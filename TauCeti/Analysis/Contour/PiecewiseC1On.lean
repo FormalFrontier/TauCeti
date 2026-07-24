@@ -148,15 +148,13 @@ theorem isPiecewiseC1On_comm : IsPiecewiseC1On γ a b ↔ IsPiecewiseC1On γ b a
 theorem IsPiecewiseC1On.symm (h : IsPiecewiseC1On γ a b) : IsPiecewiseC1On γ b a :=
   isPiecewiseC1On_comm.mp h
 
-/-- Around any non-breakpoint interior parameter there is a closed subinterval of `[[a, b]]` with
-`t` in its interior and interior disjoint from the breakpoints, so the piecewise-`C¹` clause
-applies to it. -/
-theorem exists_Icc_mem_avoiding {p : Finset ℝ} {t : ℝ}
-    (ht : t ∈ Ioo (min a b) (max a b)) (htp : t ∉ (↑p : Set ℝ)) :
-    ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint (↑p : Set ℝ) (Ioo c d) := by
-  have hopen : IsOpen (Ioo (min a b) (max a b) \ ↑p) :=
-    isOpen_Ioo.sdiff p.finite_toSet.isClosed
-  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hopen t ⟨ht, htp⟩
+/-- Around any interior parameter outside a closed set `s` there is a closed subinterval of
+`[[a, b]]` whose interior contains `t` and is disjoint from `s`. -/
+theorem exists_Icc_subset_uIcc_disjoint {s : Set ℝ} (hs : IsClosed s) {t : ℝ}
+    (ht : t ∈ Ioo (min a b) (max a b)) (hts : t ∉ s) :
+    ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint s (Ioo c d) := by
+  have hopen : IsOpen (Ioo (min a b) (max a b) \ s) := isOpen_Ioo.sdiff hs
+  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hopen t ⟨ht, hts⟩
   rw [Real.ball_eq_Ioo] at hball
   refine ⟨t - ε / 2, t + ε / 2, by constructor <;> linarith, fun x hx => ?_, ?_⟩
   · have hxs := hball (show x ∈ Ioo (t - ε) (t + ε) from ⟨by linarith [hx.1], by linarith [hx.2]⟩)
@@ -173,7 +171,8 @@ theorem IsPiecewiseC1On.exists_finset_differentiableAt (h : IsPiecewiseC1On γ a
       ∀ t ∈ Ioo (min a b) (max a b) \ (↑p : Set ℝ), DifferentiableAt ℝ γ t := by
   obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
   refine ⟨p, fun t ht => ?_⟩
-  obtain ⟨c, d, htcd, hsub, hdisj⟩ := exists_Icc_mem_avoiding ht.1 ht.2
+  obtain ⟨c, d, htcd, hsub, hdisj⟩ :=
+    exists_Icc_subset_uIcc_disjoint p.finite_toSet.isClosed ht.1 ht.2
   exact ((hC1 c d hsub hdisj).differentiableOn one_ne_zero).differentiableAt
     (Icc_mem_nhds htcd.1 htcd.2)
 

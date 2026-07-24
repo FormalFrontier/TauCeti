@@ -58,7 +58,7 @@ private theorem deriv_ne_zero_off_breakpoints {p : Finset ℝ}
       ContDiffOn ℝ 1 γ (Icc c d) ∧ ∀ t ∈ Icc c d, derivWithin γ (Icc c d) t ≠ 0)
     {t : ℝ} (ht : t ∈ Ioo (min a b) (max a b)) (htp : t ∉ (↑p : Set ℝ)) :
     DifferentiableAt ℝ γ t ∧ deriv γ t ≠ 0 := by
-  obtain ⟨c, d, htcd, hsub, hdisj⟩ := exists_Icc_mem_avoiding ht htp
+  obtain ⟨c, d, htcd, hsub, hdisj⟩ := exists_Icc_subset_uIcc_disjoint p.finite_toSet.isClosed ht htp
   have hC1 : ContDiffOn ℝ 1 γ (Icc c d) := (hpieces c d (htcd.1.trans htcd.2) hsub hdisj).1
   have hne := (hpieces c d (htcd.1.trans htcd.2) hsub hdisj).2
   have hmem : Icc c d ∈ 𝓝 t := Icc_mem_nhds htcd.1 htcd.2
