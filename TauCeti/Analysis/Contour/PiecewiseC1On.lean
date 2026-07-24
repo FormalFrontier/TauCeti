@@ -151,7 +151,7 @@ theorem IsPiecewiseC1On.symm (h : IsPiecewiseC1On γ a b) : IsPiecewiseC1On γ b
 /-- Around any non-breakpoint interior parameter there is a closed subinterval of `[[a, b]]` with
 `t` in its interior and interior disjoint from the breakpoints, so the piecewise-`C¹` clause
 applies to it. -/
-private theorem exists_Icc_mem_avoiding {p : Finset ℝ} {t : ℝ}
+theorem exists_Icc_mem_avoiding {p : Finset ℝ} {t : ℝ}
     (ht : t ∈ Ioo (min a b) (max a b)) (htp : t ∉ (↑p : Set ℝ)) :
     ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint (↑p : Set ℝ) (Ioo c d) := by
   have hopen : IsOpen (Ioo (min a b) (max a b) \ ↑p) :=

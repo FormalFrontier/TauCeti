@@ -51,23 +51,6 @@ open Set Filter Topology
 
 variable {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
 
-/-- Around any non-breakpoint interior parameter there is a closed subinterval of `[[a, b]]`
-with `t` in its interior and interior disjoint from the breakpoints. -/
-private theorem exists_Icc_mem_avoiding {p : Finset ℝ} {t : ℝ}
-    (ht : t ∈ Ioo (min a b) (max a b)) (htp : t ∉ (↑p : Set ℝ)) :
-    ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint (↑p : Set ℝ) (Ioo c d) := by
-  have hopen : IsOpen (Ioo (min a b) (max a b) \ ↑p) :=
-    isOpen_Ioo.sdiff p.finite_toSet.isClosed
-  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hopen t ⟨ht, htp⟩
-  rw [Real.ball_eq_Ioo] at hball
-  refine ⟨t - ε / 2, t + ε / 2, by constructor <;> linarith, fun x hx => ?_, ?_⟩
-  · have hxs := hball (show x ∈ Ioo (t - ε) (t + ε) from ⟨by linarith [hx.1], by linarith [hx.2]⟩)
-    exact Icc_min_max.subset (Ioo_subset_Icc_self hxs.1)
-  · rw [Set.disjoint_right]
-    intro x hx
-    exact (hball (show x ∈ Ioo (t - ε) (t + ε) from
-      ⟨by linarith [hx.1], by linarith [hx.2]⟩)).2
-
 /-- Differentiability and a non-zero derivative at interior non-breakpoint parameters, relative
 to a breakpoint witness of the immersion clause. -/
 private theorem deriv_ne_zero_off_breakpoints {p : Finset ℝ}
