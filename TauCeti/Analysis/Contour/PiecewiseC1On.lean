@@ -153,16 +153,13 @@ theorem IsPiecewiseC1On.symm (h : IsPiecewiseC1On γ a b) : IsPiecewiseC1On γ b
 theorem exists_Icc_subset_uIcc_disjoint {s : Set ℝ} (hs : IsClosed s) {t : ℝ}
     (ht : t ∈ Ioo (min a b) (max a b)) (hts : t ∉ s) :
     ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint s (Ioo c d) := by
-  have hopen : IsOpen (Ioo (min a b) (max a b) \ s) := isOpen_Ioo.sdiff hs
-  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hopen t ⟨ht, hts⟩
-  rw [Real.ball_eq_Ioo] at hball
-  refine ⟨t - ε / 2, t + ε / 2, by constructor <;> linarith, fun x hx => ?_, ?_⟩
-  · have hxs := hball (show x ∈ Ioo (t - ε) (t + ε) from ⟨by linarith [hx.1], by linarith [hx.2]⟩)
-    exact Icc_min_max.subset (Ioo_subset_Icc_self hxs.1)
+  have hmem : Ioo (min a b) (max a b) \ s ∈ 𝓝 t := (isOpen_Ioo.sdiff hs).mem_nhds ⟨ht, hts⟩
+  obtain ⟨ε, hε, hsub⟩ := (nhds_basis_Icc_pos t).mem_iff.mp hmem
+  refine ⟨t - ε, t + ε, ⟨by linarith, by linarith⟩, fun x hx => ?_, ?_⟩
+  · exact Icc_min_max.subset (Ioo_subset_Icc_self (hsub hx).1)
   · rw [Set.disjoint_right]
     intro x hx
-    exact (hball (show x ∈ Ioo (t - ε) (t + ε) from
-      ⟨by linarith [hx.1], by linarith [hx.2]⟩)).2
+    exact (hsub (Ioo_subset_Icc_self hx)).2
 
 /-- **Differentiability off a finite set.** A piecewise-`C¹` curve is differentiable at every
 interior parameter outside a finite set — the breakpoints. -/
