@@ -74,7 +74,6 @@ homeomorphism from `range f` onto the range of the moved map `Φ.final.comp f`. 
   (Homeomorph.image Φ.finalHomeomorph (Set.range f)).trans
     (Homeomorph.setCongr (Φ.range_final_comp f).symm)
 
-@[simp]
 theorem rangeHomeomorph_coe_apply (y : Set.range f) :
     (Φ.rangeHomeomorph f y : Y) = Φ.finalHomeomorph y := rfl
 
@@ -85,7 +84,6 @@ of knot-complement invariance under ambient isotopy. -/
     ↥(Set.range f)ᶜ ≃ₜ ↥(Set.range (Φ.final.comp f))ᶜ :=
   Φ.finalHomeomorph.subtype (Φ.notMem_range_iff f)
 
-@[simp]
 theorem complementHomeomorph_coe_apply (y : ↥(Set.range f)ᶜ) :
     (Φ.complementHomeomorph f y : Y) = Φ.finalHomeomorph y := rfl
 
