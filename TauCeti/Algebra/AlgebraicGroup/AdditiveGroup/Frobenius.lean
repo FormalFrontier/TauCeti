@@ -144,8 +144,8 @@ simp-normal form. -/
 theorem toAdd_gaPointsMulEquiv_frobeniusEnd (F : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
     Multiplicative.toAdd (gaPointsMulEquiv (frobeniusEnd R p F)) =
       Multiplicative.toAdd (gaPointsMulEquiv F) ^ p := by
-  simp only [toAdd_gaPointsMulEquiv, frobeniusEnd, AlgHom.mapDomain_apply,
-    AlgHom.comp_apply, BialgHom.coe_toAlgHom, frobeniusBialgHom_ι_one, map_pow]
+  simp only [toAdd_gaPointsMulEquiv, frobeniusEnd, AlgHom.mapDomain_apply_apply,
+    frobeniusBialgHom_ι_one, map_pow]
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 

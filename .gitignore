@@ -10,5 +10,8 @@
 __pycache__/
 *.pyc
 
+# macOS directory metadata
+.DS_Store
+
 # Claude Code agent worktrees are nested checkouts, never repository content.
 .claude/worktrees/

@@ -93,8 +93,7 @@ and evaluate at the generator. -/
 theorem gaPointsMulEquiv_inclusion (F : WithConv (CoordinateRing (R := R) p →ₐ[R] A)) :
     AdditiveGroup.gaPointsMulEquiv (inclusion p F) = pointsHom p F := by
   apply Multiplicative.toAdd.injective
-  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv, inclusion, AlgHom.mapDomain_apply,
-    AlgHom.comp_apply, BialgHom.coe_toAlgHom,
+  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv, inclusion, AlgHom.mapDomain_apply_apply,
     Bialgebra.Quotient.mkBialgHom_apply, toAdd_pointsHom]
 
 /-- **The inclusion `αₚ ↪ 𝔾ₐ` is injective on the functor of points.** It agrees through
