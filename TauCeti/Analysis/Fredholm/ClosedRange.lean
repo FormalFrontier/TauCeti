@@ -71,20 +71,15 @@ theorem isClosed_range_of_finiteDimensional_coker (T : E →L[𝕜] F)
   obtain ⟨N, hN⟩ := R.exists_isCompl
   haveI : FiniteDimensional 𝕜 N := (Submodule.quotientEquivOfIsCompl R N hN).finiteDimensional
   haveI : CompleteSpace N := FiniteDimensional.complete 𝕜 N
-  -- The auxiliary map `Φ(x, n) = T x + n`, continuous linear from the Banach space `E × N`.
-  set Φ : (E × N) →L[𝕜] F :=
-    T.comp (ContinuousLinearMap.fst 𝕜 E N) + N.subtypeL.comp (ContinuousLinearMap.snd 𝕜 E N)
-    with hΦdef
+  -- The auxiliary map `Φ(x, n) = T x + n`, the coproduct of `T` and the inclusion of `N`,
+  -- continuous linear from the Banach space `E × N`.
+  set Φ : (E × N) →L[𝕜] F := T.coprod N.subtypeL with hΦdef
   have hΦ : ∀ p : E × N, Φ p = T p.1 + (p.2 : F) := fun p => by simp [hΦdef]
-  -- `Φ` is surjective: `range T` and `N` together span `F`.
+  -- `Φ` is surjective: its range is `range T ⊔ N`, which is all of `F`.
   have hsurj : Function.Surjective Φ := by
-    intro y
-    have hy : y ∈ R ⊔ N := by rw [hN.sup_eq_top]; exact Submodule.mem_top
-    rw [Submodule.mem_sup] at hy
-    obtain ⟨a, ha, b, hb, rfl⟩ := hy
-    obtain ⟨x, hx⟩ := LinearMap.mem_range.mp ha
-    rw [ContinuousLinearMap.coe_coe] at hx
-    exact ⟨(x, ⟨b, hb⟩), by rw [hΦ]; simp only; rw [hx]⟩
+    rw [← ContinuousLinearMap.coe_coe, ← LinearMap.range_eq_top, hΦdef,
+      ContinuousLinearMap.range_coprod, Submodule.toLinearMap_subtypeL, Submodule.range_subtype,
+      ← hR, hN.sup_eq_top]
   -- The preimage of `range T` under `Φ` is the closed subset `{p | p.2 = 0}`.
   have hpre : Φ ⁻¹' (R : Set F) = {p : E × N | p.2 = 0} := by
     ext p
