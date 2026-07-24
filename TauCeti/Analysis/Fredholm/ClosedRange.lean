@@ -75,11 +75,14 @@ theorem isClosed_range_of_finiteDimensional_coker (T : E →L[𝕜] F)
   -- continuous linear from the Banach space `E × N`.
   set Φ : (E × N) →L[𝕜] F := T.coprod N.subtypeL with hΦdef
   have hΦ : ∀ p : E × N, Φ p = T p.1 + (p.2 : F) := fun p => by simp [hΦdef]
-  -- `Φ` is surjective: its range is `range T ⊔ N`, which is all of `F`.
+  -- `Φ` is surjective: every `y : F` lies in `R ⊔ N = ⊤`, so `y = T x + n` for some
+  -- `x : E` and `n ∈ N`, and `Φ (x, ⟨n, _⟩) = y`.
   have hsurj : Function.Surjective Φ := by
-    rw [← ContinuousLinearMap.coe_coe, ← LinearMap.range_eq_top, hΦdef,
-      ContinuousLinearMap.range_coprod, Submodule.toLinearMap_subtypeL, Submodule.range_subtype,
-      ← hR, hN.sup_eq_top]
+    intro y
+    obtain ⟨r, hr, n, hn, rfl⟩ :=
+      Submodule.mem_sup.mp (hN.sup_eq_top ▸ Submodule.mem_top : y ∈ R ⊔ N)
+    obtain ⟨x, rfl⟩ := hr
+    exact ⟨(x, ⟨n, hn⟩), by simp [hΦ]⟩
   -- The preimage of `range T` under `Φ` is the closed subset `{p | p.2 = 0}`.
   have hpre : Φ ⁻¹' (R : Set F) = {p : E × N | p.2 = 0} := by
     ext p
