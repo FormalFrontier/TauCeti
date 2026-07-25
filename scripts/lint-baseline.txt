@@ -2,6 +2,7 @@ checkType TauCeti.SymplecticForm.stdComplexLineEnergyDensity_def
 simpNF Polynomial.derivative_hermite_succ
 simpNF TauCeti.AlmostComplexStructure.product_apply_stdComplexLineImag
 simpNF TauCeti.AlmostComplexStructure.product_apply_stdComplexLineReal
+simpNF TauCeti.AlphaP.mk_ι_pow_eq_zero
 simpNF TauCeti.CommHopfAlgCat.liftQuotientPoint_mk
 simpNF TauCeti.Comodule.Hom.comp_id
 simpNF TauCeti.Comodule.Hom.id_apply
