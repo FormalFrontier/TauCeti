@@ -52,11 +52,11 @@ the family, which is exactly equicontinuity.
   also equicontinuous.
 
 This advances the L1 (normal families / Montel) layer of the conformal-mapping roadmap, whose
-generality bar fixes local boundedness as "bounded on each compact `K ⊆ Ω`".  As with the rest of
-the L0--L3 conformal-mapping material it is coordinated with the upstream Mathlib Riemann-mapping
-effort leanprover-community/mathlib4#33505, which proves a Montel equicontinuity statement
-internally as a private lemma; these declarations are a temporary shim, to be deleted and refactored
-to Mathlib's API once that human-curated work lands.
+generality bar requires scalar-valued functions `ℂ → ℂ` and fixes local boundedness as "bounded on
+each compact `K ⊆ Ω`".  As with the rest of the L0--L3 conformal-mapping material it is coordinated
+with the upstream Mathlib Riemann-mapping effort leanprover-community/mathlib4#33505, which proves a
+Montel equicontinuity statement internally as a private lemma; these declarations are a temporary
+shim, to be deleted and refactored to Mathlib's API once that human-curated work lands.
 
 ## References
 
