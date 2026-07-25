@@ -132,12 +132,13 @@ noncomputable def powEndRingHom :=
 
 /-- The canonical integer endomorphism is the additive form of the power endomorphism. -/
 @[simp]
-theorem powEndRingHom_apply (z : ℤ)
-    (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
-    (z : AddMonoid.End (Additive
-      (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) a =
-      MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a := by
-  simp
+theorem powEndRingHom_apply (z : ℤ) :
+    powEndRingHom (R := R) (A := A) z =
+      MonoidHom.toAdditive (powEnd (R := R) (A := A) z) := by
+  apply AddMonoidHom.ext
+  intro a
+  change z • a = MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a
+  exact (toAdditive_powEnd_apply z a).symm
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 

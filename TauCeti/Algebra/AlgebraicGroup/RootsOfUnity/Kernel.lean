@@ -77,6 +77,7 @@ theorem powEnd_comp_inclusion (n : ℕ) :
   exact (mem_rootsOfUnity n _).mp (SetLike.coe_mem (pointsMulEquiv (R := R) (A := A) n f))
 
 /-- The `n`th power endomorphism annihilates every `μ_n`-point, in element form. -/
+@[simp]
 theorem powEnd_inclusion (n : ℕ)
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
     DiagonalizableGroup.powEnd (R := R) (A := A) (n : ℤ) (inclusion n f) = 1 := by
