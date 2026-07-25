@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Analysis.Convex.SimplicialComplex.AffineIndependentUnion
 public import Mathlib.Topology.UniformSpace.Real
-public import Mathlib.Topology.Order
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 
 /-!
@@ -170,6 +169,12 @@ theorem vertex_injective (K : AbstractSimplicialComplex ι) :
 noncomputable def vertexEmbedding (K : AbstractSimplicialComplex ι) : ι ↪ Realization K :=
   ⟨vertex K, vertex_injective K⟩
 
+/-- The vertex embedding sends a vertex to its canonical point in the realization. -/
+@[simp]
+theorem vertexEmbedding_apply (K : AbstractSimplicialComplex ι) (v : ι) :
+    vertexEmbedding K v = vertex K v := by
+  simp [vertexEmbedding]
+
 /-- Inclusion of abstract complexes induces inclusion of their standard polyhedra. -/
 theorem standardGeometricComplex_space_mono {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
     (standardGeometricComplex K).space ⊆ (standardGeometricComplex L).space := by
@@ -190,12 +195,21 @@ theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
     (realizationMap hKL x : ι →₀ ℝ) = x := by
   simp [realizationMap]
 
+/-- An inclusion map restricted to a face is the corresponding face inclusion in the larger
+complex. -/
+@[simp]
+theorem realizationMap_comp_faceInclusion {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
+    (σ : Face K) :
+    realizationMap hKL ∘ faceInclusion K σ = faceInclusion L ⟨σ.1, hKL σ.2⟩ := by
+  funext x
+  exact Subtype.ext rfl
+
 /-- The map of realizations induced by an inclusion is continuous. -/
 theorem continuous_realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
     Continuous (realizationMap hKL) := by
   apply continuous_iff_faceInclusion.2
   intro σ
-  change Continuous (faceInclusion L ⟨σ.1, hKL σ.2⟩)
+  rw [realizationMap_comp_faceInclusion]
   exact continuous_faceInclusion L ⟨σ.1, hKL σ.2⟩
 
 /-- The map induced by the reflexive inclusion is the identity. -/
