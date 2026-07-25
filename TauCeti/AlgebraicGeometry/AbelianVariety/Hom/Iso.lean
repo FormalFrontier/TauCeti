@@ -79,7 +79,6 @@ lemma isoToScheme_inv {A B : AbelianVariety K} (e : A ≅ B) :
   rfl
 
 /-- The underlying `Over` isomorphism of the identity isomorphism is the identity. -/
-@[simp]
 lemma isoToOver_refl (A : AbelianVariety K) :
     isoToOver (Iso.refl A) = Iso.refl A.toOver :=
   (Hom.toOverFunctor.mapIso_refl A)
@@ -91,7 +90,6 @@ lemma isoToOver_symm {A B : AbelianVariety K} (e : A ≅ B) :
   rfl
 
 /-- Forgetting a composite isomorphism to schemes over the base commutes with composition. -/
-@[simp]
 lemma isoToOver_trans {A B C : AbelianVariety K} (e : A ≅ B) (f : B ≅ C) :
     isoToOver (e.trans f) = (isoToOver e).trans (isoToOver f) :=
   (Hom.toOverFunctor.mapIso_trans e f)
