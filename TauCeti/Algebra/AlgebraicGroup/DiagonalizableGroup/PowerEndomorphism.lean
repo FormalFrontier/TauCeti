@@ -73,7 +73,8 @@ namespace DiagonalizableGroup
 
 variable {R : Type u} {A : Type v} [CommSemiring R] [CommSemiring A] [Algebra R A]
 
-noncomputable local instance :
+/-- The convolution group structure on the points of `𝔾ₘ`. -/
+noncomputable local instance multiplicativeGroupPointsCommGroup :
     CommGroup (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :=
   AlgHom.instCommGroup
 
@@ -118,7 +119,6 @@ the abelian group `𝔾ₘ(A)` of points, the endomorphism `powEnd z` acts as th
 exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical ring homomorphism
 `ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for example when
 `Aˣ` has finite exponent. -/
-@[simp]
 theorem toAdditive_powEnd_apply (z : ℤ)
     (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a = z • a := by
@@ -134,9 +134,10 @@ noncomputable def powEndRingHom :=
 @[simp]
 theorem powEndRingHom_apply (z : ℤ)
     (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
-    powEndRingHom (R := R) (A := A) z a =
+    (z : AddMonoid.End (Additive
+      (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) a =
       MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a := by
-  simp [powEndRingHom]
+  simp
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 
