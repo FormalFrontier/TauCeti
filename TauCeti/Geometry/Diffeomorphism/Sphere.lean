@@ -70,44 +70,50 @@ open scoped Manifold ContDiff
 
 namespace LinearIsometryEquiv
 
-section Normed
+section Seminormed
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {R E : Type*} [Semiring R] [SeminormedAddCommGroup E] [Module R E]
 
 /-- A linear isometry equivalence preserves the unit sphere: it maps unit vectors to unit vectors,
 and nothing else to unit vectors. -/
-theorem map_mem_unitSphere_iff (e : E ≃ₗᵢ[ℝ] E) (x : E) :
+theorem map_mem_unitSphere_iff (e : E ≃ₗᵢ[R] E) (x : E) :
     e x ∈ sphere (0 : E) 1 ↔ x ∈ sphere (0 : E) 1 := by
   simp
 
 /-- A linear isometry equivalence of `E` restricts to a self-equivalence of the unit sphere. -/
-def unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
+def unitSphereEquiv (e : E ≃ₗᵢ[R] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
   e.toEquiv.subtypeEquiv fun x => (map_mem_unitSphere_iff e x).symm
 
 @[simp]
-theorem coe_unitSphereEquiv_apply (e : E ≃ₗᵢ[ℝ] E) (x : sphere (0 : E) 1) :
+theorem coe_unitSphereEquiv_apply (e : E ≃ₗᵢ[R] E) (x : sphere (0 : E) 1) :
     (unitSphereEquiv e x : E) = e x :=
   (rfl)
 
 @[simp]
-theorem unitSphereEquiv_symm (e : E ≃ₗᵢ[ℝ] E) :
+theorem unitSphereEquiv_symm (e : E ≃ₗᵢ[R] E) :
     (unitSphereEquiv e).symm = unitSphereEquiv e.symm :=
   (rfl)
 
 @[simp]
 theorem unitSphereEquiv_refl :
-    unitSphereEquiv (_root_.LinearIsometryEquiv.refl ℝ E) = Equiv.refl (sphere (0 : E) 1) :=
+    unitSphereEquiv (_root_.LinearIsometryEquiv.refl R E) = Equiv.refl (sphere (0 : E) 1) :=
   (rfl)
 
-theorem unitSphereEquiv_trans (e e' : E ≃ₗᵢ[ℝ] E) :
+theorem unitSphereEquiv_trans (e e' : E ≃ₗᵢ[R] E) :
     unitSphereEquiv (e.trans e') = (unitSphereEquiv e).trans (unitSphereEquiv e') :=
   (rfl)
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is an isometry for the
 distance the sphere inherits from `E`: the action of `O(n + 1)` on `Sⁿ` is by isometries of the
 round sphere. -/
-theorem isometry_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) : Isometry (unitSphereEquiv e) :=
+theorem isometry_unitSphereEquiv (e : E ≃ₗᵢ[R] E) : Isometry (unitSphereEquiv e) :=
   Isometry.of_dist_eq fun x y => by simp [Subtype.dist_eq]
+
+end Seminormed
+
+section Normed
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- A linear isometry equivalence is determined by its values on the unit sphere, since every
 nonzero vector is a positive multiple of a unit vector. -/
@@ -197,33 +203,42 @@ end LinearIsometryEquiv
 open scoped EuclideanSpace
 
 /-- An orthogonal matrix acts on Euclidean space as a linear isometry equivalence. -/
-noncomputable def orthogonalGroupToLinearIsometryEquiv (n : ℕ) :
-    Matrix.orthogonalGroup (Fin n) ℝ →*
-      (EuclideanSpace ℝ (Fin n) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin n)) where
+noncomputable def orthogonalGroupToLinearIsometryEquiv {ι : Type*} [Fintype ι] [DecidableEq ι] :
+    Matrix.orthogonalGroup ι ℝ →*
+      (EuclideanSpace ℝ ι ≃ₗᵢ[ℝ] EuclideanSpace ℝ ι) where
   toFun A :=
     { toLinearEquiv :=
-        (WithLp.linearEquiv 2 ℝ (Fin n → ℝ)).trans
+        (WithLp.linearEquiv 2 ℝ (ι → ℝ)).trans
           ((Matrix.UnitaryGroup.toLinearEquiv A).trans
-            (WithLp.linearEquiv 2 ℝ (Fin n → ℝ)).symm)
+            (WithLp.linearEquiv 2 ℝ (ι → ℝ)).symm)
       norm_map' := fun x => by
         apply (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp
         rw [EuclideanSpace.norm_sq_eq, EuclideanSpace.norm_sq_eq]
         simp only [Real.norm_eq_abs, sq_abs]
-        change ∑ i, ((A : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp i) ^ 2 =
+        change ∑ i, ((A : Matrix ι ι ℝ).mulVec x.ofLp i) ^ 2 =
           ∑ i, (x.ofLp i) ^ 2
         simp only [pow_two]
         rw [← dotProduct, Matrix.dotProduct_mulVec, Matrix.vecMul_mulVec,
-          (Matrix.mem_orthogonalGroup_iff' (Fin n) ℝ).1 A.2, Matrix.vecMul_one]
+          (Matrix.mem_orthogonalGroup_iff' ι ℝ).1 A.2, Matrix.vecMul_one]
         rfl }
   map_one' := _root_.LinearIsometryEquiv.ext fun x => by
-    change WithLp.toLp 2 ((1 : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp) = x
+    change WithLp.toLp 2 ((1 : Matrix ι ι ℝ).mulVec x.ofLp) = x
     rw [Matrix.one_mulVec, WithLp.toLp_ofLp]
   map_mul' A B := _root_.LinearIsometryEquiv.ext fun x => by
-    change WithLp.toLp 2 (((A * B : Matrix.orthogonalGroup (Fin n) ℝ) :
-      Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp) =
-        WithLp.toLp 2 ((A : Matrix (Fin n) (Fin n) ℝ).mulVec
-          ((B : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp))
+    change WithLp.toLp 2 (((A * B : Matrix.orthogonalGroup ι ℝ) :
+      Matrix ι ι ℝ).mulVec x.ofLp) =
+        WithLp.toLp 2 ((A : Matrix ι ι ℝ).mulVec
+          ((B : Matrix ι ι ℝ).mulVec x.ofLp))
     exact congrArg (WithLp.toLp 2) (Matrix.mulVec_mulVec _ _ _).symm
+
+/-- The linear isometry equivalence associated to an orthogonal matrix acts by matrix-vector
+multiplication in Euclidean coordinates. -/
+@[simp]
+theorem orthogonalGroupToLinearIsometryEquiv_apply {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (A : Matrix.orthogonalGroup ι ℝ) (x : EuclideanSpace ℝ ι) :
+    orthogonalGroupToLinearIsometryEquiv A x =
+      WithLp.toLp 2 ((A : Matrix ι ι ℝ).mulVec x.ofLp) :=
+  (rfl)
 
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)`: an orthogonal transformation of `ℝⁿ⁺¹`
 restricts to a diffeomorphism of the unit sphere `Sⁿ`, and this restriction is a group
@@ -232,7 +247,7 @@ noncomputable def orthogonalToDiffSphere (n : ℕ) (m : ℕ∞ω) :
     Matrix.orthogonalGroup (Fin (n + 1)) ℝ →*
       Diff (𝓡 n) (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) m :=
   (LinearIsometryEquiv.unitSphereDiffHom m).comp
-    (orthogonalGroupToLinearIsometryEquiv (n + 1))
+    orthogonalGroupToLinearIsometryEquiv
 
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` sends an orthogonal transformation to its
 restriction to the unit sphere. -/
@@ -240,7 +255,7 @@ restriction to the unit sphere. -/
 theorem orthogonalToDiffSphere_apply (n : ℕ) (m : ℕ∞ω)
     (A : Matrix.orthogonalGroup (Fin (n + 1)) ℝ) :
     orthogonalToDiffSphere n m A =
-      LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ A) :=
+      LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv A) :=
   (rfl)
 
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` is injective, so `O(n + 1)` is realised as a
@@ -248,8 +263,8 @@ subgroup of `Diff(Sⁿ)`. -/
 theorem orthogonalToDiffSphere_injective (n : ℕ) (m : ℕ∞ω) :
     Function.Injective (orthogonalToDiffSphere n m) := by
   intro A B h
-  change LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ A) =
-    LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ B) at h
+  change LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv A) =
+    LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv B) at h
   have he := LinearIsometryEquiv.unitSphereDiffHom_injective h
   apply Subtype.ext
   apply Matrix.toEuclideanLin.injective
