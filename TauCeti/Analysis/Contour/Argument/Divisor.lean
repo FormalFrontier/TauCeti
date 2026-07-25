@@ -35,8 +35,11 @@ double duty.
 ## Main results
 
 * `TauCeti.Contour.argumentPrinciple_divisor` —
-  `∮_{C(c,R)} logDeriv f = 2πi · ∑ divisor f (ball c R)`, the argument principle with the counting
-  data taken from `MeromorphicOn.divisor`.
+  `∮_{C(c,R)} logDeriv f = 2πi · ∑ᶠ z, divisor f (ball c R) z`, the argument principle with the
+  counting data taken from `MeromorphicOn.divisor`. The conclusion uses the canonical finitely
+  supported sum `∑ᶠ`, which is well defined because the divisor vanishes off `ball c R`; the
+  finiteness witness `MeromorphicOn.divisor_ball_support_finite` stays inside the proof rather than
+  appearing in the statement.
 
 ## References
 
@@ -62,9 +65,14 @@ theorem argumentPrinciple_divisor {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 
     (hsphere : ∀ z ∈ sphere c R, meromorphicOrderAt f z = 0) :
     circleIntegral (logDeriv f) c R
       = 2 * (Real.pi : ℂ) * Complex.I *
-        (∑ z ∈ (MeromorphicOn.divisor_ball_support_finite hf).toFinset,
-          ((MeromorphicOn.divisor f (ball c R) z : ℤ) : ℂ)) := by
+        (∑ᶠ z, ((MeromorphicOn.divisor f (ball c R) z : ℤ) : ℂ)) := by
   have hfb : MeromorphicOn f (ball c R) := fun x hx => hf x (ball_subset_closedBall hx)
+  have hsupp : Function.support (fun z => ((MeromorphicOn.divisor f (ball c R) z : ℤ) : ℂ))
+      ⊆ ((MeromorphicOn.divisor_ball_support_finite hf).toFinset : Set ℂ) := by
+    intro z hz
+    simp only [Function.mem_support, ne_eq, Int.cast_eq_zero] at hz
+    simpa [Set.Finite.mem_toFinset] using hz
+  rw [finsum_eq_finsetSum_of_support_subset _ hsupp]
   have hxs : c + (R : ℂ) ∈ sphere c R := by simp [abs_of_pos hR]
   have htop : ∀ z ∈ closedBall c R, meromorphicOrderAt f z ≠ ⊤ := fun z hz =>
     hf.meromorphicOrderAt_ne_top_of_isPreconnected (convex_closedBall c R).isPreconnected
