@@ -55,8 +55,9 @@ a group isomorphism is separate work that belongs upstream.
   `-1 ∈ O(n + 1)` is the antipodal map.
 * `TauCeti.LinearIsometryEquiv.eq_of_eqOn_unitSphere`: a linear isometry equivalence is
   determined by its values on the unit sphere, whence
-  `TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective`: the inclusion is injective, so
-  `O(n + 1)` is realised as a subgroup of `Diff(Sⁿ)`.
+  `TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective` and
+  `TauCeti.orthogonalToDiffSphere_injective`: the inclusion is injective, so `O(n + 1)` is
+  realised as a subgroup of `Diff(Sⁿ)`.
 
 ## Implementation notes
 
@@ -85,28 +86,27 @@ theorem map_mem_unitSphere_iff (e : E ≃ₗᵢ[ℝ] E) (x : E) :
   simp
 
 /-- A linear isometry equivalence of `E` restricts to a self-equivalence of the unit sphere. -/
-@[expose]
 def unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
   e.toEquiv.subtypeEquiv fun x => (map_mem_unitSphere_iff e x).symm
 
 @[simp]
 theorem coe_unitSphereEquiv_apply (e : E ≃ₗᵢ[ℝ] E) (x : sphere (0 : E) 1) :
     (unitSphereEquiv e x : E) = e x :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem unitSphereEquiv_symm (e : E ≃ₗᵢ[ℝ] E) :
     (unitSphereEquiv e).symm = unitSphereEquiv e.symm :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem unitSphereEquiv_refl :
     unitSphereEquiv (_root_.LinearIsometryEquiv.refl ℝ E) = Equiv.refl (sphere (0 : E) 1) :=
-  rfl
+  (rfl)
 
 theorem unitSphereEquiv_trans (e e' : E ≃ₗᵢ[ℝ] E) :
     unitSphereEquiv (e.trans e') = (unitSphereEquiv e).trans (unitSphereEquiv e') :=
-  rfl
+  (rfl)
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is an isometry for the
 distance the sphere inherits from `E`: the action of `O(n + 1)` on `Sⁿ` is by isometries of the
@@ -144,7 +144,6 @@ theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) :
   exact h.codRestrict_sphere fun x => (map_mem_unitSphere_iff e _).2 x.2
 
 /-- The diffeomorphism of the unit sphere induced by a linear isometry equivalence of `E`. -/
-@[expose]
 def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] E) (m : ℕ∞ω) :
     sphere (0 : E) 1 ≃ₘ^m⟮𝓡 n, 𝓡 n⟯ sphere (0 : E) 1 where
   toEquiv := unitSphereEquiv e
@@ -154,17 +153,17 @@ def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] E) (m : ℕ∞ω) :
 @[simp]
 theorem coe_unitSphereDiffeomorph_apply (e : E ≃ₗᵢ[ℝ] E) (x : sphere (0 : E) 1) :
     ((unitSphereDiffeomorph (n := n) e m x : sphere (0 : E) 1) : E) = e x :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem unitSphereDiffeomorph_toEquiv (e : E ≃ₗᵢ[ℝ] E) :
     (unitSphereDiffeomorph (n := n) e m).toEquiv = unitSphereEquiv e :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem unitSphereDiffeomorph_symm (e : E ≃ₗᵢ[ℝ] E) :
     (unitSphereDiffeomorph (n := n) e m).symm = unitSphereDiffeomorph e.symm m :=
-  rfl
+  (rfl)
 
 /-- The antipodal map of the unit sphere is the diffeomorphism induced by `-1`, the element of
 `O(n + 1)` given by `LinearIsometryEquiv.neg`. In particular Mathlib's `contMDiff_neg_sphere` is
@@ -177,7 +176,6 @@ theorem unitSphereDiffeomorph_neg_apply (x : sphere (0 : E) 1) :
 /-- The inclusion of the linear isometry group of `E` into the group of self-diffeomorphisms of
 its unit sphere. For `E = EuclideanSpace ℝ (Fin (n + 1))` this is the reference inclusion
 `O(n + 1) → Diff(Sⁿ)`; see `TauCeti.orthogonalToDiffSphere`. -/
-@[expose]
 def unitSphereDiffHom (m : ℕ∞ω) :
     (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
   toFun e := unitSphereDiffeomorph e m
@@ -187,7 +185,7 @@ def unitSphereDiffHom (m : ℕ∞ω) :
 @[simp]
 theorem unitSphereDiffHom_apply (e : E ≃ₗᵢ[ℝ] E) :
     unitSphereDiffHom (E := E) (n := n) m e = unitSphereDiffeomorph e m :=
-  rfl
+  (rfl)
 
 /-- The inclusion of the linear isometry group into the diffeomorphism group of the unit sphere is
 injective, so `O(n + 1)` is realised as a subgroup of `Diff(Sⁿ)`. -/
@@ -209,8 +207,7 @@ restricts to a diffeomorphism of the unit sphere `Sⁿ`, and this restriction is
 homomorphism. Here `O(n + 1)` appears in its coordinate-free form, as the group
 `EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))` of linear isometry
 equivalences of `(n + 1)`-dimensional Euclidean space. It is injective by
-`TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective`. -/
-@[expose]
+`TauCeti.orthogonalToDiffSphere_injective`. -/
 noncomputable def orthogonalToDiffSphere (n : ℕ) (m : ℕ∞ω) :
     (EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) →*
       Diff (𝓡 n) (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) m :=
@@ -222,6 +219,12 @@ restriction to the unit sphere. -/
 theorem orthogonalToDiffSphere_apply (n : ℕ) (m : ℕ∞ω)
     (e : EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) :
     orthogonalToDiffSphere n m e = LinearIsometryEquiv.unitSphereDiffHom m e :=
-  rfl
+  (rfl)
+
+/-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` is injective, so `O(n + 1)` is realised as a
+subgroup of `Diff(Sⁿ)`. -/
+theorem orthogonalToDiffSphere_injective (n : ℕ) (m : ℕ∞ω) :
+    Function.Injective (orthogonalToDiffSphere n m) := fun _ _ h =>
+  LinearIsometryEquiv.unitSphereDiffHom_injective (by simpa using h)
 
 end TauCeti
