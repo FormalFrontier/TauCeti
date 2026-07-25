@@ -35,8 +35,8 @@ Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i =
   `bind_probabilityMeasure_pi_const_apply` and `bind_probabilityMeasure_pi_const_pi`.
 
 This file does not introduce a new product-kernel structure; the lemmas live directly over Mathlib's
-`ProbabilityMeasure.pi`. It advances `TauCetiRoadmap/Exchangeability`, Layer 1 (product kernels,
-conditional independence, mixtures), and is motivated by the product-kernel layer of
+`ProbabilityMeasure.pi`. It advances `TauCetiRoadmap/Exchangeability`, Layer 1 (product kernels and
+mixtures), and is motivated by the product-kernel layer of
 `cameronfreer/exchangeability` (`MeasureKernels.lean` and the `bind_pi_apply` of
 `DeFinetti/CommonEnding.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`), implemented using
 Mathlib's `ProbabilityMeasure.pi`, `Measure.bind_apply`, and Giry measurability API; the combinator
@@ -108,7 +108,7 @@ theorem measurable_probabilityMeasure_pi_const_toMeasure {α : Type*} [Measurabl
   measurable_probabilityMeasure_pi_toMeasure (fun _ => ν) (fun _ => hν)
 
 /-- Constant-coordinate specialization of `aemeasurable_probabilityMeasure_pi_toMeasure`: the random
-product `ω ↦ (ν ω)^{⊗ Fin m}` is `AEMeasurable` from an a.e.-measurable directing kernel. -/
+product `ω ↦ (ν ω)^{⊗ Fin m}` is `AEMeasurable` from an a.e.-measurable kernel `ν`. -/
 @[fun_prop]
 theorem aemeasurable_probabilityMeasure_pi_const_toMeasure {α : Type*} [MeasurableSpace α] {m : ℕ}
     (ν : Ω → ProbabilityMeasure α) (hν : AEMeasurable ν μ) :
@@ -126,7 +126,7 @@ theorem bind_probabilityMeasure_pi_apply
   Measure.bind_apply hs (aemeasurable_probabilityMeasure_pi_toMeasure ν hν)
 
 -- Not `@[simp]`: `simp` unfolds `(ProbabilityMeasure.pi …).toMeasure` via `toMeasure_pi`, so the
--- `.toMeasure`-shaped (`ConditionallyIIDWith`-shaped) LHS here is not simp-normal and a `@[simp]`
+-- `.toMeasure`-shaped (`MixedIIDWith`-shaped) LHS here is not simp-normal and a `@[simp]`
 -- tag never fires; this is an explicit `rw` lemma in the shape later de Finetti code rewrites with.
 /-- **Bind-evaluation on a rectangle.** On a rectangle `Set.univ.pi B`, the mixture equals
 `∫⁻ ω, ∏ i, (ν i ω) (B i) ∂μ`. -/

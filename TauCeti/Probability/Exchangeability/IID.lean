@@ -4,33 +4,38 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
+public import TauCeti.Probability.Exchangeability.MixedIID.Implications
 public import Mathlib.Probability.Independence.Basic
 public import Mathlib.Probability.IdentDistrib
 
 /-!
-# An i.i.d. sequence is conditionally i.i.d., exchangeable, and contractable
+# An i.i.d. sequence is mixed i.i.d., exchangeable, and contractable
 
 This file discharges the first worked example of the Exchangeability roadmap
 (`TauCetiRoadmap/Exchangeability/README.md`, "Worked examples"):
 
-> The law of an i.i.d. sequence is `ConditionallyIID`, `Exchangeable`, and `Contractable`.
+> The law of an i.i.d. sequence is `MixedIID`, `Exchangeable`, and `Contractable`.
 
 For a sequence `X : ℕ → Ω → α` on a probability space whose coordinates are independent
 (`ProbabilityTheory.iIndepFun X μ`) and identically distributed
 (`∀ i, IdentDistrib (X i) (X 0) μ μ`), the constant random measure `ω ↦ law of X 0` is a
-directing measure: `ConditionallyIIDWith.of_iIndepFun_identDistrib`. Exchangeability and
+mixing representative: `MixedIIDWith.of_iIndepFun_identDistrib`. Exchangeability and
 contractability then follow from the Layer 0 implications
-`ConditionallyIIDWith.exchangeable` and `ConditionallyIIDWith.contractable`.
+`MixedIIDWith.exchangeable` and `MixedIIDWith.contractable`.
 
 The mathematical content is the block-law identity: along an injective selection
 `k : Fin m → ℕ` the coordinates `X ∘ k` are independent (a subfamily of an independent
 family, `ProbabilityTheory.iIndepFun.precomp`) with common law `μ.map (X 0)`, so their joint
 law is the `m`-fold product `Measure.pi (fun _ => μ.map (X 0))`
 (`ProbabilityTheory.iIndepFun.map_fun_eq_pi_map`); this is exactly the value of the mixture
-against a constant directing measure. The example validates the Layer 0 directing-measure
+against a constant mixing representative. The example validates the Layer 0 mixed-i.i.d.
 API on the canonical i.i.d. case and needs no material from
 `cameronfreer/exchangeability`.
+
+The roadmap's worked-example entry also asks for the sharper statement that an i.i.d. sequence is
+genuinely `ConditionallyIID`, with this constant measure as its *directing measure*. That awaits
+the conditional predicate itself, which is not yet defined; the mixture form below is the part
+expressible today.
 -/
 
 public section
@@ -45,18 +50,18 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **An i.i.d. sequence is conditionally i.i.d.**, with the constant directing measure
+/-- **An i.i.d. sequence is mixed i.i.d.**, with the constant mixing representative
 `ω ↦ μ.map (X 0)` (the common law of the coordinates). For independent, identically
 distributed coordinates, the law of an injective finite block is the product of
-that common law, which is precisely the mixture against the constant directing measure. -/
-theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
+that common law, which is precisely the mixture against the constant mixing representative. -/
+theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     haveI := hindep.isProbabilityMeasure
-    ConditionallyIIDWith μ X
+    MixedIIDWith μ X
       (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) := by
   haveI := hindep.isProbabilityMeasure
-  refine ConditionallyIIDWith.intro measurable_const ?_
+  refine MixedIIDWith.intro measurable_const ?_
   intro m k hk
   -- The block law along an injective selection is the `m`-fold product of the common law.
   have hindep_k : iIndepFun (fun i : Fin m => X (k i)) μ := hindep.precomp hk
@@ -70,27 +75,27 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
   rw [hblock, Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
   rfl
 
-/-- **An i.i.d. sequence is conditionally i.i.d.** (existential directing-measure form). -/
-theorem ConditionallyIID.of_iIndepFun_identDistrib {μ : Measure Ω}
+/-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/
+theorem MixedIID.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
-    ConditionallyIID μ X :=
-  ConditionallyIID.of_directing
-    (ConditionallyIIDWith.of_iIndepFun_identDistrib hindep hident)
+    MixedIID μ X :=
+  MixedIID.of_mixingRepresentative
+    (MixedIIDWith.of_iIndepFun_identDistrib hindep hident)
 
 /-- **An i.i.d. sequence is exchangeable.** -/
 theorem Exchangeable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Exchangeable μ X :=
-  (ConditionallyIIDWith.of_iIndepFun_identDistrib hindep hident).exchangeable
+  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).exchangeable
 
 /-- **An i.i.d. sequence is contractable.** -/
 theorem Contractable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Contractable μ X :=
-  (ConditionallyIIDWith.of_iIndepFun_identDistrib hindep hident).contractable
+  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).contractable
 
 end Probability
 

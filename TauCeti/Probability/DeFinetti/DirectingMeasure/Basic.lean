@@ -31,9 +31,9 @@ Finetti's theorem. This file records its basic theory: it is a probability measu
 (`directingMeasure_ae_eq_condExp`). It is also bundled as the `ProbabilityMeasure`-valued
 `directingProbabilityMeasure`, measurable at the `tailProcess X` level
 (`measurable_tailProcess_directingProbabilityMeasure`, with the ambient corollary
-`measurable_directingProbabilityMeasure`) — the form `ConditionallyIIDWith` consumes as its
-directing measure `ν`. The full block-product factorisation
-(conditional independence across a whole block) is left to a later step.
+`measurable_directingProbabilityMeasure`) — the form `MixedIIDWith` consumes as its witness `ν`.
+The full block-product factorisation (conditional independence across a whole block) is left to a
+later step.
 
 Adapted from `cameronfreer/exchangeability` (`DeFinetti/ViaMartingale/DirectingMeasure.lean`, pin
 `e0532e59ceff23edab44dda9ab0655debbc9cc22`); that version conditions over `Ω` (needing
@@ -108,7 +108,7 @@ theorem directingMeasure_ae_eq_condExp {μ : Measure Ω} [IsFiniteMeasure μ] {X
   exact h
 
 /-- The directing measure bundled as a `ProbabilityMeasure`-valued map — the form that
-`ConditionallyIIDWith` consumes as its directing measure `ν`. -/
+`MixedIIDWith` consumes as its witness `ν`. -/
 def directingProbabilityMeasure (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → α) (ω : Ω) :
     ProbabilityMeasure α :=
   ⟨directingMeasure μ X ω, inferInstance⟩
@@ -127,7 +127,7 @@ theorem measurable_tailProcess_directingProbabilityMeasure {μ : Measure Ω} [Is
     measurable_tailProcess_directingMeasure_coe hB
 
 /-- The bundled directing measure is measurable into `ProbabilityMeasure α` — the ambient corollary
-of the `tailProcess X`-measurable form, the measurability that `ConditionallyIIDWith` requires. -/
+of the `tailProcess X`-measurable form, the measurability that `MixedIIDWith` requires. -/
 @[fun_prop]
 theorem measurable_directingProbabilityMeasure {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hTail : tailProcess X ≤ (inferInstance : MeasurableSpace Ω)) :

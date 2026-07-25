@@ -7,7 +7,7 @@ module
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Coord
 public import TauCeti.Probability.Exchangeability.Cylinder
 public import TauCeti.Probability.Exchangeability.Contractability
-public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
@@ -15,7 +15,7 @@ public import Mathlib.MeasureTheory.Constructions.Polish.Basic
 -- `condExp_blockIndicatorProd_tailProcess_ae_eq_prod`, the path-law transfer and contractability
 -- bridges, and `Tuple.sort` (the injective-selection reduction).
 import TauCeti.Probability.DeFinetti.TailFactorization
-import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
+import TauCeti.Probability.Exchangeability.MixedIID.Map
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 import Mathlib.Data.Fin.Tuple.Sort
 
@@ -37,16 +37,18 @@ product of indicator conditional expectations) with
 directing measure). The merged tail factorization
 `condExp_blockIndicatorProd_tailProcess_ae_eq_prod` (from `TailFactorization`) then discharges the
 finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly what
-`conditionallyIIDWith_of_forall_rectangles` consumes — so the whole chain assembles here.
+`mixedIIDWith_of_forall_rectangles` consumes — so the whole chain assembles here.
 
 ## Main results
 
-* `conditionallyIIDWith_of_contractable` — a contractable process on a standard Borel sample space
-  is conditionally i.i.d. with directing measure `directingProbabilityMeasure μ X` (the tail
-  conditional law).
-* `conditionallyIID_of_contractable` — the existential form, for a contractable process on an
+* `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
+  is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
+  witness. That witness is the canonical *directing measure*, not merely a mixing representative;
+  what this file proves about it is the mixture identity, and the sharper conditional statement
+  awaits the `ConditionallyIID` predicate.
+* `mixedIID_of_contractable` — the existential form, for a contractable process on an
   arbitrary measurable sample space (state space still standard Borel).
-* `conditionallyIID_of_exchangeable` — the exchangeable form (via `contractable_of_exchangeable`).
+* `mixedIID_of_exchangeable` — the exchangeable form (via `contractable_of_exchangeable`).
 
 The `..._of_iCondIndepFun_tailProcess` theorems expose the intermediate reduction (de Finetti given
 tail conditional independence of the coordinates). All of the rectangle-mixture staging lemmas and
@@ -166,17 +168,17 @@ theorem blockLaw_eq_lintegral_prod_directingMeasure_of_iCondIndepFun_tailProcess
 
 /-- **de Finetti reduces to conditional independence over the tail** (directing-measure form). If
 every finite injective selection of coordinates of a contractable process is conditionally
-independent given the tail σ-algebra, then the process is conditionally i.i.d. **with directing
+independent given the tail σ-algebra, then the process is mixed i.i.d. **with directing
 measure** the tail conditional law `directingProbabilityMeasure μ X`. -/
-theorem conditionallyIIDWith_of_iCondIndepFun_tailProcess
+theorem mixedIIDWith_of_iCondIndepFun_tailProcess
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     (hCI : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
       iCondIndepFun (m := fun _ : Fin m => (inferInstance : MeasurableSpace α))
         (tailProcess X) (tailProcess_le_ambient 0 fun j _ => hX_meas j) (fun i => X (k i)) μ) :
-    ConditionallyIIDWith μ X (directingProbabilityMeasure μ X) := by
+    MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine conditionallyIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_eq_lintegral_prod_directingMeasure_of_iCondIndepFun_tailProcess
@@ -185,17 +187,17 @@ theorem conditionallyIIDWith_of_iCondIndepFun_tailProcess
   simp only [directingProbabilityMeasure_toMeasure]
 
 /-- **de Finetti reduces to conditional independence over the tail.** The existential form of
-`conditionallyIIDWith_of_iCondIndepFun_tailProcess`: under the same tail conditional-independence
-hypothesis, a contractable process is `ConditionallyIID`. -/
-theorem conditionallyIID_of_iCondIndepFun_tailProcess
+`mixedIIDWith_of_iCondIndepFun_tailProcess`: under the same tail conditional-independence
+hypothesis, a contractable process is `MixedIID`. -/
+theorem mixedIID_of_iCondIndepFun_tailProcess
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     (hCI : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
       iCondIndepFun (m := fun _ : Fin m => (inferInstance : MeasurableSpace α))
         (tailProcess X) (tailProcess_le_ambient 0 fun j _ => hX_meas j) (fun i => X (k i)) μ) :
-    ConditionallyIID μ X :=
-  ConditionallyIID.of_directing
-    (conditionallyIIDWith_of_iCondIndepFun_tailProcess hX hX_meas hCI)
+    MixedIID μ X :=
+  MixedIID.of_mixingRepresentative
+    (mixedIIDWith_of_iCondIndepFun_tailProcess hX hX_meas hCI)
 
 /-- For a contractable process, the conditional expectation of the length-`r` prefix indicator
 product given the tail σ-algebra `tailProcess X` is a.e. the product of directing-measure
@@ -267,34 +269,36 @@ private theorem blockLaw_injective_eq_lintegral_prod_directingMeasure
   exact Equiv.prod_comp e fun j => directingMeasure μ X ω (B j)
 
 /-- **de Finetti's theorem, directed form.** A contractable process on a
-standard Borel space is conditionally i.i.d. **with** directing measure the tail conditional law
+standard Borel space is mixed i.i.d. **with** witness the tail conditional law
 `directingProbabilityMeasure μ X`. -/
-theorem conditionallyIIDWith_of_contractable
+theorem mixedIIDWith_of_contractable
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ConditionallyIIDWith μ X (directingProbabilityMeasure μ X) := by
+    MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine conditionallyIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_injective_eq_lintegral_prod_directingMeasure hX hX_meas hk hB]
   simp only [directingProbabilityMeasure_toMeasure]
 
 /-- The existential form on a standard Borel sample space (the internal step through which the
-general `conditionallyIID_of_contractable` is transferred). -/
-private theorem conditionallyIID_of_contractable_standardBorelOmega
+general `mixedIID_of_contractable` is transferred). -/
+private theorem mixedIID_of_contractable_standardBorelOmega
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ConditionallyIID μ X :=
-  ConditionallyIID.of_directing (conditionallyIIDWith_of_contractable hX hX_meas)
+    MixedIID μ X :=
+  MixedIID.of_mixingRepresentative (mixedIIDWith_of_contractable hX hX_meas)
 
-/-- **de Finetti's theorem: contractable ⇒ conditionally i.i.d.** A contractable process valued in
-a standard Borel space, on an arbitrary measurable sample space, is conditionally i.i.d. -/
-theorem conditionallyIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+/-- **de Finetti's theorem, mixture form: contractable ⇒ mixed i.i.d.** A contractable process
+valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. This is
+the roadmap's `mixedIID_of_contractable`; the sharp summit `conditionallyIID_of_contractable`
+awaits the conditional predicate. -/
+theorem mixedIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ConditionallyIID μ X := by
-  refine conditionallyIID_of_conditionallyIID_pathLaw hX_meas ?_
+    MixedIID μ X := by
+  refine mixedIID_of_mixedIID_pathLaw hX_meas ?_
   haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   have hcontract : Contractable (pathLaw μ X) (fun n p => p n) := by
     rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
@@ -302,15 +306,15 @@ theorem conditionallyIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [M
       rw [pathLaw_def]; exact Measure.map_id
     rw [hpl]
     exact hX.contractableLaw_pathLaw fun i => (hX_meas i).aemeasurable
-  exact conditionallyIID_of_contractable_standardBorelOmega hcontract measurable_pi_apply
+  exact mixedIID_of_contractable_standardBorelOmega hcontract measurable_pi_apply
 
-/-- **de Finetti's theorem: exchangeable ⇒ conditionally i.i.d.** An exchangeable process valued in
-a standard Borel space, on an arbitrary measurable sample space, is conditionally i.i.d. -/
-theorem conditionallyIID_of_exchangeable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+/-- **de Finetti's theorem, mixture form: exchangeable ⇒ mixed i.i.d.** An exchangeable process
+valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. -/
+theorem mixedIID_of_exchangeable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ConditionallyIID μ X :=
-  conditionallyIID_of_contractable
+    MixedIID μ X :=
+  mixedIID_of_contractable
     (contractable_of_exchangeable hX fun i => (hX_meas i).aemeasurable) hX_meas
 
 end Probability
