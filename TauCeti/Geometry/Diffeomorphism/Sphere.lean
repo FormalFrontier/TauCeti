@@ -29,11 +29,6 @@ also the map whose source and target the Smale conjecture `Diff(S³) ≃ O(4)`
 (`[Kir97, Problem 4.34]`, Hatcher) compares, and the roadmap's acceptance criterion "the
 inclusion `O(4) → Diff(S³)` is stateable" is `TauCeti.orthogonalToDiffSphere 3 ω`.
 
-The orthogonal group appears here in its coordinate-free form, the group `E ≃ₗᵢ[ℝ] E` of linear
-isometry equivalences, rather than as Mathlib's matrix group `Matrix.orthogonalGroup`; the two
-are related by `LinearIsometryEquiv.toMatrix_mem_unitaryGroup`, and packaging that comparison as
-a group isomorphism is separate work that belongs upstream.
-
 ## Main definitions
 
 * `TauCeti.LinearIsometryEquiv.unitSphereEquiv`: the self-equivalence of the unit sphere
@@ -201,29 +196,63 @@ end LinearIsometryEquiv
 
 open scoped EuclideanSpace
 
+/-- An orthogonal matrix acts on Euclidean space as a linear isometry equivalence. -/
+noncomputable def orthogonalGroupToLinearIsometryEquiv (n : ℕ) :
+    Matrix.orthogonalGroup (Fin n) ℝ →*
+      (EuclideanSpace ℝ (Fin n) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin n)) where
+  toFun A :=
+    { toLinearEquiv :=
+        (WithLp.linearEquiv 2 ℝ (Fin n → ℝ)).trans
+          ((Matrix.UnitaryGroup.toLinearEquiv A).trans
+            (WithLp.linearEquiv 2 ℝ (Fin n → ℝ)).symm)
+      norm_map' := fun x => by
+        apply (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp
+        rw [EuclideanSpace.norm_sq_eq, EuclideanSpace.norm_sq_eq]
+        simp only [Real.norm_eq_abs, sq_abs]
+        change ∑ i, ((A : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp i) ^ 2 =
+          ∑ i, (x.ofLp i) ^ 2
+        simp only [pow_two]
+        rw [← dotProduct, Matrix.dotProduct_mulVec, Matrix.vecMul_mulVec,
+          (Matrix.mem_orthogonalGroup_iff' (Fin n) ℝ).1 A.2, Matrix.vecMul_one]
+        rfl }
+  map_one' := _root_.LinearIsometryEquiv.ext fun x => by
+    change WithLp.toLp 2 ((1 : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp) = x
+    rw [Matrix.one_mulVec, WithLp.toLp_ofLp]
+  map_mul' A B := _root_.LinearIsometryEquiv.ext fun x => by
+    change WithLp.toLp 2 (((A * B : Matrix.orthogonalGroup (Fin n) ℝ) :
+      Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp) =
+        WithLp.toLp 2 ((A : Matrix (Fin n) (Fin n) ℝ).mulVec
+          ((B : Matrix (Fin n) (Fin n) ℝ).mulVec x.ofLp))
+    exact congrArg (WithLp.toLp 2) (Matrix.mulVec_mulVec _ _ _).symm
+
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)`: an orthogonal transformation of `ℝⁿ⁺¹`
 restricts to a diffeomorphism of the unit sphere `Sⁿ`, and this restriction is a group
-homomorphism. Here `O(n + 1)` appears in its coordinate-free form, as the group
-`EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))` of linear isometry
-equivalences of `(n + 1)`-dimensional Euclidean space. It is injective by
-`TauCeti.orthogonalToDiffSphere_injective`. -/
+homomorphism. It is injective by `TauCeti.orthogonalToDiffSphere_injective`. -/
 noncomputable def orthogonalToDiffSphere (n : ℕ) (m : ℕ∞ω) :
-    (EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) →*
+    Matrix.orthogonalGroup (Fin (n + 1)) ℝ →*
       Diff (𝓡 n) (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) m :=
-  LinearIsometryEquiv.unitSphereDiffHom m
+  (LinearIsometryEquiv.unitSphereDiffHom m).comp
+    (orthogonalGroupToLinearIsometryEquiv (n + 1))
 
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` sends an orthogonal transformation to its
 restriction to the unit sphere. -/
 @[simp]
 theorem orthogonalToDiffSphere_apply (n : ℕ) (m : ℕ∞ω)
-    (e : EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) :
-    orthogonalToDiffSphere n m e = LinearIsometryEquiv.unitSphereDiffHom m e :=
+    (A : Matrix.orthogonalGroup (Fin (n + 1)) ℝ) :
+    orthogonalToDiffSphere n m A =
+      LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ A) :=
   (rfl)
 
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` is injective, so `O(n + 1)` is realised as a
 subgroup of `Diff(Sⁿ)`. -/
 theorem orthogonalToDiffSphere_injective (n : ℕ) (m : ℕ∞ω) :
-    Function.Injective (orthogonalToDiffSphere n m) := fun _ _ h =>
-  LinearIsometryEquiv.unitSphereDiffHom_injective (by simpa using h)
+    Function.Injective (orthogonalToDiffSphere n m) := by
+  intro A B h
+  change LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ A) =
+    LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv _ B) at h
+  have he := LinearIsometryEquiv.unitSphereDiffHom_injective h
+  apply Subtype.ext
+  apply Matrix.toEuclideanLin.injective
+  exact LinearMap.ext fun x => _root_.LinearIsometryEquiv.congr_fun he x
 
 end TauCeti
