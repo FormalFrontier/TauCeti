@@ -67,6 +67,8 @@ the `ℚ ∪ {∞}` bijection through any framing's coordinate isomorphism.
 * `TauCeti.FramedBoundaryTorus.value_mk` / `.slopeEquiv_symm_apply`: the parametrisation in
   coordinates, in each direction — a primitive class has the value of its `(μ, λ)`-coordinates, and
   a value comes from the slope whose coordinates are the corresponding reduced pair.
+* `TauCeti.FramedBoundaryTorus.coord_symm_apply`: a pair of coordinates `(p, q)` names the class
+  `p · μ + q · λ`, so the filling class of a slope is reachable without unfolding `coord`.
 
 `ℚ ∪ {∞}` is Mathlib's one-point extension `OnePoint ℚ` from
 `Mathlib/Topology/Compactification/OnePoint/Basic.lean`; the reduced-fraction bookkeeping reuses
@@ -85,11 +87,11 @@ namespace TauCeti
 /-! ### Primitive classes and the basis-free slope type
 
 The `Quotient` model of `Slope`, and the bodies of the maps into and out of it, are implementation
-details: they stay unexposed, and consumers work through the public defining equations
-(`Slope.congr_mk`, `Slope.value_mk`, `slopeOfValue_infty`, `slopeEquivStd_apply`, …). Those
-equations are proved by a parenthesised `(rfl)`, which keeps them ordinary propositional lemmas
-instead of implicitly `@[defeq]` ones; an exported `@[defeq]` theorem would have to expose every
-definition it unfolds. -/
+details: the underlying setoid is `private` and the bodies stay unexposed, so consumers work
+through the public defining equations (`Slope.congr_mk`, `Slope.value_mk`, `slopeOfValue_infty`,
+`slopeEquivStd_apply`, …). Those equations are proved by a parenthesised `(rfl)`, which keeps them
+ordinary propositional lemmas instead of implicitly `@[defeq]` ones; an exported `@[defeq]` theorem
+would have to expose every definition it unfolds. -/
 
 variable {M N : Type*} [AddCommGroup M] [AddCommGroup N] [Module ℤ M] [Module ℤ N]
 
@@ -115,7 +117,8 @@ theorem isPrimitive_congr (φ : M ≃ₗ[ℤ] N) {v : M} : IsPrimitive (φ v) �
 
 /-- Two primitive classes represent the same slope when they agree up to sign. This is an
 equivalence relation on primitive classes. -/
-def slopeSetoid (M : Type*) [AddCommGroup M] [Module ℤ M] : Setoid {v : M // IsPrimitive v} where
+private def slopeSetoid (M : Type*) [AddCommGroup M] [Module ℤ M] :
+    Setoid {v : M // IsPrimitive v} where
   r a b := a.1 = b.1 ∨ a.1 = -b.1
   iseqv :=
     { refl := fun _ => Or.inl rfl
@@ -127,9 +130,9 @@ def slopeSetoid (M : Type*) [AddCommGroup M] [Module ℤ M] : Setoid {v : M // I
         · exact Or.inr (by rw [hab, hbc])
         · exact Or.inl (by rw [hab, hbc, neg_neg]) }
 
-/-- Characterization of the relation defining slopes: representatives agree up to sign. -/
-@[simp]
-theorem slopeSetoid_rel_iff {a b : {v : M // IsPrimitive v}} :
+/-- Characterization of the relation defining slopes: representatives agree up to sign. This is
+internal to the quotient construction; consumers use `Slope.mk_eq_mk_iff`. -/
+private theorem slopeSetoid_rel_iff {a b : {v : M // IsPrimitive v}} :
     slopeSetoid M a b ↔ a.1 = b.1 ∨ a.1 = -b.1 :=
   Iff.rfl
 
@@ -201,8 +204,7 @@ For the standard lattice `ℤ × ℤ`, primitivity is coprimality of the coordin
 fraction `p / q` supplies the `ℚ ∪ {∞}` parametrisation. Every framing produces its own copy of this
 bijection through its coordinate isomorphism. -/
 
-/-- Over `ℤ × ℤ`, a class is primitive exactly when its two coordinates are coprime: the functional
-`(x, y) ↦ a x + b y` witnessing `a · v.1 + b · v.2 = 1` is a Bézout relation. -/
+/-- Over `ℤ × ℤ`, a class is primitive exactly when its two coordinates are coprime. -/
 theorem isPrimitive_prod_iff {v : ℤ × ℤ} : IsPrimitive v ↔ IsCoprime v.1 v.2 := by
   constructor
   · rintro ⟨f, hf⟩
@@ -214,10 +216,12 @@ theorem isPrimitive_prod_iff {v : ℤ × ℤ} : IsPrimitive v ↔ IsCoprime v.1 
     refine ⟨a • LinearMap.fst ℤ ℤ ℤ + b • LinearMap.snd ℤ ℤ ℤ, ?_⟩
     simpa [smul_eq_mul] using hab
 
-theorem isPrimitive_prod_meridian : IsPrimitive ((1, 0) : ℤ × ℤ) :=
+/-- The first standard basis vector of `ℤ × ℤ` is primitive. -/
+theorem isPrimitive_prod_one_zero : IsPrimitive ((1, 0) : ℤ × ℤ) :=
   isPrimitive_prod_iff.mpr isCoprime_one_left
 
-theorem isPrimitive_prod_longitude : IsPrimitive ((0, 1) : ℤ × ℤ) :=
+/-- The second standard basis vector of `ℤ × ℤ` is primitive. -/
+theorem isPrimitive_prod_zero_one : IsPrimitive ((0, 1) : ℤ × ℤ) :=
   isPrimitive_prod_iff.mpr isCoprime_one_right
 
 /-- The reduced form `(r.num, r.den)` of a rational is a primitive class. -/
@@ -225,7 +229,7 @@ theorem isPrimitive_num_den (r : ℚ) : IsPrimitive ((r.num, (r.den : ℤ)) : �
   rw [isPrimitive_prod_iff, Int.isCoprime_iff_nat_coprime, Int.natAbs_natCast]
   exact r.reduced
 
-/-- A primitive class with vanishing longitude-coordinate has meridian-coordinate `±1`. -/
+/-- A primitive class of `ℤ × ℤ` with vanishing second coordinate has first coordinate `±1`. -/
 theorem isPrimitive_prod_fst_eq_one_or_neg_one_of_snd_eq_zero {v : ℤ × ℤ} (h : IsPrimitive v)
     (hq : v.2 = 0) : v.1 = 1 ∨ v.1 = -1 := by
   rw [isPrimitive_prod_iff, hq, isCoprime_zero_right, Int.isUnit_iff] at h
@@ -263,14 +267,14 @@ def Slope.value : Slope (ℤ × ℤ) → OnePoint ℚ :=
 theorem Slope.value_mk (v : ℤ × ℤ) (h : IsPrimitive v) :
     Slope.value (Slope.mk v h) = slopeValue v := (rfl)
 
-/-- The primitive class attached to a value in `ℚ ∪ {∞}`: the meridian `(1, 0)` for `∞`, and the
+/-- The primitive class attached to a value in `ℚ ∪ {∞}`: the class `(1, 0)` for `∞`, and the
 reduced fraction `(r.num, r.den)` for a rational `r`. -/
 def slopeOfValue : OnePoint ℚ → Slope (ℤ × ℤ)
-  | ∞ => Slope.mk (1, 0) isPrimitive_prod_meridian
+  | ∞ => Slope.mk (1, 0) isPrimitive_prod_one_zero
   | (r : ℚ) => Slope.mk (r.num, (r.den : ℤ)) (isPrimitive_num_den r)
 
 @[simp]
-theorem slopeOfValue_infty : slopeOfValue ∞ = Slope.mk (1, 0) isPrimitive_prod_meridian := (rfl)
+theorem slopeOfValue_infty : slopeOfValue ∞ = Slope.mk (1, 0) isPrimitive_prod_one_zero := (rfl)
 
 @[simp]
 theorem slopeOfValue_coe (r : ℚ) :
@@ -317,7 +321,7 @@ theorem value_slopeOfValue (x : OnePoint ℚ) : Slope.value (slopeOfValue x) = x
 
 /-- **The standard slope parametrisation.** For the standard lattice `ℤ × ℤ`, primitive homology
 classes modulo sign biject with `ℚ ∪ {∞}`: a reduced fraction `p / q` corresponds to the primitive
-class `(p, q)`, with `∞` the meridian `(1, 0)`. A framing produces the corresponding bijection on
+class `(p, q)`, with `∞` the class `(1, 0)`. A framing produces the corresponding bijection on
 any boundary torus through its coordinate isomorphism (`TauCeti.FramedBoundaryTorus.slopeEquiv`). -/
 def slopeEquivStd : Slope (ℤ × ℤ) ≃ OnePoint ℚ where
   toFun := Slope.value
@@ -346,7 +350,8 @@ structure BoundaryTorus where
   carrier : Type
   [topologicalSpace : TopologicalSpace carrier]
   /-- The assertion that the space is homeomorphic to the standard two-torus. Only the existence of
-  such a homeomorphism is recorded, so that two boundary tori with the same carrier are equal. -/
+  such a homeomorphism is recorded, keeping this field a `Prop`, so it never obstructs equality:
+  two boundary tori with the same carrier and the same topology are equal. -/
   parametrization : Nonempty (carrier ≃ₜ UnitAddTorus (Fin 2))
 
 namespace BoundaryTorus
@@ -391,11 +396,20 @@ theorem coord_basis_zero : T.coord (T.basis 0) = (1, 0) := by
 theorem coord_basis_one : T.coord (T.basis 1) = (0, 1) := by
   simp [coord, LinearEquiv.finTwoArrow_apply]
 
+/-- The inverse coordinate isomorphism reads a pair of coordinates as the corresponding
+combination `p · μ + q · λ` of the framing basis. -/
+@[simp]
+theorem coord_symm_apply (v : ℤ × ℤ) : T.coord.symm v = v.1 • T.basis 0 + v.2 • T.basis 1 := by
+  -- the statement's `•` is the `AddCommGroup` `zsmul`, while the basis expansion produces the
+  -- `Module ℤ` action of the homology object; the two agree by `Int.cast_smul_eq_zsmul`
+  rw [← Int.cast_smul_eq_zsmul ℤ v.1 (T.basis 0), ← Int.cast_smul_eq_zsmul ℤ v.2 (T.basis 1)]
+  simp [coord, Basis.equivFun_symm_apply, Fin.sum_univ_two]
+
 theorem isPrimitive_basis_zero : IsPrimitive (T.basis 0) :=
-  (isPrimitive_congr T.coord).mp (by rw [T.coord_basis_zero]; exact isPrimitive_prod_meridian)
+  (isPrimitive_congr T.coord).mp (by rw [T.coord_basis_zero]; exact isPrimitive_prod_one_zero)
 
 theorem isPrimitive_basis_one : IsPrimitive (T.basis 1) :=
-  (isPrimitive_congr T.coord).mp (by rw [T.coord_basis_one]; exact isPrimitive_prod_longitude)
+  (isPrimitive_congr T.coord).mp (by rw [T.coord_basis_one]; exact isPrimitive_prod_zero_one)
 
 /-- The meridian slope `μ = basis 0` of the framing. -/
 noncomputable def meridian : Slope T.H := Slope.mk (T.basis 0) T.isPrimitive_basis_zero
@@ -425,7 +439,8 @@ theorem value_mk (v : T.H) (hv : IsPrimitive v) :
 
 /-- **The framed parametrisation in the inverse direction.** The slope with value `x ∈ ℚ ∪ {∞}` is
 the one whose `(μ, λ)`-coordinates are the standard reduced pair `slopeOfValue x`; for a rational
-`p / q` in lowest terms that is the class `p · μ + q · λ`. -/
+`p / q` in lowest terms that is the class `p · μ + q · λ`, by
+`TauCeti.FramedBoundaryTorus.coord_symm_apply`. -/
 @[simp]
 theorem slopeEquiv_symm_apply (x : OnePoint ℚ) :
     T.slopeEquiv.symm x = Slope.congr T.coord.symm (slopeOfValue x) := by
