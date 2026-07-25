@@ -56,7 +56,7 @@ namespace TauCeti
 
 namespace Probability
 
-variable {α β : Type*} [MeasurableSpace α]
+variable {α : Type*} [MeasurableSpace α]
 
 /-! ## Future σ-algebras as shift preimages -/
 
@@ -98,12 +98,6 @@ theorem invariants_shift_le_pathTail :
     MeasurableSpace.le_invariants_iterate (shift α) n s hs
   obtain ⟨hs_meas, hs_inv⟩ := MeasurableSpace.measurableSet_invariants.mp hn
   exact measurableSet_tailFamily_of_preimage_shift_iterate_eq hs_meas hs_inv
-
-/-- An observable measurable for the shift-invariant σ-algebra is tail-measurable. -/
-theorem measurable_pathTail_of_measurable_invariants_shift [MeasurableSpace β]
-    {g : (ℕ → α) → β} (hg : Measurable[MeasurableSpace.invariants (shift α)] g) :
-    Measurable[pathTail α] g :=
-  hg.mono invariants_shift_le_pathTail le_rfl
 
 /-- A shift-invariant event is an exchangeable event: it is a tail event, and tail events are fixed
 by every finitely supported permutation of the time coordinate. -/
