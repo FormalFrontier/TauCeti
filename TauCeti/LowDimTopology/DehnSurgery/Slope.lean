@@ -84,10 +84,12 @@ namespace TauCeti
 
 /-! ### Primitive classes and the basis-free slope type
 
-`Slope` and the maps into and out of it carry `@[expose]` because their public defining equations
-(`Slope.congr_mk`, `Slope.value_mk`, `slopeOfValue_infty`, `slopeEquivStd_apply`, …) hold by
-definitional unfolding, and the module system admits such a proof in an exported theorem only when
-every definition it unfolds is exposed. Consumers use those equations, not the quotient body. -/
+The `Quotient` model of `Slope`, and the bodies of the maps into and out of it, are implementation
+details: they stay unexposed, and consumers work through the public defining equations
+(`Slope.congr_mk`, `Slope.value_mk`, `slopeOfValue_infty`, `slopeEquivStd_apply`, …). Those
+equations are proved by a parenthesised `(rfl)`, which keeps them ordinary propositional lemmas
+instead of implicitly `@[defeq]` ones; an exported `@[defeq]` theorem would have to expose every
+definition it unfolds. -/
 
 variable {M N : Type*} [AddCommGroup M] [AddCommGroup N] [Module ℤ M] [Module ℤ N]
 
@@ -134,13 +136,13 @@ theorem slopeSetoid_rel_iff {a b : {v : M // IsPrimitive v}} :
 /-- A **slope** on a boundary torus with homology `M`: a primitive homology class taken modulo the
 sign action, i.e. an unoriented essential simple closed curve up to isotopy. This is basis-free — it
 refers only to the abstract module `M`, not to any choice of meridian-longitude basis. -/
-@[expose] def Slope (M : Type*) [AddCommGroup M] [Module ℤ M] : Type _ :=
+def Slope (M : Type*) [AddCommGroup M] [Module ℤ M] : Type _ :=
   Quotient (slopeSetoid M)
 
 namespace Slope
 
 /-- The slope represented by a primitive class `v : M`. -/
-@[expose] def mk (v : M) (h : IsPrimitive v) : Slope M := Quotient.mk (slopeSetoid M) ⟨v, h⟩
+def mk (v : M) (h : IsPrimitive v) : Slope M := Quotient.mk (slopeSetoid M) ⟨v, h⟩
 
 theorem mk_eq_mk {v w : M} (hv : IsPrimitive v) (hw : IsPrimitive w)
     (h : v = w ∨ v = -w) : mk v hv = mk w hw :=
@@ -161,7 +163,7 @@ theorem induction_on {C : Slope M → Prop} (s : Slope M)
 
 /-- A `ℤ`-linear equivalence `M ≃ₗ[ℤ] N` transports slopes bijectively; a framing's coordinate
 isomorphism uses this to carry a slope to the standard lattice. -/
-@[expose] def congr (φ : M ≃ₗ[ℤ] N) : Slope M ≃ Slope N :=
+def congr (φ : M ≃ₗ[ℤ] N) : Slope M ≃ Slope N :=
   Quotient.congr
     { toFun := fun v => ⟨φ v.1, (isPrimitive_congr φ).mpr v.2⟩
       invFun := fun w => ⟨φ.symm w.1, (isPrimitive_congr φ.symm).mpr w.2⟩
@@ -180,7 +182,7 @@ isomorphism uses this to carry a slope to the standard lattice. -/
 @[simp]
 theorem congr_mk (φ : M ≃ₗ[ℤ] N) (v : M) (h : IsPrimitive v) :
     congr φ (mk v h) = mk (φ v) ((isPrimitive_congr φ).mpr h) :=
-  rfl
+  (rfl)
 
 /-- Transporting slopes along `φ` and along `φ.symm` are inverse to one another. -/
 @[simp]
@@ -251,7 +253,7 @@ theorem slopeValue_neg (v : ℤ × ℤ) : slopeValue (-v) = slopeValue v := by
     rw [neg_div_neg_eq]
 
 /-- The `ℚ ∪ {∞}` value of a standard-lattice slope, the ratio of its coordinates. -/
-@[expose] def Slope.value : Slope (ℤ × ℤ) → OnePoint ℚ :=
+def Slope.value : Slope (ℤ × ℤ) → OnePoint ℚ :=
   Quotient.lift (fun v => slopeValue v.1) fun _ _ h => by
     rcases h with h | h
     · rw [h]
@@ -259,20 +261,20 @@ theorem slopeValue_neg (v : ℤ × ℤ) : slopeValue (-v) = slopeValue v := by
 
 @[simp]
 theorem Slope.value_mk (v : ℤ × ℤ) (h : IsPrimitive v) :
-    Slope.value (Slope.mk v h) = slopeValue v := rfl
+    Slope.value (Slope.mk v h) = slopeValue v := (rfl)
 
 /-- The primitive class attached to a value in `ℚ ∪ {∞}`: the meridian `(1, 0)` for `∞`, and the
 reduced fraction `(r.num, r.den)` for a rational `r`. -/
-@[expose] def slopeOfValue : OnePoint ℚ → Slope (ℤ × ℤ)
+def slopeOfValue : OnePoint ℚ → Slope (ℤ × ℤ)
   | ∞ => Slope.mk (1, 0) isPrimitive_prod_meridian
   | (r : ℚ) => Slope.mk (r.num, (r.den : ℤ)) (isPrimitive_num_den r)
 
 @[simp]
-theorem slopeOfValue_infty : slopeOfValue ∞ = Slope.mk (1, 0) isPrimitive_prod_meridian := rfl
+theorem slopeOfValue_infty : slopeOfValue ∞ = Slope.mk (1, 0) isPrimitive_prod_meridian := (rfl)
 
 @[simp]
 theorem slopeOfValue_coe (r : ℚ) :
-    slopeOfValue (r : OnePoint ℚ) = Slope.mk (r.num, (r.den : ℤ)) (isPrimitive_num_den r) := rfl
+    slopeOfValue (r : OnePoint ℚ) = Slope.mk (r.num, (r.den : ℤ)) (isPrimitive_num_den r) := (rfl)
 
 /-- Reading off the value of a standard-lattice slope and rebuilding a slope from it recovers the
 original slope. -/
@@ -317,17 +319,17 @@ theorem value_slopeOfValue (x : OnePoint ℚ) : Slope.value (slopeOfValue x) = x
 classes modulo sign biject with `ℚ ∪ {∞}`: a reduced fraction `p / q` corresponds to the primitive
 class `(p, q)`, with `∞` the meridian `(1, 0)`. A framing produces the corresponding bijection on
 any boundary torus through its coordinate isomorphism (`TauCeti.FramedBoundaryTorus.slopeEquiv`). -/
-@[expose] def slopeEquivStd : Slope (ℤ × ℤ) ≃ OnePoint ℚ where
+def slopeEquivStd : Slope (ℤ × ℤ) ≃ OnePoint ℚ where
   toFun := Slope.value
   invFun := slopeOfValue
   left_inv := slopeOfValue_value
   right_inv := value_slopeOfValue
 
 @[simp]
-theorem slopeEquivStd_apply (s : Slope (ℤ × ℤ)) : slopeEquivStd s = Slope.value s := rfl
+theorem slopeEquivStd_apply (s : Slope (ℤ × ℤ)) : slopeEquivStd s = Slope.value s := (rfl)
 
 @[simp]
-theorem slopeEquivStd_symm_apply (x : OnePoint ℚ) : slopeEquivStd.symm x = slopeOfValue x := rfl
+theorem slopeEquivStd_symm_apply (x : OnePoint ℚ) : slopeEquivStd.symm x = slopeOfValue x := (rfl)
 
 /-! ### Boundary tori and framings
 
@@ -404,22 +406,22 @@ noncomputable def longitude : Slope T.H := Slope.mk (T.basis 1) T.isPrimitive_ba
 /-- The framing-dependent value `p / q ∈ ℚ ∪ {∞}` of a slope: the ratio of its `(μ, λ)`-coordinates.
 Different framings give different values, which is why this is an operation of the framing rather
 than of the basis-free `Slope`. -/
-@[expose] noncomputable def value (s : Slope T.H) : OnePoint ℚ :=
+noncomputable def value (s : Slope T.H) : OnePoint ℚ :=
   Slope.value (Slope.congr T.coord s)
 
 /-- **The framed slope parametrisation.** A framing makes primitive homology classes modulo sign
 biject with `ℚ ∪ {∞}`, a reduced fraction `p / q` corresponding to the class with
 `(μ, λ)`-coordinates `(p, q)` and `∞` to the meridian. -/
-@[expose] noncomputable def slopeEquiv : Slope T.H ≃ OnePoint ℚ :=
+noncomputable def slopeEquiv : Slope T.H ≃ OnePoint ℚ :=
   (Slope.congr T.coord).trans slopeEquivStd
 
 @[simp]
-theorem slopeEquiv_apply (s : Slope T.H) : T.slopeEquiv s = T.value s := rfl
+theorem slopeEquiv_apply (s : Slope T.H) : T.slopeEquiv s = T.value s := (rfl)
 
 /-- The value of the slope of a primitive class is the ratio of its `(μ, λ)`-coordinates. -/
 @[simp]
 theorem value_mk (v : T.H) (hv : IsPrimitive v) :
-    T.value (Slope.mk v hv) = slopeValue (T.coord v) := rfl
+    T.value (Slope.mk v hv) = slopeValue (T.coord v) := (rfl)
 
 /-- **The framed parametrisation in the inverse direction.** The slope with value `x ∈ ℚ ∪ {∞}` is
 the one whose `(μ, λ)`-coordinates are the standard reduced pair `slopeOfValue x`; for a rational
