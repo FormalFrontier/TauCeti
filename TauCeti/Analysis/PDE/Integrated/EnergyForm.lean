@@ -292,7 +292,7 @@ lemma energyFormIntegral_principal_drift_mass
     _ = energyFormIntegral μ a (fun _ => 0) (fun _ => 0) U V +
           energyFormIntegral μ (fun _ => 0) b (fun _ => 0) U V +
             energyFormIntegral μ (fun _ => 0) (fun _ => 0) c U V := by
-      abel
+      rw [add_assoc]
 
 /-- The integrated full energy form is a shifted-Laplacian model plus the residual
 coefficient perturbation. -/
