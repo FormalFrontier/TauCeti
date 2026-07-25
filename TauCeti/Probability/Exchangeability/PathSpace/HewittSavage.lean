@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
+public import TauCeti.Probability.Exchangeability.IID
 public import Mathlib.Probability.Independence.ZeroOne
 -- Non-public: used only inside proofs.
 import Mathlib.Logic.Equiv.Fintype
@@ -265,7 +267,57 @@ theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProba
       _ = 4 * (d / 5) := by ring
   linarith
 
+/-- **Zero-one law for exchangeable events**, abstract form: an exchangeable path law in which
+cylinders over disjoint index blocks are independent gives every exchangeable event measure `0`
+or `1`. -/
+theorem measure_eq_zero_or_one_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+    (hexch : ExchangeableLaw ρ)
+    (hprod : ∀ {F G : Finset ℕ}, Disjoint F G → ∀ {S : Set (∀ _i : F, α)}, MeasurableSet S →
+      ∀ {T : Set (∀ _j : G, α)}, MeasurableSet T →
+      ρ (cylinder (α := fun _ : ℕ => α) F S ∩ cylinder (α := fun _ : ℕ => α) G T)
+        = ρ (cylinder (α := fun _ : ℕ => α) F S) * ρ (cylinder (α := fun _ : ℕ => α) G T))
+    {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
+    ρ s = 0 ∨ ρ s = 1 := by
+  have hs_meas : MeasurableSet s := MeasurableSet.ambient_of_exchangeableSigma hs
+  have hsq := measureReal_sq_of_exchangeableSigma hexch hprod hs
+  have htop : ρ s ≠ ⊤ := measure_ne_top ρ s
+  have hE : ρ (s ∩ s) = ρ s * ρ s := by
+    rw [Set.inter_self]
+    refine (ENNReal.toReal_eq_toReal_iff' htop (ENNReal.mul_ne_top htop htop)).mp ?_
+    rw [ENNReal.toReal_mul]
+    exact hsq
+  exact ProbabilityTheory.measure_eq_zero_or_one_of_indepSet_self
+    ((ProbabilityTheory.indepSet_iff_measure_inter_eq_mul hs_meas hs_meas ρ).mpr hE)
+
 end ZeroOne
+
+section HewittSavage
+
+variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+
+/-- **The Hewitt–Savage zero-one law.** For an i.i.d. sequence, the exchangeable (symmetric)
+σ-algebra on path space is trivial: every exchangeable event has probability `0` or `1`.
+
+This is strictly stronger than Kolmogorov's tail zero-one law. Tail triviality holds for any
+independent sequence, whereas the symmetric σ-algebra contains events — such as
+`{p | ∃ n, p n ∈ B}` — that are not tail events, and the statement genuinely needs the
+identically-distributed hypothesis, which is what makes the path law exchangeable. -/
+theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    (hX : ∀ n, Measurable (X n)) (h_indep : ProbabilityTheory.iIndepFun X μ)
+    (hident : ∀ i, ProbabilityTheory.IdentDistrib (X i) (X 0) μ μ)
+    {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
+    pathLaw μ X s = 0 ∨ pathLaw μ X s = 1 := by
+  haveI : IsProbabilityMeasure (pathLaw μ X) := by
+    rw [pathLaw_def]
+    exact Measure.isProbabilityMeasure_map (measurable_pi_lambda _ hX).aemeasurable
+  have hexch : ExchangeableLaw (pathLaw μ X) :=
+    (exchangeable_iff_exchangeableLaw_pathLaw fun i => (hX i).aemeasurable).mp
+      (Exchangeable.of_iIndepFun_identDistrib h_indep hident)
+  exact measure_eq_zero_or_one_of_exchangeableSigma hexch
+    (fun {_F _G} hFG {_S} hS {_T} hT =>
+      measure_pathLaw_inter_cylinder_of_disjoint hX h_indep hFG hS hT) hs
+
+end HewittSavage
 
 end Probability
 
