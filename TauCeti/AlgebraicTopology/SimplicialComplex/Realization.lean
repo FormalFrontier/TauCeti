@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Analysis.Convex.SimplicialComplex.AffineIndependentUnion
 public import Mathlib.Topology.UniformSpace.Real
-public import Mathlib.Topology.Defs.Induced
 public import Mathlib.Topology.Order
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 
@@ -73,18 +72,39 @@ noncomputable abbrev Realization (K : AbstractSimplicialComplex ι) : Type _ :=
 /-- A face of an abstract simplicial complex, bundled with its membership proof. -/
 abbrev Face (K : AbstractSimplicialComplex ι) := {σ : Finset ι // σ ∈ K}
 
-/-- The closed simplex spanned by a face, in standard barycentric coordinates. -/
+/-- The closed simplex spanned by a finite vertex set, in standard barycentric coordinates. -/
 noncomputable abbrev FaceRealization (σ : Finset ι) : Type _ :=
   convexHull ℝ (σ.image vertexVector : Set (ι →₀ ℝ))
 
+/-- The topology induced by the coordinatewise topology on `ι → ℝ`. These are the domain
+topologies used to define the weak topology on the whole realization. -/
 instance (σ : Finset ι) : TopologicalSpace (FaceRealization σ) :=
   TopologicalSpace.induced (fun x : FaceRealization σ => (x.1 : ι → ℝ)) inferInstance
+
+/-- A geometric face is exactly the image of an abstract face under the coordinate embedding. -/
+theorem mem_standardGeometricComplex_faces_iff (K : AbstractSimplicialComplex ι)
+    (τ : Finset (ι →₀ ℝ)) :
+    τ ∈ (standardGeometricComplex K).faces ↔
+      ∃ σ ∈ K, σ.image vertexVector = τ := by
+  classical
+  simp only [standardGeometricComplex, Geometry.SimplicialComplex.onFinsupp,
+    Geometry.SimplicialComplex.ofAffineIndependent, PreAbstractSimplicialComplex.map,
+    Set.mem_image]
+  aesop
 
 /-- Include the realization of a face into the whole polyhedron. -/
 noncomputable def faceInclusion (K : AbstractSimplicialComplex ι) (σ : Face K) :
     FaceRealization σ.1 → Realization K :=
   fun x => ⟨x, Geometry.SimplicialComplex.convexHull_subset_space
-    (K := standardGeometricComplex K) (by exact ⟨σ.1, σ.2, rfl⟩) x.2⟩
+    (K := standardGeometricComplex K)
+      ((mem_standardGeometricComplex_faces_iff K _).2 ⟨σ.1, σ.2, rfl⟩) x.2⟩
+
+/-- A face inclusion does not change the underlying barycentric coordinates. -/
+@[simp]
+theorem faceInclusion_val (K : AbstractSimplicialComplex ι) (σ : Face K)
+    (x : FaceRealization σ.1) :
+    (faceInclusion K σ x : ι →₀ ℝ) = x := by
+  simp [faceInclusion]
 
 /-- The weak topology on a realization, final with respect to all face inclusions. -/
 instance (K : AbstractSimplicialComplex ι) : TopologicalSpace (Realization K) :=
@@ -96,21 +116,23 @@ theorem continuous_faceInclusion (K : AbstractSimplicialComplex ι) (σ : Face K
   continuous_iff_coinduced_le.2 (le_iSup (fun τ : Face K =>
     TopologicalSpace.coinduced (faceInclusion K τ) inferInstance) σ)
 
-/-- The carrier of the geometric realization is the space of its standard geometric complex. -/
-theorem realization_carrier (K : AbstractSimplicialComplex ι) :
-    (Realization K : Type _) = (standardGeometricComplex K).space :=
-  rfl
+/-- A map out of a realization is continuous exactly when its restriction to every face is
+continuous. -/
+theorem continuous_iff_faceInclusion {K : AbstractSimplicialComplex ι}
+    {X : Type*} [TopologicalSpace X] {f : Realization K → X} :
+    Continuous f ↔ ∀ σ : Face K, Continuous (f ∘ faceInclusion K σ) := by
+  rw [continuous_iSup_dom]
+  exact forall_congr' fun _ => continuous_coinduced_dom
 
-/-- A geometric face is exactly the image of an abstract face under the coordinate embedding. -/
-theorem mem_standardGeometricComplex_faces_iff (K : AbstractSimplicialComplex ι)
-    (τ : Finset (ι →₀ ℝ)) :
-    τ ∈ (standardGeometricComplex K).faces ↔
-      ∃ σ ∈ K, σ.image vertexVector = τ := by
-  classical
-  rfl
+/-- Prove continuity out of a realization by proving continuity on every face. -/
+theorem continuous_of_continuous_faceInclusion {K : AbstractSimplicialComplex ι}
+    {X : Type*} [TopologicalSpace X] {f : Realization K → X}
+    (hf : ∀ σ : Face K, Continuous (f ∘ faceInclusion K σ)) :
+    Continuous f :=
+  continuous_iff_faceInclusion.2 hf
 
 /-- The coordinate image of every abstract face is a face of the geometric complex. -/
-theorem image_vertexVector_mem_standardGeometricComplex {K : AbstractSimplicialComplex ι}
+theorem image_vertexVector_mem_standardGeometricComplex_faces {K : AbstractSimplicialComplex ι}
     {σ : Finset ι} (hσ : σ ∈ K) :
     σ.image vertexVector ∈ (standardGeometricComplex K).faces :=
   (mem_standardGeometricComplex_faces_iff K _).2 ⟨σ, hσ, rfl⟩
@@ -126,19 +148,19 @@ theorem mem_realization_iff {K : AbstractSimplicialComplex ι} {x : ι →₀ �
     obtain ⟨σ, hσ, rfl⟩ := (mem_standardGeometricComplex_faces_iff K τ).1 hτ
     exact ⟨σ, hσ, hx⟩
   · rintro ⟨σ, hσ, hx⟩
-    exact ⟨σ.image vertexVector, image_vertexVector_mem_standardGeometricComplex hσ, hx⟩
+    exact ⟨σ.image vertexVector, image_vertexVector_mem_standardGeometricComplex_faces hσ, hx⟩
 
 /-- The standard coordinate vector of every vertex belongs to the geometric realization. -/
-theorem vertexVector_mem (K : AbstractSimplicialComplex ι) (v : ι) :
+theorem vertexVector_mem_standardGeometricComplex_space (K : AbstractSimplicialComplex ι) (v : ι) :
     vertexVector v ∈ (standardGeometricComplex K).space := by
   apply Geometry.SimplicialComplex.vertices_subset_space
   rw [Geometry.SimplicialComplex.mem_vertices]
   simpa [vertexVector] using
-    image_vertexVector_mem_standardGeometricComplex (K.singleton_mem v)
+    image_vertexVector_mem_standardGeometricComplex_faces (K.singleton_mem v)
 
 /-- The canonical point of the geometric realization corresponding to a vertex. -/
 noncomputable def vertex (K : AbstractSimplicialComplex ι) (v : ι) : Realization K :=
-  ⟨vertexVector v, vertexVector_mem K v⟩
+  ⟨vertexVector v, vertexVector_mem_standardGeometricComplex_space K v⟩
 
 /-- The underlying finitely supported function of a realization vertex is its coordinate vector. -/
 @[simp]
@@ -165,6 +187,40 @@ theorem standardGeometricComplex_space_mono {K L : AbstractSimplicialComplex ι}
   rw [mem_realization_iff] at hx ⊢
   obtain ⟨σ, hσ, hx⟩ := hx
   exact ⟨σ, hKL hσ, hx⟩
+
+/-- The continuous map of realizations induced by an inclusion of abstract complexes. -/
+noncomputable def realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
+    Realization K → Realization L :=
+  fun x => ⟨x, standardGeometricComplex_space_mono hKL x.2⟩
+
+/-- An induced map of realizations does not change the underlying barycentric coordinates. -/
+@[simp]
+theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
+    (x : Realization K) :
+    (realizationMap hKL x : ι →₀ ℝ) = x := by
+  simp [realizationMap]
+
+/-- The map of realizations induced by an inclusion is continuous. -/
+theorem continuous_realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
+    Continuous (realizationMap hKL) := by
+  apply continuous_of_continuous_faceInclusion
+  intro σ
+  change Continuous (faceInclusion L ⟨σ.1, hKL σ.2⟩)
+  exact continuous_faceInclusion L ⟨σ.1, hKL σ.2⟩
+
+/-- The map induced by the reflexive inclusion is the identity. -/
+@[simp]
+theorem realizationMap_refl (K : AbstractSimplicialComplex ι) :
+    realizationMap (le_refl K) = id := by
+  funext x
+  exact Subtype.ext rfl
+
+/-- Maps induced by inclusions compose according to transitivity of inclusion. -/
+@[simp]
+theorem realizationMap_trans {K L M : AbstractSimplicialComplex ι} (hKL : K ≤ L) (hLM : L ≤ M) :
+    realizationMap (hKL.trans hLM) = realizationMap hLM ∘ realizationMap hKL := by
+  funext x
+  exact Subtype.ext rfl
 
 end AbstractSimplicialComplex
 
