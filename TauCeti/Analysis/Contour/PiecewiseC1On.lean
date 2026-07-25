@@ -154,8 +154,10 @@ theorem exists_Icc_subset_uIcc_disjoint {s : Set ℝ} (hs : IsClosed s) {t : ℝ
     (ht : t ∈ Ioo (min a b) (max a b)) (hts : t ∉ s) :
     ∃ c d : ℝ, t ∈ Ioo c d ∧ Icc c d ⊆ uIcc a b ∧ Disjoint s (Ioo c d) := by
   have hmem : Ioo (min a b) (max a b) \ s ∈ 𝓝 t := (isOpen_Ioo.sdiff hs).mem_nhds ⟨ht, hts⟩
-  obtain ⟨ε, hε, hsub⟩ := (nhds_basis_Icc_pos t).mem_iff.mp hmem
-  refine ⟨t - ε, t + ε, ⟨by linarith, by linarith⟩, fun x hx => ?_, ?_⟩
+  obtain ⟨c, d, -, hnhds, hsub⟩ := exists_Icc_mem_subset_of_mem_nhds hmem
+  refine ⟨c, d, ?_, fun x hx => ?_, ?_⟩
+  · rw [← interior_Icc]
+    exact mem_interior_iff_mem_nhds.mpr hnhds
   · exact Icc_min_max.subset (Ioo_subset_Icc_self (hsub hx).1)
   · rw [Set.disjoint_right]
     intro x hx
