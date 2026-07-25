@@ -102,10 +102,8 @@ theorem not_isSquare_prod_minusTwentyOneRadicand (S : Finset (Fin 3)) (hS : S.No
 /-- The generator of `sqrtNegTwentyOneSubfield`, viewed in `ℂ`, is the product
 `i · (i√3) · (i√7)`. -/
 @[simp] theorem sqrtNegTwentyOneGenerator_coe :
-    ((prodRootMem (K := ℚ) minusTwentyOneRoot (Finset.univ : Finset (Fin 3)) :
-        adjoin ℚ (Set.range minusTwentyOneRoot)) : ℂ)
-      = Complex.I * sqrtNegThree * sqrtNegSeven := by
-  rw [prodRootMem_coe, Fin.prod_univ_succ]
+    ∏ i, minusTwentyOneRoot i = Complex.I * sqrtNegThree * sqrtNegSeven := by
+  rw [Fin.prod_univ_succ]
   simp [minusTwentyOneRoot, Fin.prod_univ_succ, mul_assoc]
 
 /-- The generator of `sqrtNegTwentyOneSubfield` squares to `-21`. -/
