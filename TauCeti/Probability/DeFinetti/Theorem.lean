@@ -35,7 +35,9 @@ so this file deliberately exposes no `deFinetti*` handle: the equivalences below
 forms, named as such. The handles return with the conditional predicate.
 
 Both equivalences hold on an arbitrary measurable sample space `Ω` under `[IsFiniteMeasure μ]`;
-the standard-Borel hypothesis sits only on the state space `α`, where the mixing measure lives.
+the standard-Borel hypothesis sits only on the state space `α`, each value of the mixing
+representative being a probability measure on `α`. (The *mixing law* itself — the law of `ν` — is a
+measure on `ProbabilityMeasure α`, not on `α`.)
 
 Adapted from `cameronfreer/exchangeability` (`DeFinetti/TheoremViaMartingale.lean`, pin
 `e0532e59ceff23edab44dda9ab0655debbc9cc22`); the statements here are the source's final wrappers,

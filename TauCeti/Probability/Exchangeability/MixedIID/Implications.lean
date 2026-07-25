@@ -54,7 +54,7 @@ theorem MixedIIDWith.prefixLaw_eq_mixture {μ : Measure Ω} {X : ℕ → Ω → 
     prefixLaw μ X n =
       μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
   rw [prefixLaw_def]
-  exact h.map (fun i : Fin n => i.val) injective_fin_val
+  exact h.blockLaw_eq_mixture (fun i : Fin n => i.val) injective_fin_val
 
 /-- Under a named mixing representative, every injective finite block has the same law as the
 corresponding prefix. -/
@@ -62,7 +62,7 @@ theorem MixedIIDWith.blockLaw_eq_prefixLaw_of_injective {μ : Measure Ω}
     {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
     blockLaw μ X k = prefixLaw μ X m := by
-  rw [h.map k hk, h.prefixLaw_eq_mixture m]
+  rw [h.blockLaw_eq_mixture k hk, h.prefixLaw_eq_mixture m]
 
 /-- A mixed i.i.d. process has the same law along every injective finite block as along the
 corresponding prefix. -/

@@ -80,7 +80,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
           = (blockLaw μ X k).map fun x : Fin m → α => fun i => f (x i) :=
             (map_blockLaw μ k hf hXk).symm
       _ = (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
-            fun x : Fin m → α => fun i => f (x i) := by rw [h.map k hk]
+            fun x : Fin m → α => fun i => f (x i) := by rw [h.blockLaw_eq_mixture k hk]
       _ = μ.bind fun ω =>
             ((ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
               fun x : Fin m → α => fun i => f (x i) := map_bind_comm hg hFmeas
@@ -122,7 +122,7 @@ theorem mixedIID_of_mixedIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
           rw [Measure.map_map hcoord hφ]
           rfl
     _ = (pathLaw μ X).bind fun p => (ProbabilityMeasure.pi fun _ : Fin m => ν p).toMeasure :=
-          hν.map k hk
+          hν.blockLaw_eq_mixture k hk
     _ = μ.bind fun ω =>
           (ProbabilityMeasure.pi fun _ : Fin m => ν (fun i => X i ω)).toMeasure := by
           simp only [pathLaw_def, Measure.bind]

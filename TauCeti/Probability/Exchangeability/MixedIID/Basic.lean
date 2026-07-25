@@ -120,9 +120,11 @@ theorem MixedIIDWith.measurable_mixingRepresentative {μ : Measure Ω} {X : ℕ 
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) : Measurable ν :=
   h.1
 
-/-- The defining finite-block mixture identity of a `MixedIIDWith` witness. -/
+/-- The defining finite-block mixture identity of a `MixedIIDWith` witness: along an injective
+selection the block law is the `ν`-mixture of the product measure. The prefix specialization is
+`MixedIIDWith.prefixLaw_eq_mixture`. -/
 @[grind =>]
-theorem MixedIIDWith.map {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem MixedIIDWith.blockLaw_eq_mixture {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k) :
     blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
@@ -162,7 +164,7 @@ theorem MixedIIDWith.blockLaw_univ_pi {μ : Measure Ω} {X : ℕ → Ω → α}
     (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i)) :
     blockLaw μ X k (Set.univ.pi B) =
       ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ := by
-  rw [h.map k hk]
+  rw [h.blockLaw_eq_mixture k hk]
   have hν_ae : AEMeasurable ν μ := h.measurable_mixingRepresentative.aemeasurable
   rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_pi ν hν_ae B hB]
 
