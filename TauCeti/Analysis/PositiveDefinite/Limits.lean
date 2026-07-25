@@ -19,7 +19,9 @@ predicate on an involutive additive monoid.
 
 This is the limit-closure item from Part C of the `OneParameterSemigroups` roadmap. The result is
 about positive-definiteness alone for pointwise limits; as the roadmap notes, locally uniform
-convergence is one sufficient additional hypothesis for preserving continuity.
+convergence is one sufficient additional hypothesis for preserving continuity. The continuity
+conclusion is already provided by Mathlib's `TendstoLocallyUniformly.continuous`, while this file
+provides the positive-definiteness conclusion.
 
 ## Main declarations
 
