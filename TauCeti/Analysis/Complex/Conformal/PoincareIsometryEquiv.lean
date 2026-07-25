@@ -122,7 +122,6 @@ lemma unitDiscStandardAutomorphismIsometryEquiv_one (a : Complex.UnitDisc) :
   simp
 
 /-- The standard Poincaré isometry sends its center to the origin. -/
-@[simp]
 lemma unitDiscStandardAutomorphismIsometryEquiv_self
     (u : Circle) (a : Complex.UnitDisc) :
     unitDiscStandardAutomorphismIsometryEquiv u a
