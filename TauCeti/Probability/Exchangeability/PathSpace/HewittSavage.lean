@@ -119,7 +119,44 @@ theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : Measure (
   obtain ⟨F, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht_mem
   exact ⟨F, S, hS, ht⟩
 
+/-- A cylinder over a measurable base is measurable. -/
+theorem measurableSet_cylinder [MeasurableSpace α] (F : Finset ℕ) {S : Set (∀ _i : F, α)}
+    (hS : MeasurableSet S) : MeasurableSet (cylinder (α := fun _ : ℕ => α) F S) :=
+  (measurable_pi_lambda _ fun i : F => measurable_pi_apply (i : ℕ)) hS
+
 end Cylinder
+
+section Independence
+
+variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+
+/-- Cylinders over **disjoint** index blocks are independent events under the path law of an
+independent family. This is the step that turns the disjointness produced by `blockSwap` into a
+product formula. -/
+theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} (hX : ∀ n, Measurable (X n)) (h_indep : ProbabilityTheory.iIndepFun X μ)
+    {F G : Finset ℕ} (hFG : Disjoint F G)
+    {S : Set (∀ _i : F, α)} (hS : MeasurableSet S)
+    {T : Set (∀ _j : G, α)} (hT : MeasurableSet T) :
+    pathLaw μ X (cylinder F S ∩ cylinder G T)
+      = pathLaw μ X (cylinder F S) * pathLaw μ X (cylinder G T) := by
+  have hΦ : Measurable fun ω => (fun n => X n ω : ℕ → α) := measurable_pi_lambda _ hX
+  have hSmeas : MeasurableSet (cylinder F S) := measurableSet_cylinder F hS
+  have hTmeas : MeasurableSet (cylinder G T) := measurableSet_cylinder G hT
+  have hfS : Measurable fun ω => (fun i : F => X (i : ℕ) ω) :=
+    measurable_pi_lambda _ fun i => hX (i : ℕ)
+  have hfT : Measurable fun ω => (fun j : G => X (j : ℕ) ω) :=
+    measurable_pi_lambda _ fun j => hX (j : ℕ)
+  have hind : ProbabilityTheory.IndepSet
+      ((fun ω => (fun i : F => X (i : ℕ) ω)) ⁻¹' S)
+      ((fun ω => (fun j : G => X (j : ℕ) ω)) ⁻¹' T) μ :=
+    (ProbabilityTheory.indepFun_iff_indepSet_preimage hfS hfT).mp
+      (h_indep.indepFun_finset F G hFG hX) S T hS hT
+  rw [pathLaw_def, Measure.map_apply hΦ (hSmeas.inter hTmeas), Measure.map_apply hΦ hSmeas,
+    Measure.map_apply hΦ hTmeas, Set.preimage_inter]
+  exact (ProbabilityTheory.indepSet_iff_measure_inter_eq_mul (hfS hS) (hfT hT) μ).mp hind
+
+end Independence
 
 end Probability
 
