@@ -12,7 +12,8 @@ public import TauCeti.Analysis.Fredholm.Basic
 This file gives streamlined Fredholm criteria when an operator is already known to be injective
 or surjective. A surjective continuous linear map is Fredholm exactly when its kernel is finite
 dimensional. Dually, an injective continuous linear map with closed range is Fredholm exactly when
-its cokernel is finite dimensional.
+its cokernel is finite dimensional. Specialising both sides gives the bijective corollaries: a
+bijective continuous linear map is Fredholm of index zero.
 
 These criteria are the elementary endpoints of the finite-dimensional reductions used throughout
 Fredholm theory.
@@ -24,6 +25,8 @@ Fredholm theory.
   criterion.
 * `TauCeti.ContinuousLinearMap.index_of_surjective` and
   `TauCeti.ContinuousLinearMap.index_of_injective`: the index in the two one-sided cases.
+* `TauCeti.IsFredholm.of_bijective` and
+  `TauCeti.ContinuousLinearMap.index_eq_zero_of_bijective`: the bijective corollaries.
 
 The conventions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Appendix
 A.1.
