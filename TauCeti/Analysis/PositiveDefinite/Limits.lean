@@ -146,27 +146,4 @@ theorem continuous_and_isPositiveDefinite_of_tendstoLocallyUniformly
     Continuous G ∧ IsPositiveDefinite G :=
   ⟨hlim.continuous hcont.frequently, IsPositiveDefinite.of_tendstoLocallyUniformly hpd hlim⟩
 
-/-- A locally uniform limit of continuous positive-definite functions is continuous and positive
-definite. -/
-theorem continuous_and_isPositiveDefinite_of_forall_tendstoLocallyUniformly
-    {M : Type*} [TopologicalSpace M] [AddMonoid M] [StarAddMonoid M]
-    {ι : Type*} {l : Filter ι} [NeBot l] {F : ι → M → ℂ} {G : M → ℂ}
-    (hcont : ∀ i, Continuous (F i))
-    (hpd : ∀ i, IsPositiveDefinite (F i))
-    (hlim : TendstoLocallyUniformly F G l) :
-    Continuous G ∧ IsPositiveDefinite G :=
-  continuous_and_isPositiveDefinite_of_tendstoLocallyUniformly
-    (Eventually.of_forall hcont) (Eventually.of_forall hpd) hlim
-
-/-- A sequential locally uniform limit of eventually continuous, eventually positive-definite
-functions is continuous and positive definite. -/
-theorem continuous_and_isPositiveDefinite_of_seq_tendstoLocallyUniformly
-    {M : Type*} [TopologicalSpace M] [AddMonoid M] [StarAddMonoid M]
-    {F : ℕ → M → ℂ} {G : M → ℂ}
-    (hcont : ∀ᶠ n in atTop, Continuous (F n))
-    (hpd : ∀ᶠ n in atTop, IsPositiveDefinite (F n))
-    (hlim : TendstoLocallyUniformly F G atTop) :
-    Continuous G ∧ IsPositiveDefinite G :=
-  continuous_and_isPositiveDefinite_of_tendstoLocallyUniformly hcont hpd hlim
-
 end TauCeti
