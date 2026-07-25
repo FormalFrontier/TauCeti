@@ -216,7 +216,6 @@ theorem realizationMap_refl (K : AbstractSimplicialComplex ι) :
   exact Subtype.ext rfl
 
 /-- Maps induced by inclusions compose according to transitivity of inclusion. -/
-@[simp]
 theorem realizationMap_trans {K L M : AbstractSimplicialComplex ι} (hKL : K ≤ L) (hLM : L ≤ M) :
     realizationMap (hKL.trans hLM) = realizationMap hLM ∘ realizationMap hKL := by
   funext x
