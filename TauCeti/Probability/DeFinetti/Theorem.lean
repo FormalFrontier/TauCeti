@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.DeFinetti.BlockFactorization
--- Non-public: used only inside proofs — the Layer-0 bridges from conditional i.i.d. back to
--- exchangeability and contractability.
+-- Non-public: used only inside proofs — the Layer-0 bridges `MixedIID.exchangeable` and
+-- `MixedIID.contractable`, from the mixture identity back to exchangeability and contractability.
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
