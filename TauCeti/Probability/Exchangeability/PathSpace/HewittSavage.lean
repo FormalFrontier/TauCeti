@@ -68,6 +68,38 @@ theorem blockSwap_finite_support (N : ℕ) :
   by_contra hmem
   exact hn (blockSwap_apply_of_le (not_lt.mp hmem))
 
+section Cylinder
+
+variable {α : Type*}
+
+/-- Read a block indexed by the moved index set `F.map π` back onto `F`, along `π`. This is the
+change of variables that turns a `π`-reindexed cylinder over `F` into a cylinder over `F.map π`. -/
+@[expose]
+def pullMoved (π : Equiv.Perm ℕ) (F : Finset ℕ) (α : Type*)
+    (g : ∀ _j : F.map (Equiv.toEmbedding π), α) : ∀ _i : F, α :=
+  fun i => g ⟨π ↑i, Finset.mem_map_of_mem _ i.2⟩
+
+@[simp]
+theorem pullMoved_apply (π : Equiv.Perm ℕ) (F : Finset ℕ)
+    (g : ∀ _j : F.map (Equiv.toEmbedding π), α) (i : F) :
+    pullMoved π F α g i = g ⟨π ↑i, Finset.mem_map_of_mem _ i.2⟩ :=
+  rfl
+
+/-- Reindexing a cylinder over `F` by `π` is a cylinder over the moved index set `F.map π`: both
+sides say that the coordinates `p (π i)`, for `i ∈ F`, lie in `S`. -/
+theorem preimage_permReindex_cylinder (π : Equiv.Perm ℕ) (F : Finset ℕ)
+    (S : Set (∀ _i : F, α)) :
+    permReindex (α := α) π ⁻¹' cylinder F S
+      = cylinder (F.map (Equiv.toEmbedding π)) (pullMoved π F α ⁻¹' S) :=
+  rfl
+
+@[fun_prop]
+theorem measurable_pullMoved [MeasurableSpace α] (π : Equiv.Perm ℕ) (F : Finset ℕ) :
+    Measurable (pullMoved π F α) :=
+  measurable_pi_lambda _ fun _ => measurable_pi_apply _
+
+end Cylinder
+
 end Probability
 
 end TauCeti
