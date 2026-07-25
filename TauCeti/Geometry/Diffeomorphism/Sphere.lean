@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Geometry.Manifold.Instances.Sphere
 public import TauCeti.Geometry.Diffeomorphism.Group
+public import TauCeti.LinearAlgebra.OrthogonalGroup
 
 /-!
 # The orthogonal group acts on the sphere by diffeomorphisms
@@ -99,6 +100,7 @@ theorem unitSphereEquiv_refl :
     unitSphereEquiv (_root_.LinearIsometryEquiv.refl R E) = Equiv.refl (sphere (0 : E) 1) :=
   (rfl)
 
+@[simp]
 theorem unitSphereEquiv_trans (e e' : E ≃ₗᵢ[R] E) :
     unitSphereEquiv (e.trans e') = (unitSphereEquiv e).trans (unitSphereEquiv e') :=
   (rfl)
@@ -202,44 +204,6 @@ end LinearIsometryEquiv
 
 open scoped EuclideanSpace
 
-/-- An orthogonal matrix acts on Euclidean space as a linear isometry equivalence. -/
-noncomputable def orthogonalGroupToLinearIsometryEquiv {ι : Type*} [Fintype ι] [DecidableEq ι] :
-    Matrix.orthogonalGroup ι ℝ →*
-      (EuclideanSpace ℝ ι ≃ₗᵢ[ℝ] EuclideanSpace ℝ ι) where
-  toFun A :=
-    { toLinearEquiv :=
-        (WithLp.linearEquiv 2 ℝ (ι → ℝ)).trans
-          ((Matrix.UnitaryGroup.toLinearEquiv A).trans
-            (WithLp.linearEquiv 2 ℝ (ι → ℝ)).symm)
-      norm_map' := fun x => by
-        apply (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp
-        rw [EuclideanSpace.norm_sq_eq, EuclideanSpace.norm_sq_eq]
-        simp only [Real.norm_eq_abs, sq_abs]
-        change ∑ i, ((A : Matrix ι ι ℝ).mulVec x.ofLp i) ^ 2 =
-          ∑ i, (x.ofLp i) ^ 2
-        simp only [pow_two]
-        rw [← dotProduct, Matrix.dotProduct_mulVec, Matrix.vecMul_mulVec,
-          (Matrix.mem_orthogonalGroup_iff' ι ℝ).1 A.2, Matrix.vecMul_one]
-        rfl }
-  map_one' := _root_.LinearIsometryEquiv.ext fun x => by
-    change WithLp.toLp 2 ((1 : Matrix ι ι ℝ).mulVec x.ofLp) = x
-    rw [Matrix.one_mulVec, WithLp.toLp_ofLp]
-  map_mul' A B := _root_.LinearIsometryEquiv.ext fun x => by
-    change WithLp.toLp 2 (((A * B : Matrix.orthogonalGroup ι ℝ) :
-      Matrix ι ι ℝ).mulVec x.ofLp) =
-        WithLp.toLp 2 ((A : Matrix ι ι ℝ).mulVec
-          ((B : Matrix ι ι ℝ).mulVec x.ofLp))
-    exact congrArg (WithLp.toLp 2) (Matrix.mulVec_mulVec _ _ _).symm
-
-/-- The linear isometry equivalence associated to an orthogonal matrix acts by matrix-vector
-multiplication in Euclidean coordinates. -/
-@[simp]
-theorem orthogonalGroupToLinearIsometryEquiv_apply {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (A : Matrix.orthogonalGroup ι ℝ) (x : EuclideanSpace ℝ ι) :
-    orthogonalGroupToLinearIsometryEquiv A x =
-      WithLp.toLp 2 ((A : Matrix ι ι ℝ).mulVec x.ofLp) :=
-  (rfl)
-
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)`: an orthogonal transformation of `ℝⁿ⁺¹`
 restricts to a diffeomorphism of the unit sphere `Sⁿ`, and this restriction is a group
 homomorphism. It is injective by `TauCeti.orthogonalToDiffSphere_injective`. -/
@@ -263,11 +227,12 @@ subgroup of `Diff(Sⁿ)`. -/
 theorem orthogonalToDiffSphere_injective (n : ℕ) (m : ℕ∞ω) :
     Function.Injective (orthogonalToDiffSphere n m) := by
   intro A B h
-  change LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv A) =
-    LinearIsometryEquiv.unitSphereDiffHom m (orthogonalGroupToLinearIsometryEquiv B) at h
-  have he := LinearIsometryEquiv.unitSphereDiffHom_injective h
+  have he := LinearIsometryEquiv.unitSphereDiffHom_injective
+    (by simpa only [orthogonalToDiffSphere_apply] using h)
   apply Subtype.ext
   apply Matrix.toEuclideanLin.injective
-  exact LinearMap.ext fun x => _root_.LinearIsometryEquiv.congr_fun he x
+  exact LinearMap.ext fun x => by
+    simpa only [orthogonalGroupToLinearIsometryEquiv_apply, Matrix.toLpLin_apply] using
+      _root_.LinearIsometryEquiv.congr_fun he x
 
 end TauCeti
