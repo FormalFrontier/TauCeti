@@ -74,6 +74,18 @@ theorem orthogonalGroupToLinearIsometryEquiv_apply
   classical
   rfl
 
+/-- The conversion from orthogonal matrices to linear isometry equivalences is injective. -/
+theorem orthogonalGroupToLinearIsometryEquiv_injective :
+    Function.Injective
+      (orthogonalGroupToLinearIsometryEquiv :
+        Matrix.orthogonalGroup ι ℝ → EuclideanSpace ℝ ι ≃ₗᵢ[ℝ] EuclideanSpace ℝ ι) := by
+  intro A B h
+  apply Subtype.ext
+  apply Matrix.toEuclideanLin.injective
+  exact LinearMap.ext fun x => by
+    simpa only [orthogonalGroupToLinearIsometryEquiv_apply, Matrix.toLpLin_apply] using
+      _root_.LinearIsometryEquiv.congr_fun h x
+
 end
 
 end TauCeti

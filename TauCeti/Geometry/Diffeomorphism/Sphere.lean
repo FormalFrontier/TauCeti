@@ -226,13 +226,7 @@ theorem orthogonalToDiffSphere_apply (n : ℕ) (m : ℕ∞ω)
 subgroup of `Diff(Sⁿ)`. -/
 theorem orthogonalToDiffSphere_injective (n : ℕ) (m : ℕ∞ω) :
     Function.Injective (orthogonalToDiffSphere n m) := by
-  intro A B h
-  have he := LinearIsometryEquiv.unitSphereDiffHom_injective
-    (by simpa only [orthogonalToDiffSphere_apply] using h)
-  apply Subtype.ext
-  apply Matrix.toEuclideanLin.injective
-  exact LinearMap.ext fun x => by
-    simpa only [orthogonalGroupToLinearIsometryEquiv_apply, Matrix.toLpLin_apply] using
-      _root_.LinearIsometryEquiv.congr_fun he x
+  exact LinearIsometryEquiv.unitSphereDiffHom_injective.comp
+    orthogonalGroupToLinearIsometryEquiv_injective
 
 end TauCeti
