@@ -90,17 +90,17 @@ namespace ContinuousLinearMap
 /-- A surjective continuous linear map has index the dimension of its kernel. -/
 lemma index_of_surjective (T : E →L[K] F) (hT : Function.Surjective T) :
     index T = (finrank K (LinearMap.ker (T : E →ₗ[K] F)) : ℤ) := by
-  rw [index_def, LinearMap.index_of_surjective hT]
+  rw [index_eq_finrank_sub, ← LinearMap.index_eq_finrank_sub, LinearMap.index_of_surjective hT]
 
 /-- An injective continuous linear map has index the negative of the dimension of its cokernel. -/
 lemma index_of_injective (T : E →L[K] F) (hT : Function.Injective T) :
     index T = -(finrank K (F ⧸ LinearMap.range (T : E →ₗ[K] F)) : ℤ) := by
-  rw [index_def, LinearMap.index_of_injective hT]
+  rw [index_eq_finrank_sub, ← LinearMap.index_eq_finrank_sub, LinearMap.index_of_injective hT]
 
 /-- A bijective continuous linear map has Fredholm index zero. This formulation applies directly
 when bijectivity is known before a continuous inverse has been bundled. -/
 lemma index_eq_zero_of_bijective (T : E →L[K] F) (hT : Function.Bijective T) : index T = 0 := by
-  rw [index_def]
+  rw [index_eq_finrank_sub, ← LinearMap.index_eq_finrank_sub]
   exact LinearEquiv.index_eq_zero (e := LinearEquiv.ofBijective (T : E →ₗ[K] F) hT)
 
 end ContinuousLinearMap
