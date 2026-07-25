@@ -110,10 +110,17 @@ theorem harmonicOnNhd_planarNewtonianKernel_sub (a : ℂ) :
   intro z hz
   exact harmonicAt_planarNewtonianKernel_sub (Set.mem_compl_singleton_iff.mp hz)
 
+/-- Away from its pole, a translated planar Newtonian kernel is twice continuously
+differentiable. -/
+theorem contDiffAt_planarNewtonianKernel_sub {z a : ℂ} (hza : z ≠ a) :
+    ContDiffAt ℝ 2 (fun w : ℂ ↦ planarNewtonianKernel (w - a)) z :=
+  (harmonicAt_planarNewtonianKernel_sub hza).1
+
 /-- Away from its pole, the planar Newtonian kernel is twice continuously differentiable. -/
 theorem contDiffAt_planarNewtonianKernel {z : ℂ} (hz : z ≠ 0) :
-    ContDiffAt ℝ 2 planarNewtonianKernel z :=
-  (harmonicAt_planarNewtonianKernel hz).1
+    ContDiffAt ℝ 2 planarNewtonianKernel z := by
+  simpa only [sub_zero] using
+    (contDiffAt_planarNewtonianKernel_sub (z := z) (a := 0) hz)
 
 /-- The planar Newtonian kernel solves the homogeneous Laplace equation pointwise away from its
 pole.  Its nonzero distributional Laplacian is concentrated at the omitted pole. -/
