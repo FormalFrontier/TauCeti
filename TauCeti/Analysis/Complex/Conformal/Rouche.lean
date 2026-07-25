@@ -34,9 +34,14 @@ Note that the primitive is only ever needed *on the circle*: the lemma consuming
 any simply-connectedness or branch-construction machinery — `h` may well have zeros and poles
 inside the disc, and indeed the theorem is about exactly those.
 
-The count is expressed with Mathlib's `analyticOrderAt`, summed over the support of
-`MeromorphicOn.divisor` — which, for a function holomorphic on the disc, is precisely its zero set
-there.
+The count is expressed with Mathlib's `analyticOrderNatAt`, summed over the open disc. Care is
+needed about infinite order: `analyticOrderNatAt` sends a locally identically-zero function to `0`,
+and such a point is likewise absent from the support of `MeromorphicOn.divisor`, so in general the
+divisor support is the set of zeros *of finite order* rather than the zero set outright. Under the
+Rouché hypotheses that distinction is vacuous: `‖f - g‖ < ‖f‖` forces `f` to be zero-free on the
+circle, and `closedBall c R` is convex hence preconnected, so
+`MeromorphicOn.meromorphicOrderAt_ne_top_of_isPreconnected` propagates finite order from a boundary
+point to the whole disc — neither `f` nor `g` vanishes identically near any point of it.
 
 ## Main results
 
@@ -105,12 +110,14 @@ private lemma circleIntegrable_logDeriv (hR : 0 < R)
 at a point of infinite order, where both sides read `0`. -/
 private lemma divisor_eq_order (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ}
     (hz : z ∈ ball c R) :
-    MeromorphicOn.divisor f (ball c R) z = ((analyticOrderAt f z).toNat : ℤ) := by
+    MeromorphicOn.divisor f (ball c R) z = (analyticOrderNatAt f z : ℤ) := by
   have hfb : AnalyticOnNhd ℂ f (ball c R) := hf.mono ball_subset_closedBall
   rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hfb hz]
+  -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
+  -- that definitional equality, so unfold it here rather than in the statements.
   cases h : analyticOrderAt f z with
-  | top => simp
-  | coe n => simp
+  | top => simp [analyticOrderNatAt, h]
+  | coe n => simp [analyticOrderNatAt, h]
 
 /-- The contour integral of `logDeriv (g / f)` around the circle vanishes: the hypothesis confines
 `g / f` to the slit plane there, where `Complex.log` supplies a primitive. -/
@@ -128,10 +135,7 @@ private lemma circleIntegral_logDeriv_div_eq_zero (hR : 0 < R)
     rw [e, norm_neg, norm_div]
     exact (div_lt_one (by positivity)).2 hlt
   have hslit : g z / f z ∈ slitPlane := by
-    refine Complex.mem_slitPlane_iff.2 (Or.inl ?_)
-    have h1 : |(g z / f z - 1).re| ≤ ‖g z / f z - 1‖ := Complex.abs_re_le_norm _
-    have h2 : |(g z / f z).re - 1| < 1 := by simpa using lt_of_le_of_lt h1 hq1
-    linarith [abs_lt.1 h2]
+    simpa using Complex.mem_slitPlane_of_norm_lt_one hq1
   have hf' : HasDerivAt f (deriv f z) z := (hf z hzc).differentiableAt.hasDerivAt
   have hg' : HasDerivAt g (deriv g z) z := (hg z hzc).differentiableAt.hasDerivAt
   have hq : HasDerivAt (fun w => g w / f w)
@@ -144,12 +148,14 @@ private lemma circleIntegral_logDeriv_div_eq_zero (hR : 0 < R)
   rw [hval]
   exact hcomp.hasDerivWithinAt
 
-/-- The canonical zero count of a holomorphic function over the open disc, as produced by the
-argument principle: the finitely supported sum of the divisor equals the cast of the finitely
-supported sum of the orders of vanishing. -/
+/-- The count produced by the argument principle, in the vocabulary of orders of vanishing: the
+finitely supported sum of the divisor equals the cast of the finitely supported sum of
+`analyticOrderNatAt` over the open disc. Both sides assign `0` at a point of infinite order, so
+this counts zeros of finite order; the caller supplies the hypotheses that exclude the other
+kind. -/
 private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (closedBall c R)) :
     (∑ᶠ z, ((MeromorphicOn.divisor h (ball c R) z : ℤ) : ℂ))
-      = ((∑ᶠ z ∈ ball c R, (analyticOrderAt h z).toNat : ℕ) : ℂ) := by
+      = ((∑ᶠ z ∈ ball c R, analyticOrderNatAt h z : ℕ) : ℂ) := by
   classical
   set S := (MeromorphicOn.divisor_ball_support_finite hh.meromorphicOn).toFinset with hS
   have hsub : (S : Set ℂ) ⊆ ball c R := fun z hz =>
@@ -160,8 +166,8 @@ private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (c
     refine finsum_eq_finsetSum_of_support_subset _ (fun z hz => ?_)
     simp only [Function.mem_support, ne_eq, Int.cast_eq_zero] at hz
     simpa [hS, Set.Finite.mem_toFinset] using hz
-  have h2 : (∑ᶠ z ∈ ball c R, (analyticOrderAt h z).toNat)
-      = ∑ z ∈ S, (analyticOrderAt h z).toNat := by
+  have h2 : (∑ᶠ z ∈ ball c R, analyticOrderNatAt h z)
+      = ∑ z ∈ S, analyticOrderNatAt h z := by
     refine finsum_mem_eq_sum_of_subset _ (fun z hz => ?_) hsub
     obtain ⟨hzb, hzs⟩ := hz
     simp only [Function.mem_support, ne_eq] at hzs
@@ -176,17 +182,19 @@ private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (c
   push_cast
   ring
 
-/-- **Rouché's theorem** for a disc. If `f` and `g` are holomorphic on the closed disc `C(c, R)`
-and `‖f z - g z‖ < ‖f z‖` at every point `z` of the bounding circle, then `f` and `g` have the same
-number of zeros in the open disc, each counted with multiplicity.
+/-- **Rouché's theorem** for a disc. If `f` and `g` are holomorphic on the closed disc
+`closedBall c R` and `‖f z - g z‖ < ‖f z‖` at every point `z` of the bounding circle, then `f` and
+`g` have the same number of zeros in `ball c R`, each counted with multiplicity. The hypothesis
+forces both functions to be zero-free on the circle, hence of finite order throughout the disc, so
+every zero is genuinely counted.
 
-The counts are the canonical finitely supported sums `∑ᶠ z ∈ ball c R, (analyticOrderAt · z).toNat`;
+The counts are the canonical finitely supported sums `∑ᶠ z ∈ ball c R, analyticOrderNatAt · z`;
 no finiteness witness appears in the statement. -/
 theorem rouche (hR : 0 < R)
     (hf : AnalyticOnNhd ℂ f (closedBall c R)) (hg : AnalyticOnNhd ℂ g (closedBall c R))
     (hs : ∀ z ∈ sphere c R, ‖f z - g z‖ < ‖f z‖) :
-    (∑ᶠ z ∈ ball c R, (analyticOrderAt f z).toNat)
-      = ∑ᶠ z ∈ ball c R, (analyticOrderAt g z).toNat := by
+    (∑ᶠ z ∈ ball c R, analyticOrderNatAt f z)
+      = ∑ᶠ z ∈ ball c R, analyticOrderNatAt g z := by
   have hnef : ∀ z ∈ sphere c R, f z ≠ 0 := fun z hz => ne_zero_left (hs z hz)
   have hneg : ∀ z ∈ sphere c R, g z ≠ 0 := fun z hz => ne_zero_right (hs z hz)
   have hsplit : (∮ z in C(c, R), logDeriv g z) = (∮ z in C(c, R), logDeriv f z) := by
