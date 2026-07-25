@@ -29,7 +29,7 @@ cube boundary is available.
   map `p e`; lifting that homotopy through `p` produces a continuous `F : I^N → E` over `f`
   with `F 0 = e`. On the boundary `F` lifts the constant map `p e`, so uniqueness of lifts on
   a preconnected domain forces `F` to be constantly `e` there — and the cube boundary is
-  preconnected exactly when the index type has at least two elements
+  preconnected when the index type has at least two elements
   (`TauCeti.isPreconnected_cubeBoundary`), which is where `n ≥ 2` enters.
 
 The conclusion is packaged as a multiplicative equivalence `π_n(E, e) ≃* π_n(X, p e)` for
@@ -45,8 +45,8 @@ cover".
   preserves) homotopy of generalized loops.
 * `TauCeti.GenLoop.exists_map_eq`: in dimension `≥ 2`, every generalized loop in the base
   lifts to a generalized loop in the total space based at a prescribed point of the fibre.
-* `TauCeti.HomotopyGroup.map_injective`, `TauCeti.HomotopyGroup.map_surjective`,
-  `TauCeti.HomotopyGroup.map_bijective`: the induced map on homotopy classes.
+* `TauCeti.HomotopyGroup.map_injective`, `TauCeti.HomotopyGroup.map_surjective`: the induced
+  map on homotopy classes.
 * `TauCeti.IsCoveringMap.homotopyGroupMulEquiv`: the isomorphism
   `HomotopyGroup N E e ≃* HomotopyGroup N X (p e)` for `[Nontrivial N]`.
 * `TauCeti.IsCoveringMap.homotopyGroupPiMulEquiv`: its `π_(n + 2)` form.
@@ -95,28 +95,51 @@ theorem exists_map_eq [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) 
   classical
   -- Read `f` as a homotopy in the `i`-th cube coordinate; it starts at the constant map `p e`.
   let i := Classical.arbitrary N
+  letI : Nonempty { j // j ≠ i } := ⟨⟨(exists_ne i).choose, (exists_ne i).choose_spec⟩⟩
   let q : C(I × I^{ j // j ≠ i }, X) := (f : C(I^N, X)).comp (Cube.insertAt i)
-  have hq0 : ∀ a, q (0, a) = p ((ContinuousMap.const (I^{ j // j ≠ i }) e) a) := fun a =>
-    _root_.GenLoop.boundary f _ (Cube.insertAt_boundary i (Or.inl (Or.inl rfl)))
-  -- Lift that homotopy, starting from the constant map at `e`.
-  let Q : C(I × I^{ j // j ≠ i }, E) := hp.liftHomotopy q (.const _ e) hq0
-  have hQ : ∀ z, p (Q z) = f (Cube.insertAt i z) :=
-    congrFun (hp.liftHomotopy_lifts q (.const _ e) hq0)
-  have hQ0 : ∀ a, Q (0, a) = e := hp.liftHomotopy_zero q (.const _ e) hq0
+  let cX : C(I^{ j // j ≠ i }, X) := .const _ (p e)
+  let cE : C(I^{ j // j ≠ i }, E) := .const _ e
+  let qRel : cX.HomotopyRel cX (Cube.boundary { j // j ≠ i }) :=
+    { toContinuousMap := q
+      map_zero_left := fun a =>
+        _root_.GenLoop.boundary f _ (Cube.insertAt_boundary i (Or.inl (Or.inl rfl)))
+      map_one_left := fun a =>
+        _root_.GenLoop.boundary f _ (Cube.insertAt_boundary i (Or.inl (Or.inr rfl)))
+      prop' := fun t a ha =>
+        _root_.GenLoop.boundary f _ (Cube.insertAt_boundary i (Or.inr ha)) }
+  let QRel : cE.HomotopyRel cE (Cube.boundary { j // j ≠ i }) :=
+    hp.liftHomotopyRel qRel ⟨0, zero_mem_cubeBoundary, rfl⟩
+      (funext fun _ => rfl) (funext fun _ => rfl)
+  let Q : C(I × I^{ j // j ≠ i }, E) := QRel.toContinuousMap
+  have hQ : p ∘ Q = q := by
+    simp only [Q, QRel, IsCoveringMap.liftHomotopyRel]
+    exact hp.liftHomotopy_lifts _ _ _
   let F : C(I^N, E) := Q.comp (Cube.splitAt i)
   have hpF : ∀ y, p (F y) = f y := fun y => by
-    have h : Cube.insertAt i (Cube.splitAt i y) = y := Homeomorph.symm_apply_apply _ y
-    change p (Q (Cube.splitAt i y)) = f y
-    simpa only [h] using hQ (Cube.splitAt i y)
-  -- On the boundary `F` lifts the constant map `p e`, and the boundary is preconnected.
+    calc
+      p (F y) = p (Q (Cube.splitAt i y)) := rfl
+      _ = q (Cube.splitAt i y) := congrFun hQ (Cube.splitAt i y)
+      _ = f y := congr_arg f (Homeomorph.symm_apply_apply (Cube.splitAt i) y)
+  -- The relative lift is constant on every boundary face.
   have hbd : ∀ y ∈ Cube.boundary N, F y = e := by
-    have : PreconnectedSpace (Cube.boundary N) :=
-      isPreconnected_iff_preconnectedSpace.mp isPreconnected_cubeBoundary
-    have key : (fun y : Cube.boundary N => F y) = fun _ : Cube.boundary N => e :=
-      hp.eq_of_comp_eq (F.continuous.comp continuous_subtype_val) continuous_const
-        (funext fun y => (hpF y).trans (_root_.GenLoop.boundary f y y.2))
-        ⟨0, zero_mem_cubeBoundary⟩ (hQ0 0)
-    exact fun y hy => congrFun key ⟨y, hy⟩
+    rintro y ⟨j, hj⟩
+    by_cases hji : j = i
+    · subst j
+      rcases hj with hj | hj
+      · have ht : (Cube.splitAt i y).1 = 0 := by
+          simpa only [Homeomorph.funSplitAt_apply] using hj
+        have hz : Cube.splitAt i y = (0, (Cube.splitAt i y).2) := Prod.ext ht rfl
+        rw [show F y = QRel (Cube.splitAt i y) by rfl, hz]
+        exact QRel.apply_zero _
+      · have ht : (Cube.splitAt i y).1 = 1 := by
+          simpa only [Homeomorph.funSplitAt_apply] using hj
+        have hz : Cube.splitAt i y = (1, (Cube.splitAt i y).2) := Prod.ext ht rfl
+        rw [show F y = QRel (Cube.splitAt i y) by rfl, hz]
+        exact QRel.apply_one _
+    · have ha : (Cube.splitAt i y).2 ∈ Cube.boundary { j // j ≠ i } :=
+        ⟨⟨j, hji⟩, by simpa only [Homeomorph.funSplitAt_apply] using hj⟩
+      change QRel (Cube.splitAt i y) = e
+      exact QRel.prop _ _ ha
   exact ⟨⟨F, hbd⟩, _root_.GenLoop.ext _ _ hpF⟩
 
 end GenLoop
@@ -137,17 +160,6 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) :
   obtain ⟨F, hF⟩ := GenLoop.exists_map_eq hp f
   exact ⟨⟦F⟧, by rw [map_mk, hF]⟩
 
-/-- A covering map is bijective on homotopy groups in dimensions `≥ 2`. -/
-theorem map_bijective [Nontrivial N] (hp : IsCoveringMap p) :
-    Function.Bijective (map (N := N) (⟨p, hp.continuous⟩ : C(E, X)) (rfl : p e = p e)) :=
-  ⟨map_injective hp, map_surjective hp⟩
-
-/-- A covering map induces an injective homomorphism on homotopy groups in every positive
-dimension. -/
-theorem mapHom_injective [DecidableEq N] [Nonempty N] (hp : IsCoveringMap p) :
-    Function.Injective (mapHom (N := N) (⟨p, hp.continuous⟩ : C(E, X)) (rfl : p e = p e)) :=
-  map_injective hp
-
 end HomotopyGroup
 
 /-- **A covering map induces an isomorphism on homotopy groups in dimensions `≥ 2`.**
@@ -157,9 +169,10 @@ type `N` has at least two elements. No connectivity hypothesis on `E` or `X` is 
 halves are statements about lifting cubes. -/
 @[expose] noncomputable def IsCoveringMap.homotopyGroupMulEquiv [DecidableEq N] [Nontrivial N]
     (hp : _root_.IsCoveringMap p) (e : E) :
-    HomotopyGroup N E e ≃* HomotopyGroup N X (p e) :=
-  MulEquiv.ofBijective (HomotopyGroup.mapHom (⟨p, hp.continuous⟩ : C(E, X)) rfl)
-    (HomotopyGroup.map_bijective hp)
+    HomotopyGroup N E e ≃* HomotopyGroup N X (p e) := by
+  classical
+  exact MulEquiv.ofBijective (HomotopyGroup.mapHom (⟨p, hp.continuous⟩ : C(E, X)) rfl)
+    ⟨HomotopyGroup.map_injective hp, HomotopyGroup.map_surjective hp⟩
 
 @[simp]
 theorem IsCoveringMap.homotopyGroupMulEquiv_apply [DecidableEq N] [Nontrivial N]
@@ -169,7 +182,7 @@ theorem IsCoveringMap.homotopyGroupMulEquiv_apply [DecidableEq N] [Nontrivial N]
   rfl
 
 /-- The `π_(n + 2)` form of `TauCeti.IsCoveringMap.homotopyGroupMulEquiv`: a covering map
-`p : E → X` induces isomorphisms `π_n(E, e) ≃* π_n(X, p e)` for every `n ≥ 2`. -/
+`p : E → X` induces `π_(n + 2)(E, e) ≃* π_(n + 2)(X, p e)` for every `n : ℕ`. -/
 @[expose] noncomputable def IsCoveringMap.homotopyGroupPiMulEquiv (hp : _root_.IsCoveringMap p)
     (e : E) (n : ℕ) : π_ (n + 2) E e ≃* π_ (n + 2) X (p e) :=
   IsCoveringMap.homotopyGroupMulEquiv hp e
