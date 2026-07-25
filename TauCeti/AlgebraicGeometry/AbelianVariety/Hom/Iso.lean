@@ -103,7 +103,7 @@ lemma isoToScheme_refl (A : AbelianVariety K) :
 lemma isoToScheme_symm {A B : AbelianVariety K} (e : A ≅ B) :
     isoToScheme e.symm = (isoToScheme e).symm := by
   apply Iso.ext
-  rfl
+  simp only [isoToScheme_hom, Iso.symm_hom, isoToScheme_inv]
 
 /-- Forgetting a composite isomorphism of schemes commutes with composition. -/
 @[simp]
