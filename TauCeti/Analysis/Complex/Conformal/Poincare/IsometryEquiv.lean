@@ -95,6 +95,7 @@ lemma unitDiscStandardAutomorphismIsometryEquiv_symm_apply
     (unitDiscStandardAutomorphismIsometryEquiv u a).symm z =
       Complex.UnitDisc.toPoincare
         (unitDiscMoebiusEquiv (-a) (u⁻¹ • toUnitDisc z)) := by
+  -- Unfold the transport through the identity reinterpretation maps to expose its inverse.
   change Complex.UnitDisc.toPoincare
       ((unitDiscStandardAutomorphismEquiv u a).symm (toUnitDisc z)) = _
   rw [unitDiscStandardAutomorphismEquiv_symm]
