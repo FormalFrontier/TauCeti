@@ -15,8 +15,7 @@ Let `p : E → X` be a covering map and let `e : E`. This file shows that postco
 `p` identifies the homotopy groups of `E` at `e` with those of `X` at `p e`, in every
 dimension `≥ 2`.
 
-Both halves are consequences of Mathlib's covering-space toolkit once the connectivity of the
-cube boundary is available.
+Both halves are consequences of Mathlib's covering-space lifting toolkit.
 
 * **Injectivity** holds already in dimension `≥ 1`. Two generalized loops in `E` whose
   postcompositions with `p` are homotopic relative to the cube boundary are themselves
@@ -26,11 +25,10 @@ cube boundary is available.
   take the value `e`.
 * **Surjectivity** needs dimension `≥ 2`. Splitting off one cube coordinate turns a
   generalized loop `f : I^N → X` into a homotopy `I × I^{j ≠ i} → X` starting at the constant
-  map `p e`; lifting that homotopy through `p` produces a continuous `F : I^N → E` over `f`
-  with `F 0 = e`. On the boundary `F` lifts the constant map `p e`, so uniqueness of lifts on
-  a preconnected domain forces `F` to be constantly `e` there — and the cube boundary is
-  preconnected when the index type has at least two elements
-  (`TauCeti.isPreconnected_cubeBoundary`), which is where `n ≥ 2` enters.
+  map `p e`. Mathlib's `IsCoveringMap.liftHomotopyRel` lifts it relative to the boundary of the
+  remaining coordinates, so the lift is constant there and at both ends of the split
+  coordinate. A second coordinate, supplied by `Nontrivial N`, ensures that every boundary face
+  is of one of these forms.
 
 The conclusion is packaged as a multiplicative equivalence `π_n(E, e) ≃* π_n(X, p e)` for
 `n ≥ 2`, in the general indexed form and in the `Fin (n + 2)` form.
@@ -43,7 +41,7 @@ cover".
 
 * `TauCeti.GenLoop.map_homotopic_iff`: postcomposition with a covering map reflects (and
   preserves) homotopy of generalized loops.
-* `TauCeti.GenLoop.exists_map_eq`: in dimension `≥ 2`, every generalized loop in the base
+* `TauCeti.GenLoop.map_surjective`: in dimension `≥ 2`, every generalized loop in the base
   lifts to a generalized loop in the total space based at a prescribed point of the fibre.
 * `TauCeti.HomotopyGroup.map_injective`, `TauCeti.HomotopyGroup.map_surjective`: the induced
   map on homotopy classes.
@@ -53,8 +51,8 @@ cover".
 
 ## References
 
-The lifting machinery consumed here (`IsCoveringMap.liftHomotopy`,
-`IsCoveringMap.homotopicRel_iff_comp`, `IsCoveringMap.eq_of_comp_eq`) is Junyan Xu's
+The lifting machinery consumed here (`IsCoveringMap.liftHomotopyRel`,
+`IsCoveringMap.homotopicRel_iff_comp`) is Junyan Xu's
 covering-space API in `Mathlib.Topology.Homotopy.Lifting` and
 `Mathlib.Topology.Covering.Basic`. Compare Proposition 4.1 of [hatcher02].
 -/
@@ -87,10 +85,11 @@ theorem map_homotopic_iff [Nonempty N] (hp : IsCoveringMap p) {F G : Ω^ N E e} 
 /-- Every generalized loop in the base of a covering map lifts, in dimensions `≥ 2`, to a
 generalized loop in the total space based at any prescribed point `e` of the fibre.
 
-The index type is assumed nontrivial (equivalently: the dimension is at least `2`), so that
-the cube boundary is preconnected. In dimension `1` the statement is false: a loop in the base
-lifts to a *path* in the total space, whose endpoint need not return to `e`. -/
-theorem exists_map_eq [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) :
+The index type is assumed nontrivial (equivalently: the dimension is at least `2`), so after
+splitting off one coordinate there is another coordinate whose boundary can be held fixed by a
+relative homotopy lift. In dimension `1` the statement is false: a loop in the base lifts to a
+*path* in the total space, whose endpoint need not return to `e`. -/
+theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) :
     ∃ F : Ω^ N E e, map ⟨p, hp.continuous⟩ rfl F = f := by
   classical
   -- Read `f` as a homotopy in the `i`-th cube coordinate; it starts at the constant map `p e`.
@@ -115,6 +114,7 @@ theorem exists_map_eq [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) 
     simp only [Q, QRel, IsCoveringMap.liftHomotopyRel]
     exact hp.liftHomotopy_lifts _ _ _
   let F : C(I^N, E) := Q.comp (Cube.splitAt i)
+  have hF_apply (y : I^N) : F y = QRel (Cube.splitAt i y) := rfl
   have hpF : ∀ y, p (F y) = f y := fun y => by
     calc
       p (F y) = p (Q (Cube.splitAt i y)) := rfl
@@ -129,16 +129,12 @@ theorem exists_map_eq [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) 
       · have ht : (Cube.splitAt i y).1 = 0 := by
           simpa only [Homeomorph.funSplitAt_apply] using hj
         have hz : Cube.splitAt i y = (0, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [show F y = QRel (Cube.splitAt i y) by
-          dsimp only [F, Q]
-          rfl, hz]
+        rw [hF_apply, hz]
         exact QRel.apply_zero _
       · have ht : (Cube.splitAt i y).1 = 1 := by
           simpa only [Homeomorph.funSplitAt_apply] using hj
         have hz : Cube.splitAt i y = (1, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [show F y = QRel (Cube.splitAt i y) by
-          dsimp only [F, Q]
-          rfl, hz]
+        rw [hF_apply, hz]
         exact QRel.apply_one _
     · have ha : (Cube.splitAt i y).2 ∈ Cube.boundary { j // j ≠ i } :=
         ⟨⟨j, hji⟩, by simpa only [Homeomorph.funSplitAt_apply] using hj⟩
@@ -161,7 +157,7 @@ theorem map_injective [Nonempty N] (hp : IsCoveringMap p) :
 theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) :
     Function.Surjective (map (N := N) (⟨p, hp.continuous⟩ : C(E, X)) (rfl : p e = p e)) := by
   refine Quotient.ind fun f => ?_
-  obtain ⟨F, hF⟩ := GenLoop.exists_map_eq hp f
+  obtain ⟨F, hF⟩ := GenLoop.map_surjective hp f
   exact ⟨⟦F⟧, by rw [map_mk, hF]⟩
 
 end HomotopyGroup
