@@ -27,7 +27,11 @@ rewritten before applying the boundedness and Gårding estimates.
 * `TauCeti.PDE.energyIntegrand_principal_add_lowerOrder` and
   `TauCeti.PDE.energyIntegrand_principal_drift_mass`: decomposition into the principal,
   drift, and mass pieces.
-* The corresponding `_apply` lemmas for rewriting pointwise energy densities.
+* `TauCeti.PDE.energyIntegrand_add_apply`, `TauCeti.PDE.energyIntegrand_neg_apply`,
+  `TauCeti.PDE.energyIntegrand_sub_apply`, and `TauCeti.PDE.energyIntegrand_smul_apply`:
+  pointwise evaluation forms of coefficient linearity.
+* `TauCeti.PDE.energyIntegrand_eq_one_zero_baseMass_add_perturbation` and its `_apply`
+  form: shifted-Laplacian-plus-residual decomposition with a chosen base mass.
 -/
 
 public section
@@ -130,13 +134,6 @@ lemma energyIntegrand_principal_add_lowerOrder :
   simpa using
     (energyIntegrand_add A (0 : Matrix n n ℝ) (0 : EuclideanSpace ℝ n) b 0 c)
 
-/-- Pointwise evaluation of the decomposition into principal and lower-order parts. -/
-lemma energyIntegrand_principal_add_lowerOrder_apply :
-    energyIntegrand A b c U V =
-      energyIntegrand A 0 0 U V + energyIntegrand 0 b c U V := by
-  rw [energyIntegrand_principal_add_lowerOrder]
-  rfl
-
 /-- The full energy integrand splits into its principal, drift, and mass pieces. -/
 lemma energyIntegrand_principal_drift_mass :
     energyIntegrand A b c =
@@ -149,14 +146,6 @@ lemma energyIntegrand_principal_drift_mass :
         (0 : EuclideanSpace ℝ n) 0 c)
   rw [h]
   abel
-
-/-- Pointwise evaluation of the decomposition into principal, drift, and mass pieces. -/
-lemma energyIntegrand_principal_drift_mass_apply :
-    energyIntegrand A b c U V =
-      energyIntegrand A 0 0 U V + energyIntegrand 0 b 0 U V +
-        energyIntegrand 0 0 c U V := by
-  rw [energyIntegrand_principal_drift_mass]
-  rfl
 
 variable [DecidableEq n]
 
@@ -190,14 +179,6 @@ lemma energyIntegrand_eq_one_zero_mass_add_perturbation :
   simpa using
     (energyIntegrand_eq_one_zero_baseMass_add_perturbation
       (A := A) (b := b) (c := c) (m := c))
-
-/-- Pointwise form of the shifted-Laplacian-plus-perturbation decomposition. -/
-lemma energyIntegrand_eq_one_zero_mass_add_perturbation_apply :
-    energyIntegrand A b c U V =
-      energyIntegrand (1 : Matrix n n ℝ) 0 c U V +
-        energyIntegrand (A - 1) b 0 U V := by
-  rw [energyIntegrand_eq_one_zero_mass_add_perturbation]
-  rfl
 
 end PDE
 
