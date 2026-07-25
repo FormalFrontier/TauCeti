@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.PiL2
-public import Mathlib.LinearAlgebra.UnitaryGroup
 
 /-!
 # Orthogonal matrices as linear isometries
