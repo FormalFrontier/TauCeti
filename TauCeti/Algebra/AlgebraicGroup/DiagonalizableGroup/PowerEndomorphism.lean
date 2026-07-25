@@ -81,7 +81,6 @@ noncomputable local instance multiplicativeGroupPointsCommGroup :
 /-- **The power endomorphism is the power map.** The `z`th power endomorphism of
 `𝔾ₘ = D(Multiplicative ℤ)`, defined through the diagonalizable-group functoriality, acts on the
 convolution group of points as the genuine `z`th power `f ↦ f ^ z`. -/
-@[simp]
 theorem powEnd_apply (z : ℤ) (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
     powEnd z f = f ^ z := by
   apply pointsMulEquiv_ext
@@ -111,7 +110,7 @@ theorem powEnd_add (a b : ℤ) :
 theorem powEnd_neg (a : ℤ) :
     powEnd (R := R) (A := A) (-a) = (powEnd (R := R) (A := A) a)⁻¹ := by
   ext f
-  simp
+  simp [powEnd_apply]
 
 /-- **The power endomorphism is the canonical integer action.** Passing to additive notation on
 the abelian group `𝔾ₘ(A)` of points, the endomorphism `powEnd z` acts as the `z`-fold operation
@@ -122,7 +121,7 @@ exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical
 theorem toAdditive_powEnd_apply (z : ℤ)
     (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a = z • a := by
-  simp
+  simp [powEnd_apply]
 
 /-- The ring homomorphism from integers to additive endomorphisms of `𝔾ₘ(A)` realized by the
 power endomorphisms. -/
@@ -133,7 +132,7 @@ noncomputable def powEndRingHom :=
 /-- The canonical integer endomorphism is the additive form of the power endomorphism. -/
 @[simp]
 theorem powEndRingHom_apply (z : ℤ) :
-    powEndRingHom (R := R) (A := A) z =
+    (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) =
       MonoidHom.toAdditive (powEnd (R := R) (A := A) z) := by
   apply AddMonoidHom.ext
   intro a
