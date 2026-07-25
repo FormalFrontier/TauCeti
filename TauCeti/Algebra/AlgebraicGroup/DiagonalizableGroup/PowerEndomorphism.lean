@@ -27,7 +27,7 @@ on the abelian group of `𝔾ₘ`-points, the family realizes the canonical inte
 `MonoidHom.toAdditive (powEnd z)` sends a point to `z • a` (`toAdditive_powEnd_apply`), i.e. the
 power endomorphisms are the power-map realization of the ring homomorphism `ℤ → End(𝔾ₘ(A))`. On
 the group of points of a *fixed* algebra `A` this map need not be injective (for instance when
-`Aˣ` is torsion), so it is honestly only a ring homomorphism, not an isomorphism.
+`Aˣ` has finite exponent), so it is honestly only a ring homomorphism, not an isomorphism.
 
 The power-map description also reads off the character–cocharacter pairing directly: composing
 a character `m` after a cocharacter `ψ` of `D(M)` raises a `𝔾ₘ`-point to the `⟨m, ψ⟩` power
@@ -45,8 +45,8 @@ and "the ring `End(𝔾ₘ) ≅ ℤ` on the level of power maps").
 * `TauCeti.DiagonalizableGroup.powEnd_zero`, `TauCeti.DiagonalizableGroup.powEnd_add`,
   `TauCeti.DiagonalizableGroup.powEnd_neg`: the additive-in-the-exponent structure of the power
   endomorphisms, complementing the existing multiplicative `powEnd_comp` / `powEnd_one`.
-* `TauCeti.DiagonalizableGroup.toAdditive_powEnd_apply`: in additive notation, `powEnd z` acts as
-  the canonical integer action `a ↦ z • a`, the power-map realization of `ℤ → End(𝔾ₘ(A))`.
+* `TauCeti.DiagonalizableGroup.powEndRingHom`: the bundled ring homomorphism
+  `ℤ →+* AddMonoid.End (Additive 𝔾ₘ(A))`, whose values are the additive forms of `powEnd z`.
 * `TauCeti.DiagonalizableGroup.mapValue_powEnd`: the power endomorphism is natural in the value
   algebra.
 * `TauCeti.DiagonalizableGroup.charPoints_cocharPoints_apply`: the character–cocharacter pairing
@@ -73,9 +73,14 @@ namespace DiagonalizableGroup
 
 variable {R : Type u} {A : Type v} [CommSemiring R] [CommSemiring A] [Algebra R A]
 
+noncomputable local instance :
+    CommGroup (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :=
+  AlgHom.instCommGroup
+
 /-- **The power endomorphism is the power map.** The `z`th power endomorphism of
 `𝔾ₘ = D(Multiplicative ℤ)`, defined through the diagonalizable-group functoriality, acts on the
 convolution group of points as the genuine `z`th power `f ↦ f ^ z`. -/
+@[simp]
 theorem powEnd_apply (z : ℤ) (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
     powEnd z f = f ^ z := by
   apply pointsMulEquiv_ext
@@ -93,6 +98,7 @@ theorem powEnd_zero :
 endomorphisms of `𝔾ₘ` (pointwise multiplication of homomorphisms into the commutative group of
 points), `powEnd (a + b) = powEnd a * powEnd b`. This is the addition of the endomorphism ring
 `End(𝔾ₘ) ≅ ℤ`, complementing the multiplication `powEnd_comp`. -/
+@[simp]
 theorem powEnd_add (a b : ℤ) :
     powEnd (R := R) (A := A) (a + b) = powEnd a * powEnd b := by
   ext f
@@ -100,33 +106,51 @@ theorem powEnd_add (a b : ℤ) :
 
 /-- The power endomorphism of a negated exponent is the pointwise inverse endomorphism:
 `powEnd (-a)` sends a point to the inverse of its image under `powEnd a`. -/
-theorem powEnd_neg (a : ℤ)
-    (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
-    powEnd (-a) f = (powEnd a f)⁻¹ := by
-  rw [powEnd_apply, powEnd_apply]
-  exact zpow_neg f a
+@[simp]
+theorem powEnd_neg (a : ℤ) :
+    powEnd (R := R) (A := A) (-a) = (powEnd (R := R) (A := A) a)⁻¹ := by
+  ext f
+  simp
 
 /-- **The power endomorphism is the canonical integer action.** Passing to additive notation on
 the abelian group `𝔾ₘ(A)` of points, the endomorphism `powEnd z` acts as the `z`-fold operation
 `a ↦ z • a`. Together with `powEnd_zero`, `powEnd_one`, `powEnd_add`, and `powEnd_comp`, this
 exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical ring homomorphism
-`ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective. -/
+`ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for example when
+`Aˣ` has finite exponent. -/
+@[simp]
 theorem toAdditive_powEnd_apply (z : ℤ)
     (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a = z • a := by
-  rw [MonoidHom.coe_toAdditive, Function.comp_apply, Function.comp_apply, powEnd_apply, ofMul_zpow,
-    ofMul_toMul]
+  simp
+
+/-- The ring homomorphism from integers to additive endomorphisms of `𝔾ₘ(A)` realized by the
+power endomorphisms. -/
+noncomputable def powEndRingHom :=
+  Int.castRingHom
+    (AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))))
+
+/-- The canonical integer endomorphism is the additive form of the power endomorphism. -/
+@[simp]
+theorem powEndRingHom_apply (z : ℤ)
+    (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
+    powEndRingHom (R := R) (A := A) z a =
+      MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a := by
+  simp [powEndRingHom]
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 
 /-- **The power endomorphism is natural in the value algebra.** Post-composing a point with an
 `R`-algebra map `φ : A →ₐ[R] B` commutes with the `z`th power endomorphism, so `powEnd z` is a
 natural transformation of the functor of points of `𝔾ₘ`. -/
-theorem mapValue_powEnd (φ : A →ₐ[R] B) (z : ℤ)
-    (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
-    AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ (powEnd z f) =
-      powEnd z (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ f) := by
-  rw [powEnd_apply, powEnd_apply, map_zpow]
+theorem mapValue_powEnd (φ : A →ₐ[R] B) (z : ℤ) :
+    (powEnd (A := B) z).comp
+        (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ) =
+      (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ).comp
+        (powEnd (A := A) z) := by
+  apply MonoidHom.ext
+  intro f
+  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, powEnd_apply, powEnd_apply, map_zpow]
 
 variable {M : Type w} [CommGroup M]
 
