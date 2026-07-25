@@ -4,14 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.PoincareMetricSpace
+public import TauCeti.Analysis.Complex.Conformal.Poincare.MetricSpace
 
 /-!
 # Disc automorphisms as Poincaré isometric equivalences
 
 This file bundles the standard automorphisms of the complex unit disc as isometric
 equivalences of `PoincareDisc`. The underlying distance-preservation results are proved in
-`PoincareMetricSpace.lean`; the bundled form records both the isometry and the inverse and is
+`Poincare/MetricSpace.lean`; the bundled form records both the isometry and the inverse and is
 therefore the natural API for the automorphism group acting on the Poincaré disc.
 
 The main constructions are:
@@ -39,7 +39,7 @@ namespace PoincareDisc
 
 /-- A hyperbolic-distance-preserving equivalence of the unit disc induces an isometric
 equivalence of the Poincaré disc. -/
-@[expose] noncomputable def isometryEquivOfHyperbolicDistEq
+noncomputable def isometryEquivOfHyperbolicDistEq
     (e : Complex.UnitDisc ≃ Complex.UnitDisc)
     (he : ∀ z w : Complex.UnitDisc,
       hyperbolicDist (e z : ℂ) (e w : ℂ) = hyperbolicDist (z : ℂ) (w : ℂ)) :
@@ -71,39 +71,14 @@ lemma isometryEquivOfHyperbolicDistEq_symm (e : Complex.UnitDisc ≃ Complex.Uni
   ext z
   rfl
 
-/-- The disc Moebius automorphism centred at `a` as an isometric equivalence of the Poincaré
-disc. -/
-@[expose] noncomputable def unitDiscMoebiusIsometryEquiv (a : Complex.UnitDisc) :
-    PoincareDisc ≃ᵢ PoincareDisc :=
-  isometryEquivOfHyperbolicDistEq (unitDiscMoebiusEquiv a)
-    (fun z w => by
-      simpa only [unitDiscMoebiusEquiv_apply, coe_unitDiscMoebius] using
-        hyperbolicDist_unitDiscMoebius a z w)
-
-/-- The Moebius Poincaré isometry acts by the usual unit-disc Moebius automorphism. -/
-@[simp]
-lemma unitDiscMoebiusIsometryEquiv_apply (a : Complex.UnitDisc) (z : PoincareDisc) :
-    unitDiscMoebiusIsometryEquiv a z =
-      Complex.UnitDisc.toPoincare (unitDiscMoebius a (toUnitDisc z)) :=
-  congrArg Complex.UnitDisc.toPoincare (unitDiscMoebiusEquiv_apply a (toUnitDisc z))
-
-/-- The inverse of the Moebius Poincaré isometry centred at `a` is the one centred at `-a`. -/
-@[simp]
-lemma unitDiscMoebiusIsometryEquiv_symm (a : Complex.UnitDisc) :
-    (unitDiscMoebiusIsometryEquiv a).symm = unitDiscMoebiusIsometryEquiv (-a) := by
-  rw [unitDiscMoebiusIsometryEquiv, isometryEquivOfHyperbolicDistEq_symm]
-  apply IsometryEquiv.toEquiv_injective
-  exact congrArg
-    (fun e : Complex.UnitDisc ≃ Complex.UnitDisc =>
-      toUnitDisc.trans (e.trans Complex.UnitDisc.toPoincare))
-    (unitDiscMoebiusEquiv_symm a)
-
 /-- The standard disc automorphism with rotation `u` and center `a` as an isometric
 equivalence of the Poincaré disc. -/
-@[expose] noncomputable def unitDiscStandardAutomorphismIsometryEquiv
+noncomputable def unitDiscStandardAutomorphismIsometryEquiv
     (u : Circle) (a : Complex.UnitDisc) : PoincareDisc ≃ᵢ PoincareDisc :=
-  isometryEquivOfHyperbolicDistEq (unitDiscStandardAutomorphismEquiv u a)
-    (fun z w => hyperbolicDist_unitDiscStandardAutomorphismEquiv u a z w)
+  { toEquiv :=
+      toUnitDisc.trans
+        ((unitDiscStandardAutomorphismEquiv u a).trans Complex.UnitDisc.toPoincare)
+    isometry_toFun := isometry_unitDiscStandardAutomorphismEquiv u a }
 
 /-- The standard Poincaré isometry acts by the standard unit-disc automorphism. -/
 @[simp]
@@ -114,14 +89,49 @@ lemma unitDiscStandardAutomorphismIsometryEquiv_apply
         (unitDiscStandardAutomorphismEquiv u a (toUnitDisc z)) :=
   (rfl)
 
+/-- The inverse of the standard Poincaré isometry applies the inverse rotation followed by the
+inverse Moebius factor. -/
+@[simp]
+lemma unitDiscStandardAutomorphismIsometryEquiv_symm_apply
+    (u : Circle) (a : Complex.UnitDisc) (z : PoincareDisc) :
+    (unitDiscStandardAutomorphismIsometryEquiv u a).symm z =
+      Complex.UnitDisc.toPoincare
+        (unitDiscMoebiusEquiv (-a) (u⁻¹ • toUnitDisc z)) := by
+  change Complex.UnitDisc.toPoincare
+      ((unitDiscStandardAutomorphismEquiv u a).symm (toUnitDisc z)) = _
+  rw [unitDiscStandardAutomorphismEquiv_symm]
+  rfl
+
+/-- The disc Moebius automorphism centred at `a` as an isometric equivalence of the Poincaré
+disc. -/
+noncomputable def unitDiscMoebiusIsometryEquiv (a : Complex.UnitDisc) :
+    PoincareDisc ≃ᵢ PoincareDisc :=
+  unitDiscStandardAutomorphismIsometryEquiv 1 a
+
+/-- The Moebius Poincaré isometry acts by the usual unit-disc Moebius automorphism. -/
+@[simp]
+lemma unitDiscMoebiusIsometryEquiv_apply (a : Complex.UnitDisc) (z : PoincareDisc) :
+    unitDiscMoebiusIsometryEquiv a z =
+      Complex.UnitDisc.toPoincare (unitDiscMoebius a (toUnitDisc z)) := by
+  rw [unitDiscMoebiusIsometryEquiv,
+    unitDiscStandardAutomorphismIsometryEquiv_apply]
+  rw [unitDiscStandardAutomorphismEquiv_one, unitDiscMoebiusEquiv_apply]
+
+/-- The inverse of the Moebius Poincaré isometry centred at `a` is the one centred at `-a`. -/
+@[simp]
+lemma unitDiscMoebiusIsometryEquiv_symm (a : Complex.UnitDisc) :
+    (unitDiscMoebiusIsometryEquiv a).symm = unitDiscMoebiusIsometryEquiv (-a) := by
+  ext z
+  simp [unitDiscMoebiusIsometryEquiv]
+
 /-- With unit rotation factor, the standard Poincaré isometry is the Moebius isometry. -/
 @[simp]
 lemma unitDiscStandardAutomorphismIsometryEquiv_one (a : Complex.UnitDisc) :
-    unitDiscStandardAutomorphismIsometryEquiv 1 a = unitDiscMoebiusIsometryEquiv a := by
-  ext z
-  simp
+    unitDiscStandardAutomorphismIsometryEquiv 1 a = unitDiscMoebiusIsometryEquiv a :=
+  (rfl)
 
 /-- The standard Poincaré isometry sends its center to the origin. -/
+@[simp]
 lemma unitDiscStandardAutomorphismIsometryEquiv_self
     (u : Circle) (a : Complex.UnitDisc) :
     unitDiscStandardAutomorphismIsometryEquiv u a
