@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Topology.MetricSpace.Lipschitz
 public import Mathlib.Topology.UniformSpace.Equicontinuity
 import Mathlib.Analysis.Calculus.MeanValue
-import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Topology.MetricSpace.Equicontinuity
 import Mathlib.Topology.MetricSpace.Thickening
