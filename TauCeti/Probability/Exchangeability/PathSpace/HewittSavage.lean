@@ -18,7 +18,38 @@ import Mathlib.MeasureTheory.Constructions.ProjectiveFamilyContent
 /-!
 # The Hewitt–Savage zero-one law
 
-Work in progress.
+For an i.i.d. sequence, the exchangeable (symmetric) σ-algebra on path space is trivial:
+every exchangeable event has probability `0` or `1` (`hewittSavage_trivial_of_iIndep`).
+
+This is strictly stronger than Kolmogorov's tail zero-one law. Tail triviality holds for any
+independent sequence, whereas the symmetric σ-algebra contains events that are not tail events —
+`{p | ∃ n, p n ∈ B}` is invariant under every finitely supported permutation but depends on the
+early coordinates — and the statement genuinely needs the identically-distributed hypothesis,
+which is what makes the path law exchangeable in the first place.
+
+## Main results
+
+* `hewittSavage_trivial_of_iIndep` — the zero-one law, from `iIndepFun` and `IdentDistrib`.
+* `measure_eq_zero_or_one_of_exchangeableSigma` — the abstract form, over an exchangeable path law
+  in which cylinders over disjoint index blocks are independent.
+* `measureReal_sq_of_exchangeableSigma` — the squaring identity `q = q²` behind it.
+
+## The argument
+
+Approximate an exchangeable event by a cylinder over `[0, N)`, then move that cylinder onto the
+disjoint block `[N, 2N)`. The mover is `blockSwap N`, the half-swap of `Fin (N + N)` transported
+to `ℕ`: it is finitely supported, hence admissible for `exchangeableSigma`, so it fixes the event
+while preserving the law. Independence then factors the event against its own moved copy, and
+letting the approximation tighten gives `q = q²`.
+
+The independence step lives on the source space rather than on path space —
+`iIndepFun.indepFun_finset` applies to the coordinate tuples of `X`, and `Measure.map_apply`
+transfers the resulting identity to `pathLaw μ X`. Stating it directly for a path-space measure
+would first need a lemma transferring `iIndepFun` to the coordinate projections.
+
+This discharges the Layer 2 target `hewittSavage_trivial_of_iIndep` of
+`TauCetiRoadmap/Exchangeability/README.md`, and supplies the Layer 2 input the roadmap records for
+the Layer 6 extreme-point corollary (the extreme exchangeable laws are exactly the i.i.d. laws).
 -/
 
 public section
