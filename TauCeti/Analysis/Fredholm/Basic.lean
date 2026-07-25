@@ -203,13 +203,14 @@ namespace ContinuousLinearMap
 
 /-- The **index** of a continuous linear map, `dim ker T − dim coker T`, defined as the index of
 the underlying linear map. For non-Fredholm operators the value is junk, matching the convention of
-`LinearMap.index`. -/
-noncomputable def index (T : E →L[𝕜] F) : ℤ := (T : E →ₗ[𝕜] F).index
+`LinearMap.index`. The body is exposed so that downstream modules can use the definitional bridge
+`index_def`. -/
+@[expose] noncomputable def index (T : E →L[𝕜] F) : ℤ := (T : E →ₗ[𝕜] F).index
 
 /-- The Fredholm index unfolds to the algebraic `LinearMap.index` of the underlying linear map.
-Internal bridge to the reused Mathlib API; the public characteristic equation is
+This is the bridge to the reused Mathlib API; the characteristic equation is
 `index_eq_finrank_sub`. -/
-private lemma index_def (T : E →L[𝕜] F) : index T = (T : E →ₗ[𝕜] F).index := rfl
+lemma index_def (T : E →L[𝕜] F) : index T = (T : E →ₗ[𝕜] F).index := rfl
 
 /-- The index is `dim ker T − dim coker T`. -/
 lemma index_eq_finrank_sub (T : E →L[𝕜] F) :
