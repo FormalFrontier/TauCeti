@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 public import Mathlib.Probability.Independence.ZeroOne
 -- Non-public: used only inside proofs.
 import Mathlib.Logic.Equiv.Fintype
@@ -157,6 +158,114 @@ theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω} [IsProbabil
   exact (ProbabilityTheory.indepSet_iff_measure_inter_eq_mul (hfS hS) (hfT hT) μ).mp hind
 
 end Independence
+
+section ZeroOne
+
+variable {α : Type*} [MeasurableSpace α]
+
+omit [MeasurableSpace α] in
+private theorem symmDiff_inter_subset {t t' s : Set (ℕ → α)} :
+    symmDiff (t ∩ t') s ⊆ symmDiff t s ∪ symmDiff t' s := by
+  intro x hx
+  simp only [Set.mem_union, symmDiff, Set.sup_eq_union, Set.mem_union, Set.mem_sdiff,
+    Set.mem_inter_iff] at hx ⊢
+  tauto
+
+/-- **The squaring identity.** Under an exchangeable path law in which cylinders over disjoint
+index blocks are independent, an exchangeable event has measure equal to its own square.
+
+The mechanism is the classical one: approximate the event by a cylinder over `[0, N)`, move that
+cylinder onto the disjoint block `[N, 2N)` by `blockSwap N` — which fixes the event, being
+exchangeable, and preserves the law — and let independence factor the two copies. -/
+theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+    (hexch : ExchangeableLaw ρ)
+    (hprod : ∀ {F G : Finset ℕ}, Disjoint F G → ∀ {S : Set (∀ _i : F, α)}, MeasurableSet S →
+      ∀ {T : Set (∀ _j : G, α)}, MeasurableSet T →
+      ρ (cylinder (α := fun _ : ℕ => α) F S ∩ cylinder (α := fun _ : ℕ => α) G T)
+        = ρ (cylinder (α := fun _ : ℕ => α) F S) * ρ (cylinder (α := fun _ : ℕ => α) G T))
+    {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
+    ρ.real s = ρ.real s * ρ.real s := by
+  have hs_meas : MeasurableSet s := MeasurableSet.ambient_of_exchangeableSigma hs
+  by_contra hne
+  set q := ρ.real s with hq
+  have hdpos : 0 < |q - q * q| := abs_pos.mpr (sub_ne_zero.mpr hne)
+  set d := |q - q * q| with hd
+  have h5 : 0 < d / 5 := by linarith
+  obtain ⟨F, S, hS, hFS⟩ := exists_cylinder_measure_symmDiff_lt (ρ := ρ) hs_meas
+    (ε := ENNReal.ofReal (d / 5)) (ENNReal.ofReal_pos.mpr h5)
+  obtain ⟨N, hN⟩ := Finset.exists_nat_subset_range F
+  set π := blockSwap N with hπ
+  set t := cylinder (α := fun _ : ℕ => α) F S with ht
+  have ht_meas : MeasurableSet t := measurableSet_cylinder F hS
+  set t' := permReindex (α := α) π ⁻¹' t with ht'
+  have ht'_meas : MeasurableSet t' := ht_meas.preimage (measurable_reindex π)
+  -- the moved copy is a cylinder over the disjoint block `F.map π`
+  have ht'_cyl : t' = cylinder (α := fun _ : ℕ => α) (F.map (Equiv.toEmbedding π))
+      (pullMoved π F α ⁻¹' S) := preimage_permReindex_cylinder π F S
+  -- the event is fixed, and the law is preserved, so the moved cylinder approximates it too
+  have hs_inv : permReindex (α := α) π ⁻¹' s = s :=
+    MeasurableSet.preimage_permReindex_eq_of_exchangeableSigma hs (blockSwap_finite_support N)
+  have hpres := hexch.measurePreserving_permReindex π
+  have ht'_symm : ρ (symmDiff t' s) = ρ (symmDiff t s) := by
+    have : symmDiff t' s = permReindex (α := α) π ⁻¹' symmDiff t s := by
+      rw [Set.preimage_symmDiff, hs_inv]
+    rw [this, hpres.measure_preimage (ht_meas.symmDiff hs_meas).nullMeasurableSet]
+  -- pass to real-valued measures
+  have htoReal : ∀ {A : Set (ℕ → α)}, ρ A < ENNReal.ofReal (d / 5) → ρ.real A < d / 5 := by
+    intro A hA
+    have := (ENNReal.toReal_lt_toReal (measure_ne_top ρ A) ENNReal.ofReal_ne_top).mpr hA
+    rwa [ENNReal.toReal_ofReal h5.le] at this
+  have h1 : ρ.real (symmDiff t s) < d / 5 := htoReal hFS
+  have h2 : ρ.real (symmDiff t' s) < d / 5 := htoReal (ht'_symm ▸ hFS)
+  have hbt : |ρ.real t - q| < d / 5 :=
+    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff ht_meas.nullMeasurableSet
+      hs_meas.nullMeasurableSet) h1
+  have hbt' : |ρ.real t' - q| < d / 5 :=
+    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff ht'_meas.nullMeasurableSet
+      hs_meas.nullMeasurableSet) h2
+  -- independence factors the intersection
+  have hinter : ρ.real (t ∩ t') = ρ.real t * ρ.real t' := by
+    rw [Measure.real, Measure.real, Measure.real, ht'_cyl, ht,
+      hprod (disjoint_map_blockSwap hN) hS (hS.preimage (measurable_pullMoved π F)),
+      ENNReal.toReal_mul]
+  -- and the intersection still approximates the event
+  have hIS : ρ.real (symmDiff (t ∩ t') s) < 2 * (d / 5) := by
+    calc ρ.real (symmDiff (t ∩ t') s)
+        ≤ ρ.real (symmDiff t s ∪ symmDiff t' s) :=
+          measureReal_mono symmDiff_inter_subset (by finiteness)
+      _ ≤ ρ.real (symmDiff t s) + ρ.real (symmDiff t' s) := measureReal_union_le _ _
+      _ < 2 * (d / 5) := by linarith
+  have hbi : |ρ.real (t ∩ t') - q| < 2 * (d / 5) :=
+    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff
+      (ht_meas.inter ht'_meas).nullMeasurableSet hs_meas.nullMeasurableSet) hIS
+  -- bounded by one, so the product is close to `q * q`
+  have hone : ∀ A : Set (ℕ → α), ρ.real A ≤ 1 := fun A => by simp
+  have hq1 : q ≤ 1 := hone s
+  have hq0 : 0 ≤ q := measureReal_nonneg
+  have hone_t' : ρ.real t' ≤ 1 := hone t'
+  have hprodclose : |ρ.real t * ρ.real t' - q * q| < 2 * (d / 5) := by
+    have e : ρ.real t * ρ.real t' - q * q
+        = (ρ.real t - q) * ρ.real t' + q * (ρ.real t' - q) := by ring
+    calc |ρ.real t * ρ.real t' - q * q|
+        ≤ |(ρ.real t - q) * ρ.real t'| + |q * (ρ.real t' - q)| := by
+          rw [e]; exact abs_add_le _ _
+      _ = |ρ.real t - q| * ρ.real t' + q * |ρ.real t' - q| := by
+          rw [abs_mul, abs_mul, abs_of_nonneg measureReal_nonneg, abs_of_nonneg hq0]
+      _ < 2 * (d / 5) := by
+          nlinarith [hone_t', abs_nonneg (ρ.real t - q), abs_nonneg (ρ.real t' - q),
+            measureReal_nonneg (μ := ρ) (s := t')]
+  have : d < 4 * (d / 5) := by
+    calc d = |q - q * q| := hd
+      _ ≤ |q - ρ.real (t ∩ t')| + |ρ.real (t ∩ t') - q * q| := by
+          have : q - q * q = (q - ρ.real (t ∩ t')) + (ρ.real (t ∩ t') - q * q) := by ring
+          rw [this]; exact abs_add_le _ _
+      _ < 2 * (d / 5) + 2 * (d / 5) := by
+          rw [hinter] at hbi ⊢
+          exact add_lt_add (by rwa [abs_sub_comm]) hprodclose
+      _ = 4 * (d / 5) := by ring
+  linarith
+
+end ZeroOne
 
 end Probability
 
