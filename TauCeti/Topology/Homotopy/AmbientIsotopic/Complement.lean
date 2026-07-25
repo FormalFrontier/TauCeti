@@ -22,9 +22,9 @@ proved.
 
 Everything is stated for arbitrary continuous maps `f : C(X, Y)`, since the range and its
 complement make sense without an embedding hypothesis; the embedded case (knots) is the intended
-specialisation. The witnessing homeomorphism is a restriction of the ambient isotopy's final
-homeomorphism `Φ.finalHomeomorph`, so it is compatible with all the naturality already recorded
-for that homeomorphism in `TauCeti.Topology.Homotopy.Isotopy.Basic`.
+specialisation. Both witnessing homeomorphisms are restrictions of the ambient isotopy's final
+homeomorphism `Φ.finalHomeomorph`: their underlying-value maps are `Φ.finalHomeomorph` itself and
+their inverses are `Φ.finalHomeomorph.symm`, as recorded by the `coe_…_apply` lemmas below.
 
 ## Main definitions
 
@@ -59,33 +59,49 @@ map `Φ.final.comp f`: the image `Φ.finalHomeomorph '' range f` is `range (Φ.f
 theorem range_final_comp :
     Set.range (Φ.final.comp f) = Φ.finalHomeomorph '' Set.range f := by
   rw [ContinuousMap.coe_comp, Set.range_comp]
-  rfl
+  exact Set.image_congr' fun y => (Φ.finalHomeomorph_apply y).symm
+
+/-- A point lies in `range f` exactly when its image under the final homeomorphism lies in the
+range of the moved map. This is the compatibility that lets the final homeomorphism restrict to
+the ranges (and, negated, to the complements). -/
+theorem mem_range_iff (y : Y) :
+    y ∈ Set.range f ↔ Φ.finalHomeomorph y ∈ Set.range (Φ.final.comp f) := by
+  rw [range_final_comp, Φ.finalHomeomorph.injective.mem_set_image]
 
 /-- A point misses `range f` exactly when its image under the final homeomorphism misses the range
 of the moved map. This is the compatibility that lets the final homeomorphism restrict to the
 complements. -/
 theorem notMem_range_iff (y : Y) :
-    y ∉ Set.range f ↔ Φ.finalHomeomorph y ∉ Set.range (Φ.final.comp f) := by
-  rw [range_final_comp, Φ.finalHomeomorph.injective.mem_set_image]
+    y ∉ Set.range f ↔ Φ.finalHomeomorph y ∉ Set.range (Φ.final.comp f) :=
+  (Φ.mem_range_iff f y).not
 
 /-- The homeomorphism of ranges induced by an ambient isotopy: `Φ.finalHomeomorph` restricts to a
 homeomorphism from `range f` onto the range of the moved map `Φ.final.comp f`. -/
-@[expose] noncomputable def rangeHomeomorph : Set.range f ≃ₜ Set.range (Φ.final.comp f) :=
-  (Homeomorph.image Φ.finalHomeomorph (Set.range f)).trans
-    (Homeomorph.setCongr (Φ.range_final_comp f).symm)
+noncomputable def rangeHomeomorph : Set.range f ≃ₜ Set.range (Φ.final.comp f) :=
+  Φ.finalHomeomorph.subtype (Φ.mem_range_iff f)
 
-theorem rangeHomeomorph_coe_apply (y : Set.range f) :
-    (Φ.rangeHomeomorph f y : Y) = Φ.finalHomeomorph y := rfl
+theorem coe_rangeHomeomorph_apply (y : Set.range f) :
+    (Φ.rangeHomeomorph f y : Y) = Φ.finalHomeomorph y := by
+  rw [rangeHomeomorph, Homeomorph.subtype_apply_coe]
+
+theorem coe_rangeHomeomorph_symm_apply (y : Set.range (Φ.final.comp f)) :
+    ((Φ.rangeHomeomorph f).symm y : Y) = Φ.finalHomeomorph.symm y := by
+  rw [rangeHomeomorph, Homeomorph.subtype_symm_apply_coe]
 
 /-- The homeomorphism of complements induced by an ambient isotopy: `Φ.finalHomeomorph` restricts
 to a homeomorphism from `(range f)ᶜ` onto `(range (Φ.final.comp f))ᶜ`. This is the point-set core
 of knot-complement invariance under ambient isotopy. -/
-@[expose] noncomputable def complementHomeomorph :
+noncomputable def complementHomeomorph :
     ↥(Set.range f)ᶜ ≃ₜ ↥(Set.range (Φ.final.comp f))ᶜ :=
   Φ.finalHomeomorph.subtype (Φ.notMem_range_iff f)
 
-theorem complementHomeomorph_coe_apply (y : ↥(Set.range f)ᶜ) :
-    (Φ.complementHomeomorph f y : Y) = Φ.finalHomeomorph y := rfl
+theorem coe_complementHomeomorph_apply (y : ↥(Set.range f)ᶜ) :
+    (Φ.complementHomeomorph f y : Y) = Φ.finalHomeomorph y := by
+  rw [complementHomeomorph, Homeomorph.subtype_apply_coe]
+
+theorem coe_complementHomeomorph_symm_apply (y : ↥(Set.range (Φ.final.comp f))ᶜ) :
+    ((Φ.complementHomeomorph f).symm y : Y) = Φ.finalHomeomorph.symm y := by
+  rw [complementHomeomorph, Homeomorph.subtype_symm_apply_coe]
 
 end AmbientIsotopy
 
