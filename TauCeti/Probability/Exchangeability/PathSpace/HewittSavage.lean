@@ -10,6 +10,7 @@ public import Mathlib.Probability.Independence.ZeroOne
 import Mathlib.Logic.Equiv.Fintype
 import Mathlib.MeasureTheory.Measure.MeasuredSets
 import Mathlib.MeasureTheory.Constructions.Cylinders
+import Mathlib.MeasureTheory.Constructions.ProjectiveFamilyContent
 
 /-!
 # The Hewitt–Savage zero-one law
@@ -22,6 +23,8 @@ public section
 noncomputable section
 
 open MeasureTheory Set
+
+open scoped ENNReal
 
 namespace TauCeti
 
@@ -97,6 +100,24 @@ theorem preimage_permReindex_cylinder (π : Equiv.Perm ℕ) (F : Finset ℕ)
 theorem measurable_pullMoved [MeasurableSpace α] (π : Equiv.Perm ℕ) (F : Finset ℕ) :
     Measurable (pullMoved π F α) :=
   measurable_pi_lambda _ fun _ => measurable_pi_apply _
+
+/-- Every measurable path-space event is approximated, in measure, by a measurable cylinder over a
+finite index set. -/
+theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : Measure (ℕ → α)}
+    [IsFiniteMeasure ρ] {s : Set (ℕ → α)} (hs : MeasurableSet s) {ε : ℝ≥0∞} (hε : 0 < ε) :
+    ∃ (F : Finset ℕ) (S : Set (∀ _i : F, α)),
+      MeasurableSet S ∧ ρ (symmDiff (cylinder F S) s) < ε := by
+  have hcov : ∃ D : Set (Set (ℕ → α)), D.Countable ∧
+      D ⊆ measurableCylinders (fun _ : ℕ => α) ∧ ρ (⋃₀ D)ᶜ = 0 := by
+    refine ⟨{Set.univ}, Set.countable_singleton _, ?_, ?_⟩
+    · rintro u (rfl : u = Set.univ)
+      rw [← cylinder_univ (∅ : Finset ℕ)]
+      exact cylinder_mem_measurableCylinders _ _ MeasurableSet.univ
+    · simp
+  obtain ⟨t, ht_mem, ht⟩ := exists_measure_symmDiff_lt_of_generateFrom_isSetRing (μ := ρ)
+    isSetRing_measurableCylinders hcov generateFrom_measurableCylinders.symm hs hε
+  obtain ⟨F, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht_mem
+  exact ⟨F, S, hS, ht⟩
 
 end Cylinder
 
