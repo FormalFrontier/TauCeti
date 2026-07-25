@@ -139,12 +139,14 @@ end IsPositiveDefinite
 continuous and positive definite. -/
 theorem continuous_and_isPositiveDefinite_of_tendstoLocallyUniformly
     {M : Type*} [TopologicalSpace M] [AddMonoid M] [StarAddMonoid M]
-    {ι : Type*} {l : Filter ι} [NeBot l] {F : ι → M → ℂ} {G : M → ℂ}
+    {ι : Type*} {l : Filter ι} {F : ι → M → ℂ} {G : M → ℂ}
     (hcont : ∃ᶠ i in l, Continuous (F i))
     (hpd : ∀ᶠ i in l, IsPositiveDefinite (F i))
     (hlim : TendstoLocallyUniformly F G l) :
-    Continuous G ∧ IsPositiveDefinite G :=
-  ⟨hlim.continuous hcont, IsPositiveDefinite.of_tendstoLocallyUniformly hpd hlim⟩
+    Continuous G ∧ IsPositiveDefinite G := by
+  letI : NeBot l := (frequently_true_iff_neBot l).mp (hcont.mono fun _ _ ↦ trivial)
+  exact
+    ⟨hlim.continuous hcont, IsPositiveDefinite.of_tendstoLocallyUniformly hpd hlim⟩
 
 /-- A locally uniform limit of continuous positive-definite functions is continuous and positive
 definite. -/
