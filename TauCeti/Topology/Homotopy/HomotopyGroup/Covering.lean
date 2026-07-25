@@ -74,6 +74,7 @@ relative to the cube boundary if and only if their postcompositions with `p` are
 The reverse implication is `TauCeti.GenLoop.map_homotopic` and needs no hypothesis on `p`;
 the forward implication lifts the homotopy, using that both generalized loops take the value
 `e` at the corner `0` of the cube. -/
+@[simp]
 theorem map_homotopic_iff [Nonempty N] (hp : IsCoveringMap p) {F G : Ω^ N E e} :
     _root_.GenLoop.Homotopic (map ⟨p, hp.continuous⟩ rfl F) (map ⟨p, hp.continuous⟩ rfl G) ↔
       _root_.GenLoop.Homotopic F G :=
