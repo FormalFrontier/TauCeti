@@ -18,9 +18,9 @@ locally-uniform-limit closure of `TauCeti.IsPositiveDefinite`, the positive-defi
 predicate on an involutive additive monoid.
 
 This is the limit-closure item from Part C of the `OneParameterSemigroups` roadmap. The result is
-about positive-definiteness alone for pointwise limits; as the roadmap notes, locally uniform
-convergence is one sufficient additional hypothesis for preserving continuity. The continuity
-conclusion is already provided by Mathlib's `TendstoLocallyUniformly.continuous`, while this file
+about positive-definiteness alone for pointwise limits; as the roadmap notes, continuity needs an
+additional hypothesis. Mathlib's `TendstoLocallyUniformly.continuous` provides continuity of a
+locally uniform limit when the approximating functions are frequently continuous, while this file
 provides the positive-definiteness conclusion.
 
 ## Main declarations
