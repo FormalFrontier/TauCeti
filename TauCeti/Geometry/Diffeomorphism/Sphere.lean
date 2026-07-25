@@ -135,8 +135,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable {n : ℕ} [Fact (finrank ℝ E = n + 1)] {m : ℕ∞ω}
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is `C^m`, for every
-smoothness exponent `m`: it is the corestriction to the sphere of a continuous linear map
-precomposed with the analytic inclusion of the sphere. -/
+smoothness exponent `m`. -/
 theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) :
     ContMDiff (𝓡 n) (𝓡 n) m (unitSphereEquiv e) := by
   have h : ContMDiff (𝓡 n) 𝓘(ℝ, E) m fun x : sphere (0 : E) 1 => e (x : E) :=
