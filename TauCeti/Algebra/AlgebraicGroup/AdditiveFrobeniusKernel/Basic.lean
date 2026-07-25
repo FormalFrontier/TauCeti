@@ -185,7 +185,6 @@ noncomputable abbrev CoordinateRing : Type u :=
   SymmetricAlgebra R R ⧸ (hopfIdeal (R := R) p).toIdeal
 
 /-- The class of `x` in the coordinate ring of `αₚ` is `p`-nilpotent: its `p`-th power is `0`. -/
-@[simp]
 theorem mk_ι_pow_eq_zero :
     (Ideal.Quotient.mk (hopfIdeal (R := R) p).toIdeal
         (ι R R 1 : SymmetricAlgebra R R)) ^ p = 0 := by
