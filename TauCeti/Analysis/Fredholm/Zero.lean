@@ -56,6 +56,7 @@ private lemma finiteDimensional_codomain_of_isFredholm_zero
 
 /-- The zero continuous linear map is Fredholm exactly when its domain and codomain are both
 finite dimensional. -/
+@[simp]
 lemma isFredholm_zero_iff :
     IsFredholm (0 : E →L[𝕜] F) ↔
       Nonempty (FiniteDimensional 𝕜 E) ∧ Nonempty (FiniteDimensional 𝕜 F) := by
@@ -79,9 +80,8 @@ dimension of its codomain. -/
 lemma index_zero :
     index (0 : E →L[𝕜] F) = (finrank 𝕜 E : ℤ) - finrank 𝕜 F := by
   rw [index_eq_finrank_sub]
-  rw [ContinuousLinearMap.toLinearMap_zero, LinearMap.ker_zero, LinearMap.range_zero]
-  rw [LinearEquiv.finrank_eq Submodule.topEquiv,
-    LinearEquiv.finrank_eq ((⊥ : Submodule 𝕜 F).quotEquivOfEqBot rfl)]
+  simpa only [ContinuousLinearMap.toLinearMap_zero, LinearMap.index_eq_finrank_sub] using
+    (LinearMap.index_zero (R := 𝕜) (M := E) (N := F))
 
 end ContinuousLinearMap
 
