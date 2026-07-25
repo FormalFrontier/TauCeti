@@ -129,17 +129,21 @@ theorem exists_map_eq [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e)) 
       · have ht : (Cube.splitAt i y).1 = 0 := by
           simpa only [Homeomorph.funSplitAt_apply] using hj
         have hz : Cube.splitAt i y = (0, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [show F y = QRel (Cube.splitAt i y) by rfl, hz]
+        rw [show F y = QRel (Cube.splitAt i y) by
+          dsimp only [F, Q]
+          rfl, hz]
         exact QRel.apply_zero _
       · have ht : (Cube.splitAt i y).1 = 1 := by
           simpa only [Homeomorph.funSplitAt_apply] using hj
         have hz : Cube.splitAt i y = (1, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [show F y = QRel (Cube.splitAt i y) by rfl, hz]
+        rw [show F y = QRel (Cube.splitAt i y) by
+          dsimp only [F, Q]
+          rfl, hz]
         exact QRel.apply_one _
     · have ha : (Cube.splitAt i y).2 ∈ Cube.boundary { j // j ≠ i } :=
         ⟨⟨j, hji⟩, by simpa only [Homeomorph.funSplitAt_apply] using hj⟩
-      change QRel (Cube.splitAt i y) = e
-      exact QRel.prop _ _ ha
+      dsimp only [F, Q]
+      exact QRel.prop (Cube.splitAt i y).1 (Cube.splitAt i y).2 ha
   exact ⟨⟨F, hbd⟩, _root_.GenLoop.ext _ _ hpF⟩
 
 end GenLoop
@@ -167,7 +171,7 @@ end HomotopyGroup
 Postcomposition with `p` is a group isomorphism `π_N(E, e) ≃* π_N(X, p e)` whenever the index
 type `N` has at least two elements. No connectivity hypothesis on `E` or `X` is needed: both
 halves are statements about lifting cubes. -/
-@[expose] noncomputable def IsCoveringMap.homotopyGroupMulEquiv [DecidableEq N] [Nontrivial N]
+noncomputable def IsCoveringMap.homotopyGroupMulEquiv [DecidableEq N] [Nontrivial N]
     (hp : _root_.IsCoveringMap p) (e : E) :
     HomotopyGroup N E e ≃* HomotopyGroup N X (p e) := by
   classical
@@ -179,11 +183,11 @@ theorem IsCoveringMap.homotopyGroupMulEquiv_apply [DecidableEq N] [Nontrivial N]
     (hp : _root_.IsCoveringMap p) (e : E) (a : HomotopyGroup N E e) :
     IsCoveringMap.homotopyGroupMulEquiv hp e a =
       HomotopyGroup.map (⟨p, hp.continuous⟩ : C(E, X)) rfl a :=
-  rfl
+  (rfl)
 
 /-- The `π_(n + 2)` form of `TauCeti.IsCoveringMap.homotopyGroupMulEquiv`: a covering map
 `p : E → X` induces `π_(n + 2)(E, e) ≃* π_(n + 2)(X, p e)` for every `n : ℕ`. -/
-@[expose] noncomputable def IsCoveringMap.homotopyGroupPiMulEquiv (hp : _root_.IsCoveringMap p)
+noncomputable def IsCoveringMap.homotopyGroupPiMulEquiv (hp : _root_.IsCoveringMap p)
     (e : E) (n : ℕ) : π_ (n + 2) E e ≃* π_ (n + 2) X (p e) :=
   IsCoveringMap.homotopyGroupMulEquiv hp e
 
@@ -192,6 +196,6 @@ theorem IsCoveringMap.homotopyGroupPiMulEquiv_apply (hp : _root_.IsCoveringMap p
     (n : ℕ) (a : π_ (n + 2) E e) :
     IsCoveringMap.homotopyGroupPiMulEquiv hp e n a =
       HomotopyGroup.map (⟨p, hp.continuous⟩ : C(E, X)) rfl a :=
-  rfl
+  (rfl)
 
 end TauCeti
