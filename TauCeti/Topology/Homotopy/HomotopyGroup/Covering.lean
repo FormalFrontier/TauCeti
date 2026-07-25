@@ -138,7 +138,7 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e))
         exact QRel.apply_one _
     · have ha : (Cube.splitAt i y).2 ∈ Cube.boundary { j // j ≠ i } :=
         ⟨⟨j, hji⟩, by simpa only [Homeomorph.funSplitAt_apply] using hj⟩
-      dsimp only [F, Q]
+      rw [hF_apply]
       exact QRel.prop (Cube.splitAt i y).1 (Cube.splitAt i y).2 ha
   exact ⟨⟨F, hbd⟩, _root_.GenLoop.ext _ _ hpF⟩
 
