@@ -64,6 +64,9 @@ the `ℚ ∪ {∞}` bijection through any framing's coordinate isomorphism.
 
 * `TauCeti.FramedBoundaryTorus.value_meridian` / `.value_longitude`: the meridian is `∞` and the
   longitude is `0`, fixing the meridian-longitude convention.
+* `TauCeti.FramedBoundaryTorus.value_mk` / `.slopeEquiv_symm_apply`: the parametrisation in
+  coordinates, in each direction — a primitive class has the value of its `(μ, λ)`-coordinates, and
+  a value comes from the slope whose coordinates are the corresponding reduced pair.
 
 `ℚ ∪ {∞}` is Mathlib's one-point extension `OnePoint ℚ` from
 `Mathlib/Topology/Compactification/OnePoint/Basic.lean`; the reduced-fraction bookkeeping reuses
@@ -79,7 +82,12 @@ open Module
 
 namespace TauCeti
 
-/-! ### Primitive classes and the basis-free slope type -/
+/-! ### Primitive classes and the basis-free slope type
+
+`Slope` and the maps into and out of it carry `@[expose]` because their public defining equations
+(`Slope.congr_mk`, `Slope.value_mk`, `slopeOfValue_infty`, `slopeEquivStd_apply`, …) hold by
+definitional unfolding, and the module system admits such a proof in an exported theorem only when
+every definition it unfolds is exposed. Consumers use those equations, not the quotient body. -/
 
 variable {M N : Type*} [AddCommGroup M] [AddCommGroup N] [Module ℤ M] [Module ℤ N]
 
@@ -119,7 +127,7 @@ def slopeSetoid (M : Type*) [AddCommGroup M] [Module ℤ M] : Setoid {v : M // I
 
 /-- Characterization of the relation defining slopes: representatives agree up to sign. -/
 @[simp]
-theorem slopeSetoid_rel {a b : {v : M // IsPrimitive v}} :
+theorem slopeSetoid_rel_iff {a b : {v : M // IsPrimitive v}} :
     slopeSetoid M a b ↔ a.1 = b.1 ∨ a.1 = -b.1 :=
   Iff.rfl
 
@@ -160,8 +168,7 @@ isomorphism uses this to carry a slope to the standard lattice. -/
       left_inv := fun v => Subtype.ext (φ.symm_apply_apply v.1)
       right_inv := fun w => Subtype.ext (φ.apply_symm_apply w.1) }
     fun a b => by
-      -- By `slopeSetoid_rel`, transport must preserve precisely equality up to sign.
-      change (a.1 = b.1 ∨ a.1 = -b.1) ↔ (φ a.1 = φ b.1 ∨ φ a.1 = -φ b.1)
+      simp only [slopeSetoid_rel_iff, Equiv.coe_fn_mk]
       constructor
       · rintro (h | h)
         · exact Or.inl (by rw [h])
@@ -174,6 +181,15 @@ isomorphism uses this to carry a slope to the standard lattice. -/
 theorem congr_mk (φ : M ≃ₗ[ℤ] N) (v : M) (h : IsPrimitive v) :
     congr φ (mk v h) = mk (φ v) ((isPrimitive_congr φ).mpr h) :=
   rfl
+
+/-- Transporting slopes along `φ` and along `φ.symm` are inverse to one another. -/
+@[simp]
+theorem congr_symm (φ : M ≃ₗ[ℤ] N) : (congr φ).symm = congr φ.symm := by
+  ext s
+  induction s using Slope.induction_on with
+  | h w hw =>
+    rw [Equiv.symm_apply_eq, congr_mk, congr_mk]
+    exact mk_eq_mk _ _ (Or.inl (φ.apply_symm_apply w).symm)
 
 end Slope
 
@@ -208,8 +224,8 @@ theorem isPrimitive_num_den (r : ℚ) : IsPrimitive ((r.num, (r.den : ℤ)) : �
   exact r.reduced
 
 /-- A primitive class with vanishing longitude-coordinate has meridian-coordinate `±1`. -/
-theorem isPrimitive_prod_fst_eq_of_snd_eq_zero {v : ℤ × ℤ} (h : IsPrimitive v) (hq : v.2 = 0) :
-    v.1 = 1 ∨ v.1 = -1 := by
+theorem isPrimitive_prod_fst_eq_one_or_neg_one_of_snd_eq_zero {v : ℤ × ℤ} (h : IsPrimitive v)
+    (hq : v.2 = 0) : v.1 = 1 ∨ v.1 = -1 := by
   rw [isPrimitive_prod_iff, hq, isCoprime_zero_right, Int.isUnit_iff] at h
   exact h
 
@@ -258,6 +274,8 @@ theorem slopeOfValue_infty : slopeOfValue ∞ = Slope.mk (1, 0) isPrimitive_prod
 theorem slopeOfValue_coe (r : ℚ) :
     slopeOfValue (r : OnePoint ℚ) = Slope.mk (r.num, (r.den : ℤ)) (isPrimitive_num_den r) := rfl
 
+/-- Reading off the value of a standard-lattice slope and rebuilding a slope from it recovers the
+original slope. -/
 theorem slopeOfValue_value (s : Slope (ℤ × ℤ)) : slopeOfValue (Slope.value s) = s := by
   induction s using Slope.induction_on with
   | h v hv =>
@@ -265,7 +283,7 @@ theorem slopeOfValue_value (s : Slope (ℤ × ℤ)) : slopeOfValue (Slope.value 
     by_cases hq : q = 0
     · subst hq
       rw [Slope.value_mk, slopeValue_of_snd_eq_zero rfl, slopeOfValue_infty]
-      rcases isPrimitive_prod_fst_eq_of_snd_eq_zero hv rfl with hp | hp <;> subst hp
+      rcases isPrimitive_prod_fst_eq_one_or_neg_one_of_snd_eq_zero hv rfl with hp | hp <;> subst hp
       · rfl
       · exact Slope.mk_eq_mk _ _ (Or.inr rfl)
     · rw [Slope.value_mk, slopeValue_of_snd_ne_zero hq, slopeOfValue_coe]
@@ -286,6 +304,7 @@ theorem slopeOfValue_value (s : Slope (ℤ × ℤ)) : slopeOfValue (Slope.value 
         refine Slope.mk_eq_mk _ _ (Or.inl ?_)
         rw [Rat.num_div_eq_of_coprime hqpos hcop, Rat.den_div_eq_of_coprime hqpos hcop]
 
+/-- The standard-lattice slope built from a value in `ℚ ∪ {∞}` has that value again. -/
 theorem value_slopeOfValue (x : OnePoint ℚ) : Slope.value (slopeOfValue x) = x := by
   induction x with
   | infty => rw [slopeOfValue_infty, Slope.value_mk, slopeValue_of_snd_eq_zero rfl]
@@ -317,14 +336,15 @@ into the `ℚ ∪ {∞}` parametrisation. The homology object and the ordered me
 carried explicitly, keeping the basis-dependent notions (`meridian`, `longitude`, `value`,
 `slopeEquiv`) genuinely parametrised by the framing rather than globally canonical. -/
 
-/-- A **boundary torus** is a topological space equipped with a homeomorphism to the standard
-two-torus. Its first homology, rather than an unrelated abstract lattice, is the carrier on which
-slopes are defined. -/
+/-- A **boundary torus** is a topological space that is homeomorphic to the standard two-torus; no
+particular homeomorphism is chosen. Its first homology, rather than an unrelated abstract lattice,
+is the carrier on which slopes are defined. -/
 structure BoundaryTorus where
   /-- The underlying topological space. -/
   carrier : Type
   [topologicalSpace : TopologicalSpace carrier]
-  /-- An identification of the boundary component with the standard two-torus. -/
+  /-- The assertion that the space is homeomorphic to the standard two-torus. Only the existence of
+  such a homeomorphism is recorded, so that two boundary tori with the same carrier are equal. -/
   parametrization : Nonempty (carrier ≃ₜ UnitAddTorus (Fin 2))
 
 namespace BoundaryTorus
@@ -358,7 +378,7 @@ variable (T : FramedBoundaryTorus)
 /-- The coordinate isomorphism `H₁(T; ℤ) ≃ ℤ × ℤ` induced by the ordered basis `(μ, λ)`, sending a
 class to its `(μ, λ)`-coordinates. This is the data that makes the parametrisation
 basis-dependent. -/
-@[expose] noncomputable def coord : T.H ≃ₗ[ℤ] ℤ × ℤ :=
+noncomputable def coord : T.H ≃ₗ[ℤ] ℤ × ℤ :=
   T.basis.equivFun ≪≫ₗ LinearEquiv.finTwoArrow ℤ ℤ
 
 @[simp]
@@ -395,6 +415,19 @@ biject with `ℚ ∪ {∞}`, a reduced fraction `p / q` corresponding to the cla
 
 @[simp]
 theorem slopeEquiv_apply (s : Slope T.H) : T.slopeEquiv s = T.value s := rfl
+
+/-- The value of the slope of a primitive class is the ratio of its `(μ, λ)`-coordinates. -/
+@[simp]
+theorem value_mk (v : T.H) (hv : IsPrimitive v) :
+    T.value (Slope.mk v hv) = slopeValue (T.coord v) := rfl
+
+/-- **The framed parametrisation in the inverse direction.** The slope with value `x ∈ ℚ ∪ {∞}` is
+the one whose `(μ, λ)`-coordinates are the standard reduced pair `slopeOfValue x`; for a rational
+`p / q` in lowest terms that is the class `p · μ + q · λ`. -/
+@[simp]
+theorem slopeEquiv_symm_apply (x : OnePoint ℚ) :
+    T.slopeEquiv.symm x = Slope.congr T.coord.symm (slopeOfValue x) := by
+  simp [slopeEquiv]
 
 /-- The framed meridian has slope value `∞`. -/
 @[simp]
