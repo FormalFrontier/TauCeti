@@ -77,6 +77,12 @@ This is the hypothesis of Montel's theorem, in the form fixed by the conformal-m
 def IsLocallyBoundedOn (F : ι → ℂ → E) (s : Set ℂ) : Prop :=
   ∀ K ⊆ s, IsCompact K → ∃ C, ∀ i, ∀ z ∈ K, ‖F i z‖ ≤ C
 
+/-- The defining compact-set characterization of local boundedness. -/
+theorem isLocallyBoundedOn_def :
+    IsLocallyBoundedOn F U ↔
+      ∀ K ⊆ U, IsCompact K → ∃ C, ∀ i, ∀ z ∈ K, ‖F i z‖ ≤ C :=
+  Iff.rfl
+
 /-- Local boundedness is inherited by subsets. -/
 theorem IsLocallyBoundedOn.mono {s t : Set ℂ} (hb : IsLocallyBoundedOn F s) (hts : t ⊆ s) :
     IsLocallyBoundedOn F t :=
