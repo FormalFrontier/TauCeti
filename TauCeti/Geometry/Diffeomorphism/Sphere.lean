@@ -65,7 +65,7 @@ the objects they are about, so they are applied in prefix form (`unitSphereEquiv
 by dot notation.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -74,7 +74,9 @@ open scoped Manifold ContDiff
 
 namespace LinearIsometryEquiv
 
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+section Normed
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- A linear isometry equivalence preserves the unit sphere: it maps unit vectors to unit vectors,
 and nothing else to unit vectors. -/
@@ -83,6 +85,7 @@ theorem map_mem_unitSphere_iff (e : E ≃ₗᵢ[ℝ] E) (x : E) :
   simp
 
 /-- A linear isometry equivalence of `E` restricts to a self-equivalence of the unit sphere. -/
+@[expose]
 def unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
   e.toEquiv.subtypeEquiv fun x => (map_mem_unitSphere_iff e x).symm
 
@@ -124,6 +127,11 @@ theorem eq_of_eqOn_unitSphere {e e' : E ≃ₗᵢ[ℝ] E} (h : Set.EqOn e e' (sp
     have hsmul : ‖v‖⁻¹ • e v = ‖v‖⁻¹ • e' v := by simpa using h hmem
     exact smul_right_injective E (inv_ne_zero hnorm) hsmul
 
+end Normed
+
+section InnerProduct
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable {n : ℕ} [Fact (finrank ℝ E = n + 1)] {m : ℕ∞ω}
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is `C^m`, for every
@@ -136,6 +144,7 @@ theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) :
   exact h.codRestrict_sphere fun x => (map_mem_unitSphere_iff e _).2 x.2
 
 /-- The diffeomorphism of the unit sphere induced by a linear isometry equivalence of `E`. -/
+@[expose]
 def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] E) (m : ℕ∞ω) :
     sphere (0 : E) 1 ≃ₘ^m⟮𝓡 n, 𝓡 n⟯ sphere (0 : E) 1 where
   toEquiv := unitSphereEquiv e
@@ -168,6 +177,7 @@ theorem unitSphereDiffeomorph_neg_apply (x : sphere (0 : E) 1) :
 /-- The inclusion of the linear isometry group of `E` into the group of self-diffeomorphisms of
 its unit sphere. For `E = EuclideanSpace ℝ (Fin (n + 1))` this is the reference inclusion
 `O(n + 1) → Diff(Sⁿ)`; see `TauCeti.orthogonalToDiffSphere`. -/
+@[expose]
 def unitSphereDiffHom (m : ℕ∞ω) :
     (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
   toFun e := unitSphereDiffeomorph e m
@@ -184,24 +194,34 @@ injective, so `O(n + 1)` is realised as a subgroup of `Diff(Sⁿ)`. -/
 theorem unitSphereDiffHom_injective :
     Function.Injective (unitSphereDiffHom (E := E) (n := n) m) := by
   intro e e' h
+  rw [unitSphereDiffHom_apply, unitSphereDiffHom_apply] at h
   refine eq_of_eqOn_unitSphere fun x hx => ?_
-  have hx' : unitSphereDiffeomorph (n := n) e m ⟨x, hx⟩
-      = unitSphereDiffeomorph (n := n) e' m ⟨x, hx⟩ := by
-    rw [show unitSphereDiffeomorph (n := n) e m = unitSphereDiffeomorph (n := n) e' m from h]
-  exact congrArg Subtype.val hx'
+  simpa using congrArg Subtype.val (DFunLike.congr_fun h ⟨x, hx⟩)
+
+end InnerProduct
 
 end LinearIsometryEquiv
 
-open scoped EuclideanSpace in
+open scoped EuclideanSpace
+
 /-- The reference inclusion `O(n + 1) → Diff(Sⁿ)`: an orthogonal transformation of `ℝⁿ⁺¹`
 restricts to a diffeomorphism of the unit sphere `Sⁿ`, and this restriction is a group
 homomorphism. Here `O(n + 1)` appears in its coordinate-free form, as the group
 `EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))` of linear isometry
 equivalences of `(n + 1)`-dimensional Euclidean space. It is injective by
 `TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective`. -/
+@[expose]
 noncomputable def orthogonalToDiffSphere (n : ℕ) (m : ℕ∞ω) :
     (EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) →*
       Diff (𝓡 n) (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) m :=
   LinearIsometryEquiv.unitSphereDiffHom m
+
+/-- The reference inclusion `O(n + 1) → Diff(Sⁿ)` sends an orthogonal transformation to its
+restriction to the unit sphere. -/
+@[simp]
+theorem orthogonalToDiffSphere_apply (n : ℕ) (m : ℕ∞ω)
+    (e : EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (n + 1))) :
+    orthogonalToDiffSphere n m e = LinearIsometryEquiv.unitSphereDiffHom m e :=
+  rfl
 
 end TauCeti
