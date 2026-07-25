@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Measure.FiniteMeasurePi
--- Public: `Measure.prod` appears in the joint-kernel statement.
-public import Mathlib.MeasureTheory.Measure.Prod
 
 /-!
 # Finite product probability-measure kernels
@@ -128,13 +126,10 @@ This is the joint-space companion of `measurable_probabilityMeasure_pi_const_toM
 one gives the block kernel alone, this one pairs it with a Dirac mass at the mixing measure itself,
 which is what a conditional (joint-law) reading of the de Finetti mixture identity has to speak
 about. It supplies the `Measure.bind_apply` and measure-extensionality inputs on the joint space
-(`TauCetiRoadmap/Exchangeability/README.md`, Layer 1). No hypotheses beyond measurability of `ν`.
-
-The product step is Mathlib's `ProbabilityMeasure.measurable_fun_prod` (the monoidal product is
-measurable); all this adds is that both components are measurable in `ω`. Both have to be presented
-as `ProbabilityMeasure`-valued to apply it, so the Dirac side is bundled through
-`Measure.measurable_dirac` and `Measurable.subtype_mk`, and the block side through
-`measurable_probabilityMeasure_pi`. -/
+(`TauCetiRoadmap/Exchangeability/README.md`, Layer 1). No hypotheses beyond measurability of `ν`. -/
+-- The product step is Mathlib's `ProbabilityMeasure.measurable_fun_prod`; all this adds is that
+-- both components are measurable in `ω`. Applying it needs both presented as
+-- `ProbabilityMeasure`-valued, hence the `subtype_mk` bundling of the Dirac side.
 @[fun_prop]
 theorem measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure {α : Type*}
     [MeasurableSpace α] {m : ℕ} (ν : Ω → ProbabilityMeasure α) (hν : Measurable ν) :
