@@ -75,10 +75,8 @@ lemma isometryEquivOfHyperbolicDistEq_symm (e : Complex.UnitDisc ≃ Complex.Uni
 equivalence of the Poincaré disc. -/
 noncomputable def unitDiscStandardAutomorphismIsometryEquiv
     (u : Circle) (a : Complex.UnitDisc) : PoincareDisc ≃ᵢ PoincareDisc :=
-  { toEquiv :=
-      toUnitDisc.trans
-        ((unitDiscStandardAutomorphismEquiv u a).trans Complex.UnitDisc.toPoincare)
-    isometry_toFun := isometry_unitDiscStandardAutomorphismEquiv u a }
+  isometryEquivOfHyperbolicDistEq (unitDiscStandardAutomorphismEquiv u a)
+    (hyperbolicDist_unitDiscStandardAutomorphismEquiv u a)
 
 /-- The standard Poincaré isometry acts by the standard unit-disc automorphism. -/
 @[simp]
