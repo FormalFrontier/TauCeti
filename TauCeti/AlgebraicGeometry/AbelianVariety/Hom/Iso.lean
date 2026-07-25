@@ -20,8 +20,8 @@ and to state its base-change compatibility as an isomorphism of abelian varietie
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, “Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API, dim,” and prepares the
 isomorphisms in the end goal and Layer F. No external mathematics is vendored. The implementation
-reuses Mathlib's `Functor.mapIso`, `Over.isoMk`, and invariance of topological Krull dimension
-under homeomorphism.
+reuses Mathlib's `Functor.mapIso`, `Over.forget.mapIso`, and invariance of topological Krull
+dimension under homeomorphism.
 -/
 
 public section
@@ -41,12 +41,76 @@ variable {K : Type u} [Field K]
 noncomputable section
 
 /-- The isomorphism of schemes over `Spec K` underlying an isomorphism of abelian varieties. -/
-abbrev isoToOver {A B : AbelianVariety K} (e : A ≅ B) : A.toOver ≅ B.toOver :=
+def isoToOver {A B : AbelianVariety K} (e : A ≅ B) : A.toOver ≅ B.toOver :=
   Hom.toOverFunctor.mapIso e
 
 /-- The isomorphism of schemes underlying an isomorphism of abelian varieties. -/
-abbrev isoToScheme {A B : AbelianVariety K} (e : A ≅ B) : A.toScheme ≅ B.toScheme :=
+def isoToScheme {A B : AbelianVariety K} (e : A ≅ B) : A.toScheme ≅ B.toScheme :=
   (Over.forget (Spec (.of K))).mapIso (isoToOver e)
+
+/-- The forward map of the underlying `Over` isomorphism is the underlying homomorphism. -/
+@[simp]
+lemma isoToOver_hom {A B : AbelianVariety K} (e : A ≅ B) :
+    (isoToOver e).hom = Hom.toOverHom e.hom := by
+  simp [isoToOver]
+
+/-- The inverse map of the underlying `Over` isomorphism is the underlying homomorphism. -/
+@[simp]
+lemma isoToOver_inv {A B : AbelianVariety K} (e : A ≅ B) :
+    (isoToOver e).inv = Hom.toOverHom e.inv := by
+  simp [isoToOver]
+
+/-- The forward map of the underlying scheme isomorphism is the underlying scheme morphism. -/
+@[simp]
+lemma isoToScheme_hom {A B : AbelianVariety K} (e : A ≅ B) :
+    (isoToScheme e).hom = Hom.toSchemeHom e.hom := by
+  simp [isoToScheme]
+
+/-- The inverse map of the underlying scheme isomorphism is the underlying scheme morphism. -/
+@[simp]
+lemma isoToScheme_inv {A B : AbelianVariety K} (e : A ≅ B) :
+    (isoToScheme e).inv = Hom.toSchemeHom e.inv := by
+  simp [isoToScheme]
+
+/-- The underlying `Over` isomorphism of the identity isomorphism is the identity. -/
+@[simp]
+lemma isoToOver_refl (A : AbelianVariety K) :
+    isoToOver (Iso.refl A) = Iso.refl A.toOver :=
+  Hom.toOverFunctor.mapIso_refl A
+
+/-- Forgetting an inverse isomorphism over the base commutes with taking inverses. -/
+@[simp]
+lemma isoToOver_symm {A B : AbelianVariety K} (e : A ≅ B) :
+    isoToOver e.symm = (isoToOver e).symm := by
+  apply Iso.ext
+  simp
+
+/-- Forgetting a composite isomorphism over the base commutes with composition. -/
+@[simp]
+lemma isoToOver_trans {A B C : AbelianVariety K} (e : A ≅ B) (f : B ≅ C) :
+    isoToOver (e.trans f) = (isoToOver e).trans (isoToOver f) :=
+  Hom.toOverFunctor.mapIso_trans e f
+
+/-- The underlying scheme isomorphism of the identity isomorphism is the identity. -/
+@[simp]
+lemma isoToScheme_refl (A : AbelianVariety K) :
+    isoToScheme (Iso.refl A) = Iso.refl A.toScheme := by
+  apply Iso.ext
+  exact Hom.toSchemeHom_id A
+
+/-- Forgetting an inverse isomorphism of schemes commutes with taking inverses. -/
+@[simp]
+lemma isoToScheme_symm {A B : AbelianVariety K} (e : A ≅ B) :
+    isoToScheme e.symm = (isoToScheme e).symm := by
+  apply Iso.ext
+  rfl
+
+/-- Forgetting a composite isomorphism of schemes commutes with composition. -/
+@[simp]
+lemma isoToScheme_trans {A B C : AbelianVariety K} (e : A ≅ B) (f : B ≅ C) :
+    isoToScheme (e.trans f) = (isoToScheme e).trans (isoToScheme f) := by
+  apply Iso.ext
+  exact Hom.toSchemeHom_comp e.hom f.hom
 
 /-- Isomorphic abelian varieties have equal topological Krull dimension. -/
 lemma dim_eq_of_iso {A B : AbelianVariety K} (e : A ≅ B) :
