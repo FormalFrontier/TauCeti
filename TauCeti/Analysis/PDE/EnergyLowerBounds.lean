@@ -24,10 +24,11 @@ inequality `∫ (min (λ/2) (μ − β²/2λ)) · ‖U‖² ≤ energyFormIntegr
 `TauCeti.Analysis.PDE.Integrated.EnergyForm`, obtained by integrating them; no
 finite-dimensional jet fibre is fed into Lax--Milgram.
 
-The ellipticity floor, the drift bound, and the mass lower bound are all stated inline, as
-`∀ x ∈ Ω, λ‖ξ‖² ≤ (a x).toQuadraticForm' ξ`, `∀ x ∈ Ω, ‖b x‖ ≤ β`, and `∀ x ∈ Ω, μ ≤ c x`; a
-caller holding a `UniformlyEllipticOn` hypothesis passes its lower-bound projection for the
-first.
+The lower-bound theorems below take a single principal coefficient `A`, drift coefficient
+`b₀`, and mass coefficient `c₀`, together with their pointwise bounds. Callers holding a
+field-level `UniformlyEllipticOn Ω a λ Λ` hypothesis should use the pointwise specializations
+in `TauCeti.Analysis.PDE.Uniform.EllipticEnergy`, which supply the principal lower bound at a
+chosen point `x ∈ Ω`.
 
 Symmetry of the same zero-drift integrand is recorded in
 `TauCeti.Analysis.PDE.SymmetricEnergy`.  Consumers that need the hypotheses side by side
