@@ -84,19 +84,23 @@ theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) :
     ContMDiff (𝓡 n) (𝓡 n) m (unitSphereEquiv e) := by
   have h : ContMDiff (𝓡 n) 𝓘(ℝ, E) m fun x : sphere (0 : E) 1 => e (x : E) :=
     (e.toContinuousLinearEquiv : E →L[ℝ] E).contDiff.comp_contMDiff contMDiff_coe_sphere
-  exact h.codRestrict_sphere fun x => (map_mem_unitSphere_iff e _).2 x.2
+  refine (h.codRestrict_sphere (n := n) fun x =>
+    (map_mem_unitSphere_iff e _).2 x.2).congr fun x => ?_
+  exact Subtype.ext (coe_unitSphereEquiv_apply e x)
 
 /-- The diffeomorphism of the unit sphere induced by a linear isometry equivalence of `E`. -/
 def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] E) (m : ℕ∞ω) :
     sphere (0 : E) 1 ≃ₘ^m⟮𝓡 n, 𝓡 n⟯ sphere (0 : E) 1 where
   toEquiv := unitSphereEquiv e
   contMDiff_toFun := contMDiff_unitSphereEquiv e
-  contMDiff_invFun := contMDiff_unitSphereEquiv e.symm
+  contMDiff_invFun := by
+    simpa only [unitSphereEquiv_symm] using
+      (contMDiff_unitSphereEquiv (n := n) e.symm)
 
 @[simp]
 theorem coe_unitSphereDiffeomorph_apply (e : E ≃ₗᵢ[ℝ] E) (x : sphere (0 : E) 1) :
     ((unitSphereDiffeomorph (n := n) e m x : sphere (0 : E) 1) : E) = e x :=
-  (rfl)
+  coe_unitSphereEquiv_apply e x
 
 @[simp]
 theorem unitSphereDiffeomorph_toEquiv (e : E ≃ₗᵢ[ℝ] E) :
@@ -106,7 +110,10 @@ theorem unitSphereDiffeomorph_toEquiv (e : E ≃ₗᵢ[ℝ] E) :
 @[simp]
 theorem unitSphereDiffeomorph_symm (e : E ≃ₗᵢ[ℝ] E) :
     (unitSphereDiffeomorph (n := n) e m).symm = unitSphereDiffeomorph e.symm m :=
-  (rfl)
+  _root_.Diffeomorph.ext fun x => Equiv.congr_fun (by
+    rw [_root_.Diffeomorph.symm_toEquiv, unitSphereDiffeomorph_toEquiv,
+      unitSphereDiffeomorph_toEquiv,
+      unitSphereEquiv_symm]) x
 
 /-- The antipodal map of the unit sphere is the diffeomorphism induced by `-1`, the element of
 `O(n + 1)` given by `LinearIsometryEquiv.neg`. In particular Mathlib's `contMDiff_neg_sphere` is
@@ -122,13 +129,17 @@ its unit sphere. For `E = EuclideanSpace ℝ (Fin (n + 1))` this is the referenc
 def unitSphereDiffHom (m : ℕ∞ω) :
     (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
   toFun e := unitSphereDiffeomorph e m
-  map_one' := _root_.Diffeomorph.ext fun _ => rfl
-  map_mul' _ _ := _root_.Diffeomorph.ext fun _ => rfl
+  map_one' := _root_.Diffeomorph.ext fun x => by
+    apply Subtype.ext
+    simp
+  map_mul' _ _ := _root_.Diffeomorph.ext fun x => by
+    apply Subtype.ext
+    simp
 
 @[simp]
 theorem unitSphereDiffHom_apply (e : E ≃ₗᵢ[ℝ] E) :
     unitSphereDiffHom (E := E) (n := n) m e = unitSphereDiffeomorph e m :=
-  (rfl)
+  _root_.Diffeomorph.ext fun _ => rfl
 
 /-- The inclusion of the linear isometry group into the diffeomorphism group of the unit sphere is
 injective, so `O(n + 1)` is realised as a subgroup of `Diff(Sⁿ)`. -/

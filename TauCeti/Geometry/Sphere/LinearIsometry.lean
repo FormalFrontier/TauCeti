@@ -44,7 +44,7 @@ theorem map_mem_unitSphere_iff (e : E ≃ₗᵢ[R] E) (x : E) :
   simp
 
 /-- A linear isometry equivalence of `E` restricts to a self-equivalence of the unit sphere. -/
-@[expose] def unitSphereEquiv (e : E ≃ₗᵢ[R] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
+def unitSphereEquiv (e : E ≃ₗᵢ[R] E) : sphere (0 : E) 1 ≃ sphere (0 : E) 1 :=
   e.toEquiv.subtypeEquiv fun x => (map_mem_unitSphere_iff e x).symm
 
 @[simp]
