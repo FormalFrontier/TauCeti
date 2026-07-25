@@ -52,8 +52,7 @@ namespace AbstractSimplicialComplex
 
 variable {ι : Type*}
 
-local instance : DecidableEq ι := Classical.decEq ι
-local instance : DecidableEq ℝ := Classical.decEq ℝ
+attribute [local instance] Classical.decEq
 
 /-- The standard coordinate representative of a vertex in the free real vector space on `ι`. -/
 noncomputable def vertexVector (v : ι) : ι →₀ ℝ :=
