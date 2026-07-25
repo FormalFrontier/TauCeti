@@ -64,17 +64,14 @@ noncomputable def standardGeometricComplex (K : AbstractSimplicialComplex ι) :
 noncomputable abbrev Realization (K : AbstractSimplicialComplex ι) : Type _ :=
   (standardGeometricComplex K).space
 
-/-- A face of an abstract simplicial complex, bundled with its membership proof. -/
-abbrev Face (K : AbstractSimplicialComplex ι) := {σ : Finset ι // σ ∈ K}
-
 /-- The closed simplex spanned by a finite vertex set, in standard barycentric coordinates. -/
-noncomputable abbrev FaceRealization (σ : Finset ι) : Type _ :=
+noncomputable abbrev StandardSimplex (σ : Finset ι) : Type _ :=
   convexHull ℝ (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))
 
 /-- The topology induced by the coordinatewise topology on `ι → ℝ`. These are the domain
 topologies used to define the weak topology on the whole realization. -/
-instance (σ : Finset ι) : TopologicalSpace (FaceRealization σ) :=
-  TopologicalSpace.induced (fun x : FaceRealization σ => (x.1 : ι → ℝ)) inferInstance
+instance (σ : Finset ι) : TopologicalSpace (StandardSimplex σ) :=
+  TopologicalSpace.induced (fun x : StandardSimplex σ => (x.1 : ι → ℝ)) inferInstance
 
 /-- A geometric face is exactly the image of an abstract face under the coordinate embedding. -/
 theorem mem_standardGeometricComplex_faces_iff (K : AbstractSimplicialComplex ι)
@@ -89,17 +86,19 @@ theorem mem_standardGeometricComplex_faces_iff (K : AbstractSimplicialComplex ι
 
 /-- Include the realization of a face into the whole polyhedron. -/
 noncomputable def faceInclusion (K : AbstractSimplicialComplex ι) (σ : Face K) :
-    FaceRealization σ.1 → Realization K :=
-  fun x => ⟨x, Geometry.SimplicialComplex.convexHull_subset_space
+    StandardSimplex σ.1 → Realization K :=
+  Set.inclusion (Geometry.SimplicialComplex.convexHull_subset_space
     (K := standardGeometricComplex K)
-      ((mem_standardGeometricComplex_faces_iff K _).2 ⟨σ.1, σ.2, rfl⟩) x.2⟩
+      ((mem_standardGeometricComplex_faces_iff K _).2 ⟨σ.1, σ.2, rfl⟩))
 
 /-- A face inclusion does not change the underlying barycentric coordinates. -/
 @[simp]
 theorem faceInclusion_val (K : AbstractSimplicialComplex ι) (σ : Face K)
-    (x : FaceRealization σ.1) :
+    (x : StandardSimplex σ.1) :
     (faceInclusion K σ x : ι →₀ ℝ) = x := by
-  simp [faceInclusion]
+  exact Set.coe_inclusion
+    (Geometry.SimplicialComplex.convexHull_subset_space
+      ((mem_standardGeometricComplex_faces_iff K _).2 ⟨σ.1, σ.2, rfl⟩)) x
 
 /-- The weak topology on a realization, final with respect to all face inclusions. -/
 instance (K : AbstractSimplicialComplex ι) : TopologicalSpace (Realization K) :=
@@ -139,6 +138,116 @@ theorem mem_realization_iff {K : AbstractSimplicialComplex ι} {x : ι →₀ �
   · rintro ⟨σ, hσ, hx⟩
     exact ⟨σ.image (fun v => Finsupp.single v (1 : ℝ)),
       image_single_mem_standardGeometricComplex_faces hσ, hx⟩
+
+/-- Barycentric coordinates in a standard simplex are nonnegative. -/
+theorem StandardSimplex.nonneg {σ : Finset ι} (x : StandardSimplex σ) (v : ι) :
+    0 ≤ x.1 v := by
+  change x.1 ∈ {y : ι →₀ ℝ | 0 ≤ y v}
+  exact convexHull_min (by
+      intro y hy
+      simp only [Finset.coe_image, Set.mem_image] at hy
+      obtain ⟨w, _, rfl⟩ := hy
+      by_cases h : w = v <;> simp [h])
+    (by
+      intro y hy z hz a b ha hb hab
+      simp only [Set.mem_setOf_eq, Finsupp.add_apply, Finsupp.smul_apply] at hy hz ⊢
+      exact add_nonneg (mul_nonneg ha hy) (mul_nonneg hb hz))
+    x.2
+
+/-- The barycentric coordinates in a standard simplex sum to one. -/
+theorem StandardSimplex.sum_eq_one {σ : Finset ι} (x : StandardSimplex σ) :
+    x.1.sum (fun _ r => r) = 1 := by
+  change x.1.sum (fun _ => LinearMap.id (R := ℝ) (M := ℝ)) = 1
+  change x.1 ∈
+    {y : ι →₀ ℝ | y.sum (fun _ => LinearMap.id (R := ℝ) (M := ℝ)) = 1}
+  exact convexHull_min (by
+      intro y hy
+      simp only [Finset.coe_image, Set.mem_image] at hy
+      obtain ⟨v, _, rfl⟩ := hy
+      simp)
+    (by
+      intro y hy z hz a b _ _ hab
+      simp only [Set.mem_setOf_eq] at hy hz ⊢
+      rw [Finsupp.sum_add_index]
+      · rw [Finsupp.sum_smul_index_linearMap', Finsupp.sum_smul_index_linearMap', hy, hz]
+        simpa [smul_eq_mul] using hab
+      all_goals simp)
+    x.2
+
+/-- The support of a point in a standard simplex is contained in its vertex set. -/
+theorem StandardSimplex.support_subset {σ : Finset ι} (x : StandardSimplex σ) :
+    x.1.support ⊆ σ := by
+  change (x.1.support : Set ι) ⊆ (σ : Set ι)
+  change x.1 ∈ Finsupp.supported ℝ ℝ (σ : Set ι)
+  exact convexHull_min (by
+    intro y hy
+    simp only [Finset.coe_image, Set.mem_image] at hy
+    obtain ⟨v, hv, rfl⟩ := hy
+    simpa [Finsupp.mem_supported] using hv) (Finsupp.supported ℝ ℝ (σ : Set ι)).convex x.2
+
+/-- A point of a standard simplex lies in the simplex spanned by its support. -/
+theorem StandardSimplex.mem_convexHull_support {σ : Finset ι} (x : StandardSimplex σ) :
+    x.1 ∈ convexHull ℝ
+      (x.1.support.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
+  have hx := (convex_convexHull ℝ _).sum_mem
+    (fun v _ => StandardSimplex.nonneg x v)
+    (by
+      change x.1.sum (fun _ r => r) = 1
+      exact StandardSimplex.sum_eq_one x)
+    (fun v hv => subset_convexHull ℝ _ (by
+      change Finsupp.single v 1 ∈
+        (x.1.support.image (fun w => Finsupp.single w (1 : ℝ)) : Finset (ι →₀ ℝ))
+      exact Finset.mem_image.2 ⟨v, hv, rfl⟩))
+  have heq : (∑ i ∈ x.1.support, x.1 i • Finsupp.single i (1 : ℝ)) = x.1 := by
+    simpa [Finsupp.sum] using x.1.sum_single
+  rw [heq] at hx
+  exact hx
+
+/-- The support of a realization point is an abstract face. -/
+theorem support_mem (K : AbstractSimplicialComplex ι) (x : Realization K) : x.1.support ∈ K := by
+  obtain ⟨σ, hσ, hx⟩ := mem_realization_iff.1 x.2
+  let hx' : StandardSimplex σ := ⟨x.1, hx⟩
+  have hs : x.1.support ⊆ σ := by
+    simpa [hx'] using StandardSimplex.support_subset hx'
+  apply K.isRelLowerSet_faces.mem_of_le hσ
+    hs
+  exact
+    (Finsupp.support_nonempty_iff.mpr <| by
+      intro h
+      have hs := StandardSimplex.sum_eq_one hx'
+      have hs' : x.1.sum (fun _ r => r) = 1 := by
+        simpa [hx'] using hs
+      rw [h] at hs'
+      simp at hs')
+
+/-- The minimal abstract face carrying a point of the realization. -/
+@[expose]
+noncomputable def carrier (K : AbstractSimplicialComplex ι) (x : Realization K) : Face K :=
+  ⟨x.1.support, support_mem K x⟩
+
+/-- The vertices of the carrier are exactly the nonzero barycentric coordinates. -/
+@[simp]
+theorem carrier_val (K : AbstractSimplicialComplex ι) (x : Realization K) :
+    (carrier K x).1 = x.1.support :=
+  rfl
+
+/-- A realization point belongs to the closed simplex spanned by its carrier. -/
+theorem mem_carrier (K : AbstractSimplicialComplex ι) (x : Realization K) :
+    x.1 ∈ convexHull ℝ
+      ((carrier K x).1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
+  obtain ⟨σ, _, hx⟩ := mem_realization_iff.1 x.2
+  change x.1 ∈ convexHull ℝ
+    (x.1.support.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))
+  exact StandardSimplex.mem_convexHull_support ⟨x.1, hx⟩
+
+/-- The carrier is contained in every abstract face whose closed simplex contains the point. -/
+theorem carrier_minimal (K : AbstractSimplicialComplex ι) (x : Realization K) {σ : Finset ι}
+    (hx : x.1 ∈ convexHull ℝ
+      (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :
+    (carrier K x).1 ⊆ σ :=
+  by
+    change x.1.support ⊆ σ
+    exact StandardSimplex.support_subset ⟨x.1, hx⟩
 
 /-- The standard coordinate vector of every vertex belongs to the geometric realization. -/
 theorem single_mem_standardGeometricComplex_space (K : AbstractSimplicialComplex ι) (v : ι) :
@@ -186,14 +295,14 @@ theorem standardGeometricComplex_space_mono {K L : AbstractSimplicialComplex ι}
 /-- The continuous map of realizations induced by an inclusion of abstract complexes. -/
 noncomputable def realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
     Realization K → Realization L :=
-  fun x => ⟨x, standardGeometricComplex_space_mono hKL x.2⟩
+  Set.inclusion (standardGeometricComplex_space_mono hKL)
 
 /-- An induced map of realizations does not change the underlying barycentric coordinates. -/
 @[simp]
 theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
     (x : Realization K) :
     (realizationMap hKL x : ι →₀ ℝ) = x := by
-  simp [realizationMap]
+  exact Set.coe_inclusion (standardGeometricComplex_space_mono hKL) x
 
 /-- An inclusion map restricted to a face is the corresponding face inclusion in the larger
 complex. -/
@@ -215,15 +324,14 @@ theorem continuous_realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K 
 /-- The map induced by the reflexive inclusion is the identity. -/
 @[simp]
 theorem realizationMap_refl (K : AbstractSimplicialComplex ι) :
-    realizationMap (le_refl K) = id := by
-  funext x
-  exact Subtype.ext rfl
+    realizationMap (le_refl K) = id :=
+  Set.inclusion_eq_id (standardGeometricComplex_space_mono (le_refl K))
 
 /-- Maps induced by inclusions compose according to transitivity of inclusion. -/
 theorem realizationMap_trans {K L M : AbstractSimplicialComplex ι} (hKL : K ≤ L) (hLM : L ≤ M) :
     realizationMap (hKL.trans hLM) = realizationMap hLM ∘ realizationMap hKL := by
-  funext x
-  exact Subtype.ext rfl
+  exact (Set.inclusion_comp_inclusion (standardGeometricComplex_space_mono hKL)
+    (standardGeometricComplex_space_mono hLM)).symm
 
 end AbstractSimplicialComplex
 
