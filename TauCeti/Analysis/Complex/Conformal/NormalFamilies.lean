@@ -19,8 +19,9 @@ import Mathlib.Topology.MetricSpace.Thickening
 
 A family of holomorphic functions on an open set `U ⊆ ℂ` that is *locally bounded* — uniformly
 bounded on every compact subset of `U` — is automatically equicontinuous on `U`.  This is the
-analytic heart of Montel's normal-families theorem: combined with Arzelà--Ascoli it upgrades a
-locally bounded family to a precompact one for local uniform convergence.
+analytic heart of Montel's normal-families theorem: for complex-valued functions, combined with
+Arzelà--Ascoli and an exhaustion/diagonal argument, it yields precompactness for local uniform
+convergence.
 
 The mechanism is Cauchy's estimate for the first derivative.  Mathlib's
 `Complex.norm_deriv_le_of_forall_mem_sphere_norm_le` bounds `‖deriv f c‖` at the *centre* of a
@@ -44,8 +45,8 @@ the family, which is exactly equicontinuity.
   `TauCeti.lipschitzOnWith_of_forall_mem_closedBall_two_mul_norm_le`: a sup bound `M` on
   `closedBall c (2 * r)` makes a holomorphic function `M / r`-Lipschitz on `ball c r`.
 * `TauCeti.IsLocallyBoundedOn.equicontinuousOn`: a locally bounded family of holomorphic
-  functions is equicontinuous.  With `TauCeti.IsLocallyBoundedOn.exists_forall_norm_le` this is the
-  pair of hypotheses Arzelà--Ascoli needs.
+  functions is equicontinuous.  With `TauCeti.IsLocallyBoundedOn.exists_forall_norm_le`, this
+  supplies the local inputs for an Arzelà--Ascoli exhaustion argument.
 * `TauCeti.IsLocallyBoundedOn.deriv` and `TauCeti.IsLocallyBoundedOn.equicontinuousOn_deriv`: the
   derivatives of a locally bounded family of holomorphic functions are again locally bounded, hence
   also equicontinuous.
@@ -68,16 +69,17 @@ namespace TauCeti
 
 open Filter Metric Set Topology
 
-variable {E ι : Type*} [NormedAddCommGroup E] {U : Set ℂ} {f : ℂ → E} {F : ι → ℂ → E}
+variable {ι : Type*} {U : Set ℂ} {f : ℂ → ℂ} {F : ι → ℂ → ℂ}
 
-/-- A family `F : ι → ℂ → E` is **locally bounded** on `s` if it is uniformly bounded — with a
+/-- A family `F : ι → ℂ → ℂ` is **locally bounded** on `s` if it is uniformly bounded — with a
 single constant, independent of the index — on every compact subset of `s`.
 
 This is the hypothesis of Montel's theorem, in the form fixed by the conformal-mapping roadmap. -/
-def IsLocallyBoundedOn (F : ι → ℂ → E) (s : Set ℂ) : Prop :=
+def IsLocallyBoundedOn (F : ι → ℂ → ℂ) (s : Set ℂ) : Prop :=
   ∀ K ⊆ s, IsCompact K → ∃ C, ∀ i, ∀ z ∈ K, ‖F i z‖ ≤ C
 
 /-- The defining compact-set characterization of local boundedness. -/
+@[simp]
 theorem isLocallyBoundedOn_def :
     IsLocallyBoundedOn F U ↔
       ∀ K ⊆ U, IsCompact K → ∃ C, ∀ i, ∀ z ∈ K, ‖F i z‖ ≤ C :=
@@ -90,8 +92,8 @@ theorem IsLocallyBoundedOn.mono {s t : Set ℂ} (hb : IsLocallyBoundedOn F s) (h
 
 /-- A locally bounded family is bounded at each point of the set, uniformly in the index.
 
-Together with `IsLocallyBoundedOn.equicontinuousOn` this is the pair of hypotheses
-Arzelà--Ascoli asks for. -/
+Together with `IsLocallyBoundedOn.equicontinuousOn`, this supplies the pointwise bounds used in
+an Arzelà--Ascoli exhaustion argument. -/
 theorem IsLocallyBoundedOn.exists_forall_norm_le {s : Set ℂ} (hb : IsLocallyBoundedOn F s) {z : ℂ}
     (hz : z ∈ s) : ∃ C, ∀ i, ‖F i z‖ ≤ C := by
   obtain ⟨C, hC⟩ := hb {z} (singleton_subset_iff.2 hz) isCompact_singleton
@@ -111,12 +113,11 @@ private theorem exists_pos_closedBall_two_mul_subset (hU : IsOpen U) {z : ℂ} (
   obtain ⟨δ, hδ, hδU⟩ :=
     isCompact_singleton.exists_cthickening_subset_open hU (singleton_subset_iff.2 hz)
   refine ⟨δ / 2, by positivity, ?_⟩
-  rw [show 2 * (δ / 2) = δ by ring]
+  have htwo : 2 * (δ / 2) = δ := by ring
+  rw [htwo]
   exact (closedBall_subset_cthickening (mem_singleton z) δ).trans hδU
 
 section Estimates
-
-variable [NormedSpace ℂ E]
 
 /-- **Cauchy's estimate on a closed ball.** If `f` is holomorphic on an open set `U` containing
 `closedBall c r` and `‖f‖ ≤ M` on that closed ball, then `‖deriv f c‖ ≤ M / r`.
@@ -127,10 +128,7 @@ inside the domain of holomorphy, which is the form the family estimates below co
 theorem norm_deriv_le_of_forall_mem_closedBall_norm_le (hf : DifferentiableOn ℂ f U) {c : ℂ}
     {r M : ℝ} (hr : 0 < r) (hsub : closedBall c r ⊆ U)
     (hM : ∀ w ∈ closedBall c r, ‖f w‖ ≤ M) : ‖deriv f c‖ ≤ M / r := by
-  have hd : DiffContOnCl ℂ f (ball c r) := by
-    refine DifferentiableOn.diffContOnCl ?_
-    rw [closure_ball c hr.ne']
-    exact hf.mono hsub
+  have hd := hf.diffContOnCl_ball hsub
   exact Complex.norm_deriv_le_of_forall_mem_sphere_norm_le hr hd fun w hw =>
     hM w (sphere_subset_closedBall hw)
 
@@ -213,12 +211,10 @@ theorem IsLocallyBoundedOn.deriv (hb : IsLocallyBoundedOn F U) (hU : IsOpen U)
   exact norm_deriv_le_of_forall_mem_closedBall_norm_le (hF i) hδ (hsub.trans hδU)
     fun w hw => hC i w (hsub hw)
 
-variable [CompleteSpace E]
-
 /-- The derivatives of a locally bounded family of holomorphic functions are equicontinuous.
 
-This is the input to Vitali's theorem: a locally bounded family is normal *together with* its
-derivatives. -/
+The result follows by applying the preceding equicontinuity theorem to the locally bounded
+derivative family. -/
 theorem IsLocallyBoundedOn.equicontinuousOn_deriv (hb : IsLocallyBoundedOn F U) (hU : IsOpen U)
     (hF : ∀ i, DifferentiableOn ℂ (F i) U) : EquicontinuousOn (fun i => _root_.deriv (F i)) U :=
   (hb.deriv hU hF).equicontinuousOn hU fun i => (hF i).deriv hU
