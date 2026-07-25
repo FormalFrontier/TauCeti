@@ -184,11 +184,20 @@ algebra structure through the bridge instances of `TauCeti.Algebra.HopfAlgebra.H
 noncomputable abbrev CoordinateRing : Type u :=
   SymmetricAlgebra R R ⧸ (hopfIdeal (R := R) p).toIdeal
 
-/-- The class of `x` in the coordinate ring of `αₚ` is `p`-nilpotent: its `p`-th power is `0`. -/
+omit [Fact p.Prime] [CharP R p] in
+/-- The class of `x` in the coordinate ring of `αₚ` is `p`-nilpotent: its `p`-th power is `0`.
+
+The left-hand side is stated over `Ideal.span {x ^ p}` rather than `(hopfIdeal p).toIdeal` so that
+it is in `simp` normal form: `hopfIdeal_toIdeal` is itself `@[simp]`, so a statement phrased over
+`.toIdeal` would be rewritten out from under this lemma and it could never fire. The two ideals are
+definitionally equal (`hopfIdeal_toIdeal` is `rfl`), so this still applies to goals phrased either
+way. In this form the statement needs neither primality of `p` nor `CharP R p`. -/
+@[simp]
 theorem mk_ι_pow_eq_zero :
-    (Ideal.Quotient.mk (hopfIdeal (R := R) p).toIdeal
+    (Ideal.Quotient.mk (Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p})
         (ι R R 1 : SymmetricAlgebra R R)) ^ p = 0 := by
-  rw [← map_pow, Ideal.Quotient.eq_zero_iff_mem, hopfIdeal_toIdeal]
+  rw [← map_pow (Ideal.Quotient.mk (Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p})),
+    Ideal.Quotient.eq_zero_iff_mem]
   exact Ideal.mem_span_singleton_self _
 
 /-- The class of `x` in the coordinate ring of `αₚ` is nonzero over a nontrivial base: the
