@@ -22,6 +22,8 @@ Fredholm theory.
 * `TauCeti.isFredholm_iff_finiteDimensional_ker_of_surjective`: the surjective criterion.
 * `TauCeti.isFredholm_iff_finiteDimensional_coker_of_injective`: the injective closed-range
   criterion.
+* `TauCeti.ContinuousLinearMap.index_of_surjective` and
+  `TauCeti.ContinuousLinearMap.index_of_injective`: the index in the two one-sided cases.
 
 The conventions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Appendix
 A.1.
@@ -85,13 +87,26 @@ lemma isFredholm_iff_finiteDimensional_coker_of_injective (hT : Function.Injecti
 
 namespace ContinuousLinearMap
 
+/-- The Fredholm index is the algebraic index of the underlying linear map: the local bridge to
+Mathlib's `LinearMap.index` API. -/
+private lemma index_eq_toLinearMap_index (T : E →L[K] F) : index T = (T : E →ₗ[K] F).index := by
+  rw [index_eq_finrank_sub, LinearMap.index_eq_finrank_sub]
+
+/-- A surjective continuous linear map has index the dimension of its kernel. -/
+lemma index_of_surjective (T : E →L[K] F) (hT : Function.Surjective T) :
+    index T = (finrank K (LinearMap.ker (T : E →ₗ[K] F)) : ℤ) := by
+  rw [index_eq_toLinearMap_index, LinearMap.index_of_surjective hT]
+
+/-- An injective continuous linear map has index the negative of the dimension of its cokernel. -/
+lemma index_of_injective (T : E →L[K] F) (hT : Function.Injective T) :
+    index T = -(finrank K (F ⧸ LinearMap.range (T : E →ₗ[K] F)) : ℤ) := by
+  rw [index_eq_toLinearMap_index, LinearMap.index_of_injective hT]
+
 /-- A bijective continuous linear map has Fredholm index zero. This formulation applies directly
 when bijectivity is known before a continuous inverse has been bundled. -/
 lemma index_eq_zero_of_bijective (T : E →L[K] F) (hT : Function.Bijective T) : index T = 0 := by
-  rw [index_eq_finrank_sub, ← LinearMap.index_eq_finrank_sub,
-    LinearMap.index_of_surjective hT.surjective,
-    LinearMap.ker_eq_bot.mpr hT.injective, finrank_bot]
-  norm_num
+  rw [index_eq_toLinearMap_index]
+  exact LinearEquiv.index_eq_zero (e := LinearEquiv.ofBijective (T : E →ₗ[K] F) hT)
 
 end ContinuousLinearMap
 
