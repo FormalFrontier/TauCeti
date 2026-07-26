@@ -31,8 +31,15 @@ invariant under modification of finitely many coordinates. The qualification mat
 `Set.univ` and is a tail event after all.
 
 `tail_le_exchangeableSigma` records the inclusion of the two σ-algebras formally; its strictness
-is not formalized here. The identically-distributed hypothesis is likewise essential rather than
-incidental — it is what makes the path law exchangeable in the first place.
+is not formalized here.
+
+Identical distribution enters only as the route to exchangeability of the path law: it is what
+`Exchangeable.of_iIndepFun_identDistrib` consumes, and exchangeability is what the argument below
+actually uses. It is sufficient for that, not necessary for the conclusion — the abstract form
+`measure_eq_zero_or_one_of_exchangeableSigma` assumes an exchangeable law and the disjoint-block
+product formula directly, and mentions identical distribution nowhere. A deterministic
+independent sequence with distinct constant coordinates, for instance, is not identically
+distributed yet has a Dirac path law, under which every event is trivial.
 
 ## Main results
 
@@ -337,8 +344,9 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 Kolmogorov's tail zero-one law does not subsume this: tail triviality needs only independence,
 whereas the symmetric σ-algebra can contain non-tail events — for measurable `B` with `B ≠ ∅` and
 `B ≠ Set.univ`, the event `{p | ∃ n, p n ∈ B}` is permutation-invariant but not a tail event
-(see the module docstring). The identically-distributed hypothesis is what makes the path law
-exchangeable, and so is essential here. -/
+(see the module docstring). Identical distribution is used here to obtain exchangeability of the
+path law, which is what the argument consumes; it is not claimed to be necessary for the
+conclusion — `measure_eq_zero_or_one_of_exchangeableSigma` assumes exchangeability directly. -/
 theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
     (h_indep : ProbabilityTheory.iIndepFun X μ)
     (hident : ∀ i, ProbabilityTheory.IdentDistrib (X i) (X 0) μ μ)
