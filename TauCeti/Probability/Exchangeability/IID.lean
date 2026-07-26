@@ -33,9 +33,10 @@ API on the canonical i.i.d. case and needs no material from
 `cameronfreer/exchangeability`.
 
 The roadmap's worked-example entry also asks for the sharper statement that an i.i.d. sequence is
-genuinely `ConditionallyIID`, with this constant measure as its *directing measure*. That awaits
-the conditional predicate itself, which is not yet defined; the mixture form below is the part
-expressible today.
+genuinely `ConditionallyIID`, with this constant measure as its *directing measure*. That is
+`TauCeti.Probability.ConditionallyIIDWith.of_iIndepFun_identDistrib`, in
+`TauCeti/Probability/Exchangeability/ConditionallyIID/Const.lean`, which upgrades the mixture form
+below; the same file records that a constant witness makes the two predicates equivalent.
 -/
 
 public section
