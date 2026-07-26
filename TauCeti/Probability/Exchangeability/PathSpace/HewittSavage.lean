@@ -21,11 +21,18 @@ import Mathlib.Probability.Independence.ZeroOne
 For an i.i.d. sequence, the exchangeable (symmetric) σ-algebra on path space is trivial:
 every exchangeable event has probability `0` or `1` (`hewittSavage_trivial_of_iIndep`).
 
-This is strictly stronger than Kolmogorov's tail zero-one law. Tail triviality holds for any
-independent sequence, whereas the symmetric σ-algebra contains events that are not tail events —
-`{p | ∃ n, p n ∈ B}` is invariant under every finitely supported permutation but depends on the
-early coordinates — and the statement genuinely needs the identically-distributed hypothesis,
-which is what makes the path law exchangeable in the first place.
+Kolmogorov's tail zero-one law does not subsume this. Tail triviality needs only independence,
+whereas the symmetric σ-algebra can contain events that are not tail events: for a measurable `B`
+with `B ≠ ∅` and `B ≠ Set.univ`, the event `{p | ∃ n, p n ∈ B}` is invariant under every
+permutation of the coordinates, yet is not a tail event — some path witnesses it only at index
+`0`, and changing that one coordinate moves the path out of the event, whereas tail events are
+invariant under modification of finitely many coordinates. The qualification matters: for
+`B = ∅` or `B = Set.univ`, or a one-point coordinate space, the event collapses to `∅` or
+`Set.univ` and is a tail event after all.
+
+`tail_le_exchangeableSigma` records the inclusion of the two σ-algebras formally; its strictness
+is not formalized here. The identically-distributed hypothesis is likewise essential rather than
+incidental — it is what makes the path law exchangeable in the first place.
 
 ## Main results
 
@@ -327,10 +334,11 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- **The Hewitt–Savage zero-one law.** For an i.i.d. sequence, the exchangeable (symmetric)
 σ-algebra on path space is trivial: every exchangeable event has probability `0` or `1`.
 
-This is strictly stronger than Kolmogorov's tail zero-one law. Tail triviality holds for any
-independent sequence, whereas the symmetric σ-algebra contains events — such as
-`{p | ∃ n, p n ∈ B}` — that are not tail events, and the statement genuinely needs the
-identically-distributed hypothesis, which is what makes the path law exchangeable. -/
+Kolmogorov's tail zero-one law does not subsume this: tail triviality needs only independence,
+whereas the symmetric σ-algebra can contain non-tail events — for measurable `B` with `B ≠ ∅` and
+`B ≠ Set.univ`, the event `{p | ∃ n, p n ∈ B}` is permutation-invariant but not a tail event
+(see the module docstring). The identically-distributed hypothesis is what makes the path law
+exchangeable, and so is essential here. -/
 theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
     (h_indep : ProbabilityTheory.iIndepFun X μ)
     (hident : ∀ i, ProbabilityTheory.IdentDistrib (X i) (X 0) μ μ)
