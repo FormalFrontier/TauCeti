@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Analytic.Order
-public import Mathlib.Analysis.Meromorphic.Divisor
 public import TauCeti.Analysis.Contour.Argument.Divisor
+import TauCeti.Analysis.Meromorphic.Divisor
 import Mathlib.Analysis.Calculus.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
@@ -43,10 +42,8 @@ circle, and `closedBall c R` is convex hence preconnected, so
 `MeromorphicOn.meromorphicOrderAt_ne_top_of_isPreconnected` propagates finite order from a boundary
 point to the whole disc — neither `f` nor `g` vanishes identically near any point of it.
 
-## Main results
+## Main result
 
-* `MeromorphicOn.AnalyticOnNhd.divisor_eq_analyticOrderNatAt` — the divisor of a holomorphic
-  function equals its natural analytic order.
 * `TauCeti.rouche` — if `‖f z - g z‖ < ‖f z‖` on `sphere c R`, then `f` and `g` have equal zero
   counts in `ball c R`, each counted with multiplicity.
 
@@ -107,23 +104,6 @@ private lemma circleIntegrable_logDeriv (hR : 0 < R)
   have hd : ContinuousOn (deriv f) (sphere c R) := (hf.deriv.continuousOn).mono hsub
   have hc : ContinuousOn f (sphere c R) := (hf.continuousOn).mono hsub
   exact hd.div hc hne
-
-namespace MeromorphicOn.AnalyticOnNhd
-
-/-- For a holomorphic function the divisor records the order of vanishing. The identity also holds
-at a point of infinite order, where both sides read `0`. -/
-lemma divisor_eq_analyticOrderNatAt {𝕜 E : Type*} [NontriviallyNormedField 𝕜]
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {f : 𝕜 → E} {V : Set 𝕜}
-    (hf : AnalyticOnNhd 𝕜 f V) {z : 𝕜} (hz : z ∈ V) :
-    MeromorphicOn.divisor f V z = (analyticOrderNatAt f z : ℤ) := by
-  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hf hz]
-  -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
-  -- that definitional equality, so unfold it here rather than in the statements.
-  cases h : analyticOrderAt f z with
-  | top => simp [analyticOrderNatAt, h]
-  | coe n => simp [analyticOrderNatAt, h]
-
-end MeromorphicOn.AnalyticOnNhd
 
 /-- The contour integral of `logDeriv (g / f)` around the circle vanishes: the hypothesis confines
 `g / f` to the slit plane there, where `Complex.log` supplies a primitive. -/

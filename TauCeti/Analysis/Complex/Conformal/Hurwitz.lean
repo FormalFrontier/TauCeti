@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Analysis.Complex.LocallyUniformLimit
 import TauCeti.Analysis.Complex.Conformal.Rouche
+import TauCeti.Analysis.Meromorphic.Divisor
 import Mathlib.Analysis.Analytic.IsolatedZeros
 
 /-!
