@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Analytic.Order
 public import TauCeti.Analysis.Complex.Conformal.Rouche
-import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Data.Set.Card.Arithmetic
 
 /-!
 # The open-mapping degree
@@ -16,11 +15,12 @@ The local mapping theorem: near a point `z₀` at which `f - f z₀` vanishes to
 value `w` close enough to `f z₀` is attained exactly `n` times, counted with multiplicity. This is
 the third target of layer **L0 (the local-mapping engine)** of the conformal-mapping roadmap.
 
-This is the quantitative refinement of Mathlib's open mapping theorem
-(`Complex.AnalyticOnNhd.is_constant_or_isOpenMap`, **consumed** here, not reproved). That theorem
-says the image of an open set is open — every nearby value is attained *at least* once. The degree
-says how many times: exactly `n`, so `f` is locally an `n`-to-one branched cover, behaving like
-`z ↦ z ^ n` up to a change of coordinates.
+This strengthens the open mapping theorem quantitatively. That theorem says the image of an open
+set is open — every nearby value is attained *at least* once. The degree says how many times:
+exactly `n`, so `f` is locally an `n`-to-one branched cover, behaving like `z ↦ z ^ n` up to a
+change of coordinates. Nothing here is derived from Mathlib's
+`Complex.AnalyticOnNhd.is_constant_or_isOpenMap`; the relationship is one of strength, not
+dependency.
 
 The proof is a Rouché comparison. On a circle small enough that `z₀` is the only solution of
 `f z = f z₀` inside, `‖f - f z₀‖` attains a positive minimum `δ`; for `‖w - f z₀‖ < δ` the
@@ -130,47 +130,40 @@ zeros. -/
 private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : AnalyticOnNhd ℂ A (closedBall c R))
     (hsimple : ∀ z ∈ ball c R, A z = 0 → analyticOrderNatAt A z = 1) :
     (∑ᶠ z ∈ ball c R, analyticOrderNatAt A z) = {z ∈ ball c R | A z = 0}.ncard := by
-  classical
-  set S := (MeromorphicOn.divisor_ball_support_finite hA.meromorphicOn).toFinset with hS
   have hAb : AnalyticOnNhd ℂ A (ball c R) := hA.mono ball_subset_closedBall
-  have hmemS : ∀ z ∈ ball c R, analyticOrderNatAt A z ≠ 0 → z ∈ S := by
-    intro z hz hne
-    have : MeromorphicOn.divisor A (ball c R) z ≠ 0 := by
-      rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hAb hz]
-      cases h : analyticOrderAt A z with
-      | top => simp [analyticOrderNatAt, h] at hne
-      | coe n => simpa [analyticOrderNatAt, h] using hne
-    simpa [hS, Set.Finite.mem_toFinset] using this
-  have hsub : (S : Set ℂ) ⊆ ball c R := fun z hz =>
-    (MeromorphicOn.divisor A (ball c R)).supportWithinDomain
-      (by simpa [hS, Set.Finite.mem_toFinset] using hz)
-  set T := S.filter (fun z => A z = 0) with hT
-  have hZT : {z ∈ ball c R | A z = 0} = (T : Set ℂ) := by
+  -- on the disc the summand is `1` exactly at the zeros and `0` elsewhere
+  have hsupp : ball c R ∩ Function.support (fun z => analyticOrderNatAt A z)
+      = {z ∈ ball c R | A z = 0} := by
     ext z
-    simp only [Set.mem_setOf_eq, hT, Finset.coe_filter, Set.mem_setOf_eq]
     constructor
+    · rintro ⟨hzb, hzs⟩
+      refine ⟨hzb, ?_⟩
+      by_contra h
+      exact hzs (by
+        simp [analyticOrderNatAt, (hAb z hzb).analyticOrderAt_eq_zero.2 h])
     · rintro ⟨hzb, hz0⟩
-      exact ⟨hmemS z hzb (by rw [hsimple z hzb hz0]; norm_num), hz0⟩
-    · rintro ⟨hzS, hz0⟩
-      exact ⟨hsub (by simpa using hzS), hz0⟩
-  have hcard : ((T : Set ℂ)).ncard = T.card := by simp
-  rw [hZT, hcard]
-  have hsum : (∑ᶠ z ∈ ball c R, analyticOrderNatAt A z) = ∑ z ∈ S, analyticOrderNatAt A z := by
-    refine finsum_mem_eq_sum_of_subset _ (fun z hz => ?_) hsub
-    obtain ⟨hzb, hzs⟩ := hz
-    simp only [Function.mem_support, ne_eq] at hzs
-    exact hmemS z hzb hzs
-  rw [hsum, ← Finset.sum_filter_add_sum_filter_not S (fun z => A z = 0)]
-  have h1 : ∑ z ∈ S.filter (fun z => A z = 0), analyticOrderNatAt A z = T.card := by
-    rw [Finset.sum_congr rfl (fun z hz => ?_), Finset.sum_const, smul_eq_mul, mul_one, hT]
-    obtain ⟨hzS, hz0⟩ := Finset.mem_filter.mp hz
-    exact hsimple z (hsub (by simpa using hzS)) hz0
-  have h2 : ∑ z ∈ S.filter (fun z => ¬ A z = 0), analyticOrderNatAt A z = 0 := by
-    refine Finset.sum_eq_zero (fun z hz => ?_)
-    obtain ⟨hzS, hz0⟩ := Finset.mem_filter.mp hz
-    simp [analyticOrderNatAt,
-      (hAb z (hsub (by simpa using hzS))).analyticOrderAt_eq_zero.2 hz0]
-  rw [h1, h2, add_zero]
+      exact ⟨hzb, by simp [Function.mem_support, hsimple z hzb hz0]⟩
+  rw [← finsum_mem_inter_support, hsupp,
+    finsum_mem_congr rfl (fun z (hz : z ∈ {z ∈ ball c R | A z = 0}) => hsimple z hz.1 hz.2)]
+  exact finsum_one
+
+/-- The fiber counted by `count_eq_ncard` is finite, which is what makes its cardinality
+statement mean "exactly this many preimages". -/
+private lemma zeros_finite {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : AnalyticOnNhd ℂ A (closedBall c R))
+    (hsimple : ∀ z ∈ ball c R, A z = 0 → analyticOrderNatAt A z = 1) :
+    {z ∈ ball c R | A z = 0}.Finite := by
+  refine Set.Finite.subset (MeromorphicOn.divisor_ball_support_finite hA.meromorphicOn)
+    (fun z hz => ?_)
+  obtain ⟨hzb, hz0⟩ := hz
+  have hAb : AnalyticOnNhd ℂ A (ball c R) := hA.mono ball_subset_closedBall
+  have h1 : analyticOrderNatAt A z = 1 := hsimple z hzb hz0
+  have hord : analyticOrderAt A z = 1 := by
+    cases h : analyticOrderAt A z with
+    | top => simp [analyticOrderNatAt, h] at h1
+    | coe n =>
+        simp only [analyticOrderNatAt, h, ENat.toNat_coe] at h1
+        simp [h1]
+  simp [Function.mem_support, MeromorphicOn.AnalyticOnNhd.divisor_apply hAb hzb, hord]
 
 /-- **The open-mapping degree**, distinct-and-simple form. Under the additional hypothesis that
 `f'` is zero-free on the punctured disc, every `w ≠ f z₀` close enough to `f z₀` has exactly `n`
@@ -178,9 +171,10 @@ private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : Analyti
 theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
     (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
-    (hderiv : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → deriv f z ≠ 0) :
+    (hderiv : ∀ z ∈ ball z₀ r, z ≠ z₀ → deriv f z ≠ 0) :
     ∃ δ > 0, ∀ w : ℂ, w ≠ f z₀ → ‖w - f z₀‖ < δ →
-      {z ∈ ball z₀ r | f z = w}.ncard = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ ∧
+      {z ∈ ball z₀ r | f z = w}.Finite ∧
+        {z ∈ ball z₀ r | f z = w}.ncard = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ ∧
         ∀ z ∈ ball z₀ r, f z = w → analyticOrderNatAt (fun ζ => f ζ - w) z = 1 := by
   obtain ⟨δ, hδ, hcount⟩ := localDegree hr hf hisol
   refine ⟨δ, hδ, fun w hw hwδ => ?_⟩
@@ -192,14 +186,15 @@ theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
       exact hw (sub_eq_zero.mp hz0).symm
     have hd : deriv (fun ζ => f ζ - w) z ≠ 0 := by
       rw [deriv_sub_const]
-      exact hderiv z (ball_subset_closedBall hz) hzne
+      exact hderiv z hz hzne
     simp [analyticOrderNatAt,
       (hA z (ball_subset_closedBall hz)).analyticOrderAt_eq_one_of_zero_deriv_ne_zero hz0 hd]
-  refine ⟨?_, fun z hz hfz => hsimple z hz (by rw [hfz, sub_self])⟩
-  rw [← hcount w hwδ, count_eq_ncard hA hsimple]
-  congr 1
-  ext z
-  simp [sub_eq_zero]
+  have hset : {z ∈ ball z₀ r | (fun ζ => f ζ - w) z = 0} = {z ∈ ball z₀ r | f z = w} := by
+    ext z
+    simp [sub_eq_zero]
+  refine ⟨hset ▸ zeros_finite hA hsimple, ?_,
+    fun z hz hfz => hsimple z hz (by rw [hfz, sub_self])⟩
+  rw [← hcount w hwδ, count_eq_ncard hA hsimple, hset]
 
 /-- **The open-mapping degree**, textbook form. If `f` is analytic at `z₀` and `z₀` is an isolated
 solution of `f z = f z₀` — equivalently, `f` is not constant near `z₀` — then there are radii `r`
@@ -229,7 +224,7 @@ uses the degree. -/
 private lemma not_injOn_ball_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
     (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
-    (hderiv : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → deriv f z ≠ 0)
+    (hderiv : ∀ z ∈ ball z₀ r, z ≠ z₀ → deriv f z ≠ 0)
     (hd₀ : deriv f z₀ = 0) :
     ¬ Set.InjOn f (ball z₀ r) := by
   obtain ⟨δ, hδ, hcard⟩ := localDegree_card hr hf hisol hderiv
@@ -273,9 +268,7 @@ private lemma not_injOn_ball_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r 
     simp only [hw_def, add_sub_cancel_left, Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos (by linarith : (0:ℝ) < δ / 2)]
     linarith
-  obtain ⟨hncard, _⟩ := hcard w hwne hwlt
-  have hfin : {z ∈ ball z₀ r | f z = w}.Finite :=
-    Set.finite_of_ncard_ne_zero (by rw [hncard]; omega)
+  obtain ⟨hfin, hncard, _⟩ := hcard w hwne hwlt
   have hnontriv : {z ∈ ball z₀ r | f z = w}.Nontrivial := by
     have hgt : 1 < {z ∈ ball z₀ r | f z = w}.ncard := by rw [hncard]; omega
     have := hfin.to_subtype
@@ -337,7 +330,7 @@ theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ}
     refine absurd (hinj.mono (fun z hz => (hball (hsub z (ball_subset_closedBall hz))).2.1))
       (not_injOn_ball_of_deriv_eq_zero hr (fun z hz => (hball (hsub z hz)).1)
         (fun z hz hzn => (hball (hsub z hz)).2.2.1 hzn)
-        (fun z hz hzn => (hball (hsub z hz)).2.2.2 hzn) hd₀)
+        (fun z hz hzn => (hball (hsub z (ball_subset_closedBall hz))).2.2.2 hzn) hd₀)
 
 /-- **The local injectivity criterion.** An analytic function is injective on some neighbourhood of
 `z₀` exactly when its derivative there is nonzero.
