@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PDE.FundamentalSolution.Planar
+public import Mathlib.Analysis.Calculus.FDeriv.Norm
+public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
@@ -36,38 +38,20 @@ open scoped Interval
 @[simp]
 theorem fderiv_planarNewtonianKernel_self {z : ℂ} (hz : z ≠ 0) :
     fderiv ℝ planarNewtonianKernel z z = -(2 * Real.pi)⁻¹ := by
-  let line : ℝ →L[ℝ] ℂ := (ContinuousLinearMap.id ℝ ℝ).smulRight z
-  have hline_one : line 1 = z := by
-    simp [line]
-  have hdiff : DifferentiableAt ℝ planarNewtonianKernel z :=
-    (contDiffAt_planarNewtonianKernel hz).differentiableAt (by norm_num)
-  have hcomp :
-      HasDerivAt (planarNewtonianKernel ∘ line)
-        (fderiv ℝ planarNewtonianKernel z z) 1 := by
-    have hline : HasDerivAt line z 1 := by
-      simpa only [hline_one] using line.hasFDerivAt.hasDerivAt
-    have hdiff' :
-        HasFDerivAt planarNewtonianKernel (fderiv ℝ planarNewtonianKernel z) (line 1) := by
-      rw [hline_one]
-      exact hdiff.hasFDerivAt
-    exact hdiff'.comp_hasDerivAt 1 hline
-  have heq :
-      (planarNewtonianKernel ∘ line) =ᶠ[nhds 1]
-        fun t ↦ (Real.log t + Real.log ‖z‖) * -(2 * Real.pi)⁻¹ := by
-    filter_upwards [eventually_gt_nhds zero_lt_one] with t ht
-    simp only [Function.comp_apply]
-    rw [planarNewtonianKernel_def]
-    simp only [line, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.id_apply,
-      norm_smul, Real.norm_eq_abs, abs_of_pos ht]
-    rw [Real.log_mul ht.ne' (norm_ne_zero_iff.mpr hz)]
-    ring
-  have hformula :
-      HasDerivAt (fun t : ℝ ↦ (Real.log t + Real.log ‖z‖) * -(2 * Real.pi)⁻¹)
-        (-(2 * Real.pi)⁻¹) 1 := by
-    simpa only [inv_one, one_mul] using
-      ((Real.hasDerivAt_log one_ne_zero).add_const (Real.log ‖z‖)).mul_const
-        (-(2 * Real.pi)⁻¹)
-  exact hcomp.unique (hformula.congr_of_eventuallyEq heq)
+  have hnorm : DifferentiableAt ℝ (fun w : ℂ ↦ ‖w‖) z :=
+    (differentiableAt_fun_id : DifferentiableAt ℝ (fun w : ℂ ↦ w) z).norm ℂ hz
+  have hlog :
+      HasFDerivAt (fun w : ℂ ↦ Real.log ‖w‖)
+        ((‖z‖ : ℝ)⁻¹ • fderiv ℝ (fun w : ℂ ↦ ‖w‖) z) z :=
+    hnorm.hasFDerivAt.log (norm_ne_zero_iff.mpr hz)
+  rw [show planarNewtonianKernel =
+    fun w : ℂ ↦ -(2 * Real.pi)⁻¹ * Real.log ‖w‖ by
+      ext w
+      exact planarNewtonianKernel_def w]
+  rw [(hlog.const_mul (-(2 * Real.pi)⁻¹)).fderiv]
+  simp only [smul_apply, smul_eq_mul]
+  rw [DifferentiableAt.fderiv_norm_self hnorm]
+  rw [inv_mul_cancel₀ (norm_ne_zero_iff.mpr hz), mul_one]
 
 /-- The derivative of a translated planar Newtonian kernel in the radial direction from its pole
 is `-(2π)⁻¹`. -/
@@ -95,6 +79,7 @@ theorem fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r θ : ℝ} (h
 
 /-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
 positively oriented circle around its pole. -/
+@[simp]
 theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
     {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
     r * fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
@@ -104,6 +89,7 @@ theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
 
 /-- The outward flux of the planar Newtonian kernel through any circle centered at its pole is
 `-1`. The factor `r` is the arclength Jacobian in the angular parametrization. -/
+@[simp]
 theorem integral_fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r : ℝ} (hr : 0 < r) :
     r * ∫ θ : ℝ in 0..2 * Real.pi,
         fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
