@@ -32,7 +32,7 @@ index types. It runs in three moves:
 1. `TauCeti.inner_L2prodMul_eq_zero_of_forall_basis` — orthogonality to the *basis* tensors upgrades
    to orthogonality to *every* elementary tensor. This is pure Hilbert-space geometry: expand a
    vector along a basis and push the sum through the continuous linear map
-   `TauCeti.L2prodMulRightL`.
+   `TauCeti.L2prodMulL`.
 2. `TauCeti.setIntegral_prod_eq_zero_of_forall_inner` — testing against indicators, since
    `1ₐ ⊗ 1_b` is the indicator of the rectangle `a ×ˢ b`.
 3. `TauCeti.setIntegral_eq_zero_of_forall_prod` — the Dynkin (π-λ) step, upgrading rectangles to
@@ -209,35 +209,23 @@ theorem norm_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜
     _ = Real.sqrt ((‖F‖ * ‖G‖) ^ 2) := by rw [h3]
     _ = ‖F‖ * ‖G‖ := Real.sqrt_sq (by positivity)
 
-/-- Tensoring on the right with a fixed `L²(ν)` vector, as a continuous linear map. -/
-noncomputable def L2prodMulLeftL [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) :
-    Lp 𝕜 2 μ →L[𝕜] Lp 𝕜 2 (μ.prod ν) :=
-  LinearMap.mkContinuous
-    { toFun := fun F => L2prodMul F G
-      map_add' := fun F₁ F₂ => L2prodMul_add_left F₁ F₂ G
-      map_smul' := fun c F => L2prodMul_smul_left c F G }
-    ‖G‖ fun F => by simp [mul_comm]
+/-- **The tensor as a bounded bilinear map.** `L2prodMulL F G = L2prodMul F G`, packaged so that
+either operand can be fixed: `L2prodMulL F` fixes the left factor, `L2prodMulL.flip G` the right.
+The operator norm bound is `1`, since `norm_L2prodMul` is an equality. -/
+noncomputable def L2prodMulL [SFinite μ] [SFinite ν] :
+    Lp 𝕜 2 μ →L[𝕜] Lp 𝕜 2 ν →L[𝕜] Lp 𝕜 2 (μ.prod ν) :=
+  LinearMap.mkContinuous₂
+    (LinearMap.mk₂ 𝕜 L2prodMul
+      (fun F₁ F₂ G => L2prodMul_add_left F₁ F₂ G)
+      (fun c F G => L2prodMul_smul_left c F G)
+      (fun F G₁ G₂ => L2prodMul_add_right F G₁ G₂)
+      (fun c F G => L2prodMul_smul_right c F G))
+    1 fun F G => by simp [norm_L2prodMul]
 
-/-- Tensoring on the left with a fixed `L²(μ)` vector, as a continuous linear map. -/
-noncomputable def L2prodMulRightL [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) :
-    Lp 𝕜 2 ν →L[𝕜] Lp 𝕜 2 (μ.prod ν) :=
-  LinearMap.mkContinuous
-    { toFun := fun G => L2prodMul F G
-      map_add' := fun G₁ G₂ => L2prodMul_add_right F G₁ G₂
-      map_smul' := fun c G => L2prodMul_smul_right c F G }
-    ‖F‖ fun G => le_of_eq (norm_L2prodMul F G)
-
-/-- `L2prodMulLeftL` applies as the tensor. -/
 @[simp]
-theorem L2prodMulLeftL_apply [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) (F : Lp 𝕜 2 μ) :
-    L2prodMulLeftL G F = L2prodMul F G :=
-  LinearMap.mkContinuous_apply _ _ _ _
-
-/-- `L2prodMulRightL` applies as the tensor. -/
-@[simp]
-theorem L2prodMulRightL_apply [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
-    L2prodMulRightL F G = L2prodMul F G :=
-  LinearMap.mkContinuous_apply _ _ _ _
+theorem L2prodMulL_apply [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
+    L2prodMulL F G = L2prodMul F G :=
+  LinearMap.mkContinuous₂_apply _ _ _ _
 
 /-- **Basis tensors detect all tensors.** A vector orthogonal to every tensor built from two Hilbert
 bases is orthogonal to *every* elementary tensor. This is the countability-free half of the
@@ -248,15 +236,15 @@ theorem inner_L2prodMul_eq_zero_of_forall_basis [SFinite μ] [SFinite ν] {ι₁
     (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) : inner 𝕜 h (L2prodMul F G) = 0 := by
   have step : ∀ i : ι₁, ∀ G' : Lp 𝕜 2 ν, inner 𝕜 h (L2prodMul (b₁ i) G') = 0 := by
     intro i G'
-    have hsum := ((b₂.hasSum_repr G').mapL ((innerSL 𝕜 h).comp (L2prodMulRightL (b₁ i))))
+    have hsum := ((b₂.hasSum_repr G').mapL ((innerSL 𝕜 h).comp (L2prodMulL (b₁ i))))
     have hzero : HasSum (fun _ : ι₂ => (0 : 𝕜))
-        ((innerSL 𝕜 h).comp (L2prodMulRightL (b₁ i)) G') := by
+        ((innerSL 𝕜 h).comp (L2prodMulL (b₁ i)) G') := by
       refine hsum.congr_fun fun j => ?_
       simp [hz i j]
     simpa using (hasSum_zero.unique hzero).symm
-  have hsum := ((b₁.hasSum_repr F).mapL ((innerSL 𝕜 h).comp (L2prodMulLeftL G)))
+  have hsum := ((b₁.hasSum_repr F).mapL ((innerSL 𝕜 h).comp (L2prodMulL.flip G)))
   have hzero : HasSum (fun _ : ι₁ => (0 : 𝕜))
-      ((innerSL 𝕜 h).comp (L2prodMulLeftL G) F) := by
+      ((innerSL 𝕜 h).comp (L2prodMulL.flip G) F) := by
     refine hsum.congr_fun fun i => ?_
     simp [step i G]
   simpa using (hasSum_zero.unique hzero).symm
