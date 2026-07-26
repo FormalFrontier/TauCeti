@@ -10,6 +10,7 @@ public import TauCeti.Probability.Exchangeability.IID
 -- Public: `cylinder` appears in the hypothesis of `measure_eq_zero_or_one_of_exchangeableSigma`.
 public import Mathlib.MeasureTheory.Constructions.Cylinders
 -- Non-public: used only inside proofs.
+import TauCeti.Algebra.GroupAction.FiniteSupportPerm
 import Mathlib.Logic.Equiv.Fintype
 import Mathlib.MeasureTheory.Measure.MeasuredSets
 import Mathlib.MeasureTheory.Constructions.ProjectiveFamilyContent
@@ -122,11 +123,8 @@ private theorem disjoint_map_blockSwap {N : ℕ} {F : Finset ℕ} (hF : F ⊆ Fi
   omega
 
 private theorem blockSwap_finite_support (N : ℕ) :
-    (MulAction.fixedBy ℕ (blockSwap N))ᶜ.Finite := by
-  refine Set.Finite.subset (Set.finite_Iio (N + N)) ?_
-  intro n hn
-  by_contra hmem
-  exact hn (blockSwap_apply_of_le (not_lt.mp hmem))
+    (MulAction.fixedBy ℕ (blockSwap N))ᶜ.Finite :=
+  finite_compl_fixedBy_of_eventually_eq_self ⟨N + N, fun _ hn => blockSwap_apply_of_le hn⟩
 
 section Cylinder
 
@@ -166,8 +164,7 @@ private theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : M
       D ⊆ measurableCylinders (fun _ : ℕ => α) ∧ ρ (⋃₀ D)ᶜ = 0 := by
     refine ⟨{Set.univ}, Set.countable_singleton _, ?_, ?_⟩
     · rintro u (rfl : u = Set.univ)
-      rw [← cylinder_univ (∅ : Finset ℕ)]
-      exact cylinder_mem_measurableCylinders _ _ MeasurableSet.univ
+      exact univ_mem_measurableCylinders (fun _ : ℕ => α)
     · simp
   obtain ⟨t, ht_mem, ht⟩ := exists_measure_symmDiff_lt_of_generateFrom_isSetRing (μ := ρ)
     isSetRing_measurableCylinders hcov generateFrom_measurableCylinders.symm hs hε
