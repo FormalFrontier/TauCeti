@@ -54,6 +54,24 @@ open scoped Real
 
 namespace TauCeti.Contour
 
+/-- Where a meromorphic function is analytic, its divisor records the order of vanishing. The
+identity also holds at a point of infinite order, where both sides read `0`.
+
+This is the bridge between `MeromorphicOn.divisor` — whose support is finite on a ball by
+`MeromorphicOn.divisor_ball_support_finite` — and the `analyticOrderNatAt` vocabulary that zero
+counts are stated in, so zero-counting arguments can reuse it instead of rebuilding the
+correspondence. Note the finiteness is of the divisor's *support*, equivalently of the zeros of
+finite order: a point where `f` vanishes identically has divisor value `0` and is absent from it. -/
+theorem divisor_eq_analyticOrderNatAt {f : ℂ → ℂ} {U : Set ℂ} {z : ℂ}
+    (hm : MeromorphicOn f U) (hf : AnalyticAt ℂ f z) (hz : z ∈ U) :
+    MeromorphicOn.divisor f U z = (analyticOrderNatAt f z : ℤ) := by
+  rw [hm.divisor_apply hz, hf.meromorphicOrderAt_eq]
+  -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
+  -- that definitional equality, so unfold it here rather than in the statements.
+  cases h : analyticOrderAt f z with
+  | top => simp [analyticOrderNatAt, h]
+  | coe n => simp [analyticOrderNatAt, h]
+
 /-- **The argument principle, against the divisor.** For `f` meromorphic on the closed disc
 `C(c, R)` with no zero or pole on the bounding circle, the contour integral of the logarithmic
 derivative is `2πi` times the sum of `MeromorphicOn.divisor` over the open disc.
