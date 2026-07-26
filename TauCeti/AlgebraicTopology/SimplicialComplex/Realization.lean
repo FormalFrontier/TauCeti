@@ -142,6 +142,7 @@ theorem mem_realization_iff {K : AbstractSimplicialComplex ι} {x : ι →₀ �
 /-- Barycentric coordinates in a standard simplex are nonnegative. -/
 theorem StandardSimplex.nonneg {σ : Finset ι} (x : StandardSimplex σ) (v : ι) :
     0 ≤ x.1 v := by
+  -- View the coordinate inequality as membership in a convex half-space.
   change x.1 ∈ {y : ι →₀ ℝ | 0 ≤ y v}
   exact convexHull_min (by
       intro y hy
@@ -157,6 +158,7 @@ theorem StandardSimplex.nonneg {σ : Finset ι} (x : StandardSimplex σ) (v : ι
 /-- The barycentric coordinates in a standard simplex sum to one. -/
 theorem StandardSimplex.sum_eq_one {σ : Finset ι} (x : StandardSimplex σ) :
     x.1.sum (fun _ r => r) = 1 := by
+  -- Use the linear-map form of coordinate summation required by the convexity API.
   change x.1.sum (fun _ => LinearMap.id (R := ℝ) (M := ℝ)) = 1
   change x.1 ∈
     {y : ι →₀ ℝ | y.sum (fun _ => LinearMap.id (R := ℝ) (M := ℝ)) = 1}
@@ -177,6 +179,7 @@ theorem StandardSimplex.sum_eq_one {σ : Finset ι} (x : StandardSimplex σ) :
 /-- The support of a point in a standard simplex is contained in its vertex set. -/
 theorem StandardSimplex.support_subset {σ : Finset ι} (x : StandardSimplex σ) :
     x.1.support ⊆ σ := by
+  -- Express support containment as membership in the standard supported submodule.
   change (x.1.support : Set ι) ⊆ (σ : Set ι)
   change x.1 ∈ Finsupp.supported ℝ ℝ (σ : Set ι)
   exact convexHull_min (by
@@ -185,6 +188,33 @@ theorem StandardSimplex.support_subset {σ : Finset ι} (x : StandardSimplex σ)
     obtain ⟨v, hv, rfl⟩ := hy
     simpa [Finsupp.mem_supported] using hv) (Finsupp.supported ℝ ℝ (σ : Set ι)).convex x.2
 
+/-- Membership in a standard simplex in terms of barycentric coordinates. -/
+@[simp]
+theorem mem_standardSimplex_iff {σ : Finset ι} {x : ι →₀ ℝ} :
+    x ∈ convexHull ℝ
+        (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) ↔
+      (∀ v, 0 ≤ x v) ∧ x.sum (fun _ r => r) = 1 ∧ x.support ⊆ σ := by
+  constructor
+  · intro hx
+    let x' : StandardSimplex σ := ⟨x, hx⟩
+    exact ⟨StandardSimplex.nonneg x', StandardSimplex.sum_eq_one x',
+      StandardSimplex.support_subset x'⟩
+  · rintro ⟨hnonneg, hsum, hsupp⟩
+    have hsum' :
+        x.sum (fun _ => LinearMap.id (R := ℝ) (M := ℝ)) = 1 := by
+      -- Put the coordinate-sum hypothesis in the linear-map form required by `Convex.sum_mem`.
+      change x.sum (fun _ r => r) = 1
+      exact hsum
+    have hx := (convex_convexHull ℝ
+        (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))).sum_mem
+      (fun v _ => hnonneg v) hsum'
+      (fun v hv => subset_convexHull ℝ _ (Finset.mem_coe.2 <|
+        Finset.mem_image.2 ⟨v, hsupp hv, rfl⟩))
+    have heq : (∑ i ∈ x.support, x i • Finsupp.single i (1 : ℝ)) = x := by
+      simpa [Finsupp.sum] using x.sum_single
+    rw [heq] at hx
+    exact hx
+
 /-- A point of a standard simplex lies in the simplex spanned by its support. -/
 theorem StandardSimplex.mem_convexHull_support {σ : Finset ι} (x : StandardSimplex σ) :
     x.1 ∈ convexHull ℝ
@@ -192,9 +222,11 @@ theorem StandardSimplex.mem_convexHull_support {σ : Finset ι} (x : StandardSim
   have hx := (convex_convexHull ℝ _).sum_mem
     (fun v _ => StandardSimplex.nonneg x v)
     (by
+      -- Return from the linear-map form expected by `Convex.sum_mem` to scalar summation.
       change x.1.sum (fun _ r => r) = 1
       exact StandardSimplex.sum_eq_one x)
     (fun v hv => subset_convexHull ℝ _ (by
+      -- Re-express set membership in the finite image so `Finset.mem_image` applies.
       change Finsupp.single v 1 ∈
         (x.1.support.image (fun w => Finsupp.single w (1 : ℝ)) : Finset (ι →₀ ℝ))
       exact Finset.mem_image.2 ⟨v, hv, rfl⟩))
@@ -221,7 +253,6 @@ theorem support_mem (K : AbstractSimplicialComplex ι) (x : Realization K) : x.1
       simp at hs')
 
 /-- The minimal abstract face carrying a point of the realization. -/
-@[expose]
 noncomputable def carrier (K : AbstractSimplicialComplex ι) (x : Realization K) : Face K :=
   ⟨x.1.support, support_mem K x⟩
 
@@ -229,23 +260,25 @@ noncomputable def carrier (K : AbstractSimplicialComplex ι) (x : Realization K)
 @[simp]
 theorem carrier_val (K : AbstractSimplicialComplex ι) (x : Realization K) :
     (carrier K x).1 = x.1.support :=
-  rfl
+  (rfl)
 
 /-- A realization point belongs to the closed simplex spanned by its carrier. -/
 theorem mem_convexHull_carrier (K : AbstractSimplicialComplex ι) (x : Realization K) :
     x.1 ∈ convexHull ℝ
       ((carrier K x).1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
   obtain ⟨σ, _, hx⟩ := mem_realization_iff.1 x.2
+  -- Unfold the public `carrier_val` characterization in the target simplex.
   change x.1 ∈ convexHull ℝ
     (x.1.support.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))
   exact StandardSimplex.mem_convexHull_support ⟨x.1, hx⟩
 
-/-- The carrier is contained in every abstract face whose closed simplex contains the point. -/
+/-- The carrier is contained in every finite vertex set whose closed simplex contains the point. -/
 theorem carrier_minimal (K : AbstractSimplicialComplex ι) (x : Realization K) {σ : Finset ι}
     (hx : x.1 ∈ convexHull ℝ
       (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :
     (carrier K x).1 ⊆ σ :=
   by
+    -- Unfold the public `carrier_val` characterization in the containment goal.
     change x.1.support ⊆ σ
     exact StandardSimplex.support_subset ⟨x.1, hx⟩
 
