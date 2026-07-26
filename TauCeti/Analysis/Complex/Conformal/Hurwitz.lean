@@ -55,7 +55,7 @@ private theorem exists_closedBall_subset_and_forall_sphere_ne_zero (hU : IsOpen 
   have hmem : U ∈ 𝓝 z := hU.mem_nhds hz
   obtain ⟨V, hV, hVsub⟩ :=
     mem_nhdsWithin_iff_exists_mem_nhds_inter.1
-      (show {w | f w ≠ 0} ∈ 𝓝[≠] z from hiso)
+      hiso
   obtain ⟨r, hr, hrsub⟩ := Metric.nhds_basis_closedBall.mem_iff.1
     (inter_mem hmem hV)
   refine ⟨r, hr, fun w hw => (hrsub hw).1, fun w hw => ?_⟩
@@ -100,21 +100,23 @@ private theorem finsum_analyticOrderNatAt_pos_of_apply_eq_zero
       ENat.toNat_pos ((hf z hz).analyticOrderAt_ne_zero.2 hfz) hfinite
     simpa [mem_ball_self hr] using horder
   · unfold Function.HasFiniteSupport
-    rw [show Function.support (fun i => ∑ᶠ (_ : i ∈ ball z r), analyticOrderNatAt f i) =
-        ball z r ∩ Function.support (analyticOrderNatAt f) by
+    have hsupport_eq :
+        Function.support (fun i => ∑ᶠ (_ : i ∈ ball z r), analyticOrderNatAt f i) =
+          ball z r ∩ Function.support (analyticOrderNatAt f) := by
       ext i
-      simp [Function.support, finsum_eq_dif, dist_comm]]
+      simp [Function.support, finsum_eq_dif, dist_comm]
+    rw [hsupport_eq]
     exact hsupport
 
-/-- **Hurwitz's theorem.** A locally uniform limit of zero-free holomorphic functions on a
-connected open set is either identically zero there or is itself zero-free there. -/
+/-- **Hurwitz's theorem.** A locally uniform limit of eventually zero-free holomorphic functions
+on a preconnected open set is either identically zero there or is itself zero-free there. -/
 theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
-    (hU : IsOpen U) (hconn : IsConnected U)
-    (hF : ∀ n, DifferentiableOn ℂ (F n) U)
-    (hf : DifferentiableOn ℂ f U)
+    (hU : IsOpen U) (hconn : IsPreconnected U)
+    (hF : ∀ᶠ n in atTop, DifferentiableOn ℂ (F n) U)
     (hconv : TendstoLocallyUniformlyOn F f atTop U)
-    (hne : ∀ n, ∀ z ∈ U, F n z ≠ 0) :
+    (hne : ∀ᶠ n in atTop, ∀ z ∈ U, F n z ≠ 0) :
     Set.EqOn f 0 U ∨ ∀ z ∈ U, f z ≠ 0 := by
+  have hf := hconv.differentiableOn hF hU
   rw [or_iff_not_imp_left]
   intro hnotzero
   simp only [Set.EqOn, not_forall] at hnotzero
@@ -125,7 +127,7 @@ theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
     refine (hf.analyticOnNhd hU z hzU).eventually_eq_zero_or_eventually_ne_zero.resolve_left ?_
     intro heq
     have hglobal := (hf.analyticOnNhd hU).eqOn_zero_of_preconnected_of_eventuallyEq_zero
-      hconn.isPreconnected hzU heq
+      hconn hzU heq
     exact haf (hglobal haU)
   obtain ⟨r, hr, hclosed, hsphere⟩ :=
     exists_closedBall_subset_and_forall_sphere_ne_zero hU hzU hiso
@@ -138,39 +140,31 @@ theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
     (sphere z r) (fun w hw => hclosed (sphere_subset_closedBall hw)) (isCompact_sphere z r)
   have hevent : ∀ᶠ n in atTop, ∀ w ∈ sphere z r, ‖f w - F n w‖ < ε := by
     simpa [dist_eq_norm] using (Metric.tendstoUniformlyOn_iff.1 hunif ε hε)
-  obtain ⟨n, hn⟩ := hevent.exists
+  obtain ⟨n, hn, hnF, hnne⟩ := (hevent.and (hF.and hne)).exists
   have hrouche := rouche hr
     ((hf.analyticOnNhd hU).mono hclosed)
-    ((hF n).analyticOnNhd hU |>.mono hclosed)
+    (hnF.analyticOnNhd hU |>.mono hclosed)
     (fun w hw => (hn w hw).trans_le (hεle w hw))
   have hleft : ∑ᶠ w ∈ ball z r, analyticOrderNatAt (F n) w = 0 :=
     finsum_analyticOrderNatAt_eq_zero_of_forall_ne_zero
-      ((hF n).analyticOnNhd hU) (ball_subset_closedBall.trans hclosed)
-      (fun w hw => hne n w (hclosed (ball_subset_closedBall hw)))
+      (hnF.analyticOnNhd hU) (ball_subset_closedBall.trans hclosed)
+      (fun w hw => hnne w (hclosed (ball_subset_closedBall hw)))
   have hfinite : analyticOrderAt f z ≠ ⊤ := by
     have haorder : analyticOrderAt f a ≠ ⊤ := by
       rw [(hf.analyticOnNhd hU a haU).analyticOrderAt_eq_zero.2 haf]
       exact ENat.zero_ne_top
     exact (hf.analyticOnNhd hU).analyticOrderAt_ne_top_of_isPreconnected
-      hconn.isPreconnected haU hzU haorder
+      hconn haU hzU haorder
   have hsupp : (ball z r ∩ Function.support (analyticOrderNatAt f)).Finite := by
     classical
-    have hfb : AnalyticOnNhd ℂ f (ball z r) :=
-      (hf.analyticOnNhd hU).mono (ball_subset_closedBall.trans hclosed)
     refine (MeromorphicOn.divisor_ball_support_finite
       (((hf.analyticOnNhd hU).mono hclosed).meromorphicOn)).subset ?_
     intro w hw
     rcases hw with ⟨hwb, hw⟩
     simp only [Function.mem_support, ne_eq] at hw ⊢
-    rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hfb hwb]
-    simp only [analyticOrderNatAt] at hw
-    cases ho : analyticOrderAt f w with
-    | top => simp [ho] at hw
-    | coe n =>
-        rw [ho] at hw
-        have hwn : n ≠ 0 := by simpa only [ENat.toNat_coe] using hw
-        simpa only [ENat.map_coe, WithTop.coe_natCast, WithTop.untop₀_natCast,
-          Int.natCast_eq_zero] using hwn
+    rw [divisor_eq_analyticOrderNatAt
+      ((hf.analyticOnNhd hU).mono (ball_subset_closedBall.trans hclosed)) hwb]
+    exact_mod_cast hw
   have hright := finsum_analyticOrderNatAt_pos_of_apply_eq_zero
     (hf.analyticOnNhd hU) hr hzU hfinite hfz hsupp
   rw [hleft] at hrouche

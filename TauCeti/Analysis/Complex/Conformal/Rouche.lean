@@ -45,6 +45,8 @@ point to the whole disc — neither `f` nor `g` vanishes identically near any po
 
 ## Main results
 
+* `TauCeti.divisor_eq_analyticOrderNatAt` — the divisor of a holomorphic function equals its
+  natural analytic order.
 * `TauCeti.rouche` — if `‖f z - g z‖ < ‖f z‖` on `sphere c R`, then `f` and `g` have equal zero
   counts in `ball c R`, each counted with multiplicity.
 
@@ -108,11 +110,10 @@ private lemma circleIntegrable_logDeriv (hR : 0 < R)
 
 /-- For a holomorphic function the divisor records the order of vanishing. The identity also holds
 at a point of infinite order, where both sides read `0`. -/
-private lemma divisor_eq_order (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ}
-    (hz : z ∈ ball c R) :
-    MeromorphicOn.divisor f (ball c R) z = (analyticOrderNatAt f z : ℤ) := by
-  have hfb : AnalyticOnNhd ℂ f (ball c R) := hf.mono ball_subset_closedBall
-  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hfb hz]
+lemma divisor_eq_analyticOrderNatAt {V : Set ℂ} (hf : AnalyticOnNhd ℂ f V) {z : ℂ}
+    (hz : z ∈ V) :
+    MeromorphicOn.divisor f V z = (analyticOrderNatAt f z : ℤ) := by
+  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hf hz]
   -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
   -- that definitional equality, so unfold it here rather than in the statements.
   cases h : analyticOrderAt f z with
@@ -172,13 +173,14 @@ private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (c
     obtain ⟨hzb, hzs⟩ := hz
     simp only [Function.mem_support, ne_eq] at hzs
     have hd : MeromorphicOn.divisor h (ball c R) z ≠ 0 := by
-      rw [divisor_eq_order hh hzb]
+      rw [divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall) hzb]
       exact_mod_cast hzs
     simpa [hS, Set.Finite.mem_toFinset] using hd
   rw [h1, h2]
   push_cast
   refine Finset.sum_congr rfl (fun z hz => ?_)
-  rw [divisor_eq_order hh (hsub (by simpa [hS] using hz))]
+  rw [divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall)
+    (hsub (by simpa [hS] using hz))]
   push_cast
   ring
 
