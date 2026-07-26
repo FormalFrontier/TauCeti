@@ -32,10 +32,12 @@ Measurability:
   `ω ↦ δ_{ν ω} ⊗ (ν ω)^{⊗ Fin m}`, pairing the block kernel with a Dirac mass at the mixing
   measure. This is the joint-space input a conditional (joint-law) reading of the mixture
   identity needs, as opposed to the block kernel alone.
-* `measurable_infinitePi` — the **countable** product `p ↦ ⊗ᵢ p i` is measurable in the measure
-  argument, with `measurable_infinitePi_const` the `ℕ`-constant power `p ↦ p^{⊗ℕ}`. Mathlib
-  supplies `Measure.infinitePi` and its projective-limit API but not this measurability, without
-  which an infinite product cannot appear under a `Measure.bind` at all.
+* `measurable_infinitePi` — the product `p ↦ ⊗ᵢ p i` over an **arbitrary** index type, of a
+  dependent family of probability measures, is measurable in the measure argument;
+  `measurable_infinitePi_const` is the `ℕ`-constant-power specialization `p ↦ p^{⊗ℕ}`. Mathlib
+  supplies `Measure.infinitePi` and its projective-limit API but not this measurability, which is
+  what a mixture of such products needs for `Measure.bind_apply` and the expected evaluation of
+  the mixture as an integral.
 
 Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure`:
 * `bind_probabilityMeasure_pi_apply` — evaluation on a measurable set as the integral of the product
@@ -148,14 +150,15 @@ theorem measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure {α : Type*}
     measurable_probabilityMeasure_pi.comp (measurable_pi_lambda _ fun _ => hν)
   exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpi)
 
-/-- **Infinite-product measurability.** The countable product `p ↦ p^{⊗ℕ}` is a measurable map
-`ProbabilityMeasure α → Measure (ℕ → α)`.
+/-- **Product measurability in the measure argument.** For an arbitrary index type and a dependent
+family of measurable spaces, `p ↦ ⊗ᵢ p i` is a measurable map
+`(∀ i, ProbabilityMeasure (β i)) → Measure (∀ i, β i)`.
 
-This is the countable-index companion of `measurable_probabilityMeasure_pi_const_toMeasure`. It is
-what lets `Measure.infinitePi` appear under a `Measure.bind`, i.e. lets a mixture of infinite
-product laws be formed — the shape the de Finetti mixture representation takes. Mathlib supplies
-`Measure.infinitePi` and its projective-limit API but not its measurability in the measure
-argument. -/
+This is the arbitrary-index companion of `measurable_probabilityMeasure_pi_toMeasure`, which covers
+the finite case through `ProbabilityMeasure.pi`. Mathlib supplies `Measure.infinitePi` and its
+projective-limit API but not this measurability, which is what a mixture of such products needs for
+`Measure.bind_apply` and for evaluating the mixture as an integral — the shape the de Finetti
+mixture representation takes. -/
 @[fun_prop]
 theorem measurable_infinitePi {ι' : Type*} {β : ι' → Type*} [∀ i, MeasurableSpace (β i)] :
     Measurable fun p : ∀ i, ProbabilityMeasure (β i) =>
@@ -170,10 +173,11 @@ theorem measurable_infinitePi {ι' : Type*} {β : ι' → Type*} [∀ i, Measura
         = Measure.pi (fun i : s => (p i : Measure (β i))) S :=
     fun p => Measure.infinitePi_cylinder _ hS
   simp_rw [hval]
-  exact (Measure.measurable_coe hS).comp
-    (measurable_probabilityMeasure_pi_toMeasure
-      (fun i : s => fun p : ∀ j, ProbabilityMeasure (β j) => p i.1)
-      fun i => measurable_pi_apply i.1)
+  simpa only [ProbabilityMeasure.toMeasure_pi, Function.comp_def] using
+    (Measure.measurable_coe hS).comp
+      (measurable_probabilityMeasure_pi_toMeasure
+        (fun i : s => fun p : ∀ j, ProbabilityMeasure (β j) => p i.1)
+        fun i => measurable_pi_apply i.1)
 
 /-- Constant-coordinate `ℕ` specialization of `measurable_infinitePi`: the countable power
 `p ↦ p^{⊗ℕ}` is measurable. -/
