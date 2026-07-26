@@ -47,8 +47,6 @@ point to the whole disc — neither `f` nor `g` vanishes identically near any po
 
 * `TauCeti.rouche` — if `‖f z - g z‖ < ‖f z‖` on `sphere c R`, then `f` and `g` have equal zero
   counts in `ball c R`, each counted with multiplicity.
-* `TauCeti.divisor_eq_analyticOrderNatAt` — the divisor of a holomorphic function is its order of
-  vanishing; exposed so downstream zero-counting arguments can reuse it.
 
 ## Coordination with upstream Mathlib
 
@@ -108,23 +106,6 @@ private lemma circleIntegrable_logDeriv (hR : 0 < R)
   have hc : ContinuousOn f (sphere c R) := (hf.continuousOn).mono hsub
   exact hd.div hc hne
 
-/-- For a holomorphic function the divisor records the order of vanishing. The identity also holds
-at a point of infinite order, where both sides read `0`.
-
-This is the bridge between `MeromorphicOn.divisor` — whose support is finite on a ball by
-`MeromorphicOn.divisor_ball_support_finite` — and the `analyticOrderNatAt` vocabulary the zero
-counts are stated in, so downstream files can reuse it instead of rebuilding the correspondence.
-Note that the finiteness is of the divisor's *support*, equivalently of the zeros of finite order:
-a point where `f` vanishes identically has divisor value `0` and is absent from it. -/
-theorem divisor_eq_analyticOrderNatAt {U : Set ℂ} (hf : AnalyticOnNhd ℂ f U) {z : ℂ} (hz : z ∈ U) :
-    MeromorphicOn.divisor f U z = (analyticOrderNatAt f z : ℤ) := by
-  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hf hz]
-  -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
-  -- that definitional equality, so unfold it here rather than in the statements.
-  cases h : analyticOrderAt f z with
-  | top => simp [analyticOrderNatAt, h]
-  | coe n => simp [analyticOrderNatAt, h]
-
 /-- The contour integral of `logDeriv (g / f)` around the circle vanishes: the hypothesis confines
 `g / f` to the slit plane there, where `Complex.log` supplies a primitive. -/
 private lemma circleIntegral_logDeriv_div_eq_zero (hR : 0 < R)
@@ -178,14 +159,16 @@ private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (c
     obtain ⟨hzb, hzs⟩ := hz
     simp only [Function.mem_support, ne_eq] at hzs
     have hd : MeromorphicOn.divisor h (ball c R) z ≠ 0 := by
-      rw [divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall) hzb]
+      rw [Contour.divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall).meromorphicOn
+        (hh _ (ball_subset_closedBall hzb)) hzb]
       exact_mod_cast hzs
     simpa [hS, Set.Finite.mem_toFinset] using hd
   rw [h1, h2]
   push_cast
   refine Finset.sum_congr rfl (fun z hz => ?_)
-  rw [divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall)
-    (hsub (by simpa [hS] using hz))]
+  have hzb' := hsub (by simpa [hS] using hz)
+  rw [Contour.divisor_eq_analyticOrderNatAt (hh.mono ball_subset_closedBall).meromorphicOn
+    (hh _ (ball_subset_closedBall hzb')) hzb']
   push_cast
   ring
 
