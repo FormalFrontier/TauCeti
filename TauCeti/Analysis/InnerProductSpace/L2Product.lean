@@ -291,12 +291,6 @@ theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν]
     _ = inner 𝕜 (L2prodMul F G) h := (L2.inner_def _ _).symm
     _ = 0 := hz F G
 
-/-- An `L²` function is integrable on any set of finite measure. -/
-theorem integrableOn_of_measure_lt_top [SFinite μ] [SFinite ν] (h : Lp 𝕜 2 (μ.prod ν))
-    {s : Set (α × β)} (hfin : (μ.prod ν) s < ⊤) : IntegrableOn (⇑h) s (μ.prod ν) := by
-  have : IsFiniteMeasure ((μ.prod ν).restrict s) := ⟨by rwa [Measure.restrict_apply_univ]⟩
-  exact ((Lp.memLp h).restrict s).integrable one_le_two
-
 /-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by finite
 boxes `spanningSets μ n ×ˢ spanningSets ν n`, run the Dynkin step inside each box, and pass to the
 monotone limit. -/
@@ -328,7 +322,7 @@ theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν]
         (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
           (measure_spanningSets_lt_top ν n)).ne
     have hdyn := setIntegral_eq_zero_of_forall_prod
-      (integrableOn_of_measure_lt_top h (hboxfin n)) hrect u hu
+      (integrableOn_Lp_of_measure_ne_top h one_le_two (hboxfin n).ne) hrect u hu
     rwa [Measure.restrict_restrict hu] at hdyn
   have hmono : Monotone fun n => u ∩ (spanningSets μ n ×ˢ spanningSets ν n) := fun m n hmn =>
     Set.inter_subset_inter_right _
@@ -346,7 +340,7 @@ theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν]
     rw [huniv, Set.inter_univ]
   have htend := tendsto_setIntegral_of_monotone
     (fun n => hu.inter ((hAm n).prod (hBm n))) hmono
-    (by rw [hcover]; exact integrableOn_of_measure_lt_top h hfin)
+    (by rw [hcover]; exact integrableOn_Lp_of_measure_ne_top h one_le_two hfin.ne)
   rw [hcover] at htend
   simp only [hbox] at htend
   exact tendsto_nhds_unique htend tendsto_const_nhds
@@ -368,7 +362,7 @@ theorem orthogonal_span_range_L2prodMul_eq_bot [SigmaFinite μ] [SigmaFinite ν]
     rw [inner_eq_zero_symm]
     exact hh _ (Submodule.subset_span ⟨(i, j), rfl⟩)
   have hae := Lp.ae_eq_zero_of_forall_setIntegral_eq_zero h (by norm_num) (by norm_num)
-    (fun s _ hs' => integrableOn_of_measure_lt_top h hs')
+    (fun s _ hs' => integrableOn_Lp_of_measure_ne_top h one_le_two hs'.ne)
     (fun s hs hs' => setIntegral_eq_zero_of_forall_inner hz s hs hs')
   rw [Lp.ext_iff]
   exact hae.trans (Lp.coeFn_zero 𝕜 2 (μ.prod ν)).symm
