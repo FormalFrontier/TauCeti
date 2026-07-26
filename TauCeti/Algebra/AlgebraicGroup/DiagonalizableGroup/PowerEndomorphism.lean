@@ -23,9 +23,9 @@ This file completes that picture. The key bridge is that the abstractly-defined 
 follows: `powEnd 0` is the trivial homomorphism (`powEnd_zero`), the exponent-additive law
 `powEnd (a + b) = powEnd a * powEnd b` holds for the pointwise product of endomorphisms
 (`powEnd_add`), and `powEnd (-a)` inverts pointwise (`powEnd_neg`). Passing to additive notation
-on the abelian group of `𝔾ₘ`-points, the family realizes the canonical integer action:
-`MonoidHom.toAdditive (powEnd z)` sends a point to `z • a` (`toAdditive_powEnd_apply`), i.e. the
-power endomorphisms are the power-map realization of the ring homomorphism `ℤ → End(𝔾ₘ(A))`. On
+on the abelian group of `𝔾ₘ`-points, the family realizes the canonical integer action
+(`toAdditive_powEnd_eq_intCast`), i.e. the power endomorphisms are the power-map realization of
+the ring homomorphism `ℤ → End(𝔾ₘ(A))`. On
 the group of points of a *fixed* algebra `A` this map need not be injective (for instance when
 `Aˣ` has finite exponent), so it is honestly only a ring homomorphism, not an isomorphism.
 
@@ -81,7 +81,6 @@ noncomputable local instance multiplicativeGroupPointsCommGroup :
 /-- **The power endomorphism is the power map.** The `z`th power endomorphism of
 `𝔾ₘ = D(Multiplicative ℤ)`, defined through the diagonalizable-group functoriality, acts on the
 convolution group of points as the genuine `z`th power `f ↦ f ^ z`. -/
-@[simp]
 theorem powEnd_apply (z : ℤ) (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
     powEnd z f = f ^ z := by
   apply pointsMulEquiv_ext
@@ -113,26 +112,19 @@ theorem powEnd_neg (a : ℤ) :
   ext f
   simp [powEnd_apply]
 
-/-- **The power endomorphism is the canonical integer action.** Passing to additive notation on
-the abelian group `𝔾ₘ(A)` of points, the endomorphism `powEnd z` acts as the `z`-fold operation
-`a ↦ z • a`. Together with `powEnd_zero`, `powEnd_one`, `powEnd_add`, and `powEnd_comp`, this
+/-- **The power endomorphism is the canonical integer action.** The additive form of `powEnd z`
+is the canonical integer endomorphism. Together with `powEnd_zero`, `powEnd_one`, `powEnd_add`,
+and `powEnd_comp`, this
 exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical ring homomorphism
 `ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for example when
 `Aˣ` has finite exponent. -/
-@[simp]
-theorem toAdditive_powEnd_apply (z : ℤ)
-    (a : Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))) :
-    MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a = z • a := by
-  simp [powEnd_apply]
-
-/-- The additive form of the power endomorphism is the canonical integer endomorphism. -/
-@[simp]
 theorem toAdditive_powEnd_eq_intCast (z : ℤ) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) =
       (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) := by
   apply AddMonoidHom.ext
   intro a
-  exact toAdditive_powEnd_apply z a
+  rw [MonoidHom.toAdditive_apply_apply, powEnd_apply, ofMul_zpow]
+  rfl
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 
