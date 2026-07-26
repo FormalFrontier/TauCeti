@@ -136,15 +136,16 @@ theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ℕ → Ω → 
 identity is the joint disintegration with the `ν` coordinate integrated out.
 
 Concretely, evaluating the joint identity on the rectangle `univ ×ˢ B` reads off the block's
-marginal law, because `δ_{ν ω}` contributes a factor `1` on `univ`. -/
+marginal law, because `δ_{ν ω}` contributes a factor `1` on `univ`.
+
+No measurability hypothesis on the coordinates is needed: `ConditionallyIIDWith` already forces it.
+Each mixing kernel is a probability measure, so the mixture has the same total mass as `μ`; if the
+pair map failed to be a.e. measurable then `Measure.map` would collapse the left side to `0`, and
+the identity would force `μ = 0`. -/
 theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω → α}
-    (hX : ∀ n, AEMeasurable (X n) μ) {ν : Ω → ProbabilityMeasure α}
-    (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
   refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
-  have hblock : AEMeasurable (fun ω => fun i : Fin m => X (k i) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => hX (k i)
-  have hpair : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
-    h.measurable_directing.aemeasurable.prodMk hblock
+  have hjoint := h.jointLaw_eq_disintegration k hk
   have hK : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
@@ -153,6 +154,23 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω �
       (fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     TauCeti.MeasureTheory.aemeasurable_probabilityMeasure_pi_const_toMeasure ν
       h.measurable_directing.aemeasurable
+  -- each mixing kernel is a probability measure, so the mixture carries the total mass of `μ`
+  have hbindUniv : (μ.bind fun ω => (Measure.dirac (ν ω)).prod
+      (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) Set.univ = μ Set.univ := by
+    rw [Measure.bind_apply MeasurableSet.univ hK]
+    simp
+  -- so the joint identity itself forces the pair map to be a.e. measurable: were it not,
+  -- `Measure.map` would collapse the left side to `0`, forcing `μ = 0`
+  have hpair : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ := by
+    rcases eq_or_ne μ 0 with rfl | hμ
+    · simp
+    · by_contra hcon
+      rw [Measure.map_of_not_aemeasurable hcon] at hjoint
+      refine hμ (Measure.measure_univ_eq_zero.mp ?_)
+      rw [← hbindUniv, ← hjoint]
+      simp
+  have hblock : AEMeasurable (fun ω => fun i : Fin m => X (k i) ω) μ :=
+    measurable_snd.comp_aemeasurable hpair
   refine Measure.ext fun B hB => ?_
   calc blockLaw μ X k B
       = μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (Set.univ ×ˢ B) := by
@@ -163,7 +181,7 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω �
         simp
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) (Set.univ ×ˢ B) := by
-        rw [h.jointLaw_eq_disintegration k hk]
+        rw [hjoint]
     _ = ∫⁻ ω, (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure B ∂μ := by
         rw [Measure.bind_apply (MeasurableSet.univ.prod hB) hK]
         simp [Measure.prod_prod]
@@ -172,9 +190,9 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω �
 
 /-- The existential form of the easy arrow. -/
 theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
-    (hX : ∀ n, AEMeasurable (X n) μ) (h : ConditionallyIID μ X) : MixedIID μ X := by
+    (h : ConditionallyIID μ X) : MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_directing
-  exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hX hν)
+  exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
 
 end Probability
 
