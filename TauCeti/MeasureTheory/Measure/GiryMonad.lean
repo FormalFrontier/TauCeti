@@ -53,15 +53,14 @@ theorem map_bind {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ
 /-- **Binding after a pushforward.** Binding `g` against a pushforward measure reindexes the
 mixing measure: `bind g ∘ map f = bind (g ∘ f)`.
 
-Obtained from associativity of `bind` together with `bind_dirac_eq_map` and `dirac_bind`. This is
-the `Measure` form of `PMF.bind_map`. -/
-theorem bind_map {μ : Measure S} {f : S → γ} (hf : Measurable f)
-    {g : γ → Measure δ} (hg : Measurable g) :
+This is the `Measure` form of `PMF.bind_map`, and like it is a `simp` lemma: it rewrites a bind of
+a mapped measure into the canonical single-bind form. -/
+@[simp]
+theorem bind_map {μ : Measure S} {f : S → γ} (hf : AEMeasurable f μ)
+    {g : γ → Measure δ} (hg : AEMeasurable g (μ.map f)) :
     (μ.map f).bind g = μ.bind (g ∘ f) := by
-  have hdirac : AEMeasurable (fun x : S => Measure.dirac (f x)) μ :=
-    (Measure.measurable_dirac.comp hf).aemeasurable
-  rw [← Measure.bind_dirac_eq_map μ hf, Measure.bind_bind hdirac hg.aemeasurable]
-  simp_rw [Function.comp_def, Measure.dirac_bind hg]
+  unfold Measure.bind
+  rw [AEMeasurable.map_map_of_aemeasurable hg hf]
 
 end MeasureTheory
 
