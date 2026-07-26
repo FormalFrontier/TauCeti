@@ -74,10 +74,40 @@ noncomputable abbrev sqrtNegSeven : ℂ :=
 theorem sqrtNegSeven_sq : sqrtNegSeven ^ 2 = (-7 : ℂ) := by
   simpa [sqrtNegSeven] using I_mul_real_sqrt_nat_sq 7
 
+/-- The three radicands `-1`, `-3`, and `-7` associated to the prime discriminants in
+the `ℚ(√-21)` genus-field example. -/
+@[expose] def minusTwentyOneRadicand : Fin 3 → ℚ :=
+  ![-1, -3, -7]
+
+/-- Chosen complex roots `i`, `i√3`, and `i√7` of the radicands in the
+`ℚ(√-21)` genus-field example. -/
+@[expose] noncomputable def minusTwentyOneRoot : Fin 3 → ℂ :=
+  ![Complex.I, sqrtNegThree, sqrtNegSeven]
+
+@[simp] theorem minusTwentyOneRadicand_zero : minusTwentyOneRadicand 0 = -1 := rfl
+
+@[simp] theorem minusTwentyOneRadicand_one : minusTwentyOneRadicand 1 = -3 := rfl
+
+@[simp] theorem minusTwentyOneRadicand_two : minusTwentyOneRadicand 2 = -7 := rfl
+
+@[simp] theorem minusTwentyOneRoot_zero : minusTwentyOneRoot 0 = Complex.I := rfl
+
+@[simp] theorem minusTwentyOneRoot_one : minusTwentyOneRoot 1 = sqrtNegThree := rfl
+
+@[simp] theorem minusTwentyOneRoot_two : minusTwentyOneRoot 2 = sqrtNegSeven := rfl
+
+/-- Each chosen root for the `ℚ(√-21)` example squares to its corresponding radicand. -/
+theorem minusTwentyOneRoot_sq (i : Fin 3) :
+    minusTwentyOneRoot i ^ 2 = algebraMap ℚ ℂ (minusTwentyOneRadicand i) := by
+  fin_cases i
+  · simp [Complex.I_sq]
+  · simp
+  · simp
+
 /-- The complex square root data for the prime discriminants `-4`, `-3`, and `-7`: the
 associated radicands are `-1`, `-3`, and `-7`, with roots `i`, `i√3`, and `i√7`. -/
 private theorem root_neg_four_neg_three_neg_seven_sq (i : Fin 3) :
-    (fun i : Fin 3 => ![Complex.I, sqrtNegThree, sqrtNegSeven] i) i ^ 2 =
+    minusTwentyOneRoot i ^ 2 =
       algebraMap ℚ ℂ
         (((primeDiscriminantRadicand
           (negFourNegThreeNegSevenPrimeDiscriminants i) : ℤ) : ℚ)) := by
@@ -95,7 +125,7 @@ private theorem root_neg_four_neg_three_neg_seven_sq (i : Fin 3) :
 /-- The range of the chosen prime-discriminant root family for the `ℚ(√-21)` example is
 `{i, √-3, √-7}`. -/
 private theorem range_roots_neg_four_neg_three_neg_seven :
-    (Set.range fun i : Fin 3 => ![Complex.I, sqrtNegThree, sqrtNegSeven] i)
+    Set.range minusTwentyOneRoot
       = {Complex.I, sqrtNegThree, sqrtNegSeven} := by
   ext x
   simp only [Set.mem_range, Set.mem_insert_iff, Set.mem_singleton_iff]
@@ -121,7 +151,7 @@ theorem finrank_adjoin_I_sqrt_neg_three_sqrt_neg_seven :
     isPrimeDiscriminant_negFourNegThreeNegSevenPrimeDiscriminants
     injective_negFourNegThreeNegSevenPrimeDiscriminants
     not_all_three_evenPrimeDiscriminants_negFourNegThreeNegSevenPrimeDiscriminants
-    (fun i : Fin 3 => ![Complex.I, sqrtNegThree, sqrtNegSeven] i)
+    minusTwentyOneRoot
     root_neg_four_neg_three_neg_seven_sq
   rw [range_roots_neg_four_neg_three_neg_seven] at h
   exact h.trans (by norm_num [Nat.card_fin])
@@ -142,7 +172,7 @@ theorem card_aut_adjoin_I_sqrt_neg_three_sqrt_neg_seven :
     isPrimeDiscriminant_negFourNegThreeNegSevenPrimeDiscriminants
     injective_negFourNegThreeNegSevenPrimeDiscriminants
     not_all_three_evenPrimeDiscriminants_negFourNegThreeNegSevenPrimeDiscriminants
-    (fun i : Fin 3 => ![Complex.I, sqrtNegThree, sqrtNegSeven] i)
+    minusTwentyOneRoot
     root_neg_four_neg_three_neg_seven_sq
   rw [← range_roots_neg_four_neg_three_neg_seven]
   exact h.trans (by norm_num [Nat.card_fin])
