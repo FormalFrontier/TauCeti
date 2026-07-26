@@ -50,7 +50,7 @@ inclusion `O(4) → Diff(S³)` is stateable" is `TauCeti.orthogonalToDiffSphere 
   sphere inherits from `E`, so the action is by isometries of the round sphere.
 * `TauCeti.LinearIsometryEquiv.unitSphereDiffeomorph_neg_apply`: the diffeomorphism induced by
   `-1 ∈ O(n + 1)` is the antipodal map.
-* `TauCeti.LinearIsometryEquiv.eq_of_eqOn_unitSphere`: a linear isometry equivalence is
+* `TauCeti.LinearMap.eq_of_eqOn_unitSphere`: a linear map is
   determined by its values on the unit sphere, whence
   `TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective` and
   `TauCeti.orthogonalToDiffSphere_injective`: the inclusion is injective, so `O(n + 1)` is
@@ -151,7 +151,7 @@ theorem unitSphereDiffHom_injective :
   rw [unitSphereDiffHom_apply, unitSphereDiffHom_apply] at h
   apply _root_.LinearIsometryEquiv.toLinearEquiv_injective
   apply LinearEquiv.toLinearMap_injective
-  refine eq_of_eqOn_unitSphere fun x hx => ?_
+  refine LinearMap.eq_of_eqOn_unitSphere fun x hx => ?_
   simpa using congrArg Subtype.val (DFunLike.congr_fun h ⟨x, hx⟩)
 
 end InnerProduct

@@ -21,7 +21,7 @@ This file develops that restriction independently of the manifold structure on s
 ## Main results
 
 * `TauCeti.LinearIsometryEquiv.isometry_unitSphereEquiv`: the restriction is an isometry.
-* `TauCeti.LinearIsometryEquiv.eq_of_eqOn_unitSphere`: a real linear map is determined by its
+* `TauCeti.LinearMap.eq_of_eqOn_unitSphere`: a real linear map is determined by its
   values on the unit sphere.
 -/
 
@@ -77,6 +77,10 @@ theorem isometry_unitSphereEquiv (e : E ≃ₗᵢ[R] F) : Isometry (unitSphereEq
 
 end Seminormed
 
+end LinearIsometryEquiv
+
+namespace LinearMap
+
 section Normed
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -97,6 +101,6 @@ theorem eq_of_eqOn_unitSphere {f g : E →ₗ[ℝ] F} (h : Set.EqOn f g (sphere 
 
 end Normed
 
-end LinearIsometryEquiv
+end LinearMap
 
 end TauCeti
