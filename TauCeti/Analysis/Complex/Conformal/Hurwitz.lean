@@ -84,7 +84,8 @@ private lemma le_count {g : ℂ → ℂ} (hg : AnalyticOnNhd ℂ g (closedBall c
     simp only [Function.mem_support, ne_eq] at hz
     by_cases hzb : z ∈ ball c R
     · simp only [hzb, finsum_true] at hz
-      simp only [Function.mem_support, ne_eq, divisor_eq_order (hg.mono ball_subset_closedBall) hzb]
+      simp only [Function.mem_support, ne_eq,
+        divisor_eq_analyticOrderNatAt (hg.mono ball_subset_closedBall) hzb]
       exact_mod_cast hz
     · exact absurd (by simp [hzb]) hz
   simpa [hz₀] using single_le_finsum z₀ hfin (fun _ => Nat.zero_le _)
