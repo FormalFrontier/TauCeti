@@ -57,8 +57,12 @@ namespace TauCeti
 
 open MeasureTheory
 
-variable {𝕜 ι : Type*} [RCLike 𝕜] [Fintype ι] {α : ι → Type*}
+variable {𝕜 ι : Type*} [Fintype ι] {α : ι → Type*}
   [∀ i, MeasurableSpace (α i)] {μ : ∀ i, Measure (α i)} [∀ i, SigmaFinite (μ i)]
+
+section NormedField
+
+variable [NormedField 𝕜]
 
 /-- The pointwise product `x ↦ ∏ i, f i (x i)` of `L²` functions is `L²` for the product measure. -/
 theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ i)) :
@@ -81,6 +85,10 @@ noncomputable def L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) : Lp 𝕜 2 (Measure.pi 
 theorem coeFn_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) :
     ⇑(L2piMul F) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, F i (x i) :=
   MemLp.coeFn_toLp _
+
+end NormedField
+
+variable [RCLike 𝕜]
 
 /-- **The tensor inner-product identity, `Fintype`-indexed.** The inner product of two pointwise
 products factors as the product of the coordinatewise inner products. -/
@@ -143,6 +151,7 @@ theorem coeFn_L2piMul_update (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜
   rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
 
 /-- The tensor is additive in the `j`-th coordinate. -/
+@[simp]
 theorem L2piMul_update_add (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v w : Lp 𝕜 2 (μ j)) :
     L2piMul (Function.update F j (v + w))
       = L2piMul (Function.update F j v) + L2piMul (Function.update F j w) := by
@@ -155,6 +164,7 @@ theorem L2piMul_update_add (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v w : Lp 𝕜
   rw [h, hadd, Pi.add_apply, h1, h2, hv, Pi.add_apply, add_mul]
 
 /-- The tensor is homogeneous in the `j`-th coordinate. -/
+@[simp]
 theorem L2piMul_update_smul (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (c : 𝕜) (v : Lp 𝕜 2 (μ j)) :
     L2piMul (Function.update F j (c • v)) = c • L2piMul (Function.update F j v) := by
   rw [Lp.ext_iff]
@@ -334,11 +344,18 @@ noncomputable def piHilbertBasis {κ : ι → Type*}
   HilbertBasis.mkOfOrthogonalEqBot (orthonormal_L2piMul fun i => (b i).orthonormal)
     (orthogonal_span_range_L2piMul_eq_bot b)
 
+/-- The `k`-th vector of `piHilbertBasis` is the tensor of the `k i`-th basis vectors. -/
+@[simp]
+theorem piHilbertBasis_apply {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (k : ∀ i, κ i) :
+    piHilbertBasis b k = L2piMul fun i => b i (k i) := by
+  rw [piHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+
 /-- The `k`-th vector of `piHilbertBasis` is a.e. the pointwise product `∏ i, b i (k i)`. -/
 theorem coeFn_piHilbertBasis {κ : ι → Type*}
     (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (k : ∀ i, κ i) :
     ⇑(piHilbertBasis b k) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, b i (k i) (x i) := by
-  rw [piHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+  rw [piHilbertBasis_apply]
   exact coeFn_L2piMul _
 
 end TauCeti
