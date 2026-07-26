@@ -81,6 +81,7 @@ noncomputable local instance multiplicativeGroupPointsCommGroup :
 /-- **The power endomorphism is the power map.** The `z`th power endomorphism of
 `𝔾ₘ = D(Multiplicative ℤ)`, defined through the diagonalizable-group functoriality, acts on the
 convolution group of points as the genuine `z`th power `f ↦ f ^ z`. -/
+@[simp]
 theorem powEnd_apply (z : ℤ) (f : WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)) :
     powEnd z f = f ^ z := by
   apply pointsMulEquiv_ext
@@ -118,6 +119,7 @@ and `powEnd_comp`, this
 exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical ring homomorphism
 `ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for example when
 `Aˣ` has finite exponent. -/
+@[simp]
 theorem toAdditive_powEnd_eq_intCast (z : ℤ) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) =
       (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) := by
