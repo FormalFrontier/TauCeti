@@ -8,7 +8,6 @@ Authors: Claude
 public import Mathlib.Analysis.InnerProductSpace.l2Space
 public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
-public import Mathlib.MeasureTheory.Integral.Prod
 public import TauCeti.MeasureTheory.Integral.Prod
 
 /-!
@@ -100,6 +99,7 @@ theorem coeFn_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp �
   MemLp.coeFn_toLp _
 
 /-- The tensor is additive in its first argument. -/
+@[simp]
 theorem L2prodMul_add_left [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul (F₁ + F₂) G = L2prodMul F₁ G + L2prodMul F₂ G := by
   rw [Lp.ext_iff]
@@ -109,6 +109,7 @@ theorem L2prodMul_add_left [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) 
   rw [h, hadd, Pi.add_apply, h1, h2, hf, Pi.add_apply, add_mul]
 
 /-- The tensor is additive in its second argument. -/
+@[simp]
 theorem L2prodMul_add_right [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G₁ G₂ : Lp 𝕜 2 ν) :
     L2prodMul F (G₁ + G₂) = L2prodMul F G₁ + L2prodMul F G₂ := by
   rw [Lp.ext_iff]
@@ -118,6 +119,7 @@ theorem L2prodMul_add_right [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G₁ G
   rw [h, hadd, Pi.add_apply, h1, h2, hg, Pi.add_apply, mul_add]
 
 /-- The tensor is homogeneous in its first argument. -/
+@[simp]
 theorem L2prodMul_smul_left [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul (c • F) G = c • L2prodMul F G := by
   rw [Lp.ext_iff]
@@ -127,6 +129,7 @@ theorem L2prodMul_smul_left [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 
   rw [h, hsmul, Pi.smul_apply, h1, hf, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_assoc]
 
 /-- The tensor is homogeneous in its second argument. -/
+@[simp]
 theorem L2prodMul_smul_right [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul F (c • G) = c • L2prodMul F G := by
   rw [Lp.ext_iff]
@@ -134,6 +137,24 @@ theorem L2prodMul_smul_right [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2
     Lp.coeFn_smul c (L2prodMul F G),
     ae_of_ae_snd (α := α) (μ := μ) (Lp.coeFn_smul c G)] with q h h1 hsmul hg
   rw [h, hsmul, Pi.smul_apply, h1, hg, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_left_comm]
+
+/-- The tensor vanishes when its first argument does. -/
+@[simp]
+theorem L2prodMul_zero_left [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) :
+    L2prodMul (0 : Lp 𝕜 2 μ) G = 0 := by
+  rw [Lp.ext_iff]
+  filter_upwards [coeFn_L2prodMul (0 : Lp 𝕜 2 μ) G, Lp.coeFn_zero 𝕜 2 (μ.prod ν),
+    ae_of_ae_fst (β := β) (ν := ν) (Lp.coeFn_zero 𝕜 2 μ)] with q h hz hf
+  rw [h, hz, hf, Pi.zero_apply, Pi.zero_apply, zero_mul]
+
+/-- The tensor vanishes when its second argument does. -/
+@[simp]
+theorem L2prodMul_zero_right [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) :
+    L2prodMul F (0 : Lp 𝕜 2 ν) = 0 := by
+  rw [Lp.ext_iff]
+  filter_upwards [coeFn_L2prodMul F (0 : Lp 𝕜 2 ν), Lp.coeFn_zero 𝕜 2 (μ.prod ν),
+    ae_of_ae_snd (α := α) (μ := μ) (Lp.coeFn_zero 𝕜 2 ν)] with q h hz hg
+  rw [h, hz, hg, Pi.zero_apply, Pi.zero_apply, mul_zero]
 
 /-- **The tensor inner-product identity.** The inner product of two pointwise-product vectors in
 `L²(μ ⊗ ν)` factors as the product of the inner products of the factors. -/
