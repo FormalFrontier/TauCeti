@@ -72,8 +72,8 @@ theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMe
   refine measure_eq_of_prefixProj_map_eq fun n => ?_
   have hfin : AEMeasurable (fun P : ProbabilityMeasure α =>
       (ProbabilityMeasure.pi fun _ : Fin n => P).toMeasure) (μ.map ν) :=
-    (TauCeti.MeasureTheory.measurable_probabilityMeasure_pi_const_toMeasure
-      (fun P : ProbabilityMeasure α => P) measurable_id).aemeasurable
+    TauCeti.MeasureTheory.aemeasurable_probabilityMeasure_pi_const_toMeasure
+      (fun P : ProbabilityMeasure α => P) measurable_id.aemeasurable
   -- the prefix marginal of each infinite power is the corresponding finite power
   have hstep : ∀ P : ProbabilityMeasure α,
       (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map (prefixProj α n)
