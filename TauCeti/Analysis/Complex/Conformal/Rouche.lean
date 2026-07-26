@@ -112,8 +112,9 @@ namespace MeromorphicOn.AnalyticOnNhd
 
 /-- For a holomorphic function the divisor records the order of vanishing. The identity also holds
 at a point of infinite order, where both sides read `0`. -/
-lemma divisor_eq_analyticOrderNatAt {V : Set ℂ} (hf : AnalyticOnNhd ℂ f V) {z : ℂ}
-    (hz : z ∈ V) :
+lemma divisor_eq_analyticOrderNatAt {𝕜 E : Type*} [NontriviallyNormedField 𝕜]
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {f : 𝕜 → E} {V : Set 𝕜}
+    (hf : AnalyticOnNhd 𝕜 f V) {z : 𝕜} (hz : z ∈ V) :
     MeromorphicOn.divisor f V z = (analyticOrderNatAt f z : ℤ) := by
   rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hf hz]
   -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
