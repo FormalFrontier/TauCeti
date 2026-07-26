@@ -106,7 +106,7 @@ theorem minusTwentyOneRadicand_eq_primeDiscriminantRadicand (i : Fin 3) :
     primeDiscriminantRadicand]
 
 /-- Each chosen root for the `ℚ(√-21)` example squares to its corresponding radicand. -/
-theorem minusTwentyOneRoot_sq (i : Fin 3) :
+@[simp] theorem minusTwentyOneRoot_sq (i : Fin 3) :
     minusTwentyOneRoot i ^ 2 = algebraMap ℚ ℂ (minusTwentyOneRadicand i) := by
   fin_cases i
   · simp [Complex.I_sq]
