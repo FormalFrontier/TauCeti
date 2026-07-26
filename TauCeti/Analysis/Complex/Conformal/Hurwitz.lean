@@ -27,10 +27,18 @@ convergence supplies an `n` with `‖g - F n‖ < δ ≤ ‖g‖` there. That is
 so `g` and `F n` have equal zero counts inside the circle. But `F n` has none, while `g` has a zero
 of positive order at `z₀` — a contradiction.
 
+The corollary usually quoted alongside it is the injectivity form: a locally uniform limit of
+*injective* holomorphic functions is injective or constant. That is the version the Riemann mapping
+theorem consumes. It is proved here directly rather than by applying `hurwitz` to the differences
+`F n - F n b` on the punctured domain `Ω \ {b}`, since that route needs the punctured set to be
+connected — a fact Mathlib does not currently supply for an open connected subset of `ℂ`.
+
 ## Main results
 
 * `TauCeti.hurwitz` — a locally uniform limit of nowhere-vanishing holomorphic functions on a
   connected open set is nowhere vanishing or identically zero.
+* `TauCeti.hurwitz_injOn` — a locally uniform limit of injective holomorphic functions is injective
+  or constant.
 
 ## Coordination with upstream Mathlib
 
@@ -162,5 +170,121 @@ theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsConnected Ω) {F : �
     (ENat.toNat_eq_zero.mp (by simpa [analyticOrderNatAt] using Nat.le_zero.mp hle)).resolve_right
       htop
   exact (hgA z₀ hz₀Ω).analyticOrderAt_eq_zero.mp h0 hgz₀
+
+/-- If `g - v` has an isolated zero at `a` inside a disc, then for all large `n` the approximant
+`F n` also attains the value `v` in that disc. This is the Rouché step behind `hurwitz_injOn`. -/
+private lemma eventually_exists_eq {Ω : Set ℂ} {F : ℕ → ℂ → ℂ} {g : ℂ → ℂ}
+    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hΩ : IsOpen Ω) (hg : AnalyticOnNhd ℂ g Ω)
+    (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
+    {a v : ℂ} {ρ : ℝ} (hρ : 0 < ρ) (hball : closedBall a ρ ⊆ Ω)
+    (hga : g a = v) (hzf : ∀ z ∈ closedBall a ρ, z ≠ a → g z ≠ v) :
+    ∀ᶠ n in atTop, ∃ z ∈ ball a ρ, F n z = v := by
+  have hA : AnalyticOnNhd ℂ (fun ζ => g ζ - v) (closedBall a ρ) :=
+    (hg.mono hball).sub analyticOnNhd_const
+  have hzne : ∀ z ∈ sphere a ρ, z ≠ a := by
+    intro z hz h
+    rw [h] at hz
+    simp only [mem_sphere, dist_self] at hz
+    linarith
+  have hsphne : ∀ z ∈ sphere a ρ, g z - v ≠ 0 := fun z hz =>
+    sub_ne_zero.mpr (hzf z (sphere_subset_closedBall hz) (hzne z hz))
+  have hcpt : IsCompact (sphere a ρ) := isCompact_sphere _ _
+  have hsne : (sphere a ρ).Nonempty := NormedSpace.sphere_nonempty.mpr hρ.le
+  have hcont : ContinuousOn (fun z => ‖g z - v‖) (sphere a ρ) :=
+    (((hA.continuousOn).mono sphere_subset_closedBall)).norm
+  obtain ⟨u, hu, humin⟩ := hcpt.exists_isMinOn hsne hcont
+  have hδ : 0 < ‖g u - v‖ := norm_pos_iff.mpr (hsphne u hu)
+  have hconvS : TendstoUniformlyOn F g atTop (sphere a ρ) :=
+    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hcpt).mp
+      (hconv.mono ((sphere_subset_closedBall).trans hball))
+  filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ] with n hn
+  have hB : AnalyticOnNhd ℂ (fun ζ => F n ζ - v) (closedBall a ρ) :=
+    (((hF n).analyticOnNhd hΩ).mono hball).sub analyticOnNhd_const
+  have hs : ∀ z ∈ sphere a ρ, ‖(g z - v) - (F n z - v)‖ < ‖g z - v‖ := by
+    intro z hz
+    have he : (g z - v) - (F n z - v) = g z - F n z := by ring
+    rw [he]
+    exact lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (humin hz)
+  have hcount := rouche hρ hA hB hs
+  have htop : analyticOrderAt (fun ζ => g ζ - v) a ≠ ⊤ := by
+    intro hev
+    rw [analyticOrderAt_eq_top] at hev
+    obtain ⟨ε, hε, hbl⟩ := Metric.eventually_nhds_iff.mp hev
+    set t : ℝ := min ε ρ / 2 with ht_def
+    have ht0 : 0 < t := by rw [ht_def]; exact half_pos (lt_min hε hρ)
+    have htε : t < ε := by have h := min_le_left ε ρ; rw [ht_def]; linarith
+    have htρ : t ≤ ρ := by have h := min_le_right ε ρ; rw [ht_def]; linarith
+    have hdist : dist (a + (t : ℂ)) a = t := by simp [dist_eq_norm, abs_of_pos ht0]
+    refine hzf (a + (t : ℂ)) ?_ ?_ (sub_eq_zero.mp (hbl ?_))
+    · simp only [mem_closedBall, hdist]; exact htρ
+    · simp only [ne_eq, add_eq_left, Complex.ofReal_eq_zero]; exact ht0.ne'
+    · rw [hdist]; exact htε
+  have hord : analyticOrderNatAt (fun ζ => g ζ - v) a ≠ 0 := by
+    have h0 : analyticOrderAt (fun ζ => g ζ - v) a ≠ 0 := fun h =>
+      ((hA a (mem_closedBall_self hρ.le)).analyticOrderAt_eq_zero.mp h) (by simp [hga])
+    simpa [analyticOrderNatAt] using fun h => h0 ((ENat.toNat_eq_zero.mp h).resolve_right htop)
+  have hne0 : (∑ᶠ z ∈ ball a ρ, analyticOrderNatAt (fun ζ => F n ζ - v) z) ≠ 0 := by
+    rw [← hcount]
+    exact fun h => hord (Nat.le_zero.mp (h ▸ le_count hA (mem_ball_self hρ)))
+  by_contra hcon
+  push Not at hcon
+  exact hne0 (count_eq_zero hB (fun z hz => sub_ne_zero.mpr (hcon z hz)))
+
+/-- **Hurwitz's theorem for injectivity.** On a connected open set, a locally uniform limit of
+*injective* holomorphic functions is either injective or constant.
+
+This is the form the Riemann mapping theorem consumes: it is what keeps the extremal map injective
+in the limit. Both alternatives genuinely occur — the injective maps `z ↦ z / (n + 1)` converge
+locally uniformly to the constant `0`.
+
+The proof does not route through `hurwitz` on the punctured domain `Ω \ {b}`, which would need
+that set to be connected — a fact Mathlib does not currently provide for an open connected subset
+of `ℂ`. Instead, if `g` were non-constant with `g a = g b` for `a ≠ b`, we place disjoint discs
+about `a` and `b` and use `eventually_exists_eq` on each: for large `n` the injective `F n` would
+attain the single value `g a` in both discs, hence at two distinct points. -/
+theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsConnected Ω) {F : ℕ → ℂ → ℂ}
+    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hg : DifferentiableOn ℂ g Ω)
+    (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
+    (hinj : ∀ n, Set.InjOn (F n) Ω) :
+    Set.InjOn g Ω ∨ ∃ v, ∀ z ∈ Ω, g z = v := by
+  have hgA : AnalyticOnNhd ℂ g Ω := hg.analyticOnNhd hΩ
+  by_cases hconst : ∃ v, ∀ z ∈ Ω, g z = v
+  · exact Or.inr hconst
+  refine Or.inl fun a ha b hb hab => ?_
+  by_contra hne
+  -- around any point where `g` takes the value `g a`, that value is taken only there
+  have hiso : ∀ x ∈ Ω, g x = g a → ∀ σ > 0, ∃ ρ > 0, ρ ≤ σ ∧ closedBall x ρ ⊆ Ω ∧
+      ∀ z ∈ closedBall x ρ, z ≠ x → g z ≠ g a := by
+    intro x hx _ σ hσ
+    have hpunct : ∀ᶠ z in 𝓝[≠] x, g z ≠ g a := by
+      rcases ((hgA.sub analyticOnNhd_const) x hx).eventually_eq_zero_or_eventually_ne_zero with
+        h | h
+      · exfalso
+        have heq := (hgA.sub analyticOnNhd_const).eqOn_zero_of_preconnected_of_eventuallyEq_zero
+          hconn.isPreconnected hx (by filter_upwards [h] with z hz using hz)
+        exact hconst ⟨g a, fun z hz => sub_eq_zero.mp (heq hz)⟩
+      · filter_upwards [h] with z hz using sub_ne_zero.mp hz
+    obtain ⟨ε₁, hε₁, h₁⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hpunct)
+    obtain ⟨ε₂, hε₂, h₂⟩ := Metric.isOpen_iff.mp hΩ x hx
+    refine ⟨min (min (ε₁ / 2) (ε₂ / 2)) σ, lt_min (lt_min (by linarith) (by linarith)) hσ,
+      min_le_right _ _, fun z hz => ?_, fun z hz hzx => ?_⟩
+    · refine h₂ (mem_ball.mpr (lt_of_le_of_lt (mem_closedBall.mp hz) ?_))
+      exact lt_of_le_of_lt (le_trans (min_le_left _ _) (min_le_right _ _)) (by linarith)
+    · refine h₁ (lt_of_le_of_lt (mem_closedBall.mp hz) ?_) (by simpa using hzx)
+      exact lt_of_le_of_lt (le_trans (min_le_left _ _) (min_le_left _ _)) (by linarith)
+  have hd : 0 < dist a b := dist_pos.mpr hne
+  obtain ⟨ρa, hρa, hρa3, hballa, hzfa⟩ := hiso a ha rfl (dist a b / 3) (by linarith)
+  obtain ⟨ρb, hρb, hρb3, hballb, hzfb⟩ := hiso b hb hab.symm (dist a b / 3) (by linarith)
+  obtain ⟨n, ⟨z₁, hz₁, hFz₁⟩, ⟨z₂, hz₂, hFz₂⟩⟩ :=
+    ((eventually_exists_eq hF hΩ hgA hconv hρa hballa rfl hzfa).and
+      (eventually_exists_eq hF hΩ hgA hconv hρb hballb hab.symm hzfb)).exists
+  have hz₁₂ : z₁ ≠ z₂ := by
+    rintro rfl
+    have h1 : dist a z₁ < ρa := by rw [dist_comm]; exact mem_ball.mp hz₁
+    have h2 : dist z₁ b < ρb := mem_ball.mp hz₂
+    have h3 := dist_triangle a z₁ b
+    linarith
+  exact hz₁₂ (hinj n (hballa (ball_subset_closedBall hz₁)) (hballb (ball_subset_closedBall hz₂))
+    (hFz₁.trans hFz₂.symm))
 
 end TauCeti
