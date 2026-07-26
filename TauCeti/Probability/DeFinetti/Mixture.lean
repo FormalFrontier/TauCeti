@@ -68,9 +68,9 @@ pushforward and need not represent the path law at all.
 
 Bundling records at the type level that the mixing law is a probability measure, and supports the
 downstream weak-topology and convergence APIs, which are stated for `ProbabilityMeasure`; it coerces
-back to `Measure` for the `bind` representation. Bundling is also what makes the measurability
-hypothesis `hX` an argument of the definition rather than of its theorems: `Measure.map` of a
-non-measurable function is `0`, which is not a probability measure. -/
+back to `Measure` for the `bind` representation. Bundling is also why measurability is required at
+construction time, as the argument `hX`: `Measure.map` of a non-measurable function is `0`, which is
+not a probability measure, so the pushforward is not known to be one without it. -/
 def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α)
     (hX : ∀ n, Measurable (X n)) : ProbabilityMeasure (ProbabilityMeasure α) :=
   ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
