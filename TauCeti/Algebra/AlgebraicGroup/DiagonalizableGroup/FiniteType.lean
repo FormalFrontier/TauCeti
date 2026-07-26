@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
@@ -74,10 +73,20 @@ noncomputable abbrev coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
 /-- The bialgebra morphism underlying `coordinateMap φ` is the group-algebra map induced
 by the underlying group homomorphism. -/
 @[simp]
-theorem coordinateMap_toBialgHom {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
     FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) =
       MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ) :=
   rfl
+
+/-- The coordinate map sends a group-algebra basis element to the basis element indexed
+by its image under the underlying group homomorphism. -/
+@[simp]
+theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r : R) :
+    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)
+        (MonoidAlgebra.single g r) =
+      MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
+  rw [toBialgHom_coordinateMap]
+  exact MonoidAlgebra.mapDomain_single
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
 
@@ -89,29 +98,15 @@ noncomputable def coordinateRingFunctor :
   map := coordinateMap R
   map_id G := by
     apply FiniteTypeCommHopfAlgCat.hom_ext
-    rw [coordinateMap_toBialgHom, FGCommGrpCat.toMonoidHom_id]
+    rw [toBialgHom_coordinateMap, FGCommGrpCat.toMonoidHom_id]
     exact MonoidAlgebra.mapDomainBialgHom_id (R := R) (M := G)
   map_comp φ ψ := by
     apply FiniteTypeCommHopfAlgCat.hom_ext
-    rw [coordinateMap_toBialgHom, FGCommGrpCat.toMonoidHom_comp,
-      FiniteTypeCommHopfAlgCat.toBialgHom_comp, coordinateMap_toBialgHom,
-      coordinateMap_toBialgHom]
+    rw [toBialgHom_coordinateMap, FGCommGrpCat.toMonoidHom_comp,
+      FiniteTypeCommHopfAlgCat.toBialgHom_comp, toBialgHom_coordinateMap,
+      toBialgHom_coordinateMap]
     exact MonoidAlgebra.mapDomainBialgHom_comp (R := R)
       (FGCommGrpCat.toMonoidHom ψ) (FGCommGrpCat.toMonoidHom φ)
-
-/-- The object part of `coordinateRingFunctor` is the group algebra `R[G]`. -/
-@[simp]
-theorem coordinateRingFunctor_obj (G : FGCommGrpCat.{v}) :
-    (coordinateRingFunctor R).obj G = coordinateRing R G :=
-  (rfl)
-
-/-- The morphism part of `coordinateRingFunctor` is the group-algebra bialgebra map. -/
-@[simp]
-theorem coordinateRingFunctor_map {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
-    (coordinateRingFunctor R).map φ =
-      eqToHom (coordinateRingFunctor_obj R G) ≫ coordinateMap R φ ≫
-        eqToHom (coordinateRingFunctor_obj R H).symm :=
-  (rfl)
 
 end DiagonalizableGroup
 

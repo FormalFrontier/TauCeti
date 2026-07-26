@@ -27,7 +27,7 @@ namespace TauCeti
 universe v
 
 /-- The object property of being a finitely generated commutative group. -/
-@[expose] def fgCommGrpProperty : ObjectProperty CommGrpCat.{v} :=
+def fgCommGrpProperty : ObjectProperty CommGrpCat.{v} :=
   fun G => Group.FG G
 
 /-- Membership in the finitely generated commutative-group object property. -/
@@ -47,11 +47,14 @@ namespace FGCommGrpCat
 def carrier (G : FGCommGrpCat.{v}) : Type v :=
   G.obj
 
+/-- Objects of `FGCommGrpCat` coerce to their underlying type. -/
 instance : CoeSort FGCommGrpCat.{v} (Type v) :=
   ⟨carrier⟩
 
 attribute [coe] carrier
 
+/-- An object of `FGCommGrpCat` inherits the commutative-group structure of its
+underlying group. -/
 instance (G : FGCommGrpCat.{v}) : CommGroup G :=
   inferInstanceAs (CommGroup G.obj)
 
@@ -61,7 +64,7 @@ instance (G : FGCommGrpCat.{v}) : Group.FG G :=
 
 /-- Construct an object of `FGCommGrpCat` from a finitely generated commutative group. -/
 abbrev of (G : Type v) [CommGroup G] [Group.FG G] : FGCommGrpCat.{v} :=
-  ⟨CommGrpCat.of G, inferInstanceAs (Group.FG G)⟩
+  ⟨CommGrpCat.of G, (fgCommGrpProperty_iff _).2 inferInstance⟩
 
 /-- Lift a group homomorphism between finitely generated commutative groups to
 `FGCommGrpCat`. -/
@@ -72,6 +75,17 @@ abbrev ofHom {G H : Type v} [CommGroup G] [Group.FG G] [CommGroup H] [Group.FG H
 /-- The group homomorphism underlying a morphism in `FGCommGrpCat`. -/
 abbrev toMonoidHom {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) : G →* H :=
   φ.hom.hom
+
+@[simp]
+theorem ofHom_toMonoidHom {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+    ofHom (toMonoidHom φ) = φ :=
+  rfl
+
+@[simp]
+theorem toMonoidHom_ofHom {G H : Type v} [CommGroup G] [Group.FG G]
+    [CommGroup H] [Group.FG H] (φ : G →* H) :
+    toMonoidHom (ofHom φ) = φ :=
+  rfl
 
 /-- Two morphisms in `FGCommGrpCat` are equal when their underlying group homomorphisms
 are equal. -/
