@@ -72,7 +72,6 @@ theorem hasFDerivAt_planarNewtonianKernel {z : ℂ} (hz : z ≠ 0) :
   exact hlog.const_mul (-(2 * Real.pi)⁻¹ / 2)
 
 /-- The Fréchet derivative of the planar Newtonian kernel as a continuous linear functional. -/
-@[simp]
 theorem fderiv_planarNewtonianKernel {z : ℂ} (hz : z ≠ 0) :
     fderiv ℝ planarNewtonianKernel z =
       (-(2 * Real.pi)⁻¹ * (‖z‖ ^ 2)⁻¹) • innerSL ℝ z :=
@@ -80,7 +79,6 @@ theorem fderiv_planarNewtonianKernel {z : ℂ} (hz : z ≠ 0) :
 
 /-- The directional derivative of the planar Newtonian kernel is the radial inner-product
 covector scaled by `-(2π ‖z‖²)⁻¹`. -/
-@[simp]
 theorem fderiv_planarNewtonianKernel_apply {z : ℂ} (hz : z ≠ 0) (v : ℂ) :
     fderiv ℝ planarNewtonianKernel z v =
       (-(2 * Real.pi)⁻¹ * (‖z‖ ^ 2)⁻¹) * ⟪z, v⟫_ℝ := by
@@ -106,14 +104,12 @@ theorem hasFDerivAt_planarNewtonianKernel_sub {z a : ℂ} (hza : z ≠ a) :
   exact hasFDerivAt_planarNewtonianKernel (sub_ne_zero.mpr hza)
 
 /-- The Fréchet derivative of a planar Newtonian kernel with pole at `a`. -/
-@[simp]
 theorem fderiv_planarNewtonianKernel_sub {z a : ℂ} (hza : z ≠ a) :
     fderiv ℝ (fun w : ℂ ↦ planarNewtonianKernel (w - a)) z =
       (-(2 * Real.pi)⁻¹ * (‖z - a‖ ^ 2)⁻¹) • innerSL ℝ (z - a) :=
   (hasFDerivAt_planarNewtonianKernel_sub hza).fderiv
 
 /-- The directional derivative of a planar Newtonian kernel with pole at `a`. -/
-@[simp]
 theorem fderiv_planarNewtonianKernel_sub_apply {z a : ℂ} (hza : z ≠ a) (v : ℂ) :
     fderiv ℝ (fun w : ℂ ↦ planarNewtonianKernel (w - a)) z v =
       (-(2 * Real.pi)⁻¹ * (‖z - a‖ ^ 2)⁻¹) * ⟪z - a, v⟫_ℝ := by
