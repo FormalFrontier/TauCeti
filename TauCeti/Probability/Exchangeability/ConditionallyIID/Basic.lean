@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
+-- Non-public: `map_bind` is used only inside the projection proof.
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
 # Conditionally i.i.d. sequences
@@ -135,61 +137,27 @@ theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ℕ → Ω → 
 /-- **The easy arrow.** A directing measure is in particular a mixing representative: the mixture
 identity is the joint disintegration with the `ν` coordinate integrated out.
 
-Concretely, evaluating the joint identity on the rectangle `univ ×ˢ B` reads off the block's
-marginal law, because `δ_{ν ω}` contributes a factor `1` on `univ`.
-
-No measurability hypothesis on the coordinates is needed. What `ConditionallyIIDWith` forces is
-that each selected block map — and hence each individual coordinate — is `μ`-**a.e.** measurable;
-it says nothing about pointwise measurability, which can fail on a non-measurable null set. That
-is enough here. Each mixing kernel is a probability measure, so the mixture has the same total
-mass as `μ`; if the pair map failed to be a.e. measurable then `Measure.map` would collapse the
-left side to `0`, and the identity would force `μ = 0`, which is the degenerate case where the
-conclusion holds anyway. -/
+Taking the second marginal of both sides does exactly that. On the left, `Measure.snd_map_prodMk₀`
+discards the `ν` coordinate needing only measurability of `ν` itself — which the predicate
+supplies — so no hypothesis on the coordinates of `X` is required. On the right, naturality of
+`bind` pushes the marginal inside the mixture, where each `δ_{ν ω}` factor integrates away. -/
 theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
   refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
-  have hjoint := h.jointLaw_eq_disintegration k hk
   have hK : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
       h.measurable_directing).aemeasurable
-  have hpi : AEMeasurable
-      (fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
-    TauCeti.MeasureTheory.aemeasurable_probabilityMeasure_pi_const_toMeasure ν
-      h.measurable_directing.aemeasurable
-  -- each mixing kernel is a probability measure, so the mixture carries the total mass of `μ`
-  have hbindUniv : (μ.bind fun ω => (Measure.dirac (ν ω)).prod
-      (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) Set.univ = μ Set.univ := by
-    rw [Measure.bind_apply MeasurableSet.univ hK]
-    simp
-  -- so the joint identity itself forces the pair map to be a.e. measurable: were it not,
-  -- `Measure.map` would collapse the left side to `0`, forcing `μ = 0`
-  have hpair : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ := by
-    rcases eq_or_ne μ 0 with rfl | hμ
-    · simp
-    · by_contra hcon
-      rw [Measure.map_of_not_aemeasurable hcon] at hjoint
-      refine hμ (Measure.measure_univ_eq_zero.mp ?_)
-      rw [← hbindUniv, ← hjoint]
-      simp
-  have hblock : AEMeasurable (fun ω => fun i : Fin m => X (k i) ω) μ :=
-    measurable_snd.comp_aemeasurable hpair
-  refine Measure.ext fun B hB => ?_
-  calc blockLaw μ X k B
-      = μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (Set.univ ×ˢ B) := by
-        rw [blockLaw_def, Measure.map_apply_of_aemeasurable hblock hB,
-          Measure.map_apply_of_aemeasurable hpair (MeasurableSet.univ.prod hB)]
-        congr 1
-        ext ω
-        simp
+  calc blockLaw μ X k
+      = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
+        rw [blockLaw_def, Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
-          (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) (Set.univ ×ˢ B) := by
-        rw [hjoint]
-    _ = ∫⁻ ω, (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure B ∂μ := by
-        rw [Measure.bind_apply (MeasurableSet.univ.prod hB) hK]
-        simp [Measure.prod_prod]
-    _ = (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) B := by
-        rw [Measure.bind_apply hB hpi]
+          (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
+        rw [h.jointLaw_eq_disintegration k hk]
+    _ = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure := by
+        simp only [Measure.snd]
+        rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
+        simp
 
 /-- The existential form of the easy arrow. -/
 theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
