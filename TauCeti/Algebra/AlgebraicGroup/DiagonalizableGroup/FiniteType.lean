@@ -150,10 +150,9 @@ theorem coordinateMap_toBialgHom {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
 /-- On a group-algebra basis element, `coordinateMap φ` applies `φ` to its index. -/
 @[simp]
 theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r : R) :
-    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)
+    MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ)
         (MonoidAlgebra.single g r) =
       MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
-  rw [coordinateMap_toBialgHom]
   simp [MonoidAlgebra.mapDomainBialgHom, MonoidAlgebra.mapDomainAlgHom_apply]
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
