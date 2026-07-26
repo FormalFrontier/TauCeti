@@ -32,10 +32,12 @@ Adding the hypothesis that `f'` is zero-free on the punctured disc upgrades the 
 multiplicity to the sharper classical statement: for `w ≠ f z₀` the `n` solutions are *distinct*
 and each is a *simple* zero of `f - w`.
 
-That refinement yields the local injectivity criterion. If `f' z₀ = 0` while `f` is non-constant
-near `z₀`, the degree is at least `2`, so some nearby value is attained twice and `f` is not
-injective on the disc. The converse — that `f' z₀ ≠ 0` makes `f` injective near `z₀` — is Mathlib's
-inverse function theorem (`HasStrictDerivAt.eventually_left_inverse`) and is consumed, not reproved.
+That refinement yields the **local injectivity criterion**: an analytic function is injective on
+some neighbourhood of `z₀` exactly when `deriv f z₀ ≠ 0`. The forward direction is proved here — a
+critical point makes the degree at least `2`, so a nearby value is attained twice — and needs no
+non-constancy hypothesis, since a function constant near `z₀` is not injective there either. The
+converse is Mathlib's inverse function theorem
+(`HasStrictDerivAt.eventually_left_inverse`), consumed rather than reproved.
 
 ## Main results
 
@@ -43,7 +45,9 @@ inverse function theorem (`HasStrictDerivAt.eventually_left_inverse`) and is con
 * `TauCeti.localDegree_card` — the distinct-and-simple form.
 * `TauCeti.exists_localDegree` — the textbook form: if `z₀` is an isolated solution of `f z = f z₀`,
   suitable radii exist.
-* `TauCeti.not_injOn_of_deriv_eq_zero` — a critical point destroys local injectivity.
+* `TauCeti.not_injOn_of_deriv_eq_zero` — a critical point destroys injectivity on *every*
+  neighbourhood of `z₀`.
+* `TauCeti.exists_injOn_nhds_iff_deriv_ne_zero` — the local injectivity criterion.
 
 ## Coordination with upstream Mathlib
 
@@ -91,7 +95,7 @@ attained in the open disc exactly as often as `f z₀` is — that is, `analytic
 `f - f z₀` at `z₀` times, counted with multiplicity. -/
 theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
-    (hiso : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀) :
+    (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀) :
     ∃ δ > 0, ∀ w : ℂ, ‖w - f z₀‖ < δ →
       (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt (fun ζ => f ζ - w) z)
         = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
@@ -106,7 +110,7 @@ theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     simp only [mem_sphere, dist_self] at hz
     linarith
   have hδ : 0 < ‖f u - f z₀‖ :=
-    norm_sub_pos_iff.mpr (hiso u (sphere_subset_closedBall hu) (hzne u hu))
+    norm_sub_pos_iff.mpr (hisol u (sphere_subset_closedBall hu) (hzne u hu))
   refine ⟨‖f u - f z₀‖, hδ, fun w hw => ?_⟩
   have hA0 : AnalyticOnNhd ℂ (fun ζ => f ζ - f z₀) (closedBall z₀ r) :=
     hf.sub analyticOnNhd_const
@@ -119,7 +123,7 @@ theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     exact lt_of_lt_of_le hw (humin hz)
   refine (rouche hr hA0 hAw hs).symm.trans
     (count_eq_single hA0 (mem_ball_self hr) (fun z hz hzn => ?_))
-  exact sub_ne_zero.mpr (hiso z (ball_subset_closedBall hz) hzn)
+  exact sub_ne_zero.mpr (hisol z (ball_subset_closedBall hz) hzn)
 
 /-- When every zero in the disc is simple, the count with multiplicity is the number of *distinct*
 zeros. -/
@@ -173,12 +177,12 @@ private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : Analyti
 *distinct* preimages in the open disc, each of them a simple zero of `f - w`. -/
 theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
-    (hiso : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
+    (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
     (hderiv : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → deriv f z ≠ 0) :
     ∃ δ > 0, ∀ w : ℂ, w ≠ f z₀ → ‖w - f z₀‖ < δ →
       {z ∈ ball z₀ r | f z = w}.ncard = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ ∧
         ∀ z ∈ ball z₀ r, f z = w → analyticOrderNatAt (fun ζ => f ζ - w) z = 1 := by
-  obtain ⟨δ, hδ, hcount⟩ := localDegree hr hf hiso
+  obtain ⟨δ, hδ, hcount⟩ := localDegree hr hf hisol
   refine ⟨δ, hδ, fun w hw hwδ => ?_⟩
   have hA : AnalyticOnNhd ℂ (fun ζ => f ζ - w) (closedBall z₀ r) := hf.sub analyticOnNhd_const
   have hsimple : ∀ z ∈ ball z₀ r, f z - w = 0 → analyticOrderNatAt (fun ζ => f ζ - w) z = 1 := by
@@ -201,13 +205,13 @@ theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
 solution of `f z = f z₀` — equivalently, `f` is not constant near `z₀` — then there are radii `r`
 and `δ` for which `localDegree` applies. -/
 theorem exists_localDegree {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀)
-    (hiso : ∀ᶠ z in 𝓝[≠] z₀, f z ≠ f z₀) :
+    (hisol : ∀ᶠ z in 𝓝[≠] z₀, f z ≠ f z₀) :
     ∃ r > 0, AnalyticOnNhd ℂ f (closedBall z₀ r) ∧
       ∃ δ > 0, ∀ w : ℂ, ‖w - f z₀‖ < δ →
         (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt (fun ζ => f ζ - w) z)
           = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
   obtain ⟨ε₁, hε₁, hA₁⟩ := Metric.eventually_nhds_iff.mp hf.eventually_analyticAt
-  obtain ⟨ε₂, hε₂, hI₂⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hiso)
+  obtain ⟨ε₂, hε₂, hI₂⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hisol)
   refine ⟨min (ε₁ / 2) (ε₂ / 2), lt_min (by linarith) (by linarith), fun z hz => ?_, ?_⟩
   · exact hA₁ (lt_of_le_of_lt (mem_closedBall.mp hz)
       (lt_of_le_of_lt (min_le_left _ _) (by linarith)))
@@ -218,21 +222,17 @@ theorem exists_localDegree {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f
         (lt_of_le_of_lt (min_le_right _ _) (by linarith))) ?_
       simpa using hzn
 
-/-- **Local injectivity fails at a critical point.** If `f'` vanishes at `z₀` while `f` is
-non-constant near it, the local degree is at least `2`, so some value close to `f z₀` is attained
-twice and `f` is not injective on the disc.
-
-Together with the inverse function theorem — which supplies the converse, that `deriv f z₀ ≠ 0`
-makes `f` injective near `z₀` (`HasStrictDerivAt.eventually_left_inverse`, consumed from Mathlib
-rather than reproved) — this is the local injectivity criterion: near `z₀`, an analytic `f` is
-injective exactly when its derivative there is nonzero. -/
-theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
+/-- Non-injectivity on a disc that has already been chosen small enough for the fiber of `f z₀` to
+be a singleton and for `f'` to be zero-free off `z₀`. The public statement
+`not_injOn_of_deriv_eq_zero` produces such a disc from analyticity alone; this is the step that
+uses the degree. -/
+private lemma not_injOn_ball_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
-    (hiso : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
+    (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
     (hderiv : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → deriv f z ≠ 0)
     (hd₀ : deriv f z₀ = 0) :
     ¬ Set.InjOn f (ball z₀ r) := by
-  obtain ⟨δ, hδ, hcard⟩ := localDegree_card hr hf hiso hderiv
+  obtain ⟨δ, hδ, hcard⟩ := localDegree_card hr hf hisol hderiv
   -- the degree is at least two: both `f - f z₀` and its derivative vanish at `z₀`
   have hA : AnalyticAt ℂ (fun ζ => f ζ - f z₀) z₀ :=
     (hf.sub analyticOnNhd_const) z₀ (mem_closedBall_self hr.le)
@@ -251,7 +251,7 @@ theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr 
       rw [ht_def]; linarith
     have hdist : dist (z₀ + (t : ℂ)) z₀ = t := by
       simp [dist_eq_norm, abs_of_pos ht0]
-    refine hiso (z₀ + (t : ℂ)) ?_ ?_ (sub_eq_zero.mp (hball ?_))
+    refine hisol (z₀ + (t : ℂ)) ?_ ?_ (sub_eq_zero.mp (hball ?_))
     · simp only [mem_closedBall, hdist]; exact htr
     · simp only [ne_eq, add_eq_left, Complex.ofReal_eq_zero]
       exact ht0.ne'
@@ -282,5 +282,76 @@ theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr 
     exact Set.one_lt_ncard_iff_nontrivial.mp hgt
   obtain ⟨a, ha, b, hb, hab⟩ := hnontriv
   exact fun hinj => hab (hinj ha.1 hb.1 (ha.2.trans hb.2.symm))
+
+/-- **Local injectivity fails at a critical point.** An analytic function whose derivative vanishes
+at `z₀` is not injective on *any* neighbourhood of `z₀`.
+
+No non-constancy hypothesis is needed: if `f` is constant near `z₀` the conclusion is immediate,
+and otherwise `f - f z₀` vanishes at `z₀` to finite order `n`, which `deriv f z₀ = 0` forces to be
+at least `2`, so `localDegree_card` produces two distinct preimages of a nearby value. -/
+theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ}
+    (hf : AnalyticAt ℂ f z₀) (hd₀ : deriv f z₀ = 0)
+    {V : Set ℂ} (hV : V ∈ 𝓝 z₀) :
+    ¬ Set.InjOn f V := by
+  intro hinj
+  have hz₀V : z₀ ∈ V := mem_of_mem_nhds hV
+  rcases (hf.sub analyticAt_const).eventually_eq_zero_or_eventually_ne_zero with hconst | hisol
+  · -- `f` is constant near `z₀`, so it repeats the value `f z₀` at a nearby point
+    have hpunct : ∀ᶠ z in 𝓝[≠] z₀, z ∈ V ∧ z ≠ z₀ ∧ f z = f z₀ := by
+      filter_upwards [nhdsWithin_le_nhds hV, self_mem_nhdsWithin, nhdsWithin_le_nhds hconst]
+        with z h1 h2 h3
+      exact ⟨h1, by simpa using h2, by simpa [sub_eq_zero] using h3⟩
+    obtain ⟨a, haV, hane, haeq⟩ := hpunct.exists
+    exact hane (hinj haV hz₀V haeq)
+  · -- `f` is non-constant near `z₀`; find a disc where the degree argument applies
+    have hderiv : ∀ᶠ z in 𝓝[≠] z₀, deriv f z ≠ 0 := by
+      rcases hf.deriv.eventually_eq_zero_or_eventually_ne_zero with hz | hz
+      · exfalso
+        obtain ⟨ε, hε, hball⟩ := Metric.eventually_nhds_iff.mp (hz.and hf.eventually_analyticAt)
+        have hfd : Set.EqOn (fderiv ℂ f) 0 (ball z₀ ε) := by
+          intro x hx
+          have hdx : deriv f x = 0 := (hball (mem_ball.mp hx)).1
+          refine ContinuousLinearMap.ext fun y => ?_
+          rw [fderiv_eq_smul_deriv, hdx]
+          simp
+        have hdiff : DifferentiableOn ℂ f (ball z₀ ε) := fun x hx =>
+          ((hball (mem_ball.mp hx)).2.differentiableAt).differentiableWithinAt
+        have hpunct : ∀ᶠ z in 𝓝[≠] z₀, z ∈ ball z₀ ε ∧ f z ≠ f z₀ := by
+          filter_upwards [nhdsWithin_le_nhds (Metric.ball_mem_nhds z₀ hε), hisol] with z h1 h2
+          exact ⟨h1, sub_ne_zero.mp h2⟩
+        obtain ⟨b, hbball, hbne⟩ := hpunct.exists
+        exact hbne (isOpen_ball.is_const_of_fderiv_eq_zero
+          (convex_ball z₀ ε).isPreconnected hdiff hfd hbball (mem_ball_self hε))
+      · exact hz
+    -- one neighbourhood on which every requirement holds at once
+    have hall : ∀ᶠ z in 𝓝 z₀, AnalyticAt ℂ f z ∧ z ∈ V ∧
+        (z ≠ z₀ → f z ≠ f z₀) ∧ (z ≠ z₀ → deriv f z ≠ 0) := by
+      filter_upwards [hf.eventually_analyticAt, hV, eventually_nhdsWithin_iff.mp hisol,
+        eventually_nhdsWithin_iff.mp hderiv] with z h1 h2 h3 h4
+      exact ⟨h1, h2, fun hz => sub_ne_zero.mp (h3 (by simpa using hz)),
+        fun hz => h4 (by simpa using hz)⟩
+    obtain ⟨ε, hε, hball⟩ := Metric.eventually_nhds_iff.mp hall
+    have hr : 0 < ε / 2 := by linarith
+    have hsub : ∀ z ∈ closedBall z₀ (ε / 2), dist z z₀ < ε := fun z hz =>
+      lt_of_le_of_lt (mem_closedBall.mp hz) (by linarith)
+    refine absurd (hinj.mono (fun z hz => (hball (hsub z (ball_subset_closedBall hz))).2.1))
+      (not_injOn_ball_of_deriv_eq_zero hr (fun z hz => (hball (hsub z hz)).1)
+        (fun z hz hzn => (hball (hsub z hz)).2.2.1 hzn)
+        (fun z hz hzn => (hball (hsub z hz)).2.2.2 hzn) hd₀)
+
+/-- **The local injectivity criterion.** An analytic function is injective on some neighbourhood of
+`z₀` exactly when its derivative there is nonzero.
+
+The forward direction is `not_injOn_of_deriv_eq_zero`; the reverse is Mathlib's inverse function
+theorem, consumed rather than reproved. -/
+theorem exists_injOn_nhds_iff_deriv_ne_zero {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀) :
+    (∃ V ∈ 𝓝 z₀, Set.InjOn f V) ↔ deriv f z₀ ≠ 0 := by
+  constructor
+  · rintro ⟨V, hV, hinj⟩ hd₀
+    exact not_injOn_of_deriv_eq_zero hf hd₀ hV hinj
+  · intro hd₀
+    obtain ⟨W, hW, hWeq⟩ :=
+      Filter.eventually_iff_exists_mem.mp (hf.hasStrictDerivAt.eventually_left_inverse hd₀)
+    exact ⟨W, hW, fun a ha b hb hab => by rw [← hWeq a ha, ← hWeq b hb, hab]⟩
 
 end TauCeti
