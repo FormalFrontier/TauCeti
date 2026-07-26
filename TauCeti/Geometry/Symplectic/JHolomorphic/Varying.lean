@@ -109,11 +109,26 @@ lemma isJHolomorphicWithinAt_of_hasFDerivWithinAt {J : U → AlmostComplexStruct
     IsJHolomorphicWithinAt J J' f s x :=
   ⟨f', hf, hlin⟩
 
+/-- The continuous-linear derivative witnessing J-holomorphicity at a point. -/
+lemma IsJHolomorphicAt.hasFDerivAt {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {x : U}
+    (hf : IsJHolomorphicAt J J' f x) :
+    HasFDerivAt f (Classical.choose ((isJHolomorphicAt_iff J J' f x).mp hf)) x :=
+  (Classical.choose_spec ((isJHolomorphicAt_iff J J' f x).mp hf)).1
+
+/-- The chosen derivative at a J-holomorphic point is complex-linear. -/
+lemma IsJHolomorphicAt.derivative_isComplexLinear {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {x : U}
+    (hf : IsJHolomorphicAt J J' f x) :
+    IsComplexLinearMap (J x) (J' (f x))
+      (Classical.choose ((isJHolomorphicAt_iff J J' f x).mp hf)).toLinearMap :=
+  (Classical.choose_spec ((isJHolomorphicAt_iff J J' f x).mp hf)).2
+
 /-- A J-holomorphic map at a point is differentiable there. -/
 lemma IsJHolomorphicAt.differentiableAt {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {x : U}
     (hf : IsJHolomorphicAt J J' f x) : DifferentiableAt ℝ f x :=
-  hf.choose_spec.1.differentiableAt
+  hf.hasFDerivAt.differentiableAt
 
 /-- A map J-holomorphic within a set at a point is differentiable within that set. -/
 lemma IsJHolomorphicWithinAt.differentiableWithinAt {J : U → AlmostComplexStructure U}
@@ -133,6 +148,105 @@ lemma IsJHolomorphicWithinAt.continuousWithinAt {J : U → AlmostComplexStructur
     (hf : IsJHolomorphicWithinAt J J' f s x) : ContinuousWithinAt f s x :=
   hf.differentiableWithinAt.continuousWithinAt
 
+/-- The Fréchet derivative of a J-holomorphic map is complex-linear. -/
+lemma IsJHolomorphicAt.fderiv_isComplexLinear {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {x : U}
+    (hf : IsJHolomorphicAt J J' f x) :
+    IsComplexLinearMap (J x) (J' (f x)) (fderiv ℝ f x).toLinearMap := by
+  simpa [hf.hasFDerivAt.fderiv] using hf.derivative_isComplexLinear
+
+/-- The Fréchet derivative of a J-holomorphic map commutes with the structures. -/
+lemma IsJHolomorphicAt.fderiv_apply_commute {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {x v : U}
+    (hf : IsJHolomorphicAt J J' f x) :
+    fderiv ℝ f x (J x v) = J' (f x) (fderiv ℝ f x v) :=
+  (isComplexLinearMap_iff_apply (J x) (J' (f x)) (fderiv ℝ f x).toLinearMap).mp
+    hf.fderiv_isComplexLinear v
+
+/-- Pointwise J-holomorphicity implies J-holomorphicity within any set. -/
+lemma IsJHolomorphicAt.within {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
+    (hf : IsJHolomorphicAt J J' f x) : IsJHolomorphicWithinAt J J' f s x :=
+  ⟨_, hf.hasFDerivAt.hasFDerivWithinAt, hf.derivative_isComplexLinear⟩
+
+/-- The continuous-linear derivative witnessing within-set J-holomorphicity. -/
+lemma IsJHolomorphicWithinAt.hasFDerivWithinAt {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
+    (hf : IsJHolomorphicWithinAt J J' f s x) :
+    HasFDerivWithinAt f
+      (Classical.choose ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)) s x :=
+  (Classical.choose_spec ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)).1
+
+/-- The chosen within-set derivative is complex-linear. -/
+lemma IsJHolomorphicWithinAt.derivative_isComplexLinear {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
+    (hf : IsJHolomorphicWithinAt J J' f s x) :
+    IsComplexLinearMap (J x) (J' (f x))
+      (Classical.choose ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)).toLinearMap :=
+  (Classical.choose_spec ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)).2
+
+/-- The within-set Fréchet derivative is complex-linear when derivatives are unique. -/
+lemma IsJHolomorphicWithinAt.fderivWithin_isComplexLinear
+    {J : U → AlmostComplexStructure U} {J' : V → AlmostComplexStructure V}
+    {f : U → V} {s : Set U} {x : U} (hf : IsJHolomorphicWithinAt J J' f s x)
+    (hs : UniqueDiffWithinAt ℝ s x) :
+    IsComplexLinearMap (J x) (J' (f x)) (fderivWithin ℝ f s x).toLinearMap := by
+  simpa [hf.hasFDerivWithinAt.fderivWithin hs] using hf.derivative_isComplexLinear
+
+/-- The within-set Fréchet derivative commutes with the structures. -/
+lemma IsJHolomorphicWithinAt.fderivWithin_apply_commute
+    {J : U → AlmostComplexStructure U} {J' : V → AlmostComplexStructure V}
+    {f : U → V} {s : Set U} {x v : U} (hf : IsJHolomorphicWithinAt J J' f s x)
+    (hs : UniqueDiffWithinAt ℝ s x) :
+    fderivWithin ℝ f s x (J x v) = J' (f x) (fderivWithin ℝ f s x v) :=
+  (isComplexLinearMap_iff_apply (J x) (J' (f x)) (fderivWithin ℝ f s x).toLinearMap).mp
+    (hf.fderivWithin_isComplexLinear hs) v
+
+/-- Within-set J-holomorphicity on a neighborhood implies pointwise J-holomorphicity. -/
+lemma IsJHolomorphicWithinAt.of_mem_nhds {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
+    (hf : IsJHolomorphicWithinAt J J' f s x) (hs : s ∈ nhds x) :
+    IsJHolomorphicAt J J' f x :=
+  ⟨_, (hasFDerivWithinAt_of_mem_nhds hs).mp hf.hasFDerivWithinAt,
+    hf.derivative_isComplexLinear⟩
+
+/-- A setwise J-holomorphic map is J-holomorphic within the set at each member. -/
+lemma IsJHolomorphicOn.withinAt {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
+    (hf : IsJHolomorphicOn J J' f s) {x : U} (hx : x ∈ s) :
+    IsJHolomorphicWithinAt J J' f s x :=
+  hf x hx
+
+/-- A setwise J-holomorphic map is differentiable on its domain. -/
+lemma IsJHolomorphicOn.differentiableOn {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
+    (hf : IsJHolomorphicOn J J' f s) : DifferentiableOn ℝ f s :=
+  fun x hx ↦ (hf x hx).differentiableWithinAt
+
+/-- A setwise J-holomorphic map is continuous on its domain. -/
+lemma IsJHolomorphicOn.continuousOn {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
+    (hf : IsJHolomorphicOn J J' f s) : ContinuousOn f s :=
+  fun x hx ↦ (hf x hx).continuousWithinAt
+
+/-- A globally J-holomorphic map is J-holomorphic on every set. -/
+lemma IsJHolomorphic.isJHolomorphicOn {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V}
+    (hf : IsJHolomorphic J J' f) (s : Set U) : IsJHolomorphicOn J J' f s :=
+  fun x _ ↦ (hf x).within
+
+/-- A globally J-holomorphic map is differentiable. -/
+lemma IsJHolomorphic.differentiable {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V}
+    (hf : IsJHolomorphic J J' f) : Differentiable ℝ f :=
+  fun x ↦ (hf x).differentiableAt
+
+/-- A globally J-holomorphic map is continuous. -/
+lemma IsJHolomorphic.continuous {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V}
+    (hf : IsJHolomorphic J J' f) : Continuous f :=
+  hf.differentiable.continuous
+
 /-- J-holomorphicity on the whole space is equivalent to global J-holomorphicity. -/
 @[simp]
 lemma isJHolomorphicOn_univ (J : U → AlmostComplexStructure U)
@@ -144,7 +258,7 @@ lemma isJHolomorphicOn_univ (J : U → AlmostComplexStructure U)
 /-- For constant structure functions, varying-structure pointwise J-holomorphicity is exactly
 the existing constant-structure predicate. -/
 @[simp]
-lemma isJHolomorphicAt_const_iff (J : AlmostComplexStructure U)
+lemma isJHolomorphicAt_constStructure_iff (J : AlmostComplexStructure U)
     (J' : AlmostComplexStructure V) (f : U → V) (x : U) :
     IsJHolomorphicAt (fun _ ↦ J) (fun _ ↦ J') f x ↔
       IsConstStructureJHolomorphicAt J J' f x := by
@@ -154,7 +268,7 @@ lemma isJHolomorphicAt_const_iff (J : AlmostComplexStructure U)
 /-- For constant structure functions, varying-structure within-set J-holomorphicity is exactly
 the existing constant-structure predicate. -/
 @[simp]
-lemma isJHolomorphicWithinAt_const_iff (J : AlmostComplexStructure U)
+lemma isJHolomorphicWithinAt_constStructure_iff (J : AlmostComplexStructure U)
     (J' : AlmostComplexStructure V) (f : U → V) (s : Set U) (x : U) :
     IsJHolomorphicWithinAt (fun _ ↦ J) (fun _ ↦ J') f s x ↔
       IsConstStructureJHolomorphicWithinAt J J' f s x := by
@@ -164,7 +278,7 @@ lemma isJHolomorphicWithinAt_const_iff (J : AlmostComplexStructure U)
 /-- For constant structure functions, setwise J-holomorphicity is exactly the existing
 constant-structure predicate. -/
 @[simp]
-lemma isJHolomorphicOn_const_iff (J : AlmostComplexStructure U)
+lemma isJHolomorphicOn_constStructure_iff (J : AlmostComplexStructure U)
     (J' : AlmostComplexStructure V) (f : U → V) (s : Set U) :
     IsJHolomorphicOn (fun _ ↦ J) (fun _ ↦ J') f s ↔
       IsConstStructureJHolomorphicOn J J' f s := by
@@ -174,7 +288,7 @@ lemma isJHolomorphicOn_const_iff (J : AlmostComplexStructure U)
 /-- For constant structure functions, global J-holomorphicity is exactly the existing
 constant-structure predicate. -/
 @[simp]
-lemma isJHolomorphic_const_iff (J : AlmostComplexStructure U)
+lemma isJHolomorphic_constStructure_iff (J : AlmostComplexStructure U)
     (J' : AlmostComplexStructure V) (f : U → V) :
     IsJHolomorphic (fun _ ↦ J) (fun _ ↦ J') f ↔
       IsConstStructureJHolomorphic J J' f := by
@@ -206,6 +320,27 @@ lemma IsJHolomorphicAt.comp {J : U → AlmostComplexStructure U}
   refine ⟨g'.comp f', hg'.comp x hf', ?_⟩
   rw [ContinuousLinearMap.toLinearMap_comp]
   exact hglin.comp hflin
+
+/-- The composition of two within-set J-holomorphic maps is J-holomorphic within the source set. -/
+lemma IsJHolomorphicWithinAt.comp {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {J'' : W → AlmostComplexStructure W}
+    {f : U → V} {g : V → W} {s : Set U} {t : Set V} {x : U}
+    (hg : IsJHolomorphicWithinAt J' J'' g t (f x))
+    (hf : IsJHolomorphicWithinAt J J' f s x) (hst : Set.MapsTo f s t) :
+    IsJHolomorphicWithinAt J J'' (g ∘ f) s x := by
+  obtain ⟨g', hg', hglin⟩ := hg
+  obtain ⟨f', hf', hflin⟩ := hf
+  refine ⟨g'.comp f', hg'.comp x hf' hst, ?_⟩
+  rw [ContinuousLinearMap.toLinearMap_comp]
+  exact hglin.comp hflin
+
+/-- The composition of two setwise J-holomorphic maps is J-holomorphic on the source set. -/
+lemma IsJHolomorphicOn.comp {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {J'' : W → AlmostComplexStructure W}
+    {f : U → V} {g : V → W} {s : Set U} {t : Set V}
+    (hg : IsJHolomorphicOn J' J'' g t) (hf : IsJHolomorphicOn J J' f s)
+    (hst : Set.MapsTo f s t) : IsJHolomorphicOn J J'' (g ∘ f) s :=
+  fun x hx ↦ (hg (f x) (hst hx)).comp (hf x hx) hst
 
 /-- The composition of two globally J-holomorphic maps is globally J-holomorphic. -/
 lemma IsJHolomorphic.comp {J : U → AlmostComplexStructure U}
