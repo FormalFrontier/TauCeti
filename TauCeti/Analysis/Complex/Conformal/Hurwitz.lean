@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Topology.UniformSpace.LocallyUniformConvergence
 public import TauCeti.Analysis.Complex.Conformal.Rouche
-import Mathlib.Analysis.Analytic.IsolatedZeros
-import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 
 /-!
@@ -86,7 +84,7 @@ private lemma le_count {g : ℂ → ℂ} (hg : AnalyticOnNhd ℂ g (closedBall c
     simp only [Function.mem_support, ne_eq] at hz
     by_cases hzb : z ∈ ball c R
     · simp only [hzb, finsum_true] at hz
-      simp only [Function.mem_support, ne_eq, divisor_eq_order hg hzb]
+      simp only [Function.mem_support, ne_eq, divisor_eq_order (hg.mono ball_subset_closedBall) hzb]
       exact_mod_cast hz
     · exact absurd (by simp [hzb]) hz
   simpa [hz₀] using single_le_finsum z₀ hfin (fun _ => Nat.zero_le _)
@@ -96,13 +94,14 @@ functions that are nowhere zero is itself either nowhere zero or identically zer
 
 The dichotomy is genuine: the constant sequence `F n = 1 / (n + 1)` on any `Ω` converges locally
 uniformly to `0`, so the second alternative cannot be dropped. -/
-theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F : ℕ → ℂ → ℂ}
-    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
-    (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
-    (hne : ∀ n, ∀ z ∈ Ω, F n z ≠ 0) :
+theorem hurwitz {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ : IsOpen Ω)
+    (hconn : IsPreconnected Ω) {F : ι → ℂ → ℂ} {g : ℂ → ℂ}
+    (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω)
+    (hconv : TendstoLocallyUniformlyOn F g l Ω)
+    (hne : ∀ᶠ i in l, ∀ z ∈ Ω, F i z ≠ 0) :
     (∀ z ∈ Ω, g z ≠ 0) ∨ (∀ z ∈ Ω, g z = 0) := by
   have hg : DifferentiableOn ℂ g Ω :=
-    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv (Filter.Eventually.of_forall hF) hΩ
+    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv hF hΩ
   have hgA : AnalyticOnNhd ℂ g Ω := hg.analyticOnNhd hΩ
   by_cases hzero : Set.EqOn g 0 Ω
   · exact Or.inr fun z hz => hzero hz
@@ -144,17 +143,18 @@ theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F 
   obtain ⟨w, hw, hwmin⟩ := hcpt.exists_isMinOn hsne hgcont
   have hδ : 0 < ‖g w‖ := norm_pos_iff.mpr (hgne w hw)
   -- locally uniform convergence gives an `n` with `‖g - F n‖ < ‖g‖` on the circle
-  have hconvS : TendstoUniformlyOn F g atTop (sphere z₀ r) :=
+  have hconvS : TendstoUniformlyOn F g l (sphere z₀ r) :=
     (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hcpt).mp
       (hconv.mono (hsph.trans hcb))
-  obtain ⟨n, hn⟩ := (Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ).exists
+  obtain ⟨n, hn, hFn, hnen⟩ :=
+    ((Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ).and (hF.and hne)).exists
   have hgA' : AnalyticOnNhd ℂ g (closedBall z₀ r) := hgA.mono hcb
-  have hFA' : AnalyticOnNhd ℂ (F n) (closedBall z₀ r) := ((hF n).analyticOnNhd hΩ).mono hcb
+  have hFA' : AnalyticOnNhd ℂ (F n) (closedBall z₀ r) := (hFn.analyticOnNhd hΩ).mono hcb
   have hs : ∀ z ∈ sphere z₀ r, ‖g z - F n z‖ < ‖g z‖ := fun z hz =>
     lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (hwmin hz)
   -- Rouché: the counts agree, yet `F n` has no zeros and `g` has one at `z₀`
   have hcount := rouche hr hgA' hFA' hs
-  rw [count_eq_zero hFA' (fun z hz => hne n z (hcb (ball_subset_closedBall hz)))] at hcount
+  rw [count_eq_zero hFA' (fun z hz => hnen z (hcb (ball_subset_closedBall hz)))] at hcount
   have hle := le_count hgA' (mem_ball_self hr)
   rw [hcount] at hle
   have h0 : analyticOrderAt g z₀ = 0 :=
@@ -164,12 +164,12 @@ theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F 
 
 /-- If `g - v` has an isolated zero at `a` inside a disc, then for all large `n` the approximant
 `F n` also attains the value `v` in that disc. This is the Rouché step behind `hurwitz_injOn`. -/
-private lemma eventually_exists_eq {Ω : Set ℂ} {F : ℕ → ℂ → ℂ} {g : ℂ → ℂ}
-    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hΩ : IsOpen Ω) (hg : AnalyticOnNhd ℂ g Ω)
-    (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
+private lemma eventually_exists_eq {ι : Type*} {l : Filter ι} {Ω : Set ℂ} {F : ι → ℂ → ℂ}
+    {g : ℂ → ℂ} (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω) (hΩ : IsOpen Ω)
+    (hg : AnalyticOnNhd ℂ g Ω) (hconv : TendstoLocallyUniformlyOn F g l Ω)
     {a v : ℂ} {ρ : ℝ} (hρ : 0 < ρ) (hball : closedBall a ρ ⊆ Ω)
     (hga : g a = v) (hzf : ∀ z ∈ closedBall a ρ, z ≠ a → g z ≠ v) :
-    ∀ᶠ n in atTop, ∃ z ∈ ball a ρ, F n z = v := by
+    ∀ᶠ i in l, ∃ z ∈ ball a ρ, F i z = v := by
   have hA : AnalyticOnNhd ℂ (fun ζ => g ζ - v) (closedBall a ρ) :=
     (hg.mono hball).sub analyticOnNhd_const
   have hzne : ∀ z ∈ sphere a ρ, z ≠ a := by
@@ -185,12 +185,12 @@ private lemma eventually_exists_eq {Ω : Set ℂ} {F : ℕ → ℂ → ℂ} {g :
     (((hA.continuousOn).mono sphere_subset_closedBall)).norm
   obtain ⟨u, hu, humin⟩ := hcpt.exists_isMinOn hsne hcont
   have hδ : 0 < ‖g u - v‖ := norm_pos_iff.mpr (hsphne u hu)
-  have hconvS : TendstoUniformlyOn F g atTop (sphere a ρ) :=
+  have hconvS : TendstoUniformlyOn F g l (sphere a ρ) :=
     (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hcpt).mp
       (hconv.mono ((sphere_subset_closedBall).trans hball))
-  filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ] with n hn
+  filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ, hF] with n hn hFn
   have hB : AnalyticOnNhd ℂ (fun ζ => F n ζ - v) (closedBall a ρ) :=
-    (((hF n).analyticOnNhd hΩ).mono hball).sub analyticOnNhd_const
+    ((hFn.analyticOnNhd hΩ).mono hball).sub analyticOnNhd_const
   have hs : ∀ z ∈ sphere a ρ, ‖(g z - v) - (F n z - v)‖ < ‖g z - v‖ := by
     intro z hz
     have he : (g z - v) - (F n z - v) = g z - F n z := by ring
@@ -233,13 +233,14 @@ that set to be connected — a fact Mathlib does not currently provide for an op
 of `ℂ`. Instead, if `g` were non-constant with `g a = g b` for `a ≠ b`, we place disjoint discs
 about `a` and `b` and use `eventually_exists_eq` on each: for large `n` the injective `F n` would
 attain the single value `g a` in both discs, hence at two distinct points. -/
-theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F : ℕ → ℂ → ℂ}
-    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
-    (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
-    (hinj : ∀ n, Set.InjOn (F n) Ω) :
+theorem hurwitz_injOn {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ : IsOpen Ω)
+    (hconn : IsPreconnected Ω) {F : ι → ℂ → ℂ} {g : ℂ → ℂ}
+    (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω)
+    (hconv : TendstoLocallyUniformlyOn F g l Ω)
+    (hinj : ∀ᶠ i in l, Set.InjOn (F i) Ω) :
     Set.InjOn g Ω ∨ ∃ v, ∀ z ∈ Ω, g z = v := by
   have hg : DifferentiableOn ℂ g Ω :=
-    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv (Filter.Eventually.of_forall hF) hΩ
+    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv hF hΩ
   have hgA : AnalyticOnNhd ℂ g Ω := hg.analyticOnNhd hΩ
   by_cases hconst : ∃ v, ∀ z ∈ Ω, g z = v
   · exact Or.inr hconst
@@ -268,16 +269,16 @@ theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected �
   have hd : 0 < dist a b := dist_pos.mpr hne
   obtain ⟨ρa, hρa, hρa3, hballa, hzfa⟩ := hiso a ha rfl (dist a b / 3) (by linarith)
   obtain ⟨ρb, hρb, hρb3, hballb, hzfb⟩ := hiso b hb hab.symm (dist a b / 3) (by linarith)
-  obtain ⟨n, ⟨z₁, hz₁, hFz₁⟩, ⟨z₂, hz₂, hFz₂⟩⟩ :=
-    ((eventually_exists_eq hF hΩ hgA hconv hρa hballa rfl hzfa).and
-      (eventually_exists_eq hF hΩ hgA hconv hρb hballb hab.symm hzfb)).exists
+  obtain ⟨n, ⟨⟨z₁, hz₁, hFz₁⟩, ⟨z₂, hz₂, hFz₂⟩⟩, hinjn⟩ :=
+    (((eventually_exists_eq hF hΩ hgA hconv hρa hballa rfl hzfa).and
+      (eventually_exists_eq hF hΩ hgA hconv hρb hballb hab.symm hzfb)).and hinj).exists
   have hz₁₂ : z₁ ≠ z₂ := by
     rintro rfl
     have h1 : dist a z₁ < ρa := by rw [dist_comm]; exact mem_ball.mp hz₁
     have h2 : dist z₁ b < ρb := mem_ball.mp hz₂
     have h3 := dist_triangle a z₁ b
     linarith
-  exact hz₁₂ (hinj n (hballa (ball_subset_closedBall hz₁)) (hballb (ball_subset_closedBall hz₂))
+  exact hz₁₂ (hinjn (hballa (ball_subset_closedBall hz₁)) (hballb (ball_subset_closedBall hz₂))
     (hFz₁.trans hFz₂.symm))
 
 end TauCeti

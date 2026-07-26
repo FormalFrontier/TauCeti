@@ -114,11 +114,9 @@ at a point of infinite order, where both sides read `0`.
 This is the bridge between `MeromorphicOn.divisor` — which carries the finiteness of the zero set
 via `MeromorphicOn.divisor_ball_support_finite` — and the `analyticOrderNatAt` vocabulary the zero
 counts are stated in, so downstream files can reuse it instead of rebuilding the correspondence. -/
-theorem divisor_eq_order (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ}
-    (hz : z ∈ ball c R) :
-    MeromorphicOn.divisor f (ball c R) z = (analyticOrderNatAt f z : ℤ) := by
-  have hfb : AnalyticOnNhd ℂ f (ball c R) := hf.mono ball_subset_closedBall
-  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hfb hz]
+theorem divisor_eq_order {U : Set ℂ} (hf : AnalyticOnNhd ℂ f U) {z : ℂ} (hz : z ∈ U) :
+    MeromorphicOn.divisor f U z = (analyticOrderNatAt f z : ℤ) := by
+  rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hf hz]
   -- `analyticOrderNatAt` is `(analyticOrderAt · ·).toNat`; this is the one place the proof needs
   -- that definitional equality, so unfold it here rather than in the statements.
   cases h : analyticOrderAt f z with
@@ -178,13 +176,13 @@ private lemma finsum_divisor_cast {h : ℂ → ℂ} (hh : AnalyticOnNhd ℂ h (c
     obtain ⟨hzb, hzs⟩ := hz
     simp only [Function.mem_support, ne_eq] at hzs
     have hd : MeromorphicOn.divisor h (ball c R) z ≠ 0 := by
-      rw [divisor_eq_order hh hzb]
+      rw [divisor_eq_order (hh.mono ball_subset_closedBall) hzb]
       exact_mod_cast hzs
     simpa [hS, Set.Finite.mem_toFinset] using hd
   rw [h1, h2]
   push_cast
   refine Finset.sum_congr rfl (fun z hz => ?_)
-  rw [divisor_eq_order hh (hsub (by simpa [hS] using hz))]
+  rw [divisor_eq_order (hh.mono ball_subset_closedBall) (hsub (by simpa [hS] using hz))]
   push_cast
   ring
 
