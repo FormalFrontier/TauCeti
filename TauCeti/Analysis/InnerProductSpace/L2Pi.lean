@@ -6,6 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import Mathlib.Analysis.InnerProductSpace.l2Space
+public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Pi
 
@@ -13,9 +14,40 @@ public import Mathlib.MeasureTheory.Integral.Pi
 # Pointwise products of `L²` functions on a finite product measure
 
 For a finite family of σ-finite measures `μ i` and `L²(μ i)` functions `f i`, the pointwise product
-`x ↦ ∏ i, f i (x i)` belongs to `L²(Measure.pi μ)`, and the assignment factors the inner product as
-a tensor. This is the `Fintype`-indexed analogue of `TauCeti.L2prodMul`, and Part B3/D of the
-`OrthogonalL2Bases` roadmap.
+`x ↦ ∏ i, f i (x i)` belongs to `L²(Measure.pi μ)`, the assignment factors the inner product as a
+tensor, and coordinatewise Hilbert bases multiply to a Hilbert basis `TauCeti.piHilbertBasis` of
+`L²(Measure.pi μ)`. This is Part B3/D of the `OrthogonalL2Bases` roadmap, and the `Fintype`-indexed
+analogue of the binary product basis.
+
+Mathlib has the two Fubini inputs at this arity already — `Integrable.fintype_prod_dep` and
+`integral_fintype_prod_eq_prod` (the latter with no integrability side conditions) — so the
+orthonormality half is short. The completeness half runs in three moves:
+
+1. `TauCeti.inner_L2piMul_eq_zero_of_forall_basis` — orthogonality to the *basis* tensors upgrades
+   to orthogonality to *every* elementary tensor. The coordinates are generalized one at a time by
+   `Finset` induction: at each step a single slot is expanded along its basis and the sum is pushed
+   through the continuous linear map `TauCeti.L2piMulSlot`. No countability is assumed of any `κ i`.
+2. `TauCeti.setIntegral_pi_eq_zero_of_forall_inner` — testing against indicators, since a tensor of
+   indicators is the indicator of the box.
+3. `TauCeti.setIntegral_eq_zero_of_isPiSystem` — the Dynkin (π-λ) step, stated for a *general*
+   π-system generating the σ-algebra (the Bochner analogue of Mathlib's
+   `lintegral_eq_lintegral_of_isPiSystem`), applied here to `isPiSystem_pi` inside a finite box,
+   followed by a monotone exhaustion along `∏ i, spanningSets (μ i) n`.
+
+## Main definitions
+
+* `TauCeti.L2piMul` — the pointwise product `x ↦ ∏ i, F i (x i)` as a vector of `L²(Measure.pi μ)`.
+* `TauCeti.piHilbertBasis` — the Hilbert basis of `L²(Measure.pi μ)` built from coordinatewise
+  Hilbert bases.
+
+## Main statements
+
+* `TauCeti.memLp_pi_prod` — the pointwise product of `L²` functions is `L²` for the product measure.
+* `TauCeti.inner_L2piMul` — the inner product of two tensors factors coordinatewise.
+* `TauCeti.orthonormal_L2piMul` — coordinatewise orthonormal families multiply to an orthonormal
+  family.
+* `TauCeti.orthogonal_span_range_L2piMul_eq_bot` — the completeness half.
+* `TauCeti.coeFn_piHilbertBasis` — the `k`-th basis vector is a.e. `∏ i, b i (k i)`.
 -/
 
 public section
@@ -191,5 +223,147 @@ theorem inner_L2piMul_eq_zero_of_forall_basis {κ : ι → Type*}
         have hfin := (hasSum_zero.unique hzero).symm
         simpa [Function.update_eq_self] using hfin
   exact key Finset.univ F fun i hi => absurd (Finset.mem_univ i) hi
+
+section PiSystem
+
+variable {X : Type*} {m0 : MeasurableSpace X}
+
+/-- **The Dynkin (π-λ) step for Bochner integrals.** On a finite measure, a function whose integral
+vanishes on the whole space and on every member of a π-system generating the σ-algebra has vanishing
+integral on every measurable set. This is the Bochner analogue of Mathlib's
+`lintegral_eq_lintegral_of_isPiSystem`, and is stated for a general π-system so that both rectangles
+and boxes can feed it. -/
+theorem setIntegral_eq_zero_of_isPiSystem {ρ : Measure X} [IsFiniteMeasure ρ] {S : Set (Set X)}
+    (hgen : m0 = MeasurableSpace.generateFrom S) (hpi : IsPiSystem S) {f : X → 𝕜}
+    (hf : Integrable f ρ) (huniv : ∫ x, f x ∂ρ = 0) (hS : ∀ s ∈ S, ∫ x in s, f x ∂ρ = 0) :
+    ∀ u, MeasurableSet u → ∫ x in u, f x ∂ρ = 0 := by
+  refine MeasurableSpace.induction_on_inter (C := fun u _ => ∫ x in u, f x ∂ρ = 0) hgen hpi ?_ hS
+    ?_ ?_
+  · simp
+  · intro u hu ih
+    rw [setIntegral_compl hu hf, huniv, ih, sub_zero]
+  · intro u hd hm ih
+    rw [integral_iUnion hm hd hf.integrableOn]
+    simp [ih]
+
+end PiSystem
+
+/-- The tensor of indicators is the indicator of the box, so orthogonality to every elementary
+tensor makes the integral over every finite-measure box vanish. -/
+theorem setIntegral_pi_eq_zero_of_forall_inner {h : Lp 𝕜 2 (Measure.pi μ)}
+    (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0)
+    (s : ∀ i, Set (α i)) (hs : ∀ i, MeasurableSet (s i)) (hfin : ∀ i, μ i (s i) ≠ ⊤) :
+    ∫ x in Set.univ.pi s, h x ∂(Measure.pi μ) = 0 := by
+  set F : ∀ i, Lp 𝕜 2 (μ i) := fun i => indicatorConstLp 2 (hs i) (hfin i) (1 : 𝕜) with hFdef
+  have hFc : ∀ᵐ x : ∀ i, α i ∂(Measure.pi μ),
+      ∀ i, F i (x i) = (s i).indicator (fun _ => (1 : 𝕜)) (x i) := by
+    rw [ae_all_iff]
+    intro i
+    exact (Measure.quasiMeasurePreserving_eval μ i).tendsto_ae.eventually
+      (indicatorConstLp_coeFn (s := s i) (hμs := hfin i) (c := (1 : 𝕜)))
+  calc ∫ x in Set.univ.pi s, h x ∂(Measure.pi μ)
+      = ∫ x, (Set.univ.pi s).indicator (fun y => h y) x ∂(Measure.pi μ) :=
+        (integral_indicator (MeasurableSet.univ_pi hs)).symm
+    _ = ∫ x, inner 𝕜 ((L2piMul F) x) (h x) ∂(Measure.pi μ) := by
+        refine integral_congr_ae ?_
+        filter_upwards [coeFn_L2piMul F, hFc] with x hx hF
+        rw [hx]
+        simp_rw [hF]
+        by_cases hmem : ∀ i, x i ∈ s i
+        · simp [hmem]
+        · obtain ⟨i, hi⟩ := not_forall.1 hmem
+          rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi])]
+          simp [hmem]
+    _ = inner 𝕜 (L2piMul F) h := (L2.inner_def _ _).symm
+    _ = 0 := hz F
+
+/-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by the
+finite boxes `∏ i, spanningSets (μ i) n`, run the Dynkin step inside each box, and pass to the
+monotone limit. -/
+theorem setIntegral_eq_zero_of_forall_inner_pi {h : Lp 𝕜 2 (Measure.pi μ)}
+    (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0)
+    (u : Set (∀ i, α i)) (hu : MeasurableSet u) (hfin : Measure.pi μ u < ⊤) :
+    ∫ x in u, h x ∂(Measure.pi μ) = 0 := by
+  classical
+  have hboxm : ∀ n, MeasurableSet (Set.univ.pi fun i => spanningSets (μ i) n) := fun n =>
+    MeasurableSet.univ_pi fun i => measurableSet_spanningSets (μ i) n
+  have hboxfin : ∀ n, Measure.pi μ (Set.univ.pi fun i => spanningSets (μ i) n) < ⊤ := by
+    intro n
+    rw [Measure.pi_pi]
+    exact ENNReal.prod_lt_top fun i _ => measure_spanningSets_lt_top (μ i) n
+  have hb : ∀ n, ∫ x in u ∩ (Set.univ.pi fun i => spanningSets (μ i) n),
+      h x ∂(Measure.pi μ) = 0 := by
+    intro n
+    have hfm : IsFiniteMeasure
+        ((Measure.pi μ).restrict (Set.univ.pi fun i => spanningSets (μ i) n)) :=
+      ⟨by rw [Measure.restrict_apply_univ]; exact hboxfin n⟩
+    have huniv : ∫ x, h x ∂((Measure.pi μ).restrict
+        (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 :=
+      setIntegral_pi_eq_zero_of_forall_inner hz _ (fun i => measurableSet_spanningSets (μ i) n)
+        (fun i => (measure_spanningSets_lt_top (μ i) n).ne)
+    have hS : ∀ t ∈ (Set.pi Set.univ '' Set.pi Set.univ fun i => {v : Set (α i) | MeasurableSet v}),
+        ∫ x in t, h x ∂((Measure.pi μ).restrict
+          (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 := by
+      rintro _ ⟨t, ht, rfl⟩
+      rw [Measure.restrict_restrict
+        (MeasurableSet.univ_pi fun i => ht i (Set.mem_univ i)), ← Set.pi_inter_distrib]
+      exact setIntegral_pi_eq_zero_of_forall_inner hz _
+        (fun i => (ht i (Set.mem_univ i)).inter (measurableSet_spanningSets (μ i) n))
+        (fun i => (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
+          (measure_spanningSets_lt_top (μ i) n)).ne)
+    have hdyn := setIntegral_eq_zero_of_isPiSystem generateFrom_pi.symm isPiSystem_pi
+      (integrableOn_Lp_of_measure_ne_top h one_le_two (hboxfin n).ne) huniv hS u hu
+    rwa [Measure.restrict_restrict hu] at hdyn
+  have hmono : Monotone fun n => u ∩ (Set.univ.pi fun i => spanningSets (μ i) n) := fun m n hmn =>
+    Set.inter_subset_inter_right _ (Set.pi_mono fun i _ => monotone_spanningSets (μ i) hmn)
+  have hcover : ⋃ n, u ∩ (Set.univ.pi fun i => spanningSets (μ i) n) = u := by
+    rw [← Set.inter_iUnion]
+    have hcov : ⋃ n, (Set.univ.pi fun i => spanningSets (μ i) n) = Set.univ := by
+      refine Set.eq_univ_of_forall fun x => ?_
+      have hx : ∀ i, ∃ m, x i ∈ spanningSets (μ i) m := fun i =>
+        Set.mem_iUnion.1 (by rw [iUnion_spanningSets]; trivial)
+      choose m hm using hx
+      exact Set.mem_iUnion.2 ⟨Finset.univ.sup m, fun i _ =>
+        monotone_spanningSets (μ i) (Finset.le_sup (Finset.mem_univ i)) (hm i)⟩
+    rw [hcov, Set.inter_univ]
+  have htend := tendsto_setIntegral_of_monotone (fun n => hu.inter (hboxm n)) hmono
+    (by rw [hcover]; exact integrableOn_Lp_of_measure_ne_top h one_le_two hfin.ne)
+  rw [hcover] at htend
+  simp only [hb] at htend
+  exact tendsto_nhds_unique htend tendsto_const_nhds
+
+/-- **Completeness of the tensor family.** The tensors built from coordinatewise Hilbert bases have
+trivial orthogonal complement in `L²(Measure.pi μ)`. -/
+theorem orthogonal_span_range_L2piMul_eq_bot {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
+    (Submodule.span 𝕜 (Set.range fun k : ∀ i, κ i => L2piMul fun i => b i (k i)))ᗮ = ⊥ := by
+  refine (Submodule.eq_bot_iff _).2 fun h hh => ?_
+  rw [Submodule.mem_orthogonal] at hh
+  have hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0 := by
+    intro F
+    rw [inner_eq_zero_symm]
+    refine inner_L2piMul_eq_zero_of_forall_basis b (fun k => ?_) F
+    rw [inner_eq_zero_symm]
+    exact hh _ (Submodule.subset_span ⟨k, rfl⟩)
+  have hae := Lp.ae_eq_zero_of_forall_setIntegral_eq_zero h (by norm_num) (by norm_num)
+    (fun s _ hs' => integrableOn_Lp_of_measure_ne_top h one_le_two hs'.ne)
+    (fun s hs hs' => setIntegral_eq_zero_of_forall_inner_pi hz s hs hs')
+  rw [Lp.ext_iff]
+  exact hae.trans (Lp.coeFn_zero 𝕜 2 (Measure.pi μ)).symm
+
+/-- **The `Fintype`-indexed product Hilbert basis.** Pointwise products of coordinatewise Hilbert
+bases form a Hilbert basis of `L²(Measure.pi μ)`, indexed by the dependent function type. -/
+noncomputable def piHilbertBasis {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
+    HilbertBasis (∀ i, κ i) 𝕜 (Lp 𝕜 2 (Measure.pi μ)) :=
+  HilbertBasis.mkOfOrthogonalEqBot (orthonormal_L2piMul fun i => (b i).orthonormal)
+    (orthogonal_span_range_L2piMul_eq_bot b)
+
+/-- The `k`-th vector of `piHilbertBasis` is a.e. the pointwise product `∏ i, b i (k i)`. -/
+theorem coeFn_piHilbertBasis {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (k : ∀ i, κ i) :
+    ⇑(piHilbertBasis b k) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, b i (k i) (x i) := by
+  rw [piHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+  exact coeFn_L2piMul _
 
 end TauCeti
