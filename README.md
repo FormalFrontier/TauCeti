@@ -42,6 +42,13 @@ Humans can raise issues against the code, and leave implementation (and review) 
 - **[TauCetiReview](https://github.com/TauCetiProject/TauCetiReview)** — the review rubrics and
   the machinery that runs review.
 
+## Relationship to Lean Pool
+
+Tau Ceti and [Lean Pool](https://github.com/Vilin97/lean-pool) are complementary. Lean Pool is
+an arXiv/AfP-like archive of independent formalization projects, whether human- or AI-written.
+Tau Ceti is an integrated, AI-built mathematical library whose contents follow human-audited
+roadmaps and undergo review for coherence, reuse, and compatibility with Mathlib.
+
 ## Review
 
 Review is entirely driven by AIs. These operate according to a fixed open source rubric. Humans write the rubric, and update it as the project evolves.
@@ -128,6 +135,14 @@ It is essential that Tau Ceti remains an open source project, and however infere
 We intend to move to a system where review agents' inference costs are covered by the large scale contributors to the library. This may be in the form of donations (in money or tokens) to the umbrella organizations, or by in-kind inference using sufficiently capable in-house models. We anticipate that individual contributions can be reviewed "for free" out of this pool.
 
 Finally, we understand that participating in AI-assisted mathematics research requires the ability to pay for inference costs, potentially adding a further barrier to entry on top of the existing societal/financial privilege implicit in holding a research position. We're not sure how to respond to this. Possibilities include advocacy for public and private funding, advocacy for capability limitations, and technical capability work on open weight models and cheaper models. Each of these are difficult, have potential adverse effects, and unknown consequences. We hope that everyone involved in Tau Ceti will think hard about these questions, and contribute to meaningful and beneficial solutions.
+
+## Documentation
+
+Generated API documentation for every declaration in Tau Ceti, hyperlinked into its Mathlib
+dependencies, is published at
+[taucetiproject.github.io/TauCeti/docs](https://taucetiproject.github.io/TauCeti/docs/). It is
+rebuilt daily from `main` with [`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside
+the [project website](https://taucetiproject.github.io/TauCeti/).
 
 ## Building
 

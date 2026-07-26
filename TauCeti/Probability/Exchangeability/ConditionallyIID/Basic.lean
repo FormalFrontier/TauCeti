@@ -1,29 +1,51 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
-public import TauCeti.Probability.Exchangeability.Basic
-public import TauCeti.MeasureTheory.Measure.ProductKernel
+public import TauCeti.Probability.Exchangeability.MixedIID.Basic
+-- Non-public: `map_bind` is used only inside the projection proof.
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
 # Conditionally i.i.d. sequences
 
-The directing-measure API for de Finetti's theorem. A process is *conditionally i.i.d.* when
-there is a measurable random probability measure `ν : Ω → ProbabilityMeasure α` such that
-every finite block of **distinct** coordinates has, as its law, the `ν`-mixture of the
-corresponding product measure. `ConditionallyIIDWith μ X ν` names the directing measure;
-`ConditionallyIID` is the existential wrapper.
+The **conditional** strengthening of the mixture identity: a process is *conditionally i.i.d.*
+with directing measure `ν` when, along every finite selection of distinct coordinates, the
+**joint** law of `(ν, block)` is the disintegration `∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)` — conditionally
+on `ν`, the block is i.i.d. `ν` (Kallenberg 2005, §1.1 eq. (2)).
 
-This file adds the Layer 0 directing-measure definitions and destructors, together with the
-Layer 1 rectangle-factorization characterization used by the common de Finetti ending. The
-exchangeability implications from conditionally i.i.d. processes live in
-`ConditionallyIIDImplications.lean`.
+Stating it as a joint-law identity means the definition needs no conditional expectations, and
+sits in the same `bind`/`pi` vocabulary as `MixedIIDWith`.
 
-These declarations follow the roadmap signatures in
-`TauCetiRoadmap/Exchangeability/README.md` and
-`TauCetiRoadmap/Exchangeability/Suggested.lean`, Layer 0, refining the existential
-`ConditionallyIID` of the roadmap into a named-directing-measure relation
-(`ConditionallyIIDWith`) plus its existential wrapper. They are adapted from the
-`cameronfreer/exchangeability` Layer 0 sources pinned at
-`e0532e59ceff23edab44dda9ab0655debbc9cc22`, with Tau Ceti API names and hypotheses.
+## Why this is stronger than `MixedIIDWith`
+
+`MixedIIDWith μ X ν` constrains only each block's **marginal** law. It therefore does not pin down
+how `X` relates to `ν`: for a nondegenerate mixing law, an *independent copy* of a directing
+measure also witnesses `MixedIIDWith`, while the process is not conditionally i.i.d. given that
+copy. The arrow runs one way only, and `mixedIIDWith_of_conditionallyIIDWith` is that arrow —
+obtained by integrating the `ν` coordinate out.
+
+Terminology follows the roadmap: a `ν` witnessing only the mixture identity is a *mixing
+representative*, whereas `ν` here is a genuine **directing measure**.
+
+## Main results
+
+* `ConditionallyIIDWith`, `ConditionallyIID` — the predicate and its existential wrapper, with
+  their constructor, accessor, and simp-normal-form API.
+* `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
+  to the mixture identity.
+
+This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
+predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
+projection it pins alongside — which consumes the already-landed Layer 1 joint-kernel lemma
+`measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
+
+Still open, and not attempted here: the Layer 1 joint-rectangle common ending
+`conditionallyIID_of_jointRectangles`; the Layer 6 summit theorems that *conclude* this predicate,
+`conditionallyIID_of_contractable` and `conditionallyIID_of_exchangeable`; the `deFinetti*` handles
+that return with them; and directing-measure uniqueness (`conditionallyIID_ae_unique`).
 -/
 
 public section
@@ -38,55 +60,44 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- Implementation helper for the rectangle characterization: two measures on a finite product
-space are equal if they agree on all measurable rectangles `Set.univ.pi B`. Only the first measure
-is assumed finite. -/
-private theorem measure_eq_of_forall_univ_pi {ι : Type*} [Finite ι] {α : ι → Type*}
-    [∀ i, MeasurableSpace (α i)] {μ ν : Measure (∀ i, α i)} [IsFiniteMeasure μ]
-    (h : ∀ B : ∀ i, Set (α i), (∀ i, MeasurableSet (B i)) →
-      μ (Set.univ.pi B) = ν (Set.univ.pi B)) :
-    μ = ν := by
-  letI := Fintype.ofFinite ι
-  refine Measure.ext_of_generateFrom_of_iUnion
-    (C := Set.pi Set.univ '' Set.pi Set.univ fun i => {s : Set (α i) | MeasurableSet s})
-    (B := fun _ : ℕ => Set.univ) generateFrom_pi.symm isPiSystem_pi ?_ ?_ ?_ ?_
-  · simpa using (iUnion_const (Set.univ : Set (∀ i, α i)))
-  · intro n
-    exact ⟨fun _ => Set.univ, fun i _ => MeasurableSet.univ, by simp⟩
-  · intro n
-    exact measure_ne_top μ Set.univ
-  · rintro _ ⟨B, hB, rfl⟩
-    exact h B fun i => hB i (mem_univ i)
+/-- Conditional i.i.d.-ness with a specified directing measure `ν`: the random measure `ν` is
+measurable, and along every finite selection `k` of **distinct** coordinates the *joint* law of
+`(ν, block)` is the `ν`-disintegration `∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)`.
 
-/-- Conditional i.i.d.-ness with a specified directing probability measure `ν`: the random
-measure `ν` is measurable, and along every finite selection `k` of **distinct** coordinates
-the block law is the `ν`-mixture of the product measure
-`ProbabilityMeasure.pi (fun _ => ν ω)`. Distinctness (`Function.Injective k`) is what product
-laws need, in contrast with the order condition `StrictMono` of `Contractable`. -/
-def ConditionallyIIDWith (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
-    Prop :=
+Constraining the joint law, rather than just the block's marginal, is exactly what makes this the
+conditional statement: see `MixedIIDWith` for the marginal-only version and
+`mixedIIDWith_of_conditionallyIIDWith` for the arrow between them. -/
+def ConditionallyIIDWith (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) : Prop :=
   Measurable ν ∧
     ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-      blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure
+      μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
+        μ.bind fun ω =>
+          (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure
 
-/-- Constructor: a measurable directing measure together with the finite-block mixture identity. -/
+/-- Constructor: a measurable directing measure together with the joint-law disintegration. -/
 theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (hν : Measurable ν)
     (h : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-      blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) :
+      μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
+        μ.bind fun ω =>
+          (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) :
     ConditionallyIIDWith μ X ν :=
   ⟨hν, h⟩
 
 /-- Simp normal form for `ConditionallyIIDWith`. -/
 @[simp]
-theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} :
+theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} :
     ConditionallyIIDWith μ X ν ↔
       Measurable ν ∧
         ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-          blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
+          μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
+            μ.bind fun ω =>
+              (Measure.dirac (ν ω)).prod
+                (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   Iff.rfl
 
-/-- Conditional i.i.d.-ness: existence of a directing probability measure. -/
+/-- Conditional i.i.d.-ness: existence of a directing measure. -/
 def ConditionallyIID (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
   ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν
 
@@ -107,77 +118,52 @@ theorem ConditionallyIIDWith.measurable_directing {μ : Measure Ω} {X : ℕ →
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Measurable ν :=
   h.1
 
-/-- The defining finite-block mixture identity of a `ConditionallyIIDWith` witness. -/
+/-- The defining joint-law disintegration of a `ConditionallyIIDWith` witness. -/
 @[grind =>]
-theorem ConditionallyIIDWith.map {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIIDWith.jointLaw_eq_disintegration {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
     {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k) :
-    blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
+    μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
+      μ.bind fun ω =>
+        (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   h.2 m k hk
 
-/-- A `ConditionallyIID` process has a directing probability measure. -/
+/-- A `ConditionallyIID` process has a directing measure. -/
 theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν :=
   h
 
-/-- A process is `ConditionallyIIDWith μ X ν` once every injective finite block has the same
-rectangle values as the corresponding random product-measure mixture. -/
-theorem conditionallyIIDWith_of_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
-    (h_rect : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-      ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
-        blockLaw μ X k (Set.univ.pi B) =
-          ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ) :
-    ConditionallyIIDWith μ X ν := by
-  refine ConditionallyIIDWith.intro hν ?_
-  intro m k hk
-  haveI : IsFiniteMeasure (blockLaw μ X k) := by
-    rw [blockLaw_def]
-    infer_instance
-  refine measure_eq_of_forall_univ_pi ?_
-  intro B hB
-  rw [h_rect m k hk B hB]
-  rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_pi ν hν.aemeasurable B hB]
+/-- **The easy arrow.** A directing measure is in particular a mixing representative: the mixture
+identity is the joint disintegration with the `ν` coordinate integrated out.
 
-/-- A `ConditionallyIIDWith` witness gives the expected rectangle factorization for every injective
-finite block. -/
-@[grind =>]
-theorem ConditionallyIIDWith.blockLaw_univ_pi {μ : Measure Ω} {X : ℕ → Ω → α}
-    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
-    {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k)
-    (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i)) :
-    blockLaw μ X k (Set.univ.pi B) =
-      ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ := by
-  rw [h.map k hk]
-  have hν_ae : AEMeasurable ν μ := h.measurable_directing.aemeasurable
-  rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_pi ν hν_ae B hB]
+Taking the second marginal of both sides does exactly that. On the left, `Measure.snd_map_prodMk₀`
+discards the `ν` coordinate needing only measurability of `ν` itself — which the predicate
+supplies — so no hypothesis on the coordinates of `X` is required. On the right, naturality of
+`bind` pushes the marginal inside the mixture, where each `δ_{ν ω}` factor integrates away. -/
+theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
+  refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
+  have hK : AEMeasurable (fun ω =>
+      (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
+    (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
+      h.measurable_directing).aemeasurable
+  calc blockLaw μ X k
+      = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
+        rw [blockLaw_def, Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
+    _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
+          (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
+        rw [h.jointLaw_eq_disintegration k hk]
+    _ = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure := by
+        simp only [Measure.snd]
+        rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
+        simp
 
-/-- Rectangle factorization is equivalent to the named `ConditionallyIIDWith` relation. -/
-theorem conditionallyIIDWith_iff_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} :
-    ConditionallyIIDWith μ X ν ↔
-      Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-          ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
-            blockLaw μ X k (Set.univ.pi B) =
-              ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ := by
-  constructor
-  · intro h
-    exact ⟨h.measurable_directing, fun m k hk B hB => h.blockLaw_univ_pi k hk B hB⟩
-  · rintro ⟨hν, h_rect⟩
-    exact conditionallyIIDWith_of_forall_rectangles hν h_rect
-
-/-- Rectangle factorization is equivalent to the existential `ConditionallyIID` relation. -/
-theorem conditionallyIID_iff_exists_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} :
-    ConditionallyIID μ X ↔
-      ∃ ν : Ω → ProbabilityMeasure α, Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
-          ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
-            blockLaw μ X k (Set.univ.pi B) =
-              ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ := by
-  simp_rw [conditionallyIID_iff, conditionallyIIDWith_iff_forall_rectangles]
+/-- The existential form of the easy arrow. -/
+theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : ConditionallyIID μ X) : MixedIID μ X := by
+  obtain ⟨ν, hν⟩ := h.exists_directing
+  exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
 
 end Probability
 

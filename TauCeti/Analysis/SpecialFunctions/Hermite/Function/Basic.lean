@@ -65,9 +65,6 @@ private lemma gaussianEnvelope_def (x : ℝ) :
     gaussianEnvelope x = Real.exp (-(x ^ 2 / 2)) :=
   gaussianEnvelope.eq_1 x
 
-private lemma gaussianEnvelope_pos (x : ℝ) : 0 < gaussianEnvelope x := by
-  exact Real.exp_pos _
-
 private lemma continuous_gaussianEnvelope : Continuous gaussianEnvelope := by
   unfold gaussianEnvelope
   exact Real.continuous_exp.comp (((continuous_id.pow 2).div_const 2).neg)

@@ -29,9 +29,9 @@ with separation scale `ρ = 1/2` and produces a finite intersection with the box
   the radius-two box form a finite set (the packing lemma discharges discreteness).
 * `TauCeti.GeometryOfNumbers.gaussianLattice_inter_box_two_ncard_le`: at most `256` of
   them, the explicit packing count `(8/ρ)^(2·#ι)` at `ρ = 1/2`, `#ι = 1`.
-* `gaussianLattice_ncard_inter_box_two_le_sixtyFour_mul_ncard_inter_box_one`:
-  the doubling instance `#(Λ ∩ box 2) ≤ 64 · #(Λ ∩ box 1)`, the engine's factor
-  `64^{#ι}` at `#ι = 1`.
+* `gaussianLattice_ncard_inter_box_two_le_fortyNine_mul_ncard_inter_box_one`:
+  the doubling instance `#(Λ ∩ box 2) ≤ 49 · #(Λ ∩ box 1)`, the engine's proved factor
+  `49^{#ι} = 49` at `#ι = 1`; `…_le_sixtyFour_…` is the rounder `64`-factor corollary.
 
 These exercise both halves of the engine — `addSubgroup_inter_box_finite_and_ncard_le_of_separated`
 and `ncard_inter_box_two_le_pow_mul_ncard_inter_box_one` — on a genuine rank-two lattice,
@@ -124,14 +124,23 @@ theorem gaussianLattice_inter_box_two_ncard_le :
   rw [Fintype.card_fin]
   norm_num
 
-/-- **A concrete doubling instance.** Passing from the unit box to the double box multiplies
-the Gaussian-lattice point count by at most `64`, the engine's factor `64^{#ι}` at `#ι = 1`:
+/-- **A concrete doubling instance.** Passing from the unit box to the double box multiplies the
+Gaussian-lattice point count by at most the engine's proved factor `49^{#ι} = 49` at `#ι = 1`:
+`#(Λ ∩ box 2) ≤ 49 · #(Λ ∩ box 1)`. -/
+theorem gaussianLattice_ncard_inter_box_two_le_fortyNine_mul_ncard_inter_box_one :
+    (((gaussianLattice : Set (Fin 1 → ℂ)) ∩ box (fun _ => 1) 2).ncard : ℝ) ≤
+      49 * (((gaussianLattice : Set (Fin 1 → ℂ)) ∩ box (fun _ => 1) 1).ncard : ℝ) := by
+  simpa [Fintype.card_fin, pow_one] using
+    ncard_inter_box_two_le_pow_mul_ncard_inter_box_one (ι := Fin 1) (fun _ => 1)
+      (fun _ => one_pos) gaussianLattice gaussianLattice_inter_box_two_finite
+
+/-- The same doubling instance with the rounder factor `64` — a compatibility corollary of
+`gaussianLattice_ncard_inter_box_two_le_fortyNine_mul_ncard_inter_box_one`, weakening `49 ≤ 64`:
 `#(Λ ∩ box 2) ≤ 64 · #(Λ ∩ box 1)`. -/
 theorem gaussianLattice_ncard_inter_box_two_le_sixtyFour_mul_ncard_inter_box_one :
     (((gaussianLattice : Set (Fin 1 → ℂ)) ∩ box (fun _ => 1) 2).ncard : ℝ) ≤
-      64 * (((gaussianLattice : Set (Fin 1 → ℂ)) ∩ box (fun _ => 1) 1).ncard : ℝ) := by
-  have h := ncard_inter_box_two_le_pow_mul_ncard_inter_box_one (ι := Fin 1) (fun _ => 1)
-    (fun _ => one_pos) gaussianLattice gaussianLattice_inter_box_two_finite
-  simpa [Fintype.card_fin] using h
+      64 * (((gaussianLattice : Set (Fin 1 → ℂ)) ∩ box (fun _ => 1) 1).ncard : ℝ) :=
+  gaussianLattice_ncard_inter_box_two_le_fortyNine_mul_ncard_inter_box_one.trans
+    (mul_le_mul_of_nonneg_right (by norm_num) (by positivity))
 
 end TauCeti.GeometryOfNumbers

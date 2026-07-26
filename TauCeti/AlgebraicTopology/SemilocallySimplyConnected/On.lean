@@ -215,14 +215,8 @@ public theorem SemilocallySimplyConnectedAt.of_semilocallySimplyConnectedSpace
   -- Recover `γ ≃ refl u` from the conjugation.
   -- `of_trans_symm` on `p = δ.trans γ`, `q = δ`: `δ.trans γ ≃ δ`.
   have hδγ : (δ.trans γ).Homotopic δ := Path.Homotopic.of_trans_symm hconj
-  -- Left-cancel `δ`.
-  have hcancel : (δ.symm.trans (δ.trans γ)).Homotopic (δ.symm.trans δ) :=
-    Path.Homotopic.hcomp (.refl δ.symm) hδγ
-  have hleft : (δ.symm.trans (δ.trans γ)).Homotopic γ :=
-    (Path.Homotopic.trans_assoc δ.symm δ γ).symm.trans <|
-      ((Path.Homotopic.hcomp (Path.Homotopic.symm_trans δ) (.refl γ)).trans
-        (Path.Homotopic.refl_trans γ))
-  exact hleft.symm.trans (hcancel.trans (Path.Homotopic.symm_trans δ))
+  -- Left-cancel the shared `δ`: rewrite `δ ≃ δ.trans (refl u)`, then apply left cancellation.
+  exact Path.Homotopic.trans_left_cancel (hδγ.trans (Path.Homotopic.trans_refl δ).symm)
 
 /-- On a locally path-connected semilocally simply connected space, every subset is pointwise
 semilocally simply connected. -/

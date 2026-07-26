@@ -123,59 +123,48 @@ theorem comap_bot (f : H →ₐc[R] K) (hf : Function.Surjective f) :
   ext h
   rw [mem_comap, mem_ker, mem_bot]
 
+/-- A finitely supported family over `K` lifts along a surjective bialgebra morphism to a
+finitely supported family over `H` that agrees with it pointwise and has the same total sum. -/
+private theorem exists_finsupp_map_eq {ι : Type*} (f : H →ₐc[R] K)
+    (hf : Function.Surjective f) (s : ι →₀ K) :
+    ∃ t : ι →₀ H, (∀ i, f (t i) = s i) ∧
+      f (t.sum fun _ y => y) = s.sum fun _ y => y := by
+  obtain ⟨t, rfl⟩ := Finsupp.mapRange_surjective (⇑f) (map_zero f) hf s
+  refine ⟨t, fun i => by rw [Finsupp.mapRange_apply], ?_⟩
+  rw [Finsupp.sum_mapRange_index fun _ => rfl, Finsupp.sum, Finsupp.sum, map_sum]
+
+/-- The inverse image of a supremum of Hopf ideals is contained in the supremum of the inverse
+images: the nontrivial inclusion of `comap_iSup_of_surjective`. -/
+private theorem comap_iSup_le {ι : Type*} [Nonempty ι] (I : ι → HopfIdeal R K)
+    (f : H →ₐc[R] K) (hf : Function.Surjective f) :
+    (⨆ i, I i).comap f hf ≤ ⨆ i, (I i).comap f hf := by
+  classical
+  intro h hh
+  rw [mem_comap, mem_iSup] at hh
+  obtain ⟨s, hs, hsum⟩ := hh
+  obtain ⟨t, ht, ht_sum⟩ := exists_finsupp_map_eq f hf s
+  let i0 : ι := Classical.choice ‹Nonempty ι›
+  -- Lift `s` to `t`, then correct the `i0` coordinate so the total sum lands on `h`.
+  refine mem_iSup.mpr ⟨t + Finsupp.single i0 (h - t.sum fun _ y => y), fun i => ?_, ?_⟩
+  · have hfin : f (t i) ∈ I i := by rw [ht i]; exact hs i
+    rw [mem_comap, Finsupp.add_apply, map_add]
+    rcases eq_or_ne i i0 with rfl | hi
+    · rw [Finsupp.single_eq_same, map_sub, ht_sum, hsum, sub_self, add_zero]
+      exact hfin
+    · rw [Finsupp.single_eq_of_ne hi, map_zero, add_zero]
+      exact hfin
+  · rw [Finsupp.sum_add_index (fun _ _ => rfl) (fun _ _ _ _ => rfl),
+      Finsupp.sum_single_index rfl]
+    abel
+
 /-- Surjective inverse image of Hopf ideals preserves nonempty suprema of families. -/
 @[simp]
 theorem comap_iSup_of_surjective {ι : Type*} [Nonempty ι] (I : ι → HopfIdeal R K)
     (f : H →ₐc[R] K) (hf : Function.Surjective f) :
     (⨆ i, I i).comap f hf = ⨆ i, (I i).comap f hf := by
-  classical
-  ext h
-  constructor
-  · intro hh
-    rw [mem_comap, mem_iSup] at hh
-    rcases hh with ⟨s, hs, hsum⟩
-    let pre : K → H := fun k => if hk : k = 0 then 0 else Classical.choose (hf k)
-    have hpre : ∀ k, f (pre k) = k := by
-      intro k
-      by_cases hk : k = 0
-      · simp [pre, hk]
-      · simpa [pre, hk] using Classical.choose_spec (hf k)
-    have hpre_zero : pre 0 = 0 := by simp [pre]
-    let t : ι →₀ H := s.mapRange pre hpre_zero
-    let i0 : ι := Classical.choice ‹Nonempty ι›
-    let u : ι →₀ H := t + Finsupp.single i0 (h - t.sum fun _ y => y)
-    rw [mem_iSup]
-    refine ⟨u, ?_, ?_⟩
-    · intro i
-      by_cases hi : i = i0
-      · subst hi
-        dsimp [u]
-        rw [Finsupp.single_eq_same]
-        exact add_mem (by simpa [t, hpre] using hs i0) (by
-          rw [mem_comap, map_sub]
-          have ht_sum : f (t.sum fun _ y => y) = s.sum fun _ y => y := by
-            dsimp [t]
-            rw [Finsupp.sum_mapRange_index (fun _ => rfl), Finsupp.sum, map_sum]
-            exact Finset.sum_congr rfl fun i _ => by simp [hpre]
-          rw [ht_sum, hsum, sub_self]
-          exact zero_mem (I i0))
-      · dsimp [u]
-        rw [Finsupp.single_eq_of_ne hi]
-        simpa [t, hpre] using hs i
-    · dsimp [u]
-      rw [Finsupp.sum_add_index (fun _ _ => rfl) (fun _ _ _ _ => rfl),
-        Finsupp.sum_single_index rfl]
-      abel
-  · intro hh
-    rw [mem_iSup] at hh
-    rcases hh with ⟨s, hs, rfl⟩
-    rw [mem_comap, mem_iSup]
-    exact ⟨s.mapRange f (map_zero f),
-      fun i => (mem_comap (I := I i) (f := f) (hf := hf)).mp (hs i), by
-      rw [Finsupp.sum_mapRange_index (fun _ => rfl)]
-      -- Expose the bounded `Finset.sum` shape produced by `Finsupp.sum` so `map_sum` applies.
-      change (∑ a ∈ s.support, f (s a)) = f (∑ a ∈ s.support, s a)
-      rw [map_sum]⟩
+  refine le_antisymm (comap_iSup_le I f hf) (sSup_le ?_)
+  rintro J ⟨i, rfl⟩
+  exact comap_mono f hf (le_sSup ⟨i, rfl⟩)
 
 /-- Surjective inverse image of Hopf ideals preserves joins. -/
 @[simp]

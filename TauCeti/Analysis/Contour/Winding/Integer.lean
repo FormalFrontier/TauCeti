@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
@@ -118,9 +122,7 @@ private theorem exists_int_windingNumber_of_closed_of_le {γ : ℝ → ℂ} {w :
   refine ⟨n, ?_⟩
   have hcont_u : ContinuousOn γ (Set.uIcc a b) := by rw [Set.uIcc_of_le hab]; exact hγ_cont
   have havoid_u : ∀ t ∈ Set.uIcc a b, γ t ≠ w := by rw [Set.uIcc_of_le hab]; exact h_avoid
-  have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 :=
-    mul_ne_zero (mul_ne_zero (by norm_num) (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero))
-      Complex.I_ne_zero
+  have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := Complex.two_pi_I_ne_zero
   rw [windingNumber_eq_integral_of_avoidance hcont_u havoid_u h_int, hint', hn,
     mul_comm (n : ℂ) (2 * (Real.pi : ℂ) * Complex.I), ← mul_assoc,
     inv_mul_cancel₀ h2πI_ne, one_mul]

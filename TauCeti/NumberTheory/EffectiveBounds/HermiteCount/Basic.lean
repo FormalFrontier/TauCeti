@@ -78,6 +78,56 @@ noncomputable def coeffBoundOfDiscrBdd (N : ℕ) : ℕ :=
   ⌈(max (Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2)) 1) ^ rankOfDiscrBdd N
       * ((rankOfDiscrBdd N).choose (rankOfDiscrBdd N / 2) : ℝ)⌉₊
 
+/-- **Effective Hermite--Minkowski, generating element.** A number field `K` with `|discr K| ≤ N`
+has a primitive integral generator `a` all of whose infinite places are at most
+`max √(1 + boundOfDiscBdd N ^ 2) 1`. -/
+private theorem exists_primitive_element_infinitePlace_le {K : Type*} [Field K] [NumberField K]
+    {N : ℕ} (hK : |discr K| ≤ (N : ℤ)) :
+    ∃ a : 𝓞 K, ℚ⟮(a : K)⟯ = ⊤ ∧
+      ∀ w : InfinitePlace K, w (a : K) ≤ max (Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2)) 1 := by
+  classical
+  obtain ⟨w₀⟩ := (inferInstance : Nonempty (InfinitePlace K))
+  have hBM : (boundOfDiscBdd N : ℝ) ≤ Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2) :=
+    Real.le_sqrt_of_sq_le (by linarith)
+  -- The generator comes from the real or the complex convex-body input according to the type of
+  -- an infinite place of `K`; both conjugate bounds fit under the single quantity above.
+  by_cases hw₀ : IsReal w₀
+  · have hlt : minkowskiBound K 1 < convexBodyLTFactor K * boundOfDiscBdd N := by
+      calc minkowskiBound K 1 < boundOfDiscBdd N := minkowskiBound_lt_boundOfDiscBdd hK
+        _ = 1 * boundOfDiscBdd N := (one_mul _).symm
+        _ ≤ convexBodyLTFactor K * boundOfDiscBdd N := by
+            gcongr; exact mod_cast one_le_convexBodyLTFactor K
+    obtain ⟨a, ha₁, ha₂⟩ := exists_primitive_element_lt_of_isReal K hw₀ hlt
+    refine ⟨a, ha₁, fun w => ?_⟩
+    have hw : w (a : K) < max (boundOfDiscBdd N : ℝ) 1 := by
+      have := ha₂ w; rwa [NNReal.coe_max, NNReal.coe_one] at this
+    exact hw.le.trans (max_le_max hBM le_rfl)
+  · rw [not_isReal_iff_isComplex] at hw₀
+    have hlt : minkowskiBound K 1 < convexBodyLT'Factor K * boundOfDiscBdd N := by
+      calc minkowskiBound K 1 < boundOfDiscBdd N := minkowskiBound_lt_boundOfDiscBdd hK
+        _ = 1 * boundOfDiscBdd N := (one_mul _).symm
+        _ ≤ convexBodyLT'Factor K * boundOfDiscBdd N := by
+            gcongr; exact mod_cast one_le_convexBodyLT'Factor K
+    obtain ⟨a, ha₁, ha₂⟩ := exists_primitive_element_lt_of_isComplex K hw₀ hlt
+    exact ⟨a, ha₁, fun w => (ha₂ w).le.trans (le_max_left _ _)⟩
+
+/-- The `ℤ`-minimal polynomial of an algebraic integer `a` of a number field `K` with
+`finrank ℚ K ≤ rankOfDiscrBdd N`, all of whose conjugates have norm at most
+`max √(1 + boundOfDiscBdd N ^ 2) 1`, has every coefficient bounded in absolute value by
+`coeffBoundOfDiscrBdd N`. -/
+private theorem abs_coeff_minpoly_le_coeffBoundOfDiscrBdd {K : Type*} [Field K] [NumberField K]
+    {N : ℕ} {a : 𝓞 K} (hrank : finrank ℚ K ≤ rankOfDiscrBdd N)
+    (hnorm : ∀ φ : K →+* ℂ, ‖φ (a : K)‖ ≤ max (Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2)) 1)
+    (i : ℕ) : |(minpoly ℤ (a : K)).coeff i| ≤ (coeffBoundOfDiscrBdd N : ℤ) := by
+  rw [← @Int.cast_le ℝ]
+  refine (Eq.trans_le ?_ (Embeddings.coeff_bdd_of_norm_le hnorm i)).trans ?_
+  · simp only [minpoly.isIntegrallyClosed_eq_field_fractions' ℚ a.isIntegral_coe, coeff_map,
+      eq_intCast, Int.norm_cast_rat, Int.norm_eq_abs, Int.cast_abs]
+  · rw [max_eq_left (le_max_right _ _)]
+    refine le_trans (mul_le_mul (pow_le_pow_right₀ (le_max_right _ _) hrank) ?_
+      (by positivity) (by positivity)) (Nat.le_ceil _)
+    exact_mod_cast (Nat.choose_le_choose _ hrank).trans (Nat.choose_le_middle _ _)
+
 variable (A : Type*) [Field A] [CharZero A]
 
 /-- **Effective Hermite--Minkowski, generating step.** Each number field `K` (a finite extension of
@@ -96,64 +146,20 @@ theorem exists_mem_rootSet_eq_adjoin_of_abs_discr_le [DecidableEq A] {N : ℕ}
   classical
   have : CharZero K := SubsemiringClass.instCharZero K
   haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance hK₀
-  set M : ℝ := max (Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2)) 1 with hM
-  have h1M : (1 : ℝ) ≤ M := le_max_right _ _
-  have hsqrtM : Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2) ≤ M := le_max_left _ _
-  have hBM : (boundOfDiscBdd N : ℝ) ≤ Real.sqrt (1 + (boundOfDiscBdd N : ℝ) ^ 2) :=
-    Real.le_sqrt_of_sq_le (by linarith)
-  -- A primitive integral generator whose every conjugate has size `≤ M`, from the real or the
-  -- complex convex-body input depending on the type of an infinite place of `K`.
-  obtain ⟨a, ha₁, haM⟩ : ∃ a : 𝓞 K, ℚ⟮(a : K)⟯ = ⊤ ∧ ∀ w : InfinitePlace K, w (a : K) ≤ M := by
-    obtain ⟨w₀⟩ := (inferInstance : Nonempty (InfinitePlace K))
-    by_cases hw₀ : IsReal w₀
-    · have hlt : minkowskiBound K 1 < convexBodyLTFactor K * boundOfDiscBdd N := by
-        calc minkowskiBound K 1 < boundOfDiscBdd N := minkowskiBound_lt_boundOfDiscBdd hK
-          _ = 1 * boundOfDiscBdd N := (one_mul _).symm
-          _ ≤ convexBodyLTFactor K * boundOfDiscBdd N := by
-              gcongr; exact mod_cast one_le_convexBodyLTFactor K
-      obtain ⟨a, ha₁, ha₂⟩ := exists_primitive_element_lt_of_isReal K hw₀ hlt
-      refine ⟨a, ha₁, fun w => ?_⟩
-      have hw : w (a : K) < max (boundOfDiscBdd N : ℝ) 1 := by
-        have := ha₂ w; rwa [NNReal.coe_max, NNReal.coe_one] at this
-      exact hw.le.trans (max_le_max hBM (le_refl 1))
-    · rw [not_isReal_iff_isComplex] at hw₀
-      have hlt : minkowskiBound K 1 < convexBodyLT'Factor K * boundOfDiscBdd N := by
-        calc minkowskiBound K 1 < boundOfDiscBdd N := minkowskiBound_lt_boundOfDiscBdd hK
-          _ = 1 * boundOfDiscBdd N := (one_mul _).symm
-          _ ≤ convexBodyLT'Factor K * boundOfDiscBdd N := by
-              gcongr; exact mod_cast one_le_convexBodyLT'Factor K
-      obtain ⟨a, ha₁, ha₂⟩ := exists_primitive_element_lt_of_isComplex K hw₀ hlt
-      exact ⟨a, ha₁, fun w => (ha₂ w).le.trans hsqrtM⟩
-  -- The minimal polynomial of `a` is the witnessing integer polynomial.
-  have hdeg : (minpoly ℤ (a : K)).natDegree ≤ rankOfDiscrBdd N :=
-    natDegree_le_rankOfDiscrBdd hK a ha₁
-  have hrank : finrank ℚ K ≤ rankOfDiscrBdd N := rank_le_rankOfDiscrBdd hK
-  have hnorm : ∀ φ : K →+* ℂ, ‖φ (a : K)‖ ≤ M := (le_iff_le (a : K) M).mp haM
-  have hcoeff : ∀ i, |(minpoly ℤ (a : K)).coeff i| ≤ (coeffBoundOfDiscrBdd N : ℤ) := by
-    intro i
-    rw [← @Int.cast_le ℝ]
-    refine (Eq.trans_le ?_ (Embeddings.coeff_bdd_of_norm_le hnorm i)).trans ?_
-    · simp only [minpoly.isIntegrallyClosed_eq_field_fractions' ℚ
-          (show IsIntegral ℤ (a : K) from a.isIntegral_coe), coeff_map, eq_intCast,
-        Int.norm_cast_rat, Int.norm_eq_abs, Int.cast_abs]
-    · rw [max_eq_left h1M]
-      refine le_trans (mul_le_mul (pow_le_pow_right₀ h1M hrank) ?_ (by positivity) (by positivity))
-        (Nat.le_ceil _)
-      exact_mod_cast (Nat.choose_le_choose _ hrank).trans (Nat.choose_le_middle _ _)
+  obtain ⟨a, ha₁, haM⟩ := exists_primitive_element_infinitePlace_le hK
   refine ⟨a, ?_, ?_⟩
-  · refine Set.mem_iUnion.mpr ⟨minpoly ℤ (a : K), Set.mem_iUnion.mpr ⟨⟨hdeg, hcoeff⟩, ?_⟩⟩
-    have hne : (minpoly ℤ (a : K)).map (algebraMap ℤ A) ≠ 0 :=
-      ((minpoly.monic a.isIntegral_coe).map (algebraMap ℤ A)).ne_zero
+  · refine Set.mem_iUnion.mpr ⟨minpoly ℤ (a : K), Set.mem_iUnion.mpr
+      ⟨⟨natDegree_le_rankOfDiscrBdd hK a ha₁, abs_coeff_minpoly_le_coeffBoundOfDiscrBdd
+        (rank_le_rankOfDiscrBdd hK) ((le_iff_le (a : K) _).mp haM)⟩, ?_⟩⟩
+    -- `a` is a root of its own `ℤ`-minimal polynomial, mapped into `A`.
     have hroot : ((minpoly ℤ (a : K)).map (algebraMap ℤ A)).IsRoot (a : A) := by
       rw [Polynomial.IsRoot.def, Polynomial.eval_map, ← Polynomial.aeval_def]
       exact (aeval_algebraMap_eq_zero_iff A (a : K) _).mpr (minpoly.aeval ℤ (a : K))
-    exact Finset.mem_coe.mpr (Multiset.mem_toFinset.mpr (Polynomial.mem_roots'.mpr ⟨hne, hroot⟩))
-  · have hlift := congrArg (IntermediateField.lift (F := K)) ha₁
-    have e1 : IntermediateField.lift (F := K) ℚ⟮(a : K)⟯ = ℚ⟮(a : A)⟯ :=
-      IntermediateField.lift_adjoin_simple ℚ K (a : K)
-    have e2 : IntermediateField.lift (F := K) (⊤ : IntermediateField ℚ K) = K :=
-      IntermediateField.lift_top ℚ K
-    exact (e1.symm.trans (hlift.trans e2)).symm
+    exact Finset.mem_coe.mpr (Multiset.mem_toFinset.mpr (Polynomial.mem_roots'.mpr
+      ⟨((minpoly.monic a.isIntegral_coe).map (algebraMap ℤ A)).ne_zero, hroot⟩))
+  · exact ((IntermediateField.lift_adjoin_simple ℚ K (a : K)).symm.trans
+      ((congr_arg (IntermediateField.lift (F := K)) ha₁).trans
+        (IntermediateField.lift_top ℚ K))).symm
 
 variable (N : ℕ)
 

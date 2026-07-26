@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/zulip
+          sparse-checkout: scripts/pr_status
       - name: Reconcile Zulip reactions
         # No continue-on-error: the script exits 0 for cosmetic/transient hiccups
         # and non-zero only for a persistent config break, which we *want* loud.
@@ -56,4 +56,4 @@ jobs:
           # Create the message when a PR opens/reopens; otherwise only react to it.
           CREATE=""
           if [ "$ACTION" != "closed" ]; then CREATE="--create"; fi
-          python3 scripts/zulip/zulip_pr_status.py reconcile "$PR" $CREATE
+          python3 scripts/pr_status/zulip.py reconcile "$PR" $CREATE

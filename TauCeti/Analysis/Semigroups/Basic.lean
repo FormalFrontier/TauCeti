@@ -223,6 +223,54 @@ theorem StronglyContinuousSemigroup.realOperator_zero_apply
   rw [S.realOperator_zero, ContinuousLinearMap.id_apply]
 
 omit [CompleteSpace X] in
+/-- A pointwise orbit bound `‖S.realOperator t x‖ ≤ B` valid on the initial interval `[0, δ)`
+propagates, via the semigroup law, to the geometric bound `(max ‖S.realOperator δ‖ 1) ^ k * B`
+on `[0, (k + 1) * δ)`. -/
+private theorem StronglyContinuousSemigroup.norm_realOperator_apply_le_pow_mul_of_near_zero
+    (S : StronglyContinuousSemigroup X) (x : X) {δ B : ℝ} (hδ_pos : 0 < δ)
+    (h_near : ∀ t : ℝ, 0 ≤ t → t < δ → ‖S.realOperator t x‖ ≤ B) :
+    ∀ (k : ℕ) (t : ℝ), 0 ≤ t → t < (↑k + 1) * δ →
+      ‖S.realOperator t x‖ ≤ (max ‖S.realOperator δ‖ 1) ^ k * B := by
+  set L := max ‖S.realOperator δ‖ 1
+  have hB : 0 ≤ B := (norm_nonneg _).trans (h_near 0 le_rfl hδ_pos)
+  intro k
+  induction k with
+  | zero =>
+    -- Base interval `[0, δ)`: this is exactly the near-zero bound.
+    intro t ht0 htδ
+    simp only [Nat.cast_zero, zero_add, one_mul] at htδ
+    simp only [pow_zero, one_mul]
+    exact h_near t ht0 htδ
+  | succ k ih =>
+    intro t ht0 ht_ub
+    by_cases hk : t < (↑k + 1) * δ
+    · -- Previous interval: reuse the induction hypothesis and enlarge `L^k` to `L^(k+1)`.
+      calc ‖S.realOperator t x‖ ≤ L ^ k * B := ih t ht0 hk
+        _ ≤ L ^ (k + 1) * B :=
+            mul_le_mul_of_nonneg_right
+              (pow_le_pow_right₀ (le_max_right _ _) (Nat.le_succ k)) hB
+    · -- New strip `[(k+1)δ, (k+2)δ)`: write `t = δ + (t - δ)` and use the semigroup law.
+      push Not at hk
+      have htd_nn : 0 ≤ t - δ := by
+        have : δ ≤ (↑k + 1) * δ :=
+          le_mul_of_one_le_left hδ_pos.le
+            (by have := (Nat.cast_nonneg k : (0 : ℝ) ≤ ↑k); linarith)
+        linarith
+      have htd_lt : t - δ < (↑k + 1) * δ := by
+        push_cast [Nat.succ_eq_add_one] at ht_ub; linarith
+      have h_sg := S.realOperator_add δ (t - δ) hδ_pos.le htd_nn
+      rw [add_sub_cancel] at h_sg
+      calc ‖S.realOperator t x‖
+          = ‖S.realOperator δ (S.realOperator (t - δ) x)‖ := by
+            simp only [h_sg, ContinuousLinearMap.comp_apply]
+        _ ≤ ‖S.realOperator δ‖ * ‖S.realOperator (t - δ) x‖ :=
+            ContinuousLinearMap.le_opNorm _ _
+        _ ≤ L * (L ^ k * B) := by
+            apply mul_le_mul (le_max_left _ _) (ih _ htd_nn htd_lt)
+              (by positivity) (by positivity)
+        _ = L ^ (k + 1) * B := by ring
+
+omit [CompleteSpace X] in
 /-- Pointwise boundedness on `[0, 1]`, the hypothesis needed for Banach-Steinhaus. -/
 private theorem StronglyContinuousSemigroup.pointwiseBoundedOnUnitInterval
     (S : StronglyContinuousSemigroup X) :
@@ -240,55 +288,16 @@ private theorem StronglyContinuousSemigroup.pointwiseBoundedOnUnitInterval
     have h1 := hδ ht0 (by rwa [dist_zero_right, Real.norm_eq_abs, abs_of_nonneg ht0])
     rw [dist_eq_norm] at h1
     linarith [norm_le_insert' (S.realOperator t x) x]
-  set L := max ‖S.realOperator δ‖ 1
-  set B := ‖x‖ + 1
+  -- Cover `[0, 1]` by `N + 1` intervals of length `δ` (`N = ⌈1/δ⌉`); as `1 < (N + 1) * δ`,
+  -- the geometric growth bound at `k = N` controls the whole interval.
   set N := Nat.ceil (1 / δ)
-  -- Induction invariant: after `k` steps of length `δ`, every `t ∈ [0, (k+1)δ)`
-  -- has orbit norm bounded by `L^k * B`.
-  have h_claim : ∀ (k : ℕ), ∀ t : ℝ, 0 ≤ t → t < (↑k + 1) * δ →
-      ‖S.realOperator t x‖ ≤ L ^ k * B := by
-    intro k; induction k with
-    | zero =>
-      -- Base interval `[0, δ)`: this is exactly strong continuity at zero.
-      intro t ht0 htδ
-      simp only [Nat.cast_zero, zero_add, one_mul] at htδ
-      simp only [pow_zero, one_mul]
-      exact h_near t ht0 htδ
-    | succ k ih =>
-      intro t ht0 ht_ub
-      by_cases hk : t < (↑k + 1) * δ
-      · -- Previous interval: reuse the induction hypothesis and enlarge `L^k` to `L^(k+1)`.
-        calc ‖S.realOperator t x‖ ≤ L ^ k * B := ih t ht0 hk
-          _ ≤ L ^ (k + 1) * B := by
-              apply mul_le_mul_of_nonneg_right _ (by positivity)
-              exact pow_le_pow_right₀ (le_max_right _ _) (Nat.le_succ k)
-      · -- New strip `[(k+1)δ, (k+2)δ)`: write `t = δ + (t - δ)` and use the semigroup law.
-        push Not at hk
-        have htd_nn : 0 ≤ t - δ := by
-          have : δ ≤ (↑k + 1) * δ :=
-            le_mul_of_one_le_left (le_of_lt hδ_pos)
-              (by have := (Nat.cast_nonneg k : (0 : ℝ) ≤ ↑k); linarith)
-          linarith
-        have htd_lt : t - δ < (↑k + 1) * δ := by
-          push_cast [Nat.succ_eq_add_one] at ht_ub; linarith
-        have h_sg := S.realOperator_add δ (t - δ) (le_of_lt hδ_pos) htd_nn
-        have h_delta_add_sub : δ + (t - δ) = t := by ring
-        rw [h_delta_add_sub] at h_sg
-        calc ‖S.realOperator t x‖
-            = ‖S.realOperator δ (S.realOperator (t - δ) x)‖ := by
-              simp only [h_sg, ContinuousLinearMap.comp_apply]
-          _ ≤ ‖S.realOperator δ‖ * ‖S.realOperator (t - δ) x‖ :=
-              ContinuousLinearMap.le_opNorm _ _
-          _ ≤ L * (L ^ k * B) := by
-              apply mul_le_mul (le_max_left _ _) (ih _ htd_nn htd_lt)
-                (by positivity) (by positivity)
-          _ = L ^ (k + 1) * B := by ring
   have hNδ : 1 < (↑N + 1) * δ := by
     have hN : (1 : ℝ) / δ ≤ ↑N := Nat.le_ceil _
     have : 1 ≤ ↑N * δ := by rwa [div_le_iff₀ hδ_pos] at hN
     linarith
-  exact ⟨L ^ N * B, fun ⟨t, ht0, ht1⟩ => by
-    simp only; exact h_claim N t ht0 (by linarith)⟩
+  refine ⟨(max ‖S.realOperator δ‖ 1) ^ N * (‖x‖ + 1), ?_⟩
+  rintro ⟨t, ht0, ht1⟩
+  exact S.norm_realOperator_apply_le_pow_mul_of_near_zero x hδ_pos h_near N t ht0 (by linarith)
 
 /-- The operator norm of a C₀-semigroup is bounded on `[0, 1]`.
 

@@ -4,7 +4,7 @@ defaultTargets = ["web"]
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso.git"
-rev = "v4.31.0-rc1"
+rev = "v4.32.0"
 
 [[lean_lib]]
 name = "Site"

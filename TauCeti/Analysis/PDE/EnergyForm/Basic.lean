@@ -57,8 +57,7 @@ explicit (never hidden in a `∃ C`):
 * `TauCeti.PDE.garding_energyIntegrand_self_of_bounds`: the pointwise Gårding lower bound
   on the diagonal.
 
-The main estimates take single coefficients and inline bounds (`‖b₀‖ ≤ β`, and so on);
-the `_on` wrappers specialize them to coefficient fields on a domain.
+The main estimates take single coefficients and inline bounds (`‖b₀‖ ≤ β`, and so on).
 -/
 
 public section
@@ -70,7 +69,7 @@ namespace PDE
 open Matrix
 open scoped InnerProductSpace
 
-variable {X n : Type*} [Fintype n]
+variable {n : Type*} [Fintype n]
 
 /-- Local classical decidable equality for finite coordinate indices in energy-form proofs. -/
 noncomputable local instance energyFormDecidableEq : DecidableEq n := Classical.decEq n
@@ -139,7 +138,6 @@ lemma energyIntegrand_one_zero_mass_self (c : ℝ)
   rw [energyIntegrand_self, toQuadraticForm'_one]
   simp
 
-variable {Ω : Set X} {a : X → Matrix n n ℝ} {b : X → EuclideanSpace ℝ n} {c : X → ℝ}
 variable {lam Lam beta gamma : ℝ}
 
 /-- Weighted Young inequality in the form used to absorb the first-order drift term into
@@ -215,17 +213,6 @@ lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
         add_le_add (add_le_add hmat hdrift) hmass
     _ = (Lam + beta + gamma) * ‖U‖ * ‖V‖ := by ring
 
-/-- Pointwise boundedness on a domain, obtained by applying
-`norm_energyIntegrand_apply_le_of_bounds` at `x`. -/
-lemma norm_energyIntegrand_apply_le_of_bounds_on (hLam : 0 ≤ Lam)
-    (ha : ∀ ⦃x⦄, x ∈ Ω → ∀ η ξ : EuclideanSpace ℝ n,
-      |η ⬝ᵥ (a x *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
-    (hb : ∀ ⦃x⦄, x ∈ Ω → ‖b x‖ ≤ beta)
-    (hc : ∀ ⦃x⦄, x ∈ Ω → ‖c x‖ ≤ gamma) {x : X} (hx : x ∈ Ω)
-    (U V : ℝ × EuclideanSpace ℝ n) :
-    ‖energyIntegrand (a x) (b x) (c x) U V‖ ≤ (Lam + beta + gamma) * ‖U‖ * ‖V‖ :=
-  norm_energyIntegrand_apply_le_of_bounds hLam (ha hx) (hb hx) (hc hx) U V
-
 /-- The operator norm of the pointwise jet form is at most `Λ + β + γ`.
 
 This finite-dimensional estimate is consumed after integration to prove boundedness of the
@@ -260,16 +247,6 @@ lemma opNorm_energyIntegrand_one_zero_mass_le (c : ℝ) :
       (gamma := ‖c‖) zero_le_one
       (fun η ξ => abs_dotProduct_one_mulVec_le η ξ) (by simp) le_rfl
 
-/-- Operator-norm boundedness on a domain, obtained by applying
-`opNorm_energyIntegrand_le_of_bounds` at `x`. -/
-lemma opNorm_energyIntegrand_le_of_bounds_on (hLam : 0 ≤ Lam)
-    (ha : ∀ ⦃x⦄, x ∈ Ω → ∀ η ξ : EuclideanSpace ℝ n,
-      |η ⬝ᵥ (a x *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
-    (hb : ∀ ⦃x⦄, x ∈ Ω → ‖b x‖ ≤ beta)
-    (hc : ∀ ⦃x⦄, x ∈ Ω → ‖c x‖ ≤ gamma) {x : X} (hx : x ∈ Ω) :
-    ‖energyIntegrand (a x) (b x) (c x)‖ ≤ Lam + beta + gamma :=
-  opNorm_energyIntegrand_le_of_bounds hLam (ha hx) (hb hx) (hc hx)
-
 /-- **Pointwise Gårding inequality.** With a nonnegative mass coefficient (`c ≥ 0`), the
 diagonal of the jet form is bounded below by `(λ/2)‖∇u‖² − (β²/2λ)|u|²`. The ellipticity
 floor `λ‖∇u‖²` pays for the drift term via Young's inequality, leaving half the floor and a
@@ -298,18 +275,6 @@ lemma garding_energyIntegrand_self_of_bounds (hlam : 0 < lam)
       lam / 2 * ‖U.2‖ ^ 2 + beta ^ 2 / (2 * lam) * U.1 ^ 2 :=
     mul_norm_abs_le_half_mul_sq_add hlam beta U.1 ‖U.2‖
   nlinarith [hQ', hM, hD, hYoung]
-
-/-- Pointwise Gårding inequality on a domain, obtained by applying
-`garding_energyIntegrand_self_of_bounds` at `x`. -/
-lemma garding_energyIntegrand_self_of_bounds_on (hlam : 0 < lam)
-    (hQ : ∀ ⦃x⦄, x ∈ Ω → ∀ ξ : EuclideanSpace ℝ n,
-      lam * ‖ξ‖ ^ 2 ≤ (a x).toQuadraticForm' ξ)
-    (hb : ∀ ⦃x⦄, x ∈ Ω → ‖b x‖ ≤ beta)
-    (hc : ∀ ⦃x⦄, x ∈ Ω → 0 ≤ c x) {x : X} (hx : x ∈ Ω)
-    (U : ℝ × EuclideanSpace ℝ n) :
-    lam / 2 * ‖U.2‖ ^ 2 - beta ^ 2 / (2 * lam) * U.1 ^ 2
-      ≤ energyIntegrand (a x) (b x) (c x) U U :=
-  garding_energyIntegrand_self_of_bounds hlam (hQ hx) (hb hx) (hc hx) U
 
 end PDE
 

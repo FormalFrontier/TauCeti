@@ -48,13 +48,20 @@ names around it. The cardinality identity is still expressed through the squarin
   universal property for maps out of `G/G²`, inherited from `ModN.liftEquiv`.
 * `TauCeti.elementaryTwoQuotientMap` and `TauCeti.elementaryTwoQuotientCongr`: transport along
   homomorphisms and equivalences of commutative groups.
+* `TauCeti.elementaryTwoQuotientMap_apply_eq_self_of_isSquare_div`,
+  `TauCeti.elementaryTwoQuotientMap_apply_eq_self_of_apply_eq_inv`, and
+  `TauCeti.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv`: inversion acts trivially on
+  the elementary-2 quotient.
 * `TauCeti.elementaryTwoQuotientEquivSquareQuotient`: the equivalence between Mathlib's `ModN`
   model and the quotient by the additive form of `G²`.
 * `TauCeti.card_elementaryTwoQuotient_eq_index_square`: the quotient cardinality as the index of
   the subgroup of squares.
 * `TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|G/G²| = |{g | g² = 1}|`.
 * `TauCeti.twoRank` and `TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
-  `|G/G²| = 2 ^ twoRank`.
+  `|G/G²| = 2 ^ twoRank`, and `TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its
+  inversion (`|G/G²| = 2 ^ n → twoRank G = n`).
+* `TauCeti.card_elementaryTwoQuotient_of_odd_card` and `TauCeti.twoRank_of_odd_card`: a group of
+  odd order has a single square class.
 * `TauCeti.card_elementaryTwoQuotient_dvd_card` and
   `TauCeti.two_pow_twoRank_dvd_card`: the quotient cardinality and its rank form divide `|G|`.
 -/
@@ -213,6 +220,26 @@ noncomputable def elementaryTwoQuotientMap (f : G →* H) :
   obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := G) x
   simp
 
+/-- A group endomorphism induces the identity on the maximal elementary-2 quotient if it sends
+each element to the same square class. -/
+theorem elementaryTwoQuotientMap_apply_eq_self_of_isSquare_div (f : G →* G)
+    (hf : ∀ g, IsSquare (f g / g)) (x : ElementaryTwoQuotient G) :
+    elementaryTwoQuotientMap f x = x := by
+  obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := G) x
+  rw [elementaryTwoQuotientMap_mk]
+  exact (elementaryTwoQuotientMk_eq_iff _ _).2 (hf g)
+
+/-- A group endomorphism that acts pointwise by inversion induces the identity on the maximal
+elementary-2 quotient. This is the abstract step used when quadratic conjugation acts on an ideal
+class group by inversion. -/
+theorem elementaryTwoQuotientMap_apply_eq_self_of_apply_eq_inv (f : G →* G)
+    (hf : ∀ g, f g = g⁻¹) (x : ElementaryTwoQuotient G) :
+    elementaryTwoQuotientMap f x = x := by
+  apply elementaryTwoQuotientMap_apply_eq_self_of_isSquare_div f _ x
+  intro g
+  refine ⟨g⁻¹, ?_⟩
+  rw [hf, div_eq_mul_inv]
+
 variable {K : Type*} [CommGroup K]
 
 /-- Induced maps on elementary-2 quotients compose pointwise. -/
@@ -258,6 +285,14 @@ noncomputable def elementaryTwoQuotientCongr (e : G ≃* H) :
     elementaryTwoQuotientCongr (e.trans e') x =
       elementaryTwoQuotientCongr e' (elementaryTwoQuotientCongr e x) :=
   elementaryTwoQuotientMap_comp_apply e.toMonoidHom e'.toMonoidHom x
+
+/-- A multiplicative automorphism that acts pointwise by inversion induces the identity on the
+maximal elementary-2 quotient. In genus theory this applies to the action of quadratic
+conjugation on `Cl(K)/Cl(K)²`. -/
+theorem elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv (e : G ≃* G)
+    (he : ∀ g, e g = g⁻¹) (x : ElementaryTwoQuotient G) :
+    elementaryTwoQuotientCongr e x = x :=
+  elementaryTwoQuotientMap_apply_eq_self_of_apply_eq_inv e.toMonoidHom he x
 
 variable (G)
 
@@ -315,6 +350,33 @@ theorem card_elementaryTwoQuotient_eq_two_pow_twoRank
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] :
     Nat.card (ElementaryTwoQuotient G) = 2 ^ twoRank G := by
   rw [twoRank, Module.natCard_eq_pow_finrank (K := ZMod 2), Nat.card_zmod]
+
+/-- Reading the 2-rank off a cardinality computation: if `G/G²` has `2 ^ n` elements, the 2-rank
+of `G` is `n`. This is the inversion of
+`TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank` used to convert each concrete counting
+result into its rank form. The hypothesis already forces `G/G²` to be a finite `ZMod 2`-module,
+so no finiteness instance need be supplied. -/
+theorem twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow
+    {n : ℕ} (h : Nat.card (ElementaryTwoQuotient G) = 2 ^ n) : twoRank G = n := by
+  have : Finite (ElementaryTwoQuotient G) := Nat.finite_of_card_ne_zero (by simp [h])
+  rw [card_elementaryTwoQuotient_eq_two_pow_twoRank] at h
+  exact Nat.pow_right_injective le_rfl h
+
+/-- **A group of odd order has a single square class.** For a finite commutative group of odd
+order, squaring is bijective (the exponent `2` is coprime to `|G|`), so `G/G²` is trivial. This
+is the odd-order half of the 2-rank computation — the even case genuinely needs more structure
+(a cyclic factor); this half holds for any commutative group. -/
+theorem card_elementaryTwoQuotient_of_odd_card (h : Odd (Nat.card G)) :
+    Nat.card (ElementaryTwoQuotient G) = 1 := by
+  rw [card_elementaryTwoQuotient_eq_index_square, square_eq_powMonoidHom_two_range]
+  have hbij : Function.Surjective (powMonoidHom 2 : G →* G) :=
+    (Nat.Coprime.pow_left_bijective (Nat.coprime_two_right.mpr h)).surjective
+  rw [MonoidHom.range_eq_top.mpr hbij, Subgroup.index_top]
+
+/-- A group of odd order has 2-rank zero. -/
+theorem twoRank_of_odd_card (h : Odd (Nat.card G)) : twoRank G = 0 :=
+  twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow G
+    ((card_elementaryTwoQuotient_of_odd_card G h).trans (pow_zero 2).symm)
 
 /-- The cardinality of the maximal elementary-2 quotient of a commutative group divides the group
 cardinality. -/

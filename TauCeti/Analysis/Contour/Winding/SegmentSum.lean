@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.Analysis.Calculus.Deriv.Basic
@@ -99,11 +103,9 @@ theorem integral_inv_sub_mul_deriv_eq_sum_log {γ : ℝ → ℂ} {w : ℂ} {a b 
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b) :
     ∫ t in a..b, (γ t - w)⁻¹ * deriv γ t
       = ∑ j ∈ Finset.range N, Complex.log ((γ (s (j + 1)) - w) / (γ (s j) - w)) := by
-  have hfun : (fun t ↦ (γ t - w)⁻¹ * deriv γ t) = fun t ↦ deriv γ t / (γ t - w) := by
-    funext t; rw [div_eq_mul_inv, mul_comm]
-  rw [hfun]
+  simp only [inv_mul_eq_div]
   exact integral_deriv_div_sub_eq_sum_log (γ' := deriv γ) hP hs_zero hs_N hs_mono hγ_cont
-    (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (hfun ▸ h_int)
+    (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (by simpa only [inv_mul_eq_div] using h_int)
 
 /-- **Real/imaginary decomposition of the index integral (explicit velocity).** Refining
 `integral_deriv_div_sub_eq_sum_log`, over the same slit-compatible monotone partition the integral
@@ -163,10 +165,9 @@ theorem integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im {γ : ℝ �
       = ((Real.log ‖γ b - w‖ - Real.log ‖γ a - w‖ : ℝ) : ℂ)
         + Complex.I * ((∑ j ∈ Finset.range N,
             (Complex.log ((γ (s (j + 1)) - w) / (γ (s j) - w))).im : ℝ) : ℂ) := by
-  have hfun : (fun t ↦ (γ t - w)⁻¹ * deriv γ t) = fun t ↦ deriv γ t / (γ t - w) := by
-    funext t; rw [div_eq_mul_inv, mul_comm]
-  rw [hfun]
+  simp only [inv_mul_eq_div]
   exact integral_deriv_div_sub_eq_log_norm_add_I_mul_sum_log_im (γ' := deriv γ) hP hs_zero hs_N
-    hs_mono hγ_cont (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (hfun ▸ h_int)
+    hs_mono hγ_cont (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit
+    (by simpa only [inv_mul_eq_div] using h_int)
 
 end TauCeti.Contour

@@ -45,26 +45,6 @@ open scoped Function
 
 namespace TauCeti.Multiquadratic
 
-/-- A squarefree integer other than `1` is not a rational square. If `(n : ℚ)` were a square then
-`n = a * a` for some integer `a`; squarefreeness forces `a` to be a unit, so `n = 1`. -/
-private theorem not_isSquare_intCast_of_squarefree_of_ne_one {n : ℤ}
-    (hsf : Squarefree n) (hne : n ≠ 1) : ¬ IsSquare ((n : ℤ) : ℚ) := by
-  rw [Rat.isSquare_intCast_iff]
-  rintro ⟨a, ha⟩
-  have hu : IsUnit a := hsf a (ha ▸ dvd_rfl)
-  rcases Int.isUnit_iff.mp hu with rfl | rfl <;> simp_all
-
-/-- Dividing a rational square by `4` leaves a rational square. -/
-private theorem isSquare_of_isSquare_four_mul {q : ℚ} (h : IsSquare ((4 : ℚ) * q)) :
-    IsSquare q := by
-  have h4 : IsSquare (4 : ℚ) := ⟨2, by norm_num⟩
-  simpa using h.div h4
-
-/-- The negative of a squarefree integer is squarefree. -/
-private theorem Squarefree.int_neg {n : ℤ} (hn : Squarefree n) : Squarefree (-n) := by
-  rw [← Int.squarefree_natAbs, Int.natAbs_neg, Int.squarefree_natAbs]
-  exact hn
-
 /-- Products over odd prime-discriminant radicands, with no `-4` radicand, are not `-1`. -/
 private theorem prod_primeDiscriminantRadicands_ne_neg_one {ι : Type*} {D : ι → ℤ}
     (hD : ∀ i, IsPrimeDiscriminant (D i)) {S : Finset ι}
@@ -165,6 +145,53 @@ theorem isCoprime_primeDiscriminantRadicand {D E : ℤ}
         oddPrimeDiscriminant_natAbs]
       exact (Nat.coprime_primes hp hq).mpr fun h => hDE (by rw [h])
 
+/-- Square-class independence in the exceptional even case where `S` carries indices for both `8`
+and `-8` but none for `-4`: the product of the radicands `primeDiscriminantRadicand (D i)` over `S`
+is not a rational square. -/
+private theorem not_isSquare_prod_primeDiscriminantRadicands_of_mem_eight_neg_eight {ι : Type*}
+    {D : ι → ℤ} (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
+    {S : Finset ι} (hno4S : ∀ i ∈ S, D i ≠ -4)
+    (hboth : (∃ i ∈ S, D i = 8) ∧ (∃ i ∈ S, D i = -8)) :
+    ¬ IsSquare (∏ i ∈ S, ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) := by
+  classical
+  obtain ⟨⟨i8, hi8S, hi8D⟩, im8, him8S, him8D⟩ := hboth
+  have hne : i8 ≠ im8 := by rintro rfl; omega
+  let T := (S.erase i8).erase im8
+  let P : ℤ := ∏ i ∈ T, primeDiscriminantRadicand (D i)
+  have him8_erase : im8 ∈ S.erase i8 := Finset.mem_erase.mpr ⟨hne.symm, him8S⟩
+  have hprod_int : (∏ i ∈ S, primeDiscriminantRadicand (D i)) = -4 * P := by
+    rw [← Finset.mul_prod_erase S (fun i => primeDiscriminantRadicand (D i)) hi8S,
+      ← Finset.mul_prod_erase (S.erase i8) (fun i => primeDiscriminantRadicand (D i))
+        him8_erase]
+    simp [P, T, hi8D, him8D]
+    ring
+  have hcopT : ∀ i ∈ T, ∀ j ∈ T, i ≠ j →
+      IsCoprime (primeDiscriminantRadicand (D i)) (primeDiscriminantRadicand (D j)) := by
+    intro i hiT j hjT hij
+    exact isCoprime_primeDiscriminantRadicand (hD i) (hD j) (fun h => hij (hinj h))
+      (by
+        intro hbad
+        rcases hbad with ⟨hi, hj⟩ | ⟨hi, hj⟩
+        · exact Finset.ne_of_mem_erase (Finset.mem_of_mem_erase hiT)
+            (hinj (by rw [hi, hi8D]))
+        · exact Finset.ne_of_mem_erase hiT (hinj (by rw [hi, him8D])))
+  have hne_negP : -P ≠ 1 := by
+    intro hneg
+    have hP : P = -1 := by omega
+    exact prod_primeDiscriminantRadicands_ne_neg_one hD
+      (fun i hi => hno4S i (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hi))) hP
+  have hnot_negP : ¬ IsSquare (((-P : ℤ) : ℚ)) :=
+    not_isSquare_intCast_of_squarefree_of_ne_one
+      (squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD hcopT).neg hne_negP
+  intro hsquare
+  have hfour : IsSquare (4 * ((-P : ℤ) : ℚ)) := by
+    convert hsquare using 1
+    rw [← Int.cast_prod, hprod_int]
+    norm_num
+  have hdiv := hfour.div (⟨2, by norm_num⟩ : IsSquare (4 : ℚ))
+  rw [mul_div_cancel_left₀ _ (by norm_num : (4 : ℚ) ≠ 0)] at hdiv
+  exact hnot_negP hdiv
+
 /-- **Square-class independence of prime discriminants.** Let `D : ι → ℤ` be an injective family
 of prime discriminants which does not contain all three even prime discriminants `-4`, `8`, and
 `-8`. Then no nonempty subset product of the radicands `primeDiscriminantRadicand (D i)` is a
@@ -175,55 +202,10 @@ theorem not_isSquare_prod_primeDiscriminantRadicands {ι : Type*} (D : ι → �
     (heven : ¬ ((∃ i, D i = -4) ∧ (∃ i, D i = 8) ∧ (∃ i, D i = -8))) :
     ∀ S : Finset ι, S.Nonempty →
       ¬ IsSquare (∏ i ∈ S, ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) := by
-  classical
   intro S hS
   by_cases hboth : (∃ i ∈ S, D i = 8) ∧ (∃ i ∈ S, D i = -8)
-  · rcases hboth with ⟨⟨i8, hi8S, hi8D⟩, ⟨im8, him8S, him8D⟩⟩
-    have hne : i8 ≠ im8 := by
-      intro h
-      have : (8 : ℤ) = -8 := by
-        calc
-          (8 : ℤ) = D i8 := hi8D.symm
-          _ = D im8 := by rw [h]
-          _ = -8 := him8D
-      norm_num at this
-    have hno4S : ∀ i ∈ S, D i ≠ -4 := by
-      intro i hiS hiD
-      exact heven ⟨⟨i, hiD⟩, ⟨i8, hi8D⟩, ⟨im8, him8D⟩⟩
-    let T := (S.erase i8).erase im8
-    let P : ℤ := ∏ i ∈ T, primeDiscriminantRadicand (D i)
-    have him8_erase : im8 ∈ S.erase i8 := Finset.mem_erase.mpr ⟨hne.symm, him8S⟩
-    have hprod_int : (∏ i ∈ S, primeDiscriminantRadicand (D i)) = -4 * P := by
-      rw [← Finset.mul_prod_erase S (fun i => primeDiscriminantRadicand (D i)) hi8S,
-        ← Finset.mul_prod_erase (S.erase i8) (fun i => primeDiscriminantRadicand (D i))
-          him8_erase]
-      simp [P, T, hi8D, him8D]
-      ring
-    have hcopT : ∀ i ∈ T, ∀ j ∈ T, i ≠ j →
-        IsCoprime (primeDiscriminantRadicand (D i)) (primeDiscriminantRadicand (D j)) := by
-      intro i hiT j hjT hij
-      exact isCoprime_primeDiscriminantRadicand (hD i) (hD j) (fun h => hij (hinj h))
-        (by
-          intro hbad
-          rcases hbad with ⟨hi, hj⟩ | ⟨hi, hj⟩
-          · exact Finset.ne_of_mem_erase (Finset.mem_of_mem_erase hiT)
-              (hinj (by rw [hi, hi8D]))
-          · exact Finset.ne_of_mem_erase hiT (hinj (by rw [hi, him8D])))
-    have hsfP : Squarefree P :=
-      squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD hcopT
-    have hne_negP : -P ≠ 1 := by
-      intro hneg
-      have hP : P = -1 := by omega
-      exact prod_primeDiscriminantRadicands_ne_neg_one hD
-        (fun i hi => hno4S i (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hi))) hP
-    have hnot_negP : ¬ IsSquare (((-P : ℤ) : ℚ)) :=
-      not_isSquare_intCast_of_squarefree_of_ne_one (Squarefree.int_neg hsfP) hne_negP
-    intro hsquare
-    apply hnot_negP
-    refine isSquare_of_isSquare_four_mul ?_
-    convert hsquare using 1
-    rw [← Int.cast_prod, hprod_int]
-    norm_num
+  · refine not_isSquare_prod_primeDiscriminantRadicands_of_mem_eight_neg_eight hD hinj ?_ hboth
+    exact fun i _ hiD => heven ⟨⟨i, hiD⟩, hboth.1.imp fun _ h => h.2, hboth.2.imp fun _ h => h.2⟩
   · refine not_isSquare_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD ?_
       (prod_primeDiscriminantRadicands_ne_one_of_nonempty hD hinj hS)
     intro i hi j hj hij

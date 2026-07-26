@@ -847,6 +847,15 @@ private lemma chafai_kernel_density_eq (f : ℝ → ℝ)
           iteratedDerivWithin n f (Ici 0) t := by ring
     _ = _ := by rw [key]
 
+/-- For `k ≠ 0`, dividing by `k!` and multiplying by `k` is dividing by `(k - 1)!`. This is the
+coefficient bookkeeping produced by differentiating the order-`k` kernel. -/
+private lemma div_factorial_mul_natCast {k : ℕ} (hk : k ≠ 0) (c z : ℝ) :
+    c / ↑k.factorial * ((k : ℝ) * z) = c / ↑(k - 1).factorial * z := by
+  have hfact : k.factorial = k * (k - 1).factorial := (Nat.mul_factorial_pred hk).symm
+  rw [hfact]
+  push_cast
+  field_simp
+
 private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (k : ℕ) (hk : k ≠ 0) (x T : ℝ) (hx : 0 ≤ x) (hxT : x < T) :
     ∫ t in x..T, (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
@@ -861,23 +870,13 @@ private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
   set u := fun t : ℝ => c * (t - x) ^ k
   set u' := fun t : ℝ => c * (↑k * (t - x) ^ (k - 1))
   have hu'_eq : ∀ t, u' t =
-      (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) := by
-    intro t
+      (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) := fun t => by
     simp only [u', c]
-    have hfact : k.factorial = k * (k - 1).factorial := by
-      cases k with
-      | zero => contradiction
-      | succ n => simp [Nat.factorial_succ]
-    rw [hfact]
-    push_cast
-    field_simp
+    exact div_factorial_mul_natCast hk _ _
   have hu_cont : ContinuousOn u (uIcc x T) :=
     continuousOn_const.mul ((continuousOn_id.sub continuousOn_const).pow _)
-  have hg_cont : ContinuousOn g (uIcc x T) := by
-    rw [uIcc_of_le hxT.le]
-    exact (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top k)
-      (uniqueDiffOn_Ici 0)).mono
-        (Icc_subset_Ici_self.trans (Ici_subset_Ici.mpr hx))
+  have hg_cont : ContinuousOn g (uIcc x T) :=
+    hcm.continuousOn_iteratedDerivWithin_uIcc k hx (hx.trans hxT.le)
   have hu_deriv : ∀ t ∈ Ioo (min x T) (max x T),
       HasDerivWithinAt u (u' t) (Ioi t) t := by
     intro t _ht
@@ -893,12 +892,8 @@ private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
   have hu'_int : IntervalIntegrable u' volume x T :=
     (continuousOn_const.mul (continuousOn_const.mul
       ((continuousOn_id.sub continuousOn_const).pow _))).intervalIntegrable
-  have hg'_int : IntervalIntegrable g' volume x T := by
-    apply ContinuousOn.intervalIntegrable
-    rw [uIcc_of_le hxT.le]
-    exact (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top (k + 1))
-      (uniqueDiffOn_Ici 0)).mono
-        (Icc_subset_Ici_self.trans (Ici_subset_Ici.mpr hx))
+  have hg'_int : IntervalIntegrable g' volume x T :=
+    (hcm.continuousOn_iteratedDerivWithin_uIcc (k + 1) hx (hx.trans hxT.le)).intervalIntegrable
   have hibp := integral_mul_deriv_eq_deriv_mul_of_hasDeriv_right
     hu_cont hg_cont hu_deriv hg_deriv hu'_int hg'_int
   have hu0 : u x = 0 := by simp [u, sub_self, zero_pow hk]
@@ -1153,81 +1148,73 @@ private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonot
       _ = (-1 : ℝ) ^ k / ↑(k - 1).factorial * t ^ (k - 1) *
           iteratedDerivWithin k f (Ici 0) t := by field_simp
 
+/-- Raising the sign exponent of the order-`k` kernel by one negates its integral. -/
+private lemma intervalIntegral_neg_one_pow_succ_kernel (f : ℝ → ℝ) (k : ℕ) (x T : ℝ) :
+    ∫ t in x..T, (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t =
+      -(∫ t in x..T, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t) := by
+  rw [← intervalIntegral.integral_neg]
+  refine intervalIntegral.integral_congr_ae (ae_of_all _ fun t _ => ?_)
+  rw [pow_succ (-1 : ℝ) k]
+  ring
+
+/-- For a completely monotone `f` with limit `L` at infinity, `0 ≤ x` and `k ≠ 0`, the order-`k`
+kernel identity implies the order-`k + 1` one: if the order-`k` kernel integrates against the
+`k`-th derivative to `f x - L` on `(x, ∞)`, then so does the order-`k + 1` kernel against the
+`(k + 1)`-st derivative. -/
+private lemma chafai_repeated_ibp_succ (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
+    (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L))
+    (ih : ∫ t in Ioi x, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t = f x - L) :
+    ∫ t in Ioi x, (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
+      iteratedDerivWithin (k + 1) f (Ici 0) t = f x - L := by
+  -- Integrate by parts on `[x, T]`; the boundary term decays, so `T → ∞` transfers `ih`.
+  have hk1 : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
+  have hintk := ibp_kernel_integrableOn f hcm k hk1 x hx L hL
+  have hintkp1 := ibp_kernel_integrableOn f hcm (k + 1) (by omega) x hx L hL
+  simp only [show k + 1 - 1 = k by omega] at hintkp1
+  have htend_k : Tendsto (fun T => ∫ t in x..T,
+      (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t) atTop (nhds (f x - L)) := by
+    rw [← ih]
+    exact intervalIntegral_tendsto_integral_Ioi x hintk tendsto_id
+  have htend_sum : Tendsto (fun T =>
+      (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
+        iteratedDerivWithin k f (Ici 0) T +
+      ∫ t in x..T, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t) atTop (nhds (f x - L)) := by
+    simpa [zero_add] using (boundary_term_decay f hcm k hk x hx L hL).add htend_k
+  have htend_via_ibp : Tendsto (fun T => ∫ t in x..T,
+      (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
+      iteratedDerivWithin (k + 1) f (Ici 0) t) atTop (nhds (f x - L)) :=
+    Tendsto.congr' ((eventually_gt_atTop x).mono fun T hxT => by
+      have := ibp_finite_interval f hcm k hk x T hx hxT
+      linarith [intervalIntegral_neg_one_pow_succ_kernel f k x T]) htend_sum
+  exact tendsto_nhds_unique
+    ((intervalIntegral_tendsto_integral_Ioi x hintkp1 tendsto_id).congr
+      (fun T => by simp [id])) htend_via_ibp
+
+/-- **Repeated integration by parts for a completely monotone function.** For `n ≥ 1`, `0 ≤ x`
+and `f` tending to `L` at infinity, integrating the order-`n` kernel
+`(-1) ^ n / (n - 1)! * (t - x) ^ (n - 1)` against the `n`-th derivative of `f` over `(x, ∞)`
+recovers `f x - L`. This is the analytic identity behind the Chafaï reconstruction of `f` from
+its derivatives. -/
 private lemma chafai_repeated_ibp (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (n : ℕ) (hn : 1 ≤ n) (x : ℝ) (hx : 0 ≤ x)
     (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     ∫ t in Ioi x, (-1 : ℝ) ^ n / ↑(n - 1).factorial *
       (t - x) ^ (n - 1) *
       iteratedDerivWithin n f (Ici 0) t = f x - L := by
-  -- Induction on `n`. Base case `n = 1`: the integral is `∫ -f'` on `(x, ∞)`, which equals
-  -- `f x - L` by the FTC and `f → L`. Inductive step: one integration by parts lowers the order
-  -- from `k+1` to `k`; the boundary term decays, and the interior term is the `k`-th case.
   induction n with
   | zero => omega
   | succ k ih =>
     by_cases hk : k = 0
-    · -- Base case `n = 1`: reduce to `∫ (x,∞) -f' = f x - L` via the fundamental theorem.
-      subst hk
-      have hsimpl :
-          (fun t => (-1 : ℝ) ^ (0 + 1) / ↑(0 + 1 - 1).factorial *
-            (t - x) ^ (0 + 1 - 1) *
-            iteratedDerivWithin (0 + 1) f (Ici 0) t) =
-          (fun t => -iteratedDerivWithin 1 f (Ici 0) t) := by
-        ext t
-        simp
-      rw [hsimpl]
-      have hintx : IntegrableOn (fun t => -iteratedDerivWithin 1 f (Ici 0) t) (Ioi x) :=
-        hcm.neg_iteratedDerivWithin_one_integrableOn.mono_set (Ioi_subset_Ioi hx)
-      refine tendsto_nhds_unique
-        (intervalIntegral_tendsto_integral_Ioi x hintx tendsto_id) ?_
-      simp only [id]
-      refine Tendsto.congr' ?_ (Tendsto.sub tendsto_const_nhds hL)
-      filter_upwards [eventually_gt_atTop (max x 1)] with T hT
-      have hxT : x < T := lt_of_le_of_lt (le_max_left x 1) hT
-      exact
-        (IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub hcm hx hxT.le).symm
-    · -- Inductive step `n = k+1`: integrate by parts once and pass to the limit.
-      have hk1 : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
-      have ih_applied := ih hk1
+    · subst hk
+      simpa using hcm.integral_Ioi_neg_iteratedDerivWithin_one_of_nonneg hx hL
+    · have hk1 : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
       simp only [show k + 1 - 1 = k by omega]
-      have hintk := ibp_kernel_integrableOn f hcm k hk1 x hx L hL
-      have hintkp1 := ibp_kernel_integrableOn f hcm (k + 1) (by omega) x hx L hL
-      simp only [show k + 1 - 1 = k by omega] at hintkp1
-      have hibp := fun T (hT : x < T) => ibp_finite_interval f hcm k hk x T hx hT
-      have hbdry := boundary_term_decay f hcm k hk x hx L hL
-      have htend_k : Tendsto (fun T => ∫ t in x..T,
-          (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t) atTop (nhds (f x - L)) := by
-        rw [← ih_applied]
-        exact intervalIntegral_tendsto_integral_Ioi x hintk tendsto_id
-      have hsign : ∀ T, ∫ t in x..T,
-          (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t =
-          -(∫ t in x..T, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t) := by
-        intro T
-        rw [← intervalIntegral.integral_neg]
-        apply intervalIntegral.integral_congr_ae
-        apply ae_of_all
-        intro t _
-        have : (-1 : ℝ) ^ (k + 1) = (-1) ^ k * (-1) := pow_succ (-1) k
-        rw [this]
-        ring
-      have htend_sum : Tendsto (fun T =>
-          (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
-            iteratedDerivWithin k f (Ici 0) T +
-          ∫ t in x..T, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-            iteratedDerivWithin k f (Ici 0) t) atTop (nhds (f x - L)) := by
-        simpa [zero_add] using hbdry.add htend_k
-      have htend_via_ibp : Tendsto (fun T => ∫ t in x..T,
-          (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
-          iteratedDerivWithin (k + 1) f (Ici 0) t) atTop (nhds (f x - L)) :=
-        Tendsto.congr' ((eventually_gt_atTop x).mono fun T hxT => by
-          have := hibp T hxT
-          linarith [hsign T]) htend_sum
-      exact tendsto_nhds_unique
-        ((intervalIntegral_tendsto_integral_Ioi x hintkp1 tendsto_id).congr
-          (fun T => by simp [id])) htend_via_ibp
+      exact chafai_repeated_ibp_succ f hcm k hk x hx L hL (ih hk1)
 
 /-- **Chafaï reconstruction identity** for the nonconstant part. -/
 lemma chafaiRescaled_integral_bernsteinKernel_eq_sub_tendsto_atTop
@@ -1289,6 +1276,59 @@ private lemma bernsteinKernel_le_exp {n : ℕ} (hn : 2 ≤ n) {x p : ℝ} (_hx :
             congr 1
             field_simp [hden_pos.ne']
 
+/-- **Local error bound for the Bernstein truncation.** For `0 ≤ u < 1` and `m : ℕ`, the
+difference `exp (-(m·u)) - (1 - u) ^ m` is bounded above by the second-order term
+`m·u² / (1 - u)`. This is the pointwise estimate driving the uniform convergence of the
+Bernstein kernel to the Laplace kernel. -/
+private lemma exp_neg_mul_sub_one_sub_pow_le (u : ℝ) (hu_nn : 0 ≤ u) (hu_lt_1 : u < 1) (m : ℕ) :
+    Real.exp (-(↑m * u)) - (1 - u) ^ m ≤ ↑m * u ^ 2 / (1 - u) := by
+  have h1u : 0 < 1 - u := by linarith
+  -- The logarithmic lower bound converts the power into an exponential with a Taylor-tail term.
+  have hpow_ge : (1 - u) ^ m ≥ Real.exp (-(↑m * u) - ↑m * u ^ 2 / (1 - u)) := by
+    have heq : (1 - u) ^ m = Real.exp (↑m * Real.log (1 - u)) := by
+      rw [← Real.rpow_natCast (1 - u) m, Real.rpow_def_of_pos h1u, mul_comm]
+    rw [heq]
+    gcongr
+    have hfactor : -(↑m * u) - ↑m * u ^ 2 / (1 - u) = ↑m * (-u - u ^ 2 / (1 - u)) := by ring
+    rw [hfactor]
+    apply mul_le_mul_of_nonneg_left _ (Nat.cast_nonneg m)
+    have habs : |u| < 1 := by rwa [abs_of_nonneg hu_nn]
+    have hlog := Real.abs_log_sub_add_sum_range_le habs 1
+    simp only [Finset.sum_range_one, Nat.cast_zero, zero_add, div_one, pow_one] at hlog
+    have hu_sq : u ^ (1 + 1) = u ^ 2 := by ring
+    rw [abs_of_nonneg hu_nn, hu_sq] at hlog
+    linarith [(abs_le.mp hlog).1]
+  set b := ↑m * u ^ 2 / (1 - u) with hb_def
+  have hb_nn : 0 ≤ b := div_nonneg (mul_nonneg (Nat.cast_nonneg m) (sq_nonneg u)) h1u.le
+  have hmu_nn : 0 ≤ ↑m * u := mul_nonneg (Nat.cast_nonneg m) hu_nn
+  -- `exp` sits above its tangent line at `0`, so the exponential gap is at most `b`.
+  suffices h : Real.exp (-(↑m * u)) - Real.exp (-(↑m * u) - b) ≤ b by linarith
+  have hsplit : Real.exp (-(↑m * u) - b) = Real.exp (-(↑m * u)) * Real.exp (-b) := by
+    rw [← Real.exp_add]
+    ring_nf
+  rw [hsplit]
+  nlinarith [Real.exp_pos (-(↑m * u)), Real.exp_pos (-b),
+    Real.exp_le_one_iff.mpr (neg_nonpos.mpr hmu_nn), Real.add_one_le_exp (-b)]
+
+/-- **Compact-support tail estimate.** Once `M` exceeds `C + 2C²/ε`, the error parameter
+`xp² / (M - xp)` stays below `ε / 2` for every `0 ≤ xp ≤ C`. Positivity of `M - C` follows
+from the size hypothesis, so the only inputs are the pointwise bounds on `xp`. -/
+private lemma sq_div_sub_lt_div_two (xp C ε M : ℝ) (hxp_nn : 0 ≤ xp) (hxp_le_C : xp ≤ C)
+    (hε : 0 < ε) (hM : 2 * C ^ 2 / ε < M - C) :
+    xp ^ 2 / (M - xp) < ε / 2 := by
+  have haux : 0 ≤ 2 * C ^ 2 / ε := div_nonneg (by positivity) hε.le
+  have hMC_pos : 0 < M - C := by linarith
+  -- Monotone in the numerator and the denominator: `xp²/(M-xp) ≤ C²/(M-C)`.
+  have hmono : xp ^ 2 / (M - xp) ≤ C ^ 2 / (M - C) :=
+    div_le_div₀ (sq_nonneg C) (sq_le_sq' (by linarith) hxp_le_C) hMC_pos (by linarith)
+  -- The size hypothesis on `M` forces `C²/(M-C) < ε/2`.
+  have hsmall : C ^ 2 / (M - C) < ε / 2 := by
+    rw [div_lt_div_iff₀ hMC_pos (by positivity : (0 : ℝ) < 2)]
+    have h2 : ε * (M - C) > ε * (2 * C ^ 2 / ε) := mul_lt_mul_of_pos_left hM hε
+    rw [mul_div_cancel₀ _ (ne_of_gt hε)] at h2
+    linarith
+  linarith
+
 private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < R)
     (hε : 0 < ε) :
     ∃ N : ℕ, ∀ n, N ≤ n → ∀ p, 0 ≤ p → p ≤ R →
@@ -1297,77 +1337,39 @@ private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < 
   have hC_pos : 0 < C := mul_pos hx hR
   obtain ⟨N₀, hN₀⟩ := exists_nat_gt (C + 2 + 2 * C ^ 2 / ε)
   refine ⟨N₀, fun n hn p hp hpR => ?_⟩
-  have hn_gt : (↑n : ℝ) > C + 2 + 2 * C ^ 2 / ε :=
-    lt_of_lt_of_le hN₀ (Nat.cast_le.mpr hn)
+  have hn_gt : (↑n : ℝ) > C + 2 + 2 * C ^ 2 / ε := lt_of_lt_of_le hN₀ (Nat.cast_le.mpr hn)
   have haux : 0 ≤ 2 * C ^ 2 / ε := div_nonneg (by positivity) hε.le
   have hn_ge2 : 2 ≤ n := by exact_mod_cast (show (2 : ℝ) < ↑n by linarith [hC_pos]).le
   have hle := bernsteinKernel_le_exp hn_ge2 hx.le hp
   rw [abs_of_nonpos (by linarith), neg_sub]
   set m := n - 1
   have hm_pos : (0 : ℝ) < ↑m := Nat.cast_pos.mpr (by omega)
-  have hm_eq : (↑m : ℝ) = ↑n - 1 := by
-    rw [Nat.cast_sub (show 1 ≤ n by omega)]
-    simp
+  have hm_eq : (↑m : ℝ) = ↑n - 1 := by rw [Nat.cast_sub (show 1 ≤ n by omega)]; simp
   have hxp_nn : 0 ≤ x * p := mul_nonneg hx.le hp
   have hxp_le_C : x * p ≤ C := mul_le_mul_of_nonneg_left hpR hx.le
-  have hm_gt_C : C < ↑m := by linarith
   set u := x * p / ↑m with hu_def
   have hu_nn : 0 ≤ u := div_nonneg hxp_nn hm_pos.le
-  have hu_lt_1 : u < 1 := by rw [div_lt_one hm_pos]; linarith
-  have h1u : 0 < 1 - u := by linarith
+  have hu_lt_1 : u < 1 := by rw [div_lt_one hm_pos]; linarith [hm_eq]
   have hkernel_eq : bernsteinKernel n x p = (1 - u) ^ m := by
     rw [bernsteinKernel_of_two_le hn_ge2]
     congr 1
     exact max_eq_left (by
       -- `max_eq_left` needs the truncated factor `1 - x*p/m` nonneg; expose it as the defeq goal.
       change 0 ≤ 1 - x * p / (↑m : ℝ)
-      rw [← hu_def]
-      linarith)
+      rw [← hu_def]; linarith)
   rw [hkernel_eq]
   set b := ↑m * u ^ 2 / (1 - u) with hb_def
-  have hb_nn : 0 ≤ b :=
-    div_nonneg (mul_nonneg (Nat.cast_nonneg m) (sq_nonneg u)) h1u.le
-  have hmu : ↑m * u = x * p := by
-    simp only [hu_def]
-    field_simp [hm_pos.ne']
-  -- Phase: the logarithmic lower bound converts the power into an exponential error term.
-  have hpow_ge : (1 - u) ^ m ≥ Real.exp (-(x * p) - b) := by
-    have heq : (1 - u) ^ m = Real.exp (↑m * Real.log (1 - u)) := by
-      rw [← Real.rpow_natCast (1 - u) m, Real.rpow_def_of_pos h1u, mul_comm]
-    rw [heq]
-    gcongr
-    rw [show -(x * p) - b = ↑m * (-u - u ^ 2 / (1 - u)) by
-      rw [← hmu, hb_def]
-      ring]
-    apply mul_le_mul_of_nonneg_left _ (Nat.cast_nonneg m)
-    have habs : |u| < 1 := by rwa [abs_of_nonneg hu_nn]
-    have hlog := Real.abs_log_sub_add_sum_range_le habs 1
-    simp only [Finset.sum_range_one, Nat.cast_zero, zero_add, div_one, pow_one] at hlog
-    rw [abs_of_nonneg hu_nn, show u ^ (1 + 1) = u ^ 2 by ring] at hlog
-    linarith [(abs_le.mp hlog).1]
+  have hmu : ↑m * u = x * p := by simp only [hu_def]; field_simp [hm_pos.ne']
+  -- Assemble the two phase estimates: the local error is `≤ b`, and `b < ε/2` on `p ≤ R`.
   have hstep : Real.exp (-(x * p)) - (1 - u) ^ m ≤ b := by
-    suffices h : Real.exp (-(x * p)) - Real.exp (-(x * p) - b) ≤ b by linarith
-    have : Real.exp (-(x * p) - b) = Real.exp (-(x * p)) * Real.exp (-b) := by
-      rw [← Real.exp_add]
-      ring_nf
-    rw [this]
-    nlinarith [Real.exp_pos (-(x * p)), Real.exp_pos (-b),
-      Real.exp_le_one_iff.mpr (neg_nonpos.mpr hxp_nn), Real.add_one_le_exp (-b)]
+    rw [hb_def, ← hmu]
+    exact exp_neg_mul_sub_one_sub_pow_le u hu_nn hu_lt_1 m
   have hb_eq : b = (x * p) ^ 2 / (↑m - x * p) := by
     simp only [hb_def, hu_def]
     field_simp [hm_pos.ne']
-  have hm_gt_C' : 0 < ↑m - C := by linarith
-  -- Phase: bound the local error parameter using the compact restriction `p ≤ R`.
-  have hb_le : b ≤ C ^ 2 / (↑m - C) := by
+  have hb_small : b < ε / 2 := by
     rw [hb_eq]
-    exact div_le_div₀ (sq_nonneg C) (sq_le_sq' (by linarith) hxp_le_C)
-      hm_gt_C' (by linarith)
-  have hfinal : C ^ 2 / (↑m - C) < ε / 2 := by
-    rw [div_lt_div_iff₀ hm_gt_C' (by positivity : (0 : ℝ) < 2)]
-    have h1 : ↑m - C > 2 * C ^ 2 / ε := by linarith [hm_eq]
-    have h2 : ε * (↑m - C) > ε * (2 * C ^ 2 / ε) := mul_lt_mul_of_pos_left h1 hε
-    rw [mul_div_cancel₀ _ (ne_of_gt hε)] at h2
-    linarith
+    exact sq_div_sub_lt_div_two (x * p) C ε ↑m hxp_nn hxp_le_C hε (by linarith [hm_eq])
   linarith
 
 private lemma kernel_uniform_conv (x : ℝ) (hx : 0 < x) (ε : ℝ) (hε : 0 < ε) :

@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.Monoidal.CommGrp_
+
 public import Mathlib.AlgebraicGeometry.Group.Abelian
 public import Mathlib.AlgebraicGeometry.Group.Smooth
 public import Mathlib.AlgebraicGeometry.Geometrically.Connected
@@ -198,6 +200,15 @@ lemma baseChange_toOver (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K
     (A.baseChange L).toOver =
       (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap K L)))).obj A.toOver :=
   (rfl)
+
+/-- Bundling the underlying `Over` object of a base change with `CommGrp.mk` gives the
+commutative group object obtained by applying pullback. -/
+lemma commGrpMk_baseChange_toOver (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L] :
+    CommGrp.mk (A.baseChange L).toOver =
+      (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap K L)))).mapCommGrp.obj
+        (CommGrp.mk A.toOver) := by
+  unfold baseChange
+  rfl
 
 /-- The unit of a base-changed abelian variety is the pullback of the original unit, with the
 monoidal comparison for `Over.pullback`. -/

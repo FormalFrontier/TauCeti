@@ -36,6 +36,25 @@ namespace TauCeti
 open Complex Metric Set
 open scoped ComplexConjugate
 
+/-- **Chain rule for the infinitesimal Schwarz--Pick conjugate.** For the composite
+`target ∘ f ∘ source` of two unit-disc Moebius factors around `f`, given the factor derivatives
+`1 - conj z * z` (of `source` at `0`, where `source 0 = z`) and `1 / (1 - conj (f z) * f z)` (of
+`target` at `f z`), the norm of the derivative of the composite at the origin equals the Poincaré
+distortion `‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2)`. -/
+private lemma norm_deriv_schwarzPickConjugate_at_zero {source target f : ℂ → ℂ} {df z : ℂ}
+    (hz : ‖z‖ ≤ 1) (hfz : ‖f z‖ ≤ 1)
+    (hs : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0) (hsz : source 0 = z)
+    (hf : HasDerivAt f df z)
+    (ht : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z)) :
+    ‖deriv (target ∘ f ∘ source) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
+  have hf' : HasDerivAt f df (source 0) := by rw [hsz]; exact hf
+  have ht' : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) ((f ∘ source) 0) := by
+    rw [Function.comp_apply, hsz]; exact ht
+  rw [(ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)).deriv, norm_mul, norm_mul, norm_div, norm_one,
+    norm_one_sub_conj_mul_self_of_norm_le_one hz,
+    norm_one_sub_conj_mul_self_of_norm_le_one hfz]
+  ring
+
 /-- **The infinitesimal Schwarz--Pick inequality.** A holomorphic self-map `f` of the open
 unit disc contracts the Poincaré metric: at every point `z` of the disc,
 `‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2)`. -/
@@ -45,64 +64,40 @@ theorem norm_deriv_div_one_sub_norm_sq_le {f : ℂ → ℂ}
     {z : ℂ} (hz : z ∈ ball (0 : ℂ) 1) :
     ‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2) := by
   have hz1 : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
-  have hfz_mem : f z ∈ ball (0 : ℂ) 1 := hmaps hz
-  have hfz1 : ‖f z‖ < 1 := by simpa [mem_ball_zero_iff] using hfz_mem
+  have hfz1 : ‖f z‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps hz
   have hden_z : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
   have hden_fz : (0 : ℝ) < 1 - ‖f z‖ ^ 2 := by nlinarith [norm_nonneg (f z)]
-  -- The disc automorphisms conjugating `f` so that the conjugate fixes `0`.
+  -- Conjugate `f` by the disc automorphisms centred at `-z` and `f z` so the conjugate fixes `0`.
   let source : ℂ → ℂ := fun ξ => (ξ - (-z)) / (1 - (starRingEnd ℂ) (-z) * ξ)
   let target : ℂ → ℂ := fun η => (η - f z) / (1 - (starRingEnd ℂ) (f z) * η)
   let g : ℂ → ℂ := target ∘ f ∘ source
-  -- The conjugate `g` is a holomorphic self-map of the disc fixing the origin (shared scaffold).
   obtain ⟨hg_diff, hg_maps, hg_zero'⟩ :=
     differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hmaps hz1
   have hg_zero : g 0 = 0 := hg_zero'
-  have hsource_zero : source 0 = z := by
-    simp [source]
-  -- Schwarz's lemma at `0` for `g`.
-  have hg_maps_closed : MapsTo g (ball (0 : ℂ) 1) (closedBall (0 : ℂ) 1) :=
-    fun ξ hξ => ball_subset_closedBall (hg_maps hξ)
+  have hsource_zero : source 0 = z := by simp [source]
+  -- Schwarz's lemma at `0` for the conjugate `g`.
   have hschwarz : ‖deriv g 0‖ ≤ 1 := by
     have hmaps' : MapsTo g (ball (0 : ℂ) 1) (closedBall (g 0) 1) := by
-      rw [hg_zero]; exact hg_maps_closed
+      rw [hg_zero]; exact fun ξ hξ => ball_subset_closedBall (hg_maps hξ)
     exact Complex.norm_deriv_le_one_of_mapsTo_ball hg_diff hmaps' (by norm_num)
-  -- The chain rule for `deriv g 0`.
-  have hp_inner : (1 : ℂ) - (starRingEnd ℂ) (-z) * 0 ≠ 0 := by simp
-  have hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one hfz1 hfz1
-  have hd_inner : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0 := by
-    have h := hasDerivAt_unitDiscMoebiusFormula (-z) 0 hp_inner
-    have hval : (1 - (starRingEnd ℂ) (-z) * (-z)) / (1 - (starRingEnd ℂ) (-z) * 0) ^ 2
-        = 1 - (starRingEnd ℂ) z * z := by simp [map_neg]
-    rw [hval] at h
-    exact h
-  have hd_outer : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z) := by
-    have h := hasDerivAt_unitDiscMoebiusFormula (f z) (f z) hp_outer
-    have hval : (1 - (starRingEnd ℂ) (f z) * f z) / (1 - (starRingEnd ℂ) (f z) * f z) ^ 2
-        = 1 / (1 - (starRingEnd ℂ) (f z) * f z) := by
-      rw [sq, ← div_div, div_self hp_outer]
-    rw [hval] at h
-    exact h
+  -- The chain rule turns Schwarz's bound `‖deriv g 0‖ ≤ 1` into the estimate for `f`.
   have hf_at : HasDerivAt f (deriv f z) z :=
     (hf.differentiableAt (isOpen_ball.mem_nhds hz)).hasDerivAt
-  have hf_at' : HasDerivAt f (deriv f z) (source 0) := by rw [hsource_zero]; exact hf_at
-  have hcomp1 : HasDerivAt (f ∘ source) (deriv f z * (1 - (starRingEnd ℂ) z * z)) 0 :=
-    hf_at'.comp (0 : ℂ) hd_inner
-  have hd_outer' : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) ((f ∘ source) 0) := by
-    rw [Function.comp_apply, hsource_zero]; exact hd_outer
-  have hcompg : HasDerivAt g
-      ((1 / (1 - (starRingEnd ℂ) (f z) * f z)) * (deriv f z * (1 - (starRingEnd ℂ) z * z))) 0 :=
-    hd_outer'.comp (0 : ℂ) hcomp1
-  have hderiv_g : deriv g 0
-      = (1 / (1 - (starRingEnd ℂ) (f z) * f z)) * (deriv f z * (1 - (starRingEnd ℂ) z * z)) :=
-    hcompg.deriv
-  -- The norms of the two Moebius derivative factors.
-  have hnorm_z := norm_one_sub_conj_mul_self_of_norm_le_one hz1.le
-  have hnorm_fz := norm_one_sub_conj_mul_self_of_norm_le_one hfz1.le
-  -- Assemble the norm of `deriv g 0` and conclude via Schwarz.
-  have hnorm_dg : ‖deriv g 0‖ = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
-    rw [hderiv_g, norm_mul, norm_mul, norm_div, norm_one, hnorm_z, hnorm_fz]
-    ring
+  have hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0 :=
+    one_sub_conj_mul_ne_zero_of_norm_lt_one hfz1 hfz1
+  -- The two Möbius factor derivatives, specialised from `hasDerivAt_unitDiscMoebiusFormula`.
+  have hs : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0 := by
+    have h := hasDerivAt_unitDiscMoebiusFormula (-z) 0 (by simp)
+    have hval : (1 - (starRingEnd ℂ) (-z) * (-z)) / (1 - (starRingEnd ℂ) (-z) * 0) ^ 2
+        = 1 - (starRingEnd ℂ) z * z := by simp [map_neg]
+    rwa [hval] at h
+  have ht : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z) := by
+    have h := hasDerivAt_unitDiscMoebiusFormula (f z) (f z) hp_outer
+    have hval : (1 - (starRingEnd ℂ) (f z) * f z) / (1 - (starRingEnd ℂ) (f z) * f z) ^ 2
+        = 1 / (1 - (starRingEnd ℂ) (f z) * f z) := by rw [sq, ← div_div, div_self hp_outer]
+    rwa [hval] at h
+  have hnorm_dg : ‖deriv g 0‖ = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) :=
+    norm_deriv_schwarzPickConjugate_at_zero hz1.le hfz1.le hs hsource_zero hf_at ht
   have hkey : ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) ≤ 1 := hnorm_dg ▸ hschwarz
   rw [div_le_one hden_fz] at hkey
   rw [div_le_div_iff₀ hden_fz hden_z, one_mul]

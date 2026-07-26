@@ -46,19 +46,6 @@ namespace OrderSystem
 
 variable (S : OrderSystem X G)
 
-private lemma sub_zsmul_ofPoint_add_zsmul_pointDifference
-    (D : WeilDivisor X) (n : ℤ) (x₀ y₀ : X) :
-    D - n • ofPoint x₀ + n • pointDifference x₀ y₀ = D - n • ofPoint y₀ := by
-  rw [pointDifference, zsmul_sub, sub_eq_add_neg]
-  abel
-
-private lemma sub_sub_zsmul_ofPoint_eq_zsmul_pointDifference
-    (D : WeilDivisor X) (n : ℤ) (x₀ y₀ : X) :
-    (D - n • ofPoint y₀) - (D - n • ofPoint x₀) =
-      n • pointDifference x₀ y₀ := by
-  rw [pointDifference, zsmul_sub, sub_eq_add_neg]
-  abel
-
 /-! ### Weighted base-point change for divisor sums -/
 
 /-- Changing the base point in the weighted Abel-Jacobi sum adds the weighted degree times the

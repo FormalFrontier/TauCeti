@@ -1,7 +1,7 @@
-import TauCeti.AlgebraicTopology.UniversalCover.Deck.Connected
-import TauCeti.Analysis.PDE.UniformEllipticity
-import TauCeti.AlgebraicGeometry.WeilDivisor
-import TauCeti.Algebra.HopfAlgebra
+import TauCeti.AlgebraicTopology.UniversalCover.Deck.Connected.Basic
+import TauCeti.Analysis.PDE.Uniform.Ellipticity
+import TauCeti.AlgebraicGeometry.WeilDivisor.Basic
+import TauCeti.Algebra.HopfAlgebra.Basic
 import SubVerso.Examples
 open SubVerso.Examples
 

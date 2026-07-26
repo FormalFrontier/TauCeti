@@ -37,6 +37,28 @@ namespace TauCeti
 variable {α : Type*} [MeasurableSpace α] [TopologicalSpace α]
   [T2Space α] [BorelSpace α]
 
+omit [T2Space α] [BorelSpace α] in
+/-- A tight family of measures admits a **monotone** exhaustion by compact sets whose complements
+carry uniformly small mass: given tolerances `u j > 0`, there are compact `K j`, increasing in `j`,
+with `σ n (K j)ᶜ ≤ u j` for every `n`. Accumulating the sets supplied by tightness is what turns
+the unrelated compact sets into the monotone family Mathlib's Prokhorov criterion expects. -/
+private lemma exists_monotone_isCompact_measure_compl_le
+    {σ : ℕ → Measure α} (hTight : IsTightMeasureSet (Set.range σ))
+    {u : ℕ → ℝ≥0} (hu_pos : ∀ j, 0 < u j) :
+    ∃ K : ℕ → Set α, Monotone K ∧ (∀ j, IsCompact (K j)) ∧
+      ∀ j n, (σ n) (K j)ᶜ ≤ (u j : ENNReal) := by
+  have hchoose : ∀ j, ∃ K : Set α, IsCompact K ∧ ∀ n, (σ n) Kᶜ ≤ (u j : ENNReal) := by
+    intro j
+    obtain ⟨K, hK, htail⟩ :=
+      isTightMeasureSet_iff_exists_isCompact_measure_compl_le.mp hTight
+        (u j : ENNReal) (by exact_mod_cast hu_pos j)
+    exact ⟨K, hK, fun n => htail (σ n) (Set.mem_range_self n)⟩
+  choose K hK_comp hK_tail using hchoose
+  refine ⟨Set.accumulate K, Set.monotone_accumulate,
+    fun j => isCompact_accumulate hK_comp j, fun j n => ?_⟩
+  exact (measure_mono (compl_subset_compl.mpr (Set.subset_accumulate (s := K) (x := j)))).trans
+    (hK_tail j n)
+
 /-- A tight, uniformly mass-bounded sequence of finite measures has a weak cluster limit.
 
 Given tightness of the sequence and a common total-mass bound, the conclusion is a finite limiting
@@ -61,42 +83,19 @@ lemma finite_measure_cluster_limit
   obtain ⟨u, -, hu_pos, hu_lim⟩ :
       ∃ u : ℕ → ℝ≥0, StrictAnti u ∧ (∀ n, 0 < u n) ∧ Tendsto u atTop (𝓝 0) :=
     exists_seq_strictAnti_tendsto 0
-  -- Tightness gives one compact set for each tolerance, uniformly for all measures in the
-  -- original sequence.
-  have hchoose : ∀ j, ∃ K : Set α, IsCompact K ∧
-      ∀ n, (σ n) Kᶜ ≤ (u j : ENNReal) := by
-    intro j
-    obtain ⟨K, hK, htail⟩ :=
-      isTightMeasureSet_iff_exists_isCompact_measure_compl_le.mp hTight
-        (u j : ENNReal) (by exact_mod_cast hu_pos j)
-    refine ⟨K, hK, fun n => ?_⟩
-    exact htail (σ n) (Set.mem_range_self n)
-  choose K hK_comp hK_tail using hchoose
-  -- Accumulate the compact sets to fit Mathlib's monotone compact-family formulation.
-  let Kacc : ℕ → Set α := Set.accumulate K
-  let S : Set (FiniteMeasure α) :=
-    {μ | μ.mass ≤ C ∧ ∀ j, μ (Kacc j)ᶜ ≤ u j}
-  have hKacc_comp : ∀ j, IsCompact (Kacc j) := by
-    intro j
-    exact isCompact_accumulate hK_comp j
+  obtain ⟨K, hKmono, hK_comp, hK_tail⟩ :=
+    exists_monotone_isCompact_measure_compl_le hTight hu_pos
+  let S : Set (FiniteMeasure α) := {μ | μ.mass ≤ C ∧ ∀ j, μ (K j)ᶜ ≤ u j}
   have hcompact : IsCompact S := by
     simpa [S] using
       isCompact_setOf_finiteMeasure_mass_le_compl_isCompact_le
-        (E := α) (C := C) (u := u) (K := Kacc) hu_lim hKacc_comp
-        (Or.inr Set.monotone_accumulate)
-  -- The finite-measure sequence lies in the compact Prokhorov set: the mass condition is direct,
-  -- and the tail condition follows by enlarging `K j` to `Kacc j`.
+        (E := α) (C := C) (u := u) (K := K) hu_lim hK_comp (Or.inr hKmono)
+  -- The finite-measure sequence lies in the compact Prokhorov set.
   have hσ_mem : ∀ n, σf n ∈ S := by
-    intro n
-    constructor
+    refine fun n => ⟨?_, fun j => ?_⟩
     · dsimp [σf, S, FiniteMeasure.mass]
       exact ENNReal.coe_le_coe.mp (by simpa using hmass n)
-    · intro j
-      have hsubset : (Kacc j)ᶜ ⊆ (K j)ᶜ :=
-        compl_subset_compl.mpr (Set.subset_accumulate (s := K) (x := j))
-      have htail : (σ n) (Kacc j)ᶜ ≤ (u j : ENNReal) :=
-        (measure_mono hsubset).trans (hK_tail j n)
-      exact ENNReal.coe_le_coe.mp (by simpa [σf] using htail)
+    · exact ENNReal.coe_le_coe.mp (by simpa [σf] using hK_tail j n)
   -- Compactness gives a cluster point and an ultrafilter below `atTop` along which `σf`
   -- converges weakly.
   have hmap_le : map σf atTop ≤ 𝓟 S :=
