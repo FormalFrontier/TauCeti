@@ -155,4 +155,41 @@ theorem L2piMulSlot_apply (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 
 
 end Slot
 
+/-- **Basis tensors detect all tensors.** A vector orthogonal to every tensor built from
+coordinatewise Hilbert bases is orthogonal to *every* elementary tensor. The coordinates are
+generalized one at a time, by expanding a single slot along its basis and pushing the sum through
+the continuous linear map `L2piMulSlot`. -/
+theorem inner_L2piMul_eq_zero_of_forall_basis {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) {h : Lp 𝕜 2 (Measure.pi μ)}
+    (hz : ∀ k : ∀ i, κ i, inner 𝕜 h (L2piMul (fun i => b i (k i))) = 0)
+    (F : ∀ i, Lp 𝕜 2 (μ i)) : inner 𝕜 h (L2piMul F) = 0 := by
+  classical
+  have key : ∀ S : Finset ι, ∀ F : ∀ i, Lp 𝕜 2 (μ i),
+      (∀ i, i ∉ S → ∃ c, F i = b i c) → inner 𝕜 h (L2piMul F) = 0 := by
+    intro S
+    induction S using Finset.induction with
+    | empty =>
+        intro F hF
+        choose k hk using fun i => hF i (by simp)
+        have hFk : F = fun i => b i (k i) := funext hk
+        rw [hFk]
+        exact hz k
+    | @insert j S hj ih =>
+        intro F hF
+        have hsum := ((b j).hasSum_repr (F j)).mapL ((innerSL 𝕜 h).comp (L2piMulSlot j F))
+        have hzero : HasSum (fun _ : κ j => (0 : 𝕜))
+            ((innerSL 𝕜 h).comp (L2piMulSlot j F) (F j)) := by
+          refine hsum.congr_fun fun c => ?_
+          have hupd : inner 𝕜 h (L2piMul (Function.update F j (b j c))) = 0 := by
+            refine ih _ fun i hi => ?_
+            by_cases hij : i = j
+            · subst hij
+              exact ⟨c, by rw [Function.update_self]⟩
+            · rw [Function.update_of_ne hij]
+              exact hF i fun hmem => (Finset.mem_insert.1 hmem).elim hij hi
+          simp [hupd]
+        have hfin := (hasSum_zero.unique hzero).symm
+        simpa [Function.update_eq_self] using hfin
+  exact key Finset.univ F fun i hi => absurd (Finset.mem_univ i) hi
+
 end TauCeti
