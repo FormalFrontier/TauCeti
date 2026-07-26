@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PDE.FundamentalSolution.Planar
-public import Mathlib.MeasureTheory.Integral.CircleIntegral
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
 /-!
 # Flux of the planar Newtonian kernel
@@ -31,6 +32,7 @@ namespace TauCeti
 open scoped Interval
 
 /-- The derivative of the planar Newtonian kernel in the radial direction is `-(2π)⁻¹`. -/
+@[simp]
 theorem fderiv_planarNewtonianKernel_self {z : ℂ} (hz : z ≠ 0) :
     fderiv ℝ planarNewtonianKernel z z = -(2 * Real.pi)⁻¹ := by
   let line : ℝ →L[ℝ] ℂ := (ContinuousLinearMap.id ℝ ℝ).smulRight z
@@ -66,11 +68,22 @@ theorem fderiv_planarNewtonianKernel_self {z : ℂ} (hz : z ≠ 0) :
         (-(2 * Real.pi)⁻¹)
   exact hcomp.unique (hformula.congr_of_eventuallyEq heq)
 
+/-- The derivative of a translated planar Newtonian kernel in the radial direction from its pole
+is `-(2π)⁻¹`. -/
+@[simp]
+theorem fderiv_planarNewtonianKernel_sub_self {z a : ℂ} (hza : z ≠ a) :
+    fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) z (z - a) =
+      -(2 * Real.pi)⁻¹ := by
+  rw [fderiv_comp_sub]
+  exact fderiv_planarNewtonianKernel_self (sub_ne_zero.mpr hza)
+
 /-- On the circle of radius `r`, the outward normal derivative of the planar Newtonian kernel is
 `-(2πr)⁻¹`. -/
-theorem fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
-    fderiv ℝ planarNewtonianKernel (circleMap 0 r θ) (r⁻¹ • circleMap 0 r θ) =
-      -(2 * Real.pi * r)⁻¹ := by
+@[simp]
+theorem fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
+    fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
+        (r⁻¹ • (circleMap a r θ - a)) = -(2 * Real.pi * r)⁻¹ := by
+  rw [fderiv_comp_sub, circleMap_sub_center]
   have hz : circleMap 0 r θ ≠ 0 := by
     rw [ne_eq, ← norm_eq_zero, norm_circleMap_zero, abs_of_pos hr]
     exact hr.ne'
@@ -78,23 +91,54 @@ theorem fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
   simp only [smul_eq_mul]
   field_simp
 
+/-- On an origin-centered circle of radius `r`, the outward normal derivative of the planar
+Newtonian kernel is `-(2πr)⁻¹`. -/
+@[simp]
+theorem fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
+    fderiv ℝ planarNewtonianKernel (circleMap 0 r θ) (r⁻¹ • circleMap 0 r θ) =
+      -(2 * Real.pi * r)⁻¹ := by
+  simpa only [sub_zero] using
+    (fderiv_planarNewtonianKernel_sub_circle_normal (a := 0) hr)
+
 /-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
 positively oriented circle around its pole. -/
+@[simp]
+theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
+    {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
+    r * fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
+        (r⁻¹ • (circleMap a r θ - a)) = -(2 * Real.pi)⁻¹ := by
+  rw [fderiv_planarNewtonianKernel_sub_circle_normal hr]
+  field_simp
+
+/-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
+positively oriented origin-centered circle. -/
+@[simp]
 theorem radius_mul_fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
     r * fderiv ℝ planarNewtonianKernel (circleMap 0 r θ) (r⁻¹ • circleMap 0 r θ) =
       -(2 * Real.pi)⁻¹ := by
-  rw [fderiv_planarNewtonianKernel_circle_normal hr]
-  field_simp
+  simpa only [sub_zero] using
+    (radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal (a := 0) hr)
 
 /-- The outward flux of the planar Newtonian kernel through any circle centered at its pole is
 `-1`. The factor `r` is the arclength Jacobian in the angular parametrization. -/
-theorem integral_fderiv_planarNewtonianKernel_circle_normal {r : ℝ} (hr : 0 < r) :
+@[simp]
+theorem integral_fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r : ℝ} (hr : 0 < r) :
     ∫ θ : ℝ in 0..2 * Real.pi,
-        r * fderiv ℝ planarNewtonianKernel (circleMap 0 r θ) (r⁻¹ • circleMap 0 r θ) = -1 := by
-  simp_rw [radius_mul_fderiv_planarNewtonianKernel_circle_normal hr]
+        r * fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
+          (r⁻¹ • (circleMap a r θ - a)) = -1 := by
+  simp_rw [radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal hr]
   rw [intervalIntegral.integral_const]
   simp only [sub_zero, smul_eq_mul]
   field_simp
+
+/-- The outward flux of the planar Newtonian kernel through any origin-centered circle is `-1`.
+The factor `r` is the arclength Jacobian in the angular parametrization. -/
+@[simp]
+theorem integral_fderiv_planarNewtonianKernel_circle_normal {r : ℝ} (hr : 0 < r) :
+    ∫ θ : ℝ in 0..2 * Real.pi,
+        r * fderiv ℝ planarNewtonianKernel (circleMap 0 r θ) (r⁻¹ • circleMap 0 r θ) = -1 := by
+  simpa only [sub_zero] using
+    (integral_fderiv_planarNewtonianKernel_sub_circle_normal (a := 0) hr)
 
 end TauCeti
 
