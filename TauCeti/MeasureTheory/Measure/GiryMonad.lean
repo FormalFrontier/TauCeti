@@ -39,7 +39,7 @@ commutes with the bind: the pushforward of the mixture is the mixture of the pus
 the Giry-monad identity `map F ∘ bind g = bind (map F ∘ g)`.
 
 Obtained from associativity of `bind` together with `bind_dirac_eq_map`. -/
-theorem map_bind_comm {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ)
+theorem map_bind {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ)
     {F : γ → δ} (hF : Measurable F) :
     (μ.bind g).map F = μ.bind fun ω => (g ω).map F := by
   have hdirac : AEMeasurable (fun x : γ => Measure.dirac (F x)) (μ.bind g) :=

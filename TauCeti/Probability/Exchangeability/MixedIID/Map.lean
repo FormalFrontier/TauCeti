@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
--- Non-public: `map_bind_comm` is used only inside the proof below.
+-- Non-public: `map_bind` is used only inside the proof below.
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
@@ -26,7 +26,7 @@ mapped process is the original identity with each product factor pushed forward 
 The proof runs at the level of the finite-block mixture identity. It reuses `map_blockLaw`
 (the coordinatewise pushforward of a block law), the random-product measurability of
 `TauCeti.MeasureTheory.Measure.ProductKernel`, the naturality of `bind`
-(`TauCeti.MeasureTheory.map_bind_comm`), and Mathlib's product pushforward `Measure.pi_map_pi`.
+(`TauCeti.MeasureTheory.map_bind`), and Mathlib's product pushforward `Measure.pi_map_pi`.
 It needs no material from `cameronfreer/exchangeability` beyond the existing `MixedIIDWith` API
 this repository already carries.
 -/
@@ -72,7 +72,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
             fun x : Fin m → α => fun i => f (x i) := by rw [h.blockLaw_eq_mixture k hk]
       _ = μ.bind fun ω =>
             ((ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
-              fun x : Fin m → α => fun i => f (x i) := TauCeti.MeasureTheory.map_bind_comm hg hFmeas
+              fun x : Fin m → α => fun i => f (x i) := TauCeti.MeasureTheory.map_bind hg hFmeas
       _ = μ.bind fun ω =>
             (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
             refine congrArg (μ.bind ·) (funext fun ω => ?_)
