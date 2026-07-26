@@ -21,14 +21,15 @@ constant there is nothing left to be independent of, and the two predicates agre
 
 ## Main results
 
-* `MixedIIDWith.blockLaw_eq_pi_of_const`, `MixedIIDWith.map_eq_of_const` — what a constant mixing
-  representative says: every injective block law is the `m`-fold product of `p`, and every
+* `MixedIIDWith.blockLaw_eq_pi_of_const`, `MixedIIDWith.aemeasurable_of_const`,
+  `MixedIIDWith.map_eq_of_const` — what a constant mixing representative says: every injective
+  block law is the `m`-fold product of `p`, every coordinate is a.e. measurable, and every
   coordinate has law `p`.
-* `mixedIIDWith_const_iff_iIndepFun` — a constant `p` is a mixing representative exactly when the
-  coordinates are independent with common law `p`.
+* `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
+  when the coordinates are independent with common law `p`.
 * `conditionallyIIDWith_const_iff_mixedIIDWith` — at a constant `ν` the conditional and mixture
-  identities coincide, and `conditionallyIIDWith_const_iff_iIndepFun` reads off the resulting
-  characterization.
+  identities coincide, and `conditionallyIIDWith_const_iff_iIndepFun_and_map_eq` reads off the
+  resulting characterization.
 * `ConditionallyIIDWith.of_iIndepFun_identDistrib`, `ConditionallyIID.of_iIndepFun_identDistrib` —
   the sharp form of the first worked example of `TauCetiRoadmap/Exchangeability/README.md`
   ("Worked examples"):
@@ -90,12 +91,25 @@ theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMea
     blockLaw μ X k = Measure.pi fun _ : Fin m => (p : Measure α) := by
   rw [h.blockLaw_eq_mixture k hk, bind_const_probabilityMeasure_pi]
 
+/-- A constant mixing representative already forces the coordinates to be a.e. measurable, so no
+such hypothesis is needed alongside it: the singleton block law is the probability measure `p`,
+hence nonzero, while `Measure.map` of a non-a.e.-measurable function is `0`. -/
+theorem MixedIIDWith.aemeasurable_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ℕ) :
+    AEMeasurable (X i) μ := by
+  have hblock :=
+    h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
+  rw [blockLaw_def] at hblock
+  have hne : (μ.map fun ω (_ : Fin 1) => X i ω) ≠ 0 := by
+    rw [hblock]; exact IsProbabilityMeasure.ne_zero _
+  exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
+
 /-- Every coordinate of a process with a constant mixing representative `p` has law `p`. -/
 theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ)
-    (h : MixedIIDWith μ X fun _ => p) (i : ℕ) : μ.map (X i) = (p : Measure α) := by
+    {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ℕ) :
+    μ.map (X i) = (p : Measure α) := by
   have hone : AEMeasurable (fun ω (_ : Fin 1) => X i ω) μ :=
-    aemeasurable_pi_lambda _ fun _ => hX i
+    aemeasurable_pi_lambda _ fun _ => h.aemeasurable_of_const i
   have hblock :=
     h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
   calc μ.map (X i)
@@ -110,11 +124,13 @@ theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
 injective selection the block law is a product measure, and `Measure.pi` on a finite index set is
 exactly what independence of that finite subfamily means. -/
 theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ)
-    (h : MixedIIDWith μ X fun _ => p) : iIndepFun X μ := by
+    {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) : iIndepFun X μ := by
+  have hX : ∀ i, AEMeasurable (X i) μ := h.aemeasurable_of_const
   rw [iIndepFun_iff_finset]
   intro s
-  change iIndepFun (fun i : s => X (i : ℕ)) μ
+  -- `Finset.restrict` is the coordinate restriction `fun i : s => X i`; unfold it so that the
+  -- finite subfamily is presented as an honest lambda for `iIndepFun_iff_map_fun_eq_pi_map`.
+  simp only [Finset.restrict_def]
   rw [iIndepFun_iff_map_fun_eq_pi_map fun i : s => hX i]
   -- Enumerate `s` increasingly to turn it into a `Fin s.card`-indexed injective selection.
   set e : Fin s.card ≃ s := (s.orderIsoOfFin rfl).toEquiv
@@ -136,14 +152,16 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
         rw [← blockLaw_def, hblock]
     _ = Measure.pi fun _ : s => (p : Measure α) := map_comp_equiv_pi_const e _
     _ = Measure.pi fun j : s => μ.map (X (j : ℕ)) :=
-        congrArg Measure.pi (funext fun j => (h.map_eq_of_const hX j).symm)
+        congrArg Measure.pi (funext fun j => (h.map_eq_of_const j).symm)
 
 /-- **A constant mixing representative means plain i.i.d.**: `fun _ => p` witnesses `MixedIIDWith`
 exactly when the coordinates are independent and each has law `p`. -/
-theorem mixedIIDWith_const_iff_iIndepFun {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ) :
+theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
     (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) := by
-  refine ⟨fun h => ⟨h.iIndepFun_of_const hX, h.map_eq_of_const hX⟩, fun ⟨hindep, hlaw⟩ => ?_⟩
+  refine ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩, fun ⟨hindep, hlaw⟩ => ?_⟩
+  have hX : ∀ i, AEMeasurable (X i) μ := fun i =>
+    AEMeasurable.of_map_ne_zero (by rw [hlaw i]; exact IsProbabilityMeasure.ne_zero _)
   have hident : ∀ i, IdentDistrib (X i) (X 0) μ μ :=
     fun i => ⟨hX i, hX 0, by rw [hlaw i, hlaw 0]⟩
   have hp : (⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hX 0)⟩ : ProbabilityMeasure α) = p :=
@@ -154,11 +172,11 @@ theorem mixedIIDWith_const_iff_iIndepFun {μ : Measure Ω} [IsProbabilityMeasure
 block law pushed forward by `Prod.mk p`, and the disintegration `δ_p ⊗ p^{⊗m}` is the product law
 pushed forward by the same map, so the mixture identity already gives the joint one. -/
 theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ)
-    (h : MixedIIDWith μ X fun _ => p) : ConditionallyIIDWith μ X fun _ => p := by
+    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
+    ConditionallyIIDWith μ X fun _ => p := by
   refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
   have hblock : AEMeasurable (fun ω (i : Fin m) => X (k i) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => hX (k i)
+    aemeasurable_pi_lambda _ fun i => h.aemeasurable_of_const (k i)
   calc μ.map (fun ω => (p, fun i : Fin m => X (k i) ω))
       = (μ.map fun ω (i : Fin m) => X (k i) ω).map (Prod.mk p) := by
         rw [measurable_prodMk_left.aemeasurable.map_map_of_aemeasurable hblock]
@@ -174,16 +192,16 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω} [IsProbabil
 the conditional predicate is strictly stronger; the degenerate case is exactly where the gap
 closes. -/
 theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ) :
+    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
-  ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith hX⟩
+  ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
 
 /-- **A constant directing measure means plain i.i.d.** -/
-theorem conditionallyIIDWith_const_iff_iIndepFun {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (hX : ∀ i, AEMeasurable (X i) μ) :
+theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
+    [IsProbabilityMeasure μ] {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔
       iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) := by
-  rw [conditionallyIIDWith_const_iff_mixedIIDWith hX, mixedIIDWith_const_iff_iIndepFun hX]
+  rw [conditionallyIIDWith_const_iff_mixedIIDWith, mixedIIDWith_const_iff_iIndepFun_and_map_eq]
 
 /-- **An i.i.d. sequence is conditionally i.i.d.**, with the constant directing measure
 `ω ↦ μ.map (X 0)`. This is the sharp form of the roadmap's first worked example: the constant
@@ -195,7 +213,7 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : �
     ConditionallyIIDWith μ X
       (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) := by
   haveI := hindep.isProbabilityMeasure
-  exact conditionallyIIDWith_const_of_mixedIIDWith (fun i => (hident i).aemeasurable_fst)
+  exact conditionallyIIDWith_const_of_mixedIIDWith
     (MixedIIDWith.of_iIndepFun_identDistrib hindep hident)
 
 /-- **An i.i.d. sequence is conditionally i.i.d.** (existential directing-measure form). -/
