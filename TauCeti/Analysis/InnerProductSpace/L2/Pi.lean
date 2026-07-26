@@ -60,9 +60,9 @@ open MeasureTheory
 variable {𝕜 ι : Type*} [Fintype ι] {α : ι → Type*}
   [∀ i, MeasurableSpace (α i)] {μ : ∀ i, Measure (α i)} [∀ i, SigmaFinite (μ i)]
 
-section NormedField
+section NormedCommRing
 
-variable [NormedField 𝕜]
+variable [NormedCommRing 𝕜] [NormOneClass 𝕜]
 
 /-- The pointwise product `x ↦ ∏ i, f i (x i)` of `L²` functions is `L²` for the product measure. -/
 theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ i)) :
@@ -71,10 +71,16 @@ theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ 
     Finset.aestronglyMeasurable_fun_prod (f := fun i (x : ∀ j, α j) => f i (x i)) _ fun i _ =>
       (hf i).1.comp_quasiMeasurePreserving (Measure.quasiMeasurePreserving_eval μ i)
   rw [memLp_two_iff_integrable_sq_norm hmeas]
+  -- Only the submultiplicative bound `‖∏ aᵢ‖ ≤ ∏ ‖aᵢ‖` is needed, so a normed commutative
+  -- ring suffices; the norm need not be multiplicative.
   refine (Integrable.fintype_prod_dep
-    (fun i => (memLp_two_iff_integrable_sq_norm (hf i).1).1 (hf i))).congr
-    (Filter.Eventually.of_forall fun x => ?_)
-  simp only [norm_prod, Finset.prod_pow]
+    (fun i => (memLp_two_iff_integrable_sq_norm (hf i).1).1 (hf i))).mono
+    (hmeas.norm.pow 2) (Filter.Eventually.of_forall fun x => ?_)
+  have hle : ‖∏ i, f i (x i)‖ ≤ ∏ i, ‖f i (x i)‖ := Finset.norm_prod_le _ _
+  have hnn : (0 : ℝ) ≤ ∏ i, ‖f i (x i)‖ := Finset.prod_nonneg fun i _ => norm_nonneg _
+  rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity),
+    Finset.prod_pow]
+  gcongr
 
 /-- The pointwise product `x ↦ ∏ i, F i (x i)` of a family of `L²(μ i)` vectors, as a vector of
 `L²(Measure.pi μ)`. -/
@@ -86,7 +92,7 @@ theorem coeFn_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) :
     ⇑(L2piMul F) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, F i (x i) :=
   MemLp.coeFn_toLp _
 
-end NormedField
+end NormedCommRing
 
 variable [RCLike 𝕜]
 
@@ -173,6 +179,12 @@ theorem L2piMul_update_smul (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (c : 𝕜) (v
     (Measure.quasiMeasurePreserving_eval μ j).tendsto_ae.eventually (Lp.coeFn_smul c v)]
     with x h h1 hsmul hv
   rw [h, hsmul, Pi.smul_apply, h1, hv, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_assoc]
+
+/-- The tensor vanishes when its `j`-th coordinate does. -/
+@[simp]
+theorem L2piMul_update_zero (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) :
+    L2piMul (Function.update F j 0) = 0 := by
+  simpa using L2piMul_update_smul j F 0 0
 
 /-- The norm of a tensor with its `j`-th coordinate replaced. -/
 theorem norm_L2piMul_update (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 (μ j)) :
