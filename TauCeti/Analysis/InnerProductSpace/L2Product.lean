@@ -107,6 +107,7 @@ theorem ae_of_ae_snd [SFinite μ] [SFinite ν] {p : β → Prop} (hp : ∀ᵐ y 
     ∀ᵐ q : α × β ∂(μ.prod ν), p q.2 :=
   Measure.quasiMeasurePreserving_snd.tendsto_ae.eventually hp
 
+/-- The tensor is additive in its first argument. -/
 theorem L2prodMul_add_left [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul (F₁ + F₂) G = L2prodMul F₁ G + L2prodMul F₂ G := by
   rw [Lp.ext_iff]
@@ -115,6 +116,7 @@ theorem L2prodMul_add_left [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) 
     ae_of_ae_fst (β := β) (ν := ν) (Lp.coeFn_add F₁ F₂)] with q h h1 h2 hadd hf
   rw [h, hadd, Pi.add_apply, h1, h2, hf, Pi.add_apply, add_mul]
 
+/-- The tensor is additive in its second argument. -/
 theorem L2prodMul_add_right [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G₁ G₂ : Lp 𝕜 2 ν) :
     L2prodMul F (G₁ + G₂) = L2prodMul F G₁ + L2prodMul F G₂ := by
   rw [Lp.ext_iff]
@@ -123,6 +125,7 @@ theorem L2prodMul_add_right [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G₁ G
     ae_of_ae_snd (α := α) (μ := μ) (Lp.coeFn_add G₁ G₂)] with q h h1 h2 hadd hg
   rw [h, hadd, Pi.add_apply, h1, h2, hg, Pi.add_apply, mul_add]
 
+/-- The tensor is homogeneous in its first argument. -/
 theorem L2prodMul_smul_left [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul (c • F) G = c • L2prodMul F G := by
   rw [Lp.ext_iff]
@@ -131,6 +134,7 @@ theorem L2prodMul_smul_left [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 
     ae_of_ae_fst (β := β) (ν := ν) (Lp.coeFn_smul c F)] with q h h1 hsmul hf
   rw [h, hsmul, Pi.smul_apply, h1, hf, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_assoc]
 
+/-- The tensor is homogeneous in its second argument. -/
 theorem L2prodMul_smul_right [SFinite μ] [SFinite ν] (c : 𝕜) (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMul F (c • G) = c • L2prodMul F G := by
   rw [Lp.ext_iff]
@@ -209,10 +213,12 @@ theorem norm_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜
       map_smul' := fun c G => L2prodMul_smul_right c F G }
     ‖F‖ fun G => le_of_eq (norm_L2prodMul F G)
 
+/-- `L2prodMulLeftL` applies as the tensor. -/
 @[simp]
 theorem L2prodMulLeftL_apply [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) (F : Lp 𝕜 2 μ) :
     L2prodMulLeftL G F = L2prodMul F G := rfl
 
+/-- `L2prodMulRightL` applies as the tensor. -/
 @[simp]
 theorem L2prodMulRightL_apply [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     L2prodMulRightL F G = L2prodMul F G := rfl
