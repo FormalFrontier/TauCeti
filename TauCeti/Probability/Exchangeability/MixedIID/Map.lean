@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
+-- Non-public: `map_bind_comm` is used only inside the proof below.
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
 # Coordinatewise maps of mixed i.i.d. sequences
@@ -22,11 +24,11 @@ transformation of the mixing representative is the expected one: the mixture ide
 mapped process is the original identity with each product factor pushed forward by `f`.
 
 The proof runs at the level of the finite-block mixture identity. It reuses `map_blockLaw`
-(the coordinatewise pushforward of a block law) and the random-product measurability of
-`TauCeti.MeasureTheory.Measure.ProductKernel`, together with the Giry-monad laws
-`Measure.bind_bind` and `Measure.bind_dirac_eq_map` and Mathlib's product pushforward
-`Measure.pi_map_pi`.  It needs no material from `cameronfreer/exchangeability` beyond the
-existing `MixedIIDWith` API this repository already carries.
+(the coordinatewise pushforward of a block law), the random-product measurability of
+`TauCeti.MeasureTheory.Measure.ProductKernel`, the naturality of `bind`
+(`TauCeti.MeasureTheory.map_bind_comm`), and Mathlib's product pushforward `Measure.pi_map_pi`.
+It needs no material from `cameronfreer/exchangeability` beyond the existing `MixedIIDWith` API
+this repository already carries.
 -/
 
 public section
@@ -40,19 +42,6 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω α β : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [MeasurableSpace β]
-
-/-- Pushing a `Measure.bind` mixture forward by a measurable map commutes with the bind: the
-pushforward of the mixture is the mixture of the pushforwards. This is the Giry-monad identity
-`map F ∘ bind g = bind (map F ∘ g)`, obtained from associativity of `bind` and
-`bind_dirac_eq_map`. -/
-private theorem map_bind_comm {S γ δ : Type*} [MeasurableSpace S] [MeasurableSpace γ]
-    [MeasurableSpace δ] {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ)
-    {F : γ → δ} (hF : Measurable F) :
-    (μ.bind g).map F = μ.bind fun ω => (g ω).map F := by
-  have hdirac : AEMeasurable (fun x : γ => Measure.dirac (F x)) (μ.bind g) :=
-    (Measure.measurable_dirac.comp hF).aemeasurable
-  rw [← Measure.bind_dirac_eq_map (μ.bind g) hF, Measure.bind_bind hg hdirac]
-  simp_rw [Measure.bind_dirac_eq_map _ hF]
 
 /-- Mixed i.i.d.-ness with a named mixing representative is preserved by a coordinatewise
 measurable map of the value space: if `X` is mixed i.i.d. with mixing representative `ν`, then
@@ -83,7 +72,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
             fun x : Fin m → α => fun i => f (x i) := by rw [h.blockLaw_eq_mixture k hk]
       _ = μ.bind fun ω =>
             ((ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
-              fun x : Fin m → α => fun i => f (x i) := map_bind_comm hg hFmeas
+              fun x : Fin m → α => fun i => f (x i) := TauCeti.MeasureTheory.map_bind_comm hg hFmeas
       _ = μ.bind fun ω =>
             (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
             refine congrArg (μ.bind ·) (funext fun ω => ?_)
