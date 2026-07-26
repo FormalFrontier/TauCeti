@@ -110,38 +110,24 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e))
   let QRel : cE.HomotopyRel cE (Cube.boundary { j // j ≠ i }) :=
     hp.liftHomotopyRel qRel ⟨0, zero_mem_cubeBoundary, rfl⟩
       (funext fun _ => rfl) (funext fun _ => rfl)
-  let Q : C(I × I^{ j // j ≠ i }, E) := QRel.toContinuousMap
-  have hQ : p ∘ Q = q := by
-    simp only [Q, QRel, IsCoveringMap.liftHomotopyRel]
+  let P : Ω (Ω^ { j // j ≠ i } E e) _root_.GenLoop.const :=
+    { toContinuousMap :=
+        ⟨fun t => ⟨QRel.toContinuousMap.curry t, fun y hy => QRel.prop t y hy⟩,
+          QRel.toContinuousMap.curry.continuous.subtype_mk _⟩
+      source' := by ext y; exact QRel.apply_zero y
+      target' := by ext y; exact QRel.apply_one y }
+  let F : Ω^ N E e := _root_.GenLoop.fromLoop i P
+  have hQ : p ∘ QRel.toContinuousMap = q := by
+    simp only [QRel, IsCoveringMap.liftHomotopyRel]
     exact hp.liftHomotopy_lifts _ _ _
-  let F : C(I^N, E) := Q.comp (Cube.splitAt i)
-  have hF_apply (y : I^N) : F y = QRel (Cube.splitAt i y) := rfl
   have hpF : ∀ y, p (F y) = f y := fun y => by
     calc
-      p (F y) = p (Q (Cube.splitAt i y)) := rfl
+      p (F y) = p (QRel (Cube.splitAt i y)) := by
+        rw [_root_.GenLoop.fromLoop_apply]
+        rfl
       _ = q (Cube.splitAt i y) := congrFun hQ (Cube.splitAt i y)
       _ = f y := congr_arg f (Homeomorph.symm_apply_apply (Cube.splitAt i) y)
-  -- The relative lift is constant on every boundary face.
-  have hbd : ∀ y ∈ Cube.boundary N, F y = e := by
-    rintro y ⟨j, hj⟩
-    by_cases hji : j = i
-    · subst j
-      rcases hj with hj | hj
-      · have ht : (Cube.splitAt i y).1 = 0 := by
-          simpa only [Homeomorph.funSplitAt_apply] using hj
-        have hz : Cube.splitAt i y = (0, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [hF_apply, hz]
-        exact QRel.apply_zero _
-      · have ht : (Cube.splitAt i y).1 = 1 := by
-          simpa only [Homeomorph.funSplitAt_apply] using hj
-        have hz : Cube.splitAt i y = (1, (Cube.splitAt i y).2) := Prod.ext ht rfl
-        rw [hF_apply, hz]
-        exact QRel.apply_one _
-    · have ha : (Cube.splitAt i y).2 ∈ Cube.boundary { j // j ≠ i } :=
-        ⟨⟨j, hji⟩, by simpa only [Homeomorph.funSplitAt_apply] using hj⟩
-      rw [hF_apply]
-      exact QRel.prop (Cube.splitAt i y).1 (Cube.splitAt i y).2 ha
-  exact ⟨⟨F, hbd⟩, _root_.GenLoop.ext _ _ hpF⟩
+  exact ⟨F, _root_.GenLoop.ext _ _ hpF⟩
 
 end GenLoop
 
