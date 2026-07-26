@@ -82,7 +82,7 @@ variable [ExpChar R p]
 /-- The tensor-square ring of the additive-group bialgebra has the same exponential
 characteristic `p` as `R`: the structure map `R → R[x] ⊗ R[x]` is a section of the counit, hence
 injective. -/
-theorem expChar_tensorSquare :
+private theorem expChar_tensorSquare :
     ExpChar (SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R) p :=
   expChar_of_injective_algebraMap
     (Bialgebra.algebraMap_injective (R := R)
