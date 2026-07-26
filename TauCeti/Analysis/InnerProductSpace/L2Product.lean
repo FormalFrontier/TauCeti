@@ -9,6 +9,7 @@ public import Mathlib.Analysis.InnerProductSpace.l2Space
 public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Prod
+public import TauCeti.MeasureTheory.Integral.Prod
 
 /-!
 # Pointwise products of `L²` functions on a product measure
@@ -36,8 +37,9 @@ index types. It runs in three moves:
 2. `TauCeti.setIntegral_prod_eq_zero_of_forall_inner` — testing against indicators, since
    `1ₐ ⊗ 1_b` is the indicator of the rectangle `a ×ˢ b`.
 3. `TauCeti.setIntegral_eq_zero_of_forall_prod` — the Dynkin (π-λ) step, upgrading rectangles to
-   arbitrary measurable sets inside a finite box, followed by a monotone exhaustion of the space by
-   the boxes `spanningSets μ n ×ˢ spanningSets ν n`.
+   arbitrary measurable sets. It is applied inside a finite box; the monotone exhaustion of the
+   space by the boxes `spanningSets μ n ×ˢ spanningSets ν n` is then done in
+   `TauCeti.setIntegral_eq_zero_of_forall_inner`.
 
 The scalars are generic over `[RCLike 𝕜]`, so a single construction serves both the real and
 complex `L²` spaces.
@@ -96,16 +98,6 @@ noncomputable def L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp
 theorem coeFn_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
     ⇑(L2prodMul F G) =ᵐ[μ.prod ν] fun p : α × β => F p.1 * G p.2 :=
   MemLp.coeFn_toLp _
-
-/-- An a.e. statement on the first factor transfers to the product measure. -/
-theorem ae_of_ae_fst [SFinite μ] [SFinite ν] {p : α → Prop} (hp : ∀ᵐ x ∂μ, p x) :
-    ∀ᵐ q : α × β ∂(μ.prod ν), p q.1 :=
-  Measure.quasiMeasurePreserving_fst.tendsto_ae.eventually hp
-
-/-- An a.e. statement on the second factor transfers to the product measure. -/
-theorem ae_of_ae_snd [SFinite μ] [SFinite ν] {p : β → Prop} (hp : ∀ᵐ y ∂ν, p y) :
-    ∀ᵐ q : α × β ∂(μ.prod ν), p q.2 :=
-  Measure.quasiMeasurePreserving_snd.tendsto_ae.eventually hp
 
 /-- The tensor is additive in its first argument. -/
 theorem L2prodMul_add_left [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
@@ -196,7 +188,7 @@ theorem norm_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜
     _ = ‖F‖ * ‖G‖ := Real.sqrt_sq (by positivity)
 
 /-- Tensoring on the right with a fixed `L²(ν)` vector, as a continuous linear map. -/
-@[expose] noncomputable def L2prodMulLeftL [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) :
+noncomputable def L2prodMulLeftL [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) :
     Lp 𝕜 2 μ →L[𝕜] Lp 𝕜 2 (μ.prod ν) :=
   LinearMap.mkContinuous
     { toFun := fun F => L2prodMul F G
@@ -205,7 +197,7 @@ theorem norm_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜
     ‖G‖ fun F => by simp [mul_comm]
 
 /-- Tensoring on the left with a fixed `L²(μ)` vector, as a continuous linear map. -/
-@[expose] noncomputable def L2prodMulRightL [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) :
+noncomputable def L2prodMulRightL [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) :
     Lp 𝕜 2 ν →L[𝕜] Lp 𝕜 2 (μ.prod ν) :=
   LinearMap.mkContinuous
     { toFun := fun G => L2prodMul F G
@@ -216,12 +208,14 @@ theorem norm_L2prodMul [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜
 /-- `L2prodMulLeftL` applies as the tensor. -/
 @[simp]
 theorem L2prodMulLeftL_apply [SFinite μ] [SFinite ν] (G : Lp 𝕜 2 ν) (F : Lp 𝕜 2 μ) :
-    L2prodMulLeftL G F = L2prodMul F G := rfl
+    L2prodMulLeftL G F = L2prodMul F G :=
+  LinearMap.mkContinuous_apply _ _ _ _
 
 /-- `L2prodMulRightL` applies as the tensor. -/
 @[simp]
 theorem L2prodMulRightL_apply [SFinite μ] [SFinite ν] (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν) :
-    L2prodMulRightL F G = L2prodMul F G := rfl
+    L2prodMulRightL F G = L2prodMul F G :=
+  LinearMap.mkContinuous_apply _ _ _ _
 
 /-- **Basis tensors detect all tensors.** A vector orthogonal to every tensor built from two Hilbert
 bases is orthogonal to *every* elementary tensor. This is the countability-free half of the
@@ -244,27 +238,6 @@ theorem inner_L2prodMul_eq_zero_of_forall_basis [SFinite μ] [SFinite ν] {ι₁
     refine hsum.congr_fun fun i => ?_
     simp [step i G]
   simpa using (hasSum_zero.unique hzero).symm
-
-/-- **The Dynkin (π-λ) step.** On a finite measure over a product space, a function whose integral
-vanishes on every measurable rectangle has vanishing integral on every measurable set. Rectangles
-are a π-system generating the product σ-algebra, so `MeasurableSpace.induction_on_inter` applies. -/
-theorem setIntegral_eq_zero_of_forall_prod {ρ : Measure (α × β)} [IsFiniteMeasure ρ]
-    {f : α × β → 𝕜} (hf : Integrable f ρ)
-    (hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t → ∫ p in s ×ˢ t, f p ∂ρ = 0) :
-    ∀ u, MeasurableSet u → ∫ p in u, f p ∂ρ = 0 := by
-  have huniv : ∫ p, f p ∂ρ = 0 := by
-    have h := hrect Set.univ MeasurableSet.univ Set.univ MeasurableSet.univ
-    rwa [Set.univ_prod_univ, setIntegral_univ] at h
-  refine MeasurableSpace.induction_on_inter (C := fun u _ => ∫ p in u, f p ∂ρ = 0)
-    generateFrom_prod.symm isPiSystem_prod ?_ ?_ ?_ ?_
-  · simp
-  · rintro _ ⟨s, hs, t, ht, rfl⟩
-    exact hrect s hs t ht
-  · intro u hu ih
-    rw [setIntegral_compl hu hf, huniv, ih, sub_zero]
-  · intro u hd hm ih
-    rw [integral_iUnion hm hd hf.integrableOn]
-    simp [ih]
 
 /-- The tensor of two indicators is the indicator of the rectangle, so orthogonality to every
 elementary tensor makes the integral over every finite-measure rectangle vanish. -/
@@ -307,9 +280,6 @@ theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν]
     exact ENNReal.mul_lt_top (measure_spanningSets_lt_top μ n) (measure_spanningSets_lt_top ν n)
   have hbox : ∀ n, ∫ p in u ∩ (spanningSets μ n ×ˢ spanningSets ν n), h p ∂(μ.prod ν) = 0 := by
     intro n
-    have hfm : IsFiniteMeasure
-        ((μ.prod ν).restrict (spanningSets μ n ×ˢ spanningSets ν n)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact hboxfin n⟩
     have hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t →
         ∫ p in s ×ˢ t, h p ∂((μ.prod ν).restrict
           (spanningSets μ n ×ˢ spanningSets ν n)) = 0 := by
