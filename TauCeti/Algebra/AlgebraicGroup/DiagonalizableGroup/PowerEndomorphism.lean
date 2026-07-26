@@ -45,8 +45,8 @@ and "the ring `End(𝔾ₘ) ≅ ℤ` on the level of power maps").
 * `TauCeti.DiagonalizableGroup.powEnd_zero`, `TauCeti.DiagonalizableGroup.powEnd_add`,
   `TauCeti.DiagonalizableGroup.powEnd_neg`: the additive-in-the-exponent structure of the power
   endomorphisms, complementing the existing multiplicative `powEnd_comp` / `powEnd_one`.
-* `TauCeti.DiagonalizableGroup.powEndRingHom`: the bundled ring homomorphism
-  `ℤ →+* AddMonoid.End (Additive 𝔾ₘ(A))`, whose values are the additive forms of `powEnd z`.
+* `TauCeti.DiagonalizableGroup.intCast_eq_toAdditive_powEnd`: the canonical integer endomorphism
+  is the additive form of `powEnd z`.
 * `TauCeti.DiagonalizableGroup.mapValue_powEnd`: the power endomorphism is natural in the value
   algebra.
 * `TauCeti.DiagonalizableGroup.charPoints_cocharPoints_apply`: the character–cocharacter pairing
@@ -123,15 +123,9 @@ theorem toAdditive_powEnd_apply (z : ℤ)
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) a = z • a := by
   simp [powEnd_apply]
 
-/-- The ring homomorphism from integers to additive endomorphisms of `𝔾ₘ(A)` realized by the
-power endomorphisms. -/
-noncomputable def powEndRingHom :=
-  Int.castRingHom
-    (AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A))))
-
 /-- The canonical integer endomorphism is the additive form of the power endomorphism. -/
 @[simp]
-theorem powEndRingHom_apply (z : ℤ) :
+theorem intCast_eq_toAdditive_powEnd (z : ℤ) :
     (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) =
       MonoidHom.toAdditive (powEnd (R := R) (A := A) z) := by
   apply AddMonoidHom.ext
