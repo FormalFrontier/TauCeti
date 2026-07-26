@@ -183,8 +183,13 @@ private theorem neg_one_le_meromorphicOrderAt {f : ℂ → ℂ} {U : Set ℂ} {S
       h_an.meromorphicOrderAt_nonneg
 
 /-- **Condition (A′) is automatic at simple poles.** The only pole order the interior clause can
-meet is `1`, discharged by the first-order flatness of the immersion, and the basepoint of
-the closed curve is off the singularities.
+meet is `1`, discharged by the first-order flatness of the immersion, and the basepoint
+`γ (min a b)` is off the singularities.
+
+The curve need not be closed: `ConditionAprime` constrains the basepoint `γ (min a b)`, so
+`hymin` is the whole premise the proof consumes. A closed contour supplies it from
+`γ a = γ b` together with `γ a ∉ S`, which is what
+`hungerbuhlerWasem_residueTheorem_of_simple_poles` does at its call site.
 
 This is an instantiation lemma for `TauCeti.Contour.ConditionAprime`: it exhibits a hypothesis
 set a caller can actually supply — a piecewise-`C¹` immersion, closed, rooted off `S`, with `f`
@@ -193,7 +198,7 @@ discharged with content rather than vacuously: at an interior crossing the pole 
 to `1` and `IsPwC1ImmersionOn.flatOfOrder_one` supplies the first-order flatness. -/
 theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U) (hγ_imm : IsPwC1ImmersionOn γ a b)
-    (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
+    (hymin : γ (min a b) ∉ (S : Set ℂ))
     (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
     (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
     (h_simple : ∀ s ∈ S, ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s) :
@@ -207,10 +212,7 @@ theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ 
       omega
     subst h_n
     exact hγ_imm.flatOfOrder_one ht₀
-  · exfalso
-    rcases le_total a b with h | h
-    · exact hγa (by rwa [min_eq_left h] at hmem)
-    · exact hγa (by rw [hclosed]; rwa [min_eq_right h] at hmem)
+  · exact absurd hmem hymin
 
 /-- **Condition (B) is automatic at simple poles.** Its clauses only fire at poles of order
 `> 1`, and there are none.
@@ -247,7 +249,10 @@ theorem hungerbuhlerWasem_residueTheorem_of_simple_poles {f : ℂ → ℂ} {U : 
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) :=
   hungerbuhlerWasem_residueTheorem hU S γ a b hγ_imm hSU hclosed hγa hγU hf hmero hnull
-    (conditionAprime_of_simple_poles hU hγ_imm hclosed hγa hγU hf h_simple)
+    (conditionAprime_of_simple_poles hU hγ_imm
+      (by rcases le_total a b with h | h
+          · rwa [min_eq_left h]
+          · rwa [min_eq_right h, ← hclosed]) hγU hf h_simple)
     (conditionB_of_simple_poles hU hγU hf h_simple)
 
 /-- **The half-residue theorem at a simple pole**: the winding-`½` case with the conditions
@@ -262,7 +267,10 @@ theorem hasCauchyPV_half_residue_of_simple_pole {f : ℂ → ℂ} {U : Set ℂ} 
     (hwind : windingNumber γ a b s = 1 / 2) :
     HasCauchyPV γ a b f ((Real.pi : ℂ) * Complex.I * residue f s) :=
   hasCauchyPV_half_residue hU γ a b s hγ_imm hsU hclosed hγa hγU hf hmero hnull
-    (conditionAprime_of_simple_poles hU hγ_imm hclosed (by simpa using hγa)
+    (conditionAprime_of_simple_poles hU hγ_imm
+      (by rcases le_total a b with h | h
+          · simpa [min_eq_left h] using hγa
+          · simpa [min_eq_right h, ← hclosed] using hγa)
       hγU (by simpa using hf)
       (fun s' hs' => (Finset.mem_singleton.mp hs') ▸ h_simple))
     (conditionB_of_simple_poles hU hγU (S := {s}) (by simpa using hf)
