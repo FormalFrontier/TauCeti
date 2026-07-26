@@ -232,7 +232,7 @@ theorem carrier_val (K : AbstractSimplicialComplex ι) (x : Realization K) :
   rfl
 
 /-- A realization point belongs to the closed simplex spanned by its carrier. -/
-theorem mem_carrier (K : AbstractSimplicialComplex ι) (x : Realization K) :
+theorem mem_convexHull_carrier (K : AbstractSimplicialComplex ι) (x : Realization K) :
     x.1 ∈ convexHull ℝ
       ((carrier K x).1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
   obtain ⟨σ, _, hx⟩ := mem_realization_iff.1 x.2
