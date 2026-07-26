@@ -39,4 +39,48 @@ theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ 
     (Filter.Eventually.of_forall fun x => ?_)
   simp only [norm_prod, Finset.prod_pow]
 
+/-- The pointwise product `x ↦ ∏ i, F i (x i)` of a family of `L²(μ i)` vectors, as a vector of
+`L²(Measure.pi μ)`. -/
+noncomputable def L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) : Lp 𝕜 2 (Measure.pi μ) :=
+  (memLp_pi_prod (fun i => Lp.memLp (F i))).toLp _
+
+/-- The `Lp` representative of `L2piMul F` is the pointwise product of the representatives. -/
+theorem coeFn_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) :
+    ⇑(L2piMul F) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, F i (x i) :=
+  MemLp.coeFn_toLp _
+
+/-- **The tensor inner-product identity, `Fintype`-indexed.** The inner product of two pointwise
+products factors as the product of the coordinatewise inner products. -/
+@[simp]
+theorem inner_L2piMul (F G : ∀ i, Lp 𝕜 2 (μ i)) :
+    inner 𝕜 (L2piMul F) (L2piMul G) = ∏ i, inner 𝕜 (F i) (G i) := by
+  rw [L2.inner_def]
+  calc
+    ∫ x, inner 𝕜 (L2piMul F x) (L2piMul G x) ∂(Measure.pi μ)
+        = ∫ x : ∀ i, α i, ∏ i, inner 𝕜 (F i (x i)) (G i (x i)) ∂(Measure.pi μ) := by
+          refine integral_congr_ae ?_
+          filter_upwards [coeFn_L2piMul F, coeFn_L2piMul G] with x hF hG
+          rw [hF, hG]
+          simp only [RCLike.inner_apply', map_prod, Finset.prod_mul_distrib]
+    _ = ∏ i, ∫ x, inner 𝕜 (F i x) (G i x) ∂(μ i) :=
+          integral_fintype_prod_eq_prod (fun i x => inner 𝕜 (F i x) (G i x))
+    _ = ∏ i, inner 𝕜 (F i) (G i) :=
+          Finset.prod_congr rfl fun i _ => (L2.inner_def _ _).symm
+
+/-- **Orthonormality of the tensor family, `Fintype`-indexed.** Coordinatewise orthonormal families
+multiply to an orthonormal family of `L²(Measure.pi μ)`, indexed by the dependent function type. -/
+theorem orthonormal_L2piMul {κ : ι → Type*} {b : ∀ i, κ i → Lp 𝕜 2 (μ i)}
+    (hb : ∀ i, Orthonormal 𝕜 (b i)) :
+    Orthonormal 𝕜 (fun k : ∀ i, κ i => L2piMul (fun i => b i (k i))) := by
+  classical
+  simp_rw [orthonormal_iff_ite] at hb ⊢
+  intro k l
+  rw [inner_L2piMul]
+  simp_rw [hb]
+  by_cases hkl : k = l
+  · subst hkl
+    simp
+  · obtain ⟨i, hi⟩ := Function.ne_iff.1 hkl
+    rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), if_neg hkl]
+
 end TauCeti
