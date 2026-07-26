@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
+public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
 
@@ -19,8 +19,9 @@ from this category to finite-type commutative Hopf algebras.
 
 On affine schemes the variance reverses once more under `Spec`, so this covariant coordinate
 ring functor is the algebraic side of the contravariant assignment `G ↦ D(G)`. Its morphism
-part is `MonoidAlgebra.mapDomainBialgHom`; the existing diagonalizable-group points API shows
-that the resulting map of represented groups acts by precomposition on characters.
+part is `MonoidAlgebra.mapDomainBialgHom`; the `DiagonalizableGroup.Functoriality` module
+separately shows that the resulting map of represented groups acts by precomposition on
+characters.
 
 This advances the reductive-groups roadmap Layer 4 target constructing the anti-equivalence
 between finitely generated abelian groups and diagonalizable groups. It supplies the
@@ -79,11 +80,13 @@ theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
   rfl
 
 /-- The coordinate map sends a group-algebra basis element to the basis element indexed
-by its image under the underlying group homomorphism. -/
-@[simp]
+by its image under the underlying group homomorphism.
+
+This is deliberately not a `simp` lemma: `FiniteTypeCommHopfAlgCat.toBialgHom_ofHom`
+already rewrites the left-hand side to `MonoidAlgebra.mapDomainBialgHom`, so `simp` would
+never see this form. -/
 theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r : R) :
-    MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ)
-        (MonoidAlgebra.single g r) =
+    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) (MonoidAlgebra.single g r) =
       MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
   exact MonoidAlgebra.mapDomain_single
 
@@ -91,7 +94,7 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
 
 It is covariant on coordinate Hopf algebras. After applying the contravariant spectrum
 functor, it becomes the usual contravariant assignment `G ↦ D(G)`. -/
-noncomputable def coordinateRingFunctor :
+@[expose] noncomputable def coordinateRingFunctor :
     FGCommGrpCat.{v} ⥤ FiniteTypeCommHopfAlgCat.{u, max u v} R where
   obj := coordinateRing R
   map := coordinateMap R
@@ -106,6 +109,20 @@ noncomputable def coordinateRingFunctor :
       toBialgHom_coordinateMap]
     exact MonoidAlgebra.mapDomainBialgHom_comp (R := R)
       (FGCommGrpCat.toMonoidHom ψ) (FGCommGrpCat.toMonoidHom φ)
+
+/-- The coordinate-ring functor sends a finitely generated commutative group to its
+coordinate Hopf algebra. -/
+@[simp]
+theorem coordinateRingFunctor_obj (G : FGCommGrpCat.{v}) :
+    (coordinateRingFunctor R).obj G = coordinateRing R G :=
+  rfl
+
+/-- The coordinate-ring functor sends a group homomorphism to the induced coordinate
+Hopf-algebra morphism. -/
+@[simp]
+theorem coordinateRingFunctor_map {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+    (coordinateRingFunctor R).map φ = coordinateMap R φ :=
+  rfl
 
 end DiagonalizableGroup
 
