@@ -62,7 +62,7 @@ variable {𝕜 ι : Type*} [Fintype ι] {α : ι → Type*}
 
 section NormedCommRing
 
-variable [NormedCommRing 𝕜] [NormOneClass 𝕜]
+variable [NormedCommRing 𝕜]
 
 /-- The pointwise product `x ↦ ∏ i, f i (x i)` of `L²` functions is `L²` for the product measure. -/
 theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ i)) :
@@ -73,10 +73,20 @@ theorem memLp_pi_prod {f : ∀ i, α i → 𝕜} (hf : ∀ i, MemLp (f i) 2 (μ 
   rw [memLp_two_iff_integrable_sq_norm hmeas]
   -- Only the submultiplicative bound `‖∏ aᵢ‖ ≤ ∏ ‖aᵢ‖` is needed, so a normed commutative
   -- ring suffices; the norm need not be multiplicative.
+  rcases isEmpty_or_nonempty ι with hι | hι
+  · -- With no coordinates the product is the empty product `1`, so the integrand is constant
+    -- and the product measure is a Dirac mass.
+    have : IsProbabilityMeasure (Measure.pi μ) :=
+      ⟨by rw [Measure.pi_of_empty]; exact measure_univ⟩
+    simp_rw [Finset.univ_eq_empty, Finset.prod_empty]
+    exact integrable_const _
   refine (Integrable.fintype_prod_dep
     (fun i => (memLp_two_iff_integrable_sq_norm (hf i).1).1 (hf i))).mono
     (hmeas.norm.pow 2) (Filter.Eventually.of_forall fun x => ?_)
-  have hle : ‖∏ i, f i (x i)‖ ≤ ∏ i, ‖f i (x i)‖ := Finset.norm_prod_le _ _
+  -- `Finset.norm_prod_le'` needs a nonempty index but, unlike `Finset.norm_prod_le`, no
+  -- normalization `‖1‖ = 1`.
+  have hle : ‖∏ i, f i (x i)‖ ≤ ∏ i, ‖f i (x i)‖ :=
+    Finset.norm_prod_le' _ Finset.univ_nonempty _
   have hnn : (0 : ℝ) ≤ ∏ i, ‖f i (x i)‖ := Finset.prod_nonneg fun i _ => norm_nonneg _
   rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity),
     Finset.prod_pow]
