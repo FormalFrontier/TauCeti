@@ -182,10 +182,16 @@ private theorem neg_one_le_meromorphicOrderAt {f : ℂ → ℂ} {U : Set ℂ} {S
     exact le_trans (by exact_mod_cast (by norm_num : (-1 : ℤ) ≤ 0))
       h_an.meromorphicOrderAt_nonneg
 
-/-- Condition (A′) is automatic at simple poles: the only pole order the interior clause can
+/-- **Condition (A′) is automatic at simple poles.** The only pole order the interior clause can
 meet is `1`, discharged by the first-order flatness of the immersion, and the basepoint of
-the closed curve is off the singularities. -/
-private theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+the closed curve is off the singularities.
+
+This is an instantiation lemma for `TauCeti.Contour.ConditionAprime`: it exhibits a hypothesis
+set a caller can actually supply — a piecewise-`C¹` immersion, closed, rooted off `S`, with `f`
+having at worst simple poles — under which the condition holds. The flatness clause is
+discharged with content rather than vacuously: at an interior crossing the pole order is forced
+to `1` and `IsPwC1ImmersionOn.flatOfOrder_one` supplies the first-order flatness. -/
+theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
     (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
@@ -206,9 +212,13 @@ private theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {
     · exact hγa (by rwa [min_eq_left h] at hmem)
     · exact hγa (by rw [hclosed]; rwa [min_eq_right h] at hmem)
 
-/-- Condition (B) is automatic at simple poles: its clauses only fire at poles of order
-`> 1`, and there are none. -/
-private theorem conditionB_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+/-- **Condition (B) is automatic at simple poles.** Its clauses only fire at poles of order
+`> 1`, and there are none.
+
+The companion instantiation lemma to `conditionAprime_of_simple_poles`: together the two
+discharge both regularity hypotheses of HW Thm 3.3 from the same simple-pole hypothesis, which
+is what makes `hungerbuhlerWasem_residueTheorem_of_simple_poles` unconditional. -/
+theorem conditionB_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U)
     (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
     (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
