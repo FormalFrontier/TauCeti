@@ -6,6 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import Mathlib.Analysis.InnerProductSpace.l2Space
+public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Prod
 
@@ -18,13 +19,25 @@ as a tensor:
 `⟪f₁ ⊗ g₁, f₂ ⊗ g₂⟫ = ⟪f₁, f₂⟫ * ⟪g₁, g₂⟫`.
 Consequently the products of two orthonormal families are an orthonormal family of `L²(μ ⊗ ν)`.
 
-This is the Fubini orthonormality half of Part B3 of the `OrthogonalL2Bases` roadmap (the product
-`L²`-basis milestone): the elementary tensors are orthonormal, and their inner products separate.
+This is Part B3 of the `OrthogonalL2Bases` roadmap (the product `L²`-basis milestone), in both
+halves: the elementary tensors are orthonormal *and* they span, so for σ-finite factors the
+products of two Hilbert bases form a Hilbert basis `TauCeti.prodHilbertBasis` of `L²(μ ⊗ ν)`.
 It is a genuine gap in Mathlib, which provides only `MemLp.comp_fst`/`MemLp.comp_snd`
 (single-factor membership, and only for finite measures) and the finite-dimensional
-`OrthonormalBasis.tensorProduct`; there is no `L²(μ.prod ν)` product API. The completeness half —
-that these tensors *span* `L²(μ ⊗ ν)`, hence form a Hilbert basis — is left to a separate
-construction; this file supplies the orthonormality input it consumes.
+`OrthonormalBasis.tensorProduct`; there is no `L²(μ.prod ν)` product API.
+
+The completeness half avoids any slicing argument, and with it any countability assumption on the
+index types. It runs in three moves:
+
+1. `TauCeti.inner_L2prodMul_eq_zero_of_forall_basis` — orthogonality to the *basis* tensors upgrades
+   to orthogonality to *every* elementary tensor. This is pure Hilbert-space geometry: expand a
+   vector along a basis and push the sum through the continuous linear map
+   `TauCeti.L2prodMulRightL`.
+2. `TauCeti.setIntegral_prod_eq_zero_of_forall_inner` — testing against indicators, since
+   `1ₐ ⊗ 1_b` is the indicator of the rectangle `a ×ˢ b`.
+3. `TauCeti.setIntegral_eq_zero_of_forall_prod` — the Dynkin (π-λ) step, upgrading rectangles to
+   arbitrary measurable sets inside a finite box, followed by a monotone exhaustion of the space by
+   the boxes `spanningSets μ n ×ˢ spanningSets ν n`.
 
 The scalars are generic over `[RCLike 𝕜]`, so a single construction serves both the real and
 complex `L²` spaces.
@@ -33,6 +46,8 @@ complex `L²` spaces.
 
 * `TauCeti.L2prodMul` — the pointwise product `(x, y) ↦ f x * g y` of `F : L²(μ)` and `G : L²(ν)`
   as a vector of `L²(μ ⊗ ν)`.
+* `TauCeti.prodHilbertBasis` — the Hilbert basis of `L²(μ ⊗ ν)` built from Hilbert bases of the
+  factors.
 
 ## Main statements
 
@@ -41,6 +56,9 @@ complex `L²` spaces.
 * `TauCeti.inner_L2prodMul` — the inner product of two tensors factors as a product of inner
   products.
 * `TauCeti.orthonormal_L2prodMul` — products of orthonormal families are orthonormal.
+* `TauCeti.orthogonal_span_range_L2prodMul_eq_bot` — the completeness half: the basis tensors have
+  trivial orthogonal complement.
+* `TauCeti.coeFn_prodHilbertBasis` — the `(i, j)` basis vector is a.e. the product `b₁ i ⊗ b₂ j`.
 -/
 
 public section
@@ -221,14 +239,6 @@ theorem inner_L2prodMul_eq_zero_of_forall_basis [SFinite μ] [SFinite ν] {ι₁
     simp [step i G]
   simpa using (hasSum_zero.unique hzero).symm
 
-/-- **Completeness of the tensor family.** The elementary tensors built from two Hilbert bases have
-trivial orthogonal complement in `L²(μ ⊗ ν)`. -/
-theorem orthogonal_span_range_L2prodMul_eq_bot [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type*}
-    (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) :
-    (Submodule.span 𝕜
-      (Set.range (fun ij : ι₁ × ι₂ => L2prodMul (b₁ ij.1) (b₂ ij.2))))ᗮ = ⊥ := by
-  sorry
-
 /-- **The Dynkin (π-λ) step.** On a finite measure over a product space, a function whose integral
 vanishes on every measurable rectangle has vanishing integral on every measurable set. Rectangles
 are a π-system generating the product σ-algebra, so `MeasurableSpace.induction_on_inter` applies. -/
@@ -275,9 +285,91 @@ theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν]
     _ = inner 𝕜 (L2prodMul F G) h := (L2.inner_def _ _).symm
     _ = 0 := hz F G
 
+/-- An `L²` function is integrable on any set of finite measure. -/
+theorem integrableOn_of_measure_lt_top [SFinite μ] [SFinite ν] (h : Lp 𝕜 2 (μ.prod ν))
+    {s : Set (α × β)} (hfin : (μ.prod ν) s < ⊤) : IntegrableOn (⇑h) s (μ.prod ν) := by
+  have : IsFiniteMeasure ((μ.prod ν).restrict s) := ⟨by rwa [Measure.restrict_apply_univ]⟩
+  exact ((Lp.memLp h).restrict s).integrable one_le_two
+
+/-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by finite
+boxes `spanningSets μ n ×ˢ spanningSets ν n`, run the Dynkin step inside each box, and pass to the
+monotone limit. -/
+theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν]
+    {h : Lp 𝕜 2 (μ.prod ν)}
+    (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
+    (u : Set (α × β)) (hu : MeasurableSet u) (hfin : (μ.prod ν) u < ⊤) :
+    ∫ p in u, h p ∂(μ.prod ν) = 0 := by
+  have hAm : ∀ n, MeasurableSet (spanningSets μ n) := measurableSet_spanningSets μ
+  have hBm : ∀ n, MeasurableSet (spanningSets ν n) := measurableSet_spanningSets ν
+  have hboxfin : ∀ n, (μ.prod ν) (spanningSets μ n ×ˢ spanningSets ν n) < ⊤ := by
+    intro n
+    rw [Measure.prod_prod]
+    exact ENNReal.mul_lt_top (measure_spanningSets_lt_top μ n) (measure_spanningSets_lt_top ν n)
+  have hbox : ∀ n, ∫ p in u ∩ (spanningSets μ n ×ˢ spanningSets ν n), h p ∂(μ.prod ν) = 0 := by
+    intro n
+    have hfm : IsFiniteMeasure
+        ((μ.prod ν).restrict (spanningSets μ n ×ˢ spanningSets ν n)) :=
+      ⟨by rw [Measure.restrict_apply_univ]; exact hboxfin n⟩
+    have hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t →
+        ∫ p in s ×ˢ t, h p ∂((μ.prod ν).restrict
+          (spanningSets μ n ×ˢ spanningSets ν n)) = 0 := by
+      intro s hs t ht
+      rw [Measure.restrict_restrict (hs.prod ht), Set.prod_inter_prod]
+      exact setIntegral_prod_eq_zero_of_forall_inner hz (hs.inter (hAm n))
+        (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
+          (measure_spanningSets_lt_top μ n)).ne
+        (ht.inter (hBm n))
+        (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
+          (measure_spanningSets_lt_top ν n)).ne
+    have hdyn := setIntegral_eq_zero_of_forall_prod
+      (integrableOn_of_measure_lt_top h (hboxfin n)) hrect u hu
+    rwa [Measure.restrict_restrict hu] at hdyn
+  have hmono : Monotone fun n => u ∩ (spanningSets μ n ×ˢ spanningSets ν n) := fun m n hmn =>
+    Set.inter_subset_inter_right _
+      (Set.prod_mono (monotone_spanningSets μ hmn) (monotone_spanningSets ν hmn))
+  have hcover : ⋃ n, u ∩ (spanningSets μ n ×ˢ spanningSets ν n) = u := by
+    rw [← Set.inter_iUnion]
+    have huniv : ⋃ n, (spanningSets μ n ×ˢ spanningSets ν n) = Set.univ := by
+      refine Set.eq_univ_of_forall fun p => ?_
+      have h1 : p.1 ∈ ⋃ n, spanningSets μ n := by rw [iUnion_spanningSets]; trivial
+      have h2 : p.2 ∈ ⋃ n, spanningSets ν n := by rw [iUnion_spanningSets]; trivial
+      obtain ⟨i, hi⟩ := Set.mem_iUnion.1 h1
+      obtain ⟨j, hj⟩ := Set.mem_iUnion.1 h2
+      exact Set.mem_iUnion.2 ⟨max i j, monotone_spanningSets μ (le_max_left i j) hi,
+        monotone_spanningSets ν (le_max_right i j) hj⟩
+    rw [huniv, Set.inter_univ]
+  have htend := tendsto_setIntegral_of_monotone
+    (fun n => hu.inter ((hAm n).prod (hBm n))) hmono
+    (by rw [hcover]; exact integrableOn_of_measure_lt_top h hfin)
+  rw [hcover] at htend
+  simp only [hbox] at htend
+  exact tendsto_nhds_unique htend tendsto_const_nhds
+
+/-- **Completeness of the tensor family.** The elementary tensors built from two Hilbert bases have
+trivial orthogonal complement in `L²(μ ⊗ ν)`: a vector orthogonal to all of them is orthogonal to
+every elementary tensor, hence integrates to zero on every rectangle, hence on every finite-measure
+set, hence vanishes. -/
+theorem orthogonal_span_range_L2prodMul_eq_bot [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
+    (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) :
+    (Submodule.span 𝕜
+      (Set.range (fun ij : ι₁ × ι₂ => L2prodMul (b₁ ij.1) (b₂ ij.2))))ᗮ = ⊥ := by
+  refine (Submodule.eq_bot_iff _).2 fun h hh => ?_
+  rw [Submodule.mem_orthogonal] at hh
+  have hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0 := by
+    intro F G
+    rw [inner_eq_zero_symm]
+    refine inner_L2prodMul_eq_zero_of_forall_basis b₁ b₂ (fun i j => ?_) F G
+    rw [inner_eq_zero_symm]
+    exact hh _ (Submodule.subset_span ⟨(i, j), rfl⟩)
+  have hae := Lp.ae_eq_zero_of_forall_setIntegral_eq_zero h (by norm_num) (by norm_num)
+    (fun s _ hs' => integrableOn_of_measure_lt_top h hs')
+    (fun s hs hs' => setIntegral_eq_zero_of_forall_inner hz s hs hs')
+  rw [Lp.ext_iff]
+  exact hae.trans (Lp.coeFn_zero 𝕜 2 (μ.prod ν)).symm
+
 /-- **The product Hilbert basis.** Pointwise products of two Hilbert bases form a Hilbert basis of
 `L²(μ ⊗ ν)`, indexed by the product of the index types. -/
-noncomputable def prodHilbertBasis [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type*}
+noncomputable def prodHilbertBasis [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
     (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) :
     HilbertBasis (ι₁ × ι₂) 𝕜 (Lp 𝕜 2 (μ.prod ν)) :=
   HilbertBasis.mkOfOrthogonalEqBot
@@ -285,7 +377,7 @@ noncomputable def prodHilbertBasis [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type
     (orthogonal_span_range_L2prodMul_eq_bot b₁ b₂)
 
 /-- The `(i, j)` vector of `prodHilbertBasis` is a.e. the pointwise product `b₁ i ⊗ b₂ j`. -/
-theorem coeFn_prodHilbertBasis [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type*}
+theorem coeFn_prodHilbertBasis [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
     (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) (i : ι₁) (j : ι₂) :
     ⇑(prodHilbertBasis b₁ b₂ (i, j)) =ᵐ[μ.prod ν] fun q : α × β => b₁ i q.1 * b₂ j q.2 := by
   rw [prodHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
