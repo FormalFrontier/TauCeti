@@ -15,6 +15,7 @@ This file packages finitely generated commutative groups as a full subcategory o
 
 ## Main declarations
 
+* `TauCeti.CommGrpCat.isFG`: the object property of being finitely generated.
 * `TauCeti.FGCommGrpCat`: the category of finitely generated commutative groups.
 -/
 
@@ -26,19 +27,23 @@ namespace TauCeti
 
 universe v
 
+namespace CommGrpCat
+
 /-- The object property of being a finitely generated commutative group. -/
-def fgCommGrpProperty : ObjectProperty CommGrpCat.{v} :=
+def isFG : ObjectProperty CommGrpCat.{v} :=
   fun G => Group.FG G
 
 /-- Membership in the finitely generated commutative-group object property. -/
 @[simp]
-theorem fgCommGrpProperty_iff (G : CommGrpCat.{v}) :
-    fgCommGrpProperty G ↔ Group.FG G :=
+theorem isFG_iff (G : CommGrpCat.{v}) :
+    isFG G ↔ Group.FG G :=
   Iff.rfl
+
+end CommGrpCat
 
 /-- The category of finitely generated commutative groups. -/
 abbrev FGCommGrpCat :=
-  fgCommGrpProperty.FullSubcategory
+  CommGrpCat.isFG.FullSubcategory
 
 namespace FGCommGrpCat
 
@@ -64,7 +69,7 @@ instance (G : FGCommGrpCat.{v}) : Group.FG G :=
 
 /-- Construct an object of `FGCommGrpCat` from a finitely generated commutative group. -/
 abbrev of (G : Type v) [CommGroup G] [Group.FG G] : FGCommGrpCat.{v} :=
-  ⟨CommGrpCat.of G, (fgCommGrpProperty_iff _).2 inferInstance⟩
+  ⟨CommGrpCat.of G, (CommGrpCat.isFG_iff _).2 inferInstance⟩
 
 /-- Lift a group homomorphism between finitely generated commutative groups to
 `FGCommGrpCat`. -/
@@ -92,7 +97,7 @@ are equal. -/
 @[ext]
 theorem hom_ext {G H : FGCommGrpCat.{v}} {φ ψ : G ⟶ H}
     (h : toMonoidHom φ = toMonoidHom ψ) : φ = ψ :=
-  ObjectProperty.hom_ext (P := fgCommGrpProperty) (CommGrpCat.hom_ext h)
+  ObjectProperty.hom_ext (P := CommGrpCat.isFG) (CommGrpCat.hom_ext h)
 
 @[simp]
 theorem toMonoidHom_id {G : FGCommGrpCat.{v}} :
