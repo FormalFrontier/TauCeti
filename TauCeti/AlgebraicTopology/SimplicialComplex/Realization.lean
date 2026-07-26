@@ -192,10 +192,11 @@ theorem StandardSimplex.support_subset {σ : Finset ι} (x : StandardSimplex σ)
 @[simp]
 theorem mem_standardSimplex_iff {σ : Finset ι} {x : ι →₀ ℝ} :
     x ∈ convexHull ℝ
-        (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) ↔
+        ((fun v => Finsupp.single v (1 : ℝ)) '' (σ : Set ι)) ↔
       (∀ v, 0 ≤ x v) ∧ x.sum (fun _ r => r) = 1 ∧ x.support ⊆ σ := by
   constructor
   · intro hx
+    rw [← Finset.coe_image] at hx
     let x' : StandardSimplex σ := ⟨x, hx⟩
     exact ⟨StandardSimplex.nonneg x', StandardSimplex.sum_eq_one x',
       StandardSimplex.support_subset x'⟩
@@ -213,6 +214,7 @@ theorem mem_standardSimplex_iff {σ : Finset ι} {x : ι →₀ ℝ} :
     have heq : (∑ i ∈ x.support, x i • Finsupp.single i (1 : ℝ)) = x := by
       simpa [Finsupp.sum] using x.sum_single
     rw [heq] at hx
+    rw [Finset.coe_image] at hx
     exact hx
 
 /-- A point of a standard simplex lies in the simplex spanned by its support. -/
