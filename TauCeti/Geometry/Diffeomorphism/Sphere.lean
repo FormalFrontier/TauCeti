@@ -147,6 +147,8 @@ theorem unitSphereDiffHom_injective :
     Function.Injective (unitSphereDiffHom (E := E) (n := n) m) := by
   intro e e' h
   rw [unitSphereDiffHom_apply, unitSphereDiffHom_apply] at h
+  apply _root_.LinearIsometryEquiv.toLinearEquiv_injective
+  apply LinearEquiv.toLinearMap_injective
   refine eq_of_eqOn_unitSphere fun x hx => ?_
   simpa using congrArg Subtype.val (DFunLike.congr_fun h ⟨x, hx⟩)
 
