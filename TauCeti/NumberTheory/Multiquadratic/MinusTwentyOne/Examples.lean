@@ -76,25 +76,34 @@ theorem sqrtNegSeven_sq : sqrtNegSeven ^ 2 = (-7 : ℂ) := by
 
 /-- The three radicands `-1`, `-3`, and `-7` associated to the prime discriminants in
 the `ℚ(√-21)` genus-field example. -/
-@[expose] def minusTwentyOneRadicand : Fin 3 → ℚ :=
+def minusTwentyOneRadicand : Fin 3 → ℚ :=
   ![-1, -3, -7]
 
 /-- Chosen complex roots `i`, `i√3`, and `i√7` of the radicands in the
 `ℚ(√-21)` genus-field example. -/
-@[expose] noncomputable def minusTwentyOneRoot : Fin 3 → ℂ :=
+noncomputable def minusTwentyOneRoot : Fin 3 → ℂ :=
   ![Complex.I, sqrtNegThree, sqrtNegSeven]
 
-@[simp] theorem minusTwentyOneRadicand_zero : minusTwentyOneRadicand 0 = -1 := rfl
+@[simp] theorem minusTwentyOneRadicand_zero : minusTwentyOneRadicand 0 = -1 := (rfl)
 
-@[simp] theorem minusTwentyOneRadicand_one : minusTwentyOneRadicand 1 = -3 := rfl
+@[simp] theorem minusTwentyOneRadicand_one : minusTwentyOneRadicand 1 = -3 := (rfl)
 
-@[simp] theorem minusTwentyOneRadicand_two : minusTwentyOneRadicand 2 = -7 := rfl
+@[simp] theorem minusTwentyOneRadicand_two : minusTwentyOneRadicand 2 = -7 := (rfl)
 
-@[simp] theorem minusTwentyOneRoot_zero : minusTwentyOneRoot 0 = Complex.I := rfl
+@[simp] theorem minusTwentyOneRoot_zero : minusTwentyOneRoot 0 = Complex.I := (rfl)
 
-@[simp] theorem minusTwentyOneRoot_one : minusTwentyOneRoot 1 = sqrtNegThree := rfl
+@[simp] theorem minusTwentyOneRoot_one : minusTwentyOneRoot 1 = sqrtNegThree := (rfl)
 
-@[simp] theorem minusTwentyOneRoot_two : minusTwentyOneRoot 2 = sqrtNegSeven := rfl
+@[simp] theorem minusTwentyOneRoot_two : minusTwentyOneRoot 2 = sqrtNegSeven := (rfl)
+
+/-- The radicands for the `ℚ(√-21)` example agree with those associated to its three
+prime discriminants. -/
+theorem minusTwentyOneRadicand_eq_primeDiscriminantRadicand (i : Fin 3) :
+    minusTwentyOneRadicand i =
+      ((primeDiscriminantRadicand
+        (negFourNegThreeNegSevenPrimeDiscriminants i) : ℤ) : ℚ) := by
+  fin_cases i <;> simp [negFourNegThreeNegSevenPrimeDiscriminants,
+    primeDiscriminantRadicand]
 
 /-- Each chosen root for the `ℚ(√-21)` example squares to its corresponding radicand. -/
 theorem minusTwentyOneRoot_sq (i : Fin 3) :
@@ -111,16 +120,8 @@ private theorem root_neg_four_neg_three_neg_seven_sq (i : Fin 3) :
       algebraMap ℚ ℂ
         (((primeDiscriminantRadicand
           (negFourNegThreeNegSevenPrimeDiscriminants i) : ℤ) : ℚ)) := by
-  fin_cases i
-  · simp [negFourNegThreeNegSevenPrimeDiscriminants, Complex.I_sq]
-  · have hrad : primeDiscriminantRadicand (-3) = -3 := by
-      have h := primeDiscriminantRadicand_oddPrimeDiscriminant (p := 3) (by decide)
-      simpa [oddPrimeDiscriminant_of_mod_four_eq_three (by norm_num : 3 % 4 = 3)] using h
-    simp [negFourNegThreeNegSevenPrimeDiscriminants, hrad]
-  · have hrad : primeDiscriminantRadicand (-7) = -7 := by
-      have h := primeDiscriminantRadicand_oddPrimeDiscriminant (p := 7) (by decide)
-      simpa [oddPrimeDiscriminant_of_mod_four_eq_three (by norm_num : 7 % 4 = 3)] using h
-    simp [negFourNegThreeNegSevenPrimeDiscriminants, hrad]
+  rw [← minusTwentyOneRadicand_eq_primeDiscriminantRadicand]
+  exact minusTwentyOneRoot_sq i
 
 /-- The range of the chosen prime-discriminant root family for the `ℚ(√-21)` example is
 `{i, √-3, √-7}`. -/
