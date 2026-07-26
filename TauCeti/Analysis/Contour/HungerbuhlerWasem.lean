@@ -192,10 +192,11 @@ The curve need not be closed: `ConditionAprime` constrains the basepoint `γ (mi
 `hungerbuhlerWasem_residueTheorem_of_simple_poles` does at its call site.
 
 This is an instantiation lemma for `TauCeti.Contour.ConditionAprime`: it exhibits a hypothesis
-set a caller can actually supply — a piecewise-`C¹` immersion, closed, rooted off `S`, with `f`
-having at worst simple poles — under which the condition holds. The flatness clause is
-discharged with content rather than vacuously: at an interior crossing the pole order is forced
-to `1` and `IsPwC1ImmersionOn.flatOfOrder_one` supplies the first-order flatness. -/
+set a caller can actually supply — a piecewise-`C¹` immersion whose basepoint lies off `S`, with
+`f` having at worst simple poles — under which the condition holds. Where an interior crossing
+occurs the flatness clause is met with content rather than by vacuity: the pole order there is
+forced to `1` and `IsPwC1ImmersionOn.flatOfOrder_one` supplies the first-order flatness. On a
+curve with no interior crossing the clause holds because there is nothing to discharge. -/
 theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hymin : γ (min a b) ∉ (S : Set ℂ))
