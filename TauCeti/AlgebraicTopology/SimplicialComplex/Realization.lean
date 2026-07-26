@@ -269,9 +269,7 @@ theorem mem_convexHull_carrier (K : AbstractSimplicialComplex ι) (x : Realizati
     x.1 ∈ convexHull ℝ
       ((carrier K x).1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
   obtain ⟨σ, _, hx⟩ := mem_realization_iff.1 x.2
-  -- Unfold the public `carrier_val` characterization in the target simplex.
-  change x.1 ∈ convexHull ℝ
-    (x.1.support.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))
+  rw [carrier_val]
   exact StandardSimplex.mem_convexHull_support ⟨x.1, hx⟩
 
 /-- The carrier is contained in every finite vertex set whose closed simplex contains the point. -/
@@ -280,8 +278,7 @@ theorem carrier_minimal (K : AbstractSimplicialComplex ι) (x : Realization K) {
       (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :
     (carrier K x).1 ⊆ σ :=
   by
-    -- Unfold the public `carrier_val` characterization in the containment goal.
-    change x.1.support ⊆ σ
+    rw [carrier_val]
     exact StandardSimplex.support_subset ⟨x.1, hx⟩
 
 /-- The standard coordinate vector of every vertex belongs to the geometric realization. -/
