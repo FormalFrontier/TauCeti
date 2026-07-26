@@ -77,9 +77,7 @@ theorem isClosed_range_of_finiteDimensional_coker (T : E →L[𝕜] F)
   have hΦ : ∀ p : E × N, Φ p = T p.1 + (p.2 : F) := fun p => by simp [hΦdef]
   -- `Φ` is surjective: its range is `range T ⊔ N = R ⊔ N = ⊤`.
   have hsurj : Function.Surjective Φ := LinearMap.range_eq_top.mp <| by
-    rw [hΦdef, ContinuousLinearMap.range_coprod, Submodule.toLinearMap_subtypeL,
-      Submodule.range_subtype, ← hR]
-    exact hN.sup_eq_top
+    simpa [hΦdef, LinearMap.range_coprod, hR] using hN.sup_eq_top
   -- The preimage of `range T` under `Φ` is the closed subset `{p | p.2 = 0}`.
   have hpre : Φ ⁻¹' (R : Set F) = {p : E × N | p.2 = 0} := by
     ext p
