@@ -5,10 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import Mathlib.Topology.Covering.Basic
 public import Mathlib.Topology.Homotopy.Lifting
 public import TauCeti.AlgebraicTopology.UniversalCover.Basic
-public import TauCeti.Topology.Homotopy.Path
 
 /-!
 # Universal cover: covering map, simple connectedness, universal property
@@ -81,7 +79,7 @@ instance discreteTopology_fiber [LocallyPathConnectedSpace X] [PathConnectedSpac
 
 /-- Every point of `UniversalCover x₀` is joined to the point represented by the constant
 path. The connecting path is the family of initial segments `t ↦ α |_[0, t]`. -/
-theorem joined_basepoint_of_ofBasedPath (α : BasedPath x₀) :
+theorem joined_basepoint_ofBasedPath (α : BasedPath x₀) :
     Joined (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) (ofBasedPath x₀ α) :=
   ⟨{  toFun t := ofBasedPath x₀ (BasedPath.ofPath (Path.initialSegmentFamily α.toPath t))
       continuous_toFun :=
@@ -98,7 +96,7 @@ instance pathConnectedSpace (x₀ : X) :
   refine ⟨⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))⟩, fun z₁ z₂ ↦ ?_⟩
   obtain ⟨α₁, rfl⟩ := surjective_ofBasedPath x₀ z₁
   obtain ⟨α₂, rfl⟩ := surjective_ofBasedPath x₀ z₂
-  exact (joined_basepoint_of_ofBasedPath α₁).symm.trans (joined_basepoint_of_ofBasedPath α₂)
+  exact (joined_basepoint_ofBasedPath α₁).symm.trans (joined_basepoint_ofBasedPath α₂)
 
 /-- The lift through `proj` of a path `γ` starting at the class of `α` ends at the class of
 the concatenated based path `α.append γ`. -/
