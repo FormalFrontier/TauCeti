@@ -4,53 +4,45 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.MixedIID.Basic
--- Public: `directingProbabilityMeasure` appears in the `deFinettiMeasure` definition.
+-- Public: the generic mixture representation this specializes, and the directing measure whose law
+-- `deFinettiMeasure` is.
+public import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
-import TauCeti.Probability.Exchangeability.FiniteMarginals
--- Non-public: the Giry interchange laws and the product-kernel adapters are used only in proofs.
-import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
-# The de Finetti mixture representation
+# The de Finetti measure
 
-A mixed i.i.d. process has, as its **path law**, a mixture of infinite product measures: for a
-mixing representative `ν`,
-
-```text
-pathLaw μ X = ∫ P^{⊗ℕ} d(μ.map ν)(P)
-```
-
-written in the `Measure.bind` idiom. `MixedIIDWith` constrains only the *finite* blocks, so the
-content here is the passage from finite blocks to the whole path — carried by finite-dimensional
-marginal uniqueness on one side and the projective-limit property of `Measure.infinitePi` on the
-other.
+The law of the canonical directing measure, as a probability measure on `ProbabilityMeasure α`,
+together with the specialization of the mixture representation to it.
 
 ## Main results
 
-* `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` — the mixture representation, for an arbitrary
-  mixing representative.
-* `deFinettiMeasure` — the **de Finetti measure** itself: the law of the canonical directing
-  measure, bundled as a `ProbabilityMeasure (ProbabilityMeasure α)`, with
-  `deFinettiMeasure_toMeasure` exposing its underlying measure.
-* `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith` — the mixture representation
-  against the de Finetti measure.
+* `deFinettiMeasure` — the law of `directingProbabilityMeasure`, bundled as a
+  `ProbabilityMeasure (ProbabilityMeasure α)`, with `deFinettiMeasure_toMeasure` exposing its
+  underlying measure.
+* `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith` — the mixture representation against
+  it, for a process whose canonical directing measure is a mixing representative.
 
 ## Hypotheses
 
-The arbitrary-witness representation needs only `[IsFiniteMeasure μ]`, a.e.-measurable coordinates,
-and the witness itself. `deFinettiMeasure` and its specialization need more, because the canonical
-directing measure is built from a conditional distribution: a probability base law
-`[IsProbabilityMeasure μ]`, a standard-Borel nonempty **state** space
+The generic representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` needs only
+`[IsFiniteMeasure μ]`, a.e.-measurable coordinates, and a witness. The definition here needs more,
+because the canonical directing measure is built from a conditional distribution: a probability base
+law `[IsProbabilityMeasure μ]`, a standard-Borel nonempty **state** space
 `[StandardBorelSpace α] [Nonempty α]`, and pointwise `Measurable` coordinates.
 
 No theorem here assumes `[StandardBorelSpace Ω]`. That hypothesis is what *supplying* the canonical
-witness costs — `mixedIIDWith_of_contractable` carries it — so the specialization takes the witness
-as an explicit hypothesis instead of deriving it.
+witness costs — `mixedIIDWith_of_contractable` carries it — so the specialization below takes the
+witness as an explicit hypothesis instead of deriving it.
 
-This advances `TauCetiRoadmap/Exchangeability/README.md`, Layer 6, the directing-measure API bullet
-asking for the mixture-of-product-measures form. The roadmap's `deFinetti_mixture` is reserved for
-the eventual theorem that *derives* the canonical witness rather than assuming one.
+## What is not here
+
+The Layer 6 bullet in `TauCetiRoadmap/Exchangeability/README.md` asks for the mixture form with `π`
+the **unique** law of `ν`. Uniqueness (`mixedIID_mixingLaw_unique`) is not proved here or anywhere
+yet: at the roadmap's stated generality it needs finite-dimensional compact-box mixed-moment
+determinacy, which does not exist. That bullet is therefore only partly discharged, and the roadmap
+name `deFinetti_mixture` stays reserved for the theorem that *derives* a canonical witness rather
+than assuming one.
 -/
 
 public section
@@ -63,72 +55,28 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [StandardBorelSpace α] [Nonempty α]
 
-/-- **The de Finetti mixture representation.** If `ν` is a mixing representative for `X`, the path
-law of `X` is the `μ.map ν`-mixture of the infinite product measures `P^{⊗ℕ}`.
+/-- The law of the canonical directing measure `directingProbabilityMeasure μ X`, as a probability
+measure on `ProbabilityMeasure α`.
 
-`MixedIIDWith` gives the finite-block laws; this upgrades them to the whole path law. Both sides are
-compared through their finite-dimensional prefix marginals, where the block identity meets the
-projective-limit property of `Measure.infinitePi`. -/
-theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX : ∀ n, AEMeasurable (X n) μ) {ν : Ω → ProbabilityMeasure α}
-    (h : MixedIIDWith μ X ν) :
-    pathLaw μ X = (μ.map ν).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-  have hΦ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ := aemeasurable_pi_lambda _ hX
-  have hν : AEMeasurable ν μ := h.measurable_mixingRepresentative.aemeasurable
-  have hpow : AEMeasurable (fun P : ProbabilityMeasure α =>
-      Measure.infinitePi fun _ : ℕ => (P : Measure α)) (μ.map ν) :=
-    TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
-  refine measure_eq_of_prefixProj_map_eq fun n => ?_
-  have hfin : AEMeasurable (fun P : ProbabilityMeasure α =>
-      (ProbabilityMeasure.pi fun _ : Fin n => P).toMeasure) (μ.map ν) :=
-    (TauCeti.MeasureTheory.measurable_probabilityMeasure_pi_const_toMeasure
-      (fun P : ProbabilityMeasure α => P) measurable_id).aemeasurable
-  -- the prefix marginal of each infinite power is the corresponding finite power
-  have hstep : ∀ P : ProbabilityMeasure α,
-      (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map (prefixProj α n)
-        = (ProbabilityMeasure.pi fun _ : Fin n => P).toMeasure := by
-    intro P
-    have hp : prefixProj α n = fun x : ℕ → α => fun i : Fin n => x i := rfl
-    rw [hp, ProbabilityMeasure.toMeasure_pi,
-      TauCeti.MeasureTheory.map_prefixProj_infinitePi_const P n]
-  calc (pathLaw μ X).map (prefixProj α n)
-      = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-        rw [map_prefixProj_pathLaw μ hΦ n, prefixLaw_def,
-          h.blockLaw_eq_mixture _ Fin.val_injective]
-    _ = ((μ.map ν).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
-          (prefixProj α n) := by
-        rw [TauCeti.MeasureTheory.map_bind hpow (measurable_prefixProj n)]
-        simp_rw [hstep]
-        rw [TauCeti.MeasureTheory.bind_map hν hfin]
-        rfl
+This is the **de Finetti measure** — the mixing law `π` of the de Finetti representation —
+*precisely when* `directingProbabilityMeasure μ X` is a `MixedIIDWith` witness for `X`, which is
+what `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith` assumes. The definition itself
+assumes no exchangeability or contractability, so for a general measurable process it is just that
+pushforward and need not represent the path law at all.
 
-section DeFinettiMeasure
-
-variable [StandardBorelSpace α] [Nonempty α]
-
-/-- The **de Finetti measure** of a process: the law of its canonical directing measure, as a
-probability measure on `ProbabilityMeasure α`.
-
-This is the mixing law `π` of the de Finetti representation. TauCeti's `directingProbabilityMeasure`
-is the directing random measure itself, a map `Ω → ProbabilityMeasure α`; this is its pushforward
-under `μ`, the object the representation integrates against.
-
-Bundling records at the type level that the mixing law is a probability measure, and supports
+Bundling records at the type level that the mixing law is a probability measure, and supports the
 downstream weak-topology and convergence APIs, which are stated for `ProbabilityMeasure`; it coerces
-back to `Measure` for the `bind` representation below. Bundling is also what makes the measurability
+back to `Measure` for the `bind` representation. Bundling is also what makes the measurability
 hypothesis `hX` an argument of the definition rather than of its theorems: `Measure.map` of a
 non-measurable function is `0`, which is not a probability measure. -/
 def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α)
     (hX : ∀ n, Measurable (X n)) : ProbabilityMeasure (ProbabilityMeasure α) :=
-  ⟨μ.map (directingProbabilityMeasure μ X),
-    haveI : IsProbabilityMeasure (μ.map (directingProbabilityMeasure μ X)) :=
-      Measure.isProbabilityMeasure_map
-        (measurable_directingProbabilityMeasure
-          (tailProcess_le_ambient 0 fun j _ => hX j)).aemeasurable
-    inferInstance⟩
+  ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
+    (f := directingProbabilityMeasure μ X)
+    (measurable_directingProbabilityMeasure
+      (μ := μ) (tailProcess_le_ambient 0 fun j _ => hX j)).aemeasurable
 
 /-- The underlying measure of the de Finetti measure is the pushforward of the directing measure. -/
 @[simp]
@@ -136,15 +84,15 @@ theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {
     (hX : ∀ n, Measurable (X n)) :
     (deFinettiMeasure μ X hX : Measure (ProbabilityMeasure α))
       = μ.map (directingProbabilityMeasure μ X) := by
-  simp only [deFinettiMeasure, ProbabilityMeasure.coe_mk]
+  simp only [deFinettiMeasure, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]
 
-/-- **The de Finetti mixture representation, against the de Finetti measure.** When the canonical
-directing measure is a mixing representative, the path law is the `deFinettiMeasure`-mixture of the
-infinite product measures.
+/-- **The mixture representation against the de Finetti measure.** When the canonical directing
+measure is a mixing representative for `X`, the path law of `X` is the `deFinettiMeasure`-mixture of
+the infinite product measures.
 
-The canonical-witness hypothesis is taken rather than derived: `mixedIIDWith_of_contractable`
-supplies it, but only under `[StandardBorelSpace Ω]`, and taking it here keeps that assumption out
-of this statement. -/
+The witness hypothesis is taken rather than derived: `mixedIIDWith_of_contractable` supplies it, but
+only under `[StandardBorelSpace Ω]`, and taking it here keeps that assumption out of this
+statement. -/
 theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith {μ : Measure Ω}
     [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX : ∀ n, Measurable (X n))
     (h : MixedIIDWith μ X (directingProbabilityMeasure μ X)) :
@@ -153,8 +101,6 @@ theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith {μ : Measur
           fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   rw [deFinettiMeasure_toMeasure]
   exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith (fun n => (hX n).aemeasurable) h
-
-end DeFinettiMeasure
 
 end Probability
 
