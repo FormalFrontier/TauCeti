@@ -5,15 +5,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
-public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 public import TauCeti.Probability.Exchangeability.IID
-public import Mathlib.Probability.Independence.ZeroOne
+-- Public: `cylinder` appears in the hypothesis of `measure_eq_zero_or_one_of_exchangeableSigma`.
+public import Mathlib.MeasureTheory.Constructions.Cylinders
 -- Non-public: used only inside proofs.
 import Mathlib.Logic.Equiv.Fintype
 import Mathlib.MeasureTheory.Measure.MeasuredSets
-import Mathlib.MeasureTheory.Constructions.Cylinders
 import Mathlib.MeasureTheory.Constructions.ProjectiveFamilyContent
+import Mathlib.Probability.Independence.ZeroOne
 
 /-!
 # The Hewitt–Savage zero-one law
@@ -32,7 +32,10 @@ which is what makes the path law exchangeable in the first place.
 * `hewittSavage_trivial_of_iIndep` — the zero-one law, from `iIndepFun` and `IdentDistrib`.
 * `measure_eq_zero_or_one_of_exchangeableSigma` — the abstract form, over an exchangeable path law
   in which cylinders over disjoint index blocks are independent.
-* `measureReal_sq_of_exchangeableSigma` — the squaring identity `q = q²` behind it.
+
+Everything else in this file is `private` proof infrastructure: the block permutation, the
+reindexed-cylinder change of variables, the cylinder approximation, the disjoint-block product
+formula, and the squaring identity.
 
 ## The argument
 
@@ -50,6 +53,17 @@ would first need a lemma transferring `iIndepFun` to the coordinate projections.
 This discharges the Layer 2 target `hewittSavage_trivial_of_iIndep` of
 `TauCetiRoadmap/Exchangeability/README.md`, and supplies the Layer 2 input the roadmap records for
 the Layer 6 extreme-point corollary (the extreme exchangeable laws are exactly the i.i.d. laws).
+
+## References
+
+* Edwin Hewitt and Leonard J. Savage, *Symmetric measures on Cartesian products*, Transactions of
+  the American Mathematical Society **80** (1955), 470–501, <https://doi.org/10.2307/1992999> — the
+  original theorem, and the source the roadmap names for this target.
+* Olav Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Springer, 2005, Chapter 1.
+
+No material is adapted from `cameronfreer/exchangeability`: that formalization does not carry this
+theorem, and the proof here is assembled from Mathlib's cylinder, approximation, and independence
+API.
 -/
 
 public section
@@ -65,30 +79,25 @@ namespace TauCeti
 namespace Probability
 
 /-- The finitely supported permutation of `ℕ` that swaps the block `[0, N)` with `[N, 2N)`
-pointwise and fixes everything from `2 * N` on. -/
-def blockSwap (N : ℕ) : Equiv.Perm ℕ :=
-  Equiv.Perm.viaFintypeEmbedding
-    (((finSumFinEquiv (m := N) (n := N)).symm.trans (Equiv.sumComm _ _)).trans finSumFinEquiv)
-    ⟨Fin.val, Fin.val_injective⟩
+pointwise and fixes everything from `2 * N` on: Mathlib's half-swap `finAddFlip` on `Fin (N + N)`,
+transported to `ℕ` along the value embedding. -/
+private def blockSwap (N : ℕ) : Equiv.Perm ℕ :=
+  Equiv.Perm.viaFintypeEmbedding (finAddFlip (m := N) (n := N)) ⟨Fin.val, Fin.val_injective⟩
 
-theorem blockSwap_apply_of_lt {N i : ℕ} (hi : i < N) : blockSwap N i = N + i := by
-  have key : ((finSumFinEquiv.symm.trans (Equiv.sumComm (Fin N) (Fin N))).trans finSumFinEquiv)
-      (Fin.castAdd N ⟨i, hi⟩) = Fin.natAdd N ⟨i, hi⟩ := by
-    rw [Equiv.trans_apply, Equiv.trans_apply, finSumFinEquiv_symm_apply_castAdd]
-    rfl
+private theorem blockSwap_apply_of_lt {N i : ℕ} (hi : i < N) : blockSwap N i = N + i := by
   have h : (⟨Fin.val, Fin.val_injective⟩ : Fin (N + N) ↪ ℕ)
       (Fin.castAdd N ⟨i, hi⟩) = i := rfl
-  rw [blockSwap, ← h, Equiv.Perm.viaFintypeEmbedding_apply_image, key]
+  rw [blockSwap, ← h, Equiv.Perm.viaFintypeEmbedding_apply_image, finAddFlip_apply_castAdd]
   rfl
 
-theorem blockSwap_apply_of_le {N n : ℕ} (hn : N + N ≤ n) : blockSwap N n = n := by
+private theorem blockSwap_apply_of_le {N n : ℕ} (hn : N + N ≤ n) : blockSwap N n = n := by
   refine Equiv.Perm.viaFintypeEmbedding_apply_notMem_range _ _ ?_
   rintro ⟨j, rfl⟩
   exact absurd j.isLt (not_lt.mpr hn)
 
 /-- `blockSwap N` carries any index block inside `[0, N)` off itself: the moved copy lands in
 `[N, 2N)`. This is the disjointness the independence step consumes. -/
-theorem disjoint_map_blockSwap {N : ℕ} {F : Finset ℕ} (hF : F ⊆ Finset.range N) :
+private theorem disjoint_map_blockSwap {N : ℕ} {F : Finset ℕ} (hF : F ⊆ Finset.range N) :
     Disjoint F (F.map (Equiv.toEmbedding (blockSwap N))) := by
   rw [Finset.disjoint_left]
   intro a haF hamem
@@ -98,7 +107,7 @@ theorem disjoint_map_blockSwap {N : ℕ} {F : Finset ℕ} (hF : F ⊆ Finset.ran
   rw [Equiv.coe_toEmbedding, blockSwap_apply_of_lt hbN] at hb
   omega
 
-theorem blockSwap_finite_support (N : ℕ) :
+private theorem blockSwap_finite_support (N : ℕ) :
     (MulAction.fixedBy ℕ (blockSwap N))ᶜ.Finite := by
   refine Set.Finite.subset (Set.finite_Iio (N + N)) ?_
   intro n hn
@@ -111,33 +120,31 @@ variable {α : Type*}
 
 /-- Read a block indexed by the moved index set `F.map π` back onto `F`, along `π`. This is the
 change of variables that turns a `π`-reindexed cylinder over `F` into a cylinder over `F.map π`. -/
-@[expose]
-def pullMoved (π : Equiv.Perm ℕ) (F : Finset ℕ) (α : Type*)
+private def pullMoved (π : Equiv.Perm ℕ) (F : Finset ℕ) (α : Type*)
     (g : ∀ _j : F.map (Equiv.toEmbedding π), α) : ∀ _i : F, α :=
   fun i => g ⟨π ↑i, Finset.mem_map_of_mem _ i.2⟩
 
 @[simp]
-theorem pullMoved_apply (π : Equiv.Perm ℕ) (F : Finset ℕ)
+private theorem pullMoved_apply (π : Equiv.Perm ℕ) (F : Finset ℕ)
     (g : ∀ _j : F.map (Equiv.toEmbedding π), α) (i : F) :
     pullMoved π F α g i = g ⟨π ↑i, Finset.mem_map_of_mem _ i.2⟩ :=
   rfl
 
 /-- Reindexing a cylinder over `F` by `π` is a cylinder over the moved index set `F.map π`: both
 sides say that the coordinates `p (π i)`, for `i ∈ F`, lie in `S`. -/
-theorem preimage_permReindex_cylinder (π : Equiv.Perm ℕ) (F : Finset ℕ)
+private theorem preimage_permReindex_cylinder (π : Equiv.Perm ℕ) (F : Finset ℕ)
     (S : Set (∀ _i : F, α)) :
     permReindex (α := α) π ⁻¹' cylinder F S
       = cylinder (F.map (Equiv.toEmbedding π)) (pullMoved π F α ⁻¹' S) :=
   rfl
 
-@[fun_prop]
-theorem measurable_pullMoved [MeasurableSpace α] (π : Equiv.Perm ℕ) (F : Finset ℕ) :
+private theorem measurable_pullMoved [MeasurableSpace α] (π : Equiv.Perm ℕ) (F : Finset ℕ) :
     Measurable (pullMoved π F α) :=
   measurable_pi_lambda _ fun _ => measurable_pi_apply _
 
 /-- Every measurable path-space event is approximated, in measure, by a measurable cylinder over a
 finite index set. -/
-theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : Measure (ℕ → α)}
+private theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : Measure (ℕ → α)}
     [IsFiniteMeasure ρ] {s : Set (ℕ → α)} (hs : MeasurableSet s) {ε : ℝ≥0∞} (hε : 0 < ε) :
     ∃ (F : Finset ℕ) (S : Set (∀ _i : F, α)),
       MeasurableSet S ∧ ρ (symmDiff (cylinder F S) s) < ε := by
@@ -162,30 +169,24 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- Cylinders over **disjoint** index blocks are independent events under the path law of an
 independent family. This is the step that turns the disjointness produced by `blockSwap` into a
 product formula. -/
-theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (hX : ∀ n, Measurable (X n)) (h_indep : ProbabilityTheory.iIndepFun X μ)
+private theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω}
+    {X : ℕ → Ω → α} (hX : ∀ n, AEMeasurable (X n) μ)
+    (h_indep : ProbabilityTheory.iIndepFun X μ)
     {F G : Finset ℕ} (hFG : Disjoint F G)
     {S : Set (∀ _i : F, α)} (hS : MeasurableSet S)
     {T : Set (∀ _j : G, α)} (hT : MeasurableSet T) :
     pathLaw μ X (cylinder F S ∩ cylinder G T)
       = pathLaw μ X (cylinder F S) * pathLaw μ X (cylinder G T) := by
-  have hΦ : Measurable fun ω => (fun n => X n ω : ℕ → α) := measurable_pi_lambda _ hX
+  letI := h_indep.isProbabilityMeasure
+  have hΦ : AEMeasurable (fun ω => (fun n => X n ω : ℕ → α)) μ := aemeasurable_pi_lambda _ hX
   have hSmeas : MeasurableSet (cylinder F S) :=
     MeasurableSet.cylinder (α := fun _ : ℕ => α) F hS
   have hTmeas : MeasurableSet (cylinder G T) :=
     MeasurableSet.cylinder (α := fun _ : ℕ => α) G hT
-  have hfS : Measurable fun ω => (fun i : F => X (i : ℕ) ω) :=
-    measurable_pi_lambda _ fun i => hX (i : ℕ)
-  have hfT : Measurable fun ω => (fun j : G => X (j : ℕ) ω) :=
-    measurable_pi_lambda _ fun j => hX (j : ℕ)
-  have hind : ProbabilityTheory.IndepSet
-      ((fun ω => (fun i : F => X (i : ℕ) ω)) ⁻¹' S)
-      ((fun ω => (fun j : G => X (j : ℕ) ω)) ⁻¹' T) μ :=
-    (ProbabilityTheory.indepFun_iff_indepSet_preimage hfS hfT).mp
-      (h_indep.indepFun_finset F G hFG hX) S T hS hT
-  rw [pathLaw_def, Measure.map_apply hΦ (hSmeas.inter hTmeas), Measure.map_apply hΦ hSmeas,
-    Measure.map_apply hΦ hTmeas, Set.preimage_inter]
-  exact (ProbabilityTheory.indepSet_iff_measure_inter_eq_mul (hfS hS) (hfT hT) μ).mp hind
+  rw [pathLaw_def, Measure.map_apply_of_aemeasurable hΦ (hSmeas.inter hTmeas),
+    Measure.map_apply_of_aemeasurable hΦ hSmeas, Measure.map_apply_of_aemeasurable hΦ hTmeas,
+    Set.preimage_inter]
+  exact (h_indep.indepFun_finset₀ F G hFG hX).measure_inter_preimage_eq_mul S T hS hT
 
 end Independence
 
@@ -207,7 +208,7 @@ index blocks are independent, an exchangeable event has measure equal to its own
 The mechanism is the classical one: approximate the event by a cylinder over `[0, N)`, move that
 cylinder onto the disjoint block `[N, 2N)` by `blockSwap N` — which fixes the event, being
 exchangeable, and preserves the law — and let independence factor the two copies. -/
-theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+private theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
     (hexch : ExchangeableLaw ρ)
     (hprod : ∀ {F G : Finset ℕ}, Disjoint F G → ∀ {S : Set (∀ _i : F, α)}, MeasurableSet S →
       ∀ {T : Set (∀ _j : G, α)}, MeasurableSet T →
@@ -330,16 +331,18 @@ This is strictly stronger than Kolmogorov's tail zero-one law. Tail triviality h
 independent sequence, whereas the symmetric σ-algebra contains events — such as
 `{p | ∃ n, p n ∈ B}` — that are not tail events, and the statement genuinely needs the
 identically-distributed hypothesis, which is what makes the path law exchangeable. -/
-theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    (hX : ∀ n, Measurable (X n)) (h_indep : ProbabilityTheory.iIndepFun X μ)
+theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h_indep : ProbabilityTheory.iIndepFun X μ)
     (hident : ∀ i, ProbabilityTheory.IdentDistrib (X i) (X 0) μ μ)
     {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
     pathLaw μ X s = 0 ∨ pathLaw μ X s = 1 := by
+  letI := h_indep.isProbabilityMeasure
+  have hX : ∀ i, AEMeasurable (X i) μ := fun i => (hident i).aemeasurable_fst
   haveI : IsProbabilityMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
-    exact Measure.isProbabilityMeasure_map (measurable_pi_lambda _ hX).aemeasurable
+    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
   have hexch : ExchangeableLaw (pathLaw μ X) :=
-    (exchangeable_iff_exchangeableLaw_pathLaw fun i => (hX i).aemeasurable).mp
+    (exchangeable_iff_exchangeableLaw_pathLaw hX).mp
       (Exchangeable.of_iIndepFun_identDistrib h_indep hident)
   exact measure_eq_zero_or_one_of_exchangeableSigma hexch
     (fun {_F _G} hFG {_S} hS {_T} hT =>
