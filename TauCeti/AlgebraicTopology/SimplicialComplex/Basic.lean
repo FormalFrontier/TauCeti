@@ -19,6 +19,9 @@ namespace TauCeti
 
 namespace AbstractSimplicialComplex
 
+/-- A face of an abstract simplicial complex, bundled with its membership proof. -/
+abbrev Face {ι : Type*} (K : AbstractSimplicialComplex ι) := {σ : Finset ι // σ ∈ K}
+
 /-- A finite set is a face of the underlying precomplex exactly when it is a face of the abstract
 simplicial complex itself. This is the single place where the two `SetLike` instances are
 identified. -/
