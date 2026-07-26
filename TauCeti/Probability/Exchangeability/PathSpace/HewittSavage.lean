@@ -153,11 +153,6 @@ theorem exists_cylinder_measure_symmDiff_lt [MeasurableSpace α] {ρ : Measure (
   obtain ⟨F, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht_mem
   exact ⟨F, S, hS, ht⟩
 
-/-- A cylinder over a measurable base is measurable. -/
-theorem measurableSet_cylinder [MeasurableSpace α] (F : Finset ℕ) {S : Set (∀ _i : F, α)}
-    (hS : MeasurableSet S) : MeasurableSet (cylinder (α := fun _ : ℕ => α) F S) :=
-  (measurable_pi_lambda _ fun i : F => measurable_pi_apply (i : ℕ)) hS
-
 end Cylinder
 
 section Independence
@@ -175,8 +170,10 @@ theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω} [IsProbabil
     pathLaw μ X (cylinder F S ∩ cylinder G T)
       = pathLaw μ X (cylinder F S) * pathLaw μ X (cylinder G T) := by
   have hΦ : Measurable fun ω => (fun n => X n ω : ℕ → α) := measurable_pi_lambda _ hX
-  have hSmeas : MeasurableSet (cylinder F S) := measurableSet_cylinder F hS
-  have hTmeas : MeasurableSet (cylinder G T) := measurableSet_cylinder G hT
+  have hSmeas : MeasurableSet (cylinder F S) :=
+    MeasurableSet.cylinder (α := fun _ : ℕ => α) F hS
+  have hTmeas : MeasurableSet (cylinder G T) :=
+    MeasurableSet.cylinder (α := fun _ : ℕ => α) G hT
   have hfS : Measurable fun ω => (fun i : F => X (i : ℕ) ω) :=
     measurable_pi_lambda _ fun i => hX (i : ℕ)
   have hfT : Measurable fun ω => (fun j : G => X (j : ℕ) ω) :=
@@ -229,7 +226,7 @@ theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProba
   obtain ⟨N, hN⟩ := Finset.exists_nat_subset_range F
   set π := blockSwap N with hπ
   set t := cylinder (α := fun _ : ℕ => α) F S with ht
-  have ht_meas : MeasurableSet t := measurableSet_cylinder F hS
+  have ht_meas : MeasurableSet t := MeasurableSet.cylinder (α := fun _ : ℕ => α) F hS
   set t' := permReindex (α := α) π ⁻¹' t with ht'
   have ht'_meas : MeasurableSet t' := ht_meas.preimage (measurable_reindex π)
   -- the moved copy is a cylinder over the disjoint block `F.map π`
