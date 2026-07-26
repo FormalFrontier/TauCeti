@@ -28,8 +28,7 @@ This proves Stage 4, item 11 of the Tau Ceti universal-covers roadmap
 ## Main declarations
 
 * `TauCeti.AddCircle.subsingleton_homotopyGroup`: `π_N(AddCircle p)` is trivial when `N` has
-  at least two elements.
-* `TauCeti.AddCircle.subsingleton_homotopyGroupPi`: the `π_(n + 2)` form.
+  at least two elements; instance resolution specializes it to `π_(n + 2)`.
 * `TauCeti.AddCircle.homotopyGroup_eq_one`, `TauCeti.AddCircle.homotopyGroupPi_eq_one`: the
   corresponding equalities.
 
@@ -59,11 +58,6 @@ instance subsingleton_homotopyGroup : Subsingleton (HomotopyGroup N (AddCircle p
 /-- Every higher homotopy class of a real circle is the identity. -/
 theorem homotopyGroup_eq_one [DecidableEq N] (a : HomotopyGroup N (AddCircle p) x) : a = 1 :=
   Subsingleton.elim _ _
-
-/-- The homotopy group `π_(n + 2)` of a real circle is trivial, for every `n`. -/
-instance subsingleton_homotopyGroupPi (n : ℕ) :
-    Subsingleton (π_ (n + 2) (AddCircle p) x) :=
-  subsingleton_homotopyGroup p x
 
 /-- Every element of `π_(n + 2)` of a real circle is the identity. -/
 theorem homotopyGroupPi_eq_one (n : ℕ) (a : π_ (n + 2) (AddCircle p) x) : a = 1 :=
