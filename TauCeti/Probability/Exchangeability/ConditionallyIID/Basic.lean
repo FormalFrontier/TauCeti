@@ -30,14 +30,20 @@ representative*, whereas `ν` here is a genuine **directing measure**.
 
 ## Main results
 
-* `ConditionallyIIDWith`, `ConditionallyIID` — the predicate and its existential wrapper.
-* `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy arrow down to
-  the mixture identity.
+* `ConditionallyIIDWith`, `ConditionallyIID` — the predicate and its existential wrapper, with
+  their constructor, accessor, and simp-normal-form API.
+* `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
+  to the mixture identity.
 
-This advances `TauCetiRoadmap/Exchangeability/README.md`, Layer 0/1: the conditional predicate the
-roadmap reserves the `ConditionallyIID` name for, and the easy arrow it pins alongside. The
-summit theorems that *conclude* it (`conditionallyIID_of_contractable` and the `deFinetti*`
-handles) remain open.
+This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
+predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
+projection it pins alongside — which consumes the already-landed Layer 1 joint-kernel lemma
+`measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
+
+Still open, and not attempted here: the Layer 1 joint-rectangle common ending
+`conditionallyIID_of_jointRectangles`; the Layer 6 summit theorems that *conclude* this predicate,
+`conditionallyIID_of_contractable` and `conditionallyIID_of_exchangeable`; the `deFinetti*` handles
+that return with them; and directing-measure uniqueness (`conditionallyIID_ae_unique`).
 -/
 
 public section
@@ -76,6 +82,19 @@ theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ℕ → Ω → α} {ν
     ConditionallyIIDWith μ X ν :=
   ⟨hν, h⟩
 
+/-- Simp normal form for `ConditionallyIIDWith`. -/
+@[simp]
+theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} :
+    ConditionallyIIDWith μ X ν ↔
+      Measurable ν ∧
+        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+          μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
+            μ.bind fun ω =>
+              (Measure.dirac (ν ω)).prod
+                (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
+  Iff.rfl
+
 /-- Conditional i.i.d.-ness: existence of a directing measure. -/
 def ConditionallyIID (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
   ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν
@@ -84,6 +103,12 @@ def ConditionallyIID (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
 theorem ConditionallyIID.of_directing {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : ConditionallyIID μ X :=
   ⟨ν, h⟩
+
+/-- Simp normal form for the existential wrapper `ConditionallyIID`. -/
+@[simp]
+theorem conditionallyIID_iff {μ : Measure Ω} {X : ℕ → Ω → α} :
+    ConditionallyIID μ X ↔ ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν :=
+  Iff.rfl
 
 /-- The directing measure of a `ConditionallyIIDWith` witness is measurable. -/
 @[grind →]
