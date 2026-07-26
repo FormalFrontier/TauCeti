@@ -8,6 +8,7 @@ module
 public import Mathlib.Topology.Covering.Basic
 public import Mathlib.Topology.Homotopy.Lifting
 public import TauCeti.AlgebraicTopology.UniversalCover.Basic
+public import TauCeti.Topology.Homotopy.Path
 
 /-!
 # Universal cover: covering map, simple connectedness, universal property
@@ -92,7 +93,7 @@ theorem joined_basepoint_of_ofBasedPath (α : BasedPath x₀) :
       target' := by simp }⟩
 
 /-- The universal cover is path-connected. -/
-theorem pathConnectedSpace (x₀ : X) :
+instance pathConnectedSpace (x₀ : X) :
     PathConnectedSpace (TauCeti.UniversalCover x₀) := by
   refine ⟨⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))⟩, fun z₁ z₂ ↦ ?_⟩
   obtain ⟨α₁, rfl⟩ := surjective_ofBasedPath x₀ z₁
@@ -108,20 +109,14 @@ theorem liftPath_apply_one_eq_ofBasedPath_append
     (isCoveringMap x₀).liftPath γ (ofBasedPath x₀ α)
       (by simp) 1 =
       ofBasedPath x₀ (BasedPath.append α γ) := by
-  have h_append_cont :
-      Continuous fun t : I ↦ BasedPath.append α (Path.initialSegmentFamily γ t) := by
-    apply Continuous.subtype_mk
-    refine ContinuousMap.continuous_of_continuous_uncurry _ ?_
-    simpa using!
-      Path.trans_continuous_family (fun _ : I ↦ α.toPath)
-        (Path.continuous_uncurry_iff.mpr continuous_const) (Path.initialSegmentFamily γ)
-        (Path.continuous_initialSegmentFamily_uncurry γ)
   let Γ : C(I, TauCeti.UniversalCover x₀) := by
     refine ⟨fun t ↦ ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ t)),
       ?_⟩
-    exact (continuous_ofBasedPath x₀).comp h_append_cont
+    exact (continuous_ofBasedPath x₀).comp
+      (BasedPath.continuous_append_initialSegmentFamily α γ)
   have hΓ_lifts : proj (x₀ := x₀) ∘ Γ = γ := by
     ext t
+    -- Unfold the local `ContinuousMap` wrapper so `proj_ofBasedPath` can rewrite its value.
     rw [Function.comp_apply, show Γ t =
       ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ t)) from rfl,
       proj_ofBasedPath, BasedPath.endpoint_append]
@@ -146,18 +141,20 @@ theorem liftPath_apply_one_eq_ofBasedPath_append
       (γ_0 := by simp) (Γ := Γ)).2
       ⟨hΓ_lifts, hΓ_zero⟩
   rw [← hΓ_eq_lift]
+  -- Both sides are values of the local lift wrapper; unfolding exposes the appended paths.
   change ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ 1)) =
     ofBasedPath x₀ (BasedPath.append α γ)
   rw [Path.initialSegmentFamily_one]
   apply congrArg (ofBasedPath x₀)
   apply BasedPath.ext
   intro t
+  -- `BasedPath.append` inserts endpoint casts definitionally; expose the underlying paths.
   change (α.toPath.trans (γ.cast _ _)) t = (α.toPath.trans γ) t
   rw [Path.trans_apply, Path.trans_apply]
   split_ifs <;> simp only [Path.cast_coe]
 
 /-- The universal cover is simply connected. -/
-theorem simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+instance simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] (x₀ : X) :
     SimplyConnectedSpace (TauCeti.UniversalCover x₀) := by
   rw [simply_connected_iff_loops_nullhomotopic]
@@ -191,20 +188,10 @@ theorem simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace X
       (Path.Homotopic.Quotient.mk γ : Path.Homotopic.Quotient
           (BasedPath.endpoint α) (BasedPath.endpoint α)) =
         Path.Homotopic.Quotient.refl (BasedPath.endpoint α) := by
-    let qα : Path.Homotopic.Quotient x₀ (BasedPath.endpoint α) :=
-      Path.Homotopic.Quotient.mk α.toPath
-    calc
-      Path.Homotopic.Quotient.mk γ
-          = (Path.Homotopic.Quotient.trans (Path.Homotopic.Quotient.symm qα) qα).trans
-              (Path.Homotopic.Quotient.mk γ) := by simp
-      _ = (Path.Homotopic.Quotient.symm qα).trans
-            (qα.trans (Path.Homotopic.Quotient.mk γ)) :=
-          Path.Homotopic.Quotient.trans_assoc _ _ _
-      _ = (Path.Homotopic.Quotient.symm qα).trans
-            (Path.Homotopic.Quotient.mk (α.toPath.trans γ)) := by
-          rw [Path.Homotopic.Quotient.mk_trans]
-      _ = (Path.Homotopic.Quotient.symm qα).trans qα := by rw [h_append_eq]
-      _ = Path.Homotopic.Quotient.refl (BasedPath.endpoint α) := by simp
+    apply Quotient.sound
+    apply Path.Homotopic.trans_left_cancel (e := α.toPath)
+    exact (Path.Homotopic.Quotient.exact h_append_eq).trans
+      (Path.Homotopic.trans_refl α.toPath).symm
   rw [← Path.Homotopic.Quotient.eq]
   apply (isCoveringMap x₀).injective_path_homotopic_map
     (ofBasedPath x₀ α) (ofBasedPath x₀ α)
