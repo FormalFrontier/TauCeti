@@ -336,6 +336,11 @@ theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
     (realizationMap hKL x : ι →₀ ℝ) = x := by
   exact Set.coe_inclusion (standardGeometricComplex_space_mono hKL) x
 
+/-- The map of realizations induced by an inclusion is injective. -/
+theorem realizationMap_injective {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
+    Function.Injective (realizationMap hKL) :=
+  Set.inclusion_injective (standardGeometricComplex_space_mono hKL)
+
 /-- An inclusion map restricted to a face is the corresponding face inclusion in the larger
 complex. -/
 @[simp]
