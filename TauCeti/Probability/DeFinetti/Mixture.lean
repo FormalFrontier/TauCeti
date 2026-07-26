@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
-public import TauCeti.Probability.Exchangeability.FiniteMarginals
+import TauCeti.Probability.Exchangeability.FiniteMarginals
 -- Non-public: the Giry interchange laws and the product-kernel adapters are used only in proofs.
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
