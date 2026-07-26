@@ -120,11 +120,13 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e))
   have hQ : p ∘ QRel.toContinuousMap = q := by
     simp only [QRel, IsCoveringMap.liftHomotopyRel]
     exact hp.liftHomotopy_lifts _ _ _
+  -- This records the reduction through the `P` wrapper used to assemble `F`.
+  have hF_apply (y : I^N) : F y = QRel (Cube.splitAt i y) := by
+    rw [_root_.GenLoop.fromLoop_apply]
+    rfl
   have hpF : ∀ y, p (F y) = f y := fun y => by
     calc
-      p (F y) = p (QRel (Cube.splitAt i y)) := by
-        rw [_root_.GenLoop.fromLoop_apply]
-        rfl
+      p (F y) = p (QRel (Cube.splitAt i y)) := congr_arg p (hF_apply y)
       _ = q (Cube.splitAt i y) := congrFun hQ (Cube.splitAt i y)
       _ = f y := congr_arg f (Homeomorph.symm_apply_apply (Cube.splitAt i) y)
   exact ⟨F, _root_.GenLoop.ext _ _ hpF⟩
