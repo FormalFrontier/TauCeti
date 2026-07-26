@@ -83,4 +83,76 @@ theorem orthonormal_L2piMul {κ : ι → Type*} {b : ∀ i, κ i → Lp 𝕜 2 (
   · obtain ⟨i, hi⟩ := Function.ne_iff.1 hkl
     rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), if_neg hkl]
 
+/-- The tensor construction is norm-multiplicative. -/
+@[simp]
+theorem norm_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) : ‖L2piMul F‖ = ∏ i, ‖F i‖ := by
+  have h : ((‖L2piMul F‖ : ℝ) : 𝕜) ^ 2 = ∏ i, ((‖F i‖ : ℝ) : 𝕜) ^ 2 := by
+    simpa only [inner_self_eq_norm_sq_to_K] using inner_L2piMul F F
+  have h3 : ‖L2piMul F‖ ^ 2 = (∏ i, ‖F i‖) ^ 2 := by
+    have hc : ((‖L2piMul F‖ ^ 2 : ℝ) : 𝕜) = (((∏ i, ‖F i‖) ^ 2 : ℝ) : 𝕜) := by
+      push_cast
+      rw [h, ← Finset.prod_pow]
+    exact_mod_cast hc
+  calc ‖L2piMul F‖ = Real.sqrt (‖L2piMul F‖ ^ 2) := (Real.sqrt_sq (norm_nonneg _)).symm
+    _ = Real.sqrt ((∏ i, ‖F i‖) ^ 2) := by rw [h3]
+    _ = ∏ i, ‖F i‖ := Real.sqrt_sq (Finset.prod_nonneg fun i _ => norm_nonneg _)
+
+section Slot
+
+variable [DecidableEq ι]
+
+/-- Splitting off the `j`-th coordinate of a tensor. -/
+theorem coeFn_L2piMul_update (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 (μ j)) :
+    ⇑(L2piMul (Function.update F j v)) =ᵐ[Measure.pi μ]
+      fun x : ∀ i, α i => v (x j) * ∏ i ∈ Finset.univ.erase j, F i (x i) := by
+  filter_upwards [coeFn_L2piMul (Function.update F j v)] with x hx
+  rw [hx, ← Finset.mul_prod_erase _ _ (Finset.mem_univ j), Function.update_self]
+  congr 1
+  refine Finset.prod_congr rfl fun i hi => ?_
+  rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
+
+/-- The tensor is additive in the `j`-th coordinate. -/
+theorem L2piMul_update_add (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v w : Lp 𝕜 2 (μ j)) :
+    L2piMul (Function.update F j (v + w))
+      = L2piMul (Function.update F j v) + L2piMul (Function.update F j w) := by
+  rw [Lp.ext_iff]
+  filter_upwards [coeFn_L2piMul_update j F (v + w), coeFn_L2piMul_update j F v,
+    coeFn_L2piMul_update j F w,
+    Lp.coeFn_add (L2piMul (Function.update F j v)) (L2piMul (Function.update F j w)),
+    (Measure.quasiMeasurePreserving_eval μ j).tendsto_ae.eventually (Lp.coeFn_add v w)]
+    with x h h1 h2 hadd hv
+  rw [h, hadd, Pi.add_apply, h1, h2, hv, Pi.add_apply, add_mul]
+
+/-- The tensor is homogeneous in the `j`-th coordinate. -/
+theorem L2piMul_update_smul (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (c : 𝕜) (v : Lp 𝕜 2 (μ j)) :
+    L2piMul (Function.update F j (c • v)) = c • L2piMul (Function.update F j v) := by
+  rw [Lp.ext_iff]
+  filter_upwards [coeFn_L2piMul_update j F (c • v), coeFn_L2piMul_update j F v,
+    Lp.coeFn_smul c (L2piMul (Function.update F j v)),
+    (Measure.quasiMeasurePreserving_eval μ j).tendsto_ae.eventually (Lp.coeFn_smul c v)]
+    with x h h1 hsmul hv
+  rw [h, hsmul, Pi.smul_apply, h1, hv, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_assoc]
+
+/-- Tensoring with all coordinates but `j` held fixed, as a continuous linear map. -/
+@[expose] noncomputable def L2piMulSlot (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) :
+    Lp 𝕜 2 (μ j) →L[𝕜] Lp 𝕜 2 (Measure.pi μ) :=
+  LinearMap.mkContinuous
+    { toFun := fun v => L2piMul (Function.update F j v)
+      map_add' := L2piMul_update_add j F
+      map_smul' := fun c v => L2piMul_update_smul j F c v }
+    (∏ i ∈ Finset.univ.erase j, ‖F i‖) fun v => by
+      change ‖L2piMul (Function.update F j v)‖ ≤ (∏ i ∈ Finset.univ.erase j, ‖F i‖) * ‖v‖
+      rw [norm_L2piMul, ← Finset.mul_prod_erase _ _ (Finset.mem_univ j), Function.update_self,
+        mul_comm]
+      refine mul_le_mul_of_nonneg_right (le_of_eq ?_) (norm_nonneg v)
+      refine Finset.prod_congr rfl fun i hi => ?_
+      rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
+
+/-- `L2piMulSlot` applies as the tensor. -/
+@[simp]
+theorem L2piMulSlot_apply (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 (μ j)) :
+    L2piMulSlot j F v = L2piMul (Function.update F j v) := rfl
+
+end Slot
+
 end TauCeti
