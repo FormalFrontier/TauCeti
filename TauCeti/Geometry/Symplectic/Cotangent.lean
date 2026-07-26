@@ -26,8 +26,8 @@ bundles in exact Lagrangian Floer theory.
 * `TauCeti.cotangentSymplecticForm_apply`: its evaluation formula.
 * `TauCeti.cotangentZeroSection`: the linear zero section `V × {0}`.
 * `TauCeti.cotangentFiber`: the linear cotangent fiber `{0} × V*`.
-* `TauCeti.cotangentZeroSection_isLagrangian`: the zero section is Lagrangian.
-* `TauCeti.cotangentFiber_isLagrangian`: the cotangent fiber is Lagrangian.
+* `TauCeti.isLagrangian_cotangentZeroSection`: the zero section is Lagrangian.
+* `TauCeti.isLagrangian_cotangentFiber`: the cotangent fiber is Lagrangian.
 
 The sign convention is the standard one `ω = -dλ`, where the tautological one-form is
 `λ_(q,p)(δq,δp) = p(δq)`.
@@ -61,29 +61,18 @@ private lemma cotangentBilinForm_isAlt :
 
 private lemma cotangentBilinForm_nondegenerate :
     (cotangentBilinForm (V := V)).Nondegenerate := by
-  constructor
-  · rintro ⟨v, α⟩ h
-    have hα : α = 0 := by
-      apply LinearMap.ext
-      intro w
-      have := h (w, 0)
+  refine (LinearMap.IsAlt.isRefl cotangentBilinForm_isAlt).nondegenerate_iff_separatingLeft.mpr ?_
+  rintro ⟨v, α⟩ h
+  have hα : α = 0 := by
+    apply LinearMap.ext
+    intro w
+    have := h (w, 0)
+    simpa using this
+  have hv : v = 0 := by
+    exact (Module.forall_dual_apply_eq_zero_iff ℝ v).mp fun β => by
+      have := h (0, β)
       simpa using this
-    have hv : v = 0 := by
-      exact (Module.forall_dual_apply_eq_zero_iff ℝ v).mp fun β => by
-        have := h (0, β)
-        simpa using this
-    exact Prod.ext hv hα
-  · rintro ⟨w, β⟩ h
-    have hβ : β = 0 := by
-      apply LinearMap.ext
-      intro v
-      have := h (v, 0)
-      simpa using this
-    have hw : w = 0 := by
-      exact (Module.forall_dual_apply_eq_zero_iff ℝ w).mp fun α => by
-        have := h (0, α)
-        simpa using this
-    exact Prod.ext hw hβ
+  exact Prod.ext hv hα
 
 /-- The canonical symplectic form on the linear cotangent space `V × V*`, with formula
 `ω((v, α), (w, β)) = β(v) - α(w)`. -/
@@ -109,23 +98,18 @@ def cotangentFiber : Submodule ℝ (V × Module.Dual ℝ V) :=
 @[simp]
 lemma mem_cotangentZeroSection_iff {x : V × Module.Dual ℝ V} :
     x ∈ cotangentZeroSection ↔ x.2 = 0 := by
-  constructor
-  · rintro ⟨v, rfl⟩
-    simp
-  · intro hx
-    exact ⟨x.1, Prod.ext rfl hx.symm⟩
+  rw [cotangentZeroSection, LinearMap.range_inl, LinearMap.mem_ker]
+  rfl
 
 @[simp]
 lemma mem_cotangentFiber_iff {x : V × Module.Dual ℝ V} :
     x ∈ cotangentFiber ↔ x.1 = 0 := by
-  constructor
-  · rintro ⟨α, rfl⟩
-    simp
-  · intro hx
-    exact ⟨x.2, Prod.ext hx.symm rfl⟩
+  rw [cotangentFiber, LinearMap.range_inr, LinearMap.mem_ker]
+  rfl
 
 /-- The symplectic orthogonal of the zero section is the zero section itself. -/
-lemma cotangentZeroSection_orthogonal :
+@[simp]
+lemma orthogonal_cotangentZeroSection :
     (cotangentSymplecticForm (V := V)).orthogonal cotangentZeroSection =
       cotangentZeroSection := by
   ext x
@@ -141,7 +125,8 @@ lemma cotangentZeroSection_orthogonal :
     simp [hx, hy]
 
 /-- The symplectic orthogonal of a cotangent fiber is that fiber itself. -/
-lemma cotangentFiber_orthogonal :
+@[simp]
+lemma orthogonal_cotangentFiber :
     (cotangentSymplecticForm (V := V)).orthogonal cotangentFiber = cotangentFiber := by
   ext x
   rw [SymplecticForm.mem_orthogonal_iff, mem_cotangentFiber_iff]
@@ -155,18 +140,18 @@ lemma cotangentFiber_orthogonal :
     simp [hx, hy]
 
 /-- The zero section is Lagrangian for the canonical cotangent symplectic form. -/
-lemma cotangentZeroSection_isLagrangian :
+lemma isLagrangian_cotangentZeroSection :
     (cotangentSymplecticForm (V := V)).IsLagrangian
       (cotangentZeroSection (V := V)) := by
   rw [SymplecticForm.isLagrangian_iff, SymplecticForm.isIsotropic_iff_le,
-    SymplecticForm.isCoisotropic_iff_le, cotangentZeroSection_orthogonal]
+    SymplecticForm.isCoisotropic_iff_le, orthogonal_cotangentZeroSection]
   exact ⟨le_rfl, le_rfl⟩
 
-/-- Each cotangent fiber is Lagrangian for the canonical cotangent symplectic form. -/
-lemma cotangentFiber_isLagrangian :
+/-- The vertical subspace `{0} × V*` is Lagrangian for the canonical cotangent symplectic form. -/
+lemma isLagrangian_cotangentFiber :
     (cotangentSymplecticForm (V := V)).IsLagrangian (cotangentFiber (V := V)) := by
   rw [SymplecticForm.isLagrangian_iff, SymplecticForm.isIsotropic_iff_le,
-    SymplecticForm.isCoisotropic_iff_le, cotangentFiber_orthogonal]
+    SymplecticForm.isCoisotropic_iff_le, orthogonal_cotangentFiber]
   exact ⟨le_rfl, le_rfl⟩
 
 end TauCeti
