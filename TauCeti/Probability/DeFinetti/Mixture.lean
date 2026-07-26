@@ -36,9 +36,17 @@ other.
 * `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith` — the mixture representation
   against the de Finetti measure.
 
-The statement assumes only `[IsFiniteMeasure μ]`, a.e.-measurable coordinates, and the witness: no
-standard-Borel hypothesis appears, since none is needed once a witness is given. Supplying the
-*canonical* witness is what needs standard Borel, and that lives with the summit theorems.
+## Hypotheses
+
+The arbitrary-witness representation needs only `[IsFiniteMeasure μ]`, a.e.-measurable coordinates,
+and the witness itself. `deFinettiMeasure` and its specialization need more, because the canonical
+directing measure is built from a conditional distribution: a probability base law
+`[IsProbabilityMeasure μ]`, a standard-Borel nonempty **state** space
+`[StandardBorelSpace α] [Nonempty α]`, and pointwise `Measurable` coordinates.
+
+No theorem here assumes `[StandardBorelSpace Ω]`. That hypothesis is what *supplying* the canonical
+witness costs — `mixedIIDWith_of_contractable` carries it — so the specialization takes the witness
+as an explicit hypothesis instead of deriving it.
 
 This advances `TauCetiRoadmap/Exchangeability/README.md`, Layer 6, the directing-measure API bullet
 asking for the mixture-of-product-measures form. The roadmap's `deFinetti_mixture` is reserved for
@@ -108,12 +116,11 @@ This is the mixing law `π` of the de Finetti representation. TauCeti's `directi
 is the directing random measure itself, a map `Ω → ProbabilityMeasure α`; this is its pushforward
 under `μ`, the object the representation integrates against.
 
-It is bundled as a `ProbabilityMeasure`, since every consumer of a mixing law —
-`ProbabilityMeasure.pi`, weak-convergence statements, the representation below — is stated for
-bundled probability measures, and an unbundled version would force a wrapper at each use site.
-Bundling is what makes the measurability hypothesis `hX` an argument of the definition rather than
-of its theorems: `Measure.map` of a non-measurable function is `0`, which is not a probability
-measure. -/
+Bundling records at the type level that the mixing law is a probability measure, and supports
+downstream weak-topology and convergence APIs, which are stated for `ProbabilityMeasure`; it coerces
+back to `Measure` for the `bind` representation below. Bundling is also what makes the measurability
+hypothesis `hX` an argument of the definition rather than of its theorems: `Measure.map` of a
+non-measurable function is `0`, which is not a probability measure. -/
 def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α)
     (hX : ∀ n, Measurable (X n)) : ProbabilityMeasure (ProbabilityMeasure α) :=
   ⟨μ.map (directingProbabilityMeasure μ X),
