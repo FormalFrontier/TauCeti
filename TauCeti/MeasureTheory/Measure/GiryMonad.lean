@@ -7,19 +7,22 @@ module
 public import Mathlib.MeasureTheory.Measure.GiryMonad
 
 /-!
-# Naturality of the Giry monad's `bind`
+# The Giry monad's `map`/`bind` interchange laws
 
-Pushing a `Measure.bind` mixture forward by a measurable map commutes with the bind: the
-pushforward of a mixture is the mixture of the pushforwards.
+Two ways `Measure.map` and `Measure.bind` commute:
 
-Mathlib carries this naturality for `PMF` (`PMF.map_bind`) but not for `Measure`, although all
-of its ingredients — `Measure.bind_bind` and `Measure.bind_dirac_eq_map` — are there. This file
-supplies the missing `Measure` form.
+* `map_bind` — pushing a mixture forward is the mixture of the pushforwards,
+  `map F ∘ bind g = bind (map F ∘ g)`;
+* `bind_map` — binding after a pushforward reindexes the mixing measure,
+  `bind g ∘ map f = bind (g ∘ f)`.
 
-It is stated for an a.e.-measurable kernel `g`, which is the hypothesis `Measure.bind_bind`
-needs, and it is the shape mixture arguments want: `bind` is how a random measure is integrated
-against its mixing law, so pushing a mixture forward along a coordinate map — a marginal — is a
-routine step.
+Mathlib carries both for `PMF` (`PMF.map_bind`, `PMF.bind_map`) but neither for `Measure`,
+although all of their ingredients — `Measure.bind_bind`, `Measure.bind_dirac_eq_map`,
+`Measure.dirac_bind` — are there. This file supplies the missing `Measure` forms.
+
+They are the shape mixture arguments want: `bind` is how a random measure is integrated against
+its mixing law, so pushing a mixture forward along a coordinate map (a marginal), or rewriting a
+mixture over a pushforward mixing law, are both routine steps.
 -/
 
 public section
@@ -46,6 +49,19 @@ theorem map_bind {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ
     (Measure.measurable_dirac.comp hF).aemeasurable
   rw [← Measure.bind_dirac_eq_map (μ.bind g) hF, Measure.bind_bind hg hdirac]
   simp_rw [Measure.bind_dirac_eq_map _ hF]
+
+/-- **Binding after a pushforward.** Binding `g` against a pushforward measure reindexes the
+mixing measure: `bind g ∘ map f = bind (g ∘ f)`.
+
+Obtained from associativity of `bind` together with `bind_dirac_eq_map` and `dirac_bind`. This is
+the `Measure` form of `PMF.bind_map`. -/
+theorem bind_map {μ : Measure S} {f : S → γ} (hf : Measurable f)
+    {g : γ → Measure δ} (hg : Measurable g) :
+    (μ.map f).bind g = μ.bind (g ∘ f) := by
+  have hdirac : AEMeasurable (fun x : S => Measure.dirac (f x)) μ :=
+    (Measure.measurable_dirac.comp hf).aemeasurable
+  rw [← Measure.bind_dirac_eq_map μ hf, Measure.bind_bind hdirac hg.aemeasurable]
+  simp_rw [Function.comp_def, Measure.dirac_bind hg]
 
 end MeasureTheory
 
