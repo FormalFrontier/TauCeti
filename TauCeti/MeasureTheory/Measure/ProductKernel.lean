@@ -38,6 +38,10 @@ Measurability:
   supplies `Measure.infinitePi` and its projective-limit API but not this measurability, which is
   what a mixture of such products needs for `Measure.bind_apply` and the expected evaluation of
   the mixture as an integral.
+* `map_prefix_infinitePi_const` — the finite-prefix marginal of a countable power, `p^{⊗ℕ}`
+  restricted to its first `n` coordinates being `p^{⊗ Fin n}`. Mathlib's
+  `Measure.infinitePi_map_restrict` gives the marginal indexed by a coerced `Finset`; this is the
+  `Fin n`-prefix form that prefix-marginal arguments on `ℕ → α` use.
 
 Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure`:
 * `bind_probabilityMeasure_pi_apply` — evaluation on a measurable set as the integral of the product
@@ -186,6 +190,41 @@ theorem measurable_infinitePi_const {α : Type*} [MeasurableSpace α] :
     Measurable fun p : ProbabilityMeasure α =>
       Measure.infinitePi (fun _ : ℕ => (p : Measure α)) :=
   measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => measurable_id)
+
+/-- **Finite-prefix marginal of a countable product.** Restricting `p^{⊗ℕ}` to its first `n`
+coordinates gives the finite product `p^{⊗ Fin n}`.
+
+Mathlib's `Measure.infinitePi_map_restrict` gives the marginal along a `Finset.restrict`, indexed by
+the coerced finite set; this is the `Fin n`-prefix form, which is what prefix-marginal arguments on
+`ℕ → α` actually use. Stated with the bare prefix map rather than any particular prefix
+abbreviation, so it stays independent of downstream conventions. -/
+theorem map_prefix_infinitePi_const {α : Type*} [MeasurableSpace α] (p : ProbabilityMeasure α)
+    (n : ℕ) :
+    (Measure.infinitePi (fun _ : ℕ => (p : Measure α))).map (fun x : ℕ → α => fun i : Fin n => x i)
+      = Measure.pi (fun _ : Fin n => (p : Measure α)) := by
+  have hmeas : Measurable (fun x : ℕ → α => fun i : Fin n => x i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (i : ℕ)
+  refine (Measure.pi_eq fun t ht => ?_).symm
+  classical
+  have hpre : (fun x : ℕ → α => fun i : Fin n => x i) ⁻¹' Set.univ.pi t
+      = Set.pi ↑(Finset.range n) (fun j => if h : j < n then t ⟨j, h⟩ else Set.univ) := by
+    ext x
+    simp only [Set.mem_preimage, Set.mem_pi, Set.mem_univ, forall_true_left, Finset.coe_range,
+      Set.mem_Iio]
+    constructor
+    · intro hx j hj
+      simpa [hj] using hx ⟨j, hj⟩
+    · intro hx i
+      simpa [i.2] using hx i.1 i.2
+  have hmt : ∀ j ∈ Finset.range n,
+      MeasurableSet (if h : j < n then t ⟨j, h⟩ else (Set.univ : Set α)) := by
+    intro j hj
+    simp only [Finset.mem_range] at hj
+    simpa [hj] using ht ⟨j, hj⟩
+  rw [Measure.map_apply hmeas (MeasurableSet.univ_pi ht), hpre,
+    Measure.infinitePi_pi (μ := fun _ : ℕ => (p : Measure α)) hmt]
+  rw [Finset.prod_range fun j => (p : Measure α) (if h : j < n then t ⟨j, h⟩ else Set.univ)]
+  exact Finset.prod_congr rfl fun i _ => by simp [i.2]
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives
