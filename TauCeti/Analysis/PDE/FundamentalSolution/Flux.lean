@@ -79,7 +79,6 @@ theorem fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r θ : ℝ} (h
 
 /-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
 positively oriented circle around its pole. -/
-@[simp]
 theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
     {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
     r * fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
@@ -89,7 +88,6 @@ theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
 
 /-- The outward flux of the planar Newtonian kernel through any circle centered at its pole is
 `-1`. The factor `r` is the arclength Jacobian in the angular parametrization. -/
-@[simp]
 theorem integral_fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r : ℝ} (hr : 0 < r) :
     r * ∫ θ : ℝ in 0..2 * Real.pi,
         fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
