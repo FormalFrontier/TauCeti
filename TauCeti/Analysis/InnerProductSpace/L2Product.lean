@@ -59,7 +59,8 @@ complex `L²` spaces.
 * `TauCeti.orthonormal_L2prodMul` — products of orthonormal families are orthonormal.
 * `TauCeti.orthogonal_span_range_L2prodMul_eq_bot` — the completeness half: the basis tensors have
   trivial orthogonal complement.
-* `TauCeti.coeFn_prodHilbertBasis` — the `(i, j)` basis vector is a.e. the product `b₁ i ⊗ b₂ j`.
+* `TauCeti.prodHilbertBasis_apply` — the `(i, j)` basis vector is the tensor `b₁ i ⊗ b₂ j`;
+  `TauCeti.coeFn_prodHilbertBasis` gives its a.e. representative.
 -/
 
 public section
@@ -367,11 +368,19 @@ noncomputable def prodHilbertBasis [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι�
     (orthonormal_L2prodMul b₁.orthonormal b₂.orthonormal)
     (orthogonal_span_range_L2prodMul_eq_bot b₁ b₂)
 
+/-- The `(i, j)` vector of `prodHilbertBasis` is the tensor of the `i`-th and `j`-th basis
+vectors. -/
+@[simp]
+theorem prodHilbertBasis_apply [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
+    (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) (i : ι₁) (j : ι₂) :
+    prodHilbertBasis b₁ b₂ (i, j) = L2prodMul (b₁ i) (b₂ j) := by
+  rw [prodHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+
 /-- The `(i, j)` vector of `prodHilbertBasis` is a.e. the pointwise product `b₁ i ⊗ b₂ j`. -/
 theorem coeFn_prodHilbertBasis [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
     (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) (i : ι₁) (j : ι₂) :
     ⇑(prodHilbertBasis b₁ b₂ (i, j)) =ᵐ[μ.prod ν] fun q : α × β => b₁ i q.1 * b₂ j q.2 := by
-  rw [prodHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+  rw [prodHilbertBasis_apply]
   exact coeFn_L2prodMul _ _
 
 end TauCeti
