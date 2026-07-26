@@ -82,10 +82,9 @@ theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
 by its image under the underlying group homomorphism. -/
 @[simp]
 theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r : R) :
-    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)
+    MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ)
         (MonoidAlgebra.single g r) =
       MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
-  rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
