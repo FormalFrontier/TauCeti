@@ -138,10 +138,13 @@ identity is the joint disintegration with the `ν` coordinate integrated out.
 Concretely, evaluating the joint identity on the rectangle `univ ×ˢ B` reads off the block's
 marginal law, because `δ_{ν ω}` contributes a factor `1` on `univ`.
 
-No measurability hypothesis on the coordinates is needed: `ConditionallyIIDWith` already forces it.
-Each mixing kernel is a probability measure, so the mixture has the same total mass as `μ`; if the
-pair map failed to be a.e. measurable then `Measure.map` would collapse the left side to `0`, and
-the identity would force `μ = 0`. -/
+No measurability hypothesis on the coordinates is needed. What `ConditionallyIIDWith` forces is
+that each selected block map — and hence each individual coordinate — is `μ`-**a.e.** measurable;
+it says nothing about pointwise measurability, which can fail on a non-measurable null set. That
+is enough here. Each mixing kernel is a probability measure, so the mixture has the same total
+mass as `μ`; if the pair map failed to be a.e. measurable then `Measure.map` would collapse the
+left side to `0`, and the identity would force `μ = 0`, which is the degenerate case where the
+conclusion holds anyway. -/
 theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
   refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
