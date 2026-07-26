@@ -145,16 +145,14 @@ lemma orthogonal_cotangentFiber :
 lemma isLagrangian_cotangentZeroSection :
     (cotangentSymplecticForm (V := V)).IsLagrangian
       (cotangentZeroSection (V := V)) := by
-  rw [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le]
-  exact ⟨(orthogonal_cotangentZeroSection (V := V)).ge,
-    (orthogonal_cotangentZeroSection (V := V)).le⟩
+  simp [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le,
+    orthogonal_cotangentZeroSection]
 
 /-- The vertical subspace `{0} × V*` is Lagrangian for the canonical cotangent symplectic form. -/
 lemma isLagrangian_cotangentFiber :
     (cotangentSymplecticForm (V := V)).IsLagrangian (cotangentFiber (V := V)) := by
-  rw [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le]
-  exact ⟨(orthogonal_cotangentFiber (V := V)).ge,
-    (orthogonal_cotangentFiber (V := V)).le⟩
+  simp [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le,
+    orthogonal_cotangentFiber]
 
 end SymplecticForm
 
