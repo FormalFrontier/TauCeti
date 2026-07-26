@@ -9,6 +9,7 @@ public import Mathlib.Analysis.InnerProductSpace.l2Space
 public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Pi
+public import TauCeti.MeasureTheory.Integral.PiSystem
 
 /-!
 # Pointwise products of `L²` functions on a finite product measure
@@ -125,9 +126,7 @@ theorem norm_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) : ‖L2piMul F‖ = ∏ i, �
       push_cast
       rw [h, ← Finset.prod_pow]
     exact_mod_cast hc
-  calc ‖L2piMul F‖ = Real.sqrt (‖L2piMul F‖ ^ 2) := (Real.sqrt_sq (norm_nonneg _)).symm
-    _ = Real.sqrt ((∏ i, ‖F i‖) ^ 2) := by rw [h3]
-    _ = ∏ i, ‖F i‖ := Real.sqrt_sq (Finset.prod_nonneg fun i _ => norm_nonneg _)
+  exact (sq_eq_sq₀ (norm_nonneg _) (Finset.prod_nonneg fun i _ => norm_nonneg _)).1 h3
 
 section Slot
 
@@ -165,32 +164,33 @@ theorem L2piMul_update_smul (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (c : 𝕜) (v
     with x h h1 hsmul hv
   rw [h, hsmul, Pi.smul_apply, h1, hv, Pi.smul_apply, smul_eq_mul, smul_eq_mul, mul_assoc]
 
+/-- The norm of a tensor with its `j`-th coordinate replaced. -/
+theorem norm_L2piMul_update (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 (μ j)) :
+    ‖L2piMul (Function.update F j v)‖ = (∏ i ∈ Finset.univ.erase j, ‖F i‖) * ‖v‖ := by
+  rw [norm_L2piMul, ← Finset.mul_prod_erase _ _ (Finset.mem_univ j), Function.update_self, mul_comm]
+  congr 1
+  refine Finset.prod_congr rfl fun i hi => ?_
+  rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
+
 /-- Tensoring with all coordinates but `j` held fixed, as a continuous linear map. -/
-@[expose] noncomputable def L2piMulSlot (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) :
+noncomputable def L2piMulSlot (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) :
     Lp 𝕜 2 (μ j) →L[𝕜] Lp 𝕜 2 (Measure.pi μ) :=
   LinearMap.mkContinuous
     { toFun := fun v => L2piMul (Function.update F j v)
       map_add' := L2piMul_update_add j F
       map_smul' := fun c v => L2piMul_update_smul j F c v }
-    (∏ i ∈ Finset.univ.erase j, ‖F i‖) fun v => by
-      change ‖L2piMul (Function.update F j v)‖ ≤ (∏ i ∈ Finset.univ.erase j, ‖F i‖) * ‖v‖
-      rw [norm_L2piMul, ← Finset.mul_prod_erase _ _ (Finset.mem_univ j), Function.update_self,
-        mul_comm]
-      refine mul_le_mul_of_nonneg_right (le_of_eq ?_) (norm_nonneg v)
-      refine Finset.prod_congr rfl fun i hi => ?_
-      rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
+    (∏ i ∈ Finset.univ.erase j, ‖F i‖) fun v => le_of_eq (norm_L2piMul_update j F v)
 
 /-- `L2piMulSlot` applies as the tensor. -/
 @[simp]
 theorem L2piMulSlot_apply (j : ι) (F : ∀ i, Lp 𝕜 2 (μ i)) (v : Lp 𝕜 2 (μ j)) :
-    L2piMulSlot j F v = L2piMul (Function.update F j v) := rfl
+    L2piMulSlot j F v = L2piMul (Function.update F j v) :=
+  LinearMap.mkContinuous_apply _ _ _ _
 
 end Slot
 
 /-- **Basis tensors detect all tensors.** A vector orthogonal to every tensor built from
-coordinatewise Hilbert bases is orthogonal to *every* elementary tensor. The coordinates are
-generalized one at a time, by expanding a single slot along its basis and pushing the sum through
-the continuous linear map `L2piMulSlot`. -/
+coordinatewise Hilbert bases is orthogonal to *every* elementary tensor. -/
 theorem inner_L2piMul_eq_zero_of_forall_basis {κ : ι → Type*}
     (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) {h : Lp 𝕜 2 (Measure.pi μ)}
     (hz : ∀ k : ∀ i, κ i, inner 𝕜 h (L2piMul (fun i => b i (k i))) = 0)
@@ -219,34 +219,13 @@ theorem inner_L2piMul_eq_zero_of_forall_basis {κ : ι → Type*}
               exact ⟨c, by rw [Function.update_self]⟩
             · rw [Function.update_of_ne hij]
               exact hF i fun hmem => (Finset.mem_insert.1 hmem).elim hij hi
-          simp [hupd]
+          simp only [ContinuousLinearMap.comp_apply, map_smul, L2piMulSlot_apply,
+            innerSL_apply_apply, hupd, smul_zero]
         have hfin := (hasSum_zero.unique hzero).symm
-        simpa [Function.update_eq_self] using hfin
+        rw [ContinuousLinearMap.comp_apply, L2piMulSlot_apply, Function.update_eq_self,
+          innerSL_apply_apply] at hfin
+        exact hfin
   exact key Finset.univ F fun i hi => absurd (Finset.mem_univ i) hi
-
-section PiSystem
-
-variable {X : Type*} {m0 : MeasurableSpace X}
-
-/-- **The Dynkin (π-λ) step for Bochner integrals.** On a finite measure, a function whose integral
-vanishes on the whole space and on every member of a π-system generating the σ-algebra has vanishing
-integral on every measurable set. This is the Bochner analogue of Mathlib's
-`lintegral_eq_lintegral_of_isPiSystem`, and is stated for a general π-system so that both rectangles
-and boxes can feed it. -/
-theorem setIntegral_eq_zero_of_isPiSystem {ρ : Measure X} [IsFiniteMeasure ρ] {S : Set (Set X)}
-    (hgen : m0 = MeasurableSpace.generateFrom S) (hpi : IsPiSystem S) {f : X → 𝕜}
-    (hf : Integrable f ρ) (huniv : ∫ x, f x ∂ρ = 0) (hS : ∀ s ∈ S, ∫ x in s, f x ∂ρ = 0) :
-    ∀ u, MeasurableSet u → ∫ x in u, f x ∂ρ = 0 := by
-  refine MeasurableSpace.induction_on_inter (C := fun u _ => ∫ x in u, f x ∂ρ = 0) hgen hpi ?_ hS
-    ?_ ?_
-  · simp
-  · intro u hu ih
-    rw [setIntegral_compl hu hf, huniv, ih, sub_zero]
-  · intro u hd hm ih
-    rw [integral_iUnion hm hd hf.integrableOn]
-    simp [ih]
-
-end PiSystem
 
 /-- The tensor of indicators is the indicator of the box, so orthogonality to every elementary
 tensor makes the integral over every finite-measure box vanish. -/
@@ -277,9 +256,8 @@ theorem setIntegral_pi_eq_zero_of_forall_inner {h : Lp 𝕜 2 (Measure.pi μ)}
     _ = inner 𝕜 (L2piMul F) h := (L2.inner_def _ _).symm
     _ = 0 := hz F
 
-/-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by the
-finite boxes `∏ i, spanningSets (μ i) n`, run the Dynkin step inside each box, and pass to the
-monotone limit. -/
+/-- A vector orthogonal to every elementary tensor has vanishing integral over every measurable set
+of finite measure. -/
 theorem setIntegral_eq_zero_of_forall_inner_pi {h : Lp 𝕜 2 (Measure.pi μ)}
     (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0)
     (u : Set (∀ i, α i)) (hu : MeasurableSet u) (hfin : Measure.pi μ u < ⊤) :
@@ -294,9 +272,6 @@ theorem setIntegral_eq_zero_of_forall_inner_pi {h : Lp 𝕜 2 (Measure.pi μ)}
   have hb : ∀ n, ∫ x in u ∩ (Set.univ.pi fun i => spanningSets (μ i) n),
       h x ∂(Measure.pi μ) = 0 := by
     intro n
-    have hfm : IsFiniteMeasure
-        ((Measure.pi μ).restrict (Set.univ.pi fun i => spanningSets (μ i) n)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact hboxfin n⟩
     have huniv : ∫ x, h x ∂((Measure.pi μ).restrict
         (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 :=
       setIntegral_pi_eq_zero_of_forall_inner hz _ (fun i => measurableSet_spanningSets (μ i) n)
