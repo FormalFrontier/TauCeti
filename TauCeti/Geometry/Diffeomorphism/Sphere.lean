@@ -75,41 +75,43 @@ namespace LinearIsometryEquiv
 
 section InnerProduct
 
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable {n : ℕ} [Fact (finrank ℝ E = n + 1)] {m : ℕ∞ω}
+variable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+variable [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+variable {n k : ℕ} [Fact (finrank ℝ E = n + 1)] [Fact (finrank ℝ F = k + 1)] {m : ℕ∞ω}
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is `C^m`, for every
 smoothness exponent `m`. -/
-theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] E) :
-    ContMDiff (𝓡 n) (𝓡 n) m (unitSphereEquiv e) := by
-  have h : ContMDiff (𝓡 n) 𝓘(ℝ, E) m fun x : sphere (0 : E) 1 => e (x : E) :=
-    (e.toContinuousLinearEquiv : E →L[ℝ] E).contDiff.comp_contMDiff contMDiff_coe_sphere
-  refine (h.codRestrict_sphere (n := n) fun x =>
+theorem contMDiff_unitSphereEquiv (e : E ≃ₗᵢ[ℝ] F) :
+    ContMDiff (𝓡 n) (𝓡 k) m (unitSphereEquiv e) := by
+  have h : ContMDiff (𝓡 n) 𝓘(ℝ, F) m fun x : sphere (0 : E) 1 => e (x : E) :=
+    (e.toContinuousLinearEquiv : E →L[ℝ] F).contDiff.comp_contMDiff contMDiff_coe_sphere
+  refine (h.codRestrict_sphere (n := k) fun x =>
     (map_mem_unitSphere_iff e _).2 x.2).congr fun x => ?_
   exact Subtype.ext (coe_unitSphereEquiv_apply e x)
 
-/-- The diffeomorphism of the unit sphere induced by a linear isometry equivalence of `E`. -/
-def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] E) (m : ℕ∞ω) :
-    sphere (0 : E) 1 ≃ₘ^m⟮𝓡 n, 𝓡 n⟯ sphere (0 : E) 1 where
+/-- The diffeomorphism between unit spheres induced by a linear isometry equivalence. -/
+def unitSphereDiffeomorph (e : E ≃ₗᵢ[ℝ] F) (m : ℕ∞ω) :
+    sphere (0 : E) 1 ≃ₘ^m⟮𝓡 n, 𝓡 k⟯ sphere (0 : F) 1 where
   toEquiv := unitSphereEquiv e
   contMDiff_toFun := contMDiff_unitSphereEquiv e
   contMDiff_invFun := by
     simpa only [unitSphereEquiv_symm] using
-      (contMDiff_unitSphereEquiv (n := n) e.symm)
+      (contMDiff_unitSphereEquiv (n := k) (k := n) e.symm)
 
 @[simp]
-theorem coe_unitSphereDiffeomorph_apply (e : E ≃ₗᵢ[ℝ] E) (x : sphere (0 : E) 1) :
-    ((unitSphereDiffeomorph (n := n) e m x : sphere (0 : E) 1) : E) = e x :=
+theorem coe_unitSphereDiffeomorph_apply (e : E ≃ₗᵢ[ℝ] F) (x : sphere (0 : E) 1) :
+    ((unitSphereDiffeomorph (n := n) (k := k) e m x : sphere (0 : F) 1) : F) = e x :=
   coe_unitSphereEquiv_apply e x
 
 @[simp]
-theorem unitSphereDiffeomorph_toEquiv (e : E ≃ₗᵢ[ℝ] E) :
-    (unitSphereDiffeomorph (n := n) e m).toEquiv = unitSphereEquiv e :=
+theorem unitSphereDiffeomorph_toEquiv (e : E ≃ₗᵢ[ℝ] F) :
+    (unitSphereDiffeomorph (n := n) (k := k) e m).toEquiv = unitSphereEquiv e :=
   (rfl)
 
 @[simp]
-theorem unitSphereDiffeomorph_symm (e : E ≃ₗᵢ[ℝ] E) :
-    (unitSphereDiffeomorph (n := n) e m).symm = unitSphereDiffeomorph e.symm m :=
+theorem unitSphereDiffeomorph_symm (e : E ≃ₗᵢ[ℝ] F) :
+    (unitSphereDiffeomorph (n := n) (k := k) e m).symm =
+      unitSphereDiffeomorph (n := k) (k := n) e.symm m :=
   _root_.Diffeomorph.ext fun x => Equiv.congr_fun (by
     rw [_root_.Diffeomorph.symm_toEquiv, unitSphereDiffeomorph_toEquiv,
       unitSphereDiffeomorph_toEquiv,
@@ -119,7 +121,7 @@ theorem unitSphereDiffeomorph_symm (e : E ≃ₗᵢ[ℝ] E) :
 `O(n + 1)` given by `LinearIsometryEquiv.neg`. In particular Mathlib's `contMDiff_neg_sphere` is
 the case `e = -1` of `contMDiff_unitSphereEquiv`. -/
 theorem unitSphereDiffeomorph_neg_apply (x : sphere (0 : E) 1) :
-    unitSphereDiffeomorph (n := n) (_root_.LinearIsometryEquiv.neg ℝ) m x = -x := by
+    unitSphereDiffeomorph (n := n) (k := n) (_root_.LinearIsometryEquiv.neg ℝ) m x = -x := by
   ext
   simp
 
