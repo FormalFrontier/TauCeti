@@ -44,10 +44,10 @@ theorem fderiv_planarNewtonianKernel_self {z : ℂ} (hz : z ≠ 0) :
       HasFDerivAt (fun w : ℂ ↦ Real.log ‖w‖)
         ((‖z‖ : ℝ)⁻¹ • fderiv ℝ (fun w : ℂ ↦ ‖w‖) z) z :=
     hnorm.hasFDerivAt.log (norm_ne_zero_iff.mpr hz)
-  rw [show planarNewtonianKernel =
-    fun w : ℂ ↦ -(2 * Real.pi)⁻¹ * Real.log ‖w‖ by
-      ext w
-      exact planarNewtonianKernel_def w]
+  have hkernel :
+      planarNewtonianKernel = fun w : ℂ ↦ -(2 * Real.pi)⁻¹ * Real.log ‖w‖ :=
+    funext planarNewtonianKernel_def
+  rw [hkernel]
   rw [(hlog.const_mul (-(2 * Real.pi)⁻¹)).fderiv]
   simp only [smul_apply, smul_eq_mul]
   rw [DifferentiableAt.fderiv_norm_self hnorm]
