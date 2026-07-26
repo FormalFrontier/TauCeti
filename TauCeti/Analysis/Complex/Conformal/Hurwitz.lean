@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Complex.LocallyUniformLimit
-public import TauCeti.Analysis.Complex.Conformal.Rouche
+import TauCeti.Analysis.Complex.Conformal.Rouche
 import Mathlib.Analysis.Analytic.IsolatedZeros
 
 /-!
@@ -44,7 +44,7 @@ namespace TauCeti
 
 open Filter Metric Set Topology
 
-variable {U : Set ℂ} {F : ℕ → ℂ → ℂ} {f : ℂ → ℂ}
+variable {U : Set ℂ} {ι : Type*} {φ : Filter ι} {F : ι → ℂ → ℂ} {f : ℂ → ℂ}
 
 /-- Around an isolated zero of an analytic function on an open set, there is a closed disc in the
 set whose bounding circle contains no zeros. -/
@@ -111,10 +111,11 @@ private theorem finsum_analyticOrderNatAt_pos_of_apply_eq_zero
 /-- **Hurwitz's theorem.** A locally uniform limit of eventually zero-free holomorphic functions
 on a preconnected open set is either identically zero there or is itself zero-free there. -/
 theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
+    [φ.NeBot]
     (hU : IsOpen U) (hconn : IsPreconnected U)
-    (hF : ∀ᶠ n in atTop, DifferentiableOn ℂ (F n) U)
-    (hconv : TendstoLocallyUniformlyOn F f atTop U)
-    (hne : ∀ᶠ n in atTop, ∀ z ∈ U, F n z ≠ 0) :
+    (hF : ∀ᶠ n in φ, DifferentiableOn ℂ (F n) U)
+    (hconv : TendstoLocallyUniformlyOn F f φ U)
+    (hne : ∀ᶠ n in φ, ∀ z ∈ U, F n z ≠ 0) :
     Set.EqOn f 0 U ∨ ∀ z ∈ U, f z ≠ 0 := by
   have hf := hconv.differentiableOn hF hU
   rw [or_iff_not_imp_left]
@@ -138,7 +139,7 @@ theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
       (NormedSpace.sphere_nonempty.2 hr.le) hcont hsphere
   have hunif := (tendstoLocallyUniformlyOn_iff_forall_isCompact hU).1 hconv
     (sphere z r) (fun w hw => hclosed (sphere_subset_closedBall hw)) (isCompact_sphere z r)
-  have hevent : ∀ᶠ n in atTop, ∀ w ∈ sphere z r, ‖f w - F n w‖ < ε := by
+  have hevent : ∀ᶠ n in φ, ∀ w ∈ sphere z r, ‖f w - F n w‖ < ε := by
     simpa [dist_eq_norm] using (Metric.tendstoUniformlyOn_iff.1 hunif ε hε)
   obtain ⟨n, hn, hnF, hnne⟩ := (hevent.and (hF.and hne)).exists
   have hrouche := rouche hr
@@ -162,7 +163,7 @@ theorem eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn
     intro w hw
     rcases hw with ⟨hwb, hw⟩
     simp only [Function.mem_support, ne_eq] at hw ⊢
-    rw [divisor_eq_analyticOrderNatAt
+    rw [MeromorphicOn.AnalyticOnNhd.divisor_eq_analyticOrderNatAt
       ((hf.analyticOnNhd hU).mono (ball_subset_closedBall.trans hclosed)) hwb]
     exact_mod_cast hw
   have hright := finsum_analyticOrderNatAt_pos_of_apply_eq_zero
