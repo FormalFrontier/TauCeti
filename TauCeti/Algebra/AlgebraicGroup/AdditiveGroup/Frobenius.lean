@@ -85,8 +85,8 @@ injective. -/
 theorem expChar_tensorSquare :
     ExpChar (SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R) p :=
   expChar_of_injective_algebraMap
-    (Function.LeftInverse.injective (g := Coalgebra.counit (R := R))
-      fun r => Bialgebra.counit_algebraMap r) p
+    (Bialgebra.algebraMap_injective (R := R)
+      (SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R)) p
 
 /-- **The Frobenius power `xᵖ` is primitive.** In exponential characteristic `p` the
 comultiplication of `xᵖ` is `xᵖ ⊗ 1 + 1 ⊗ xᵖ`, by the freshman's dream applied to the primitive
