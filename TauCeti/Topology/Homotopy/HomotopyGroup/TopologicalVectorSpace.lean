@@ -49,7 +49,7 @@ namespace HomotopyGroup
 
 /-- Every homotopy group of a real topological vector space is a subsingleton. This includes
 dimension zero: a real topological vector space is path connected. -/
-theorem subsingleton_of_topologicalVectorSpace : Subsingleton (HomotopyGroup N E x) := by
+instance subsingleton_of_topologicalVectorSpace : Subsingleton (HomotopyGroup N E x) := by
   constructor
   intro a b
   refine Quotient.inductionOn₂ a b fun f g ↦ ?_

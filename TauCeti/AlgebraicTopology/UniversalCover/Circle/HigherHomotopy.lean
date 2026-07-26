@@ -50,20 +50,18 @@ variable {N : Type*} [Nontrivial N] (p : ℝ) (x : AddCircle p)
 
 /-- Every higher homotopy group of a real circle is trivial. The index type `N` being
 nontrivial expresses that the dimension is at least two. -/
-theorem subsingleton_homotopyGroup : Subsingleton (HomotopyGroup N (AddCircle p) x) := by
+instance subsingleton_homotopyGroup : Subsingleton (HomotopyGroup N (AddCircle p) x) := by
   classical
   obtain ⟨x, rfl⟩ := QuotientAddGroup.mk_surjective x
-  letI : Subsingleton (HomotopyGroup N ℝ x) :=
-    HomotopyGroup.subsingleton_of_topologicalVectorSpace
   exact (TauCeti.IsCoveringMap.homotopyGroupMulEquiv (N := N)
     (_root_.AddCircle.isCoveringMap_coe p) x).toEquiv.subsingleton_congr.mp inferInstance
 
 /-- Every higher homotopy class of a real circle is the identity. -/
 theorem homotopyGroup_eq_one [DecidableEq N] (a : HomotopyGroup N (AddCircle p) x) : a = 1 :=
-  @Subsingleton.elim _ (subsingleton_homotopyGroup p x) _ _
+  Subsingleton.elim _ _
 
 /-- The homotopy group `π_(n + 2)` of a real circle is trivial, for every `n`. -/
-theorem subsingleton_homotopyGroupPi (n : ℕ) :
+instance subsingleton_homotopyGroupPi (n : ℕ) :
     Subsingleton (π_ (n + 2) (AddCircle p) x) :=
   subsingleton_homotopyGroup p x
 
