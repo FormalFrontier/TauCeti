@@ -47,6 +47,8 @@ point to the whole disc — neither `f` nor `g` vanishes identically near any po
 
 * `TauCeti.rouche` — if `‖f z - g z‖ < ‖f z‖` on `sphere c R`, then `f` and `g` have equal zero
   counts in `ball c R`, each counted with multiplicity.
+* `TauCeti.divisor_eq_order` — the divisor of a holomorphic function is its order of vanishing;
+  exposed so downstream zero-counting arguments can reuse it.
 
 ## Coordination with upstream Mathlib
 
@@ -107,8 +109,12 @@ private lemma circleIntegrable_logDeriv (hR : 0 < R)
   exact hd.div hc hne
 
 /-- For a holomorphic function the divisor records the order of vanishing. The identity also holds
-at a point of infinite order, where both sides read `0`. -/
-private lemma divisor_eq_order (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ}
+at a point of infinite order, where both sides read `0`.
+
+This is the bridge between `MeromorphicOn.divisor` — which carries the finiteness of the zero set
+via `MeromorphicOn.divisor_ball_support_finite` — and the `analyticOrderNatAt` vocabulary the zero
+counts are stated in, so downstream files can reuse it instead of rebuilding the correspondence. -/
+theorem divisor_eq_order (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ}
     (hz : z ∈ ball c R) :
     MeromorphicOn.divisor f (ball c R) z = (analyticOrderNatAt f z : ℤ) := by
   have hfb : AnalyticOnNhd ℂ f (ball c R) := hf.mono ball_subset_closedBall

@@ -5,11 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Analytic.Order
-public import Mathlib.Topology.UniformSpace.CompactConvergence
+public import Mathlib.Topology.UniformSpace.LocallyUniformConvergence
 public import TauCeti.Analysis.Complex.Conformal.Rouche
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Complex.CauchyIntegral
+import Mathlib.Analysis.Complex.LocallyUniformLimit
 
 /-!
 # Hurwitz's theorem
@@ -79,46 +79,37 @@ private lemma le_count {g : ℂ → ℂ} (hg : AnalyticOnNhd ℂ g (closedBall c
     {z₀ : ℂ} (hz₀ : z₀ ∈ ball c R) :
     analyticOrderNatAt g z₀ ≤ ∑ᶠ z ∈ ball c R, analyticOrderNatAt g z := by
   classical
-  set S := (MeromorphicOn.divisor_ball_support_finite hg.meromorphicOn).toFinset with hS
-  have hgb : AnalyticOnNhd ℂ g (ball c R) := hg.mono ball_subset_closedBall
-  have hmemS : ∀ z ∈ ball c R, analyticOrderNatAt g z ≠ 0 → z ∈ S := by
-    intro z hz hne
-    have : MeromorphicOn.divisor g (ball c R) z ≠ 0 := by
-      rw [MeromorphicOn.AnalyticOnNhd.divisor_apply hgb hz]
-      cases h : analyticOrderAt g z with
-      | top => simp [analyticOrderNatAt, h] at hne
-      | coe n => simpa [analyticOrderNatAt, h] using hne
-    simpa [hS, Set.Finite.mem_toFinset] using this
-  have hsub : (S : Set ℂ) ⊆ ball c R := fun z hz =>
-    (MeromorphicOn.divisor g (ball c R)).supportWithinDomain
-      (by simpa [hS, Set.Finite.mem_toFinset] using hz)
-  have h2 : (∑ᶠ z ∈ ball c R, analyticOrderNatAt g z) = ∑ z ∈ S, analyticOrderNatAt g z := by
-    refine finsum_mem_eq_sum_of_subset _ (fun z hz => ?_) hsub
-    obtain ⟨hzb, hzs⟩ := hz
-    simp only [Function.mem_support, ne_eq] at hzs
-    exact hmemS z hzb hzs
-  rw [h2]
-  by_cases h0 : analyticOrderNatAt g z₀ = 0
-  · simp [h0]
-  · exact Finset.single_le_sum (fun i _ => Nat.zero_le _) (hmemS z₀ hz₀ h0)
+  have hfin : (Function.support
+      fun z => ∑ᶠ (_ : z ∈ ball c R), analyticOrderNatAt g z).Finite := by
+    refine Set.Finite.subset (MeromorphicOn.divisor_ball_support_finite hg.meromorphicOn)
+      (fun z hz => ?_)
+    simp only [Function.mem_support, ne_eq] at hz
+    by_cases hzb : z ∈ ball c R
+    · simp only [hzb, finsum_true] at hz
+      simp only [Function.mem_support, ne_eq, divisor_eq_order hg hzb]
+      exact_mod_cast hz
+    · exact absurd (by simp [hzb]) hz
+  simpa [hz₀] using single_le_finsum z₀ hfin (fun _ => Nat.zero_le _)
 
 /-- **Hurwitz's theorem.** On a connected open set, a locally uniform limit of holomorphic
 functions that are nowhere zero is itself either nowhere zero or identically zero.
 
 The dichotomy is genuine: the constant sequence `F n = 1 / (n + 1)` on any `Ω` converges locally
 uniformly to `0`, so the second alternative cannot be dropped. -/
-theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsConnected Ω) {F : ℕ → ℂ → ℂ} {g : ℂ → ℂ}
-    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hg : DifferentiableOn ℂ g Ω)
+theorem hurwitz {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F : ℕ → ℂ → ℂ}
+    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
     (hne : ∀ n, ∀ z ∈ Ω, F n z ≠ 0) :
     (∀ z ∈ Ω, g z ≠ 0) ∨ (∀ z ∈ Ω, g z = 0) := by
+  have hg : DifferentiableOn ℂ g Ω :=
+    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv (Filter.Eventually.of_forall hF) hΩ
   have hgA : AnalyticOnNhd ℂ g Ω := hg.analyticOnNhd hΩ
   by_cases hzero : Set.EqOn g 0 Ω
   · exact Or.inr fun z hz => hzero hz
   refine Or.inl fun z₀ hz₀Ω hgz₀ => ?_
   -- `g` does not vanish identically near `z₀`, else the identity theorem kills it on all of `Ω`
   have htop : analyticOrderAt g z₀ ≠ ⊤ := fun h =>
-    hzero (hgA.eqOn_zero_of_preconnected_of_eventuallyEq_zero hconn.isPreconnected hz₀Ω
+    hzero (hgA.eqOn_zero_of_preconnected_of_eventuallyEq_zero hconn hz₀Ω
       (by
         have := analyticOrderAt_eq_top.mp h
         filter_upwards [this] with z hz using hz))
@@ -242,11 +233,13 @@ that set to be connected — a fact Mathlib does not currently provide for an op
 of `ℂ`. Instead, if `g` were non-constant with `g a = g b` for `a ≠ b`, we place disjoint discs
 about `a` and `b` and use `eventually_exists_eq` on each: for large `n` the injective `F n` would
 attain the single value `g a` in both discs, hence at two distinct points. -/
-theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsConnected Ω) {F : ℕ → ℂ → ℂ}
-    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hg : DifferentiableOn ℂ g Ω)
+theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω) {F : ℕ → ℂ → ℂ}
+    {g : ℂ → ℂ} (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     (hconv : TendstoLocallyUniformlyOn F g atTop Ω)
     (hinj : ∀ n, Set.InjOn (F n) Ω) :
     Set.InjOn g Ω ∨ ∃ v, ∀ z ∈ Ω, g z = v := by
+  have hg : DifferentiableOn ℂ g Ω :=
+    _root_.TendstoLocallyUniformlyOn.differentiableOn hconv (Filter.Eventually.of_forall hF) hΩ
   have hgA : AnalyticOnNhd ℂ g Ω := hg.analyticOnNhd hΩ
   by_cases hconst : ∃ v, ∀ z ∈ Ω, g z = v
   · exact Or.inr hconst
@@ -261,7 +254,7 @@ theorem hurwitz_injOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hconn : IsConnected Ω) 
         h | h
       · exfalso
         have heq := (hgA.sub analyticOnNhd_const).eqOn_zero_of_preconnected_of_eventuallyEq_zero
-          hconn.isPreconnected hx (by filter_upwards [h] with z hz using hz)
+          hconn hx (by filter_upwards [h] with z hz using hz)
         exact hconst ⟨g a, fun z hz => sub_eq_zero.mp (heq hz)⟩
       · filter_upwards [h] with z hz using sub_ne_zero.mp hz
     obtain ⟨ε₁, hε₁, h₁⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hpunct)
