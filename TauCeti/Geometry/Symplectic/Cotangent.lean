@@ -26,8 +26,8 @@ bundles in exact Lagrangian Floer theory.
 * `TauCeti.cotangentSymplecticForm_apply`: its evaluation formula.
 * `TauCeti.cotangentZeroSection`: the linear zero section `V × {0}`.
 * `TauCeti.cotangentFiber`: the linear cotangent fiber `{0} × V*`.
-* `TauCeti.isLagrangian_cotangentZeroSection`: the zero section is Lagrangian.
-* `TauCeti.isLagrangian_cotangentFiber`: the cotangent fiber is Lagrangian.
+* `TauCeti.SymplecticForm.isLagrangian_cotangentZeroSection`: the zero section is Lagrangian.
+* `TauCeti.SymplecticForm.isLagrangian_cotangentFiber`: the cotangent fiber is Lagrangian.
 
 The sign convention is the standard one `ω = -dλ`, where the tautological one-form is
 `λ_(q,p)(δq,δp) = p(δq)`.
@@ -107,6 +107,8 @@ lemma mem_cotangentFiber_iff {x : V × Module.Dual ℝ V} :
   rw [cotangentFiber, LinearMap.range_inr, LinearMap.mem_ker]
   rfl
 
+namespace SymplecticForm
+
 /-- The symplectic orthogonal of the zero section is the zero section itself. -/
 @[simp]
 lemma orthogonal_cotangentZeroSection :
@@ -143,15 +145,17 @@ lemma orthogonal_cotangentFiber :
 lemma isLagrangian_cotangentZeroSection :
     (cotangentSymplecticForm (V := V)).IsLagrangian
       (cotangentZeroSection (V := V)) := by
-  rw [SymplecticForm.isLagrangian_iff, SymplecticForm.isIsotropic_iff_le,
-    SymplecticForm.isCoisotropic_iff_le, orthogonal_cotangentZeroSection]
-  exact ⟨le_rfl, le_rfl⟩
+  rw [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le]
+  exact ⟨(orthogonal_cotangentZeroSection (V := V)).ge,
+    (orthogonal_cotangentZeroSection (V := V)).le⟩
 
 /-- The vertical subspace `{0} × V*` is Lagrangian for the canonical cotangent symplectic form. -/
 lemma isLagrangian_cotangentFiber :
     (cotangentSymplecticForm (V := V)).IsLagrangian (cotangentFiber (V := V)) := by
-  rw [SymplecticForm.isLagrangian_iff, SymplecticForm.isIsotropic_iff_le,
-    SymplecticForm.isCoisotropic_iff_le, orthogonal_cotangentFiber]
-  exact ⟨le_rfl, le_rfl⟩
+  rw [isLagrangian_iff, isIsotropic_iff_le, isCoisotropic_iff_le]
+  exact ⟨(orthogonal_cotangentFiber (V := V)).ge,
+    (orthogonal_cotangentFiber (V := V)).le⟩
+
+end SymplecticForm
 
 end TauCeti
