@@ -130,11 +130,19 @@ lemma IsJHolomorphicAt.differentiableAt {J : U → AlmostComplexStructure U}
     (hf : IsJHolomorphicAt J J' f x) : DifferentiableAt ℝ f x :=
   hf.hasFDerivAt.differentiableAt
 
+/-- The continuous-linear derivative witnessing within-set J-holomorphicity. -/
+lemma IsJHolomorphicWithinAt.hasFDerivWithinAt {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
+    (hf : IsJHolomorphicWithinAt J J' f s x) :
+    HasFDerivWithinAt f
+      (Classical.choose ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)) s x :=
+  (Classical.choose_spec ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)).1
+
 /-- A map J-holomorphic within a set at a point is differentiable within that set. -/
 lemma IsJHolomorphicWithinAt.differentiableWithinAt {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
     (hf : IsJHolomorphicWithinAt J J' f s x) : DifferentiableWithinAt ℝ f s x :=
-  hf.choose_spec.1.differentiableWithinAt
+  hf.hasFDerivWithinAt.differentiableWithinAt
 
 /-- A J-holomorphic map at a point is continuous there. -/
 lemma IsJHolomorphicAt.continuousAt {J : U → AlmostComplexStructure U}
@@ -164,18 +172,10 @@ lemma IsJHolomorphicAt.fderiv_apply_commute {J : U → AlmostComplexStructure U}
     hf.fderiv_isComplexLinear v
 
 /-- Pointwise J-holomorphicity implies J-holomorphicity within any set. -/
-lemma IsJHolomorphicAt.within {J : U → AlmostComplexStructure U}
+lemma IsJHolomorphicAt.isJHolomorphicWithinAt {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
     (hf : IsJHolomorphicAt J J' f x) : IsJHolomorphicWithinAt J J' f s x :=
   ⟨_, hf.hasFDerivAt.hasFDerivWithinAt, hf.derivative_isComplexLinear⟩
-
-/-- The continuous-linear derivative witnessing within-set J-holomorphicity. -/
-lemma IsJHolomorphicWithinAt.hasFDerivWithinAt {J : U → AlmostComplexStructure U}
-    {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
-    (hf : IsJHolomorphicWithinAt J J' f s x) :
-    HasFDerivWithinAt f
-      (Classical.choose ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)) s x :=
-  (Classical.choose_spec ((isJHolomorphicWithinAt_iff J J' f s x).mp hf)).1
 
 /-- The chosen within-set derivative is complex-linear. -/
 lemma IsJHolomorphicWithinAt.derivative_isComplexLinear {J : U → AlmostComplexStructure U}
@@ -203,7 +203,7 @@ lemma IsJHolomorphicWithinAt.fderivWithin_apply_commute
     (hf.fderivWithin_isComplexLinear hs) v
 
 /-- Within-set J-holomorphicity on a neighborhood implies pointwise J-holomorphicity. -/
-lemma IsJHolomorphicWithinAt.of_mem_nhds {J : U → AlmostComplexStructure U}
+lemma IsJHolomorphicWithinAt.isJHolomorphicAt_of_mem_nhds {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U} {x : U}
     (hf : IsJHolomorphicWithinAt J J' f s x) (hs : s ∈ nhds x) :
     IsJHolomorphicAt J J' f x :=
@@ -211,7 +211,7 @@ lemma IsJHolomorphicWithinAt.of_mem_nhds {J : U → AlmostComplexStructure U}
     hf.derivative_isComplexLinear⟩
 
 /-- A setwise J-holomorphic map is J-holomorphic within the set at each member. -/
-lemma IsJHolomorphicOn.withinAt {J : U → AlmostComplexStructure U}
+lemma IsJHolomorphicOn.isJHolomorphicWithinAt {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
     (hf : IsJHolomorphicOn J J' f s) {x : U} (hx : x ∈ s) :
     IsJHolomorphicWithinAt J J' f s x :=
@@ -233,7 +233,7 @@ lemma IsJHolomorphicOn.continuousOn {J : U → AlmostComplexStructure U}
 lemma IsJHolomorphic.isJHolomorphicOn {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V}
     (hf : IsJHolomorphic J J' f) (s : Set U) : IsJHolomorphicOn J J' f s :=
-  fun x _ ↦ (hf x).within
+  fun x _ ↦ (hf x).isJHolomorphicWithinAt
 
 /-- A globally J-holomorphic map is differentiable. -/
 lemma IsJHolomorphic.differentiable {J : U → AlmostComplexStructure U}
@@ -296,6 +296,7 @@ lemma isJHolomorphic_constStructure_iff (J : AlmostComplexStructure U)
   rfl
 
 /-- The identity map is J-holomorphic for every varying almost complex structure. -/
+@[simp]
 lemma isJHolomorphic_id (J : U → AlmostComplexStructure U) :
     IsJHolomorphic J J id := by
   intro x
@@ -303,6 +304,7 @@ lemma isJHolomorphic_id (J : U → AlmostComplexStructure U) :
   exact isComplexLinearMap_id (J x)
 
 /-- A constant map is J-holomorphic for arbitrary source and target structures. -/
+@[simp]
 lemma isJHolomorphic_const (J : U → AlmostComplexStructure U)
     (J' : V → AlmostComplexStructure V) (c : V) :
     IsJHolomorphic J J' (fun _ ↦ c) := by
