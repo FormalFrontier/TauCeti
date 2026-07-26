@@ -23,11 +23,15 @@ for the first derivative within `[0, ∞)`.
 
 * `TauCeti.IsCompletelyMonotone.neg_one_pow_mul_taylor_remainder_nonneg`: the Taylor integral
   remainder has sign `(-1)ⁿ`.
+* `TauCeti.IsCompletelyMonotone.continuousOn_iteratedDerivWithin_uIcc`: every iterated derivative
+  within `[0, ∞)` is continuous on a compact interval `[x, T] ⊆ [0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub`: on a compact
   interval in `[0, ∞)`, the integral of `-f'` is the endpoint drop `f x - f T`.
 * `TauCeti.IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn`,
   `TauCeti.IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one`: integrability and the
   improper integral of `-f'` on `(0, ∞)`, represented as `iteratedDerivWithin 1`.
+* `TauCeti.IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one_of_nonneg`: the same
+  improper integral from an arbitrary nonnegative endpoint, `∫ₓ^∞ (-f') = f x - L`.
 
 ## References
 
@@ -104,6 +108,15 @@ private lemma IsCompletelyMonotone.iteratedDerivWithin_one_nonpos
     iteratedDerivWithin 1 f (Ici 0) t ≤ 0 := by
   rw [iteratedDerivWithin_one]; exact hf.derivWithin_nonpos ht
 
+/-- Every iterated derivative within `[0, ∞)` of a completely monotone function is continuous on
+the interval spanned by any two nonnegative endpoints. The endpoints need no ordering: `uIcc` is
+the unordered interval, and `[0, ∞)` is order-connected. -/
+lemma IsCompletelyMonotone.continuousOn_iteratedDerivWithin_uIcc (hcm : IsCompletelyMonotone f)
+    (m : ℕ) {x T : ℝ} (hx : 0 ≤ x) (hT : 0 ≤ T) :
+    ContinuousOn (iteratedDerivWithin m f (Ici 0)) (uIcc x T) :=
+  (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top m)
+    (uniqueDiffOn_Ici 0)).mono (ordConnected_Ici.uIcc_subset hx hT)
+
 /-- On a compact interval in `[0, ∞)`, the integral of `-f'` for a completely monotone
 function is the endpoint drop, with the derivative taken within `[0, ∞)`. -/
 lemma IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub
@@ -142,22 +155,27 @@ lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn
     fun t ht => hcm.iteratedDerivWithin_one_nonpos ht.le
   exact (integrableOn_Ioi_deriv_of_nonpos hcont hderiv hneg hL).neg
 
-/-- The improper integral `∫₀^∞ (-f') dt = f(0) - L` for completely monotone functions. -/
-lemma IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one
-    (hcm : IsCompletelyMonotone f) {L : ℝ} (hL : Tendsto f atTop (nhds L)) :
-    ∫ t in Ioi 0, -iteratedDerivWithin 1 f (Ici 0) t = f 0 - L := by
-  have hcont : ContinuousWithinAt f (Ici 0) 0 :=
-    hcm.contDiffOn.continuousOn.continuousWithinAt self_mem_Ici
-  have hderiv : ∀ t ∈ Ioi 0,
-      HasDerivAt f (iteratedDerivWithin 1 f (Ici 0) t) t := by
-    intro t ht
-    exact hcm.hasDerivAt_iteratedDerivWithin_succ 0 ht
-  have hneg : ∀ t ∈ Ioi 0, iteratedDerivWithin 1 f (Ici 0) t ≤ 0 :=
-    fun t ht => hcm.iteratedDerivWithin_one_nonpos ht.le
-  have hFTC :
-      ∫ t in Ioi 0, iteratedDerivWithin 1 f (Ici 0) t = L - f 0 :=
+/-- The improper integral `∫ₓ^∞ (-f') dt = f x - L` from an arbitrary nonnegative endpoint `x`,
+for a completely monotone function with limit `L` at infinity. -/
+lemma IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one_of_nonneg
+    (hcm : IsCompletelyMonotone f) {x : ℝ} (hx : 0 ≤ x) {L : ℝ}
+    (hL : Tendsto f atTop (nhds L)) :
+    ∫ t in Ioi x, -iteratedDerivWithin 1 f (Ici 0) t = f x - L := by
+  have hcont : ContinuousWithinAt f (Ici x) x :=
+    (hcm.contDiffOn.continuousOn.continuousWithinAt hx).mono (Ici_subset_Ici.mpr hx)
+  have hderiv : ∀ t ∈ Ioi x, HasDerivAt f (iteratedDerivWithin 1 f (Ici 0) t) t :=
+    fun t ht => hcm.hasDerivAt_iteratedDerivWithin_succ 0 (hx.trans_lt ht)
+  have hneg : ∀ t ∈ Ioi x, iteratedDerivWithin 1 f (Ici 0) t ≤ 0 :=
+    fun t ht => hcm.iteratedDerivWithin_one_nonpos (hx.trans ht.le)
+  have hFTC : ∫ t in Ioi x, iteratedDerivWithin 1 f (Ici 0) t = L - f x :=
     integral_Ioi_of_hasDerivAt_of_nonpos hcont hderiv hneg hL
   rw [MeasureTheory.integral_neg, hFTC]
   ring
+
+/-- The improper integral `∫₀^∞ (-f') dt = f(0) - L` for completely monotone functions. -/
+lemma IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one
+    (hcm : IsCompletelyMonotone f) {L : ℝ} (hL : Tendsto f atTop (nhds L)) :
+    ∫ t in Ioi 0, -iteratedDerivWithin 1 f (Ici 0) t = f 0 - L :=
+  hcm.integral_Ioi_neg_iteratedDerivWithin_one_of_nonneg le_rfl hL
 
 end TauCeti

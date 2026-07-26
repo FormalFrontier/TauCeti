@@ -5,26 +5,30 @@ This is an EMERGENCY channel, not a "ask the humans for help" queue. Every alert
 here means a piece of Tau Ceti's own automation was supposed to make progress and
 could not unstick itself: a bump that will not cross a breaking change, a green PR
 the merge machinery never merged, a scheduled job that stopped firing, main gone
-red. The expected response to any alert is to FIX THE INFRASTRUCTURE (a script, a
-workflow, a pin, a guard) so the situation cannot recur -- not to hand-hold one PR
-and move on. If an alert can only ever be resolved by a human doing a one-off
-favour, it does not belong here; see the "deliberately NOT alerted" list below.
+red. The expected response to any alert is to FIX THE INFRASTRUCTURE, e.g. a
+script, a workflow, a pin, or a guard, so that the situation cannot recur. Do not
+hand-hold one PR and move on. If an alert can only ever be resolved by a human
+doing a one-off favour, it does not belong here; see the "deliberately NOT
+alerted" list below.
 
 Detectors (each names the infra failure it implies):
 
   1. stuck-bump      The last-known-good bump PR (branch hopscotch/lkg-bump) has a
                      RED `build` check that has stayed red past a grace window. The
                      daily bump cannot cross a mathlib breaking change on its own;
-                     something (a proof, scripts/lint-env.sh, a guard) needs a fix.
+                     something needs a fix, e.g. a proof, scripts/lint-env.sh, or a
+                     guard.
   2. stale-pin       main's mathlib pin has not moved in several days. The bump has
-                     stopped advancing (a wedged PR, an unresolved first-known-bad
-                     freeze, or update.yml silently broken).
+                     stopped advancing, e.g. a wedged PR, an unresolved
+                     first-known-bad freeze, or update.yml silently broken.
   3. stranded-pr     A PR that is in-scope (TauCeti/ + allowed roots, bump-guard
                      green for any pin change), `build` green, every blocking
                      rubric green at HEAD, not draft/hold, mergeable, and quiet for
                      the grace window. auto-merge / the queue / merge-sweep broke.
-  4. review-stuck    An open `Review stuck: PR #N` issue: the review engine
-                     self-flagged a PR it cannot resolve.
+  4. review-stuck    An open `Review stuck: PR #N` issue whose PR #N is also still
+                     open: the review engine self-flagged a PR it cannot resolve.
+                     An issue left open after its PR merged or closed is stale
+                     bookkeeping by the (out-of-repo) worker, not a live wedge.
   5. dead-scheduler  A scheduled workflow is missing, disabled, or its last
                      SCHEDULED run is older than its cadence + slack. GitHub
                      disabled the cron (60-day inactivity), or it errors at dispatch.
@@ -54,9 +58,10 @@ Each run reconciles the topic against live GitHub state:
     rather than editing the buried one, so a re-fired incident is actually seen.
 There are no @-mentions (the topic is watched, not pinged).
 
-FAIL CLOSED, never fail open. A detector that raises (GitHub outage, rate limit,
-bug) does NOT clear its alerts: its key-prefix is marked "unknown" for the run and
-existing messages under that prefix are left exactly as they are. The alternative
+FAIL CLOSED, never fail open. A detector may raise, e.g. on a GitHub outage, a rate
+limit, or a bug. When it does, its alerts are NOT cleared: its key-prefix is marked
+"unknown" for the run and existing messages under that prefix are left exactly as
+they are. The alternative
 -- treating "the check failed" as "the emergency is over" -- is the worst possible
 behaviour for a watchdog. Only a genuinely-absent alert from a detector that ran
 cleanly is resolved.
@@ -215,9 +220,9 @@ def detect_stuck_bump():
                     f"https://github.com/{REPO}/pull/{pr['number']} has had a red "
                     f"`build` check and has been open over {BUMP_STUCK_HOURS}h. The daily bump cannot "
                     f"cross a mathlib breaking change on its own.\n\n"
-                    f"**Fix:** open the failing build, land the fix it needs (a proof, "
-                    f"`scripts/lint-env.sh`, a guard) together with the pin move in one "
-                    f"human-owned PR, so the bump can resume."),
+                    f"**Fix:** open the failing build, and land whatever fix it needs "
+                    f"together with the pin move in one human-owned PR, so the bump "
+                    f"can resume."),
             })
     return out
 
@@ -314,24 +319,57 @@ def detect_stranded_prs():
     return out
 
 
+REVIEW_STUCK_TITLE_RE = re.compile(r"Review stuck: PR #([0-9]+)")
+
+
+def flagged_pr_is_finished(number):
+    """True iff the PR the issue flagged is definitely merged or closed.
+
+    Any doubt (an API error, a number that is not a PR, an unexpected state) is
+    False, so the caller keeps alerting. Fail closed: a live wedge must never be
+    silenced by a lookup that did not work.
+    """
+    try:
+        return gh_scalar(f"/repos/{REPO}/pulls/{number}", jq='.state // ""') == "closed"
+    except Exception as exc:
+        zp.log(f"review-stuck: state of PR #{number} unreadable ({exc}); alerting anyway")
+        return False
+
+
 def detect_review_stuck():
     # Match the exact title grammar and interpolate NOTHING from the (untrusted)
     # title into the message: the alert renders a fixed title and links the issue
     # by its numeric id, so a crafted title cannot inject a marker or a mention.
+    # The flagged PR's number is recovered from that same grammar and re-checked
+    # here against a digits-only pattern before it reaches an API path.
     issues = gh_stream(
         f"/repos/{REPO}/issues?state=open&per_page=100",
         jq='.[] | select(.pull_request == null) '
-           '| select(.title | test("^Review stuck: PR #[0-9]+$")) | {number}')
-    return [{
-        "key": f"review-stuck/{i['number']}",
-        "title": "Review engine self-flagged a PR it cannot resolve",
-        "body": (
-            f"An open `Review stuck` issue is unresolved: "
-            f"https://github.com/{REPO}/issues/{i['number']}\n\n"
-            f"**Fix:** this is not a one-off review to nudge — the engine hit a state "
-            f"it has no rule for (a rubric contradiction, an error loop). Fix the "
-            f"review logic / rubric in TauCetiReview so it cannot re-wedge."),
-    } for i in issues]
+           '| select(.title | test("^Review stuck: PR #[0-9]+$")) | {number, title}')
+    out = []
+    for i in issues:
+        # The engine is wedged only while the PR it flagged is still open. The
+        # worker that files these issues closes them once their PR merges or is
+        # closed, but that self-close is out of this repo and has been observed to
+        # miss: issue #1137's PR #1134 merged 16 minutes later and the alert still
+        # fired for two days. An issue outliving its PR is stale bookkeeping, not
+        # an emergency, and the topic is worthless once it cries wolf.
+        m = REVIEW_STUCK_TITLE_RE.fullmatch(i.get("title") or "")
+        if m and flagged_pr_is_finished(m.group(1)):
+            zp.log(f"review-stuck: issue #{i['number']} names finished PR #{m.group(1)}; skipping")
+            continue
+        out.append({
+            "key": f"review-stuck/{i['number']}",
+            "title": "Review engine self-flagged a PR it cannot resolve",
+            "body": (
+                f"An open `Review stuck` issue is unresolved: "
+                f"https://github.com/{REPO}/issues/{i['number']}\n\n"
+                f"**Fix:** this is not a one-off review to nudge. The engine hit a "
+                f"state it has no rule for, e.g. a rubric contradiction or an error "
+                f"loop. Fix the review logic / rubric in TauCetiReview so it cannot "
+                f"re-wedge."),
+        })
+    return out
 
 
 def detect_dead_schedulers():

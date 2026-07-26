@@ -8,6 +8,14 @@ name: pr-build
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
 # reach). The `build` commit status on the PR head SHA is the required merge check.
 #
+# The job below is deliberately NOT named `build`: GitHub Actions auto-creates a check-run named
+# after the job, and a check-run named `build` would collide with the required `build` STATUS this
+# job posts. Branch protection matches the required context `build` against BOTH commit statuses and
+# check-runs by name, so two `build` results (a green status + a red job check-run) wedge the PR as
+# BLOCKED even though the authoritative build passed — e.g. when the job's final report step exits
+# nonzero on a transient "could not list files" (INFRA) hiccup while a healthy re-run posts the green
+# status. Keeping the job name distinct leaves exactly one `build` (the status) as the merge gate.
+#
 # Live on pull_request_target (fires for all PRs, incl. forks, from the trusted base definition).
 # workflow_dispatch is also kept for ad-hoc re-testing of a given PR number.
 
@@ -35,7 +43,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
+  # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
+  sandboxed-build:
     runs-on: ubuntu-24.04
     env:
       LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71

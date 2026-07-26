@@ -80,6 +80,16 @@ private theorem notMem_pair_of_apply_involutive {α : Type*} [DecidableEq α] {f
       _ = f (f p) := by rw [hqdef]
       _ = p := hinvolp
 
+omit [IsDedekindDomain R] in
+/-- Transporting a height-one prime along a ring equivalence `σ` maps its ideal to the image
+ideal: `(equivOfRingEquiv σ p).asIdeal = Ideal.map σ p.asIdeal`. -/
+private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R)
+    (p : IsDedekindDomain.HeightOneSpectrum R) :
+    (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p).asIdeal =
+      Ideal.map σ p.asIdeal := by
+  ext x
+  simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
+
 /-- For a distinct prime `q ≠ p` and a family `G'` no member of which is divisible by `p.asIdeal`,
 multiplying `G'` by `p.asIdeal` and by `q.asIdeal` gives disjoint images. -/
 private theorem disjoint_image_mul_asIdeal {p q : IsDedekindDomain.HeightOneSpectrum R}
@@ -147,9 +157,7 @@ theorem exists_transversal_family (σ : R ≃+* R)
   have hqS : q ∈ S := hinv p hpS
   have hpq : q ≠ p := hfree p hpS
   have hqIdeal : q.asIdeal = Ideal.map σ p.asIdeal := by
-    rw [hqdef]
-    ext x
-    simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
+    rw [hqdef]; exact asIdeal_equivOfRingEquiv σ p
   have hp0 : p.asIdeal ≠ ⊥ := p.ne_bot
   have hpair : ({p, q} : Finset (IsDedekindDomain.HeightOneSpectrum R)) ⊆ S := by
     intro x hx; rcases Finset.mem_insert.mp hx with rfl | hx
@@ -193,12 +201,7 @@ theorem exists_transversal_family (σ : R ≃+* R)
           two_pow_div_two_le_two_mul_two_pow_div_two_of_le_add_two (by omega)
       _ ≤ G'.card + G'.card := by omega
   · have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
-      have hσq :
-          (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ q).asIdeal =
-            Ideal.map σ q.asIdeal := by
-        ext x
-        simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
-      rw [← hσq]
+      rw [← asIdeal_equivOfRingEquiv σ q]
       exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal (hinvol p hpS)
     exact fun A hA =>
       mul_map_eq_prod_of_mem_image_union (σ := (σ : R →+* R)) hqIdeal hmapq hprodS hprod' hA

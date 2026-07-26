@@ -56,7 +56,11 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  # Named `build-site`, not `build`, to keep every job name distinct from the required `build` commit
+  # status context (see pr-build.yml's header note on that collision). This workflow only runs on
+  # push-to-main / schedule, never on a PR, so its check-run can't wedge a PR today — the distinct name
+  # is hygiene so a future PR trigger here could never reintroduce the collision.
+  build-site:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -221,7 +225,7 @@ jobs:
           path: web/_out
 
   deploy:
-    needs: build
+    needs: build-site
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -71,12 +71,6 @@ private theorem bridgeModRangeNSMul_mk (G : Type*) [CommGroup G] (g : G) :
     bridgeModRangeNSMul G (elementaryTwoQuotientMk g) = QuotientAddGroup.mk (Additive.ofMul g) := by
   rw [elementaryTwoQuotientMk_eq_mkQ]; rfl
 
-/-- The inverse bridge sends the coset of `Additive.ofMul g` to the class of `g`. -/
-private theorem bridgeModRangeNSMul_symm_mk (G : Type*) [CommGroup G] (g : G) :
-    (bridgeModRangeNSMul G).symm (QuotientAddGroup.mk (Additive.ofMul g)) =
-      elementaryTwoQuotientMk g := by
-  rw [AddEquiv.symm_apply_eq, bridgeModRangeNSMul_mk]
-
 section Prod
 
 variable (G H : Type*) [CommGroup G] [CommGroup H]
