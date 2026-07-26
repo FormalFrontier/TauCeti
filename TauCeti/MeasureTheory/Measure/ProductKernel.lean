@@ -40,8 +40,8 @@ Measurability:
   supplies `Measure.infinitePi` and its projective-limit API but not this measurability, which is
   what a mixture of such products needs for `Measure.bind_apply` and the expected evaluation of
   the mixture as an integral.
-* `map_prefix_infinitePi` — the finite-prefix marginal of a countable product, its first `n`
-  coordinates being the corresponding finite product, with `map_prefix_infinitePi_const` the
+* `map_prefixProj_infinitePi` — the finite-prefix marginal of a countable product, its first `n`
+  coordinates being the corresponding finite product, with `map_prefixProj_infinitePi_const` the
   constant-family form. Mathlib's `Measure.infinitePi_map_restrict` gives the marginal indexed by a
   coerced `Finset`; this is the `Fin n`-prefix form that prefix-marginal arguments on `ℕ → α` use.
 
@@ -200,19 +200,19 @@ Mathlib's `Measure.infinitePi_map_restrict` gives the marginal along a `Finset.r
 the coerced finite set; this is the `Fin n`-prefix form, which is what prefix-marginal arguments on
 `ℕ → α` use. Stated with the bare prefix map rather than any particular prefix abbreviation, so it
 stays independent of downstream conventions. -/
-theorem map_prefix_infinitePi {α : Type*} [MeasurableSpace α] (p : ℕ → ProbabilityMeasure α)
+theorem map_prefixProj_infinitePi {α : Type*} [MeasurableSpace α] (p : ℕ → ProbabilityMeasure α)
     (n : ℕ) :
     (Measure.infinitePi fun j : ℕ => (p j : Measure α)).map (fun x : ℕ → α => fun i : Fin n => x i)
       = Measure.pi fun i : Fin n => (p i : Measure α) := by
   rw [Measure.map_infinitePi_infinitePi_of_inj Fin.val_injective, Measure.infinitePi_eq_pi]
 
-/-- Constant-coordinate specialization of `map_prefix_infinitePi`: the first `n` coordinates of
+/-- Constant-coordinate specialization of `map_prefixProj_infinitePi`: the first `n` coordinates of
 `p^{⊗ℕ}` are distributed as `p^{⊗ Fin n}`. -/
-theorem map_prefix_infinitePi_const {α : Type*} [MeasurableSpace α] (p : ProbabilityMeasure α)
+theorem map_prefixProj_infinitePi_const {α : Type*} [MeasurableSpace α] (p : ProbabilityMeasure α)
     (n : ℕ) :
     (Measure.infinitePi (fun _ : ℕ => (p : Measure α))).map (fun x : ℕ → α => fun i : Fin n => x i)
       = Measure.pi (fun _ : Fin n => (p : Measure α)) :=
-  map_prefix_infinitePi (fun _ => p) n
+  map_prefixProj_infinitePi (fun _ => p) n
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives
