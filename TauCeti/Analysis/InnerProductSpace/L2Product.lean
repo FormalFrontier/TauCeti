@@ -229,6 +229,52 @@ theorem orthogonal_span_range_L2prodMul_eq_bot [SFinite μ] [SFinite ν] {ι₁ 
       (Set.range (fun ij : ι₁ × ι₂ => L2prodMul (b₁ ij.1) (b₂ ij.2))))ᗮ = ⊥ := by
   sorry
 
+/-- **The Dynkin (π-λ) step.** On a finite measure over a product space, a function whose integral
+vanishes on every measurable rectangle has vanishing integral on every measurable set. Rectangles
+are a π-system generating the product σ-algebra, so `MeasurableSpace.induction_on_inter` applies. -/
+theorem setIntegral_eq_zero_of_forall_prod {ρ : Measure (α × β)} [IsFiniteMeasure ρ]
+    {f : α × β → 𝕜} (hf : Integrable f ρ)
+    (hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t → ∫ p in s ×ˢ t, f p ∂ρ = 0) :
+    ∀ u, MeasurableSet u → ∫ p in u, f p ∂ρ = 0 := by
+  have huniv : ∫ p, f p ∂ρ = 0 := by
+    have h := hrect Set.univ MeasurableSet.univ Set.univ MeasurableSet.univ
+    rwa [Set.univ_prod_univ, setIntegral_univ] at h
+  refine MeasurableSpace.induction_on_inter (C := fun u _ => ∫ p in u, f p ∂ρ = 0)
+    generateFrom_prod.symm isPiSystem_prod ?_ ?_ ?_ ?_
+  · simp
+  · rintro _ ⟨s, hs, t, ht, rfl⟩
+    exact hrect s hs t ht
+  · intro u hu ih
+    rw [setIntegral_compl hu hf, huniv, ih, sub_zero]
+  · intro u hd hm ih
+    rw [integral_iUnion hm hd hf.integrableOn]
+    simp [ih]
+
+/-- The tensor of two indicators is the indicator of the rectangle, so orthogonality to every
+elementary tensor makes the integral over every finite-measure rectangle vanish. -/
+theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν]
+    {h : Lp 𝕜 2 (μ.prod ν)}
+    (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
+    {A : Set α} (hA : MeasurableSet A) (hμA : μ A ≠ ⊤)
+    {B : Set β} (hB : MeasurableSet B) (hνB : ν B ≠ ⊤) :
+    ∫ p in A ×ˢ B, h p ∂(μ.prod ν) = 0 := by
+  set F : Lp 𝕜 2 μ := indicatorConstLp 2 hA hμA (1 : 𝕜) with hFdef
+  set G : Lp 𝕜 2 ν := indicatorConstLp 2 hB hνB (1 : 𝕜) with hGdef
+  have hFc : ⇑F =ᵐ[μ] A.indicator fun _ => (1 : 𝕜) := indicatorConstLp_coeFn
+  have hGc : ⇑G =ᵐ[ν] B.indicator fun _ => (1 : 𝕜) := indicatorConstLp_coeFn
+  calc ∫ p in A ×ˢ B, h p ∂(μ.prod ν)
+      = ∫ p, (A ×ˢ B).indicator (fun q => h q) p ∂(μ.prod ν) :=
+        (integral_indicator (hA.prod hB)).symm
+    _ = ∫ p, inner 𝕜 ((L2prodMul F G) p) (h p) ∂(μ.prod ν) := by
+        refine integral_congr_ae ?_
+        filter_upwards [coeFn_L2prodMul F G, ae_of_ae_fst (β := β) (ν := ν) hFc,
+          ae_of_ae_snd (α := α) (μ := μ) hGc] with p hp hpF hpG
+        rw [hp, hpF, hpG]
+        by_cases h1 : p.1 ∈ A <;> by_cases h2 : p.2 ∈ B <;>
+          simp [Set.mem_prod, h1, h2]
+    _ = inner 𝕜 (L2prodMul F G) h := (L2.inner_def _ _).symm
+    _ = 0 := hz F G
+
 /-- **The product Hilbert basis.** Pointwise products of two Hilbert bases form a Hilbert basis of
 `L²(μ ⊗ ν)`, indexed by the product of the index types. -/
 noncomputable def prodHilbertBasis [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type*}
