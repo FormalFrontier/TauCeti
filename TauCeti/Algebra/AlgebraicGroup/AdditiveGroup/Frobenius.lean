@@ -17,9 +17,10 @@ Over a base commutative semiring `R` of exponential characteristic `p`, the addi
 `𝔾ₐ = Spec R[x]` (here `x = ι R R 1` in `SymmetricAlgebra R R`) carries the **Frobenius
 endomorphism** `F : 𝔾ₐ → 𝔾ₐ`, which on every commutative `R`-algebra `A` raises a point to its
 `p`-th power,
-`a ↦ aᵖ`. This is a homomorphism of group functors precisely because of the freshman's dream:
+`a ↦ aᵖ`. This is a homomorphism of additive-monoid-valued functors precisely because of the
+freshman's dream:
 raising to the `p`-th power is additive in exponential characteristic `p`. Contravariantly it is
-induced by the bialgebra endomorphism of the coordinate Hopf algebra `R[x]` sending the primitive
+induced by the bialgebra endomorphism of the coordinate bialgebra `R[x]` sending the primitive
 generator `x` to `xᵖ` (again primitive, `Δ(xᵖ) = xᵖ ⊗ 1 + 1 ⊗ xᵖ`).
 
 The exponential-characteristic hypothesis `[ExpChar R p]` covers both the interesting case of
@@ -33,7 +34,7 @@ where `R` has prime characteristic `p`.
 * `TauCeti.AdditiveGroup.comul_ι_pow`: in exponential characteristic `p` the Frobenius power `xᵖ`
   is primitive, `Δ(xᵖ) = xᵖ ⊗ 1 + 1 ⊗ xᵖ`.
 * `TauCeti.AdditiveGroup.frobeniusBialgHom`: the Frobenius bialgebra endomorphism `x ↦ xᵖ` of the
-  coordinate Hopf algebra `R[x]` of `𝔾ₐ`.
+  coordinate bialgebra `R[x]` of `𝔾ₐ`.
 * `TauCeti.AdditiveGroup.frobeniusEnd`: the Frobenius endomorphism of `𝔾ₐ` on the functor of
   points, the contravariant image of `frobeniusBialgHom`.
 * `TauCeti.AdditiveGroup.toAdd_gaPointsMulEquiv_frobeniusEnd`: the Frobenius endomorphism acts as
@@ -44,7 +45,7 @@ where `R` has prime characteristic `p`.
 ## References
 
 The additive-group points dictionary `TauCeti.AdditiveGroup.gaPointsMulEquiv` and the
-coordinate-Hopf-algebra functoriality `TauCeti.AlgHom.mapDomain` are Tau Ceti's. The freshman's
+coordinate-bialgebra functoriality `TauCeti.AlgHom.mapDomain` are Tau Ceti's. The freshman's
 dream `add_pow_expChar`, the symmetric-algebra bialgebra structure, and the bialgebra-hom
 constructor `BialgHom.ofAlgHom` are Mathlib's.
 -/
@@ -78,7 +79,7 @@ private theorem frobeniusAlgHom_ι_one :
 
 variable [ExpChar R p]
 
-/-- The tensor-square ring of the additive-group Hopf algebra has the same exponential
+/-- The tensor-square ring of the additive-group bialgebra has the same exponential
 characteristic `p` as `R`: the structure map `R → R[x] ⊗ R[x]` is a section of the counit, hence
 injective. -/
 theorem expChar_tensorSquare :
@@ -98,7 +99,7 @@ theorem comul_ι_pow :
   rw [Bialgebra.comul_pow, comul_ι, add_pow_expChar, Algebra.TensorProduct.tmul_pow,
     Algebra.TensorProduct.tmul_pow, one_pow]
 
-/-- **The Frobenius bialgebra endomorphism `x ↦ xᵖ` of the coordinate Hopf algebra of `𝔾ₐ`.** In
+/-- **The Frobenius bialgebra endomorphism `x ↦ xᵖ` of the coordinate bialgebra of `𝔾ₐ`.** In
 exponential characteristic `p` the generator `x` is primitive, hence so is `xᵖ`
 (`Δ(xᵖ) = xᵖ ⊗ 1 + 1 ⊗ xᵖ` by the freshman's dream), and the counit still vanishes on `xᵖ`, so
 the algebra endomorphism `x ↦ xᵖ` is a bialgebra endomorphism. It induces the Frobenius
@@ -127,9 +128,9 @@ theorem frobeniusBialgHom_ι_one :
 variable {A : Type v} [CommSemiring A] [Algebra R A]
 
 /-- **The Frobenius endomorphism of `𝔾ₐ`, on the functor of points.** For every commutative
-`R`-algebra `A` it is the homomorphism of the convolution group of points induced (contravariantly)
-by the Frobenius bialgebra endomorphism `x ↦ xᵖ`; on points it raises a point to its `p`-th power,
-`a ↦ aᵖ`. -/
+`R`-algebra `A` it is the homomorphism of the convolution monoid of points induced
+(contravariantly) by the Frobenius bialgebra endomorphism `x ↦ xᵖ`; on points it raises a point to
+its `p`-th power, `a ↦ aᵖ`. -/
 noncomputable def frobeniusEnd :
     WithConv (SymmetricAlgebra R R →ₐ[R] A) →* WithConv (SymmetricAlgebra R R →ₐ[R] A) :=
   AlgHom.mapDomain (frobeniusBialgHom R p)

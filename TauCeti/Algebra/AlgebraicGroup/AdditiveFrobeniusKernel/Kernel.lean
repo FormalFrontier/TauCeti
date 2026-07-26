@@ -84,7 +84,7 @@ pre-composition of a point of `αₚ` with the quotient map. It agrees with the 
 noncomputable def inclusion :
     WithConv (CoordinateRing (R := R) p →ₐ[R] A) →*
       WithConv (SymmetricAlgebra R R →ₐ[R] A) :=
-  AlgHom.mapDomain (Bialgebra.Quotient.mkBialgHom (hopfIdeal (R := R) p).toIdeal)
+  (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A)).symm.toMonoidHom.comp (pointsHom p)
 
 /-- Reading an included `αₚ`-point off as an element of the additive group is the underlying-element
 map `TauCeti.AlphaP.pointsHom`: both pre-compose the point with the quotient map `R[x] ↠ R[x]/(xᵖ)`
@@ -92,9 +92,7 @@ and evaluate at the generator. -/
 @[simp]
 theorem gaPointsMulEquiv_inclusion (F : WithConv (CoordinateRing (R := R) p →ₐ[R] A)) :
     AdditiveGroup.gaPointsMulEquiv (inclusion p F) = pointsHom p F := by
-  apply Multiplicative.toAdd.injective
-  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv, inclusion, AlgHom.mapDomain_apply_apply,
-    Bialgebra.Quotient.mkBialgHom_apply, toAdd_pointsHom]
+  simp [inclusion]
 
 /-- **The inclusion `αₚ ↪ 𝔾ₐ` is injective on the functor of points.** It agrees through
 `TauCeti.AdditiveGroup.gaPointsMulEquiv` with the injective underlying-element map
@@ -112,8 +110,12 @@ theorem mapValue_inclusion (χ : A →ₐ[R] B) :
     (inclusion (R := R) (A := B) p).comp
         (AlgHom.mapValue (H := CoordinateRing (R := R) p) χ) =
       (AlgHom.mapValue (H := SymmetricAlgebra R R) χ).comp (inclusion (R := R) (A := A) p) := by
-  rw [inclusion, inclusion]
-  exact AlgHom.mapValue_mapDomain _ χ
+  refine MonoidHom.ext fun F => ?_
+  apply (AdditiveGroup.gaPointsMulEquiv (R := R) (A := B)).injective
+  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, gaPointsMulEquiv_inclusion,
+    AdditiveGroup.gaPointsMulEquiv_mapValue, gaPointsMulEquiv_inclusion]
+  apply Multiplicative.toAdd.injective
+  simp
 
 /-- **The Frobenius endomorphism annihilates `αₚ`.** Composing the Frobenius endomorphism of `𝔾ₐ`
 after the inclusion `αₚ ↪ 𝔾ₐ` is the trivial homomorphism of group functors: every `αₚ`-point maps
