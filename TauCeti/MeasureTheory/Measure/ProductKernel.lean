@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Measure.FiniteMeasurePi
+-- Public: `Measure.infinitePi` appears in the infinite-product statement.
+public import Mathlib.Probability.ProductMeasure
 
 /-!
 # Finite product probability-measure kernels
@@ -141,6 +143,32 @@ theorem measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure {α : Type*}
   have hpi : Measurable fun ω => ProbabilityMeasure.pi fun _ : Fin m => ν ω :=
     measurable_probabilityMeasure_pi.comp (measurable_pi_lambda _ fun _ => hν)
   exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpi)
+
+/-- **Infinite-product measurability.** The countable product `p ↦ p^{⊗ℕ}` is a measurable map
+`ProbabilityMeasure α → Measure (ℕ → α)`.
+
+This is the countable-index companion of `measurable_probabilityMeasure_pi_const_toMeasure`. It is
+what lets `Measure.infinitePi` appear under a `Measure.bind`, i.e. lets a mixture of infinite
+product laws be formed — the shape the de Finetti mixture representation takes. Mathlib supplies
+`Measure.infinitePi` and its projective-limit API but not its measurability in the measure
+argument. -/
+@[fun_prop]
+theorem measurable_infinitePi_const {α : Type*} [MeasurableSpace α] :
+    Measurable fun p : ProbabilityMeasure α =>
+      Measure.infinitePi (fun _ : ℕ => (p : Measure α)) := by
+  refine Measurable.measure_of_isPiSystem_of_isProbabilityMeasure
+    (S := measurableCylinders (fun _ : ℕ => α)) generateFrom_measurableCylinders.symm
+    isSetRing_measurableCylinders.isSetSemiring.isPiSystem ?_
+  intro t ht
+  obtain ⟨s, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht
+  have hval : ∀ p : ProbabilityMeasure α,
+      Measure.infinitePi (fun _ : ℕ => (p : Measure α)) (cylinder s S)
+        = Measure.pi (fun _ : s => (p : Measure α)) S :=
+    fun p => Measure.infinitePi_cylinder _ hS
+  simp_rw [hval]
+  exact (Measure.measurable_coe hS).comp
+    (measurable_probabilityMeasure_pi_toMeasure (fun _ : s => (id : ProbabilityMeasure α → _))
+      fun _ => measurable_id)
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives
