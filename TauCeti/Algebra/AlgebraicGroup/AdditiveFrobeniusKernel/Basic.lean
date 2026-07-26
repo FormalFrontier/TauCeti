@@ -196,9 +196,8 @@ way. In this form the statement needs neither primality of `p` nor `CharP R p`. 
 theorem mk_ι_pow_eq_zero :
     (Ideal.Quotient.mk (Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p})
         (ι R R 1 : SymmetricAlgebra R R)) ^ p = 0 := by
-  rw [← map_pow (Ideal.Quotient.mk (Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p})),
-    Ideal.Quotient.eq_zero_iff_mem]
-  exact Ideal.mem_span_singleton_self _
+  rw [← map_pow (Ideal.Quotient.mk (Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p}))]
+  exact Ideal.Quotient.mk_singleton_self _
 
 /-- The class of `x` in the coordinate ring of `αₚ` is nonzero over a nontrivial base: the
 dual-number test algebra `R[ε]` receives `x ↦ ε`, sending the relation `xᵖ` to `εᵖ = 0` (as
