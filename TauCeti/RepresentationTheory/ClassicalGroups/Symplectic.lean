@@ -157,22 +157,29 @@ theorem stdSymplecticBilinForm_stdSymplecticRep
     LinearMap.congr_fun
       (LinearMap.congr_fun (stdSymplecticBilinForm_comp_stdSymplecticRep k n g) v) w
 
-end CommRing
-
-section Field
-
-variable [Field k]
-
 /-- The standard symplectic form identifies the standard module with its dual. -/
 noncomputable def stdSymplecticRepToDual :
     ((Fin n ⊕ Fin n) → k) ≃ₗ[k] Module.Dual k ((Fin n ⊕ Fin n) → k) :=
-  (stdSymplecticBilinForm k n).toDual (stdSymplecticBilinForm_nondegenerate k n)
+  ((Matrix.J (Fin n) k)ᵀ.toLinearEquiv (Pi.basisFun k (Fin n ⊕ Fin n))
+    (by simpa only [Matrix.det_transpose] using Matrix.isUnit_det_J (Fin n) k)).trans
+      (Pi.basisFun k (Fin n ⊕ Fin n)).toDualEquiv
 
 /-- The standard symplectic self-duality evaluates as the standard alternating form. -/
 @[simp]
 theorem stdSymplecticRepToDual_apply (v w : (Fin n ⊕ Fin n) → k) :
     stdSymplecticRepToDual k n v w = stdSymplecticBilinForm k n v w :=
-  LinearMap.BilinForm.toDual_def (stdSymplecticBilinForm_nondegenerate k n)
+  by
+    rw [stdSymplecticRepToDual, LinearEquiv.trans_apply, Matrix.toLinearEquiv_apply,
+      Matrix.toLin_eq_toLin', Module.Basis.toDualEquiv_apply]
+    calc
+      (Pi.basisFun k (Fin n ⊕ Fin n)).toDual
+          ((Matrix.J (Fin n) k)ᵀ *ᵥ v) w =
+          ((Matrix.J (Fin n) k)ᵀ *ᵥ v) ⬝ᵥ w := by
+        simp [Module.Basis.toDual, Pi.basisFun, dotProduct]
+      _ = w ⬝ᵥ (Matrix.J (Fin n) k)ᵀ *ᵥ v := dotProduct_comm _ _
+      _ = v ⬝ᵥ Matrix.J (Fin n) k *ᵥ w :=
+        Matrix.dotProduct_transpose_mulVec (Matrix.J (Fin n) k) w v
+      _ = stdSymplecticBilinForm k n v w := (stdSymplecticBilinForm_apply k n v w).symm
 
 /-- The dual, or contragredient, of the standard representation of the symplectic group. -/
 noncomputable def stdSymplecticDualRep :
@@ -234,6 +241,12 @@ theorem stdSymplecticRepEquivDual_apply (v w : (Fin n ⊕ Fin n) → k) :
 noncomputable abbrev stdSymplecticDualFDRep :
     FDRep k (Matrix.symplecticGroup (Fin n) k) :=
   FDRep.of (stdSymplecticDualRep k n)
+
+end CommRing
+
+section Field
+
+variable [Field k]
 
 /-- The character of the standard symplectic representation is the matrix trace. -/
 @[simp]
