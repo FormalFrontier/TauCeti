@@ -196,7 +196,6 @@ instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) :
   infer_instance
 
 /-- Strict dominance is irreflexive. -/
-@[simp]
 theorem strictlyDominates_irrefl {n : ℕ} (μ : n.Partition) :
     ¬StrictlyDominates μ μ := by
   letI := DominanceOrder.partitionPartialOrder (n := n)
