@@ -40,7 +40,9 @@ private theorem integrable_continuousMap (f : C(G, V)) :
     f.continuous.continuousOn.integrableOn_compact' (μ := haarProb G) isCompact_univ
       MeasurableSet.univ
 
-variable {𝕜 : Type*} [RCLike 𝕜] [NormedSpace ℝ V] [NormedSpace 𝕜 V]
+section NormedFieldScalars
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [NormedSpace ℝ V] [NormedSpace 𝕜 V]
   [SMulCommClass ℝ 𝕜 V]
 
 /-- Averaging a continuous vector-valued function against normalized Haar measure, as a
@@ -65,18 +67,15 @@ theorem haarAverage_apply [CompleteSpace V] (f : C(G, V)) :
     haarAverage G (𝕜 := 𝕜) f = ∫ g, f g ∂haarProb G :=
   (rfl)
 
-/-- Haar averaging is norm-nonincreasing for the uniform norm on continuous maps. -/
-theorem norm_haarAverage_apply_le [CompleteSpace V] (f : C(G, V)) :
-    ‖haarAverage G (𝕜 := 𝕜) f‖ ≤ ‖f‖ := by
-  rw [haarAverage_apply]
-  simpa using norm_integral_le_of_norm_le_const
-    (μ := haarProb G) (Filter.Eventually.of_forall f.norm_coe_le_norm)
-
 /-- The operator norm of Haar averaging is at most one. -/
 theorem norm_haarAverage_le_one [CompleteSpace V] :
     ‖haarAverage G (𝕜 := 𝕜) (V := V)‖ ≤ 1 :=
-  ContinuousLinearMap.opNorm_le_bound _ zero_le_one fun f ↦ by
-    simpa using norm_haarAverage_apply_le G (𝕜 := 𝕜) f
+  LinearMap.mkContinuous_norm_le _ zero_le_one _
+
+/-- Haar averaging is norm-nonincreasing for the uniform norm on continuous maps. -/
+theorem norm_haarAverage_apply_le [CompleteSpace V] (f : C(G, V)) :
+    ‖haarAverage G (𝕜 := 𝕜) f‖ ≤ ‖f‖ := by
+  simpa using (haarAverage G (𝕜 := 𝕜) (V := V)).le_of_opNorm_le (norm_haarAverage_le_one G) f
 
 /-- The Haar average of a constant function is that constant. -/
 @[simp]
@@ -95,16 +94,6 @@ theorem norm_haarAverage_eq_one [Nontrivial V] [CompleteSpace V] :
   have h := (haarAverage G (𝕜 := 𝕜) (V := V)).ratio_le_opNorm
     (ContinuousMap.const G v)
   simpa [haarAverage_const, hnorm, norm_ne_zero_iff.mpr hv] using h
-
-/-- Continuous linear maps commute with Haar averaging. -/
-@[simp]
-theorem haarAverage_comp_comm {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W]
-    [NormedSpace 𝕜 W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace V] [CompleteSpace W]
-    (L : V →L[𝕜] W) (f : C(G, V)) :
-    haarAverage G (𝕜 := 𝕜) ((L : C(V, W)).comp f) = L (haarAverage G (𝕜 := 𝕜) f) := by
-  simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
-    ContinuousMap.coe_coe]
-  exact L.integral_comp_comm (integrable_continuousMap G f)
 
 /-- Haar averaging is unchanged by left translation of the argument. -/
 @[simp]
@@ -132,6 +121,27 @@ theorem haarAverage_comp_inv [CompleteSpace V] (f : C(G, V)) :
   simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
     ContinuousMap.coe_coe, Homeomorph.coe_inv]
   exact integral_inv_eq_self f (haarProb G)
+
+end NormedFieldScalars
+
+section RCLikeScalars
+
+variable {𝕜 : Type*} [RCLike 𝕜] [NormedSpace ℝ V] [NormedSpace 𝕜 V] [SMulCommClass ℝ 𝕜 V]
+
+/-- Continuous linear maps commute with Haar averaging.
+
+The scalars are assumed to be `RCLike` because Mathlib states
+`ContinuousLinearMap.integral_comp_comm` under that hypothesis. -/
+@[simp]
+theorem _root_.ContinuousLinearMap.haarAverage_comp_comm {W : Type*} [NormedAddCommGroup W]
+    [NormedSpace ℝ W] [NormedSpace 𝕜 W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace V] [CompleteSpace W]
+    (L : V →L[𝕜] W) (f : C(G, V)) :
+    haarAverage G (𝕜 := 𝕜) ((L : C(V, W)).comp f) = L (haarAverage G (𝕜 := 𝕜) f) := by
+  simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
+    ContinuousMap.coe_coe]
+  exact L.integral_comp_comm (integrable_continuousMap G f)
+
+end RCLikeScalars
 
 end CompactGroup
 
