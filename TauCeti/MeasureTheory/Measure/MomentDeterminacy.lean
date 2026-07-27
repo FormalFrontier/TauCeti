@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
-public import Mathlib.Topology.ContinuousMap.StoneWeierstrass
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
+import Mathlib.Topology.ContinuousMap.StoneWeierstrass
 
 /-!
 # Multivariate moment determinacy on a compact set
@@ -16,6 +17,8 @@ Two finite measures on a compact subset of `Fin k → ℝ` that agree on every m
 ## Main results
 
 * `Measure.ext_of_forall_integral_monomial_eq` — the compact-subtype form.
+* `Measure.ext_of_forall_integral_monomial_eq_of_support` — the ambient form on `Fin k → ℝ`, for
+  measures supported on a common compact measurable set.
 
 ## Implementation
 
@@ -24,7 +27,13 @@ subalgebra of `C(K, ℝ)` they span is `Algebra.adjoin ℝ` of those coordinates
 integrals is **not** closed under multiplication, so the passage from monomials to the whole
 subalgebra is by `Algebra.adjoin_eq_span` and linearity, not by `Algebra.adjoin_induction`.
 Coordinates separate points, so Stone–Weierstrass makes that subalgebra dense, and density plus
-`ext_of_forall_integral_eq_of_IsFiniteMeasure` gives equality of the measures.
+`ext_of_forall_integral_eq_of_IsFiniteMeasure` gives equality of the measures. Density is used
+through closedness of the agreement set, which holds because integration against a finite measure
+is Lipschitz in the uniform norm.
+
+The ambient form is a wrapper: it pulls both measures back along `Subtype.val` to the compact
+subtype, applies the subtype form, and pushes the resulting equality forward again, using the
+support hypotheses to identify each `restrict` with the original measure.
 -/
 
 public section
@@ -154,6 +163,40 @@ theorem Measure.ext_of_forall_integral_monomial_eq [CompactSpace K] [MeasurableS
     ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints _
       (coordAlgebra_separatesPoints K)
   exact (SetLike.ext_iff.mp htop (BoundedContinuousFunction.toContinuousMap f)).mpr trivial
+
+/-- **Multivariate moment determinacy, ambient form.** Two finite Borel measures on `Fin k → ℝ`
+that are both supported on a common compact measurable set `K` and assign the same integral to
+every mixed monomial are equal.
+
+Both support hypotheses are needed. Agreement of moments alone does not force a measure to
+concentrate on `K`, and a measure with mass outside `K` is invisible to the compact-set argument:
+the moments only see `μ.restrict K`. -/
+theorem Measure.ext_of_forall_integral_monomial_eq_of_support {K : Set (Fin k → ℝ)}
+    (hK : IsCompact K) (hKm : MeasurableSet K) {μ ν : Measure (Fin k → ℝ)}
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
+    (hmom : ∀ n : Fin k → ℕ, ∫ x, ∏ i, x i ^ n i ∂μ = ∫ x, ∏ i, x i ^ n i ∂ν) :
+    μ = ν := by
+  haveI : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  have hμr : μ.restrict K = μ := Measure.restrict_eq_self_of_ae_mem (ae_iff.mpr hμ)
+  have hνr : ν.restrict K = ν := Measure.restrict_eq_self_of_ae_mem (ae_iff.mpr hν)
+  have hfin : ∀ (ρ : Measure (Fin k → ℝ)) [IsFiniteMeasure ρ],
+      IsFiniteMeasure (Measure.comap Subtype.val ρ : Measure K) := by
+    intro ρ _
+    constructor
+    rw [comap_subtype_coe_apply hKm]
+    exact measure_lt_top ρ _
+  haveI := hfin μ
+  haveI := hfin ν
+  have hmom' : ∀ n : Fin k → ℕ,
+      ∫ x : K, ∏ i, (x : Fin k → ℝ) i ^ n i ∂(Measure.comap Subtype.val μ)
+        = ∫ x : K, ∏ i, (x : Fin k → ℝ) i ^ n i ∂(Measure.comap Subtype.val ν) := by
+    intro n
+    rw [integral_subtype_comap hKm fun x => ∏ i, x i ^ n i,
+      integral_subtype_comap hKm fun x => ∏ i, x i ^ n i, hμr, hνr]
+    exact hmom n
+  have hcore := Measure.ext_of_forall_integral_monomial_eq hmom'
+  have hmap := congrArg (Measure.map (Subtype.val : K → (Fin k → ℝ))) hcore
+  rwa [map_comap_subtype_coe hKm, map_comap_subtype_coe hKm, hμr, hνr] at hmap
 
 end MeasureTheory
 
