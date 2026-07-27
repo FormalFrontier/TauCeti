@@ -27,7 +27,7 @@ namespace Rep
 
 /-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
 along their composite. -/
-@[expose] noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
+noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
     _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
       _root_.Rep.resFunctor.{max u v w x} (k := k) φ ≅
         _root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ) :=
