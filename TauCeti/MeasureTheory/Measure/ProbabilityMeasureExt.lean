@@ -94,7 +94,14 @@ private theorem measurableSpace_probabilityMeasure_eq_comap :
     (inferInstance : MeasurableSpace (ProbabilityMeasure α))
       = MeasurableSpace.comap (evalReal (α := α)) MeasurableSpace.pi := by
   refine le_antisymm ?_ measurable_evalReal.comap_le
-  change MeasurableSpace.comap Subtype.val Measure.instMeasurableSpace ≤ _
+  -- `ProbabilityMeasure α` is a subtype of `Measure α`, and its instance is
+  -- `inferInstanceAs (MeasurableSpace (Subtype _))`, i.e. `Subtype.instMeasurableSpace`, which is
+  -- itself `Measure.instMeasurableSpace.comap Subtype.val`. Neither is accompanied by an equation
+  -- lemma in Mathlib, so the unfolding is available only definitionally; naming it as an explicit
+  -- `rfl` confines that to one step and keeps the rest of the proof propositional.
+  have hinst : (inferInstance : MeasurableSpace (ProbabilityMeasure α))
+      = MeasurableSpace.comap Subtype.val Measure.instMeasurableSpace := rfl
+  rw [hinst]
   rw [measurableSpace_measure_eq_comap_eval, MeasurableSpace.comap_comp, MeasurableSpace.pi,
     MeasurableSpace.comap_iSup]
   refine iSup_le fun s => ?_
