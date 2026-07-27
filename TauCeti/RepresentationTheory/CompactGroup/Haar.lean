@@ -67,11 +67,6 @@ theorem haarProb_def :
     · rfl
     · exact (FiniteMeasure.mass_nonzero_iff (haarFinite G)).mpr (haarFinite_ne_zero G)
 
-/-- The normalized Haar measure of the whole group is `1`. -/
-@[simp]
-theorem haarProb_apply_univ : haarProb G univ = 1 := by
-  exact (haarFinite G).normalize.property.measure_univ
-
 instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) := by
   exact (haarFinite G).normalize.property
 
