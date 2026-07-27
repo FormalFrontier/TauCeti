@@ -1,6 +1,9 @@
-import Mathlib.Combinatorics.Quiver.Path
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Tactic.Ring
+module
+
+public import Mathlib.Combinatorics.Quiver.Path
+public import Mathlib.Data.Fintype.Defs
+public import Mathlib.Algebra.BigOperators.Ring.Finset
+public import Mathlib.Tactic.Ring
 
 /-!
 # Euler and Tits forms of a finite quiver
@@ -8,6 +11,8 @@ import Mathlib.Tactic.Ring
 The Euler form records the oriented incidence data of a finite quiver.  Its diagonal,
 the Tits form, is the numerical form used by reflection functors and Gabriel's theorem.
 -/
+
+@[expose] public section
 
 namespace TauCeti
 
