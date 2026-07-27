@@ -31,14 +31,6 @@ section CompactGroup
 variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
-/-- Haar measure of a compact group has finite total mass. -/
-theorem haar_univ_lt_top : (Measure.haar : Measure G) univ < ⊤ :=
-  measure_lt_top _ _
-
-/-- Haar measure of a nonempty compact group has nonzero total mass. -/
-theorem haar_univ_ne_zero : (Measure.haar : Measure G) univ ≠ 0 :=
-  (Measure.measure_pos_of_nonempty_interior (μ := Measure.haar) (by simp)).ne'
-
 /-- Haar probability measure on a compact topological group. -/
 @[expose] noncomputable def haarProb : Measure G :=
   ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar
@@ -48,16 +40,9 @@ theorem haarProb_def :
     haarProb G = ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar :=
   rfl
 
-/-- The normalized Haar measure of the whole group is `1`.
-
-This is not a `simp` lemma: once `isProbabilityMeasure_haarProb` is available, `measure_univ`
-already puts the left-hand side in simp-normal form. -/
-theorem haarProb_apply_univ : haarProb G univ = 1 := by
-  rw [haarProb_def, Measure.smul_apply]
-  exact ENNReal.inv_mul_cancel (haar_univ_ne_zero G) (haar_univ_lt_top G).ne
-
-instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) :=
-  ⟨haarProb_apply_univ G⟩
+instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) := by
+  rw [haarProb_def]
+  infer_instance
 
 instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
   rw [haarProb_def]
@@ -66,8 +51,8 @@ instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
 instance isHaarMeasure_haarProb : (haarProb G).IsHaarMeasure := by
   rw [haarProb_def]
   exact Measure.IsHaarMeasure.smul Measure.haar
-    (ENNReal.inv_ne_zero.mpr (haar_univ_lt_top G).ne)
-    (ENNReal.inv_ne_top.mpr (haar_univ_ne_zero G))
+    (ENNReal.inv_ne_zero.mpr (measure_ne_top _ _))
+    (ENNReal.inv_ne_top.mpr (NeZero.ne _))
 
 /-- Normalized Haar measure is invariant under right multiplication. -/
 instance isMulRightInvariant_haarProb : (haarProb G).IsMulRightInvariant where
