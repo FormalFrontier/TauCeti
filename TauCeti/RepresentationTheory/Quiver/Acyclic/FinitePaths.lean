@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
-public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Data.Fintype.Sigma
 public import Mathlib.Data.Fintype.Sum
@@ -70,20 +69,6 @@ private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (
       exact ⟨.inr ⟨c, e, ⟨q, hq_le⟩⟩, Subtype.ext hpq.symm⟩
 
 namespace Quiver.IsAcyclic
-
-/-- The vertices encountered by a path in an acyclic quiver are pairwise distinct. -/
-theorem vertices_nodup (h : Quiver.IsAcyclic V) {a b : V} (p : _root_.Quiver.Path a b) :
-    p.vertices.Nodup := by
-  induction p with
-  | nil => simp
-  | cons p e ih =>
-    rw [_root_.Quiver.Path.vertices_cons, List.nodup_concat]
-    refine ⟨?_, ih⟩
-    intro he
-    obtain ⟨p₁, p₂, hp⟩ := p.exists_eq_comp_of_mem_vertices he
-    have hlength := h.length_eq_zero (p₂.cons e)
-    rw [_root_.Quiver.Path.length_cons] at hlength
-    omega
 
 /-- Every path in an acyclic finite quiver has length strictly below the number of vertices. -/
 theorem length_lt_card (h : Quiver.IsAcyclic V) [Fintype V] {a b : V}

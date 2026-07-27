@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Combinatorics.Quiver.Path.Vertices
+public import Mathlib.Data.List.Nodup
 
 /-!
 # Acyclic quivers
@@ -115,6 +116,20 @@ theorem eq_of_paths (h : Quiver.IsAcyclic V) {a b : V}
     (p : Path a b) (q : Path b a) :
     a = b :=
   p.eq_of_length_zero (h.length_eq_zero_of_paths_left p q)
+
+/-- The vertices encountered by a path in an acyclic quiver are pairwise distinct. -/
+theorem vertices_nodup (h : Quiver.IsAcyclic V) {a b : V} (p : Path a b) :
+    p.vertices.Nodup := by
+  induction p with
+  | nil => simp
+  | cons p e ih =>
+    rw [Path.vertices_cons, List.nodup_concat]
+    refine ⟨?_, ih⟩
+    intro he
+    obtain ⟨p₁, p₂, hp⟩ := p.exists_eq_comp_of_mem_vertices he
+    have hlength := h.length_eq_zero (p₂.cons e)
+    rw [Path.length_cons] at hlength
+    omega
 
 /-- Between distinct vertices of an acyclic quiver, paths cannot exist in both directions. -/
 theorem not_nonempty_path_and_nonempty_path (h : Quiver.IsAcyclic V) {a b : V}
