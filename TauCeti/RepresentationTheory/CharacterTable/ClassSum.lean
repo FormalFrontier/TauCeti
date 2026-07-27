@@ -48,6 +48,7 @@ theorem classSum_coeff [Semiring k] (C : ConjClasses G) (g : G) :
     rw [← h]
     exact ConjClasses.mem_carrier_iff_mk_eq.mp c.property
 
+omit [Fintype G] [DecidableEq G] in
 /-- Conjugation by `g` permutes every conjugacy class. -/
 def conjugateCarrierEquiv (g : G) (C : ConjClasses G) : C.carrier ≃ C.carrier where
   toFun x := ⟨g * x * g⁻¹, by
