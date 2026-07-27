@@ -20,6 +20,11 @@ multiplication and the matrix trace.
 * `TauCeti.stdRep`: the standard representation of `GL n k`.
 * `TauCeti.stdFDRep`: the standard representation as a finite-dimensional representation.
 * `TauCeti.stdDualRep`: the contragredient of the standard representation.
+
+## References
+
+* [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md)
+* [Suggested declarations](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/Suggested.lean)
 -/
 
 public section
