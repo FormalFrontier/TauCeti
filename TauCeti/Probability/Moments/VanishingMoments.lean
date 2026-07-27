@@ -20,13 +20,15 @@ Both forms assume exponential control at a single positive rate; they differ in 
 
 * `TauCeti.ae_eq_zero_of_forall_moment_eq_zero` (function level) assumes the *product*
   `e^{a|x|} · g` is integrable for some `a > 0`, and concludes for a real `g`.
-* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` (measure level) assumes it of
-  the *weight* alone -- `e^{a|x|} ∈ L¹(ν)` for some `a > 0` -- and of `g` only that it lies in
-  `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.
+* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` (measure level) assumes
+  it of the *weight* alone -- `e^{a|x|} ∈ L¹(ν)` for some `a > 0` -- and of `g` only that it lies
+  in `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.
 
 The measure-level form is the usable one: `hexp` becomes a statement about the weight alone
-(Gaussian decay, or automatic for compact support), independent of `g`.  Finiteness of `ν` is not a
-separate hypothesis in either form, since `e^{a|x|} ≥ 1` dominates the constant `1`.
+(Gaussian decay, or automatic for a *finite* compactly supported measure), independent of `g`.
+Compact support alone does not suffice: on a compactly supported measure of infinite mass even the
+constant `1` fails to be integrable.  Finiteness of `ν` is not a separate hypothesis in either
+form, since `e^{a|x|} ≥ 1` dominates the constant `1` and so `hexp` already forces it.
 -/
 
 public section
@@ -108,7 +110,7 @@ end Densities
 is a.e. zero.
 
 This is the internal transfer step, not the form the completeness step consumes — that is the
-measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` below, which wraps this
+measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` below, which wraps this
 one. `Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp` in
 `TauCeti.Probability.Moments.Determinacy` pins down a *measure* from its moments, and this transfers
 that to a *function* by applying it to the positive and negative parts of `g` as densities
@@ -218,7 +220,7 @@ form above; a caller holding a bound at every rate supplies it at any single one
 `∫ e^{a|x|} dν` is finite only for `a < 1`, even though they are moment-determinate all the same.
 
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
-theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
+theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
     (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
