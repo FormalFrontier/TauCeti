@@ -6,16 +6,38 @@ Authors: Claude
 module
 
 public import TauCeti.MeasureTheory.Measure.ProductKernel
-public import TauCeti.MeasureTheory.Measure.GiryMonad
-public import TauCeti.Probability.Moments.CompactDeterminacy
-public import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.GiryMonad
+import TauCeti.Probability.Moments.CompactDeterminacy
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
 
 /-!
 # The mixing measure is identified by the i.i.d. mixture
 
-Work in progress.
--/
+The map `π ↦ π.bind (P ↦ P^{⊗ℕ})`, sending a measure on `ProbabilityMeasure α` to the law of a
+sequence drawn i.i.d. from a `π`-random probability measure, is injective on finite measures.
 
+## Main results
+
+* `Measure.ext_of_bind_infinitePi_eq` — two finite measures on `ProbabilityMeasure α` inducing the
+  same mixture are equal.
+
+## Implementation
+
+Evaluating the mixture on a finite-dimensional rectangle gives the mixed moment
+`∫⁻ P, ∏ i, P (B i) ∂π` of the evaluation maps. Nothing forces the sets `B i` to be distinct, so
+listing `B j` exactly `m j` times turns the rectangle identity into one for the mixed monomial
+`∏ j, (P (B j)) ^ m j` — this is the whole of the passage from rectangles to moments, and it is
+where the argument gains its strength.
+
+From there the two imported ingredients finish it. A finite evaluation family takes values in the
+compact box `[0,1]^k`, so `Measure.ext_of_forall_integral_monomial_eq_of_support` identifies its
+law from those monomials; and `Measure.ext_of_forall_map_probabilityMeasure_eval_eq` promotes
+agreement of every finite evaluation law to equality of the measures.
+
+Only `π₁` is assumed finite. Every infinite product of probability measures is a probability
+measure, so the mixture has the same total mass as its mixing measure, and equality of the two
+mixtures transfers finiteness to `π₂`.
+-/
 public section
 
 noncomputable section
@@ -93,6 +115,13 @@ private theorem toReal_prod_pow (P : ProbabilityMeasure α) {k : ℕ} (B : Fin k
   rw [← ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, ← ENNReal.coe_pow,
     ENNReal.coe_toReal, NNReal.coe_pow]
 
+/-- The mixture has the same total mass as the mixing measure, since every infinite product of
+probability measures is itself a probability measure. -/
+private theorem bind_infinitePi_univ (π : Measure (ProbabilityMeasure α)) :
+    (π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) Set.univ = π Set.univ := by
+  rw [Measure.bind_apply MeasurableSet.univ measurable_infinitePi_const.aemeasurable]
+  simp
+
 /-- **The i.i.d. mixture determines the mixing measure.** If two finite measures on
 `ProbabilityMeasure α` induce the same mixture `π.bind (P ↦ P^{⊗ℕ})`, they are equal.
 
@@ -100,10 +129,14 @@ The mixture's finite-dimensional rectangle probabilities are the mixed moments o
 maps, and repetitions in the rectangle turn those into mixed monomials. Each finite evaluation
 family lands in the compact box `[0,1]^k`, so multivariate moment determinacy identifies its law,
 and finite evaluation laws determine the measure. -/
-theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁] [IsFiniteMeasure π₂]
+theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁]
     (h : (π₁.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α))
       = π₂.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
     π₁ = π₂ := by
+  haveI : IsFiniteMeasure π₂ := by
+    constructor
+    rw [← bind_infinitePi_univ π₂, ← h, bind_infinitePi_univ π₁]
+    exact measure_lt_top π₁ _
   refine TauCeti.MeasureTheory.Measure.ext_of_forall_map_probabilityMeasure_eval_eq
     fun k B hB => ?_
   have hfm : Measurable fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) :=
