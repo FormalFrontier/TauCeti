@@ -98,10 +98,9 @@ noncomputable def tensorPower (ρ : Representation R G M) (d : ℕ) :
 /-- The tensor-power action applies the original action in every tensor factor. -/
 @[simp]
 theorem tensorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
-    ρ.tensorPower d g = PiTensorProduct.map fun _ : Fin d => ρ g :=
-  by
-    simp only [tensorPower, MonoidHom.comp_apply, PiTensorProduct.mapMonoidHom_apply]
-    congr 1
+    ρ.tensorPower d g = PiTensorProduct.map fun _ : Fin d => ρ g := by
+  simp only [tensorPower, MonoidHom.comp_apply, PiTensorProduct.mapMonoidHom_apply]
+  exact congrArg PiTensorProduct.map (funext fun i => MonoidHom.pi_apply _ g i)
 
 end CommSemiring
 
@@ -129,8 +128,6 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
     simp only [pow_zero]
   | succ d ih =>
     -- Split `Fin (d + 1)` into `Fin d` and `Fin 1`, then use multiplicativity of trace.
-    let e : (⨂[R]^d M) ⊗[R] (⨂[R]^1 M) ≃ₗ[R] (⨂[R]^(d + 1) M) :=
-      TensorPower.mulEquiv
     rw [← TauCeti.TensorPower.mulEquiv_conj_map, LinearMap.trace_conj',
       LinearMap.trace_tensorProduct']
     have h_one : LinearMap.trace R (⨂[R]^1 M) (PiTensorProduct.map fun _ : Fin 1 => ρ g) =
