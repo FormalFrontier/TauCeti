@@ -141,6 +141,8 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     have hofIdx :
         P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P j) j =
           P.reflectionPerm j j := by
+      -- Mathlib has no `weylGroupToPerm_ofIdx` lemma: expose the restriction and `ofIdx`
+      -- wrappers definitionally, then use its named theorem for the underlying reflection.
       change (RootPairing.Equiv.reflection P j).indexEquiv j = P.reflectionPerm j j
       exact congrArg (fun e : ι ≃ ι => e j)
         (RootPairing.Equiv.reflection_indexEquiv P j)
