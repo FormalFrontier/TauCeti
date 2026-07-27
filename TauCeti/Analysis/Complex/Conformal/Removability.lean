@@ -43,7 +43,8 @@ L0–L6 to remain scalar; the Banach-valued generalization is therefore outside 
   the gluing form — holomorphic above the axis, holomorphic below it, continuous across it, hence
   holomorphic.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap`:
-  removability of any subset of the line through two distinct points `p ≠ q`.
+  removability of any subset of the line through two points `p` and `q`, including the singleton
+  case `p = q`.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq` and
   `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_re_eq`: the horizontal and
   vertical special cases `{z | z.im = c}` and `{z | z.re = c}`.
@@ -224,14 +225,8 @@ lemma mem_range_lineMap_iff {p q z : ℂ} :
     Complex.real_smul, eq_comm (a := z)]
   exact exists_congr fun t => by rw [add_comm]
 
-/-- **Painlevé removability across a line.** Let `p ≠ q` be points of `ℂ` and let `S` be any subset
-of the line through them, such as the whole line or a segment. A function continuous on an open set
-`Ω ⊆ ℂ` and holomorphic on `Ω \ S` is holomorphic on all of `Ω`.
-
-The line is straightened to the real axis by the affine chart `w ↦ p + (q - p) * w`, a
-biholomorphism of `ℂ` carrying `ℝ` onto it, reducing the statement to
-`TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero`. -/
-theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
+private theorem
+    differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap_of_ne
     {p q : ℂ} {S : Set ℂ}
     (hpq : p ≠ q) (hS : S ⊆ Set.range (AffineMap.lineMap (k := ℝ) p q))
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω) (hdiff : DifferentiableOn ℂ F (Ω \ S)) :
@@ -259,6 +254,28 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_rang
   · simpa only [Set.mem_preimage, hφinv z] using hz
   · simp only [Function.comp_apply, hφinv z]
 
+/-- **Painlevé removability across a line.** Let `S` be any subset of the line through points
+`p` and `q`, such as the whole line or a segment. A function continuous on an open set `Ω ⊆ ℂ`
+and holomorphic on `Ω \ S` is holomorphic on all of `Ω`.
+
+For distinct `p` and `q`, the line is straightened to the real axis by the affine chart
+`w ↦ p + (q - p) * w`; when `p = q`, `S` is a singleton and is contained in any nondegenerate
+line through `p`. -/
+theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
+    {p q : ℂ} {S : Set ℂ}
+    (hS : S ⊆ Set.range (AffineMap.lineMap (k := ℝ) p q))
+    (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω) (hdiff : DifferentiableOn ℂ F (Ω \ S)) :
+    DifferentiableOn ℂ F Ω := by
+  by_cases hpq : p = q
+  · subst q
+    refine differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap_of_ne
+      (p := p) (q := p + 1) (by simp) (fun z hz => ?_) hΩ hcont hdiff
+    obtain ⟨t, ht⟩ := mem_range_lineMap_iff.mp (hS hz)
+    refine mem_range_lineMap_iff.mpr ⟨0, ?_⟩
+    simpa using ht
+  · exact differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap_of_ne
+      hpq hS hΩ hcont hdiff
+
 /-- **Painlevé removability across a horizontal line.** A function continuous on an open set
 `Ω ⊆ ℂ` and holomorphic off the horizontal line `{z | z.im = c}` is holomorphic on all of `Ω`. -/
 theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq {c : ℝ}
@@ -266,7 +283,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq {c : ℝ
     (hdiff : DifferentiableOn ℂ F (Ω \ {z : ℂ | z.im = c})) :
     DifferentiableOn ℂ F Ω := by
   refine differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
-    (p := c * I) (q := 1 + c * I) (by simp) (fun z hz => ?_) hΩ hcont hdiff
+    (p := c * I) (q := 1 + c * I) (fun z hz => ?_) hΩ hcont hdiff
   refine mem_range_lineMap_iff.mpr ⟨z.re, ?_⟩
   simp only [add_sub_cancel_right, mul_one]
   exact Complex.ext (by simp) (by simpa using hz)
@@ -278,7 +295,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_re_eq {c : ℝ
     (hdiff : DifferentiableOn ℂ F (Ω \ {z : ℂ | z.re = c})) :
     DifferentiableOn ℂ F Ω := by
   refine differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
-    (p := (c : ℂ)) (q := (c : ℂ) + I) (by simp) (fun z hz => ?_) hΩ hcont hdiff
+    (p := (c : ℂ)) (q := (c : ℂ) + I) (fun z hz => ?_) hΩ hcont hdiff
   refine mem_range_lineMap_iff.mpr ⟨z.im, ?_⟩
   simp only [add_sub_cancel_left]
   exact Complex.ext (by simpa using hz) (by simp)
