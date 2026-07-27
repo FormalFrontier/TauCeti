@@ -134,6 +134,7 @@ theorem char_detPowerFDRep (m : ℤ) (g : GL (Fin n) k) :
   simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using char_detPowerRep k n m g
 
 /-- The bundled determinant character is the determinant. -/
+@[simp]
 theorem char_detFDRep (g : GL (Fin n) k) :
     (detFDRep k n).character g = (Matrix.GeneralLinearGroup.det g : k) := by
   simpa only [zpow_one, Matrix.GeneralLinearGroup.val_det_apply] using char_detPowerFDRep k n 1 g
