@@ -43,15 +43,32 @@ variable [CommRing k]
 
 attribute [local instance] starRingOfComm
 
+/-- The canonical inclusion of the orthogonal group into the general linear group. -/
+def orthogonalGroupToGL : Matrix.orthogonalGroup (Fin n) k →* GL (Fin n) k :=
+  Matrix.GeneralLinearGroup.toLin.symm.toMonoidHom.comp Matrix.UnitaryGroup.embeddingGL
+
+/-- The orthogonal-to-general-linear inclusion has the original matrix as its underlying matrix. -/
+@[simp]
+theorem orthogonalGroupToGL_coe (g : Matrix.orthogonalGroup (Fin n) k) :
+    (orthogonalGroupToGL k n g : Matrix (Fin n) (Fin n) k) = g := by
+  apply Matrix.mulVec_injective
+  funext v
+  change (Matrix.GeneralLinearGroup.toLin
+    (Matrix.GeneralLinearGroup.toLin.symm (Matrix.UnitaryGroup.embeddingGL g)) :
+      (Fin n → k) →ₗ[k] Fin n → k) v = _
+  rw [MulEquiv.apply_symm_apply]
+  exact LinearMap.congr_fun (Matrix.UnitaryGroup.coe_toGL g) v
+
 /-- The standard representation of the orthogonal group on column vectors. -/
 def stdOrthogonalRep : Representation k (Matrix.orthogonalGroup (Fin n) k) (Fin n → k) :=
-  Units.coeHom ((Fin n → k) →ₗ[k] (Fin n → k)) |>.comp Matrix.UnitaryGroup.embeddingGL
+  (stdRep k n).comp (orthogonalGroupToGL k n)
 
 /-- The standard orthogonal action is multiplication by the underlying matrix. -/
 @[simp]
 theorem stdOrthogonalRep_apply (g : Matrix.orthogonalGroup (Fin n) k) :
-    stdOrthogonalRep k n g = Matrix.mulVecLin (g : Matrix (Fin n) (Fin n) k) :=
-  Matrix.UnitaryGroup.coe_toGL g
+    stdOrthogonalRep k n g = Matrix.mulVecLin (g : Matrix (Fin n) (Fin n) k) := by
+  simpa only [stdOrthogonalRep, MonoidHom.comp_apply, orthogonalGroupToGL_coe] using
+    stdRep_apply k n (orthogonalGroupToGL k n g)
 
 /-- Evaluation of the standard orthogonal action is matrix-vector multiplication. -/
 theorem stdOrthogonalRep_apply_apply (g : Matrix.orthogonalGroup (Fin n) k) (v : Fin n → k) :
@@ -59,7 +76,8 @@ theorem stdOrthogonalRep_apply_apply (g : Matrix.orthogonalGroup (Fin n) k) (v :
   LinearMap.congr_fun (stdOrthogonalRep_apply k n g) v
 
 /-- The standard orthogonal action preserves the coordinate dot product. -/
-theorem stdOrthogonalRep_dotProduct (g : Matrix.orthogonalGroup (Fin n) k) (v w : Fin n → k) :
+theorem stdOrthogonalRep_dotProduct_stdOrthogonalRep
+    (g : Matrix.orthogonalGroup (Fin n) k) (v w : Fin n → k) :
     (stdOrthogonalRep k n g v) ⬝ᵥ (stdOrthogonalRep k n g w) = v ⬝ᵥ w := by
   rw [stdOrthogonalRep_apply_apply, stdOrthogonalRep_apply_apply]
   calc
@@ -74,6 +92,7 @@ theorem stdOrthogonalRep_dotProduct (g : Matrix.orthogonalGroup (Fin n) k) (v w 
           (g : Matrix (Fin n) (Fin n) k)) *ᵥ w) := by
       rw [Matrix.mulVec_mulVec]
     _ = v ⬝ᵥ w := by
+      -- `starRingOfComm` equips `k` with the definitional trivial star.
       have hstar : star (g : Matrix (Fin n) (Fin n) k) =
           (g : Matrix (Fin n) (Fin n) k)ᵀ := rfl
       rw [← hstar, Matrix.mem_unitaryGroup_iff'.mp g.prop, Matrix.one_mulVec]
@@ -86,23 +105,16 @@ noncomputable def stdOrthogonalRepToDual :
 /-- `stdOrthogonalRepToDual` evaluates as the coordinate dot product. -/
 theorem stdOrthogonalRepToDual_apply (v w : Fin n → k) :
     stdOrthogonalRepToDual k n v w = v ⬝ᵥ w := by
-  change (Pi.basisFun k (Fin n)).toDual v w = _
+  rw [stdOrthogonalRepToDual, Module.Basis.toDualEquiv_apply]
   simp [Module.Basis.toDual, Pi.basisFun, dotProduct]
 
 /-- The standard representation of the orthogonal group is faithful. -/
 theorem stdOrthogonalRep_injective : Function.Injective (stdOrthogonalRep k n) := by
   intro g h gh
   apply Subtype.ext
-  apply Matrix.ext
-  intro i j
-  have happly : (g : Matrix (Fin n) (Fin n) k) *ᵥ Pi.single j 1 =
-      (h : Matrix (Fin n) (Fin n) k) *ᵥ Pi.single j 1 := by
-    calc
-      (g : Matrix (Fin n) (Fin n) k) *ᵥ Pi.single j 1 =
-          stdOrthogonalRep k n g (Pi.single j 1) := rfl
-      _ = stdOrthogonalRep k n h (Pi.single j 1) := LinearMap.congr_fun gh (Pi.single j 1)
-      _ = (h : Matrix (Fin n) (Fin n) k) *ᵥ Pi.single j 1 := rfl
-  simpa [Matrix.mulVec, dotProduct, Pi.single_apply] using congr_fun happly i
+  apply Matrix.mulVec_injective
+  funext v
+  exact LinearMap.congr_fun (by simpa only [stdOrthogonalRep_apply] using gh) v
 
 /-- The standard representation of the orthogonal group, bundled as an object of `FDRep`. -/
 noncomputable abbrev stdOrthogonalFDRep : FDRep k (Matrix.orthogonalGroup (Fin n) k) :=
@@ -130,10 +142,13 @@ theorem stdOrthogonalRepToDual_equivariant (g : Matrix.orthogonalGroup (Fin n) k
   intro v
   apply LinearMap.ext
   intro w
+  -- Extensionality leaves coercions to functions opaque; this only exposes the displayed
+  -- composition so that the public application lemmas below can rewrite it.
   change stdOrthogonalRepToDual k n (stdOrthogonalRep k n g v) w = _
   rw [stdOrthogonalRepToDual_apply]
   rw [stdOrthogonalDualRep_apply, LinearMap.comp_apply, Module.Dual.transpose_apply,
     LinearMap.comp_apply]
+  -- The same coercion exposure lets `stdOrthogonalRepToDual_apply` describe the right side.
   change _ = stdOrthogonalRepToDual k n v
     (((g⁻¹ : Matrix.orthogonalGroup (Fin n) k) : Matrix (Fin n) (Fin n) k) *ᵥ w)
   rw [stdOrthogonalRepToDual_apply, ← stdOrthogonalRep_apply_apply k n g⁻¹]
@@ -143,12 +158,18 @@ theorem stdOrthogonalRepToDual_equivariant (g : Matrix.orthogonalGroup (Fin n) k
           stdOrthogonalRep k n g (stdOrthogonalRep k n g⁻¹ w) := by
       rw [Representation.self_inv_apply]
     _ = v ⬝ᵥ stdOrthogonalRep k n g⁻¹ w :=
-      stdOrthogonalRep_dotProduct k n g v (stdOrthogonalRep k n g⁻¹ w)
+      stdOrthogonalRep_dotProduct_stdOrthogonalRep k n g v (stdOrthogonalRep k n g⁻¹ w)
 
 /-- The standard representation of the orthogonal group is equivariantly self-dual. -/
 noncomputable def stdOrthogonalRepEquivDual :
     (stdOrthogonalRep k n).Equiv (stdOrthogonalDualRep k n) :=
   .mk (stdOrthogonalRepToDual k n) (stdOrthogonalRepToDual_equivariant k n)
+
+/-- The orthogonal self-duality equivalence evaluates as the coordinate dot product. -/
+@[simp]
+theorem stdOrthogonalRepEquivDual_apply (v w : Fin n → k) :
+    stdOrthogonalRepEquivDual k n v w = v ⬝ᵥ w :=
+  stdOrthogonalRepToDual_apply k n v w
 
 /-- The dual standard representation of the orthogonal group, bundled as an object of `FDRep`. -/
 noncomputable abbrev stdOrthogonalDualFDRep : FDRep k (Matrix.orthogonalGroup (Fin n) k) :=
@@ -166,8 +187,8 @@ attribute [local instance] starRingOfComm
 @[simp]
 theorem char_stdOrthogonalRep (g : Matrix.orthogonalGroup (Fin n) k) :
     (stdOrthogonalRep k n).character g = Matrix.trace (g : Matrix (Fin n) (Fin n) k) := by
-  rw [Representation.character, stdOrthogonalRep_apply]
-  exact Matrix.trace_toLin'_eq (g : Matrix (Fin n) (Fin n) k)
+  simpa only [stdOrthogonalRep, Representation.character, MonoidHom.comp_apply,
+    orthogonalGroupToGL_coe] using char_stdRep k n (orthogonalGroupToGL k n g)
 
 /-- The bundled standard orthogonal character is the matrix trace. -/
 @[simp]
