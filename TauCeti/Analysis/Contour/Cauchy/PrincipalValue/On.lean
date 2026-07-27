@@ -52,6 +52,11 @@ of `f` (which fails at an on-curve singularity), never silently identifying the 
 * `HasCauchyPVAt.hasCauchyPV`, `CauchyPVExistsAt.cauchyPVExists` — the single-point principal value
   at `z₀` is the set-level principal value with `S = {z₀}`: the excision `‖γ t − z₀‖ > ε` is exactly
   the `S = {z₀}` case of the set excision.
+* `HasCauchyPVWith.of_integrable_of_crossings_measure_zero` and its finite-crossings wrapper
+  `HasCauchyPVWith.of_integrable_of_finite_crossings` — where
+  the integrand is integrable and the curve meets the excised points on a null set of parameters
+  (in particular, finitely often), the principal value is the ordinary integral **for any
+  prescribed excision set**
 * `HasCauchyPV.of_integrable` — if the ordinary contour integrand is interval-integrable, the empty
   excision witnesses that the principal value is the ordinary integral (as when no on-curve
   singularity of `f` obstructs integrability).
@@ -216,6 +221,83 @@ theorem HasCauchyPV.of_integrable {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → �
   · refine tendsto_const_nhds.congr fun ε => ?_
     exact intervalIntegral.integral_congr fun t _ => by simp
 
+/-- If `z` is none of the finitely many points of `S`, then for all small enough `ε > 0` the point
+`z` is farther than `ε` from every point of `S`; i.e. the excision at `S` eventually keeps `z`. -/
+private theorem eventually_not_exists_mem_le (z : ℂ) (S : Finset ℂ) (h : ∀ s ∈ S, z ≠ s) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), ¬ ∃ s ∈ S, ‖z - s‖ ≤ ε := by
+  have key : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ s ∈ S, ε < ‖z - s‖ := by
+    rw [Filter.eventually_all_finset]
+    intro s hs
+    have hpos : (0 : ℝ) < ‖z - s‖ := by rw [norm_pos_iff, sub_ne_zero]; exact h s hs
+    exact nhdsWithin_le_nhds (Iio_mem_nhds hpos)
+  filter_upwards [key] with ε hε
+  rintro ⟨s, hs, hle⟩
+  exact absurd hle (not_le.mpr (hε s hs))
+
+/-- **An integrable integrand has principal value the ordinary integral, for *any* prescribed
+excision set.** Where the contour integrand is interval-integrable and the curve meets the excised
+points only on a null set of parameters, shrinking the excised neighbourhoods recovers the ordinary
+integral: for each fixed `ε` the excision may perturb the integrand on a set of positive measure,
+but as `ε → 0⁺` the excised integrands converge almost everywhere to the original one, since the
+limiting crossing set is null.
+
+The strength here is that `S` is arbitrary: the conclusion holds for whatever excision set another
+principal value happens to be witnessed by, which is what lets an arc carrying no singularity be
+subtracted off via `HasCauchyPVWith.sub_right` without knowing that witness. Compare
+`HasCauchyPV.of_integrable`, which proves the weaker existential form by exhibiting `S = ∅`. -/
+theorem HasCauchyPVWith.of_integrable_of_crossings_measure_zero {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (S : Finset ℂ) (hγ : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)))
+    (h_int : IntervalIntegrable (fun t => f (γ t) * deriv γ t) MeasureTheory.volume a b)
+    (h_null : MeasureTheory.volume (⋃ s ∈ S, Set.uIoc a b ∩ γ ⁻¹' {s}) = 0) :
+    HasCauchyPVWith γ a b f S (∫ t in a..b, f (γ t) * deriv γ t) := by
+  classical
+  set g : ℝ → ℂ := fun t => f (γ t) * deriv γ t with hg
+  have hmeas : ∀ ε : ℝ, MeasureTheory.NullMeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε}
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε => by
+    have hset : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext t; simp
+    refine hset ▸ MeasureTheory.NullMeasurableSet.biUnion S.countable_toSet fun s _ => ?_
+    exact nullMeasurableSet_le ((hγ.sub_const s).norm) aemeasurable_const
+  have hsm : ∀ ε : ℝ, MeasureTheory.AEStronglyMeasurable
+      (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε =>
+    (h_int.def'.aestronglyMeasurable.indicator₀ (hmeas ε).compl).congr
+      (Filter.Eventually.of_forall fun t => by
+        dsimp only
+        by_cases h : ∃ s ∈ S, ‖γ t - s‖ ≤ ε
+        · rw [Set.indicator_of_notMem (by simpa using h), if_pos h]
+        · rw [Set.indicator_of_mem (by simpa using h), if_neg h])
+  have hle : ∀ ε : ℝ, ∀ t : ℝ,
+      ‖(if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)‖ ≤ ‖g t‖ := fun ε t => by
+    by_cases h : ∃ s ∈ S, ‖γ t - s‖ ≤ ε <;> simp [h]
+  have hae : ∀ᵐ t ∂MeasureTheory.volume, t ∈ Set.uIoc a b →
+      Filter.Tendsto (fun ε : ℝ => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)
+        (𝓝[>] 0) (𝓝 (g t)) := by
+    filter_upwards [MeasureTheory.measure_eq_zero_iff_ae_notMem.mp h_null] with t ht htI
+    have hne : ∀ s ∈ S, γ t ≠ s := fun s hs hst =>
+      ht (Set.mem_biUnion hs ⟨htI, hst⟩)
+    refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
+    filter_upwards [eventually_not_exists_mem_le (γ t) S hne] with ε hε
+    exact (if_neg hε).symm
+  refine ⟨Filter.Eventually.of_forall fun ε =>
+      h_int.mono_fun (hsm ε) (Filter.Eventually.of_forall (hle ε)), ?_⟩
+  exact intervalIntegral.tendsto_integral_filter_of_dominated_convergence (fun t => ‖g t‖)
+    (Filter.Eventually.of_forall hsm)
+    (Filter.Eventually.of_forall fun ε => Filter.Eventually.of_forall fun t _ => hle ε t)
+    h_int.norm hae
+
+/-- Finite-crossings form of `HasCauchyPVWith.of_integrable_of_crossings_measure_zero`: a curve
+meeting each excised point only finitely often meets them on a null set of parameters. This is
+the form contour arguments consume: `IsPwC1ImmersionOn.finite_crossings` (HW Prop 2.2) supplies
+finiteness on the closed interval, from which this follows by `Set.Finite.subset` along
+`Set.uIoc_subset_uIcc`. -/
+theorem HasCauchyPVWith.of_integrable_of_finite_crossings {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (S : Finset ℂ) (hγ : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)))
+    (h_int : IntervalIntegrable (fun t => f (γ t) * deriv γ t) MeasureTheory.volume a b)
+    (h_fin : ∀ s ∈ S, (Set.uIoc a b ∩ γ ⁻¹' {s}).Finite) :
+    HasCauchyPVWith γ a b f S (∫ t in a..b, f (γ t) * deriv γ t) :=
+  .of_integrable_of_crossings_measure_zero S hγ h_int
+    ((S.finite_toSet.biUnion fun s hs => h_fin s hs).measure_zero _)
+
 /-- **Zero integrand.** The principal value of the zero integrand is `0`, witnessed by the empty
 excision: the truncated integrand is identically `0`, hence integrable with vanishing integral. -/
 theorem HasCauchyPV.zero {γ : ℝ → ℂ} {a b : ℝ} : HasCauchyPV γ a b (fun _ => 0) 0 := by
@@ -243,6 +325,43 @@ theorem HasCauchyPV.const_mul {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {
   · refine (htend.const_mul c).congr fun ε => ?_
     rw [← intervalIntegral.integral_const_mul]
     exact intervalIntegral.integral_congr fun t _ => (hbody ε t).symm
+
+/-- **Changing the curve.** Two curves that agree on the open parameter interval
+have the same principal value: both the excision test `‖γ t - s‖ ≤ ε` and the integrand
+`f (γ t) * deriv γ t` are computed pointwise from the curve, the derivatives agree automatically
+because the interval is open, and the endpoints do not affect an interval integral.
+
+This is what lets a contour identity be restated along a more convenient parametrization — for
+instance replacing a piece of a closed contour by the straight line it traces. -/
+theorem HasCauchyPVWith.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {S : Finset ℂ} {v : ℂ}
+    (h : HasCauchyPVWith γ₁ a b f S v) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    HasCauchyPVWith γ₂ a b f S v := by
+  have h_deriv : Set.EqOn (deriv γ₁) (deriv γ₂) (Set.uIoo a b) := h_eq.deriv isOpen_Ioo
+  rw [hasCauchyPVWith_iff] at h ⊢
+  have hbody : ∀ ε : ℝ, ∀ t ∈ Set.uIoo a b,
+      (if ∃ s ∈ S, ‖γ₁ t - s‖ ≤ ε then 0 else f (γ₁ t) * deriv γ₁ t)
+        = if ∃ s ∈ S, ‖γ₂ t - s‖ ≤ ε then 0 else f (γ₂ t) * deriv γ₂ t := by
+    intro ε t ht
+    rw [h_eq ht, h_deriv ht]
+  refine ⟨?_, ?_⟩
+  · filter_upwards [h.1] with ε hε
+    exact (intervalIntegrable_congr_uIoo fun t ht => hbody ε t ht).mp hε
+  · exact h.2.congr fun ε => intervalIntegral.integral_congr_uIoo fun t ht => hbody ε t ht
+
+/-- Curve congruence for the primary predicate: `HasCauchyPVWith.congr_curve` with the excision
+set re-hidden, so consumers need not name it. -/
+theorem HasCauchyPV.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ}
+    (h : HasCauchyPV γ₁ a b f v) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    HasCauchyPV γ₂ a b f v :=
+  let ⟨_, hS⟩ := hasCauchyPV_iff_exists_hasCauchyPVWith.mp h
+  (hS.congr_curve h_eq).hasCauchyPV
+
+/-- Existence form of `HasCauchyPV.congr_curve`. -/
+theorem CauchyPVExists.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (h : CauchyPVExists γ₁ a b f) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    CauchyPVExists γ₂ a b f :=
+  let ⟨_, hv⟩ := h
+  ⟨_, hv.congr_curve h_eq⟩
 
 /-- **Congruence along the curve.** If `f` and `g` agree along `γ` on the open interval `Set.uIoo a
 b`, they share the same principal value there, with the same excision set (the endpoints are
@@ -306,19 +425,6 @@ private theorem countable_setOf_deriv_ne_zero_on_fiber (g : ℝ → ℂ) (c : �
     nhdsWithin_mono x (fun y hy => ne_of_lt hy) hfreq
   rw [Set.inter_comm, nhdsWithin_inter']
   exact Filter.inf_principal_eq_bot.mpr h2
-
-/-- If `z` is none of the finitely many points of `S`, then for all small enough `ε > 0` the point
-`z` is farther than `ε` from every point of `S`; i.e. the excision at `S` eventually keeps `z`. -/
-private theorem eventually_not_exists_mem_le (z : ℂ) (S : Finset ℂ) (h : ∀ s ∈ S, z ≠ s) :
-    ∀ᶠ ε in 𝓝[>] (0 : ℝ), ¬ ∃ s ∈ S, ‖z - s‖ ≤ ε := by
-  have key : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ s ∈ S, ε < ‖z - s‖ := by
-    rw [Filter.eventually_all_finset]
-    intro s hs
-    have hpos : (0 : ℝ) < ‖z - s‖ := by rw [norm_pos_iff, sub_ne_zero]; exact h s hs
-    exact nhdsWithin_le_nhds (Iio_mem_nhds hpos)
-  filter_upwards [key] with ε hε
-  rintro ⟨s, hs, hle⟩
-  exact absurd hle (not_le.mpr (hε s hs))
 
 /-- **A separating, integrable excision radius.** If the truncated integrands for `S₁` and `S₂` are
 eventually integrable as `ε → 0⁺`, there is a single `ε₀ > 0` at which both are integrable and at
@@ -524,6 +630,17 @@ theorem HasCauchyPV.cauchyPV_eq {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
   have hex : ∃ v, HasCauchyPV γ a b f v := ⟨v, h⟩
   rw [cauchyPV, dif_pos hex]
   exact hex.choose_spec.unique h
+
+/-- Value form of `HasCauchyPV.congr_curve`: curves agreeing on the open parameter interval have
+the same principal value, whether or not it exists (both sides are `0` when it does not). -/
+theorem cauchyPV_congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) : cauchyPV γ₁ a b f = cauchyPV γ₂ a b f := by
+  by_cases h : ∃ v, HasCauchyPV γ₁ a b f v
+  · obtain ⟨v, hv⟩ := h
+    rw [hv.cauchyPV_eq, (hv.congr_curve h_eq).cauchyPV_eq]
+  · have h2 : ¬ ∃ v, HasCauchyPV γ₂ a b f v := fun ⟨v, hv⟩ =>
+      h ⟨v, hv.congr_curve h_eq.symm⟩
+    rw [cauchyPV, dif_neg h, cauchyPV, dif_neg h2]
 
 /-- The value form of `HasCauchyPV.zero`: the principal value of the zero integrand is `0`. -/
 @[simp]

@@ -72,8 +72,14 @@ theorem measurable_probabilityMeasure_eval_family {ι : Type*}
     Measurable fun P : ProbabilityMeasure α => fun i => (P (B i) : ℝ) :=
   measurable_pi_lambda _ fun i => measurable_probabilityMeasure_apply_real (hB i)
 
+/-- The defining equation of `evalReal`, stated so that proofs about it cite the unfolding
+explicitly rather than relying on definitional equality. -/
+private theorem evalReal_apply (P : ProbabilityMeasure α) (s : MeasIdx α) :
+    evalReal P s = (P s.1 : ℝ) := rfl
+
 private theorem measurable_evalReal : Measurable (evalReal (α := α)) :=
-  measurable_pi_lambda _ fun s => measurable_probabilityMeasure_apply_real s.2
+  measurable_pi_lambda _ fun s => by
+    simpa only [evalReal_apply] using measurable_probabilityMeasure_apply_real s.2
 
 /-- The Giry σ-algebra on `Measure α` is the pullback of the product σ-algebra along the
 all-evaluations map. This is a repackaging of the definition: the instance is already an `iSup`
