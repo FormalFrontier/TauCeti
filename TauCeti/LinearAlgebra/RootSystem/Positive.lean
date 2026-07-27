@@ -22,7 +22,8 @@ and negative root indices. It records their partition and their exchange under r
 ## References
 
 This file implements the “Positive and negative roots” item in Layer 1 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, following the target signatures in
+`TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`.
 -/
 
 namespace TauCeti
@@ -98,17 +99,11 @@ lemma posRoots_nonempty [Nonempty ι] : (posRoots P b).Nonempty := by
   · exact ⟨i, hi⟩
   · exact ⟨-i, hi⟩
 
-omit [CharZero R] in
-/-- The root-negation index is the self-reflection index. -/
-private lemma reflectionPerm_self_eq_neg (i : ι) :
-    letI := P.indexNeg
-    P.reflectionPerm i i = -i := rfl
-
 /-- The negative of a positive root is negative. -/
 lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     P.reflectionPerm i i ∈ negRoots P b ↔ i ∈ posRoots P b := by
   letI := P.indexNeg
-  rw [reflectionPerm_self_eq_neg, mem_negRoots, mem_posRoots,
+  rw [← RootPairing.indexNeg_neg, mem_negRoots, mem_posRoots,
     RootPairing.Base.IsPos.neg_iff_not]
   exact not_not
 
@@ -117,7 +112,7 @@ lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
 lemma isPos_reflectionPerm_self_iff_mem_negRoots (i : ι) :
     b.IsPos (P.reflectionPerm i i) ↔ i ∈ negRoots P b := by
   letI := P.indexNeg
-  rw [reflectionPerm_self_eq_neg, mem_negRoots]
+  rw [← RootPairing.indexNeg_neg, mem_negRoots]
   exact RootPairing.Base.IsPos.neg_iff_not b i
 
 /-- The negative of a negative root is positive. -/
@@ -147,7 +142,7 @@ lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
 theorem image_reflectionPerm_self_posRoots :
     (fun i ↦ P.reflectionPerm i i) '' posRoots P b = negRoots P b := by
   letI := P.indexNeg
-  simp_rw [reflectionPerm_self_eq_neg P]
+  simp_rw [← RootPairing.indexNeg_neg]
   ext i
   constructor
   · rintro ⟨j, hj, rfl⟩
@@ -165,10 +160,7 @@ theorem image_reflectionPerm_self_negRoots :
   letI := P.indexNeg
   have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
     intro i
-    have hneg : (fun j : ι ↦ P.reflectionPerm j j) = fun j ↦ -j :=
-      funext (reflectionPerm_self_eq_neg P)
-    rw [hneg]
-    exact neg_neg i
+    simp only [← RootPairing.indexNeg_neg, neg_neg]
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
         (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
