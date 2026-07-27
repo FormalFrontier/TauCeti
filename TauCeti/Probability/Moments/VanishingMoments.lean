@@ -8,6 +8,7 @@ Authors: Claude
 public import TauCeti.Probability.Moments.Determinacy
 public import Mathlib.Analysis.RCLike.Basic
 public import Mathlib.MeasureTheory.Function.L2Space
+public import Mathlib.Probability.Moments.IntegrableExpMul
 
 /-!
 # Vanishing moments force a function to be zero
@@ -20,7 +21,7 @@ Both forms assume exponential control at a single positive rate; they differ in 
 
 * `TauCeti.ae_eq_zero_of_forall_moment_eq_zero` (function level) assumes the *product*
   `e^{a|x|} · g` is integrable for some `a > 0`, and concludes for a real `g`.
-* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` (measure level) assumes
+* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` (measure level) assumes
   it of the *weight* alone -- `e^{a|x|} ∈ L¹(ν)` for some `a > 0` -- and of `g` only that it lies
   in `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.
 
@@ -51,17 +52,6 @@ private theorem abs_max_zero_le_abs (t : ℝ) : |max t 0| ≤ |t| := by
   · simp [max_eq_right h]
   · simp [max_eq_left h, abs_of_nonneg h]
 
-/-- Polynomial growth is dominated by exponential growth at any positive rate:
-`|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`. -/
-private theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
-    |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
-  have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
-  have han : (0 : ℝ) < a ^ n := by positivity
-  have h := Real.pow_div_factorial_le_exp (a * |x|) (by positivity) n
-  rw [div_le_iff₀ hfac, mul_pow] at h
-  rw [div_mul_eq_mul_div, le_div_iff₀ han]
-  nlinarith [h, Real.exp_pos (a * |x|), pow_nonneg (abs_nonneg x) n]
-
 section Densities
 
 variable {a : ℝ} {g f : ℝ → ℝ}
@@ -74,16 +64,21 @@ private theorem integrable_toReal_ofReal_smul_pow (ha : 0 < a)
     (hfm : AEMeasurable (fun x : ℝ => ENNReal.ofReal (f x)) ν)
     (hle : ∀ x, |max (f x) 0| ≤ |g x|) (n : ℕ) :
     Integrable (fun x : ℝ => (ENNReal.ofReal (f x)).toReal • x ^ n) ν := by
-  have hc : (0 : ℝ) < (Nat.factorial n : ℝ) / a ^ n := by
-    have : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
-    positivity
-  refine (hexp.const_mul ((Nat.factorial n : ℝ) / a ^ n)).mono ?_ ?_
+  have hc : (0 : ℝ) < ((n : ℝ) / a) ^ n := by
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp
+    · exact pow_pos (div_pos (Nat.cast_pos.mpr hn) ha) _
+  have hdom : ∀ x : ℝ, |x| ^ n ≤ ((n : ℝ) / a) ^ n * Real.exp (a * |x|) := by
+    intro x
+    have h := rpow_abs_le_mul_exp_abs x (p := (n : ℝ)) (t := a) (Nat.cast_nonneg n) (ne_of_gt ha)
+    rwa [abs_of_pos ha, Real.rpow_natCast, Real.rpow_natCast] at h
+  refine (hexp.const_mul (((n : ℝ) / a) ^ n)).mono ?_ ?_
   · exact hfm.ennreal_toReal.aestronglyMeasurable.smul (continuous_pow n).aestronglyMeasurable
   · filter_upwards with x
     have hE : (0 : ℝ) < Real.exp (a * |x|) := Real.exp_pos _
     simp only [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, abs_mul, abs_pow,
       abs_of_pos hE, abs_of_pos hc]
-    nlinarith [hle x, pow_abs_le_factorial_div_pow_mul_exp ha n x, abs_nonneg (g x),
+    nlinarith [hle x, hdom x, abs_nonneg (g x),
       abs_nonneg (max (f x) 0), pow_nonneg (abs_nonneg x) n, hE.le, hc.le]
 
 /-- Shared step: the density measure `(ofReal ∘ f) · ν` inherits the finite exponential moment. -/
@@ -110,7 +105,7 @@ end Densities
 is a.e. zero.
 
 This is the internal transfer step, not the form the completeness step consumes — that is the
-measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` below, which wraps this
+measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` below, which wraps this
 one. `Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp` in
 `TauCeti.Probability.Moments.Determinacy` pins down a *measure* from its moments, and this transfers
 that to a *function* by applying it to the positive and negative parts of `g` as densities
@@ -218,9 +213,12 @@ The rate is existential, matching the convention of the engine this wraps and of
 form above; a caller holding a bound at every rate supplies it at any single one.  Requiring it at
 *every* rate would exclude exponentially-tailed weights such as `e^{-|x|}`, for which
 `∫ e^{a|x|} dν` is finite only for `a < 1`, even though they are moment-determinate all the same.
+The `_of_finite_expMoments` suffix is the roadmap-specified API name, and it is accurate: a finite
+exponential moment at one positive rate forces every polynomial moment to be finite — the
+domination step below (`rpow_abs_le_mul_exp_abs`) is exactly that implication.
 
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
-theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
+theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
     (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
@@ -252,20 +250,36 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
       Integrable (fun x : ℝ => Real.exp (b * |x|) * f x) ν := by
     intro f hf
     simpa only [Pi.mul_def] using hexp2.integrable_mul hf
-  -- Monomials are square-integrable: `|x|ⁿ ≤ (n!/bⁿ)·e^{b|x|}` and the right side is in `L²`.
+  -- Monomials are square-integrable: exponential domination makes every polynomial moment
+  -- integrable (`ProbabilityTheory.integrable_pow_abs_of_integrable_exp_mul`), and `L²`
+  -- membership at `n` is integrability at `2 * n`.
   have hpolyL2 : ∀ n : ℕ, MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
     intro n
-    have hK : (0 : ℝ) < (Nat.factorial n : ℝ) / b ^ n := by
-      have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
-      positivity
-    refine MemLp.of_le (hexp2.const_mul ((Nat.factorial n : ℝ) / b ^ n)) ?_ ?_
-    · exact ((RCLike.continuous_ofReal.comp continuous_id).pow n).aestronglyMeasurable
-    · refine Filter.Eventually.of_forall fun x => ?_
-      have h := pow_abs_le_factorial_div_pow_mul_exp hbpos n x
-      have hE : (0 : ℝ) < Real.exp (b * |x|) := Real.exp_pos _
-      rw [RCLike.algebraMap_eq_ofReal, norm_pow, RCLike.norm_ofReal, Real.norm_eq_abs,
-        abs_mul, abs_of_pos hK, abs_of_pos hE]
-      linarith
+    have hexpb : Integrable (fun x : ℝ => Real.exp (b * |x|)) ν :=
+      hexp2.integrable (show (1 : ENNReal) ≤ 2 by norm_num)
+    have hmeas_lin : ∀ c : ℝ, AEStronglyMeasurable (fun x : ℝ => Real.exp (c * x)) ν :=
+      fun c =>
+        (Real.continuous_exp.comp (continuous_const.mul continuous_id)).aestronglyMeasurable
+    have hpos : Integrable (fun x : ℝ => Real.exp (b * x)) ν := by
+      refine hexpb.mono' (hmeas_lin b) (Filter.Eventually.of_forall fun x => ?_)
+      rw [Real.norm_eq_abs, Real.abs_exp]
+      exact Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left (le_abs_self x) hbpos.le)
+    have hneg : Integrable (fun x : ℝ => Real.exp (-b * x)) ν := by
+      refine hexpb.mono' (hmeas_lin (-b)) (Filter.Eventually.of_forall fun x => ?_)
+      rw [Real.norm_eq_abs, Real.abs_exp]
+      refine Real.exp_le_exp.mpr (by nlinarith [hbpos, neg_le_abs x])
+    have hsq : Integrable (fun x : ℝ => |x| ^ (2 * n)) ν :=
+      integrable_pow_abs_of_integrable_exp_mul (ne_of_gt hbpos) hpos hneg (2 * n)
+    have hfun : (fun x : ℝ => ‖(algebraMap ℝ 𝕜 x) ^ n‖ ^ 2) = fun x : ℝ => |x| ^ (2 * n) := by
+      funext x
+      rw [RCLike.algebraMap_eq_ofReal, norm_pow, RCLike.norm_ofReal, ← pow_mul]
+      congr 1
+      ring
+    rw [memLp_two_iff_integrable_sq_norm
+      ((RCLike.continuous_ofReal.comp continuous_id).pow n).aestronglyMeasurable]
+    change Integrable (fun x : ℝ => ‖(algebraMap ℝ 𝕜 x) ^ n‖ ^ 2) ν
+    rw [hfun]
+    exact hsq
   -- Hence each monomial moment integrand is integrable, so `re`/`im` pass through the integral.
   have hint : ∀ n : ℕ, Integrable (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n * g x) ν :=
     fun n => by simpa only [Pi.mul_def] using (hpolyL2 n).integrable_mul hg
