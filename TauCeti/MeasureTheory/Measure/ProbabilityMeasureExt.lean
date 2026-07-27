@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
-import Mathlib.MeasureTheory.Constructions.Cylinders
+import Mathlib.MeasureTheory.Constructions.Projective
 
 /-!
 # Finite evaluation laws determine a measure on `ProbabilityMeasure α`
@@ -29,10 +29,11 @@ each is measurable in terms of the other, so the two pullbacks coincide — puts
 `ProbabilityMeasure α` in the same form.
 
 Once the σ-algebra is a pullback, equality of the two measures reduces to equality of their
-pushforwards under the all-evaluations map, and that is a statement about a product σ-algebra:
-`measurableCylinders` is a π-system generating it, and a measurable cylinder is exactly the event
-that a *finite* evaluation family lands in a measurable set. So the hypothesis applies directly,
-and no π-system has to be built by hand.
+pushforwards under the all-evaluations map. Those pushforwards live on a product space, and the
+hypothesis says exactly that their restrictions to every finite set of coordinates agree — so both
+are projective limits of the same family and `MeasureTheory.IsProjectiveLimit.unique` concludes.
+No π-system is built here: that lemma already performs the `measurableCylinders` argument. The only
+work is reindexing a `Finset` of coordinates by `Fin` via `Finset.equivFin`.
 -/
 
 public section
@@ -125,36 +126,35 @@ theorem Measure.ext_of_forall_map_probabilityMeasure_eval_eq
       π₁.map (fun P => fun i => (P (B i) : ℝ))
         = π₂.map (fun P => fun i => (P (B i) : ℝ))) :
     π₁ = π₂ := by
-  have hmapfin : IsFiniteMeasure (π₁.map (evalReal (α := α))) :=
-    Measure.isFiniteMeasure_map _ _
   have key : π₁.map (evalReal (α := α)) = π₂.map (evalReal (α := α)) := by
-    refine ext_of_generate_finite (measurableCylinders fun _ : MeasIdx α => ℝ)
-      generateFrom_measurableCylinders.symm isPiSystem_measurableCylinders ?_ ?_
-    · rintro t ht
-      obtain ⟨I, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht
+    haveI : ∀ I : Finset (MeasIdx α),
+        IsFiniteMeasure ((π₁.map (evalReal (α := α))).map I.restrict) :=
+      fun I => Measure.isFiniteMeasure_map _ _
+    -- Each finite restriction of the two pushforwards agrees, so both are projective limits of
+    -- the same family and `IsProjectiveLimit.unique` finishes.
+    have hstep : ∀ I : Finset (MeasIdx α),
+        (π₂.map (evalReal (α := α))).map I.restrict
+          = (π₁.map (evalReal (α := α))).map I.restrict := by
+      intro I
       set e := I.equivFin
       set B : Fin I.card → Set α := fun j => ((e.symm j : MeasIdx α) : Set α) with hB
       have hBm : ∀ j, MeasurableSet (B j) := fun j => (e.symm j : MeasIdx α).2
       set Φ : (Fin I.card → ℝ) → (I → ℝ) := fun x i => x (e i) with hΦ
       have hΦm : Measurable Φ := measurable_pi_lambda _ fun i => measurable_pi_apply _
       have hfam := measurable_eval_family B hBm
-      have hpre : (evalReal (α := α)) ⁻¹' cylinder I S
-          = (fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) ⁻¹' (Φ ⁻¹' S) := by
-        ext P
-        simp only [Set.mem_preimage, mem_cylinder, hΦ, hB]
-        congr! 2 with i
-        simp [evalReal, Finset.restrict]
-      rw [Measure.map_apply measurable_evalReal hS.cylinder,
-        Measure.map_apply measurable_evalReal hS.cylinder, hpre,
-        ← Measure.map_apply hfam (hΦm hS), ← Measure.map_apply hfam (hΦm hS), h _ B hBm]
-    · have hfam0 := measurable_eval_family (α := α) (fun i : Fin 0 => i.elim0)
-        (fun i => i.elim0)
-      have h0 := congrArg (fun ρ : Measure (Fin 0 → ℝ) => ρ Set.univ)
-        (h 0 (fun i => i.elim0) (fun i => i.elim0))
-      simp only [Measure.map_apply hfam0 MeasurableSet.univ, Set.preimage_univ] at h0
-      rw [Measure.map_apply measurable_evalReal MeasurableSet.univ,
-        Measure.map_apply measurable_evalReal MeasurableSet.univ, Set.preimage_univ]
-      exact h0
+      have hfun : I.restrict ∘ (evalReal (α := α))
+          = Φ ∘ fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) := by
+        funext P i
+        simp [Finset.restrict, evalReal, hΦ, hB]
+      have hcomp : ∀ π : Measure (ProbabilityMeasure α),
+          (π.map (evalReal (α := α))).map I.restrict
+            = (π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)).map Φ := by
+        intro π
+        rw [Measure.map_map (Finset.measurable_restrict I) measurable_evalReal,
+          Measure.map_map hΦm hfam, hfun]
+      rw [hcomp, hcomp, h _ B hBm]
+    exact (IsProjectiveLimit.unique
+      (P := fun I => (π₁.map (evalReal (α := α))).map I.restrict) hstep fun _ => rfl).symm
   refine Measure.ext fun T hT => ?_
   obtain ⟨U, hU, rfl⟩ : ∃ U, MeasurableSet U ∧ (evalReal (α := α)) ⁻¹' U = T := by
     have hT' : MeasurableSet[MeasurableSpace.comap (evalReal (α := α)) MeasurableSpace.pi] T := by
