@@ -45,12 +45,13 @@ variable [CommRing k]
 /-- Multiplication by a square matrix scales the standard-basis determinant form by its
 determinant. -/
 @[simp]
-theorem basisFun_det_mulVec (M : Matrix (Fin n) (Fin n) k) (v : Fin n → Fin n → k) :
+theorem basisFun_det_mulVec {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (M : Matrix ι ι k) (v : ι → ι → k) :
     Matrix.detRowAlternating (fun i => M *ᵥ v i) =
       M.det * Matrix.detRowAlternating v := by
   simpa only [Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply, Matrix.mulVecBilin_apply,
     LinearMap.det_toLin'] using
-    (Module.Basis.det_comp (Pi.basisFun k (Fin n)) (Matrix.toLin' M) v)
+    (Module.Basis.det_comp (Pi.basisFun k ι) (Matrix.toLin' M) v)
 
 /-- The standard action of `SL(n, k)` preserves the standard-basis determinant form.
 
@@ -62,7 +63,7 @@ theorem basisFun_det_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
       Matrix.detRowAlternating v := by
   simpa only [stdSLRep_apply_apply, g.det_coe, one_mul] using
-    basisFun_det_mulVec k n (g : Matrix (Fin n) (Fin n) k) v
+    basisFun_det_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
 
 end CommRing
 
