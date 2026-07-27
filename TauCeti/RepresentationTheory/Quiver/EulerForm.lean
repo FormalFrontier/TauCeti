@@ -51,6 +51,7 @@ public def eulerForm : LinearMap.BilinForm ℤ (Q → ℤ) :=
       simp_rw [Finset.mul_sum, ← mul_assoc])
 
 /-- The defining sum for the Euler form. -/
+@[simp]
 public theorem eulerForm_def (d e : Q → ℤ) :
     eulerForm Q d e =
       (∑ v : Q, d v * e v) - ∑ a : Q, ∑ b : Q, ∑ _ : a ⟶ b, d a * e b :=
@@ -61,6 +62,7 @@ public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
   (eulerForm Q).toQuadraticMap
 
 /-- The defining equation for the Tits form. -/
+@[simp]
 public theorem titsForm_def (d : Q → ℤ) : titsForm Q d = eulerForm Q d d :=
   LinearMap.BilinMap.toQuadraticMap_apply _ _
 
@@ -69,22 +71,16 @@ public def titsPolarForm : LinearMap.BilinForm ℤ (Q → ℤ) :=
   (titsForm Q).polarBilin
 
 /-- The defining equation for the polarized Tits form. -/
+@[simp]
 public theorem titsPolarForm_def (d e : Q → ℤ) :
     titsPolarForm Q d e = eulerForm Q d e + eulerForm Q e d := by
   simp only [titsPolarForm, QuadraticMap.polarBilin_apply_apply, titsForm,
     LinearMap.BilinMap.polar_toQuadraticMap]
 
-/-- Adding dimension vectors polarizes the Tits form. -/
-public theorem titsForm_add (d e : Q → ℤ) :
-    titsForm Q (d + e) = titsForm Q d + titsForm Q e + titsPolarForm Q d e := by
+/-- The polarized Tits form is symmetric. -/
+public theorem titsPolarForm_comm (d e : Q → ℤ) :
+    titsPolarForm Q d e = titsPolarForm Q e d := by
   simpa only [titsPolarForm, QuadraticMap.polarBilin_apply_apply] using
-    QuadraticMap.map_add (titsForm Q) d e
-
-/-- Subtracting dimension vectors polarizes the Tits form. -/
-public theorem titsForm_sub (d e : Q → ℤ) :
-    titsForm Q (d - e) = titsForm Q d + titsForm Q e - titsPolarForm Q d e := by
-  simpa only [sub_eq_add_neg, QuadraticMap.map_neg, titsPolarForm,
-    QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_neg_right] using
-    QuadraticMap.map_add (titsForm Q) d (-e)
+    QuadraticMap.polar_comm (titsForm Q) d e
 
 end TauCeti
