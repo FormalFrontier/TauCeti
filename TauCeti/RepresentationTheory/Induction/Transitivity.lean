@@ -106,6 +106,19 @@ noncomputable def coindFunctorCompIso (φ : G →* H) (ψ : H →* K) :
   let adjψφ := _root_.Rep.resCoindAdjunction.{max u v w x} k (ψ.comp φ)
   exact conjugateIsoEquiv adjφψ adjψφ (resFunctorCompIso φ ψ).symm
 
+/-- The coinduction-in-stages isomorphism is characterized by the inverse
+restriction-composition isomorphism under the inverse adjunction equivalence. -/
+@[simp]
+lemma conjugateEquiv_symm_coindFunctorCompIso_hom (φ : G →* H) (ψ : H →* K) :
+    ((conjugateEquiv
+      ((_root_.Rep.resCoindAdjunction.{max u v w x} k ψ).comp
+        (_root_.Rep.resCoindAdjunction.{max u v w x} k φ))
+      (_root_.Rep.resCoindAdjunction.{max u v w x} k (ψ.comp φ))).symm
+      (coindFunctorCompIso φ ψ).hom) =
+    (resFunctorCompIso φ ψ).inv := by
+  unfold coindFunctorCompIso
+  exact Equiv.symm_apply_apply _ _
+
 end Coinduction
 
 end Rep
