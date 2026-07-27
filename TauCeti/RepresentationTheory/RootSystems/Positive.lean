@@ -105,7 +105,6 @@ private lemma reflectionPerm_self_eq_neg (i : ι) :
     P.reflectionPerm i i = -i := rfl
 
 /-- The negative of a positive root is negative. -/
-@[simp]
 lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     P.reflectionPerm i i ∈ negRoots P b ↔ i ∈ posRoots P b := by
   letI := P.indexNeg
@@ -113,13 +112,18 @@ lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     RootPairing.Base.IsPos.neg_iff_not]
   exact not_not
 
-/-- The negative of a negative root is positive. -/
+/-- The self-reflection of a root is positive exactly when the root is negative. -/
 @[simp]
+lemma isPos_reflectionPerm_self_iff_mem_negRoots (i : ι) :
+    b.IsPos (P.reflectionPerm i i) ↔ i ∈ negRoots P b := by
+  letI := P.indexNeg
+  rw [reflectionPerm_self_eq_neg, mem_negRoots]
+  exact RootPairing.Base.IsPos.neg_iff_not b i
+
+/-- The negative of a negative root is positive. -/
 lemma reflectionPerm_self_mem_posRoots_iff_mem_negRoots (i : ι) :
     P.reflectionPerm i i ∈ posRoots P b ↔ i ∈ negRoots P b := by
-  letI := P.indexNeg
-  rw [reflectionPerm_self_eq_neg, mem_posRoots, mem_negRoots]
-  exact RootPairing.Base.IsPos.neg_iff_not b i
+  exact (mem_posRoots P b _).trans (isPos_reflectionPerm_self_iff_mem_negRoots P b i)
 
 /-- A positive root is a nonnegative natural-number combination of simple roots. -/
 lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
