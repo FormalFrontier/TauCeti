@@ -133,7 +133,7 @@ instance isInvInvariant_haarProb : (haarProb G).IsInvInvariant :=
   isInvInvariant_of_isHaarMeasure_of_isProbabilityMeasure (G := G) _
 
 /-- A probability Haar measure on a compact group is the normalized Haar measure. -/
-theorem isHaarMeasure_eq_haarProb_of_isProbabilityMeasure (μ : Measure G)
+theorem eq_haarProb_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
     [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ = haarProb G :=
   Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
