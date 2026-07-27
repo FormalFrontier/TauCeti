@@ -42,22 +42,6 @@ private theorem bind_const_probabilityMeasure_pi (μ : Measure Ω) [IsProbabilit
       Measure.pi fun _ : Fin m => (p : Measure α) := by
   rw [Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
 
-/-- Implementation helper: a constant finite product measure is invariant under reindexing the
-factors by a bijection. This is `MeasureTheory.measurePreserving_piCongrLeft` for a constant
-family, with the reindexing written as honest precomposition rather than as a dependent
-`Equiv.piCongrLeft`. -/
-private theorem map_comp_equiv_pi_const {ι ι' : Type*} [Fintype ι] [Fintype ι'] (e : ι ≃ ι')
-    (q : Measure α) [IsProbabilityMeasure q] :
-    (Measure.pi fun _ : ι => q).map (fun g (j : ι') => g (e.symm j)) =
-      Measure.pi fun _ : ι' => q := by
-  have hmap : ⇑(MeasurableEquiv.piCongrLeft (fun _ : ι' => α) e) =
-      fun g (j : ι') => g (e.symm j) := by
-    funext g j
-    rw [MeasurableEquiv.coe_piCongrLeft]
-    simpa using Equiv.piCongrLeft_apply_apply (fun _ : ι' => α) e g (e.symm j)
-  rw [← hmap]
-  exact Measure.pi_map_piCongrLeft e fun _ : ι' => q
-
 /-- A constant mixing representative says exactly that every injective block law is the
 corresponding product of `p`. -/
 theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -125,7 +109,13 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
           (e.symm j)).aemeasurable.map_map_of_aemeasurable hae, hcomp]
     _ = (Measure.pi fun _ : Fin s.card => (p : Measure α)).map fun g (j : s) => g (e.symm j) := by
         rw [← blockLaw_def, hblock]
-    _ = Measure.pi fun _ : s => (p : Measure α) := map_comp_equiv_pi_const e _
+    _ = Measure.pi fun _ : s => (p : Measure α) := by
+      rw [← show ⇑(MeasurableEquiv.piCongrLeft (fun _ : s => α) e) =
+          fun g (j : s) => g (e.symm j) by
+        funext g j
+        rw [MeasurableEquiv.coe_piCongrLeft]
+        simpa using Equiv.piCongrLeft_apply_apply (fun _ : s => α) e g (e.symm j)]
+      exact Measure.pi_map_piCongrLeft e fun _ : s => (p : Measure α)
     _ = Measure.pi fun j : s => μ.map (X (j : ℕ)) :=
         congrArg Measure.pi (funext fun j => (h.map_eq_of_const j).symm)
 
