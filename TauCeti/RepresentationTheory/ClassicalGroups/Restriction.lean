@@ -48,7 +48,8 @@ def stdSLRep : Representation k (Matrix.SpecialLinearGroup (Fin n) k) (Fin n →
 @[simp]
 theorem stdSLRep_apply (g : Matrix.SpecialLinearGroup (Fin n) k) :
     stdSLRep k n g = Matrix.mulVecLin (g : Matrix (Fin n) (Fin n) k) := by
-  exact stdRep_apply k n (Matrix.SpecialLinearGroup.toGL g)
+  simpa only [stdSLRep, MonoidHom.comp_apply, Matrix.SpecialLinearGroup.coe_GL_coe_matrix] using
+    stdRep_apply k n (Matrix.SpecialLinearGroup.toGL g)
 
 /-- Evaluation of the standard special-linear action is matrix-vector multiplication. -/
 theorem stdSLRep_apply_apply (g : Matrix.SpecialLinearGroup (Fin n) k) (v : Fin n → k) :
@@ -57,7 +58,10 @@ theorem stdSLRep_apply_apply (g : Matrix.SpecialLinearGroup (Fin n) k) (v : Fin 
 
 /-- The standard representation of `SL n k` is faithful. -/
 theorem stdSLRep_injective : Function.Injective (stdSLRep k n) := by
-  exact (stdRep_injective k n).comp Matrix.SpecialLinearGroup.toGL_injective
+  intro g h gh
+  apply Matrix.SpecialLinearGroup.toGL_injective
+  apply stdRep_injective k n
+  simpa only [stdSLRep, MonoidHom.comp_apply] using gh
 
 /-- The standard representation of `SL n k`, bundled as an object of `FDRep`. -/
 noncomputable abbrev stdSLFDRep : FDRep k (Matrix.SpecialLinearGroup (Fin n) k) :=
@@ -91,7 +95,9 @@ variable [Field k]
 @[simp]
 theorem char_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k) :
     (stdSLRep k n).character g = Matrix.trace (g : Matrix (Fin n) (Fin n) k) := by
-  exact char_stdRep k n (Matrix.SpecialLinearGroup.toGL g)
+  simpa only [stdSLRep, Representation.character, MonoidHom.comp_apply,
+    Matrix.SpecialLinearGroup.coe_GL_coe_matrix] using
+    char_stdRep k n (Matrix.SpecialLinearGroup.toGL g)
 
 /-- The character of the bundled standard representation of `SL n k` is the matrix trace. -/
 @[simp]
