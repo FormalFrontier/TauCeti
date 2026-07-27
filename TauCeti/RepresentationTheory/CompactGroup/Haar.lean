@@ -107,8 +107,11 @@ theorem haarProb_def :
 instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) := by
   exact (haarFinite G).normalize.property
 
-/-- Normalized Haar measure has total mass one. -/
-@[simp] theorem haarProb_apply_univ : haarProb G univ = 1 :=
+/-- Normalized Haar measure has total mass one.
+
+Not a `simp` lemma: `simp` already closes this goal from the `IsProbabilityMeasure` instance
+via `MeasureTheory.measure_univ`. -/
+theorem haarProb_apply_univ : haarProb G univ = 1 :=
   measure_univ
 
 instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
