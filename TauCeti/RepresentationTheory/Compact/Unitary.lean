@@ -56,11 +56,13 @@ namespace IsUnitary
 variable {π : ContRepresentation ℂ G V}
 
 /-- A unitary representation preserves the inner product. -/
+@[simp]
 theorem inner_map_map (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪π g v, π g w⟫_ℂ = ⟪v, w⟫_ℂ :=
   hπ g v w
 
 /-- Every action map of a unitary representation preserves norms. -/
+@[simp]
 theorem norm_map (hπ : IsUnitary π) (g : G) (v : V) :
     ‖π g v‖ = ‖v‖ :=
   (isUnitary_iff_norm_map π).mp hπ g v
@@ -138,10 +140,12 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_left (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪π g v, w⟫_ℂ = ⟪v, π g⁻¹ w⟫_ℂ := by
-  have hw := Representation.self_inv_apply π.toRepresentation g w
-  change π g (π g⁻¹ w) = w at hw
   calc
-    ⟪π g v, w⟫_ℂ = ⟪π g v, π g (π g⁻¹ w)⟫_ℂ := by rw [hw]
+    ⟪π g v, w⟫_ℂ = ⟪π g v, π g (π g⁻¹ w)⟫_ℂ := by
+      change ⟪π g v, w⟫_ℂ =
+        ⟪π g v, (π.toRepresentation : Representation ℂ G V) g
+          ((π.toRepresentation : Representation ℂ G V) g⁻¹ w)⟫_ℂ
+      rw [Representation.self_inv_apply]
     _ = ⟪v, π g⁻¹ w⟫_ℂ := hπ.inner_map_map _ _ _
 
 omit [CompleteSpace V] in
@@ -149,10 +153,12 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_right (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪v, π g w⟫_ℂ = ⟪π g⁻¹ v, w⟫_ℂ := by
-  have hv := Representation.self_inv_apply π.toRepresentation g v
-  change π g (π g⁻¹ v) = v at hv
   calc
-    ⟪v, π g w⟫_ℂ = ⟪π g (π g⁻¹ v), π g w⟫_ℂ := by rw [hv]
+    ⟪v, π g w⟫_ℂ = ⟪π g (π g⁻¹ v), π g w⟫_ℂ := by
+      change ⟪v, π g w⟫_ℂ =
+        ⟪(π.toRepresentation : Representation ℂ G V) g
+          ((π.toRepresentation : Representation ℂ G V) g⁻¹ v), π g w⟫_ℂ
+      rw [Representation.self_inv_apply]
     _ = ⟪π g⁻¹ v, w⟫_ℂ := hπ.inner_map_map _ _ _
 
 /-- The adjoint of a unitary action operator is the action of the inverse group element. -/
