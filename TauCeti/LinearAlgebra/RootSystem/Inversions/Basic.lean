@@ -126,6 +126,18 @@ lemma ncard_inversions_one : (inversions P b 1).ncard = 0 := by
 
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
+omit [CharZero R] [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+/-- The Weyl-group permutation of a simple reflection is the corresponding root-index
+reflection. -/
+lemma weylGroupToPerm_ofIdx_apply (i j : ι) :
+    P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j =
+      P.reflectionPerm i j := by
+  -- Mathlib exposes the underlying reflection equivalence, but not its restriction to the
+  -- Weyl group. Unfolding just those two wrappers connects the APIs.
+  change (RootPairing.Equiv.reflection P i).indexEquiv j = P.reflectionPerm i j
+  exact congrArg (fun e : ι ≃ ι => e j)
+    (RootPairing.Equiv.reflection_indexEquiv P i)
+
 /-- A simple reflection has exactly its defining simple root as an inversion. -/
 @[simp]
 theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
@@ -138,15 +150,7 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     exact hneg (hj.reflectionPerm hi hji)
   · rintro rfl
     refine ⟨b.isPos_of_mem_support hi, ?_⟩
-    have hofIdx :
-        P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P j) j =
-          P.reflectionPerm j j := by
-      -- Mathlib has no `weylGroupToPerm_ofIdx` lemma: expose the restriction and `ofIdx`
-      -- wrappers definitionally, then use its named theorem for the underlying reflection.
-      change (RootPairing.Equiv.reflection P j).indexEquiv j = P.reflectionPerm j j
-      exact congrArg (fun e : ι ≃ ι => e j)
-        (RootPairing.Equiv.reflection_indexEquiv P j)
-    rw [hofIdx, ← mem_negRoots,
+    rw [weylGroupToPerm_ofIdx_apply, ← mem_negRoots,
       reflectionPerm_self_mem_negRoots_iff_mem_posRoots, mem_posRoots]
     exact b.isPos_of_mem_support hi
 
