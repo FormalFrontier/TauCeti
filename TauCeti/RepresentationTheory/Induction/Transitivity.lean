@@ -27,7 +27,7 @@ namespace Rep
 
 /-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
 along their composite. -/
-noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
+@[expose] noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
     _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
       _root_.Rep.resFunctor.{max u v w x} (k := k) φ ≅
         _root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ) :=
@@ -38,6 +38,22 @@ noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
       intro _ _ f
       ext
       rfl)
+
+/-- The forward component of `resFunctorCompIso` acts as the identity on vectors. -/
+@[simp↓]
+lemma resFunctorCompIso_hom_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+    ((resFunctorCompIso φ ψ).hom.app A) x = x :=
+  by
+    unfold resFunctorCompIso
+    rfl
+
+/-- The inverse component of `resFunctorCompIso` acts as the identity on vectors. -/
+@[simp↓]
+lemma resFunctorCompIso_inv_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+    ((resFunctorCompIso φ ψ).inv.app A) x = x :=
+  by
+    unfold resFunctorCompIso
+    rfl
 
 /-- Induction in stages: induction along a composite is naturally isomorphic to successive
 inductions along the two group homomorphisms. -/
