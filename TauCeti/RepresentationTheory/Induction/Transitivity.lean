@@ -18,25 +18,28 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u v w
+universe u v w x
 
 variable {k : Type u} [CommRing k]
-  {G : Type v} {H : Type v} {K : Type v} [Group G] [Group H] [Group K]
+  {G : Type v} {H : Type w} {K : Type x} [Group G] [Group H] [Group K]
 
 /-- Restricting a representation along two composable group homomorphisms is naturally
 isomorphic to restriction along their composite. -/
 noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
-    _root_.Rep.resFunctor (k := k) ψ ⋙ _root_.Rep.resFunctor φ ≅
-      _root_.Rep.resFunctor (ψ.comp φ) :=
+    _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
+      _root_.Rep.resFunctor.{max u v w x} φ ≅
+        _root_.Rep.resFunctor.{max u v w x} (ψ.comp φ) :=
   Iso.refl _
 
 /-- Induction in stages: induction along a composite is naturally isomorphic to successive
 inductions along the two group homomorphisms. -/
 noncomputable def indFunctorCompIso (φ : G →* H) (ψ : H →* K) :
-    _root_.Rep.indFunctor k φ ⋙ _root_.Rep.indFunctor k ψ ≅
-      _root_.Rep.indFunctor k (ψ.comp φ) :=
-  Adjunction.leftAdjointCompIso (_root_.Rep.indResAdjunction k φ)
-    (_root_.Rep.indResAdjunction k ψ) (_root_.Rep.indResAdjunction k (ψ.comp φ))
+    _root_.Rep.indFunctor.{max u v w x} k φ ⋙
+      _root_.Rep.indFunctor.{max u v w x} k ψ ≅
+        _root_.Rep.indFunctor.{max u v w x} k (ψ.comp φ) :=
+  Adjunction.leftAdjointCompIso (_root_.Rep.indResAdjunction.{max u v w x} k φ)
+    (_root_.Rep.indResAdjunction.{max u v w x} k ψ)
+    (_root_.Rep.indResAdjunction.{max u v w x} k (ψ.comp φ))
     (resFunctorCompIso φ ψ)
 
 end TauCeti
