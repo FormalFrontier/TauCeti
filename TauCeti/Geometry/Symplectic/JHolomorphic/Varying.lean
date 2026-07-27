@@ -217,6 +217,15 @@ lemma IsJHolomorphicOn.isJHolomorphicWithinAt {J : U → AlmostComplexStructure 
     IsJHolomorphicWithinAt J J' f s x :=
   hf x hx
 
+/-- Restrict the domain set of a setwise J-holomorphic map. -/
+lemma IsJHolomorphicOn.mono
+    {J : U → AlmostComplexStructure U} {J' : V → AlmostComplexStructure V}
+    {f : U → V} {s t : Set U} (hf : IsJHolomorphicOn J J' f t) (hst : s ⊆ t) :
+    IsJHolomorphicOn J J' f s :=
+  fun x hx ↦
+    let hfx := hf x (hst hx)
+    ⟨_, hfx.hasFDerivWithinAt.mono hst, hfx.derivative_isComplexLinear⟩
+
 /-- A setwise J-holomorphic map is differentiable on its domain. -/
 lemma IsJHolomorphicOn.differentiableOn {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
