@@ -11,9 +11,9 @@ public import Mathlib.LinearAlgebra.BilinearForm.Properties
 /-!
 # The bilinear pairing of finite-group class functions
 
-This file defines the normalized bilinear pairing on class functions of a finite group.  It is
-the pairing in which irreducible characters are orthonormal when the coefficient field has
-characteristic coprime to the group order.
+This file defines the normalized bilinear pairing on class functions of a finite group.  When
+the coefficient field is algebraically closed and the group order is invertible, irreducible
+characters are orthonormal for this pairing.
 
 The pairing is bilinear, rather than Hermitian: complex conjugation enters only after restricting
 to virtual characters.
@@ -21,6 +21,7 @@ to virtual characters.
 ## References
 
 * [Character Theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md), Layer 0.
+* I. M. Isaacs, *Character Theory of Finite Groups* (1976), Chapter 2.
 -/
 
 public section
@@ -33,9 +34,21 @@ universe u v
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G]
 
-/-- The normalized bilinear pairing of class functions on a finite group, when its order is
-invertible in the coefficient field. -/
-noncomputable def characterPairing [Invertible (Nat.card G : k)] :
+omit [Group G] in
+private theorem card_inv_mul_sum_mul_smul (c : k) (f₁ f₂ : G → k) :
+    (Nat.card G : k)⁻¹ * ∑ g : G, f₁ g * (c * f₂ g) =
+      c * ((Nat.card G : k)⁻¹ * ∑ g : G, f₁ g * f₂ g) := by
+  calc
+    _ = (Nat.card G : k)⁻¹ * (c * ∑ g : G, f₁ g * f₂ g) := by
+      congr 1
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro g _
+      ring
+    _ = _ := by ring
+
+/-- The normalized bilinear pairing of class functions on a finite group. -/
+noncomputable def characterPairing :
     LinearMap.BilinForm k (ClassFunction k G) :=
   LinearMap.mk₂ k
     (fun f₁ f₂ => (Nat.card G : k)⁻¹ * ∑ g : G, f₁.1 g * f₂.1 g⁻¹)
@@ -45,37 +58,24 @@ noncomputable def characterPairing [Invertible (Nat.card G : k)] :
     (by
       intro c f₁ f₂
       simp only [Submodule.coe_smul, Pi.smul_apply, smul_eq_mul]
-      calc
-        _ = (Nat.card G : k)⁻¹ * (c * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by
-          congr 1
-          rw [Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro g _
-          ring
-        _ = c * ((Nat.card G : k)⁻¹ * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by ring)
+      simpa [mul_comm, mul_left_comm, mul_assoc] using
+        card_inv_mul_sum_mul_smul (G := G) c f₁.1 fun g => f₂.1 g⁻¹)
     (by
       intro f₁ f₂ f₃
       simp [mul_add, Finset.sum_add_distrib])
     (by
       intro c f₁ f₂
       simp only [Submodule.coe_smul, Pi.smul_apply, smul_eq_mul]
-      calc
-        _ = (Nat.card G : k)⁻¹ * (c * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by
-          congr 1
-          rw [Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro g _
-          ring
-        _ = c * ((Nat.card G : k)⁻¹ * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by ring)
+      simpa using card_inv_mul_sum_mul_smul (G := G) c f₁.1 fun g => f₂.1 g⁻¹)
 
 /-- The defining formula for the character pairing. -/
-theorem characterPairing_apply [Invertible (Nat.card G : k)] (f₁ f₂ : ClassFunction k G) :
+theorem characterPairing_apply (f₁ f₂ : ClassFunction k G) :
     characterPairing f₁ f₂ =
       (Nat.card G : k)⁻¹ * ∑ g : G, f₁.1 g * f₂.1 g⁻¹ :=
   (rfl)
 
 /-- The character pairing is symmetric. -/
-theorem characterPairing_symm [Invertible (Nat.card G : k)] (f₁ f₂ : ClassFunction k G) :
+theorem characterPairing_symm (f₁ f₂ : ClassFunction k G) :
     characterPairing f₁ f₂ = characterPairing f₂ f₁ := by
   rw [characterPairing_apply, characterPairing_apply]
   have hsum : (∑ g : G, f₁.1 g * f₂.1 g⁻¹) = ∑ g : G, f₂.1 g * f₁.1 g⁻¹ := by
@@ -88,24 +88,12 @@ theorem characterPairing_symm [Invertible (Nat.card G : k)] (f₁ f₂ : ClassFu
   rw [hsum]
 
 /-- The bilinear form underlying `characterPairing` is symmetric. -/
-theorem characterPairing_isSymm [Invertible (Nat.card G : k)] :
+theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
-/-- Pairing a sum in the right argument distributes over addition. -/
-@[simp]
-theorem characterPairing_add_right [Invertible (Nat.card G : k)] (f₁ f₂ f₃ : ClassFunction k G) :
-    characterPairing f₁ (f₂ + f₃) = characterPairing f₁ f₂ + characterPairing f₁ f₃ :=
-  (characterPairing (k := k) (G := G) f₁).map_add f₂ f₃
-
-/-- The zero class function pairs to zero on the right. -/
-@[simp]
-theorem characterPairing_zero_right [Invertible (Nat.card G : k)] (f : ClassFunction k G) :
-    characterPairing f 0 = 0 :=
-  (characterPairing (k := k) (G := G) f).map_zero
-
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
-theorem characterPairing_ofCharacter [Invertible (Nat.card G : k)]
+theorem characterPairing_ofCharacter
     {V W : Type*} [AddCommGroup V] [Module k V]
     [FiniteDimensional k V] [AddCommGroup W] [Module k W] [FiniteDimensional k W]
     (ρ : Representation k G V) (σ : Representation k G W) :
@@ -116,7 +104,7 @@ theorem characterPairing_ofCharacter [Invertible (Nat.card G : k)]
 
 /-- The pairing of two finite-dimensional representation characters is Mathlib's normalized
 character sum. -/
-theorem characterPairing_ofFDRep [Invertible (Nat.card G : k)] (V W : FDRep k G) :
+theorem characterPairing_ofFDRep (V W : FDRep k G) :
     characterPairing (ofFDRep V) (ofFDRep W) =
       (Nat.card G : k)⁻¹ * ∑ g : G, V.character g * W.character g⁻¹ := by
   rw [characterPairing_apply]
