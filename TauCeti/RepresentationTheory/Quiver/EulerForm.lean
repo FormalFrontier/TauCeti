@@ -78,14 +78,12 @@ public theorem titsPolarForm_def (d e : Q → ℤ) :
     LinearMap.BilinMap.polar_toQuadraticMap]
 
 /-- The Tits form evaluated at a sum. -/
-@[simp]
 public theorem titsForm_add (d e : Q → ℤ) :
     titsForm Q (d + e) = titsForm Q d + titsForm Q e + titsPolarForm Q d e := by
   simpa only [titsPolarForm, QuadraticMap.polarBilin_apply_apply] using
     QuadraticMap.map_add (titsForm Q) d e
 
 /-- The Tits form evaluated at a difference. -/
-@[simp]
 public theorem titsForm_sub (d e : Q → ℤ) :
     titsForm Q (d - e) = titsForm Q d + titsForm Q e - titsPolarForm Q d e := by
   rw [sub_eq_add_neg, QuadraticMap.map_add (titsForm Q) d (-e), QuadraticMap.map_neg]
