@@ -18,7 +18,11 @@ namespace TauCeti
 
 open scoped BigOperators
 
-variable {k G : Type*} [CommRing k] [Group G] [Fintype G] [DecidableEq G]
+variable {k G : Type*} [Group G] [Fintype G] [DecidableEq G]
+
+section
+
+variable [Semiring k]
 
 /-- The sum in `k[G]` of the elements in the conjugacy class `C`. -/
 noncomputable def classSum (C : ConjClasses G) : MonoidAlgebra k G :=
@@ -56,8 +60,10 @@ theorem classSum_commutes_of (C : ConjClasses G) (g : G) :
   ext x
   simp [conjugateCarrierEquiv, mul_assoc]
 
+end
+
 /-- Every class sum lies in the center of the group algebra. -/
-theorem classSum_mem_center (C : ConjClasses G) :
+theorem classSum_mem_center [CommSemiring k] (C : ConjClasses G) :
     classSum (k := k) C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
   rw [Subalgebra.mem_center_iff]
   intro a
