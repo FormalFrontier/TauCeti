@@ -55,7 +55,10 @@ section Field
 
 variable [Field k]
 
-/-- The character of the tensor power is the corresponding power of the standard character. -/
+/-- The character of the tensor power is the corresponding power of the standard character.
+
+This is intentionally not a simp lemma: `Representation.char_tensorPower` and `char_stdRep`
+already normalize its left-hand side, so registering this specialization would violate `simpNF`. -/
 theorem char_tensorPowerRep (g : GL (Fin n) k) :
     (tensorPowerRep k n d).character g =
       Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
