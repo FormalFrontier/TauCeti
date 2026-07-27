@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Combinatorics.Quiver.Path
+public import Mathlib.Combinatorics.Quiver.Path.Vertices
 
 /-!
 # Acyclic quivers
@@ -59,6 +59,7 @@ theorem iff_forall_length_eq_zero :
     exact p.eq_nil_of_length_zero (h p)
 
 /-- In an acyclic quiver, every closed path has length zero. -/
+@[simp]
 theorem length_eq_zero (h : Quiver.IsAcyclic V) {a : V} (p : Path a a) :
     p.length = 0 :=
   iff_forall_length_eq_zero.mp h p
@@ -100,10 +101,8 @@ theorem comp_eq_nil (h : Quiver.IsAcyclic V) {a b : V}
 /-- If paths run in both directions in an acyclic quiver, the forward path has length zero. -/
 theorem length_eq_zero_of_paths_left (h : Quiver.IsAcyclic V) {a b : V}
     (p : Path a b) (q : Path b a) :
-    p.length = 0 := by
-  have hpq : (p.comp q).length = 0 := h.length_eq_zero (p.comp q)
-  rw [Path.length_comp] at hpq
-  omega
+    p.length = 0 :=
+  Path.nil_of_comp_eq_nil_left (h.comp_eq_nil p q)
 
 /-- If paths run in both directions in an acyclic quiver, the reverse path has length zero. -/
 theorem length_eq_zero_of_paths_right (h : Quiver.IsAcyclic V) {a b : V}
