@@ -6,7 +6,9 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.TensorPower.Basic
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import Mathlib.RepresentationTheory.Basic
+public import Mathlib.RepresentationTheory.Character
 
 /-!
 # Tensor powers of representations
@@ -50,5 +52,50 @@ theorem tensorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
   by unfold tensorPower; rfl
 
 end CommSemiring
+
+section Field
+
+variable [Field R] [Monoid G] [AddCommGroup M] [Module R M] [FiniteDimensional R M]
+
+/-- The character of a tensor-power representation is the corresponding power of the character. -/
+@[simp]
+theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
+    (ρ.tensorPower d).character g = (ρ.character g) ^ d := by
+  classical
+  letI (d : ℕ) : FiniteDimensional R (⨂[R]^d M) :=
+    (Basis.piTensorProduct fun _ : Fin d => Module.finBasis R M).finiteDimensional_of_finite
+  simp only [Representation.character, tensorPower_apply]
+  induction d with
+  | zero =>
+    have hmap : PiTensorProduct.map (fun _ : Fin 0 => ρ g) = LinearMap.id := by
+      rw [← PiTensorProduct.map_id]
+      congr
+      funext i
+      exact Fin.elim0 i
+    rw [hmap]
+    let e := PiTensorProduct.isEmptyEquiv (Fin 0) (R := R) (s := fun _ => M)
+    rw [← LinearMap.trace_conj' (LinearMap.id : (⨂[R]^0 M) →ₗ[R] _) e]
+    simp [e]
+  | succ d ih =>
+    let e : (⨂[R]^d M) ⊗[R] (⨂[R]^1 M) ≃ₗ[R] (⨂[R]^(d + 1) M) :=
+      TensorPower.mulEquiv
+    have he : e.conj
+        (TensorProduct.map (PiTensorProduct.map fun _ : Fin d => ρ g)
+          (PiTensorProduct.map fun _ : Fin 1 => ρ g)) =
+        PiTensorProduct.map (fun _ : Fin (d + 1) => ρ g) := by
+      ext x
+      apply e.symm.injective
+      simp [LinearEquiv.conj_apply_apply, e, TensorPower.mulEquiv]
+    rw [← he, LinearMap.trace_conj', LinearMap.trace_tensorProduct']
+    have h_one : LinearMap.trace R (⨂[R]^1 M) (PiTensorProduct.map fun _ : Fin 1 => ρ g) =
+        LinearMap.trace R M (ρ g) := by
+      let e₁ := PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 => M) 0
+      rw [← LinearMap.trace_conj' (PiTensorProduct.map fun _ : Fin 1 => ρ g) e₁]
+      congr 1
+      ext x
+      simp [LinearEquiv.conj_apply_apply, e₁]
+    rw [ih, h_one, pow_succ]
+
+end Field
 
 end Representation
