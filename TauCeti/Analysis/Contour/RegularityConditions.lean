@@ -41,6 +41,9 @@ pole — and that it meet each `s` only finitely often. Condition (B) governs po
   Order `1` gives a one-sided tangent line; larger `n` hugs the line more tightly.
 * `FlatOfOrderBasepoint γ a b n` — the analogue at the join `γ a = γ b` of a closed curve, for the
   outgoing branch at `a` (from the right) and the incoming branch at `b` (from the left).
+* `flatOfOrder_of_eventually_collinear` — a curve whose one-sided branches at `t₀` eventually stay
+  on a line through `γ t₀` is flat there to **every** order; the two one-sided directions may
+  differ, so a corner at `t₀` is allowed.
 * `ConditionAprime γ a b f S` — HW condition (A′), a structure requiring `γ` to meet each `s ∈ S`
   finitely often (`finite_crossings`) and be flat of order `n` wherever `f` has a pole of order `n`
   there (`interior`, `basepoint`). Pole orders come from `f` via `meromorphicOrderAt`; `S` selects
@@ -215,6 +218,28 @@ theorem flatOfOrder_iff {γ : ℝ → ℂ} {t₀ : ℝ} {n : ℕ} :
         (fun t => |((γ t - γ t₀) * star v_minus).im| / ‖v_minus‖)
             =o[𝓝[<] t₀] (fun t => ‖γ t - γ t₀‖ ^ n) :=
   Iff.rfl
+
+/-- **A curve with straight one-sided branches at `t₀` is flat there to every order.** If, on each
+side of `t₀`, the curve eventually stays on the line through `γ t₀` with direction `v` — which for
+complex numbers is exactly the vanishing of `Im ((γ t - γ t₀) * conj v)` — then the perpendicular
+deviation is identically `0` near `t₀`, hence `o` of anything. The two directions are allowed to
+differ, so a curve with a *corner* at `t₀` still qualifies. This supplies the **flatness** clause
+of Hungerbühler–Wasem condition (A′) for indented and polygonal contours; the finite-crossing and
+basepoint clauses are separate and must be established independently. -/
+theorem flatOfOrder_of_eventually_collinear {γ : ℝ → ℂ} {t₀ : ℝ} {v_plus v_minus : ℂ}
+    (hv_plus : v_plus ≠ 0) (hv_minus : v_minus ≠ 0) (n : ℕ)
+    (hplus : ∀ᶠ t in 𝓝[>] t₀, ((γ t - γ t₀) * star v_plus).im = 0)
+    (hminus : ∀ᶠ t in 𝓝[<] t₀, ((γ t - γ t₀) * star v_minus).im = 0) :
+    FlatOfOrder γ t₀ n := by
+  rw [flatOfOrder_iff]
+  refine ⟨v_plus, v_minus, hv_plus, hv_minus, ?_, ?_⟩ <;>
+    refine (Asymptotics.isLittleO_zero _ _).congr' ?_ Filter.EventuallyEq.rfl
+  · filter_upwards [hplus] with t ht
+    rw [ht]
+    simp
+  · filter_upwards [hminus] with t ht
+    rw [ht]
+    simp
 
 /-- `FlatOfOrderBasepoint` unfolded: the two one-sided little-o clauses (outgoing at `a`, incoming
 at `b`) that build the basepoint flatness hypothesis, exposed without unfolding the definition. -/

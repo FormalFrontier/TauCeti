@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Topology.UnitInterval
 import TauCeti.Analysis.Contour.Curve.Distance
 
 /-!
@@ -351,6 +352,31 @@ private lemma exists_covering_segment {N : ℕ} (hN : 0 < N) {s : ℕ → ℝ} (
     · have hMk : M ≤ k := by omega
       exact (hmono hMk).trans hk_spec
 
+/-! ### Uniform partition with bounded mesh -/
+
+/-- **Monotone partition with mesh below `δ`.** For `a ≤ b` and `δ > 0`, the interval `[a, b]`
+admits a monotone partition `a = s 0 ≤ ⋯ ≤ s N = b` with `N > 0` segments (so `N + 1` nodes), each
+node in `[a, b]`, and every gap `s (j + 1) - s j` strictly below `δ`. Built from Mathlib's
+fixed-step `Set.Icc.addNSMul` partition (step `δ / 2`, stabilising at `b`). -/
+private theorem exists_monotone_partition_mesh_lt {a b δ : ℝ} (hab : a ≤ b) (hδ : 0 < δ) :
+    ∃ (N : ℕ) (s : ℕ → ℝ), 0 < N ∧ s 0 = a ∧ s N = b ∧ Monotone s ∧
+      (∀ j ≤ N, s j ∈ Icc a b) ∧ ∀ j, s (j + 1) - s j < δ := by
+  have hδ2 : (0 : ℝ) < δ / 2 := half_pos hδ
+  obtain ⟨m, hm⟩ := Set.Icc.addNSMul_eq_right hab hδ2
+  refine ⟨m + 1, fun j => ↑(Set.Icc.addNSMul hab (δ / 2) j), m.succ_pos, ?_, ?_,
+    fun i j hij => Subtype.coe_le_coe.mpr (Set.Icc.monotone_addNSMul hab hδ2.le hij),
+    fun j _ => (Set.Icc.addNSMul hab (δ / 2) j).2, fun j => ?_⟩
+  · exact Set.Icc.addNSMul_zero hab
+  · exact hm (m + 1) (Nat.le_succ m)
+  · -- gap `< δ`: the fixed step gives `≤ δ / 2` (Mathlib's `abs_sub_addNSMul_le`), and `δ / 2 < δ`.
+    have hle : (Set.Icc.addNSMul hab (δ / 2) j : ℝ) ≤ Set.Icc.addNSMul hab (δ / 2) (j + 1) :=
+      Subtype.coe_le_coe.mpr (Set.Icc.monotone_addNSMul hab hδ2.le (Nat.le_succ j))
+    have hbd := Set.Icc.abs_sub_addNSMul_le hab hδ2.le
+      (t := Set.Icc.addNSMul hab (δ / 2) (j + 1)) j
+      ⟨Set.Icc.monotone_addNSMul hab hδ2.le (Nat.le_succ j), le_refl _⟩
+    rw [abs_of_nonneg (by linarith)] at hbd
+    linarith
+
 /-! ### Main theorem: argument lift on `[a, b]` -/
 
 /-- **Argument lift on `[a, b]`, with a partition.** For `γ` continuous on `[a, b]` (`a ≤ b`) and
@@ -378,55 +404,17 @@ theorem exists_continuousOn_arg_lift_with_partition
             (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℝ) : ℂ))) := by
   obtain ⟨δ', hδ'_pos, ρ, hρ_pos, h_dist_lb, h_unif⟩ :=
     exists_uniform_modulus_avoiding hab hγ h_avoid
-  obtain ⟨N, hN⟩ := exists_nat_gt ((b - a) / δ')
-  have hN_pos : 0 < N := by
-    have h0 : (0 : ℝ) ≤ (b - a) / δ' := div_nonneg (by linarith) hδ'_pos.le
-    exact_mod_cast h0.trans_lt hN
-  have hN_real : (0 : ℝ) < N := Nat.cast_pos.mpr hN_pos
-  have hN_mesh : (b - a) / N < δ' := by
-    rw [div_lt_iff₀ hN_real, mul_comm]
-    rwa [div_lt_iff₀ hδ'_pos] at hN
-  set s : ℕ → ℝ := fun j ↦ a + (j : ℝ) * (b - a) / N with hs_def
-  have hs_zero : s 0 = a := by simp [hs_def]
-  have hs_N : s N = b := by
-    simp only [hs_def]
-    rw [mul_div_cancel_left₀ (b - a) hN_real.ne']
-    ring
-  have hba : (0 : ℝ) ≤ b - a := by linarith
-  have hc : (0 : ℝ) ≤ (b - a) / N := div_nonneg hba hN_real.le
-  have hs_mono : Monotone s := by
-    intro i j hij
-    simp only [hs_def]
-    have h1 : (i : ℝ) * (b - a) / N ≤ (j : ℝ) * (b - a) / N := by
-      rw [mul_div_assoc, mul_div_assoc]
-      exact mul_le_mul_of_nonneg_right (by exact_mod_cast hij) hc
-    linarith
-  have hs_in : ∀ j, j ≤ N → s j ∈ Icc a b := by
-    intro j hj
-    refine ⟨?_, ?_⟩
-    · simp only [hs_def]
-      have hnn : 0 ≤ (j : ℝ) * (b - a) / N := by
-        rw [mul_div_assoc]; exact mul_nonneg (Nat.cast_nonneg j) hc
-      linarith
-    · simp only [hs_def]
-      have hjN : (j : ℝ) ≤ N := by exact_mod_cast hj
-      have hbound : (j : ℝ) * (b - a) / N ≤ b - a := by
-        rw [div_le_iff₀ hN_real]
-        calc (j : ℝ) * (b - a) ≤ (N : ℝ) * (b - a) := mul_le_mul_of_nonneg_right hjN hba
-          _ = (b - a) * N := by ring
-      linarith
+  obtain ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_mesh⟩ :=
+    exists_monotone_partition_mesh_lt hab hδ'_pos
   have hs_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0 := fun j hj ↦
     sub_ne_zero.mpr (h_avoid (s j) (hs_in j hj))
-  have hs_mesh : ∀ j, s (j + 1) - s j = (b - a) / N := by
-    intro j; simp only [hs_def]; push_cast; ring
   have hs_le : ∀ j, s j ≤ s (j + 1) := fun j ↦ hs_mono (Nat.le_succ _)
   have h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
       (γ t - w) / (γ (s j) - w) ∈ Complex.slitPlane := by
     intro j hj t ht
     rw [← segRatio_eq_div_of_mem_Icc ht]
-    have h_mesh_j : s (j + 1) - s j < δ' := by rw [hs_mesh j]; exact hN_mesh
     exact segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
-      (hs_in j hj.le) (hs_in (j + 1) hj) (hs_le j) h_mesh_j t
+      (hs_in j hj.le) (hs_in (j + 1) hj) (hs_le j) (hs_mesh j) t
   refine ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_avoid, h_slit, ?_, ?_⟩
   -- Continuity of θ
   · refine ContinuousOn.add continuousOn_const ?_
@@ -434,8 +422,7 @@ theorem exists_continuousOn_arg_lift_with_partition
     intro j hj
     refine continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
       (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))
-      (hs_le j) ?_
-    rw [hs_mesh j]; exact hN_mesh
+      (hs_le j) (hs_mesh j)
   -- Lift property
   · intro t ht
     have h_avoid_a : γ a - w ≠ 0 :=
@@ -447,12 +434,11 @@ theorem exists_continuousOn_arg_lift_with_partition
     rw [hs_zero] at h_telescope
     have h_ratio_ne : ∀ j ∈ Finset.range N,
         segRatio γ w (s j) (s (j + 1)) t ≠ 0 := fun j hj ↦
-      have h_mesh_j : s (j + 1) - s j < δ' := by rw [hs_mesh j]; exact hN_mesh
       Complex.slitPlane_ne_zero
         (segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
           (hs_in j (Finset.mem_range.mp hj).le)
           (hs_in (j + 1) (Finset.mem_range.mp hj))
-          (hs_le j) h_mesh_j t)
+          (hs_le j) (hs_mesh j) t)
     have h_prod_eq : (γ a - w) *
         ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = γ t - w := by
       rw [h_telescope, mul_div_cancel₀ _ h_avoid_a]

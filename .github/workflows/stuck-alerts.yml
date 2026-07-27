@@ -1,0 +1,60 @@
+name: Stuck-automation alerts
+
+# Post EMERGENCY alerts to Zulip (Tau Ceti > "Stuck PRs") when a piece of Tau
+# Ceti's own automation wedged and cannot unstick itself: a bump that will not
+# cross a breaking change, a green PR the merge machinery never merged, a
+# scheduled job that stopped firing, main gone red, an unresolved mathlib
+# incompatibility. Every alert means "go FIX THE INFRASTRUCTURE", not "a human
+# please hand-hold one PR" — see scripts/pr_status/stuck_alerts.py for the full
+# contract and the list of states deliberately NOT alerted (normal backlog).
+#
+# The alerts live in Zulip and are idempotent (one message per active alert,
+# edited to a checkmark when it clears), so the run's own red/green is NOT the
+# signal: a run that checks and posts successfully is green even with ten alerts
+# open. Only a persistent Zulip config break (bad key, forbidden bot, not
+# subscribed) fails the run — if we cannot post, the emergency channel itself is
+# down and that must be loud (mirrors zulip-healthcheck.yml).
+#
+# Known limitation: a watchdog cannot fully watch itself — if THIS workflow's own
+# cron stops firing (GitHub 60-day disable, org-level pause), it cannot alert on
+# its own silence. That gap is best closed by an external check (e.g. teaching
+# zulip-healthcheck.yml to assert stuck-alerts ran recently); left as a follow-up.
+
+on:
+  schedule:
+  - cron: "50 * * * *"   # hourly, offset from merge-sweep (:40) and housekeeping (:20)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read          # checkout the script
+  issues: read            # review-stuck / first-known-bad issues
+  pull-requests: read     # stuck-bump / stranded-PR detection
+  actions: read           # dead-scheduler / main-red (workflow runs)
+  statuses: read          # build / bump-guard commit statuses
+  checks: read
+
+concurrency:
+  group: stuck-alerts
+  # Don't cancel a run mid-post: cancelling while it is editing/sending Zulip
+  # messages could leave the topic half-reconciled. timeout-minutes bounds a hung run.
+  cancel-in-progress: false
+
+jobs:
+  stuck-alerts:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/pr_status
+      - name: Reconcile stuck-automation alerts
+        # No continue-on-error: a broken Zulip integration must go red here too.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          ZULIP_TOPIC: Stuck PRs
+        run: python3 scripts/pr_status/stuck_alerts.py

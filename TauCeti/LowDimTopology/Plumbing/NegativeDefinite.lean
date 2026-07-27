@@ -29,6 +29,8 @@ be negative definite.
 
 * `TauCeti.PlumbingGraph.IsNegativeDefinite.intersectionForm_self_neg`: the intersection form is
   strictly negative on every nonzero lattice vector.
+* `TauCeti.PlumbingGraph.isNegativeDefinite_iff_forall_intersectionForm_self_neg`: this strict
+  self-pairing inequality characterizes negative-definiteness.
 * `TauCeti.PlumbingGraph.IsNegativeDefinite.intersectionForm_self_nonpos`: the self-pairing is
   always nonpositive.
 * `TauCeti.PlumbingGraph.IsNegativeDefinite.intersectionForm_self_eq_zero_iff`: the self-pairing
@@ -69,6 +71,20 @@ theorem IsNegativeDefinite.intersectionForm_self_neg (h : P.IsNegativeDefinite) 
   rw [P.intersectionForm_apply]
   rw [← Matrix.toBilin'_apply' P.intersectionMatrix x x, Matrix.toBilin'_apply] at hpos
   linarith
+
+/-- A plumbing is negative definite exactly when its intersection-form self-pairing is strictly
+negative on every nonzero lattice vector. -/
+@[grind =]
+theorem isNegativeDefinite_iff_forall_intersectionForm_self_neg :
+    P.IsNegativeDefinite ↔ ∀ x : V → ℤ, x ≠ 0 → P.intersectionForm x x < 0 := by
+  refine ⟨fun h x hx => h.intersectionForm_self_neg hx, fun h => ?_⟩
+  rw [isNegativeDefinite_iff, Matrix.posDef_iff_dotProduct_mulVec]
+  refine ⟨(Matrix.isHermitian_iff_isSymm.mpr P.intersectionMatrix_isSymm).neg, fun x hx => ?_⟩
+  have hconv : star x ⬝ᵥ ((-P.intersectionMatrix) *ᵥ x) = -P.intersectionForm x x := by
+    rw [Matrix.neg_mulVec, dotProduct_neg, star_trivial, P.intersectionForm_apply,
+      ← Matrix.toBilin'_apply P.intersectionMatrix x x, Matrix.toBilin'_apply']
+  rw [hconv]
+  linarith [h x hx]
 
 /-- On a negative-definite plumbing the intersection form self-pairing is always nonpositive: it
 is strictly negative away from the origin and zero at it. -/
@@ -129,20 +145,14 @@ matrix `!![2, -1; -1, 2]`, whose quadratic form `2x₀² - 2x₀x₁ + 2x₁² =
 positive on every nonzero integer vector. A self-validating instance of the negative-definite
 hypothesis used in Lane L. -/
 theorem a2Plumbing_isNegativeDefinite : a2Plumbing.IsNegativeDefinite := by
-  rw [PlumbingGraph.isNegativeDefinite_iff, Matrix.posDef_iff_dotProduct_mulVec]
-  refine ⟨(Matrix.isHermitian_iff_isSymm.mpr a2Plumbing.intersectionMatrix_isSymm).neg,
-    fun x hx => ?_⟩
-  have hconv : star x ⬝ᵥ ((-a2Plumbing.intersectionMatrix) *ᵥ x)
-      = -a2Plumbing.intersectionForm x x := by
-    rw [Matrix.neg_mulVec, dotProduct_neg, star_trivial]
-    rw [a2Plumbing.intersectionForm_apply,
-      ← Matrix.toBilin'_apply a2Plumbing.intersectionMatrix x x, Matrix.toBilin'_apply']
+  rw [PlumbingGraph.isNegativeDefinite_iff_forall_intersectionForm_self_neg]
+  intro x hx
   have hIF : a2Plumbing.intersectionForm x x
       = -2 * x 0 ^ 2 + 2 * (x 0 * x 1) - 2 * x 1 ^ 2 := by
     rw [a2Plumbing.intersectionForm_apply, a2Plumbing_intersectionMatrix]
     simp [Fin.sum_univ_two]
     ring
-  rw [hconv, hIF]
+  rw [hIF]
   have hx2 : x 0 ≠ 0 ∨ x 1 ≠ 0 := by
     by_contra hcon
     rw [not_or, not_not, not_not] at hcon

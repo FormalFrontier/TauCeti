@@ -154,6 +154,123 @@ private theorem log_sum_decomp {A B C D : ℂ} (hA : A ≠ 0) (hB : B ≠ 0) (hC
   push_cast
   ring
 
+/-- **Right annular argument limit along a right exit-time function.** If `τR ε → t₀` from the
+right (within `Ioi t₀`) as `ε → 0⁺`, and `γ` is continuous at `t₀`,
+differentiable from the right with `deriv γ → L_R` from the right, and the tangent-side chord
+`(γ (t₀ + r) - s) / L_R` lies in the slit plane, then the argument of the annular quotient
+`(γ (t₀ + r) - s) / (γ (τR ε) - s)` converges as `ε → 0⁺` to `((γ (t₀ + r) - s) / L_R).arg`. -/
+private theorem arg_annular_quotient_exitTime_tendsto_right {γ : ℝ → ℂ} {s : ℂ} {t₀ r : ℝ}
+    {L_R : ℂ} {τR : ℝ → ℝ} (hγ_at : ContinuousAt γ t₀)
+    (h_diff_R : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
+    (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R)) (h_at : γ t₀ = s)
+    (h_slit_plus : (γ (t₀ + r) - s) / L_R ∈ Complex.slitPlane)
+    (h_toR : Tendsto τR (𝓝[>] (0 : ℝ)) (𝓝[>] t₀)) :
+    Tendsto (fun ε : ℝ => Complex.arg ((γ (t₀ + r) - s) / (γ (τR ε) - s)))
+      (𝓝[>] (0 : ℝ)) (𝓝 ((γ (t₀ + r) - s) / L_R).arg) := by
+  -- `τR ε → t₀` within `Ioi t₀`, so `τR ε` is eventually strictly past `t₀`.
+  have hδR_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < τR ε - t₀ :=
+    (h_toR.eventually self_mem_nhdsWithin).mono fun ε hε => sub_pos.mpr hε
+  have hδR_to : Tendsto (fun ε => τR ε - t₀) (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨by simpa using (h_toR.mono_right nhdsWithin_le_nhds).sub_const t₀,
+      hδR_pos.mono fun ε hε => mem_Ioi.mpr hε⟩
+  have h_deriv_R : HasDerivWithinAt γ L_R (Ioi t₀) t₀ :=
+    TauCeti.hasDerivWithinAt_Ioi_of_tendsto_deriv hγ_at h_diff_R h_tendsto_R
+  refine (arg_annular_quotient_tendsto_right h_deriv_R h_at h_slit_plus hδR_pos hδR_to).congr
+    fun ε => ?_
+  rw [show t₀ + (τR ε - t₀) = τR ε from by ring]  -- reindex the exit time back to `τR ε`
+
+/-- **Left annular argument limit along a left exit-time function.** If `τL ε → t₀` from the left
+(within `Iio t₀`) as `ε → 0⁺`, and `γ` is continuous at `t₀`,
+differentiable from the left with `deriv γ → L_L` from the left, and the tangent-side chord
+`(-L_L) / (γ (t₀ - r) - s)` lies in the slit plane, then the argument of the annular quotient
+`(γ (τL ε) - s) / (γ (t₀ - r) - s)` converges as `ε → 0⁺` to `((-L_L) / (γ (t₀ - r) - s)).arg`. -/
+private theorem arg_annular_quotient_exitTime_tendsto_left {γ : ℝ → ℂ} {s : ℂ} {t₀ r : ℝ}
+    {L_L : ℂ} {τL : ℝ → ℝ} (hγ_at : ContinuousAt γ t₀)
+    (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
+    (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) (h_at : γ t₀ = s)
+    (h_slit_minus : (-L_L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (h_toL : Tendsto τL (𝓝[>] (0 : ℝ)) (𝓝[<] t₀)) :
+    Tendsto (fun ε : ℝ => Complex.arg ((γ (τL ε) - s) / (γ (t₀ - r) - s)))
+      (𝓝[>] (0 : ℝ)) (𝓝 ((-L_L) / (γ (t₀ - r) - s)).arg) := by
+  -- `τL ε → t₀` within `Iio t₀`, so `τL ε` is eventually strictly before `t₀`.
+  have hδL_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < t₀ - τL ε :=
+    (h_toL.eventually self_mem_nhdsWithin).mono fun ε hε => sub_pos.mpr hε
+  have hδL_to : Tendsto (fun ε => t₀ - τL ε) (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨by simpa using (h_toL.mono_right nhdsWithin_le_nhds).const_sub t₀,
+      hδL_pos.mono fun ε hε => mem_Ioi.mpr hε⟩
+  have h_deriv_L : HasDerivWithinAt γ L_L (Iio t₀) t₀ :=
+    TauCeti.hasDerivWithinAt_Iio_of_tendsto_deriv hγ_at h_diff_L h_tendsto_L
+  refine (arg_annular_quotient_tendsto_left h_deriv_L h_at h_slit_minus hδL_pos hδL_to).congr
+    fun ε => ?_
+  rw [show t₀ - (t₀ - τL ε) = τL ε from by ring]  -- reindex the exit time back to `τL ε`
+
+/-- **Closed form of the truncated window integral at a fixed truncation level.** For exit points
+`τl ∈ Ioo (t₀ - r) t₀` and `τr ∈ Ioo t₀ (t₀ + r)` with common exit radius
+`‖γ τl - s‖ = ‖γ τr - s‖ = ε > 0`, a countable set `P` off which `γ` is differentiable on the
+window, an interval-integrable derivative, continuity on the window, the condition that any
+crossing of `s` in the window occurs at `t₀` (at most one crossing; existence is not assumed),
+the anchored slit-plane chord quotients on each side, and the window-split identity for the
+`ε`-truncated simple-pole integrand, the truncated window integral equals the log-norm difference
+of the window endpoints plus the two boundary chord arguments times `I`. -/
+private theorem perWindow_truncated_integral_eq_log_form {γ : ℝ → ℂ} {s : ℂ} {t₀ r ε : ℝ}
+    {P : Set ℝ} {τl τr : ℝ} (hP : P.Countable)
+    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
+    (hγ_diffP : ∀ t ∈ Ioo (t₀ - r) (t₀ + r) \ P, DifferentiableAt ℝ γ t)
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
+      (t₀ - r) (t₀ + r))
+    (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
+    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
+      (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
+    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ →
+      (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (hτL : τl ∈ Ioo (t₀ - r) t₀) (hτR : τr ∈ Ioo t₀ (t₀ + r))
+    (hradL : ‖γ τl - s‖ = ε) (hradR : ‖γ τr - s‖ = ε) (hε : 0 < ε)
+    (hsplit : ∫ u in (t₀ - r)..(t₀ + r),
+        (if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) =
+      (∫ u in (t₀ - r)..τl, (γ u - s)⁻¹ * deriv γ u) +
+      (∫ u in τr..(t₀ + r), (γ u - s)⁻¹ * deriv γ u)) :
+    ∫ t in (t₀ - r)..(t₀ + r),
+        (if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =
+      ((Real.log ‖γ (t₀ + r) - s‖ - Real.log ‖γ (t₀ - r) - s‖ : ℝ) : ℂ) +
+        ((((γ τl - s) / (γ (t₀ - r) - s)).arg +
+          ((γ (t₀ + r) - s) / (γ τr - s)).arg : ℝ) : ℂ) * Complex.I := by
+  have hr_pos : 0 < r := by linarith [hτL.1, hτL.2]
+  have h_ne_plus : γ (t₀ + r) - s ≠ 0 := sub_ne_zero.mpr fun h_eq =>
+    absurd (h_unique _ (right_mem_Icc.mpr (by linarith)) h_eq) (by linarith)
+  have h_ne_minus : γ (t₀ - r) - s ≠ 0 := sub_ne_zero.mpr fun h_eq =>
+    absurd (h_unique _ (left_mem_Icc.mpr (by linarith)) h_eq) (by linarith)
+  have h_ne_L : γ τl - s ≠ 0 := by
+    rw [← norm_pos_iff, hradL]
+    exact hε
+  have h_ne_R : γ τr - s ≠ 0 := by
+    rw [← norm_pos_iff, hradR]
+    exact hε
+  have h_win : t₀ - r ≤ t₀ + r := by linarith [hτL.1, hτL.2, hτR.1, hτR.2]
+  rw [hsplit,
+    integral_inv_sub_mul_deriv_eq_log_window hτL.1.le hP
+      (hγ_cont.mono (Icc_subset_Icc le_rfl (by linarith [hτL.2])))
+      (fun t ht => hγ_diffP t ⟨⟨ht.1.1, by linarith [ht.1.2, hτL.2]⟩, ht.2⟩)
+      (hderiv_int.mono_set (by
+        rw [uIcc_of_le hτL.1.le, uIcc_of_le h_win]
+        exact Icc_subset_Icc le_rfl (by linarith [hτL.2])))
+      (fun t ht h_eq => absurd (h_unique t
+        ⟨by linarith [ht.1], by linarith [ht.2, hτL.2]⟩ h_eq)
+        (by linarith [ht.2, hτL.2]))
+      (fun t ht => h_slit_L t ht.1 (by linarith [ht.2, hτL.2])),
+    integral_inv_sub_mul_deriv_eq_log_window hτR.2.le hP
+      (hγ_cont.mono (Icc_subset_Icc (by linarith [hτR.1]) le_rfl))
+      (fun t ht => hγ_diffP t ⟨⟨by linarith [ht.1.1, hτR.1], ht.1.2⟩, ht.2⟩)
+      (hderiv_int.mono_set (by
+        rw [uIcc_of_le hτR.2.le, uIcc_of_le h_win]
+        exact Icc_subset_Icc (by linarith [hτR.1]) le_rfl))
+      (fun t ht h_eq => absurd (h_unique t
+        ⟨by linarith [ht.1, hτR.1], by linarith [ht.2]⟩ h_eq)
+        (by linarith [ht.1, hτR.1]))
+      (fun t ht => h_slit_R τr t hτR.1 ht.1 ht.2),
+    log_sum_decomp h_ne_minus h_ne_L h_ne_R h_ne_plus (by rw [hradL, hradR])]
+
 /-- **The per-window principal value at a simple pole**: at a transverse crossing `γ t₀ = s`
 with unique crossing on the window, non-zero one-sided derivative limits, and the slit-plane
 inputs at the window radius, the `ε`-truncated window integral of `(γ t - s)⁻¹ * deriv γ t`
@@ -202,34 +319,10 @@ theorem perWindow_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {t₀ 
         (hderiv_int.mono_set (by
           rw [uIcc_of_le hab, uIcc_of_le (by linarith)]
           exact Icc_subset_Icc (by linarith) (by linarith))) hε)
-  have hδR_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < τR ε - t₀ :=
-    h_memR.mono fun ε hε => by linarith [hε.1]
-  have hδL_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < t₀ - τL ε :=
-    h_memL.mono fun ε hε => by linarith [hε.2]
-  have hδR_to : Tendsto (fun ε => τR ε - t₀) (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-    rw [tendsto_nhdsWithin_iff]
-    exact ⟨by simpa using (h_toR.mono_right nhdsWithin_le_nhds).sub_const t₀,
-      hδR_pos.mono fun ε hε => mem_Ioi.mpr hε⟩
-  have hδL_to : Tendsto (fun ε => t₀ - τL ε) (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-    rw [tendsto_nhdsWithin_iff]
-    exact ⟨by simpa using (h_toL.mono_right nhdsWithin_le_nhds).const_sub t₀,
-      hδL_pos.mono fun ε hε => mem_Ioi.mpr hε⟩
-  have h_deriv_R : HasDerivWithinAt γ L_R (Ioi t₀) t₀ :=
-    TauCeti.hasDerivWithinAt_Ioi_of_tendsto_deriv hγ_at h_diff_R h_tendsto_R
-  have h_deriv_L : HasDerivWithinAt γ L_L (Iio t₀) t₀ :=
-    TauCeti.hasDerivWithinAt_Iio_of_tendsto_deriv hγ_at h_diff_L h_tendsto_L
-  have h_argR : Tendsto (fun ε : ℝ => Complex.arg ((γ (t₀ + r) - s) / (γ (τR ε) - s)))
-      (𝓝[>] (0 : ℝ)) (𝓝 ((γ (t₀ + r) - s) / L_R).arg) :=
-    (arg_annular_quotient_tendsto_right h_deriv_R h_at h_slit_plus hδR_pos hδR_to).congr
-      fun ε => by rw [show t₀ + (τR ε - t₀) = τR ε from by ring]
-  have h_argL : Tendsto (fun ε : ℝ => Complex.arg ((γ (τL ε) - s) / (γ (t₀ - r) - s)))
-      (𝓝[>] (0 : ℝ)) (𝓝 ((-L_L) / (γ (t₀ - r) - s)).arg) :=
-    (arg_annular_quotient_tendsto_left h_deriv_L h_at h_slit_minus hδL_pos hδL_to).congr
-      fun ε => by rw [show t₀ - (t₀ - τL ε) = τL ε from by ring]
-  have h_ne_plus : γ (t₀ + r) - s ≠ 0 := sub_ne_zero.mpr fun h_eq =>
-    absurd (h_unique _ (right_mem_Icc.mpr (by linarith)) h_eq) (by linarith)
-  have h_ne_minus : γ (t₀ - r) - s ≠ 0 := sub_ne_zero.mpr fun h_eq =>
-    absurd (h_unique _ (left_mem_Icc.mpr (by linarith)) h_eq) (by linarith)
+  have h_argR := arg_annular_quotient_exitTime_tendsto_right hγ_at h_diff_R
+    h_tendsto_R h_at h_slit_plus h_toR
+  have h_argL := arg_annular_quotient_exitTime_tendsto_left hγ_at h_diff_L
+    h_tendsto_L h_at h_slit_minus h_toL
   have h_ev : (fun ε : ℝ => ∫ t in (t₀ - r)..(t₀ + r),
       if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =ᶠ[𝓝[>] (0 : ℝ)]
       fun ε => ((Real.log ‖γ (t₀ + r) - s‖ - Real.log ‖γ (t₀ - r) - s‖ : ℝ) : ℂ) +
@@ -237,34 +330,8 @@ theorem perWindow_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {t₀ 
           ((γ (t₀ + r) - s) / (γ (τR ε) - s)).arg : ℝ) : ℂ) * Complex.I := by
     filter_upwards [h_split, h_memL, h_memR, h_radL, h_radR, self_mem_nhdsWithin]
       with ε hsplit hτL hτR hradL hradR hε_pos
-    have h_ne_L : γ (τL ε) - s ≠ 0 := by
-      rw [← norm_pos_iff, hradL]
-      exact hε_pos
-    have h_ne_R : γ (τR ε) - s ≠ 0 := by
-      rw [← norm_pos_iff, hradR]
-      exact hε_pos
-    rw [hsplit,
-      integral_inv_sub_mul_deriv_eq_log_window hτL.1.le hP
-        (hγ_cont.mono (Icc_subset_Icc le_rfl (by linarith [hτL.2])))
-        (fun t ht => hγ_diffP t ⟨⟨ht.1.1, by linarith [ht.1.2, hτL.2]⟩, ht.2⟩)
-        (hderiv_int.mono_set (by
-          rw [uIcc_of_le hτL.1.le, uIcc_of_le (show t₀ - r ≤ t₀ + r by linarith)]
-          exact Icc_subset_Icc le_rfl (by linarith [hτL.2])))
-        (fun t ht h_eq => absurd (h_unique t
-          ⟨by linarith [ht.1], by linarith [ht.2, hτL.2]⟩ h_eq)
-          (by linarith [ht.2, hτL.2]))
-        (fun t ht => h_slit_L t ht.1 (by linarith [ht.2, hτL.2])),
-      integral_inv_sub_mul_deriv_eq_log_window hτR.2.le hP
-        (hγ_cont.mono (Icc_subset_Icc (by linarith [hτR.1]) le_rfl))
-        (fun t ht => hγ_diffP t ⟨⟨by linarith [ht.1.1, hτR.1], ht.1.2⟩, ht.2⟩)
-        (hderiv_int.mono_set (by
-          rw [uIcc_of_le hτR.2.le, uIcc_of_le (show t₀ - r ≤ t₀ + r by linarith)]
-          exact Icc_subset_Icc (by linarith [hτR.1]) le_rfl))
-        (fun t ht h_eq => absurd (h_unique t
-          ⟨by linarith [ht.1, hτR.1], by linarith [ht.2]⟩ h_eq)
-          (by linarith [ht.1, hτR.1]))
-        (fun t ht => h_slit_R (τR ε) t hτR.1 ht.1 ht.2),
-      log_sum_decomp h_ne_minus h_ne_L h_ne_R h_ne_plus (by rw [hradL, hradR])]
+    exact perWindow_truncated_integral_eq_log_form hP hγ_cont hγ_diffP hderiv_int
+      h_unique h_slit_R h_slit_L hτL hτR hradL hradR hε_pos hsplit
   refine Tendsto.congr' h_ev.symm (tendsto_const_nhds.add ?_)
   have h_sum : Tendsto (fun ε : ℝ =>
       ((γ (τL ε) - s) / (γ (t₀ - r) - s)).arg +

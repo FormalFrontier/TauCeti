@@ -26,12 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/zulip
+          sparse-checkout: scripts/pr_status
       - name: Probe Zulip credentials
         # No continue-on-error: a failed probe means the integration is broken
-        # and this run should go red. See scripts/zulip/README.md.
+        # and this run should go red. See scripts/pr_status/README.md.
         env:
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com
-        run: python3 scripts/zulip/zulip_pr_status.py check
+        run: python3 scripts/pr_status/zulip.py check

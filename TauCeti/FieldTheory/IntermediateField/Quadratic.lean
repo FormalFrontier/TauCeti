@@ -100,6 +100,32 @@ theorem mem_sup_adjoin_sq {F : IntermediateField K L} {x : L}
       ∃ a b : L, a ∈ F ∧ b ∈ F ∧ y = a + b * x :=
   ⟨exists_add_mul_of_mem_sup_adjoin_sq hx2, mem_sup_adjoin_sq_of_exists⟩
 
+omit K [Field K] [Algebra K L] in
+/-- **Vanishing cross term in a quadratic step.** If `x² ∈ F` but `x ∉ F`, then a square
+`(a + b * x) ^ 2` of a normal-form element that lands back in `F` has no cross term: `a * b = 0`.
+This is where characteristic not two enters, through `2 ≠ 0` in `L`. It holds for an arbitrary
+subfield `F` of `L`; no ambient base field or algebra tower is needed. -/
+theorem mul_eq_zero_of_add_mul_sq_mem {S : Type*} [SetLike S L] [SubfieldClass S L] {F : S} {x : L}
+    (hx2 : x ^ 2 ∈ F) (hxF : x ∉ F) [NeZero (2 : L)] {a b : L}
+    (ha : a ∈ F) (hb : b ∈ F) (hab_mem : (a + b * x) ^ 2 ∈ F) :
+    a * b = 0 := by
+  by_contra hab
+  refine hxF ?_
+  -- Expanding `(a + b * x) ^ 2` and using `x² ∈ F`, the cross term `2 * a * b * x` lies in `F`.
+  have hcross_mem : 2 * a * b * x ∈ F := by
+    have hEq : 2 * a * b * x = (a + b * x) ^ 2 - a ^ 2 - b ^ 2 * x ^ 2 := by ring
+    rw [hEq]
+    exact sub_mem (sub_mem hab_mem (pow_mem ha 2)) (mul_mem (pow_mem hb 2) hx2)
+  -- The coefficient `2 * a * b` lies in `F` and is nonzero, so `x` is recovered by dividing it out.
+  have hcoef_mem : 2 * a * b ∈ F := mul_mem (mul_mem (natCast_mem (s := F) 2) ha) hb
+  have hcoef_ne : 2 * a * b ≠ 0 := by
+    have h2ab : (2 : L) * (a * b) ≠ 0 := mul_ne_zero (NeZero.ne (2 : L)) hab
+    simpa [mul_assoc] using h2ab
+  have hxeq : (2 * a * b)⁻¹ * (2 * a * b * x) = x := by
+    rw [← mul_assoc, inv_mul_cancel₀ hcoef_ne, one_mul]
+  rw [← hxeq]
+  exact mul_mem (inv_mem hcoef_mem) hcross_mem
+
 /-- If `x² ∈ F` but `x ∉ F`, then the simple extension `F⟮x⟯` has finrank two over `F`. -/
 theorem finrank_adjoin_simple_eq_two_of_sq_mem_notMem (F : IntermediateField K L) {x : L}
     (hx2 : x ^ 2 ∈ F) (hxF : x ∉ F) :
@@ -156,57 +182,45 @@ theorem isSquare_mul_of_adjoin_simple_eq [NeZero (2 : K)] {a c : K} {x y : L}
     (hxb : x ∉ (⊥ : IntermediateField K L))
     (hxy : IntermediateField.adjoin K {x} = IntermediateField.adjoin K {y}) :
     IsSquare (a * c) := by
-  -- Write `y` in the normal form `p + q * x` over the base field.
+  haveI : NeZero (2 : L) :=
+    NeZero.nat_of_injective (n := 2) (f := algebraMap K L) (algebraMap K L).injective
+  -- Write `y` in the base-field normal form `algebraMap p₀ + algebraMap q₀ * x`.
   have hx2 : x ^ 2 ∈ (⊥ : IntermediateField K L) := by
     rw [hx]; exact IntermediateField.algebraMap_mem _ _
   have hy_mem : y ∈ (⊥ : IntermediateField K L) ⊔ IntermediateField.adjoin K {x} := by
     rw [bot_sup_eq, hxy]; exact IntermediateField.mem_adjoin_simple_self K y
   obtain ⟨p, q, hp, hq, hy_eq⟩ := (mem_sup_adjoin_sq hx2).mp hy_mem
   rw [IntermediateField.mem_bot] at hp hq
-  obtain ⟨p₀, hp₀⟩ := hp
-  obtain ⟨q₀, hq₀⟩ := hq
-  -- The `x`-coefficient of `y²` in this normal form.
-  have hkey : algebraMap K L (2 * p₀ * q₀) * x = algebraMap K L (c - p₀ ^ 2 - q₀ ^ 2 * a) := by
+  obtain ⟨p₀, rfl⟩ := hp
+  obtain ⟨q₀, rfl⟩ := hq
+  -- The square `y² = c` lands in `⊥`, so the shared cross-term lemma forces `p₀ * q₀ = 0`.
+  have hab_mem :
+      (algebraMap K L p₀ + algebraMap K L q₀ * x) ^ 2 ∈ (⊥ : IntermediateField K L) := by
+    rw [← hy_eq, hy]; exact IntermediateField.algebraMap_mem _ _
+  have hpq : algebraMap K L p₀ * algebraMap K L q₀ = 0 :=
+    mul_eq_zero_of_add_mul_sq_mem hx2 hxb (IntermediateField.algebraMap_mem _ _)
+      (IntermediateField.algebraMap_mem _ _) hab_mem
+  have hpq0 : p₀ * q₀ = 0 := by
+    apply FaithfulSMul.algebraMap_injective K L
+    rw [map_mul, map_zero]
+    exact hpq
+  -- The vanishing cross term forces `c = p₀² + q₀² * a`.
+  have hc : c = p₀ ^ 2 + q₀ ^ 2 * a := by
     have hy2 : (algebraMap K L p₀ + algebraMap K L q₀ * x) ^ 2 = algebraMap K L c := by
-      rw [hp₀, hq₀, ← hy_eq]; exact hy
-    simp only [map_mul, map_sub, map_pow, map_ofNat]
-    linear_combination hy2 - (algebraMap K L q₀) ^ 2 * hx
-  by_cases hz : 2 * p₀ * q₀ = 0
-  · -- The `x`-coefficient vanishes, so `c = p₀² + q₀² a` and `p₀ q₀ = 0`.
-    have hmc : c - p₀ ^ 2 - q₀ ^ 2 * a = 0 := by
-      have : algebraMap K L (c - p₀ ^ 2 - q₀ ^ 2 * a) = 0 := by
-        rw [← hkey, hz, map_zero, zero_mul]
-      exact FaithfulSMul.algebraMap_injective K L (by rw [this, map_zero])
-    have hc : c = p₀ ^ 2 + q₀ ^ 2 * a := by linear_combination hmc
-    have hpq : p₀ = 0 ∨ q₀ = 0 := by
-      rcases mul_eq_zero.mp hz with h | h
-      · rcases mul_eq_zero.mp h with h2 | h2
-        · exact absurd h2 (NeZero.ne (2 : K))
-        · exact Or.inl h2
-      · exact Or.inr h
-    rcases hpq with hp0 | hq0
-    · -- `p₀ = 0`, so `c = q₀² a` and `a c = (q₀ a)²`.
-      refine ⟨q₀ * a, ?_⟩
-      rw [hc, hp0]; ring
-    · -- `q₀ = 0` forces `y` into the base field, contradicting `x ∉ ⊥`.
-      exfalso
-      apply hxb
-      have hyb : y ∈ (⊥ : IntermediateField K L) := by
-        rw [hy_eq, ← hq₀, hq0, map_zero, zero_mul, add_zero, ← hp₀]
-        exact IntermediateField.algebraMap_mem _ _
-      have hyadjoin : IntermediateField.adjoin K {y} = ⊥ :=
-        IntermediateField.adjoin_eq_bot_iff.mpr (Set.singleton_subset_iff.mpr hyb)
-      rw [← hxy] at hyadjoin
-      rw [← hyadjoin]
-      exact IntermediateField.mem_adjoin_simple_self K x
-  · -- The `x`-coefficient is nonzero, so `x` lies in the base field, a contradiction.
-    exfalso
-    apply hxb
-    have hne : algebraMap K L (2 * p₀ * q₀) ≠ 0 :=
-      (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective K L)).mpr hz
-    have hxeq : x = algebraMap K L (c - p₀ ^ 2 - q₀ ^ 2 * a) / algebraMap K L (2 * p₀ * q₀) := by
-      rw [eq_div_iff hne, mul_comm]; exact hkey
-    rw [hxeq]
-    exact div_mem (IntermediateField.algebraMap_mem _ _) (IntermediateField.algebraMap_mem _ _)
+      rw [← hy_eq]; exact hy
+    apply FaithfulSMul.algebraMap_injective K L
+    rw [map_add, map_pow, map_mul, map_pow]
+    linear_combination -hy2 + (algebraMap K L q₀) ^ 2 * hx + 2 * x * hpq
+  -- Either `p₀ = 0`, giving `a * c = (q₀ * a)²`, or `q₀ = 0`, forcing `x ∈ K`, a contradiction.
+  rcases mul_eq_zero.mp hpq0 with hp0 | hq0
+  · -- `p₀ = 0`, so `c = q₀² * a` and `a * c = (q₀ * a)²`.
+    exact ⟨q₀ * a, by rw [hc, hp0]; ring⟩
+  · -- `q₀ = 0` puts `y` in the base field, forcing `x ∈ K`, a contradiction.
+    refine absurd ?_ hxb
+    have hyb : y ∈ (⊥ : IntermediateField K L) := by
+      rw [hy_eq, hq0, map_zero, zero_mul, add_zero]
+      exact IntermediateField.algebraMap_mem _ _
+    exact IntermediateField.adjoin_simple_eq_bot_iff.mp
+      (hxy.trans (IntermediateField.adjoin_simple_eq_bot_iff.mpr hyb))
 
 end TauCeti.IntermediateField

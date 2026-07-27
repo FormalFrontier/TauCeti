@@ -178,17 +178,6 @@ private lemma liftQuotientPointHom_apply (H : _root_.CommHopfAlgCat.{v} R)
         ((mem_quotientPointsSubgroup_iff H I A g).mp g.property))
   rw [MonoidHom.apply_ofInjective_symm, quotientPointsHom_liftQuotientPoint]
 
-private lemma liftQuotientPointHom_naturality (H : _root_.CommHopfAlgCat.{v} R)
-    (I : HopfIdeal R H) {A B : CommAlgCat.{w} R} (χ : A ⟶ B)
-    (g : quotientPointsSubgroup H I A) :
-    HopfAlgebra.mapPoints (H := quotient H I) χ (liftQuotientPointHom H I A g) =
-      liftQuotientPointHom H I B (mapQuotientPointsSubgroup H I χ g) := by
-  apply quotientPointsHom_injective H I B
-  rw [← mapPoints_quotientPointsHom H I χ]
-  rw [liftQuotientPointHom_apply, liftQuotientPointHom_apply]
-  rw [quotientPointsHom_liftQuotientPoint, quotientPointsHom_liftQuotientPoint]
-  rfl
-
 /-- The component isomorphism between quotient points and the cut-out subgroup. -/
 @[expose] noncomputable def quotientPointsSubgroupIso (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (A : CommAlgCat.{w} R) :

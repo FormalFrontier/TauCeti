@@ -118,6 +118,68 @@ private theorem exists_monotone_leave_radius {γ : ℝ → ℂ} {s : ℂ} {t₀ 
     rw [h_at, heq, sub_self, norm_zero] at h_strict
     exact absurd h_strict (lt_irrefl 0)
 
+/-- **The truncated integral vanishes between the two exit points.** With `cₗ < t₀ < cᵣ` inside the
+monotone half-windows and both exit radii equal to `ε`, the curve stays within the closed `ε`-ball
+on `[cₗ, cᵣ]`, so the `ε`-truncation annihilates the integrand there. -/
+private theorem integral_truncated_eq_zero_between_exits {γ : ℝ → ℂ} {g : ℂ → ℂ} {s : ℂ}
+    {t₀ ρ ε cₗ cᵣ : ℝ}
+    (hmono : MonotoneOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + ρ)))
+    (hanti : AntitoneOn (fun t => ‖γ t - s‖) (Icc (t₀ - ρ) t₀))
+    (hcₗ : cₗ ∈ Ioo (t₀ - ρ) t₀) (hcᵣ : cᵣ ∈ Ioo t₀ (t₀ + ρ))
+    (hεₗ : ‖γ cₗ - s‖ = ε) (hεᵣ : ‖γ cᵣ - s‖ = ε) :
+    ∫ u in cₗ..cᵣ, (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) = 0 := by
+  refine integral_truncated_eq_zero (le_of_lt (hcₗ.2.trans hcᵣ.1)) fun t ht => ?_
+  rcases lt_trichotomy t t₀ with h_lt | h_eq | h_ge
+  · have h_bd : ‖γ t - s‖ ≤ ‖γ cₗ - s‖ :=
+      hanti ⟨hcₗ.1.le, hcₗ.2.le⟩ ⟨le_trans hcₗ.1.le ht.1.le, h_lt.le⟩ ht.1.le
+    rwa [hεₗ] at h_bd
+  · rw [h_eq]
+    have h_bd : ‖γ t₀ - s‖ ≤ ‖γ cₗ - s‖ :=
+      hanti ⟨hcₗ.1.le, hcₗ.2.le⟩ ⟨by linarith [hcₗ.1, hcₗ.2], le_rfl⟩ hcₗ.2.le
+    rwa [hεₗ] at h_bd
+  · have h_bd : ‖γ t - s‖ ≤ ‖γ cᵣ - s‖ :=
+      hmono ⟨h_ge.le, le_trans ht.2 hcᵣ.2.le⟩ ⟨hcᵣ.1.le, hcᵣ.2.le⟩ ht.2
+    rwa [hεᵣ] at h_bd
+
+/-- **The left window truncation is inert.** On `[t₀ - r, cₗ]`, where `cₗ < t₀` is the left exit
+point with radius `ε`, the curve stays at distance `> ε` almost everywhere — strictly before `cₗ`
+inside the antitone window, and at least `m > ε` beyond it — so the `ε`-truncated integral equals
+the plain one. -/
+private theorem integral_truncated_eq_of_left_exit {γ : ℝ → ℂ} {g : ℂ → ℂ} {s : ℂ}
+    {t₀ ρ r m ε cₗ : ℝ} (h_lb : t₀ - r ≤ cₗ) (hcₗ : cₗ ∈ Ioo (t₀ - ρ) t₀)
+    (hεₗ : ‖γ cₗ - s‖ = ε) (hεm : ε < m)
+    (hanti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - ρ) t₀))
+    (h_far : ∀ t ∈ Icc (t₀ - r) (t₀ - ρ), m ≤ ‖γ t - s‖) :
+    ∫ u in (t₀ - r)..cₗ, (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) =
+      ∫ u in (t₀ - r)..cₗ, g (γ u) * deriv γ u := by
+  refine integral_truncated_eq_of_ae_gt h_lb ?_
+  filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
+    (MeasureTheory.measure_singleton cₗ)] with t h_ne ht
+  have h_t_lt : t < cₗ := lt_of_le_of_ne ht.2 h_ne
+  rcases lt_or_ge t (t₀ - ρ) with h_lt | h_ge
+  · exact lt_of_lt_of_le hεm (h_far t ⟨ht.1.le, h_lt.le⟩)
+  · have h_bd : ‖γ cₗ - s‖ < ‖γ t - s‖ :=
+      hanti ⟨h_ge, by linarith [hcₗ.2, h_t_lt]⟩ ⟨hcₗ.1.le, hcₗ.2.le⟩ h_t_lt
+    rwa [hεₗ] at h_bd
+
+/-- **The right window truncation is inert.** On `[cᵣ, t₀ + r]`, where `cᵣ > t₀` is the right exit
+point with radius `ε`, the curve stays at distance `> ε` almost everywhere — strictly after `cᵣ`
+inside the monotone window, and at least `m > ε` beyond it — so the `ε`-truncated integral equals
+the plain one. -/
+private theorem integral_truncated_eq_of_right_exit {γ : ℝ → ℂ} {g : ℂ → ℂ} {s : ℂ}
+    {t₀ ρ r m ε cᵣ : ℝ} (h_ub : cᵣ ≤ t₀ + r) (hcᵣ : cᵣ ∈ Ioo t₀ (t₀ + ρ))
+    (hεᵣ : ‖γ cᵣ - s‖ = ε) (hεm : ε < m)
+    (hmono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + ρ)))
+    (h_far : ∀ t ∈ Icc (t₀ + ρ) (t₀ + r), m ≤ ‖γ t - s‖) :
+    ∫ u in cᵣ..(t₀ + r), (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) =
+      ∫ u in cᵣ..(t₀ + r), g (γ u) * deriv γ u := by
+  refine integral_truncated_eq_of_ae_gt h_ub (Eventually.of_forall fun t ht => ?_)
+  rcases le_or_gt t (t₀ + ρ) with h_le | h_gt
+  · have h_bd : ‖γ cᵣ - s‖ < ‖γ t - s‖ :=
+      hmono ⟨hcᵣ.1.le, hcᵣ.2.le⟩ ⟨by linarith [hcᵣ.1, ht.1], h_le⟩ ht.1
+    rwa [hεᵣ] at h_bd
+  · exact lt_of_lt_of_le hεm (h_far t ⟨h_gt.le, ht.2⟩)
+
 /-- **Shared window-splitting core.** At a transverse crossing `γ t₀ = s` (non-zero one-sided
 derivative limits `L_R`, `L_L`, unique crossing on the window `[t₀ - r, t₀ + r]`), there are
 exit-time functions `τL, τR` tending to `t₀` one-sidedly with exit radius exactly `ε`, such
@@ -182,50 +244,16 @@ theorem exists_exit_times_truncated_integral_split {γ : ℝ → ℂ} {s : ℂ} 
   have h_lb : t₀ - r ≤ τL ε := by linarith [hτL.1]
   have h_mid_le : τL ε ≤ τR ε := by linarith [hτL.2, hτR.1]
   have h_ub : τR ε ≤ t₀ + r := by linarith [hτR.2]
-  have h_mid_zero : ∫ u in (τL ε)..(τR ε),
-      (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) = 0 := by
-    refine integral_truncated_eq_zero h_mid_le fun u hu => ?_
-    rcases lt_trichotomy u t₀ with h_lt | h_eq | h_ge
-    · have h_bd : ‖γ u - s‖ ≤ ‖γ (τL ε) - s‖ := by
-        rcases eq_or_lt_of_le hu.1.le with h_eq' | h_lt'
-        · rw [h_eq']
-        · exact (hanti ⟨hτL.1.le, hτL.2.le⟩ ⟨by linarith [hτL.1], h_lt.le⟩ h_lt').le
-      rwa [hεL] at h_bd
-    · rw [h_eq, h_at, sub_self, norm_zero]
-      exact hε_pos.le
-    · have h_bd : ‖γ u - s‖ ≤ ‖γ (τR ε) - s‖ := by
-        rcases eq_or_lt_of_le hu.2 with h_eq' | h_lt'
-        · rw [h_eq']
-        · exact (hmono ⟨h_ge.le, by linarith [hτR.2, hu.2]⟩ ⟨hτR.1.le, hτR.2.le⟩ h_lt').le
-      rwa [hεR] at h_bd
-  have h_left_eq : ∫ u in (t₀ - r)..(τL ε),
-      (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) =
-      ∫ u in (t₀ - r)..(τL ε), g (γ u) * deriv γ u := by
-    refine integral_truncated_eq_of_ae_gt h_lb ?_
-    filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
-      (MeasureTheory.measure_singleton (τL ε))] with u hu_ne hu
-    have h_u_lt : u < τL ε := lt_of_le_of_ne hu.2 hu_ne
-    rcases lt_or_ge u (t₀ - ρ) with h_lt | h_ge
-    · exact lt_of_lt_of_le hεm.2 (h_far_L u ⟨hu.1.le, h_lt.le⟩)
-    · have h_bd : ‖γ (τL ε) - s‖ < ‖γ u - s‖ :=
-        hanti ⟨h_ge, by linarith [hτL.2, h_u_lt]⟩ ⟨hτL.1.le, hτL.2.le⟩ h_u_lt
-      rwa [hεL] at h_bd
-  have h_right_eq : ∫ u in (τR ε)..(t₀ + r),
-      (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) =
-      ∫ u in (τR ε)..(t₀ + r), g (γ u) * deriv γ u := by
-    refine integral_truncated_eq_of_ae_gt h_ub (Eventually.of_forall fun u hu => ?_)
-    rcases le_or_gt u (t₀ + ρ) with h_le | h_gt
-    · have h_bd : ‖γ (τR ε) - s‖ < ‖γ u - s‖ :=
-        hmono ⟨hτR.1.le, hτR.2.le⟩ ⟨by linarith [hτR.1, hu.1], h_le⟩ hu.1
-      rwa [hεR] at h_bd
-    · exact lt_of_lt_of_le hεm.2 (h_far_R u ⟨h_gt.le, hu.2⟩)
   have h_int_left := h_int ε hε_pos (t₀ - r) (τL ε) le_rfl h_lb (by linarith [hτL.2])
   have h_int_mid := h_int ε hε_pos (τL ε) (τR ε) h_lb h_mid_le h_ub
   have h_int_right := h_int ε hε_pos (τR ε) (t₀ + r) (h_lb.trans h_mid_le) h_ub le_rfl
   rw [← intervalIntegral.integral_add_adjacent_intervals
       (h_int_left.trans h_int_mid) h_int_right,
     ← intervalIntegral.integral_add_adjacent_intervals h_int_left h_int_mid,
-    h_mid_zero, add_zero, h_left_eq, h_right_eq]
+    integral_truncated_eq_zero_between_exits hmono.monotoneOn hanti.antitoneOn hτL hτR hεL hεR,
+    add_zero,
+    integral_truncated_eq_of_left_exit h_lb hτL hεL hεm.2 hanti h_far_L,
+    integral_truncated_eq_of_right_exit h_ub hτR hεR hεm.2 hmono h_far_R]
 
 end TauCeti.Contour
 

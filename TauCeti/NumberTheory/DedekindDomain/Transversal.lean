@@ -80,6 +80,16 @@ private theorem notMem_pair_of_apply_involutive {α : Type*} [DecidableEq α] {f
       _ = f (f p) := by rw [hqdef]
       _ = p := hinvolp
 
+omit [IsDedekindDomain R] in
+/-- Transporting a height-one prime along a ring equivalence `σ` maps its ideal to the image
+ideal: `(equivOfRingEquiv σ p).asIdeal = Ideal.map σ p.asIdeal`. -/
+private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R)
+    (p : IsDedekindDomain.HeightOneSpectrum R) :
+    (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p).asIdeal =
+      Ideal.map σ p.asIdeal := by
+  ext x
+  simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
+
 /-- For a distinct prime `q ≠ p` and a family `G'` no member of which is divisible by `p.asIdeal`,
 multiplying `G'` by `p.asIdeal` and by `q.asIdeal` gives disjoint images. -/
 private theorem disjoint_image_mul_asIdeal {p q : IsDedekindDomain.HeightOneSpectrum R}
@@ -97,6 +107,33 @@ private theorem disjoint_image_mul_asIdeal {p q : IsDedekindDomain.HeightOneSpec
     · exact absurd (q.isMaximal.eq_of_le p.isMaximal.ne_top (Ideal.le_of_dvd h))
         (fun hpqIdeal => hpq (IsDedekindDomain.HeightOneSpectrum.ext hpqIdeal))
   exact hpFree b hb hpdvd
+
+omit R [CommRing R] [IsDedekindDomain R] in
+/-- If `n ≤ m + 2` then `2 ^ (n / 2) ≤ 2 * 2 ^ (m / 2)`. -/
+private lemma two_pow_div_two_le_two_mul_two_pow_div_two_of_le_add_two {m n : ℕ} (hmn : n ≤ m + 2) :
+    2 ^ (n / 2) ≤ 2 * 2 ^ (m / 2) := by
+  rw [← pow_succ']
+  exact Nat.pow_le_pow_right (by norm_num) (by omega)
+
+omit R [CommRing R] [IsDedekindDomain R] in
+/-- Every ideal in the union `G'.image (· * P) ∪ G'.image (· * Q)` has conjugate product `prodS`,
+given the conjugate-pair relations `Q = Ideal.map σ P` and `Ideal.map σ Q = P`, the factorisation
+`prodS = prodS' * P * Q` of the product through the pair, and the product property
+`a * Ideal.map σ a = prodS'` of every `a ∈ G'`. This is a pure identity about ideals under a ring
+homomorphism `σ`, valid over any commutative semiring (no Dedekind structure needed). -/
+private theorem mul_map_eq_prod_of_mem_image_union {R : Type*} [CommSemiring R] {σ : R →+* R}
+    {prodS prodS' P Q : Ideal R} {G' : Finset (Ideal R)}
+    (hqIdeal : Q = Ideal.map σ P) (hmapq : Ideal.map σ Q = P)
+    (hprodS : prodS = prodS' * P * Q)
+    (hprod' : ∀ a ∈ G', a * Ideal.map σ a = prodS') {A : Ideal R}
+    (hA : A ∈ G'.image (· * P) ∪ G'.image (· * Q)) :
+    A * Ideal.map σ A = prodS := by
+  rw [Finset.mem_union] at hA
+  rcases hA with hA | hA
+  · obtain ⟨a, ha, rfl⟩ := Finset.mem_image.mp hA
+    rw [Ideal.map_mul, ← hqIdeal, hprodS, ← hprod' a ha]; ring
+  · obtain ⟨a, ha, rfl⟩ := Finset.mem_image.mp hA
+    rw [Ideal.map_mul, hmapq, hprodS, ← hprod' a ha]; ring
 
 /-- **Conjugate-transversal ideal family.** For a fixed-point-free involution `σ` of a finite set
 `S` of height-one primes of a Dedekind domain, there are at least `2 ^ (S.card / 2)` ideals `A`
@@ -120,9 +157,7 @@ theorem exists_transversal_family (σ : R ≃+* R)
   have hqS : q ∈ S := hinv p hpS
   have hpq : q ≠ p := hfree p hpS
   have hqIdeal : q.asIdeal = Ideal.map σ p.asIdeal := by
-    rw [hqdef]
-    ext x
-    simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
+    rw [hqdef]; exact asIdeal_equivOfRingEquiv σ p
   have hp0 : p.asIdeal ≠ ⊥ := p.ne_bot
   have hpair : ({p, q} : Finset (IsDedekindDomain.HeightOneSpectrum R)) ⊆ S := by
     intro x hx; rcases Finset.mem_insert.mp hx with rfl | hx
@@ -162,28 +197,13 @@ theorem exists_transversal_family (σ : R ≃+* R)
         isPrime_not_dvd_prod p hpS' (hprod' A hA ▸ dvd_mul_of_dvd_left hpA (Ideal.map σ A)))
     rw [Finset.card_union_of_disjoint hdisj, Finset.card_image_of_injective _ hinjp,
       Finset.card_image_of_injective _ hinjq]
-    have h2 : 2 ≤ S.card := Finset.one_lt_card.mpr ⟨p, hpS, q, hqS, hpq.symm⟩
-    calc 2 ^ (S.card / 2) = 2 * 2 ^ (S.card / 2 - 1) := by
-            rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_div_iff (by norm_num) |>.mpr h2)]
-      _ ≤ 2 * 2 ^ (S'.card / 2) := by
-            gcongr
-            · norm_num
-            · rw [hcardS]; omega
+    calc 2 ^ (S.card / 2) ≤ 2 * 2 ^ (S'.card / 2) :=
+          two_pow_div_two_le_two_mul_two_pow_div_two_of_le_add_two (by omega)
       _ ≤ G'.card + G'.card := by omega
-  · rintro A hA
-    rw [Finset.mem_union] at hA
-    rcases hA with hA | hA
-    · obtain ⟨a, ha, rfl⟩ := Finset.mem_image.mp hA
-      rw [Ideal.map_mul, ← hqIdeal, hprodS, ← hprod' a ha]; ring
-    · obtain ⟨a, ha, rfl⟩ := Finset.mem_image.mp hA
-      have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
-        have hσq :
-            (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ q).asIdeal =
-              Ideal.map σ q.asIdeal := by
-          ext x
-          simp [IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv]
-        rw [← hσq]
-        exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal (hinvol p hpS)
-      rw [Ideal.map_mul, hmapq, hprodS, ← hprod' a ha]; ring
+  · have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
+      rw [← asIdeal_equivOfRingEquiv σ q]
+      exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal (hinvol p hpS)
+    exact fun A hA =>
+      mul_map_eq_prod_of_mem_image_union (σ := (σ : R →+* R)) hqIdeal hmapq hprodS hprod' hA
 
 end TauCeti.DedekindDomain

@@ -69,6 +69,23 @@ theorem aut_gen_eq_signPattern (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)
       have hval : (1 : ZMod 2).val = 1 := rfl
       simp [h', hval]
 
+/-- **Read the sign pattern off a generator-wise sign.** If `σ (gen root i) = ε • gen root i`
+with `ε = ±1` (in `ℤ`) and `d i ≠ 0`, then `signPattern root σ i` is `0` when `ε = 1` and `1`
+when `ε = -1`. This bridges a generator-wise sign — for instance a Frobenius acting on `√dᵢ` by
+a Legendre symbol (`TauCeti.NumberField.isArithFrobAt_apply_sqrt`) — to the `(ℤ/2)ⁿ`
+identification, so it composes with `TauCeti.Multiquadratic.galoisGroupEquiv_apply`. -/
+theorem signPattern_eq_ite_of_zsmul_gen [NeZero (2 : K)]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (σ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) {i : ι} {ε : ℤ}
+    (hε : ε = 1 ∨ ε = -1) (hd : d i ≠ 0) (hσ : σ (gen root i) = ε • gen root i) :
+    signPattern root σ i = if ε = 1 then 0 else 1 := by
+  rw [signPattern]
+  rcases hε with rfl | rfl
+  · rw [one_smul] at hσ; rw [if_pos hσ, if_pos rfl]
+  · rw [neg_one_zsmul] at hσ
+    rw [if_neg (fun h => gen_ne_neg hroot i hd (h.symm.trans hσ)),
+      if_neg (by norm_num : (-1 : ℤ) ≠ 1)]
+
 /-- Two automorphisms with the same sign pattern are equal. -/
 theorem signPattern_injective (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
     Function.Injective (signPattern (K := K) root) := by

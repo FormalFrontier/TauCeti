@@ -41,7 +41,6 @@ simpNF TauCeti.HopfIdeal.kerLiftBialgHom_mk
 simpNF TauCeti.IsComplexLinearMap.eq_zero_iff_apply_stdComplexLineReal
 simpNF TauCeti.Multiquadratic.forall_legendreSym_neg_four_five_eq_one_iff
 simpNF TauCeti.PDE.uniformlyEllipticOn_biUnion_iff
-simpNF TauCeti.Probability.isShiftInvariant.preimage_shift_iterate_eq
 simpNF TauCeti.Probability.permReindex_apply
 simpNF TauCeti.Subcoalgebra.map_top_toSubmodule
 simpNF TauCeti.Subcomodule.comap_id

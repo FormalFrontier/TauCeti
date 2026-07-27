@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Semigroups.Resolvent
+public import TauCeti.Analysis.Semigroups.Resolvent.Identity
+public import TauCeti.Analysis.Semigroups.Resolvent.PowerBounds
 public import TauCeti.Analysis.Semigroups.BoundedGenerator
 public import TauCeti.Analysis.Semigroups.Generator
 

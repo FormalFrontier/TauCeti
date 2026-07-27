@@ -197,7 +197,7 @@ private theorem endpoint_deformTerminal {u v : X} (γ : BasedPath x₀) (hu : en
 continuous in the family parameter. This packages the boilerplate for using
 `Path.trans_continuous_family` to lift `append γ ∘ Path.initialSegmentFamily δ` to a continuous
 map `I → BasedPath x₀`. -/
-private theorem continuous_append_initialSegmentFamily {x₀ z : X}
+public theorem continuous_append_initialSegmentFamily {x₀ z : X}
     (γ : BasedPath x₀) (δ : Path (endpoint γ) z) :
     Continuous fun t : I ↦ γ.append (Path.initialSegmentFamily δ t) := by
   apply Continuous.subtype_mk
@@ -251,6 +251,102 @@ theorem exists_endpointNeighborhood_of_basicNeighborhood [LocallyPathConnectedSp
   have hz' : ∀ KU ∈ Tgood, z ∈ KU.2 := by simpa [O] using! hWO hz
   exact hz' KU hKU
 
+/-- The range of the compressed terminal tail `terminalTail γ rfl a ha1` is contained in `W`,
+given that the terminal interval `Set.Ioc a₀ 1` maps into `W` under `γ.toPath` (`hpreim`), that
+`a₀ < a` (`ha₀_lt_a`) and that `a ≤ 1` (`ha1`). The tail retraces `γ` over `[a, 1]`, and every
+such time already lies in `Set.Ioc a₀ 1`, so its image lies in `W`. -/
+private theorem terminalTail_range_subset (γ : BasedPath x₀) {W : Set X} {a₀ : I} {a : ℝ}
+    (hpreim : Set.Ioc a₀ 1 ⊆ γ.toPath ⁻¹' W)
+    (ha₀_lt_a : ((a₀ : I) : ℝ) < a) (ha1 : a ≤ 1) :
+    Set.range (terminalTail γ rfl a ha1) ⊆ W := by
+  apply Path.truncateOfLE_range_subset (h := ha1)
+  intro s hs
+  have ha0 : (0 : ℝ) ≤ a := (a₀.2.1.trans_lt ha₀_lt_a).le
+  have hs01 : s ∈ (Set.Icc 0 1 : Set ℝ) := ⟨le_trans ha0 hs.1, hs.2⟩
+  simp only [Set.mem_preimage]
+  rw [Path.extend_apply _ hs01]
+  refine hpreim ?_
+  refine ⟨?_, ?_⟩
+  · -- No interval-order lemma matches this mixed subtype/real goal directly.
+    change ((a₀ : I) : ℝ) < s
+    exact lt_of_lt_of_le ha₀_lt_a hs.1
+  · -- No interval-order lemma matches this mixed subtype/real goal directly.
+    change s ≤ 1
+    exact hs.2
+
+/-- For a time `t` with `a < t`, the deformed based path `deformTerminal γ rfl δ ha0 hab hb1`
+takes a value in `U` at `t`, provided `W ⊆ U` (`hWU`), the terminal tail's range lies in `W`
+(`htail`), and `δ`'s range lies in `W` (`hδW`). The bounds are `0 ≤ a` (`ha0`), `a < b` (`hab`),
+`b < 1` (`hb1`), and `a ≤ 1` (`ha1`, which names the tail's defining bound). On `a < t ≤ b` the
+value lies on the tail, and on `b < t` it lies on `δ`; either way it is in `W ⊆ U`. -/
+private theorem deformTerminal_apply_mem_of_lt {v : X} (γ : BasedPath x₀)
+    (δ : Path (endpoint γ) v) {W U : Set X} {a b : ℝ} (ha0 : 0 ≤ a) (hab : a < b) (hb1 : b < 1)
+    (ha1 : a ≤ 1) (hWU : W ⊆ U) (htail : Set.range (terminalTail γ rfl a ha1) ⊆ W)
+    (hδW : Set.range δ ⊆ W) (t : I) (hat : a < (t : ℝ)) :
+    (deformTerminal γ rfl δ ha0 hab hb1).1 t ∈ U := by
+  by_cases htb : (t : ℝ) ≤ b
+  · have hparam : (((t : ℝ) - a) / (b - a)) ∈ (Set.Icc 0 1 : Set ℝ) :=
+      unitInterval.div_mem (sub_nonneg.mpr hat.le) (sub_pos.mpr hab).le (sub_le_sub_right htb a)
+    rw [deformTerminal_apply_of_lt_of_le γ rfl δ ha0 hab hb1 t hat htb,
+      Path.extend_apply _ hparam]
+    exact hWU (htail ⟨⟨((t : ℝ) - a) / (b - a), hparam⟩, rfl⟩)
+  · have hbt : b < (t : ℝ) := lt_of_not_ge htb
+    have hparam : (((t : ℝ) - b) / (1 - b)) ∈ (Set.Icc 0 1 : Set ℝ) :=
+      unitInterval.div_mem (sub_nonneg.mpr hbt.le) (sub_pos.mpr hb1).le (sub_le_sub_right t.2.2 b)
+    rw [deformTerminal_apply_of_lt γ rfl δ ha0 hab hb1 t hbt, Path.extend_apply _ hparam]
+    exact hWU (hδW ⟨⟨((t : ℝ) - b) / (1 - b), hparam⟩, rfl⟩)
+
+omit [TopologicalSpace X] in
+/-- A time `t` in the set `K` of a `Tbad` pair `(K, U)` (`hKUbad`, `ht`) satisfies
+`(t : ℝ) ≤ a`, provided the terminal interval `Set.Ioc a₀ 1` avoids every `Tbad` set
+(`hbad_avoid`) and `a₀ < a` (`ha₀_lt_a`). Were `(t : ℝ) > a`, then `a₀ < a < t ≤ 1` would place
+`t` in `Set.Ioc a₀ 1`, contradicting that `t` lies in the avoided set `K`. -/
+private theorem coe_le_of_mem_Tbad {Tbad : Finset (Set I × Set X)} {a₀ : I} {a : ℝ}
+    (hbad_avoid : Set.Ioc a₀ 1 ⊆ ⋂ KU ∈ Tbad, KU.1ᶜ) (ha₀_lt_a : ((a₀ : I) : ℝ) < a)
+    {K : Set I} {U : Set X} (hKUbad : (K, U) ∈ Tbad) {t : I} (ht : t ∈ K) : (t : ℝ) ≤ a := by
+  have ht_not_Ioc : t ∉ Set.Ioc a₀ 1 := fun htIoc ↦ by
+    have htN' : ∀ KU ∈ Tbad, t ∉ KU.1 := by simpa using! hbad_avoid htIoc
+    exact htN' (K, U) hKUbad ht
+  by_contra hgt
+  have hat₀ : ((a₀ : I) : ℝ) < t := lt_trans ha₀_lt_a (lt_of_not_ge hgt)
+  exact ht_not_Ioc ⟨hat₀, t.2.2⟩
+
+/-- The deformed based path `deformTerminal γ rfl δ ha0 hab hb1` maps the set `K` of a
+pair `(K, U) ∈ S` (`hKU`) into `U`. Here `hγKU` says `γ.1` already maps `K` into `U`;
+`hT_of_S` includes `S` into `T`;
+`hTgood_iff` and `hTbad_iff` split `T` according to whether `1 ∈ K`; `hW_good` says `W` refines
+every `Tgood` target; `hIoc` places `Set.Ioc a₀ 1` inside `γ.toPath ⁻¹' W` and away from the
+`Tbad` sets; `ha₀_lt_a`, `ha0`, `ha1`, `hab`, `hb1` are the bounds `a₀ < a`, `0 ≤ a`, `a ≤ 1`,
+`a < b`, `b < 1`; and `hδW` says `δ` stays in `W`. For `t ≤ a` the deformed path agrees with `γ`,
+and for `a < t` the pair is forced to be `Tgood`, so the value lies in `W ⊆ U`. -/
+private theorem mapsTo_deformTerminal {v : X} (γ : BasedPath x₀) (δ : Path (endpoint γ) v)
+    {S : Set (Set I × Set X)} {T Tgood Tbad : Finset (Set I × Set X)}
+    (hT_of_S : ∀ KU, KU ∈ S → KU ∈ T)
+    (hTgood_iff : ∀ KU, KU ∈ Tgood ↔ KU ∈ T ∧ (1 : I) ∈ KU.1)
+    (hTbad_iff : ∀ KU, KU ∈ Tbad ↔ KU ∈ T ∧ (1 : I) ∉ KU.1)
+    {W : Set X} (hW_good : ∀ KU ∈ Tgood, W ⊆ KU.2) {a₀ : I} {a b : ℝ}
+    (hIoc : Set.Ioc a₀ 1 ⊆ γ.toPath ⁻¹' W ∩ ⋂ KU ∈ Tbad, KU.1ᶜ)
+    (ha₀_lt_a : ((a₀ : I) : ℝ) < a) (ha0 : 0 ≤ a) (ha1 : a ≤ 1) (hab : a < b) (hb1 : b < 1)
+    (hδW : Set.range δ ⊆ W) {K : Set I} {U : Set X} (hKU : (K, U) ∈ S)
+    (hγKU : Set.MapsTo γ.1 K U) :
+    Set.MapsTo (deformTerminal γ rfl δ ha0 hab hb1).1 K U := by
+  classical
+  have htail : Set.range (terminalTail γ rfl a ha1) ⊆ W :=
+    terminalTail_range_subset γ (hIoc.trans Set.inter_subset_left) ha₀_lt_a ha1
+  intro t ht
+  have hKUT : (K, U) ∈ T := hT_of_S (K, U) hKU
+  by_cases hta : (t : ℝ) ≤ a
+  · rw [deformTerminal_apply_of_le γ rfl δ ha0 hab hb1 t hta, Path.extend_apply _ t.2]
+    exact hγKU ht
+  · have hat : a < (t : ℝ) := lt_of_not_ge hta
+    have h1K : (1 : I) ∈ K := by
+      by_contra h1K
+      exact absurd
+        (coe_le_of_mem_Tbad (hIoc.trans Set.inter_subset_right) ha₀_lt_a
+          ((hTbad_iff (K, U)).2 ⟨hKUT, h1K⟩) ht) (not_le.mpr hat)
+    exact deformTerminal_apply_mem_of_lt γ δ ha0 hab hb1 ha1
+      (hW_good (K, U) ((hTgood_iff (K, U)).2 ⟨hKUT, h1K⟩)) htail hδW t hat
+
 /-- Any point in the chosen path-connected endpoint neighborhood is realized by a deformed based
 path that still lies in the original compact-open basic neighborhood. -/
 theorem exists_deformTerminal_mem_basicNeighborhood
@@ -267,71 +363,12 @@ theorem exists_deformTerminal_mem_basicNeighborhood
     (hIoc : Set.Ioc a₀ 1 ⊆ γ.toPath ⁻¹' W ∩ ⋂ KU ∈ Tbad, KU.1ᶜ)
     (ha₀_lt_a : ((a₀ : I) : ℝ) < a) (ha0 : 0 ≤ a) (ha1 : a ≤ 1) (hab : a < b) (hb1 : b < 1) :
     ∀ v ∈ W, ∃ η : BasedPath x₀, η.1 ∈ V ∧ endpoint η = v := by
-  classical
   intro v hvW
   obtain ⟨δ, hδ⟩ := hWpath.joinedIn _ huW _ hvW
-  have hδW : Set.range δ ⊆ W := Set.range_subset_iff.mpr hδ
   refine ⟨deformTerminal γ rfl δ ha0 hab hb1, ?_,
     endpoint_deformTerminal γ rfl δ ha0 hab hb1⟩
-  apply hSV
-  intro K U hKU
-  have hKUT : (K, U) ∈ T := hT_of_S (K, U) hKU
-  intro t ht
-  by_cases h1K : (1 : I) ∈ K
-  · have hKUgood : (K, U) ∈ Tgood := (hTgood_iff (K, U)).2 ⟨hKUT, h1K⟩
-    by_cases hta : (t : ℝ) ≤ a
-    · rw [BasedPath.deformTerminal_apply_of_le γ rfl δ ha0 hab hb1 t hta,
-          Path.extend_apply _ t.2]
-      exact (hSdata K U hKU).2.2 ht
-    · have hat : a < (t : ℝ) := lt_of_not_ge hta
-      by_cases htb : (t : ℝ) ≤ b
-      · have hrange : Set.range (terminalTail γ rfl a (by linarith)) ⊆ W := by
-          apply Path.truncateOfLE_range_subset (h := ha1)
-          intro s hs
-          have hs01 : s ∈ (Set.Icc 0 1 : Set ℝ) := ⟨le_trans ha0 hs.1, hs.2⟩
-          simp only [Set.mem_preimage]
-          rw [Path.extend_apply _ hs01]
-          refine (hIoc ?_).1
-          refine ⟨?_, ?_⟩
-          · -- No interval-order lemma matches this mixed subtype/real goal directly.
-            change ((a₀ : I) : ℝ) < s
-            exact lt_of_lt_of_le ha₀_lt_a hs.1
-          · -- No interval-order lemma matches this mixed subtype/real goal directly.
-            change s ≤ 1
-            exact hs.2
-        have hparam : (((t : ℝ) - a) / (b - a)) ∈ (Set.Icc 0 1 : Set ℝ) := by
-          have hba : 0 < b - a := sub_pos.mpr hab
-          exact ⟨div_nonneg (sub_nonneg.mpr hat.le) hba.le,
-            (div_le_one hba).2 <| sub_le_sub_right htb a⟩
-        have htailW :
-            (terminalTail γ rfl a (by linarith)).extend (((t : ℝ) - a) / (b - a)) ∈ W := by
-          rw [Path.extend_apply _ hparam]
-          exact hrange ⟨⟨((t : ℝ) - a) / (b - a), hparam⟩, rfl⟩
-        rw [BasedPath.deformTerminal_apply_of_lt_of_le γ rfl δ ha0 hab hb1 t hat htb]
-        exact hW_good (K, U) hKUgood htailW
-      · have hbt : b < (t : ℝ) := lt_of_not_ge htb
-        have hparam : (((t : ℝ) - b) / (1 - b)) ∈ (Set.Icc 0 1 : Set ℝ) := by
-          have hb : 0 < 1 - b := sub_pos.mpr hb1
-          exact ⟨div_nonneg (sub_nonneg.mpr hbt.le) hb.le,
-            (div_le_one hb).2 <| sub_le_sub_right t.2.2 b⟩
-        have hδt : δ.extend (((t : ℝ) - b) / (1 - b)) ∈ W := by
-          rw [Path.extend_apply _ hparam]
-          exact hδW ⟨⟨((t : ℝ) - b) / (1 - b), hparam⟩, rfl⟩
-        rw [BasedPath.deformTerminal_apply_of_lt γ rfl δ ha0 hab hb1 t hbt]
-        exact hW_good (K, U) hKUgood hδt
-  · have hKUbad : (K, U) ∈ Tbad := (hTbad_iff (K, U)).2 ⟨hKUT, h1K⟩
-    have ht_not_Ioc : t ∉ Set.Ioc a₀ 1 := fun htIoc ↦ by
-      have htN : t ∈ γ.toPath ⁻¹' W ∩ ⋂ KU ∈ Tbad, KU.1ᶜ := hIoc htIoc
-      have htN' : ∀ KU ∈ Tbad, t ∉ KU.1 := by simpa using! htN.2
-      exact htN' (K, U) hKUbad ht
-    have htle : (t : ℝ) ≤ a := by
-      by_contra hgt
-      have hat : a < (t : ℝ) := lt_of_not_ge hgt
-      have hat₀ : ((a₀ : I) : ℝ) < t := lt_trans ha₀_lt_a hat
-      exact ht_not_Ioc ⟨hat₀, t.2.2⟩
-    rw [BasedPath.deformTerminal_apply_of_le γ rfl δ ha0 hab hb1 t htle,
-        Path.extend_apply _ t.2]
-    exact (hSdata K U hKU).2.2 ht
+  exact hSV fun K U hKU ↦ mapsTo_deformTerminal γ δ hT_of_S hTgood_iff hTbad_iff
+    hW_good hIoc ha₀_lt_a ha0 ha1 hab hb1 (Set.range_subset_iff.mpr hδ) hKU (hSdata K U hKU).2.2
 
 /-- The endpoint map `BasedPath x₀ → X` is an open map when `X` is locally path-connected. -/
 public theorem isOpenMap_endpoint [LocallyPathConnectedSpace X] (x₀ : X) :

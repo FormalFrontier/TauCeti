@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
@@ -89,6 +93,74 @@ private lemma phi1_strictMono (r m : ℕ) : StrictMono (phi1 r m) := by
     simp only [hj, if_false]
     omega
 
+/-! ### Prefix-tail split as a measurable equivalence -/
+
+/-- Split a sequence into its length-`r` prefix `Fin r → α` and the tail `ℕ → α` from index `r`, as
+a measurable equivalence.  The forward map sends `f` to `(fun i => f i.val, fun j => f (r + j))`;
+its inverse glues a prefix/tail pair back into a sequence, taking coordinates below `r` from the
+prefix and the rest (reindexed by `· - r`) from the tail. -/
+private def prefixSplitEquiv (r : ℕ) : (ℕ → α) ≃ᵐ (Fin r → α) × (ℕ → α) :=
+  (MeasurableEquiv.arrowCongr' (finSumNatEquiv r).symm (.refl α)).trans
+    (MeasurableEquiv.sumPiEquivProdPi fun _ => α)
+
+/-- The inverse of `prefixSplitEquiv` glues a prefix/tail pair into a sequence: coordinates below
+`r` come from the prefix `p.1`, the rest (reindexed by `· - r`) from the tail `p.2`. -/
+private lemma prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ → α)) (n : ℕ) :
+    (prefixSplitEquiv r).symm p n = if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+  have key : (prefixSplitEquiv r).symm p
+      = fun n => if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+    apply (prefixSplitEquiv r).injective
+    rw [MeasurableEquiv.apply_symm_apply]
+    -- BRITTLE: uses the defeq `prefixSplitEquiv r f = (fun i => f i.val, fun j => f (r + j))`;
+    -- `MeasurableEquiv.arrowCongr'` exposes no coe/apply lemma, so this cannot be a `simp` rewrite.
+    change p = (fun i : Fin r => (if h : (i : ℕ) < r then p.1 ⟨i, h⟩ else p.2 ((i : ℕ) - r)),
+        fun j : ℕ => if h : r + j < r then p.1 ⟨r + j, h⟩ else p.2 (r + j - r))
+    refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
+    · simp only [dif_pos i.isLt, Fin.eta]
+    · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
+      simp only [dif_neg h, Nat.add_sub_cancel_left]
+  rw [key]
+
+omit [MeasurableSpace Ω] in
+/-- Gluing the length-`r` prefix `i ↦ X i` onto the shifted tail `processShift X (m+1)` yields the
+`phi0`-reindexing of `X` (evaluated pointwise). -/
+private lemma prefixSplitEquiv_symm_apply_processShift {X : ℕ → Ω → α} {r m : ℕ} (hr : r ≤ m)
+    (ω : Ω) (n : ℕ) :
+    (prefixSplitEquiv r).symm ((fun i : Fin r => X i ω), processShift X (m + 1) ω) n
+      = X (phi0 r m n) ω := by
+  simp only [prefixSplitEquiv_symm_apply, phi0]
+  by_cases hn : n < r
+  · simp only [hn, dite_true, ite_true]
+  · simp only [hn, dite_false, ite_false, processShift_apply]
+    congr 1
+    omega
+
+omit [MeasurableSpace Ω] in
+/-- Gluing the length-`r` prefix `i ↦ X i` onto the consed tail
+`processCons (X r) (processShift X (m+1))` yields the `phi1`-reindexing of `X` (evaluated
+pointwise). -/
+private lemma prefixSplitEquiv_symm_apply_processCons {X : ℕ → Ω → α} {r m : ℕ} (hr : r ≤ m)
+    (ω : Ω) (n : ℕ) :
+    (prefixSplitEquiv r).symm ((fun i : Fin r => X i ω),
+        processCons (fun ω => X r ω) (processShift X (m + 1)) ω) n = X (phi1 r m n) ω := by
+  simp only [prefixSplitEquiv_symm_apply, phi1]
+  by_cases hn : n < r
+  · have hle : n ≤ r := Nat.le_of_lt hn
+    simp only [hn, dite_true, hle, ite_true]
+  · simp only [hn, dite_false]
+    by_cases hn' : n = r
+    · subst hn'
+      simp only [Nat.sub_self, le_refl, ite_true, processCons_zero]
+    · have hgt : r < n := Nat.lt_of_le_of_ne (Nat.not_lt.mp hn) (Ne.symm hn')
+      simp only [Nat.not_le.mpr hgt, ite_false]
+      obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_lt hgt
+      subst hk
+      have h_idx : r + k + 1 - r = k + 1 := by omega
+      rw [h_idx]
+      simp only [processCons_succ, processShift_apply]
+      congr 1
+      omega
+
 /-! ### Pair-law equality from contractability -/
 
 /-- **Pair-law equality from contractability:** `(U, W) =ᵈ (U, W')`, where `U` is the length-`r`
@@ -113,81 +185,34 @@ private lemma pair_law_eq_of_contractable [IsFiniteMeasure μ]
         = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
           (map_reindex_pathLaw μ hX_ae φ).symm
       _ = pathLaw μ X := (hContr.measurePreserving_reindex hX_ae hφ).map_eq
-  -- Concatenation map: glue prefix `(Fin r → α)` and tail `(ℕ → α)` into `(ℕ → α)`.
-  let concat : (Fin r → α) × (ℕ → α) → (ℕ → α) := fun p n =>
-    if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r)
-  -- Split map: extract prefix and tail from `(ℕ → α)`.
-  let split : (ℕ → α) → (Fin r → α) × (ℕ → α) := fun f =>
-    (fun i => f i.val, fun n => f (r + n))
-  have h_split_concat : ∀ p : (Fin r → α) × (ℕ → α), split (concat p) = p := fun ⟨u, w⟩ => by
-    simp only [split, concat, Prod.mk.injEq]
-    constructor
-    · ext i
-      have hi : (i : ℕ) < r := i.isLt
-      simp only [hi, dite_true, Fin.eta]
-    · ext n
-      have h : ¬(r + n < r) := Nat.not_lt.mpr (Nat.le_add_right r n)
-      simp only [h, dite_false, Nat.add_sub_cancel_left]
-  have h_concat_meas : Measurable concat := by
-    refine measurable_pi_lambda _ fun n => ?_
-    by_cases hn : n < r
-    · have h : (fun p : (Fin r → α) × (ℕ → α) => concat p n) = fun p => p.1 ⟨n, hn⟩ := by
-        funext p; simp only [concat, dif_pos hn]
-      rw [h]; exact (measurable_pi_apply _).comp measurable_fst
-    · have h : (fun p : (Fin r → α) × (ℕ → α) => concat p n) = fun p => p.2 (n - r) := by
-        funext p; simp only [concat, dif_neg hn]
-      rw [h]; exact (measurable_pi_apply _).comp measurable_snd
-  have h_split_meas : Measurable split := by fun_prop
-  -- Concatenated sequences.
-  let seq0 : Ω → ℕ → α := fun ω => concat (U ω, W ω)
-  let seq1 : Ω → ℕ → α := fun ω => concat (U ω, W' ω)
-  have h_seq0 : ∀ ω n, seq0 ω n = X (phi0 r m n) ω := fun ω n => by
-    simp only [seq0, concat, U, phi0]
-    by_cases hn : n < r
-    · simp only [hn, dite_true, ite_true]
-    · simp only [hn, dite_false, ite_false, W, processShift_apply]
-      congr 1
-      omega
-  have h_seq1 : ∀ ω n, seq1 ω n = X (phi1 r m n) ω := fun ω n => by
-    simp only [seq1, concat, U, phi1]
-    by_cases hn : n < r
-    · have hle : n ≤ r := Nat.le_of_lt hn
-      simp only [hn, dite_true, hle, ite_true]
-    · simp only [hn, dite_false]
-      by_cases hn' : n = r
-      · subst hn'
-        simp only [Nat.sub_self, le_refl, ite_true, W', processCons_zero]
-      · have hgt : r < n := Nat.lt_of_le_of_ne (Nat.not_lt.mp hn) (Ne.symm hn')
-        simp only [Nat.not_le.mpr hgt, ite_false]
-        obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_lt hgt
-        subst hk
-        have h_idx : (r + k + 1) - r = k + 1 := by omega
-        rw [h_idx]
-        simp only [W', processCons_succ, W, processShift_apply]
-        congr 1
-        omega
   -- Measurability of the building blocks.
   have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX (m + 1 + n)
   have hW'_meas : Measurable W' :=
     measurable_processCons (hX r) fun n => (measurable_pi_apply n).comp hW_meas
-  have hseq0_meas : Measurable seq0 := h_concat_meas.comp (hU_meas.prodMk hW_meas)
-  have hseq1_meas : Measurable seq1 := h_concat_meas.comp (hU_meas.prodMk hW'_meas)
-  -- Both concatenated sequences are reindexings of `X`, hence have the same law `pathLaw μ X`.
+  -- The two glued sequences are the `phi0`/`phi1`-reindexings of `X`, hence share `pathLaw μ X`.
+  let seq0 : Ω → ℕ → α := fun ω => (prefixSplitEquiv r).symm (U ω, W ω)
+  let seq1 : Ω → ℕ → α := fun ω => (prefixSplitEquiv r).symm (U ω, W' ω)
+  have hseq0_meas : Measurable seq0 :=
+    (prefixSplitEquiv r).symm.measurable.comp (hU_meas.prodMk hW_meas)
+  have hseq1_meas : Measurable seq1 :=
+    (prefixSplitEquiv r).symm.measurable.comp (hU_meas.prodMk hW'_meas)
   have hseq0_eq : seq0 = fun ω (i : ℕ) => X (phi0 r m i) ω :=
-    funext fun ω => funext fun n => h_seq0 ω n
+    funext fun ω => funext fun n => prefixSplitEquiv_symm_apply_processShift hr ω n
   have hseq1_eq : seq1 = fun ω (i : ℕ) => X (phi1 r m i) ω :=
-    funext fun ω => funext fun n => h_seq1 ω n
+    funext fun ω => funext fun n => prefixSplitEquiv_symm_apply_processCons hr ω n
   have h_seq_eq : Measure.map seq0 μ = Measure.map seq1 μ := by
     rw [hseq0_eq, hseq1_eq, hreindex (phi0 r m) (phi0_strictMono r m),
       hreindex (phi1 r m) (phi1_strictMono r m)]
-  -- Pull back via `split`.
-  have h0 : Measure.map (fun ω => (U ω, W ω)) μ = Measure.map (split ∘ seq0) μ :=
-    congrArg (Measure.map · μ) <| funext fun ω => (h_split_concat (U ω, W ω)).symm
-  have h1 : Measure.map (fun ω => (U ω, W' ω)) μ = Measure.map (split ∘ seq1) μ :=
-    congrArg (Measure.map · μ) <| funext fun ω => (h_split_concat (U ω, W' ω)).symm
-  rw [h0, h1, ← Measure.map_map h_split_meas hseq0_meas,
-    ← Measure.map_map h_split_meas hseq1_meas, h_seq_eq]
+  -- Pull back via `prefixSplitEquiv`, whose forward map reassembles the split sequences.
+  have h0 : Measure.map (fun ω => (U ω, W ω)) μ = Measure.map (⇑(prefixSplitEquiv r) ∘ seq0) μ :=
+    congrArg (Measure.map · μ) <|
+      funext fun ω => ((prefixSplitEquiv r).apply_symm_apply (U ω, W ω)).symm
+  have h1 : Measure.map (fun ω => (U ω, W' ω)) μ = Measure.map (⇑(prefixSplitEquiv r) ∘ seq1) μ :=
+    congrArg (Measure.map · μ) <|
+      funext fun ω => ((prefixSplitEquiv r).apply_symm_apply (U ω, W' ω)).symm
+  rw [h0, h1, ← Measure.map_map (prefixSplitEquiv r).measurable hseq0_meas,
+    ← Measure.map_map (prefixSplitEquiv r).measurable hseq1_meas, h_seq_eq]
 
 /-- **Drop-info for the prefix `U`.** For a contractable process and `r ≤ m`, conditioning the
 indicator of the prefix `U` on `σ(W') = σ(X r) ⊔ σ(W)` equals conditioning on `σ(W)`; here

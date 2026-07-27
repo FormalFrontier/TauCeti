@@ -159,12 +159,6 @@ Berg--Christensen--Ressel sense, if all finite quadratic forms formed using the 
 def IsSemigroupGroupPD (F : ℝ≥0 × V → ℂ) : Prop :=
   IsPositiveDefinite fun p : BCRPoint V => F (p.time, p.point)
 
-/-- The BCR predicate is the generic positive-definite-function predicate on the local
-`BCRPoint` wrapper carrying the involution `(t, v) ↦ (t, -v)`. -/
-private theorem isSemigroupGroupPD_iff_isPositiveDefinite :
-    IsSemigroupGroupPD F ↔ IsPositiveDefinite (fun p : BCRPoint V => F (p.time, p.point)) :=
-  Iff.rfl
-
 /-- The bridge from semigroup-group positive definiteness to the associated positive-definite
 kernel. -/
 theorem isSemigroupGroupPD_iff_isPositiveDefiniteKernel :

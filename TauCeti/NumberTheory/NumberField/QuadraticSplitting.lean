@@ -51,56 +51,64 @@ private theorem minpoly_rat_quadratic {θ : 𝓞 K} {d : ℤ} (hmin : minpoly �
   rw [minpoly.isIntegrallyClosed_eq_field_fractions ℚ K (IsIntegralClosure.isIntegral ℤ K θ), hmin]
   simp [Polynomial.map_sub, Polynomial.map_pow]
 
+/-- The power-basis discriminant `4d` lies in the conductor: for `θ` generating `K` over `ℚ`
+with minimal polynomial `X² - d` over `ℤ`, the image of `4 * d` in `𝓞 K` belongs to
+`conductor ℤ θ`. This is the crux of the conductor bound, since it forces the conductor
+exponent of `θ` to divide `4d`. -/
+private theorem algebraMap_four_mul_mem_conductor {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    (algebraMap ℤ (𝓞 K)) (4 * d) ∈ conductor ℤ θ := by
+  rw [mem_conductor_iff]
+  intro b
+  have hintθℤ : IsIntegral ℤ (θ : K) := θ.isIntegral_coe
+  have hintθℚ : IsIntegral ℚ (θ : K) := hintθℤ.tower_top
+  let pb : PowerBasis ℚ K := PowerBasis.ofAdjoinEqTop' hintθℚ hgen
+  have hgenθ : pb.gen = (θ : K) := PowerBasis.ofAdjoinEqTop'_gen hintθℚ hgen
+  have hmin' : minpoly ℚ pb.gen = X ^ 2 - C ((d : ℤ) : ℚ) := by
+    rw [hgenθ]; exact minpoly_rat_quadratic hmin
+  have hdim : pb.dim = 2 := by
+    rw [← pb.natDegree_minpoly, hmin', natDegree_X_pow_sub_C]
+  have hnormθ : Algebra.norm ℚ pb.gen = -((d : ℤ) : ℚ) := by
+    rw [Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly, hmin', hdim]
+    simp [coeff_sub, coeff_X_pow]
+  have hfinrank : Module.finrank ℚ K = 2 := pb.finrank.trans hdim
+  have haeval : (aeval pb.gen) ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).derivative
+      = algebraMap ℚ K 2 * pb.gen := by
+    -- `derivative_X_pow` leaves the exponent as `2 - 1`; reduce it to `1` so `pow_one` applies.
+    have hsub : (2 : ℕ) - 1 = 1 := by norm_num
+    rw [derivative_sub, derivative_C, sub_zero, derivative_X_pow, map_mul, aeval_C, map_pow,
+      aeval_X, hsub, pow_one]
+    norm_num
+  have hdiscr : Algebra.discr ℚ pb.basis = ((4 * d : ℤ) : ℚ) := by
+    rw [Algebra.discr_powerBasis_eq_norm, hmin', haeval, map_mul,
+      Algebra.norm_algebraMap, hnormθ, hfinrank]
+    norm_num
+  have hgenint : IsIntegral ℤ pb.gen := hgenθ ▸ hintθℤ
+  have key := Algebra.discr_mul_isIntegral_mem_adjoin (R := ℤ) (K := ℚ) (L := K) (B := pb)
+    hgenint (z := (b : K)) (b.isIntegral_coe)
+  rw [hdiscr, hgenθ] at key
+  -- `key : ((4d:ℤ):ℚ) • (b:K) ∈ adjoin ℤ {(θ:K)}`; bridge back into `𝓞 K`.
+  let f : (𝓞 K) →ₐ[ℤ] K := IsScalarTower.toAlgHom ℤ (𝓞 K) K
+  have hfθ : f θ = (θ : K) := by rw [IsScalarTower.coe_toAlgHom']
+  have hAmap : (Algebra.adjoin ℤ {θ}).map f = Algebra.adjoin ℤ {(θ : K)} := by
+    rw [← Algebra.adjoin_image, Set.image_singleton, hfθ]
+  have himg : ((4 * d : ℤ) : ℚ) • (b : K) = f (algebraMap ℤ (𝓞 K) (4 * d) * b) := by
+    have key1 : f (algebraMap ℤ (𝓞 K) (4 * d) * b) = algebraMap ℤ K (4 * d) * (b : K) := by
+      rw [map_mul, IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K]
+    rw [key1, Algebra.smul_def]
+    simp
+  rw [himg, ← hAmap] at key
+  obtain ⟨y, hyA, hyeq⟩ := key
+  rwa [(FaithfulSMul.algebraMap_injective (𝓞 K) K) hyeq] at hyA
+
 /-- **Conductor bound.** If `θ` generates `K` and has minimal polynomial `X² - d`, then an odd
 prime not dividing `d` does not divide the conductor exponent of `θ`. -/
 private theorem not_dvd_exponent_of_minpoly_quadratic {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
     (hcop : ¬ (p : ℤ) ∣ d) : ¬ p ∣ exponent θ := by
-  -- Key bound: the conductor exponent divides `4d`.
-  have hmem : (algebraMap ℤ (𝓞 K)) (4 * d) ∈ conductor ℤ θ := by
-    rw [mem_conductor_iff]
-    intro b
-    have hintθℤ : IsIntegral ℤ (θ : K) := θ.isIntegral_coe
-    have hintθℚ : IsIntegral ℚ (θ : K) := hintθℤ.tower_top
-    let pb : PowerBasis ℚ K := PowerBasis.ofAdjoinEqTop' hintθℚ hgen
-    have hgenθ : pb.gen = (θ : K) := PowerBasis.ofAdjoinEqTop'_gen hintθℚ hgen
-    have hmin' : minpoly ℚ pb.gen = X ^ 2 - C ((d : ℤ) : ℚ) := by
-      rw [hgenθ]; exact minpoly_rat_quadratic hmin
-    have hdim : pb.dim = 2 := by
-      rw [← pb.natDegree_minpoly, hmin', natDegree_X_pow_sub_C]
-    have hnormθ : Algebra.norm ℚ pb.gen = -((d : ℤ) : ℚ) := by
-      rw [Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly, hmin', hdim]
-      simp [coeff_sub, coeff_X_pow]
-    have hfinrank : Module.finrank ℚ K = 2 := pb.finrank.trans hdim
-    have haeval : (aeval pb.gen) ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).derivative
-        = algebraMap ℚ K 2 * pb.gen := by
-      -- `derivative_X_pow` leaves the exponent as `2 - 1`; reduce it to `1` so `pow_one` applies.
-      have hsub : (2 : ℕ) - 1 = 1 := by norm_num
-      rw [derivative_sub, derivative_C, sub_zero, derivative_X_pow, map_mul, aeval_C, map_pow,
-        aeval_X, hsub, pow_one]
-      norm_num
-    have hdiscr : Algebra.discr ℚ pb.basis = ((4 * d : ℤ) : ℚ) := by
-      rw [Algebra.discr_powerBasis_eq_norm, hmin', haeval, map_mul,
-        Algebra.norm_algebraMap, hnormθ, hfinrank]
-      norm_num
-    have hgenint : IsIntegral ℤ pb.gen := hgenθ ▸ hintθℤ
-    have key := Algebra.discr_mul_isIntegral_mem_adjoin (R := ℤ) (K := ℚ) (L := K) (B := pb)
-      hgenint (z := (b : K)) (b.isIntegral_coe)
-    rw [hdiscr, hgenθ] at key
-    -- `key : ((4d:ℤ):ℚ) • (b:K) ∈ adjoin ℤ {(θ:K)}`; bridge back into `𝓞 K`.
-    let f : (𝓞 K) →ₐ[ℤ] K := IsScalarTower.toAlgHom ℤ (𝓞 K) K
-    have hfθ : f θ = (θ : K) := by rw [IsScalarTower.coe_toAlgHom']
-    have hAmap : (Algebra.adjoin ℤ {θ}).map f = Algebra.adjoin ℤ {(θ : K)} := by
-      rw [← Algebra.adjoin_image, Set.image_singleton, hfθ]
-    have himg : ((4 * d : ℤ) : ℚ) • (b : K) = f (algebraMap ℤ (𝓞 K) (4 * d) * b) := by
-      have key1 : f (algebraMap ℤ (𝓞 K) (4 * d) * b) = algebraMap ℤ K (4 * d) * (b : K) := by
-        rw [map_mul, IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K]
-      rw [key1, Algebra.smul_def]
-      simp
-    rw [himg, ← hAmap] at key
-    obtain ⟨y, hyA, hyeq⟩ := key
-    rwa [(FaithfulSMul.algebraMap_injective (𝓞 K) K) hyeq] at hyA
+  -- Key bound: `4d ∈ conductor ℤ θ`, hence the conductor exponent divides `4d`.
+  have hmem := algebraMap_four_mul_mem_conductor hmin hgen
   have hdvd : exponent θ ∣ (4 * d).natAbs := by
     have hmem' : (4 * d : ℤ) ∈ under ℤ (conductor ℤ θ) := Ideal.mem_comap.mpr hmem
     rw [← Int.ideal_span_absNorm_eq_self (under ℤ (conductor ℤ θ)),
