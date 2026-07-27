@@ -20,6 +20,10 @@ API.  Mathlib's partition of a permutation includes the fixed points as parts of
 
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 0.
+* Mathlib's `Mathlib.GroupTheory.Perm.Cycle.Type`, for `Equiv.Perm.partition` and
+  `Equiv.Perm.partition_eq_of_isConj`.
+* Mathlib's `Mathlib.GroupTheory.Perm.Cycle.PossibleTypes`, for
+  `Equiv.Perm.exists_with_cycleType_iff`.
 -/
 
 public section
@@ -96,7 +100,7 @@ theorem permConjClassPartition_surjective {α : Type*} [Fintype α] [DecidableEq
 
 /-- Partitions of the cardinality of a finite type are equivalent to conjugacy classes of its
 permutations. -/
-noncomputable def permEquivConjClasses (α : Type*) [Fintype α] [DecidableEq α] :
+noncomputable def partitionEquivPermConjClasses (α : Type*) [Fintype α] [DecidableEq α] :
     (Fintype.card α).Partition ≃ ConjClasses (Equiv.Perm α) :=
   (Equiv.ofBijective (permConjClassPartition (α := α))
     ⟨permConjClassPartition_injective, permConjClassPartition_surjective⟩).symm
@@ -105,14 +109,14 @@ noncomputable def permEquivConjClasses (α : Type*) [Fintype α] [DecidableEq α
 noncomputable def partitionEquivConjClasses (n : ℕ) :
     n.Partition ≃ ConjClasses (Equiv.Perm (Fin n)) :=
   (Equiv.cast (congrArg Nat.Partition (Fintype.card_fin n).symm)).trans
-    (permEquivConjClasses (Fin n))
+    (partitionEquivPermConjClasses (Fin n))
 
 /-- The conjugacy class associated to a partition has that partition. -/
 @[simp]
-theorem permConjClassPartition_permEquivConjClasses (α : Type*) [Fintype α]
+theorem permConjClassPartition_partitionEquivPermConjClasses (α : Type*) [Fintype α]
     [DecidableEq α] (p : (Fintype.card α).Partition) :
-    permConjClassPartition (permEquivConjClasses α p) = p :=
-  (permEquivConjClasses α).symm_apply_apply p
+    permConjClassPartition (partitionEquivPermConjClasses α p) = p :=
+  (partitionEquivPermConjClasses α).symm_apply_apply p
 
 /-- The conjugacy class associated to a partition of `n` has that partition. -/
 @[simp]
@@ -123,10 +127,10 @@ theorem permConjClassPartition_partitionEquivConjClasses (n : ℕ) (p : n.Partit
 
 /-- The inverse class-to-partition map sends a representative to its permutation partition. -/
 @[simp]
-theorem permEquivConjClasses_symm_mk (α : Type*) [Fintype α] [DecidableEq α]
+theorem partitionEquivPermConjClasses_symm_mk (α : Type*) [Fintype α] [DecidableEq α]
     (σ : Equiv.Perm α) :
-    (permEquivConjClasses α).symm (ConjClasses.mk σ) = σ.partition := by
-  rw [permEquivConjClasses, Equiv.symm_symm, Equiv.ofBijective_apply,
+    (partitionEquivPermConjClasses α).symm (ConjClasses.mk σ) = σ.partition := by
+  rw [partitionEquivPermConjClasses, Equiv.symm_symm, Equiv.ofBijective_apply,
     permConjClassPartition_mk]
 
 /-- The inverse class-to-partition map for `Fin n` sends a representative to its permutation
@@ -143,6 +147,6 @@ of its cardinality. -/
 theorem card_conjClasses_perm_eq_card_partition (α : Type*) [Fintype α] [DecidableEq α] :
     Fintype.card (ConjClasses (Equiv.Perm α)) =
       Fintype.card (Fintype.card α).Partition :=
-  Fintype.card_congr (permEquivConjClasses α).symm
+  Fintype.card_congr (partitionEquivPermConjClasses α).symm
 
 end TauCeti

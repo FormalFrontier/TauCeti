@@ -34,10 +34,10 @@ noncomputable def partitionEquivYoungDiagram (n : ℕ) :
 
 /-- The Young diagram associated to a partition is the one built from its decreasing parts by
 `YoungDiagram.ofRowLens`. -/
-theorem partitionEquivYoungDiagram_apply_coe (n : ℕ) (p : n.Partition)
-    (hw : (p.parts.sort (· ≥ ·)).SortedGE) :
+theorem partitionEquivYoungDiagram_apply_coe (n : ℕ) (p : n.Partition) :
     (partitionEquivYoungDiagram n p).1 =
-      _root_.YoungDiagram.ofRowLens (p.parts.sort (· ≥ ·)) hw := by
+      _root_.YoungDiagram.ofRowLens (p.parts.sort (· ≥ ·))
+        (Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE := by
   simp only [partitionEquivYoungDiagram, Equiv.trans_apply, Equiv.subtypeEquiv_apply,
     _root_.YoungDiagram.equivListRowLens_symm_apply]
   have hinter :
@@ -64,8 +64,7 @@ theorem partitionEquivYoungDiagram_apply_coe (n : ℕ) (p : n.Partition)
 @[simp]
 theorem partitionEquivYoungDiagram_apply_rowLens (n : ℕ) (p : n.Partition) :
     (partitionEquivYoungDiagram n p).1.rowLens = p.parts.sort (· ≥ ·) := by
-  rw [partitionEquivYoungDiagram_apply_coe n p
-    (Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE]
+  rw [partitionEquivYoungDiagram_apply_coe n p]
   exact _root_.YoungDiagram.rowLens_ofRowLens_eq_self fun x hx =>
     p.parts_pos ((Multiset.mem_sort (r := (· ≥ ·))).mp hx)
 
