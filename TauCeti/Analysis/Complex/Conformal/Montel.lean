@@ -104,11 +104,10 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
       rw [heq]
       exact (hbase.comp σ).equicontinuousOn K
     · intro K _ x _
-      obtain ⟨C, hC⟩ := isLocallyBoundedOn_def.mp hb {(x : ℂ)}
-        (by simp) isCompact_singleton
+      obtain ⟨C, hC⟩ := hb.exists_forall_norm_le x.2
       refine ⟨closedBall 0 C, isCompact_closedBall _ _, fun i hi => ?_⟩
       obtain ⟨n, rfl⟩ := hi
-      simpa [hfdef, mem_closedBall, dist_zero_right] using hC n x.1 rfl
+      simpa [hfdef, mem_closedBall, dist_zero_right] using hC n
   obtain ⟨a, -, φ, hφ, hconv⟩ := hcpt.tendsto_subseq (x := f) fun n => subset_closure ⟨n, rfl⟩
   -- compact-open convergence is locally uniform convergence
   have hlu : TendstoLocallyUniformly (fun n (x : Ω) => F (φ n) x) (fun x : Ω => a x) atTop :=
