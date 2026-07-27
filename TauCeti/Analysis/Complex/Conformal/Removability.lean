@@ -30,6 +30,11 @@ boundary integral vanish, and the shared axis edge cancels when the two halves a
 arbitrary line is reduced to the real axis by the affine chart `w ↦ p + (q - p) * w`, which is a
 biholomorphism of `ℂ` carrying `ℝ` onto the line through `p` and `q`.
 
+In accordance with the conformal-mapping roadmap's generality bar, the results are stated for
+scalar-valued functions `F : ℂ → ℂ`, even though the Morera argument and its Mathlib inputs also
+support Banach-valued functions. The roadmap deliberately requires every theorem added in layers
+L0–L6 to remain scalar; the Banach-valued generalization is therefore outside this module's scope.
+
 ## Main results
 
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero`: removability of the
