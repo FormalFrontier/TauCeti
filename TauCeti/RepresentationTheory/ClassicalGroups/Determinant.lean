@@ -111,21 +111,20 @@ theorem detPowerRep_neg_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
     detPowerRep k n (-m) g x = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)⁻¹ * x := by
   simp only [detPowerRep_apply, zpow_neg, Units.val_inv_eq_inv_val]
 
-private theorem trace_lsmul_self (a : k) :
-    LinearMap.trace k k (LinearMap.lsmul k k a) = a := by
-  have h : LinearMap.lsmul k k a = a • (1 : k →ₗ[k] k) := by
-    apply LinearMap.ext
-    intro x
-    simp [LinearMap.lsmul_apply]
-  rw [h, map_smul, LinearMap.trace_one]
-  simp [Module.finrank_self]
-
 /-- The character of the determinant-power representation is the corresponding determinant power. -/
 @[simp]
 theorem char_detPowerRep (m : ℤ) (g : GL (Fin n) k) :
     (detPowerRep k n m).character g = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) := by
   rw [Representation.character]
-  exact trace_lsmul_self k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)
+  change LinearMap.trace k k
+      (LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)) =
+    (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)
+  rw [show LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) =
+      LinearMap.id.smulRight (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) by
+    apply LinearMap.ext
+    intro x
+    simp [LinearMap.lsmul_apply, mul_comm]]
+  simp only [LinearMap.trace_smulRight, LinearMap.id_apply]
 
 /-- The bundled determinant-power character is the corresponding determinant power. -/
 @[simp]
