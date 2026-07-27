@@ -196,16 +196,22 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg
     (hpos : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | 0 < z.im}))
     (hneg : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | z.im < 0})) :
     DifferentiableOn ℂ F Ω := by
-  refine differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero hΩ hcont fun z hz => ?_
-  -- Each open half is an open set, so holomorphy there upgrades to differentiability at `z`.
-  have him : z.im ≠ 0 := hz.2
-  rcases lt_or_gt_of_ne him with h | h
-  · have hopen : IsOpen (Ω ∩ {z : ℂ | z.im < 0}) :=
-      hΩ.inter (isOpen_lt Complex.continuous_im continuous_const)
-    exact (hneg.differentiableAt (hopen.mem_nhds ⟨hz.1, h⟩)).differentiableWithinAt
-  · have hopen : IsOpen (Ω ∩ {z : ℂ | 0 < z.im}) :=
-      hΩ.inter (isOpen_lt continuous_const Complex.continuous_im)
-    exact (hpos.differentiableAt (hopen.mem_nhds ⟨hz.1, h⟩)).differentiableWithinAt
+  apply differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero hΩ hcont
+  rw [show Ω ∩ {z : ℂ | z.im ≠ 0} =
+      (Ω ∩ {z : ℂ | 0 < z.im}) ∪ (Ω ∩ {z : ℂ | z.im < 0}) by
+    ext z
+    simp only [mem_inter_iff, mem_setOf_eq, mem_union]
+    constructor
+    · rintro ⟨hz, him⟩
+      rcases lt_or_gt_of_ne him with h | h
+      · exact Or.inr ⟨hz, h⟩
+      · exact Or.inl ⟨hz, h⟩
+    · rintro (⟨hz, h⟩ | ⟨hz, h⟩)
+      · exact ⟨hz, ne_of_gt h⟩
+      · exact ⟨hz, ne_of_lt h⟩]
+  exact hpos.union_of_isOpen hneg
+    (hΩ.inter (isOpen_lt continuous_const Complex.continuous_im))
+    (hΩ.inter (isOpen_lt Complex.continuous_im continuous_const))
 
 /-- Membership in the line through two points, in the "base point plus real multiple of the
 direction" form used by the affine chart below. -/
