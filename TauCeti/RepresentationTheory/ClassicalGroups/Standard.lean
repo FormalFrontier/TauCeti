@@ -74,17 +74,17 @@ variable [Field k]
 
 /-- The character of the standard representation is the matrix trace. -/
 @[simp]
-theorem stdRep_character (g : GL (Fin n) k) :
+theorem char_stdRep (g : GL (Fin n) k) :
     (stdRep k n).character g = Matrix.trace (g : Matrix (Fin n) (Fin n) k) := by
-  rw [Representation.character, stdRep_apply]
+  rw [Representation.character, stdRep_apply, ← Matrix.toLin'_apply']
   exact Matrix.trace_toLin'_eq (g : Matrix (Fin n) (Fin n) k)
 
 /-- The character of the bundled standard representation is the matrix trace. -/
 @[simp]
-theorem stdFDRep_character (g : GL (Fin n) k) :
+theorem char_stdFDRep (g : GL (Fin n) k) :
     (stdFDRep k n).character g = Matrix.trace (g : Matrix (Fin n) (Fin n) k) := by
   simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
-    stdRep_character k n g
+    char_stdRep k n g
 
 end Field
 
@@ -117,18 +117,18 @@ variable [Field k]
 
 /-- The character of the dual standard representation is the trace at the inverse matrix. -/
 @[simp]
-theorem stdDualRep_character (g : GL (Fin n) k) :
+theorem char_stdDualRep (g : GL (Fin n) k) :
     (stdDualRep k n).character g =
       Matrix.trace ((g⁻¹ : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) := by
-  rw [stdDualRep, Representation.char_dual, stdRep_character]
+  rw [stdDualRep, Representation.char_dual, char_stdRep]
 
 /-- The character of the bundled dual standard representation is the inverse matrix trace. -/
 @[simp]
-theorem stdDualFDRep_character (g : GL (Fin n) k) :
+theorem char_stdDualFDRep (g : GL (Fin n) k) :
     (stdDualFDRep k n).character g =
       Matrix.trace ((g⁻¹ : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) := by
   simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
-    stdDualRep_character k n g
+    char_stdDualRep k n g
 
 end Field
 
