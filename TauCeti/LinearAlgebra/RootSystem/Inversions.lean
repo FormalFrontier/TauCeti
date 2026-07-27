@@ -124,7 +124,6 @@ theorem inversions_one : inversions P b 1 = ∅ := by
   simp
 
 /-- The number of inversions of the identity is zero. -/
-@[simp]
 lemma ncard_inversions_one : (inversions P b 1).ncard = 0 := by
   rw [inversions_one, Set.ncard_empty]
 
