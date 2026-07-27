@@ -49,8 +49,9 @@ functions is the identity.
 The ambient form is a wrapper: it pulls both measures back along `Subtype.val` to the compact
 subtype, applies the subtype form, and pushes the resulting equality forward again. That route
 establishes only equality of the *restrictions* to `K`, which is why it needs a support hypothesis
-on each measure rather than on one — see the theorem's docstring for why the one-sided form is
-nevertheless true.
+on each measure rather than on one. That second hypothesis is not merely an artifact of the route:
+see the theorem's docstring for why dropping it makes the statement false under Lean's convention
+for integrals of non-integrable functions.
 -/
 
 public section
@@ -162,12 +163,18 @@ Both support hypotheses are required *by this proof*, which restricts to the com
 route establishes only `μ.restrict K = ν.restrict K`, and each support hypothesis is what identifies
 one restriction with the original measure.
 
-They are not both mathematically necessary. A compactly supported finite measure is
-moment-determinate among all finite measures: matching even moments confine any competitor to the
-same box, by a Markov bound on `∫ (x i / R) ^ (2 * m)`. So the one-sided statement — hypothesising
-compact support of `μ` alone — is true and strictly stronger. It needs that extra confinement step,
-which is deliberately out of scope here; this form is what the Layer 6 consumer needs, where both
-mixing laws are already known to live on a common compact box. -/
+`hν` cannot simply be dropped. Classically, a compactly supported finite measure is
+moment-determinate among all finite measures *whose moments exist*. But `hmom` is stated with
+Bochner integrals, and `MeasureTheory.integral_undef` makes `∫ f ∂ν = 0` when `f` is not
+`ν`-integrable, so `hmom` asserts nothing where `ν`'s moments diverge. Taking `μ` a Dirac mass and
+`ν` a Cauchy measure satisfies every hypothesis with `hν` deleted, since each side of `hmom` is `0`
+for `n ≠ 0` — on the left because `0 ^ n = 0`, on the right because the integral is undefined. So
+`hν` is what forces `ν`'s moments to exist at all.
+
+The strengthening that *is* available replaces `hν` by moment-integrability of `ν`, which compact
+support implies: with genuine moments, a Markov bound on `x i ^ (2 * m)` confines `ν` to the same
+box. That is left to a follow-up; the Layer 6 consumer already has both mixing laws on a common
+compact box. -/
 theorem Measure.ext_of_forall_integral_monomial_eq_of_support [Fintype ι] (hK : IsCompact K)
     {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
