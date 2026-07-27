@@ -64,23 +64,16 @@ theorem rootSystem_indexHom_injective :
   | add x y _ _ hx hy => simpa only [LinearMap.map_add] using congrArg₂ (· + ·) hx hy
   | smul r x _ hx => simpa only [LinearMap.map_smul] using congrArg (r • ·) hx
 
-/-- The root permutation representation is faithful on every subgroup of root-system
-automorphisms. -/
-theorem indexHom_restrict_injective (G : Subgroup P.Aut) :
-    Function.Injective ((_root_.RootPairing.Equiv.indexHom P).restrict G) := by
-  intro f g hfg
-  exact Subtype.ext <| rootSystem_indexHom_injective P hfg
-
 /-- The action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective : Function.Injective P.weylGroupToPerm :=
-  indexHom_restrict_injective P P.weylGroup
+  (rootSystem_indexHom_injective P).comp Subtype.val_injective
 
 variable [Finite ι]
 
 /-- Every subgroup of the automorphism group of a finite root system is finite. -/
 theorem finite_subgroup_aut (G : Subgroup P.Aut) : Finite G :=
   Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).restrict G)
-    (indexHom_restrict_injective P G)
+    ((rootSystem_indexHom_injective P).comp Subtype.val_injective)
 
 /-- The automorphism group of a finite root system is finite. -/
 theorem finite_rootSystem_aut : Finite P.Aut :=
@@ -92,7 +85,8 @@ theorem card_subgroup_aut_le_factorial (G : Subgroup P.Aut) :
     Nat.card G ≤ Nat.factorial (Nat.card ι) := by
   calc
     Nat.card G ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
-      ((_root_.RootPairing.Equiv.indexHom P).restrict G) (indexHom_restrict_injective P G)
+      ((_root_.RootPairing.Equiv.indexHom P).restrict G)
+        ((rootSystem_indexHom_injective P).comp Subtype.val_injective)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
 
 /-- The automorphism group of a finite root system has order at most the factorial of the number
