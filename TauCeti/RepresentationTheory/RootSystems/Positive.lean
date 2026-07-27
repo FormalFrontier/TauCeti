@@ -52,12 +52,12 @@ lemma mem_posRoots (i : ι) : i ∈ posRoots P b ↔ b.IsPos i := Iff.rfl
 lemma mem_negRoots (i : ι) : i ∈ negRoots P b ↔ ¬ b.IsPos i := Iff.rfl
 
 /-- The negative roots are the complement of the positive roots. -/
-lemma posRoots_compl : (posRoots P b)ᶜ = negRoots P b := by
+lemma compl_posRoots : (posRoots P b)ᶜ = negRoots P b := by
   ext i
   simp only [Set.mem_compl_iff, mem_posRoots, mem_negRoots]
 
 /-- The negative roots are the complement of the positive roots. -/
-lemma negRoots_compl : negRoots P b = (posRoots P b)ᶜ := posRoots_compl P b |>.symm
+lemma negRoots_eq_compl : negRoots P b = (posRoots P b)ᶜ := compl_posRoots P b |>.symm
 
 /-- No root is both positive and negative. -/
 lemma disjoint_posRoots_negRoots : Disjoint (posRoots P b) (negRoots P b) := by
@@ -66,7 +66,7 @@ lemma disjoint_posRoots_negRoots : Disjoint (posRoots P b) (negRoots P b) := by
 
 /-- Every root is either positive or negative. -/
 lemma posRoots_union_negRoots : posRoots P b ∪ negRoots P b = Set.univ := by
-  rw [negRoots_compl]
+  rw [negRoots_eq_compl]
   exact Set.union_compl_self _
 
 /-- Every root is either positive or negative. -/
@@ -105,6 +105,7 @@ private lemma reflectionPerm_self_eq_neg (i : ι) :
     P.reflectionPerm i i = -i := rfl
 
 /-- The negative of a positive root is negative. -/
+@[simp]
 lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     P.reflectionPerm i i ∈ negRoots P b ↔ i ∈ posRoots P b := by
   letI := P.indexNeg
@@ -115,9 +116,9 @@ lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
 /-- The negative of a negative root is positive. -/
 @[simp]
 lemma reflectionPerm_self_mem_posRoots_iff_mem_negRoots (i : ι) :
-    b.IsPos (P.reflectionPerm i i) ↔ i ∈ negRoots P b := by
+    P.reflectionPerm i i ∈ posRoots P b ↔ i ∈ negRoots P b := by
   letI := P.indexNeg
-  rw [reflectionPerm_self_eq_neg, mem_negRoots]
+  rw [reflectionPerm_self_eq_neg, mem_posRoots, mem_negRoots]
   exact RootPairing.Base.IsPos.neg_iff_not b i
 
 /-- A positive root is a nonnegative natural-number combination of simple roots. -/
@@ -142,6 +143,7 @@ lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
 theorem image_reflectionPerm_self_posRoots :
     (fun i ↦ P.reflectionPerm i i) '' posRoots P b = negRoots P b := by
   letI := P.indexNeg
+  simp_rw [reflectionPerm_self_eq_neg P]
   ext i
   constructor
   · rintro ⟨j, hj, rfl⟩
@@ -159,10 +161,12 @@ theorem image_reflectionPerm_self_negRoots :
   letI := P.indexNeg
   have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
     intro i
+    rw [show (fun j : ι ↦ P.reflectionPerm j j) = fun j ↦ -j from
+      funext (reflectionPerm_self_eq_neg P)]
     exact neg_neg i
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
-        (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_compl]
+        (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
     _ = ((fun i ↦ P.reflectionPerm i i) '' posRoots P b)ᶜ :=
       Set.image_compl_eq hinv.bijective
     _ = (negRoots P b)ᶜ := by rw [image_reflectionPerm_self_posRoots]
