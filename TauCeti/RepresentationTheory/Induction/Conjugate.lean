@@ -91,6 +91,8 @@ theorem conjRepFunctor_map_hom_toLinearMap [Semiring k] (s : G) {H : Subgroup G}
   change HEq (Rep.resMap (conjSubgroupEquiv s H).toMonoidHom f).hom.toLinearMap _
   exact heq_of_eq (Rep.resMap_hom_toLinearMap _ _)
 
+/-- The conjugate action, as a heterogeneous equality: `conjRep` is opaque, so
+`(conjRep s A).V` and `A.V` are equal only via `conjRep_V`, not definitionally. -/
 theorem conjRep_ρ [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
@@ -129,6 +131,8 @@ theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
     (conjFDRep s A).V = A.V := by
   rfl
 
+/-- The conjugate action, as a heterogeneous equality: `conjFDRep` is opaque, so
+`(conjFDRep s A).V` and `A.V` are equal only via `conjFDRep_V`, not definitionally. -/
 theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
@@ -137,7 +141,7 @@ theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
   rw [FDRep.of_ρ']
   rfl
 
-@[simp]
+/-- The conjugate action, transported along `conjFDRep_V`. -/
 theorem conjFDRep_ρ_apply (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     cast (congrArg (fun V : FGModuleCat k => V →ₗ[k] V) (conjFDRep_V s A))
@@ -167,7 +171,7 @@ theorem char_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H)
   congr 1
 
 /-- The conjugate-character formula `({}^s χ)(x) = χ(s⁻¹xs)`. -/
-theorem char_conjFDRep_eq (s : G) {H : Subgroup G} (A : FDRep k H)
+theorem char_conjFDRep_mk (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     (conjFDRep s A).character x =
       A.character ⟨s⁻¹ * (x : G) * s, (mem_conj_smul s H x).mp x.2⟩ := by
