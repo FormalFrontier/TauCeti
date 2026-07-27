@@ -116,14 +116,18 @@ theorem detPowerRep_neg_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
 theorem char_detPowerRep (m : ℤ) (g : GL (Fin n) k) :
     (detPowerRep k n m).character g = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) := by
   rw [Representation.character]
-  change LinearMap.trace k k
-      (LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)) =
-    (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)
-  rw [show LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) =
-      LinearMap.id.smulRight (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) by
+  have haction : detPowerRep k n m g =
+      LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) := by
     apply LinearMap.ext
     intro x
-    simp [LinearMap.lsmul_apply, mul_comm]]
+    simp only [detPowerRep_apply, LinearMap.lsmul_apply, smul_eq_mul]
+  rw [haction]
+  have hlsmul : LinearMap.lsmul k k (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) =
+      LinearMap.id.smulRight (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) := by
+    apply LinearMap.ext
+    intro x
+    simp [LinearMap.lsmul_apply, mul_comm]
+  rw [hlsmul]
   simp only [LinearMap.trace_smulRight, LinearMap.id_apply]
 
 /-- The bundled determinant-power character is the corresponding determinant power. -/
