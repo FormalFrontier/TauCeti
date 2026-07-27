@@ -88,6 +88,7 @@ never see this form. -/
 theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r : R) :
     FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) (MonoidAlgebra.single g r) =
       MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
+  rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
