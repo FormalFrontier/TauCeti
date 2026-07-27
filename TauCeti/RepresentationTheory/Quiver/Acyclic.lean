@@ -1,4 +1,10 @@
-import Mathlib.Combinatorics.Quiver.Path
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.Combinatorics.Quiver.Path
 
 /-!
 # Acyclic quivers
@@ -10,6 +16,8 @@ in both directions between distinct vertices.
 This is the orientation-sensitive notion of acyclicity used for path algebras and quiver
 representations. It is distinct from acyclicity of the underlying undirected graph.
 -/
+
+public section
 
 namespace TauCeti
 
