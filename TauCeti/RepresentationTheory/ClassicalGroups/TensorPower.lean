@@ -45,28 +45,9 @@ noncomputable abbrev tensorPowerRep :
     Representation k (GL (Fin n) k) (⨂[k]^d (Fin n → k)) :=
   (stdRep k n).tensorPower d
 
-/-- The tensor-power standard action sends a pure tensor to the tensor of its matrix actions. -/
-@[simp]
-theorem tensorPowerRep_apply_tprod (g : GL (Fin n) k) (v : Fin d → Fin n → k) :
-    tensorPowerRep k n d g (PiTensorProduct.tprod k v) =
-      PiTensorProduct.tprod k (fun i => (g : Matrix (Fin n) (Fin n) k) *ᵥ v i) := by
-  simp only [tensorPowerRep, Representation.tensorPower_apply_tprod, stdRep_apply_apply]
-
-/-- The zero-fold tensor-power standard representation is trivial. -/
-@[simp]
-theorem tensorPowerRep_zero_apply (g : GL (Fin n) k) :
-    tensorPowerRep k n 0 g = LinearMap.id :=
-  Representation.tensorPower_zero_apply (stdRep k n) g
-
 /-- The `d`-fold tensor power of the standard representation, bundled as an `FDRep`. -/
 noncomputable abbrev tensorPowerFDRep : FDRep k (GL (Fin n) k) :=
   (stdRep k n).tensorPowerFDRep d
-
-/-- The finite-dimensional tensor-power standard action agrees with the tensor-power action. -/
-@[simp]
-theorem tensorPowerFDRep_ρ :
-    (tensorPowerFDRep k n d).ρ = tensorPowerRep k n d :=
-  rfl
 
 end CommRing
 
