@@ -90,14 +90,14 @@ theorem norm_haarAverage_eq_one [Nontrivial V] [CompleteSpace V] :
   apply le_antisymm (norm_haarAverage_le_one G) _
   obtain ⟨v, hv⟩ := exists_ne (0 : V)
   have hnorm : ‖ContinuousMap.const G v‖ = ‖v‖ := by
-    apply le_antisymm
-    · exact (ContinuousMap.const G v).norm_le (norm_nonneg v) |>.2 fun _ ↦ le_rfl
-    · simpa using (ContinuousMap.const G v).norm_coe_le_norm (1 : G)
+    rw [← (ContinuousMap.linearIsometryBoundedOfCompact G V 𝕜).norm_map]
+    exact BoundedContinuousFunction.norm_const_eq v
   have h := (haarAverage G (𝕜 := 𝕜) (V := V)).ratio_le_opNorm
     (ContinuousMap.const G v)
   simpa [haarAverage_const, hnorm, norm_ne_zero_iff.mpr hv] using h
 
 /-- Continuous linear maps commute with Haar averaging. -/
+@[simp]
 theorem haarAverage_comp_comm {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W]
     [NormedSpace 𝕜 W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace V] [CompleteSpace W]
     (L : V →L[𝕜] W) (f : C(G, V)) :
