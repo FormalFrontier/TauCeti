@@ -124,24 +124,6 @@ theorem inversions_one : inversions P b 1 = ∅ := by
 lemma ncard_inversions_one : (inversions P b 1).ncard = 0 := by
   rw [inversions_one, Set.ncard_empty]
 
-omit [CharZero R] in
-/-- A simple reflection acts on root indices by the corresponding reflection permutation.
-
-The statement uses `RootPairing.Equiv.indexEquiv` because `weylGroupToPerm` is an abbreviation for
-the restriction of this index action, and the simp linter requires the unfolded normal form. -/
-@[simp]
-lemma weylGroupToPerm_ofIdx (i j : ι) :
-    ((RootPairing.weylGroup.ofIdx P i : P.weylGroup) :
-      RootPairing.Equiv P P).indexEquiv j = P.reflectionPerm i j := by
-  have hroot :
-      P.root (P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j) =
-        P.root (P.reflectionPerm i j) := by
-    rw [← P.weylGroup_apply_root, RootPairing.weylGroup.ofIdx_smul,
-      RootPairing.Equiv.reflection_smul, P.root_reflectionPerm]
-  calc
-    _ = P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j := rfl
-    _ = P.reflectionPerm i j := P.root.injective hroot
-
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
 /-- A simple reflection has exactly its defining simple root as an inversion. -/
@@ -159,10 +141,9 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     have hofIdx :
         P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P j) j =
           P.reflectionPerm j j := by
-      calc
-        _ = (((RootPairing.weylGroup.ofIdx P j : P.weylGroup) :
-          RootPairing.Equiv P P).indexEquiv j) := rfl
-        _ = P.reflectionPerm j j := weylGroupToPerm_ofIdx P j j
+      change (RootPairing.Equiv.reflection P j).indexEquiv j = P.reflectionPerm j j
+      exact congrArg (fun e : ι ≃ ι => e j)
+        (RootPairing.Equiv.reflection_indexEquiv P j)
     rw [hofIdx, ← mem_negRoots,
       reflectionPerm_self_mem_negRoots_iff_mem_posRoots, mem_posRoots]
     exact b.isPos_of_mem_support hi
