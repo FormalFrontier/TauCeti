@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Combinatorics.Enumerative.Partition.Basic
 public import Mathlib.Data.List.Lex
-import Mathlib.Tactic.Order
+import Lean.Elab.Tactic.Omega
 
 /-!
 # Dominance order on partitions
@@ -39,11 +39,26 @@ private theorem sortedParts_length_le {n : ℕ} (μ : n.Partition) :
         μ.parts_pos ((Multiset.mem_sort (· ≥ ·)).mp hi)
     _ = n := sortedParts_sum μ
 
+namespace PartitionLex
+
+/-- The lexicographic linear order on partitions, obtained from their decreasingly sorted parts.
+Activate it with `open scoped TauCeti.PartitionLex`. -/
+scoped instance partitionLinearOrder {n : ℕ} : LinearOrder n.Partition :=
+  LinearOrder.lift' (fun μ => μ.parts.sort (· ≥ ·)) (by
+    intro μ ν h
+    apply Nat.Partition.ext
+    calc
+      μ.parts = ↑(μ.parts.sort (· ≥ ·)) := (Multiset.sort_eq μ.parts (· ≥ ·)).symm
+      _ = ↑(ν.parts.sort (· ≥ ·)) := congrArg (fun l : List ℕ => (l : Multiset ℕ)) h
+      _ = ν.parts := Multiset.sort_eq ν.parts (· ≥ ·))
+
+end PartitionLex
+
 /-- A partition `μ` dominates a partition `ν` when every partial sum of the decreasingly
 sorted parts of `μ` is at least the corresponding partial sum of `ν`. -/
 def Dominates {n : ℕ} (μ ν : n.Partition) : Prop :=
   ∀ k : Fin (n + 1),
-    ((sortedParts ν).take k).sum ≤ ((sortedParts μ).take k).sum
+    ((ν.parts.sort (· ≥ ·)).take k).sum ≤ ((μ.parts.sort (· ≥ ·)).take k).sum
 
 /-- Dominance can be checked on the first `n + 1` partial sums. -/
 theorem dominates_fin_iff {n : ℕ} {μ ν : n.Partition} :
@@ -51,7 +66,7 @@ theorem dominates_fin_iff {n : ℕ} {μ ν : n.Partition} :
       ∀ k : Fin (n + 1),
         ((ν.parts.sort (· ≥ ·)).take k).sum ≤
           ((μ.parts.sort (· ≥ ·)).take k).sum :=
-  (Iff.rfl)
+  Iff.rfl
 
 /-- The defining partial-sum characterization of dominance. -/
 theorem dominates_iff {n : ℕ} {μ ν : n.Partition} :
@@ -77,7 +92,7 @@ instance {n : ℕ} (μ ν : n.Partition) : Decidable (Dominates μ ν) := by
         ((μ.parts.sort (· ≥ ·)).take k).sum) dominates_fin_iff.symm
 
 /-- Every partition dominates itself. -/
-@[refl]
+@[simp, refl]
 theorem dominates_refl {n : ℕ} (μ : n.Partition) : Dominates μ μ :=
   (dominates_iff.mpr fun _ => le_rfl)
 
@@ -86,18 +101,6 @@ theorem dominates_refl {n : ℕ} (μ : n.Partition) : Dominates μ μ :=
 theorem Dominates.trans {n : ℕ} {μ ν ξ : n.Partition}
     (hμν : Dominates μ ν) (hνξ : Dominates ν ξ) : Dominates μ ξ :=
   dominates_iff.mpr fun k => (dominates_iff.mp hνξ k).trans (dominates_iff.mp hμν k)
-
-/-- Strict dominance is dominance between unequal partitions. -/
-def StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
-  Dominates μ ν ∧ μ ≠ ν
-
-/-- The defining characterization of strict dominance. -/
-theorem strictlyDominates_iff {n : ℕ} {μ ν : n.Partition} :
-    StrictlyDominates μ ν ↔ Dominates μ ν ∧ μ ≠ ν :=
-  Iff.rfl
-
-instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) := by
-  exact decidable_of_iff (Dominates μ ν ∧ μ ≠ ν) strictlyDominates_iff.symm
 
 private theorem lex_lt_of_prefix_sum_le {l₁ l₂ : List ℕ}
     (hsum : l₁.sum = l₂.sum)
@@ -138,65 +141,76 @@ private theorem lex_lt_of_prefix_sum_le {l₁ l₂ : List ℕ}
               exact hne (congrArg (List.cons a) h)
           · exact List.Lex.rel hba
 
-/-- Strict dominance refines the decreasing lexicographic order on sorted parts. -/
-theorem sortedParts_lt_of_strictlyDominates {n : ℕ} {μ ν : n.Partition}
-    (h : StrictlyDominates μ ν) :
-    ν.parts.sort (· ≥ ·) < μ.parts.sort (· ≥ ·) := by
+private theorem lex_lt_of_dominates_of_ne {n : ℕ} {μ ν : n.Partition}
+    (hdom : Dominates μ ν) (hne : μ ≠ ν) :
+    sortedParts ν < sortedParts μ := by
   apply lex_lt_of_prefix_sum_le (sortedParts_sum μ |>.trans (sortedParts_sum ν).symm)
   · intro i hi
     exact μ.parts_pos ((Multiset.mem_sort (· ≥ ·)).mp hi)
   · intro i hi
     exact ν.parts_pos ((Multiset.mem_sort (· ≥ ·)).mp hi)
-  · exact dominates_iff.mp h.1
-  · intro hs
-    apply h.2
+  · exact dominates_iff.mp hdom
+  · intro h
+    apply hne
     apply Nat.Partition.ext
     calc
-      μ.parts = ↑(μ.parts.sort (· ≥ ·)) :=
-        (Multiset.sort_eq μ.parts (· ≥ ·)).symm
-      _ = ↑(ν.parts.sort (· ≥ ·)) := congrArg (fun l : List ℕ => (l : Multiset ℕ)) hs
+      μ.parts = ↑(sortedParts μ) := (Multiset.sort_eq μ.parts (· ≥ ·)).symm
+      _ = ↑(sortedParts ν) := congrArg (fun l : List ℕ => (l : Multiset ℕ)) h
       _ = ν.parts := Multiset.sort_eq ν.parts (· ≥ ·)
 
 /-- Dominance is antisymmetric. -/
 theorem Dominates.antisymm {n : ℕ} {μ ν : n.Partition}
     (hμν : Dominates μ ν) (hνμ : Dominates ν μ) : μ = ν := by
   by_contra hne
-  have hν_lt_μ := sortedParts_lt_of_strictlyDominates
-    (show StrictlyDominates μ ν from ⟨hμν, hne⟩)
-  have hμ_lt_ν := sortedParts_lt_of_strictlyDominates
-    (show StrictlyDominates ν μ from ⟨hνμ, Ne.symm hne⟩)
+  have hν_lt_μ := lex_lt_of_dominates_of_ne hμν hne
+  have hμ_lt_ν := lex_lt_of_dominates_of_ne hνμ (Ne.symm hne)
   exact hν_lt_μ.asymm hμ_lt_ν
 
-/-- A dominance comparison is either equality or strict dominance. -/
-theorem dominates_iff_eq_or_strictlyDominates {n : ℕ} {μ ν : n.Partition} :
-    Dominates μ ν ↔ μ = ν ∨ StrictlyDominates μ ν := by
-  constructor
-  · intro h
-    rcases eq_or_ne μ ν with rfl | hne
-    · exact Or.inl rfl
-    · exact Or.inr ⟨h, hne⟩
-  · rintro (rfl | h)
-    · exact dominates_refl _
-    · exact h.1
+namespace DominanceOrder
+
+/-- The dominance partial order on partitions, oriented so that `ν ≤ μ` means that `μ`
+dominates `ν`. Activate it with `open scoped TauCeti.DominanceOrder`. -/
+scoped instance partitionPartialOrder {n : ℕ} : PartialOrder n.Partition where
+  le μ ν := Dominates ν μ
+  le_refl μ := dominates_refl μ
+  le_trans _ _ _ hμν hνξ := hνξ.trans hμν
+  le_antisymm _ _ hμν hνμ := hνμ.antisymm hμν
+
+end DominanceOrder
+
+/-- Strict dominance is the strict relation of the dominance partial order. -/
+abbrev StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
+  DominanceOrder.partitionPartialOrder.lt ν μ
+
+/-- Strict dominance is dominance between unequal partitions. -/
+@[simp]
+theorem strictlyDominates_iff {n : ℕ} {μ ν : n.Partition} :
+    StrictlyDominates μ ν ↔ Dominates μ ν ∧ μ ≠ ν := by
+  letI := DominanceOrder.partitionPartialOrder (n := n)
+  change ν < μ ↔ Dominates μ ν ∧ μ ≠ ν
+  rw [lt_iff_le_and_ne]
+  exact and_congr Iff.rfl ne_comm
+
+instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) := by
+  rw [strictlyDominates_iff]
+  infer_instance
 
 /-- Strict dominance is irreflexive. -/
+@[simp]
 theorem strictlyDominates_irrefl {n : ℕ} (μ : n.Partition) :
-    ¬StrictlyDominates μ μ :=
-  fun h => h.2 rfl
+    ¬StrictlyDominates μ μ := by
+  letI := DominanceOrder.partitionPartialOrder (n := n)
+  change ¬μ < μ
+  exact lt_irrefl μ
 
-/-- Strict dominance is transitive. -/
-theorem StrictlyDominates.trans {n : ℕ} {μ ν ξ : n.Partition}
-    (hμν : StrictlyDominates μ ν) (hνξ : StrictlyDominates ν ξ) :
-    StrictlyDominates μ ξ := by
-  refine ⟨hμν.1.trans hνξ.1, ?_⟩
-  intro hμξ
-  apply hμν.2
-  exact hμν.1.antisymm (hμξ ▸ hνξ.1)
+open scoped PartitionLex
 
-/-- Strict dominance is asymmetric. -/
-theorem StrictlyDominates.asymm {n : ℕ} {μ ν : n.Partition}
-    (hμν : StrictlyDominates μ ν) : ¬StrictlyDominates ν μ :=
-  fun hνμ => hμν.2 (hμν.1.antisymm hνμ.1)
+/-- Strict dominance refines the lexicographic linear order on partitions. -/
+theorem lex_lt_of_strictlyDominates {n : ℕ} {μ ν : n.Partition}
+    (h : StrictlyDominates μ ν) : ν < μ := by
+  change sortedParts ν < sortedParts μ
+  rw [strictlyDominates_iff] at h
+  exact lex_lt_of_dominates_of_ne h.1 h.2
 
 /-- The one-part partition dominates every partition of the same natural number. -/
 theorem indiscrete_dominates {n : ℕ} (μ : n.Partition) :
@@ -216,6 +230,7 @@ theorem indiscrete_dominates {n : ℕ} (μ : n.Partition) :
     omega
 
 /-- A partition dominates the one-part partition only when it is that partition. -/
+@[simp]
 theorem dominates_indiscrete_iff {n : ℕ} {μ : n.Partition} :
     Dominates μ (Nat.Partition.indiscrete n) ↔ μ = Nat.Partition.indiscrete n := by
   constructor
