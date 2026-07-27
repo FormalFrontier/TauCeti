@@ -15,6 +15,12 @@ in both directions between distinct vertices.
 
 This is the orientation-sensitive notion of acyclicity used for path algebras and quiver
 representations. It is distinct from acyclicity of the underlying undirected graph.
+
+## References
+
+This file implements the Layer 0 “Acyclicity, as a predicate” target of
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/Suggested.lean` and its
+`README.md`.
 -/
 
 public section
@@ -33,12 +39,21 @@ def Quiver.IsAcyclic (V : Type u) [Quiver.{v} V] : Prop :=
 
 namespace Quiver.IsAcyclic
 
+/-- The defining closed-path condition for an acyclic quiver. -/
+theorem isAcyclic_def :
+    Quiver.IsAcyclic V ↔ ∀ ⦃a : V⦄ (p : Path a a), p = Path.nil :=
+  Iff.rfl
+
+/-- Every closed path in an acyclic quiver is trivial. -/
+theorem eq_nil (h : Quiver.IsAcyclic V) {a : V} (p : Path a a) : p = Path.nil :=
+  h p
+
 /-- A quiver is acyclic exactly when every closed path has length zero. -/
 theorem iff_forall_length_eq_zero :
     Quiver.IsAcyclic V ↔ ∀ ⦃a : V⦄ (p : Path a a), p.length = 0 := by
   constructor
   · intro h a p
-    rw [h p]
+    rw [h.eq_nil p]
     exact Path.length_nil
   · intro h a p
     exact p.eq_nil_of_length_zero (h p)
@@ -70,7 +85,7 @@ theorem iff_not_exists_ne_nil :
   constructor
   · intro h hex
     obtain ⟨a, p, hp⟩ := hex
-    exact hp (h p)
+    exact hp (h.eq_nil p)
   · intro h a p
     by_contra hp
     exact h ⟨a, p, hp⟩
@@ -80,7 +95,7 @@ theorem iff_not_exists_ne_nil :
 theorem comp_eq_nil (h : Quiver.IsAcyclic V) {a b : V}
     (p : Path a b) (q : Path b a) :
     p.comp q = Path.nil :=
-  h (p.comp q)
+  h.eq_nil (p.comp q)
 
 /-- If paths run in both directions in an acyclic quiver, the forward path has length zero. -/
 theorem length_eq_zero_of_paths_left (h : Quiver.IsAcyclic V) {a b : V}
@@ -93,10 +108,8 @@ theorem length_eq_zero_of_paths_left (h : Quiver.IsAcyclic V) {a b : V}
 /-- If paths run in both directions in an acyclic quiver, the reverse path has length zero. -/
 theorem length_eq_zero_of_paths_right (h : Quiver.IsAcyclic V) {a b : V}
     (p : Path a b) (q : Path b a) :
-    q.length = 0 := by
-  have hpq : (p.comp q).length = 0 := h.length_eq_zero (p.comp q)
-  rw [Path.length_comp] at hpq
-  omega
+    q.length = 0 :=
+  h.length_eq_zero_of_paths_left q p
 
 /-- Vertices joined by paths in both directions in an acyclic quiver are equal. -/
 theorem eq_of_paths (h : Quiver.IsAcyclic V) {a b : V}
@@ -122,16 +135,18 @@ theorem isEmpty_hom_self (h : Quiver.IsAcyclic V) (a : V) :
     IsEmpty (a ⟶ a) :=
   ⟨fun e ↦ Path.cons_ne_nil Path.nil e (h e.toPath)⟩
 
-/-- In an acyclic quiver, an arrow between distinct vertices excludes a reverse arrow. -/
+/-- In an acyclic quiver, an arrow excludes every reverse arrow. -/
 theorem isEmpty_hom_of_hom (h : Quiver.IsAcyclic V) {a b : V}
-    (hab : a ≠ b) (e : a ⟶ b) :
-    IsEmpty (b ⟶ a) :=
-  ⟨fun f ↦ hab (h.eq_of_paths e.toPath f.toPath)⟩
+    (e : a ⟶ b) : IsEmpty (b ⟶ a) :=
+  ⟨fun f ↦ by
+    have hlength : (e.toPath.comp f.toPath).length = 0 := h.length_eq_zero _
+    rw [Path.length_comp, Path.length_toPath, Path.length_toPath] at hlength
+    omega⟩
 
 /-- Closed paths in an acyclic quiver form a subsingleton. -/
 theorem subsingleton_path_self (h : Quiver.IsAcyclic V) (a : V) :
     Subsingleton (Path a a) :=
-  ⟨fun p q ↦ (h p).trans (h q).symm⟩
+  ⟨fun p q ↦ (h.eq_nil p).trans (h.eq_nil q).symm⟩
 
 /-- A quiver with no arrows is acyclic. -/
 theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :
@@ -141,22 +156,24 @@ theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :
   | nil => rfl
   | cons _ e => exact isEmptyElim e
 
-/-- A quiver embedded faithfully into an acyclic quiver is acyclic. -/
-theorem of_injective_mapPath {W : Type*} [Quiver W] (F : V ⥤q W)
+/-- A quiver mapping to an acyclic quiver is acyclic if the induced map on each closed-path
+type is injective. -/
+theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W)
     (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a : V⦄, Function.Injective (F.mapPath : Path a a → Path (F.obj a) (F.obj a))) :
     Quiver.IsAcyclic V := by
   intro a p
   apply hinj
-  rw [hW (F.mapPath p)]
+  rw [hW.eq_nil (F.mapPath p)]
   exact F.mapPath_nil a
 
-/-- A quiver is acyclic if its paths embed in the paths of an acyclic quiver. -/
-theorem of_injective_prefunctor {W : Type*} [Quiver W] (F : V ⥤q W)
+/-- A quiver is acyclic if its induced maps on all path types are injective and its target is
+acyclic. -/
+theorem of_mapPath_injective_of_all {W : Type*} [Quiver W] (F : V ⥤q W)
     (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a b : V⦄, Function.Injective (F.mapPath : Path a b → Path (F.obj a) (F.obj b))) :
     Quiver.IsAcyclic V :=
-  of_injective_mapPath F hW fun {_} ↦ @hinj _ _
+  of_mapPath_injective F hW fun {_} ↦ @hinj _ _
 
 end Quiver.IsAcyclic
 
