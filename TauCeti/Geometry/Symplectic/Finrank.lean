@@ -19,7 +19,7 @@ its complex dimension, hence even. This is the classical fact that a manifold (o
 admitting an almost complex structure is even-dimensional (McDuff--Salamon, *J-holomorphic Curves
 and Symplectic Topology*, Section 2.1), recorded here at the pointwise linear-algebra level.
 
-Everything is stated without a finite-dimensionality hypothesis: the tower law
+The tower-law identities are stated without a finite-dimensionality hypothesis:
 `Module.finrank_mul_finrank` holds for `Module.finrank` unconditionally (an infinite-dimensional
 `V` has `Module.finrank ℝ V = 0 = 2 * 0`), so the identities below need no `FiniteDimensional`
 assumption.
