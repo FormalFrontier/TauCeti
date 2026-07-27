@@ -26,6 +26,7 @@ of Coxeter length with the number of inversions.
 * `TauCeti.inversions_one` computes the inversion set of the identity.
 * `TauCeti.inversions_ofIdx` computes the inversion set of a simple reflection.
 * `TauCeti.image_root_inversions` identifies index-level inversions with vector roots.
+* `TauCeti.ncard_inversions_eq_ncard_vector_inversions` identifies their cardinalities.
 
 ## References
 
@@ -108,10 +109,6 @@ theorem inversions_eq_posRoots_iff :
     refine ⟨(mem_posRoots P b i).mp hi, ?_⟩
     exact (mem_negRoots P b _).mp (h hi)
 
-/-- Inversion sets are finite when the root index type is finite. -/
-lemma inversions_finite [Finite ι] : (inversions P b w).Finite :=
-  Set.toFinite _
-
 /-- The number of inversions is at most the number of positive roots. -/
 lemma ncard_inversions_le [Finite ι] :
     (inversions P b w).ncard ≤ (posRoots P b).ncard :=
@@ -127,9 +124,18 @@ theorem inversions_one : inversions P b 1 = ∅ := by
 lemma ncard_inversions_one : (inversions P b 1).ncard = 0 := by
   rw [inversions_one, Set.ncard_empty]
 
+omit [CharZero R] in
+/-- A simple reflection acts on root indices by the corresponding reflection permutation. -/
+lemma weylGroupToPerm_ofIdx (i j : ι) :
+    P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j = P.reflectionPerm i j := by
+  apply P.root.injective
+  rw [← P.weylGroup_apply_root, RootPairing.weylGroup.ofIdx_smul,
+    RootPairing.Equiv.reflection_smul, P.root_reflectionPerm]
+
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
 /-- A simple reflection has exactly its defining simple root as an inversion. -/
+@[simp]
 theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     inversions P b (RootPairing.weylGroup.ofIdx P i) = {i} := by
   ext j
@@ -140,14 +146,11 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     exact hneg (hj.reflectionPerm hi hji)
   · rintro rfl
     refine ⟨b.isPos_of_mem_support hi, ?_⟩
-    simpa only [RootPairing.weylGroup.ofIdx, RootPairing.weylGroupToPerm,
-      MonoidHom.restrict_apply, RootPairing.Equiv.indexHom_apply,
-      RootPairing.Equiv.reflection_indexEquiv,
-      isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots, not_not] using
-        b.isPos_of_mem_support hi
+    rw [weylGroupToPerm_ofIdx, ← mem_negRoots,
+      reflectionPerm_self_mem_negRoots_iff_mem_posRoots, mem_posRoots]
+    exact b.isPos_of_mem_support hi
 
 /-- A simple reflection has one inversion. -/
-@[simp]
 theorem ncard_inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     (inversions P b (RootPairing.weylGroup.ofIdx P i)).ncard = 1 := by
   rw [inversions_ofIdx P b hi, Set.ncard_singleton]
@@ -168,5 +171,12 @@ theorem image_root_inversions :
       P.root.injective ((P.weylGroup_apply_root w i).symm.trans hact.symm)
     refine ⟨i, ⟨(mem_posRoots P b i).mp hi, ?_⟩, rfl⟩
     rwa [hij, ← mem_negRoots P b j]
+
+omit [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+/-- The number of index-level inversions equals the number of vector-root inversions. -/
+theorem ncard_inversions_eq_ncard_vector_inversions :
+    (inversions P b w).ncard =
+      ((P.root '' posRoots P b) ∩ {α | w • α ∈ P.root '' negRoots P b}).ncard := by
+  rw [← image_root_inversions P b w, P.root.injective.injOn.ncard_image]
 
 end TauCeti
