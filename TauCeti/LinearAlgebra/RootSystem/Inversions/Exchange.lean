@@ -57,29 +57,33 @@ private lemma reflectionPerm_ne_of_isPos {i j : ι} (hi : i ∈ b.support)
 
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
+/-- Membership criterion for the punctured inversion sets: a positive root other than the
+reflecting one stays positive and away from it, so only its image needs to be negative. -/
+private lemma reflectionPerm_mem_inversions_sdiff (v : P.weylGroup) {i j : ι}
+    (hi : i ∈ b.support) (hj : b.IsPos j) (hji : j ≠ i)
+    (hneg : ¬ b.IsPos (P.weylGroupToPerm v (P.reflectionPerm i j))) :
+    P.reflectionPerm i j ∈ inversions P b v \ {i} :=
+  ⟨(mem_inversions P b _ _).mpr ⟨hj.reflectionPerm hi hji, hneg⟩, by
+    simpa using reflectionPerm_ne_of_isPos P b hi hj⟩
+
 /-- Away from the distinguished simple root, reflection bijects the inversion sets before and
 after right multiplication by that simple reflection. -/
 private noncomputable def puncturedInversionsEquiv {i : ι} (hi : i ∈ b.support) :
     ↥(inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}) ≃
       ↥(inversions P b w \ {i}) where
-  toFun x := by
-    refine ⟨P.reflectionPerm i x.1, ?_⟩
+  toFun x := ⟨P.reflectionPerm i x.1, by
     obtain ⟨hx, hxi⟩ := x.2
     have hx' := (mem_inversions P b _ _).mp hx
-    have hx_ne : x.1 ≠ i := by simpa using hxi
-    refine ⟨(mem_inversions P b _ _).mpr ⟨hx'.1.reflectionPerm hi hx_ne, ?_⟩, ?_⟩
-    · rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply] at hx'
-      exact hx'.2
-    · simpa using reflectionPerm_ne_of_isPos P b hi hx'.1
-  invFun x := by
-    refine ⟨P.reflectionPerm i x.1, ?_⟩
+    refine reflectionPerm_mem_inversions_sdiff P b w hi hx'.1 (by simpa using hxi) ?_
+    rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply] at hx'
+    exact hx'.2⟩
+  invFun x := ⟨P.reflectionPerm i x.1, by
     obtain ⟨hx, hxi⟩ := x.2
     have hx' := (mem_inversions P b _ _).mp hx
-    have hx_ne : x.1 ≠ i := by simpa using hxi
-    refine ⟨(mem_inversions P b _ _).mpr ⟨hx'.1.reflectionPerm hi hx_ne, ?_⟩, ?_⟩
-    · rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply, P.reflectionPerm_self]
-      exact hx'.2
-    · simpa using reflectionPerm_ne_of_isPos P b hi hx'.1
+    refine reflectionPerm_mem_inversions_sdiff P b (w * RootPairing.weylGroup.ofIdx P i) hi
+      hx'.1 (by simpa using hxi) ?_
+    rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply, P.reflectionPerm_self]
+    exact hx'.2⟩
   left_inv x := by
     apply Subtype.ext
     exact P.reflectionPerm_self i x.1
@@ -133,8 +137,5 @@ theorem ncard_inversions_mul_ofIdx {i : ι} (hi : i ∈ b.support) :
       _ = (inversions P b w \ {i}).ncard + 1 := congrArg (· + 1) hpunctured
       _ = (inversions P b w).ncard + 1 := by
         rw [Set.sdiff_singleton_eq_self hiw]
-
-@[deprecated (since := "2026-07-27")]
-alias inversions_ncard_mul_ofIdx := ncard_inversions_mul_ofIdx
 
 end TauCeti
