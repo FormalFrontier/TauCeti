@@ -1,0 +1,123 @@
+import Mathlib.MeasureTheory.Group.Integral
+import Mathlib.MeasureTheory.Measure.Haar.Unique
+import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+
+/-!
+# Normalized Haar measure on compact groups
+
+This file normalizes Mathlib's Haar measure on a compact topological group to a probability
+measure.  It records left, right, and inversion invariance, the uniqueness of the resulting
+probability Haar measure, and the basic integral identities used for averaging representations.
+-/
+
+open MeasureTheory Set
+
+namespace TauCeti
+
+section CompactGroup
+
+variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+
+/-- Haar measure of a compact group has finite total mass. -/
+theorem haar_univ_lt_top : (Measure.haar : Measure G) univ < ⊤ :=
+  measure_lt_top _ _
+
+/-- Haar measure of a nonempty compact group has nonzero total mass. -/
+theorem haar_univ_ne_zero : (Measure.haar : Measure G) univ ≠ 0 :=
+  (Measure.measure_pos_of_nonempty_interior (μ := Measure.haar) (by simp)).ne'
+
+/-- Haar probability measure on a compact topological group. -/
+noncomputable def haarProb : Measure G :=
+  ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar
+
+/-- The definition of normalized Haar measure as a rescaling of Mathlib's Haar measure. -/
+theorem haarProb_def :
+    haarProb G = ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar :=
+  rfl
+
+@[simp]
+theorem haarProb_apply_univ : haarProb G univ = 1 := by
+  rw [haarProb_def, Measure.smul_apply]
+  exact ENNReal.inv_mul_cancel (haar_univ_ne_zero G) (haar_univ_lt_top G).ne
+
+instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) :=
+  ⟨haarProb_apply_univ G⟩
+
+instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
+  rw [haarProb_def]
+  infer_instance
+
+instance isHaarMeasure_haarProb : (haarProb G).IsHaarMeasure := by
+  rw [haarProb_def]
+  exact Measure.IsHaarMeasure.smul Measure.haar
+    (ENNReal.inv_ne_zero.mpr (haar_univ_lt_top G).ne)
+    (ENNReal.inv_ne_top.mpr (haar_univ_ne_zero G))
+
+/-- Normalized Haar measure is invariant under right multiplication. -/
+instance isMulRightInvariant_haarProb : (haarProb G).IsMulRightInvariant where
+  map_mul_right_eq_self g := by
+    let μ := haarProb G
+    haveI : μ.IsHaarMeasure := isHaarMeasure_haarProb G
+    haveI : IsProbabilityMeasure μ := isProbabilityMeasure_haarProb G
+    haveI : (Measure.map (· * g) μ).IsHaarMeasure := by
+      convert Measure.isHaarMeasure_map_smul μ (MulOpposite.op g) using 1
+      simp only [MulOpposite.smul_eq_mul_unop, MulOpposite.unop_op]
+    haveI : IsProbabilityMeasure (Measure.map (· * g) μ) :=
+      Measure.isProbabilityMeasure_map
+        (continuous_id.mul continuous_const).measurable.aemeasurable
+    exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
+
+/-- Normalized Haar measure is invariant under inversion. -/
+instance isInvInvariant_haarProb : (haarProb G).IsInvInvariant where
+  inv_eq_self := by
+    let μ := haarProb G
+    haveI : μ.IsHaarMeasure := isHaarMeasure_haarProb G
+    haveI : IsProbabilityMeasure μ := isProbabilityMeasure_haarProb G
+    haveI : μ.IsMulRightInvariant := isMulRightInvariant_haarProb G
+    letI : (μ.inv).IsHaarMeasure := {
+      toIsFiniteMeasureOnCompacts := inferInstance
+      toIsMulLeftInvariant := inferInstance
+      toIsOpenPosMeasure := inferInstance }
+    haveI : IsProbabilityMeasure μ.inv := by
+      rw [Measure.inv_def]
+      exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
+    change μ.inv = μ
+    exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
+
+/-- A Haar probability measure on a compact group is the normalized Haar measure. -/
+theorem isHaarMeasure_eq_haarProb (μ : Measure G) [μ.IsHaarMeasure]
+    [IsProbabilityMeasure μ] : μ = haarProb G :=
+  Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
+
+section Integral
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- Integrating after a left translation does not change the normalized Haar integral. -/
+theorem integral_haarProb_mul_left (f : G → E) (g : G) :
+    ∫ x, f (g * x) ∂haarProb G = ∫ x, f x ∂haarProb G :=
+  integral_mul_left_eq_self f g
+
+/-- Integrating after a right translation does not change the normalized Haar integral. -/
+theorem integral_haarProb_mul_right (f : G → E) (g : G) :
+    ∫ x, f (x * g) ∂haarProb G = ∫ x, f x ∂haarProb G :=
+  integral_mul_right_eq_self f g
+
+/-- Integrating after inversion does not change the normalized Haar integral. -/
+theorem integral_haarProb_inv (f : G → E) :
+    ∫ x, f x⁻¹ ∂haarProb G = ∫ x, f x ∂haarProb G :=
+  integral_inv_eq_self f _
+
+/-- The normalized Haar integral of a constant is that constant. -/
+@[simp]
+theorem integral_haarProb_const [CompleteSpace E] (c : E) :
+    ∫ _ : G, c ∂haarProb G = c := by
+  rw [integral_const]
+  simp
+
+end Integral
+
+end CompactGroup
+
+end TauCeti
