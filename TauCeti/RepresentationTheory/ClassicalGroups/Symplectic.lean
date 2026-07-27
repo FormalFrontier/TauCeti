@@ -121,7 +121,7 @@ theorem stdSymplecticBilinForm_apply (v w : (Fin n ⊕ Fin n) → k) :
   Matrix.toBilin'_apply' _ _ _
 
 /-- The standard symplectic form is alternating. -/
-theorem stdSymplecticBilinForm_isAlt : (stdSymplecticBilinForm k n).IsAlt := by
+theorem isAlt_stdSymplecticBilinForm : (stdSymplecticBilinForm k n).IsAlt := by
   intro v
   simp [stdSymplecticBilinForm_apply, Matrix.J, Matrix.fromBlocks_mulVec, dotProduct, mul_comm,
     Matrix.neg_mulVec]
