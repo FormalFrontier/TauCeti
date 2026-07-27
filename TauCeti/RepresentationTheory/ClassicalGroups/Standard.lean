@@ -48,20 +48,12 @@ theorem stdRep_apply_apply (g : GL (Fin n) k) (v : Fin n → k) :
 
 /-- The standard representation is faithful. -/
 theorem stdRep_injective : Function.Injective (stdRep k n) := by
-  intro g h e
-  apply Units.ext
-  apply Matrix.toLin'.injective
-  rw [Matrix.toLin'_apply', Matrix.toLin'_apply']
-  simpa only [stdRep_apply] using e
+  simpa [stdRep] using
+    Units.coeHom_injective.comp Matrix.GeneralLinearGroup.toLin.injective
 
 /-- The standard representation of `GL n k`, bundled as an object of `FDRep`. -/
 noncomputable def stdFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (stdRep k n)
-
-@[simp]
-theorem stdFDRep_rho :
-    (stdFDRep k n).ρ = stdRep k n :=
-  rfl
 
 /-- The character of the standard representation is the matrix trace. -/
 @[simp]
@@ -92,10 +84,5 @@ theorem stdDualRep_character (g : GL (Fin n) k) :
 /-- The dual standard representation, bundled as an object of `FDRep`. -/
 noncomputable def stdDualFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (stdDualRep k n)
-
-@[simp]
-theorem stdDualFDRep_rho :
-    (stdDualFDRep k n).ρ = stdDualRep k n :=
-  rfl
 
 end TauCeti
