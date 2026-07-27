@@ -71,7 +71,7 @@ lemma circleSchwarzReflection_of_notMem_closedBall (c : ℂ) (r : ℝ) (d : ℂ)
 extension is continuous when the original map is continuous on the closed inside part, maps the
 source-circle boundary to the target circle, and avoids the target centre in the punctured open
 inside part. -/
-theorem continuousOn_circleSchwarzReflection {Ω : Set ℂ} {c d : ℂ} {r s : ℝ}
+theorem continuousOn_circleSchwarzReflection_of_symmetric {Ω : Set ℂ} {c d : ℂ} {r s : ℝ}
     {f : ℂ → ℂ} (hr : 0 < r) (hs : 0 < s)
     (hsymm : MapsTo (inversion c r) Ω Ω)
     (hcont : ContinuousOn f (Ω ∩ closedBall c r))
@@ -144,7 +144,7 @@ theorem differentiableOn_circleSchwarzReflection_of_symmetric
     (havoid : ∀ z ∈ Ω ∩ ball c r, z ≠ c → f z ≠ d) :
     DifferentiableOn ℂ (circleSchwarzReflection c r d s f) Ω := by
   refine differentiableOn_of_continuousOn_of_differentiableOn_diff_sphere (c := c) hr hΩ
-    (continuousOn_circleSchwarzReflection hr hs hsymm hcont hboundary havoid) ?_
+    (continuousOn_circleSchwarzReflection_of_symmetric hr hs hsymm hcont hboundary havoid) ?_
   have hrs : r ≠ 0 ∧ s ≠ 0 := ⟨hr.ne', hs.ne'⟩
   let E := Ω ∩ {z : ℂ | r < dist z c}
   have hEinv : MapsTo (inversion c r) E (Ω ∩ ball c r) := by
