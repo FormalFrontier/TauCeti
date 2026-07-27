@@ -1,5 +1,7 @@
-import Mathlib.CategoryTheory.Adjunction.CompositionIso
-import Mathlib.RepresentationTheory.Induced
+module
+
+public import Mathlib.CategoryTheory.Adjunction.CompositionIso
+public import Mathlib.RepresentationTheory.Induced
 
 /-!
 # Transitivity of induction
@@ -9,6 +11,8 @@ It obtains the natural isomorphism from the functoriality of restriction and Mat
 restriction adjunction.  This is the categorical core used by the subgroup form of induction in
 the induction and Mackey-theory roadmap.
 -/
+
+@[expose] public section
 
 namespace TauCeti
 
