@@ -7,7 +7,8 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.NormalFamilies
 import Mathlib.Analysis.Complex.LocallyUniformLimit
-import Mathlib.Topology.ContinuousMap.Bounded.ArzelaAscoli
+import Mathlib.Topology.UniformSpace.Ascoli
+import Mathlib.Topology.UniformSpace.CompactConvergence
 
 /-!
 # Montel's selection theorem
@@ -21,18 +22,19 @@ The equicontinuity half is already available in `Conformal/NormalFamilies.lean`
 (`TauCeti.IsLocallyBoundedOn.equicontinuousOn`, from Cauchy's estimate); what is added here is the
 selection argument that turns it into a convergent subsequence.
 
-The proof exhausts `Ω` by the compacts `exh Ω m`, restricts the family to each one as bounded
-continuous functions, and applies Arzelà–Ascoli there. The usual next step is a diagonal argument;
-instead we take the product over all levels at once. A product of the per-level compact closures is
-compact by Tychonoff, and a countable product of metrizable spaces is first countable, so a single
-application of `IsCompact.tendsto_subseq` yields one subsequence converging uniformly on *every*
-level simultaneously. That is the diagonal argument, discharged by Mathlib's product machinery
-rather than by hand.
+The proof is Mathlib's compact-open Arzelà–Ascoli framework, applied in `C(Ω, ℂ)`. The family
+restricts to a set of continuous maps there;
+`ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact` together with
+`UniformOnFun.isClosed_setOf_continuous` exhibits `C(Ω, ℂ)` as a closed subspace of the
+uniform-on-compacts function space, so
+`ArzelaAscoli.isCompact_closure_of_isClosedEmbedding` applies: equicontinuity on each compact comes
+from `IsLocallyBoundedOn.equicontinuousOn`, and pointwise relative compactness from local
+boundedness. The closure of the family is then compact, `Ω` being locally compact makes `C(Ω, ℂ)`
+first countable, and `IsCompact.tendsto_subseq` extracts a convergent subsequence. Finally
+`ContinuousMap.tendsto_iff_tendstoLocallyUniformly` turns compact-open convergence into locally
+uniform convergence, and `TendstoLocallyUniformlyOn.differentiableOn` gives holomorphy of the limit.
 
-The exhausting compacts are cut out by `∀ w ∈ Ωᶜ, 1/(m+1) ≤ dist z w` rather than by
-`1/(m+1) ≤ infDist z Ωᶜ`. The two agree whenever `Ωᶜ` is nonempty, but `Metric.infDist` is
-`ℝ`-valued and so must set `infDist z ∅ = 0`; the `infDist` form would therefore make every level
-empty in the case `Ω = univ`. The `∀ w ∈ Ωᶜ` form is vacuously true there and needs no case split.
+No compact exhaustion or diagonal argument is needed: Mathlib's framework subsumes both.
 
 ## Main results
 
@@ -65,154 +67,60 @@ namespace TauCeti
 
 variable {Ω : Set ℂ} {F : ℕ → ℂ → ℂ}
 
-/-- The `m`-th exhausting compact of `Ω`: points of norm at most `m` lying at distance at least
-`1/(m+1)` from the complement. -/
-private def exh (Ω : Set ℂ) (m : ℕ) : Set ℂ :=
-  closedBall 0 m ∩ {z | ∀ w ∈ Ωᶜ, (1 : ℝ) / (m + 1) ≤ dist z w}
-
-private theorem isCompact_exh (Ω : Set ℂ) (m : ℕ) : IsCompact (exh Ω m) := by
-  refine (isCompact_closedBall (0 : ℂ) m).inter_right ?_
-  have h : {z : ℂ | ∀ w ∈ Ωᶜ, (1 : ℝ) / (m + 1) ≤ dist z w}
-      = ⋂ w ∈ Ωᶜ, {z : ℂ | (1 : ℝ) / (m + 1) ≤ dist z w} := by
-    ext z; simp
-  rw [h]
-  exact isClosed_biInter fun w _ =>
-    isClosed_le continuous_const (continuous_id.dist continuous_const)
-
-private theorem exh_subset (Ω : Set ℂ) (m : ℕ) : exh Ω m ⊆ Ω := by
-  rintro z ⟨-, hz⟩
-  by_contra h
-  have h1 := hz z h
-  simp only [dist_self] at h1
-  have : (0:ℝ) < 1 / (m + 1) := by positivity
-  linarith
-
-/-- Every point of an open `Ω` lies in the interior of some exhausting compact, which is what makes
-uniform convergence on the levels give *locally* uniform convergence on `Ω`. -/
-private theorem exists_ball_subset_exh (hΩ : IsOpen Ω) {z : ℂ} (hz : z ∈ Ω) :
-    ∃ m, ∃ r > 0, ball z r ⊆ exh Ω m := by
-  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hΩ z hz
-  obtain ⟨m, hm⟩ := exists_nat_gt (max (‖z‖ + 1) (2 / ε))
-  refine ⟨m, min 1 (ε / 2), lt_min one_pos (by positivity), fun y hy => ?_⟩
-  have hylt : dist y z < min 1 (ε / 2) := mem_ball.mp hy
-  have h1 : ‖z‖ + 1 < m := lt_of_le_of_lt (le_max_left _ _) hm
-  have h2 : 2 / ε < m := lt_of_le_of_lt (le_max_right _ _) hm
-  constructor
-  · have : ‖y‖ ≤ ‖z‖ + dist y z := by
-      simpa [dist_eq_norm] using norm_le_norm_add_norm_sub' y z
-    have hle : dist y z ≤ 1 := (lt_min_iff.mp hylt).1.le
-    simp only [mem_closedBall, dist_zero_right]
-    linarith
-  · intro w hw
-    by_contra hlt
-    push Not at hlt
-    have hdyw : dist y w < 1 / (m + 1) := hlt
-    have hmpos : (0:ℝ) < m := lt_of_le_of_lt (by positivity) h1
-    -- `1/(m+1) < ε/2`, so `w` would be within `ε` of `z`, contradicting `ball z ε ⊆ Ω`
-    have hkey : 1 / ((m : ℝ) + 1) < ε / 2 := by
-      rw [div_lt_iff₀ (by positivity)]
-      rw [div_lt_iff₀ hε] at h2
-      nlinarith
-    have : dist z w < ε := by
-      have := dist_triangle z y w
-      have hzy : dist z y < ε / 2 := by
-        rw [dist_comm]
-        exact lt_of_lt_of_le hylt (min_le_right _ _)
-      linarith
-    exact hw (hball (mem_ball.mpr (by rwa [dist_comm])))
-
-/-- The restriction of a family member to a compact `K`, as a bounded continuous function. -/
-private noncomputable def restr (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
-    {K : Set ℂ} (hK : IsCompact K) (hKΩ : K ⊆ Ω) (n : ℕ) :
-    letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
-    (K →ᵇ ℂ) :=
-  letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
-  mkOfCompact ⟨K.restrict (F n), (((hF n).continuousOn).mono hKΩ).restrict⟩
-
-/-- **Per-level Arzelà–Ascoli.** On a compact `K ⊆ Ω` the restricted family has compact closure. -/
-private theorem isCompact_closure_range (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
-    (hb : IsLocallyBoundedOn F Ω) {K : Set ℂ} (hK : IsCompact K) (hKΩ : K ⊆ Ω) :
-    letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
-    IsCompact (closure (Set.range (restr hF hK hKΩ))) := by
-  letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
-  classical
-  obtain ⟨C, hC⟩ := isLocallyBoundedOn_def.mp hb K hKΩ hK
-  refine arzela_ascoli (closedBall (0 : ℂ) C) (isCompact_closedBall _ _) _ (fun f x hf => ?_) ?_
-  · obtain ⟨n, rfl⟩ := hf
-    simpa [restr] using hC n x.1 x.2
-  · have hbase : Equicontinuous (fun n => ⇑(restr hF hK hKΩ n)) :=
-      (equicontinuous_restrict_iff F).mpr ((hb.equicontinuousOn hΩ hF).mono hKΩ)
-    have hchoice : ∀ x : ↥(Set.range (restr hF hK hKΩ)), ∃ n,
-        restr hF hK hKΩ n = (x : K →ᵇ ℂ) := fun x => x.2
-    choose σ hσ using hchoice
-    have heq : (fun x : ↥(Set.range (restr hF hK hKΩ)) => ⇑(x : K →ᵇ ℂ))
-        = (fun n => ⇑(restr hF hK hKΩ n)) ∘ σ := by
-      funext x
-      rw [Function.comp_apply, hσ x]
-    rw [heq]
-    exact hbase.comp σ
-
 /-- **Montel's selection theorem.** A locally bounded family of holomorphic functions on an open
 set `Ω ⊆ ℂ` is normal: every sequence from it has a subsequence converging locally uniformly on
 `Ω`, and the limit is holomorphic.
 
-The local boundedness hypothesis cannot be dropped: `F n z = n` is a family of holomorphic
-functions on any `Ω` with no locally uniformly convergent subsequence. -/
+The local boundedness hypothesis cannot be dropped: on any *nonempty* open `Ω`, the holomorphic
+family `F n z = n` has no locally uniformly convergent subsequence. (On `Ω = ∅` the conclusion is
+vacuous, so nonemptiness is needed for the counterexample.) -/
 theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     (hb : IsLocallyBoundedOn F Ω) :
     ∃ (φ : ℕ → ℕ) (g : ℂ → ℂ), StrictMono φ ∧ DifferentiableOn ℂ g Ω ∧
       TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω := by
   classical
-  letI : ∀ m, CompactSpace (exh Ω m) := fun m => isCompact_iff_compactSpace.mp (isCompact_exh Ω m)
-  set R : ∀ m : ℕ, ℕ → (exh Ω m →ᵇ ℂ) :=
-    fun m => restr hF (isCompact_exh Ω m) (exh_subset Ω m) with hR
-  -- one extraction in the product over all levels replaces the diagonal argument
-  have hcpt : IsCompact (Set.univ.pi fun m => closure (Set.range (R m))) :=
-    isCompact_univ_pi fun m =>
-      isCompact_closure_range hΩ hF hb (isCompact_exh Ω m) (exh_subset Ω m)
-  obtain ⟨a, -, φ, hφ, hconv⟩ := hcpt.tendsto_subseq (x := fun n m => R m n)
-    (fun n => fun m _ => subset_closure ⟨n, rfl⟩)
-  -- level by level, the subsequence converges uniformly
-  have hlevel : ∀ m, TendstoUniformlyOn (fun n => F (φ n)) (fun z => if hz : z ∈ exh Ω m then
-      a m ⟨z, hz⟩ else 0) atTop (exh Ω m) := by
-    intro m
-    have hco : Tendsto (fun n => R m (φ n)) atTop (𝓝 (a m)) :=
-      ((continuous_apply m).continuousAt.tendsto).comp hconv
-    have huc : TendstoUniformly (fun n => ⇑(R m (φ n))) (⇑(a m)) atTop :=
-      tendsto_iff_tendstoUniformly.mp hco
-    rw [tendstoUniformlyOn_iff_tendstoUniformly_comp_coe]
-    have hlim : ((fun z => if hz : z ∈ exh Ω m then a m ⟨z, hz⟩ else 0) ∘
-        ((↑) : exh Ω m → ℂ)) = ⇑(a m) := by
-      funext x
-      simp [x.2]
-    rw [hlim]
-    exact huc
-  -- pointwise limits agree across levels, so they glue to a single `g`
-  set g : ℂ → ℂ := fun z => if hz : ∃ m, z ∈ exh Ω m then a (Nat.find hz) ⟨z, Nat.find_spec hz⟩
-    else 0 with hg
-  have hptw : ∀ (m : ℕ) (z : ℂ) (hz : z ∈ exh Ω m),
-      Tendsto (fun n => F (φ n) z) atTop (𝓝 (a m ⟨z, hz⟩)) := by
-    intro m z hz
-    have := (hlevel m).tendsto_at hz
-    simpa [hz] using this
-  have hagree : ∀ m, ∀ z (hz : z ∈ exh Ω m), g z = a m ⟨z, hz⟩ := by
-    intro m z hz
-    have hex : ∃ m, z ∈ exh Ω m := ⟨m, hz⟩
-    have h1 := hptw (Nat.find hex) z (Nat.find_spec hex)
-    have h2 := hptw m z hz
-    simp only [hg, dif_pos hex]
-    exact tendsto_nhds_unique h1 h2
-  have hlevel' : ∀ m, TendstoUniformlyOn (fun n => F (φ n)) g atTop (exh Ω m) := by
-    intro m
-    refine (hlevel m).congr_right (fun z hz => ?_)
-    simp [hagree m z hz, hz]
-  -- levels are neighbourhoods, so this is locally uniform convergence on `Ω`
-  have hloc : TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω := by
-    intro u hu x hx
-    obtain ⟨m, r, hr, hball⟩ := exists_ball_subset_exh hΩ hx
-    refine ⟨Ω ∩ ball x r, inter_mem_nhdsWithin _ (Metric.ball_mem_nhds x hr), ?_⟩
-    filter_upwards [(hlevel' m) u hu] with n hn y hy
-    exact hn y (hball hy.2)
-  exact ⟨φ, g, hφ, hloc.differentiableOn (Eventually.of_forall fun n => hF (φ n)) hΩ, hloc⟩
+  haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
+  set f : ℕ → C(Ω, ℂ) := fun n => ⟨Ω.restrict (F n), ((hF n).continuousOn).restrict⟩ with hfdef
+  -- `C(Ω, ℂ)` sits as a closed subspace of the uniform-on-compacts function space
+  have hclemb : IsClosedEmbedding (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
+      (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) := by
+    refine ⟨ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact.isEmbedding, ?_⟩
+    rw [show (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
+        (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) = ContinuousMap.toUniformOnFunIsCompact from rfl,
+      ContinuousMap.range_toUniformOnFunIsCompact]
+    exact UniformOnFun.isClosed_setOf_continuous CompactlyCoherentSpace.isCoherentWith
+  -- Arzelà–Ascoli in the compact-open topology
+  have hcpt : IsCompact (closure (Set.range f)) := by
+    refine ArzelaAscoli.isCompact_closure_of_isClosedEmbedding (fun K hK => hK) hclemb ?_ ?_
+    · intro K _
+      have hbase : Equicontinuous (fun n => (f n : Ω → ℂ)) :=
+        (equicontinuous_restrict_iff F).mpr (hb.equicontinuousOn hΩ hF)
+      have hchoice : ∀ x : ↥(Set.range f), ∃ n, f n = (x : C(Ω, ℂ)) := fun x => x.2
+      choose σ hσ using hchoice
+      have heq : ((DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ)) ∘ (Subtype.val : ↥(Set.range f) → C(Ω, ℂ)))
+          = (fun n => (f n : Ω → ℂ)) ∘ σ := by
+        funext x
+        rw [Function.comp_apply, Function.comp_apply, hσ x]
+      rw [heq]
+      exact (hbase.comp σ).equicontinuousOn K
+    · intro K _ x _
+      obtain ⟨C, hC⟩ := isLocallyBoundedOn_def.mp hb {(x : ℂ)}
+        (by simp) isCompact_singleton
+      refine ⟨closedBall 0 C, isCompact_closedBall _ _, fun i hi => ?_⟩
+      obtain ⟨n, rfl⟩ := hi
+      simpa [hfdef, mem_closedBall, dist_zero_right] using hC n x.1 rfl
+  obtain ⟨a, -, φ, hφ, hconv⟩ := hcpt.tendsto_subseq (x := f) fun n => subset_closure ⟨n, rfl⟩
+  -- compact-open convergence is locally uniform convergence
+  have hlu : TendstoLocallyUniformly (fun n (x : Ω) => F (φ n) x) (fun x : Ω => a x) atTop :=
+    ContinuousMap.tendsto_iff_tendstoLocallyUniformly.mp hconv
+  have hlim : ((fun z => if hz : z ∈ Ω then a ⟨z, hz⟩ else 0) ∘ (Subtype.val : Ω → ℂ))
+      = fun x : Ω => a x := by
+    funext x
+    simp [x.2]
+  have hconvOn : TendstoLocallyUniformlyOn (fun n => F (φ n))
+      (fun z => if hz : z ∈ Ω then a ⟨z, hz⟩ else 0) atTop Ω := by
+    rw [tendstoLocallyUniformlyOn_iff_tendstoLocallyUniformly_comp_coe, hlim]
+    exact hlu
+  exact ⟨φ, _, hφ, hconvOn.differentiableOn (Eventually.of_forall fun n => hF (φ n)) hΩ, hconvOn⟩
 
 end TauCeti
