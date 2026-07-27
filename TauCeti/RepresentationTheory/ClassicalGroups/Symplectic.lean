@@ -27,6 +27,8 @@ preserves it, and packages the resulting equivariant self-duality.
 
 * [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
   Layer 0.
+* The equivariance, self-duality, and character constructions follow the formal template in
+  `TauCeti.RepresentationTheory.ClassicalGroups.Orthogonal`.
 -/
 
 public section
@@ -127,15 +129,9 @@ theorem stdSymplecticBilinForm_isAlt : (stdSymplecticBilinForm k n).IsAlt := by
 /-- The standard symplectic form is nondegenerate. -/
 theorem stdSymplecticBilinForm_nondegenerate :
     (stdSymplecticBilinForm k n).Nondegenerate := by
-  rw [stdSymplecticBilinForm, Matrix.nondegenerate_toBilin'_iff,
-    Matrix.nondegenerate_iff_forall_vecMul_and_mulVec_eq_zero]
-  constructor
-  · intro v hv
-    have h := congrArg (fun w => w ᵥ* Matrix.J (Fin n) k) hv
-    simpa [Matrix.vecMul_vecMul, Matrix.J_squared, Matrix.vecMul_neg] using h
-  · intro v hv
-    have h := congrArg (fun w => Matrix.J (Fin n) k *ᵥ w) hv
-    simpa [Matrix.mulVec_mulVec, Matrix.J_squared, Matrix.neg_mulVec] using h
+  rw [stdSymplecticBilinForm, Matrix.nondegenerate_toBilin'_iff]
+  exact Matrix.Nondegenerate.of_det_mem_nonZeroDivisors
+    (Matrix.isUnit_det_J (Fin n) k).mem_nonZeroDivisors
 
 /-- The standard symplectic action preserves the standard alternating form. -/
 @[simp]
