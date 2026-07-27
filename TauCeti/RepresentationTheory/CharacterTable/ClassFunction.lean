@@ -59,6 +59,7 @@ theorem eq_of_isConj (f : ClassFunction k G) {g h : G} (hgh : IsConj g h) :
 noncomputable def toConjClasses (f : ClassFunction k G) : ConjClasses G → k :=
   Quotient.lift f.1 fun _ _ h => eq_of_isConj f h
 
+/-- Evaluating the induced function on the class of `g` gives the value at `g`. -/
 @[simp]
 theorem toConjClasses_mk (f : ClassFunction k G) (g : G) :
     toConjClasses f (ConjClasses.mk g) = f.1 g :=
@@ -71,6 +72,7 @@ def ofConjClasses (f : ConjClasses G → k) : ClassFunction k G :=
     exact ConjClasses.mk_eq_mk_iff_isConj.mpr
       (IsConj.symm (isConj_iff.mpr ⟨h, rfl⟩))⟩
 
+/-- Pulling back a function on conjugacy classes evaluates it on the class of `g`. -/
 @[simp]
 theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
@@ -96,11 +98,13 @@ noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G 
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     rfl
 
+/-- The linear equivalence evaluates a class function on the class of `g`. -/
 @[simp]
 theorem equivConjClasses_apply_mk (f : ClassFunction k G) (g : G) :
     equivConjClasses f (ConjClasses.mk g) = f.1 g :=
   (rfl)
 
+/-- The inverse linear equivalence evaluates a function on the class of `g`. -/
 @[simp]
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) (g : G) :
     (equivConjClasses.symm f).1 g = f (ConjClasses.mk g) :=
@@ -130,6 +134,7 @@ noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) : ClassFunction k G :=
   ⟨ρ.character, fun g h => ρ.char_conj g h⟩
 
+/-- The class function of a representation evaluates to its character. -/
 @[simp]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) (g : G) :
@@ -140,6 +145,7 @@ theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
 noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
   ⟨V.character, fun g h => V.char_conj g h⟩
 
+/-- The class function of a bundled finite-dimensional representation evaluates to its character. -/
 @[simp]
 theorem ofFDRep_apply (V : FDRep k G) (g : G) :
     (ofFDRep V).1 g = V.character g :=
