@@ -107,9 +107,6 @@ theorem haarProb_def :
 instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) := by
   exact (haarFinite G).normalize.property
 
-@[simp]
-theorem haarProb_apply_univ : haarProb G univ = 1 := measure_univ
-
 instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
   rw [haarProb_def]
   infer_instance
