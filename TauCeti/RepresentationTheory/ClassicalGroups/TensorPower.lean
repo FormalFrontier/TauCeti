@@ -18,7 +18,6 @@ polynomial representations.
 ## Main definitions
 
 * `TauCeti.tensorPowerRep` is the `d`-fold tensor power of `stdRep`.
-* `TauCeti.tensorPowerFDRep` is its bundled finite-dimensional form.
 
 ## References
 
@@ -44,10 +43,6 @@ variable [CommRing k]
 noncomputable abbrev tensorPowerRep :
     Representation k (GL (Fin n) k) (⨂[k]^d (Fin n → k)) :=
   (stdRep k n).tensorPower d
-
-/-- The `d`-fold tensor power of the standard representation, bundled as an `FDRep`. -/
-noncomputable abbrev tensorPowerFDRep : FDRep k (GL (Fin n) k) :=
-  (stdRep k n).tensorPowerFDRep d
 
 end CommRing
 
