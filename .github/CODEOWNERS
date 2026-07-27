@@ -23,7 +23,11 @@
 # bump-guard check plus the sandboxed build, so they need no human review. As with /TauCeti.lean,
 # leaving them human-owned would also block the merge queue from enqueuing a bump PR (the App
 # bypasses code-owner review for a direct merge, but not at enqueue time), so they are AI-gated.
-# `lakefile.toml` stays human-owned: a build-config change is not a pin and bump-guard does not
-# cover it.
+# The review bot's exact first-known-bad Mathlib pin also needs to enter the merge queue. GitHub
+# cannot make CODEOWNERS conditional on the PR author, so this file has no owner here; the trusted
+# author-aware scope status and bump guard remain the load-bearing gates. Any other lakefile change
+# is refused by auto-merge and still needs a human merge decision; its red `scope` status is the
+# explicit signal that the human must inspect the config rather than treating green build as review.
+/lakefile.toml
 /lake-manifest.json
 /lean-toolchain

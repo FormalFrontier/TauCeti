@@ -15,6 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Infrastructure policy unit tests
+        run: |
+          PYTHONPATH=scripts python3 scripts/test_check_bot_lakefile.py
+          python3 scripts/pr_status/test_stuck_alerts.py
+          python3 scripts/test_roadmap_label.py
+          python3 scripts/pr_status/test_pr_labels.py
+          python3 scripts/test_structure_nudge.py
+
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting
       # sorried declarations: TauCeti/ may not import the roadmap/review trees.

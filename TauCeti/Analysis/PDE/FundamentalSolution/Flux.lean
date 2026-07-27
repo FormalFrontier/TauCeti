@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PDE.FundamentalSolution.Planar
-public import Mathlib.Analysis.Calculus.FDeriv.Norm
+public import TauCeti.Analysis.PDE.FundamentalSolution.Gradient
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
@@ -37,20 +36,8 @@ open scoped Interval
 @[simp]
 theorem fderiv_planarNewtonianKernel_self {z : ℂ} (hz : z ≠ 0) :
     fderiv ℝ planarNewtonianKernel z z = -(2 * Real.pi)⁻¹ := by
-  have hnorm : DifferentiableAt ℝ (fun w : ℂ ↦ ‖w‖) z :=
-    (differentiableAt_fun_id : DifferentiableAt ℝ (fun w : ℂ ↦ w) z).norm ℂ hz
-  have hlog :
-      HasFDerivAt (fun w : ℂ ↦ Real.log ‖w‖)
-        ((‖z‖ : ℝ)⁻¹ • fderiv ℝ (fun w : ℂ ↦ ‖w‖) z) z :=
-    hnorm.hasFDerivAt.log (norm_ne_zero_iff.mpr hz)
-  have hkernel :
-      planarNewtonianKernel = fun w : ℂ ↦ -(2 * Real.pi)⁻¹ * Real.log ‖w‖ :=
-    funext planarNewtonianKernel_def
-  rw [hkernel]
-  rw [(hlog.const_mul (-(2 * Real.pi)⁻¹)).fderiv]
-  simp only [smul_apply, smul_eq_mul]
-  rw [DifferentiableAt.fderiv_norm_self hnorm]
-  rw [inv_mul_cancel₀ (norm_ne_zero_iff.mpr hz), mul_one]
+  rw [fderiv_planarNewtonianKernel_apply hz, real_inner_self_eq_norm_sq]
+  field_simp
 
 /-- The derivative of a translated planar Newtonian kernel in the radial direction from its pole
 is `-(2π)⁻¹`. -/

@@ -259,11 +259,21 @@ def detect_stale_pin():
     }]
 
 
+def is_automerge_scope(files, author):
+    """Mirror the author-aware path exception enforced by pr-build and TauCetiReview."""
+    if not files:
+        return False
+    allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
+    if author == "tauceti-review-bot[bot]":
+        allowed_roots.add("lakefile.toml")
+    return all(path.startswith("TauCeti/") or path in allowed_roots for path in files)
+
+
 def detect_stranded_prs():
     prs = gh_stream(
         f"/repos/{REPO}/pulls?state=open&base=main&per_page=100",
         jq='.[] | {number, head: .head.sha, draft, updated_at, '
-           'labels: [.labels[].name]}')
+           'author: .user.login, labels: [.labels[].name]}')
     out = []
     for pr in prs:
         if pr.get("draft"):
@@ -293,9 +303,9 @@ def detect_stranded_prs():
                          jq='.[].filename')
         if not files:
             continue
-        allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
-        touches_pin = any(f in ("lake-manifest.json", "lean-toolchain") for f in files)
-        if not all(f.startswith("TauCeti/") or f in allowed_roots for f in files):
+        touches_pin = any(
+            f in ("lake-manifest.json", "lean-toolchain", "lakefile.toml") for f in files)
+        if not is_automerge_scope(files, pr.get("author")):
             continue  # a human-owned path legitimately does not auto-merge
         if touches_pin and newest_status(head, "bump-guard")[0] != "success":
             continue

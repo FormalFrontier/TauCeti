@@ -10,10 +10,10 @@ second, structured field.
 
 A PR gets exactly one label, decided in this order:
 
-1. `roadmap/none` -- the diff touches a path CI does not let an AI PR touch on its
-   own (anything outside `TauCeti/`, the root `TauCeti.lean`, and the two Lake
-   pins; the exact set the `pr-build` scope guard uses). Such a PR only merged
-   because a human overrode the check, so it is infrastructure, not roadmap work.
+1. `roadmap/none` -- the diff touches an infrastructure path (anything outside
+   `TauCeti/`, the root `TauCeti.lean`, and the two ordinary Lake pins). This also
+   covers the review bot's narrowly validated first-known-bad lakefile exception:
+   either way it is infrastructure, not roadmap work.
 2. `roadmap/<Area>` -- the body cites exactly one canonical roadmap, e.g.
    `TauCetiRoadmap/OneParameterSemigroups/README.md` or `ContourIntegration/README.md`.
    `<Area>` is the roadmap directory name, the same source of truth
@@ -72,8 +72,9 @@ UNKNOWN_COLOR = "fbca04"   # yellow: needs a citation
 
 # A PR whose files all match this is one an AI author may land without a human
 # override: `TauCeti/`, the root aggregator, and the two bump-guarded Lake pins.
-# This is the same predicate the `pr-build` scope guard applies before it decides
-# a PR is "infra" and routes it to a human (see .github/workflows/pr-build.yml).
+# The build workflow has one author-aware extension to this set: a PR opened by the
+# trusted review bot may pin Mathlib's lakefile rev to an exactly validated SHA. It
+# remains an infrastructure PR and therefore still belongs under roadmap/none here.
 _ALLOWED_PATH = re.compile(r"^(?:TauCeti/|TauCeti\.lean$|lake-manifest\.json$|lean-toolchain$)")
 
 # Titles that, by convention, rework existing material rather than add new

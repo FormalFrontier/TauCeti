@@ -3,18 +3,23 @@
 # safe, machine-checkable *forward* bump, and nothing else.
 #
 # This is the trust anchor that lets a PR touching `lake-manifest.json` and/or
-# `lean-toolchain` (but NOT the lakefile) be built and auto-merged without a human:
+# `lean-toolchain` be built and auto-merged without a human. The sole lakefile exception is
+# `--allow-bot-lakefile`: the trusted review bot may replace Mathlib's nominated branch with the
+# immutable first-known-bad SHA (or restore that one field to `master` after the fix), provided
+# check_bot_lakefile.py proves that is the only Lake-config change and the manifest agrees.
 # the worry is a PR that re-points a dependency at a malicious fork/commit or a
 # malicious toolchain and then gets auto-built. We reduce the whole manifest to a
 # deterministic function of one validated fact — "mathlib moved forward on the
 # branch nominated in lakefile.toml" — and require the toolchain to move forward
 # and match mathlib's:
 #
-#   1. lakefile.toml / lakefile.lean are byte-identical to base (lakefile edits
-#      stay human-owned; they change which branch/dep is even nominated).
+#   1. lakefile.toml / lakefile.lean are byte-identical to base, except for the narrow validated
+#      review-bot mode above (lakefile.lean is never excepted).
 #   2. The nominated require (mathlib) is the ONLY package named "mathlib", is a
-#      `git` package pinned to a 40-hex commit SHA, keeps its url + inputRev
-#      (master), and its new rev is a *descendant of the old rev* AND *on
+#      `git` package pinned to a 40-hex commit SHA, keeps its url, and normally keeps
+#      inputRev at `master` (the bot exception may temporarily set inputRev to the exact same SHA,
+#      then restore it to `master`).
+#      Its new rev is a *descendant of the old rev* AND *on the trusted base
 #      inputRev's history* — a genuine forward move on the nominated branch (via
 #      the GitHub compare API; the SHA requirement makes the compared revs
 #      immutable, so what we validate is exactly what Lake will resolve and build).
@@ -28,7 +33,7 @@
 # It does NO build and runs NONE of the PR's code — only reads/parses two text
 # files and queries the trusted upstream via `gh api`. Usage:
 #
-#   check-bump.sh <base_dir> <merge_base_dir> <pr_dir>
+#   check-bump.sh <base_dir> <merge_base_dir> <pr_dir> [--allow-bot-lakefile]
 #
 # where each dir holds the repo's lean-toolchain, lake-manifest.json, lakefile.toml
 # (and optionally lakefile.lean). base_dir is the CURRENT target-branch tip — the
@@ -42,6 +47,9 @@ set -uo pipefail
 BASE="${1:?usage: check-bump.sh <base_dir> <merge_base_dir> <pr_dir>}"
 MERGE_BASE="${2:?usage: check-bump.sh <base_dir> <merge_base_dir> <pr_dir>}"
 PR="${3:?usage: check-bump.sh <base_dir> <merge_base_dir> <pr_dir>}"
+MODE="${4:-}"
+[ -z "$MODE" ] || [ "$MODE" = "--allow-bot-lakefile" ] \
+  || { echo "usage: check-bump.sh <base_dir> <merge_base_dir> <pr_dir> [--allow-bot-lakefile]"; exit 2; }
 
 fail() { echo "::error::bump-guard: $*"; echo "BUMP-GUARD: FAIL — $*"; exit 1; }
 ok()   { echo "BUMP-GUARD: PASS — $*"; exit 0; }
@@ -62,16 +70,27 @@ for f in lakefile.toml lakefile.lean lake-manifest.json lean-toolchain; do
 done
 [ "$pin_changed" = 0 ] && ok "no lakefile or Lake-pin change relative to the merge-base"
 
-# --- 1. lakefile is human-owned: it must not change ---------------------------
-for f in lakefile.toml lakefile.lean; do
-  b="$BASE/$f"; p="$PR/$f"
-  # Treat an absent file the same on both sides; a file appearing/vanishing is a change.
+# --- 1. lakefile is human-owned; validate the one trusted-bot exception -------
+f=lakefile.lean
+b="$BASE/$f"; p="$PR/$f"
+# Treat an absent file the same on both sides; a file appearing/vanishing is a change.
+[ -f "$b" ] || b=/dev/null
+[ -f "$p" ] || p=/dev/null
+if ! diff -q "$b" "$p" >/dev/null 2>&1; then
+  fail "$f differs from base — lakefile edits are human-owned and never auto-merge"
+fi
+if [ "$MODE" = "--allow-bot-lakefile" ]; then
+  python3 "$BASE/scripts/check_bot_lakefile.py" \
+    "$BASE/lakefile.toml" "$PR/lakefile.toml" "$PR/lake-manifest.json" \
+    || fail "review-bot lakefile pin is not the exact validated Mathlib revision change"
+else
+  b="$BASE/lakefile.toml"; p="$PR/lakefile.toml"
   [ -f "$b" ] || b=/dev/null
   [ -f "$p" ] || p=/dev/null
   if ! diff -q "$b" "$p" >/dev/null 2>&1; then
-    fail "$f differs from base — lakefile edits are human-owned and never auto-merge"
+    fail "lakefile.toml differs from base — only the trusted review bot's exact Mathlib pin may auto-merge"
   fi
-done
+fi
 
 # --- helpers ------------------------------------------------------------------
 # owner/repo slug from a github url
@@ -109,7 +128,23 @@ IFS=$'\t' read -r ML_URL_B ML_REV_B ML_IR_B <<<"$ml_base"
 IFS=$'\t' read -r ML_URL_P ML_REV_P ML_IR_P <<<"$ml_pr"
 
 [ "$ML_URL_B" = "$ML_URL_P" ] || fail "mathlib url changed ($ML_URL_B -> $ML_URL_P) — repo swap is human-owned"
-[ "$ML_IR_B"  = "$ML_IR_P"  ] || fail "mathlib inputRev (nominated branch) changed ($ML_IR_B -> $ML_IR_P) — human-owned"
+if [ "$MODE" = "--allow-bot-lakefile" ]; then
+  if [ "$ML_IR_P" = "$ML_REV_P" ]; then
+    [ "$ML_IR_B" = "master" ] \
+      || fail "an exact review-bot pin may only start from the trusted master nomination (base inputRev=$ML_IR_B)"
+    NOMINATED_BRANCH="$ML_IR_B"
+  elif [ "$ML_IR_P" = "master" ]; then
+    [ "$ML_IR_B" = "$ML_REV_B" ] \
+      || fail "review-bot de-pin to master requires an exact pinned base ($ML_IR_B != $ML_REV_B)"
+    NOMINATED_BRANCH="$ML_IR_P"
+  else
+    fail "review-bot manifest inputRev must be its exact Mathlib rev or master (got $ML_IR_P)"
+  fi
+else
+  [ "$ML_IR_B" = "$ML_IR_P" ] \
+    || fail "mathlib inputRev (nominated branch) changed ($ML_IR_B -> $ML_IR_P) — human-owned"
+  NOMINATED_BRANCH="$ML_IR_B"
+fi
 ML_SLUG="$(slug "$ML_URL_P")"
 
 # --- 2. mathlib moved forward on the nominated branch -------------------------
@@ -126,13 +161,15 @@ else
     ahead) : ;;  # new strictly descends from old — forward
     *) fail "mathlib rev is not a forward move from base (compare status: ${st_fwd:-unknown}); old=$ML_REV_B new=$ML_REV_P" ;;
   esac
-  st_branch="$(gh api "repos/$ML_SLUG/compare/$ML_REV_P...$ML_IR_P" --jq '.status' 2>/dev/null)" \
-    || fail "compare API failed for $ML_SLUG $ML_REV_P...$ML_IR_P"
+  # Membership is checked against the trusted branch: normally the base nomination; `master` from
+  # the bot PR itself only when it is undoing an exact-SHA base nomination.
+  st_branch="$(gh api "repos/$ML_SLUG/compare/$ML_REV_P...$NOMINATED_BRANCH" --jq '.status' 2>/dev/null)" \
+    || fail "compare API failed for $ML_SLUG $ML_REV_P...$NOMINATED_BRANCH"
   case "$st_branch" in
     ahead|identical) : ;;  # the nominated branch tip is at-or-ahead of new — new is on its history
-    *) fail "mathlib new rev $ML_REV_P is not on branch '$ML_IR_P' (compare status: ${st_branch:-unknown})" ;;
+    *) fail "mathlib new rev $ML_REV_P is not on branch '$NOMINATED_BRANCH' (compare status: ${st_branch:-unknown})" ;;
   esac
-  echo "bump-guard: mathlib $ML_REV_B -> $ML_REV_P is a forward move on '$ML_IR_P'."
+  echo "bump-guard: mathlib $ML_REV_B -> $ML_REV_P is a forward move on '$NOMINATED_BRANCH'."
 fi
 
 # --- 3. the rest of the manifest is EXACTLY mathlib's own manifest at the new rev
@@ -203,4 +240,4 @@ ML_TC="$(gh api "repos/$ML_SLUG/contents/lean-toolchain?ref=$ML_REV_P" --jq '.co
 [ "$TC_P" = "$ML_TC" ] || fail "PR lean-toolchain ($TC_P) != mathlib@$ML_REV_P's ($ML_TC)"
 echo "bump-guard: toolchain $TC_B -> $TC_P is forward and matches mathlib@$ML_REV_P."
 
-ok "forward-only bump validated (mathlib on '$ML_IR_P', derived transitive pins, toolchain consistent)"
+ok "forward-only bump validated (mathlib on '$NOMINATED_BRANCH', derived transitive pins, toolchain consistent)"

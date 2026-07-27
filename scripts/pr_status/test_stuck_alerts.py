@@ -101,6 +101,17 @@ class FailClosedTest(unittest.TestCase):
         self.assertTrue(z.updated[0][1].lstrip().startswith(sa.GREEN))
 
 
+class AutoMergeScopeTest(unittest.TestCase):
+    def test_lakefile_exception_is_exact_author_only(self):
+        files = ["lakefile.toml", "lake-manifest.json"]
+        self.assertTrue(sa.is_automerge_scope(files, "tauceti-review-bot[bot]"))
+        self.assertFalse(sa.is_automerge_scope(files, "someone-else"))
+
+    def test_bot_authorship_does_not_allow_other_infrastructure(self):
+        self.assertFalse(sa.is_automerge_scope(
+            ["lakefile.toml", ".github/workflows/x.yml"], "tauceti-review-bot[bot]"))
+
+
 class ReconcileTest(unittest.TestCase):
     def test_new_alert_posts_message(self):
         z = FakeZulip([])
