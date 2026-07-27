@@ -171,27 +171,36 @@ theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabi
 /-- **At a constant `ν` the conditional identity is free.** The joint law of `(p, block)` is the
 block law pushed forward by `Prod.mk p`, and the disintegration `δ_p ⊗ p^{⊗m}` is the product law
 pushed forward by the same map, so the mixture identity already gives the joint one. -/
-theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω} [IsProbabilityMeasure μ]
+theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
     {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
     ConditionallyIIDWith μ X fun _ => p := by
+  by_cases hμ : μ = 0
+  · subst μ
+    refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
+    simp
   refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
+  have hblock_ne : blockLaw μ X k ≠ 0 := by
+    rw [h.blockLaw_eq_mixture k hk, Measure.bind_const]
+    intro hzero
+    have huniv := congrArg (fun q : Measure (Fin m → α) => q Set.univ) hzero
+    exact hμ (Measure.measure_univ_eq_zero.mp (by simpa using huniv))
   have hblock : AEMeasurable (fun ω (i : Fin m) => X (k i) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => h.aemeasurable_of_const (k i)
+    AEMeasurable.of_map_ne_zero (by simpa only [blockLaw_def] using hblock_ne)
   calc μ.map (fun ω => (p, fun i : Fin m => X (k i) ω))
       = (μ.map fun ω (i : Fin m) => X (k i) ω).map (Prod.mk p) := by
         rw [measurable_prodMk_left.aemeasurable.map_map_of_aemeasurable hblock]
         rfl
-    _ = (Measure.pi fun _ : Fin m => (p : Measure α)).map (Prod.mk p) := by
-        rw [← blockLaw_def, h.blockLaw_eq_pi_of_const k hk]
+    _ = (μ.bind fun _ : Ω =>
+          (ProbabilityMeasure.pi fun _ : Fin m => p).toMeasure).map (Prod.mk p) := by
+        rw [← blockLaw_def, h.blockLaw_eq_mixture k hk]
     _ = μ.bind fun _ : Ω =>
           (Measure.dirac p).prod (ProbabilityMeasure.pi fun _ : Fin m => p).toMeasure := by
-        rw [Measure.bind_const, measure_univ, one_smul, Measure.dirac_prod,
-          ProbabilityMeasure.toMeasure_pi]
+        rw [Measure.bind_const, Measure.bind_const, Measure.map_smul, Measure.dirac_prod]
 
 /-- **The two de Finetti predicates agree at a constant witness.** For a nondegenerate mixing law
 the conditional predicate is strictly stronger; the degenerate case is exactly where the gap
 closes. -/
-theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω} [IsProbabilityMeasure μ]
+theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
     {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
   ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
