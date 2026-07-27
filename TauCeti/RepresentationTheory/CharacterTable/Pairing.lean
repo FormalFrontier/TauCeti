@@ -137,11 +137,8 @@ private theorem card_conjClass_dvd_card [Finite G] (x : G) :
 omit [Fintype G] in
 private theorem card_conjClass_cast_ne_zero [Finite G] [Invertible (Nat.card G : k)] (x : G) :
     (Nat.card (ConjClasses.mk x).carrier : k) ≠ 0 := by
-  intro hx
-  rcases Nat.cast_dvd_cast (α := k) (card_conjClass_dvd_card x) with ⟨c, hc⟩
-  have hG : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
-  apply hG
-  rw [hc, hx, zero_mul]
+  exact ne_zero_of_dvd_ne_zero (Invertible.ne_zero _)
+    (Nat.cast_dvd_cast (α := k) (card_conjClass_dvd_card x))
 
 /-- The character pairing is nondegenerate when the group order is invertible in the field. -/
 theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
