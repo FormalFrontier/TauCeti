@@ -134,4 +134,7 @@ theorem ncard_inversions_mul_ofIdx {i : ι} (hi : i ∈ b.support) :
       _ = (inversions P b w).ncard + 1 := by
         rw [Set.sdiff_singleton_eq_self hiw]
 
+@[deprecated (since := "2026-07-27")]
+alias inversions_ncard_mul_ofIdx := ncard_inversions_mul_ofIdx
+
 end TauCeti
