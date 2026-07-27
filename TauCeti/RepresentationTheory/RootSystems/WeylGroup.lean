@@ -53,12 +53,9 @@ theorem indexHom_injective_of_span_eq_top (hspan : Submodule.span R (range P.roo
   refine LinearMap.ext_on_range hspan fun i ↦ ?_
   have hfg' : f.indexEquiv i = g.indexEquiv i :=
     congrFun (congrArg DFunLike.coe hfg) i
-  calc
-    _ = f • P.root i := rfl
-    _ = P.root (f.indexEquiv i) := (_root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i f).symm
-    _ = P.root (g.indexEquiv i) := congrArg P.root hfg'
-    _ = g • P.root i := _root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i g
-    _ = _ := rfl
+  simp only [_root_.RootPairing.Equiv.weightHom_apply, LinearEquiv.coe_coe,
+    _root_.RootPairing.Equiv.weightEquiv_apply,
+    _root_.RootPairing.Hom.root_weightMap_apply, hfg']
 
 /-- An automorphism of a root system is determined by its permutation of the root indices. -/
 theorem indexHom_injective [P.IsRootSystem] :
