@@ -47,11 +47,8 @@ theorem mulEquiv_conj_map (f : M →ₗ[R] M) (d e : ℕ) :
         (TensorProduct.map (PiTensorProduct.map fun _ : Fin d => f)
           (PiTensorProduct.map fun _ : Fin e => f)) =
       PiTensorProduct.map (fun _ : Fin (d + e) => f) := by
-  let equiv : (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M) :=
-    _root_.TensorPower.mulEquiv
   ext x
   simp only [LinearMap.compMultilinearMap_apply]
-  change equiv.conj _ (⨂ₜ[R] i, x i) = _
   rw [LinearEquiv.conj_apply_apply]
   let a : Fin d → M := fun i => x (Fin.castAdd e i)
   let b : Fin e → M := fun i => x (Fin.natAdd d i)
@@ -62,18 +59,17 @@ theorem mulEquiv_conj_map (f : M →ₗ[R] M) (d e : ℕ) :
       simp only [a, Fin.append_left]
     · intro j
       simp only [b, Fin.append_right]
-  have hsplit : equiv.symm (⨂ₜ[R] i, x i) =
+  have hsplit : (_root_.TensorPower.mulEquiv :
+      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).symm (⨂ₜ[R] i, x i) =
       (⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i) := by
-    apply equiv.injective
-    rw [equiv.apply_symm_apply]
-    rw [show equiv ((⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i)) =
-      ⨂ₜ[R] i, Fin.append a b i from _root_.TensorPower.tprod_mul_tprod R a b]
+    apply (_root_.TensorPower.mulEquiv :
+      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).injective
+    rw [LinearEquiv.apply_symm_apply]
+    rw [← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod]
     rw [hx]
   rw [hsplit, TensorProduct.map_tmul, PiTensorProduct.map_tprod,
     PiTensorProduct.map_tprod]
-  rw [show equiv ((⨂ₜ[R] i, f (a i)) ⊗ₜ[R] (⨂ₜ[R] i, f (b i))) =
-    ⨂ₜ[R] i, Fin.append (fun i => f (a i)) (fun i => f (b i)) i from
-      _root_.TensorPower.tprod_mul_tprod R _ _]
+  rw [← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod]
   rw [PiTensorProduct.map_tprod]
   congr 1
   rw [← hx]
