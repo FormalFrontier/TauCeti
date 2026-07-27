@@ -142,12 +142,7 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
   simp only [Representation.character, tensorPower_apply]
   induction d with
   | zero =>
-    have hmap : PiTensorProduct.map (fun _ : Fin 0 => ρ g) = LinearMap.id := by
-      rw [← PiTensorProduct.map_id]
-      congr
-      funext i
-      exact Fin.elim0 i
-    rw [hmap]
+    rw [TauCeti.TensorPower.map_fin_zero]
     let e := PiTensorProduct.isEmptyEquiv (Fin 0) (R := R) (s := fun _ => M)
     rw [← LinearMap.trace_conj' (LinearMap.id : (⨂[R]^0 M) →ₗ[R] _) e]
     rw [LinearEquiv.conj_id, LinearMap.trace_id, Module.finrank_self, Nat.cast_one]
