@@ -139,12 +139,7 @@ private theorem card_conjClass_cast_ne_zero [Finite G] [Invertible (Nat.card G :
     (Nat.card (ConjClasses.mk x).carrier : k) ≠ 0 := by
   intro hx
   rcases Nat.cast_dvd_cast (α := k) (card_conjClass_dvd_card x) with ⟨c, hc⟩
-  have hG : (Nat.card G : k) ≠ 0 := by
-    intro h
-    have h' := invOf_mul_self (Nat.card G : k)
-    rw [invOf_eq_inv] at h'
-    rw [h, inv_zero, zero_mul] at h'
-    exact zero_ne_one h'
+  have hG : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
   apply hG
   rw [hc, hx, zero_mul]
 
@@ -192,18 +187,13 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
         rfl
   have hpair := hf (classIndicator (k := k) x⁻¹)
   rw [characterPairing_apply, hsum] at hpair
-  exact (mul_ne_zero (inv_ne_zero (by
-    intro h
-    have h' := invOf_mul_self (Nat.card G : k)
-    rw [invOf_eq_inv] at h'
-    rw [h, inv_zero, zero_mul] at h'
-    exact zero_ne_one h'))
+  exact (mul_ne_zero (inv_ne_zero (Invertible.ne_zero _))
     (mul_ne_zero (card_conjClass_cast_ne_zero (k := k) x) hfx)) hpair
 
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
 theorem characterPairing_ofCharacter
     {V W : Type*} [AddCommGroup V] [Module k V]
-    [FiniteDimensional k V] [AddCommGroup W] [Module k W] [FiniteDimensional k W]
+    [AddCommGroup W] [Module k W]
     (ρ : Representation k G V) (σ : Representation k G W) :
     characterPairing (ofCharacter ρ) (ofCharacter σ) =
       (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character g * σ.character g⁻¹ := by
