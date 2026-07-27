@@ -24,8 +24,16 @@ namespace YoungDiagram
 /-- The sum of the row lengths of a Young diagram is its number of cells. -/
 @[simp]
 theorem sum_rowLens (μ : YoungDiagram) : μ.rowLens.sum = μ.card := by
+  have sum_list_range (f : ℕ → ℕ) :
+      ∀ n, ((List.range n).map f).sum = ∑ i ∈ Finset.range n, f i := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [List.range_succ, List.map_append, List.sum_append, ih, Finset.sum_range_succ]
+      simp
   have hrange : μ.rowLens.sum = ∑ i ∈ Finset.range (μ.colLen 0), μ.rowLen i := by
-    simp [_root_.YoungDiagram.rowLens, Finset.sum, Finset.range_val, Multiset.range]
+    rw [_root_.YoungDiagram.rowLens, sum_list_range]
   rw [hrange]
   symm
   calc

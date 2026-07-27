@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Algebra.Group.ConjFinite
 public import Mathlib.GroupTheory.Perm.Cycle.PossibleTypes
-public import TauCeti.Combinatorics.Young.Partitions
 
 /-!
 # Partitions and conjugacy classes of permutations
