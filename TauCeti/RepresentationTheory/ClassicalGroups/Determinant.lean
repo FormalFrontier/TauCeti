@@ -103,7 +103,7 @@ section Field
 
 variable [Field k]
 
-/-- A negative determinant power acts by the inverse of the corresponding positive scalar. -/
+/-- Negating the exponent makes the determinant scalar the inverse of the original power. -/
 theorem detPowerRep_neg_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
     detPowerRep k n (-m) g x = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k)⁻¹ * x := by
   simp only [detPowerRep_apply, zpow_neg, Units.val_inv_eq_inv_val]
