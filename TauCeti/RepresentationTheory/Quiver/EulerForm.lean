@@ -1,7 +1,6 @@
 module
 
 public import Mathlib.Combinatorics.Quiver.Basic
-public import Mathlib.Data.Fintype.Defs
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 import Mathlib.Tactic.Ring
