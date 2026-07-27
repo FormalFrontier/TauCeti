@@ -35,6 +35,7 @@ def IsTotallyReal (J : E →ₗ[R] E) (L : Submodule R E) : Prop :=
   Disjoint L (L.map J)
 
 /-- The totally real predicate unfolds to disjointness of `L` and its `J`-image. -/
+@[simp, grind =]
 theorem isTotallyReal_iff (J : E →ₗ[R] E) (L : Submodule R E) :
     IsTotallyReal J L ↔ Disjoint L (L.map J) :=
   Iff.rfl
@@ -45,6 +46,7 @@ def IsMaximalTotallyReal (J : E →ₗ[R] E) (L : Submodule R E) : Prop :=
   IsCompl L (L.map J)
 
 /-- The maximal totally real predicate unfolds to complementarity of `L` and its `J`-image. -/
+@[simp, grind =]
 theorem isMaximalTotallyReal_iff (J : E →ₗ[R] E) (L : Submodule R E) :
     IsMaximalTotallyReal J L ↔ IsCompl L (L.map J) :=
   Iff.rfl
