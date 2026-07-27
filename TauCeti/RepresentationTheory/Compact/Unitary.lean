@@ -140,26 +140,18 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_left (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪π g v, w⟫_ℂ = ⟪v, π g⁻¹ w⟫_ℂ := by
-  calc
-    ⟪π g v, w⟫_ℂ = ⟪π g v, π g (π g⁻¹ w)⟫_ℂ := by
-      change ⟪π g v, w⟫_ℂ =
-        ⟪π g v, (π.toRepresentation : Representation ℂ G V) g
-          ((π.toRepresentation : Representation ℂ G V) g⁻¹ w)⟫_ℂ
-      rw [Representation.self_inv_apply]
-    _ = ⟪v, π g⁻¹ w⟫_ℂ := hπ.inner_map_map _ _ _
+  have hinv := Representation.self_inv_apply π.toRepresentation g w
+  change π g (π g⁻¹ w) = w at hinv
+  simpa only [hinv] using hπ.inner_map_map g v (π g⁻¹ w)
 
 omit [CompleteSpace V] in
 /-- Moving a unitary action from the second inner-product argument to the first replaces the group
 element by its inverse. -/
 theorem inner_map_right (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪v, π g w⟫_ℂ = ⟪π g⁻¹ v, w⟫_ℂ := by
-  calc
-    ⟪v, π g w⟫_ℂ = ⟪π g (π g⁻¹ v), π g w⟫_ℂ := by
-      change ⟪v, π g w⟫_ℂ =
-        ⟪(π.toRepresentation : Representation ℂ G V) g
-          ((π.toRepresentation : Representation ℂ G V) g⁻¹ v), π g w⟫_ℂ
-      rw [Representation.self_inv_apply]
-    _ = ⟪π g⁻¹ v, w⟫_ℂ := hπ.inner_map_map _ _ _
+  have hinv := Representation.self_inv_apply π.toRepresentation g v
+  change π g (π g⁻¹ v) = v at hinv
+  simpa only [hinv] using hπ.inner_map_map g (π g⁻¹ v) w
 
 /-- The adjoint of a unitary action operator is the action of the inverse group element. -/
 @[simp]
