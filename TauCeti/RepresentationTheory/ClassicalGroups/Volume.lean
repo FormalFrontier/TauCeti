@@ -19,9 +19,9 @@ invariant alternating form required for the standard representation of `SL(n, k)
 
 ## Main results
 
-* `TauCeti.basisFun_det_mulVec` states that multiplication by a square matrix scales the
+* `TauCeti.detRowAlternating_mulVec` states that multiplication by a square matrix scales the
   determinant form by the matrix determinant.
-* `TauCeti.basisFun_det_stdSLRep` states the invariance of the determinant form under the
+* `TauCeti.detRowAlternating_stdSLRep` states the invariance of the determinant form under the
   standard representation of the special linear group.
 
 ## References
@@ -45,7 +45,7 @@ variable [CommRing k]
 /-- Multiplication by a square matrix scales the standard-basis determinant form by its
 determinant. -/
 @[simp]
-theorem basisFun_det_mulVec {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem detRowAlternating_mulVec {ι : Type*} [Fintype ι] [DecidableEq ι]
     (M : Matrix ι ι k) (v : ι → ι → k) :
     Matrix.detRowAlternating (fun i => M *ᵥ v i) =
       M.det * Matrix.detRowAlternating v := by
@@ -57,13 +57,13 @@ theorem basisFun_det_mulVec {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 This is deliberately not a `simp` lemma: `stdSLRep_apply` already rewrites `stdSLRep k n g` to
 `Matrix.mulVecLin ↑g`, so the left-hand side here is not in `simp` normal form and the rewrite
-could never fire. Use `basisFun_det_mulVec` for the `simp`-normal statement. -/
-theorem basisFun_det_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
+could never fire. Use `detRowAlternating_mulVec` for the `simp`-normal statement. -/
+theorem detRowAlternating_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
     Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
       Matrix.detRowAlternating v := by
   simpa only [stdSLRep_apply_apply, g.det_coe, one_mul] using
-    basisFun_det_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
+    detRowAlternating_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
 
 end CommRing
 
