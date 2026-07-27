@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Complex.Conformal.NormalFamilies
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 import Mathlib.Topology.UniformSpace.Ascoli
-import Mathlib.Topology.UniformSpace.CompactConvergence
 
 /-!
 # Montel's selection theorem
