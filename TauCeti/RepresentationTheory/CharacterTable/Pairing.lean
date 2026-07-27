@@ -92,6 +92,114 @@ theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
+omit [Fintype G] in
+private theorem isConj_inv_iff {x y : G} :
+    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
+  constructor <;> intro h
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+
+private noncomputable def classIndicator (x : G) : ClassFunction k G := by
+  classical
+  exact equivConjClasses.symm (Pi.single (ConjClasses.mk x) 1)
+
+open scoped Classical in
+private theorem classIndicator_apply (x y : G) :
+    (classIndicator (k := k) x).1 y =
+      if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 :=
+  by
+    classical
+    rw [classIndicator, equivConjClasses_symm_apply, ofConjClasses_apply, Pi.single_apply]
+
+omit [Fintype G] in
+private theorem card_conjClass_dvd_card [Finite G] (x : G) :
+    Nat.card (ConjClasses.mk x).carrier ∣ Nat.card G := by
+  classical
+  letI : Fintype G := Fintype.ofFinite G
+  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  letI : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
+  letI : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
+  rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+  rw [ConjClasses.card_carrier]
+  apply Nat.div_dvd_of_dvd
+  refine ⟨Fintype.card (MulAction.orbit (ConjAct G) x), ?_⟩
+  simpa [Nat.card_eq_fintype_card, Nat.mul_comm] using
+    (MulAction.card_orbit_mul_card_stabilizer_eq_card_group (ConjAct G) x).symm
+
+omit [Fintype G] in
+private theorem card_conjClass_cast_ne_zero [Finite G] [Invertible (Nat.card G : k)] (x : G) :
+    (Nat.card (ConjClasses.mk x).carrier : k) ≠ 0 := by
+  intro hx
+  rcases Nat.cast_dvd_cast (α := k) (card_conjClass_dvd_card x) with ⟨c, hc⟩
+  have hG : (Nat.card G : k) ≠ 0 := by
+    intro h
+    have h' := invOf_mul_self (Nat.card G : k)
+    rw [invOf_eq_inv] at h'
+    rw [h, inv_zero, zero_mul] at h'
+    exact zero_ne_one h'
+  apply hG
+  rw [hc, hx, zero_mul]
+
+/-- The character pairing is nondegenerate when the group order is invertible in the field. -/
+theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
+    characterPairing (k := k) (G := G).Nondegenerate := by
+  classical
+  refine (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
+    (B := characterPairing (k := k) (G := G)) characterPairing_isSymm.isRefl).mpr ?_
+  intro f hf
+  apply Subtype.ext
+  funext x
+  by_contra hfx
+  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  have hcarrier : (ConjClasses.mk x).carrier = {g | IsConj g x} := by
+    ext g
+    simp only [ConjClasses.mem_carrier_iff_mk_eq, Set.mem_setOf_eq]
+    exact ConjClasses.mk_eq_mk_iff_isConj
+  have hconj (g : G) :
+      ConjClasses.mk g⁻¹ = ConjClasses.mk x⁻¹ ↔ IsConj g x := by
+    rw [ConjClasses.mk_eq_mk_iff_isConj, isConj_inv_iff]
+  have hsum :
+      (∑ g : G, f.1 g * (classIndicator (k := k) x⁻¹).1 g⁻¹) =
+        Nat.card (ConjClasses.mk x).carrier * f.1 x := by
+    calc
+      _ = ∑ g : G, if IsConj g x then f.1 g else 0 := by
+        apply Fintype.sum_congr
+        intro g
+        by_cases hg : IsConj g x
+        · have h' := hconj g |>.mpr hg
+          rw [classIndicator_apply, if_pos h', if_pos hg, mul_one]
+        · have h' : ConjClasses.mk g⁻¹ ≠ ConjClasses.mk x⁻¹ := fun h => hg (hconj g |>.mp h)
+          rw [classIndicator_apply, if_neg h', if_neg hg, mul_zero]
+      _ = ∑ g ∈ Finset.univ.filter (fun g => IsConj g x), f.1 g := by
+        rw [Finset.sum_filter]
+      _ = ∑ _g ∈ Finset.univ.filter (fun g => IsConj g x), f.1 x := by
+        apply Finset.sum_congr rfl
+        intro g hg
+        exact ClassFunction.eq_of_isConj f (by simpa using Finset.mem_filter.mp hg |>.2)
+      _ = _ := by
+        rw [Finset.sum_const, nsmul_eq_mul]
+        rw [hcarrier, Nat.card_eq_fintype_card]
+        rw [(Fintype.card_ofFinset (p := {g | IsConj g x})
+          (Finset.univ.filter fun g => IsConj g x) (by simp)).symm]
+        rfl
+  have hpair := hf (classIndicator (k := k) x⁻¹)
+  rw [characterPairing_apply, hsum] at hpair
+  exact (mul_ne_zero (inv_ne_zero (by
+    intro h
+    have h' := invOf_mul_self (Nat.card G : k)
+    rw [invOf_eq_inv] at h'
+    rw [h, inv_zero, zero_mul] at h'
+    exact zero_ne_one h'))
+    (mul_ne_zero (card_conjClass_cast_ne_zero (k := k) x) hfx)) hpair
+
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
 theorem characterPairing_ofCharacter
     {V W : Type*} [AddCommGroup V] [Module k V]
