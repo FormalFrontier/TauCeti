@@ -70,6 +70,7 @@ theorem dimVector_zero :
 
 /-- The dimension vector is additive on biproducts of pointwise finite-dimensional
 representations. -/
+@[simp]
 theorem dimVector_biprod (M N : QuiverRep k Q)
     (hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
     (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i))) :
