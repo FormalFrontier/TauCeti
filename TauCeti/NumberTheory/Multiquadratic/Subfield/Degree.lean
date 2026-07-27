@@ -109,7 +109,7 @@ theorem finrank_mul_card_intermediateFieldEquivSubmodule [Finite ι] [NeZero (2 
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
   haveI := isGalois hroot
   rw [card_intermediateFieldEquivSubmodule_ofDual hroot hindep F,
-    IntermediateField.finrank_eq_fixingSubgroup_index F,
+    IntermediateField.finrank_eq_fixingSubgroup_index (L := F),
     Subgroup.index_mul_card F.fixingSubgroup]
   exact card_aut_adjoin_range hroot hindep
 
