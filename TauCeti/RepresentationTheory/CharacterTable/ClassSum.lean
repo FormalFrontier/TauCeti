@@ -1,6 +1,8 @@
-import Mathlib.Algebra.Group.ConjFinite
-import Mathlib.Algebra.Central.Basic
-import Mathlib.Algebra.MonoidAlgebra.Basic
+module
+
+public import Mathlib.Algebra.Group.ConjFinite
+public import Mathlib.Algebra.Central.Basic
+public import Mathlib.Algebra.MonoidAlgebra.Basic
 
 /-!
 # Class sums in a finite group algebra
@@ -9,6 +11,8 @@ This file defines the element of a group algebra obtained by summing the members
 class.  It proves that every class sum is central, the first input to the class-algebra side of
 finite-group character theory.
 -/
+
+public section
 
 namespace TauCeti
 
