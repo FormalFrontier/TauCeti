@@ -22,7 +22,7 @@ namespace TauCeti
 namespace Nat.Partition
 
 /-- A partition is equivalent to its decreasing list of positive parts. -/
-@[expose] noncomputable def equivSortedParts (n : ℕ) :
+noncomputable def equivSortedParts (n : ℕ) :
     n.Partition ≃
       {w : List ℕ // (w.SortedGE ∧ ∀ x ∈ w, 0 < x) ∧ w.sum = n} where
   toFun p :=
@@ -44,7 +44,7 @@ namespace Nat.Partition
 
 /-- Sorting the parts is the forward map of `equivSortedParts`. -/
 @[simp]
-theorem equivSortedParts_apply_parts (n : ℕ) (p : n.Partition) :
+theorem equivSortedParts_apply_coe (n : ℕ) (p : n.Partition) :
     (equivSortedParts n p).1 = p.parts.sort (· ≥ ·) := by
   simp [equivSortedParts]
 
