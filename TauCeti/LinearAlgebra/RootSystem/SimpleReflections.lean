@@ -138,16 +138,10 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
       rw [Subgroup.closure_toSubmonoid, hinv, union_self]
     rw [← hclosure, ← weylGroup_eq_closure_simple P b]
     exact Submonoid.mem_top w
-  obtain ⟨l, hl, hprod⟩ := Submonoid.exists_list_of_mem_closure hw
-  choose f hf using fun x (hx : x ∈ l) => hl x hx
-  have hmap :
-      l.attach.map (fun x => RootPairing.weylGroup.ofIdx P (f x.1 x.2 : ι)) = l := by
-    calc
-      l.attach.map (fun x => RootPairing.weylGroup.ofIdx P (f x.1 x.2 : ι)) =
-          l.attach.map fun x => x.1 := List.map_congr_left fun x _ => hf x.1 x.2
-      _ = l := List.attach_map_subtype_val l
-  refine ⟨l.attach.map fun x => f x.1 x.2, ?_⟩
-  rw [List.map_map]
-  exact (congrArg List.prod hmap).trans hprod
+  rw [← FreeMonoid.mrange_lift] at hw
+  obtain ⟨l, hl⟩ := MonoidHom.mem_mrange.mp hw
+  refine ⟨l.toList, ?_⟩
+  rw [← FreeMonoid.lift_apply]
+  exact hl
 
 end TauCeti
