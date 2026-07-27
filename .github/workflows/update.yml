@@ -8,8 +8,9 @@ name: Update Dependencies
 #     place — not for merging as-is), and close the LKG bump PR until resolved.
 # PRs and pushes use the tauceti-review-bot App token so pr-build/review trigger
 # normally. The LKG bump is de-pinned below to a manifest- and toolchain-only forward move,
-# so bump-guard validates it and it auto-merges; the first-known-bad fix PR still edits the
-# Lake config and is human-owned.
+# so bump-guard validates it and it auto-merges. A first-known-bad fix PR keeps its exact
+# lakefile pin; the author-aware bump guard validates that one bot-only config change so the
+# repair PR can merge without human intervention once its build and reviews are green.
 
 on:
   schedule:
@@ -41,28 +42,47 @@ jobs:
       # should be the fix one pinned at the first-known-bad commit.
       - name: Check whether an incompatibility is reported
         id: fkb
-        uses: leanprover-community/downstream-reports/.github/actions/query-latest@main
+        uses: leanprover-community/downstream-reports/.github/actions/query-latest@43df0aa23fd0d157988f154b9e636c2d0efe2822
         with:
           query-type: first-known-bad
 
       - name: Bump to latest mathlib
         id: bump
         if: steps.fkb.outputs.commit == ''
-        uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@main
+        uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@43df0aa23fd0d157988f154b9e636c2d0efe2822
 
       # TauCeti tracks mathlib `master` and lets bump-guard (scripts/check-bump.sh) validate
       # each bump as a forward move and auto-merge it. bump-to-latest pins the lakefile `rev`
-      # and the manifest `inputRev` to the bumped commit; bump-guard rejects that (lakefile
-      # edits are human-owned; inputRev must stay the nominated branch) and routes it to a
-      # human. De-pin both — restore the human-owned lakefile and reset mathlib's inputRev to
-      # "master" — leaving a manifest- and toolchain-only forward move that validates and
-      # merges without a human. The manifest `rev` still carries the actual pin.
+      # and manifest `inputRev` to the bumped commit. Restore both nominations to `master` while
+      # retaining the manifest's actual SHA pin. This is normally a manifest/toolchain-only bump;
+      # after an incompatibility PR temporarily pinned the base lakefile, it also performs the
+      # trusted bot's validated one-line de-pin back to `master`.
       - name: De-pin to keep tracking master (so bump-guard can auto-merge)
         if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
         run: |
           set -euo pipefail
-          # Discard the bot's pinned rev in the human-owned lakefile(s); keep everything else.
-          git checkout -- lakefile.toml
+          # Restore only Mathlib's nominated rev to master. `git checkout -- lakefile.toml` is not
+          # enough when main is temporarily pinned at a first-known-bad SHA: it would restore that
+          # SHA and leave the next LKG PR unable to resume tracking master.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("lakefile.toml")
+          parts = path.read_text().split("[[require]]")
+          changed = 0
+          for index in range(1, len(parts)):
+              if re.search(
+                      r'^[ \t]*name[ \t]*=[ \t]*"mathlib"[ \t]*$',
+                      parts[index], re.MULTILINE):
+                  parts[index], count = re.subn(
+                      r'^[ \t]*rev[ \t]*=[ \t]*"[^"]+"[ \t]*$', 'rev = "master"', parts[index],
+                      count=1, flags=re.MULTILINE)
+                  changed += count
+          if changed != 1:
+              raise SystemExit(f"expected one Mathlib rev in lakefile.toml; changed {changed}")
+          path.write_text("[[require]]".join(parts))
+          PY
           git checkout -- lakefile.lean 2>/dev/null || true
           # Reset mathlib's inputRev back to "master". It is the only 40-hex inputRev in the
           # manifest (every other dep nominates a branch/tag), so this targets mathlib alone
@@ -72,7 +92,7 @@ jobs:
 
       - name: Open or update PR
         if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
-        uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@main
+        uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@43df0aa23fd0d157988f154b9e636c2d0efe2822
         with:
           branch: ${{ env.LKG_BRANCH }}
           title: "chore: ${{ steps.bump.outputs.pr-title }}"
@@ -101,7 +121,7 @@ jobs:
 
       - name: Open or update incompatibility issue and fix PR
         id: track
-        uses: leanprover-community/downstream-reports/.github/actions/track-incompatibility@main
+        uses: leanprover-community/downstream-reports/.github/actions/track-incompatibility@43df0aa23fd0d157988f154b9e636c2d0efe2822
         with:
           open-pr: true
           token: ${{ steps.app-token.outputs.token }}

@@ -4,18 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.Finrank
-public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 public import TauCeti.Geometry.Symplectic.AlmostComplex
 public import TauCeti.Geometry.Symplectic.Lagrangian.Basic
-public import TauCeti.LinearAlgebra.TotallyReal
+public import TauCeti.LinearAlgebra.TotallyReal.Finrank
 
 /-!
 # Lagrangian subspaces of a tame pair are maximal totally real
 
 The analytic Heegaard Floer roadmap keeps *totally real* and *Lagrangian* as separate named
-hypotheses (a totally real subspace `L` is one complementary to its `J`-image, `V = L ⊕ JL`; a
-Lagrangian subspace is one equal to its symplectic complement, `L^ω = L`), because the two play
+hypotheses (a totally real subspace `L` is one disjoint from its `J`-image, `L ⊓ JL = ⊥`, and a
+maximal totally real one is moreover complementary, `V = L ⊕ JL`; a Lagrangian subspace is one
+equal to its symplectic complement, `L^ω = L`), because the two play
 different roles downstream: totally real boundary conditions for the Cauchy--Riemann operator and
 the tori `T_α`, `T_β` in `Sym^g(Σ)` (Lane F4), Lagrangian boundary conditions for exact Lagrangian
 Floer homology (Lane F3). They are nevertheless tightly linked: on a finite-dimensional space, as
@@ -81,11 +80,6 @@ theorem IsIsotropic.disjoint_map_of_tames (h : ω.IsIsotropic L) (htame : ω.Tam
   rw [← hJyx, hy0]
   simp
 
-/-- The `J`-image of a subspace has the same dimension, since `J` is a linear isomorphism. -/
-private theorem finrank_map_toLinearMap (L : Submodule ℝ V) :
-    finrank ℝ (L.map J.toLinearMap) = finrank ℝ L :=
-  LinearEquiv.finrank_map_eq J.linearEquiv L
-
 section FiniteDimensional
 
 variable [FiniteDimensional ℝ V]
@@ -95,11 +89,10 @@ variable [FiniteDimensional ℝ V]
 
 Note that only taming is required, not the full compatibility of `(ω, J)`. -/
 theorem IsLagrangian.isMaximalTotallyReal_of_tames (hL : ω.IsLagrangian L) (htame : ω.Tames J) :
-    IsMaximalTotallyReal J.toLinearMap L := by
-  have hdim : finrank ℝ V ≤ finrank ℝ L + finrank ℝ (L.map J.toLinearMap) := by
-    rw [finrank_map_toLinearMap, ← two_mul, hL.two_mul_finrank]
-  exact (Submodule.isCompl_iff_disjoint L (L.map J.toLinearMap) hdim).mpr
-    (hL.isIsotropic.disjoint_map_of_tames htame)
+    IsMaximalTotallyReal J.toLinearMap L :=
+  IsTotallyReal.isMaximalTotallyReal
+    ((isTotallyReal_iff _ _).2 (hL.isIsotropic.disjoint_map_of_tames htame))
+    (J.injective.comp L.subtype_injective) hL.two_mul_finrank
 
 /-- A Lagrangian subspace of a compatible pair on a finite-dimensional space is maximal totally
 real. -/

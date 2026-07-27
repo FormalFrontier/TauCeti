@@ -197,7 +197,7 @@ private theorem endpoint_deformTerminal {u v : X} (γ : BasedPath x₀) (hu : en
 continuous in the family parameter. This packages the boilerplate for using
 `Path.trans_continuous_family` to lift `append γ ∘ Path.initialSegmentFamily δ` to a continuous
 map `I → BasedPath x₀`. -/
-private theorem continuous_append_initialSegmentFamily {x₀ z : X}
+public theorem continuous_append_initialSegmentFamily {x₀ z : X}
     (γ : BasedPath x₀) (δ : Path (endpoint γ) z) :
     Continuous fun t : I ↦ γ.append (Path.initialSegmentFamily δ t) := by
   apply Continuous.subtype_mk
