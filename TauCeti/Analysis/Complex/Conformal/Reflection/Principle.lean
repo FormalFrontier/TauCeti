@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Basic
-public import TauCeti.Analysis.Complex.Conformal.Removability
+public import TauCeti.Analysis.Complex.Conformal.Removability.Basic
 
 /-!
 # The Schwarz reflection principle across the real axis
@@ -19,7 +19,7 @@ whose gluing calculus (continuity on all of `Ω`, holomorphy off the axis, the d
 and the conjugation symmetry) is already established there. What remains — and is proved here — is
 holomorphy *at* the axis — and that is exactly Painlevé removability of the real axis,
 `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero` from
-`Conformal/Removability.lean`, where the Morera argument that supplies it is proved. So the
+`Conformal/Removability/Basic.lean`, where the Morera argument that supplies it is proved. So the
 reflection principle is now a two-line consequence of the two halves of its input: continuity of
 the extension across the axis, and holomorphy off it.
 
