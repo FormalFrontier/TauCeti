@@ -44,7 +44,6 @@ noncomputable def volumeForm : (Fin n → k) [⋀^Fin n]→ₗ[k] k :=
   (Pi.basisFun k (Fin n)).det
 
 /-- The coordinate volume form evaluates a family of vectors by its matrix determinant. -/
-@[simp]
 theorem volumeForm_apply (v : Fin n → Fin n → k) :
     volumeForm k n v = Matrix.det (Matrix.of v) := by
   exact Pi.basisFun_det_apply v
