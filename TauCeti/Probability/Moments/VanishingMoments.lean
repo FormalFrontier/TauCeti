@@ -5,6 +5,7 @@ Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+public import TauCeti.MeasureTheory.Function.PolynomialMemLp
 public import TauCeti.Probability.Moments.Determinacy
 public import Mathlib.Analysis.RCLike.Basic
 public import Mathlib.MeasureTheory.Function.L2Space
@@ -43,14 +44,6 @@ open scoped Topology
 variable {ν : Measure ℝ}
 
 /-! ## Vanishing moments at the level of functions -/
-
-/-- The positive part `max t 0` never exceeds `t` in absolute value.
-
-This is what lets a single bound on `g` serve both truncated densities `g⁺` and `g⁻` below. -/
-private theorem abs_max_zero_le_abs (t : ℝ) : |max t 0| ≤ |t| := by
-  rcases le_total t 0 with h | h
-  · simp [max_eq_right h]
-  · simp [max_eq_left h, abs_of_nonneg h]
 
 section Densities
 
@@ -151,9 +144,11 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
   have hltn : ∀ᵐ x ∂ν, ENNReal.ofReal (-g x) < ⊤ := by
     filter_upwards with x using ENNReal.ofReal_lt_top
   -- `ENNReal.ofReal` already truncates at zero, so these densities are exactly `g⁺` and `g⁻`.
-  have hlep : ∀ x, |max (g x) 0| ≤ |g x| := fun x => abs_max_zero_le_abs (g x)
-  have hlen : ∀ x, |max (-g x) 0| ≤ |g x| := fun x =>
-    (abs_max_zero_le_abs (-g x)).trans_eq (abs_neg (g x))
+  -- `|max t 0| ≤ |t|` is Mathlib's `abs_max_sub_max_le_abs` at `b = c = 0`.
+  have hlep : ∀ x, |max (g x) 0| ≤ |g x| := fun x => by
+    simpa using abs_max_sub_max_le_abs (g x) 0 0
+  have hlen : ∀ x, |max (-g x) 0| ≤ |g x| := fun x => by
+    simpa using abs_max_sub_max_le_abs (-g x) 0 0
   haveI hmpfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (g x)) :=
     isFiniteMeasure_withDensity_ofReal hg.2
   haveI hmnfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (-g x)) :=
@@ -250,11 +245,11 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
       Integrable (fun x : ℝ => Real.exp (b * |x|) * f x) ν := by
     intro f hf
     simpa only [Pi.mul_def] using hexp2.integrable_mul hf
-  -- Monomials are square-integrable: exponential domination makes every polynomial moment
-  -- integrable (`ProbabilityTheory.integrable_pow_abs_of_integrable_exp_mul`), and `L²`
-  -- membership at `n` is integrability at `2 * n`.
+  -- Monomials are square-integrable.  Exponential integrability at `±b` makes every polynomial
+  -- moment finite (`ProbabilityTheory.integrable_pow_of_integrable_exp_mul`), which is exactly
+  -- the hypothesis of the shared polynomial-`L²` construction in
+  -- `TauCeti.MeasureTheory.Function.PolynomialMemLp`; specialising it to `X ^ n` gives this.
   have hpolyL2 : ∀ n : ℕ, MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
-    intro n
     have hexpb : Integrable (fun x : ℝ => Real.exp (b * |x|)) ν :=
       hexp2.integrable (show (1 : ENNReal) ≤ 2 by norm_num)
     have hmeas_lin : ∀ c : ℝ, AEStronglyMeasurable (fun x : ℝ => Real.exp (c * x)) ν :=
@@ -268,18 +263,11 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
       refine hexpb.mono' (hmeas_lin (-b)) (Filter.Eventually.of_forall fun x => ?_)
       rw [Real.norm_eq_abs, Real.abs_exp]
       refine Real.exp_le_exp.mpr (by nlinarith [hbpos, neg_le_abs x])
-    have hsq : Integrable (fun x : ℝ => |x| ^ (2 * n)) ν :=
-      integrable_pow_abs_of_integrable_exp_mul (ne_of_gt hbpos) hpos hneg (2 * n)
-    have hfun : (fun x : ℝ => ‖(algebraMap ℝ 𝕜 x) ^ n‖ ^ 2) = fun x : ℝ => |x| ^ (2 * n) := by
-      funext x
-      rw [RCLike.algebraMap_eq_ofReal, norm_pow, RCLike.norm_ofReal, ← pow_mul]
-      congr 1
-      ring
-    rw [memLp_two_iff_integrable_sq_norm
-      ((RCLike.continuous_ofReal.comp continuous_id).pow n).aestronglyMeasurable]
-    change Integrable (fun x : ℝ => ‖(algebraMap ℝ 𝕜 x) ^ n‖ ^ 2) ν
-    rw [hfun]
-    exact hsq
+    have hpow : ∀ k : ℕ, Integrable (fun x : ℝ => x ^ k) ν := fun k =>
+      integrable_pow_of_integrable_exp_mul (ne_of_gt hbpos) hpos hneg k
+    intro n
+    simpa using
+      memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜) hpow (Polynomial.X ^ n)
   -- Hence each monomial moment integrand is integrable, so `re`/`im` pass through the integral.
   have hint : ∀ n : ℕ, Integrable (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n * g x) ν :=
     fun n => by simpa only [Pi.mul_def] using (hpolyL2 n).integrable_mul hg
