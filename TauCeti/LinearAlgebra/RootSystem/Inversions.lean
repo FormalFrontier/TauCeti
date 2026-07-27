@@ -126,6 +126,7 @@ lemma ncard_inversions_one : (inversions P b 1).ncard = 0 := by
 
 omit [CharZero R] in
 /-- A simple reflection acts on root indices by the corresponding reflection permutation. -/
+@[simp]
 lemma weylGroupToPerm_ofIdx (i j : ι) :
     P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j = P.reflectionPerm i j := by
   apply P.root.injective
