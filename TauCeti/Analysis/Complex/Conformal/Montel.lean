@@ -29,8 +29,10 @@ restricts to a set of continuous maps there;
 uniform-on-compacts function space, so
 `ArzelaAscoli.isCompact_closure_of_isClosedEmbedding` applies: equicontinuity on each compact comes
 from `IsLocallyBoundedOn.equicontinuousOn`, and pointwise relative compactness from local
-boundedness. The closure of the family is then compact, `Ω` being locally compact makes `C(Ω, ℂ)`
-first countable, and `IsCompact.tendsto_subseq` extracts a convergent subsequence. Finally
+boundedness. The closure of the family is then compact. An open subset of `ℂ` is locally compact
+and second countable, hence σ-compact and so hemicompact — a countable cofinal family of compacts —
+which is what makes the compact-open topology on `C(Ω, ℂ)` first countable (local compactness alone
+would not suffice), and `IsCompact.tendsto_subseq` extracts a convergent subsequence. Finally
 `ContinuousMap.tendsto_iff_tendstoLocallyUniformly` turns compact-open convergence into locally
 uniform convergence, and `TendstoLocallyUniformlyOn.differentiableOn` gives holomorphy of the limit.
 
