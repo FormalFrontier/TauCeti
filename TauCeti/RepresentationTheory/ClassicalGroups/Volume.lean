@@ -69,14 +69,16 @@ theorem volumeForm_stdRep (g : GL (Fin n) k) (v : Fin n → Fin n → k) :
 @[simp]
 theorem volumeForm_stdRep_SL (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
-    volumeForm k n (fun i => stdRep k n (g : GL (Fin n) k) (v i)) = volumeForm k n v := by
-  rw [volumeForm_stdRep, Matrix.SpecialLinearGroup.coe_GL_coe_matrix, g.det_coe, one_mul]
+    volumeForm k n (fun i => (g : Matrix (Fin n) (Fin n) k).mulVec (v i)) = volumeForm k n v := by
+  simpa only [stdRep_apply, Matrix.SpecialLinearGroup.coe_GL_coe_matrix, Matrix.mulVecBilin_apply,
+    g.det_coe, one_mul] using volumeForm_stdRep k n (g : GL (Fin n) k) v
 
 /-- The standard action of `SL(n, k)` preserves the coordinate volume form on the standard basis. -/
 @[simp]
 theorem volumeForm_stdRep_SL_basis (g : Matrix.SpecialLinearGroup (Fin n) k) :
-    volumeForm k n (fun i => stdRep k n (g : GL (Fin n) k) (Pi.basisFun k (Fin n) i)) = 1 := by
-  rw [volumeForm_stdRep_SL, volumeForm_basis]
+    volumeForm k n (fun i => (g : Matrix (Fin n) (Fin n) k).col i) = 1 := by
+  simpa only [Pi.basisFun_apply, Matrix.mulVec_single, MulOpposite.op_one, one_smul,
+    volumeForm_basis] using volumeForm_stdRep_SL k n g (Pi.basisFun k (Fin n))
 
 end CommRing
 
