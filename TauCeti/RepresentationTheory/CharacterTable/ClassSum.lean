@@ -18,23 +18,23 @@ namespace TauCeti
 
 open scoped BigOperators
 
-variable {k G : Type*} [Group G] [Fintype G] [DecidableEq G]
+variable {G : Type*} [Group G] [Fintype G] [DecidableEq G]
 
 section
 
 /-- The sum in `k[G]` of the elements in the conjugacy class `C`. -/
-noncomputable def classSum [Semiring k] (C : ConjClasses G) : MonoidAlgebra k G :=
+noncomputable def classSum (k : Type*) [Semiring k] (C : ConjClasses G) : MonoidAlgebra k G :=
   ∑ x : C.carrier, MonoidAlgebra.of k G x
 
 /-- A class sum is the sum of the basis elements in its conjugacy class. -/
-theorem classSum_eq_sum [Semiring k] (C : ConjClasses G) :
-    classSum (k := k) C = ∑ x : C.carrier, MonoidAlgebra.of k G x := by
+theorem classSum_eq_sum {k : Type*} [Semiring k] (C : ConjClasses G) :
+    classSum k C = ∑ x : C.carrier, MonoidAlgebra.of k G x := by
   rfl
 
 /-- The coefficient of `g` in the class sum of `C` is `1` if `g` lies in `C`, and `0` otherwise. -/
 @[simp]
-theorem classSum_coeff [Semiring k] (C : ConjClasses G) (g : G) :
-    (classSum (k := k) C).coeff g = if ConjClasses.mk g = C then 1 else 0 := by
+theorem classSum_coeff {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
+    (classSum k C).coeff g = if ConjClasses.mk g = C then 1 else 0 := by
   rw [classSum_eq_sum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
   simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases hg : ConjClasses.mk g = C
@@ -78,9 +78,8 @@ theorem conjugateCarrierEquiv_apply (g : G) (C : ConjClasses G) (x : C.carrier) 
   simp [conjugateCarrierEquiv]
 
 /-- A class sum commutes with each group element in the group algebra. -/
-theorem classSum_commutes [Semiring k] (C : ConjClasses G) (g : G) :
-    classSum (k := k) C * MonoidAlgebra.of k G g =
-      MonoidAlgebra.of k G g * classSum (k := k) C := by
+theorem classSum_commutes {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
+    classSum k C * MonoidAlgebra.of k G g = MonoidAlgebra.of k G g * classSum k C := by
   rw [classSum_eq_sum, Finset.sum_mul, Finset.mul_sum]
   simp_rw [← (MonoidAlgebra.of k G).map_mul]
   rw [← (conjugateCarrierEquiv g C).sum_comp fun x => MonoidAlgebra.of k G (x * g)]
@@ -91,12 +90,12 @@ theorem classSum_commutes [Semiring k] (C : ConjClasses G) (g : G) :
 end
 
 /-- Every class sum lies in the center of the group algebra. -/
-theorem classSum_mem_center [CommSemiring k] (C : ConjClasses G) :
-    classSum (k := k) C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
+theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :
+    classSum k C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
   rw [Subalgebra.mem_center_iff]
   intro a
   induction a using MonoidAlgebra.induction_on with
-  | hM g => exact (classSum_commutes (k := k) C g).symm
+  | hM g => exact (classSum_commutes C g).symm
   | hadd x y hx hy =>
     rw [mul_add, add_mul, hx, hy]
   | hsmul r x hx =>
