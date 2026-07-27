@@ -62,7 +62,6 @@ public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
   (eulerForm Q).toQuadraticMap
 
 /-- The defining equation for the Tits form. -/
-@[simp]
 public theorem titsForm_def (d : Q → ℤ) : titsForm Q d = eulerForm Q d d :=
   LinearMap.BilinMap.toQuadraticMap_apply _ _
 
