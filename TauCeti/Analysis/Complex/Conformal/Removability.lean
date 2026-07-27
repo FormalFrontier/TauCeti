@@ -197,8 +197,9 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg
     (hneg : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | z.im < 0})) :
     DifferentiableOn ℂ F Ω := by
   apply differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero hΩ hcont
-  rw [show Ω ∩ {z : ℂ | z.im ≠ 0} =
-      (Ω ∩ {z : ℂ | 0 < z.im}) ∪ (Ω ∩ {z : ℂ | z.im < 0}) by
+  have hoffAxis :
+      Ω ∩ {z : ℂ | z.im ≠ 0} =
+        (Ω ∩ {z : ℂ | 0 < z.im}) ∪ (Ω ∩ {z : ℂ | z.im < 0}) := by
     ext z
     simp only [mem_inter_iff, mem_setOf_eq, mem_union]
     constructor
@@ -208,7 +209,8 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg
       · exact Or.inl ⟨hz, h⟩
     · rintro (⟨hz, h⟩ | ⟨hz, h⟩)
       · exact ⟨hz, ne_of_gt h⟩
-      · exact ⟨hz, ne_of_lt h⟩]
+      · exact ⟨hz, ne_of_lt h⟩
+  rw [hoffAxis]
   exact hpos.union_of_isOpen hneg
     (hΩ.inter (isOpen_lt continuous_const Complex.continuous_im))
     (hΩ.inter (isOpen_lt Complex.continuous_im continuous_const))
