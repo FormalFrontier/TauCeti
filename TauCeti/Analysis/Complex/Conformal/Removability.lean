@@ -61,7 +61,7 @@ namespace TauCeti
 open Complex Set intervalIntegral MeasureTheory
 open scoped Interval
 
-variable {Ω : Set ℂ} {F : ℂ → ℂ}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {Ω : Set ℂ} {F : ℂ → E}
 
 /-- A rectangle whose open interior avoids the real axis has a vanishing boundary integral for
 any function continuous on a domain `Ω` containing the (closed) rectangle and holomorphic on the
@@ -161,8 +161,15 @@ private lemma boundaryIntegral_eq_zero_of_straddling
     (Or.inl (Complex.ofReal_im z.re))
   simp only [Complex.ofReal_re, Complex.ofReal_im] at R1 R2
   rw [splitVw, splitVz, smul_add, smul_add]
-  simp only [smul_eq_mul] at R1 R2 ⊢
-  linear_combination R1 + R2
+  have h := congrArg₂ (· + ·) R1 R2
+  simp only [add_zero] at h
+  simp only [Complex.ofReal_zero, zero_mul, add_zero] at h ⊢
+  abel_nf at h ⊢
+  convert h using 1
+  all_goals simp only [add_comm]
+  all_goals abel
+
+variable [CompleteSpace E]
 
 /-- **Painlevé removability of the real axis.** A function continuous on an open set `Ω ⊆ ℂ` and
 holomorphic on the part of `Ω` off the real axis is holomorphic on all of `Ω`.
