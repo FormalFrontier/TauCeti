@@ -39,6 +39,16 @@ section CommSemiring
 
 variable [CommSemiring R] [AddCommMonoid M] [Module R M]
 
+/-- A family of linear maps indexed by `Fin 0` acts as the identity on the zero-fold tensor
+power. -/
+@[simp]
+theorem map_fin_zero (f : Fin 0 → M →ₗ[R] M) :
+    PiTensorProduct.map f = LinearMap.id := by
+  rw [← PiTensorProduct.map_id]
+  congr
+  funext i
+  exact Fin.elim0 i
+
 private theorem append_const {α : Type*} {d e : ℕ} (x : α) :
     Fin.append (fun _ : Fin d => x) (fun _ : Fin e => x) = fun _ : Fin (d + e) => x := by
   ext i
@@ -101,14 +111,13 @@ theorem tensorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
   simp only [tensorPower, MonoidHom.comp_apply, PiTensorProduct.mapMonoidHom_apply]
   exact congrArg PiTensorProduct.map (funext fun i => MonoidHom.pi_apply _ g i)
 
-/-- The action on the zero-fold tensor power is the identity. -/
-@[simp]
+/-- The action on the zero-fold tensor power is the identity.
+
+This is intentionally not a simp lemma: `tensorPower_apply` followed by
+`TauCeti.TensorPower.map_fin_zero` already performs this simplification. -/
 theorem tensorPower_zero_apply (ρ : Representation R G M) (g : G) :
     ρ.tensorPower 0 g = LinearMap.id := by
-  rw [tensorPower_apply, ← PiTensorProduct.map_id]
-  congr
-  funext i
-  exact Fin.elim0 i
+  simp
 
 /-- Splitting the factors gives an equivalence from the tensor product of two tensor-power
 representations to the tensor power indexed by their sum. -/
