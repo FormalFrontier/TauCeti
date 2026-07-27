@@ -138,10 +138,7 @@ theorem isEmpty_hom_self (h : Quiver.IsAcyclic V) (a : V) :
 /-- In an acyclic quiver, an arrow excludes every reverse arrow. -/
 theorem isEmpty_hom_of_hom (h : Quiver.IsAcyclic V) {a b : V}
     (e : a ⟶ b) : IsEmpty (b ⟶ a) :=
-  ⟨fun f ↦ by
-    have hlength : (e.toPath.comp f.toPath).length = 0 := h.length_eq_zero _
-    rw [Path.length_comp, Path.length_toPath, Path.length_toPath] at hlength
-    omega⟩
+  ⟨fun f ↦ by simpa using h.length_eq_zero_of_paths_left e.toPath f.toPath⟩
 
 /-- Closed paths in an acyclic quiver form a subsingleton. -/
 theorem subsingleton_path_self (h : Quiver.IsAcyclic V) (a : V) :
@@ -158,7 +155,7 @@ theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :
 
 /-- A quiver mapping to an acyclic quiver is acyclic if the induced map on each closed-path
 type is injective. -/
-theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W)
+theorem of_mapPath_self_injective {W : Type*} [Quiver W] (F : V ⥤q W)
     (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a : V⦄, Function.Injective (F.mapPath : Path a a → Path (F.obj a) (F.obj a))) :
     Quiver.IsAcyclic V := by
@@ -169,11 +166,11 @@ theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W)
 
 /-- A quiver is acyclic if its induced maps on all path types are injective and its target is
 acyclic. -/
-theorem of_mapPath_injective_of_all {W : Type*} [Quiver W] (F : V ⥤q W)
+theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W)
     (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a b : V⦄, Function.Injective (F.mapPath : Path a b → Path (F.obj a) (F.obj b))) :
     Quiver.IsAcyclic V :=
-  of_mapPath_injective F hW fun {_} ↦ @hinj _ _
+  of_mapPath_self_injective F hW fun {_} ↦ @hinj _ _
 
 end Quiver.IsAcyclic
 
