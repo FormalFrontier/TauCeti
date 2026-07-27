@@ -12,10 +12,11 @@ public import Mathlib.LinearAlgebra.AffineSpace.AffineMap
 
 A line is a removable set for *continuous* holomorphic functions: if `F` is continuous on an open
 set `Ω ⊆ ℂ` and holomorphic on `Ω` off a line, then `F` is holomorphic on all of `Ω`. This is the
-removability half of the L4 layer of the conformal-mapping roadmap
-(`ConformalMapping/README.md`, "Painlevé removability across an arc"); it is the analytic content
-that makes the Schwarz reflection principle work, and it is what lets two functions holomorphic on
-the two open sides of a line be glued along it as soon as the glued function is continuous.
+straight-line base case toward the L4 analytic-arc removability result in the conformal-mapping
+roadmap (`ConformalMapping/README.md`); curved analytic arcs remain outside this module's scope.
+It is the analytic content that makes the Schwarz reflection principle work, and it is what lets
+two functions holomorphic on the two open sides of a line be glued along it as soon as the glued
+function is continuous.
 
 The proof is the classical Morera argument. By
 `Complex.isConservativeOn_and_continuousOn_iff_isDifferentiableOn`, holomorphy on an open set is
@@ -35,8 +36,8 @@ biholomorphism of `ℂ` carrying `ℝ` onto the line through `p` and `q`.
   real axis, the base case carrying the Morera argument.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg`: the gluing
   form — holomorphic above the axis, holomorphic below it, continuous across it, hence holomorphic.
-* `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_lineMap`: removability of any
-  subset of the line through two distinct points `p ≠ q`, in particular of a segment or arc of it.
+* `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap`:
+  removability of any subset of the line through two distinct points `p ≠ q`.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq` and
   `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_re_eq`: the horizontal and
   vertical special cases `{z | z.im = c}` and `{z | z.re = c}`.
@@ -61,7 +62,7 @@ namespace TauCeti
 open Complex Set intervalIntegral MeasureTheory
 open scoped Interval
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {Ω : Set ℂ} {F : ℂ → E}
+variable {Ω : Set ℂ} {F : ℂ → ℂ}
 
 /-- A rectangle whose open interior avoids the real axis has a vanishing boundary integral for
 any function continuous on a domain `Ω` containing the (closed) rectangle and holomorphic on the
@@ -161,22 +162,15 @@ private lemma boundaryIntegral_eq_zero_of_straddling
     (Or.inl (Complex.ofReal_im z.re))
   simp only [Complex.ofReal_re, Complex.ofReal_im] at R1 R2
   rw [splitVw, splitVz, smul_add, smul_add]
-  have h := congrArg₂ (· + ·) R1 R2
-  simp only [add_zero] at h
-  simp only [Complex.ofReal_zero, zero_mul, add_zero] at h ⊢
-  abel_nf at h ⊢
-  convert h using 1
-  all_goals simp only [add_comm]
-  all_goals abel
-
-variable [CompleteSpace E]
+  simp only [smul_eq_mul] at R1 R2 ⊢
+  linear_combination R1 + R2
 
 /-- **Painlevé removability of the real axis.** A function continuous on an open set `Ω ⊆ ℂ` and
 holomorphic on the part of `Ω` off the real axis is holomorphic on all of `Ω`.
 
 This is the base case of removability across a line: an arbitrary line is reduced to it by an
 affine change of variable in
-`TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_lineMap`. -/
+`TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap`. -/
 theorem differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω)
     (hdiff : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | z.im ≠ 0})) :
@@ -217,13 +211,14 @@ private lemma mem_range_lineMap_iff {p q z : ℂ} :
   exact exists_congr fun t => by rw [add_comm]
 
 /-- **Painlevé removability across a line.** Let `p ≠ q` be points of `ℂ` and let `S` be any subset
-of the line through them — the whole line, a segment, an arc. A function continuous on an open set
+of the line through them, such as the whole line or a segment. A function continuous on an open set
 `Ω ⊆ ℂ` and holomorphic on `Ω \ S` is holomorphic on all of `Ω`.
 
 The line is straightened to the real axis by the affine chart `w ↦ p + (q - p) * w`, a
 biholomorphism of `ℂ` carrying `ℝ` onto it, reducing the statement to
 `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero`. -/
-theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_lineMap {p q : ℂ} {S : Set ℂ}
+theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
+    {p q : ℂ} {S : Set ℂ}
     (hpq : p ≠ q) (hS : S ⊆ Set.range (AffineMap.lineMap (k := ℝ) p q))
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω) (hdiff : DifferentiableOn ℂ F (Ω \ S)) :
     DifferentiableOn ℂ F Ω := by
@@ -256,7 +251,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq {c : ℝ
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω)
     (hdiff : DifferentiableOn ℂ F (Ω \ {z : ℂ | z.im = c})) :
     DifferentiableOn ℂ F Ω := by
-  refine differentiableOn_of_continuousOn_of_differentiableOn_diff_lineMap
+  refine differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
     (p := c * I) (q := 1 + c * I) (by simp) (fun z hz => ?_) hΩ hcont hdiff
   refine mem_range_lineMap_iff.mpr ⟨z.re, ?_⟩
   simp only [add_sub_cancel_right, mul_one]
@@ -268,7 +263,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_re_eq {c : ℝ
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω)
     (hdiff : DifferentiableOn ℂ F (Ω \ {z : ℂ | z.re = c})) :
     DifferentiableOn ℂ F Ω := by
-  refine differentiableOn_of_continuousOn_of_differentiableOn_diff_lineMap
+  refine differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap
     (p := (c : ℂ)) (q := (c : ℂ) + I) (by simp) (fun z hz => ?_) hΩ hcont hdiff
   refine mem_range_lineMap_iff.mpr ⟨z.im, ?_⟩
   simp only [add_sub_cancel_left]
