@@ -85,6 +85,10 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
   have hclemb : IsClosedEmbedding (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
       (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) := by
     refine ⟨ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact.isEmbedding, ?_⟩
+    -- The `rfl` below is just `ContinuousMap.toUniformOnFunIsCompact` unfolded (Mathlib
+    -- `Topology/UniformSpace/CompactConvergence.lean`): Arzelà–Ascoli asks for the map in the
+    -- `UniformOnFun.ofFun 𝔖 ∘ F` form, while `range_toUniformOnFunIsCompact` is stated for the
+    -- packaged name, so this bridges the two.
     rw [show (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
         (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) = ContinuousMap.toUniformOnFunIsCompact from rfl,
       ContinuousMap.range_toUniformOnFunIsCompact]
