@@ -98,16 +98,16 @@ noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G 
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     rfl
 
-/-- The linear equivalence evaluates a class function on the class of `g`. -/
+/-- The linear equivalence is given by `toConjClasses`. -/
 @[simp]
-theorem equivConjClasses_apply_mk (f : ClassFunction k G) (g : G) :
-    equivConjClasses f (ConjClasses.mk g) = f.1 g :=
+theorem equivConjClasses_apply (f : ClassFunction k G) :
+    equivConjClasses f = toConjClasses f :=
   (rfl)
 
-/-- The inverse linear equivalence evaluates a function on the class of `g`. -/
+/-- The inverse linear equivalence is given by `ofConjClasses`. -/
 @[simp]
-theorem equivConjClasses_symm_apply (f : ConjClasses G → k) (g : G) :
-    (equivConjClasses.symm f).1 g = f (ConjClasses.mk g) :=
+theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
+    equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
 
 end ClassFunction
