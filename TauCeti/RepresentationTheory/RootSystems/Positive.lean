@@ -12,8 +12,7 @@ public section
 # Positive and negative roots
 
 This file packages Mathlib's positivity predicate for a root-pairing base as the sets of positive
-and negative root indices. It records their partition, their exchange under root negation, and the
-positive-root induction principle used to study Weyl-group inversion sets.
+and negative root indices. It records their partition and their exchange under root negation.
 
 ## Main definitions
 
@@ -142,23 +141,5 @@ theorem image_reflectionPerm_self_negRoots :
     change ¬ b.IsPos (-i)
     intro hneg
     exact (RootPairing.Base.IsPos.neg_iff_not b i).mp hneg hi
-
-/-- A positive root is a sum of simple roots whose partial sums are roots. -/
-theorem exists_sum_support_of_mem_posRoots [Finite ι] [IsDomain R] [P.IsCrystallographic]
-    {i : ι} (hi : i ∈ posRoots P b) :
-    ∃ n, ∃ f : Fin n → ι,
-      Set.range f ⊆ b.support ∧
-      P.root i = ∑ m, P.root (f m) ∧
-      ∀ m, ∑ m' ≤ m, P.root (f m') ∈ Set.range P.root :=
-  RootPairing.Base.exists_eq_sum_and_forall_sum_mem_of_isPos (b := b) hi
-
-/-- To prove a predicate on positive roots, it suffices to prove it for simple roots and show that
-it is preserved by the simple reflections used in positive-root lowering. -/
-theorem posRoots_induction_on_reflect [Finite ι] [IsDomain R] [P.IsCrystallographic]
-    [P.IsReduced] {i : ι} (hi : i ∈ posRoots P b) {p : ι → Prop}
-    (hbase : ∀ j ∈ b.support, p j)
-    (hreflect : ∀ j k, p j → k ∈ b.support → p (P.reflectionPerm k j)) :
-    p i :=
-  hi.induction_on_reflect hbase hreflect
 
 end TauCeti
