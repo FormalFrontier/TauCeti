@@ -110,8 +110,10 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
     rw [hfun]
     exact h0
   -- Apply the weighted-product form of B1 to the real and imaginary parts separately.
-  have hzre := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _ (key _ hg.re) hre
-  have hzim := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _ (key _ hg.im) him
+  have hzre := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _
+    ⟨1, one_pos, key _ hg.re 1 zero_le_one⟩ hre
+  have hzim := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _
+    ⟨1, one_pos, key _ hg.im 1 zero_le_one⟩ him
   filter_upwards [hzre, hzim] with x hx1 hx2
   simp only [Pi.zero_apply] at hx1 hx2 ⊢
   exact RCLike.ext (by simp [hx1]) (by simp [hx2])
