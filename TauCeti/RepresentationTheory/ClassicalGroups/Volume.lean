@@ -11,15 +11,17 @@ public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public section
 
 /-!
-# The volume form preserved by the special linear group
+# The determinant form preserved by the special linear group
 
-This file defines the coordinate volume form on `Fin n → k` and proves its transformation law
-under the standard action of the general linear group.  Restricting to matrices of determinant one
-gives the invariant alternating form required for the standard representation of `SL(n, k)`.
+This file proves the transformation law for Mathlib's standard-basis determinant form under the
+standard action of the general linear group. Restricting to matrices of determinant one gives the
+invariant alternating form required for the standard representation of `SL(n, k)`.
 
-## Main definitions
+## Main results
 
-* `TauCeti.volumeForm` is the top-dimensional alternating form determined by the standard basis.
+* `TauCeti.basisFun_det_stdRep` gives the determinant transformation law for the standard
+  representation.
+* `TauCeti.basisFun_det_stdRep_SL` states its specialization to the special linear group.
 
 ## References
 
@@ -39,52 +41,23 @@ section CommRing
 
 variable [CommRing k]
 
-/-- The coordinate volume form on `kⁿ`, normalized to take value `1` on the standard basis. -/
-noncomputable def volumeForm : (Fin n → k) [⋀^Fin n]→ₗ[k] k :=
-  (Pi.basisFun k (Fin n)).det
-
-/-- The coordinate volume form evaluates a family of vectors by its matrix determinant. -/
-theorem volumeForm_apply (v : Fin n → Fin n → k) :
-    volumeForm k n v = Matrix.det (Matrix.of v) := by
-  exact Pi.basisFun_det_apply v
-
-/-- The coordinate volume form is normalized on the standard basis. -/
-@[simp]
-theorem volumeForm_basis : volumeForm k n (Pi.basisFun k (Fin n)) = 1 :=
-  (Pi.basisFun k (Fin n)).det_self
-
-/-- The coordinate volume form is nonzero over a nontrivial coefficient ring. -/
-theorem volumeForm_ne_zero [Nontrivial k] : volumeForm k n ≠ 0 :=
-  (Pi.basisFun k (Fin n)).det_ne_zero
-
-/-- Applying a square matrix to every argument scales the volume form by its determinant. -/
-theorem volumeForm_mulVec (A : Matrix (Fin n) (Fin n) k) (v : Fin n → Fin n → k) :
-    volumeForm k n (fun i => A.mulVec (v i)) = Matrix.det A * volumeForm k n v := by
-  simpa [volumeForm, Matrix.mulVecBilin_apply, Function.comp_def, LinearMap.det_toLin'] using
+/-- The standard action of `GL(n, k)` scales the standard-basis determinant form by the matrix
+determinant. -/
+theorem basisFun_det_stdRep (g : GL (Fin n) k) (v : Fin n → Fin n → k) :
+    (Pi.basisFun k (Fin n)).det (fun i => stdRep k n g (v i)) =
+      Matrix.det (g : Matrix (Fin n) (Fin n) k) * (Pi.basisFun k (Fin n)).det v := by
+  simpa [stdRep_apply, Function.comp_def, LinearMap.det_toLin'] using
     (Module.Basis.det_comp (Pi.basisFun k (Fin n))
-      (Matrix.toLin' A) v)
+      (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
 
-/-- The standard action of `GL(n, k)` scales the volume form by the matrix determinant. -/
-theorem volumeForm_stdRep (g : GL (Fin n) k) (v : Fin n → Fin n → k) :
-    volumeForm k n (fun i => stdRep k n g (v i)) =
-      Matrix.det (g : Matrix (Fin n) (Fin n) k) * volumeForm k n v := by
-  simpa only [stdRep_apply, Matrix.mulVecBilin_apply] using
-    volumeForm_mulVec k n (g : Matrix (Fin n) (Fin n) k) v
-
-/-- The standard action of `SL(n, k)` preserves the coordinate volume form. -/
+/-- The standard action of `SL(n, k)` preserves the standard-basis determinant form. -/
 @[simp]
-theorem volumeForm_stdRep_SL (g : Matrix.SpecialLinearGroup (Fin n) k)
+theorem basisFun_det_stdRep_SL (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
-    volumeForm k n (fun i => (g : Matrix (Fin n) (Fin n) k).mulVec (v i)) = volumeForm k n v := by
+    (Pi.basisFun k (Fin n)).det (fun i => (g : Matrix (Fin n) (Fin n) k).mulVec (v i)) =
+      (Pi.basisFun k (Fin n)).det v := by
   simpa only [stdRep_apply, Matrix.SpecialLinearGroup.coe_GL_coe_matrix, Matrix.mulVecBilin_apply,
-    g.det_coe, one_mul] using volumeForm_stdRep k n (g : GL (Fin n) k) v
-
-/-- The standard action of `SL(n, k)` preserves the coordinate volume form on the standard basis. -/
-@[simp]
-theorem volumeForm_stdRep_SL_basis (g : Matrix.SpecialLinearGroup (Fin n) k) :
-    volumeForm k n (fun i => (g : Matrix (Fin n) (Fin n) k).col i) = 1 := by
-  simpa only [Pi.basisFun_apply, Matrix.mulVec_single, MulOpposite.op_one, one_smul,
-    volumeForm_basis] using volumeForm_stdRep_SL k n g (Pi.basisFun k (Fin n))
+    g.det_coe, one_mul] using basisFun_det_stdRep k n (g : GL (Fin n) k) v
 
 end CommRing
 
