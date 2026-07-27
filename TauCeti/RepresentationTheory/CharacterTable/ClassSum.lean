@@ -22,14 +22,16 @@ variable {k G : Type*} [Group G] [Fintype G] [DecidableEq G]
 
 section
 
-variable [Semiring k] [Nontrivial k]
+variable [Semiring k]
 
 /-- The sum in `k[G]` of the elements in the conjugacy class `C`. -/
-def classSum (C : ConjClasses G) : MonoidAlgebra k G :=
-  { coeff :=
-      { support := Finset.univ.filter (fun x => ConjClasses.mk x = C)
-        toFun := fun x => if ConjClasses.mk x = C then 1 else 0
-        mem_support_toFun := by simp } }
+noncomputable def classSum (C : ConjClasses G) : MonoidAlgebra k G :=
+  { coeff := Finsupp.onFinset (Finset.univ.filter fun x => ConjClasses.mk x = C)
+      (fun x => if ConjClasses.mk x = C then 1 else 0) (by
+        intro x hx
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        by_contra h
+        simp [h] at hx) }
 
 /-- A class sum is the sum of the basis elements in its conjugacy class. -/
 theorem classSum_eq_sum (C : ConjClasses G) :
@@ -47,7 +49,7 @@ theorem classSum_eq_sum (C : ConjClasses G) :
   rw [sum_apply]
   simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   rw [classSum, MonoidAlgebra.coeff_ofCoeff]
-  simp only [Finsupp.coe_mk]
+  simp only [Finsupp.onFinset_apply]
   change (if ConjClasses.mk x = C then 1 else 0) =
     ∑ i : C.carrier, if (i : G) = x then 1 else 0
   by_cases hx : ConjClasses.mk x = C
@@ -105,7 +107,7 @@ theorem classSum_commutes_of (C : ConjClasses G) (g : G) :
 end
 
 /-- Every class sum lies in the center of the group algebra. -/
-theorem classSum_mem_center [CommSemiring k] [Nontrivial k] (C : ConjClasses G) :
+theorem classSum_mem_center [CommSemiring k] (C : ConjClasses G) :
     classSum (k := k) C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
   rw [Subalgebra.mem_center_iff]
   intro a
