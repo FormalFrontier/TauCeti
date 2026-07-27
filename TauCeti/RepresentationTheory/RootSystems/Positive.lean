@@ -105,7 +105,6 @@ private lemma reflectionPerm_self_eq_neg (i : ι) :
     P.reflectionPerm i i = -i := rfl
 
 /-- The negative of a positive root is negative. -/
-@[simp]
 lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     P.reflectionPerm i i ∈ negRoots P b ↔ i ∈ posRoots P b := by
   letI := P.indexNeg
@@ -116,9 +115,9 @@ lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
 /-- The negative of a negative root is positive. -/
 @[simp]
 lemma reflectionPerm_self_mem_posRoots_iff_mem_negRoots (i : ι) :
-    P.reflectionPerm i i ∈ posRoots P b ↔ i ∈ negRoots P b := by
+    b.IsPos (P.reflectionPerm i i) ↔ i ∈ negRoots P b := by
   letI := P.indexNeg
-  rw [reflectionPerm_self_eq_neg, mem_posRoots, mem_negRoots]
+  rw [reflectionPerm_self_eq_neg, mem_negRoots]
   exact RootPairing.Base.IsPos.neg_iff_not b i
 
 /-- A positive root is a nonnegative natural-number combination of simple roots. -/
