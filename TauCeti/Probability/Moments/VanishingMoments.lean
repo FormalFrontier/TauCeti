@@ -8,7 +8,6 @@ Authors: Claude
 public import TauCeti.MeasureTheory.Function.PolynomialMemLp
 public import TauCeti.Probability.Moments.Determinacy
 public import Mathlib.Analysis.RCLike.Basic
-public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.Probability.Moments.IntegrableExpMul
 
 /-!
@@ -22,15 +21,18 @@ Both forms assume exponential control at a single positive rate; they differ in 
 
 * `TauCeti.ae_eq_zero_of_forall_moment_eq_zero` (function level) assumes the *product*
   `e^{a|x|} · g` is integrable for some `a > 0`, and concludes for a real `g`.
-* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` (measure level) assumes
+* `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` (measure level) assumes
   it of the *weight* alone -- `e^{a|x|} ∈ L¹(ν)` for some `a > 0` -- and of `g` only that it lies
-  in `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.
+  in `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.  The roadmap name
+  `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` is retained as a public alias.
 
 The measure-level form is the usable one: `hexp` becomes a statement about the weight alone
 (Gaussian decay, or automatic for a *finite* compactly supported measure), independent of `g`.
 Compact support alone does not suffice: on a compactly supported measure of infinite mass even the
-constant `1` fails to be integrable.  Finiteness of `ν` is not a separate hypothesis in either
-form, since `e^{a|x|} ≥ 1` dominates the constant `1` and so `hexp` already forces it.
+constant `1` fails to be integrable.  In the measure-level form finiteness of `ν` is not a separate
+hypothesis: there `hexp` integrates the weight `e^{a|x|} ≥ 1` itself, which dominates the constant
+`1`.  The function-level form carries no such implication -- its `hexp` integrates the *product*
+`e^{a|x|} · g`, which `g = 0` satisfies over any measure, finite or infinite.
 -/
 
 public section
@@ -98,7 +100,7 @@ end Densities
 is a.e. zero.
 
 This is the internal transfer step, not the form the completeness step consumes — that is the
-measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` below, which wraps this
+measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` below, which wraps this
 one. `Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp` in
 `TauCeti.Probability.Moments.Determinacy` pins down a *measure* from its moments, and this transfers
 that to a *function* by applying it to the positive and negative parts of `g` as densities
@@ -208,12 +210,13 @@ The rate is existential, matching the convention of the engine this wraps and of
 form above; a caller holding a bound at every rate supplies it at any single one.  Requiring it at
 *every* rate would exclude exponentially-tailed weights such as `e^{-|x|}`, for which
 `∫ e^{a|x|} dν` is finite only for `a < 1`, even though they are moment-determinate all the same.
-The `_of_finite_expMoments` suffix is the roadmap-specified API name, and it is accurate: a finite
-exponential moment at one positive rate forces every polynomial moment to be finite — the
-domination step below (`rpow_abs_le_mul_exp_abs`) is exactly that implication.
+The `_of_exists_integrable_exp` suffix names the hypothesis exactly — *existence* of one positive
+rate with `e^{a|x|}` integrable — and matches the adjacent determinacy API
+(`Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp`).  The roadmap name
+`_of_finite_expMoments` is provided as a public alias immediately below.
 
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
-theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
+theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
     (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
@@ -304,5 +307,16 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
   filter_upwards [hzre, hzim] with x hx1 hx2
   simp only [Pi.zero_apply] at hx1 hx2 ⊢
   exact RCLike.ext (by simp [hx1]) (by simp [hx2])
+
+/-- **Roadmap B1, measure level** (roadmap-specified API name).  Alias of
+`ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp`; the primary name is preferred as it
+names the hypothesis (existence of one integrable exponential rate) exactly and matches the adjacent
+determinacy API. -/
+theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
+    {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
+    (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
+    g =ᵐ[ν] 0 :=
+  ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp hexp hg hmom
 
 end TauCeti
