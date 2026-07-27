@@ -15,7 +15,7 @@ to every arrow, compatibly with path composition. This is precisely a functor fr
 path category to its category of modules.
 
 This file introduces only the standard abbreviation. The equivalence with modules over the path
-algebra is developed separately.
+algebra is planned for separate development.
 
 ## References
 

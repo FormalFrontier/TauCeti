@@ -17,9 +17,11 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 /-!
 # Dimension vectors of quiver representations
 
-The dimension vector of a representation records the dimension of its vector space at each vertex.
-This file defines dimension vectors and proves their fundamental functorial properties: invariance
-under isomorphism and additivity on biproducts and short exact sequences.
+The dimension vector of a representation records the `Module.finrank` of its vector space at each
+vertex. No finite-dimensionality is assumed in the definition, so an infinite-dimensional component
+has value `0` by the convention for `Module.finrank`. This file defines dimension vectors and proves
+their fundamental functorial properties: invariance under isomorphism and additivity on biproducts
+and short exact sequences.
 
 ## References
 
@@ -38,12 +40,13 @@ universe u v
 
 variable {k : Type u} {Q : Type v} [Field k] [Quiver Q]
 
-/-- The dimension vector of a quiver representation, indexed by the vertices of the quiver. -/
+/-- The `Module.finrank` dimension vector of a quiver representation, indexed by the vertices of the
+quiver. An infinite-dimensional component has value `0` by convention. -/
 noncomputable def dimVector (M : QuiverRep k Q) : Q → ℕ :=
   fun i ↦ Module.finrank k (M.obj ((Paths.of Q).obj i))
 
-/-- The value of the dimension vector at a vertex is the dimension of the corresponding vector
-space. -/
+/-- The value of the dimension vector at a vertex is the `Module.finrank` of the corresponding
+vector space. -/
 @[simp]
 theorem dimVector_apply (M : QuiverRep k Q) (i : Q) :
     dimVector M i = Module.finrank k (M.obj ((Paths.of Q).obj i)) :=
