@@ -1,6 +1,12 @@
-import Mathlib.MeasureTheory.Group.Integral
-import Mathlib.MeasureTheory.Measure.Haar.Unique
-import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.MeasureTheory.Group.Integral
+public import Mathlib.MeasureTheory.Measure.Haar.Unique
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 /-!
 # Normalized Haar measure on compact groups
@@ -9,6 +15,8 @@ This file normalizes Mathlib's Haar measure on a compact topological group to a 
 measure.  It records left, right, and inversion invariance, the uniqueness of the resulting
 probability Haar measure, and the basic integral identities used for averaging representations.
 -/
+
+public section
 
 open MeasureTheory Set
 
@@ -28,7 +36,7 @@ theorem haar_univ_ne_zero : (Measure.haar : Measure G) univ ≠ 0 :=
   (Measure.measure_pos_of_nonempty_interior (μ := Measure.haar) (by simp)).ne'
 
 /-- Haar probability measure on a compact topological group. -/
-noncomputable def haarProb : Measure G :=
+@[expose] noncomputable def haarProb : Measure G :=
   ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar
 
 /-- The definition of normalized Haar measure as a rescaling of Mathlib's Haar measure. -/
@@ -36,7 +44,10 @@ theorem haarProb_def :
     haarProb G = ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar :=
   rfl
 
-@[simp]
+/-- The normalized Haar measure of the whole group is `1`.
+
+This is not a `simp` lemma: once `isProbabilityMeasure_haarProb` is available, `measure_univ`
+already puts the left-hand side in simp-normal form. -/
 theorem haarProb_apply_univ : haarProb G univ = 1 := by
   rw [haarProb_def, Measure.smul_apply]
   exact ENNReal.inv_mul_cancel (haar_univ_ne_zero G) (haar_univ_lt_top G).ne
@@ -109,8 +120,10 @@ theorem integral_haarProb_inv (f : G → E) :
     ∫ x, f x⁻¹ ∂haarProb G = ∫ x, f x ∂haarProb G :=
   integral_inv_eq_self f _
 
-/-- The normalized Haar integral of a constant is that constant. -/
-@[simp]
+/-- The normalized Haar integral of a constant is that constant.
+
+This is not a `simp` lemma: `integral_const` together with the total mass being `1` already
+reduces the left-hand side. -/
 theorem integral_haarProb_const [CompleteSpace E] (c : E) :
     ∫ _ : G, c ∂haarProb G = c := by
   rw [integral_const]
