@@ -71,7 +71,6 @@ theorem dimVector_zero :
 
 /-- The dimension vector is additive on biproducts of pointwise finite-dimensional
 representations. -/
-@[simp]
 theorem dimVector_biprod (M N : QuiverRep k Q)
     (hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
     (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i))) :
@@ -92,7 +91,7 @@ theorem dimVector_biprod (M N : QuiverRep k Q)
 
 /-- In a short exact sequence of pointwise finite-dimensional quiver representations, the middle
 dimension vector is the sum of the outer dimension vectors. -/
-theorem dimVector_shortExact {S : ShortComplex (QuiverRep k Q)} (hS : S.ShortExact)
+theorem dimVector_add_of_shortExact {S : ShortComplex (QuiverRep k Q)} (hS : S.ShortExact)
     (h₁ : ∀ i : Q, FiniteDimensional k (S.X₁.obj ((Paths.of Q).obj i)))
     (h₃ : ∀ i : Q, FiniteDimensional k (S.X₃.obj ((Paths.of Q).obj i))) :
     dimVector S.X₂ = dimVector S.X₁ + dimVector S.X₃ := by
