@@ -31,13 +31,20 @@ branch). Then:
 Inverting, `z ↦ (r/2) / (h z + w₀)` is holomorphic, injective, and bounded by `1/2`. Halving `r`
 is what makes the bound **strict**, landing in the open disc rather than its closure.
 
-## Upstream coordination
+## Attribution and upstream coordination
 
-As with `TauCeti.Analysis.Complex.Conformal.BranchLogRoot`, the Riemann mapping theorem is being
-formalized upstream at
+This construction follows the in-tree Mathlib proof of the same step,
+`Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` (© Yury Kudryashov,
+`Mathlib.Analysis.Complex.RiemannMapping`): the same plan — pick `a ∉ U`, take a holomorphic square
+root of `z - a`, obtain an open image ball, observe that `-h` avoids it, and invert. That lemma is
+present in this checkout but is **not exported from its module** (it carries no `public` marker
+under the module system, so an importer cannot name it — a direct reference elaborates to
+`Unknown constant`), which is why this file re-derives the construction rather than reusing it.
+
+The Riemann mapping theorem is also being formalized upstream at
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), which proves the
 L0–L3 prerequisites internally as private lemmas. This declaration is an explicitly **temporary
-shim**: delete it and refactor downstream consumers when the human-curated Mathlib version lands.
+shim**: delete it and refactor downstream consumers onto the exported Mathlib version once it lands.
 
 ## Main statements
 
@@ -144,10 +151,12 @@ theorem exists_differentiableOn_injOn_mapsTo_ball {U : Set ℂ} (hUc : IsSimplyC
       abs_of_pos hrhalf, div_lt_one hpos]
     linarith
 
-/-- **Non-vacuity.** The hypotheses above are satisfiable: the open unit ball is simply connected
-(being convex, hence contractible), open, and proper. Without this the theorem could be true
-merely because nothing meets its hypotheses. -/
-theorem isSimplyConnected_isOpen_ne_univ_ball :
+/- **Non-vacuity** (documentation, not public API). The hypotheses above are satisfiable: the open
+unit ball is simply connected (being convex, hence contractible), open, and proper. Without this the
+theorem could be true merely because nothing meets its hypotheses.  Kept as an `example` — it is a
+one-off sanity check on `ball 0 1`, with no downstream consumer, so it should not sit in the public
+namespace. -/
+example :
     IsSimplyConnected (ball (0 : ℂ) 1) ∧ IsOpen (ball (0 : ℂ) 1)
       ∧ (ball (0 : ℂ) 1) ≠ univ := by
   refine ⟨?_, isOpen_ball, ?_⟩
