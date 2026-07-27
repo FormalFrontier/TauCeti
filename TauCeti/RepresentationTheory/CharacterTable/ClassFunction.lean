@@ -1,6 +1,8 @@
-import Mathlib.Algebra.Group.ConjFinite
-import Mathlib.LinearAlgebra.Dimension.Constructions
-import Mathlib.RepresentationTheory.Character
+module
+
+public import Mathlib.Algebra.Group.ConjFinite
+public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import Mathlib.RepresentationTheory.Character
 
 /-!
 # Class functions
@@ -11,6 +13,8 @@ groups, and shows that characters of representations are class functions.
 
 These are the indexing foundations for character tables.
 -/
+
+@[expose] public section
 
 namespace TauCeti
 
@@ -105,13 +109,11 @@ theorem finrank_eq_card_conjClasses [Finite G] :
 
 /-- The character of a representation is a class function. -/
 noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
-    [FiniteDimensional k V]
     (ρ : Representation k G V) : ClassFunction k G :=
   ⟨ρ.character, fun g h => ρ.char_conj g h⟩
 
 @[simp]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
-    [FiniteDimensional k V]
     (ρ : Representation k G V) (g : G) :
     (ofCharacter ρ).1 g = ρ.character g :=
   rfl
