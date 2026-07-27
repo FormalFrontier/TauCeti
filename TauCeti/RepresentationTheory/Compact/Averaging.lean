@@ -55,8 +55,11 @@ noncomputable def haarAverage [CompleteSpace V] : C(G, V) →L[𝕜] V :=
       simpa using norm_integral_le_of_norm_le_const
         (μ := haarProb G) (Filter.Eventually.of_forall f.norm_coe_le_norm)
 
-/-- The Haar average is the Bochner integral against normalized Haar measure. -/
-@[simp]
+/-- The Haar average is the Bochner integral against normalized Haar measure.
+
+Not a `simp` lemma: `haarAverage` is the normal form here, so that the constant, translation
+and inversion lemmas below can be `simp` lemmas. Unfold explicitly with `rw`/`simp` when the
+underlying integral is wanted. -/
 theorem haarAverage_apply [CompleteSpace V] (f : C(G, V)) :
     haarAverage G (𝕜 := 𝕜) f = ∫ g, f g ∂haarProb G :=
   (rfl)
