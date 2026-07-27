@@ -12,7 +12,7 @@ restriction adjunction.  This is the categorical core used by the subgroup form 
 the induction and Mackey-theory roadmap.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -23,6 +23,22 @@ universe u v w x
 variable {k : Type u} [CommRing k]
   {G : Type v} {H : Type w} {K : Type x} [Group G] [Group H] [Group K]
 
+namespace Rep
+
+/-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
+along their composite. -/
+noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
+    _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
+      _root_.Rep.resFunctor.{max u v w x} (k := k) φ ≅
+        _root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ) :=
+  NatIso.ofComponents
+    (fun A ↦ _root_.Rep.mkIso <|
+      Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by rfl)
+    (by
+      intro _ _ f
+      ext
+      rfl)
+
 /-- Induction in stages: induction along a composite is naturally isomorphic to successive
 inductions along the two group homomorphisms. -/
 noncomputable def indFunctorCompIso (φ : G →* H) (ψ : H →* K) :
@@ -32,6 +48,20 @@ noncomputable def indFunctorCompIso (φ : G →* H) (ψ : H →* K) :
   Adjunction.leftAdjointCompIso (_root_.Rep.indResAdjunction.{max u v w x} k φ)
     (_root_.Rep.indResAdjunction.{max u v w x} k ψ)
     (_root_.Rep.indResAdjunction.{max u v w x} k (ψ.comp φ))
-    (Iso.refl _)
+    (resFunctorCompIso φ ψ)
+
+/-- The induction-in-stages isomorphism is characterized by the restriction-composition
+isomorphism under the adjunction equivalence. -/
+@[simp]
+lemma conjugateEquiv_indFunctorCompIso_inv (φ : G →* H) (ψ : H →* K) :
+    conjugateEquiv
+      ((_root_.Rep.indResAdjunction.{max u v w x} k φ).comp
+        (_root_.Rep.indResAdjunction.{max u v w x} k ψ))
+      (_root_.Rep.indResAdjunction.{max u v w x} k (ψ.comp φ))
+      (indFunctorCompIso φ ψ).inv =
+        (resFunctorCompIso φ ψ).hom :=
+  Adjunction.conjugateEquiv_leftAdjointCompIso_inv _ _ _ _
+
+end Rep
 
 end TauCeti
