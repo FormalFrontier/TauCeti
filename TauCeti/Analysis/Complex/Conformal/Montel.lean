@@ -15,8 +15,9 @@ import Mathlib.Topology.UniformSpace.CompactConvergence
 
 A locally bounded family of holomorphic functions on an open set `Ω ⊆ ℂ` is a normal family: every
 sequence drawn from it has a subsequence converging locally uniformly on `Ω`, and the limit is
-again holomorphic. This completes layer **L1 (normal families / Montel)** of the conformal-mapping
-roadmap, and is the compactness engine the Riemann mapping theorem runs on.
+again holomorphic. This is the **Montel selection** component of layer **L1 (normal families /
+Montel)** of the conformal-mapping roadmap, and the compactness engine the Riemann mapping theorem
+runs on. L1 also lists Vitali's theorem, which is not proved here, so the layer is not complete.
 
 The equicontinuity half is already available in `Conformal/NormalFamilies.lean`
 (`TauCeti.IsLocallyBoundedOn.equicontinuousOn`, from Cauchy's estimate); what is added here is the
