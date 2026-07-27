@@ -19,6 +19,8 @@ invariant alternating form required for the standard representation of `SL(n, k)
 
 ## Main results
 
+* `TauCeti.basisFun_det_mulVec` states the invariance of the determinant form under
+  multiplication by a matrix of determinant one.
 * `TauCeti.basisFun_det_stdSLRep` states the invariance of the determinant form under the
   standard representation of the special linear group.
 
@@ -40,16 +42,26 @@ section CommRing
 
 variable [CommRing k]
 
-/-- The standard action of `SL(n, k)` preserves the standard-basis determinant form. -/
+/-- Multiplication by a matrix of determinant one preserves the standard-basis determinant form. -/
 @[simp]
+theorem basisFun_det_mulVec (g : Matrix.SpecialLinearGroup (Fin n) k) (v : Fin n → Fin n → k) :
+    Matrix.detRowAlternating (fun i => (g : Matrix (Fin n) (Fin n) k) *ᵥ v i) =
+      (Pi.basisFun k (Fin n)).det v := by
+  simpa only [Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply, Matrix.mulVecBilin_apply,
+    LinearMap.det_toLin', g.det_coe, one_mul] using
+    (Module.Basis.det_comp (Pi.basisFun k (Fin n))
+      (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
+
+/-- The standard action of `SL(n, k)` preserves the standard-basis determinant form.
+
+This is deliberately not a `simp` lemma: `stdSLRep_apply` already rewrites `stdSLRep k n g` to
+`Matrix.mulVecLin ↑g`, so the left-hand side here is not in `simp` normal form and the rewrite
+could never fire. Use `basisFun_det_mulVec` for the `simp`-normal statement. -/
 theorem basisFun_det_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
     Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
       (Pi.basisFun k (Fin n)).det v := by
-  simpa only [stdSLRep_apply_apply, Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply,
-    Matrix.mulVecBilin_apply, LinearMap.det_toLin', g.det_coe, one_mul] using
-    (Module.Basis.det_comp (Pi.basisFun k (Fin n))
-      (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
+  simpa only [stdSLRep_apply_apply] using basisFun_det_mulVec k n g v
 
 end CommRing
 
