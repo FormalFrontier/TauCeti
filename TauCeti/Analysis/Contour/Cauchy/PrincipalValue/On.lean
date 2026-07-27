@@ -37,6 +37,8 @@ of `f` (which fails at an on-curve singularity), never silently identifying the 
 
 ## Main definitions
 
+* `HasCauchyPVWith γ a b f S v` — the same with the excision set `S` **prescribed**; the form
+  that concatenates, since adjacent subcurves must share it (`PrincipalValue/Concat.lean`)
 * `HasCauchyPV γ a b f v` — some finite excision set makes the truncated integrals converge to `v`
   (the primary predicate).
 * `CauchyPVExists γ a b f` — the principal value exists (`∃ v, HasCauchyPV γ a b f v`).
@@ -87,6 +89,29 @@ open Filter Topology
 
 namespace TauCeti.Contour
 
+/-- **The Cauchy principal value with a prescribed excision set.** Identical to `HasCauchyPV`
+except that the finite set `S` of excised points is an explicit parameter rather than
+existentially bound, which is what makes the principal values along adjacent subcurves
+concatenable. -/
+def HasCauchyPVWith (γ : ℝ → ℂ) (a b : ℝ) (f : ℂ → ℂ) (S : Finset ℂ) (v : ℂ) : Prop :=
+  (∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+      (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
+        MeasureTheory.volume a b) ∧
+    Tendsto (fun ε ↦ ∫ t in a..b, if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
+      (𝓝[>] 0) (𝓝 v)
+
+/-- `HasCauchyPVWith` unfolded into its two clauses — eventual integrability of the excised
+integrand and convergence of the excised integrals — so consumers need not unfold the
+definition. -/
+theorem hasCauchyPVWith_iff {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {S : Finset ℂ} {v : ℂ} :
+    HasCauchyPVWith γ a b f S v ↔
+      (∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+          (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
+        MeasureTheory.volume a b) ∧
+        Tendsto (fun ε ↦ ∫ t in a..b, if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
+          (𝓝[>] 0) (𝓝 v) :=
+  Iff.rfl
+
 /-- The **Cauchy principal value on a set** of the contour integral `∮_γ f` exists with value `v`:
 there is a finite set `S ⊆ ℂ` such that the truncated integrand along `γ` over `[a, b]`, zeroed
 within a symmetric `ε`-ball of any point of `S`, is eventually `IntervalIntegrable` and its integral
@@ -95,12 +120,7 @@ tends to `v` as `ε → 0⁺`. The set is existential so the predicate stays `S`
 the convention that a Bochner integral of a non-integrable function is `0`. Set-level companion of
 `HasCauchyPVAt` (raw `γ : ℝ → ℂ`, `[a, b]`). -/
 def HasCauchyPV (γ : ℝ → ℂ) (a b : ℝ) (f : ℂ → ℂ) (v : ℂ) : Prop :=
-  ∃ S : Finset ℂ,
-    (∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
-        (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
-        MeasureTheory.volume a b) ∧
-      Tendsto (fun ε ↦ ∫ t in a..b, if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f (γ t) * deriv γ t)
-        (𝓝[>] 0) (𝓝 v)
+  ∃ S : Finset ℂ, HasCauchyPVWith γ a b f S v
 
 /-- Restatement of `HasCauchyPV` as the existence of a finite excision set making the excised
 integrand eventually integrable and its integrals convergent, so consumers can characterize the
@@ -127,6 +147,21 @@ theorem HasCauchyPV.intro {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : 
         (𝓝[>] 0) (𝓝 v)) :
     HasCauchyPV γ a b f v :=
   ⟨S, h_int, h_tendsto⟩
+
+/-- Forgetting the witness recovers the existentially-bound form. -/
+theorem HasCauchyPVWith.hasCauchyPV {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {S : Finset ℂ} {v : ℂ}
+    (h : HasCauchyPVWith γ a b f S v) : HasCauchyPV γ a b f v :=
+  HasCauchyPV.intro S h.1 h.2
+
+/-- `HasCauchyPV` is exactly `HasCauchyPVWith` with the excision set existentially quantified.
+
+This is the abstraction-preserving bridge between the two forms, and is **not** redundant with
+the definition: under the module system `HasCauchyPV`'s body is not exposed outside this file,
+so `Iff.rfl` proves this only here and consumers elsewhere cannot unfold their way across. The
+sibling `hasCauchyPV_iff` expands the truncation body instead, which loses the abstraction. -/
+theorem hasCauchyPV_iff_exists_hasCauchyPVWith {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ} :
+    HasCauchyPV γ a b f v ↔ ∃ S : Finset ℂ, HasCauchyPVWith γ a b f S v :=
+  Iff.rfl
 
 /-- The Cauchy principal value on a set exists: shorthand for `∃ v, HasCauchyPV γ a b f v`. -/
 def CauchyPVExists (γ : ℝ → ℂ) (a b : ℝ) (f : ℂ → ℂ) : Prop :=
