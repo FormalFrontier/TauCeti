@@ -19,9 +19,9 @@ group, is finite when the root index type is finite.
 
 * `TauCeti.RootPairing.Equiv.indexHom_injective` says that an automorphism of a root system is
   determined by its permutation of the roots.
-* `TauCeti.finite_subgroup_aut` proves that every subgroup of the automorphism group of a finite
-  root system is finite.
-* `TauCeti.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
+* `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
+  a finite root system is finite.
+* `TauCeti.RootPairing.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
 
 ## References
 
@@ -65,15 +65,17 @@ theorem indexHom_injective [P.IsRootSystem] :
 
 end RootPairing.Equiv
 
+namespace RootPairing
+
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
     (hspan : Submodule.span R (range P.root) = ⊤) :
     Function.Injective P.weylGroupToPerm :=
-  (RootPairing.Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective
+  (Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective
 
 /-- The action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective [P.IsRootSystem] : Function.Injective P.weylGroupToPerm :=
-  (RootPairing.Equiv.indexHom_injective P).comp Subtype.val_injective
+  (Equiv.indexHom_injective P).comp Subtype.val_injective
 
 variable [Finite ι]
 
@@ -82,7 +84,7 @@ is finite. -/
 theorem finite_subgroup_aut_of_span_eq_top (hspan : Submodule.span R (range P.root) = ⊤)
     (G : Subgroup P.Aut) : Finite G :=
   Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).restrict G)
-    ((RootPairing.Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective)
+    ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective)
 
 /-- Every subgroup of the automorphism group of a finite root system is finite. -/
 theorem finite_subgroup_aut [P.IsRootSystem] (G : Subgroup P.Aut) : Finite G :=
@@ -90,14 +92,14 @@ theorem finite_subgroup_aut [P.IsRootSystem] (G : Subgroup P.Aut) : Finite G :=
     (_root_.RootPairing.IsRootSystem.span_root_eq_top (P := P)) G
 
 /-- If the roots span, the automorphism group is finite when the root index type is finite. -/
-theorem finite_rootPairing_aut_of_span_eq_top
+theorem finite_aut_of_span_eq_top
     (hspan : Submodule.span R (range P.root) = ⊤) : Finite P.Aut :=
   Finite.of_injective (_root_.RootPairing.Equiv.indexHom P)
-    (RootPairing.Equiv.indexHom_injective_of_span_eq_top P hspan)
+    (Equiv.indexHom_injective_of_span_eq_top P hspan)
 
 /-- The automorphism group of a finite root system is finite. -/
-theorem finite_rootSystem_aut [P.IsRootSystem] : Finite P.Aut :=
-  finite_rootPairing_aut_of_span_eq_top P
+theorem finite_aut [P.IsRootSystem] : Finite P.Aut :=
+  finite_aut_of_span_eq_top P
     (_root_.RootPairing.IsRootSystem.span_root_eq_top (P := P))
 
 /-- If the roots span, every subgroup of the automorphism group has order at most the factorial of
@@ -108,7 +110,7 @@ theorem card_subgroup_aut_le_factorial_of_span_eq_top
   calc
     Nat.card G ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
       ((_root_.RootPairing.Equiv.indexHom P).restrict G)
-        ((RootPairing.Equiv.indexHom_injective_of_span_eq_top P hspan).comp
+        ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp
           Subtype.val_injective)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
 
@@ -121,20 +123,20 @@ theorem card_subgroup_aut_le_factorial [P.IsRootSystem] (G : Subgroup P.Aut) :
 
 /-- If the roots span, the automorphism group has order at most the factorial of the number of
 roots. -/
-theorem card_rootPairing_aut_le_factorial_of_span_eq_top
+theorem card_aut_le_factorial_of_span_eq_top
     (hspan : Submodule.span R (range P.root) = ⊤) :
     Nat.card P.Aut ≤ Nat.factorial (Nat.card ι) :=
   calc
     Nat.card P.Aut ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
       (_root_.RootPairing.Equiv.indexHom P)
-        (RootPairing.Equiv.indexHom_injective_of_span_eq_top P hspan)
+        (Equiv.indexHom_injective_of_span_eq_top P hspan)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
 
 /-- The automorphism group of a finite root system has order at most the factorial of the number
 of roots. -/
-theorem card_rootSystem_aut_le_factorial [P.IsRootSystem] :
+theorem card_aut_le_factorial [P.IsRootSystem] :
     Nat.card P.Aut ≤ Nat.factorial (Nat.card ι) :=
-  card_rootPairing_aut_le_factorial_of_span_eq_top P
+  card_aut_le_factorial_of_span_eq_top P
     (_root_.RootPairing.IsRootSystem.span_root_eq_top (P := P))
 
 /-- If the roots span, the Weyl group is finite when the root index type is finite. -/
@@ -158,6 +160,8 @@ roots. -/
 theorem card_weylGroup_le_factorial [P.IsRootSystem] :
     Nat.card P.weylGroup ≤ Nat.factorial (Nat.card ι) :=
   card_subgroup_aut_le_factorial P P.weylGroup
+
+end RootPairing
 
 end RootSystem
 
