@@ -102,12 +102,7 @@ theorem stdOrthogonalRep_dotProduct_stdOrthogonalRep
           (g : Matrix (Fin n) (Fin n) k)) *ᵥ w) := by
       rw [Matrix.mulVec_mulVec]
     _ = v ⬝ᵥ w := by
-      letI : TrivialStar k := ⟨fun _ => rfl⟩
-      have hstar : star (g : Matrix (Fin n) (Fin n) k) =
-          (g : Matrix (Fin n) (Fin n) k)ᵀ := by
-        ext i j
-        simp only [Matrix.star_apply, star_trivial, transpose_apply]
-      rw [← hstar, Matrix.mem_unitaryGroup_iff'.mp g.prop, Matrix.one_mulVec]
+      rw [(Matrix.mem_orthogonalGroup_iff' (Fin n) k).mp g.prop, Matrix.one_mulVec]
 
 /-- The coordinate dot product identifies the standard module with its dual. -/
 noncomputable def stdOrthogonalRepToDual :
