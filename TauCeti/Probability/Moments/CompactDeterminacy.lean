@@ -6,8 +6,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.Algebra.Group.Submonoid.Finsupp
 import Mathlib.MeasureTheory.Measure.FiniteMeasureExt
-import Mathlib.MeasureTheory.Constructions.Polish.Basic
 
 /-!
 # Multivariate moment determinacy on a compact set
@@ -47,9 +47,10 @@ also makes integrability immediate. The star condition is vacuous, since `star` 
 functions is the identity.
 
 The ambient form is a wrapper: it pulls both measures back along `Subtype.val` to the compact
-subtype, applies the subtype form, and pushes the resulting equality forward again. Note the
-compact-subtype argument only establishes equality of the *restrictions* to `K`; the support
-hypotheses are what identify those restrictions with the original measures.
+subtype, applies the subtype form, and pushes the resulting equality forward again. That route
+establishes only equality of the *restrictions* to `K`, which is why it needs a support hypothesis
+on each measure rather than on one — see the theorem's docstring for why the one-sided form is
+nevertheless true.
 -/
 
 public section
@@ -99,23 +100,16 @@ private theorem coordAlgebra_separatesPoints (K : Set (ι → ℝ)) [CompactSpac
       ⟨coordBCF K i, Algebra.subset_adjoin (Set.mem_range_self i), rfl⟩
   exact ⟨(coordFun K i : K → ℝ), ⟨coordFun K i, hmem, rfl⟩, hi⟩
 
-/-- Every element of the multiplicative closure of the coordinate functions is a mixed monomial. -/
+/-- Every element of the multiplicative closure of the coordinate functions is a mixed monomial.
+`Submonoid.exists_of_mem_closure_range` supplies the exponent vector; this only transports the
+resulting equation of bounded continuous functions to its pointwise form. -/
 private theorem exists_monomial_of_mem_closure [Fintype ι] [CompactSpace K] {g : K →ᵇ ℝ}
     (hg : g ∈ Submonoid.closure (Set.range (coordBCF K))) :
     ∃ n : ι → ℕ, ∀ x : K, g x = ∏ i, (x : ι → ℝ) i ^ n i := by
-  classical
-  induction hg using Submonoid.closure_induction with
-  | mem f hf =>
-    obtain ⟨i, rfl⟩ := hf
-    refine ⟨fun j => if j = i then 1 else 0, fun x => ?_⟩
-    simp [Finset.prod_ite_eq' Finset.univ i fun j => (x : ι → ℝ) j]
-  | one => exact ⟨fun _ => 0, fun x => by simp⟩
-  | mul a b _ _ ha hb =>
-    obtain ⟨na, hna⟩ := ha
-    obtain ⟨nb, hnb⟩ := hb
-    refine ⟨na + nb, fun x => ?_⟩
-    simp only [mul_apply, hna, hnb, Pi.add_apply, pow_add]
-    rw [Finset.prod_mul_distrib]
+  obtain ⟨n, rfl⟩ := Submonoid.exists_of_mem_closure_range (coordBCF K) g hg
+  exact ⟨n, fun x => by
+    simp only [BoundedContinuousFunction.prod_apply, BoundedContinuousFunction.pow_apply,
+      coordBCF_apply]⟩
 
 /-- Integrals against `μ` and `ν` agree on the whole coordinate subalgebra, given agreement on
 mixed monomials. The monomials are the multiplicative closure of the coordinates, so this is a
@@ -164,10 +158,16 @@ theorem Measure.ext_of_forall_integral_monomial_eq [Fintype ι] [CompactSpace K]
 that are both supported on a common compact set `K` and assign the same integral to every mixed
 monomial are equal.
 
-Both support hypotheses are needed. Matching moments do not by themselves force either measure to
-concentrate on `K`, and the compact-subtype argument only yields equality of the restrictions
-`μ.restrict K = ν.restrict K`; it is exactly the support hypotheses that identify each restriction
-with the original measure. -/
+Both support hypotheses are required *by this proof*, which restricts to the compact subtype: that
+route establishes only `μ.restrict K = ν.restrict K`, and each support hypothesis is what identifies
+one restriction with the original measure.
+
+They are not both mathematically necessary. A compactly supported finite measure is
+moment-determinate among all finite measures: matching even moments confine any competitor to the
+same box, by a Markov bound on `∫ (x i / R) ^ (2 * m)`. So the one-sided statement — hypothesising
+compact support of `μ` alone — is true and strictly stronger. It needs that extra confinement step,
+which is deliberately out of scope here; this form is what the Layer 6 consumer needs, where both
+mixing laws are already known to live on a common compact box. -/
 theorem Measure.ext_of_forall_integral_monomial_eq_of_support [Fintype ι] (hK : IsCompact K)
     {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
