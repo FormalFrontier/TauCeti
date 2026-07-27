@@ -27,6 +27,19 @@ open scoped InnerProductSpace
 
 namespace TauCeti
 
+namespace ContRepresentation
+
+variable {R G V : Type*} [Ring R] [Group G] [AddCommGroup V] [TopologicalSpace V]
+  [IsTopologicalAddGroup V] [Module R V]
+
+/-- Applying a continuous group representation at an element and then at its inverse cancels. -/
+@[simp]
+theorem self_inv_apply (π : ContRepresentation R G V) (g : G) (v : V) :
+    π g (π g⁻¹ v) = v :=
+  Representation.self_inv_apply π.toRepresentation g v
+
+end ContRepresentation
+
 section Monoid
 
 variable {G V : Type*} [Monoid G] [NormedAddCommGroup V] [InnerProductSpace ℂ V]
@@ -124,11 +137,13 @@ theorem mem_unitary (hπ : IsUnitary π) (g : G) :
   (isUnitary_iff_mem_unitary π).mp hπ g
 
 /-- The adjoint of a unitary action operator is a left inverse. -/
+@[simp]
 theorem adjoint_comp_self (hπ : IsUnitary π) (g : G) :
     (ContinuousLinearMap.adjoint (π g)).comp (π g) = 1 :=
   (π g).inner_map_map_iff_adjoint_comp_self.mp (hπ g)
 
 /-- The adjoint of a unitary action operator is a right inverse. -/
+@[simp]
 theorem self_comp_adjoint (hπ : IsUnitary π) (g : G) :
     (π g).comp (ContinuousLinearMap.adjoint (π g)) = 1 := by
   rw [← ContinuousLinearMap.mul_def]
@@ -140,18 +155,14 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_left (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪π g v, w⟫_ℂ = ⟪v, π g⁻¹ w⟫_ℂ := by
-  have hinv := Representation.self_inv_apply π.toRepresentation g w
-  change π g (π g⁻¹ w) = w at hinv
-  simpa only [hinv] using hπ.inner_map_map g v (π g⁻¹ w)
+  simpa only [ContRepresentation.self_inv_apply] using hπ.inner_map_map g v (π g⁻¹ w)
 
 omit [CompleteSpace V] in
 /-- Moving a unitary action from the second inner-product argument to the first replaces the group
 element by its inverse. -/
 theorem inner_map_right (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪v, π g w⟫_ℂ = ⟪π g⁻¹ v, w⟫_ℂ := by
-  have hinv := Representation.self_inv_apply π.toRepresentation g v
-  change π g (π g⁻¹ v) = v at hinv
-  simpa only [hinv] using hπ.inner_map_map g (π g⁻¹ v) w
+  simpa only [ContRepresentation.self_inv_apply] using hπ.inner_map_map g (π g⁻¹ v) w
 
 /-- The adjoint of a unitary action operator is the action of the inverse group element. -/
 @[simp]
