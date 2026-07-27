@@ -308,6 +308,46 @@ lemma isJHolomorphic_constStructure_iff (J : AlmostComplexStructure U)
   · intro hf x
     exact hf.isConstStructureJHolomorphicAt x
 
+/-- The identity map is J-holomorphic at every point for every varying almost complex
+structure. -/
+@[simp]
+lemma isJHolomorphicAt_id (J : U → AlmostComplexStructure U) (x : U) :
+    IsJHolomorphicAt J J id x :=
+  isConstStructureJHolomorphicAt_id (J x) x
+
+/-- A constant map is J-holomorphic at every point for arbitrary source and target structures. -/
+@[simp]
+lemma isJHolomorphicAt_const (J : U → AlmostComplexStructure U)
+    (J' : V → AlmostComplexStructure V) (c : V) (x : U) :
+    IsJHolomorphicAt J J' (fun _ ↦ c) x :=
+  isConstStructureJHolomorphicAt_const (J x) (J' c) c x
+
+/-- The identity map is J-holomorphic within every set at every point. -/
+@[simp]
+lemma isJHolomorphicWithinAt_id (J : U → AlmostComplexStructure U) (s : Set U) (x : U) :
+    IsJHolomorphicWithinAt J J id s x :=
+  (isJHolomorphicAt_id J x).isJHolomorphicWithinAt
+
+/-- A constant map is J-holomorphic within every set at every point. -/
+@[simp]
+lemma isJHolomorphicWithinAt_const (J : U → AlmostComplexStructure U)
+    (J' : V → AlmostComplexStructure V) (c : V) (s : Set U) (x : U) :
+    IsJHolomorphicWithinAt J J' (fun _ ↦ c) s x :=
+  (isJHolomorphicAt_const J J' c x).isJHolomorphicWithinAt
+
+/-- The identity map is J-holomorphic on every set. -/
+@[simp]
+lemma isJHolomorphicOn_id (J : U → AlmostComplexStructure U) (s : Set U) :
+    IsJHolomorphicOn J J id s :=
+  fun x _ ↦ isJHolomorphicWithinAt_id J s x
+
+/-- A constant map is J-holomorphic on every set. -/
+@[simp]
+lemma isJHolomorphicOn_const (J : U → AlmostComplexStructure U)
+    (J' : V → AlmostComplexStructure V) (c : V) (s : Set U) :
+    IsJHolomorphicOn J J' (fun _ ↦ c) s :=
+  fun x _ ↦ isJHolomorphicWithinAt_const J J' c s x
+
 /-- The identity map is J-holomorphic for every varying almost complex structure. -/
 @[simp]
 lemma isJHolomorphic_id (J : U → AlmostComplexStructure U) :
