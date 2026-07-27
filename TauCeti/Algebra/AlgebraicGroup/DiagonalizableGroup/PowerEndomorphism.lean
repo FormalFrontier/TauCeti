@@ -33,10 +33,9 @@ The power-map description also reads off the character–cocharacter pairing dir
 a character `m` after a cocharacter `ψ` of `D(M)` raises a `𝔾ₘ`-point to the `⟨m, ψ⟩` power
 (`DiagonalizableGroup.charPoints_cocharPoints_apply`).
 
-This advances the reductive-groups roadmap (`ReductiveGroups/README.md` in TauCetiRoadmap,
-Layer 4: "Tori ... the character lattice `X*(T)` and cocharacter lattice `X_*(T)` with their
-perfect pairing", where the pairing "is realized as the composite endomorphism ... `powEnd`",
-and "the ring `End(𝔾ₘ) ≅ ℤ` on the level of power maps").
+This improves the existing power-endomorphism and character–cocharacter pairing API supporting
+the reductive-groups roadmap (`ReductiveGroups/README.md` in TauCetiRoadmap, Layer 4: "Tori ...
+the character lattice `X*(T)` and cocharacter lattice `X_*(T)` with their perfect pairing").
 
 ## Main results
 
@@ -57,8 +56,7 @@ and "the ring `End(𝔾ₘ) ≅ ℤ` on the level of power maps").
 The power endomorphism `DiagonalizableGroup.powEnd`, the `𝔾ₘ`-points extensionality
 `DiagonalizableGroup.pointsMulEquiv_ext`, and the character–cocharacter pairing are Tau Ceti's
 `TauCeti.Algebra.AlgebraicGroup.Cocharacter`. The additive reinterpretation
-`MonoidHom.toAdditive` and `ofMul_zpow` are Mathlib's. This realizes the `End(𝔾ₘ) ≅ ℤ`
-"on power maps" note of the Tau Ceti reductive-groups roadmap (Layer 4).
+`MonoidHom.toAdditive` and `ofMul_zpow` are Mathlib's.
 -/
 
 public section
@@ -125,8 +123,8 @@ theorem toAdditive_powEnd_eq_intCast (z : ℤ) :
       (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) := by
   apply AddMonoidHom.ext
   intro a
-  rw [MonoidHom.toAdditive_apply_apply, powEnd_apply, ofMul_zpow]
-  rfl
+  rw [MonoidHom.toAdditive_apply_apply, powEnd_apply, ofMul_zpow, ofMul_toMul]
+  exact (AddMonoid.End.intCast_apply z a).symm
 
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 
