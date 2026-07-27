@@ -19,7 +19,14 @@ and its
 [suggested declarations](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean).
 -/
 
-@[expose] public section
+public section
+
+/-
+The definitions below are deliberately not `@[expose]`d: the characteristic lemmas in this file
+are the intended interface, so nothing downstream needs to unfold them. Those lemmas are proved
+by `(rfl)` rather than `rfl`, since the parentheses stop them from being exported as
+definitional equalities, which would in turn require exposing the definitions.
+-/
 
 namespace TauCeti
 
@@ -55,7 +62,7 @@ noncomputable def toConjClasses (f : ClassFunction k G) : ConjClasses G → k :=
 @[simp]
 theorem toConjClasses_mk (f : ClassFunction k G) (g : G) :
     toConjClasses f (ConjClasses.mk g) = f.1 g :=
-  rfl
+  (rfl)
 
 /-- Pull a function on conjugacy classes back to a class function on the group. -/
 def ofConjClasses (f : ConjClasses G → k) : ClassFunction k G :=
@@ -67,7 +74,7 @@ def ofConjClasses (f : ConjClasses G → k) : ClassFunction k G :=
 @[simp]
 theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
-  rfl
+  (rfl)
 
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
@@ -92,12 +99,12 @@ noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G 
 @[simp]
 theorem equivConjClasses_apply_mk (f : ClassFunction k G) (g : G) :
     equivConjClasses f (ConjClasses.mk g) = f.1 g :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) (g : G) :
     (equivConjClasses.symm f).1 g = f (ConjClasses.mk g) :=
-  rfl
+  (rfl)
 
 end ClassFunction
 
@@ -122,7 +129,7 @@ noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) (g : G) :
     (ofCharacter ρ).1 g = ρ.character g :=
-  rfl
+  (rfl)
 
 /-- The character of a finite-dimensional bundled representation is a class function. -/
 noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
@@ -131,7 +138,7 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 @[simp]
 theorem ofFDRep_apply (V : FDRep k G) (g : G) :
     (ofFDRep V).1 g = V.character g :=
-  rfl
+  (rfl)
 
 end ClassFunction
 
