@@ -137,13 +137,11 @@ theorem mem_unitary (hπ : IsUnitary π) (g : G) :
   (isUnitary_iff_mem_unitary π).mp hπ g
 
 /-- The adjoint of a unitary action operator is a left inverse. -/
-@[simp]
 theorem adjoint_comp_self (hπ : IsUnitary π) (g : G) :
     (ContinuousLinearMap.adjoint (π g)).comp (π g) = 1 :=
   (π g).inner_map_map_iff_adjoint_comp_self.mp (hπ g)
 
 /-- The adjoint of a unitary action operator is a right inverse. -/
-@[simp]
 theorem self_comp_adjoint (hπ : IsUnitary π) (g : G) :
     (π g).comp (ContinuousLinearMap.adjoint (π g)) = 1 := by
   rw [← ContinuousLinearMap.mul_def]
