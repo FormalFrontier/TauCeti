@@ -89,48 +89,11 @@ theorem characterPairing_symm (f₁ f₂ : ClassFunction k G) :
 theorem characterPairing_isSymm : characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
-/-- Pairing a sum in the left argument distributes over addition. -/
-@[simp]
-theorem characterPairing_add_left (f₁ f₂ f₃ : ClassFunction k G) :
-    characterPairing (f₁ + f₂) f₃ = characterPairing f₁ f₃ + characterPairing f₂ f₃ :=
-  by
-    rw [characterPairing_apply, characterPairing_apply, characterPairing_apply]
-    simp [add_mul, Finset.sum_add_distrib, mul_add]
-
-/-- Pairing a scalar multiple in the left argument pulls out the scalar. -/
-@[simp]
-theorem characterPairing_smul_left (c : k) (f₁ f₂ : ClassFunction k G) :
-    characterPairing (c • f₁) f₂ = c * characterPairing f₁ f₂ :=
-  by
-    rw [characterPairing_apply, characterPairing_apply]
-    simp only [Submodule.coe_smul, Pi.smul_apply, smul_eq_mul]
-    calc
-      _ = (Nat.card G : k)⁻¹ * (c * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by
-        congr 1
-        rw [Finset.mul_sum]
-        apply Finset.sum_congr rfl
-        intro g _
-        ring
-      _ = c * ((Nat.card G : k)⁻¹ * ∑ g : G, f₁.1 g * f₂.1 g⁻¹) := by ring
-
 /-- Pairing a sum in the right argument distributes over addition. -/
 @[simp]
 theorem characterPairing_add_right (f₁ f₂ f₃ : ClassFunction k G) :
     characterPairing f₁ (f₂ + f₃) = characterPairing f₁ f₂ + characterPairing f₁ f₃ :=
   (characterPairing (k := k) (G := G) f₁).map_add f₂ f₃
-
-/-- Pairing a scalar multiple in the right argument pulls out the scalar. -/
-@[simp]
-theorem characterPairing_smul_right (c : k) (f₁ f₂ : ClassFunction k G) :
-    characterPairing f₁ (c • f₂) = c * characterPairing f₁ f₂ :=
-  (characterPairing (k := k) (G := G) f₁).map_smul c f₂
-
-/-- The zero class function pairs to zero on the left. -/
-@[simp]
-theorem characterPairing_zero_left (f : ClassFunction k G) : characterPairing 0 f = 0 :=
-  by
-    rw [characterPairing_apply]
-    simp
 
 /-- The zero class function pairs to zero on the right. -/
 @[simp]
