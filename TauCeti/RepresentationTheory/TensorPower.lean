@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.TensorPower.Basic
-public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import Mathlib.RepresentationTheory.Basic
 public import Mathlib.RepresentationTheory.Character
 
