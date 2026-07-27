@@ -153,7 +153,8 @@ theorem card_weylGroup_le_factorial_of_span_eq_top
     Nat.card P.weylGroup ≤ Nat.factorial (Nat.card ι) :=
   card_subgroup_aut_le_factorial_of_span_eq_top P hspan P.weylGroup
 
-/-- The order of a finite Weyl group is at most the factorial of the number of roots. -/
+/-- The order of the Weyl group of a finite root system is at most the factorial of the number of
+roots. -/
 theorem card_weylGroup_le_factorial [P.IsRootSystem] :
     Nat.card P.weylGroup ≤ Nat.factorial (Nat.card ι) :=
   card_subgroup_aut_le_factorial P P.weylGroup
