@@ -34,21 +34,14 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- Implementation helper: binding a probability measure against the *constant* random product
-measure `ω ↦ p^{⊗m}` just returns `p^{⊗m}`. -/
-private theorem bind_const_probabilityMeasure_pi (μ : Measure Ω) [IsProbabilityMeasure μ]
-    (p : ProbabilityMeasure α) (m : ℕ) :
-    (μ.bind fun _ : Ω => (ProbabilityMeasure.pi fun _ : Fin m => p).toMeasure) =
-      Measure.pi fun _ : Fin m => (p : Measure α) := by
-  rw [Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
-
 /-- A constant mixing representative says exactly that every injective block law is the
 corresponding product of `p`. -/
 theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p)
     {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k) :
     blockLaw μ X k = Measure.pi fun _ : Fin m => (p : Measure α) := by
-  rw [h.blockLaw_eq_mixture k hk, bind_const_probabilityMeasure_pi]
+  rw [h.blockLaw_eq_mixture k hk, Measure.bind_const, measure_univ, one_smul,
+    ProbabilityMeasure.toMeasure_pi]
 
 /-- A constant mixing representative already forces the coordinates to be a.e. measurable, so no
 such hypothesis is needed alongside it: the singleton block law is the probability measure `p`,
