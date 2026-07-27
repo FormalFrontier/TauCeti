@@ -63,6 +63,13 @@ theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
   ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
 
+/-- **A constant directing measure means plain i.i.d.**: `fun _ => p` witnesses
+`ConditionallyIIDWith` exactly when the coordinates are independent and each has law `p`. -/
+theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
+    [IsProbabilityMeasure μ] {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
+    (ConditionallyIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
+  conditionallyIIDWith_const_iff_mixedIIDWith.trans mixedIIDWith_const_iff_iIndepFun_and_map_eq
+
 /-- **An i.i.d. sequence is conditionally i.i.d.**, with the constant directing measure
 `ω ↦ μ.map (X 0)`. This is the sharp form of the roadmap's first worked example: the constant
 random measure is a genuine *directing measure*, not merely a mixing representative.
