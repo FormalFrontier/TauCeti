@@ -31,13 +31,14 @@ namespace TauCeti
 section CompactGroup
 
 variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 variable {V : Type*} [NormedAddCommGroup V]
 
 private theorem integrable_continuousMap (f : C(G, V)) :
     Integrable f (haarProb G) := by
   simpa only [integrableOn_univ] using
-    f.continuous.continuousOn.integrableOn_compact (μ := haarProb G) isCompact_univ
+    f.continuous.continuousOn.integrableOn_compact' (μ := haarProb G) isCompact_univ
+      MeasurableSet.univ
 
 variable {𝕜 : Type*} [RCLike 𝕜] [NormedSpace ℝ V] [NormedSpace 𝕜 V]
   [SMulCommClass ℝ 𝕜 V]
@@ -84,7 +85,7 @@ theorem haarAverage_const [CompleteSpace V] (v : V) :
   simp [haarAverage_apply]
 
 /-- On a nonzero target, Haar averaging has operator norm one. -/
-theorem norm_haarAverage [Nontrivial V] [CompleteSpace V] :
+theorem norm_haarAverage_eq_one [Nontrivial V] [CompleteSpace V] :
     ‖haarAverage G (𝕜 := 𝕜) (V := V)‖ = 1 := by
   apply le_antisymm (norm_haarAverage_le_one G) _
   obtain ⟨v, hv⟩ := exists_ne (0 : V)
@@ -100,10 +101,9 @@ theorem norm_haarAverage [Nontrivial V] [CompleteSpace V] :
 theorem haarAverage_comp_comm {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W]
     [NormedSpace 𝕜 W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace V] [CompleteSpace W]
     (L : V →L[𝕜] W) (f : C(G, V)) :
-    haarAverage G (𝕜 := 𝕜)
-        ⟨fun g ↦ L (f g), L.continuous.comp f.continuous⟩ =
-      L (haarAverage G (𝕜 := 𝕜) f) := by
-  rw [haarAverage_apply, haarAverage_apply]
+    haarAverage G (𝕜 := 𝕜) ((L : C(V, W)).comp f) = L (haarAverage G (𝕜 := 𝕜) f) := by
+  simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
+    ContinuousMap.coe_coe]
   exact L.integral_comp_comm (integrable_continuousMap G f)
 
 /-- Haar averaging is unchanged by left translation of the argument. -/
@@ -127,10 +127,10 @@ theorem haarAverage_comp_mulRight [CompleteSpace V] (f : C(G, V)) (g : G) :
 /-- Haar averaging is unchanged by inversion of the argument. -/
 @[simp]
 theorem haarAverage_comp_inv [CompleteSpace V] (f : C(G, V)) :
-    haarAverage G (𝕜 := 𝕜)
-        ⟨fun g ↦ f g⁻¹, f.continuous.comp continuous_inv⟩ =
+    haarAverage G (𝕜 := 𝕜) (f.comp (Homeomorph.inv G : C(G, G))) =
       haarAverage G (𝕜 := 𝕜) f := by
-  rw [haarAverage_apply, haarAverage_apply]
+  simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
+    ContinuousMap.coe_coe, Homeomorph.coe_inv]
   exact integral_inv_eq_self f (haarProb G)
 
 end CompactGroup
