@@ -7,9 +7,10 @@ defaultTargets = ["TauCeti"]
 # the platform-independent mapping automatically.
 platformIndependent = true
 
-# mathlib's `rev` below stays on "master", never a pinned commit. The actual revision is
-# pinned in lake-manifest.json; "master" is only the branch the daily bump moves forward
-# along, and bump-guard (scripts/check-bump.sh) requires it to validate and auto-merge a bump.
+# mathlib's `rev` below normally stays on "master"; lake-manifest.json carries the actual pin.
+# An incompatibility PR opened by tauceti-review-bot may temporarily replace it with the exact
+# first-known-bad SHA so the repair builds reproducibly. bump-guard (scripts/check-bump.sh)
+# validates that single-line exception and the next compatible LKG bump restores "master".
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"

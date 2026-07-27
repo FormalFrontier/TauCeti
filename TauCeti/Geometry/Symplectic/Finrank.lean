@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.Ring.Parity
 public import TauCeti.Geometry.Symplectic.Complex.Module.Basic
 public import TauCeti.LinearAlgebra.Complex.Finrank
+public import TauCeti.LinearAlgebra.TotallyReal.Finrank
 
 /-!
 # An almost complex structure forces even real dimension
@@ -18,7 +19,7 @@ its complex dimension, hence even. This is the classical fact that a manifold (o
 admitting an almost complex structure is even-dimensional (McDuff--Salamon, *J-holomorphic Curves
 and Symplectic Topology*, Section 2.1), recorded here at the pointwise linear-algebra level.
 
-Everything is stated without a finite-dimensionality hypothesis: the tower law
+The tower-law identities are stated without a finite-dimensionality hypothesis:
 `Module.finrank_mul_finrank` holds for `Module.finrank` unconditionally (an infinite-dimensional
 `V` has `Module.finrank ℝ V = 0 = 2 * 0`), so the identities below need no `FiniteDimensional`
 assumption.
@@ -35,6 +36,10 @@ assumption.
   almost complex structure is even.
 * `TauCeti.AlmostComplexStructure.isEmpty_of_odd_finrank`: an odd-dimensional real module admits no
   almost complex structure.
+* `TauCeti.AlmostComplexStructure.finrank_eq_complexFinrank_of_isMaximalTotallyReal`: a maximal
+  totally real subspace has real dimension equal to the complex dimension of the ambient space.
+  This is the statement that the totally real tori `T_α`, `T_β` in the symmetric product
+  `Sym^g(Σ)` of a Heegaard surface are `g`-dimensional.
 
 The conventions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
 Section 2.1.
@@ -77,6 +82,20 @@ theorem even_finrank_real (J : AlmostComplexStructure V) :
     Even (Module.finrank ℝ V) := by
   rw [J.finrank_real_eq_two_mul_complexFinrank]
   exact even_two_mul _
+
+/-- A maximal totally real subspace `L` of a finite-dimensional almost complex module has real
+dimension equal to the complex dimension of the ambient module: `L` is "half-dimensional".
+
+For a Heegaard diagram of genus `g`, this is the statement that the totally real tori `T_α`,
+`T_β` are `g`-dimensional inside the `g`-complex-dimensional symmetric product `Sym^g(Σ)`
+(Ozsváth--Szabó, [arXiv:math/0101206](https://arxiv.org/abs/math/0101206), Section 2). -/
+theorem finrank_eq_complexFinrank_of_isMaximalTotallyReal [FiniteDimensional ℝ V]
+    {J : AlmostComplexStructure V} {L : Submodule ℝ V}
+    (hL : IsMaximalTotallyReal J.toLinearMap L) :
+    Module.finrank ℝ L = J.complexFinrank := by
+  have h := hL.two_mul_finrank_eq (J.injective.comp L.subtype_injective)
+  have h' := J.finrank_real_eq_two_mul_complexFinrank
+  omega
 
 /-- An odd-dimensional real module admits no almost complex structure. -/
 theorem isEmpty_of_odd_finrank (h : Odd (Module.finrank ℝ V)) :
