@@ -20,10 +20,13 @@ open CategoryTheory
 
 universe u v w x
 
-variable {k : Type u} [CommRing k]
-  {G : Type v} {H : Type w} {K : Type x} [Group G] [Group H] [Group K]
+variable {k : Type u} {G : Type v} {H : Type w} {K : Type x}
 
 namespace Rep
+
+section Restriction
+
+variable [Semiring k] [Monoid G] [Monoid H] [Monoid K]
 
 /-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
 along their composite. -/
@@ -41,7 +44,7 @@ noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
 
 /-- The forward component of `resFunctorCompIso` acts as the identity on vectors. -/
 @[simp↓]
-lemma resFunctorCompIso_hom_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+lemma resFunctorCompIso_hom_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
     ((resFunctorCompIso φ ψ).hom.app A) x = x :=
   by
     unfold resFunctorCompIso
@@ -49,11 +52,17 @@ lemma resFunctorCompIso_hom_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep 
 
 /-- The inverse component of `resFunctorCompIso` acts as the identity on vectors. -/
 @[simp↓]
-lemma resFunctorCompIso_inv_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+lemma resFunctorCompIso_inv_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
     ((resFunctorCompIso φ ψ).inv.app A) x = x :=
   by
     unfold resFunctorCompIso
     rfl
+
+end Restriction
+
+section Induction
+
+variable [CommRing k] [Group G] [Group H] [Group K]
 
 /-- Induction in stages: induction along a composite is naturally isomorphic to successive
 inductions along the two group homomorphisms. -/
@@ -77,6 +86,8 @@ lemma conjugateEquiv_indFunctorCompIso_inv (φ : G →* H) (ψ : H →* K) :
       (indFunctorCompIso φ ψ).inv =
         (resFunctorCompIso φ ψ).hom :=
   Adjunction.conjugateEquiv_leftAdjointCompIso_inv _ _ _ _
+
+end Induction
 
 end Rep
 
