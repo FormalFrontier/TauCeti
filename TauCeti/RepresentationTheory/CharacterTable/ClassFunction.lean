@@ -12,6 +12,11 @@ their module with the module of functions on `ConjClasses G`, computes its dimen
 groups, and shows that characters of representations are class functions.
 
 These are the indexing foundations for character tables.
+
+This implementation follows the
+[Character Theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
+and its
+[suggested declarations](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean).
 -/
 
 @[expose] public section
@@ -32,6 +37,7 @@ namespace ClassFunction
 variable {k : Type u} {G : Type v} [CommRing k] [Group G]
 
 /-- A function is a class function exactly when it is invariant under conjugation. -/
+@[simp]
 theorem mem_iff {f : G → k} :
     f ∈ ClassFunction k G ↔ ∀ g h : G, f (h * g * h⁻¹) = f g :=
   Iff.rfl
