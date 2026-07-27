@@ -33,7 +33,7 @@ namespace TauCeti
 universe u v w
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
-def ClassFunction (k : Type u) (G : Type v) [CommRing k] [Group G] : Submodule k (G → k) where
+def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
   carrier := {f | ∀ g h : G, f (h * g * h⁻¹) = f g}
   zero_mem' _ _ := rfl
   add_mem' hf₁ hf₂ g h := by rw [Pi.add_apply, Pi.add_apply, hf₁ g h, hf₂ g h]
@@ -41,7 +41,7 @@ def ClassFunction (k : Type u) (G : Type v) [CommRing k] [Group G] : Submodule k
 
 namespace ClassFunction
 
-variable {k : Type u} {G : Type v} [CommRing k] [Group G]
+variable {k : Type u} {G : Type v} [Semiring k] [Group G]
 
 /-- A function is a class function exactly when it is invariant under conjugation. -/
 @[simp]
@@ -110,7 +110,7 @@ end ClassFunction
 
 namespace ClassFunction
 
-variable {k : Type u} {G : Type v} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [DivisionRing k] [Group G]
 
 /-- The dimension of the space of class functions is the number of conjugacy classes. -/
 theorem finrank_eq_card_conjClasses [Finite G] :
@@ -119,6 +119,12 @@ theorem finrank_eq_card_conjClasses [Finite G] :
   letI := Classical.decEq G
   rw [LinearEquiv.finrank_eq equivConjClasses, Module.finrank_pi_fintype]
   simp
+
+end ClassFunction
+
+namespace ClassFunction
+
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- The character of a representation is a class function. -/
 noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
