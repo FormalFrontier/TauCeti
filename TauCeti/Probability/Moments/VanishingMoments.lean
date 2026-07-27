@@ -79,8 +79,8 @@ private theorem integrable_toReal_ofReal_smul_pow (ha : 0 < a)
   · exact hfm.ennreal_toReal.aestronglyMeasurable.smul (continuous_pow n).aestronglyMeasurable
   · filter_upwards with x
     have hE : (0 : ℝ) < Real.exp (a * |x|) := Real.exp_pos _
-    rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
-      abs_mul, abs_mul, abs_mul, abs_pow, abs_of_pos hE, abs_of_pos hc]
+    simp only [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, abs_mul, abs_pow,
+      abs_of_pos hE, abs_of_pos hc]
     nlinarith [hle x, pow_abs_le_factorial_div_pow_mul_exp ha n x, abs_nonneg (g x),
       abs_nonneg (max (f x) 0), pow_nonneg (abs_nonneg x) n, hE.le, hc.le]
 
@@ -97,8 +97,8 @@ private theorem integrable_exp_withDensity_ofReal
   · fun_prop
   · filter_upwards with x
     have hE : (0 : ℝ) < Real.exp (a * |x|) := Real.exp_pos _
-    rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
-      abs_mul, abs_mul, abs_of_pos hE]
+    simp only [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, abs_mul,
+      abs_of_pos hE]
     nlinarith [hle x, abs_nonneg (g x), hE.le]
 
 end Densities
@@ -115,12 +115,13 @@ to the positive and negative parts of `g` as densities against `ν`.
 The exponential hypothesis is the existential `∃ a > 0`, matching the engine's convention; a caller
 holding a bound at every rate supplies it at any single one.
 
-The reference measure is an arbitrary σ-finite `ν`, not just `volume`: the argument only splits `g`
-into `g⁺`/`g⁻` as densities, and σ-finiteness is exactly what is needed to read equality of the two
-`withDensity` measures back as equality of the densities. Weighted orthogonal families against a
-measure other than Lebesgue (Hermite against a Gaussian, Laguerre against `e^{-x}`) are the intended
-consumers. -/
-theorem ae_eq_zero_of_forall_moment_eq_zero [SigmaFinite ν] (g : ℝ → ℝ)
+The reference measure is arbitrary, not just `volume`, and carries no σ-finiteness hypothesis: the
+argument splits `g` into `g⁺`/`g⁻` as densities, and integrability of `g` already bounds the
+positive density's lintegral, which is what lets equality of the two `withDensity` measures be read
+back as equality of the densities. Weighted orthogonal families against a measure other than
+Lebesgue (Hermite against a Gaussian, Chebyshev against `(1-x²)^{-1/2}` on `[-1,1]`) are the
+intended consumers. -/
+theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν)
     (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
     g =ᵐ[ν] 0 := by
@@ -185,7 +186,14 @@ theorem ae_eq_zero_of_forall_moment_eq_zero [SigmaFinite ν] (g : ℝ → ℝ)
       ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasp hltp hlep⟩
       ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasn hltn hlen⟩ hmoments
   -- ... hence the densities agree a.e., hence `g⁺ = g⁻` a.e., hence `g = 0` a.e.
-  rw [withDensity_eq_iff_of_sigmaFinite hmeasp hmeasn] at hEq
+  -- Integrability of `g` bounds the positive density's lintegral, which is what replaces
+  -- σ-finiteness of `ν` in reading the density equality back off the measure equality.
+  have hfin : ∫⁻ x, ENNReal.ofReal (g x) ∂ν ≠ ⊤ := by
+    refine ne_of_lt (lt_of_le_of_lt (lintegral_mono_ae ?_) hg.hasFiniteIntegral)
+    filter_upwards with x
+    rw [← ofReal_norm, Real.norm_eq_abs]
+    exact ENNReal.ofReal_le_ofReal (le_abs_self _)
+  rw [withDensity_eq_iff hmeasp hmeasn hfin] at hEq
   filter_upwards [hEq] with x hx
   have h := congrArg ENNReal.toReal hx
   rw [ENNReal.toReal_ofReal', ENNReal.toReal_ofReal'] at h
@@ -204,8 +212,8 @@ moment-determinate, so a `g ∈ L²(ν)` orthogonal to every monomial is a.e. `0
 
 The rate is existential, matching the convention of the engine this wraps and of the function-level
 form above; a caller holding a bound at every rate supplies it at any single one.  Requiring it at
-*every* rate would exclude exponentially-tailed weights such as `e^{-|x|}` (the Laguerre case),
-which are moment-determinate all the same.
+*every* rate would exclude exponentially-tailed weights such as `e^{-|x|}`, for which
+`∫ e^{a|x|} dν` is finite only for `a < 1`, even though they are moment-determinate all the same.
 
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
