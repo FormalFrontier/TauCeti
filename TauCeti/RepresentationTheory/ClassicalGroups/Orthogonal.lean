@@ -53,11 +53,21 @@ theorem orthogonalGroupToGL_coe (g : Matrix.orthogonalGroup (Fin n) k) :
     (orthogonalGroupToGL k n g : Matrix (Fin n) (Fin n) k) = g := by
   apply Matrix.mulVec_injective
   funext v
-  change (Matrix.GeneralLinearGroup.toLin
-    (Matrix.GeneralLinearGroup.toLin.symm (Matrix.UnitaryGroup.embeddingGL g)) :
-      (Fin n → k) →ₗ[k] Fin n → k) v = _
-  rw [MulEquiv.apply_symm_apply]
-  exact LinearMap.congr_fun (Matrix.UnitaryGroup.coe_toGL g) v
+  rw [← Matrix.mulVecLin_apply, ← Matrix.GeneralLinearGroup.coe_toLin]
+  calc
+    (Matrix.GeneralLinearGroup.toLin (orthogonalGroupToGL k n g) :
+        (Fin n → k) →ₗ[k] Fin n → k) v =
+        (Matrix.UnitaryGroup.embeddingGL g : (Fin n → k) →ₗ[k] Fin n → k) v := by
+      simpa only [orthogonalGroupToGL, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom] using
+        congrArg (fun f : LinearMap.GeneralLinearGroup k (Fin n → k) =>
+          (f : (Fin n → k) →ₗ[k] Fin n → k) v)
+          (Matrix.GeneralLinearGroup.toLin.apply_symm_apply
+            (Matrix.UnitaryGroup.embeddingGL g))
+    _ = Matrix.UnitaryGroup.toLin' g v :=
+      LinearMap.congr_fun (Matrix.UnitaryGroup.coe_toGL g) v
+    _ = (g : Matrix (Fin n) (Fin n) k) *ᵥ v := by
+      simpa only [Matrix.UnitaryGroup.toLin'] using
+        Matrix.toLin'_apply (g : Matrix (Fin n) (Fin n) k) v
 
 /-- The standard representation of the orthogonal group on column vectors. -/
 def stdOrthogonalRep : Representation k (Matrix.orthogonalGroup (Fin n) k) (Fin n → k) :=
@@ -92,9 +102,11 @@ theorem stdOrthogonalRep_dotProduct_stdOrthogonalRep
           (g : Matrix (Fin n) (Fin n) k)) *ᵥ w) := by
       rw [Matrix.mulVec_mulVec]
     _ = v ⬝ᵥ w := by
-      -- `starRingOfComm` equips `k` with the definitional trivial star.
+      letI : TrivialStar k := ⟨fun _ => rfl⟩
       have hstar : star (g : Matrix (Fin n) (Fin n) k) =
-          (g : Matrix (Fin n) (Fin n) k)ᵀ := rfl
+          (g : Matrix (Fin n) (Fin n) k)ᵀ := by
+        ext i j
+        simp only [Matrix.star_apply, star_trivial, transpose_apply]
       rw [← hstar, Matrix.mem_unitaryGroup_iff'.mp g.prop, Matrix.one_mulVec]
 
 /-- The coordinate dot product identifies the standard module with its dual. -/
@@ -111,10 +123,13 @@ theorem stdOrthogonalRepToDual_apply (v w : Fin n → k) :
 /-- The standard representation of the orthogonal group is faithful. -/
 theorem stdOrthogonalRep_injective : Function.Injective (stdOrthogonalRep k n) := by
   intro g h gh
-  apply Subtype.ext
-  apply Matrix.mulVec_injective
-  funext v
-  exact LinearMap.congr_fun (by simpa only [stdOrthogonalRep_apply] using gh) v
+  apply (show Function.Injective (orthogonalGroupToGL k n) by
+    intro g h gh
+    apply Subtype.ext
+    have hcoe := congrArg (fun x : GL (Fin n) k => (x : Matrix (Fin n) (Fin n) k)) gh
+    simpa only [orthogonalGroupToGL_coe] using hcoe)
+  apply stdRep_injective k n
+  simpa only [stdOrthogonalRep, MonoidHom.comp_apply] using gh
 
 /-- The standard representation of the orthogonal group, bundled as an object of `FDRep`. -/
 noncomputable abbrev stdOrthogonalFDRep : FDRep k (Matrix.orthogonalGroup (Fin n) k) :=
