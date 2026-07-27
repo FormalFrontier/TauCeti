@@ -13,6 +13,9 @@ public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 This file normalizes Mathlib's Haar measure on a compact topological group to a probability
 measure, and records its left, right, and inversion invariance.
 
+The Layer 0 design follows the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md)
+and its accompanying `Suggested.lean`.
+
 Since `haarProb` is a Haar measure and a probability measure, Mathlib's generic API applies to
 it directly: `MeasureTheory.Measure.isHaarMeasure_eq_of_isProbabilityMeasure` identifies it with
 any other Haar probability measure, and `MeasureTheory.integral_mul_left_eq_self`,
@@ -31,18 +34,46 @@ section CompactGroup
 variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
+/-- Haar measure of a compact group has finite total mass. -/
+theorem haar_univ_lt_top : (Measure.haar : Measure G) univ < ⊤ :=
+  measure_lt_top _ _
+
+/-- Haar measure of a nonempty compact group has nonzero total mass. -/
+theorem haar_univ_ne_zero : (Measure.haar : Measure G) univ ≠ 0 :=
+  (Measure.measure_pos_of_nonempty_interior (μ := Measure.haar) (by simp)).ne'
+
+private noncomputable def haarFinite : FiniteMeasure G :=
+  ⟨Measure.haar, inferInstance⟩
+
+private theorem haarFinite_ne_zero : haarFinite G ≠ 0 := by
+  rw [← FiniteMeasure.mass_nonzero_iff]
+  apply ENNReal.coe_ne_zero.mp
+  rw [FiniteMeasure.ennreal_mass]
+  exact haar_univ_ne_zero G
+
 /-- Haar probability measure on a compact topological group. -/
-@[expose] noncomputable def haarProb : Measure G :=
-  ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar
+noncomputable def haarProb : Measure G :=
+  (haarFinite G).normalize
 
 /-- The definition of normalized Haar measure as a rescaling of Mathlib's Haar measure. -/
 theorem haarProb_def :
     haarProb G = ((Measure.haar : Measure G) univ)⁻¹ • Measure.haar :=
-  rfl
+  by
+    rw [haarProb,
+      FiniteMeasure.toMeasure_normalize_eq_of_nonzero (haarFinite G) (haarFinite_ne_zero G)]
+    change (haarFinite G).mass⁻¹ • (haarFinite G : Measure G) =
+      ((haarFinite G : Measure G) univ)⁻¹ • (haarFinite G : Measure G)
+    rw [← FiniteMeasure.ennreal_mass, ← ENNReal.coe_inv]
+    · rfl
+    · exact (FiniteMeasure.mass_nonzero_iff (haarFinite G)).mpr (haarFinite_ne_zero G)
+
+/-- The normalized Haar measure of the whole group is `1`. -/
+@[simp]
+theorem haarProb_apply_univ : haarProb G univ = 1 := by
+  exact (haarFinite G).normalize.property.measure_univ
 
 instance isProbabilityMeasure_haarProb : IsProbabilityMeasure (haarProb G) := by
-  rw [haarProb_def]
-  infer_instance
+  exact (haarFinite G).normalize.property
 
 instance isMulLeftInvariant_haarProb : (haarProb G).IsMulLeftInvariant := by
   rw [haarProb_def]
@@ -54,36 +85,44 @@ instance isHaarMeasure_haarProb : (haarProb G).IsHaarMeasure := by
     (ENNReal.inv_ne_zero.mpr (measure_ne_top _ _))
     (ENNReal.inv_ne_top.mpr (NeZero.ne _))
 
-/-- Normalized Haar measure is invariant under right multiplication. -/
-instance isMulRightInvariant_haarProb : (haarProb G).IsMulRightInvariant where
+/-- Every probability Haar measure on a compact group is right-invariant. -/
+theorem isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
+    [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ.IsMulRightInvariant where
   map_mul_right_eq_self g := by
-    let μ := haarProb G
-    haveI : μ.IsHaarMeasure := isHaarMeasure_haarProb G
-    haveI : IsProbabilityMeasure μ := isProbabilityMeasure_haarProb G
-    haveI : (Measure.map (· * g) μ).IsHaarMeasure := by
-      convert Measure.isHaarMeasure_map_smul μ (MulOpposite.op g) using 1
-      simp only [MulOpposite.smul_eq_mul_unop, MulOpposite.unop_op]
+    haveI : (Measure.map (· * g) μ).IsHaarMeasure :=
+      Measure.isHaarMeasure_map_mul_right μ g
     haveI : IsProbabilityMeasure (Measure.map (· * g) μ) :=
       Measure.isProbabilityMeasure_map
         (continuous_id.mul continuous_const).measurable.aemeasurable
     exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
+/-- Normalized Haar measure is invariant under right multiplication. -/
+instance isMulRightInvariant_haarProb : (haarProb G).IsMulRightInvariant :=
+  isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (G := G) _
+
+/-- Every probability Haar measure on a compact group is invariant under inversion. -/
+theorem isInvInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
+    [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ.IsInvInvariant := by
+  haveI : μ.IsMulRightInvariant :=
+    isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (G := G) μ
+  constructor
+  letI : μ.inv.IsHaarMeasure := {
+    toIsFiniteMeasureOnCompacts := inferInstance
+    toIsMulLeftInvariant := inferInstance
+    toIsOpenPosMeasure := inferInstance }
+  letI : IsProbabilityMeasure μ.inv := by
+    rw [Measure.inv_def]
+    exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
+  exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
+
 /-- Normalized Haar measure is invariant under inversion. -/
-instance isInvInvariant_haarProb : (haarProb G).IsInvInvariant where
-  inv_eq_self := by
-    let μ := haarProb G
-    haveI : μ.IsHaarMeasure := isHaarMeasure_haarProb G
-    haveI : IsProbabilityMeasure μ := isProbabilityMeasure_haarProb G
-    haveI : μ.IsMulRightInvariant := isMulRightInvariant_haarProb G
-    letI : (μ.inv).IsHaarMeasure := {
-      toIsFiniteMeasureOnCompacts := inferInstance
-      toIsMulLeftInvariant := inferInstance
-      toIsOpenPosMeasure := inferInstance }
-    haveI : IsProbabilityMeasure μ.inv := by
-      rw [Measure.inv_def]
-      exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
-    change μ.inv = μ
-    exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
+instance isInvInvariant_haarProb : (haarProb G).IsInvInvariant :=
+  isInvInvariant_of_isHaarMeasure_of_isProbabilityMeasure (G := G) _
+
+/-- A probability Haar measure on a compact group is the normalized Haar measure. -/
+theorem isHaarMeasure_eq_haarProb_of_isProbabilityMeasure (μ : Measure G)
+    [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ = haarProb G :=
+  Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
 end CompactGroup
 
