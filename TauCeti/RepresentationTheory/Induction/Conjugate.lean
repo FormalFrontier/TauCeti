@@ -80,33 +80,34 @@ def conjRep [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
 @[simp]
 theorem conjRep_V [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
     (conjRep s A).V = A.V := by
+  -- Unfold the local wrappers to expose Mathlib's restriction carrier.
   change (Rep.res (conjSubgroupEquiv s H).toMonoidHom A).V = A.V
   exact Rep.res_obj_V _ _
 
-@[simp]
 theorem conjRepFunctor_map_hom_toLinearMap [Semiring k] (s : G) {H : Subgroup G}
     {A B : Rep k H} (f : A ⟶ B) :
     HEq ((conjRepFunctor s H).map f).hom.toLinearMap f.hom.toLinearMap := by
+  -- Unfold the local functor wrapper to expose Mathlib's restriction map.
   change HEq (Rep.resMap (conjSubgroupEquiv s H).toMonoidHom f).hom.toLinearMap _
   exact heq_of_eq (Rep.resMap_hom_toLinearMap _ _)
 
-@[simp]
 theorem conjRep_ρ [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
+  -- Unfold the local wrappers to expose Mathlib's restricted action.
   change HEq ((Rep.res (conjSubgroupEquiv s H).toMonoidHom A).ρ x) _
   exact heq_of_eq (Rep.coe_res_obj_ρ' _ _ _)
 
 /-- The conjugate action on elements, transported along `conjRep_V`. -/
-@[simp]
 theorem conjRep_ρ_apply [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
     (x : (MulAut.conj s • H : Subgroup G)) (v : A.V) :
     cast (conjRep_V s A) ((conjRep s A).ρ x (cast (conjRep_V s A).symm v)) =
       A.ρ (conjSubgroupEquiv s H x) v := by
+  -- Both casts reduce because `conjRep_V` is the definitional restriction carrier equality.
   rfl
 
 /-- The action of the conjugate representation, written directly in the ambient group. -/
-theorem conjRep_ρ_eq [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
+theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjRep s A).ρ x)
       (A.ρ ⟨s⁻¹ * (x : G) * s, (mem_conj_smul s H x).mp x.2⟩) := by
@@ -128,13 +129,29 @@ theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
     (conjFDRep s A).V = A.V := by
   rfl
 
-@[simp]
 theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
+  -- Unfold the local wrapper to expose the action of Mathlib's `FDRep.of`.
   change HEq ((FDRep.of (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom)).ρ x) _
   rw [FDRep.of_ρ']
   rfl
+
+@[simp]
+theorem conjFDRep_ρ_apply (s : G) {H : Subgroup G} (A : FDRep k H)
+    (x : (MulAut.conj s • H : Subgroup G)) :
+    cast (congrArg (fun V : FGModuleCat k => V →ₗ[k] V) (conjFDRep_V s A))
+      ((conjFDRep s A).ρ x) = A.ρ (conjSubgroupEquiv s H x) := by
+  -- Unfold the local wrapper to expose the action of Mathlib's `FDRep.of`.
+  change (FDRep.of (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom)).ρ x = _
+  rw [FDRep.of_ρ']
+  rfl
+
+/-- Conjugation preserves the dimension (finrank) of a finite-dimensional representation. -/
+@[simp]
+theorem finrank_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
+    Module.finrank k (conjFDRep s A) = Module.finrank k A := by
+  exact congrArg (fun V : FGModuleCat k => Module.finrank k V) (conjFDRep_V s A)
 
 end FDRep
 
@@ -156,12 +173,6 @@ theorem char_conjFDRep_eq (s : G) {H : Subgroup G} (A : FDRep k H)
       A.character ⟨s⁻¹ * (x : G) * s, (mem_conj_smul s H x).mp x.2⟩ := by
   rw [char_conjFDRep]
   congr 1
-
-/-- Conjugation preserves the dimension (finrank) of a finite-dimensional representation. -/
-@[simp]
-theorem finrank_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
-    Module.finrank k (conjFDRep s A) = Module.finrank k A := by
-  exact congrArg (fun V : FGModuleCat k => Module.finrank k V) (conjFDRep_V s A)
 
 end Character
 
