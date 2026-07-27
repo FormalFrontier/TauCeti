@@ -60,8 +60,8 @@ could never fire. Use `basisFun_det_mulVec` for the `simp`-normal statement. -/
 theorem basisFun_det_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
     Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
-      (Pi.basisFun k (Fin n)).det v := by
-  simpa only [stdSLRep_apply_apply, g.det_coe, one_mul, Pi.basisFun_det] using
+      Matrix.detRowAlternating v := by
+  simpa only [stdSLRep_apply_apply, g.det_coe, one_mul] using
     basisFun_det_mulVec k n (g : Matrix (Fin n) (Fin n) k) v
 
 end CommRing
