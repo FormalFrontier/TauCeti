@@ -11,11 +11,15 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 /-!
 # Holomorphic branches of `log` and of `n`-th roots on a simply connected domain
 
-Mathlib's `Complex.exists_continuousOn_eqOn_exp_comp` and
-`Complex.exists_continuousOn_pow_eq` produce **continuous** branches of `log ∘ g` and of `ⁿ√g` on a
-simply connected open set. The Riemann-mapping argument needs **holomorphic** ones. This file
-supplies exactly that upgrade, and nothing else: the branch itself is Mathlib's, consumed rather
-than rebuilt.
+Mathlib's `Complex.exists_continuousOn_eqOn_exp_comp` produces a **continuous** branch of `log ∘ g`
+on a simply connected open set. The Riemann-mapping argument needs a **holomorphic** one. This file
+supplies that upgrade for the logarithm, consuming Mathlib's branch rather than rebuilding it, and
+then obtains the `n`-th root from it directly as `exp (L / n)`.
+
+Note that the root branch is *not* an upgrade of Mathlib's `Complex.exists_continuousOn_pow_eq`,
+which this file does not use: once the logarithm branch is holomorphic, `exp (L / n)` is holomorphic
+by composition and satisfies `(exp (L / n)) ^ n = exp L = g` outright, so routing through a separate
+continuous root branch would add a second continuity-to-holomorphy argument for no gain.
 
 The upgrade is local and purely formal. Near a point `z₀`, the continuous branch `L` agrees with
 `v ↦ w₀ + log (v / exp w₀) ∘ g` where `w₀ = L z₀`: that composite is holomorphic (the argument

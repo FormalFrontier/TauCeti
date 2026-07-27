@@ -41,7 +41,7 @@ shim**: delete it and refactor downstream consumers when the human-curated Mathl
 
 ## Main statements
 
-* `TauCeti.exists_injOn_differentiableOn_mapsTo_ball` — the nonempty-family step.
+* `TauCeti.exists_differentiableOn_injOn_mapsTo_ball` — the nonempty-family step.
 -/
 
 public section
@@ -52,7 +52,7 @@ open Complex Set Metric
 
 /-- **A simply connected proper domain injects into the unit disc.** The Riemann mapping theorem's
 competing family — injective holomorphic maps `U → 𝔻` — is nonempty. -/
-theorem exists_injOn_differentiableOn_mapsTo_ball {U : Set ℂ} (hUc : IsSimplyConnected U)
+theorem exists_differentiableOn_injOn_mapsTo_ball {U : Set ℂ} (hUc : IsSimplyConnected U)
     (hUo : IsOpen U) (hUne : U ≠ univ) :
     ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) := by
   obtain ⟨a, ha⟩ : ∃ a, a ∉ U := by
