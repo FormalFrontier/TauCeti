@@ -87,10 +87,7 @@ theorem detPowerRep_comp_toGL (m : ℤ) :
   -- Unfolding the two composed monoid homomorphisms exposes the scalar-action formula.
   change detPowerRep k n m (Matrix.SpecialLinearGroup.toGL g) x = x
   rw [detPowerRep_apply]
-  have hdet : Matrix.GeneralLinearGroup.det (Matrix.SpecialLinearGroup.toGL g) = 1 := by
-    apply Units.ext
-    exact g.det_coe
-  simp [hdet]
+  simp
 
 /-- The determinant-power representation as a finite-dimensional representation. -/
 noncomputable abbrev detPowerFDRep (m : ℤ) : FDRep k (GL (Fin n) k) :=
