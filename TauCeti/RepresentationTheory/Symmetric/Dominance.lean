@@ -209,7 +209,7 @@ theorem partition_lt_iff {n : ℕ} {μ ν : n.Partition} :
 end DominanceOrder
 
 /-- Strict dominance is the strict relation of the dominance partial order. -/
-abbrev StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
+def StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
   DominanceOrder.partitionPartialOrder.lt ν μ
 
 /-- Strict dominance is dominance between unequal partitions. -/
