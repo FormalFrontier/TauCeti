@@ -22,7 +22,7 @@ identification of Coxeter length with the number of inversions.
 
 * `TauCeti.mem_inversions_mul_ofIdx_iff_not_mem` shows that the defining simple root toggles
   membership in the inversion set.
-* `TauCeti.inversions_ncard_mul_ofIdx` proves that the inversion count changes by one.
+* `TauCeti.ncard_inversions_mul_ofIdx` proves that the inversion count changes by one.
 
 ## References
 
@@ -39,32 +39,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N) (w : P.weylGroup)
 
-/-- Right multiplication by a simple reflection acts by first reflecting the root index. -/
-lemma weylGroupToPerm_mul_ofIdx_apply (i j : ι) :
-    P.weylGroupToPerm (w * RootPairing.weylGroup.ofIdx P i) j =
-      P.weylGroupToPerm w (P.reflectionPerm i j) := by
-  rw [map_mul]
-  exact congrArg (P.weylGroupToPerm w)
-    (weylGroupToPerm_ofIdx_apply P i j)
-
-/-- The Weyl-group action on root indices commutes with root negation. -/
-lemma weylGroupToPerm_neg (j : ι) :
-    letI := P.indexNeg
-    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) := by
-  letI := P.indexNeg
-  apply P.root.injective
-  calc
-    P.root (P.weylGroupToPerm w (-j)) = w • P.root (-j) :=
-      (P.weylGroup_apply_root w (-j)).symm
-    _ = w • (-P.root j) := by rw [show P.root (-j) = -P.root j by simp]
-    _ = -(w • P.root j) := by rw [smul_neg]
-    _ = -P.root (P.weylGroupToPerm w j) :=
-      congrArg Neg.neg (P.weylGroup_apply_root w j)
-    _ = P.root (-(P.weylGroupToPerm w j)) := by
-      rw [show -(P.weylGroupToPerm w j) =
-        P.reflectionPerm (P.weylGroupToPerm w j) (P.weylGroupToPerm w j) from rfl,
-        P.root_reflectionPerm, P.reflection_apply_self]
-
 variable [CharZero R] (b : P.Base)
 
 private lemma reflectionPerm_ne_of_isPos {i j : ι} (hi : i ∈ b.support)
@@ -77,9 +51,7 @@ private lemma reflectionPerm_ne_of_isPos {i j : ι} (hi : i ∈ b.support)
         (P.reflectionPerm_self i j).symm
       _ = P.reflectionPerm i i := congrArg (P.reflectionPerm i) h
   have hneg : ¬ b.IsPos (P.reflectionPerm i i) := by
-    letI := P.indexNeg
-    rw [show P.reflectionPerm i i = -i from rfl,
-      RootPairing.Base.IsPos.neg_iff_not]
+    rw [isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots]
     exact not_not_intro (b.isPos_of_mem_support hi)
   exact hneg (hji ▸ hj)
 
@@ -96,7 +68,7 @@ private noncomputable def puncturedInversionsEquiv {i : ι} (hi : i ∈ b.suppor
     have hx' := (mem_inversions P b _ _).mp hx
     have hx_ne : x.1 ≠ i := by simpa using hxi
     refine ⟨(mem_inversions P b _ _).mpr ⟨hx'.1.reflectionPerm hi hx_ne, ?_⟩, ?_⟩
-    · rw [weylGroupToPerm_mul_ofIdx_apply] at hx'
+    · rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply] at hx'
       exact hx'.2
     · simpa using reflectionPerm_ne_of_isPos P b hi hx'.1
   invFun x := by
@@ -105,7 +77,7 @@ private noncomputable def puncturedInversionsEquiv {i : ι} (hi : i ∈ b.suppor
     have hx' := (mem_inversions P b _ _).mp hx
     have hx_ne : x.1 ≠ i := by simpa using hxi
     refine ⟨(mem_inversions P b _ _).mpr ⟨hx'.1.reflectionPerm hi hx_ne, ?_⟩, ?_⟩
-    · rw [weylGroupToPerm_mul_ofIdx_apply, P.reflectionPerm_self]
+    · rw [RootPairing.weylGroupToPerm_mul_ofIdx_apply, P.reflectionPerm_self]
       exact hx'.2
     · simpa using reflectionPerm_ne_of_isPos P b hi hx'.1
   left_inv x := by
@@ -124,12 +96,12 @@ lemma mem_inversions_mul_ofIdx_iff_not_mem {i : ι} (hi : i ∈ b.support) :
   classical
   letI := P.indexNeg
   simp only [mem_inversions, b.isPos_of_mem_support hi, true_and,
-    weylGroupToPerm_mul_ofIdx_apply, show P.reflectionPerm i i = -i from rfl,
-    weylGroupToPerm_neg, RootPairing.Base.IsPos.neg_iff_not]
+    RootPairing.weylGroupToPerm_mul_ofIdx_apply, ← RootPairing.indexNeg_neg,
+    RootPairing.weylGroupToPerm_neg, RootPairing.Base.IsPos.neg_iff_not]
 
 /-- Right multiplication by a simple reflection changes the number of inversions by exactly
 one. -/
-theorem inversions_ncard_mul_ofIdx {i : ι} (hi : i ∈ b.support) :
+theorem ncard_inversions_mul_ofIdx {i : ι} (hi : i ∈ b.support) :
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
         (inversions P b w).ncard + 1 ∨
       (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
