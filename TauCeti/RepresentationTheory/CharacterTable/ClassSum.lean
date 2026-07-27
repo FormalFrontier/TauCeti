@@ -34,6 +34,15 @@ noncomputable def classSum [Semiring k] (C : ConjClasses G) : MonoidAlgebra k G 
             mem_support_toFun := by simp } }
   · exact 0
 
+/-- The computable class sum, when equality of coefficients is decidable. -/
+def classSumOfDecidableEq [Semiring k] [DecidableEq k] (C : ConjClasses G) : MonoidAlgebra k G :=
+  { coeff :=
+      { support :=
+          Finset.univ.filter (fun x =>
+            (if ConjClasses.mk x = C then 1 else 0 : k) ≠ 0)
+        toFun := fun x => if ConjClasses.mk x = C then 1 else 0
+        mem_support_toFun := by simp } }
+
 /-- A class sum is the sum of the basis elements in its conjugacy class. -/
 theorem classSum_eq_sum [Semiring k] (C : ConjClasses G) :
     classSum (k := k) C = ∑ x : C.carrier, MonoidAlgebra.of k G x := by
