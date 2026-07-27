@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.Group.Submonoid.Membership
 public import Mathlib.LinearAlgebra.RootSystem.Base
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
+import Mathlib.GroupTheory.OrderOfElement
 
 public section
 
@@ -119,23 +120,15 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
   have hw :
       w ∈ Submonoid.closure (range fun i : b.support =>
         RootPairing.weylGroup.ofIdx P (i : ι)) := by
-    have hinv :
-        (range fun i : b.support => RootPairing.weylGroup.ofIdx P (i : ι))⁻¹ =
-          range fun i : b.support => RootPairing.weylGroup.ofIdx P (i : ι) := by
-      ext x
-      rw [Set.mem_inv]
-      constructor
-      · rintro ⟨i, hi⟩
-        refine ⟨i, ?_⟩
-        simpa only [ofIdx_inv_eq P i, inv_inv] using congrArg Inv.inv hi
-      · rintro ⟨i, rfl⟩
-        exact ⟨i, (ofIdx_inv_eq P i).symm⟩
     have hclosure :
         (Subgroup.closure (range fun i : b.support =>
           RootPairing.weylGroup.ofIdx P (i : ι))).toSubmonoid =
             Submonoid.closure (range fun i : b.support =>
               RootPairing.weylGroup.ofIdx P (i : ι)) := by
-      rw [Subgroup.closure_toSubmonoid, hinv, union_self]
+      apply Subgroup.closure_toSubmonoid_of_isOfFinOrder
+      rintro x ⟨i, rfl⟩
+      exact isOfFinOrder_iff_pow_eq_one.2 ⟨2, Nat.zero_lt_succ 1, by
+        rw [sq, mul_eq_one_iff_eq_inv, ofIdx_inv_eq P i]⟩
     rw [← hclosure, ← weylGroup_eq_closure_simple P b]
     exact Submonoid.mem_top w
   rw [← FreeMonoid.mrange_lift] at hw
