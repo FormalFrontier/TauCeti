@@ -23,14 +23,6 @@ universe u v w x
 variable {k : Type u} [CommRing k]
   {G : Type v} {H : Type w} {K : Type x} [Group G] [Group H] [Group K]
 
-/-- Restricting a representation along two composable group homomorphisms is naturally
-isomorphic to restriction along their composite. -/
-noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
-    _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
-      _root_.Rep.resFunctor.{max u v w x} φ ≅
-        _root_.Rep.resFunctor.{max u v w x} (ψ.comp φ) :=
-  Iso.refl _
-
 /-- Induction in stages: induction along a composite is naturally isomorphic to successive
 inductions along the two group homomorphisms. -/
 noncomputable def indFunctorCompIso (φ : G →* H) (ψ : H →* K) :
@@ -40,6 +32,6 @@ noncomputable def indFunctorCompIso (φ : G →* H) (ψ : H →* K) :
   Adjunction.leftAdjointCompIso (_root_.Rep.indResAdjunction.{max u v w x} k φ)
     (_root_.Rep.indResAdjunction.{max u v w x} k ψ)
     (_root_.Rep.indResAdjunction.{max u v w x} k (ψ.comp φ))
-    (resFunctorCompIso φ ψ)
+    (Iso.refl _)
 
 end TauCeti
