@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.TensorPower.Basic
-import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+public import Mathlib.LinearAlgebra.PiTensorProduct.Finite
 public import Mathlib.RepresentationTheory.Basic
 public import Mathlib.RepresentationTheory.Character
 
@@ -62,8 +62,6 @@ variable [Field R] [Monoid G] [AddCommGroup M] [Module R M] [FiniteDimensional R
 theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
     (ρ.tensorPower d).character g = (ρ.character g) ^ d := by
   classical
-  letI (d : ℕ) : FiniteDimensional R (⨂[R]^d M) :=
-    (Basis.piTensorProduct fun _ : Fin d => Module.finBasis R M).finiteDimensional_of_finite
   simp only [Representation.character, tensorPower_apply]
   induction d with
   | zero =>
