@@ -59,13 +59,6 @@ theorem classSumCenter_coe (C : ConjClasses G) :
     (classSumCenter (k := k) C : MonoidAlgebra k G) = classSum k C :=
   (rfl)
 
-/-- The coefficient of a central class sum detects its conjugacy class. -/
-@[simp]
-theorem classSumCenter_coeff (C : ConjClasses G) (g : G) :
-    (classSumCenter (k := k) C : MonoidAlgebra k G).coeff g =
-      if ConjClasses.mk g = C then 1 else 0 := by
-  simp
-
 /-- Convert a function on conjugacy classes to the corresponding linear combination of class
 sums. -/
 noncomputable def ofConjClassesCenter (f : ConjClasses G → k) :
