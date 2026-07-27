@@ -141,20 +141,25 @@ theorem stdSymplecticBilinForm_nondegenerate :
 @[simp]
 theorem stdSymplecticBilinForm_comp_stdSymplecticRep
     (g : Matrix.symplecticGroup (Fin n) k) :
-    (stdSymplecticBilinForm k n).comp (stdSymplecticRep k n g) (stdSymplecticRep k n g) =
+    (stdSymplecticBilinForm k n).comp
+        (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVecLin
+        (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVecLin =
       stdSymplecticBilinForm k n := by
-  rw [stdSymplecticBilinForm, stdSymplecticRep_apply, ← Matrix.toLin'_apply',
-    Matrix.toBilin'_comp]
+  rw [stdSymplecticBilinForm, ← Matrix.toLin'_apply', Matrix.toBilin'_comp]
   rw [(SymplecticGroup.mem_iff' (l := Fin n) (R := k)).mp g.2]
 
 /-- The standard symplectic pairing is invariant under the standard action. -/
 @[simp]
 theorem stdSymplecticBilinForm_stdSymplecticRep
     (g : Matrix.symplecticGroup (Fin n) k) (v w : (Fin n ⊕ Fin n) → k) :
-    stdSymplecticBilinForm k n (stdSymplecticRep k n g v) (stdSymplecticRep k n g w) =
+    (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVec v ⬝ᵥ
+        (Matrix.J (Fin n) k *
+          (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k)).mulVec w =
       stdSymplecticBilinForm k n v w := by
-  exact LinearMap.congr_fun
-    (LinearMap.congr_fun (stdSymplecticBilinForm_comp_stdSymplecticRep k n g) v) w
+  simpa only [LinearMap.BilinForm.comp_apply, stdSymplecticBilinForm_apply,
+    Matrix.mulVecLin_apply, Matrix.mulVec_mulVec] using
+    LinearMap.congr_fun
+      (LinearMap.congr_fun (stdSymplecticBilinForm_comp_stdSymplecticRep k n g) v) w
 
 end CommRing
 
@@ -212,8 +217,11 @@ theorem stdSymplecticRepToDual_equivariant
         stdSymplecticBilinForm k n (stdSymplecticRep k n g v)
           (stdSymplecticRep k n g (stdSymplecticRep k n g⁻¹ w)) := by
       rw [Representation.self_inv_apply]
-    _ = stdSymplecticBilinForm k n v (stdSymplecticRep k n g⁻¹ w) :=
-      stdSymplecticBilinForm_stdSymplecticRep k n g v (stdSymplecticRep k n g⁻¹ w)
+    _ = stdSymplecticBilinForm k n v (stdSymplecticRep k n g⁻¹ w) := by
+      simpa only [stdSymplecticRep_apply, stdSymplecticBilinForm_apply,
+        Matrix.mulVecLin_apply, Matrix.mulVec_mulVec, Matrix.mul_assoc] using
+        stdSymplecticBilinForm_stdSymplecticRep k n g v
+          (stdSymplecticRep k n g⁻¹ w)
 
 /-- The standard representation of the symplectic group is equivariantly self-dual. -/
 noncomputable def stdSymplecticRepEquivDual :
