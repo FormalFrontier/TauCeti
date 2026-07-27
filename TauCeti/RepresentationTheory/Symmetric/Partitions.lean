@@ -148,4 +148,10 @@ theorem card_conjClasses_perm_eq_card_partition (α : Type*) [Fintype α] [Decid
       Fintype.card (Fintype.card α).Partition :=
   Fintype.card_congr (partitionEquivPermConjClasses α).symm
 
+/-- The number of conjugacy classes of the symmetric group on `Fin n` is the number of partitions
+of `n`. -/
+theorem card_conjClasses_perm (n : ℕ) :
+    Fintype.card (ConjClasses (Equiv.Perm (Fin n))) = Fintype.card n.Partition := by
+  simpa using card_conjClasses_perm_eq_card_partition (Fin n)
+
 end TauCeti
