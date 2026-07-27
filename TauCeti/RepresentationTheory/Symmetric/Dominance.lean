@@ -218,6 +218,12 @@ theorem strictlyDominates_iff {n : ℕ} {μ ν : n.Partition} :
     StrictlyDominates μ ν ↔ Dominates μ ν ∧ μ ≠ ν := by
   exact DominanceOrder.partition_lt_iff.trans (and_congr Iff.rfl ne_comm)
 
+/-- Strict dominance is a strict order on partitions. -/
+instance {n : ℕ} : IsStrictOrder n.Partition StrictlyDominates := by
+  letI := DominanceOrder.partitionPartialOrder (n := n)
+  change IsStrictOrder n.Partition (Function.swap (· < ·))
+  infer_instance
+
 instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) := by
   rw [strictlyDominates_iff]
   infer_instance
