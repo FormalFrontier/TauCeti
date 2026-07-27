@@ -25,7 +25,7 @@ follows: `powEnd 0` is the trivial homomorphism (`powEnd_zero`), the exponent-ad
 (`powEnd_add`), and `powEnd (-a)` inverts pointwise (`powEnd_neg`). Passing to additive notation
 on the abelian group of `𝔾ₘ`-points, the family realizes the canonical integer action
 (`toAdditive_powEnd_eq_intCast`), i.e. the power endomorphisms are the power-map realization of
-the ring homomorphism `ℤ → End(𝔾ₘ(A))`. On
+Mathlib's canonical ring homomorphism `Int.castRingHom` into `End(𝔾ₘ(A))`. On
 the group of points of a *fixed* algebra `A` this map need not be injective (for instance when
 `Aˣ` has finite exponent), so it is honestly only a ring homomorphism, not an isomorphism.
 
@@ -45,9 +45,7 @@ the character lattice `X*(T)` and cocharacter lattice `X_*(T)` with their perfec
   `TauCeti.DiagonalizableGroup.powEnd_neg`: the additive-in-the-exponent structure of the power
   endomorphisms, complementing the existing multiplicative `powEnd_comp` / `powEnd_one`.
 * `TauCeti.DiagonalizableGroup.toAdditive_powEnd_eq_intCast`: the additive form of `powEnd z`
-  is the canonical integer endomorphism.
-* `TauCeti.DiagonalizableGroup.mapValue_powEnd`: the power endomorphism is natural in the value
-  algebra.
+  is the value of Mathlib's canonical integer ring homomorphism.
 * `TauCeti.DiagonalizableGroup.charPoints_cocharPoints_apply`: the character–cocharacter pairing
   is the exponent of the power map obtained by composing a character after a cocharacter.
 
@@ -115,30 +113,17 @@ theorem powEnd_neg (a : ℤ) :
 is the canonical integer endomorphism. Together with `powEnd_zero`, `powEnd_one`, `powEnd_add`,
 and `powEnd_comp`, this
 exhibits `z ↦ powEnd z` as the power-endomorphism realization of the canonical ring homomorphism
-`ℤ → End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for example when
-`Aˣ` has finite exponent. -/
+`Int.castRingHom` into `End(𝔾ₘ(A))`; on a fixed algebra `A` this map need not be injective, for
+example when `Aˣ` has finite exponent. -/
 @[simp]
 theorem toAdditive_powEnd_eq_intCast (z : ℤ) :
     MonoidHom.toAdditive (powEnd (R := R) (A := A) z) =
-      (z : AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) := by
+      Int.castRingHom
+        (AddMonoid.End (Additive (WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A)))) z := by
   apply AddMonoidHom.ext
   intro a
   rw [MonoidHom.toAdditive_apply_apply, powEnd_apply, ofMul_zpow, ofMul_toMul]
   exact (AddMonoid.End.intCast_apply z a).symm
-
-variable {B : Type w} [CommSemiring B] [Algebra R B]
-
-/-- **The power endomorphism is natural in the value algebra.** Post-composing a point with an
-`R`-algebra map `φ : A →ₐ[R] B` commutes with the `z`th power endomorphism, so `powEnd z` is a
-natural transformation of the functor of points of `𝔾ₘ`. -/
-theorem mapValue_powEnd (φ : A →ₐ[R] B) (z : ℤ) :
-    (powEnd (A := B) z).comp
-        (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ) =
-      (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) φ).comp
-        (powEnd (A := A) z) := by
-  apply MonoidHom.ext
-  intro f
-  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, powEnd_apply, powEnd_apply, map_zpow]
 
 variable {M : Type w} [CommGroup M]
 
