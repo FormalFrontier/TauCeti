@@ -44,10 +44,10 @@ variable [CommRing k]
 @[simp]
 theorem basisFun_det_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
-    Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
+    Matrix.detRowAlternating (fun i => (g : Matrix (Fin n) (Fin n) k).mulVec (v i)) =
       (Pi.basisFun k (Fin n)).det v := by
-  simpa only [stdSLRep_apply_apply, Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply,
-    Matrix.mulVecBilin_apply, LinearMap.det_toLin', g.det_coe, one_mul] using
+  simpa only [Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply, Matrix.mulVecBilin_apply,
+    LinearMap.det_toLin', g.det_coe, one_mul] using
     (Module.Basis.det_comp (Pi.basisFun k (Fin n))
       (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
 
