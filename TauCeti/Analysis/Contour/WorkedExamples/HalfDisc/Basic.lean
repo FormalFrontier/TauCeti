@@ -46,6 +46,12 @@ residue theorem does not apply because the pole lies *on* the contour.
   origin is `½`.
 * `TauCeti.Contour.halfDiscBoundary_eq_zero_iff` — the contour meets the origin exactly once,
   at `t = 0`.
+* `TauCeti.Contour.deriv_halfDiscBoundary_of_lt_radius` and
+  `TauCeti.Contour.deriv_halfDiscBoundary_of_lt` — before the junction the derivative is the real
+  inclusion's, beyond it the circle map's at the shifted parameter.
+* `TauCeti.Contour.integral_halfDiscBoundary_arc` — the `[R, R + π]` piece of the contour integral
+  is the `circleMap 0 R` integral over `[0, π]`; for `0 < R` that is the upper semicircle, the
+  form Jordan's lemma bounds.
 * `TauCeti.Contour.flatOfOrder_halfDiscBoundary` — both one-sided branches at the origin lie on
   the real line, so the contour is flat there to every order.
 * `TauCeti.Contour.conditionAprime_halfDiscBoundary` — Hungerbühler–Wasem condition (A′) at the
@@ -101,6 +107,58 @@ theorem eqOn_halfDiscBoundary_segment (hR : 0 ≤ R) :
   have h2 : t < max (-R) R := (Set.mem_Ioo.mp ht).2
   rw [max_eq_right (by linarith : (-R : ℝ) ≤ R)] at h2
   simp [halfDiscBoundary_of_le h2.le]
+
+/-- **The derivative on the open diameter.** Strictly before the junction the half-disc boundary
+is the real inclusion on a whole neighbourhood, so the two derivatives agree. -/
+@[simp]
+theorem deriv_halfDiscBoundary_of_lt_radius {R t : ℝ} (h : t < R) :
+    deriv (halfDiscBoundary R) t = deriv (fun s : ℝ => (s : ℂ)) t := by
+  have hev : halfDiscBoundary R =ᶠ[nhds t] fun s : ℝ => (s : ℂ) := by
+    filter_upwards [Iio_mem_nhds h] with s hs
+    exact halfDiscBoundary_of_le hs.le
+  exact hev.deriv_eq
+
+/-- **The derivative on the open arc.** Strictly beyond the junction the half-disc boundary
+coincides with the shifted circle map on a whole neighbourhood, so its derivative is the circle
+map's, evaluated at the shifted parameter. (At the junction `t = R` itself the contour has a
+corner, and no such identity is claimed.) -/
+@[simp]
+theorem deriv_halfDiscBoundary_of_lt {R t : ℝ} (h : R < t) :
+    deriv (halfDiscBoundary R) t = deriv (circleMap 0 R) (t - R) := by
+  have hev : halfDiscBoundary R =ᶠ[nhds t] (circleMap 0 R ∘ fun s : ℝ => s - R) := by
+    filter_upwards [Ioi_mem_nhds h] with s hs
+    exact halfDiscBoundary_of_lt hs
+  rw [hev.deriv_eq]
+  have hsub : HasDerivAt (fun s : ℝ => s - R) 1 t := by
+    simpa using (hasDerivAt_id t).sub_const R
+  have hd : HasDerivAt (circleMap 0 R ∘ fun s : ℝ => s - R)
+      (deriv (circleMap 0 R) (t - R)) t := by
+    simpa [deriv_circleMap] using (hasDerivAt_circleMap 0 R (t - R)).scomp t hsub
+  exact hd.deriv
+
+/-- **The arc piece of the contour integral is the circle-map integral.** Beyond the junction the
+half-disc boundary is the circle map shifted by `R`, so translating the parameter identifies the
+`[R, R + π]` piece of `∮_γ f` with the integral of `circleMap 0 R` over `[0, π]`. The junction
+`t = R` itself, where the contour has a corner, is a single point and does not affect the integral.
+
+The identity holds for every `R`. For `0 < R` the right-hand side is the *upper* semicircle
+traversed counterclockwise — the form Jordan's lemma bounds; for `R < 0` the same parametrization
+traces the lower semicircle instead, and `R = 0` is degenerate, `circleMap 0 0` being the constant
+path at the origin. -/
+theorem integral_halfDiscBoundary_arc (f : ℂ → ℂ) (R : ℝ) :
+    (∫ t in R..(R + Real.pi), f (halfDiscBoundary R t) * deriv (halfDiscBoundary R) t)
+      = ∫ θ in (0 : ℝ)..Real.pi, f (circleMap 0 R θ) * deriv (circleMap 0 R) θ := by
+  have hshift : (∫ t in R..(R + Real.pi),
+      f (circleMap 0 R (t - R)) * deriv (circleMap 0 R) (t - R))
+      = ∫ θ in (0 : ℝ)..Real.pi, f (circleMap 0 R θ) * deriv (circleMap 0 R) θ := by
+    have h := intervalIntegral.integral_comp_sub_right
+      (fun θ => f (circleMap 0 R θ) * deriv (circleMap 0 R) θ) (a := R) (b := R + Real.pi) R
+    simpa using h
+  rw [← hshift]
+  refine intervalIntegral.integral_congr_ae' (Filter.Eventually.of_forall fun t ht => ?_)
+    (Filter.Eventually.of_forall fun t ht => ?_)
+  · rw [halfDiscBoundary_of_lt ht.1, deriv_halfDiscBoundary_of_lt ht.1]
+  · exact absurd (ht.1.trans_le ht.2) (by simp [Real.pi_pos.le])
 
 /-- On the arc's parameter interval — including both endpoints, where the two agree — the contour
 is the circle reparametrized by `t ↦ t - R`. -/
