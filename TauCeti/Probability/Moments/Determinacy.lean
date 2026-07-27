@@ -185,32 +185,38 @@ zero.
 This is the instance the completeness step consumes:
 `Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp`
 above pins down a *measure* from its moments, and this transfers that to a *function* by applying it
-to the positive and negative parts of `g` as densities against `volume`. -/
-theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
-    (hexp : ∀ a : ℝ, 0 ≤ a → Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) volume)
-    (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x = 0) :
-    g =ᵐ[volume] 0 := by
+to the positive and negative parts of `g` as densities against `ν`.
+
+The reference measure is an arbitrary σ-finite `ν`, not just `volume`: the argument only splits `g`
+into `g⁺`/`g⁻` as densities, and σ-finiteness is exactly what is needed to read equality of the two
+`withDensity` measures back as equality of the densities. Weighted orthogonal families against a
+measure other than Lebesgue (Hermite against a Gaussian, Laguerre against `e^{-x}`) are the intended
+consumers. -/
+theorem ae_eq_zero_of_forall_moment_eq_zero [SigmaFinite ν] (g : ℝ → ℝ)
+    (hexp : ∀ a : ℝ, 0 ≤ a → Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν)
+    (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
+    g =ᵐ[ν] 0 := by
   -- `a = 0` gives plain integrability of `g`.
-  have hg : Integrable g volume := by simpa using hexp 0 le_rfl
-  have hgm : AEMeasurable g volume := hg.aestronglyMeasurable.aemeasurable
-  have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) volume :=
+  have hg : Integrable g ν := by simpa using hexp 0 le_rfl
+  have hgm : AEMeasurable g ν := hg.aestronglyMeasurable.aemeasurable
+  have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) ν :=
     ENNReal.measurable_ofReal.comp_aemeasurable hgm
-  have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) volume :=
+  have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) ν :=
     ENNReal.measurable_ofReal.comp_aemeasurable hgm.neg
-  have hltp : ∀ᵐ x ∂volume, ENNReal.ofReal (g x) < ⊤ := by
+  have hltp : ∀ᵐ x ∂ν, ENNReal.ofReal (g x) < ⊤ := by
     filter_upwards with x using ENNReal.ofReal_lt_top
-  have hltn : ∀ᵐ x ∂volume, ENNReal.ofReal (-g x) < ⊤ := by
+  have hltn : ∀ᵐ x ∂ν, ENNReal.ofReal (-g x) < ⊤ := by
     filter_upwards with x using ENNReal.ofReal_lt_top
-  -- Split `g` into its positive and negative parts as densities against `volume`.
+  -- Split `g` into its positive and negative parts as densities against `ν`.
   -- `ENNReal.ofReal` already truncates at zero, so these are exactly `g⁺` and `g⁻`.
-  set mp : Measure ℝ := volume.withDensity (fun x => ENNReal.ofReal (g x)) with hmp
-  set mn : Measure ℝ := volume.withDensity (fun x => ENNReal.ofReal (-g x)) with hmn
+  set mp : Measure ℝ := ν.withDensity (fun x => ENNReal.ofReal (g x)) with hmp
+  set mn : Measure ℝ := ν.withDensity (fun x => ENNReal.ofReal (-g x)) with hmn
   haveI hmpfin : IsFiniteMeasure mp := isFiniteMeasure_withDensity_ofReal hg.2
   haveI hmnfin : IsFiniteMeasure mn := isFiniteMeasure_withDensity_ofReal hg.neg.2
   -- Vanishing moments of `g` say exactly that `g⁺` and `g⁻` have the same moments.
   -- `xⁿ · g` is integrable: `|x|ⁿ ≤ n! · e^{|x|}`, so `hexp 1` dominates every polynomial moment.
   have hdom : ∀ n : ℕ,
-      Integrable (fun x : ℝ => (Nat.factorial n : ℝ) * (Real.exp (1 * |x|) * g x)) volume :=
+      Integrable (fun x : ℝ => (Nat.factorial n : ℝ) * (Real.exp (1 * |x|) * g x)) ν :=
     fun n => (hexp 1 zero_le_one).const_mul _
   have hpowbd : ∀ (n : ℕ) (x : ℝ), |x| ^ n ≤ (Nat.factorial n : ℝ) * Real.exp (1 * |x|) := by
     intro n x
@@ -220,7 +226,7 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     rw [div_le_iff₀ hfac] at h
     linarith
   have hintp : ∀ n : ℕ,
-      Integrable (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n) volume := by
+      Integrable (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n) ν := by
     intro n
     have hfacpos : (0:ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
     refine (hdom n).mono ?_ ?_
@@ -237,7 +243,7 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
         abs_mul, abs_mul, abs_mul, abs_pow, abs_of_pos hE, abs_of_pos hfacpos]
       nlinarith [abs_nonneg (g x), abs_nonneg (max (g x) 0), pow_nonneg (abs_nonneg x) n]
   have hintn : ∀ n : ℕ,
-      Integrable (fun x : ℝ => (ENNReal.ofReal (-g x)).toReal • x ^ n) volume := by
+      Integrable (fun x : ℝ => (ENNReal.ofReal (-g x)).toReal • x ^ n) ν := by
     intro n
     have hfacpos : (0:ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
     refine (hdom n).mono ?_ ?_
@@ -267,7 +273,7 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
       · rw [max_eq_right h, max_eq_left (neg_nonneg.mpr h)]; ring
       · rw [max_eq_left h, max_eq_right (neg_nonpos.mpr h)]; ring
     have hz : ∫ x : ℝ, ((ENNReal.ofReal (g x)).toReal • x ^ n
-        - (ENNReal.ofReal (-g x)).toReal • x ^ n) = 0 := by
+        - (ENNReal.ofReal (-g x)).toReal • x ^ n) ∂ν = 0 := by
       rw [hsplit]; exact hmom n
     rw [integral_sub (hintp n) (hintn n)] at hz
     linarith
