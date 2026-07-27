@@ -39,46 +39,45 @@ section CommSemiring
 
 variable [CommSemiring R] [AddCommMonoid M] [Module R M]
 
-/-- Splitting a tensor power intertwines the tensor product of diagonal maps with the
-diagonal map on the combined tensor power. -/
-theorem mulEquiv_conj_map (f : M →ₗ[R] M) (d e : ℕ) :
+private theorem append_const {α : Type*} {d e : ℕ} (x : α) :
+    Fin.append (fun _ : Fin d => x) (fun _ : Fin e => x) = fun _ : Fin (d + e) => x := by
+  ext i
+  refine Fin.addCases ?_ ?_ i <;> simp
+
+private theorem mulEquiv_map {d e : ℕ} (f : Fin d → M →ₗ[R] M)
+    (g : Fin e → M →ₗ[R] M) :
+    (_root_.TensorPower.mulEquiv :
+      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).toLinearMap ∘ₗ
+        TensorProduct.map (PiTensorProduct.map f) (PiTensorProduct.map g) =
+      PiTensorProduct.map (Fin.append f g) ∘ₗ
+        (_root_.TensorPower.mulEquiv :
+          (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).toLinearMap := by
+  ext x y
+  simp only [LinearMap.compMultilinearMap_apply, TensorProduct.AlgebraTensorModule.curry_apply,
+    LinearMap.restrictScalars_self, TensorProduct.curry_apply, LinearMap.coe_comp,
+    LinearEquiv.coe_coe, Function.comp_apply, TensorProduct.map_tmul,
+    PiTensorProduct.map_tprod]
+  rw [← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod,
+    ← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod,
+    PiTensorProduct.map_tprod]
+  congr 1 with i
+  refine Fin.addCases ?_ ?_ i <;> intro j <;> simp [Fin.append]
+
+/-- Splitting a tensor power intertwines separate families of maps on the two factors with
+their appended family on the combined tensor power. -/
+theorem mulEquiv_conj_map {d e : ℕ} (f : Fin d → M →ₗ[R] M) (g : Fin e → M →ₗ[R] M) :
     (_root_.TensorPower.mulEquiv :
       (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).conj
-        (TensorProduct.map (PiTensorProduct.map fun _ : Fin d => f)
-          (PiTensorProduct.map fun _ : Fin e => f)) =
-      PiTensorProduct.map (fun _ : Fin (d + e) => f) := by
-  ext x
-  simp only [LinearMap.compMultilinearMap_apply]
+        (TensorProduct.map (PiTensorProduct.map f) (PiTensorProduct.map g)) =
+      PiTensorProduct.map (Fin.append f g) := by
+  apply LinearMap.ext
+  intro x
   rw [LinearEquiv.conj_apply_apply]
-  let a : Fin d → M := fun i => x (Fin.castAdd e i)
-  let b : Fin e → M := fun i => x (Fin.natAdd d i)
-  have hx : Fin.append a b = x := by
-    ext i
-    refine Fin.addCases ?_ ?_ i
-    · intro j
-      simp only [a, Fin.append_left]
-    · intro j
-      simp only [b, Fin.append_right]
-  have hsplit : (_root_.TensorPower.mulEquiv :
-      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).symm (⨂ₜ[R] i, x i) =
-      (⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i) := by
-    apply (_root_.TensorPower.mulEquiv :
-      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).injective
-    rw [LinearEquiv.apply_symm_apply]
-    rw [← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod]
-    rw [hx]
-  rw [hsplit, TensorProduct.map_tmul, PiTensorProduct.map_tprod,
-    PiTensorProduct.map_tprod]
-  rw [← _root_.TensorPower.gMul_def, _root_.TensorPower.tprod_mul_tprod]
-  rw [PiTensorProduct.map_tprod]
-  congr 1
-  rw [← hx]
-  ext i
-  refine Fin.addCases ?_ ?_ i
-  · intro j
-    simp only [Fin.append_left]
-  · intro j
-    simp only [Fin.append_right]
+  have h := LinearMap.congr_fun (mulEquiv_map f g)
+    ((_root_.TensorPower.mulEquiv :
+      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).symm x)
+  simpa only [LinearMap.comp_apply, LinearEquiv.apply_symm_apply,
+    LinearEquiv.coe_coe] using h
 
 end CommSemiring
 
@@ -101,6 +100,24 @@ theorem tensorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
     ρ.tensorPower d g = PiTensorProduct.map fun _ : Fin d => ρ g := by
   simp only [tensorPower, MonoidHom.comp_apply, PiTensorProduct.mapMonoidHom_apply]
   exact congrArg PiTensorProduct.map (funext fun i => MonoidHom.pi_apply _ g i)
+
+/-- The action on the zero-fold tensor power is the identity. -/
+@[simp]
+theorem tensorPower_zero_apply (ρ : Representation R G M) (g : G) :
+    ρ.tensorPower 0 g = LinearMap.id := by
+  rw [tensorPower_apply, ← PiTensorProduct.map_id]
+  congr
+  funext i
+  exact Fin.elim0 i
+
+/-- Splitting the factors gives an equivalence from the tensor product of two tensor-power
+representations to the tensor power indexed by their sum. -/
+noncomputable def tensorPowerAddEquiv (ρ : Representation R G M) (d e : ℕ) :
+    ((ρ.tensorPower d).tprod (ρ.tensorPower e)).Equiv (ρ.tensorPower (d + e)) :=
+  .mk (_root_.TensorPower.mulEquiv) fun g => by
+    rw [tprod_apply, tensorPower_apply, tensorPower_apply, tensorPower_apply]
+    simpa only [TauCeti.TensorPower.append_const] using
+      TauCeti.TensorPower.mulEquiv_map (fun _ : Fin d => ρ g) (fun _ : Fin e => ρ g)
 
 end CommSemiring
 
@@ -128,7 +145,9 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
     simp only [pow_zero]
   | succ d ih =>
     -- Split `Fin (d + 1)` into `Fin d` and `Fin 1`, then use multiplicativity of trace.
-    rw [← TauCeti.TensorPower.mulEquiv_conj_map, LinearMap.trace_conj',
+    rw [← TauCeti.TensorPower.append_const (d := d) (e := 1) (ρ g),
+      ← TauCeti.TensorPower.mulEquiv_conj_map (fun _ : Fin d => ρ g)
+      (fun _ : Fin 1 => ρ g), LinearMap.trace_conj',
       LinearMap.trace_tensorProduct']
     have h_one : LinearMap.trace R (⨂[R]^1 M) (PiTensorProduct.map fun _ : Fin 1 => ρ g) =
         LinearMap.trace R M (ρ g) := by
