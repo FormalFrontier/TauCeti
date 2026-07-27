@@ -8,6 +8,7 @@ module
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 public import TauCeti.MeasureTheory.Measure.GiryMonad
 public import TauCeti.Probability.Moments.CompactDeterminacy
+public import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
 
 /-!
 # The mixing measure is identified by the i.i.d. mixture
@@ -81,6 +82,65 @@ private theorem lintegral_prod_pow_eq_of_bind_eq
       Fintype.prod_sigma]
     simp
   simpa only [hprod] using lintegral_prod_eq_of_bind_eq h B' hB'm
+
+/-- The `ℝ≥0∞`-valued mixed monomial is `ENNReal.ofReal` of its real-valued counterpart; a
+probability measure's values are finite, so `toReal` passes through the product. -/
+private theorem toReal_prod_pow (P : ProbabilityMeasure α) {k : ℕ} (B : Fin k → Set α)
+    (m : Fin k → ℕ) :
+    (∏ j, ((P : Measure α) (B j)) ^ m j).toReal = ∏ j, (P (B j) : ℝ) ^ m j := by
+  rw [ENNReal.toReal_prod]
+  refine Finset.prod_congr rfl fun j _ => ?_
+  rw [← ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, ← ENNReal.coe_pow,
+    ENNReal.coe_toReal, NNReal.coe_pow]
+
+/-- **The i.i.d. mixture determines the mixing measure.** If two finite measures on
+`ProbabilityMeasure α` induce the same mixture `π.bind (P ↦ P^{⊗ℕ})`, they are equal.
+
+The mixture's finite-dimensional rectangle probabilities are the mixed moments of the evaluation
+maps, and repetitions in the rectangle turn those into mixed monomials. Each finite evaluation
+family lands in the compact box `[0,1]^k`, so multivariate moment determinacy identifies its law,
+and finite evaluation laws determine the measure. -/
+theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁] [IsFiniteMeasure π₂]
+    (h : (π₁.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α))
+      = π₂.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
+    π₁ = π₂ := by
+  refine TauCeti.MeasureTheory.Measure.ext_of_forall_map_probabilityMeasure_eval_eq
+    fun k B hB => ?_
+  have hfm : Measurable fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) :=
+    measurable_probabilityMeasure_eval_family B hB
+  haveI : IsFiniteMeasure (π₁.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
+    Measure.isFiniteMeasure_map _ _
+  haveI : IsFiniteMeasure (π₂.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
+    Measure.isFiniteMeasure_map _ _
+  have hKc : IsCompact (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1) :=
+    isCompact_univ_pi fun _ => isCompact_Icc
+  have hsupp : ∀ π : Measure (ProbabilityMeasure α),
+      (π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
+        (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1)ᶜ = 0 := by
+    intro π
+    rw [Measure.map_apply hfm (hKc.isClosed.measurableSet.compl)]
+    convert measure_empty (μ := π)
+    ext P
+    simp only [Set.mem_preimage, Set.mem_compl_iff, Set.mem_pi, Set.mem_univ, Set.mem_Icc,
+      forall_const, Set.mem_empty_iff_false, iff_false, not_not]
+    exact fun j => ⟨(P (B j)).coe_nonneg, by exact_mod_cast (P.apply_le_one (B j))⟩
+  refine Measure.ext_of_forall_integral_monomial_eq_of_support hKc (hsupp π₁) (hsupp π₂) fun m => ?_
+  have hconv : ∀ π : Measure (ProbabilityMeasure α),
+      ∫ x, ∏ j, x j ^ m j ∂(π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
+        = (∫⁻ P, ∏ j, ((P : Measure α) (B j)) ^ m j ∂π).toReal := by
+    intro π
+    rw [integral_map hfm.aemeasurable
+      (Finset.measurable_prod _ fun j _ =>
+        (measurable_pi_apply j).pow_const _).aestronglyMeasurable]
+    rw [← integral_toReal ?meas ?fin]
+    · exact integral_congr_ae (Filter.Eventually.of_forall fun P => (toReal_prod_pow P B m).symm)
+    case meas =>
+      exact (Finset.measurable_prod _ fun j _ =>
+        ((Measure.measurable_coe (hB j)).comp measurable_subtype_coe).pow_const _).aemeasurable
+    case fin =>
+      exact Filter.Eventually.of_forall fun P =>
+        ENNReal.prod_lt_top fun j _ => (ENNReal.pow_ne_top (measure_ne_top _ _)).lt_top
+  rw [hconv, hconv, lintegral_prod_pow_eq_of_bind_eq h B hB m]
 
 end MeasureTheory
 
