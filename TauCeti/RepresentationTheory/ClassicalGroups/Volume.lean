@@ -44,6 +44,7 @@ noncomputable def volumeForm : (Fin n → k) [⋀^Fin n]→ₗ[k] k :=
   (Pi.basisFun k (Fin n)).det
 
 /-- The coordinate volume form evaluates a family of vectors by its matrix determinant. -/
+@[simp]
 theorem volumeForm_apply (v : Fin n → Fin n → k) :
     volumeForm k n v = Matrix.det (Matrix.of v) := by
   exact Pi.basisFun_det_apply v
@@ -57,13 +58,19 @@ theorem volumeForm_basis : volumeForm k n (Pi.basisFun k (Fin n)) = 1 :=
 theorem volumeForm_ne_zero [Nontrivial k] : volumeForm k n ≠ 0 :=
   (Pi.basisFun k (Fin n)).det_ne_zero
 
+/-- Applying a square matrix to every argument scales the volume form by its determinant. -/
+theorem volumeForm_mulVec (A : Matrix (Fin n) (Fin n) k) (v : Fin n → Fin n → k) :
+    volumeForm k n (fun i => A.mulVec (v i)) = Matrix.det A * volumeForm k n v := by
+  simpa [volumeForm, Matrix.mulVecBilin_apply, Function.comp_def, LinearMap.det_toLin'] using
+    (Module.Basis.det_comp (Pi.basisFun k (Fin n))
+      (Matrix.toLin' A) v)
+
 /-- The standard action of `GL(n, k)` scales the volume form by the matrix determinant. -/
 theorem volumeForm_stdRep (g : GL (Fin n) k) (v : Fin n → Fin n → k) :
     volumeForm k n (fun i => stdRep k n g (v i)) =
       Matrix.det (g : Matrix (Fin n) (Fin n) k) * volumeForm k n v := by
-  simpa [volumeForm, stdRep_apply, Function.comp_def, LinearMap.det_toLin'] using
-    (Module.Basis.det_comp (Pi.basisFun k (Fin n))
-      (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
+  simpa only [stdRep_apply, Matrix.mulVecBilin_apply] using
+    volumeForm_mulVec k n (g : Matrix (Fin n) (Fin n) k) v
 
 /-- The standard action of `SL(n, k)` preserves the coordinate volume form. -/
 @[simp]
