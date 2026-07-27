@@ -59,6 +59,7 @@ variable {K L : PreAbstractSimplicialComplex α}
 /-- A finite set is a face of the cone exactly when it is nonempty and its left projection is
 either empty or a face of the base complex.  There is no further condition on the right
 projection because the apex type has one element. -/
+@[simp]
 theorem mem_cone_iff {σ : Finset (α ⊕ PUnit)} :
     σ ∈ cone K ↔ σ.Nonempty ∧ (σ.toLeft = ∅ ∨ σ.toLeft ∈ K) := by
   rw [cone, mem_join_iff]
@@ -138,6 +139,7 @@ theorem cone_toPreAbstractSimplicialComplex :
 
 /-- A finite set is a face of the cone exactly when it is nonempty and its left projection is
 either empty or a face of the base complex. -/
+@[simp]
 theorem mem_cone_iff {σ : Finset (α ⊕ PUnit)} :
     σ ∈ cone K ↔ σ.Nonempty ∧ (σ.toLeft = ∅ ∨ σ.toLeft ∈ K) := by
   simp only [← mem_toPreAbstractSimplicialComplex, cone_toPreAbstractSimplicialComplex]
