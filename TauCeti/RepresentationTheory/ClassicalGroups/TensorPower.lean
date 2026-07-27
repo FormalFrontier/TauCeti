@@ -56,9 +56,19 @@ section Field
 variable [Field k]
 
 /-- The character of the tensor power is the corresponding power of the standard character. -/
+@[simp]
 theorem char_tensorPowerRep (g : GL (Fin n) k) :
-    (tensorPowerRep k n d).character g = ((stdRep k n).character g) ^ d := by
-  exact Representation.char_tensorPower (stdRep k n) d g
+    (tensorPowerRep k n d).character g =
+      Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
+  rw [Representation.char_tensorPower, char_stdRep]
+
+/-- The bundled tensor-power representation has character equal to the trace power. -/
+@[simp]
+theorem char_tensorPowerFDRep (g : GL (Fin n) k) :
+    (tensorPowerFDRep k n d).character g =
+      Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
+  simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
+    char_tensorPowerRep k n d g
 
 end Field
 
