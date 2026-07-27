@@ -61,10 +61,6 @@ theorem stdRep_injective : Function.Injective (stdRep k n) := by
 noncomputable abbrev stdFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (stdRep k n)
 
-/-- The representation underlying the bundled standard representation. -/
-@[simp]
-theorem stdFDRep_ρ : (stdFDRep k n).ρ = stdRep k n := rfl
-
 end CommRing
 
 section Field
@@ -82,7 +78,7 @@ theorem stdRep_character (g : GL (Fin n) k) :
 @[simp]
 theorem stdFDRep_character (g : GL (Fin n) k) :
     (stdFDRep k n).character g = Matrix.trace (g : Matrix (Fin n) (Fin n) k) := by
-  simpa only [FDRep.character, stdFDRep_ρ, Representation.character] using
+  simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
     stdRep_character k n g
 
 end Field
@@ -108,10 +104,6 @@ theorem stdDualRep_apply (g : GL (Fin n) k) :
 noncomputable abbrev stdDualFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (stdDualRep k n)
 
-/-- The representation underlying the bundled dual standard representation. -/
-@[simp]
-theorem stdDualFDRep_ρ : (stdDualFDRep k n).ρ = stdDualRep k n := rfl
-
 end CommRing
 
 section Field
@@ -130,7 +122,7 @@ theorem stdDualRep_character (g : GL (Fin n) k) :
 theorem stdDualFDRep_character (g : GL (Fin n) k) :
     (stdDualFDRep k n).character g =
       Matrix.trace ((g⁻¹ : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) := by
-  simpa only [FDRep.character, stdDualFDRep_ρ, Representation.character] using
+  simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
     stdDualRep_character k n g
 
 end Field
