@@ -17,6 +17,8 @@ continuous linear operators, and records the basic inner-product identities and 
 The definition and its API implement the unitarity-predicate milestone in Layer 1 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
 The operator characterizations reuse Mathlib's adjoint and unitary-operator theory.
+
+The mathematical development follows Daniel Bump, *Lie Groups*, second edition, Chapters 2–4.
 -/
 
 public section
@@ -136,9 +138,8 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_left (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪π g v, w⟫_ℂ = ⟪v, π g⁻¹ w⟫_ℂ := by
-  have hw : π g (π g⁻¹ w) = w := by
-    rw [← mul_apply_eq_comp, ← map_mul]
-    simp
+  have hw := Representation.self_inv_apply π.toRepresentation g w
+  change π g (π g⁻¹ w) = w at hw
   calc
     ⟪π g v, w⟫_ℂ = ⟪π g v, π g (π g⁻¹ w)⟫_ℂ := by rw [hw]
     _ = ⟪v, π g⁻¹ w⟫_ℂ := hπ.inner_map_map _ _ _
@@ -148,12 +149,19 @@ omit [CompleteSpace V] in
 element by its inverse. -/
 theorem inner_map_right (hπ : IsUnitary π) (g : G) (v w : V) :
     ⟪v, π g w⟫_ℂ = ⟪π g⁻¹ v, w⟫_ℂ := by
-  have hv : π g (π g⁻¹ v) = v := by
-    rw [← mul_apply_eq_comp, ← map_mul]
-    simp
+  have hv := Representation.self_inv_apply π.toRepresentation g v
+  change π g (π g⁻¹ v) = v at hv
   calc
     ⟪v, π g w⟫_ℂ = ⟪π g (π g⁻¹ v), π g w⟫_ℂ := by rw [hv]
     _ = ⟪π g⁻¹ v, w⟫_ℂ := hπ.inner_map_map _ _ _
+
+/-- The adjoint of a unitary action operator is the action of the inverse group element. -/
+@[simp]
+theorem adjoint_eq_inv (hπ : IsUnitary π) (g : G) :
+    ContinuousLinearMap.adjoint (π g) = π g⁻¹ := by
+  rw [eq_comm, ContinuousLinearMap.eq_adjoint_iff]
+  intro v w
+  simpa using hπ.inner_map_left g⁻¹ v w
 
 end IsUnitary
 
