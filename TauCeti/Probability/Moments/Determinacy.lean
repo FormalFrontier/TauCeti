@@ -176,4 +176,141 @@ theorem Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp
     (zero_mem_interior_integrableExpSet_id_of_exists_integrable_exp hμ)
     (zero_mem_interior_integrableExpSet_id_of_exists_integrable_exp hν) hmom
 
+/-! ## Vanishing moments at the level of functions -/
+
+/-- **Roadmap B1 (function level).** A real function on `ℝ` whose exponentially-weighted products
+`e^{a|x|} · g` are all integrable, and all of whose polynomial moments `∫ xⁿ g` vanish, is a.e.
+zero.
+
+This is the instance the completeness step consumes:
+`Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp`
+above pins down a *measure* from its moments, and this transfers that to a *function* by applying it
+to the positive and negative parts of `g` as densities against `volume`. -/
+theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
+    (hexp : ∀ a : ℝ, 0 ≤ a → Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) volume)
+    (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x = 0) :
+    g =ᵐ[volume] 0 := by
+  -- `a = 0` gives plain integrability of `g`.
+  have hg : Integrable g volume := by simpa using hexp 0 le_rfl
+  have hgm : AEMeasurable g volume := hg.aestronglyMeasurable.aemeasurable
+  have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) volume :=
+    ENNReal.measurable_ofReal.comp_aemeasurable hgm
+  have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) volume :=
+    ENNReal.measurable_ofReal.comp_aemeasurable hgm.neg
+  have hltp : ∀ᵐ x ∂volume, ENNReal.ofReal (g x) < ⊤ := by
+    filter_upwards with x using ENNReal.ofReal_lt_top
+  have hltn : ∀ᵐ x ∂volume, ENNReal.ofReal (-g x) < ⊤ := by
+    filter_upwards with x using ENNReal.ofReal_lt_top
+  -- Split `g` into its positive and negative parts as densities against `volume`.
+  -- `ENNReal.ofReal` already truncates at zero, so these are exactly `g⁺` and `g⁻`.
+  set mp : Measure ℝ := volume.withDensity (fun x => ENNReal.ofReal (g x)) with hmp
+  set mn : Measure ℝ := volume.withDensity (fun x => ENNReal.ofReal (-g x)) with hmn
+  haveI hmpfin : IsFiniteMeasure mp := isFiniteMeasure_withDensity_ofReal hg.2
+  haveI hmnfin : IsFiniteMeasure mn := isFiniteMeasure_withDensity_ofReal hg.neg.2
+  -- Vanishing moments of `g` say exactly that `g⁺` and `g⁻` have the same moments.
+  -- `xⁿ · g` is integrable: `|x|ⁿ ≤ n! · e^{|x|}`, so `hexp 1` dominates every polynomial moment.
+  have hdom : ∀ n : ℕ,
+      Integrable (fun x : ℝ => (Nat.factorial n : ℝ) * (Real.exp (1 * |x|) * g x)) volume :=
+    fun n => (hexp 1 zero_le_one).const_mul _
+  have hpowbd : ∀ (n : ℕ) (x : ℝ), |x| ^ n ≤ (Nat.factorial n : ℝ) * Real.exp (1 * |x|) := by
+    intro n x
+    have h := Real.pow_div_factorial_le_exp |x| (abs_nonneg x) n
+    have hfac : (0:ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast (Nat.factorial_pos n)
+    rw [one_mul]
+    rw [div_le_iff₀ hfac] at h
+    linarith
+  have hintp : ∀ n : ℕ,
+      Integrable (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n) volume := by
+    intro n
+    have hfacpos : (0:ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
+    refine (hdom n).mono ?_ ?_
+    · exact (hmeasp.ennreal_toReal.aestronglyMeasurable).smul
+        ((continuous_pow n).aestronglyMeasurable)
+    · filter_upwards with x
+      have h1 : |max (g x) 0| ≤ |g x| := by
+        rcases le_total (g x) 0 with h | h
+        · simp [max_eq_right h]
+        · simp [max_eq_left h, abs_of_nonneg h]
+      have h2 := hpowbd n x
+      have hE : (0:ℝ) < Real.exp (1 * |x|) := Real.exp_pos _
+      rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
+        abs_mul, abs_mul, abs_mul, abs_pow, abs_of_pos hE, abs_of_pos hfacpos]
+      nlinarith [abs_nonneg (g x), abs_nonneg (max (g x) 0), pow_nonneg (abs_nonneg x) n]
+  have hintn : ∀ n : ℕ,
+      Integrable (fun x : ℝ => (ENNReal.ofReal (-g x)).toReal • x ^ n) volume := by
+    intro n
+    have hfacpos : (0:ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
+    refine (hdom n).mono ?_ ?_
+    · exact (hmeasn.ennreal_toReal.aestronglyMeasurable).smul
+        ((continuous_pow n).aestronglyMeasurable)
+    · filter_upwards with x
+      have h1 : |max (-g x) 0| ≤ |g x| := by
+        rcases le_total (-g x) 0 with h | h
+        · simp [max_eq_right h]
+        · rw [max_eq_left h, abs_of_nonneg h]
+          exact neg_le_abs (g x)
+      have h2 := hpowbd n x
+      have hE : (0:ℝ) < Real.exp (1 * |x|) := Real.exp_pos _
+      rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
+        abs_mul, abs_mul, abs_mul, abs_pow, abs_of_pos hE, abs_of_pos hfacpos]
+      nlinarith [abs_nonneg (g x), abs_nonneg (max (-g x) 0), pow_nonneg (abs_nonneg x) n]
+  -- `g⁺ - g⁻ = g` pointwise, so the two moment sequences differ by `∫ xⁿ g = 0`.
+  have hmoments : ∀ n : ℕ, ∫ x, x ^ n ∂mp = ∫ x, x ^ n ∂mn := by
+    intro n
+    rw [hmp, hmn, integral_withDensity_eq_integral_toReal_smul₀ hmeasp hltp,
+      integral_withDensity_eq_integral_toReal_smul₀ hmeasn hltn]
+    have hsplit : (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n
+        - (ENNReal.ofReal (-g x)).toReal • x ^ n) = fun x : ℝ => x ^ n * g x := by
+      funext x
+      rw [smul_eq_mul, smul_eq_mul, ENNReal.toReal_ofReal', ENNReal.toReal_ofReal']
+      rcases le_total (g x) 0 with h | h
+      · rw [max_eq_right h, max_eq_left (neg_nonneg.mpr h)]; ring
+      · rw [max_eq_left h, max_eq_right (neg_nonpos.mpr h)]; ring
+    have hz : ∫ x : ℝ, ((ENNReal.ofReal (g x)).toReal • x ^ n
+        - (ENNReal.ofReal (-g x)).toReal • x ^ n) = 0 := by
+      rw [hsplit]; exact hmom n
+    rw [integral_sub (hintp n) (hintn n)] at hz
+    linarith
+  have hexpp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x => Real.exp (a * |x|)) mp := by
+    refine ⟨1, one_pos, ?_⟩
+    rw [hmp, integrable_withDensity_iff_integrable_smul₀' hmeasp hltp]
+    refine (hexp 1 zero_le_one).mono ?_ ?_
+    · fun_prop
+    · filter_upwards with x
+      have hpos : (0:ℝ) < Real.exp (1 * |x|) := Real.exp_pos _
+      rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
+        abs_mul, abs_mul, abs_of_pos hpos]
+      have hle : |max (g x) 0| ≤ |g x| := by
+        rcases le_total (g x) 0 with h | h
+        · simp [max_eq_right h]
+        · simp [max_eq_left h, abs_of_nonneg h]
+      nlinarith [abs_nonneg (g x), hpos.le, hle]
+  have hexpn : ∃ a : ℝ, 0 < a ∧ Integrable (fun x => Real.exp (a * |x|)) mn := by
+    refine ⟨1, one_pos, ?_⟩
+    rw [hmn, integrable_withDensity_iff_integrable_smul₀' hmeasn hltn]
+    refine (hexp 1 zero_le_one).mono ?_ ?_
+    · fun_prop
+    · filter_upwards with x
+      have hpos : (0:ℝ) < Real.exp (1 * |x|) := Real.exp_pos _
+      rw [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, Real.norm_eq_abs,
+        abs_mul, abs_mul, abs_of_pos hpos]
+      have hle : |max (-g x) 0| ≤ |g x| := by
+        rcases le_total (-g x) 0 with h | h
+        · simp [max_eq_right h]
+        · simp [max_eq_left h, abs_of_nonneg h, abs_neg (g x) ▸ le_abs_self (-g x)]
+      nlinarith [abs_nonneg (g x), hpos.le, hle]
+  -- Determinacy forces the two parts to be the same measure ...
+  have hEq : mp = mn :=
+    Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp hexpp hexpn hmoments
+  -- ... hence the densities agree a.e., hence `g⁺ = g⁻` a.e., hence `g = 0` a.e.
+  rw [hmp, hmn, withDensity_eq_iff_of_sigmaFinite hmeasp hmeasn] at hEq
+  filter_upwards [hEq] with x hx
+  have h := congrArg ENNReal.toReal hx
+  rw [ENNReal.toReal_ofReal', ENNReal.toReal_ofReal'] at h
+  rcases le_total (g x) 0 with hle | hle
+  · rw [max_eq_right hle, max_eq_left (neg_nonneg.mpr hle)] at h
+    simpa using h.symm
+  · rw [max_eq_left hle, max_eq_right (neg_nonpos.mpr hle)] at h
+    simpa using h
+
 end TauCeti
