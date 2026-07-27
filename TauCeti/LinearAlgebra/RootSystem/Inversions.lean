@@ -128,7 +128,9 @@ omit [CharZero R] in
 /-- A simple reflection acts on root indices by the corresponding reflection permutation. -/
 @[simp]
 lemma weylGroupToPerm_ofIdx (i j : ι) :
-    P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j = P.reflectionPerm i j := by
+    ((RootPairing.weylGroup.ofIdx P i : P.weylGroup) :
+      RootPairing.Equiv P P).indexEquiv j = P.reflectionPerm i j := by
+  change P.weylGroupToPerm (RootPairing.weylGroup.ofIdx P i) j = P.reflectionPerm i j
   apply P.root.injective
   rw [← P.weylGroup_apply_root, RootPairing.weylGroup.ofIdx_smul,
     RootPairing.Equiv.reflection_smul, P.root_reflectionPerm]
@@ -147,6 +149,9 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     exact hneg (hj.reflectionPerm hi hji)
   · rintro rfl
     refine ⟨b.isPos_of_mem_support hi, ?_⟩
+    change ¬ b.IsPos
+      (((RootPairing.weylGroup.ofIdx P j : P.weylGroup) :
+        RootPairing.Equiv P P).indexEquiv j)
     rw [weylGroupToPerm_ofIdx, ← mem_negRoots,
       reflectionPerm_self_mem_negRoots_iff_mem_posRoots, mem_posRoots]
     exact b.isPos_of_mem_support hi
