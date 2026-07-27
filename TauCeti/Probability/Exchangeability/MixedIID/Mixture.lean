@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.MixedIID.Basic
+public import TauCeti.Probability.Exchangeability.MixedIID.Implications
 -- Non-public: used only inside the proof below.
 import TauCeti.Probability.Exchangeability.FiniteMarginals
 import TauCeti.MeasureTheory.Measure.GiryMonad
@@ -84,8 +84,7 @@ theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMe
       TauCeti.MeasureTheory.map_prefixProj_infinitePi_const P n]
   calc (pathLaw μ X).map (prefixProj α n)
       = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-        rw [map_prefixProj_pathLaw μ hΦ n, prefixLaw_def,
-          h.blockLaw_eq_mixture _ Fin.val_injective]
+        rw [map_prefixProj_pathLaw μ hΦ n, h.prefixLaw_eq_mixture n]
     _ = ((μ.map ν).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
           (prefixProj α n) := by
         rw [TauCeti.MeasureTheory.map_bind hpow (measurable_prefixProj n)]
