@@ -60,6 +60,14 @@ theorem partition_lt_iff {n : ℕ} {μ ν : n.Partition} :
       μ.parts.sort (· ≥ ·) < ν.parts.sort (· ≥ ·) :=
   Iff.rfl
 
+/-- Partition comparison in the non-strict lexicographic order is comparison of the decreasingly
+sorted parts. -/
+@[simp]
+theorem partition_le_iff {n : ℕ} {μ ν : n.Partition} :
+    @LE.le n.Partition partitionLinearOrder.toLE μ ν ↔
+      μ.parts.sort (· ≥ ·) ≤ ν.parts.sort (· ≥ ·) :=
+  Iff.rfl
+
 end PartitionLex
 
 /-- A partition `μ` dominates a partition `ν` when every partial sum of the decreasingly
@@ -190,6 +198,14 @@ theorem partition_le_iff {n : ℕ} {μ ν : n.Partition} :
     @LE.le n.Partition partitionPartialOrder.toLE μ ν ↔ Dominates ν μ :=
   Iff.rfl
 
+/-- Strict partition comparison in the dominance order is strict dominance in the reverse
+direction. -/
+@[simp]
+theorem partition_lt_iff {n : ℕ} {μ ν : n.Partition} :
+    @LT.lt n.Partition partitionPartialOrder.toLT μ ν ↔ Dominates ν μ ∧ μ ≠ ν := by
+  letI := partitionPartialOrder (n := n)
+  exact lt_iff_le_and_ne.trans (and_congr partition_le_iff Iff.rfl)
+
 end DominanceOrder
 
 /-- Strict dominance is the strict relation of the dominance partial order. -/
@@ -200,10 +216,7 @@ abbrev StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
 @[simp]
 theorem strictlyDominates_iff {n : ℕ} {μ ν : n.Partition} :
     StrictlyDominates μ ν ↔ Dominates μ ν ∧ μ ≠ ν := by
-  letI := DominanceOrder.partitionPartialOrder (n := n)
-  rw [show StrictlyDominates μ ν ↔ ν < μ from Iff.rfl, lt_iff_le_and_ne,
-    DominanceOrder.partition_le_iff]
-  exact and_congr Iff.rfl ne_comm
+  exact DominanceOrder.partition_lt_iff.trans (and_congr Iff.rfl ne_comm)
 
 instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) := by
   rw [strictlyDominates_iff]
@@ -219,6 +232,7 @@ theorem lex_lt_of_strictlyDominates {n : ℕ} {μ ν : n.Partition}
   exact lex_lt_of_dominates_of_ne h.1 h.2
 
 /-- The one-part partition dominates every partition of the same natural number. -/
+@[simp]
 theorem indiscrete_dominates {n : ℕ} (μ : n.Partition) :
     Dominates (Nat.Partition.indiscrete n) μ := by
   rw [dominates_iff]
