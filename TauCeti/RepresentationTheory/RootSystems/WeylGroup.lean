@@ -64,12 +64,6 @@ theorem rootSystem_indexHom_injective :
   | add x y _ _ hx hy => simpa only [LinearMap.map_add] using congrArg₂ (· + ·) hx hy
   | smul r x _ hx => simpa only [LinearMap.map_smul] using congrArg (r • ·) hx
 
-/-- Two root-system automorphisms are equal exactly when they induce the same root permutation. -/
-theorem rootSystem_indexHom_eq_iff {f g : P.Aut} :
-    _root_.RootPairing.Equiv.indexHom P f = _root_.RootPairing.Equiv.indexHom P g ↔ f = g :=
-  ⟨fun h ↦ rootSystem_indexHom_injective P h,
-    fun h ↦ congrArg (_root_.RootPairing.Equiv.indexHom P) h⟩
-
 /-- The root permutation representation is faithful on every subgroup of root-system
 automorphisms. -/
 theorem indexHom_restrict_injective (G : Subgroup P.Aut) :
