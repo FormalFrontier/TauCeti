@@ -17,8 +17,8 @@ group, is finite when the root index type is finite.
 
 ## Main results
 
-* `TauCeti.rootSystem_indexHom_injective` says that an automorphism of a root system is determined
-  by its permutation of the roots.
+* `TauCeti.RootPairing.Equiv.indexHom_injective` says that an automorphism of a root system is
+  determined by its permutation of the roots.
 * `TauCeti.finite_subgroup_aut` proves that every subgroup of the automorphism group of a finite
   root system is finite.
 * `TauCeti.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
@@ -41,43 +41,42 @@ section RootSystem
 variable [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : _root_.RootPairing ι R M N) [P.IsRootSystem]
 
+namespace RootPairing.Equiv
+
 /-- An automorphism of a root system is determined by its permutation of the root indices. -/
-theorem rootSystem_indexHom_injective :
+theorem indexHom_injective :
     Function.Injective (_root_.RootPairing.Equiv.indexHom P) := by
   intro f g hfg
   apply _root_.RootPairing.Equiv.weightHom_injective P
   apply LinearEquiv.toLinearMap_injective
-  ext x
-  have hx : x ∈ Submodule.span R (range P.root) := by simp
-  induction hx using Submodule.span_induction with
-  | mem x hx =>
-      obtain ⟨i, rfl⟩ := hx
-      have hfg' : f.indexEquiv i = g.indexEquiv i :=
-        congrFun (congrArg DFunLike.coe hfg) i
-      calc
-        _ = f • P.root i := rfl
-        _ = P.root (f.indexEquiv i) := (_root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i f).symm
-        _ = P.root (g.indexEquiv i) := congrArg P.root hfg'
-        _ = g • P.root i := _root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i g
-        _ = _ := rfl
-  | zero => simp
-  | add x y _ _ hx hy => simpa only [LinearMap.map_add] using congrArg₂ (· + ·) hx hy
-  | smul r x _ hx => simpa only [LinearMap.map_smul] using congrArg (r • ·) hx
+  refine LinearMap.ext_on_range
+    (_root_.RootPairing.IsRootSystem.span_root_eq_top (P := P)) fun i ↦ ?_
+  have hfg' : f.indexEquiv i = g.indexEquiv i :=
+    congrFun (congrArg DFunLike.coe hfg) i
+  calc
+    _ = f • P.root i := rfl
+    _ = P.root (f.indexEquiv i) := (_root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i f).symm
+    _ = P.root (g.indexEquiv i) := congrArg P.root hfg'
+    _ = g • P.root i := _root_.RootPairing.Equiv.root_indexEquiv_eq_smul P i g
+    _ = _ := rfl
+
+end RootPairing.Equiv
 
 /-- The action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective : Function.Injective P.weylGroupToPerm :=
-  (rootSystem_indexHom_injective P).comp Subtype.val_injective
+  (RootPairing.Equiv.indexHom_injective P).comp Subtype.val_injective
 
 variable [Finite ι]
 
 /-- Every subgroup of the automorphism group of a finite root system is finite. -/
 theorem finite_subgroup_aut (G : Subgroup P.Aut) : Finite G :=
   Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).restrict G)
-    ((rootSystem_indexHom_injective P).comp Subtype.val_injective)
+    ((RootPairing.Equiv.indexHom_injective P).comp Subtype.val_injective)
 
 /-- The automorphism group of a finite root system is finite. -/
 theorem finite_rootSystem_aut : Finite P.Aut :=
-  Finite.of_injective (_root_.RootPairing.Equiv.indexHom P) (rootSystem_indexHom_injective P)
+  Finite.of_injective (_root_.RootPairing.Equiv.indexHom P)
+    (RootPairing.Equiv.indexHom_injective P)
 
 /-- Every subgroup of the automorphism group of a finite root system has order at most the
 factorial of the number of roots. -/
@@ -86,7 +85,7 @@ theorem card_subgroup_aut_le_factorial (G : Subgroup P.Aut) :
   calc
     Nat.card G ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
       ((_root_.RootPairing.Equiv.indexHom P).restrict G)
-        ((rootSystem_indexHom_injective P).comp Subtype.val_injective)
+        ((RootPairing.Equiv.indexHom_injective P).comp Subtype.val_injective)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
 
 /-- The automorphism group of a finite root system has order at most the factorial of the number
@@ -94,7 +93,7 @@ of roots. -/
 theorem card_rootSystem_aut_le_factorial : Nat.card P.Aut ≤ Nat.factorial (Nat.card ι) :=
   calc
     Nat.card P.Aut ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
-      (_root_.RootPairing.Equiv.indexHom P) (rootSystem_indexHom_injective P)
+      (_root_.RootPairing.Equiv.indexHom P) (RootPairing.Equiv.indexHom_injective P)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
 
 /-- The Weyl group of a finite root system is finite. -/
