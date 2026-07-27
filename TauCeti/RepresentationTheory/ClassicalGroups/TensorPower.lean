@@ -64,14 +64,6 @@ theorem char_tensorPowerRep (g : GL (Fin n) k) :
       Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
   rw [Representation.char_tensorPower, char_stdRep]
 
-/-- The bundled tensor-power representation has character equal to the trace power. -/
-@[simp]
-theorem char_tensorPowerFDRep (g : GL (Fin n) k) :
-    (tensorPowerFDRep k n d).character g =
-      Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
-  simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
-    char_tensorPowerRep k n d g
-
 end Field
 
 end TauCeti

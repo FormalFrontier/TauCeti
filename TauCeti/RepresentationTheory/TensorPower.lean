@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.TensorPower.Basic
 public import Mathlib.LinearAlgebra.PiTensorProduct.Finite
-public import Mathlib.RepresentationTheory.Basic
 public import Mathlib.RepresentationTheory.Character
 
 /-!
@@ -87,6 +86,8 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
         PiTensorProduct.map (fun _ : Fin (d + 1) => ρ g) := by
       ext x
       simp only [LinearMap.compMultilinearMap_apply]
+      -- `ext` leaves the pure tensor behind the defining multilinear map; expose it so the
+      -- public apply lemmas below can rewrite the action without unfolding `TensorPower.mulEquiv`.
       change e.conj _ (⨂ₜ[R] i, x i) = _
       rw [LinearEquiv.conj_apply_apply]
       let a : Fin d → M := fun i => x (Fin.castAdd 1 i)
@@ -102,11 +103,15 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
           (⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i) := by
         apply e.injective
         rw [e.apply_symm_apply]
+        -- Rewriting cannot match through the local name `e`; this conversion exposes exactly the
+        -- public `tprod_mul_tprod` equation without unfolding the equivalence.
         rw [show e ((⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i)) =
           ⨂ₜ[R] i, Fin.append a b i from TensorPower.tprod_mul_tprod R a b]
         rw [hx]
       rw [hsplit, TensorProduct.map_tmul, PiTensorProduct.map_tprod,
         PiTensorProduct.map_tprod]
+      -- As above, make the let-bound equivalence transparent only through its public pure-tensor
+      -- equation, which lets `rw` avoid the implementation of `TensorPower.mulEquiv`.
       rw [show e ((⨂ₜ[R] i, (ρ g) (a i)) ⊗ₜ[R] (⨂ₜ[R] i, (ρ g) (b i))) =
         ⨂ₜ[R] i, Fin.append (fun i => (ρ g) (a i)) (fun i => (ρ g) (b i)) i from
           TensorPower.tprod_mul_tprod R _ _]
