@@ -55,9 +55,9 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
           (Measure.dirac p).prod (ProbabilityMeasure.pi fun _ : Fin m => p).toMeasure := by
         rw [Measure.bind_const, Measure.bind_const, Measure.map_smul, Measure.dirac_prod]
 
-/-- **The two de Finetti predicates agree at a constant witness.** For a nondegenerate mixing law
-the conditional predicate is strictly stronger; the degenerate case is exactly where the gap
-closes. -/
+/-- **The two de Finetti predicates agree at a constant witness.** In general only
+`mixedIIDWith_of_conditionallyIIDWith` is available and the two need not agree; at a constant `ν`
+the converse holds too, so they coincide. -/
 theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
     {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
