@@ -26,7 +26,8 @@ characters.
 This advances the reductive-groups roadmap Layer 4 target constructing the anti-equivalence
 between finitely generated abelian groups and diagonalizable groups. It supplies the
 finite-type source and coordinate-algebra functor needed before essential surjectivity and
-full faithfulness can be formulated.
+full faithfulness can be formulated; it does not construct the scheme-side functor or depend
+on the general Hopf-algebra/affine-group-scheme anti-equivalence.
 
 ## Main declarations
 
