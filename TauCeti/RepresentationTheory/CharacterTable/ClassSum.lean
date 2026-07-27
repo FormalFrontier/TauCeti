@@ -29,7 +29,7 @@ noncomputable def classSum [Semiring k] (C : ConjClasses G) : MonoidAlgebra k G 
 /-- A class sum is the sum of the basis elements in its conjugacy class. -/
 theorem classSum_eq_sum [Semiring k] (C : ConjClasses G) :
     classSum (k := k) C = ∑ x : C.carrier, MonoidAlgebra.of k G x := by
-  rw [classSum]
+  rfl
 
 /-- The coefficient of `g` in the class sum of `C` is `1` if `g` lies in `C`, and `0` otherwise. -/
 @[simp]
