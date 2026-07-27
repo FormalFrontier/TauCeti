@@ -6,8 +6,9 @@ Authors: Codex
 module
 
 public import Mathlib.Algebra.Group.ConjFinite
-public import Mathlib.Combinatorics.Young.YoungDiagram
 public import Mathlib.GroupTheory.Perm.Cycle.PossibleTypes
+public import TauCeti.Combinatorics.Enumerative.Partition.Basic
+public import TauCeti.Combinatorics.Young.YoungDiagram
 
 /-!
 # Partitions, Young diagrams, and conjugacy classes
@@ -15,9 +16,10 @@ public import Mathlib.GroupTheory.Perm.Cycle.PossibleTypes
 This file connects three indexing types used in the representation theory of the symmetric group:
 partitions of `n`, Young diagrams with `n` cells, and conjugacy classes of `Equiv.Perm (Fin n)`.
 
-The equivalence with Young diagrams sorts the multiset of parts into decreasing row lengths.  The
-equivalence with conjugacy classes uses Mathlib's partition of a permutation, including the fixed
-points as parts of size one.
+The equivalence with Young diagrams sorts the multiset of parts into decreasing row lengths, using
+`TauCeti.Nat.Partition.equivSortedParts` and `TauCeti.YoungDiagram.sum_rowLens`.  The equivalence
+with conjugacy classes uses Mathlib's partition of a permutation, including the fixed points as
+parts of size one.
 
 ## References
 
@@ -31,69 +33,8 @@ namespace TauCeti
 
 open Equiv
 
-namespace YoungDiagram
-
-/-- The sum of the row lengths of a Young diagram is its number of cells. -/
-theorem sum_rowLens (μ : YoungDiagram) : μ.rowLens.sum = μ.card := by
-  rw [_root_.YoungDiagram.rowLens]
-  change (∑ i ∈ Finset.range (μ.colLen 0), μ.rowLen i) = μ.card
-  symm
-  calc
-    μ.card =
-        ∑ i ∈ Finset.range (μ.colLen 0),
-          (μ.cells.filter fun c => c.fst = i).card := by
-      apply Finset.card_eq_sum_card_fiberwise
-      intro c hc
-      simpa using
-        (_root_.YoungDiagram.mem_iff_lt_colLen.mp hc).trans_le
-          (μ.colLen_anti 0 c.snd c.snd.zero_le)
-    _ = ∑ i ∈ Finset.range (μ.colLen 0), μ.rowLen i := by
-      apply Finset.sum_congr rfl
-      intro i _
-      exact (μ.rowLen_eq_card (i := i)).symm
-
-end YoungDiagram
-
-namespace Nat.Partition
-
-/-- A partition is equivalent to its decreasing list of positive parts. -/
-noncomputable def equivSortedParts (n : ℕ) :
-    n.Partition ≃
-      {w : List ℕ // (w.SortedGE ∧ ∀ x ∈ w, 0 < x) ∧ w.sum = n} where
-  toFun p :=
-    ⟨p.parts.sort (· ≥ ·),
-      ⟨(Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE,
-        fun x hx => p.parts_pos ((Multiset.mem_sort (r := (· ≥ ·))).mp hx)⟩, by
-        rw [← Multiset.sum_coe, Multiset.sort_eq, p.parts_sum]⟩
-  invFun w :=
-    ⟨w.1, fun {_} hx => w.2.1.2 _ hx, by
-      simpa only [Multiset.sum_coe] using w.2.2⟩
-  left_inv p := by
-    apply Nat.Partition.ext
-    exact Multiset.sort_eq p.parts (· ≥ ·)
-  right_inv w := by
-    apply Subtype.ext
-    exact List.Perm.eq_of_sortedGE
-      (Multiset.pairwise_sort (↑w.1 : Multiset ℕ) (· ≥ ·)).sortedGE w.2.1.1
-      (Multiset.coe_eq_coe.mp (Multiset.sort_eq (↑w.1 : Multiset ℕ) (· ≥ ·)))
-
-/-- Sorting the parts is the forward map of `equivSortedParts`. -/
-@[simp]
-theorem equivSortedParts_apply_parts (n : ℕ) (p : n.Partition) :
-    (equivSortedParts n p).1 = p.parts.sort (· ≥ ·) := by
-  simp [equivSortedParts]
-
-/-- The inverse of `equivSortedParts` has the given list as its multiset of parts. -/
-@[simp]
-theorem equivSortedParts_symm_apply_parts (n : ℕ)
-    (w : {w : List ℕ // (w.SortedGE ∧ ∀ x ∈ w, 0 < x) ∧ w.sum = n}) :
-    ((equivSortedParts n).symm w).parts = w.1 := by
-  simp [equivSortedParts]
-
-end Nat.Partition
-
 /-- Partitions of `n` are equivalent to Young diagrams with `n` cells. -/
-noncomputable def partitionEquivYoungDiagram (n : ℕ) :
+@[expose] noncomputable def partitionEquivYoungDiagram (n : ℕ) :
     n.Partition ≃ {μ : YoungDiagram // μ.card = n} :=
   (Nat.Partition.equivSortedParts n).trans
     ((Equiv.subtypeSubtypeEquivSubtypeInter
@@ -101,18 +42,23 @@ noncomputable def partitionEquivYoungDiagram (n : ℕ) :
         (fun w => w.sum = n)).symm.trans
       (YoungDiagram.equivListRowLens.symm.subtypeEquiv
         (q := fun μ => μ.card = n) fun w => by
-          rw [← YoungDiagram.sum_rowLens,
-            show (YoungDiagram.equivListRowLens.symm w).rowLens = w.1 from
-              congrArg Subtype.val (YoungDiagram.equivListRowLens.apply_symm_apply w)]))
+          rw [← YoungDiagram.sum_rowLens, _root_.YoungDiagram.equivListRowLens_symm_apply,
+            _root_.YoungDiagram.rowLens_ofRowLens_eq_self w.2.2]))
+
+/-- The Young diagram associated to a partition is the one built from its decreasing parts by
+`YoungDiagram.ofRowLens`. -/
+theorem partitionEquivYoungDiagram_apply_coe (n : ℕ) (p : n.Partition)
+    (hw : (p.parts.sort (· ≥ ·)).SortedGE) :
+    (partitionEquivYoungDiagram n p).1 =
+      _root_.YoungDiagram.ofRowLens (p.parts.sort (· ≥ ·)) hw :=
+  rfl
 
 /-- The Young diagram associated to a partition has its decreasing parts as row lengths. -/
 @[simp]
 theorem partitionEquivYoungDiagram_apply_rowLens (n : ℕ) (p : n.Partition) :
     (partitionEquivYoungDiagram n p).1.rowLens = p.parts.sort (· ≥ ·) := by
-  change
-    (_root_.YoungDiagram.ofRowLens (p.parts.sort (· ≥ ·))
-      (Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE).rowLens =
-      p.parts.sort (· ≥ ·)
+  rw [partitionEquivYoungDiagram_apply_coe n p
+    (Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE]
   exact _root_.YoungDiagram.rowLens_ofRowLens_eq_self fun x hx =>
     p.parts_pos ((Multiset.mem_sort (r := (· ≥ ·))).mp hx)
 
@@ -131,18 +77,25 @@ theorem partitionEquivYoungDiagram_symm_apply_parts (n : ℕ)
     _ = ↑μ.1.rowLens := congrArg (fun w : List ℕ => (↑w : Multiset ℕ)) h.symm
 
 /-- The partition of `n` obtained from a permutation of `Fin n`. -/
-def finPermPartition (n : ℕ) (σ : Equiv.Perm (Fin n)) : n.Partition where
+@[expose] def finPermPartition (n : ℕ) (σ : Equiv.Perm (Fin n)) : n.Partition where
   parts := σ.partition.parts
   parts_pos := σ.partition.parts_pos
   parts_sum := by simpa using σ.partition.parts_sum
 
+/-- The parts of `finPermPartition n σ` are the parts of Mathlib's partition of `σ`. -/
+@[simp]
+theorem finPermPartition_parts (n : ℕ) (σ : Equiv.Perm (Fin n)) :
+    (finPermPartition n σ).parts = σ.partition.parts :=
+  rfl
+
 /-- Two permutations of `Fin n` have the same sized partition exactly when their Mathlib
 partitions agree. -/
+@[simp]
 theorem finPermPartition_eq_iff (n : ℕ) (σ τ : Equiv.Perm (Fin n)) :
     finPermPartition n σ = finPermPartition n τ ↔ σ.partition = τ.partition := by
   constructor <;> intro h <;> apply Nat.Partition.ext
-  · simpa only [finPermPartition] using congrArg Nat.Partition.parts h
-  · simpa only [finPermPartition] using congrArg Nat.Partition.parts h
+  · simpa only [finPermPartition_parts] using congrArg Nat.Partition.parts h
+  · simpa only [finPermPartition_parts] using congrArg Nat.Partition.parts h
 
 /-- Every partition of `n` is the partition of a permutation of `Fin n`. -/
 theorem exists_perm_partition_eq {n : ℕ} (p : n.Partition) :
@@ -179,9 +132,8 @@ theorem exists_perm_partition_eq {n : ℕ} (p : n.Partition) :
     rw [← Equiv.Perm.sum_cycleType, hσ]
   have hremaining : n - largeParts.sum = unitParts.card := by
     omega
-  change σ.partition.parts = p.parts
-  rw [Equiv.Perm.parts_partition, hσ, Fintype.card_fin, hsupport, hremaining, ← hunit,
-    hsplit]
+  rw [finPermPartition_parts, Equiv.Perm.parts_partition, hσ, Fintype.card_fin, hsupport,
+    hremaining, ← hunit, hsplit]
 
 /-- The partition of a conjugacy class of permutations. -/
 def permConjClassPartition (n : ℕ) :
@@ -229,8 +181,8 @@ theorem permConjClassPartition_partitionEquivConjClasses (n : ℕ) (p : n.Partit
 @[simp]
 theorem partitionEquivConjClasses_symm_mk (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     (partitionEquivConjClasses n).symm (ConjClasses.mk σ) = finPermPartition n σ := by
-  change permConjClassPartition n (ConjClasses.mk σ) = finPermPartition n σ
-  exact permConjClassPartition_mk n σ
+  rw [partitionEquivConjClasses, Equiv.symm_symm, Equiv.ofBijective_apply,
+    permConjClassPartition_mk]
 
 /-- The number of conjugacy classes of `Sₙ` is the number of partitions of `n`. -/
 theorem card_conjClasses_perm_eq_card_partition (n : ℕ) :
