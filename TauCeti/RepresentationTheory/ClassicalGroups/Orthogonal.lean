@@ -20,6 +20,7 @@ bilinear pairing, and the corresponding character formulas.
 * `TauCeti.stdOrthogonalRep` is the standard representation of `Matrix.orthogonalGroup`.
 * `TauCeti.stdOrthogonalFDRep` is its finite-dimensional bundled form.
 * `TauCeti.stdOrthogonalDualRep` is its contragredient.
+* `TauCeti.stdOrthogonalRepEquivDual` is the equivariant self-duality induced by the dot product.
 
 ## References
 
@@ -77,6 +78,17 @@ theorem stdOrthogonalRep_dotProduct (g : Matrix.orthogonalGroup (Fin n) k) (v w 
           (g : Matrix (Fin n) (Fin n) k)ᵀ := rfl
       rw [← hstar, Matrix.mem_unitaryGroup_iff'.mp g.prop, Matrix.one_mulVec]
 
+/-- The coordinate dot product identifies the standard module with its dual. -/
+noncomputable def stdOrthogonalRepToDual :
+    (Fin n → k) ≃ₗ[k] Module.Dual k (Fin n → k) :=
+  (Pi.basisFun k (Fin n)).toDualEquiv
+
+/-- `stdOrthogonalRepToDual` evaluates as the coordinate dot product. -/
+theorem stdOrthogonalRepToDual_apply (v w : Fin n → k) :
+    stdOrthogonalRepToDual k n v w = v ⬝ᵥ w := by
+  change (Pi.basisFun k (Fin n)).toDual v w = _
+  simp [Module.Basis.toDual, Pi.basisFun, dotProduct]
+
 /-- The standard representation of the orthogonal group is faithful. -/
 theorem stdOrthogonalRep_injective : Function.Injective (stdOrthogonalRep k n) := by
   intro g h gh
@@ -109,6 +121,34 @@ theorem stdOrthogonalDualRep_apply (g : Matrix.orthogonalGroup (Fin n) k) :
         (Matrix.mulVecLin ((g⁻¹ : Matrix.orthogonalGroup (Fin n) k) :
           Matrix (Fin n) (Fin n) k)) := by
   rw [stdOrthogonalDualRep, Representation.dual_apply, stdOrthogonalRep_apply]
+
+/-- The coordinate-dot-product identification intertwines the standard and dual actions. -/
+theorem stdOrthogonalRepToDual_equivariant (g : Matrix.orthogonalGroup (Fin n) k) :
+    stdOrthogonalRepToDual k n ∘ₗ stdOrthogonalRep k n g =
+      stdOrthogonalDualRep k n g ∘ₗ stdOrthogonalRepToDual k n := by
+  apply LinearMap.ext
+  intro v
+  apply LinearMap.ext
+  intro w
+  change stdOrthogonalRepToDual k n (stdOrthogonalRep k n g v) w = _
+  rw [stdOrthogonalRepToDual_apply]
+  rw [stdOrthogonalDualRep_apply, LinearMap.comp_apply, Module.Dual.transpose_apply,
+    LinearMap.comp_apply]
+  change _ = stdOrthogonalRepToDual k n v
+    (((g⁻¹ : Matrix.orthogonalGroup (Fin n) k) : Matrix (Fin n) (Fin n) k) *ᵥ w)
+  rw [stdOrthogonalRepToDual_apply, ← stdOrthogonalRep_apply_apply k n g⁻¹]
+  calc
+    stdOrthogonalRep k n g v ⬝ᵥ w =
+        stdOrthogonalRep k n g v ⬝ᵥ
+          stdOrthogonalRep k n g (stdOrthogonalRep k n g⁻¹ w) := by
+      rw [Representation.self_inv_apply]
+    _ = v ⬝ᵥ stdOrthogonalRep k n g⁻¹ w :=
+      stdOrthogonalRep_dotProduct k n g v (stdOrthogonalRep k n g⁻¹ w)
+
+/-- The standard representation of the orthogonal group is equivariantly self-dual. -/
+noncomputable def stdOrthogonalRepEquivDual :
+    (stdOrthogonalRep k n).Equiv (stdOrthogonalDualRep k n) :=
+  .mk (stdOrthogonalRepToDual k n) (stdOrthogonalRepToDual_equivariant k n)
 
 /-- The dual standard representation of the orthogonal group, bundled as an object of `FDRep`. -/
 noncomputable abbrev stdOrthogonalDualFDRep : FDRep k (Matrix.orthogonalGroup (Fin n) k) :=
