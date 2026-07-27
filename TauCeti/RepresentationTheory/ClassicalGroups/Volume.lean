@@ -51,7 +51,6 @@ theorem basisFun_det_stdRep (g : GL (Fin n) k) (v : Fin n → Fin n → k) :
       (Matrix.toLin' (g : Matrix (Fin n) (Fin n) k)) v)
 
 /-- The standard action of `SL(n, k)` preserves the standard-basis determinant form. -/
-@[simp]
 theorem basisFun_det_stdRep_SL (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
     (Pi.basisFun k (Fin n)).det (fun i => (g : Matrix (Fin n) (Fin n) k).mulVec (v i)) =
