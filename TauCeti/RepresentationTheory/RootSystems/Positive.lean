@@ -165,8 +165,9 @@ theorem image_reflectionPerm_self_negRoots :
   letI := P.indexNeg
   have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
     intro i
-    rw [show (fun j : ι ↦ P.reflectionPerm j j) = fun j ↦ -j from
-      funext (reflectionPerm_self_eq_neg P)]
+    have hneg : (fun j : ι ↦ P.reflectionPerm j j) = fun j ↦ -j :=
+      funext (reflectionPerm_self_eq_neg P)
+    rw [hneg]
     exact neg_neg i
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
