@@ -8,6 +8,10 @@ public import Mathlib.AlgebraicTopology.FundamentalGroupoid.InducedMaps
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
 public import Mathlib.Topology.Homotopy.LocallyContractible
 public import Mathlib.Topology.Homotopy.Product
+-- Private: `Path.codRestrict`, `Path.map_codRestrict`, and
+-- `Path.Homotopic.map_nullhomotopic_of_nullhomotopic` are used only in private proofs below,
+-- so this import is not re-exported.
+import TauCeti.Topology.Homotopy.Path
 
 /-!
 # Semilocally simply connected spaces
@@ -126,30 +130,14 @@ theorem SemilocallySimplyConnectedSpace.of_locallyContractibleSpace
     let j : C(V, X) := ⟨Subtype.val, continuous_subtype_val⟩
     have hnj : j.Nullhomotopic :=
       hnull.comp_right (⟨Subtype.val, continuous_subtype_val⟩ : C((Set.univ : Set X), X))
-    obtain ⟨c, ⟨F⟩⟩ := hnj
     refine ⟨V, hV, fun γ hγ => ?_⟩
-    -- Lift the loop `γ` to a loop in the subspace `V`.
+    -- Restrict the loop `γ` to the subspace `V` via `codRestrict`; pushing it forward along the
+    -- null-homotopic inclusion `j` recovers `γ` (`Path.map_codRestrict`), so `γ` is null-homotopic
+    -- in `X`.
     let xV : V := ⟨x, mem_of_mem_nhds hV⟩
-    let γ' : Path xV xV :=
-      { toFun := fun t => ⟨γ t, hγ t⟩
-        source' := Subtype.ext γ.source
-        target' := Subtype.ext γ.target }
-    have key := Path.Homotopic.map_trans_evalAt F γ'
-    have ha : γ'.map (map_continuous j) = γ := by ext t; rfl
-    have hb : γ'.map (map_continuous (ContinuousMap.const _ c)) = Path.refl c := by
-      ext t; rfl
-    rw [ha, hb] at key
-    -- `key : (γ.trans e).Homotopic (e.trans (refl c))` for the path `e` traced by the basepoint
-    -- under the null-homotopy; cancelling `e` on the right gives `γ ≃ refl x`.
-    set e := F.evalAt xV
-    have key' : (γ.trans e).Homotopic e := key.trans (Path.Homotopic.trans_refl e)
-    have right : ((γ.trans e).trans e.symm).Homotopic γ :=
-      (Path.Homotopic.trans_assoc γ e e.symm).trans <|
-        ((Path.Homotopic.refl γ).hcomp (Path.Homotopic.trans_symm e)).trans
-          (Path.Homotopic.trans_refl γ)
-    have left : ((γ.trans e).trans e.symm).Homotopic (Path.refl x) :=
-      (key'.hcomp (Path.Homotopic.refl e.symm)).trans (Path.Homotopic.trans_symm e)
-    exact right.symm.trans left
+    have hmap :=
+      Path.Homotopic.map_nullhomotopic_of_nullhomotopic hnj (γ.codRestrict hγ : Path xV xV)
+    rwa [Path.map_codRestrict] at hmap
 
 /-- A simply connected space is semilocally simply connected: the whole space already witnesses
 the condition, since every loop is null-homotopic. -/

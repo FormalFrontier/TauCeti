@@ -54,6 +54,26 @@ theorem le_of_forall_pos_mul_le {a m C : ℝ} (hC : 0 ≤ C) (h : ∀ ε : ℝ, 
     have : δ / C * C = δ := by field_simp
     linarith
 
+omit [FiniteDimensional ℝ E] in
+/-- If every upper bound for a continuous function on the frontier of a nonempty compact set is
+also an upper bound on the whole set, then the function attains a maximum on the frontier. -/
+theorem exists_mem_frontier_isMaxOn_of_le_frontier {K : Set E} (hK : IsCompact K)
+    [Nontrivial E] (hne : K.Nonempty) {f : E → ℝ} (hcont : ContinuousOn f K)
+    (hbound : ∀ {m : ℝ}, (∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) →
+      ∀ ⦃x⦄, x ∈ K → f x ≤ m) :
+    ∃ x ∈ frontier K, IsMaxOn f K x := by
+  have hfrsub : frontier K ⊆ K := hK.isClosed.frontier_subset
+  have hfrcompact : IsCompact (frontier K) := hK.of_isClosed_subset isClosed_frontier hfrsub
+  have hfrne : (frontier K).Nonempty := by
+    rw [Set.nonempty_iff_ne_empty]
+    intro hempty
+    rcases frontier_eq_empty_iff.mp hempty with h | h
+    · exact hne.ne_empty h
+    · exact noncompact_univ E (h ▸ hK)
+  obtain ⟨z, hzfr, hzmax⟩ := hfrcompact.exists_isMaxOn hfrne (hcont.mono hfrsub)
+  refine ⟨z, hzfr, isMaxOn_iff.mpr fun y hyK => ?_⟩
+  exact hbound (fun w hw => isMaxOn_iff.mp hzmax w hw) hyK
+
 /-- The Laplacian of the perturbation `f + ε‖·‖²` at a point where `f` is `C²`: it exceeds `Δ f` by
 the contribution `ε * (2 * dim E)` of the strictly convex term `ε‖·‖²`. This is the computation the
 bare-Laplacian and the `-Δ + c` weak maximum principles both run on the perturbed function. -/
@@ -67,6 +87,26 @@ theorem laplacian_add_const_smul_norm_sq {f : E → ℝ} {x : E} (ε : ℝ) (hf 
     laplacian_smul ε (contDiff_norm_sq ℝ).contDiffAt
   rw [hadd, hsmul, laplacian_norm_sq, smul_eq_mul]
 
+omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
+/-- **The `ε → 0` perturbation engine of the weak maximum principles.** To bound `f x ≤ m` on a
+bounded set `K`, it suffices to produce, for every `ε > 0`, a point `z ∈ K` at which the
+perturbation `f + ε‖·‖²` attains its maximum over `K` and where `f z ≤ m`: bounding `‖·‖²` by a
+constant on the bounded `K` and letting `ε → 0` then gives `f x ≤ m`. The bare-Laplacian and
+`-Δ + c` weak maximum principles differ only in how they produce such a maximizer, so this lemma
+packages everything they share. -/
+theorem le_of_forall_pos_exists_isMaxOn_perturbation {K : Set E} (hK : Bornology.IsBounded K)
+    {f : E → ℝ} {m : ℝ} {x : E} (hxK : x ∈ K)
+    (H : ∀ ε : ℝ, 0 < ε → ∃ z ∈ K, IsMaxOn (fun y : E => f y + ε • ‖y‖ ^ 2) K z ∧ f z ≤ m) :
+    f x ≤ m := by
+  obtain ⟨M, hM⟩ := hK.exists_norm_le
+  refine le_of_forall_pos_mul_le (sq_nonneg M) fun ε hε => ?_
+  obtain ⟨z, hzK, hzmax, hfz⟩ := H ε hε
+  have hxz : f x + ε * ‖x‖ ^ 2 ≤ f z + ε * ‖z‖ ^ 2 := by simpa [smul_eq_mul] using hzmax hxK
+  have hzC : ‖z‖ ^ 2 ≤ M ^ 2 := by nlinarith [hM z hzK, norm_nonneg z]
+  have hεzC : ε * ‖z‖ ^ 2 ≤ ε * M ^ 2 := mul_le_mul_of_nonneg_left hzC hε.le
+  have hεx : 0 ≤ ε * ‖x‖ ^ 2 := mul_nonneg hε.le (sq_nonneg _)
+  linarith
+
 section Nontrivial
 
 variable [Nontrivial E]
@@ -79,38 +119,25 @@ theorem le_of_laplacian_nonneg_le_frontier {K : Set E} (hK : IsCompact K) {f : E
     (hcont : ContinuousOn f K) (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x) (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
-  -- Perturb `f` to the strictly subharmonic `f + ε‖·‖²`, apply the strict boundary maximum
-  -- principle, and let `ε → 0`.
+  -- Perturb `f` to the strictly subharmonic `f + ε‖·‖²`, whose maximum over `K` is forced onto the
+  -- frontier by the strict boundary maximum principle; then let `ε → 0`.
   intro x hxK
-  -- `‖·‖²` is bounded above by some `C ≥ 0` on the compact set `K`.
-  obtain ⟨C, hCub⟩ := hK.bddAbove_image (f := fun y : E => ‖y‖ ^ 2) (by fun_prop)
-  have hCnonneg : 0 ≤ C := le_trans (sq_nonneg _) (hCub ⟨x, hxK, rfl⟩)
   have hfrpos : (0 : ℝ) < Module.finrank ℝ E := by exact_mod_cast Module.finrank_pos
-  -- Perturbation estimate: `f x ≤ m + ε C` for every `ε > 0`.
-  have key : ∀ ε : ℝ, 0 < ε → f x ≤ m + ε * C := by
-    intro ε hε
-    have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
-      fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
-    have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
-    have hgcd : ∀ ⦃y⦄, y ∈ interior K → ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) y :=
-      fun y hy => (hcd hy).add (hεsq y)
-    have hglap : ∀ ⦃y⦄, y ∈ interior K → 0 < Δ (fun y : E => f y + ε • ‖y‖ ^ 2) y := by
-      intro y hy
-      rw [laplacian_add_const_smul_norm_sq ε (hcd hy)]
-      have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
-      linarith [hlap hy]
-    -- Strict boundary maximum principle applied to the perturbed function.
-    obtain ⟨z, hzfr, hzmax⟩ :=
-      exists_mem_frontier_isMaxOn_of_laplacian_pos hK ⟨x, hxK⟩ hgcont hgcd hglap
-    have hzK : z ∈ K := hK.isClosed.frontier_subset hzfr
-    have hxle : f x + ε * ‖x‖ ^ 2 ≤ f z + ε * ‖z‖ ^ 2 := by
-      simpa [smul_eq_mul] using hzmax hxK
-    have hzC : ‖z‖ ^ 2 ≤ C := hCub ⟨z, hzK, rfl⟩
-    have := mul_le_mul_of_nonneg_left hzC hε.le
-    have := mul_nonneg hε.le (sq_nonneg ‖x‖)
-    linarith [hbdry hzfr]
-  -- Let `ε → 0`.
-  exact le_of_forall_pos_mul_le hCnonneg key
+  refine le_of_forall_pos_exists_isMaxOn_perturbation hK.isBounded hxK fun ε hε => ?_
+  have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
+    fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
+  have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
+  have hgcd : ∀ ⦃y⦄, y ∈ interior K → ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) y :=
+    fun y hy => (hcd hy).add (hεsq y)
+  have hglap : ∀ ⦃y⦄, y ∈ interior K → 0 < Δ (fun y : E => f y + ε • ‖y‖ ^ 2) y := by
+    intro y hy
+    rw [laplacian_add_const_smul_norm_sq ε (hcd hy)]
+    have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
+    linarith [hlap hy]
+  -- Strict boundary maximum principle: the maximizer lies on the frontier, where `f ≤ m`.
+  obtain ⟨z, hzfr, hzmax⟩ :=
+    exists_mem_frontier_isMaxOn_of_laplacian_pos hK ⟨x, hxK⟩ hgcont hgcd hglap
+  exact ⟨z, hK.isClosed.frontier_subset hzfr, hzmax, hbdry hzfr⟩
 
 /-- **Weak minimum principle for superharmonic functions.**
 
@@ -139,18 +166,8 @@ theorem exists_mem_frontier_isMaxOn_of_laplacian_nonneg {K : Set E} (hK : IsComp
     (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x) :
     ∃ x ∈ frontier K, IsMaxOn f K x := by
-  have hfrsub : frontier K ⊆ K := hK.isClosed.frontier_subset
-  have hfrcompact : IsCompact (frontier K) := hK.of_isClosed_subset isClosed_frontier hfrsub
-  have hfrne : (frontier K).Nonempty := by
-    rw [Set.nonempty_iff_ne_empty]
-    intro hempty
-    rcases frontier_eq_empty_iff.mp hempty with h | h
-    · exact hne.ne_empty h
-    · exact noncompact_univ E (h ▸ hK)
-  obtain ⟨z, hzfr, hzmax⟩ := hfrcompact.exists_isMaxOn hfrne (hcont.mono hfrsub)
-  refine ⟨z, hzfr, isMaxOn_iff.mpr fun y hyK => ?_⟩
-  exact le_of_laplacian_nonneg_le_frontier hK hcont hcd hlap
-    (fun w hw => isMaxOn_iff.mp hzmax w hw) hyK
+  exact exists_mem_frontier_isMaxOn_of_le_frontier hK hne hcont fun hbdry =>
+    le_of_laplacian_nonneg_le_frontier hK hcont hcd hlap hbdry
 
 /-- A superharmonic (`Δ f ≤ 0`) continuous function on a nonempty compact set in a nontrivial
 finite-dimensional real inner product space attains a minimum on the frontier. -/

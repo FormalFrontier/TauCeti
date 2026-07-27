@@ -8,6 +8,7 @@ public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.FieldTheory.Normal.Basic
 public import Mathlib.FieldTheory.SeparableClosure
 public import Mathlib.GroupTheory.Exponent
+import Mathlib.Algebra.CharP.Basic
 
 /-!
 # A multiquadratic field is Galois
@@ -116,7 +117,8 @@ theorem aut_gen_eq_self_or_eq_neg (hroot : ∀ i, root i ^ 2 = algebraMap K L (d
   exact sq_eq_sq_iff_eq_or_eq_neg.mp h1
 
 omit [Finite ι] in
-/-- A generator is not equal to its own negation when the radicand is nonzero. -/
+/-- A generator is not equal to its own negation when the radicand is nonzero, since `2 ≠ 0` in
+`L` (via `Ring.eq_self_iff_eq_zero_of_char_ne_two`). -/
 theorem gen_ne_neg [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (i : ι) (hd : d i ≠ 0) :
     gen (K := K) root i ≠ -gen root i := by
@@ -125,13 +127,12 @@ theorem gen_ne_neg [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L 
   have h2L : (2 : L) ≠ 0 := by
     rw [← map_ofNat (algebraMap K L) 2]
     exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective K L)).mpr two_ne_zero
-  have hr0 : root i = 0 := by
-    have h2 : (2 : L) * root i = 0 := by rw [two_mul]; nth_rewrite 1 [hcoe]; rw [neg_add_cancel]
-    exact (mul_eq_zero.mp h2).resolve_left h2L
-  have hd0 : d i = 0 := by
-    have hh : algebraMap K L (d i) = 0 := by rw [← hroot i, hr0]; ring
-    exact (map_eq_zero_iff _ (FaithfulSMul.algebraMap_injective K L)).mp hh
-  exact hd hd0
+  have hr0 : root i ≠ 0 := fun hx0 =>
+    hd ((map_eq_zero_iff _ (FaithfulSMul.algebraMap_injective K L)).mp
+      (by rw [← hroot i, hx0]; ring))
+  have hchar : ringChar L ≠ 2 := fun hc =>
+    h2L (by exact_mod_cast (ringChar.spec L 2).2 (by simp [hc]))
+  exact hr0 ((Ring.eq_self_iff_eq_zero_of_char_ne_two hchar).mp hcoe.symm)
 
 /-- `∏ᵢ (X² - dᵢ)` is nonzero. -/
 private theorem definingPolynomial_ne_zero : definingPolynomial d ≠ 0 := by

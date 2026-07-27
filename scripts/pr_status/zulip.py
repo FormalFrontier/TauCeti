@@ -3,29 +3,29 @@
 
 We keep exactly one bot-owned message per PR in a dedicated channel/topic
 (default: "Tau Ceti" > "PRs") and reconcile two independent, mutually-exclusive
-groups of emoji reactions on it from GitHub truth:
+groups of emoji reactions on it from the PR's status (see core.derive):
 
   CI (build) group        review / lifecycle group
     running   -> yellow      review has begun        -> eyes
     passed    -> green_circle running, green so far   -> play
     failed    -> red_circle  changes_requested/block -> writing
-                             all review done, green  -> check
-                             merged                  -> merge        (realm emoji)
-                             closed, not merged      -> closed-pr    (realm emoji)
+                             all review done, green   -> check
+                             merged                   -> merge      (realm emoji)
+                             closed, not merged       -> closed-pr  (realm emoji)
 
-The script reads what it needs from GitHub (PR state, the canonical
-`<!--tauceti-scoreboard-->` comment's meta JSON, and the `build` commit status),
-so it is fully idempotent: the same `reconcile` powers both the event-driven
-GitHub Actions and a one-shot backfill over historical PRs. Run it as often as
-you like; it converges the reactions to match GitHub and changes nothing else.
+The status comes from core.derive, which reads GitHub truth (PR state, the
+canonical `<!--tauceti-scoreboard-->` comment's meta JSON, and the `build` commit
+status). This sink only renders it, so the same `reconcile` powers both the
+event-driven GitHub Actions and a one-shot backfill over historical PRs. Run it
+as often as you like; it converges the reactions to match GitHub and nothing else.
 
 Only the *bot's own* reactions are authoritative: presence is judged by the
 bot's user id, so a human reacting on a message never confuses reconciliation,
 and we only ever add/remove our own reactions.
 
 Usage:
-    zulip_pr_status.py reconcile <pr_number> [--create] [--ci STATE]
-    zulip_pr_status.py check
+    zulip.py reconcile <pr_number> [--create] [--ci STATE]
+    zulip.py check
 
 `--create` posts the per-PR message if it does not exist yet (used by the PR
 "opened" workflow and by backfill). Without it, a PR with no message yet is left
@@ -61,23 +61,24 @@ whole integration is dead" deserve different volumes:
     every PR and will not fix itself. We log it, emit a GitHub Actions
     `::error::` annotation (visible even under `continue-on-error`), and exit
     non-zero so the workflow run goes red. This is the loud signal that the
-    secret needs re-setting; see scripts/zulip/README.md for the fix.
+    secret needs re-setting; see scripts/pr_status/README.md for the fix.
 """
 
 import base64
 import json
 import os
 import re
-import subprocess
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
 
-REPO = os.environ.get("GH_REPO", "TauCetiProject/TauCeti")
+import core
+
+REPO = core.REPO
 CHANNEL = os.environ.get("ZULIP_CHANNEL", "Tau Ceti")
 TOPIC = os.environ.get("ZULIP_TOPIC", "PRs")
-ZWSP = "\u200b"  # zero-width space, used to defuse mentions/linkifiers
+ZWSP = "​"  # zero-width space, used to defuse mentions/linkifiers
 
 
 class ConfigError(RuntimeError):
@@ -105,6 +106,12 @@ EMOJI = {
 CI_GROUP = ["yellow", "green_circle", "red_circle"]
 REVIEW_GROUP = ["eyes", "play", "writing", "check", "merge", "closed-pr"]
 
+# core.derive's neutral states -> this sink's emoji.
+CI_EMOJI = {"running": "yellow", "success": "green_circle",
+            "failure": "red_circle", None: None}
+REVIEW_EMOJI = {"none": "eyes", "running": "play",
+                "changes": "writing", "approved": "check"}
+
 
 def log(msg):
     print(msg, flush=True)
@@ -112,109 +119,6 @@ def log(msg):
 
 def pr_url(pr):
     return f"https://github.com/{REPO}/pull/{pr}"
-
-
-# ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
-
-def gh_api(path, jq=None, paginate=False):
-    cmd = ["gh", "api", path]
-    if paginate:
-        cmd.append("--paginate")
-    if jq is not None:
-        cmd += ["--jq", jq]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        raise RuntimeError(f"gh api {path} failed: {out.stderr.strip()}")
-    return out.stdout
-
-
-def pr_state(pr):
-    """{'state','merged','head','title'} for the PR.
-
-    Prefer the triggering event's payload, passed in via PR_STATE/PR_HEAD/
-    PR_MERGED/PR_TITLE (the lifecycle workflow sets these from
-    github.event.pull_request, so a close/merge needs no GitHub API call at
-    all). Fall back to the REST API when they aren't set (the workflow_run
-    status workflow and the backfill), where the payload is absent or isn't the
-    PR we're reconciling.
-    """
-    env_state = os.environ.get("PR_STATE")
-    env_head = os.environ.get("PR_HEAD")
-    if env_state and env_head:
-        return {
-            "state": env_state,
-            "merged": os.environ.get("PR_MERGED") == "true",
-            "head": env_head,
-            "title": os.environ.get("PR_TITLE") or f"PR #{pr}",
-        }
-    d = json.loads(gh_api(f"/repos/{REPO}/pulls/{pr}"))
-    return {
-        "state": d["state"],                 # "open" | "closed"
-        "merged": bool(d.get("merged")),
-        "head": d["head"]["sha"],
-        "title": d.get("title") or f"PR #{pr}",
-    }
-
-
-def scoreboard_meta(pr):
-    """The newest trusted scoreboard comment's meta JSON ({} if none).
-
-    Trust mirrors round.sh: the <!--tauceti-scoreboard--> marker AND an author
-    with repo association (OWNER/MEMBER/COLLABORATOR), so a random external
-    comment cannot forge review state. Paginates so the canonical comment is
-    found even on long PRs.
-    """
-    body = gh_api(
-        f"/repos/{REPO}/issues/{pr}/comments?per_page=100",
-        jq='[.[] | select(.body|contains("<!--tauceti-scoreboard-->"))'
-           ' | select(.author_association|IN("OWNER","MEMBER","COLLABORATOR"))]'
-           ' | sort_by(.updated_at) | last | .body // ""',
-        paginate=True,
-    )
-    # With --paginate the jq runs per page, so take the last non-empty body.
-    body = next((ln for ln in reversed(body.splitlines()) if ln.strip()), "")
-    m = re.search(r"<!--tauceti-meta:v1 (.*)-->", body)
-    if not m:
-        return {}
-    try:
-        return json.loads(m.group(1))
-    except json.JSONDecodeError:
-        return {}
-
-
-def ci_status(head):
-    """'running' | 'success' | 'failure' | None from the `build` commit status."""
-    state = gh_api(
-        f"/repos/{REPO}/commits/{head}/statuses",
-        jq='[.[] | select(.context == "build")] | sort_by(.updated_at) | last | .state // ""',
-    ).strip()
-    if state == "pending":
-        return "running"
-    if state == "success":
-        return "success"
-    if state in ("failure", "error"):
-        return "failure"
-    return None
-
-
-def review_emoji(meta, head):
-    """Map the scoreboard meta at the current head to a review-group emoji.
-
-    Mirrors round.sh's review_all_green / ledger_blocking: a verdict is blocking
-    if it is neither "approve" nor "error"; a round is all-green iff it ran and
-    every rubric approved. State not at the current head (a fix landed since the
-    last review) reads as "running, green so far".
-    """
-    if not meta:
-        return "eyes"  # review has begun / queued, nothing posted yet
-    runs = meta.get("runs") or []
-    at_head = meta.get("head_sha") == head
-    if at_head and runs:
-        if any(r.get("verdict") not in ("approve", "error") for r in runs):
-            return "writing"  # at least one changes_requested / block
-        if all(r.get("verdict") == "approve" for r in runs):
-            return "check"  # all review done, all green
-    return "play"  # running, green so far
 
 
 # ----- Zulip REST (stdlib urllib; no third-party dependency) ------------------
@@ -349,7 +253,11 @@ def set_group(z, message, bot_id, group, desired):
 
 def reconcile(z, pr, create, ci_override):
     bot_id = z.my_user_id()
-    st = pr_state(pr)
+    # Read only the PR's own metadata first and find-or-create the durable message from its title,
+    # BEFORE the fallible CI/scoreboard reads. Otherwise a transient GitHub hiccup during those reads
+    # would abort the sole --create run and the PR would stay absent from Zulip indefinitely (later
+    # events don't pass --create). Passing this state into derive() reads the PR just once.
+    st = core.pr_state(pr)
     content = pr_message_content(pr, st["title"])
     message = find_message(z, pr, bot_id)
     if message is None:
@@ -364,23 +272,15 @@ def reconcile(z, pr, create, ci_override):
         log(f"updating content of message {message['id']} for PR #{pr}")
         z.update_message(message["id"], content)
 
-    if st["merged"]:
-        rev = "merge"
-    elif st["state"] == "closed":
-        rev = "closed-pr"
-    else:
-        rev = review_emoji(scoreboard_meta(pr), st["head"])
+    status = core.derive(pr, ci_override, state=st)
+    rev = {"merged": "merge", "closed": "closed-pr"}.get(status["lifecycle"])
+    if rev is None:  # open PR: render the review state
+        rev = REVIEW_EMOJI[status["review"]]
     set_group(z, message, bot_id, REVIEW_GROUP, rev)
 
-    # CI status is only meaningful while the PR is open; clear it on a terminal PR.
-    if st["state"] != "open":
-        ci = None
-    elif ci_override is not None:
-        ci = ci_override
-    else:
-        ci = ci_status(st["head"])
-    ci_emoji = {"running": "yellow", "success": "green_circle",
-                "failure": "red_circle", "none": None, None: None}[ci]
+    # CI status is only meaningful while the PR is open; core.derive already
+    # clears it (ci=None) on a terminal PR, so this maps straight through.
+    ci_emoji = CI_EMOJI[status["ci"]]
     set_group(z, message, bot_id, CI_GROUP, ci_emoji)
     log(f"PR #{pr}: review={rev} ci={ci_emoji}")
 

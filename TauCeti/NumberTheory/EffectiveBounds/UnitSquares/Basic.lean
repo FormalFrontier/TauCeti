@@ -21,6 +21,13 @@ together with a generator of the finite cyclic torsion subgroup, so it is genera
 `rank + 1 ≤ [F:ℚ]` elements; `TauCeti.index_square_le_of_closure_eq_top` then controls the
 index of the squares.
 
+This is the cheap, self-contained upstream bound consumed by the effective class-number
+estimates. Its sharpening to the exact value `[O_F^× : (O_F^×)²] = 2^(rank F + 1)` (from
+Dirichlet's unit theorem) is `TauCeti.NumberField.units_sq_index_eq`, in the unit-square-class
+file `TauCeti.NumberTheory.NumberField.Units.ElementaryTwoQuotient`, kept separate so this bound
+does not depend on the structural-Dirichlet and elementary-2-quotient machinery the exact value
+needs.
+
 ## Main results
 
 * `TauCeti.NumberField.units_sq_index_le`: `[O_F^× : (O_F^×)²] ≤ 2^[F:ℚ]`.

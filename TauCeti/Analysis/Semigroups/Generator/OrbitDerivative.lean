@@ -11,9 +11,10 @@ import Mathlib.Analysis.Calculus.Deriv.Slope
 # Differentiability of semigroup orbits
 
 This file characterizes membership in the infinitesimal generator domain by right
-differentiability of the orbit at zero. For a vector in the generator domain, it then computes
-the right derivative at every nonnegative time in the equivalent forms `A (S t x)` and
-`S t (A x)`.
+differentiability of the orbit at zero. For a vector in the generator domain, it computes the
+right derivative at every nonnegative time in the equivalent forms `A (S t x)` and `S t (A x)`.
+It also proves that a generator-domain orbit has a derivative within the whole nonnegative
+half-line, hence a two-sided derivative at positive times.
 
 ## References
 
@@ -135,6 +136,61 @@ theorem realOperator_hasDerivWithinAt_map_generator
         exact x.property⟩)) (Set.Ici t) t := by
   rw [← S.realOperator_generator_map ht x]
   exact S.realOperator_hasDerivWithinAt ht (S.realOperator_mem_domain ht x.property)
+
+/-! ## Derivatives within the nonnegative half-line -/
+
+private theorem realOperator_eq_add_integral_map_generator (S : StronglyContinuousSemigroup X)
+    [CompleteSpace X] (x : S.domain) {s : ℝ} (hs : 0 ≤ s) :
+    S.realOperator s (x : X) = (x : X) + ∫ u in (0 : ℝ)..s,
+      S.realOperator u (S.generator ⟨x, by rw [S.generator_domain]; exact x.property⟩) := by
+  let z : X := S.generator ⟨x, by rw [S.generator_domain]; exact x.property⟩
+  have hzint : IntervalIntegrable (fun u : ℝ => S.realOperator u z)
+      MeasureTheory.volume 0 s := by
+    apply ContinuousOn.intervalIntegrable
+    simpa [Set.uIcc_of_le hs] using
+      (S.realOperator_continuousOn_Ici z).mono (fun _ hu => hu.1)
+  have hftc := intervalIntegral.integral_eq_sub_of_hasDeriv_right_of_le hs
+    ((S.realOperator_continuousOn_Ici x).mono Set.Icc_subset_Ici_self)
+    (fun u hu => (S.realOperator_hasDerivWithinAt_map_generator x hu.1.le).mono
+      Set.Ioi_subset_Ici_self) hzint
+  rw [hftc, S.realOperator_zero_apply]
+  abel
+
+/-- On the nonnegative half-line, the orbit of a generator-domain vector has derivative equal
+to the generator evaluated on the evolved vector. At positive times this is a two-sided
+derivative; only the derivative at zero is one-sided. -/
+theorem realOperator_hasDerivWithinAt_Ici (S : StronglyContinuousSemigroup X)
+    [CompleteSpace X] (x : S.domain) {t : ℝ} (ht : 0 ≤ t) :
+    HasDerivWithinAt (fun s : ℝ => S.realOperator s (x : X))
+      (S.generator ⟨S.realOperator t x, by
+        rw [S.generator_domain]
+        exact S.realOperator_mem_domain ht x.property⟩) (Set.Ici 0) t := by
+  rcases ht.eq_or_lt with rfl | ht
+  · simpa only [S.realOperator_zero_apply] using S.realOperator_hasDerivWithinAt_zero x
+  let z : X := S.generator ⟨x, by rw [S.generator_domain]; exact x.property⟩
+  let g : ℝ → X := fun s => (x : X) + ∫ u in (0 : ℝ)..s, S.realOperator u z
+  have horbit : ∀ s : ℝ, 0 ≤ s → S.realOperator s (x : X) = g s := by
+    intro s hs
+    simpa only [g, z] using S.realOperator_eq_add_integral_map_generator x hs
+  have hg : HasDerivWithinAt g (S.realOperator t z) (Set.Ici 0) t := by
+    have hzint : IntervalIntegrable (fun u : ℝ => S.realOperator u z)
+        MeasureTheory.volume 0 t := by
+      apply ContinuousOn.intervalIntegrable
+      simpa [Set.uIcc_of_le ht.le] using
+        (S.realOperator_continuousOn_Ici z).mono (by
+          intro u hu
+          exact hu.1)
+    have hcont := S.realOperator_continuousAt_of_pos z ht
+    have hmeas := ContinuousOn.stronglyMeasurableAtFilter (μ := MeasureTheory.volume)
+      isOpen_Ioi ((S.realOperator_continuousOn_Ici z).mono Set.Ioi_subset_Ici_self) t ht
+    have hint := intervalIntegral.integral_hasDerivAt_right hzint hmeas hcont
+    have h := ((hasDerivAt_const t (x : X)).add hint).hasDerivWithinAt (s := Set.Ici 0)
+    convert h.congr (fun _ _ => rfl) rfl |>.congr_deriv (zero_add _) using 1
+    funext s
+    rfl
+  -- Finally transfer the derivative from `g` back to the orbit and commute the generator.
+  rw [S.realOperator_generator_map ht.le x]
+  exact hg.congr (fun s hs => horbit s hs) (horbit t ht.le)
 
 /-- The orbit of a generator-domain vector is right-differentiable at every nonnegative time. -/
 theorem realOperator_differentiableWithinAt (S : StronglyContinuousSemigroup X)

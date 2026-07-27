@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
@@ -22,10 +26,13 @@ is phrased through Mathlib's `ProbabilityTheory.CondIndep`.
 
 * `condExp_blockIndicatorProd_future_ae_eq_prod` — for `r ≤ m + 1`, the conditional expectation of
   the length-`r` prefix indicator product factors as the product of the single-coordinate
-  conditional expectations, with every coordinate replaced by `X 0`. The conditional-independence
-  step feeds the merged prefix/tail conditional independence
-  `Contractable.condIndep_coord_prefix_tail` (Kallenberg's Lemma 1.3, symmetrised and transported
-  to the `tailFamily` interface inline) into Mathlib's product formula `condIndep_iff`.
+  conditional expectations, with every coordinate replaced by `X 0`.
+
+The induction is organised through three private helpers: `condIndep_prefix_coord_future`
+(prefix/coordinate conditional independence given the future, from the merged
+`Contractable.condIndep_coord_prefix_tail`, Kallenberg's Lemma 1.3),
+`condExp_blockCylinder_inter_preimage_ae_eq_mul` (the resulting conditional-expectation product
+split), and `condExp_blockIndicatorProd_future_succ` (the inductive step).
 
 Adapted from `cameronfreer/exchangeability`
 (`DeFinetti/ViaMartingale/Factorization.lean`: `block_coord_condIndep`,
@@ -55,6 +62,114 @@ private lemma measurableSet_blockCylinder_comap_prefix (X : ℕ → Ω → α) {
   ⟨Set.univ.pi fun j : Fin r => C j, MeasurableSet.univ_pi fun j => hC j,
     by rw [blockCylinder_eq_preimage_univ_pi]⟩
 
+/-- **Prefix/coordinate conditional independence given the future.** For a contractable process and
+`r ≤ m`, the length-`r` prefix `ω ↦ (X 0 ω, …, X (r-1) ω)` and the single coordinate `X r` are
+conditionally independent given the future σ-algebra `tailFamily X (m+1)`. -/
+private lemma condIndep_prefix_coord_future [StandardBorelSpace Ω] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_meas : ∀ n, Measurable (X n)) {m r : ℕ} (hrm : r ≤ m) :
+    CondIndep (tailFamily X (m + 1))
+      (MeasurableSpace.comap (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance)
+      (MeasurableSpace.comap (X r) inferInstance)
+      (tailFamily_le_ambient (m + 1) fun k _ => hX_meas k) μ := by
+  -- Symmetrise `Contractable.condIndep_coord_prefix_tail` (Kallenberg 1.3), then transport it
+  -- from `σ(processShift X (m+1))` to `tailFamily X (m+1)` via `tailFamily_eq_comap_shift`.
+  have hW_eq : MeasurableSpace.comap (processShift X (m + 1)) inferInstance
+      = tailFamily X (m + 1) := by
+    rw [tailFamily_eq_comap_shift X (m + 1)]
+    congr 1
+    funext ω n
+    exact processShift_apply X (m + 1) n ω
+  simp only [← hW_eq]
+  exact (Contractable.condIndep_coord_prefix_tail hX hX_meas hrm).symm
+
+/-- **Product split of the prefix-cylinder/coordinate indicator conditional expectation.** For a
+contractable process and `r ≤ m`, the conditional expectation given `tailFamily X (m+1)` of the
+indicator of the length-`r` prefix cylinder `blockCylinder X id D` intersected with the coordinate
+preimage `X r ⁻¹' B` factors as the product of the two individual conditional expectations. The
+coordinate family `D` and the set `B` are assumed measurable. -/
+private lemma condExp_blockCylinder_inter_preimage_ae_eq_mul [StandardBorelSpace Ω] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
+    {m r : ℕ} (hrm : r ≤ m) (D : Fin r → Set α) (hD : ∀ i, MeasurableSet (D i)) {B : Set α}
+    (hB : MeasurableSet B) :
+    μ[(blockCylinder X (fun i : Fin r => (i : ℕ)) D ∩ X r ⁻¹' B).indicator (fun _ => (1 : ℝ))
+        | tailFamily X (m + 1)]
+      =ᵐ[μ]
+    μ[(blockCylinder X (fun i : Fin r => (i : ℕ)) D).indicator (fun _ => (1 : ℝ))
+        | tailFamily X (m + 1)]
+      * μ[(X r ⁻¹' B).indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] := by
+  have hA_meas : MeasurableSet[MeasurableSpace.comap
+      (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance]
+      (blockCylinder X (fun i : Fin r => (i : ℕ)) D) :=
+    measurableSet_blockCylinder_comap_prefix X D hD
+  have hB_meas : MeasurableSet[MeasurableSpace.comap (X r) inferInstance] (X r ⁻¹' B) :=
+    ⟨B, hB, rfl⟩
+  exact (condIndep_iff (tailFamily X (m + 1))
+    (MeasurableSpace.comap (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance)
+    (MeasurableSpace.comap (X r) inferInstance)
+    (tailFamily_le_ambient (m + 1) fun k _ => hX_meas k)
+    ((measurable_pi_lambda (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) fun i => hX_meas i).comap_le)
+    ((hX_meas r).comap_le) μ).mp
+      (condIndep_prefix_coord_future hX hX_meas hrm) _ _ hA_meas hB_meas
+
+/-- **Successor step of the finite-level future factorization.** Assuming the length-`r`
+factorization `ih_r` for the truncated coordinate family `fun j => C (Fin.castSucc j)`, the
+length-`(r+1)` factorization holds for `C`. Requires `r ≤ m` and every `C i` measurable. -/
+private lemma condExp_blockIndicatorProd_future_succ [StandardBorelSpace Ω] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
+    {m r : ℕ} (hrm : r ≤ m) (C : Fin (r + 1) → Set α) (hC : ∀ i, MeasurableSet (C i))
+    (ih_r : μ[blockIndicatorProd X (fun i : Fin r => (i : ℕ)) (fun j => C (Fin.castSucc j))
+              | tailFamily X (m + 1)]
+        =ᵐ[μ] (fun ω => ∏ i : Fin r,
+          μ[Set.indicator (C (Fin.castSucc i)) (fun _ => (1 : ℝ)) ∘ X 0
+            | tailFamily X (m + 1)] ω)) :
+    μ[blockIndicatorProd X (fun i : Fin (r + 1) => (i : ℕ)) C | tailFamily X (m + 1)]
+      =ᵐ[μ]
+    (fun ω => ∏ i : Fin (r + 1),
+      μ[Set.indicator (C i) (fun _ => (1 : ℝ)) ∘ X 0 | tailFamily X (m + 1)] ω) := by
+  classical
+  set cyl : Set Ω :=
+    blockCylinder X (fun i : Fin r => (i : ℕ)) (fun j => C (Fin.castSucc j)) with hcyl
+  set pre : Set Ω := X r ⁻¹' C (Fin.last r) with hpre
+  -- Successor split of the indicator product, from the `Cylinder` API.
+  have hblock_eq : blockIndicatorProd X (fun i : Fin (r + 1) => (i : ℕ)) C
+      = (cyl ∩ pre).indicator (fun _ => (1 : ℝ)) := by
+    rw [hcyl, hpre]
+    exact blockIndicatorProd_succ_eq_indicator_inter X (fun i : Fin (r + 1) => (i : ℕ)) C
+  -- CondIndep → condExp product formula, from the split helper.
+  have hbridge : μ[(cyl ∩ pre).indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
+      =ᵐ[μ] μ[cyl.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
+          * μ[pre.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] := by
+    rw [hcyl, hpre]
+    exact condExp_blockCylinder_inter_preimage_ae_eq_mul hX hX_meas hrm _
+      (fun j => hC (Fin.castSucc j)) (hC (Fin.last r))
+  have hcyl_ce : μ[cyl.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
+      =ᵐ[μ] (fun ω => ∏ i : Fin r,
+        μ[Set.indicator (C (Fin.castSucc i)) (fun _ => (1 : ℝ)) ∘ X 0
+          | tailFamily X (m + 1)] ω) := by
+    rw [hcyl, ← blockIndicatorProd_eq_indicator]; exact ih_r
+  have hpre_ind : (fun ω => (C (Fin.last r)).indicator (fun _ => (1 : ℝ)) (X r ω))
+      = pre.indicator (fun _ => (1 : ℝ)) := by
+    rw [hpre]; funext ω; simp only [Set.indicator_apply, Set.mem_preimage]
+  have hpre_ce : μ[pre.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
+      =ᵐ[μ] μ[Set.indicator (C (Fin.last r)) (fun _ => (1 : ℝ)) ∘ X 0 | tailFamily X (m + 1)] :=
+    (condExp_congr_ae (EventuallyEq.of_eq hpre_ind.symm)).trans
+      (hX.condExp_indicator_future_eq hX_meas (k := 0) (by omega) (by omega) (hC (Fin.last r)))
+  calc μ[blockIndicatorProd X (fun i : Fin (r + 1) => (i : ℕ)) C | tailFamily X (m + 1)]
+      _ =ᵐ[μ] μ[(cyl ∩ pre).indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] :=
+          condExp_congr_ae (EventuallyEq.of_eq hblock_eq)
+      _ =ᵐ[μ] μ[cyl.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
+                * μ[pre.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] := hbridge
+      _ =ᵐ[μ] (fun ω => (∏ i : Fin r,
+                  μ[Set.indicator (C (Fin.castSucc i)) (fun _ => (1 : ℝ)) ∘ X 0
+                    | tailFamily X (m + 1)] ω)
+                * μ[Set.indicator (C (Fin.last r)) (fun _ => (1 : ℝ)) ∘ X 0
+                    | tailFamily X (m + 1)] ω) := hcyl_ce.mul hpre_ce
+      _ =ᵐ[μ] (fun ω => ∏ i : Fin (r + 1),
+                  μ[Set.indicator (C i) (fun _ => (1 : ℝ)) ∘ X 0 | tailFamily X (m + 1)] ω) := by
+          refine EventuallyEq.of_eq (funext fun ω => ?_)
+          rw [Fin.prod_univ_castSucc]
+
 /-- **Finite-level future factorization.**
 
 For a contractable process and any future level `m` with `r ≤ m + 1`, the conditional expectation of
@@ -82,72 +197,8 @@ lemma condExp_blockIndicatorProd_future_ae_eq_prod
     refine (EventuallyEq.of_eq (condExp_const hle 1)).trans (EventuallyEq.of_eq ?_)
     funext ω; simp
   | succ r ih =>
-    have hrm : r ≤ m := by omega
-    set cyl : Set Ω :=
-      blockCylinder X (fun i : Fin r => (i : ℕ)) (fun j => C (Fin.castSucc j)) with hcyl
-    set pre : Set Ω := X r ⁻¹' C (Fin.last r) with hpre
-    -- Successor split of the indicator product, from the `Cylinder` API.
-    have hblock_eq : blockIndicatorProd X (fun i : Fin (r + 1) => (i : ℕ)) C
-        = (cyl ∩ pre).indicator (fun _ => (1 : ℝ)) := by
-      rw [hcyl, hpre]
-      exact blockIndicatorProd_succ_eq_indicator_inter X (fun i : Fin (r + 1) => (i : ℕ)) C
-    have hA_meas : MeasurableSet[MeasurableSpace.comap
-        (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance] cyl := by
-      rw [hcyl]
-      exact measurableSet_blockCylinder_comap_prefix X _ fun j => hC (Fin.castSucc j)
-    have hB_meas : MeasurableSet[MeasurableSpace.comap (X r) inferInstance] pre :=
-      ⟨C (Fin.last r), hC _, hpre.symm⟩
-    -- Prefix/coordinate conditional independence given the future (Kallenberg 1.3), inline from the
-    -- merged #723 result: symmetrise `condIndep_coord_prefix_tail` (stated over `σ(processShift)`)
-    -- and transport it along the identification `σ(processShift X (m+1)) = tailFamily X (m+1)`.
-    have hci : CondIndep (tailFamily X (m + 1))
-        (MeasurableSpace.comap (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance)
-        (MeasurableSpace.comap (X r) inferInstance)
-        (tailFamily_le_ambient (m + 1) fun k _ => hX_meas k) μ := by
-      have hW_eq : MeasurableSpace.comap (processShift X (m + 1)) inferInstance
-          = tailFamily X (m + 1) := by
-        rw [tailFamily_eq_comap_shift X (m + 1)]
-        congr 1
-        funext ω n
-        exact processShift_apply X (m + 1) n ω
-      simp only [← hW_eq]
-      exact (Contractable.condIndep_coord_prefix_tail hX hX_meas hrm).symm
-    -- CondIndep → condExp product formula, via Mathlib's `condIndep_iff`.
-    have hbridge := (condIndep_iff (tailFamily X (m + 1))
-        (MeasurableSpace.comap (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance)
-        (MeasurableSpace.comap (X r) inferInstance)
-        (tailFamily_le_ambient (m + 1) fun k _ => hX_meas k)
-        ((measurable_pi_lambda (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω)
-            fun i => hX_meas i).comap_le)
-        ((hX_meas r).comap_le) μ).mp
-      hci cyl pre hA_meas hB_meas
-    have hcyl_ce : μ[cyl.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
-        =ᵐ[μ] (fun ω => ∏ i : Fin r,
-          μ[Set.indicator (C (Fin.castSucc i)) (fun _ => (1 : ℝ)) ∘ X 0
-            | tailFamily X (m + 1)] ω) := by
-      rw [hcyl, ← blockIndicatorProd_eq_indicator]
-      exact ih (fun j => C (Fin.castSucc j)) (fun j => hC _) (by omega)
-    have hpre_ind : (fun ω => (C (Fin.last r)).indicator (fun _ => (1 : ℝ)) (X r ω))
-        = pre.indicator (fun _ => (1 : ℝ)) := by
-      rw [hpre]; funext ω; simp only [Set.indicator_apply, Set.mem_preimage]
-    have hpre_ce : μ[pre.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
-        =ᵐ[μ] μ[Set.indicator (C (Fin.last r)) (fun _ => (1 : ℝ)) ∘ X 0 | tailFamily X (m + 1)] :=
-      (condExp_congr_ae (EventuallyEq.of_eq hpre_ind.symm)).trans
-        (hX.condExp_indicator_future_eq hX_meas (k := 0) (by omega) (by omega) (hC (Fin.last r)))
-    calc μ[blockIndicatorProd X (fun i : Fin (r + 1) => (i : ℕ)) C | tailFamily X (m + 1)]
-        _ =ᵐ[μ] μ[(cyl ∩ pre).indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] :=
-            condExp_congr_ae (EventuallyEq.of_eq hblock_eq)
-        _ =ᵐ[μ] μ[cyl.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)]
-                  * μ[pre.indicator (fun _ => (1 : ℝ)) | tailFamily X (m + 1)] := hbridge
-        _ =ᵐ[μ] (fun ω => (∏ i : Fin r,
-                    μ[Set.indicator (C (Fin.castSucc i)) (fun _ => (1 : ℝ)) ∘ X 0
-                      | tailFamily X (m + 1)] ω)
-                  * μ[Set.indicator (C (Fin.last r)) (fun _ => (1 : ℝ)) ∘ X 0
-                      | tailFamily X (m + 1)] ω) := hcyl_ce.mul hpre_ce
-        _ =ᵐ[μ] (fun ω => ∏ i : Fin (r + 1),
-                    μ[Set.indicator (C i) (fun _ => (1 : ℝ)) ∘ X 0 | tailFamily X (m + 1)] ω) := by
-            refine EventuallyEq.of_eq (funext fun ω => ?_)
-            rw [Fin.prod_univ_castSucc]
+    exact condExp_blockIndicatorProd_future_succ hX hX_meas (by omega) C hC
+      (ih (fun j => C (Fin.castSucc j)) (fun j => hC _) (by omega))
 
 end Probability
 

@@ -10,6 +10,7 @@ public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.NumberTheory.RamificationInertia.Basic
 public import Mathlib.NumberTheory.ZetaValues
 public import Mathlib.RingTheory.Ideal.Int
+import Mathlib.Data.Set.Card.Arithmetic
 
 /-!
 # An effective count of ideals of bounded norm
@@ -72,6 +73,44 @@ private theorem sum_one_div_sq_le_two (N : ℕ) :
   have hpi : Real.pi < 3.4 := by pi_upper_bound [7 / 5]
   nlinarith [hconv, Real.pi_pos, hpi]
 
+/-- Splitting off the last coordinate `j`, which ranges over `{1, …, ⌊X⌋}`: an `(n+1)`-tuple
+with product at most `X` is an `n`-tuple with product at most `X / j` followed by `j`. -/
+private theorem prodLeTuples_succ_eq_iUnion (n : ℕ) (X : ℝ) :
+    prodLeTuples (n + 1) X = ⋃ j ∈ Finset.Icc 1 ⌊X⌋₊,
+      (fun e => Fin.snoc e j) '' (prodLeTuples n (X / j)) := by
+  ext d; simp only [prodLeTuples, Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_image,
+    Finset.mem_Icc]
+  constructor <;> intro h
+  · refine ⟨d (Fin.last n), ⟨h.1 _, Nat.le_floor ?_⟩, Fin.init d, ⟨?_, ?_⟩,
+      Fin.snoc_init_self d⟩
+    · refine le_trans ?_ h.2
+      rw [Fin.prod_univ_castSucc]
+      exact le_mul_of_one_le_left (Nat.cast_nonneg _)
+        (mod_cast Finset.one_le_prod' fun i _ => h.1 _)
+    · exact fun i => h.1 _
+    · rw [le_div_iff₀ (mod_cast h.1 (Fin.last n))]
+      rw [Fin.prod_univ_castSucc] at h
+      simpa [Fin.init] using h.2
+  · obtain ⟨j, ⟨hj1, -⟩, e, ⟨hepos, heprod⟩, rfl⟩ := h
+    have hj0 : (0 : ℝ) < j := by exact_mod_cast hj1
+    refine ⟨fun i => ?_, ?_⟩
+    · refine Fin.lastCases ?_ (fun i => ?_) i
+      · rw [Fin.snoc_last]; exact hj1
+      · rw [Fin.snoc_castSucc]; exact hepos i
+    · rw [Fin.prod_univ_castSucc, Fin.snoc_last]
+      simp only [Fin.snoc_castSucc]
+      rw [le_div_iff₀ hj0] at heprod
+      linarith [heprod]
+
+/-- The number of `(n+1)`-tuples with product at most `X` is at most the sum, over the last
+coordinate `j ∈ {1, …, ⌊X⌋}`, of the counts of `n`-tuples with product at most `X / j`. -/
+private theorem prodLeTuples_succ_ncard_le (n : ℕ) (X : ℝ) :
+    (prodLeTuples (n + 1) X).ncard ≤
+      ∑ j ∈ Finset.Icc 1 ⌊X⌋₊, (prodLeTuples n (X / j)).ncard := by
+  rw [prodLeTuples_succ_eq_iUnion]
+  exact (Finset.set_ncard_biUnion_le _ _).trans
+    (Finset.sum_le_sum fun j _ => Set.ncard_image_le (prodLeTuples_finite _ _))
+
 /-- The number of positive `n`-tuples of natural numbers whose real product is at most `X` is
 at most `X² * 2ⁿ`, for `X ≥ 1`. -/
 private theorem prodLeTuples_ncard_le (n : ℕ) {X : ℝ} (hX : 1 ≤ X) :
@@ -83,46 +122,8 @@ private theorem prodLeTuples_ncard_le (n : ℕ) {X : ℝ} (hX : 1 ≤ X) :
       rw [huniv, Set.ncard_univ, Nat.card_unique, pow_zero, Nat.cast_one, mul_one]
       nlinarith [hX, sq_nonneg (X - 1)]
   | succ n ih =>
-      -- Decompose by the last coordinate `j ∈ {1,…,⌊X⌋}`.
-      have h_def : prodLeTuples (n + 1) X = ⋃ j ∈ Finset.Icc 1 ⌊X⌋₊,
-          (fun e => Fin.snoc e j) '' (prodLeTuples n (X / j)) := by
-        ext d; simp only [prodLeTuples, Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_image,
-          Finset.mem_Icc]
-        constructor <;> intro h
-        · refine ⟨d (Fin.last n), ⟨h.1 _, Nat.le_floor ?_⟩, Fin.init d, ⟨?_, ?_⟩,
-            Fin.snoc_init_self d⟩
-          · refine le_trans ?_ h.2
-            rw [Fin.prod_univ_castSucc]
-            exact le_mul_of_one_le_left (Nat.cast_nonneg _)
-              (mod_cast Finset.one_le_prod' fun i _ => h.1 _)
-          · exact fun i => h.1 _
-          · rw [le_div_iff₀ (mod_cast h.1 (Fin.last n))]
-            rw [Fin.prod_univ_castSucc] at h
-            simpa [Fin.init] using h.2
-        · obtain ⟨j, ⟨hj1, hjX⟩, e, ⟨hepos, heprod⟩, rfl⟩ := h
-          have hj0 : (0 : ℝ) < j := by exact_mod_cast hj1
-          refine ⟨fun i => ?_, ?_⟩
-          · refine Fin.lastCases ?_ (fun i => ?_) i
-            · rw [Fin.snoc_last]; exact hj1
-            · rw [Fin.snoc_castSucc]; exact hepos i
-          · rw [Fin.prod_univ_castSucc, Fin.snoc_last]
-            simp only [Fin.snoc_castSucc]
-            rw [le_div_iff₀ hj0] at heprod
-            linarith [heprod]
-      -- The biUnion's count is at most the sum of the parts' counts.
-      have key : ∀ s : Finset ℕ, (⋃ j ∈ s, (fun e : Fin n → ℕ => (Fin.snoc e j : Fin (n + 1) → ℕ))
-          '' (prodLeTuples n (X / j))).ncard ≤ ∑ j ∈ s, (prodLeTuples n (X / j)).ncard := by
-        intro s
-        induction s using Finset.induction with
-        | empty => simp
-        | insert a s ha ih2 =>
-            rw [Finset.set_biUnion_insert, Finset.sum_insert ha]
-            refine (Set.ncard_union_le _ _).trans (add_le_add ?_ ih2)
-            exact Set.ncard_image_le (prodLeTuples_finite _ _)
-      have h_ind : (prodLeTuples (n + 1) X).ncard ≤
-          ∑ j ∈ Finset.Icc 1 ⌊X⌋₊, (prodLeTuples n (X / j)).ncard := by
-        rw [h_def]; exact key _
-      refine le_trans (Nat.cast_le.mpr h_ind) ?_
+      -- Bound the count by the sum over the last coordinate, then apply the IH to each term.
+      refine le_trans (Nat.cast_le.mpr (prodLeTuples_succ_ncard_le n X)) ?_
       push_cast
       refine le_trans (Finset.sum_le_sum fun i hi => ih ?_) ?_
       · rw [le_div_iff₀ (by exact_mod_cast (Finset.mem_Icc.mp hi).1)]

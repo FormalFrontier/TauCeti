@@ -111,6 +111,13 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 1.25rem; }
 }
 .cta:hover { text-decoration: none; filter: brightness(1.07); }
 
+.cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.cta-row .cta { margin-top: 0; }
+
+/* Secondary call to action: outlined amber pill sitting beside the filled one. */
+.cta.secondary { color: var(--text); background: transparent; box-shadow: inset 0 0 0 2px var(--amber-2); }
+.cta.secondary:hover { background: rgba(255, 157, 77, 0.12); filter: none; }
+
 /* ---- pillars ---- */
 .pillars {
   display: grid;

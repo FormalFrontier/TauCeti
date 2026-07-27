@@ -228,6 +228,59 @@ public theorem Path.exists_pathHomotopyTrivial_tube
   refine ⟨n, part, T, ?_⟩
   exact { stays_in_U := hU_contains, passes_through_V := hγ_in_V }
 
+/-- The set of paths sending each partition segment `[part.t i.castSucc, part.t i.succ]` into the
+corresponding set `U i` is open, provided every `U i` is open. Only openness of the `U i` is used,
+via the compact-open topology on `C(unitInterval, X)` restricted to each compact segment. -/
+private theorem isOpen_setOf_forall_segment_mapsTo {x y : X} {n : ℕ}
+    (part : IntervalPartition n) (U : Fin n → Set X) (hU_open : ∀ i, IsOpen (U i)) :
+    IsOpen {γ' : Path x y | ∀ i (s : unitInterval),
+      (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} := by
+  have hrw : {γ' : Path x y | ∀ i (s : unitInterval),
+        (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} =
+      ⋂ i : Fin n, {γ' : Path x y | ∀ s : unitInterval,
+        (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} := by
+    ext γ'
+    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+  rw [hrw]
+  apply isOpen_iInter_of_finite
+  intro i
+  let K_i : Set unitInterval := Set.Icc (part.t i.castSucc) (part.t i.succ)
+  have h_compact_K : IsCompact K_i := isCompact_Icc
+  have h_eq : {γ' : Path x y | ∀ s : unitInterval,
+      (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} =
+    {γ' : Path x y | Set.MapsTo γ' K_i (U i)} := by
+    ext γ'
+    simp only [Set.mem_setOf_eq, Set.MapsTo, K_i, Set.mem_Icc]
+    refine forall_congr' fun s ↦ ?_
+    constructor
+    · intro h hs; exact h hs
+    · intro h hs; exact h hs
+  rw [h_eq]
+  -- BRITTLE (intentional): `Set.MapsTo γ' K_i (U i)` for a `Path` unfolds its application through
+  -- the `Path → C(I, X)` coercion, so the path-set is *definitionally* the coercion-preimage of the
+  -- continuous-map-set. If `Path`'s coercion is ever restated, replace this `rfl`.
+  have hpre : {γ' : Path x y | Set.MapsTo γ' K_i (U i)} =
+      (↑) ⁻¹' {f : C(unitInterval, X) | Set.MapsTo f K_i (U i)} := rfl
+  rw [hpre]
+  exact (ContinuousMap.isOpen_setOf_mapsTo h_compact_K (hU_open i)).preimage
+    continuous_induced_dom
+
+/-- The set of paths sending each partition vertex `part.t j` into the corresponding set `V j` is
+open, provided every `V j` is open: it is a finite intersection of preimages of the `V j` under the
+(continuous) evaluation maps. -/
+private theorem isOpen_setOf_forall_vertex_mem {x y : X} {n : ℕ}
+    (part : IntervalPartition n) (V : Fin (n + 1) → Set X) (hV_open : ∀ j, IsOpen (V j)) :
+    IsOpen {γ' : Path x y | ∀ j, γ' (part.t j) ∈ V j} := by
+  have hrw : {γ' : Path x y | ∀ j, γ' (part.t j) ∈ V j} =
+      ⋂ j : Fin (n + 1), {γ' : Path x y | γ' (part.t j) ∈ V j} := by
+    ext γ'
+    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+  rw [hrw]
+  apply isOpen_iInter_of_finite
+  intro j
+  exact (hV_open j).preimage <|
+    (continuous_eval_const (part.t j)).comp continuous_induced_dom
+
 /-- Given open segment and vertex families, the corresponding raw tube set is open in the path
 space. This compact-open statement only uses openness of the two families, not the full SLSC tube
 data carried by `TubeData`. -/
@@ -238,54 +291,9 @@ theorem isOpen_pathTube {x y : X} {n : ℕ}
       (∀ i (s : unitInterval),
         (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i) ∧
       ∀ j, γ' (part.t j) ∈ V j} := by
-  let A : Set (Path x y) := {γ' | ∀ i (s : unitInterval),
-    (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i}
-  let B : Set (Path x y) := {γ' | ∀ j, γ' (part.t j) ∈ V j}
-  have hA : IsOpen A := by
-    have : A =
-      ⋂ i : Fin n, {γ' : Path x y | ∀ s : unitInterval,
-        (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} := by
-      ext γ'
-      simp only [A, Set.mem_setOf_eq, Set.mem_iInter]
-    rw [this]
-    apply isOpen_iInter_of_finite
-    intro i
-    let K_i : Set unitInterval := Set.Icc (part.t i.castSucc) (part.t i.succ)
-    have h_compact_K : IsCompact K_i := isCompact_Icc
-    have h_eq : {γ' : Path x y | ∀ s : unitInterval,
-        (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} =
-      {γ' : Path x y | Set.MapsTo γ' K_i (U i)} := by
-      ext γ'
-      simp only [Set.mem_setOf_eq, Set.MapsTo, K_i, Set.mem_Icc]
-      refine forall_congr' fun s ↦ ?_
-      constructor
-      · intro h hs; exact h hs
-      · intro h hs; exact h hs
-    rw [h_eq]
-    have : {γ' : Path x y | Set.MapsTo γ' K_i (U i)} =
-        (↑) ⁻¹' {f : C(unitInterval, X) | Set.MapsTo f K_i (U i)} := by
-      rfl
-    rw [this]
-    exact (ContinuousMap.isOpen_setOf_mapsTo h_compact_K (hU_open i)).preimage
-      continuous_induced_dom
-  have hB : IsOpen B := by
-    have : B = ⋂ j : Fin (n + 1), {γ' : Path x y | γ' (part.t j) ∈ V j} := by
-      ext γ'
-      simp only [B, Set.mem_setOf_eq, Set.mem_iInter]
-    rw [this]
-    apply isOpen_iInter_of_finite
-    intro j
-    exact (hV_open j).preimage <|
-      (continuous_eval_const (part.t j)).comp continuous_induced_dom
-  have hAB :
-      {γ' : Path x y |
-        (∀ i (s : unitInterval),
-          (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i) ∧
-        ∀ j, γ' (part.t j) ∈ V j} = A ∩ B := by
-    ext γ'
-    simp only [A, B, Set.mem_setOf_eq, Set.mem_inter_iff]
-  rw [hAB]
-  exact hA.inter hB
+  rw [Set.setOf_and]
+  exact (isOpen_setOf_forall_segment_mapsTo part U hU_open).inter
+    (isOpen_setOf_forall_vertex_mem part V hV_open)
 
 /-- Given a partition and tube data, the set of paths in the tube is open in the path space. -/
 theorem TubeData.isOpen {x y : X} {n : ℕ}
@@ -378,6 +386,84 @@ theorem Path.target_eq_eval_partition_last {x y : X} (p : Path x y)
     {n : ℕ} (part : IntervalPartition n) : y = p (part.t (Fin.last n)) := by
   rw [part.t_last, p.target]
 
+/-- The `i`-th intermediate path of the telescoping ladder from `γ.trans αₙ` to `α₀.trans γ'`:
+follow `γ` up to the partition point `t i`, cross to `γ'` along the rung `α i`, then follow `γ'`
+to the end. The endpoints are cast back to `x` and `y'` using `t 0 = 0` and `t (last n) = 1`. -/
+private def Path.pasteSegmentAuxPath {x y y' : X} {n : ℕ}
+    (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) (i : Fin (n + 1)) :
+    Path x y' :=
+  (((γ.subpath (part.t 0) (part.t i)).trans (α i)).trans
+    (γ'.subpath (part.t i) (part.t (Fin.last n)))).cast
+    (by rw [part.t_zero, γ.source])
+    (by rw [part.t_last, γ'.target])
+
+/-- At the first partition point the `γ`-prefix is constant and the `γ'`-suffix is all of `γ'`, so
+the intermediate path reduces to the first rung `α 0` followed by `γ'`. -/
+private lemma Path.pasteSegmentAuxPath_zero_homotopic {x y y' : X} {n : ℕ}
+    (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) :
+    Path.Homotopic (Path.pasteSegmentAuxPath γ γ' part α 0)
+      (((α 0).cast (Path.source_eq_eval_partition_zero γ part)
+                   (Path.source_eq_eval_partition_zero γ' part)).trans γ') := by
+  apply Path.Homotopic.Quotient.exact
+  dsimp [Path.pasteSegmentAuxPath]
+  rw [Path.Homotopic.Quotient.subpath_self,
+      Path.Homotopic.Quotient.cast_mk_subpath_part_endpoints γ' part]
+  simp
+
+/-- At the last partition point the `γ`-prefix is all of `γ` and the `γ'`-suffix is constant, so
+the intermediate path reduces to `γ` followed by the final rung `α (last n)`. -/
+private lemma Path.pasteSegmentAuxPath_last_homotopic {x y y' : X} {n : ℕ}
+    (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) :
+    Path.Homotopic (Path.pasteSegmentAuxPath γ γ' part α (Fin.last n))
+      (γ.trans ((α (Fin.last n)).cast
+        (Path.target_eq_eval_partition_last γ part)
+        (Path.target_eq_eval_partition_last γ' part))) := by
+  apply Path.Homotopic.Quotient.exact
+  dsimp [Path.pasteSegmentAuxPath]
+  rw [Path.Homotopic.Quotient.subpath_self,
+      Path.Homotopic.Quotient.cast_mk_subpath_part_endpoints γ part]
+  simp
+
+open Path.Homotopic.Quotient in
+/-- Consecutive intermediate paths are homotopic: passing from segment `i` to segment `i+1` swaps
+a single rung across one rectangle, and the rectangle homotopy `h_rectangles i` cancels it. -/
+private lemma Path.pasteSegmentAuxPath_succ_homotopic {x y y' : X} {n : ℕ}
+    (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
+    (i : Fin n)
+    (h_rectangle : Path.Homotopic
+        ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
+        ((α i.castSucc).trans (γ'.subpath (part.t i.castSucc) (part.t i.succ)))) :
+    Path.Homotopic (Path.pasteSegmentAuxPath γ γ' part α i.succ)
+      (Path.pasteSegmentAuxPath γ γ' part α i.castSucc) := by
+  apply exact
+  simp only [Path.pasteSegmentAuxPath, mk_trans, mk_cast]
+  -- Decompose γ|[0, i+1] = γ|[0, i] · γ|[i, i+1] and γ'|[i, last] = γ'|[i, i+1] · γ'|[i+1, last].
+  rw [← Path.Homotopic.Quotient.subpath_trans γ
+    (part.t 0) (part.t i.castSucc) (part.t i.succ)]
+  rw [← Path.Homotopic.Quotient.subpath_trans γ'
+    (part.t i.castSucc) (part.t i.succ) (part.t (Fin.last n))]
+  -- Right-associate everything so the rectangle rewrite fires on the shared suffix.
+  simp only [trans_assoc]
+  -- Turn the rectangle homotopy into an equality of quotient composites, then cancel the suffix.
+  have h_eq :
+      (Path.Homotopic.Quotient.mk (γ.subpath (part.t i.castSucc) (part.t i.succ))).trans
+          (Path.Homotopic.Quotient.mk (α i.succ)) =
+        (Path.Homotopic.Quotient.mk (α i.castSucc)).trans
+          (Path.Homotopic.Quotient.mk (γ'.subpath (part.t i.castSucc) (part.t i.succ))) := by
+    rw [← Path.Homotopic.Quotient.mk_trans, ← Path.Homotopic.Quotient.mk_trans]
+    exact Path.Homotopic.Quotient.eq.mpr h_rectangle
+  -- Reassociate the inner rung pair so `γ|[i, i+1] · α_{i+1}` surfaces as a subterm, rewrite it to
+  -- `α_i · γ'|[i, i+1]` via `h_eq`, then restore right-association. The shared prefix `γ|[0, i]`
+  -- and the outer endpoint `cast` are carried along untouched.
+  rw [← Path.Homotopic.Quotient.trans_assoc
+        (Path.Homotopic.Quotient.mk (γ.subpath (part.t i.castSucc) (part.t i.succ))),
+      h_eq,
+      Path.Homotopic.Quotient.trans_assoc (Path.Homotopic.Quotient.mk (α i.castSucc))]
+
 /-- The pasting lemma for segment homotopies. Works directly with path restrictions.
 
 Given:
@@ -406,76 +492,18 @@ theorem Path.paste_segment_homotopies {x y y' : X} {n : ℕ}
         (Path.target_eq_eval_partition_last γ' part)))
       (((α 0).cast (Path.source_eq_eval_partition_zero γ part)
                    (Path.source_eq_eval_partition_zero γ' part)).trans γ') := by
-  open Path.Homotopic.Quotient in
-  -- Define intermediate paths: γ_aux i follows γ up to t_i, crosses via α_i, then follows γ'
-  let γ_aux : (i : Fin (n + 1)) → Path x y' := fun i ↦
-    (((γ.subpath (part.t 0) (part.t i)).trans (α i)).trans
-      (γ'.subpath (part.t i) (part.t (Fin.last n)))).cast
-      (by rw [part.t_zero, γ.source])
-      (by rw [part.t_last, γ'.target])
-  -- Base case: γ_aux 0 ≃ α_0 · γ'
-  -- At i=0, γ|[0,0] is constant, and γ'|[0,1] is all of γ', so this simplifies to α_0 · γ'
-  have h_base : Path.Homotopic (γ_aux 0)
-      (((α 0).cast (Path.source_eq_eval_partition_zero γ part)
-                   (Path.source_eq_eval_partition_zero γ' part)).trans γ') := by
-    apply Path.Homotopic.Quotient.exact
-    dsimp [γ_aux]
-    rw [Path.Homotopic.Quotient.subpath_self,
-        Path.Homotopic.Quotient.cast_mk_subpath_part_endpoints γ' part]
-    simp
-  -- Final case: γ_aux (Fin.last n) ≃ γ · α_n
-  -- At i=n, γ|[0,1] is all of γ, and γ'|[1,1] is constant, so this simplifies to γ · α_n
-  have h_final : Path.Homotopic (γ_aux (Fin.last n))
-      (γ.trans ((α (Fin.last n)).cast
-        (Path.target_eq_eval_partition_last γ part)
-        (Path.target_eq_eval_partition_last γ' part))) := by
-    apply Path.Homotopic.Quotient.exact
-    dsimp [γ_aux]
-    rw [Path.Homotopic.Quotient.subpath_self,
-        Path.Homotopic.Quotient.cast_mk_subpath_part_endpoints γ part]
-    simp
-  -- Lift h_rectangles to the quotient with an arbitrary suffix
-  -- This allows simp to apply the rectangle homotopy in context
-  have rectangle_with_suffix : ∀ (i : Fin n) {w : X}
-      (suffix : Path.Homotopic.Quotient (γ' (part.t i.succ)) w),
-      (Path.Homotopic.Quotient.mk (γ.subpath (part.t i.castSucc) (part.t i.succ))).trans
-        ((Path.Homotopic.Quotient.mk (α i.succ)).trans suffix) =
-      (Path.Homotopic.Quotient.mk (α i.castSucc)).trans
-        ((Path.Homotopic.Quotient.mk
-          (γ'.subpath (part.t i.castSucc) (part.t i.succ))).trans suffix) := by
-    intro i w suffix
-    induction suffix using Path.Homotopic.Quotient.ind with | mk suffix =>
-    simp only [← mk_trans, eq]
-    -- Chain homotopies: reassociate, apply rectangle, reassociate back
-    exact ((Path.Homotopic.trans_assoc _ _ _).symm.trans
-      (Path.Homotopic.hcomp (h_rectangles i) (Path.Homotopic.refl suffix))).trans
-      (Path.Homotopic.trans_assoc _ _ _)
-  -- Consecutive paths are homotopic: γ_aux i.succ ≃ γ_aux i.castSucc
-  -- This follows from decomposing using subpath_trans and applying h_rectangles i
-  have h_step : ∀ (i : Fin n), Path.Homotopic (γ_aux i.succ) (γ_aux i.castSucc) := by
-    intro i
-    apply exact
-    simp only [γ_aux, mk_trans, mk_cast]
-    -- Decompose γ|[0, i+1] = γ|[0, i] · γ|[i, i+1]
-    rw [← Path.Homotopic.Quotient.subpath_trans γ
-      (part.t 0) (part.t i.castSucc) (part.t i.succ)]
-    -- Decompose γ'|[i, last n] = γ'|[i, i+1] · γ'|[i+1, last n]
-    rw [← Path.Homotopic.Quotient.subpath_trans γ'
-      (part.t i.castSucc) (part.t i.succ) (part.t (Fin.last n))]
-    -- Right-associate everything so rectangle_with_suffix can fire
-    simp only [trans_assoc]
-    -- Now apply the rectangle homotopy with suffix
-    rw [rectangle_with_suffix]
-  -- Chain all homotopies together
-  -- γ · α_n ≃ γ_aux n ≃ γ_aux (n-1) ≃ ... ≃ γ_aux 0 ≃ α_0 · γ'
-  -- Build a chain from any γ_aux i down to γ_aux 0 using h_step
-  have h_chain : ∀ i : Fin (n + 1), Path.Homotopic (γ_aux i) (γ_aux 0) := by
+  -- Telescope the intermediate paths `pasteSegmentAuxPath … i` from `i = last n` down to `i = 0`.
+  have h_chain : ∀ i : Fin (n + 1),
+      Path.Homotopic (Path.pasteSegmentAuxPath γ γ' part α i)
+        (Path.pasteSegmentAuxPath γ γ' part α 0) := by
     intro i
     induction i using Fin.induction with
     | zero => exact Path.Homotopic.refl _
-    | succ i ih => exact (h_step i).trans ih
-  -- Now combine everything: γ · α_n ≃ γ_aux n ≃ γ_aux 0 ≃ α_0 · γ'
-  exact h_final.symm.trans ((h_chain (Fin.last n)).trans h_base)
+    | succ i ih =>
+      exact (Path.pasteSegmentAuxPath_succ_homotopic γ γ' part α i (h_rectangles i)).trans ih
+  -- γ · αₙ ≃ aux (last n) ≃ aux 0 ≃ α₀ · γ'.
+  exact (Path.pasteSegmentAuxPath_last_homotopic γ γ' part α).symm.trans
+    ((h_chain (Fin.last n)).trans (Path.pasteSegmentAuxPath_zero_homotopic γ γ' part α))
 
 /-- A loop whose range lies in a path-homotopy-trivial set is null-homotopic. -/
 theorem Path.nullhomotopic_of_range_subset_pathHomotopyTrivial {x : X} (γ : Path x x)

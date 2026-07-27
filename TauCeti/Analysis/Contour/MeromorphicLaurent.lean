@@ -93,7 +93,7 @@ theorem neg_meromorphicPolarOrderAt_le (f : ℂ → ℂ) (s : ℂ) :
   · rw [h]; exact le_top
   · rw [← WithTop.coe_untop₀_of_ne_top h]
     rw [show (-(meromorphicPolarOrderAt f s : ℤ) : WithTop ℤ) =
-        ((-(meromorphicPolarOrderAt f s : ℤ) : ℤ) : WithTop ℤ) by push_cast; ring,
+        ((-(meromorphicPolarOrderAt f s : ℤ) : ℤ) : WithTop ℤ) by norm_cast,
       WithTop.coe_le_coe, meromorphicPolarOrderAt]
     omega
 

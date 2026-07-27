@@ -40,6 +40,15 @@ import subprocess
 import sys
 
 REPO = os.environ["REPO"]
+
+# The trusted-scoreboard parse lives once, in the pr_status package; import it rather than keeping a
+# second copy here (the two had drifted on the meta regex). This script is parameterised by $REPO, so
+# point core's reads at the same repo.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
+import core  # noqa: E402
+
+core.REPO = REPO
+
 DRY_RUN = os.environ.get("DRY_RUN") == "1"
 # Lifetime review rounds a PR may accumulate without going all-green before CI retires it. CI is the
 # single budget authority: the worker no longer caps itself, so a PR is reviewed/fixed until it merges
@@ -59,9 +68,6 @@ TARGET_ID_RE = re.compile(r'"id"\s*:\s*"([^"]+)"')
 # The reviewer posts one scoreboard comment per PR carrying a machine-readable meta block: `full_rounds`
 # (lifetime review passes) and `states` (per-rubric verdict). A rubric `state` not in {green, stale} is
 # blocking ("stale" is a prior approval carried forward, not a block).
-SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
-SCOREBOARD_META_RE = re.compile(r"<!--tauceti-meta:v1\s+(\{.*?\})-->", re.S)
-TRUSTED_ASSOC = {"OWNER", "MEMBER", "COLLABORATOR"}
 NONBLOCKING_STATES = {"green", "stale"}
 KEEP_LABELS = {"keep", "hold", "wip", "human", "do-not-close"}
 BUDGET_COMMENT = (
@@ -114,28 +120,13 @@ def parse_ts(s: str) -> datetime.datetime:
 def latest_scoreboard_meta(pr: int):
     """The meta block of the newest TRUSTED review scoreboard comment, or None. Trust = the
     `tauceti-scoreboard` marker AND a repo-associated author (so an external author cannot forge a
-    verdict). Fails safe (None) on any API/parse error, so a hiccup never causes a wrong close."""
+    verdict). Delegates to the shared `core.scoreboard_meta` so that parse lives in one place; fails
+    safe (None) on any API/parse error, so a hiccup never causes a wrong close."""
     try:
-        comments = gh_json(["api", "--paginate", f"/repos/{REPO}/issues/{pr}/comments?per_page=100"])
-    except RuntimeError as e:
+        return core.scoreboard_meta(pr) or None
+    except Exception as e:
         print(f"#{pr}: scoreboard fetch failed ({e}); leaving it", file=sys.stderr)
         return None
-    best_ts, meta = "", None
-    for c in comments or []:
-        body = c.get("body") or ""
-        if SCOREBOARD_MARKER not in body or c.get("author_association") not in TRUSTED_ASSOC:
-            continue
-        m = SCOREBOARD_META_RE.search(body)
-        if not m:
-            continue
-        try:
-            parsed = json.loads(m.group(1))
-        except ValueError:
-            continue
-        ts = c.get("updated_at") or ""
-        if ts >= best_ts:
-            best_ts, meta = ts, parsed
-    return meta
 
 
 def blocking_rubrics(meta: dict) -> list:

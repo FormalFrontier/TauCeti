@@ -1,0 +1,39 @@
+name = "docbuild"
+reservoir = false
+version = "0.1.0"
+
+# doc-gen4 documents an entire library and its whole import closure. Rather than pull it
+# into the main `lakefile.toml` (and its manifest, and every CI build), the recommended
+# setup is this throwaway nested project: it requires doc-gen4 plus the real TauCeti
+# library and nothing else. `packagesDir` points back at the parent's package directory so
+# Mathlib is shared, not re-resolved — the docs are generated against exactly the Mathlib
+# revision the parent pins. See https://github.com/leanprover/doc-gen4#usage.
+packagesDir = "../.lake/packages"
+
+# doc-gen4 with interproject linking (https://github.com/leanprover/doc-gen4/pull/396),
+# pinned to the fork branch until that PR lands upstream. It lets us document only TauCeti's
+# own modules and link references to Mathlib out to the hosted mathlib4_docs (see the
+# `DOCGEN_LOCAL_MODULE_ROOTS` / `DOCGEN_DEPS_DOCS_URL` env vars set in the Pages workflow),
+# instead of rendering the whole Mathlib closure locally. The revision is built against Lean
+# v4.32.0; when `lean-toolchain` moves forward, bump this to the matching doc-gen4 revision
+# and re-run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake update doc-gen4` in this directory.
+[[require]]
+name = "doc-gen4"
+git = "https://github.com/kim-em/doc-gen4"
+rev = "7ae50b89123da640dd3b7a23a41fc1b281273ca0"
+
+[[require]]
+name = "TauCeti"
+path = "../"
+
+# doc-gen4's `docs` facet documents a library's *root* modules and their import closure, so
+# it expects a root that imports the whole library (Mathlib.lean, Batteries.lean, ... are all
+# generated import-all roots). TauCeti has none by design: its root is empty and the library
+# is a `TauCeti.*` glob. `mk_docs_root.py` writes the throwaway aggregator below — a root that
+# `public import`s every TauCeti module — so `lake build TauCetiDocs:docs` visits the whole
+# closure; with `DOCGEN_LOCAL_MODULE_ROOTS=TauCeti` set, doc-gen4 then renders pages for only
+# the `TauCeti.*` modules and links the rest to mathlib4_docs. TauCetiDocs.lean is a build
+# artifact (git-ignored, regenerated in CI and locally); it is never committed, so TauCeti
+# keeps its empty root.
+[[lean_lib]]
+name = "TauCetiDocs"

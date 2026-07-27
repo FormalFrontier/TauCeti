@@ -75,44 +75,31 @@ theorem le_of_mul_le_laplacian_le_frontier {K : Set E} (hK : IsCompact K) {c f :
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
   intro x hxK
-  -- `‖·‖²` is bounded above by some `C ≥ 0` on the compact set `K`.
-  obtain ⟨C, hCub⟩ := hK.bddAbove_image (f := fun y : E => ‖y‖ ^ 2) (by fun_prop)
-  have hCnonneg : 0 ≤ C := le_trans (sq_nonneg _) (hCub ⟨x, hxK, rfl⟩)
   have hfrpos : (0 : ℝ) < Module.finrank ℝ E := by exact_mod_cast Module.finrank_pos
-  -- Perturbation estimate: `f x ≤ m + ε C` for every `ε > 0`.
-  have key : ∀ ε : ℝ, 0 < ε → f x ≤ m + ε * C := by
-    intro ε hε
-    have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
-      fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
-    have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
-    -- The perturbation attains its maximum over `K` at some point `z`.
-    obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩ hgcont
-    have hxz : f x + ε * ‖x‖ ^ 2 ≤ f z + ε * ‖z‖ ^ 2 := by
-      simpa [smul_eq_mul] using hzmax hxK
-    have hzC : ‖z‖ ^ 2 ≤ C := hCub ⟨z, hzK, rfl⟩
-    have hεzC : ε * ‖z‖ ^ 2 ≤ ε * C := mul_le_mul_of_nonneg_left hzC hε.le
-    have hεx : 0 ≤ ε * ‖x‖ ^ 2 := mul_nonneg hε.le (sq_nonneg _)
-    -- At the maximizer either `f z ≤ m` (boundary or negative value) or we reach a contradiction.
-    have hfz : f z ≤ m := by
-      by_cases hzint : z ∈ interior K
-      · -- Interior maximizer: rule out `0 ≤ f z` via the second-derivative obstruction.
-        by_contra hcon
-        rw [not_le] at hcon
-        have hfz0 : 0 ≤ f z := le_trans hm hcon.le
-        have hloc : IsLocalMax (fun y : E => f y + ε • ‖y‖ ^ 2) z :=
-          hzmax.isLocalMax (mem_interior_iff_mem_nhds.mp hzint)
-        have hgcd : ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) z := (hcd hzint).add (hεsq z)
-        have hΔle : Δ (fun y : E => f y + ε • ‖y‖ ^ 2) z ≤ 0 :=
-          laplacian_nonpos_of_isLocalMax hgcd hloc
-        rw [laplacian_add_const_smul_norm_sq ε (hcd hzint)] at hΔle
-        have hΔf : 0 ≤ Δ f z := le_trans (mul_nonneg (hc hzint) hfz0) (hsub hzint)
-        have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
-        linarith
-      · -- Boundary maximizer: `z ∈ frontier K`.
-        exact hbdry ⟨subset_closure hzK, hzint⟩
+  refine le_of_forall_pos_exists_isMaxOn_perturbation hK.isBounded hxK fun ε hε => ?_
+  have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
+    fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
+  have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
+  -- The perturbation attains its maximum over `K` at some point `z`.
+  obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩ hgcont
+  refine ⟨z, hzK, hzmax, ?_⟩
+  -- At the maximizer either `f z ≤ m` (boundary or negative value) or we reach a contradiction.
+  by_cases hzint : z ∈ interior K
+  · -- Interior maximizer: rule out `0 ≤ f z` via the second-derivative obstruction.
+    by_contra hcon
+    rw [not_le] at hcon
+    have hfz0 : 0 ≤ f z := le_trans hm hcon.le
+    have hloc : IsLocalMax (fun y : E => f y + ε • ‖y‖ ^ 2) z :=
+      hzmax.isLocalMax (mem_interior_iff_mem_nhds.mp hzint)
+    have hgcd : ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) z := (hcd hzint).add (hεsq z)
+    have hΔle : Δ (fun y : E => f y + ε • ‖y‖ ^ 2) z ≤ 0 :=
+      laplacian_nonpos_of_isLocalMax hgcd hloc
+    rw [laplacian_add_const_smul_norm_sq ε (hcd hzint)] at hΔle
+    have hΔf : 0 ≤ Δ f z := le_trans (mul_nonneg (hc hzint) hfz0) (hsub hzint)
+    have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
     linarith
-  -- Let `ε → 0`.
-  exact le_of_forall_pos_mul_le hCnonneg key
+  · -- Boundary maximizer: `z ∈ frontier K`.
+    exact hbdry ⟨subset_closure hzK, hzint⟩
 
 /-- **Comparison principle for `-Δ + c` with `c ≥ 0`.**
 

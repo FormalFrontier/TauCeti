@@ -25,8 +25,8 @@ rather than consuming it.
   `(4·c/ε) ^ (2·#ι)` points.
 
 * **Doubling** (`ncard_inter_box_two_le_pow_mul_ncard_inter_box_one`): passing from the unit
-  box to the double box multiplies the lattice-point count by at most `64 ^ #ι`, i.e.
-  `#(Λ ∩ box r 2) ≤ 64 ^ #ι · #(Λ ∩ box r 1)`, given that `Λ ∩ box r 2` is finite.
+  box to the double box multiplies the lattice-point count by at most `49 ^ #ι`, i.e.
+  `#(Λ ∩ box r 2) ≤ 49 ^ #ι · #(Λ ∩ box r 1)`, given that `Λ ∩ box r 2` is finite.
 
 ## Reconciliation with `ZLattice`
 
@@ -41,7 +41,7 @@ The roadmap asks that Layer 0 keep only the genuinely measure-free content. Acco
   what a `ZLattice`'s discreteness supplies (a discrete subgroup meets a bounded set in a
   finite set); the packing lemma here is one self-contained way to discharge it.
 
-The doubling factor `64 ^ #ι` and the packing count are explicit and have no upstream
+The doubling factor `49 ^ #ι` and the packing count are explicit and have no upstream
 analogue: Mathlib's geometry of numbers is volumetric (Minkowski's convex-body theorem), not
 a cardinal doubling estimate.
 
@@ -150,6 +150,36 @@ private theorem cellCount_le {c ε : ℝ} (hε : 0 < ε) (hεc : ε ≤ c) :
   rw [le_div_iff₀ hε]
   nlinarith [hme, hεc, hc, hs]
 
+/-- The cell-index map of scale `ε` for the box `box r c`: a point maps to the tuple of its
+per-coordinate integer cell indices (of the real and imaginary parts), with cell side
+`ε·rᵢ/√2`. -/
+private noncomputable def cellIndexMap (r : ι → ℝ) (c ε : ℝ) : (ι → ℂ) → (ι → ℤ × ℤ) :=
+  fun x i => (⌊((x i).re + c * r i) / (ε * r i / Real.sqrt 2)⌋,
+    ⌊((x i).im + c * r i) / (ε * r i / Real.sqrt 2)⌋)
+
+omit [Fintype ι] in
+/-- The cell-index map is injective on a set whose distinct points are `ε`-separated in some
+coordinate: two points sharing every cell index would differ by less than the cell diameter
+`ε·rᵢ` in that coordinate, contradicting the separation. -/
+private theorem injOn_cellIndexMap_of_separated (r : ι → ℝ) (hr : ∀ i, 0 < r i) {c ε : ℝ}
+    (hε : 0 < ε) {S : Set (ι → ℂ)}
+    (hsep : ∀ x ∈ S, ∀ y ∈ S, x ≠ y → ∃ i, ε * r i < ‖x i - y i‖) :
+    Set.InjOn (cellIndexMap r c ε) S := by
+  intro x hx y hy hxy
+  by_contra hne
+  obtain ⟨i, hi⟩ := hsep x hx y hy hne
+  simp only [cellIndexMap, funext_iff, Prod.ext_iff] at hxy
+  have hdnn : (0 : ℝ) ≤ ε * r i / Real.sqrt 2 :=
+    div_nonneg (mul_nonneg hε.le (hr i).le) (Real.sqrt_nonneg 2)
+  have hre : |(x i).re - (y i).re| < ε * r i / Real.sqrt 2 :=
+    cell_index_diff hε (hr i) (hxy i).1
+  have him : |(x i).im - (y i).im| < ε * r i / Real.sqrt 2 :=
+    cell_index_diff hε (hr i) (hxy i).2
+  have hlt : ‖x i - y i‖ < (ε * r i / Real.sqrt 2) * Real.sqrt 2 :=
+    norm_lt_of_re_im_bound hdnn (by rwa [Complex.sub_re]) (by rwa [Complex.sub_im])
+  rw [div_mul_cancel₀ _ (by positivity : Real.sqrt 2 ≠ 0)] at hlt
+  linarith
+
 /-- **Grid pigeonhole / packing.** A subset of the polydisc `box r c` whose distinct points
 are `ε`-separated in some coordinate (relative to `r`) is finite, of cardinality at most
 `(4·c/ε) ^ (2·#ι)`. -/
@@ -165,9 +195,7 @@ theorem finite_and_ncard_le_of_subset_box_of_separated (r : ι → ℝ) (hr : �
   set T : Finset (ι → ℤ × ℤ) :=
     Fintype.piFinset (fun _ : ι => Finset.Icc (0 : ℤ) K ×ˢ Finset.Icc (0 : ℤ) K) with hT
   -- The cell map, of cell side `ε·r i/√2` per coordinate.
-  set g : (ι → ℂ) → (ι → ℤ × ℤ) :=
-    fun x i => (⌊((x i).re + c * r i) / (ε * r i / Real.sqrt 2)⌋,
-      ⌊((x i).im + c * r i) / (ε * r i / Real.sqrt 2)⌋)
+  set g : (ι → ℂ) → (ι → ℤ × ℤ) := cellIndexMap r c ε with hg_def
   have key : ∀ x ∈ S, ∀ i, |(x i).re| ≤ c * r i ∧ |(x i).im| ≤ c * r i := fun x hx i =>
     ⟨(Complex.abs_re_le_norm _).trans (hS hx i), (Complex.abs_im_le_norm _).trans (hS hx i)⟩
   have hg : ∀ x ∈ S, g x ∈ T := by
@@ -177,21 +205,7 @@ theorem finite_and_ncard_le_of_subset_box_of_separated (r : ι → ℝ) (hr : �
     rw [Finset.mem_product]
     exact ⟨cell_index_mem hε (hr i) (key x hx i).1, cell_index_mem hε (hr i) (key x hx i).2⟩
   -- The cell map is injective on `S`.
-  have hg_inj : Set.InjOn g S := by
-    intro x hx y hy hxy
-    by_contra hne
-    obtain ⟨i, hi⟩ := hsep x hx y hy hne
-    have hdnn : (0 : ℝ) ≤ ε * r i / Real.sqrt 2 :=
-      div_nonneg (mul_nonneg hε.le (hr i).le) (Real.sqrt_nonneg 2)
-    have hre : |(x i).re - (y i).re| < ε * r i / Real.sqrt 2 :=
-      cell_index_diff hε (hr i) (congr_arg Prod.fst (congr_fun hxy i))
-    have him : |(x i).im - (y i).im| < ε * r i / Real.sqrt 2 :=
-      cell_index_diff hε (hr i) (congr_arg Prod.snd (congr_fun hxy i))
-    have hlt : ‖x i - y i‖ < (ε * r i / Real.sqrt 2) * Real.sqrt 2 :=
-      norm_lt_of_re_im_bound hdnn
-        (by rwa [Complex.sub_re]) (by rwa [Complex.sub_im])
-    rw [div_mul_cancel₀ _ (by positivity : Real.sqrt 2 ≠ 0)] at hlt
-    linarith
+  have hg_inj : Set.InjOn g S := injOn_cellIndexMap_of_separated r hr hε hsep
   -- Finiteness and the cardinal bound follow from injectivity into the finite `T`.
   have hgsub : g '' S ⊆ (↑T : Set (ι → ℤ × ℤ)) := by
     rintro _ ⟨x, hx, rfl⟩
@@ -270,76 +284,89 @@ private theorem coarseCell_mem_Icc {ri : ℝ} (hri : 0 < ri) {t : ℝ} (ht : |t|
   · rw [le_div_iff₀ hpos]; push_cast; nlinarith [abs_le.mp ht]
   · rw [div_lt_iff₀ hpos]; push_cast; nlinarith [abs_le.mp ht]
 
+omit [Fintype ι] in
+/-- The coarse cell index of `x` for the grid of side `2·r i/3`: per coordinate, the pair of
+floor indices of the real and imaginary parts. -/
+private noncomputable def coarseCellMap (r : ι → ℝ) (x : ι → ℂ) : ι → ℤ × ℤ :=
+  fun i => (⌊(x i).re / (2 * r i / 3)⌋, ⌊(x i).im / (2 * r i / 3)⌋)
+
+omit [Fintype ι] in
+/-- Two points sharing every coarse cell `coarseCellMap r` differ by at most `r i` in each
+coordinate, so their difference lies in `box r 1`. -/
+private theorem sub_mem_box_one_of_coarseCellMap_eq {r : ι → ℝ} (hr : ∀ i, 0 < r i) {y x : ι → ℂ}
+    (h : coarseCellMap r y = coarseCellMap r x) : y - x ∈ box r 1 := by
+  rw [mem_box]
+  intro i
+  rw [one_mul, Pi.sub_apply]
+  have hc := congr_fun h i
+  exact norm_sub_le_of_coarseCell_eq (hr i) (congr_arg Prod.fst hc) (congr_arg Prod.snd hc)
+
+/-- A `g`-fibre of `sA` has at most `sB.card` elements when the difference of any two
+same-fibre points of `sA` lies in `sB`: translating the fibre to a fixed representative
+injects it into `sB`. -/
+private theorem card_filter_le_of_sub_mem {G : Type*} [AddGroup G] {σ : Type*} [DecidableEq σ]
+    {sA sB : Finset G} {g : G → σ}
+    (h : ∀ y ∈ sA, ∀ x ∈ sA, g y = g x → y - x ∈ sB) (b : σ) :
+    (sA.filter (fun a => g a = b)).card ≤ sB.card := by
+  rcases (sA.filter (fun a => g a = b)).eq_empty_or_nonempty with he | ⟨x₀, hx₀⟩
+  · simp [he]
+  · rw [Finset.mem_filter] at hx₀
+    exact Finset.card_le_card_of_injOn (· - x₀)
+      (fun y hy => h y (Finset.mem_filter.1 (Finset.mem_coe.1 hy)).1 x₀ hx₀.1
+        ((Finset.mem_filter.1 (Finset.mem_coe.1 hy)).2.trans hx₀.2.symm))
+      (fun a _ c _ hac => by simpa using congrArg (· + x₀) hac)
+
+/-- If `s` is contained in `box r 2`, its image under `coarseCellMap r` has at most `49 ^ #ι`
+elements: each coordinate part lands in the 7 cells `Icc (-3) 3`, so `7² = 49` cells per
+coordinate and `49 ^ #ι` overall. -/
+private theorem card_image_coarseCellMap_le {r : ι → ℝ} (hr : ∀ i, 0 < r i)
+    {s : Finset (ι → ℂ)} (hs : ∀ x ∈ s, x ∈ box r 2) :
+    (s.image (coarseCellMap r)).card ≤ 49 ^ Fintype.card ι := by
+  set T : Finset (ι → ℤ × ℤ) :=
+    Fintype.piFinset (fun _ : ι => Finset.Icc (-3 : ℤ) 3 ×ˢ Finset.Icc (-3 : ℤ) 3) with hTdef
+  have himage : s.image (coarseCellMap r) ⊆ T := by
+    intro b hb
+    obtain ⟨y, hy, rfl⟩ := Finset.mem_image.mp hb
+    rw [hTdef, Fintype.mem_piFinset]
+    intro i
+    have hy2 := hs y hy
+    rw [Finset.mem_product]
+    exact ⟨coarseCell_mem_Icc (hr i) ((Complex.abs_re_le_norm _).trans (hy2 i)),
+      coarseCell_mem_Icc (hr i) ((Complex.abs_im_le_norm _).trans (hy2 i))⟩
+  have hTeq : T.card = 49 ^ Fintype.card ι := by
+    have hcard7 : (Finset.Icc (-3 : ℤ) 3).card = 7 := by rw [Int.card_Icc]; rfl
+    rw [hTdef, Fintype.card_piFinset, Finset.prod_const, Finset.card_univ,
+      Finset.card_product, hcard7]
+  exact hTeq ▸ Finset.card_le_card himage
+
 /-- **Doubling.** Assuming `Λ ∩ box r 2` is finite, counting lattice points in the double box
-loses at most `64 ^ #ι` against the unit box:
-`#(Λ ∩ box r 2) ≤ 64 ^ #ι · #(Λ ∩ box r 1)`. -/
+loses at most `49 ^ #ι` against the unit box:
+`#(Λ ∩ box r 2) ≤ 49 ^ #ι · #(Λ ∩ box r 1)`. -/
 theorem ncard_inter_box_two_le_pow_mul_ncard_inter_box_one (r : ι → ℝ) (hr : ∀ i, 0 < r i)
     (Λ : AddSubgroup (ι → ℂ)) (hfin : ((Λ : Set (ι → ℂ)) ∩ box r 2).Finite) :
     (((Λ : Set (ι → ℂ)) ∩ box r 2).ncard : ℝ) ≤
-      64 ^ Fintype.card ι * ((Λ : Set (ι → ℂ)) ∩ box r 1).ncard := by
+      49 ^ Fintype.card ι * ((Λ : Set (ι → ℂ)) ∩ box r 1).ncard := by
   set A : Set (ι → ℂ) := (Λ : Set (ι → ℂ)) ∩ box r 2
   set B : Set (ι → ℂ) := (Λ : Set (ι → ℂ)) ∩ box r 1
-  have hBA : B ⊆ A := fun x hx => ⟨hx.1, box_mono (fun i => (hr i).le) one_le_two hx.2⟩
-  have hBfin : B.Finite := hfin.subset hBA
+  have hBfin : B.Finite :=
+    hfin.subset fun x hx => ⟨hx.1, box_mono (fun i => (hr i).le) one_le_two hx.2⟩
   set sA : Finset (ι → ℂ) := hfin.toFinset with hsA
   set sB : Finset (ι → ℂ) := hBfin.toFinset with hsB
-  set f : (ι → ℂ) → (ι → ℤ × ℤ) :=
-    fun x i => (⌊(x i).re / (2 * r i / 3)⌋, ⌊(x i).im / (2 * r i / 3)⌋)
-  have hfiber : ∀ b ∈ sA.image f, (sA.filter (fun a => f a = b)).card ≤ sB.card := by
-    intro b hb
-    obtain ⟨x₀, hx₀A, hx₀b⟩ := Finset.mem_image.mp hb
-    have hmaps : ∀ y ∈ sA.filter (fun a => f a = b), y - x₀ ∈ sB := by
-      intro y hy
-      rw [Finset.mem_filter] at hy
-      have hyb : f y = f x₀ := hy.2.trans hx₀b.symm
-      have hdiff : ∀ i, ‖(y - x₀) i‖ ≤ r i := by
-        intro i
-        have hcell := congr_fun hyb i
-        rw [Pi.sub_apply]
-        exact norm_sub_le_of_coarseCell_eq (hr i) (congr_arg Prod.fst hcell)
-          (congr_arg Prod.snd hcell)
-      have hyA : y ∈ A := (hfin.mem_toFinset).mp hy.1
-      have hx₀A' : x₀ ∈ A := (hfin.mem_toFinset).mp hx₀A
-      rw [hsB, hBfin.mem_toFinset]
-      exact ⟨Λ.sub_mem hyA.1 hx₀A'.1, fun i => by rw [one_mul]; exact hdiff i⟩
-    have hinj : Set.InjOn (fun y => y - x₀) ↑(sA.filter (fun a => f a = b)) :=
-      fun a _ b _ h => by have h2 := congrArg (· + x₀) h; simpa using h2
-    calc (sA.filter (fun a => f a = b)).card
-        = ((sA.filter (fun a => f a = b)).image (fun y => y - x₀)).card :=
-          (Finset.card_image_of_injOn hinj).symm
-      _ ≤ sB.card := Finset.card_le_card (fun z hz => by
-          obtain ⟨y, hy, rfl⟩ := Finset.mem_image.mp hz; exact hmaps y hy)
-  set T : Finset (ι → ℤ × ℤ) :=
-    Fintype.piFinset (fun _ : ι => Finset.Icc (-3 : ℤ) 3 ×ˢ Finset.Icc (-3 : ℤ) 3) with hTdef
-  have himage : sA.image f ⊆ T := by
-    intro b hb
-    obtain ⟨y, hyA, rfl⟩ := Finset.mem_image.mp hb
-    have hyA' : y ∈ A := (hfin.mem_toFinset).mp hyA
-    rw [hTdef, Fintype.mem_piFinset]
-    intro i
-    have hbre : |(y i).re| ≤ 2 * r i := (Complex.abs_re_le_norm _).trans (hyA'.2 i)
-    have hbim : |(y i).im| ≤ 2 * r i := (Complex.abs_im_le_norm _).trans (hyA'.2 i)
-    rw [Finset.mem_product]
-    exact ⟨coarseCell_mem_Icc (hr i) hbre, coarseCell_mem_Icc (hr i) hbim⟩
-  have hTcard : (T.card : ℝ) ≤ 64 ^ Fintype.card ι := by
-    have hcard7 : (Finset.Icc (-3 : ℤ) 3).card = 7 := by rw [Int.card_Icc]; rfl
-    have hTeq : T.card = 49 ^ Fintype.card ι := by
-      rw [hTdef, Fintype.card_piFinset, Finset.prod_const, Finset.card_univ,
-        Finset.card_product, hcard7]
-    rw [hTeq]; push_cast
-    exact pow_le_pow_left₀ (by norm_num) (by norm_num) _
-  have hmul : sA.card ≤ sB.card * (sA.image f).card :=
-    Finset.card_le_mul_card_image sA sB.card hfiber
-  have hAcard : A.ncard = sA.card := by rw [hsA]; exact Set.ncard_eq_toFinset_card A hfin
-  have hBcard : B.ncard = sB.card := by rw [hsB]; exact Set.ncard_eq_toFinset_card B hBfin
-  rw [hAcard, hBcard]
-  have h64 : ((sA.image f).card : ℝ) ≤ 64 ^ Fintype.card ι :=
-    le_trans (by exact_mod_cast Finset.card_le_card himage) hTcard
+  -- Translating a coarse-cell fibre of `sA` to a representative injects it into `sB`.
+  have hsub : ∀ y ∈ sA, ∀ x ∈ sA, coarseCellMap r y = coarseCellMap r x → y - x ∈ sB := by
+    intro y hy x hx hyx
+    rw [hsB, hBfin.mem_toFinset]
+    exact ⟨Λ.sub_mem (hfin.mem_toFinset.mp hy).1 (hfin.mem_toFinset.mp hx).1,
+      sub_mem_box_one_of_coarseCellMap_eq hr hyx⟩
+  have hmul : sA.card ≤ sB.card * (sA.image (coarseCellMap r)).card :=
+    Finset.card_le_mul_card_image sA sB.card fun b _ => card_filter_le_of_sub_mem hsub b
+  have h49 : ((sA.image (coarseCellMap r)).card : ℝ) ≤ 49 ^ Fintype.card ι := by
+    exact_mod_cast card_image_coarseCellMap_le hr fun z hz => (hfin.mem_toFinset.mp hz).2
+  rw [Set.ncard_eq_toFinset_card A hfin, Set.ncard_eq_toFinset_card B hBfin, ← hsA, ← hsB]
   calc (sA.card : ℝ)
-      ≤ (sB.card : ℝ) * ((sA.image f).card : ℝ) := by exact_mod_cast hmul
-    _ ≤ (sB.card : ℝ) * (64 ^ Fintype.card ι) := by
-        exact mul_le_mul_of_nonneg_left h64 (by positivity)
-    _ = 64 ^ Fintype.card ι * (sB.card : ℝ) := by ring
+      ≤ (sB.card : ℝ) * ((sA.image (coarseCellMap r)).card : ℝ) := by exact_mod_cast hmul
+    _ ≤ (sB.card : ℝ) * 49 ^ Fintype.card ι := mul_le_mul_of_nonneg_left h49 (by positivity)
+    _ = 49 ^ Fintype.card ι * (sB.card : ℝ) := by ring
 
 end Doubling
 

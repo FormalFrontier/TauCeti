@@ -36,11 +36,6 @@ section PrimeFamily
 
 variable [Finite ι] (p : ι → ℕ) (hp : ∀ i, (p i).Prime) (hinj : Function.Injective p)
 
-omit [Finite ι] in
-/-- The square roots `√(p i)` of a prime family satisfy the radicand equation `√(p i)² = p i`. -/
-private theorem sqrtPrime_sq (i : ι) : Real.sqrt (p i) ^ 2 = algebraMap ℚ ℝ (p i : ℚ) :=
-  sq_sqrt_natCast (p i)
-
 include hp hinj
 
 /-- **The subfield lattice of `ℚ(√p₁, …, √pₙ)`.** For a finite family of distinct primes
@@ -50,7 +45,7 @@ include hp hinj
 noncomputable def intermediateFieldEquivSubmoduleSqrtPrimes :
     IntermediateField ℚ (adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))) ≃o
       (Submodule (ZMod 2) (ι → ZMod 2))ᵒᵈ :=
-  intermediateFieldEquivSubmodule (sqrtPrime_sq p)
+  intermediateFieldEquivSubmodule (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj)
 
 /-- A sign vector belongs to the subspace attached to an intermediate field of
@@ -60,7 +55,7 @@ noncomputable def intermediateFieldEquivSubmoduleSqrtPrimes :
     (v : ι → ZMod 2) :
     v ∈ (intermediateFieldEquivSubmoduleSqrtPrimes p hp hinj F).ofDual ↔
       ∃ σ ∈ F.fixingSubgroup, signPattern (fun i => (Real.sqrt (p i) : ℝ)) σ = v :=
-  mem_intermediateFieldEquivSubmodule_apply_ofDual_iff (sqrtPrime_sq p)
+  mem_intermediateFieldEquivSubmodule_apply_ofDual_iff (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj) F v
 
 /-- The intermediate field attached to a subspace in the prime-radicand dictionary is the fixed
@@ -70,7 +65,7 @@ field of the automorphisms whose sign patterns lie in that subspace. -/
     (x : adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))) :
     x ∈ (intermediateFieldEquivSubmoduleSqrtPrimes p hp hinj).symm (OrderDual.toDual U) ↔
       ∀ σ, signPattern (fun i => (Real.sqrt (p i) : ℝ)) σ ∈ U → σ x = x :=
-  mem_intermediateFieldEquivSubmodule_symm_apply_iff (sqrtPrime_sq p)
+  mem_intermediateFieldEquivSubmodule_symm_apply_iff (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj) U x
 
 /-- **The number of subfields of `ℚ(√p₁, …, √pₙ)`.** For a finite family of distinct primes, the
@@ -78,7 +73,7 @@ intermediate fields of `ℚ(√p₁, …, √pₙ)/ℚ` are in bijection with th
 theorem card_intermediateField_adjoin_sqrt_primes :
     Nat.card (IntermediateField ℚ (adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))))
       = Nat.card (Submodule (ZMod 2) (ι → ZMod 2)) :=
-  card_intermediateField_adjoin_range (sqrtPrime_sq p)
+  card_intermediateField_adjoin_range (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj)
 
 end PrimeFamily

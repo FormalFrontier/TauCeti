@@ -1,5 +1,11 @@
 name = "TauCeti"
 defaultTargets = ["TauCeti"]
+# TauCeti is a pure Lean package: its cached module outputs (.olean/.ilean/Lean IR/generated C)
+# are reusable across platforms. This deliberately excludes native libraries and precompiled
+# modules; keep it in sync if either is ever added. The axiom audit rejects native_decide, one
+# source of host-dependent elaboration. Lake filters platform-dependent executable outputs from
+# the platform-independent mapping automatically.
+platformIndependent = true
 
 # mathlib's `rev` below stays on "master", never a pinned commit. The actual revision is
 # pinned in lake-manifest.json; "master" is only the branch the daily bump moves forward

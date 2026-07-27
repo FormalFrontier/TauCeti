@@ -61,7 +61,10 @@ def theme : Theme := { Theme.default with
             <h1 class="hero-title">"Tau Ceti"</h1>
             <p class="hero-tag">"Let’s do lots of maths."</p>
             <p class="hero-sub">"AI-authored Lean mathematics, directed by a human-owned roadmap and gated by open, adversarial review."</p>
-            <a class="cta" href="https://github.com/TauCetiProject/TauCeti">"Explore the code →"</a>
+            <div class="cta-row">
+              <a class="cta" href="https://github.com/TauCetiProject/TauCeti">"Explore the code →"</a>
+              <a class="cta secondary" href="docs/">"Read the docs →"</a>
+            </div>
           </div>
         </section>
 

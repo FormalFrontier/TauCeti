@@ -195,7 +195,7 @@ DOCMARKER="DOCSCAN-COMPLETE-$NONCE"
 # The default environment-linter set minus docBlame (see the header comment), sorted.
 # The docstring-scan driver verifies this against the environment and fails if the
 # default set drifts, so a stale list here cannot silently narrow the lint.
-LINTERS="checkType defsWithUnderscore deprecatedNoSince dupNamespace impossibleInstance nonClassInstance simpComm simpNF structureInType subsetDotNotationLinter synTaut tacticDocs unusedArguments unusedHavesSuffices"
+LINTERS="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonClassInstance simpComm simpNF structureInType subsetDotNotationLinter synTaut tacticDocs unusedArguments unusedHavesSuffices"
 
 # $LINTERS rendered as Lean string literals, for the freshness guard in the driver.
 LINTERS_LEAN=$(printf '"%s", ' $LINTERS | sed 's/, $//')

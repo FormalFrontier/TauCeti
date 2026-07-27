@@ -8,6 +8,14 @@ name: pr-build
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
 # reach). The `build` commit status on the PR head SHA is the required merge check.
 #
+# The job below is deliberately NOT named `build`: GitHub Actions auto-creates a check-run named
+# after the job, and a check-run named `build` would collide with the required `build` STATUS this
+# job posts. Branch protection matches the required context `build` against BOTH commit statuses and
+# check-runs by name, so two `build` results (a green status + a red job check-run) wedge the PR as
+# BLOCKED even though the authoritative build passed — e.g. when the job's final report step exits
+# nonzero on a transient "could not list files" (INFRA) hiccup while a healthy re-run posts the green
+# status. Keeping the job name distinct leaves exactly one `build` (the status) as the merge gate.
+#
 # Live on pull_request_target (fires for all PRs, incl. forks, from the trusted base definition).
 # workflow_dispatch is also kept for ad-hoc re-testing of a given PR number.
 
@@ -35,7 +43,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
+  # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
+  sandboxed-build:
     runs-on: ubuntu-24.04
     env:
       LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
@@ -127,10 +137,10 @@ jobs:
           # transitive pins derived from mathlib, toolchain monotonic). lakefile.* stays
           # human-owned (and check-bump fails if it changed).
           if [ -z "$files" ]; then
-            echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — routing to human"
+            echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine the overlay, routing to human"
           elif echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
-            echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::PR changes paths outside TauCeti/ + Lake pins (infra) — not sandbox-built; needs human review"
+            echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
+            echo "::warning::PR changes paths outside TauCeti/ + Lake pins — its TauCeti/ is still sandbox-built against the trusted base (so the build result is visible), but merging needs human review"
           elif echo "$files" | grep -qE '^lake-manifest\.json$|^lean-toolchain$'; then
             echo "BUMP=1" >> "$GITHUB_ENV"
             echo "::notice::PR changes Lake pins — validating as a forward bump before building"
@@ -212,6 +222,13 @@ jobs:
           ref: ${{ steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
+          # actions/checkout now refuses to fetch fork PR code under
+          # pull_request_target unless this opt-in is set. Fetching the fork's
+          # sources is exactly this workflow's job; it is safe here because the
+          # checkout carries no credentials (persist-credentials: false) and the
+          # fork's code is only ever executed under landrun below (offline, no
+          # token in reach), never in the trusted context this guard warns about.
+          allow-unsafe-pr-checkout: true
 
       # For a Lake-pin PR, validate it is a safe forward bump BEFORE overlaying its
       # pins or building. The validator and the BASE config it judges against are the
@@ -414,16 +431,16 @@ jobs:
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "posted bump-guard=$bg_state ($bg_desc) to ${{ steps.pr.outputs.status_sha }}"
 
-          if [ "${{ env.BUMP_BAD }}" = "1" ]; then
-            state=failure; desc="Lake-pin change is not a validated forward bump — human review + merge required"
-          elif [ "${{ env.INFRA }}" = "1" ]; then
-            state=failure; desc="changes outside TauCeti/ — human review + merge required"
-          elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
-            state=failure; desc="diff exceeds 2000 added/removed lines or 2000 files — split into smaller PRs to keep review manageable"
-          elif [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
-            state=failure; desc="could not read PR diff totals from the GitHub API — re-run pr-build"
-          elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
-            state=failure; desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
+          # build: the real sandboxed-build result ONLY — never a policy verdict. The build now runs even
+          # for an out-of-scope PR (its TauCeti/ is overlaid onto the trusted base and built), so a red
+          # `build` always means the code did not compile or an audit/lint failed, and fix-ci can trust
+          # it. It is reported as not-run only when we genuinely could not build: an indeterminate file
+          # list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins), or a
+          # diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build). Those
+          # post a failure so this required check still blocks merge; the reason lives in `scope` below.
+          if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
+             || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
+            state=failure; desc="build not run — see the scope check"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
             state=success; desc="sandboxed build, audits, and simp-NF lint passed (trusted config)"
           else
@@ -433,4 +450,28 @@ jobs:
             -f state="$state" -f context="build" -f description="$desc" \
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "posted build=$state ($desc) to ${{ steps.pr.outputs.status_sha }}"
+
+          # scope: the merge-policy verdict, posted as its OWN status so a policy issue never hides the
+          # build result (the bug this split fixes — an out-of-scope PR used to post its "human review"
+          # verdict as a red `build`, so fix-ci churned on it and you could not see whether it compiled).
+          # Informational, NOT a required check: auto-merge's own "every changed path under TauCeti/"
+          # rule and the required bump-guard are the merge gate, so an out-of-scope PR still cannot
+          # auto-merge; a human merges it once they have seen its now-visible build.
+          if [ "${{ env.OUT_OF_SCOPE }}" = "1" ]; then
+            sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
+          elif [ "${{ env.INFRA }}" = "1" ]; then
+            sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
+          elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
+            sc_state=failure; sc_desc="diff exceeds 2000 added/removed lines or 2000 files — split into smaller PRs to keep review manageable"
+          elif [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
+            sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
+          elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
+            sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
+          else
+            sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
+          fi
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
+            -f state="$sc_state" -f context="scope" -f description="$sc_desc" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "posted scope=$sc_state ($sc_desc) to ${{ steps.pr.outputs.status_sha }}"
           [ "$state" = "success" ]

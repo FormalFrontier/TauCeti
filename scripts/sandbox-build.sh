@@ -21,7 +21,12 @@ export TMPDIR="$PWD/.lake/tmp"
 
 # Build the overlaid TauCeti/ against the trusted base config. landrun keeps this
 # offline and confines writes to base/.lake.
-lake build
+#
+# --iofail requires a SILENT build, the way Mathlib does (its CI runs `lake build --iofail`): it is
+# `--fail-level=info`, so the build fails if any module logs an `info:` (or warning/error) — a stray
+# #check/#eval, a `simp?`/`ring_nf?`-style "Try this: …" suggestion, a linter note. A clean elaboration
+# logs nothing above trace, so this is exit-code enforcement, not output scraping.
+lake build --iofail
 
 # Axiom audit: inspect the built environment and reject any axiom outside
 # {propext, Classical.choice, Quot.sound} — catching sorry, native_decide, and

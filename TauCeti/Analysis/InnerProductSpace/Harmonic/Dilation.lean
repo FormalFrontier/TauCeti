@@ -66,6 +66,87 @@ private lemma contDiffAt_homothety (a : E) (c : ℝ) (x : E) :
     fun_prop
   simpa [AffineMap.homothety_apply, vsub_eq_sub, vadd_eq_add] using h
 
+omit [FiniteDimensional ℝ E] in
+/-- Twice continuous differentiability at a point is invariant under nonzero homothety.
+
+For `c ≠ 0`, the function `y ↦ f (AffineMap.homothety a c y)` is `C²` at `x` iff `f` is `C²`
+at `AffineMap.homothety a c x`. -/
+private lemma contDiffAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F}
+    {x : E} :
+    ContDiffAt ℝ 2 (fun y : E ↦ f (AffineMap.homothety a c y)) x ↔
+      ContDiffAt ℝ 2 f (AffineMap.homothety a c x) := by
+  constructor
+  · intro h
+    -- Right-compose with the inverse homothety `AffineMap.homothety a c⁻¹` to recover `f`.
+    have hφ : ContDiffAt ℝ 2 (fun y : E ↦ AffineMap.homothety a c⁻¹ y)
+        (AffineMap.homothety a c x) :=
+      contDiffAt_homothety a c⁻¹ (AffineMap.homothety a c x)
+    have hx : AffineMap.homothety a c⁻¹ (AffineMap.homothety a c x) = x := by
+      rw [← AffineMap.homothety_mul_apply]
+      simp [hc]
+    have h' : ContDiffAt ℝ 2 (fun y : E ↦ f (AffineMap.homothety a c y))
+        ((fun y : E ↦ AffineMap.homothety a c⁻¹ y)
+          (AffineMap.homothety a c x)) := by
+      simpa [hx] using h
+    have hc' := h'.comp (AffineMap.homothety a c x) hφ
+    have hgf :
+        (fun y : E ↦ f (AffineMap.homothety a c y)) ∘
+            (fun y : E ↦ AffineMap.homothety a c⁻¹ y) = f := by
+      funext y
+      simp only [Function.comp_apply]
+      rw [← AffineMap.homothety_mul_apply]
+      simp [hc]
+    rwa [hgf] at hc'
+  · intro h
+    exact h.comp x (contDiffAt_homothety a c x)
+
+/-- Local vanishing of the Laplacian is invariant under nonzero homothety.
+
+For `c ≠ 0`, the Laplacian of `y ↦ f (AffineMap.homothety a c y)` vanishes near `x` iff the
+Laplacian of `f` vanishes near `AffineMap.homothety a c x`. -/
+private lemma laplacian_eventuallyEq_zero_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0)
+    {f : E → F} {x : E} :
+    (Δ (fun y : E ↦ f (AffineMap.homothety a c y)) =ᶠ[𝓝 x] 0) ↔
+      (Δ f =ᶠ[𝓝 (AffineMap.homothety a c x)] 0) := by
+  -- `e` realises the homothety as a homeomorphism so we can transport the neighbourhood filter.
+  let e : E ≃ₜ E := homothetyHomeomorph a c hc
+  have he : ∀ y : E, e y = AffineMap.homothety a c y := fun y ↦
+    homothetyHomeomorph_apply a c hc y
+  rw [laplacian_comp_homothety_right a c f]
+  have hscale :
+      (fun y : E ↦ c ^ 2 • (Δ f) (AffineMap.homothety a c y)) =
+        (fun z ↦ c ^ 2 • z) ∘ (Δ f ∘ e) := by
+    funext y
+    simp [he y, Function.comp_apply]
+  rw [hscale]
+  have hzero : Function.Injective (fun z : F ↦ c ^ 2 • z) := by
+    exact smul_right_injective F (pow_ne_zero 2 hc)
+  constructor
+  · intro h
+    have h' : Δ f ∘ e =ᶠ[𝓝 x] 0 := by
+      filter_upwards [h] with y hy
+      exact hzero (by simpa [Function.comp_apply] using hy)
+    have hmain : Δ f =ᶠ[𝓝 (e x)] (0 : E → F) := by
+      rw [← e.map_nhds_eq x]
+      exact ((Filter.eventuallyEq_map (f := 𝓝 x) (m := e) (f₁ := Δ f)
+        (f₂ := (0 : E → F))).symm).1 (by simpa using h')
+    simpa [he x] using hmain
+  · intro h
+    have h' : Δ f ∘ e =ᶠ[𝓝 x] 0 := by
+      have hmain : Δ f =ᶠ[𝓝 (e x)] (0 : E → F) := by
+        simpa [he x] using h
+      rw [← e.map_nhds_eq x] at hmain
+      -- `Filter.eventuallyEq_map` compares `g ∘ e` with `g' ∘ e`; reshape the zero side as
+      -- `0 ∘ e` (definitionally `0`) so it applies to `hmain`.
+      change Δ f ∘ e =ᶠ[𝓝 x] (0 : E → F) ∘ e
+      exact ((Filter.eventuallyEq_map (f := 𝓝 x) (m := e) (f₁ := Δ f)
+        (f₂ := (0 : E → F))).symm).2 hmain
+    filter_upwards [h'] with y hy
+    -- Unfold the scaled composition produced by `hscale` at this point.
+    change c ^ 2 • ((Δ f ∘ e) y) = 0
+    rw [hy]
+    simp
+
 /-- **Harmonicity is invariant under nonzero homothety.**
 
 For `c ≠ 0`, the function `y ↦ f (AffineMap.homothety a c y)` is harmonic at `x` iff `f`
@@ -73,73 +154,11 @@ is harmonic at `AffineMap.homothety a c x`. -/
 theorem harmonicAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F}
     {x : E} :
     HarmonicAt (fun y ↦ f (AffineMap.homothety a c y)) x ↔
-      HarmonicAt f (AffineMap.homothety a c x) := by
-  let e : E ≃ₜ E := homothetyHomeomorph a c hc
-  have he : ∀ y : E, e y = AffineMap.homothety a c y := fun y ↦
-    homothetyHomeomorph_apply a c hc y
-  have hcd : ContDiffAt ℝ 2 (fun y : E ↦ f (AffineMap.homothety a c y)) x ↔
-      ContDiffAt ℝ 2 f (AffineMap.homothety a c x) := by
-    constructor
-    · intro h
-      have hφ : ContDiffAt ℝ 2 (fun y : E ↦ AffineMap.homothety a c⁻¹ y)
-          (AffineMap.homothety a c x) :=
-        contDiffAt_homothety a c⁻¹ (AffineMap.homothety a c x)
-      have hx : AffineMap.homothety a c⁻¹ (AffineMap.homothety a c x) = x := by
-        rw [← AffineMap.homothety_mul_apply]
-        simp [hc]
-      have h' : ContDiffAt ℝ 2 (fun y : E ↦ f (AffineMap.homothety a c y))
-          ((fun y : E ↦ AffineMap.homothety a c⁻¹ y)
-            (AffineMap.homothety a c x)) := by
-        simpa [hx] using h
-      have hc' := h'.comp (AffineMap.homothety a c x) hφ
-      have hgf :
-          (fun y : E ↦ f (AffineMap.homothety a c y)) ∘
-              (fun y : E ↦ AffineMap.homothety a c⁻¹ y) = f := by
-        funext y
-        simp only [Function.comp_apply]
-        rw [← AffineMap.homothety_mul_apply]
-        simp [hc]
-      rwa [hgf] at hc'
-    · intro h
-      exact h.comp x (contDiffAt_homothety a c x)
-  have hlap : (Δ (fun y : E ↦ f (AffineMap.homothety a c y)) =ᶠ[𝓝 x] 0) ↔
-      (Δ f =ᶠ[𝓝 (AffineMap.homothety a c x)] 0) := by
-    rw [laplacian_comp_homothety_right a c f]
-    have hscale :
-        (fun y : E ↦ c ^ 2 • (Δ f) (AffineMap.homothety a c y)) =
-          (fun z ↦ c ^ 2 • z) ∘ (Δ f ∘ e) := by
-      funext y
-      simp [he y, Function.comp_apply]
-    rw [hscale]
-    have hzero : Function.Injective (fun z : F ↦ c ^ 2 • z) := by
-      exact smul_right_injective F (pow_ne_zero 2 hc)
-    constructor
-    · intro h
-      have h' : Δ f ∘ e =ᶠ[𝓝 x] 0 := by
-        filter_upwards [h] with y hy
-        exact hzero (by simpa [Function.comp_apply] using hy)
-      have hmain : Δ f =ᶠ[𝓝 (e x)] (0 : E → F) := by
-        rw [← e.map_nhds_eq x]
-        exact ((Filter.eventuallyEq_map (f := 𝓝 x) (m := e) (f₁ := Δ f)
-          (f₂ := (0 : E → F))).symm).1 (by simpa using h')
-      simpa [he x] using hmain
-    · intro h
-      have h' : Δ f ∘ e =ᶠ[𝓝 x] 0 := by
-        have hmain : Δ f =ᶠ[𝓝 (e x)] (0 : E → F) := by
-          simpa [he x] using h
-        rw [← e.map_nhds_eq x] at hmain
-        -- `Filter.eventuallyEq_map` compares `g ∘ e` with `g' ∘ e`; reshape the zero side as
-        -- `0 ∘ e` (definitionally `0`) so it applies to `hmain`.
-        change Δ f ∘ e =ᶠ[𝓝 x] (0 : E → F) ∘ e
-        exact ((Filter.eventuallyEq_map (f := 𝓝 x) (m := e) (f₁ := Δ f)
-          (f₂ := (0 : E → F))).symm).2 hmain
-      filter_upwards [h'] with y hy
-      -- Unfold the scaled composition produced by `hscale` at this point.
-      change c ^ 2 • ((Δ f ∘ e) y) = 0
-      rw [hy]
-      simp
-  exact ⟨fun hf ↦ ⟨hcd.1 hf.1, hlap.1 hf.2⟩,
-    fun hf ↦ ⟨hcd.2 hf.1, hlap.2 hf.2⟩⟩
+      HarmonicAt f (AffineMap.homothety a c x) :=
+  ⟨fun hf ↦ ⟨(contDiffAt_comp_homothety_right_iff a c hc).1 hf.1,
+      (laplacian_eventuallyEq_zero_comp_homothety_right_iff a c hc).1 hf.2⟩,
+    fun hf ↦ ⟨(contDiffAt_comp_homothety_right_iff a c hc).2 hf.1,
+      (laplacian_eventuallyEq_zero_comp_homothety_right_iff a c hc).2 hf.2⟩⟩
 
 /-- Harmonicity on a neighbourhood of a set is invariant under nonzero homothety. -/
 theorem harmonicOnNhd_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F}

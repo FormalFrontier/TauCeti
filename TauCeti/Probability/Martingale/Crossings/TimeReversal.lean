@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.Algebra.Polynomial.Reverse
@@ -47,6 +51,61 @@ lemma revProcess_apply {Ω α : Type*} (X : ℕ → Ω → α) (N n : ℕ) (ω :
 lemma revProcess_apply_of_le {Ω α : Type*} (X : ℕ → Ω → α) {N n : ℕ} (h : n ≤ N) (ω : Ω) :
     revProcess X N n ω = X (N - n) ω := by simp [revProcess, Polynomial.revAt_le h]
 
+/-- Inductive step of `upperCrossingTime_neg_revProcess_le_strong`.
+
+Fix a crossing index `i` and a count `m'`, and assume:
+* `hab : a < b`;
+* `hσ_lt_N`: `X`'s `(i + 1)`-th upper crossing completes strictly before `N`;
+* `ih'`: the reversed process satisfies the bound at count `m'` (endpoint index `i + 1`).
+
+Then the bound holds for `m' + 1`, with reflected endpoint `N - lowerCrossingTime a b X N i ω`. -/
+private lemma upperCrossingTime_neg_revProcess_succ_le
+    {Ω : Type*} (X : ℕ → Ω → ℝ) (a b : ℝ) (hab : a < b) (N m' i : ℕ) (ω : Ω)
+    (hσ_lt_N : upperCrossingTime a b X N (i + 1) ω < N)
+    (ih' : upperCrossingTime (-b) (-a) (-(revProcess X N)) (N + 1) m' ω
+      ≤ N - lowerCrossingTime a b X N (i + 1) ω) :
+    upperCrossingTime (-b) (-a) (-(revProcess X N)) (N + 1) (m' + 1) ω
+      ≤ N - lowerCrossingTime a b X N i ω := by
+  set Y := -(revProcess X N) with hY_def
+  -- `X` reaches `≥ b` at its `(i+1)`-th upper crossing, `≤ a` at its `i`-th lower crossing, and the
+  -- latter precedes the former. (Stated on explicit terms, then folded to `σ`, `τ` by `set`.)
+  have hτ_lt_σ : lowerCrossingTime a b X N i ω < upperCrossingTime a b X N (i + 1) ω :=
+    lowerCrossingTime_lt_upperCrossingTime hab (Nat.ne_of_lt hσ_lt_N)
+  -- The `i`-th lower crossing precedes the `(i+1)`-th upper, so it too completes before `N`.
+  have hτ_lt_N : lowerCrossingTime a b X N i ω < N := lt_trans hτ_lt_σ hσ_lt_N
+  have hX_σ_ge_b : b ≤ X (upperCrossingTime a b X N (i + 1) ω) ω :=
+    stoppedValue_upperCrossingTime (Nat.ne_of_lt hσ_lt_N)
+  have hX_τ_le_a : X (lowerCrossingTime a b X N i ω) ω ≤ a :=
+    stoppedValue_lowerCrossingTime (Nat.ne_of_lt hτ_lt_N)
+  have h_lct_ge : upperCrossingTime a b X N (i + 1) ω ≤ lowerCrossingTime a b X N (i + 1) ω :=
+    upperCrossingTime_le_lowerCrossingTime
+  set σ := upperCrossingTime a b X N (i + 1) ω with hσ_def
+  set τ := lowerCrossingTime a b X N i ω with hτ_def
+  -- The reflected process `Y` mirrors these levels at the reflected times `N - σ` and `N - τ`.
+  have hY_Nσ_le_negb : Y (N - σ) ω ≤ -b := by
+    have hrev : revProcess X N (N - σ) ω = X σ ω := by
+      rw [revProcess_apply_of_le X (Nat.sub_le N σ) ω, Nat.sub_sub_self (Nat.le_of_lt hσ_lt_N)]
+    simp only [hY_def, Pi.neg_apply, hrev]; linarith
+  have hY_Nτ_ge_nega : -a ≤ Y (N - τ) ω := by
+    have hrev : revProcess X N (N - τ) ω = X τ ω := by
+      rw [revProcess_apply_of_le X (Nat.sub_le N τ) ω, Nat.sub_sub_self (Nat.le_of_lt hτ_lt_N)]
+    simp only [hY_def, Pi.neg_apply, hrev]; linarith
+  -- Advance `Y`'s crossing count: the induction hypothesis bounds `Y`'s `m'`-th upper crossing by
+  -- `N - σ`, hence its `m'`-th lower crossing too; the `(m'+1)`-th upper crossing then lands by
+  -- `N - τ`, the reflection of `X`'s crossing start.
+  have h_uct_le_Nσ : upperCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - σ :=
+    le_trans ih' (Nat.sub_le_sub_left h_lct_ge N)
+  have h_lctY_le_Nσ : lowerCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - σ := by
+    simpa only [lowerCrossingTime] using
+      hittingBtwn_le_of_mem h_uct_le_Nσ (Nat.le_succ_of_le (Nat.sub_le N σ)) hY_Nσ_le_negb
+  have h_lctY_le_Nτ : lowerCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - τ :=
+    Nat.le_of_lt (lt_of_le_of_lt h_lctY_le_Nσ (Nat.sub_lt_sub_left hτ_lt_N hτ_lt_σ))
+  calc upperCrossingTime (-b) (-a) Y (N + 1) (m' + 1) ω
+      = hittingBtwn Y (Set.Ici (-a)) (lowerCrossingTime (-b) (-a) Y (N + 1) m' ω) (N + 1) ω :=
+        upperCrossingTime_succ_eq ω
+    _ ≤ N - τ :=
+        hittingBtwn_le_of_mem h_lctY_le_Nτ (Nat.le_succ_of_le (Nat.sub_le N τ)) hY_Nτ_ge_nega
+
 /-- Strong version tracking the bijection explicitly.
 
 For `m ≤ k` with `X`'s `k`-th crossing completing before `N`:
@@ -60,94 +119,17 @@ private lemma upperCrossingTime_neg_revProcess_le_strong
     (h_k : upperCrossingTime a b X N k ω < N) :
     upperCrossingTime (-b) (-a) (-(revProcess X N)) (N + 1) m ω
       ≤ N - lowerCrossingTime a b X N (k - m) ω := by
-  set Y := -(revProcess X N) with hY_def
-  -- All of X's crossing times are < N
-  have h_j : ∀ j ≤ k, upperCrossingTime a b X N j ω < N := by
-    intro j hj
-    calc upperCrossingTime a b X N j ω
-        ≤ upperCrossingTime a b X N k ω := upperCrossingTime_mono hj
-      _ < N := h_k
-  have h_τ_lt : ∀ j < k, lowerCrossingTime a b X N j ω < N := by
-    intro j hj
-    have h_j1 : j + 1 ≤ k := hj
-    have h_uct : upperCrossingTime a b X N (j + 1) ω < N := h_j (j + 1) h_j1
-    exact lt_trans (lowerCrossingTime_lt_upperCrossingTime hab (Nat.ne_of_lt h_uct)) h_uct
+  -- All of `X`'s upper crossings up to the `k`-th complete before `N`, and so do the lower ones.
+  have h_j : ∀ j ≤ k, upperCrossingTime a b X N j ω < N := fun j hj =>
+    lt_of_le_of_lt (upperCrossingTime_mono hj) h_k
   induction m with
-  | zero =>
-    simp only [upperCrossingTime_zero, Nat.sub_zero]
-    exact Nat.zero_le _
+  | zero => simp only [upperCrossingTime_zero, Nat.sub_zero]; exact Nat.zero_le _
   | succ m' ih =>
-    have hm'_lt_k : m' < k := Nat.lt_of_succ_le hm
-    have hm' : m' ≤ k := Nat.le_of_lt hm'_lt_k
-    set j := k - m' with hj_def
-    have hj_pos : 1 ≤ j := by omega
-    have hj_le_k : j ≤ k := Nat.sub_le k m'
-    have h_km1_eq : k - (m' + 1) = j - 1 := by omega
-    have ih' := ih hm'
-    -- X's j-th crossing times
-    set σ := upperCrossingTime a b X N j ω with hσ_def
-    set τ := lowerCrossingTime a b X N (j - 1) ω with hτ_def
-    have hσ_lt_N : σ < N := h_j j hj_le_k
-    have hτ_lt_N : τ < N := by
-      have h : j - 1 < k := by omega
-      exact h_τ_lt (j - 1) h
-    -- τ < σ : lowerCrossingTime (j - 1) < upperCrossingTime j
-    have hτ_lt_σ : τ < σ := by
-      have h_j_eq : j = (j - 1) + 1 := by omega
-      have h_uct_lt : upperCrossingTime a b X N ((j - 1) + 1) ω < N := by
-        simp only [← h_j_eq]; exact hσ_lt_N
-      have := lowerCrossingTime_lt_upperCrossingTime hab (Nat.ne_of_lt h_uct_lt)
-      simp only [← hτ_def, ← hσ_def, ← h_j_eq] at this
-      exact this
-    rw [h_km1_eq]
-    -- X's level conditions
-    have h_neq_σ : σ ≠ N := Nat.ne_of_lt hσ_lt_N
-    have h_neq_τ : τ ≠ N := Nat.ne_of_lt hτ_lt_N
-    have hX_σ_ge_b : b ≤ X σ ω := by
-      have h_j_eq : j = (j - 1) + 1 := by omega
-      have h_neq_σ' : upperCrossingTime a b X N ((j - 1) + 1) ω ≠ N := by
-        simp only [← h_j_eq]; exact h_neq_σ
-      have h2 := stoppedValue_upperCrossingTime (f := X) (n := j - 1) h_neq_σ'
-      rw [← h_j_eq] at h2
-      exact h2
-    have hX_τ_le_a : X τ ω ≤ a :=
-      stoppedValue_lowerCrossingTime (f := X) (n := j - 1) h_neq_τ
-    -- Y's level conditions at bijected times
-    have hY_Nσ_le_negb : Y (N - σ) ω ≤ -b := by
-      have hrev : revProcess X N (N - σ) ω = X σ ω := by
-        rw [revProcess_apply_of_le X (Nat.sub_le N σ) ω, Nat.sub_sub_self (Nat.le_of_lt hσ_lt_N)]
-      simp only [hY_def, Pi.neg_apply, hrev]
-      linarith
-    have hY_Nτ_ge_nega : Y (N - τ) ω ≥ -a := by
-      have hrev : revProcess X N (N - τ) ω = X τ ω := by
-        rw [revProcess_apply_of_le X (Nat.sub_le N τ) ω, Nat.sub_sub_self (Nat.le_of_lt hτ_lt_N)]
-      simp only [hY_def, Pi.neg_apply, hrev]
-      linarith
-    -- lowerCrossingTime X j ≥ σ (hitting starts from σ)
-    have h_lct_ge : lowerCrossingTime a b X N j ω ≥ σ :=
-      hσ_def ▸ upperCrossingTime_le_lowerCrossingTime
-    -- From IH: upperCrossingTime Y m' ≤ N - lowerCrossingTime X j ≤ N - σ
-    have h_uct_le_Nσ : upperCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - σ := by
-      calc upperCrossingTime (-b) (-a) Y (N + 1) m' ω
-          ≤ N - lowerCrossingTime a b X N j ω := ih'
-        _ ≤ N - σ := Nat.sub_le_sub_left h_lct_ge N
-    -- lowerCrossingTime Y m' ≤ N - σ (by hittingBtwn_le_of_mem)
-    have h_Nσ_le_N1 : N - σ ≤ N + 1 := Nat.le_succ_of_le (Nat.sub_le N σ)
-    have hY_Nσ_in_Iic : Y (N - σ) ω ∈ Set.Iic (-b) := hY_Nσ_le_negb
-    have h_lctY_le_Nσ : lowerCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - σ := by
-      simpa only [lowerCrossingTime] using
-        hittingBtwn_le_of_mem h_uct_le_Nσ h_Nσ_le_N1 hY_Nσ_in_Iic
-    -- N - σ < N - τ and lowerCrossingTime Y m' < N - τ
-    have hNσ_lt_Nτ : N - σ < N - τ := Nat.sub_lt_sub_left hτ_lt_N hτ_lt_σ
-    have h_lctY_le_Nτ : lowerCrossingTime (-b) (-a) Y (N + 1) m' ω ≤ N - τ :=
-      Nat.le_of_lt (lt_of_le_of_lt h_lctY_le_Nσ hNσ_lt_Nτ)
-    have h_Nτ_le_N1 : N - τ ≤ N + 1 := Nat.le_succ_of_le (Nat.sub_le N τ)
-    have hY_Nτ_in_Ici : Y (N - τ) ω ∈ Set.Ici (-a) := hY_Nτ_ge_nega
-    -- Final: upperCrossingTime Y (m' + 1) ≤ N - τ
-    calc upperCrossingTime (-b) (-a) Y (N + 1) (m' + 1) ω
-        = hittingBtwn Y (Set.Ici (-a)) (lowerCrossingTime (-b) (-a) Y (N + 1) m' ω) (N + 1) ω :=
-          upperCrossingTime_succ_eq ω
-      _ ≤ N - τ := hittingBtwn_le_of_mem h_lctY_le_Nτ h_Nτ_le_N1 hY_Nτ_in_Ici
+    -- `Y`'s `(m'+1)`-th crossing reflects `X`'s `(k-m')`-th; set `i = k-(m'+1)`, so `k-m' = i+1`.
+    have hik : k - m' = k - (m' + 1) + 1 := by omega
+    refine upperCrossingTime_neg_revProcess_succ_le X a b hab N m' (k - (m' + 1)) ω ?_ ?_
+    · rw [← hik]; exact h_j (k - m') (Nat.sub_le k m')
+    · rw [← hik]; exact ih (Nat.le_of_lt (Nat.lt_of_succ_le hm))
 
 /-- **Time-reversal crossing bound.**
 
