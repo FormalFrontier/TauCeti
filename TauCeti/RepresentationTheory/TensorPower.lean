@@ -29,11 +29,66 @@ public section
 
 open scoped TensorProduct
 
-namespace Representation
-
 universe u v w
 
 variable {R : Type u} {G : Type v} {M : Type w}
+
+namespace TauCeti.TensorPower
+
+section CommSemiring
+
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- Splitting a tensor power intertwines the tensor product of diagonal maps with the
+diagonal map on the combined tensor power. -/
+theorem mulEquiv_conj_map (f : M →ₗ[R] M) (d e : ℕ) :
+    (_root_.TensorPower.mulEquiv :
+      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).conj
+        (TensorProduct.map (PiTensorProduct.map fun _ : Fin d => f)
+          (PiTensorProduct.map fun _ : Fin e => f)) =
+      PiTensorProduct.map (fun _ : Fin (d + e) => f) := by
+  let equiv : (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M) :=
+    _root_.TensorPower.mulEquiv
+  ext x
+  simp only [LinearMap.compMultilinearMap_apply]
+  change equiv.conj _ (⨂ₜ[R] i, x i) = _
+  rw [LinearEquiv.conj_apply_apply]
+  let a : Fin d → M := fun i => x (Fin.castAdd e i)
+  let b : Fin e → M := fun i => x (Fin.natAdd d i)
+  have hx : Fin.append a b = x := by
+    ext i
+    refine Fin.addCases ?_ ?_ i
+    · intro j
+      simp only [a, Fin.append_left]
+    · intro j
+      simp only [b, Fin.append_right]
+  have hsplit : equiv.symm (⨂ₜ[R] i, x i) =
+      (⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i) := by
+    apply equiv.injective
+    rw [equiv.apply_symm_apply]
+    rw [show equiv ((⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i)) =
+      ⨂ₜ[R] i, Fin.append a b i from _root_.TensorPower.tprod_mul_tprod R a b]
+    rw [hx]
+  rw [hsplit, TensorProduct.map_tmul, PiTensorProduct.map_tprod,
+    PiTensorProduct.map_tprod]
+  rw [show equiv ((⨂ₜ[R] i, f (a i)) ⊗ₜ[R] (⨂ₜ[R] i, f (b i))) =
+    ⨂ₜ[R] i, Fin.append (fun i => f (a i)) (fun i => f (b i)) i from
+      _root_.TensorPower.tprod_mul_tprod R _ _]
+  rw [PiTensorProduct.map_tprod]
+  congr 1
+  rw [← hx]
+  ext i
+  refine Fin.addCases ?_ ?_ i
+  · intro j
+    simp only [Fin.append_left]
+  · intro j
+    simp only [Fin.append_right]
+
+end CommSemiring
+
+end TauCeti.TensorPower
+
+namespace Representation
 
 section CommSemiring
 
@@ -80,51 +135,8 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
     -- Split `Fin (d + 1)` into `Fin d` and `Fin 1`, then use multiplicativity of trace.
     let e : (⨂[R]^d M) ⊗[R] (⨂[R]^1 M) ≃ₗ[R] (⨂[R]^(d + 1) M) :=
       TensorPower.mulEquiv
-    have he : e.conj
-        (TensorProduct.map (PiTensorProduct.map fun _ : Fin d => ρ g)
-          (PiTensorProduct.map fun _ : Fin 1 => ρ g)) =
-        PiTensorProduct.map (fun _ : Fin (d + 1) => ρ g) := by
-      ext x
-      simp only [LinearMap.compMultilinearMap_apply]
-      -- `ext` leaves the pure tensor behind the defining multilinear map; expose it so the
-      -- public apply lemmas below can rewrite the action without unfolding `TensorPower.mulEquiv`.
-      change e.conj _ (⨂ₜ[R] i, x i) = _
-      rw [LinearEquiv.conj_apply_apply]
-      let a : Fin d → M := fun i => x (Fin.castAdd 1 i)
-      let b : Fin 1 → M := fun i => x (Fin.natAdd d i)
-      have hx : Fin.append a b = x := by
-        ext i
-        refine Fin.addCases ?_ ?_ i
-        · intro j
-          simp only [a, Fin.append_left]
-        · intro j
-          simp only [b, Fin.append_right]
-      have hsplit : e.symm (⨂ₜ[R] i, x i) =
-          (⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i) := by
-        apply e.injective
-        rw [e.apply_symm_apply]
-        -- Rewriting cannot match through the local name `e`; this conversion exposes exactly the
-        -- public `tprod_mul_tprod` equation without unfolding the equivalence.
-        rw [show e ((⨂ₜ[R] i, a i) ⊗ₜ[R] (⨂ₜ[R] i, b i)) =
-          ⨂ₜ[R] i, Fin.append a b i from TensorPower.tprod_mul_tprod R a b]
-        rw [hx]
-      rw [hsplit, TensorProduct.map_tmul, PiTensorProduct.map_tprod,
-        PiTensorProduct.map_tprod]
-      -- As above, make the let-bound equivalence transparent only through its public pure-tensor
-      -- equation, which lets `rw` avoid the implementation of `TensorPower.mulEquiv`.
-      rw [show e ((⨂ₜ[R] i, (ρ g) (a i)) ⊗ₜ[R] (⨂ₜ[R] i, (ρ g) (b i))) =
-        ⨂ₜ[R] i, Fin.append (fun i => (ρ g) (a i)) (fun i => (ρ g) (b i)) i from
-          TensorPower.tprod_mul_tprod R _ _]
-      rw [PiTensorProduct.map_tprod]
-      congr 1
-      rw [← hx]
-      ext i
-      refine Fin.addCases ?_ ?_ i
-      · intro j
-        simp only [Fin.append_left]
-      · intro j
-        simp only [Fin.append_right]
-    rw [← he, LinearMap.trace_conj', LinearMap.trace_tensorProduct']
+    rw [← TauCeti.TensorPower.mulEquiv_conj_map, LinearMap.trace_conj',
+      LinearMap.trace_tensorProduct']
     have h_one : LinearMap.trace R (⨂[R]^1 M) (PiTensorProduct.map fun _ : Fin 1 => ρ g) =
         LinearMap.trace R M (ρ g) := by
       let e₁ := PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 => M) 0
