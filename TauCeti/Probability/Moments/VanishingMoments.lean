@@ -107,10 +107,12 @@ end Densities
 `e^{a|x|} · g` is integrable for some `a > 0`, and all of whose polynomial moments `∫ xⁿ g` vanish,
 is a.e. zero.
 
-This is the instance the completeness step consumes:
-`Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp`
-above pins down a *measure* from its moments, and this transfers that to a *function* by applying it
-to the positive and negative parts of `g` as densities against `ν`.
+This is the internal transfer step, not the form the completeness step consumes — that is the
+measure-level `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` below, which wraps this
+one. `Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp` in
+`TauCeti.Probability.Moments.Determinacy` pins down a *measure* from its moments, and this transfers
+that to a *function* by applying it to the positive and negative parts of `g` as densities
+against `ν`.
 
 The exponential hypothesis is the existential `∃ a > 0`, matching the engine's convention; a caller
 holding a bound at every rate supplies it at any single one.
@@ -118,9 +120,9 @@ holding a bound at every rate supplies it at any single one.
 The reference measure is arbitrary, not just `volume`, and carries no σ-finiteness hypothesis: the
 argument splits `g` into `g⁺`/`g⁻` as densities, and integrability of `g` already bounds the
 positive density's lintegral, which is what lets equality of the two `withDensity` measures be read
-back as equality of the densities. Weighted orthogonal families against a measure other than
-Lebesgue (Hermite against a Gaussian, Chebyshev against `(1-x²)^{-1/2}` on `[-1,1]`) are the
-intended consumers. -/
+back as equality of the densities. That generality is what lets weighted orthogonal families against
+a measure other than Lebesgue (Hermite against a Gaussian, Chebyshev against `(1-x²)^{-1/2}` on
+`[-1,1]`) reach the completeness step, through the measure-level form below. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν)
     (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
