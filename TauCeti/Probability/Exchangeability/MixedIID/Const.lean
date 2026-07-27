@@ -103,11 +103,17 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
     _ = (Measure.pi fun _ : Fin s.card => (p : Measure α)).map fun g (j : s) => g (e.symm j) := by
         rw [← blockLaw_def, hblock]
     _ = Measure.pi fun _ : s => (p : Measure α) := by
-      rw [← show ⇑(MeasurableEquiv.piCongrLeft (fun _ : s => α) e) =
-          fun g (j : s) => g (e.symm j) by
+      -- `Measure.pi_map_piCongrLeft` transports along `MeasurableEquiv.piCongrLeft`, which
+      -- reindexes by `e.symm` *and* casts each coordinate along the resulting type equality.
+      -- Here the family `fun _ : s => α` is constant, so that cast is the identity and the
+      -- equiv is just reindexing — but only propositionally, so neither `rw` nor `convert`
+      -- aligns the two map functions on its own. Name the identification instead.
+      have hpiCongrLeft : ⇑(MeasurableEquiv.piCongrLeft (fun _ : s => α) e) =
+          fun g (j : s) => g (e.symm j) := by
         funext g j
         rw [MeasurableEquiv.coe_piCongrLeft]
-        simpa using Equiv.piCongrLeft_apply_apply (fun _ : s => α) e g (e.symm j)]
+        simpa using Equiv.piCongrLeft_apply_apply (fun _ : s => α) e g (e.symm j)
+      rw [← hpiCongrLeft]
       exact Measure.pi_map_piCongrLeft e fun _ : s => (p : Measure α)
     _ = Measure.pi fun j : s => μ.map (X (j : ℕ)) :=
         congrArg Measure.pi (funext fun j => (h.map_eq_of_const j).symm)
