@@ -7,8 +7,9 @@ public import Mathlib.RepresentationTheory.Induced
 /-!
 # Transitivity of induction and coinduction
 
-This file records induction and coinduction in stages for representations along composable group
-homomorphisms. It obtains the natural isomorphisms from the functoriality of restriction and
+This file records restriction and coinduction in stages for representations along composable monoid
+homomorphisms, and induction in stages along composable group homomorphisms. It obtains the natural
+isomorphisms from the functoriality of restriction and
 Mathlib's induction--restriction and restriction--coinduction adjunctions. This is the categorical
 core used by the subgroup form of induction in the induction and Mackey-theory roadmap.
 -/
