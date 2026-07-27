@@ -79,7 +79,8 @@ private theorem measurableSpace_measure_eq_comap_eval :
   rw [Measure.instMeasurableSpace, iSup_subtype]
   simp only [← BorelSpace.measurable_eq (α := ENNReal)]
 
-/-- Each `ℝ≥0∞`-valued evaluation is a measurable function of the real-valued ones. -/
+/-- Expresses the `ℝ≥0∞`-valued evaluation `P ↦ (P : Measure α) s` as `ENNReal.ofReal` of its
+real-valued counterpart `evalReal`. -/
 private theorem coe_apply_eq_ofReal_evalReal (s : MeasIdx α) :
     (fun P : ProbabilityMeasure α => (P : Measure α) s.1)
       = fun P => ENNReal.ofReal (evalReal P s) := by
@@ -131,7 +132,7 @@ theorem Measure.ext_of_forall_map_probabilityMeasure_eval_eq
       generateFrom_measurableCylinders.symm isPiSystem_measurableCylinders ?_ ?_
     · rintro t ht
       obtain ⟨I, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht
-      set e := I.equivFin with he
+      set e := I.equivFin
       set B : Fin I.card → Set α := fun j => ((e.symm j : MeasIdx α) : Set α) with hB
       have hBm : ∀ j, MeasurableSet (B j) := fun j => (e.symm j : MeasIdx α).2
       set Φ : (Fin I.card → ℝ) → (I → ℝ) := fun x i => x (e i) with hΦ
@@ -158,7 +159,7 @@ theorem Measure.ext_of_forall_map_probabilityMeasure_eval_eq
   obtain ⟨U, hU, rfl⟩ : ∃ U, MeasurableSet U ∧ (evalReal (α := α)) ⁻¹' U = T := by
     have hT' : MeasurableSet[MeasurableSpace.comap (evalReal (α := α)) MeasurableSpace.pi] T := by
       rwa [← measurableSpace_probabilityMeasure_eq_comap]
-    exact hT'
+    exact MeasurableSpace.measurableSet_comap.1 hT'
   rw [← Measure.map_apply measurable_evalReal hU, ← Measure.map_apply measurable_evalReal hU, key]
 
 
