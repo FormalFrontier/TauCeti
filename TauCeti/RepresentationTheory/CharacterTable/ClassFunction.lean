@@ -113,10 +113,9 @@ namespace ClassFunction
 variable {k : Type u} {G : Type v} [DivisionRing k] [Group G]
 
 /-- The dimension of the space of class functions is the number of conjugacy classes. -/
-theorem finrank_eq_card_conjClasses [Finite G] :
+theorem finrank_eq_card_conjClasses [Finite (ConjClasses G)] :
     Module.finrank k (ClassFunction k G) = Nat.card (ConjClasses G) := by
-  letI := Fintype.ofFinite G
-  letI := Classical.decEq G
+  letI := Fintype.ofFinite (ConjClasses G)
   rw [LinearEquiv.finrank_eq equivConjClasses, Module.finrank_pi_fintype]
   simp
 
