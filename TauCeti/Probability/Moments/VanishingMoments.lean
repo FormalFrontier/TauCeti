@@ -48,6 +48,30 @@ variable {ν : Measure ℝ}
 
 /-! ## Vanishing moments at the level of functions -/
 
+/-- The positive part `max t 0` never exceeds `t` in absolute value.
+
+This is what lets a single bound on `g` serve both truncated densities `g⁺` and `g⁻` below. -/
+private theorem abs_max_zero_le_abs (t : ℝ) : |max t 0| ≤ |t| := by
+  rcases le_total t 0 with h | h
+  · simp [max_eq_right h]
+  · simp [max_eq_left h, abs_of_nonneg h]
+
+/-- Polynomial growth is dominated by exponential growth at any positive rate:
+`|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`.
+
+Public rather than `private`: besides the two B1 forms below, this is the bound that puts
+polynomials in `L²` of a measure with a finite exponential moment, which
+`TauCeti.memLp_two_algebraMap_pow` (the completeness step of the orthogonal-basis bridge)
+consumes. -/
+theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
+    |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
+  have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
+  have han : (0 : ℝ) < a ^ n := by positivity
+  have h := Real.pow_div_factorial_le_exp (a * |x|) (by positivity) n
+  rw [div_le_iff₀ hfac, mul_pow] at h
+  rw [div_mul_eq_mul_div, le_div_iff₀ han]
+  nlinarith [h, Real.exp_pos (a * |x|), pow_nonneg (abs_nonneg x) n]
+
 section Densities
 
 variable {a : ℝ} {g f : ℝ → ℝ}

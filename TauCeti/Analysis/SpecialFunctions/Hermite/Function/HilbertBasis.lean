@@ -63,10 +63,14 @@ theorem integrable_exp_mul_abs_gaussianWeight (a : ℝ) :
     rw [← Real.exp_add, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), ← Real.exp_add]
     refine Real.exp_le_exp.2 ?_
     nlinarith [sq_nonneg (|x| - a), sq_abs x, abs_nonneg x]
-  refine integrable_exp_withDensity_ofReal hcore ?_ ?_ fun x => ?_
-  · fun_prop
-  · exact Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top
-  · rw [max_eq_left (Real.exp_pos _).le]
+  rw [integrable_withDensity_iff_integrable_smul₀' (by fun_prop)
+    (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top)]
+  have hfun : (fun x : ℝ => (ENNReal.ofReal (Real.exp (-x ^ 2))).toReal • Real.exp (a * |x|))
+      = fun x : ℝ => Real.exp (a * |x|) * Real.exp (-x ^ 2) := by
+    funext x
+    rw [smul_eq_mul, ENNReal.toReal_ofReal (Real.exp_pos _).le, mul_comm]
+  rw [hfun]
+  exact hcore
 
 /-- The Hermite normalization `cₙ = n!·√π` is positive. -/
 theorem hermiteNormalization_pos (n : ℕ) : (0 : ℝ) < (n.factorial : ℝ) * Real.sqrt Real.pi := by
@@ -120,7 +124,7 @@ private theorem memLp_hermiteDilated_normalized (n : ℕ) :
     ring
   rw [hfun]
   exact (memLp_two_algebraMap_eval (𝕜 := 𝕜)
-    (fun a _ => integrable_exp_mul_abs_gaussianWeight a) (hermiteDilated n)).const_mul _
+    ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩ (hermiteDilated n)).const_mul _
 
 /-- **Roadmap A3: the Hermite functions are a Hilbert basis of `L²(ℝ)`.** Orthonormality comes from
 the weighted-measure machinery and completeness from moment determinacy
@@ -136,7 +140,7 @@ noncomputable def hermiteHilbertBasis : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (volume
     (memLp_hermiteDilated_normalized 𝕜)
     (bareNormalizedLp_ortho_eq_bot (𝕜 := 𝕜) hermiteDilated (fun x => Real.exp (-x ^ 2))
       (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi) degree_hermiteDilated
-      hermiteNormalization_pos (fun a _ => integrable_exp_mul_abs_gaussianWeight a)
+      hermiteNormalization_pos ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩
       (memLp_hermiteDilated_normalized 𝕜))
 
 /-- **The basis vectors are the Hermite functions.** Without this the construction would only
