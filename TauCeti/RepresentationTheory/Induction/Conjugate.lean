@@ -85,6 +85,7 @@ theorem conjRep_V [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
   change (Rep.res (conjSubgroupEquiv s H).toMonoidHom A).V = A.V
   exact Rep.res_obj_V _ _
 
+/-- Conjugation preserves the underlying linear map of a representation morphism. -/
 theorem conjRepFunctor_map_hom_toLinearMap [Semiring k] (s : G) {H : Subgroup G}
     {A B : Rep k H} (f : A ⟶ B) :
     HEq ((conjRepFunctor s H).map f).hom.toLinearMap f.hom.toLinearMap := by
@@ -134,8 +135,7 @@ theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
     (conjFDRep s A).V = A.V := by
   rfl
 
-/-- The conjugate action, as a heterogeneous equality: `conjFDRep` is opaque, so
-`(conjFDRep s A).V` and `A.V` are equal only via `conjFDRep_V`, not definitionally. -/
+/-- The conjugate finite-dimensional action, as a heterogeneous equality. -/
 theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
@@ -166,6 +166,7 @@ section Character
 
 variable [Field k]
 
+/-- The character of a conjugate representation is evaluated through `conjSubgroupEquiv`. -/
 @[simp]
 theorem char_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
