@@ -9,6 +9,8 @@ public import Mathlib.MeasureTheory.Measure.FiniteMeasurePi
 public import Mathlib.Probability.ProductMeasure
 -- Non-public: `map_infinitePi_infinitePi_of_inj` is used only inside the prefix-marginal proof.
 import Mathlib.Probability.Independence.InfinitePi
+-- Non-public: `map_bind` is used only inside the mixture prefix-rectangle proof.
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
 # Product probability-measure kernels
@@ -51,6 +53,10 @@ Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i =
 * `bind_probabilityMeasure_pi_pi` — evaluation on a measurable rectangle as the integral of the
   product of coordinate measures, with `Fin m` constant-coordinate forms
   `bind_probabilityMeasure_pi_const_apply` and `bind_probabilityMeasure_pi_const_pi`.
+* `map_prefixProj_bind_infinitePi_pi` — the same evaluation for the *countable*-product mixture
+  `π.bind (P ↦ P^{⊗ℕ})`: its finite-prefix rectangle probabilities are the mixed moments
+  `∫⁻ P, ∏ i, P (B i) ∂π` of the evaluation maps. This pairs the prefix-marginal lemma above with
+  bind-evaluation, and is what identifiability arguments for the mixing measure consume.
 
 This file does not introduce a new product-kernel structure; the lemmas live directly over Mathlib's
 `ProbabilityMeasure.pi`. It advances `TauCetiRoadmap/Exchangeability`, Layer 1 (product kernels and
@@ -253,6 +259,26 @@ theorem bind_probabilityMeasure_pi_const_pi {α : Type*} [MeasurableSpace α] {m
     (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) (Set.univ.pi B)
       = ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ :=
   bind_probabilityMeasure_pi_pi (fun _ => ν) (fun _ => hν) B hB
+
+/-- The mixture's finite-dimensional rectangle probabilities are the mixed moments of the
+evaluation maps: pushing `π.bind (P ↦ P^{⊗ℕ})` to its first `n` coordinates and evaluating on a
+rectangle `∏ i, B i` gives `∫⁻ P, ∏ i, P (B i) ∂π`. -/
+theorem map_prefixProj_bind_infinitePi_pi {α : Type*} [MeasurableSpace α]
+    (π : Measure (ProbabilityMeasure α)) {n : ℕ} (B : Fin n → Set α)
+    (hB : ∀ i, MeasurableSet (B i)) :
+    ((π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
+        (fun x : ℕ → α => fun i : Fin n => x i)) (Set.univ.pi B)
+      = ∫⁻ P, ∏ i, (P : Measure α) (B i) ∂π := by
+  have hproj : Measurable (fun x : ℕ → α => fun i : Fin n => x i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply _
+  have hmeas : AEMeasurable (fun P : ProbabilityMeasure α =>
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
+        fun x : ℕ → α => fun i : Fin n => x i) π :=
+    ((Measure.measurable_map _ hproj).comp measurable_infinitePi_const).aemeasurable
+  rw [map_bind measurable_infinitePi_const.aemeasurable hproj,
+    Measure.bind_apply (MeasurableSet.univ_pi hB) hmeas]
+  refine lintegral_congr fun P => ?_
+  rw [map_prefixProj_infinitePi_const, Measure.pi_pi]
 
 end MeasureTheory
 

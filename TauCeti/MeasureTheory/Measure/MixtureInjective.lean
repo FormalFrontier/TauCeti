@@ -21,6 +21,12 @@ sequence drawn i.i.d. from a `π`-random probability measure, is injective on fi
 * `Measure.ext_of_bind_infinitePi_eq` — two finite measures on `ProbabilityMeasure α` inducing the
   same mixture are equal.
 
+## Sources
+
+The construction and proof plan follow the human-authored roadmap
+`TauCetiRoadmap/Exchangeability/README.md`, *Layer 6 — directing measures and de Finetti
+representation*, which names mixing-law uniqueness as the target this theorem serves.
+
 ## Implementation
 
 Evaluating the mixture on a finite-dimensional rectangle gives the mixed moment
@@ -49,25 +55,6 @@ namespace TauCeti
 namespace MeasureTheory
 
 variable {α : Type*} [MeasurableSpace α]
-
-/-- The mixture's finite-dimensional rectangle probabilities are the mixed moments of the
-evaluation maps: pushing `π.bind (P ↦ P^{⊗ℕ})` to its first `n` coordinates and evaluating on a
-rectangle `∏ i, B i` gives `∫⁻ P, ∏ i, P (B i) ∂π`. -/
-theorem map_prefixProj_bind_infinitePi_pi (π : Measure (ProbabilityMeasure α))
-    {n : ℕ} (B : Fin n → Set α) (hB : ∀ i, MeasurableSet (B i)) :
-    ((π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
-        (fun x : ℕ → α => fun i : Fin n => x i)) (Set.univ.pi B)
-      = ∫⁻ P, ∏ i, (P : Measure α) (B i) ∂π := by
-  have hproj : Measurable (fun x : ℕ → α => fun i : Fin n => x i) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply _
-  have hmeas : AEMeasurable (fun P : ProbabilityMeasure α =>
-      (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
-        fun x : ℕ → α => fun i : Fin n => x i) π :=
-    ((Measure.measurable_map _ hproj).comp measurable_infinitePi_const).aemeasurable
-  rw [map_bind measurable_infinitePi_const.aemeasurable hproj,
-    Measure.bind_apply (MeasurableSet.univ_pi hB) hmeas]
-  refine lintegral_congr fun P => ?_
-  rw [map_prefixProj_infinitePi_const, Measure.pi_pi]
 
 variable {π₁ π₂ : Measure (ProbabilityMeasure α)}
 
