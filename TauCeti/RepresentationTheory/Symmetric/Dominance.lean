@@ -52,6 +52,14 @@ scoped instance partitionLinearOrder {n : ℕ} : LinearOrder n.Partition :=
       _ = ↑(ν.parts.sort (· ≥ ·)) := congrArg (fun l : List ℕ => (l : Multiset ℕ)) h
       _ = ν.parts := Multiset.sort_eq ν.parts (· ≥ ·))
 
+/-- Partition comparison in the lexicographic order is comparison of the decreasingly sorted
+parts. -/
+@[simp]
+theorem partition_lt_iff {n : ℕ} {μ ν : n.Partition} :
+    @LT.lt n.Partition partitionLinearOrder.toLT μ ν ↔
+      μ.parts.sort (· ≥ ·) < ν.parts.sort (· ≥ ·) :=
+  Iff.rfl
+
 end PartitionLex
 
 /-- A partition `μ` dominates a partition `ν` when every partial sum of the decreasingly
@@ -176,6 +184,12 @@ scoped instance partitionPartialOrder {n : ℕ} : PartialOrder n.Partition where
   le_trans _ _ _ hμν hνξ := hνξ.trans hμν
   le_antisymm _ _ hμν hνμ := hνμ.antisymm hμν
 
+/-- Partition comparison in the dominance order is dominance in the reverse direction. -/
+@[simp]
+theorem partition_le_iff {n : ℕ} {μ ν : n.Partition} :
+    @LE.le n.Partition partitionPartialOrder.toLE μ ν ↔ Dominates ν μ :=
+  Iff.rfl
+
 end DominanceOrder
 
 /-- Strict dominance is the strict relation of the dominance partial order. -/
@@ -187,27 +201,20 @@ abbrev StrictlyDominates {n : ℕ} (μ ν : n.Partition) : Prop :=
 theorem strictlyDominates_iff {n : ℕ} {μ ν : n.Partition} :
     StrictlyDominates μ ν ↔ Dominates μ ν ∧ μ ≠ ν := by
   letI := DominanceOrder.partitionPartialOrder (n := n)
-  change ν < μ ↔ Dominates μ ν ∧ μ ≠ ν
-  rw [lt_iff_le_and_ne]
+  rw [show StrictlyDominates μ ν ↔ ν < μ from Iff.rfl, lt_iff_le_and_ne,
+    DominanceOrder.partition_le_iff]
   exact and_congr Iff.rfl ne_comm
 
 instance {n : ℕ} (μ ν : n.Partition) : Decidable (StrictlyDominates μ ν) := by
   rw [strictlyDominates_iff]
   infer_instance
 
-/-- Strict dominance is irreflexive. -/
-theorem strictlyDominates_irrefl {n : ℕ} (μ : n.Partition) :
-    ¬StrictlyDominates μ μ := by
-  letI := DominanceOrder.partitionPartialOrder (n := n)
-  change ¬μ < μ
-  exact lt_irrefl μ
-
 open scoped PartitionLex
 
 /-- Strict dominance refines the lexicographic linear order on partitions. -/
 theorem lex_lt_of_strictlyDominates {n : ℕ} {μ ν : n.Partition}
     (h : StrictlyDominates μ ν) : ν < μ := by
-  change sortedParts ν < sortedParts μ
+  rw [PartitionLex.partition_lt_iff]
   rw [strictlyDominates_iff] at h
   exact lex_lt_of_dominates_of_ne h.1 h.2
 
