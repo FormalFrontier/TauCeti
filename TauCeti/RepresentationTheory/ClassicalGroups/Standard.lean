@@ -42,7 +42,6 @@ theorem stdRep_apply (g : GL (Fin n) k) :
     stdRep k n g = Matrix.mulVecLin (g : Matrix (Fin n) (Fin n) k) :=
   Matrix.GeneralLinearGroup.coe_toLin g
 
-@[simp]
 theorem stdRep_apply_apply (g : GL (Fin n) k) (v : Fin n → k) :
     stdRep k n g v = (g : Matrix (Fin n) (Fin n) k) *ᵥ v := by
   rw [stdRep_apply, Matrix.mulVecLin_apply]
@@ -63,11 +62,6 @@ noncomputable def stdFDRep : FDRep k (GL (Fin n) k) :=
 theorem stdFDRep_rho :
     (stdFDRep k n).ρ = stdRep k n :=
   rfl
-
-@[simp]
-theorem stdFDRep_rho_apply (g : GL (Fin n) k) :
-    (stdFDRep k n).ρ g = Matrix.mulVecLin (g : Matrix (Fin n) (Fin n) k) :=
-  stdRep_apply k n g
 
 /-- The character of the standard representation is the matrix trace. -/
 @[simp]
