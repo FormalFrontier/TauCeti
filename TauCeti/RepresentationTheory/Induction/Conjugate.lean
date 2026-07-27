@@ -44,6 +44,7 @@ namespace TauCeti
 variable {k : Type u} {G : Type v} [Group G]
 
 /-- Membership in `sHs⁻¹`, expressed using the conjugation convention used by `conjRep`. -/
+@[simp]
 theorem mem_conj_smul (s : G) (H : Subgroup G) (x : G) :
     x ∈ (MulAut.conj s • H : Subgroup G) ↔ s⁻¹ * x * s ∈ H := by
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
@@ -105,8 +106,10 @@ theorem conjRep_ρ_apply [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
     (x : (MulAut.conj s • H : Subgroup G)) (v : A.V) :
     cast (conjRep_V s A) ((conjRep s A).ρ x (cast (conjRep_V s A).symm v)) =
       A.ρ (conjSubgroupEquiv s H x) v := by
-  -- Both casts reduce because `conjRep_V` is the definitional restriction carrier equality.
-  rfl
+  -- Unfold the local wrapper to expose Mathlib's restricted action; both casts are along the
+  -- definitional carrier equality `Rep.res_obj_V`.
+  change (Rep.res (conjSubgroupEquiv s H).toMonoidHom A).ρ x v = _
+  exact LinearMap.congr_fun (Rep.coe_res_obj_ρ' _ _ x) v
 
 /-- The action of the conjugate representation, written directly in the ambient group. -/
 theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
@@ -142,7 +145,7 @@ theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
   rfl
 
 /-- The conjugate action, transported along `conjFDRep_V`. -/
-theorem conjFDRep_ρ_apply (s : G) {H : Subgroup G} (A : FDRep k H)
+theorem conjFDRep_ρ_cast (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
     cast (congrArg (fun V : FGModuleCat k => V →ₗ[k] V) (conjFDRep_V s A))
       ((conjFDRep s A).ρ x) = A.ρ (conjSubgroupEquiv s H x) := by
