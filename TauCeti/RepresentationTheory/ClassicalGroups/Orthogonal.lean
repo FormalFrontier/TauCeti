@@ -69,6 +69,13 @@ theorem orthogonalGroupToGL_coe (g : Matrix.orthogonalGroup (Fin n) k) :
       simpa only [Matrix.UnitaryGroup.toLin'] using
         Matrix.toLin'_apply (g : Matrix (Fin n) (Fin n) k) v
 
+/-- The canonical inclusion of the orthogonal group into the general linear group is injective. -/
+theorem orthogonalGroupToGL_injective : Function.Injective (orthogonalGroupToGL k n) := by
+  intro g h gh
+  apply Subtype.ext
+  have hcoe := congrArg (fun x : GL (Fin n) k => (x : Matrix (Fin n) (Fin n) k)) gh
+  simpa only [orthogonalGroupToGL_coe] using hcoe
+
 /-- The standard representation of the orthogonal group on column vectors. -/
 def stdOrthogonalRep : Representation k (Matrix.orthogonalGroup (Fin n) k) (Fin n → k) :=
   (stdRep k n).comp (orthogonalGroupToGL k n)
@@ -118,11 +125,7 @@ theorem stdOrthogonalRepToDual_apply (v w : Fin n → k) :
 /-- The standard representation of the orthogonal group is faithful. -/
 theorem stdOrthogonalRep_injective : Function.Injective (stdOrthogonalRep k n) := by
   intro g h gh
-  apply (show Function.Injective (orthogonalGroupToGL k n) by
-    intro g h gh
-    apply Subtype.ext
-    have hcoe := congrArg (fun x : GL (Fin n) k => (x : Matrix (Fin n) (Fin n) k)) gh
-    simpa only [orthogonalGroupToGL_coe] using hcoe)
+  apply orthogonalGroupToGL_injective k n
   apply stdRep_injective k n
   simpa only [stdOrthogonalRep, MonoidHom.comp_apply] using gh
 
