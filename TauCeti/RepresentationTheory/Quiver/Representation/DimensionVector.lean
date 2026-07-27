@@ -17,10 +17,9 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 /-!
 # Dimension vectors of quiver representations
 
-The dimension vector of a pointwise finite-dimensional representation records the dimension of its
-vector space at each vertex. This file defines dimension vectors and proves their fundamental
-functorial properties: invariance under isomorphism and additivity on biproducts and short exact
-sequences.
+The dimension vector of a representation records the dimension of its vector space at each vertex.
+This file defines dimension vectors and proves their fundamental functorial properties: invariance
+under isomorphism and additivity on biproducts and short exact sequences.
 
 ## References
 
@@ -39,34 +38,30 @@ universe u v
 
 variable {k : Type u} {Q : Type v} [Field k] [Quiver Q]
 
-/-- The dimension vector of a pointwise finite-dimensional quiver representation, indexed by the
-vertices of the quiver. -/
-noncomputable def dimVector (M : QuiverRep k Q)
-    (_hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i))) : Q → ℕ :=
+/-- The dimension vector of a quiver representation, indexed by the vertices of the quiver. -/
+noncomputable def dimVector (M : QuiverRep k Q) : Q → ℕ :=
   fun i ↦ Module.finrank k (M.obj ((Paths.of Q).obj i))
 
 /-- The value of the dimension vector at a vertex is the dimension of the corresponding vector
 space. -/
 @[simp]
-theorem dimVector_apply (M : QuiverRep k Q)
-    (hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i))) (i : Q) :
-    dimVector M hM i = Module.finrank k (M.obj ((Paths.of Q).obj i)) :=
+theorem dimVector_apply (M : QuiverRep k Q) (i : Q) :
+    dimVector M i = Module.finrank k (M.obj ((Paths.of Q).obj i)) :=
   (rfl)
 
 /-- Isomorphic quiver representations have the same dimension vector. -/
-theorem dimVector_eq_of_iso {M N : QuiverRep k Q}
-    (hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
-    (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i))) (e : M ≅ N) :
-    dimVector M hM = dimVector N hN := by
+theorem dimVector_eq_of_iso {M N : QuiverRep k Q} (e : M ≅ N) :
+    dimVector M = dimVector N := by
   funext i
+  simp only [dimVector_apply]
   exact (e.app ((Paths.of Q).obj i)).toLinearEquiv.finrank_eq
 
 /-- The zero representation has zero dimension vector. -/
 @[simp]
-theorem dimVector_zero
-    (h : ∀ i : Q, FiniteDimensional k ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i))) :
-    dimVector (0 : QuiverRep k Q) h = 0 := by
+theorem dimVector_zero :
+    dimVector (0 : QuiverRep k Q) = 0 := by
   funext i
+  simp only [dimVector_apply, Pi.zero_apply]
   have hi : IsZero ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i)) :=
     Functor.zero_obj ((Paths.of Q).obj i)
   letI : Subsingleton ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i)) :=
@@ -77,9 +72,8 @@ theorem dimVector_zero
 representations. -/
 theorem dimVector_biprod (M N : QuiverRep k Q)
     (hM : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
-    (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i)))
-    (hMN : ∀ i : Q, FiniteDimensional k ((M ⊞ N).obj ((Paths.of Q).obj i))) :
-    dimVector (M ⊞ N) hMN = dimVector M hM + dimVector N hN := by
+    (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i))) :
+    dimVector (M ⊞ N) = dimVector M + dimVector N := by
   funext i
   letI := hM i
   letI := hN i
@@ -98,15 +92,26 @@ theorem dimVector_biprod (M N : QuiverRep k Q)
 dimension vector is the sum of the outer dimension vectors. -/
 theorem dimVector_add_of_shortExact {S : ShortComplex (QuiverRep k Q)} (hS : S.ShortExact)
     (h₁ : ∀ i : Q, FiniteDimensional k (S.X₁.obj ((Paths.of Q).obj i)))
-    (h₂ : ∀ i : Q, FiniteDimensional k (S.X₂.obj ((Paths.of Q).obj i)))
     (h₃ : ∀ i : Q, FiniteDimensional k (S.X₃.obj ((Paths.of Q).obj i))) :
-    dimVector S.X₂ h₂ = dimVector S.X₁ h₁ + dimVector S.X₃ h₃ := by
+    dimVector S.X₂ = dimVector S.X₁ + dimVector S.X₃ := by
   funext i
   let E := (evaluation (Paths Q) (ModuleCat k)).obj ((Paths.of Q).obj i)
   letI : FiniteDimensional k (S.map E).X₁ := h₁ i
   letI : FiniteDimensional k (S.map E).X₃ := h₃ i
   have hSi : (S.map E).ShortExact := hS.map_of_exact E
   simp only [Pi.add_apply, dimVector_apply]
-  exact ModuleCat.free_shortExact_finrank_add hSi rfl rfl
+  have hfin₁ : Module.finrank k (S.map E).X₁ =
+      Module.finrank k (S.X₁.obj ((Paths.of Q).obj i)) :=
+    congrArg (fun X : ModuleCat k ↦ Module.finrank k X) ((ShortComplex.map_X₁ S E).trans
+      (evaluation_obj_obj (Paths Q) (ModuleCat k) ((Paths.of Q).obj i) S.X₁))
+  have hfin₂ : Module.finrank k (S.map E).X₂ =
+      Module.finrank k (S.X₂.obj ((Paths.of Q).obj i)) :=
+    congrArg (fun X : ModuleCat k ↦ Module.finrank k X) ((ShortComplex.map_X₂ S E).trans
+      (evaluation_obj_obj (Paths Q) (ModuleCat k) ((Paths.of Q).obj i) S.X₂))
+  have hfin₃ : Module.finrank k (S.map E).X₃ =
+      Module.finrank k (S.X₃.obj ((Paths.of Q).obj i)) :=
+    congrArg (fun X : ModuleCat k ↦ Module.finrank k X) ((ShortComplex.map_X₃ S E).trans
+      (evaluation_obj_obj (Paths Q) (ModuleCat k) ((Paths.of Q).obj i) S.X₃))
+  exact hfin₂.symm.trans (ModuleCat.free_shortExact_finrank_add hSi hfin₁ hfin₃)
 
 end TauCeti
