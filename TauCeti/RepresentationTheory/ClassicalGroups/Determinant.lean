@@ -60,12 +60,6 @@ theorem detPowerRep_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
     detPowerRep k n m g x = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) * x := by
   simp [detPowerRep, smul_eq_mul]
 
-/-- The determinant action is scalar multiplication by the determinant. -/
-@[simp]
-theorem detRep_apply (g : GL (Fin n) k) (x : k) :
-    detRep k n g x = (Matrix.GeneralLinearGroup.det g : k) * x := by
-  simp
-
 /-- The zero determinant power is the trivial representation. -/
 @[simp]
 theorem detPowerRep_zero : detPowerRep k n 0 = 1 := by
@@ -130,12 +124,6 @@ theorem char_detPowerRep (m : ℤ) (g : GL (Fin n) k) :
     simp [LinearMap.lsmul_apply]]
   simp [Module.finrank_self]
 
-/-- The determinant is the character of the determinant representation. -/
-@[simp]
-theorem char_detRep (g : GL (Fin n) k) :
-    (detRep k n).character g = (Matrix.GeneralLinearGroup.det g : k) := by
-  simp
-
 /-- The bundled determinant-power character is the corresponding determinant power. -/
 @[simp]
 theorem char_detPowerFDRep (m : ℤ) (g : GL (Fin n) k) :
@@ -143,10 +131,9 @@ theorem char_detPowerFDRep (m : ℤ) (g : GL (Fin n) k) :
   simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using char_detPowerRep k n m g
 
 /-- The bundled determinant character is the determinant. -/
-@[simp]
 theorem char_detFDRep (g : GL (Fin n) k) :
     (detFDRep k n).character g = (Matrix.GeneralLinearGroup.det g : k) := by
-  simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using char_detRep k n g
+  simpa only [zpow_one, Matrix.GeneralLinearGroup.val_det_apply] using char_detPowerFDRep k n 1 g
 
 end Field
 
