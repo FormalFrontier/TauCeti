@@ -51,7 +51,6 @@ section Field
 variable [Field k]
 
 /-- The character of the tensor power is the corresponding power of the standard character. -/
-@[simp]
 theorem char_tensorPowerRep (g : GL (Fin n) k) :
     (tensorPowerRep k n d).character g = ((stdRep k n).character g) ^ d := by
   exact Representation.char_tensorPower (stdRep k n) d g
