@@ -39,8 +39,9 @@ L0–L6 to remain scalar; the Banach-valued generalization is therefore outside 
 
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero`: removability of the
   real axis, the base case carrying the Morera argument.
-* `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg`: the gluing
-  form — holomorphic above the axis, holomorphic below it, continuous across it, hence holomorphic.
+* `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_im_pos_of_differentiableOn_im_neg`:
+  the gluing form — holomorphic above the axis, holomorphic below it, continuous across it, hence
+  holomorphic.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_range_lineMap`:
   removability of any subset of the line through two distinct points `p ≠ q`.
 * `TauCeti.differentiableOn_of_continuousOn_of_differentiableOn_diff_im_eq` and
@@ -191,7 +192,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero
 open upper part and on the open lower part of `Ω`, and merely *continuous* on `Ω`, is holomorphic
 on all of `Ω`. This is the form in which removability is used to glue two separately defined
 holomorphic branches along the axis, as in the Schwarz reflection principle. -/
-theorem differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg
+theorem differentiableOn_of_continuousOn_of_differentiableOn_im_pos_of_differentiableOn_im_neg
     (hΩ : IsOpen Ω) (hcont : ContinuousOn F Ω)
     (hpos : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | 0 < z.im}))
     (hneg : DifferentiableOn ℂ F (Ω ∩ {z : ℂ | z.im < 0})) :
@@ -217,7 +218,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_of_im_pos_of_im_neg
 
 /-- Membership in the line through two points, in the "base point plus real multiple of the
 direction" form used by the affine chart below. -/
-private lemma mem_range_lineMap_iff {p q z : ℂ} :
+lemma mem_range_lineMap_iff {p q z : ℂ} :
     z ∈ Set.range (AffineMap.lineMap (k := ℝ) p q) ↔ ∃ t : ℝ, z = p + t * (q - p) := by
   simp only [Set.mem_range, AffineMap.lineMap_apply, vsub_eq_sub, vadd_eq_add,
     Complex.real_smul, eq_comm (a := z)]
