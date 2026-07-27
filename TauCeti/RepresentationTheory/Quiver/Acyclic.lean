@@ -37,12 +37,12 @@ variable {V : Type u} [Quiver.{v} V]
 def Quiver.IsAcyclic (V : Type u) [Quiver.{v} V] : Prop :=
   ∀ ⦃a : V⦄ (p : Path a a), p = Path.nil
 
-namespace Quiver.IsAcyclic
-
 /-- The defining closed-path condition for an acyclic quiver. -/
-theorem isAcyclic_def :
+theorem Quiver.isAcyclic_def :
     Quiver.IsAcyclic V ↔ ∀ ⦃a : V⦄ (p : Path a a), p = Path.nil :=
   Iff.rfl
+
+namespace Quiver.IsAcyclic
 
 /-- Every closed path in an acyclic quiver is trivial. -/
 theorem eq_nil (h : Quiver.IsAcyclic V) {a : V} (p : Path a a) : p = Path.nil :=
