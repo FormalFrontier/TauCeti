@@ -55,11 +55,6 @@ theorem windingNumber_eq_zero_of_unbounded_component {γ : ℝ → ℂ} {a b : �
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
     {w : ℂ} (hcomp : ¬IsBounded (connectedComponentIn ((γ '' uIcc a b)ᶜ) w)) :
     windingNumber γ a b w = 0 := by
-  have hw : w ∈ (γ '' uIcc a b)ᶜ := by
-    by_contra hw
-    apply hcomp
-    rw [connectedComponentIn_eq_empty hw]
-    exact isBounded_empty
   obtain ⟨K, hK_compact, hK_good⟩ :=
     Filter.mem_cocompact.mp
       (windingNumber_eventually_zero_cocompact hclosed hP hγ_cont hγ_diff hderiv_int)
@@ -69,7 +64,7 @@ theorem windingNumber_eq_zero_of_unbounded_component {γ : ℝ → ℂ} {a b : �
   have hw'_zero : windingNumber γ a b w' = 0 := (hK_good hw'_notK).2
   exact
     (windingNumber_eq_of_mem_connectedComponentIn hclosed hP hγ_cont hγ_diff hderiv_int
-      hw hw'_comp).symm.trans hw'_zero
+      hw'_comp).symm.trans hw'_zero
 
 /-- **Piecewise-`C¹` form of vanishing on the unbounded component.** If the component of `w` in the
 complement of a closed piecewise-`C¹` curve is unbounded, its winding number about `w` is zero. The

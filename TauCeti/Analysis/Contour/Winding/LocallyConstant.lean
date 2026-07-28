@@ -121,9 +121,12 @@ theorem windingNumber_eq_of_mem_connectedComponentIn {γ : ℝ → ℂ} {a b : �
     (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
     (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
-    {w₀ w₁ : ℂ} (hw₀ : w₀ ∈ (γ '' uIcc a b)ᶜ)
-    (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
+    {w₀ w₁ : ℂ} (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
     windingNumber γ a b w₁ = windingNumber γ a b w₀ := by
+  have hw₀ : w₀ ∈ (γ '' uIcc a b)ᶜ := by
+    by_contra hw₀
+    rw [connectedComponentIn_eq_empty hw₀] at hw₁
+    exact hw₁
   rw [← setOf_forall_ne_eq_compl_image] at hw₀ hw₁
   rw [connectedComponentIn_eq_image hw₀] at hw₁
   obtain ⟨w₁, hw₁, rfl⟩ := hw₁
@@ -136,12 +139,11 @@ theorem windingNumber_eq_of_mem_connectedComponentIn {γ : ℝ → ℂ} {a b : �
 points in the same connected component of the curve complement have the same winding number. -/
 theorem IsPiecewiseC1On.windingNumber_eq_of_mem_connectedComponentIn
     {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
-    {w₀ w₁ : ℂ} (hw₀ : w₀ ∈ (γ '' uIcc a b)ᶜ)
-    (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
+    {w₀ w₁ : ℂ} (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
     windingNumber γ a b w₁ = windingNumber γ a b w₀ := by
   obtain ⟨P, hP, hγ_diff⟩ := hγ.exists_countable_differentiableAt
   exact TauCeti.Contour.windingNumber_eq_of_mem_connectedComponentIn hclosed hP
-    hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hw₀ hw₁
+    hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hw₁
 
 /-- **The winding number vanishes on a ball around an off-curve null point.** For a closed curve
 `γ` (differentiable off a countable set, continuous on `uIcc a b`, with interval-integrable
