@@ -71,8 +71,9 @@ theorem isOpen_image_of_injOn (hΩo : IsOpen Ω) (hgd : DifferentiableOn ℂ g �
   have hnc : ¬ ∃ w, ∀ y ∈ ball z ε, g y = w := by
     rintro ⟨w, hw⟩
     have hshift : z + ((ε / 2 : ℝ) : ℂ) ∈ ball z ε := by
-      rw [mem_ball, dist_self_add_left, Complex.norm_real, Real.norm_eq_abs,
-        abs_of_pos (by linarith)]
+      have hdist : dist (z + ((ε / 2 : ℝ) : ℂ)) z = ε / 2 := by
+        simpa [dist_eq_norm] using hε.le
+      rw [mem_ball, hdist]
       linarith
     have hne : ((ε / 2 : ℝ) : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (by positivity)
     have := hgi (hball hz') (hball hshift) ((hw z hz').trans (hw _ hshift).symm)
