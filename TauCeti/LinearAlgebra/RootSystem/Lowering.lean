@@ -30,6 +30,11 @@ pairing, a positive root that is not simple can be lowered while remaining posit
 This file implements “Simple-root lowering” in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The argument follows Bourbaki,
 *Lie Groups and Lie Algebras*, Chapters 4--6.
+
+Mathlib already carries out this height computation and lowering step inside the proof of
+`RootPairing.Base.IsPos.induction_on_reflect`, where it is packaged as a strong induction
+principle rather than exposed. The declarations below state that computation and the resulting
+existence results in their own right.
 -/
 
 namespace TauCeti
@@ -67,7 +72,7 @@ lemma height_reflectionPerm_lt_iff (b : P.Base) {i j : ι}
   omega
 
 /-- A positive root has positive Cartan pairing with some simple coroot. -/
-lemma exists_mem_support_pairingIn_pos [Finite ι] (b : P.Base) {j : ι} (hj : b.IsPos j) :
+lemma exists_mem_support_pos_pairingIn [Finite ι] (b : P.Base) {j : ι} (hj : b.IsPos j) :
     ∃ i ∈ b.support, 0 < P.pairingIn ℤ j i := by
   -- Mathlib provides the transposed pairing; finiteness makes the two pairings have the same sign.
   obtain ⟨i, hi, hpair⟩ := hj.exists_mem_support_pos_pairingIn
@@ -78,7 +83,7 @@ theorem exists_mem_support_height_reflectionPerm_lt [Finite ι]
     (b : P.Base) {j : ι} (hj : b.IsPos j) :
     ∃ i ∈ b.support,
       b.height (P.reflectionPerm i j) < b.height j := by
-  obtain ⟨i, hi, hpair⟩ := exists_mem_support_pairingIn_pos P b hj
+  obtain ⟨i, hi, hpair⟩ := exists_mem_support_pos_pairingIn P b hj
   exact ⟨i, hi, (height_reflectionPerm_lt_iff P b hi).mpr hpair⟩
 
 /-- A nonsimple positive root admits a simple reflection that remains positive and has strictly
