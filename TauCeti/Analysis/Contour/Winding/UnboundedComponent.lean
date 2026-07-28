@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Topology.MetricSpace.Bounded
-public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.Winding.LocallyConstant
 public import TauCeti.Analysis.Contour.Winding.Vanishing
 
@@ -23,8 +22,6 @@ integration roadmap: the winding number is zero on the unbounded component.
 
 ## Main results
 
-* `TauCeti.Contour.windingNumber_eq_of_mem_connectedComponentIn` — the winding number is constant
-  on each connected component of the curve complement.
 * `TauCeti.Contour.windingNumber_eq_zero_of_unbounded_component` — the winding number vanishes on
   every unbounded component of the curve complement.
 * `TauCeti.Contour.IsPiecewiseC1On.windingNumber_eq_zero_of_unbounded_component` — the direct
@@ -44,38 +41,10 @@ open scoped Topology
 
 namespace TauCeti.Contour
 
-/-- The points avoided by `γ` on `[[a, b]]` are exactly the complement of its image there. -/
-private theorem setOf_forall_ne_eq_compl_image {γ : ℝ → ℂ} {a b : ℝ} :
-    {w : ℂ | ∀ t ∈ uIcc a b, γ t ≠ w} = (γ '' uIcc a b)ᶜ := by
-  ext w
-  simp only [mem_setOf_eq, mem_compl_iff, mem_image, not_exists, not_and]
-
-/-- **The winding number is constant on a connected component of the curve complement.**
-For a closed curve that is continuous on `[[a, b]]`, differentiable away from a countable set,
-and has interval-integrable derivative, two points in the same connected component of
-`ℂ \ γ '' [[a, b]]` have the same winding number.
-
-This is the connected-component form of homotopy invariance in the point: it follows from local
-constancy of the integer-valued winding number off the curve. -/
-theorem windingNumber_eq_of_mem_connectedComponentIn {γ : ℝ → ℂ} {a b : ℝ} {P : Set ℝ}
-    (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
-    (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
-    {w₀ w₁ : ℂ} (hw₀ : w₀ ∈ (γ '' uIcc a b)ᶜ)
-    (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
-    windingNumber γ a b w₁ = windingNumber γ a b w₀ := by
-  rw [← setOf_forall_ne_eq_compl_image] at hw₀ hw₁
-  rw [connectedComponentIn_eq_image hw₀] at hw₁
-  obtain ⟨w₁, hw₁, rfl⟩ := hw₁
-  exact
-    (isLocallyConstant_windingNumber_of_closed hclosed hP hγ_cont hγ_diff
-      hderiv_int).apply_eq_of_isPreconnected isPreconnected_connectedComponent hw₁
-        mem_connectedComponent
-
 /-- **The winding number vanishes on every unbounded component of the curve complement.**
-For a closed curve with the usual off-curve regularity, let `w` lie outside the curve. If the
-connected component of `w` in `ℂ \ γ '' [[a, b]]` is unbounded, then the winding number about `w`
-is zero.
+For a closed curve with the usual off-curve regularity, if the connected component of `w` in
+`ℂ \ γ '' [[a, b]]` is unbounded, then the winding number about `w` is zero. Unboundedness also
+ensures that `w` lies outside the curve.
 
 Indeed, far-field vanishing holds outside some compact set. An unbounded component cannot be
 contained in that compact set, so it contains a far-field point with winding number zero; the
@@ -84,9 +53,13 @@ theorem windingNumber_eq_zero_of_unbounded_component {γ : ℝ → ℂ} {a b : �
     (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
     (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
-    {w : ℂ} (hw : w ∈ (γ '' uIcc a b)ᶜ)
-    (hcomp : ¬IsBounded (connectedComponentIn ((γ '' uIcc a b)ᶜ) w)) :
+    {w : ℂ} (hcomp : ¬IsBounded (connectedComponentIn ((γ '' uIcc a b)ᶜ) w)) :
     windingNumber γ a b w = 0 := by
+  have hw : w ∈ (γ '' uIcc a b)ᶜ := by
+    by_contra hw
+    apply hcomp
+    rw [connectedComponentIn_eq_empty hw]
+    exact isBounded_empty
   obtain ⟨K, hK_compact, hK_good⟩ :=
     Filter.mem_cocompact.mp
       (windingNumber_eventually_zero_cocompact hclosed hP hγ_cont hγ_diff hderiv_int)
@@ -98,17 +71,16 @@ theorem windingNumber_eq_zero_of_unbounded_component {γ : ℝ → ℂ} {a b : �
     (windingNumber_eq_of_mem_connectedComponentIn hclosed hP hγ_cont hγ_diff hderiv_int
       hw hw'_comp).symm.trans hw'_zero
 
-/-- **Piecewise-`C¹` form of vanishing on the unbounded component.** If a closed piecewise-`C¹`
-curve avoids `w` and the component of `w` in the curve complement is unbounded, its winding number
-about `w` is zero. The finite breakpoint set supplies all raw regularity hypotheses of
+/-- **Piecewise-`C¹` form of vanishing on the unbounded component.** If the component of `w` in the
+complement of a closed piecewise-`C¹` curve is unbounded, its winding number about `w` is zero. The
+finite breakpoint set supplies all raw regularity hypotheses of
 `windingNumber_eq_zero_of_unbounded_component`. -/
 theorem IsPiecewiseC1On.windingNumber_eq_zero_of_unbounded_component {γ : ℝ → ℂ} {a b : ℝ}
     (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
-    {w : ℂ} (hw : w ∈ (γ '' uIcc a b)ᶜ)
-    (hcomp : ¬IsBounded (connectedComponentIn ((γ '' uIcc a b)ᶜ) w)) :
+    {w : ℂ} (hcomp : ¬IsBounded (connectedComponentIn ((γ '' uIcc a b)ᶜ) w)) :
     windingNumber γ a b w = 0 := by
   obtain ⟨P, hP, hγ_diff⟩ := hγ.exists_countable_differentiableAt
   exact TauCeti.Contour.windingNumber_eq_zero_of_unbounded_component hclosed hP
-    hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hw hcomp
+    hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hcomp
 
 end TauCeti.Contour
