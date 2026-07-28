@@ -12,7 +12,6 @@ public import TauCeti.Analysis.Contour.PolarPart.Decomposition
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
-import TauCeti.Analysis.Contour.Curve.Integrability
 import TauCeti.Analysis.Contour.PolarPart.CPV
 
 /-!
@@ -72,9 +71,8 @@ theorem hasCauchyPV_residue_sum {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
   classical
   have h_rem_int : IntervalIntegrable
       (fun t => decomp.analyticRemainder (γ t) * deriv γ t) MeasureTheory.volume a b :=
-    h_imm.isPiecewiseC1On.intervalIntegrable_comp_mul_deriv
-      (decomp.analyticRemainder_differentiableOn.continuousOn.mono
-        (image_subset_iff.mpr hγU))
+    h_imm.isPiecewiseC1On.intervalIntegrable_deriv.continuousOn_mul
+      (decomp.analyticRemainder_differentiableOn.continuousOn.comp h_imm.continuousOn hγU)
   have h_rem : HasCauchyPV γ a b decomp.analyticRemainder 0 := by
     have h0 := HasCauchyPV.of_integrable h_rem_int
     rwa [show (∫ t in a..b, decomp.analyticRemainder (γ t) * deriv γ t) = 0 from by
