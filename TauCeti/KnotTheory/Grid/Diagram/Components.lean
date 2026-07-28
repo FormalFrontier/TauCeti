@@ -98,9 +98,19 @@ theorem mem_componentCycles_iff (c : Equiv.Perm (Fin n)) :
 def componentCycleType : Multiset ℕ :=
   G.componentPerm.cycleType
 
+/-- The component-size multiset is the cycle type of the component permutation. -/
+theorem componentCycleType_def :
+    G.componentCycleType = G.componentPerm.cycleType :=
+  (rfl)
+
 /-- The number of components of the link represented by a grid diagram. -/
 def componentCount : ℕ :=
   G.componentCycleType.card
+
+/-- The component count is the cardinality of the component-size multiset. -/
+theorem componentCount_def :
+    G.componentCount = G.componentCycleType.card :=
+  (rfl)
 
 /-- The number of component cycles agrees with `componentCount`. -/
 @[simp]
@@ -116,6 +126,10 @@ theorem sum_componentCycleType : G.componentCycleType.sum = n := by
 /-- A grid diagram represents a knot when its component permutation has exactly one cycle. -/
 def IsKnot : Prop :=
   G.componentCount = 1
+
+/-- A grid diagram is a knot diagram exactly when its component count is one. -/
+theorem isKnot_def : G.IsKnot ↔ G.componentCount = 1 :=
+  Iff.rfl
 
 /-- A grid diagram represents a knot exactly when its component permutation is a single
 nontrivial cycle. -/
