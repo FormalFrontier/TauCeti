@@ -29,13 +29,15 @@ That is the form multivariate Gaussian `L²` and chaos expansions consume, and i
   exponential moment finite, the hypothesis
   `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.gaussianHermiteHilbertBasis` — milestone A3′ itself.
-* `TauCeti.coe_gaussianHermiteHilbertBasis` — the anti-vacuity pin: the basis vectors really are
+* `TauCeti.coeFn_gaussianHermiteHilbertBasis` — the anti-vacuity pin: the basis vectors really are
   `Hₙ/√(n!)`, not merely *some* orthonormal basis.
 * `TauCeti.sqrt_gaussianPDFReal_mul_hermiteℝ_div_sqrt_factorial` — the `√w`-envelope of a basis
   vector is `2^{-1/4}·ψₙ(x/√2)`, identifying this basis with the function-side
   `TauCeti.hermiteHilbertBasis` through `TauCeti.weightL2Isometry`.
-* `TauCeti.weightL2Isometry_gaussianHermiteHilbertBasis_apply` — that identification at the
-  `weightL2Isometry` level: the image of the `n`-th basis vector is `2^{-1/4} • ψₙ(·/√2)`.
+* `TauCeti.sqrt_gaussianPDFReal_smul_gaussianHermiteHilbertBasis` — that envelope computed on the
+  public basis vector itself, a.e. against `volume`.
+* `TauCeti.weightL2Isometry_gaussianHermiteHilbertBasis` — the same identification at the
+  `TauCeti.weightL2Isometry` level: the image of the `n`-th basis vector is `2^{-1/4} • ψₙ(·/√2)`.
 -/
 
 public section
@@ -138,6 +140,14 @@ private theorem coe_cast_hilbertBasis {μ ν : Measure ℝ} (h : μ = ν)
   rw [cast_eq]
   exact hb
 
+/-- Transporting an `L²` element along an equality of measures does not move its representative:
+the `cast` is along `↥(Lp 𝕜 2 μ) = ↥(Lp 𝕜 2 ν)`, so it is the identity on functions. -/
+private theorem coeFn_cast_lp {μ ν : Measure ℝ} (h : μ = ν) (f : Lp 𝕜 2 μ) (x : ℝ) :
+    ((cast (congrArg (fun m : Measure ℝ => (Lp 𝕜 2 m : Type _)) h) f : Lp 𝕜 2 ν) : ℝ → 𝕜) x
+      = (f : ℝ → 𝕜) x := by
+  subst h
+  rfl
+
 /-- **Roadmap A3′: the Hermite polynomials are a Hilbert basis of `L²(γ)`.** Orthonormality comes
 from the orthogonality relation against the Gaussian density and completeness from moment
 determinacy (`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`), applied to the exact-degree
@@ -152,7 +162,7 @@ noncomputable def gaussianHermiteHilbertBasis :
 /-- **The basis vectors are the normalized Hermite polynomials.** Without this the construction
 would only exhibit *some* Hilbert basis of `L²(γ)`; here each vector is pinned to `Hₙ/√(n!)`, which
 is what downstream chaos-coordinate computations need. -/
-theorem coe_gaussianHermiteHilbertBasis (n : ℕ) :
+theorem coeFn_gaussianHermiteHilbertBasis (n : ℕ) :
     ⇑(gaussianHermiteHilbertBasis 𝕜 n) =ᵐ[gaussianReal 0 1]
       fun x => (algebraMap ℝ 𝕜) (aeval x (hermite n) / Real.sqrt ((n.factorial : ℝ))) := by
   have hcoe : ⇑(gaussianHermiteHilbertBasisAux 𝕜)
@@ -214,17 +224,19 @@ theorem sqrt_gaussianPDFReal_mul_hermiteℝ_div_sqrt_factorial (n : ℕ) (x : �
   rw [hdens, eval_hermiteℝ, hermiteFunction_def, harg, hsq, hsplit1, hsplit2]
   field_simp
 
-/-- **The `weightL2Isometry`-image of the Gaussian Hermite basis is the dilated Hermite function
-family.** Multiplication by `√w` is the forward map of `TauCeti.weightL2Isometry`
-(`TauCeti.weightL2Isometry_apply`), so this is the promised characterization of the image of
-`TauCeti.gaussianHermiteHilbertBasis`: the `n`-th vector goes to `2^{-1/4} • ψₙ(·/√2)`.
+/-- **The Gaussian envelope of the basis is the dilated Hermite function family.** Scaling the
+`n`-th basis vector of `L²(γ)` by `√(γ-density)` gives `2^{-1/4} • ψₙ(·/√2)`.
 
-Stated a.e. against `volume`, the measure the isometry lands in, and in terms of the public
+Stated a.e. against `volume`, the measure that envelope lives on, and in terms of the public
 `gaussianHermiteHilbertBasis` rather than its weighted-measure preimage. The pointwise content is
 `TauCeti.sqrt_gaussianPDFReal_mul_hermiteℝ_div_sqrt_factorial`; the only work here is moving the
 basis representative from `γ`-a.e. to `volume`-a.e., which is legitimate because the Gaussian
-density never vanishes. -/
-theorem weightL2Isometry_gaussianHermiteHilbertBasis_apply (n : ℕ) :
+density never vanishes.
+
+`√w`-scaling is the forward map of `TauCeti.weightL2Isometry`, so this is the pointwise content of
+`TauCeti.weightL2Isometry_gaussianHermiteHilbertBasis` below, which states the same fact at the
+isometry level. -/
+theorem sqrt_gaussianPDFReal_smul_gaussianHermiteHilbertBasis (n : ℕ) :
     (fun x : ℝ => Real.sqrt (gaussianPDFReal 0 1 x)
         • (gaussianHermiteHilbertBasis 𝕜 n : ℝ → 𝕜) x)
       =ᵐ[volume] fun x : ℝ => (Real.sqrt (Real.sqrt 2))⁻¹
@@ -235,9 +247,38 @@ theorem weightL2Isometry_gaussianHermiteHilbertBasis_apply (n : ℕ) :
     rw [gaussianReal_of_var_ne_zero 0 one_ne_zero]
     exact withDensity_absolutelyContinuous' (by fun_prop)
       (Filter.Eventually.of_forall fun x => (gaussianPDF_pos 0 one_ne_zero x).ne')
-  filter_upwards [(coe_gaussianHermiteHilbertBasis 𝕜 n).filter_mono hac.ae_le] with x hx
+  filter_upwards [(coeFn_gaussianHermiteHilbertBasis 𝕜 n).filter_mono hac.ae_le] with x hx
   rw [hx, ← eval_hermiteℝ, Algebra.smul_def, Algebra.smul_def, ← map_mul, ← map_mul,
     sqrt_gaussianPDFReal_mul_hermiteℝ_div_sqrt_factorial n x]
+
+/-- **The `weightL2Isometry`-image of the Gaussian Hermite basis is the dilated Hermite function
+family.** The `n`-th vector goes to `2^{-1/4} • ψₙ(·/√2)`, pinning the measure-side basis of `L²(γ)`
+to the function-side basis `TauCeti.hermiteHilbertBasis` of `L²(ℝ)` up to that dilation and
+normalization.
+
+`TauCeti.weightL2Isometry` has `L²(volume.withDensity …)` as its domain, whereas
+`TauCeti.gaussianHermiteHilbertBasis` lives in the propositionally equal `L²(γ)`, so the basis
+vector is transported along that equality of measures before the isometry is applied. The
+positivity and measurability side conditions are taken as arguments so a consumer may supply
+whichever proofs it already has. -/
+theorem weightL2Isometry_gaussianHermiteHilbertBasis (n : ℕ)
+    (hwpos : ∀ᵐ x ∂(volume : Measure ℝ), 0 < gaussianPDFReal 0 1 x)
+    (hwm : AEMeasurable (fun x : ℝ => gaussianPDFReal 0 1 x) volume) :
+    weightL2Isometry volume (fun x : ℝ => gaussianPDFReal 0 1 x) hwpos hwm
+        (cast (congrArg (fun m : Measure ℝ => (Lp 𝕜 2 m : Type _))
+          (by rw [gaussianReal_of_var_ne_zero 0 one_ne_zero, gaussianPDF_def]))
+          (gaussianHermiteHilbertBasis 𝕜 n))
+      =ᵐ[volume] fun x : ℝ => (Real.sqrt (Real.sqrt 2))⁻¹
+        • (algebraMap ℝ 𝕜) (hermiteFunction n (x / Real.sqrt 2)) := by
+  -- The isometry is multiplication by `√w`, and the transport does not move representatives.
+  refine (weightL2Isometry_apply (𝕜 := 𝕜) volume (fun x : ℝ => gaussianPDFReal 0 1 x)
+    hwpos hwm _).trans ?_
+  have hγ : (gaussianReal 0 1 : Measure ℝ)
+      = volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) := by
+    rw [gaussianReal_of_var_ne_zero 0 one_ne_zero, gaussianPDF_def]
+  refine Filter.EventuallyEq.trans ?_ (sqrt_gaussianPDFReal_smul_gaussianHermiteHilbertBasis 𝕜 n)
+  exact Filter.Eventually.of_forall fun x => by
+    simp only [coeFn_cast_lp 𝕜 hγ (gaussianHermiteHilbertBasis 𝕜 n) x]
 
 end Basis
 

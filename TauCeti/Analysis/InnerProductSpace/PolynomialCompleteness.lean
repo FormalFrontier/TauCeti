@@ -65,14 +65,6 @@ theorem integrable_pow_of_exp_moment {ν : Measure ℝ}
   rw [Real.norm_eq_abs, abs_pow]
   exact pow_abs_le_factorial_div_pow_mul_exp ha k x
 
-/-- A measure carrying one finite exponential moment integrates every monomial squared: `xⁿ` lies
-in `L²`. The exact-degree specialization of `memLp_two_algebraMap_eval` at `q = Xⁿ`. -/
-theorem memLp_two_algebraMap_pow {ν : Measure ℝ}
-    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (n : ℕ) :
-    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
-  simpa using memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜)
-    (integrable_pow_of_exp_moment hexp) (Polynomial.X ^ n)
-
 /-- Every polynomial lies in `L²` of a measure carrying one finite exponential moment. -/
 theorem memLp_two_algebraMap_eval {ν : Measure ℝ}
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)

@@ -44,12 +44,15 @@ variable (𝕜 : Type*) [RCLike 𝕜]
 
 /-- The Chebyshev measure has a finite exponential moment: `e^{|x|}` is integrable against
 `measureT`, immediate from compact support `[-1,1]` (there `|x| ≤ 1`, so the integrand is bounded)
-and finiteness of `measureT`. This is the hypothesis the completeness engine consumes. -/
+and finiteness of `measureT`. This is the hypothesis the completeness engine consumes.
+
+Both halves are already packaged by `TauCeti.integrable_exp_mul_abs_smul_measureT`, applied here to
+the constant function `1`, which is integrable because `measureT` is finite. -/
 theorem exp_moment_measureT :
     ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) measureT :=
-  ⟨1, one_pos,
-    integrable_measureT (by fun_prop : ContinuousOn (fun x : ℝ => Real.exp (1 * |x|))
-      (Set.Icc (-1) 1))⟩
+  ⟨1, one_pos, by
+    simpa using integrable_exp_mul_abs_smul_measureT (𝕜 := ℝ) (g := fun _ : ℝ => (1 : ℝ)) 1
+      (integrable_const 1)⟩
 
 /-- **Monomial-orthogonality from mode-orthogonality.** A vector of `L²(measureT)` orthogonal to
 every normalized Chebyshev mode has every scalar-cast monomial moment `∫ (x : 𝕜)ⁿ · g` vanishing.
