@@ -33,11 +33,11 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u
+universe u v
 
 namespace Rep
 
-variable {k G : Type u} [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Group G] {S : Subgroup G}
 
 section CosetModel
 
@@ -82,7 +82,7 @@ theorem rightCosetFactor_out (q : Quotient (QuotientGroup.rightRel S)) :
 /-- Coinduction from a subgroup is linearly equivalent to a product of copies of the original
 representation indexed by the right cosets. The forward map evaluates an equivariant function at
 the chosen representative of each right coset. -/
-noncomputable def coindSubtypeEquivPi (A : Rep.{u} k S) :
+noncomputable def coindSubtypeEquivPi (A : Rep.{max u v} k S) :
     Rep.coind S.subtype A ≃ₗ[k]
       (Quotient (QuotientGroup.rightRel S) → A) where
   toFun f q := f.1 q.out
@@ -118,7 +118,7 @@ noncomputable def coindSubtypeEquivPi (A : Rep.{u} k S) :
 
 /-- The coset model evaluates a coinduced function at the chosen representative. -/
 @[simp]
-theorem coindSubtypeEquivPi_apply (A : Rep.{u} k S)
+theorem coindSubtypeEquivPi_apply (A : Rep.{max u v} k S)
     (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     coindSubtypeEquivPi A f q = f.1 q.out := by
   rw [coindSubtypeEquivPi]
@@ -126,7 +126,7 @@ theorem coindSubtypeEquivPi_apply (A : Rep.{u} k S)
 
 /-- The inverse coset model extends a value from each representative by `S`-equivariance. -/
 @[simp]
-theorem coindSubtypeEquivPi_symm_apply (A : Rep.{u} k S)
+theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) (g : G) :
     ((coindSubtypeEquivPi A).symm x).1 g =
       A.ρ (rightCosetFactor (S := S) g) (x (Quotient.mk'' g)) := by
@@ -135,7 +135,7 @@ theorem coindSubtypeEquivPi_symm_apply (A : Rep.{u} k S)
 
 /-- The underlying vector space of induction from a finite-index subgroup is a product of copies
 of the original representation indexed by the right cosets. -/
-noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
+noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{max u v} k S) :
     Rep.ind S.subtype A ≃ₗ[k]
       (Quotient (QuotientGroup.rightRel S) → A) := by
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -146,7 +146,7 @@ noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
 /-- The coset model of induction transports along `Rep.indCoindIso` and then evaluates at the
 chosen representative of each right coset. -/
 @[simp]
-theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{u} k S)
+theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max u v} k S)
     (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     indSubtypeEquivPi A x q =
       ((letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -158,7 +158,7 @@ theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{u} k S)
 /-- The inverse coset model of induction extends by `S`-equivariance and then transports back
 along `Rep.indCoindIso`. -/
 @[simp]
-theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{u} k S)
+theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) :
     (indSubtypeEquivPi A).symm x =
       (letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -175,7 +175,7 @@ section Dimension
 variable [Field k]
 
 /-- Induction from a finite-index subgroup preserves finite-dimensionality. -/
-noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{u} k S)
+noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max u v} k S)
     [FiniteDimensional k A] : FiniteDimensional k (Rep.ind S.subtype A) := by
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   letI := S.fintypeQuotientOfFiniteIndex
@@ -187,7 +187,7 @@ noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{u} k S)
 
 /-- The dimension of induction from a finite-index subgroup is the index times the original
 dimension. -/
-theorem finrank_ind [S.FiniteIndex] (A : Rep.{u} k S) [FiniteDimensional k A] :
+theorem finrank_ind [S.FiniteIndex] (A : Rep.{max u v} k S) [FiniteDimensional k A] :
     Module.finrank k (Rep.ind S.subtype A) = S.index * Module.finrank k A := by
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   letI := S.fintypeQuotientOfFiniteIndex
