@@ -5,7 +5,8 @@ Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
-public import TauCeti.Analysis.Complex.Conformal.BranchLogRoot
+public import TauCeti.Analysis.Complex.BranchLogRoot
+public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import Mathlib.Analysis.Complex.OpenMapping
 public import Mathlib.Analysis.Convex.Contractible
 
@@ -166,32 +167,35 @@ theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSim
 injective holomorphic maps `U → 𝔻` that *fix a chosen base point* `z₀`, so the nonemptiness it needs
 is this one, not the bare version above.
 
-The normalization is an affine correction, not a disc automorphism: if `f` lands in `𝔻`, then
-`f z - f z₀` lands in `ball 0 2` by the triangle inequality, so halving returns to `𝔻` while sending
-`z₀` to `0`. Injectivity and holomorphy are inherited, since `w ↦ (w - f z₀) / 2` is affine and
-injective on all of `ℂ`.
+The normalization is the textbook one: post-compose with the disc automorphism centred at
+`c = f z₀`, `w ↦ (w - c) / (1 - conj c * w)`. That is the L2 disc-automorphism API of this roadmap,
+already available here as `TauCeti.unitDiscMoebius` and its scalar formula, so this step consumes
+it rather than substituting a weaker correction:
 
-The textbook normalization instead composes with the disc automorphism centred at `f z₀`,
-`w ↦ (w - c) / (1 - conj c * w)`. That is the better map — it is onto `𝔻`, and it is what the
-uniqueness half of the theorem needs — but `Aut(𝔻)` is an **L2** deliverable of the
-`ConformalMapping` roadmap and does not exist in this checkout or in Mathlib yet. For the *nonempty
-normalized family* obligation alone, surjectivity is not required, so this L3 step does not have to
-wait on L2. Replace this proof with the automorphism composition once L2 lands. -/
+* holomorphy — `TauCeti.differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one`;
+* self-map of `𝔻` — `TauCeti.mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one`;
+* injectivity on `𝔻` — the factor centred at `-c` is a left inverse
+  (`TauCeti.leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one`).
+
+Each is stated for a scalar centre of norm `< 1`, which is exactly what `f z₀ ∈ 𝔻` supplies, so no
+passage through the bundled `Complex.UnitDisc` is needed. The Moebius factor is onto `𝔻`, which the
+uniqueness half of the Riemann mapping theorem will need; the *nonempty normalized family*
+obligation proved here uses only the three properties above. -/
 theorem exists_differentiableOn_injOn_mapsTo_unitBall_apply_eq_zero {U : Set ℂ}
     (hUc : IsSimplyConnected U) (hUo : IsOpen U) (hUne : U ≠ univ) {z₀ : ℂ} (hz₀ : z₀ ∈ U) :
     ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) ∧ f z₀ = 0 := by
   obtain ⟨f, hfd, hfi, hfm⟩ := exists_differentiableOn_injOn_mapsTo_unitBall hUc hUo hUne
-  refine ⟨fun z => (f z - f z₀) / 2, ?_, ?_, ?_, by simp⟩
-  · exact fun z hz => ((hfd z hz).sub_const _).div_const _
-  · intro z₁ hz₁ z₂ hz₂ hEq
-    exact hfi hz₁ hz₂ (by linear_combination 2 * hEq)
-  · intro z hz
-    have h₁ : ‖f z‖ < 1 := by simpa [mem_ball, dist_zero_right] using hfm hz
-    have h₂ : ‖f z₀‖ < 1 := by simpa [mem_ball, dist_zero_right] using hfm hz₀
-    have hnum : ‖f z - f z₀‖ < 2 := lt_of_le_of_lt (norm_sub_le _ _) (by linarith)
-    have hden : ‖(2 : ℂ)‖ = 2 := by norm_num
-    rw [mem_ball, dist_zero_right, norm_div, hden, div_lt_one (by norm_num : (0 : ℝ) < 2)]
-    exact hnum
+  -- The centre of the normalizing automorphism is the base point's image, which lies in `𝔻`.
+  have hc : ‖f z₀‖ < 1 := by simpa [mem_ball, dist_zero_right] using hfm hz₀
+  set m : ℂ → ℂ := fun w => (w - f z₀) / (1 - (starRingEnd ℂ) (f z₀) * w) with hm
+  have hmd : DifferentiableOn ℂ m (ball (0 : ℂ) 1) :=
+    differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hc
+  have hmm : MapsTo m (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+    mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one hc
+  have hmi : InjOn m (ball (0 : ℂ) 1) :=
+    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hc).injOn
+  refine ⟨m ∘ f, hmd.comp hfd hfm, hmi.comp hfi hfm, hmm.comp hfm, ?_⟩
+  simp [hm]
 
 /- **Non-vacuity** (documentation, not public API). The hypotheses above are satisfiable: the open
 unit ball is simply connected (being convex, hence contractible), open, and proper. Without this the
