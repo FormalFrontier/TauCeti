@@ -78,7 +78,7 @@ def ofBasedPath (x₀ : X) (α : BasedPath x₀) : UniversalCover x₀ :=
   mk (BasedPath.endpoint α) (Path.Homotopic.Quotient.mk α.toPath)
 
 /-- `ofBasedPath` records the endpoint and homotopy class of its based path. -/
-theorem ofBasedPath_eq (α : BasedPath x₀) :
+theorem ofBasedPath_def (α : BasedPath x₀) :
     ofBasedPath x₀ α =
       mk (BasedPath.endpoint α) (Path.Homotopic.Quotient.mk α.toPath) :=
   (rfl)

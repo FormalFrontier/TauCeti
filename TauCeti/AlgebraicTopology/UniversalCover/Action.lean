@@ -108,14 +108,14 @@ instance : ContinuousConstSMul (FundamentalGroup X x₀) (UniversalCover x₀) w
         ofBasedPath x₀ (BasedPath.ofPath (γ.trans β.toPath))) by
       apply h_cont.congr
       intro β
-      rw [ofBasedPath_ofPath, Function.comp_apply, ofBasedPath_eq, smul_mk,
+      rw [ofBasedPath_ofPath, Function.comp_apply, ofBasedPath_def, smul_mk,
         Path.Homotopic.Quotient.mk_trans, hγ']
     refine (continuous_ofBasedPath x₀).comp (Continuous.subtype_mk ?_ _)
     refine ContinuousMap.continuous_of_continuous_uncurry _ ?_
     have h_eval : Continuous fun p : BasedPath x₀ × I ↦ p.1.1 p.2 :=
       continuous_eval.comp (continuous_subtype_val.prodMap continuous_id)
-    simpa using!
-      Path.trans_continuous_family (a := fun _ : BasedPath x₀ ↦ x₀)
+    change Continuous fun p : BasedPath x₀ × I ↦ γ.trans p.1.toPath p.2
+    exact Path.trans_continuous_family (a := fun _ : BasedPath x₀ ↦ x₀)
         (b := fun _ : BasedPath x₀ ↦ x₀)
         (c := fun β : BasedPath x₀ ↦ BasedPath.endpoint β)
         (fun _ ↦ γ) (Path.continuous_uncurry_iff.mpr continuous_const)
