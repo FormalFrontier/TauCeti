@@ -82,7 +82,7 @@ theorem orthogonal_span_normalizedChebyshevTLp_eq_bot :
     intro n
     exact inner_eq_zero_symm.mpr
       ((Submodule.mem_orthogonal _ _).mp hg _ (Submodule.subset_span ⟨n, rfl⟩))
-  have hae := ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments (ν := measureT)
+  have hae := ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp (ν := measureT)
     exp_moment_measureT (Lp.memLp g) (monomial_moment_measureT_eq_zero 𝕜 g hmode)
   exact (Lp.eq_zero_iff_ae_eq_zero).mpr hae
 

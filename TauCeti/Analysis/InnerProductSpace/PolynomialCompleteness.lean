@@ -182,7 +182,7 @@ theorem bareNormalizedLp_ortho_eq_bot {μ : Measure ℝ}
     intro n
     have h := hpoly (Polynomial.X ^ n)
     simpa [eval_pow, eval_X, map_pow] using h
-  have := ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments hexp hGmem hmom
+  have := ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp hexp hGmem hmom
   exact (Lp.eq_zero_iff_ae_eq_zero).mpr this
 
 end TauCeti
