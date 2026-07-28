@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basic
 public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 
@@ -14,8 +15,19 @@ For a finite group `G` and a commutative semiring `k`, the coefficients of a cen
 the group algebra `k[G]` are constant on conjugacy classes. This identifies the center linearly
 with the space of `k`-valued functions on `ConjClasses G`.
 
-The corresponding family is a basis already over a commutative semiring. Over a field, this
-implies that the dimension of the center is the number of conjugacy classes.
+The corresponding family is a basis already over a commutative semiring. Over a ring satisfying
+the strong rank condition, this implies that the dimension of the center is the number of
+conjugacy classes.
+
+The identification is built by sending a central element to its coefficient function as a
+`TauCeti.ClassFunction`, and composing with the equivalence
+`TauCeti.ClassFunction.equivConjClasses`, so the descent to the quotient and its linearity are
+reused rather than repeated here.
+
+This implementation follows the
+[Character Theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
+and its
+[suggested declarations](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean).
 -/
 
 public section
@@ -27,26 +39,42 @@ open scoped BigOperators
 variable {G k : Type*} [Group G] [Fintype G] [DecidableEq G] [CommSemiring k]
 
 omit [Fintype G] [DecidableEq G] in
+/-- The coefficient function of a central group-algebra element, as a class function on `G`. -/
+def centerToClassFunction :
+    Subalgebra.center k (MonoidAlgebra k G) →ₗ[k] ClassFunction k G where
+  toFun z := ⟨fun g => z.1.coeff g, ClassFunction.mem_iff.mpr fun g x => by
+    have hz := congrArg (fun a : MonoidAlgebra k G => a.coeff (x * g))
+      (Subalgebra.mem_center_iff.mp z.2 (MonoidAlgebra.of k G x))
+    simpa [mul_assoc] using hz.symm⟩
+  map_add' z w := rfl
+  map_smul' c z := rfl
+
+omit [Fintype G] [DecidableEq G] in
+/-- The class function of a central element is its coefficient function. -/
+@[simp]
+theorem centerToClassFunction_apply (z : Subalgebra.center k (MonoidAlgebra k G)) (g : G) :
+    (centerToClassFunction z).1 g = z.1.coeff g :=
+  (rfl)
+
+omit [Fintype G] [DecidableEq G] in
 /-- The coefficients of a central group-algebra element agree on conjugate group elements. -/
 theorem center_coeff_eq_of_isConj (z : Subalgebra.center k (MonoidAlgebra k G))
     {g h : G} (hgh : IsConj g h) :
-    z.1.coeff g = z.1.coeff h := by
-  obtain ⟨x, rfl⟩ := isConj_iff.mp hgh
-  have hz := congrArg (fun a : MonoidAlgebra k G => a.coeff (x * g))
-    (Subalgebra.mem_center_iff.mp z.2 (MonoidAlgebra.of k G x))
-  simpa [mul_assoc] using hz
+    z.1.coeff g = z.1.coeff h :=
+  ClassFunction.eq_of_isConj (centerToClassFunction z) hgh
 
+omit [Fintype G] [DecidableEq G] in
 /-- Read the coefficients of a central group-algebra element as a function on conjugacy classes. -/
 noncomputable def centerToConjClasses
     (z : Subalgebra.center k (MonoidAlgebra k G)) : ConjClasses G → k :=
-  Quotient.lift (fun g => z.1.coeff g) fun _ _ h => center_coeff_eq_of_isConj z h
+  ClassFunction.equivConjClasses (centerToClassFunction z)
 
 omit [Fintype G] [DecidableEq G] in
 /-- Reading the coefficient on the conjugacy class of `g` recovers the coefficient at `g`. -/
 @[simp]
 theorem centerToConjClasses_mk (z : Subalgebra.center k (MonoidAlgebra k G)) (g : G) :
-    centerToConjClasses z (ConjClasses.mk g) = z.1.coeff g :=
-  (rfl)
+    centerToConjClasses z (ConjClasses.mk g) = z.1.coeff g := by
+  simp [centerToConjClasses]
 
 /-- Regard a class sum as an element of the center of the group algebra. -/
 noncomputable def classSumCenter (C : ConjClasses G) :
@@ -78,13 +106,9 @@ noncomputable def centerEquivConjClasses :
   toFun := centerToConjClasses
   invFun := ofConjClassesCenter
   map_add' z w := by
-    ext C
-    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-    simp
+    simp only [centerToConjClasses, map_add]
   map_smul' c z := by
-    ext C
-    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-    simp
+    simp only [centerToConjClasses, map_smul, RingHom.id_apply]
   left_inv z := by
     ext g
     simp
@@ -133,7 +157,7 @@ end TauCeti
 
 namespace TauCeti
 
-variable (k G : Type*) [Field k] [Group G] [Finite G]
+variable (k G : Type*) [CommSemiring k] [StrongRankCondition k] [Group G] [Finite G]
 
 /-- The dimension of the center of a finite group algebra is the number of conjugacy classes. -/
 theorem finrank_center_monoidAlgebra :
