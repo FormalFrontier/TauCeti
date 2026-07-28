@@ -112,10 +112,6 @@ private def transposeCellEquiv (μ : YoungDiagram) : ↥μ.transpose.cells ≃ �
     apply Subtype.ext
     exact Prod.swap_swap c.1
 
-private theorem finCongr_apply_val {m n : ℕ} (h : m = n) (a : Fin m) :
-    (finCongr h a).val = a.val :=
-  rfl
-
 /-- Transpose a standard Young tableau by swapping its rows and columns while preserving its
 labels. -/
 def transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
@@ -143,7 +139,7 @@ theorem transpose_apply_val {μ : YoungDiagram} (T : StandardYoungTableau μ)
       congrArg Fin.val (toEquiv_apply T.transpose c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩).val := by
       simp only [transpose, Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk,
-        finCongr_apply_val, toEquiv_apply]
+        finCongr, Fin.val_cast, toEquiv_apply]
 
 private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpose) :
     StandardYoungTableau μ where
@@ -168,7 +164,7 @@ private theorem untranspose_apply_val {μ : YoungDiagram}
       congrArg Fin.val (toEquiv_apply (untranspose T) c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val := by
       simp only [untranspose, Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
-        finCongr_apply_val, toEquiv_apply]
+        Equiv.coe_fn_mk, finCongr, Fin.val_cast, toEquiv_apply]
 
 /-- Transposition is an equivalence between standard Young tableaux of conjugate shapes. -/
 def transposeEquiv (μ : YoungDiagram) :
