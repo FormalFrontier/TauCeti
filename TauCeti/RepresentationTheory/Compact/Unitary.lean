@@ -32,9 +32,11 @@ namespace ContRepresentation
 variable {R G V : Type*} [Ring R] [Group G] [AddCommGroup V] [TopologicalSpace V]
   [IsTopologicalAddGroup V] [Module R V]
 
-/-- Applying a continuous group representation at an element and then at its inverse cancels. -/
-@[simp]
-theorem self_inv_apply (π : ContRepresentation R G V) (g : G) (v : V) :
+/-- Applying a continuous group representation at an element and then at its inverse cancels.
+
+This restates `Representation.self_inv_apply` for the continuous action coercion, which `simp` does
+not otherwise reach; it is an implementation detail of the inverse-transfer proofs below. -/
+private theorem self_inv_apply (π : ContRepresentation R G V) (g : G) (v : V) :
     π g (π g⁻¹ v) = v :=
   Representation.self_inv_apply π.toRepresentation g v
 
