@@ -12,18 +12,18 @@ public section
 # Lowering positive roots by simple reflections
 
 This file records how reflection in a simple root changes the height relative to a root-pairing
-base. The change is the corresponding Cartan integer. Consequently, every positive root admits a
-simple reflection that strictly decreases its height. In a finite reduced crystallographic root
-pairing, a positive root that is not simple can be lowered while remaining positive.
+base. The change is the corresponding Cartan integer. When the root index type is finite, every
+positive root admits a simple reflection that strictly decreases its height. If the coefficient
+ring is also a domain and the pairing is reduced, a positive root that is not simple can be lowered
+while remaining positive.
 
 ## Main results
 
 * `TauCeti.height_reflectionPerm` computes the height after an arbitrary root reflection.
 * `TauCeti.height_reflectionPerm_lt_iff` characterizes strict height decrease by positivity of
   the corresponding Cartan integer.
-* `TauCeti.exists_mem_support_height_reflectionPerm_lt` gives a height-lowering simple reflection.
-* `TauCeti.exists_mem_support_isPos_reflectionPerm_height_lt` gives the positive-root lowering
-  step for a nonsimple positive root.
+* `TauCeti.exists_mem_support_height_reflectionPerm_lt` gives the positive-root lowering step for
+  a nonsimple positive root.
 
 ## References
 
@@ -56,6 +56,7 @@ lemma height_reflectionPerm (b : P.Base) (i j : ι) :
   simp [sub_eq_add_neg]
 
 /-- Reflection in a simple root subtracts the corresponding Cartan integer from the height. -/
+@[simp]
 lemma height_reflectionPerm_of_mem_support (b : P.Base) {i j : ι}
     (hi : i ∈ b.support) :
     b.height (P.reflectionPerm i j) =
@@ -78,8 +79,7 @@ lemma exists_mem_support_pos_pairingIn [Finite ι] (b : P.Base) {j : ι} (hj : b
   obtain ⟨i, hi, hpair⟩ := hj.exists_mem_support_pos_pairingIn
   exact ⟨i, hi, (P.zero_lt_pairingIn_iff' ℤ).mp hpair⟩
 
-/-- Every positive root admits a simple reflection that strictly decreases its height. -/
-theorem exists_mem_support_height_reflectionPerm_lt [Finite ι]
+private lemma exists_mem_support_height_reflectionPerm_lt_aux [Finite ι]
     (b : P.Base) {j : ι} (hj : b.IsPos j) :
     ∃ i ∈ b.support,
       b.height (P.reflectionPerm i j) < b.height j := by
@@ -88,13 +88,13 @@ theorem exists_mem_support_height_reflectionPerm_lt [Finite ι]
 
 /-- A nonsimple positive root admits a simple reflection that remains positive and has strictly
 smaller height. This is the positive-root lowering step used by induction on height. -/
-theorem exists_mem_support_isPos_reflectionPerm_height_lt [Finite ι] [IsDomain R]
+theorem exists_mem_support_height_reflectionPerm_lt [Finite ι] [IsDomain R]
     [P.IsReduced] (b : P.Base) {j : ι}
     (hj : b.IsPos j) (hj' : j ∉ b.support) :
     ∃ i ∈ b.support, b.IsPos (P.reflectionPerm i j) ∧
       b.height (P.reflectionPerm i j) < b.height j := by
   obtain ⟨i, hi, hheight⟩ :=
-    exists_mem_support_height_reflectionPerm_lt P b hj
+    exists_mem_support_height_reflectionPerm_lt_aux P b hj
   refine ⟨i, hi, hj.reflectionPerm hi ?_, hheight⟩
   exact fun hji ↦ hj' (hji ▸ hi)
 
