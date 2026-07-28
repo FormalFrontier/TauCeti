@@ -182,6 +182,19 @@ theorem componentPerm_relabelColumns (κ : Equiv.Perm (Fin n)) :
   ext c
   simp [componentPerm_apply]
 
+/-- Row relabeling preserves the component cycles. -/
+@[simp]
+theorem componentCycles_relabelRows (ρ : Equiv.Perm (Fin n)) :
+    (G.relabelRows ρ).componentCycles = G.componentCycles := by
+  simp [componentCycles]
+
+/-- Column relabeling transports component cycles by conjugation. -/
+theorem mem_componentCycles_relabelColumns (κ c : Equiv.Perm (Fin n)) :
+    κ * c * κ⁻¹ ∈ (G.relabelColumns κ).componentCycles ↔
+      c ∈ G.componentCycles := by
+  rw [componentCycles, componentPerm_relabelColumns, componentCycles,
+    Equiv.Perm.mem_cycleFactorsFinset_conj]
+
 /-- Row relabeling preserves the component-size multiset. -/
 @[simp]
 theorem componentCycleType_relabelRows (ρ : Equiv.Perm (Fin n)) :
@@ -201,6 +214,26 @@ theorem componentPerm_swapMarkings :
     G.swapMarkings.componentPerm = G.componentPerm⁻¹ := by
   simp [componentPerm]
 
+/-- Exchanging the marking types reverses every component cycle. -/
+theorem mem_componentCycles_swapMarkings (c : Equiv.Perm (Fin n)) :
+    c⁻¹ ∈ G.swapMarkings.componentCycles ↔ c ∈ G.componentCycles := by
+  rw [componentCycles, componentPerm_swapMarkings, componentCycles]
+  have aux : ∀ {g c : Equiv.Perm (Fin n)}, c ∈ g.cycleFactorsFinset →
+      c⁻¹ ∈ g⁻¹.cycleFactorsFinset := by
+    intro g c hmem
+    have hc := Equiv.Perm.mem_cycleFactorsFinset_iff.mp hmem
+    rw [Equiv.Perm.mem_cycleFactorsFinset_iff]
+    refine ⟨hc.1.inv, ?_⟩
+    intro a ha
+    rw [Equiv.Perm.support_inv] at ha
+    have hga : g⁻¹ a ∈ c.support := by
+      rw [← Equiv.Perm.mem_cycleFactorsFinset_support hmem (g⁻¹ a)]
+      simpa using ha
+    apply c.injective
+    simpa using (hc.2 (g⁻¹ a) hga).symm
+  refine ⟨fun h ↦ ?_, aux⟩
+  simpa using aux (g := G.componentPerm⁻¹) (c := c⁻¹) h
+
 /-- Exchanging the two marking types preserves the component-size multiset. -/
 @[simp]
 theorem componentCycleType_swapMarkings :
@@ -216,12 +249,28 @@ theorem componentPerm_transpose :
   ext c
   simp [componentPerm, GridState.transpose]
 
+/-- Diagonal reflection transports component cycles by inversion and conjugation. -/
+theorem mem_componentCycles_transpose (c : Equiv.Perm (Fin n)) :
+    G.X.toPerm * c⁻¹ * G.X.toPerm⁻¹ ∈ G.transpose.componentCycles ↔
+      c ∈ G.componentCycles := by
+  rw [componentCycles, componentPerm_transpose,
+    Equiv.Perm.mem_cycleFactorsFinset_conj]
+  simpa [componentCycles, componentPerm_swapMarkings] using
+    G.mem_componentCycles_swapMarkings c
+
 /-- Diagonal reflection preserves the component-size multiset. -/
 @[simp]
 theorem componentCycleType_transpose :
     G.transpose.componentCycleType = G.componentCycleType := by
   rw [componentCycleType, componentPerm_transpose, Equiv.Perm.cycleType_conj,
     Equiv.Perm.cycleType_inv, componentCycleType]
+
+/-- Half-turn rotation transports component cycles by coordinate-reversal conjugation. -/
+theorem mem_componentCycles_rotate (c : Equiv.Perm (Fin n)) :
+    Fin.revPerm * c * Fin.revPerm⁻¹ ∈ G.rotate.componentCycles ↔
+      c ∈ G.componentCycles := by
+  simpa [GridDiagram.rotate] using
+    G.mem_componentCycles_relabelColumns Fin.revPerm c
 
 /-- Half-turn rotation preserves the component-size multiset. -/
 @[simp]
