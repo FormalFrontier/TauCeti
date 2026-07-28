@@ -105,15 +105,18 @@ copy of a mixing representative is another one, so no witness-level a.e.-equalit
 conclude `ν =ᵐ[μ] ν'` from `MixedIIDWith` alone; a.e. uniqueness of the witness belongs to the
 conditional predicate (`conditionallyIID_ae_unique`).
 
-`[IsProbabilityMeasure μ]` is load-bearing rather than decorative. For an infinite base measure
-distinct mixing measures can produce identical `∞`-valued finite-dimensional mixtures, so
-mixing-law uniqueness fails at the hypothesis-light generality the definitions otherwise enjoy. -/
-theorem mixedIID_mixingLaw_unique {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+*Finiteness* of `μ` is load-bearing rather than decorative: for an infinite base measure, distinct
+mixing measures can produce identical `∞`-valued finite-dimensional mixtures, so mixing-law
+uniqueness fails at the hypothesis-light generality the definitions otherwise enjoy.
+
+Normalization, however, is not needed. The roadmap states this target with
+`[IsProbabilityMeasure μ]`, but the justification it gives only separates finite from infinite base
+measures, and the proof goes through for any finite `μ`. -/
+theorem mixedIID_mixingLaw_unique {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : ∀ n, AEMeasurable (X n) μ) {ν ν' : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) (h' : MixedIIDWith μ X ν') :
     μ.map ν = μ.map ν' := by
-  haveI : IsProbabilityMeasure (μ.map ν) :=
-    Measure.isProbabilityMeasure_map h.measurable_mixingRepresentative.aemeasurable
+  haveI : IsFiniteMeasure (μ.map ν) := Measure.isFiniteMeasure_map _ _
   refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
   rw [← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h,
     ← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h']
