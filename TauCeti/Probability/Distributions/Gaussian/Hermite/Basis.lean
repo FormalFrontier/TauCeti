@@ -44,17 +44,6 @@ namespace TauCeti
 
 open MeasureTheory Polynomial Real ProbabilityTheory
 
-/-- The standard Gaussian measure is the Lebesgue measure weighted by its own density — the shape
-`TauCeti.hilbertBasisOfWeightedMeasure` produces its basis on.
-
-Stated before the integrability and orthogonality results below because both are obtained by
-transporting a `gaussianReal`-side statement along it, rather than re-proved density-side. -/
-theorem gaussianReal_zero_one_eq_withDensity :
-    (gaussianReal 0 1 : Measure ℝ)
-      = volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) := by
-  rw [gaussianReal_of_var_ne_zero 0 one_ne_zero]
-  rfl
-
 /-- **Orthogonality against the standard Gaussian density.**
 `∫ Hₘ Hₙ dγ = δₘₙ · n!`. This is the density-side reading of the Gaussian-measure orthogonality
 milestone `TauCeti.integral_hermite_mul_hermite_gaussianReal`: `∫ · ∂γ` unfolds to `∫ pdf • ·`, so
@@ -92,12 +81,13 @@ integrable against `γ`.
 Both one-sided exponentials are already integrable against a Gaussian
 (`ProbabilityTheory.integrable_exp_mul_gaussianReal`, which is the mgf being everywhere finite), and
 `ProbabilityTheory.integrable_exp_mul_abs` folds the rates `a` and `-a` into the two-sided
-`e^{a|x|}`. Transporting along `gaussianReal_zero_one_eq_withDensity` then puts it in the
-with-density form the completeness theorem takes. -/
+`e^{a|x|}`. Transporting along `ProbabilityTheory.gaussianReal_of_var_ne_zero` then puts it in the
+with-density form the completeness theorem takes; the `ENNReal.ofReal ∘ gaussianPDFReal` spelling
+of the density is definitionally the `gaussianPDF` that lemma produces. -/
 theorem integrable_exp_mul_abs_gaussianPDFReal (a : ℝ) :
     Integrable (fun x : ℝ => Real.exp (a * |x|))
       (volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x)) := by
-  rw [← gaussianReal_zero_one_eq_withDensity]
+  rw [← gaussianPDF_def, ← gaussianReal_of_var_ne_zero 0 one_ne_zero]
   exact integrable_exp_mul_abs (X := fun x : ℝ => x) (t := a)
     (integrable_exp_mul_gaussianReal a) (integrable_exp_mul_gaussianReal (-a))
 
@@ -122,7 +112,7 @@ private theorem memLp_hermiteℝ_normalized (n : ℕ) :
     (fun n => (n.factorial : ℝ)) n
 
 /-- The basis in the weighted-measure form the machinery produces; `gaussianHermiteHilbertBasis`
-is this transported along `gaussianReal_zero_one_eq_withDensity`. -/
+is this transported along `ProbabilityTheory.gaussianReal_of_var_ne_zero`. -/
 private noncomputable def gaussianHermiteHilbertBasisAux :
     HilbertBasis ℕ 𝕜
       (Lp 𝕜 2 (volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x))) :=
@@ -156,7 +146,8 @@ Where `TauCeti.hermiteHilbertBasis` carries the Gaussian in the function, this c
 measure — the form multivariate `L²(γ^ι)` and chaos expansions consume. -/
 noncomputable def gaussianHermiteHilbertBasis :
     HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (gaussianReal 0 1)) :=
-  cast (by rw [gaussianReal_zero_one_eq_withDensity]) (gaussianHermiteHilbertBasisAux 𝕜)
+  cast (by rw [gaussianReal_of_var_ne_zero 0 one_ne_zero, gaussianPDF_def])
+    (gaussianHermiteHilbertBasisAux 𝕜)
 
 /-- **The basis vectors are the normalized Hermite polynomials.** Without this the construction
 would only exhibit *some* Hilbert basis of `L²(γ)`; here each vector is pinned to `Hₙ/√(n!)`, which
@@ -178,7 +169,10 @@ theorem coe_gaussianHermiteHilbertBasis (n : ℕ) :
       (memLp_hermiteℝ_normalized 𝕜) n] with x hx
     rw [hx, eval_hermiteℝ]
   rw [gaussianHermiteHilbertBasis]
-  exact coe_cast_hilbertBasis 𝕜 gaussianReal_zero_one_eq_withDensity.symm _ _ n haux
+  have hγ : (volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x))
+      = (gaussianReal 0 1 : Measure ℝ) := by
+    rw [gaussianReal_of_var_ne_zero 0 one_ne_zero, gaussianPDF_def]
+  exact coe_cast_hilbertBasis 𝕜 hγ _ _ n haux
 
 /-- **The Gaussian envelope carries `Hₙ/√(n!)` to a dilated Hermite function.**
 `√(γ-density x) · Hₙ(x)/√(n!) = 2^{-1/4} · ψₙ(x/√2)`, with `2^{-1/4}` written as `(√√2)⁻¹` to stay
@@ -238,12 +232,9 @@ theorem weightL2Isometry_gaussianHermiteHilbertBasis_apply (n : ℕ) :
   -- `w > 0` makes `volume` absolutely continuous with respect to `γ = w·volume`, so the
   -- `γ`-a.e. representative of the basis vector is also a `volume`-a.e. one.
   have hac : (volume : Measure ℝ) ≪ (gaussianReal 0 1 : Measure ℝ) := by
-    rw [gaussianReal_zero_one_eq_withDensity]
-    refine withDensity_absolutelyContinuous' (by fun_prop)
-      (Filter.Eventually.of_forall fun x => ?_)
-    simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
-    rw [gaussianPDFReal_zero_one]
-    positivity
+    rw [gaussianReal_of_var_ne_zero 0 one_ne_zero]
+    exact withDensity_absolutelyContinuous' (by fun_prop)
+      (Filter.Eventually.of_forall fun x => (gaussianPDF_pos 0 one_ne_zero x).ne')
   filter_upwards [(coe_gaussianHermiteHilbertBasis 𝕜 n).filter_mono hac.ae_le] with x hx
   rw [hx, ← eval_hermiteℝ, Algebra.smul_def, Algebra.smul_def, ← map_mul, ← map_mul,
     sqrt_gaussianPDFReal_mul_hermiteℝ_div_sqrt_factorial n x]
