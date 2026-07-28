@@ -151,12 +151,14 @@ theorem componentCount_eq_zero_of_zero (G : GridDiagram 0) :
   G.componentCount_eq_zero_iff.mpr rfl
 
 /-- An empty grid does not represent a knot. -/
+@[simp]
 theorem not_isKnot_of_zero (G : GridDiagram 0) : ¬G.IsKnot := by
   rw [IsKnot, componentCount_eq_zero_of_zero]
   exact Nat.zero_ne_one
 
 /-- Every `2 × 2` grid diagram represents a knot. Its fixed-point-free component permutation is
 the transposition of the two columns. -/
+@[simp]
 theorem isKnot_of_two (G : GridDiagram 2) : G.IsKnot := by
   rw [isKnot_iff_componentPerm_isCycle]
   apply Equiv.Perm.IsSwap.isCycle
