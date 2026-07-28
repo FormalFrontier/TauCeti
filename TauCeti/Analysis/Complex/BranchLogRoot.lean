@@ -34,10 +34,12 @@ nonvanishing function is automatically holomorphic.
 The mathematics here is an upgrade of prior Mathlib work, not a first proof, and rests on two
 efforts of Yury Kudryashov's.
 
-*The branch itself* is Mathlib's: `Complex.exists_continuousOn_eqOn_exp_comp` and
-`Complex.exists_continuousOn_pow_eq` in `Mathlib.Analysis.Complex.BranchLogRoot` (© Yury Kudryashov)
-supply the continuous branch on a simply connected domain, which this file consumes rather than
-rebuilds. Everything added below is the continuity-to-holomorphy upgrade.
+*The branch itself* is Mathlib's: `Complex.exists_continuousOn_eqOn_exp_comp` in
+`Mathlib.Analysis.Complex.BranchLogRoot` (© Yury Kudryashov) supplies the continuous logarithm
+branch on a simply connected domain, which this file consumes rather than rebuilds. Everything
+added below is the continuity-to-holomorphy upgrade. The `n`-th root is *not* obtained from
+Mathlib's continuous root API (`Complex.exists_continuousOn_pow_eq` is never used here): it is
+derived as `exp (L / n)` from the upgraded holomorphic logarithm branch `L`.
 
 *The consumer* is the Riemann mapping construction in `Mathlib.Analysis.Complex.RiemannMapping`
 (© Yury Kudryashov), whose `Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` performs the same

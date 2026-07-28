@@ -45,10 +45,11 @@ cannot name it — a direct reference elaborates to `Unknown constant`, while a 
 same file resolves), which is why this file re-derives the construction rather than reusing it.
 
 *The square root it rests on.* The branch used here comes from
-`TauCeti.exists_differentiableOn_pow_eq`, which is the holomorphic upgrade of Mathlib's continuous
-branch API in `Mathlib.Analysis.Complex.BranchLogRoot` (`Complex.exists_continuousOn_eqOn_exp_comp`,
-`Complex.exists_continuousOn_pow_eq`). The existence half of this step is therefore Mathlib's; the
-sibling file `BranchLogRoot.lean` records that debt in detail.
+`TauCeti.exists_differentiableOn_pow_eq`, which derives the root as `exp (L / n)` from the
+holomorphic upgrade of Mathlib's continuous *logarithm* branch
+`Complex.exists_continuousOn_eqOn_exp_comp` (`Mathlib.Analysis.Complex.BranchLogRoot`); Mathlib's
+continuous root API `Complex.exists_continuousOn_pow_eq` is not used. The existence half of this
+step is therefore Mathlib's; the sibling file `BranchLogRoot.lean` records that debt in detail.
 
 The Riemann mapping theorem is also being formalized upstream at
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), which proves the
