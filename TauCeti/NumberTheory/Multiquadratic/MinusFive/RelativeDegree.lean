@@ -56,13 +56,14 @@ def minusFiveRadicand : Fin 2 → ℚ :=
 noncomputable def minusFiveRoot : Fin 2 → ℂ :=
   ![Complex.I, ((Real.sqrt 5 : ℝ) : ℂ)]
 
-@[simp] theorem minusFiveRadicand_zero : minusFiveRadicand 0 = -1 := rfl
+@[simp] theorem minusFiveRadicand_zero : minusFiveRadicand 0 = -1 := by simp [minusFiveRadicand]
 
-@[simp] theorem minusFiveRadicand_one : minusFiveRadicand 1 = 5 := rfl
+@[simp] theorem minusFiveRadicand_one : minusFiveRadicand 1 = 5 := by simp [minusFiveRadicand]
 
-@[simp] theorem minusFiveRoot_zero : minusFiveRoot 0 = Complex.I := rfl
+@[simp] theorem minusFiveRoot_zero : minusFiveRoot 0 = Complex.I := by simp [minusFiveRoot]
 
-@[simp] theorem minusFiveRoot_one : minusFiveRoot 1 = ((Real.sqrt 5 : ℝ) : ℂ) := rfl
+@[simp] theorem minusFiveRoot_one : minusFiveRoot 1 = ((Real.sqrt 5 : ℝ) : ℂ) := by
+  simp [minusFiveRoot]
 
 /-- The radicands for the `ℚ(√-5)` example agree with those associated to its two prime
 discriminants `-4` and `5`. -/
@@ -89,7 +90,7 @@ theorem not_isSquare_prod_minusFiveRadicand (S : Finset (Fin 2)) (hS : S.Nonempt
     fin_cases i
     · simp [negFourFivePrimeDiscriminants]
     · have h5 : IsPrimeDiscriminant (5 : ℤ) := by
-        simpa [oddPrimeDiscriminant_of_mod_four_eq_one (by norm_num : (5 : ℤ) % 4 = 1)]
+        simpa [oddPrimeDiscriminant_of_mod_four_eq_one (by norm_num : 5 % 4 = 1)]
           using isPrimeDiscriminant_oddPrimeDiscriminant (p := 5) (by decide) (by decide)
       simpa [negFourFivePrimeDiscriminants] using h5
   have hinj : Function.Injective negFourFivePrimeDiscriminants := by decide
