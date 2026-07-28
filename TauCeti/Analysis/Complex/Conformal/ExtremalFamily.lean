@@ -54,9 +54,11 @@ versions once those land.
 
 ## Main statements
 
-* `TauCeti.IsNormalizedSchlichtOn` — membership in the competing family.
-* `TauCeti.exists_isNormalizedSchlichtOn` — the family is nonempty.
-* `TauCeti.exists_isMaxOn_norm_deriv` — the extremal problem has a solution.
+* `TauCeti.IsPointedDiscInjectionOn` — membership in the competing family.
+* `TauCeti.exists_isPointedDiscInjectionOn` — the family is nonempty.
+* `TauCeti.exists_isMaxOn_norm_deriv` — the extremal problem has a solution, given one competitor.
+* `TauCeti.exists_isMaxOn_norm_deriv_of_isSimplyConnected` — the form used by the Riemann mapping
+  theorem, where simple connectivity supplies that competitor.
 
 ## References
 
@@ -72,44 +74,48 @@ open Complex Set Metric Filter Topology
 
 variable {Ω : Set ℂ} {f g : ℂ → ℂ} {z₀ : ℂ}
 
-/-- A **normalized schlicht map** on `Ω` at the base point `z₀`: a holomorphic injection of `Ω`
-into the open unit disc sending `z₀` to the origin. (*Schlicht* is the classical name for an
-injective holomorphic map.)
+/-- A **pointed disc injection** on `Ω` at the base point `z₀`: a holomorphic injection of `Ω`
+into the open unit disc sending `z₀` to the origin. It is the pointed form of the maps produced by
+`TauCeti.exists_differentiableOn_injOn_mapsTo_unitBall` in `DiscInjection.lean`.
+
+Such maps are classically called *schlicht*, the traditional name for an injective holomorphic map;
+the name here deliberately avoids *normalized*, which conventionally demands the further
+normalization `deriv f z₀ = 1` that this predicate does not impose.
 
 This is the competing family of the Riemann mapping theorem's extremal problem: the theorem is
 proved by maximizing `‖deriv f z₀‖` over all such `f`. -/
-structure IsNormalizedSchlichtOn (f : ℂ → ℂ) (Ω : Set ℂ) (z₀ : ℂ) : Prop where
-  /-- A normalized schlicht map is holomorphic on `Ω`. -/
+structure IsPointedDiscInjectionOn (f : ℂ → ℂ) (Ω : Set ℂ) (z₀ : ℂ) : Prop where
+  /-- A pointed disc injection is holomorphic on `Ω`. -/
   differentiableOn : DifferentiableOn ℂ f Ω
-  /-- A normalized schlicht map takes `Ω` into the open unit disc. -/
+  /-- A pointed disc injection takes `Ω` into the open unit disc. -/
   mapsTo : MapsTo f Ω (ball (0 : ℂ) 1)
-  /-- A normalized schlicht map is injective on `Ω`. -/
+  /-- A pointed disc injection is injective on `Ω`. -/
   injOn : InjOn f Ω
-  /-- A normalized schlicht map sends the base point to the origin. -/
+  /-- A pointed disc injection sends the base point to the origin. -/
   map_base : f z₀ = 0
 
-namespace IsNormalizedSchlichtOn
+namespace IsPointedDiscInjectionOn
 
-/-- A normalized schlicht map is bounded by `1`, since it lands in the unit disc. -/
-theorem norm_le_one (hf : IsNormalizedSchlichtOn f Ω z₀) {z : ℂ} (hz : z ∈ Ω) : ‖f z‖ ≤ 1 :=
+/-- A pointed disc injection is bounded by `1`, since it lands in the unit disc. -/
+theorem norm_le_one (hf : IsPointedDiscInjectionOn f Ω z₀) {z : ℂ} (hz : z ∈ Ω) : ‖f z‖ ≤ 1 :=
   (mem_ball_zero_iff.mp (hf.mapsTo hz)).le
 
-/-- A normalized schlicht map has nonvanishing derivative throughout `Ω`: it is injective on a
+/-- A pointed disc injection has nonvanishing derivative throughout `Ω`: it is injective on a
 neighbourhood of each point, which by the local injectivity criterion forces `deriv f z ≠ 0`. -/
-theorem deriv_ne_zero (hf : IsNormalizedSchlichtOn f Ω z₀) (hΩo : IsOpen Ω) {z : ℂ} (hz : z ∈ Ω) :
+theorem deriv_ne_zero (hf : IsPointedDiscInjectionOn f Ω z₀) (hΩo : IsOpen Ω) {z : ℂ} (hz : z ∈ Ω) :
     deriv f z ≠ 0 :=
   (exists_injOn_nhds_iff_deriv_ne_zero
     (hf.differentiableOn.analyticOnNhd hΩo z hz)).mp ⟨Ω, hΩo.mem_nhds hz, hf.injOn⟩
 
-end IsNormalizedSchlichtOn
+end IsPointedDiscInjectionOn
 
 /-- **The competing family is nonempty.** Every base point of a nonempty, simply connected, open,
-proper subset of `ℂ` admits a normalized schlicht map.
+proper subset of `ℂ` admits a pointed disc injection.
 
 This repackages `TauCeti.exists_differentiableOn_injOn_mapsTo_unitBall_apply_eq_zero`. -/
-theorem exists_isNormalizedSchlichtOn (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen Ω)
+theorem exists_isPointedDiscInjectionOn (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen Ω)
     (hΩne : Ω ≠ univ) (hz₀ : z₀ ∈ Ω) :
-    ∃ f : ℂ → ℂ, IsNormalizedSchlichtOn f Ω z₀ := by
+    ∃ f : ℂ → ℂ, IsPointedDiscInjectionOn f Ω z₀ := by
   obtain ⟨f, hfd, hfi, hfm, hf₀⟩ :=
     exists_differentiableOn_injOn_mapsTo_unitBall_apply_eq_zero hΩc hΩo hΩne hz₀
   exact ⟨f, hfd, hfm, hfi, hf₀⟩
@@ -118,7 +124,7 @@ theorem exists_isNormalizedSchlichtOn (hΩc : IsSimplyConnected Ω) (hΩo : IsOp
 closed ball of radius `r` inside `Ω`, every member is bounded by `1`, hence its derivative at the
 centre is bounded by `1 / r`. -/
 private theorem bddAbove_norm_deriv (hΩo : IsOpen Ω) (hz₀ : z₀ ∈ Ω) :
-    BddAbove ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsNormalizedSchlichtOn f Ω z₀}) := by
+    BddAbove ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}) := by
   obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hΩo z₀ hz₀
   have hsub : closedBall z₀ (ε / 2) ⊆ Ω :=
     (closedBall_subset_ball (by linarith)).trans hball
@@ -150,24 +156,29 @@ private theorem mapsTo_ball_of_forall_norm_le_one (hΩo : IsOpen Ω) (hconn : Is
     simp only [Function.comp_def, hg₀, norm_zero] at hconst
     exact one_ne_zero (heq.symm.trans hconst.symm)
 
-/-- **The extremal problem has a solution.** On a nonempty, simply connected, open, proper subset
-`Ω` of `ℂ` with base point `z₀`, some normalized schlicht map maximizes `‖deriv · z₀‖` over the
-whole family.
+/-- **The extremal problem has a solution.** If the competing family at a base point `z₀` of an
+open preconnected set `Ω` is nonempty, then some member maximizes `‖deriv · z₀‖` over the whole
+family.
+
+The compactness argument needs nothing beyond these hypotheses: preconnectedness for the maximum
+modulus principle and for Hurwitz's theorem, and one competitor to make the supremum positive.
+Simple connectivity enters only through
+`TauCeti.exists_isPointedDiscInjectionOn`, which supplies that competitor; see the corollary
+`TauCeti.exists_isMaxOn_norm_deriv_of_isSimplyConnected`.
 
 This is the compactness half of the Riemann mapping theorem. It does **not** assert that the
 maximizer is surjective; that is the Koebe square-root argument, proved elsewhere. -/
-theorem exists_isMaxOn_norm_deriv (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen Ω) (hΩne : Ω ≠ univ)
-    (hz₀ : z₀ ∈ Ω) :
-    ∃ g : ℂ → ℂ, IsNormalizedSchlichtOn g Ω z₀ ∧
-      ∀ f : ℂ → ℂ, IsNormalizedSchlichtOn f Ω z₀ → ‖deriv f z₀‖ ≤ ‖deriv g z₀‖ := by
+theorem exists_isMaxOn_norm_deriv (hΩo : IsOpen Ω) (hconn : IsPreconnected Ω) (hz₀ : z₀ ∈ Ω)
+    (hne : ∃ f : ℂ → ℂ, IsPointedDiscInjectionOn f Ω z₀) :
+    ∃ g : ℂ → ℂ, IsPointedDiscInjectionOn g Ω z₀ ∧
+      ∀ f : ℂ → ℂ, IsPointedDiscInjectionOn f Ω z₀ → ‖deriv f z₀‖ ≤ ‖deriv g z₀‖ := by
   classical
-  have hconn : IsPreconnected Ω := hΩc.isPathConnected.isConnected.isPreconnected
-  obtain ⟨f₀, hf₀⟩ := exists_isNormalizedSchlichtOn hΩc hΩo hΩne hz₀
+  obtain ⟨f₀, hf₀⟩ := hne
   have hbdd := bddAbove_norm_deriv hΩo hz₀ (Ω := Ω)
-  have hSne : ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsNormalizedSchlichtOn f Ω z₀}).Nonempty :=
+  have hSne : ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}).Nonempty :=
     ⟨_, ⟨f₀, hf₀, rfl⟩⟩
   -- The supremum of the derivative norms is positive: `f₀` already contributes a nonzero value.
-  have hM₀ : 0 < sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsNormalizedSchlichtOn f Ω z₀}) :=
+  have hM₀ : 0 < sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}) :=
     lt_of_lt_of_le (norm_pos_iff.mpr (hf₀.deriv_ne_zero hΩo hz₀)) (le_csSup hbdd ⟨f₀, hf₀, rfl⟩)
   -- A maximizing sequence, indexed by `ℕ` as Montel's theorem requires.
   obtain ⟨u, -, hu_tendsto, hu_mem⟩ := exists_seq_tendsto_sSup hSne hbdd
@@ -193,7 +204,7 @@ theorem exists_isMaxOn_norm_deriv (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen �
       (Eventually.of_forall fun n => (hF (φ n)).differentiableOn) hΩo
     simpa [Function.comp_def] using h
   have hMg : ‖deriv g z₀‖ =
-      sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsNormalizedSchlichtOn f Ω z₀}) := by
+      sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}) := by
     refine tendsto_nhds_unique (hderiv.tendsto_at hz₀).norm ?_
     simpa [Function.comp_def, hFu] using hu_tendsto.comp hφ.tendsto_atTop
   -- Injectivity survives by Hurwitz; the constant alternative is excluded by positivity.
@@ -205,5 +216,18 @@ theorem exists_isMaxOn_norm_deriv (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen �
       rw [deriv_eq_zero_of_forall_eq hΩo hz₀ hv, norm_zero] at hMg
       exact hM₀.ne hMg
   exact ⟨g, ⟨hgd, hgm, hgi, hg₀⟩, fun f hf => hMg ▸ le_csSup hbdd ⟨f, hf, rfl⟩⟩
+
+/-- **The extremal problem has a solution on a simply connected proper subdomain.** This is the
+form the Riemann mapping theorem uses: on a nonempty, simply connected, open, proper subset `Ω` of
+`ℂ` with base point `z₀`, some pointed disc injection maximizes `‖deriv · z₀‖`.
+
+Simple connectivity and properness serve only to produce one competitor; the compactness argument
+itself is `TauCeti.exists_isMaxOn_norm_deriv`. -/
+theorem exists_isMaxOn_norm_deriv_of_isSimplyConnected (hΩc : IsSimplyConnected Ω) (hΩo : IsOpen Ω)
+    (hΩne : Ω ≠ univ) (hz₀ : z₀ ∈ Ω) :
+    ∃ g : ℂ → ℂ, IsPointedDiscInjectionOn g Ω z₀ ∧
+      ∀ f : ℂ → ℂ, IsPointedDiscInjectionOn f Ω z₀ → ‖deriv f z₀‖ ≤ ‖deriv g z₀‖ :=
+  exists_isMaxOn_norm_deriv hΩo hΩc.isPathConnected.isConnected.isPreconnected hz₀
+    (exists_isPointedDiscInjectionOn hΩc hΩo hΩne hz₀)
 
 end TauCeti
