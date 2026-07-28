@@ -100,17 +100,8 @@ theorem col_strict {μ : YoungDiagram} (T : StandardYoungTableau μ)
     T ⟨(i₁, j), μ.up_left_mem h.le (by rfl) hcell⟩ < T ⟨(i₂, j), hcell⟩ :=
   T.col_strict' h hcell
 
-private def transposeCellEquiv (μ : YoungDiagram) : ↥μ.transpose.cells ≃ ↥μ.cells where
-  toFun c := ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩
-  invFun c :=
-    ⟨c.1.swap, YoungDiagram.mem_transpose.mpr
-      (by simpa only [Prod.swap_swap, YoungDiagram.mem_cells] using c.2)⟩
-  left_inv c := by
-    apply Subtype.ext
-    exact Prod.swap_swap c.1
-  right_inv c := by
-    apply Subtype.ext
-    exact Prod.swap_swap c.1
+private def transposeCellEquiv (μ : YoungDiagram) : ↥μ.transpose.cells ≃ ↥μ.cells :=
+  (Equiv.prodComm ℕ ℕ).subtypeEquiv fun _ => YoungDiagram.mem_transpose
 
 /-- Transpose a standard Young tableau by swapping its rows and columns while preserving its
 labels. -/
@@ -120,12 +111,14 @@ def transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     (transposeCellEquiv μ).trans
       (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ).symm))
   row_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk, Prod.swap,
-      finCongr, Fin.cast_lt_cast, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.subtypeEquiv_apply,
+      Equiv.prodComm_apply, Prod.swap, finCongr, Equiv.coe_fn_mk, Fin.cast_lt_cast,
+      toEquiv_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mp hcell)
   col_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk, Prod.swap,
-      finCongr, Fin.cast_lt_cast, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.subtypeEquiv_apply,
+      Equiv.prodComm_apply, Prod.swap, finCongr, Equiv.coe_fn_mk, Fin.cast_lt_cast,
+      toEquiv_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mp hcell)
 
 /-- Transposition preserves the numeric label of each cell. -/
@@ -138,8 +131,9 @@ theorem transpose_apply_val {μ : YoungDiagram} (T : StandardYoungTableau μ)
     (T.transpose c).val = (T.transpose.toEquiv c).val :=
       congrArg Fin.val (toEquiv_apply T.transpose c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩).val := by
-      simp only [transpose, Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk,
-        finCongr, Fin.val_cast, toEquiv_apply]
+      simp only [transpose, Equiv.trans_apply, transposeCellEquiv,
+        Equiv.subtypeEquiv_apply, Equiv.prodComm_apply, finCongr, Equiv.coe_fn_mk,
+        Fin.val_cast, toEquiv_apply]
 
 private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpose) :
     StandardYoungTableau μ where
@@ -147,12 +141,14 @@ private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpo
     (transposeCellEquiv μ).symm.trans
       (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ)))
   row_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
-      Equiv.coe_fn_mk, Prod.swap, finCongr, Fin.cast_lt_cast, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.subtypeEquiv_symm,
+      Equiv.prodComm_symm, Equiv.subtypeEquiv_apply, Equiv.prodComm_apply, Prod.swap,
+      finCongr, Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mpr hcell)
   col_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
-      Equiv.coe_fn_mk, Prod.swap, finCongr, Fin.cast_lt_cast, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.subtypeEquiv_symm,
+      Equiv.prodComm_symm, Equiv.subtypeEquiv_apply, Equiv.prodComm_apply, Prod.swap,
+      finCongr, Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mpr hcell)
 
 private theorem untranspose_apply_val {μ : YoungDiagram}
@@ -163,8 +159,9 @@ private theorem untranspose_apply_val {μ : YoungDiagram}
     (untranspose T c).val = ((untranspose T).toEquiv c).val :=
       congrArg Fin.val (toEquiv_apply (untranspose T) c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val := by
-      simp only [untranspose, Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
-        Equiv.coe_fn_mk, finCongr, Fin.val_cast, toEquiv_apply]
+      simp only [untranspose, Equiv.trans_apply, transposeCellEquiv,
+        Equiv.subtypeEquiv_symm, Equiv.prodComm_symm, Equiv.subtypeEquiv_apply,
+        Equiv.prodComm_apply, finCongr, Equiv.coe_fn_mk, Fin.val_cast, toEquiv_apply]
 
 /-- Transposition is an equivalence between standard Young tableaux of conjugate shapes. -/
 def transposeEquiv (μ : YoungDiagram) :
@@ -196,12 +193,6 @@ theorem transposeEquiv_symm_apply_val {μ : YoungDiagram}
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
   untranspose_apply_val T c
 
-/-- Applying inverse transposition after transposition returns the original tableau. -/
-@[simp]
-theorem transposeEquiv_symm_transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
-    (transposeEquiv μ).symm T.transpose = T :=
-  (transposeEquiv μ).left_inv T
-
 /-- Standard Young tableaux of a fixed shape form a finite type. -/
 noncomputable instance instFintype (μ : YoungDiagram) :
     Fintype (StandardYoungTableau μ) :=
@@ -212,6 +203,12 @@ end StandardYoungTableau
 /-- The number of standard Young tableaux of shape `μ`. -/
 noncomputable def standardCount (μ : YoungDiagram) : ℕ :=
   Fintype.card (StandardYoungTableau μ)
+
+/-- The number of standard Young tableaux is the cardinality of their finite type. -/
+@[simp]
+theorem standardCount_def (μ : YoungDiagram) :
+    standardCount μ = Fintype.card (StandardYoungTableau μ) :=
+  standardCount.eq_1 μ
 
 /-- Transposing a Young diagram does not change its number of standard Young tableaux. -/
 @[simp]
