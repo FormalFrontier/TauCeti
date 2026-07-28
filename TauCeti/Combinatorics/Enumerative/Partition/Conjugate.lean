@@ -254,9 +254,4 @@ theorem dominates_conjugate_iff {n : ℕ} (μ ν : n.Partition) :
   · intro h
     simpa using dominates_conjugate h
 
-/-- Alias for `dominates_conjugate_iff` using transpose terminology for conjugate partitions. -/
-theorem dominates_transpose_iff {n : ℕ} (μ ν : n.Partition) :
-    Dominates μ ν ↔ Dominates (conjugate ν) (conjugate μ) :=
-  dominates_conjugate_iff μ ν
-
 end TauCeti
