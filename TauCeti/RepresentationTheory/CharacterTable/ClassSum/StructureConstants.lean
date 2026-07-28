@@ -65,7 +65,7 @@ def structureConstant (Cᵢ Cⱼ Cₖ : ConjClasses G) : ℕ :=
 
 /-- The structure constant at the conjugacy class of `g` counts the corresponding
 factorizations of `g`. -/
-theorem structureConstant_mk (Cᵢ Cⱼ : ConjClasses G) (g : G) :
+@[simp] theorem structureConstant_mk (Cᵢ Cⱼ : ConjClasses G) (g : G) :
     structureConstant Cᵢ Cⱼ (ConjClasses.mk g) =
       ((Finset.univ ×ˢ Finset.univ).filter
         fun p : Cᵢ.carrier × Cⱼ.carrier => (p.1.1 : G) * p.2.1 = g).card := by
@@ -79,7 +79,7 @@ theorem structureConstant_mk (Cᵢ Cⱼ : ConjClasses G) (g : G) :
       rfl)
 
 /-- Multiplication of class sums is governed by the structure constants. -/
-theorem classSum_mul (k : Type*) [CommRing k] (Cᵢ Cⱼ : ConjClasses G) :
+theorem classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) :
     classSum k Cᵢ * classSum k Cⱼ =
       ∑ Cₖ : ConjClasses G, (structureConstant Cᵢ Cⱼ Cₖ : k) • classSum k Cₖ := by
   ext g
