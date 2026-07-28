@@ -195,6 +195,7 @@ noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max u v} 
 
 /-- The dimension of induction from a finite-index subgroup is the index times the original
 dimension. -/
+@[simp]
 theorem finrank_ind [S.FiniteIndex] (A : Rep.{max u v} k S) [FiniteDimensional k A] :
     Module.finrank k (Rep.ind S.subtype A) = S.index * Module.finrank k A := by
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -255,6 +256,7 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
 original representation. -/
+@[simp]
 theorem finrank_indFDRep {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) :
     Module.finrank k (indFDRep A) = S.index * Module.finrank k A := by
