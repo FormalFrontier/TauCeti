@@ -86,17 +86,9 @@ private theorem sum_map_min_rowLens_eq_card_filter_snd (μ : YoungDiagram) (k : 
 private theorem card_filter_fst_transpose (μ : YoungDiagram) (k : ℕ) :
     (μ.transpose.cells.filter fun c => c.1 < k).card =
       (μ.cells.filter fun c => c.2 < k).card := by
-  change
-    (((Equiv.prodComm ℕ ℕ).finsetCongr μ.cells).filter fun c => c.1 < k).card =
-      (μ.cells.filter fun c => c.2 < k).card
-  rw [Equiv.finsetCongr_apply]
-  have hmap :
-      (μ.cells.filter fun c => c.2 < k).map (Equiv.prodComm ℕ ℕ).toEmbedding =
-        (μ.cells.map (Equiv.prodComm ℕ ℕ).toEmbedding).filter fun c => c.1 < k := by
-    rw [Finset.map_filter]
-    ext ⟨i, j⟩
-    simp
-  rw [← hmap, Finset.card_map]
+  apply Finset.card_equiv (Equiv.prodComm ℕ ℕ)
+  intro c
+  simp
 
 private theorem sum_take_transpose_rowLens (μ : YoungDiagram) (k : ℕ) :
     (μ.transpose.rowLens.take k).sum = (μ.rowLens.map (min k)).sum := by
@@ -159,7 +151,7 @@ private theorem sum_map_min_le_of_prefix_sum_le {l₁ l₂ : List ℕ}
   let r := (l₂.takeWhile fun x => decide (k < x)).length
   have htake :
       l₂.take r = l₂.takeWhile fun x => decide (k < x) := by
-    rw [show r = (l₂.takeWhile fun x => decide (k < x)).length by rfl]
+    dsimp only [r]
     calc
       l₂.take (l₂.takeWhile fun x => decide (k < x)).length =
           ((l₂.takeWhile fun x => decide (k < x)) ++
@@ -184,6 +176,13 @@ private theorem sum_map_min_le_of_prefix_sum_le {l₁ l₂ : List ℕ}
 noncomputable def diagramOf {n : ℕ} (μ : n.Partition) : YoungDiagram :=
   (partitionEquivYoungDiagram n μ).1
 
+/-- The Young diagram construction is injective on partitions of a fixed size. -/
+theorem diagramOf_injective {n : ℕ} : Function.Injective (diagramOf (n := n)) := by
+  intro μ ν h
+  apply (partitionEquivYoungDiagram n).injective
+  apply Subtype.ext
+  simpa only [diagramOf] using h
+
 /-- The Young diagram of a partition has the size of the partition. -/
 @[simp]
 theorem card_diagramOf {n : ℕ} (μ : n.Partition) : (diagramOf μ).card = n :=
@@ -204,24 +203,21 @@ noncomputable def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=
 @[simp]
 theorem diagramOf_conjugate {n : ℕ} (μ : n.Partition) :
     diagramOf (conjugate μ) = (diagramOf μ).transpose := by
-  change
-    ((partitionEquivYoungDiagram n)
-      ((partitionEquivYoungDiagram n).symm
-        ⟨(diagramOf μ).transpose, by simp⟩)).1 =
-      (diagramOf μ).transpose
-  rw [Equiv.apply_symm_apply]
+  simpa only [diagramOf, conjugate] using
+    congrArg Subtype.val
+      (Equiv.apply_symm_apply (partitionEquivYoungDiagram n)
+        ⟨(diagramOf μ).transpose, by simp⟩)
 
 /-- Conjugating a partition twice recovers the original partition. -/
 @[simp]
 theorem conjugate_conjugate {n : ℕ} (μ : n.Partition) :
     conjugate (conjugate μ) = μ := by
-  apply (partitionEquivYoungDiagram n).injective
-  apply Subtype.ext
-  change diagramOf (conjugate (conjugate μ)) = diagramOf μ
-  rw [diagramOf_conjugate, diagramOf_conjugate, YoungDiagram.transpose_transpose]
+  apply diagramOf_injective
+  simp
 
 /-- The decreasing parts of the conjugate partition are the row lengths of the transposed
 diagram. -/
+@[simp]
 theorem conjugate_parts_sort {n : ℕ} (μ : n.Partition) :
     (conjugate μ).parts.sort (· ≥ ·) = (diagramOf μ).transpose.rowLens := by
   calc
@@ -251,11 +247,16 @@ private theorem dominates_conjugate {n : ℕ} {μ ν : n.Partition} (h : Dominat
   · exact dominates_iff.mp h
 
 /-- Conjugation of partitions reverses dominance. -/
-theorem dominates_transpose_iff {n : ℕ} (μ ν : n.Partition) :
+theorem dominates_conjugate_iff {n : ℕ} (μ ν : n.Partition) :
     Dominates μ ν ↔ Dominates (conjugate ν) (conjugate μ) := by
   constructor
   · exact dominates_conjugate
   · intro h
     simpa using dominates_conjugate h
+
+/-- Alias for `dominates_conjugate_iff` using transpose terminology for conjugate partitions. -/
+theorem dominates_transpose_iff {n : ℕ} (μ ν : n.Partition) :
+    Dominates μ ν ↔ Dominates (conjugate ν) (conjugate μ) :=
+  dominates_conjugate_iff μ ν
 
 end TauCeti
