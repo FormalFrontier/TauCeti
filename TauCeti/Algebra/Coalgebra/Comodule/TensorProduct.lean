@@ -195,21 +195,9 @@ theorem tensorCombine_assoc_symm (x : M ⊗[R] C) (y : N ⊗[R] C) (z : P ⊗[R]
           (x ⊗ₜ[R] tensorCombine (R := R) (C := C) (M := N) (N := P) (y ⊗ₜ[R] z))) =
       tensorCombine (R := R) (C := C) (M := M ⊗[R] N) (N := P)
         (tensorCombine (R := R) (C := C) (M := M) (N := N) (x ⊗ₜ[R] y) ⊗ₜ[R] z) := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x₁ x₂ hx₁ hx₂ =>
-    simpa only [add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hx₁ hx₂
-  | tmul m c =>
-    induction y using TensorProduct.induction_on with
-    | zero => simp
-    | add y₁ y₂ hy₁ hy₂ =>
-      simpa only [tmul_add, add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hy₁ hy₂
-    | tmul n d =>
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | add z₁ z₂ hz₁ hz₂ =>
-        simpa only [tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hz₁ hz₂
-      | tmul p e => simp [mul_assoc]
+  simpa [TensorProduct.map_map] using congrArg
+    (TensorProduct.map (TensorProduct.assoc R M N P).symm.toLinearMap LinearMap.id)
+    (tensorCombine_assoc (R := R) (C := C) x y z).symm
 
 /-- Combining the trivial coefficient `1` on the left and applying the left tensor unitor
 scales a coacted vector by the scalar in the trivial factor. -/
@@ -231,11 +219,9 @@ theorem tensorCombine_lid_symm (x : M ⊗[R] C) :
     tensorCombine (R := R) (C := C) (M := R) (N := M)
         (((1 : R) ⊗ₜ[R] (1 : C)) ⊗ₜ[R] x) =
       TensorProduct.map (TensorProduct.lid R M).symm.toLinearMap LinearMap.id x := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy =>
-    simpa only [tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
-  | tmul m c => simp
+  simpa [TensorProduct.map_map] using congrArg
+    (TensorProduct.map (TensorProduct.lid R M).symm.toLinearMap LinearMap.id)
+    (tensorCombine_lid (R := R) (C := C) (r := 1) x)
 
 /-- Combining the trivial coefficient `1` on the right and applying the right tensor unitor
 scales a coacted vector by the scalar in the trivial factor. -/
@@ -257,11 +243,9 @@ theorem tensorCombine_rid_symm (x : M ⊗[R] C) :
     tensorCombine (R := R) (C := C) (M := M) (N := R)
         (x ⊗ₜ[R] ((1 : R) ⊗ₜ[R] (1 : C))) =
       TensorProduct.map (TensorProduct.rid R M).symm.toLinearMap LinearMap.id x := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy =>
-    simpa only [add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
-  | tmul m c => simp
+  simpa [TensorProduct.map_map] using congrArg
+    (TensorProduct.map (TensorProduct.rid R M).symm.toLinearMap LinearMap.id)
+    (tensorCombine_rid (R := R) (C := C) x (r := 1))
 
 end Coherence
 
