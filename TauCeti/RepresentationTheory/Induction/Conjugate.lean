@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.RepresentationTheory.Character
+public import Mathlib.RepresentationTheory.Irreducible
 
 /-!
 # Conjugate representations
@@ -119,6 +120,37 @@ theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
       (A.ρ ⟨s⁻¹ * (x : G) * s, (mem_conj_smul s H x).mp x.2⟩) := by
   apply (conjRep_ρ s A x).trans
   congr 1
+
+section Irreducible
+
+variable [Field k]
+
+/-- Conjugation identifies the invariant subspaces of a representation with those of its
+conjugate. -/
+def conjRepSubrepresentationOrderIso (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
+    Subrepresentation (conjRep s A).ρ ≃o Subrepresentation A.ρ := by
+  change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
+    Subrepresentation A.ρ
+  exact
+    { toFun := fun S ↦
+        { toSubmodule := S.toSubmodule
+          apply_mem_toSubmodule := fun h v hv ↦ by
+            simpa using S.apply_mem_toSubmodule ((conjSubgroupEquiv s H).symm h) hv }
+      invFun := fun S ↦
+        { toSubmodule := S.toSubmodule
+          apply_mem_toSubmodule := fun g v hv ↦
+            S.apply_mem_toSubmodule (conjSubgroupEquiv s H g) hv }
+      left_inv := fun S ↦ by ext; rfl
+      right_inv := fun S ↦ by ext; rfl
+      map_rel_iff' := by rfl }
+
+/-- A conjugate representation is irreducible exactly when the original representation is. -/
+theorem isIrreducible_conjRep_iff (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
+    Representation.IsIrreducible (conjRep s A).ρ ↔
+      Representation.IsIrreducible A.ρ :=
+  (conjRepSubrepresentationOrderIso s A).isSimpleOrder_iff
+
+end Irreducible
 
 section FDRep
 
