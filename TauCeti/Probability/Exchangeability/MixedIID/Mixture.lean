@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Implications
 -- Non-public: used only inside the proof below.
 import TauCeti.Probability.Exchangeability.FiniteMarginals
 import TauCeti.MeasureTheory.Measure.GiryMonad
+import TauCeti.MeasureTheory.Measure.MixtureInjective
 
 /-!
 # The path law of a mixed i.i.d. process
@@ -25,6 +26,7 @@ written in the `Measure.bind` idiom.
 
 * `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` — the representation, for an arbitrary mixing
   representative.
+* `mixedIID_mixingLaw_unique` — the mixing law `μ.map ν` is determined by the process.
 
 It needs only `[IsFiniteMeasure μ]`, a.e.-measurable coordinates, and the witness. In particular no
 standard-Borel hypothesis appears: that is the cost of *supplying* a canonical witness, not of using
@@ -41,8 +43,11 @@ recognise each prefix marginal of an infinite power as the corresponding finite 
 
 This advances `TauCetiRoadmap/Exchangeability/README.md`, Layer 6, the directing-measure API bullet
 asking for the mixture-of-product-measures form. That bullet also asks for `π` to be the *unique*
-law of `ν`; uniqueness is not proved here or anywhere yet, and the roadmap name `deFinetti_mixture`
-is reserved for the theorem that derives a canonical witness rather than assuming one.
+law of `ν`, which `mixedIID_mixingLaw_unique` now supplies: the mixture representation turns two
+witnesses into the same `Measure.bind`, and injectivity of `π ↦ π.bind (P ↦ P^{⊗ℕ})`
+(`Measure.ext_of_bind_infinitePi_eq`) identifies the mixing laws. The roadmap name
+`deFinetti_mixture` stays reserved for the theorem that derives a canonical witness rather than
+assuming one.
 -/
 
 public section
@@ -91,6 +96,27 @@ theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMe
         simp_rw [hstep]
         rw [TauCeti.MeasureTheory.bind_map hν hfin]
         rfl
+
+/-- **Uniqueness of the mixing law.** Two mixing representatives for the same process induce the
+same law on `ProbabilityMeasure α`.
+
+Only the *law* `μ.map ν` is unique, not the witness. For a nondegenerate mixing law an independent
+copy of a mixing representative is another one, so no witness-level a.e.-equality theorem can
+conclude `ν =ᵐ[μ] ν'` from `MixedIIDWith` alone; a.e. uniqueness of the witness belongs to the
+conditional predicate (`conditionallyIID_ae_unique`).
+
+`[IsProbabilityMeasure μ]` is load-bearing rather than decorative. For an infinite base measure
+distinct mixing measures can produce identical `∞`-valued finite-dimensional mixtures, so
+mixing-law uniqueness fails at the hypothesis-light generality the definitions otherwise enjoy. -/
+theorem mixedIID_mixingLaw_unique {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    (hX : ∀ n, AEMeasurable (X n) μ) {ν ν' : Ω → ProbabilityMeasure α}
+    (h : MixedIIDWith μ X ν) (h' : MixedIIDWith μ X ν') :
+    μ.map ν = μ.map ν' := by
+  haveI : IsProbabilityMeasure (μ.map ν) :=
+    Measure.isProbabilityMeasure_map h.measurable_mixingRepresentative.aemeasurable
+  refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
+  rw [← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h,
+    ← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h']
 
 end Probability
 
