@@ -10,7 +10,7 @@ public import Mathlib.RepresentationTheory.Continuous.Basic
 /-!
 # Unitary continuous representations
 
-This file defines when a continuous representation preserves a complex inner product. It
+This file defines when a continuous representation preserves a real or complex inner product. It
 characterizes unitarity through norm preservation, isometries, and Mathlib's `unitary` submonoid of
 continuous linear operators, and records the basic inner-product identities and coefficient bound.
 
@@ -40,19 +40,17 @@ private theorem self_inv_apply (π : ContRepresentation R G V) (g : G) (v : V) :
     π g (π g⁻¹ v) = v :=
   Representation.self_inv_apply π.toRepresentation g v
 
-end ContRepresentation
-
 section Monoid
 
-variable {G V : Type*} [Monoid G] [NormedAddCommGroup V] [InnerProductSpace ℂ V]
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
 
 /-- A continuous representation is unitary when every action operator preserves the inner
 product. -/
-def IsUnitary (π : ContRepresentation ℂ G V) : Prop :=
-  ∀ g v w, ⟪π g v, π g w⟫_ℂ = ⟪v, w⟫_ℂ
+def IsUnitary (π : ContRepresentation 𝕜 G V) : Prop :=
+  ∀ g v w, ⟪π g v, π g w⟫_𝕜 = ⟪v, w⟫_𝕜
 
 /-- A representation is unitary exactly when every action map preserves norms. -/
-theorem isUnitary_iff_norm_map (π : ContRepresentation ℂ G V) :
+theorem isUnitary_iff_norm_map (π : ContRepresentation 𝕜 G V) :
     IsUnitary π ↔ ∀ g v, ‖π g v‖ = ‖v‖ := by
   constructor
   · intro hπ g
@@ -61,19 +59,19 @@ theorem isUnitary_iff_norm_map (π : ContRepresentation ℂ G V) :
     exact (LinearMap.norm_map_iff_inner_map_map (π g)).mp (hπ g)
 
 /-- A representation is unitary exactly when every action map is an isometry. -/
-theorem isUnitary_iff_isometry (π : ContRepresentation ℂ G V) :
+theorem isUnitary_iff_isometry (π : ContRepresentation 𝕜 G V) :
     IsUnitary π ↔ ∀ g, Isometry (π g) := by
   rw [isUnitary_iff_norm_map]
   exact forall_congr' fun g ↦ (AddMonoidHomClass.isometry_iff_norm (π g)).symm
 
 namespace IsUnitary
 
-variable {π : ContRepresentation ℂ G V}
+variable {π : ContRepresentation 𝕜 G V}
 
 /-- A unitary representation preserves the inner product. -/
 @[simp]
 theorem inner_map_map (hπ : IsUnitary π) (g : G) (v w : V) :
-    ⟪π g v, π g w⟫_ℂ = ⟪v, w⟫_ℂ :=
+    ⟪π g v, π g w⟫_𝕜 = ⟪v, w⟫_𝕜 :=
   hπ g v w
 
 /-- Every action map of a unitary representation preserves norms. -/
@@ -98,16 +96,16 @@ theorem restrict {H : Type*} [Monoid H] (hπ : IsUnitary π) (φ : H →* G) :
 /-- A matrix coefficient of a unitary representation is bounded by the product of the vector
 norms. -/
 theorem norm_inner_map_le (hπ : IsUnitary π) (g : G) (v w : V) :
-    ‖⟪π g v, w⟫_ℂ‖ ≤ ‖v‖ * ‖w‖ := by
+    ‖⟪π g v, w⟫_𝕜‖ ≤ ‖v‖ * ‖w‖ := by
   calc
-    ‖⟪π g v, w⟫_ℂ‖ ≤ ‖π g v‖ * ‖w‖ := norm_inner_le_norm _ _
+    ‖⟪π g v, w⟫_𝕜‖ ≤ ‖π g v‖ * ‖w‖ := norm_inner_le_norm _ _
     _ = ‖v‖ * ‖w‖ := by rw [hπ.norm_map]
 
 end IsUnitary
 
 /-- The trivial continuous representation is unitary. -/
 theorem isUnitary_trivial :
-    IsUnitary (ContRepresentation.trivial ℂ G V) := by
+    IsUnitary (ContRepresentation.trivial 𝕜 G V) := by
   intro g v w
   simp
 
@@ -115,13 +113,14 @@ end Monoid
 
 section Group
 
-variable {G V : Type*} [Group G] [NormedAddCommGroup V] [InnerProductSpace ℂ V] [CompleteSpace V]
-variable {π : ContRepresentation ℂ G V}
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [NormedAddCommGroup V]
+  [InnerProductSpace 𝕜 V] [CompleteSpace V]
+variable {π : ContRepresentation 𝕜 G V}
 
 /-- For a group representation, inner-product preservation is equivalent to every action operator
 belonging to Mathlib's unitary submonoid. -/
-theorem isUnitary_iff_mem_unitary (π : ContRepresentation ℂ G V) :
-    IsUnitary π ↔ ∀ g, π g ∈ unitary (V →L[ℂ] V) := by
+theorem isUnitary_iff_mem_unitary (π : ContRepresentation 𝕜 G V) :
+    IsUnitary π ↔ ∀ g, π g ∈ unitary (V →L[𝕜] V) := by
   constructor
   · intro hπ g
     apply ((Group.isUnit g).map π.toMonoidHom).mem_unitary_of_star_mul_self
@@ -135,7 +134,7 @@ namespace IsUnitary
 /-- Every action operator of a unitary group representation belongs to Mathlib's `unitary`
 submonoid. -/
 theorem mem_unitary (hπ : IsUnitary π) (g : G) :
-    π g ∈ unitary (V →L[ℂ] V) :=
+    π g ∈ unitary (V →L[𝕜] V) :=
   (isUnitary_iff_mem_unitary π).mp hπ g
 
 /-- The adjoint of a unitary action operator is a left inverse. -/
@@ -154,14 +153,14 @@ omit [CompleteSpace V] in
 /-- Moving a unitary action from the first inner-product argument to the second replaces the group
 element by its inverse. -/
 theorem inner_map_left (hπ : IsUnitary π) (g : G) (v w : V) :
-    ⟪π g v, w⟫_ℂ = ⟪v, π g⁻¹ w⟫_ℂ := by
+    ⟪π g v, w⟫_𝕜 = ⟪v, π g⁻¹ w⟫_𝕜 := by
   simpa only [ContRepresentation.self_inv_apply] using hπ.inner_map_map g v (π g⁻¹ w)
 
 omit [CompleteSpace V] in
 /-- Moving a unitary action from the second inner-product argument to the first replaces the group
 element by its inverse. -/
 theorem inner_map_right (hπ : IsUnitary π) (g : G) (v w : V) :
-    ⟪v, π g w⟫_ℂ = ⟪π g⁻¹ v, w⟫_ℂ := by
+    ⟪v, π g w⟫_𝕜 = ⟪π g⁻¹ v, w⟫_𝕜 := by
   simpa only [ContRepresentation.self_inv_apply] using hπ.inner_map_map g (π g⁻¹ v) w
 
 /-- The adjoint of a unitary action operator is the action of the inverse group element. -/
@@ -175,5 +174,7 @@ theorem adjoint_eq_inv (hπ : IsUnitary π) (g : G) :
 end IsUnitary
 
 end Group
+
+end ContRepresentation
 
 end TauCeti
