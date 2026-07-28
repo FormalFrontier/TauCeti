@@ -47,7 +47,7 @@ points and weight functions. The face formula follows A. Némethi,
 [arXiv:0709.0841](https://arxiv.org/abs/0709.0841), Section 3.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -73,17 +73,6 @@ noncomputable def latticeDifferentialOnGenerator
         (Polynomial.X ^ PlumbingCube.characteristicLowerFaceExponent P k C v) +
       Finsupp.single (C.upperFace v v.property)
         (Polynomial.X ^ PlumbingCube.characteristicUpperFaceExponent P k C v.property)
-
-/-- The generator formula for the lattice differential. -/
-theorem latticeDifferentialOnGenerator_def
-    (P : PlumbingGraph V) (k : P.characteristicVectors) (C : PlumbingCube V) :
-    P.latticeDifferentialOnGenerator k C =
-      C.directions.attach.sum fun v =>
-        Finsupp.single (C.lowerFace v v.property)
-            (Polynomial.X ^ PlumbingCube.characteristicLowerFaceExponent P k C v) +
-          Finsupp.single (C.upperFace v v.property)
-            (Polynomial.X ^ PlumbingCube.characteristicUpperFaceExponent P k C v.property) :=
-  rfl
 
 /-- The `𝔽₂[U]`-linear lattice differential on plumbing chains. -/
 noncomputable def latticeDifferential
@@ -254,9 +243,9 @@ private theorem latticeDifferential_latticeDifferentialOnGenerator
       C.directions.offDiag.attach.sum
         (latticeDifferentialTwoDirections P k C) := by
   classical
-  rw [latticeDifferentialOnGenerator_def, map_sum]
+  rw [latticeDifferentialOnGenerator, map_sum]
   simp_rw [map_add, latticeDifferential_single]
-  simp_rw [latticeDifferentialOnGenerator_def]
+  simp_rw [latticeDifferentialOnGenerator]
   simp_rw [Finset.smul_sum, smul_add]
   simp_rw [Finsupp.smul_single, smul_eq_mul, ← pow_add]
   trans C.directions.attach.sum fun v =>
