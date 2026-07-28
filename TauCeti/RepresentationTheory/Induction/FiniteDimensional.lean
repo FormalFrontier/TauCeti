@@ -208,14 +208,12 @@ noncomputable def indFDRepFunctor {k G : Type u} [Field k] [Group G] {S : Subgro
   obj A := indFDRep A
   map f := (forget₂ (FDRep k G) (Rep k G)).preimage
     ((Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f))
+  -- Both laws hold after pushing the forgetful functor through the preimage; the closing `rfl`
+  -- only identifies `(forget₂ _ _).obj (indFDRep _)` with `Rep.ind S.subtype _`.
   map_id _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    rw [Functor.map_preimage, CategoryTheory.Functor.map_id, CategoryTheory.Functor.map_id,
-      CategoryTheory.Functor.map_id]
-    rfl)
+    simp only [Functor.map_preimage, CategoryTheory.Functor.map_id]; rfl)
   map_comp _ _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    rw [Functor.map_preimage, CategoryTheory.Functor.map_comp, CategoryTheory.Functor.map_comp,
-      CategoryTheory.Functor.map_comp, Functor.map_preimage, Functor.map_preimage]
-    rfl)
+    simp only [Functor.map_preimage, CategoryTheory.Functor.map_comp]; rfl)
 
 /-- Under the forgetful functor to `Rep k G`, `indFDRepFunctor` is naturally isomorphic to
 Mathlib's induction functor. -/
