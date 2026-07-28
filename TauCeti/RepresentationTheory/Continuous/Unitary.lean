@@ -101,6 +101,17 @@ theorem norm_inner_map_le (hπ : IsUnitary π) (g : G) (v w : V) :
     ‖⟪π g v, w⟫_𝕜‖ ≤ ‖π g v‖ * ‖w‖ := norm_inner_le_norm _ _
     _ = ‖v‖ * ‖w‖ := by rw [hπ.norm_map]
 
+section
+
+variable [CompleteSpace V]
+
+/-- The adjoint of a unitary action operator is a left inverse. -/
+theorem adjoint_comp_self (hπ : IsUnitary π) (g : G) :
+    (ContinuousLinearMap.adjoint (π g)).comp (π g) = 1 :=
+  (π g).inner_map_map_iff_adjoint_comp_self.mp (hπ g)
+
+end
+
 end IsUnitary
 
 /-- The trivial continuous representation is unitary. -/
@@ -136,11 +147,6 @@ submonoid. -/
 theorem mem_unitary (hπ : IsUnitary π) (g : G) :
     π g ∈ unitary (V →L[𝕜] V) :=
   (isUnitary_iff_mem_unitary π).mp hπ g
-
-/-- The adjoint of a unitary action operator is a left inverse. -/
-theorem adjoint_comp_self (hπ : IsUnitary π) (g : G) :
-    (ContinuousLinearMap.adjoint (π g)).comp (π g) = 1 :=
-  (π g).inner_map_map_iff_adjoint_comp_self.mp (hπ g)
 
 /-- The adjoint of a unitary action operator is a right inverse. -/
 theorem self_comp_adjoint (hπ : IsUnitary π) (g : G) :
