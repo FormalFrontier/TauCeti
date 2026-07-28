@@ -35,9 +35,10 @@ hypothesis: there `hexp` integrates the weight `e^{a|x|} ≥ 1` itself, which do
 `1`.  The function-level form carries no such implication -- its `hexp` integrates the *product*
 `e^{a|x|} · g`, which `g = 0` satisfies over any measure, finite or infinite.
 
-The same exponential-moment hypothesis also bounds polynomial growth, so the two results that
-turn it into finiteness of every polynomial moment -- `TauCeti.pow_abs_le_factorial_div_pow_mul_exp`
-and `TauCeti.integrable_pow_of_exp_moment` -- live here with it rather than with any one consumer.
+The same exponential-moment hypothesis also makes every polynomial moment finite, so the result
+that records this -- `TauCeti.integrable_pow_of_exp_moment`, a symmetric-moment adaptation of
+`ProbabilityTheory.integrable_pow_of_integrable_exp_mul` -- lives here with it rather than with
+any one consumer.
 -/
 
 public section
@@ -52,23 +53,11 @@ variable {ν : Measure ℝ}
 
 /-! ## Exponential moments control polynomial moments -/
 
-/-- Polynomial growth is dominated by exponential growth at any positive rate:
-`|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`.
+/-- **One finite exponential moment makes every polynomial moment finite.**
 
-Public rather than `private`: a standalone growth comparison carrying no measure-theoretic
-content, of use wherever a monomial has to be dominated by an exponential.
-`TauCeti.integrable_pow_of_exp_moment` just below is the measure-theoretic consequence. -/
-theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
-    |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
-  have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
-  have han : (0 : ℝ) < a ^ n := by positivity
-  have h := Real.pow_div_factorial_le_exp (a * |x|) (by positivity) n
-  rw [div_le_iff₀ hfac, mul_pow] at h
-  rw [div_mul_eq_mul_div, le_div_iff₀ han]
-  nlinarith [h, Real.exp_pos (a * |x|), pow_nonneg (abs_nonneg x) n]
-
-/-- **One finite exponential moment makes every polynomial moment finite.** The pointwise bound
-`pow_abs_le_factorial_div_pow_mul_exp` dominates each monomial by an integrable function.
+The two-sided moment hypothesis of `ProbabilityTheory.integrable_pow_of_integrable_exp_mul` is
+what a *single* symmetric moment `e^{a|x|} ∈ L¹(ν)` supplies: `±x ≤ |x|` makes `e^{a|x|}`
+dominate both `e^{ax}` and `e^{-ax}`.
 
 This is the bridge to the family-agnostic polynomial interface of
 `TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
@@ -79,10 +68,16 @@ theorem integrable_pow_of_exp_moment
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
     Integrable (fun x : ℝ => x ^ k) ν := by
   obtain ⟨a, ha, hexpa⟩ := hexp
-  refine (hexpa.const_mul ((Nat.factorial k : ℝ) / a ^ k)).mono'
-    ((continuous_id.pow k).aestronglyMeasurable) (Filter.Eventually.of_forall fun x => ?_)
-  rw [Real.norm_eq_abs, abs_pow]
-  exact pow_abs_le_factorial_div_pow_mul_exp ha k x
+  have hdom : ∀ c : ℝ, (∀ x : ℝ, c * x ≤ a * |x|) →
+      Integrable (fun x : ℝ => Real.exp (c * x)) ν := fun c hc =>
+    hexpa.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => by
+      rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+      exact Real.exp_le_exp.2 (hc x))
+  exact integrable_pow_of_integrable_exp_mul ha.ne'
+    (hdom a fun x => mul_le_mul_of_nonneg_left (le_abs_self x) ha.le)
+    (hdom (-a) fun x => by
+      rw [neg_mul, ← mul_neg]
+      exact mul_le_mul_of_nonneg_left (neg_le_abs x) ha.le) k
 
 /-! ## Vanishing moments at the level of functions -/
 
