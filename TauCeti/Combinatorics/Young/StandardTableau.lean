@@ -112,10 +112,6 @@ private def transposeCellEquiv (μ : YoungDiagram) : ↥μ.transpose.cells ≃ �
     apply Subtype.ext
     exact Prod.swap_swap c.1
 
-private theorem finCongr_lt_finCongr {m n : ℕ} (h : m = n) {a b : Fin m} :
-    finCongr h a < finCongr h b ↔ a < b :=
-  Fin.cast_lt_cast h
-
 private theorem finCongr_apply_val {m n : ℕ} (h : m = n) (a : Fin m) :
     (finCongr h a).val = a.val :=
   rfl
@@ -129,11 +125,11 @@ def transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
       (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ).symm))
   row_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk, Prod.swap,
-      finCongr_lt_finCongr, toEquiv_apply] using
+      finCongr, Fin.cast_lt_cast, toEquiv_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mp hcell)
   col_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_mk, Prod.swap,
-      finCongr_lt_finCongr, toEquiv_apply] using
+      finCongr, Fin.cast_lt_cast, toEquiv_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mp hcell)
 
 /-- Transposition preserves the numeric label of each cell. -/
@@ -155,13 +151,24 @@ private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpo
     (transposeCellEquiv μ).symm.trans
       (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ)))
   row_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk, Prod.swap,
-      finCongr_lt_finCongr, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
+      Equiv.coe_fn_mk, Prod.swap, finCongr, Fin.cast_lt_cast, toEquiv_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mpr hcell)
   col_strict' h hcell := by
-    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk, Prod.swap,
-      finCongr_lt_finCongr, toEquiv_apply] using
+    simpa only [Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
+      Equiv.coe_fn_mk, Prod.swap, finCongr, Fin.cast_lt_cast, toEquiv_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mpr hcell)
+
+private theorem untranspose_apply_val {μ : YoungDiagram}
+    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) :
+    (untranspose T c).val =
+      (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
+  calc
+    (untranspose T c).val = ((untranspose T).toEquiv c).val :=
+      congrArg Fin.val (toEquiv_apply (untranspose T) c).symm
+    _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val := by
+      simp only [untranspose, Equiv.trans_apply, transposeCellEquiv, Equiv.coe_fn_symm_mk,
+        finCongr_apply_val, toEquiv_apply]
 
 /-- Transposition is an equivalence between standard Young tableaux of conjugate shapes. -/
 def transposeEquiv (μ : YoungDiagram) :
@@ -169,17 +176,35 @@ def transposeEquiv (μ : YoungDiagram) :
   toFun := transpose
   invFun := untranspose
   left_inv T := by
-    ext c
-    rfl
+    apply DFunLike.ext
+    intro c
+    apply Fin.ext
+    simp only [untranspose_apply_val, transpose_apply_val, Prod.swap_swap]
   right_inv T := by
-    ext c
-    rfl
+    apply DFunLike.ext
+    intro c
+    apply Fin.ext
+    simp only [transpose_apply_val, untranspose_apply_val, Prod.swap_swap]
 
 /-- The forward map of `transposeEquiv` is tableau transposition. -/
 @[simp]
 theorem transposeEquiv_apply {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     transposeEquiv μ T = T.transpose :=
   by simp [transposeEquiv]
+
+/-- The inverse transpose equivalence swaps cells while preserving their numeric labels. -/
+@[simp]
+theorem transposeEquiv_symm_apply_val {μ : YoungDiagram}
+    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) :
+    (((transposeEquiv μ).symm T) c).val =
+      (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
+  untranspose_apply_val T c
+
+/-- Applying inverse transposition after transposition returns the original tableau. -/
+@[simp]
+theorem transposeEquiv_symm_transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
+    (transposeEquiv μ).symm T.transpose = T :=
+  (transposeEquiv μ).left_inv T
 
 /-- Standard Young tableaux of a fixed shape form a finite type. -/
 noncomputable instance instFintype (μ : YoungDiagram) :
