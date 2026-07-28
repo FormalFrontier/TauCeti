@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Positive
+public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
 
@@ -66,13 +66,10 @@ lemma height_reflectionPerm_lt_iff (b : P.Base) {i j : ι}
   rw [height_reflectionPerm_of_mem_support P b hi]
   omega
 
-/-- A positive root has positive Cartan pairing with some simple coroot.
-
-Mathlib provides the transposed pairing in
-`RootPairing.Base.IsPos.exists_mem_support_pos_pairingIn`; finiteness makes the two pairings have
-the same sign. -/
+/-- A positive root has positive Cartan pairing with some simple coroot. -/
 lemma exists_mem_support_pairingIn_pos [Finite ι] (b : P.Base) {j : ι} (hj : b.IsPos j) :
     ∃ i ∈ b.support, 0 < P.pairingIn ℤ j i := by
+  -- Mathlib provides the transposed pairing; finiteness makes the two pairings have the same sign.
   obtain ⟨i, hi, hpair⟩ := hj.exists_mem_support_pos_pairingIn
   exact ⟨i, hi, (P.zero_lt_pairingIn_iff' ℤ).mp hpair⟩
 
