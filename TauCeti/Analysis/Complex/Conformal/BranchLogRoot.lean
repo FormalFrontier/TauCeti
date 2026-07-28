@@ -28,7 +28,20 @@ continuity of `L` confines `L z - w₀` to the strip `|im| < π` on which `log �
 So no new analysis is involved — only the observation that a continuous logarithm of a holomorphic
 nonvanishing function is automatically holomorphic.
 
-## Upstream coordination
+## Attribution and upstream coordination
+
+The mathematics here is an upgrade of prior Mathlib work, not a first proof, and rests on two
+efforts of Yury Kudryashov's.
+
+*The branch itself* is Mathlib's: `Complex.exists_continuousOn_eqOn_exp_comp` and
+`Complex.exists_continuousOn_pow_eq` in `Mathlib.Analysis.Complex.BranchLogRoot` (© Yury Kudryashov)
+supply the continuous branch on a simply connected domain, which this file consumes rather than
+rebuilds. Everything added below is the continuity-to-holomorphy upgrade.
+
+*The consumer* is the Riemann mapping construction in `Mathlib.Analysis.Complex.RiemannMapping`
+(© Yury Kudryashov), whose `Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` performs the same
+square-root step that the sibling file `DiscInjection.lean` re-derives on top of this API; see its
+docstring for why that lemma cannot be named by an importer.
 
 The Riemann mapping theorem is being formalized upstream at
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), which proves

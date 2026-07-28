@@ -33,13 +33,21 @@ is what makes the bound **strict**, landing in the open disc rather than its clo
 
 ## Attribution and upstream coordination
 
-This construction follows the in-tree Mathlib proof of the same step,
-`Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` (© Yury Kudryashov,
-`Mathlib.Analysis.Complex.RiemannMapping`): the same plan — pick `a ∉ U`, take a holomorphic square
-root of `z - a`, obtain an open image ball, observe that `-h` avoids it, and invert. That lemma is
-present in this checkout but is **not exported from its module** (it carries no `public` marker
-under the module system, so an importer cannot name it — a direct reference elaborates to
-`Unknown constant`), which is why this file re-derives the construction rather than reusing it.
+Two pieces of prior Mathlib work stand behind this file, both © Yury Kudryashov.
+
+*The construction.* This follows the in-tree Mathlib proof of the same step,
+`Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` (`Mathlib.Analysis.Complex.RiemannMapping`):
+the same plan — pick `a ∉ U`, take a holomorphic square root of `z - a`, obtain an open image ball,
+observe that `-h` avoids it, and invert. That lemma is present in this checkout but is **not
+exported from its module** (it carries no `public` marker under the module system, so an importer
+cannot name it — a direct reference elaborates to `Unknown constant`, while a public lemma from the
+same file resolves), which is why this file re-derives the construction rather than reusing it.
+
+*The square root it rests on.* The branch used here comes from
+`TauCeti.exists_differentiableOn_pow_eq`, which is the holomorphic upgrade of Mathlib's continuous
+branch API in `Mathlib.Analysis.Complex.BranchLogRoot` (`Complex.exists_continuousOn_eqOn_exp_comp`,
+`Complex.exists_continuousOn_pow_eq`). The existence half of this step is therefore Mathlib's; the
+sibling file `BranchLogRoot.lean` records that debt in detail.
 
 The Riemann mapping theorem is also being formalized upstream at
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), which proves the
@@ -49,6 +57,9 @@ shim**: delete it and refactor downstream consumers onto the exported Mathlib ve
 ## Main statements
 
 * `TauCeti.exists_differentiableOn_injOn_mapsTo_unitBall` — the nonempty-family step.
+* `TauCeti.exists_differentiableOn_injOn_mapsTo_unitBall_apply_eq_zero` — the same step for the
+  **normalized** family, whose members fix a chosen base point. This is the form the roadmap's
+  maximization argument consumes.
 -/
 
 public section
@@ -150,6 +161,37 @@ theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSim
     rw [mem_ball, dist_zero_right, norm_div, Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos hrhalf, div_lt_one hpos]
     linarith
+
+/-- **The normalized competing family is nonempty.** The roadmap's maximization step ranges over
+injective holomorphic maps `U → 𝔻` that *fix a chosen base point* `z₀`, so the nonemptiness it needs
+is this one, not the bare version above.
+
+The normalization is an affine correction, not a disc automorphism: if `f` lands in `𝔻`, then
+`f z - f z₀` lands in `ball 0 2` by the triangle inequality, so halving returns to `𝔻` while sending
+`z₀` to `0`. Injectivity and holomorphy are inherited, since `w ↦ (w - f z₀) / 2` is affine and
+injective on all of `ℂ`.
+
+The textbook normalization instead composes with the disc automorphism centred at `f z₀`,
+`w ↦ (w - c) / (1 - conj c * w)`. That is the better map — it is onto `𝔻`, and it is what the
+uniqueness half of the theorem needs — but `Aut(𝔻)` is an **L2** deliverable of the
+`ConformalMapping` roadmap and does not exist in this checkout or in Mathlib yet. For the *nonempty
+normalized family* obligation alone, surjectivity is not required, so this L3 step does not have to
+wait on L2. Replace this proof with the automorphism composition once L2 lands. -/
+theorem exists_differentiableOn_injOn_mapsTo_unitBall_apply_eq_zero {U : Set ℂ}
+    (hUc : IsSimplyConnected U) (hUo : IsOpen U) (hUne : U ≠ univ) {z₀ : ℂ} (hz₀ : z₀ ∈ U) :
+    ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) ∧ f z₀ = 0 := by
+  obtain ⟨f, hfd, hfi, hfm⟩ := exists_differentiableOn_injOn_mapsTo_unitBall hUc hUo hUne
+  refine ⟨fun z => (f z - f z₀) / 2, ?_, ?_, ?_, by simp⟩
+  · exact fun z hz => ((hfd z hz).sub_const _).div_const _
+  · intro z₁ hz₁ z₂ hz₂ hEq
+    exact hfi hz₁ hz₂ (by linear_combination 2 * hEq)
+  · intro z hz
+    have h₁ : ‖f z‖ < 1 := by simpa [mem_ball, dist_zero_right] using hfm hz
+    have h₂ : ‖f z₀‖ < 1 := by simpa [mem_ball, dist_zero_right] using hfm hz₀
+    have hnum : ‖f z - f z₀‖ < 2 := lt_of_le_of_lt (norm_sub_le _ _) (by linarith)
+    have hden : ‖(2 : ℂ)‖ = 2 := by norm_num
+    rw [mem_ball, dist_zero_right, norm_div, hden, div_lt_one (by norm_num : (0 : ℝ) < 2)]
+    exact hnum
 
 /- **Non-vacuity** (documentation, not public API). The hypotheses above are satisfiable: the open
 unit ball is simply connected (being convex, hence contractible), open, and proper. Without this the
