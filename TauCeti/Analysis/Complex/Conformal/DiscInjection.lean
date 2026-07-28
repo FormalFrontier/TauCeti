@@ -6,9 +6,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import TauCeti.Analysis.Complex.BranchLogRoot
-public import TauCeti.Analysis.Complex.Conformal.Moebius
-public import Mathlib.Analysis.Complex.OpenMapping
-public import Mathlib.Analysis.Convex.Contractible
+import TauCeti.Analysis.Complex.Conformal.Moebius
+import Mathlib.Analysis.Complex.OpenMapping
+import Mathlib.Analysis.Convex.Contractible
 
 /-!
 # A simply connected proper domain injects holomorphically into the unit disc

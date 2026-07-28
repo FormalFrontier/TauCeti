@@ -6,7 +6,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import Mathlib.Analysis.Complex.BranchLogRoot
-public import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 
 /-!
 # Holomorphic branches of `log` and of `n`-th roots on a simply connected domain
