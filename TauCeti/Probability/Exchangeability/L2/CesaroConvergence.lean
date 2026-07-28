@@ -99,15 +99,19 @@ private theorem dist_blockAverage_toLp_le_of_disjoint {μ : Measure Ω}
         add_le_add le_rfl hfrac
       _ = 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n := by ring
   have hnonneg : 0 ≤ 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (n : ℝ) := by positivity
-  simpa only [B] using
-    (show dist
+  have hdist_nonneg :
+      0 ≤ dist
         ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
-        (hB_L2.toLp B) ≤
-          Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) by
-      nlinarith [show 0 ≤ dist
-        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
-        (hB_L2.toLp B) from dist_nonneg, Real.sqrt_nonneg
-        (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n), Real.sq_sqrt hnonneg])
+        (hB_L2.toLp B) :=
+    dist_nonneg
+  have hdist_le_sqrt :
+      dist
+          ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+          (hB_L2.toLp B) ≤
+        Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) := by
+    nlinarith [hdist_nonneg, Real.sqrt_nonneg
+      (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n), Real.sq_sqrt hnonneg]
+  simpa only [B] using hdist_le_sqrt
 
 /-- Compare two block averages in `L²` through a longer block disjoint from both. -/
 private theorem dist_blockAverages_toLp_le_via_disjoint {μ : Measure Ω}
@@ -233,7 +237,7 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
   -- Completeness of `L²` supplies the common prefix limit and a measurable representative.
   obtain ⟨a₂, ha₂⟩ :
       ∃ a₂ : Lp ℝ 2 μ, Tendsto A₂ atTop (𝓝 a₂) :=
-    CompleteSpace.complete (show Cauchy (atTop.map A₂) from hA₂_cauchy)
+    cauchySeq_tendsto_of_complete hA₂_cauchy
   let a : Ω → ℝ := (Lp.aestronglyMeasurable a₂).mk a₂
   have ha₂_ae : a₂ =ᵐ[μ] a := (Lp.aestronglyMeasurable a₂).ae_eq_mk
   have ha_meas : Measurable a := (Lp.aestronglyMeasurable a₂).measurable_mk
