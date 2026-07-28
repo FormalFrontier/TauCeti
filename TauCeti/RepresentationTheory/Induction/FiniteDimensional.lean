@@ -16,6 +16,9 @@ The main input is a linear equivalence between coinduction and a product indexed
 Composing it with Mathlib's finite-index isomorphism from induction to coinduction gives the
 dimension formula
 `finrank k (Ind_S^G A) = S.index * finrank k A`.
+Induction on finite-dimensional representations is packaged both objectwise, as `indFDRep`, and
+functorially, as `indFDRepFunctor`, the latter naturally isomorphic to `Rep.indFunctor` under the
+forgetful functor to `Rep k G`.
 
 ## References
 
@@ -72,10 +75,10 @@ theorem rightCosetFactor_out (q : Quotient (QuotientGroup.rightRel S)) :
   ext
   simp [rightCosetFactor]
 
-/-- Coinduction from a finite-index subgroup is linearly equivalent to a product of copies of
-the original representation indexed by the right cosets. The forward map evaluates an
-equivariant function at the chosen representative of each right coset. -/
-noncomputable def coindSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
+/-- Coinduction from a subgroup is linearly equivalent to a product of copies of the original
+representation indexed by the right cosets. The forward map evaluates an equivariant function at
+the chosen representative of each right coset. -/
+noncomputable def coindSubtypeEquivPi (A : Rep.{u} k S) :
     Rep.coind S.subtype A ≃ₗ[k]
       (Quotient (QuotientGroup.rightRel S) → A) where
   toFun f q := f.1 q.out
@@ -111,7 +114,7 @@ noncomputable def coindSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
 
 /-- The coset model evaluates a coinduced function at the chosen representative. -/
 @[simp]
-theorem coindSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{u} k S)
+theorem coindSubtypeEquivPi_apply (A : Rep.{u} k S)
     (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     coindSubtypeEquivPi A f q = f.1 q.out := by
   rw [coindSubtypeEquivPi]
@@ -119,7 +122,7 @@ theorem coindSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{u} k S)
 
 /-- The inverse coset model extends a value from each representative by `S`-equivariance. -/
 @[simp]
-theorem coindSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{u} k S)
+theorem coindSubtypeEquivPi_symm_apply (A : Rep.{u} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) (g : G) :
     ((coindSubtypeEquivPi A).symm x).1 g =
       A.ρ (rightCosetFactor (S := S) g) (x (Quotient.mk'' g)) := by
@@ -128,27 +131,36 @@ theorem coindSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{u} k S)
 
 /-- The underlying vector space of induction from a finite-index subgroup is a product of copies
 of the original representation indexed by the right cosets. -/
-noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
+noncomputable def indSubtypeEquivPi [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
+    (A : Rep.{u} k S) :
     Rep.ind S.subtype A ≃ₗ[k]
-      (Quotient (QuotientGroup.rightRel S) → A) := by
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-  let e := Rep.indCoindIso A
-  let e' : Rep.ind S.subtype A ≃ₗ[k] Rep.coind S.subtype A :=
-    { toFun := e.hom.hom
-      map_add' := e.hom.hom.map_add
-      map_smul' := e.hom.hom.map_smul
-      invFun := e.inv.hom
-      left_inv := by
-        intro x
-        exact ConcreteCategory.congr_hom e.hom_inv_id x
-      right_inv := by
-        intro x
-        exact ConcreteCategory.congr_hom e.inv_hom_id x }
-  exact e'.trans (coindSubtypeEquivPi A)
+      (Quotient (QuotientGroup.rightRel S) → A) :=
+  (((forget₂ (Rep k G) (ModuleCat k)).mapIso (Rep.indCoindIso A)).toLinearEquiv).trans
+    (coindSubtypeEquivPi A)
+
+/-- The coset model of induction transports along `Rep.indCoindIso` and then evaluates at the
+chosen representative of each right coset. -/
+@[simp]
+theorem indSubtypeEquivPi_apply [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
+    (A : Rep.{u} k S) (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
+    indSubtypeEquivPi A x q = ((Rep.indCoindIso A).hom.hom x).1 q.out := by
+  rw [indSubtypeEquivPi]
+  rfl
+
+/-- The inverse coset model of induction extends by `S`-equivariance and then transports back
+along `Rep.indCoindIso`. -/
+@[simp]
+theorem indSubtypeEquivPi_symm_apply [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
+    (A : Rep.{u} k S) (x : Quotient (QuotientGroup.rightRel S) → A) :
+    (indSubtypeEquivPi A).symm x =
+      (Rep.indCoindIso A).inv.hom ((coindSubtypeEquivPi A).symm x) := by
+  rw [indSubtypeEquivPi]
+  rfl
 
 /-- Induction from a finite-index subgroup preserves finite-dimensionality. -/
 noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{u} k S)
     [FiniteDimensional k A] : FiniteDimensional k (Rep.ind S.subtype A) := by
+  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   letI := S.fintypeQuotientOfFiniteIndex
   letI : Fintype (Quotient (QuotientGroup.rightRel S)) :=
     QuotientGroup.fintypeQuotientRightRel
@@ -160,14 +172,12 @@ noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{u} k S)
 dimension. -/
 theorem finrank_ind [S.FiniteIndex] (A : Rep.{u} k S) [FiniteDimensional k A] :
     Module.finrank k (Rep.ind S.subtype A) = S.index * Module.finrank k A := by
+  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   letI := S.fintypeQuotientOfFiniteIndex
   letI : Fintype (Quotient (QuotientGroup.rightRel S)) :=
     QuotientGroup.fintypeQuotientRightRel
   -- Transfer the computation to the explicit finite product supplied by the coset model.
-  rw [show Module.finrank k (Rep.ind S.subtype A) =
-    Module.finrank k (Quotient (QuotientGroup.rightRel S) → A) from
-      LinearEquiv.finrank_eq (indSubtypeEquivPi A)]
-  rw [Module.finrank_pi_fintype]
+  rw [LinearEquiv.finrank_eq (indSubtypeEquivPi A), Module.finrank_pi_fintype]
   simp [QuotientGroup.card_quotient_rightRel, Subgroup.index_eq_card]
 
 end Rep
@@ -189,6 +199,34 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
     (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ≅
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Iso.refl _
+
+/-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
+It acts on objects as `indFDRep`; on intertwiners it is Mathlib's `Rep.indFunctor`, transported
+back along the fully faithful forgetful functor `FDRep k G ⥤ Rep k G`. -/
+noncomputable def indFDRepFunctor {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] : FDRep k S ⥤ FDRep k G where
+  obj A := indFDRep A
+  map f := (forget₂ (FDRep k G) (Rep k G)).preimage
+    ((Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f))
+  map_id _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
+    rw [Functor.map_preimage, CategoryTheory.Functor.map_id, CategoryTheory.Functor.map_id,
+      CategoryTheory.Functor.map_id]
+    rfl)
+  map_comp _ _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
+    rw [Functor.map_preimage, CategoryTheory.Functor.map_comp, CategoryTheory.Functor.map_comp,
+      CategoryTheory.Functor.map_comp, Functor.map_preimage, Functor.map_preimage]
+    rfl)
+
+/-- Under the forgetful functor to `Rep k G`, `indFDRepFunctor` is naturally isomorphic to
+Mathlib's induction functor. -/
+noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] :
+    indFDRepFunctor (k := k) (S := S) ⋙ forget₂ (FDRep k G) (Rep k G) ≅
+      forget₂ (FDRep k S) (Rep k S) ⋙ Rep.indFunctor k S.subtype :=
+  NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun f ↦ by
+    simp only [indFDRepFunctor, indFDRepForgetIso, Functor.comp_map, Iso.refl_hom,
+      Functor.map_preimage]
+    rfl
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
 original representation. -/
