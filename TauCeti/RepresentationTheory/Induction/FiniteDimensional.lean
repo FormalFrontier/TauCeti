@@ -25,6 +25,14 @@ forgetful functor to `Rep k G`.
 This implements the first item of Layer 2, “Induction preserves finite-dimensionality, via an
 explicit coset model”, in
 `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`.
+
+The coset-representative construction below — `rightCosetFactor` together with the two rewriting
+lemmas `rightCoset_mk_mul` and `rightCosetFactor_mul` that make it `S`-equivariant, and the proof
+plan of building an equivariant function from values at the chosen representatives — is adapted
+from the proof of the `PreservesEpimorphisms` instance for `Rep.coindFunctor` in
+`Mathlib.RepresentationTheory.Coinduced`, where the same factor appears inline as a local
+definition `γ` with auxiliary facts `hmk` and `hγ`. Here it is extracted as standalone API and
+used to build the coset equivalence rather than a surjectivity witness.
 -/
 
 public section
