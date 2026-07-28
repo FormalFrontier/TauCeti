@@ -61,6 +61,10 @@ def e8Plumbing : PlumbingGraph (Fin 8) where
   decidableAdj := inferInstance
   weight := fun _ => -2
 
+/-- Every vertex of the `E₈` plumbing has framing `-2`. -/
+@[simp]
+theorem e8Plumbing_weight (i : Fin 8) : e8Plumbing.weight i = -2 := (rfl)
+
 /-- Two vertices of the `E₈` plumbing are adjacent exactly when they are one of the seven
 unordered pairs in its Dynkin tree. -/
 @[simp]
@@ -136,6 +140,47 @@ def e8SquareTerm (x : Fin 8 → ℤ) : Fin 8 → ℤ :=
 theorem e8SquareTerm_nonneg (x : Fin 8 → ℤ) (i : Fin 8) : 0 ≤ e8SquareTerm x i := by
   fin_cases i <;> exact mul_nonneg (by norm_num) (sq_nonneg _)
 
+/-- The completed-square expression for `E₈` vanishes only at the zero vector. -/
+theorem e8SquareTerm_sum_eq_zero (x : Fin 8 → ℤ) (h : ∑ i, e8SquareTerm x i = 0) :
+    x = 0 := by
+  have hterm (i : Fin 8) : e8SquareTerm x i = 0 :=
+    (Finset.sum_eq_zero_iff_of_nonneg fun j _ => e8SquareTerm_nonneg x j).mp h i
+      (Finset.mem_univ i)
+  have hz7 : x 7 = 0 := by
+    have := hterm 7
+    rw [e8SquareTerm_seven] at this
+    nlinarith [sq_nonneg (x 7)]
+  have hz6 : x 6 = 0 := by
+    have this := hterm 6
+    rw [e8SquareTerm_six, hz7] at this
+    nlinarith [sq_nonneg (x 6)]
+  have hz5 : x 5 = 0 := by
+    have this := hterm 5
+    rw [e8SquareTerm_five, hz6, hz7] at this
+    nlinarith [sq_nonneg (x 5)]
+  have hz4 : x 4 = 0 := by
+    have this := hterm 4
+    rw [e8SquareTerm_four, hz5, hz7] at this
+    nlinarith [sq_nonneg (x 4)]
+  have hz3 : x 3 = 0 := by
+    have this := hterm 3
+    rw [e8SquareTerm_three, hz4, hz7] at this
+    nlinarith [sq_nonneg (x 3)]
+  have hz2 : x 2 = 0 := by
+    have this := hterm 2
+    rw [e8SquareTerm_two, hz3, hz7] at this
+    nlinarith [sq_nonneg (x 2)]
+  have hz1 : x 1 = 0 := by
+    have this := hterm 1
+    rw [e8SquareTerm_one, hz2] at this
+    nlinarith [sq_nonneg (x 1)]
+  have hz0 : x 0 = 0 := by
+    have this := hterm 0
+    rw [e8SquareTerm_zero, hz1] at this
+    nlinarith [sq_nonneg (x 0)]
+  funext i
+  fin_cases i <;> assumption
+
 /-- An integral completion of squares for the negative `E₈` intersection form. Multiplication by
 `840` clears the denominators in the usual `LDLᵀ` decomposition of the `E₈` Cartan matrix. -/
 theorem e8Plumbing_neg_intersectionForm (x : Fin 8 → ℤ) :
@@ -156,50 +201,6 @@ theorem e8Plumbing_isNegativeDefinite : e8Plumbing.IsNegativeDefinite := by
     have : 0 ≤ ∑ i, e8SquareTerm x i :=
       Finset.sum_nonneg fun i _ => e8SquareTerm_nonneg x i
     nlinarith
-  have hterm (i : Fin 8) : e8SquareTerm x i = 0 :=
-    (Finset.sum_eq_zero_iff_of_nonneg fun j _ => e8SquareTerm_nonneg x j).mp hR i
-      (Finset.mem_univ i)
-  have hz7 : x 7 = 0 := by
-    have := hterm 7
-    rw [e8SquareTerm_seven] at this
-    nlinarith [sq_nonneg (x 7)]
-  have hz6 : x 6 = 0 := by
-    have this := hterm 6
-    rw [e8SquareTerm_six] at this
-    rw [hz7] at this
-    nlinarith [sq_nonneg (x 6)]
-  have hz5 : x 5 = 0 := by
-    have this := hterm 5
-    rw [e8SquareTerm_five] at this
-    rw [hz6, hz7] at this
-    nlinarith [sq_nonneg (x 5)]
-  have hz4 : x 4 = 0 := by
-    have hs := hterm 4
-    rw [e8SquareTerm_four] at hs
-    rw [hz5, hz7] at hs
-    nlinarith [sq_nonneg (x 4)]
-  have hz3 : x 3 = 0 := by
-    have hs := hterm 3
-    rw [e8SquareTerm_three] at hs
-    rw [hz4, hz7] at hs
-    nlinarith [sq_nonneg (x 3)]
-  have hz2 : x 2 = 0 := by
-    have hs := hterm 2
-    rw [e8SquareTerm_two] at hs
-    rw [hz3, hz7] at hs
-    nlinarith [sq_nonneg (x 2)]
-  have hz1 : x 1 = 0 := by
-    have hs := hterm 1
-    rw [e8SquareTerm_one] at hs
-    rw [hz2] at hs
-    nlinarith [sq_nonneg (x 1)]
-  have hz0 : x 0 = 0 := by
-    have hs := hterm 0
-    rw [e8SquareTerm_zero] at hs
-    rw [hz1] at hs
-    nlinarith [sq_nonneg (x 0)]
-  apply hx
-  funext i
-  fin_cases i <;> assumption
+  exact hx (e8SquareTerm_sum_eq_zero x hR)
 
 end TauCeti
