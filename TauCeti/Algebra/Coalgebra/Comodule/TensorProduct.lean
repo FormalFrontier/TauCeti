@@ -38,6 +38,8 @@ resolution non-confluent.
 * `TauCeti.Comodule.tensorCoact`: the diagonal coaction on `M ⊗ N`.
 * `TauCeti.Comodule.tensorCombine_natural`: naturality of the combining map in the two
   comodule carriers.
+* `TauCeti.Comodule.tensorCombine_assoc`, `tensorCombine_lid`, and `tensorCombine_rid`:
+  compatibility of coefficient combination with the tensor associator and unitors.
 * `TauCeti.Comodule.tensorCoact_natural`: the diagonal coaction commutes with tensoring
   comodule morphisms.
 * `TauCeti.Comodule.lTensor_comp_tensorCombine`: an algebra homomorphism on the coefficients
@@ -153,6 +155,115 @@ theorem tensorCombine_natural (f : M →ₗ[R] M') (g : N →ₗ[R] N') :
       rw [LinearMap.comp_assoc]
 
 end Combine
+
+section Coherence
+
+variable {P : Type*}
+variable [Semiring C] [Algebra R C]
+variable [AddCommMonoid M] [Module R M]
+variable [AddCommMonoid N] [Module R N]
+variable [AddCommMonoid P] [Module R P]
+
+/-- Combining three coacted factors is compatible with reassociation. The two sides multiply
+the coefficient factors as `(c * d) * e` and `c * (d * e)`, respectively. -/
+theorem tensorCombine_assoc (x : M ⊗[R] C) (y : N ⊗[R] C) (z : P ⊗[R] C) :
+    TensorProduct.map (TensorProduct.assoc R M N P).toLinearMap LinearMap.id
+        (tensorCombine (R := R) (C := C) (M := M ⊗[R] N) (N := P)
+          (tensorCombine (R := R) (C := C) (M := M) (N := N) (x ⊗ₜ[R] y) ⊗ₜ[R] z)) =
+      tensorCombine (R := R) (C := C) (M := M) (N := N ⊗[R] P)
+        (x ⊗ₜ[R] tensorCombine (R := R) (C := C) (M := N) (N := P) (y ⊗ₜ[R] z)) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x₁ x₂ hx₁ hx₂ =>
+    simpa only [add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hx₁ hx₂
+  | tmul m c =>
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add y₁ y₂ hy₁ hy₂ =>
+      simpa only [tmul_add, add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hy₁ hy₂
+    | tmul n d =>
+      induction z using TensorProduct.induction_on with
+      | zero => simp
+      | add z₁ z₂ hz₁ hz₂ =>
+        simpa only [tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hz₁ hz₂
+      | tmul p e => simp [mul_assoc]
+
+/-- The inverse associator is compatible with combining three coacted factors. -/
+theorem tensorCombine_assoc_symm (x : M ⊗[R] C) (y : N ⊗[R] C) (z : P ⊗[R] C) :
+    TensorProduct.map (TensorProduct.assoc R M N P).symm.toLinearMap LinearMap.id
+        (tensorCombine (R := R) (C := C) (M := M) (N := N ⊗[R] P)
+          (x ⊗ₜ[R] tensorCombine (R := R) (C := C) (M := N) (N := P) (y ⊗ₜ[R] z))) =
+      tensorCombine (R := R) (C := C) (M := M ⊗[R] N) (N := P)
+        (tensorCombine (R := R) (C := C) (M := M) (N := N) (x ⊗ₜ[R] y) ⊗ₜ[R] z) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x₁ x₂ hx₁ hx₂ =>
+    simpa only [add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hx₁ hx₂
+  | tmul m c =>
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add y₁ y₂ hy₁ hy₂ =>
+      simpa only [tmul_add, add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hy₁ hy₂
+    | tmul n d =>
+      induction z using TensorProduct.induction_on with
+      | zero => simp
+      | add z₁ z₂ hz₁ hz₂ =>
+        simpa only [tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hz₁ hz₂
+      | tmul p e => simp [mul_assoc]
+
+/-- Combining the trivial coefficient `1` on the left and applying the left tensor unitor
+scales a coacted vector by the scalar in the trivial factor. -/
+theorem tensorCombine_lid (r : R) (x : M ⊗[R] C) :
+    TensorProduct.map (TensorProduct.lid R M).toLinearMap LinearMap.id
+        (tensorCombine (R := R) (C := C) (M := R) (N := M)
+          ((r ⊗ₜ[R] (1 : C)) ⊗ₜ[R] x)) =
+      r • x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+    simpa only [tmul_add, LinearMap.map_add, smul_add] using congrArg₂ (· + ·) hx hy
+  | tmul m c =>
+    simpa using (smul_tmul' r m c).symm
+
+/-- Combining the trivial coefficient `1` on the left agrees with applying the inverse left
+tensor unitor to the carrier factor. -/
+theorem tensorCombine_lid_symm (x : M ⊗[R] C) :
+    tensorCombine (R := R) (C := C) (M := R) (N := M)
+        (((1 : R) ⊗ₜ[R] (1 : C)) ⊗ₜ[R] x) =
+      TensorProduct.map (TensorProduct.lid R M).symm.toLinearMap LinearMap.id x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+    simpa only [tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
+  | tmul m c => simp
+
+/-- Combining the trivial coefficient `1` on the right and applying the right tensor unitor
+scales a coacted vector by the scalar in the trivial factor. -/
+theorem tensorCombine_rid (x : M ⊗[R] C) (r : R) :
+    TensorProduct.map (TensorProduct.rid R M).toLinearMap LinearMap.id
+        (tensorCombine (R := R) (C := C) (M := M) (N := R)
+          (x ⊗ₜ[R] (r ⊗ₜ[R] (1 : C)))) =
+      r • x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+    simpa only [add_tmul, LinearMap.map_add, smul_add] using congrArg₂ (· + ·) hx hy
+  | tmul m c =>
+    simpa using (smul_tmul' r m c).symm
+
+/-- Combining the trivial coefficient `1` on the right agrees with applying the inverse right
+tensor unitor to the carrier factor. -/
+theorem tensorCombine_rid_symm (x : M ⊗[R] C) :
+    tensorCombine (R := R) (C := C) (M := M) (N := R)
+        (x ⊗ₜ[R] ((1 : R) ⊗ₜ[R] (1 : C))) =
+      TensorProduct.map (TensorProduct.rid R M).symm.toLinearMap LinearMap.id x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+    simpa only [add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
+  | tmul m c => simp
+
+end Coherence
 
 section Coact
 
