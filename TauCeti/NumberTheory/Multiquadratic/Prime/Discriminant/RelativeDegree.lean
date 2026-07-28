@@ -106,7 +106,7 @@ theorem finrank_adjoin_range_over_prodRootMem_univ_of_finset
   have hcard : Nat.card {P // P ∈ s} = s.card := Nat.card_eq_finsetCard s
   rw [← hcard]
   exact finrank_adjoin_range_over_prodRootMem_univ_of_primeDiscriminants
-    (fun P => (P : ℤ)) (fun P => hs P.1 P.2) (fun _ _ h => Subtype.ext h)
+    (ι := {P // P ∈ s}) Subtype.val (fun P => hs P.1 P.2) (fun _ _ h => Subtype.ext h)
     (fun P Q hP hQ => hev P.1 P.2 Q.1 Q.2 hP hQ) root hroot
 
 end TauCeti.Multiquadratic
