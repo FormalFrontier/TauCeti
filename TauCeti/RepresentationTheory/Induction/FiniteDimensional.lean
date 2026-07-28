@@ -37,7 +37,11 @@ universe u
 
 namespace Rep
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k G : Type u} [Group G] {S : Subgroup G}
+
+section CosetModel
+
+variable [CommRing k]
 
 /-- The element of `S` carrying the chosen representative of the right coset of `g` to `g`. -/
 noncomputable def rightCosetFactor (g : G) : S :=
@@ -157,6 +161,12 @@ theorem indSubtypeEquivPi_symm_apply [DecidableRel (QuotientGroup.rightRel S)] [
   rw [indSubtypeEquivPi]
   rfl
 
+end CosetModel
+
+section Dimension
+
+variable [Field k]
+
 /-- Induction from a finite-index subgroup preserves finite-dimensionality. -/
 noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{u} k S)
     [FiniteDimensional k A] : FiniteDimensional k (Rep.ind S.subtype A) := by
@@ -179,6 +189,8 @@ theorem finrank_ind [S.FiniteIndex] (A : Rep.{u} k S) [FiniteDimensional k A] :
   -- Transfer the computation to the explicit finite product supplied by the coset model.
   rw [LinearEquiv.finrank_eq (indSubtypeEquivPi A), Module.finrank_pi_fintype]
   simp [QuotientGroup.card_quotient_rightRel, Subgroup.index_eq_card]
+
+end Dimension
 
 end Rep
 
