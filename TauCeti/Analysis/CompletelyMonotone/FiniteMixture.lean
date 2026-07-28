@@ -21,7 +21,6 @@ acceptance examples in the one-parameter-semigroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.IsCompletelyMonotone.sum`: completely monotone functions are closed under finite sums.
 * `TauCeti.finiteExponentialMixture`: a finite positive mixture of exponential extreme rays.
 * `TauCeti.finiteExponentialMixtureMeasure`: the corresponding finite sum of weighted Dirac
   measures on `ℝ≥0`.
@@ -45,24 +44,6 @@ open scoped ENNReal NNReal
 
 namespace TauCeti
 
-namespace IsCompletelyMonotone
-
-/-- Completely monotone functions are closed under finite sums. -/
-theorem sum {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ}
-    (hf : ∀ i ∈ s, IsCompletelyMonotone (f i)) :
-    IsCompletelyMonotone (fun t => ∑ i ∈ s, f i t) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-      simpa using isCompletelyMonotone_const (c := 0) le_rfl
-  | @insert i s hi ih =>
-      have hsum := (hf i (Finset.mem_insert_self i s)).add
-        (ih fun j hj => hf j (Finset.mem_insert_of_mem hj))
-      exact hsum.congr fun t _ => by
-        simp [hi, Pi.add_apply]
-
-end IsCompletelyMonotone
-
 /-- A finite positive mixture of the exponential extreme rays `t ↦ exp (-p * t)`.
 
 The weights and rates are indexed by a finset. Both take values in `ℝ≥0`, making their
@@ -71,26 +52,19 @@ noncomputable def finiteExponentialMixture {ι : Type*} (s : Finset ι)
     (w p : ι → ℝ≥0) (t : ℝ) : ℝ :=
   ∑ i ∈ s, (w i : ℝ) * Real.exp (-(p i : ℝ) * t)
 
-/-- Evaluation of a finite exponential mixture as its defining finite sum. -/
-theorem finiteExponentialMixture_apply {ι : Type*} (s : Finset ι)
-    (w p : ι → ℝ≥0) (t : ℝ) :
-    finiteExponentialMixture s w p t =
-      ∑ i ∈ s, (w i : ℝ) * Real.exp (-(p i : ℝ) * t) := by
-  rw [finiteExponentialMixture]
-
 /-- The empty exponential mixture is the zero function. -/
 @[simp]
 theorem finiteExponentialMixture_empty {ι : Type*} (w p : ι → ℝ≥0) :
     finiteExponentialMixture ∅ w p = 0 := by
   ext t
-  simp [finiteExponentialMixture_apply]
+  simp [finiteExponentialMixture]
 
 /-- A singleton exponential mixture is one weighted exponential extreme ray. -/
 @[simp]
 theorem finiteExponentialMixture_singleton {ι : Type*} (i : ι) (w p : ι → ℝ≥0) (t : ℝ) :
     finiteExponentialMixture {i} w p t =
       (w i : ℝ) * Real.exp (-(p i : ℝ) * t) := by
-  simp [finiteExponentialMixture_apply]
+  simp [finiteExponentialMixture]
 
 /-- Every finite positive mixture of exponential extreme rays is completely monotone. -/
 theorem isCompletelyMonotone_finiteExponentialMixture {ι : Type*} (s : Finset ι)
@@ -110,6 +84,17 @@ Repeated rates are intentionally allowed: measure addition combines their weight
 noncomputable def finiteExponentialMixtureMeasure {ι : Type*} (s : Finset ι)
     (w p : ι → ℝ≥0) : Measure ℝ≥0 :=
   ∑ i ∈ s, (w i : ℝ≥0∞) • Measure.dirac (p i)
+
+/-- The representing measure of a measurable set is the sum of the weights at rates in the set. -/
+@[simp]
+theorem finiteExponentialMixtureMeasure_apply {ι : Type*} (s : Finset ι)
+    (w p : ι → ℝ≥0) {A : Set ℝ≥0} (hA : MeasurableSet A) :
+    finiteExponentialMixtureMeasure s w p A =
+      ∑ i ∈ s, A.indicator (fun _ => (w i : ℝ≥0∞)) (p i) := by
+  simp only [finiteExponentialMixtureMeasure, Measure.finsetSum_apply, hA,
+    Measure.smul_apply, Measure.dirac_apply']
+  refine Finset.sum_congr rfl fun i _ => ?_
+  by_cases hi : p i ∈ A <;> simp [hi, smul_eq_mul]
 
 /-- The empty exponential mixture has the zero representing measure. -/
 @[simp]
@@ -131,7 +116,7 @@ theorem finiteExponentialMixture_eq_integral {ι : Type*} (s : Finset ι)
     finiteExponentialMixture s w p t =
       ∫ q : ℝ≥0, Real.exp (-t * (q : ℝ)) ∂finiteExponentialMixtureMeasure s w p := by
   rw [finiteExponentialMixtureMeasure, integral_finsetSum_measure]
-  · rw [finiteExponentialMixture_apply]
+  · rw [finiteExponentialMixture]
     refine Finset.sum_congr rfl fun i _ => ?_
     rw [integral_smul_measure, integral_dirac]
     simp [mul_comm]
@@ -149,6 +134,6 @@ theorem integral_exp_neg_mul_dirac_one (t : ℝ) :
 theorem finiteExponentialMixture_singleton_one (t : ℝ) :
     finiteExponentialMixture ({()} : Finset Unit) (fun _ => 1) (fun _ => 1) t =
       Real.exp (-t) := by
-  simp [finiteExponentialMixture_apply]
+  simp [finiteExponentialMixture]
 
 end TauCeti
