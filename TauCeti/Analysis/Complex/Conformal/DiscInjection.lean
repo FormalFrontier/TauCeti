@@ -18,8 +18,8 @@ unit disc.
 
 This is the classical square-root construction. Pick `a ∉ U`. On the simply connected `U` the
 nonvanishing function `z - a` has a holomorphic square root `h`
-(`TauCeti.exists_differentiableOn_pow_eq` at `n = 2`, itself an upgrade of Mathlib's continuous
-branch). Then:
+(`TauCeti.exists_differentiableOn_pow_eq` at `n = 2`, constructed as `exp (L / 2)` from the upgraded
+holomorphic logarithm branch `L`, not from Mathlib's continuous root branch). Then:
 
 * `h` is injective, since `h z₁ = h z₂` forces `z₁ - a = z₂ - a` after squaring;
 * `h '' U` is open (open mapping theorem: `h` is injective, hence nonconstant, on the connected
@@ -48,7 +48,7 @@ shim**: delete it and refactor downstream consumers onto the exported Mathlib ve
 
 ## Main statements
 
-* `TauCeti.exists_differentiableOn_injOn_mapsTo_ball` — the nonempty-family step.
+* `TauCeti.exists_differentiableOn_injOn_mapsTo_unitBall` — the nonempty-family step.
 -/
 
 public section
@@ -59,7 +59,7 @@ open Complex Set Metric
 
 /-- **A simply connected proper domain injects into the unit disc.** The Riemann mapping theorem's
 competing family — injective holomorphic maps `U → 𝔻` — is nonempty. -/
-theorem exists_differentiableOn_injOn_mapsTo_ball {U : Set ℂ} (hUc : IsSimplyConnected U)
+theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSimplyConnected U)
     (hUo : IsOpen U) (hUne : U ≠ univ) :
     ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) := by
   obtain ⟨a, ha⟩ : ∃ a, a ∉ U := by
