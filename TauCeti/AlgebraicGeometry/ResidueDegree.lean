@@ -39,6 +39,7 @@ variable {X Y Z : Scheme.{u}}
 
 /-- The residue degree of a composite is the product of the successive residue degrees:
 `[κ(x) : κ(g(f(x)))] = [κ(f(x)) : κ(g(f(x)))] [κ(x) : κ(f(x))]`. -/
+@[simp]
 theorem residueDegree_comp (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) :
     (f ≫ g).residueDegree x = g.residueDegree (f x) * f.residueDegree x := by
   letI : Algebra (Z.residueField (g (f x))) (Y.residueField (f x)) :=
@@ -52,6 +53,7 @@ theorem residueDegree_comp (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) :
     IsScalarTower.of_algebraMap_eq' <| by
       rw [RingHom.algebraMap_toAlgebra]
       exact congrArg CommRingCat.Hom.hom (Scheme.residueFieldMap_comp f g x)
+  rw [Scheme.Hom.residueDegree]
   exact (Module.finrank_mul_finrank (Z.residueField (g (f x)))
     (Y.residueField (f x)) (X.residueField x)).symm
 
@@ -83,6 +85,7 @@ theorem residueDegree_eq_one_iff (f : X ⟶ Y) (x : X) :
     RingHom.algebraMap_toAlgebra]
 
 /-- An isomorphism of schemes has residue degree one at every point. -/
+@[simp]
 theorem residueDegree_eq_one_of_isIso (f : X ⟶ Y) [IsIso f] (x : X) :
     f.residueDegree x = 1 :=
   (residueDegree_eq_one_iff f x).mpr (ConcreteCategory.bijective_of_isIso _)
