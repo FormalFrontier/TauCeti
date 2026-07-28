@@ -7,7 +7,7 @@ Authors: Claude
 -/
 public import TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Orthogonality
-public import TauCeti.Probability.Distributions.Gaussian.HermiteMemLp
+public import TauCeti.Probability.Distributions.Gaussian.Hermite.MemLp
 
 /-!
 # The Hermite polynomials as a Hilbert basis of `L²(γ)`
@@ -25,7 +25,8 @@ That is the form multivariate Gaussian `L²` and chaos expansions consume, and i
 * `TauCeti.integral_hermite_mul_hermite_mul_gaussianPDFReal` — the orthogonality relation against
   the standard Gaussian density, with normalization `cₙ = n!`.
 * `TauCeti.integrable_exp_mul_abs_gaussianPDFReal` — the standard Gaussian density has every
-  exponential moment finite, the hypothesis `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
+  exponential moment finite, the hypothesis
+  `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.gaussianHermiteHilbertBasis` — milestone A3′ itself.
 * `TauCeti.coeFn_gaussianHermiteHilbertBasis` — the anti-vacuity pin: the basis vectors really are
   `Hₙ/√(n!)`, not merely *some* orthonormal basis.
@@ -37,35 +38,28 @@ namespace TauCeti
 
 open MeasureTheory Polynomial Real ProbabilityTheory
 
-/-- The standard Gaussian density is `(√(2π))⁻¹·e^{-x²/2}`. -/
-theorem gaussianPDFReal_zero_one (x : ℝ) :
-    gaussianPDFReal 0 1 x = (Real.sqrt (2 * π))⁻¹ * Real.exp (-(x ^ 2 / 2)) := by
-  rw [gaussianPDFReal_def]
-  norm_num
-  exact Or.inl (by ring)
+/-- The standard Gaussian measure is the Lebesgue measure weighted by its own density — the shape
+`TauCeti.hilbertBasisOfWeightedMeasure` produces its basis on.
+
+Stated before the integrability and orthogonality results below because both are obtained by
+transporting a `gaussianReal`-side statement along it, rather than re-proved density-side. -/
+theorem gaussianReal_zero_one_eq_withDensity :
+    (gaussianReal 0 1 : Measure ℝ)
+      = volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) := by
+  rw [gaussianReal_of_var_ne_zero 0 one_ne_zero]
+  rfl
 
 /-- **Orthogonality against the standard Gaussian density.**
-`∫ Hₘ Hₙ dγ = δₘₙ · n!`. This is the Hermite orthogonality relation (milestone A1) divided by the
-Gaussian normalizing constant `√(2π)`, which is exactly what turns the `n!√(2π)` there into the
-`cₙ = n!` the measure-side basis uses. -/
+`∫ Hₘ Hₙ dγ = δₘₙ · n!`. This is the density-side reading of the Gaussian-measure orthogonality
+milestone `TauCeti.integral_hermite_mul_hermite_gaussianReal`: `∫ · ∂γ` unfolds to `∫ pdf • ·`, so
+the two differ only by the order of the factors. -/
 theorem integral_hermite_mul_hermite_mul_gaussianPDFReal (m n : ℕ) :
     (∫ x : ℝ, aeval x (hermite m) * aeval x (hermite n) * gaussianPDFReal 0 1 x)
       = if m = n then (n.factorial : ℝ) else 0 := by
-  have h2pi : Real.sqrt (2 * π) ≠ 0 := by
-    have : (0 : ℝ) < 2 * π := by positivity
-    exact ne_of_gt (Real.sqrt_pos.mpr this)
-  have hpt : ∀ x : ℝ, aeval x (hermite m) * aeval x (hermite n) * gaussianPDFReal 0 1 x
-      = (Real.sqrt (2 * π))⁻¹
-        * (aeval x (hermite m) * aeval x (hermite n) * Real.exp (-(x ^ 2 / 2))) := by
-    intro x
-    rw [gaussianPDFReal_zero_one]
-    ring
-  simp_rw [hpt]
-  rw [integral_const_mul, integral_hermite_mul_hermite_mul_gaussian]
-  by_cases hmn : m = n
-  · rw [if_pos hmn, if_pos hmn]
-    field_simp
-  · rw [if_neg hmn, if_neg hmn, mul_zero]
+  rw [← integral_hermite_mul_hermite_gaussianReal m n,
+    integral_gaussianReal_eq_integral_smul (one_ne_zero)]
+  simp only [smul_eq_mul]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
 
 /-! ## The weighted-measure input data -/
 
@@ -86,53 +80,20 @@ theorem degree_hermiteℝ (n : ℕ) : (hermiteℝ n).degree = (n : WithBot ℕ) 
 theorem hermiteGaussianNormalization_pos (n : ℕ) : (0 : ℝ) < (n.factorial : ℝ) := by
   exact_mod_cast Nat.factorial_pos n
 
-/-- The standard Gaussian measure is the Lebesgue measure weighted by its own density — the shape
-`TauCeti.hilbertBasisOfWeightedMeasure` produces its basis on. -/
-theorem gaussianReal_zero_one_eq_withDensity :
-    (gaussianReal 0 1 : Measure ℝ)
-      = volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) := by
-  rw [gaussianReal_of_var_ne_zero 0 one_ne_zero]
-  rfl
-
 /-- **Finite exponential moments of the standard Gaussian.** For every rate `a`, `e^{a|x|}` is
-integrable against `γ`, because `a|x| ≤ a² + x²/4` gives the domination
-`e^{a|x|}e^{-x²/2} ≤ e^{a²}·e^{-x²/4}`. Note the spare Gaussian is `e^{-x²/4}`, not the `e^{-x²/2}`
-of the function-side weight: here the density itself is only `e^{-x²/2}`. -/
+integrable against `γ`.
+
+Both one-sided exponentials are already integrable against a Gaussian
+(`ProbabilityTheory.integrable_exp_mul_gaussianReal`, which is the mgf being everywhere finite), and
+`ProbabilityTheory.integrable_exp_mul_abs` folds the rates `a` and `-a` into the two-sided
+`e^{a|x|}`. Transporting along `gaussianReal_zero_one_eq_withDensity` then puts it in the
+with-density form the completeness theorem takes. -/
 theorem integrable_exp_mul_abs_gaussianPDFReal (a : ℝ) :
     Integrable (fun x : ℝ => Real.exp (a * |x|))
       (volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x)) := by
-  have h2pi : (0 : ℝ) < (Real.sqrt (2 * π))⁻¹ := by
-    have h : (0 : ℝ) < 2 * π := by positivity
-    have := Real.sqrt_pos.mpr h
-    positivity
-  have hgauss : Integrable (fun x : ℝ =>
-      (Real.sqrt (2 * π))⁻¹ * Real.exp (a ^ 2) * Real.exp (-(1 / 4) * x ^ 2)) :=
-    (integrable_exp_neg_mul_sq (by norm_num : (0:ℝ) < 1 / 4)).const_mul _
-  have hcore : Integrable (fun x : ℝ => Real.exp (a * |x|) * gaussianPDFReal 0 1 x) := by
-    refine hgauss.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => ?_)
-    have hnn : (0 : ℝ) ≤ Real.exp (a * |x|) * gaussianPDFReal 0 1 x := by
-      have := gaussianPDFReal_nonneg 0 1 x
-      positivity
-    have hkey : Real.exp (a * |x|) * Real.exp (-(x ^ 2 / 2))
-        ≤ Real.exp (a ^ 2) * Real.exp (-(1 / 4) * x ^ 2) := by
-      rw [← Real.exp_add, ← Real.exp_add]
-      refine Real.exp_le_exp.2 ?_
-      nlinarith [sq_nonneg (|x| - 2 * a), sq_abs x, abs_nonneg x]
-    rw [Real.norm_eq_abs, abs_of_nonneg hnn, gaussianPDFReal_zero_one]
-    calc Real.exp (a * |x|) * ((Real.sqrt (2 * π))⁻¹ * Real.exp (-(x ^ 2 / 2)))
-        = (Real.sqrt (2 * π))⁻¹ * (Real.exp (a * |x|) * Real.exp (-(x ^ 2 / 2))) := by ring
-      _ ≤ (Real.sqrt (2 * π))⁻¹ * (Real.exp (a ^ 2) * Real.exp (-(1 / 4) * x ^ 2)) :=
-          mul_le_mul_of_nonneg_left hkey h2pi.le
-      _ = (Real.sqrt (2 * π))⁻¹ * Real.exp (a ^ 2) * Real.exp (-(1 / 4) * x ^ 2) := by ring
-  rw [integrable_withDensity_iff_integrable_smul₀' (by fun_prop)
-    (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top)]
-  have hfun : (fun x : ℝ =>
-        (ENNReal.ofReal (gaussianPDFReal 0 1 x)).toReal • Real.exp (a * |x|))
-      = fun x : ℝ => Real.exp (a * |x|) * gaussianPDFReal 0 1 x := by
-    funext x
-    rw [smul_eq_mul, ENNReal.toReal_ofReal (gaussianPDFReal_nonneg 0 1 x), mul_comm]
-  rw [hfun]
-  exact hcore
+  rw [← gaussianReal_zero_one_eq_withDensity]
+  exact integrable_exp_mul_abs (X := fun x : ℝ => x) (t := a)
+    (integrable_exp_mul_gaussianReal a) (integrable_exp_mul_gaussianReal (-a))
 
 /-- The exponential-moment hypothesis in the existential form the completeness theorem takes. -/
 theorem exp_moment_gaussianPDFReal :
@@ -163,7 +124,8 @@ private noncomputable def gaussianHermiteHilbertBasisAux :
     (fun m n => by
       simpa only [eval_hermiteℝ] using integral_hermite_mul_hermite_mul_gaussianPDFReal m n)
     (memLp_hermiteℝ_normalized 𝕜)
-    (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteℝ (fun x => gaussianPDFReal 0 1 x)
+    (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteℝ
+      (fun x => gaussianPDFReal 0 1 x)
       (fun n => (n.factorial : ℝ)) degree_hermiteℝ hermiteGaussianNormalization_pos
       exp_moment_gaussianPDFReal (memLp_hermiteℝ_normalized 𝕜))
 
@@ -179,7 +141,8 @@ private theorem coe_cast_hilbertBasis {μ ν : Measure ℝ} (h : μ = ν)
 
 /-- **Roadmap A3′: the Hermite polynomials are a Hilbert basis of `L²(γ)`.** Orthonormality comes
 from the orthogonality relation against the Gaussian density and completeness from moment
-determinacy (`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`), applied to the exact-degree family `Hₙ`.
+determinacy (`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`), applied to the exact-degree
+family `Hₙ`.
 Where `TauCeti.hermiteHilbertBasis` carries the Gaussian in the function, this carries it in the
 measure — the form multivariate `L²(γ^ι)` and chaos expansions consume. -/
 noncomputable def gaussianHermiteHilbertBasis :

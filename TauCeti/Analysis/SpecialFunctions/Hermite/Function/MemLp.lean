@@ -60,8 +60,8 @@ noncomputable def hermiteDilated (n : ℕ) : Polynomial ℝ :=
 can rewrite with it. -/
 theorem hermiteDilated_def (n : ℕ) :
     hermiteDilated n
-      = ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * X) :=
-  rfl
+      = ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * Polynomial.X) := by
+  rw [hermiteDilated]
 
 /-- Evaluating the dilated Hermite polynomial is `aeval (·√2)`. -/
 theorem eval_hermiteDilated (n : ℕ) (x : ℝ) :

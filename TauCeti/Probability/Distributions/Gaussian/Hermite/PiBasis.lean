@@ -6,7 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import TauCeti.Analysis.InnerProductSpace.L2.Pi
-public import TauCeti.Probability.Distributions.Gaussian.HermiteBasis
+public import TauCeti.Probability.Distributions.Gaussian.Hermite.Basis
 
 /-!
 # The multi-index Hermite basis of a multivariate Gaussian `L²`

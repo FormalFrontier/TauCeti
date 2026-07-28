@@ -35,7 +35,8 @@ orthogonal, and self-paired to `n! · √(2π)`, in `L²` of the Gaussian weight
   index down to a constant (`Polynomial.iterate_derivative_hermite`);
 * **Milestone (Gaussian-measure form)** `integral_hermite_mul_hermite_gaussianReal`:
   `∫ x, Hₘ(x) · Hₙ(x) ∂(gaussianReal 0 1) = if m = n then n! else 0`, the Lebesgue form divided by
-  the `√(2π)` density. This is the form the Gaussian Hermite basis (A3′) consumes directly.
+  the `√(2π)` density. This is the form the Gaussian Hermite basis (A3′) consumes directly;
+* `gaussianPDFReal_zero_one`, the density in closed form `(√(2π))⁻¹ · e^{-x²/2}`, shared with A3′.
 
 The Hermite lowering identities `Polynomial.derivative_hermite`,
 `Polynomial.iterate_derivative_hermite` are reused from
@@ -152,8 +153,11 @@ theorem integral_hermite_mul_hermite_mul_gaussian (m n : ℕ) :
       Nat.descFactorial_eq_zero_iff_lt.mpr h]
     simp
 
-/-- The probability-density form of the weight: `gaussianPDFReal 0 1 x = (√(2π))⁻¹ · e^{-x²/2}`. -/
-private theorem gaussianPDFReal_zero_one (x : ℝ) :
+/-- The probability-density form of the weight: `gaussianPDFReal 0 1 x = (√(2π))⁻¹ · e^{-x²/2}`.
+
+Public because the measure-side Gaussian Hermite basis (A3′) needs the same rewrite; keeping it
+private here forced a second copy of this proof downstream. -/
+theorem gaussianPDFReal_zero_one (x : ℝ) :
     gaussianPDFReal 0 1 x = (Real.sqrt (2 * π))⁻¹ * Real.exp (-(x ^ 2 / 2)) := by
   rw [gaussianPDFReal]
   simp only [NNReal.coe_one, mul_one, sub_zero]
