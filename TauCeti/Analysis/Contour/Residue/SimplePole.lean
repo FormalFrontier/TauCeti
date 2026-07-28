@@ -37,6 +37,8 @@ direction one uses in practice to read off a residue.
   f z₀` (at most a simple pole); the analytic case gives the limit `0 = residue f z₀`.
 * `TauCeti.Contour.residue_eq_of_tendsto_sub_mul` — the converse: if `f` is meromorphic at `z₀` and
   `(z − z₀) · f z` converges to `L`, then `residue f z₀ = L`.
+* `TauCeti.Contour.neg_one_le_meromorphicOrderAt_of_tendsto_sub_mul` — a punctured limit of
+  `(z − z₀) · f z` forces the pole to be at worst simple.
 * `TauCeti.Contour.residue_sub_inv` — `residue (fun z => (z − z₀)⁻¹) z₀ = 1`, and
   `TauCeti.Contour.residue_const_mul_sub_inv` — `residue (fun z => c · (z − z₀)⁻¹) z₀ = c`: the
   elementary simple-pole residues, read off from the converse rule.
@@ -95,6 +97,20 @@ private theorem neg_one_le_of_zero_le_one_add {x : WithTop ℤ} (h : 0 ≤ 1 + x
     rw [hc1, WithTop.coe_le_coe]
     omega
 
+/-- **A punctured limit of `(z − z₀) · f z` forces the pole to be at worst simple.** If that
+product converges, the order of `(z − z₀) · f z` is nonnegative, hence the order of `f` is at
+least `−1` — the hypothesis the Hungerbühler–Wasem half-residue theorem consumes. The same limit
+also computes the residue, via `residue_eq_of_tendsto_sub_mul`. -/
+theorem neg_one_le_meromorphicOrderAt_of_tendsto_sub_mul {L : ℂ} (hf : MeromorphicAt f z₀)
+    (h : Tendsto (fun z => (z - z₀) * f z) (𝓝[≠] z₀) (𝓝 L)) :
+    ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f z₀ := by
+  have hg : MeromorphicAt (fun z : ℂ => (z - z₀) * f z) z₀ :=
+    ((analyticAt_id.sub analyticAt_const).meromorphicAt).mul hf
+  have hgnn : 0 ≤ meromorphicOrderAt (fun z => (z - z₀) * f z) z₀ :=
+    (tendsto_nhds_iff_meromorphicOrderAt_nonneg hg).1 ⟨L, h⟩
+  rw [meromorphicOrderAt_sub_mul hf] at hgnn
+  simpa using neg_one_le_of_zero_le_one_add hgnn
+
 /-- **The residue at a simple pole is `lim_{z→z₀} (z − z₀) · f z`.** If `f` has a simple pole at
 `z₀` (`meromorphicOrderAt f z₀ = −1`), then `(z − z₀) · f z` converges to `residue f z₀` as
 `z → z₀`. -/
@@ -130,12 +146,8 @@ in practice to read off a residue. -/
 theorem residue_eq_of_tendsto_sub_mul {L : ℂ} (hf : MeromorphicAt f z₀)
     (h : Tendsto (fun z => (z - z₀) * f z) (𝓝[≠] z₀) (𝓝 L)) :
     residue f z₀ = L := by
-  have hg : MeromorphicAt (fun z : ℂ => (z - z₀) * f z) z₀ :=
-    ((analyticAt_id.sub analyticAt_const).meromorphicAt).mul hf
-  have hgnn : 0 ≤ meromorphicOrderAt (fun z => (z - z₀) * f z) z₀ :=
-    (tendsto_nhds_iff_meromorphicOrderAt_nonneg hg).1 ⟨L, h⟩
-  rw [meromorphicOrderAt_sub_mul hf] at hgnn
-  exact tendsto_nhds_unique (tendsto_sub_mul_nhds_residue hf (neg_one_le_of_zero_le_one_add hgnn)) h
+  exact tendsto_nhds_unique
+    (tendsto_sub_mul_nhds_residue hf (neg_one_le_meromorphicOrderAt_of_tendsto_sub_mul hf h)) h
 
 /-- The reciprocal `(· − z₀)⁻¹` of the simple factor `(· − z₀)` is meromorphic at `z₀`. -/
 theorem meromorphicAt_sub_inv (z₀ : ℂ) : MeromorphicAt (fun z => (z - z₀)⁻¹) z₀ :=

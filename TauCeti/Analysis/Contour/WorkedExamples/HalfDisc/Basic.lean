@@ -46,8 +46,9 @@ residue theorem does not apply because the pole lies *on* the contour.
   origin is `½`.
 * `TauCeti.Contour.halfDiscBoundary_eq_zero_iff` — the contour meets the origin exactly once,
   at `t = 0`.
-* `TauCeti.Contour.deriv_halfDiscBoundary_of_lt` — strictly beyond the junction the derivative is
-  the circle map's, at the shifted parameter.
+* `TauCeti.Contour.deriv_halfDiscBoundary_of_lt_radius` and
+  `TauCeti.Contour.deriv_halfDiscBoundary_of_lt` — before the junction the derivative is the real
+  inclusion's, beyond it the circle map's at the shifted parameter.
 * `TauCeti.Contour.integral_halfDiscBoundary_arc` — the `[R, R + π]` piece of the contour integral
   is the `circleMap 0 R` integral over `[0, π]`; for `0 < R` that is the upper semicircle, the
   form Jordan's lemma bounds.
@@ -106,6 +107,16 @@ theorem eqOn_halfDiscBoundary_segment (hR : 0 ≤ R) :
   have h2 : t < max (-R) R := (Set.mem_Ioo.mp ht).2
   rw [max_eq_right (by linarith : (-R : ℝ) ≤ R)] at h2
   simp [halfDiscBoundary_of_le h2.le]
+
+/-- **The derivative on the open diameter.** Strictly before the junction the half-disc boundary
+is the real inclusion on a whole neighbourhood, so the two derivatives agree. -/
+@[simp]
+theorem deriv_halfDiscBoundary_of_lt_radius {R t : ℝ} (h : t < R) :
+    deriv (halfDiscBoundary R) t = deriv (fun s : ℝ => (s : ℂ)) t := by
+  have hev : halfDiscBoundary R =ᶠ[nhds t] fun s : ℝ => (s : ℂ) := by
+    filter_upwards [Iio_mem_nhds h] with s hs
+    exact halfDiscBoundary_of_le hs.le
+  exact hev.deriv_eq
 
 /-- **The derivative on the open arc.** Strictly beyond the junction the half-disc boundary
 coincides with the shifted circle map on a whole neighbourhood, so its derivative is the circle

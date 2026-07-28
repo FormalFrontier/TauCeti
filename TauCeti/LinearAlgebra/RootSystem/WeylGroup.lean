@@ -9,16 +9,19 @@ public import Mathlib.Data.Finite.Perm
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 
 /-!
-# Faithful permutation actions of Weyl groups
+# Permutation actions of Weyl groups
 
 This file proves that the action of the automorphism group of a root system on its root indices is
 faithful.  Consequently, every subgroup of that automorphism group, and in particular the Weyl
-group, is finite when the root index type is finite.
+group, is finite when the root index type is finite.  It also records how that action evaluates on
+simple reflections and how it interacts with root negation.
 
 ## Main results
 
 * `TauCeti.RootPairing.Equiv.indexHom_injective` says that an automorphism of a root system is
   determined by its permutation of the roots.
+* `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
+* `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
   a finite root system is finite.
 * `TauCeti.RootPairing.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
@@ -76,6 +79,41 @@ theorem weylGroupToPerm_injective_of_span_eq_top
 /-- The action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective [P.IsRootSystem] : Function.Injective P.weylGroupToPerm :=
   (Equiv.indexHom_injective P).comp Subtype.val_injective
+
+/-- The Weyl-group permutation of a simple reflection is the corresponding root-index
+reflection. -/
+lemma weylGroupToPerm_ofIdx_apply (i j : ι) :
+    P.weylGroupToPerm (_root_.RootPairing.weylGroup.ofIdx P i) j =
+      P.reflectionPerm i j := by
+  -- Mathlib exposes the underlying reflection equivalence, but not its restriction to the
+  -- Weyl group. Unfolding just those two wrappers connects the APIs.
+  change (_root_.RootPairing.Equiv.reflection P i).indexEquiv j = P.reflectionPerm i j
+  exact congrArg (fun e : ι ≃ ι => e j)
+    (_root_.RootPairing.Equiv.reflection_indexEquiv P i)
+
+/-- Right multiplication by a simple reflection acts by first reflecting the root index. -/
+lemma weylGroupToPerm_mul_ofIdx_apply (w : P.weylGroup) (i j : ι) :
+    P.weylGroupToPerm (w * _root_.RootPairing.weylGroup.ofIdx P i) j =
+      P.weylGroupToPerm w (P.reflectionPerm i j) := by
+  rw [map_mul]
+  exact congrArg (P.weylGroupToPerm w) (weylGroupToPerm_ofIdx_apply P i j)
+
+/-- The Weyl-group action on root indices commutes with root negation. -/
+lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
+    letI := P.indexNeg
+    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) := by
+  letI := P.indexNeg
+  apply P.root.injective
+  calc
+    P.root (P.weylGroupToPerm w (-j)) = w • P.root (-j) :=
+      (P.weylGroup_apply_root w (-j)).symm
+    _ = w • (-P.root j) := by
+      rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
+    _ = -(w • P.root j) := smul_neg _ _
+    _ = -P.root (P.weylGroupToPerm w j) :=
+      congrArg Neg.neg (P.weylGroup_apply_root w j)
+    _ = P.root (-(P.weylGroupToPerm w j)) := by
+      rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
 
 variable [Finite ι]
 

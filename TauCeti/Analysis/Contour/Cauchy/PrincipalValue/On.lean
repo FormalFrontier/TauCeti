@@ -326,6 +326,43 @@ theorem HasCauchyPV.const_mul {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {
     rw [← intervalIntegral.integral_const_mul]
     exact intervalIntegral.integral_congr fun t _ => (hbody ε t).symm
 
+/-- **Changing the curve.** Two curves that agree on the open parameter interval
+have the same principal value: both the excision test `‖γ t - s‖ ≤ ε` and the integrand
+`f (γ t) * deriv γ t` are computed pointwise from the curve, the derivatives agree automatically
+because the interval is open, and the endpoints do not affect an interval integral.
+
+This is what lets a contour identity be restated along a more convenient parametrization — for
+instance replacing a piece of a closed contour by the straight line it traces. -/
+theorem HasCauchyPVWith.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {S : Finset ℂ} {v : ℂ}
+    (h : HasCauchyPVWith γ₁ a b f S v) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    HasCauchyPVWith γ₂ a b f S v := by
+  have h_deriv : Set.EqOn (deriv γ₁) (deriv γ₂) (Set.uIoo a b) := h_eq.deriv isOpen_Ioo
+  rw [hasCauchyPVWith_iff] at h ⊢
+  have hbody : ∀ ε : ℝ, ∀ t ∈ Set.uIoo a b,
+      (if ∃ s ∈ S, ‖γ₁ t - s‖ ≤ ε then 0 else f (γ₁ t) * deriv γ₁ t)
+        = if ∃ s ∈ S, ‖γ₂ t - s‖ ≤ ε then 0 else f (γ₂ t) * deriv γ₂ t := by
+    intro ε t ht
+    rw [h_eq ht, h_deriv ht]
+  refine ⟨?_, ?_⟩
+  · filter_upwards [h.1] with ε hε
+    exact (intervalIntegrable_congr_uIoo fun t ht => hbody ε t ht).mp hε
+  · exact h.2.congr fun ε => intervalIntegral.integral_congr_uIoo fun t ht => hbody ε t ht
+
+/-- Curve congruence for the primary predicate: `HasCauchyPVWith.congr_curve` with the excision
+set re-hidden, so consumers need not name it. -/
+theorem HasCauchyPV.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ}
+    (h : HasCauchyPV γ₁ a b f v) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    HasCauchyPV γ₂ a b f v :=
+  let ⟨_, hS⟩ := hasCauchyPV_iff_exists_hasCauchyPVWith.mp h
+  (hS.congr_curve h_eq).hasCauchyPV
+
+/-- Existence form of `HasCauchyPV.congr_curve`. -/
+theorem CauchyPVExists.congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (h : CauchyPVExists γ₁ a b f) (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    CauchyPVExists γ₂ a b f :=
+  let ⟨_, hv⟩ := h
+  ⟨_, hv.congr_curve h_eq⟩
+
 /-- **Congruence along the curve.** If `f` and `g` agree along `γ` on the open interval `Set.uIoo a
 b`, they share the same principal value there, with the same excision set (the endpoints are
 invisible to the interval integral; the excised integrand reads `f` only through `f (γ t)`). -/
@@ -593,6 +630,17 @@ theorem HasCauchyPV.cauchyPV_eq {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
   have hex : ∃ v, HasCauchyPV γ a b f v := ⟨v, h⟩
   rw [cauchyPV, dif_pos hex]
   exact hex.choose_spec.unique h
+
+/-- Value form of `HasCauchyPV.congr_curve`: curves agreeing on the open parameter interval have
+the same principal value, whether or not it exists (both sides are `0` when it does not). -/
+theorem cauchyPV_congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
+    (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) : cauchyPV γ₁ a b f = cauchyPV γ₂ a b f := by
+  by_cases h : ∃ v, HasCauchyPV γ₁ a b f v
+  · obtain ⟨v, hv⟩ := h
+    rw [hv.cauchyPV_eq, (hv.congr_curve h_eq).cauchyPV_eq]
+  · have h2 : ¬ ∃ v, HasCauchyPV γ₂ a b f v := fun ⟨v, hv⟩ =>
+      h ⟨v, hv.congr_curve h_eq.symm⟩
+    rw [cauchyPV, dif_neg h, cauchyPV, dif_neg h2]
 
 /-- The value form of `HasCauchyPV.zero`: the principal value of the zero integrand is `0`. -/
 @[simp]
