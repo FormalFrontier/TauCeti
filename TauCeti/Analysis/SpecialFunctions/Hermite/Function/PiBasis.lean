@@ -22,7 +22,7 @@ factor — here `TauCeti.hermiteHilbertBasis` — so this file only performs the
 ## Main statements
 
 * `TauCeti.hermiteFunctionPiBasis` — the multi-index basis.
-* `TauCeti.coe_hermiteFunctionPiBasis` — the anti-vacuity pin: the `a`-th vector really is the
+* `TauCeti.coeFn_hermiteFunctionPiBasis` — the anti-vacuity pin: the `a`-th vector really is the
   product `∏ᵢ ψ_{aᵢ}(xᵢ)`.
 -/
 
@@ -45,7 +45,7 @@ construction would only exhibit *some* Hilbert basis of `L²(volume^ι)`. The co
 identification `⇑(hermiteHilbertBasis 𝕜) = hermiteFunctionLp 𝕜` transfers to the product measure
 because each evaluation map pushes the product's a.e. filter into the factor's
 (`MeasureTheory.Measure.tendsto_eval_ae_ae`). -/
-theorem coe_hermiteFunctionPiBasis (a : ι → ℕ) :
+theorem coeFn_hermiteFunctionPiBasis (a : ι → ℕ) :
     ⇑(hermiteFunctionPiBasis 𝕜 ι a)
       =ᵐ[Measure.pi fun _ : ι => (volume : Measure ℝ)]
         fun x => ∏ i, (algebraMap ℝ 𝕜) (hermiteFunction (a i) (x i)) := by

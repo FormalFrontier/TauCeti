@@ -25,9 +25,9 @@ That is the form multivariate Gaussian `L²` and chaos expansions consume, and i
 * `TauCeti.integral_hermite_mul_hermite_mul_gaussianPDFReal` — the orthogonality relation against
   the standard Gaussian density, with normalization `cₙ = n!`.
 * `TauCeti.integrable_exp_mul_abs_gaussianPDFReal` — the standard Gaussian density has every
-  exponential moment finite, the hypothesis `TauCeti.bareNormalizedLp_ortho_eq_bot` needs.
+  exponential moment finite, the hypothesis `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.gaussianHermiteHilbertBasis` — milestone A3′ itself.
-* `TauCeti.coe_gaussianHermiteHilbertBasis` — the anti-vacuity pin: the basis vectors really are
+* `TauCeti.coeFn_gaussianHermiteHilbertBasis` — the anti-vacuity pin: the basis vectors really are
   `Hₙ/√(n!)`, not merely *some* orthonormal basis.
 -/
 
@@ -78,7 +78,7 @@ theorem eval_hermiteℝ (n : ℕ) (x : ℝ) : (hermiteℝ n).eval x = aeval x (h
   rfl
 
 /-- The cast to `ℝ[X]` preserves degrees: `Hₙ` has degree exactly `n`, the exact-degree hypothesis
-of `TauCeti.bareNormalizedLp_ortho_eq_bot`. -/
+of `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`. -/
 theorem degree_hermiteℝ (n : ℕ) : (hermiteℝ n).degree = (n : WithBot ℕ) := by
   rw [hermiteℝ, Polynomial.degree_map_eq_of_injective Int.cast_injective, Polynomial.degree_hermite]
 
@@ -163,7 +163,7 @@ private noncomputable def gaussianHermiteHilbertBasisAux :
     (fun m n => by
       simpa only [eval_hermiteℝ] using integral_hermite_mul_hermite_mul_gaussianPDFReal m n)
     (memLp_hermiteℝ_normalized 𝕜)
-    (bareNormalizedLp_ortho_eq_bot (𝕜 := 𝕜) hermiteℝ (fun x => gaussianPDFReal 0 1 x)
+    (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteℝ (fun x => gaussianPDFReal 0 1 x)
       (fun n => (n.factorial : ℝ)) degree_hermiteℝ hermiteGaussianNormalization_pos
       exp_moment_gaussianPDFReal (memLp_hermiteℝ_normalized 𝕜))
 
@@ -179,7 +179,7 @@ private theorem coe_cast_hilbertBasis {μ ν : Measure ℝ} (h : μ = ν)
 
 /-- **Roadmap A3′: the Hermite polynomials are a Hilbert basis of `L²(γ)`.** Orthonormality comes
 from the orthogonality relation against the Gaussian density and completeness from moment
-determinacy (`TauCeti.bareNormalizedLp_ortho_eq_bot`), applied to the exact-degree family `Hₙ`.
+determinacy (`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`), applied to the exact-degree family `Hₙ`.
 Where `TauCeti.hermiteHilbertBasis` carries the Gaussian in the function, this carries it in the
 measure — the form multivariate `L²(γ^ι)` and chaos expansions consume. -/
 noncomputable def gaussianHermiteHilbertBasis :
@@ -189,7 +189,7 @@ noncomputable def gaussianHermiteHilbertBasis :
 /-- **The basis vectors are the normalized Hermite polynomials.** Without this the construction
 would only exhibit *some* Hilbert basis of `L²(γ)`; here each vector is pinned to `Hₙ/√(n!)`, which
 is what downstream chaos-coordinate computations need. -/
-theorem coe_gaussianHermiteHilbertBasis (n : ℕ) :
+theorem coeFn_gaussianHermiteHilbertBasis (n : ℕ) :
     ⇑(gaussianHermiteHilbertBasis 𝕜 n) =ᵐ[gaussianReal 0 1]
       fun x => (algebraMap ℝ 𝕜) (aeval x (hermite n) / Real.sqrt ((n.factorial : ℝ))) := by
   have hcoe : ⇑(gaussianHermiteHilbertBasisAux 𝕜)

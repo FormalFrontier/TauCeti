@@ -18,19 +18,25 @@ discharges that hypothesis. This file supplies it for a family of polynomials of
 the case every classical orthogonal family falls under.
 
 The mechanism is moment determinacy. If the weighted measure `w·μ` carries one finite
-exponential moment then `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` says a
-`g ∈ L²(w·μ)` orthogonal to every *monomial* vanishes. A family `p` with `(p n).degree = n` spans
-the same subspaces as the monomials, degree by degree (`Polynomial.Sequence.span_degreeLT`), so
-orthogonality to the family transfers to orthogonality to the monomials.
+exponential moment then `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp`
+says a `g ∈ L²(w·μ)` orthogonal to every *monomial* vanishes. So the only thing completeness needs
+of the family is that it **spans `ℝ[X]`**, and that is the hypothesis the core theorem takes.
 
-Requiring `degree` rather than `natDegree` matters: `natDegree 0 = 0` would admit `p 0 = 0`, which
-silently destroys the basis.
+Exact degrees are one sufficient route to spanning, not the content of the argument: a family with
+`(p n).degree = n` spans, because over a field every nonzero leading coefficient is a unit
+(`Polynomial.Sequence.span`). That case is kept as a corollary, since it is the one every classical
+orthogonal family satisfies. Requiring `degree` rather than `natDegree` matters there:
+`natDegree 0 = 0` would admit `p 0 = 0`, which silently destroys the basis.
 
 ## Main statements
 
 * `TauCeti.memLp_two_algebraMap_eval` — polynomials lie in `L²` of a measure carrying one finite
   exponential moment.
-* `TauCeti.bareNormalizedLp_ortho_eq_bot` — the completeness input of the B2 bridge.
+* `TauCeti.memLp_two_bareNormalized` — the normalized-family `MemLp` obligation, discharged from
+  that same exponential moment so callers need not repeat it.
+* `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top` — the completeness input
+  of the B2 bridge, from spanning alone.
+* `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` — its exact-degree specialization.
 -/
 
 public section
@@ -96,19 +102,45 @@ theorem memLp_two_algebraMap_eval {ν : Measure ℝ}
     rw [this]
     exact (memLp_two_algebraMap_pow (𝕜 := 𝕜) hexp n).const_mul _
 
-/-- **Roadmap B1 → B2 bridge: completeness of an exact-degree polynomial family.**
+/-- Dividing by a constant keeps a polynomial in `L²`: `q/r` is again the evaluation of a
+polynomial, namely `C r⁻¹ * q`. This also covers `r = 0`, where both sides are `0`. -/
+theorem memLp_two_algebraMap_eval_div {ν : Measure ℝ}
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
+    (q : Polynomial ℝ) (r : ℝ) :
+    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x / r)) 2 ν := by
+  have hrw : (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x / r))
+      = fun x : ℝ => (algebraMap ℝ 𝕜) ((Polynomial.C r⁻¹ * q).eval x) := by
+    funext x
+    simp [div_eq_mul_inv, mul_comm]
+  rw [hrw]
+  exact memLp_two_algebraMap_eval (𝕜 := 𝕜) hexp _
 
-If the weighted measure `w·μ` carries one finite exponential moment and `p n` has degree exactly
-`n`, then the normalized polynomials span a dense subspace of `L²(w·μ)` — the orthogonal
-complement of their span is trivial. This is the `hcomplete` input that
-`TauCeti.hilbertBasisOfWeightedMeasure` consumes. -/
-theorem bareNormalizedLp_ortho_eq_bot {μ : Measure ℝ}
+/-- The `MemLp` obligation of `TauCeti.bareNormalizedLp` for a polynomial family, discharged from
+the one exponential moment that the completeness theorem already assumes. Supplied as the default
+value of that theorem's `hmem` argument, so callers do not repeat this proof. -/
+theorem memLp_two_bareNormalized {ν : Measure ℝ}
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
+    (p : ℕ → Polynomial ℝ) (c : ℕ → ℝ) (n : ℕ) :
+    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2 ν :=
+  memLp_two_algebraMap_eval_div (𝕜 := 𝕜) hexp (p n) _
+
+/-- **Roadmap B1 → B2 bridge: completeness of a spanning polynomial family.**
+
+If the weighted measure `w·μ` carries one finite exponential moment and `p` spans `ℝ[X]`, then the
+normalized polynomials span a dense subspace of `L²(w·μ)` — the orthogonal complement of their span
+is trivial. This is the `hcomplete` input that `TauCeti.hilbertBasisOfWeightedMeasure` consumes.
+
+Spanning is all the argument uses; see
+`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` for the exact-degree families that motivate
+it. -/
+theorem orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top {μ : Measure ℝ}
     (p : ℕ → Polynomial ℝ) (w : ℝ → ℝ) (c : ℕ → ℝ)
-    (hdeg : ∀ n, (p n).degree = (n : WithBot ℕ)) (hc : ∀ n, 0 < c n)
+    (hspan : Submodule.span ℝ (Set.range p) = ⊤) (hc : ∀ n, 0 < c n)
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|))
       (μ.withDensity fun x => ENNReal.ofReal (w x)))
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2
-      (μ.withDensity fun x => ENNReal.ofReal (w x))) :
+      (μ.withDensity fun x => ENNReal.ofReal (w x)) :=
+      fun n => memLp_two_bareNormalized (𝕜 := 𝕜) hexp p c n) :
     (Submodule.span 𝕜 (Set.range
       (bareNormalizedLp (𝕜 := 𝕜) (fun n x => (p n).eval x) w c hmem)))ᗮ = ⊥ := by
   set ν : Measure ℝ := μ.withDensity (fun x => ENNReal.ofReal (w x)) with hνdef
@@ -149,12 +181,6 @@ theorem bareNormalizedLp_ortho_eq_bot {μ : Measure ℝ}
     rw [integral_const_mul, h1, mul_zero]
   -- Transfer to every polynomial through the degree filtration.
   have hpoly : ∀ q : Polynomial ℝ, ∫ x, (algebraMap ℝ 𝕜) (q.eval x) * G x ∂ν = 0 := by
-    -- Exact degrees make `p` a `Polynomial.Sequence`, and over a field every nonzero leading
-    -- coefficient is a unit, so `p` spans `ℝ[X]`.
-    have hspan : Submodule.span ℝ (Set.range p) = ⊤ :=
-      Polynomial.Sequence.span (⟨p, hdeg⟩ : Polynomial.Sequence ℝ) fun i =>
-        isUnit_iff_ne_zero.mpr <| Polynomial.leadingCoeff_ne_zero.mpr <|
-          Polynomial.Sequence.ne_zero (⟨p, hdeg⟩ : Polynomial.Sequence ℝ) i
     intro q
     have hq : q ∈ Submodule.span ℝ (Set.range p) := hspan ▸ Submodule.mem_top
     induction hq using Submodule.span_induction with
@@ -184,5 +210,27 @@ theorem bareNormalizedLp_ortho_eq_bot {μ : Measure ℝ}
     simpa [eval_pow, eval_X, map_pow] using h
   have := ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp hexp hGmem hmom
   exact (Lp.eq_zero_iff_ae_eq_zero).mpr this
+
+/-- **Completeness of an exact-degree polynomial family** — the specialization of
+`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top` that every classical
+orthogonal family satisfies.
+
+Exact degrees make `p` a `Polynomial.Sequence`, and over a field every nonzero leading coefficient
+is a unit, so `p` spans `ℝ[X]`. -/
+theorem orthogonal_span_range_bareNormalizedLp_eq_bot {μ : Measure ℝ}
+    (p : ℕ → Polynomial ℝ) (w : ℝ → ℝ) (c : ℕ → ℝ)
+    (hdeg : ∀ n, (p n).degree = (n : WithBot ℕ)) (hc : ∀ n, 0 < c n)
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|))
+      (μ.withDensity fun x => ENNReal.ofReal (w x)))
+    (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2
+      (μ.withDensity fun x => ENNReal.ofReal (w x)) :=
+      fun n => memLp_two_bareNormalized (𝕜 := 𝕜) hexp p c n) :
+    (Submodule.span 𝕜 (Set.range
+      (bareNormalizedLp (𝕜 := 𝕜) (fun n x => (p n).eval x) w c hmem)))ᗮ = ⊥ :=
+  orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top p w c
+    (Polynomial.Sequence.span (⟨p, hdeg⟩ : Polynomial.Sequence ℝ) fun i =>
+      isUnit_iff_ne_zero.mpr <| Polynomial.leadingCoeff_ne_zero.mpr <|
+        Polynomial.Sequence.ne_zero (⟨p, hdeg⟩ : Polynomial.Sequence ℝ) i)
+    hc hexp hmem
 
 end TauCeti

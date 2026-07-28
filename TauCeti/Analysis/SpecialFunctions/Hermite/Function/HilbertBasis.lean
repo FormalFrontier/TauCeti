@@ -18,10 +18,14 @@ the dilated Hermite polynomials `Hₙ(x√2)`, whose `√w`-envelope is exactly 
 ## Main statements
 
 * `TauCeti.integrable_exp_mul_abs_gaussianWeight` — the Gaussian weight has every exponential
-  moment finite, the hypothesis `TauCeti.bareNormalizedLp_ortho_eq_bot` needs.
+  moment finite, the hypothesis the completeness theorem
+  `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.degree_hermiteDilated` — `Hₙ(x√2)` has degree exactly `n`.
 * `TauCeti.integral_hermiteDilated_mul_gaussianWeight` — the orthogonality relation with
   normalization `cₙ = n!√π`, obtained from the Hermite function orthonormality (milestone A2).
+* `TauCeti.hermiteHilbertBasis` — **milestone A3**: the Hermite functions as a `HilbertBasis` of
+  `L²(ℝ)`, the principal result of this file.
+* `TauCeti.coe_hermiteHilbertBasis` — its normal form: the `n`-th basis vector really is `ψₙ`.
 -/
 
 public section
@@ -30,25 +34,18 @@ namespace TauCeti
 
 open MeasureTheory Polynomial Real
 
-/-- The dilated Hermite polynomial `Hₙ(√2 · X)`, the polynomial whose Gaussian envelope is the
-Hermite function `ψₙ`. -/
-noncomputable def hermiteDilated (n : ℕ) : Polynomial ℝ :=
-  ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * Polynomial.X)
+/-- The dilation preserves degrees: `Hₙ(√2 · X)` has degree exactly `n`.
 
-theorem eval_hermiteDilated (n : ℕ) (x : ℝ) :
-    (hermiteDilated n).eval x = aeval (x * Real.sqrt 2) (hermite n) := by
-  rw [hermiteDilated, Polynomial.eval_comp, Polynomial.eval_mul, Polynomial.eval_C,
-    Polynomial.eval_X, Polynomial.eval_map, Polynomial.aeval_def, mul_comm]
-  rfl
-
-/-- The dilation preserves degrees: `Hₙ(√2 · X)` has degree exactly `n`. -/
+`TauCeti.hermiteDilated` itself lives in the `MemLp` layer, where the membership results are
+already stated about it; only this degree fact is new here, and only the basis construction
+needs it. -/
 theorem degree_hermiteDilated (n : ℕ) : (hermiteDilated n).degree = (n : WithBot ℕ) := by
   have h2 : Real.sqrt 2 ≠ 0 := by positivity
   have hq : (Polynomial.C (Real.sqrt 2) * Polynomial.X).degree = 1 :=
     Polynomial.degree_C_mul_X h2
   have hmap : ((hermite n).map (Int.castRingHom ℝ)).degree = (n : WithBot ℕ) := by
     rw [Polynomial.degree_map_eq_of_injective Int.cast_injective, Polynomial.degree_hermite]
-  rw [hermiteDilated, Polynomial.degree_comp (by rw [hq]; norm_num), hq, hmap, mul_one]
+  rw [hermiteDilated_def, Polynomial.degree_comp (by rw [hq]; norm_num), hq, hmap, mul_one]
 
 /-- **Finite exponential moments of the Gaussian weight.** For every rate `a`, `e^{a|x|}` is
 integrable against `e^{-x²}·dx`, because `a|x| ≤ (a² + x²)/2` gives the domination
@@ -128,8 +125,8 @@ private theorem memLp_hermiteDilated_normalized (n : ℕ) :
 
 /-- **Roadmap A3: the Hermite functions are a Hilbert basis of `L²(ℝ)`.** Orthonormality comes from
 the weighted-measure machinery and completeness from moment determinacy
-(`TauCeti.bareNormalizedLp_ortho_eq_bot`), applied to the exact-degree family `Hₙ(x√2)` against the
-Gaussian weight `e^{-x²}`. -/
+(`TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`), applied to the exact-degree family
+`Hₙ(x√2)` against the Gaussian weight `e^{-x²}`. -/
 noncomputable def hermiteHilbertBasis : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (volume : Measure ℝ)) :=
   hilbertBasisOfOrthogonalSystem (𝕜 := 𝕜) (fun n x => (hermiteDilated n).eval x)
     (fun x => Real.exp (-x ^ 2)) (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi)
@@ -138,13 +135,15 @@ noncomputable def hermiteHilbertBasis : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (volume
     (fun m n => by
       simpa using integral_hermiteDilated_mul_gaussianWeight m n)
     (memLp_hermiteDilated_normalized 𝕜)
-    (bareNormalizedLp_ortho_eq_bot (𝕜 := 𝕜) hermiteDilated (fun x => Real.exp (-x ^ 2))
+    (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteDilated
+      (fun x => Real.exp (-x ^ 2))
       (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi) degree_hermiteDilated
       hermiteNormalization_pos ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩
       (memLp_hermiteDilated_normalized 𝕜))
 
 /-- **The basis vectors are the Hermite functions.** Without this the construction would only
 exhibit *some* Hilbert basis; here the `√w`-envelope of `Hₙ(x√2)/√cₙ` is identified with `ψₙ`. -/
+@[simp]
 theorem coe_hermiteHilbertBasis : ⇑(hermiteHilbertBasis 𝕜) = hermiteFunctionLp 𝕜 := by
   funext n
   have hwpos : ∀ᵐ x ∂(volume : Measure ℝ), 0 < Real.exp (-x ^ 2) :=
@@ -168,8 +167,13 @@ theorem coe_hermiteHilbertBasis : ⇑(hermiteHilbertBasis 𝕜) = hermiteFunctio
       (fun x => Real.exp (-x ^ 2)) (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi)
       (memLp_hermiteDilated_normalized 𝕜) n).filter_mono hac.ae_le,
     coeFn_hermiteFunctionLp (𝕜 := 𝕜) n] with x h1 h2 h3
+  -- `√w` is the Hermite envelope: `√(e^{-x²}) = e^{-x²/2}`. `Real.sqrt_mul_self` wants the
+  -- radicand presented as a literal product, so the exponent is split first and `Real.exp_add`
+  -- turns the sum into that product; the split is stated as its own equality rather than being
+  -- reshaped inline.
+  have hsplit : (-x ^ 2 : ℝ) = -(x ^ 2 / 2) + -(x ^ 2 / 2) := by ring
   have hs : Real.sqrt (Real.exp (-x ^ 2)) = Real.exp (-(x ^ 2 / 2)) := by
-    rw [show (-x ^ 2 : ℝ) = -(x ^ 2 / 2) + -(x ^ 2 / 2) by ring, Real.exp_add]
+    rw [hsplit, Real.exp_add]
     exact Real.sqrt_mul_self (Real.exp_pos _).le
   rw [h1, h2, h3, hermiteFunction_def, eval_hermiteDilated, Algebra.smul_def, ← map_mul, hs]
   congr 1

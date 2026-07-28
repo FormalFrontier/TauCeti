@@ -48,18 +48,33 @@ open scoped NNReal ENNReal
 
 /-! ## `L¹` and `L²` membership of the Hermite functions -/
 
-/-- The polynomial `Hₙ(·√2)`, real-evaluated, as a composition whose `eval` is `aeval (·√2)`. -/
-private lemma eval_hermiteComp (n : ℕ) (x : ℝ) :
-    (((hermite n).map (Int.castRingHom ℝ)).comp (X * Polynomial.C (Real.sqrt 2))).eval x
-      = aeval (x * Real.sqrt 2) (hermite n) := by
-  rw [eval_comp, eval_mul, eval_X, eval_C, aeval_def, algebraMap_int_eq, ← eval_map]
+/-- The dilated Hermite polynomial `Hₙ(√2 · X)`, the polynomial whose Gaussian envelope is the
+Hermite function `ψₙ`.
+
+It is defined at this layer rather than at the basis layer because every `MemLp` result below is
+already about it: `ψₙ` *is* this polynomial times `exp(-x²/2)`, up to normalization. -/
+noncomputable def hermiteDilated (n : ℕ) : Polynomial ℝ :=
+  ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * X)
+
+/-- The defining equation of `TauCeti.hermiteDilated`, exported so that consumers in other modules
+can rewrite with it. -/
+theorem hermiteDilated_def (n : ℕ) :
+    hermiteDilated n
+      = ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * X) :=
+  rfl
+
+/-- Evaluating the dilated Hermite polynomial is `aeval (·√2)`. -/
+theorem eval_hermiteDilated (n : ℕ) (x : ℝ) :
+    (hermiteDilated n).eval x = aeval (x * Real.sqrt 2) (hermite n) := by
+  rw [hermiteDilated_def, eval_comp, eval_mul, eval_X, eval_C, aeval_def, algebraMap_int_eq,
+    ← eval_map, mul_comm]
 
 /-- **Target A2 (`L¹`).** Each Hermite function is integrable against Lebesgue measure: it is a
 polynomial in `x` times the Gaussian envelope `exp(-x²/2)`, the `v = 1` case of
 `integrable_eval_mul_gaussianEnvelope`. -/
 theorem integrable_hermiteFunction (n : ℕ) : Integrable (hermiteFunction n) volume := by
   have h := integrable_eval_mul_gaussianEnvelope 0
-    (((hermite n).map (Int.castRingHom ℝ)).comp (X * Polynomial.C (Real.sqrt 2))) (w := 1)
+    (hermiteDilated n) (w := 1)
     one_ne_zero
   have exponent_one :
       ∀ x : ℝ, (-(x ^ 2 / 2) : ℝ) = -(x - 0) ^ 2 / (2 * ((1 : ℝ≥0) : ℝ)) := by
@@ -67,11 +82,11 @@ theorem integrable_hermiteFunction (n : ℕ) : Integrable (hermiteFunction n) vo
     push_cast
     ring
   have hfun : hermiteFunction n = fun x =>
-      (((hermite n).map (Int.castRingHom ℝ)).comp (X * Polynomial.C (Real.sqrt 2))).eval x
+      (hermiteDilated n).eval x
         * Real.exp (-(x - 0) ^ 2 / (2 * ((1 : ℝ≥0) : ℝ)))
         / Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi) := by
     funext x
-    rw [hermiteFunction_def, ← eval_hermiteComp, exponent_one x]
+    rw [hermiteFunction_def, ← eval_hermiteDilated, exponent_one x]
   rw [hfun]
   exact h.div_const _
 
@@ -82,13 +97,13 @@ membership `hermiteFunctionLp` needs to realize `ψₙ` as an element of `Lp ℝ
 theorem memLp_two_hermiteFunction (n : ℕ) : MemLp (hermiteFunction n) 2 volume := by
   rw [memLp_two_iff_integrable_sq (continuous_hermiteFunction n).aestronglyMeasurable]
   have hfun : (fun x => hermiteFunction n x ^ 2) = fun x =>
-      ((((hermite n).map (Int.castRingHom ℝ)).comp (X * Polynomial.C (Real.sqrt 2))) ^ 2).eval x
+      ((hermiteDilated n) ^ 2).eval x
         * Real.exp (-x ^ 2)
         / Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi) ^ 2 := by
     funext x
     have henv : Real.exp (-(x ^ 2 / 2)) ^ 2 = Real.exp (-x ^ 2) := by
       rw [pow_two, ← Real.exp_add]; congr 1; ring
-    rw [hermiteFunction_def, div_pow, mul_pow, henv, eval_pow, eval_hermiteComp]
+    rw [hermiteFunction_def, div_pow, mul_pow, henv, eval_pow, eval_hermiteDilated]
   rw [hfun]
   exact (integrable_eval_mul_exp_neg_sq _).div_const _
 
