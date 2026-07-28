@@ -74,6 +74,17 @@ noncomputable def latticeDifferentialOnGenerator
       Finsupp.single (C.upperFace v v.property)
         (Polynomial.X ^ PlumbingCube.characteristicUpperFaceExponent P k C v.property)
 
+/-- The defining weighted face-sum formula for the generator differential. -/
+theorem latticeDifferentialOnGenerator_def
+    (P : PlumbingGraph V) (k : P.characteristicVectors) (C : PlumbingCube V) :
+    P.latticeDifferentialOnGenerator k C =
+      C.directions.attach.sum fun v =>
+        Finsupp.single (C.lowerFace v v.property)
+            (Polynomial.X ^ PlumbingCube.characteristicLowerFaceExponent P k C v) +
+          Finsupp.single (C.upperFace v v.property)
+            (Polynomial.X ^ PlumbingCube.characteristicUpperFaceExponent P k C v.property) :=
+  by rw [latticeDifferentialOnGenerator]
+
 /-- The `𝔽₂[U]`-linear lattice differential on plumbing chains. -/
 noncomputable def latticeDifferential
     (P : PlumbingGraph V) (k : P.characteristicVectors) :
