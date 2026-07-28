@@ -48,19 +48,11 @@ variable {ν : Measure ℝ}
 
 /-! ## Vanishing moments at the level of functions -/
 
-/-- The positive part `max t 0` never exceeds `t` in absolute value.
-
-This is what lets a single bound on `g` serve both truncated densities `g⁺` and `g⁻` below. -/
-private theorem abs_max_zero_le_abs (t : ℝ) : |max t 0| ≤ |t| := by
-  rcases le_total t 0 with h | h
-  · simp [max_eq_right h]
-  · simp [max_eq_left h, abs_of_nonneg h]
-
 /-- Polynomial growth is dominated by exponential growth at any positive rate:
 `|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`.
 
-Public rather than `private`: besides the two B1 forms below, this is the bound that makes every
-polynomial moment of such a measure finite, which `TauCeti.integrable_pow_of_exp_moment` (the
+Public rather than `private`: this is the bound that makes every polynomial moment of a measure
+with one finite exponential moment finite, which `TauCeti.integrable_pow_of_exp_moment` (the
 completeness step of the orthogonal-basis bridge) consumes. -/
 theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
     |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
