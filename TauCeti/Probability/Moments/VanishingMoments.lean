@@ -24,7 +24,8 @@ Both forms assume exponential control at a single positive rate; they differ in 
 * `TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` (measure level) assumes
   it of the *weight* alone -- `e^{a|x|} ∈ L¹(ν)` for some `a > 0` -- and of `g` only that it lies
   in `L²(ν)`, for scalars in any `RCLike` field.  Cauchy-Schwarz bridges the two.  The roadmap name
-  `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` is retained as a public alias.
+  `ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments`, taking the stronger *all-rates*
+  hypothesis its name implies, is provided as a public wrapper.
 
 The measure-level form is the usable one: `hexp` becomes a statement about the weight alone
 (Gaussian decay, or automatic for a *finite* compactly supported measure), independent of `g`.
@@ -213,7 +214,7 @@ form above; a caller holding a bound at every rate supplies it at any single one
 The `_of_exists_integrable_exp` suffix names the hypothesis exactly — *existence* of one positive
 rate with `e^{a|x|}` integrable — and matches the adjacent determinacy API
 (`Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp`).  The roadmap name
-`_of_finite_expMoments` is provided as a public alias immediately below.
+`_of_finite_expMoments`, with the matching *all-rates* hypothesis, wraps this one immediately below.
 
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
@@ -308,15 +309,17 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
   simp only [Pi.zero_apply] at hx1 hx2 ⊢
   exact RCLike.ext (by simp [hx1]) (by simp [hx2])
 
-/-- **Roadmap B1, measure level** (roadmap-specified API name).  Alias of
-`ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp`; the primary name is preferred as it
-names the hypothesis (existence of one integrable exponential rate) exactly and matches the adjacent
-determinacy API. -/
+/-- **Roadmap B1, measure level** (roadmap-specified API name).  The name `_of_finite_expMoments`
+is accurate here: the hypothesis is that *every* exponential moment is finite -- `e^{a|x|}` is
+integrable at every rate `a ≥ 0` -- which is the roadmap signature.  This is strictly stronger than
+the primary `_of_exists_integrable_exp`, and follows from it immediately by using the moment at any
+single positive rate. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
-    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
+    (hexp : ∀ a : ℝ, 0 ≤ a → Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
     (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
     g =ᵐ[ν] 0 :=
-  ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp hexp hg hmom
+  ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
+    ⟨1, one_pos, hexp 1 zero_le_one⟩ hg hmom
 
 end TauCeti
