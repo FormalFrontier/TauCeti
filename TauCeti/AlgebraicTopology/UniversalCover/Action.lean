@@ -38,8 +38,6 @@ The inverse-free computation rule is `inv_smul_mk`.
   `FundamentalGroup X x₀` acting on `UniversalCover x₀`.
 * `TauCeti.UniversalCover.proj_eq_iff_mem_orbit`: the fibres of `proj` are precisely the
   action orbits.
-* `TauCeti.UniversalCover.exists_nhds_smul_disjoint`: the action is locally properly
-  discontinuous.
 * `TauCeti.UniversalCover.isQuotientCoveringMap`: `proj` is the quotient covering map for
   the fundamental-group action.
 -/
@@ -48,7 +46,6 @@ public section
 noncomputable section
 
 open scoped unitInterval
-open Topology
 
 variable {X : Type*} [TopologicalSpace X] {x₀ : X}
 
@@ -155,33 +152,13 @@ theorem proj_surjective [PathConnectedSpace X] :
     Function.Surjective (proj : UniversalCover x₀ → X) := fun x ↦
   ⟨mk x (Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath x₀ x)), rfl⟩
 
-/-- Every point has a neighbourhood disjoint from each of its nonidentity translates. -/
-theorem exists_nhds_smul_disjoint
-    [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X]
-    (e : UniversalCover x₀) :
-    ∃ U ∈ 𝓝 e, ∀ g : FundamentalGroup X x₀,
-      ((g • ·) '' U ∩ U).Nonempty → g = 1 := by
-  rcases e with ⟨x, q⟩
-  obtain ⟨baseU, hU_open, hxU, -, hU_slsc⟩ :=
-    exists_isOpen_mem_isPathConnected_isPathHomotopyTrivial x
-  let U := sheet baseU hxU q
-  have hU_open' : IsOpen U := isOpen_sheet baseU hU_open hxU q
-  have hU_mem : mk x q ∈ U := by
-    induction q using Quotient.inductionOn with
-    | h p => exact ofBasedPath_ofPath p ▸ mem_sheet_self hxU p
-  refine ⟨U, hU_open'.mem_nhds hU_mem, fun g hgU ↦ ?_⟩
-  obtain ⟨_, ⟨y, hyU, rfl⟩, hgyU⟩ := hgU
-  exact IsCancelSMul.eq_one_of_smul
-    (proj_injOn_sheet hU_slsc hxU q hgyU hyU (proj_smul g y))
-
 /-- The endpoint projection is a quotient covering map for the fundamental-group action. -/
 theorem isQuotientCoveringMap
     [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] :
-    IsQuotientCoveringMap (proj : UniversalCover x₀ → X) (FundamentalGroup X x₀) where
-  __ := (isCoveringMap x₀).isOpenMap.isQuotientMap
-    (continuous_proj x₀) proj_surjective
-  apply_eq_iff_mem_orbit := proj_eq_iff_mem_orbit
-  disjoint := exists_nhds_smul_disjoint
+    IsQuotientCoveringMap (proj : UniversalCover x₀ → X) (FundamentalGroup X x₀) := by
+  rw [isQuotientCoveringMap_iff_isCoveringMap_and]
+  exact
+    ⟨isCoveringMap x₀, proj_surjective, inferInstance, inferInstance, proj_eq_iff_mem_orbit⟩
 
 end TauCeti.UniversalCover
