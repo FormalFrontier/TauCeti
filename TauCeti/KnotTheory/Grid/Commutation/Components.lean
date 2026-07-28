@@ -48,8 +48,7 @@ namespace GridDiagram
 
 variable {n : ℕ} {G G' : GridDiagram n}
 
-/-- A row commutation leaves the component traversal permutation unchanged. Both marking
-permutations are postcomposed by the same row transposition, which cancels in `X⁻¹ * O`. -/
+/-- A row commutation leaves the component traversal permutation unchanged. -/
 theorem IsRowCommutation.componentPerm_eq (h : IsRowCommutation G G') :
     G'.componentPerm = G.componentPerm := by
   rw [isRowCommutation_iff] at h
@@ -86,35 +85,35 @@ theorem IsCommutation.componentCycleType_eq (h : IsCommutation G G') :
   exact h.elim IsRowCommutation.componentCycleType_eq
     IsColumnCommutation.componentCycleType_eq
 
-/-- A row commutation preserves the number of represented link components. -/
-theorem IsRowCommutation.componentCount_eq (h : IsRowCommutation G G') :
-    G'.componentCount = G.componentCount := by
-  rw [componentCount_def, h.componentCycleType_eq, componentCount_def]
-
-/-- A column commutation preserves the number of represented link components. -/
-theorem IsColumnCommutation.componentCount_eq (h : IsColumnCommutation G G') :
-    G'.componentCount = G.componentCount := by
-  rw [componentCount_def, h.componentCycleType_eq, componentCount_def]
-
 /-- Every elementary commutation preserves the number of represented link components. -/
 theorem IsCommutation.componentCount_eq (h : IsCommutation G G') :
     G'.componentCount = G.componentCount := by
   rw [componentCount_def, h.componentCycleType_eq, componentCount_def]
 
-/-- A row commutation preserves whether a grid diagram represents a knot. -/
-theorem IsRowCommutation.isKnot_iff (h : IsRowCommutation G G') :
-    G'.IsKnot ↔ G.IsKnot := by
-  rw [isKnot_def, h.componentCount_eq, isKnot_def]
+/-- A row commutation preserves the number of represented link components. -/
+theorem IsRowCommutation.componentCount_eq (h : IsRowCommutation G G') :
+    G'.componentCount = G.componentCount :=
+  (isCommutation_iff G G').mpr (Or.inl h) |>.componentCount_eq
 
-/-- A column commutation preserves whether a grid diagram represents a knot. -/
-theorem IsColumnCommutation.isKnot_iff (h : IsColumnCommutation G G') :
-    G'.IsKnot ↔ G.IsKnot := by
-  rw [isKnot_def, h.componentCount_eq, isKnot_def]
+/-- A column commutation preserves the number of represented link components. -/
+theorem IsColumnCommutation.componentCount_eq (h : IsColumnCommutation G G') :
+    G'.componentCount = G.componentCount :=
+  (isCommutation_iff G G').mpr (Or.inr h) |>.componentCount_eq
 
 /-- Every elementary commutation preserves whether a grid diagram represents a knot. -/
 theorem IsCommutation.isKnot_iff (h : IsCommutation G G') :
     G'.IsKnot ↔ G.IsKnot := by
   rw [isKnot_def, h.componentCount_eq, isKnot_def]
+
+/-- A row commutation preserves whether a grid diagram represents a knot. -/
+theorem IsRowCommutation.isKnot_iff (h : IsRowCommutation G G') :
+    G'.IsKnot ↔ G.IsKnot :=
+  (isCommutation_iff G G').mpr (Or.inl h) |>.isKnot_iff
+
+/-- A column commutation preserves whether a grid diagram represents a knot. -/
+theorem IsColumnCommutation.isKnot_iff (h : IsColumnCommutation G G') :
+    G'.IsKnot ↔ G.IsKnot :=
+  (isCommutation_iff G G').mpr (Or.inr h) |>.isKnot_iff
 
 end GridDiagram
 
