@@ -2,7 +2,6 @@ module
 
 public import Mathlib.Combinatorics.Enumerative.Partition.Basic
 public import Mathlib.Data.List.Lex
-import Lean.Elab.Tactic.Omega
 
 /-!
 # Dominance order on partitions
@@ -76,8 +75,8 @@ def Dominates {n : ℕ} (μ ν : n.Partition) : Prop :=
   ∀ k : Fin (n + 1),
     ((ν.parts.sort (· ≥ ·)).take k).sum ≤ ((μ.parts.sort (· ≥ ·)).take k).sum
 
-/-- Dominance can be checked on the first `n + 1` partial sums. -/
-theorem dominates_fin_iff {n : ℕ} {μ ν : n.Partition} :
+/-- By definition, dominance compares the first `n + 1` partial sums. -/
+theorem dominates_def {n : ℕ} {μ ν : n.Partition} :
     Dominates μ ν ↔
       ∀ k : Fin (n + 1),
         ((ν.parts.sort (· ≥ ·)).take k).sum ≤
@@ -105,7 +104,7 @@ instance {n : ℕ} (μ ν : n.Partition) : Decidable (Dominates μ ν) := by
   exact decidable_of_iff
     (∀ k : Fin (n + 1),
       ((ν.parts.sort (· ≥ ·)).take k).sum ≤
-        ((μ.parts.sort (· ≥ ·)).take k).sum) dominates_fin_iff.symm
+        ((μ.parts.sort (· ≥ ·)).take k).sum) dominates_def.symm
 
 /-- Every partition dominates itself. -/
 @[simp, refl]
