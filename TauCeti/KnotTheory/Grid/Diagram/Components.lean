@@ -44,7 +44,7 @@ grid states", and supplies the knot-versus-link distinction needed by the later 
 Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -65,11 +65,11 @@ def componentPerm : Equiv.Perm (Fin n) :=
 @[simp]
 theorem componentPerm_apply (c : Fin n) :
     G.componentPerm c = XColumnOfRow G (G.O c) :=
-  rfl
+  (rfl)
 
 /-- The component permutation has no fixed columns, because an `O` and an `X` cannot occupy the
 same square. -/
-theorem componentPerm_ne (c : Fin n) : G.componentPerm c ≠ c := by
+theorem componentPerm_apply_ne_self (c : Fin n) : G.componentPerm c ≠ c := by
   intro h
   apply G.disjoint c
   simpa [componentPerm] using congrArg (fun d => G.X d) h
@@ -78,17 +78,13 @@ theorem componentPerm_ne (c : Fin n) : G.componentPerm c ≠ c := by
 @[simp]
 theorem support_componentPerm : G.componentPerm.support = Finset.univ := by
   ext c
-  simpa only [Equiv.Perm.mem_support, Finset.mem_univ, iff_true] using G.componentPerm_ne c
+  simpa only [Equiv.Perm.mem_support, Finset.mem_univ, iff_true] using
+    G.componentPerm_apply_ne_self c
 
 /-- The cycle factors of the component permutation. Each factor is one component of the
 represented link, expressed as a cyclic permutation of its `O`-marking columns. -/
 def componentCycles : Finset (Equiv.Perm (Fin n)) :=
   G.componentPerm.cycleFactorsFinset
-
-/-- The component cycles are the cycle factors of `componentPerm`. -/
-theorem componentCycles_def :
-    G.componentCycles = G.componentPerm.cycleFactorsFinset :=
-  rfl
 
 /-- A permutation is a component cycle exactly when it is a cycle agreeing with the component
 permutation throughout its support. -/
@@ -101,19 +97,9 @@ theorem mem_componentCycles_iff (c : Equiv.Perm (Fin n)) :
 def componentCycleType : Multiset ℕ :=
   G.componentPerm.cycleType
 
-/-- The component-size multiset is the cycle type of `componentPerm`. -/
-theorem componentCycleType_def :
-    G.componentCycleType = G.componentPerm.cycleType :=
-  rfl
-
 /-- The number of components of the link represented by a grid diagram. -/
 def componentCount : ℕ :=
   G.componentCycleType.card
-
-/-- The component count is the cardinality of the component-size multiset. -/
-theorem componentCount_def :
-    G.componentCount = G.componentCycleType.card :=
-  rfl
 
 /-- The number of component cycles agrees with `componentCount`. -/
 @[simp]
@@ -130,6 +116,11 @@ theorem sum_componentCycleType : G.componentCycleType.sum = n := by
 def IsKnot : Prop :=
   G.componentCount = 1
 
+/-- A grid diagram represents a knot exactly when its component count is one. -/
+@[simp]
+theorem isKnot_iff_componentCount_eq_one : G.IsKnot ↔ G.componentCount = 1 :=
+  by rw [IsKnot]
+
 /-- A grid diagram represents a knot exactly when its component permutation is a single
 nontrivial cycle. -/
 theorem isKnot_iff_componentPerm_isCycle :
@@ -143,17 +134,29 @@ theorem IsKnot.componentCycleType_eq (hG : G.IsKnot) :
   rw [componentCycleType, (G.isKnot_iff_componentPerm_isCycle.mp hG).cycleType,
     support_componentPerm, Finset.card_univ, Fintype.card_fin]
 
+/-- A grid diagram has no link components exactly when its size is zero. -/
+@[simp]
+theorem componentCount_eq_zero_iff : G.componentCount = 0 ↔ n = 0 := by
+  constructor
+  · intro h
+    rw [componentCount] at h
+    have htype : G.componentCycleType = 0 := Multiset.card_eq_zero.mp h
+    simpa [htype] using (G.sum_componentCycleType).symm
+  · intro h
+    subst n
+    rw [componentCount, componentCycleType]
+    have hperm : G.componentPerm = 1 := Subsingleton.elim _ _
+    simp [hperm]
+
 /-- The empty grid has no link components. -/
 @[simp]
 theorem componentCount_eq_zero_of_zero (G : GridDiagram 0) :
-    G.componentCount = 0 := by
-  rw [componentCount, componentCycleType]
-  have hperm : G.componentPerm = 1 := Subsingleton.elim _ _
-  simp [hperm]
+    G.componentCount = 0 :=
+  G.componentCount_eq_zero_iff.mpr rfl
 
 /-- An empty grid does not represent a knot. -/
 theorem not_isKnot_of_zero (G : GridDiagram 0) : ¬G.IsKnot := by
-  simp [IsKnot]
+  simp
 
 /-- Every `2 × 2` grid diagram represents a knot. Its fixed-point-free component permutation is
 the transposition of the two columns. -/
