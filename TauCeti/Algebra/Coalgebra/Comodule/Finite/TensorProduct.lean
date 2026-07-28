@@ -83,16 +83,6 @@ theorem tensor_coact (M N : FGComoduleCat.{u, v, w} R C) :
       Comodule.tensorCoact (R := R) (C := C) (M := M) (N := N) :=
   rfl
 
-/-- The diagonal coaction on a simple tensor is obtained by combining the two component
-coactions. -/
-@[simp]
-theorem tensor_coact_tmul (M N : FGComoduleCat.{u, v, w} R C) (m : M) (n : N) :
-    Comodule.coact (R := R) (C := C) (M := tensor R C M N) (m ⊗ₜ[R] n) =
-      Comodule.tensorCombine (R := R) (C := C) (M := M) (N := N)
-        (Comodule.coact (R := R) (C := C) (M := M) m ⊗ₜ[R]
-          Comodule.coact (R := R) (C := C) (M := N) n) :=
-  Comodule.tensorCoact_tmul m n
-
 /-- The inclusion into all comodules sends the finite tensor product to the ambient
 tensor-product comodule. -/
 @[simp]
@@ -116,13 +106,6 @@ variable {M M' M'' N N' N'' : FGComoduleCat.{u, v, w} R C}
 noncomputable abbrev tensorMap (f : M ⟶ M') (g : N ⟶ N') :
     tensor R C M N ⟶ tensor R C M' N' :=
   ofHom (R := R) (C := C) (Comodule.Hom.tensorMap f.hom g.hom)
-
-/-- The ambient comodule morphism underlying `tensorMap f g` is the tensor product of the
-ambient morphisms. -/
-@[simp]
-theorem tensorMap_hom (f : M ⟶ M') (g : N ⟶ N') :
-    (tensorMap f g).hom = Comodule.Hom.tensorMap f.hom g.hom :=
-  rfl
 
 /-- The underlying linear map of `tensorMap f g` is the tensor product of the underlying
 linear maps. -/
@@ -188,14 +171,6 @@ morphisms. -/
 theorem tensorBifunctor_map {P Q : FGComoduleCat.{u, v, w} R C ×
     FGComoduleCat.{u, v, w} R C} (fg : P ⟶ Q) :
     (tensorBifunctor R C).map fg = tensorMap fg.1 fg.2 :=
-  rfl
-
-/-- Pointwise, the morphism part of `tensorBifunctor` maps a simple tensor by its two
-component morphisms. -/
-@[simp]
-theorem tensorBifunctor_map_tmul {P Q : FGComoduleCat.{u, v, w} R C ×
-    FGComoduleCat.{u, v, w} R C} (fg : P ⟶ Q) (m : P.1) (n : P.2) :
-    (tensorBifunctor R C).map fg (m ⊗ₜ[R] n) = fg.1 m ⊗ₜ[R] fg.2 n :=
   rfl
 
 end FGComoduleCat
