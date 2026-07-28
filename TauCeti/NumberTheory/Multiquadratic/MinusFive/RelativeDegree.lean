@@ -26,8 +26,9 @@ candidate genus field. The relative-degree calculation then specializes
 field-degree part of the roadmap's `ℚ(√-5)` acceptance example (`[K_gen : ℚ(√-5)] = 2 = 2 ^ (t - 1)`
 with `t = 2` ramified primes); identifying the compositum as the maximal unramified abelian
 extension is later work. It is the CM-presented companion of the `ℚ(√-21)` example
-`finrank_candidateGenusField_over_sqrtNegTwentyOneSubfield` (whose radicands `-3, -7` are negative,
-so it is not a CM field and uses its own generator list).
+`finrank_candidateGenusField_over_sqrtNegTwentyOneSubfield`, whose generators `i√3, i√7` are not
+real square roots of primes and so are not captured by the `cmRoot` family, so that example uses a
+bespoke generator list instead.
 
 The prime-discriminant description follows D. A. Cox, *Primes of the Form x² + ny²*, and
 F. Lemmermeyer's *Reciprocity Laws*.
