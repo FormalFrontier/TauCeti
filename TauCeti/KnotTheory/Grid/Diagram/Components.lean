@@ -117,10 +117,6 @@ theorem sum_componentCycleType : G.componentCycleType.sum = n := by
 def IsKnot : Prop :=
   G.componentCount = 1
 
-/-- A grid diagram represents a knot exactly when its component count is one. -/
-theorem isKnot_iff_componentCount_eq_one : G.IsKnot ↔ G.componentCount = 1 :=
-  by rw [IsKnot]
-
 /-- A grid diagram represents a knot exactly when its component permutation is a single
 nontrivial cycle. -/
 theorem isKnot_iff_componentPerm_isCycle :
@@ -156,7 +152,7 @@ theorem componentCount_eq_zero_of_zero (G : GridDiagram 0) :
 
 /-- An empty grid does not represent a knot. -/
 theorem not_isKnot_of_zero (G : GridDiagram 0) : ¬G.IsKnot := by
-  rw [isKnot_iff_componentCount_eq_one, componentCount_eq_zero_of_zero]
+  rw [IsKnot, componentCount_eq_zero_of_zero]
   exact Nat.zero_ne_one
 
 /-- Every `2 × 2` grid diagram represents a knot. Its fixed-point-free component permutation is
