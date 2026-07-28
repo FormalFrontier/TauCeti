@@ -22,7 +22,7 @@ a Hilbert basis of `L²(Measure.pi μ)` from coordinatewise bases, and
 ## Main statements
 
 * `TauCeti.gaussianHermitePiBasis` — the multi-index basis.
-* `TauCeti.coeFn_gaussianHermitePiBasis` — the anti-vacuity pin: the `a`-th vector really is the
+* `TauCeti.coe_gaussianHermitePiBasis` — the anti-vacuity pin: the `a`-th vector really is the
   product `∏ᵢ H_{aᵢ}(xᵢ)/√(aᵢ!)`.
 -/
 
@@ -44,7 +44,7 @@ noncomputable def gaussianHermitePiBasis :
 only exhibit *some* Hilbert basis of `L²(γ^ι)`. The coordinatewise identification transfers to the
 product measure because each evaluation map pushes the product's a.e. filter into the factor's
 (`MeasureTheory.Measure.tendsto_eval_ae_ae`). -/
-theorem coeFn_gaussianHermitePiBasis (a : ι → ℕ) :
+theorem coe_gaussianHermitePiBasis (a : ι → ℕ) :
     ⇑(gaussianHermitePiBasis 𝕜 ι a)
       =ᵐ[Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ)]
         fun x => ∏ i, (algebraMap ℝ 𝕜)
@@ -55,7 +55,7 @@ theorem coeFn_gaussianHermitePiBasis (a : ι → ℕ) :
           = (algebraMap ℝ 𝕜) (aeval (x i) (hermite (a i)) / Real.sqrt (((a i).factorial : ℝ))) :=
     fun i => (Measure.tendsto_eval_ae_ae
       (μ := fun _ : ι => (gaussianReal 0 1 : Measure ℝ)) (i := i)).eventually
-        (coeFn_gaussianHermiteHilbertBasis 𝕜 (a i))
+        (coe_gaussianHermiteHilbertBasis 𝕜 (a i))
   rw [gaussianHermitePiBasis]
   filter_upwards [coeFn_piHilbertBasis (fun _ : ι => gaussianHermiteHilbertBasis 𝕜) a,
     ae_all_iff.2 hcoord] with x hx hall

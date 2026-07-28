@@ -30,6 +30,8 @@ orthogonal family satisfies. Requiring `degree` rather than `natDegree` matters 
 
 ## Main statements
 
+* `TauCeti.integrable_pow_of_exp_moment` — one finite exponential moment makes every polynomial
+  moment finite, which is what the family-agnostic polynomial-`L²` interface asks for.
 * `TauCeti.memLp_two_algebraMap_eval` — polynomials lie in `L²` of a measure carrying one finite
   exponential moment.
 * `TauCeti.memLp_two_bareNormalized` — the normalized-family `MemLp` obligation, discharged from
@@ -47,60 +49,37 @@ open MeasureTheory Polynomial
 
 variable {𝕜 : Type*} [RCLike 𝕜]
 
-/-- A measure carrying one finite exponential moment integrates every monomial squared: `xⁿ` lies
-in `L²`, because `|x|ⁿ ≤ (n!/bⁿ)·e^{b|x|}` and `e^{b|x|}` is square-integrable.
+/-- **One finite exponential moment makes every polynomial moment finite.** The pointwise bound
+`|x|ⁿ ≤ (n!/aⁿ)·e^{a|x|}` (`TauCeti.pow_abs_le_factorial_div_pow_mul_exp`) dominates each monomial
+by an integrable function.
 
-The rate is existential, matching the convention of the B1 forms this feeds. The proof runs at
-*half* the supplied rate: `e^{(a/2)|x|}` squares to the supplied `e^{a|x|}`, which is what makes
-one moment enough. -/
+This is the bridge to the family-agnostic polynomial interface of
+`TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
+moment is finite"; the two `MemLp` statements below are that interface applied through this. -/
+theorem integrable_pow_of_exp_moment {ν : Measure ℝ}
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
+    Integrable (fun x : ℝ => x ^ k) ν := by
+  obtain ⟨a, ha, hexpa⟩ := hexp
+  refine (hexpa.const_mul ((Nat.factorial k : ℝ) / a ^ k)).mono'
+    ((continuous_id.pow k).aestronglyMeasurable) (Filter.Eventually.of_forall fun x => ?_)
+  rw [Real.norm_eq_abs, abs_pow]
+  exact pow_abs_le_factorial_div_pow_mul_exp ha k x
+
+/-- A measure carrying one finite exponential moment integrates every monomial squared: `xⁿ` lies
+in `L²`. The exact-degree specialization of `memLp_two_algebraMap_eval` at `q = Xⁿ`. -/
 theorem memLp_two_algebraMap_pow {ν : Measure ℝ}
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (n : ℕ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
-  obtain ⟨a, ha, hexpa⟩ := hexp
-  set b := a / 2 with hb
-  have hbpos : (0 : ℝ) < b := by positivity
-  have hexpmeas : AEStronglyMeasurable (fun x : ℝ => Real.exp (b * |x|)) ν :=
-    (Real.continuous_exp.comp (continuous_const.mul continuous_abs)).aestronglyMeasurable
-  have hexp2 : MemLp (fun x : ℝ => Real.exp (b * |x|)) 2 ν := by
-    refine (memLp_two_iff_integrable_sq hexpmeas).2 ?_
-    have hfun : (fun x : ℝ => Real.exp (a * |x|))
-        = fun x : ℝ => Real.exp (b * |x|) ^ 2 := by
-      funext x
-      rw [sq, ← Real.exp_add, hb]
-      ring_nf
-    exact hfun ▸ hexpa
-  have hK : (0 : ℝ) < (Nat.factorial n : ℝ) / b ^ n := by
-    have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
-    positivity
-  refine MemLp.of_le (hexp2.const_mul ((Nat.factorial n : ℝ) / b ^ n)) ?_ ?_
-  · exact ((RCLike.continuous_ofReal.comp continuous_id).pow n).aestronglyMeasurable
-  · refine Filter.Eventually.of_forall fun x => ?_
-    have h := pow_abs_le_factorial_div_pow_mul_exp hbpos n x
-    have hE : (0 : ℝ) < Real.exp (b * |x|) := Real.exp_pos _
-    rw [RCLike.algebraMap_eq_ofReal, norm_pow, RCLike.norm_ofReal, Real.norm_eq_abs,
-      abs_mul, abs_of_pos hK, abs_of_pos hE]
-    linarith
+  simpa using memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜)
+    (integrable_pow_of_exp_moment hexp) (Polynomial.X ^ n)
 
 /-- Every polynomial lies in `L²` of a measure carrying one finite exponential moment. -/
 theorem memLp_two_algebraMap_eval {ν : Measure ℝ}
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     (q : Polynomial ℝ) :
-    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x)) 2 ν := by
-  induction q using Polynomial.induction_on' with
-  | add q r hq hr =>
-    have : (fun x : ℝ => (algebraMap ℝ 𝕜) ((q + r).eval x))
-        = (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x))
-          + fun x : ℝ => (algebraMap ℝ 𝕜) (r.eval x) := by
-      funext x; simp [map_add]
-    rw [this]
-    exact hq.add hr
-  | monomial n a =>
-    have : (fun x : ℝ => (algebraMap ℝ 𝕜) ((monomial n a).eval x))
-        = fun x : ℝ => (algebraMap ℝ 𝕜 a) * (algebraMap ℝ 𝕜 x) ^ n := by
-      funext x
-      simp [eval_monomial, map_mul, map_pow]
-    rw [this]
-    exact (memLp_two_algebraMap_pow (𝕜 := 𝕜) hexp n).const_mul _
+    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x)) 2 ν :=
+  memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜)
+    (integrable_pow_of_exp_moment hexp) q
 
 /-- Dividing by a constant keeps a polynomial in `L²`: `q/r` is again the evaluation of a
 polynomial, namely `C r⁻¹ * q`. This also covers `r = 0`, where both sides are `0`. -/

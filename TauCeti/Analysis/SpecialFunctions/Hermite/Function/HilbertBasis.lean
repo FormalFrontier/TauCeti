@@ -21,8 +21,9 @@ the dilated Hermite polynomials `Hₙ(x√2)`, whose `√w`-envelope is exactly 
   moment finite, the hypothesis the completeness theorem
   `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.degree_hermiteDilated` — `Hₙ(x√2)` has degree exactly `n`.
-* `TauCeti.integral_hermiteDilated_mul_gaussianWeight` — the orthogonality relation with
-  normalization `cₙ = n!√π`, obtained from the Hermite function orthonormality (milestone A2).
+* `TauCeti.integral_hermiteDilated_mul_hermiteDilated_mul_gaussianWeight` — the orthogonality
+  relation with normalization `cₙ = n!√π`, obtained from the Hermite function orthonormality
+  (milestone A2).
 * `TauCeti.hermiteHilbertBasis` — **milestone A3**: the Hermite functions as a `HilbertBasis` of
   `L²(ℝ)`, the principal result of this file.
 * `TauCeti.coe_hermiteHilbertBasis` — its normal form: the `n`-th basis vector really is `ψₙ`.
@@ -77,7 +78,7 @@ theorem hermiteNormalization_pos (n : ℕ) : (0 : ℝ) < (n.factorial : ℝ) * R
 
 /-- **Orthogonality against the Gaussian weight.** `∫ Hₘ(x√2)Hₙ(x√2)e^{-x²} = δₘₙ·n!√π`. This is
 the Hermite function orthonormality (milestone A2) with the normalizations put back. -/
-theorem integral_hermiteDilated_mul_gaussianWeight (m n : ℕ) :
+theorem integral_hermiteDilated_mul_hermiteDilated_mul_gaussianWeight (m n : ℕ) :
     (∫ x : ℝ, (hermiteDilated m).eval x * (hermiteDilated n).eval x * Real.exp (-x ^ 2))
       = if m = n then (n.factorial : ℝ) * Real.sqrt Real.pi else 0 := by
   have hpt : ∀ x : ℝ, (hermiteDilated m).eval x * (hermiteDilated n).eval x * Real.exp (-x ^ 2)
@@ -106,22 +107,15 @@ section Basis
 
 variable (𝕜 : Type*) [RCLike 𝕜]
 
+/-- The `MemLp` obligation for the dilated Hermite family against the Gaussian weight. This is the
+generic `TauCeti.memLp_two_bareNormalized` at `p = hermiteDilated`, `c n = n!√π`; the only content
+specific to this family is the exponential moment of `e^{-x²}`. -/
 private theorem memLp_hermiteDilated_normalized (n : ℕ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜)
         ((hermiteDilated n).eval x / Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi))) 2
-      (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2))) := by
-  have hfun : (fun x : ℝ => (algebraMap ℝ 𝕜)
-        ((hermiteDilated n).eval x / Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi)))
-      = fun x : ℝ => (algebraMap ℝ 𝕜)
-          (Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi))⁻¹
-        * (algebraMap ℝ 𝕜) ((hermiteDilated n).eval x) := by
-    funext x
-    rw [← map_mul]
-    congr 1
-    ring
-  rw [hfun]
-  exact (memLp_two_algebraMap_eval (𝕜 := 𝕜)
-    ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩ (hermiteDilated n)).const_mul _
+      (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2))) :=
+  memLp_two_bareNormalized (𝕜 := 𝕜) ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩
+    hermiteDilated (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi) n
 
 /-- **Roadmap A3: the Hermite functions are a Hilbert basis of `L²(ℝ)`.** Orthonormality comes from
 the weighted-measure machinery and completeness from moment determinacy
@@ -133,7 +127,7 @@ noncomputable def hermiteHilbertBasis : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (volume
     (Filter.Eventually.of_forall fun x => Real.exp_pos _) (by fun_prop)
     hermiteNormalization_pos
     (fun m n => by
-      simpa using integral_hermiteDilated_mul_gaussianWeight m n)
+      simpa using integral_hermiteDilated_mul_hermiteDilated_mul_gaussianWeight m n)
     (memLp_hermiteDilated_normalized 𝕜)
     (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteDilated
       (fun x => Real.exp (-x ^ 2))

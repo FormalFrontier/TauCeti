@@ -19,9 +19,10 @@ Roadmap **Part C**: the normalized Chebyshev `T` modes `Tₙ/√‖Tₙ‖²` ar
 Every input is already merged; this file only supplies the missing assembly. Orthonormality is
 `TauCeti.orthonormal_normalizedChebyshevTLp`; completeness is the one step that had been left open,
 because it needs the **function-level** moment-determinacy theorem
-`TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments` (a vector of `L²(measureT)`
-orthogonal to every monomial is a.e. `0`), whose exponential-moment hypothesis is free here: the
-Chebyshev measure has compact support `[-1,1]`, so `e^{|x|}` is integrable against it.
+`TauCeti.ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp` (a vector of `L²(measureT)`
+orthogonal to every monomial is a.e. `0`). That theorem asks only for a *single* positive rate `a`
+with `e^{a|x|}` integrable, which is free here: the Chebyshev measure has compact support `[-1,1]`,
+so `e^{|x|}` is integrable against it and `a = 1` works.
 
 The bridge from mode-orthogonality to monomial-orthogonality is
 `TauCeti.inner_polynomialEvalChebyshevLp_eq_zero`.

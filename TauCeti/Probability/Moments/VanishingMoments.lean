@@ -59,10 +59,9 @@ private theorem abs_max_zero_le_abs (t : ℝ) : |max t 0| ≤ |t| := by
 /-- Polynomial growth is dominated by exponential growth at any positive rate:
 `|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`.
 
-Public rather than `private`: besides the two B1 forms below, this is the bound that puts
-polynomials in `L²` of a measure with a finite exponential moment, which
-`TauCeti.memLp_two_algebraMap_pow` (the completeness step of the orthogonal-basis bridge)
-consumes. -/
+Public rather than `private`: besides the two B1 forms below, this is the bound that makes every
+polynomial moment of such a measure finite, which `TauCeti.integrable_pow_of_exp_moment` (the
+completeness step of the orthogonal-basis bridge) consumes. -/
 theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
     |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
   have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
