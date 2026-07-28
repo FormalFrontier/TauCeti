@@ -6,12 +6,51 @@ Authors: Claude
 module
 
 public import TauCeti.Probability.Exchangeability.L2.BlockAverages
+import TauCeti.Probability.Exchangeability.Map
+import TauCeti.MeasureTheory.Function.BoundedMemLp
 import Mathlib.MeasureTheory.Function.LpSeminorm.LpNorm
 
 /-!
-# Work in progress
--/
+# L¹ convergence of weighted block averages
 
+For a contractable process and a bounded measurable observable, the Cesàro averages converge in
+`L¹` to a **single** limit — the same one for every starting index.
+
+## Main results
+
+* `Contractable.exists_tendsto_integral_abs_movingAverage_sub` — the generic `L²` form, for a
+  contractable real sequence with square-integrable coordinates.
+* `weighted_sums_converge_L1` — the bounded-observable corollary, on an arbitrary measurable state
+  space.
+
+## Implementation
+
+The whole argument runs off one landed estimate. `integral_sq_blockAverage_sub_of_disjoint` gives
+an **equality**, not a bound: for non-overlapping windows,
+`∫ (A - A') ^ 2 = varGap / m₁ + varGap / m₂`, where `varGap = Var[X 0] - cov[X 0, X 1]`. Read
+through `Lp.dist_def`, that is the `L²` distance between the bundled averages.
+
+Two arbitrary windows may overlap, so they are compared against a third window that is *longer than
+both* (length `max m₁ m₂`) and *starts beyond both*. Disjointness is then automatic and the remote
+window's own contribution is dominated by the other two terms, giving
+
+`dist A₁ A₂ ≤ √(2 * varGap / m₁) + √(2 * varGap / m₂)`
+
+with no limit taken. That single bound supplies both the Cauchy property and — applied with equal
+window lengths — the fact that every fixed-start sequence stays close to the zero-start one, hence
+shares its limit.
+
+The descent from `L²` to `L¹` converts the exponent comparison into a real-valued estimate once,
+`∫ ‖g‖ ≤ lpNorm g 2 μ * K` with `K` a fixed constant, so that no convergence argument takes place
+in `ℝ≥0∞`.
+
+`varGap` is nonnegative: the singleton case of the same disjoint-window identity evaluates
+`∫ (X 0 - X 1) ^ 2` as `2 * varGap`.
+
+This advances `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** — the *L¹ convergence of
+weighted block averages* bullet. The determining-class and directing-measure steps that follow it
+there are not addressed here.
+-/
 public section
 
 noncomputable section
@@ -167,6 +206,95 @@ private theorem cauchySeq_movingAverageLp [IsFiniteMeasure μ]
       ≤ Real.sqrt (2 * varGap μ X / (a + 1)) + Real.sqrt (2 * varGap μ X / (b + 1)) := by
         simpa [movingAverageLp] using hbound
     _ < ε := by linarith
+
+/-- **The common L² limit.** Completeness supplies a limit for the zero-start averages, and the
+remote-block bound with equal window lengths shows every fixed-start sequence stays within
+`2√(2C/m)` of it, hence converges to the same limit. -/
+private theorem exists_tendsto_movingAverageLp [IsFiniteMeasure μ]
+    (hX : Contractable μ X) (hX_L2 : ∀ i, MemLp (X i) 2 μ) :
+    ∃ g : Lp ℝ 2 μ, ∀ n : ℕ, Tendsto (movingAverageLp hX_L2 n) atTop (𝓝 g) := by
+  obtain ⟨g, hg⟩ := cauchySeq_tendsto_of_complete (cauchySeq_movingAverageLp hX hX_L2 0)
+  refine ⟨g, fun n => ?_⟩
+  have hsum : Tendsto (fun m : ℕ => Real.sqrt (2 * varGap μ X / (m + 1))
+      + Real.sqrt (2 * varGap μ X / (m + 1))) atTop (𝓝 0) := by
+    simpa using (tendsto_sqrt_varGap (X := X) (μ := μ)).add (tendsto_sqrt_varGap (X := X) (μ := μ))
+  have hclose : Tendsto (fun m => dist (movingAverageLp hX_L2 n m) (movingAverageLp hX_L2 0 m))
+      atTop (𝓝 0) := by
+    refine squeeze_zero (fun _ => dist_nonneg) (fun m => ?_) hsum
+    simpa [movingAverageLp] using dist_toLp_movingAverage_le hX hX_L2 (n₁ := n) (m₁ := m + 1)
+      (n₂ := 0) (m₂ := m + 1) m.succ_pos m.succ_pos
+  rw [tendsto_iff_dist_tendsto_zero] at hg ⊢
+  refine squeeze_zero (fun _ => dist_nonneg)
+    (fun m => dist_triangle _ (movingAverageLp hX_L2 0 m) _) ?_
+  simpa using hclose.add hg
+
+/-- **The L² → L¹ descent, as a real estimate.** On a finite measure space the exponent comparison
+is a single fixed constant, converted out of `ℝ≥0∞` once so that no convergence argument has to
+happen there. -/
+private theorem integral_norm_le_lpNorm_two [IsFiniteMeasure μ] {g : Ω → ℝ} (hg : MemLp g 2 μ) :
+    ∫ ω, ‖g ω‖ ∂μ ≤ lpNorm g 2 μ * (μ Set.univ ^ (2 : ℝ)⁻¹).toReal := by
+  have hle : eLpNorm g 1 μ ≤ eLpNorm g 2 μ * μ Set.univ ^ (2 : ℝ)⁻¹ := by
+    have h := eLpNorm_le_eLpNorm_mul_rpow_measure_univ (p := 1) (q := 2) (by norm_num) hg.1
+    simpa [show ((1 : ℝ) - 2⁻¹) = 2⁻¹ by norm_num] using h
+  have hfin : eLpNorm g 2 μ * μ Set.univ ^ (2 : ℝ)⁻¹ ≠ ⊤ := by
+    have : eLpNorm g 2 μ ≠ ⊤ := hg.2.ne
+    finiteness
+  have h1 : ∫ ω, ‖g ω‖ ∂μ = (eLpNorm g 1 μ).toReal :=
+    ((toReal_eLpNorm hg.1).trans (lpNorm_one_eq_integral_norm hg.1)).symm
+  rw [h1]
+  refine (ENNReal.toReal_mono hfin hle).trans_eq ?_
+  rw [ENNReal.toReal_mul, toReal_eLpNorm hg.1]
+
+
+/-- **L¹ convergence of Cesàro averages, generic form.** For a contractable `L²` sequence there is a
+single limit `g`, independent of the starting index, to which every moving average converges in
+`L¹`. -/
+theorem Contractable.exists_tendsto_integral_abs_movingAverage_sub [IsFiniteMeasure μ]
+    (hX : Contractable μ X) (hX_L2 : ∀ i, MemLp (X i) 2 μ) :
+    ∃ g : Ω → ℝ, MemLp g 1 μ ∧ ∀ n : ℕ,
+      Tendsto (fun m : ℕ => ∫ ω, |(m : ℝ)⁻¹ * ∑ i : Fin m, X (n + i) ω - g ω| ∂μ)
+        atTop (𝓝 0) := by
+  obtain ⟨g, hg⟩ := exists_tendsto_movingAverageLp hX hX_L2
+  have hgL2 : MemLp (⇑g) 2 μ := Lp.memLp g
+  refine ⟨⇑g, hgL2.mono_exponent (by norm_num), fun n => ?_⟩
+  set K : ℝ := (μ Set.univ ^ (2 : ℝ)⁻¹).toReal with hK
+  have hdist : Tendsto (fun m : ℕ => dist (movingAverageLp hX_L2 n m) g) atTop (𝓝 0) :=
+    tendsto_iff_dist_tendsto_zero.1 (hg n)
+  have hbound : ∀ m : ℕ,
+      ∫ ω, |movingAverage X n (m + 1) ω - g ω| ∂μ
+        ≤ dist (movingAverageLp hX_L2 n m) g * K := by
+    intro m
+    have hsub : MemLp (movingAverage X n (m + 1) - ⇑g) 2 μ :=
+      (memLp_movingAverage hX_L2 n (m + 1)).sub hgL2
+    have h1 := integral_norm_le_lpNorm_two hsub
+    have h2 : dist (movingAverageLp hX_L2 n m) g = lpNorm (movingAverage X n (m + 1) - ⇑g) 2 μ := by
+      simp only [movingAverageLp]
+      rw [Lp.dist_def,
+        eLpNorm_congr_ae ((MemLp.coeFn_toLp _).sub (Filter.EventuallyEq.refl _ (⇑g))),
+        toReal_eLpNorm hsub.1]
+    rw [h2]
+    refine le_trans (le_of_eq ?_) h1
+    exact integral_congr_ae (Filter.Eventually.of_forall fun ω => (Real.norm_eq_abs _).symm)
+  rw [← Filter.tendsto_add_atTop_iff_nat 1]
+  refine squeeze_zero (g := fun m : ℕ => dist (movingAverageLp hX_L2 n m) g * K)
+    (fun _ => integral_nonneg fun _ => abs_nonneg _) (fun m => ?_) ?_
+  · simpa only [movingAverage_apply] using hbound m
+  · simpa using hdist.mul_const K
+
+/-- **L¹ convergence of weighted block averages.** For a contractable process on an arbitrary
+measurable state space and a bounded measurable observable `f`, the Cesàro averages of
+`f ∘ X` converge in `L¹` to a single limit, the same one for every starting index.
+
+Neither the process nor its coordinates need be real-valued or square-integrable: boundedness of
+`f` supplies `MemLp (f ∘ X i) 2 μ` on a finite measure space. -/
+theorem weighted_sums_converge_L1 {α : Type*} [MeasurableSpace α] [IsFiniteMeasure μ]
+    {Y : ℕ → Ω → α} (hY : Contractable μ Y) (hY_meas : ∀ i, AEMeasurable (Y i) μ)
+    {f : α → ℝ} (hf : Measurable f) (C : ℝ) (hbdd : ∀ i, ∀ᵐ ω ∂μ, |f (Y i ω)| ≤ C) :
+    ∃ g : Ω → ℝ, MemLp g 1 μ ∧ ∀ n : ℕ,
+      Tendsto (fun m : ℕ => ∫ ω, |(m : ℝ)⁻¹ * ∑ i : Fin m, f (Y (n + i) ω) - g ω| ∂μ)
+        atTop (𝓝 0) :=
+  (hY.map_values hf hY_meas).exists_tendsto_integral_abs_movingAverage_sub fun i =>
+    memLp_comp_of_bound hf (hY_meas i) C (by simpa only [Real.norm_eq_abs] using hbdd i) 2
 
 end Probability
 
