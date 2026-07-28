@@ -30,10 +30,8 @@ orthogonal family satisfies. Requiring `degree` rather than `natDegree` matters 
 
 ## Main statements
 
-* `TauCeti.integrable_pow_of_exp_moment` — one finite exponential moment makes every polynomial
-  moment finite, which is what the family-agnostic polynomial-`L²` interface asks for.
 * `TauCeti.memLp_two_algebraMap_eval` — polynomials lie in `L²` of a measure carrying one finite
-  exponential moment.
+  exponential moment, via `TauCeti.integrable_pow_of_exp_moment`.
 * `TauCeti.memLp_two_bareNormalized` — the normalized-family `MemLp` obligation, discharged from
   that same exponential moment so callers need not repeat it.
 * `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top` — the completeness input
@@ -48,22 +46,6 @@ namespace TauCeti
 open MeasureTheory Polynomial
 
 variable {𝕜 : Type*} [RCLike 𝕜]
-
-/-- **One finite exponential moment makes every polynomial moment finite.** The pointwise bound
-`|x|ⁿ ≤ (n!/aⁿ)·e^{a|x|}` (`TauCeti.pow_abs_le_factorial_div_pow_mul_exp`) dominates each monomial
-by an integrable function.
-
-This is the bridge to the family-agnostic polynomial interface of
-`TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
-moment is finite"; the two `MemLp` statements below are that interface applied through this. -/
-theorem integrable_pow_of_exp_moment {ν : Measure ℝ}
-    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
-    Integrable (fun x : ℝ => x ^ k) ν := by
-  obtain ⟨a, ha, hexpa⟩ := hexp
-  refine (hexpa.const_mul ((Nat.factorial k : ℝ) / a ^ k)).mono'
-    ((continuous_id.pow k).aestronglyMeasurable) (Filter.Eventually.of_forall fun x => ?_)
-  rw [Real.norm_eq_abs, abs_pow]
-  exact pow_abs_le_factorial_div_pow_mul_exp ha k x
 
 /-- Every polynomial lies in `L²` of a measure carrying one finite exponential moment. -/
 theorem memLp_two_algebraMap_eval {ν : Measure ℝ}

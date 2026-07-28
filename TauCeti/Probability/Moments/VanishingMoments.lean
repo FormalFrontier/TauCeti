@@ -34,6 +34,10 @@ constant `1` fails to be integrable.  In the measure-level form finiteness of `�
 hypothesis: there `hexp` integrates the weight `e^{a|x|} ≥ 1` itself, which dominates the constant
 `1`.  The function-level form carries no such implication -- its `hexp` integrates the *product*
 `e^{a|x|} · g`, which `g = 0` satisfies over any measure, finite or infinite.
+
+The same exponential-moment hypothesis also bounds polynomial growth, so the two results that
+turn it into finiteness of every polynomial moment -- `TauCeti.pow_abs_le_factorial_div_pow_mul_exp`
+and `TauCeti.integrable_pow_of_exp_moment` -- live here with it rather than with any one consumer.
 -/
 
 public section
@@ -46,14 +50,14 @@ open scoped Topology
 
 variable {ν : Measure ℝ}
 
-/-! ## Vanishing moments at the level of functions -/
+/-! ## Exponential moments control polynomial moments -/
 
 /-- Polynomial growth is dominated by exponential growth at any positive rate:
 `|x|ⁿ ≤ (n! / aⁿ) · e^{a|x|}`.
 
-Public rather than `private`: this is the bound that makes every polynomial moment of a measure
-with one finite exponential moment finite, which `TauCeti.integrable_pow_of_exp_moment` (the
-completeness step of the orthogonal-basis bridge) consumes. -/
+Public rather than `private`: a standalone growth comparison carrying no measure-theoretic
+content, of use wherever a monomial has to be dominated by an exponential.
+`TauCeti.integrable_pow_of_exp_moment` just below is the measure-theoretic consequence. -/
 theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x : ℝ) :
     |x| ^ n ≤ (Nat.factorial n : ℝ) / a ^ n * Real.exp (a * |x|) := by
   have hfac : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
@@ -62,6 +66,25 @@ theorem pow_abs_le_factorial_div_pow_mul_exp {a : ℝ} (ha : 0 < a) (n : ℕ) (x
   rw [div_le_iff₀ hfac, mul_pow] at h
   rw [div_mul_eq_mul_div, le_div_iff₀ han]
   nlinarith [h, Real.exp_pos (a * |x|), pow_nonneg (abs_nonneg x) n]
+
+/-- **One finite exponential moment makes every polynomial moment finite.** The pointwise bound
+`pow_abs_le_factorial_div_pow_mul_exp` dominates each monomial by an integrable function.
+
+This is the bridge to the family-agnostic polynomial interface of
+`TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
+moment is finite"; the `MemLp` statements of
+`TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness` are that interface applied through
+this. -/
+theorem integrable_pow_of_exp_moment
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
+    Integrable (fun x : ℝ => x ^ k) ν := by
+  obtain ⟨a, ha, hexpa⟩ := hexp
+  refine (hexpa.const_mul ((Nat.factorial k : ℝ) / a ^ k)).mono'
+    ((continuous_id.pow k).aestronglyMeasurable) (Filter.Eventually.of_forall fun x => ?_)
+  rw [Real.norm_eq_abs, abs_pow]
+  exact pow_abs_le_factorial_div_pow_mul_exp ha k x
+
+/-! ## Vanishing moments at the level of functions -/
 
 section Densities
 
