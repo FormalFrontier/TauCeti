@@ -8,7 +8,7 @@ public import Mathlib.Data.List.Lex
 
 This file defines dominance of partitions of a fixed natural number by comparing all partial
 sums of their decreasingly sorted parts. It proves that dominance is a partial order and that
-strict dominance implies the corresponding strict lexicographic comparison.
+dominance implies the corresponding lexicographic comparison, strictly for strict dominance.
 
 The dominance order is the triangular order governing Kostka numbers and the occurrence of
 Specht modules in permutation modules. It is the “Orders on partitions” target in Layer 0 of
@@ -235,6 +235,12 @@ theorem lex_lt_of_strictlyDominates {n : ℕ} {μ ν : n.Partition}
   rw [PartitionLex.partition_lt_iff]
   rw [strictlyDominates_iff] at h
   exact lex_lt_of_dominates_of_ne h.1 h.2
+
+/-- Dominance refines the lexicographic linear order on partitions. -/
+theorem lex_le_of_dominates {n : ℕ} {μ ν : n.Partition} (h : Dominates μ ν) : ν ≤ μ := by
+  rcases eq_or_ne μ ν with rfl | hne
+  · exact le_rfl
+  · exact (lex_lt_of_strictlyDominates (strictlyDominates_iff.mpr ⟨h, hne⟩)).le
 
 /-- The one-part partition dominates every partition of the same natural number. -/
 @[simp]
