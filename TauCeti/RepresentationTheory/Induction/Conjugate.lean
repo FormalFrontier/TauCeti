@@ -121,14 +121,11 @@ theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
   apply (conjRep_ρ s A x).trans
   congr 1
 
-section Irreducible
-
-variable [Field k]
-
 /-- Conjugation identifies the invariant subspaces of a representation with those of its
 conjugate. -/
-def conjRepSubrepresentationOrderIso (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
+def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Subrepresentation (conjRep s A).ρ ≃o Subrepresentation A.ρ := by
+  -- Unfold the local wrapper so the two subrepresentations visibly have the same carrier module.
   change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
     Subrepresentation A.ρ
   exact
@@ -144,13 +141,28 @@ def conjRepSubrepresentationOrderIso (s : G) {H : Subgroup G} (A : Rep.{w} k H) 
       right_inv := fun S ↦ by ext; rfl
       map_rel_iff' := by rfl }
 
+/-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
+@[simp]
+theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
+    {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation (conjRep s A).ρ) :
+    HEq (conjRepSubrepresentationOrderIso s A S).toSubmodule S.toSubmodule := by
+  change HEq S.toSubmodule S.toSubmodule
+  rfl
+
+/-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
+@[simp]
+theorem conjRepSubrepresentationOrderIso_symm_apply_toSubmodule [Semiring k] (s : G)
+    {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation A.ρ) :
+    HEq ((conjRepSubrepresentationOrderIso s A).symm S).toSubmodule S.toSubmodule := by
+  change HEq S.toSubmodule S.toSubmodule
+  rfl
+
 /-- A conjugate representation is irreducible exactly when the original representation is. -/
-theorem isIrreducible_conjRep_iff (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
+@[simp]
+theorem isIrreducible_conjRep_iff [Field k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Representation.IsIrreducible (conjRep s A).ρ ↔
       Representation.IsIrreducible A.ρ :=
   (conjRepSubrepresentationOrderIso s A).isSimpleOrder_iff
-
-end Irreducible
 
 section FDRep
 

@@ -6,18 +6,16 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.Induction.Conjugate
+public import TauCeti.RepresentationTheory.Induction.Transitivity
 
 /-!
 # Irreducibility of conjugate representations
 
-Restriction along an isomorphism of groups is an equivalence of representation categories. This
-file constructs that equivalence and identifies the invariant subspaces before applying both
-descriptions to conjugate representations. In particular, conjugation preserves irreducibility.
+This file packages conjugation by a group element as an equivalence of representation categories,
+using the generic restriction equivalence.
 
 ## Main definitions
 
-* `TauCeti.Rep.resEquivalence`: restriction along a multiplicative equivalence, as an equivalence
-  of representation categories.
 * `TauCeti.conjRepEquivalence`: conjugation as an equivalence of representation categories.
 
 ## References
@@ -31,50 +29,9 @@ public section
 open CategoryTheory
 open scoped Pointwise
 
-universe u v w
+universe u v
 
 namespace TauCeti
-
-namespace Rep
-
-variable {k : Type u} {G : Type v} {H : Type w}
-variable [Semiring k] [Monoid G] [Monoid H]
-
-private noncomputable def resCompEquivUnitIso (e : G ≃* H) :
-    𝟭 (_root_.Rep k H) ≅
-      _root_.Rep.resFunctor e.toMonoidHom ⋙
-        _root_.Rep.resFunctor e.symm.toMonoidHom :=
-  NatIso.ofComponents
-    (fun A ↦ _root_.Rep.mkIso <|
-      Representation.Equiv.mk (LinearEquiv.refl k A.V) fun g ↦ by simp)
-    (by
-      intro A B f
-      ext
-      rfl)
-
-private noncomputable def resCompEquivCounitIso (e : G ≃* H) :
-    _root_.Rep.resFunctor e.symm.toMonoidHom ⋙
-        _root_.Rep.resFunctor e.toMonoidHom ≅
-      𝟭 (_root_.Rep k G) :=
-  NatIso.ofComponents
-    (fun A ↦ _root_.Rep.mkIso <|
-      Representation.Equiv.mk (LinearEquiv.refl k A.V) fun g ↦ by simp)
-    (by
-      intro A B f
-      ext
-      rfl)
-
-/-- Restriction along a multiplicative equivalence is an equivalence of representation
-categories. -/
-noncomputable def resEquivalence (e : G ≃* H) :
-    _root_.Rep k H ≌ _root_.Rep k G :=
-  CategoryTheory.Equivalence.mk
-    (_root_.Rep.resFunctor e.toMonoidHom)
-    (_root_.Rep.resFunctor e.symm.toMonoidHom)
-    (resCompEquivUnitIso e)
-    (resCompEquivCounitIso e)
-
-end Rep
 
 variable {k : Type u} {G : Type v} [Semiring k] [Group G]
 
@@ -82,5 +39,19 @@ variable {k : Type u} {G : Type v} [Semiring k] [Group G]
 noncomputable def conjRepEquivalence (s : G) (H : Subgroup G) :
     _root_.Rep k H ≌ _root_.Rep k (MulAut.conj s • H : Subgroup G) :=
   Rep.resEquivalence (conjSubgroupEquiv s H)
+
+/-- The forward functor of the conjugation equivalence is restriction along conjugation. -/
+@[simp]
+theorem conjRepEquivalence_functor (s : G) (H : Subgroup G) :
+    (conjRepEquivalence (k := k) s H).functor =
+      _root_.Rep.resFunctor (conjSubgroupEquiv s H).toMonoidHom := by
+  rw [conjRepEquivalence, Rep.resEquivalence_functor]
+
+/-- The inverse functor of the conjugation equivalence restricts along inverse conjugation. -/
+@[simp]
+theorem conjRepEquivalence_inverse (s : G) (H : Subgroup G) :
+    (conjRepEquivalence (k := k) s H).inverse =
+      _root_.Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
+  rw [conjRepEquivalence, Rep.resEquivalence_inverse]
 
 end TauCeti

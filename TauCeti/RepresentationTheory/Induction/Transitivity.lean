@@ -60,6 +60,61 @@ lemma resFunctorCompIso_inv_app_apply (φ : G →* H) (ψ : H →* K) (A : _root
     unfold resFunctorCompIso
     rfl
 
+/-- Restriction along a multiplicative equivalence is an equivalence of representation
+categories. -/
+noncomputable def resEquivalence (e : G ≃* H) :
+    _root_.Rep k H ≌ _root_.Rep k G := by
+  let unitIso :
+      𝟭 (_root_.Rep k H) ≅
+        _root_.Rep.resFunctor e.toMonoidHom ⋙
+          _root_.Rep.resFunctor e.symm.toMonoidHom :=
+    (NatIso.ofComponents
+      (fun A ↦ _root_.Rep.mkIso <|
+        Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
+          change LinearMap.id.comp (A.ρ (e (e.symm _))) =
+            (A.ρ _).comp LinearMap.id
+          rw [LinearMap.id_comp, LinearMap.comp_id]
+          rw [e.apply_symm_apply])
+      (by
+        intro A B f
+        ext
+        rfl)).symm.trans
+      (resFunctorCompIso e.symm.toMonoidHom e.toMonoidHom).symm
+  let counitIso :
+      _root_.Rep.resFunctor e.symm.toMonoidHom ⋙
+          _root_.Rep.resFunctor e.toMonoidHom ≅
+        𝟭 (_root_.Rep k G) :=
+    (resFunctorCompIso e.toMonoidHom e.symm.toMonoidHom).trans
+      (NatIso.ofComponents
+        (fun A ↦ _root_.Rep.mkIso <|
+          Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
+            change LinearMap.id.comp (A.ρ (e.symm (e _))) =
+              (A.ρ _).comp LinearMap.id
+            rw [LinearMap.id_comp, LinearMap.comp_id]
+            rw [e.symm_apply_apply])
+        (by
+          intro A B f
+          ext
+          rfl))
+  exact CategoryTheory.Equivalence.mk
+    (_root_.Rep.resFunctor e.toMonoidHom)
+    (_root_.Rep.resFunctor e.symm.toMonoidHom)
+    unitIso counitIso
+
+/-- The forward functor of restriction along an equivalence is restriction along its
+underlying homomorphism. -/
+@[simp]
+theorem resEquivalence_functor (e : G ≃* H) :
+    (resEquivalence (k := k) e).functor = _root_.Rep.resFunctor e.toMonoidHom := by
+  rfl
+
+/-- The inverse functor of restriction along an equivalence is restriction along the inverse
+homomorphism. -/
+@[simp]
+theorem resEquivalence_inverse (e : G ≃* H) :
+    (resEquivalence (k := k) e).inverse = _root_.Rep.resFunctor e.symm.toMonoidHom := by
+  rfl
+
 end Restriction
 
 section Induction
