@@ -167,10 +167,9 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     have hsplit : (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n
         - (ENNReal.ofReal (-g x)).toReal • x ^ n) = fun x : ℝ => x ^ n * g x := by
       funext x
-      rw [smul_eq_mul, smul_eq_mul, ENNReal.toReal_ofReal', ENNReal.toReal_ofReal']
-      rcases le_total (g x) 0 with h | h
-      · rw [max_eq_right h, max_eq_left (neg_nonneg.mpr h)]; ring
-      · rw [max_eq_left h, max_eq_right (neg_nonpos.mpr h)]; ring
+      rw [smul_eq_mul, smul_eq_mul, ENNReal.toReal_ofReal', ENNReal.toReal_ofReal',
+        ← sub_mul, max_zero_sub_max_neg_zero_eq_self]
+      ring
     have hz : ∫ x : ℝ, ((ENNReal.ofReal (g x)).toReal • x ^ n
         - (ENNReal.ofReal (-g x)).toReal • x ^ n) ∂ν = 0 := by
       rw [hsplit]; exact hmom n
@@ -194,11 +193,7 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
   filter_upwards [hEq] with x hx
   have h := congrArg ENNReal.toReal hx
   rw [ENNReal.toReal_ofReal', ENNReal.toReal_ofReal'] at h
-  rcases le_total (g x) 0 with hle | hle
-  · rw [max_eq_right hle, max_eq_left (neg_nonneg.mpr hle)] at h
-    simpa using h.symm
-  · rw [max_eq_left hle, max_eq_right (neg_nonpos.mpr hle)] at h
-    simpa using h
+  exact (max_zero_sub_max_neg_zero_eq_self (g x)).symm.trans (sub_eq_zero.mpr h)
 
 /-! ## Vanishing moments at the level of measures -/
 
