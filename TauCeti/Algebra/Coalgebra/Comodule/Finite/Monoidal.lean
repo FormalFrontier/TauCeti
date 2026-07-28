@@ -71,12 +71,7 @@ noncomputable instance instMonoidalCategoryStruct :
   whiskerRight f M := tensorMap f (𝟙 M)
   tensorHom := tensorMap
   tensorUnit := tensorUnit R C
-  associator := associatorData
-  leftUnitor := leftUnitorData
-  rightUnitor := rightUnitorData
-where
-  associatorData (M N P : FGComoduleCat.{u, v, u} R C) :
-      tensor R C (tensor R C M N) P ≅ tensor R C M (tensor R C N P) := {
+  associator M N P := {
     hom :=
       ofHom
         { toLinearMap := (TensorProduct.assoc R M N P).toLinearMap
@@ -118,8 +113,8 @@ where
       apply ComoduleCat.hom_ext
       exact (TensorProduct.assoc R M N P).apply_symm_apply
     }
-  leftUnitorData (M : FGComoduleCat.{u, v, u} R C) :
-      tensor R C (tensorUnit R C) M ≅ M :=
+
+  leftUnitor M :=
     letI : Comodule R C R := Comodule.trivial (R := R) (C := C) (M := R)
     {
     hom :=
@@ -153,8 +148,8 @@ where
       apply ComoduleCat.hom_ext
       exact (TensorProduct.lid R M).apply_symm_apply
     }
-  rightUnitorData (M : FGComoduleCat.{u, v, u} R C) :
-      tensor R C M (tensorUnit R C) ≅ M :=
+
+  rightUnitor M :=
     letI : Comodule R C R := Comodule.trivial (R := R) (C := C) (M := R)
     {
     hom :=
@@ -195,22 +190,18 @@ noncomputable instance instMonoidalCategory :
     MonoidalCategory (FGComoduleCat.{u, v, u} R C) :=
   Monoidal.induced
     (forget₂ (FGComoduleCat.{u, v, u} R C) (SemimoduleCat.{u} R))
-    inducingFunctorData
-where
-  inducingFunctorData :
-      Monoidal.InducingFunctorData
-        (forget₂ (FGComoduleCat.{u, v, u} R C) (SemimoduleCat.{u} R)) := {
-    μIso _ _ := Iso.refl _
-    εIso := Iso.refl _
-    associator_eq _ _ _ := by
-      ext1
-      exact TensorProduct.ext (TensorProduct.ext rfl)
-    leftUnitor_eq _ := by
-      ext1
-      exact TensorProduct.ext rfl
-    rightUnitor_eq _ := by
-      ext1
-      exact TensorProduct.ext rfl
+    {
+      μIso _ _ := Iso.refl _
+      εIso := Iso.refl _
+      associator_eq _ _ _ := by
+        ext1
+        exact TensorProduct.ext (TensorProduct.ext rfl)
+      leftUnitor_eq _ := by
+        ext1
+        exact TensorProduct.ext rfl
+      rightUnitor_eq _ := by
+        ext1
+        exact TensorProduct.ext rfl
     }
 
 variable {R C}
