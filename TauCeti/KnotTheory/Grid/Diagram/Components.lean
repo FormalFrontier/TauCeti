@@ -88,6 +88,7 @@ def componentCycles : Finset (Equiv.Perm (Fin n)) :=
 
 /-- A permutation is a component cycle exactly when it is a cycle agreeing with the component
 permutation throughout its support. -/
+@[simp]
 theorem mem_componentCycles_iff (c : Equiv.Perm (Fin n)) :
     c ∈ G.componentCycles ↔
       c.IsCycle ∧ ∀ a ∈ c.support, c a = G.componentPerm a := by
