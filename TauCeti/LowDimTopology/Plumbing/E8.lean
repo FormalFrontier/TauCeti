@@ -141,7 +141,8 @@ theorem e8SquareTerm_nonneg (x : Fin 8 → ℤ) (i : Fin 8) : 0 ≤ e8SquareTerm
   fin_cases i <;> exact mul_nonneg (by norm_num) (sq_nonneg _)
 
 /-- The completed-square expression for `E₈` vanishes only at the zero vector. -/
-theorem e8SquareTerm_sum_eq_zero (x : Fin 8 → ℤ) (h : ∑ i, e8SquareTerm x i = 0) :
+theorem eq_zero_of_e8SquareTerm_sum_eq_zero (x : Fin 8 → ℤ)
+    (h : ∑ i, e8SquareTerm x i = 0) :
     x = 0 := by
   have hterm (i : Fin 8) : e8SquareTerm x i = 0 :=
     (Finset.sum_eq_zero_iff_of_nonneg fun j _ => e8SquareTerm_nonneg x j).mp h i
@@ -201,6 +202,6 @@ theorem e8Plumbing_isNegativeDefinite : e8Plumbing.IsNegativeDefinite := by
     have : 0 ≤ ∑ i, e8SquareTerm x i :=
       Finset.sum_nonneg fun i _ => e8SquareTerm_nonneg x i
     nlinarith
-  exact hx (e8SquareTerm_sum_eq_zero x hR)
+  exact hx (eq_zero_of_e8SquareTerm_sum_eq_zero x hR)
 
 end TauCeti
