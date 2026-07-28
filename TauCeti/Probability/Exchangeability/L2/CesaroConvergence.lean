@@ -61,6 +61,89 @@ private theorem dist_toLp_sq_eq_integral_sq {μ : Measure Ω} {g h : Ω → ℝ}
   rw [hsub]
   simp [Pi.sub_apply, hgω, hhω, pow_two]
 
+/-- Bound the `L²` distance from a block average to a longer disjoint block average. -/
+private theorem dist_blockAverage_toLp_le_of_disjoint {μ : Measure Ω}
+    [IsProbabilityMeasure μ] {Y : ℕ → Ω → ℝ} (hY : Contractable μ Y)
+    (hY_L2 : ∀ i, MemLp (Y i) 2 μ)
+    (hD : 0 ≤ Var[Y 0; μ] - cov[Y 0, Y 1; μ]) {n l : ℕ}
+    (hn : 0 < n) (hl : 0 < l) {k : Fin n → ℕ} {k₀ : Fin l → ℕ}
+    (hk : Function.Injective k) (hk₀ : Function.Injective k₀)
+    (hdisj : ∀ i j, k i ≠ k₀ j) (hnl : n ≤ l) :
+    dist
+        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+        ((memLp_blockAverage k₀ fun i => hY_L2 (k₀ i)).toLp (blockAverage Y k₀)) ≤
+      Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) := by
+  let B : Ω → ℝ := blockAverage Y k₀
+  have hB_L2 : MemLp B 2 μ := memLp_blockAverage k₀ fun i => hY_L2 (k₀ i)
+  have hformula :
+      ∫ ω, (blockAverage Y k ω - B ω) ^ 2 ∂μ =
+        (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n +
+          (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / l := by
+    simpa only [B] using
+      hY.integral_sq_blockAverage_sub_of_disjoint hY_L2 hn hl hk hk₀ hdisj
+  have hfrac :
+      (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (l : ℝ) ≤
+        (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n := by
+    exact div_le_div_of_nonneg_left hD (by positivity) (by exact_mod_cast hnl)
+  have hsq :
+      dist
+          ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+          (hB_L2.toLp B) ^ 2 ≤
+        2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n := by
+    rw [dist_toLp_sq_eq_integral_sq _ hB_L2, hformula]
+    calc
+      (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (n : ℝ) +
+            (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (l : ℝ)
+          ≤ (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n +
+              (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n :=
+        add_le_add le_rfl hfrac
+      _ = 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n := by ring
+  have hnonneg : 0 ≤ 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (n : ℝ) := by positivity
+  simpa only [B] using
+    (show dist
+        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+        (hB_L2.toLp B) ≤
+          Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) by
+      nlinarith [show 0 ≤ dist
+        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+        (hB_L2.toLp B) from dist_nonneg, Real.sqrt_nonneg
+        (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n), Real.sq_sqrt hnonneg])
+
+/-- Compare two block averages in `L²` through a longer block disjoint from both. -/
+private theorem dist_blockAverages_toLp_le_via_disjoint {μ : Measure Ω}
+    [IsProbabilityMeasure μ] {Y : ℕ → Ω → ℝ} (hY : Contractable μ Y)
+    (hY_L2 : ∀ i, MemLp (Y i) 2 μ)
+    (hD : 0 ≤ Var[Y 0; μ] - cov[Y 0, Y 1; μ]) {n m l : ℕ}
+    (hn : 0 < n) (hm : 0 < m) (hl : 0 < l)
+    {k : Fin n → ℕ} {k' : Fin m → ℕ} {k₀ : Fin l → ℕ}
+    (hk : Function.Injective k) (hk' : Function.Injective k')
+    (hk₀ : Function.Injective k₀) (hdisj : ∀ i j, k i ≠ k₀ j)
+    (hdisj' : ∀ i j, k' i ≠ k₀ j) (hnl : n ≤ l) (hml : m ≤ l) :
+    dist
+        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+        ((memLp_blockAverage k' fun i => hY_L2 (k' i)).toLp (blockAverage Y k')) ≤
+      Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) +
+        Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / m) := by
+  have hk_bound :=
+    dist_blockAverage_toLp_le_of_disjoint hY hY_L2 hD hn hl hk hk₀ hdisj hnl
+  have hk'_bound :=
+    dist_blockAverage_toLp_le_of_disjoint hY hY_L2 hD hm hl hk' hk₀ hdisj' hml
+  calc
+    dist
+          ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+          ((memLp_blockAverage k' fun i => hY_L2 (k' i)).toLp (blockAverage Y k'))
+        ≤ dist
+            ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
+            ((memLp_blockAverage k₀ fun i => hY_L2 (k₀ i)).toLp (blockAverage Y k₀)) +
+          dist ((memLp_blockAverage k₀ fun i => hY_L2 (k₀ i)).toLp (blockAverage Y k₀))
+            ((memLp_blockAverage k' fun i => hY_L2 (k' i)).toLp (blockAverage Y k')) :=
+      dist_triangle _ _ _
+    _ ≤ Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) +
+          Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / m) := by
+      rw [dist_comm
+        ((memLp_blockAverage k₀ fun i => hY_L2 (k₀ i)).toLp (blockAverage Y k₀))]
+      exact add_le_add hk_bound hk'_bound
+
 /-- A bounded measurable observable of a contractable process has fixed-start Cesàro averages
 converging in `L¹` to one common measurable limit.
 
@@ -101,6 +184,7 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
   have hA_L2 : ∀ m, MemLp (A m) 2 μ := fun m =>
     memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i
   let A₂ : ℕ → Lp ℝ 2 μ := fun m => (hA_L2 m).toLp (A m)
+  -- Compare any two prefixes through a fresh block beyond both to obtain an `L²` Cauchy sequence.
   have hA₂_cauchy : CauchySeq A₂ := by
     rw [Metric.cauchySeq_iff]
     intro ε hε
@@ -129,51 +213,24 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
       intro i j
       dsimp only [k, l]
       omega
-    let B : Ω → ℝ := blockAverage Y k
-    have hB_L2 : MemLp B 2 μ := memLp_blockAverage k fun i => hY_L2 (k i)
-    have hn_formula :
-        ∫ ω, (A n ω - B ω) ^ 2 ∂μ =
-          D / ((n : ℝ) + 1) + D / l := by
-      simpa only [A, D, B, Nat.cast_succ] using
-        hY.integral_sq_blockAverage_sub_of_disjoint hY_L2 (Nat.succ_pos n) hl
-          Fin.val_injective hk hn_disjoint
-    have hm_formula :
-        ∫ ω, (A m ω - B ω) ^ 2 ∂μ =
-          D / ((m : ℝ) + 1) + D / l := by
-      simpa only [A, D, B, Nat.cast_succ] using
-        hY.integral_sq_blockAverage_sub_of_disjoint hY_L2 (Nat.succ_pos m) hl
-          Fin.val_injective hk hm_disjoint
-    have hn_frac : D / (l : ℝ) ≤ D / ((n : ℝ) + 1) := by
-      exact div_le_div_of_nonneg_left hD (by positivity)
-        (by exact_mod_cast (show n + 1 ≤ l by omega))
-    have hm_frac : D / (l : ℝ) ≤ D / ((m : ℝ) + 1) := by
-      exact div_le_div_of_nonneg_left hD (by positivity)
-        (by exact_mod_cast (show m + 1 ≤ l by omega))
-    have hn_sq :
-        dist (A₂ n) (hB_L2.toLp B) ^ 2 ≤ 2 * D / ((n : ℝ) + 1) := by
-      rw [dist_toLp_sq_eq_integral_sq (hA_L2 n) hB_L2, hn_formula]
-      calc
-        D / ((n : ℝ) + 1) + D / (l : ℝ)
-            ≤ D / ((n : ℝ) + 1) + D / ((n : ℝ) + 1) := add_le_add le_rfl hn_frac
-        _ = 2 * D / ((n : ℝ) + 1) := by ring
-    have hm_sq :
-        dist (A₂ m) (hB_L2.toLp B) ^ 2 ≤ 2 * D / ((m : ℝ) + 1) := by
-      rw [dist_toLp_sq_eq_integral_sq (hA_L2 m) hB_L2, hm_formula]
-      calc
-        D / ((m : ℝ) + 1) + D / (l : ℝ)
-            ≤ D / ((m : ℝ) + 1) + D / ((m : ℝ) + 1) := add_le_add le_rfl hm_frac
-        _ = 2 * D / ((m : ℝ) + 1) := by ring
-    have hn_dist : dist (A₂ n) (hB_L2.toLp B) < ε / 2 := by
+    have hdist :
+        dist (A₂ n) (A₂ m) ≤
+          Real.sqrt (2 * D / ((n : ℝ) + 1)) +
+            Real.sqrt (2 * D / ((m : ℝ) + 1)) := by
+      simpa only [A₂, A, D, Nat.cast_succ] using
+        dist_blockAverages_toLp_le_via_disjoint hY hY_L2 hD
+          (Nat.succ_pos n) (Nat.succ_pos m) hl Fin.val_injective Fin.val_injective hk
+          hn_disjoint hm_disjoint (by omega) (by omega)
+    have hn_dist : Real.sqrt (2 * D / ((n : ℝ) + 1)) < ε / 2 := by
       have hn_bound := hN n hn
-      nlinarith [show 0 ≤ dist (A₂ n) (hB_L2.toLp B) from dist_nonneg]
-    have hm_dist : dist (A₂ m) (hB_L2.toLp B) < ε / 2 := by
+      have hn_nonneg : 0 ≤ 2 * D / ((n : ℝ) + 1) := by positivity
+      nlinarith [Real.sqrt_nonneg (2 * D / ((n : ℝ) + 1)), Real.sq_sqrt hn_nonneg]
+    have hm_dist : Real.sqrt (2 * D / ((m : ℝ) + 1)) < ε / 2 := by
       have hm_bound := hN m hm
-      nlinarith [show 0 ≤ dist (A₂ m) (hB_L2.toLp B) from dist_nonneg]
-    calc
-      dist (A₂ n) (A₂ m)
-          ≤ dist (A₂ n) (hB_L2.toLp B) + dist (hB_L2.toLp B) (A₂ m) :=
-        dist_triangle _ _ _
-      _ < ε := by rw [dist_comm (hB_L2.toLp B) (A₂ m)]; linarith
+      have hm_nonneg : 0 ≤ 2 * D / ((m : ℝ) + 1) := by positivity
+      nlinarith [Real.sqrt_nonneg (2 * D / ((m : ℝ) + 1)), Real.sq_sqrt hm_nonneg]
+    linarith
+  -- Completeness of `L²` supplies the common prefix limit and a measurable representative.
   obtain ⟨a₂, ha₂⟩ :
       ∃ a₂ : Lp ℝ 2 μ, Tendsto A₂ atTop (𝓝 a₂) :=
     CompleteSpace.complete (show Cauchy (atTop.map A₂) from hA₂_cauchy)
@@ -192,6 +249,7 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
   have hW_L2 : ∀ m, MemLp (W m) 2 μ := fun m =>
     memLp_blockAverage (fun j : Fin (m + 1) => r + j) fun j => hY_L2 (r + j)
   let W₂ : ℕ → Lp ℝ 2 μ := fun m => (hW_L2 m).toLp (W m)
+  -- A fresh disjoint block makes each fixed-start window close to the same-length prefix.
   have hWA_dist :
       Tendsto (fun m => dist (W₂ m) (A₂ m)) atTop (𝓝 0) := by
     have hq :
@@ -220,53 +278,16 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
       intro i j
       dsimp only [k, l]
       omega
-    let B : Ω → ℝ := blockAverage Y k
-    have hB_L2 : MemLp B 2 μ := memLp_blockAverage k fun i => hY_L2 (k i)
-    have hprefix_formula :
-        ∫ ω, (A m ω - B ω) ^ 2 ∂μ = 2 * D / ((m : ℝ) + 1) := by
-      have hformula :=
-        hY.integral_sq_blockAverage_sub_of_disjoint hY_L2
-          (Nat.succ_pos m) (Nat.succ_pos m) Fin.val_injective hk hprefix_disjoint
-      calc
-        ∫ ω, (A m ω - B ω) ^ 2 ∂μ =
-            D / ((m : ℝ) + 1) + D / ((m : ℝ) + 1) := by
-          simpa only [A, D, B, Nat.cast_succ] using hformula
-        _ = 2 * D / ((m : ℝ) + 1) := by ring
-    have hwindow_formula :
-        ∫ ω, (W m ω - B ω) ^ 2 ∂μ = 2 * D / ((m : ℝ) + 1) := by
-      have hformula :=
-        hY.integral_sq_blockAverage_sub_of_disjoint hY_L2
-          (Nat.succ_pos m) (Nat.succ_pos m)
-          (fun _ _ hij => Fin.ext (Nat.add_left_cancel hij)) hk hwindow_disjoint
-      calc
-        ∫ ω, (W m ω - B ω) ^ 2 ∂μ =
-            D / ((m : ℝ) + 1) + D / ((m : ℝ) + 1) := by
-          simpa only [W, D, B, Nat.cast_succ] using hformula
-        _ = 2 * D / ((m : ℝ) + 1) := by ring
-    have hq_nonneg : 0 ≤ 2 * D / ((m : ℝ) + 1) := by positivity
-    have hprefix_dist :
-        dist (A₂ m) (hB_L2.toLp B) = Real.sqrt (2 * D / ((m : ℝ) + 1)) := by
-      have hsquare :
-          dist (A₂ m) (hB_L2.toLp B) ^ 2 = 2 * D / ((m : ℝ) + 1) := by
-        rw [dist_toLp_sq_eq_integral_sq (hA_L2 m) hB_L2, hprefix_formula]
-      nlinarith [show 0 ≤ dist (A₂ m) (hB_L2.toLp B) from dist_nonneg,
-        Real.sqrt_nonneg (2 * D / ((m : ℝ) + 1)),
-        Real.sq_sqrt hq_nonneg]
-    have hwindow_dist :
-        dist (W₂ m) (hB_L2.toLp B) = Real.sqrt (2 * D / ((m : ℝ) + 1)) := by
-      have hsquare :
-          dist (W₂ m) (hB_L2.toLp B) ^ 2 = 2 * D / ((m : ℝ) + 1) := by
-        rw [dist_toLp_sq_eq_integral_sq (hW_L2 m) hB_L2, hwindow_formula]
-      nlinarith [show 0 ≤ dist (W₂ m) (hB_L2.toLp B) from dist_nonneg,
-        Real.sqrt_nonneg (2 * D / ((m : ℝ) + 1)),
-        Real.sq_sqrt hq_nonneg]
     calc
       dist (W₂ m) (A₂ m)
-          ≤ dist (W₂ m) (hB_L2.toLp B) + dist (hB_L2.toLp B) (A₂ m) :=
-        dist_triangle _ _ _
-      _ = 2 * Real.sqrt (2 * D / ((m : ℝ) + 1)) := by
-        rw [hwindow_dist, dist_comm (hB_L2.toLp B), hprefix_dist]
-        ring
+          ≤ Real.sqrt (2 * D / ((m : ℝ) + 1)) +
+              Real.sqrt (2 * D / ((m : ℝ) + 1)) := by
+        simpa only [W₂, A₂, hW_L2, hA_L2, W, A, D, Nat.cast_succ] using
+          dist_blockAverages_toLp_le_via_disjoint hY hY_L2 hD
+            (Nat.succ_pos m) (Nat.succ_pos m) (Nat.succ_pos m)
+            (fun _ _ hij => Fin.ext (Nat.add_left_cancel hij)) Fin.val_injective hk
+            hwindow_disjoint hprefix_disjoint le_rfl le_rfl
+      _ = 2 * Real.sqrt (2 * D / ((m : ℝ) + 1)) := by ring
   have hW₂_tendsto : Tendsto W₂ atTop (𝓝 a₂) := by
     apply tendsto_iff_dist_tendsto_zero.2
     have hupper :
@@ -279,6 +300,7 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
       Tendsto (fun m => eLpNorm (W m - a) 2 μ) atTop (𝓝 0) := by
     rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' W hW_L2 a ha_L2]
     simpa only [ha_toLp] using hW₂_tendsto
+  -- Probability-space norm monotonicity descends convergence from `L²` to `L¹`.
   have hW_L1_tendsto :
       Tendsto (fun m => eLpNorm (W m - a) 1 μ) atTop (𝓝 0) := by
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hW_L2_tendsto
