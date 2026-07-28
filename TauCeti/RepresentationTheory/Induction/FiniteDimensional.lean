@@ -135,29 +135,36 @@ theorem coindSubtypeEquivPi_symm_apply (A : Rep.{u} k S)
 
 /-- The underlying vector space of induction from a finite-index subgroup is a product of copies
 of the original representation indexed by the right cosets. -/
-noncomputable def indSubtypeEquivPi [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
-    (A : Rep.{u} k S) :
+noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{u} k S) :
     Rep.ind S.subtype A ≃ₗ[k]
-      (Quotient (QuotientGroup.rightRel S) → A) :=
-  (((forget₂ (Rep k G) (ModuleCat k)).mapIso (Rep.indCoindIso A)).toLinearEquiv).trans
-    (coindSubtypeEquivPi A)
+      (Quotient (QuotientGroup.rightRel S) → A) := by
+  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  exact
+    (((forget₂ (Rep k G) (ModuleCat k)).mapIso (Rep.indCoindIso A)).toLinearEquiv).trans
+      (coindSubtypeEquivPi A)
 
 /-- The coset model of induction transports along `Rep.indCoindIso` and then evaluates at the
 chosen representative of each right coset. -/
 @[simp]
-theorem indSubtypeEquivPi_apply [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
-    (A : Rep.{u} k S) (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
-    indSubtypeEquivPi A x q = ((Rep.indCoindIso A).hom.hom x).1 q.out := by
+theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{u} k S)
+    (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
+    indSubtypeEquivPi A x q =
+      ((letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+        Rep.indCoindIso A).hom.hom x).1 q.out := by
+  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
 
 /-- The inverse coset model of induction extends by `S`-equivariance and then transports back
 along `Rep.indCoindIso`. -/
 @[simp]
-theorem indSubtypeEquivPi_symm_apply [DecidableRel (QuotientGroup.rightRel S)] [S.FiniteIndex]
-    (A : Rep.{u} k S) (x : Quotient (QuotientGroup.rightRel S) → A) :
+theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{u} k S)
+    (x : Quotient (QuotientGroup.rightRel S) → A) :
     (indSubtypeEquivPi A).symm x =
-      (Rep.indCoindIso A).inv.hom ((coindSubtypeEquivPi A).symm x) := by
+      (letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+       Rep.indCoindIso A).inv.hom
+        ((coindSubtypeEquivPi A).symm x) := by
+  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
 
