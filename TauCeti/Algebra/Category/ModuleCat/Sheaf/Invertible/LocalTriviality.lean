@@ -67,38 +67,17 @@ structure LocalTrivializations (M : SheafOfModules.{u} R) where
 
 namespace LocalGeneratorsData.IsInvertible
 
-/-- The local free basis of an invertible sheaf is equivalent to the standard singleton type
-`PUnit`. -/
-def basisEquiv {q : SheafOfModules.LocalGeneratorsData M}
-    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    PUnit ≃ (q.generators i).I where
-  toFun _ := hq.basisNonempty i |>.some
-  invFun _ := PUnit.unit
-  left_inv _ := Subsingleton.elim _ _
-  right_inv _ := hq.basisSubsingleton i |>.elim _ _
-
-/-- The isomorphism supplied by a local free presentation of an invertible sheaf. -/
-def presentationIso {q : SheafOfModules.LocalGeneratorsData M}
-    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    _root_.SheafOfModules.free (R := R.over (q.X i)) (q.generators i).I ≅
-      M.over (q.X i) :=
-  @asIso _ _ _ _ (q.generators i).π (hq.isLocallyFreeData.isIso i)
-
-/-- The forward map of the presentation isomorphism is the original local free
-presentation. -/
-@[simp]
-lemma presentationIso_hom {q : SheafOfModules.LocalGeneratorsData M}
-    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    (hq.presentationIso i).hom = (q.generators i).π :=
-  (rfl)
-
 /-- A rank-one free presentation on a member of a cover, standardized to an isomorphism from
 the free sheaf on `PUnit`. -/
 def trivializationIso {q : SheafOfModules.LocalGeneratorsData M}
     (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    _root_.SheafOfModules.free (R := R.over (q.X i)) PUnit ≅ M.over (q.X i) :=
-  ((_root_.SheafOfModules.freeFunctor (R := R.over (q.X i))).mapIso
-    (hq.basisEquiv i).toIso).trans (hq.presentationIso i)
+    _root_.SheafOfModules.free (R := R.over (q.X i)) PUnit ≅ M.over (q.X i) := by
+  letI : Nonempty (q.generators i).I := hq.basisNonempty i
+  letI : Subsingleton (q.generators i).I := hq.basisSubsingleton i
+  exact
+    ((_root_.SheafOfModules.freeFunctor (R := R.over (q.X i))).mapIso
+      Equiv.punitOfNonemptyOfSubsingleton.symm.toIso).trans
+      (@asIso _ _ _ _ (q.generators i).π (hq.isLocallyFreeData.isIso i))
 
 /-- The forward map of the standardized trivialization is the relabelling of the free basis,
 followed by the original local free presentation. -/
@@ -107,9 +86,10 @@ lemma trivializationIso_hom {q : SheafOfModules.LocalGeneratorsData M}
     (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
     (hq.trivializationIso i).hom =
       (_root_.SheafOfModules.freeFunctor (R := R.over (q.X i))).map
-        (hq.basisEquiv i).toIso.hom ≫
+        (@Equiv.punitOfNonemptyOfSubsingleton (q.generators i).I
+          (hq.basisNonempty i) (hq.basisSubsingleton i)).symm.toIso.hom ≫
         (q.generators i).π :=
-  (rfl)
+  by simp only [trivializationIso, Iso.trans_hom, Functor.mapIso_hom, asIso_hom]
 
 end LocalGeneratorsData.IsInvertible
 
