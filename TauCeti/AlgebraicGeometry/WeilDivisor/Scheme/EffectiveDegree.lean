@@ -14,9 +14,6 @@ scheme-theoretic Weil divisor. Relative degree is always nonnegative on effectiv
 the residue-field extensions at the divisor's support are finite, their weights are strictly
 positive, so an effective divisor has degree zero exactly when it is zero.
 
-For an isomorphism of schemes every residue degree is one. In that case relative degree reduces
-to the ordinary, unweighted degree; the identity morphism is the principal example.
-
 These results supply the positivity and normalization API for the degree in
 `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, “Degree”. They reuse the general weighted
 degree theory for `WeilDivisor` and Mathlib's definition of scheme-theoretic residue degree; no
@@ -39,18 +36,11 @@ variable {X Y : Scheme.{u}}
 
 noncomputable section
 
-/-- Relative degree is weighted degree for the residue-degree weight function. -/
-lemma relativeDegree_eq_weightedDegree (f : X ⟶ Y) (D : SchemeWeilDivisor X) :
-    relativeDegree f D =
-      WeilDivisor.weightedDegree
-        (fun x : CodimensionOnePoint X ↦ (f.residueDegree x : ℤ)) D := by
-  rw [relativeDegree_apply, WeilDivisor.weightedDegree_apply]
-
 /-- The relative degree of an effective Weil divisor is nonnegative. -/
 lemma IsEffective.relativeDegree_nonneg {D : SchemeWeilDivisor X}
     (hD : WeilDivisor.IsEffective D) (f : X ⟶ Y) :
     0 ≤ relativeDegree f D := by
-  rw [relativeDegree_eq_weightedDegree]
+  rw [relativeDegree_apply, ← WeilDivisor.weightedDegree_apply]
   exact hD.weightedDegree_nonneg fun x ↦ Nat.cast_nonneg _
 
 /-- If the residue-field extension is finite at every point in the support, an effective
@@ -59,7 +49,7 @@ lemma IsEffective.relativeDegree_eq_zero_iff_of_finite_on_support
     {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) (f : X ⟶ Y)
     (hf : ∀ x ∈ D.support, (f.residueFieldMap x).hom.Finite) :
     relativeDegree f D = 0 ↔ D = 0 := by
-  rw [relativeDegree_eq_weightedDegree]
+  rw [relativeDegree_apply, ← WeilDivisor.weightedDegree_apply]
   apply hD.weightedDegree_eq_zero_iff_of_pos_on_support
   intro x hx
   exact_mod_cast (residueDegree_pos_iff f x).mpr (hf x hx)
@@ -80,15 +70,6 @@ lemma IsEffective.relativeDegree_pos_of_finite_on_support_of_ne_zero
     0 < relativeDegree f D := by
   exact lt_of_le_of_ne (IsEffective.relativeDegree_nonneg hD f) fun h ↦
     hD0 ((IsEffective.relativeDegree_eq_zero_iff_of_finite_on_support hD f hf).mp h.symm)
-
-/-- Along an isomorphism, relative degree is the ordinary unweighted degree. -/
-@[simp]
-lemma relativeDegree_eq_degree_of_isIso (f : X ⟶ Y) [IsIso f]
-    (D : SchemeWeilDivisor X) :
-    relativeDegree f D = WeilDivisor.degree D := by
-  rw [relativeDegree_eq_weightedDegree]
-  simpa only [residueDegree_eq_one_of_isIso, Nat.cast_one] using
-    WeilDivisor.weightedDegree_one_eq_degree D
 
 end
 

@@ -59,6 +59,15 @@ lemma relativeDegree_comp (f : X ⟶ Y) (g : Y ⟶ Z) (D : SchemeWeilDivisor X) 
           (g.residueDegree (f x) : ℤ) * f.residueDegree x) D := by
   simp only [relativeDegree, residueDegree_comp, Nat.cast_mul]
 
+/-- Along an isomorphism, relative degree is the ordinary unweighted degree. -/
+@[simp]
+lemma relativeDegree_eq_degree_of_isIso (f : X ⟶ Y) [IsIso f]
+    (D : SchemeWeilDivisor X) :
+    relativeDegree f D = WeilDivisor.degree D := by
+  rw [relativeDegree]
+  simpa only [residueDegree_eq_one_of_isIso, Nat.cast_one] using
+    WeilDivisor.weightedDegree_one_eq_degree D
+
 end
 
 end SchemeWeilDivisor
