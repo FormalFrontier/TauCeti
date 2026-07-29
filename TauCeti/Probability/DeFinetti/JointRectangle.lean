@@ -7,6 +7,14 @@ module
 
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 public import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
+import TauCeti.Algebra.GroupAction.FiniteSupportPerm
+import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
+import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
+import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
+import TauCeti.Probability.Exchangeability.MixedIID.Implications
+-- Non-public: supplies `MeasurableSingletonClass (ProbabilityMeasure α)`, which the
+-- exchangeable-σ-algebra fixed-function lemma needs to apply to the directing measure.
+import TauCeti.MeasureTheory.Measure.FiniteMeasure
 
 /-!
 # Work in progress: the directing-measure joint-rectangle factorization
@@ -93,14 +101,85 @@ private theorem measure_inter_blockCylinder_eq_setLIntegral
   rw [ENNReal.ofReal_prod_of_nonneg fun i _ => ENNReal.toReal_nonneg]
   exact Finset.prod_congr rfl fun i _ => ENNReal.ofReal_toReal (measure_ne_top _ _)
 
-/-- **Joint-rectangle factorization, prefix case.** The joint law of the directing measure with a
-length-`r` prefix block agrees with the disintegration on rectangles `S ×ˢ ∏ i, B i`. -/
-private theorem jointRectangle_prefix
-    [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
-    {r : ℕ} {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i))
+/-- **Symmetry transport.** On path space the core identity holds for every *injective* selection,
+not just the prefix.
+
+A finitely supported permutation realising `k` on the initial segment pulls the prefix
+cylinder back to the `k`-cylinder. The directing measure is `pathTail`-measurable, hence
+measurable for the exchangeable σ-algebra, hence fixed by that reindexing, so the
+directing-measure event is pulled back to itself. Contractability gives exchangeability,
+under which the reindexing preserves the measure, and the prefix case applies. -/
+private theorem measure_inter_blockCylinder_eq_setLIntegral_of_injective
+    [StandardBorelSpace α] [Nonempty α] {μ : Measure (ℕ → α)} [IsFiniteMeasure μ]
+    (hX : Contractable μ fun j (x : ℕ → α) => x j)
+    {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k)
+    {B : Fin m → Set α} (hB : ∀ i, MeasurableSet (B i))
     {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S) :
-    (μ.map fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X i ω))
+    μ ((directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+        ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = ∫⁻ ω in directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S,
+          ∏ i, directingMeasure μ (fun j (x : ℕ → α) => x j) ω (B i) ∂μ := by
+  classical
+  have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
+  obtain ⟨π, hπfin, hπval⟩ := Equiv.Perm.exists_finite_compl_fixedBy_apply_eq
+    (⟨Fin.val, Fin.val_injective⟩ : Fin m ↪ ℕ) ⟨k, hk⟩
+  simp only [Function.Embedding.coeFn_mk] at hπval
+  have hνex : Measurable[exchangeableSigma α]
+      (directingProbabilityMeasure μ fun j (x : ℕ → α) => x j) :=
+    measurable_tailProcess_directingProbabilityMeasure.mono tail_le_exchangeableSigma le_rfl
+  have hνfix : (directingProbabilityMeasure μ fun j (x : ℕ → α) => x j) ∘ permReindex π
+      = directingProbabilityMeasure μ fun j (x : ℕ → α) => x j :=
+    comp_permReindex_eq_of_measurable_exchangeableSigma hνex hπfin
+  have hSfix : permReindex π ⁻¹'
+      (directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+      = directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S := by
+    rw [← Set.preimage_comp, hνfix]
+  have hcyl : blockCylinder (fun j (x : ℕ → α) => x j) k B
+      = permReindex π ⁻¹' blockCylinder (fun j (x : ℕ → α) => x j)
+          (fun i : Fin m => (i : ℕ)) B := by
+    ext x
+    simp only [Set.mem_preimage, mem_blockCylinder, permReindex]
+    exact forall_congr' fun i => by rw [hπval i]
+  have hexch : ExchangeableLaw μ := by
+    have hpl : pathLaw μ (fun j (x : ℕ → α) => x j) = μ := by
+      rw [pathLaw_def]; exact Measure.map_id
+    have hE : Exchangeable μ fun j (x : ℕ → α) => x j :=
+      (mixedIID_of_contractable hX hY_meas).exchangeable
+    exact hpl ▸ (exchangeable_iff_exchangeableLaw_pathLaw
+      (fun j => (hY_meas j).aemeasurable)).1 hE
+  have hmp : MeasurePreserving (permReindex (α := α) π) μ μ :=
+    hexch.measurePreserving_permReindex π
+  have hmeas : MeasurableSet
+      ((directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+        ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin m => (i : ℕ)) B) :=
+    (measurable_directingProbabilityMeasure (μ := μ)
+        (tailProcess_le_ambient 0 fun j _ => hY_meas j) hS).inter
+      (measurableSet_blockCylinder (fun i => hY_meas _) hB)
+  calc μ ((directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+        ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = μ (permReindex π ⁻¹'
+          ((directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+            ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin m => (i : ℕ)) B)) := by
+        rw [Set.preimage_inter, hSfix, ← hcyl]
+    _ = μ ((directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S)
+          ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin m => (i : ℕ)) B) :=
+        hmp.measure_preimage hmeas.nullMeasurableSet
+    _ = _ := measure_inter_blockCylinder_eq_setLIntegral hX hY_meas hB hS
+
+/-- **Joint-rectangle reduction.** Given the core set-integral identity for a selection `k`, the
+joint law of the directing measure with that block agrees with the disintegration on rectangles
+`S ×ˢ ∏ i, B i`.
+
+The reduction is independent of `k`: the disintegration side never mentions it. -/
+private theorem jointRectangle_of_measure_inter
+    [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    {r : ℕ} {k : Fin r → ℕ} {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i))
+    {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S)
+    (hcore : μ ((directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B)
+      = ∫⁻ ω in directingProbabilityMeasure μ X ⁻¹' S,
+          ∏ i, directingMeasure μ X ω (B i) ∂μ) :
+    (μ.map fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω))
         (S ×ˢ Set.univ.pi B)
       = (μ.bind fun ω =>
           (Measure.dirac (directingProbabilityMeasure μ X ω)).prod
@@ -112,7 +191,8 @@ private theorem jointRectangle_prefix
     tailProcess_le_ambient 0 fun j _ => hX_meas j
   have hν : Measurable (directingProbabilityMeasure μ X) :=
     measurable_directingProbabilityMeasure hTail
-  have hjoint : Measurable fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X i ω) :=
+  have hjoint : Measurable fun ω =>
+      (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω) :=
     hν.prodMk (measurable_pi_lambda _ fun i => hX_meas _)
   have hker : Measurable fun ω =>
       (Measure.dirac (directingProbabilityMeasure μ X ω)).prod
@@ -121,14 +201,12 @@ private theorem jointRectangle_prefix
   have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) :=
     hS.prod (MeasurableSet.univ_pi hB)
   -- the joint law's mass is the mass of the tail event meeting the block cylinder
-  have hpre : (fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X i ω))
+  have hpre : (fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω))
         ⁻¹' (S ×ˢ Set.univ.pi B)
-      = (directingProbabilityMeasure μ X ⁻¹' S)
-        ∩ blockCylinder X (fun i : Fin r => (i : ℕ)) B := by
+      = (directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B := by
     ext ω
     simp [Set.mem_prod, mem_blockCylinder, Set.mem_pi]
-  rw [Measure.map_apply hjoint hrect, hpre,
-    measure_inter_blockCylinder_eq_setLIntegral hX hX_meas hB hS,
+  rw [Measure.map_apply hjoint hrect, hpre, hcore,
     Measure.bind_apply hrect hker.aemeasurable]
   -- the mixture side splits as a Dirac indicator times the product measure
   rw [← lintegral_indicator (hν hS)]
