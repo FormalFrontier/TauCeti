@@ -26,7 +26,7 @@ identified by `fiberSubgroupMulEquivStabilizer`, and the isomorphism above is Ma
 `DomMulAct.stabilizerMulEquiv` transported along it.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -34,7 +34,7 @@ variable {α ι κ : Type*}
 
 /-- The subgroup of permutations of `α` that preserve every fiber of `f : α → ι`, that is, those
 moving each point within its own fiber. -/
-def fiberSubgroup (f : α → ι) : Subgroup (Equiv.Perm α) where
+@[expose] def fiberSubgroup (f : α → ι) : Subgroup (Equiv.Perm α) where
   carrier := {σ | ∀ a, f (σ a) = f a}
   mul_mem' hσ hτ a := (hσ _).trans (hτ a)
   one_mem' _ := rfl
@@ -83,7 +83,7 @@ theorem fiberSubgroup_eq_bot_iff {f : α → ι} :
 /-- The permutations preserving the fibers of `f` are the stabilizer of `f` for the domain action
 of `Equiv.Perm α` on `α → ι`, read as a subgroup of `Equiv.Perm α` itself: the `ᵈᵐᵃ` and `ᵐᵒᵖ`
 synonyms reverse multiplication twice, so `σ ↦ DomMulAct.mk σ` is an isomorphism. -/
-def fiberSubgroupMulEquivStabilizer (f : α → ι) :
+@[expose] def fiberSubgroupMulEquivStabilizer (f : α → ι) :
     fiberSubgroup f ≃* (MulAction.stabilizer (Equiv.Perm α)ᵈᵐᵃ f)ᵐᵒᵖ where
   toFun σ := MulOpposite.op ⟨DomMulAct.mk (σ : Equiv.Perm α),
     DomMulAct.mem_stabilizer_iff.mpr (funext (mem_fiberSubgroup.mp σ.2))⟩
@@ -98,7 +98,7 @@ the product of the permutation groups of the fibers.
 
 This is Mathlib's `DomMulAct.stabilizerMulEquiv` transported along
 `fiberSubgroupMulEquivStabilizer`. -/
-def fiberSubgroupMulEquivPiPerm (f : α → ι) :
+@[expose] def fiberSubgroupMulEquivPiPerm (f : α → ι) :
     fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i} :=
   (fiberSubgroupMulEquivStabilizer f).trans (DomMulAct.stabilizerMulEquiv f)
 
