@@ -111,6 +111,19 @@ private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : �
       (fun b' h1 h2 => hc_L (t₀ - ρ) b' (by linarith) h1 h2)
       (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩⟩
 
+/-- **A single radius below a finite family of positive radii and a given bound.** For a nonempty
+finite `T`, positive radii `R` on `T`, and `r₀ > 0`, there is a `ρ` with `0 < ρ < r₀` and
+`ρ ≤ R t` for every `t ∈ T`. -/
+private theorem exists_uniform_window_radius {T : Finset ℝ} (hT : T.Nonempty) {R : ℝ → ℝ}
+    (hR_pos : ∀ t ∈ T, 0 < R t) {r₀ : ℝ} (hr₀ : 0 < r₀) :
+    ∃ ρ, 0 < ρ ∧ ρ < r₀ ∧ ∀ t ∈ T, ρ ≤ R t := by
+  have hinf_pos : 0 < T.inf' hT R := (Finset.lt_inf'_iff hT).mpr hR_pos
+  refine ⟨min r₀ (T.inf' hT R) / 2, half_pos (lt_min hr₀ hinf_pos), ?_, fun t ht => ?_⟩
+  · have := min_le_left r₀ (T.inf' hT R); linarith
+  · have h1 := Finset.inf'_le R ht
+    have h2 := min_le_right r₀ (T.inf' hT R)
+    linarith
+
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
 value of `t ↦ (γ t - s)⁻¹ * deriv γ t` at `s` exists on `[a, b]`. Endpoint crossings are
@@ -144,16 +157,7 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       exists_radius_perWindow_tendsto h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     obtain ⟨r₀, hr₀_pos, h_endpts, h_pair₀, -⟩ := exists_common_window_radius (P := ∅)
       hT_ne h_Ioo fun t _ => Finset.notMem_empty t
-    set ρ : ℝ := min r₀ (T.inf' hT_ne R) / 2 with hρ_def
-    have hRmin_pos : 0 < T.inf' hT_ne R := (Finset.lt_inf'_iff hT_ne).mpr hR_pos
-    have hρ_pos : 0 < ρ := half_pos (lt_min hr₀_pos hRmin_pos)
-    have hρ_lt : ρ < r₀ := by
-      have := min_le_left r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
-    have hρ_le_R : ∀ t ∈ T, ρ ≤ R t := fun t ht => by
-      have h1 := Finset.inf'_le R ht
-      have h2 := min_le_right r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
+    obtain ⟨ρ, hρ_pos, hρ_lt, hρ_le_R⟩ := exists_uniform_window_radius hT_ne hR_pos hr₀_pos
     refine cauchyPVExistsAt_of_perWindow_tendsto hρ_pos hab.le T
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
