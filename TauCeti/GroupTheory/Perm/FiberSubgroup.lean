@@ -105,6 +105,16 @@ theorem fiberSubgroupMulEquivStabilizer_apply_unop_coe (f : α → ι) (σ : fib
       DomMulAct.mk (σ : Equiv.Perm α) := by
   simp [fiberSubgroupMulEquivStabilizer]
 
+/-- Read in `Equiv.Perm α`, the fiber-preserving permutation attached to an element of the
+stabilizer is that element. -/
+@[simp]
+theorem fiberSubgroupMulEquivStabilizer_symm_apply_coe (f : α → ι)
+    (g : (MulAction.stabilizer (Equiv.Perm α)ᵈᵐᵃ f)ᵐᵒᵖ) :
+    (((fiberSubgroupMulEquivStabilizer f).symm g : fiberSubgroup f) : Equiv.Perm α) =
+      DomMulAct.mk.symm (g.unop : (Equiv.Perm α)ᵈᵐᵃ) := by
+  conv_rhs => rw [← (fiberSubgroupMulEquivStabilizer f).apply_symm_apply g]
+  rw [fiberSubgroupMulEquivStabilizer_apply_unop_coe, Equiv.symm_apply_apply]
+
 /-- Restricting a fiber-preserving permutation of `α` to each fiber of `f` is an isomorphism onto
 the product of the permutation groups of the fibers.
 

@@ -50,22 +50,35 @@ def rowIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ ×
 /-- The column of the cell of `μ` carrying the label `k` in the tableau `t`. -/
 def colIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ × ℕ).2
 
+/-- The row of a label is the first coordinate of the cell carrying it.  This is not a `simp`
+lemma: `rowIndex` is the normal form, and `rowIndex_apply` computes it on a label presented as
+the value of `t`. -/
+theorem rowIndex_def (t : YoungTableau μ) (k : Fin μ.card) :
+    rowIndex t k = (t.symm k : ℕ × ℕ).1 := by
+  rw [rowIndex]
+
+/-- The column of a label is the second coordinate of the cell carrying it.  As for
+`rowIndex_def`, this is not a `simp` lemma. -/
+theorem colIndex_def (t : YoungTableau μ) (k : Fin μ.card) :
+    colIndex t k = (t.symm k : ℕ × ℕ).2 := by
+  rw [colIndex]
+
 @[simp]
 theorem rowIndex_apply (t : YoungTableau μ) (c : ↥μ.cells) :
     rowIndex t (t c) = (c : ℕ × ℕ).1 := by
-  simp [rowIndex]
+  rw [rowIndex_def, Equiv.symm_apply_apply]
 
 @[simp]
 theorem colIndex_apply (t : YoungTableau μ) (c : ↥μ.cells) :
     colIndex t (t c) = (c : ℕ × ℕ).2 := by
-  simp [colIndex]
+  rw [colIndex_def, Equiv.symm_apply_apply]
 
 /-- A cell of a Young diagram is determined by its row together with its column, so a label of a
 tableau is determined by its row and its column. -/
 theorem rowIndex_colIndex_injective (t : YoungTableau μ) :
     Function.Injective fun k => (rowIndex t k, colIndex t k) := by
   intro k l h
-  simp only [rowIndex, colIndex, Prod.mk.injEq] at h
+  simp only [rowIndex_def, colIndex_def, Prod.mk.injEq] at h
   exact t.symm.injective (Subtype.ext (Prod.ext h.1 h.2))
 
 /-- The labels lying in row `i` of a `μ`-tableau are the cells of the `i`-th row of `μ`. -/
@@ -100,6 +113,26 @@ theorem colFiberEquiv_apply_coe (t : YoungTableau μ) (j : ℕ)
     (k : {k : Fin μ.card // colIndex t k = j}) :
     (colFiberEquiv t j k : ℕ × ℕ) = (t.symm k.1 : ℕ × ℕ) := by
   simp [colFiberEquiv]
+
+/-- The label attached to a cell of row `i` is the label of that cell in the tableau. -/
+@[simp]
+theorem rowFiberEquiv_symm_apply_coe (t : YoungTableau μ) (i : ℕ) (c : ↥(μ.row i)) :
+    ((rowFiberEquiv t i).symm c : Fin μ.card) =
+      t ⟨(c : ℕ × ℕ), (YoungDiagram.mem_cells _).mpr (YoungDiagram.mem_row_iff.mp c.2).1⟩ := by
+  apply t.symm.injective
+  rw [Equiv.symm_apply_apply]
+  refine Subtype.ext ?_
+  rw [← rowFiberEquiv_apply_coe, Equiv.apply_symm_apply]
+
+/-- The label attached to a cell of column `j` is the label of that cell in the tableau. -/
+@[simp]
+theorem colFiberEquiv_symm_apply_coe (t : YoungTableau μ) (j : ℕ) (c : ↥(μ.col j)) :
+    ((colFiberEquiv t j).symm c : Fin μ.card) =
+      t ⟨(c : ℕ × ℕ), (YoungDiagram.mem_cells _).mpr (YoungDiagram.mem_col_iff.mp c.2).1⟩ := by
+  apply t.symm.injective
+  rw [Equiv.symm_apply_apply]
+  refine Subtype.ext ?_
+  rw [← colFiberEquiv_apply_coe, Equiv.apply_symm_apply]
 
 end YoungTableau
 
