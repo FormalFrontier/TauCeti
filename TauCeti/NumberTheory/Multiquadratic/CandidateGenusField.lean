@@ -21,12 +21,13 @@ at the real places over `ℚ(√3)`. Identifying it with the genus field unramif
 the ordinary one for real `d`, which needs the infinite-place condition — is later work.
 
 This file gives the object a name. `GenusField` proved the underlying square-class facts for an
-arbitrary finite set of prime discriminants with chosen roots; here we pin a canonical choice —
-the factorization finset `genusPrimeDiscriminants` from
-`IsFundamentalDiscriminant.exists_finset_primeDiscriminant`, and canonical complex roots
+arbitrary finite set of prime discriminants with chosen roots; here we fix a choice — the
+factorization finset `genusPrimeDiscriminants` from
+`IsFundamentalDiscriminant.exists_finset_primeDiscriminant`, and chosen complex roots
 `genusFieldRoot` of the radicands (using that `ℂ` is algebraically closed) — and package the
-compositum as `candidateGenusField`. As a first property we record that it contains a square root
-of `d`, so it really is a candidate genus field *of `ℚ(√d)`*.
+compositum as `candidateGenusField`. (Both choices are made with `choose`; independence of the
+resulting field from them is not claimed here.) As a first property we record that it contains a
+square root of `d`, so it really is a candidate genus field *of `ℚ(√d)`*.
 
 The prime-discriminant description is classical; see D. A. Cox, *Primes of the Form x² + ny²*, and
 F. Lemmermeyer, *Reciprocity Laws*.
@@ -38,8 +39,10 @@ F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
-* `TauCeti.Multiquadratic.exists_mem_candidateGenusField_sq_eq`: the candidate genus field contains
-  an element squaring to `d`.
+* `TauCeti.Multiquadratic.candidateGenusField_le_iff`: its universal property — it is below an
+  intermediate field iff that field contains every chosen root.
+* `TauCeti.Multiquadratic.exists_mem_candidateGenusField_sq_eq`: it contains an element squaring
+  to `d`.
 -/
 
 public section
@@ -70,15 +73,12 @@ noncomputable def genusFieldRoot {d : ℤ} (hd : Squarefree d)
   (IsAlgClosed.exists_pow_nat_eq ((primeDiscriminantRadicand P.val : ℤ) : ℂ) (n := 2)
     (by norm_num)).choose
 
-/-- Each `genusFieldRoot` squares to its radicand. -/
-theorem genusFieldRoot_sq {d : ℤ} (hd : Squarefree d)
+/-- Each `genusFieldRoot` squares to its radicand (in `ℂ`-cast normal form). -/
+@[simp] theorem genusFieldRoot_sq {d : ℤ} (hd : Squarefree d)
     (P : {P // P ∈ genusPrimeDiscriminants hd}) :
-    genusFieldRoot hd P ^ 2 = algebraMap ℚ ℂ ((primeDiscriminantRadicand P.val : ℤ) : ℚ) := by
-  have h : genusFieldRoot hd P ^ 2 = ((primeDiscriminantRadicand P.val : ℤ) : ℂ) :=
-    (IsAlgClosed.exists_pow_nat_eq ((primeDiscriminantRadicand P.val : ℤ) : ℂ) (n := 2)
-      (by norm_num)).choose_spec
-  rw [h]
-  simp
+    genusFieldRoot hd P ^ 2 = ((primeDiscriminantRadicand P.val : ℤ) : ℂ) := by
+  simp only [genusFieldRoot]
+  exact (IsAlgClosed.exists_pow_nat_eq _ (n := 2) (by norm_num)).choose_spec
 
 /-- **The candidate genus field of `ℚ(√d)`.** For squarefree `d`, the compositum over `ℚ` of the
 chosen complex square roots of the radicands of the prime discriminants dividing
@@ -88,13 +88,31 @@ unramified at all places (the infinite ones included) is later work. -/
 noncomputable def candidateGenusField {d : ℤ} (hd : Squarefree d) : IntermediateField ℚ ℂ :=
   adjoin ℚ (Set.range (genusFieldRoot hd))
 
+/-- `candidateGenusField` presented as the `adjoin` of its chosen roots. -/
+theorem candidateGenusField_def {d : ℤ} (hd : Squarefree d) :
+    candidateGenusField hd = adjoin ℚ (Set.range (genusFieldRoot hd)) := rfl
+
+/-- Each chosen root lies in the candidate genus field. -/
+@[simp] theorem genusFieldRoot_mem_candidateGenusField {d : ℤ} (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    genusFieldRoot hd P ∈ candidateGenusField hd := by
+  rw [candidateGenusField_def]
+  exact subset_adjoin ℚ _ ⟨P, rfl⟩
+
+/-- **Universal property of the candidate genus field.** It is contained in an intermediate field
+`F` exactly when `F` contains every chosen root. -/
+theorem candidateGenusField_le_iff {d : ℤ} (hd : Squarefree d) {F : IntermediateField ℚ ℂ} :
+    candidateGenusField hd ≤ F ↔ ∀ P, genusFieldRoot hd P ∈ F := by
+  simp only [candidateGenusField_def, adjoin_le_iff, Set.range_subset_iff, SetLike.mem_coe]
+
 /-- **The candidate genus field of `ℚ(√d)` contains a square root of `d`.** This is what makes it a
 candidate genus field *of `ℚ(√d)`*; it specializes the square-class containment of `GenusField` to
-the canonical factorization and roots. -/
+the chosen factorization and roots. -/
 theorem exists_mem_candidateGenusField_sq_eq {d : ℤ} (hd : Squarefree d) :
     ∃ x ∈ candidateGenusField hd, x ^ 2 = algebraMap ℚ ℂ ((d : ℤ) : ℚ) := by
   obtain ⟨hs, _, hprod⟩ := genusPrimeDiscriminants_spec hd
-  exact exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq hs hprod
-    (genusFieldRoot hd) (genusFieldRoot_sq hd)
+  simpa only [candidateGenusField] using
+    exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq hs hprod (genusFieldRoot hd)
+      (fun P => by simp)
 
 end TauCeti.Multiquadratic
