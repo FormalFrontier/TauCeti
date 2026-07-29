@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor
+public import TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor.Basic
 
 /-!
 # Effective divisors and integral fractional ideals
@@ -35,8 +35,10 @@ namespace AlgebraicGeometry
 
 namespace WeilDivisor
 
-variable (R : Type*) [CommRing R] [IsDedekindDomain R]
-variable (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
+section
+
+variable (R : Type*) [CommRing R]
+variable (K : Type*) [CommRing K] [Algebra R K]
 
 /-- The additive submonoid of invertible fractional ideals contained in `R`. -/
 def integralFractionalIdealSubmonoid :
@@ -54,6 +56,11 @@ lemma mem_integralFractionalIdealSubmonoid
     I ∈ integralFractionalIdealSubmonoid R K ↔
       Units.val (Additive.toMul I) ≤ 1 :=
   Iff.rfl
+
+end
+
+variable (R : Type*) [CommRing R] [IsDedekindDomain R]
+variable (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
 
 variable {R K}
 

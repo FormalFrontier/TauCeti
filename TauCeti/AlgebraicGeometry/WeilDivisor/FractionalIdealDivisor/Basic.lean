@@ -12,10 +12,10 @@ public import TauCeti.AlgebraicGeometry.WeilDivisor.Dedekind.Basic
 For a Dedekind domain `R` with fraction field `K`,
 `TauCeti.AlgebraicGeometry.WeilDivisor.Dedekind.Basic` turns the height-one spectrum of `R` into the
 points of an affine curve and packages the order of vanishing of a rational function as the order
-system `OrderSystem.ofDedekindDomain R K`. This file adds the *Cartier* side of that picture: the
-invertible fractional ideals of `R` are the Cartier divisors of the affine curve, and this file
-identifies them with Weil divisors. The line-bundle / Picard-group language belongs to the later
-quotient-level comparison and is not part of this divisor-level statement.
+system `OrderSystem.ofDedekindDomain R K`. This basic module adds the *Cartier* side of that
+picture: invertible fractional ideals of `R` are the Cartier divisors of the affine curve, and this
+file identifies them with Weil divisors. The line-bundle / Picard-group language belongs to the
+later quotient-level comparison and is not part of this divisor-level statement.
 
 Concretely, a nonzero fractional ideal `I` has a well-defined `v`-adic multiplicity
 `FractionalIdeal.count K v I` at each height-one prime `v`, zero for all but finitely many `v`, so

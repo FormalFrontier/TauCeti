@@ -138,8 +138,7 @@ abbrev AffineDedekindCartierDivisor (X : Scheme.{u}) (K : Type u)
 /-- Integral Cartier divisors on an affine Dedekind scheme, presented as the invertible fractional
 ideals contained in its coordinate ring. -/
 abbrev AffineDedekindIntegralCartierDivisor (X : Scheme.{u}) (K : Type u)
-    [Field K] [Algebra Γ(X, ⊤) K] [IsFractionRing Γ(X, ⊤) K]
-    [IsDedekindDomain Γ(X, ⊤)] :=
+    [Field K] [Algebra Γ(X, ⊤) K] :=
   WeilDivisor.integralFractionalIdealSubmonoid Γ(X, ⊤) K
 
 /-- The Weil--Cartier correspondence for an affine Dedekind scheme. It sends an invertible
@@ -268,25 +267,8 @@ lemma affineDedekindWeilCartierAddEquiv_asIdeal (X : Scheme.{u}) (K : Type u)
   rw [affineDedekindWeilCartierAddEquiv, AddEquiv.trans_apply,
     WeilDivisor.fractionalIdealDivisorAddEquiv_apply, Finsupp.domCongr_apply,
     WeilDivisor.fractionalIdealDivisor_asIdeal]
-  apply WeilDivisor.ext
-  intro x
-  calc
-    WeilDivisor.coeff
-        (Finsupp.equivMapDomain (affineDedekindPointEquiv X)
-          (WeilDivisor.ofPoint v)) x =
-        WeilDivisor.coeff (WeilDivisor.ofPoint v)
-          ((affineDedekindPointEquiv X).symm x) := by
-      simpa only [WeilDivisor.coeff] using
-        Finsupp.equivMapDomain_apply (affineDedekindPointEquiv X)
-          (WeilDivisor.ofPoint v) x
-    _ = WeilDivisor.coeff (WeilDivisor.ofPoint (affineDedekindPointEquiv X v)) x := by
-      by_cases hx : x = affineDedekindPointEquiv X v
-      · subst x
-        rw [Equiv.symm_apply_apply, WeilDivisor.coeff_ofPoint_self,
-          WeilDivisor.coeff_ofPoint_self]
-      · have hx' : (affineDedekindPointEquiv X).symm x ≠ v := fun h ↦
-          hx (by simpa using congrArg (affineDedekindPointEquiv X) h)
-        rw [WeilDivisor.coeff_ofPoint_of_ne hx', WeilDivisor.coeff_ofPoint_of_ne hx]
+  simpa only [WeilDivisor.single_eq_zsmul_ofPoint, one_zsmul] using
+    Finsupp.equivMapDomain_single (affineDedekindPointEquiv X) v (1 : ℤ)
 
 end
 
