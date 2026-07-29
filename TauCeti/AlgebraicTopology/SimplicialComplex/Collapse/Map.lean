@@ -22,8 +22,12 @@ the standard invariance of those definitions under a change of vertex labels.
 ## Main results
 
 * `PreAbstractSimplicialComplex.IsFreePair.map`: an injective vertex map preserves a free pair.
+* `PreAbstractSimplicialComplex.IsFreePair.map_iff_of_injective`: an injective vertex map
+  preserves and reflects a free pair.
 * `PreAbstractSimplicialComplex.ElementaryCollapsesTo.map`: an injective vertex map preserves an
   elementary collapse.
+* `PreAbstractSimplicialComplex.ElementaryCollapsesTo.map_iff_of_injective`: an injective vertex
+  map preserves and reflects an elementary collapse.
 * `PreAbstractSimplicialComplex.CollapsesTo.map`: an injective vertex map preserves a finite
   collapse sequence.
 * `PreAbstractSimplicialComplex.CollapsesTo.map_iff_of_injective`: an injective vertex map
@@ -117,6 +121,28 @@ theorem map (h : IsFreePair K σ τ) (f : α → β) (hf : Function.Injective f)
     · exact Or.inl rfl
     · exact Or.inr rfl
 
+/-- An injective relabeling preserves and reflects a free pair. -/
+theorem map_iff_of_injective (f : α → β) (hf : Function.Injective f) :
+    IsFreePair (K.map f) (σ.image f) (τ.image f) ↔ IsFreePair K σ τ := by
+  constructor
+  · intro h
+    refine
+      { lower_mem := ?_
+        upper_mem := ?_
+        lower_ssubset_upper := (Finset.image_ssubset_image hf).mp h.lower_ssubset_upper
+        eq_lower_or_eq_upper := ?_ }
+    · obtain ⟨ρ, hρ, hρσ⟩ := mem_map_iff.mp h.lower_mem
+      simpa only [(Finset.image_inj hf).mp hρσ] using hρ
+    · obtain ⟨ρ, hρ, hρτ⟩ := mem_map_iff.mp h.upper_mem
+      simpa only [(Finset.image_inj hf).mp hρτ] using hρ
+    · intro ω hω hσω
+      have hω' : ω.image f ∈ K.map f := mem_map_iff.mpr ⟨ω, hω, rfl⟩
+      have hσω' : σ.image f ⊆ ω.image f := Finset.image_subset_image hσω
+      rcases h.eq_lower_or_eq_upper hω' hσω' with h | h
+      · exact Or.inl ((Finset.image_inj hf).mp h)
+      · exact Or.inr ((Finset.image_inj hf).mp h)
+  · exact fun h => h.map f hf
+
 end IsFreePair
 
 namespace ElementaryCollapsesTo
@@ -140,22 +166,23 @@ private theorem exists_of_map_left {P : _root_.PreAbstractSimplicialComplex β}
     (hmem ω).trans <|
       (mem_deletion_of_isFreePair (K.map f) hfree).symm.trans mem_deletion.symm
   subst P
-  obtain ⟨σ, hσ, hσσ'⟩ := mem_map_iff.mp hfree.lower_mem
-  obtain ⟨τ, hτ, hττ'⟩ := mem_map_iff.mp hfree.upper_mem
+  obtain ⟨σ, _, hσσ'⟩ := mem_map_iff.mp hfree.lower_mem
+  obtain ⟨τ, _, hττ'⟩ := mem_map_iff.mp hfree.upper_mem
   subst σ'
   subst τ'
   have hfree' : IsFreePair K σ τ :=
-    { lower_mem := hσ
-      upper_mem := hτ
-      lower_ssubset_upper := (Finset.image_ssubset_image hf).mp hfree.lower_ssubset_upper
-      eq_lower_or_eq_upper := by
-        intro ω hω hσω
-        have hω' : ω.image f ∈ K.map f := mem_map_iff.mpr ⟨ω, hω, rfl⟩
-        have hσω' : σ.image f ⊆ ω.image f := Finset.image_subset_image hσω
-        rcases hfree.eq_lower_or_eq_upper hω' hσω' with h | h
-        · exact Or.inl ((Finset.image_inj hf).mp h)
-        · exact Or.inr ((Finset.image_inj hf).mp h) }
+    (IsFreePair.map_iff_of_injective f hf).mp hfree
   exact ⟨deletion K σ, (map_deletion f hf K σ).symm, of_isFreePair hfree' rfl⟩
+
+/-- An injective relabeling preserves and reflects an elementary collapse. -/
+theorem map_iff_of_injective (f : α → β) (hf : Function.Injective f) :
+    ElementaryCollapsesTo (K.map f) (L.map f) ↔ ElementaryCollapsesTo K L := by
+  constructor
+  · intro h
+    obtain ⟨P, hLP, hKP⟩ := exists_of_map_left hf h
+    have hLP' : L = P := map_injective f hf hLP
+    simpa only [hLP'] using hKP
+  · exact fun h => h.map f hf
 
 end ElementaryCollapsesTo
 
