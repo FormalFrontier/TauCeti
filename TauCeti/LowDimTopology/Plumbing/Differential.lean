@@ -38,6 +38,8 @@ oriented cubical differential.
 * `TauCeti.PlumbingGraph.latticeDifferential_single`: the differential on a basis cube.
 * `TauCeti.PlumbingGraph.latticeDifferential_comp_self`: the lattice differential squares to
   zero.
+* `TauCeti.PlumbingGraph.latticeDifferential_eq_zero_of_isEmpty`: the zero-vertex
+  plumbing has zero differential.
 
 ## References
 
@@ -295,6 +297,20 @@ theorem latticeDifferential_comp_self
     (P.latticeDifferential k).comp (P.latticeDifferential k) = 0 := by
   refine Finsupp.lhom_ext' fun C => LinearMap.ext_ring ?_
   simp [LinearMap.comp_apply]
+
+/-- The lattice differential vanishes when the plumbing graph has no vertices. Every cube then
+has an empty direction set, so the weighted face sum on every generator is empty. -/
+@[simp]
+theorem latticeDifferential_eq_zero_of_isEmpty [IsEmpty V]
+    (P : PlumbingGraph V) (k : P.characteristicVectors) :
+    P.latticeDifferential k = 0 := by
+  refine Finsupp.lhom_ext' fun C => LinearMap.ext_ring ?_
+  simp only [LinearMap.comp_apply, Finsupp.lsingle_apply, LinearMap.zero_apply]
+  rw [latticeDifferential_single, latticeDifferentialOnGenerator_def]
+  have hattach : C.directions.attach = ∅ :=
+    Finset.eq_empty_iff_forall_notMem.mpr fun v _ => isEmptyElim v.1
+  rw [hattach]
+  simp
 
 end PlumbingGraph
 

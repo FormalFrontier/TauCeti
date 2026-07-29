@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 
 /-!
@@ -15,8 +15,8 @@ sheaf on a scheme `X` is an `𝒪_X`-module which is locally free of rank one.
 
 The rank-one condition itself is not specific to schemes: it is
 `TauCeti.SheafOfModules.IsInvertible` from
-`TauCeti/Algebra/Category/ModuleCat/Sheaf/Invertible.lean`, stated for a sheaf of modules over an
-arbitrary site. This file only packages it over a scheme:
+`TauCeti/Algebra/Category/ModuleCat/Sheaf/Invertible/Basic.lean`, stated for a sheaf of modules
+over an arbitrary site. This file only packages it over a scheme:
 
 * `TauCeti.AlgebraicGeometry.SheafOfModules.isInvertible X` is the `ObjectProperty` on `X.Modules`
   cut out by the predicate (closed under isomorphisms, by the site-level transport theorem, so

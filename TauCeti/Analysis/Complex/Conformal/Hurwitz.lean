@@ -105,6 +105,17 @@ private lemma exists_radius_sphere_ne_zero {Ω : Set ℂ} (hΩ : IsOpen Ω) {g :
   exact ⟨r, hr, fun z hz => (hball hz).1, fun z hz =>
     (hball (sphere_subset_closedBall hz)).2 (Metric.ne_of_mem_sphere hz hr.ne')⟩
 
+/-- **An analytic function on a preconnected set attains a value it does not attain identically
+only in isolation.** If `g` is analytic on `Ω` and is not constantly `v` there, then `g z ≠ v` on
+a punctured neighbourhood of any `x ∈ Ω`. -/
+private theorem eventually_ne_of_not_forall_eq {Ω : Set ℂ} (hconn : IsPreconnected Ω)
+    {g : ℂ → ℂ} (hgA : AnalyticOnNhd ℂ g Ω) {v : ℂ} (hnc : ¬ ∀ z ∈ Ω, g z = v)
+    {x : ℂ} (hx : x ∈ Ω) : ∀ᶠ z in 𝓝[≠] x, g z ≠ v := by
+  rcases (hgA x hx).eventually_eq_or_eventually_ne (analyticAt_const (v := v)) with h | h
+  · exact absurd (fun z hz =>
+      hgA.eqOn_of_preconnected_of_eventuallyEq analyticOnNhd_const hconn hx h hz) hnc
+  · exact h
+
 /-- **Hurwitz's theorem.** On a connected open set, a locally uniform limit of holomorphic
 functions that are nowhere zero is itself either nowhere zero or identically zero.
 
@@ -123,16 +134,14 @@ theorem hurwitz {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ : IsO
   · exact Or.inr fun z hz => hzero hz
   refine Or.inl fun z₀ hz₀Ω hgz₀ => ?_
   -- `g` does not vanish identically near `z₀`, else the identity theorem kills it on all of `Ω`
-  have htop : analyticOrderAt g z₀ ≠ ⊤ := fun h =>
-    hzero (hgA.eqOn_zero_of_preconnected_of_eventuallyEq_zero hconn hz₀Ω
-      (by
-        have := analyticOrderAt_eq_top.mp h
-        filter_upwards [this] with z hz using hz))
-  -- so `g` is zero-free on some punctured ball about `z₀`
-  have hpunct : ∀ᶠ z in 𝓝[≠] z₀, g z ≠ 0 := by
-    rcases (hgA z₀ hz₀Ω).eventually_eq_zero_or_eventually_ne_zero with h | h
-    · exact absurd (analyticOrderAt_eq_top.mpr h) htop
-    · exact h
+  -- `g` is zero-free on some punctured ball about `z₀`, else the identity theorem kills it on `Ω`
+  have hpunct : ∀ᶠ z in 𝓝[≠] z₀, g z ≠ 0 :=
+    eventually_ne_of_not_forall_eq hconn hgA (fun hv => hzero fun z hz => by simpa using hv z hz)
+      hz₀Ω
+  have htop : analyticOrderAt g z₀ ≠ ⊤ := fun h => by
+    obtain ⟨z, hz1, hz2⟩ :=
+      (hpunct.and ((analyticOrderAt_eq_top.mp h).filter_mono nhdsWithin_le_nhds)).exists
+    exact hz1 hz2
   obtain ⟨r, hr, hcb, hgne⟩ := exists_radius_sphere_ne_zero hΩ hz₀Ω hpunct
   have hsph : sphere z₀ r ⊆ closedBall z₀ r := sphere_subset_closedBall
   -- `‖g‖` attains a positive minimum on the circle
@@ -227,14 +236,8 @@ theorem hurwitz_injOn {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ
   have hiso : ∀ x ∈ Ω, g x = g a → ∀ σ > 0, ∃ ρ > 0, ρ ≤ σ ∧ closedBall x ρ ⊆ Ω ∧
       ∀ z ∈ closedBall x ρ, z ≠ x → g z ≠ g a := by
     intro x hx _ σ hσ
-    have hpunct : ∀ᶠ z in 𝓝[≠] x, g z ≠ g a := by
-      rcases ((hgA.sub analyticOnNhd_const) x hx).eventually_eq_zero_or_eventually_ne_zero with
-        h | h
-      · exfalso
-        have heq := (hgA.sub analyticOnNhd_const).eqOn_zero_of_preconnected_of_eventuallyEq_zero
-          hconn hx (by filter_upwards [h] with z hz using hz)
-        exact hconst ⟨g a, fun z hz => sub_eq_zero.mp (heq hz)⟩
-      · filter_upwards [h] with z hz using sub_ne_zero.mp hz
+    have hpunct : ∀ᶠ z in 𝓝[≠] x, g z ≠ g a :=
+      eventually_ne_of_not_forall_eq hconn hgA (fun hv => hconst ⟨g a, hv⟩) hx
     obtain ⟨ε₁, hε₁, h₁⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hpunct)
     obtain ⟨ε₂, hε₂, h₂⟩ := Metric.isOpen_iff.mp hΩ x hx
     refine ⟨min (min (ε₁ / 2) (ε₂ / 2)) σ, lt_min (lt_min (by linarith) (by linarith)) hσ,

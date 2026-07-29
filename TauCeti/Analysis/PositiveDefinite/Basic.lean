@@ -52,6 +52,8 @@ here. The continuity theory and Bochner's representation theorem are later miles
 * `TauCeti.IsPositiveDefinite.norm_apply_le_map_zero_re_of_add_star_eq_zero`: `‖F a‖ ≤ (F 0).re`
   when `a + star a = 0`, with the additive-group corollary
   `TauCeti.IsPositiveDefinite.norm_apply_le_map_zero_re_of_star_eq_neg` for `star a = -a`.
+* `TauCeti.IsPositiveDefinite.apply_eq_zero_of_map_zero_re_eq_zero`: `(F 0).re = 0` forces
+  `F` to vanish identically.
 * `TauCeti.IsPositiveDefinite.isPositiveDefiniteKernel`: a positive-definite function gives the
   positive-definite kernel `fun a b => F (a + star b)`.
 * `TauCeti.IsPositiveDefinite.of_isPositiveDefiniteKernel`: conversely, if the kernel
@@ -214,6 +216,20 @@ theorem norm_apply_le_map_zero_re_of_add_star_eq_zero (hF : IsPositiveDefinite F
     (a : M) (ha : a + star a = 0) : ‖F a‖ ≤ (F 0).re := by
   refine le_of_sq_le_sq ?_ hF.map_zero_re_nonneg
   simpa [Complex.normSq_eq_norm_sq, pow_two, ha, star_zero] using hF.normSq_le a 0
+
+-- Not a `simp` lemma: the conclusion is `F a = 0` with `F` a variable, so the left-hand side has
+-- a variable head symbol. Lean rejects the tag outright ("the theorem will be tried on every simp
+-- step"), and `warningAsError` makes that a build failure. The sibling bound
+-- `norm_apply_le_map_zero_re_of_add_star_eq_zero` is untagged for the same reason.
+/-- **A positive-definite function with `(F 0).re = 0` vanishes identically.**
+
+No hypothesis on the point is required, and none on the ambient structure beyond an
+involutive additive monoid (`AddMonoid` and `StarAddMonoid`). -/
+theorem apply_eq_zero_of_map_zero_re_eq_zero (hF : IsPositiveDefinite F)
+    (h0 : (F 0).re = 0) (a : M) : F a = 0 := by
+  have hzero : F (0 + star 0) = 0 := by simpa [h0] using hF.map_zero_eq_ofReal_re
+  simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right
+    hF.isPositiveDefiniteKernel (a := a) (b := 0) hzero
 
 section Group
 

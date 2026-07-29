@@ -36,6 +36,7 @@ abstract simplicial complex. It is the object used in the subsequent definition 
 * `mem_realization_iff`: a finitely supported function belongs to the polyhedron exactly when it
   lies in the convex hull of the coordinate image of some abstract face.
 * `vertex`: the canonical point of the realization corresponding to a vertex.
+* `realizationBotHomeomorph`: the realization of the bottom complex is its discrete vertex space.
 -/
 
 public section
@@ -315,6 +316,74 @@ noncomputable def vertexEmbedding (K : AbstractSimplicialComplex ι) : ι ↪ Re
 theorem vertexEmbedding_apply (K : AbstractSimplicialComplex ι) (v : ι) :
     vertexEmbedding K v = vertex K v := by
   simp [vertexEmbedding]
+
+/-- The vertices exhaust the realization of the bottom abstract simplicial complex. -/
+theorem vertex_bot_surjective :
+    Function.Surjective (vertex (⊥ : AbstractSimplicialComplex ι)) := by
+  classical
+  intro x
+  obtain ⟨v, hv⟩ := (carrier (⊥ : AbstractSimplicialComplex ι) x).2
+  refine ⟨v, Subtype.ext ?_⟩
+  have hx := mem_convexHull_carrier (⊥ : AbstractSimplicialComplex ι) x
+  have hx' : x.1 = Finsupp.single v 1 := by
+    simpa only [hv, Finset.image_singleton, Finset.coe_singleton, convexHull_singleton,
+      mem_singleton_iff] using hx
+  rw [vertex_val]
+  exact hx'.symm
+
+/-- The weak topology on the realization of the bottom abstract simplicial complex is discrete. -/
+instance realizationBotDiscreteTopology :
+    DiscreteTopology (Realization (⊥ : AbstractSimplicialComplex ι)) := by
+  classical
+  rw [discreteTopology_iff_forall_isOpen]
+  intro s
+  rw [isOpen_iSup_iff]
+  intro σ
+  rw [isOpen_coinduced]
+  obtain ⟨v, hv⟩ := σ.2
+  haveI : Subsingleton (StandardSimplex σ.1) := by
+    constructor
+    intro x y
+    apply Subtype.ext
+    have hx : x.1 = Finsupp.single v 1 := by
+      simpa only [hv, Finset.image_singleton, Finset.coe_singleton, convexHull_singleton,
+        mem_singleton_iff] using x.2
+    have hy : y.1 = Finsupp.single v 1 := by
+      simpa only [hv, Finset.image_singleton, Finset.coe_singleton, convexHull_singleton,
+        mem_singleton_iff] using y.2
+    exact hx.trans hy.symm
+  exact isOpen_discrete _
+
+private noncomputable def vertexEquivBot :
+    ι ≃ Realization (⊥ : AbstractSimplicialComplex ι) :=
+  Equiv.ofBijective (vertex (⊥ : AbstractSimplicialComplex ι))
+    ⟨vertex_injective _, vertex_bot_surjective⟩
+
+/-- The realization of the bottom abstract simplicial complex is canonically homeomorphic to its
+vertex type equipped with a discrete topology. -/
+noncomputable def realizationBotHomeomorph [TopologicalSpace ι] [DiscreteTopology ι] :
+    Realization (⊥ : AbstractSimplicialComplex ι) ≃ₜ ι :=
+  (Homeomorph.ofDiscrete vertexEquivBot).symm
+
+/-- Under the canonical homeomorphism for the bottom complex, the inverse sends a vertex to its
+standard barycentric point. -/
+@[simp]
+theorem realizationBotHomeomorph_symm_apply [TopologicalSpace ι] [DiscreteTopology ι] (v : ι) :
+    (realizationBotHomeomorph (ι := ι)).symm v =
+      vertex (⊥ : AbstractSimplicialComplex ι) v :=
+  by
+    rw [realizationBotHomeomorph, Homeomorph.symm_symm]
+    calc
+      (Homeomorph.ofDiscrete vertexEquivBot) v = vertexEquivBot v := rfl
+      _ = vertex (⊥ : AbstractSimplicialComplex ι) v :=
+        Equiv.ofBijective_apply _ ⟨vertex_injective _, vertex_bot_surjective⟩ v
+
+/-- The canonical homeomorphism sends the barycentric point of a vertex back to that vertex. -/
+@[simp]
+theorem realizationBotHomeomorph_apply_vertex [TopologicalSpace ι] [DiscreteTopology ι] (v : ι) :
+    realizationBotHomeomorph (vertex (⊥ : AbstractSimplicialComplex ι) v) = v := by
+  rw [← realizationBotHomeomorph_symm_apply]
+  exact Homeomorph.apply_symm_apply _ _
 
 /-- Inclusion of abstract complexes induces inclusion of their standard polyhedra. -/
 theorem standardGeometricComplex_space_mono {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) :
