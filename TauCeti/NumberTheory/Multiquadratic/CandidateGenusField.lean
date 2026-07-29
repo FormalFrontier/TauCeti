@@ -11,10 +11,14 @@ public import Mathlib.Analysis.Complex.Polynomial.Basic
 /-!
 # The candidate genus field of `ℚ(√d)`
 
-For a squarefree integer `d`, the *candidate genus field* of `ℚ(√d)` is the compositum over `ℚ` of
-the quadratic fields `ℚ(√(radicand P))` attached to the prime discriminants `P` dividing the
-fundamental discriminant `fundamentalDiscriminant d`. Classically this is the genus field of
-`ℚ(√d)`; identifying it with the maximal unramified abelian extension is later work.
+For a squarefree integer `d`, the *candidate genus field* of `ℚ(√d)` built here is the compositum
+over `ℚ` of the quadratic fields `ℚ(√(radicand P))` attached to the prime discriminants `P` dividing
+the fundamental discriminant `fundamentalDiscriminant d`. This compositum is unramified at the
+*finite* places. For imaginary `d`, where the narrow and ordinary genus fields coincide, it is the
+genus field of `ℚ(√d)`. For real `d` it is only the *narrow* candidate and may ramify at the
+infinite places: e.g. `d = 3` has `disc = 12 = (-4)·(-3)`, so the compositum is `ℚ(i, √3)`, ramified
+at the real places over `ℚ(√3)`. Identifying it with the genus field unramified at *all* places —
+the ordinary one for real `d`, which needs the infinite-place condition — is later work.
 
 This file gives the object a name. `GenusField` proved the underlying square-class facts for an
 arbitrary finite set of prime discriminants with chosen roots; here we pin a canonical choice —
@@ -78,8 +82,9 @@ theorem genusFieldRoot_sq {d : ℤ} (hd : Squarefree d)
 
 /-- **The candidate genus field of `ℚ(√d)`.** For squarefree `d`, the compositum over `ℚ` of the
 chosen complex square roots of the radicands of the prime discriminants dividing
-`fundamentalDiscriminant d`. Classically this is the genus field of `ℚ(√d)`; identifying it with the
-maximal unramified abelian extension is later work. -/
+`fundamentalDiscriminant d`. Unramified at the finite places, it is the genus field of `ℚ(√d)` for
+imaginary `d` and only the narrow candidate for real `d`; identifying it with the genus field
+unramified at all places (the infinite ones included) is later work. -/
 noncomputable def candidateGenusField {d : ℤ} (hd : Squarefree d) : IntermediateField ℚ ℂ :=
   adjoin ℚ (Set.range (genusFieldRoot hd))
 
