@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.Induced
+public import TauCeti.RepresentationTheory.Induction.Basic
 
 /-!
 # The permutation representation as an induced representation
@@ -22,8 +22,6 @@ fixed cosets.
 
 ## Main statements
 
-* `TauCeti.indV_mk_mul`: the relation defining `Representation.IndV`, on the generators
-  `Representation.IndV.mk`.
 * `TauCeti.character_ofMulAction`: the character of a permutation representation at `g` counts
   the points fixed by `g`.
 * `TauCeti.character_ind_trivial`: the character of `Ind_H^G (trivial)` at `g` counts the cosets
@@ -53,22 +51,6 @@ open scoped MonoidAlgebra
 namespace TauCeti
 
 universe u v w
-
-section IndV
-
-variable {k : Type u} [CommRing k] {G : Type v} {G' : Type w} [Group G] [Group G']
-  (φ : G →* G') {A : Type*} [AddCommGroup A] [Module k A] (ρ : Representation k G A)
-
-/-- The defining relation of the induced representation `Ind_φ ρ`: translating the group
-coordinate of a generator by `φ g` is undone by acting by `g` on the coefficient. -/
-theorem indV_mk_mul (g : G) (h : G') (a : A) :
-    IndV.mk φ ρ (φ g * h) (ρ g a) = IndV.mk φ ρ h a := by
-  refine Eq.trans (congrArg
-    (Coinvariants.mk (Representation.tprod ((Representation.leftRegular k G').comp φ) ρ)) ?_)
-    (Coinvariants.mk_self_apply _ g (MonoidAlgebra.single h 1 ⊗ₜ a))
-  simp [leftRegular]
-
-end IndV
 
 section Induced
 
@@ -116,8 +98,8 @@ private noncomputable def indTrivialToQuotient :
 private theorem indTrivialToQuotient_mk (x : G) (a : k) :
     indTrivialToQuotient k H (IndV.mk H.subtype (Representation.trivial k H k) x a) =
       MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ H) a := by
-  change indTrivialLift k H (MonoidAlgebra.single x 1 ⊗ₜ a) = _
-  rw [indTrivialLift_tmul, smul_eq_mul, mul_one]
+  rw [indTrivialToQuotient, IndV.mk, LinearMap.comp_apply, TensorProduct.mk_apply,
+    Coinvariants.lift_mk, indTrivialLift_tmul, smul_eq_mul, mul_one]
 
 /-- Left translation by `H` is invisible in `Ind_H^G (trivial)`. -/
 private theorem indV_mk_smul (s : H) (x : G) (a : k) :
@@ -134,7 +116,8 @@ private noncomputable def indTrivialMk (q : G ⧸ H) :
       have hs : b⁻¹ * a ∈ H := by
         simpa using H.inv_mem (QuotientGroup.leftRel_apply.1 hab)
       have h := indV_mk_smul k H ⟨b⁻¹ * a, hs⟩ a⁻¹ (1 : k)
-      rw [show ((⟨b⁻¹ * a, hs⟩ : H) : G) * a⁻¹ = b⁻¹ by simp] at h
+      have hb : ((⟨b⁻¹ * a, hs⟩ : H) : G) * a⁻¹ = b⁻¹ := by simp
+      rw [hb] at h
       exact h.symm
 
 private theorem indTrivialMk_mk (x : G) :
@@ -162,22 +145,17 @@ noncomputable def indTrivialEquiv :
   · refine MonoidAlgebra.lhom_ext' fun q ↦ LinearMap.ext_ring ?_
     induction q using QuotientGroup.induction_on with
     | H x =>
-      change indTrivialToQuotient k H (quotientToIndTrivial k H
-          (MonoidAlgebra.single (QuotientGroup.mk x : G ⧸ H) (1 : k))) = _
-      rw [quotientToIndTrivial_single, one_smul, indTrivialMk_mk, indTrivialToQuotient_mk,
-        inv_inv]
-      rfl
+      rw [LinearMap.comp_apply, MonoidAlgebra.lsingle_apply, LinearMap.comp_apply,
+        quotientToIndTrivial_single, one_smul, indTrivialMk_mk, indTrivialToQuotient_mk, inv_inv,
+        LinearMap.comp_apply, LinearMap.id_apply, MonoidAlgebra.lsingle_apply]
   · refine IndV.hom_ext _ _ fun x ↦ LinearMap.ext_ring ?_
-    change quotientToIndTrivial k H (indTrivialToQuotient k H
-        (IndV.mk H.subtype (Representation.trivial k H k) x (1 : k))) = _
-    rw [indTrivialToQuotient_mk, quotientToIndTrivial_single, one_smul, indTrivialMk_mk, inv_inv]
-    rfl
+    rw [LinearMap.id_comp, LinearMap.comp_apply, LinearMap.comp_apply, indTrivialToQuotient_mk,
+      quotientToIndTrivial_single, one_smul, indTrivialMk_mk, inv_inv]
   · intro g
     refine IndV.hom_ext _ _ fun x ↦ LinearMap.ext_ring ?_
-    change indTrivialToQuotient k H ((Representation.trivial k H k).ind H.subtype g
-        (IndV.mk H.subtype (Representation.trivial k H k) x (1 : k))) =
-      Representation.ofMulAction k G (G ⧸ H) g (indTrivialToQuotient k H
-        (IndV.mk H.subtype (Representation.trivial k H k) x (1 : k)))
+    rw [LinearEquiv.ofLinear_toLinearMap]
+    conv_lhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
+    conv_rhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
     rw [Representation.ind_mk, indTrivialToQuotient_mk, indTrivialToQuotient_mk,
       ofMulAction_single]
     congr 1
@@ -191,6 +169,7 @@ theorem indTrivialEquiv_apply_mk (x : G) (a : k) :
   indTrivialToQuotient_mk k H x a
 
 /-- The generator computation rule for the inverse of `indTrivialEquiv`. -/
+@[simp]
 theorem indTrivialEquiv_symm_apply_single (x : G) (r : k) :
     (indTrivialEquiv k H).symm (MonoidAlgebra.single (QuotientGroup.mk x : G ⧸ H) r) =
       r • IndV.mk H.subtype (Representation.trivial k H k) x⁻¹ (1 : k) :=
@@ -211,9 +190,9 @@ instance instFiniteIndTrivial [Finite (G ⧸ H)] :
 
 end Induced
 
-section Character
+section PermutationCharacter
 
-variable (k : Type u) [Field k] {G : Type v} [Group G]
+variable (k : Type u) [Field k] {G : Type v} [Monoid G]
 
 /-- **The permutation character.** The character of the permutation representation `k[X]` at `g`
 is the number of points of `X` fixed by `g`. -/
@@ -230,7 +209,11 @@ theorem character_ofMulAction (X : Type w) [MulAction G X] [Finite X] (g : G) :
       Finsupp.single_apply]
   simp [key, Fintype.card_subtype]
 
-variable (H : Subgroup G)
+end PermutationCharacter
+
+section Character
+
+variable (k : Type u) [Field k] {G : Type v} [Group G] (H : Subgroup G)
 
 /-- **The permutation character of an induced trivial representation.** The character of
 `Ind_H^G (trivial)` at `g` is the number of cosets in `G ⧸ H` fixed by `g`. -/
