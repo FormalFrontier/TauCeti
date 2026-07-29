@@ -27,7 +27,7 @@ being a `MonoidHom` supplies multiplicativity.
 
 This is the group-level input the universal-covers roadmap calls for when computing
 `π₁(Tᵏ)` (Stage 4, "applications": `π_n(Tᵏ)`); see
-`TauCeti/AlgebraicTopology/UniversalCover/TorusFundamentalGroup.lean` for the torus
+`TauCeti/AlgebraicTopology/UniversalCover/Torus/FundamentalGroup.lean` for the torus
 application built on top.
 
 ## Main declarations
