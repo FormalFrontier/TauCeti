@@ -269,29 +269,61 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Iso.refl _
 
+/-- Induction of an intertwiner of finite-dimensional representations: Mathlib's `Rep.indFunctor`
+on the underlying intertwiner, conjugated by `indFDRepForgetIso` and transported back along the
+fully faithful forgetful functor `FDRep k G ⥤ Rep k G`. Its characterizing property is
+`forget₂_map_indFDRepMap`; the definition itself is not exposed. -/
+noncomputable def indFDRepMap {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) : indFDRep A ⟶ indFDRep B :=
+  (forget₂ (FDRep k G) (Rep k G)).preimage
+    ((indFDRepForgetIso A).hom ≫
+      (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
+        (indFDRepForgetIso B).inv)
+
+/-- Forgetting finite-dimensionality from `indFDRepMap` gives Mathlib's induced intertwiner,
+conjugated by `indFDRepForgetIso`. This is the only fact about `indFDRepMap` used below. -/
+@[simp]
+theorem forget₂_map_indFDRepMap {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
+    (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) =
+      (indFDRepForgetIso A).hom ≫
+        (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
+          (indFDRepForgetIso B).inv := by
+  rw [indFDRepMap]
+  exact (forget₂ (FDRep k G) (Rep k G)).map_preimage _
+
+/-- Induction of intertwiners preserves identities. -/
+theorem indFDRepMap_id {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] (A : FDRep k S) : indFDRepMap (𝟙 A) = 𝟙 (indFDRep A) :=
+  -- The law holds after applying the forgetful functor: the conjugating copies of
+  -- `indFDRepForgetIso` cancel, so the proof does not unfold `indFDRep`.
+  (forget₂ (FDRep k G) (Rep k G)).map_injective (by
+    simp only [forget₂_map_indFDRepMap, CategoryTheory.Functor.map_id, Rep.indFunctor_obj,
+      Category.id_comp, Iso.hom_inv_id])
+
+/-- Induction of intertwiners preserves composition. -/
+theorem indFDRepMap_comp {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] {A B C : FDRep k S} (f : A ⟶ B) (g : B ⟶ C) :
+    indFDRepMap (f ≫ g) = indFDRepMap f ≫ indFDRepMap g :=
+  (forget₂ (FDRep k G) (Rep k G)).map_injective (by
+    simp only [forget₂_map_indFDRepMap, CategoryTheory.Functor.map_comp, Category.assoc,
+      Iso.inv_hom_id_assoc])
+
 /-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
-It acts on objects as `indFDRep`; on intertwiners it is Mathlib's `Rep.indFunctor`, conjugated by
-`indFDRepForgetIso` and transported back along the fully faithful forgetful functor
-`FDRep k G ⥤ Rep k G`.
+It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`.
 
 `@[simps obj map]` supplies the projection lemmas `indFDRepFunctor_obj` and
-`indFDRepFunctor_map`; they are proved by `rfl`, so this definition is `@[expose]`. -/
+`indFDRepFunctor_map`. Both are proved by `rfl`, and the type of the second needs
+`indFDRepFunctor.obj A` to reduce to `indFDRep A`, so this definition is `@[expose]`. Exposing it
+publishes exactly those two projections: the construction of the morphism map lives in
+`indFDRepMap`, which stays opaque behind `forget₂_map_indFDRepMap`. -/
 @[expose, simps obj map]
 noncomputable def indFDRepFunctor {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] : FDRep k S ⥤ FDRep k G where
   obj A := indFDRep A
-  map {A B} f := (forget₂ (FDRep k G) (Rep k G)).preimage
-    ((indFDRepForgetIso A).hom ≫
-      (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
-        (indFDRepForgetIso B).inv)
-  -- Both laws hold after pushing the forgetful functor through the preimage: the conjugating
-  -- copies of `indFDRepForgetIso` then cancel, so neither law unfolds `indFDRep`.
-  map_id _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    simp only [Functor.map_preimage, CategoryTheory.Functor.map_id, Rep.indFunctor_obj,
-      Category.id_comp, Iso.hom_inv_id])
-  map_comp _ _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    simp only [Functor.map_preimage, CategoryTheory.Functor.map_comp, Category.assoc,
-      Iso.inv_hom_id_assoc])
+  map f := indFDRepMap f
+  map_id A := indFDRepMap_id A
+  map_comp f g := indFDRepMap_comp f g
 
 /-- Under the forgetful functor to `Rep k G`, `indFDRepFunctor` is naturally isomorphic to
 Mathlib's induction functor, componentwise by `indFDRepForgetIso`. -/
@@ -300,18 +332,11 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
     indFDRepFunctor (k := k) (S := S) ⋙ forget₂ (FDRep k G) (Rep k G) ≅
       forget₂ (FDRep k S) (Rep k S) ⋙ Rep.indFunctor k S.subtype :=
   NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun {A B} f ↦ by
-    -- Naturality is the cancellation of the conjugating isomorphisms in `indFDRepFunctor.map`.
-    have h := (forget₂ (FDRep k G) (Rep k G)).map_preimage
-      ((indFDRepForgetIso A).hom ≫
-        (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
-          (indFDRepForgetIso B).inv)
-    change (forget₂ (FDRep k G) (Rep k G)).map ((forget₂ (FDRep k G) (Rep k G)).preimage
-        ((indFDRepForgetIso A).hom ≫
-          (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
-            (indFDRepForgetIso B).inv)) ≫ (indFDRepForgetIso B).hom =
+    -- Naturality is the cancellation of the conjugating isomorphisms in `indFDRepMap`.
+    change (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) ≫ (indFDRepForgetIso B).hom =
       (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
-    rw [h, Category.assoc, Category.assoc, Iso.inv_hom_id, Category.comp_id]
+    rw [forget₂_map_indFDRepMap, Category.assoc, Category.assoc, Iso.inv_hom_id, Category.comp_id]
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
 original representation. -/
