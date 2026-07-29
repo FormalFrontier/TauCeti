@@ -90,7 +90,8 @@ noncomputable def candidateGenusField {d : ℤ} (hd : Squarefree d) : Intermedia
 
 /-- `candidateGenusField` presented as the `adjoin` of its chosen roots. -/
 theorem candidateGenusField_def {d : ℤ} (hd : Squarefree d) :
-    candidateGenusField hd = adjoin ℚ (Set.range (genusFieldRoot hd)) := rfl
+    candidateGenusField hd = adjoin ℚ (Set.range (genusFieldRoot hd)) := by
+  simp only [candidateGenusField]
 
 /-- Each chosen root lies in the candidate genus field. -/
 @[simp] theorem genusFieldRoot_mem_candidateGenusField {d : ℤ} (hd : Squarefree d)
