@@ -56,7 +56,9 @@ lemma orderAt_apply (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ)
     orderAt x f = X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x := by
   rw [X.ord_eq_unzero_ordHom x.property
     (Units.ne_zero (Additive.toMul f : X.functionFieldˣ))]
-  rfl
+  simp only [orderAt, MonoidHom.toAdditiveLeft_apply_apply, MonoidHom.coe_comp,
+    MulEquiv.coe_toMonoidHom, Function.comp_apply, WithZero.unitsWithZeroEquiv_apply]
+  congr 1
 
 end
 
