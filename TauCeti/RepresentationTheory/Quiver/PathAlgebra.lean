@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
 public import Mathlib.Algebra.Algebra.Defs
+public import Mathlib.Combinatorics.Quiver.Path
+public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
@@ -30,7 +31,7 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   composable.
 * `TauCeti.pathAlgebra k Q`: the path algebra, with `TauCeti.PathAlgebra.single` its basis
   elements. It is a non-unital semiring for any quiver, and carries `Semiring`, `Ring` and
-  `Algebra k` structures once the vertex type is finite, finiteness being what makes the unit
+  `Algebra k` structures once the vertex type is `Finite`, finiteness being what makes the unit
   `1 = ∑ᵥ eᵥ` exist.
 * `TauCeti.PathAlgebra.vertexIdempotent`: the idempotent `eᵥ` given by the trivial path at `v`.
 * `TauCeti.pathAlgebraBasis`: the paths of `Q` as a `k`-basis of `kQ`.
@@ -41,8 +42,9 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
   orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
-  rank the number of paths of `Q`, and `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic`
-  specializes this to a finite acyclic quiver.
+  rank the number of paths of `Q`. The specialization to a finite acyclic quiver, whose paths are
+  finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
+  `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
 
 ## Implementation notes
 
@@ -56,11 +58,16 @@ spelled out once and for all by `mul_def` and `single_def`.
 
 That whole layer is private apart from `mul'` itself, which the `Mul` instance has to name: an
 instance body is exposed, so it cannot mention a private declaration, which is also why the ring
-axioms reach the structure instances through a `by exact`. Of the definitions, only `pathAlgebra`,
-`ofPath` and `vertexIdempotent` are exposed, and only because the transported instances and the
-`rfl` characterisation `vertexIdempotent_eq_single` unfold them; `single` is opaque downstream,
-which sees the path algebra through its algebraic structure and the lemmas below rather than
-through the `Finsupp` representation.
+axioms reach the structure instances through a `by exact`. `mul'` has no public lemmas, so it is
+opaque downstream all the same. `pathAlgebra` is the only definition whose body is `@[expose]`d,
+because the transported instances unfold it; every other definition here is opaque downstream,
+which sees the path algebra through its algebraic structure and the lemmas below
+(`ofPath_eq_single` and `vertexIdempotent_eq_single` for the basis elements, `single_mul_single`
+and the `mul?` lemmas for products) rather than through the `Finsupp` representation.
+
+Since `Finset.univ` is data, the unit is the sum of the vertex idempotents over a `Fintype`
+structure chosen internally by `Fintype.ofFinite`; the unital instances therefore ask only for
+`[Finite Q]`, and `one_def` identifies `1` with the sum over *any* `Fintype Q` a caller supplies.
 
 ## References
 
@@ -91,7 +98,7 @@ variable {Q : Type u} [Quiver.{v} Q]
 open scoped Classical in
 /-- Concatenation of indexed paths in the *later factor first* order used by the path algebra:
 `x.mul? y` traces `y` and then `x`, and is `none` unless `y` ends where `x` starts. -/
-@[expose] noncomputable def mul? (x y : TotalPath Q) : Option (TotalPath Q) :=
+noncomputable def mul? (x y : TotalPath Q) : Option (TotalPath Q) :=
   if h : y.2.1 = x.1 then some ⟨y.1, x.2.1, (h ▸ y.2.2).comp x.2.2⟩ else none
 
 /-- Composable indexed paths concatenate, the later factor written first. -/
@@ -345,6 +352,7 @@ noncomputable instance : NonUnitalSemiring (pathAlgebra k Q) where
 
 /-- The defining product of two basis paths: their concatenation, later factor first, when they
 are composable, and `0` otherwise. -/
+@[simp]
 theorem single_mul_single (x y : Quiver.TotalPath Q) (a b : k) :
     (single x a * single y b : pathAlgebra k Q)
       = (x.mul? y).elim 0 fun z => single z (a * b) := by
@@ -366,32 +374,39 @@ theorem single_mul_single_of_not_composable {x y : Quiver.TotalPath Q} (h : y.2.
   rfl
 
 /-- The basis element of the path algebra attached to a path. -/
-@[expose] noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
+noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
   single x 1
 
+/-- A path is the basis element it indexes, with coefficient one. -/
+theorem ofPath_eq_single (x : Quiver.TotalPath Q) :
+    (ofPath x : pathAlgebra k Q) = single x 1 := (rfl)
+
 /-- Two composable paths multiply to their concatenation, later factor first. -/
+@[simp]
 theorem ofPath_mul_ofPath_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
     (q : _root_.Quiver.Path c a) :
     (ofPath (⟨a, b, p⟩ : Quiver.TotalPath Q) * ofPath ⟨c, a, q⟩ : pathAlgebra k Q)
       = ofPath ⟨c, b, q.comp p⟩ := by
-  rw [ofPath, ofPath, ofPath, single_mul_single_of_comp, one_mul]
+  rw [ofPath_eq_single, ofPath_eq_single, ofPath_eq_single, single_mul_single_of_comp, one_mul]
 
 /-- Two paths that do not meet multiply to zero. -/
+@[simp]
 theorem ofPath_mul_ofPath_of_not_composable {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) :
-    (ofPath x * ofPath y : pathAlgebra k Q) = 0 :=
-  single_mul_single_of_not_composable h 1 1
+    (ofPath x * ofPath y : pathAlgebra k Q) = 0 := by
+  rw [ofPath_eq_single, ofPath_eq_single]
+  exact single_mul_single_of_not_composable h 1 1
 
 /-! ### The vertex idempotents -/
 
 variable (k) in
 /-- The idempotent of the path algebra attached to a vertex: the trivial path at that vertex. -/
-@[expose] noncomputable def vertexIdempotent (v : Q) : pathAlgebra k Q :=
+noncomputable def vertexIdempotent (v : Q) : pathAlgebra k Q :=
   ofPath ⟨v, v, _root_.Quiver.Path.nil⟩
 
 /-- The vertex idempotent is the basis element of the trivial path, with coefficient one. -/
 theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
-      = single (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) (1 : k) := rfl
+      = single (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) (1 : k) := (rfl)
 
 /-- The vertex idempotent at the target of a path is a left unit for it. -/
 @[simp]
@@ -408,33 +423,41 @@ theorem single_mul_vertexIdempotent (x : Quiver.TotalPath Q) (r : k) :
     Option.elim_some, mul_one]
 
 /-- Distinct vertex idempotents are orthogonal. -/
+@[simp]
 theorem vertexIdempotent_mul_vertexIdempotent_of_ne {u v : Q} (h : u ≠ v) :
-    (vertexIdempotent k u * vertexIdempotent k v : pathAlgebra k Q) = 0 :=
-  single_mul_single_of_not_composable (x := ⟨u, u, _root_.Quiver.Path.nil⟩)
-    (y := ⟨v, v, _root_.Quiver.Path.nil⟩) h.symm 1 1
+    (vertexIdempotent k u * vertexIdempotent k v : pathAlgebra k Q) = 0 := by
+  rw [vertexIdempotent_eq_single, vertexIdempotent_eq_single]
+  exact single_mul_single_of_not_composable h.symm 1 1
 
 /-- The vertex idempotents are idempotent. -/
 @[simp]
 theorem vertexIdempotent_mul_self (v : Q) :
-    (vertexIdempotent k v * vertexIdempotent k v : pathAlgebra k Q) = vertexIdempotent k v :=
-  single_mul_vertexIdempotent (k := k) ⟨v, v, _root_.Quiver.Path.nil⟩ 1
+    (vertexIdempotent k v * vertexIdempotent k v : pathAlgebra k Q) = vertexIdempotent k v := by
+  rw [vertexIdempotent_eq_single, single_mul_single_of_comp, one_mul, _root_.Quiver.Path.comp_nil]
 
 /-! ### The unit -/
 
 section Unit
 
-variable [Fintype Q]
+variable [Finite Q]
 
+-- `Finset.univ` is data, so the unit picks an enumeration of the finite vertex type; `one_def`
+-- below identifies it with the sum over any `Fintype Q` structure a caller supplies.
 noncomputable instance : One (pathAlgebra k Q) :=
+  letI := Fintype.ofFinite Q
   ⟨∑ v : Q, vertexIdempotent k v⟩
 
 /-- The unit of the path algebra is the sum of the vertex idempotents: the vertex idempotents are
 a decomposition of the unit. -/
-theorem one_def : (1 : pathAlgebra k Q) = ∑ v : Q, vertexIdempotent k v := rfl
+theorem one_def [Fintype Q] : (1 : pathAlgebra k Q) = ∑ v : Q, vertexIdempotent k v :=
+  Finset.sum_congr (congrArg (@Finset.univ Q) (Subsingleton.elim _ _)) fun _ _ => rfl
 
+-- The unit lemmas on basis paths are the ingredients of the `Semiring` instance below; downstream
+-- they are its `one_mul` and `mul_one`, which need no `Fintype` structure.
 /-- The sum of the vertex idempotents is a left unit on basis paths. -/
-theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
+private theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
     ((1 : pathAlgebra k Q) * single x r : pathAlgebra k Q) = single x r := by
+  letI := Fintype.ofFinite Q
   rw [one_def, Finset.sum_mul, Finset.sum_eq_single x.2.1]
   · exact vertexIdempotent_mul_single x r
   · intro v _ hv
@@ -444,8 +467,9 @@ theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
     exact absurd (Finset.mem_univ _) h
 
 /-- The sum of the vertex idempotents is a right unit on basis paths. -/
-theorem single_mul_one (x : Quiver.TotalPath Q) (r : k) :
+private theorem single_mul_one (x : Quiver.TotalPath Q) (r : k) :
     (single x r * (1 : pathAlgebra k Q) : pathAlgebra k Q) = single x r := by
+  letI := Fintype.ofFinite Q
   rw [one_def, Finset.mul_sum, Finset.sum_eq_single x.1]
   · exact single_mul_vertexIdempotent x r
   · intro v _ hv
@@ -476,7 +500,7 @@ variable {k : Type w} {Q : Type u} [Ring k] [Quiver.{v} Q]
 noncomputable instance : AddCommGroup (pathAlgebra k Q) :=
   inferInstanceAs (AddCommGroup (Quiver.TotalPath Q →₀ k))
 
-noncomputable instance [Fintype Q] : Ring (pathAlgebra k Q) where
+noncomputable instance [Finite Q] : Ring (pathAlgebra k Q) where
 
 end Ring
 
@@ -498,13 +522,13 @@ private theorem mul'_smul (r : k) (f g : Quiver.TotalPath Q →₀ k) :
       rw [Finsupp.smul_single, mul'_single_single, mul'_single_single, smul_singleOption,
         smul_eq_mul, mul_left_comm]
 
-variable [Fintype Q]
+variable [Finite Q]
 
 noncomputable instance : Algebra k (pathAlgebra k Q) :=
   Algebra.ofModule (by exact fun r x y => smul_mul' r x y) (by exact fun r x y => mul'_smul r x y)
 
 /-- The image of a scalar in the path algebra spreads it over the vertex idempotents. -/
-theorem algebraMap_apply (r : k) :
+theorem algebraMap_apply [Fintype Q] (r : k) :
     algebraMap k (pathAlgebra k Q) r = ∑ v : Q, r • vertexIdempotent k v := by
   rw [Algebra.algebraMap_eq_smul_one, one_def, Finset.smul_sum]
 
@@ -545,12 +569,6 @@ variable (k : Type w) (Q : Type u) [DivisionRing k] [Quiver.{v} Q]
 theorem finrank_pathAlgebra [Fintype (Quiver.TotalPath Q)] :
     Module.finrank k (pathAlgebra k Q) = Fintype.card (Quiver.TotalPath Q) :=
   Module.finrank_eq_card_basis (pathAlgebraBasis k Q)
-
-/-- The path algebra of a finite acyclic quiver is finite-dimensional. -/
-theorem finiteDimensional_pathAlgebra_of_isAcyclic [Finite Q] [∀ a b : Q, Finite (a ⟶ b)]
-    (h : Quiver.IsAcyclic Q) : FiniteDimensional k (pathAlgebra k Q) :=
-  letI := finite_paths_of_isAcyclic h
-  module_finite_pathAlgebra k Q
 
 end DivisionRing
 
