@@ -72,11 +72,16 @@ private theorem support_finRotate_torus :
     (finRotate (p + 1 + (q + 1))).support = Finset.univ :=
   support_finRotate_of_le (by omega)
 
+/-- The cyclic shift of the columns of a torus link grid is a cycle of length the grid number. -/
+private theorem card_support_finRotate_torus :
+    (finRotate (p + 1 + (q + 1))).support.card = p + 1 + (q + 1) := by
+  rw [support_finRotate_torus, Finset.card_univ, Fintype.card_fin]
+
 /-- The shift `q + 1` of the `X` markings of a torus link grid is not a multiple of the grid
 number, which is what makes the shifted diagonal disjoint from the diagonal. -/
 private theorem not_card_dvd_torus :
-    ¬Fintype.card (Fin (p + 1 + (q + 1))) ∣ q + 1 := by
-  rw [Fintype.card_fin]
+    ¬(finRotate (p + 1 + (q + 1))).support.card ∣ q + 1 := by
+  rw [card_support_finRotate_torus]
   exact Nat.not_dvd_of_pos_of_lt q.succ_pos (by omega)
 
 /-! ### The diagram -/
@@ -92,8 +97,8 @@ def torusLink : GridDiagram (p + 1 + (q + 1)) where
   X := ⟨finRotate (p + 1 + (q + 1)) ^ (q + 1)⟩
   disjoint := by
     intro c h
-    exact pow_apply_ne_self_of_isCycle (isCycle_finRotate_torus p q)
-      (support_finRotate_torus p q) (not_card_dvd_torus p q) c (by simpa using h.symm)
+    exact pow_apply_ne_self_of_isCycle (isCycle_finRotate_torus p q) (not_card_dvd_torus p q)
+      (by rw [support_finRotate_torus]; exact Finset.mem_univ c) (by simpa using h.symm)
 
 -- The body of `torusLink` is deliberately not exposed, so the projection lemmas below are
 -- written `(rfl)` rather than `rfl`: the parentheses opt out of exporting the definitional
@@ -168,8 +173,8 @@ theorem componentCycleType_torusLink :
       Multiset.replicate ((p + 1).gcd (q + 1))
         ((p + 1 + (q + 1)) / (p + 1).gcd (q + 1)) := by
   rw [componentCycleType_def, componentPerm_torusLink, Equiv.Perm.cycleType_inv,
-    cycleType_pow_of_isCycle (isCycle_finRotate_torus p q) (support_finRotate_torus p q)
-      (not_card_dvd_torus p q), Fintype.card_fin, gcd_torus]
+    cycleType_pow_of_isCycle (isCycle_finRotate_torus p q) (not_card_dvd_torus p q),
+    card_support_finRotate_torus, gcd_torus]
 
 /-- A standard torus link grid represents a link with `gcd (p + 1) (q + 1)` components. -/
 theorem componentCount_torusLink :
