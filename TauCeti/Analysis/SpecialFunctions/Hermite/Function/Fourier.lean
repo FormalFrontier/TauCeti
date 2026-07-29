@@ -26,6 +26,11 @@ and proves that `𝓕 Φₙ = (-i)ⁿ Φₙ`. The dilation is load-bearing: the 
 
 * `TauCeti.twoPiHermiteFunction` is the `2π`-normalized Hermite family.
 * `TauCeti.fourier_twoPiHermiteFunction` states its Fourier eigenvalue `(-i)ⁿ`.
+
+## References
+
+* G. B. Folland, *Harmonic Analysis in Phase Space*, §1, for the standard normalization and
+  Fourier eigenvalue identity.
 -/
 
 public section
@@ -41,6 +46,13 @@ noncomputable def twoPiHermiteFunction (n : ℕ) (x : ℝ) : ℝ :=
   Real.sqrt (Real.sqrt (2 * Real.pi)) *
     hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
 
+/-- The defining equation for the Hermite function rescaled to Mathlib's Fourier convention. -/
+theorem twoPiHermiteFunction_def (n : ℕ) (x : ℝ) :
+    twoPiHermiteFunction n x =
+      Real.sqrt (Real.sqrt (2 * Real.pi)) *
+        hermiteFunction n (Real.sqrt (2 * Real.pi) * x) :=
+  twoPiHermiteFunction.eq_1 n x
+
 private lemma hermiteFourierScale_pos : 0 < Real.sqrt (2 * Real.pi) :=
   Real.sqrt_pos.2 (mul_pos two_pos Real.pi_pos)
 
@@ -53,11 +65,12 @@ private lemma hermiteFourierScale_sq :
 
 /-- The zeroth rescaled Hermite function is a constant multiple of the self-dual Gaussian
 `exp (-πx²)`. -/
+@[simp]
 theorem twoPiHermiteFunction_zero (x : ℝ) :
     twoPiHermiteFunction 0 x =
       (Real.sqrt (Real.sqrt (2 * Real.pi)) / Real.sqrt (Real.sqrt Real.pi)) *
         Real.exp (-Real.pi * x ^ 2) := by
-  rw [twoPiHermiteFunction.eq_1, hermiteFunction_zero]
+  rw [twoPiHermiteFunction_def, hermiteFunction_zero]
   have hexp :
       -((Real.sqrt (2 * Real.pi) * x) ^ 2 / 2) = -Real.pi * x ^ 2 := by
     rw [mul_pow, hermiteFourierScale_sq]
@@ -69,10 +82,7 @@ theorem twoPiHermiteFunction_zero (x : ℝ) :
 @[fun_prop]
 theorem continuous_twoPiHermiteFunction (n : ℕ) :
     Continuous (twoPiHermiteFunction n) := by
-  rw [show twoPiHermiteFunction n = fun x =>
-      Real.sqrt (Real.sqrt (2 * Real.pi)) *
-        hermiteFunction n (Real.sqrt (2 * Real.pi) * x) from
-    funext (twoPiHermiteFunction.eq_1 n)]
+  unfold twoPiHermiteFunction
   exact continuous_const.mul
     ((continuous_hermiteFunction n).comp (continuous_const.mul continuous_id))
 
@@ -84,7 +94,7 @@ theorem mul_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
         + (Real.sqrt ((n : ℝ) / 2) / Real.sqrt (2 * Real.pi)) *
           twoPiHermiteFunction (n - 1) x := by
   have h := mul_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
-  simp only [twoPiHermiteFunction.eq_1]
+  simp only [twoPiHermiteFunction_def]
   calc
     x * (Real.sqrt (Real.sqrt (2 * Real.pi)) *
         hermiteFunction n (Real.sqrt (2 * Real.pi) * x)) =
@@ -131,7 +141,7 @@ theorem hasDerivAt_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
               hermiteFunction (n + 1) (Real.sqrt (2 * Real.pi) * x)) *
           Real.sqrt (2 * Real.pi))) x := by
     apply hsimp.congr_of_eventuallyEq
-    exact Filter.Eventually.of_forall fun y => (twoPiHermiteFunction.eq_1 n y).symm
+    exact Filter.Eventually.of_forall fun y => (twoPiHermiteFunction_def n y).symm
   have hval :
       Real.sqrt (Real.sqrt (2 * Real.pi)) *
           ((Real.sqrt ((n : ℝ) / 2) *
@@ -142,7 +152,7 @@ theorem hasDerivAt_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
         = Real.sqrt (2 * Real.pi) *
           (Real.sqrt ((n : ℝ) / 2) * twoPiHermiteFunction (n - 1) x
             - Real.sqrt (((n : ℝ) + 1) / 2) * twoPiHermiteFunction (n + 1) x) := by
-    simp only [twoPiHermiteFunction.eq_1]
+    simp only [twoPiHermiteFunction_def]
     ring
   exact hval ▸ h'
 
@@ -163,7 +173,7 @@ theorem mul_sub_invScale_deriv_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
   have h := mul_sub_deriv_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
   have hderiv := deriv_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
   rw [deriv_twoPiHermiteFunction]
-  simp only [twoPiHermiteFunction.eq_1]
+  simp only [twoPiHermiteFunction_def]
   rw [← mul_assoc (Real.sqrt (2 * Real.pi))⁻¹, inv_mul_cancel₀ hermiteFourierScale_ne_zero,
     one_mul]
   linear_combination
@@ -176,7 +186,7 @@ theorem integrable_twoPiHermiteFunction (n : ℕ) :
   have h :=
     ((integrable_hermiteFunction n).comp_mul_left' hermiteFourierScale_ne_zero).const_mul
       (Real.sqrt (Real.sqrt (2 * Real.pi)))
-  exact h.congr (Filter.Eventually.of_forall fun x => (twoPiHermiteFunction.eq_1 n x).symm)
+  exact h.congr (Filter.Eventually.of_forall fun x => (twoPiHermiteFunction_def n x).symm)
 
 private theorem integrable_mul_twoPiHermiteFunction (n : ℕ) :
     Integrable (fun x : ℝ => x * twoPiHermiteFunction n x) volume := by
@@ -250,12 +260,6 @@ private theorem fourier_const_smul (c : ℂ) (f : ℝ → ℂ) :
   rw [Real.fourier_real_eq, Real.fourier_real_eq, ← integral_smul]
   refine integral_congr_ae (Filter.Eventually.of_forall fun v => ?_)
   exact smul_comm (𝐞 (-(v * w))) c (f v)
-
-private theorem fourier_add_of_integrable {f g : ℝ → ℂ}
-    (hf : Integrable f volume) (hg : Integrable g volume) :
-    𝓕 (f + g) = 𝓕 f + 𝓕 g :=
-  VectorFourier.fourierIntegral_add (e := 𝐞) (L := innerₗ ℝ)
-    (by fun_prop) (by fun_prop) hf hg
 
 private theorem fourier_twoPiHermiteFunction_zero :
     𝓕 (fun x : ℝ => (twoPiHermiteFunction 0 x : ℂ)) =
@@ -377,11 +381,13 @@ private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
         fun x => eigen * twoPiHermiteFunction n x) :
     𝓕 (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) =
       fun x => (-Complex.I * eigen) * twoPiHermiteFunction (n + 1) x := by
+  -- Abbreviate the scale, creation-operator terms, and successor function.
   let s : ℂ := Real.sqrt (2 * Real.pi)
   let a : ℂ := Real.sqrt (2 * ((n : ℝ) + 1))
   let xf : ℝ → ℂ := fun x => x • (twoPiHermiteFunction n x : ℂ)
   let df : ℝ → ℂ := fun x => ((deriv (twoPiHermiteFunction n) x : ℝ) : ℂ)
   let fnext : ℝ → ℂ := fun x => (twoPiHermiteFunction (n + 1) x : ℂ)
+  -- Record the nonvanishing and normalization identities needed by the final scalar calculation.
   have hs : s ≠ 0 := by
     dsimp only [s]
     exact Complex.ofReal_ne_zero.mpr hermiteFourierScale_ne_zero
@@ -392,6 +398,8 @@ private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
     dsimp only [s]
     rw [← Complex.ofReal_pow, hermiteFourierScale_sq]
     norm_num
+  -- Express the successor by the rescaled creation operator and establish integrability of its
+  -- two summands.
   have hraise : fnext = a⁻¹ • (s • xf + (-s⁻¹) • df) :=
     twoPiHermiteFunction_succ_complex n
   have hsxf : Integrable (s • xf) volume := by
@@ -402,20 +410,29 @@ private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
     apply ((integrable_deriv_twoPiHermiteFunction n).ofReal.const_mul (-s⁻¹)).congr
     exact Filter.Eventually.of_forall fun _ => rfl
   funext w
-  have hadd := congrFun (fourier_add_of_integrable hsxf hinvdf) w
+  -- Apply Fourier linearity, then substitute the transform identities for multiplication and
+  -- differentiation under the eigenfunction hypothesis.
+  have hadd :
+      𝓕 (s • xf + (-s⁻¹) • df) w = (𝓕 (s • xf) + 𝓕 ((-s⁻¹) • df)) w :=
+    congrFun (VectorFourier.fourierIntegral_add
+      (e := 𝐞) (L := innerₗ ℝ) (by fun_prop) (by fun_prop) hsxf hinvdf) w
   have houter := congrFun (fourier_const_smul a⁻¹ (s • xf + (-s⁻¹) • df)) w
   have hleftRaise := congrArg (fun g : ℝ → ℂ => 𝓕 g w) hraise
+  have hnext :
+      (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) = fnext := rfl
+  have hnextValue : (twoPiHermiteFunction (n + 1) w : ℂ) = fnext w :=
+    congrFun hnext w
   have hraiseValue :
       fnext w = a⁻¹ * (s * xf w + (-s⁻¹) * df w) := by
     simpa only [Pi.add_apply, Pi.smul_apply, smul_eq_mul] using congrFun hraise w
-  rw [show (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) = fnext from rfl,
-    show (twoPiHermiteFunction (n + 1) w : ℂ) = fnext w from rfl]
+  rw [hnext, hnextValue]
   rw [hleftRaise, houter, Pi.smul_apply, smul_eq_mul, hadd]
   rw [fourier_const_smul, fourier_const_smul, Pi.add_apply,
     Pi.smul_apply, Pi.smul_apply, smul_eq_mul,
     fourier_mul_twoPiHermiteFunction_of_eigen n eigen hfourier,
     fourier_deriv_twoPiHermiteFunction_of_eigen n eigen hfourier]
   rw [hraiseValue]
+  -- The remaining goal is the scalar normalization `s² = 2π`.
   rw [← hs_sq]
   dsimp only [xf, df]
   simp only [Complex.real_smul, smul_eq_mul]
