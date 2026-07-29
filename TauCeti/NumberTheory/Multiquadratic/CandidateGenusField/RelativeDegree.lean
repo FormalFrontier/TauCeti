@@ -6,17 +6,27 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
 import TauCeti.FieldTheory.IntermediateField.Quadratic
+import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
+import TauCeti.NumberTheory.Multiquadratic.RelativeDegree
 
 /-!
-# The quadratic base inside the candidate genus field
+# The candidate genus field over its quadratic base
 
 For a squarefree integer `d`, `candidateGenusField hd` contains a chosen square root of `d`.
 This file names that root and the resulting copy of `ℚ(√d)` inside the candidate genus field.
-When `d` is not a rational square, this base has degree two over `ℚ`.
+When `d` is not a rational square, this base has degree two over `ℚ`, and the full candidate
+genus field has relative degree
 
-Computing the relative degree of the candidate over this base, identifying the candidate with
-the maximal extension satisfying the required ramification conditions, and identifying its
-relative Galois group with `Cl/Cl²` remain later work.
+`[candidateGenusField hd : ℚ(√d)] = 2 ^ ((genusPrimeDiscriminants hd).card - 1)`.
+
+The absolute degree `2 ^ (genusPrimeDiscriminants hd).card` is proved in
+`CandidateGenusField/Degree`. The relative formula here combines that theorem with the quadratic
+degree of the base through the tower law
+`[M : ℚ] = [ℚ(√d) : ℚ] · [M : ℚ(√d)]`.
+
+This is the relative-degree part of the genus-field construction. Identifying the candidate
+with the maximal extension satisfying the required ramification conditions, and identifying
+its relative Galois group with `Cl/Cl²`, remain later work.
 
 The prime-discriminant description of the genus field is classical; see D. A. Cox,
 *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
@@ -31,6 +41,8 @@ The prime-discriminant description of the genus field is classical; see D. A. Co
 
 * `TauCeti.Multiquadratic.finrank_candidateGenusFieldBase`: the base has degree two when `d`
   is not a rational square.
+* `TauCeti.Multiquadratic.finrank_candidateGenusField_over_candidateGenusFieldBase`: the
+  candidate genus field has degree `2 ^ (t - 1)` over its quadratic base.
 -/
 
 public section
@@ -102,5 +114,54 @@ theorem finrank_candidateGenusFieldBase {d : ℤ} (hd : Squarefree d)
   have h := TauCeti.IntermediateField.finrank_sup_adjoin_simple_eq_mul_two
     (⊥ : IntermediateField ℚ (candidateGenusField hd)) hx2 hxnot
   rwa [bot_sup_eq, IntermediateField.finrank_bot, one_mul] at h
+
+/-- **Relative degree of the candidate genus field over `ℚ(√d)`.** If the squarefree integer
+`d` is not a rational square, the prime-discriminant compositum has degree
+`2 ^ (t - 1)` over its embedded quadratic base, where
+`t = (genusPrimeDiscriminants hd).card`. -/
+theorem finrank_candidateGenusField_over_candidateGenusFieldBase {d : ℤ} (hd : Squarefree d)
+    (hnsq : ¬ IsSquare (((d : ℤ) : ℚ))) :
+    Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
+      2 ^ ((genusPrimeDiscriminants hd).card - 1) := by
+  classical
+  let e : candidateGenusField hd ≃ₐ[ℚ] adjoin ℚ (Set.range (genusFieldRoot hd)) :=
+    IntermediateField.equivOfEq (candidateGenusField_def hd)
+  let F : IntermediateField ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+    (candidateGenusFieldBase hd).map e.toAlgHom
+  let eF : candidateGenusFieldBase hd ≃ₐ[ℚ] F :=
+    IntermediateField.equivMap (candidateGenusFieldBase hd) e.toAlgHom
+  obtain ⟨hprime, heven_unique, _⟩ := genusPrimeDiscriminants_spec hd
+  have hroot : ∀ P : {P // P ∈ genusPrimeDiscriminants hd},
+      genusFieldRoot hd P ^ 2 =
+        algebraMap ℚ ℂ (((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := fun P => by simp
+  have hindep :
+      ∀ S : Finset {P // P ∈ genusPrimeDiscriminants hd}, S.Nonempty →
+        ¬ IsSquare (∏ P ∈ S, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) :=
+    not_isSquare_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
+      (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
+      (fun P => hprime P.val P.property) Subtype.val_injective
+      (fun P Q hP hQ => heven_unique P.val P.property Q.val Q.property hP hQ)
+  have hF : Module.finrank ℚ F = 2 := by
+    rw [← eF.toLinearEquiv.finrank_eq]
+    exact finrank_candidateGenusFieldBase hd hnsq
+  have h := finrank_top_over_intermediateField_of_finrank_eq_two hroot hindep
+    F hF
+  have heF (x : candidateGenusFieldBase hd) :
+      (↑(eF x) : adjoin ℚ (Set.range (genusFieldRoot hd))) =
+        e (x : candidateGenusField hd) := by
+    convert IntermediateField.coe_equivMap_apply
+      (candidateGenusFieldBase hd) e.toAlgHom x using 1 <;> rfl
+  have hrel :
+      Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
+        Module.finrank F (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+    Algebra.finrank_eq_of_equiv_equiv eF.toRingEquiv e.toRingEquiv (by
+      apply RingHom.ext
+      intro x
+      simpa only [RingHom.comp_apply, IntermediateField.algebraMap_apply,
+        RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, AlgEquiv.coe_ringEquiv] using heF x)
+  rw [hrel]
+  convert h using 1
+  · rfl
+  · simp only [Nat.card_eq_fintype_card, Fintype.card_coe]
 
 end TauCeti.Multiquadratic
