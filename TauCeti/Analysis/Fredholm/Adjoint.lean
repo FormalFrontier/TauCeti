@@ -45,9 +45,13 @@ open scoped InnerProduct
 
 variable {𝕜 E F : Type*} [RCLike 𝕜]
 variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E]
-variable [NormedAddCommGroup F] [InnerProductSpace 𝕜 F] [CompleteSpace F]
+variable [NormedAddCommGroup F]
 
 namespace ContinuousLinearMap
+
+section Restriction
+
+variable [NormedSpace 𝕜 F] [CompleteSpace F]
 
 /-- The restriction of a closed-range operator to the orthogonal complement of its kernel is a
 continuous linear equivalence onto its range. -/
@@ -86,6 +90,16 @@ theorem orthogonalKerEquivRange_symm_apply (T : E →L[𝕜] F)
     T ((orthogonalKerEquivRange T hT).symm y) = (y : F) :=
   (orthogonalKerEquivRange_apply T hT _).symm.trans <|
     congr_arg Subtype.val ((orthogonalKerEquivRange T hT).apply_symm_apply y)
+
+end Restriction
+
+end ContinuousLinearMap
+
+section HilbertCodomain
+
+variable [InnerProductSpace 𝕜 F] [CompleteSpace F]
+
+namespace ContinuousLinearMap
 
 /-- The adjoint of a continuous linear equivalence is bijective. -/
 private theorem adjoint_bijective (e : E ≃L[𝕜] F) :
@@ -131,16 +145,16 @@ theorem range_adjoint_eq_orthogonal_ker_of_isClosed_range (T : E →L[𝕜] F)
     apply ContinuousLinearMap.ext
     intro y
     refine ext_inner_left 𝕜 fun x => ?_
-    -- Pass from the inherited inner product on the subspace to the ambient one.
-    change inner 𝕜 (x : E) ((T†) (y : F)) =
-      inner 𝕜 (x : Kᗮ) (((e : Kᗮ →L[𝕜] R)†) y)
-    rw [T.adjoint_inner_right, ContinuousLinearMap.adjoint_inner_right]
-    dsimp only [e]
-    -- Make both inherited range inner products ambient before using the restriction API.
-    change inner 𝕜 (T (x : E)) (y : F) =
-      inner 𝕜 ((orthogonalKerEquivRange T hT x :
-        LinearMap.range (T : E →ₗ[𝕜] F)) : F) (y : F)
-    rw [orthogonalKerEquivRange_apply]
+    calc
+      inner 𝕜 x (B y) = inner 𝕜 (x : E) ((T†) (y : F)) := by
+        rw [Submodule.coe_inner]
+        rfl
+      _ = inner 𝕜 (T (x : E)) (y : F) := T.adjoint_inner_right x y
+      _ = inner 𝕜 ((e x : R) : F) (y : F) := by
+        rw [show (e x : F) = T (x : E) from orthogonalKerEquivRange_apply T hT x]
+      _ = inner 𝕜 (e x) y := (Submodule.coe_inner R (e x) y).symm
+      _ = inner 𝕜 x (((e : Kᗮ →L[𝕜] R)†) y) :=
+        (ContinuousLinearMap.adjoint_inner_right (e : Kᗮ →L[𝕜] R) x y).symm
   have hB_surjective : Function.Surjective B := by
     rw [hB]
     exact (adjoint_bijective e).2
@@ -196,17 +210,25 @@ theorem coe_cokerEquivKerAdjoint_mk (T : E →L[𝕜] F)
   simp [cokerEquivKerAdjoint,
     Submodule.orthogonalProjectionOnto_apply_eq_projectionOnto]
 
+/-- The inverse cokernel--adjoint-kernel equivalence sends a kernel vector to its quotient
+class. -/
+@[simp]
+theorem cokerEquivKerAdjoint_symm_apply (T : E →L[𝕜] F)
+    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
+    (y : LinearMap.ker (T† : F →ₗ[𝕜] E)) :
+    (cokerEquivKerAdjoint T hT).symm y = Submodule.Quotient.mk (y : F) := by
+  let range := LinearMap.range (T : E →ₗ[𝕜] F)
+  letI : CompleteSpace range := hT.completeSpace_coe
+  simp [cokerEquivKerAdjoint]
+
 /-- The cokernel of the adjoint of a closed-range operator is linearly equivalent to the
 original kernel. -/
 noncomputable def cokerAdjointEquivKer (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) :
     (E ⧸ LinearMap.range (T† : F →ₗ[𝕜] E)) ≃ₗ[𝕜]
-      LinearMap.ker (T : E →ₗ[𝕜] F) := by
-  let rangeAdjoint := LinearMap.range (T† : F →ₗ[𝕜] E)
-  letI : CompleteSpace rangeAdjoint :=
-    (isClosed_range_adjoint_of_isClosed_range T hT).completeSpace_coe
-  exact rangeAdjoint.quotientEquivOrthogonal.toLinearEquiv.trans
-    (LinearEquiv.ofEq _ _ <| by simpa using (T†).orthogonal_range)
+      LinearMap.ker (T : E →ₗ[𝕜] F) :=
+  (cokerEquivKerAdjoint (T†) (isClosed_range_adjoint_of_isClosed_range T hT)).trans
+    (LinearEquiv.ofEq _ _ <| by simp)
 
 /-- On quotient representatives, the adjoint-cokernel--kernel equivalence is orthogonal
 projection onto the orthogonal complement of the adjoint range. -/
@@ -215,11 +237,16 @@ theorem coe_cokerAdjointEquivKer_mk (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (x : E) :
     (cokerAdjointEquivKer T hT (Submodule.Quotient.mk x) : E) =
       ((LinearMap.range (T† : F →ₗ[𝕜] E))ᗮ.orthogonalProjectionOnto x : E) := by
-  letI : CompleteSpace (LinearMap.range (T† : F →ₗ[𝕜] E)) :=
-    (isClosed_range_adjoint_of_isClosed_range T hT).completeSpace_coe
-  simp [cokerAdjointEquivKer,
-    Submodule.orthogonalProjectionOnto_apply_eq_projectionOnto,
-    (LinearMap.range (T† : F →ₗ[𝕜] E)).orthogonal_orthogonal]
+  simp [cokerAdjointEquivKer, coe_cokerEquivKerAdjoint_mk]
+
+/-- The inverse adjoint-cokernel--kernel equivalence sends a kernel vector to its quotient
+class. -/
+@[simp]
+theorem cokerAdjointEquivKer_symm_apply (T : E →L[𝕜] F)
+    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
+    (x : LinearMap.ker (T : E →ₗ[𝕜] F)) :
+    (cokerAdjointEquivKer T hT).symm x = Submodule.Quotient.mk (x : E) := by
+  simp [cokerAdjointEquivKer]
 
 end ContinuousLinearMap
 
@@ -257,6 +284,8 @@ theorem index_adjoint (T : E →L[𝕜] F) (hT : IsFredholm T) :
   omega
 
 end ContinuousLinearMap
+
+end HilbertCodomain
 
 end TauCeti
 
