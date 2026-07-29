@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.L2.BlockAverages
 import TauCeti.Probability.Exchangeability.Map
+import TauCeti.MeasureTheory.Function.BoundedMemLp
 import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 
@@ -13,8 +14,8 @@ import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 # L¹ convergence of Cesàro averages of a contractable process
 
 This file proves the `weighted_sums_converge_L1` milestone from Layer 3 of the Exchangeability
-roadmap. For a bounded measurable real-valued observable `f` of a contractable process `X`, all
-fixed-start Cesàro windows
+roadmap. For a measurable real-valued observable `f` of a contractable process `X` with
+`f ∘ X 0` square-integrable — in particular for any bounded `f` — all fixed-start Cesàro windows
 
 ```text
 (m + 1)⁻¹ ∑_{i ≤ m} f(X_{r + i})
@@ -272,17 +273,17 @@ private theorem tendsto_integral_abs_sub_of_tendsto_eLpNorm_two {μ : Measure Ω
   simpa only [Pi.sub_apply, Real.norm_eq_abs, eLpNorm_one_eq_lintegral_enorm] using
     (integral_norm_eq_lintegral_enorm (hWa_meas m))
 
-/-- A square-integrable measurable observable of a contractable process has fixed-start Cesàro
-averages converging in `L¹` to one common measurable limit.
+/-- A measurable observable of a contractable process whose composite with a *single* coordinate is
+square-integrable has fixed-start Cesàro averages converging in `L¹` to one common measurable limit.
 
 The start `r` is fixed while the window length `m + 1` tends to infinity. The successor in the
 length avoids assigning any special meaning to an empty average.
 
-A bounded observable satisfies the square-integrability hypothesis on a finite measure space, via
-`MemLp.of_bound`. -/
-theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
+Contractability makes the mapped coordinates identically distributed, so square-integrability at
+coordinate `0` carries to all of them. -/
+theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
-    {f : α → ℝ} (hf : Measurable f) (hf_L2 : ∀ i, MemLp (fun ω => f (X i ω)) 2 μ) :
+    {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
       ∀ r : ℕ,
         Tendsto
@@ -291,7 +292,9 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
           atTop (𝓝 0) := by
   let Y : ℕ → Ω → ℝ := fun i ω => f (X i ω)
   have hY : Contractable μ Y := hX.map_values hf hX_ae
-  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := hf_L2
+  have hY_ae : ∀ i, AEMeasurable (Y i) μ := fun i => hf.comp_aemeasurable (hX_ae i)
+  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := fun i =>
+    (hY.identDistrib_coord (hY_ae 0) (hY_ae i)).memLp_snd hf_L2
   have hA_L2 : ∀ m : ℕ, MemLp (blockAverage Y fun i : Fin (m + 1) => (i : ℕ)) 2 μ := fun m =>
     memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i
   let A₂ : ℕ → Lp ℝ 2 μ := fun m =>
@@ -322,6 +325,22 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
     (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) ?_
   rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
   simpa only [ha_toLp] using hW₂_tendsto
+
+/-- **Bounded-observable form**, the shape the Layer 3 roadmap names and the determining-class stage
+consumes. A uniform bound on `f` gives square-integrability of the composite on a finite measure
+space, so this is the direct entry point for bounded observables. -/
+theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
+    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
+    ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
+      ∀ r : ℕ,
+        Tendsto
+          (fun m => ∫ ω,
+            |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
+          atTop (𝓝 0) :=
+  let ⟨C, hC⟩ := hf_bdd
+  weighted_sums_converge_L1_of_memLp hX hX_ae hf
+    (memLp_comp_of_bound hf (hX_ae 0) C (Filter.Eventually.of_forall fun ω => hC (X 0 ω)) 2)
 
 end Probability
 
