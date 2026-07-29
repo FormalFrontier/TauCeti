@@ -19,6 +19,7 @@ trivializing isomorphisms. The two formulations are equivalent:
 
 * `LocalGeneratorsData.IsInvertible.trivializationIso` standardizes each rank-one free
   presentation;
+* `LocalTrivializations.ofIso` transports a local trivialization atlas along an isomorphism;
 * `LocalTrivializations.isInvertible` recovers the local-generator formulation;
 * `LocalTrivializations.ofIsInvertible` constructs local trivializations from an invertible
   sheaf;
@@ -48,7 +49,7 @@ variable {C : Type u₁} [Category.{v₁} C] {J : GrothendieckTopology C}
   {R : Sheaf J RingCat.{u}}
   [∀ Y : C, HasWeakSheafify (J.over Y) AddCommGrpCat.{u}]
   [∀ Y : C, (J.over Y).WEqualsLocallyBijective AddCommGrpCat.{u}]
-  {M : SheafOfModules.{u} R}
+  {M N : SheafOfModules.{u} R}
 
 /-- A local trivialization atlas for a sheaf of modules. It consists of a cover of the terminal
 object and, over every member of the cover, an isomorphism from the standard free rank-one
@@ -95,26 +96,52 @@ end LocalGeneratorsData.IsInvertible
 
 namespace LocalTrivializations
 
+/-- Transport local trivializations along an isomorphism of sheaves of modules. -/
+@[expose]
+def ofIso (t : LocalTrivializations M) (e : M ≅ N) : LocalTrivializations N where
+  I := t.I
+  X := t.X
+  coversTop := t.coversTop
+  iso i := t.iso i ≪≫ (SheafOfModules.overFunctor R (t.X i)).mapIso e
+
+/-- Transporting local trivializations preserves the indexing type. -/
+@[simp]
+lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) :
+    (t.ofIso e).I = t.I := rfl
+
+/-- Transporting local trivializations preserves the covering objects. -/
+@[simp]
+lemma ofIso_X (t : LocalTrivializations M) (e : M ≅ N) :
+    (t.ofIso e).X = t.X := rfl
+
+/-- The transported trivializations are obtained by composing with the restricted isomorphism. -/
+@[simp]
+lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : t.I) :
+    (t.ofIso e).iso i =
+      t.iso i ≪≫ (SheafOfModules.overFunctor R (t.X i)).mapIso e := rfl
+
 /-- Local trivializations exhibit a sheaf as invertible. -/
 theorem isInvertible (t : LocalTrivializations M) : IsInvertible M := by
-  refine ⟨?_, ?_⟩
-  · exact
-      { I := t.I
-        X := t.X
-        coversTop := t.coversTop
-        generators i :=
-          (_root_.SheafOfModules.free.generatingSections
-            (R := R.over (t.X i)) PUnit).ofEpi (t.iso i).hom }
+  let q : SheafOfModules.LocalGeneratorsData.{u₁} M :=
+    { I := t.I
+      X := t.X
+      coversTop := t.coversTop
+      generators i :=
+        (_root_.SheafOfModules.free.generatingSections
+          (R := R.over (t.X i)) PUnit).ofEpi (t.iso i).hom }
+  refine ⟨q, ?_⟩
   refine
     { isLocallyFreeData :=
-        { isIso := fun i ↦ ?_ }
+        { isIso := by
+            change ∀ i : t.I, IsIso
+              ((_root_.SheafOfModules.free.generatingSections
+                (R := R.over (t.X i)) PUnit).ofEpi (t.iso i).hom).π
+            intro i
+            rw [_root_.SheafOfModules.GeneratingSections.ofEpi_π]
+            simpa only [_root_.SheafOfModules.free.generatingSections_π, Category.id_comp] using
+              inferInstanceAs (IsIso (t.iso i).hom) }
       basisNonempty := fun i ↦ ?_
       basisSubsingleton := fun i ↦ ?_ }
-  · dsimp at i ⊢
-    simpa only [_root_.SheafOfModules.GeneratingSections.ofEpi_π,
-      _root_.SheafOfModules.free.generatingSections_I,
-      _root_.SheafOfModules.free.generatingSections_π, Category.id_comp] using
-      inferInstanceAs (IsIso (t.iso i).hom)
   · simpa only [_root_.SheafOfModules.GeneratingSections.ofEpi_I,
       _root_.SheafOfModules.free.generatingSections_I] using
       inferInstanceAs (Nonempty PUnit)
