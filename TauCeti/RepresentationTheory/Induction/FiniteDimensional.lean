@@ -141,6 +141,32 @@ theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v} k S)
   rw [coindSubtypeEquivPi]
   rfl
 
+/-- In the coset model the `G`-action on coinduction is the coordinate permutation
+`q ↦ ⟦q.out * g⟧` followed by the action of the coset factor of `q.out * g`.
+
+Not a `simp` lemma: Mathlib's `@[simps]` on `Representation.coind` rewrites
+`(Rep.coind φ A).ρ g` to its underlying `LinearMap`, so this left-hand side is not in `simp`
+normal form. Mathlib states its own action lemma `Representation.ind_mk` the same way. -/
+theorem coindSubtypeEquivPi_rho_apply (A : Rep.{max u v} k S) (g : G)
+    (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
+    coindSubtypeEquivPi A ((Rep.coind S.subtype A).ρ g f) q =
+      A.ρ (rightCosetFactor (S := S) (q.out * g))
+        (coindSubtypeEquivPi A f (Quotient.mk'' (q.out * g))) := by
+  have h := f.2 (rightCosetFactor (S := S) (q.out * g))
+    (Quotient.out (Quotient.mk'' (q.out * g) :
+      Quotient (QuotientGroup.rightRel S)))
+  -- Expose `S.subtype` so the representative reconstruction lemma rewrites its argument.
+  change f.1 ((rightCosetFactor (S := S) (q.out * g) : G) *
+    Quotient.out (Quotient.mk'' (q.out * g) :
+      Quotient (QuotientGroup.rightRel S))) =
+      A.ρ (rightCosetFactor (S := S) (q.out * g))
+        (f.1 (Quotient.out (Quotient.mk'' (q.out * g) :
+          Quotient (QuotientGroup.rightRel S)))) at h
+  rw [coindSubtypeEquivPi_apply, coindSubtypeEquivPi_apply]
+  -- The coinduced action evaluates `f` at `q.out * g`.
+  change f.1 (q.out * g) = _
+  simpa only [rightCosetFactor_mul_out] using h
+
 /-- The underlying vector space of induction from a finite-index subgroup is a product of copies
 of the original representation indexed by the right cosets. -/
 noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{max u v} k S) :
@@ -175,6 +201,20 @@ theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v} k S)
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
+
+/-- In the coset model of induction the `G`-action is the coordinate permutation
+`q ↦ ⟦q.out * g⟧` followed by the action of the coset factor of `q.out * g`. This is the form a
+trace computation over the coset model consumes.
+
+Not a `simp` lemma, for the same reason as `coindSubtypeEquivPi_rho_apply`: `@[simps]` on
+`Representation.ind` takes `(Rep.ind φ A).ρ g` out of `simp` normal form. -/
+theorem indSubtypeEquivPi_rho_apply [S.FiniteIndex] (A : Rep.{max u v} k S) (g : G)
+    (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
+    indSubtypeEquivPi A ((Rep.ind S.subtype A).ρ g x) q =
+      A.ρ (rightCosetFactor (S := S) (q.out * g))
+        (indSubtypeEquivPi A x (Quotient.mk'' (q.out * g))) := by
+  rw [indSubtypeEquivPi_apply, indSubtypeEquivPi_apply, Rep.hom_comm_apply]
+  exact coindSubtypeEquivPi_rho_apply A g _ q
 
 end CosetModel
 
@@ -220,8 +260,9 @@ noncomputable def indFDRep {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     infer_instance
   exact FDRep.of (Rep.ind S.subtype A').ρ
 
-/-- Forgetting finite-dimensionality from `indFDRep` recovers Mathlib's induced
-representation. -/
+/-- Forgetting finite-dimensionality from `indFDRep` recovers Mathlib's induced representation.
+This is the one place where the two objects are identified; everything below about `indFDRep` is
+stated and proved through this isomorphism. -/
 noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
     (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ≅
@@ -229,30 +270,44 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
   Iso.refl _
 
 /-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
-It acts on objects as `indFDRep`; on intertwiners it is Mathlib's `Rep.indFunctor`, transported
-back along the fully faithful forgetful functor `FDRep k G ⥤ Rep k G`. -/
+It acts on objects as `indFDRep`; on intertwiners it is Mathlib's `Rep.indFunctor`, conjugated by
+`indFDRepForgetIso` and transported back along the fully faithful forgetful functor
+`FDRep k G ⥤ Rep k G`. -/
 noncomputable def indFDRepFunctor {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] : FDRep k S ⥤ FDRep k G where
   obj A := indFDRep A
-  map f := (forget₂ (FDRep k G) (Rep k G)).preimage
-    ((Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f))
-  -- Both laws hold after pushing the forgetful functor through the preimage; the closing `rfl`
-  -- only identifies `(forget₂ _ _).obj (indFDRep _)` with `Rep.ind S.subtype _`.
+  map {A B} f := (forget₂ (FDRep k G) (Rep k G)).preimage
+    ((indFDRepForgetIso A).hom ≫
+      (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
+        (indFDRepForgetIso B).inv)
+  -- Both laws hold after pushing the forgetful functor through the preimage: the conjugating
+  -- copies of `indFDRepForgetIso` then cancel, so neither law unfolds `indFDRep`.
   map_id _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    simp only [Functor.map_preimage, CategoryTheory.Functor.map_id]; rfl)
+    simp only [Functor.map_preimage, CategoryTheory.Functor.map_id, Rep.indFunctor_obj,
+      Category.id_comp, Iso.hom_inv_id])
   map_comp _ _ := (forget₂ (FDRep k G) (Rep k G)).map_injective (by
-    simp only [Functor.map_preimage, CategoryTheory.Functor.map_comp]; rfl)
+    simp only [Functor.map_preimage, CategoryTheory.Functor.map_comp, Category.assoc,
+      Iso.inv_hom_id_assoc])
 
 /-- Under the forgetful functor to `Rep k G`, `indFDRepFunctor` is naturally isomorphic to
-Mathlib's induction functor. -/
+Mathlib's induction functor, componentwise by `indFDRepForgetIso`. -/
 noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] :
     indFDRepFunctor (k := k) (S := S) ⋙ forget₂ (FDRep k G) (Rep k G) ≅
       forget₂ (FDRep k S) (Rep k S) ⋙ Rep.indFunctor k S.subtype :=
-  NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun f ↦ by
-    simp only [indFDRepFunctor, indFDRepForgetIso, Functor.comp_map, Iso.refl_hom,
-      Functor.map_preimage]
-    rfl
+  NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun {A B} f ↦ by
+    -- Naturality is the cancellation of the conjugating isomorphisms in `indFDRepFunctor.map`.
+    have h := (forget₂ (FDRep k G) (Rep k G)).map_preimage
+      ((indFDRepForgetIso A).hom ≫
+        (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
+          (indFDRepForgetIso B).inv)
+    change (forget₂ (FDRep k G) (Rep k G)).map ((forget₂ (FDRep k G) (Rep k G)).preimage
+        ((indFDRepForgetIso A).hom ≫
+          (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
+            (indFDRepForgetIso B).inv)) ≫ (indFDRepForgetIso B).hom =
+      (indFDRepForgetIso A).hom ≫
+        (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
+    rw [h, Category.assoc, Category.assoc, Iso.inv_hom_id, Category.comp_id]
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
 original representation. -/
