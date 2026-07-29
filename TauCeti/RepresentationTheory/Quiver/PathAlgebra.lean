@@ -5,11 +5,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Algebra.Defs
+public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.Combinatorics.Quiver.Path
 public import Mathlib.Data.Fintype.EquivFin
+public import Mathlib.LinearAlgebra.Dimension.Finite
 public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
+public import Mathlib.RingTheory.Adjoin.Basic
 
 /-!
 # The path algebra of a quiver
@@ -35,6 +38,7 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   `1 = ∑ᵥ eᵥ` exist.
 * `TauCeti.PathAlgebra.vertexIdempotent`: the idempotent `eᵥ` given by the trivial path at `v`.
 * `TauCeti.pathAlgebraBasis`: the paths of `Q` as a `k`-basis of `kQ`.
+* `TauCeti.Quiver.OneLoop`: the quiver with one vertex and one loop.
 
 ## Main results
 
@@ -45,6 +49,11 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   rank the number of paths of `Q`. The specialization to a finite acyclic quiver, whose paths are
   finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
   `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
+* `TauCeti.PathAlgebra.adjoin_vertexIdempotents_union_arrows`: the vertex idempotents and arrows
+  generate the path algebra.
+* `TauCeti.PathAlgebra.oneLoopAlgEquiv`: the one-loop path algebra is the additive monoid algebra
+  on `ℕ`; `TauCeti.not_finiteDimensional_pathAlgebra_oneLoop` records that it is
+  infinite-dimensional.
 
 ## Implementation notes
 
@@ -84,12 +93,85 @@ open _root_.Quiver
 
 universe u v w
 
+/-! ### The one-loop quiver -/
+
+namespace Quiver
+
+/-- The quiver with one vertex and one loop. -/
+inductive OneLoop : Type
+  | vertex
+  deriving DecidableEq
+
+namespace OneLoop
+
+instance : Fintype OneLoop where
+  elems := {vertex}
+  complete x := by cases x; simp
+
+instance : Unique OneLoop where
+  default := vertex
+  uniq x := by cases x; rfl
+
+instance : _root_.Quiver OneLoop where
+  Hom _ _ := PUnit
+
+instance (a b : OneLoop) : Subsingleton (a ⟶ b) :=
+  inferInstanceAs (Subsingleton PUnit)
+
+/-- The unique loop in the one-loop quiver. -/
+def loop : (vertex : OneLoop) ⟶ vertex := PUnit.unit
+
+/-- The path of a prescribed length in the one-loop quiver. -/
+private def pathOfLength : ℕ → _root_.Quiver.Path (vertex : OneLoop) vertex
+  | 0 => .nil
+  | n + 1 => (pathOfLength n).cons loop
+
+@[simp]
+private theorem length_pathOfLength (n : ℕ) : (pathOfLength n).length = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => simp [pathOfLength, ih]
+
+private theorem length_toList {a b : OneLoop}
+    (p : _root_.Quiver.Path a b) : p.toList.length = p.length := by
+  induction p with
+  | nil => rfl
+  | cons p e ih => simp [ih]
+
+private theorem path_eq_pathOfLength
+    (p : _root_.Quiver.Path (vertex : OneLoop) vertex) :
+    p = pathOfLength p.length := by
+  apply (_root_.Quiver.Path.toList_injective vertex vertex)
+  apply List.length_injective
+  rw [length_toList, length_toList, length_pathOfLength]
+
+end OneLoop
+
+end Quiver
+
 /-! ### The index type of the path basis -/
 
 /-- The total space of the paths of a quiver: a path together with its source and target. This is
 the index type of the path basis of the path algebra. -/
 abbrev Quiver.TotalPath (Q : Type u) [Quiver.{v} Q] : Type _ :=
   Σ a b : Q, _root_.Quiver.Path a b
+
+namespace Quiver.OneLoop
+
+/-- Paths in the one-loop quiver are classified by their length. -/
+private def totalPathEquivNat : Quiver.TotalPath OneLoop ≃ ℕ where
+  toFun x := x.2.2.length
+  invFun n := ⟨vertex, vertex, pathOfLength n⟩
+  left_inv x := by
+    obtain ⟨a, b, p⟩ := x
+    cases a
+    cases b
+    simp only
+    exact congrArg (fun q => (⟨vertex, vertex, q⟩ : Quiver.TotalPath OneLoop))
+      (path_eq_pathOfLength p).symm
+  right_inv := length_pathOfLength
+
+end Quiver.OneLoop
 
 namespace Quiver.TotalPath
 
@@ -571,5 +653,133 @@ theorem finrank_pathAlgebra [Fintype (Quiver.TotalPath Q)] :
   Module.finrank_eq_card_basis (pathAlgebraBasis k Q)
 
 end DivisionRing
+
+namespace PathAlgebra
+
+section Generate
+
+variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q] [Finite Q]
+
+/-- The path-algebra element attached to an arrow. -/
+noncomputable def ofArrow {a b : Q} (e : a ⟶ b) : pathAlgebra k Q :=
+  ofPath ⟨a, b, e.toPath⟩
+
+/-- The vertex idempotents and arrows generate the path algebra. Vertex idempotents are necessary:
+arrows alone do not generate the path algebra of, for example, a discrete multi-vertex quiver. -/
+theorem adjoin_vertexIdempotents_union_arrows :
+    Algebra.adjoin k
+        (Set.range (vertexIdempotent k) ∪
+          Set.range fun e : Σ a b : Q, a ⟶ b => ofArrow e.2.2) =
+      ⊤ := by
+  apply top_unique
+  suffices ∀ f : pathAlgebra k Q,
+      f ∈ Algebra.adjoin k
+        (Set.range (vertexIdempotent k) ∪
+          Set.range fun e : Σ a b : Q, a ⟶ b => ofArrow e.2.2) by
+    exact fun f _ => this f
+  intro f
+  induction f using induction_linear with
+  | zero => exact Subalgebra.zero_mem _
+  | add f g hf hg => exact Subalgebra.add_mem _ hf hg
+  | single x c =>
+      have ofPath_mem (x : Quiver.TotalPath Q) :
+          ofPath x ∈
+            Algebra.adjoin k
+              (Set.range (vertexIdempotent k) ∪
+                Set.range fun e : Σ a b : Q, a ⟶ b => ofArrow e.2.2) := by
+        obtain ⟨a, b, p⟩ := x
+        induction p with
+        | nil =>
+            exact Algebra.subset_adjoin
+              (Set.mem_union_left _ ⟨a, rfl⟩)
+        | @cons b c p e ih =>
+            rw [← _root_.Quiver.Path.comp_toPath_eq_cons,
+              ← ofPath_mul_ofPath_of_comp e.toPath p]
+            exact Subalgebra.mul_mem _
+              (Algebra.subset_adjoin (Set.mem_union_right _
+                ⟨⟨b, c, e⟩, rfl⟩)) ih
+      simpa [ofPath_eq_single] using
+        (Algebra.adjoin k
+          (Set.range (vertexIdempotent k) ∪
+            Set.range fun e : Σ a b : Q, a ⟶ b => ofArrow e.2.2)).smul_mem
+          (ofPath_mem x) c
+
+end Generate
+
+section OneLoop
+
+variable (k : Type w) [CommSemiring k]
+
+private noncomputable def oneLoopLinearEquiv :
+    pathAlgebra k Quiver.OneLoop ≃ₗ[k] AddMonoidAlgebra k ℕ :=
+  ((pathAlgebraBasis k Quiver.OneLoop).repr.trans
+      (Finsupp.domLCongr Quiver.OneLoop.totalPathEquivNat)).trans
+    (AddMonoidAlgebra.coeffLinearEquiv k).symm
+
+private theorem oneLoopLinearEquiv_ofPath (x : Quiver.TotalPath Quiver.OneLoop) :
+    oneLoopLinearEquiv k (PathAlgebra.ofPath x) =
+      AddMonoidAlgebra.single (Quiver.OneLoop.totalPathEquivNat x) 1 := by
+  have hb : pathAlgebraBasis k Quiver.OneLoop x = ofPath x :=
+    congrFun (coe_pathAlgebraBasis k Quiver.OneLoop) x
+  rw [← hb]
+  simp only [oneLoopLinearEquiv, LinearEquiv.trans_apply, Module.Basis.repr_self]
+  simp
+
+private theorem oneLoopLinearEquiv_single (x : Quiver.TotalPath Quiver.OneLoop) (c : k) :
+    oneLoopLinearEquiv k (single x c) =
+      AddMonoidAlgebra.single (Quiver.OneLoop.totalPathEquivNat x) c := by
+  rw [← mul_one c, ← smul_single, ← ofPath_eq_single, map_smul,
+    oneLoopLinearEquiv_ofPath]
+  simp
+
+private theorem oneLoopLinearEquiv_map_one :
+    oneLoopLinearEquiv k (1 : pathAlgebra k Quiver.OneLoop) = 1 := by
+  rw [one_def]
+  simp [vertexIdempotent_eq_single, oneLoopLinearEquiv_single,
+    Quiver.OneLoop.totalPathEquivNat, ← AddMonoidAlgebra.one_def]
+
+private theorem oneLoopLinearEquiv_map_mul
+    (f g : pathAlgebra k Quiver.OneLoop) :
+    oneLoopLinearEquiv k (f * g) = oneLoopLinearEquiv k f * oneLoopLinearEquiv k g := by
+  induction f using induction_linear with
+  | zero => simp
+  | add f₁ f₂ ih₁ ih₂ => simp [ih₁, ih₂, add_mul]
+  | single x a =>
+      induction g using induction_linear with
+      | zero => simp
+      | add g₁ g₂ ih₁ ih₂ => simp [ih₁, ih₂, mul_add]
+      | single y b =>
+          obtain ⟨x₁, x₂, p⟩ := x
+          obtain ⟨y₁, y₂, q⟩ := y
+          cases x₁
+          cases x₂
+          cases y₁
+          cases y₂
+          simp [single_mul_single, Quiver.TotalPath.mul?,
+            oneLoopLinearEquiv_single, Quiver.OneLoop.totalPathEquivNat,
+            _root_.Quiver.Path.length_comp, Nat.add_comm]
+
+/-- The path algebra of the quiver with one vertex and one loop is the additive monoid algebra on
+`ℕ` (equivalently, the polynomial algebra in one variable). -/
+noncomputable def oneLoopAlgEquiv :
+    pathAlgebra k Quiver.OneLoop ≃ₐ[k] AddMonoidAlgebra k ℕ :=
+  AlgEquiv.ofLinearEquiv (oneLoopLinearEquiv k) (oneLoopLinearEquiv_map_one k)
+    (oneLoopLinearEquiv_map_mul k)
+
+end OneLoop
+
+end PathAlgebra
+
+/-- Over a division ring, the path algebra of the one-loop quiver is infinite-dimensional. -/
+theorem not_finiteDimensional_pathAlgebra_oneLoop
+    (k : Type w) [DivisionRing k] :
+    ¬ FiniteDimensional k (pathAlgebra k Quiver.OneLoop) := by
+  letI : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
+    Quiver.OneLoop.totalPathEquivNat.infinite_iff.mpr inferInstance
+  intro h
+  letI : Module.Finite k (pathAlgebra k Quiver.OneLoop) := h
+  exact Module.Finite.not_linearIndependent_of_infinite
+    (⇑(pathAlgebraBasis k Quiver.OneLoop))
+    (pathAlgebraBasis k Quiver.OneLoop).linearIndependent
 
 end TauCeti

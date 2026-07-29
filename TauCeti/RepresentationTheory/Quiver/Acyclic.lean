@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
+public import TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra
 
 /-!
 # Acyclic quivers
