@@ -41,13 +41,6 @@ noncomputable def twoPiHermiteFunction (n : ℕ) (x : ℝ) : ℝ :=
   Real.sqrt (Real.sqrt (2 * Real.pi)) *
     hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
 
-/-- The defining equation for the `2π`-normalized Hermite function. -/
-theorem twoPiHermiteFunction_def (n : ℕ) (x : ℝ) :
-    twoPiHermiteFunction n x =
-      Real.sqrt (Real.sqrt (2 * Real.pi)) *
-        hermiteFunction n (Real.sqrt (2 * Real.pi) * x) :=
-  twoPiHermiteFunction.eq_1 n x
-
 private lemma hermiteFourierScale_pos : 0 < Real.sqrt (2 * Real.pi) :=
   Real.sqrt_pos.2 (mul_pos two_pos Real.pi_pos)
 
@@ -64,7 +57,7 @@ theorem twoPiHermiteFunction_zero (x : ℝ) :
     twoPiHermiteFunction 0 x =
       (Real.sqrt (Real.sqrt (2 * Real.pi)) / Real.sqrt (Real.sqrt Real.pi)) *
         Real.exp (-Real.pi * x ^ 2) := by
-  rw [twoPiHermiteFunction_def, hermiteFunction_zero]
+  rw [twoPiHermiteFunction.eq_1, hermiteFunction_zero]
   have hexp :
       -((Real.sqrt (2 * Real.pi) * x) ^ 2 / 2) = -Real.pi * x ^ 2 := by
     rw [mul_pow, hermiteFourierScale_sq]
@@ -79,7 +72,7 @@ theorem continuous_twoPiHermiteFunction (n : ℕ) :
   rw [show twoPiHermiteFunction n = fun x =>
       Real.sqrt (Real.sqrt (2 * Real.pi)) *
         hermiteFunction n (Real.sqrt (2 * Real.pi) * x) from
-    funext (twoPiHermiteFunction_def n)]
+    funext (twoPiHermiteFunction.eq_1 n)]
   exact continuous_const.mul
     ((continuous_hermiteFunction n).comp (continuous_const.mul continuous_id))
 
@@ -91,7 +84,7 @@ theorem mul_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
         + (Real.sqrt ((n : ℝ) / 2) / Real.sqrt (2 * Real.pi)) *
           twoPiHermiteFunction (n - 1) x := by
   have h := mul_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
-  simp only [twoPiHermiteFunction_def]
+  simp only [twoPiHermiteFunction.eq_1]
   calc
     x * (Real.sqrt (Real.sqrt (2 * Real.pi)) *
         hermiteFunction n (Real.sqrt (2 * Real.pi) * x)) =
@@ -138,7 +131,7 @@ theorem hasDerivAt_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
               hermiteFunction (n + 1) (Real.sqrt (2 * Real.pi) * x)) *
           Real.sqrt (2 * Real.pi))) x := by
     apply hsimp.congr_of_eventuallyEq
-    exact Filter.Eventually.of_forall fun y => (twoPiHermiteFunction_def n y).symm
+    exact Filter.Eventually.of_forall fun y => (twoPiHermiteFunction.eq_1 n y).symm
   have hval :
       Real.sqrt (Real.sqrt (2 * Real.pi)) *
           ((Real.sqrt ((n : ℝ) / 2) *
@@ -149,7 +142,7 @@ theorem hasDerivAt_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
         = Real.sqrt (2 * Real.pi) *
           (Real.sqrt ((n : ℝ) / 2) * twoPiHermiteFunction (n - 1) x
             - Real.sqrt (((n : ℝ) + 1) / 2) * twoPiHermiteFunction (n + 1) x) := by
-    simp only [twoPiHermiteFunction_def]
+    simp only [twoPiHermiteFunction.eq_1]
     ring
   exact hval ▸ h'
 
@@ -170,7 +163,7 @@ theorem mul_sub_invScale_deriv_twoPiHermiteFunction (n : ℕ) (x : ℝ) :
   have h := mul_sub_deriv_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
   have hderiv := deriv_hermiteFunction n (Real.sqrt (2 * Real.pi) * x)
   rw [deriv_twoPiHermiteFunction]
-  simp only [twoPiHermiteFunction_def]
+  simp only [twoPiHermiteFunction.eq_1]
   rw [← mul_assoc (Real.sqrt (2 * Real.pi))⁻¹, inv_mul_cancel₀ hermiteFourierScale_ne_zero,
     one_mul]
   linear_combination
@@ -183,7 +176,7 @@ theorem integrable_twoPiHermiteFunction (n : ℕ) :
   have h :=
     ((integrable_hermiteFunction n).comp_mul_left' hermiteFourierScale_ne_zero).const_mul
       (Real.sqrt (Real.sqrt (2 * Real.pi)))
-  exact h.congr (Filter.Eventually.of_forall fun x => (twoPiHermiteFunction_def n x).symm)
+  exact h.congr (Filter.Eventually.of_forall fun x => (twoPiHermiteFunction.eq_1 n x).symm)
 
 private theorem integrable_mul_twoPiHermiteFunction (n : ℕ) :
     Integrable (fun x : ℝ => x * twoPiHermiteFunction n x) volume := by
