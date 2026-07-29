@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.GroupTheory.Perm.Fin
-public import TauCeti.GroupTheory.Perm.CyclePower
 public import TauCeti.KnotTheory.Grid.Unknot
+import TauCeti.GroupTheory.Perm.CyclePower
 
 /-!
 # The standard torus link grid diagrams
@@ -15,19 +15,23 @@ This file builds the standard grid diagram of the `(p + 1, q + 1)` torus link: o
 `(p + 1) + (q + 1)` the `O` markings sit on the diagonal and the `X` markings sit on the diagonal
 shifted up by `q + 1` rows. Following the markings alternately horizontally and vertically shifts
 the column down by `q + 1` each time, so the component permutation is the inverse of the
-`(q + 1)`-st power of the cyclic shift `finRotate`, and the represented link is the closure of the
-`(p + 1)`-strand braid winding `q + 1` times around, that is, the `(p + 1, q + 1)` torus link. The
-smallest members are the standard unknot grids (`q = 0`), the `4 × 4` Hopf link grid
-(`p = q = 1`), and the `5 × 5` trefoil grid (`p = 1`, `q = 2`).
+`(q + 1)`-st power of the cyclic shift `finRotate`. The smallest members are the standard unknot
+grids (`q = 0`), the `4 × 4` grid with `p = q = 1`, and the `5 × 5` grid with `p = 1`, `q = 2`.
 
 The cycle decomposition of the component permutation is computed from
 `TauCeti.cycleType_pow_of_isCycle`: the diagram has exactly `gcd (p + 1) (q + 1)` link components,
 all of them carrying the same number `((p + 1) + (q + 1)) / gcd (p + 1) (q + 1)` of markings, and
-it represents a knot exactly when `p + 1` and `q + 1` are coprime. This matches the classical
-count of the components of the `(p + 1, q + 1)` torus link, but nothing here identifies the
-represented link with a torus link on the nose: as the roadmap's standing convention has it, a
-link *is* a grid diagram modulo grid moves at this stage, and the comparison with other
-presentations of a link belongs to the separate reconciliation lane.
+it represents a knot exactly when `p + 1` and `q + 1` are coprime. That is all that is proved
+here.
+
+Everything else in the name "torus link" is informal motivation and is *not* established by this
+file: that the staircase traversal is the closure of the `(p + 1)`-strand braid winding `q + 1`
+times around, hence the `(p + 1, q + 1)` torus link — of which the classical component count is
+indeed `gcd (p + 1) (q + 1)`, matching the count proved here — and, in the same vein, the
+readings of the members above as the unknot, the Hopf link, and the trefoil. As the roadmap's
+standing convention has it, a link *is* a grid diagram modulo grid moves at this stage, and the
+comparison with other presentations of a link belongs to the separate reconciliation lane; until
+that lane runs, the classical names are labels for these diagrams, not theorems about them.
 
 ## Main definitions
 
@@ -116,6 +120,9 @@ theorem torusLink_X_toPerm :
     (torusLink p q).X.toPerm = finRotate (p + 1 + (q + 1)) ^ (q + 1) :=
   (rfl)
 
+-- Not `@[simp]`: the `simp` normal form of `(torusLink p q).O c` goes through the marking-state
+-- lemma `torusLink_O_toPerm` above, which already rewrites it to `c`, so tagging the pointwise
+-- form is a `simpNF` violation ("simp can prove this"). The same holds for the `X` marking.
 /-- The `O` marking of a standard torus link grid in a column is in the diagonal row. -/
 theorem torusLink_O_apply (c : Fin (p + 1 + (q + 1))) : (torusLink p q).O c = c :=
   (rfl)
@@ -138,12 +145,13 @@ same time: the shift commutes with its own power. -/
 theorem relabelRows_relabelColumns_torusLink :
     ((torusLink p q).relabelRows (finRotate (p + 1 + (q + 1)))).relabelColumns
         (finRotate (p + 1 + (q + 1))) = torusLink p q := by
+  have hcomm : Commute (finRotate (p + 1 + (q + 1))) (finRotate (p + 1 + (q + 1)) ^ (q + 1)) :=
+    Commute.self_pow _ (q + 1)
   refine GridDiagram.ext (GridState.ext fun c => ?_) (GridState.ext fun c => ?_)
   · rw [relabelColumns_O_apply, relabelRows_O_apply, torusLink_O_apply, torusLink_O_apply,
       Equiv.apply_symm_apply]
   · rw [relabelColumns_X_apply, relabelRows_X_apply, torusLink_X_apply, torusLink_X_apply,
-      ← Equiv.Perm.mul_apply, ← pow_succ', pow_succ, Equiv.Perm.mul_apply,
-      Equiv.apply_symm_apply]
+      ← Equiv.Perm.mul_apply, hcomm.eq, Equiv.Perm.mul_apply, Equiv.apply_symm_apply]
 
 /-! ### The represented link and its components -/
 
@@ -151,14 +159,7 @@ theorem relabelRows_relabelColumns_torusLink :
 back down to the next `O` marking shifts the column down by `q + 1`. -/
 theorem componentPerm_torusLink :
     (torusLink p q).componentPerm = (finRotate (p + 1 + (q + 1)) ^ (q + 1))⁻¹ := by
-  refine Equiv.ext fun c => ?_
-  rw [componentPerm_apply, torusLink_O_apply]
-  have h1 : (torusLink p q).X (XColumnOfRow (torusLink p q) c) = c :=
-    XColumnOfRow_apply _ c
-  have h2 : (torusLink p q).X ((finRotate (p + 1 + (q + 1)) ^ (q + 1))⁻¹ c) = c := by
-    rw [torusLink_X_apply]
-    simp
-  exact (torusLink p q).X.toPerm.injective (h1.trans h2.symm)
+  rw [componentPerm_def, torusLink_O_toPerm, torusLink_X_toPerm, mul_one]
 
 /-- Cancelling the shift out of the grid number inside a greatest common divisor:
 `gcd ((p + 1) + (q + 1)) (q + 1) = gcd (p + 1) (q + 1)`. -/

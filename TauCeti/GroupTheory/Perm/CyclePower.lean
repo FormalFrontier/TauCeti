@@ -61,7 +61,7 @@ theorem pow_apply_ne_self_of_isCycle (hf : f.IsCycle) {k : ℕ} (hk : ¬f.suppor
 
 /-- Every cycle of a power of a cycle of length `n` has the same length, namely the order
 `n / gcd n k` of that power. -/
-theorem card_support_of_mem_cycleFactorsFinset_pow (hf : f.IsCycle) {k : ℕ} {c : Perm α}
+private theorem card_support_of_mem_cycleFactorsFinset_pow (hf : f.IsCycle) {k : ℕ} {c : Perm α}
     (hc : c ∈ (f ^ k).cycleFactorsFinset) :
     c.support.card = f.support.card / f.support.card.gcd k := by
   have horder : orderOf (f ^ k) = f.support.card / f.support.card.gcd k := by

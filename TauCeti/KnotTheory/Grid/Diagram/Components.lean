@@ -60,6 +60,12 @@ the oriented link represented by `G`. -/
 def componentPerm : Equiv.Perm (Fin n) :=
   G.X.toPerm⁻¹ * G.O.toPerm
 
+/-- The component permutation is the `O`-marking permutation followed by the inverse of the
+`X`-marking permutation. Downstream modules use this defining formula to read off the component
+permutation of a diagram whose two marking permutations are known. -/
+theorem componentPerm_def : G.componentPerm = G.X.toPerm⁻¹ * G.O.toPerm :=
+  (rfl)
+
 /-- Applying the component permutation follows the `O`-marking's row to its unique
 `X`-marking column. -/
 @[simp]
