@@ -10,9 +10,8 @@ public import TauCeti.AlgebraicTopology.SimplicialComplex.Collapse.Basic
 # Relabeling simplicial collapses
 
 Simplicial collapse is intrinsic to a complex and must not depend on its ambient vertex names.
-This file proves that an injective relabeling carries free pairs, elementary collapses, finite
-collapse sequences, and collapsibility to the corresponding image complexes. In particular, a
-vertex equivalence preserves and reflects both `CollapsesTo` and `Collapsible`.
+This file proves that an injective relabeling preserves and reflects free pairs, elementary
+collapses, finite collapse sequences, and collapsibility.
 
 This is functorial infrastructure for the collapse track in layer 11 of the geometric-topology
 roadmap. It lets later subdivision and product constructions replace a complex by an isomorphic
@@ -27,8 +26,12 @@ the standard invariance of those definitions under a change of vertex labels.
   elementary collapse.
 * `PreAbstractSimplicialComplex.CollapsesTo.map`: an injective vertex map preserves a finite
   collapse sequence.
+* `PreAbstractSimplicialComplex.CollapsesTo.map_iff_of_injective`: an injective vertex map
+  preserves and reflects a collapse sequence.
 * `PreAbstractSimplicialComplex.CollapsesTo.map_equiv_iff`: relabeling by a vertex equivalence
   preserves and reflects a collapse sequence.
+* `PreAbstractSimplicialComplex.Collapsible.map_iff_of_injective`: an injective vertex map
+  preserves and reflects collapsibility.
 * `PreAbstractSimplicialComplex.Collapsible.map_equiv_iff`: relabeling by a vertex equivalence
   preserves and reflects collapsibility.
 -/
@@ -46,6 +49,22 @@ private theorem mem_map_iff {f : α → β} {K : _root_.PreAbstractSimplicialCom
     {σ : Finset β} : σ ∈ K.map f ↔ ∃ τ, τ ∈ K ∧ τ.image f = σ :=
   Iff.rfl
 
+private theorem map_injective (f : α → β) (hf : Function.Injective f) :
+    Function.Injective (fun K : _root_.PreAbstractSimplicialComplex α => K.map f) := by
+  intro K L hKL
+  refine SetLike.ext fun σ => ?_
+  have mem_image (P : _root_.PreAbstractSimplicialComplex α) :
+      σ.image f ∈ P.map f ↔ σ ∈ P := by
+    constructor
+    · rintro ⟨τ, hτ, hτσ⟩
+      rwa [(Finset.image_inj hf).mp hτσ] at hτ
+    · exact fun hσ => mem_map_iff.mpr ⟨σ, hσ, rfl⟩
+  have hKL' : K.map f = L.map f := by simpa only using hKL
+  calc
+    σ ∈ K ↔ σ.image f ∈ K.map f := (mem_image K).symm
+    _ ↔ σ.image f ∈ L.map f := by rw [hKL']
+    _ ↔ σ ∈ L := mem_image L
+
 /-- Mapping a one-vertex complex along any vertex map gives the one-vertex complex at the image
 vertex. -/
 @[simp]
@@ -62,6 +81,7 @@ theorem map_point (f : α → β) (v : α) : (point v).map f = point (f v) := by
 
 /-- An injective vertex map commutes with deletion: a face contains the image of `σ` exactly when
 its unique preimage face contains `σ`. -/
+@[simp]
 theorem map_deletion (f : α → β) (hf : Function.Injective f) (K : PreAbstractSimplicialComplex α)
     (σ : Finset α) : (deletion K σ).map f = deletion (K.map f) (σ.image f) := by
   refine SetLike.ext fun ω => ?_
@@ -111,6 +131,32 @@ theorem map (h : ElementaryCollapsesTo K L) (f : α → β) (hf : Function.Injec
   subst L
   exact of_isFreePair (hfree.map f hf) (map_deletion f hf K σ)
 
+private theorem exists_of_map_left {P : _root_.PreAbstractSimplicialComplex β}
+    {f : α → β} (hf : Function.Injective f) (h : ElementaryCollapsesTo (K.map f) P) :
+    ∃ L : _root_.PreAbstractSimplicialComplex α,
+      P = L.map f ∧ ElementaryCollapsesTo K L := by
+  obtain ⟨σ', τ', hfree, _, hmem⟩ := h.exists_pair
+  have hP : P = deletion (K.map f) σ' := SetLike.ext fun ω =>
+    (hmem ω).trans <|
+      (mem_deletion_of_isFreePair (K.map f) hfree).symm.trans mem_deletion.symm
+  subst P
+  obtain ⟨σ, hσ, hσσ'⟩ := mem_map_iff.mp hfree.lower_mem
+  obtain ⟨τ, hτ, hττ'⟩ := mem_map_iff.mp hfree.upper_mem
+  subst σ'
+  subst τ'
+  have hfree' : IsFreePair K σ τ :=
+    { lower_mem := hσ
+      upper_mem := hτ
+      lower_ssubset_upper := (Finset.image_ssubset_image hf).mp hfree.lower_ssubset_upper
+      eq_lower_or_eq_upper := by
+        intro ω hω hσω
+        have hω' : ω.image f ∈ K.map f := mem_map_iff.mpr ⟨ω, hω, rfl⟩
+        have hσω' : σ.image f ⊆ ω.image f := Finset.image_subset_image hσω
+        rcases hfree.eq_lower_or_eq_upper hω' hσω' with h | h
+        · exact Or.inl ((Finset.image_inj hf).mp h)
+        · exact Or.inr ((Finset.image_inj hf).mp h) }
+  exact ⟨deletion K σ, (map_deletion f hf K σ).symm, of_isFreePair hfree' rfl⟩
+
 end ElementaryCollapsesTo
 
 namespace CollapsesTo
@@ -125,26 +171,31 @@ theorem map (h : CollapsesTo K L) (f : α → β) (hf : Function.Injective f) :
     exact hA.tail (hAB.map f hf)
   · exact refl _
 
-/-- Relabeling both complexes by a vertex equivalence preserves and reflects the existence of a
-finite collapse sequence. -/
-theorem map_equiv_iff (e : α ≃ β) :
-    CollapsesTo (K.map e) (L.map e) ↔ CollapsesTo K L := by
-  classical
-  have map_symm (P : PreAbstractSimplicialComplex α) : (P.map e).map e.symm = P := by
-    refine SetLike.ext fun σ => ?_
-    rw [mem_map_iff]
-    constructor
-    · rintro ⟨τ, hτ, rfl⟩
-      obtain ⟨ρ, hρP, rfl⟩ := mem_map_iff.mp hτ
-      simpa [Finset.image_image] using hρP
-    · intro hσ
-      refine ⟨σ.image e, mem_map_iff.mpr ⟨σ, hσ, rfl⟩, ?_⟩
-      simp [Finset.image_image]
+/-- An injective relabeling preserves and reflects finite collapse sequences. -/
+theorem map_iff_of_injective (f : α → β) (hf : Function.Injective f) :
+    CollapsesTo (K.map f) (L.map f) ↔ CollapsesTo K L := by
   constructor
   · intro h
-    have h' := h.map e.symm e.symm.injective
-    rwa [map_symm K, map_symm L] at h'
-  · exact fun h => h.map e e.injective
+    obtain ⟨q, hLQ, hKQ⟩ := property_of_elementaryCollapsesTo
+      (p := fun P => ∃ q : _root_.PreAbstractSimplicialComplex α,
+        P = q.map f ∧ CollapsesTo K q)
+      (fun ⦃A B⦄ hAB hA => by
+        obtain ⟨q, hAQ, hKQ⟩ := hA
+        have hAB' : ElementaryCollapsesTo (q.map f) _ := hAQ ▸ hAB
+        obtain ⟨r, hBR, hQR⟩ := ElementaryCollapsesTo.exists_of_map_left hf hAB'
+        exact ⟨r, hBR, hKQ.tail hQR⟩)
+      h
+      ⟨K, rfl, refl K⟩
+    have hLQ' : L = q := map_injective f hf hLQ
+    rwa [← hLQ'] at hKQ
+  · exact fun h => h.map f hf
+
+/-- Relabeling both complexes by a vertex equivalence preserves and reflects the existence of a
+finite collapse sequence. -/
+@[simp]
+theorem map_equiv_iff (e : α ≃ β) :
+    CollapsesTo (K.map e) (L.map e) ↔ CollapsesTo K L :=
+  map_iff_of_injective e e.injective
 
 end CollapsesTo
 
@@ -157,15 +208,27 @@ theorem map (h : Collapsible K) (f : α → β) (hf : Function.Injective f) :
   obtain ⟨v, hv⟩ := collapsible_iff.mp h
   exact collapsible_iff.mpr ⟨f v, by simpa using hv.map f hf⟩
 
-/-- Relabeling a complex by a vertex equivalence preserves and reflects collapsibility. -/
-theorem map_equiv_iff (e : α ≃ β) : Collapsible (K.map e) ↔ Collapsible K := by
-  classical
+/-- An injective relabeling preserves and reflects collapsibility. -/
+theorem map_iff_of_injective (f : α → β) (hf : Function.Injective f) :
+    Collapsible (K.map f) ↔ Collapsible K := by
   constructor
   · intro h
     obtain ⟨w, hw⟩ := collapsible_iff.mp h
-    refine collapsible_iff.mpr ⟨e.symm w, (CollapsesTo.map_equiv_iff e).mp ?_⟩
-    simpa using hw
-  · exact fun h => h.map e e.injective
+    have hwK : ({w} : Finset β) ∈ K.map f := point_le_iff.mp hw.le
+    obtain ⟨σ, hσ, hσw⟩ := mem_map_iff.mp hwK
+    obtain ⟨v, hv⟩ := (K.isRelLowerSet_faces hσ).1
+    have hvw : f v = w := by
+      have : f v ∈ σ.image f := Finset.mem_image.mpr ⟨v, hv, rfl⟩
+      rw [hσw, Finset.mem_singleton] at this
+      exact this
+    refine collapsible_iff.mpr ⟨v, (CollapsesTo.map_iff_of_injective f hf).mp ?_⟩
+    simpa [hvw] using hw
+  · exact fun h => h.map f hf
+
+/-- Relabeling a complex by a vertex equivalence preserves and reflects collapsibility. -/
+@[simp]
+theorem map_equiv_iff (e : α ≃ β) : Collapsible (K.map e) ↔ Collapsible K :=
+  map_iff_of_injective e e.injective
 
 end Collapsible
 
