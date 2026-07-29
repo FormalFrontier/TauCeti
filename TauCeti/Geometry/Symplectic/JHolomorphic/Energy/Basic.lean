@@ -31,9 +31,9 @@ constant-structure `J`-holomorphic maps. This is the linear-algebra content behi
 "constant-structure `J`-holomorphic curves minimize
 energy in their homology class".
 
-The statements here are still pointwise linear algebra and Frechet-derivative calculus. They are
-the local identities that the later holomorphic-curve energy theory will integrate over strips
-or disks.
+The statements here are pointwise linear algebra and Frechet-derivative calculus. They are
+integrated over a measure space in
+`TauCeti.Geometry.Symplectic.JHolomorphic.Energy.Integral`.
 
 ## Main declarations
 
@@ -66,7 +66,7 @@ The convention follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Top
 Section 2.1: for a compatible pair, `g(·, ·) = ω(·, J ·)` and `du(∂t) = J du(∂s)`.
 -/
 
-public section
+@[expose] public section
 
 namespace TauCeti
 
