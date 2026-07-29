@@ -103,6 +103,13 @@ noncomputable def youngSubgroupMulEquiv {n : ℕ} (μ : n.Partition) :
         Equiv.Perm (Fin ((μ.parts.sort (· ≥ ·)).get i))) :=
   (MonoidHom.ofInjective (youngSubgroupHom_injective μ)).symm
 
+private theorem youngSubgroupMulEquiv_symm_apply {n : ℕ} (μ : n.Partition)
+    (p : ∀ i : Fin (μ.parts.sort (· ≥ ·)).length,
+      Equiv.Perm (Fin ((μ.parts.sort (· ≥ ·)).get i))) :
+    ((youngSubgroupMulEquiv μ).symm p : Equiv.Perm (Fin n)) =
+      youngSubgroupHom μ p :=
+  MonoidHom.ofInjective_apply (youngSubgroupHom_injective μ)
+
 /-- The inverse product decomposition acts on each consecutive block by the corresponding
 permutation. -/
 @[simp]
@@ -114,7 +121,7 @@ theorem youngSubgroupMulEquiv_symm_apply_youngBlocksEquiv {n : ℕ} (μ : n.Part
     ((youngSubgroupMulEquiv μ).symm p : Equiv.Perm (Fin n))
         (youngBlocksEquiv μ ⟨i, j⟩) =
       youngBlocksEquiv μ ⟨i, p i j⟩ := by
-  change youngSubgroupHom μ p (youngBlocksEquiv μ ⟨i, j⟩) = _
+  rw [youngSubgroupMulEquiv_symm_apply]
   exact youngSubgroupHom_apply_youngBlocksEquiv μ p ⟨i, j⟩
 
 /-- The product decomposition records the local coordinate induced on each consecutive block. -/
@@ -161,21 +168,39 @@ theorem youngBlockEquiv_apply {n : ℕ} (μ : n.Partition)
       ⟨youngBlocksEquiv μ ⟨i, j⟩, youngBlock_youngBlocksEquiv μ ⟨i, j⟩⟩ :=
   Subtype.ext rfl
 
+private theorem prod_factorial_sorted_parts {n : ℕ} (μ : n.Partition) :
+    (∏ i : Fin (μ.parts.sort (· ≥ ·)).length,
+        ((μ.parts.sort (· ≥ ·)).get i).factorial) =
+      (μ.parts.map Nat.factorial).prod := by
+  simp_rw [List.get_eq_getElem]
+  rw [Fin.prod_univ_fun_getElem, ← Multiset.prod_coe, ← Multiset.map_coe,
+    Multiset.sort_eq]
+
 /-- The order of a Young subgroup is the product of the factorials of the parts. -/
 theorem card_youngSubgroup {n : ℕ} (μ : n.Partition) :
     Nat.card (youngSubgroup μ) = (μ.parts.map Nat.factorial).prod := by
   rw [Nat.card_congr (youngSubgroupMulEquiv μ).toEquiv, Nat.card_pi]
   simp only [Nat.card_perm, Nat.card_fin]
-  simp_rw [List.get_eq_getElem]
-  rw [Fin.prod_univ_fun_getElem, ← Multiset.prod_coe, ← Multiset.map_coe,
-    Multiset.sort_eq]
+  exact prod_factorial_sorted_parts μ
 
-private theorem card_youngBlock_stabilizer {n : ℕ} (μ : n.Partition) :
-    Nat.card
-        {σ : Equiv.Perm (Fin n) //
-          youngBlock μ ∘ σ = youngBlock μ} =
+private noncomputable def youngBlockStabilizer {n : ℕ} (μ : n.Partition) :
+    Subgroup (Equiv.Perm (Fin n)) :=
+  (MulAction.stabilizer (Equiv.Perm (Fin n))ᵈᵐᵃ (youngBlock μ)).unop
+
+private theorem mem_youngBlockStabilizer_iff {n : ℕ} (μ : n.Partition)
+    (σ : Equiv.Perm (Fin n)) :
+    σ ∈ youngBlockStabilizer μ ↔ youngBlock μ ∘ σ = youngBlock μ := by
+  change DomMulAct.mk σ ∈
+    MulAction.stabilizer (Equiv.Perm (Fin n))ᵈᵐᵃ (youngBlock μ) ↔ _
+  exact DomMulAct.mem_stabilizer_iff
+
+private theorem card_youngBlockStabilizer {n : ℕ} (μ : n.Partition) :
+    Nat.card (youngBlockStabilizer μ) =
       (μ.parts.map Nat.factorial).prod := by
-  rw [Nat.card_eq_fintype_card, DomMulAct.stabilizer_card]
+  let e : youngBlockStabilizer μ ≃
+      {σ : Equiv.Perm (Fin n) // youngBlock μ ∘ σ = youngBlock μ} :=
+    Equiv.subtypeEquiv (Equiv.refl _) (mem_youngBlockStabilizer_iff μ)
+  rw [Nat.card_congr e, Nat.card_eq_fintype_card, DomMulAct.stabilizer_card]
   calc
     (∏ i : Fin (μ.parts.sort (· ≥ ·)).length,
         (Fintype.card {j : Fin n // youngBlock μ j = i}).factorial) =
@@ -185,51 +210,26 @@ private theorem card_youngBlock_stabilizer {n : ℕ} (μ : n.Partition) :
       intro i _
       rw [Fintype.card_congr (youngBlockEquiv μ i).symm]
       simp
-    _ = (μ.parts.map Nat.factorial).prod := by
-      simp_rw [List.get_eq_getElem]
-      rw [Fin.prod_univ_fun_getElem, ← Multiset.prod_coe, ← Multiset.map_coe,
-        Multiset.sort_eq]
+    _ = (μ.parts.map Nat.factorial).prod := prod_factorial_sorted_parts μ
 
 /-- Membership in the Young subgroup is equivalent to preserving the consecutive-block label. -/
 @[simp]
 theorem mem_youngSubgroup_iff {n : ℕ} (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     σ ∈ youngSubgroup μ ↔ youngBlock μ ∘ σ = youngBlock μ := by
-  let K : Subgroup (Equiv.Perm (Fin n)) :=
-    { carrier := {σ | youngBlock μ ∘ σ = youngBlock μ}
-      one_mem' := by ext j; rfl
-      mul_mem' := by
-        intro a b ha hb
-        apply funext
-        intro j
-        simpa only [Function.comp_apply, Equiv.Perm.mul_apply] using
-          (congrFun ha (b j)).trans (congrFun hb j)
-      inv_mem' := by
-        intro a ha
-        apply funext
-        intro j
-        simpa only [Function.comp_apply, Equiv.Perm.coe_inv, Equiv.apply_symm_apply] using
-          (congrFun ha (a.symm j)).symm }
-  have hle : youngSubgroup μ ≤ K := by
+  have hle : youngSubgroup μ ≤ youngBlockStabilizer μ := by
     intro a ha
     obtain ⟨p, rfl⟩ := ha
+    rw [mem_youngBlockStabilizer_iff]
     ext j
     obtain ⟨x, rfl⟩ := (youngBlocksEquiv μ).surjective j
     simp only [Function.comp_apply, youngSubgroupHom_apply_youngBlocksEquiv,
       youngBlock_youngBlocksEquiv]
-  have hcardK : Nat.card K = (μ.parts.map Nat.factorial).prod := by
-    let e : K ≃
-        {σ : Equiv.Perm (Fin n) // youngBlock μ ∘ σ = youngBlock μ} :=
-      { toFun := fun σ => ⟨σ.1, σ.2⟩
-        invFun := fun σ => ⟨σ.1, σ.2⟩
-        left_inv := fun σ => Subtype.ext rfl
-        right_inv := fun σ => Subtype.ext rfl }
-    exact (Nat.card_congr e).trans (card_youngBlock_stabilizer μ)
-  have hcard : Nat.card K ≤ Nat.card (youngSubgroup μ) := by
-    rw [hcardK, card_youngSubgroup]
-  have heq : youngSubgroup μ = K :=
+  have hcard :
+      Nat.card (youngBlockStabilizer μ) ≤ Nat.card (youngSubgroup μ) := by
+    rw [card_youngBlockStabilizer, card_youngSubgroup]
+  have heq : youngSubgroup μ = youngBlockStabilizer μ :=
     Subgroup.eq_of_le_of_card_ge hle hcard
-  rw [heq]
-  rfl
+  rw [heq, mem_youngBlockStabilizer_iff]
 
 /-- The index of a Young subgroup times its order is `n!`. -/
 theorem youngSubgroup_index_mul {n : ℕ} (μ : n.Partition) :
