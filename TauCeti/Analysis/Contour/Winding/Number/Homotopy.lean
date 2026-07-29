@@ -109,12 +109,7 @@ private theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x : ℂ} {p q : Path
 
 /-- **Homotopy invariance of the winding number off the curve.** Two closed paths joined through
 `ℂ \ {w}` by a path homotopy whose extension to the unit square is `C²` have the same winding number
-about `w`.
-
-The `C²` hypothesis is exactly the regularity consumed by Mathlib's homotopy invariance theorem for
-closed `1`-forms. It also makes both boundary paths piecewise `C¹`, as needed to identify their
-ordinary index integrals with Tau Ceti's winding number. The endpoint paths are fixed by
-`Path.Homotopy`, so their curve integrals vanish. -/
+about `w`. -/
 theorem windingNumber_eq_of_pathHomotopy {x w : ℂ} {p q : Path x x}
     (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
