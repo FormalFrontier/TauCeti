@@ -315,7 +315,11 @@ def baseChangeTrivialIso (L : Type u) [Field L] [Algebra K L] :
   (isTerminalBaseChangeTrivial K L).uniqueUpToIso (isTerminalTrivial L)
 
 /-- The base change of the trivial abelian variety still has dimension `0`. -/
--- Not `@[simp]`: `baseChange_dim` already rewrites the left-hand side.
+-- Not `@[simp]`: `baseChange_dim` already rewrites the left-hand side. It does not, however,
+-- prove this lemma: `baseChange_dim` computes no dimension, it only replaces the left-hand side
+-- by `topologicalKrullDim (pullback (trivial K).toOver.hom (Spec.map (algebraMap K L)))`, a goal
+-- that neither `dim_trivial` nor the simp set can discharge. The content below is that base
+-- change preserves the terminal object, via `baseChangeTrivialIso`.
 lemma dim_baseChange_trivial (L : Type u) [Field L] [Algebra K L] :
     ((trivial K).baseChange L).dim = 0 := by
   rw [dim_eq_of_iso (baseChangeTrivialIso K L), dim_trivial]
