@@ -96,6 +96,12 @@ theorem youngBlockEquiv_apply {n : ℕ} (μ : n.Partition)
       ⟨youngBlocksEquiv μ ⟨i, j⟩, youngBlock_youngBlocksEquiv μ ⟨i, j⟩⟩ :=
   Subtype.ext rfl
 
+private theorem youngBlockEquiv_val {n : ℕ} (μ : n.Partition)
+    (i : Fin (μ.parts.sort (· ≥ ·)).length)
+    (j : Fin ((μ.parts.sort (· ≥ ·))[(i : ℕ)])) :
+    (youngBlockEquiv μ i j).1 = youngBlocksEquiv μ ⟨i, j⟩ := by
+  simpa only using congrArg Subtype.val (youngBlockEquiv_apply μ i j)
+
 /-- The Young subgroup associated to `μ`, acting independently on the consecutive blocks whose
 sizes are the decreasing parts of `μ`. -/
 noncomputable def youngSubgroup {n : ℕ} (μ : n.Partition) :
@@ -111,6 +117,13 @@ private noncomputable def youngSubgroupStabilizerMulEquiv {n : ℕ} (μ : n.Part
   right_inv _ := rfl
   map_mul' _ _ := rfl
 
+private theorem mem_youngSubgroup_stabilizer_iff {n : ℕ} (μ : n.Partition)
+    (σ : Equiv.Perm (Fin n)) :
+    σ ∈ youngSubgroup μ ↔
+      DomMulAct.mk σ ∈
+        MulAction.stabilizer (Equiv.Perm (Fin n))ᵈᵐᵃ (youngBlock μ) :=
+  Iff.rfl
+
 /-- The Young subgroup is the product of the symmetric groups on its consecutive blocks. -/
 noncomputable def youngSubgroupMulEquiv {n : ℕ} (μ : n.Partition) :
     youngSubgroup μ ≃*
@@ -119,6 +132,20 @@ noncomputable def youngSubgroupMulEquiv {n : ℕ} (μ : n.Partition) :
   (youngSubgroupStabilizerMulEquiv μ).trans <|
     (DomMulAct.stabilizerMulEquiv (youngBlock μ)).trans <|
       MulEquiv.piCongrRight fun i => (youngBlockEquiv μ i).symm.permCongrHom
+
+private theorem youngSubgroupStabilizerMulEquiv_apply {n : ℕ} (μ : n.Partition)
+    (σ : youngSubgroup μ) :
+    DomMulAct.mk.symm (youngSubgroupStabilizerMulEquiv μ σ).unop =
+      (σ : Equiv.Perm (Fin n)) :=
+  rfl
+
+private theorem youngSubgroupMulEquiv_apply {n : ℕ} (μ : n.Partition)
+    (σ : youngSubgroup μ) (i : Fin (μ.parts.sort (· ≥ ·)).length) :
+    youngSubgroupMulEquiv μ σ i =
+      (youngBlockEquiv μ i).symm.permCongrHom
+        ((DomMulAct.stabilizerMulEquiv (youngBlock μ))
+          (youngSubgroupStabilizerMulEquiv μ σ) i) :=
+  rfl
 
 /-- The product decomposition records the local coordinate induced on each consecutive block. -/
 @[simp]
@@ -130,20 +157,12 @@ theorem youngSubgroupMulEquiv_apply_youngBlocksEquiv {n : ℕ} (μ : n.Partition
       ⟨i, (youngSubgroupMulEquiv μ σ) i j⟩ := by
   apply (youngBlocksEquiv μ).injective
   rw [Equiv.apply_symm_apply]
-  change (σ : Equiv.Perm (Fin n)) (youngBlocksEquiv μ ⟨i, j⟩) =
-    (youngBlockEquiv μ i ((youngSubgroupMulEquiv μ σ) i j)).1
+  rw [← youngBlockEquiv_val μ i ((youngSubgroupMulEquiv μ σ) i j)]
   have h := DomMulAct.stabilizerMulEquiv_apply
     (youngSubgroupStabilizerMulEquiv μ σ) (youngBlock_youngBlocksEquiv μ ⟨i, j⟩)
-  change ((DomMulAct.stabilizerMulEquiv (youngBlock μ))
-      (youngSubgroupStabilizerMulEquiv μ σ) i (youngBlockEquiv μ i j)).1 =
-    (σ : Equiv.Perm (Fin n)) (youngBlocksEquiv μ ⟨i, j⟩) at h
+  rw [youngSubgroupStabilizerMulEquiv_apply] at h
   rw [← h]
-  change ((DomMulAct.stabilizerMulEquiv (youngBlock μ))
-      (youngSubgroupStabilizerMulEquiv μ σ) i (youngBlockEquiv μ i j)).1 =
-    (youngBlockEquiv μ i
-      ((youngBlockEquiv μ i).symm.permCongrHom
-        ((DomMulAct.stabilizerMulEquiv (youngBlock μ))
-          (youngSubgroupStabilizerMulEquiv μ σ) i) j)).1
+  rw [← youngBlockEquiv_apply μ i j, youngSubgroupMulEquiv_apply]
   rw [Equiv.permCongrHom_coe, Equiv.permCongr_apply, Equiv.symm_symm,
     Equiv.apply_symm_apply]
 
@@ -181,8 +200,7 @@ theorem card_youngSubgroup {n : ℕ} (μ : n.Partition) :
 @[simp]
 theorem mem_youngSubgroup_iff {n : ℕ} (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     σ ∈ youngSubgroup μ ↔ youngBlock μ ∘ σ = youngBlock μ := by
-  change DomMulAct.mk σ ∈
-    MulAction.stabilizer (Equiv.Perm (Fin n))ᵈᵐᵃ (youngBlock μ) ↔ _
+  rw [mem_youngSubgroup_stabilizer_iff]
   exact DomMulAct.mem_stabilizer_iff
 
 /-- The index of a Young subgroup times its order is `n!`. -/
