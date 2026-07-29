@@ -132,8 +132,12 @@ nonempty, irreducible, and reduced. -/
 instance isIntegral (A : AbelianVariety K) : IsIntegral A.toScheme :=
   GeometricallyIntegral.isIntegral_of_subsingleton A.toOver.hom
 
-/-- A constructor for abelian varieties from Mathlib's geometrically integral package. -/
-noncomputable def ofGeometricallyIntegral (G : Over (Spec (.of K))) [GrpObj G]
+/-- A constructor for abelian varieties from Mathlib's geometrically integral package.
+
+Its body is `@[expose]`d so that `(ofGeometricallyIntegral G).toOver` reduces to `G`: a caller
+supplying a concrete `G` keeps the definitional description of the group law, rather than having
+to transport every statement about `G` along `ofGeometricallyIntegral_toOver`. -/
+@[expose] noncomputable def ofGeometricallyIntegral (G : Over (Spec (.of K))) [GrpObj G]
     [IsProper G.hom] [GeometricallyIntegral G.hom] : AbelianVariety K where
   toOver := G
   grpObj := inferInstance
