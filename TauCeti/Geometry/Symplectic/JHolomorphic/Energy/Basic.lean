@@ -66,7 +66,7 @@ The convention follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Top
 Section 2.1: for a compatible pair, `g(·, ·) = ω(·, J ·)` and `du(∂t) = J du(∂s)`.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -80,12 +80,19 @@ variable {ω : SymplecticForm V}
 
 For a compatible pair `(ω, J)`, this is
 `g(F ∂s, F ∂s) + g(F ∂t, F ∂t)`, where `g(v,w) = ω(v, J w)`. -/
--- `irreducible_def` supplies the public `_def` lemma while keeping this body unexposed.
 irreducible_def stdComplexLineEnergyDensity (ω : SymplecticForm V) (J : AlmostComplexStructure V)
     (F : (ℝ × ℝ) →ₗ[ℝ] V) : ℝ :=
   ω.associatedBilinForm J (F stdComplexLineReal) (F stdComplexLineReal) +
     ω.associatedBilinForm J (F stdComplexLineImag) (F stdComplexLineImag)
 
+/-- The standard complex-line energy density is the sum of the associated bilinear form evaluated
+on the images of the standard real and imaginary basis vectors. -/
+lemma stdComplexLineEnergyDensity_apply (ω : SymplecticForm V) (J : AlmostComplexStructure V)
+    (F : (ℝ × ℝ) →ₗ[ℝ] V) :
+    ω.stdComplexLineEnergyDensity J F =
+      ω.associatedBilinForm J (F stdComplexLineReal) (F stdComplexLineReal) +
+        ω.associatedBilinForm J (F stdComplexLineImag) (F stdComplexLineImag) :=
+  stdComplexLineEnergyDensity_def ω J F
 
 /-- The standard pointwise energy density of any real-linear map is nonnegative under tameness. -/
 lemma stdComplexLineEnergyDensity_nonneg (hω : ω.Tames J)
