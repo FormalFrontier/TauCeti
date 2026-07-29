@@ -100,8 +100,9 @@ lemma relativeDegree_eq_degree_of_isIso (f : X ⟶ Y) [IsIso f]
   simpa only [residueDegree_eq_one_of_isIso, Nat.cast_one] using
     WeilDivisor.weightedDegree_one_eq_degree D
 
-/-- Relative degree along the identity morphism is the ordinary unweighted degree. -/
-@[simp]
+/-- Relative degree along the identity morphism is the ordinary unweighted degree.
+
+Not `@[simp]`: `simp` already proves this via `relativeDegree_eq_degree_of_isIso`. -/
 lemma relativeDegree_id (D : SchemeWeilDivisor X) :
     relativeDegree (𝟙 X) D = WeilDivisor.degree D :=
   relativeDegree_eq_degree_of_isIso (𝟙 X) D
