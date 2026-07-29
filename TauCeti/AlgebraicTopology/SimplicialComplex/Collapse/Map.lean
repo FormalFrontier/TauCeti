@@ -56,18 +56,9 @@ private theorem mem_map_iff {f : α → β} {K : _root_.PreAbstractSimplicialCom
 private theorem map_injective (f : α → β) (hf : Function.Injective f) :
     Function.Injective (fun K : _root_.PreAbstractSimplicialComplex α => K.map f) := by
   intro K L hKL
-  refine SetLike.ext fun σ => ?_
-  have mem_image (P : _root_.PreAbstractSimplicialComplex α) :
-      σ.image f ∈ P.map f ↔ σ ∈ P := by
-    constructor
-    · rintro ⟨τ, hτ, hτσ⟩
-      rwa [(Finset.image_inj hf).mp hτσ] at hτ
-    · exact fun hσ => mem_map_iff.mpr ⟨σ, hσ, rfl⟩
-  have hKL' : K.map f = L.map f := by simpa only using hKL
-  calc
-    σ ∈ K ↔ σ.image f ∈ K.map f := (mem_image K).symm
-    _ ↔ σ.image f ∈ L.map f := by rw [hKL']
-    _ ↔ σ ∈ L := mem_image L
+  apply SetLike.ext'
+  apply (Finset.image_injective hf).image_injective
+  exact congrArg (fun P => P.faces) hKL
 
 /-- Mapping a one-vertex complex along any vertex map gives the one-vertex complex at the image
 vertex. -/
