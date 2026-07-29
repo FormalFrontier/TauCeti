@@ -505,6 +505,34 @@ theorem single_mul_vertexIdempotent (x : Quiver.TotalPath Q) (r : k) :
   rw [vertexIdempotent_eq_single, single_mul_single, Quiver.TotalPath.mul?_nil_right,
     Option.elim_some, mul_one]
 
+/-- The vertex idempotent at the target of a path is a left unit for its canonical element. -/
+@[simp]
+theorem vertexIdempotent_mul_ofPath {a b : Q} (p : _root_.Quiver.Path a b) :
+    (vertexIdempotent k b * ofPath ⟨a, b, p⟩ : pathAlgebra k Q) = ofPath ⟨a, b, p⟩ := by
+  exact vertexIdempotent_mul_single (k := k) ⟨a, b, p⟩ 1
+
+/-- The vertex idempotent at the source of a path is a right unit for its canonical element. -/
+@[simp]
+theorem ofPath_mul_vertexIdempotent {a b : Q} (p : _root_.Quiver.Path a b) :
+    (ofPath ⟨a, b, p⟩ * vertexIdempotent k a : pathAlgebra k Q) = ofPath ⟨a, b, p⟩ := by
+  exact single_mul_vertexIdempotent (k := k) ⟨a, b, p⟩ 1
+
+/-- A vertex idempotent not at the target of a path annihilates its canonical element on the
+left. -/
+@[simp]
+theorem vertexIdempotent_mul_ofPath_of_ne {v : Q} (x : Quiver.TotalPath Q) (h : v ≠ x.2.1) :
+    (vertexIdempotent k v * ofPath x : pathAlgebra k Q) = 0 := by
+  rw [vertexIdempotent_eq_single, ofPath_eq_single]
+  exact single_mul_single_of_not_composable h.symm 1 1
+
+/-- A vertex idempotent not at the source of a path annihilates its canonical element on the
+right. -/
+@[simp]
+theorem ofPath_mul_vertexIdempotent_of_ne {v : Q} (x : Quiver.TotalPath Q) (h : v ≠ x.1) :
+    (ofPath x * vertexIdempotent k v : pathAlgebra k Q) = 0 := by
+  rw [ofPath_eq_single, vertexIdempotent_eq_single]
+  exact single_mul_single_of_not_composable h 1 1
+
 /-- Distinct vertex idempotents are orthogonal. -/
 @[simp]
 theorem vertexIdempotent_mul_vertexIdempotent_of_ne {u v : Q} (h : u ≠ v) :
