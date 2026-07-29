@@ -5,9 +5,13 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Probability.DeFinetti.BlockFactorization
-public import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
-import TauCeti.Algebra.GroupAction.FiniteSupportPerm
+-- Public: `ConditionallyIID` and `Contractable` appear in the exported statement.
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+-- Non-public: the prefix factorization and directing measure, the joint-rectangle common ending,
+-- the path-law transfer, and the machinery the symmetry transport runs on.
+import TauCeti.Probability.DeFinetti.BlockFactorization
+import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
+import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
@@ -17,9 +21,45 @@ import TauCeti.Probability.Exchangeability.MixedIID.Implications
 import TauCeti.MeasureTheory.Measure.FiniteMeasure
 
 /-!
-# Work in progress: the directing-measure joint-rectangle factorization
--/
+# The conditional summit from contractability
 
+A contractable process valued in a nonempty standard Borel space is **conditionally i.i.d.**: there
+is a directing measure given which every finite distinct block is i.i.d., as a joint-law
+disintegration.
+
+## Main results
+
+* `conditionallyIID_of_contractable` — the summit. It strengthens `mixedIID_of_contractable`, which
+  concludes only the mixture identity, and imposes no standard-Borel hypothesis on the *sample*
+  space.
+
+## Implementation
+
+The predicate `ConditionallyIIDWith` asks for a joint-law identity, so the block identities of the
+mixture route are not enough: the directing measure must survive alongside the block. Three layers
+supply that, all private.
+
+**The set-integral identity.** The mass on the tail event `ν ⁻¹' S` meeting a *prefix* block
+cylinder is the integral of the directing-measure product over that event. Since `ν` is
+`tailProcess`-measurable, `ν ⁻¹' S` is a tail event, so `setIntegral_condExp` may be tested against
+it and the prefix factorization replaces the conditional expectation. All real/`ℝ≥0∞` conversion is
+confined here.
+
+**Symmetry transport.** A finitely supported permutation realising an injective selection on the
+initial segment carries the prefix identity to that selection. It fixes `ν`, because tail events lie
+in the exchangeable σ-algebra, and it preserves the measure, because contractability gives
+exchangeability — so the directing-measure event rides along untouched. This needs no sorting of the
+selection: the permutation realises arbitrary injective selections directly.
+
+**Path space.** Both of the above run on `ℕ → α`, which is standard Borel whenever `α` is. That is
+what keeps `[StandardBorelSpace Ω]` out of the exported statement:
+`conditionallyIID_of_conditionallyIID_pathLaw` carries the conclusion back to an arbitrary sample
+space.
+
+The joint rectangles are then fed to `conditionallyIID_of_jointRectangles`.
+
+This advances `TauCetiRoadmap/Exchangeability/README.md`, **Layer 6** — the conditional summit.
+-/
 public section
 
 noncomputable section
@@ -31,14 +71,6 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
-
-/-- The event that the directing measure lands in `S` is a tail event: this is what lets the
-conditional factorization be integrated against it. -/
-private theorem measurableSet_tailProcess_directingProbabilityMeasure_preimage
-    [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
-    {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S) :
-    MeasurableSet[tailProcess X] (directingProbabilityMeasure μ X ⁻¹' S) :=
-  measurable_tailProcess_directingProbabilityMeasure hS
 
 /-- **Core set-integral identity.** The mass on the tail event `ν ⁻¹' S` intersected with a prefix
 block cylinder is the integral of the directing-measure product over that event.
@@ -219,6 +251,42 @@ private theorem jointRectangle_of_measure_inter
   by_cases hω : directingProbabilityMeasure μ X ω ∈ S
   · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
   · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
+
+/-- **The conditional summit on path space.** A contractable coordinate process on a standard Borel
+state space is conditionally i.i.d., with the tail conditional law as directing measure. -/
+private theorem conditionallyIID_of_contractable_pathSpace
+    [StandardBorelSpace α] [Nonempty α] {μ : Measure (ℕ → α)} [IsFiniteMeasure μ]
+    (hX : Contractable μ fun j (x : ℕ → α) => x j) :
+    ConditionallyIID μ fun j (x : ℕ → α) => x j := by
+  have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
+  refine ConditionallyIID.of_directing (conditionallyIID_of_jointRectangles
+    (measurable_directingProbabilityMeasure (μ := μ)
+      (tailProcess_le_ambient 0 fun j _ => hY_meas j))
+    fun m sel hsel S hS B hB => ?_)
+  exact jointRectangle_of_measure_inter hY_meas hB hS
+    (measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel hB hS)
+
+/-- **The conditional summit.** A contractable process valued in a nonempty standard Borel space is
+conditionally i.i.d.: there is a directing measure given which every finite distinct block is
+i.i.d., as a joint-law disintegration.
+
+This strengthens `mixedIID_of_contractable`, which concludes only the mixture identity. No
+standard-Borel hypothesis is imposed on the sample space: the argument runs on path space, which is
+standard Borel whenever the state space is, and `conditionallyIID_of_conditionallyIID_pathLaw`
+carries the conclusion back. -/
+theorem conditionallyIID_of_contractable {Ω : Type*} [MeasurableSpace Ω]
+    [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
+    (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
+    ConditionallyIID μ X := by
+  refine conditionallyIID_of_conditionallyIID_pathLaw hX_meas ?_
+  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have hcontract : Contractable (pathLaw μ X) fun j (p : ℕ → α) => p j := by
+    rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
+    have hpl : pathLaw (pathLaw μ X) (fun j (p : ℕ → α) => p j) = pathLaw μ X := by
+      rw [pathLaw_def]; exact Measure.map_id
+    rw [hpl]
+    exact hX.contractableLaw_pathLaw fun i => (hX_meas i).aemeasurable
+  exact conditionallyIID_of_contractable_pathSpace hcontract
 
 end Probability
 
