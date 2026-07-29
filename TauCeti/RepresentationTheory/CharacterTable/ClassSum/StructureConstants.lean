@@ -99,4 +99,47 @@ theorem classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) :
     rw [if_neg hCₖ.symm, mul_zero]
   · simp
 
+/-- The coefficient of `g` in a product of two class sums is the structure constant at the
+conjugacy class of `g`. This is the pointwise form of `TauCeti.classSum_mul`. -/
+theorem coeff_classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) (g : G) :
+    (classSum k Cᵢ * classSum k Cⱼ).coeff g =
+      (structureConstant Cᵢ Cⱼ (ConjClasses.mk g) : k) := by
+  rw [classSum_mul]
+  simp only [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, MonoidAlgebra.coeff_smul_apply,
+    smul_eq_mul, classSum_coeff]
+  rw [Finset.sum_eq_single (ConjClasses.mk g)]
+  · rw [if_pos rfl, mul_one]
+  · intro Cₖ _ hCₖ
+    rw [if_neg hCₖ.symm, mul_zero]
+  · simp
+
+/-- **Counting all the factorizations at once**: weighting the structure constants by the class
+sizes gives the product of the sizes of the two classes, since every product `x * y` with `x ∈ Cᵢ`
+and `y ∈ Cⱼ` is counted exactly once on the left. -/
+theorem sum_structureConstant_mul_card_carrier (Cᵢ Cⱼ : ConjClasses G) :
+    ∑ Cₖ : ConjClasses G, structureConstant Cᵢ Cⱼ Cₖ * Nat.card Cₖ.carrier =
+      Nat.card Cᵢ.carrier * Nat.card Cⱼ.carrier := by
+  -- Apply the augmentation `ℤ[G] → ℤ`, which sends a class sum to the size of its class.
+  set φ := MonoidAlgebra.lift ℤ ℤ G 1 with hφ
+  have hclass : ∀ C : ConjClasses G, φ (classSum ℤ C) = (Nat.card C.carrier : ℤ) := by
+    intro C
+    rw [classSum_eq_sum, map_sum]
+    simp [hφ, Nat.card_eq_fintype_card]
+  have key := (map_mul φ (classSum ℤ Cᵢ) (classSum ℤ Cⱼ)).symm.trans
+    (congrArg φ (classSum_mul ℤ Cᵢ Cⱼ))
+  rw [hclass, hclass, map_sum] at key
+  simp only [map_smul, hclass, smul_eq_mul] at key
+  exact_mod_cast key.symm
+
+/-- **The structure constants are symmetric in their two class arguments**, because the two class
+sums commute in the group algebra. -/
+theorem structureConstant_comm (Cᵢ Cⱼ Cₖ : ConjClasses G) :
+    structureConstant Cᵢ Cⱼ Cₖ = structureConstant Cⱼ Cᵢ Cₖ := by
+  obtain ⟨g, rfl⟩ := ConjClasses.exists_rep Cₖ
+  have hcomm : classSum ℤ Cᵢ * classSum ℤ Cⱼ = classSum ℤ Cⱼ * classSum ℤ Cᵢ :=
+    Subalgebra.mem_center_iff.mp (classSum_mem_center ℤ Cⱼ) _
+  have h := congrArg (fun a : MonoidAlgebra ℤ G => a.coeff g) hcomm
+  simp only [coeff_classSum_mul] at h
+  exact_mod_cast h
+
 end TauCeti

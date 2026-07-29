@@ -93,6 +93,15 @@ theorem classSum_commutes {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
 
 end
 
+/-- The class sum of the conjugacy class of `1` is the unit of the group algebra: that class is the
+singleton `{1}`. -/
+@[simp]
+theorem classSum_mk_one (k : Type*) [Semiring k] :
+    classSum k (ConjClasses.mk (1 : G)) = 1 := by
+  ext g
+  rw [classSum_coeff, MonoidAlgebra.one_def, MonoidAlgebra.coeff_single, Finsupp.single_apply]
+  simp [ConjClasses.mk_eq_mk_iff_isConj, eq_comm]
+
 /-- Every class sum lies in the center of the group algebra. -/
 theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :
     classSum k C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
