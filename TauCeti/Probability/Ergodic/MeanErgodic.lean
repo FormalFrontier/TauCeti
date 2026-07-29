@@ -43,18 +43,11 @@ def metProjection (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
     Lp E 2 μ →L[𝕜] Lp E 2 μ :=
   (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT).starProjection
 
-/-- The mean-ergodic projection is the orthogonal projection onto the fixed space. -/
-theorem metProjection_apply (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Lp E 2 μ) :
-    metProjection (𝕜 := 𝕜) T hT g =
-      (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT).starProjection g :=
-  (rfl)
-
 /-- The mean-ergodic projection takes values in the fixed space. -/
 theorem metProjection_mem_fixedSpace (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
     (g : Lp E 2 μ) :
     metProjection (𝕜 := 𝕜) T hT g ∈ fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT := by
-  rw [metProjection_apply]
+  rw [metProjection]
   exact Submodule.starProjection_apply_mem _ _
 
 /-- The mean-ergodic projection fixes exactly the invariant `L²` observables. -/
@@ -63,7 +56,7 @@ theorem metProjection_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ �
     (g : Lp E 2 μ) :
     metProjection (𝕜 := 𝕜) T hT g = g ↔
       g ∈ fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT := by
-  rw [metProjection_apply]
+  rw [metProjection]
   exact Submodule.starProjection_eq_self_iff
 
 /-- The range of the mean-ergodic projection is the fixed space. -/
@@ -80,7 +73,7 @@ theorem sub_metProjection_mem_orthogonal (T : Ω → Ω) (hT : MeasurePreserving
     (g : Lp E 2 μ) :
     g - metProjection (𝕜 := 𝕜) T hT g ∈
       (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT)ᗮ := by
-  rw [metProjection_apply]
+  rw [metProjection]
   exact Submodule.sub_starProjection_mem_orthogonal _
 
 /-- The mean-ergodic projection for the identity transformation is the identity operator. -/
@@ -90,6 +83,7 @@ theorem metProjection_id :
       ContinuousLinearMap.id 𝕜 (Lp E 2 μ) := by
   apply ContinuousLinearMap.ext
   intro g
+  rw [metProjection]
   exact Submodule.starProjection_eq_self_iff.mpr
     ((mem_fixedSpace_iff (𝕜 := 𝕜) (E := E) (p := 2) (MeasurePreserving.id μ) g).2
       (Lp.compMeasurePreserving_id_apply g))
