@@ -41,7 +41,7 @@ theorem map_center_eq_center (e : A ≃ₐ[R] B) :
     rw [Subalgebra.mem_center_iff] at ha ⊢
     intro b'
     obtain ⟨a', rfl⟩ := e.surjective b'
-    change e a' * e a = e a * e a'
+    simp only [AlgEquiv.coe_toAlgHom]
     rw [← map_mul, ← map_mul, ha a']
   · intro b hb
     rw [Subalgebra.mem_center_iff] at hb
@@ -53,14 +53,14 @@ theorem map_center_eq_center (e : A ≃ₐ[R] B) :
     exact hb (e a)
 
 /-- The center of an algebra, transported along an algebra equivalence. -/
-@[expose] def centerCongr (e : A ≃ₐ[R] B) :
+def centerCongr (e : A ≃ₐ[R] B) :
     Subalgebra.center R A ≃ₐ[R] Subalgebra.center R B :=
   (e.subalgebraMap _).trans (Subalgebra.equivOfEq _ _ (map_center_eq_center e))
 
 @[simp]
 theorem centerCongr_apply_coe (e : A ≃ₐ[R] B) (x : Subalgebra.center R A) :
-    (centerCongr e x : B) = e (x : A) :=
-  rfl
+    (centerCongr e x : B) = e (x : A) := by
+  simp [centerCongr]
 
 section Pi
 
@@ -73,7 +73,7 @@ theorem mem_center_pi_iff {x : Π i, S i} :
   simp
 
 /-- The center of a product of algebras is the product of their centers. -/
-@[expose] def centerPiAlgEquiv :
+def centerPiAlgEquiv :
     Subalgebra.center R (Π i, S i) ≃ₐ[R] Π i, Subalgebra.center R (S i) where
   toFun x i := ⟨x.1 i, mem_center_pi_iff.mp x.2 i⟩
   invFun y := ⟨fun i => (y i).1, mem_center_pi_iff.mpr fun i => (y i).2⟩
@@ -85,8 +85,8 @@ theorem mem_center_pi_iff {x : Π i, S i} :
 
 @[simp]
 theorem centerPiAlgEquiv_apply_coe (x : Subalgebra.center R (Π i, S i)) (i : ι) :
-    (centerPiAlgEquiv x i : S i) = (x : Π i, S i) i :=
-  rfl
+    (centerPiAlgEquiv x i : S i) = (x : Π i, S i) i := by
+  simp [centerPiAlgEquiv]
 
 end Pi
 
@@ -98,6 +98,18 @@ variable (K D : Type*) [Field K] [Semiring D] [Nontrivial D] [Algebra K D]
 /-- The center of a central algebra is the base field. -/
 noncomputable def centerAlgEquivOfIsCentral : Subalgebra.center K D ≃ₐ[K] K :=
   (Subalgebra.equivOfEq _ _ (Algebra.IsCentral.center_eq_bot K D)).trans (Algebra.botEquiv K D)
+
+/-- The inverse of `centerAlgEquivOfIsCentral` is the structure map of the algebra. -/
+@[simp]
+theorem coe_centerAlgEquivOfIsCentral_symm (r : K) :
+    ((centerAlgEquivOfIsCentral K D).symm r : D) = algebraMap K D r := by
+  simp [centerAlgEquivOfIsCentral]
+
+/-- `centerAlgEquivOfIsCentral` sends a central element to the scalar it is the image of. -/
+@[simp]
+theorem algebraMap_centerAlgEquivOfIsCentral (x : Subalgebra.center K D) :
+    algebraMap K D (centerAlgEquivOfIsCentral K D x) = (x : D) := by
+  rw [← coe_centerAlgEquivOfIsCentral_symm, AlgEquiv.symm_apply_apply]
 
 /-- A central algebra has a one-dimensional center. -/
 @[simp]

@@ -75,6 +75,15 @@ noncomputable def centerPiMatrixAlgEquiv [∀ i, NeZero (d i)] :
     haveI : Nonempty (Fin (d i)) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne (d i)))
     centerAlgEquivOfIsCentral k _)
 
+/-- `centerPiMatrixAlgEquiv` reads off the scalar of each component: the `i`-th component of a
+central tuple is the scalar matrix on the `i`-th value of the corresponding function. -/
+@[simp]
+theorem algebraMap_centerPiMatrixAlgEquiv_apply [∀ i, NeZero (d i)]
+    (x : Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) (i : Fin n) :
+    algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (centerPiMatrixAlgEquiv k d x i) =
+      (x : Π i, Matrix (Fin (d i)) (Fin (d i)) k) i := by
+  simp [centerPiMatrixAlgEquiv, AlgEquiv.piCongrRight]
+
 /-- The center of a finite product of nonzero matrix algebras over a field has dimension the number
 of factors. -/
 theorem finrank_center_pi_matrix [∀ i, NeZero (d i)] :
@@ -87,14 +96,15 @@ end PiMatrix
 
 section GroupAlgebra
 
-variable (k G : Type*) [Field k] [Finite G]
+variable (k G : Type*)
 
 /-- The group algebra of a finite group has dimension the order of the group. -/
-theorem finrank_monoidAlgebra : Module.finrank k (MonoidAlgebra k G) = Nat.card G := by
+theorem finrank_monoidAlgebra [CommSemiring k] [StrongRankCondition k] [Finite G] :
+    Module.finrank k (MonoidAlgebra k G) = Nat.card G := by
   letI := Fintype.ofFinite G
   rw [Module.finrank_eq_card_basis (MonoidAlgebra.basis G k), Fintype.card_eq_nat_card]
 
-variable [Group G]
+variable [Field k] [Finite G] [Group G]
 variable {k G}
 
 /-- **The sum of the squares of the block degrees is the order of the group**: both sides compute
@@ -113,6 +123,17 @@ noncomputable def centerMonoidAlgebraAlgEquivPi {n : ℕ} {d : Fin n → ℕ} [�
     (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
     Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (Fin n → k) :=
   (centerCongr e).trans (centerPiMatrixAlgEquiv k d)
+
+omit [Finite G] in
+/-- `centerMonoidAlgebraAlgEquivPi e` records, block by block, the scalar that a central element of
+`k[G]` acts by: the `i`-th component of the image of `e` is that scalar matrix. -/
+@[simp]
+theorem algebraMap_centerMonoidAlgebraAlgEquivPi_apply {n : ℕ} {d : Fin n → ℕ} [∀ i, NeZero (d i)]
+    (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
+    (z : Subalgebra.center k (MonoidAlgebra k G)) (i : Fin n) :
+    algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (centerMonoidAlgebraAlgEquivPi e z i) =
+      e (z : MonoidAlgebra k G) i := by
+  simp [centerMonoidAlgebraAlgEquivPi]
 
 /-- **The number of Wedderburn blocks of `k[G]` is the number of conjugacy classes of `G`**: both
 sides compute the dimension of `Z(k[G])`.
