@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.Basic
-public import Mathlib.Analysis.InnerProductSpace.Adjoint
-public import Mathlib.Analysis.InnerProductSpace.ProdL2
+public import TauCeti.Analysis.Fredholm.Adjoint
 
 /-!
 # Self-adjoint Fredholm operators
@@ -48,11 +46,8 @@ noncomputable def IsFredholm.cokerEquivKerOfKerAdjointEq {T : E →L[𝕜] E}
     (hT : IsFredholm T)
     (hker : (ContinuousLinearMap.adjoint T).ker = T.ker) :
     (E ⧸ LinearMap.range (T : E →ₗ[𝕜] E)) ≃ₗ[𝕜]
-      LinearMap.ker (T : E →ₗ[𝕜] E) := by
-  let range := LinearMap.range (T : E →ₗ[𝕜] E)
-  haveI : CompleteSpace range := hT.isClosed_range.completeSpace_coe
-  exact range.quotientEquivOrthogonal.toLinearEquiv.trans
-    (LinearEquiv.ofEq _ _ (T.orthogonal_range.trans hker))
+      LinearMap.ker (T : E →ₗ[𝕜] E) :=
+  hT.cokerEquivKerAdjoint.trans (LinearEquiv.ofEq _ _ hker)
 
 /-- The cokernel of a self-adjoint Fredholm operator is linearly equivalent to its kernel. -/
 noncomputable def IsFredholm.cokerEquivKer {T : E →L[𝕜] E} (hT : IsFredholm T)
