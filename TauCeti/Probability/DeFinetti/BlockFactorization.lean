@@ -308,13 +308,8 @@ theorem mixedIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [Measurabl
     MixedIID μ X := by
   refine mixedIID_of_mixedIID_pathLaw hX_meas ?_
   haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
-  have hcontract : Contractable (pathLaw μ X) (fun n p => p n) := by
-    rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
-    have hpl : pathLaw (pathLaw μ X) (fun n p => p n) = pathLaw μ X := by
-      rw [pathLaw_def]; exact Measure.map_id
-    rw [hpl]
-    exact hX.contractableLaw_pathLaw fun i => (hX_meas i).aemeasurable
-  exact mixedIID_of_contractable_standardBorelOmega hcontract measurable_pi_apply
+  exact mixedIID_of_contractable_standardBorelOmega
+    (hX.coordinate_pathLaw fun i => (hX_meas i).aemeasurable) measurable_pi_apply
 
 /-- **de Finetti's theorem, mixture form: exchangeable ⇒ mixed i.i.d.** An exchangeable process
 valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. -/

@@ -18,6 +18,10 @@ path-space `ExchangeableLaw` predicate: a process is fully exchangeable exactly 
 is the same statement. It also connects process-level contractability with the path-space
 `ContractableLaw` predicate.
 
+`Contractable.coordinate_pathLaw` packages the form path-space arguments use: contractability
+transferred to the *coordinate* process under `pathLaw μ X`, so an argument may be run on path space
+and its conclusion carried back.
+
 The bridges realize the Layer 0 roadmap item asking for process-level ↔ path-law bridges in both
 directions. They reuse the existing `FullyExchangeable` path-law bridge from
 `FullyExchangeable.lean` and the contractability bridge from `Contractability.lean`; no
@@ -87,6 +91,24 @@ theorem contractable_of_contractableLaw_pathLaw {μ : Measure Ω} {X : ℕ → �
     (hρ : ContractableLaw (pathLaw μ X)) :
     Contractable μ X :=
   (contractable_iff_contractableLaw_pathLaw hX_meas).2 hρ
+
+/-- **The coordinate process under a contractable process's path law is contractable.** This is the
+form path-space arguments need: transfer the hypothesis to `pathLaw μ X`, work there, and carry the
+conclusion back.
+
+The path law of the coordinate process under `pathLaw μ X` is `pathLaw μ X` itself, so
+`contractable_iff_contractableLaw_pathLaw` reduces this to
+`Contractable.contractableLaw_pathLaw`. -/
+theorem Contractable.coordinate_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α} [IsFiniteMeasure μ]
+    (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) :
+    Contractable (pathLaw μ X) fun j (p : ℕ → α) => p j := by
+  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
+  have hpl : pathLaw (pathLaw μ X) (fun j (p : ℕ → α) => p j) = pathLaw μ X := by
+    rw [pathLaw_def]; exact Measure.map_id
+  rw [hpl]
+  exact hX.contractableLaw_pathLaw hX_meas
+
 
 end Probability
 
