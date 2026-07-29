@@ -88,11 +88,6 @@ private theorem moebius_apply_zero (c : ℂ) : moebius c 0 = -c := by
 private theorem moebius_self (c : ℂ) : moebius c c = 0 := by
   simp [moebius]
 
-/-- A complex number whose square lies in the open unit disc lies in it too. -/
-private theorem norm_lt_one_of_norm_sq_lt_one {w : ℂ} (hw : ‖w ^ 2‖ < 1) : ‖w‖ < 1 := by
-  have hsq : ‖w‖ ^ 2 < 1 := by rwa [← norm_pow]
-  nlinarith [norm_nonneg w]
-
 /-- **A proper simply connected subdomain of the disc containing the origin expands.** If `U` is an
 open simply connected proper subset of the unit disc with `0 ∈ U`, then there is a holomorphic
 injection of `U` into the disc fixing the origin whose derivative there has norm exceeding `1`.
@@ -126,8 +121,7 @@ theorem exists_isPointedDiscInjectionOn_one_lt_norm_deriv {U : Set ℂ} (hUo : I
     have := hhsq hU₀
     simpa [moebius_apply_zero] using this
   have hb1 : ‖b‖ < 1 := by
-    refine norm_lt_one_of_norm_sq_lt_one ?_
-    rw [hb2, norm_neg]
+    rw [← pow_lt_one_iff_of_nonneg (norm_nonneg b) two_ne_zero, ← norm_pow, hb2, norm_neg]
     exact ha1
   have hb0 : b ≠ 0 := by
     intro h0
@@ -136,8 +130,7 @@ theorem exists_isPointedDiscInjectionOn_one_lt_norm_deriv {U : Set ℂ} (hUo : I
   -- The square root lands in the disc, since its square does.
   have hhmem : ∀ z ∈ U, h z ∈ ball (0 : ℂ) 1 := by
     intro z hz
-    rw [mem_ball_zero_iff]
-    refine norm_lt_one_of_norm_sq_lt_one ?_
+    rw [mem_ball_zero_iff, ← pow_lt_one_iff_of_nonneg (norm_nonneg (h z)) two_ne_zero, ← norm_pow]
     have hsq : h z ^ 2 = moebius a z := hhsq hz
     rw [hsq, ← mem_ball_zero_iff]
     exact mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha1 (hUd hz)
@@ -167,8 +160,7 @@ theorem exists_isPointedDiscInjectionOn_one_lt_norm_deriv {U : Set ℂ} (hUo : I
   have hsqm : MapsTo (fun w : ℂ => w ^ 2) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
     intro w hw
     rw [mem_ball_zero_iff] at hw ⊢
-    rw [norm_pow]
-    nlinarith [norm_nonneg w]
+    rwa [norm_pow, pow_lt_one_iff_of_nonneg (norm_nonneg w) two_ne_zero]
   have hGd : DifferentiableOn ℂ G (ball (0 : ℂ) 1) :=
     (differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hna).comp
       ((differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hnb).pow 2)

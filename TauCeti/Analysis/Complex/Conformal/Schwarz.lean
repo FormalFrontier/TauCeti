@@ -11,22 +11,25 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 /-!
 # A strict form of the Schwarz lemma
 
-Schwarz's lemma bounds the derivative at the centre of a ball by `1` when a holomorphic map sends
-that ball into the closed ball of the same radius about the image of the centre. This file records
-the **strict** form: the bound is attained only by an injective map, so a non-injective one has
-`‖deriv g c‖ < 1`.
+Schwarz's lemma bounds the derivative at the centre of a ball by `R₂ / R₁` when a holomorphic map
+sends `ball c R₁` into `closedBall (g c) R₂`. This file records the **strict** form: the bound is
+attained only by an injective map, so a non-injective one has `‖deriv g c‖ < R₂ / R₁`.
 
 ## The argument
 
-Mathlib's `Complex.norm_deriv_le_one_of_mapsTo_ball` gives `‖deriv g c‖ ≤ 1`. In the equality case
-`Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div` — the equality case of Schwarz, available for
-`ℂ` because it is a strictly convex space — forces `g` to be the affine map
-`z ↦ g c + (z - c) * deriv g c` on the ball. The multiplier is nonzero, having norm `1`, so that map
-is injective, contradicting the hypothesis.
+Mathlib's `Complex.norm_deriv_le_div_of_mapsTo_ball` gives `‖deriv g c‖ ≤ R₂ / R₁`. In the equality
+case `Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div` — the equality case of Schwarz, available
+for `ℂ` because it is a strictly convex space — forces `g` to be the affine map
+`z ↦ g c + (z - c) * deriv g c` on the ball. The multiplier is nonzero, having norm `R₂ / R₁ > 0`,
+so that map is injective, contradicting the hypothesis.
+
+Both radii must be positive. With `R₂ = 0` the target is the single point `g c`, so `g` is constant
+and *not* injective, while the claimed bound `‖deriv g c‖ < 0` is false.
 
 ## Main statements
 
-* `TauCeti.norm_deriv_lt_one_of_not_injOn` — the strict bound.
+* `TauCeti.norm_deriv_lt_div_of_not_injOn` — the strict bound.
+* `TauCeti.norm_deriv_lt_one_of_not_injOn` — its equal-radius form.
 
 ## Coordination with upstream Mathlib
 
@@ -47,26 +50,36 @@ namespace TauCeti
 
 open Complex Set Metric
 
-/-- **Strict Schwarz lemma.** A holomorphic map of `ball c R` into `closedBall (g c) R` that is
-**not** injective has `‖deriv g c‖ < 1`.
+/-- **Strict Schwarz lemma.** A holomorphic map of `ball c R₁` into `closedBall (g c) R₂` that is
+**not** injective has `‖deriv g c‖ < R₂ / R₁`.
 
-Schwarz's lemma gives `‖deriv g c‖ ≤ 1`; in the equality case the map is affine with nonzero
-multiplier, hence injective. -/
-theorem norm_deriv_lt_one_of_not_injOn {g : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R)
-    (hgd : DifferentiableOn ℂ g (ball c R)) (hgm : MapsTo g (ball c R) (closedBall (g c) R))
-    (hgi : ¬ InjOn g (ball c R)) : ‖deriv g c‖ < 1 := by
-  rcases (Complex.norm_deriv_le_one_of_mapsTo_ball hgd hgm hR).lt_or_eq with hlt | heq
+Schwarz's lemma gives `‖deriv g c‖ ≤ R₂ / R₁`; in the equality case the map is affine with nonzero
+multiplier, hence injective. Both radii must be positive: for `R₂ = 0` the map is constant, so it is
+not injective and the strict bound fails. -/
+theorem norm_deriv_lt_div_of_not_injOn {g : ℂ → ℂ} {c : ℂ} {R₁ R₂ : ℝ} (hR₁ : 0 < R₁)
+    (hR₂ : 0 < R₂) (hgd : DifferentiableOn ℂ g (ball c R₁))
+    (hgm : MapsTo g (ball c R₁) (closedBall (g c) R₂)) (hgi : ¬ InjOn g (ball c R₁)) :
+    ‖deriv g c‖ < R₂ / R₁ := by
+  rcases (Complex.norm_deriv_le_div_of_mapsTo_ball hgd hgm hR₁).lt_or_eq with hlt | heq
   · exact hlt
   refine absurd ?_ hgi
   -- In the equality case Schwarz forces `g z = g c + (z - c) * deriv g c`, which is injective.
-  have hds : ‖dslope g c c‖ = R / R := by
-    rw [div_self hR.ne']
-    simpa [dslope_same] using heq
-  have haff := Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div hgd hgm (mem_ball_self hR) hds
-  have hd₀ : deriv g c ≠ 0 := fun h₀ => one_ne_zero (heq.symm.trans (by rw [h₀, norm_zero]))
+  have hds : ‖dslope g c c‖ = R₂ / R₁ := by simpa [dslope_same] using heq
+  have haff := Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div hgd hgm (mem_ball_self hR₁) hds
+  have hd₀ : deriv g c ≠ 0 := by
+    intro h₀
+    rw [h₀, norm_zero] at heq
+    exact (div_pos hR₂ hR₁).ne' heq.symm
   intro z hz w hw hzw
   rw [haff hz, haff hw] at hzw
   simp only [dslope_same, smul_eq_mul, add_right_inj] at hzw
   linear_combination mul_right_cancel₀ hd₀ hzw
+
+/-- **Strict Schwarz lemma, equal radii.** A holomorphic map of `ball c R` into
+`closedBall (g c) R` that is **not** injective has `‖deriv g c‖ < 1`. -/
+theorem norm_deriv_lt_one_of_not_injOn {g : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R)
+    (hgd : DifferentiableOn ℂ g (ball c R)) (hgm : MapsTo g (ball c R) (closedBall (g c) R))
+    (hgi : ¬ InjOn g (ball c R)) : ‖deriv g c‖ < 1 := by
+  simpa [div_self hR.ne'] using norm_deriv_lt_div_of_not_injOn hR hR hgd hgm hgi
 
 end TauCeti
