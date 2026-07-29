@@ -321,6 +321,13 @@ theorem isStabilization_swapMarkings (G : GridDiagram n)
 def IsDestabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) : Prop :=
   IsStabilization G G'
 
+/-- Exchanging the marking types preserves the elementary destabilization relation. -/
+@[simp]
+theorem isDestabilization_swapMarkings (G' : GridDiagram (n + 1))
+    (G : GridDiagram n) :
+    IsDestabilization G'.swapMarkings G.swapMarkings ↔ IsDestabilization G' G := by
+  simpa only [IsDestabilization] using isStabilization_swapMarkings G G'
+
 end GridDiagram
 
 end TauCeti
