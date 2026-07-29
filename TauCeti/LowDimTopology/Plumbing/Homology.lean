@@ -88,6 +88,18 @@ theorem latticeShortComplex_X₃ (P : PlumbingGraph V) (k : P.characteristicVect
     (P.latticeShortComplex k).X₃ =
       ModuleCat.of PlumbingCoefficient (PlumbingChain V) := (rfl)
 
+/-- The left map of the lattice short complex is the lattice differential. -/
+@[simp]
+theorem latticeShortComplex_f (P : PlumbingGraph V) (k : P.characteristicVectors) :
+    HEq (P.latticeShortComplex k).f
+      (ModuleCat.ofHom (P.latticeDifferential k)) := (HEq.rfl)
+
+/-- The right map of the lattice short complex is the lattice differential. -/
+@[simp]
+theorem latticeShortComplex_g (P : PlumbingGraph V) (k : P.characteristicVectors) :
+    HEq (P.latticeShortComplex k).g
+      (ModuleCat.ofHom (P.latticeDifferential k)) := (HEq.rfl)
+
 /-- The characteristic-two lattice homology module: the homology of the weighted
 plumbing-lattice short complex.
 
@@ -111,13 +123,13 @@ noncomputable def latticeHomologyIsoChainOfIsEmpty [IsEmpty V]
     P.latticeHomology k ≅ ModuleCat.of PlumbingCoefficient (PlumbingChain V) := by
   let S := P.latticeShortComplex k
   have hf : S.f = 0 := by
-    simp only [S, latticeShortComplex, ShortComplex.moduleCatMk_f,
-      P.latticeDifferential_eq_zero_of_isEmpty k]
-    rfl
+    have h := P.latticeShortComplex_f k
+    rw [P.latticeDifferential_eq_zero_of_isEmpty k] at h
+    exact eq_of_heq h
   have hg : S.g = 0 := by
-    simp only [S, latticeShortComplex, ShortComplex.moduleCatMk_g,
-      P.latticeDifferential_eq_zero_of_isEmpty k]
-    rfl
+    have h := P.latticeShortComplex_g k
+    rw [P.latticeDifferential_eq_zero_of_isEmpty k] at h
+    exact eq_of_heq h
   exact (S.asIsoHomologyπ hf).symm ≪≫ S.cyclesIsoX₂ hg
 
 /-- The characteristic-two lattice homology of a zero-vertex plumbing is a universe-lifted copy
