@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
-public import TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector
+public import TauCeti.RepresentationTheory.Quiver.Reflection.Acyclic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.EulerForm
 
 /-!

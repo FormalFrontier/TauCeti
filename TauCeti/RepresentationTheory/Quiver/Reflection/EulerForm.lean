@@ -117,7 +117,6 @@ private theorem sub_sum_sum_eq_of_reflect_data {W : Type*} [Fintype W] (i : W)
   ring
 
 variable {V : Type u} [_root_.Quiver.{v} V] [Fintype V] [∀ a b : V, Fintype (a ⟶ b)]
-  [DecidableEq V]
 
 /-- `TauCeti.eulerForm_eq_sum_card` for the reflected quiver, with the sums re-indexed by the
 vertex type `V` itself and the arrow counts written as `TauCeti.Quiver.reflectHom` counts.
@@ -170,6 +169,8 @@ theorem titsPolarForm_reflect (i : V) (d e : V → ℤ) :
     eulerForm_reflect_eq_sum_card, eulerForm_eq_sum_card, eulerForm_eq_sum_card]
   linarith [key]
 
+variable [DecidableEq V]
+
 /-- Reflecting at a vertex leaves every simple reflection on dimension vectors unchanged, since
 these are built from the polarized Tits form, which reflection preserves. -/
 theorem vertexPreReflection_reflect_apply (i j : V) (d : V → ℤ) (w : V) :
@@ -195,7 +196,7 @@ theorem eulerForm_reflect_vertexPreReflection {i : V} (h : Quiver.IsSink i) (d e
     eulerForm (Quiver.Reflect V i) (vertexPreReflection V i d) (vertexPreReflection V i e)
       = eulerForm V d e := by
   have hcard : ∀ b : V, (Fintype.card (i ⟶ b) : ℤ) = 0 := fun b ↦ by
-    rw [Fintype.card_eq_zero_iff.mpr (h b), Nat.cast_zero]
+    rw [Fintype.card_eq_zero_iff.mpr (h.isEmpty_hom b), Nat.cast_zero]
   have hself : ∀ f : V → ℤ, vertexPreReflection V i f i
       = (∑ w : V, (Fintype.card (w ⟶ i) : ℤ) * f w) - f i := fun f ↦ by
     rw [vertexPreReflection_apply_self, sub_eq_neg_add]
