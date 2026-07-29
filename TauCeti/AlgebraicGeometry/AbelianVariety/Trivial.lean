@@ -124,8 +124,7 @@ lemma trivial_toOver : (trivial K).toOver = 𝟙_ (Over (Spec (.of K))) := by
 /-- The scheme underlying the trivial abelian variety is `Spec K`. -/
 @[simp]
 lemma trivial_toScheme : (trivial K).toScheme = Spec (.of K) := by
-  change (trivial K).toOver.left = _
-  rw [trivial_toOver, Over.tensorUnit_left]
+  simp only [toScheme, trivial_toOver, Over.tensorUnit_left]
 
 /-- The scheme over `Spec K` underlying the trivial abelian variety is terminal: it is the
 monoidal unit of `Over (Spec K)`. -/
