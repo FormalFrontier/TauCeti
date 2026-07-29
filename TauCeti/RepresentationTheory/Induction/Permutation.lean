@@ -12,8 +12,8 @@ public import TauCeti.RepresentationTheory.Induction.Basic
 # The permutation representation as an induced representation
 
 For a subgroup `H` of a group `G`, inducing the trivial `H`-representation along `H.subtype`
-gives the permutation representation of `G` on the left cosets `G ⧸ H`, and its character counts
-fixed cosets.
+gives the permutation representation of `G` on the left cosets `G ⧸ H`, and its character is the
+number of fixed cosets, cast into the coefficient field.
 
 ## Main definitions
 
@@ -22,10 +22,13 @@ fixed cosets.
 
 ## Main statements
 
-* `TauCeti.character_ofMulAction`: the character of a permutation representation at `g` counts
-  the points fixed by `g`.
-* `TauCeti.character_ind_trivial`: the character of `Ind_H^G (trivial)` at `g` counts the cosets
-  fixed by `g`.
+* `TauCeti.character_ofMulAction`: the character of a permutation representation at `g` is the
+  number of points fixed by `g`, cast into `k`.
+* `TauCeti.character_ind_trivial`: the character of `Ind_H^G (trivial)` at `g` is the number of
+  cosets fixed by `g`, cast into `k`.
+
+Both statements are equalities in `k`, so in positive characteristic they determine the fixed-point
+count only modulo the characteristic.
 
 ## Implementation notes
 
@@ -98,8 +101,7 @@ private noncomputable def indTrivialToQuotient :
 private theorem indTrivialToQuotient_mk (x : G) (a : k) :
     indTrivialToQuotient k H (IndV.mk H.subtype (Representation.trivial k H k) x a) =
       MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ H) a := by
-  rw [indTrivialToQuotient, IndV.mk, LinearMap.comp_apply, TensorProduct.mk_apply,
-    Coinvariants.lift_mk, indTrivialLift_tmul, smul_eq_mul, mul_one]
+  simp [indTrivialToQuotient, IndV.mk, indTrivialLift_tmul]
 
 /-- Left translation by `H` is invisible in `Ind_H^G (trivial)`. -/
 private theorem indV_mk_smul (s : H) (x : G) (a : k) :
@@ -145,21 +147,14 @@ noncomputable def indTrivialEquiv :
   · refine MonoidAlgebra.lhom_ext' fun q ↦ LinearMap.ext_ring ?_
     induction q using QuotientGroup.induction_on with
     | H x =>
-      rw [LinearMap.comp_apply, MonoidAlgebra.lsingle_apply, LinearMap.comp_apply,
-        quotientToIndTrivial_single, one_smul, indTrivialMk_mk, indTrivialToQuotient_mk, inv_inv,
-        LinearMap.comp_apply, LinearMap.id_apply, MonoidAlgebra.lsingle_apply]
+      simp [quotientToIndTrivial_single, indTrivialMk_mk, indTrivialToQuotient,
+        indTrivialLift_tmul]
   · refine IndV.hom_ext _ _ fun x ↦ LinearMap.ext_ring ?_
-    rw [LinearMap.id_comp, LinearMap.comp_apply, LinearMap.comp_apply, indTrivialToQuotient_mk,
-      quotientToIndTrivial_single, one_smul, indTrivialMk_mk, inv_inv]
+    simp [indTrivialToQuotient, indTrivialLift_tmul, quotientToIndTrivial_single,
+      indTrivialMk_mk]
   · intro g
     refine IndV.hom_ext _ _ fun x ↦ LinearMap.ext_ring ?_
-    rw [LinearEquiv.ofLinear_toLinearMap]
-    conv_lhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
-    conv_rhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
-    rw [Representation.ind_mk, indTrivialToQuotient_mk, indTrivialToQuotient_mk,
-      ofMulAction_single]
-    congr 1
-    simp [mul_inv_rev]
+    simp [indTrivialToQuotient, indTrivialLift_tmul, ofMulAction_single, mul_inv_rev]
 
 /-- The generator computation rule for `indTrivialEquiv`. Not a `simp` lemma: `simp` unfolds the
 reducible `Representation.IndV.mk`, so the left-hand side is not in `simp`-normal form. -/
@@ -194,20 +189,29 @@ section PermutationCharacter
 
 variable (k : Type u) [Field k] {G : Type v} [Monoid G]
 
+/-- A permutation representation permutes the standard basis of `k[X]`. -/
+private theorem ofMulAction_basis (X : Type w) [MulAction G X] (g : G) (x : X) :
+    Representation.ofMulAction k G X g (MonoidAlgebra.basis X k x) =
+      MonoidAlgebra.basis X k (g • x) := by
+  simp [ofMulAction_single]
+
+/-- The diagonal entries of a permutation representation record which points are fixed. -/
+private theorem toMatrix_ofMulAction_diag (X : Type w) [MulAction G X] [Fintype X]
+    [DecidableEq X] (g : G) (x : X) :
+    LinearMap.toMatrix (MonoidAlgebra.basis X k) (MonoidAlgebra.basis X k)
+      (Representation.ofMulAction k G X g) x x = if g • x = x then 1 else 0 := by
+  simp only [LinearMap.toMatrix_apply, ofMulAction_basis, Module.Basis.repr_self,
+    Finsupp.single_apply]
+
 /-- **The permutation character.** The character of the permutation representation `k[X]` at `g`
-is the number of points of `X` fixed by `g`. -/
+is the number of points of `X` fixed by `g`, cast into `k`. -/
 theorem character_ofMulAction (X : Type w) [MulAction G X] [Finite X] (g : G) :
     (Representation.ofMulAction k G X).character g = Nat.card {x : X // g • x = x} := by
   classical
   have := Fintype.ofFinite X
   rw [Representation.character,
     LinearMap.trace_eq_matrix_trace k (MonoidAlgebra.basis X k), Matrix.trace]
-  have key : ∀ i : X, LinearMap.toMatrix (MonoidAlgebra.basis X k) (MonoidAlgebra.basis X k)
-      (Representation.ofMulAction k G X g) i i = if g • i = i then 1 else 0 := fun i ↦ by
-    rw [LinearMap.toMatrix_apply, MonoidAlgebra.basis_apply,
-      ofMulAction_single, ← MonoidAlgebra.basis_apply, Module.Basis.repr_self,
-      Finsupp.single_apply]
-  simp [key, Fintype.card_subtype]
+  simp [toMatrix_ofMulAction_diag, Fintype.card_subtype]
 
 end PermutationCharacter
 
@@ -216,7 +220,7 @@ section Character
 variable (k : Type u) [Field k] {G : Type v} [Group G] (H : Subgroup G)
 
 /-- **The permutation character of an induced trivial representation.** The character of
-`Ind_H^G (trivial)` at `g` is the number of cosets in `G ⧸ H` fixed by `g`. -/
+`Ind_H^G (trivial)` at `g` is the number of cosets in `G ⧸ H` fixed by `g`, cast into `k`. -/
 theorem character_ind_trivial [Finite (G ⧸ H)] (g : G) :
     ((Representation.trivial k H k).ind H.subtype).character g =
       Nat.card {q : G ⧸ H // g • q = q} := by
