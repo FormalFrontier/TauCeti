@@ -118,22 +118,21 @@ theorem residue_inv_of_deriv_ne_zero (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ 
   simpa only [one_div] using
     residue_div_of_deriv_ne_zero (g := fun _ => 1) analyticAt_const hh hh0 hh'
 
-/-- A simple zero of the denominator lowers the meromorphic order by one: if `h` is analytic at
-`z₀` with `h z₀ = 0` and `deriv h z₀ ≠ 0`, then
+/-- A simple zero of the denominator lowers the meromorphic order by one: if `g` is meromorphic at
+`z₀` and `h` is analytic at `z₀` with `h z₀ = 0` and `deriv h z₀ ≠ 0`, then
 
 `meromorphicOrderAt (fun z => g z / h z) z₀ = meromorphicOrderAt g z₀ − 1`.
 
 The denominator's analytic order at a zero with non-vanishing derivative is `1`
 (`AnalyticAt.analyticOrderAt_eq_one_of_zero_deriv_ne_zero`), and orders subtract across a quotient
-(`meromorphicOrderAt_div`). -/
-theorem meromorphicOrderAt_div_of_deriv_ne_zero (hg : AnalyticAt ℂ g z₀) (hh : AnalyticAt ℂ h z₀)
+(`fun_meromorphicOrderAt_div`). -/
+theorem meromorphicOrderAt_div_of_deriv_ne_zero (hg : MeromorphicAt g z₀) (hh : AnalyticAt ℂ h z₀)
     (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
     meromorphicOrderAt (fun z => g z / h z) z₀ = meromorphicOrderAt g z₀ - 1 := by
   have hord : meromorphicOrderAt h z₀ = 1 := by
     rw [hh.meromorphicOrderAt_eq, hh.analyticOrderAt_eq_one_of_zero_deriv_ne_zero hh0 hh']
     simp
-  rw [show (fun z => g z / h z) = g / h from rfl,
-    meromorphicOrderAt_div hg.meromorphicAt hh.meromorphicAt, hord]
+  rw [fun_meromorphicOrderAt_div hg hh.meromorphicAt, hord]
 
 /-- **A non-vanishing numerator over a simple zero is an exactly simple pole.** If `g` and `h` are
 analytic at `z₀` with `g z₀ ≠ 0`, `h z₀ = 0` and `deriv h z₀ ≠ 0`, then
@@ -145,8 +144,8 @@ the simple-pole residue theorems
 theorem meromorphicOrderAt_div_eq_neg_one (hg : AnalyticAt ℂ g z₀) (hgne : g z₀ ≠ 0)
     (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
     meromorphicOrderAt (fun z => g z / h z) z₀ = -1 := by
-  rw [meromorphicOrderAt_div_of_deriv_ne_zero hg hh hh0 hh', hg.meromorphicOrderAt_eq,
-    analyticOrderAt_eq_zero.mpr (Or.inr hgne)]
+  rw [meromorphicOrderAt_div_of_deriv_ne_zero hg.meromorphicAt hh hh0 hh',
+    hg.meromorphicOrderAt_eq, analyticOrderAt_eq_zero.mpr (Or.inr hgne)]
   simp
 
 /-! ### Worked examples
