@@ -82,35 +82,35 @@ noncomputable section
 
 variable (K : Type u) [Field K]
 
-/-- The **trivial abelian variety** over `K`: the base `Spec K` regarded as a group scheme over
-itself.
-
-It is carried by the monoidal unit `𝟙_ (Over (Spec K))`, which is a group object because it is
-terminal, and whose structure morphism is the identity of `Spec K` (`Over.tensorUnit_hom`); the
-identity is proper, and it is geometrically integral by `geometricallyIntegral_of_isIso`. Those
-are exactly the hypotheses of `AbelianVariety.ofGeometricallyIntegral`, which assembles them. -/
-def trivial : AbelianVariety K :=
-  haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
-  haveI : IsProper (𝟙_ (Over (Spec (.of K)))).hom := by
-    rw [Over.tensorUnit_hom]
-    -- `infer_instance` fails on the rewritten goal because the failed attempt on the original
-    -- goal is cached; `inferInstanceAs` re-elaborates the type and succeeds.
-    exact inferInstanceAs (IsProper (𝟙 _))
-  haveI : GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom := by
-    rw [Over.tensorUnit_hom]
-    exact hid
-  ofGeometricallyIntegral (𝟙_ (Over (Spec (.of K))))
-
+/-- The structure morphism of the monoidal unit of `Over (Spec K)` is proper: it is the identity
+of `Spec K` (`Over.tensorUnit_hom`). -/
 private lemma isProperTensorUnit :
     IsProper (𝟙_ (Over (Spec (.of K)))).hom := by
   rw [Over.tensorUnit_hom]
+  -- `infer_instance` fails on the rewritten goal because the failed attempt on the original goal
+  -- is cached; `inferInstanceAs` re-elaborates the type and succeeds.
   exact inferInstanceAs (IsProper (𝟙 _))
 
+/-- The structure morphism of the monoidal unit of `Over (Spec K)` is geometrically integral: it
+is the identity of `Spec K` (`Over.tensorUnit_hom`), and an isomorphism is geometrically integral
+by `geometricallyIntegral_of_isIso`. -/
 private lemma geometricallyIntegralTensorUnit :
     GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom := by
   haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
   rw [Over.tensorUnit_hom]
   exact hid
+
+/-- The **trivial abelian variety** over `K`: the base `Spec K` regarded as a group scheme over
+itself.
+
+It is carried by the monoidal unit `𝟙_ (Over (Spec K))`, which is a group object because it is
+terminal, and whose structure morphism is proper and geometrically integral by
+`isProperTensorUnit` and `geometricallyIntegralTensorUnit`. Those are exactly the hypotheses of
+`AbelianVariety.ofGeometricallyIntegral`, which assembles them. -/
+def trivial : AbelianVariety K :=
+  letI := isProperTensorUnit K
+  letI := geometricallyIntegralTensorUnit K
+  ofGeometricallyIntegral (𝟙_ (Over (Spec (.of K))))
 
 /-- The group scheme underlying the trivial abelian variety is the monoidal unit of
 `Over (Spec K)`. -/
