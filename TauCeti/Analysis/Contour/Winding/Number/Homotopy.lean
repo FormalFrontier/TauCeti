@@ -21,7 +21,7 @@ integrals on the compact image of the homotopy.
 
 ## Main results
 
-* `windingNumber_eq_inv_two_pi_mul_curveIntegral` identifies Tau Ceti's raw-function winding
+* `windingNumber_eq_two_pi_I_inv_mul_curveIntegral` identifies Tau Ceti's raw-function winding
   number of a piecewise-`C¹` path with Mathlib's curve integral of the Cauchy-kernel `1`-form.
 * `windingNumber_eq_of_pathHomotopy` proves the Layer 0 homotopy invariance result.
 * `isNullHomologous_iff_of_pathHomotopy` transfers null-homology across a homotopy in the ambient
@@ -64,14 +64,14 @@ private theorem hasFDerivAt_indexForm {w z : ℂ} (hzw : z ≠ w) :
 private theorem indexFormDeriv_apply_comm (w z u v : ℂ) :
     indexFormDeriv w z u v = indexFormDeriv w z v u := by
   have happly (x y : ℂ) : indexFormDeriv w z x y = x * (-((z - w) ^ 2)⁻¹) * y := by
-    rfl
+    simp [indexFormDeriv, mul_assoc]
   rw [happly, happly]
   ring
 
 /-- For a piecewise-`C¹` path avoiding `w`, its winding number about `w` is the normalized curve
 integral of the closed `1`-form `z ↦ (z - w)⁻¹ dz`. This is the bridge from Tau Ceti's raw-function
 winding number to Mathlib's path-based curve integral. -/
-theorem windingNumber_eq_inv_two_pi_mul_curveIntegral {x y w : ℂ} {p : Path x y}
+theorem windingNumber_eq_two_pi_I_inv_mul_curveIntegral {x y w : ℂ} {p : Path x y}
     (hp : IsPiecewiseC1On p.extend 0 1) (havoid : ∀ t : Set.Icc (0 : ℝ) 1, p t ≠ w) :
     windingNumber p.extend 0 1 w =
       (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
@@ -87,39 +87,24 @@ theorem windingNumber_eq_inv_two_pi_mul_curveIntegral {x y w : ℂ} {p : Path x 
     curveIntegral_eq_intervalIntegral_deriv]
   simp only [smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul]
 
-/-- The first boundary path of a smooth path homotopy is piecewise `C¹`. -/
-private theorem isPiecewiseC1On_fst_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
+/-- Every intermediate path of a smooth path homotopy is piecewise `C¹`. -/
+private theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
     (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
       (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1)) :
-    IsPiecewiseC1On p.extend 0 1 := by
+      (Set.Icc 0 1))
+    (s : I) :
+    IsPiecewiseC1On (φ.eval s).extend 0 1 := by
   apply IsPiecewiseC1On.of_contDiffOn
   rw [Set.uIcc_of_le zero_le_one]
   have hs : ContDiffOn ℝ 1
       ((fun st : ℝ × ℝ ↦
         Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) ∘
-        fun t : ℝ => ((0, t) : ℝ × ℝ)) (Set.Icc 0 1) :=
+        fun t : ℝ => ((s, t) : ℝ × ℝ)) (Set.Icc 0 1) :=
     (hφsmooth.of_le (by norm_num)).comp (by fun_prop)
-      (fun t ht => by simpa [Prod.le_def] using ht)
-  exact hs.congr fun _ _ => by simp [Path.extend]
-
-/-- The second boundary path of a smooth path homotopy is piecewise `C¹`. -/
-private theorem isPiecewiseC1On_snd_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
-    (φ : p.Homotopy q)
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1)) :
-    IsPiecewiseC1On q.extend 0 1 := by
-  apply IsPiecewiseC1On.of_contDiffOn
-  rw [Set.uIcc_of_le zero_le_one]
-  have hs : ContDiffOn ℝ 1
-      ((fun st : ℝ × ℝ ↦
-        Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) ∘
-        fun t : ℝ => ((1, t) : ℝ × ℝ)) (Set.Icc 0 1) :=
-    (hφsmooth.of_le (by norm_num)).comp (by fun_prop)
-      (fun t ht => by simpa [Prod.le_def] using ht)
-  exact hs.congr fun _ _ => by simp [Path.extend]
+      (fun t ht => by
+        simpa [Prod.le_def] using ⟨⟨s.2.1, ht.1⟩, ⟨s.2.2, ht.2⟩⟩)
+  exact hs.congr fun _ _ => by simp [Path.extend, Path.Homotopy.eval]
 
 /-- **Homotopy invariance of the winding number off the curve.** Two closed paths joined through
 `ℂ \ {w}` by a path homotopy whose extension to the unit square is `C²` have the same winding number
@@ -167,11 +152,15 @@ theorem windingNumber_eq_of_pathHomotopy {x w : ℂ} {p q : Path x x}
       (∫ᶜ z in p, (z - w)⁻¹ • ContinuousLinearMap.id ℂ ℂ) =
         ∫ᶜ z in q, (z - w)⁻¹ • ContinuousLinearMap.id ℂ ℂ := by
     simpa only [indexForm] using hcurve
-  rw [windingNumber_eq_inv_two_pi_mul_curveIntegral
-      (isPiecewiseC1On_fst_of_smoothPathHomotopy φ hφsmooth)
+  have hp : IsPiecewiseC1On p.extend 0 1 := by
+    simpa using isPiecewiseC1On_eval_of_smoothPathHomotopy φ hφsmooth (0 : I)
+  have hq : IsPiecewiseC1On q.extend 0 1 := by
+    simpa using isPiecewiseC1On_eval_of_smoothPathHomotopy φ hφsmooth (1 : I)
+  rw [windingNumber_eq_two_pi_I_inv_mul_curveIntegral
+      hp
       (fun t ↦ haway ⟨(0, t), by simp⟩),
-    windingNumber_eq_inv_two_pi_mul_curveIntegral
-      (isPiecewiseC1On_snd_of_smoothPathHomotopy φ hφsmooth)
+    windingNumber_eq_two_pi_I_inv_mul_curveIntegral
+      hq
       (fun t ↦ haway ⟨(1, t), by simp⟩),
     hcurve']
 
