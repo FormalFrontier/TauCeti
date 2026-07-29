@@ -1,15 +1,15 @@
 module
 
-public import Mathlib.CategoryTheory.Adjunction.CompositionIso
 public import Mathlib.RepresentationTheory.Coinduced
 public import Mathlib.RepresentationTheory.Induced
+public import TauCeti.RepresentationTheory.Restriction
 
 /-!
 # Transitivity of induction and coinduction
 
-This file records restriction and coinduction in stages for representations along composable monoid
-homomorphisms, and induction in stages along composable group homomorphisms. It obtains the natural
-isomorphisms from the functoriality of restriction and
+This file records coinduction in stages for representations along composable monoid homomorphisms,
+and induction in stages along composable group homomorphisms. It obtains the natural isomorphisms
+from the functoriality of restriction in `TauCeti.RepresentationTheory.Restriction` and
 Mathlib's induction--restriction and restriction--coinduction adjunctions. This is the categorical
 core used by the subgroup form of induction in the induction and Mackey-theory roadmap.
 -/
@@ -25,101 +25,6 @@ universe u v w x
 variable {k : Type u} {G : Type v} {H : Type w} {K : Type x}
 
 namespace Rep
-
-section Restriction
-
-variable [Semiring k] [Monoid G] [Monoid H] [Monoid K]
-
-/-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
-along their composite. -/
-noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
-    _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
-      _root_.Rep.resFunctor.{max u v w x} (k := k) φ ≅
-        _root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ) :=
-  NatIso.ofComponents
-    (fun A ↦ _root_.Rep.mkIso <|
-      Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by rfl)
-    (by
-      intro _ _ f
-      ext
-      rfl)
-
-/-- The forward component of `resFunctorCompIso` acts as the identity on vectors. -/
-@[simp↓]
-lemma resFunctorCompIso_hom_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
-    ((resFunctorCompIso φ ψ).hom.app A) x = x :=
-  by
-    unfold resFunctorCompIso
-    rfl
-
-/-- The inverse component of `resFunctorCompIso` acts as the identity on vectors. -/
-@[simp↓]
-lemma resFunctorCompIso_inv_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
-    ((resFunctorCompIso φ ψ).inv.app A) x = x :=
-  by
-    unfold resFunctorCompIso
-    rfl
-
-/-- Restriction along a multiplicative equivalence is an equivalence of representation
-categories. -/
-noncomputable def resEquivalence (e : G ≃* H) :
-    _root_.Rep k H ≌ _root_.Rep k G := by
-  let unitIso :
-      𝟭 (_root_.Rep k H) ≅
-        _root_.Rep.resFunctor e.toMonoidHom ⋙
-          _root_.Rep.resFunctor e.symm.toMonoidHom :=
-    (NatIso.ofComponents
-      (fun A ↦ _root_.Rep.mkIso <|
-        Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
-          -- Unfold the two restricted actions so the unit component reduces to cancellation
-          -- by `e.apply_symm_apply`; both underlying linear maps are definitionally identities.
-          change LinearMap.id.comp (A.ρ (e (e.symm _))) =
-            (A.ρ _).comp LinearMap.id
-          rw [LinearMap.id_comp, LinearMap.comp_id]
-          rw [e.apply_symm_apply])
-      (by
-        intro A B f
-        ext
-        rfl)).symm.trans
-      (resFunctorCompIso e.symm.toMonoidHom e.toMonoidHom).symm
-  let counitIso :
-      _root_.Rep.resFunctor e.symm.toMonoidHom ⋙
-          _root_.Rep.resFunctor e.toMonoidHom ≅
-        𝟭 (_root_.Rep k G) :=
-    (resFunctorCompIso e.toMonoidHom e.symm.toMonoidHom).trans
-      (NatIso.ofComponents
-        (fun A ↦ _root_.Rep.mkIso <|
-          Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
-            -- Unfold the two restricted actions so the counit component reduces to cancellation
-            -- by `e.symm_apply_apply`; both underlying linear maps are definitionally identities.
-            change LinearMap.id.comp (A.ρ (e.symm (e _))) =
-              (A.ρ _).comp LinearMap.id
-            rw [LinearMap.id_comp, LinearMap.comp_id]
-            rw [e.symm_apply_apply])
-        (by
-          intro A B f
-          ext
-          rfl))
-  exact CategoryTheory.Equivalence.mk
-    (_root_.Rep.resFunctor e.toMonoidHom)
-    (_root_.Rep.resFunctor e.symm.toMonoidHom)
-    unitIso counitIso
-
-/-- The forward functor of restriction along an equivalence is restriction along its
-underlying homomorphism. -/
-@[simp]
-theorem resEquivalence_functor (e : G ≃* H) :
-    (resEquivalence (k := k) e).functor = _root_.Rep.resFunctor e.toMonoidHom := by
-  rfl
-
-/-- The inverse functor of restriction along an equivalence is restriction along the inverse
-homomorphism. -/
-@[simp]
-theorem resEquivalence_inverse (e : G ≃* H) :
-    (resEquivalence (k := k) e).inverse = _root_.Rep.resFunctor e.symm.toMonoidHom := by
-  rfl
-
-end Restriction
 
 section Induction
 

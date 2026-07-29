@@ -6,8 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.Irreducible
-public import TauCeti.RepresentationTheory.Induction.Transitivity
+public import TauCeti.RepresentationTheory.Restriction
 
 /-!
 # Conjugate representations
@@ -26,6 +25,9 @@ This is the representation occurring in the summands of the Mackey decomposition
 * `TauCeti.conjRepFunctor`: conjugation as a functor between representation categories.
 * `TauCeti.conjRep`: the conjugate of a representation.
 * `TauCeti.conjRepEquivalence`: conjugation as an equivalence of representation categories.
+* `TauCeti.conjRepSubrepresentationOrderIso`: the invariant-subspace correspondence under
+  conjugation.
+* `TauCeti.isIrreducible_conjRep_iff`: conjugation preserves irreducibility.
 * `TauCeti.conjFDRep`: the finite-dimensional version.
 
 ## References
@@ -88,9 +90,9 @@ noncomputable def conjRepEquivalence [Semiring k] (s : G) (H : Subgroup G) :
 /-- The forward functor of the conjugation equivalence is restriction along conjugation. -/
 @[simp]
 theorem conjRepEquivalence_functor [Semiring k] (s : G) (H : Subgroup G) :
-    (conjRepEquivalence (k := k) s H).functor =
-      Rep.resFunctor (conjSubgroupEquiv s H).toMonoidHom := by
+    (conjRepEquivalence (k := k) s H).functor = conjRepFunctor s H := by
   rw [conjRepEquivalence, Rep.resEquivalence_functor]
+  rfl
 
 /-- The inverse functor of the conjugation equivalence restricts along inverse conjugation. -/
 @[simp]
@@ -146,48 +148,34 @@ theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
 conjugate. -/
 def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Subrepresentation (conjRep s A).ρ ≃o Subrepresentation A.ρ := by
-  -- Unfold the local wrapper so the two subrepresentations visibly have the same carrier module.
   change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
     Subrepresentation A.ρ
-  exact
-    { toFun := fun S ↦
-        { toSubmodule := S.toSubmodule
-          apply_mem_toSubmodule := fun h v hv ↦ by
-            simpa using S.apply_mem_toSubmodule ((conjSubgroupEquiv s H).symm h) hv }
-      invFun := fun S ↦
-        { toSubmodule := S.toSubmodule
-          apply_mem_toSubmodule := fun g v hv ↦
-            S.apply_mem_toSubmodule (conjSubgroupEquiv s H g) hv }
-      left_inv := fun S ↦ by ext; rfl
-      right_inv := fun S ↦ by ext; rfl
-      map_rel_iff' := by rfl }
+  exact Rep.resSubrepresentationOrderIso (conjSubgroupEquiv s H) A
 
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
 theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
     {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation (conjRep s A).ρ) :
     HEq (conjRepSubrepresentationOrderIso s A S).toSubmodule S.toSubmodule := by
-  -- Unfold the conjugate representation and the explicit order isomorphism; its forward map
-  -- deliberately reuses the same underlying submodule.
-  change HEq S.toSubmodule S.toSubmodule
-  rfl
+  unfold conjRepSubrepresentationOrderIso
+  exact heq_of_eq (Rep.resSubrepresentationOrderIso_apply_toSubmodule
+    (conjSubgroupEquiv s H) A S)
 
 /-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
 theorem conjRepSubrepresentationOrderIso_symm_apply_toSubmodule [Semiring k] (s : G)
     {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation A.ρ) :
     HEq ((conjRepSubrepresentationOrderIso s A).symm S).toSubmodule S.toSubmodule := by
-  -- Unfold the conjugate representation and the explicit order isomorphism; its inverse map
-  -- deliberately reuses the same underlying submodule.
-  change HEq S.toSubmodule S.toSubmodule
-  rfl
+  unfold conjRepSubrepresentationOrderIso
+  exact heq_of_eq (Rep.resSubrepresentationOrderIso_symm_apply_toSubmodule
+    (conjSubgroupEquiv s H) A S)
 
 /-- A conjugate representation is irreducible exactly when the original representation is. -/
 @[simp]
 theorem isIrreducible_conjRep_iff [Field k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Representation.IsIrreducible (conjRep s A).ρ ↔
       Representation.IsIrreducible A.ρ :=
-  (conjRepSubrepresentationOrderIso s A).isSimpleOrder_iff
+  Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H) A
 
 section FDRep
 
