@@ -173,6 +173,16 @@ lemma coeff_affineDedekindWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
     _ = _ := WeilDivisor.coeff_fractionalIdealDivisor
       (R := Γ(X, ⊤)) (K := K) I _
 
+/-- The affine Weil--Cartier correspondence restricted to positive objects: integral Cartier
+divisors correspond exactly to effective scheme-theoretic Weil divisors. -/
+def affineDedekindEffectiveWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
+    [IsAffine X] [Field K] [Algebra Γ(X, ⊤) K]
+    [IsFractionRing Γ(X, ⊤) K] [IsDedekindDomain Γ(X, ⊤)] :
+    AffineDedekindIntegralCartierDivisor X K ≃+
+      WeilDivisor.effectiveSubmonoid (CodimensionOnePoint X) :=
+  (WeilDivisor.integralFractionalIdealDivisorAddEquiv Γ(X, ⊤) K).trans
+    (WeilDivisor.effectiveSubmonoidAddEquiv (affineDedekindPointEquiv X))
+
 /-- An affine Cartier divisor has an effective associated Weil divisor exactly when its
 fractional ideal is integral. -/
 lemma isEffective_affineDedekindWeilCartierAddEquiv_iff
@@ -182,47 +192,10 @@ lemma isEffective_affineDedekindWeilCartierAddEquiv_iff
     (I : AffineDedekindCartierDivisor X K) :
     WeilDivisor.IsEffective (affineDedekindWeilCartierAddEquiv X K I) ↔
       I ∈ AffineDedekindIntegralCartierDivisor X K := by
-  constructor
-  · intro hI
-    rw [WeilDivisor.mem_integralFractionalIdealSubmonoid]
-    apply WeilDivisor.le_one_of_isEffective_fractionalIdealDivisor I
-    rw [WeilDivisor.isEffective_iff]
-    intro v
-    rw [WeilDivisor.coeff_fractionalIdealDivisor]
-    have hv := (WeilDivisor.isEffective_iff _).mp hI (affineDedekindPointEquiv X v)
-    simpa only [coeff_affineDedekindWeilCartierAddEquiv, Equiv.symm_apply_apply] using hv
-  · intro hI
-    rw [WeilDivisor.isEffective_iff]
-    intro x
-    rw [coeff_affineDedekindWeilCartierAddEquiv]
-    have hFractional :=
-      (WeilDivisor.isEffective_fractionalIdealDivisor_iff_mem I).mpr hI
-    simpa only [WeilDivisor.coeff_fractionalIdealDivisor] using
-      (WeilDivisor.isEffective_iff _).mp hFractional
-        ((affineDedekindPointEquiv X).symm x)
-
-/-- The affine Weil--Cartier correspondence restricted to positive objects: integral Cartier
-divisors correspond exactly to effective scheme-theoretic Weil divisors. -/
-def affineDedekindEffectiveWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
-    [IsAffine X] [Field K] [Algebra Γ(X, ⊤) K]
-    [IsFractionRing Γ(X, ⊤) K] [IsDedekindDomain Γ(X, ⊤)] :
-    AffineDedekindIntegralCartierDivisor X K ≃+
-      WeilDivisor.effectiveSubmonoid (CodimensionOnePoint X) where
-  toFun I :=
-    ⟨affineDedekindWeilCartierAddEquiv X K I,
-      (WeilDivisor.mem_effectiveSubmonoid _).mpr
-        ((isEffective_affineDedekindWeilCartierAddEquiv_iff X K I).mpr I.property)⟩
-  invFun D :=
-    ⟨(affineDedekindWeilCartierAddEquiv X K).symm D,
-      (isEffective_affineDedekindWeilCartierAddEquiv_iff X K
-        ((affineDedekindWeilCartierAddEquiv X K).symm D)).mp <| by
-        simpa only [AddEquiv.apply_symm_apply] using
-          (WeilDivisor.mem_effectiveSubmonoid (D : SchemeWeilDivisor X)).mp D.property⟩
-  left_inv I := Subtype.ext <| (affineDedekindWeilCartierAddEquiv X K).symm_apply_apply I
-  right_inv D := Subtype.ext <| (affineDedekindWeilCartierAddEquiv X K).apply_symm_apply D
-  map_add' I J := Subtype.ext <|
-    (affineDedekindWeilCartierAddEquiv X K).map_add
-      (I : AffineDedekindCartierDivisor X K) J
+  rw [affineDedekindWeilCartierAddEquiv, AddEquiv.trans_apply,
+    Finsupp.domCongr_apply, WeilDivisor.isEffective_equivMapDomain_iff,
+    WeilDivisor.fractionalIdealDivisorAddEquiv_apply,
+    WeilDivisor.isEffective_fractionalIdealDivisor_iff_mem]
 
 /-- The restricted affine Weil--Cartier equivalence agrees with the unrestricted equivalence after
 forgetting integrality and effectivity. -/
@@ -235,8 +208,12 @@ lemma coe_affineDedekindEffectiveWeilCartierAddEquiv
     ((affineDedekindEffectiveWeilCartierAddEquiv X K I :
         WeilDivisor.effectiveSubmonoid (CodimensionOnePoint X)) :
       SchemeWeilDivisor X) =
-      affineDedekindWeilCartierAddEquiv X K I :=
-  (rfl)
+      affineDedekindWeilCartierAddEquiv X K I := by
+  rw [affineDedekindEffectiveWeilCartierAddEquiv, AddEquiv.trans_apply,
+    WeilDivisor.coe_effectiveSubmonoidAddEquiv,
+    WeilDivisor.coe_integralFractionalIdealDivisorAddEquiv,
+    affineDedekindWeilCartierAddEquiv, AddEquiv.trans_apply,
+    WeilDivisor.fractionalIdealDivisorAddEquiv_apply]
 
 /-- The inverse restricted affine Weil--Cartier equivalence agrees with the unrestricted inverse
 after forgetting integrality. -/
@@ -249,8 +226,11 @@ lemma coe_affineDedekindEffectiveWeilCartierAddEquiv_symm
     (((affineDedekindEffectiveWeilCartierAddEquiv X K).symm D :
         AffineDedekindIntegralCartierDivisor X K) :
       AffineDedekindCartierDivisor X K) =
-      (affineDedekindWeilCartierAddEquiv X K).symm D :=
-  (rfl)
+      (affineDedekindWeilCartierAddEquiv X K).symm D := by
+  apply (affineDedekindWeilCartierAddEquiv X K).injective
+  rw [← coe_affineDedekindEffectiveWeilCartierAddEquiv X K
+      ((affineDedekindEffectiveWeilCartierAddEquiv X K).symm D),
+    AddEquiv.apply_symm_apply, AddEquiv.apply_symm_apply]
 
 /-- The prime fractional ideal at `v` corresponds to the point divisor at the associated
 codimension-one point of the affine scheme. -/
