@@ -71,8 +71,7 @@ theorem riemannMapping_openPartialHomeomorph {Ω : Set ℂ}
       DifferentiableOn ℂ e.symm (ball (0 : ℂ) 1) ∧
       (∀ z ∈ Ω, ConformalAt e z) ∧
       ∀ w ∈ ball (0 : ℂ) 1, ConformalAt e.symm w := by
-  obtain ⟨f, hbij, hfd, hinvd, -, -⟩ :=
-    exists_bijOn_ball_differentiableOn_invFunOn hΩo hΩc hΩ
+  obtain ⟨f, hbij, hfd, -⟩ := riemannMapping hΩo hΩc hΩ
   refine ⟨TauCeti.DifferentiableOn.toOpenPartialHomeomorph hfd hΩo hbij.injOn,
     ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact TauCeti.DifferentiableOn.toOpenPartialHomeomorph_source hfd hΩo hbij.injOn
@@ -81,12 +80,13 @@ theorem riemannMapping_openPartialHomeomorph {Ω : Set ℂ}
         hbij.image_eq
   · rw [TauCeti.DifferentiableOn.toOpenPartialHomeomorph_coe hfd hΩo hbij.injOn]
     exact hfd
-  · rw [TauCeti.DifferentiableOn.toOpenPartialHomeomorph_coe_symm hfd hΩo hbij.injOn]
-    exact hinvd
+  · have hinv :=
+      TauCeti.DifferentiableOn.differentiableOn_toOpenPartialHomeomorph_symm hfd hΩo hbij.injOn
+    simpa only [hbij.image_eq] using hinv
   · exact fun z hz =>
-      TauCeti.DifferentiableOn.toOpenPartialHomeomorph_conformalAt hfd hΩo hbij.injOn hz
+      TauCeti.DifferentiableOn.conformalAt_toOpenPartialHomeomorph hfd hΩo hbij.injOn hz
   · intro w hw
-    exact TauCeti.DifferentiableOn.toOpenPartialHomeomorph_conformalAt_symm hfd hΩo hbij.injOn
+    exact TauCeti.DifferentiableOn.conformalAt_toOpenPartialHomeomorph_symm hfd hΩo hbij.injOn
       (hbij.image_eq ▸ hw)
 
 end TauCeti

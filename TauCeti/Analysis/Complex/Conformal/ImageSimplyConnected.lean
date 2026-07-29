@@ -85,8 +85,8 @@ theorem isOpen_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
 /-- Restricted to its open domain, an injective holomorphic map is an open map into `ℂ`: an open
 subset of the subtype `↥Ω` is `Ω` met with an open set, and the image of that is open by
 `TauCeti.isOpen_image_of_differentiableOn_of_injOn`. -/
-private theorem isOpenMap_restrict (hΩo : IsOpen Ω) (hgd : DifferentiableOn ℂ g Ω)
-    (hgi : InjOn g Ω) : IsOpenMap (Ω.restrict g) := by
+theorem isOpenMap_restrict_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
+    (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) : IsOpenMap (Ω.restrict g) := by
   intro V hV
   obtain ⟨W, hW, rfl⟩ := isOpen_induced_iff.mp hV
   rw [Set.image_restrict]
@@ -105,7 +105,8 @@ theorem isSimplyConnected_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
   have hemb : IsEmbedding (Ω.restrict g) :=
     (IsOpenEmbedding.of_continuous_injective_isOpenMap
       (continuousOn_iff_continuous_restrict.mp hgd.continuousOn)
-      (Set.injOn_iff_injective.mp hgi) (isOpenMap_restrict hΩo hgd hgi)).isEmbedding
+      (Set.injOn_iff_injective.mp hgi)
+      (isOpenMap_restrict_of_differentiableOn_of_injOn hΩo hgd hgi)).isEmbedding
   have himg := hemb.isSimplyConnected_image (s := (univ : Set ↥Ω))
   rw [image_univ, Set.range_restrict] at himg
   refine himg.mpr ?_
