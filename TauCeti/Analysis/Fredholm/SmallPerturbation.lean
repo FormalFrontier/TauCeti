@@ -59,6 +59,35 @@ private def blockCorner
   (ContinuousLinearMap.fst 𝕜 Y C).comp
     (A.comp (ContinuousLinearMap.inr 𝕜 K X))
 
+private def prodShear
+    {U V : Type*}
+    [NormedAddCommGroup U] [NormedSpace 𝕜 U]
+    [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+    (f : U →L[𝕜] V) : (U × V) ≃L[𝕜] (U × V) where
+  toFun uv := (uv.1, uv.2 - f uv.1)
+  invFun uv := (uv.1, uv.2 + f uv.1)
+  left_inv uv := by simp
+  right_inv uv := by simp
+  map_add' u v := by
+    ext
+    · simp
+    · simp
+      abel
+  map_smul' c u := by
+    ext <;> simp [smul_sub]
+  continuous_toFun := by fun_prop
+  continuous_invFun := by fun_prop
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] in
+@[simp]
+private theorem prodShear_apply
+    {U V : Type*}
+    [NormedAddCommGroup U] [NormedSpace 𝕜 U]
+    [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+    (f : U →L[𝕜] V) (u : U) (v : V) :
+    prodShear f (u, v) = (u, v - f u) :=
+  rfl
+
 omit [IsRCLikeNormedField 𝕜] in
 private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     {K X Y C : Type*}
@@ -74,8 +103,6 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
   -- corners, with `e` the invertible infinite-dimensional corner.
   letI : CompleteSpace K := FiniteDimensional.complete 𝕜 K
   letI : CompleteSpace C := FiniteDimensional.complete 𝕜 C
-  let fstK := ContinuousLinearMap.fst 𝕜 K X
-  let sndX := ContinuousLinearMap.snd 𝕜 K X
   let fstY := ContinuousLinearMap.fst 𝕜 Y C
   let sndC := ContinuousLinearMap.snd 𝕜 Y C
   let inlK := ContinuousLinearMap.inl 𝕜 K X
@@ -87,41 +114,9 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
   let dBInv : Y →L[𝕜] C := d.comp (e.symm : Y →L[𝕜] X)
   let schur : K →L[𝕜] C := c - d.comp bInvA
   -- The domain shear subtracts `e⁻¹ a`, eliminating the upper-left off-diagonal block.
-  let p : K × X →L[𝕜] K × X := fstK.prod (sndX - bInvA.comp fstK)
-  have hp : Function.Bijective p := by
-    constructor
-    · intro u v huv
-      have hfst : u.1 = v.1 := by
-        simpa [p, fstK, ContinuousLinearMap.coe_fst'] using congr_arg Prod.fst huv
-      have hsnd : u.2 - bInvA u.1 = v.2 - bInvA v.1 := by
-        simpa [p, fstK, sndX, ContinuousLinearMap.coe_fst',
-          ContinuousLinearMap.coe_snd'] using congr_arg Prod.snd huv
-      exact Prod.ext hfst (by simpa [hfst] using hsnd)
-    · intro z
-      refine ⟨(z.1, z.2 + bInvA z.1), ?_⟩
-      simp [p, fstK, sndX]
-  let P : (K × X) ≃L[𝕜] (K × X) :=
-    ContinuousLinearEquiv.ofBijective p
-      (LinearMap.ker_eq_bot.mpr hp.injective)
-      (LinearMap.range_eq_top.mpr hp.surjective)
+  let P : (K × X) ≃L[𝕜] (K × X) := prodShear bInvA
   -- The codomain shear subtracts `d e⁻¹`, eliminating the other off-diagonal block.
-  let q : Y × C →L[𝕜] Y × C := fstY.prod (sndC - dBInv.comp fstY)
-  have hq : Function.Bijective q := by
-    constructor
-    · intro u v huv
-      have hfst : u.1 = v.1 := by
-        simpa [q, fstY, ContinuousLinearMap.coe_fst'] using congr_arg Prod.fst huv
-      have hsnd : u.2 - dBInv u.1 = v.2 - dBInv v.1 := by
-        simpa [q, fstY, sndC, ContinuousLinearMap.coe_fst',
-          ContinuousLinearMap.coe_snd'] using congr_arg Prod.snd huv
-      exact Prod.ext hfst (by simpa [hfst] using hsnd)
-    · intro z
-      refine ⟨(z.1, z.2 + dBInv z.1), ?_⟩
-      simp [q, fstY, sndC]
-  let Q : (Y × C) ≃L[𝕜] (Y × C) :=
-    ContinuousLinearEquiv.ofBijective q
-      (LinearMap.ker_eq_bot.mpr hq.injective)
-      (LinearMap.range_eq_top.mpr hq.surjective)
+  let Q : (Y × C) ≃L[𝕜] (Y × C) := prodShear dBInv
   let swap : (C × Y) ≃L[𝕜] (Y × C) :=
     (LinearIsometryEquiv.prodComm 𝕜 C Y).toContinuousLinearEquiv
   let B : K × X →L[𝕜] Y × C :=
@@ -135,10 +130,10 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     simpa using (A.comp_inl_add_comp_inr (k, x)).symm
   have hP_apply (k : K) (x : X) :
       (P : K × X →L[𝕜] K × X) (k, x) = (k, x - bInvA k) := by
-    simp [P, p, fstK, sndX]
+    exact prodShear_apply bInvA k x
   have hQ_apply (y : Y) (z : C) :
       (Q : Y × C →L[𝕜] Y × C) (y, z) = (y, z - dBInv y) := by
-    simp [Q, q, fstY, sndC]
+    exact prodShear_apply dBInv y z
   have ha_apply (k : K) : (A (k, 0)).1 = a k := by
     simp [a, fstY, inlK]
   have hc_apply (k : K) : (A (k, 0)).2 = c k := by
