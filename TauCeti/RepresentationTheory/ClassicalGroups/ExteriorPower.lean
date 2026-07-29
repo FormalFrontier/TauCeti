@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
+public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.ExteriorPower
 
@@ -18,6 +19,9 @@ general linear group. The resulting action applies a matrix to every factor of a
 
 * `TauCeti.extPowerRep` is the exterior-power representation of `GL n k`.
 * `TauCeti.extPowerFDRep` is its bundled finite-dimensional form.
+
+Importing this file also makes `exteriorPower.eq_zero_of_finrank_lt` available, which says that
+`⋀[k]^d (Fin n → k)`, and hence `extPowerRep k n d`, is zero once `n < d`.
 
 ## References
 

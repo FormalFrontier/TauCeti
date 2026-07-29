@@ -19,8 +19,9 @@ commutative ring vanishes as soon as `d` exceeds the rank of the module.
 
 ## References
 
-The exterior-power basis used in the proof is Mathlib's `Module.Basis.exteriorPower` from
-`Mathlib.LinearAlgebra.ExteriorPower.Basis`, by Sophie Morel and Daniel Morrison.
+The proof reads the statement off Mathlib's exterior-power dimension formula
+`exteriorPower.finrank_eq`, from `Mathlib.LinearAlgebra.ExteriorPower.Basis`, by Sophie Morel
+and Daniel Morrison.
 -/
 
 public section
@@ -37,18 +38,9 @@ variable [Module.Free R M] [Module.Finite R M]
 /-- An exterior power above the rank of a finite free module is zero. -/
 theorem eq_zero_of_finrank_lt (d : ℕ) (h : Module.finrank R M < d) (x : ⋀[R]^d M) :
     x = 0 := by
-  classical
-  let _ : LinearOrder (Module.Free.ChooseBasisIndex R M) := linearOrderOfSTO WellOrderingRel
-  -- No subset of a basis indexed by fewer than `d` elements has cardinality `d`, so the basis
-  -- of `⋀[R]^d M` induced by a basis of `M` is indexed by the empty type.
-  have : IsEmpty (Set.powersetCard (Module.Free.ChooseBasisIndex R M) d) := by
-    refine ⟨fun s => ?_⟩
-    have hs : (s : Finset _).card ≤ Fintype.card (Module.Free.ChooseBasisIndex R M) :=
-      Finset.card_le_univ _
-    rw [Set.powersetCard.card_eq, ← Module.finrank_eq_card_chooseBasisIndex] at hs
-    omega
-  refine ((Module.Free.chooseBasis R M).exteriorPower d).repr.injective ?_
-  ext i
-  exact isEmptyElim i
+  have : Subsingleton (⋀[R]^d M) := by
+    rw [← Module.finrank_eq_zero_iff_of_free R, finrank_eq, Nat.choose_eq_zero_iff]
+    exact h
+  exact Subsingleton.elim x 0
 
 end exteriorPower
