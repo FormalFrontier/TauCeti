@@ -103,7 +103,7 @@ theorem candidateGenusField_def {d : ℤ} (hd : Squarefree d) :
 
 /-- **Universal property of the candidate genus field.** It is contained in an intermediate field
 `F` exactly when `F` contains every chosen root. -/
-theorem candidateGenusField_le_iff {d : ℤ} (hd : Squarefree d) {F : IntermediateField ℚ ℂ} :
+@[simp] theorem candidateGenusField_le_iff {d : ℤ} (hd : Squarefree d) {F : IntermediateField ℚ ℂ} :
     candidateGenusField hd ≤ F ↔ ∀ P, genusFieldRoot hd P ∈ F := by
   simp only [candidateGenusField_def, adjoin_le_iff, Set.range_subset_iff, SetLike.mem_coe]
 
