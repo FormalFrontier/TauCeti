@@ -133,6 +133,8 @@ theorem isInvertible (t : LocalTrivializations M) : IsInvertible M := by
   refine
     { isLocallyFreeData :=
         { isIso := by
+            -- `q` uses the atlas's cover and the standard free generators, so unfold that local
+            -- witness to express its isomorphism condition directly in terms of `t`.
             change ∀ i : t.I, IsIso
               ((_root_.SheafOfModules.free.generatingSections
                 (R := R.over (t.X i)) PUnit).ofEpi (t.iso i).hom).π
