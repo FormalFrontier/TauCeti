@@ -38,9 +38,10 @@ types, and `GridDiagram.IsDestabilization` reverses the relation.
 
 ## References
 
-This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.5, "Invariance over
-`𝔽₂`. Grid moves = commutation + (de)stabilization." The local three-marking construction and
-its eight types follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
+This supplies the stabilization half of the standing convention in
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md` that a link is initially a grid diagram
+modulo grid moves. The local three-marking construction and its eight types follow
+Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
 -/
 
 public section
@@ -224,18 +225,6 @@ def IsOStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
       finRotate (n + 1) (newRow.succAbove (G.O splitColumn)) = newRow) ∧
     G' = G.stabilizeO newColumn newRow splitColumn
 
-/-- Characterization of an elementary `O`-stabilization by its inserted coordinates and split
-column. -/
-theorem isOStabilization_iff (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
-    IsOStabilization G G' ↔
-      ∃ newColumn newRow splitColumn,
-        (finRotate (n + 1) newColumn = newColumn.succAbove splitColumn ∨
-          finRotate (n + 1) (newColumn.succAbove splitColumn) = newColumn) ∧
-        (finRotate (n + 1) newRow = newRow.succAbove (G.O splitColumn) ∨
-          finRotate (n + 1) (newRow.succAbove (G.O splitColumn)) = newRow) ∧
-        G' = G.stabilizeO newColumn newRow splitColumn :=
-  Iff.rfl
-
 /-- A local `O`-stabilization construction is an elementary `O`-stabilization. -/
 theorem isOStabilization_stabilizeO (newColumn newRow : Fin (n + 1))
     (splitColumn : Fin n)
@@ -270,18 +259,6 @@ def IsXStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
       finRotate (n + 1) (newRow.succAbove (G.X splitColumn)) = newRow) ∧
     G' = G.stabilizeX newColumn newRow splitColumn
 
-/-- Characterization of an elementary `X`-stabilization by its inserted coordinates and split
-column. -/
-theorem isXStabilization_iff (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
-    IsXStabilization G G' ↔
-      ∃ newColumn newRow splitColumn,
-        (finRotate (n + 1) newColumn = newColumn.succAbove splitColumn ∨
-          finRotate (n + 1) (newColumn.succAbove splitColumn) = newColumn) ∧
-        (finRotate (n + 1) newRow = newRow.succAbove (G.X splitColumn) ∨
-          finRotate (n + 1) (newRow.succAbove (G.X splitColumn)) = newRow) ∧
-        G' = G.stabilizeX newColumn newRow splitColumn :=
-  Iff.rfl
-
 /-- A local `X`-stabilization construction is an elementary `X`-stabilization. -/
 theorem isXStabilization_stabilizeX (newColumn newRow : Fin (n + 1))
     (splitColumn : Fin n)
@@ -303,23 +280,46 @@ theorem isXStabilization_stabilizeX_castSucc (splitColumn : Fin n) :
   · left
     simp
 
+/-- Exchanging the marking types turns an `O`-stabilization relation into an
+`X`-stabilization relation. -/
+@[simp]
+theorem isOStabilization_swapMarkings (G : GridDiagram n)
+    (G' : GridDiagram (n + 1)) :
+    IsOStabilization G.swapMarkings G'.swapMarkings ↔ IsXStabilization G G' := by
+  constructor
+  · rintro ⟨newColumn, newRow, splitColumn, hColumn, hRow, hG'⟩
+    refine ⟨newColumn, newRow, splitColumn, hColumn, ?_, ?_⟩
+    · simpa using hRow
+    · simpa using congrArg GridDiagram.swapMarkings hG'
+  · rintro ⟨newColumn, newRow, splitColumn, hColumn, hRow, hG'⟩
+    refine ⟨newColumn, newRow, splitColumn, hColumn, ?_, ?_⟩
+    · simpa using hRow
+    · simpa using congrArg GridDiagram.swapMarkings hG'
+
+/-- Exchanging the marking types turns an `X`-stabilization relation into an
+`O`-stabilization relation. -/
+@[simp]
+theorem isXStabilization_swapMarkings (G : GridDiagram n)
+    (G' : GridDiagram (n + 1)) :
+    IsXStabilization G.swapMarkings G'.swapMarkings ↔ IsOStabilization G G' := by
+  simpa only [swapMarkings_swapMarkings] using
+    (isOStabilization_swapMarkings G.swapMarkings G'.swapMarkings).symm
+
 /-- One elementary grid stabilization, splitting either an `O`- or an `X`-marking. -/
 def IsStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
   IsOStabilization G G' ∨ IsXStabilization G G'
 
-/-- A grid stabilization splits either an `O`- or an `X`-marking. -/
-theorem isStabilization_iff (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
-    IsStabilization G G' ↔ IsOStabilization G G' ∨ IsXStabilization G G' :=
-  Iff.rfl
+/-- Exchanging the marking types preserves the elementary stabilization relation. -/
+@[simp]
+theorem isStabilization_swapMarkings (G : GridDiagram n)
+    (G' : GridDiagram (n + 1)) :
+    IsStabilization G.swapMarkings G'.swapMarkings ↔ IsStabilization G G' := by
+  simp only [IsStabilization, isOStabilization_swapMarkings,
+    isXStabilization_swapMarkings, or_comm]
 
 /-- One elementary grid destabilization, oriented from the larger diagram to the smaller one. -/
 def IsDestabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) : Prop :=
   IsStabilization G G'
-
-/-- A destabilization from `G'` to `G` is a stabilization from `G` to `G'`. -/
-theorem isDestabilization_iff (G' : GridDiagram (n + 1)) (G : GridDiagram n) :
-    IsDestabilization G' G ↔ IsStabilization G G' :=
-  Iff.rfl
 
 end GridDiagram
 
