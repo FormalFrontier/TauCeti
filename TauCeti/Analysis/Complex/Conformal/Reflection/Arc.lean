@@ -96,6 +96,17 @@ private theorem mapsTo_schwarzReflection
     rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
     exact neg_nonneg.mpr him_neg.le
 
+/-- Charted Schwarz reflection maps the source chart domain into the target chart domain. -/
+theorem mapsTo_chartedSchwarzReflection
+    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+    (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
+    (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
+    MapsTo (chartedSchwarzReflection e d f) e.source d.source := by
+  intro z hz
+  rw [chartedSchwarzReflection_def]
+  exact d.map_target
+    (mapsTo_schwarzReflection e d f he_symm hd_symm hf (e.map_source hz))
+
 /-- On the closed positive side of the source arc, charted Schwarz reflection agrees with the
 original function. -/
 @[simp]
@@ -139,7 +150,7 @@ private theorem differentiableOn_in_coordinates
     hf.comp (he_inv.mono inter_subset_left) (mapsTo_symm_inter_im e)
   refine hd.comp hfe fun w hw => hf_maps ?_
   rcases hw with ⟨hw_target, hw_im⟩
-  change 0 < w.im at hw_im
+  simp only [Set.mem_setOf_eq] at hw_im
   apply mapsTo_symm_inter_im e
   exact ⟨hw_target, hw_im.le⟩
 
