@@ -18,7 +18,7 @@ Note that `YoungTableau μ` is an abbreviation, so that the whole `Equiv` API ap
 directly.  As a consequence dot notation on a tableau resolves in the `Equiv` namespace, and the
 declarations below are to be spelled out, as in `YoungTableau.rowIndex t`.
 
-A `μ`-tableau is required to be neither row- nor column-increasing.  The strictly row- and
+A `μ`-tableau is not required to be row- or column-increasing.  The strictly row- and
 column-increasing ones are `TauCeti.StandardYoungTableau`, whose `toEquiv` field is a `μ`-tableau
 in the present sense; Mathlib's `SemistandardYoungTableau` is a different notion again, a filling
 of `μ` by natural numbers that is weakly increasing along each row and strictly increasing down
