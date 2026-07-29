@@ -112,22 +112,6 @@ private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : �
       (fun b' h1 h2 => hc_L (t₀ - ρ) b' (by linarith) h1 h2)
       (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩⟩
 
-/-- **A single radius below a finite family of positive radii and a given bound.** Given positive
-radii `R` on a finite `T` and a bound `r₀ > 0`, there is a `ρ` with `0 < ρ < r₀` and `ρ ≤ R t` for
-every `t ∈ T`. The index type is arbitrary and `T` may be empty, where the constraint is vacuous. -/
-private theorem exists_uniform_window_radius {ι : Type*} {T : Finset ι} {R : ι → ℝ}
-    (hR_pos : ∀ t ∈ T, 0 < R t) {r₀ : ℝ} (hr₀ : 0 < r₀) :
-    ∃ ρ, 0 < ρ ∧ ρ < r₀ ∧ ∀ t ∈ T, ρ ≤ R t := by
-  obtain ⟨ρ, hρ, hlt⟩ := Pi.exists_forall_pos_add_lt (ι := Option {t // t ∈ T})
-    (x := fun _ => (0 : ℝ)) (y := fun i => i.elim r₀ fun t => R t.1)
-    (fun i => by
-      cases i with
-      | none => simpa using hr₀
-      | some t => simpa using hR_pos t.1 t.2)
-  refine ⟨ρ, hρ, ?_, fun t ht => ?_⟩
-  · simpa using hlt none
-  · exact le_of_lt (by simpa using hlt (some ⟨t, ht⟩))
-
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
 value of `t ↦ (γ t - s)⁻¹ * deriv γ t` at `s` exists on `[a, b]`. Endpoint crossings are
@@ -161,7 +145,16 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       exists_radius_perWindow_tendsto h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     obtain ⟨r₀, hr₀_pos, h_endpts, h_pair₀, -⟩ := exists_common_window_radius (P := ∅)
       hT_ne h_Ioo fun t _ => Finset.notMem_empty t
-    obtain ⟨ρ, hρ_pos, hρ_lt, hρ_le_R⟩ := exists_uniform_window_radius hR_pos hr₀_pos
+    -- one radius below both the endpoint bound `r₀` and every per-crossing radius `R t`
+    obtain ⟨ρ, hρ_pos, hρ_all⟩ := Pi.exists_forall_pos_add_lt (ι := Option {t // t ∈ T})
+      (x := fun _ => (0 : ℝ)) (y := fun i => i.elim r₀ fun t => R t.1)
+      (fun i => by
+        cases i with
+        | none => simpa using hr₀_pos
+        | some t => simpa using hR_pos t.1 t.2)
+    have hρ_lt : ρ < r₀ := by simpa using hρ_all none
+    have hρ_le_R : ∀ t ∈ T, ρ ≤ R t := fun t ht =>
+      le_of_lt (by simpa using hρ_all (some ⟨t, ht⟩))
     refine cauchyPVExistsAt_of_perWindow_tendsto hρ_pos hab.le T
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
