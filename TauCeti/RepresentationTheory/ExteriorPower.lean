@@ -180,7 +180,12 @@ private noncomputable def exteriorPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
 private theorem exteriorPowerLinearEquiv_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (exteriorPowerLinearEquiv e d).toLinearMap =
       _root_.exteriorPower.map d e.toLinearMap :=
-  (rfl)
+  LinearEquiv.ofLinear_toLinearMap ..
+
+private theorem exteriorPowerLinearEquiv_symm_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
+    (exteriorPowerLinearEquiv e d).symm.toLinearMap =
+      _root_.exteriorPower.map d e.symm.toLinearMap :=
+  LinearEquiv.ofLinear_symm_toLinearMap ..
 
 /-- An equivalence of representations induces an equivalence of every exterior power. -/
 noncomputable def exteriorPower (e : ρ.Equiv σ) (d : ℕ) :
@@ -188,6 +193,10 @@ noncomputable def exteriorPower (e : ρ.Equiv σ) (d : ℕ) :
   .mk (exteriorPowerLinearEquiv e d) fun g => by
     rw [exteriorPowerLinearEquiv_toLinearMap]
     exact (e.toIntertwiningMap.exteriorPower d).isIntertwining' g
+
+private theorem exteriorPower_toLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
+    (e.exteriorPower d).toLinearEquiv = exteriorPowerLinearEquiv e d :=
+  toLinearEquiv_mk' _
 
 /-- The underlying linear map is the usual map induced on exterior powers. -/
 @[simp]
@@ -216,7 +225,9 @@ theorem exteriorPower_refl (d : ℕ) :
 theorem exteriorPower_symm (e : ρ.Equiv σ) (d : ℕ) :
     e.symm.exteriorPower d = (e.exteriorPower d).symm := by
   have h : (e.symm.exteriorPower d).toLinearMap =
-      ((e.exteriorPower d).symm).toLinearMap := rfl
+      ((e.exteriorPower d).symm).toLinearMap := by
+    rw [exteriorPower_toLinearMap, toLinearMap_symm (e.exteriorPower d),
+      exteriorPower_toLinearEquiv, exteriorPowerLinearEquiv_symm_toLinearMap]
   exact Equiv.ext (funext fun x => LinearMap.congr_fun h x)
 
 /-- Exterior powers preserve composition of equivalences. -/
