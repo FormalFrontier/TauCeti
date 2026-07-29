@@ -14,8 +14,7 @@ For a Dedekind domain `R` with fraction field `K`,
 points of an affine curve and packages the order of vanishing of a rational function as the order
 system `OrderSystem.ofDedekindDomain R K`. This basic module adds the *Cartier* side of that
 picture: invertible fractional ideals of `R` are the Cartier divisors of the affine curve, and this
-file identifies them with Weil divisors. The line-bundle / Picard-group language belongs to the
-later quotient-level comparison and is not part of this divisor-level statement.
+file identifies them with Weil divisors.
 
 Concretely, a nonzero fractional ideal `I` has a well-defined `v`-adic multiplicity
 `FractionalIdeal.count K v I` at each height-one prime `v`, zero for all but finitely many `v`, so
@@ -29,20 +28,18 @@ is invertible, `FractionalIdeal R⁰ K` being a semifield) to the free Weil-divi
 homomorphism is an **isomorphism**: a fractional ideal is recovered from its multiplicities by the
 factorization `I = ∏_v v^(count K v I)` (injectivity), and every finite integer combination of
 primes is the divisor of the corresponding product of prime ideals (surjectivity). This is the
-scheme-free, affine-chart form of the roadmap's **`Weil ≃ Cartier` / divisor ↔ line-bundle
-dictionary**.
+scheme-free, affine-chart form of the roadmap's **`Weil ≃ Cartier` dictionary**.
 
 We also connect it to the order system already built: the divisor of the principal fractional ideal
 `(x)` is exactly the principal divisor of the rational function `x`, so the isomorphism carries the
 principal fractional ideals to the principal divisors. This is the compatibility on principal
-elements needed for a later comparison of the divisor class group `Cl(X)` with the ideal class
-group; that quotient-level isomorphism is not proved in this file.
+elements needed before passing to quotient-level statements, which are not proved in this file.
 The affine divisor of an integral ideal (a fractional ideal contained in `R`) is effective, and the
 divisor of a prime `v` is the point divisor `[v]`, the sanity checks that rule out a vacuous map.
 
-This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors on a curve" and the
-dictionaries "`Cartier ≃ line bundles`", "(smooth curve) `Weil ≃ Cartier`", and "`Cl(X) ≅ Pic X`",
-realized here for the affine Dedekind model before the global Picard scheme exists. It reuses
+This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors on a curve",
+specifically the "(smooth curve) `Weil ≃ Cartier`" dictionary realized here for the affine
+Dedekind model. It reuses
 Mathlib's `FractionalIdeal.count` factorization API (`count_mul`, `count_finsuppProd`,
 `finprod_heightOneSpectrum_factorization'`, `count_maximal_coprime`, `count_coe_nonneg`) and Tau
 Ceti's `WeilDivisor` and `OrderSystem.ofDedekindDomain` API; no external mathematics is vendored.
