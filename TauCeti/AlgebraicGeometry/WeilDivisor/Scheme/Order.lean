@@ -22,7 +22,8 @@ order at only finitely many codimension-one points; no finiteness assumption is 
 
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, the
 "principal divisors" part of "Divisors on a curve". It reuses Mathlib's
-`AlgebraicGeometry.Scheme.ord` and `ord_mul`; no external formalization is vendored.
+`AlgebraicGeometry.Scheme.ord`, `ordHom`, and `ord_eq_unzero_ordHom`; no external
+formalization is vendored.
 -/
 
 public section
@@ -44,28 +45,18 @@ noncomputable section
 /-- The order of a nonzero rational function at a codimension-one point, as an additive
 homomorphism from the additive form of the unit group of the function field. -/
 noncomputable def orderAt (x : CodimensionOnePoint X) :
-    Additive (X.functionFieldˣ) →+ ℤ where
-  toFun f := X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x
-  map_zero' := by
-    have h := X.ord_mul (x := x.1)
-      (Units.ne_zero (1 : X.functionFieldˣ)) (Units.ne_zero (1 : X.functionFieldˣ))
-    have h' : X.ord (1 : X.functionField) x =
-        X.ord (1 : X.functionField) x + X.ord (1 : X.functionField) x := by
-      simpa only [Units.val_one, one_mul] using h
-    have hz : X.ord (1 : X.functionField) x = 0 := by
-      apply add_left_cancel (a := X.ord (1 : X.functionField) x)
-      simpa only [add_zero] using h'.symm
-    simpa only [toMul_zero, Units.val_one] using hz
-  map_add' f g := by
-    simp only [toMul_add]
-    exact X.ord_mul (x := x.1)
-      (Units.ne_zero (Additive.toMul f)) (Units.ne_zero (Additive.toMul g))
+    Additive (X.functionFieldˣ) →+ ℤ :=
+  MonoidHom.toAdditiveLeft
+    (WithZero.unitsWithZeroEquiv.toMonoidHom.comp
+      (Units.map (X.ordHom x x.property).toMonoidHom))
 
 /-- Evaluating `orderAt` gives Mathlib's integer-valued order of vanishing. -/
 @[simp]
 lemma orderAt_apply (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ) :
-    orderAt x f = X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x :=
-  (rfl)
+    orderAt x f = X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x := by
+  rw [X.ord_eq_unzero_ordHom x.property
+    (Units.ne_zero (Additive.toMul f : X.functionFieldˣ))]
+  rfl
 
 end
 
