@@ -20,7 +20,9 @@ general linear group. The resulting action applies a matrix to every factor of a
 * `TauCeti.extPowerFDRep` is its bundled finite-dimensional form.
 
 Importing this file also makes `exteriorPower.eq_zero_of_finrank_lt` available, which says that
-`⋀[k]^d (Fin n → k)`, and hence `extPowerRep k n d`, is zero once `n < d`.
+`⋀[k]^d (Fin n → k)`, and hence `extPowerRep k n d`, is zero once `n < d`. The degree-zero and
+degree-one identifications of `extPowerRep k n` are the generic
+`(stdRep k n).exteriorPowerZeroEquiv` and `(stdRep k n).exteriorPowerOneEquiv`.
 
 ## References
 
@@ -47,15 +49,5 @@ noncomputable abbrev extPowerRep :
 /-- The exterior power of the standard representation, bundled as an object of `FDRep`. -/
 noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (extPowerRep k n d)
-
-/-- The zeroth exterior power of the standard representation is trivial. -/
-noncomputable abbrev extPowerRepZeroEquiv :
-    (extPowerRep k n 0).Equiv (Representation.trivial k (GL (Fin n) k) k) :=
-  (stdRep k n).exteriorPowerZeroEquiv
-
-/-- The first exterior power of the standard representation is the standard representation. -/
-noncomputable abbrev extPowerRepOneEquiv :
-    (extPowerRep k n 1).Equiv (stdRep k n) :=
-  (stdRep k n).exteriorPowerOneEquiv
 
 end TauCeti
