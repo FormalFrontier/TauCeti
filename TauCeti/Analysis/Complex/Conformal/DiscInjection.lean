@@ -6,8 +6,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
 public import TauCeti.Analysis.Complex.BranchLogRoot
+import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Complex.Conformal.Moebius
-import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Convex.Contractible
 
 /-!
@@ -125,17 +125,9 @@ theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSim
   -- itself nonvanishing.
   obtain ⟨h, hhd, hsq, hsq_inj, hne⟩ := exists_sq_eq_sub_injOn_ne_zero hUc hUo ha
   have hinj : InjOn h U := fun z₁ hz₁ z₂ hz₂ he => hsq_inj hz₁ hz₂ (by simp only; rw [he])
-  -- `h '' U` is open: `h` is injective, hence nonconstant, on the connected `U`.
-  have hconn : IsPreconnected U := hUc.isPathConnected.isConnected.isPreconnected
-  have hanal : AnalyticOnNhd ℂ h U := hhd.analyticOnNhd hUo
+  -- `h '' U` is open, `h` being injective and holomorphic on the open `U`.
   obtain ⟨z₀, hz₀⟩ := hUc.nonempty
-  have hopen : IsOpen (h '' U) := by
-    rcases hanal.is_constant_or_isOpen hconn with hconst | hopenmap
-    · obtain ⟨w, hw⟩ := hconst
-      obtain ⟨z₁, hz₁, hz₁ne⟩ :=
-        (infinite_of_mem_nhds z₀ (hUo.mem_nhds hz₀)).nontrivial.exists_ne z₀
-      exact absurd (hinj hz₁ hz₀ (by rw [hw _ hz₁, hw _ hz₀])) hz₁ne
-    · exact hopenmap U (subset_refl U) hUo
+  have hopen : IsOpen (h '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hhd hinj
   -- The image contains a ball around `h z₀`, and `-h` avoids it.
   obtain ⟨r, hr, hball⟩ := Metric.isOpen_iff.mp hopen (h z₀) ⟨z₀, hz₀, rfl⟩
   set w₀ : ℂ := h z₀ with hw₀

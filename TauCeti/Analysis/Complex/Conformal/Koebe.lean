@@ -228,9 +228,10 @@ theorem surjOn_ball_of_isMaxOn {Ω : Set ℂ} (hΩo : IsOpen Ω) (hΩc : IsSimpl
   by_cases hUeq : g '' Ω = ball (0 : ℂ) 1
   · exact hUeq.ge
   exfalso
-  have hUo : IsOpen (g '' Ω) := isOpen_image_of_injOn hΩo hg.differentiableOn hg.injOn
+  have hUo : IsOpen (g '' Ω) :=
+    isOpen_image_of_differentiableOn_of_injOn hΩo hg.differentiableOn hg.injOn
   have hUc : IsSimplyConnected (g '' Ω) :=
-    isSimplyConnected_image_of_injOn hΩo hΩc hg.differentiableOn hg.injOn
+    isSimplyConnected_image_of_differentiableOn_of_injOn hΩo hΩc hg.differentiableOn hg.injOn
   have hU₀ : (0 : ℂ) ∈ g '' Ω := ⟨z₀, hz₀, hg.map_base⟩
   obtain ⟨f, hf, hfd1⟩ := exists_isPointedDiscInjectionOn_one_lt_norm_deriv hUo hUc hU₀
     hg.mapsTo.image_subset hUeq

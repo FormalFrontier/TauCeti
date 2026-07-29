@@ -32,9 +32,9 @@ homotopy argument here.
 
 ## Main statements
 
-* `TauCeti.isOpen_image_of_injOn` — the image of an open set is open.
-* `TauCeti.isSimplyConnected_image_of_injOn` — the image of an open simply connected set is simply
-  connected.
+* `TauCeti.isOpen_image_of_differentiableOn_of_injOn` — the image of an open set is open.
+* `TauCeti.isSimplyConnected_image_of_differentiableOn_of_injOn` — the image of an open simply
+  connected set is simply connected.
 
 ## Coordination with upstream Mathlib
 
@@ -60,8 +60,8 @@ variable {Ω : Set ℂ} {g : ℂ → ℂ}
 /-- **The image of an open set under an injective holomorphic map is open.** No connectivity
 hypothesis is needed: openness is local, and on a small ball around any point of `Ω` the map is
 analytic and nonconstant, so the open mapping theorem applies there. -/
-theorem isOpen_image_of_injOn (hΩo : IsOpen Ω) (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) :
-    IsOpen (g '' Ω) := by
+theorem isOpen_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
+    (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) : IsOpen (g '' Ω) := by
   rw [isOpen_iff_forall_mem_open]
   rintro _ ⟨z, hz, rfl⟩
   obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hΩo z hz
@@ -84,13 +84,13 @@ theorem isOpen_image_of_injOn (hΩo : IsOpen Ω) (hgd : DifferentiableOn ℂ g �
 
 /-- Restricted to its open domain, an injective holomorphic map is an open map into `ℂ`: an open
 subset of the subtype `↥Ω` is `Ω` met with an open set, and the image of that is open by
-`TauCeti.isOpen_image_of_injOn`. -/
+`TauCeti.isOpen_image_of_differentiableOn_of_injOn`. -/
 private theorem isOpenMap_restrict (hΩo : IsOpen Ω) (hgd : DifferentiableOn ℂ g Ω)
     (hgi : InjOn g Ω) : IsOpenMap (Ω.restrict g) := by
   intro V hV
   obtain ⟨W, hW, rfl⟩ := isOpen_induced_iff.mp hV
   rw [Set.image_restrict]
-  exact isOpen_image_of_injOn (hW.inter hΩo) (hgd.mono inter_subset_right)
+  exact isOpen_image_of_differentiableOn_of_injOn (hW.inter hΩo) (hgd.mono inter_subset_right)
     (hgi.mono inter_subset_right)
 
 /-- **Injective holomorphic maps preserve simple connectivity.** The image of an open simply
@@ -99,8 +99,9 @@ connected set under a holomorphic map injective on it is again simply connected.
 The mathematical content beyond openness is Mathlib's
 `Topology.IsEmbedding.isSimplyConnected_image`: the restriction of `g` to `Ω` is a topological
 embedding, because it is continuous, injective, and open. -/
-theorem isSimplyConnected_image_of_injOn (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω)
-    (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) : IsSimplyConnected (g '' Ω) := by
+theorem isSimplyConnected_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
+    (hΩc : IsSimplyConnected Ω) (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) :
+    IsSimplyConnected (g '' Ω) := by
   have hemb : IsEmbedding (Ω.restrict g) :=
     (IsOpenEmbedding.of_continuous_injective_isOpenMap
       (continuousOn_iff_continuous_restrict.mp hgd.continuousOn)
