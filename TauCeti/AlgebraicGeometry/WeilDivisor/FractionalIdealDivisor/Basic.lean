@@ -41,8 +41,8 @@ This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors o
 specifically the "(smooth curve) `Weil ≃ Cartier`" dictionary realized here for the affine
 Dedekind model. It reuses
 Mathlib's `FractionalIdeal.count` factorization API (`count_mul`, `count_finsuppProd`,
-`finprod_heightOneSpectrum_factorization'`, `count_maximal_coprime`, `count_coe_nonneg`) and Tau
-Ceti's `WeilDivisor` and `OrderSystem.ofDedekindDomain` API; no external mathematics is vendored.
+`finprod_heightOneSpectrum_factorization'`, `count_maximal_coprime`) and Tau Ceti's `WeilDivisor`
+and `OrderSystem.ofDedekindDomain` API; no external mathematics is vendored.
 -/
 
 public section
