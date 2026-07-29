@@ -16,6 +16,7 @@ import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.PiecewiseC1On
+import Mathlib.Algebra.Order.Field.Pi
 
 /-!
 # Existence of the Cauchy-kernel principal value along an immersed curve
@@ -117,14 +118,15 @@ every `t ∈ T`. The index type is arbitrary and `T` may be empty, where the con
 private theorem exists_uniform_window_radius {ι : Type*} {T : Finset ι} {R : ι → ℝ}
     (hR_pos : ∀ t ∈ T, 0 < R t) {r₀ : ℝ} (hr₀ : 0 < r₀) :
     ∃ ρ, 0 < ρ ∧ ρ < r₀ ∧ ∀ t ∈ T, ρ ≤ R t := by
-  rcases T.eq_empty_or_nonempty with rfl | hT
-  · exact ⟨r₀ / 2, half_pos hr₀, by linarith, by simp⟩
-  · have hinf_pos : 0 < T.inf' hT R := (Finset.lt_inf'_iff hT).mpr hR_pos
-    refine ⟨min r₀ (T.inf' hT R) / 2, half_pos (lt_min hr₀ hinf_pos), ?_, fun t ht => ?_⟩
-    · have := min_le_left r₀ (T.inf' hT R); linarith
-    · have h1 := Finset.inf'_le R ht
-      have h2 := min_le_right r₀ (T.inf' hT R)
-      linarith
+  obtain ⟨ρ, hρ, hlt⟩ := Pi.exists_forall_pos_add_lt (ι := Option {t // t ∈ T})
+    (x := fun _ => (0 : ℝ)) (y := fun i => i.elim r₀ fun t => R t.1)
+    (fun i => by
+      cases i with
+      | none => simpa using hr₀
+      | some t => simpa using hR_pos t.1 t.2)
+  refine ⟨ρ, hρ, ?_, fun t ht => ?_⟩
+  · simpa using hlt none
+  · exact le_of_lt (by simpa using hlt (some ⟨t, ht⟩))
 
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
