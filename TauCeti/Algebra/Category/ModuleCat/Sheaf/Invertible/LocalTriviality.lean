@@ -97,7 +97,6 @@ end LocalGeneratorsData.IsInvertible
 namespace LocalTrivializations
 
 /-- Transport local trivializations along an isomorphism of sheaves of modules. -/
-@[expose]
 def ofIso (t : LocalTrivializations M) (e : M ≅ N) : LocalTrivializations N where
   I := t.I
   X := t.X
@@ -107,18 +106,20 @@ def ofIso (t : LocalTrivializations M) (e : M ≅ N) : LocalTrivializations N wh
 /-- Transporting local trivializations preserves the indexing type. -/
 @[simp]
 lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) :
-    (t.ofIso e).I = t.I := rfl
+    (t.ofIso e).I = t.I := (rfl)
 
 /-- Transporting local trivializations preserves the covering objects. -/
 @[simp]
 lemma ofIso_X (t : LocalTrivializations M) (e : M ≅ N) :
-    (t.ofIso e).X = t.X := rfl
+    (t.ofIso e).X = fun i ↦ t.X ((ofIso_I t e).mp i) := (rfl)
 
 /-- The transported trivializations are obtained by composing with the restricted isomorphism. -/
 @[simp]
-lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : t.I) :
+lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : (t.ofIso e).I) :
     (t.ofIso e).iso i =
-      t.iso i ≪≫ (SheafOfModules.overFunctor R (t.X i)).mapIso e := rfl
+      cast (by rw [ofIso_X])
+        (t.iso ((ofIso_I t e).mp i) ≪≫
+          (SheafOfModules.overFunctor R (t.X ((ofIso_I t e).mp i))).mapIso e) := (rfl)
 
 /-- Local trivializations exhibit a sheaf as invertible. -/
 theorem isInvertible (t : LocalTrivializations M) : IsInvertible M := by
