@@ -10,7 +10,6 @@ public import Mathlib.MeasureTheory.Function.ConditionalExpectation.AEMeasurable
 public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
 import Mathlib.Data.EReal.Basic
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
-import Mathlib.Topology.Algebra.Order.LiminfLimsup
 
 /-!
 # Invariant measurable representatives
