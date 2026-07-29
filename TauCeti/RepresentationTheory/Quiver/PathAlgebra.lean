@@ -38,7 +38,7 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 ## Main results
 
 * `TauCeti.PathAlgebra.single_mul_single`: the defining product of two basis paths.
-* `TauCeti.PathAlgebra.sum_vertexIdempotent`: the vertex idempotents sum to `1`; they are
+* `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
   orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`, and `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic`
@@ -51,7 +51,16 @@ pattern of `MonoidAlgebra`: were it reducible, instance search would unfold it a
 *pointwise* multiplication of `Finsupp`. The multiplication is therefore introduced as an
 operation `TauCeti.PathAlgebra.mul'` on `Quiver.TotalPath Q →₀ k` (with `singleOption` naming the
 product of two basis paths, which is a basis path or `0`), where the `Finsupp` API applies without
-friction; the ring axioms are proved there and transferred definitionally.
+friction; the ring axioms are proved there and transferred definitionally, the transfer being
+spelled out once and for all by `mul_def` and `single_def`.
+
+That whole layer is private apart from `mul'` itself, which the `Mul` instance has to name: an
+instance body is exposed, so it cannot mention a private declaration, which is also why the ring
+axioms reach the structure instances through a `by exact`. Of the definitions, only `pathAlgebra`,
+`ofPath` and `vertexIdempotent` are exposed, and only because the transported instances and the
+`rfl` characterisation `vertexIdempotent_eq_single` unfold them; `single` is opaque downstream,
+which sees the path algebra through its algebraic structure and the lemmas below rather than
+through the `Finsupp` representation.
 
 ## References
 
@@ -163,8 +172,12 @@ noncomputable instance : Inhabited (pathAlgebra k Q) :=
   inferInstanceAs (Inhabited (Quiver.TotalPath Q →₀ k))
 
 /-- The basis element of the path algebra attached to a path, with a coefficient. -/
-@[expose] noncomputable def single (x : Quiver.TotalPath Q) (c : k) : pathAlgebra k Q :=
+noncomputable def single (x : Quiver.TotalPath Q) (c : k) : pathAlgebra k Q :=
   Finsupp.single x c
+
+/-- A basis path is the corresponding `Finsupp.single`, read through the type synonym. -/
+private theorem single_def (x : Quiver.TotalPath Q) (c : k) :
+    (single x c : pathAlgebra k Q) = Finsupp.single x c := rfl
 
 /-- A basis path with coefficient zero is zero. -/
 @[simp]
@@ -193,52 +206,53 @@ theorem induction_linear {motive : pathAlgebra k Q → Prop} (f : pathAlgebra k 
 
 /-- `Finsupp.single` at an optional index, the zero function at `none`. It spells the product of
 two basis paths uniformly: a single path when they are composable, and `0` otherwise. -/
-@[expose] noncomputable def singleOption (o : Option (Quiver.TotalPath Q)) (c : k) :
+private noncomputable def singleOption (o : Option (Quiver.TotalPath Q)) (c : k) :
     Quiver.TotalPath Q →₀ k :=
   o.elim 0 fun x => Finsupp.single x c
 
 /-- An absent index contributes nothing. -/
 @[simp]
-theorem singleOption_none (c : k) : singleOption (Q := Q) none c = 0 := rfl
+private theorem singleOption_none (c : k) : singleOption (Q := Q) none c = 0 := rfl
 
 /-- A present index contributes the corresponding basis path. -/
 @[simp]
-theorem singleOption_some (x : Quiver.TotalPath Q) (c : k) :
+private theorem singleOption_some (x : Quiver.TotalPath Q) (c : k) :
     singleOption (some x) c = Finsupp.single x c := rfl
 
 /-- The coefficient zero contributes nothing. -/
 @[simp]
-theorem singleOption_zero (o : Option (Quiver.TotalPath Q)) : singleOption o (0 : k) = 0 := by
+private theorem singleOption_zero (o : Option (Quiver.TotalPath Q)) :
+    singleOption o (0 : k) = 0 := by
   cases o <;> simp
 
 /-- `singleOption` is additive in its coefficient. -/
-theorem singleOption_add (o : Option (Quiver.TotalPath Q)) (c d : k) :
+private theorem singleOption_add (o : Option (Quiver.TotalPath Q)) (c d : k) :
     singleOption o (c + d) = singleOption o c + singleOption o d := by
   cases o <;> simp [Finsupp.single_add]
 
 /-- `singleOption` absorbs scalars into its coefficient. -/
-theorem smul_singleOption (r : k) (o : Option (Quiver.TotalPath Q)) (c : k) :
+private theorem smul_singleOption (r : k) (o : Option (Quiver.TotalPath Q)) (c : k) :
     r • singleOption o c = singleOption o (r * c) := by
   cases o <;> simp [Finsupp.smul_single]
 
 /-- The multiplication of the path algebra, at the level of finitely supported functions. -/
-@[expose] noncomputable def mul' (f g : Quiver.TotalPath Q →₀ k) : Quiver.TotalPath Q →₀ k :=
+noncomputable def mul' (f g : Quiver.TotalPath Q →₀ k) : Quiver.TotalPath Q →₀ k :=
   f.sum fun x a => g.sum fun y b => singleOption (x.mul? y) (a * b)
 
 /-- The multiplication kills zero on the left. -/
 @[simp]
-theorem mul'_zero_left (g : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_zero_left (g : Quiver.TotalPath Q →₀ k) :
     mul' (0 : Quiver.TotalPath Q →₀ k) g = 0 := by
   simp [mul']
 
 /-- The multiplication kills zero on the right. -/
 @[simp]
-theorem mul'_zero_right (f : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_zero_right (f : Quiver.TotalPath Q →₀ k) :
     mul' f (0 : Quiver.TotalPath Q →₀ k) = 0 := by
   simp [mul']
 
 /-- The multiplication is additive in its left argument. -/
-theorem mul'_add_left (f₁ f₂ g : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_add_left (f₁ f₂ g : Quiver.TotalPath Q →₀ k) :
     mul' (f₁ + f₂) g = mul' f₁ g + mul' f₂ g := by
   refine Finsupp.sum_add_index' (fun x => ?_) fun x a₁ a₂ => ?_
   · simp
@@ -246,7 +260,7 @@ theorem mul'_add_left (f₁ f₂ g : Quiver.TotalPath Q →₀ k) :
     exact Finsupp.sum_congr fun y _ => by rw [add_mul, singleOption_add]
 
 /-- The multiplication is additive in its right argument. -/
-theorem mul'_add_right (f g₁ g₂ : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_add_right (f g₁ g₂ : Quiver.TotalPath Q →₀ k) :
     mul' f (g₁ + g₂) = mul' f g₁ + mul' f g₂ := by
   simp only [mul']
   rw [← Finsupp.sum_add]
@@ -255,12 +269,12 @@ theorem mul'_add_right (f g₁ g₂ : Quiver.TotalPath Q →₀ k) :
       rw [mul_add, singleOption_add]
 
 /-- The multiplication on basis paths is the partial concatenation of their indices. -/
-theorem mul'_single_single (x y : Quiver.TotalPath Q) (a b : k) :
+private theorem mul'_single_single (x y : Quiver.TotalPath Q) (a b : k) :
     mul' (Finsupp.single x a) (Finsupp.single y b) = singleOption (x.mul? y) (a * b) := by
   rw [mul', Finsupp.sum_single_index (by simp), Finsupp.sum_single_index (by simp)]
 
 /-- Multiplying an optional basis path by a basis path binds the two indices. -/
-theorem mul'_singleOption_single (o : Option (Quiver.TotalPath Q)) (c : k)
+private theorem mul'_singleOption_single (o : Option (Quiver.TotalPath Q)) (c : k)
     (y : Quiver.TotalPath Q) (b : k) :
     mul' (singleOption o c) (Finsupp.single y b)
       = singleOption (o.bind fun w => w.mul? y) (c * b) := by
@@ -269,7 +283,7 @@ theorem mul'_singleOption_single (o : Option (Quiver.TotalPath Q)) (c : k)
   | some x => rw [singleOption_some, mul'_single_single, Option.bind_some]
 
 /-- Multiplying a basis path by an optional basis path binds the two indices. -/
-theorem mul'_single_singleOption (x : Quiver.TotalPath Q) (a : k)
+private theorem mul'_single_singleOption (x : Quiver.TotalPath Q) (a : k)
     (o : Option (Quiver.TotalPath Q)) (c : k) :
     mul' (Finsupp.single x a) (singleOption o c)
       = singleOption (o.bind fun w => x.mul? w) (a * c) := by
@@ -278,7 +292,7 @@ theorem mul'_single_singleOption (x : Quiver.TotalPath Q) (a : k)
   | some y => rw [singleOption_some, mul'_single_single, Option.bind_some]
 
 /-- The multiplication is associative, by associativity of path concatenation. -/
-theorem mul'_assoc (f g t : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_assoc (f g t : Quiver.TotalPath Q →₀ k) :
     mul' (mul' f g) t = mul' f (mul' g t) := by
   induction f using Finsupp.induction_linear with
   | zero => simp
@@ -296,7 +310,7 @@ theorem mul'_assoc (f g t : Quiver.TotalPath Q →₀ k) :
           mul'_single_singleOption, Quiver.TotalPath.mul?_assoc, mul_assoc]
 
 /-- The multiplication is homogeneous in its left argument. -/
-theorem smul_mul' (r : k) (f g : Quiver.TotalPath Q →₀ k) :
+private theorem smul_mul' (r : k) (f g : Quiver.TotalPath Q →₀ k) :
     mul' (r • f) g = r • mul' f g := by
   induction f using Finsupp.induction_linear with
   | zero => simp
@@ -312,14 +326,20 @@ theorem smul_mul' (r : k) (f g : Quiver.TotalPath Q →₀ k) :
 noncomputable instance : Mul (pathAlgebra k Q) :=
   ⟨mul'⟩
 
+/-- The multiplication of the path algebra is `mul'`, read through the type synonym. This is the
+only place the identification is used; every product below is computed from it. -/
+private theorem mul_def (f g : pathAlgebra k Q) : f * g = mul' f g := rfl
+
+-- The axioms below are the `mul'` lemmas above, which are private: an instance body is exposed,
+-- so it can only mention them through a `by exact`, which elaborates to a lifted private proof.
 noncomputable instance : NonUnitalNonAssocSemiring (pathAlgebra k Q) where
-  left_distrib := mul'_add_right
-  right_distrib := mul'_add_left
-  zero_mul := mul'_zero_left
-  mul_zero := mul'_zero_right
+  left_distrib := by exact mul'_add_right
+  right_distrib := by exact mul'_add_left
+  zero_mul := by exact mul'_zero_left
+  mul_zero := by exact mul'_zero_right
 
 noncomputable instance : NonUnitalSemiring (pathAlgebra k Q) where
-  mul_assoc := mul'_assoc
+  mul_assoc := by exact mul'_assoc
 
 /-! ### Products of basis paths -/
 
@@ -328,9 +348,8 @@ are composable, and `0` otherwise. -/
 theorem single_mul_single (x y : Quiver.TotalPath Q) (a b : k) :
     (single x a * single y b : pathAlgebra k Q)
       = (x.mul? y).elim 0 fun z => single z (a * b) := by
-  change mul' (Finsupp.single x a) (Finsupp.single y b) = _
-  rw [mul'_single_single]
-  rfl
+  rw [mul_def, single_def, single_def, mul'_single_single]
+  cases x.mul? y <;> rfl
 
 /-- Multiplying two composable basis paths concatenates them, later factor first. -/
 theorem single_mul_single_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
@@ -341,7 +360,7 @@ theorem single_mul_single_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
   rfl
 
 /-- The product of two basis paths that are not composable vanishes. -/
-theorem single_mul_single_of_ne {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) (r s : k) :
+theorem single_mul_single_of_not_composable {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) (r s : k) :
     (single x r * single y s : pathAlgebra k Q) = 0 := by
   rw [single_mul_single, Quiver.TotalPath.mul?_eq_none h]
   rfl
@@ -358,9 +377,9 @@ theorem ofPath_mul_ofPath_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
   rw [ofPath, ofPath, ofPath, single_mul_single_of_comp, one_mul]
 
 /-- Two paths that do not meet multiply to zero. -/
-theorem ofPath_mul_ofPath_of_ne {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) :
+theorem ofPath_mul_ofPath_of_not_composable {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) :
     (ofPath x * ofPath y : pathAlgebra k Q) = 0 :=
-  single_mul_single_of_ne h 1 1
+  single_mul_single_of_not_composable h 1 1
 
 /-! ### The vertex idempotents -/
 
@@ -391,7 +410,7 @@ theorem single_mul_vertexIdempotent (x : Quiver.TotalPath Q) (r : k) :
 /-- Distinct vertex idempotents are orthogonal. -/
 theorem vertexIdempotent_mul_vertexIdempotent_of_ne {u v : Q} (h : u ≠ v) :
     (vertexIdempotent k u * vertexIdempotent k v : pathAlgebra k Q) = 0 :=
-  single_mul_single_of_ne (x := ⟨u, u, _root_.Quiver.Path.nil⟩)
+  single_mul_single_of_not_composable (x := ⟨u, u, _root_.Quiver.Path.nil⟩)
     (y := ⟨v, v, _root_.Quiver.Path.nil⟩) h.symm 1 1
 
 /-- The vertex idempotents are idempotent. -/
@@ -409,11 +428,9 @@ variable [Fintype Q]
 noncomputable instance : One (pathAlgebra k Q) :=
   ⟨∑ v : Q, vertexIdempotent k v⟩
 
-/-- The unit of the path algebra is the sum of the vertex idempotents. -/
+/-- The unit of the path algebra is the sum of the vertex idempotents: the vertex idempotents are
+a decomposition of the unit. -/
 theorem one_def : (1 : pathAlgebra k Q) = ∑ v : Q, vertexIdempotent k v := rfl
-
-/-- The vertex idempotents are a decomposition of the unit. -/
-theorem sum_vertexIdempotent : ∑ v : Q, vertexIdempotent k v = (1 : pathAlgebra k Q) := rfl
 
 /-- The sum of the vertex idempotents is a left unit on basis paths. -/
 theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
@@ -421,7 +438,8 @@ theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
   rw [one_def, Finset.sum_mul, Finset.sum_eq_single x.2.1]
   · exact vertexIdempotent_mul_single x r
   · intro v _ hv
-    exact single_mul_single_of_ne (x := ⟨v, v, _root_.Quiver.Path.nil⟩) (fun h => hv h.symm) 1 r
+    exact single_mul_single_of_not_composable (x := ⟨v, v, _root_.Quiver.Path.nil⟩)
+      (fun h => hv h.symm) 1 r
   · intro h
     exact absurd (Finset.mem_univ _) h
 
@@ -431,7 +449,7 @@ theorem single_mul_one (x : Quiver.TotalPath Q) (r : k) :
   rw [one_def, Finset.mul_sum, Finset.sum_eq_single x.1]
   · exact single_mul_vertexIdempotent x r
   · intro v _ hv
-    exact single_mul_single_of_ne (y := ⟨v, v, _root_.Quiver.Path.nil⟩) hv r 1
+    exact single_mul_single_of_not_composable (y := ⟨v, v, _root_.Quiver.Path.nil⟩) hv r 1
   · intro h
     exact absurd (Finset.mem_univ _) h
 
@@ -467,7 +485,7 @@ section Algebra
 variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q]
 
 /-- Over a commutative base the multiplication is homogeneous in its right argument. -/
-theorem mul'_smul (r : k) (f g : Quiver.TotalPath Q →₀ k) :
+private theorem mul'_smul (r : k) (f g : Quiver.TotalPath Q →₀ k) :
     mul' f (r • g) = r • mul' f g := by
   induction f using Finsupp.induction_linear with
   | zero => simp
@@ -483,7 +501,7 @@ theorem mul'_smul (r : k) (f g : Quiver.TotalPath Q →₀ k) :
 variable [Fintype Q]
 
 noncomputable instance : Algebra k (pathAlgebra k Q) :=
-  Algebra.ofModule (fun r x y => smul_mul' r x y) fun r x y => mul'_smul r x y
+  Algebra.ofModule (by exact fun r x y => smul_mul' r x y) (by exact fun r x y => mul'_smul r x y)
 
 /-- The image of a scalar in the path algebra spreads it over the vertex idempotents. -/
 theorem algebraMap_apply (r : k) :
@@ -519,9 +537,9 @@ theorem module_finite_pathAlgebra [Finite (Quiver.TotalPath Q)] :
 
 end Basis
 
-section Field
+section DivisionRing
 
-variable (k : Type w) (Q : Type u) [Field k] [Quiver.{v} Q]
+variable (k : Type w) (Q : Type u) [DivisionRing k] [Quiver.{v} Q]
 
 /-- The dimension of the path algebra is the number of paths of `Q`. -/
 theorem finrank_pathAlgebra [Fintype (Quiver.TotalPath Q)] :
@@ -534,6 +552,6 @@ theorem finiteDimensional_pathAlgebra_of_isAcyclic [Finite Q] [∀ a b : Q, Fini
   letI := finite_paths_of_isAcyclic h
   module_finite_pathAlgebra k Q
 
-end Field
+end DivisionRing
 
 end TauCeti
