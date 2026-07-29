@@ -6,6 +6,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Basic
 public import Mathlib.AlgebraicGeometry.AlgebraicCycle.Basic
+import Mathlib.AlgebraicGeometry.Properties
 
 /-!
 # Weil divisors on schemes
@@ -30,7 +31,7 @@ before principal divisors can be constructed from `Scheme.ord`.
 
 public section
 
-open Order AlgebraicGeometry
+open CategoryTheory Order AlgebraicGeometry
 
 namespace TauCeti
 
@@ -48,9 +49,46 @@ abbrev SchemeWeilDivisor (X : Scheme.{u}) : Type u :=
 
 namespace SchemeWeilDivisor
 
-variable {X : Scheme.{u}}
+variable {X Y : Scheme.{u}}
 
 noncomputable section
+
+/-- A scheme isomorphism identifies the codimension-one points of its source and target. -/
+@[expose] def codimensionOnePointEquivOfIso (e : X ≅ Y) :
+    CodimensionOnePoint X ≃ CodimensionOnePoint Y where
+  toFun x := ⟨e.hom x, (coheight_eq_of_isOpenImmersion e.hom).trans x.2⟩
+  invFun y := ⟨e.inv y, (coheight_eq_of_isOpenImmersion e.inv).trans y.2⟩
+  left_inv x := by
+    apply Subtype.ext
+    exact
+      calc
+        e.inv (e.hom x) = (e.hom ≫ e.inv) x :=
+          (Scheme.Hom.comp_apply e.hom e.inv x).symm
+        _ = (𝟙 X) x := congrArg (fun f : X ⟶ X ↦ f x) e.hom_inv_id
+        _ = x := rfl
+  right_inv y := by
+    apply Subtype.ext
+    exact
+      calc
+        e.hom (e.inv y) = (e.inv ≫ e.hom) y :=
+          (Scheme.Hom.comp_apply e.inv e.hom y).symm
+        _ = (𝟙 Y) y := congrArg (fun f : Y ⟶ Y ↦ f y) e.inv_hom_id
+        _ = y := rfl
+
+/-- The forward map on codimension-one points induced by a scheme isomorphism is its underlying
+map on points. -/
+@[simp]
+lemma codimensionOnePointEquivOfIso_apply_coe (e : X ≅ Y) (x : CodimensionOnePoint X) :
+    ((codimensionOnePointEquivOfIso e x : CodimensionOnePoint Y) : Y) = e.hom x :=
+  rfl
+
+/-- The inverse map on codimension-one points induced by a scheme isomorphism is its underlying
+inverse map on points. -/
+@[simp]
+lemma codimensionOnePointEquivOfIso_symm_apply_coe (e : X ≅ Y)
+    (y : CodimensionOnePoint Y) :
+    (((codimensionOnePointEquivOfIso e).symm y : CodimensionOnePoint X) : X) = e.inv y :=
+  rfl
 
 /-- Regard a finitely supported function as an algebraic cycle. -/
 private def algebraicCycleOfFinsupp : (X →₀ ℤ) →+ AlgebraicCycle X ℤ where
