@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Analysis.Contour.ModelSectorWinding
+public import TauCeti.Analysis.Contour.ModelSector.Winding
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import Mathlib.Analysis.Complex.CauchyIntegral
 
@@ -24,7 +24,7 @@ of points:
 
 Together these are the roadmap's `n_c(circle) = 1` normalization and its companion "`n` is `0`
 outside" (`ContourIntegration/README.md`, the worked examples). They upgrade the raw-index-integral
-value `windingNumber_circle` of `ModelSectorWinding` to statements about the `windingNumber`
+value `windingNumber_circle` of `ModelSector.Winding` to statements about the `windingNumber`
 *definition*, connecting the principal-value packaging to the elementary circle computation and to
 Mathlib's disc Cauchy theory.
 

@@ -16,6 +16,7 @@ import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.PiecewiseC1On
+import Mathlib.Algebra.Order.Field.Pi
 
 /-!
 # Existence of the Cauchy-kernel principal value along an immersed curve
@@ -144,16 +145,16 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       exists_radius_perWindow_tendsto h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     obtain ⟨r₀, hr₀_pos, h_endpts, h_pair₀, -⟩ := exists_common_window_radius (P := ∅)
       hT_ne h_Ioo fun t _ => Finset.notMem_empty t
-    set ρ : ℝ := min r₀ (T.inf' hT_ne R) / 2 with hρ_def
-    have hRmin_pos : 0 < T.inf' hT_ne R := (Finset.lt_inf'_iff hT_ne).mpr hR_pos
-    have hρ_pos : 0 < ρ := half_pos (lt_min hr₀_pos hRmin_pos)
-    have hρ_lt : ρ < r₀ := by
-      have := min_le_left r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
-    have hρ_le_R : ∀ t ∈ T, ρ ≤ R t := fun t ht => by
-      have h1 := Finset.inf'_le R ht
-      have h2 := min_le_right r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
+    -- one radius below both the endpoint bound `r₀` and every per-crossing radius `R t`
+    obtain ⟨ρ, hρ_pos, hρ_all⟩ := Pi.exists_forall_pos_add_lt (ι := Option {t // t ∈ T})
+      (x := fun _ => (0 : ℝ)) (y := fun i => i.elim r₀ fun t => R t.1)
+      (fun i => by
+        cases i with
+        | none => simpa using hr₀_pos
+        | some t => simpa using hR_pos t.1 t.2)
+    have hρ_lt : ρ < r₀ := by simpa using hρ_all none
+    have hρ_le_R : ∀ t ∈ T, ρ ≤ R t := fun t ht =>
+      le_of_lt (by simpa using hρ_all (some ⟨t, ht⟩))
     refine cauchyPVExistsAt_of_perWindow_tendsto hρ_pos hab.le T
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
