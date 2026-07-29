@@ -276,10 +276,13 @@ private theorem tendsto_integral_abs_sub_of_tendsto_eLpNorm_two {μ : Measure Ω
 converging in `L¹` to one common measurable limit.
 
 The start `r` is fixed while the window length `m + 1` tends to infinity. The successor in the
-length avoids assigning any special meaning to an empty average. -/
-theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
-    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
+length avoids assigning any special meaning to an empty average.
+
+The measure need only be finite, the coordinates only a.e.-measurable, and the bound on `f` only
+coordinatewise a.e. — none of the analytic steps use more. -/
+theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ)
+    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ i, ∀ᵐ ω ∂μ, ‖f (X i ω)‖ ≤ C) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
       ∀ r : ℕ,
         Tendsto
@@ -287,14 +290,11 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsProbabilityMeasure μ]
             |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
   let Y : ℕ → Ω → ℝ := fun i ω => f (X i ω)
-  have hY_meas : ∀ i, Measurable (Y i) := fun i => hf.comp (hX_meas i)
-  have hY : Contractable μ Y := hX.map_values hf fun i => (hX_meas i).aemeasurable
+  have hY_ae : ∀ i, AEMeasurable (Y i) μ := fun i => hf.comp_aemeasurable (hX_meas i)
+  have hY : Contractable μ Y := hX.map_values hf hX_meas
   obtain ⟨C, hC⟩ := hf_bdd
-  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := by
-    intro i
-    apply MemLp.of_bound (hY_meas i).aestronglyMeasurable C
-    filter_upwards with ω
-    exact hC (X i ω)
+  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := fun i =>
+    MemLp.of_bound (hY_ae i).aestronglyMeasurable C (hC i)
   have hA_L2 : ∀ m : ℕ, MemLp (blockAverage Y fun i : Fin (m + 1) => (i : ℕ)) 2 μ := fun m =>
     memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i
   let A₂ : ℕ → Lp ℝ 2 μ := fun m =>
