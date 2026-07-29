@@ -29,8 +29,6 @@ This is the representation occurring in the summands of the Mackey decomposition
   conjugation.
 * `TauCeti.isIrreducible_conjRep_iff`: conjugation preserves irreducibility.
 * `TauCeti.conjFDRep`: the finite-dimensional version.
-* `TauCeti.conjFDRepEquivalence`: conjugation as an equivalence of finite-dimensional
-  representation categories.
 
 ## References
 
@@ -87,13 +85,13 @@ def conjRep [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
 /-- Conjugation by a group element is an equivalence of representation categories. -/
 noncomputable def conjRepEquivalence [Semiring k] (s : G) (H : Subgroup G) :
     Rep k H ≌ Rep k (MulAut.conj s • H : Subgroup G) :=
-  Rep.resEquivalence (conjSubgroupEquiv s H)
+  Rep.resEquiv (conjSubgroupEquiv s H)
 
 /-- The forward functor of the conjugation equivalence is restriction along conjugation. -/
 @[simp]
 theorem conjRepEquivalence_functor [Semiring k] (s : G) (H : Subgroup G) :
     (conjRepEquivalence (k := k) s H).functor = conjRepFunctor s H := by
-  rw [conjRepEquivalence, Rep.resEquivalence_functor]
+  rw [conjRepEquivalence, Rep.resEquiv_functor]
   rfl
 
 /-- The inverse functor of the conjugation equivalence restricts along inverse conjugation. -/
@@ -101,7 +99,7 @@ theorem conjRepEquivalence_functor [Semiring k] (s : G) (H : Subgroup G) :
 theorem conjRepEquivalence_inverse [Semiring k] (s : G) (H : Subgroup G) :
     (conjRepEquivalence (k := k) s H).inverse =
       Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
-  rw [conjRepEquivalence, Rep.resEquivalence_inverse]
+  rw [conjRepEquivalence, Rep.resEquiv_inverse]
 
 /-- The unit of the conjugation equivalence has the identity underlying linear map. -/
 @[simp]
@@ -109,7 +107,7 @@ theorem conjRepEquivalence_unitIso_hom_app_toLinearMap [Semiring k] (s : G) (H :
     (A : Rep k H) :
     HEq ((conjRepEquivalence (k := k) s H).unitIso.hom.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  exact Rep.resEquivalence_unitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
+  exact Rep.resEquiv_unitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
 
 /-- The inverse of the unit of the conjugation equivalence has the identity underlying
 linear map. -/
@@ -118,7 +116,7 @@ theorem conjRepEquivalence_unitIso_inv_app_toLinearMap [Semiring k] (s : G) (H :
     (A : Rep k H) :
     HEq ((conjRepEquivalence (k := k) s H).unitIso.inv.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  exact Rep.resEquivalence_unitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
+  exact Rep.resEquiv_unitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
 
 /-- The counit of the conjugation equivalence has the identity underlying linear map. -/
 @[simp]
@@ -126,7 +124,7 @@ theorem conjRepEquivalence_counitIso_hom_app_toLinearMap [Semiring k] (s : G) (H
     (A : Rep k (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjRepEquivalence (k := k) s H).counitIso.hom.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  exact Rep.resEquivalence_counitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
+  exact Rep.resEquiv_counitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
 
 /-- The inverse of the counit of the conjugation equivalence has the identity underlying
 linear map. -/
@@ -135,7 +133,7 @@ theorem conjRepEquivalence_counitIso_inv_app_toLinearMap [Semiring k] (s : G) (H
     (A : Rep k (MulAut.conj s • H : Subgroup G)) :
     HEq ((conjRepEquivalence (k := k) s H).counitIso.inv.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  exact Rep.resEquivalence_counitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
+  exact Rep.resEquiv_counitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
 
 /-- Conjugation preserves the underlying module of a representation. -/
 @[simp]
@@ -187,7 +185,7 @@ def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : 
   -- Unfold `conjRep` and `conjRepFunctor` to expose Mathlib's definition of the restricted action.
   change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
     Subrepresentation A.ρ
-  exact Rep.resSubrepresentationOrderIso (conjSubgroupEquiv s H) A
+  exact Rep.resSubrepresentationOrderIso (conjSubgroupEquiv s H) A.ρ
 
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
@@ -196,7 +194,7 @@ theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
     HEq (conjRepSubrepresentationOrderIso s A S).toSubmodule S.toSubmodule := by
   unfold conjRepSubrepresentationOrderIso
   exact heq_of_eq (Rep.resSubrepresentationOrderIso_apply_toSubmodule
-    (conjSubgroupEquiv s H) A S)
+    (conjSubgroupEquiv s H) A.ρ S)
 
 /-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
@@ -205,14 +203,14 @@ theorem conjRepSubrepresentationOrderIso_symm_apply_toSubmodule [Semiring k] (s 
     HEq ((conjRepSubrepresentationOrderIso s A).symm S).toSubmodule S.toSubmodule := by
   unfold conjRepSubrepresentationOrderIso
   exact heq_of_eq (Rep.resSubrepresentationOrderIso_symm_apply_toSubmodule
-    (conjSubgroupEquiv s H) A S)
+    (conjSubgroupEquiv s H) A.ρ S)
 
 /-- A conjugate representation is irreducible exactly when the original representation is. -/
 @[simp]
 theorem isIrreducible_conjRep_iff [Field k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Representation.IsIrreducible (conjRep s A).ρ ↔
       Representation.IsIrreducible A.ρ :=
-  Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H) A
+  Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H) A.ρ
 
 section FDRep
 
@@ -223,75 +221,10 @@ noncomputable def conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
     FDRep k (MulAut.conj s • H : Subgroup G) :=
   FDRep.of (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom)
 
-/-- Conjugation by a group element is an equivalence of finite-dimensional representation
-categories. -/
-noncomputable def conjFDRepEquivalence (s : G) (H : Subgroup G) :
-    FDRep k H ≌ FDRep k (MulAut.conj s • H : Subgroup G) :=
-  Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)
-
-/-- The forward functor of finite-dimensional conjugation is restriction along conjugation. -/
-@[simp]
-theorem conjFDRepEquivalence_functor (s : G) (H : Subgroup G) :
-    (conjFDRepEquivalence (k := k) s H).functor =
-      Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom := by
-  rfl
-
-/-- The inverse functor of finite-dimensional conjugation is restriction along inverse
-conjugation. -/
-@[simp]
-theorem conjFDRepEquivalence_inverse (s : G) (H : Subgroup G) :
-    (conjFDRepEquivalence (k := k) s H).inverse =
-      Action.res (FGModuleCat k) (conjSubgroupEquiv s H).symm.toMonoidHom := by
-  rfl
-
 /-- The forward object map of the finite-dimensional conjugation equivalence is `conjFDRep`. -/
 @[simp]
 theorem conjFDRepEquivalence_functor_obj (s : G) (H : Subgroup G) (A : FDRep k H) :
     (Action.res (FGModuleCat k) (conjSubgroupEquiv s H : _ →* _)).obj A = conjFDRep s A := by
-  rfl
-
-/-- The forward morphism map of finite-dimensional conjugation preserves the underlying
-module morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_functor_map_hom (s : G) (H : Subgroup G)
-    {A B : FDRep k H} (f : A ⟶ B) :
-    HEq ((conjFDRepEquivalence (k := k) s H).functor.map f).hom f.hom := by
-  rfl
-
-/-- The inverse morphism map of finite-dimensional conjugation preserves the underlying
-module morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_inverse_map_hom (s : G) (H : Subgroup G)
-    {A B : FDRep k (MulAut.conj s • H : Subgroup G)} (f : A ⟶ B) :
-    HEq ((conjFDRepEquivalence (k := k) s H).inverse.map f).hom f.hom := by
-  rfl
-
-/-- The unit of finite-dimensional conjugation has the identity underlying module morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_unitIso_hom_app_hom (s : G) (H : Subgroup G) (A : FDRep k H) :
-    HEq ((conjFDRepEquivalence (k := k) s H).unitIso.hom.app A).hom (𝟙 A.V) := by
-  rfl
-
-/-- The inverse of the unit of finite-dimensional conjugation has the identity underlying module
-morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_unitIso_inv_app_hom (s : G) (H : Subgroup G) (A : FDRep k H) :
-    HEq ((conjFDRepEquivalence (k := k) s H).unitIso.inv.app A).hom (𝟙 A.V) := by
-  rfl
-
-/-- The counit of finite-dimensional conjugation has the identity underlying module morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_counitIso_hom_app_hom (s : G) (H : Subgroup G)
-    (A : FDRep k (MulAut.conj s • H : Subgroup G)) :
-    HEq ((conjFDRepEquivalence (k := k) s H).counitIso.hom.app A).hom (𝟙 A.V) := by
-  rfl
-
-/-- The inverse of the counit of finite-dimensional conjugation has the identity underlying
-module morphism. -/
-@[simp]
-theorem conjFDRepEquivalence_counitIso_inv_app_hom (s : G) (H : Subgroup G)
-    (A : FDRep k (MulAut.conj s • H : Subgroup G)) :
-    HEq ((conjFDRepEquivalence (k := k) s H).counitIso.inv.app A).hom (𝟙 A.V) := by
   rfl
 
 /-- Conjugation preserves the underlying module of a finite-dimensional representation. -/
@@ -342,8 +275,7 @@ theorem isIrreducible_conjFDRep_iff (s : G) {H : Subgroup G} (A : FDRep k H) :
   change Representation.IsIrreducible
       (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ↔
     Representation.IsIrreducible A.ρ
-  exact Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H)
-    ((forget₂ (FDRep k H) (Rep k H)).obj A)
+  exact Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H) A.ρ
 
 end FDRepIrreducible
 

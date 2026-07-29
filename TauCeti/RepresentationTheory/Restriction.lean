@@ -19,7 +19,7 @@ representation restricted along a multiplicative equivalence.
 ## Main definitions
 
 * `TauCeti.Rep.resFunctorCompIso`: restriction along a composite agrees with restriction in stages.
-* `TauCeti.Rep.resEquivalence`: restriction along a multiplicative equivalence is a categorical
+* `TauCeti.Rep.resEquiv`: restriction along a multiplicative equivalence is a categorical
   equivalence.
 * `TauCeti.Rep.resSubrepresentationOrderIso`: restriction along a multiplicative equivalence
   preserves the lattice of invariant subspaces.
@@ -31,7 +31,7 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u v w x
+universe u v w x y
 
 namespace Rep
 
@@ -71,7 +71,7 @@ lemma resFunctorCompIso_inv_app_apply (φ : G →* H) (ψ : H →* K) (A : _root
 
 /-- Restriction along a multiplicative equivalence is an equivalence of representation
 categories. -/
-noncomputable def resEquivalence (e : G ≃* H) :
+noncomputable def resEquiv (e : G ≃* H) :
     _root_.Rep k H ≌ _root_.Rep k G := by
   let unitIso :
       𝟭 (_root_.Rep k H) ≅
@@ -117,54 +117,55 @@ noncomputable def resEquivalence (e : G ≃* H) :
 /-- The forward functor of restriction along an equivalence is restriction along its
 underlying homomorphism. -/
 @[simp]
-theorem resEquivalence_functor (e : G ≃* H) :
-    (resEquivalence (k := k) e).functor = _root_.Rep.resFunctor e.toMonoidHom := by
+theorem resEquiv_functor (e : G ≃* H) :
+    (resEquiv (k := k) e).functor = _root_.Rep.resFunctor e.toMonoidHom := by
   rfl
 
 /-- The inverse functor of restriction along an equivalence is restriction along the inverse
 homomorphism. -/
 @[simp]
-theorem resEquivalence_inverse (e : G ≃* H) :
-    (resEquivalence (k := k) e).inverse = _root_.Rep.resFunctor e.symm.toMonoidHom := by
+theorem resEquiv_inverse (e : G ≃* H) :
+    (resEquiv (k := k) e).inverse = _root_.Rep.resFunctor e.symm.toMonoidHom := by
   rfl
 
 /-- The unit of restriction along an equivalence has the identity underlying linear map. -/
 @[simp]
-theorem resEquivalence_unitIso_hom_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k H) :
-    HEq ((resEquivalence (k := k) e).unitIso.hom.app A).hom.toLinearMap
+theorem resEquiv_unitIso_hom_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k H) :
+    HEq ((resEquiv (k := k) e).unitIso.hom.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  unfold resEquivalence
+  unfold resEquiv
   rfl
 
 /-- The inverse of the unit of restriction along an equivalence has the identity underlying
 linear map. -/
 @[simp]
-theorem resEquivalence_unitIso_inv_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k H) :
-    HEq ((resEquivalence (k := k) e).unitIso.inv.app A).hom.toLinearMap
+theorem resEquiv_unitIso_inv_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k H) :
+    HEq ((resEquiv (k := k) e).unitIso.inv.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  unfold resEquivalence
+  unfold resEquiv
   rfl
 
 /-- The counit of restriction along an equivalence has the identity underlying linear map. -/
 @[simp]
-theorem resEquivalence_counitIso_hom_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k G) :
-    HEq ((resEquivalence (k := k) e).counitIso.hom.app A).hom.toLinearMap
+theorem resEquiv_counitIso_hom_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k G) :
+    HEq ((resEquiv (k := k) e).counitIso.hom.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  unfold resEquivalence
+  unfold resEquiv
   rfl
 
 /-- The inverse of the counit of restriction along an equivalence has the identity underlying
 linear map. -/
 @[simp]
-theorem resEquivalence_counitIso_inv_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k G) :
-    HEq ((resEquivalence (k := k) e).counitIso.inv.app A).hom.toLinearMap
+theorem resEquiv_counitIso_inv_app_toLinearMap (e : G ≃* H) (A : _root_.Rep k G) :
+    HEq ((resEquiv (k := k) e).counitIso.inv.app A).hom.toLinearMap
       (LinearMap.id : A.V →ₗ[k] A.V) := by
-  unfold resEquivalence
+  unfold resEquiv
   rfl
 
 /-- Restriction along a multiplicative equivalence identifies invariant subspaces. -/
-def resSubrepresentationOrderIso (e : G ≃* H) (A : _root_.Rep k H) :
-    Subrepresentation (A.ρ.comp (e : G →* H)) ≃o Subrepresentation A.ρ :=
+def resSubrepresentationOrderIso {V : Type y} [AddCommMonoid V] [Module k V]
+    (e : G ≃* H) (ρ : Representation k H V) :
+    Subrepresentation (ρ.comp (e : G →* H)) ≃o Subrepresentation ρ :=
   { toFun := fun S ↦
       { toSubmodule := S.toSubmodule
         apply_mem_toSubmodule := fun h v hv ↦ by
@@ -178,16 +179,16 @@ def resSubrepresentationOrderIso (e : G ≃* H) (A : _root_.Rep k H) :
 
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
-theorem resSubrepresentationOrderIso_apply_toSubmodule (e : G ≃* H) (A : _root_.Rep k H)
-    (S : Subrepresentation (A.ρ.comp (e : G →* H))) :
-    (resSubrepresentationOrderIso e A S).toSubmodule = S.toSubmodule := by
+theorem resSubrepresentationOrderIso_apply_toSubmodule {V : Type y} [AddCommMonoid V] [Module k V]
+    (e : G ≃* H) (ρ : Representation k H V) (S : Subrepresentation (ρ.comp (e : G →* H))) :
+    (resSubrepresentationOrderIso e ρ S).toSubmodule = S.toSubmodule := by
   rfl
 
 /-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
-theorem resSubrepresentationOrderIso_symm_apply_toSubmodule (e : G ≃* H) (A : _root_.Rep k H)
-    (S : Subrepresentation A.ρ) :
-    ((resSubrepresentationOrderIso e A).symm S).toSubmodule = S.toSubmodule := by
+theorem resSubrepresentationOrderIso_symm_apply_toSubmodule {V : Type y} [AddCommMonoid V]
+    [Module k V] (e : G ≃* H) (ρ : Representation k H V) (S : Subrepresentation ρ) :
+    ((resSubrepresentationOrderIso e ρ).symm S).toSubmodule = S.toSubmodule := by
   rfl
 
 end Semiring
@@ -198,10 +199,11 @@ variable [Field k] [Monoid G] [Monoid H]
 
 /-- Restriction along a multiplicative equivalence preserves irreducibility. -/
 @[simp]
-theorem isIrreducible_comp_equiv_iff (e : G ≃* H) (A : _root_.Rep k H) :
-    Representation.IsIrreducible (A.ρ.comp (e : G →* H)) ↔
-      Representation.IsIrreducible A.ρ :=
-  (resSubrepresentationOrderIso e A).isSimpleOrder_iff
+theorem isIrreducible_comp_equiv_iff {V : Type y} [AddCommGroup V] [Module k V]
+    (e : G ≃* H) (ρ : Representation k H V) :
+    Representation.IsIrreducible (ρ.comp (e : G →* H)) ↔
+      Representation.IsIrreducible ρ :=
+  (resSubrepresentationOrderIso e ρ).isSimpleOrder_iff
 
 end Field
 
