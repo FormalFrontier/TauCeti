@@ -221,8 +221,13 @@ lemma toOverHom_toTrivial (A : AbelianVariety K) :
 transporting its codomain to `Spec K`. -/
 @[simp]
 lemma toSchemeHom_toTrivial (A : AbelianVariety K) :
-    Hom.toSchemeHom (toTrivial A) ≫ (eqToHom (trivial_toOver K)).left = A.toOver.hom :=
-  congrArg Over.Hom.left (toOverHom_toTrivial A)
+    Hom.toSchemeHom (toTrivial A) ≫ eqToHom (trivial_toScheme K) = A.toOver.hom := by
+  -- `toOverHom_toTrivial` transports along `trivial_toOver`, so its `Over.Hom.left` carries
+  -- `(eqToHom (trivial_toOver K)).left`. That is not in simp normal form: `Over.eqToHom_left`
+  -- turns it into the `eqToHom` of `trivial_toScheme`, which is the form stated here.
+  rw [show eqToHom (trivial_toScheme K) = (eqToHom (trivial_toOver K)).left from
+    (Over.eqToHom_left (trivial_toOver K)).symm]
+  exact congrArg Over.Hom.left (toOverHom_toTrivial A)
 
 /-- The homomorphism from the trivial abelian variety to an abelian variety, namely the identity
 element of the group `trivial K ⟶ A`. Its underlying morphism over `Spec K` is the unit section
@@ -244,9 +249,12 @@ lemma toOverHom_fromTrivial (A : AbelianVariety K) :
 its domain from `Spec K`. -/
 @[simp]
 lemma toSchemeHom_fromTrivial (A : AbelianVariety K) :
-    (eqToHom (trivial_toOver K).symm).left ≫ Hom.toSchemeHom (fromTrivial A) =
-      η[A.toOver].left :=
-  congrArg Over.Hom.left (toOverHom_fromTrivial A)
+    eqToHom (trivial_toScheme K).symm ≫ Hom.toSchemeHom (fromTrivial A) =
+      η[A.toOver].left := by
+  -- As in `toSchemeHom_toTrivial`, `Over.eqToHom_left` puts the transport in simp normal form.
+  rw [show eqToHom (trivial_toScheme K).symm = (eqToHom (trivial_toOver K).symm).left from
+    (Over.eqToHom_left (trivial_toOver K).symm).symm]
+  exact congrArg Over.Hom.left (toOverHom_fromTrivial A)
 
 /-- The trivial abelian variety is terminal: the only homomorphism to it from an abelian variety
 over `K` is that variety's structure morphism to `Spec K`. -/
