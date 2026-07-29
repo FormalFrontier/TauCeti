@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.ExteriorPower
 
@@ -44,15 +45,6 @@ noncomputable abbrev extPowerRep :
     Representation k (GL (Fin n) k) (⋀[k]^d (Fin n → k)) :=
   (stdRep k n).exteriorPower d
 
-/-- A matrix acts on a pure wedge by acting on every factor.
-
-This is not a `simp` lemma: `simp` already reaches the right-hand side through
-`Representation.exteriorPower_apply` and `exteriorPower.map_apply_ιMulti`. -/
-theorem extPowerRep_apply_ιMulti (g : GL (Fin n) k) (m : Fin d → Fin n → k) :
-    extPowerRep k n d g (_root_.exteriorPower.ιMulti k d m) =
-      _root_.exteriorPower.ιMulti k d (stdRep k n g ∘ m) :=
-  Representation.exteriorPower_apply_ιMulti (stdRep k n) d g m
-
 /-- The zeroth exterior power of the standard representation is trivial. -/
 noncomputable abbrev extPowerRepZeroEquiv :
     (extPowerRep k n 0).Equiv (Representation.trivial k (GL (Fin n) k) k) :=
@@ -72,12 +64,6 @@ variable [Field k]
 /-- The exterior power of the standard representation, bundled as an object of `FDRep`. -/
 noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (extPowerRep k n d)
-
-/-- An exterior power above the dimension of the standard representation is zero. -/
-theorem extPowerRep_eq_zero_of_lt (h : n < d) (x : ⋀[k]^d (Fin n → k)) :
-    x = 0 := by
-  apply _root_.exteriorPower.eq_zero_of_finrank_lt d
-  simpa using h
 
 end Field
 

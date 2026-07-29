@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.ExteriorPower.Basis
+public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RepresentationTheory.Intertwining
 
 /-!
@@ -24,6 +24,10 @@ exterior powers recover the trivial and original representations.
 
 * [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
   Layer 1, “Symmetric and exterior power representations”.
+
+The functorial exterior-power API transported here — `exteriorPower.map`, its identity and
+composition laws, and the equivalences `exteriorPower.zeroEquiv` and `exteriorPower.oneEquiv` —
+is Mathlib's `Mathlib.LinearAlgebra.ExteriorPower.Basic`, by Sophie Morel and Joël Riou.
 -/
 
 public section
@@ -58,16 +62,6 @@ theorem exteriorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
     ρ.exteriorPower d g = _root_.exteriorPower.map d (ρ g) :=
   (rfl)
 
-/-- The exterior-power action applies the original action to every factor of a pure wedge.
-
-This is not a `simp` lemma: `simp` already reaches the right-hand side through
-`exteriorPower_apply` and `exteriorPower.map_apply_ιMulti`. -/
-theorem exteriorPower_apply_ιMulti (ρ : Representation R G M) (d : ℕ) (g : G)
-    (m : Fin d → M) :
-    ρ.exteriorPower d g (_root_.exteriorPower.ιMulti R d m) =
-      _root_.exteriorPower.ιMulti R d (ρ g ∘ m) := by
-  rw [exteriorPower_apply, _root_.exteriorPower.map_apply_ιMulti]
-
 /-- The zeroth exterior power is equivalent to the trivial representation on the scalars. -/
 noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
     (ρ.exteriorPower 0).Equiv (trivial R G R) :=
@@ -75,11 +69,25 @@ noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
     rw [exteriorPower_apply, _root_.exteriorPower.zeroEquiv_naturality]
     simp
 
+/-- The underlying linear equivalence is Mathlib's identification of the zeroth exterior power
+with the scalars. -/
+@[simp]
+theorem exteriorPowerZeroEquiv_toLinearEquiv (ρ : Representation R G M) :
+    ρ.exteriorPowerZeroEquiv.toLinearEquiv = _root_.exteriorPower.zeroEquiv R M :=
+  (rfl)
+
 /-- The first exterior power is equivalent to the original representation. -/
 noncomputable def exteriorPowerOneEquiv (ρ : Representation R G M) :
     (ρ.exteriorPower 1).Equiv ρ :=
   .mk (_root_.exteriorPower.oneEquiv R M) fun g =>
     _root_.exteriorPower.oneEquiv_naturality (ρ g)
+
+/-- The underlying linear equivalence is Mathlib's identification of the first exterior power
+with the module itself. -/
+@[simp]
+theorem exteriorPowerOneEquiv_toLinearEquiv (ρ : Representation R G M) :
+    ρ.exteriorPowerOneEquiv.toLinearEquiv = _root_.exteriorPower.oneEquiv R M :=
+  (rfl)
 
 end CommRing
 
@@ -174,19 +182,3 @@ theorem exteriorPower_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
 end CommRing
 
 end Representation.Equiv
-
-namespace exteriorPower
-
-section Field
-
-variable [Field R] [AddCommGroup M] [Module R M] [FiniteDimensional R M]
-
-/-- An exterior power above the dimension of its module is zero. -/
-theorem eq_zero_of_finrank_lt (d : ℕ) (h : Module.finrank R M < d) (x : ⋀[R]^d M) :
-    x = 0 := by
-  apply (finrank_zero_iff_forall_zero (K := R) (V := ⋀[R]^d M)).mp
-  rw [finrank_eq, Nat.choose_eq_zero_of_lt h]
-
-end Field
-
-end exteriorPower
