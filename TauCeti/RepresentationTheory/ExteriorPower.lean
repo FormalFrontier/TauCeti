@@ -159,23 +159,23 @@ variable [CommRing R] [Monoid G]
 variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
 variable {ρ : Representation R G M} {σ : Representation R G N}
 
+/-- The linear equivalence induced on `d`th exterior powers by an equivalence of representations.
+
+This is built from the explicit inverse `exteriorPower.map d e.symm.toLinearMap` rather than from
+bijectivity of `exteriorPower.map d e.toLinearMap`, so that the inverse is *definitionally* the
+map induced by `e.symm`; that is what makes `exteriorPowerLinearEquiv_symm_toLinearMap`, and hence
+`exteriorPower_symm`, hold. Mathlib builds `TensorProduct.congr` the same way. -/
 private noncomputable def exteriorPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
     (⋀[R]^d M) ≃ₗ[R] (⋀[R]^d N) :=
   LinearEquiv.ofLinear
     (_root_.exteriorPower.map d e.toLinearMap)
     (_root_.exteriorPower.map d e.symm.toLinearMap)
     (by
-      rw [← _root_.exteriorPower.map_comp]
-      have he : e.toLinearMap ∘ₗ e.symm.toLinearMap = LinearMap.id := by
-        ext x
-        simp
-      rw [he, _root_.exteriorPower.map_id])
+      rw [← _root_.exteriorPower.map_comp, Representation.Equiv.toLinearMap_symm,
+        e.toLinearEquiv.comp_symm, _root_.exteriorPower.map_id])
     (by
-      rw [← _root_.exteriorPower.map_comp]
-      have he : e.symm.toLinearMap ∘ₗ e.toLinearMap = LinearMap.id := by
-        ext x
-        simp
-      rw [he, _root_.exteriorPower.map_id])
+      rw [← _root_.exteriorPower.map_comp, Representation.Equiv.toLinearMap_symm,
+        e.toLinearEquiv.symm_comp, _root_.exteriorPower.map_id])
 
 private theorem exteriorPowerLinearEquiv_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (exteriorPowerLinearEquiv e d).toLinearMap =
