@@ -119,9 +119,16 @@ private theorem sub_sum_sum_eq_of_reflect_data {W : Type*} [Fintype W] (i : W)
 variable {V : Type u} [_root_.Quiver.{v} V] [Fintype V] [∀ a b : V, Fintype (a ⟶ b)]
   [DecidableEq V]
 
-/-- The Euler form of the reflected quiver, with its arrows counted by
-`TauCeti.Quiver.reflectHom`. -/
-theorem eulerForm_reflect_eq_sum_card (i : V) (d e : V → ℤ) :
+/-- `TauCeti.eulerForm_eq_sum_card` for the reflected quiver, with the sums re-indexed by the
+vertex type `V` itself and the arrow counts written as `TauCeti.Quiver.reflectHom` counts.
+
+`Quiver.Reflect V i` is a type synonym for `V`, so this is the generic expansion up to
+unfolding that synonym and its `Fintype` instances; the point of stating it is that `linarith`
+and `ring` compare atoms only up to reducible transparency, and so cannot see a
+`Quiver.Reflect V i`-indexed sum and a `V`-indexed one as the same term. Where a tactic does
+unfold the synonym (`refine`, in `TauCeti.eulerForm_reflect_vertexPreReflection` below), the
+generic lemma is used directly instead. -/
+private theorem eulerForm_reflect_eq_sum_card (i : V) (d e : V → ℤ) :
     eulerForm (Quiver.Reflect V i) d e =
       (∑ w : V, d w * e w)
         - ∑ a : V, ∑ b : V, (Fintype.card (Quiver.reflectHom i a b) : ℤ) * (d a * e b) :=
@@ -195,7 +202,7 @@ theorem eulerForm_reflect_vertexPreReflection {i : V} (h : Quiver.IsSink i) (d e
     congr 1
     refine Finset.sum_congr rfl fun x _ ↦ ?_
     rw [hcard x, zero_add]
-  rw [eulerForm_reflect_eq_sum_card, eulerForm_eq_sum_card]
+  rw [eulerForm_eq_sum_card (Quiver.Reflect V i), eulerForm_eq_sum_card V]
   refine sub_sum_sum_eq_of_reflect_data i (fun a b ↦ (Fintype.card (a ⟶ b) : ℤ))
     (fun a b ↦ (Fintype.card (Quiver.reflectHom i a b) : ℤ)) d e _ _
     hcard (fun b ↦ by rw [Quiver.card_reflectHom_left])
