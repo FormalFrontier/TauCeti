@@ -58,8 +58,10 @@ theorem exteriorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
     ρ.exteriorPower d g = _root_.exteriorPower.map d (ρ g) :=
   (rfl)
 
-/-- The exterior-power action applies the original action to every factor of a pure wedge. -/
-@[simp]
+/-- The exterior-power action applies the original action to every factor of a pure wedge.
+
+This is not a `simp` lemma: `simp` already reaches the right-hand side through
+`exteriorPower_apply` and `exteriorPower.map_apply_ιMulti`. -/
 theorem exteriorPower_apply_ιMulti (ρ : Representation R G M) (d : ℕ) (g : G)
     (m : Fin d → M) :
     ρ.exteriorPower d g (_root_.exteriorPower.ιMulti R d m) =

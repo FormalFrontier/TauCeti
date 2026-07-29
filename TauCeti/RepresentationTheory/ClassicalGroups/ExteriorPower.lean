@@ -44,8 +44,10 @@ noncomputable abbrev extPowerRep :
     Representation k (GL (Fin n) k) (⋀[k]^d (Fin n → k)) :=
   (stdRep k n).exteriorPower d
 
-/-- A matrix acts on a pure wedge by acting on every factor. -/
-@[simp]
+/-- A matrix acts on a pure wedge by acting on every factor.
+
+This is not a `simp` lemma: `simp` already reaches the right-hand side through
+`Representation.exteriorPower_apply` and `exteriorPower.map_apply_ιMulti`. -/
 theorem extPowerRep_apply_ιMulti (g : GL (Fin n) k) (m : Fin d → Fin n → k) :
     extPowerRep k n d g (_root_.exteriorPower.ιMulti k d m) =
       _root_.exteriorPower.ιMulti k d (stdRep k n g ∘ m) :=
