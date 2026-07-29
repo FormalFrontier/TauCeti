@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.Enumerative.Partition.Basic
-public import TauCeti.Combinatorics.Young.YoungDiagram
+public import TauCeti.Combinatorics.Young.Diagram
 
 /-!
 # Partitions and Young diagrams

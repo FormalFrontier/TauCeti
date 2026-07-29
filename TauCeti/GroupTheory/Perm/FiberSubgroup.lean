@@ -108,4 +108,12 @@ theorem fiberSubgroupMulEquivPiPerm_apply_coe (f : α → ι) (σ : fiberSubgrou
     (fiberSubgroupMulEquivPiPerm f σ i a : α) = (σ : Equiv.Perm α) a :=
   rfl
 
+/-- The fiber-preserving permutation assembled from a family of permutations of the fibers of `f`
+moves each point by the permutation of its own fiber. -/
+@[simp]
+theorem fiberSubgroupMulEquivPiPerm_symm_apply (f : α → ι)
+    (σ : ∀ i, Equiv.Perm {a // f a = i}) (a : α) :
+    ((fiberSubgroupMulEquivPiPerm f).symm σ : Equiv.Perm α) a = (σ (f a) ⟨a, rfl⟩ : α) :=
+  rfl
+
 end TauCeti

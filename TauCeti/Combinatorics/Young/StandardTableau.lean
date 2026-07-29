@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.Data.FunLike.Fintype
-public import TauCeti.Combinatorics.Young.YoungDiagram
+public import TauCeti.Combinatorics.Young.Diagram
 
 /-!
 # Standard Young tableaux
