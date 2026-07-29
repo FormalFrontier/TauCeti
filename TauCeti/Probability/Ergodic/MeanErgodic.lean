@@ -43,6 +43,12 @@ def metProjection (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
     Lp E 2 μ →L[𝕜] Lp E 2 μ :=
   (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT).starProjection
 
+/-- The mean-ergodic projection is the orthogonal projection onto the fixed space. -/
+theorem metProjection_eq_starProjection (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
+    metProjection (𝕜 := 𝕜) (E := E) T hT =
+      (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT).starProjection := by
+  rw [metProjection]
+
 /-- The mean-ergodic projection takes values in the fixed space. -/
 theorem metProjection_mem_fixedSpace (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
     (g : Lp E 2 μ) :
