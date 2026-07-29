@@ -77,6 +77,12 @@ variable {x₀ x : X}
 def ofBasedPath (x₀ : X) (α : BasedPath x₀) : UniversalCover x₀ :=
   mk (BasedPath.endpoint α) (Path.Homotopic.Quotient.mk α.toPath)
 
+/-- `ofBasedPath` records the endpoint and homotopy class of its based path. -/
+theorem ofBasedPath_def (α : BasedPath x₀) :
+    ofBasedPath x₀ α =
+      mk (BasedPath.endpoint α) (Path.Homotopic.Quotient.mk α.toPath) :=
+  (rfl)
+
 /-- The topology on `UniversalCover x₀` as the quotient topology coinduced from the compact-open
 topology on `BasedPath x₀` via `ofBasedPath`. See the module-level `## Implementation note` for
 why we do not use the Hatcher-style bespoke basis. -/

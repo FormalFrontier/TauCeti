@@ -41,11 +41,11 @@ witness as an explicit hypothesis instead of deriving it.
 ## What is not here
 
 The Layer 6 bullet in `TauCetiRoadmap/Exchangeability/README.md` asks for the mixture form with `π`
-the **unique** law of `ν`. Uniqueness (`mixedIID_mixingLaw_unique`) is not proved here or anywhere
-yet: at the roadmap's stated generality it needs finite-dimensional compact-box mixed-moment
-determinacy, which does not exist. That bullet is therefore only partly discharged, and the roadmap
-name `deFinetti_mixture` stays reserved for the theorem that *derives* a canonical witness rather
-than assuming one.
+the **unique** law of `ν`. That uniqueness is `mixedIID_mixingLaw_unique`, proved alongside the
+generic representation in `Exchangeability/MixedIID/Mixture.lean`; it is stated for `MixedIIDWith`
+witnesses and so does not mention `deFinettiMeasure`. The roadmap name `deFinetti_mixture` stays
+reserved for the theorem that *derives* a canonical witness rather than assuming one, which is
+still open.
 -/
 
 public section

@@ -60,6 +60,14 @@ def IsColumnCommutation (G G' : GridDiagram n) : Prop :=
     ColumnsNoninterleaving G a (finRotate n a) ∧
       G' = G.swapColumns a (finRotate n a)
 
+/-- Characterization of an elementary column commutation by its exchanged columns. -/
+theorem isColumnCommutation_iff (G G' : GridDiagram n) :
+    IsColumnCommutation G G' ↔
+      ∃ a : Fin n, a ≠ finRotate n a ∧
+        ColumnsNoninterleaving G a (finRotate n a) ∧
+          G' = G.swapColumns a (finRotate n a) :=
+  Iff.rfl
+
 /-- Swapping a cyclically adjacent non-interleaving pair of columns is a column commutation. -/
 theorem isColumnCommutation_swapColumns (G : GridDiagram n) (a : Fin n)
     (ha : a ≠ finRotate n a) (hG : ColumnsNoninterleaving G a (finRotate n a)) :
@@ -85,6 +93,14 @@ def IsRowCommutation (G G' : GridDiagram n) : Prop :=
   ∃ a : Fin n, a ≠ finRotate n a ∧
     RowsNoninterleaving G a (finRotate n a) ∧
       G' = G.swapRows a (finRotate n a)
+
+/-- Characterization of an elementary row commutation by its exchanged rows. -/
+theorem isRowCommutation_iff (G G' : GridDiagram n) :
+    IsRowCommutation G G' ↔
+      ∃ a : Fin n, a ≠ finRotate n a ∧
+        RowsNoninterleaving G a (finRotate n a) ∧
+          G' = G.swapRows a (finRotate n a) :=
+  Iff.rfl
 
 /-- Swapping a cyclically adjacent non-interleaving pair of rows is a row commutation. -/
 theorem isRowCommutation_swapRows (G : GridDiagram n) (a : Fin n)
@@ -136,6 +152,12 @@ theorem isColumnCommutation_transpose (G G' : GridDiagram n) :
 /-- One elementary grid commutation, either of rows or of columns. -/
 def IsCommutation (G G' : GridDiagram n) : Prop :=
   IsRowCommutation G G' ∨ IsColumnCommutation G G'
+
+/-- A commutation is either an elementary row commutation or an elementary column
+commutation. -/
+theorem isCommutation_iff (G G' : GridDiagram n) :
+    IsCommutation G G' ↔ IsRowCommutation G G' ∨ IsColumnCommutation G G' :=
+  Iff.rfl
 
 /-- The elementary grid commutation relation is symmetric. -/
 theorem isCommutation_comm {G G' : GridDiagram n} :

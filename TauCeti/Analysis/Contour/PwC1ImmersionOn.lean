@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.PiecewiseC1On
+public import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
 
 /-!
@@ -43,9 +44,13 @@ theorem, whose singularities lie *off* the curve, needs only `IsPiecewiseC1On`.)
 * `Contour.IsPwC1ImmersionOn.of_breakpoints`, `Contour.IsPwC1ImmersionOn.exists_breakpoints` —
   introduce the predicate from, and eliminate it to, a finite breakpoint witness.
 * `Contour.isPwC1ImmersionOn_comm`, `Contour.IsPwC1ImmersionOn.symm` — endpoint-swap invariance.
+* `Contour.IsPwC1ImmersionOn.exists_deriv_slope_right_limit`,
+  `Contour.IsPwC1ImmersionOn.exists_deriv_slope_left_limit` — the same one-sided tangent as the
+  limit of both `deriv γ` and the chord slope `(γ t - γ t₀) / (t - t₀)`; the chord form is what
+  the crossing angle needs.
 * `Contour.IsPwC1ImmersionOn.exists_deriv_right_limit`,
-  `Contour.IsPwC1ImmersionOn.exists_deriv_left_limit` — the non-zero one-sided tangent limits,
-  recovered from the within-piece derivative.
+  `Contour.IsPwC1ImmersionOn.exists_deriv_left_limit` — the tangent-limit projections of
+  `exists_deriv_slope_right_limit` and `exists_deriv_slope_left_limit`.
 
 ## Provenance
 
@@ -204,37 +209,68 @@ theorem IsPwC1ImmersionOn.exists_Icc_piece_left (h : IsPwC1ImmersionOn γ a b) {
   obtain ⟨c, hlt, hsub, hdisj⟩ := exists_Icc_left_avoiding hp ht₀
   exact ⟨c, hlt, hsub, hpieces c t₀ hlt hsub hdisj⟩
 
-/-- **Non-zero right tangent limit of an immersion.** At every parameter `t₀ ∈ [min, max)` a
-piecewise-`C¹` immersion has a non-zero limit of `deriv γ` from the right — the one-sided
-tangent of the piece beginning at `t₀`, namely its within-piece derivative there. -/
+/-- **Non-zero one-sided tangent of an immersion, from the right.** At every parameter
+`t₀ ∈ [min, max)` a piecewise-`C¹` immersion has a non-zero limit of `deriv γ` from the right —
+the within-piece derivative there — and the chord slope `(γ t - γ t₀) / (t - t₀)` converges from
+the right to the **same** value.
+
+Both limits are stated together, and about one `L`, because they are the same tangent: the
+derivative form is what the flatness conditions are stated against, while the chord form is what
+the direction of `γ t - z₀` at a crossing is computed from. Splitting them into two existentials
+would lose the fact that they agree. -/
+theorem IsPwC1ImmersionOn.exists_deriv_slope_right_limit (h : IsPwC1ImmersionOn γ a b) {t₀ : ℝ}
+    (ht₀ : t₀ ∈ Ico (min a b) (max a b)) :
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L) ∧
+      Tendsto (slope γ t₀) (𝓝[>] t₀) (𝓝 L) := by
+  obtain ⟨d, hlt, hsub, hC1, hne⟩ := h.exists_Icc_piece_right ht₀
+  refine ⟨derivWithin γ (Icc t₀ d) t₀, hne t₀ (left_mem_Icc.mpr hlt.le), ?_, ?_⟩
+  · have h1 : Tendsto (derivWithin γ (Icc t₀ d)) (𝓝[Ioo t₀ d] t₀)
+        (𝓝 (derivWithin γ (Icc t₀ d) t₀)) :=
+      (((hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl) t₀
+        (left_mem_Icc.mpr hlt.le)).tendsto).mono_left (nhdsWithin_mono t₀ Ioo_subset_Icc_self)
+    rw [← nhdsWithin_Ioo_eq_nhdsGT hlt]
+    exact h1.congr' <| eventually_mem_nhdsWithin.mono fun t ht =>
+      derivWithin_of_mem_nhds (Icc_mem_nhds ht.1 ht.2)
+  · have hd : HasDerivWithinAt γ (derivWithin γ (Icc t₀ d) t₀) (Icc t₀ d) t₀ :=
+      ((hC1.differentiableOn one_ne_zero) t₀ (left_mem_Icc.mpr hlt.le)).hasDerivWithinAt
+    rw [← nhdsWithin_Ioo_eq_nhdsGT hlt]
+    exact (hasDerivWithinAt_iff_tendsto_slope' (by simp)).1 (hd.mono Ioo_subset_Icc_self)
+
+/-- The tangent-limit half of `IsPwC1ImmersionOn.exists_deriv_slope_right_limit`. -/
 theorem IsPwC1ImmersionOn.exists_deriv_right_limit (h : IsPwC1ImmersionOn γ a b) {t₀ : ℝ}
     (ht₀ : t₀ ∈ Ico (min a b) (max a b)) :
-    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L) := by
-  obtain ⟨d, hlt, hsub, hC1, hne⟩ := h.exists_Icc_piece_right ht₀
-  refine ⟨derivWithin γ (Icc t₀ d) t₀, hne t₀ (left_mem_Icc.mpr hlt.le), ?_⟩
-  have h1 : Tendsto (derivWithin γ (Icc t₀ d)) (𝓝[Ioo t₀ d] t₀)
-      (𝓝 (derivWithin γ (Icc t₀ d) t₀)) :=
-    (((hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl) t₀
-      (left_mem_Icc.mpr hlt.le)).tendsto).mono_left (nhdsWithin_mono t₀ Ioo_subset_Icc_self)
-  rw [← nhdsWithin_Ioo_eq_nhdsGT hlt]
-  exact h1.congr' <| eventually_mem_nhdsWithin.mono fun t ht =>
-    derivWithin_of_mem_nhds (Icc_mem_nhds ht.1 ht.2)
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L) :=
+  let ⟨L, hL, hd, _⟩ := h.exists_deriv_slope_right_limit ht₀
+  ⟨L, hL, hd⟩
 
-/-- **Non-zero left tangent limit of an immersion.** At every parameter `t₀ ∈ (min, max]` a
-piecewise-`C¹` immersion has a non-zero limit of `deriv γ` from the left — the one-sided tangent
-of the piece ending at `t₀`, namely its within-piece derivative there. -/
+/-- **Non-zero one-sided tangent of an immersion, from the left.** The left-hand companion of
+`IsPwC1ImmersionOn.exists_deriv_slope_right_limit`: at every parameter `t₀ ∈ (min, max]` both
+`deriv γ` and the chord slope converge from the left to the same non-zero within-piece
+derivative. -/
+theorem IsPwC1ImmersionOn.exists_deriv_slope_left_limit (h : IsPwC1ImmersionOn γ a b) {t₀ : ℝ}
+    (ht₀ : t₀ ∈ Ioc (min a b) (max a b)) :
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L) ∧
+      Tendsto (slope γ t₀) (𝓝[<] t₀) (𝓝 L) := by
+  obtain ⟨c, hlt, hsub, hC1, hne⟩ := h.exists_Icc_piece_left ht₀
+  refine ⟨derivWithin γ (Icc c t₀) t₀, hne t₀ (right_mem_Icc.mpr hlt.le), ?_, ?_⟩
+  · have h1 : Tendsto (derivWithin γ (Icc c t₀)) (𝓝[Ioo c t₀] t₀)
+        (𝓝 (derivWithin γ (Icc c t₀) t₀)) :=
+      (((hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl) t₀
+        (right_mem_Icc.mpr hlt.le)).tendsto).mono_left (nhdsWithin_mono t₀ Ioo_subset_Icc_self)
+    rw [← nhdsWithin_Ioo_eq_nhdsLT hlt]
+    exact h1.congr' <| eventually_mem_nhdsWithin.mono fun t ht =>
+      derivWithin_of_mem_nhds (Icc_mem_nhds ht.1 ht.2)
+  · have hd : HasDerivWithinAt γ (derivWithin γ (Icc c t₀) t₀) (Icc c t₀) t₀ :=
+      ((hC1.differentiableOn one_ne_zero) t₀ (right_mem_Icc.mpr hlt.le)).hasDerivWithinAt
+    rw [← nhdsWithin_Ioo_eq_nhdsLT hlt]
+    exact (hasDerivWithinAt_iff_tendsto_slope' (by simp)).1 (hd.mono Ioo_subset_Icc_self)
+
+/-- The tangent-limit half of `IsPwC1ImmersionOn.exists_deriv_slope_left_limit`. -/
 theorem IsPwC1ImmersionOn.exists_deriv_left_limit (h : IsPwC1ImmersionOn γ a b) {t₀ : ℝ}
     (ht₀ : t₀ ∈ Ioc (min a b) (max a b)) :
-    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L) := by
-  obtain ⟨c, hlt, hsub, hC1, hne⟩ := h.exists_Icc_piece_left ht₀
-  refine ⟨derivWithin γ (Icc c t₀) t₀, hne t₀ (right_mem_Icc.mpr hlt.le), ?_⟩
-  have h1 : Tendsto (derivWithin γ (Icc c t₀)) (𝓝[Ioo c t₀] t₀)
-      (𝓝 (derivWithin γ (Icc c t₀) t₀)) :=
-    (((hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl) t₀
-      (right_mem_Icc.mpr hlt.le)).tendsto).mono_left (nhdsWithin_mono t₀ Ioo_subset_Icc_self)
-  rw [← nhdsWithin_Ioo_eq_nhdsLT hlt]
-  exact h1.congr' <| eventually_mem_nhdsWithin.mono fun t ht =>
-    derivWithin_of_mem_nhds (Icc_mem_nhds ht.1 ht.2)
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L) :=
+  let ⟨L, hL, hd, _⟩ := h.exists_deriv_slope_left_limit ht₀
+  ⟨L, hL, hd⟩
 
 end TauCeti.Contour
 

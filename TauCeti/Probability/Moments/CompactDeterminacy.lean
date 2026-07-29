@@ -21,7 +21,7 @@ hypothesis. Here the hypothesis is compact support instead, and the conclusion i
 two are genuinely different routes: that one is analytic (the moment generating function is
 analytic on a strip), this one is approximation-theoretic (Stone–Weierstrass).
 
-It supplies the determinacy input needed by `mixedIID_mixingLaw_unique`
+It supplies the determinacy input consumed by `mixedIID_mixingLaw_unique`
 (`TauCetiRoadmap/Exchangeability/README.md`, *Layer 6 — directing measures and de Finetti
 representation*), where the mixed monomials arise as the finite-dimensional moments of a mixture of
 i.i.d. laws on a compact box.

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Rouche
+public import TauCeti.Analysis.Complex.IsolatedZero
 import Mathlib.Data.Set.Card.Arithmetic
 
 /-!
@@ -99,19 +100,11 @@ theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     ∃ δ > 0, ∀ w : ℂ, ‖w - f z₀‖ < δ →
       (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt (fun ζ => f ζ - w) z)
         = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
-  have hcpt : IsCompact (sphere z₀ r) := isCompact_sphere _ _
-  have hsne : (sphere z₀ r).Nonempty := NormedSpace.sphere_nonempty.mpr hr.le
-  have hcont : ContinuousOn (fun z => ‖f z - f z₀‖) (sphere z₀ r) :=
-    (((hf.continuousOn).mono sphere_subset_closedBall).sub continuousOn_const).norm
-  obtain ⟨u, hu, humin⟩ := hcpt.exists_isMinOn hsne hcont
-  have hzne : ∀ z ∈ sphere z₀ r, z ≠ z₀ := by
-    intro z hz h
-    rw [h] at hz
-    simp only [mem_sphere, dist_self] at hz
-    linarith
-  have hδ : 0 < ‖f u - f z₀‖ :=
-    norm_sub_pos_iff.mpr (hisol u (sphere_subset_closedBall hu) (hzne u hu))
-  refine ⟨‖f u - f z₀‖, hδ, fun w hw => ?_⟩
+  obtain ⟨δ, hδ, hδle⟩ := exists_pos_le_norm_of_mem_sphere (f := fun ζ => f ζ - f z₀)
+    ((hf.continuousOn.mono sphere_subset_closedBall).sub continuousOn_const)
+    fun z hz => sub_ne_zero.mpr
+      (hisol z (sphere_subset_closedBall hz) (Metric.ne_of_mem_sphere hz hr.ne'))
+  refine ⟨δ, hδ, fun w hw => ?_⟩
   have hA0 : AnalyticOnNhd ℂ (fun ζ => f ζ - f z₀) (closedBall z₀ r) :=
     hf.sub analyticOnNhd_const
   have hAw : AnalyticOnNhd ℂ (fun ζ => f ζ - w) (closedBall z₀ r) :=
@@ -120,7 +113,7 @@ theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     intro z hz
     have he : (f z - f z₀) - (f z - w) = w - f z₀ := by ring
     rw [he]
-    exact lt_of_lt_of_le hw (humin hz)
+    exact lt_of_lt_of_le hw (hδle z hz)
   refine (rouche hr hA0 hAw hs).symm.trans
     (count_eq_single hA0 (mem_ball_self hr) (fun z hz hzn => ?_))
   exact sub_ne_zero.mpr (hisol z (ball_subset_closedBall hz) hzn)
@@ -231,26 +224,9 @@ private lemma not_injOn_ball_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ} {r 
   -- the degree is at least two: both `f - f z₀` and its derivative vanish at `z₀`
   have hA : AnalyticAt ℂ (fun ζ => f ζ - f z₀) z₀ :=
     (hf.sub analyticOnNhd_const) z₀ (mem_closedBall_self hr.le)
-  have htop : analyticOrderAt (fun ζ => f ζ - f z₀) z₀ ≠ ⊤ := by
-    intro hev
-    rw [analyticOrderAt_eq_top] at hev
-    obtain ⟨ε, hε, hball⟩ := Metric.eventually_nhds_iff.mp hev
-    -- a point of the punctured disc where `f` would have to agree with `f z₀`
-    set t : ℝ := min ε r / 2 with ht_def
-    have ht0 : 0 < t := by rw [ht_def]; exact half_pos (lt_min hε hr)
-    have htε : t < ε := by
-      have h := min_le_left ε r
-      rw [ht_def]; linarith
-    have htr : t ≤ r := by
-      have h := min_le_right ε r
-      rw [ht_def]; linarith
-    have hdist : dist (z₀ + (t : ℂ)) z₀ = t := by
-      simp [dist_eq_norm, abs_of_pos ht0]
-    refine hisol (z₀ + (t : ℂ)) ?_ ?_ (sub_eq_zero.mp (hball ?_))
-    · simp only [mem_closedBall, hdist]; exact htr
-    · simp only [ne_eq, add_eq_left, Complex.ofReal_eq_zero]
-      exact ht0.ne'
-    · rw [hdist]; exact htε
+  have htop : analyticOrderAt (fun ζ => f ζ - f z₀) z₀ ≠ ⊤ :=
+    analyticOrderAt_ne_top_of_forall_ne_zero hr fun z hz hzn =>
+      sub_ne_zero.mpr (hisol z (ball_subset_closedBall hz) hzn)
   have h2 : 2 ≤ analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
     have hle : ((2 : ℕ) : ℕ∞) ≤ analyticOrderAt (fun ζ => f ζ - f z₀) z₀ := by
       rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero hA]
