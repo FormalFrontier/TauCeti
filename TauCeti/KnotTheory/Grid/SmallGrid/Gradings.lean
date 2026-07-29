@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.KnotTheory.Grid.Grading.Integer
-public import TauCeti.KnotTheory.Grid.StateCardinality
+public import TauCeti.KnotTheory.Grid.Unknot
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NormNum
 
@@ -17,9 +16,10 @@ There are exactly two grid states in grid size two: the identity graph and the t
 graph. The standard `2 × 2` grid diagram used for the unknot has `O` markings on the identity
 graph and `X` markings on the transposition graph.
 
-The named states are available from `StateCardinality`. Here we define the standard diagram and
-combine that small-grid API with the integer grading API to compute the two generators' Maslov
-and Alexander gradings in this concrete diagram.
+The named states are available from `StateCardinality` and the standard diagram itself from
+`Unknot`, where it is the smallest member of the unknot grid family. Here we combine that
+small-grid API with the integer grading API to compute the two generators' Maslov and Alexander
+gradings in this concrete diagram.
 
 ## Main results
 
@@ -43,25 +43,6 @@ public section
 namespace TauCeti
 
 namespace GridDiagram
-
-/-- The standard `2 × 2` grid diagram with `O` markings on the identity state and `X`
-markings on the transposition state. This is the usual smallest grid diagram for the unknot. -/
-abbrev twoByTwo : GridDiagram 2 where
-  O := GridState.twoByTwoId
-  X := GridState.twoByTwoSwap
-  disjoint := by
-    intro c h
-    fin_cases c <;> simp at h
-
-/-- The `O`-marking state of the standard two-by-two diagram is the identity state. -/
-@[simp]
-theorem twoByTwo_O : twoByTwo.O = GridState.twoByTwoId :=
-  rfl
-
-/-- The `X`-marking state of the standard two-by-two diagram is the transposition state. -/
-@[simp]
-theorem twoByTwo_X : twoByTwo.X = GridState.twoByTwoSwap :=
-  rfl
 
 /-- The standard two-by-two diagram has `O` markings at `(0,0)` and `(1,1)`. -/
 @[simp]
@@ -200,7 +181,7 @@ theorem maslovOℤ_twoByTwo_twoByTwoSwap :
 diagram is `1`. -/
 theorem maslovXℤ_twoByTwo_twoByTwoSwap :
     twoByTwo.maslovXℤ GridState.twoByTwoSwap = 1 := by
-  simpa using maslovXℤ_X twoByTwo
+  simpa only [twoByTwo_X] using maslovXℤ_X twoByTwo
 
 /-- Twice the Alexander grading of the transposition generator in the standard two-by-two
 diagram is `0`. -/

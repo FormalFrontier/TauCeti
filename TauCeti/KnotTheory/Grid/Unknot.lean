@@ -7,29 +7,34 @@ module
 public import Mathlib.GroupTheory.Perm.Fin
 public import TauCeti.KnotTheory.Grid.Diagram.Components
 public import TauCeti.KnotTheory.Grid.Grading.Integer
-public import TauCeti.KnotTheory.Grid.SmallGrid.Gradings
+public import TauCeti.KnotTheory.Grid.StateCardinality
+import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
 
 /-!
 # The standard unknot grid diagram of arbitrary grid number
 
-The `2 × 2` grid diagram for the unknot is already available as `TauCeti.GridDiagram.twoByTwo`.
-This file builds its `n × n` analogue for every grid number `n + 2`: the `O` markings sit on the
-diagonal and the `X` markings sit on the diagonal shifted up by one row, so the represented link
-is the staircase closing up once around the torus in each direction, that is, the unknot.
+This file builds the standard unknot grid diagram of every grid number `n + 2`: the `O` markings
+sit on the diagonal and the `X` markings sit on the diagonal shifted up by one row, so the
+represented link is the staircase closing up once around the torus in each direction, that is,
+the unknot. Its smallest member, the `2 × 2` diagram `TauCeti.GridDiagram.twoByTwo`, is defined
+here too and identified with the `n = 0` member of the family; the two-by-two grading
+computations that use it live downstream in `TauCeti.KnotTheory.Grid.SmallGrid.Gradings`.
 
-Two things are proved about it. First it really is a knot diagram: its component permutation is
-`(finRotate (n + 2))⁻¹`, a single `(n + 2)`-cycle, so all `n + 2` markings lie on one component.
-Second, its two marking states carry the extreme bigradings. Writing `N = n + 2` for the grid
-number, the general lemmas `maslovOℤ_O` and `maslovXℤ_X` give `M_O(O) = 1` and `M_X(X) = 1`,
-while the two crossed Maslov gradings are computed here to be `M_X(O) = M_O(X) = N`. Hence
+Two things are proved about the family. First it really is a knot diagram: its component
+permutation is `(finRotate (n + 2))⁻¹`, a single `(n + 2)`-cycle, so all `n + 2` markings lie on
+one component. Second, the bigradings of its two marking states are computed. Writing
+`N = n + 2` for the grid number, the general lemmas `maslovOℤ_O` and `maslovXℤ_X` give
+`M_O(O) = 1` and `M_X(X) = 1`, while the two crossed Maslov gradings are computed here to be
+`M_X(O) = M_O(X) = N`. Hence
 
 `(M_O, A)` is `(1, -(N - 1))` at the `O`-state and `(N, 0)` at the `X`-state.
 
 Both gradings therefore differ by `N - 1` between the two marking states, which is the spread
 expected of the fully blocked grid homology `GH̃` of an `N`-grid unknot: that homology is
 predicted to be `W^{⊗(N-1)}` with `W = 𝔽 ⊕ 𝔽` in bigradings `(0, 0)` and `(-1, -1)`.
-Nothing about the homology is proved here; only the two marking states are graded.
+Nothing about the homology is proved here, and the gradings of the remaining grid states are
+not compared with these two: only the two marking states are graded.
 
 The Maslov computation reduces to four counts of pairs of columns, and each of the three crossed
 counts differs from the plain count `#{(c, c') | c < c'}` by exactly `N - 1`; the missing pairs
@@ -40,6 +45,8 @@ evaluated.
 ## Main definitions
 
 * `TauCeti.GridDiagram.unknot`: the standard unknot grid diagram of grid number `n + 2`.
+* `TauCeti.GridDiagram.twoByTwo`: the standard `2 × 2` grid diagram, with `O` markings on the
+  identity state and `X` markings on the transposition state.
 
 ## Main results
 
@@ -47,7 +54,7 @@ evaluated.
 * `TauCeti.GridDiagram.componentPerm_unknot`, `TauCeti.GridDiagram.isKnot_unknot`,
   `TauCeti.GridDiagram.componentCycleType_unknot`: the diagram represents a knot, its component
   permutation being the inverse cyclic shift.
-* `TauCeti.GridDiagram.relabelColumns_relabelRows_unknot`: the diagram is invariant under
+* `TauCeti.GridDiagram.relabelRows_relabelColumns_unknot`: the diagram is invariant under
   simultaneously shifting all rows and all columns by one, a cyclic symmetry of order `n + 2`.
 * `TauCeti.GridDiagram.maslovXℤ_unknot_O` and `TauCeti.GridDiagram.maslovOℤ_unknot_X`: the two
   crossed Maslov gradings of the marking states are both the grid number.
@@ -62,7 +69,7 @@ and grid states", and supplies the diagram named in the acceptance criterion "`G
 follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapters 3 and 4.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -83,30 +90,55 @@ def unknot (n : ℕ) : GridDiagram (n + 2) where
 
 variable (n : ℕ)
 
+-- The body of `unknot` is deliberately not exposed, so the projection lemmas below are written
+-- `(rfl)` rather than `rfl`: the parentheses opt out of exporting the definitional equality,
+-- which downstream modules do not need and which the lemmas themselves replace.
+
 /-- The `O` markings of the standard unknot grid are the identity permutation graph. -/
+@[simp]
 theorem unknot_O_toPerm : (unknot n).O.toPerm = 1 :=
-  rfl
+  (rfl)
 
 /-- The `X` markings of the standard unknot grid are the cyclic shift permutation graph. -/
+@[simp]
 theorem unknot_X_toPerm : (unknot n).X.toPerm = finRotate (n + 2) :=
-  rfl
+  (rfl)
 
 /-- The `O` marking of the standard unknot grid in a column is in the diagonal row. -/
-@[simp]
 theorem unknot_O_apply (c : Fin (n + 2)) : (unknot n).O c = c :=
-  rfl
+  (rfl)
 
 /-- The `X` marking of the standard unknot grid in a column is one row above the diagonal. -/
-@[simp]
 theorem unknot_X_apply (c : Fin (n + 2)) : (unknot n).X c = finRotate (n + 2) c :=
-  rfl
+  (rfl)
 
 /-- The `X` markings of the standard unknot grid form the shifted diagonal. -/
 theorem unknot_X_apply_eq_add_one (c : Fin (n + 2)) : (unknot n).X c = c + 1 := by
   rw [unknot_X_apply]
   exact finRotate_apply c
 
-/-- In grid number two the standard unknot grid is the already available `2 × 2` diagram. -/
+/-! ### The smallest member, in grid number two -/
+
+/-- The standard `2 × 2` grid diagram with `O` markings on the identity state and `X`
+markings on the transposition state. This is the usual smallest grid diagram for the unknot. -/
+abbrev twoByTwo : GridDiagram 2 where
+  O := GridState.twoByTwoId
+  X := GridState.twoByTwoSwap
+  disjoint := by
+    intro c h
+    fin_cases c <;> simp at h
+
+/-- The `O`-marking state of the standard two-by-two diagram is the identity state. -/
+@[simp]
+theorem twoByTwo_O : twoByTwo.O = GridState.twoByTwoId :=
+  rfl
+
+/-- The `X`-marking state of the standard two-by-two diagram is the transposition state. -/
+@[simp]
+theorem twoByTwo_X : twoByTwo.X = GridState.twoByTwoSwap :=
+  rfl
+
+/-- In grid number two the standard unknot grid is the `2 × 2` diagram `twoByTwo`. -/
 theorem unknot_zero : unknot 0 = twoByTwo := by
   refine GridDiagram.ext rfl (GridState.ext fun c => ?_)
   revert c
@@ -137,7 +169,7 @@ theorem componentCycleType_unknot : (unknot n).componentCycleType = {n + 2} :=
 
 /-- The standard unknot grid diagram is invariant under shifting all rows and all columns by one
 at the same time. This cyclic symmetry has order `n + 2`. -/
-theorem relabelColumns_relabelRows_unknot :
+theorem relabelRows_relabelColumns_unknot :
     ((unknot n).relabelRows (finRotate (n + 2))).relabelColumns (finRotate (n + 2)) = unknot n := by
   refine GridDiagram.ext (GridState.ext fun c => ?_) (GridState.ext fun c => ?_)
   · rw [relabelColumns_O_apply, relabelRows_O_apply, unknot_O_apply, unknot_O_apply,
@@ -284,24 +316,22 @@ theorem maslovXℤ_unknot_O : (unknot n).maslovXℤ (unknot n).O = n + 2 := by
   omega
 
 /-- The `O`-Maslov grading of the `X`-marking state of the standard unknot grid is the grid
-number. -/
+number. Swapping the roles of the two marking states turns the count computed in
+`maslovXℤ_unknot_O` into this one, so no column-pair count has to be redone. -/
 theorem maslovOℤ_unknot_X : (unknot n).maslovOℤ (unknot n).X = n + 2 := by
+  have h := maslovXℤ_unknot_O n
+  rw [maslovXℤ_eq_card] at h
   rw [maslovOℤ_eq_card]
-  have h1 := card_filter_lt_O_lt_O n
-  have h2 := card_filter_lt_O_lt_X n
-  have h3 := card_filter_lt_X_lt_O n
-  have h4 := card_filter_lt_X_lt_X n
   omega
 
-/-- Twice the Alexander grading of the `X`-marking state of the standard unknot grid vanishes:
-this is the top generator of the Alexander grading. -/
+/-- Twice the Alexander grading of the `X`-marking state of the standard unknot grid vanishes. -/
 theorem alexanderTwoℤ_unknot_X : (unknot n).alexanderTwoℤ (unknot n).X = 0 := by
   rw [alexanderTwoℤ_def, maslovOℤ_unknot_X, maslovXℤ_X]
   push_cast
   ring
 
 /-- Twice the Alexander grading of the `O`-marking state of the standard unknot grid is
-`-2 (n + 1)`: this is the bottom generator of the Alexander grading. -/
+`-2 (n + 1)`. -/
 theorem alexanderTwoℤ_unknot_O : (unknot n).alexanderTwoℤ (unknot n).O = -2 * (n + 1) := by
   rw [alexanderTwoℤ_def, maslovOℤ_O, maslovXℤ_unknot_O]
   push_cast
