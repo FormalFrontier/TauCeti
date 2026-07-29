@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.CategoryTheory.Adjunction.CompositionIso
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Res
 
@@ -42,7 +41,7 @@ section Semiring
 
 variable [Semiring k] [Monoid G] [Monoid H] [Monoid K]
 
-/-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
+/-- Restriction along two composable monoid homomorphisms is naturally isomorphic to restriction
 along their composite. -/
 noncomputable def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
     _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙

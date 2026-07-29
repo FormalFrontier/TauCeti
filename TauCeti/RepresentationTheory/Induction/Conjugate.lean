@@ -101,6 +101,40 @@ theorem conjRepEquivalence_inverse [Semiring k] (s : G) (H : Subgroup G) :
       Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
   rw [conjRepEquivalence, Rep.resEquivalence_inverse]
 
+/-- The unit of the conjugation equivalence has the identity underlying linear map. -/
+@[simp]
+theorem conjRepEquivalence_unitIso_hom_app_toLinearMap [Semiring k] (s : G) (H : Subgroup G)
+    (A : Rep k H) :
+    HEq ((conjRepEquivalence (k := k) s H).unitIso.hom.app A).hom.toLinearMap
+      (LinearMap.id : A.V →ₗ[k] A.V) := by
+  exact Rep.resEquivalence_unitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
+
+/-- The inverse of the unit of the conjugation equivalence has the identity underlying
+linear map. -/
+@[simp]
+theorem conjRepEquivalence_unitIso_inv_app_toLinearMap [Semiring k] (s : G) (H : Subgroup G)
+    (A : Rep k H) :
+    HEq ((conjRepEquivalence (k := k) s H).unitIso.inv.app A).hom.toLinearMap
+      (LinearMap.id : A.V →ₗ[k] A.V) := by
+  exact Rep.resEquivalence_unitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
+
+/-- The counit of the conjugation equivalence has the identity underlying linear map. -/
+@[simp]
+theorem conjRepEquivalence_counitIso_hom_app_toLinearMap [Semiring k] (s : G) (H : Subgroup G)
+    (A : Rep k (MulAut.conj s • H : Subgroup G)) :
+    HEq ((conjRepEquivalence (k := k) s H).counitIso.hom.app A).hom.toLinearMap
+      (LinearMap.id : A.V →ₗ[k] A.V) := by
+  exact Rep.resEquivalence_counitIso_hom_app_toLinearMap (conjSubgroupEquiv s H) A
+
+/-- The inverse of the counit of the conjugation equivalence has the identity underlying
+linear map. -/
+@[simp]
+theorem conjRepEquivalence_counitIso_inv_app_toLinearMap [Semiring k] (s : G) (H : Subgroup G)
+    (A : Rep k (MulAut.conj s • H : Subgroup G)) :
+    HEq ((conjRepEquivalence (k := k) s H).counitIso.inv.app A).hom.toLinearMap
+      (LinearMap.id : A.V →ₗ[k] A.V) := by
+  exact Rep.resEquivalence_counitIso_inv_app_toLinearMap (conjSubgroupEquiv s H) A
+
 /-- Conjugation preserves the underlying module of a representation. -/
 @[simp]
 theorem conjRep_V [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :

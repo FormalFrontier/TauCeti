@@ -1,5 +1,6 @@
 module
 
+public import Mathlib.CategoryTheory.Adjunction.CompositionIso
 public import Mathlib.RepresentationTheory.Coinduced
 public import Mathlib.RepresentationTheory.Induced
 public import TauCeti.RepresentationTheory.Restriction
