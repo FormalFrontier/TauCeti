@@ -40,8 +40,8 @@ preservation of terminal objects by the right adjoint `Over.pullback`, and
 `PrimeSpectrum.topologicalKrullDim_eq_ringKrullDim` together with `ringKrullDim_eq_zero_of_field`.
 The geometric-integrality input is `TauCeti.AlgebraicGeometry.geometricallyIntegral_of_isIso`.
 The abelian variety itself is assembled by the existing constructor
-`AbelianVariety.ofGeometricallyIntegral`, whose body this file's companion change `@[expose]`s so
-that `(trivial K).toOver` still reduces to the monoidal unit.
+`AbelianVariety.ofGeometricallyIntegral`; its characteristic lemmas identify the underlying group
+scheme and operations without exposing the constructor's implementation.
 
 An earlier Tau Ceti formalization of this target,
 [PR #1030](https://github.com/TauCetiProject/TauCeti/pull/1030), was retired by queue housekeeping
@@ -89,7 +89,7 @@ It is carried by the monoidal unit `𝟙_ (Over (Spec K))`, which is a group obj
 terminal, and whose structure morphism is the identity of `Spec K` (`Over.tensorUnit_hom`); the
 identity is proper, and it is geometrically integral by `geometricallyIntegral_of_isIso`. Those
 are exactly the hypotheses of `AbelianVariety.ofGeometricallyIntegral`, which assembles them. -/
-@[expose] def trivial : AbelianVariety K :=
+def trivial : AbelianVariety K :=
   haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
   haveI : IsProper (𝟙_ (Over (Spec (.of K)))).hom := by
     rw [Over.tensorUnit_hom]
@@ -101,34 +101,68 @@ are exactly the hypotheses of `AbelianVariety.ofGeometricallyIntegral`, which as
     exact hid
   ofGeometricallyIntegral (𝟙_ (Over (Spec (.of K))))
 
-@[simp]
-lemma trivial_toOver : (trivial K).toOver = 𝟙_ (Over (Spec (.of K))) :=
-  (rfl)
+private lemma isProperTensorUnit :
+    IsProper (𝟙_ (Over (Spec (.of K)))).hom := by
+  rw [Over.tensorUnit_hom]
+  exact inferInstanceAs (IsProper (𝟙 _))
 
+private lemma geometricallyIntegralTensorUnit :
+    GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom := by
+  haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
+  rw [Over.tensorUnit_hom]
+  exact hid
+
+/-- The group scheme underlying the trivial abelian variety is the monoidal unit of
+`Over (Spec K)`. -/
 @[simp]
-lemma trivial_toScheme : (trivial K).toScheme = Spec (.of K) :=
-  (rfl)
+lemma trivial_toOver : (trivial K).toOver = 𝟙_ (Over (Spec (.of K))) := by
+  letI := isProperTensorUnit K
+  letI := geometricallyIntegralTensorUnit K
+  unfold trivial
+  exact ofGeometricallyIntegral_toOver _
+
+/-- The scheme underlying the trivial abelian variety is `Spec K`. -/
+@[simp]
+lemma trivial_toScheme : (trivial K).toScheme = Spec (.of K) := by
+  change (trivial K).toOver.left = _
+  rw [trivial_toOver, Over.tensorUnit_left]
 
 /-- The scheme over `Spec K` underlying the trivial abelian variety is terminal: it is the
 monoidal unit of `Over (Spec K)`. -/
 def isTerminalTrivialToOver : IsTerminal (trivial K).toOver :=
-  isTerminalTensorUnit
+  IsTerminal.ofIso isTerminalTensorUnit (eqToIso (trivial_toOver K).symm)
 
 /-- The unit section of the trivial abelian variety is the identity: it is an endomorphism of a
 terminal object. -/
 @[simp]
-lemma trivial_one : η[(trivial K).toOver] = 𝟙 (𝟙_ (Over (Spec (.of K)))) :=
-  (isTerminalTrivialToOver K).hom_ext _ _
+lemma trivial_one :
+    η[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
+      η[𝟙_ (Over (Spec (.of K)))] := by
+  letI := isProperTensorUnit K
+  letI := geometricallyIntegralTensorUnit K
+  unfold trivial
+  exact ofGeometricallyIntegral_one _
 
 /-- The multiplication of the trivial abelian variety is the terminal projection. -/
 @[simp]
-lemma trivial_mul : μ[(trivial K).toOver] = toUnit ((trivial K).toOver ⊗ (trivial K).toOver) :=
-  (isTerminalTrivialToOver K).hom_ext _ _
+lemma trivial_mul :
+    μ[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
+      (eqToHom (trivial_toOver K) ⊗ₘ eqToHom (trivial_toOver K)) ≫
+        μ[𝟙_ (Over (Spec (.of K)))] := by
+  letI := isProperTensorUnit K
+  letI := geometricallyIntegralTensorUnit K
+  unfold trivial
+  exact ofGeometricallyIntegral_mul _
 
 /-- The inversion of the trivial abelian variety is the identity. -/
 @[simp]
-lemma trivial_inv : ι[(trivial K).toOver] = 𝟙 (𝟙_ (Over (Spec (.of K)))) :=
-  (isTerminalTrivialToOver K).hom_ext _ _
+lemma trivial_inv :
+    ι[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
+      eqToHom (trivial_toOver K) ≫ ι[𝟙_ (Over (Spec (.of K)))] := by
+  letI := isProperTensorUnit K
+  letI := geometricallyIntegralTensorUnit K
+  unfold trivial
+  exact ofGeometricallyIntegral_inv _
 
 /-- The trivial abelian variety has dimension `0`. -/
 @[simp]
@@ -146,14 +180,15 @@ instance uniqueHomToTrivial (A : AbelianVariety K) : Unique (A ⟶ trivial K) :=
   -- `InducedCategory.homEquiv : (X ⟶ Y) ≃ (F X ⟶ F Y)` leaves the inducing map `F` implicit, and
   -- neither the expected type `Unique (A ⟶ trivial K)` nor `Equiv.trans` determines it. Each
   -- `show` therefore names the codomain hom-type, which fixes `F`: first the `CommGrp` layer that
-  -- `AbelianVariety K` is induced from, then the `Grp` layer that `CommGrp` is induced from. Both
-  -- conversions are definitional rather than proof steps, because `(trivial K).toOver` reduces to
-  -- `𝟙_ (Over (Spec K))` and hence `CommGrp.mk (trivial K).toOver` to `CommGrp.trivial _`; there is
-  -- no transport lemma for `Unique` across an induced category that could replace them.
-  ((show _ ≃ (CommGrp.mk A.toOver ⟶ CommGrp.trivial (Over (Spec (.of K)))) from
+  -- `AbelianVariety K` is induced from, then the `Grp` layer that `CommGrp` is induced from.
+  -- `CommGrp.mkIso` transports the middle hom-type along `trivial_toOver`.
+  let e : CommGrp.mk (trivial K).toOver ≅ CommGrp.trivial (Over (Spec (.of K))) :=
+    CommGrp.mkIso (eqToIso (trivial_toOver K)) (trivial_one K) (trivial_mul K)
+  ((show _ ≃ (CommGrp.mk A.toOver ⟶ CommGrp.mk (trivial K).toOver) from
       InducedCategory.homEquiv).trans
-    (show _ ≃ (Grp.mk A.toOver ⟶ Grp.trivial (Over (Spec (.of K)))) from
-      InducedCategory.homEquiv)).unique
+    (((Iso.refl _).homCongr e).trans
+      (show _ ≃ (Grp.mk A.toOver ⟶ Grp.trivial (Over (Spec (.of K)))) from
+        InducedCategory.homEquiv))).unique
 
 /-- There is exactly one homomorphism from the trivial abelian variety to an abelian variety.
 Since `(trivial K).toOver` is the monoidal unit, this is Mathlib's
@@ -162,10 +197,12 @@ Since `(trivial K).toOver` is the monoidal unit, this is Mathlib's
 instance uniqueHomFromTrivial (A : AbelianVariety K) : Unique (trivial K ⟶ A) :=
   -- As in `uniqueHomToTrivial`, the `show` names the codomain hom-type to fix the inducing map
   -- implicit in `InducedCategory.homEquiv`; one layer suffices here because `CommGrp` already has
-  -- the uniqueness statement. The conversion is definitional: `(trivial K).toOver` reduces to
-  -- `𝟙_ (Over (Spec K))`, so `CommGrp.mk (trivial K).toOver` reduces to `CommGrp.trivial _`.
-  (show _ ≃ (CommGrp.trivial (Over (Spec (.of K))) ⟶ CommGrp.mk A.toOver) from
-    InducedCategory.homEquiv).unique
+  -- the uniqueness statement. `CommGrp.mkIso` transports along `trivial_toOver`.
+  let e : CommGrp.mk (trivial K).toOver ≅ CommGrp.trivial (Over (Spec (.of K))) :=
+    CommGrp.mkIso (eqToIso (trivial_toOver K)) (trivial_one K) (trivial_mul K)
+  ((show _ ≃ (CommGrp.mk (trivial K).toOver ⟶ CommGrp.mk A.toOver) from
+      InducedCategory.homEquiv).trans
+    (e.homCongr (Iso.refl _))).unique
 
 /-- The homomorphism from an abelian variety to the trivial one, namely the identity element of
 the group `A ⟶ trivial K`. Its underlying morphism over `Spec K` is the structure morphism of
@@ -173,14 +210,18 @@ the group `A ⟶ trivial K`. Its underlying morphism over `Spec K` is the struct
 def toTrivial (A : AbelianVariety K) : A ⟶ trivial K :=
   1
 
+/-- The morphism over `Spec K` underlying `toTrivial A` is the structure morphism of `A`, after
+transporting its codomain along `trivial_toOver`. -/
 @[simp]
 lemma toOverHom_toTrivial (A : AbelianVariety K) :
-    Hom.toOverHom (toTrivial A) = toUnit A.toOver :=
-  (isTerminalTrivialToOver K).hom_ext _ _
+    Hom.toOverHom (toTrivial A) ≫ eqToHom (trivial_toOver K) = toUnit A.toOver :=
+  isTerminalTensorUnit.hom_ext _ _
 
+/-- The scheme morphism underlying `toTrivial A` is the structure morphism of `A`, after
+transporting its codomain to `Spec K`. -/
 @[simp]
 lemma toSchemeHom_toTrivial (A : AbelianVariety K) :
-    Hom.toSchemeHom (toTrivial A) = A.toOver.hom :=
+    Hom.toSchemeHom (toTrivial A) ≫ (eqToHom (trivial_toOver K)).left = A.toOver.hom :=
   congrArg Over.Hom.left (toOverHom_toTrivial A)
 
 /-- The homomorphism from the trivial abelian variety to an abelian variety, namely the identity
@@ -194,15 +235,17 @@ def fromTrivial (A : AbelianVariety K) : trivial K ⟶ A :=
 object, hence the identity. -/
 @[simp]
 lemma toOverHom_fromTrivial (A : AbelianVariety K) :
-    Hom.toOverHom (fromTrivial A) = η[A.toOver] :=
-  have h : toUnit (trivial K).toOver = 𝟙 (𝟙_ (Over (Spec (.of K)))) :=
-    (isTerminalTrivialToOver K).hom_ext _ _
-  Hom.toOverHom_one.trans
-    ((congrArg (· ≫ η[A.toOver]) h).trans (Category.id_comp η[A.toOver]))
+    eqToHom (trivial_toOver K).symm ≫ Hom.toOverHom (fromTrivial A) = η[A.toOver] := by
+  rw [← Hom.one_hom]
+  congr 1
+  exact (isTerminalTrivialToOver K).hom_ext _ _
 
+/-- The scheme morphism underlying `fromTrivial A` is the unit section of `A`, after transporting
+its domain from `Spec K`. -/
 @[simp]
 lemma toSchemeHom_fromTrivial (A : AbelianVariety K) :
-    Hom.toSchemeHom (fromTrivial A) = η[A.toOver].left :=
+    (eqToHom (trivial_toOver K).symm).left ≫ Hom.toSchemeHom (fromTrivial A) =
+      η[A.toOver].left :=
   congrArg Over.Hom.left (toOverHom_fromTrivial A)
 
 /-- The trivial abelian variety is terminal: the only homomorphism to it from an abelian variety
