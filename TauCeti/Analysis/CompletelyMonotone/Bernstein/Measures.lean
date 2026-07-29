@@ -512,6 +512,13 @@ private lemma chafaiRescaled_lintegral_coe_eq_chafaiMeasure_neg_derivWithin
   simp only [Pi.mul_apply]
   rw [hscale, ← ENNReal.ofReal_mul hdens_nonneg, mul_comm, ← hdens_eq]
 
+/-- The Chafaï density of order `n` is interval-integrable on `[0, T]`: it is continuous on
+`Ici 0` given `n`-fold differentiability there, and `[0, T]` sits inside that ray. -/
+private lemma intervalIntegrable_chafaiDensity {f : ℝ → ℝ} {n : ℕ}
+    (hf : ContDiffOn ℝ ((n : ℕ) : WithTop ℕ∞) f (Ici 0)) {T : ℝ} (hT : 0 ≤ T) :
+    IntervalIntegrable (fun t => chafaiDensity f n t) volume 0 T :=
+  ((continuousOn_chafaiDensity hf).mono Icc_subset_Ici_self).intervalIntegrable_of_Icc hT
+
 /-- **IBP identity** for the CM density:
 `∫₀ᵀ ρ_{m+2}(t) dt = B_{m+2}(T) + ∫₀ᵀ ρ_{m+1}(t) dt`. -/
 private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
@@ -533,7 +540,6 @@ private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
   have hg_deriv : ∀ t, 0 < t → HasDerivAt g (g' t) t :=
     fun t ht =>
       ContDiffOn.hasDerivAt_iteratedDerivWithin hf (uniqueDiffOn_Ici 0) (Ici_mem_nhds ht)
-  have huIcc : uIcc (0 : ℝ) T = Icc 0 T := uIcc_of_le hT.le
   have hF_cont : ContinuousOn F (Icc 0 T) :=
     ((continuous_pow _).continuousOn).mul
       (continuousOn_const.mul (hg_cont.mono Icc_subset_Ici_self))
@@ -541,13 +547,11 @@ private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
       (↑(m + 1) * t ^ m * (c * g t) + t ^ (m + 1) * (c * g' t)) t :=
     fun t ht => (hasDerivAt_pow (m + 1) t).mul ((hg_deriv t ht.1).const_mul c)
   -- Transfer interval integrability from continuity of the two density branches.
-  have h_int_m2 : IntervalIntegrable (fun t => chafaiDensity f (m + 2) t) volume 0 T := by
-    apply ContinuousOn.intervalIntegrable; rw [huIcc]
-    exact (continuousOn_chafaiDensity (n := m + 2) hf).mono Icc_subset_Ici_self
-  have h_int_m1 : IntervalIntegrable (fun t => chafaiDensity f (m + 1) t) volume 0 T := by
-    apply ContinuousOn.intervalIntegrable; rw [huIcc]
-    exact (continuousOn_chafaiDensity (n := m + 1)
-      (hf.of_le (by exact_mod_cast (by omega : m + 1 ≤ m + 2)))).mono Icc_subset_Ici_self
+  have h_int_m2 : IntervalIntegrable (fun t => chafaiDensity f (m + 2) t) volume 0 T :=
+    intervalIntegrable_chafaiDensity hf hT.le
+  have h_int_m1 : IntervalIntegrable (fun t => chafaiDensity f (m + 1) t) volume 0 T :=
+    intervalIntegrable_chafaiDensity
+      (hf.of_le (by exact_mod_cast (by omega : m + 1 ≤ m + 2))) hT.le
   have hF'_eq : ∀ t, ↑(m + 1) * t ^ m * (c * g t) + t ^ (m + 1) * (c * g' t) =
       chafaiDensity f (m + 2) t - chafaiDensity f (m + 1) t := by
     intro t

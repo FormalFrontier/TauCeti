@@ -140,6 +140,31 @@ theorem integral_pow_inv_mul_deriv_eq_sub {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
   exact MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le _ _ hlu hP h_G_cont
     h_G_deriv (intervalIntegrable_pow_inv_mul_deriv c k hlu hγ_cont h_ne hderiv_int)
 
+/-- **Antiderivative evaluation on a subinterval missing the crossing.** On a subinterval
+`[l, u]` of the window `[t_i - r, t_i + r]`, where the curve meets `s` only at `t_i` and
+`t_i ∉ [l, u]`, the higher-order integrand integrates to the difference of antiderivative values
+at the endpoints. The two pieces a truncated window integral splits into — left of the entry time
+and right of the exit time — are both instances. -/
+private lemma integral_pow_inv_mul_deriv_eq_sub_of_subinterval {γ : ℝ → ℂ} {s : ℂ} {t_i r : ℝ}
+    {k : ℕ} (hk : 2 ≤ k) (c : ℂ) {P : Set ℝ} (hP : P.Countable)
+    (hγ_cont : ContinuousOn γ (Icc (t_i - r) (t_i + r)))
+    (hγ_diffP : ∀ t ∈ Ioo (t_i - r) (t_i + r) \ P, DifferentiableAt ℝ γ t)
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
+      (t_i - r) (t_i + r))
+    (h_unique : ∀ t ∈ Icc (t_i - r) (t_i + r), γ t = s → t = t_i)
+    {l u : ℝ} (hlu : l ≤ u) (hl : t_i - r ≤ l) (hu : u ≤ t_i + r) (h_excl : t_i ∉ Icc l u) :
+    ∫ t in l..u, c / (γ t - s) ^ k * deriv γ t =
+      c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹) -
+        c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ l - s) ^ (k - 1))⁻¹) := by
+  have h_ne : ∀ t ∈ Icc l u, γ t ≠ s := fun t ht h_eq =>
+    h_excl (h_unique t ⟨by linarith [ht.1], by linarith [ht.2]⟩ h_eq ▸ ht)
+  exact integral_pow_inv_mul_deriv_eq_sub hk c hlu hP h_ne
+    (fun t ht => hγ_diffP t ⟨⟨by linarith [ht.1.1], by linarith [ht.1.2]⟩, ht.2⟩)
+    (hγ_cont.mono (Icc_subset_Icc hl hu))
+    (hderiv_int.mono_set (by
+      rw [uIcc_of_le hlu, uIcc_of_le (by linarith : t_i - r ≤ t_i + r)]
+      exact Icc_subset_Icc hl hu))
+
 /-- **The per-window principal value at a higher-order pole**: at a transverse crossing
 `γ t_i = s`, flat of order `n ≥ k ≥ 2` and satisfying the condition-(B) power identity, with
 unique crossing on the window, the `ε`-truncated window integral of the order-`k` polar term
@@ -194,27 +219,11 @@ theorem perWindow_higherOrder_truncated_integral_tendsto {γ : ℝ → ℂ} {s :
         c * ((-(↑(k - 1) : ℂ)⁻¹ * ((γ (τL ε) - s) ^ (k - 1))⁻¹) -
           (-(↑(k - 1) : ℂ)⁻¹ * ((γ (τR ε) - s) ^ (k - 1))⁻¹)) := by
     filter_upwards [h_split, h_memL, h_memR] with ε hsplit hτL hτR
-    have h_ne_left : ∀ t ∈ Icc (t_i - r) (τL ε), γ t ≠ s := fun t ht h_eq => by
-      have := h_unique t ⟨ht.1, by linarith [ht.2, hτL.2]⟩ h_eq
-      linarith [ht.2, hτL.2, this]
-    have h_ne_right : ∀ t ∈ Icc (τR ε) (t_i + r), γ t ≠ s := fun t ht h_eq => by
-      have := h_unique t ⟨by linarith [ht.1, hτR.1], ht.2⟩ h_eq
-      linarith [ht.1, hτR.1, this]
     rw [hsplit,
-      integral_pow_inv_mul_deriv_eq_sub hk c hτL.1.le hP
-        (fun t ht => h_ne_left t ht)
-        (fun t ht => hγ_diffP t ⟨⟨ht.1.1, by linarith [ht.1.2, hτL.2]⟩, ht.2⟩)
-        (hγ_cont.mono (Icc_subset_Icc le_rfl (by linarith [hτL.2])))
-        (hderiv_int.mono_set (by
-          rw [uIcc_of_le hτL.1.le, uIcc_of_le (by linarith : t_i - r ≤ t_i + r)]
-          exact Icc_subset_Icc le_rfl (by linarith [hτL.2]))),
-      integral_pow_inv_mul_deriv_eq_sub hk c hτR.2.le hP
-        (fun t ht => h_ne_right t ht)
-        (fun t ht => hγ_diffP t ⟨⟨by linarith [ht.1.1, hτR.1], ht.1.2⟩, ht.2⟩)
-        (hγ_cont.mono (Icc_subset_Icc (by linarith [hτR.1]) le_rfl))
-        (hderiv_int.mono_set (by
-          rw [uIcc_of_le hτR.2.le, uIcc_of_le (by linarith : t_i - r ≤ t_i + r)]
-          exact Icc_subset_Icc (by linarith [hτR.1]) le_rfl))]
+      integral_pow_inv_mul_deriv_eq_sub_of_subinterval hk c hP hγ_cont hγ_diffP hderiv_int h_unique
+        hτL.1.le le_rfl (by linarith [hτL.2]) (fun h => absurd h.2 (by linarith [hτL.2])),
+      integral_pow_inv_mul_deriv_eq_sub_of_subinterval hk c hP hγ_cont hγ_diffP hderiv_int h_unique
+        hτR.2.le (by linarith [hτR.1]) le_rfl (fun h => absurd h.1 (by linarith [hτR.1]))]
     ring
   refine Tendsto.congr' h_ev.symm ?_
   have h_lim : Tendsto (fun ε =>

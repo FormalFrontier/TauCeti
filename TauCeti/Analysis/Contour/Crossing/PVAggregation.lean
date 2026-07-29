@@ -52,26 +52,6 @@ namespace TauCeti.Contour
 
 open Filter MeasureTheory Set Topology
 
-/-- On an interval where the curve keeps distance `≥ m > 0` from `s`, the principal value at
-`s` is the plain integral: the truncation is eventually inactive. Continuity of the curve is
-not needed — the distance bound and the truncated integrability carry the clauses. -/
-private theorem hasCauchyPVAt_of_dist_lower_bound {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ}
-    {l u m : ℝ} (hlu : l ≤ u) (hm_pos : 0 < m)
-    (h_far : ∀ t ∈ Icc l u, m ≤ ‖γ t - s‖)
-    (h_int_tr : ∀ ε : ℝ, 0 < ε →
-      IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
-        MeasureTheory.volume l u) :
-    HasCauchyPVAt γ l u g s (∫ t in l..u, g (γ t) * deriv γ t) := by
-  have h_ev : (fun ε : ℝ => ∫ t in l..u, if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
-      =ᶠ[𝓝[>] (0 : ℝ)] fun _ => ∫ t in l..u, g (γ t) * deriv γ t := by
-    filter_upwards [Ioo_mem_nhdsGT hm_pos] with ε hε
-    refine intervalIntegral.integral_congr fun t ht => ?_
-    rw [uIcc_of_le hlu] at ht
-    rw [if_pos (lt_of_lt_of_le hε.2 (h_far t ht))]
-  refine hasCauchyPVAt_iff.mpr ⟨?_, Tendsto.congr' h_ev.symm tendsto_const_nhds⟩
-  filter_upwards [self_mem_nhdsWithin] with ε hε
-  exact h_int_tr ε hε
-
 /-- The truncated integrand is eventually interval-integrable on a crossing window interior to
 `[a, b]`, by restriction. -/
 private theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : ℂ}
@@ -99,10 +79,11 @@ private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ 
     {l u : ℝ} (hA : a ≤ l) (hlu : l ≤ u) (hu : u ≤ b)
     (h_far : ∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) :
     HasCauchyPVAt γ l u g s (∫ t in l..u, g (γ t) * deriv γ t) :=
-  hasCauchyPVAt_of_dist_lower_bound hlu hm_pos h_far
-    (fun ε hε => (h_int_tr ε hε).mono_set (by
+  HasCauchyPVAt.of_dist_lower_bound hm_pos (by rwa [uIcc_of_le hlu]) <| by
+    filter_upwards [self_mem_nhdsWithin] with ε hε
+    exact (h_int_tr ε hε).mono_set (by
       rw [uIcc_of_le hlu, uIcc_of_le hab]
-      exact Icc_subset_Icc hA hu))
+      exact Icc_subset_Icc hA hu)
 
 /-- The aggregated value along a sorted crossing list: between-piece values `p` alternating
 with window values `w`. -/
