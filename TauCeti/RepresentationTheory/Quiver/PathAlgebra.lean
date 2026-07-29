@@ -60,17 +60,16 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 `pathAlgebra k Q` is a semireducible type synonym for `Quiver.TotalPath Q →₀ k`, following the
 pattern of `MonoidAlgebra`: were it reducible, instance search would unfold it and pick up the
 *pointwise* multiplication of `Finsupp`. The multiplication is therefore introduced as an
-operation `TauCeti.PathAlgebra.mul'` on `Quiver.TotalPath Q →₀ k` (with `singleOption` naming the
-product of two basis paths, which is a basis path or `0`), where the `Finsupp` API applies without
-friction; the ring axioms are proved there and transferred definitionally, the transfer being
-spelled out once and for all by `mul_def` and `single_def`.
+operation `mul'` on `Quiver.TotalPath Q →₀ k` (with `singleOption` naming the product of two basis
+paths, which is a basis path or `0`), where the `Finsupp` API applies without friction; the ring
+axioms are proved there and transferred definitionally.
 
-That whole layer is private apart from `mul'` itself, which the `Mul` instance has to name: an
-instance body is exposed, so it cannot mention a private declaration, which is also why the ring
-axioms reach the structure instances through a `by exact`. `mul'` has no public lemmas, so it is
-opaque downstream all the same. `pathAlgebra` is the only definition whose body is `@[expose]`d,
-because the transported instances unfold it; every other definition here is opaque downstream,
-which sees the path algebra through its algebraic structure and the lemmas below
+That whole layer is private. The exposed `Mul` instance spells out the same operation because it
+cannot mention a private declaration; `mul_def` records their definitional agreement. The ring
+axioms reach the structure instances through a `by exact` for the same reason. `pathAlgebra` is the
+only definition whose body is `@[expose]`d, because the transported instances unfold it; every other
+definition here is opaque downstream, which sees the path algebra through its algebraic structure
+and the lemmas below
 (`ofPath_eq_single` and `vertexIdempotent_eq_single` for the basis elements, `single_mul_single`
 and the `mul?` lemmas for products) rather than through the `Finsupp` representation.
 
@@ -325,7 +324,7 @@ private theorem smul_singleOption (r : k) (o : Option (Quiver.TotalPath Q)) (c :
   cases o <;> simp [Finsupp.smul_single]
 
 /-- The multiplication of the path algebra, at the level of finitely supported functions. -/
-noncomputable def mul' (f g : Quiver.TotalPath Q →₀ k) : Quiver.TotalPath Q →₀ k :=
+private noncomputable def mul' (f g : Quiver.TotalPath Q →₀ k) : Quiver.TotalPath Q →₀ k :=
   f.sum fun x a => g.sum fun y b => singleOption (x.mul? y) (a * b)
 
 /-- The multiplication kills zero on the left. -/
@@ -413,7 +412,9 @@ private theorem smul_mul' (r : k) (f g : Quiver.TotalPath Q →₀ k) :
         smul_eq_mul, mul_assoc]
 
 noncomputable instance : Mul (pathAlgebra k Q) :=
-  ⟨mul'⟩
+  ⟨fun f g =>
+    f.sum fun x a => g.sum fun y b =>
+      (x.mul? y).elim 0 fun z => Finsupp.single z (a * b)⟩
 
 /-- The multiplication of the path algebra is `mul'`, read through the type synonym. This is the
 only place the identification is used; every product below is computed from it. -/
