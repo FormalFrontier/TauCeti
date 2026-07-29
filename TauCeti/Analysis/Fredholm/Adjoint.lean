@@ -206,7 +206,7 @@ noncomputable def cokerEquivKerAdjoint (T : E →L[𝕜] F)
 /-- On quotient representatives, the cokernel--adjoint-kernel equivalence is orthogonal
 projection onto the orthogonal complement of the range. -/
 @[simp]
-theorem coe_cokerEquivKerAdjoint_mk (T : E →L[𝕜] F)
+theorem coe_cokerEquivKerAdjoint_apply_mk (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (y : F) :
     (cokerEquivKerAdjoint T hT (Submodule.Quotient.mk y) : F) =
       ((LinearMap.range (T : E →ₗ[𝕜] F))ᗮ.orthogonalProjectionOnto y : F) := by
@@ -236,11 +236,11 @@ noncomputable def cokerAdjointEquivKer (T : E →L[𝕜] F)
 /-- On quotient representatives, the adjoint-cokernel--kernel equivalence is orthogonal
 projection onto the orthogonal complement of the adjoint range. -/
 @[simp]
-theorem coe_cokerAdjointEquivKer_mk (T : E →L[𝕜] F)
+theorem coe_cokerAdjointEquivKer_apply_mk (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (x : E) :
     (cokerAdjointEquivKer T hT (Submodule.Quotient.mk x) : E) =
       ((LinearMap.range (T† : F →ₗ[𝕜] E))ᗮ.orthogonalProjectionOnto x : E) := by
-  simp [cokerAdjointEquivKer, coe_cokerEquivKerAdjoint_mk]
+  simp [cokerAdjointEquivKer, coe_cokerEquivKerAdjoint_apply_mk]
 
 /-- The inverse adjoint-cokernel--kernel equivalence sends a kernel vector to its quotient
 class. -/
