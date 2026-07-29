@@ -29,6 +29,8 @@ This is the representation occurring in the summands of the Mackey decomposition
   conjugation.
 * `TauCeti.isIrreducible_conjRep_iff`: conjugation preserves irreducibility.
 * `TauCeti.conjFDRep`: the finite-dimensional version.
+* `TauCeti.conjFDRepEquivalence`: conjugation as an equivalence of finite-dimensional
+  representation categories.
 
 ## References
 
@@ -221,6 +223,18 @@ noncomputable def conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
     FDRep k (MulAut.conj s • H : Subgroup G) :=
   FDRep.of (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom)
 
+/-- Conjugation by a group element is an equivalence of finite-dimensional representation
+categories. -/
+noncomputable def conjFDRepEquivalence (s : G) (H : Subgroup G) :
+    FDRep k H ≌ FDRep k (MulAut.conj s • H : Subgroup G) :=
+  Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)
+
+/-- The forward object map of the finite-dimensional conjugation equivalence is `conjFDRep`. -/
+@[simp]
+theorem conjFDRepEquivalence_functor_obj (s : G) (H : Subgroup G) (A : FDRep k H) :
+    (conjFDRepEquivalence (k := k) s H).functor.obj A = conjFDRep s A := by
+  rfl
+
 /-- Conjugation preserves the underlying module of a finite-dimensional representation. -/
 @[simp]
 theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
@@ -253,6 +267,24 @@ theorem finrank_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
   exact congrArg (fun V : FGModuleCat k => Module.finrank k V) (conjFDRep_V s A)
 
 end FDRep
+
+section FDRepIrreducible
+
+variable [Field k]
+
+/-- A conjugate finite-dimensional representation is irreducible exactly when the original
+representation is. -/
+@[simp]
+theorem isIrreducible_conjFDRep_iff (s : G) {H : Subgroup G} (A : FDRep k H) :
+    Representation.IsIrreducible (conjFDRep s A).ρ ↔
+      Representation.IsIrreducible A.ρ := by
+  change Representation.IsIrreducible
+      (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ↔
+    Representation.IsIrreducible A.ρ
+  exact Rep.isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H)
+    ((forget₂ (FDRep k H) (Rep k H)).obj A)
+
+end FDRepIrreducible
 
 section Character
 
