@@ -300,6 +300,7 @@ theorem latticeDifferential_comp_self
 
 /-- The lattice differential vanishes when the plumbing graph has no vertices. Every cube then
 has an empty direction set, so the weighted face sum on every generator is empty. -/
+@[simp]
 theorem latticeDifferential_eq_zero_of_isEmpty [IsEmpty V]
     (P : PlumbingGraph V) (k : P.characteristicVectors) :
     P.latticeDifferential k = 0 := by
