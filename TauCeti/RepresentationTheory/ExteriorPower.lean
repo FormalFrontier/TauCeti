@@ -1,0 +1,190 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.LinearAlgebra.ExteriorPower.Basis
+public import Mathlib.RepresentationTheory.Intertwining
+
+/-!
+# Exterior powers of representations
+
+This file equips each exterior power of a representation with the induced diagonal action.
+Intertwining maps and equivalences pass functorially to exterior powers, and the zeroth and first
+exterior powers recover the trivial and original representations.
+
+## Main definitions
+
+* `Representation.exteriorPower` is the induced action on `⋀[R]^d M`.
+* `IntertwiningMap.exteriorPower` is the induced map between exterior-power representations.
+* `Representation.Equiv.exteriorPower` is the induced equivalence.
+
+## References
+
+* [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
+  Layer 1, “Symmetric and exterior power representations”.
+-/
+
+public section
+
+open scoped TensorProduct
+
+universe u v w w'
+
+variable {R : Type u} {G : Type v} {M : Type w} {N : Type w'}
+
+namespace Representation
+
+section CommRing
+
+variable [CommRing R] [Monoid G]
+variable [AddCommGroup M] [Module R M]
+
+/-- The action induced by a representation on its `d`th exterior power. -/
+noncomputable def exteriorPower (ρ : Representation R G M) (d : ℕ) :
+    Representation R G (⋀[R]^d M) where
+  toFun g := _root_.exteriorPower.map d (ρ g)
+  map_one' := by
+    rw [ρ.map_one, Module.End.one_eq_id, _root_.exteriorPower.map_id,
+      Module.End.one_eq_id]
+  map_mul' g h := by
+    simpa only [map_mul, Module.End.mul_eq_comp] using
+      (_root_.exteriorPower.map_comp (n := d) (ρ h) (ρ g))
+
+/-- The action on an exterior power is induced by the action on the original representation. -/
+@[simp]
+theorem exteriorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
+    ρ.exteriorPower d g = _root_.exteriorPower.map d (ρ g) :=
+  (rfl)
+
+/-- The exterior-power action applies the original action to every factor of a pure wedge. -/
+@[simp]
+theorem exteriorPower_apply_ιMulti (ρ : Representation R G M) (d : ℕ) (g : G)
+    (m : Fin d → M) :
+    ρ.exteriorPower d g (_root_.exteriorPower.ιMulti R d m) =
+      _root_.exteriorPower.ιMulti R d (ρ g ∘ m) := by
+  rw [exteriorPower_apply, _root_.exteriorPower.map_apply_ιMulti]
+
+/-- The zeroth exterior power is equivalent to the trivial representation on the scalars. -/
+noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
+    (ρ.exteriorPower 0).Equiv (trivial R G R) :=
+  .mk (_root_.exteriorPower.zeroEquiv R M) fun g => by
+    rw [exteriorPower_apply, _root_.exteriorPower.zeroEquiv_naturality]
+    simp
+
+/-- The first exterior power is equivalent to the original representation. -/
+noncomputable def exteriorPowerOneEquiv (ρ : Representation R G M) :
+    (ρ.exteriorPower 1).Equiv ρ :=
+  .mk (_root_.exteriorPower.oneEquiv R M) fun g =>
+    _root_.exteriorPower.oneEquiv_naturality (ρ g)
+
+end CommRing
+
+end Representation
+
+namespace Representation.IntertwiningMap
+
+section CommRing
+
+variable [CommRing R] [Monoid G]
+variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+variable {ρ : Representation R G M} {σ : Representation R G N}
+
+/-- An intertwining map induces an intertwining map on every exterior power. -/
+noncomputable def exteriorPower (f : IntertwiningMap ρ σ) (d : ℕ) :
+    IntertwiningMap (ρ.exteriorPower d) (σ.exteriorPower d) where
+  toLinearMap := _root_.exteriorPower.map d f.toLinearMap
+  isIntertwining' g := by
+    rw [Representation.exteriorPower_apply, Representation.exteriorPower_apply,
+      ← _root_.exteriorPower.map_comp, ← _root_.exteriorPower.map_comp,
+      f.isIntertwining']
+
+/-- The underlying linear map is the usual map induced on exterior powers. -/
+@[simp]
+theorem exteriorPower_toLinearMap (f : IntertwiningMap ρ σ) (d : ℕ) :
+    (f.exteriorPower d).toLinearMap = _root_.exteriorPower.map d f.toLinearMap :=
+  (rfl)
+
+/-- Exterior powers preserve identity intertwining maps. -/
+@[simp]
+theorem exteriorPower_id (d : ℕ) :
+    (IntertwiningMap.id ρ).exteriorPower d = IntertwiningMap.id (ρ.exteriorPower d) := by
+  apply IntertwiningMap.ext
+  simp
+
+/-- Exterior powers preserve composition of intertwining maps. -/
+@[simp]
+theorem exteriorPower_comp {P : Type*} [AddCommGroup P] [Module R P]
+    {τ : Representation R G P} (f : IntertwiningMap ρ σ) (g : IntertwiningMap σ τ) (d : ℕ) :
+    (g.comp f).exteriorPower d = (g.exteriorPower d).comp (f.exteriorPower d) := by
+  apply IntertwiningMap.ext
+  exact _root_.exteriorPower.map_comp f.toLinearMap g.toLinearMap
+
+end CommRing
+
+end Representation.IntertwiningMap
+
+namespace Representation.Equiv
+
+section CommRing
+
+variable [CommRing R] [Monoid G]
+variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+variable {ρ : Representation R G M} {σ : Representation R G N}
+
+private noncomputable def exteriorPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
+    (⋀[R]^d M) ≃ₗ[R] (⋀[R]^d N) :=
+  LinearEquiv.ofLinear
+    (_root_.exteriorPower.map d e.toLinearMap)
+    (_root_.exteriorPower.map d e.symm.toLinearMap)
+    (by
+      rw [← _root_.exteriorPower.map_comp]
+      have he : e.toLinearMap ∘ₗ e.symm.toLinearMap = LinearMap.id := by
+        ext x
+        simp
+      rw [he, _root_.exteriorPower.map_id])
+    (by
+      rw [← _root_.exteriorPower.map_comp]
+      have he : e.symm.toLinearMap ∘ₗ e.toLinearMap = LinearMap.id := by
+        ext x
+        simp
+      rw [he, _root_.exteriorPower.map_id])
+
+private theorem exteriorPowerLinearEquiv_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
+    (exteriorPowerLinearEquiv e d).toLinearMap =
+      _root_.exteriorPower.map d e.toLinearMap :=
+  (rfl)
+
+/-- An equivalence of representations induces an equivalence of every exterior power. -/
+noncomputable def exteriorPower (e : ρ.Equiv σ) (d : ℕ) :
+    (ρ.exteriorPower d).Equiv (σ.exteriorPower d) :=
+  .mk (exteriorPowerLinearEquiv e d) fun g => by
+    rw [exteriorPowerLinearEquiv_toLinearMap]
+    exact (e.toIntertwiningMap.exteriorPower d).isIntertwining' g
+
+/-- The underlying linear map is the usual map induced on exterior powers. -/
+@[simp]
+theorem exteriorPower_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
+    (e.exteriorPower d).toLinearMap = _root_.exteriorPower.map d e.toLinearMap :=
+  (rfl)
+
+end CommRing
+
+end Representation.Equiv
+
+namespace exteriorPower
+
+section Field
+
+variable [Field R] [AddCommGroup M] [Module R M] [FiniteDimensional R M]
+
+/-- An exterior power above the dimension of its module is zero. -/
+theorem eq_zero_of_finrank_lt (d : ℕ) (h : Module.finrank R M < d) (x : ⋀[R]^d M) :
+    x = 0 := by
+  apply (finrank_zero_iff_forall_zero (K := R) (V := ⋀[R]^d M)).mp
+  rw [finrank_eq, Nat.choose_eq_zero_of_lt h]
+
+end Field
+
+end exteriorPower
