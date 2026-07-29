@@ -81,13 +81,15 @@ matrix with `(Cⱼ, Cₖ)` entry the structure constant `aᵢₖⱼ`.
 The transposed index order is fixed so that `classMultMatrix Cᵢ` is the matrix of left
 multiplication by the class sum `K_{Cᵢ}` on the centre of the group algebra, taken in the class-sum
 basis (`TauCeti.classMultMatrix_map_intCast`). -/
-@[expose] def classMultMatrix (Cᵢ : ConjClasses G) : Matrix (ConjClasses G) (ConjClasses G) ℤ :=
+def classMultMatrix (Cᵢ : ConjClasses G) : Matrix (ConjClasses G) (ConjClasses G) ℤ :=
   Matrix.of fun Cⱼ Cₖ => (structureConstant Cᵢ Cₖ Cⱼ : ℤ)
 
 @[simp]
 theorem classMultMatrix_apply (Cᵢ Cⱼ Cₖ : ConjClasses G) :
     classMultMatrix Cᵢ Cⱼ Cₖ = (structureConstant Cᵢ Cₖ Cⱼ : ℤ) :=
-  rfl
+  -- `(rfl)` rather than `rfl`: the parenthesized form does not export the equation as a
+  -- definitional unfolding, so the body of `classMultMatrix` stays unexposed.
+  (rfl)
 
 /-- **The class-multiplication matrix is the matrix of multiplication by the class sum**: pushing
 `classMultMatrix Cᵢ` into any commutative ring `k` gives the matrix of left multiplication by
