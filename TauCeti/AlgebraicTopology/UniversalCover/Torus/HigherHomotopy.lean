@@ -40,12 +40,8 @@ variable {N ι : Type*} [Nontrivial N] (p : ι → ℝ) (x : ∀ i, AddCircle (p
 /-- Every higher homotopy group of an indexed product of real circles is trivial. The index
 type `N` being nontrivial expresses that the homotopy dimension is at least two. -/
 instance subsingleton_homotopyGroup_pi :
-    Subsingleton (HomotopyGroup N (∀ i, AddCircle (p i)) x) := by
-  constructor
-  intro a b
-  apply (HomotopyGroup.piEquiv x).injective
-  funext i
-  exact Subsingleton.elim _ _
+    Subsingleton (HomotopyGroup N (∀ i, AddCircle (p i)) x) :=
+  inferInstance
 
 /-- Every higher homotopy class of an indexed product of real circles is the identity. -/
 theorem homotopyGroup_pi_eq_one [DecidableEq N]

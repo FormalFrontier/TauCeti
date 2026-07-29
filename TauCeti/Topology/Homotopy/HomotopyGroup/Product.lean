@@ -16,6 +16,9 @@ of homotopy groups. This file supplies the generalized-loop constructions, their
 API, and the resulting equivalences of homotopy groups. In positive dimensions the equivalences
 are multiplicative.
 
+The relative-homotopy product constructions are due to Praneeth Kolichala and come from
+`Mathlib.Topology.Homotopy.Product`.
+
 This is the product prerequisite for the torus calculation requested in
 `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13: combining the indexed-product
 equivalence with the vanishing of the higher homotopy groups of a circle computes the higher
@@ -213,6 +216,23 @@ theorem prodMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (x : X) (y : Y)
     (prodMulEquiv x y).symm a = prod a.1 a.2 :=
   (rfl)
 
+/-- The coordinatewise product of identity homotopy classes is the identity. -/
+@[simp]
+theorem prod_one [DecidableEq N] [Nonempty N] :
+    prod (1 : HomotopyGroup N X x) (1 : HomotopyGroup N Y y) = 1 := by
+  change (prodMulEquiv (N := N) x y).symm 1 = 1
+  exact (prodMulEquiv (N := N) x y).symm.map_one
+
+/-- Coordinatewise products commute with multiplication of homotopy classes. -/
+@[simp]
+theorem prod_mul [DecidableEq N] [Nonempty N]
+    (a₁ a₂ : HomotopyGroup N X x) (b₁ b₂ : HomotopyGroup N Y y) :
+    prod (a₁ * a₂) (b₁ * b₂) = prod a₁ b₁ * prod a₂ b₂ := by
+  change (prodMulEquiv (N := N) x y).symm ((a₁, b₁) * (a₂, b₂)) =
+    (prodMulEquiv (N := N) x y).symm (a₁, b₁) *
+      (prodMulEquiv (N := N) x y).symm (a₂, b₂)
+  exact (prodMulEquiv (N := N) x y).symm.map_mul _ _
+
 variable {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)] {z : ∀ i, Z i}
 
 /-- The indexed product of homotopy classes, represented by the coordinatewise product of
@@ -264,6 +284,12 @@ theorem piEquiv_symm_apply (z : ∀ i, Z i)
     (piEquiv z).symm a = pi a :=
   (rfl)
 
+/-- The homotopy group of an indexed product is a subsingleton when every factor homotopy
+group is a subsingleton. -/
+instance subsingleton_pi [∀ i, Subsingleton (HomotopyGroup N (Z i) (z i))] :
+    Subsingleton (HomotopyGroup N (∀ i, Z i) z) :=
+  (piEquiv z).subsingleton_congr.mpr inferInstance
+
 /-- In positive dimensions, the homotopy group of an indexed product is multiplicatively
 equivalent to the indexed product of the homotopy groups. -/
 noncomputable def piMulEquiv [DecidableEq N] [Nonempty N] (z : ∀ i, Z i) :
@@ -283,6 +309,22 @@ theorem piMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (z : ∀ i, Z i)
     (a : ∀ i, HomotopyGroup N (Z i) (z i)) :
     (piMulEquiv z).symm a = pi a :=
   (rfl)
+
+/-- The coordinatewise indexed product of identity homotopy classes is the identity. -/
+@[simp]
+theorem pi_one [DecidableEq N] [Nonempty N] :
+    pi (fun _ ↦ 1 : ∀ i, HomotopyGroup N (Z i) (z i)) = 1 := by
+  change (piMulEquiv (N := N) z).symm 1 = 1
+  exact (piMulEquiv (N := N) z).symm.map_one
+
+/-- Coordinatewise indexed products commute with multiplication of homotopy classes. -/
+@[simp]
+theorem pi_mul [DecidableEq N] [Nonempty N]
+    (a b : ∀ i, HomotopyGroup N (Z i) (z i)) :
+    pi (a * b) = pi a * pi b := by
+  change (piMulEquiv (N := N) z).symm (a * b) =
+    (piMulEquiv (N := N) z).symm a * (piMulEquiv (N := N) z).symm b
+  exact (piMulEquiv (N := N) z).symm.map_mul _ _
 
 end HomotopyGroup
 
