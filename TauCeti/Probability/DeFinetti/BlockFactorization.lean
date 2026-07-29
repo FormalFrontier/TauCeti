@@ -42,8 +42,8 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 ## Main results
 
 * `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
-  at the directing measure, the shared bridge both the mixture route and the conditional
-  joint-rectangle factorization build on.
+  at the directing measure. The mixture route below builds on it; it is public because the
+  forthcoming conditional joint-rectangle factorization will need the same bridge.
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
   is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
   witness. That witness is the canonical *directing measure*, not merely a mixing representative;
@@ -210,8 +210,9 @@ conditional expectation of the length-`r` prefix indicator product given the tai
 This is the bridge from the merged tail factorization
 `condExp_blockIndicatorProd_tailProcess_ae_eq_prod` to `directingMeasure`, obtained by identifying
 each single-coordinate conditional expectation via
-`Contractable.directingMeasure_ae_eq_condExp_coord`. Both the mixture route below and the
-conditional joint-rectangle factorization consume it. -/
+`Contractable.directingMeasure_ae_eq_condExp_coord`. The mixture route below consumes it, and it is
+public in anticipation of the conditional joint-rectangle factorization, which will need the same
+bridge tested against the directing-measure event. -/
 theorem condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
