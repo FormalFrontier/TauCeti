@@ -37,16 +37,16 @@ universe u
 
 namespace TauCeti
 
-variable (k : Type u) (n d : ℕ)
-
-section CommRing
-
-variable [CommRing k]
+variable (k : Type u) (n d : ℕ) [CommRing k]
 
 /-- The `d`th exterior power of the standard representation of `GL n k`. -/
 noncomputable abbrev extPowerRep :
     Representation k (GL (Fin n) k) (⋀[k]^d (Fin n → k)) :=
   (stdRep k n).exteriorPower d
+
+/-- The exterior power of the standard representation, bundled as an object of `FDRep`. -/
+noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
+  FDRep.of (extPowerRep k n d)
 
 /-- The zeroth exterior power of the standard representation is trivial. -/
 noncomputable abbrev extPowerRepZeroEquiv :
@@ -57,17 +57,5 @@ noncomputable abbrev extPowerRepZeroEquiv :
 noncomputable abbrev extPowerRepOneEquiv :
     (extPowerRep k n 1).Equiv (stdRep k n) :=
   (stdRep k n).exteriorPowerOneEquiv
-
-end CommRing
-
-section Field
-
-variable [Field k]
-
-/-- The exterior power of the standard representation, bundled as an object of `FDRep`. -/
-noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
-  FDRep.of (extPowerRep k n d)
-
-end Field
 
 end TauCeti

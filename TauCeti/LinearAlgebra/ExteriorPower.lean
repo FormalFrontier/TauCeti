@@ -9,8 +9,8 @@ public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 /-!
 # Vanishing of exterior powers above the rank
 
-This file records that the `d`th exterior power of a finite free module over a nontrivial
-commutative ring vanishes as soon as `d` exceeds the rank of the module.
+This file records that the `d`th exterior power of a finite free module over a commutative ring
+vanishes as soon as `d` exceeds the rank of the module.
 
 ## Main results
 
@@ -32,15 +32,17 @@ variable {R : Type u} {M : Type w}
 
 namespace exteriorPower
 
-variable [CommRing R] [Nontrivial R] [AddCommGroup M] [Module R M]
+variable [CommRing R] [AddCommGroup M] [Module R M]
 variable [Module.Free R M] [Module.Finite R M]
 
 /-- An exterior power above the rank of a finite free module is zero. -/
 theorem eq_zero_of_finrank_lt (d : ℕ) (h : Module.finrank R M < d) (x : ⋀[R]^d M) :
     x = 0 := by
   have : Subsingleton (⋀[R]^d M) := by
-    rw [← Module.finrank_eq_zero_iff_of_free R, finrank_eq, Nat.choose_eq_zero_iff]
-    exact h
+    rcases subsingleton_or_nontrivial R with _ | _
+    · exact Module.subsingleton R _
+    · rw [← Module.finrank_eq_zero_iff_of_free R, finrank_eq, Nat.choose_eq_zero_iff]
+      exact h
   exact Subsingleton.elim x 0
 
 end exteriorPower
