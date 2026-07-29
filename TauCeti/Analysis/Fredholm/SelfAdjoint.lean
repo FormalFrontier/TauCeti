@@ -47,7 +47,7 @@ noncomputable def IsFredholm.cokerEquivKerOfKerAdjointEq {T : E →L[𝕜] E}
     (hker : (ContinuousLinearMap.adjoint T).ker = T.ker) :
     (E ⧸ LinearMap.range (T : E →ₗ[𝕜] E)) ≃ₗ[𝕜]
       LinearMap.ker (T : E →ₗ[𝕜] E) :=
-  (TauCeti.ContinuousLinearMap.cokerEquivKerAdjoint T hT.isClosed_range).trans
+  (TauCeti.ContinuousLinearMap.cokerEquivKerAdjoint T hT.isClosed_range).toLinearEquiv.trans
     (LinearEquiv.ofEq _ _ hker)
 
 /-- The cokernel of a self-adjoint Fredholm operator is linearly equivalent to its kernel. -/
