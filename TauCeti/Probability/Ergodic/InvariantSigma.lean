@@ -15,8 +15,9 @@ import Mathlib.Topology.Algebra.Order.LiminfLimsup
 /-!
 # Invariant measurable representatives
 
-This file identifies almost-everywhere invariance under a measure-preserving endomorphism with
-almost-everywhere strong measurability for Mathlib's invariant σ-algebra.
+Within the ambient-almost-everywhere strongly measurable real-valued functions, this file
+identifies almost-everywhere invariance under a nonsingular endomorphism with almost-everywhere
+strong measurability for Mathlib's invariant σ-algebra.
 
 The nontrivial direction replaces an almost invariant real-valued function by a pointwise
 invariant representative.  For an ambient-measurable representative `g`, the replacement is the
@@ -25,13 +26,13 @@ real part of
 `limsup (fun n => g (T^[n] ω))`.
 
 Dropping the first term does not change this limsup, so the replacement is pointwise invariant.
-Measure preservation transports the original a.e. invariance along every iterate, making the
-replacement a.e. equal to `g`.
+Nonsingularity transports the original a.e. invariance along every iterate, making the replacement
+a.e. equal to `g`.
 
 ## Main results
 
-* `aestronglyMeasurable_invariants_of_comp_ae_eq` — an a.e. invariant function has an invariant
-  measurable representative;
+* `aestronglyMeasurable_invariants_of_comp_ae_eq` — an ambient-a.e. strongly measurable,
+  a.e. invariant function has an invariant measurable representative;
 * `aestronglyMeasurable_invariants_iff_comp_ae_eq` — the characteristic equivalence;
 * `fixedSpace_eq_lpMeas_invariants` — the `Lᵖ` fixed space is exactly Mathlib's `lpMeas` subspace
   for the invariant σ-algebra.
@@ -40,7 +41,8 @@ The construction and proof are adapted from
 `cameronfreer/exchangeability`, `Exchangeability/Ergodic/ShiftInvariantRepresentatives.lean` and
 `Exchangeability/Ergodic/InvariantSigma.lean`, at commit
 `e0532e59ceff23edab44dda9ab0655debbc9cc22`.  This version is generalized from the path-space shift
-to an arbitrary measure-preserving endomorphism and uses
+to an arbitrary nonsingular endomorphism at the function level (and a measure-preserving one on
+`Lᵖ`) and uses
 `MeasurableSpace.invariants` directly, as required by the Exchangeability roadmap.
 -/
 
@@ -82,17 +84,17 @@ private theorem invariantRepresentative_comp (T : Ω → Ω) (g : Ω → ℝ) :
     limsup_nat_add (fun n : ℕ => (g ((T^[n]) ω) : EReal)) 1
 
 private theorem iterate_comp_ae_eq_of_comp_ae_eq {T : Ω → Ω}
-    (hT : MeasurePreserving T μ μ) {g : Ω → ℝ} (hg : g ∘ T =ᵐ[μ] g) :
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {g : Ω → ℝ} (hg : g ∘ T =ᵐ[μ] g) :
     ∀ n : ℕ, g ∘ T^[n] =ᵐ[μ] g := by
   intro n
   induction n with
   | zero => simp
   | succ n hn =>
       rw [Function.iterate_succ]
-      exact (hT.quasiMeasurePreserving.ae_eq_comp hn).trans hg
+      exact (hT.ae_eq_comp hn).trans hg
 
 private theorem invariantRepresentative_ae_eq {T : Ω → Ω}
-    (hT : MeasurePreserving T μ μ) {g : Ω → ℝ} (hg : g ∘ T =ᵐ[μ] g) :
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {g : Ω → ℝ} (hg : g ∘ T =ᵐ[μ] g) :
     invariantRepresentative T g =ᵐ[μ] g := by
   have hiter : ∀ᵐ ω ∂μ, ∀ n : ℕ, g ((T^[n]) ω) = g ω := by
     rw [ae_all_iff]
@@ -104,20 +106,20 @@ private theorem invariantRepresentative_ae_eq {T : Ω → Ω}
     exact congrArg (fun x : ℝ => (x : EReal)) (hω n)
   simp only [invariantRepresentative, hconst, limsup_const, EReal.toReal_coe]
 
-/-- An almost-everywhere invariant real-valued function has a representative measurable for
-Mathlib's invariant σ-algebra.
+/-- An ambient-almost-everywhere strongly measurable, almost-everywhere invariant real-valued
+function has a representative measurable for Mathlib's invariant σ-algebra.
 
-The endomorphism is arbitrary: path-space shift is the specialization used by the Koopman route to
-de Finetti's theorem. -/
+The nonsingular endomorphism is arbitrary: path-space shift is the specialization used by the
+Koopman route to de Finetti's theorem. -/
 theorem aestronglyMeasurable_invariants_of_comp_ae_eq {T : Ω → Ω}
-    (hT : MeasurePreserving T μ μ) {f : Ω → ℝ} (hf : AEStronglyMeasurable f μ)
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {f : Ω → ℝ} (hf : AEStronglyMeasurable f μ)
     (hfix : f ∘ T =ᵐ[μ] f) :
     AEStronglyMeasurable[MeasurableSpace.invariants T] f μ := by
   let g := hf.mk f
   have hg_meas : Measurable g := hf.stronglyMeasurable_mk.measurable
   have hg_eq : g =ᵐ[μ] f := hf.ae_eq_mk.symm
   have hg_fix : g ∘ T =ᵐ[μ] g :=
-    (hT.quasiMeasurePreserving.ae_eq_comp hg_eq).trans (hfix.trans hg_eq.symm)
+    (hT.ae_eq_comp hg_eq).trans (hfix.trans hg_eq.symm)
   let g' := invariantRepresentative T g
   have hg'_meas : Measurable g' := measurable_invariantRepresentative hT.measurable hg_meas
   have hg'_inv : g' ∘ T = g' := invariantRepresentative_comp T g
@@ -130,20 +132,25 @@ theorem aestronglyMeasurable_invariants_of_comp_ae_eq {T : Ω → Ω}
 /-- A function almost-everywhere strongly measurable for the invariant σ-algebra is almost
 everywhere fixed by composition. -/
 theorem AEStronglyMeasurable.comp_ae_eq_of_invariants {T : Ω → Ω}
-    (hT : MeasurePreserving T μ μ) {f : Ω → ℝ}
+    {E : Type*} [TopologicalSpace E] [TopologicalSpace.PseudoMetrizableSpace E]
+    [MeasurableSpace E] [BorelSpace E] [MeasurableSingletonClass E]
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {f : Ω → E}
     (hf : AEStronglyMeasurable[MeasurableSpace.invariants T] f μ) :
     f ∘ T =ᵐ[μ] f := by
   let g := hf.mk f
   have hg_meas : Measurable[MeasurableSpace.invariants T] g :=
     hf.stronglyMeasurable_mk.measurable
   have hg_eq : g =ᵐ[μ] f := hf.ae_eq_mk.symm
-  exact (hT.quasiMeasurePreserving.ae_eq_comp hg_eq.symm).trans
+  exact (hT.ae_eq_comp hg_eq.symm).trans
     ((EventuallyEq.of_eq (MeasurableSpace.comp_eq_of_measurable_invariants hg_meas)).trans hg_eq)
 
-/-- Almost-everywhere strong measurability for the invariant σ-algebra is equivalent to
+/-- Within the ambient-almost-everywhere strongly measurable real-valued functions,
+almost-everywhere strong measurability for the invariant σ-algebra is equivalent to
 almost-everywhere invariance under composition. -/
+@[simp]
 theorem aestronglyMeasurable_invariants_iff_comp_ae_eq {T : Ω → Ω}
-    (hT : MeasurePreserving T μ μ) {f : Ω → ℝ} (hf : AEStronglyMeasurable f μ) :
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {f : Ω → ℝ}
+    (hf : AEStronglyMeasurable f μ) :
     AEStronglyMeasurable[MeasurableSpace.invariants T] f μ ↔ f ∘ T =ᵐ[μ] f :=
   ⟨fun h => AEStronglyMeasurable.comp_ae_eq_of_invariants hT h,
     aestronglyMeasurable_invariants_of_comp_ae_eq hT hf⟩
@@ -160,7 +167,8 @@ theorem mem_fixedSpace_iff_aestronglyMeasurable_invariants {T : Ω → Ω}
       AEStronglyMeasurable[MeasurableSpace.invariants T] f μ := by
   rw [mem_fixedSpace_iff, compMeasurePreserving_eq_self_iff]
   exact
-    (aestronglyMeasurable_invariants_iff_comp_ae_eq hT (Lp.aestronglyMeasurable f)).symm
+    (aestronglyMeasurable_invariants_iff_comp_ae_eq hT.quasiMeasurePreserving
+      (Lp.aestronglyMeasurable f)).symm
 
 /-- The `Lᵖ` fixed space of a measure-preserving endomorphism is the subspace of functions
 almost-everywhere strongly measurable for its invariant σ-algebra. -/
