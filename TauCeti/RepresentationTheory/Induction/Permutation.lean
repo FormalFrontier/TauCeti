@@ -22,9 +22,9 @@ number of fixed cosets, cast into the coefficient field.
 
 ## Main statements
 
-* `TauCeti.character_ofMulAction`: the character of a permutation representation at `g` is the
+* `TauCeti.char_ofMulAction`: the character of a permutation representation at `g` is the
   number of points fixed by `g`, cast into `k`.
-* `TauCeti.character_ind_trivial`: the character of `Ind_H^G (trivial)` at `g` is the number of
+* `TauCeti.char_ind_trivial`: the character of `Ind_H^G (trivial)` at `g` is the number of
   cosets fixed by `g`, cast into `k`.
 
 Both statements are equalities in `k`, so in positive characteristic they determine the fixed-point
@@ -209,7 +209,7 @@ private theorem toMatrix_ofMulAction_diag (X : Type w) [MulAction G X] [Fintype 
 /-- **The permutation character.** The character of the permutation representation `k[X]` at `g`
 is the number of points of `X` fixed by `g`, cast into `k`. -/
 @[simp]
-theorem character_ofMulAction (X : Type w) [MulAction G X] [Finite X] (g : G) :
+theorem char_ofMulAction (X : Type w) [MulAction G X] [Finite X] (g : G) :
     (Representation.ofMulAction k G X).character g = Nat.card {x : X // g • x = x} := by
   classical
   have := Fintype.ofFinite X
@@ -226,10 +226,10 @@ variable (k : Type u) [Field k] {G : Type v} [Group G] (H : Subgroup G)
 /-- **The permutation character of an induced trivial representation.** The character of
 `Ind_H^G (trivial)` at `g` is the number of cosets in `G ⧸ H` fixed by `g`, cast into `k`. -/
 @[simp]
-theorem character_ind_trivial [Finite (G ⧸ H)] (g : G) :
+theorem char_ind_trivial [Finite (G ⧸ H)] (g : G) :
     ((Representation.trivial k H k).ind H.subtype).character g =
       Nat.card {q : G ⧸ H // g • q = q} := by
-  rw [Representation.char_iso (indTrivialEquiv k H), character_ofMulAction]
+  rw [Representation.char_iso (indTrivialEquiv k H), char_ofMulAction]
 
 end Character
 
