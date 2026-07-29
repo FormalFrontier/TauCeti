@@ -87,6 +87,12 @@ theorem classSumCenter_coe (C : ConjClasses G) :
     (classSumCenter (k := k) C : MonoidAlgebra k G) = classSum k C :=
   (rfl)
 
+/-- The class sum of the conjugacy class of `1`, as an element of the center, is `1`. -/
+@[simp]
+theorem classSumCenter_mk_one : classSumCenter (k := k) (ConjClasses.mk (1 : G)) = 1 := by
+  apply Subtype.ext
+  simp
+
 /-- Convert a function on conjugacy classes to the corresponding linear combination of class
 sums. -/
 noncomputable def ofConjClassesCenter (f : ConjClasses G → k) :

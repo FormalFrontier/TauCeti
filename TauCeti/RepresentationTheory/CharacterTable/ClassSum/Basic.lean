@@ -99,8 +99,8 @@ singleton `{1}`. -/
 theorem classSum_mk_one (k : Type*) [Semiring k] :
     classSum k (ConjClasses.mk (1 : G)) = 1 := by
   ext g
-  rw [classSum_coeff, MonoidAlgebra.one_def, MonoidAlgebra.coeff_single, Finsupp.single_apply]
-  simp [ConjClasses.mk_eq_mk_iff_isConj, eq_comm]
+  simp [MonoidAlgebra.one_def, MonoidAlgebra.coeff_single, Finsupp.single_apply,
+    ConjClasses.mk_eq_mk_iff_isConj, eq_comm]
 
 /-- Every class sum lies in the center of the group algebra. -/
 theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :

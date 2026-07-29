@@ -29,8 +29,15 @@ of the file, and everything else follows from it:
 
 Since `TauCeti.structureConstant` is a genuine `def` on `[Fintype G] [DecidableEq G]` data, so is
 `classMultMatrix`; these integers and matrices are the whole input to the Burnside--Dixon--Schneider
-character-table algorithm, where the values of a central character on the class sums appear as a
-common eigenvector of the family `{Mᵢ}`.
+character-table algorithm. The eigenvector orientation there is pinned, and the index order above is
+what pins it: writing `vⱼ = ω(K_{Cⱼ})` for the values of a central character on the class sums, the
+row vector `v` is a common **left** eigenvector of the family `{Mᵢ}`, acting from the left via
+`Matrix.vecMul` (`ᵥ*`), with `v ᵥ* Mᵢ = ω(K_{Cᵢ}) • v`. It is *not* a column eigenvector under
+`Matrix.mulVec` (`*ᵥ`): that convention would require the transposed matrix `aᵢⱼₖ` instead. The `*ᵥ`
+action recorded below in `TauCeti.classMultMatrix_mulVec` is a different statement — that `Mᵢ`
+carries class-sum coordinates to the coordinates of the product, which is exactly what makes `Mᵢ` a
+matrix of left multiplication — and not an eigenvector relation. The eigenvector theorem itself
+needs central characters, so it is deferred to the layer that constructs them.
 
 ## References
 
@@ -53,12 +60,6 @@ section Center
 
 variable (k : Type*) [CommSemiring k]
 
-/-- The class sum of the conjugacy class of `1`, as an element of the centre, is `1`. -/
-@[simp]
-theorem classSumCenter_mk_one : classSumCenter (k := k) (ConjClasses.mk (1 : G)) = 1 := by
-  apply Subtype.ext
-  simp
-
 /-- **The structure constants are the matrix of multiplication by a class sum**, entrywise: the
 matrix of left multiplication by `K_{Cᵢ}` on the centre of `k[G]`, in the class-sum basis, has
 `(Cⱼ, Cₖ)` entry `aᵢₖⱼ`. -/
@@ -66,9 +67,9 @@ theorem leftMulMatrix_classSumCenter_apply (Cᵢ Cⱼ Cₖ : ConjClasses G) :
     Algebra.leftMulMatrix (classSumBasis (k := k)) (classSumCenter Cᵢ) Cⱼ Cₖ =
       (structureConstant Cᵢ Cₖ Cⱼ : k) := by
   obtain ⟨g, rfl⟩ := ConjClasses.exists_rep Cⱼ
-  rw [Algebra.leftMulMatrix_eq_repr_mul, classSumBasis_apply, classSumBasis_repr_apply,
-    centerToConjClasses_mk, MulMemClass.coe_mul, classSumCenter_coe, classSumCenter_coe]
-  exact coeff_classSum_mul k Cᵢ Cₖ g
+  simpa only [Algebra.leftMulMatrix_eq_repr_mul, classSumBasis_apply, classSumBasis_repr_apply,
+    centerToConjClasses_mk, MulMemClass.coe_mul, classSumCenter_coe] using
+    coeff_classSum_mul k Cᵢ Cₖ g
 
 end Center
 
@@ -95,7 +96,7 @@ theorem classMultMatrix_map_intCast (k : Type*) [CommRing k] (Cᵢ : ConjClasses
     (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) =
       Algebra.leftMulMatrix (classSumBasis (k := k)) (classSumCenter Cᵢ) := by
   ext Cⱼ Cₖ
-  rw [Matrix.map_apply, classMultMatrix_apply, leftMulMatrix_classSumCenter_apply,
+  simp only [Matrix.map_apply, classMultMatrix_apply, leftMulMatrix_classSumCenter_apply,
     Int.cast_natCast]
 
 /-- The class-multiplication matrix over `ℤ` is itself a matrix of multiplication by a class sum,
@@ -131,7 +132,10 @@ theorem classMultMatrix_mk_one : classMultMatrix (ConjClasses.mk (1 : G)) = 1 :=
   rw [classMultMatrix_eq_leftMulMatrix, classSumCenter_mk_one, map_one]
 
 /-- **The class-multiplication matrix acts by multiplication by the class sum**: it sends the vector
-of class-sum coordinates of a central element `z` to the coordinates of `K_{Cᵢ} * z`. -/
+of class-sum coordinates of a central element `z` to the coordinates of `K_{Cᵢ} * z`.
+
+This `*ᵥ` action is the defining property of a matrix of left multiplication; it is not the pinned
+eigenvector relation, which is a `ᵥ*` action on the central-character row vectors. -/
 theorem classMultMatrix_mulVec (k : Type*) [CommRing k] (Cᵢ : ConjClasses G)
     (z : Subalgebra.center k (MonoidAlgebra k G)) :
     (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) *ᵥ centerToConjClasses z =
