@@ -207,7 +207,7 @@ noncomputable def standardCount (μ : YoungDiagram) : ℕ :=
 /-- The number of standard Young tableaux is the cardinality of their finite type. -/
 theorem standardCount_def (μ : YoungDiagram) :
     standardCount μ = Fintype.card (StandardYoungTableau μ) :=
-  standardCount.eq_1 μ
+  by simp only [standardCount]
 
 /-- Transposing a Young diagram does not change its number of standard Young tableaux. -/
 @[simp]
