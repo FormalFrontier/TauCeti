@@ -83,12 +83,6 @@ noncomputable def fullyBlockedHomologyClassOfLeTwo (hn : n ≤ 2) (x : GridState
     G.fullyBlockedHomology :=
   Submodule.Quotient.mk (G.fullyBlockedCycleOfLeTwo hn x)
 
-/-- The single-state class is represented by `fullyBlockedCycleOfLeTwo`. -/
-theorem fullyBlockedHomologyClassOfLeTwo_def (hn : n ≤ 2) (x : GridState n) :
-    G.fullyBlockedHomologyClassOfLeTwo hn x =
-      Submodule.Quotient.mk (G.fullyBlockedCycleOfLeTwo hn x) :=
-  (rfl)
-
 /-- Under the small-grid equivalence from homology to the chain module, the class represented by
 `x` becomes the singleton chain at `x`. -/
 @[simp]
@@ -96,7 +90,7 @@ theorem fullyBlockedHomologyEquivChainOfLeTwo_class (hn : n ≤ 2) (x : GridStat
     G.fullyBlockedHomologyEquivChainOfLeTwo hn
         (G.fullyBlockedHomologyClassOfLeTwo hn x) =
       Finsupp.single x 1 := by
-  rw [fullyBlockedHomologyClassOfLeTwo_def,
+  rw [fullyBlockedHomologyClassOfLeTwo,
     G.fullyBlockedHomologyEquivChainOfLeTwo_apply_mk]
   exact G.fullyBlockedCycleOfLeTwo_coe hn x
 
@@ -136,7 +130,7 @@ theorem fullyBlockedHomologyBasisOfLeTwo_repr_class (hn : n ≤ 2) (x : GridStat
     (G.fullyBlockedHomologyBasisOfLeTwo hn).repr
         (G.fullyBlockedHomologyClassOfLeTwo hn x) =
       Finsupp.single x 1 := by
-  rw [fullyBlockedHomologyClassOfLeTwo_def,
+  rw [fullyBlockedHomologyClassOfLeTwo,
     G.fullyBlockedHomologyBasisOfLeTwo_repr_mk]
   exact G.fullyBlockedCycleOfLeTwo_coe hn x
 
