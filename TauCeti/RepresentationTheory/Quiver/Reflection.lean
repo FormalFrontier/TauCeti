@@ -96,6 +96,7 @@ theorem vertexPreReflection_apply_self_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)
 
 /-- The simple reflection at a loopless vertex negates the corresponding simple dimension
 vector. -/
+@[simp]
 theorem vertexPreReflection_single_self {i : Q} (h : IsEmpty (i ⟶ i)) :
     vertexPreReflection Q i (Pi.single i 1) = -Pi.single i 1 :=
   Module.preReflection_apply_self (titsPolarForm_single_self_of_isEmpty Q h)
