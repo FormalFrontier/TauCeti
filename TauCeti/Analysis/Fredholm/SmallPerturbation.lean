@@ -59,35 +59,6 @@ private def blockCorner
   (ContinuousLinearMap.fst 𝕜 Y C).comp
     (A.comp (ContinuousLinearMap.inr 𝕜 K X))
 
-private def prodShear
-    {U V : Type*}
-    [NormedAddCommGroup U] [NormedSpace 𝕜 U]
-    [NormedAddCommGroup V] [NormedSpace 𝕜 V]
-    (f : U →L[𝕜] V) : (U × V) ≃L[𝕜] (U × V) where
-  toFun uv := (uv.1, uv.2 - f uv.1)
-  invFun uv := (uv.1, uv.2 + f uv.1)
-  left_inv uv := by simp
-  right_inv uv := by simp
-  map_add' u v := by
-    ext
-    · simp
-    · simp
-      abel
-  map_smul' c u := by
-    ext <;> simp [smul_sub]
-  continuous_toFun := by fun_prop
-  continuous_invFun := by fun_prop
-
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] in
-@[simp]
-private theorem prodShear_apply
-    {U V : Type*}
-    [NormedAddCommGroup U] [NormedSpace 𝕜 U]
-    [NormedAddCommGroup V] [NormedSpace 𝕜 V]
-    (f : U →L[𝕜] V) (u : U) (v : V) :
-    prodShear f (u, v) = (u, v - f u) :=
-  rfl
-
 omit [IsRCLikeNormedField 𝕜] in
 private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     {K X Y C : Type*}
@@ -114,9 +85,13 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
   let dBInv : Y →L[𝕜] C := d.comp (e.symm : Y →L[𝕜] X)
   let schur : K →L[𝕜] C := c - d.comp bInvA
   -- The domain shear subtracts `e⁻¹ a`, eliminating the upper-left off-diagonal block.
-  let P : (K × X) ≃L[𝕜] (K × X) := prodShear bInvA
+  let P : (K × X) ≃L[𝕜] (K × X) :=
+    (ContinuousLinearEquiv.refl 𝕜 K).skewProd
+      (ContinuousLinearEquiv.refl 𝕜 X) (-bInvA)
   -- The codomain shear subtracts `d e⁻¹`, eliminating the other off-diagonal block.
-  let Q : (Y × C) ≃L[𝕜] (Y × C) := prodShear dBInv
+  let Q : (Y × C) ≃L[𝕜] (Y × C) :=
+    (ContinuousLinearEquiv.refl 𝕜 Y).skewProd
+      (ContinuousLinearEquiv.refl 𝕜 C) (-dBInv)
   let swap : (C × Y) ≃L[𝕜] (Y × C) :=
     (LinearIsometryEquiv.prodComm 𝕜 C Y).toContinuousLinearEquiv
   let B : K × X →L[𝕜] Y × C :=
@@ -130,10 +105,10 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     simpa using (A.comp_inl_add_comp_inr (k, x)).symm
   have hP_apply (k : K) (x : X) :
       (P : K × X →L[𝕜] K × X) (k, x) = (k, x - bInvA k) := by
-    exact prodShear_apply bInvA k x
+    simp [P, sub_eq_add_neg]
   have hQ_apply (y : Y) (z : C) :
       (Q : Y × C →L[𝕜] Y × C) (y, z) = (y, z - dBInv y) := by
-    exact prodShear_apply dBInv y z
+    simp [Q, sub_eq_add_neg]
   have ha_apply (k : K) : (A (k, 0)).1 = a k := by
     simp [a, fstY, inlK]
   have hc_apply (k : K) : (A (k, 0)).2 = c k := by
