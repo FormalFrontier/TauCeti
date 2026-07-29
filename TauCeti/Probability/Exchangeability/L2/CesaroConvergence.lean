@@ -272,17 +272,17 @@ private theorem tendsto_integral_abs_sub_of_tendsto_eLpNorm_two {μ : Measure Ω
   simpa only [Pi.sub_apply, Real.norm_eq_abs, eLpNorm_one_eq_lintegral_enorm] using
     (integral_norm_eq_lintegral_enorm (hWa_meas m))
 
-/-- A bounded measurable observable of a contractable process has fixed-start Cesàro averages
-converging in `L¹` to one common measurable limit.
+/-- A square-integrable measurable observable of a contractable process has fixed-start Cesàro
+averages converging in `L¹` to one common measurable limit.
 
 The start `r` is fixed while the window length `m + 1` tends to infinity. The successor in the
 length avoids assigning any special meaning to an empty average.
 
-The measure need only be finite, the coordinates only a.e.-measurable, and the bound on `f` only
-coordinatewise a.e. — none of the analytic steps use more. -/
+A bounded observable satisfies the square-integrability hypothesis on a finite measure space, via
+`MemLp.of_bound`. -/
 theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ)
-    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ i, ∀ᵐ ω ∂μ, ‖f (X i ω)‖ ≤ C) :
+    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
+    {f : α → ℝ} (hf : Measurable f) (hf_L2 : ∀ i, MemLp (fun ω => f (X i ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
       ∀ r : ℕ,
         Tendsto
@@ -290,11 +290,8 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
             |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
   let Y : ℕ → Ω → ℝ := fun i ω => f (X i ω)
-  have hY_ae : ∀ i, AEMeasurable (Y i) μ := fun i => hf.comp_aemeasurable (hX_meas i)
-  have hY : Contractable μ Y := hX.map_values hf hX_meas
-  obtain ⟨C, hC⟩ := hf_bdd
-  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := fun i =>
-    MemLp.of_bound (hY_ae i).aestronglyMeasurable C (hC i)
+  have hY : Contractable μ Y := hX.map_values hf hX_ae
+  have hY_L2 : ∀ i, MemLp (Y i) 2 μ := hf_L2
   have hA_L2 : ∀ m : ℕ, MemLp (blockAverage Y fun i : Fin (m + 1) => (i : ℕ)) 2 μ := fun m =>
     memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i
   let A₂ : ℕ → Lp ℝ 2 μ := fun m =>
