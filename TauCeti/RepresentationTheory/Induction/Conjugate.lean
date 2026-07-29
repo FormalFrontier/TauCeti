@@ -278,6 +278,8 @@ representation is. -/
 theorem isIrreducible_conjFDRep_iff (s : G) {H : Subgroup G} (A : FDRep k H) :
     Representation.IsIrreducible (conjFDRep s A).ρ ↔
       Representation.IsIrreducible A.ρ := by
+  -- Unfold `conjFDRep` and the `FDRep`-to-`Rep` coercion to expose the restricted action;
+  -- rewriting cannot see through these definitional wrappers.
   change Representation.IsIrreducible
       (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ↔
     Representation.IsIrreducible A.ρ
