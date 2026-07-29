@@ -22,8 +22,7 @@ order at only finitely many codimension-one points; no finiteness assumption is 
 
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, the
 "principal divisors" part of "Divisors on a curve". It reuses Mathlib's
-`AlgebraicGeometry.Scheme.ord`, `ord_mul`, and `ord_eq_unzero_ordHom`; no external
-formalization is vendored.
+`AlgebraicGeometry.Scheme.ord` and `ord_mul`; no external formalization is vendored.
 -/
 
 public section
@@ -67,71 +66,6 @@ noncomputable def orderAt (x : CodimensionOnePoint X) :
 lemma orderAt_apply (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ) :
     orderAt x f = X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x :=
   (rfl)
-
-/-- The constant rational function `1` has order zero.
-
-Not `@[simp]`: `orderAt_apply` rewrites the left-hand side first, so as a simp lemma this
-would never fire. -/
-lemma orderAt_ofMul_one (x : CodimensionOnePoint X) :
-    orderAt x (Additive.ofMul (1 : X.functionFieldˣ)) = 0 :=
-  map_zero (orderAt x)
-
-/-- Taking the inverse of a nonzero rational function negates its order.
-
-Not `@[simp]`: `orderAt_apply` rewrites the left-hand side first, so as a simp lemma this
-would never fire. -/
-lemma orderAt_ofMul_inv (x : CodimensionOnePoint X) (f : X.functionFieldˣ) :
-    orderAt x (Additive.ofMul f⁻¹) = -orderAt x (Additive.ofMul f) :=
-  map_neg (orderAt x) (Additive.ofMul f)
-
-/-- The order homomorphism is the additive form of Mathlib's `ordHom`, after removing the
-nonzero wrapper from its value. -/
-lemma orderAt_eq_unzero_ordHom (x : CodimensionOnePoint X)
-    (f : Additive X.functionFieldˣ) :
-    orderAt x f =
-      (WithZero.unzero
-        ((map_ne_zero (X.ordHom x x.property)).mpr
-          (Units.ne_zero (Additive.toMul f : X.functionFieldˣ)))).toAdd := by
-  rw [orderAt_apply, X.ord_eq_unzero_ordHom x.property
-    (Units.ne_zero (Additive.toMul f : X.functionFieldˣ))]
-
-/-- The order at `x` equals `n` exactly when Mathlib's multiplicative order homomorphism has
-value `Multiplicative.ofAdd n`. -/
-lemma orderAt_eq_iff (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ) (n : ℤ) :
-    orderAt x f = n ↔
-      X.ordHom x x.property ((Additive.toMul f : X.functionFieldˣ) : X.functionField) =
-        Multiplicative.ofAdd n := by
-  rw [orderAt_apply]
-  exact X.ord_eq_iff x.property (Units.ne_zero (Additive.toMul f : X.functionFieldˣ))
-
-/-- The order at `x` vanishes exactly when Mathlib's multiplicative order homomorphism has
-value one. -/
-lemma orderAt_eq_zero_iff (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ) :
-    orderAt x f = 0 ↔
-      X.ordHom x x.property ((Additive.toMul f : X.functionFieldˣ) : X.functionField) = 1 := by
-  simpa only [ofAdd_zero, WithZero.coe_one] using orderAt_eq_iff x f 0
-
-/-- A codimension-one point belongs to the order support of a rational function exactly when
-Mathlib's multiplicative order homomorphism is nontrivial there. -/
-lemma orderAt_ne_zero_iff (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ) :
-    orderAt x f ≠ 0 ↔
-      X.ordHom x x.property ((Additive.toMul f : X.functionFieldˣ) : X.functionField) ≠ 1 :=
-  not_congr (orderAt_eq_zero_iff x f)
-
-/-- A rational function represented by a unit on an open neighbourhood of `x` has order zero
-at `x`. -/
-lemma orderAt_eq_zero_of_isUnit {U : X.Opens} [Nonempty U] {f : Γ(X, U)}
-    (hf : IsUnit f) (x : CodimensionOnePoint X) (hx : x.1 ∈ U) :
-    orderAt x
-      (Additive.ofMul
-        (Units.mk0 (X.germToFunctionField U f)
-          (by
-            intro h
-            apply IsUnit.ne_zero hf
-            apply X.germToFunctionField_injective U
-            simpa using h))) = 0 := by
-  rw [orderAt_apply]
-  exact X.ord_of_isUnit hf hx
 
 end
 
