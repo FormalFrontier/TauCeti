@@ -107,7 +107,40 @@ private theorem jointRectangle_prefix
             (ProbabilityMeasure.pi fun _ : Fin r =>
               directingProbabilityMeasure μ X ω).toMeasure)
         (S ×ˢ Set.univ.pi B) := by
-  sorry
+  classical
+  have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
+    tailProcess_le_ambient 0 fun j _ => hX_meas j
+  have hν : Measurable (directingProbabilityMeasure μ X) :=
+    measurable_directingProbabilityMeasure hTail
+  have hjoint : Measurable fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X i ω) :=
+    hν.prodMk (measurable_pi_lambda _ fun i => hX_meas _)
+  have hker : Measurable fun ω =>
+      (Measure.dirac (directingProbabilityMeasure μ X ω)).prod
+        (ProbabilityMeasure.pi fun _ : Fin r => directingProbabilityMeasure μ X ω).toMeasure :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν
+  have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) :=
+    hS.prod (MeasurableSet.univ_pi hB)
+  -- the joint law's mass is the mass of the tail event meeting the block cylinder
+  have hpre : (fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X i ω))
+        ⁻¹' (S ×ˢ Set.univ.pi B)
+      = (directingProbabilityMeasure μ X ⁻¹' S)
+        ∩ blockCylinder X (fun i : Fin r => (i : ℕ)) B := by
+    ext ω
+    simp [Set.mem_prod, mem_blockCylinder, Set.mem_pi]
+  rw [Measure.map_apply hjoint hrect, hpre,
+    measure_inter_blockCylinder_eq_setLIntegral hX hX_meas hB hS,
+    Measure.bind_apply hrect hker.aemeasurable]
+  -- the mixture side splits as a Dirac indicator times the product measure
+  rw [← lintegral_indicator (hν hS)]
+  refine lintegral_congr fun ω => ?_
+  have hprod : (ProbabilityMeasure.pi fun _ : Fin r => directingProbabilityMeasure μ X ω).toMeasure
+      (Set.univ.pi B) = ∏ i, directingMeasure μ X ω (B i) := by
+    rw [ProbabilityMeasure.toMeasure_pi, Measure.pi_pi]
+    exact Finset.prod_congr rfl fun i _ => by rw [directingProbabilityMeasure_toMeasure]
+  rw [Measure.prod_prod, Measure.dirac_apply' _ hS, hprod]
+  by_cases hω : directingProbabilityMeasure μ X ω ∈ S
+  · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
+  · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
 
 end Probability
 
