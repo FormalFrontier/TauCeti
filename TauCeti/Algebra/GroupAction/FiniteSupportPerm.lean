@@ -8,6 +8,7 @@ public import Mathlib.GroupTheory.GroupAction.FixedPoints
 public import Mathlib.Algebra.Group.Action.End
 public import Mathlib.Data.Set.Finite.Lattice
 public import Mathlib.Order.Interval.Finset.Nat
+public import Mathlib.Logic.Equiv.Fintype
 import Mathlib.Algebra.Group.Pointwise.Set.Finite
 
 /-!
@@ -52,5 +53,39 @@ theorem finite_compl_fixedBy_conj {G α : Type*} [Group G] [MulAction G α] {g h
     (hh : (MulAction.fixedBy α h)ᶜ.Finite) :
     (MulAction.fixedBy α (g⁻¹ * h * g))ᶜ.Finite := by
   simpa [Set.smul_set_compl, MulAction.smul_fixedBy] using hh.smul_set (a := g⁻¹)
+
+/-- **A pair of embeddings from a finite type is realised by a finitely supported permutation.**
+For `f g : ι ↪ β` with `ι` finite there is a permutation of `β` carrying each `f i` to `g i` and
+fixing everything outside the finite set `range f ∪ range g`.
+
+Mathlib's `Equiv.Perm.exists_extending_pair` already supplies a permutation with the right values,
+but it matches the complements of the ranges by an arbitrary bijection, so it need not be finitely
+supported. Applying it inside the finite subtype `range f ∪ range g` and pushing the result out with
+`Equiv.Perm.viaFintypeEmbedding` keeps it the identity off that set. -/
+theorem exists_finiteSupport_perm_apply_eq {ι β : Type*} [Finite ι] (f g : ι ↪ β) :
+    ∃ σ : Equiv.Perm β, (MulAction.fixedBy β σ)ᶜ.Finite ∧ ∀ i, σ (f i) = g i := by
+  classical
+  set T : Set β := Set.range f ∪ Set.range g with hT
+  have hTfin : T.Finite := (Set.finite_range f).union (Set.finite_range g)
+  haveI : Fintype ↥T := hTfin.fintype
+  have hfT : ∀ i, f i ∈ T := fun i => Or.inl ⟨i, rfl⟩
+  have hgT : ∀ i, g i ∈ T := fun i => Or.inr ⟨i, rfl⟩
+  have hf' : Function.Injective (fun i => (⟨f i, hfT i⟩ : ↥T)) := fun a b h =>
+    f.injective (congrArg Subtype.val h)
+  have hg' : Function.Injective (fun i => (⟨g i, hgT i⟩ : ↥T)) := fun a b h =>
+    g.injective (congrArg Subtype.val h)
+  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ hf' hg'
+  set emb : ↥T ↪ β := ⟨Subtype.val, Subtype.val_injective⟩ with hemb
+  refine ⟨Equiv.Perm.viaFintypeEmbedding σ emb, hTfin.subset fun b hb => ?_, fun i => ?_⟩
+  · by_contra hbT
+    refine hb ?_
+    simp only [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
+    refine Equiv.Perm.viaFintypeEmbedding_apply_notMem_range σ emb ?_
+    rintro ⟨x, rfl⟩
+    exact hbT x.2
+  · calc (Equiv.Perm.viaFintypeEmbedding σ emb) (f i)
+        = ((σ ⟨f i, hfT i⟩ : ↥T) : β) :=
+          Equiv.Perm.viaFintypeEmbedding_apply_image σ emb ⟨f i, hfT i⟩
+      _ = g i := congrArg Subtype.val (hσ i)
 
 end TauCeti
