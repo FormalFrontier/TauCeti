@@ -68,14 +68,18 @@ lemma orderAt_apply (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ)
     orderAt x f = X.ord ((Additive.toMul f : X.functionFieldˣ) : X.functionField) x :=
   (rfl)
 
-/-- The constant rational function `1` has order zero. -/
-@[simp]
+/-- The constant rational function `1` has order zero.
+
+Not `@[simp]`: `orderAt_apply` rewrites the left-hand side first, so as a simp lemma this
+would never fire. -/
 lemma orderAt_ofMul_one (x : CodimensionOnePoint X) :
     orderAt x (Additive.ofMul (1 : X.functionFieldˣ)) = 0 :=
   map_zero (orderAt x)
 
-/-- Taking the inverse of a nonzero rational function negates its order. -/
-@[simp]
+/-- Taking the inverse of a nonzero rational function negates its order.
+
+Not `@[simp]`: `orderAt_apply` rewrites the left-hand side first, so as a simp lemma this
+would never fire. -/
 lemma orderAt_ofMul_inv (x : CodimensionOnePoint X) (f : X.functionFieldˣ) :
     orderAt x (Additive.ofMul f⁻¹) = -orderAt x (Additive.ofMul f) :=
   map_neg (orderAt x) (Additive.ofMul f)
