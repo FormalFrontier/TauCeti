@@ -1104,6 +1104,40 @@ private lemma boundary_term_decay (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
   rw [show (0 : ℝ) = -(1 / ↑k.factorial) * 0 from by ring]
   exact hkey.const_mul _
 
+/-- **The shifted order-`k` kernel is dominated by the Chafaï density.** For `0 ≤ x ≤ t` the
+kernel built from `(t - x) ^ (k - 1)` is nonnegative and bounded by the density built from
+`t ^ (k - 1)`. -/
+private lemma norm_ibp_kernel_le_chafaiDensity (f : ℝ → ℝ)
+    {k : ℕ} (hk0 : k ≠ 0) {x t : ℝ} (hx : 0 ≤ x) (ht : x ≤ t)
+    (hcm_sign : 0 ≤ (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) :
+    ‖(-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t‖ ≤ chafaiDensity f k t := by
+  have htx : 0 ≤ t - x := by linarith
+  have htx_le : t - x ≤ t := by linarith
+  rw [chafaiDensity_of_ne_zero hk0]
+  have hfact : (0 : ℝ) < ↑(k - 1).factorial := Nat.cast_pos.mpr (Nat.factorial_pos _)
+  have hval_nn : 0 ≤ (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t := by
+    calc
+      (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+          iteratedDerivWithin k f (Ici 0) t
+          = (t - x) ^ (k - 1) / ↑(k - 1).factorial *
+            ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
+      _ ≥ 0 := mul_nonneg (div_nonneg (pow_nonneg htx _) hfact.le) hcm_sign
+  rw [Real.norm_eq_abs, abs_of_nonneg hval_nn]
+  calc
+    (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t
+        = (1 / ↑(k - 1).factorial) * (t - x) ^ (k - 1) *
+          ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
+    _ ≤ (1 / ↑(k - 1).factorial) * t ^ (k - 1) *
+        ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left (pow_le_pow_left₀ htx htx_le _) (by positivity))
+            hcm_sign
+    _ = (-1 : ℝ) ^ k / ↑(k - 1).factorial * t ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t := by field_simp
+
 private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x)
     (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
@@ -1120,37 +1154,8 @@ private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonot
         (uniqueDiffOn_Ici 0)).mono
         (fun t ht => mem_Ici.mpr (lt_of_le_of_lt hx ht).le)))
   · rw [ae_restrict_iff' measurableSet_Ioi]
-    apply ae_of_all
-    intro t ht
-    simp only [Ioi, mem_setOf_eq] at ht
-    have ht0 : 0 < t := lt_of_le_of_lt hx ht
-    have htx : 0 ≤ t - x := by linarith
-    have htx_le : t - x ≤ t := by linarith
-    rw [chafaiDensity_of_ne_zero hk0]
-    have hcm_sign : 0 ≤ (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t :=
-      hcm.neg_one_pow_mul_iteratedDerivWithin_nonneg k ht0.le
-    have hfact : (0 : ℝ) < ↑(k - 1).factorial := Nat.cast_pos.mpr (Nat.factorial_pos _)
-    have hval_nn : 0 ≤ (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-        iteratedDerivWithin k f (Ici 0) t := by
-      calc
-        (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-            iteratedDerivWithin k f (Ici 0) t
-            = (t - x) ^ (k - 1) / ↑(k - 1).factorial *
-              ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
-        _ ≥ 0 := mul_nonneg (div_nonneg (pow_nonneg htx _) hfact.le) hcm_sign
-    rw [Real.norm_eq_abs, abs_of_nonneg hval_nn]
-    calc
-      (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t
-          = (1 / ↑(k - 1).factorial) * (t - x) ^ (k - 1) *
-            ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
-      _ ≤ (1 / ↑(k - 1).factorial) * t ^ (k - 1) *
-          ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by
-            exact mul_le_mul_of_nonneg_right
-              (mul_le_mul_of_nonneg_left (pow_le_pow_left₀ htx htx_le _) (by positivity))
-              hcm_sign
-      _ = (-1 : ℝ) ^ k / ↑(k - 1).factorial * t ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t := by field_simp
+    exact ae_of_all _ fun t ht => norm_ibp_kernel_le_chafaiDensity f hk0 hx (le_of_lt ht)
+      (hcm.neg_one_pow_mul_iteratedDerivWithin_nonneg k (le_trans hx (le_of_lt ht)))
 
 /-- Raising the sign exponent of the order-`k` kernel by one negates its integral. -/
 private lemma intervalIntegral_neg_one_pow_succ_kernel (f : ℝ → ℝ) (k : ℕ) (x T : ℝ) :

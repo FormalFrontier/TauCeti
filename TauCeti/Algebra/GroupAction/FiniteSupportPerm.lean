@@ -8,6 +8,8 @@ public import Mathlib.GroupTheory.GroupAction.FixedPoints
 public import Mathlib.Algebra.Group.Action.End
 public import Mathlib.Data.Set.Finite.Lattice
 public import Mathlib.Order.Interval.Finset.Nat
+public import Mathlib.Logic.Equiv.Fintype
+public import Mathlib.Logic.Embedding.Set
 import Mathlib.Algebra.Group.Pointwise.Set.Finite
 
 /-!
@@ -54,3 +56,46 @@ theorem finite_compl_fixedBy_conj {G α : Type*} [Group G] [MulAction G α] {g h
   simpa [Set.smul_set_compl, MulAction.smul_fixedBy] using hh.smul_set (a := g⁻¹)
 
 end TauCeti
+
+namespace Equiv.Perm
+
+/-- **A pair of embeddings from a finite type is realised by a permutation supported on their
+ranges.** For `f g : ι ↪ β` with `ι` finite there is a permutation of `β` carrying each `f i` to
+`g i` and fixing every point outside `Set.range f ∪ Set.range g`.
+
+That union is finite, so `Set.Finite.subset` turns the containment into finite support in the sense
+of `(MulAction.fixedBy β σ)ᶜ.Finite`. -/
+theorem exists_compl_fixedBy_subset_apply_eq {ι β : Type*} [Finite ι] (f g : ι ↪ β) :
+    ∃ σ : Equiv.Perm β,
+      (MulAction.fixedBy β σ)ᶜ ⊆ Set.range f ∪ Set.range g ∧ ∀ i, σ (f i) = g i := by
+  classical
+  set T : Set β := Set.range f ∪ Set.range g with hT
+  haveI : Fintype ↥T := ((Set.finite_range f).union (Set.finite_range g)).fintype
+  have hfT : ∀ i, f i ∈ T := fun i => Or.inl ⟨i, rfl⟩
+  have hgT : ∀ i, g i ∈ T := fun i => Or.inr ⟨i, rfl⟩
+  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair (f.codRestrict T hfT) (g.codRestrict T hgT)
+    (f.codRestrict T hfT).injective (g.codRestrict T hgT).injective
+  refine ⟨Equiv.Perm.viaFintypeEmbedding σ (Function.Embedding.subtype _), fun b hb => ?_,
+    fun i => ?_⟩
+  · by_contra hbT
+    refine hb ?_
+    simp only [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
+    refine Equiv.Perm.viaFintypeEmbedding_apply_notMem_range σ _ ?_
+    rintro ⟨x, rfl⟩
+    exact hbT x.2
+  · calc (Equiv.Perm.viaFintypeEmbedding σ (Function.Embedding.subtype _)) (f i)
+        = ((σ (f.codRestrict T hfT i) : ↥T) : β) :=
+          Equiv.Perm.viaFintypeEmbedding_apply_image σ _ (f.codRestrict T hfT i)
+      _ = g i := congrArg Subtype.val (hσ i)
+
+/-- Finite-support form of `Equiv.Perm.exists_compl_fixedBy_subset_apply_eq`: for `f g : ι ↪ β`
+with `ι` finite there is a permutation of `β` carrying each `f i` to `g i` whose support is finite.
+
+This is the shape consumers of finitely supported reindexing want, `(MulAction.fixedBy β σ)ᶜ.Finite`
+being Mathlib's finite-support predicate. -/
+theorem exists_finite_compl_fixedBy_apply_eq {ι β : Type*} [Finite ι] (f g : ι ↪ β) :
+    ∃ σ : Equiv.Perm β, (MulAction.fixedBy β σ)ᶜ.Finite ∧ ∀ i, σ (f i) = g i := by
+  obtain ⟨σ, hsub, hval⟩ := exists_compl_fixedBy_subset_apply_eq f g
+  exact ⟨σ, ((Set.finite_range f).union (Set.finite_range g)).subset hsub, hval⟩
+
+end Equiv.Perm
