@@ -98,6 +98,7 @@ noncomputable def latticeHomology
   (P.latticeShortComplex k).homology
 
 /-- Lattice homology is the canonical homology object of the lattice short complex. -/
+@[simp]
 theorem latticeHomology_def (P : PlumbingGraph V) (k : P.characteristicVectors) :
     P.latticeHomology k = (P.latticeShortComplex k).homology := by
   unfold latticeHomology
@@ -110,12 +111,12 @@ noncomputable def latticeHomologyIsoChainOfIsEmpty [IsEmpty V]
     P.latticeHomology k ≅ ModuleCat.of PlumbingCoefficient (PlumbingChain V) := by
   let S := P.latticeShortComplex k
   have hf : S.f = 0 := by
-    change ModuleCat.ofHom (P.latticeDifferential k) = 0
-    rw [P.latticeDifferential_eq_zero_of_isEmpty k]
+    simp only [S, latticeShortComplex, ShortComplex.moduleCatMk_f,
+      P.latticeDifferential_eq_zero_of_isEmpty k]
     rfl
   have hg : S.g = 0 := by
-    change ModuleCat.ofHom (P.latticeDifferential k) = 0
-    rw [P.latticeDifferential_eq_zero_of_isEmpty k]
+    simp only [S, latticeShortComplex, ShortComplex.moduleCatMk_g,
+      P.latticeDifferential_eq_zero_of_isEmpty k]
     rfl
   exact (S.asIsoHomologyπ hf).symm ≪≫ S.cyclesIsoX₂ hg
 
