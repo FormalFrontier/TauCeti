@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.GenusField
+public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 /-!
