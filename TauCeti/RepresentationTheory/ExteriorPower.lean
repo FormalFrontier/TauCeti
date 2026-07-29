@@ -62,6 +62,15 @@ theorem exteriorPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
     ρ.exteriorPower d g = _root_.exteriorPower.map d (ρ g) :=
   (rfl)
 
+/-- The exterior-power action applies the original action to every factor of a pure wedge.
+
+This is intentionally not a simp lemma: `exteriorPower_apply` followed by Mathlib's
+`exteriorPower.map_apply_ιMulti` already performs this simplification. -/
+theorem exteriorPower_apply_ιMulti (ρ : Representation R G M) (d : ℕ) (g : G) (m : Fin d → M) :
+    ρ.exteriorPower d g (_root_.exteriorPower.ιMulti R d m) =
+      _root_.exteriorPower.ιMulti R d (ρ g ∘ m) := by
+  rw [exteriorPower_apply, _root_.exteriorPower.map_apply_ιMulti]
+
 /-- The zeroth exterior power is equivalent to the trivial representation on the scalars. -/
 noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
     (ρ.exteriorPower 0).Equiv (trivial R G R) :=
@@ -115,6 +124,13 @@ noncomputable def exteriorPower (f : IntertwiningMap ρ σ) (d : ℕ) :
 theorem exteriorPower_toLinearMap (f : IntertwiningMap ρ σ) (d : ℕ) :
     (f.exteriorPower d).toLinearMap = _root_.exteriorPower.map d f.toLinearMap :=
   (rfl)
+
+/-- The induced map sends a pure wedge to the wedge of the images of its factors. -/
+@[simp]
+theorem exteriorPower_apply_ιMulti (f : IntertwiningMap ρ σ) (d : ℕ) (m : Fin d → M) :
+    f.exteriorPower d (_root_.exteriorPower.ιMulti R d m) =
+      _root_.exteriorPower.ιMulti R d (f ∘ m) :=
+  _root_.exteriorPower.map_apply_ιMulti f.toLinearMap m
 
 /-- Exterior powers preserve identity intertwining maps. -/
 @[simp]
@@ -178,6 +194,32 @@ noncomputable def exteriorPower (e : ρ.Equiv σ) (d : ℕ) :
 theorem exteriorPower_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (e.exteriorPower d).toLinearMap = _root_.exteriorPower.map d e.toLinearMap :=
   (rfl)
+
+/-- The induced equivalence sends a pure wedge to the wedge of the images of its factors. -/
+@[simp]
+theorem exteriorPower_apply_ιMulti (e : ρ.Equiv σ) (d : ℕ) (m : Fin d → M) :
+    e.exteriorPower d (_root_.exteriorPower.ιMulti R d m) =
+      _root_.exteriorPower.ιMulti R d (e ∘ m) :=
+  _root_.exteriorPower.map_apply_ιMulti e.toLinearMap m
+
+/-- Exterior powers preserve identity equivalences. -/
+@[simp]
+theorem exteriorPower_refl (d : ℕ) :
+    (Equiv.refl ρ).exteriorPower d = .refl (ρ.exteriorPower d) := by
+  have h : ((Equiv.refl ρ).exteriorPower d).toLinearMap =
+      (Equiv.refl (ρ.exteriorPower d)).toLinearMap := by
+    simp
+  exact Equiv.ext (funext fun x => LinearMap.congr_fun h x)
+
+/-- Exterior powers preserve composition of equivalences. -/
+@[simp]
+theorem exteriorPower_trans {P : Type*} [AddCommGroup P] [Module R P]
+    {τ : Representation R G P} (e : ρ.Equiv σ) (f : σ.Equiv τ) (d : ℕ) :
+    (e.trans f).exteriorPower d = (e.exteriorPower d).trans (f.exteriorPower d) := by
+  have h : ((e.trans f).exteriorPower d).toLinearMap =
+      ((e.exteriorPower d).trans (f.exteriorPower d)).toLinearMap := by
+    simp
+  exact Equiv.ext (funext fun x => LinearMap.congr_fun h x)
 
 end CommRing
 

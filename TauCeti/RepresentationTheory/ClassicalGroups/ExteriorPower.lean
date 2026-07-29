@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.ExteriorPower
