@@ -64,7 +64,7 @@ variable {V : Type u} [DecidableEq V] [Fintype V]
 
 The three objects are the total plumbing-chain module on all cubical dimensions. The short-complex
 condition is exactly `latticeDifferential_comp_self`. -/
-@[expose] noncomputable def latticeShortComplex
+noncomputable def latticeShortComplex
     (P : PlumbingGraph V) (k : P.characteristicVectors) :
     ShortComplex (ModuleCat PlumbingCoefficient) :=
   ShortComplex.moduleCatMk (P.latticeDifferential k) (P.latticeDifferential k)
@@ -74,31 +74,31 @@ condition is exactly `latticeDifferential_comp_self`. -/
 @[simp]
 theorem latticeShortComplex_X₁ (P : PlumbingGraph V) (k : P.characteristicVectors) :
     (P.latticeShortComplex k).X₁ =
-      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := rfl
+      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := (rfl)
 
 /-- The middle object of the lattice short complex is the plumbing-chain module. -/
 @[simp]
 theorem latticeShortComplex_X₂ (P : PlumbingGraph V) (k : P.characteristicVectors) :
     (P.latticeShortComplex k).X₂ =
-      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := rfl
+      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := (rfl)
 
 /-- The right object of the lattice short complex is the plumbing-chain module. -/
 @[simp]
 theorem latticeShortComplex_X₃ (P : PlumbingGraph V) (k : P.characteristicVectors) :
     (P.latticeShortComplex k).X₃ =
-      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := rfl
+      ModuleCat.of PlumbingCoefficient (PlumbingChain V) := (rfl)
 
 /-- The first map of the lattice short complex is the lattice differential. -/
 @[simp]
 theorem latticeShortComplex_f (P : PlumbingGraph V) (k : P.characteristicVectors) :
-    (P.latticeShortComplex k).f = ModuleCat.ofHom (P.latticeDifferential k) := by
-  simp [latticeShortComplex]
+    HEq (P.latticeShortComplex k).f
+      (ModuleCat.ofHom (P.latticeDifferential k)) := (HEq.rfl)
 
 /-- The second map of the lattice short complex is the lattice differential. -/
 @[simp]
 theorem latticeShortComplex_g (P : PlumbingGraph V) (k : P.characteristicVectors) :
-    (P.latticeShortComplex k).g = ModuleCat.ofHom (P.latticeDifferential k) := by
-  simp [latticeShortComplex]
+    HEq (P.latticeShortComplex k).g
+      (ModuleCat.ofHom (P.latticeDifferential k)) := (HEq.rfl)
 
 /-- The characteristic-two lattice homology module: the homology of the weighted
 plumbing-lattice short complex.
@@ -122,15 +122,13 @@ noncomputable def latticeHomologyIsoChainOfIsEmpty [IsEmpty V]
     P.latticeHomology k ≅ ModuleCat.of PlumbingCoefficient (PlumbingChain V) := by
   let S := P.latticeShortComplex k
   have hf : S.f = 0 := by
-    apply ModuleCat.hom_ext
-    simp only [S, latticeShortComplex_f, P.latticeDifferential_eq_zero_of_isEmpty k,
-      ModuleCat.hom_zero]
-    rfl
+    have h := P.latticeShortComplex_f k
+    rw [P.latticeDifferential_eq_zero_of_isEmpty k] at h
+    exact eq_of_heq h
   have hg : S.g = 0 := by
-    apply ModuleCat.hom_ext
-    simp only [S, latticeShortComplex_g, P.latticeDifferential_eq_zero_of_isEmpty k,
-      ModuleCat.hom_zero]
-    rfl
+    have h := P.latticeShortComplex_g k
+    rw [P.latticeDifferential_eq_zero_of_isEmpty k] at h
+    exact eq_of_heq h
   exact (S.asIsoHomologyπ hf).symm ≪≫ S.cyclesIsoX₂ hg
 
 /-- The characteristic-two lattice homology of a zero-vertex plumbing is a universe-lifted copy
