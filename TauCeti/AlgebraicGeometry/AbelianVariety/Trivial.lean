@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AbelianVariety.Hom.BaseChange
 public import TauCeti.AlgebraicGeometry.AbelianVariety.Hom.Iso
 public import TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup
+public import TauCeti.AlgebraicGeometry.Geometrically.Integral
 public import Mathlib.RingTheory.KrullDimension.Field
 public import Mathlib.RingTheory.Spectrum.Prime.Topology
 
@@ -17,8 +17,6 @@ The base `Spec K` itself, with its unique group-scheme structure, is an abelian 
 This file constructs it as `AbelianVariety.trivial K` and identifies it as the zero object of the
 category of abelian varieties over `K`.
 
-* `AlgebraicGeometry.geometricallyIntegral_of_isIso`: an isomorphism of schemes is geometrically
-  integral. This is the input that makes `Spec K` an abelian variety over `K`;
 * `AbelianVariety.trivial`: the trivial abelian variety, carried by the monoidal unit
   `𝟙_ (Over (Spec K))`, whose underlying scheme is `Spec K`;
 * `AbelianVariety.dim_trivial`: its dimension is `0`;
@@ -36,12 +34,24 @@ proper, geometrically connected group scheme over `k`; basic API, `dim`", and th
 base-change compatibility. Mathematically this is the degenerate case of the Jacobian: a curve of
 genus `0` has trivial Jacobian, and there the acceptance criterion `dim (Jac X) = genus X` reads
 `dim (trivial K) = 0`. No external mathematics is vendored; the proofs reuse Mathlib's group-object
-structure on the monoidal unit, stability of isomorphisms under base change, the terminal object of
-`Over S`, preservation of terminal objects by the right adjoint `Over.pullback`, and
+structure on the monoidal unit together with its uniqueness API for the trivial group object
+(`CommGrp.uniqueHomFromTrivial`, `Grp.uniqueHomToTrivial`), the terminal object of `Over S`,
+preservation of terminal objects by the right adjoint `Over.pullback`, and
 `PrimeSpectrum.topologicalKrullDim_eq_ringKrullDim` together with `ringKrullDim_eq_zero_of_field`.
+The geometric-integrality input is `TauCeti.AlgebraicGeometry.geometricallyIntegral_of_isIso`.
 The abelian variety itself is assembled by the existing constructor
 `AbelianVariety.ofGeometricallyIntegral`, whose body this file's companion change `@[expose]`s so
 that `(trivial K).toOver` still reduces to the monoidal unit.
+
+An earlier Tau Ceti formalization of this target,
+[PR #1030](https://github.com/TauCetiProject/TauCeti/pull/1030), was retired by queue housekeeping
+at the review round cap without an all-green review. This file follows its overall design: the same
+carrier `𝟙_ (Over (Spec K))` passed to `ofGeometricallyIntegral`, the same `trivial_toOver` /
+`trivial_toScheme` / `isTerminalTrivialToOver` interface, and its
+`geometricallyIntegral_of_isIso` (revised here from a low-priority instance to a plain lemma, and
+placed in `TauCeti.AlgebraicGeometry.Geometrically.Integral`). It is extended here beyond
+terminality to the full zero-object statement, the compatibility with the pointwise group law on
+hom-sets, and the behaviour under base change.
 -/
 
 public section
@@ -54,21 +64,13 @@ namespace AlgebraicGeometry
 
 universe u
 
-/-- An isomorphism of schemes is geometrically integral.
-
-Every base change of an isomorphism is an isomorphism, so the fibre product of `f` with a morphism
-`Spec L ⟶ Y` is isomorphic to `Spec L`, which is integral because `L` is a field. -/
-lemma geometricallyIntegral_of_isIso {X Y : Scheme.{u}} (f : X ⟶ Y) [IsIso f] :
-    GeometricallyIntegral f := by
-  constructor
-  intro L _ y Z fst snd h
-  have : IsIso snd :=
-    (MorphismProperty.isomorphisms Scheme).of_isPullback h (inferInstanceAs (IsIso f))
-  exact IsIntegral.of_isIso (inv snd)
-
 /-- The spectrum of a field has topological Krull dimension `0`. -/
 private lemma topologicalKrullDim_spec_eq_zero (K : Type u) [Field K] :
     topologicalKrullDim (Spec (.of K)) = 0 := by
+  -- The underlying topological space of `Spec R` *is* `PrimeSpectrum R`, definitionally
+  -- (`AlgebraicGeometry.Scheme.Spec_carrier`); no lemma states `topologicalKrullDim` of a scheme
+  -- in terms of its coordinate ring, and Mathlib crosses the same gap by `change`, in
+  -- `AlgebraicGeometry.IsLocallyArtinian.of_topologicalKrullDim_le_zero`.
   change topologicalKrullDim (PrimeSpectrum K) = 0
   rw [PrimeSpectrum.topologicalKrullDim_eq_ringKrullDim, ringKrullDim_eq_zero_of_field]
 
@@ -84,14 +86,19 @@ variable (K : Type u) [Field K]
 itself.
 
 It is carried by the monoidal unit `𝟙_ (Over (Spec K))`, which is a group object because it is
-terminal, and whose structure morphism is the identity of `Spec K`; the identity is proper, and it
-is geometrically integral by `geometricallyIntegral_of_isIso`. Those are exactly the hypotheses of
-`AbelianVariety.ofGeometricallyIntegral`, which assembles them. -/
+terminal, and whose structure morphism is the identity of `Spec K` (`Over.tensorUnit_hom`); the
+identity is proper, and it is geometrically integral by `geometricallyIntegral_of_isIso`. Those
+are exactly the hypotheses of `AbelianVariety.ofGeometricallyIntegral`, which assembles them. -/
 @[expose] def trivial : AbelianVariety K :=
-  haveI : IsProper (𝟙_ (Over (Spec (.of K)))).hom :=
-    inferInstanceAs (IsProper (𝟙 (Spec (.of K))))
-  haveI : GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom :=
-    show GeometricallyIntegral (𝟙 (Spec (.of K))) from geometricallyIntegral_of_isIso _
+  haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
+  haveI : IsProper (𝟙_ (Over (Spec (.of K)))).hom := by
+    rw [Over.tensorUnit_hom]
+    -- `infer_instance` fails on the rewritten goal because the failed attempt on the original
+    -- goal is cached; `inferInstanceAs` re-elaborates the type and succeeds.
+    exact inferInstanceAs (IsProper (𝟙 _))
+  haveI : GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom := by
+    rw [Over.tensorUnit_hom]
+    exact hid
   ofGeometricallyIntegral (𝟙_ (Over (Spec (.of K))))
 
 @[simp]
@@ -107,6 +114,22 @@ monoidal unit of `Over (Spec K)`. -/
 def isTerminalTrivialToOver : IsTerminal (trivial K).toOver :=
   isTerminalTensorUnit
 
+/-- The unit section of the trivial abelian variety is the identity: it is an endomorphism of a
+terminal object. -/
+@[simp]
+lemma trivial_one : η[(trivial K).toOver] = 𝟙 (𝟙_ (Over (Spec (.of K)))) :=
+  (isTerminalTrivialToOver K).hom_ext _ _
+
+/-- The multiplication of the trivial abelian variety is the terminal projection. -/
+@[simp]
+lemma trivial_mul : μ[(trivial K).toOver] = toUnit ((trivial K).toOver ⊗ (trivial K).toOver) :=
+  (isTerminalTrivialToOver K).hom_ext _ _
+
+/-- The inversion of the trivial abelian variety is the identity. -/
+@[simp]
+lemma trivial_inv : ι[(trivial K).toOver] = 𝟙 (𝟙_ (Over (Spec (.of K)))) :=
+  (isTerminalTrivialToOver K).hom_ext _ _
+
 /-- The trivial abelian variety has dimension `0`. -/
 @[simp]
 lemma dim_trivial : (trivial K).dim = 0 := by
@@ -115,6 +138,23 @@ lemma dim_trivial : (trivial K).dim = 0 := by
 variable {K}
 
 /-! ### The zero object -/
+
+/-- There is exactly one homomorphism from an abelian variety to the trivial one. Since
+`(trivial K).toOver` is the monoidal unit, this is Mathlib's `Grp.uniqueHomToTrivial`, transported
+through the hom equivalences of the induced categories `AbelianVariety K`, `CommGrp` and `Grp`. -/
+instance uniqueHomToTrivial (A : AbelianVariety K) : Unique (A ⟶ trivial K) :=
+  ((show _ ≃ (CommGrp.mk A.toOver ⟶ CommGrp.trivial (Over (Spec (.of K)))) from
+      InducedCategory.homEquiv).trans
+    (show _ ≃ (Grp.mk A.toOver ⟶ Grp.trivial (Over (Spec (.of K)))) from
+      InducedCategory.homEquiv)).unique
+
+/-- There is exactly one homomorphism from the trivial abelian variety to an abelian variety.
+Since `(trivial K).toOver` is the monoidal unit, this is Mathlib's
+`CommGrp.uniqueHomFromTrivial`, transported through the hom equivalence of the induced category
+`AbelianVariety K`. -/
+instance uniqueHomFromTrivial (A : AbelianVariety K) : Unique (trivial K ⟶ A) :=
+  (show _ ≃ (CommGrp.trivial (Over (Spec (.of K))) ⟶ CommGrp.mk A.toOver) from
+    InducedCategory.homEquiv).unique
 
 /-- The homomorphism from an abelian variety to the trivial one, namely the identity element of
 the group `A ⟶ trivial K`. Its underlying morphism over `Spec K` is the structure morphism of
@@ -157,24 +197,18 @@ lemma toSchemeHom_fromTrivial (A : AbelianVariety K) :
 /-- The trivial abelian variety is terminal: the only homomorphism to it from an abelian variety
 over `K` is that variety's structure morphism to `Spec K`. -/
 def isTerminalTrivial (K : Type u) [Field K] : IsTerminal (trivial K) :=
-  IsTerminal.ofUniqueHom toTrivial fun A f ↦
-    Hom.ext (congrArg Over.Hom.left
-      ((isTerminalTrivialToOver K).hom_ext (Hom.toOverHom f) (Hom.toOverHom (toTrivial A))))
+  IsTerminal.ofUnique _
 
 /-- The trivial abelian variety is initial: the only homomorphism from it to an abelian variety
 over `K` is that variety's unit section, because a homomorphism of group schemes preserves the
 unit and the unit of the trivial group scheme is the identity. -/
 def isInitialTrivial (K : Type u) [Field K] : IsInitial (trivial K) :=
-  IsInitial.ofUniqueHom fromTrivial fun A f ↦
-    -- the unit of the trivial group scheme is the identity, so `Hom.one_hom` reads `f = η[A]`
-    have h : Hom.toOverHom f = η[A.toOver] :=
-      (Category.id_comp (Hom.toOverHom f)).symm.trans (Hom.one_hom f)
-    Hom.ext (congrArg Over.Hom.left (h.trans (toOverHom_fromTrivial A).symm))
+  IsInitial.ofUnique _
 
 /-- The trivial abelian variety is a zero object of the category of abelian varieties over `K`. -/
 lemma isZeroTrivial (K : Type u) [Field K] : IsZero (trivial K) where
-  unique_to A := ⟨⟨⟨fromTrivial A⟩, fun f ↦ (isInitialTrivial K).hom_ext f _⟩⟩
-  unique_from A := ⟨⟨⟨toTrivial A⟩, fun f ↦ (isTerminalTrivial K).hom_ext f _⟩⟩
+  unique_to A := nonempty_unique (trivial K ⟶ A)
+  unique_from A := nonempty_unique (A ⟶ trivial K)
 
 instance (K : Type u) [Field K] : HasZeroObject (AbelianVariety K) :=
   ⟨trivial K, isZeroTrivial K⟩
