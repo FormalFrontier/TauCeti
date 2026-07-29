@@ -59,7 +59,6 @@ noncomputable abbrev permutationModuleBasis {n : ℕ} (μ : n.Partition) :
   MonoidAlgebra.basis (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) ℚ
 
 /-- The symmetric-group action permutes the tabloid basis by left multiplication. -/
-@[simp]
 theorem permutationModule_ρ_basis {n : ℕ} (μ : n.Partition)
     (σ : Equiv.Perm (Fin n))
     (q : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) :
@@ -94,7 +93,6 @@ theorem finrank_permutationModule {n : ℕ} (μ : n.Partition) :
   rw [finrank_permutationModule_eq_index, youngSubgroup_index]
 
 /-- The character of `M^μ` at `σ` is the number of `μ`-tabloids fixed by `σ`. -/
-@[simp]
 theorem char_permutationModule {n : ℕ} (μ : n.Partition)
     (σ : Equiv.Perm (Fin n)) :
     (permutationModule μ).ρ.character σ =
