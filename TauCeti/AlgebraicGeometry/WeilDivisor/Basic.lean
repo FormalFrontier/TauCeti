@@ -158,55 +158,6 @@ lemma mem_effectiveSubmonoid (D : WeilDivisor X) :
     D ∈ effectiveSubmonoid X ↔ IsEffective D :=
   Iff.rfl
 
-/-- Reindexing a Weil divisor along an equivalence preserves effectivity. -/
-@[simp]
-lemma isEffective_equivMapDomain_iff (e : X ≃ Y) (D : WeilDivisor X) :
-    IsEffective (Finsupp.equivMapDomain e D) ↔ IsEffective D := by
-  constructor
-  · intro h x
-    simpa only [coeff, Finsupp.equivMapDomain_apply,
-      Equiv.symm_apply_apply] using h (e x)
-  · intro h y
-    simpa only [coeff, Finsupp.equivMapDomain_apply] using h (e.symm y)
-
-/-- An equivalence of point types reindexes effective Weil divisors additively. -/
-noncomputable def effectiveSubmonoidAddEquiv (e : X ≃ Y) :
-    effectiveSubmonoid X ≃+ effectiveSubmonoid Y where
-  toFun D :=
-    ⟨Finsupp.domCongr e D, by
-      simpa only [Finsupp.domCongr_apply, mem_effectiveSubmonoid] using
-        (isEffective_equivMapDomain_iff e D).mpr D.property⟩
-  invFun D :=
-    ⟨Finsupp.domCongr e.symm D, by
-      simpa only [Finsupp.domCongr_apply, mem_effectiveSubmonoid] using
-        (isEffective_equivMapDomain_iff e.symm D).mpr D.property⟩
-  left_inv D := Subtype.ext <| by
-    simpa only [Finsupp.domCongr_symm] using
-      (Finsupp.domCongr e).symm_apply_apply (D : WeilDivisor X)
-  right_inv D := Subtype.ext <| by
-    simpa only [Finsupp.domCongr_symm] using
-      (Finsupp.domCongr e).apply_symm_apply (D : WeilDivisor Y)
-  map_add' D E := Subtype.ext <| by
-    simpa only [AddSubmonoid.coe_add] using
-      (Finsupp.domCongr e).map_add (D : WeilDivisor X) E
-
-/-- After forgetting effectivity, `effectiveSubmonoidAddEquiv` is ordinary reindexing. -/
-@[simp]
-lemma coe_effectiveSubmonoidAddEquiv (e : X ≃ Y) (D : effectiveSubmonoid X) :
-    ((effectiveSubmonoidAddEquiv e D : effectiveSubmonoid Y) : WeilDivisor Y) =
-      Finsupp.domCongr e D := by
-  simp only [effectiveSubmonoidAddEquiv, AddEquiv.coe_mk, Equiv.coe_fn_mk]
-
-/-- After forgetting effectivity, the inverse of `effectiveSubmonoidAddEquiv` is inverse
-reindexing. -/
-@[simp]
-lemma coe_effectiveSubmonoidAddEquiv_symm (e : X ≃ Y) (D : effectiveSubmonoid Y) :
-    (((effectiveSubmonoidAddEquiv e).symm D : effectiveSubmonoid X) : WeilDivisor X) =
-      (Finsupp.domCongr e).symm D := by
-  apply (Finsupp.domCongr e).injective
-  rw [← coe_effectiveSubmonoidAddEquiv e ((effectiveSubmonoidAddEquiv e).symm D),
-    AddEquiv.apply_symm_apply, AddEquiv.apply_symm_apply]
-
 /-- Push forward a formal divisor along a map of point sets by summing coefficients over
 fibres.  Geometric pushforward of Weil divisors will specialize this once the relevant point
 maps and residue-degree factors are available. -/

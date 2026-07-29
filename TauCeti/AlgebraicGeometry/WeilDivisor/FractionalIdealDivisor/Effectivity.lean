@@ -105,25 +105,26 @@ variable (R K)
 fractional ideals correspond exactly to effective Weil divisors. -/
 noncomputable def integralFractionalIdealDivisorAddEquiv :
     integralFractionalIdealSubmonoid R K ≃+
-      effectiveSubmonoid (HeightOneSpectrum R) where
-  toFun I :=
-    ⟨fractionalIdealDivisorAddEquiv R K I,
-      (mem_effectiveSubmonoid _).mpr <| by
-        simpa only [fractionalIdealDivisorAddEquiv_apply] using
-          (isEffective_fractionalIdealDivisor_iff_mem
-            (R := R) (K := K) (I : Additive (FractionalIdeal R⁰ K)ˣ)).mpr I.property⟩
-  invFun D :=
-    ⟨(fractionalIdealDivisorAddEquiv R K).symm D,
-      (isEffective_fractionalIdealDivisor_iff_mem
-        (R := R) (K := K)
-        ((fractionalIdealDivisorAddEquiv R K).symm D)).mp <| by
-        simpa only [← fractionalIdealDivisorAddEquiv_apply, AddEquiv.apply_symm_apply]
-          using (mem_effectiveSubmonoid (D : WeilDivisor (HeightOneSpectrum R))).mp D.property⟩
-  left_inv I := Subtype.ext <| (fractionalIdealDivisorAddEquiv R K).symm_apply_apply I
-  right_inv D := Subtype.ext <| (fractionalIdealDivisorAddEquiv R K).apply_symm_apply D
-  map_add' I J := Subtype.ext <|
-    (fractionalIdealDivisorAddEquiv R K).map_add
-      (I : Additive (FractionalIdeal R⁰ K)ˣ) J
+      effectiveSubmonoid (HeightOneSpectrum R) :=
+  ((fractionalIdealDivisorAddEquiv R K).addSubmonoidMap
+    (integralFractionalIdealSubmonoid R K)).trans
+      (AddEquiv.addSubmonoidCongr <| by
+        ext D
+        constructor
+        · rintro ⟨I, hI, rfl⟩
+          exact (mem_effectiveSubmonoid _).mpr <| by
+            simpa only [fractionalIdealDivisorAddEquiv_apply] using
+              (isEffective_fractionalIdealDivisor_iff_mem
+                (R := R) (K := K) I).mpr hI
+        · intro hD
+          refine ⟨(fractionalIdealDivisorAddEquiv R K).symm D, ?_, ?_⟩
+          · exact (isEffective_fractionalIdealDivisor_iff_mem
+              (R := R) (K := K)
+              ((fractionalIdealDivisorAddEquiv R K).symm D)).mp <| by
+                simpa only [← fractionalIdealDivisorAddEquiv_apply,
+                  AddEquiv.apply_symm_apply] using
+                    (mem_effectiveSubmonoid D).mp hD
+          · exact (fractionalIdealDivisorAddEquiv R K).apply_symm_apply D)
 
 /-- The restricted equivalence agrees with `fractionalIdealDivisor` after forgetting
 effectivity. -/
