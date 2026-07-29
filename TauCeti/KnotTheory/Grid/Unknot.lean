@@ -55,7 +55,7 @@ evaluated.
   `TauCeti.GridDiagram.componentCycleType_unknot`: the diagram represents a knot, its component
   permutation being the inverse cyclic shift.
 * `TauCeti.GridDiagram.relabelRows_relabelColumns_unknot`: the diagram is invariant under
-  simultaneously shifting all rows and all columns by one, a cyclic symmetry of order `n + 2`.
+  simultaneously shifting all rows and all columns by one.
 * `TauCeti.GridDiagram.maslovXℤ_unknot_O` and `TauCeti.GridDiagram.maslovOℤ_unknot_X`: the two
   crossed Maslov gradings of the marking states are both the grid number.
 * `TauCeti.GridDiagram.alexander_unknot_O` and `TauCeti.GridDiagram.alexander_unknot_X`: the
@@ -168,7 +168,7 @@ theorem componentCycleType_unknot : (unknot n).componentCycleType = {n + 2} :=
   (isKnot_unknot n).componentCycleType_eq
 
 /-- The standard unknot grid diagram is invariant under shifting all rows and all columns by one
-at the same time. This cyclic symmetry has order `n + 2`. -/
+at the same time. -/
 theorem relabelRows_relabelColumns_unknot :
     ((unknot n).relabelRows (finRotate (n + 2))).relabelColumns (finRotate (n + 2)) = unknot n := by
   refine GridDiagram.ext (GridState.ext fun c => ?_) (GridState.ext fun c => ?_)
