@@ -146,10 +146,19 @@ theorem finrank_candidateGenusField_over_candidateGenusFieldBase {d : ℤ} (hd :
     exact finrank_candidateGenusFieldBase hd hnsq
   have h := finrank_top_over_intermediateField_of_finrank_eq_two hroot hindep
     F hF
+  have heF (x : candidateGenusFieldBase hd) :
+      (↑(eF x) : adjoin ℚ (Set.range (genusFieldRoot hd))) =
+        e (x : candidateGenusField hd) := by
+    convert IntermediateField.coe_equivMap_apply
+      (candidateGenusFieldBase hd) e.toAlgHom x using 1 <;> rfl
   have hrel :
       Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
         Module.finrank F (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
-    Algebra.finrank_eq_of_equiv_equiv eF.toRingEquiv e.toRingEquiv (by ext; rfl)
+    Algebra.finrank_eq_of_equiv_equiv eF.toRingEquiv e.toRingEquiv (by
+      apply RingHom.ext
+      intro x
+      simpa only [RingHom.comp_apply, IntermediateField.algebraMap_apply,
+        RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, AlgEquiv.coe_ringEquiv] using heF x)
   rw [hrel]
   convert h using 1
   · rfl
