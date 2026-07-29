@@ -71,6 +71,8 @@ noncomputable def resEquivalence (e : G ≃* H) :
     (NatIso.ofComponents
       (fun A ↦ _root_.Rep.mkIso <|
         Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
+          -- Unfold the two restricted actions so the unit component reduces to cancellation
+          -- by `e.apply_symm_apply`; both underlying linear maps are definitionally identities.
           change LinearMap.id.comp (A.ρ (e (e.symm _))) =
             (A.ρ _).comp LinearMap.id
           rw [LinearMap.id_comp, LinearMap.comp_id]
@@ -88,6 +90,8 @@ noncomputable def resEquivalence (e : G ≃* H) :
       (NatIso.ofComponents
         (fun A ↦ _root_.Rep.mkIso <|
           Representation.Equiv.mk (LinearEquiv.refl k A.V) fun _ ↦ by
+            -- Unfold the two restricted actions so the counit component reduces to cancellation
+            -- by `e.symm_apply_apply`; both underlying linear maps are definitionally identities.
             change LinearMap.id.comp (A.ρ (e.symm (e _))) =
               (A.ρ _).comp LinearMap.id
             rw [LinearMap.id_comp, LinearMap.comp_id]

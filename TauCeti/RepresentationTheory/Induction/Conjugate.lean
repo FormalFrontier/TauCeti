@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.Irreducible
+public import TauCeti.RepresentationTheory.Induction.Transitivity
 
 /-!
 # Conjugate representations
@@ -24,6 +25,7 @@ This is the representation occurring in the summands of the Mackey decomposition
 * `TauCeti.conjSubgroupEquiv`: the canonical isomorphism from `sHs⁻¹` to `H`.
 * `TauCeti.conjRepFunctor`: conjugation as a functor between representation categories.
 * `TauCeti.conjRep`: the conjugate of a representation.
+* `TauCeti.conjRepEquivalence`: conjugation as an equivalence of representation categories.
 * `TauCeti.conjFDRep`: the finite-dimensional version.
 
 ## References
@@ -77,6 +79,25 @@ def conjRepFunctor [Semiring k] (s : G) (H : Subgroup G) :
 def conjRep [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
     Rep k (MulAut.conj s • H : Subgroup G) :=
   (conjRepFunctor s H).obj A
+
+/-- Conjugation by a group element is an equivalence of representation categories. -/
+noncomputable def conjRepEquivalence [Semiring k] (s : G) (H : Subgroup G) :
+    Rep k H ≌ Rep k (MulAut.conj s • H : Subgroup G) :=
+  Rep.resEquivalence (conjSubgroupEquiv s H)
+
+/-- The forward functor of the conjugation equivalence is restriction along conjugation. -/
+@[simp]
+theorem conjRepEquivalence_functor [Semiring k] (s : G) (H : Subgroup G) :
+    (conjRepEquivalence (k := k) s H).functor =
+      Rep.resFunctor (conjSubgroupEquiv s H).toMonoidHom := by
+  rw [conjRepEquivalence, Rep.resEquivalence_functor]
+
+/-- The inverse functor of the conjugation equivalence restricts along inverse conjugation. -/
+@[simp]
+theorem conjRepEquivalence_inverse [Semiring k] (s : G) (H : Subgroup G) :
+    (conjRepEquivalence (k := k) s H).inverse =
+      Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
+  rw [conjRepEquivalence, Rep.resEquivalence_inverse]
 
 /-- Conjugation preserves the underlying module of a representation. -/
 @[simp]
@@ -146,6 +167,8 @@ def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : 
 theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
     {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation (conjRep s A).ρ) :
     HEq (conjRepSubrepresentationOrderIso s A S).toSubmodule S.toSubmodule := by
+  -- Unfold the conjugate representation and the explicit order isomorphism; its forward map
+  -- deliberately reuses the same underlying submodule.
   change HEq S.toSubmodule S.toSubmodule
   rfl
 
@@ -154,6 +177,8 @@ theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
 theorem conjRepSubrepresentationOrderIso_symm_apply_toSubmodule [Semiring k] (s : G)
     {H : Subgroup G} (A : Rep.{w} k H) (S : Subrepresentation A.ρ) :
     HEq ((conjRepSubrepresentationOrderIso s A).symm S).toSubmodule S.toSubmodule := by
+  -- Unfold the conjugate representation and the explicit order isomorphism; its inverse map
+  -- deliberately reuses the same underlying submodule.
   change HEq S.toSubmodule S.toSubmodule
   rfl
 
