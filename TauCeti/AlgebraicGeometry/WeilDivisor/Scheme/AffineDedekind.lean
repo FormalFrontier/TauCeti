@@ -52,7 +52,7 @@ noncomputable section
 
 /-- The nonzero prime ideals of a Dedekind ring are exactly the codimension-one points of its
 spectrum. -/
-@[expose] def heightOneSpectrumEquivCodimensionOnePoint
+def heightOneSpectrumEquivCodimensionOnePoint
     (R : CommRingCat.{u}) [IsDedekindDomain R] :
     HeightOneSpectrum R ≃ CodimensionOnePoint (Spec R) where
   toFun v := ⟨⟨v.asIdeal, v.isPrime⟩, by
@@ -81,7 +81,7 @@ ideal. -/
 lemma heightOneSpectrumEquivCodimensionOnePoint_apply_asIdeal
     (R : CommRingCat.{u}) [IsDedekindDomain R] (v : HeightOneSpectrum R) :
     (heightOneSpectrumEquivCodimensionOnePoint R v).1.asIdeal = v.asIdeal :=
-  rfl
+  (rfl)
 
 /-- The height-one prime associated to a codimension-one point of a spectrum is its underlying
 prime ideal. -/
@@ -89,11 +89,11 @@ prime ideal. -/
 lemma heightOneSpectrumEquivCodimensionOnePoint_symm_apply_asIdeal
     (R : CommRingCat.{u}) [IsDedekindDomain R] (x : CodimensionOnePoint (Spec R)) :
     ((heightOneSpectrumEquivCodimensionOnePoint R).symm x).asIdeal = x.1.asIdeal :=
-  rfl
+  (rfl)
 
 /-- For an affine scheme with Dedekind coordinate ring, height-one prime ideals of its coordinate
 ring are equivalent to codimension-one points of the scheme. -/
-@[expose] def affineDedekindPointEquiv (X : Scheme.{u}) [IsAffine X]
+def affineDedekindPointEquiv (X : Scheme.{u}) [IsAffine X]
     [IsDedekindDomain Γ(X, ⊤)] :
     HeightOneSpectrum Γ(X, ⊤) ≃ CodimensionOnePoint X :=
   (heightOneSpectrumEquivCodimensionOnePoint Γ(X, ⊤)).trans
@@ -119,7 +119,15 @@ by mapping that point to the spectrum. -/
 lemma affineDedekindPointEquiv_symm_apply_asIdeal (X : Scheme.{u}) [IsAffine X]
     [IsDedekindDomain Γ(X, ⊤)] (x : CodimensionOnePoint X) :
     ((affineDedekindPointEquiv X).symm x).asIdeal = (X.isoSpec.hom x.1).asIdeal :=
-  rfl
+  calc
+    ((affineDedekindPointEquiv X).symm x).asIdeal =
+        ((heightOneSpectrumEquivCodimensionOnePoint Γ(X, ⊤)).symm
+          (codimensionOnePointEquivOfIso X.isoSpec x)).asIdeal := by
+      rfl
+    _ = (codimensionOnePointEquivOfIso X.isoSpec x).1.asIdeal :=
+      heightOneSpectrumEquivCodimensionOnePoint_symm_apply_asIdeal _ _
+    _ = (X.isoSpec.hom x.1).asIdeal :=
+      congrArg PrimeSpectrum.asIdeal (codimensionOnePointEquivOfIso_apply_coe X.isoSpec x)
 
 /-- Cartier divisors on an affine Dedekind scheme, presented as invertible fractional ideals of
 its coordinate ring in a chosen fraction field. -/
@@ -137,7 +145,7 @@ abbrev AffineDedekindIntegralCartierDivisor (X : Scheme.{u}) (K : Type u)
 /-- The Weil--Cartier correspondence for an affine Dedekind scheme. It sends an invertible
 fractional ideal to its height-one multiplicities, indexed by the corresponding codimension-one
 points of the scheme. -/
-@[expose] def affineDedekindWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
+def affineDedekindWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
     [IsAffine X] [Field K] [Algebra Γ(X, ⊤) K]
     [IsFractionRing Γ(X, ⊤) K] [IsDedekindDomain Γ(X, ⊤)] :
     AffineDedekindCartierDivisor X K ≃+ SchemeWeilDivisor X :=
@@ -196,7 +204,7 @@ lemma isEffective_affineDedekindWeilCartierAddEquiv_iff
 
 /-- The affine Weil--Cartier correspondence restricted to positive objects: integral Cartier
 divisors correspond exactly to effective scheme-theoretic Weil divisors. -/
-@[expose] def affineDedekindEffectiveWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
+def affineDedekindEffectiveWeilCartierAddEquiv (X : Scheme.{u}) (K : Type u)
     [IsAffine X] [Field K] [Algebra Γ(X, ⊤) K]
     [IsFractionRing Γ(X, ⊤) K] [IsDedekindDomain Γ(X, ⊤)] :
     AffineDedekindIntegralCartierDivisor X K ≃+
@@ -229,7 +237,21 @@ lemma coe_affineDedekindEffectiveWeilCartierAddEquiv
         WeilDivisor.effectiveSubmonoid (CodimensionOnePoint X)) :
       SchemeWeilDivisor X) =
       affineDedekindWeilCartierAddEquiv X K I :=
-  rfl
+  (rfl)
+
+/-- The inverse restricted affine Weil--Cartier equivalence agrees with the unrestricted inverse
+after forgetting integrality. -/
+@[simp]
+lemma coe_affineDedekindEffectiveWeilCartierAddEquiv_symm
+    (X : Scheme.{u}) (K : Type u)
+    [IsAffine X] [Field K] [Algebra Γ(X, ⊤) K]
+    [IsFractionRing Γ(X, ⊤) K] [IsDedekindDomain Γ(X, ⊤)]
+    (D : WeilDivisor.effectiveSubmonoid (CodimensionOnePoint X)) :
+    (((affineDedekindEffectiveWeilCartierAddEquiv X K).symm D :
+        AffineDedekindIntegralCartierDivisor X K) :
+      AffineDedekindCartierDivisor X K) =
+      (affineDedekindWeilCartierAddEquiv X K).symm D :=
+  (rfl)
 
 /-- The prime fractional ideal at `v` corresponds to the point divisor at the associated
 codimension-one point of the affine scheme. -/

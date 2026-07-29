@@ -96,7 +96,7 @@ variable (R K)
 
 /-- The affine Weil--Cartier equivalence restricted to positive objects: integral invertible
 fractional ideals correspond exactly to effective Weil divisors. -/
-@[expose] noncomputable def integralFractionalIdealDivisorAddEquiv :
+noncomputable def integralFractionalIdealDivisorAddEquiv :
     integralFractionalIdealSubmonoid R K ≃+
       effectiveSubmonoid (HeightOneSpectrum R) where
   toFun I :=
@@ -129,6 +129,17 @@ lemma coe_integralFractionalIdealDivisorAddEquiv
       fractionalIdealDivisor R K I :=
   fractionalIdealDivisorAddEquiv_apply
     (R := R) (K := K) (I : Additive (FractionalIdeal R⁰ K)ˣ)
+
+/-- The inverse restricted equivalence agrees with the unrestricted inverse after forgetting
+integrality. -/
+@[simp]
+lemma coe_integralFractionalIdealDivisorAddEquiv_symm
+    (D : effectiveSubmonoid (HeightOneSpectrum R)) :
+    (((integralFractionalIdealDivisorAddEquiv R K).symm D :
+        integralFractionalIdealSubmonoid R K) :
+      Additive (FractionalIdeal R⁰ K)ˣ) =
+      (fractionalIdealDivisorAddEquiv R K).symm D :=
+  (rfl)
 
 end WeilDivisor
 

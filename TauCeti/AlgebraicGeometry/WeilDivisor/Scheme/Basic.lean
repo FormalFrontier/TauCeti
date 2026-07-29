@@ -54,7 +54,7 @@ variable {X Y : Scheme.{u}}
 noncomputable section
 
 /-- A scheme isomorphism identifies the codimension-one points of its source and target. -/
-@[expose] def codimensionOnePointEquivOfIso (e : X ≅ Y) :
+def codimensionOnePointEquivOfIso (e : X ≅ Y) :
     CodimensionOnePoint X ≃ CodimensionOnePoint Y where
   toFun x := ⟨e.hom x, (coheight_eq_of_isOpenImmersion e.hom).trans x.2⟩
   invFun y := ⟨e.inv y, (coheight_eq_of_isOpenImmersion e.inv).trans y.2⟩
@@ -80,7 +80,7 @@ map on points. -/
 @[simp]
 lemma codimensionOnePointEquivOfIso_apply_coe (e : X ≅ Y) (x : CodimensionOnePoint X) :
     ((codimensionOnePointEquivOfIso e x : CodimensionOnePoint Y) : Y) = e.hom x :=
-  rfl
+  (rfl)
 
 /-- The inverse map on codimension-one points induced by a scheme isomorphism is its underlying
 inverse map on points. -/
@@ -88,7 +88,7 @@ inverse map on points. -/
 lemma codimensionOnePointEquivOfIso_symm_apply_coe (e : X ≅ Y)
     (y : CodimensionOnePoint Y) :
     (((codimensionOnePointEquivOfIso e).symm y : CodimensionOnePoint X) : X) = e.inv y :=
-  rfl
+  (rfl)
 
 /-- Regard a finitely supported function as an algebraic cycle. -/
 private def algebraicCycleOfFinsupp : (X →₀ ℤ) →+ AlgebraicCycle X ℤ where
