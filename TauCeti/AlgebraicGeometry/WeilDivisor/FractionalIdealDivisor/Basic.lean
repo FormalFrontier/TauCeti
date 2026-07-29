@@ -34,8 +34,8 @@ We also connect it to the order system already built: the divisor of the princip
 `(x)` is exactly the principal divisor of the rational function `x`, so the isomorphism carries the
 principal fractional ideals to the principal divisors. This is the compatibility on principal
 elements needed before passing to quotient-level statements, which are not proved in this file.
-The affine divisor of an integral ideal (a fractional ideal contained in `R`) is effective, and the
-divisor of a prime `v` is the point divisor `[v]`, the sanity checks that rule out a vacuous map.
+The divisor of a prime `v` is the point divisor `[v]`, the sanity check that rules out a
+vacuous map.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors on a curve",
 specifically the "(smooth curve) `Weil ≃ Cartier`" dictionary realized here for the affine
@@ -202,19 +202,6 @@ lemma fractionalIdealDivisor_asIdeal (v : HeightOneSpectrum R) :
   · subst h
     rw [FractionalIdeal.count_self, coeff_ofPoint_self]
   · rw [FractionalIdeal.count_maximal_coprime K w h, coeff_ofPoint_of_ne (Ne.symm h)]
-
-/-- The divisor of an integral fractional ideal (one contained in `R`, i.e. `≤ 1`) is effective:
-integral ideals have no poles, only zeros. This is the affine "effective divisor ↔ integral ideal"
-half of the dictionary. -/
-lemma isEffective_fractionalIdealDivisor_of_le_one (I : Additive (FractionalIdeal R⁰ K)ˣ)
-    (hI : Units.val (Additive.toMul I) ≤ 1) :
-    IsEffective (fractionalIdealDivisor R K I) := by
-  rw [isEffective_iff]
-  intro v
-  rw [coeff_fractionalIdealDivisor]
-  obtain ⟨J, hJ⟩ := FractionalIdeal.le_one_iff_exists_coeIdeal.mp hI
-  rw [← hJ]
-  exact FractionalIdeal.count_coe_nonneg K v J
 
 end WeilDivisor
 

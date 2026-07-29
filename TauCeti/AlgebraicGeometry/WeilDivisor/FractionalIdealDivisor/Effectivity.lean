@@ -64,6 +64,19 @@ variable (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
 
 variable {R K}
 
+/-- The divisor of an integral fractional ideal (one contained in `R`, i.e. `≤ 1`) is effective:
+integral ideals have no poles, only zeros. This is the affine "effective divisor ↔ integral ideal"
+half of the dictionary. -/
+lemma isEffective_fractionalIdealDivisor_of_le_one (I : Additive (FractionalIdeal R⁰ K)ˣ)
+    (hI : Units.val (Additive.toMul I) ≤ 1) :
+    IsEffective (fractionalIdealDivisor R K I) := by
+  rw [isEffective_iff]
+  intro v
+  rw [coeff_fractionalIdealDivisor]
+  obtain ⟨J, hJ⟩ := FractionalIdeal.le_one_iff_exists_coeIdeal.mp hI
+  rw [← hJ]
+  exact FractionalIdeal.count_coe_nonneg K v J
+
 /-- If the divisor of an invertible fractional ideal is effective, then the fractional ideal is
 integral. This is the converse of `isEffective_fractionalIdealDivisor_of_le_one`. -/
 lemma le_one_of_isEffective_fractionalIdealDivisor
@@ -84,6 +97,7 @@ lemma le_one_of_isEffective_fractionalIdealDivisor
 
 /-- An invertible fractional ideal is integral exactly when its associated Weil divisor is
 effective. -/
+@[simp]
 lemma isEffective_fractionalIdealDivisor_iff
     (I : Additive (FractionalIdeal R⁰ K)ˣ) :
     IsEffective (fractionalIdealDivisor R K I) ↔
@@ -146,8 +160,13 @@ lemma coe_integralFractionalIdealDivisorAddEquiv_symm
     (((integralFractionalIdealDivisorAddEquiv R K).symm D :
         integralFractionalIdealSubmonoid R K) :
       Additive (FractionalIdeal R⁰ K)ˣ) =
-      (fractionalIdealDivisorAddEquiv R K).symm D :=
-  (rfl)
+      (fractionalIdealDivisorAddEquiv R K).symm D := by
+  apply (fractionalIdealDivisorAddEquiv R K).injective
+  rw [AddEquiv.apply_symm_apply]
+  simpa only [coe_integralFractionalIdealDivisorAddEquiv,
+    fractionalIdealDivisorAddEquiv_apply] using
+    congrArg Subtype.val
+      ((integralFractionalIdealDivisorAddEquiv R K).apply_symm_apply D)
 
 end WeilDivisor
 
