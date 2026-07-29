@@ -95,7 +95,9 @@ private theorem compMeasurePreservingₗᵢ_toLinearMap_apply
       congrFun (LinearIsometry.coe_toLinearMap _) g
     _ = Lp.compMeasurePreserving T hT g := compMeasurePreservingₗ_apply T hT g
 
-private theorem fixedSpace_eq_eqLocus (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
+/-- The fixed space is the equalizer of the continuous `Lᵖ` composition operator and the
+identity. -/
+theorem fixedSpace_eq_eqLocus (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
     fixedSpace (𝕜 := 𝕜) (E := E) (p := p) T hT =
       (Lp.compMeasurePreservingₗᵢ 𝕜 T hT).toContinuousLinearMap.toLinearMap.eqLocus
         (1 : Lp E p μ →L[𝕜] Lp E p μ).toLinearMap := by
