@@ -64,6 +64,16 @@ public theorem eulerForm_def (d e : Q → ℤ) :
       (∑ v : Q, d v * e v) - ∑ a : Q, ∑ b : Q, ∑ _ : a ⟶ b, d a * e b :=
   by apply LinearMap.mk₂_apply
 
+/-- The Euler form with the arrows between each pair of vertices counted by cardinality. -/
+public theorem eulerForm_eq_sum_card (d e : Q → ℤ) :
+    eulerForm Q d e =
+      (∑ v : Q, d v * e v)
+        - ∑ a : Q, ∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * (d a * e b) := by
+  rw [eulerForm_def]
+  congr 1
+  refine Finset.sum_congr rfl fun a _ ↦ Finset.sum_congr rfl fun b _ ↦ ?_
+  rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+
 /-- The Tits form of a finite quiver, the diagonal of its Euler form. -/
 public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
   (eulerForm Q).toQuadraticMap
