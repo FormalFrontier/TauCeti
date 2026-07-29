@@ -41,6 +41,9 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 
 ## Main results
 
+* `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
+  at the directing measure, the shared bridge both the mixture route and the conditional
+  joint-rectangle factorization build on.
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
   is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
   witness. That witness is the canonical *directing measure*, not merely a mixing representative;
@@ -199,10 +202,17 @@ theorem mixedIID_of_iCondIndepFun_tailProcess
   MixedIID.of_mixingRepresentative
     (mixedIIDWith_of_iCondIndepFun_tailProcess hX hX_meas hCI)
 
-/-- For a contractable process, the conditional expectation of the length-`r` prefix indicator
-product given the tail σ-algebra `tailProcess X` is a.e. the product of directing-measure
-evaluations `∏ i, (directingMeasure μ X ω).real (C i)` on the coordinate sets. -/
-private theorem condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure
+/-- **Prefix block factorization at the directing measure.** For a contractable process, the
+conditional expectation of the length-`r` prefix indicator product given the tail σ-algebra
+`tailProcess X` is a.e. the product of directing-measure evaluations
+`∏ i, (directingMeasure μ X ω).real (C i)` on the coordinate sets.
+
+This is the bridge from the merged tail factorization
+`condExp_blockIndicatorProd_tailProcess_ae_eq_prod` to `directingMeasure`, obtained by identifying
+each single-coordinate conditional expectation via
+`Contractable.directingMeasure_ae_eq_condExp_coord`. Both the mixture route below and the
+conditional joint-rectangle factorization consume it. -/
+theorem condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     {r : ℕ} {C : Fin r → Set α} (hC : ∀ i, MeasurableSet (C i)) :
