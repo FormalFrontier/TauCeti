@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Induction.Basic
+public import Mathlib.RepresentationTheory.Induced
 
 /-!
 # The permutation representation as an induced representation
@@ -106,8 +106,11 @@ private theorem indTrivialToQuotient_mk (x : G) (a : k) :
 /-- Left translation by `H` is invisible in `Ind_H^G (trivial)`. -/
 private theorem indV_mk_smul (s : H) (x : G) (a : k) :
     IndV.mk H.subtype (Representation.trivial k H k) ((s : G) * x) a =
-      IndV.mk H.subtype (Representation.trivial k H k) x a :=
-  indV_mk_mul H.subtype (Representation.trivial k H k) s x a
+      IndV.mk H.subtype (Representation.trivial k H k) x a := by
+  refine Eq.trans (congrArg (Coinvariants.mk (indTrivialSource k H)) ?_)
+    (Coinvariants.mk_inv_tmul ((Representation.leftRegular k G).comp H.subtype)
+      (Representation.trivial k H k) (MonoidAlgebra.single x 1) a s⁻¹)
+  simp [leftRegular]
 
 /-- The image of a coset `⟦x⟧` in `Ind_H^G (trivial)`, namely `⟦single x⁻¹ 1 ⊗ₜ 1⟧`. -/
 private noncomputable def indTrivialMk (q : G ⧸ H) :
@@ -205,6 +208,7 @@ private theorem toMatrix_ofMulAction_diag (X : Type w) [MulAction G X] [Fintype 
 
 /-- **The permutation character.** The character of the permutation representation `k[X]` at `g`
 is the number of points of `X` fixed by `g`, cast into `k`. -/
+@[simp]
 theorem character_ofMulAction (X : Type w) [MulAction G X] [Finite X] (g : G) :
     (Representation.ofMulAction k G X).character g = Nat.card {x : X // g • x = x} := by
   classical
@@ -221,6 +225,7 @@ variable (k : Type u) [Field k] {G : Type v} [Group G] (H : Subgroup G)
 
 /-- **The permutation character of an induced trivial representation.** The character of
 `Ind_H^G (trivial)` at `g` is the number of cosets in `G ⧸ H` fixed by `g`, cast into `k`. -/
+@[simp]
 theorem character_ind_trivial [Finite (G ⧸ H)] (g : G) :
     ((Representation.trivial k H k).ind H.subtype).character g =
       Nat.card {q : G ⧸ H // g • q = q} := by
