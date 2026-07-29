@@ -4,11 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Matrix.Pi
 public import TauCeti.Algebra.Subalgebra.Center
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
-public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.Algebra.MonoidAlgebra.Module
-public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RepresentationTheory.Maschke
 public import Mathlib.RingTheory.SimpleModule.IsAlgClosed
 
@@ -20,8 +19,8 @@ group `G`, Maschke's theorem makes `k[G]` semisimple and Artin--Wedderburn prese
 product of matrix algebras `∏ᵢ Matₙᵢ(k)`. This file reads the two classical numerical invariants
 off such a presentation:
 
-* `TauCeti.sum_sq_eq_card_of_algEquiv_pi_matrix`: the degrees satisfy `∑ᵢ nᵢ² = |G|`, because both
-  sides compute `dimₖ k[G]`;
+* `TauCeti.sum_sq_eq_card_of_algEquiv_pi_matrix`: the matrix sizes satisfy `∑ᵢ nᵢ² = |G|`, because
+  both sides compute `dimₖ k[G]`;
 * `TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix`: the **number of blocks is the number of
   conjugacy classes** of `G`, because both sides compute `dimₖ Z(k[G])` — on one side through the
   class-sum basis (`TauCeti.finrank_center_monoidAlgebra`), on the other because the center of a
@@ -53,86 +52,46 @@ namespace TauCeti
 
 open scoped BigOperators
 
-/-! ### Products of matrix algebras -/
+section Presentation
 
-section PiMatrix
+variable {k G : Type*} [Field k] {ι : Type*} {d : ι → ℕ}
 
-variable (k : Type*) [Field k] {n : ℕ} (d : Fin n → ℕ)
-
-/-- The dimension of a finite product of matrix algebras is the sum of the squares of the sizes. -/
-theorem finrank_pi_matrix :
-    Module.finrank k (Π i, Matrix (Fin (d i)) (Fin (d i)) k) = ∑ i, d i ^ 2 := by
-  rw [Module.finrank_pi_fintype]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Module.finrank_matrix]
-  simp [sq]
-
-/-- The center of a finite product of nonzero matrix algebras over a field consists of the tuples of
-scalar matrices, so it is the algebra of functions on the index. -/
-noncomputable def centerPiMatrixAlgEquiv [∀ i, NeZero (d i)] :
-    Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k) ≃ₐ[k] (Fin n → k) :=
-  centerPiAlgEquiv.trans (AlgEquiv.piCongrRight fun i =>
-    haveI : Nonempty (Fin (d i)) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne (d i)))
-    centerAlgEquivOfIsCentral k _)
-
-/-- `centerPiMatrixAlgEquiv` reads off the scalar of each component: the `i`-th component of a
-central tuple is the scalar matrix on the `i`-th value of the corresponding function. -/
-@[simp]
-theorem algebraMap_centerPiMatrixAlgEquiv_apply [∀ i, NeZero (d i)]
-    (x : Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) (i : Fin n) :
-    algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (centerPiMatrixAlgEquiv k d x i) =
-      (x : Π i, Matrix (Fin (d i)) (Fin (d i)) k) i := by
-  simp [centerPiMatrixAlgEquiv, AlgEquiv.piCongrRight]
-
-/-- The center of a finite product of nonzero matrix algebras over a field has dimension the number
-of factors. -/
-theorem finrank_center_pi_matrix [∀ i, NeZero (d i)] :
-    Module.finrank k (Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) = n := by
-  rw [(centerPiMatrixAlgEquiv k d).toLinearEquiv.finrank_eq, Module.finrank_pi, Fintype.card_fin]
-
-end PiMatrix
-
-/-! ### The group algebra -/
-
-section GroupAlgebra
-
-variable (k G : Type*)
-
-/-- The group algebra of a finite group has dimension the order of the group. -/
-theorem finrank_monoidAlgebra [CommSemiring k] [StrongRankCondition k] [Finite G] :
-    Module.finrank k (MonoidAlgebra k G) = Nat.card G := by
-  letI := Fintype.ofFinite G
-  rw [Module.finrank_eq_card_basis (MonoidAlgebra.basis G k), Fintype.card_eq_nat_card]
-
-variable [Field k] [Finite G] [Group G]
-variable {k G}
-
-/-- **The sum of the squares of the block degrees is the order of the group**: both sides compute
+/-- **The sum of the squares of the matrix sizes is the order of the group**: both sides compute
 the dimension of `k[G]`. -/
-theorem sum_sq_eq_card_of_algEquiv_pi_matrix {n : ℕ} {d : Fin n → ℕ}
+theorem sum_sq_eq_card_of_algEquiv_pi_matrix [Monoid G] [Finite G] [Fintype ι]
     (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
     ∑ i, d i ^ 2 = Nat.card G :=
   calc ∑ i, d i ^ 2
       = Module.finrank k (Π i, Matrix (Fin (d i)) (Fin (d i)) k) := (finrank_pi_matrix k d).symm
     _ = Module.finrank k (MonoidAlgebra k G) := e.toLinearEquiv.finrank_eq.symm
-    _ = Nat.card G := finrank_monoidAlgebra k G
+    _ = Nat.card G := by
+        letI := Fintype.ofFinite G
+        rw [Module.finrank_eq_card_basis (MonoidAlgebra.basis G k), Fintype.card_eq_nat_card]
 
-/-- **The center of the group algebra splits**: a Wedderburn presentation of `k[G]` with `n` blocks
-identifies `Z(k[G])` with `k ^ n`. -/
-noncomputable def centerMonoidAlgebraAlgEquivPi {n : ℕ} {d : Fin n → ℕ} [∀ i, NeZero (d i)]
+/-- **The center of the group algebra splits**: a Wedderburn presentation of `k[G]` with blocks
+indexed by `ι` identifies `Z(k[G])` with the algebra `ι → k` of functions on the blocks. -/
+noncomputable def centerMonoidAlgebraAlgEquivPi [Monoid G] [∀ i, NeZero (d i)]
     (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
-    Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (Fin n → k) :=
+    Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (ι → k) :=
   (centerCongr e).trans (centerPiMatrixAlgEquiv k d)
 
-omit [Finite G] in
 /-- `centerMonoidAlgebraAlgEquivPi e` records, block by block, the scalar that a central element of
 `k[G]` acts by: the `i`-th component of the image of `e` is that scalar matrix. -/
 @[simp]
-theorem algebraMap_centerMonoidAlgebraAlgEquivPi_apply {n : ℕ} {d : Fin n → ℕ} [∀ i, NeZero (d i)]
+theorem algebraMap_centerMonoidAlgebraAlgEquivPi_apply [Monoid G] [∀ i, NeZero (d i)]
     (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
-    (z : Subalgebra.center k (MonoidAlgebra k G)) (i : Fin n) :
+    (z : Subalgebra.center k (MonoidAlgebra k G)) (i : ι) :
     algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (centerMonoidAlgebraAlgEquivPi e z i) =
       e (z : MonoidAlgebra k G) i := by
+  simp [centerMonoidAlgebraAlgEquivPi]
+
+/-- The inverse of `centerMonoidAlgebraAlgEquivPi e` builds the central element acting on each
+block by the prescribed scalar. -/
+@[simp]
+theorem centerMonoidAlgebraAlgEquivPi_symm_apply [Monoid G] [∀ i, NeZero (d i)]
+    (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) (f : ι → k) (i : ι) :
+    e ((centerMonoidAlgebraAlgEquivPi e).symm f : MonoidAlgebra k G) i =
+      algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (f i) := by
   simp [centerMonoidAlgebraAlgEquivPi]
 
 /-- **The number of Wedderburn blocks of `k[G]` is the number of conjugacy classes of `G`**: both
@@ -140,16 +99,21 @@ sides compute the dimension of `Z(k[G])`.
 
 This is the numerical half of the count `#irreducibles = #conjugacy classes`; identifying the blocks
 with the isomorphism classes of simple `k[G]`-modules is a separate statement. -/
-theorem card_eq_card_conjClasses_of_algEquiv_pi_matrix {n : ℕ} {d : Fin n → ℕ} [∀ i, NeZero (d i)]
-    (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
-    n = Nat.card (ConjClasses G) :=
-  calc n = Module.finrank k (Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) :=
+theorem card_eq_card_conjClasses_of_algEquiv_pi_matrix [Group G] [Finite G] [Fintype ι]
+    [∀ i, NeZero (d i)] (e : MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
+    Fintype.card ι = Nat.card (ConjClasses G) :=
+  calc Fintype.card ι
+      = Module.finrank k (Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) :=
         (finrank_center_pi_matrix k d).symm
     _ = Module.finrank k (Subalgebra.center k (MonoidAlgebra k G)) :=
         (centerCongr e).toLinearEquiv.finrank_eq.symm
     _ = Nat.card (ConjClasses G) := finrank_center_monoidAlgebra k G
 
-variable (k G) [NeZero (Nat.card G : k)] [IsAlgClosed k]
+end Presentation
+
+section Existence
+
+variable (k G : Type*) [Field k] [Group G] [Finite G] [NeZero (Nat.card G : k)] [IsAlgClosed k]
 
 /-- **Maschke and Artin--Wedderburn for a finite group algebra**: over an algebraically closed field
 whose characteristic does not divide `|G|`, the group algebra is a finite product of matrix algebras
@@ -169,13 +133,14 @@ theorem exists_algEquiv_pi_matrix_conjClasses :
       Nonempty (MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ := exists_algEquiv_pi_matrix k G
   haveI := hd
-  obtain rfl : n = Nat.card (ConjClasses G) := card_eq_card_conjClasses_of_algEquiv_pi_matrix e
+  obtain rfl : n = Nat.card (ConjClasses G) := by
+    simpa using card_eq_card_conjClasses_of_algEquiv_pi_matrix e
   set σ := Finite.equivFin (ConjClasses G)
   refine ⟨fun c => d (σ c), fun c => hd _, ?_,
     ⟨e.trans (AlgEquiv.piCongrLeft k (fun i => Matrix (Fin (d i)) (Fin (d i)) k) σ).symm⟩⟩
   rw [finsum_comp_equiv σ (f := fun i => d i ^ 2), finsum_eq_sum_of_fintype]
   exact sum_sq_eq_card_of_algEquiv_pi_matrix e
 
-end GroupAlgebra
+end Existence
 
 end TauCeti

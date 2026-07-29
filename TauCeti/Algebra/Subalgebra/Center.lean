@@ -62,30 +62,40 @@ theorem centerCongr_apply_coe (e : A ≃ₐ[R] B) (x : Subalgebra.center R A) :
     (centerCongr e x : B) = e (x : A) := by
   simp [centerCongr]
 
+/-- The inverse of `centerCongr e` transports the center back along `e.symm`. -/
+@[simp]
+theorem centerCongr_symm_apply_coe (e : A ≃ₐ[R] B) (y : Subalgebra.center R B) :
+    ((centerCongr e).symm y : A) = e.symm (y : B) := by
+  apply e.injective
+  rw [e.apply_symm_apply, ← centerCongr_apply_coe e, (centerCongr e).apply_symm_apply]
+
 section Pi
 
 variable {ι : Type*} {S : ι → Type*} [∀ i, Semiring (S i)] [∀ i, Algebra R (S i)]
 
-/-- An element of a product of algebras is central exactly when each of its components is. -/
-theorem mem_center_pi_iff {x : Π i, S i} :
-    x ∈ Subalgebra.center R (Π i, S i) ↔ ∀ i, x i ∈ Subalgebra.center R (S i) := by
-  rw [Subalgebra.center_pi]
-  simp
-
 /-- The center of a product of algebras is the product of their centers. -/
 def centerPiAlgEquiv :
-    Subalgebra.center R (Π i, S i) ≃ₐ[R] Π i, Subalgebra.center R (S i) where
-  toFun x i := ⟨x.1 i, mem_center_pi_iff.mp x.2 i⟩
-  invFun y := ⟨fun i => (y i).1, mem_center_pi_iff.mpr fun i => (y i).2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_mul' _ _ := rfl
-  map_add' _ _ := rfl
-  commutes' _ := rfl
+    Subalgebra.center R (Π i, S i) ≃ₐ[R] Π i, Subalgebra.center R (S i) :=
+  have mem_iff : ∀ x : Π i, S i,
+      x ∈ Subalgebra.center R (Π i, S i) ↔ ∀ i, x i ∈ Subalgebra.center R (S i) := fun _ => by
+    rw [Subalgebra.center_pi]; simp
+  { toFun := fun x i => ⟨x.1 i, (mem_iff _).mp x.2 i⟩
+    invFun := fun y => ⟨fun i => (y i).1, (mem_iff _).mpr fun i => (y i).2⟩
+    left_inv := fun _ => rfl
+    right_inv := fun _ => rfl
+    map_mul' := fun _ _ => rfl
+    map_add' := fun _ _ => rfl
+    commutes' := fun _ => rfl }
 
 @[simp]
 theorem centerPiAlgEquiv_apply_coe (x : Subalgebra.center R (Π i, S i)) (i : ι) :
     (centerPiAlgEquiv x i : S i) = (x : Π i, S i) i := by
+  simp [centerPiAlgEquiv]
+
+/-- The inverse of `centerPiAlgEquiv` assembles a tuple of central elements componentwise. -/
+@[simp]
+theorem centerPiAlgEquiv_symm_apply_coe (y : Π i, Subalgebra.center R (S i)) (i : ι) :
+    (centerPiAlgEquiv.symm y : Π i, S i) i = (y i : S i) := by
   simp [centerPiAlgEquiv]
 
 end Pi
