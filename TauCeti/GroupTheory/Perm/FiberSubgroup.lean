@@ -34,7 +34,7 @@ variable {α ι κ : Type*}
 
 /-- The subgroup of permutations of `α` that preserve every fiber of `f : α → ι`, that is, those
 moving each point within its own fiber. -/
-@[expose] def fiberSubgroup (f : α → ι) : Subgroup (Equiv.Perm α) where
+def fiberSubgroup (f : α → ι) : Subgroup (Equiv.Perm α) where
   carrier := {σ | ∀ a, f (σ a) = f a}
   mul_mem' hσ hτ a := (hσ _).trans (hτ a)
   one_mem' _ := rfl

@@ -37,12 +37,12 @@ variable {μ : YoungDiagram}
 
 /-- The **row group** of a `μ`-tableau: the permutations of the labels that keep every label in
 its own row of `t`. -/
-@[expose] def rowSubgroup (t : YoungTableau μ) : Subgroup (Equiv.Perm (Fin μ.card)) :=
+def rowSubgroup (t : YoungTableau μ) : Subgroup (Equiv.Perm (Fin μ.card)) :=
   fiberSubgroup (rowIndex t)
 
 /-- The **column group** of a `μ`-tableau: the permutations of the labels that keep every label in
 its own column of `t`. -/
-@[expose] def colSubgroup (t : YoungTableau μ) : Subgroup (Equiv.Perm (Fin μ.card)) :=
+def colSubgroup (t : YoungTableau μ) : Subgroup (Equiv.Perm (Fin μ.card)) :=
   fiberSubgroup (colIndex t)
 
 @[simp]
@@ -70,14 +70,14 @@ theorem disjoint_rowSubgroup_colSubgroup (t : YoungTableau μ) :
 
 /-- The row group of a `μ`-tableau is the product, over the rows of `μ`, of the symmetric groups
 of the rows.  Rows beyond the last one of `μ` are empty and contribute trivial factors. -/
-@[expose] def rowSubgroupMulEquiv (t : YoungTableau μ) :
+def rowSubgroupMulEquiv (t : YoungTableau μ) :
     rowSubgroup t ≃* ∀ i, Equiv.Perm ↥(μ.row i) :=
   (fiberSubgroupMulEquivPiPerm (rowIndex t)).trans
     (MulEquiv.piCongrRight fun i => (rowFiberEquiv t i).permCongrHom)
 
 /-- The column group of a `μ`-tableau is the product, over the columns of `μ`, of the symmetric
 groups of the columns. -/
-@[expose] def colSubgroupMulEquiv (t : YoungTableau μ) :
+def colSubgroupMulEquiv (t : YoungTableau μ) :
     colSubgroup t ≃* ∀ j, Equiv.Perm ↥(μ.col j) :=
   (fiberSubgroupMulEquivPiPerm (colIndex t)).trans
     (MulEquiv.piCongrRight fun j => (colFiberEquiv t j).permCongrHom)
@@ -89,9 +89,15 @@ theorem rowSubgroupMulEquiv_apply_coe (t : YoungTableau μ) (σ : rowSubgroup t)
     (k : {k : Fin μ.card // rowIndex t k = i}) :
     (rowSubgroupMulEquiv t σ i (rowFiberEquiv t i k) : ℕ × ℕ) =
       (t.symm ((σ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := by
-  have key : rowSubgroupMulEquiv t σ i =
-      (rowFiberEquiv t i).permCongr (fiberSubgroupMulEquivPiPerm (rowIndex t) σ i) := rfl
-  simp [key]
+  have key : ∀ τ : fiberSubgroup (rowIndex t),
+      ((fiberSubgroupMulEquivPiPerm (rowIndex t)).trans
+          (MulEquiv.piCongrRight fun i => (rowFiberEquiv t i).permCongrHom) τ i
+            (rowFiberEquiv t i k) : ℕ × ℕ) =
+        (t.symm ((τ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := fun τ => by
+    rw [MulEquiv.trans_apply, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_coe,
+      Equiv.permCongr_apply, Equiv.symm_apply_apply, rowFiberEquiv_apply_coe,
+      fiberSubgroupMulEquivPiPerm_apply_coe]
+  exact key σ
 
 /-- The `j`-th component of `colSubgroupMulEquiv t σ` moves the cell carrying the label `k` to the
 cell carrying the label `σ k`. -/
@@ -100,9 +106,15 @@ theorem colSubgroupMulEquiv_apply_coe (t : YoungTableau μ) (σ : colSubgroup t)
     (k : {k : Fin μ.card // colIndex t k = j}) :
     (colSubgroupMulEquiv t σ j (colFiberEquiv t j k) : ℕ × ℕ) =
       (t.symm ((σ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := by
-  have key : colSubgroupMulEquiv t σ j =
-      (colFiberEquiv t j).permCongr (fiberSubgroupMulEquivPiPerm (colIndex t) σ j) := rfl
-  simp [key]
+  have key : ∀ τ : fiberSubgroup (colIndex t),
+      ((fiberSubgroupMulEquivPiPerm (colIndex t)).trans
+          (MulEquiv.piCongrRight fun j => (colFiberEquiv t j).permCongrHom) τ j
+            (colFiberEquiv t j k) : ℕ × ℕ) =
+        (t.symm ((τ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := fun τ => by
+    rw [MulEquiv.trans_apply, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_coe,
+      Equiv.permCongr_apply, Equiv.symm_apply_apply, colFiberEquiv_apply_coe,
+      fiberSubgroupMulEquivPiPerm_apply_coe]
+  exact key σ
 
 end YoungTableau
 
