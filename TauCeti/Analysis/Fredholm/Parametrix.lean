@@ -261,7 +261,7 @@ theorem apply_parametrix (hT : _root_.TauCeti.IsFredholm T) (y : F) :
           hT.isTopCompl_range_cokerComplement y))
     rw [ContinuousLinearEquiv.apply_symm_apply] at h
     rw [← h]
-    rfl
+    exact Submodule.coe_projectionOntoL_apply hT.isTopCompl_range_cokerComplement y
   rw [h0, cokerProjection, eq_sub_iff_add_eq]
   exact Submodule.projectionL_add_projectionL_eq_self hT.isTopCompl_range_cokerComplement y
 
