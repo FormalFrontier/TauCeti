@@ -182,6 +182,7 @@ theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
 conjugate. -/
 def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : Rep.{w} k H) :
     Subrepresentation (conjRep s A).ρ ≃o Subrepresentation A.ρ := by
+  -- Unfold `conjRep` and `conjRepFunctor` to expose Mathlib's definition of the restricted action.
   change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
     Subrepresentation A.ρ
   exact Rep.resSubrepresentationOrderIso (conjSubgroupEquiv s H) A
