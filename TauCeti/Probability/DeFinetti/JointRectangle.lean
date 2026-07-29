@@ -9,11 +9,12 @@ module
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 -- Non-public: the prefix factorization and directing measure, the joint-rectangle common ending,
 -- the path-law transfer, and the machinery the symmetry transport runs on.
+-- Public: `directingProbabilityMeasure` names the witness in the exported statement.
+public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
 import TauCeti.Probability.DeFinetti.BlockFactorization
 import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
-import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 -- Non-public: supplies `MeasurableSingletonClass (ProbabilityMeasure α)`, which the
@@ -29,9 +30,8 @@ disintegration.
 
 ## Main results
 
-* `conditionallyIID_of_contractable` — the summit. It strengthens `mixedIID_of_contractable`, which
-  concludes only the mixture identity, and imposes no standard-Borel hypothesis on the *sample*
-  space.
+* `conditionallyIIDWith_of_contractable_pathSpace` — the summit on path space, at the canonical
+  directing measure. `DeFinetti/Theorem.lean` derives the sample-space form from it.
 
 ## Implementation
 
@@ -59,6 +59,18 @@ space.
 The joint rectangles are then fed to `conditionallyIID_of_jointRectangles`.
 
 This advances `TauCetiRoadmap/Exchangeability/README.md`, **Layer 6** — the conditional summit.
+
+## Sources
+
+The mathematical theorem is Kallenberg, *Probabilistic Symmetries and Invariance Principles* (2005),
+Theorem 1.1, in its conditional form.
+
+The joint-law upgrade formalized here is **new to this development**. `cameronfreer/exchangeability`
+proves a `conditionallyIID_bind_of_contractable`, but under that repository's legacy naming
+`ConditionallyIID` denotes the *mixture* identity — what TauCeti calls `MixedIID` — so it
+establishes a strictly weaker statement, already available here as `mixedIID_of_contractable`. The
+directing-measure joint-rectangle factorization and its symmetry transport were built from TauCeti's
+own tail-factorization and exchangeable-σ-algebra API; no material is adapted.
 -/
 public section
 
@@ -252,41 +264,24 @@ private theorem jointRectangle_of_measure_inter
   · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
   · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
 
-/-- **The conditional summit on path space.** A contractable coordinate process on a standard Borel
-state space is conditionally i.i.d., with the tail conditional law as directing measure. -/
-private theorem conditionallyIID_of_contractable_pathSpace
+/-- **The conditional summit on path space, at the canonical directing measure.** A contractable
+coordinate process on a standard Borel state space is conditionally i.i.d. **with** witness the tail
+conditional law `directingProbabilityMeasure`.
+
+Stated at the named witness rather than existentially: the directing measure is the object the
+conditional predicate is about, so discarding it would lose the identity downstream users need. -/
+theorem conditionallyIIDWith_of_contractable_pathSpace
     [StandardBorelSpace α] [Nonempty α] {μ : Measure (ℕ → α)} [IsFiniteMeasure μ]
     (hX : Contractable μ fun j (x : ℕ → α) => x j) :
-    ConditionallyIID μ fun j (x : ℕ → α) => x j := by
+    ConditionallyIIDWith μ (fun j (x : ℕ → α) => x j)
+      (directingProbabilityMeasure μ fun j (x : ℕ → α) => x j) := by
   have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
-  refine ConditionallyIID.of_directing (conditionallyIID_of_jointRectangles
+  refine conditionallyIID_of_jointRectangles
     (measurable_directingProbabilityMeasure (μ := μ)
       (tailProcess_le_ambient 0 fun j _ => hY_meas j))
-    fun m sel hsel S hS B hB => ?_)
+    fun m sel hsel S hS B hB => ?_
   exact jointRectangle_of_measure_inter hY_meas hB hS
     (measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel hB hS)
-
-/-- **The conditional summit.** A contractable process valued in a nonempty standard Borel space is
-conditionally i.i.d.: there is a directing measure given which every finite distinct block is
-i.i.d., as a joint-law disintegration.
-
-This strengthens `mixedIID_of_contractable`, which concludes only the mixture identity. No
-standard-Borel hypothesis is imposed on the sample space: the argument runs on path space, which is
-standard Borel whenever the state space is, and `conditionallyIID_of_conditionallyIID_pathLaw`
-carries the conclusion back. -/
-theorem conditionallyIID_of_contractable {Ω : Type*} [MeasurableSpace Ω]
-    [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
-    (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ConditionallyIID μ X := by
-  refine conditionallyIID_of_conditionallyIID_pathLaw hX_meas ?_
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
-  have hcontract : Contractable (pathLaw μ X) fun j (p : ℕ → α) => p j := by
-    rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
-    have hpl : pathLaw (pathLaw μ X) (fun j (p : ℕ → α) => p j) = pathLaw μ X := by
-      rw [pathLaw_def]; exact Measure.map_id
-    rw [hpl]
-    exact hX.contractableLaw_pathLaw fun i => (hX_meas i).aemeasurable
-  exact conditionallyIID_of_contractable_pathSpace hcontract
 
 end Probability
 
