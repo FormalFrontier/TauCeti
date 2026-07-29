@@ -42,10 +42,11 @@ predicate for which the roadmap reserves the `ConditionallyIID` name, together w
 projection it pins alongside — which consumes the already-landed Layer 1 joint-kernel lemma
 `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
 
-Still open, and not attempted here: the Layer 1 joint-rectangle common ending
-`conditionallyIID_of_jointRectangles`; the Layer 6 summit theorems that *conclude* this predicate,
-`conditionallyIID_of_contractable` and `conditionallyIID_of_exchangeable`; the `deFinetti*` handles
-that return with them; and directing-measure uniqueness (`conditionallyIID_ae_unique`).
+The Layer 1 joint-rectangle common ending `conditionallyIID_of_jointRectangles` lives in
+`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`. Still open here are the Layer 6 summit
+theorems that *conclude* this predicate, `conditionallyIID_of_contractable` and
+`conditionallyIID_of_exchangeable`; the `deFinetti*` handles that return with them; and
+directing-measure uniqueness (`conditionallyIID_ae_unique`).
 -/
 
 public section

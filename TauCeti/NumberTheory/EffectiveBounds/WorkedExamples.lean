@@ -100,6 +100,24 @@ theorem classNumber_adjoinRoot_sqrt_neg_five_le :
 
 /-! ### `ℚ(i)`: the discriminant bound recovers `|d| = 4` from the basis `{1, i}` -/
 
+/-- The `ℤ`-span of any set containing `1` and a primitive fourth root of unity is all of `𝓞 K`:
+those two elements are the vectors of the integral power basis. -/
+private theorem span_eq_top_of_one_mem_of_toInteger_mem {K : Type*} [Field K] [NumberField K]
+    [IsCyclotomicExtension {4} ℚ K] {ζ : K} (hζ : IsPrimitiveRoot ζ 4) {s : Set (𝓞 K)}
+    (h1 : (1 : 𝓞 K) ∈ s) (hi : hζ.toInteger ∈ s) : Submodule.span ℤ s = ⊤ := by
+  set pb := hζ.integralPowerBasis with hpb
+  have hdim : pb.dim = 2 := by rw [hpb, hζ.integralPowerBasis_dim]; decide
+  -- Every vector of the integral power basis is `ζ ^ 0 = 1` or `ζ ^ 1 = ζ`.
+  have hpow : ∀ i : Fin pb.dim, pb.basis i ∈ Submodule.span ℤ s := by
+    intro i
+    rw [pb.basis_eq_pow, hζ.integralPowerBasis_gen]
+    have hlt : (i : ℕ) < 2 := hdim ▸ i.isLt
+    rcases (by omega : (i : ℕ) = 0 ∨ (i : ℕ) = 1) with h | h <;> rw [h]
+    · rw [pow_zero]; exact Submodule.subset_span h1
+    · rw [pow_one]; exact Submodule.subset_span hi
+  exact le_antisymm le_top (le_trans (le_of_eq pb.basis.span_eq.symm)
+    (Submodule.span_le.mpr (Set.range_subset_iff.mpr hpow)))
+
 /-- The discriminant of a fourth cyclotomic field is `-4`, recovered from the integral basis
 `{1, i}`: the equality companion of the effective discriminant bound turns the trace-form value
 `disc ℚ {1, i} = 4·(-1) = -4` into the field discriminant. -/
@@ -114,14 +132,9 @@ private theorem discr_eq_neg_four_of_isCyclotomicExtension {K : Type*} [Field K]
     rw [IsCyclotomicExtension.finrank K
       (Polynomial.cyclotomic.irreducible_rat (n := 4) (by norm_num))]
     decide
-  -- The primitive fourth root of unity is a square root of `-1`.
-  have h4 : ζ ^ 4 = 1 := hζ.pow_eq_one
-  have hne : ζ ^ 2 ≠ 1 := hζ.pow_ne_one_of_pos_of_lt (by norm_num) (by norm_num)
-  have hfac : (ζ ^ 2 - 1) * (ζ ^ 2 + 1) = 0 := by linear_combination h4
-  have hζ2K : ζ ^ 2 = -1 := by
-    rcases mul_eq_zero.mp hfac with h | h
-    · exact absurd (sub_eq_zero.mp h) hne
-    · linear_combination h
+  -- The primitive fourth root of unity is a square root of `-1`: its square is a primitive
+  -- second root of unity.
+  have hζ2K : ζ ^ 2 = -1 := (hζ.pow (by norm_num) (by norm_num)).eq_neg_one_of_two_right
   have hζ2 : ζ ^ 2 = algebraMap ℚ K (-1) := by rw [hζ2K]; simp
   -- `i` is not rational, else `-1` would be a rational square.
   have hζnotmem : ζ ∉ (algebraMap ℚ K).range := by
@@ -136,28 +149,8 @@ private theorem discr_eq_neg_four_of_isCyclotomicExtension {K : Type*} [Field K]
   -- `{1, i}` is the integral power basis of `𝒪_{ℚ(i)}`, so its `ℤ`-span is all of `𝒪_{ℚ(i)}`.
   have hb0 : b 0 = (1 : K) := by rw [hbcoe]; rfl
   have hb1 : b 1 = ζ := by rw [hbcoe]; rfl
-  have hspan : Submodule.span ℤ (Set.range fun i => (⟨b i, hb_int i⟩ : 𝓞 K)) = ⊤ := by
-    set pb := hζ.integralPowerBasis with hpb
-    have hgen : pb.gen = hζ.toInteger := hζ.integralPowerBasis_gen
-    have hdim : pb.dim = 2 := by rw [hpb, hζ.integralPowerBasis_dim]; decide
-    -- `1` and `i` themselves lie in the span, as the two vectors of the family.
-    have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨b i, hb_int i⟩ : 𝓞 K)) :=
-      Submodule.subset_span ⟨0, Subtype.ext hb0⟩
-    have hi : hζ.toInteger ∈ Submodule.span ℤ (Set.range fun i => (⟨b i, hb_int i⟩ : 𝓞 K)) :=
-      Submodule.subset_span ⟨1, Subtype.ext hb1⟩
-    -- Every vector of the integral power basis is `i ^ 0 = 1` or `i ^ 1 = i`.
-    have hpow : ∀ i : Fin pb.dim, pb.basis i ∈
-        Submodule.span ℤ (Set.range fun i => (⟨b i, hb_int i⟩ : 𝓞 K)) := by
-      intro i
-      rw [pb.basis_eq_pow, hgen]
-      have hlt : (i : ℕ) < 2 := hdim ▸ i.isLt
-      have hcase : (i : ℕ) = 0 ∨ (i : ℕ) = 1 := by omega
-      rcases hcase with h | h <;> rw [h]
-      · rw [pow_zero]; exact h1
-      · rw [pow_one]; exact hi
-    refine le_antisymm le_top ?_
-    refine le_trans (le_of_eq pb.basis.span_eq.symm) ?_
-    exact Submodule.span_le.mpr (Set.range_subset_iff.mpr hpow)
+  have hspan : Submodule.span ℤ (Set.range fun i => (⟨b i, hb_int i⟩ : 𝓞 K)) = ⊤ :=
+    span_eq_top_of_one_mem_of_toInteger_mem hζ ⟨0, Subtype.ext hb0⟩ ⟨1, Subtype.ext hb1⟩
   -- The trace form evaluates `disc ℚ {1, i} = -4`.
   have hdiscr : Algebra.discr ℚ (b : Fin 2 → K) = ((-4 : ℤ) : ℚ) := by
     rw [hbcoe, TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap hfin hζ2 hζnotmem]

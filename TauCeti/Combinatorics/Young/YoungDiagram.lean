@@ -21,6 +21,13 @@ namespace TauCeti
 
 namespace YoungDiagram
 
+/-- Transposing a Young diagram preserves its number of cells. -/
+@[simp]
+theorem card_transpose (μ : YoungDiagram) : μ.transpose.card = μ.card := by
+  apply Finset.card_equiv (Equiv.prodComm ℕ ℕ)
+  intro c
+  simp
+
 /-- The sum of the row lengths of a Young diagram is its number of cells. -/
 @[simp]
 theorem sum_rowLens (μ : YoungDiagram) : μ.rowLens.sum = μ.card := by

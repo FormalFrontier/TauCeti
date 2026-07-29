@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Topology.UniformSpace.LocallyUniformConvergence
 public import TauCeti.Analysis.Complex.Conformal.Rouche
+public import TauCeti.Analysis.Complex.IsolatedZero
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 
 /-!
@@ -135,22 +136,18 @@ theorem hurwitz {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ : IsO
   obtain ⟨r, hr, hcb, hgne⟩ := exists_radius_sphere_ne_zero hΩ hz₀Ω hpunct
   have hsph : sphere z₀ r ⊆ closedBall z₀ r := sphere_subset_closedBall
   -- `‖g‖` attains a positive minimum on the circle
-  have hcpt : IsCompact (sphere z₀ r) := isCompact_sphere _ _
-  have hsne : (sphere z₀ r).Nonempty := NormedSpace.sphere_nonempty.mpr hr.le
-  have hgcont : ContinuousOn (fun z => ‖g z‖) (sphere z₀ r) :=
-    ((hgA.continuousOn).mono (hsph.trans hcb)).norm
-  obtain ⟨w, hw, hwmin⟩ := hcpt.exists_isMinOn hsne hgcont
-  have hδ : 0 < ‖g w‖ := norm_pos_iff.mpr (hgne w hw)
+  obtain ⟨δ, hδ, hδle⟩ := exists_pos_le_norm_of_mem_sphere
+    (hgA.continuousOn.mono (hsph.trans hcb)) hgne
   -- locally uniform convergence gives an `n` with `‖g - F n‖ < ‖g‖` on the circle
   have hconvS : TendstoUniformlyOn F g l (sphere z₀ r) :=
-    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hcpt).mp
+    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact (isCompact_sphere z₀ r)).mp
       (hconv.mono (hsph.trans hcb))
   obtain ⟨n, hn, hFn, hnen⟩ :=
     ((Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ).and (hF.and hne)).exists
   have hgA' : AnalyticOnNhd ℂ g (closedBall z₀ r) := hgA.mono hcb
   have hFA' : AnalyticOnNhd ℂ (F n) (closedBall z₀ r) := (hFn.analyticOnNhd hΩ).mono hcb
   have hs : ∀ z ∈ sphere z₀ r, ‖g z - F n z‖ < ‖g z‖ := fun z hz =>
-    lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (hwmin hz)
+    lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (hδle z hz)
   -- Rouché: the counts agree, yet `F n` has no zeros and `g` has one at `z₀`
   have hcount := rouche hr hgA' hFA' hs
   rw [count_eq_zero hFA' (fun z hz => hnen z (hcb (ball_subset_closedBall hz)))] at hcount
@@ -171,21 +168,12 @@ private lemma eventually_exists_eq {ι : Type*} {l : Filter ι} {Ω : Set ℂ} {
     ∀ᶠ i in l, ∃ z ∈ ball a ρ, F i z = v := by
   have hA : AnalyticOnNhd ℂ (fun ζ => g ζ - v) (closedBall a ρ) :=
     (hg.mono hball).sub analyticOnNhd_const
-  have hzne : ∀ z ∈ sphere a ρ, z ≠ a := by
-    intro z hz h
-    rw [h] at hz
-    simp only [mem_sphere, dist_self] at hz
-    linarith
   have hsphne : ∀ z ∈ sphere a ρ, g z - v ≠ 0 := fun z hz =>
-    sub_ne_zero.mpr (hzf z (sphere_subset_closedBall hz) (hzne z hz))
-  have hcpt : IsCompact (sphere a ρ) := isCompact_sphere _ _
-  have hsne : (sphere a ρ).Nonempty := NormedSpace.sphere_nonempty.mpr hρ.le
-  have hcont : ContinuousOn (fun z => ‖g z - v‖) (sphere a ρ) :=
-    (((hA.continuousOn).mono sphere_subset_closedBall)).norm
-  obtain ⟨u, hu, humin⟩ := hcpt.exists_isMinOn hsne hcont
-  have hδ : 0 < ‖g u - v‖ := norm_pos_iff.mpr (hsphne u hu)
+    sub_ne_zero.mpr (hzf z (sphere_subset_closedBall hz) (Metric.ne_of_mem_sphere hz hρ.ne'))
+  obtain ⟨δ, hδ, hδle⟩ := exists_pos_le_norm_of_mem_sphere
+    (hA.continuousOn.mono sphere_subset_closedBall) hsphne
   have hconvS : TendstoUniformlyOn F g l (sphere a ρ) :=
-    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hcpt).mp
+    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact (isCompact_sphere a ρ)).mp
       (hconv.mono ((sphere_subset_closedBall).trans hball))
   filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ, hF] with n hn hFn
   have hB : AnalyticOnNhd ℂ (fun ζ => F n ζ - v) (closedBall a ρ) :=
@@ -194,21 +182,11 @@ private lemma eventually_exists_eq {ι : Type*} {l : Filter ι} {Ω : Set ℂ} {
     intro z hz
     have he : (g z - v) - (F n z - v) = g z - F n z := by ring
     rw [he]
-    exact lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (humin hz)
+    exact lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (hδle z hz)
   have hcount := rouche hρ hA hB hs
-  have htop : analyticOrderAt (fun ζ => g ζ - v) a ≠ ⊤ := by
-    intro hev
-    rw [analyticOrderAt_eq_top] at hev
-    obtain ⟨ε, hε, hbl⟩ := Metric.eventually_nhds_iff.mp hev
-    set t : ℝ := min ε ρ / 2 with ht_def
-    have ht0 : 0 < t := by rw [ht_def]; exact half_pos (lt_min hε hρ)
-    have htε : t < ε := by have h := min_le_left ε ρ; rw [ht_def]; linarith
-    have htρ : t ≤ ρ := by have h := min_le_right ε ρ; rw [ht_def]; linarith
-    have hdist : dist (a + (t : ℂ)) a = t := by simp [dist_eq_norm, abs_of_pos ht0]
-    refine hzf (a + (t : ℂ)) ?_ ?_ (sub_eq_zero.mp (hbl ?_))
-    · simp only [mem_closedBall, hdist]; exact htρ
-    · simp only [ne_eq, add_eq_left, Complex.ofReal_eq_zero]; exact ht0.ne'
-    · rw [hdist]; exact htε
+  have htop : analyticOrderAt (fun ζ => g ζ - v) a ≠ ⊤ :=
+    analyticOrderAt_ne_top_of_forall_ne_zero hρ fun z hz hne =>
+      sub_ne_zero.mpr (hzf z (ball_subset_closedBall hz) hne)
   have hord : analyticOrderNatAt (fun ζ => g ζ - v) a ≠ 0 := by
     have h0 : analyticOrderAt (fun ζ => g ζ - v) a ≠ 0 := fun h =>
       ((hA a (mem_closedBall_self hρ.le)).analyticOrderAt_eq_zero.mp h) (by simp [hga])

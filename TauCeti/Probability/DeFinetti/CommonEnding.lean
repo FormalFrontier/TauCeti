@@ -19,8 +19,8 @@ finite product σ-algebra by Mathlib's `generateFrom_pi` / `isPiSystem_pi`, and 
 product-kernel API evaluates the mixture on rectangles.  This file packages that as the existential
 wrapper.  This advances `TauCetiRoadmap/Exchangeability/README.md`, Layer 1, the mixture common
 de Finetti ending `mixedIID_of_mixingRepresentative`. The joint-rectangle strengthening
-`conditionallyIID_of_jointRectangles`, which the roadmap pairs with it, awaits the conditional
-predicate.
+`conditionallyIID_of_jointRectangles`, which the roadmap pairs with it, lives in
+`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`.
 
 This is adapted from the rectangle common-ending strategy in
 `cameronfreer/exchangeability` (`DeFinetti/CommonEnding.lean`, pin

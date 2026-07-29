@@ -34,6 +34,11 @@ constant `1` fails to be integrable.  In the measure-level form finiteness of `�
 hypothesis: there `hexp` integrates the weight `e^{a|x|} ≥ 1` itself, which dominates the constant
 `1`.  The function-level form carries no such implication -- its `hexp` integrates the *product*
 `e^{a|x|} · g`, which `g = 0` satisfies over any measure, finite or infinite.
+
+The same exponential-moment hypothesis also makes every polynomial moment finite, so the result
+that records this -- `TauCeti.integrable_pow_of_exp_moment`, a symmetric-moment adaptation of
+`ProbabilityTheory.integrable_pow_of_integrable_exp_mul` -- lives here with it rather than with
+any one consumer.
 -/
 
 public section
@@ -45,6 +50,34 @@ open MeasureTheory ProbabilityTheory Complex Filter
 open scoped Topology
 
 variable {ν : Measure ℝ}
+
+/-! ## Exponential moments control polynomial moments -/
+
+/-- **One finite exponential moment makes every polynomial moment finite.**
+
+The two-sided moment hypothesis of `ProbabilityTheory.integrable_pow_of_integrable_exp_mul` is
+what a *single* symmetric moment `e^{a|x|} ∈ L¹(ν)` supplies: `±x ≤ |x|` makes `e^{a|x|}`
+dominate both `e^{ax}` and `e^{-ax}`.
+
+This is the bridge to the family-agnostic polynomial interface of
+`TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
+moment is finite"; the `MemLp` statements of
+`TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness` are that interface applied through
+this. -/
+theorem integrable_pow_of_exp_moment
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
+    Integrable (fun x : ℝ => x ^ k) ν := by
+  obtain ⟨a, ha, hexpa⟩ := hexp
+  have hdom : ∀ c : ℝ, (∀ x : ℝ, c * x ≤ a * |x|) →
+      Integrable (fun x : ℝ => Real.exp (c * x)) ν := fun c hc =>
+    hexpa.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => by
+      rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+      exact Real.exp_le_exp.2 (hc x))
+  exact integrable_pow_of_integrable_exp_mul ha.ne'
+    (hdom a fun x => mul_le_mul_of_nonneg_left (le_abs_self x) ha.le)
+    (hdom (-a) fun x => by
+      rw [neg_mul, ← mul_neg]
+      exact mul_le_mul_of_nonneg_left (neg_le_abs x) ha.le) k
 
 /-! ## Vanishing moments at the level of functions -/
 
@@ -94,6 +127,49 @@ private theorem integrable_exp_withDensity_ofReal
       abs_of_pos hE]
     nlinarith [hle x, abs_nonneg (g x), hE.le]
 
+/-- An exponentially-weighted product bounds the function itself: since `e^{a|x|} ≥ 1` for
+`a ≥ 0`, integrability of `e^{a|x|} · g` already gives integrability of `g`. -/
+private theorem integrable_of_integrable_exp_mul_abs_mul (ha : 0 ≤ a)
+    (hexp : Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν) : Integrable g ν := by
+  have hgm : AEStronglyMeasurable g ν := by
+    have hrw : g = fun x => Real.exp (-(a * |x|)) * (Real.exp (a * |x|) * g x) := by
+      funext x
+      rw [← mul_assoc, ← Real.exp_add, neg_add_cancel, Real.exp_zero, one_mul]
+    rw [hrw]
+    exact (Real.continuous_exp.comp (by fun_prop)).aestronglyMeasurable.mul
+      hexp.aestronglyMeasurable
+  refine hexp.mono hgm ?_
+  filter_upwards with x
+  have h1 : (1 : ℝ) ≤ Real.exp (a * |x|) := Real.one_le_exp (mul_nonneg ha (abs_nonneg x))
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_mul, abs_of_pos (Real.exp_pos _)]
+  nlinarith [abs_nonneg (g x)]
+
+/-- If `∫ xⁿ g` vanishes then the two truncations `g⁺` and `g⁻`, taken as densities against `ν`,
+have the same `n`-th moment: their difference is `g` pointwise. -/
+private theorem integral_pow_withDensity_ofReal_eq {n : ℕ}
+    (hmeasp : AEMeasurable (fun x : ℝ => ENNReal.ofReal (g x)) ν)
+    (hmeasn : AEMeasurable (fun x : ℝ => ENNReal.ofReal (-g x)) ν)
+    (hintp : Integrable (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n) ν)
+    (hintn : Integrable (fun x : ℝ => (ENNReal.ofReal (-g x)).toReal • x ^ n) ν)
+    (hmom : ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
+    ∫ x, x ^ n ∂(ν.withDensity fun x => ENNReal.ofReal (g x))
+      = ∫ x, x ^ n ∂(ν.withDensity fun x => ENNReal.ofReal (-g x)) := by
+  rw [integral_withDensity_eq_integral_toReal_smul₀ hmeasp (ae_of_all _ fun _ =>
+      ENNReal.ofReal_lt_top),
+    integral_withDensity_eq_integral_toReal_smul₀ hmeasn (ae_of_all _ fun _ =>
+      ENNReal.ofReal_lt_top)]
+  have hsplit : (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n
+      - (ENNReal.ofReal (-g x)).toReal • x ^ n) = fun x : ℝ => x ^ n * g x := by
+    funext x
+    rw [smul_eq_mul, smul_eq_mul, ENNReal.toReal_ofReal', ENNReal.toReal_ofReal',
+      ← sub_mul, max_zero_sub_max_neg_zero_eq_self]
+    ring
+  have hz : ∫ x : ℝ, ((ENNReal.ofReal (g x)).toReal • x ^ n
+      - (ENNReal.ofReal (-g x)).toReal • x ^ n) ∂ν = 0 := by
+    rw [hsplit]; exact hmom
+  rw [integral_sub hintp hintn] at hz
+  linarith
+
 end Densities
 
 /-- **Roadmap B1 (function level).** A real function on `ℝ` whose exponentially-weighted product
@@ -121,31 +197,14 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
     g =ᵐ[ν] 0 := by
   obtain ⟨a, ha, hexpa⟩ := hexp
-  -- `g` is measurable: it is `e^{-a|x|}` times the weighted product.
-  have hgm0 : AEStronglyMeasurable g ν := by
-    have hrw : g = fun x => Real.exp (-(a * |x|)) * (Real.exp (a * |x|) * g x) := by
-      funext x
-      rw [← mul_assoc, ← Real.exp_add]
-      simp
-    rw [hrw]
-    exact (Real.continuous_exp.comp (by fun_prop)).aestronglyMeasurable.mul
-      hexpa.aestronglyMeasurable
-  -- `e^{a|x|} ≥ 1`, so the weighted integrability already gives `g ∈ L¹`.
-  have hg : Integrable g ν := by
-    refine hexpa.mono hgm0 ?_
-    filter_upwards with x
-    have h1 : (1 : ℝ) ≤ Real.exp (a * |x|) := Real.one_le_exp (by positivity)
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_mul, abs_of_pos (Real.exp_pos _)]
-    nlinarith [abs_nonneg (g x)]
+  have hg : Integrable g ν := integrable_of_integrable_exp_mul_abs_mul ha.le hexpa
   have hgm : AEMeasurable g ν := hg.aestronglyMeasurable.aemeasurable
   have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) ν :=
     ENNReal.measurable_ofReal.comp_aemeasurable hgm
   have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) ν :=
     ENNReal.measurable_ofReal.comp_aemeasurable hgm.neg
-  have hltp : ∀ᵐ x ∂ν, ENNReal.ofReal (g x) < ⊤ := by
-    filter_upwards with x using ENNReal.ofReal_lt_top
-  have hltn : ∀ᵐ x ∂ν, ENNReal.ofReal (-g x) < ⊤ := by
-    filter_upwards with x using ENNReal.ofReal_lt_top
+  have hltp : ∀ᵐ x ∂ν, ENNReal.ofReal (g x) < ⊤ := ae_of_all _ fun _ => ENNReal.ofReal_lt_top
+  have hltn : ∀ᵐ x ∂ν, ENNReal.ofReal (-g x) < ⊤ := ae_of_all _ fun _ => ENNReal.ofReal_lt_top
   -- `ENNReal.ofReal` already truncates at zero, so these densities are exactly `g⁺` and `g⁻`.
   -- `|max t 0| ≤ |t|` is Mathlib's `abs_max_sub_max_le_abs` at `b = c = 0`.
   have hlep : ∀ x, |max (g x) 0| ≤ |g x| := fun x => by
@@ -159,22 +218,8 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
   have hintp := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasp hlep n
   have hintn := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasn hlen n
   -- `g⁺ - g⁻ = g` pointwise, so the two moment sequences differ by `∫ xⁿ g = 0`.
-  have hmoments : ∀ n : ℕ, ∫ x, x ^ n ∂(ν.withDensity fun x => ENNReal.ofReal (g x))
-      = ∫ x, x ^ n ∂(ν.withDensity fun x => ENNReal.ofReal (-g x)) := by
-    intro n
-    rw [integral_withDensity_eq_integral_toReal_smul₀ hmeasp hltp,
-      integral_withDensity_eq_integral_toReal_smul₀ hmeasn hltn]
-    have hsplit : (fun x : ℝ => (ENNReal.ofReal (g x)).toReal • x ^ n
-        - (ENNReal.ofReal (-g x)).toReal • x ^ n) = fun x : ℝ => x ^ n * g x := by
-      funext x
-      rw [smul_eq_mul, smul_eq_mul, ENNReal.toReal_ofReal', ENNReal.toReal_ofReal',
-        ← sub_mul, max_zero_sub_max_neg_zero_eq_self]
-      ring
-    have hz : ∫ x : ℝ, ((ENNReal.ofReal (g x)).toReal • x ^ n
-        - (ENNReal.ofReal (-g x)).toReal • x ^ n) ∂ν = 0 := by
-      rw [hsplit]; exact hmom n
-    rw [integral_sub (hintp n) (hintn n)] at hz
-    linarith
+  have hmoments := fun n => integral_pow_withDensity_ofReal_eq hmeasp hmeasn (hintp n) (hintn n)
+    (hmom n)
   -- Determinacy forces the two parts to be the same measure ...
   have hEq : (ν.withDensity fun x => ENNReal.ofReal (g x))
       = ν.withDensity fun x => ENNReal.ofReal (-g x) :=
@@ -199,6 +244,50 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
 
 variable {𝕜 : Type*} [RCLike 𝕜]
 
+/-- A measure carrying an integrable weight `e^{a|x|}` at a rate `a ≥ 0` is finite: that weight
+dominates the constant `1`. -/
+private theorem isFiniteMeasure_of_integrable_exp_mul_abs {a : ℝ} (ha : 0 ≤ a)
+    (hexp : Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) : IsFiniteMeasure ν := by
+  have hone : Integrable (fun _ : ℝ => (1 : ℝ)) ν := by
+    refine hexp.mono' aestronglyMeasurable_const (Filter.Eventually.of_forall fun x => ?_)
+    rw [Real.norm_eq_abs, abs_one]
+    exact Real.one_le_exp (mul_nonneg ha (abs_nonneg x))
+  exact (integrable_const_iff.mp hone).resolve_left one_ne_zero
+
+/-- Every monomial, cast into `𝕜`, is square-integrable against a measure carrying an integrable
+weight `e^{b|x|}` at a positive rate: that weight dominates `e^{±bx}`, which makes every polynomial
+moment finite. -/
+private theorem memLp_two_algebraMap_pow_of_integrable_exp_mul_abs {b : ℝ} (hb : 0 < b)
+    (hexp : Integrable (fun x : ℝ => Real.exp (b * |x|)) ν) (n : ℕ) :
+    MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
+  have hmeas : ∀ c : ℝ, AEStronglyMeasurable (fun x : ℝ => Real.exp (c * x)) ν :=
+    fun c => (Real.continuous_exp.comp (continuous_const.mul continuous_id)).aestronglyMeasurable
+  have hpos : Integrable (fun x : ℝ => Real.exp (b * x)) ν := by
+    refine hexp.mono' (hmeas b) (Filter.Eventually.of_forall fun x => ?_)
+    rw [Real.norm_eq_abs, Real.abs_exp]
+    exact Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left (le_abs_self x) hb.le)
+  have hneg : Integrable (fun x : ℝ => Real.exp (-b * x)) ν := by
+    refine hexp.mono' (hmeas (-b)) (Filter.Eventually.of_forall fun x => ?_)
+    rw [Real.norm_eq_abs, Real.abs_exp]
+    exact Real.exp_le_exp.mpr (by nlinarith [hb, neg_le_abs x])
+  have hpow : ∀ k : ℕ, Integrable (fun x : ℝ => x ^ k) ν := fun k =>
+    integrable_pow_of_integrable_exp_mul (ne_of_gt hb) hpos hneg k
+  simpa only [Polynomial.eval_pow, Polynomial.eval_X, map_pow] using
+    memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜) hpow (Polynomial.X ^ n)
+
+/-- A real-linear functional passes through a vanishing monomial moment.  The monomial `xⁿ` is
+real, so `L` commutes with multiplication by it, and `∫ xⁿ · L(g)` is `L` applied to the moment. -/
+private theorem integral_pow_mul_clm_eq_zero (L : 𝕜 →L[ℝ] ℝ) {g : ℝ → 𝕜} {n : ℕ}
+    (hint : Integrable (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n * g x) ν)
+    (hmom : ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
+    ∫ x : ℝ, x ^ n * L (g x) ∂ν = 0 := by
+  have hfun : (fun x : ℝ => x ^ n * L (g x))
+      = fun x : ℝ => L ((algebraMap ℝ 𝕜 x) ^ n * g x) := by
+    funext x
+    rw [RCLike.algebraMap_eq_ofReal, ← RCLike.ofReal_pow, ← RCLike.real_smul_eq_coe_mul,
+      L.map_smul, smul_eq_mul]
+  rw [hfun, L.integral_comp_comm hint, hmom, map_zero]
+
 /-- **Roadmap B1, measure level.** A measure `ν` on `ℝ` carrying one finite exponential moment is
 moment-determinate, so a `g ∈ L²(ν)` orthogonal to every monomial is a.e. `0`.
 
@@ -220,19 +309,11 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
   obtain ⟨a, ha, hexpa⟩ := hexp
   set b := a / 2 with hb
   have hbpos : (0 : ℝ) < b := by positivity
-  have hexpmeas : ∀ c : ℝ, AEStronglyMeasurable (fun x : ℝ => Real.exp (c * |x|)) ν :=
-    fun c => (Real.continuous_exp.comp
-      (continuous_const.mul continuous_abs)).aestronglyMeasurable
-  -- `e^{a|x|} ≥ 1` dominates the constant function, so `ν` is finite.
-  haveI hnu : IsFiniteMeasure ν := by
-    have hone : Integrable (fun _ : ℝ => (1 : ℝ)) ν := by
-      refine hexpa.mono' aestronglyMeasurable_const (Filter.Eventually.of_forall fun x => ?_)
-      rw [Real.norm_eq_abs, abs_one]
-      exact Real.one_le_exp (by positivity)
-    exact (integrable_const_iff.mp hone).resolve_left one_ne_zero
+  have : IsFiniteMeasure ν := isFiniteMeasure_of_integrable_exp_mul_abs ha.le hexpa
   -- Half the rate is square-integrable, its square being the full-rate weight.
   have hexp2 : MemLp (fun x : ℝ => Real.exp (b * |x|)) 2 ν := by
-    refine (memLp_two_iff_integrable_sq (hexpmeas b)).2 ?_
+    refine (memLp_two_iff_integrable_sq (Real.continuous_exp.comp
+      (continuous_const.mul continuous_abs)).aestronglyMeasurable).2 ?_
     have hfun : (fun x : ℝ => Real.exp (a * |x|))
         = fun x : ℝ => Real.exp (b * |x|) ^ 2 := by
       funext x
@@ -241,62 +322,19 @@ theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
     exact hfun ▸ hexpa
   -- Cauchy-Schwarz: an `L²` function against the `L²` weight is integrable.
   have key : ∀ f : ℝ → ℝ, MemLp f 2 ν →
-      Integrable (fun x : ℝ => Real.exp (b * |x|) * f x) ν := by
-    intro f hf
-    simpa only [Pi.mul_def] using hexp2.integrable_mul hf
-  -- Monomials are square-integrable.  Exponential integrability at `±b` makes every polynomial
-  -- moment finite (`ProbabilityTheory.integrable_pow_of_integrable_exp_mul`), which is exactly
-  -- the hypothesis of the shared polynomial-`L²` construction in
-  -- `TauCeti.MeasureTheory.Function.PolynomialMemLp`; specialising it to `X ^ n` gives this.
-  have hpolyL2 : ∀ n : ℕ, MemLp (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n) 2 ν := by
-    have hexpb : Integrable (fun x : ℝ => Real.exp (b * |x|)) ν :=
-      hexp2.integrable (show (1 : ENNReal) ≤ 2 by norm_num)
-    have hmeas_lin : ∀ c : ℝ, AEStronglyMeasurable (fun x : ℝ => Real.exp (c * x)) ν :=
-      fun c =>
-        (Real.continuous_exp.comp (continuous_const.mul continuous_id)).aestronglyMeasurable
-    have hpos : Integrable (fun x : ℝ => Real.exp (b * x)) ν := by
-      refine hexpb.mono' (hmeas_lin b) (Filter.Eventually.of_forall fun x => ?_)
-      rw [Real.norm_eq_abs, Real.abs_exp]
-      exact Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left (le_abs_self x) hbpos.le)
-    have hneg : Integrable (fun x : ℝ => Real.exp (-b * x)) ν := by
-      refine hexpb.mono' (hmeas_lin (-b)) (Filter.Eventually.of_forall fun x => ?_)
-      rw [Real.norm_eq_abs, Real.abs_exp]
-      refine Real.exp_le_exp.mpr (by nlinarith [hbpos, neg_le_abs x])
-    have hpow : ∀ k : ℕ, Integrable (fun x : ℝ => x ^ k) ν := fun k =>
-      integrable_pow_of_integrable_exp_mul (ne_of_gt hbpos) hpos hneg k
-    intro n
-    simpa using
-      memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜) hpow (Polynomial.X ^ n)
-  -- Hence each monomial moment integrand is integrable, so `re`/`im` pass through the integral.
-  have hint : ∀ n : ℕ, Integrable (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n * g x) ν :=
-    fun n => by simpa only [Pi.mul_def] using (hpolyL2 n).integrable_mul hg
-  have hsplit : ∀ (x : ℝ) (n : ℕ),
-      (algebraMap ℝ 𝕜 x) ^ n * g x = ((x ^ n : ℝ) : 𝕜) * g x := by
-    intro x n
-    rw [RCLike.algebraMap_eq_ofReal, RCLike.ofReal_pow]
-  -- Monomials are real, so real and imaginary parts each inherit vanishing moments.
-  have hre : ∀ n : ℕ, ∫ x, x ^ n * RCLike.re (g x) ∂ν = 0 := by
-    intro n
-    have h0 : RCLike.re (∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν) = 0 := by
-      rw [hmom n]; simp
-    rw [← integral_re (hint n)] at h0
-    have hfun : (fun x : ℝ => x ^ n * RCLike.re (g x))
-        = fun x : ℝ => RCLike.re ((algebraMap ℝ 𝕜 x) ^ n * g x) := by
-      funext x
-      rw [hsplit x n, RCLike.re_ofReal_mul]
-    rw [hfun]
-    exact h0
-  have him : ∀ n : ℕ, ∫ x, x ^ n * RCLike.im (g x) ∂ν = 0 := by
-    intro n
-    have h0 : RCLike.im (∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν) = 0 := by
-      rw [hmom n]; simp
-    rw [← integral_im (hint n)] at h0
-    have hfun : (fun x : ℝ => x ^ n * RCLike.im (g x))
-        = fun x : ℝ => RCLike.im ((algebraMap ℝ 𝕜 x) ^ n * g x) := by
-      funext x
-      rw [hsplit x n, RCLike.im_ofReal_mul]
-    rw [hfun]
-    exact h0
+      Integrable (fun x : ℝ => Real.exp (b * |x|) * f x) ν :=
+    fun f hf => by simpa only [Pi.mul_def] using hexp2.integrable_mul hf
+  -- Monomials are square-integrable, so each monomial moment integrand is integrable and the
+  -- real and imaginary parts each pass through the integral.
+  have hint : ∀ n : ℕ, Integrable (fun x : ℝ => (algebraMap ℝ 𝕜 x) ^ n * g x) ν := fun n => by
+    simpa only [Pi.mul_def] using (memLp_two_algebraMap_pow_of_integrable_exp_mul_abs hbpos
+      (hexp2.integrable (show (1 : ENNReal) ≤ 2 by norm_num)) n).integrable_mul hg
+  have hre : ∀ n : ℕ, ∫ x, x ^ n * RCLike.re (g x) ∂ν = 0 := fun n => by
+    simpa only [RCLike.reCLM_apply] using
+      integral_pow_mul_clm_eq_zero RCLike.reCLM (hint n) (hmom n)
+  have him : ∀ n : ℕ, ∫ x, x ^ n * RCLike.im (g x) ∂ν = 0 := fun n => by
+    simpa only [RCLike.imCLM_apply] using
+      integral_pow_mul_clm_eq_zero RCLike.imCLM (hint n) (hmom n)
   -- Apply the function-level form to the real and imaginary parts separately.
   have hzre := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _ ⟨b, hbpos, key _ hg.re⟩ hre
   have hzim := ae_eq_zero_of_forall_moment_eq_zero (ν := ν) _ ⟨b, hbpos, key _ hg.im⟩ him
