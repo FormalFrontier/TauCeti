@@ -104,10 +104,9 @@ theorem rowSubgroupMulEquiv_apply_coe (t : YoungTableau μ) (σ : rowSubgroup t)
     (k : {k : Fin μ.card // rowIndex t k = i}) :
     (rowSubgroupMulEquiv t σ i (rowFiberEquiv t i k) : ℕ × ℕ) =
       (t.symm ((σ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := by
-  rw [rowSubgroupMulEquiv, MulEquiv.trans_apply, MulEquiv.trans_apply,
-    MulEquiv.piCongrRight_apply, Equiv.permCongrHom_coe, Equiv.permCongr_apply,
-    Equiv.symm_apply_apply, rowFiberEquiv_apply_coe, fiberSubgroupMulEquivPiPerm_apply_coe,
-    MulEquiv.subgroupCongr_apply]
+  rw [rowSubgroupMulEquiv, MulEquiv.trans_apply,
+    fiberSubgroupMulEquivPiPerm_trans_piCongrRight_apply, rowFiberEquiv_apply_coe]
+  simp only [MulEquiv.subgroupCongr_apply]
 
 /-- The `j`-th component of `colSubgroupMulEquiv t σ` moves the cell carrying the label `k` to the
 cell carrying the label `σ k`. -/
@@ -116,10 +115,9 @@ theorem colSubgroupMulEquiv_apply_coe (t : YoungTableau μ) (σ : colSubgroup t)
     (k : {k : Fin μ.card // colIndex t k = j}) :
     (colSubgroupMulEquiv t σ j (colFiberEquiv t j k) : ℕ × ℕ) =
       (t.symm ((σ : Equiv.Perm (Fin μ.card)) k) : ℕ × ℕ) := by
-  rw [colSubgroupMulEquiv, MulEquiv.trans_apply, MulEquiv.trans_apply,
-    MulEquiv.piCongrRight_apply, Equiv.permCongrHom_coe, Equiv.permCongr_apply,
-    Equiv.symm_apply_apply, colFiberEquiv_apply_coe, fiberSubgroupMulEquivPiPerm_apply_coe,
-    MulEquiv.subgroupCongr_apply]
+  rw [colSubgroupMulEquiv, MulEquiv.trans_apply,
+    fiberSubgroupMulEquivPiPerm_trans_piCongrRight_apply, colFiberEquiv_apply_coe]
+  simp only [MulEquiv.subgroupCongr_apply]
 
 /-- The permutation of the labels assembled from a family of permutations of the rows of `μ` moves
 each label by the permutation of its own row. -/
@@ -130,9 +128,7 @@ theorem rowSubgroupMulEquiv_symm_apply (t : YoungTableau μ) (σ : ∀ i, Equiv.
       ((rowFiberEquiv t (rowIndex t k)).symm
         (σ (rowIndex t k) (rowFiberEquiv t (rowIndex t k) ⟨k, rfl⟩)) : Fin μ.card) := by
   rw [rowSubgroupMulEquiv, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
-    MulEquiv.symm_trans_apply, fiberSubgroupMulEquivPiPerm_symm_apply,
-    MulEquiv.piCongrRight_symm, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_symm,
-    Equiv.permCongrHom_coe, Equiv.permCongr_apply, Equiv.symm_symm]
+    fiberSubgroupMulEquivPiPerm_trans_piCongrRight_symm_apply]
 
 /-- The permutation of the labels assembled from a family of permutations of the columns of `μ`
 moves each label by the permutation of its own column. -/
@@ -143,9 +139,7 @@ theorem colSubgroupMulEquiv_symm_apply (t : YoungTableau μ) (σ : ∀ j, Equiv.
       ((colFiberEquiv t (colIndex t k)).symm
         (σ (colIndex t k) (colFiberEquiv t (colIndex t k) ⟨k, rfl⟩)) : Fin μ.card) := by
   rw [colSubgroupMulEquiv, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
-    MulEquiv.symm_trans_apply, fiberSubgroupMulEquivPiPerm_symm_apply,
-    MulEquiv.piCongrRight_symm, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_symm,
-    Equiv.permCongrHom_coe, Equiv.permCongr_apply, Equiv.symm_symm]
+    fiberSubgroupMulEquivPiPerm_trans_piCongrRight_symm_apply]
 
 end YoungTableau
 

@@ -45,10 +45,10 @@ namespace YoungTableau
 variable {μ : YoungDiagram}
 
 /-- The row of the cell of `μ` carrying the label `k` in the tableau `t`. -/
-@[expose] def rowIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ × ℕ).1
+def rowIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ × ℕ).1
 
 /-- The column of the cell of `μ` carrying the label `k` in the tableau `t`. -/
-@[expose] def colIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ × ℕ).2
+def colIndex (t : YoungTableau μ) (k : Fin μ.card) : ℕ := (t.symm k : ℕ × ℕ).2
 
 @[simp]
 theorem rowIndex_apply (t : YoungTableau μ) (c : ↥μ.cells) :
@@ -69,17 +69,22 @@ theorem rowIndex_colIndex_injective (t : YoungTableau μ) :
   exact t.symm.injective (Subtype.ext (Prod.ext h.1 h.2))
 
 /-- The labels lying in row `i` of a `μ`-tableau are the cells of the `i`-th row of `μ`. -/
-@[expose] def rowFiberEquiv (t : YoungTableau μ) (i : ℕ) :
+def rowFiberEquiv (t : YoungTableau μ) (i : ℕ) :
     {k : Fin μ.card // rowIndex t k = i} ≃ ↥(μ.row i) :=
-  (Equiv.subtypeEquiv t.symm fun _ => Iff.rfl).trans <|
+  -- the two predicates are given explicitly: inferring them from `Iff.rfl` would state the source
+  -- subtype through the unfolding of `rowIndex` rather than through `rowIndex` itself
+  (Equiv.subtypeEquiv (p := fun k => rowIndex t k = i) (q := fun c : ↥μ.cells => (↑c : ℕ × ℕ).1 = i)
+      t.symm fun _ => Iff.rfl).trans <|
     (Equiv.subtypeSubtypeEquivSubtypeInter (· ∈ μ.cells) fun c => c.1 = i).trans <|
       Equiv.subtypeEquivRight fun _ => by
         rw [YoungDiagram.mem_row_iff, YoungDiagram.mem_cells]
 
 /-- The labels lying in column `j` of a `μ`-tableau are the cells of the `j`-th column of `μ`. -/
-@[expose] def colFiberEquiv (t : YoungTableau μ) (j : ℕ) :
+def colFiberEquiv (t : YoungTableau μ) (j : ℕ) :
     {k : Fin μ.card // colIndex t k = j} ≃ ↥(μ.col j) :=
-  (Equiv.subtypeEquiv t.symm fun _ => Iff.rfl).trans <|
+  -- as for `rowFiberEquiv`, the two predicates are given explicitly
+  (Equiv.subtypeEquiv (p := fun k => colIndex t k = j) (q := fun c : ↥μ.cells => (↑c : ℕ × ℕ).2 = j)
+      t.symm fun _ => Iff.rfl).trans <|
     (Equiv.subtypeSubtypeEquivSubtypeInter (· ∈ μ.cells) fun c => c.2 = j).trans <|
       Equiv.subtypeEquivRight fun _ => by
         rw [YoungDiagram.mem_col_iff, YoungDiagram.mem_cells]
@@ -87,14 +92,14 @@ theorem rowIndex_colIndex_injective (t : YoungTableau μ) :
 @[simp]
 theorem rowFiberEquiv_apply_coe (t : YoungTableau μ) (i : ℕ)
     (k : {k : Fin μ.card // rowIndex t k = i}) :
-    (rowFiberEquiv t i k : ℕ × ℕ) = (t.symm k.1 : ℕ × ℕ) :=
-  rfl
+    (rowFiberEquiv t i k : ℕ × ℕ) = (t.symm k.1 : ℕ × ℕ) := by
+  simp [rowFiberEquiv]
 
 @[simp]
 theorem colFiberEquiv_apply_coe (t : YoungTableau μ) (j : ℕ)
     (k : {k : Fin μ.card // colIndex t k = j}) :
-    (colFiberEquiv t j k : ℕ × ℕ) = (t.symm k.1 : ℕ × ℕ) :=
-  rfl
+    (colFiberEquiv t j k : ℕ × ℕ) = (t.symm k.1 : ℕ × ℕ) := by
+  simp [colFiberEquiv]
 
 end YoungTableau
 

@@ -15,7 +15,11 @@ of `Equiv.Perm α`, here called `TauCeti.fiberSubgroup f`.  This file records th
 behaviour of the construction under pairing two maps, the criterion for it to be trivial, and the
 isomorphism restricting a fiber-preserving permutation to each fiber,
 
-`fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i}`.
+`fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i}`,
+
+together with the two formulas reading that isomorphism, and its inverse, through a family of
+equivalences `{a // f a = i} ≃ β i` of the fibers, which is how a concrete description of the
+fibers is fed into it.
 
 Mathlib already studies these permutations, but through the domain action of `Equiv.Perm α` on
 `α → ι`: `DomMulAct.stabilizerMulEquiv` is the same isomorphism stated on
@@ -83,7 +87,7 @@ theorem fiberSubgroup_eq_bot_iff {f : α → ι} :
 /-- The permutations preserving the fibers of `f` are the stabilizer of `f` for the domain action
 of `Equiv.Perm α` on `α → ι`, read as a subgroup of `Equiv.Perm α` itself: the `ᵈᵐᵃ` and `ᵐᵒᵖ`
 synonyms reverse multiplication twice, so `σ ↦ DomMulAct.mk σ` is an isomorphism. -/
-@[expose] def fiberSubgroupMulEquivStabilizer (f : α → ι) :
+def fiberSubgroupMulEquivStabilizer (f : α → ι) :
     fiberSubgroup f ≃* (MulAction.stabilizer (Equiv.Perm α)ᵈᵐᵃ f)ᵐᵒᵖ where
   toFun σ := MulOpposite.op ⟨DomMulAct.mk (σ : Equiv.Perm α),
     DomMulAct.mem_stabilizer_iff.mpr (funext (mem_fiberSubgroup.mp σ.2))⟩
@@ -93,27 +97,70 @@ synonyms reverse multiplication twice, so `σ ↦ DomMulAct.mk σ` is an isomorp
   right_inv _ := rfl
   map_mul' _ _ := rfl
 
+/-- Read in `(Equiv.Perm α)ᵈᵐᵃ`, the stabilizer element attached to a fiber-preserving permutation
+is that permutation. -/
+@[simp]
+theorem fiberSubgroupMulEquivStabilizer_apply_unop_coe (f : α → ι) (σ : fiberSubgroup f) :
+    ((fiberSubgroupMulEquivStabilizer f σ).unop : (Equiv.Perm α)ᵈᵐᵃ) =
+      DomMulAct.mk (σ : Equiv.Perm α) := by
+  simp [fiberSubgroupMulEquivStabilizer]
+
 /-- Restricting a fiber-preserving permutation of `α` to each fiber of `f` is an isomorphism onto
 the product of the permutation groups of the fibers.
 
 This is Mathlib's `DomMulAct.stabilizerMulEquiv` transported along
 `fiberSubgroupMulEquivStabilizer`. -/
-@[expose] def fiberSubgroupMulEquivPiPerm (f : α → ι) :
+def fiberSubgroupMulEquivPiPerm (f : α → ι) :
     fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i} :=
   (fiberSubgroupMulEquivStabilizer f).trans (DomMulAct.stabilizerMulEquiv f)
 
 @[simp]
 theorem fiberSubgroupMulEquivPiPerm_apply_coe (f : α → ι) (σ : fiberSubgroup f) (i : ι)
     (a : {a // f a = i}) :
-    (fiberSubgroupMulEquivPiPerm f σ i a : α) = (σ : Equiv.Perm α) a :=
-  rfl
+    (fiberSubgroupMulEquivPiPerm f σ i a : α) = (σ : Equiv.Perm α) a := by
+  obtain ⟨a, ha⟩ := a
+  rw [fiberSubgroupMulEquivPiPerm, MulEquiv.trans_apply,
+    DomMulAct.stabilizerMulEquiv_apply _ ha, fiberSubgroupMulEquivStabilizer_apply_unop_coe,
+    Equiv.symm_apply_apply]
 
 /-- The fiber-preserving permutation assembled from a family of permutations of the fibers of `f`
 moves each point by the permutation of its own fiber. -/
 @[simp]
 theorem fiberSubgroupMulEquivPiPerm_symm_apply (f : α → ι)
     (σ : ∀ i, Equiv.Perm {a // f a = i}) (a : α) :
-    ((fiberSubgroupMulEquivPiPerm f).symm σ : Equiv.Perm α) a = (σ (f a) ⟨a, rfl⟩ : α) :=
-  rfl
+    ((fiberSubgroupMulEquivPiPerm f).symm σ : Equiv.Perm α) a = (σ (f a) ⟨a, rfl⟩ : α) := by
+  conv_rhs => rw [← (fiberSubgroupMulEquivPiPerm f).apply_symm_apply σ]
+  rw [fiberSubgroupMulEquivPiPerm_apply_coe]
+
+section Transport
+
+variable {β : ι → Type*}
+
+/-- Reading `fiberSubgroupMulEquivPiPerm f` through equivalences `e i : {a // f a = i} ≃ β i` of
+the fibers of `f`: the `i`-th component takes the point of `β i` matching `a` to the one matching
+`σ a`.  Specialising this to a concrete family of fibers gives the component formula for the
+transported isomorphism. -/
+theorem fiberSubgroupMulEquivPiPerm_trans_piCongrRight_apply (f : α → ι)
+    (e : ∀ i, {a // f a = i} ≃ β i) (σ : fiberSubgroup f) (i : ι) (a : {a // f a = i}) :
+    (fiberSubgroupMulEquivPiPerm f).trans
+        (MulEquiv.piCongrRight fun i => (e i).permCongrHom) σ i (e i a) =
+      e i ⟨(σ : Equiv.Perm α) a, (mem_fiberSubgroup.mp σ.2 a).trans a.2⟩ := by
+  rw [MulEquiv.trans_apply, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_coe,
+    Equiv.permCongr_apply, Equiv.symm_apply_apply]
+  exact congrArg (e i) (Subtype.ext (fiberSubgroupMulEquivPiPerm_apply_coe f σ i a))
+
+/-- Reading the inverse of `fiberSubgroupMulEquivPiPerm f` through equivalences
+`e i : {a // f a = i} ≃ β i` of the fibers of `f`: the assembled permutation moves each point by
+the permutation of its own fiber, read through `e`. -/
+theorem fiberSubgroupMulEquivPiPerm_trans_piCongrRight_symm_apply (f : α → ι)
+    (e : ∀ i, {a // f a = i} ≃ β i) (σ : ∀ i, Equiv.Perm (β i)) (a : α) :
+    ((((fiberSubgroupMulEquivPiPerm f).trans
+        (MulEquiv.piCongrRight fun i => (e i).permCongrHom)).symm σ : Equiv.Perm α) a : α) =
+      ((e (f a)).symm (σ (f a) (e (f a) ⟨a, rfl⟩)) : α) := by
+  rw [MulEquiv.symm_trans_apply, fiberSubgroupMulEquivPiPerm_symm_apply,
+    MulEquiv.piCongrRight_symm, MulEquiv.piCongrRight_apply, Equiv.permCongrHom_symm,
+    Equiv.permCongrHom_coe, Equiv.permCongr_apply, Equiv.symm_symm]
+
+end Transport
 
 end TauCeti
