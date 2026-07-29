@@ -8,6 +8,7 @@ public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import Mathlib.MeasureTheory.Integral.CurveIntegral.Basic
 public import Mathlib.Topology.Homotopy.Path
+import TauCeti.Analysis.Contour.NullHomologous
 import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.MeasureTheory.Integral.CurveIntegral.Poincare
 
@@ -172,14 +173,15 @@ theorem isNullHomologous_iff_of_pathHomotopy {x : ℂ} {p q : Path x x} {Ω : Se
       (Set.Icc 0 1))
     (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω) :
     IsNullHomologous p.extend 0 1 Ω ↔ IsNullHomologous q.extend 0 1 Ω := by
-  rw [isNullHomologous_iff, isNullHomologous_iff]
-  constructor <;> intro h z hz
-  · rw [← windingNumber_eq_of_pathHomotopy φ hφsmooth
-      (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))]
-    exact h z hz
-  · rw [windingNumber_eq_of_pathHomotopy φ hφsmooth
-      (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))]
-    exact h z hz
+  constructor
+  · intro h
+    exact h.congr_windingNumber fun z hz ↦
+      (windingNumber_eq_of_pathHomotopy φ hφsmooth
+        (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))).symm
+  · intro h
+    exact h.congr_windingNumber fun z hz ↦
+      windingNumber_eq_of_pathHomotopy φ hφsmooth
+        (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))
 
 end TauCeti.Contour
 
