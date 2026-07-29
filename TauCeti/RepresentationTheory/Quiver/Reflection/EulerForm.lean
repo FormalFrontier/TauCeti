@@ -14,10 +14,9 @@ Reflecting a quiver at a vertex does not change its underlying graph, so it chan
 Tits form (`TauCeti.titsForm_reflect`) nor its polarization (`TauCeti.titsPolarForm_reflect`), and
 hence not the simple reflections on dimension vectors either
 (`TauCeti.vertexPreReflection_reflect_apply`). The Euler form *does* change, since it records the
-orientation; what survives is the Bernstein-Gelfand-Ponomarev identity at a **sink** `i`: the
+orientation; what survives is the Bernstein-Gelfand-Ponomarev identity at a sink or source `i`: the
 Euler form of the reflected quiver, evaluated at the simple reflections `sᵢ d` and `sᵢ e`, is the
-Euler form of the original quiver evaluated at `d` and `e`
-(`TauCeti.eulerForm_reflect_vertexPreReflection`).
+Euler form of the original quiver evaluated at `d` and `e`.
 
 ## Main results
 
@@ -26,6 +25,8 @@ Euler form of the original quiver evaluated at `d` and `e`
 * `TauCeti.vertexPreReflection_reflect_apply`: so is every simple reflection on dimension vectors.
 * `TauCeti.eulerForm_reflect_vertexPreReflection`: at a sink, the Euler form is transported by the
   simple reflection at that vertex.
+* `TauCeti.eulerForm_reflect_vertexPreReflection_of_isSource`: the corresponding identity at a
+  source.
 
 ## References
 
@@ -116,6 +117,34 @@ private theorem sub_sum_sum_eq_of_reflect_data {W : Type*} [Fintype W] (i : W)
   rw [h₁, h₂, h₃, h₄, hdi, hei]
   ring
 
+/-- Transposing an arrow-count matrix exchanges the two arguments of its Euler-form sum. -/
+private theorem sum_sum_transpose {W : Type*} [Fintype W] (N : W → W → ℤ) (d e : W → ℤ) :
+    ∑ a : W, ∑ b : W, N b a * (e a * d b) = ∑ a : W, ∑ b : W, N a b * (d a * e b) := by
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun a _ ↦ Finset.sum_congr rfl fun b _ ↦ ?_
+  ring
+
+/-- The source-oriented version of `sub_sum_sum_eq_of_reflect_data`, obtained by transposing the
+two arrow-count matrices and exchanging the arguments of the Euler form. -/
+private theorem sub_sum_sum_eq_of_reflect_data_of_source {W : Type*} [Fintype W] (i : W)
+    (N N' : W → W → ℤ) (d e d' e' : W → ℤ)
+    (hN : ∀ a : W, N a i = 0) (hN'col : ∀ a : W, N' a i = N i a)
+    (hN'row : ∀ b : W, N' i b = 0)
+    (hN' : ∀ a b : W, a ≠ i → b ≠ i → N' a b = N a b)
+    (hd : ∀ w : W, w ≠ i → d' w = d w) (he : ∀ w : W, w ≠ i → e' w = e w)
+    (hdi : d' i = (∑ w : W, N i w * d w) - d i)
+    (hei : e' i = (∑ w : W, N i w * e w) - e i) :
+    (∑ w : W, d' w * e' w) - ∑ a : W, ∑ b : W, N' a b * (d' a * e' b)
+      = (∑ w : W, d w * e w) - ∑ a : W, ∑ b : W, N a b * (d a * e b) := by
+  have key := sub_sum_sum_eq_of_reflect_data i (fun a b ↦ N b a) (fun a b ↦ N' b a)
+    e d e' d' hN hN'col hN'row (fun a b ha hb ↦ hN' b a hb ha) he hd hei hdi
+  rw [sum_sum_transpose N' d' e', sum_sum_transpose N d e] at key
+  have hdiag' : ∑ w : W, e' w * d' w = ∑ w : W, d' w * e' w :=
+    Finset.sum_congr rfl fun w _ ↦ mul_comm (e' w) (d' w)
+  have hdiag : ∑ w : W, e w * d w = ∑ w : W, d w * e w :=
+    Finset.sum_congr rfl fun w _ ↦ mul_comm (e w) (d w)
+  rwa [hdiag', hdiag] at key
+
 variable {V : Type u} [_root_.Quiver.{v} V] [Fintype V] [∀ a b : V, Fintype (a ⟶ b)]
 
 /-- `TauCeti.eulerForm_eq_sum_card` for the reflected quiver, with the sums re-indexed by the
@@ -184,7 +213,7 @@ theorem vertexPreReflection_reflect_apply (i j : V) (d : V → ℤ) (w : V) :
   · rw [vertexPreReflection_apply_of_ne (Quiver.Reflect V i) j d hw,
       vertexPreReflection_apply_of_ne V j d hw]
 
-/-! ### The Euler form at a sink -/
+/-! ### The Euler form at a sink or source -/
 
 /-- At a sink `i`, the Euler form of the quiver reflected at `i` is carried to the Euler form of
 the original quiver by the simple reflection `sᵢ` on dimension vectors:
@@ -208,6 +237,34 @@ theorem eulerForm_reflect_vertexPreReflection {i : V} (h : Quiver.IsSink i) (d e
     (fun a b ↦ (Fintype.card (Quiver.reflectHom i a b) : ℤ)) d e _ _
     hcard (fun b ↦ by rw [Quiver.card_reflectHom_left])
     (fun a ↦ by rw [Quiver.card_reflectHom_right_of_isSink h, Nat.cast_zero])
+    (fun a b ha hb ↦ by rw [Quiver.card_reflectHom_of_ne_of_ne ha hb])
+    (fun x hx ↦ vertexPreReflection_apply_of_ne V i d hx)
+    (fun x hx ↦ vertexPreReflection_apply_of_ne V i e hx) (hself d) (hself e)
+
+/-- At a source `i`, the Euler form of the quiver reflected at `i` is carried to the Euler form of
+the original quiver by the simple reflection `sᵢ` on dimension vectors:
+`⟨sᵢ d, sᵢ e⟩` for `Q.reflect i` equals `⟨d, e⟩` for `Q`.
+
+This is the numerical identity behind the Bernstein-Gelfand-Ponomarev reflection functor at a
+source, which realizes `sᵢ` on dimension vectors. -/
+theorem eulerForm_reflect_vertexPreReflection_of_isSource {i : V} (h : Quiver.IsSource i)
+    (d e : V → ℤ) :
+    eulerForm (Quiver.Reflect V i) (vertexPreReflection V i d) (vertexPreReflection V i e)
+      = eulerForm V d e := by
+  have hcard : ∀ a : V, (Fintype.card (a ⟶ i) : ℤ) = 0 := fun a ↦ by
+    rw [Fintype.card_eq_zero_iff.mpr (h.isEmpty_hom a), Nat.cast_zero]
+  have hself : ∀ f : V → ℤ, vertexPreReflection V i f i
+      = (∑ w : V, (Fintype.card (i ⟶ w) : ℤ) * f w) - f i := fun f ↦ by
+    rw [vertexPreReflection_apply_self, sub_eq_neg_add]
+    congr 1
+    refine Finset.sum_congr rfl fun x _ ↦ ?_
+    rw [hcard x, add_zero]
+  rw [eulerForm_eq_sum_card (Quiver.Reflect V i), eulerForm_eq_sum_card V]
+  refine sub_sum_sum_eq_of_reflect_data_of_source i
+    (fun a b ↦ (Fintype.card (a ⟶ b) : ℤ))
+    (fun a b ↦ (Fintype.card (Quiver.reflectHom i a b) : ℤ)) d e _ _
+    hcard (fun a ↦ by rw [Quiver.card_reflectHom_right])
+    (fun b ↦ by rw [Quiver.card_reflectHom_left, hcard b])
     (fun a b ha hb ↦ by rw [Quiver.card_reflectHom_of_ne_of_ne ha hb])
     (fun x hx ↦ vertexPreReflection_apply_of_ne V i d hx)
     (fun x hx ↦ vertexPreReflection_apply_of_ne V i e hx) (hself d) (hself e)

@@ -11,7 +11,7 @@ public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
 # Acyclic reflected quivers
 
 This file develops the interaction between acyclicity and reflection at a sink or source. A
-nonempty finite acyclic quiver has a sink and a source, and reflecting at a sink preserves
+nonempty finite acyclic quiver has a sink and a source, and reflecting at either one preserves
 acyclicity.
 
 ## Main results
@@ -19,6 +19,8 @@ acyclicity.
 * `TauCeti.Quiver.IsAcyclic.exists_isSink`: a nonempty finite acyclic quiver has a sink.
 * `TauCeti.Quiver.IsAcyclic.exists_isSource`: a nonempty finite acyclic quiver has a source.
 * `TauCeti.Quiver.IsAcyclic.reflect_of_isSink`: reflecting an acyclic quiver at a sink leaves it
+  acyclic.
+* `TauCeti.Quiver.IsAcyclic.reflect_of_isSource`: reflecting an acyclic quiver at a source leaves it
   acyclic.
 
 ## References
@@ -107,6 +109,35 @@ theorem IsAcyclic.reflect_of_isSink {i : V} (hV : IsAcyclic V) (h : IsSink i) :
     | nil => exact Path.length_nil
     | cons _ e => exact (h.isSource_reflect.isEmpty_hom _).elim (ha ▸ e)
   · obtain ⟨-, q, hq⟩ := exists_path_of_isSink h ha p
+    rw [← hq, hV.length_eq_zero q]
+
+/-- Away from a source, a path of the reflected quiver comes from a path of the original quiver of
+the same length; in particular it cannot start at the source. -/
+private theorem exists_path_of_isSource {i : V} (h : IsSource i) {a b : Reflect V i} (hb : b ≠ i)
+    (p : Path a b) : a ≠ i ∧ ∃ q : @Path V _ a b, q.length = p.length := by
+  induction p with
+  | nil => exact ⟨hb, Path.nil, rfl⟩
+  | @cons c d p e ih =>
+    have hc : c ≠ i := fun hc ↦ (h.isSink_reflect.isEmpty_hom d).elim (hc ▸ e)
+    obtain ⟨ha, q, hq⟩ := ih hc
+    refine ⟨ha, q.cons (cast (reflectHom_of_ne_of_ne hc hb) (cast (hom_reflect i c d) e)), ?_⟩
+    rw [Path.length_cons, Path.length_cons, hq]
+
+/-- Reflecting an acyclic quiver at a source leaves it acyclic. -/
+theorem IsAcyclic.reflect_of_isSource {i : V} (hV : IsAcyclic V) (h : IsSource i) :
+    IsAcyclic (Reflect V i) := by
+  rw [isAcyclic_def]
+  intro a p
+  refine p.eq_nil_of_length_zero ?_
+  by_cases ha : a = i
+  · subst a
+    cases p with
+    | nil => exact Path.length_nil
+    | cons p e =>
+      have hb := h.isSink_reflect.eq_of_path p
+      rw [← hb] at e
+      exact (h.isSink_reflect.isEmpty_hom _).elim e
+  · obtain ⟨-, q, hq⟩ := exists_path_of_isSource h ha p
     rw [← hq, hV.length_eq_zero q]
 
 end Quiver
