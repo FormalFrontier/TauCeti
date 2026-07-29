@@ -18,6 +18,11 @@ path-space `ExchangeableLaw` predicate: a process is fully exchangeable exactly 
 is the same statement. It also connects process-level contractability with the path-space
 `ContractableLaw` predicate.
 
+`Contractable.coordinate_pathLaw` packages the form path-space arguments use: contractability
+transferred to the *coordinate* process under `pathLaw μ X`, so an argument may be run on path space
+and its conclusion carried back. It needs no finiteness hypothesis: contractability is a family of
+finite-dimensional map equalities.
+
 The bridges realize the Layer 0 roadmap item asking for process-level ↔ path-law bridges in both
 directions. They reuse the existing `FullyExchangeable` path-law bridge from
 `FullyExchangeable.lean` and the contractability bridge from `Contractability.lean`; no
@@ -87,6 +92,25 @@ theorem contractable_of_contractableLaw_pathLaw {μ : Measure Ω} {X : ℕ → �
     (hρ : ContractableLaw (pathLaw μ X)) :
     Contractable μ X :=
   (contractable_iff_contractableLaw_pathLaw hX_meas).2 hρ
+
+/-- **The coordinate process under a contractable process's path law is contractable.** This is the
+form path-space arguments need: transfer the hypothesis to `pathLaw μ X`, work there — path space
+being standard Borel whenever the state space is — and carry the conclusion back. -/
+theorem Contractable.coordinate_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) :
+    Contractable (pathLaw μ X) fun j (p : ℕ → α) => p j := by
+  have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
+    aemeasurable_pi_lambda _ hX_meas
+  have key : ∀ {n : ℕ} (sel : Fin n → ℕ),
+      blockLaw (pathLaw μ X) (fun j (p : ℕ → α) => p j) sel = blockLaw μ X sel := by
+    intro n sel
+    simp only [blockLaw_def, pathLaw_def]
+    rw [AEMeasurable.map_map_of_aemeasurable
+      (measurable_pi_lambda _ fun i => measurable_pi_apply (sel i)).aemeasurable hφ]
+    rfl
+  intro m k hk
+  rw [key k, prefixLaw_def, key fun i : Fin m => i.val, ← prefixLaw_def]
+  exact hX m k hk
 
 end Probability
 
