@@ -113,4 +113,12 @@ theorem isSimplyConnected_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
   have : SimplyConnectedSpace ↥Ω := hΩc
   exact (Homeomorph.Set.univ ↥Ω).toHomotopyEquiv.simplyConnectedSpace
 
+/-- Deprecated compatibility alias for the old name, which named only the injectivity hypothesis. -/
+@[deprecated isOpen_image_of_differentiableOn_of_injOn (since := "2026-07-29")]
+alias isOpen_image_of_injOn := isOpen_image_of_differentiableOn_of_injOn
+
+/-- Deprecated compatibility alias for the old name, which named only the injectivity hypothesis. -/
+@[deprecated isSimplyConnected_image_of_differentiableOn_of_injOn (since := "2026-07-29")]
+alias isSimplyConnected_image_of_injOn := isSimplyConnected_image_of_differentiableOn_of_injOn
+
 end TauCeti
