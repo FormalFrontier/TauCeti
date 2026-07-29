@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Fredholm.Comp
+public import TauCeti.Analysis.Fredholm.Criteria
 public import TauCeti.Analysis.Fredholm.Splitting
 
 /-!
@@ -27,8 +28,8 @@ is Fredholm with the *same index*. Fredholmness follows from Atkinson's criterio
 parametrix for `T` is still a parametrix for `T + K` after absorbing `S ∘ K` and `K ∘ S` into the
 error terms. The index statement is a restriction argument rather than a homotopy: `T` and `T + K`
 agree on the closed, finite-codimensional subspace `ker K`, so composing both with its inclusion
-— itself Fredholm, of index `-dim (E ⧸ ker K)` — and cancelling that common index shift through
-additivity of the index gives `index (T + K) = index T`.
+— itself Fredholm, by `TauCeti.isFredholm_ker_subtypeL` — and cancelling that common index shift
+through additivity of the index gives `index (T + K) = index T`.
 
 ## Main declarations
 
@@ -36,6 +37,9 @@ additivity of the index gives `index (T + K) = index T`.
 * `TauCeti.IsFredholm.parametrix_comp_self` and `TauCeti.IsFredholm.self_comp_parametrix`: the two
   parametrix identities, with their finite-rank error terms
   `TauCeti.IsFredholm.kerProjection` and `TauCeti.IsFredholm.cokerProjection`.
+* `TauCeti.IsFredholm.ker_kerProjection`, `TauCeti.IsFredholm.range_kerProjection` and their
+  cokernel counterparts, together with the action of the two error terms on the complementary
+  subspaces they project onto and along, and their idempotence.
 * `TauCeti.IsFredholm.self_comp_parametrix_comp_self` and
   `TauCeti.IsFredholm.parametrix_comp_self_comp_parametrix`: a parametrix is a generalized inverse,
   `T ∘ S ∘ T = T` and `S ∘ T ∘ S = S`.
@@ -43,15 +47,12 @@ additivity of the index gives `index (T + K) = index T`.
 * `TauCeti.IsFredholm.of_parametrix`: **Atkinson's criterion**, that an operator invertible on both
   sides modulo finite-rank errors is Fredholm.
 * `TauCeti.isFredholm_iff_exists_parametrix`: **Atkinson's theorem** as an equivalence.
-* `TauCeti.IsFredholm.parametrix_isFredholm` and
+* `TauCeti.IsFredholm.isFredholm_parametrix` and
   `TauCeti.ContinuousLinearMap.index_parametrix`: a parametrix is itself Fredholm, of the opposite
   index.
 * `TauCeti.IsFredholm.add_of_finiteDimensional_range` and
   `TauCeti.ContinuousLinearMap.index_add_of_finiteDimensional_range`: Fredholmness and the index
   are stable under perturbation by an operator of finite rank.
-* `TauCeti.isFredholm_ker_subtypeL` and `TauCeti.ContinuousLinearMap.index_subtypeL`: the
-  restriction machinery the index statement runs on — the inclusion of the kernel of a finite-rank
-  operator is Fredholm, and the inclusion of a subspace has index minus its codimension.
 
 The parametrix construction and the index conventions follow McDuff--Salamon, *J-holomorphic
 Curves and Symplectic Topology*, Appendix A.1; Atkinson's theorem in the finite-rank form proved
@@ -138,7 +139,7 @@ theorem IsFredholm.of_parametrix {S₁ S₂ : F →L[𝕜] E} {P : E →L[𝕜] 
 
 namespace IsFredholm
 
-omit [CompleteSpace 𝕜] [CompleteSpace F] in
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
 /-- The projection of the domain onto `ker T` along the chosen kernel complement
 `TauCeti.IsFredholm.kerComplement`. It is the finite-rank error term of
 `TauCeti.IsFredholm.parametrix_comp_self`, named because the unfolded projection is unreadable at
@@ -154,6 +155,78 @@ omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
 noncomputable def cokerProjection (hT : _root_.TauCeti.IsFredholm T) : F →L[𝕜] F :=
   hT.cokerComplement.projectionL (LinearMap.range (T : E →ₗ[𝕜] F))
     hT.isTopCompl_range_cokerComplement.symm
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The kernel of the first error term is the chosen kernel complement: it is the subspace
+`TauCeti.IsFredholm.kerProjection` projects along. -/
+theorem ker_kerProjection (hT : _root_.TauCeti.IsFredholm T) :
+    LinearMap.ker (hT.kerProjection : E →ₗ[𝕜] E) = hT.kerComplement :=
+  Submodule.ker_projectionL hT.isTopCompl_ker_kerComplement
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The kernel of the second error term is `range T`: it is the subspace
+`TauCeti.IsFredholm.cokerProjection` projects along. -/
+theorem ker_cokerProjection (hT : _root_.TauCeti.IsFredholm T) :
+    LinearMap.ker (hT.cokerProjection : F →ₗ[𝕜] F) = LinearMap.range (T : E →ₗ[𝕜] F) :=
+  Submodule.ker_projectionL hT.isTopCompl_range_cokerComplement.symm
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The first error term is the identity on `ker T`. -/
+theorem kerProjection_apply_of_mem_ker (hT : _root_.TauCeti.IsFredholm T) {x : E}
+    (hx : x ∈ LinearMap.ker (T : E →ₗ[𝕜] F)) : hT.kerProjection x = x :=
+  Submodule.projectionL_apply_left hT.isTopCompl_ker_kerComplement ⟨x, hx⟩
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The first error term vanishes on the chosen kernel complement. -/
+theorem kerProjection_apply_eq_zero_of_mem_kerComplement (hT : _root_.TauCeti.IsFredholm T)
+    {x : E} (hx : x ∈ hT.kerComplement) : hT.kerProjection x = 0 :=
+  Submodule.projectionL_apply_eq_zero_of_mem_right _ hx
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The first error term takes values in `ker T`. -/
+theorem kerProjection_apply_mem_ker (hT : _root_.TauCeti.IsFredholm T) (x : E) :
+    hT.kerProjection x ∈ LinearMap.ker (T : E →ₗ[𝕜] F) :=
+  Submodule.projectionL_apply_mem _ x
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- `T` annihilates the first error term, which projects onto `ker T`. -/
+@[simp]
+theorem apply_kerProjection (hT : _root_.TauCeti.IsFredholm T) (x : E) :
+    T (hT.kerProjection x) = 0 :=
+  LinearMap.mem_ker.mp (hT.kerProjection_apply_mem_ker x)
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The second error term is the identity on the chosen cokernel representative. -/
+theorem cokerProjection_apply_of_mem_cokerComplement (hT : _root_.TauCeti.IsFredholm T) {y : F}
+    (hy : y ∈ hT.cokerComplement) : hT.cokerProjection y = y :=
+  Submodule.projectionL_apply_left hT.isTopCompl_range_cokerComplement.symm ⟨y, hy⟩
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The second error term vanishes on `range T`. -/
+theorem cokerProjection_apply_eq_zero_of_mem_range (hT : _root_.TauCeti.IsFredholm T) {y : F}
+    (hy : y ∈ LinearMap.range (T : E →ₗ[𝕜] F)) : hT.cokerProjection y = 0 :=
+  Submodule.projectionL_apply_eq_zero_of_mem_right _ hy
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The second error term annihilates every value of `T`. -/
+@[simp]
+theorem cokerProjection_apply_apply (hT : _root_.TauCeti.IsFredholm T) (x : E) :
+    hT.cokerProjection (T x) = 0 :=
+  hT.cokerProjection_apply_eq_zero_of_mem_range ⟨x, rfl⟩
+
+omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The first error term is idempotent: it is a projection. -/
+@[simp]
+theorem isIdempotentElem_kerProjection (hT : _root_.TauCeti.IsFredholm T) :
+    IsIdempotentElem hT.kerProjection :=
+  Submodule.isIdempotentElem_projectionL _
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- The second error term is idempotent: it is a projection. -/
+@[simp]
+theorem isIdempotentElem_cokerProjection (hT : _root_.TauCeti.IsFredholm T) :
+    IsIdempotentElem hT.cokerProjection :=
+  Submodule.isIdempotentElem_projectionL _
 
 /-- A **parametrix** for a Fredholm operator: project the codomain onto `range T`, invert `T`
 there against the chosen kernel complement, and include the result back into the domain. -/
@@ -175,6 +248,7 @@ private theorem parametrix_apply (hT : _root_.TauCeti.IsFredholm T) (y : F) :
 
 /-- Applying `T` to a parametrix recovers the argument up to its cokernel component: the
 pointwise form of `TauCeti.IsFredholm.self_comp_parametrix`. -/
+@[simp]
 theorem apply_parametrix (hT : _root_.TauCeti.IsFredholm T) (y : F) :
     T (hT.parametrix y) = y - hT.cokerProjection y := by
   have h0 : T (hT.parametrix y) =
@@ -193,6 +267,7 @@ theorem apply_parametrix (hT : _root_.TauCeti.IsFredholm T) (y : F) :
 
 /-- A parametrix recovers the argument of `T` up to its kernel component: the pointwise form of
 `TauCeti.IsFredholm.parametrix_comp_self`. -/
+@[simp]
 theorem parametrix_apply_apply (hT : _root_.TauCeti.IsFredholm T) (x : E) :
     hT.parametrix (T x) = x - hT.kerProjection x := by
   have hmem : T x ∈ LinearMap.range (T : E →ₗ[𝕜] F) := ⟨x, rfl⟩
@@ -208,10 +283,7 @@ theorem parametrix_apply_apply (hT : _root_.TauCeti.IsFredholm T) (x : E) :
       (LinearMap.ker (T : E →ₗ[𝕜] F)) hT.isTopCompl_ker_kerComplement.symm x) =
       ⟨T x, hmem⟩ := by
     refine Subtype.ext ?_
-    rw [hT.kerComplementEquivRange_apply, hc, map_sub,
-      show T (hT.kerProjection x) = 0 from
-        LinearMap.mem_ker.mp (Submodule.projectionL_apply_mem _ x),
-      sub_zero]
+    rw [hT.kerComplementEquivRange_apply, hc, map_sub, hT.apply_kerProjection, sub_zero]
   rw [parametrix_apply, h1, ← h2, ContinuousLinearEquiv.symm_apply_apply]
   exact hc
 
@@ -219,14 +291,14 @@ theorem parametrix_apply_apply (hT : _root_.TauCeti.IsFredholm T) (x : E) :
 theorem parametrix_comp_self (hT : _root_.TauCeti.IsFredholm T) :
     hT.parametrix.comp T = ContinuousLinearMap.id 𝕜 E - hT.kerProjection := by
   ext x
-  simpa using hT.parametrix_apply_apply x
+  simp
 
 /-- The second parametrix identity: `T ∘ S` is the identity minus the projection onto the chosen
 cokernel representative. -/
 theorem self_comp_parametrix (hT : _root_.TauCeti.IsFredholm T) :
     T.comp hT.parametrix = ContinuousLinearMap.id 𝕜 F - hT.cokerProjection := by
   ext y
-  simpa using hT.apply_parametrix y
+  simp
 
 omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
 /-- The error term of the first parametrix identity has range `ker T`. -/
@@ -291,8 +363,7 @@ exactly the part of the codomain that `T` misses. -/
 theorem ker_parametrix (hT : _root_.TauCeti.IsFredholm T) :
     LinearMap.ker (hT.parametrix : F →ₗ[𝕜] E) = hT.cokerComplement := by
   ext y
-  rw [LinearMap.mem_ker,
-    show (hT.parametrix : F →ₗ[𝕜] E) y = hT.parametrix y from rfl, parametrix_apply,
+  rw [LinearMap.mem_ker, ContinuousLinearMap.coe_coe, parametrix_apply,
     Submodule.coe_eq_zero, ContinuousLinearEquiv.map_eq_zero_iff,
     Submodule.projectionOntoL_apply_eq_zero_iff]
 
@@ -306,7 +377,7 @@ theorem range_parametrix (hT : _root_.TauCeti.IsFredholm T) :
   · intro x hx
     refine ⟨T x, ?_⟩
     have hx0 : hT.kerProjection x = 0 :=
-      Submodule.projectionL_apply_eq_zero_of_mem_right _ hx
+      hT.kerProjection_apply_eq_zero_of_mem_kerComplement hx
     have h := hT.parametrix_apply_apply x
     rw [hx0, sub_zero] at h
     exact h
@@ -316,9 +387,7 @@ theorem range_parametrix (hT : _root_.TauCeti.IsFredholm T) :
 theorem self_comp_parametrix_comp_self (hT : _root_.TauCeti.IsFredholm T) :
     T.comp (hT.parametrix.comp T) = T := by
   ext x
-  have hx0 : T (hT.kerProjection x) = 0 :=
-    LinearMap.mem_ker.mp (Submodule.projectionL_apply_mem _ x)
-  simp [hT.parametrix_apply_apply x, hx0]
+  simp
 
 /-- A parametrix is a generalized inverse of `T`: the two error terms cancel in
 `S ∘ T ∘ S`, which is `S` again. -/
@@ -329,13 +398,13 @@ theorem parametrix_comp_self_comp_parametrix (hT : _root_.TauCeti.IsFredholm T) 
     rw [← hT.range_parametrix]
     exact LinearMap.mem_range_self _ y
   have hx0 : hT.kerProjection (hT.parametrix y) = 0 :=
-    Submodule.projectionL_apply_eq_zero_of_mem_right _ hmem
+    hT.kerProjection_apply_eq_zero_of_mem_kerComplement hmem
   simpa [hx0] using hT.parametrix_apply_apply (hT.parametrix y)
 
 /-- The parametrix of a Fredholm operator is itself Fredholm: its kernel is the
 finite-dimensional cokernel representative and its range is the closed kernel complement, whose
 quotient is the finite-dimensional `ker T`. -/
-theorem parametrix_isFredholm (hT : _root_.TauCeti.IsFredholm T) :
+theorem isFredholm_parametrix (hT : _root_.TauCeti.IsFredholm T) :
     _root_.TauCeti.IsFredholm hT.parametrix := by
   haveI := hT.finiteDimensional_ker
   refine ⟨?_, ?_, ?_⟩
@@ -411,31 +480,7 @@ theorem IsFredholm.add_of_finiteDimensional_range (hT : IsFredholm T)
   · rw [ContinuousLinearMap.add_comp, hS, hT.self_comp_parametrix]
     abel
 
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
-/-- The inclusion of the kernel of a finite-rank operator is Fredholm: the kernel is closed and,
-by the first isomorphism theorem, of finite codimension. -/
-theorem isFredholm_ker_subtypeL
-    (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
-    IsFredholm (LinearMap.ker (K : E →ₗ[𝕜] F)).subtypeL := by
-  haveI := hK
-  refine ⟨?_, ?_, ?_⟩
-  · rw [Submodule.toLinearMap_subtypeL, Submodule.ker_subtype]
-    infer_instance
-  · rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
-    exact K.isClosed_ker
-  · rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
-    exact (K : E →ₗ[𝕜] F).quotKerEquivRange.symm.finiteDimensional
-
 namespace ContinuousLinearMap
-
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
-/-- Restricting along the inclusion of a subspace shifts the index down by the codimension of that
-subspace: the inclusion is injective, so its index is minus the dimension of its cokernel. -/
-theorem index_subtypeL (p : Submodule 𝕜 E) :
-    index p.subtypeL = -(finrank 𝕜 (E ⧸ p) : ℤ) := by
-  rw [index_eq_finrank_sub, Submodule.toLinearMap_subtypeL, Submodule.ker_subtype,
-    Submodule.range_subtype, finrank_bot]
-  simp
 
 /-- Perturbing a Fredholm operator by an operator of finite rank leaves its index unchanged: both
 operators restrict to the same map on the closed, finite-codimensional subspace `ker K`, and

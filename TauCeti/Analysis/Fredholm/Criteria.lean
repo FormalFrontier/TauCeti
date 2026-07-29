@@ -16,13 +16,16 @@ its cokernel is finite dimensional. Specialising both sides gives the bijective 
 bijective continuous linear map is Fredholm of index zero.
 
 These criteria are the elementary endpoints of the finite-dimensional reductions used throughout
-Fredholm theory.
+Fredholm theory. As an application of the injective closed-range criterion, the inclusion of the
+kernel of an operator of finite rank is Fredholm.
 
 ## Main declarations
 
 * `TauCeti.isFredholm_iff_finiteDimensional_ker_of_surjective`: the surjective criterion.
 * `TauCeti.isFredholm_iff_finiteDimensional_coker_of_injective`: the injective closed-range
   criterion.
+* `TauCeti.isFredholm_ker_subtypeL`: the inclusion of the kernel of an operator of finite rank is
+  Fredholm.
 * `TauCeti.ContinuousLinearMap.index_of_surjective` and
   `TauCeti.ContinuousLinearMap.index_of_injective`: the index in the two one-sided cases.
 * `TauCeti.IsFredholm.of_bijective` and
@@ -87,6 +90,19 @@ lemma isFredholm_iff_finiteDimensional_coker_of_injective (hT : Function.Injecti
   · intro hcoker
     letI := hcoker
     exact IsFredholm.of_injective hT hclosed
+
+/-- The inclusion of the kernel of an operator of finite rank is Fredholm: the kernel is closed
+and, by the first isomorphism theorem, of finite codimension. -/
+lemma isFredholm_ker_subtypeL (hT : FiniteDimensional K (LinearMap.range (T : E →ₗ[K] F))) :
+    IsFredholm (LinearMap.ker (T : E →ₗ[K] F)).subtypeL := by
+  letI := hT
+  letI : FiniteDimensional K (E ⧸ LinearMap.range
+      ((LinearMap.ker (T : E →ₗ[K] F)).subtypeL : LinearMap.ker (T : E →ₗ[K] F) →ₗ[K] E)) := by
+    rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
+    exact (T : E →ₗ[K] F).quotKerEquivRange.symm.finiteDimensional
+  refine IsFredholm.of_injective (Submodule.injective_subtype _) ?_
+  rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
+  exact T.isClosed_ker
 
 namespace ContinuousLinearMap
 
