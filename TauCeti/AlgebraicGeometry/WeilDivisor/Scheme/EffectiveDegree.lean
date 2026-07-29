@@ -72,24 +72,14 @@ lemma IsEffective.relativeDegree_eq_zero_iff_of_finite
     relativeDegree f D = 0 ↔ D = 0 :=
   IsEffective.relativeDegree_eq_zero_iff_of_finite_on_support hD f fun x _ ↦ hf x
 
-/-- An effective divisor of relative degree zero is zero when the residue-field extensions at
-its support are finite. -/
-lemma IsEffective.eq_zero_of_relativeDegree_eq_zero_of_finite_on_support
-    {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) (f : X ⟶ Y)
-    (hf : ∀ x ∈ D.support, (f.residueFieldMap x).hom.Finite)
-    (hdeg : relativeDegree f D = 0) :
-    D = 0 :=
-  (IsEffective.relativeDegree_eq_zero_iff_of_finite_on_support hD f hf).mp hdeg
-
 /-- A nonzero effective divisor has positive relative degree when the residue-field extensions
 at its support are finite. -/
-lemma IsEffective.relativeDegree_pos_of_finite_on_support
+lemma IsEffective.relativeDegree_pos_of_finite_on_support_of_ne_zero
     {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) (f : X ⟶ Y)
     (hf : ∀ x ∈ D.support, (f.residueFieldMap x).hom.Finite) (hD0 : D ≠ 0) :
     0 < relativeDegree f D := by
   exact lt_of_le_of_ne (IsEffective.relativeDegree_nonneg hD f) fun h ↦
-    hD0 (IsEffective.eq_zero_of_relativeDegree_eq_zero_of_finite_on_support
-      hD f hf h.symm)
+    hD0 ((IsEffective.relativeDegree_eq_zero_iff_of_finite_on_support hD f hf).mp h.symm)
 
 /-- Along an isomorphism, relative degree is the ordinary unweighted degree. -/
 @[simp]
@@ -99,13 +89,6 @@ lemma relativeDegree_eq_degree_of_isIso (f : X ⟶ Y) [IsIso f]
   rw [relativeDegree_eq_weightedDegree]
   simpa only [residueDegree_eq_one_of_isIso, Nat.cast_one] using
     WeilDivisor.weightedDegree_one_eq_degree D
-
-/-- Relative degree along the identity morphism is the ordinary unweighted degree.
-
-Not `@[simp]`: `simp` already proves this via `relativeDegree_eq_degree_of_isIso`. -/
-lemma relativeDegree_id (D : SchemeWeilDivisor X) :
-    relativeDegree (𝟙 X) D = WeilDivisor.degree D :=
-  relativeDegree_eq_degree_of_isIso (𝟙 X) D
 
 end
 
