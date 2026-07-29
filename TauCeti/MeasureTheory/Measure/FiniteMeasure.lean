@@ -44,8 +44,9 @@ namespace MeasureTheory
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- Evaluation at a fixed measurable set is measurable on `FiniteMeasure α`. -/
-theorem FiniteMeasure.measurable_coe_toMeasure {s : Set α} (hs : MeasurableSet s) :
+/-- Evaluation at a fixed measurable set is measurable on `FiniteMeasure α`. Private: it exists
+only to prove the instance below. -/
+private theorem FiniteMeasure.measurable_coe_toMeasure {s : Set α} (hs : MeasurableSet s) :
     Measurable fun ν : FiniteMeasure α => (ν : Measure α) s :=
   (Measure.measurable_coe hs).comp measurable_subtype_coe
 
