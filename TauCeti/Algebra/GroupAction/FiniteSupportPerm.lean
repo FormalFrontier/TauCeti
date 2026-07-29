@@ -88,4 +88,14 @@ theorem exists_compl_fixedBy_subset_apply_eq {ι β : Type*} [Finite ι] (f g : 
           Equiv.Perm.viaFintypeEmbedding_apply_image σ _ (f.codRestrict T hfT i)
       _ = g i := congrArg Subtype.val (hσ i)
 
+/-- Finite-support form of `Equiv.Perm.exists_compl_fixedBy_subset_apply_eq`: for `f g : ι ↪ β`
+with `ι` finite there is a permutation of `β` carrying each `f i` to `g i` whose support is finite.
+
+This is the shape consumers of finitely supported reindexing want, `(MulAction.fixedBy β σ)ᶜ.Finite`
+being Mathlib's finite-support predicate. -/
+theorem exists_finite_compl_fixedBy_apply_eq {ι β : Type*} [Finite ι] (f g : ι ↪ β) :
+    ∃ σ : Equiv.Perm β, (MulAction.fixedBy β σ)ᶜ.Finite ∧ ∀ i, σ (f i) = g i := by
+  obtain ⟨σ, hsub, hval⟩ := exists_compl_fixedBy_subset_apply_eq f g
+  exact ⟨σ, ((Set.finite_range f).union (Set.finite_range g)).subset hsub, hval⟩
+
 end Equiv.Perm
