@@ -193,7 +193,7 @@ section PermutationCharacter
 variable (k : Type u) [Field k] {G : Type v} [Monoid G]
 
 /-- A permutation representation permutes the standard basis of `k[X]`. -/
-private theorem ofMulAction_basis (X : Type w) [MulAction G X] (g : G) (x : X) :
+theorem ofMulAction_basis (X : Type w) [MulAction G X] (g : G) (x : X) :
     Representation.ofMulAction k G X g (MonoidAlgebra.basis X k x) =
       MonoidAlgebra.basis X k (g • x) := by
   simp [ofMulAction_single]

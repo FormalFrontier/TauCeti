@@ -58,15 +58,6 @@ noncomputable abbrev permutationModuleBasis {n : ℕ} (μ : n.Partition) :
       (permutationModule μ).V :=
   MonoidAlgebra.basis (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) ℚ
 
-/-- The symmetric-group action permutes the tabloid basis by left multiplication. -/
-theorem permutationModule_ρ_basis {n : ℕ} (μ : n.Partition)
-    (σ : Equiv.Perm (Fin n))
-    (q : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) :
-    (permutationModule μ).ρ σ (permutationModuleBasis μ q) =
-      permutationModuleBasis μ (σ • q) := by
-  rw [MonoidAlgebra.basis_apply, MonoidAlgebra.basis_apply]
-  exact Representation.ofMulAction_single σ q 1
-
 /-! ## Induction, dimension, and character -/
 
 /-- The Young permutation module is induction of the trivial representation of the Young
