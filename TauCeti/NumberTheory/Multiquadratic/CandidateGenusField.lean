@@ -63,8 +63,9 @@ theorem genusPrimeDiscriminants_spec {d : ℤ} (hd : Squarefree d) :
     (∀ P ∈ genusPrimeDiscriminants hd, IsPrimeDiscriminant P) ∧
       (∀ P ∈ genusPrimeDiscriminants hd, ∀ Q ∈ genusPrimeDiscriminants hd,
         IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant Q → P = Q) ∧
-      ∏ P ∈ genusPrimeDiscriminants hd, P = fundamentalDiscriminant d :=
-  (isFundamentalDiscriminant_fundamentalDiscriminant hd).exists_finset_primeDiscriminant.choose_spec
+      ∏ P ∈ genusPrimeDiscriminants hd, P = fundamentalDiscriminant d := by
+  have h := (isFundamentalDiscriminant_fundamentalDiscriminant hd).exists_finset_primeDiscriminant
+  simpa only [genusPrimeDiscriminants] using h.choose_spec
 
 /-- A chosen complex square root of the radicand of each prime discriminant in
 `genusPrimeDiscriminants hd` (available since `ℂ` is algebraically closed). -/
