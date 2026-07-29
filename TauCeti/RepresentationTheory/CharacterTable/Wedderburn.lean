@@ -138,15 +138,22 @@ theorem exists_algEquiv_pi_matrix :
       Nonempty (MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :=
   IsSemisimpleRing.exists_algEquiv_pi_matrix_of_isAlgClosed k (MonoidAlgebra k G)
 
-/-- The Wedderburn decomposition of `k[G]`, indexed by the conjugacy classes of `G`, with the
-degrees squaring to a sum of `|G|`. -/
+/-- The Wedderburn decomposition of `k[G]`, with its blocks indexed by the conjugacy classes of `G`
+themselves, and with the degrees squaring to a sum of `|G|`.
+
+The indexing is by an arbitrary bijection between the blocks and the conjugacy classes: the
+statement asserts nothing about *which* class labels a given block. -/
 theorem exists_algEquiv_pi_matrix_conjClasses :
-    ∃ d : Fin (Nat.card (ConjClasses G)) → ℕ, (∀ i, NeZero (d i)) ∧ ∑ i, d i ^ 2 = Nat.card G ∧
+    ∃ d : ConjClasses G → ℕ, (∀ i, NeZero (d i)) ∧ ∑ᶠ i, d i ^ 2 = Nat.card G ∧
       Nonempty (MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ := exists_algEquiv_pi_matrix k G
   haveI := hd
   obtain rfl : n = Nat.card (ConjClasses G) := card_eq_card_conjClasses_of_algEquiv_pi_matrix e
-  exact ⟨d, hd, sum_sq_eq_card_of_algEquiv_pi_matrix e, ⟨e⟩⟩
+  set σ := Finite.equivFin (ConjClasses G)
+  refine ⟨fun c => d (σ c), fun c => hd _, ?_,
+    ⟨e.trans (AlgEquiv.piCongrLeft k (fun i => Matrix (Fin (d i)) (Fin (d i)) k) σ).symm⟩⟩
+  rw [finsum_comp_equiv σ (f := fun i => d i ^ 2), finsum_eq_sum_of_fintype]
+  exact sum_sq_eq_card_of_algEquiv_pi_matrix e
 
 end GroupAlgebra
 
