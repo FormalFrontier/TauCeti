@@ -211,6 +211,14 @@ theorem exteriorPower_refl (d : ℕ) :
     simp
   exact Equiv.ext (funext fun x => LinearMap.congr_fun h x)
 
+/-- Exterior powers preserve inverses of equivalences. -/
+@[simp]
+theorem exteriorPower_symm (e : ρ.Equiv σ) (d : ℕ) :
+    e.symm.exteriorPower d = (e.exteriorPower d).symm := by
+  have h : (e.symm.exteriorPower d).toLinearMap =
+      ((e.exteriorPower d).symm).toLinearMap := rfl
+  exact Equiv.ext (funext fun x => LinearMap.congr_fun h x)
+
 /-- Exterior powers preserve composition of equivalences. -/
 @[simp]
 theorem exteriorPower_trans {P : Type*} [AddCommGroup P] [Module R P]
