@@ -665,6 +665,13 @@ variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q] [Finite Q]
 noncomputable def ofArrow {a b : Q} (e : a ⟶ b) : pathAlgebra k Q :=
   ofPath ⟨a, b, e.toPath⟩
 
+omit [Finite Q] in
+/-- An arrow is the basis element indexed by its length-one path. -/
+@[simp]
+theorem ofArrow_eq_ofPath {a b : Q} (e : a ⟶ b) :
+    (ofArrow e : pathAlgebra k Q) = ofPath ⟨a, b, e.toPath⟩ := by
+  rw [ofArrow]
+
 /-- The vertex idempotents and arrows generate the path algebra. Vertex idempotents are necessary:
 arrows alone do not generate the path algebra of, for example, a discrete multi-vertex quiver. -/
 theorem adjoin_vertexIdempotents_union_arrows :
