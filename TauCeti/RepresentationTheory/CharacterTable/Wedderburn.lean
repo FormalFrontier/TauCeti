@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Matrix.Pi
-public import TauCeti.Algebra.Subalgebra.Center
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 public import Mathlib.Algebra.MonoidAlgebra.Module
 public import Mathlib.RepresentationTheory.Maschke
