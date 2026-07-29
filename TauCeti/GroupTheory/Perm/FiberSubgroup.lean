@@ -21,8 +21,9 @@ Mathlib already studies these permutations, but through the domain action of `Eq
 `α → ι`: `DomMulAct.stabilizerMulEquiv` is the same isomorphism stated on
 `(MulAction.stabilizer (Equiv.Perm α)ᵈᵐᵃ f)ᵐᵒᵖ`.  The `ᵈᵐᵃ`/`ᵐᵒᵖ` wrapping makes it awkward to use
 where the object of interest is a subgroup of `Equiv.Perm α` itself, as it is for the row and
-column groups of a Young tableau; `fiberSubgroup` is that subgroup, and the isomorphism below is
-built from Mathlib's construction of the inverse map, `DomMulAct.stabilizerEquiv_invFun_aux`.
+column groups of a Young tableau; `fiberSubgroup` is that subgroup.  The two presentations are
+identified by `fiberSubgroupMulEquivStabilizer`, and the isomorphism above is Mathlib's
+`DomMulAct.stabilizerMulEquiv` transported along it.
 -/
 
 @[expose] public section
@@ -79,24 +80,27 @@ theorem fiberSubgroup_eq_bot_iff {f : α → ι} :
     fiberSubgroup f = ⊥ ↔ Function.Injective f :=
   ⟨injective_of_fiberSubgroup_eq_bot, fiberSubgroup_eq_bot_of_injective⟩
 
+/-- The permutations preserving the fibers of `f` are the stabilizer of `f` for the domain action
+of `Equiv.Perm α` on `α → ι`, read as a subgroup of `Equiv.Perm α` itself: the `ᵈᵐᵃ` and `ᵐᵒᵖ`
+synonyms reverse multiplication twice, so `σ ↦ DomMulAct.mk σ` is an isomorphism. -/
+def fiberSubgroupMulEquivStabilizer (f : α → ι) :
+    fiberSubgroup f ≃* (MulAction.stabilizer (Equiv.Perm α)ᵈᵐᵃ f)ᵐᵒᵖ where
+  toFun σ := MulOpposite.op ⟨DomMulAct.mk (σ : Equiv.Perm α),
+    DomMulAct.mem_stabilizer_iff.mpr (funext (mem_fiberSubgroup.mp σ.2))⟩
+  invFun g := ⟨DomMulAct.mk.symm (g.unop : (Equiv.Perm α)ᵈᵐᵃ),
+    mem_fiberSubgroup.mpr (congrFun (DomMulAct.mem_stabilizer_iff.mp g.unop.2))⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_mul' _ _ := rfl
+
 /-- Restricting a fiber-preserving permutation of `α` to each fiber of `f` is an isomorphism onto
 the product of the permutation groups of the fibers.
 
-This is `DomMulAct.stabilizerMulEquiv` transported to the subgroup `fiberSubgroup f` of
-`Equiv.Perm α`; the inverse map, assembling a family of permutations of the fibers into a
-permutation of `α`, is Mathlib's `DomMulAct.stabilizerEquiv_invFun_aux`. -/
+This is Mathlib's `DomMulAct.stabilizerMulEquiv` transported along
+`fiberSubgroupMulEquivStabilizer`. -/
 def fiberSubgroupMulEquivPiPerm (f : α → ι) :
-    fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i} where
-  toFun σ i := Equiv.Perm.subtypePerm (σ : Equiv.Perm α) fun a => by
-    rw [mem_fiberSubgroup.mp σ.2 a]
-  invFun g :=
-    ⟨DomMulAct.stabilizerEquiv_invFun_aux g, fun a => DomMulAct.comp_stabilizerEquiv_invFun g a⟩
-  left_inv σ := Subtype.ext (Equiv.ext fun _ => rfl)
-  right_inv g := by
-    funext i
-    ext a
-    exact DomMulAct.stabilizerEquiv_invFun_eq g a.2
-  map_mul' _ _ := rfl
+    fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i} :=
+  (fiberSubgroupMulEquivStabilizer f).trans (DomMulAct.stabilizerMulEquiv f)
 
 @[simp]
 theorem fiberSubgroupMulEquivPiPerm_apply_coe (f : α → ι) (σ : fiberSubgroup f) (i : ι)
