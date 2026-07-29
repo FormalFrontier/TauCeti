@@ -154,12 +154,20 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     rw [hrecover]
     exact (hBfredholm.comp_equiv P.symm).equiv_comp Q.symm
   refine ⟨hA, ?_⟩
-  rw [hrecover, ContinuousLinearMap.index_equiv_comp,
-    ContinuousLinearMap.index_comp_equiv, hB,
-    ContinuousLinearMap.index_equiv_comp,
-    ContinuousLinearMap.index_prodMap schur (e : X →L[𝕜] Y) hSchur heFredholm,
-    ContinuousLinearMap.index_eq_of_finiteDimensional,
-    ContinuousLinearMap.index_continuousLinearEquiv_eq_zero, add_zero]
+  calc
+    ContinuousLinearMap.index A = ContinuousLinearMap.index B := by
+      rw [hrecover]
+      simp
+    _ = ContinuousLinearMap.index (schur.prodMap (e : X →L[𝕜] Y)) := by
+      rw [hB]
+      simp
+    _ = ContinuousLinearMap.index schur +
+        ContinuousLinearMap.index (e : X →L[𝕜] Y) :=
+      ContinuousLinearMap.index_prodMap schur (e : X →L[𝕜] Y) hSchur heFredholm
+    _ = ((finrank 𝕜 K : ℤ) - finrank 𝕜 C) + 0 := by
+      rw [ContinuousLinearMap.index_eq_of_finiteDimensional]
+      simp
+    _ = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := add_zero _
 
 variable {E F : Type*}
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
