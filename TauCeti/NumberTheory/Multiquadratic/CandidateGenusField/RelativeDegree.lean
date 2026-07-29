@@ -6,6 +6,8 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
 import TauCeti.FieldTheory.IntermediateField.Quadratic
+import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
+import TauCeti.NumberTheory.Multiquadratic.RelativeDegree
 
 /-!
 # The candidate genus field over its quadratic base
@@ -121,25 +123,36 @@ theorem finrank_candidateGenusField_over_candidateGenusFieldBase {d : ℤ} (hd :
     (hnsq : ¬ IsSquare (((d : ℤ) : ℚ))) :
     Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
       2 ^ ((genusPrimeDiscriminants hd).card - 1) := by
-  let t := (genusPrimeDiscriminants hd).card
-  have hmul :=
-    Module.finrank_mul_finrank ℚ (candidateGenusFieldBase hd) (candidateGenusField hd)
-  rw [finrank_candidateGenusFieldBase hd hnsq, finrank_candidateGenusField hd] at hmul
-  have hmul' :
-      2 * Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) = 2 ^ t := by
-    simpa only [t] using hmul
-  have ht : 1 ≤ t := by
-    by_contra h
-    have ht0 : t = 0 := by omega
-    rw [ht0, pow_zero] at hmul'
-    omega
-  have hpow : 2 ^ t = 2 * 2 ^ (t - 1) := by
-    calc
-      2 ^ t = 2 ^ ((t - 1) + 1) := by rw [Nat.sub_add_cancel ht]
-      _ = 2 ^ (t - 1) * 2 := by rw [pow_succ]
-      _ = 2 * 2 ^ (t - 1) := by rw [mul_comm]
-  rw [hpow] at hmul'
-  have hresult := Nat.eq_of_mul_eq_mul_left (by norm_num) hmul'
-  simpa only [t] using hresult
+  classical
+  let e : candidateGenusField hd ≃ₐ[ℚ] adjoin ℚ (Set.range (genusFieldRoot hd)) :=
+    IntermediateField.equivOfEq (candidateGenusField_def hd)
+  let F : IntermediateField ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+    (candidateGenusFieldBase hd).map e.toAlgHom
+  let eF : candidateGenusFieldBase hd ≃ₐ[ℚ] F :=
+    IntermediateField.equivMap (candidateGenusFieldBase hd) e.toAlgHom
+  obtain ⟨hprime, heven_unique, _⟩ := genusPrimeDiscriminants_spec hd
+  have hroot : ∀ P : {P // P ∈ genusPrimeDiscriminants hd},
+      genusFieldRoot hd P ^ 2 =
+        algebraMap ℚ ℂ (((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := fun P => by simp
+  have hindep :
+      ∀ S : Finset {P // P ∈ genusPrimeDiscriminants hd}, S.Nonempty →
+        ¬ IsSquare (∏ P ∈ S, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) :=
+    not_isSquare_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
+      (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
+      (fun P => hprime P.val P.property) Subtype.val_injective
+      (fun P Q hP hQ => heven_unique P.val P.property Q.val Q.property hP hQ)
+  have hF : Module.finrank ℚ F = 2 := by
+    rw [← eF.toLinearEquiv.finrank_eq]
+    exact finrank_candidateGenusFieldBase hd hnsq
+  have h := finrank_top_over_intermediateField_of_finrank_eq_two hroot hindep
+    F hF
+  have hrel :
+      Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
+        Module.finrank F (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+    Algebra.finrank_eq_of_equiv_equiv eF.toRingEquiv e.toRingEquiv (by ext; rfl)
+  rw [hrel]
+  convert h using 1
+  · rfl
+  · simp only [Nat.card_eq_fintype_card, Fintype.card_coe]
 
 end TauCeti.Multiquadratic
