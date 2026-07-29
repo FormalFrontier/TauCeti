@@ -143,6 +143,13 @@ variable {K}
 `(trivial K).toOver` is the monoidal unit, this is Mathlib's `Grp.uniqueHomToTrivial`, transported
 through the hom equivalences of the induced categories `AbelianVariety K`, `CommGrp` and `Grp`. -/
 instance uniqueHomToTrivial (A : AbelianVariety K) : Unique (A ⟶ trivial K) :=
+  -- `InducedCategory.homEquiv : (X ⟶ Y) ≃ (F X ⟶ F Y)` leaves the inducing map `F` implicit, and
+  -- neither the expected type `Unique (A ⟶ trivial K)` nor `Equiv.trans` determines it. Each
+  -- `show` therefore names the codomain hom-type, which fixes `F`: first the `CommGrp` layer that
+  -- `AbelianVariety K` is induced from, then the `Grp` layer that `CommGrp` is induced from. Both
+  -- conversions are definitional rather than proof steps, because `(trivial K).toOver` reduces to
+  -- `𝟙_ (Over (Spec K))` and hence `CommGrp.mk (trivial K).toOver` to `CommGrp.trivial _`; there is
+  -- no transport lemma for `Unique` across an induced category that could replace them.
   ((show _ ≃ (CommGrp.mk A.toOver ⟶ CommGrp.trivial (Over (Spec (.of K)))) from
       InducedCategory.homEquiv).trans
     (show _ ≃ (Grp.mk A.toOver ⟶ Grp.trivial (Over (Spec (.of K)))) from
@@ -153,6 +160,10 @@ Since `(trivial K).toOver` is the monoidal unit, this is Mathlib's
 `CommGrp.uniqueHomFromTrivial`, transported through the hom equivalence of the induced category
 `AbelianVariety K`. -/
 instance uniqueHomFromTrivial (A : AbelianVariety K) : Unique (trivial K ⟶ A) :=
+  -- As in `uniqueHomToTrivial`, the `show` names the codomain hom-type to fix the inducing map
+  -- implicit in `InducedCategory.homEquiv`; one layer suffices here because `CommGrp` already has
+  -- the uniqueness statement. The conversion is definitional: `(trivial K).toOver` reduces to
+  -- `𝟙_ (Over (Spec K))`, so `CommGrp.mk (trivial K).toOver` reduces to `CommGrp.trivial _`.
   (show _ ≃ (CommGrp.trivial (Over (Spec (.of K))) ⟶ CommGrp.mk A.toOver) from
     InducedCategory.homEquiv).unique
 
@@ -228,7 +239,7 @@ variable (K)
 /-- The scheme over `Spec L` underlying the base change of the trivial abelian variety is
 terminal, because pulling back along `Spec L ⟶ Spec K` is a right adjoint and so preserves the
 terminal object of `Over (Spec K)`. -/
-def isTerminalBaseChangeTrivialToOver (L : Type u) [Field L] [Algebra K L] :
+private def isTerminalBaseChangeTrivialToOver (L : Type u) [Field L] [Algebra K L] :
     IsTerminal ((trivial K).baseChange L).toOver :=
   IsTerminal.ofIso
     ((isTerminalTrivialToOver K).isTerminalObj
