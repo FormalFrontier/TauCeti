@@ -11,7 +11,7 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
--- Non-public: used only inside proofs — the merged tail factorization
+-- Non-public: used only inside proofs — the tail factorization
 -- `condExp_blockIndicatorProd_tailProcess_ae_eq_prod`, the path-law transfer and contractability
 -- bridges, and `Tuple.sort` (the injective-selection reduction).
 import TauCeti.Probability.DeFinetti.TailFactorization
@@ -34,7 +34,7 @@ directing measure on the coordinate sets:
 This chains Mathlib's `iCondIndepFun_iff_condExp_inter_preimage_eq_mul` (conditional independence ⟺
 product of indicator conditional expectations) with
 `Contractable.directingMeasure_ae_eq_condExp_coord` (each coordinate's conditional law is the
-directing measure). The merged tail factorization
+directing measure). The tail factorization
 `condExp_blockIndicatorProd_tailProcess_ae_eq_prod` (from `TailFactorization`) then discharges the
 finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly what
 `mixedIIDWith_of_forall_rectangles` consumes — so the whole chain assembles here.
@@ -207,7 +207,7 @@ conditional expectation of the length-`r` prefix indicator product given the tai
 `tailProcess X` is a.e. the product of directing-measure evaluations
 `∏ i, (directingMeasure μ X ω).real (C i)` on the coordinate sets.
 
-This is the bridge from the merged tail factorization
+This is the bridge from the tail factorization
 `condExp_blockIndicatorProd_tailProcess_ae_eq_prod` to `directingMeasure`, obtained by identifying
 each single-coordinate conditional expectation via
 `Contractable.directingMeasure_ae_eq_condExp_coord`. The mixture route below consumes it, and it is
