@@ -147,7 +147,7 @@ theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v w} k S)
 Not a `simp` lemma: Mathlib's `@[simps]` on `Representation.coind` rewrites
 `(Rep.coind φ A).ρ g` to its underlying `LinearMap`, so this left-hand side is not in `simp`
 normal form. Mathlib states its own action lemma `Representation.ind_mk` the same way. -/
-theorem coindSubtypeEquivPi_rho_apply (A : Rep.{max u v w} k S) (g : G)
+theorem coindSubtypeEquivPi_ρ_apply (A : Rep.{max u v w} k S) (g : G)
     (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     coindSubtypeEquivPi A ((Rep.coind S.subtype A).ρ g f) q =
       A.ρ (rightCosetFactor (S := S) (q.out * g))
@@ -178,8 +178,11 @@ noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{max u v w} k S) :
       (Rep.indCoindIso.{max u v w, u, v} A)).toLinearEquiv.trans (coindSubtypeEquivPi A)
 
 /-- The coset model of induction transports along `Rep.indCoindIso` and then evaluates at the
-chosen representative of each right coset. -/
-@[simp]
+chosen representative of each right coset.
+
+Not a `simp` lemma: its right-hand side names `Rep.indCoindIso`, so rewriting with it replaces
+the coset model by the comparison isomorphism it is built from. The intended interface is
+`indSubtypeEquivPi_ρ_apply`, which stays inside the coset model. -/
 theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
     (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     indSubtypeEquivPi A x q =
@@ -190,8 +193,10 @@ theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
   rfl
 
 /-- The inverse coset model of induction extends by `S`-equivariance and then transports back
-along `Rep.indCoindIso`. -/
-@[simp]
+along `Rep.indCoindIso`.
+
+Not a `simp` lemma, for the same reason as `indSubtypeEquivPi_apply`: it rewrites the coset
+model into the comparison isomorphism. -/
 theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) :
     (indSubtypeEquivPi A).symm x =
@@ -206,15 +211,15 @@ theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
 `q ↦ ⟦q.out * g⟧` followed by the action of the coset factor of `q.out * g`. This is the form a
 trace computation over the coset model consumes.
 
-Not a `simp` lemma, for the same reason as `coindSubtypeEquivPi_rho_apply`: `@[simps]` on
+Not a `simp` lemma, for the same reason as `coindSubtypeEquivPi_ρ_apply`: `@[simps]` on
 `Representation.ind` takes `(Rep.ind φ A).ρ g` out of `simp` normal form. -/
-theorem indSubtypeEquivPi_rho_apply [S.FiniteIndex] (A : Rep.{max u v w} k S) (g : G)
+theorem indSubtypeEquivPi_ρ_apply [S.FiniteIndex] (A : Rep.{max u v w} k S) (g : G)
     (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     indSubtypeEquivPi A ((Rep.ind S.subtype A).ρ g x) q =
       A.ρ (rightCosetFactor (S := S) (q.out * g))
         (indSubtypeEquivPi A x (Quotient.mk'' (q.out * g))) := by
   rw [indSubtypeEquivPi_apply, indSubtypeEquivPi_apply, Rep.hom_comm_apply]
-  exact coindSubtypeEquivPi_rho_apply A g _ q
+  exact coindSubtypeEquivPi_ρ_apply A g _ q
 
 end CosetModel
 
