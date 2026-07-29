@@ -4,10 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Probability.DeFinetti.JointRectangle
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 -- Non-public: used only inside proofs — the Layer-0 bridges `MixedIID.exchangeable` and
 -- `MixedIID.contractable`, from the mixture identity back to exchangeability and contractability.
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
+import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
+import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 
 /-!
 # The de Finetti–Ryll-Nardzewski equivalences, mixture form
@@ -92,6 +95,25 @@ theorem contractable_iff_exchangeable_and_mixedIID [StandardBorelSpace α] [None
     Contractable μ X ↔ Exchangeable μ X ∧ MixedIID μ X :=
   (contractable_iff_mixedIID hX_meas).trans
     ⟨fun hX => ⟨hX.exchangeable, hX⟩, And.right⟩
+
+/-- **The conditional summit: contractable ⇒ conditionally i.i.d.** A contractable process valued in
+a nonempty standard Borel space has a directing measure given which every finite distinct block is
+i.i.d., as a joint-law disintegration.
+
+This is the sharp form. It strengthens `contractable_iff_mixedIID`, whose forward direction
+concludes only the mixture identity, which the roadmap is explicit should never be mistaken for the
+summit. No standard-Borel hypothesis is imposed on the sample space.
+
+The witness is available explicitly: `conditionallyIIDWith_of_contractable_pathSpace` names the tail
+conditional law on path space, and `ConditionallyIIDWith.of_pathLaw` transports it here. -/
+theorem conditionallyIID_of_contractable [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_meas : ∀ n, Measurable (X n)) :
+    ConditionallyIID μ X := by
+  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  exact ConditionallyIID.of_directing
+    ((conditionallyIIDWith_of_contractable_pathSpace
+      (Contractable.coordinate_pathLaw hX fun i => (hX_meas i).aemeasurable)).of_pathLaw hX_meas)
 
 end Probability
 
