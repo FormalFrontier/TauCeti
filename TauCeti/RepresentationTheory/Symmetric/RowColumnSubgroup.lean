@@ -57,13 +57,13 @@ theorem mem_colSubgroup {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
   mem_fiberSubgroup
 
 /-- The row group of `t` is the group of permutations preserving the fibers of `rowIndex t`. -/
-theorem rowSubgroup_eq_fiberSubgroup (t : YoungTableau μ) :
+theorem rowSubgroup_def (t : YoungTableau μ) :
     rowSubgroup t = fiberSubgroup (rowIndex t) := by
   ext σ
   rw [mem_rowSubgroup, mem_fiberSubgroup]
 
 /-- The column group of `t` is the group of permutations preserving the fibers of `colIndex t`. -/
-theorem colSubgroup_eq_fiberSubgroup (t : YoungTableau μ) :
+theorem colSubgroup_def (t : YoungTableau μ) :
     colSubgroup t = fiberSubgroup (colIndex t) := by
   ext σ
   rw [mem_colSubgroup, mem_fiberSubgroup]
@@ -72,7 +72,7 @@ theorem colSubgroup_eq_fiberSubgroup (t : YoungTableau μ) :
 labels that stays inside the rows and inside the columns fixes every cell. -/
 theorem rowSubgroup_inf_colSubgroup_eq_bot (t : YoungTableau μ) :
     rowSubgroup t ⊓ colSubgroup t = ⊥ := by
-  rw [rowSubgroup_eq_fiberSubgroup, colSubgroup_eq_fiberSubgroup, fiberSubgroup_inf]
+  rw [rowSubgroup_def, colSubgroup_def, fiberSubgroup_inf]
   exact fiberSubgroup_eq_bot_of_injective (rowIndex_colIndex_injective t)
 
 /-- The row and column groups of a `μ`-tableau are disjoint subgroups of the symmetric group on
@@ -85,7 +85,7 @@ theorem disjoint_rowSubgroup_colSubgroup (t : YoungTableau μ) :
 of the rows.  Rows beyond the last one of `μ` are empty and contribute trivial factors. -/
 def rowSubgroupMulEquiv (t : YoungTableau μ) :
     rowSubgroup t ≃* ∀ i, Equiv.Perm ↥(μ.row i) :=
-  (MulEquiv.subgroupCongr (rowSubgroup_eq_fiberSubgroup t)).trans <|
+  (MulEquiv.subgroupCongr (rowSubgroup_def t)).trans <|
     (fiberSubgroupMulEquivPiPerm (rowIndex t)).trans
       (MulEquiv.piCongrRight fun i => (rowFiberEquiv t i).permCongrHom)
 
@@ -93,7 +93,7 @@ def rowSubgroupMulEquiv (t : YoungTableau μ) :
 groups of the columns. -/
 def colSubgroupMulEquiv (t : YoungTableau μ) :
     colSubgroup t ≃* ∀ j, Equiv.Perm ↥(μ.col j) :=
-  (MulEquiv.subgroupCongr (colSubgroup_eq_fiberSubgroup t)).trans <|
+  (MulEquiv.subgroupCongr (colSubgroup_def t)).trans <|
     (fiberSubgroupMulEquivPiPerm (colIndex t)).trans
       (MulEquiv.piCongrRight fun j => (colFiberEquiv t j).permCongrHom)
 
