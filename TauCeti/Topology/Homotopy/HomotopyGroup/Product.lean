@@ -220,18 +220,16 @@ theorem prodMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (x : X) (y : Y)
 @[simp]
 theorem prod_one [DecidableEq N] [Nonempty N] :
     prod (1 : HomotopyGroup N X x) (1 : HomotopyGroup N Y y) = 1 := by
-  change (prodMulEquiv (N := N) x y).symm 1 = 1
-  exact (prodMulEquiv (N := N) x y).symm.map_one
+  simpa only [prodMulEquiv_symm_apply, Prod.fst_one, Prod.snd_one] using
+    (prodMulEquiv (N := N) x y).symm.map_one
 
 /-- Coordinatewise products commute with multiplication of homotopy classes. -/
 @[simp]
 theorem prod_mul [DecidableEq N] [Nonempty N]
     (a₁ a₂ : HomotopyGroup N X x) (b₁ b₂ : HomotopyGroup N Y y) :
     prod (a₁ * a₂) (b₁ * b₂) = prod a₁ b₁ * prod a₂ b₂ := by
-  change (prodMulEquiv (N := N) x y).symm ((a₁, b₁) * (a₂, b₂)) =
-    (prodMulEquiv (N := N) x y).symm (a₁, b₁) *
-      (prodMulEquiv (N := N) x y).symm (a₂, b₂)
-  exact (prodMulEquiv (N := N) x y).symm.map_mul _ _
+  simpa only [prodMulEquiv_symm_apply, Prod.fst_mul, Prod.snd_mul] using
+    (prodMulEquiv (N := N) x y).symm.map_mul (a₁, b₁) (a₂, b₂)
 
 variable {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)] {z : ∀ i, Z i}
 
@@ -314,7 +312,7 @@ theorem piMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (z : ∀ i, Z i)
 @[simp]
 theorem pi_one [DecidableEq N] [Nonempty N] :
     pi (fun _ ↦ 1 : ∀ i, HomotopyGroup N (Z i) (z i)) = 1 := by
-  change (piMulEquiv (N := N) z).symm 1 = 1
+  rw [← piMulEquiv_symm_apply (N := N) z]
   exact (piMulEquiv (N := N) z).symm.map_one
 
 /-- Coordinatewise indexed products commute with multiplication of homotopy classes. -/
@@ -322,9 +320,8 @@ theorem pi_one [DecidableEq N] [Nonempty N] :
 theorem pi_mul [DecidableEq N] [Nonempty N]
     (a b : ∀ i, HomotopyGroup N (Z i) (z i)) :
     pi (a * b) = pi a * pi b := by
-  change (piMulEquiv (N := N) z).symm (a * b) =
-    (piMulEquiv (N := N) z).symm a * (piMulEquiv (N := N) z).symm b
-  exact (piMulEquiv (N := N) z).symm.map_mul _ _
+  simpa only [piMulEquiv_symm_apply] using
+    (piMulEquiv (N := N) z).symm.map_mul a b
 
 end HomotopyGroup
 
