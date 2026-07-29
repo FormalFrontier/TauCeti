@@ -229,10 +229,69 @@ noncomputable def conjFDRepEquivalence (s : G) (H : Subgroup G) :
     FDRep k H ≌ FDRep k (MulAut.conj s • H : Subgroup G) :=
   Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)
 
+/-- The forward functor of finite-dimensional conjugation is restriction along conjugation. -/
+@[simp]
+theorem conjFDRepEquivalence_functor (s : G) (H : Subgroup G) :
+    (conjFDRepEquivalence (k := k) s H).functor =
+      Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom := by
+  rfl
+
+/-- The inverse functor of finite-dimensional conjugation is restriction along inverse
+conjugation. -/
+@[simp]
+theorem conjFDRepEquivalence_inverse (s : G) (H : Subgroup G) :
+    (conjFDRepEquivalence (k := k) s H).inverse =
+      Action.res (FGModuleCat k) (conjSubgroupEquiv s H).symm.toMonoidHom := by
+  rfl
+
 /-- The forward object map of the finite-dimensional conjugation equivalence is `conjFDRep`. -/
 @[simp]
 theorem conjFDRepEquivalence_functor_obj (s : G) (H : Subgroup G) (A : FDRep k H) :
-    (conjFDRepEquivalence (k := k) s H).functor.obj A = conjFDRep s A := by
+    (Action.res (FGModuleCat k) (conjSubgroupEquiv s H : _ →* _)).obj A = conjFDRep s A := by
+  rfl
+
+/-- The forward morphism map of finite-dimensional conjugation preserves the underlying
+module morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_functor_map_hom (s : G) (H : Subgroup G)
+    {A B : FDRep k H} (f : A ⟶ B) :
+    HEq ((conjFDRepEquivalence (k := k) s H).functor.map f).hom f.hom := by
+  rfl
+
+/-- The inverse morphism map of finite-dimensional conjugation preserves the underlying
+module morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_inverse_map_hom (s : G) (H : Subgroup G)
+    {A B : FDRep k (MulAut.conj s • H : Subgroup G)} (f : A ⟶ B) :
+    HEq ((conjFDRepEquivalence (k := k) s H).inverse.map f).hom f.hom := by
+  rfl
+
+/-- The unit of finite-dimensional conjugation has the identity underlying module morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_unitIso_hom_app_hom (s : G) (H : Subgroup G) (A : FDRep k H) :
+    HEq ((conjFDRepEquivalence (k := k) s H).unitIso.hom.app A).hom (𝟙 A.V) := by
+  rfl
+
+/-- The inverse of the unit of finite-dimensional conjugation has the identity underlying module
+morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_unitIso_inv_app_hom (s : G) (H : Subgroup G) (A : FDRep k H) :
+    HEq ((conjFDRepEquivalence (k := k) s H).unitIso.inv.app A).hom (𝟙 A.V) := by
+  rfl
+
+/-- The counit of finite-dimensional conjugation has the identity underlying module morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_counitIso_hom_app_hom (s : G) (H : Subgroup G)
+    (A : FDRep k (MulAut.conj s • H : Subgroup G)) :
+    HEq ((conjFDRepEquivalence (k := k) s H).counitIso.hom.app A).hom (𝟙 A.V) := by
+  rfl
+
+/-- The inverse of the counit of finite-dimensional conjugation has the identity underlying
+module morphism. -/
+@[simp]
+theorem conjFDRepEquivalence_counitIso_inv_app_hom (s : G) (H : Subgroup G)
+    (A : FDRep k (MulAut.conj s • H : Subgroup G)) :
+    HEq ((conjFDRepEquivalence (k := k) s H).counitIso.inv.app A).hom (𝟙 A.V) := by
   rfl
 
 /-- Conjugation preserves the underlying module of a finite-dimensional representation. -/
