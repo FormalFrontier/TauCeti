@@ -15,8 +15,9 @@ The canonical process on path space carries `ConditionallyIID` back to the origi
 
 ## Main results
 
-* `conditionallyIID_of_conditionallyIID_pathLaw` — if the coordinate process is conditionally
-  i.i.d. under `pathLaw μ X`, then `X` is conditionally i.i.d. under `μ`.
+* `ConditionallyIIDWith.of_pathLaw` — the transfer at a named directing measure, identifying the
+  transferred witness as `ν ∘ (ω ↦ fun i => X i ω)`.
+* `conditionallyIID_of_conditionallyIID_pathLaw` — its existential corollary.
 
 ## Implementation
 
@@ -41,20 +42,19 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **Path-law transfer for the conditional predicate.** If the coordinate process is conditionally
-i.i.d. under the path law of `X`, then `X` itself is conditionally i.i.d., with directing measure
-the path-space one composed with `ω ↦ fun i => X i ω`.
+/-- **Path-law transfer, at a named directing measure.** If the coordinate process is conditionally
+i.i.d. under the path law of `X` with directing measure `ν`, then `X` is conditionally i.i.d. with
+directing measure `ν ∘ (ω ↦ fun i => X i ω)`.
 
-The roadmap names this `conditionallyIID_transfer`; the name here matches its mixture counterpart
-`mixedIID_of_mixedIID_pathLaw`. -/
-theorem conditionallyIID_of_conditionallyIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
-    (hX_meas : ∀ n, Measurable (X n))
-    (h : ConditionallyIID (pathLaw μ X) fun n p => p n) :
-    ConditionallyIID μ X := by
-  obtain ⟨ν, hν⟩ := h.exists_directing
+Both sides of the disintegration identity move along the path map: the joint law by
+`Measure.map_map`, the mixture by `bind_map`. -/
+theorem ConditionallyIIDWith.of_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX_meas : ∀ n, Measurable (X n)) {ν : (ℕ → α) → ProbabilityMeasure α}
+    (hν : ConditionallyIIDWith (pathLaw μ X) (fun n p => p n) ν) :
+    ConditionallyIIDWith μ X fun ω => ν fun i => X i ω := by
   have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
   have hνm : Measurable ν := hν.measurable_directing
-  refine ConditionallyIID.of_directing (ConditionallyIIDWith.intro (hνm.comp hφ) ?_)
+  refine ConditionallyIIDWith.intro (hνm.comp hφ) ?_
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
@@ -75,6 +75,17 @@ theorem conditionallyIID_of_conditionallyIID_pathLaw {μ : Measure Ω} {X : ℕ 
             (ProbabilityMeasure.pi fun _ : Fin m => ν fun i => X i ω).toMeasure := by
         rw [pathLaw_def]
         exact TauCeti.MeasureTheory.bind_map hφ.aemeasurable hker.aemeasurable
+
+/-- **Path-law transfer for the conditional predicate**, existential form. The roadmap names this
+`conditionallyIID_transfer`; the name here matches its mixture counterpart
+`mixedIID_of_mixedIID_pathLaw`. -/
+theorem conditionallyIID_of_conditionallyIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX_meas : ∀ n, Measurable (X n))
+    (h : ConditionallyIID (pathLaw μ X) fun n p => p n) :
+    ConditionallyIID μ X :=
+  let ⟨_, hν⟩ := h.exists_directing
+  ConditionallyIID.of_directing (hν.of_pathLaw hX_meas)
+
 
 end Probability
 
