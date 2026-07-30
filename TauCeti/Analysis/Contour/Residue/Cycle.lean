@@ -52,7 +52,8 @@ here and not there.
 * `TauCeti.Contour.classicalResidueTheorem_nullHomologous` — the residue theorem for an arbitrary
   null-homologous cycle avoiding the poles.
 
-This is the Layer 2/3 "general arbitrary-cycle case" of the contour-integration roadmap.
+This is the "general arbitrary-cycle case" of the contour-integration roadmap, which that roadmap
+defers to Layer 3+.
 
 ## References
 
