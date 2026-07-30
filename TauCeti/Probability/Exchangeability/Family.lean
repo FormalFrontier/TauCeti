@@ -45,12 +45,12 @@ variable {Ω α ι κ : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 selection of indices by another of the same size. -/
 def ExchangeableFamily (μ : Measure Ω) (X : ι → Ω → α) : Prop :=
   ∀ (m : ℕ) (k l : Fin m → ι), Function.Injective k → Function.Injective l →
-    μ.map (fun ω i => X (k i) ω) = μ.map fun ω i => X (l i) ω
+    blockLaw μ X k = blockLaw μ X l
 
 /-- Constructor for exchangeability of an arbitrary family. -/
 theorem ExchangeableFamily.intro {μ : Measure Ω} {X : ι → Ω → α}
     (h : ∀ (m : ℕ) (k l : Fin m → ι), Function.Injective k → Function.Injective l →
-      μ.map (fun ω i => X (k i) ω) = μ.map fun ω i => X (l i) ω) :
+      blockLaw μ X k = blockLaw μ X l) :
     ExchangeableFamily μ X :=
   h
 
@@ -59,7 +59,7 @@ theorem ExchangeableFamily.intro {μ : Measure Ω} {X : ι → Ω → α}
 theorem exchangeableFamily_iff {μ : Measure Ω} {X : ι → Ω → α} :
     ExchangeableFamily μ X ↔
       ∀ (m : ℕ) (k l : Fin m → ι), Function.Injective k → Function.Injective l →
-        μ.map (fun ω i => X (k i) ω) = μ.map fun ω i => X (l i) ω :=
+        blockLaw μ X k = blockLaw μ X l :=
   Iff.rfl
 
 /-- The finite-block law equality defining an exchangeable family. -/
@@ -67,7 +67,7 @@ theorem exchangeableFamily_iff {μ : Measure Ω} {X : ι → Ω → α} :
 theorem ExchangeableFamily.blockLaw_eq {μ : Measure Ω} {X : ι → Ω → α}
     (h : ExchangeableFamily μ X) {m : ℕ} (k l : Fin m → ι)
     (hk : Function.Injective k) (hl : Function.Injective l) :
-    μ.map (fun ω i => X (k i) ω) = μ.map fun ω i => X (l i) ω :=
+    blockLaw μ X k = blockLaw μ X l :=
   h m k l hk hl
 
 /-- A conditionally i.i.d. family with a named directing measure is exchangeable. -/
@@ -100,7 +100,7 @@ theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → �
     (h : ExchangeableFamily μ X) {f : κ → ι} (hf : Function.Injective f) :
     ExchangeableFamily μ fun j => X (f j) := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  simpa only [Function.comp_apply] using
+  simpa only [blockLaw_def, Function.comp_apply] using
     h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
 
 /-! ## Comparison with the sequence predicates -/
@@ -119,7 +119,6 @@ theorem Exchangeable.exchangeableFamily {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (h : Exchangeable μ X) (hX : ∀ i, AEMeasurable (X i) μ) :
     ExchangeableFamily μ X := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  rw [← blockLaw_def, ← blockLaw_def]
   exact (h.blockLaw_eq_prefixLaw_of_injective hX k hk).trans
     (h.blockLaw_eq_prefixLaw_of_injective hX l hl).symm
 

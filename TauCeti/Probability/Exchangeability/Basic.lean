@@ -12,10 +12,14 @@ public import Mathlib.Tactic.Measurability
 /-!
 # Basic exchangeability definitions
 
-This file starts the Layer 0 exchangeability API: indexed block laws of a process,
+This file starts the Layer 0 exchangeability API: indexed block laws of a family,
 prefix laws, path laws, finite exchangeability, full exchangeability, and
 contractability. The definitions are intentionally hypothesis-light; measurability
 hypotheses enter only in lemmas that compose `Measure.map`s.
+
+`blockLaw` and its characteristic lemmas are stated for an arbitrary index type; the remaining
+definitions here are about the order structure of `ℕ` (prefixes, shifts, strictly increasing
+selections) and stay sequence-level.
 
 These declarations follow the roadmap signatures in
 `TauCetiRoadmap/Exchangeability/README.md` and
@@ -34,11 +38,15 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α β : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α β ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- The finite-dimensional law of a process along a coordinate selection `k`. -/
+/-- The finite-dimensional law of a family along a coordinate selection `k`.
+
+The index type is arbitrary: nothing about a finite selection needs the indices to be natural
+numbers, and `ExchangeableFamily` selects from an arbitrary type. Sequence-level users get the
+`ι = ℕ` case by unification. -/
 @[expose]
-def blockLaw (μ : Measure Ω) (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) :
+def blockLaw (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι) :
     Measure (Fin m → α) :=
   μ.map fun ω i => X (k i) ω
 
@@ -90,7 +98,7 @@ def Contractable (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
   ∀ (m : ℕ) (k : Fin m → ℕ), StrictMono k → blockLaw μ X k = prefixLaw μ X m
 
 @[simp]
-theorem blockLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) :
+theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι) :
     blockLaw μ X k = μ.map (fun ω i => X (k i) ω) :=
   rfl
 
@@ -101,7 +109,7 @@ theorem blockLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) {m : ℕ} (k : Fi
 coordinate-wise preimage. This is the characteristic evaluation of `blockLaw` as a pushforward;
 `blockLaw_apply_rectangle` is the rectangle specialization. -/
 @[grind =>]
-theorem blockLaw_apply_of_measurable (μ : Measure Ω) (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ)
+theorem blockLaw_apply_of_measurable (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι)
     (hXk : ∀ i, AEMeasurable (X (k i)) μ) {S : Set (Fin m → α)} (hS : MeasurableSet S) :
     blockLaw μ X k S = μ ((fun ω i => X (k i) ω) ⁻¹' S) := by
   rw [blockLaw_def, Measure.map_apply_of_aemeasurable (aemeasurable_pi_lambda _ hXk) hS]
@@ -110,7 +118,7 @@ theorem blockLaw_apply_of_measurable (μ : Measure Ω) (X : ℕ → Ω → α) {
 measure of the coordinate-wise preimage `{ω | ∀ i, X (k i) ω ∈ B i}` — the rectangle specialization
 of `blockLaw_apply_of_measurable`. -/
 @[grind =>]
-theorem blockLaw_apply_rectangle (μ : Measure Ω) (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ)
+theorem blockLaw_apply_rectangle (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι)
     (hXk : ∀ i, AEMeasurable (X (k i)) μ) (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i)) :
     blockLaw μ X k (Set.univ.pi B) = μ {ω | ∀ i, X (k i) ω ∈ B i} := by
   rw [blockLaw_apply_of_measurable μ X k hXk (MeasurableSet.univ_pi hB)]
@@ -173,7 +181,7 @@ theorem map_prefixProj_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
   rfl
 
 /-- A coordinatewise measurable map sends block laws to block laws. -/
-theorem map_blockLaw (μ : Measure Ω) {X : ℕ → Ω → α} {m : ℕ} (k : Fin m → ℕ)
+theorem map_blockLaw (μ : Measure Ω) {X : ι → Ω → α} {m : ℕ} (k : Fin m → ι)
     {f : α → β} [MeasurableSpace β] (hf : Measurable f)
     (hXk : ∀ i : Fin m, AEMeasurable (X (k i)) μ) :
     (blockLaw μ X k).map (fun x : Fin m → α => fun i => f (x i)) =
@@ -208,8 +216,8 @@ theorem map_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
 
 /-- Push a block law forward along a coordinate reindexing: selecting the coordinates of
 `blockLaw μ X k` through `g : Fin p → Fin n` yields the block law along `k ∘ g`. -/
-theorem map_blockLaw_reindex (μ : Measure Ω) {X : ℕ → Ω → α} {n p : ℕ}
-    (k : Fin n → ℕ) (g : Fin p → Fin n) (hXk : ∀ j : Fin n, AEMeasurable (X (k j)) μ) :
+theorem map_blockLaw_reindex (μ : Measure Ω) {X : ι → Ω → α} {n p : ℕ}
+    (k : Fin n → ι) (g : Fin p → Fin n) (hXk : ∀ j : Fin n, AEMeasurable (X (k j)) μ) :
     (blockLaw μ X k).map (fun x : Fin n → α => fun i : Fin p => x (g i)) =
       blockLaw μ X (k ∘ g) := by
   rw [blockLaw_def, blockLaw_def,
