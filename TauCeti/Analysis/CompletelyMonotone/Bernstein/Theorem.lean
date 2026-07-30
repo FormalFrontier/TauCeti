@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness
-public import TauCeti.MeasureTheory.Measure.Prokhorov
+public import TauCeti.Analysis.CompletelyMonotone.Basic
+public import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
+public import Mathlib.MeasureTheory.Measure.Typeclasses.Finite
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+-- Non-public: the Chafaï approximating measures, their tightness, and the Prokhorov extraction are
+-- used only inside the proof; the statement mentions none of them.
+import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness
+import TauCeti.MeasureTheory.Measure.Prokhorov
 
 /-!
 # Bernstein's theorem: existence of a representing measure
@@ -78,9 +84,8 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
   have key : ∀ t : ℝ, 0 ≤ t → f t - L = ∫ p, Real.exp (-(t * (p : ℝ))) ∂μ₀ := by
     intro t ht
     have hlap : Tendsto (fun n => ∫ p, Real.exp (-(t * (p : ℝ))) ∂(chafaiRescaled f n))
-        (U : Filter ℕ) (nhds (∫ p, Real.exp (-(t * (p : ℝ))) ∂μ₀)) := by
-      have h := hweak (laplaceKernelBoundedContinuous ht)
-      rwa [funext (laplaceKernelBoundedContinuous_apply ht)] at h
+        (U : Filter ℕ) (nhds (∫ p, Real.exp (-(t * (p : ℝ))) ∂μ₀)) :=
+      chafaiRescaled_tendsto_laplace_integral_of_weak hweak ht
     have herr : Tendsto (fun n => ∫ p : ℝ≥0,
         (bernsteinKernel n t (p : ℝ) - Real.exp (-(t * (p : ℝ))))
           ∂(chafaiRescaled f n)) (U : Filter ℕ) (nhds 0) :=
