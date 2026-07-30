@@ -196,11 +196,6 @@ def blowUpVertex [DecidableEq V] (P : PlumbingGraph V) (v : V) : PlumbingGraph (
 
 variable [DecidableEq V] (P : PlumbingGraph V) (v : V)
 
-/-- The new vertex carries no loop. -/
-@[simp]
-theorem blowUpVertex_adj_none_none : ¬ (P.blowUpVertex v).toSimpleGraph.Adj none none :=
-  not_false
-
 /-- The new vertex is joined exactly to the blown-up vertex. -/
 @[simp]
 theorem blowUpVertex_adj_none_some (w : V) :
@@ -259,8 +254,9 @@ theorem blowUpVertex_degree_none [Fintype V] :
     | some w => simp
   rw [SimpleGraph.degree, h, Finset.card_singleton]
 
-/-- The exceptional sphere has self-intersection `-1`. -/
-@[simp]
+/-- The exceptional sphere has self-intersection `-1`. This is not a `simp` lemma: the simp set
+already rewrites the left-hand side through `intersectionMatrix_diag` and
+`blowUpVertex_weight_none`. -/
 theorem blowUpVertex_intersectionMatrix_none_none :
     (P.blowUpVertex v).intersectionMatrix none none = -1 := by
   rw [intersectionMatrix_diag, blowUpVertex_weight_none]
