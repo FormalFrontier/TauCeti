@@ -123,22 +123,6 @@ theorem exists_rowMeetsColumnTwice_relabel (t : YoungTableau μ) {x y u v : Fin 
   rw [inv_inv, hρx, hρy]
   exact hcol
 
-/-- The basis element of a product of permutations is the product of their basis elements.  This
-is `MonoidAlgebra.single_mul_single` read with unit coefficients. -/
-private theorem single_mul_single_one (a b : Equiv.Perm (Fin μ.card)) :
-    MonoidAlgebra.single (a * b) (1 : ℚ) =
-      MonoidAlgebra.single a (1 : ℚ) * MonoidAlgebra.single b (1 : ℚ) := by
-  rw [MonoidAlgebra.single_mul_single, mul_one]
-
-/-- Transporting a transposition across `σ` inside the group algebra: multiplying by `σ` on the
-right turns the swap of `x` and `y` into the swap of their `σ`-preimages.  This is the one step
-of the transposition trick that moves the swap from the row side to the column side. -/
-private theorem single_swap_mul_single (σ : Equiv.Perm (Fin μ.card)) (x y : Fin μ.card) :
-    MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) * MonoidAlgebra.single σ (1 : ℚ) =
-      MonoidAlgebra.single σ (1 : ℚ) *
-        MonoidAlgebra.single (Equiv.swap (σ⁻¹ x) (σ⁻¹ y)) (1 : ℚ) := by
-  rw [← single_mul_single_one, ← single_mul_single_one, Equiv.swap_mul_eq_mul_swap]
-
 /-- **The key vanishing lemma**, in terms of explicit labels: if the distinct labels `x` and `y`
 lie in a common row of `t` while their `σ`-preimages lie in a common column of `t`, then the
 sandwich `a_t σ b_t` vanishes. -/
@@ -157,6 +141,13 @@ theorem rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_eq_zero (t : YoungTa
       columnAntisymmetrizer t =
       ((Equiv.Perm.sign (Equiv.swap (σ⁻¹ x) (σ⁻¹ y)) : ℤ) : ℚ) • columnAntisymmetrizer t :=
     mul_columnAntisymmetrizer_left t ⟨Equiv.swap (σ⁻¹ x) (σ⁻¹ y), swap_mem_colSubgroup hcol⟩
+  -- multiplying by `σ` on the right turns the swap of `x` and `y` into the swap of their
+  -- `σ`-preimages: this is the step that moves the swap from the row side to the column side
+  have hswap : MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) * MonoidAlgebra.single σ (1 : ℚ) =
+      MonoidAlgebra.single σ (1 : ℚ) *
+        MonoidAlgebra.single (Equiv.swap (σ⁻¹ x) (σ⁻¹ y)) (1 : ℚ) := by
+    rw [MonoidAlgebra.single_mul_single, MonoidAlgebra.single_mul_single, mul_one,
+      Equiv.swap_mul_eq_mul_swap]
   have hneg : ((Equiv.Perm.sign (Equiv.swap (σ⁻¹ x) (σ⁻¹ y)) : ℤ) : ℚ) = -1 := by
     rw [Equiv.Perm.sign_swap hxy']
     simp
@@ -169,7 +160,7 @@ theorem rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_eq_zero (t : YoungTa
       _ = rowSymmetrizer t * MonoidAlgebra.single σ (1 : ℚ) *
             (MonoidAlgebra.single (Equiv.swap (σ⁻¹ x) (σ⁻¹ y)) (1 : ℚ) *
               columnAntisymmetrizer t) := by
-          rw [single_swap_mul_single]
+          rw [hswap]
           simp only [mul_assoc]
       _ = -(rowSymmetrizer t * MonoidAlgebra.single σ (1 : ℚ) * columnAntisymmetrizer t) := by
           rw [hsign, hneg, neg_one_smul, mul_neg]
@@ -202,8 +193,10 @@ theorem rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_eq_sign_smul_youngSy
   have hcol : MonoidAlgebra.single q (1 : ℚ) * columnAntisymmetrizer t =
       ((Equiv.Perm.sign q : ℤ) : ℚ) • columnAntisymmetrizer t :=
     mul_columnAntisymmetrizer_left t ⟨q, hq⟩
-  rw [single_mul_single_one, ← mul_assoc, hrow, mul_assoc, hcol, mul_smul_comm,
-    youngSymmetrizer_def]
+  have hpq : MonoidAlgebra.single (p * q) (1 : ℚ) =
+      MonoidAlgebra.single p (1 : ℚ) * MonoidAlgebra.single q (1 : ℚ) := by
+    rw [MonoidAlgebra.single_mul_single, mul_one]
+  rw [hpq, ← mul_assoc, hrow, mul_assoc, hcol, mul_smul_comm, youngSymmetrizer_def]
 
 /-- A permutation lying in the product of the row and the column group has a nonzero
 sandwich. -/
