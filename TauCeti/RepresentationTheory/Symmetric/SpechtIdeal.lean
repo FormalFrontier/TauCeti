@@ -37,6 +37,8 @@ namespace TauCeti
 
 namespace YoungTableau
 
+/-- `Representation.ofModule'` has no public application lemma, so this private bridge
+isolates its definitional reduction to the group-algebra action. -/
 private theorem ofModule'_apply
     {k G M : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid M]
     [Module k M] [Module (MonoidAlgebra k G) M]
@@ -55,6 +57,15 @@ def spechtIdeal (t : YoungTableau μ) :
     Submodule (MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)))
       (MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) :=
   MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)) ∙ youngSymmetrizer t
+
+/-- The Young-symmetrizer left ideal is contained in a submodule exactly when that
+submodule contains its generator. -/
+@[simp]
+theorem spechtIdeal_le_iff (t : YoungTableau μ)
+    (I : Submodule (MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)))
+      (MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)))) :
+    spechtIdeal t ≤ I ↔ youngSymmetrizer t ∈ I := by
+  rw [spechtIdeal, Submodule.span_singleton_le_iff_mem]
 
 /-- An element lies in `ℚ[Sₙ] c_t` exactly when it is a left multiple of `c_t`. -/
 @[simp]
@@ -101,10 +112,7 @@ theorem spechtIdealRep_ρ_apply_coe (t : YoungTableau μ)
       MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
       MonoidAlgebra.single g 1 *
         (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) := by
-  rw [show (spechtIdealRep t).ρ =
-    Representation.ofModule' (spechtIdeal t) from
-      Rep.of_ρ (spechtIdeal t) (Representation.ofModule' (spechtIdeal t))]
-  rw [ofModule'_apply, Submodule.coe_smul, smul_eq_mul]
+  rw [Rep.of_ρ, ofModule'_apply, Submodule.coe_smul, smul_eq_mul]
 
 /-- A Young-symmetrizer left ideal is finite-dimensional over `ℚ`. -/
 noncomputable instance instModuleFiniteSpechtIdeal (t : YoungTableau μ) :
