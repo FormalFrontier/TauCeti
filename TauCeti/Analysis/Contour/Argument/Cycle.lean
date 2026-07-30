@@ -50,7 +50,7 @@ analyticity of `f` off `S`.
 
 * `TauCeti.Contour.argumentPrinciple_nullHomologous` — the argument principle for a closed
   null-homologous piecewise-`C¹` cycle: `∮_γ f'/f = 2πi · ∑_{z ∈ S} n_z(γ) · ord z`.
-* `TauCeti.Contour.argumentPrinciple_nullHomologous_single` — the one-point case
+* `TauCeti.Contour.argumentPrinciple_nullHomologous_local` — the one-point case
   `∮_γ f'/f = 2πi · n_{z₀}(γ) · n`, the arbitrary-cycle counterpart of
   `TauCeti.Contour.argumentPrinciple_local`.
 * `TauCeti.Contour.argumentPrinciple_nullHomologous_of_analyticOnNhd` — the zero-counting
@@ -144,7 +144,7 @@ if `z₀` lies outside `U` then `f` is analytic and non-vanishing on all of `U`,
 makes `n_{z₀}(γ)` vanish, so both sides are `0` for any `n`. Accordingly the meromorphy and the
 order hypotheses are conditional on `z₀ ∈ U`, exactly as they are in
 `TauCeti.Contour.argumentPrinciple_nullHomologous`. -/
-theorem argumentPrinciple_nullHomologous_single {f : ℂ → ℂ} {U : Set ℂ} {z₀ : ℂ} {n : ℤ}
+theorem argumentPrinciple_nullHomologous_local {f : ℂ → ℂ} {U : Set ℂ} {z₀ : ℂ} {n : ℤ}
     (hU : IsOpen U) (hmero : z₀ ∈ U → MeromorphicAt f z₀)
     (hn : z₀ ∈ U → meromorphicOrderAt f z₀ = (n : WithTop ℤ))
     (hoff : ∀ z ∈ U, z ≠ z₀ → AnalyticAt ℂ f z ∧ f z ≠ 0)
