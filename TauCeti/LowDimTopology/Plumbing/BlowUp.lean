@@ -346,10 +346,7 @@ private theorem blowUpVertex_mulVec_apply_some (y : V → ℤ) (t : ℤ) (w : V)
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, hsplit]
   rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Matrix.mulVec_apply_eq_sum]
   simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, if_true]
-  by_cases h : w = v
-  · simp [h]
-    ring
-  · simp [h]
+  split_ifs <;> ring
 
 /-- **The blow-up splits the intersection form.** Under the total-transform identification
 `blowUpVertexEquiv`, the intersection form of the blow-up is the orthogonal direct sum of the
@@ -394,7 +391,11 @@ end Lattice
 /-- **Blowing up at a vertex preserves and reflects negative-definiteness.** The blown-up
 intersection form is the old one plus a `⟨-1⟩` summand, so it is negative definite exactly when
 the old one is. Since negative-definiteness is the standing hypothesis of lattice homology, the
-blow-up move stays inside the class of plumbings the theory applies to. -/
+blow-up move stays inside the class of plumbings the theory applies to.
+
+Exposed to `grind` as a rewrite, like the other `IsNegativeDefinite` characterizations, so that
+`grind` reduces negative-definiteness of a blow-up to negative-definiteness of `P`. -/
+@[grind =]
 theorem isNegativeDefinite_blowUpVertex_iff [Finite V] :
     (P.blowUpVertex v).IsNegativeDefinite ↔ P.IsNegativeDefinite := by
   obtain ⟨_⟩ := nonempty_fintype V
