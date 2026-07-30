@@ -28,12 +28,12 @@ Mathlib's Wedderburn-Artin theorem gives `A ≃ₐ[K] Matrix (Fin n) (Fin n) D` 
 division algebra, together with the dimension count `finrank K A = n ^ 2 * finrank K D`.
 
 The same file settles the finite base field. A finite division ring is a field (little Wedderburn),
-and a *commutative* algebra is central exactly when its structure map is onto, so a central division
-algebra over a finite field is the field itself and every central simple algebra over a finite field
-is a full matrix algebra `Matrix (Fin n) (Fin n) K`. In particular its dimension is the square
-`n ^ 2`. Centrality is what makes this work: `𝔽_{q^m}` is a finite division algebra over `𝔽_q`
-which is *not* the base field, and `TauCeti.isCentral_iff_surjective_algebraMap` locates the
-failure precisely in the surjectivity of the structure map.
+so `Algebra.IsCentral.baseField_essentially_unique` collapses a finite central division algebra to
+its base field, and every central simple algebra over a finite field is a full matrix algebra
+`Matrix (Fin n) (Fin n) K`. In particular its dimension is the square `n ^ 2`. Centrality is what
+makes this work: `𝔽_{q^m}` is a finite division algebra over `𝔽_q` which is *not* the base field,
+and `TauCeti.isCentral_iff_surjective_algebraMap` locates the failure precisely in the surjectivity
+of the structure map.
 
 ## Main results
 
@@ -43,10 +43,10 @@ failure precisely in the surjectivity of the structure map.
   algebras**. A finite-dimensional central simple `K`-algebra `A` is `Matrix (Fin n) (Fin n) D` for
   a finite-dimensional **central** division `K`-algebra `D`, and
   `finrank K A = n ^ 2 * finrank K D`.
-* `TauCeti.surjective_algebraMap_of_mul_comm`, `TauCeti.isCentral_iff_surjective_algebraMap`: a
-  commutative `K`-algebra is central iff its structure map is surjective.
-* `TauCeti.algebraMap_bijective_of_finite`, `TauCeti.baseFieldAlgEquivOfFinite`: a finite central
-  division algebra over a field is the base field.
+* `TauCeti.isCentral_iff_surjective_algebraMap`: a commutative `K`-algebra is central iff its
+  structure map is surjective.
+* `TauCeti.baseFieldAlgEquivOfFinite`: a finite central division algebra over a field is the base
+  field.
 * `TauCeti.exists_algEquiv_matrix_of_finite`: a central simple algebra over a **finite** field is a
   full matrix algebra over that field, and `TauCeti.isSquare_finrank_of_finite`: its dimension is a
   perfect square.
@@ -57,7 +57,7 @@ failure precisely in the surjectivity of the structure map.
 `Matrix ι ι D` while its conclusion mentions only `D`, so instance search could not run it
 backwards, and the index type `ι` is unconstrained by the goal.
 
-`TauCeti.algebraMap_bijective_of_finite` assumes `Finite D`, the single hypothesis little Wedderburn
+`TauCeti.baseFieldAlgEquivOfFinite` assumes `Finite D`, the single hypothesis little Wedderburn
 needs, rather than the pair `Finite K` and `FiniteDimensional K D`; the two are equivalent, because
 `K` embeds in `D`. The central-simple corollary does take the pair `Finite K` and
 `FiniteDimensional K A`, which is how a finite base field is met in practice.
@@ -150,32 +150,21 @@ end CentralSimple
 
 /-! ### Central algebras that happen to be commutative -/
 
-/-- If a central `K`-algebra has commutative multiplication then its structure map is surjective:
-every element lies in the centre, hence in the image of `K`.
-
-Commutativity is taken as a hypothesis rather than as a `CommSemiring` instance so that the lemma
-applies to a `DivisionRing` that little Wedderburn has shown to be commutative, without introducing
-a second multiplicative structure on it. -/
-theorem surjective_algebraMap_of_mul_comm (K D : Type*) [CommSemiring K] [Semiring D] [Algebra K D]
-    [Algebra.IsCentral K D] (h : ∀ x y : D, x * y = y * x) :
-    Function.Surjective (algebraMap K D) := fun x ↦ by
-  obtain ⟨a, ha⟩ :=
-    (Algebra.IsCentral.mem_center_iff K).mp (Subalgebra.mem_center_iff.mpr fun b ↦ h b x)
-  exact ⟨a, ha.symm⟩
-
 /-- A commutative `K`-algebra is central over `K` exactly when its structure map is surjective: the
 centre of a commutative algebra is all of it, so demanding that the centre be the image of `K`
 demands that everything be in the image of `K`.
 
 This is the precise sense in which centrality is a strong condition on a field extension: `L / K` is
-central only when `L = K`. It is also what makes the finite-field results below work, once little
-Wedderburn has made a finite division algebra commutative. -/
+central only when `L = K`, which is why the finite-field results below collapse the division algebra
+to its base field once little Wedderburn has made it commutative. -/
 theorem isCentral_iff_surjective_algebraMap (K D : Type*) [CommSemiring K] [CommSemiring D]
     [Algebra K D] : Algebra.IsCentral K D ↔ Function.Surjective (algebraMap K D) := by
-  refine ⟨fun _ ↦ surjective_algebraMap_of_mul_comm K D fun x y ↦ mul_comm x y,
-    fun h ↦ ⟨fun x _ ↦ ?_⟩⟩
-  obtain ⟨a, rfl⟩ := h x
-  exact Algebra.mem_bot.mpr ⟨a, rfl⟩
+  refine ⟨fun _ x ↦ ?_, fun h ↦ ⟨fun x _ ↦ ?_⟩⟩
+  · obtain ⟨a, ha⟩ := (Algebra.IsCentral.mem_center_iff K).mp
+      (Subalgebra.mem_center_iff.mpr fun b ↦ mul_comm b x)
+    exact ⟨a, ha.symm⟩
+  · obtain ⟨a, rfl⟩ := h x
+    exact Algebra.mem_bot.mpr ⟨a, rfl⟩
 
 /-! ### Finite central division algebras and finite base fields -/
 
@@ -184,20 +173,16 @@ section Finite
 variable (K : Type*) [Field K] (D : Type*) [DivisionRing D] [Algebra K D]
   [Algebra.IsCentral K D] [Finite D]
 
-/-- A **finite central division algebra over a field is the base field**: its structure map is
-bijective.
+/-- A **finite central division algebra over a field is the base field**, as an isomorphism of
+`K`-algebras.
 
-A finite division ring is commutative by little Wedderburn, and a commutative central algebra has
-surjective structure map; injectivity is automatic over a field. Centrality is essential: `𝔽_{q^m}`
-is a finite division algebra over `𝔽_q` whose structure map is not surjective for `m > 1`. -/
-theorem algebraMap_bijective_of_finite : Function.Bijective (algebraMap K D) :=
-  ⟨(algebraMap K D).injective,
-    surjective_algebraMap_of_mul_comm K D (Finite.isDomain_to_isField D).mul_comm⟩
-
-/-- The identification of a finite central division algebra with its base field, as an isomorphism
-of `K`-algebras. -/
+A finite division ring is a field by little Wedderburn (the instance `littleWedderburn`), so `K → D`
+is a central extension of fields and `Algebra.IsCentral.baseField_essentially_unique` applied to the
+tower `D / D / K` makes it bijective. Centrality is essential: `𝔽_{q^m}` is a finite division
+algebra over `𝔽_q` whose structure map is not surjective for `m > 1`. -/
 noncomputable def baseFieldAlgEquivOfFinite : D ≃ₐ[K] K :=
-  (AlgEquiv.ofBijective (Algebra.ofId K D) (algebraMap_bijective_of_finite K D)).symm
+  (AlgEquiv.ofBijective (Algebra.ofId K D)
+    (Algebra.IsCentral.baseField_essentially_unique K D D)).symm
 
 @[simp]
 theorem baseFieldAlgEquivOfFinite_symm_apply (a : K) :
