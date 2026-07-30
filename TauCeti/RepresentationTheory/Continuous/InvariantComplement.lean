@@ -8,6 +8,7 @@ public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 public import Mathlib.Analysis.InnerProductSpace.Subspace
 public import Mathlib.RepresentationTheory.Semisimple
 public import Mathlib.RepresentationTheory.Submodule
+public import TauCeti.RepresentationTheory.Continuous.Subrepresentation
 public import TauCeti.RepresentationTheory.Continuous.Unitary
 
 /-!
@@ -25,8 +26,6 @@ complemented.
 
 ## Main definitions
 
-* `TauCeti.ContRepresentation.subrepresentation`: the restriction of a continuous representation to
-  an invariant submodule.
 * `TauCeti.ContRepresentation.IsUnitary.orthogonalSubrepresentation`: the orthogonal complement of
   a subrepresentation of a unitary representation, as a subrepresentation.
 * `TauCeti.ContRepresentation.IsUnitary.starProjectionIntertwiner`: the orthogonal projection onto
@@ -74,40 +73,6 @@ open scoped InnerProductSpace
 namespace TauCeti
 
 namespace ContRepresentation
-
-/-! ### Restricting a continuous representation to an invariant submodule -/
-
-section Subrepresentation
-
-variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [TopologicalSpace V]
-  [IsTopologicalAddGroup V] [Module R V]
-
-/-- The restriction of a continuous representation to an invariant submodule. This is the
-continuous counterpart of `Representation.subrepresentation`. -/
-@[expose]
-def subrepresentation (π : ContRepresentation R G V) (W : Submodule R V)
-    (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) : ContRepresentation R G W :=
-  .ofMonoidHom
-    { toFun g := (π g).restrict (hW g)
-      map_one' := by ext v; simp
-      map_mul' g h := by ext v; simp }
-
-variable {π : ContRepresentation R G V} {W : Submodule R V} {hW : ∀ g, ∀ v ∈ W, π g v ∈ W}
-
-/-- The restricted action is the ambient action, read on the underlying vectors. -/
-@[simp]
-theorem coe_subrepresentation_apply (g : G) (v : W) :
-    ((subrepresentation π W hW g v : W) : V) = π g (v : V) :=
-  (rfl)
-
-/-- The underlying representation of a restricted continuous representation is the restriction of
-the underlying representation. -/
-theorem toRepresentation_subrepresentation :
-    (subrepresentation π W hW).toRepresentation
-      = π.toRepresentation.subrepresentation W fun g _ hv => hW g _ hv :=
-  rfl
-
-end Subrepresentation
 
 /-! ### The orthogonal complement of an invariant subspace -/
 
