@@ -26,6 +26,8 @@ F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.isAbelianGalois_candidateGenusField_over_base`: `K_gen` is abelian
+  Galois over its embedded quadratic base `ℚ(√d)`.
 * `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_base`:
   `|Gal(K_gen / ℚ(√d))| = 2 ^ (t - 1)` when `d` is not a rational square.
 -/
@@ -33,6 +35,17 @@ F. Lemmermeyer, *Reciprocity Laws*.
 public section
 
 namespace TauCeti.Multiquadratic
+
+/-- **The candidate genus field is abelian Galois over `ℚ(√d)`.** It is Galois over the intermediate
+field `candidateGenusFieldBase` because it is Galois over `ℚ`, and its relative Galois group is
+abelian because it injects (by restriction of scalars) into the abelian `Gal(K_gen/ℚ)`. -/
+noncomputable instance isAbelianGalois_candidateGenusField_over_base {d : ℤ} {hd : Squarefree d} :
+    IsAbelianGalois (candidateGenusFieldBase hd) (candidateGenusField hd) where
+  toIsGalois := inferInstance
+  is_comm.comm σ τ := by
+    have h := IsMulCommutative.is_comm.comm (σ.restrictScalars ℚ) (τ.restrictScalars ℚ)
+    ext x
+    simpa only [AlgEquiv.mul_apply, AlgEquiv.restrictScalars_apply] using DFunLike.congr_fun h x
 
 /-- **Order of the relative Galois group of the candidate genus field over `ℚ(√d)`.** If the
 squarefree integer `d` is not a rational square, then `K_gen` is Galois over its embedded quadratic
