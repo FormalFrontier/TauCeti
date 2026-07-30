@@ -418,6 +418,7 @@ theorem residue_const_div_sub_pow (a z₀ : ℂ) (k : ℕ) :
 the whole Laurent principal part comes from the first `k + 1` Taylor terms of `g`, and only the one
 of index `k` sits at order `−1`. This is the residue behind Cauchy's integral formula for the
 `k`-th derivative; the constant case is `TauCeti.Contour.residue_const_div_sub_pow`. -/
+@[simp]
 theorem residue_div_sub_pow_of_analyticAt {g : ℂ → ℂ} {z₀ : ℂ} (hg : AnalyticAt ℂ g z₀) (k : ℕ) :
     residue (fun z => g z / (z - z₀) ^ (k + 1)) z₀
       = iteratedDeriv k g z₀ / (k.factorial : ℂ) := by
@@ -427,8 +428,8 @@ theorem residue_div_sub_pow_of_analyticAt {g : ℂ → ℂ} {z₀ : ℂ} (hg : A
       -- `change` beta-reduces the applied lambdas; the `rw` patterns do not match otherwise.
       change g z / (z - z₀) ^ (k + 1) = (z - z₀) ^ (-(k + 1 : ℕ) : ℤ) • g z
       rw [smul_eq_mul, zpow_neg, zpow_natCast, mul_comm, div_eq_mul_inv]
-  rw [residue_eq_of_eventuallyEq_zpow_smul (by omega) hg hfg,
-    show (-1 - (-(k + 1 : ℕ) : ℤ)).toNat = k by omega]
+  have htoNat : (-1 - (-(k + 1 : ℕ) : ℤ)).toNat = k := by omega
+  rw [residue_eq_of_eventuallyEq_zpow_smul (by omega) hg hfg, htoNat]
 
 /-- **The residue from a Laurent expansion.** If `f z = g z + ∑ k, a k / (z - z₀)^(k+1)` near
 `z₀` with `g` analytic at `z₀`, then `residue f z₀` is the first Laurent coefficient `a 0` (or

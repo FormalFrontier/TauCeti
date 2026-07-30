@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Contour.Residue.Cycle
-public import TauCeti.Analysis.Contour.Winding.Number.Circle
+import Mathlib.Analysis.Complex.CauchyIntegral
 
 /-!
 # Cauchy's integral formula in homology form, for all derivatives
@@ -22,7 +22,7 @@ accompanies the homology Cauchy theorem — and the general `k` is its derivativ
 
 The proof is a single application of the residue theorem for a null-homologous cycle
 (`TauCeti.Contour.classicalResidueTheorem_nullHomologous`) to the Cauchy kernel
-`w ↦ f w / (w − z) ^ (k + 1)`, whose only singularity in `U` is the pole at `z`, together with the
+`w ↦ f w / (w − z) ^ (k + 1)`, whose only possible singularity in `U` is at `z`, together with the
 residue computation `TauCeti.Contour.residue_div_sub_pow_of_analyticAt` reading the residue there as
 the Taylor coefficient `f⁽ᵏ⁾(z) / k !`. Holomorphy on the *open* `U` is what turns
 `DifferentiableOn` into analyticity at `z` (`DifferentiableOn.analyticOnNhd`), so the Taylor
@@ -36,21 +36,16 @@ coefficient exists at all.
   Cauchy integral formula `∮_γ f(w)/(w − z) dw = 2πi · n_z(γ) · f z`.
 * `TauCeti.Contour.cauchyIntegralFormula_deriv_nullHomologous` — its `k = 1` case, stated with
   `deriv f z`.
-* `TauCeti.Contour.circleIntegral_div_sub_pow_of_differentiableOn` — the round-circle corollary
-  `∮_{C(c,R)} f(w)/(w − z) ^ (k + 1) dw = 2πi · f⁽ᵏ⁾(z) / k !` at an arbitrary `z` **inside** the
-  circle.
 
 ## Relation to Mathlib
 
-Mathlib's higher-derivative Cauchy integral formulas
+Mathlib's Cauchy integral formulas are all stated for a round circle: the higher-derivative ones
 (`Complex.circleIntegral_one_div_sub_center_pow_smul_of_differentiable_on_off_countable` and its
 `DiffContOnCl` / `DifferentiableOn` variants) evaluate the circle integral of
-`(w − c)^{−(k+1)} • f w` at the **centre** `c` of the circle only, and the file recording them
-carries an explicit `TODO: add a version for w ∈ Metric.ball c R`. The circle corollary here is that
-off-centre version, obtained for free from the null-homologous statement; only its `k = 0` case is
-already upstream, as `Complex.circleIntegral_div_sub_of_differentiable_on_off_countable`. The price
-of the extra generality in `k` is holomorphy on an open neighbourhood of the closed disc, where
-Mathlib asks only for continuity up to the boundary.
+`(w − c)^{−(k+1)} • f w` at the **centre** `c` of the circle only, and the off-centre one
+(`Complex.circleIntegral_div_sub_of_differentiable_on_off_countable`) is the case `k = 0`. Mathlib
+has no winding number for a general curve, hence no formula weighted by one; that is what the
+statements here supply.
 
 ## References
 
@@ -67,7 +62,7 @@ AINTLIB `LeanModularForms` development.
 
 public section
 
-open Complex MeasureTheory Metric Set
+open Complex MeasureTheory Set
 
 open scoped Interval Real
 
@@ -80,9 +75,9 @@ let `z ∈ U` lie off the curve. Then for every `k`,
 `∫ t in a..b, γ' t • (f (γ t) / (γ t − z) ^ (k + 1)) = 2πi · n_z(γ) · f⁽ᵏ⁾(z) / k !`,
 
 the `k`-th Taylor coefficient of `f` at `z` weighted by the generalized winding number of `γ` about
-`z`. Only the pole at `z` contributes: the residue theorem for a null-homologous cycle applied to
-the Cauchy kernel `w ↦ f w / (w − z) ^ (k + 1)` leaves the single residue
-`iteratedDeriv k f z / k !`. -/
+`z`. Only the residue at `z` contributes: the residue theorem for a null-homologous cycle applied
+to the Cauchy kernel `w ↦ f w / (w − z) ^ (k + 1)`, whose only possible singularity in `U` is at
+`z`, leaves the single residue `iteratedDeriv k f z / k !`. -/
 theorem cauchyIntegralFormula_iteratedDeriv_nullHomologous {f : ℂ → ℂ} {U : Set ℂ} {γ : ℝ → ℂ}
     {a b : ℝ} {z : ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U) (hγ : IsPiecewiseC1On γ a b)
     (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b) (hnull : IsNullHomologous γ a b U)
@@ -139,42 +134,6 @@ theorem cauchyIntegralFormula_deriv_nullHomologous {f : ℂ → ℂ} {U : Set �
       = 2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b z * deriv f z := by
   simpa [iteratedDeriv_one] using
     cauchyIntegralFormula_iteratedDeriv_nullHomologous hU hf hγ hγU hclosed hnull hz hoff 1
-
-/-- **Cauchy's integral formula for derivatives at an off-centre point of a disc.** If `f` is
-holomorphic on an open `U` containing the closed disc `closedBall c R` and `z` lies strictly inside
-that disc, then
-
-`∮_{C(c, R)} f(w) / (w − z) ^ (k + 1) dw = 2πi · f⁽ᵏ⁾(z) / k !`.
-
-The counterclockwise circle is null-homologous in `U` — a point outside `U` lies outside the closed
-disc, hence has winding number `0` (`TauCeti.Contour.windingNumber_circleMap_eq_zero_of_lt_dist`) —
-and it winds once about `z` (`TauCeti.Contour.windingNumber_circleMap_eq_one_of_dist_lt`), so
-`TauCeti.Contour.cauchyIntegralFormula_iteratedDeriv_nullHomologous` applies with weight `1`.
-
-Mathlib's higher-derivative circle formulas are stated at the centre of the circle only; this is the
-`w ∈ Metric.ball c R` version their file leaves as a TODO. For `k = 0`,
-`Complex.circleIntegral_div_sub_of_differentiable_on_off_countable` is upstream and asks less
-regularity (continuity on the closed disc, differentiability off a countable subset of the open
-one). -/
-theorem circleIntegral_div_sub_pow_of_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} {c z : ℂ} {R : ℝ}
-    (hU : IsOpen U) (hf : DifferentiableOn ℂ f U) (hUR : closedBall c R ⊆ U) (hz : dist z c < R)
-    (k : ℕ) :
-    (∮ w in C(c, R), f w / (w - z) ^ (k + 1))
-      = 2 * (Real.pi : ℂ) * Complex.I * (iteratedDeriv k f z / (k.factorial : ℂ)) := by
-  have hR : 0 < R := lt_of_le_of_lt dist_nonneg hz
-  have hclosed : circleMap c R 0 = circleMap c R (2 * Real.pi) := by
-    simpa using (periodic_circleMap c R 0).symm
-  have hnull : IsNullHomologous (circleMap c R) 0 (2 * Real.pi) U := by
-    rw [isNullHomologous_iff]
-    intro w hw
-    exact windingNumber_circleMap_eq_zero_of_lt_dist hR.le
-      (not_le.mp fun hle => hw (hUR (mem_closedBall.mpr hle)))
-  rw [circleIntegral, cauchyIntegralFormula_iteratedDeriv_nullHomologous hU hf
-      (IsPiecewiseC1On.of_contDiffOn (contDiff_circleMap c R).contDiffOn)
-      (fun θ _ => hUR (circleMap_mem_closedBall c hR.le θ)) hclosed hnull
-      (hUR (mem_closedBall.mpr hz.le))
-      (fun θ _ => circleMap_ne_mem_ball (mem_ball.mpr hz) θ) k,
-    windingNumber_circleMap_eq_one_of_dist_lt hz, mul_one]
 
 end TauCeti.Contour
 
