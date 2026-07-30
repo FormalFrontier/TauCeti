@@ -21,8 +21,8 @@ degree.
 * `relativeDegree_ofPoint_of_section`: the prime divisor at a codimension-one point in the image
   of a section has relative degree `1`.
 * `relativeDegree_zsmul_ofPoint_of_section`: hence `deg (d · x₀) = d`.
-* `relativeDegree_sub_zsmul_ofPoint_of_section`: hence `deg (D - (deg D) · x₀) = 0`, the
-  normalization of the Abel map at the chosen point.
+* `relativeDegree_sub_zsmul_ofPoint_of_section`: hence `deg (D - (deg D) · x₀) = 0`, so
+  subtracting a multiple of `x₀` normalizes an arbitrary Weil divisor to relative degree zero.
 
 This is the geometric source of the weight-one base point hypothesis that the Layer A degree
 theory runs on: the weight of a point of a curve over `k` is its residue degree `[κ(x) : k]`
@@ -73,9 +73,9 @@ theorem relativeDegree_zsmul_ofPoint_of_section (hs : s ≫ f = 𝟙 S) {y : S}
 /-- Correcting a divisor by a multiple of a rational point kills its relative degree:
 `deg (D - (deg D) · x₀) = 0`.
 
-This is the normalization `D ↦ D - d·x₀` of the Abel map: over a base point of relative degree
-one every divisor becomes degree zero after subtracting its own degree times that point, which is
-what makes the degree-zero part of the divisor class group accessible from arbitrary divisors. -/
+Over a base point of relative degree one, every Weil divisor becomes relative degree zero after
+subtracting its own degree times that point. Only this equality of relative degrees is proved
+here: no map on divisor classes is constructed. -/
 theorem relativeDegree_sub_zsmul_ofPoint_of_section (hs : s ≫ f = 𝟙 S) {y : S}
     {x₀ : CodimensionOnePoint X} (hx₀ : (x₀ : X) = s y) (D : SchemeWeilDivisor X) :
     SchemeWeilDivisor.relativeDegree f

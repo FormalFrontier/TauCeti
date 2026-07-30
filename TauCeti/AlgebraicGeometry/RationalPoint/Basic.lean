@@ -38,8 +38,9 @@ the Abel-Jacobi morphism"). Base change of rational points is left to a subseque
 is a statement about pullbacks in an arbitrary category rather than about schemes.
 
 No external mathematics is vendored; the proofs reuse Mathlib's `Scheme.Hom.residueFieldMap`,
-`Scheme.residueFieldCongr` and `Scheme.Hom.residueDegree` API together with Tau Ceti's
-`residueDegree_comp` and `residueDegree_eq_one_iff`.
+`Scheme.residueFieldCongr` and `Scheme.Hom.residueDegree` API, `CategoryTheory.asIso` and
+`CategoryTheory.Iso.inv_ext` for the isomorphism, and Tau Ceti's `residueDegree_comp` and
+`residueDegree_eq_one_iff`.
 -/
 
 public section
@@ -143,20 +144,13 @@ lemma residueFieldMap_comp_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y
 base at the corresponding point of the base. The inverse is the residue-field map of the
 section. -/
 noncomputable def residueFieldIsoOfSection (hs : s ≫ f = 𝟙 S) (y : S) :
-    S.residueField y ≅ X.residueField (s y) where
-  hom := (S.residueFieldCongr (section_apply hs y).symm).hom ≫ f.residueFieldMap (s y)
-  inv := s.residueFieldMap y
-  hom_inv_id := by
-    rw [Category.assoc, residueFieldMap_comp_residueFieldMap_of_section hs y]
-  inv_hom_id := by
-    haveI := isIso_residueFieldMap_section hs y
-    rw [← cancel_mono (s.residueFieldMap y)]
-    simp only [Category.assoc, Category.id_comp]
-    rw [residueFieldMap_comp_residueFieldMap_of_section hs y, Category.comp_id]
+    S.residueField y ≅ X.residueField (s y) :=
+  haveI := isIso_residueFieldMap_of_section hs y
+  asIso ((S.residueFieldCongr (section_apply hs y).symm).hom ≫ f.residueFieldMap (s y))
 
 -- The isomorphism is intentionally not `@[expose]`, so downstream modules cannot unfold it; the
--- two lemmas below are its public characterization, and their `(rfl)` proofs keep consumers from
--- having to rely on the definitional unfolding.
+-- two lemmas below are its public characterization, which keeps consumers from having to rely on
+-- the definitional unfolding.
 
 /-- The forward map of `residueFieldIsoOfSection` is the residue-field map of `f`, transported
 along `f (s y) = y`. -/
@@ -170,7 +164,9 @@ lemma residueFieldIsoOfSection_hom (hs : s ≫ f = 𝟙 S) (y : S) :
 @[simp]
 lemma residueFieldIsoOfSection_inv (hs : s ≫ f = 𝟙 S) (y : S) :
     (residueFieldIsoOfSection hs y).inv = s.residueFieldMap y :=
-  (rfl)
+  Iso.inv_ext <| by
+    rw [residueFieldIsoOfSection_hom, Category.assoc,
+      residueFieldMap_comp_residueFieldMap_of_section hs y]
 
 end AlgebraicGeometry
 
