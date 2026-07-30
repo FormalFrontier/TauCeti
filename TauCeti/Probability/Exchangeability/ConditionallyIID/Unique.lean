@@ -45,10 +45,11 @@ weighted block identity supplies the three moments
 
 the last of which is the genuinely *conditional* input: it is the joint law of `(ν, Xᵢ)`, not the
 marginal law of `Xᵢ`, that the mixture predicate would leave free. The centred variables `eᵢ - q`
-are therefore uncorrelated with common variance `∫ q - ∫ q²`, so their averages converge to `0` in
-`L²` at rate `1/n`. Both directing measures are approximated by the *same* averages, so the
-triangle inequality forces `∫ (q - q')² = 0` for every measurable `B`, and a countable generating
-set algebra promotes that to a.e. equality of the random measures themselves.
+are therefore uncorrelated with common variance `∫ q - ∫ q²`, so the averages of `eᵢ` converge to
+`q` with mean square error `O(1/n)`, hence in `L²` at rate `O(1/√n)`. Both directing measures are
+approximated by the *same* averages, so the triangle inequality forces `∫ (q - q')² = 0` for every
+measurable `B`, and a countable generating set algebra promotes that to a.e. equality of the random
+measures themselves.
 
 The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promotion needs;
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 6, states `conditionallyIID_ae_unique` with
