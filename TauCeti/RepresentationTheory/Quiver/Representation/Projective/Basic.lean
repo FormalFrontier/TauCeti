@@ -56,6 +56,17 @@ target, on the universal property — is stated on those basis vectors; anyone w
 underlying free module has the explicit transport `(indecProjRepBasis k i j).repr`. The lemmas that
 name finitely supported functions directly are private to this file.
 
+Read as a functor composite, `Pᵢ` is the free-module image of the covariant representable at `i`,
+`CategoryTheory.coyoneda.obj (Opposite.op i) ⋙ ModuleCat.free k`. That composite is *not* what is
+written below, for a universe reason: `ModuleCat.free` exists only as `Type u ⥤ ModuleCat.{u} k` for
+`k : Type u`, so composing it with the representable `Paths Q ⥤ Type (max v w)` forces
+`max v w = u`, collapsing the vertex and arrow universes into the universe of the field, and
+interposing `CategoryTheory.uliftFunctor` only weakens that to `max v w ≤ u` while re-indexing the
+basis by `ULift (Quiver.Path i j)`. The `Finsupp` API underlying that composite is reused directly
+instead, at the level where it is universe-polymorphic: `ModuleCat.free` acts by
+`Finsupp.lmapDomain`, which is the map below, and its adjunction bijection is the `Finsupp.sum` map
+`Finsupp.linearCombination` used for `indecProjRepHom`.
+
 A vertex `i : Q` is used below as an object of the free category `CategoryTheory.Paths Q`, which is
 `Q` itself only by unfolding a semireducible definition. Goals about the action of a path are
 therefore not type-correct at `instances` transparency, where `rw` and `simp` build their motives;
