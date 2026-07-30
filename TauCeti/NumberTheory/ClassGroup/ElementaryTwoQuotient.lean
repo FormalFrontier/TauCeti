@@ -34,9 +34,8 @@ square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` f
   of an ideal class, trivial iff that class is a square; `elementaryTwoQuotientMk_mul`,
   `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
   `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
-  `elementaryTwoQuotientMk_prod` record its additivity, and `elementaryTwoQuotientMk_inv_eq` records
-  that inversion is trivial in the quotient; `elementaryTwoQuotientMk_surjective` and
-  `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
+  `elementaryTwoQuotientMk_prod` record its additivity, while `elementaryTwoQuotientMk_surjective`
+  and `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
 * `TauCeti.ClassGroup.elementaryTwoQuotientCongr`: a multiplicative equivalence of class groups
   induces a `ZMod 2`-linear equivalence of their elementary-2 quotients.
 * `TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|Cl(R)/Cl(R)²| = |Cl(R)[2]|`,
@@ -81,13 +80,6 @@ noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuot
 @[simp] theorem elementaryTwoQuotientMk_inv (C : ClassGroup R) :
     elementaryTwoQuotientMk R C⁻¹ = -elementaryTwoQuotientMk R C :=
   TauCeti.elementaryTwoQuotientMk_inv C
-
-/-- Inversion is trivial on `Cl(R)/Cl(R)²`: the class of an inverse ideal equals the class itself,
-since the elementary two-quotient is `2`-torsion. The class-group instance of the general
-`TauCeti.elementaryTwoQuotientMk_inv_eq`. -/
-theorem elementaryTwoQuotientMk_inv_eq (C : ClassGroup R) :
-    elementaryTwoQuotientMk R C⁻¹ = elementaryTwoQuotientMk R C :=
-  TauCeti.elementaryTwoQuotientMk_inv_eq C
 
 /-- The class map to `Cl(R)/Cl(R)²` sends quotients to differences. -/
 @[simp] theorem elementaryTwoQuotientMk_div (C D : ClassGroup R) :

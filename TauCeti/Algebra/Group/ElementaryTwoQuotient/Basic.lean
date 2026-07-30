@@ -41,7 +41,7 @@ names around it. The cardinality identity is still expressed through the squarin
   trivial iff the element is a square; `elementaryTwoQuotientMk_mul`,
   `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
   `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
-  `elementaryTwoQuotientMk_prod` record its additivity, and `elementaryTwoQuotientMk_inv_eq`
+  `elementaryTwoQuotientMk_prod` record its additivity, and `elementaryTwoQuotientMk_inv_eq_self`
   records that inversion is trivial in the quotient (`mk g⁻¹ = mk g`).
 * `TauCeti.elementaryTwoQuotientMk_surjective` and `TauCeti.elementaryTwoQuotientMk_eq_iff`: the
   class map is surjective, and two elements have the same class iff they differ by a square.
@@ -159,7 +159,7 @@ protected def elementaryTwoQuotientLinearLiftEquiv [AddCommGroup H] [Module (ZMo
 quotient is `2`-torsion. This is the companion of `elementaryTwoQuotientMk_inv` in the form used
 when an inverting endomorphism acts trivially on the quotient (cf.
 `elementaryTwoQuotientMap_apply_eq_self_of_apply_eq_inv`). -/
-theorem elementaryTwoQuotientMk_inv_eq (g : G) :
+theorem elementaryTwoQuotientMk_inv_eq_self (g : G) :
     elementaryTwoQuotientMk g⁻¹ = elementaryTwoQuotientMk g := by
   rw [elementaryTwoQuotientMk_inv, ZModModule.neg_eq_self]
 
