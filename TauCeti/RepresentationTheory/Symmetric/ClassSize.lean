@@ -17,9 +17,9 @@ partition `μ` is
 
 `zPart μ = ∏ i, i ^ mᵢ * mᵢ !`,
 
-where `mᵢ` is the multiplicity of the part `i` in `μ`, that is, Mathlib's `μ.parts.count i`; no
-separate multiplicity function is introduced.  It is the order of the centralizer of any
-permutation with partition `μ`, so the class of such a permutation has `n ! / zPart μ` elements.
+where `mᵢ = partMultiplicity μ i` is the multiplicity of the part `i` in `μ`, that is, Mathlib's
+`μ.parts.count i`.  It is the order of the centralizer of any permutation with partition `μ`, so
+the class of such a permutation has `n ! / zPart μ` elements.
 
 The main results are `nat_card_centralizer_eq_zPart`, the multiplicative class-size formula
 `card_partition_mul_zPart` with its transported form `card_partition_parts_mul_zPart_fin`, and the
@@ -50,34 +50,50 @@ open Equiv Nat
 
 variable {α : Type*} [Fintype α] [DecidableEq α]
 
-/-- The weight `z_μ = ∏ᵢ i ^ mᵢ · mᵢ !` of a partition `μ`, where `mᵢ = μ.parts.count i` is the
-multiplicity of the part `i`.
+/-- The multiplicity `mᵢ` of the part `i` in the partition `μ`: the number of parts of `μ` equal
+to `i`.  This is the `mᵢ` of the weight `zPart μ = ∏ᵢ i ^ mᵢ · mᵢ !`.
+
+It is Mathlib's `Multiset.count` on the parts; `partMultiplicity_eq_count` is a `simp` lemma, so
+proofs about multiplicities are carried out with the `Multiset.count` API. -/
+def partMultiplicity {n : ℕ} (μ : n.Partition) (i : ℕ) : ℕ :=
+  μ.parts.count i
+
+/-- The multiplicity of a part is its count in the multiset of parts. -/
+@[simp]
+theorem partMultiplicity_eq_count {n : ℕ} (μ : n.Partition) (i : ℕ) :
+    partMultiplicity μ i = μ.parts.count i := by
+  simp only [partMultiplicity]
+
+/-- The weight `z_μ = ∏ᵢ i ^ mᵢ · mᵢ !` of a partition `μ`, where `mᵢ = partMultiplicity μ i` is
+the multiplicity of the part `i`.
 
 It is the order of the centralizer of a permutation whose cycle lengths are the parts of `μ`, so
 the conjugacy class of that permutation has `n ! / zPart μ` elements. -/
 def zPart {n : ℕ} (μ : n.Partition) : ℕ :=
-  ∏ i ∈ μ.parts.toFinset, i ^ μ.parts.count i * (μ.parts.count i)!
+  ∏ i ∈ μ.parts.toFinset, i ^ partMultiplicity μ i * (partMultiplicity μ i)!
 
 /-- The weight depends only on the multiset of parts, so it is unchanged by transporting a
 partition along an equality of the number being partitioned. -/
 theorem zPart_congr {m n : ℕ} {μ : m.Partition} {ν : n.Partition} (h : μ.parts = ν.parts) :
     zPart μ = zPart ν := by
-  simp only [zPart, h]
+  simp only [zPart, partMultiplicity_eq_count, h]
 
 /-- The defining product may be taken over any finite set of naturals containing the parts: the
 extra factors are `i ^ 0 * 0 ! = 1`. -/
 theorem zPart_eq_prod_of_subset {n : ℕ} (μ : n.Partition) {s : Finset ℕ}
     (hs : μ.parts.toFinset ⊆ s) :
     zPart μ = ∏ i ∈ s, i ^ μ.parts.count i * (μ.parts.count i)! := by
+  simp only [zPart, partMultiplicity_eq_count]
   refine Finset.prod_subset hs fun i _ hi => ?_
   rw [Multiset.count_eq_zero_of_notMem (by simpa using hi)]
   simp
 
 /-- The defining equation of `zPart`: the product of `i ^ mᵢ * mᵢ !` over the parts `i` of `μ`,
-the case `s = μ.parts.toFinset` of `zPart_eq_prod_of_subset`. -/
+with `mᵢ = partMultiplicity μ i`, the case `s = μ.parts.toFinset` of `zPart_eq_prod_of_subset`. -/
 theorem zPart_def {n : ℕ} (μ : n.Partition) :
-    zPart μ = ∏ i ∈ μ.parts.toFinset, i ^ μ.parts.count i * (μ.parts.count i)! :=
-  zPart_eq_prod_of_subset μ Finset.Subset.rfl
+    zPart μ = ∏ i ∈ μ.parts.toFinset, i ^ partMultiplicity μ i * (partMultiplicity μ i)! := by
+  simp only [partMultiplicity_eq_count]
+  exact zPart_eq_prod_of_subset μ Finset.Subset.rfl
 
 /-- The weight of a partition is positive; the parts of a partition are positive. -/
 theorem zPart_pos {n : ℕ} (μ : n.Partition) : 0 < zPart μ := by
