@@ -5,6 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Join
+public import TauCeti.AlgebraicTopology.SimplicialComplex.LinkStar
+public import TauCeti.AlgebraicTopology.SimplicialComplex.Simplex.Basic
+import Mathlib.Data.Finite.Prod
+import Mathlib.Data.Set.Finite.Basic
 
 /-!
 # Cones of simplicial complexes
@@ -19,6 +23,12 @@ combinatorial balls are obtained by coning combinatorial spheres, and suspension
 iterated coning/gluing.  This file supplies the combinatorial operation and its face API, building
 entirely on the join construction already available in Tau Ceti.
 
+The file also carries the predicate `IsCone K v`, which says that `K` is a cone with apex a
+vertex `v` of its *own* vertex type, so that a complex can be recognised as a cone without
+changing that type.  This internal form applies to complexes that merely happen to be cones —
+abstract simplices and closed stars — while `isCone_cone` records that the `cone` construction
+satisfies it at its apex, identifying the two accounts.
+
 The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter
 2.  No result from that source is used beyond the standard definition of a cone as a join with a
 point.
@@ -27,6 +37,7 @@ point.
 
 * `TauCeti.PreAbstractSimplicialComplex.cone`: the cone on a pre-abstract simplicial complex.
 * `TauCeti.AbstractSimplicialComplex.cone`: the cone on an abstract simplicial complex.
+* `TauCeti.PreAbstractSimplicialComplex.IsCone`: a complex is a cone with a given apex.
 
 ## Main results
 
@@ -36,6 +47,9 @@ point.
 * `apex_mem_cone`: the apex is a face.
 * `disjSum_singleton_mem_cone`: adjoining the apex to an original face gives a face.
 * `cone_mono`: coning is monotone.
+* `finite_faces_cone`: the cone on a finite complex is finite.
+* `isCone_deletion`: deleting a face missing the apex leaves a cone with the same apex.
+* `isCone_simplex`, `isCone_closedStar_singleton`, `isCone_cone`: the standard cones.
 -/
 
 public section
@@ -116,6 +130,77 @@ theorem disjSum_singleton_mem_cone {s : Finset α} (hs : s ∈ K) :
 /-- Coning is monotone in the base complex. -/
 theorem cone_mono (h : K ≤ L) : cone K ≤ cone L :=
   join_mono h le_rfl
+
+/-- The cone on a finite complex is finite: a face of the cone is determined by its two
+projections (`Finset.sumEquiv`), the left one is empty or a face of the base, and the apex type
+is finite. -/
+theorem finite_faces_cone (hfin : K.faces.Finite) : (cone K).faces.Finite := by
+  refine Set.Finite.of_finite_image (f := Finset.sumEquiv)
+    (Set.Finite.subset ((hfin.insert ∅).prod (Set.finite_univ (α := Finset PUnit))) ?_)
+    Finset.sumEquiv.injective.injOn
+  rintro _ ⟨σ, hσ, rfl⟩
+  exact Set.mem_prod.mpr ⟨Set.mem_insert_iff.mpr (mem_cone_iff.mp hσ).2, Set.mem_univ _⟩
+
+section IsCone
+
+variable {ι : Type*} [DecidableEq ι] {v : ι} {σ : Finset ι}
+
+/-- `K` is a **cone with apex `v`** when `v` is a vertex of `K` and adjoining `v` to a face of
+`K` again gives a face of `K`.
+
+This is the internal form of the cone condition: the apex is a vertex of the ambient type of
+`K` itself, so a complex can be recognised as a cone without changing its vertex type.  The
+`cone` construction above satisfies it at its apex (`isCone_cone`). -/
+structure IsCone (K : PreAbstractSimplicialComplex ι) (v : ι) : Prop where
+  /-- The apex is a vertex of the complex. -/
+  apex_mem : ({v} : Finset ι) ∈ K
+  /-- Adjoining the apex to a face gives a face. -/
+  insert_mem : ∀ ⦃σ : Finset ι⦄, σ ∈ K → insert v σ ∈ K
+
+/-- A cone with apex `v` is nonempty. -/
+theorem IsCone.ne_bot {K : PreAbstractSimplicialComplex ι} (h : IsCone K v) : K ≠ ⊥ := fun hK =>
+  (hK ▸ h.apex_mem : ({v} : Finset ι) ∈ (⊥ : PreAbstractSimplicialComplex ι)).elim
+
+/-- Deleting a nonempty face that misses the apex leaves a cone with the same apex.  Note that
+the deletion of a face *containing* the apex need not be a cone: deleting `{v}` itself destroys
+the apex. -/
+theorem isCone_deletion {K : PreAbstractSimplicialComplex ι} (h : IsCone K v) (hσ : σ.Nonempty)
+    (hv : v ∉ σ) : IsCone (deletion K σ) v where
+  apex_mem := by
+    refine mem_deletion.mpr ⟨h.apex_mem, fun hsub => ?_⟩
+    rcases Finset.subset_singleton_iff.mp hsub with rfl | rfl
+    · exact hσ.ne_empty rfl
+    · exact hv (Finset.mem_singleton_self v)
+  insert_mem ω hω := by
+    rw [mem_deletion] at hω ⊢
+    exact ⟨h.insert_mem hω.1, fun hsub =>
+      hω.2 ((Finset.subset_insert_iff_of_notMem hv).mp hsub)⟩
+
+/-- An abstract simplex is a cone with apex any of its vertices. -/
+theorem isCone_simplex {V : Finset ι} (hv : v ∈ V) : IsCone (simplex V) v where
+  apex_mem := mem_simplex.mpr ⟨Finset.singleton_nonempty v, Finset.singleton_subset_iff.mpr hv⟩
+  insert_mem σ hσ :=
+    mem_simplex.mpr ⟨Finset.insert_nonempty v σ, Finset.insert_subset hv (mem_simplex.mp hσ).2⟩
+
+/-- The closed star of a vertex is a cone with that vertex as apex: adjoining `v` to a face of
+the closed star is idempotent on the defining condition. -/
+theorem isCone_closedStar_singleton {K : PreAbstractSimplicialComplex ι}
+    (hv : ({v} : Finset ι) ∈ K) : IsCone (closedStar K {v}) v where
+  apex_mem := mem_closedStar_singleton.mpr ⟨hv, by simpa using hv⟩
+  insert_mem σ hσ := by
+    rw [mem_closedStar_singleton] at hσ ⊢
+    exact ⟨hσ.2, by rw [Finset.insert_idem]; exact hσ.2⟩
+
+/-- The cone construction produces a cone in the internal sense, with apex the adjoined
+vertex.  This is what identifies the two accounts of a cone. -/
+theorem isCone_cone [DecidableEq α] (K : PreAbstractSimplicialComplex α) :
+    IsCone (cone K) (Sum.inr PUnit.unit) where
+  apex_mem := apex_mem_cone
+  insert_mem σ hσ := by
+    rw [mem_cone_iff] at hσ ⊢
+    exact ⟨Finset.insert_nonempty _ _, by rw [Finset.toLeft_insert_inr]; exact hσ.2⟩
+
+end IsCone
 
 end PreAbstractSimplicialComplex
 

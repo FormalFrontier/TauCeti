@@ -75,6 +75,10 @@ theorem self_notMem_simplexBoundary : V ∉ simplexBoundary V := by
 theorem singleton_mem_simplex {v : ι} : {v} ∈ simplex V ↔ v ∈ V := by
   simp
 
+/-- An abstract simplex has finitely many faces: they are subsets of the spanning set. -/
+theorem finite_faces_simplex (V : Finset ι) : (simplex V).faces.Finite :=
+  V.powerset.finite_toSet.subset fun _ hσ => Finset.mem_powerset.mpr (mem_simplex.mp hσ).2
+
 /-- A singleton is a boundary face exactly when its vertex belongs to a spanning set containing
 at least one other vertex. -/
 theorem singleton_mem_simplexBoundary {v : ι} :
