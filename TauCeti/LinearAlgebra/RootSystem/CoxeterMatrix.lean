@@ -54,8 +54,8 @@ roots, and there the two simple reflections commute
   In particular the diagonal entries are not `2`, since no root is orthogonal to itself.
 * `TauCeti.forall_coxeterMatrixOfBase_le_three_iff`: all entries are at most `3` exactly when the
   Cartan matrix is simply laced.
-* `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_of_eq_two`: where the matrix entry is `2`,
-  the product of the two simple reflections does have order `2`.
+* `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two`:
+  where the matrix entry is `2`, the product of the two simple reflections does have order `2`.
 
 ## References
 
@@ -215,7 +215,8 @@ product `4` with itself.
 
 That the entries really are those orders is the classical rank-two computation, and follows in
 general from the Coxeter presentation of the Weyl group, which is not built here; the entry `2` is
-checked directly in `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_of_eq_two`.
+checked directly in
+`TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two`.
 
 The body is not exposed: `TauCeti.coxeterMatrixOfBase_apply` is the entry API. -/
 noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support where
@@ -297,8 +298,8 @@ variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduc
 /-- **Where the Coxeter matrix of a base has the entry `2`, the product of the two simple
 reflections does have order `2`.** This is the one entry of `coxeterMatrixOfBase` that can be
 checked before the Coxeter presentation of the Weyl group is available. -/
-theorem orderOf_ofIdx_mul_ofIdx_of_eq_two (b : P.Base) {i j : b.support}
-    (h : coxeterMatrixOfBase P b i j = 2) :
+theorem orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two
+    (b : P.Base) {i j : b.support} (h : coxeterMatrixOfBase P b i j = 2) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P (i : ι) *
       _root_.RootPairing.weylGroup.ofIdx P (j : ι)) = 2 := by
   have hij : i ≠ j := by rintro rfl; simp at h
