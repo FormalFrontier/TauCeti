@@ -28,14 +28,8 @@ non-identity element from the right, either its last letter is already an invers
 condition shortens the word by two letters and the induction continues. Equivalently, the only
 Weyl-group element permuting the positive roots among themselves is the identity.
 
-## Main definitions
-
-* `TauCeti.wordProd` is the product of the simple reflections named by a word in `b.support`.
-
 ## Main results
 
-* `TauCeti.ofIdx_weylGroupToPerm` conjugates a simple reflection into the reflection in the image
-  root.
 * `TauCeti.exists_wordProd_eraseIdx_eq` is the exchange condition.
 * `TauCeti.exists_mem_support_not_isPos_of_ne_one` produces, for a non-identity element, a simple
   root sent to a negative root.
@@ -59,73 +53,7 @@ universe u v w x
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
-
-/-! ## Words in the simple reflections -/
-
-section WordProd
-
-variable (b : P.Base)
-
-/-- The product of the simple reflections named by a word in the simple roots of `b`, read from
-the left. -/
-@[expose] noncomputable def wordProd (L : List b.support) : P.weylGroup :=
-  (L.map fun i : b.support ↦ RootPairing.weylGroup.ofIdx P (i : ι)).prod
-
-@[simp]
-lemma wordProd_nil : wordProd P b [] = 1 := rfl
-
-@[simp]
-lemma wordProd_cons (i : b.support) (L : List b.support) :
-    wordProd P b (i :: L) =
-      RootPairing.weylGroup.ofIdx P (i : ι) * wordProd P b L :=
-  rfl
-
-lemma wordProd_append (L L' : List b.support) :
-    wordProd P b (L ++ L') = wordProd P b L * wordProd P b L' := by
-  simp [wordProd, List.prod_append]
-
-lemma wordProd_concat (L : List b.support) (i : b.support) :
-    wordProd P b (L ++ [i]) =
-      wordProd P b L * RootPairing.weylGroup.ofIdx P (i : ι) := by
-  rw [wordProd_append]
-  simp
-
-end WordProd
-
-/-! ## Conjugating a simple reflection -/
-
-/-- Conjugating the reflection in `αᵢ` by a Weyl-group element `w` gives the reflection in the root
-that `w` sends `αᵢ` to. This is the group-level form of the invariance of the root system under the
-Weyl group, and it is what lets a leading letter of a word be cancelled in the exchange
-condition. -/
-theorem ofIdx_weylGroupToPerm (w : P.weylGroup) (i : ι) :
-    RootPairing.weylGroup.ofIdx P (P.weylGroupToPerm w i) =
-      w * RootPairing.weylGroup.ofIdx P i * w⁻¹ := by
-  revert i
-  obtain ⟨w, hw⟩ := w
-  induction hw using RootPairing.weylGroup.induction with
-  | mem j =>
-    intro i
-    have hj : (⟨RootPairing.Equiv.reflection P j, P.reflection_mem_weylGroup j⟩ : P.weylGroup) =
-        RootPairing.weylGroup.ofIdx P j := rfl
-    rw [hj, RootPairing.weylGroupToPerm_ofIdx_apply, ofIdx_inv, ofIdx_reflectionPerm]
-  | one =>
-    intro i
-    have h1 : (⟨1, one_mem P.weylGroup⟩ : P.weylGroup) = 1 := rfl
-    rw [h1]
-    simp
-  | mul g₁ g₂ hg₁ hg₂ ih₁ ih₂ =>
-    intro i
-    have hmul : (⟨g₁ * g₂, mul_mem hg₁ hg₂⟩ : P.weylGroup) =
-        (⟨g₁, hg₁⟩ : P.weylGroup) * ⟨g₂, hg₂⟩ := rfl
-    rw [hmul, map_mul, Equiv.Perm.mul_apply, ih₁, ih₂]
-    group
-
-/-! ## The exchange condition -/
-
-section Exchange
-
-variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
+  [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
 
 /-- **The exchange condition.** If the product of the word `L` sends the simple root `αⱼ` to a
 negative root, then appending `sⱼ` to `L` has the same effect as deleting one of the letters of
@@ -209,7 +137,7 @@ private theorem exists_mem_support_not_isPos_aux (n : ℕ) :
 /-- Every Weyl-group element other than the identity sends some simple root to a negative root. -/
 theorem exists_mem_support_not_isPos_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
     ∃ i ∈ b.support, ¬ b.IsPos (P.weylGroupToPerm w i) := by
-  obtain ⟨L, rfl⟩ := exists_list_prod_ofIdx_eq P b w
+  obtain ⟨L, rfl⟩ := exists_wordProd_eq P b w
   exact exists_mem_support_not_isPos_aux P b L.length L le_rfl hw
 
 /-- A non-identity Weyl-group element has a simple root among its inversions. -/
@@ -258,7 +186,5 @@ theorem ncard_inversions_wordProd_le (L : List b.support) :
     rw [wordProd_concat]
     simp only [List.length_append, List.length_cons, List.length_nil]
     omega
-
-end Exchange
 
 end TauCeti
