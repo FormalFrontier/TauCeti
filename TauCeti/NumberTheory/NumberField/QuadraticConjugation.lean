@@ -46,8 +46,8 @@ namespace TauCeti.NumberField
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
 /-- The minimal polynomial of `θ` over `ℚ` is `X² - d`, lifted from its minimal polynomial over
-`ℤ` through the integrally closed base `ℤ ⊆ 𝓞 K`. -/
-theorem minpoly_rat_of_int (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+`ℤ` through the integrally closed base `ℤ ⊆ 𝓞 K`. Kept private as a file-local helper. -/
+private theorem minpoly_rat_of_int (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     minpoly ℚ (θ : K) = X ^ 2 - C ((d : ℤ) : ℚ) := by
   rw [minpoly.isIntegrallyClosed_eq_field_fractions ℚ K (IsIntegralClosure.isIntegral ℤ K θ),
     hmin]
