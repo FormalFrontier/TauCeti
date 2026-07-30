@@ -174,6 +174,26 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
 
 end Rep
 
+section Forget
+
+variable {k G : Type u} [Field k] [Group G] (A : FDRep k G)
+
+/-- Forgetting finite-dimensionality keeps the same underlying module, so it keeps the
+`FiniteDimensional` instance. -/
+private instance : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
+  inferInstanceAs (FiniteDimensional k A)
+
+/-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. Mathlib's
+`FDRep.forget₂_ρ` supplies the equality of the two representations; the closing `rfl` only
+identifies the two names of the single underlying module, the same definitional identification
+that lets `FDRep.forget₂_ρ` be stated at all. Keep that unfolding isolated here. -/
+private theorem character_forget₂ (g : G) :
+    ((forget₂ (FDRep k G) (Rep k G)).obj A).ρ.character g = A.character g := by
+  rw [FDRep.character, Representation.character, FDRep.forget₂_ρ]
+  rfl
+
+end Forget
+
 open scoped Classical in
 /-- The induced character at `g` is the sum of the original character over those left coset
 representatives `t` for which `t⁻¹ g t` belongs to the subgroup. -/
@@ -187,24 +207,14 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
         else 0 := by
   have hindCharacter :
       (indFDRep (k := k) (G := G) A).character g =
-        (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g := by
-    have hforget :
-        (indFDRep (k := k) (G := G) A).character g =
-          ((forget₂ (FDRep k G) (Rep k G)).obj
-            (indFDRep (k := k) (G := G) A)).ρ.character g := rfl
-    exact hforget.trans (congrFun
+        (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
+    (character_forget₂ (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
       (Representation.char_iso (Representation.equivOfIso (indFDRepForgetIso A))) g)
   letI := Fintype.ofFinite (G ⧸ S)
   let A' : Rep.{u} k S := (forget₂ (FDRep k S) (Rep k S)).obj A
-  letI : FiniteDimensional k A' := by
-    -- The forgetful object's carrier is the same vector space, hidden behind category wrappers.
-    change FiniteDimensional k A
-    infer_instance
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   letI : Fintype (Rep.RightCosets S) := QuotientGroup.fintypeQuotientRightRel
-  have hforgetCharacter (s : S) : A'.ρ.character s = A.character s := by
-    -- The forgetful functor changes only the categorical wrapper around `A`.
-    rfl
+  have hforgetCharacter (s : S) : A'.ρ.character s = A.character s := character_forget₂ A s
   have hcharacter :
       (indFDRep (k := k) (G := G) A).character g =
         LinearMap.trace k (Rep.ind S.subtype A') ((Rep.ind S.subtype A').ρ g) := by
@@ -236,7 +246,7 @@ open scoped Classical in
 /-- The induced character at `g`, written as an average over the whole group. The subgroup
 order must be invertible in the coefficient field; without this hypothesis,
 `character_indFDRep_sum_quotient` is the division-free formula to use. -/
-theorem character_ind {k G : Type u} [Field k] [Group G] {S : Subgroup G} [S.FiniteIndex]
+theorem character_ind {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [Fintype G] (hS : IsUnit (Nat.card S : k)) (A : FDRep k S) (g : G) :
     (indFDRep (k := k) (G := G) A).character g =
       (Nat.card S : k)⁻¹ * ∑ x : G,
@@ -268,7 +278,7 @@ theorem character_ind {k G : Type u} [Field k] [Group G] {S : Subgroup G} [S.Fin
   have haverage :
       (∑ q : G ⧸ S, term q.out) = (Nat.card S : k)⁻¹ * ∑ x : G, term x := by
     rw [hsum, ← mul_assoc, inv_mul_cancel₀ hS.ne_zero, one_mul]
-  have hcharacter (s : S) : A'.ρ.character s = A.character s := rfl
+  have hcharacter (s : S) : A'.ρ.character s = A.character s := character_forget₂ A s
   rw [character_indFDRep_sum_quotient]
   simpa only [term, Rep.inducedCharacterTerm, hcharacter] using haverage
 
