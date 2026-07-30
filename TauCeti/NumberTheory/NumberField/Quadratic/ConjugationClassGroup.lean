@@ -6,6 +6,7 @@ module
 
 public import TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation
+public import TauCeti.NumberTheory.NumberField.Quadratic.ConjugationNorm
 
 /-!
 # Quadratic conjugation acts on the class group by inversion
@@ -19,10 +20,11 @@ involution to **inversion**, the genus-theoretic mechanism `I · σI` principal,
 The reduction has two moves. First a general **bridge**: for a ring isomorphism `f : R ≃+* R'` of
 Dedekind domains, `ClassGroup.mulEquiv f` sends the class of an ideal to the class of its
 pushforward `Ideal.map f` (`ClassGroup.mulEquiv_mk0`), derived from the fraction-field computation
-`ClassGroup.mulEquiv_mk_fractionRing`. Second the **inversion**: for `σ` the ideal class of `σI` is
-the inverse of the class of `I` exactly when `I · σI` is principal
-(`ClassGroup.mk0_eq_mk0_inv_iff`). Feeding that inversion into the abstract statement
-`TauCeti.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv` gives the identity on `Cl/Cl²`.
+`ClassGroup.mulEquiv_mk_fractionRing`. Second the **inversion**: the ideal class of `σI` is the
+inverse of the class of `I` because `I · σI` is principal — the norm-principality theorem
+`isPrincipal_mul_map_ringOfIntegersQuadraticConj` (in `Quadratic/ConjugationNorm.lean`) combined with
+`ClassGroup.mk0_eq_mk0_inv_iff`. Reducing to `IsSquare (C⁻¹ / C)` in the elementary-2 quotient then
+gives the identity on `Cl/Cl²`.
 
 This is Layer 3 of the multiquadratic roadmap: the summit isomorphism
 `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` factors the conjugation action through its triviality on `Cl/Cl²`.
@@ -31,8 +33,8 @@ This is Layer 3 of the multiquadratic roadmap: the summit isomorphism
 
 * `ClassGroup.mulEquiv_mk0`: the class-group equivalence induced by a ring isomorphism sends the
   class of an ideal to the class of its image ideal.
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_eq_inv`: given that `I · σI` is always
-  principal, quadratic conjugation acts on `Cl(𝓞 K)` by inversion.
+* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_eq_inv`: quadratic conjugation acts on
+  `Cl(𝓞 K)` by inversion.
 * `TauCeti.NumberField.elementaryTwoQuotientCongr_ringOfIntegersQuadraticConj_eq_self`: hence
   quadratic conjugation is the identity on the maximal elementary-2 quotient `Cl(𝓞 K)/Cl(𝓞 K)²`.
 -/
@@ -101,20 +103,17 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- **Quadratic conjugation acts on the class group by inversion.** Given the genus-theoretic
-hypothesis that `I · σI` is principal for every nonzero ideal `I`, the induced action of quadratic
-conjugation `σ = ringOfIntegersQuadraticConj` on `Cl(𝓞 K)` sends each class to its inverse. This is
-the sharpening of `mulEquiv_ringOfIntegersQuadraticConj_involutive` from an involution to inversion.
--/
+/-- **Quadratic conjugation acts on the class group by inversion.** The induced action of quadratic
+conjugation `σ = ringOfIntegersQuadraticConj` on `Cl(𝓞 K)` sends each class to its inverse, because
+`I · σI` is principal (`isPrincipal_mul_map_ringOfIntegersQuadraticConj`). This sharpens
+`mulEquiv_ringOfIntegersQuadraticConj_involutive` from an involution to inversion. -/
 theorem mulEquiv_ringOfIntegersQuadraticConj_eq_inv (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hprinc : ∀ I : (Ideal (𝓞 K))⁰, ((I : Ideal (𝓞 K)) *
-      Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K))).IsPrincipal)
     (C : ClassGroup (𝓞 K)) :
     ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C⁻¹ := by
   obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective C
   rw [ClassGroup.mulEquiv_mk0, ClassGroup.mk0_eq_mk0_inv_iff]
-  obtain ⟨x, hx⟩ := (hprinc I).principal
+  obtain ⟨x, hx⟩ := (isPrincipal_mul_map_ringOfIntegersQuadraticConj hmin hgen I).principal
   have hIne : (I : Ideal (𝓞 K)) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
   have hmapne : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K)) ≠ 0 := by
     rw [ne_eq, Ideal.zero_eq_bot,
@@ -130,18 +129,16 @@ theorem mulEquiv_ringOfIntegersQuadraticConj_eq_inv (hmin : minpoly ℤ θ = X ^
     exact hx
 
 /-- **Quadratic conjugation acts trivially on `Cl(𝓞 K)/Cl(𝓞 K)²`.** Because it acts on `Cl(𝓞 K)` by
-inversion (given `I · σI` principal), the induced `ZMod 2`-linear map on the maximal elementary-2
+inversion (as `I · σI` is principal), the induced `ZMod 2`-linear map on the maximal elementary-2
 quotient is the identity. This is the capstone reduction feeding the genus-field 2-rank theorems. -/
 theorem elementaryTwoQuotientCongr_ringOfIntegersQuadraticConj_eq_self
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hprinc : ∀ I : (Ideal (𝓞 K))⁰, ((I : Ideal (𝓞 K)) *
-      Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K))).IsPrincipal)
     (x : TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K)) :
     TauCeti.ClassGroup.elementaryTwoQuotientCongr
       (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) x = x := by
   obtain ⟨C, rfl⟩ := TauCeti.ClassGroup.elementaryTwoQuotientMk_surjective (𝓞 K) x
   rw [TauCeti.ClassGroup.elementaryTwoQuotientCongr_mk,
-    mulEquiv_ringOfIntegersQuadraticConj_eq_inv hmin hgen hprinc,
+    mulEquiv_ringOfIntegersQuadraticConj_eq_inv hmin hgen,
     TauCeti.ClassGroup.elementaryTwoQuotientMk_eq_iff]
   exact ⟨C⁻¹, by rw [div_eq_mul_inv]⟩
 
