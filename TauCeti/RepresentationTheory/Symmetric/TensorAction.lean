@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.LinearAlgebra.PiTensorProduct.Basic
 public import Mathlib.RepresentationTheory.Basic
 
@@ -72,6 +71,17 @@ theorem commute_reindexRepresentation_map (σ : Equiv.Perm ι) (f : M →ₗ[R] 
   simpa only [Module.End.mul_apply, reindexRepresentation_apply,
     LinearEquiv.coe_toLinearMap] using
     (map_reindex (f := fun _ : ι => f) σ x).symm
+
+/-- Every element of the group algebra commutes with applying the same linear map in every
+tensor factor. -/
+theorem commute_reindexRepresentation_asAlgebraHom_map
+    (a : MonoidAlgebra R (Equiv.Perm ι)) (f : M →ₗ[R] M) :
+    Commute ((reindexRepresentation R M ι).asAlgebraHom a) (map fun _ : ι => f) := by
+  induction a using MonoidAlgebra.induction_on with
+  | hM σ =>
+    simpa only [Representation.asAlgebraHom_of] using commute_reindexRepresentation_map R M ι σ f
+  | hadd a b ha hb => simpa only [map_add] using ha.add_left hb
+  | hsmul r a ha => simpa only [map_smul] using ha.smul_left r
 
 /-- The group-algebra action on a pure tensor is the corresponding finite linear combination
 of reindexed pure tensors. -/

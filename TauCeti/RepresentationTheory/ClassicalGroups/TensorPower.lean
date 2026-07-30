@@ -21,7 +21,8 @@ polynomial representations.
 * `TauCeti.tensorPowerRep` is the `d`-fold tensor power of `stdRep`.
 * `TauCeti.tensorPowerFDRep` is its bundled finite-dimensional form.
 * `TauCeti.schurWeyl_commute` proves that the general-linear and symmetric-group actions
-  commute.
+  commute, and `TauCeti.commute_permTensorActionAlgHom_tensorPowerRep` extends that to the
+  whole group algebra `k[S_d]`.
 
 ## References
 
@@ -60,6 +61,15 @@ theorem schurWeyl_commute (g : GL (Fin n) k) (σ : Equiv.Perm (Fin d)) :
   simpa only [Module.End.mul_eq_comp] using
     (PiTensorProduct.commute_reindexRepresentation_map k (Fin n → k) (Fin d) σ
       (stdRep k n g)).eq
+
+/-- The whole group algebra `k[S_d]` commutes with the general-linear action on the tensor power,
+so a Young symmetrizer cuts out a `GL n k`-subrepresentation. -/
+theorem commute_permTensorActionAlgHom_tensorPowerRep
+    (a : MonoidAlgebra k (Equiv.Perm (Fin d))) (g : GL (Fin n) k) :
+    Commute (permTensorActionAlgHom k n d a) (tensorPowerRep k n d g) := by
+  rw [tensorPowerRep, Representation.tensorPower_apply]
+  exact PiTensorProduct.commute_reindexRepresentation_asAlgebraHom_map k (Fin n → k) (Fin d) a
+    (stdRep k n g)
 
 end CommRing
 
