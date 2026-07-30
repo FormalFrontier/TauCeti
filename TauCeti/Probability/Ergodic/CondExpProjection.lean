@@ -143,9 +143,9 @@ theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp (T : Ω → Ω) (hT : Measur
   refine Filter.Tendsto.congr (fun n => eLpNorm_congr_ae ?_) hBA
   have haverage : ⇑(birkhoffAverage ℝ
       (Lp.compMeasurePreservingₗᵢ ℝ T hT).toContinuousLinearMap id n (hf.toLp f)) =ᵐ[μ]
-      birkhoffAverage ℝ T f n :=
-    -- the isometry's underlying map is `Lp.compMeasurePreserving T hT` by definition
-    (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
+      birkhoffAverage ℝ T f n := by
+    rw [coe_compMeasurePreservingₗᵢ_toContinuousLinearMap T hT]
+    exact (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
       (hT.quasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq ℝ hf.coeFn_toLp n)
   have hprojection : ⇑(metProjection (𝕜 := ℝ) T hT (hf.toLp f)) =ᵐ[μ]
       μ[f | MeasurableSpace.invariants T] :=

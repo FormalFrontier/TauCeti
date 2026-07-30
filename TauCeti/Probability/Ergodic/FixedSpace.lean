@@ -13,6 +13,11 @@ public import Mathlib.LinearAlgebra.FixedSubmodule
 This file relates membership in Mathlib's fixed submodule for the `Lᵖ` composition isometry to
 almost-everywhere invariance of representatives. This is the closed subspace onto which the mean
 ergodic projection in the Koopman route to de Finetti's theorem will project.
+
+It also records `coe_compMeasurePreservingₗᵢ_toContinuousLinearMap`, which identifies the map
+underlying the continuous composition isometry with Mathlib's composition operator
+`MeasureTheory.Lp.compMeasurePreserving`, so that statements phrased with the isometry can be
+rewritten into the form the lemmas about representatives use.
 -/
 
 public section
@@ -83,17 +88,17 @@ variable {Ω 𝕜 E : Type*} [MeasurableSpace Ω] [NormedRing 𝕜]
   [NormedAddCommGroup E] [Module 𝕜 E] [IsBoundedSMul 𝕜 E]
 variable {p : ℝ≥0∞} [Fact (1 ≤ p)] {μ : Measure Ω}
 
-private theorem compMeasurePreservingₗᵢ_toLinearMap_apply
-    (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp E p μ) :
-    (Lp.compMeasurePreservingₗᵢ 𝕜 T hT).toContinuousLinearMap.toLinearMap g =
-      Lp.compMeasurePreserving T hT g := by
-  calc
-    _ = Lp.compMeasurePreservingₗᵢ 𝕜 T hT g :=
-      congrFun (LinearMap.coe_coe (f :=
-        (Lp.compMeasurePreservingₗᵢ 𝕜 T hT).toContinuousLinearMap.toLinearMap)) g
-    _ = Lp.compMeasurePreservingₗ 𝕜 T hT g :=
-      congrFun (LinearIsometry.coe_toLinearMap _) g
-    _ = Lp.compMeasurePreserving T hT g := compMeasurePreservingₗ_apply T hT g
+/-- The continuous linear map underlying Mathlib's `Lᵖ` composition isometry is Mathlib's
+composition operator `MeasureTheory.Lp.compMeasurePreserving`. This is the bridge between the
+statements phrased with the isometry, such as the mean ergodic theorem, and the lemmas about
+representatives, which are phrased with `MeasureTheory.Lp.compMeasurePreserving`. -/
+theorem coe_compMeasurePreservingₗᵢ_toContinuousLinearMap (T : Ω → Ω)
+    (hT : MeasurePreserving T μ μ) :
+    ⇑(Lp.compMeasurePreservingₗᵢ 𝕜 T hT).toContinuousLinearMap =
+      ⇑(Lp.compMeasurePreserving (E := E) (p := p) T hT) := by
+  funext g
+  rw [LinearIsometry.coe_toContinuousLinearMap]
+  exact compMeasurePreservingₗ_apply T hT g
 
 /-- The fixed space is the equalizer of the continuous `Lᵖ` composition operator and the
 identity. -/
@@ -102,13 +107,9 @@ theorem fixedSpace_eq_eqLocus (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
       (Lp.compMeasurePreservingₗᵢ 𝕜 T hT).toContinuousLinearMap.toLinearMap.eqLocus
         (1 : Lp E p μ →L[𝕜] Lp E p μ).toLinearMap := by
   ext g
-  rw [mem_fixedSpace_iff, LinearMap.mem_eqLocus, compMeasurePreservingₗᵢ_toLinearMap_apply]
-  have h_one : (1 : Lp E p μ →L[𝕜] Lp E p μ).toLinearMap g = g := by
-    calc
-      _ = (1 : Lp E p μ →L[𝕜] Lp E p μ) g := congrFun (LinearMap.coe_coe (f :=
-        (1 : Lp E p μ →L[𝕜] Lp E p μ).toLinearMap)) g
-      _ = g := one_apply_eq_self g
-  rw [h_one]
+  rw [mem_fixedSpace_iff, LinearMap.mem_eqLocus]
+  simp only [ContinuousLinearMap.coe_coe, coe_compMeasurePreservingₗᵢ_toContinuousLinearMap,
+    one_apply_eq_self]
 
 /-- The fixed space is closed in `Lᵖ`. -/
 theorem isClosed_fixedSpace (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
