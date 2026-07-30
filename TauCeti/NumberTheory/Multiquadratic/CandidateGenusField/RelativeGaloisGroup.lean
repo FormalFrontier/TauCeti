@@ -18,8 +18,11 @@ intermediate field, so this file reads off the order of the relative Galois grou
 
 `|Gal(K_gen / ℚ(√d))| = 2 ^ (t - 1)`.
 
-This is the left-hand side of the genus-theory summit isomorphism `Gal(K_gen / ℚ(√d)) ≅ Cl/Cl²`; the
-class-group side is built separately in `NumberTheory/ClassGroup`.
+For *imaginary* `d` this is the left-hand side of the genus-theory summit isomorphism
+`Gal(K_gen / ℚ(√d)) ≅ Cl/Cl²`. For *real* `d` the uniform `2 ^ (t - 1)` count matches the **narrow**
+class group instead (the ordinary `Cl/Cl²` can be smaller, since `K_gen` may ramify at the infinite
+places). Identifying `K_gen` with the relevant genus field, and building the class-group side, is
+later work; the class-group infrastructure lives in `NumberTheory/ClassGroup`.
 
 The genus-field description is classical; see D. A. Cox, *Primes of the Form x² + ny²*, and
 F. Lemmermeyer, *Reciprocity Laws*.
@@ -29,7 +32,7 @@ Mathlib for intermediate fields of an abelian Galois extension.)
 
 ## Main results
 
-* `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_base`:
+* `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_candidateGenusFieldBase`:
   `|Gal(K_gen / ℚ(√d))| = 2 ^ (t - 1)` when `d` is not a rational square.
 -/
 
@@ -41,8 +44,10 @@ namespace TauCeti.Multiquadratic
 squarefree integer `d` is not a rational square, then `K_gen` is Galois over its embedded quadratic
 base `ℚ(√d)` (as an intermediate field of the Galois extension `K_gen / ℚ`), and its relative Galois
 group has order `2 ^ (t - 1)`, where `t = (genusPrimeDiscriminants hd).card`. This is the
-group-order shadow of the summit isomorphism `Gal(K_gen / ℚ(√d)) ≅ Cl(ℚ(√d))/Cl(ℚ(√d))²`. -/
-theorem card_aut_candidateGenusField_over_base {d : ℤ} (hd : Squarefree d)
+group-order shadow of the genus-theory summit isomorphism, which for imaginary `d` is
+`Gal(K_gen / ℚ(√d)) ≅ Cl(ℚ(√d))/Cl(ℚ(√d))²` (for real `d` the count matches the narrow class group).
+It is the relative analogue of the absolute `card_aut_candidateGenusField = 2 ^ t`. -/
+theorem card_aut_candidateGenusField_over_candidateGenusFieldBase {d : ℤ} (hd : Squarefree d)
     (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd)
       = 2 ^ ((genusPrimeDiscriminants hd).card - 1) := by
