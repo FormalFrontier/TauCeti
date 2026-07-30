@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.LinearAlgebra.TensorProduct.Basis
+import Mathlib.RingTheory.Coalgebra.CoassocSimps
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Adjoin
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.Basic
@@ -32,6 +34,7 @@ comodule is stable under comultiplication and hence defines a subcoalgebra.
 * `TauCeti.Comodule.comul_matrixCoefficient_eq_sum`: its expansion in a finite basis.
 * `TauCeti.Comodule.matrixCoefficientSubcoalgebra`: the coefficient subcoalgebra of a finite
   free comodule.
+* `TauCeti.Comodule.matrixCoefficientSubcoalgebra_le_iff`: its universal property.
 
 ## References
 
@@ -53,47 +56,6 @@ variable [CommSemiring R]
 variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
 variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 
-private def applyFirst (φ : Module.Dual R M) :
-    M ⊗[R] (C ⊗[R] C) →ₗ[R] C ⊗[R] C :=
-  (TensorProduct.lid R (C ⊗[R] C)).toLinearMap.comp
-    (TensorProduct.map φ LinearMap.id)
-
-omit [Comodule R C M] in
-private theorem applyFirst_comul_lTensor (φ : Module.Dual R M) (x : M ⊗[R] C) :
-    applyFirst (C := C) φ (Coalgebra.comul.lTensor M x) =
-      Coalgebra.comul
-        (TensorProduct.lid R C (TensorProduct.map φ LinearMap.id x)) := by
-  induction x with
-  | zero => simp [applyFirst]
-  | tmul m c => simp [applyFirst]
-  | add x y hx hy =>
-      simpa only [map_add] using congrArg₂ (· + ·) hx hy
-
-omit [Coalgebra R C] [Comodule R C M] in
-private theorem applyFirst_assoc_tmul (φ : Module.Dual R M) (x : M ⊗[R] C) (c : C) :
-    applyFirst (C := C) φ
-        (TensorProduct.assoc R M C C (x ⊗ₜ[R] c)) =
-      TensorProduct.lid R C (TensorProduct.map φ LinearMap.id x) ⊗ₜ[R] c := by
-  induction x with
-  | zero => simp [applyFirst]
-  | tmul m d => simp [applyFirst, TensorProduct.smul_tmul']
-  | add x y hx hy =>
-      simpa only [map_add, add_tmul] using congrArg₂ (· + ·) hx hy
-
-private theorem applyFirst_assoc_rTensor_coact (φ : Module.Dual R M) (x : M ⊗[R] C) :
-    applyFirst (C := C) φ
-        (TensorProduct.assoc R M C C
-          ((coact (R := R) (C := C) (M := M)).rTensor C x)) =
-      TensorProduct.map
-        (matrixCoefficientLinear (R := R) (C := C) φ) LinearMap.id x := by
-  induction x with
-  | zero => simp [applyFirst]
-  | tmul m c =>
-      rw [LinearMap.rTensor_tmul, applyFirst_assoc_tmul]
-      rfl
-  | add x y hx hy =>
-      simpa only [map_add] using congrArg₂ (· + ·) hx hy
-
 /-- Comultiplication of a matrix coefficient is obtained by applying its coefficient map to
 the vector factor of the coaction. -/
 theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
@@ -102,10 +64,41 @@ theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
       TensorProduct.map
         (matrixCoefficientLinear (R := R) (C := C) φ) LinearMap.id
         (coact (R := R) (C := C) (M := M) m) := by
-  have h := congrArg (applyFirst (C := C) φ)
-    (coassoc_apply (R := R) (C := C) (M := M) m)
-  rw [applyFirst_assoc_rTensor_coact, applyFirst_comul_lTensor] at h
-  exact h.symm
+  change (Coalgebra.comul ∘ₗ (TensorProduct.lid R C).toLinearMap ∘ₗ
+          TensorProduct.map φ LinearMap.id ∘ₗ
+          coact (R := R) (C := C) (M := M)) m =
+        (TensorProduct.map
+            ((TensorProduct.lid R C).toLinearMap ∘ₗ
+              TensorProduct.map φ LinearMap.id ∘ₗ
+              coact (R := R) (C := C) (M := M))
+            LinearMap.id ∘ₗ
+          coact (R := R) (C := C) (M := M)) m
+  apply LinearMap.congr_fun ?_ m
+  calc
+    _ = (TensorProduct.lid R (C ⊗[R] C)).toLinearMap ∘ₗ
+        TensorProduct.map φ LinearMap.id ∘ₗ
+        TensorProduct.map LinearMap.id Coalgebra.comul ∘ₗ
+        coact (R := R) (C := C) (M := M) := by
+          simp only [coassoc_simps]
+    _ = (TensorProduct.lid R (C ⊗[R] C)).toLinearMap ∘ₗ
+        TensorProduct.map φ LinearMap.id ∘ₗ
+        (TensorProduct.assoc R M C C).toLinearMap ∘ₗ
+        TensorProduct.map (coact (R := R) (C := C) (M := M)) LinearMap.id ∘ₗ
+        coact (R := R) (C := C) (M := M) := by
+          simpa only [coassoc_simps] using congrArg
+            (fun f : M →ₗ[R] M ⊗[R] (C ⊗[R] C) =>
+              (TensorProduct.lid R (C ⊗[R] C)).toLinearMap ∘ₗ
+                TensorProduct.map φ LinearMap.id ∘ₗ f)
+            (coact_coassoc (R := R) (C := C) (M := M)).symm
+    _ = TensorProduct.map
+          ((TensorProduct.lid R C).toLinearMap ∘ₗ
+            TensorProduct.map φ LinearMap.id)
+          LinearMap.id ∘ₗ
+        TensorProduct.map (coact (R := R) (C := C) (M := M)) LinearMap.id ∘ₗ
+        coact (R := R) (C := C) (M := M) := by
+          simp only [TensorProduct.lid_tensor, coassoc_simps]
+    _ = _ := by
+      simp only [coassoc_simps]
 
 omit [Coalgebra R C] [Comodule R C M] in
 private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
@@ -114,18 +107,20 @@ private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
       ∑ i, b i ⊗ₜ[R]
         TensorProduct.lid R C
           (TensorProduct.map (b.coord i) LinearMap.id x) := by
-  induction x with
-  | zero => simp
-  | tmul m c =>
-      simp only [TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.lid_tmul]
-      simp_rw [TensorProduct.tmul_smul, TensorProduct.smul_tmul']
-      rw [← TensorProduct.sum_tmul Finset.univ]
-      have hb : (∑ i, (b.coord i) m • b i) = m := by
-        simpa only [Basis.coord_apply] using b.sum_repr m
-      rw [hb]
-  | add x y hx hy =>
-      simp only [map_add, TensorProduct.tmul_add, Finset.sum_add_distrib]
-      exact congrArg₂ (· + ·) hx hy
+  classical
+  let e := TensorProduct.equivFinsuppOfBasisLeft (N := C) b
+  calc
+    x = e.symm (e x) := (e.symm_apply_apply x).symm
+    _ = (e x).sum fun i n => b i ⊗ₜ[R] n :=
+      TensorProduct.equivFinsuppOfBasisLeft_symm_apply b (e x)
+    _ = ∑ i, b i ⊗ₜ[R] (e x i) := Finsupp.sum_fintype _ _ (by simp)
+    _ = ∑ i, b i ⊗ₜ[R]
+        TensorProduct.lid R C
+          (TensorProduct.map (b.coord i) LinearMap.id x) := by
+      congr 1
+      funext i
+      rw [TensorProduct.equivFinsuppOfBasisLeft_apply]
+      rfl
 
 private theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι]
     (b : Basis ι R M) (m : M) :
@@ -156,26 +151,22 @@ theorem comul_matrixCoefficient_eq_sum {ι : Type x} [Fintype ι]
     (matrixCoefficientSubmodule (R := R) (C := C) (M := M)) <| by
       intro c hc
       let D := matrixCoefficientSubmodule (R := R) (C := C) (M := M)
-      let P :=
+      change Coalgebra.comul (R := R) (A := C) c ∈
         LinearMap.range (TensorProduct.map D.subtype D.subtype)
-      have hle :
-          matrixCoefficientSubmodule (R := R) (C := C) (M := M) ≤
-            P.comap (Coalgebra.comul (R := R) (A := C)) := by
-        apply matrixCoefficientSubmodule_le
-        intro φ m
-        rw [Submodule.mem_comap]
-        rw [comul_matrixCoefficient_eq_sum (Module.Free.chooseBasis R M)]
-        refine ⟨∑ i,
-          (⟨matrixCoefficient (R := R) (C := C) φ
-              (Module.Free.chooseBasis R M i),
-            matrixCoefficient_mem_submodule (R := R) (C := C) φ
-              (Module.Free.chooseBasis R M i)⟩ : D) ⊗ₜ[R]
-          (⟨matrixCoefficient (R := R) (C := C)
-              ((Module.Free.chooseBasis R M).coord i) m,
-            matrixCoefficient_mem_submodule (R := R) (C := C)
-              ((Module.Free.chooseBasis R M).coord i) m⟩ : D), ?_⟩
-        simp
-      exact hle hc
+      rw [TensorProduct.range_mapIncl]
+      apply
+        (matrixCoefficientSubmodule_le
+          (P := (Submodule.map₂ (TensorProduct.mk R C C) D D).comap
+            (Coalgebra.comul (R := R) (A := C))) ?_) hc
+      intro φ m
+      rw [Submodule.mem_comap]
+      rw [comul_matrixCoefficient_eq_sum (Module.Free.chooseBasis R M)]
+      exact Submodule.sum_mem _ fun i _ =>
+        Submodule.apply_mem_map₂ _
+          (matrixCoefficient_mem_submodule (R := R) (C := C) φ
+            (Module.Free.chooseBasis R M i))
+          (matrixCoefficient_mem_submodule (R := R) (C := C)
+            ((Module.Free.chooseBasis R M).coord i) m)
 
 /-- The underlying submodule of the coefficient subcoalgebra is the matrix-coefficient
 submodule. -/
@@ -203,6 +194,19 @@ theorem matrixCoefficient_mem_subcoalgebra
   mem_matrixCoefficientSubcoalgebra.2
     (matrixCoefficient_mem_submodule (R := R) (C := C) φ m)
 
+/-- The coefficient subcoalgebra is the smallest subcoalgebra containing all matrix
+coefficients. -/
+theorem matrixCoefficientSubcoalgebra_le
+    [Module.Free R M] [Module.Finite R M] {D : Subcoalgebra R C}
+    (hD : ∀ (φ : Module.Dual R M) (m : M),
+      matrixCoefficient (R := R) (C := C) φ m ∈ D) :
+    matrixCoefficientSubcoalgebra (R := R) (C := C) (M := M) ≤ D := by
+  intro c hc
+  rw [mem_matrixCoefficientSubcoalgebra] at hc
+  rw [← Subcoalgebra.mem_toSubmodule]
+  exact matrixCoefficientSubmodule_le (R := R) (C := C)
+    (fun φ m => Subcoalgebra.mem_toSubmodule.2 (hD φ m)) hc
+
 /-- The coefficient subcoalgebra is contained in a subcoalgebra exactly when that
 subcoalgebra contains every matrix coefficient. -/
 theorem matrixCoefficientSubcoalgebra_le_iff
@@ -210,13 +214,8 @@ theorem matrixCoefficientSubcoalgebra_le_iff
     matrixCoefficientSubcoalgebra (R := R) (C := C) (M := M) ≤ D ↔
       ∀ (φ : Module.Dual R M) (m : M),
         matrixCoefficient (R := R) (C := C) φ m ∈ D := by
-  constructor
-  · intro h φ m
-    exact h (matrixCoefficient_mem_subcoalgebra (R := R) (C := C) φ m)
-  · intro h c hc
-    rw [mem_matrixCoefficientSubcoalgebra] at hc
-    rw [← Subcoalgebra.mem_toSubmodule]
-    exact matrixCoefficientSubmodule_le (R := R) (C := C)
-      (fun φ m => Subcoalgebra.mem_toSubmodule.2 (h φ m)) hc
+  exact
+    ⟨fun hD φ m => hD (matrixCoefficient_mem_subcoalgebra (R := R) (C := C) φ m),
+      matrixCoefficientSubcoalgebra_le (R := R) (C := C) (M := M)⟩
 
 end TauCeti.Comodule
