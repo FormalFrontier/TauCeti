@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AbelianVariety.Hom.Basic
+public import TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup
 
 /-!
 # Base change of abelian-variety homomorphisms
@@ -14,6 +14,14 @@ extension `K → L`, pullback from schemes over `Spec K` to schemes over `Spec L
 abelian-variety homomorphism `A ⟶ B` to a homomorphism `A.baseChange L ⟶ B.baseChange L`.
 These maps assemble into `AbelianVariety.baseChangeFunctor`.
 
+Base change also respects the pointwise group law on homomorphisms of
+`TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup`:
+`AbelianVariety.Hom.baseChangeMonoidHom` bundles it as a homomorphism
+`(A ⟶ B) →* (A.baseChange L ⟶ B.baseChange L)` of the homomorphism groups, with
+`AbelianVariety.Hom.baseChange_one`, `baseChange_mul`, `baseChange_inv`, `baseChange_div` and
+`baseChange_zpow` its unbundled forms. `AbelianVariety.baseChangeIso` is the action of base change
+on isomorphisms, which the functor supplies but which is worth having in `Iso` form.
+
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E's basic
 abelian-variety API and the base-change compatibility required in the end goal. It will allow
 the Jacobian base-change comparison to be stated and used as an isomorphism of abelian varieties,
@@ -21,7 +29,8 @@ not merely as an isomorphism of their underlying schemes.
 
 No external mathematics is vendored. The implementation uses Mathlib's lax monoidal pullback
 functor on `Over` categories, whose action on group objects proves that the pulled-back morphism
-preserves the unit and multiplication.
+preserves the unit and multiplication, together with Mathlib's multiplicativity of a monoidal
+functor on morphisms into a monoid object (`CategoryTheory.Functor.map_mul`).
 -/
 
 public section
@@ -137,6 +146,122 @@ lemma baseChangeFunctor_map {A B : AbelianVariety K} (L : Type u) [Field L] [Alg
       eqToHom (baseChangeFunctor_obj L A) ≫ Hom.baseChange f L ≫
         eqToHom (baseChangeFunctor_obj L B).symm :=
   (rfl)
+
+/-! ### Compatibility with the pointwise group law
+
+Base change is a homomorphism for the pointwise group law of
+`TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup`, not merely a functor. The two
+instances below say that the transport isomorphism `eqToHom (baseChange_toOver A L)` between the
+group scheme underlying `A.baseChange L` and the pullback of the one underlying `A` is an
+isomorphism of monoid objects; everything else follows from Mathlib's multiplicativity of a
+monoidal functor on morphisms into a monoid object. -/
+
+open scoped Hom
+
+/-- The transport isomorphism identifying the group scheme underlying `A.baseChange L` with the
+pullback of the group scheme underlying `A` preserves the unit and the multiplication: by
+construction, those of the base change *are* the pulled-back ones. -/
+instance isMonHom_eqToHom_baseChange_toOver (A : AbelianVariety K) (L : Type u) [Field L]
+    [Algebra K L] :
+    IsMonHom (eqToHom (baseChange_toOver A L)) where
+  one_hom := by rw [baseChange_one, Functor.obj.η_def]
+  mul_hom := by rw [baseChange_mul, Functor.obj.μ_def]
+
+/-- The inverse transport isomorphism is a homomorphism of monoid objects as well. -/
+instance isMonHom_eqToHom_baseChange_toOver_symm (A : AbelianVariety K) (L : Type u) [Field L]
+    [Algebra K L] :
+    IsMonHom (eqToHom (baseChange_toOver A L).symm) :=
+  haveI : IsMonHom (eqToIso (baseChange_toOver A L)).hom :=
+    isMonHom_eqToHom_baseChange_toOver A L
+  inferInstanceAs (IsMonHom (eqToIso (baseChange_toOver A L)).inv)
+
+/-- Base change carries the identity element of the group of homomorphisms — the homomorphism
+factoring through the unit section — to the identity element. -/
+@[simp]
+lemma Hom.baseChange_one (A B : AbelianVariety K) (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChange (1 : A ⟶ B) L = 1 := by
+  apply Hom.toOverFunctor.map_injective
+  simp only [Hom.toOverHom_baseChange, Hom.toOverHom_one, Functor.map_one, MonObj.one_comp,
+    MonObj.comp_one]
+
+/-- Base change is multiplicative for the pointwise group law: pulling back the pointwise product
+of two homomorphisms gives the pointwise product of their pullbacks. -/
+@[simp]
+lemma Hom.baseChange_mul {A B : AbelianVariety K} (f g : A ⟶ B)
+    (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChange (f * g) L = Hom.baseChange f L * Hom.baseChange g L := by
+  apply Hom.toOverFunctor.map_injective
+  simp only [Hom.toOverHom_baseChange, Hom.toOverHom_mul, Functor.map_mul, MonObj.mul_comp,
+    MonObj.comp_mul]
+
+/-- Base change along a field extension, as a homomorphism of the groups of homomorphisms of
+abelian varieties. -/
+def Hom.baseChangeMonoidHom (A B : AbelianVariety K) (L : Type u) [Field L] [Algebra K L] :
+    (A ⟶ B) →* (A.baseChange L ⟶ B.baseChange L) where
+  toFun f := Hom.baseChange f L
+  map_one' := Hom.baseChange_one A B L
+  map_mul' f g := Hom.baseChange_mul f g L
+
+@[simp]
+lemma Hom.baseChangeMonoidHom_apply {A B : AbelianVariety K} (f : A ⟶ B)
+    (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChangeMonoidHom A B L f = Hom.baseChange f L :=
+  (rfl)
+
+/-- Base change preserves pointwise inverses of homomorphisms. -/
+@[simp]
+lemma Hom.baseChange_inv {A B : AbelianVariety K} (f : A ⟶ B)
+    (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChange f⁻¹ L = (Hom.baseChange f L)⁻¹ :=
+  map_inv (Hom.baseChangeMonoidHom A B L) f
+
+/-- Base change preserves pointwise quotients of homomorphisms. -/
+@[simp]
+lemma Hom.baseChange_div {A B : AbelianVariety K} (f g : A ⟶ B)
+    (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChange (f / g) L = Hom.baseChange f L / Hom.baseChange g L :=
+  map_div (Hom.baseChangeMonoidHom A B L) f g
+
+/-- Base change preserves pointwise integer powers of homomorphisms. -/
+@[simp]
+lemma Hom.baseChange_zpow {A B : AbelianVariety K} (f : A ⟶ B) (n : ℤ)
+    (L : Type u) [Field L] [Algebra K L] :
+    Hom.baseChange (f ^ n) L = Hom.baseChange f L ^ n :=
+  map_zpow (Hom.baseChangeMonoidHom A B L) f n
+
+/-! ### Base change of an isomorphism -/
+
+/-- Base change of an isomorphism of abelian varieties along a field extension `K → L`. -/
+@[expose, simps]
+def baseChangeIso {A B : AbelianVariety K} (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] :
+    A.baseChange L ≅ B.baseChange L where
+  hom := Hom.baseChange e.hom L
+  inv := Hom.baseChange e.inv L
+  hom_inv_id := by rw [← Hom.baseChange_comp, e.hom_inv_id, Hom.baseChange_id]
+  inv_hom_id := by rw [← Hom.baseChange_comp, e.inv_hom_id, Hom.baseChange_id]
+
+/-- Base change of the identity isomorphism is the identity. -/
+@[simp]
+lemma baseChangeIso_refl (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L] :
+    baseChangeIso (Iso.refl A) L = Iso.refl (A.baseChange L) := by
+  apply Iso.ext
+  simp only [baseChangeIso_hom, Iso.refl_hom, Hom.baseChange_id]
+
+/-- Base change commutes with inverting an isomorphism. -/
+@[simp]
+lemma baseChangeIso_symm {A B : AbelianVariety K} (e : A ≅ B)
+    (L : Type u) [Field L] [Algebra K L] :
+    baseChangeIso e.symm L = (baseChangeIso e L).symm := by
+  apply Iso.ext
+  simp only [baseChangeIso_hom, Iso.symm_hom, baseChangeIso_inv]
+
+/-- Base change commutes with composing isomorphisms. -/
+@[simp]
+lemma baseChangeIso_trans {A B C : AbelianVariety K} (e : A ≅ B) (f : B ≅ C)
+    (L : Type u) [Field L] [Algebra K L] :
+    baseChangeIso (e.trans f) L = (baseChangeIso e L).trans (baseChangeIso f L) := by
+  apply Iso.ext
+  simp only [baseChangeIso_hom, Iso.trans_hom, Hom.baseChange_comp]
 
 end
 
