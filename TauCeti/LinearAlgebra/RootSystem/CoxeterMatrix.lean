@@ -149,7 +149,7 @@ section CartanProduct
 variable [P.IsCrystallographic] (b : P.Base)
 
 /-- The Cartan product of a pair of simple roots is their Coxeter weight. -/
-lemma cartanMatrix_mul_cartanMatrix (i j : b.support) :
+lemma cartanMatrix_mul_cartanMatrix_eq_coxeterWeightIn (i j : b.support) :
     b.cartanMatrix i j * b.cartanMatrix j i = P.coxeterWeightIn ℤ i j := rfl
 
 variable [CharZero R] [IsDomain R]
@@ -183,7 +183,7 @@ theorem cartanMatrix_mul_cartanMatrix_mem_of_ne {i j : b.support} (hij : i ≠ j
   have hne : P.coxeterWeightIn ℤ (i : ι) (j : ι) ≠ 4 :=
     (P.linearIndependent_iff_coxeterWeightIn_ne_four ℤ).mp (b.linearIndependent_pair_of_ne hij)
   have hmem := P.coxeterWeightIn_mem_set_of_isCrystallographic (i : ι) (j : ι)
-  rw [cartanMatrix_mul_cartanMatrix]
+  rw [cartanMatrix_mul_cartanMatrix_eq_coxeterWeightIn]
   simp only [mem_insert_iff, mem_singleton_iff] at hmem ⊢
   tauto
 
