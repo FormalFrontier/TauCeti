@@ -15,6 +15,10 @@ monodromy API. For a covering map `p : E → X` whose total space is simply conn
 choosing a lift `e` over `x` identifies `π₁(X, x)` with the fibre over `x` by sending a
 loop class to its monodromy translate of `e`.
 
+It also records that a covering map is injective on fundamental groups — the
+fundamental-group form of Mathlib's `IsCoveringMap.injective_path_homotopic_map`, which states
+the same injectivity for the Hom-sets of the fundamental groupoid.
+
 It also records the lifting criterion in a subgroup form used by the universal-covers
 roadmap. Mathlib already proves the fundamental result
 `IsCoveringMap.existsUnique_continuousMap_lifts_of_range_le`: a map `f : A → X` lifts through
@@ -25,6 +29,8 @@ separately identifies `H` as a subgroup of the image of `p_*`.
 
 ## Main declarations
 
+* `TauCeti.IsCoveringMap.map_injective` and `TauCeti.IsCoveringMap.mapOfEq_injective`: a
+  covering map is injective on fundamental groups.
 * `TauCeti.IsCoveringMap.existsUnique_continuousMap_lifts_of_range_le_subgroup`: lift when
   `f_* π₁(A, a₀) ≤ H ≤ p_* π₁(E, e₀)`.
 * `existsUnique_continuousMap_lifts_of_subsingleton_fundamentalGroup`: lift when the source
@@ -50,6 +56,25 @@ variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {p : E → X} {
 variable {A : Type*} [TopologicalSpace A]
 
 open FundamentalGroup
+
+/-- A covering map induces an injective map on fundamental groups. This is the fundamental-group
+form of Mathlib's `IsCoveringMap.injective_path_homotopic_map`, which states the same injectivity
+for every Hom-set of the fundamental groupoid. -/
+theorem IsCoveringMap.map_injective (hp : _root_.IsCoveringMap p) (e : E) :
+    Function.Injective (_root_.FundamentalGroup.map ⟨p, hp.continuous⟩ e) := by
+  intro δ δ' h
+  rw [FundamentalGroup.map_apply, FundamentalGroup.map_apply] at h
+  exact hp.injective_path_homotopic_map e e h
+
+/-- A covering map induces an injective map on fundamental groups, in the form transported along
+an equality `p e = x` of basepoints.
+
+Combined with `MonoidHom.ofInjective`, this exhibits the image subgroup `p_* π₁(E, e)` as a copy
+of `π₁(E, e)`. -/
+theorem IsCoveringMap.mapOfEq_injective (hp : _root_.IsCoveringMap p) {e : E} (he : p e = x) :
+    Function.Injective (_root_.FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ he) :=
+  (CategoryTheory.eqToIso (congrArg FundamentalGroupoid.mk he)).conj.injective.comp
+    (IsCoveringMap.map_injective hp e)
 
 /-- The lifting criterion for a covering map, with the subgroup inclusion factored through an
 intermediate subgroup `H ≤ π₁(X, f a₀)`.
