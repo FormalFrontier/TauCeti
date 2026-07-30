@@ -188,6 +188,7 @@ theorem matrixCoeff_trivial (v w : V) :
 /-- A matrix coefficient of an invariant submodule is the matrix coefficient of the ambient
 representation at the underlying vectors, so passing to a subrepresentation creates no new
 matrix coefficients. -/
+@[simp]
 theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v ∈ W, π g v ∈ W)
     (hsub : Continuous (subrepresentation π W hW)) (v w : W) :
     matrixCoeff (subrepresentation π W hW) hsub v w = matrixCoeff π hπ (v : V) (w : V) := by
@@ -196,6 +197,7 @@ theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v 
 
 /-- Restricting a representation along a continuous homomorphism precomposes its matrix
 coefficients; the restricted action is `π ∘ φ`, so `hπ.comp hφ` is its continuity witness. -/
+@[simp]
 theorem matrixCoeff_restrict {H : Type*} [Monoid H] [TopologicalSpace H] (φ : H →* G)
     (hφ : Continuous φ) (v w : V) :
     matrixCoeff (π.restrict φ) (hπ.comp hφ) v w = (matrixCoeff π hπ v w).comp ⟨φ, hφ⟩ := by
