@@ -232,8 +232,11 @@ theorem sum_card_partition_parts {n : ℕ} (α : Type*) [Fintype α] [DecidableE
   exact Nat.card_congr <| Equiv.subtypeEquivRight fun σ =>
     ⟨Nat.Partition.ext, fun hσ => by rw [hσ]⟩
 
-/-- The class sizes add up to the order of the group: the identity `∑_μ 1 / z_μ = 1` normalising
-the orthogonality weights. -/
+/-- The class sizes add up to the order of the group.  Every division here is exact, by
+`zPart_dvd_factorial`.
+
+This is the natural-number form of the normalisation of the orthogonality weights; the rational
+identity `∑_μ 1 / z_μ = 1`, which divides this one by `n !`, is not formalised here. -/
 theorem sum_factorial_div_zPart (n : ℕ) : ∑ μ : n.Partition, n ! / zPart μ = n ! :=
   Eq.trans (Finset.sum_congr rfl fun μ _ => (card_partition_parts_fin n μ).symm)
     (sum_card_partition_parts (Fin n) (Fintype.card_fin n))
