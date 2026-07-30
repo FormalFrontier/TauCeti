@@ -14,13 +14,13 @@ public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower
 
 When `2` is invertible, the tensor square of a representation splits into its symmetric and
 exterior squares. This file establishes the representation equivalence and specializes it to the
-standard representation of the general linear group. Over a field, it also records the resulting
-character identity.
+standard representation of the general linear group. Over any field, it also records the
+corresponding character identity, which remains valid even when the decomposition does not split.
 
 ## Main definitions
 
 * `TauCeti.tensorSquareRepEquiv` specializes it to the standard representation of `GL n k`.
-* `TauCeti.char_tensorSquare_stdRep` is the associated character identity.
+* `TauCeti.char_tensorSquare_stdRep` is the tensor-square character identity.
 
 ## References
 
@@ -85,10 +85,10 @@ end CommRing
 
 section Field
 
-variable [Field k] [NeZero (2 : k)]
+variable [Field k]
 
-/-- The square of the standard character is the sum of the symmetric-square and
-exterior-square characters. -/
+/-- Over any field, the square of the standard character is the sum of the symmetric-square
+and exterior-square characters. -/
 theorem char_tensorSquare_stdRep (g : GL (Fin n) k) :
     Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ 2 =
       (symPowerRep k n 2).character g + (extPowerRep k n 2).character g := by

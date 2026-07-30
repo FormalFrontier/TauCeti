@@ -139,22 +139,17 @@ variable [Field R] [Monoid G] [AddCommGroup M] [Module R M] [FiniteDimensional R
 theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
     (ρ.tensorPower d).character g = (ρ.character g) ^ d := by
   classical
-  simp only [Representation.character, tensorPower_apply]
   induction d with
   | zero =>
+    simp only [Representation.character, tensorPower_apply]
     rw [TauCeti.TensorPower.map_fin_zero]
     let e := PiTensorProduct.isEmptyEquiv (Fin 0) (R := R) (s := fun _ => M)
     rw [← LinearMap.trace_conj' (LinearMap.id : (⨂[R]^0 M) →ₗ[R] _) e]
     rw [LinearEquiv.conj_id, LinearMap.trace_id, Module.finrank_self, Nat.cast_one]
     simp only [pow_zero]
   | succ d ih =>
-    -- Split `Fin (d + 1)` into `Fin d` and `Fin 1`, then use multiplicativity of trace.
-    rw [← TauCeti.TensorPower.append_const (d := d) (e := 1) (ρ g),
-      ← TauCeti.TensorPower.mulEquiv_conj_map (fun _ : Fin d => ρ g)
-      (fun _ : Fin 1 => ρ g), LinearMap.trace_conj',
-      LinearMap.trace_tensorProduct']
-    have h_one : LinearMap.trace R (⨂[R]^1 M) (PiTensorProduct.map fun _ : Fin 1 => ρ g) =
-        LinearMap.trace R M (ρ g) := by
+    have h_one : (ρ.tensorPower 1).character g = ρ.character g := by
+      simp only [Representation.character, tensorPower_apply]
       let e₁ := PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 => M) 0
       rw [← LinearMap.trace_conj' (PiTensorProduct.map fun _ : Fin 1 => ρ g) e₁]
       congr 1
@@ -164,7 +159,8 @@ theorem char_tensorPower (ρ : Representation R G M) (d : ℕ) (g : G) :
         simpa only using
           (PiTensorProduct.subsingletonEquiv_symm_apply' (R := R) (ι := Fin 1) 0 x)
       rw [he₁, PiTensorProduct.map_tprod, PiTensorProduct.subsingletonEquiv_apply_tprod]
-    rw [ih, h_one, pow_succ]
+    rw [← Representation.char_iso (ρ.tensorPowerAddEquiv d 1),
+      Representation.char_tensor, Pi.mul_apply, ih, h_one, pow_succ]
 
 end Field
 
