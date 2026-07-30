@@ -77,29 +77,32 @@ open scoped ComplexOrder Topology
 
 variable {Ω : Set ℂ} {f g : ℂ → ℂ} {z₀ : ℂ}
 
-/-- Multiplying by a unimodular constant preserves a bijection onto the open unit disc: rotations
-of the disc are bijections of it. -/
-theorem bijOn_ball_const_mul {u : ℂ} (hu : ‖u‖ = 1) (hf : BijOn f Ω (ball (0 : ℂ) 1)) :
-    BijOn (fun z => u * f z) Ω (ball (0 : ℂ) 1) := by
+/-- Multiplying by a unimodular constant preserves a bijection onto a ball about the origin:
+rotations of the ball are bijections of it. Neither the domain nor the radius plays any role, so
+this is stated for an arbitrary source set and an arbitrary radius. -/
+private theorem bijOn_ball_const_mul {α : Type*} {s : Set α} {F : α → ℂ} {r : ℝ} {u : ℂ}
+    (hu : ‖u‖ = 1) (hF : BijOn F s (ball (0 : ℂ) r)) :
+    BijOn (fun z => u * F z) s (ball (0 : ℂ) r) := by
   have hu0 : u ≠ 0 := by
     intro h
     rw [h, norm_zero] at hu
     exact zero_ne_one hu
-  refine ⟨fun z hz => ?_, fun z hz w hw h => hf.injOn hz hw (mul_left_cancel₀ hu0 h),
+  refine ⟨fun z hz => ?_, fun z hz w hw h => hF.injOn hz hw (mul_left_cancel₀ hu0 h),
     fun w hw => ?_⟩
   · rw [mem_ball_zero_iff, norm_mul, hu, one_mul]
-    exact mem_ball_zero_iff.mp (hf.mapsTo hz)
-  · have hw' : u⁻¹ * w ∈ ball (0 : ℂ) 1 := by
+    exact mem_ball_zero_iff.mp (hF.mapsTo hz)
+  · have hw' : u⁻¹ * w ∈ ball (0 : ℂ) r := by
       rw [mem_ball_zero_iff, norm_mul, norm_inv, hu, inv_one, one_mul]
       exact mem_ball_zero_iff.mp hw
-    obtain ⟨z, hz, hzw⟩ := hf.surjOn hw'
-    exact ⟨z, hz, show u * f z = w by rw [hzw, ← mul_assoc, mul_inv_cancel₀ hu0, one_mul]⟩
+    obtain ⟨z, hz, hzw⟩ := hF.surjOn hw'
+    refine ⟨z, hz, ?_⟩
+    simp only [hzw, ← mul_assoc, mul_inv_cancel₀ hu0, one_mul]
 
 /-- A unimodular constant carrying one positive real to another is `1`: the modulus forces the two
 positive reals to be equal, and cancelling them leaves `u = 1`. This is the rigidity behind the
 uniqueness of the normalized Riemann map. -/
-theorem eq_one_of_norm_eq_one_of_mul_pos {u a b : ℂ} (hu : ‖u‖ = 1) (ha : 0 < a) (hb : 0 < b)
-    (hab : u * a = b) : u = 1 := by
+private theorem eq_one_of_norm_eq_one_of_mul_pos {u a b : ℂ} (hu : ‖u‖ = 1) (ha : 0 < a)
+    (hb : 0 < b) (hab : u * a = b) : u = 1 := by
   have hnorm : ‖b‖ = ‖a‖ := by rw [← hab, norm_mul, hu, one_mul]
   have hab' : b = a := by
     refine Complex.ext ?_ ?_
