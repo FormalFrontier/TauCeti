@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import Mathlib.Algebra.Category.ModuleCat.EpiMono
 public import Mathlib.CategoryTheory.Limits.FunctorCategory.EpiMono
@@ -37,8 +36,9 @@ identification of representations with left modules over the path algebra it is 
 * `TauCeti.dimVector_indecProjRep`: the dimension vector of `Pᵢ` counts the paths out of `i`, and
   `TauCeti.not_isZero_indecProjRep`: `Pᵢ` is nonzero.
 * `TauCeti.finrank_hom_indecProjRep_indecProjRep`: `dim Hom(Pᵢ, Pⱼ)` is the number of paths
-  `j → i`, the path-counting form of the Cartan matrix of a path algebra; over an acyclic quiver
-  this makes `Pᵢ` a brick, `TauCeti.finrank_end_indecProjRep_of_isAcyclic`.
+  `j → i`, the path-counting form of the Cartan matrix of a path algebra. Its acyclic consequence,
+  that `Pᵢ` is then a brick, is in
+  `TauCeti.RepresentationTheory.Quiver.Representation.Projective.Acyclic`.
 
 ## Implementation notes
 
@@ -49,10 +49,18 @@ proved is projectivity, and the universal property that makes `Pᵢ` the represe
 
 `Pᵢ` is built by `CategoryTheory.Paths.lift`: a representation of `Q` is a functor out of the free
 category on `Q`, so a module at each vertex and a map along each arrow suffice, and Mathlib
-supplies functoriality along path concatenation. The definitions below are `@[expose]`d, because
-the vector space `(Pᵢ)_j` is only a space of finitely supported functions after unfolding, so every
-lemma naming an element of it (that is, every lemma about the action of a path) needs the body of
-`indecProjRep`.
+supplies functoriality along path concatenation. Only `indecProjRep` itself is `@[expose]`d: the
+vector space `(Pᵢ)_j` is a space of finitely supported functions only after unfolding, so the
+statement of every lemma naming an element of it — that is, of every lemma about the action of a
+path — needs that body. The definitions derived from it keep their bodies hidden, and are used
+through the lemmas below; the abstract handle on `(Pᵢ)_j` is the basis `indecProjRepBasis`, indexed
+by the paths `i → j`.
+
+A vertex `i : Q` is used below as an object of the free category `CategoryTheory.Paths Q`, which is
+`Q` itself only by unfolding a semireducible definition. Goals about the action of a path are
+therefore not type-correct at `instances` transparency, where `rw` and `simp` build their motives;
+the one proof that has to reach the underlying statement about finitely supported functions does so
+by `change`, and says so in a comment.
 
 The vector space `(Pᵢ)_j` lives in the universe of `Quiver.Path i j →₀ k`, which is larger than
 the universe of `k` unless the vertex and arrow types are small. The vertex simple `Sᵢ` of
@@ -67,7 +75,7 @@ This implements the indecomposable projectives of Layer 1 of
 Skowroński, *Elements of the Representation Theory of Associative Algebras I*, Ch. III.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -79,8 +87,8 @@ variable (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q]
 
 /-- **The projective representation at a vertex** `Pᵢ`: the free `k`-module on the paths `i → j`
 at the vertex `j`, an arrow acting by appending itself to a path. Under the identification of
-representations with left modules over the path algebra this is the left ideal `kQ · eᵢ`, and it is
-the projective cover of the vertex simple `Sᵢ`. -/
+representations with left modules over the path algebra this is the left ideal `kQ · eᵢ`. -/
+@[expose]
 noncomputable def indecProjRep (i : Q) : QuiverRep k Q :=
   Paths.lift
     { obj := fun j ↦ ModuleCat.of k (Quiver.Path i j →₀ k)
@@ -127,6 +135,10 @@ theorem indecProjRep_map (i : Q) {a b : Q} (p : Quiver.Path a b) :
     (indecProjRep k Q i).map p
       = ModuleCat.ofHom (Finsupp.lmapDomain k k fun q : Quiver.Path i a ↦ q.comp p) := by
   refine ModuleCat.hom_ext (Finsupp.lhom_ext fun q c ↦ ?_)
+  -- The goal here mentions `(indecProjRep k Q i).obj a` for a vertex `a : Q` read as an object of
+  -- `CategoryTheory.Paths Q`, so it is not type-correct at `instances` transparency: neither `rw`
+  -- nor `simp` can build a motive for it, and `change` is the only way to state the underlying
+  -- equality of finitely supported functions.
   change (indecProjRep k Q i).map p (Finsupp.single q c)
       = Finsupp.mapDomain (fun r : Quiver.Path i a ↦ r.comp p) (Finsupp.single q c)
   rw [Finsupp.mapDomain_single, indecProjRep_map_single]
@@ -147,12 +159,11 @@ instance finiteDimensional_indecProjRep_obj (i j : Q) [Finite (Quiver.Path i j)]
     FiniteDimensional k ((indecProjRep k Q i).obj j) :=
   Module.Finite.of_basis (indecProjRepBasis k i j)
 
-/-- The dimension vector of `Pᵢ` counts, at each vertex, the paths from `i` to it. -/
-theorem dimVector_indecProjRep (i j : Q) [Finite (Quiver.Path i j)] :
+/-- The dimension vector of `Pᵢ` counts, at each vertex, the paths from `i` to it. With infinitely
+many paths `i → j` both sides are `0`, by the conventions for `Module.finrank` and `Nat.card`. -/
+theorem dimVector_indecProjRep (i j : Q) :
     dimVector (indecProjRep k Q i) j = Nat.card (Quiver.Path i j) := by
-  letI := Fintype.ofFinite (Quiver.Path i j)
-  rw [dimVector_apply, Paths.of_obj, Module.finrank_eq_card_basis (indecProjRepBasis k i j),
-    Nat.card_eq_fintype_card]
+  rw [dimVector_apply, Paths.of_obj, Module.finrank_eq_nat_card_basis (indecProjRepBasis k i j)]
 
 /-! ### The universal property -/
 
@@ -162,15 +173,12 @@ noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
     indecProjRep k Q i ⟶ M where
   app j := ModuleCat.ofHom (Finsupp.linearCombination k fun p : Quiver.Path i j ↦ M.map p x)
   naturality {a b} p := by
-    refine ModuleCat.hom_ext ((indecProjRepBasis k i a).ext fun q ↦ ?_)
-    have hcomp : M.map (q.comp p) = M.map q ≫ M.map p := M.map_comp q p
-    change Finsupp.linearCombination k (fun r : Quiver.Path i b ↦ M.map r x)
-          ((indecProjRep k Q i).map p (Finsupp.single q (1 : k)))
-        = M.map p (Finsupp.linearCombination k (fun r : Quiver.Path i a ↦ M.map r x)
-          (Finsupp.single q (1 : k)))
-    rw [indecProjRep_map_single, Finsupp.linearCombination_single,
-      Finsupp.linearCombination_single, one_smul, one_smul, hcomp]
-    rfl
+    have hcomp : ∀ q : Quiver.Path i a, (M.map p) ((M.map q) x) = M.map (q.comp p) x := fun q ↦
+      (congrArg (fun g : M.obj i ⟶ M.obj b ↦ g x) (M.map_comp q p)).symm
+    rw [indecProjRep_map]
+    exact ModuleCat.hom_ext (Finsupp.lmapDomain_linearCombination (R := k)
+      (v := fun q : Quiver.Path i a ↦ M.map q x) (v' := fun r : Quiver.Path i b ↦ M.map r x)
+      (fun q : Quiver.Path i a ↦ q.comp p) (M.map p).hom hcomp)
 
 /-- The morphism attached to `x : Mᵢ` sends the basis element of a path `p` to the action of `p`
 on `x`. -/
@@ -180,6 +188,8 @@ theorem indecProjRepHom_app_single (i : Q) (M : QuiverRep k Q) (x : M.obj i) (j 
     (indecProjRepHom i M x).app j (Finsupp.single p c) = c • M.map p x :=
   Finsupp.linearCombination_single k c p
 
+-- Not `@[simp]`: `indecProjRepHom_app_single` and `one_smul` already rewrite this left-hand side
+-- to `M.map Quiver.Path.nil x`, so tagging it is a simp-normal-form violation (`simpNF`).
 /-- The morphism attached to `x : Mᵢ` sends the basis element of the trivial path back to `x`. -/
 theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
     (indecProjRepHom i M x).app i (Finsupp.single Quiver.Path.nil 1) = x := by
@@ -187,6 +197,7 @@ theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
   exact congrArg (fun g : M.obj i ⟶ M.obj i ↦ g x) (M.map_id i)
 
 /-- A morphism out of `Pᵢ` is determined by the image of the trivial path at `i`. -/
+@[simp]
 theorem indecProjRepHom_app_nil_self {i : Q} {M : QuiverRep k Q} (f : indecProjRep k Q i ⟶ M) :
     indecProjRepHom i M (f.app i (Finsupp.single Quiver.Path.nil 1)) = f := by
   refine NatTrans.ext (funext fun j ↦ ModuleCat.hom_ext
@@ -212,19 +223,21 @@ noncomputable def indecProjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
 @[simp]
 theorem indecProjRepHomEquiv_apply (i : Q) (M : QuiverRep k Q) (f : indecProjRep k Q i ⟶ M) :
     indecProjRepHomEquiv i M f = f.app i (Finsupp.single Quiver.Path.nil 1) :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem indecProjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
     (indecProjRepHomEquiv i M).symm x = indecProjRepHom i M x :=
-  rfl
+  (rfl)
 
+-- Not `@[simp]`: `simp` already proves this from `indecProjRepHomEquiv_apply` and
+-- `CategoryTheory.NatTrans.comp_app`, so tagging it is a `simpNF` violation.
 /-- The universal property is natural in the target: postcomposition with `g` corresponds to
 applying `g` at `i`. -/
 theorem indecProjRepHomEquiv_comp (i : Q) {M N : QuiverRep k Q} (f : indecProjRep k Q i ⟶ M)
     (g : M ⟶ N) :
     indecProjRepHomEquiv i N (f ≫ g) = g.app i (indecProjRepHomEquiv i M f) :=
-  rfl
+  (rfl)
 
 /-- **The representations `Pᵢ` are projective.** A morphism out of `Pᵢ` lifts along any
 epimorphism, because it is determined by a single element of the target at `i` and an epimorphism
@@ -245,17 +258,9 @@ theorem finrank_hom_indecProjRep (i : Q) (M : QuiverRep k Q) :
 
 /-- **The path-counting form of the Cartan matrix of a path algebra**: the dimension of
 `Hom(Pᵢ, Pⱼ)` is the number of paths `j → i`. -/
-theorem finrank_hom_indecProjRep_indecProjRep (i j : Q) [Finite (Quiver.Path j i)] :
+theorem finrank_hom_indecProjRep_indecProjRep (i j : Q) :
     Module.finrank k (indecProjRep k Q i ⟶ indecProjRep k Q j) = Nat.card (Quiver.Path j i) := by
   rw [finrank_hom_indecProjRep, dimVector_indecProjRep]
-
-/-- Over an acyclic quiver the endomorphism algebra of `Pᵢ` is one-dimensional, the trivial path at
-`i` being the only path `i → i`: the projective `Pᵢ` is a brick. -/
-theorem finrank_end_indecProjRep_of_isAcyclic (h : Quiver.IsAcyclic Q) (i : Q) :
-    Module.finrank k (indecProjRep k Q i ⟶ indecProjRep k Q i) = 1 := by
-  letI : Subsingleton (Quiver.Path i i) := h.subsingleton_path_self i
-  letI : Unique (Quiver.Path i i) := uniqueOfSubsingleton Quiver.Path.nil
-  rw [finrank_hom_indecProjRep_indecProjRep, Nat.card_unique]
 
 /-- The representation `Pᵢ` is nonzero: the trivial path at `i` is a nonzero element of `(Pᵢ)_i`. -/
 theorem not_isZero_indecProjRep (i : Q) : ¬ IsZero (indecProjRep k Q i) := by
