@@ -187,11 +187,13 @@ theorem matrixCoeff_trivial (v w : V) :
 
 /-- A matrix coefficient of an invariant submodule is the matrix coefficient of the ambient
 representation at the underlying vectors, so passing to a subrepresentation creates no new
-matrix coefficients. -/
+matrix coefficients; `continuous_subrepresentation hπ` is the continuity witness of the restricted
+action. -/
 @[simp]
 theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v ∈ W, π g v ∈ W)
-    (hsub : Continuous (subrepresentation π W hW)) (v w : W) :
-    matrixCoeff (subrepresentation π W hW) hsub v w = matrixCoeff π hπ (v : V) (w : V) := by
+    (v w : W) :
+    matrixCoeff (subrepresentation π W hW) (continuous_subrepresentation hπ) v w =
+      matrixCoeff π hπ (v : V) (w : V) := by
   ext g
   simp [Submodule.coe_inner]
 
