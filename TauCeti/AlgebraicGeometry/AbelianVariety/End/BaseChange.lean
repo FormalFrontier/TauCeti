@@ -19,7 +19,7 @@ change respects the pointwise group law on homomorphisms
 
 * `AbelianVariety.End.baseChange`: the ring homomorphism, with
   `AbelianVariety.End.toHom_baseChange` translating it back into base change of morphisms;
-* `AbelianVariety.End.congr_baseChange`: base change commutes with the identification of
+* `AbelianVariety.End.baseChange_congr`: base change commutes with the identification of
   endomorphism rings along an isomorphism of abelian varieties;
 * `AbelianVariety.baseChange_mulBy`: multiplication by `n` base changes to multiplication by `n`.
 
@@ -112,7 +112,7 @@ and `AbelianVariety.baseChangeFunctor_obj` identifies its endpoints with the bas
 conjugating isomorphism is the composite of the three; writing it that way keeps the statement
 type-correct without unfolding the functor. -/
 @[simp]
-lemma congr_baseChange (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] (x : End A) :
+lemma baseChange_congr (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] (x : End A) :
     baseChange B L (congr e x) =
       congr (eqToIso (baseChangeFunctor_obj L A).symm ≪≫ (baseChangeFunctor L).mapIso e ≪≫
         eqToIso (baseChangeFunctor_obj L B)) (baseChange A L x) := by
@@ -127,13 +127,12 @@ end End
 
 variable (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L]
 
-/-- Multiplication by `n` is compatible with extension of the base field.
-
-Proved directly from `AbelianVariety.mulBy_eq_zpow`: `[n]` is the `n`-th power of the identity for
-the pointwise group law, and base change preserves that law and the identity. -/
+/-- Multiplication by `n` is compatible with extension of the base field. -/
 @[simp]
 lemma baseChange_mulBy (n : ℤ) :
     Hom.baseChange (mulBy A n) L = mulBy (A.baseChange L) n := by
+  -- `[n]` is the `n`-th power of the identity for the pointwise group law, and base change
+  -- preserves that law and the identity.
   rw [mulBy_eq_zpow, mulBy_eq_zpow, Hom.baseChange_zpow, Hom.baseChange_id]
 
 end

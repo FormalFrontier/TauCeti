@@ -151,26 +151,27 @@ lemma baseChangeFunctor_map {A B : AbelianVariety K} (L : Type u) [Field L] [Alg
 /-! ### Compatibility with the pointwise group law
 
 Base change is a homomorphism for the pointwise group law of
-`TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup`, not merely a functor. The two
+`TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup`, not merely a functor. The two private
 instances below say that the transport isomorphism `eqToHom (baseChange_toOver A L)` between the
 group scheme underlying `A.baseChange L` and the pullback of the one underlying `A` is an
-isomorphism of monoid objects; everything else follows from Mathlib's multiplicativity of a
-monoidal functor on morphisms into a monoid object. -/
+isomorphism of monoid objects; they are proof support for the two lemmas that follow, which
+together with Mathlib's multiplicativity of a monoidal functor on morphisms into a monoid object
+give the public interface. -/
 
 open scoped Hom
 
 /-- The transport isomorphism identifying the group scheme underlying `A.baseChange L` with the
 pullback of the group scheme underlying `A` preserves the unit and the multiplication: by
 construction, those of the base change *are* the pulled-back ones. -/
-instance isMonHom_eqToHom_baseChange_toOver (A : AbelianVariety K) (L : Type u) [Field L]
+private instance isMonHom_eqToHom_baseChange_toOver (A : AbelianVariety K) (L : Type u) [Field L]
     [Algebra K L] :
     IsMonHom (eqToHom (baseChange_toOver A L)) where
   one_hom := by rw [baseChange_one, Functor.obj.η_def]
   mul_hom := by rw [baseChange_mul, Functor.obj.μ_def]
 
 /-- The inverse transport isomorphism is a homomorphism of monoid objects as well. -/
-instance isMonHom_eqToHom_baseChange_toOver_symm (A : AbelianVariety K) (L : Type u) [Field L]
-    [Algebra K L] :
+private instance isMonHom_eqToHom_baseChange_toOver_symm (A : AbelianVariety K) (L : Type u)
+    [Field L] [Algebra K L] :
     IsMonHom (eqToHom (baseChange_toOver A L).symm) :=
   haveI : IsMonHom (eqToIso (baseChange_toOver A L)).hom :=
     isMonHom_eqToHom_baseChange_toOver A L
