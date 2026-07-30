@@ -42,6 +42,8 @@ As an unconditional value it is junk (`0`) when `f` is not meromorphic at `z₀`
 * `TauCeti.Contour.residue_eq_zero_of_analyticAt` — the residue vanishes where `f` is analytic.
 * `TauCeti.Contour.residue_eq_meromorphicTrailingCoeffAt_of_order_eq_neg_one` — at a simple pole the
   residue is the leading Laurent (trailing) coefficient.
+* `TauCeti.Contour.residue_div_sub_pow_of_analyticAt` — the Cauchy-kernel computation
+  `Res_{z₀} (g / (· − z₀) ^ (k + 1)) = g^{(k)}(z₀) / k !` for `g` analytic at `z₀`.
 
 This is a Layer 0 object of the Hungerbühler–Wasem generalized residue theorem (HW Thm 3.3).
 
@@ -410,6 +412,23 @@ theorem residue_const_div_sub_pow (a z₀ : ℂ) (k : ℕ) :
   rcases Nat.eq_zero_or_pos k with rfl | hk
   · simp
   · simp [hk.ne']
+
+/-- **The residue of the Cauchy kernel.** If `g` is analytic at `z₀`, then the function
+`g z / (z - z₀) ^ (k + 1)` has residue the Taylor coefficient `iteratedDeriv k g z₀ / k !` at `z₀`:
+the whole Laurent principal part comes from the first `k + 1` Taylor terms of `g`, and only the one
+of index `k` sits at order `−1`. This is the residue behind Cauchy's integral formula for the
+`k`-th derivative; the constant case is `TauCeti.Contour.residue_const_div_sub_pow`. -/
+theorem residue_div_sub_pow_of_analyticAt {g : ℂ → ℂ} {z₀ : ℂ} (hg : AnalyticAt ℂ g z₀) (k : ℕ) :
+    residue (fun z => g z / (z - z₀) ^ (k + 1)) z₀
+      = iteratedDeriv k g z₀ / (k.factorial : ℂ) := by
+  have hfg : (fun z => g z / (z - z₀) ^ (k + 1)) =ᶠ[𝓝[≠] z₀]
+      fun z => (z - z₀) ^ (-(k + 1 : ℕ) : ℤ) • g z :=
+    Filter.Eventually.of_forall fun z => by
+      -- `change` beta-reduces the applied lambdas; the `rw` patterns do not match otherwise.
+      change g z / (z - z₀) ^ (k + 1) = (z - z₀) ^ (-(k + 1 : ℕ) : ℤ) • g z
+      rw [smul_eq_mul, zpow_neg, zpow_natCast, mul_comm, div_eq_mul_inv]
+  rw [residue_eq_of_eventuallyEq_zpow_smul (by omega) hg hfg,
+    show (-1 - (-(k + 1 : ℕ) : ℤ)).toNat = k by omega]
 
 /-- **The residue from a Laurent expansion.** If `f z = g z + ∑ k, a k / (z - z₀)^(k+1)` near
 `z₀` with `g` analytic at `z₀`, then `residue f z₀` is the first Laurent coefficient `a 0` (or
