@@ -9,6 +9,7 @@ public import TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Basic
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Orthogonality
 public import TauCeti.Probability.Distributions.Gaussian.Basic
+public import TauCeti.RingTheory.Polynomial.Hermite.Real
 
 /-!
 # The Hermite polynomials as a Hilbert basis of `L²(γ)`
@@ -58,21 +59,11 @@ theorem integral_hermite_mul_hermite_mul_gaussianPDFReal (m n : ℕ) :
   simp only [smul_eq_mul]
   exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
 
-/-! ## The weighted-measure input data -/
+/-! ## The weighted-measure input data
 
-/-- `Hₙ` over `ℝ`: Mathlib's `Polynomial.hermite n` lives in `ℤ[X]`, and the weighted-measure
-machinery consumes a real polynomial family. -/
-noncomputable def hermiteℝ (n : ℕ) : Polynomial ℝ := (hermite n).map (Int.castRingHom ℝ)
-
-@[simp]
-theorem eval_hermiteℝ (n : ℕ) (x : ℝ) : (hermiteℝ n).eval x = aeval x (hermite n) := by
-  rw [hermiteℝ, Polynomial.eval_map, Polynomial.aeval_def]
-  rfl
-
-/-- The cast to `ℝ[X]` preserves degrees: `Hₙ` has degree exactly `n`, the exact-degree hypothesis
-of `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`. -/
-theorem degree_hermiteℝ (n : ℕ) : (hermiteℝ n).degree = (n : WithBot ℕ) := by
-  rw [hermiteℝ, Polynomial.degree_map_eq_of_injective Int.cast_injective, Polynomial.degree_hermite]
+`TauCeti.hermiteℝ` and its `eval`/`degree` lemmas live in
+`TauCeti/RingTheory/Polynomial/Hermite/Real.lean`: they mention no measure and no Gaussian, and
+keeping them here would strand them below the function-side files that use the same cast. -/
 
 /-- **Finite exponential moments of the standard Gaussian.** For every rate `a`, `e^{a|x|}` is
 integrable against `γ`.

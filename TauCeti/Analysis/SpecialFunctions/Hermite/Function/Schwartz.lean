@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
 import Mathlib.Analysis.SpecialFunctions.Gaussian.PoissonSummation
 import Mathlib.RingTheory.Polynomial.Hermite.Gaussian
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Ladder
+public import TauCeti.RingTheory.Polynomial.Hermite.Real
 
 /-!
 # Hermite functions in Schwartz space
@@ -51,12 +52,12 @@ private noncomputable def gaussianSchwartzMap : 𝓢(ℝ, ℝ) where
   toFun x := Real.exp (-(x ^ 2 / 2))
   smooth' := Real.contDiff_exp.comp (((contDiff_id.pow 2).div_const 2).neg)
   decay' k n := by
-    let p : ℝ[X] := (hermite n).map (Int.castRingHom ℝ)
+    let p : ℝ[X] := hermiteℝ n
     let F : ℝ → ℝ := fun x =>
       x ^ k * (-1 : ℝ) ^ n * p.eval x * Real.exp (-(x ^ 2 / 2))
     have hp_eval (x : ℝ) : p.eval x = aeval x (hermite n) := by
       dsimp only [p]
-      rw [aeval_def, algebraMap_int_eq, eval_map]
+      exact eval_hermiteℝ n x
     have hF (x : ℝ) :
         F x = x ^ k * iteratedDeriv n (fun y : ℝ => Real.exp (-(y ^ 2 / 2))) x := by
       rw [iteratedDeriv_eq_iterate, Polynomial.deriv_gaussian_eq_hermite_mul_gaussian]
@@ -90,7 +91,7 @@ private theorem hasTemperateGrowth_hermiteFactor (n : ℕ) :
     Function.HasTemperateGrowth
       (fun x : ℝ => aeval (x * Real.sqrt 2) (hermite n) /
         Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi)) := by
-  let p : ℝ[X] := (hermite n).map (Int.castRingHom ℝ)
+  let p : ℝ[X] := hermiteℝ n
   have hp : Function.HasTemperateGrowth (fun x : ℝ => p.eval x) := by
     induction p using Polynomial.induction_on' with
     | add p q hp hq =>
@@ -114,7 +115,7 @@ private theorem hasTemperateGrowth_hermiteFactor (n : ℕ) :
   have heval (x : ℝ) :
       p.eval (x * Real.sqrt 2) = aeval (x * Real.sqrt 2) (hermite n) := by
     dsimp only [p]
-    rw [aeval_def, algebraMap_int_eq, eval_map]
+    exact eval_hermiteℝ n _
   have hfun :
       (fun x : ℝ => aeval (x * Real.sqrt 2) (hermite n) /
           Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi)) =
