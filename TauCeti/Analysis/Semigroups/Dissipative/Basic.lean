@@ -21,8 +21,11 @@ which is the notion available in a general Banach space (the Hilbert-space chara
 The elementary API records what the inequality buys: an a priori estimate `‖x‖ ≤ ‖y‖ / lambda`
 for solutions of `lambda x - A x = y`, injectivity of `lambda • I - A` on `D(A)`, and stability
 under restriction and under nonnegative scalar multiples. Adding the range condition —
-`lambda • I - A` onto `X` for every `lambda > 0` — gives **m-dissipativity**
-(`IsMDissipative`), for which `lambda • I - A : D(A) → X` is bijective.
+`lambda • I - A` onto `X` for *some* `lambda > 0` — gives **m-dissipativity**
+(`IsMDissipative`). On a Banach space that single point is enough: inverting `lambda • I - A`
+and expanding a Neumann series propagates the range condition from `lambda` to every
+`mu ∈ (0, 2 lambda)`, and doubling from there covers all of `(0, ∞)`, so `mu • I - A : D(A) → X`
+is bijective for every `mu > 0`.
 
 The file then connects dissipativity to C₀-semigroups. For a semigroup with growth bound
 `(ω, M)` and `lambda > ω`, the Laplace-transform resolvent turns the bound `‖R(lambda)‖ ≤
@@ -39,6 +42,9 @@ dissipative.
 
 * `TauCeti.Semigroups.IsDissipative`, `TauCeti.Semigroups.IsMDissipative`: the dissipativity
   and m-dissipativity predicates.
+* `TauCeti.Semigroups.IsDissipative.smul_sub_surjective_of_lt_two_mul` and
+  `TauCeti.Semigroups.IsMDissipative.smul_sub_surjective`: on a Banach space the range
+  condition at one positive `lambda` propagates to every positive `lambda`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.norm_le_norm_smul_sub_generator`: the
   resolvent-range inequality at a general growth bound `(ω, M)`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.smul_sub_generator_bijective`:
@@ -136,53 +142,154 @@ theorem IsDissipative.smul {A : X →ₗ.[ℝ] X} (hA : IsDissipative A) {c : �
 /-! ## Maximal dissipativity -/
 
 /-- An unbounded operator is **m-dissipative** (maximally dissipative) when it is dissipative
-and `lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0`.
+and `lambda • I - A` maps `D(A)` onto `X` for *some* `lambda > 0`.
 
 The range condition is what upgrades the one-sided estimate of `IsDissipative` to a genuine
-resolvent: `lambda • I - A : D(A) → X` becomes bijective (`IsMDissipative.smul_sub_bijective`),
-its inverse bounded by `1 / lambda` through `IsDissipative.norm_le_of_smul_sub_eq`. The
-Lumer--Phillips generation theorem — that a densely defined m-dissipative operator *is* the
-generator of a contraction semigroup — is not yet available in this library; its converse half
-is `ContractionSemigroup.isMDissipative_generator` below. -/
+resolvent, and one positive `lambda` already suffices: over a Banach space it propagates to
+every `lambda > 0` (`IsMDissipative.smul_sub_surjective`), so that `lambda • I - A : D(A) → X`
+is bijective there (`IsMDissipative.smul_sub_bijective`), with inverse bounded by `1 / lambda`
+through `IsDissipative.norm_le_of_smul_sub_eq`. Asking for a single `lambda` is the form the
+hypothesis takes in the Lumer--Phillips generation theorem — that a densely defined
+m-dissipative operator *is* the generator of a contraction semigroup — which is not yet
+available in this library; its converse half is `ContractionSemigroup.isMDissipative_generator`
+below. -/
 @[expose] def IsMDissipative (A : X →ₗ.[ℝ] X) : Prop :=
   IsDissipative A ∧
-    ∀ lambda : ℝ, 0 < lambda → Function.Surjective fun x : A.domain => lambda • (x : X) - A x
+    ∃ lambda : ℝ, 0 < lambda ∧ Function.Surjective fun x : A.domain => lambda • (x : X) - A x
 
 /-- `IsMDissipative A` unfolds to its defining conjunction: `A` is dissipative and
-`lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0`. -/
+`lambda • I - A` maps `D(A)` onto `X` for some `lambda > 0`. -/
 theorem isMDissipative_iff {A : X →ₗ.[ℝ] X} :
     IsMDissipative A ↔
       IsDissipative A ∧
-        ∀ lambda : ℝ, 0 < lambda →
+        ∃ lambda : ℝ, 0 < lambda ∧
           Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
   Iff.rfl
 
-/-- A dissipative operator whose `lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0` is
-m-dissipative. -/
-theorem IsDissipative.isMDissipative {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
-    (hrange : ∀ lambda : ℝ, 0 < lambda →
-      Function.Surjective fun x : A.domain => lambda • (x : X) - A x) :
+/-- A dissipative operator whose `lambda • I - A` maps `D(A)` onto `X` for a single `lambda > 0`
+is m-dissipative. -/
+theorem IsDissipative.isMDissipative {A : X →ₗ.[ℝ] X} (hA : IsDissipative A) {lambda : ℝ}
+    (hlambda : 0 < lambda)
+    (hrange : Function.Surjective fun x : A.domain => lambda • (x : X) - A x) :
     IsMDissipative A :=
-  ⟨hA, hrange⟩
+  ⟨hA, lambda, hlambda, hrange⟩
 
 /-- An m-dissipative operator is dissipative. -/
 theorem IsMDissipative.isDissipative {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) :
     IsDissipative A :=
   hA.1
 
-/-- The range condition of an m-dissipative operator. -/
+/-- The range condition of an m-dissipative operator: `lambda • I - A` maps `D(A)` onto `X` for
+at least one `lambda > 0`. -/
+theorem IsMDissipative.exists_smul_sub_surjective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) :
+    ∃ lambda : ℝ, 0 < lambda ∧
+      Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
+  hA.2
+
+section CompleteSpace
+
+variable [CompleteSpace X]
+
+/-- **The range condition propagates along a Neumann series.** If `A` is dissipative and
+`lambda • I - A` maps `D(A)` onto `X`, then so does `mu • I - A` for every `mu` in the interval
+`(0, 2 lambda)`.
+
+Dissipativity makes `lambda • I - A : D(A) → X` a bijection whose inverse `J` is bounded by
+`1 / lambda`, and `mu • I - A = (I - (lambda - mu) • J) ∘ (lambda • I - A)`. The first factor is
+invertible because `‖(lambda - mu) • J‖ ≤ |lambda - mu| / lambda < 1`, which is exactly the
+constraint `0 < mu < 2 lambda`. -/
+theorem IsDissipative.smul_sub_surjective_of_lt_two_mul {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda mu : ℝ} (hlambda : 0 < lambda)
+    (hrange : Function.Surjective fun x : A.domain => lambda • (x : X) - A x)
+    (hmu : 0 < mu) (hmu' : mu < 2 * lambda) :
+    Function.Surjective fun x : A.domain => mu • (x : X) - A x := by
+  -- `lambda • I - A`, packaged as a linear equivalence `D(A) ≃ₗ X`
+  let S : A.domain →ₗ[ℝ] X := lambda • A.domain.subtype - A.toFun
+  have hSapp : ∀ x : A.domain, S x = lambda • (x : X) - A x := fun x => by simp [S]
+  have hbij : Function.Bijective S := by
+    constructor
+    · intro x y h
+      exact hA.smul_sub_injective hlambda (by simpa [hSapp] using h)
+    · intro y
+      obtain ⟨x, hx⟩ := hrange y
+      exact ⟨x, by simpa [hSapp] using hx⟩
+  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective S hbij
+  have he : ∀ y : X, lambda • ((e.symm y : A.domain) : X) - A (e.symm y) = y := by
+    intro y
+    rw [← hSapp]
+    exact e.apply_symm_apply y
+  -- its inverse, as a bounded operator of norm at most `1 / lambda`
+  let J : X →ₗ[ℝ] X := A.domain.subtype ∘ₗ (e.symm : X →ₗ[ℝ] A.domain)
+  have hJapp : ∀ y : X, J y = ((e.symm y : A.domain) : X) := fun _ => rfl
+  have hJbound : ∀ y : X, ‖J y‖ ≤ lambda⁻¹ * ‖y‖ := by
+    intro y
+    rw [hJapp]
+    have := hA.norm_le_of_smul_sub_eq hlambda (x := e.symm y) (y := y) (he y)
+    rwa [div_eq_inv_mul] at this
+  let Jc : X →L[ℝ] X := J.mkContinuous lambda⁻¹ hJbound
+  have hJc : ∀ y : X, Jc y = ((e.symm y : A.domain) : X) := fun y => hJapp y
+  have hJcnorm : ‖Jc‖ ≤ lambda⁻¹ := J.mkContinuous_norm_le (by positivity) hJbound
+  -- `I - (lambda - mu) • Jc` is invertible, by the geometric series
+  let T : X →L[ℝ] X := (lambda - mu) • Jc
+  have hTapp : ∀ y : X, T y = (lambda - mu) • ((e.symm y : A.domain) : X) := by
+    intro y; simp [T, hJc]
+  have hTnorm : ‖T‖ < 1 := by
+    have h1 : ‖T‖ ≤ |lambda - mu| * lambda⁻¹ := by
+      have h2 : ‖T‖ = |lambda - mu| * ‖Jc‖ := by simp [T, norm_smul, Real.norm_eq_abs]
+      rw [h2]; gcongr
+    have h3 : |lambda - mu| < lambda := by rw [abs_lt]; constructor <;> linarith
+    calc ‖T‖ ≤ |lambda - mu| * lambda⁻¹ := h1
+      _ < lambda * lambda⁻¹ := mul_lt_mul_of_pos_right h3 (by positivity)
+      _ = 1 := mul_inv_cancel₀ hlambda.ne'
+  obtain ⟨u, hu⟩ := isUnit_one_sub_of_norm_lt_one hTnorm
+  -- solve `y - T y = z` and push the solution through `(lambda • I - A)⁻¹`
+  intro z
+  obtain ⟨y, hyz⟩ : ∃ y : X, y - T y = z := by
+    refine ⟨(↑u⁻¹ : X →L[ℝ] X) z, ?_⟩
+    have h1 : ((u : X →L[ℝ] X) * (↑u⁻¹ : X →L[ℝ] X)) z = z := by rw [u.mul_inv]; rfl
+    rw [hu] at h1
+    simpa using h1
+  refine ⟨e.symm y, ?_⟩
+  change mu • ((e.symm y : A.domain) : X) - A (e.symm y) = z
+  rw [show mu • ((e.symm y : A.domain) : X) - A (e.symm y)
+        = (lambda • ((e.symm y : A.domain) : X) - A (e.symm y))
+          - (lambda - mu) • ((e.symm y : A.domain) : X) from by module,
+    he y, ← hTapp y, hyz]
+
+/-- The range condition of an m-dissipative operator holds at *every* positive `lambda`, not
+just at the one its definition provides: propagate the given `lambda₀` through
+`IsDissipative.smul_sub_surjective_of_lt_two_mul` along the geometric sequence
+`(3/2)^n lambda₀`, which passes every positive real. -/
 theorem IsMDissipative.smul_sub_surjective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
-    Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
-  hA.2 lambda hlambda
+    Function.Surjective fun x : A.domain => lambda • (x : X) - A x := by
+  obtain ⟨lambda₀, hlambda₀, hrange⟩ := hA.exists_smul_sub_surjective
+  have hstep : (0 : ℝ) < 3 / 2 := by norm_num
+  have key : ∀ n : ℕ, Function.Surjective
+      fun x : A.domain => ((3 / 2 : ℝ) ^ n * lambda₀) • (x : X) - A x := by
+    intro n
+    induction n with
+    | zero => simpa using hrange
+    | succ n ih =>
+        have hpow : (0 : ℝ) < (3 / 2 : ℝ) ^ n := pow_pos hstep n
+        refine hA.isDissipative.smul_sub_surjective_of_lt_two_mul (by positivity) ih
+          (by positivity) ?_
+        rw [pow_succ]
+        nlinarith
+  obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt (lambda / (2 * lambda₀)) (by norm_num : (1 : ℝ) < 3 / 2)
+  rw [div_lt_iff₀ (by positivity)] at hn
+  refine hA.isDissipative.smul_sub_surjective_of_lt_two_mul (by positivity) (key n) hlambda ?_
+  linarith
 
 /-- For an m-dissipative operator, `lambda • I - A` is a bijection from `D(A)` onto `X` for
-every `lambda > 0`: injectivity comes from dissipativity, surjectivity from the range
-condition. -/
+every `lambda > 0`: injectivity comes from dissipativity, surjectivity from the propagated
+range condition. -/
 theorem IsMDissipative.smul_sub_bijective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
   ⟨hA.isDissipative.smul_sub_injective hlambda, hA.smul_sub_surjective hlambda⟩
+
+end CompleteSpace
 
 /-! ## The generator of a C₀-semigroup -/
 
@@ -274,13 +381,14 @@ theorem isDissipative_generator (S : ContractionSemigroup X) :
 /-- **The generator of a contraction semigroup is m-dissipative.** This is the full converse of
 the Lumer--Phillips theorem apart from the density of the domain (which is
 `StronglyContinuousSemigroup.dense_domain`): dissipativity is
-`ContractionSemigroup.isDissipative_generator` and the range condition is the surjectivity of
-`lambda • I - A` supplied by the resolvent. -/
+`ContractionSemigroup.isDissipative_generator` and the range condition is witnessed at
+`lambda = 1` by the surjectivity of `lambda • I - A` that the resolvent supplies (indeed at
+every `lambda > 0`, by `StronglyContinuousSemigroup.smul_sub_generator_surjective`). -/
 theorem isMDissipative_generator (S : ContractionSemigroup X) :
     IsMDissipative S.toStronglyContinuousSemigroup.generator :=
-  S.isDissipative_generator.isMDissipative fun _lambda hlambda =>
-    S.toStronglyContinuousSemigroup.smul_sub_generator_surjective S.hasGrowthBound
-      (by simpa using hlambda)
+  S.isDissipative_generator.isMDissipative one_pos
+    (S.toStronglyContinuousSemigroup.smul_sub_generator_surjective S.hasGrowthBound
+      (by norm_num))
 
 /-- The a priori estimate for the generator of a contraction semigroup: a solution of
 `lambda x - A x = y` has `‖x‖ ≤ ‖y‖ / lambda`. -/
