@@ -20,7 +20,7 @@ statement required by Part C of the `OrthogonalL2Bases` roadmap.
 ## Main declarations
 
 * `TauCeti.chebyshevCosineHilbertBasis` is the transported Chebyshev basis.
-* `TauCeti.coe_chebyshevCosineHilbertBasis` identifies its vectors with the normalized cosines.
+* `TauCeti.coeFn_chebyshevCosineHilbertBasis` identifies its vectors with the normalized cosines.
 -/
 
 public section
@@ -41,7 +41,7 @@ noncomputable def chebyshevCosineHilbertBasis :
 
 /-- **Chebyshev-cosine basis correspondence.** The `n`th vector of the transported Chebyshev basis
 is almost everywhere the scalar-cast normalized cosine `cos (nθ) / √cₙ`. -/
-theorem coe_chebyshevCosineHilbertBasis (n : ℕ) :
+theorem coeFn_chebyshevCosineHilbertBasis (n : ℕ) :
     ⇑(chebyshevCosineHilbertBasis 𝕜 n) =ᵐ[chebyshevAngleMeasure]
       fun θ => (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) := by
   rw [chebyshevCosineHilbertBasis, HilbertBasis.mapₗᵢ_apply]

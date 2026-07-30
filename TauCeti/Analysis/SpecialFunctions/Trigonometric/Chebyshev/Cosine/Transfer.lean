@@ -35,20 +35,25 @@ open MeasureTheory Polynomial.Chebyshev
 noncomputable def chebyshevAngleMeasure : Measure ℝ :=
   volume.restrict (Set.Ioc 0 Real.pi)
 
+/-- The angular Chebyshev measure is Lebesgue measure restricted to `(0, π]`. -/
+theorem chebyshevAngleMeasure_def :
+    chebyshevAngleMeasure = volume.restrict (Set.Ioc 0 Real.pi) :=
+  chebyshevAngleMeasure.eq_1
+
 /-- Integrating against `chebyshevAngleMeasure` is interval integration from `0` to `π`. -/
 theorem integral_chebyshevAngleMeasure {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (f : ℝ → E) :
     ∫ θ, f θ ∂chebyshevAngleMeasure = ∫ θ in (0)..Real.pi, f θ := by
-  rw [chebyshevAngleMeasure, intervalIntegral.integral_of_le Real.pi_nonneg]
+  rw [chebyshevAngleMeasure_def, intervalIntegral.integral_of_le Real.pi_nonneg]
 
 /-- The pushforward of angular Lebesgue measure under `cos` is the Chebyshev measure. -/
 theorem map_cos_chebyshevAngleMeasure :
     Measure.map Real.cos chebyshevAngleMeasure = measureT := by
   letI : IsFiniteMeasure chebyshevAngleMeasure := by
-    rw [chebyshevAngleMeasure]
+    rw [chebyshevAngleMeasure_def]
     infer_instance
   letI : Measure.InnerRegular chebyshevAngleMeasure := by
-    rw [chebyshevAngleMeasure]
+    rw [chebyshevAngleMeasure_def]
     infer_instance
   letI : Measure.InnerRegular (Measure.map Real.cos chebyshevAngleMeasure) :=
     Measure.InnerRegular.map_of_continuous Real.continuous_cos
@@ -121,6 +126,11 @@ private theorem chebyshevCosineL2Isometry_toLinearMap_apply (f : Lp 𝕜 2 measu
     (AddHom.toFun_eq_coe
       (Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev).toAddHom) f
 
+private theorem chebyshevCosineL2Isometry_apply (f : Lp 𝕜 2 measureT) :
+    chebyshevCosineL2Isometry 𝕜 f =
+      Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev f :=
+  chebyshevCosineL2Isometry_toLinearMap_apply 𝕜 f
+
 private theorem chebyshevArccosL2LinearMap_apply (f : Lp 𝕜 2 chebyshevAngleMeasure) :
     chebyshevArccosL2LinearMap 𝕜 f =
       Lp.compMeasurePreserving Real.arccos measurePreserving_arccos_chebyshev f := by
@@ -177,12 +187,18 @@ noncomputable def chebyshevCosineL2Equiv :
 /-- The forward Chebyshev-to-cosine equivalence is composition with `Real.cos`. -/
 theorem chebyshevCosineL2Equiv_apply (f : Lp 𝕜 2 measureT) :
     ⇑(chebyshevCosineL2Equiv 𝕜 f) =ᵐ[chebyshevAngleMeasure] fun θ => f (Real.cos θ) :=
-  Lp.coeFn_compMeasurePreserving f measurePreserving_cos_chebyshev
+  by
+    rw [chebyshevCosineL2Equiv, LinearIsometryEquiv.coe_ofLinearIsometry,
+      chebyshevCosineL2Isometry_apply]
+    exact Lp.coeFn_compMeasurePreserving f measurePreserving_cos_chebyshev
 
 /-- The inverse Chebyshev-to-cosine equivalence is composition with `Real.arccos`. -/
 theorem chebyshevCosineL2Equiv_symm_apply (f : Lp 𝕜 2 chebyshevAngleMeasure) :
     ⇑((chebyshevCosineL2Equiv 𝕜).symm f) =ᵐ[measureT] fun x => f (Real.arccos x) :=
-  Lp.coeFn_compMeasurePreserving f measurePreserving_arccos_chebyshev
+  by
+    rw [chebyshevCosineL2Equiv, LinearIsometryEquiv.coe_ofLinearIsometry_symm,
+      chebyshevArccosL2LinearMap_apply]
+    exact Lp.coeFn_compMeasurePreserving f measurePreserving_arccos_chebyshev
 
 end L2
 
