@@ -110,6 +110,10 @@ lemma prod_inv (A B : AbelianVariety K) :
 
 namespace prod
 
+private lemma toOverHom_injective {A B : AbelianVariety K} {f g : A ⟶ B}
+    (h : Hom.toOverHom f = Hom.toOverHom g) : f = g :=
+  (Hom.toOverFunctor (K := K)).map_injective h
+
 /-- The first projection from a product of abelian varieties. -/
 def fst (A B : AbelianVariety K) : prod A B ⟶ A := by
   refine Hom.mk'
@@ -163,8 +167,7 @@ lemma toOverHom_lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 @[simp]
 lemma lift_fst {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
     lift f g ≫ fst A B = f := by
-  apply (Hom.toOverFunctor (K := K)).map_injective
-  change Hom.toOverHom (lift f g ≫ fst A B) = Hom.toOverHom f
+  apply toOverHom_injective
   rw [Hom.toOverHom_comp, toOverHom_lift, toOverHom_fst]
   simp only [← Category.assoc]
   simp
@@ -173,8 +176,7 @@ lemma lift_fst {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 @[simp]
 lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
     lift f g ≫ snd A B = g := by
-  apply (Hom.toOverFunctor (K := K)).map_injective
-  change Hom.toOverHom (lift f g ≫ snd A B) = Hom.toOverHom g
+  apply toOverHom_injective
   rw [Hom.toOverHom_comp, toOverHom_lift, toOverHom_snd]
   simp only [← Category.assoc]
   simp
@@ -184,15 +186,12 @@ lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B}
     (hfst : f ≫ fst A B = g ≫ fst A B)
     (hsnd : f ≫ snd A B = g ≫ snd A B) : f = g := by
-  apply (Hom.toOverFunctor (K := K)).map_injective
-  change Hom.toOverHom f = Hom.toOverHom g
+  apply toOverHom_injective
   rw [← cancel_mono (eqToHom (prod_toOver A B))]
   apply CartesianMonoidalCategory.hom_ext
-  · have h := congrArg (Hom.toOverFunctor (K := K)).map hfst
-    change Hom.toOverHom (f ≫ fst A B) = Hom.toOverHom (g ≫ fst A B) at h
+  · have h := congrArg Hom.toOverHom hfst
     simpa only [Hom.toOverHom_comp, toOverHom_fst, ← Category.assoc] using h
-  · have h := congrArg (Hom.toOverFunctor (K := K)).map hsnd
-    change Hom.toOverHom (f ≫ snd A B) = Hom.toOverHom (g ≫ snd A B) at h
+  · have h := congrArg Hom.toOverHom hsnd
     simpa only [Hom.toOverHom_comp, toOverHom_snd, ← Category.assoc] using h
 
 /-- Precomposing a pairing composes each of its components. -/
