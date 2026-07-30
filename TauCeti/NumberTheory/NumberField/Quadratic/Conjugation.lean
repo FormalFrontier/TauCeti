@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.NumberTheory.NumberField.Basic
-public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.PowerBasis
 public import TauCeti.NumberTheory.ClassGroup.Equiv
+public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 
 /-!
 # Quadratic conjugation on a quadratic number field
@@ -46,14 +45,6 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The minimal polynomial of `θ` over `ℚ` is `X² - d`, lifted from its minimal polynomial over
-`ℤ` through the integrally closed base `ℤ ⊆ 𝓞 K`. Kept private as a file-local helper. -/
-private theorem minpoly_rat_of_int (hmin : minpoly ℤ θ = X ^ 2 - C d) :
-    minpoly ℚ (θ : K) = X ^ 2 - C ((d : ℤ) : ℚ) := by
-  rw [minpoly.isIntegrallyClosed_eq_field_fractions ℚ K (IsIntegralClosure.isIntegral ℤ K θ),
-    hmin]
-  simp
-
 /-- `X² - C a` is invariant under negating the variable: it is an even polynomial. -/
 private theorem X_pow_two_sub_C_comp_neg (a : ℚ) :
     (X ^ 2 - C a).comp (-X) = X ^ 2 - C a := by
@@ -62,7 +53,7 @@ private theorem X_pow_two_sub_C_comp_neg (a : ℚ) :
 /-- `θ` and `-θ` have the same minimal polynomial over `ℚ` (both `X² - d`, an even polynomial). -/
 private theorem minpoly_rat_eq_neg (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     minpoly ℚ (θ : K) = minpoly ℚ (-(θ : K)) := by
-  rw [minpoly.neg, minpoly_rat_of_int hmin, natDegree_X_pow_sub_C, X_pow_two_sub_C_comp_neg]
+  rw [minpoly.neg, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C, X_pow_two_sub_C_comp_neg]
   ring
 
 /-- The power basis `1, θ` of the quadratic field `K` over `ℚ`. -/

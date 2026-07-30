@@ -8,6 +8,7 @@ public import Mathlib.FieldTheory.KummerPolynomial
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
+public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 
 /-!
 # The prime-splitting law for a quadratic field
@@ -44,12 +45,6 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- The minimal polynomial of `θ` over `ℚ` is `X² - d`, obtained from its minimal polynomial
-over `ℤ` by base change along `ℤ → ℚ`. -/
-private theorem minpoly_rat_quadratic {θ : 𝓞 K} {d : ℤ} (hmin : minpoly ℤ θ = X ^ 2 - C d) :
-    minpoly ℚ (θ : K) = X ^ 2 - C ((d : ℤ) : ℚ) := by
-  rw [minpoly.isIntegrallyClosed_eq_field_fractions ℚ K (IsIntegralClosure.isIntegral ℤ K θ), hmin]
-  simp [Polynomial.map_sub, Polynomial.map_pow]
 
 /-- The power-basis discriminant `4d` lies in the conductor: for `θ` generating `K` over `ℚ`
 with minimal polynomial `X² - d` over `ℤ`, the image of `4 * d` in `𝓞 K` belongs to
