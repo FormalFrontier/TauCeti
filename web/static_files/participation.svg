@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430"
+     font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
+     role="img" aria-labelledby="participation-title participation-description">
+  <title id="participation-title">Tau Ceti — human participation: 27 people across 4 repositories as of 2026-07-29</title>
+  <desc id="participation-description">TauCeti: 17, TauCetiRoadmap: 15, TauCetiWorker: 3, TauCetiReview: 2. People active in several repositories are counted in each bar.</desc>
+  <style>
+    .title{fill:#eef2fb;font-size:19px;font-weight:600}
+    .total{fill:#eef2fb;font-size:42px;font-weight:700}
+    .sub{fill:#9aa6c9;font-size:13px}
+    .label{fill:#eef2fb;font-size:15px;text-anchor:end}
+    .count{fill:#eef2fb;font-size:16px;font-weight:650}
+    .note{fill:#9aa6c9;font-size:12.5px}
+  </style>
+  <rect x="0.5" y="0.5" width="979" height="429" rx="12" fill="#101936" stroke="#1b2547"/>
+  <text class="title" x="50" y="36">Tau Ceti — human participation</text>
+  <text class="total" x="50" y="91">27</text>
+  <text class="sub" x="112" y="86">unique people · 2026-07-29</text>
+  <text class="label" x="227" y="159">TauCeti</text><rect x="245" y="132" width="665" height="42" rx="8" fill="#27335a"/><rect x="245" y="132" width="418.7" height="42" rx="8" fill="#ff9d4d"/><text class="count" x="675.7" y="159">17</text><text class="label" x="227" y="219">TauCetiRoadmap</text><rect x="245" y="192" width="665" height="42" rx="8" fill="#27335a"/><rect x="245" y="192" width="369.4" height="42" rx="8" fill="#5eead4"/><text class="count" x="626.4" y="219">15</text><text class="label" x="227" y="279">TauCetiWorker</text><rect x="245" y="252" width="665" height="42" rx="8" fill="#27335a"/><rect x="245" y="252" width="73.9" height="42" rx="8" fill="#60a5fa"/><text class="count" x="330.9" y="279">3</text><text class="label" x="227" y="339">TauCetiReview</text><rect x="245" y="312" width="665" height="42" rx="8" fill="#27335a"/><rect x="245" y="312" width="49.3" height="42" rx="8" fill="#c084fc"/><text class="count" x="306.3" y="339">2</text>
+  <text class="note" x="50" y="400">
+    Opened a PR/issue, commented or reviewed, or authored a default-branch commit. Multi-repo participants appear in each bar.
+  </text>
+</svg>

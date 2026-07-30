@@ -7,7 +7,8 @@ module
 public import Mathlib.MeasureTheory.Measure.FiniteMeasurePi
 -- Public: `Measure.infinitePi` appears in the infinite-product statement.
 public import Mathlib.Probability.ProductMeasure
--- Non-public: `map_infinitePi_infinitePi_of_inj` is used only inside the prefix-marginal proof.
+-- Non-public: `map_infinitePi_infinitePi_of_inj` is used inside the prefix-marginal and
+-- block-selection proofs.
 import Mathlib.Probability.Independence.InfinitePi
 -- Non-public: `map_bind` is used only inside the mixture prefix-rectangle proof.
 import TauCeti.MeasureTheory.Measure.GiryMonad
@@ -50,6 +51,11 @@ Measurability:
   coordinates being the corresponding finite product, with `map_prefixProj_infinitePi_const` the
   constant-family form. Mathlib's `Measure.infinitePi_map_restrict` gives the marginal indexed by a
   coerced `Finset`; this is the `Fin n`-prefix form that prefix-marginal arguments on `ℕ → α` use.
+* `map_infinitePi_pair_block` — an **arbitrary injective block** of coordinates read off a constant
+  countable power, and tagged with the law it came from: `Q^{⊗ℕ}` pushed along
+  `x ↦ (Q, x ∘ k)` is `δ_Q ⊗ Q^{⊗ Fin m}`. This generalizes the prefix marginal above from `Fin.val`
+  to any injective `k`, and pairs it with the Dirac factor, which is the form a disintegration
+  against a directing measure consumes.
 
 Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure`:
 * `bind_probabilityMeasure_pi_apply` — evaluation on a measurable set as the integral of the product
@@ -244,6 +250,29 @@ theorem map_prefixProj_infinitePi_const {α : Type*} [MeasurableSpace α] (p : P
     (Measure.infinitePi (fun _ : ℕ => (p : Measure α))).map (fun x : ℕ → α => fun i : Fin n => x i)
       = Measure.pi (fun _ : Fin n => (p : Measure α)) :=
   map_prefixProj_infinitePi (fun _ => p) n
+
+/-- **Selecting a block from an i.i.d. power, tagged with its own law.** Reading an injective block
+`k : Fin m → ℕ` of coordinates off the countable power `Q^{⊗ℕ}` and recording `Q` alongside the
+result gives `δ_Q ⊗ Q^{⊗ Fin m}`; injectivity is what makes the selected coordinates independent.
+
+This is `map_prefixProj_infinitePi_const` for an arbitrary injective block rather than a prefix,
+paired with the law, which is the form a disintegration against a directing measure consumes. -/
+theorem map_infinitePi_pair_block {α : Type*} [MeasurableSpace α] (Q : ProbabilityMeasure α)
+    {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
+    (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
+      = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+  have hblk : Measurable fun x : ℕ → α => fun i : Fin m => x (k i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+  calc (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
+      = ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+          fun x : ℕ → α => fun i : Fin m => x (k i)).map (Prod.mk Q) :=
+        (Measure.map_map measurable_prodMk_left hblk).symm
+    _ = (Measure.pi fun _ : Fin m => (Q : Measure α)).map (Prod.mk Q) := by
+        rw [Measure.map_infinitePi_infinitePi_of_inj hk, Measure.infinitePi_eq_pi]
+    _ = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+        rw [ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives
