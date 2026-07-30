@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient
-public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Basic
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Norm
 
 /-!
@@ -44,8 +43,6 @@ classical genus theory behind the inversion action of conjugation on the class g
 
 public section
 
-open scoped nonZeroDivisors
-
 open NumberField Polynomial
 
 namespace TauCeti.NumberField
@@ -57,26 +54,10 @@ conjugation `σ = ringOfIntegersQuadraticConj` on `Cl(𝓞 K)` sends each class 
 `I · σI` is principal (`isPrincipal_mul_map_ringOfIntegersQuadraticConj`). This sharpens
 `mulEquiv_ringOfIntegersQuadraticConj_involutive` from an involution to inversion. -/
 theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (C : ClassGroup (𝓞 K)) :
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (C : ClassGroup (𝓞 K)) :
     ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C⁻¹ := by
-  obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective C
-  rw [ClassGroup.mulEquiv_mk0, ClassGroup.mk0_eq_mk0_inv_iff]
-  obtain ⟨x, hx⟩ :=
-    (isPrincipal_mul_map_ringOfIntegersQuadraticConj hmin hgen (I : Ideal (𝓞 K))).principal
-  have hIne : (I : Ideal (𝓞 K)) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
-  have hmapne : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K)) ≠ 0 := by
-    rw [ne_eq, Ideal.zero_eq_bot,
-      Ideal.map_eq_bot_iff_of_injective (ringOfIntegersQuadraticConj hmin hgen).injective,
-      ← Ideal.zero_eq_bot]
-    exact hIne
-  refine ⟨x, ?_, ?_⟩
-  · intro hx0
-    subst hx0
-    rw [Submodule.span_zero_singleton] at hx
-    exact mul_ne_zero hIne hmapne (hx.trans Ideal.zero_eq_bot.symm)
-  · rw [mul_comm]
-    exact hx
+  refine ClassGroup.mulEquiv_apply_eq_inv_of_forall_isPrincipal ?_ C
+  exact fun I => isPrincipal_mul_map_ringOfIntegersQuadraticConj hmin hgen (I : Ideal (𝓞 K))
 
 /-- **Quadratic conjugation acts trivially on `Cl(𝓞 K)/Cl(𝓞 K)²`.** Because it acts on `Cl(𝓞 K)` by
 inversion (as `I · σI` is principal), the induced `ZMod 2`-linear map on the maximal elementary-2

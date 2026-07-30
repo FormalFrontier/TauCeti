@@ -139,15 +139,13 @@ private theorem relNorm_map_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- **Norm-principality (Lemma A).** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`,
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
-genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
-
-For `I ≠ 0` the proof idea is that `I · σI` equals `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`,
-the extension of a principal `ℤ`-ideal (`Ideal.relNorm ℤ I` lives in the PID `ℤ`); the equality is
-obtained by matching relative norms and divisibility, not exported separately. -/
+genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (I : Ideal (𝓞 K)) :
     (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
+  -- For `I ≠ 0`, `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a
+  -- principal `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.
   rcases eq_or_ne I 0 with rfl | hJne
   · exact ⟨0, by simp⟩
   set σ := ringOfIntegersQuadraticConj hmin hgen with hσdef

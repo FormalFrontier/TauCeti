@@ -37,6 +37,8 @@ compute it on ideal classes.
   a ring isomorphism is again a nonzero divisor in the ideal monoid.
 * `ClassGroup.mulEquiv_mk0`: the induced class-group equivalence sends the class `ClassGroup.mk0 I`
   of a nonzero ideal to the class of its pushforward ideal `Ideal.map f I`.
+* `ClassGroup.mulEquiv_apply_eq_inv_of_forall_isPrincipal`: if `I · (Ideal.map f I)` is principal
+  for every nonzero ideal, the induced class-group map is inversion `C ↦ C⁻¹`.
 -/
 
 public section
@@ -245,5 +247,26 @@ theorem mulEquiv_mk0 [IsDedekindDomain R] [IsDedekindDomain R'] (f : R ≃+* R')
   apply Units.ext
   simp only [Units.coe_mapEquiv, FractionalIdeal.coe_mk0, RingEquiv.coe_toMulEquiv]
   exact ringEquivOfRingEquiv_coeIdeal (FractionRing R) (FractionRing R') f I
+
+/-- **Inversion criterion for the class-group action.** If a ring automorphism `f : R ≃+* R` of a
+Dedekind domain makes `I · (Ideal.map f I)` principal for every nonzero ideal `I`, then the induced
+map on the class group is inversion: `ClassGroup.mulEquiv f C = C⁻¹`. -/
+theorem mulEquiv_apply_eq_inv_of_forall_isPrincipal [IsDedekindDomain R] {f : R ≃+* R}
+    (hf : ∀ I : (Ideal R)⁰, ((I : Ideal R) * Ideal.map (f : R →+* R) (I : Ideal R)).IsPrincipal)
+    (C : ClassGroup R) : ClassGroup.mulEquiv f C = C⁻¹ := by
+  obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective C
+  rw [mulEquiv_mk0, ClassGroup.mk0_eq_mk0_inv_iff]
+  obtain ⟨x, hx⟩ := (hf I).principal
+  have hIne : (I : Ideal R) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
+  have hmapne : Ideal.map (f : R →+* R) (I : Ideal R) ≠ 0 := by
+    rw [ne_eq, Ideal.zero_eq_bot,
+      Ideal.map_eq_bot_iff_of_injective (f := (f : R →+* R)) f.injective, ← Ideal.zero_eq_bot]
+    exact hIne
+  refine ⟨x, ?_, ?_⟩
+  · intro hx0
+    subst hx0
+    rw [Submodule.span_zero_singleton] at hx
+    exact mul_ne_zero hIne hmapne (hx.trans Ideal.zero_eq_bot.symm)
+  · rw [mul_comm]; exact hx
 
 end ClassGroup
