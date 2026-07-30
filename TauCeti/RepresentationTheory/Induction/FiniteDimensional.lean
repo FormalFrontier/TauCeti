@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.FiniteIndex
 
@@ -273,6 +274,15 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
     (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ≅
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Iso.refl _
+
+/-- The character of `indFDRep A` is the character of Mathlib's underlying induced
+representation. -/
+@[simp]
+theorem indFDRep_character_eq {k G : Type u} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) (g : G) :
+    (indFDRep A).character g =
+      (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
+  (rfl)
 
 /-- Induction of an intertwiner of finite-dimensional representations: Mathlib's `Rep.indFunctor`
 on the underlying intertwiner, conjugated by `indFDRepForgetIso` and transported back along the
