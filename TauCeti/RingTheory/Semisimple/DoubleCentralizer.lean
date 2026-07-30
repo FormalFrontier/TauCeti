@@ -35,16 +35,16 @@ module-internal form -- no ambient base field is involved, only finiteness over 
 * `TauCeti.exists_smul_eq_of_linearIndependent`: the Jacobson-Chevalley form of density. Over a
   simple module, a single element of `R` carries any `D`-linearly independent family to an
   arbitrary family of targets.
-* `TauCeti.finite_end_of_smulCommClass`: the finiteness hypothesis is supplied by finiteness over
-  any commutative base ring acting compatibly, which is how it arises for a finite-dimensional
-  algebra; `TauCeti.algEquivEndEndOfIsSimpleRing` assembles that case.
+* `TauCeti.algEquivEndEndOfIsSimpleRing`: the finite-dimensional-algebra form, where the finiteness
+  hypothesis is supplied by finiteness over a commutative base ring acting compatibly.
 
 ## Implementation notes
 
 The finiteness hypothesis is `Module.Finite (Module.End R M) M`, finiteness over the endomorphism
 ring itself, rather than finite-dimensionality over an unrelated base ring. That is the hypothesis
-density actually needs, and `TauCeti.finite_end_of_smulCommClass` derives it from a base-ring
-hypothesis when one is available.
+density actually needs; when a commutative base ring `K` acting compatibly is available, the
+`K`-scalars are themselves `R`-linear endomorphisms, so `Module.Finite K M` gives it by
+`Module.Finite.of_restrictScalars_finite`.
 
 A faithful simple module makes `R` a *primitive* ring, not necessarily a simple one, so
 `TauCeti.toModuleEnd_moduleEnd_bijective` is genuinely more general than its simple-ring corollary.
@@ -77,11 +77,6 @@ kernel of a ring homomorphism out of `R`, a two-sided ideal not containing `1`, 
 theorem faithfulSMul_of_isSimpleRing [IsSimpleRing R] [Nontrivial M] : FaithfulSMul R M where
   eq_of_smul_eq_smul {_ _} h :=
     (Module.toModuleEnd (Module.End R M) M (S := R)).injective (LinearMap.ext h)
-
-/-- Over a simple ring the annihilator of a nontrivial module vanishes. -/
-theorem annihilator_eq_bot_of_isSimpleRing [IsSimpleRing R] [Nontrivial M] :
-    Module.annihilator R M = ⊥ :=
-  Module.annihilator_eq_bot.mpr faithfulSMul_of_isSimpleRing
 
 /-! ### The double centralizer theorem -/
 
@@ -189,19 +184,7 @@ theorem exists_smul_eq_of_linearIndependent [IsSimpleModule R M]
       Basis.constr_basis]
   rw [← hvi, ← hr, Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply]
 
-/-! ### Supplying the finiteness hypothesis -/
-
-/-- The finiteness hypothesis of the density theorem, `Module.Finite (Module.End R M) M`, follows
-from finiteness over any commutative base ring `K` whose action on `M` commutes with that of `R`:
-the scalars from `K` are themselves `R`-linear endomorphisms, so a `K`-generating set of `M`
-generates it over `Module.End R M`.
-
-In particular a finite-dimensional module over an algebra is finite over its endomorphism ring,
-which is how the hypothesis is met in the finite-dimensional-algebra setting. -/
-theorem finite_end_of_smulCommClass (K : Type*) [CommSemiring K] [Module K M]
-    [SMulCommClass R K M] [Module.Finite K M] :
-    Module.Finite (Module.End R M) M :=
-  .of_restrictScalars_finite K (Module.End R M) M
+/-! ### The finite-dimensional algebra case -/
 
 variable (R M)
 
@@ -214,7 +197,8 @@ noncomputable def algEquivEndEndOfIsSimpleRing (K : Type*) [CommSemiring K] [Alg
     R ≃ₐ[K] Module.End (Module.End R M) M :=
   have := IsSimpleModule.nontrivial R M
   have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
-  have := finite_end_of_smulCommClass (R := R) (M := M) K
+  -- The `K`-scalars are `R`-linear endomorphisms, so `M` is finite over `Module.End R M`.
+  have := Module.Finite.of_restrictScalars_finite K (Module.End R M) M
   algEquivEndEnd R M K
 
 variable {R M}
