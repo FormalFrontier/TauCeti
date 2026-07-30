@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Ring.Invertible
-public import Mathlib.LinearAlgebra.ExteriorPower.Pairing
+public import Mathlib.LinearAlgebra.ExteriorPower.Basic
+public import Mathlib.LinearAlgebra.TensorPower.Basic
 public import TauCeti.LinearAlgebra.SymmetricPower
 
 /-!
@@ -28,6 +29,8 @@ is needed.
 ## References
 
 * W. Fulton and J. Harris, *Representation Theory: A First Course*, Lecture 6.
+* Mathlib's `SymmetricPower` quotient API, by Kenny Lau.
+* Mathlib's `exteriorPower` universal-property API, by Sophie Morel and Joël Riou.
 -/
 
 public section
@@ -85,6 +88,7 @@ private theorem symmetricProjection_rel :
       · change symmetricProjection R M (PiTensorProduct.tprod R f) =
           symmetricProjection R M
             (PiTensorProduct.tprod R fun i ↦ f (Equiv.swap 0 1 i))
+        -- Unfold the quotient relation to the corresponding equality of pure tensor powers.
         simp [symmetricProjection, tensorSwap, Equiv.symm_swap, add_comm]
 
 end TauCeti
@@ -160,17 +164,39 @@ private noncomputable def symmetricExteriorToTensorSquare :
   (SymmetricPower.toTensorSquare R M).coprod
     (exteriorPower.toTensorSquare R M)
 
-private theorem mk_comp_toTensorSquare :
+end TauCeti
+
+namespace SymmetricPower
+
+/-- The symmetric quotient composed with the symmetric-square embedding is the identity. -/
+theorem mk_comp_toTensorSquare :
     (SymmetricPower.mk R (Fin 2) M).comp
         (SymmetricPower.toTensorSquare R M) = LinearMap.id := by
   apply LinearMap.ext_on
     (SymmetricPower.span_tprod_eq_top (R := R) (ι := Fin 2) (M := M))
   rintro _ ⟨f, rfl⟩
   simp only [LinearMap.comp_apply, SymmetricPower.toTensorSquare_tprod, map_smul, map_add]
+  -- `SymmetricPower.mk` sends each tensor-power generator to its symmetric class.
   change (⅟ (2 : R)) • (⨂ₛ[R] i, f i) +
     (⅟ (2 : R)) • (⨂ₛ[R] i, f (Equiv.swap 0 1 i)) = ⨂ₛ[R] i, f i
   rw [SymmetricPower.tprod_equiv (Equiv.swap 0 1) f, ← add_smul,
     invOf_two_add_invOf_two, one_smul]
+
+/-- Projecting the symmetric-square embedding back to the symmetric square is the identity. -/
+@[simp]
+theorem mk_toTensorSquare (x : Sym[R]^2M) :
+    mk R (Fin 2) M (toTensorSquare R M x) = x :=
+  DFunLike.congr_fun (mk_comp_toTensorSquare R M) x
+
+/-- The map from the symmetric square to the tensor square is injective. -/
+theorem toTensorSquare_injective :
+    Function.Injective (toTensorSquare R M) := by
+  intro x y h
+  rw [← mk_toTensorSquare R M x, ← mk_toTensorSquare R M y, h]
+
+end SymmetricPower
+
+namespace TauCeti
 
 private theorem wedge_comp_symmetric_toTensorSquare :
     (PiTensorProduct.lift
@@ -181,6 +207,7 @@ private theorem wedge_comp_symmetric_toTensorSquare :
   rintro _ ⟨f, rfl⟩
   simp only [LinearMap.comp_apply, SymmetricPower.toTensorSquare_tprod, map_smul,
     map_add, PiTensorProduct.lift.tprod, LinearMap.zero_apply]
+  -- The lifted wedge projection evaluates on pure tensors as `exteriorPower.ιMulti`.
   change (⅟ (2 : R)) •
     ((exteriorPower.ιMulti R 2) f +
       (exteriorPower.ιMulti R 2) (f ∘ Equiv.swap 0 1)) = 0
@@ -195,12 +222,18 @@ private theorem mk_comp_exterior_toTensorSquare :
   intro f
   simp only [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
     exteriorPower.toTensorSquare_ιMulti, map_smul, map_sub, LinearMap.zero_apply]
+  -- `SymmetricPower.mk` sends each tensor-power generator to its symmetric class.
   change (⅟ (2 : R)) •
     ((⨂ₛ[R] i, f i) - (⨂ₛ[R] i, f (Equiv.swap 0 1 i))) = 0
   rw [SymmetricPower.tprod_equiv (Equiv.swap 0 1) f]
   simp
 
-private theorem wedge_comp_exterior_toTensorSquare :
+end TauCeti
+
+namespace exteriorPower
+
+/-- The exterior projection composed with the exterior-square embedding is the identity. -/
+theorem lift_ιMulti_comp_toTensorSquare :
     (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (exteriorPower.toTensorSquare R M) = LinearMap.id := by
@@ -210,6 +243,7 @@ private theorem wedge_comp_exterior_toTensorSquare :
   simp only [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
     exteriorPower.toTensorSquare_ιMulti, map_smul, map_sub,
     PiTensorProduct.lift.tprod, LinearMap.id_apply]
+  -- Expose the swapped family as precomposition so `AlternatingMap.map_swap` applies.
   rw [show (fun i ↦ f (Equiv.swap 0 1 i)) = f ∘ Equiv.swap 0 1 by rfl]
   have hswap :
       (exteriorPower.ιMulti R 2).toMultilinearMap
@@ -218,6 +252,23 @@ private theorem wedge_comp_exterior_toTensorSquare :
     (exteriorPower.ιMulti R 2).map_swap f (by decide)
   rw [hswap]
   simp
+
+/-- Projecting the exterior-square embedding back to the exterior square is the identity. -/
+@[simp]
+theorem lift_ιMulti_toTensorSquare (x : ⋀[R]^2 M) :
+    PiTensorProduct.lift (ιMulti R 2 (M := M)).toMultilinearMap
+        (toTensorSquare R M x) = x :=
+  DFunLike.congr_fun (lift_ιMulti_comp_toTensorSquare R M) x
+
+/-- The map from the exterior square to the tensor square is injective. -/
+theorem toTensorSquare_injective :
+    Function.Injective (toTensorSquare R M) := by
+  intro x y h
+  rw [← lift_ιMulti_toTensorSquare R M x, ← lift_ιMulti_toTensorSquare R M y, h]
+
+end exteriorPower
+
+namespace TauCeti
 
 private theorem symmetricExteriorToTensorSquare_comp :
     (symmetricExteriorToTensorSquare R M).comp
@@ -228,6 +279,7 @@ private theorem symmetricExteriorToTensorSquare_comp :
   rintro _ ⟨f, rfl⟩
   simp only [LinearMap.add_apply, LinearMap.comp_apply, PiTensorProduct.lift.tprod,
     LinearMap.id_apply]
+  -- The two components of the product map reduce to the symmetric class and wedge.
   change SymmetricPower.toTensorSquare R M (⨂ₛ[R] i, f i) +
       exteriorPower.toTensorSquare R M ((exteriorPower.ιMulti R 2) f) =
     PiTensorProduct.tprod R f
@@ -241,8 +293,8 @@ private theorem tensorSquareToSymmetricExterior_comp :
         (symmetricExteriorToTensorSquare R M) = LinearMap.id := by
   rw [tensorSquareToSymmetricExterior, symmetricExteriorToTensorSquare,
     LinearMap.prod_comp, LinearMap.comp_coprod, LinearMap.comp_coprod,
-    mk_comp_toTensorSquare, wedge_comp_symmetric_toTensorSquare,
-    mk_comp_exterior_toTensorSquare, wedge_comp_exterior_toTensorSquare]
+    SymmetricPower.mk_comp_toTensorSquare, wedge_comp_symmetric_toTensorSquare,
+    mk_comp_exterior_toTensorSquare, exteriorPower.lift_ιMulti_comp_toTensorSquare]
   rw [← LinearMap.fst_eq_coprod, ← LinearMap.snd_eq_coprod,
     LinearMap.pair_fst_snd]
 
@@ -264,6 +316,15 @@ theorem tensorSquareEquivSymmetricExterior_tprod (f : Fin 2 → M) :
     tensorSquareEquivSymmetricExterior R M (PiTensorProduct.tprod R f) =
       (⨂ₛ[R] i, f i, exteriorPower.ιMulti R 2 f) := by
   simp [tensorSquareEquivSymmetricExterior, tensorSquareToSymmetricExterior]
+  rfl
+
+/-- The inverse tensor-square decomposition is the sum of the symmetric and exterior
+embeddings. -/
+@[simp]
+theorem tensorSquareEquivSymmetricExterior_symm_apply
+    (x : (Sym[R]^2M) × (⋀[R]^2 M)) :
+    (tensorSquareEquivSymmetricExterior R M).symm x =
+      SymmetricPower.toTensorSquare R M x.1 + exteriorPower.toTensorSquare R M x.2 := by
   rfl
 
 end TauCeti
