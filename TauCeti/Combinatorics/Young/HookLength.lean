@@ -38,8 +38,8 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
 * `TauCeti.YoungDiagram.hookLength_transpose`: transposition preserves hook lengths.
 * `TauCeti.YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when it is a
   corner, that is, when neither the cell to its right nor the cell below it lies in the diagram.
-* `TauCeti.YoungDiagram.prod_hookLength_of_colLen_le_one`: the hook lengths of a one-row diagram
-  multiply to `μ.card !`.
+* `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one`: the hook lengths of a
+  one-row diagram multiply to `μ.card !`.
 
 ## References
 
@@ -99,6 +99,7 @@ theorem mem_leg {d : ℕ × ℕ} : d ∈ leg μ c ↔ d ∈ μ ∧ d.2 = c.2 ∧
   · rintro ⟨ha, rfl, hc⟩
     exact ⟨a, ⟨hc, ha⟩, rfl, rfl⟩
 
+@[simp]
 theorem mem_hook {d : ℕ × ℕ} :
     d ∈ hook μ c ↔ d = c ∨ (d ∈ μ ∧ d.1 = c.1 ∧ c.2 < d.2) ∨ (d ∈ μ ∧ d.2 = c.2 ∧ c.1 < d.1) := by
   simp [hook]
@@ -138,16 +139,20 @@ def legLength : ℕ := μ.colLen c.2 - c.1 - 1
 /-- The hook length of the cell `c` in the Young diagram `μ`: the number of cells in its hook. -/
 def hookLength : ℕ := armLength μ c + legLength μ c + 1
 
+/-- The arm of a cell has `armLength` many elements. -/
 @[simp]
 theorem card_arm : (arm μ c).card = armLength μ c := by
   simp only [arm, Finset.card_map, Nat.card_Ico, armLength]
   omega
 
+/-- The leg of a cell has `legLength` many elements. -/
 @[simp]
 theorem card_leg : (leg μ c).card = legLength μ c := by
   simp only [leg, Finset.card_map, Nat.card_Ico, legLength]
   omega
 
+/-- The hook of a cell has `hookLength` many elements: the numerical definition of `hookLength`
+really does count the cells of the hook. -/
 @[simp]
 theorem card_hook : (hook μ c).card = hookLength μ c := by
   have hc : c ∉ arm μ c ∪ leg μ c := Finset.notMem_union.mpr ⟨notMem_arm_self, notMem_leg_self⟩
@@ -167,14 +172,48 @@ theorem hookLength_le_card (h : c ∈ μ) : hookLength μ c ≤ μ.card := by
 
 variable (μ c)
 
+/-- Transposition exchanges arms with legs: the arm of `c` in `μ.transpose` is the reflection of
+the leg of `c.swap` in `μ`. -/
+@[simp]
+theorem arm_transpose :
+    arm μ.transpose c = (leg μ c.swap).map (Equiv.prodComm ℕ ℕ).toEmbedding := by
+  ext d
+  rw [Finset.mem_map_equiv]
+  simp [_root_.YoungDiagram.mem_transpose]
+
+/-- Transposition exchanges legs with arms: the leg of `c` in `μ.transpose` is the reflection of
+the arm of `c.swap` in `μ`. -/
+@[simp]
+theorem leg_transpose :
+    leg μ.transpose c = (arm μ c.swap).map (Equiv.prodComm ℕ ℕ).toEmbedding := by
+  ext d
+  rw [Finset.mem_map_equiv]
+  simp [_root_.YoungDiagram.mem_transpose]
+
+/-- Transposition reflects hooks: the hook of `c` in `μ.transpose` is the reflection of the hook of
+`c.swap` in `μ`. -/
+@[simp]
+theorem hook_transpose :
+    hook μ.transpose c = (hook μ c.swap).map (Equiv.prodComm ℕ ℕ).toEmbedding := by
+  ext d
+  rw [Finset.mem_map_equiv]
+  simp only [mem_hook, Equiv.prodComm_symm, Equiv.prodComm_apply, _root_.YoungDiagram.mem_transpose,
+    Prod.fst_swap, Prod.snd_swap, Prod.swap_inj]
+  -- the arm and the leg have traded places
+  exact or_congr Iff.rfl or_comm
+
+/-- Transposition exchanges arm lengths with leg lengths. -/
 @[simp]
 theorem armLength_transpose : armLength μ.transpose c = legLength μ c.swap := by
   simp [armLength, legLength]
 
+/-- Transposition exchanges leg lengths with arm lengths. -/
 @[simp]
 theorem legLength_transpose : legLength μ.transpose c = armLength μ c.swap := by
   simp [armLength, legLength]
 
+/-- Transposition preserves hook lengths: the hook length of `c` in `μ.transpose` is that of
+`c.swap` in `μ`. -/
 @[simp]
 theorem hookLength_transpose : hookLength μ.transpose c = hookLength μ c.swap := by
   simp only [hookLength, armLength_transpose, legLength_transpose]
@@ -248,10 +287,9 @@ theorem cells_eq_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
 
 theorem card_eq_rowLen_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
     μ.card = μ.rowLen 0 := by
-  rw [show μ.card = μ.cells.card from rfl, cells_eq_of_colLen_le_one h]
-  simp
+  simp [_root_.YoungDiagram.card, cells_eq_of_colLen_le_one h]
 
-theorem hookLength_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) {j : ℕ}
+theorem hookLength_eq_rowLen_sub_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) {j : ℕ}
     (hj : j < μ.rowLen 0) :
     hookLength μ (0, j) = μ.rowLen 0 - j := by
   have hmem : (0, j) ∈ μ := _root_.YoungDiagram.mem_iff_lt_rowLen.mpr hj
@@ -262,24 +300,27 @@ theorem hookLength_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) 
 
 /-- The hook-length formula for a Young diagram with at most one row: the hook lengths multiply to
 `μ.card !`. -/
-theorem prod_hookLength_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
+theorem prod_hookLength_eq_factorial_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
     ∏ c ∈ μ.cells, hookLength μ c = Nat.factorial μ.card := by
   set m := μ.rowLen 0 with hm
+  have hreflect : ∀ j ∈ Finset.range m, m - (m - 1 - j) = j + 1 := by
+    intro j hj
+    have := Finset.mem_range.mp hj
+    omega
   rw [cells_eq_of_colLen_le_one h, Finset.prod_product, Finset.prod_singleton,
     card_eq_rowLen_of_colLen_le_one h, ← hm]
-  rw [Finset.prod_congr rfl fun j hj => hookLength_of_colLen_le_one h (Finset.mem_range.mp hj)]
+  rw [Finset.prod_congr rfl fun j hj =>
+    hookLength_eq_rowLen_sub_of_colLen_le_one h (Finset.mem_range.mp hj)]
   rw [← Finset.prod_range_reflect (fun j => m - j) m]
-  rw [Finset.prod_congr rfl fun j hj => show m - (m - 1 - j) = j + 1 by
-    have := Finset.mem_range.mp hj
-    omega]
+  rw [Finset.prod_congr rfl hreflect]
   exact Finset.prod_range_add_one_eq_factorial m
 
 /-- The hook-length formula for a Young diagram with at most one column: the hook lengths multiply
 to `μ.card !`. -/
-theorem prod_hookLength_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
+theorem prod_hookLength_eq_factorial_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
     ∏ c ∈ μ.cells, hookLength μ c = Nat.factorial μ.card := by
   rw [← prod_hookLength_transpose μ,
-    prod_hookLength_of_colLen_le_one (by simpa using h), card_transpose]
+    prod_hookLength_eq_factorial_of_colLen_le_one (by simpa using h), card_transpose]
 
 end YoungDiagram
 
