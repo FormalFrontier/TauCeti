@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.PowerBasis
+public import TauCeti.NumberTheory.ClassGroup.Equiv
 
 /-!
 # Quadratic conjugation on a quadratic number field
@@ -117,5 +118,13 @@ theorem quadConjInt_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     rw [quadConjInt_coe, quadConjInt_coe]
     exact quadConj_involutive hmin hgen (x : K)
   exact RingOfIntegers.coe_injective h
+
+/-- Quadratic conjugation acts as an **involution on the class group** `Cl(𝓞 K)`. This is the
+group-action shadow of `quadConjInt_involutive`, and the first step towards the genus-theoretic
+fact that the induced action is inversion (hence trivial on `Cl/Cl²`). -/
+theorem mulEquiv_quadConjInt_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    Function.Involutive (ClassGroup.mulEquiv (quadConjInt hmin hgen)) :=
+  ClassGroup.mulEquiv_involutive (quadConjInt_involutive hmin hgen)
 
 end TauCeti.NumberField
