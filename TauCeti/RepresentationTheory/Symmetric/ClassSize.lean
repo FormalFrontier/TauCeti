@@ -138,7 +138,7 @@ theorem card_isConj_mul_zPart (σ : Equiv.Perm α) :
 `(Fintype.card α)! / zPart μ`.
 
 Stated multiplicatively, so it carries no divisibility obligation; the quotient form is
-`card_partition_parts_fin`. -/
+`card_partition_div_zPart`. -/
 theorem card_partition_mul_zPart (μ : (Fintype.card α).Partition) :
     Nat.card {σ : Equiv.Perm α // σ.partition = μ} * zPart μ = (Fintype.card α)! := by
   obtain ⟨g, hg⟩ := exists_perm_partition_eq μ
@@ -183,7 +183,7 @@ theorem card_partition_parts_div_zPart {n : ℕ} (h : Fintype.card α = n) (μ :
   (Nat.div_eq_of_eq_mul_left (zPart_pos μ) (card_partition_parts_mul_zPart h μ).symm).symm
 
 /-- The quotient form of the class-size formula for `Equiv.Perm (Fin n)`. -/
-theorem card_partition_parts_fin (n : ℕ) (μ : n.Partition) :
+theorem card_partition_parts_div_zPart_fin (n : ℕ) (μ : n.Partition) :
     Nat.card {σ : Equiv.Perm (Fin n) // σ.partition.parts = μ.parts} = n ! / zPart μ :=
   card_partition_parts_div_zPart (Fintype.card_fin n) μ
 
@@ -194,15 +194,25 @@ For `2 ≤ n` these are the `n`-cycles.  For `n ≤ 1` the fibre is the identity
 are `1`, but the identity is not a cycle in Mathlib's sense: the one-part partition of `0` has no
 parts, and that of `1` has the single part `1`, which is the partition of the identity of a
 one-element type. -/
-theorem card_partition_parts_indiscrete {n : ℕ} (h : Fintype.card α = n) :
-    Nat.card {σ : Equiv.Perm α //
-      σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! := by
-  rw [card_partition_parts_div_zPart h]
-  rcases eq_or_ne n 0 with rfl | hn
-  · simp [zPart_def]
+theorem card_partition_indiscrete :
+    Nat.card {σ : Equiv.Perm α // σ.partition = Nat.Partition.indiscrete (Fintype.card α)} =
+      (Fintype.card α - 1)! := by
+  rw [card_partition_div_zPart]
+  rcases eq_or_ne (Fintype.card α) 0 with h | hn
+  · rw [h]
+    simp [zPart_def]
   · rw [zPart_indiscrete hn]
     exact Nat.div_eq_of_eq_mul_left (Nat.pos_of_ne_zero hn)
       (by rw [mul_comm, Nat.mul_factorial_pred hn])
+
+/-- The count of the permutations with the one-part partition, transported along an equality
+`Fintype.card α = n`. -/
+theorem card_partition_parts_indiscrete {n : ℕ} (h : Fintype.card α = n) :
+    Nat.card {σ : Equiv.Perm α //
+      σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! := by
+  subst h
+  exact Eq.trans (Nat.card_congr <| Equiv.subtypeEquivRight fun σ =>
+    ⟨Nat.Partition.ext, fun hσ => by rw [hσ]⟩) card_partition_indiscrete
 
 /-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)` when `2 ≤ n`; for `n ≤ 1` the fibre is
 the identity permutation of `Fin n`, which is not a cycle, and both sides are `1`. -/
@@ -238,7 +248,7 @@ theorem sum_card_partition_parts {n : ℕ} (α : Type*) [Fintype α] [DecidableE
 This is the natural-number form of the normalisation of the orthogonality weights; the rational
 identity `∑_μ 1 / z_μ = 1`, which divides this one by `n !`, is not formalised here. -/
 theorem sum_factorial_div_zPart (n : ℕ) : ∑ μ : n.Partition, n ! / zPart μ = n ! :=
-  Eq.trans (Finset.sum_congr rfl fun μ _ => (card_partition_parts_fin n μ).symm)
+  Eq.trans (Finset.sum_congr rfl fun μ _ => (card_partition_parts_div_zPart_fin n μ).symm)
     (sum_card_partition_parts (Fin n) (Fintype.card_fin n))
 
 end TauCeti
