@@ -58,29 +58,6 @@ theorem mem_colSubgroup {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
     σ ∈ colSubgroup t ↔ ∀ k, colIndex t (σ k) = colIndex t k :=
   mem_fiberSubgroup
 
-/-- The transposition of two labels lying in a common row of `t` belongs to the row group. -/
-theorem swap_mem_rowSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
-    (h : rowIndex t x = rowIndex t y) : Equiv.swap x y ∈ rowSubgroup t := by
-  rw [mem_rowSubgroup]
-  intro k
-  rcases eq_or_ne k x with rfl | hkx
-  · rw [Equiv.swap_apply_left, h]
-  · rcases eq_or_ne k y with rfl | hky
-    · rw [Equiv.swap_apply_right, h]
-    · rw [Equiv.swap_apply_of_ne_of_ne hkx hky]
-
-/-- The transposition of two labels lying in a common column of `t` belongs to the column
-group. -/
-theorem swap_mem_colSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
-    (h : colIndex t x = colIndex t y) : Equiv.swap x y ∈ colSubgroup t := by
-  rw [mem_colSubgroup]
-  intro k
-  rcases eq_or_ne k x with rfl | hkx
-  · rw [Equiv.swap_apply_left, h]
-  · rcases eq_or_ne k y with rfl | hky
-    · rw [Equiv.swap_apply_right, h]
-    · rw [Equiv.swap_apply_of_ne_of_ne hkx hky]
-
 /-- The row group of `t` is the group of permutations preserving the fibers of `rowIndex t`. -/
 theorem rowSubgroup_def (t : YoungTableau μ) :
     rowSubgroup t = fiberSubgroup (rowIndex t) := by
@@ -92,6 +69,19 @@ theorem colSubgroup_def (t : YoungTableau μ) :
     colSubgroup t = fiberSubgroup (colIndex t) := by
   ext σ
   rw [mem_colSubgroup, mem_fiberSubgroup]
+
+/-- The transposition of two labels lying in a common row of `t` belongs to the row group. -/
+theorem swap_mem_rowSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : rowIndex t x = rowIndex t y) : Equiv.swap x y ∈ rowSubgroup t := by
+  rw [rowSubgroup_def]
+  exact swap_mem_fiberSubgroup h
+
+/-- The transposition of two labels lying in a common column of `t` belongs to the column
+group. -/
+theorem swap_mem_colSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : colIndex t x = colIndex t y) : Equiv.swap x y ∈ colSubgroup t := by
+  rw [colSubgroup_def]
+  exact swap_mem_fiberSubgroup h
 
 /-- The row and column groups of a `μ`-tableau meet only in the identity: a permutation of the
 labels that stays inside the rows and inside the columns fixes every cell. -/
