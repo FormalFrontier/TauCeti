@@ -7,7 +7,7 @@ module
 public import TauCeti.Probability.Ergodic.InvariantSigma
 public import TauCeti.Probability.Ergodic.MeanErgodic
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
-public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
+import TauCeti.Probability.Ergodic.BirkhoffLp
 import Mathlib.Dynamics.BirkhoffSum.QuasiMeasurePreserving
 
 /-!
@@ -18,8 +18,9 @@ probabilistic form of the theorem still needs that projection identified with a 
 expectation. This file carries out the identification for the `L²` composition (Koopman) operator
 of a measure-preserving map `T`: the mean ergodic projection `metProjection T hT` of
 `TauCeti.Probability.Ergodic.MeanErgodic` is Mathlib's `condExpL2` for the invariant σ-algebra
-`MeasurableSpace.invariants T`, and therefore almost everywhere the conditional expectation
-`μ[· | MeasurableSpace.invariants T]`.
+`MeasurableSpace.invariants T`. Passing from `condExpL2` to the conditional expectation
+`μ[· | MeasurableSpace.invariants T]` of representatives costs a finiteness assumption, so the
+pointwise statements below assume `[IsFiniteMeasure μ]` while the `condExpL2` ones do not.
 
 The identification is not a simp step: it rests on `fixedSpace_eq_lpMeas_invariants`, which
 replaces an almost invariant observable by an invariantly measurable representative, together with
@@ -27,23 +28,23 @@ the fact that both operators are orthogonal projections onto the resulting commo
 `L²`.
 
 Feeding the identification into `birkhoffAverage_tendsto_metProjection` turns the Hilbert-space
-statement into the probabilists' mean ergodic theorem: the time averages `birkhoffAverage ℝ T f n`
-of a square-integrable observable converge in `L²` to `μ[f | MeasurableSpace.invariants T]`. The
-translation between the operator Birkhoff averages of the composition operator and the pointwise
-Birkhoff averages of a representative is `coeFn_birkhoffAverage_compMeasurePreserving`.
+statement into the probabilists' mean ergodic theorem: on a finite measure space, the time averages
+`birkhoffAverage ℝ T f n` of a square-integrable observable converge in `L²` to
+`μ[f | MeasurableSpace.invariants T]`. The translation between the operator Birkhoff averages of
+the composition operator and the pointwise Birkhoff averages of a representative is
+`coeFn_birkhoffAverage_compMeasurePreserving` of `TauCeti.Probability.Ergodic.BirkhoffLp`.
 
 ## Main results
 
 * `metProjection_eq_condExpL2` — the mean ergodic projection is `condExpL2` for the invariant
-  σ-algebra;
-* `metProjection_ae_eq_condExp` — its representatives are the conditional expectation given the
-  invariant σ-algebra;
-* `condExpL2_invariants_eq_self_iff` — that conditional expectation fixes exactly the almost
-  everywhere invariant observables;
-* `coeFn_birkhoffAverage_compMeasurePreserving` — the Birkhoff averages of the composition
-  operator are represented by the pointwise Birkhoff averages of a representative;
-* `birkhoffAverage_tendsto_condExpL2` and `tendsto_eLpNorm_birkhoffAverage_sub_condExp` — the two
-  resulting forms of the mean ergodic theorem for conditional expectations.
+  σ-algebra, for an arbitrary measure;
+* `metProjection_ae_eq_condExp` — on a finite measure space, its representatives are the
+  conditional expectation given the invariant σ-algebra;
+* `condExpL2_invariants_eq_self_iff` — `condExpL2` for the invariant σ-algebra fixes exactly the
+  almost everywhere invariant observables, again for an arbitrary measure;
+* `birkhoffAverage_tendsto_condExpL2` — the Birkhoff averages of the composition operator converge
+  to `condExpL2`, and `tendsto_eLpNorm_birkhoffAverage_sub_condExp` — on a finite measure space,
+  the pointwise Birkhoff averages converge in `L²` to the conditional expectation.
 
 The `Exchangeability` roadmap records this identification as the Layer 5 milestone
 `proj_eq_condexp`, whose migration source is the `Ergodic` subtree of
@@ -56,8 +57,8 @@ public section
 
 noncomputable section
 
-open Filter Function MeasureTheory
-open scoped ENNReal Topology
+open Filter MeasureTheory
+open scoped Topology
 
 namespace TauCeti
 
@@ -83,12 +84,12 @@ theorem metProjection_eq_condExpL2 (T : Ω → Ω) (hT : MeasurePreserving T μ 
           lpMeas ℝ ℝ (MeasurableSpace.invariants T) 2 μ) : Lp ℝ 2 μ) =
         (lpMeas ℝ ℝ (MeasurableSpace.invariants T) 2 μ).starProjection g :=
     Submodule.coe_orthogonalProjectionOnto_apply _ g
-  rw [metProjection_eq_starProjection]
-  refine Submodule.eq_starProjection_of_mem_orthogonal ?_ ?_
-  · rw [fixedSpace_eq_lpMeas_invariants T hT]
-    exact Submodule.coe_mem _
-  · rw [fixedSpace_eq_lpMeas_invariants T hT, hcoe]
-    exact Submodule.sub_starProjection_mem_orthogonal _
+  rw [hcoe]
+  refine (Submodule.eq_starProjection_of_mem_orthogonal ?_ ?_).symm
+  · rw [← fixedSpace_eq_lpMeas_invariants T hT]
+    exact metProjection_mem_fixedSpace T hT g
+  · rw [← fixedSpace_eq_lpMeas_invariants T hT]
+    exact sub_metProjection_mem_orthogonal T hT g
 
 /-- On a finite measure space, the mean ergodic projection of a square-integrable observable is
 almost everywhere its conditional expectation given the invariant σ-algebra. -/
@@ -103,58 +104,13 @@ theorem metProjection_ae_eq_condExp [IsFiniteMeasure μ] (T : Ω → Ω)
 
 /-- Conditional expectation for the invariant σ-algebra fixes exactly the almost everywhere
 invariant `L²` observables. -/
+@[simp]
 theorem condExpL2_invariants_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
     (g : Lp ℝ 2 μ) :
     (condExpL2 ℝ ℝ (MeasurableSpace.invariants_le T) g : Lp ℝ 2 μ) = g ↔
       (g : Ω → ℝ) ∘ T =ᵐ[μ] g := by
   rw [← metProjection_eq_condExpL2 T hT g, metProjection_eq_self_iff, mem_fixedSpace_iff hT,
     compMeasurePreserving_eq_self_iff hT]
-
-/-! ## Birkhoff averages of the composition operator -/
-
-section Birkhoff
-
-variable {E : Type*} [NormedAddCommGroup E] {p : ℝ≥0∞}
-
-/-- Iterating the `Lᵖ` composition operator composes with the iterated transformation. -/
-theorem coeFn_iterate_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePreserving T μ μ)
-    (g : Lp E p μ) (n : ℕ) :
-    ⇑((Lp.compMeasurePreserving (E := E) (p := p) T hT)^[n] g) =ᵐ[μ] ⇑g ∘ T^[n] := by
-  rw [Lp.compMeasurePreserving_iterate hT n]
-  exact Lp.coeFn_compMeasurePreserving g (hT.iterate n)
-
-/-- The Birkhoff sums of the `Lᵖ` composition operator are represented by the pointwise Birkhoff
-sums of any representative. -/
-theorem coeFn_birkhoffSum_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePreserving T μ μ)
-    (g : Lp E p μ) (n : ℕ) :
-    ⇑(birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g) =ᵐ[μ]
-      birkhoffSum T (⇑g) n := by
-  induction n with
-  | zero =>
-      simp only [birkhoffSum_zero', Pi.zero_apply]
-      exact Lp.coeFn_zero E p μ
-  | succ n ih =>
-      rw [birkhoffSum_succ]
-      filter_upwards [ih, coeFn_iterate_compMeasurePreserving hT g n,
-        Lp.coeFn_add (birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g)
-          (id ((Lp.compMeasurePreserving (E := E) (p := p) T hT)^[n] g))] with ω hsum hiter hadd
-      rw [hadd, birkhoffSum_succ]
-      exact congrArg₂ _ hsum hiter
-
-variable [NormedSpace ℝ E]
-
-/-- The Birkhoff averages of the `Lᵖ` composition operator are represented by the pointwise
-Birkhoff averages of any representative. -/
-theorem coeFn_birkhoffAverage_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePreserving T μ μ)
-    (g : Lp E p μ) (n : ℕ) :
-    ⇑(birkhoffAverage ℝ (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g) =ᵐ[μ]
-      birkhoffAverage ℝ T (⇑g) n := by
-  filter_upwards [coeFn_birkhoffSum_compMeasurePreserving hT g n,
-    Lp.coeFn_smul ((n : ℝ)⁻¹)
-      (birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g)] with ω hsum hsmul
-  rw [birkhoffAverage, hsmul, Pi.smul_apply, hsum, birkhoffAverage]
-
-end Birkhoff
 
 /-! ## The mean ergodic theorem for conditional expectations -/
 
