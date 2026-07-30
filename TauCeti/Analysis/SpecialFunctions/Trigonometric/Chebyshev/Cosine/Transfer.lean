@@ -104,7 +104,7 @@ theorem measurePreserving_arccos_chebyshev :
 
 section L2
 
-variable (𝕜 : Type*) [RCLike 𝕜]
+variable (𝕜 : Type*) [NormedRing 𝕜]
 
 private noncomputable def chebyshevCosineL2Isometry :
     Lp 𝕜 2 measureT →ₗᵢ[𝕜] Lp 𝕜 2 chebyshevAngleMeasure :=
