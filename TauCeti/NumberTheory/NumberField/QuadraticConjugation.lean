@@ -97,4 +97,25 @@ theorem quadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
   have := AlgHom.congr_fun hext x
   simpa only [AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, AlgHom.id_apply] using this
 
+/-- **Quadratic conjugation on the ring of integers.** The restriction of `quadConj` to `𝓞 K`, a
+ring automorphism `𝓞 K ≃+* 𝓞 K`. This is the automorphism whose action on `ClassGroup (𝓞 K)` is by
+inversion (the genus-theoretic fact that `I · σI` is principal). -/
+noncomputable def quadConjInt (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : 𝓞 K ≃+* 𝓞 K :=
+  RingOfIntegers.mapRingEquiv (quadConj hmin hgen).toRingEquiv
+
+@[simp] theorem quadConjInt_coe (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
+    (quadConjInt hmin hgen x : K) = quadConj hmin hgen (x : K) := by
+  rw [quadConjInt, RingOfIntegers.mapRingEquiv_apply, AlgEquiv.coe_ringEquiv]
+
+theorem quadConjInt_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    Function.Involutive (quadConjInt hmin hgen) := by
+  intro x
+  have h : (quadConjInt hmin hgen (quadConjInt hmin hgen x) : K) = (x : K) := by
+    rw [quadConjInt_coe, quadConjInt_coe]
+    exact quadConj_involutive hmin hgen (x : K)
+  exact RingOfIntegers.coe_injective h
+
 end TauCeti.NumberField
