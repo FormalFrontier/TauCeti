@@ -27,7 +27,7 @@ is a simple `k`-module.
 
 ## Main results
 
-* `TauCeti.simple_simpleRep`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
+* `TauCeti.simpleRep_simple`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
 * `TauCeti.hom_simpleRep_eq_zero_iff` and `TauCeti.simpleRep_hom_eq_zero_iff`: a morphism into or
   out of `Sᵢ` is detected by its component at `i`.
 * `TauCeti.dimVector_simpleRep`: the dimension vector of `Sᵢ` is `Pi.single i 1`.
@@ -42,6 +42,9 @@ and `simpleRep_obj_of_ne` describe the two cases without mentioning the branch. 
 
 The objects of `CategoryTheory.Paths Q` are the vertices of `Q`, so the statements below use a
 vertex directly as an object of the path category.
+
+The roadmap pins the simplicity result as `simpleRep_simple`, so the instance carries that name
+rather than the `simple_simpleRep` a Mathlib predicate prefix would give it.
 
 ## References
 
@@ -96,8 +99,7 @@ instance finiteDimensional_simpleRep_obj (i a : Q) :
   · rw [simpleRep_obj_of_ne ha]
     have : Subsingleton ((0 : ModuleCat k) : Type u) :=
       ModuleCat.subsingleton_of_isZero (isZero_zero _)
-    exact Module.Finite.of_surjective (0 : k →ₗ[k] ((0 : ModuleCat k) : Type u))
-      fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
+    infer_instance
 
 /-- Every arrow of the quiver acts by zero on the vertex simple `Sᵢ`. -/
 @[simp]
@@ -108,8 +110,9 @@ theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
 /-- More generally, every path of positive length acts by zero on the vertex simple `Sᵢ`. -/
 @[simp]
 theorem simpleRep_map_cons (i : Q) {a b c : Q} (p : Quiver.Path a b) (e : b ⟶ c) :
-    (simpleRep k Q i).map (p.cons e) = 0 :=
-  Limits.comp_zero
+    (simpleRep k Q i).map (p.cons e) = 0 := by
+  rw [simpleRep, Paths.lift_cons]
+  exact Limits.comp_zero
 
 /-- A path of positive length acts by zero on the vertex simple `Sᵢ`; only the trivial paths, which
 act by the identity, survive. -/
@@ -121,6 +124,7 @@ theorem simpleRep_map_eq_zero_of_length_ne_zero (i : Q) {a b : Q} (p : Quiver.Pa
 
 /-- A morphism into the vertex simple `Sᵢ` vanishes as soon as its component at `i` does: all its
 other components land in a zero module. -/
+@[simp]
 theorem hom_simpleRep_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : M ⟶ simpleRep k Q i) :
     f = 0 ↔ f.app i = 0 := by
   refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
@@ -131,6 +135,7 @@ theorem hom_simpleRep_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : M ⟶ simpleR
 
 /-- Dually, a morphism out of the vertex simple `Sᵢ` vanishes as soon as its component at `i` does:
 all its other components start from a zero module. -/
+@[simp]
 theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q i ⟶ M) :
     f = 0 ↔ f.app i = 0 := by
   refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
@@ -141,7 +146,7 @@ theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q
 
 /-- **The vertex simples are simple.** The vertex representation `Sᵢ = simpleRep k Q i` is a simple
 object of `TauCeti.QuiverRep k Q`. -/
-instance simple_simpleRep (i : Q) : Simple (simpleRep k Q i) where
+instance simpleRep_simple (i : Q) : Simple (simpleRep k Q i) where
   mono_isIso_iff_nonzero {M} f _ := by
     constructor
     · intro _ h
