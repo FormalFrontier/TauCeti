@@ -11,14 +11,14 @@ import TauCeti.Analysis.Contour.PerWindow.HigherOrder
 /-!
 # The classical residue theorem for an arbitrary null-homologous cycle
 
-For `f` differentiable on `U ∖ S` and meromorphic at each point of the finite set `S`, and a
-**closed, null-homologous** piecewise-`C¹` curve `γ` in `U` that **avoids** `S`,
+For `f` differentiable on `U ∖ S` and meromorphic at each point of the finite set `S` lying in
+`U`, and a **closed, null-homologous** piecewise-`C¹` curve `γ` in `U` that **avoids** `S`,
 
 `∫ t in a..b, γ' t • f (γ t) = 2πi · ∑_{s ∈ S} n_s(γ) · Res_s f`,
 
 where `n_s(γ)` is the generalized winding number of `γ` about `s`. This is the general
-arbitrary-cycle form of the classical residue theorem, the case the circle theorem
-(`Contour.classicalResidueTheorem_circle`) generalizes: the contour is an arbitrary
+arbitrary-cycle form of the classical residue theorem, and it generalizes the circle theorem
+(`Contour.classicalResidueTheorem_circle`): the contour is an arbitrary
 piecewise-`C¹` loop rather than a round circle, and each pole is weighted by its winding number
 rather than by `1`. Null-homology is not decoration — on a general holomorphy domain `Ω`, a loop
 that merely avoids the poles need not integrate to the residue sum (a loop around a hole of `Ω`
@@ -182,8 +182,9 @@ be a closed piecewise-`C¹` curve in `U`, **null-homologous** in `U`, that **avo
 each pole weighted by the generalized winding number of `γ` about it.
 
 Points of `S` outside `U` are harmless rather than excluded: null-homology forces their winding
-number, hence their contribution, to vanish. Likewise `S` may list regular points of `f`, whose
-residues are `0`.
+number, hence their contribution, to vanish, so nothing at all is asked of `f` there —
+meromorphicity is required only at the points of `S` that lie in `U`. Likewise `S` may list
+regular points of `f`, whose residues are `0`.
 
 Its `S = ∅` case is the homology Cauchy theorem (`Contour.homologyCauchyTheorem`), so this is
 genuinely a Layer 3 statement; the round-circle case with the poles inside is
@@ -191,19 +192,35 @@ genuinely a Layer 3 statement; the round-circle case with the poles inside is
 Hungerbühler–Wasem theorem `Contour.hungerbuhlerWasem_residueTheorem`. -/
 theorem classicalResidueTheorem_nullHomologous {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ (↑S : Set ℂ)))
-    (hmero : ∀ s ∈ S, MeromorphicAt f s) {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b)
+    (hmero : ∀ s ∈ S, s ∈ U → MeromorphicAt f s) {γ : ℝ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b)
     (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
     (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) (hnull : IsNullHomologous γ a b U) :
     ∫ t in a..b, deriv γ t • f (γ t)
       = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s := by
   classical
-  obtain ⟨decomp⟩ : Nonempty (PolarPartDecomposition f S U) :=
-    ⟨.ofMeromorphic hU hf hmero⟩
+  -- Replace `S` by the part `T` of it lying in `U`, where `f` is meromorphic: a point outside `U`
+  -- has winding number `0` by null-homology, so it drops out of the sum for free.
+  obtain ⟨T, hTS, hfT, hmeroT, hsum⟩ : ∃ T : Finset ℂ, (∀ s ∈ T, s ∈ S) ∧
+      DifferentiableOn ℂ f (U \ (↑T : Set ℂ)) ∧ (∀ s ∈ T, MeromorphicAt f s) ∧
+      (∑ s ∈ S, windingNumber γ a b s * residue f s)
+        = ∑ s ∈ T, windingNumber γ a b s * residue f s :=
+    ⟨S.filter (· ∈ U), fun _ hs => (Finset.mem_filter.mp hs).1,
+      hf.mono fun z hz => ⟨hz.1, fun hzS =>
+        hz.2 (Finset.mem_coe.mpr (Finset.mem_filter.mpr ⟨hzS, hz.1⟩))⟩,
+      fun s hs => hmero s (Finset.mem_filter.mp hs).1 (Finset.mem_filter.mp hs).2,
+      (Finset.sum_filter_of_ne fun s _ hs => not_not.mp fun hsU =>
+        hs (by rw [isNullHomologous_iff.mp hnull s hsU, zero_mul])).symm⟩
+  rw [hsum]
+  obtain ⟨decomp⟩ : Nonempty (PolarPartDecomposition f T U) :=
+    ⟨.ofMeromorphic hU hfT hmeroT⟩
   have hcont : ContinuousOn γ (uIcc a b) := hγ.continuousOn
   have hderiv : IntervalIntegrable (fun t => deriv γ t) volume a b := hγ.intervalIntegrable_deriv
-  have hne : ∀ s : S, ∀ t ∈ uIcc a b, γ t ≠ (s : ℂ) := fun s t ht h_eq =>
-    hoff t ht (h_eq ▸ Finset.mem_coe.mpr s.2)
-  have hpol_cont : ∀ s : S, ContinuousOn (fun t => decomp.polarPart s (γ t)) (uIcc a b) :=
+  have hoffT : ∀ t ∈ uIcc a b, γ t ∉ (↑T : Set ℂ) := fun t ht h =>
+    hoff t ht (Finset.mem_coe.mpr (hTS _ (Finset.mem_coe.mp h)))
+  have hne : ∀ s : T, ∀ t ∈ uIcc a b, γ t ≠ (s : ℂ) := fun s t ht h_eq =>
+    hoffT t ht (h_eq ▸ Finset.mem_coe.mpr s.2)
+  have hpol_cont : ∀ s : T, ContinuousOn (fun t => decomp.polarPart s (γ t)) (uIcc a b) :=
     fun s => ContinuousOn.congr
       (continuousOn_finsetSum Finset.univ fun k _ => continuousOn_const.div
         ((hcont.sub continuousOn_const).pow (k.val + 1))
@@ -213,26 +230,24 @@ theorem classicalResidueTheorem_nullHomologous {f : ℂ → ℂ} {S : Finset ℂ
       (fun t => deriv γ t • decomp.analyticRemainder (γ t)) volume a b :=
     hderiv.smul_continuousOn
       (decomp.analyticRemainder_differentiableOn.continuousOn.comp hcont hγU)
-  have hpol_int : ∀ s ∈ S.attach, IntervalIntegrable
+  have hpol_int : ∀ s ∈ T.attach, IntervalIntegrable
       (fun t => deriv γ t • decomp.polarPart s (γ t)) volume a b :=
     fun s _ => hderiv.smul_continuousOn (hpol_cont s)
   have hsum_int : IntervalIntegrable
-      (fun t => ∑ s ∈ S.attach, deriv γ t • decomp.polarPart s (γ t)) volume a b := by
-    have h := IntervalIntegrable.sum S.attach hpol_int
-    rwa [show (∑ s ∈ S.attach, fun t => deriv γ t • decomp.polarPart s (γ t))
-      = fun t => ∑ s ∈ S.attach, deriv γ t • decomp.polarPart s (γ t) from
-      funext fun t => Finset.sum_apply _ _ _] at h
+      (fun t => ∑ s ∈ T.attach, deriv γ t • decomp.polarPart s (γ t)) volume a b := by
+    have h := IntervalIntegrable.sum T.attach hpol_int
+    rwa [Finset.sum_fn] at h
   have hf_eq : EqOn (fun t => deriv γ t • f (γ t))
       (fun t => deriv γ t • decomp.analyticRemainder (γ t)
-        + ∑ s ∈ S.attach, deriv γ t • decomp.polarPart s (γ t)) (uIcc a b) := fun t ht => by
+        + ∑ s ∈ T.attach, deriv γ t • decomp.polarPart s (γ t)) (uIcc a b) := fun t ht => by
     simp only
-    rw [decomp.f_eq (γ t) ⟨hγU t ht, hoff t ht⟩, smul_add, Finset.smul_sum]
+    rw [decomp.f_eq (γ t) ⟨hγU t ht, hoffT t ht⟩, smul_add, Finset.smul_sum]
   rw [intervalIntegral.integral_congr hf_eq, intervalIntegral.integral_add hrem_int hsum_int,
     intervalIntegral.integral_finsetSum hpol_int,
     decomp.intervalIntegral_deriv_smul_analyticRemainder_eq_zero hU hγ hγU hclosed hnull,
     zero_add, Finset.sum_congr rfl fun s _ =>
       decomp.intervalIntegral_deriv_smul_polarPart s hγ hclosed (hne s),
-    Finset.mul_sum, ← Finset.sum_attach S
+    Finset.mul_sum, ← Finset.sum_attach T
       fun s => 2 * (Real.pi : ℂ) * Complex.I * (windingNumber γ a b s * residue f s)]
   exact Finset.sum_congr rfl fun s _ => by ring
 
