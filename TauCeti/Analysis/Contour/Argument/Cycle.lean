@@ -162,11 +162,14 @@ This is the `S = {z₀}` case of `TauCeti.Contour.argumentPrinciple_nullHomologo
 arbitrary-cycle counterpart of `TauCeti.Contour.argumentPrinciple_local`: a loop winding `k` times
 around a zero of order `n` integrates `f'/f` to `2πi · k · n`.
 
-Membership `z₀ ∈ U` is not required: if `z₀` lies outside `U` then `f` is analytic and
-non-vanishing on all of `U`, and null-homology makes `n_{z₀}(γ)` vanish, so both sides are `0`. -/
+Membership `z₀ ∈ U` is not required, and nothing at all is asked of `f` at `z₀` unless it holds:
+if `z₀` lies outside `U` then `f` is analytic and non-vanishing on all of `U`, and null-homology
+makes `n_{z₀}(γ)` vanish, so both sides are `0` for any `n`. Accordingly the meromorphy and the
+order hypotheses are conditional on `z₀ ∈ U`, exactly as they are in
+`TauCeti.Contour.argumentPrinciple_nullHomologous`. -/
 theorem argumentPrinciple_nullHomologous_single {f : ℂ → ℂ} {U : Set ℂ} {z₀ : ℂ} {n : ℤ}
-    (hU : IsOpen U) (hmero : MeromorphicAt f z₀)
-    (hn : meromorphicOrderAt f z₀ = (n : WithTop ℤ))
+    (hU : IsOpen U) (hmero : z₀ ∈ U → MeromorphicAt f z₀)
+    (hn : z₀ ∈ U → meromorphicOrderAt f z₀ = (n : WithTop ℤ))
     (hoff : ∀ z ∈ U, z ≠ z₀ → AnalyticAt ℂ f z ∧ f z ≠ 0)
     {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b)
     (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
@@ -175,8 +178,8 @@ theorem argumentPrinciple_nullHomologous_single {f : ℂ → ℂ} {U : Set ℂ} 
       = 2 * (Real.pi : ℂ) * Complex.I * (windingNumber γ a b z₀ * (n : ℂ)) := by
   have key := argumentPrinciple_nullHomologous (S := {z₀}) (ord := fun _ => n) hU
     (fun z hzU hzS => hoff z hzU (by simpa using hzS))
-    (fun s hs _ => by rw [Finset.mem_singleton.mp hs]; exact hmero)
-    (fun s hs _ => by rw [Finset.mem_singleton.mp hs]; exact hn) hγ hγU hclosed
+    (fun s hs hsU => by rw [Finset.mem_singleton.mp hs] at hsU ⊢; exact hmero hsU)
+    (fun s hs hsU => by rw [Finset.mem_singleton.mp hs] at hsU ⊢; exact hn hsU) hγ hγU hclosed
     (fun t ht => by simpa using hγoff t ht) hnull
   simpa using key
 
