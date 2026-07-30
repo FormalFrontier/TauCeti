@@ -14,8 +14,9 @@ public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 This file proves that the action of the automorphism group of a root system on its root indices is
 faithful.  Consequently, every subgroup of that automorphism group, and in particular the Weyl
 group, is finite when the root index type is finite.  It also records how that action evaluates on
-simple reflections, how it interacts with root negation, and the sign change a reflection induces
-on its own coroot functional.
+simple reflections, how it interacts with root negation, the conjugation and involution identities
+satisfied by the reflections themselves, and the sign change a reflection induces on its own coroot
+functional.
 
 ## Main results
 
@@ -24,6 +25,10 @@ on its own coroot functional.
 * `TauCeti.RootPairing.coroot'_reflection_self` says a reflection reverses the sign of its own
   coroot functional.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
+* `TauCeti.RootPairing.ofIdx_reflectionPerm` and `TauCeti.RootPairing.ofIdx_inv` record the
+  conjugation and involution identities for reflections, viewed in the Weyl group.
+* `TauCeti.RootPairing.ofIdx_weylGroupToPerm` conjugates a root reflection into the reflection in
+  the image root.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
   a finite root system is finite.
@@ -113,6 +118,60 @@ lemma weylGroupToPerm_mul_ofIdx_apply (w : P.weylGroup) (i j : ι) :
       P.weylGroupToPerm w (P.reflectionPerm i j) := by
   rw [map_mul]
   exact congrArg (P.weylGroupToPerm w) (weylGroupToPerm_ofIdx_apply P i j)
+
+/-- Reflecting the root `αᵢ` in the root `αⱼ` conjugates the reflection in `αᵢ` by the reflection
+in `αⱼ`. This is `RootPairing.reflection_reflectionPerm` transported to the Weyl group. -/
+lemma ofIdx_reflectionPerm (i j : ι) :
+    _root_.RootPairing.weylGroup.ofIdx P (P.reflectionPerm j i) =
+      _root_.RootPairing.weylGroup.ofIdx P j * _root_.RootPairing.weylGroup.ofIdx P i *
+        _root_.RootPairing.weylGroup.ofIdx P j := by
+  apply Subtype.ext
+  have hreflection :
+      _root_.RootPairing.Equiv.reflection P (P.reflectionPerm j i) =
+        _root_.RootPairing.Equiv.reflection P j * _root_.RootPairing.Equiv.reflection P i *
+          _root_.RootPairing.Equiv.reflection P j := by
+    apply _root_.RootPairing.Equiv.weightHom_injective P
+    simpa only [map_mul, _root_.RootPairing.Equiv.weightHom_apply,
+      _root_.RootPairing.Equiv.reflection_weightEquiv] using
+      P.reflection_reflectionPerm
+  exact hreflection
+
+/-- A root reflection is its own inverse. -/
+@[simp]
+lemma ofIdx_inv (i : ι) :
+    (_root_.RootPairing.weylGroup.ofIdx P i)⁻¹ = _root_.RootPairing.weylGroup.ofIdx P i := by
+  apply Subtype.ext
+  exact _root_.RootPairing.Equiv.reflection_inv P i
+
+/-- Conjugating the reflection in `αᵢ` by a Weyl-group element `w` gives the reflection in the root
+that `w` sends `αᵢ` to. This is the group-level form of the invariance of the root system under the
+Weyl group, and it is what lets a leading letter of a word be cancelled in the exchange
+condition. -/
+theorem ofIdx_weylGroupToPerm (w : P.weylGroup) (i : ι) :
+    _root_.RootPairing.weylGroup.ofIdx P (P.weylGroupToPerm w i) =
+      w * _root_.RootPairing.weylGroup.ofIdx P i * w⁻¹ := by
+  revert i
+  obtain ⟨w, hw⟩ := w
+  induction hw using _root_.RootPairing.weylGroup.induction with
+  | mem j =>
+    intro i
+    -- `weylGroup.ofIdx` is the reflection automorphism packaged with its membership proof.
+    have hj : (⟨_root_.RootPairing.Equiv.reflection P j,
+        P.reflection_mem_weylGroup j⟩ : P.weylGroup) =
+        _root_.RootPairing.weylGroup.ofIdx P j :=
+      Subtype.ext rfl
+    rw [hj, weylGroupToPerm_ofIdx_apply, ofIdx_inv, ofIdx_reflectionPerm]
+  | one =>
+    intro i
+    have h1 : (⟨1, one_mem P.weylGroup⟩ : P.weylGroup) = 1 := Subtype.ext (by simp)
+    rw [h1]
+    simp
+  | mul g₁ g₂ hg₁ hg₂ ih₁ ih₂ =>
+    intro i
+    have hmul : (⟨g₁ * g₂, mul_mem hg₁ hg₂⟩ : P.weylGroup) =
+        (⟨g₁, hg₁⟩ : P.weylGroup) * ⟨g₂, hg₂⟩ := Subtype.ext (by simp)
+    rw [hmul, map_mul, Equiv.Perm.mul_apply, ih₁, ih₂]
+    group
 
 /-- The Weyl-group action on root indices commutes with root negation. -/
 lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :

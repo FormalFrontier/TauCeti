@@ -85,14 +85,14 @@ theorem exists_wordProd_eraseIdx_eq (L : List b.support) {j : b.support}
       have hconj : RootPairing.weylGroup.ofIdx P (i : ι) =
           wordProd P b L * RootPairing.weylGroup.ofIdx P (j : ι) * (wordProd P b L)⁻¹ := by
         rw [← hki]
-        exact ofIdx_weylGroupToPerm P (wordProd P b L) (j : ι)
+        exact RootPairing.ofIdx_weylGroupToPerm P (wordProd P b L) (j : ι)
       have hcomm : RootPairing.weylGroup.ofIdx P (i : ι) * wordProd P b L =
           wordProd P b L * RootPairing.weylGroup.ofIdx P (j : ι) := by
         rw [hconj]
         group
       have hsq : RootPairing.weylGroup.ofIdx P (i : ι) *
           RootPairing.weylGroup.ofIdx P (i : ι) = 1 :=
-        mul_eq_one_iff_eq_inv.mpr (ofIdx_inv P (i : ι)).symm
+        mul_eq_one_iff_eq_inv.mpr (RootPairing.ofIdx_inv P (i : ι)).symm
       have hzero : (i :: L).eraseIdx 0 = L := rfl
       refine ⟨0, by simp, ?_⟩
       rw [hzero, wordProd_cons, mul_assoc, ← hcomm, ← mul_assoc, hsq, one_mul]
