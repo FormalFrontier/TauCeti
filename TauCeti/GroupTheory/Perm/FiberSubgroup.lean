@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.Subgroup.Lattice
+public import Mathlib.Algebra.Group.Subgroup.Map
 public import Mathlib.GroupTheory.Perm.DomMulAct
 
 /-!
@@ -50,6 +50,26 @@ def fiberSubgroup (f : α → ι) : Subgroup (Equiv.Perm α) where
 theorem mem_fiberSubgroup {f : α → ι} {σ : Equiv.Perm α} :
     σ ∈ fiberSubgroup f ↔ ∀ a, f (σ a) = f a :=
   Iff.rfl
+
+/-- Conjugation by `e` transports the subgroup preserving the fibers of `f` to the subgroup
+preserving the fibers of `g` when `e` identifies their fiber equivalence relations. -/
+theorem fiberSubgroup_map_conj {f : α → ι} {g : α → κ} (e : Equiv.Perm α)
+    (h : ∀ a b, f a = f b ↔ g (e a) = g (e b)) :
+    (fiberSubgroup f).map (MulAut.conj e).toMonoidHom = fiberSubgroup g := by
+  ext σ
+  rw [Subgroup.mem_map_equiv, mem_fiberSubgroup, mem_fiberSubgroup]
+  constructor
+  · intro hσ a
+    have hfa : f (e.symm (σ a)) = f (e.symm a) := by
+      simpa only [MulAut.conj_symm_apply, Equiv.Perm.coe_mul, Function.comp_apply,
+        Equiv.Perm.coe_inv, Equiv.apply_symm_apply] using hσ (e.symm a)
+    have ha := (h (e.symm (σ a)) (e.symm a)).mp hfa
+    simpa only [MulAut.conj_symm_apply, Equiv.Perm.coe_mul, Function.comp_apply,
+      Equiv.Perm.coe_inv, Equiv.apply_symm_apply] using ha
+  · intro hσ a
+    apply (h _ _).mpr
+    simpa only [MulAut.conj_symm_apply, Equiv.Perm.coe_mul, Function.comp_apply,
+      Equiv.Perm.coe_inv, Equiv.apply_symm_apply] using hσ (e a)
 
 /-- Preserving the fibers of two maps at once is preserving the fibers of the paired map. -/
 theorem fiberSubgroup_inf (f : α → ι) (g : α → κ) :

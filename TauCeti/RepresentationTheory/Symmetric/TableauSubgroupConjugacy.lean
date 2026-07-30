@@ -68,10 +68,21 @@ private theorem cast_rowBlocks_fst {l₁ l₂ : List ℕ} (h : l₁ = l₂)
   subst l₂
   rfl
 
+private theorem cast_rowBlocks_snd {l₁ l₂ : List ℕ} (h : l₁ = l₂)
+    (x : rowBlocks l₁) :
+    ((Equiv.cast (congrArg rowBlocks h) x).2 : ℕ) = x.2 := by
+  subst l₂
+  rfl
+
 private theorem sortedBlocksEquivRows_fst (μ : YoungDiagram)
     (x : rowBlocks ((shapePartition μ).parts.sort (· ≥ ·))) :
     ((sortedBlocksEquivRows μ x).1 : ℕ) = x.1 :=
   cast_rowBlocks_fst (shapePartition_sortedParts μ) x
+
+private theorem sortedBlocksEquivRows_snd (μ : YoungDiagram)
+    (x : rowBlocks ((shapePartition μ).parts.sort (· ≥ ·))) :
+    ((sortedBlocksEquivRows μ x).2 : ℕ) = x.2 :=
+  cast_rowBlocks_snd (shapePartition_sortedParts μ) x
 
 /-- The permutation carrying the consecutive-block labeling of a Young diagram to the labeling
 of `t`. It sends each block of the shape partition to the correspondingly numbered row of `t`. -/
@@ -94,40 +105,40 @@ theorem rowIndex_rowYoungConjugator {μ : YoungDiagram} (t : YoungTableau μ)
     Equiv.symm_apply_apply, x]
   exact sortedBlocksEquivRows_fst μ x
 
+/-- On consecutive-block coordinates, `rowYoungConjugator t` sends position `j` in block `i`
+to the label in position `j` of row `i` of `t`. -/
+@[simp]
+theorem rowYoungConjugator_youngBlocksEquiv {μ : YoungDiagram} (t : YoungTableau μ)
+    (x : Σ i : Fin
+        (((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩).parts.sort (· ≥ ·)).length,
+      Fin ((((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩).parts.sort (· ≥ ·)).get i)) :
+    rowYoungConjugator t
+        (youngBlocksEquiv ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩) x) =
+      t ⟨(x.1, x.2), by
+        rw [YoungDiagram.mem_cells, YoungDiagram.mem_iff_lt_rowLen]
+        let y := sortedBlocksEquivRows μ x
+        calc
+          (x.2 : ℕ) = y.2 := (sortedBlocksEquivRows_snd μ x).symm
+          _ < μ.rowLens.get y.1 := y.2.2
+          _ = μ.rowLen y.1 := YoungDiagram.get_rowLens
+          _ = μ.rowLen x.1 := congrArg μ.rowLen (sortedBlocksEquivRows_fst μ x)⟩ := by
+  simp only [rowYoungConjugator, Equiv.trans_apply, Equiv.symm_apply_apply]
+  apply congrArg t
+  apply Subtype.ext
+  apply Prod.ext
+  · exact sortedBlocksEquivRows_fst μ x
+  · exact sortedBlocksEquivRows_snd μ x
+
 /-- Conjugation by `rowYoungConjugator t` carries the Young subgroup of the shape partition
 onto the row group of `t`. -/
-theorem map_youngSubgroup_conj_eq_rowSubgroup {μ : YoungDiagram} (t : YoungTableau μ) :
+theorem youngSubgroup_map_conj_eq_rowSubgroup {μ : YoungDiagram} (t : YoungTableau μ) :
     (youngSubgroup ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩)).map
         (MulAut.conj (rowYoungConjugator t)).toMonoidHom = rowSubgroup t := by
-  ext σ
-  rw [Subgroup.mem_map_equiv, mem_rowSubgroup, mem_youngSubgroup_iff]
-  constructor
-  · intro h k
-    have hleft :=
-      rowIndex_rowYoungConjugator t ((rowYoungConjugator t).symm (σ k))
-    rw [Equiv.apply_symm_apply] at hleft
-    have hright :=
-      rowIndex_rowYoungConjugator t ((rowYoungConjugator t).symm k)
-    rw [Equiv.apply_symm_apply] at hright
-    have hmiddle := congrArg Fin.val (congrFun h ((rowYoungConjugator t).symm k))
-    simp only [MulAut.conj_symm_apply, Equiv.Perm.coe_mul, Function.comp_apply,
-      Equiv.Perm.coe_inv, Equiv.apply_symm_apply] at hmiddle
-    exact hleft.trans (hmiddle.trans hright.symm)
-  · intro h
-    funext k
-    apply Fin.ext
-    calc
-      (youngBlock ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩)
-          (((MulAut.conj (rowYoungConjugator t)).symm σ) k) : ℕ) =
-          rowIndex t (rowYoungConjugator t
-            (((MulAut.conj (rowYoungConjugator t)).symm σ) k)) :=
-        (rowIndex_rowYoungConjugator t _).symm
-      _ = rowIndex t (σ (rowYoungConjugator t k)) := by
-        simp only [MulAut.conj_symm_apply, Equiv.Perm.coe_mul, Function.comp_apply,
-          Equiv.Perm.coe_inv, Equiv.apply_symm_apply]
-      _ = rowIndex t (rowYoungConjugator t k) := h _
-      _ = (youngBlock ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩) k : ℕ) :=
-        rowIndex_rowYoungConjugator t k
+  rw [youngSubgroup_eq_fiberSubgroup, rowSubgroup_def]
+  apply fiberSubgroup_map_conj
+  intro a b
+  simp only [rowIndex_rowYoungConjugator]
+  exact Fin.ext_iff
 
 /-- Conjugation by `rowYoungConjugator t` as a multiplicative equivalence from the Young
 subgroup of the shape partition to the row group of `t`. -/
@@ -136,7 +147,7 @@ noncomputable def youngSubgroupConjMulEquiv {μ : YoungDiagram} (t : YoungTablea
       rowSubgroup t :=
   ((MulAut.conj (rowYoungConjugator t)).subgroupMap
       (youngSubgroup ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩))).trans
-    (MulEquiv.subgroupCongr (map_youngSubgroup_conj_eq_rowSubgroup t))
+    (MulEquiv.subgroupCongr (youngSubgroup_map_conj_eq_rowSubgroup t))
 
 /-- The subgroup equivalence acts by conjugation with `rowYoungConjugator t`. -/
 @[simp]

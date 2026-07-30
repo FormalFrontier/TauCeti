@@ -9,6 +9,7 @@ public import TauCeti.Combinatorics.Enumerative.Partition.Basic
 public import Mathlib.Data.Finite.Perm
 public import Mathlib.GroupTheory.Index
 public import Mathlib.GroupTheory.Perm.DomMulAct
+public import TauCeti.GroupTheory.Perm.FiberSubgroup
 
 /-!
 # Young subgroups of symmetric groups
@@ -202,6 +203,13 @@ theorem mem_youngSubgroup_iff {n : ℕ} (μ : n.Partition) (σ : Equiv.Perm (Fin
     σ ∈ youngSubgroup μ ↔ youngBlock μ ∘ σ = youngBlock μ := by
   rw [mem_youngSubgroup_stabilizer_iff]
   exact DomMulAct.mem_stabilizer_iff
+
+/-- The Young subgroup is the subgroup preserving the fibers of its consecutive-block map. -/
+theorem youngSubgroup_eq_fiberSubgroup {n : ℕ} (μ : n.Partition) :
+    youngSubgroup μ = fiberSubgroup (youngBlock μ) := by
+  ext σ
+  rw [mem_youngSubgroup_iff, mem_fiberSubgroup]
+  simp only [funext_iff, Function.comp_apply]
 
 /-- The index of a Young subgroup times its order is `n!`. -/
 theorem youngSubgroup_index_mul {n : ℕ} (μ : n.Partition) :
