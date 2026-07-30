@@ -34,9 +34,6 @@ disc.
 
 ## Main declarations
 
-* `TauCeti.continuousOn_artanh` — `Real.artanh` is continuous on `(-1, 1)`; Mathlib's
-  `Analysis/SpecialFunctions/Artanh.lean` develops the order theory of `Real.artanh` but
-  records no continuity statement.
 * `TauCeti.continuousOn_hyperbolicDist` — the hyperbolic distance is jointly continuous on
   `ball 0 1 ×ˢ ball 0 1`.
 * `TauCeti.norm_sub_le_two_mul_pseudoHyperbolicExpr` — the Euclidean distance of two disc
@@ -44,7 +41,9 @@ disc.
 * `TauCeti.hyperbolicDist_zero_le_iff_norm_le_tanh` — the closed hyperbolic ball about the
   origin of radius `r` is the closed Euclidean ball of radius `Real.tanh r`.
 * `TauCeti.PoincareDisc.toUnitDiscHomeomorph` — the identification of the Poincaré disc with
-  `Complex.UnitDisc` is a homeomorphism.
+  `Complex.UnitDisc` is a homeomorphism; `toUnitDiscHomeomorph_apply` and
+  `toUnitDiscHomeomorph_symm_apply` (with the `coe_`-prefixed function-level variants)
+  characterise both directions, so consumers never need to unfold the definition.
 * `TauCeti.PoincareDisc.instProperSpace` — the Poincaré disc is a proper metric space, hence
   complete and locally compact.
 
@@ -71,8 +70,10 @@ open scoped ComplexConjugate Topology
 /-- `Real.artanh` is continuous on the interval `(-1, 1)` on which it inverts `Real.tanh`.
 
 Mathlib's `Analysis/SpecialFunctions/Artanh.lean` proves the monotonicity and inversion
-properties of `Real.artanh` but records no continuity statement. -/
-lemma continuousOn_artanh : ContinuousOn Real.artanh (Ioo (-1 : ℝ) 1) := by
+properties of `Real.artanh` but records no continuity statement. This is a local proof helper
+for `continuousOn_hyperbolicDist`, kept private so that a general real-analysis fact is not
+exported from a file about the Poincaré metric. -/
+private lemma continuousOn_artanh : ContinuousOn Real.artanh (Ioo (-1 : ℝ) 1) := by
   have hpos : ∀ x ∈ Ioo (-1 : ℝ) 1, (0 : ℝ) < (1 + x) / (1 - x) := fun x hx =>
     div_pos (by linarith [hx.1]) (by linarith [hx.2])
   have hcont : ContinuousOn (fun x : ℝ => 1 / 2 * Real.log ((1 + x) / (1 - x)))
@@ -198,27 +199,26 @@ interchangeably with the Euclidean one for topological purposes. -/
   continuous_toFun := continuous_toUnitDisc
   continuous_invFun := Complex.UnitDisc.continuous_toPoincare
 
+/-- The homeomorphism acts as the identification `PoincareDisc.toUnitDisc`. -/
 @[simp]
+lemma toUnitDiscHomeomorph_apply (z : PoincareDisc) :
+    toUnitDiscHomeomorph z = toUnitDisc z := rfl
+
+/-- The inverse homeomorphism acts as the identification `Complex.UnitDisc.toPoincare`. -/
+@[simp]
+lemma toUnitDiscHomeomorph_symm_apply (z : Complex.UnitDisc) :
+    toUnitDiscHomeomorph.symm z = Complex.UnitDisc.toPoincare z := rfl
+
+/-- The underlying function of the homeomorphism is `PoincareDisc.toUnitDisc`. -/
 lemma coe_toUnitDiscHomeomorph : ⇑toUnitDiscHomeomorph = ⇑toUnitDisc := rfl
+
+/-- The underlying function of the inverse homeomorphism is `Complex.UnitDisc.toPoincare`. -/
+lemma coe_toUnitDiscHomeomorph_symm :
+    ⇑toUnitDiscHomeomorph.symm = ⇑Complex.UnitDisc.toPoincare := rfl
 
 end PoincareDisc
 
 /-! ### Properness of the Poincaré metric -/
-
-/-- The set of unit-disc points of Euclidean norm at most `ρ < 1` is compact: it is carried by
-the embedding into `ℂ` onto the closed Euclidean ball of radius `ρ`, which the hypothesis
-`ρ < 1` places inside the open disc. -/
-lemma _root_.Complex.UnitDisc.isCompact_setOf_norm_le {ρ : ℝ} (hρ : ρ < 1) :
-    IsCompact {z : Complex.UnitDisc | ‖(z : ℂ)‖ ≤ ρ} := by
-  rw [Complex.UnitDisc.isEmbedding_coe.isCompact_iff]
-  have himg : ((↑) : Complex.UnitDisc → ℂ) '' {z : Complex.UnitDisc | ‖(z : ℂ)‖ ≤ ρ}
-      = closedBall (0 : ℂ) ρ := by
-    ext w
-    simp only [Set.mem_image, Set.mem_setOf_eq, mem_closedBall, dist_zero_right]
-    exact ⟨fun ⟨z, hz, hzw⟩ => hzw ▸ hz, fun hw =>
-      ⟨Complex.UnitDisc.mk w (lt_of_le_of_lt hw hρ), by simpa using hw, by simp⟩⟩
-  rw [himg]
-  exact isCompact_closedBall _ _
 
 /-- **The Poincaré disc is a proper metric space.** A closed hyperbolic ball of radius `r` about
 `x` consists of points at hyperbolic distance at most `r + hyperbolicDist x 0` from the origin,
@@ -234,6 +234,7 @@ instance PoincareDisc.instProperSpace : ProperSpace PoincareDisc where
         {z : Complex.UnitDisc |
           ‖(z : ℂ)‖ ≤ Real.tanh (r + dist x (Complex.UnitDisc.toPoincare 0))} := by
       rintro _ ⟨z, hz, rfl⟩
+      simp only [Set.mem_setOf_eq, PoincareDisc.toUnitDiscHomeomorph_apply]
       have htri : dist z (Complex.UnitDisc.toPoincare 0)
           ≤ r + dist x (Complex.UnitDisc.toPoincare 0) := by
         have hzx : dist z x ≤ r := mem_closedBall.mp hz
