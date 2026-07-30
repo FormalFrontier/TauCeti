@@ -67,14 +67,6 @@ lemma leftInverse_of_section (hs : s ≫ f = 𝟙 S) : Function.LeftInverse f s 
 lemma section_apply (hs : s ≫ f = 𝟙 S) (y : S) : f (s y) = y :=
   leftInverse_of_section hs y
 
-/-- Distinct points of the base have distinct images under a section. -/
-lemma section_injective (hs : s ≫ f = 𝟙 S) : Function.Injective s :=
-  (leftInverse_of_section hs).injective
-
-/-- A morphism admitting a section is surjective on points. -/
-lemma base_surjective_of_section (hs : s ≫ f = 𝟙 S) : Function.Surjective f :=
-  (leftInverse_of_section hs).surjective
-
 /-! ### Residue degrees at a section -/
 
 /-- The two residue degrees attached to a section multiply to one: the residue-field extensions
