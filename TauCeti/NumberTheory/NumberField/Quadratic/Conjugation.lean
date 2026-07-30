@@ -54,11 +54,15 @@ private theorem minpoly_rat_of_int (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     hmin]
   simp
 
+/-- `X² - C a` is invariant under negating the variable: it is an even polynomial. -/
+private theorem X_pow_two_sub_C_comp_neg (a : ℚ) :
+    (X ^ 2 - C a).comp (-X) = X ^ 2 - C a := by
+  rw [sub_comp, pow_comp, X_comp, C_comp]; ring
+
 /-- `θ` and `-θ` have the same minimal polynomial over `ℚ` (both `X² - d`, an even polynomial). -/
 private theorem minpoly_rat_eq_neg (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     minpoly ℚ (θ : K) = minpoly ℚ (-(θ : K)) := by
-  rw [minpoly.neg, minpoly_rat_of_int hmin, natDegree_X_pow_sub_C, sub_comp, pow_comp, X_comp,
-    C_comp]
+  rw [minpoly.neg, minpoly_rat_of_int hmin, natDegree_X_pow_sub_C, X_pow_two_sub_C_comp_neg]
   ring
 
 /-- The power basis `1, θ` of the quadratic field `K` over `ℚ`. -/
@@ -97,6 +101,7 @@ noncomputable def quadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
   (quadPowerBasis hgen).equivOfMinpoly (quadPowerBasisNeg hgen) (by
     rw [quadPowerBasis_gen, quadPowerBasisNeg_gen]; exact minpoly_rat_eq_neg hmin)
 
+/-- Quadratic conjugation sends the generator `θ` to `-θ`. -/
 @[simp] theorem quadConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     quadConj hmin hgen (θ : K) = -(θ : K) := by
@@ -104,7 +109,8 @@ noncomputable def quadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
   nth_rewrite 1 [← quadPowerBasis_gen hgen]
   rw [PowerBasis.equivOfMinpoly_gen, quadPowerBasisNeg_gen]
 
-theorem quadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- Quadratic conjugation is an involution on `K` (applying it twice is the identity). -/
+@[simp] theorem quadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Function.Involutive (quadConj hmin hgen) := by
   have hext : (quadConj hmin hgen).toAlgHom.comp (quadConj hmin hgen).toAlgHom
@@ -123,11 +129,13 @@ noncomputable def ringOfIntegersQuadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : 𝓞 K ≃+* 𝓞 K :=
   RingOfIntegers.mapRingEquiv (quadConj hmin hgen).toRingEquiv
 
+/-- Passing to `K`, `ringOfIntegersQuadConj x` is `quadConj` of the image of `x`. -/
 @[simp] theorem coe_ringOfIntegersQuadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
     (ringOfIntegersQuadConj hmin hgen x : K) = quadConj hmin hgen (x : K) := by
   rw [ringOfIntegersQuadConj, RingOfIntegers.mapRingEquiv_apply, AlgEquiv.coe_ringEquiv]
 
+/-- Quadratic conjugation on `𝓞 K` sends the generator `θ` to `-θ`. -/
 @[simp] theorem ringOfIntegersQuadConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     ringOfIntegersQuadConj hmin hgen θ = -θ := by
@@ -135,7 +143,8 @@ noncomputable def ringOfIntegersQuadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     rw [coe_ringOfIntegersQuadConj, quadConj_gen]; push_cast; ring
   exact RingOfIntegers.coe_injective h
 
-theorem ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- Quadratic conjugation is an involution on `𝓞 K` (applying it twice is the identity). -/
+@[simp] theorem ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Function.Involutive (ringOfIntegersQuadConj hmin hgen) := by
   intro x
@@ -148,7 +157,7 @@ theorem ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
 /-- Quadratic conjugation acts as an **involution on the class group** `Cl(𝓞 K)`. This is the
 group-action shadow of `ringOfIntegersQuadConj_involutive`, and the first step towards the
 genus-theoretic fact that the induced action is inversion (hence trivial on `Cl/Cl²`). -/
-theorem mulEquiv_ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem mulEquiv_ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Function.Involutive (ClassGroup.mulEquiv (ringOfIntegersQuadConj hmin hgen)) :=
   ClassGroup.mulEquiv_involutive (ringOfIntegersQuadConj_involutive hmin hgen)
