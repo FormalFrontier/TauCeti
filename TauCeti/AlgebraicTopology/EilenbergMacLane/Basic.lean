@@ -25,7 +25,8 @@ The product results reuse the existing product isomorphisms for fundamental and 
 homotopy groups.
 
 This implements the general API for `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4,
-item 13, "`K(G, 1)` spaces". Concrete circle and torus examples are in
+item 13, "`K(G, 1)` spaces". Concrete circle and torus examples are respectively in
+`TauCeti.AlgebraicTopology.UniversalCover.Circle.EilenbergMacLane` and
 `TauCeti.AlgebraicTopology.UniversalCover.Torus.EilenbergMacLane`.
 
 ## Main declarations
@@ -34,7 +35,8 @@ item 13, "`K(G, 1)` spaces". Concrete circle and torus examples are in
   dimensions at least two.
 * `TauCeti.IsEilenbergMacLaneSpaceOne`: the property of being an Eilenberg--Mac Lane space
   of type `K(G, 1)`.
-* `TauCeti.IsAspherical.homeomorph`, `TauCeti.IsEilenbergMacLaneSpaceOne.homeomorph`:
+* `TauCeti.IsAspherical.of_homeomorph`,
+  `TauCeti.IsEilenbergMacLaneSpaceOne.of_homeomorph`:
   invariance under pointed homeomorphisms.
 * `TauCeti.IsAspherical.prod`, `TauCeti.IsAspherical.pi`,
   `TauCeti.IsEilenbergMacLaneSpaceOne.prod`, `TauCeti.IsEilenbergMacLaneSpaceOne.pi`:
@@ -57,6 +59,7 @@ def IsAspherical (X : Type u) [TopologicalSpace X] (x : X) : Prop :=
   PathConnectedSpace X ∧ ∀ n : ℕ, Subsingleton (π_ (n + 2) X x)
 
 /-- Characteristic restatement of asphericity. -/
+@[simp]
 theorem isAspherical_iff {X : Type u} [TopologicalSpace X] {x : X} :
     IsAspherical X x ↔
       PathConnectedSpace X ∧ ∀ n : ℕ, Subsingleton (π_ (n + 2) X x) :=
@@ -66,6 +69,12 @@ namespace IsAspherical
 
 variable {X : Type u} {Y : Type v} [TopologicalSpace X] [TopologicalSpace Y]
   {x : X} {y : Y}
+
+/-- Construct asphericity from path-connectedness and the vanishing of all homotopy groups
+in dimensions at least two. -/
+protected theorem mk (hX : PathConnectedSpace X)
+    (hπ : ∀ n : ℕ, Subsingleton (π_ (n + 2) X x)) : IsAspherical X x :=
+  ⟨hX, hπ⟩
 
 /-- An aspherical space is path-connected. -/
 protected theorem pathConnectedSpace (h : IsAspherical X x) : PathConnectedSpace X :=
@@ -77,7 +86,7 @@ protected theorem subsingleton_homotopyGroupPi (h : IsAspherical X x) (n : ℕ) 
   h.2 n
 
 /-- Asphericity is preserved by a pointed homeomorphism. -/
-theorem homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
+theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsAspherical Y y := by
   letI : PathConnectedSpace X := hX.pathConnectedSpace
   refine ⟨e.surjective.pathConnectedSpace e.continuous, fun n ↦ ?_⟩
@@ -117,6 +126,7 @@ def IsEilenbergMacLaneSpaceOne (G : Type u) [Group G]
   IsAspherical X x ∧ Nonempty (FundamentalGroup X x ≃* G)
 
 /-- Characteristic restatement of the `K(G, 1)` property. -/
+@[simp]
 theorem isEilenbergMacLaneSpaceOne_iff {G : Type u} [Group G]
     {X : Type v} [TopologicalSpace X] {x : X} :
     IsEilenbergMacLaneSpaceOne G X x ↔
@@ -128,6 +138,13 @@ namespace IsEilenbergMacLaneSpaceOne
 variable {G : Type u} {H : Type v} [Group G] [Group H]
   {X : Type v} {Y : Type w} [TopologicalSpace X] [TopologicalSpace Y]
   {x : X} {y : Y}
+
+/-- Construct the `K(G, 1)` property from asphericity and an isomorphism between the
+fundamental group and `G`. -/
+protected theorem mk (hX : IsAspherical X x)
+    (hπ : Nonempty (FundamentalGroup X x ≃* G)) :
+    IsEilenbergMacLaneSpaceOne G X x :=
+  ⟨hX, hπ⟩
 
 /-- A `K(G, 1)` space is aspherical. -/
 protected theorem isAspherical (h : IsEilenbergMacLaneSpaceOne G X x) :
@@ -141,15 +158,15 @@ protected theorem nonempty_fundamentalGroupMulEquiv
   h.2
 
 /-- Transporting the target group along an isomorphism preserves the `K(G, 1)` property. -/
-theorem mulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) (e : G ≃* H) :
+theorem of_mulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) (e : G ≃* H) :
     IsEilenbergMacLaneSpaceOne H X x :=
   ⟨h.isAspherical, h.nonempty_fundamentalGroupMulEquiv.map fun f ↦ f.trans e⟩
 
 /-- The `K(G, 1)` property is preserved by a pointed homeomorphism. -/
-theorem homeomorph (h : IsEilenbergMacLaneSpaceOne G X x)
+theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x)
     (e : X ≃ₜ Y) (he : e x = y) :
     IsEilenbergMacLaneSpaceOne G Y y :=
-  ⟨h.isAspherical.homeomorph e he,
+  ⟨h.isAspherical.of_homeomorph e he,
     h.nonempty_fundamentalGroupMulEquiv.map fun f ↦
       (FundamentalGroup.homeomorphMulEquivOfEq e he).symm.trans f⟩
 
