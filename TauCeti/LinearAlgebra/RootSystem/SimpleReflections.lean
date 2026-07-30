@@ -29,6 +29,8 @@ while root negation does not change the reflection.
   its simple reflections.
 * `TauCeti.exists_list_prod_ofIdx_eq` writes every Weyl-group element as a product of simple
   reflections.
+* `TauCeti.ofIdx_reflectionPerm` and `TauCeti.ofIdx_inv` record the conjugation and involution
+  identities for reflections, viewed in the Weyl group.
 
 ## References
 
@@ -51,7 +53,9 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 variable (b : P.Base)
 
 omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
-private lemma ofIdx_reflectionPerm_eq (i j : ι) :
+/-- Reflecting `αᵢ` in the simple root `αⱼ` conjugates the reflection in `αᵢ` by the reflection in
+`αⱼ`. This is `RootPairing.reflection_reflectionPerm` transported to the Weyl group. -/
+lemma ofIdx_reflectionPerm (i j : ι) :
     RootPairing.weylGroup.ofIdx P (P.reflectionPerm j i) =
       RootPairing.weylGroup.ofIdx P j * RootPairing.weylGroup.ofIdx P i *
         RootPairing.weylGroup.ofIdx P j := by
@@ -70,7 +74,7 @@ omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] 
 private lemma ofIdx_reflectionPerm_self_eq (i : ι) :
     RootPairing.weylGroup.ofIdx P (P.reflectionPerm i i) =
     RootPairing.weylGroup.ofIdx P i := by
-  rw [ofIdx_reflectionPerm_eq P i i]
+  rw [ofIdx_reflectionPerm P i i]
   have hsquare :
       RootPairing.weylGroup.ofIdx P i * RootPairing.weylGroup.ofIdx P i = 1 := by
     rw [mul_eq_one_iff_eq_inv]
@@ -79,7 +83,8 @@ private lemma ofIdx_reflectionPerm_self_eq (i : ι) :
   rw [hsquare, one_mul]
 
 omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
-private lemma ofIdx_inv_eq (i : ι) :
+/-- A simple reflection is its own inverse. -/
+lemma ofIdx_inv (i : ι) :
     (RootPairing.weylGroup.ofIdx P i)⁻¹ = RootPairing.weylGroup.ofIdx P i := by
   apply Subtype.ext
   exact RootPairing.Equiv.reflection_inv P i
@@ -95,7 +100,7 @@ private lemma ofIdx_mem_closure_simple (i : ι) :
   · intro j hj
     exact Subgroup.subset_closure ⟨⟨j, hj⟩, rfl⟩
   · intro j k hj hk
-    rw [ofIdx_reflectionPerm_eq P j k]
+    rw [ofIdx_reflectionPerm P j k]
     exact mul_mem (mul_mem (Subgroup.subset_closure ⟨⟨k, hk⟩, rfl⟩) hj)
       (Subgroup.subset_closure ⟨⟨k, hk⟩, rfl⟩)
 
@@ -128,7 +133,7 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
       apply Subgroup.closure_toSubmonoid_of_isOfFinOrder
       rintro x ⟨i, rfl⟩
       exact isOfFinOrder_iff_pow_eq_one.2 ⟨2, Nat.zero_lt_succ 1, by
-        rw [sq, mul_eq_one_iff_eq_inv, ofIdx_inv_eq P i]⟩
+        rw [sq, mul_eq_one_iff_eq_inv, ofIdx_inv P i]⟩
     rw [← hclosure, ← weylGroup_eq_closure_simple P b]
     exact Submonoid.mem_top w
   rw [← FreeMonoid.mrange_lift] at hw
