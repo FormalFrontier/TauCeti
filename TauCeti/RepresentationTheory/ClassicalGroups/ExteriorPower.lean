@@ -74,18 +74,12 @@ theorem char_extPowerRep_diagonal (t : Fin n → kˣ) :
   rw [exteriorPower.trace_map_of_apply_basis (Pi.basisFun k (Fin n))
     (stdRep k n (diagGL t)) (fun i => (t i : k)) d
     (stdRep_diagGL_apply_basisFun t)]
-  rw [MvPolynomial.esymm_eq_sum_subtype]
-  simp only [MvPolynomial.eval_sum, MvPolynomial.eval_prod, MvPolynomial.eval_X]
-  -- Normalize the two `Fintype` instances on the same subtype of finite sets.
-  refine @Fintype.sum_equiv
-    (Set.powersetCard (Fin n) d)
-    {s : Finset (Fin n) // s.card = d}
-    k
-    (Set.powersetCard.instFintypeElemFinset (Fin n) d)
-    (Subtype.fintype fun s : Finset (Fin n) => s.card = d)
-    _ (Equiv.refl _) _ _ ?_
-  intro s
-  rfl
+  simp only [MvPolynomial.esymm, MvPolynomial.eval_sum, MvPolynomial.eval_prod,
+    MvPolynomial.eval_X]
+  -- Both sides sum the same products over the `d`-element subsets of `Fin n`, indexed by
+  -- `Set.powersetCard` on the left and by `Finset.powersetCard` on the right.
+  exact (Finset.sum_subtype (Finset.powersetCard d Finset.univ)
+    (fun _ => Finset.mem_powersetCard_univ) fun s => ∏ i ∈ s, (t i : k)).symm
 
 end Field
 
