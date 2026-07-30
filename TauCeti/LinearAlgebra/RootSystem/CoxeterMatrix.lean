@@ -294,7 +294,7 @@ end CoxeterMatrixOfBase
 
 namespace RootPairing.weylGroup
 
-variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
+variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic]
 
 /-- **Where the Coxeter matrix of a base has the entry `2`, the product of the two simple
 reflections does have order `2`.** This is the one entry of `coxeterMatrixOfBase` that can be

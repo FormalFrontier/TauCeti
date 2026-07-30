@@ -129,20 +129,23 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
 
 namespace RootPairing.weylGroup
 
-/-- Distinct simple roots give distinct simple reflections: a simple reflection turns its own
-simple root negative and leaves every other one positive. -/
+omit [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+/-- Distinct simple roots give distinct simple reflections: the two reflections already disagree on
+the second simple root, since the two simple roots are linearly independent. -/
 theorem ofIdx_ne_ofIdx_of_ne {i j : ι} (hi : i ∈ b.support) (hj : j ∈ b.support) (hij : i ≠ j) :
     _root_.RootPairing.weylGroup.ofIdx P i ≠ _root_.RootPairing.weylGroup.ofIdx P j := by
-  letI := P.indexNeg
   intro hEq
-  have hpos : b.IsPos (P.reflectionPerm i j) :=
-    (b.isPos_of_mem_support hj).reflectionPerm hi hij.symm
-  have hneg : ¬ b.IsPos (P.reflectionPerm j j) := by
-    rw [← _root_.RootPairing.indexNeg_neg, _root_.RootPairing.Base.IsPos.neg_iff_not]
-    exact not_not_intro (b.isPos_of_mem_support hj)
-  refine hneg ?_
-  rw [← weylGroupToPerm_ofIdx_apply P j j, ← hEq, weylGroupToPerm_ofIdx_apply P i j]
-  exact hpos
+  have hindep : LinearIndependent R ![P.root i, P.root j] :=
+    b.linearIndependent_pair_of_ne (i := ⟨i, hi⟩) (j := ⟨j, hj⟩) (by simpa using hij)
+  have happ : P.root (P.reflectionPerm i j) = P.root (P.reflectionPerm j j) := by
+    rw [← weylGroupToPerm_ofIdx_apply P i j, ← weylGroupToPerm_ofIdx_apply P j j, hEq]
+  rw [P.root_reflectionPerm, P.root_reflectionPerm, P.reflection_apply_root,
+    P.reflection_apply_self] at happ
+  -- `happ` now reads `αⱼ - ⟨αⱼ, αᵢ^∨⟩ • αᵢ = -αⱼ`, so `2 • αⱼ` is a multiple of `αᵢ`.
+  have h2 : (2 : R) = 0 :=
+    (LinearIndependent.pair_iff.mp hindep (-P.pairing j i) 2
+      (by linear_combination (norm := module) happ)).2
+  exact two_ne_zero h2
 
 end RootPairing.weylGroup
 
