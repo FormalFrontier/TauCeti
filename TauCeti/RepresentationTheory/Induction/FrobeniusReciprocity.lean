@@ -86,11 +86,12 @@ This is Mathlib's `Rep.indResHomEquiv`, the linear form of the adjunction
 It is private: only `finrank_hom_indFDRep` is intended as API. -/
 private noncomputable def indResFDRepHomEquiv [S.FiniteIndex] (A : FDRep k S) (B : FDRep k G) :
     (indFDRep A ⟶ B) ≃ₗ[k] (A ⟶ resFDRep S B) :=
+  -- `resFDRep` is an abbreviation for `Action.res`, so its image under `forget₂` is `Rep.res`
+  -- definitionally and the restriction side needs no comparison isomorphism.
   (FDRep.forget₂HomLinearEquiv (indFDRep A) B).symm.trans <|
     ((Linear.homCongr k (indFDRepForgetIso A) (Iso.refl _)).trans
-      (Rep.indResHomEquiv S.subtype _ _)).trans <|
-        (Linear.homCongr k (Iso.refl _) (resFDRepForgetIso S B).symm).trans
-          (FDRep.forget₂HomLinearEquiv A (resFDRep S B))
+      (Rep.indResHomEquiv S.subtype _ _)).trans
+        (FDRep.forget₂HomLinearEquiv A (resFDRep S B))
 
 /-- The intertwining space out of an induced representation has the same dimension as the
 intertwining space into the corresponding restriction. This is the quantitative content of
@@ -112,7 +113,6 @@ private noncomputable def resIndFDRepHomEquiv [S.FiniteIndex] (A : FDRep k S) (B
   -- `Rep.indCoindIso` picks coset representatives, so it wants the coset relation to be decidable.
   letI : DecidableRel ⇑(QuotientGroup.rightRel S) := Classical.decRel _
   (FDRep.forget₂HomLinearEquiv (resFDRep S B) A).symm.trans <|
-    (Linear.homCongr k (resFDRepForgetIso S B) (Iso.refl _)).trans <|
     (Rep.resCoindHomEquiv S.subtype _ _).trans <|
       (Linear.homCongr k (Iso.refl _)
         ((indFDRepForgetIso A).trans (Rep.indCoindIso _)).symm).trans
