@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Projection
-public import Mathlib.RingTheory.Artinian.Module
 public import Mathlib.RingTheory.FiniteLength
 public import Mathlib.RingTheory.LocalRing.Basic
 public import Mathlib.RingTheory.Nilpotent.Basic
@@ -40,8 +38,8 @@ local-endomorphism-ring theorem. Both are supplied here.
 * `TauCeti.isLocalRing_end_of_isIndecomposable`: the endomorphism ring of an indecomposable module
   of finite length is local.
 * `TauCeti.isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`: for a module of finite
-  length the converse holds too, so indecomposability is *equivalent* to having a local
-  endomorphism ring.
+  length the converse holds too, so indecomposability is *equivalent* to being nontrivial and
+  having a local endomorphism ring.
 
 ## Implementation notes
 
@@ -86,6 +84,19 @@ def IsIndecomposableModule : Prop :=
 
 variable {A M}
 
+/-- `IsIndecomposableModule` restated as the conjunction defining it, so that clients can
+establish and consume it without unfolding the definition. -/
+theorem isIndecomposableModule_iff_nontrivial_and_forall_isCompl :
+    IsIndecomposableModule A M ↔
+      Nontrivial M ∧ ∀ N P : Submodule A M, IsCompl N P → N = ⊥ ∨ P = ⊥ :=
+  Iff.rfl
+
+/-- A nontrivial module along none of whose decompositions `M = N ⊕ P` both summands are nonzero is
+indecomposable. -/
+theorem isIndecomposableModule_of_forall_isCompl [Nontrivial M]
+    (h : ∀ N P : Submodule A M, IsCompl N P → N = ⊥ ∨ P = ⊥) : IsIndecomposableModule A M :=
+  ⟨‹_›, h⟩
+
 theorem IsIndecomposableModule.nontrivial (h : IsIndecomposableModule A M) : Nontrivial M := h.1
 
 theorem IsIndecomposableModule.eq_bot_or_eq_bot (h : IsIndecomposableModule A M)
@@ -125,7 +136,7 @@ decomposition `M = N ⊕ P` is witnessed by the projection onto `N` along `P`. -
 theorem isIndecomposableModule_of_forall_isIdempotentElem [Nontrivial M]
     (h : ∀ f : Module.End A M, IsIdempotentElem f → f = 0 ∨ f = 1) :
     IsIndecomposableModule A M := by
-  refine ⟨‹_›, fun N P hNP ↦ ?_⟩
+  refine isIndecomposableModule_of_forall_isCompl fun N P hNP ↦ ?_
   rcases h (N.projection P hNP) (Submodule.isIdempotentElem_projection hNP) with h₀ | h₁
   · exact Or.inl (by simpa [h₀] using (Submodule.range_projection hNP).symm)
   · exact Or.inr (by simpa [h₁, Module.End.one_eq_id] using (Submodule.ker_projection hNP).symm)
@@ -234,8 +245,8 @@ theorem isIndecomposableModule_of_isLocalRing_end [Nontrivial M]
   isIndecomposableModule_of_forall_isIdempotentElem fun _ hf ↦
     IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hf
 
-/-- For a module of finite length, indecomposability is **equivalent** to having a local
-endomorphism ring. -/
+/-- For a module of finite length, indecomposability is **equivalent** to being nontrivial and
+having a local endomorphism ring. -/
 theorem isIndecomposableModule_iff_nontrivial_and_isLocalRing_end (hM : IsFiniteLength A M) :
     IsIndecomposableModule A M ↔ Nontrivial M ∧ IsLocalRing (Module.End A M) := by
   refine ⟨fun h ↦ ⟨h.nontrivial, isLocalRing_end_of_isIndecomposable hM h⟩, fun ⟨_, h⟩ ↦ ?_⟩
