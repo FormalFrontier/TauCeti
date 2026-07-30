@@ -118,7 +118,7 @@ private theorem continuousOn_in_coordinates
     (hf : ContinuousOn f (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) :
     ContinuousOn (fun w => d (f (e.symm w)))
       (e.target ∩ {w : ℂ | 0 ≤ w.im}) := by
-  have he_inv := TauCeti.DifferentiableOn.openPartialHomeomorph_symm he
+  have he_inv := TauCeti.OpenPartialHomeomorph.differentiableOn_symm he
   have hfe : ContinuousOn (f ∘ e.symm) (e.target ∩ {w : ℂ | 0 ≤ w.im}) :=
     hf.comp (he_inv.mono inter_subset_left).continuousOn (mapsTo_symm_inter_im e)
   exact hd.continuousOn.comp hfe fun w hw =>
@@ -131,7 +131,7 @@ private theorem differentiableOn_in_coordinates
     (hf : DifferentiableOn ℂ f (e.source ∩ {z : ℂ | 0 < (e z).im})) :
     DifferentiableOn ℂ (fun w => d (f (e.symm w)))
       (e.target ∩ {w : ℂ | 0 < w.im}) := by
-  have he_inv := TauCeti.DifferentiableOn.openPartialHomeomorph_symm he
+  have he_inv := TauCeti.OpenPartialHomeomorph.differentiableOn_symm he
   have hfe : DifferentiableOn ℂ (f ∘ e.symm) (e.target ∩ {w : ℂ | 0 < w.im}) :=
     hf.comp (he_inv.mono inter_subset_left) (mapsTo_symm_inter_im e)
   refine hd.comp hfe fun w hw => hf_maps ?_
@@ -175,7 +175,7 @@ theorem differentiableOn_chartedSchwarzReflection_of_symmetric
       (apply_im_eq_zero_in_coordinates e d f hf_real)
   have hge : DifferentiableOn ℂ (fun z => schwarzReflection g (e z)) e.source :=
     hg.comp he e.mapsTo
-  have hd_inv := TauCeti.DifferentiableOn.openPartialHomeomorph_symm hd
+  have hd_inv := TauCeti.OpenPartialHomeomorph.differentiableOn_symm hd
   have hresult : DifferentiableOn ℂ (fun z => d.symm (schwarzReflection g (e z))) e.source :=
     hd_inv.comp hge (mapsTo_schwarzReflection e d f he_symm hd_symm hf_maps |>.comp e.mapsTo)
   exact hresult.congr fun z _ => chartedSchwarzReflection_def e d f z
