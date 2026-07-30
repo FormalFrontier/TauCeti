@@ -146,16 +146,15 @@ private theorem chebyshevCosineL2Isometry_comp_arccos :
   intro f
   simp only [LinearMap.comp_apply, LinearMap.id_apply]
   rw [chebyshevCosineL2Isometry_toLinearMap_apply, chebyshevArccosL2LinearMap_apply]
+  rw [← Lp.compMeasurePreserving_comp_apply f measurePreserving_arccos_chebyshev
+    measurePreserving_cos_chebyshev]
   apply Lp.ext
   filter_upwards [
-    Lp.coeFn_compMeasurePreserving
-      (Lp.compMeasurePreserving Real.arccos measurePreserving_arccos_chebyshev f)
-      measurePreserving_cos_chebyshev,
-    measurePreserving_cos_chebyshev.quasiMeasurePreserving.ae_eq
-      (Lp.coeFn_compMeasurePreserving f measurePreserving_arccos_chebyshev),
-    arccos_comp_cos_ae] with θ hcos harccos hinv
-  exact hcos.trans (harccos.trans (by
-    simpa only [Function.comp_apply, id_eq] using congrArg (fun x => f x) hinv))
+    Lp.coeFn_compMeasurePreserving f
+      (measurePreserving_arccos_chebyshev.comp measurePreserving_cos_chebyshev),
+    arccos_comp_cos_ae] with θ hcomp hinv
+  exact hcomp.trans (by
+    simpa only [Function.comp_apply, id_eq] using congrArg (fun x => f x) hinv)
 
 private theorem chebyshevArccosL2LinearMap_comp_cosine :
     (chebyshevArccosL2LinearMap 𝕜).comp (chebyshevCosineL2Isometry 𝕜).toLinearMap =
@@ -164,16 +163,15 @@ private theorem chebyshevArccosL2LinearMap_comp_cosine :
   intro f
   simp only [LinearMap.comp_apply, LinearMap.id_apply]
   rw [chebyshevArccosL2LinearMap_apply, chebyshevCosineL2Isometry_toLinearMap_apply]
+  rw [← Lp.compMeasurePreserving_comp_apply f measurePreserving_cos_chebyshev
+    measurePreserving_arccos_chebyshev]
   apply Lp.ext
   filter_upwards [
-    Lp.coeFn_compMeasurePreserving
-      (Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev f)
-      measurePreserving_arccos_chebyshev,
-    measurePreserving_arccos_chebyshev.quasiMeasurePreserving.ae_eq
-      (Lp.coeFn_compMeasurePreserving f measurePreserving_cos_chebyshev),
-    cos_comp_arccos_ae] with x harccos hcos hinv
-  exact harccos.trans (hcos.trans (by
-    simpa only [Function.comp_apply, id_eq] using congrArg (fun y => f y) hinv))
+    Lp.coeFn_compMeasurePreserving f
+      (measurePreserving_cos_chebyshev.comp measurePreserving_arccos_chebyshev),
+    cos_comp_arccos_ae] with x hcomp hinv
+  exact hcomp.trans (by
+    simpa only [Function.comp_apply, id_eq] using congrArg (fun y => f y) hinv)
 
 /-- **The Chebyshev-to-cosine `L²` equivalence.** It pulls a function on `[-1,1]` back along
 `x = cos θ`; its inverse pulls an angular function back along `θ = arccos x`. -/
