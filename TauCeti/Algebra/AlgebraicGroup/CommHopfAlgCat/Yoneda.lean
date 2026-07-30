@@ -31,6 +31,8 @@ shrinking part.
   corepresented by the coordinate algebra.
 * `TauCeti.HopfAlgebra.coyonedaObjIsoPointsFunctorForget`: the corresponding coyoneda
   isomorphism.
+* `TauCeti.HopfAlgebra.pointsFunctorForget_isCorepresentable`: the discoverable
+  corepresentability instance.
 * `TauCeti.CommHopfAlgCat.pointsFunctor_faithful`: points distinguish coordinate Hopf
   algebra morphisms.
 
@@ -90,6 +92,13 @@ noncomputable def coyonedaObjIsoPointsFunctorForget
     coyoneda.obj (op (CommAlgCat.of R H)) ≅
       pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{v} :=
   (pointsCorepresentableBy (R := R) H).toIso
+
+/-- The underlying type-valued functor of points is registered as corepresentable, so the
+generic corepresentability API can recover a representing object and universal element. -/
+instance pointsFunctorForget_isCorepresentable
+    (H : Type v) [CommRing H] [_root_.HopfAlgebra R H] :
+    (pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{v}).IsCorepresentable :=
+  (pointsCorepresentableBy (R := R) H).isCorepresentable
 
 /-- The forward map of `coyonedaObjIsoPointsFunctorForget` regards an algebra morphism as a
 point. -/
