@@ -175,12 +175,12 @@ theorem matrixCoeff_apply_mul_eq_sum {ι : Type*} [Fintype ι] (e : OrthonormalB
 /-! ### The trivial representation, and restriction along a homomorphism -/
 
 /-- A matrix coefficient of the trivial representation is the constant function at the inner
-product of its defining vectors; `continuous_const` is the continuity witness to feed in. Which
-constants arise depends on `V`: they are the values of the inner product, so all of `𝕜` when some
-`⟪v, w⟫ ≠ 0`, and only `0` when `V` is trivial. -/
+product of its defining vectors; the trivial action is constant, so `continuous_const` is its
+continuity witness. Which constants arise depends on `V`: they are the values of the inner product,
+so all of `𝕜` when some `⟪v, w⟫ ≠ 0`, and only `0` when `V` is trivial. -/
 @[simp]
-theorem matrixCoeff_trivial (htriv : Continuous (ContRepresentation.trivial 𝕜 G V)) (v w : V) :
-    matrixCoeff (ContRepresentation.trivial 𝕜 G V) htriv v w =
+theorem matrixCoeff_trivial (v w : V) :
+    matrixCoeff (ContRepresentation.trivial 𝕜 G V) continuous_const v w =
       ContinuousMap.const G ⟪v, w⟫_𝕜 := by
   ext g
   simp
@@ -195,10 +195,10 @@ theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v 
   simp [Submodule.coe_inner]
 
 /-- Restricting a representation along a continuous homomorphism precomposes its matrix
-coefficients. -/
+coefficients; the restricted action is `π ∘ φ`, so `hπ.comp hφ` is its continuity witness. -/
 theorem matrixCoeff_restrict {H : Type*} [Monoid H] [TopologicalSpace H] (φ : H →* G)
-    (hφ : Continuous φ) (hres : Continuous (π.restrict φ)) (v w : V) :
-    matrixCoeff (π.restrict φ) hres v w = (matrixCoeff π hπ v w).comp ⟨φ, hφ⟩ := by
+    (hφ : Continuous φ) (v w : V) :
+    matrixCoeff (π.restrict φ) (hπ.comp hφ) v w = (matrixCoeff π hπ v w).comp ⟨φ, hφ⟩ := by
   ext h
   simp
 
