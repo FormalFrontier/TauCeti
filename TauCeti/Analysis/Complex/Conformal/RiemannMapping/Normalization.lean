@@ -109,8 +109,8 @@ theorem eq_one_of_norm_eq_one_of_mul_pos {u a b : ℂ} (hu : ‖u‖ = 1) (ha : 
   rw [hab'] at hab
   exact mul_right_cancel₀ ha.ne' (by rw [hab, one_mul])
 
-/-- A **normalized Riemann map** of a domain `Ω` at a base point `z₀`: a holomorphic bijection of
-`Ω` onto the open unit disc that sends `z₀` to the origin and has a *positive real* derivative
+/-- A **normalized Riemann map** of a domain `Ω` at a base point `z₀ ∈ Ω`: a holomorphic bijection
+of `Ω` onto the open unit disc that sends `z₀` to the origin and has a *positive real* derivative
 there.
 
 The order on `deriv f z₀` is the scoped `ComplexOrder` one, so `0 < deriv f z₀` unfolds to
@@ -120,6 +120,9 @@ This normalization is what makes the Riemann map unique: `TauCeti.riemannMapping
 only up to a disc automorphism, whereas by `TauCeti.riemannMapping_normalized` exactly one function
 on `Ω` satisfies the predicate below. -/
 structure IsNormalizedRiemannMapOn (f : ℂ → ℂ) (Ω : Set ℂ) (z₀ : ℂ) : Prop where
+  /-- The base point of a normalized Riemann map lies in its domain, so that the conditions at the
+  base point really do constrain the map on `Ω`. -/
+  base_mem : z₀ ∈ Ω
   /-- A normalized Riemann map is holomorphic on its domain. -/
   differentiableOn : DifferentiableOn ℂ f Ω
   /-- A normalized Riemann map is a bijection of its domain onto the open unit disc. -/
@@ -177,7 +180,8 @@ theorem exists_isNormalizedRiemannMapOn (hΩo : IsOpen Ω) (hΩc : IsSimplyConne
   have hnu : ‖u‖ = 1 := by
     rw [hu_def, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hcpos,
       div_self hcpos.ne']
-  refine ⟨fun z => u * g z, hg.differentiableOn.const_mul u, bijOn_ball_const_mul hnu hbij, ?_, ?_⟩
+  refine ⟨fun z => u * g z, hz₀, hg.differentiableOn.const_mul u,
+    bijOn_ball_const_mul hnu hbij, ?_, ?_⟩
   · rw [hg.map_base, mul_zero]
   · rw [deriv_const_mul_field, hu_def, div_mul_cancel₀ _ hc]
     exact Complex.zero_lt_real.mpr hcpos
@@ -189,13 +193,14 @@ Together with `TauCeti.exists_isNormalizedRiemannMapOn` this makes the normalize
 genuinely well-defined function of `(Ω, z₀)`. Note that neither simple connectivity nor properness
 of `Ω` is needed here: uniqueness holds wherever two such maps happen to exist. -/
 theorem IsNormalizedRiemannMapOn.eqOn (hg : IsNormalizedRiemannMapOn g Ω z₀)
-    (hf : IsNormalizedRiemannMapOn f Ω z₀) (hΩo : IsOpen Ω) (hz₀ : z₀ ∈ Ω) : EqOn g f Ω := by
+    (hf : IsNormalizedRiemannMapOn f Ω z₀) (hΩo : IsOpen Ω) : EqOn g f Ω := by
   obtain ⟨u, hu⟩ :=
     exists_eqOn_const_mul_of_image_eq_ball_of_apply_eq_zero hΩo hf.differentiableOn
-      hg.differentiableOn hf.injOn hg.injOn hf.image_eq hg.image_eq hz₀ hf.map_base hg.map_base
+      hg.differentiableOn hf.injOn hg.injOn hf.image_eq hg.image_eq hf.base_mem hf.map_base
+      hg.map_base
   -- The two maps agree near `z₀` up to the constant `u`, so their derivatives there do too.
   have hev : g =ᶠ[𝓝 z₀] fun z => (u : ℂ) * f z :=
-    eventually_nhds_iff.mpr ⟨Ω, fun z hz => hu hz, hΩo, hz₀⟩
+    eventually_nhds_iff.mpr ⟨Ω, fun z hz => hu hz, hΩo, hf.base_mem⟩
   have hderiv : (u : ℂ) * deriv f z₀ = deriv g z₀ := by
     rw [hev.deriv_eq, deriv_const_mul_field]
   have hu1 : (u : ℂ) = 1 :=
@@ -215,10 +220,11 @@ theorem riemannMapping_normalized (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected �
     ∃ f : ℂ → ℂ, IsNormalizedRiemannMapOn f Ω z₀ ∧
       ∀ g : ℂ → ℂ, IsNormalizedRiemannMapOn g Ω z₀ → EqOn g f Ω := by
   obtain ⟨f, hf⟩ := exists_isNormalizedRiemannMapOn hΩo hΩc hΩ hz₀
-  exact ⟨f, hf, fun g hg => hg.eqOn hf hΩo hz₀⟩
+  exact ⟨f, hf, fun g hg => hg.eqOn hf hΩo⟩
 
 /-- The identity is the normalized Riemann map of the unit disc at the origin. -/
 theorem isNormalizedRiemannMapOn_id_ball : IsNormalizedRiemannMapOn id (ball (0 : ℂ) 1) 0 where
+  base_mem := mem_ball_self one_pos
   differentiableOn := differentiable_id.differentiableOn
   bijOn := bijOn_id _
   map_base := rfl
@@ -232,6 +238,6 @@ assumes the derivative at the origin is exactly `1`: here it is only assumed to 
 and uniqueness of the normalized Riemann map supplies the rest. -/
 theorem eqOn_id_of_isNormalizedRiemannMapOn_ball
     (hf : IsNormalizedRiemannMapOn f (ball (0 : ℂ) 1) 0) : EqOn f id (ball (0 : ℂ) 1) :=
-  hf.eqOn isNormalizedRiemannMapOn_id_ball isOpen_ball (mem_ball_self one_pos)
+  hf.eqOn isNormalizedRiemannMapOn_id_ball isOpen_ball
 
 end TauCeti
