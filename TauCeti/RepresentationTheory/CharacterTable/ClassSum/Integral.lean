@@ -29,21 +29,10 @@ public section
 
 namespace TauCeti
 
-/-- The center of `ℤ[G]` is finite as a `ℤ`-module, with its class-sum basis. -/
-noncomputable instance instModuleFiniteCenterIntMonoidAlgebra
-    {G : Type*} [Group G] [Finite G] :
-    Module.Finite ℤ (Subalgebra.center ℤ (MonoidAlgebra ℤ G)) :=
-  by
-    letI := Fintype.ofFinite G
-    letI := Classical.decEq G
-    exact Module.Finite.of_basis classSumBasis
-
 /-- A class sum is integral over `ℤ` as an element of the center of `ℤ[G]`. -/
 theorem isIntegral_classSum {G : Type*} [Group G] [Fintype G] [DecidableEq G]
     (C : ConjClasses G) :
-    IsIntegral ℤ
-      (⟨classSum ℤ C, classSum_mem_center ℤ C⟩ :
-        Subalgebra.center ℤ (MonoidAlgebra ℤ G)) :=
+    IsIntegral ℤ (classSumCenter (k := ℤ) C) :=
   Algebra.IsIntegral.isIntegral _
 
 end TauCeti
