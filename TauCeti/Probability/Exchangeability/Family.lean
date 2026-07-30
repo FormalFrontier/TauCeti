@@ -22,8 +22,8 @@ directing measure, and `ConditionallyIIDFamily` is its existential wrapper.
 * `conditionallyIIDWithFamily_iff_conditionallyIIDWith` and
   `conditionallyIIDFamily_iff_conditionallyIID` give the corresponding identifications for the
   conditional predicates.
-* `ExchangeableFamily.comp_injective` and
-  `ConditionallyIIDWithFamily.comp_injective` reindex a family along an injection.
+* `ExchangeableFamily.comp_injective`, `ConditionallyIIDWithFamily.comp_injective`, and
+  `ConditionallyIIDFamily.comp_injective` reindex a family along an injection.
 
 These are the index-generic definitions needed for the Layer 8 target “de Finetti for other
 countable index types” in `TauCetiRoadmap/Exchangeability/README.md`. The countable-index theorem
@@ -164,6 +164,14 @@ theorem ConditionallyIIDWithFamily.comp_injective
   refine ConditionallyIIDWithFamily.intro h.measurable_directing fun m k hk => ?_
   simpa only [Function.comp_apply] using
     h.jointLaw_eq_disintegration (f ∘ k) (hf.comp hk)
+
+/-- Conditional i.i.d.-ness is preserved by reindexing a family along an injection. -/
+theorem ConditionallyIIDFamily.comp_injective
+    {μ : Measure Ω} {X : ι → Ω → α} (h : ConditionallyIIDFamily μ X)
+    {f : κ → ι} (hf : Function.Injective f) :
+    ConditionallyIIDFamily μ fun j => X (f j) :=
+  let ⟨_, hν⟩ := h.exists_directing
+  ConditionallyIIDFamily.of_directing (hν.comp_injective hf)
 
 /-! ## Comparison with the sequence predicates -/
 

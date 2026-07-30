@@ -16,8 +16,8 @@ type. This file transports the sequence theorem along an equivalence with `ℕ`.
 
 ## Main results
 
-* `conditionallyIIDFamily_of_exchangeableFamily_equivNat` gives the transport along an explicit
-  equivalence `ι ≃ ℕ`.
+* `conditionallyIIDFamily_of_exchangeableFamily_of_equiv_nat` gives the transport along an
+  explicit equivalence `ι ≃ ℕ`.
 * `conditionallyIIDFamily_of_exchangeableFamily` chooses such an equivalence from `[Countable ι]`
   and `[Infinite ι]`.
 
@@ -38,9 +38,10 @@ namespace Probability
 
 variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **De Finetti's theorem transported along an explicit enumeration.** An exchangeable family
-whose index type is equivalent to `ℕ` is conditionally i.i.d. -/
-theorem conditionallyIIDFamily_of_exchangeableFamily_equivNat
+/-- **De Finetti's theorem transported along an explicit enumeration.** Under a finite measure,
+an exchangeable family with measurable coordinates whose index type is equivalent to `ℕ` is
+conditionally i.i.d. -/
+theorem conditionallyIIDFamily_of_exchangeableFamily_of_equiv_nat
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ι → Ω → α} (e : ι ≃ ℕ) (hX : ExchangeableFamily μ X)
     (hX_meas : ∀ i, Measurable (X i)) :
@@ -55,15 +56,15 @@ theorem conditionallyIIDFamily_of_exchangeableFamily_equivNat
   simpa only [Y, Equiv.symm_apply_apply] using
     hν.conditionallyIIDWithFamily.comp_injective (f := e) e.injective
 
-/-- **De Finetti's theorem for countably infinite index types.** Every exchangeable family indexed
-by a countably infinite type, with values in a nonempty standard Borel space, is conditionally
-i.i.d. -/
+/-- **De Finetti's theorem for countably infinite index types.** Under a finite measure, every
+exchangeable family with measurable coordinates indexed by a countably infinite type, with values
+in a nonempty standard Borel space, is conditionally i.i.d. -/
 theorem conditionallyIIDFamily_of_exchangeableFamily
     [Countable ι] [Infinite ι] [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ι → Ω → α}
     (hX : ExchangeableFamily μ X) (hX_meas : ∀ i, Measurable (X i)) :
     ConditionallyIIDFamily μ X :=
-  conditionallyIIDFamily_of_exchangeableFamily_equivNat
+  conditionallyIIDFamily_of_exchangeableFamily_of_equiv_nat
     (Classical.choice (inferInstance : Nonempty (ι ≃ ℕ))) hX hX_meas
 
 end Probability
