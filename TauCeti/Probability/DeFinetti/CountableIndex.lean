@@ -43,7 +43,7 @@ an exchangeable family with measurable coordinates whose index type is equivalen
 conditionally i.i.d. -/
 theorem conditionallyIIDFamily_of_exchangeableFamily_of_equiv_nat
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ι → Ω → α} (e : ι ≃ ℕ) (hX : ExchangeableFamily μ X)
+    {X : ι → Ω → α} (hX : ExchangeableFamily μ X) (e : ι ≃ ℕ)
     (hX_meas : ∀ i, Measurable (X i)) :
     ConditionallyIIDFamily μ X := by
   let Y : ℕ → Ω → α := fun n => X (e.symm n)
@@ -65,7 +65,7 @@ theorem conditionallyIIDFamily_of_exchangeableFamily
     (hX : ExchangeableFamily μ X) (hX_meas : ∀ i, Measurable (X i)) :
     ConditionallyIIDFamily μ X :=
   conditionallyIIDFamily_of_exchangeableFamily_of_equiv_nat
-    (Classical.choice (inferInstance : Nonempty (ι ≃ ℕ))) hX hX_meas
+    hX (Classical.choice (inferInstance : Nonempty (ι ≃ ℕ))) hX_meas
 
 end Probability
 

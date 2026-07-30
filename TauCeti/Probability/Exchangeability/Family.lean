@@ -22,6 +22,9 @@ directing measure, and `ConditionallyIIDFamily` is its existential wrapper.
 * `conditionallyIIDWithFamily_iff_conditionallyIIDWith` and
   `conditionallyIIDFamily_iff_conditionallyIID` give the corresponding identifications for the
   conditional predicates.
+* `ConditionallyIIDWithFamily.exchangeableFamily` and
+  `ConditionallyIIDFamily.exchangeableFamily` give the easy implication from conditional
+  i.i.d.-ness to exchangeability.
 * `ExchangeableFamily.comp_injective`, `ConditionallyIIDWithFamily.comp_injective`, and
   `ConditionallyIIDFamily.comp_injective` reindex a family along an injection.
 
@@ -124,6 +127,24 @@ theorem ConditionallyIIDWithFamily.jointLaw_eq_disintegration
         (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   h.2 m k hk
 
+/-- A conditionally i.i.d. family with a named directing measure is exchangeable. -/
+theorem ConditionallyIIDWithFamily.exchangeableFamily
+    {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (h : ConditionallyIIDWithFamily μ X ν) : ExchangeableFamily μ X := by
+  refine ExchangeableFamily.intro fun m k l hk hl => ?_
+  calc
+    μ.map (fun ω i => X (k i) ω) =
+        (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
+      rw [Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
+    _ = (μ.bind fun ω =>
+          (Measure.dirac (ν ω)).prod
+            (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
+      rw [h.jointLaw_eq_disintegration k hk]
+    _ = (μ.map fun ω => (ν ω, fun i : Fin m => X (l i) ω)).snd := by
+      rw [h.jointLaw_eq_disintegration l hl]
+    _ = μ.map fun ω i => X (l i) ω := by
+      rw [Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
+
 /-- Conditional i.i.d.-ness of a family: existence of a directing measure. -/
 def ConditionallyIIDFamily (μ : Measure Ω) (X : ι → Ω → α) : Prop :=
   ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWithFamily μ X ν
@@ -146,6 +167,13 @@ theorem ConditionallyIIDFamily.exists_directing {μ : Measure Ω} {X : ι → Ω
     (h : ConditionallyIIDFamily μ X) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWithFamily μ X ν :=
   h
+
+/-- A conditionally i.i.d. family is exchangeable. -/
+theorem ConditionallyIIDFamily.exchangeableFamily
+    {μ : Measure Ω} {X : ι → Ω → α} (h : ConditionallyIIDFamily μ X) :
+    ExchangeableFamily μ X :=
+  let ⟨_, hν⟩ := h.exists_directing
+  hν.exchangeableFamily
 
 /-- Exchangeability is preserved by reindexing a family along an injection. -/
 theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → α}
