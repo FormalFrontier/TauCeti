@@ -43,7 +43,7 @@ consumes needs only `C^{1,1}`.
 * `Contour.tendsto_realWindingIntegrand_at_crossing_of_contDiffAt` — the same limit under the
   roadmap's `C²` hypothesis, with the acceleration read off as `deriv (deriv γ) t₀`.
 * `Contour.tendsto_realWindingIntegrand_circleMap_crossing` — the value `½` at every point of a
-  circle, the smooth-crossing check (`½ · r⁻¹ · r`) of the formula above.
+  circle, the smooth-crossing check (`½ · |r|⁻¹ · |r|`) of the formula above.
 
 The second-order chord expansion behind the first result is obtained from Mathlib's mean-value
 engine `Convex.isLittleO_pow_succ_real`, the same lemma Mathlib's `taylor_isLittleO` runs on; it is
@@ -105,12 +105,13 @@ private theorem tendsto_chord_secondOrder
   have hFt₀ : F t₀ = 0 := by simp [hF]
   rw [hFt₀, hVopen.nhdsWithin_eq ht₀V] at hmain
   simp only [sub_zero] at hmain
-  -- Move the comparison function to the complex square, then divide.
+  -- Move the comparison function to the complex square, then divide. The real square `(t - t₀) ^ 2`
+  -- and its complex coercion have the same norm, so comparing norms transfers the estimate.
+  have hnorm : ∀ t : ℝ, ‖(t - t₀) ^ (1 + 1)‖ = ‖((t - t₀ : ℝ) : ℂ) ^ 2‖ := fun t ↦ by
+    rw [norm_pow, norm_pow, Complex.norm_real]
   have hcx : F =o[𝓝 t₀] fun t ↦ ((t - t₀ : ℝ) : ℂ) ^ 2 := by
     rw [← isLittleO_norm_right] at hmain ⊢
-    refine hmain.congr' EventuallyEq.rfl (Eventually.of_forall fun t ↦ ?_)
-    change ‖(t - t₀) ^ (1 + 1)‖ = ‖((t - t₀ : ℝ) : ℂ) ^ 2‖
-    rw [norm_pow, norm_pow, Complex.norm_real]
+    exact hmain.congr' EventuallyEq.rfl (Eventually.of_forall hnorm)
   have hzero := (hcx.tendsto_div_nhds_zero).mono_left (nhdsWithin_le_nhds (s := {t₀}ᶜ))
   have hshift := hzero.add_const (A / 2)
   rw [zero_add] at hshift
@@ -179,8 +180,9 @@ theorem tendsto_realWindingIntegrand_at_crossing_of_contDiffAt {z₀ : ℂ}
 
 /-- **The smooth-crossing check.** At every parameter of a circle of nonzero radius, the real
 winding integrand about the point of the circle reached there tends to `½`: the circle has signed
-curvature `r⁻¹` and `circleMap` has speed `r`, so `½ k |Λ̇| = ½`. This is the value the roadmap's
-smooth crossing (opening angle `π`) carries, computed from
+curvature `|r|⁻¹` and `circleMap c r` has speed `|r|` (a negative `r` traverses the circle of radius
+`|r|` counterclockwise too, only from the antipodal parameter), so `½ k |Λ̇| = ½`. This is the value
+the roadmap's smooth crossing (opening angle `π`) carries, computed from
 `tendsto_realWindingIntegrand_at_crossing_of_contDiffAt` rather than assumed. -/
 theorem tendsto_realWindingIntegrand_circleMap_crossing {c : ℂ} {r : ℝ} (hr : r ≠ 0) (t₀ : ℝ) :
     Tendsto (fun t ↦ realWindingIntegrand (circleMap c r t - circleMap c r t₀)
