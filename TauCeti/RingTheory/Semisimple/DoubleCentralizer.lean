@@ -35,6 +35,8 @@ module-internal form -- no ambient base field is involved, only finiteness over 
 * `TauCeti.exists_smul_eq_of_linearIndependent`: the Jacobson-Chevalley form of density. Over a
   simple module, a single element of `R` carries any `D`-linearly independent family to an
   arbitrary family of targets.
+* `TauCeti.finite_end_of_smulCommClass`: finiteness over a base ring acting compatibly supplies the
+  finiteness hypothesis density needs.
 * `TauCeti.algEquivEndEndOfIsSimpleRing`: the finite-dimensional-algebra form, where the finiteness
   hypothesis is supplied by finiteness over a commutative base ring acting compatibly.
 
@@ -42,9 +44,9 @@ module-internal form -- no ambient base field is involved, only finiteness over 
 
 The finiteness hypothesis is `Module.Finite (Module.End R M) M`, finiteness over the endomorphism
 ring itself, rather than finite-dimensionality over an unrelated base ring. That is the hypothesis
-density actually needs; when a commutative base ring `K` acting compatibly is available, the
-`K`-scalars are themselves `R`-linear endomorphisms, so `Module.Finite K M` gives it by
-`Module.Finite.of_restrictScalars_finite`.
+density actually needs; when a base ring `K` acting compatibly is available, the `K`-scalars are
+themselves `R`-linear endomorphisms, so `Module.Finite K M` gives it by
+`TauCeti.finite_end_of_smulCommClass`.
 
 A faithful simple module makes `R` a *primitive* ring, not necessarily a simple one, so
 `TauCeti.toModuleEnd_moduleEnd_bijective` is genuinely more general than its simple-ring corollary.
@@ -166,25 +168,27 @@ theorem exists_smul_eq_of_linearIndependent [IsSimpleModule R M]
     (hv : LinearIndependent (Module.End R M) v) (w : ι → M) :
     ∃ r : R, ∀ i, r • v i = w i := by
   classical
-  -- Extend `v` to a `D`-linear map `f` with the prescribed values, by splitting off a complement
-  -- of the span of `v`; then density realizes `f` by a scalar.
-  obtain ⟨q, hq⟩ := Submodule.exists_isCompl (Submodule.span (Module.End R M) (Set.range v))
-  set f : Module.End (Module.End R M) M :=
-    ((Basis.span hv).constr ℕ w).comp (Submodule.projectionOnto _ q hq) with hf
+  -- `v` is a basis of its span, so it has the prescribed values under some `D`-linear map on that
+  -- span; extend that map to all of `M` and let density realize the extension by a scalar.
+  obtain ⟨f, hf⟩ := ((Basis.span hv).constr ℕ w).exists_extend
   obtain ⟨r, hr⟩ := Module.Finite.toModuleEnd_moduleEnd_surjective (R := R) f
   refine ⟨r, fun i ↦ ?_⟩
-  have hmem : v i ∈ Submodule.span (Module.End R M) (Set.range v) :=
-    Submodule.subset_span ⟨i, rfl⟩
-  have hproj := Submodule.projectionOnto_apply_left hq (⟨v i, hmem⟩ :
-    Submodule.span (Module.End R M) (Set.range v))
   have hvi : f (v i) = w i := by
-    rw [hf, LinearMap.comp_apply, hproj,
-      show (⟨v i, hmem⟩ : Submodule.span (Module.End R M) (Set.range v)) = (Basis.span hv) i from
-        Subtype.ext (Basis.coe_span_apply hv i).symm,
-      Basis.constr_basis]
+    -- The `i`-th vector of `Basis.span hv` is `v i` viewed in the span, where `f` agrees with
+    -- `(Basis.span hv).constr ℕ w`, which sends it to `w i`.
+    have hbasis : ((Basis.span hv) i : M) = v i := Basis.coe_span_apply hv i
+    have := LinearMap.congr_fun hf ((Basis.span hv) i)
+    rwa [LinearMap.comp_apply, Submodule.subtype_apply, hbasis, Basis.constr_basis] at this
   rw [← hvi, ← hr, Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply]
 
 /-! ### The finite-dimensional algebra case -/
+
+/-- Finiteness over a base ring `K` whose action on `M` commutes with the `R`-action gives the
+finiteness hypothesis density needs: the `K`-scalars are themselves `R`-linear endomorphisms of `M`,
+so `M` is finite over `Module.End R M` along the tower `K → Module.End R M → M`. -/
+theorem finite_end_of_smulCommClass (K : Type*) [Semiring K] [Module K M] [SMulCommClass R K M]
+    [Module.Finite K M] : Module.Finite (Module.End R M) M :=
+  Module.Finite.of_restrictScalars_finite K (Module.End R M) M
 
 variable (R M)
 
@@ -197,8 +201,7 @@ noncomputable def algEquivEndEndOfIsSimpleRing (K : Type*) [CommSemiring K] [Alg
     R ≃ₐ[K] Module.End (Module.End R M) M :=
   have := IsSimpleModule.nontrivial R M
   have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
-  -- The `K`-scalars are `R`-linear endomorphisms, so `M` is finite over `Module.End R M`.
-  have := Module.Finite.of_restrictScalars_finite K (Module.End R M) M
+  have := finite_end_of_smulCommClass (R := R) (M := M) K
   algEquivEndEnd R M K
 
 variable {R M}
@@ -208,6 +211,9 @@ theorem algEquivEndEndOfIsSimpleRing_apply (K : Type*) [CommSemiring K] [Algebra
     [IsScalarTower K R M] [Module.Finite K M] [IsSimpleRing R] [IsSimpleModule R M] (r : R)
     (m : M) :
     algEquivEndEndOfIsSimpleRing R M K r m = r • m :=
-  (rfl)
+  have := IsSimpleModule.nontrivial R M
+  have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
+  have := finite_end_of_smulCommClass (R := R) (M := M) K
+  algEquivEndEnd_apply K r m
 
 end TauCeti
