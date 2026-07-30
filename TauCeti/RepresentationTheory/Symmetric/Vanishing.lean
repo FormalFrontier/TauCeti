@@ -68,10 +68,10 @@ open scoped Pointwise
 variable {μ : YoungDiagram}
 
 /-- A row of the tableau `t` **meets a column** of the tableau `s` **twice** if two distinct
-labels lie in a common row of `t` and in a common column of `s`.  Meeting once is no condition at
-all (a row of `t` and a column of `t` always share exactly one label), so it is the second shared
-label that carries the content.  The relation is not symmetric: rows are read off `t` and columns
-off `s`. -/
+labels lie in a common row of `t` and in a common column of `s`.  A row of `t` and a column of `t`
+share at most one label, so meeting once is no condition at all and it is the second shared label
+that carries the content.  The relation is not symmetric: rows are read off `t` and columns off
+`s`. -/
 def RowMeetsColumnTwice (t s : YoungTableau μ) : Prop :=
   ∃ x y, x ≠ y ∧ rowIndex t x = rowIndex t y ∧ colIndex s x = colIndex s y
 
@@ -114,7 +114,9 @@ theorem exists_rowMeetsColumnTwice_relabel (t : YoungTableau μ) {x y u v : Fin 
   refine ⟨ρ⁻¹, ?_⟩
   rw [rowMeetsColumnTwice_relabel_iff]
   refine ⟨x, y, hxy, hrow, ?_⟩
-  rw [inv_inv, show ρ x = u from hρ true, show ρ y = v from hρ false]
+  have hx : ρ x = u := by simpa using hρ true
+  have hy : ρ y = v := by simpa using hρ false
+  rw [inv_inv, hx, hy]
   exact hcol
 
 /-- **The key vanishing lemma**, in terms of explicit labels: if the distinct labels `x` and `y`
