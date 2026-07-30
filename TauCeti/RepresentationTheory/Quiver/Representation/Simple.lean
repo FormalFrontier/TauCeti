@@ -1,0 +1,184 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import Mathlib.Algebra.Category.ModuleCat.Simple
+public import Mathlib.CategoryTheory.Limits.FunctorCategory.EpiMono
+
+/-!
+# The vertex simple representations of a quiver
+
+For a vertex `i` of a quiver `Q`, the *vertex simple* representation `Sᵢ` is the base field `k` at
+`i` and the zero module at every other vertex, every arrow acting by zero. This file constructs
+`Sᵢ` and proves that it is a simple object of the category of representations.
+
+The construction is a `CategoryTheory.Paths.lift` of the prefunctor sending `i` to `k`, every other
+vertex to the zero module, and every arrow to the zero map; functoriality along path concatenation
+is then supplied by Mathlib. Simplicity is checked pointwise: a monomorphism into `Sᵢ` is zero away
+from `i` because the target vanishes there, so it is determined by its component at `i`, where `k`
+is a simple `k`-module.
+
+## Main definitions
+
+* `TauCeti.simpleRep k Q i`: the vertex simple representation `Sᵢ`.
+
+## Main results
+
+* `TauCeti.simple_simpleRep`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
+* `TauCeti.hom_simpleRep_eq_zero_iff` and `TauCeti.simpleRep_hom_eq_zero_iff`: a morphism into or
+  out of `Sᵢ` is detected by its component at `i`.
+* `TauCeti.dimVector_simpleRep`: the dimension vector of `Sᵢ` is `Pi.single i 1`.
+* `TauCeti.not_nonempty_simpleRep_iso`: vertex simples at distinct vertices are not isomorphic.
+
+## Implementation notes
+
+`simpleRep` branches on equality of vertices, so it takes a `DecidableEq Q` instance; the
+`Decidable` instances of a proposition are all equal, so the resulting representation does not
+depend on which one is supplied, and `Classical.decEq` is always available.
+
+The objects of `CategoryTheory.Paths Q` are the vertices of `Q`, so the statements below use a
+vertex directly as an object of the path category.
+
+## References
+
+This implements the vertex simples of Layer 1 of
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`.
+-/
+
+public section
+
+namespace TauCeti
+
+open CategoryTheory CategoryTheory.Limits
+open scoped ZeroObject
+
+universe u v
+
+variable (k : Type u) (Q : Type v) [Field k] [Quiver Q] [DecidableEq Q]
+
+/-- The **vertex simple** representation `Sᵢ` of a quiver: the base field `k` at the vertex `i`,
+the zero module at every other vertex, and the zero map along every arrow. -/
+@[expose] noncomputable def simpleRep (i : Q) : QuiverRep k Q :=
+  Paths.lift { obj := fun a ↦ if a = i then ModuleCat.of k k else 0, map := fun _ ↦ 0 }
+
+variable {k Q}
+
+@[simp]
+theorem simpleRep_obj (i a : Q) :
+    (simpleRep k Q i).obj a = if a = i then ModuleCat.of k k else 0 :=
+  rfl
+
+theorem simpleRep_obj_self (i : Q) : (simpleRep k Q i).obj i = ModuleCat.of k k := by
+  rw [simpleRep_obj, if_pos rfl]
+
+theorem simpleRep_obj_of_ne {i a : Q} (h : a ≠ i) : (simpleRep k Q i).obj a = 0 := by
+  rw [simpleRep_obj, if_neg h]
+
+/-- Away from `i`, the vertex simple `Sᵢ` vanishes. -/
+theorem isZero_simpleRep_obj {i a : Q} (h : a ≠ i) : IsZero ((simpleRep k Q i).obj a) := by
+  rw [simpleRep_obj_of_ne h]
+  exact isZero_zero _
+
+/-- At `i`, the vertex simple `Sᵢ` is the simple `k`-module `k`. -/
+instance simple_simpleRep_obj_self (i : Q) : Simple ((simpleRep k Q i).obj i) := by
+  rw [simpleRep_obj_self]
+  infer_instance
+
+instance finiteDimensional_simpleRep_obj (i a : Q) :
+    FiniteDimensional k ((simpleRep k Q i).obj a) := by
+  rcases eq_or_ne a i with rfl | ha
+  · rw [simpleRep_obj_self]
+    exact inferInstanceAs (FiniteDimensional k k)
+  · rw [simpleRep_obj_of_ne ha]
+    have : Subsingleton ((0 : ModuleCat k) : Type u) :=
+      ModuleCat.subsingleton_of_isZero (isZero_zero _)
+    exact Module.Finite.of_surjective (0 : k →ₗ[k] ((0 : ModuleCat k) : Type u))
+      fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
+
+/-- Every arrow of the quiver acts by zero on the vertex simple `Sᵢ`. -/
+@[simp]
+theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
+    (simpleRep k Q i).map e.toPath = 0 :=
+  Paths.lift_toPath _ e
+
+/-- More generally, every path of positive length acts by zero on the vertex simple `Sᵢ`. -/
+@[simp]
+theorem simpleRep_map_cons (i : Q) {a b c : Q} (p : Quiver.Path a b) (e : b ⟶ c) :
+    (simpleRep k Q i).map (p.cons e) = 0 :=
+  Limits.comp_zero
+
+/-- A path of positive length acts by zero on the vertex simple `Sᵢ`; only the trivial paths, which
+act by the identity, survive. -/
+theorem simpleRep_map_eq_zero_of_length_ne_zero (i : Q) {a b : Q} (p : Quiver.Path a b)
+    (hp : p.length ≠ 0) : (simpleRep k Q i).map p = 0 := by
+  cases p with
+  | nil => exact absurd rfl hp
+  | cons q e => exact simpleRep_map_cons i q e
+
+/-- A morphism into the vertex simple `Sᵢ` vanishes as soon as its component at `i` does: all its
+other components land in a zero module. -/
+theorem hom_simpleRep_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : M ⟶ simpleRep k Q i) :
+    f = 0 ↔ f.app i = 0 := by
+  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine NatTrans.ext (funext fun a ↦ ?_)
+  rcases eq_or_ne a i with rfl | ha
+  · exact h
+  · exact (isZero_simpleRep_obj (Q := Q) ha).eq_of_tgt _ _
+
+/-- Dually, a morphism out of the vertex simple `Sᵢ` vanishes as soon as its component at `i` does:
+all its other components start from a zero module. -/
+theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q i ⟶ M) :
+    f = 0 ↔ f.app i = 0 := by
+  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine NatTrans.ext (funext fun a ↦ ?_)
+  rcases eq_or_ne a i with rfl | ha
+  · exact h
+  · exact (isZero_simpleRep_obj (Q := Q) ha).eq_of_src _ _
+
+/-- **The vertex simples are simple.** A monomorphism into `Sᵢ` is zero away from `i`, and at `i` it
+is a monomorphism into the simple `k`-module `k`. -/
+instance simple_simpleRep (i : Q) : Simple (simpleRep k Q i) where
+  mono_isIso_iff_nonzero {M} f _ := by
+    constructor
+    · intro _ h
+      have hzi : IsZero ((simpleRep k Q i).obj i) := (IsZero.of_epi_eq_zero f h).obj i
+      rw [simpleRep_obj_self] at hzi
+      exact not_subsingleton k (ModuleCat.subsingleton_of_isZero hzi)
+    · intro h
+      rw [NatTrans.isIso_iff_isIso_app]
+      intro a
+      rcases eq_or_ne a i with rfl | ha
+      · exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)
+      · have ht : IsZero ((simpleRep k Q i).obj a) := isZero_simpleRep_obj (Q := Q) ha
+        have hs : IsZero (M.obj a) := IsZero.of_mono (f.app a) ht
+        rw [hs.eq_of_src (f.app a) (hs.iso ht).hom]
+        infer_instance
+
+/-- The dimension vector of the vertex simple `Sᵢ` is the standard basis vector at `i`. -/
+@[simp]
+theorem dimVector_simpleRep (i : Q) : dimVector (simpleRep k Q i) = Pi.single i 1 := by
+  funext a
+  rw [dimVector_apply, Pi.single_apply]
+  rcases eq_or_ne a i with rfl | ha
+  · rw [if_pos rfl]
+    change Module.finrank k ((simpleRep k Q a).obj a) = 1
+    rw [simpleRep_obj_self]
+    exact Module.finrank_self k
+  · rw [if_neg ha]
+    change Module.finrank k ((simpleRep k Q i).obj a) = 0
+    have : Subsingleton ((simpleRep k Q i).obj a) :=
+      ModuleCat.subsingleton_of_isZero (isZero_simpleRep_obj ha)
+    exact Module.finrank_zero_of_subsingleton
+
+/-- Vertex simples at distinct vertices are not isomorphic: their dimension vectors differ. -/
+theorem not_nonempty_simpleRep_iso {i j : Q} (h : i ≠ j) :
+    ¬ Nonempty (simpleRep k Q i ≅ simpleRep k Q j) := by
+  rintro ⟨e⟩
+  have hd := dimVector_eq_of_iso e
+  rw [dimVector_simpleRep, dimVector_simpleRep] at hd
+  simpa [Pi.single_apply, h] using congrFun hd i
+
+end TauCeti
