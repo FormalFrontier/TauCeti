@@ -231,11 +231,7 @@ theorem hookLength_transpose : hookLength μ.transpose c = hookLength μ c.swap 
 product of all hook lengths is a transposition invariant. -/
 theorem prod_hookLength_transpose :
     ∏ c ∈ μ.transpose.cells, hookLength μ.transpose c = ∏ c ∈ μ.cells, hookLength μ c := by
-  refine Finset.prod_nbij' Prod.swap Prod.swap (fun d hd => ?_) (fun d hd => ?_)
-    (fun d _ => d.swap_swap) (fun d _ => d.swap_swap) (fun d _ => ?_)
-  · simpa using hd
-  · simpa using hd
-  · simp
+  exact Finset.prod_equiv (Equiv.prodComm ℕ ℕ) (by simp) (by simp)
 
 /-! ### Monotonicity along rows and columns -/
 
