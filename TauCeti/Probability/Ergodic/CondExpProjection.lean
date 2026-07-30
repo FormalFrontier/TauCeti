@@ -8,6 +8,7 @@ public import TauCeti.Probability.Ergodic.InvariantSigma
 public import TauCeti.Probability.Ergodic.MeanErgodic
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
+import Mathlib.Dynamics.BirkhoffSum.QuasiMeasurePreserving
 
 /-!
 # The mean ergodic projection is conditional expectation given the invariants
@@ -140,18 +141,6 @@ theorem coeFn_birkhoffSum_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePre
       rw [hadd, birkhoffSum_succ]
       exact congrArg₂ _ hsum hiter
 
-/-- Almost everywhere equal observables have almost everywhere equal Birkhoff sums along a
-measure-preserving transformation. -/
-theorem birkhoffSum_congr_ae {T : Ω → Ω} (hT : MeasurePreserving T μ μ) {f₁ f₂ : Ω → E}
-    (hf : f₁ =ᵐ[μ] f₂) (n : ℕ) :
-    birkhoffSum T f₁ n =ᵐ[μ] birkhoffSum T f₂ n := by
-  induction n with
-  | zero => simp only [birkhoffSum_zero']; rfl
-  | succ n ih =>
-      filter_upwards [ih, (hT.iterate n).quasiMeasurePreserving.ae_eq_comp hf] with ω hsum hiter
-      rw [birkhoffSum_succ, birkhoffSum_succ]
-      exact congrArg₂ _ hsum hiter
-
 variable [NormedSpace ℝ E]
 
 /-- The Birkhoff averages of the `Lᵖ` composition operator are represented by the pointwise
@@ -164,14 +153,6 @@ theorem coeFn_birkhoffAverage_compMeasurePreserving {T : Ω → Ω} (hT : Measur
     Lp.coeFn_smul ((n : ℝ)⁻¹)
       (birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g)] with ω hsum hsmul
   rw [birkhoffAverage, hsmul, Pi.smul_apply, hsum, birkhoffAverage]
-
-/-- Almost everywhere equal observables have almost everywhere equal Birkhoff averages along a
-measure-preserving transformation. -/
-theorem birkhoffAverage_congr_ae {T : Ω → Ω} (hT : MeasurePreserving T μ μ) {f₁ f₂ : Ω → E}
-    (hf : f₁ =ᵐ[μ] f₂) (n : ℕ) :
-    birkhoffAverage ℝ T f₁ n =ᵐ[μ] birkhoffAverage ℝ T f₂ n := by
-  filter_upwards [birkhoffSum_congr_ae hT hf n] with ω hω
-  rw [birkhoffAverage, birkhoffAverage, hω]
 
 end Birkhoff
 
@@ -210,7 +191,7 @@ theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp [IsFiniteMeasure μ] (T : Ω
       birkhoffAverage ℝ T f n := by
     rw [coe_compMeasurePreservingₗᵢ_toContinuousLinearMap T hT]
     exact (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
-      (birkhoffAverage_congr_ae hT hf.coeFn_toLp n)
+      (hT.quasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq ℝ hf.coeFn_toLp n)
   have hprojection : ⇑(metProjection (𝕜 := ℝ) T hT (hf.toLp f)) =ᵐ[μ]
       μ[f | MeasurableSpace.invariants T] :=
     (metProjection_ae_eq_condExp T hT (hf.toLp f)).trans (condExp_congr_ae hf.coeFn_toLp)
