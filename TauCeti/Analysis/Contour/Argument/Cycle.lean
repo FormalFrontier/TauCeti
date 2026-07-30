@@ -12,27 +12,29 @@ public import TauCeti.Analysis.Contour.Residue.LogDeriv
 /-!
 # The argument principle for an arbitrary null-homologous cycle
 
-For `f` with all its zeros and poles inside a finite set `S`, and a closed piecewise-`C¹` curve
-`γ` that is **null-homologous** in the holomorphy domain `U` and avoids `S`,
+For `f` whose zeros and poles *in* an open set `U` all lie in a finite set `S`, and a closed
+piecewise-`C¹` curve `γ` that is **null-homologous** in `U` and avoids `S`,
 
-`∫ t in a..b, γ' t • logDeriv f (γ t) = 2πi · ∑_{z ∈ S} n_z(γ) · ord_z f`,
+`∫ t in a..b, γ' t • logDeriv f (γ t) = 2πi · ∑_{z ∈ S} n_z(γ) · ord z`,
 
-where `n_z(γ)` is the generalized winding number of `γ` about `z` and `ord_z f` is
-`meromorphicOrderAt f z` — positive at a zero, negative at a pole. This is the arbitrary-cycle
-form of the argument principle: the roadmap's Layer-2 statement
-`TauCeti.Contour.argumentPrinciple` fixes the contour to be a round circle with every special
-point strictly inside, so each order is counted exactly once; here the contour is any
-piecewise-`C¹` loop and each order is counted with the multiplicity with which the loop winds
-around it.
+where `n_z(γ)` is the generalized winding number of `γ` about `z` and `ord` is a caller-supplied
+integer-valued function required to agree with `meromorphicOrderAt f` only at the points of `S`
+that lie in `U` — positive at a zero, negative at a pole. Nothing is asked of `f` or of `ord` at a
+point of `S` outside `U`: null-homology forces the winding number there to vanish, so its term
+drops out whatever `ord` says. This is the arbitrary-cycle form of the argument principle: the
+roadmap's Layer-2 statement `TauCeti.Contour.argumentPrinciple` fixes the contour to be a round
+circle with every special point strictly inside, so each order is counted exactly once; here the
+contour is any piecewise-`C¹` loop and each order is counted with the multiplicity with which the
+loop winds around it.
 
 The proof is the classical one-liner over the two pieces the repository already has: the residue
 theorem for a null-homologous cycle (`TauCeti.Contour.classicalResidueTheorem_nullHomologous`)
 applied to `logDeriv f`, whose residue at each point is the order of `f` there
 (`TauCeti.Contour.residue_logDeriv_eq_meromorphicOrderAt`). What has to be supplied is the input
-regularity of `logDeriv f` rather than of `f`: off `S` the logarithmic derivative is holomorphic
+regularity of `logDeriv f` rather than of `f`: on `U ∖ S` the logarithmic derivative is holomorphic
 because `f` is analytic *and non-vanishing* there (a zero of `f` is a pole of `logDeriv f`, which
 is exactly why the hypothesis asks `S` to collect the zeros as well as the poles), and at each
-point of `S` it is meromorphic because `f` is.
+point of `S` lying in `U` it is meromorphic because `f` is.
 
 Null-homology is load-bearing, as it already is for the residue theorem: on a domain with a hole
 a loop that merely avoids the zeros and poles can still see the function's behaviour in the hole,
@@ -40,9 +42,9 @@ and `n_w(γ) = 0` for every `w ∉ U` is exactly the hypothesis that rules this 
 
 Unlike the circle statement, the hypotheses ask for genuine analyticity and non-vanishing of `f` at
 every point of `U ∖ S`, so no pointwise "wrong value" there is tolerated. Nothing pointwise is
-asked at the points of `S`, where only meromorphy is required, nor anywhere outside `U`. The circle
-proof may instead replace `f` by its meromorphic normal form, because a circle integral is
-unchanged by a change of integrand on a set codiscrete within the sphere
+asked at the points of `S` lying in `U`, where only meromorphy is required, nor anywhere outside
+`U`. The circle proof may instead replace `f` by its meromorphic normal form, because a circle
+integral is unchanged by a change of integrand on a set codiscrete within the sphere
 (`circleIntegral.circleIntegral_congr_codiscreteWithin`); no such congruence is available for a
 general piecewise-`C¹` contour, and the null-homologous residue theorem used here asks for honest
 differentiability of `logDeriv f` on `U ∖ S`.
