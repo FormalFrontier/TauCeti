@@ -23,10 +23,15 @@ The point of the file is the lattice-level content. The map
 `blowUpVertexEquiv v : (V → ℤ) × ℤ ≃ₗ[ℤ] (Option V → ℤ)`,
 `(x, s) ↦ fun a => a.elim (x v + s) x`,
 
-sends the basis sphere `e_v` of the old lattice to the *proper transform* `e_v + e_none` and every
-other basis sphere `e_w` to `e_w`, while `(0, 1)` is the exceptional class `e_none`. Under this
-identification the blown-up intersection form becomes the orthogonal direct sum of the old
-intersection form with the rank-one form `⟨-1⟩`:
+sends the basis sphere `e_v` of the old lattice to the *total transform* (pullback) `e_v + e_none`
+and every other basis sphere `e_w` to `e_w`, while `(0, 1)` is the exceptional class `e_none`.
+Beware the standard distinction: it is the basis vector `e_v = Pi.single (some v) 1` of the
+*blown-up* lattice, of square `P.weight v - 1` and meeting `e_none` once, that is the *proper
+transform* of the sphere `v`; the total transform is the sum of that proper transform and the
+exceptional class, it is the image `blowUpVertexEquiv v (e_v, 0)` of the old basis sphere, and it
+keeps the old square `P.weight v` and is orthogonal to `e_none`. Under this identification the
+blown-up intersection form becomes the orthogonal direct sum of the old intersection form with the
+rank-one form `⟨-1⟩`:
 
 `⟨(x, s), (y, t)⟩ = ⟨x, y⟩ - s * t`.
 
@@ -44,7 +49,7 @@ that it preserves the hypothesis under which the invariant is defined.
 
 * `TauCeti.PlumbingGraph.BlowUpVertexAdj`: the adjacency relation of the blow-up.
 * `TauCeti.PlumbingGraph.blowUpVertex`: the blow-up of a plumbing graph at a vertex.
-* `TauCeti.PlumbingGraph.blowUpVertexEquiv`: the proper-transform identification of the blown-up
+* `TauCeti.PlumbingGraph.blowUpVertexEquiv`: the total-transform identification of the blown-up
   lattice with `(V → ℤ) × ℤ`.
 
 ## Main results
@@ -80,13 +85,15 @@ namespace PlumbingGraph
 
 variable {V : Type*}
 
-/-- The proper-transform identification of the blown-up plumbing lattice.
+/-- The total-transform identification of the blown-up plumbing lattice.
 
 A pair `(x, s)` consisting of a lattice point `x` of the original plumbing and a multiple `s` of
 the exceptional class is sent to the lattice point of the blow-up whose coordinate at the new
 vertex `none` is `x v + s` and whose coordinate at an old vertex `some w` is `x w`. On basis
-vectors this is `e_v ↦ e_v + e_none` (the proper transform of the blown-up sphere), `e_w ↦ e_w`
-for `w ≠ v`, and `(0, 1) ↦ e_none`; see `blowUpVertexEquiv_zero_one`.
+vectors this is `e_v ↦ e_v + e_none` (the total transform, or pullback, of the blown-up sphere),
+`e_w ↦ e_w` for `w ≠ v`, and `(0, 1) ↦ e_none`; see `blowUpVertexEquiv_zero_one`. The proper
+transform of the blown-up sphere is instead the basis vector `Pi.single (some v) 1`, the image of
+`(e_v, -1)`; unlike the total transform it meets the exceptional class once.
 
 The map depends only on the blown-up vertex, not on the framings or the edges. -/
 def blowUpVertexEquiv (v : V) : ((V → ℤ) × ℤ) ≃ₗ[ℤ] (Option V → ℤ) where
@@ -261,14 +268,16 @@ theorem blowUpVertex_intersectionMatrix_none_none :
     (P.blowUpVertex v).intersectionMatrix none none = -1 := by
   rw [intersectionMatrix_diag, blowUpVertex_weight_none]
 
-/-- The exceptional sphere meets the proper transform once and the other spheres not at all. -/
+/-- The exceptional sphere meets the proper transform `Pi.single (some v) 1` once and the other
+spheres not at all. -/
 @[simp]
 theorem blowUpVertex_intersectionMatrix_none_some (w : V) :
     (P.blowUpVertex v).intersectionMatrix none (some w) = if w = v then 1 else 0 := by
   rw [(P.blowUpVertex v).intersectionMatrix_apply_of_ne (by simp : (none : Option V) ≠ some w)]
   simp
 
-/-- The exceptional sphere meets the proper transform once and the other spheres not at all. -/
+/-- The exceptional sphere meets the proper transform `Pi.single (some v) 1` once and the other
+spheres not at all. -/
 @[simp]
 theorem blowUpVertex_intersectionMatrix_some_none (w : V) :
     (P.blowUpVertex v).intersectionMatrix (some w) none = if w = v then 1 else 0 := by
@@ -308,7 +317,7 @@ private theorem sum_ite_one_mul (y : V → ℤ) (v : V) :
   simp
 
 /-- The `none`-coordinate of the image of a lifted lattice point under the blown-up intersection
-matrix: the exceptional class is orthogonal to the proper transforms, so only the exceptional
+matrix: the exceptional class is orthogonal to the total transforms, so only the exceptional
 multiplicity survives. -/
 private theorem blowUpVertex_mulVec_apply_none (y : V → ℤ) (t : ℤ) :
     ((P.blowUpVertex v).intersectionMatrix *ᵥ blowUpVertexEquiv v (y, t)) none = -t := by
@@ -340,7 +349,7 @@ private theorem blowUpVertex_mulVec_apply_some (y : V → ℤ) (t : ℤ) (w : V)
     ring
   · simp [h]
 
-/-- **The blow-up splits the intersection form.** Under the proper-transform identification
+/-- **The blow-up splits the intersection form.** Under the total-transform identification
 `blowUpVertexEquiv`, the intersection form of the blow-up is the orthogonal direct sum of the
 intersection form of `P` with the rank-one form `⟨-1⟩` spanned by the exceptional class. -/
 theorem intersectionForm_blowUpVertexEquiv (x y : V → ℤ) (s t : ℤ) :
@@ -370,7 +379,7 @@ theorem intersectionForm_single_none_self :
         (Pi.single (none : Option V) (1 : ℤ)) = -1 := by
   rw [(P.blowUpVertex v).intersectionForm_single, blowUpVertex_intersectionMatrix_none_none]
 
-/-- The exceptional class is orthogonal to every proper transform, so the splitting of
+/-- The exceptional class is orthogonal to every total transform, so the splitting of
 `intersectionForm_blowUpVertexEquiv` really is orthogonal. -/
 theorem intersectionForm_blowUpVertexEquiv_single_none (x : V → ℤ) :
     (P.blowUpVertex v).intersectionForm (blowUpVertexEquiv v (x, 0))
