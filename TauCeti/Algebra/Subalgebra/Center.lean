@@ -12,9 +12,9 @@ public import Mathlib.LinearAlgebra.Dimension.Finrank
 /-!
 # Transporting and decomposing the center of an algebra
 
-Three constructions on `Subalgebra.center` that Mathlib states only for `Subring.center`, or only
+Constructions on `Subalgebra.center` that Mathlib states only for `Subring.center`, or only
 as an equality of subalgebras, and that are needed whenever a structure theorem presents an algebra
-up to an algebra equivalence.
+up to an algebra equivalence, together with the criterion for a commutative algebra to be central.
 
 * `TauCeti.centerCongr` transports the center along an algebra equivalence. It is the
   `Subalgebra` counterpart of Mathlib's `Subring.centerCongr`, which sees only the ring
@@ -24,6 +24,9 @@ up to an algebra equivalence.
   `Π i, S i` to an algebra equivalence with `Π i, Subalgebra.center R (S i)`.
 * `TauCeti.centerAlgEquivOfIsCentral` identifies the center of a central algebra with the base
   field, so that its dimension is one (`TauCeti.finrank_center_of_isCentral`).
+* `TauCeti.isCentral_iff_surjective_algebraMap` records that a commutative algebra is central
+  exactly when its structure map is surjective, the precise sense in which centrality is a strong
+  condition on a field extension.
 -/
 
 public section
@@ -127,5 +130,20 @@ theorem finrank_center_of_isCentral : Module.finrank K (Subalgebra.center K D) =
   ((centerAlgEquivOfIsCentral K D).toLinearEquiv.finrank_eq).trans (CommSemiring.finrank_self K)
 
 end IsCentral
+
+/-- A commutative `K`-algebra is central over `K` exactly when its structure map is surjective: the
+center of a commutative algebra is all of it, so demanding that the center be the image of `K`
+demands that everything be in the image of `K`.
+
+This is the precise sense in which centrality is a strong condition on a field extension: `L / K` is
+central only when `L = K`. -/
+theorem isCentral_iff_surjective_algebraMap (K D : Type*) [CommSemiring K] [CommSemiring D]
+    [Algebra K D] : Algebra.IsCentral K D ↔ Function.Surjective (algebraMap K D) := by
+  refine ⟨fun _ x ↦ ?_, fun h ↦ ⟨fun x _ ↦ ?_⟩⟩
+  · obtain ⟨a, ha⟩ := (Algebra.IsCentral.mem_center_iff K).mp
+      (Subalgebra.mem_center_iff.mpr fun b ↦ mul_comm b x)
+    exact ⟨a, ha.symm⟩
+  · obtain ⟨a, rfl⟩ := h x
+    exact Algebra.mem_bot.mpr ⟨a, rfl⟩
 
 end TauCeti

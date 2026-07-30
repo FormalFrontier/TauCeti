@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Central.Matrix
 public import Mathlib.Algebra.Central.Basic
-public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RingTheory.LittleWedderburn
 public import Mathlib.RingTheory.SimpleModule.WedderburnArtin
@@ -20,42 +20,30 @@ of central simple algebras one needs the refinement in which `D` is again **cent
 because that is the hypothesis every later structure theorem (the degree, Skolem-Noether, the Brauer
 group) carries.
 
-This file supplies the missing step. Mathlib proves that a matrix algebra over a central algebra is
-central (`Algebra.IsCentral.matrix`); the converse is `TauCeti.isCentral_of_isCentral_matrix`, which
-reads off the centre of `D` from the centre of `Matrix ι ι D` using
-`Matrix.subalgebraCenter_eq_scalarAlgHom_map` and injectivity of `Matrix.scalarAlgHom`. Feeding it
-Mathlib's Wedderburn-Artin theorem gives `A ≃ₐ[K] Matrix (Fin n) (Fin n) D` with `D` a central
-division algebra, together with the dimension count `finrank K A = n ^ 2 * finrank K D`.
+This file supplies the missing step. Feeding Mathlib's Wedderburn-Artin theorem the centrality
+descent `TauCeti.isCentral_of_isCentral_matrix` gives `A ≃ₐ[K] Matrix (Fin n) (Fin n) D` with `D` a
+central division algebra, together with the dimension count `finrank K A = n ^ 2 * finrank K D`.
 
 The same file settles the finite base field. A finite division ring is a field (little Wedderburn),
 so `Algebra.IsCentral.baseField_essentially_unique` collapses a finite central division algebra to
 its base field, and every central simple algebra over a finite field is a full matrix algebra
 `Matrix (Fin n) (Fin n) K`. In particular its dimension is the square `n ^ 2`. Centrality is what
 makes this work: `𝔽_{q^m}` is a finite division algebra over `𝔽_q` which is *not* the base field,
-and `TauCeti.isCentral_iff_surjective_algebraMap` locates the failure precisely in the surjectivity
-of the structure map.
+the failure being exactly that its structure map is not surjective.
 
 ## Main results
 
-* `TauCeti.isCentral_of_isCentral_matrix`: if `Matrix ι ι D` is central over `K` for a nonempty
-  finite `ι`, then so is `D`; `TauCeti.isCentral_matrix_iff` packages this with Mathlib's converse.
-* `TauCeti.exists_algEquiv_matrix_centralDivisionRing`: **Wedderburn-Artin for central simple
-  algebras**. A finite-dimensional central simple `K`-algebra `A` is `Matrix (Fin n) (Fin n) D` for
-  a finite-dimensional **central** division `K`-algebra `D`, and
+* `TauCeti.IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing`: **Wedderburn-Artin for central
+  simple algebras**. A finite-dimensional central simple `K`-algebra `A` is
+  `Matrix (Fin n) (Fin n) D` for a finite-dimensional **central** division `K`-algebra `D`, and
   `finrank K A = n ^ 2 * finrank K D`.
-* `TauCeti.isCentral_iff_surjective_algebraMap`: a commutative `K`-algebra is central iff its
-  structure map is surjective.
 * `TauCeti.baseFieldAlgEquivOfFinite`: a finite central division algebra over a field is the base
   field.
-* `TauCeti.exists_algEquiv_matrix_of_finite`: a central simple algebra over a **finite** field is a
-  full matrix algebra over that field, and `TauCeti.isSquare_finrank_of_finite`: its dimension is a
-  perfect square.
+* `TauCeti.IsSimpleRing.exists_algEquiv_matrix_of_finite`: a central simple algebra over a
+  **finite** field is a full matrix algebra over that field, and
+  `TauCeti.IsSimpleRing.isSquare_finrank_of_finite`: its dimension is a perfect square.
 
 ## Implementation notes
-
-`TauCeti.isCentral_of_isCentral_matrix` is deliberately *not* an instance: its hypothesis mentions
-`Matrix ι ι D` while its conclusion mentions only `D`, so instance search could not run it
-backwards, and the index type `ι` is unconstrained by the goal.
 
 `TauCeti.baseFieldAlgEquivOfFinite` assumes `Finite D`, the single hypothesis little Wedderburn
 needs, rather than the pair `Finite K` and `FiniteDimensional K D`; the two are equivalent, because
@@ -80,50 +68,11 @@ namespace TauCeti
 
 universe u
 
-/-! ### Centrality descends from a matrix algebra to its coefficients -/
-
-section Descent
-
-variable (K D : Type*) [CommSemiring K] [Semiring D] [Algebra K D]
-  (ι : Type*) [Fintype ι] [DecidableEq ι] [Nonempty ι]
-
-/-- If a matrix algebra `Matrix ι ι D` over a nonempty finite index type is central over `K`, then
-its coefficient algebra `D` is central over `K`.
-
-The centre of `Matrix ι ι D` is the image of the centre of `D` under the scalar embedding
-`Matrix.scalarAlgHom`, which is injective because `ι` is nonempty; so the centre of `D` is `⊥` as
-soon as the centre of the matrix algebra is. This is the converse of `Algebra.IsCentral.matrix`. -/
-theorem isCentral_of_isCentral_matrix [Algebra.IsCentral K (Matrix ι ι D)] :
-    Algebra.IsCentral K D := by
-  have hinj : Function.Injective (Matrix.scalarAlgHom ι K : D →ₐ[K] Matrix ι ι D) :=
-    fun _ _ h ↦ by simpa using h
-  have h : (Subalgebra.center K D).map (Matrix.scalarAlgHom ι K) =
-      (⊥ : Subalgebra K D).map (Matrix.scalarAlgHom ι K) := by
-    rw [Algebra.map_bot, ← Matrix.subalgebraCenter_eq_scalarAlgHom_map,
-      Algebra.IsCentral.center_eq_bot]
-  exact ⟨(Subalgebra.map_injective hinj h).le⟩
-
-/-- A matrix algebra over a nonempty finite index type is central exactly when its coefficient
-algebra is. -/
-theorem isCentral_matrix_iff :
-    Algebra.IsCentral K (Matrix ι ι D) ↔ Algebra.IsCentral K D :=
-  ⟨fun _ ↦ isCentral_of_isCentral_matrix K D ι, fun _ ↦ Algebra.IsCentral.matrix K D ι⟩
-
-end Descent
-
 /-! ### Wedderburn-Artin for central simple algebras -/
 
-section CentralSimple
+namespace IsSimpleRing
 
 variable (K : Type*) [Field K] (A : Type u) [Ring A] [Algebra K A]
-
-/-- Transporting a dimension count along a matrix presentation: an algebra isomorphic to
-`n × n` matrices over `D` has dimension `n ^ 2 * finrank K D`. -/
-theorem finrank_eq_sq_mul_finrank {n : ℕ} {D : Type*} [Ring D] [Algebra K D]
-    (e : A ≃ₐ[K] Matrix (Fin n) (Fin n) D) :
-    Module.finrank K A = n ^ 2 * Module.finrank K D := by
-  rw [e.toLinearEquiv.finrank_eq, Module.finrank_matrix, Fintype.card_fin]
-  ring
 
 /-- **Wedderburn-Artin for central simple algebras.** A finite-dimensional central simple
 `K`-algebra `A` is isomorphic to a matrix algebra over a finite-dimensional **central** division
@@ -139,32 +88,15 @@ theorem exists_algEquiv_matrix_centralDivisionRing [Algebra.IsCentral K A] [IsSi
         Nonempty (A ≃ₐ[K] Matrix (Fin n) (Fin n) D) := by
   have := IsArtinianRing.of_finite K A
   obtain ⟨n, hn, D, hD, hDalg, hDfin, ⟨e⟩⟩ :=
-    IsSimpleRing.exists_algEquiv_matrix_divisionRing_finite K A
+    _root_.IsSimpleRing.exists_algEquiv_matrix_divisionRing_finite K A
   have : Nonempty (Fin n) := ⟨0⟩
   have : Algebra.IsCentral K (Matrix (Fin n) (Fin n) D) :=
     Algebra.IsCentral.of_algEquiv K A _ e
-  exact ⟨n, hn, D, hD, hDalg, isCentral_of_isCentral_matrix K D (Fin n), hDfin,
-    finrank_eq_sq_mul_finrank K A e, ⟨e⟩⟩
+  refine ⟨n, hn, D, hD, hDalg, isCentral_of_isCentral_matrix K D (Fin n), hDfin, ?_, ⟨e⟩⟩
+  rw [e.toLinearEquiv.finrank_eq, Module.finrank_matrix, Fintype.card_fin]
+  ring
 
-end CentralSimple
-
-/-! ### Central algebras that happen to be commutative -/
-
-/-- A commutative `K`-algebra is central over `K` exactly when its structure map is surjective: the
-centre of a commutative algebra is all of it, so demanding that the centre be the image of `K`
-demands that everything be in the image of `K`.
-
-This is the precise sense in which centrality is a strong condition on a field extension: `L / K` is
-central only when `L = K`, which is why the finite-field results below collapse the division algebra
-to its base field once little Wedderburn has made it commutative. -/
-theorem isCentral_iff_surjective_algebraMap (K D : Type*) [CommSemiring K] [CommSemiring D]
-    [Algebra K D] : Algebra.IsCentral K D ↔ Function.Surjective (algebraMap K D) := by
-  refine ⟨fun _ x ↦ ?_, fun h ↦ ⟨fun x _ ↦ ?_⟩⟩
-  · obtain ⟨a, ha⟩ := (Algebra.IsCentral.mem_center_iff K).mp
-      (Subalgebra.mem_center_iff.mpr fun b ↦ mul_comm b x)
-    exact ⟨a, ha.symm⟩
-  · obtain ⟨a, rfl⟩ := h x
-    exact Algebra.mem_bot.mpr ⟨a, rfl⟩
+end IsSimpleRing
 
 /-! ### Finite central division algebras and finite base fields -/
 
@@ -195,7 +127,7 @@ theorem finrank_eq_one_of_finite : Module.finrank K D = 1 := by
 
 end Finite
 
-section FiniteField
+namespace IsSimpleRing
 
 variable (K : Type*) [Field K] [Finite K] (A : Type u) [Ring A] [Algebra K A]
   [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A]
@@ -220,6 +152,6 @@ theorem isSquare_finrank_of_finite : IsSquare (Module.finrank K A) := by
   obtain ⟨n, _, hrank, -⟩ := exists_algEquiv_matrix_of_finite K A
   exact ⟨n, by rw [hrank, sq]⟩
 
-end FiniteField
+end IsSimpleRing
 
 end TauCeti
