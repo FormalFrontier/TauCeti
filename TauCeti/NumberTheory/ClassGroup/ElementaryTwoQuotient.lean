@@ -81,6 +81,15 @@ noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuot
     elementaryTwoQuotientMk R C⁻¹ = -elementaryTwoQuotientMk R C :=
   TauCeti.elementaryTwoQuotientMk_inv C
 
+/-- **Inversion is trivial on `Cl(R)/Cl(R)²`.** The elementary two-quotient is `2`-torsion, so the
+class of an inverse ideal equals the class itself. This is the genus-theoretic fact that an
+automorphism inverting ideal classes — such as conjugation on a quadratic field — acts trivially on
+`Cl(R)/Cl(R)²`. -/
+theorem elementaryTwoQuotientMk_inv_eq (C : ClassGroup R) :
+    elementaryTwoQuotientMk R C⁻¹ = elementaryTwoQuotientMk R C := by
+  rw [elementaryTwoQuotientMk_inv, ← neg_one_smul (R := ZMod 2),
+    (by decide : (-1 : ZMod 2) = 1), one_smul]
+
 /-- The class map to `Cl(R)/Cl(R)²` sends quotients to differences. -/
 @[simp] theorem elementaryTwoQuotientMk_div (C D : ClassGroup R) :
     elementaryTwoQuotientMk R (C / D) =
