@@ -42,29 +42,6 @@ variable {R : Type} {G : Type v} {M : Type w}
 
 namespace TauCeti.TensorSquare
 
-private theorem perm_fin_two_eq (e : Equiv.Perm (Fin 2)) :
-    e = 1 ∨ e = Equiv.swap 0 1 := by
-  by_cases h0 : e 0 = 0
-  · left
-    apply Equiv.ext
-    intro i
-    fin_cases i
-    · exact h0
-    · apply Fin.eq_one_of_ne_zero
-      intro h1
-      exact one_ne_zero (e.injective (h1.trans h0.symm))
-  · right
-    have h0' : e 0 = 1 := Fin.eq_one_of_ne_zero _ h0
-    apply Equiv.ext
-    intro i
-    fin_cases i
-    · simpa using h0'
-    · have h1 : e 1 = 0 := by
-        by_contra h
-        have h1' : e 1 = 1 := Fin.eq_one_of_ne_zero _ h
-        exact one_ne_zero (e.injective (h1'.trans h0'.symm))
-      simpa using h1
-
 private theorem toTensorPower_ιMulti_two {R : Type} {M : Type*}
     [CommRing R] [AddCommGroup M] [Module R M] (f : Fin 2 → M) :
     exteriorPower.toTensorPower R M 2 (exteriorPower.ιMulti R 2 f) =
@@ -75,7 +52,7 @@ private theorem toTensorPower_ιMulti_two {R : Type} {M : Type*}
       {1, Equiv.swap 0 1} := by
     ext e
     simp only [Finset.mem_univ, Finset.mem_insert, Finset.mem_singleton, true_iff]
-    exact perm_fin_two_eq e
+    exact perm_fin_two_eq_one_or_swap e
   rw [exteriorPower.toTensorPower_apply_ιMulti, hperm,
     Finset.sum_insert (by decide), Finset.sum_singleton]
   rw [Equiv.Perm.sign_swap (by decide : (0 : Fin 2) ≠ 1)]
@@ -112,7 +89,7 @@ private noncomputable def symToAlternatingQuotient {R : Type} {M : Type*}
         | perm e f =>
           apply (AddCon.ker_rel _).2
           apply (Submodule.Quotient.eq _).2
-          rcases perm_fin_two_eq e with rfl | rfl
+          rcases perm_fin_two_eq_one_or_swap e with rfl | rfl
           · simp
           · exact ⟨exteriorPower.ιMulti R 2 f, toTensorPower_ιMulti_two f⟩)
   map_add' := map_add _

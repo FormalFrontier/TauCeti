@@ -44,7 +44,9 @@ variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
 
 namespace TauCeti
 
-private theorem perm_fin_two_eq (e : Equiv.Perm (Fin 2)) :
+/-- A permutation of `Fin 2` is either the identity or the transposition: the classification
+that drives every computation with the two orders on a tensor square. -/
+theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
     e = 1 ∨ e = Equiv.swap 0 1 := by
   by_cases h0 : e 0 = 0
   · left
@@ -83,7 +85,7 @@ private theorem symmetricProjection_rel :
   cases h with
   | perm e f =>
       apply (AddCon.ker_rel _).2
-      rcases perm_fin_two_eq e with rfl | rfl
+      rcases perm_fin_two_eq_one_or_swap e with rfl | rfl
       · rfl
       · change symmetricProjection R M (PiTensorProduct.tprod R f) =
           symmetricProjection R M
@@ -139,7 +141,7 @@ theorem toTensorSquare_ιMulti (f : Fin 2 → M) :
       {1, Equiv.swap 0 1} := by
     ext e
     simp only [Finset.mem_univ, Finset.mem_insert, Finset.mem_singleton, true_iff]
-    exact TauCeti.perm_fin_two_eq e
+    exact TauCeti.perm_fin_two_eq_one_or_swap e
   rw [toTensorSquare, LinearMap.smul_apply,
     exteriorPower.toTensorPower_apply_ιMulti, hperm]
   rw [Finset.sum_insert (by decide), Finset.sum_singleton]
