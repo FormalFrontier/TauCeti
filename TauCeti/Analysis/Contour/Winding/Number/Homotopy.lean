@@ -92,7 +92,7 @@ theorem windingNumber_eq_two_pi_I_inv_mul_curveIntegral {x y w : ℂ} {p : Path 
 
 /-- If the extension of a path homotopy is `C²` on the unit square, then every intermediate
 path, extended constantly from the unit interval to `ℝ`, is piecewise `C¹` on `[0, 1]`. -/
-theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
+theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x y : ℂ} {p q : Path x y}
     (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
       (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
