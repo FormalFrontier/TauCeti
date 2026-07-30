@@ -11,6 +11,7 @@ public import TauCeti.Probability.DeFinetti.BlockFactorization
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
+import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
 
 /-!
 # The de Finetti–Ryll-Nardzewski theorem and equivalences
@@ -157,7 +158,7 @@ theorem deFinetti_equivalence [StandardBorelSpace α] [Nonempty α] {μ : Measur
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) :
     Exchangeable μ X ↔ ConditionallyIID μ X :=
   ⟨fun hX => conditionallyIID_of_exchangeable hX hX_meas,
-    fun hX => (mixedIID_of_conditionallyIID hX).exchangeable⟩
+    fun hX => hX.exchangeable⟩
 
 /-- **The de Finetti–Ryll-Nardzewski equivalence.** A process with measurable coordinates, valued
 in a nonempty standard Borel space, is contractable iff it is both exchangeable and conditionally
@@ -169,8 +170,8 @@ theorem deFinetti_RyllNardzewski_equivalence [StandardBorelSpace α] [Nonempty �
   constructor
   · intro hX
     have hX_cond := conditionallyIID_of_contractable hX hX_meas
-    exact ⟨(mixedIID_of_conditionallyIID hX_cond).exchangeable, hX_cond⟩
-  · exact fun hX => (mixedIID_of_conditionallyIID hX.2).contractable
+    exact ⟨hX_cond.exchangeable, hX_cond⟩
+  · exact fun hX => hX.2.contractable
 
 end Probability
 
