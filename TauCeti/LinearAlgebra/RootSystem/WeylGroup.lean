@@ -80,6 +80,7 @@ lemma coroot'_reflectionPerm_self (i : ι) : P.coroot' (P.reflectionPerm i i) = 
   simp
 
 /-- A reflection reverses the sign of its own coroot functional. -/
+@[grind =]
 lemma coroot'_reflection_self (i : ι) (x : M) :
     P.coroot' i (P.reflection i x) = -P.coroot' i x := by
   rw [P.coroot'_reflection, coroot'_reflectionPerm_self]
