@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.MultiplicationMatrix
-public import Mathlib.Algebra.Algebra.Bilinear
-public import Mathlib.LinearAlgebra.Basis.Bilinear
+import Mathlib.Algebra.Algebra.Bilinear
+import Mathlib.LinearAlgebra.Basis.Bilinear
 
 /-!
 # Common eigenrows of the class-multiplication matrices
@@ -14,8 +14,9 @@ public import Mathlib.LinearAlgebra.Basis.Bilinear
 For a finite group `G` the class sums `K_C` are a `k`-basis of the centre `Z(k[G])`
 (`TauCeti.classSumBasis`), and the class-multiplication matrices `Mᵢ`
 (`TauCeti.classMultMatrix`) record multiplication by `K_{Cᵢ}` in that basis. This file identifies
-the common **left** eigenvectors of the family `{Mᵢ}`, in the row/`ᵥ*` convention pinned by
-`TauCeti.classMultMatrix`, with the `k`-algebra homomorphisms out of the centre.
+the **normalized** common **left** eigenvectors of the family `{Mᵢ}` — those taking the value `1` at
+the class of `1` — in the row/`ᵥ*` convention pinned by `TauCeti.classMultMatrix`, with the
+`k`-algebra homomorphisms out of the centre.
 
 Everything rests on the **coordinate identity** `K_{Cᵢ} K_{Cⱼ} = ∑ₖ aᵢⱼₖ K_{Cₖ}` inside the centre,
 which is `TauCeti.classSumCenter_mul`.
@@ -32,9 +33,11 @@ which is `TauCeti.classSumCenter_mul`.
 * `TauCeti.isClassEigenrow_iff_exists_algHom` and `TauCeti.algHomEquivEigenrow` package the two
   directions as an equivalence between `Z(k[G]) →ₐ[k] k` and the normalized common left eigenrows.
 
-The normalization is exactly the exclusion of the zero row: `TauCeti.isClassEigenrow_zero` shows
-`0` is an eigenrow, and `TauCeti.IsClassEigenrow.mk_one_eq_one` shows that over a ring without zero
-divisors every *nonzero* eigenrow already satisfies `v (ConjClasses.mk 1) = 1`.
+The normalization cannot be dropped: `TauCeti.isClassEigenrow_zero` shows `0` is an eigenrow, while
+`TauCeti.classSumRow_mk_one` shows every row of an algebra homomorphism is normalized. Over a ring
+without zero divisors the normalization is exactly the exclusion of that zero row:
+`TauCeti.IsClassEigenrow.mk_one_eq_one` shows that under `NoZeroDivisors k` every *nonzero* eigenrow
+already satisfies `v (ConjClasses.mk 1) = 1`.
 
 Nothing here uses representation theory: the statement is about the class algebra alone, so it holds
 over any commutative ring `k`. In the Burnside--Dixon--Schneider algorithm it is the step that turns
