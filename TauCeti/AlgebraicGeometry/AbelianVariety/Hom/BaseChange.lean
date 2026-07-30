@@ -19,8 +19,7 @@ Base change also respects the pointwise group law on homomorphisms of
 `AbelianVariety.Hom.baseChangeMonoidHom` bundles it as a homomorphism
 `(A ⟶ B) →* (A.baseChange L ⟶ B.baseChange L)` of the homomorphism groups, with
 `AbelianVariety.Hom.baseChange_one`, `baseChange_mul`, `baseChange_inv`, `baseChange_div` and
-`baseChange_zpow` its unbundled forms. `AbelianVariety.baseChangeIso` is the functor's action on
-isomorphisms, `CategoryTheory.Functor.mapIso`, restated at the types the rest of this API uses.
+`baseChange_zpow` its unbundled forms.
 
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E's basic
 abelian-variety API and the base-change compatibility required in the end goal. It will allow
@@ -231,35 +230,6 @@ lemma Hom.baseChange_zpow {A B : AbelianVariety K} (f : A ⟶ B) (n : ℤ)
     (L : Type u) [Field L] [Algebra K L] :
     Hom.baseChange (f ^ n) L = Hom.baseChange f L ^ n :=
   map_zpow (Hom.baseChangeMonoidHom A B L) f n
-
-/-! ### Base change of an isomorphism -/
-
-/-- Base change of an isomorphism of abelian varieties along a field extension `K → L`.
-
-This is nothing but `AbelianVariety.baseChangeFunctor` acting on isomorphisms; it is worth naming
-only because `Functor.mapIso` produces the type
-`(baseChangeFunctor L).obj A ≅ (baseChangeFunctor L).obj B`, whereas the rest of the base-change
-API — and the `simp` lemmas keyed on it — is stated for `A.baseChange L` and `B.baseChange L`.
-Compatibility with `Iso.refl`, `Iso.symm` and `Iso.trans` is Mathlib's `Functor.mapIso_refl`,
-`Functor.mapIso_symm` and `Functor.mapIso_trans`, applied through this definitional equality. -/
-@[expose]
-def baseChangeIso {A B : AbelianVariety K} (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] :
-    A.baseChange L ≅ B.baseChange L :=
-  (baseChangeFunctor L).mapIso e
-
-/-- The forward map of a base-changed isomorphism is the base change of its forward map. -/
-@[simp]
-lemma baseChangeIso_hom {A B : AbelianVariety K} (e : A ≅ B)
-    (L : Type u) [Field L] [Algebra K L] :
-    (baseChangeIso e L).hom = Hom.baseChange e.hom L :=
-  (rfl)
-
-/-- The inverse map of a base-changed isomorphism is the base change of its inverse map. -/
-@[simp]
-lemma baseChangeIso_inv {A B : AbelianVariety K} (e : A ≅ B)
-    (L : Type u) [Field L] [Algebra K L] :
-    (baseChangeIso e L).inv = Hom.baseChange e.inv L :=
-  (rfl)
 
 end
 

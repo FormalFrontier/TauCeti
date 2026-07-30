@@ -104,12 +104,21 @@ variable {B : AbelianVariety K}
 
 /-- Base change commutes with conjugation by an isomorphism of abelian varieties: conjugating and
 then extending the base field is the same as extending the base field and conjugating by the
-base-changed isomorphism. -/
+base-changed isomorphism, `CategoryTheory.Functor.mapIso` for `AbelianVariety.baseChangeFunctor`.
+
+The two objects conjugated between are named explicitly because `Functor.mapIso` produces an
+isomorphism `(baseChangeFunctor L).obj A ≅ (baseChangeFunctor L).obj B`, which is the base change
+only definitionally; supplying them keeps the statement — and hence every rewrite with it —
+type-correct without unfolding the functor. -/
 lemma congr_baseChange (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] (x : End A) :
-    baseChange B L (congr e x) = congr (baseChangeIso e L) (baseChange A L x) := by
+    baseChange B L (congr e x) =
+      congr (A := A.baseChange L) (B := B.baseChange L) ((baseChangeFunctor L).mapIso e)
+        (baseChange A L x) := by
   apply toHom_injective
-  simp only [toHom_baseChange, toHom_congr, Hom.baseChange_comp, baseChangeIso_hom,
-    baseChangeIso_inv]
+  rw [toHom_baseChange, toHom_congr, toHom_congr, toHom_baseChange, Hom.baseChange_comp,
+    Hom.baseChange_comp, Functor.mapIso_hom, Functor.mapIso_inv]
+  -- What is left is that the functor's action on morphisms is `Hom.baseChange`, by definition.
+  rfl
 
 end End
 
