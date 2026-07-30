@@ -39,16 +39,15 @@ namespace TauCeti
 
 variable (k : Type) (n : ℕ)
 
-section Field
+section CommRing
 
-variable [Field k] [NeZero (2 : k)]
+variable [CommRing k] [Invertible (2 : k)]
 
 /-- The tensor square of the standard representation is equivalent to the product of its
 symmetric and exterior squares. -/
 noncomputable abbrev tensorSquareRepEquiv :
     (tensorPowerRep k n 2).Equiv
       ((symPowerRep k n 2).prod (extPowerRep k n 2)) :=
-  letI : Invertible (2 : k) := invertibleOfNonzero (NeZero.ne _)
   (stdRep k n).tensorSquareEquivSymmetricExterior
 
 /-- The tensor-square decomposition bundled as an isomorphism in `FDRep`. The product
@@ -61,6 +60,32 @@ noncomputable def tensorSquareFDRepIso :
     fun g ↦ by
       apply FGModuleCat.hom_ext
       exact (tensorSquareRepEquiv k n).isIntertwining' g
+
+/-- The forward map of the bundled tensor-square decomposition is the natural representation
+equivalence. -/
+@[simp]
+theorem tensorSquareFDRepIso_hom_hom :
+    (tensorSquareFDRepIso k n).hom.hom =
+      ConcreteCategory.ofHom (tensorSquareRepEquiv k n).toLinearMap :=
+  by
+    rw [tensorSquareFDRepIso]
+    rfl
+
+/-- The inverse map of the bundled tensor-square decomposition is the inverse natural
+representation equivalence. -/
+@[simp]
+theorem tensorSquareFDRepIso_inv_hom :
+    (tensorSquareFDRepIso k n).inv.hom =
+      ConcreteCategory.ofHom (tensorSquareRepEquiv k n).symm.toLinearMap :=
+  by
+    rw [tensorSquareFDRepIso]
+    rfl
+
+end CommRing
+
+section Field
+
+variable [Field k] [NeZero (2 : k)]
 
 /-- The square of the standard character is the sum of the symmetric-square and
 exterior-square characters. -/

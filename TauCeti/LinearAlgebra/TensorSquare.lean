@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Ring.Invertible
-public import Mathlib.LinearAlgebra.ExteriorPower.Basic
+public import Mathlib.LinearAlgebra.ExteriorPower.Pairing
 public import Mathlib.LinearAlgebra.TensorPower.Basic
 public import TauCeti.LinearAlgebra.SymmetricPower
 
@@ -123,22 +123,10 @@ end SymmetricPower
 
 namespace exteriorPower
 
-private noncomputable def tensorSquareAlternating :
-    M [⋀^Fin 2]→ₗ[R] (⨂[R]^2 M) where
-  toMultilinearMap :=
-    (⅟ (2 : R)) •
-      (PiTensorProduct.tprod R -
-        (PiTensorProduct.tprod R).domDomCongr (Equiv.swap 0 1))
-  map_eq_zero_of_eq' f i j hij hne := by
-    have hswap : (fun k ↦ f (Equiv.swap 0 1 k)) = f := by
-      funext k
-      fin_cases i <;> fin_cases j <;> fin_cases k <;> simp_all
-    simp [MultilinearMap.domDomCongr_apply, hswap]
-
 /-- The embedding of the exterior square in the tensor square, given on a pure wedge by
 `x ∧ y ↦ ⅟2 • (x ⊗ₜ y - y ⊗ₜ x)`. -/
 noncomputable def toTensorSquare : ⋀[R]^2 M →ₗ[R] ⨂[R]^2 M :=
-  alternatingMapLinearEquiv (tensorSquareAlternating R M)
+  (⅟ (2 : R)) • exteriorPower.toTensorPower R M 2
 
 /-- The exterior-square embedding is the half-difference of the two orders on pure wedges. -/
 @[simp]
@@ -147,7 +135,19 @@ theorem toTensorSquare_ιMulti (f : Fin 2 → M) :
       (⅟ (2 : R)) •
         (PiTensorProduct.tprod R f -
           PiTensorProduct.tprod R (fun i ↦ f (Equiv.swap 0 1 i))) := by
-  simp [toTensorSquare, tensorSquareAlternating, MultilinearMap.domDomCongr_apply]
+  have hperm : (Finset.univ : Finset (Equiv.Perm (Fin 2))) =
+      {1, Equiv.swap 0 1} := by
+    ext e
+    simp only [Finset.mem_univ, Finset.mem_insert, Finset.mem_singleton, true_iff]
+    exact TauCeti.perm_fin_two_eq e
+  rw [toTensorSquare, LinearMap.smul_apply,
+    exteriorPower.toTensorPower_apply_ιMulti, hperm]
+  rw [Finset.sum_insert (by decide), Finset.sum_singleton]
+  rw [smul_sub]
+  rw [Equiv.Perm.sign_swap (by decide : (0 : Fin 2) ≠ 1)]
+  simp only [Equiv.Perm.sign_one, Equiv.Perm.coe_one, id_eq, one_smul, Fin.isValue,
+    Units.neg_smul, smul_add, smul_neg]
+  rw [← sub_eq_add_neg]
 
 end exteriorPower
 
