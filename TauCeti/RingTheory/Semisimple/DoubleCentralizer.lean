@@ -114,7 +114,7 @@ theorem ringEquivEndEnd_apply [IsSemisimpleModule R M] [FaithfulSMul R M]
   simp [ringEquivEndEnd]
 
 @[simp]
-theorem smul_ringEquivEndEnd_symm [IsSemisimpleModule R M] [FaithfulSMul R M]
+theorem ringEquivEndEnd_symm_smul [IsSemisimpleModule R M] [FaithfulSMul R M]
     [Module.Finite (Module.End R M) M] (f : Module.End (Module.End R M) M) (m : M) :
     (ringEquivEndEnd R M).symm f • m = f m := by
   rw [← ringEquivEndEnd_apply ((ringEquivEndEnd R M).symm f) m, RingEquiv.apply_symm_apply]
@@ -139,6 +139,13 @@ theorem algEquivEndEnd_apply (K : Type*) [CommSemiring K] [Algebra K R] [Module 
     [Module.Finite (Module.End R M) M] (r : R) (m : M) :
     algEquivEndEnd R M K r m = r • m :=
   ringEquivEndEnd_apply r m
+
+@[simp]
+theorem algEquivEndEnd_symm_smul (K : Type*) [CommSemiring K] [Algebra K R] [Module K M]
+    [IsScalarTower K R M] [IsSemisimpleModule R M] [FaithfulSMul R M]
+    [Module.Finite (Module.End R M) M] (f : Module.End (Module.End R M) M) (m : M) :
+    (algEquivEndEnd R M K).symm f • m = f m := by
+  rw [← algEquivEndEnd_apply K ((algEquivEndEnd R M K).symm f) m, AlgEquiv.apply_symm_apply]
 
 variable (R M)
 
@@ -174,12 +181,12 @@ theorem exists_smul_eq_of_linearIndependent [IsSimpleModule R M]
   obtain ⟨r, hr⟩ := Module.Finite.toModuleEnd_moduleEnd_surjective (R := R) f
   refine ⟨r, fun i ↦ ?_⟩
   have hvi : f (v i) = w i := by
-    -- The `i`-th vector of `Basis.span hv` is `v i` viewed in the span, where `f` agrees with
-    -- `(Basis.span hv).constr ℕ w`, which sends it to `w i`.
-    have hbasis : ((Basis.span hv) i : M) = v i := Basis.coe_span_apply hv i
-    have := LinearMap.congr_fun hf ((Basis.span hv) i)
-    rwa [LinearMap.comp_apply, Submodule.subtype_apply, hbasis, Basis.constr_basis] at this
-  rw [← hvi, ← hr, Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply]
+    -- `f` agrees on the span with `(Basis.span hv).constr ℕ w`, which sends the `i`-th basis
+    -- vector to `w i`; that basis vector is `v i` viewed inside the span.
+    have h := LinearMap.congr_fun hf ((Basis.span hv) i)
+    rw [Basis.constr_basis] at h
+    simpa using h
+  simpa [hvi] using LinearMap.congr_fun hr (v i)
 
 /-! ### The finite-dimensional algebra case -/
 
@@ -215,5 +222,13 @@ theorem algEquivEndEndOfIsSimpleRing_apply (K : Type*) [CommSemiring K] [Algebra
   have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
   have := finite_end_of_smulCommClass (R := R) (M := M) K
   algEquivEndEnd_apply K r m
+
+@[simp]
+theorem algEquivEndEndOfIsSimpleRing_symm_smul (K : Type*) [CommSemiring K] [Algebra K R]
+    [Module K M] [IsScalarTower K R M] [Module.Finite K M] [IsSimpleRing R] [IsSimpleModule R M]
+    (f : Module.End (Module.End R M) M) (m : M) :
+    (algEquivEndEndOfIsSimpleRing R M K).symm f • m = f m := by
+  rw [← algEquivEndEndOfIsSimpleRing_apply K ((algEquivEndEndOfIsSimpleRing R M K).symm f) m,
+    AlgEquiv.apply_symm_apply]
 
 end TauCeti
