@@ -15,8 +15,12 @@ endomorphism ring is the zero ring and the multiplication-by-`n` endomorphism `[
 for every `n` — a check that the construction of
 `TauCeti.AlgebraicGeometry.AbelianVariety.End.Basic` is not vacuous.
 
-* `AbelianVariety.End.instUniqueTrivial`: `End (trivial K)` is the zero ring;
 * `AbelianVariety.mulBy_trivial`: `[n] = 𝟙 (trivial K)`.
+
+That `End (trivial K)` is the zero ring needs no declaration here: `AbelianVariety.End.instUnique`
+turns the uniqueness of homomorphisms into the trivial abelian variety
+(`AbelianVariety.uniqueHomToTrivial`) into `Unique (End (trivial K))` by instance search, which the
+`example` below records.
 
 This is the specialization of the endomorphism ring to the trivial abelian variety, kept apart from
 `End.Basic` so that the generic construction does not depend on the trivial-variety theory. It
@@ -42,11 +46,9 @@ variable {K : Type u} [Field K]
 
 noncomputable section
 
-/-- The trivial abelian variety has a unique endomorphism, so its endomorphism ring is the zero
-ring. -/
-instance End.instUniqueTrivial : Unique (End (trivial K)) where
-  default := 0
-  uniq _ := End.toHom_injective (Subsingleton.elim _ _)
+-- The endomorphism ring of the trivial abelian variety is the zero ring, by
+-- `AbelianVariety.End.instUnique` applied to `AbelianVariety.uniqueHomToTrivial`.
+example : Unique (End (trivial K)) := inferInstance
 
 /-- Every endomorphism of the trivial abelian variety, in particular every `[n]`, is the
 identity. -/

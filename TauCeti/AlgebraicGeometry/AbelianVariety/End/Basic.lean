@@ -32,7 +32,8 @@ conjugation by an isomorphism is Mathlib's `CategoryTheory.Iso.conj`.
 `AbelianVariety.End.toHom` and `AbelianVariety.End.ofHom` translate between the two views, and the
 `toHom_*` lemmas turn every ring operation into a group or categorical operation on morphisms.
 
-* `AbelianVariety.End A`: the endomorphism ring, with `AbelianVariety.End.instRing`;
+* `AbelianVariety.End A`: the endomorphism ring, with `AbelianVariety.End.instRing`, and
+  `AbelianVariety.End.instUnique` recognizing it as the zero ring when `A` has one endomorphism;
 * `AbelianVariety.mulBy A n`: the endomorphism `[n]`, with `AbelianVariety.mulBy_eq_zpow`
   identifying it with the `n`-th power map and `AbelianVariety.mulBy_comp` recording that every
   homomorphism of abelian varieties commutes with it;
@@ -166,6 +167,14 @@ instance instSemiring (A : AbelianVariety K) : Semiring (End A) :=
 instance instRing (A : AbelianVariety K) : Ring (End A) :=
   { instSemiring A, instAddCommGroup A with
     neg_add_cancel := neg_add_cancel }
+
+/-- An abelian variety with only one endomorphism has the zero ring as its endomorphism ring.
+
+This is Mathlib's `Unique (Additive α)` instance; it is stated here, rather than reproved wherever a
+hom-set is known to be a singleton, because unfolding `End A` to `Additive (A ⟶ A)` is only possible
+in this module. -/
+instance instUnique [Unique (A ⟶ A)] : Unique (End A) :=
+  inferInstanceAs (Unique (Additive (A ⟶ A)))
 
 /-- The natural number `n` acts in the endomorphism ring as the `n`-th power of the identity for
 the pointwise group law. -/
