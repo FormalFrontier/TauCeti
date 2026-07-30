@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Koebe
 public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Uniqueness
 public import Mathlib.Analysis.Complex.Order
+import Mathlib.Analysis.Complex.Isometry
 
 /-!
 # The normalized Riemann map
@@ -22,7 +23,9 @@ biholomorphism `Ω → 𝔻` with
 
 the second condition being an inequality in the scoped order `ComplexOrder` on `ℂ`, so that it says
 precisely that `deriv f z₀` is a *positive real number*. With `Ω` and `z₀` fixed, this pins the
-Riemann map down to a single function.
+Riemann map down on `Ω`: the maps here are total functions `ℂ → ℂ`, whose values off `Ω` no
+condition constrains, and what is proved is that any two normalized maps agree *on* `Ω` — that is,
+that the biholomorphism `Ω → 𝔻` they restrict to is unique.
 
 ## The argument
 
@@ -83,20 +86,13 @@ this is stated for an arbitrary source set and an arbitrary radius. -/
 private theorem bijOn_ball_const_mul {α : Type*} {s : Set α} {F : α → ℂ} {r : ℝ} {u : ℂ}
     (hu : ‖u‖ = 1) (hF : BijOn F s (ball (0 : ℂ) r)) :
     BijOn (fun z => u * F z) s (ball (0 : ℂ) r) := by
-  have hu0 : u ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hu
-    exact zero_ne_one hu
-  refine ⟨fun z hz => ?_, fun z hz w hw h => hF.injOn hz hw (mul_left_cancel₀ hu0 h),
-    fun w hw => ?_⟩
-  · rw [mem_ball_zero_iff, norm_mul, hu, one_mul]
-    exact mem_ball_zero_iff.mp (hF.mapsTo hz)
-  · have hw' : u⁻¹ * w ∈ ball (0 : ℂ) r := by
-      rw [mem_ball_zero_iff, norm_mul, norm_inv, hu, inv_one, one_mul]
-      exact mem_ball_zero_iff.mp hw
-    obtain ⟨z, hz, hzw⟩ := hF.surjOn hw'
-    refine ⟨z, hz, ?_⟩
-    simp only [hzw, ← mul_assoc, mul_inv_cancel₀ hu0, one_mul]
+  -- Multiplication by `u` is the rotation `rotation ⟨u, hu⟩`, a linear isometry equivalence of `ℂ`
+  -- fixing `0`, so it carries the ball about the origin bijectively onto itself.
+  have hrot : BijOn (fun w : ℂ => u * w) (ball (0 : ℂ) r) (ball (0 : ℂ) r) := by
+    have h := (rotation ⟨u, mem_sphere_zero_iff_norm.mpr hu⟩).injective.injOn.bijOn_image
+      (s := ball (0 : ℂ) r)
+    rwa [LinearIsometryEquiv.image_ball, map_zero] at h
+  exact hrot.comp hF
 
 /-- A unimodular constant carrying one positive real to another is `1`: the modulus forces the two
 positive reals to be equal, and cancelling them leaves `u = 1`. This is the rigidity behind the
@@ -120,8 +116,9 @@ The order on `deriv f z₀` is the scoped `ComplexOrder` one, so `0 < deriv f z�
 `0 < (deriv f z₀).re ∧ 0 = (deriv f z₀).im`.
 
 This normalization is what makes the Riemann map unique: `TauCeti.riemannMapping` produces a map
-only up to a disc automorphism, whereas by `TauCeti.riemannMapping_normalized` exactly one function
-on `Ω` satisfies the predicate below. -/
+only up to a disc automorphism, whereas by `TauCeti.riemannMapping_normalized` any two functions
+satisfying the predicate below agree on `Ω`. Uniqueness can only be uniqueness on `Ω`, since the
+predicate says nothing about the values of `f` outside `Ω`. -/
 structure IsNormalizedRiemannMapOn (f : ℂ → ℂ) (Ω : Set ℂ) (z₀ : ℂ) : Prop where
   /-- The base point of a normalized Riemann map lies in its domain, so that the conditions at the
   base point really do constrain the map on `Ω`. -/
@@ -193,8 +190,9 @@ theorem exists_isNormalizedRiemannMapOn (hΩo : IsOpen Ω) (hΩc : IsSimplyConne
 the same base point agree on that domain.
 
 Together with `TauCeti.exists_isNormalizedRiemannMapOn` this makes the normalized Riemann map a
-genuinely well-defined function of `(Ω, z₀)`. Note that neither simple connectivity nor properness
-of `Ω` is needed here: uniqueness holds wherever two such maps happen to exist. -/
+genuinely well-defined function of `(Ω, z₀)` *on* `Ω`: what is determined is the restriction
+`Ω → 𝔻`, not the values of a representative off `Ω`. Note that neither simple connectivity nor
+properness of `Ω` is needed here: uniqueness holds wherever two such maps happen to exist. -/
 theorem IsNormalizedRiemannMapOn.eqOn (hg : IsNormalizedRiemannMapOn g Ω z₀)
     (hf : IsNormalizedRiemannMapOn f Ω z₀) (hΩo : IsOpen Ω) : EqOn g f Ω := by
   obtain ⟨u, hu⟩ :=
