@@ -53,8 +53,9 @@ their naming the same root system. `Valid` keeps only `B 2` of those two names.
 * `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_iff_symm`: their zero pattern is symmetric, so each
   is a generalized Cartan matrix.
 * `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: the standard Cartan matrix of a type is
-  simply laced exactly when the type is or has rank at most one; the second alternative covers
-  precisely the degenerate types `B 0`, `B 1`, `C 0` and `C 1`, whose matrices have no off-diagonal
+  simply laced exactly when the type is or has rank at most one; rank at most one also holds of
+  `A 0`, `A 1`, `D 0` and `D 1`, but the types the second alternative *adds* to the first are
+  precisely the degenerate `B 0`, `B 1`, `C 0` and `C 1`, whose matrices have no off-diagonal
   entries to constrain.
 * `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff_of_valid`: among valid types the simply-laced
   Cartan matrices are therefore exactly those of types `A`, `D` and `E`.
@@ -114,7 +115,9 @@ inductive DynkinType where
 namespace DynkinType
 
 /-- The rank of a Dynkin type: the number of simple roots, equivalently the size of its Cartan
-matrix. This is exposed because it appears in the *type* of `TauCeti.DynkinType.cartanMatrix`. -/
+matrix. This is exposed because it appears in the *type* of `TauCeti.DynkinType.cartanMatrix`, so
+even the statement `(A n).cartanMatrix = CartanMatrix.A n` needs `Fin (A n).rank` to reduce to
+`Fin n`. -/
 @[expose] def rank : DynkinType → ℕ
   | .A n | .B n | .C n | .D n => n
   | .E6 => 6
@@ -274,10 +277,11 @@ private lemma not_isSimplyLaced_cartanMatrix_B {n : ℕ} (hn : 2 ≤ n) :
     rw [cartanMatrix_B_apply_eq_neg_two hn _ _ rfl rfl] at h1 <;> omega
 
 /-- **A standard Cartan matrix is simply laced exactly when its type is, or the type has rank at
-most one.** The second alternative is not redundant: it holds precisely for `B 0`, `B 1`, `C 0` and
-`C 1`, whose matrices have no off-diagonal entries at all and so are vacuously simply laced even
-though the types are not. Excluding those four is all that
-`isSimplyLaced_cartanMatrix_iff_of_valid` needs. -/
+most one.** The second alternative is not redundant. Rank at most one holds for `A 0`, `A 1`, `D 0`
+and `D 1` as well, but those types are simply laced anyway, so the types it adds to the first
+alternative are precisely `B 0`, `B 1`, `C 0` and `C 1`, whose matrices have no off-diagonal entries
+at all and so are vacuously simply laced even though the types are not. Excluding those four is all
+that `isSimplyLaced_cartanMatrix_iff_of_valid` needs. -/
 theorem isSimplyLaced_cartanMatrix_iff (t : DynkinType) :
     t.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced ∨ t.rank ≤ 1 := by
   -- A matrix with at most one index has no off-diagonal entry to constrain.
@@ -357,7 +361,8 @@ lemma HasCartanType.card_support {b : P.Base} {t : DynkinType} (h : HasCartanTyp
   simpa using Fintype.card_congr e
 
 /-- **A base of Cartan type `t` is simply laced exactly when `t` is, or `t` has rank at most one.**
-The second alternative is only reachable for the degenerate types `B 0`, `B 1`, `C 0` and `C 1`. -/
+The second alternative adds only the degenerate types `B 0`, `B 1`, `C 0` and `C 1`: the remaining
+types of rank at most one, namely `A 0`, `A 1`, `D 0` and `D 1`, are simply laced already. -/
 theorem HasCartanType.isSimplyLaced_iff {b : P.Base} {t : DynkinType} (h : HasCartanType P b t) :
     b.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced ∨ t.rank ≤ 1 := by
   obtain ⟨e, he⟩ := h
