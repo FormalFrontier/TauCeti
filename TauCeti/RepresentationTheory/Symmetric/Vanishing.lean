@@ -23,6 +23,14 @@ that `a_t σ b_t = 0` as soon as a row of `t` meets a column of the relabelled t
 two labels lies in the row group, its conjugate `σ⁻¹ τ σ` lies in the column group, and pushing
 `τ` across `σ` turns the sandwich into its own negative.
 
+The direction of `σ` matters, and it is the one written here: the two labels sharing a column are
+`σ⁻¹ x` and `σ⁻¹ y`, or equivalently `x` and `y` share a column of the relabelling `σt`, which is
+Fulton's formulation.  The variant asking instead that `σ x` and `σ y` share a column of `t` is
+false, as the sandwich lemmas below already show: if `x ≠ y` share a row of `t` and `x ≠ v` share
+a column of `t`, then `σ = (x y) (x v)` carries `x` and `y` to the common-column pair `v` and `x`,
+yet `σ` lies in `Row(t) · Col(t)`, so `a_t σ b_t ≠ 0` by
+`YoungTableau.rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_ne_zero`.
+
 In the opposite direction, a permutation of the form `σ = p q` with `p` in the row group and `q`
 in the column group has `a_t σ b_t = sign q • c_t ≠ 0`
 (`YoungTableau.rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_of_mul_mem`), and no row of
