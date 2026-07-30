@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Grading
 public import Mathlib.RingTheory.Finiteness.Subalgebra
 
 /-!
@@ -44,14 +43,11 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_zero` and
   `TauCeti.CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
   scalars together with `LinearMap.range (ι Q)`.
-* `TauCeti.CliffordAlgebra.filtration_mul` and `TauCeti.CliffordAlgebra.filtration_mul_le`: the
-  filtration is multiplicative, and in fact exactly so:
-  `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes the
-  associated graded object an algebra, and it is the prerequisite the roadmap asks for before
-  anything downstream.
-* `TauCeti.CliffordAlgebra.filtration_succ_eq_sup` and
-  `TauCeti.CliffordAlgebra.filtration_one_mul_filtration`: two recursions for the successor step,
-  additive and multiplicative.
+* `TauCeti.CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
+  so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
+  the associated graded object an algebra, and it is the prerequisite the roadmap asks for before
+  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate.
+* `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
 * `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
 * `TauCeti.CliffordAlgebra.iSup_filtration_eq_top` and
@@ -92,13 +88,6 @@ def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra 
 
 variable (Q : QuadraticForm R M)
 
-/-- The defining span of `filtration`. The body of `filtration` is deliberately not exposed, so
-this unfolding stays private to this file; `filtration_le_iff` and `prod_map_ι_mem_filtration` are
-the public interface to the span. -/
-private theorem filtration_eq_span (k : ℕ) :
-    filtration Q k = Submodule.span R {x | ∃ l : List M, l.length ≤ k ∧ (l.map (ι Q)).prod = x} :=
-  rfl
-
 /-- A product of at most `k` generators lies in the `k`-th step of the filtration. This is the
 generating family, so most `filtration` memberships reduce to it. -/
 theorem prod_map_ι_mem_filtration {k : ℕ} {l : List M} (hl : l.length ≤ k) :
@@ -110,7 +99,7 @@ submodule contains it exactly when it contains those products. This is `Submodul
 form in which it applies to `filtration`. -/
 theorem filtration_le_iff {k : ℕ} {p : Submodule R (CliffordAlgebra Q)} :
     filtration Q k ≤ p ↔ ∀ l : List M, l.length ≤ k → (l.map (ι Q)).prod ∈ p := by
-  rw [filtration_eq_span, Submodule.span_le]
+  rw [filtration, Submodule.span_le]
   constructor
   · intro h l hl
     exact h ⟨l, hl, rfl⟩
@@ -125,7 +114,7 @@ theorem filtration_mono : Monotone (filtration Q) := fun _ _ hij =>
 /-- The zeroth step of the filtration is the module of scalars, the span of the empty product. -/
 @[simp]
 theorem filtration_zero : filtration Q 0 = 1 := by
-  rw [filtration_eq_span, Submodule.one_eq_span]
+  rw [filtration, Submodule.one_eq_span]
   congr 1
   ext x
   constructor
@@ -135,24 +124,32 @@ theorem filtration_zero : filtration Q 0 = 1 := by
   · rintro rfl
     exact ⟨[], le_rfl, rfl⟩
 
+/-- `1` is the empty product of generators, so it lies in every step of the filtration. -/
 theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k := by
   simpa using prod_map_ι_mem_filtration Q (l := []) (Nat.zero_le k)
 
+/-- The submodule form of `one_mem_filtration`: the scalars sit inside every step. -/
 theorem one_le_filtration (k : ℕ) : 1 ≤ filtration Q k :=
   Submodule.one_le.2 (one_mem_filtration Q k)
 
+/-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
     algebraMap R (CliffordAlgebra Q) r ∈ filtration Q k := by
   rw [Algebra.algebraMap_eq_smul_one]
   exact Submodule.smul_mem _ _ (one_mem_filtration Q k)
 
+/-- A generator is a product of one generator, so it lies in the first step. -/
 theorem ι_mem_filtration_one (m : M) : ι Q m ∈ filtration Q 1 := by
   simpa using prod_map_ι_mem_filtration Q (l := [m]) le_rfl
 
+/-- The submodule form of `ι_mem_filtration_one`: all of `LinearMap.range (ι Q)` lies in the first
+step. -/
 theorem ι_range_le_filtration_one : LinearMap.range (ι Q) ≤ filtration Q 1 := by
   rintro _ ⟨m, rfl⟩
   exact ι_mem_filtration_one Q m
 
+/-- A product of two generators lies in the second step. This is the membership the roadmap's
+bivectors use. -/
 theorem ι_mul_ι_mem_filtration_two (a b : M) : ι Q a * ι Q b ∈ filtration Q 2 := by
   simpa using prod_map_ι_mem_filtration Q (l := [a, b]) le_rfl
 
@@ -163,8 +160,7 @@ associated graded object of the filtration is an algebra. -/
 theorem filtration_mul (i j : ℕ) :
     filtration Q i * filtration Q j = filtration Q (i + j) := by
   refine le_antisymm ?_ ?_
-  · rw [filtration_eq_span, filtration_eq_span, Submodule.span_mul_span, Submodule.span_le,
-      Set.mul_subset_iff]
+  · rw [filtration, filtration, Submodule.span_mul_span, Submodule.span_le, Set.mul_subset_iff]
     rintro _ ⟨l₁, h₁, rfl⟩ _ ⟨l₂, h₂, rfl⟩
     rw [← List.prod_append, ← List.map_append]
     exact prod_map_ι_mem_filtration Q (by simpa using Nat.add_le_add h₁ h₂)
@@ -175,22 +171,12 @@ theorem filtration_mul (i j : ℕ) :
     rw [List.length_drop]
     omega
 
-/-- The filtration is submultiplicative, the inequality half of `filtration_mul`. -/
-theorem filtration_mul_le (i j : ℕ) :
-    filtration Q i * filtration Q j ≤ filtration Q (i + j) :=
-  (filtration_mul Q i j).le
-
-/-- Iterating `filtration_mul_le`: the `n`-th submodule power of the `i`-th step lands in the
-`i * n`-th step. -/
-theorem filtration_pow_le (i n : ℕ) : filtration Q i ^ n ≤ filtration Q (i * n) := by
+/-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
+step. -/
+theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) := by
   induction n with
   | zero => rw [pow_zero, Nat.mul_zero, filtration_zero]
-  | succ n ih =>
-    calc filtration Q i ^ (n + 1)
-        = filtration Q i ^ n * filtration Q i := pow_succ _ _
-      _ ≤ filtration Q (i * n) * filtration Q i := mul_le_mul' ih le_rfl
-      _ ≤ filtration Q (i * n + i) := filtration_mul_le Q _ _
-      _ = filtration Q (i * (n + 1)) := by rw [Nat.mul_succ]
+  | succ n ih => rw [pow_succ, ih, filtration_mul, Nat.mul_succ]
 
 /-- A product of exactly `n` generators lies in the `n`-th submodule power of
 `LinearMap.range (ι Q)`. -/
@@ -210,7 +196,7 @@ theorem ι_range_pow_le_filtration (n : ℕ) : LinearMap.range (ι Q) ^ n ≤ fi
     calc LinearMap.range (ι Q) ^ (n + 1)
         = LinearMap.range (ι Q) ^ n * LinearMap.range (ι Q) := pow_succ _ _
       _ ≤ filtration Q n * filtration Q 1 := mul_le_mul' ih (ι_range_le_filtration_one Q)
-      _ ≤ filtration Q (n + 1) := filtration_mul_le Q n 1
+      _ = filtration Q (n + 1) := filtration_mul Q n 1
 
 /-- The comparison between the filtration and the submodule powers of `LinearMap.range (ι Q)`:
 `filtration Q k` collects the products of at most `k` generators, so it is the supremum of the
@@ -235,12 +221,6 @@ theorem filtration_succ_eq_sup (k : ℕ) :
 @[simp]
 theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) := by
   simpa [filtration_zero] using filtration_succ_eq_sup Q 0
-
-/-- The multiplicative form of the successor recursion: each step is the first step times the
-previous one. This is `filtration_mul` at `i = 1`. -/
-theorem filtration_one_mul_filtration (k : ℕ) :
-    filtration Q 1 * filtration Q k = filtration Q (k + 1) := by
-  rw [filtration_mul, Nat.add_comm]
 
 /-- **The filtration is exhaustive.** Every element of the Clifford algebra is a combination of
 products of generators, so it lies in some step. -/
@@ -293,9 +273,8 @@ variable {N : Type w} [AddCommGroup N] [Module R N] {Q' : QuadraticForm R N}
 to a product of the same length. -/
 theorem map_prod_map_ι (f : Q →qᵢ Q') (l : List M) :
     CliffordAlgebra.map f (l.map (ι Q)).prod = ((l.map f).map (ι Q')).prod := by
-  induction l with
-  | nil => simp
-  | cons m t ih => simp [ih]
+  rw [map_list_prod, List.map_map, List.map_map]
+  simp [Function.comp_def]
 
 /-- An isometry of quadratic forms respects the degree filtration. -/
 theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
