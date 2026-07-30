@@ -47,8 +47,8 @@ their standard Cartan matrices are transposes of one another
 * `TauCeti.DynkinType.cartanMatrix_apply_self` and
   `TauCeti.DynkinType.cartanMatrix_apply_le_zero_of_ne`: the standard matrices have diagonal `2`
   and nonpositive off-diagonal entries.
-* `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_comm`: their zero pattern is symmetric, so each is
-  a generalized Cartan matrix.
+* `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_iff_symm`: their zero pattern is symmetric, so each
+  is a generalized Cartan matrix.
 * `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: the standard Cartan matrix of a type is
   simply laced exactly when the type is or has rank at most one; the second alternative covers
   precisely the degenerate types `B 0`, `B 1`, `C 0` and `C 1`, whose matrices have no off-diagonal
@@ -241,8 +241,9 @@ lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : 
 
 /-- The zero pattern of a standard Cartan matrix is symmetric: two simple roots are orthogonal in
 one order exactly when they are in the other. With `cartanMatrix_apply_self` and
-`cartanMatrix_apply_le_zero_of_ne` this says each standard matrix is a generalized Cartan matrix. -/
-lemma cartanMatrix_apply_eq_zero_comm (t : DynkinType) (i j : Fin t.rank) :
+`cartanMatrix_apply_le_zero_of_ne` this says each standard matrix is a generalized Cartan matrix.
+This is the `DynkinType` analogue of `RootPairing.Base.cartanMatrix_apply_eq_zero_iff_symm`. -/
+lemma cartanMatrix_apply_eq_zero_iff_symm (t : DynkinType) (i j : Fin t.rank) :
     t.cartanMatrix i j = 0 ↔ t.cartanMatrix j i = 0 := by
   have symm_case {k : ℕ} {X : Matrix (Fin k) (Fin k) ℤ} (hX : X.IsSymm) (i j : Fin k) :
       X i j = 0 ↔ X j i = 0 := by rw [hX.apply]
