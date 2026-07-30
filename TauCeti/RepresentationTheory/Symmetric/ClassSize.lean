@@ -85,8 +85,8 @@ theorem zPart_pos {n : ℕ} (μ : n.Partition) : 0 < zPart μ := by
   have hi' : 0 < i := μ.parts_pos (Multiset.mem_toFinset.mp hi)
   positivity
 
-/-- The weight of the one-part partition of `n` is `n`: an `n`-cycle commutes exactly with its own
-powers. -/
+/-- The weight of the one-part partition of `n` is `n`: for `2 ≤ n` an `n`-cycle commutes exactly
+with its own powers, and for `n = 1` the centralizer is the trivial group. -/
 @[simp]
 theorem zPart_indiscrete {n : ℕ} (hn : n ≠ 0) : zPart (Nat.Partition.indiscrete n) = n := by
   simp [zPart, Nat.Partition.indiscrete_parts hn]
@@ -190,9 +190,10 @@ theorem card_partition_parts_fin (n : ℕ) (μ : n.Partition) :
 /-- The permutations of `α` whose partition is the one-part partition of `n = Fintype.card α`
 number `(n - 1)!`.
 
-For `0 < n` these are the `n`-cycles.  For `n = 0` the one-part partition has no parts, its fibre
-is all of the trivial group `Equiv.Perm α`, whose only element is the identity, and both sides
-are `1`. -/
+For `2 ≤ n` these are the `n`-cycles.  For `n ≤ 1` the fibre is the identity alone and both sides
+are `1`, but the identity is not a cycle in Mathlib's sense: the one-part partition of `0` has no
+parts, and that of `1` has the single part `1`, which is the partition of the identity of a
+one-element type. -/
 theorem card_partition_parts_indiscrete {n : ℕ} (h : Fintype.card α = n) :
     Nat.card {σ : Equiv.Perm α //
       σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! := by
@@ -203,8 +204,8 @@ theorem card_partition_parts_indiscrete {n : ℕ} (h : Fintype.card α = n) :
     exact Nat.div_eq_of_eq_mul_left (Nat.pos_of_ne_zero hn)
       (by rw [mul_comm, Nat.mul_factorial_pred hn])
 
-/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)` when `0 < n`; for `n = 0` the fibre is
-the identity permutation of `Fin 0`, which is not a cycle, and both sides are `1`. -/
+/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)` when `2 ≤ n`; for `n ≤ 1` the fibre is
+the identity permutation of `Fin n`, which is not a cycle, and both sides are `1`. -/
 theorem card_partition_parts_indiscrete_fin (n : ℕ) :
     Nat.card {σ : Equiv.Perm (Fin n) //
       σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! :=
