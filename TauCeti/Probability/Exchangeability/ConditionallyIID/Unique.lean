@@ -155,13 +155,6 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_pair
 
 /-! ### The `L²` rate for empirical frequencies -/
 
-/-- Bounded measurable real functions are integrable on a finite measure space, via Mathlib's
-`MemLp.of_bound`. Private: a bookkeeping step, used to feed the linearity lemmas below. -/
-private theorem integrable_of_abs_le [IsFiniteMeasure μ] {f : Ω → ℝ} {C : ℝ}
-    (hf : Measurable f) (hb : ∀ ω, |f ω| ≤ C) : Integrable f μ :=
-  memLp_one_iff_integrable.mp <| MemLp.of_bound hf.aestronglyMeasurable C <|
-    ae_of_all _ fun ω => by simpa [Real.norm_eq_abs] using hb ω
-
 /-- Transfer of an `ℝ≥0∞` integral identity between finite integrands to the Bochner integrals of
 their real parts. Private: a bookkeeping step of the moment computation. -/
 private theorem integral_toReal_eq_of_lintegral_eq {F G : Ω → ℝ≥0∞}
@@ -191,8 +184,9 @@ private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → �
     constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
   have hInt : ∀ i j, Integrable (fun ω => (e i ω - q ω) * (e j ω - q ω)) μ := by
     intro i j
-    refine integrable_of_abs_le (C := 4) (((he i).sub hq).mul ((he j).sub hq)) fun ω => ?_
-    rw [abs_mul]
+    refine Integrable.of_bound (((he i).sub hq).mul ((he j).sub hq)).aestronglyMeasurable 4
+      (ae_of_all _ fun ω => ?_)
+    rw [Real.norm_eq_abs, abs_mul]
     nlinarith [hdb i ω, hdb j ω, abs_nonneg (e i ω - q ω), abs_nonneg (e j ω - q ω)]
   have hstep : ∀ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, e i ω) - q ω) ^ 2
       = (n : ℝ)⁻¹ ^ 2 * ∑ i ∈ Finset.range n, ∑ j ∈ Finset.range n,
@@ -303,22 +297,26 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
     intro i j
     have hi1 : Integrable (fun ω => (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
         * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
-      refine integrable_of_abs_le (C := 1) ((he i).mul (he j)) fun ω => ?_
-      rw [abs_mul, abs_of_nonneg (he0 i ω), abs_of_nonneg (he0 j ω)]
+      refine Integrable.of_bound ((he i).mul (he j)).aestronglyMeasurable 1
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (he0 i ω), abs_of_nonneg (he0 j ω)]
       nlinarith [he0 i ω, he0 j ω, he1 i ω, he1 j ω]
     have hi2 : Integrable (fun ω => ((ν ω : Measure α) B).toReal
         * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
-      refine integrable_of_abs_le (C := 1) (hq.mul (he i)) fun ω => ?_
-      rw [abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 i ω)]
+      refine Integrable.of_bound (hq.mul (he i)).aestronglyMeasurable 1
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 i ω)]
       nlinarith [hq0 ω, hq1 ω, he0 i ω, he1 i ω]
     have hi3 : Integrable (fun ω => ((ν ω : Measure α) B).toReal
         * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
-      refine integrable_of_abs_le (C := 1) (hq.mul (he j)) fun ω => ?_
-      rw [abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 j ω)]
+      refine Integrable.of_bound (hq.mul (he j)).aestronglyMeasurable 1
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 j ω)]
       nlinarith [hq0 ω, hq1 ω, he0 j ω, he1 j ω]
     have hi4 : Integrable (fun ω => ((ν ω : Measure α) B).toReal ^ 2) μ := by
-      refine integrable_of_abs_le (C := 1) (hq.pow_const 2) fun ω => ?_
-      rw [abs_of_nonneg (by positivity)]
+      refine Integrable.of_bound (hq.pow_const 2).aestronglyMeasurable 1
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
       nlinarith [hq0 ω, hq1 ω]
     have hexp : ∀ ω, ((X i ⁻¹' B).indicator (1 : Ω → ℝ) ω - ((ν ω : Measure α) B).toReal)
           * ((X j ⁻¹' B).indicator (1 : Ω → ℝ) ω - ((ν ω : Measure α) B).toReal)
@@ -366,7 +364,9 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilit
     simpa using
       ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (ν ω : Measure α)) (s := B))
   have hqint : Integrable (fun ω => ((ν ω : Measure α) B).toReal) μ :=
-    integrable_of_abs_le (C := 1) hq fun ω => abs_le.mpr ⟨by linarith [hq0 ω], hq1 ω⟩
+    Integrable.of_bound hq.aestronglyMeasurable 1 <| ae_of_all _ fun ω => by
+      rw [Real.norm_eq_abs]
+      exact abs_le.mpr ⟨by linarith [hq0 ω], hq1 ω⟩
   have hA : ∫ ω, ((ν ω : Measure α) B).toReal ∂μ ≤ 1 := by
     have := integral_mono hqint (integrable_const (1 : ℝ)) hq1
     simpa using this
@@ -424,8 +424,9 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
     ((ν ω : Measure α) B).toReal - ((ν' ω : Measure α) B).toReal with hd_def
   have hdm : Measurable d := (hqm ν h.measurable_directing).sub (hqm ν' h'.measurable_directing)
   have hdint : Integrable (fun ω => d ω ^ 2) μ := by
-    refine integrable_of_abs_le (C := 1) (hdm.pow_const 2) fun ω => ?_
-    rw [abs_of_nonneg (by positivity)]
+    refine Integrable.of_bound (hdm.pow_const 2).aestronglyMeasurable 1
+      (ae_of_all _ fun ω => ?_)
+    rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
     nlinarith [hq0 ν ω, hq1 ν ω, hq0 ν' ω, hq1 ν' ω]
   have hbound : ∀ n : ℕ, 1 ≤ n → ∫ ω, d ω ^ 2 ∂μ ≤ 4 / n := by
     intro n hn
@@ -433,14 +434,16 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
     set Y : Ω → ℝ := fun ω =>
       (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
     have hi1 : Integrable (fun ω => (Y ω - ((ν ω : Measure α) B).toReal) ^ 2) μ := by
-      refine integrable_of_abs_le (C := 4)
-        (((hem n).sub (hqm ν h.measurable_directing)).pow_const 2) fun ω => ?_
-      rw [abs_of_nonneg (by positivity)]
+      refine Integrable.of_bound
+        (((hem n).sub (hqm ν h.measurable_directing)).pow_const 2).aestronglyMeasurable 4
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
       nlinarith [abs_le.mp (heb n ω), hq0 ν ω, hq1 ν ω]
     have hi2 : Integrable (fun ω => (Y ω - ((ν' ω : Measure α) B).toReal) ^ 2) μ := by
-      refine integrable_of_abs_le (C := 4)
-        (((hem n).sub (hqm ν' h'.measurable_directing)).pow_const 2) fun ω => ?_
-      rw [abs_of_nonneg (by positivity)]
+      refine Integrable.of_bound
+        (((hem n).sub (hqm ν' h'.measurable_directing)).pow_const 2).aestronglyMeasurable 4
+        (ae_of_all _ fun ω => ?_)
+      rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
       nlinarith [abs_le.mp (heb n ω), hq0 ν' ω, hq1 ν' ω]
     have hpt : ∀ ω, d ω ^ 2 ≤ 2 * (Y ω - ((ν ω : Measure α) B).toReal) ^ 2
         + 2 * (Y ω - ((ν' ω : Measure α) B).toReal) ^ 2 := by
