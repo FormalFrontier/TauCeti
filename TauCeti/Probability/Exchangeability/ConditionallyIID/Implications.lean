@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
--- Non-public: the mixture-side bridges `MixedIID.exchangeable` and `MixedIID.contractable` are
--- used only inside the proofs below.
+-- Non-public: the mixture-side bridges `MixedIIDWith.exchangeable` and `MixedIIDWith.contractable`
+-- are used only inside the proofs below.
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
@@ -15,10 +15,16 @@ import TauCeti.Probability.Exchangeability.MixedIID.Implications
 The symmetry consequences of the conditional predicate: a conditionally i.i.d. sequence is
 exchangeable, and it is contractable.
 
-Both factor through `mixedIID_of_conditionallyIID`, so this file is the conditional counterpart of
-`TauCeti.Probability.Exchangeability.MixedIID.Implications`, and sits one layer above it for the
-same reason that file sits above `MixedIID.Basic`: the projection belongs with the predicate, the
-implications out of it do not.
+The witness-level forms compose the projection `mixedIIDWith_of_conditionallyIIDWith` with the
+corresponding `MixedIIDWith` implication, so the directing measure is carried through unchanged; the
+existential forms destruct `exists_directing` and apply them. This is the same layering as the
+mixture side, where `MixedIIDWith.exchangeable` does the work and `MixedIID.exchangeable` destructs
+the existential.
+
+The file is therefore the conditional counterpart of
+`TauCeti.Probability.Exchangeability.MixedIID.Implications`, and sits one layer above
+`ConditionallyIID.Basic` for the same reason that file sits above `MixedIID.Basic`: the projection
+belongs with the predicate, the implications out of it do not.
 
 ## Main results
 
