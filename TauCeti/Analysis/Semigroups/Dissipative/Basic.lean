@@ -41,7 +41,7 @@ dissipative.
   and m-dissipativity predicates.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.norm_le_norm_smul_sub_generator`: the
   resolvent-range inequality at a general growth bound `(ω, M)`.
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.bijective_smul_sub_generator`:
+* `TauCeti.Semigroups.StronglyContinuousSemigroup.smul_sub_generator_bijective`:
   `lambda • I - A` is bijective from `D(A)` onto `X` for `lambda > ω`.
 * `TauCeti.Semigroups.ContractionSemigroup.isDissipative_generator` and
   `TauCeti.Semigroups.ContractionSemigroup.isMDissipative_generator`: the generator of a
@@ -71,6 +71,14 @@ injective on `D(A)` with `‖(lambda • I - A)⁻¹‖ ≤ 1 / lambda` on its r
 @[expose] def IsDissipative (A : X →ₗ.[ℝ] X) : Prop :=
   ∀ lambda : ℝ, 0 < lambda → ∀ x : A.domain, lambda * ‖(x : X)‖ ≤ ‖lambda • (x : X) - A x‖
 
+/-- `IsDissipative A` unfolds to its defining inequality: `lambda * ‖x‖ ≤ ‖lambda • x - A x‖`
+for every `lambda > 0` and every `x ∈ D(A)`. -/
+theorem isDissipative_iff {A : X →ₗ.[ℝ] X} :
+    IsDissipative A ↔
+      ∀ lambda : ℝ, 0 < lambda → ∀ x : A.domain,
+        lambda * ‖(x : X)‖ ≤ ‖lambda • (x : X) - A x‖ :=
+  Iff.rfl
+
 /-- The a priori estimate carried by dissipativity: a solution of `lambda x - A x = y` obeys
 `‖x‖ ≤ ‖y‖ / lambda`. -/
 theorem IsDissipative.norm_le_of_smul_sub_eq {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
@@ -83,7 +91,7 @@ theorem IsDissipative.norm_le_of_smul_sub_eq {A : X →ₗ.[ℝ] X} (hA : IsDiss
 
 /-- A dissipative operator has `lambda • I - A` injective on its domain, for every
 `lambda > 0`. -/
-theorem IsDissipative.injective_smul_sub {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+theorem IsDissipative.smul_sub_injective {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Injective fun x : A.domain => lambda • (x : X) - A x := by
   intro x y hxy
@@ -131,7 +139,7 @@ theorem IsDissipative.smul {A : X →ₗ.[ℝ] X} (hA : IsDissipative A) {c : �
 and `lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0`.
 
 The range condition is what upgrades the one-sided estimate of `IsDissipative` to a genuine
-resolvent: `lambda • I - A : D(A) → X` becomes bijective (`IsMDissipative.bijective_smul_sub`),
+resolvent: `lambda • I - A : D(A) → X` becomes bijective (`IsMDissipative.smul_sub_bijective`),
 its inverse bounded by `1 / lambda` through `IsDissipative.norm_le_of_smul_sub_eq`. The
 Lumer--Phillips generation theorem — that a densely defined m-dissipative operator *is* the
 generator of a contraction semigroup — is not yet available in this library; its converse half
@@ -140,13 +148,30 @@ is `ContractionSemigroup.isMDissipative_generator` below. -/
   IsDissipative A ∧
     ∀ lambda : ℝ, 0 < lambda → Function.Surjective fun x : A.domain => lambda • (x : X) - A x
 
+/-- `IsMDissipative A` unfolds to its defining conjunction: `A` is dissipative and
+`lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0`. -/
+theorem isMDissipative_iff {A : X →ₗ.[ℝ] X} :
+    IsMDissipative A ↔
+      IsDissipative A ∧
+        ∀ lambda : ℝ, 0 < lambda →
+          Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
+  Iff.rfl
+
+/-- A dissipative operator whose `lambda • I - A` maps `D(A)` onto `X` for every `lambda > 0` is
+m-dissipative. -/
+theorem IsDissipative.isMDissipative {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    (hrange : ∀ lambda : ℝ, 0 < lambda →
+      Function.Surjective fun x : A.domain => lambda • (x : X) - A x) :
+    IsMDissipative A :=
+  ⟨hA, hrange⟩
+
 /-- An m-dissipative operator is dissipative. -/
 theorem IsMDissipative.isDissipative {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) :
     IsDissipative A :=
   hA.1
 
 /-- The range condition of an m-dissipative operator. -/
-theorem IsMDissipative.surjective_smul_sub {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+theorem IsMDissipative.smul_sub_surjective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
   hA.2 lambda hlambda
@@ -154,10 +179,10 @@ theorem IsMDissipative.surjective_smul_sub {A : X →ₗ.[ℝ] X} (hA : IsMDissi
 /-- For an m-dissipative operator, `lambda • I - A` is a bijection from `D(A)` onto `X` for
 every `lambda > 0`: injectivity comes from dissipativity, surjectivity from the range
 condition. -/
-theorem IsMDissipative.bijective_smul_sub {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+theorem IsMDissipative.smul_sub_bijective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
-  ⟨hA.isDissipative.injective_smul_sub hlambda, hA.surjective_smul_sub hlambda⟩
+  ⟨hA.isDissipative.smul_sub_injective hlambda, hA.smul_sub_surjective hlambda⟩
 
 /-! ## The generator of a C₀-semigroup -/
 
@@ -187,22 +212,23 @@ theorem norm_le_norm_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω 
         gcongr
         exact S.resolvent_norm_le hb lambda hlambda
 
-/-- For `lambda` beyond the growth exponent, `lambda • I - A` is injective on `D(A)`. -/
-theorem injective_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω M : ℝ}
+/-- For `lambda` beyond the growth exponent, `lambda • I - A` is injective on `D(A)`: the
+resolvent is a left inverse of it. -/
+theorem smul_sub_generator_injective (S : StronglyContinuousSemigroup X) {ω M : ℝ}
     (hb : S.HasGrowthBound ω M) {lambda : ℝ} (hlambda : ω < lambda) :
     Function.Injective fun x : S.generator.domain => lambda • (x : X) - S.generator x := by
+  have key : ∀ x : S.generator.domain,
+      S.resolvent hb lambda hlambda (lambda • (x : X) - S.generator x) = (x : X) := by
+    intro x
+    exact S.resolventLeftInv hb lambda hlambda ⟨(x : X), by
+      rw [← S.generator_domain]; exact x.property⟩
   intro x y hxy
   replace hxy : lambda • (x : X) - S.generator x = lambda • (y : X) - S.generator y := hxy
-  have hzero :
-      lambda • ((x - y : S.generator.domain) : X) - S.generator (x - y) = 0 := by
-    rw [Submodule.coe_sub, S.generator.map_sub, smul_sub, sub_sub_sub_comm, hxy, sub_self]
-  have h := S.norm_le_norm_smul_sub_generator hb hlambda (x - y)
-  rw [hzero, norm_zero, mul_zero, Submodule.coe_sub] at h
-  exact Subtype.ext (sub_eq_zero.mp (norm_le_zero_iff.mp h))
+  exact Subtype.ext (by rw [← key x, ← key y, hxy])
 
 /-- For `lambda` beyond the growth exponent, `lambda • I - A` maps `D(A)` onto `X`: the
 resolvent supplies the preimage. -/
-theorem surjective_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω M : ℝ}
+theorem smul_sub_generator_surjective (S : StronglyContinuousSemigroup X) {ω M : ℝ}
     (hb : S.HasGrowthBound ω M) {lambda : ℝ} (hlambda : ω < lambda) :
     Function.Surjective fun x : S.generator.domain => lambda • (x : X) - S.generator x := by
   intro y
@@ -213,10 +239,10 @@ theorem surjective_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω M 
 
 /-- Every `lambda` beyond the growth exponent lies in the resolvent set of the generator:
 `lambda • I - A : D(A) → X` is bijective. -/
-theorem bijective_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω M : ℝ}
+theorem smul_sub_generator_bijective (S : StronglyContinuousSemigroup X) {ω M : ℝ}
     (hb : S.HasGrowthBound ω M) {lambda : ℝ} (hlambda : ω < lambda) :
     Function.Bijective fun x : S.generator.domain => lambda • (x : X) - S.generator x :=
-  ⟨S.injective_smul_sub_generator hb hlambda, S.surjective_smul_sub_generator hb hlambda⟩
+  ⟨S.smul_sub_generator_injective hb hlambda, S.smul_sub_generator_surjective hb hlambda⟩
 
 end StronglyContinuousSemigroup
 
@@ -229,7 +255,7 @@ dissipative.
 
 It is the `(ω, M) = (0, 1)` case of the resolvent-range inequality
 `StronglyContinuousSemigroup.norm_le_norm_smul_sub_generator`. Together with
-`StronglyContinuousSemigroup.surjective_smul_sub_generator` and the density of the generator
+`StronglyContinuousSemigroup.smul_sub_generator_surjective` and the density of the generator
 domain, it shows that the hypotheses of the Lumer--Phillips generation theorem are also
 necessary. -/
 theorem isDissipative_generator (S : ContractionSemigroup X) :
@@ -252,9 +278,9 @@ the Lumer--Phillips theorem apart from the density of the domain (which is
 `lambda • I - A` supplied by the resolvent. -/
 theorem isMDissipative_generator (S : ContractionSemigroup X) :
     IsMDissipative S.toStronglyContinuousSemigroup.generator :=
-  ⟨S.isDissipative_generator, fun _lambda hlambda =>
-    S.toStronglyContinuousSemigroup.surjective_smul_sub_generator S.hasGrowthBound
-      (by simpa using hlambda)⟩
+  S.isDissipative_generator.isMDissipative fun _lambda hlambda =>
+    S.toStronglyContinuousSemigroup.smul_sub_generator_surjective S.hasGrowthBound
+      (by simpa using hlambda)
 
 /-- The a priori estimate for the generator of a contraction semigroup: a solution of
 `lambda x - A x = y` has `‖x‖ ≤ ‖y‖ / lambda`. -/
