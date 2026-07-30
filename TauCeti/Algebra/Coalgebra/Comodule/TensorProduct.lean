@@ -40,6 +40,8 @@ resolution non-confluent.
   comodule carriers.
 * `TauCeti.Comodule.tensorCombine_assoc`, `tensorCombine_lid`, and `tensorCombine_rid`:
   compatibility of coefficient combination with the tensor associator and unitors.
+* `TauCeti.Comodule.tensorCombine_comm`: compatibility of coefficient combination with
+  swapping the two carrier factors when the coefficient algebra is commutative.
 * `TauCeti.Comodule.tensorCoact_natural`: the diagonal coaction commutes with tensoring
   comodule morphisms.
 * `TauCeti.Comodule.lTensor_comp_tensorCombine`: an algebra homomorphism on the coefficients
@@ -248,6 +250,32 @@ theorem tensorCombine_rid_symm (x : M ⊗[R] C) :
     (tensorCombine_rid (R := R) (C := C) x (r := 1))
 
 end Coherence
+
+section Symmetry
+
+variable [NonUnitalNonAssocCommSemiring C] [Module R C] [SMulCommClass R C C]
+variable [IsScalarTower R C C]
+variable [AddCommMonoid M] [Module R M]
+variable [AddCommMonoid N] [Module R N]
+
+/-- Swapping two coacted factors commutes with combining their coefficients when the
+coefficient algebra is commutative. -/
+theorem tensorCombine_comm (x : M ⊗[R] C) (y : N ⊗[R] C) :
+    TensorProduct.map (TensorProduct.comm R M N).toLinearMap LinearMap.id
+        (tensorCombine (R := R) (C := C) (M := M) (N := N) (x ⊗ₜ[R] y)) =
+      tensorCombine (R := R) (C := C) (M := N) (N := M) (y ⊗ₜ[R] x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x₁ x₂ hx₁ hx₂ =>
+    simpa only [add_tmul, tmul_add, LinearMap.map_add] using congrArg₂ (· + ·) hx₁ hx₂
+  | tmul m c =>
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add y₁ y₂ hy₁ hy₂ =>
+      simpa only [tmul_add, add_tmul, LinearMap.map_add] using congrArg₂ (· + ·) hy₁ hy₂
+    | tmul n d => simp [mul_comm]
+
+end Symmetry
 
 section Coact
 
