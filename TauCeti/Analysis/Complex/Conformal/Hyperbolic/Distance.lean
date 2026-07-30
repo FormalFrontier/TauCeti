@@ -105,6 +105,22 @@ lemma hyperbolicDist_eq_zero_iff_of_mem_ball {z w : ℂ}
     · linarith
   · exact fun h => Or.inr (Or.inl h)
 
+/-- On the open unit disc the hyperbolic distance and the pseudo-hyperbolic expression carry
+the same information: `Real.artanh` is injective on `(-1, 1)`, and the pseudo-hyperbolic
+expression of a pair of disc points lies in `[0, 1)`. -/
+lemma pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq {z w z' w' : ℂ}
+    (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1)
+    (hz' : z' ∈ ball (0 : ℂ) 1) (hw' : w' ∈ ball (0 : ℂ) 1) :
+    pseudoHyperbolicExpr z w = pseudoHyperbolicExpr z' w' ↔
+      hyperbolicDist z w = hyperbolicDist z' w' := by
+  have hmem : pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
+    ⟨by linarith [pseudoHyperbolicExpr_nonneg z w], pseudoHyperbolicExpr_lt_one_of_mem_ball hz hw⟩
+  have hmem' : pseudoHyperbolicExpr z' w' ∈ Ioo (-1 : ℝ) 1 :=
+    ⟨by linarith [pseudoHyperbolicExpr_nonneg z' w'],
+      pseudoHyperbolicExpr_lt_one_of_mem_ball hz' hw'⟩
+  rw [hyperbolicDist_def, hyperbolicDist_def]
+  exact ⟨fun h => by rw [h], fun h => Real.artanh_injOn hmem hmem' h⟩
+
 /-- **Schwarz--Pick, distance form.** A holomorphic self-map of the complex unit disc does not
 increase the hyperbolic distance. -/
 theorem hyperbolicDist_map_le {f : ℂ → ℂ}
