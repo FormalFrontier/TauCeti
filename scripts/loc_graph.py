@@ -36,15 +36,28 @@ def count_lines(repo, commit, pathspecs):
 
 
 def series(repo, pathspecs, ref):
-    # The latest commit on each day that touched the files, in date order;
-    # --reverse walks oldest-first, so the last write for a day wins.
+    # The last commit to land on each day that touched the files, keyed by
+    # commit date (%cd): the date the code actually entered the repo, which is
+    # the faithful x-axis for a lines-over-time chart and is monotonic under
+    # --reverse, so the chart never runs backwards. Author date (%ad) is freely
+    # rewritable by rebase and squash, which is what made the days arrive out of
+    # order before. Keying on commit date also keeps the newest point at HEAD,
+    # so the "as of" label reflects the current repo. The sort is insurance
+    # against history rewrites that leave commit dates out of order; dates are
+    # ISO YYYY-MM-DD, so lexicographic order is chronological.
+    #
+    # --first-parent walks the mainline only, so the chart tracks the size of
+    # the branch itself. Without it, a commit on a feature branch is sampled on
+    # its own (earlier) date, and count_lines there sees the whole branch tree,
+    # so a large branch shows up as a spike on the day it was written that
+    # vanishes the next day and only truly lands when the branch merges.
     day_commit = {}
-    for line in git(repo, "log", "--reverse", "--date=short",
-                    "--format=%ad %H", ref, "--", *pathspecs).splitlines():
+    for line in git(repo, "log", "--first-parent", "--reverse", "--date=short",
+                    "--format=%cd %H", ref, "--", *pathspecs).splitlines():
         date, commit = line.split()
         day_commit[date] = commit
     return [(date, count_lines(repo, commit, pathspecs))
-            for date, commit in day_commit.items()]
+            for date, commit in sorted(day_commit.items())]
 
 
 def nice_ceil(x):

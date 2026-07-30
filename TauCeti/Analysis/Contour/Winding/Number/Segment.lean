@@ -20,7 +20,8 @@ limit — and the principal value is `0` with no limiting argument at all. The g
 of `Winding/Number/Affine.lean`; the degenerate direction `v = 0` (the constant curve at `z₀`) is
 included, since there every positive-radius truncation is identically zero.
 
-This is the on-curve counterpart of `ModelSector/Winding.lean`, which computes the winding of an
+This is the on-curve counterpart of the arc computations in `Winding/Number/Circle.lean`,
+which compute the winding of an
 arc about its *centre*, a point off the curve. Together they supply the two pieces of an indented
 contour: a diameter through the singularity contributes `0`, and the semicircular arc about it
 contributes `½` (`windingNumber_at_i`) — the `windingNumber = 1/2` input of the

@@ -16,7 +16,7 @@ import TauCeti.MeasureTheory.Integral.OddSymmetric
 
 The Hungerbühler–Wasem model sector (HW (2.4)) is the closed curve made of a radial segment into
 its centre, a circular arc of opening angle `α`, and a radial segment back out. The arc's
-contribution is `α / 2π` (`windingNumber_modelSector`); this file supplies the other half, that the
+contribution is `α / 2π` (`indexIntegral_arc`); this file supplies the other half, that the
 two radial segments contribute nothing.
 
 The two segments cannot be treated separately: for nonzero ray directions and `R > 0` each

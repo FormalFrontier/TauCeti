@@ -113,24 +113,9 @@ theorem hasCauchyPVAt_polarPart (decomp : PolarPartDecomposition f S U) (s : S)
   have h_val : (∑ k : Fin (decomp.order s), if k.val = 0 then
         decomp.coeff s k * cauchyPVAt γ a b (fun z => (z - (s : ℂ))⁻¹) (s : ℂ) else 0)
       = 2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b s * residue f s := by
-    rcases Nat.eq_zero_or_pos (decomp.order s) with h0 | h_pos
-    · rw [Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega),
-        decomp.residue_eq s, dif_neg (by omega)]
-      ring
-    · have h_pick : ∀ k : Fin (decomp.order s),
-          (if k.val = 0 then
-            decomp.coeff s k * cauchyPVAt γ a b (fun z => (z - (s : ℂ))⁻¹) (s : ℂ) else 0)
-          = if k = ⟨0, h_pos⟩ then
-            decomp.coeff s ⟨0, h_pos⟩ * cauchyPVAt γ a b (fun z => (z - (s : ℂ))⁻¹) (s : ℂ)
-          else 0 := fun k => by
-        rcases eq_or_ne k ⟨0, h_pos⟩ with rfl | hk
-        · simp
-        · rw [if_neg fun h => hk (Fin.ext h), if_neg hk]
-      rw [Finset.sum_congr rfl fun k _ => h_pick k, Finset.sum_ite_eq' Finset.univ,
-        if_pos (Finset.mem_univ _), decomp.residue_eq s, dif_pos h_pos,
-        windingNumber_eq_cauchyPVAt, ← mul_assoc,
-        mul_inv_cancel₀ Complex.two_pi_I_ne_zero, one_mul]
-      ring
+    rw [decomp.sum_ite_coeff_eq_residue_mul s, windingNumber_eq_cauchyPVAt, ← mul_assoc,
+      mul_inv_cancel₀ Complex.two_pi_I_ne_zero, one_mul]
+    ring
   rw [← h_val]
   exact h_pv
 

@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Data.Finset.Max
 public import Mathlib.Order.Interval.Set.Defs
 import TauCeti.Analysis.Contour.Curve.Distance
+import Mathlib.Algebra.Order.Field.Pi
 import Mathlib.Order.Interval.Set.UnorderedInterval
 import Mathlib.Topology.MetricSpace.Infsep
 
@@ -26,6 +27,8 @@ scaffolding that localizes the principal-value analysis to one crossing per wind
 ## Main results
 
 * `Contour.exists_common_window_radius` — the common window radius.
+* `Contour.exists_common_window_radius_le` — a common window radius additionally held below a
+  positive per-crossing bound, with strict endpoint margins.
 * `Contour.eq_of_mem_window_of_eq` — in-window uniqueness of the crossing.
 * `Contour.exists_window_dist_lower_bound` — a positive lower bound for `‖γ t - s‖` on the two
   closed half-windows excluding the crossing.
@@ -137,6 +140,44 @@ theorem exists_common_window_radius {a b : ℝ} {crossings P : Finset ℝ}
       linarith [(min_le_right c (min (e / 2) (d / 4))).trans (min_le_right (e / 2) (d / 4))]
     · linarith [h_exc t ht p hp,
         (min_le_right c (min (e / 2) (d / 4))).trans (min_le_left (e / 2) (d / 4))]
+
+/-- **A common window radius below a prescribed per-crossing bound.** The `P = ∅` case of
+`exists_common_window_radius` with the radius additionally placed under a given positive `R t` at
+every crossing — which is what lets a family of per-crossing window results, each valid only below
+its own radius, be applied at one shared radius. There is no exceptional-set clause; use
+`exists_common_window_radius` directly when one is needed.
+
+Unlike that lemma this one does not ask for a nonempty family: for no crossings all three
+conditions are vacuous and any positive radius serves.
+
+The endpoint margins come out *strict* here: the radius is chosen strictly below the one that lemma
+supplies, so it clears both endpoints with room to spare. -/
+theorem exists_common_window_radius_le {a b : ℝ} {crossings : Finset ℝ}
+    (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b)
+    (R : ℝ → ℝ) (hR_pos : ∀ t ∈ crossings, 0 < R t) :
+    ∃ r > 0,
+      (∀ t ∈ crossings, a + r < t ∧ t < b - r) ∧
+      (∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r < |t - t'|) ∧
+      (∀ t ∈ crossings, r ≤ R t) := by
+  classical
+  rcases crossings.eq_empty_or_nonempty with rfl | h_nonempty
+  · exact ⟨1, one_pos, by simp, by simp, by simp⟩
+  obtain ⟨r₀, hr₀_pos, h_endpts, h_pair, -⟩ :=
+    exists_common_window_radius (P := ∅) h_nonempty h_Ioo fun t _ => Finset.notMem_empty t
+  -- Pick one radius strictly under `r₀` and under every `R t`, indexing the bounds by
+  -- `Option {t // t ∈ crossings}` so that `r₀` is the `none` component.
+  obtain ⟨r, hr_pos, hr_all⟩ := Pi.exists_forall_pos_add_lt
+    (ι := Option {t // t ∈ crossings}) (x := fun _ => (0 : ℝ))
+    (y := fun i => i.elim r₀ fun t => R t.1)
+    (fun i => by
+      cases i with
+      | none => simpa using hr₀_pos
+      | some t => simpa using hR_pos t.1 t.2)
+  have hr_lt : r < r₀ := by simpa using hr_all none
+  exact ⟨r, hr_pos, fun t ht => ⟨by linarith [(h_endpts t ht).1], by
+    linarith [(h_endpts t ht).2]⟩,
+    fun t ht t' ht' hne => by linarith [h_pair t ht t' ht' hne],
+    fun t ht => le_of_lt (by simpa using hr_all (some ⟨t, ht⟩))⟩
 
 /-- **In-window uniqueness of the crossing**: with windows inside `[a, b]`, distinct crossings
 more than `r` apart, and completeness — every parameter of `[a, b]` where `γ` takes the value

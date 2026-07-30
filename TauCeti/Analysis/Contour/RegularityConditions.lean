@@ -103,7 +103,7 @@ model sector, from the exit tangent `L₊` to the reversed entry tangent `−L�
 `L₋ = lim_{t → t₀⁻} γ'(t)`, `L₊ = lim_{t → t₀⁺} γ'(t)` are the one-sided limits of `deriv γ`. This
 is the orientation of Hungerbühler–Wasem's model sector-curve, whose arc of opening angle `α` runs
 counterclockwise from the exit ray to the reversed entry ray and contributes `α / 2π`
-(`windingNumber_modelSector`). The normalization keeps it nonnegative: a **smooth** crossing
+(`indexIntegral_arc`). The normalization keeps it nonnegative: a **smooth** crossing
 (`L₊ = L₋`) gives `π`, as in HW §3, and a cusp (`L₋ = -L₊`) gives `0`, the tangents alone not
 distinguishing a degenerate sector from a full turn. As a `limUnder`-based value it is junk when a
 one-sided tangent fails to exist; it is meaningful at the corners/crossings of a piecewise-`C¹`

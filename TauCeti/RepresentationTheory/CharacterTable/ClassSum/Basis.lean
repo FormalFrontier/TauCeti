@@ -163,7 +163,16 @@ end TauCeti
 
 namespace TauCeti
 
-variable (k G : Type*) [CommSemiring k] [StrongRankCondition k] [Group G] [Finite G]
+variable (k G : Type*) [CommSemiring k] [Group G] [Finite G]
+
+/-- The center of a finite group algebra is finite as a module, with its class-sum basis. -/
+noncomputable instance instModuleFiniteCenterMonoidAlgebra :
+    Module.Finite k (Subalgebra.center k (MonoidAlgebra k G)) := by
+  letI := Fintype.ofFinite G
+  letI := Classical.decEq G
+  exact Module.Finite.of_basis classSumBasis
+
+variable [StrongRankCondition k]
 
 /-- The dimension of the center of a finite group algebra is the number of conjugacy classes. -/
 theorem finrank_center_monoidAlgebra :
