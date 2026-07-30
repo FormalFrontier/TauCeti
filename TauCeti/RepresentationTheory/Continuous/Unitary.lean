@@ -6,13 +6,15 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.Adjoint
 public import Mathlib.RepresentationTheory.Continuous.Basic
+public import TauCeti.RepresentationTheory.Continuous.Subrepresentation
 
 /-!
 # Unitary continuous representations
 
 This file defines when a continuous representation preserves a real or complex inner product. It
 characterizes unitarity through norm preservation, isometries, and Mathlib's `unitary` submonoid of
-continuous linear operators, and records the basic inner-product identities and coefficient bound.
+continuous linear operators, and records the basic inner-product identities, the coefficient bound,
+and that unitarity passes to restrictions.
 
 The definition and its API implement the unitarity-predicate milestone in Layer 1 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
@@ -92,6 +94,13 @@ theorem injective (hπ : IsUnitary π) (g : G) : Function.Injective (π g) :=
 theorem restrict {H : Type*} [Monoid H] (hπ : IsUnitary π) (φ : H →* G) :
     IsUnitary (π.restrict φ) :=
   fun h ↦ hπ (φ h)
+
+/-- The restriction of a unitary representation to an invariant submodule is unitary. -/
+theorem subrepresentation (hπ : IsUnitary π) {W : Submodule 𝕜 V}
+    (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) : IsUnitary (subrepresentation π W hW) :=
+  (isUnitary_iff_norm_map _).mpr fun g v => by
+    rw [← Submodule.norm_coe, ← Submodule.norm_coe (s := W) v, coe_subrepresentation_apply,
+      hπ.norm_map]
 
 /-- A matrix coefficient of a unitary representation is bounded by the product of the vector
 norms. -/

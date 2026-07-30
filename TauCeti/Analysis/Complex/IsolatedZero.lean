@@ -9,15 +9,19 @@ public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Complex.Basic
 
 /-!
-# Estimates for a Rouché count on a small disc
+# Estimates near an isolated zero
 
-The two standing hypotheses of every Rouché comparison made on a disc whose centre is the only
-zero of the function inside it.
+A lower bound on a circle around a point at whose centre the function has its only zero, and two
+ways of concluding that the analytic order at a point is finite.
 
-Both `TauCeti.Analysis.Complex.Conformal.LocalDegree` and
+The first two are the standing hypotheses of every Rouché comparison made on such a disc: both
+`TauCeti.Analysis.Complex.Conformal.LocalDegree` and
 `TauCeti.Analysis.Complex.Conformal.Hurwitz` set up such a comparison, and each needs the same
-two facts about the disc before Rouché can be applied. Neither fact mentions Rouché's theorem, so
-this module does not import it:
+two facts about the disc before Rouché can be applied. The third has no Rouché content at all: it
+draws the same finiteness from the global hypothesis a zero count comes with, that the zeros in an
+open set lie in a finite set, and serves the arbitrary-cycle argument principle
+(`TauCeti.Contour.argumentPrinciple_nullHomologous_of_analyticOnNhd`). No result here mentions
+Rouché's theorem, so this module does not import it:
 
 ## Main results
 
@@ -25,9 +29,10 @@ this module does not import it:
   by a positive constant — this is what a competitor has to beat.
 * `TauCeti.analyticOrderAt_ne_top_of_forall_ne_zero`: the analytic order at the centre is finite,
   so the count Rouché produces is a natural number rather than `⊤`.
+* `TauCeti.analyticOrderAt_ne_top_of_zeros_subset`: the same finiteness under the hypothesis a
+  global zero count comes with, that the zeros in an open set lie in a finite set.
 
-Neither mentions Rouché's theorem itself; they are separated here only because two files need
-them.
+They are separated here only because several files need them.
 -/
 
 public section
@@ -69,5 +74,24 @@ theorem analyticOrderAt_ne_top_of_forall_ne_zero {f : ℂ → ℂ} {a : ℂ} {ρ
   · simp only [mem_ball, hdist]; exact htρ
   · simp only [ne_eq, add_eq_left, Complex.ofReal_eq_zero]; exact ht0.ne'
   · rw [hdist]; exact htε
+
+/-- **A function whose zeros are confined to a finite set has finite order.** If every zero of `f`
+in an open set `U` lies in a finite set `S`, then `f` does not vanish identically near any point of
+`U`, so `analyticOrderAt f z ≠ ⊤` there.
+
+The point `z` itself is allowed to be a zero — indeed to lie in `S` — since vanishing identically
+near `z` would force a whole punctured neighbourhood of zeros, of which all but finitely many are
+outside `S`. This is the finite-set form of
+`TauCeti.analyticOrderAt_ne_top_of_forall_ne_zero`, and reduces to it on a small enough ball. -/
+theorem analyticOrderAt_ne_top_of_zeros_subset {f : ℂ → ℂ} {U : Set ℂ} {S : Finset ℂ} {z : ℂ}
+    (hU : IsOpen U) (hz : z ∈ U) (hzeros : ∀ w ∈ U, f w = 0 → w ∈ S) :
+    analyticOrderAt f z ≠ ⊤ := by
+  -- Deleting `z`, the finite set `S` is closed and misses `z`, so `U` minus it is an open
+  -- neighbourhood of `z`; any ball inside it has no zero of `f` off its centre.
+  have hopen : IsOpen (U ∩ ((S : Set ℂ) \ {z})ᶜ) :=
+    hU.inter (S.finite_toSet.sdiff).isClosed.isOpen_compl
+  obtain ⟨ρ, hρ, hball⟩ := Metric.isOpen_iff.mp hopen z ⟨hz, by simp⟩
+  exact analyticOrderAt_ne_top_of_forall_ne_zero hρ fun w hw hwz hw0 =>
+    (hball hw).2 ⟨hzeros w (hball hw).1 hw0, hwz⟩
 
 end TauCeti

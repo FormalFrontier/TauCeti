@@ -186,6 +186,49 @@ theorem IsMDissipative.exists_smul_sub_surjective {A : X →ₗ.[ℝ] X} (hA : I
       Function.Surjective fun x : A.domain => lambda • (x : X) - A x :=
   hA.2
 
+/-- **A bounded right inverse at a point of the range condition.** If `A` is dissipative and
+`lambda • I - A` maps `D(A)` onto `X`, then it admits a right inverse `g` into `D(A)` which, read
+as a map into `X`, is a bounded operator `J` of norm at most `1 / lambda`. Keeping `g` separate
+from `J` is what lets `A` be applied to the result, since `A` only accepts elements of `D(A)`.
+
+Dissipativity makes `g` a genuine two-sided inverse (`IsDissipative.smul_sub_injective`), but only
+the right-inverse property is exposed, that being what the Neumann-series argument consumes.
+
+Completeness of `X` is not needed: the bound comes from dissipativity
+(`IsDissipative.norm_le_of_smul_sub_eq`) rather than from the open mapping theorem. -/
+private theorem IsDissipative.exists_bounded_rightInverse {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hrange : Function.Surjective fun x : A.domain => lambda • (x : X) - A x) :
+    ∃ (g : X → A.domain) (J : X →L[ℝ] X), ‖J‖ ≤ lambda⁻¹ ∧ (∀ y : X, (g y : X) = J y) ∧
+      ∀ y : X, lambda • (g y : X) - A (g y) = y := by
+  -- `lambda • I - A`, packaged as a linear equivalence `D(A) ≃ₗ X`
+  let S : A.domain →ₗ[ℝ] X := lambda • A.domain.subtype - A.toFun
+  have hSapp : ∀ x : A.domain, S x = lambda • (x : X) - A x := fun x => by simp [S]
+  have hbij : Function.Bijective S := by
+    constructor
+    · intro x y h
+      exact hA.smul_sub_injective hlambda (by simpa [hSapp] using h)
+    · intro y
+      obtain ⟨x, hx⟩ := hrange y
+      exact ⟨x, by simpa [hSapp] using hx⟩
+  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective S hbij
+  have he : ∀ y : X, lambda • ((e.symm y : A.domain) : X) - A (e.symm y) = y := by
+    intro y
+    rw [← hSapp]
+    exact e.apply_symm_apply y
+  -- its inverse, bounded by `1 / lambda` through dissipativity
+  set J : X →ₗ[ℝ] X := A.domain.subtype ∘ₗ (e.symm : X →ₗ[ℝ] A.domain) with hJ_def
+  have hJapp : ∀ y : X, J y = ((e.symm y : A.domain) : X) := fun y => by
+    rw [hJ_def, LinearMap.comp_apply, Submodule.subtype_apply, LinearEquiv.coe_coe]
+  have hJbound : ∀ y : X, ‖J y‖ ≤ lambda⁻¹ * ‖y‖ := by
+    intro y
+    rw [hJapp]
+    have := hA.norm_le_of_smul_sub_eq hlambda (x := e.symm y) (y := y) (he y)
+    rwa [div_eq_inv_mul] at this
+  refine ⟨fun y => e.symm y, J.mkContinuous lambda⁻¹ hJbound,
+    J.mkContinuous_norm_le (by positivity) hJbound, fun y => ?_, he⟩
+  rw [LinearMap.mkContinuous_apply, hJapp]
+
 section CompleteSpace
 
 variable [CompleteSpace X]
@@ -203,36 +246,11 @@ theorem IsDissipative.smul_sub_surjective_of_lt_two_mul {A : X →ₗ.[ℝ] X} (
     (hrange : Function.Surjective fun x : A.domain => lambda • (x : X) - A x)
     (hmu : 0 < mu) (hmu' : mu < 2 * lambda) :
     Function.Surjective fun x : A.domain => mu • (x : X) - A x := by
-  -- `lambda • I - A`, packaged as a linear equivalence `D(A) ≃ₗ X`
-  let S : A.domain →ₗ[ℝ] X := lambda • A.domain.subtype - A.toFun
-  have hSapp : ∀ x : A.domain, S x = lambda • (x : X) - A x := fun x => by simp [S]
-  have hbij : Function.Bijective S := by
-    constructor
-    · intro x y h
-      exact hA.smul_sub_injective hlambda (by simpa [hSapp] using h)
-    · intro y
-      obtain ⟨x, hx⟩ := hrange y
-      exact ⟨x, by simpa [hSapp] using hx⟩
-  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective S hbij
-  have he : ∀ y : X, lambda • ((e.symm y : A.domain) : X) - A (e.symm y) = y := by
-    intro y
-    rw [← hSapp]
-    exact e.apply_symm_apply y
-  -- its inverse, as a bounded operator of norm at most `1 / lambda`
-  let J : X →ₗ[ℝ] X := A.domain.subtype ∘ₗ (e.symm : X →ₗ[ℝ] A.domain)
-  have hJapp : ∀ y : X, J y = ((e.symm y : A.domain) : X) := fun _ => rfl
-  have hJbound : ∀ y : X, ‖J y‖ ≤ lambda⁻¹ * ‖y‖ := by
-    intro y
-    rw [hJapp]
-    have := hA.norm_le_of_smul_sub_eq hlambda (x := e.symm y) (y := y) (he y)
-    rwa [div_eq_inv_mul] at this
-  let Jc : X →L[ℝ] X := J.mkContinuous lambda⁻¹ hJbound
-  have hJc : ∀ y : X, Jc y = ((e.symm y : A.domain) : X) := fun y => hJapp y
-  have hJcnorm : ‖Jc‖ ≤ lambda⁻¹ := J.mkContinuous_norm_le (by positivity) hJbound
+  obtain ⟨g, Jc, hJcnorm, hgJ, he⟩ := hA.exists_bounded_rightInverse hlambda hrange
   -- `I - (lambda - mu) • Jc` is invertible, by the geometric series
   let T : X →L[ℝ] X := (lambda - mu) • Jc
-  have hTapp : ∀ y : X, T y = (lambda - mu) • ((e.symm y : A.domain) : X) := by
-    intro y; simp [T, hJc]
+  have hTapp : ∀ y : X, T y = (lambda - mu) • (g y : X) := by
+    intro y; simp [T, hgJ]
   have hTnorm : ‖T‖ < 1 := by
     have h1 : ‖T‖ ≤ |lambda - mu| * lambda⁻¹ := by
       have h2 : ‖T‖ = |lambda - mu| * ‖Jc‖ := by simp [T, norm_smul, Real.norm_eq_abs]
@@ -249,14 +267,13 @@ theorem IsDissipative.smul_sub_surjective_of_lt_two_mul {A : X →ₗ.[ℝ] X} (
     have h1 : ((u : X →L[ℝ] X) * (↑u⁻¹ : X →L[ℝ] X)) z = z := by rw [u.mul_inv]; rfl
     rw [hu] at h1
     simpa using h1
-  refine ⟨e.symm y, ?_⟩
-  -- the surjectivity goal is the beta-redex `(fun x => mu • ↑x - A x) (e.symm y) = z`, which
+  refine ⟨g y, ?_⟩
+  -- the surjectivity goal is the beta-redex `(fun x => mu • ↑x - A x) (g y) = z`, which
   -- `rw` cannot see through; `change` beta-reduces it (the style linter reserves `show` for
   -- goals that are already displayed in this form)
-  change mu • ((e.symm y : A.domain) : X) - A (e.symm y) = z
-  have hsplit : mu • ((e.symm y : A.domain) : X) - A (e.symm y)
-      = (lambda • ((e.symm y : A.domain) : X) - A (e.symm y))
-        - (lambda - mu) • ((e.symm y : A.domain) : X) := by module
+  change mu • (g y : X) - A (g y) = z
+  have hsplit : mu • (g y : X) - A (g y)
+      = (lambda • (g y : X) - A (g y)) - (lambda - mu) • (g y : X) := by module
   rw [hsplit, he y, ← hTapp y, hyz]
 
 /-- The range condition of an m-dissipative operator holds at *every* positive `lambda`, not

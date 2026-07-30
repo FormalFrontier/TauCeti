@@ -18,6 +18,8 @@ jobs:
       - name: Infrastructure policy unit tests
         run: |
           PYTHONPATH=scripts python3 scripts/test_check_bot_lakefile.py
+          PYTHONPATH=scripts python3 scripts/test_loc_graph.py
+          PYTHONPATH=scripts python3 scripts/test_participant_graph.py
           python3 scripts/pr_status/test_stuck_alerts.py
           python3 scripts/test_roadmap_label.py
           python3 scripts/pr_status/test_pr_labels.py
