@@ -125,9 +125,8 @@ lemma Hom.baseChange_comp {A B C : AbelianVariety K} (f : A ⟶ B) (g : B ⟶ C)
 
 /-- Extension of the base field defines a functor between the categories of abelian varieties.
 
-Exposed so that `(baseChangeFunctor L).obj A` reduces to `A.baseChange L`, the form the rest of
-the base-change API is stated in. -/
-@[expose]
+Its action is characterized by `AbelianVariety.baseChangeFunctor_obj` and
+`AbelianVariety.baseChangeFunctor_map`. -/
 noncomputable def baseChangeFunctor (L : Type u) [Field L] [Algebra K L] :
     AbelianVariety K ⥤ AbelianVariety L where
   obj A := A.baseChange L

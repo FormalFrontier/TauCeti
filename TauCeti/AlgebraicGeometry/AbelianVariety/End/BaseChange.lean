@@ -21,14 +21,13 @@ change respects the pointwise group law on homomorphisms
   `AbelianVariety.End.toHom_baseChange` translating it back into base change of morphisms;
 * `AbelianVariety.End.congr_baseChange`: base change commutes with the identification of
   endomorphism rings along an isomorphism of abelian varieties;
-* `AbelianVariety.baseChange_mulBy` and `AbelianVariety.End.baseChange_ofHom_mulBy`: multiplication
-  by `n` base changes to multiplication by `n`.
+* `AbelianVariety.baseChange_mulBy`: multiplication by `n` base changes to multiplication by `n`.
 
-The last two statements are the concrete check that the ring homomorphism is the expected one:
-`[n]` is the image of the integer `n` in the endomorphism ring, and a ring homomorphism preserves
-integers, so `[n]` is intrinsic to the abelian variety and does not depend on the base field. That
-is also what a later Layer E statement about `[n]` being an isogeny needs in order to be checked
-after base change to an algebraic closure.
+The last statement is the concrete check that the ring homomorphism is the expected one: `[n]` is
+the image of the integer `n` in the endomorphism ring, and a ring homomorphism preserves integers,
+so `[n]` is intrinsic to the abelian variety and does not depend on the base field. That is also
+what a later Layer E statement about `[n]` being an isogeny needs in order to be checked after
+base change to an algebraic closure.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, "Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API" and its item "`[n]` as an
@@ -67,8 +66,10 @@ variable (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L]
 Addition in an endomorphism ring is the pointwise group law of the abelian variety and
 multiplication is composition, so additivity is `AbelianVariety.Hom.baseChange_mul` and
 multiplicativity is `AbelianVariety.Hom.baseChange_comp` (composition being taken in the reversed
-order in which `AbelianVariety.End` multiplies). -/
-@[expose]
+order in which `AbelianVariety.End` multiplies).
+
+The action is characterized by `AbelianVariety.End.toHom_baseChange` and
+`AbelianVariety.End.baseChange_ofHom`, so the implementation is not exposed. -/
 def baseChange : End A →+* End (A.baseChange L) where
   toFun x := ofHom (Hom.baseChange (toHom x) L)
   map_one' := by
@@ -106,19 +107,19 @@ variable {B : AbelianVariety K}
 then extending the base field is the same as extending the base field and conjugating by the
 base-changed isomorphism, `CategoryTheory.Functor.mapIso` for `AbelianVariety.baseChangeFunctor`.
 
-The two objects conjugated between are named explicitly because `Functor.mapIso` produces an
-isomorphism `(baseChangeFunctor L).obj A ≅ (baseChangeFunctor L).obj B`, which is the base change
-only definitionally; supplying them keeps the statement — and hence every rewrite with it —
+`Functor.mapIso` produces an isomorphism `(baseChangeFunctor L).obj A ≅ (baseChangeFunctor L).obj B`
+and `AbelianVariety.baseChangeFunctor_obj` identifies its endpoints with the base changes, so the
+conjugating isomorphism is the composite of the three; writing it that way keeps the statement
 type-correct without unfolding the functor. -/
+@[simp]
 lemma congr_baseChange (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] (x : End A) :
     baseChange B L (congr e x) =
-      congr (A := A.baseChange L) (B := B.baseChange L) ((baseChangeFunctor L).mapIso e)
-        (baseChange A L x) := by
+      congr (eqToIso (baseChangeFunctor_obj L A).symm ≪≫ (baseChangeFunctor L).mapIso e ≪≫
+        eqToIso (baseChangeFunctor_obj L B)) (baseChange A L x) := by
   apply toHom_injective
-  rw [toHom_baseChange, toHom_congr, toHom_congr, toHom_baseChange, Hom.baseChange_comp,
-    Hom.baseChange_comp, Functor.mapIso_hom, Functor.mapIso_inv]
-  -- What is left is that the functor's action on morphisms is `Hom.baseChange`, by definition.
-  rfl
+  -- Both sides unfold to a conjugate of `Hom.baseChange (toHom x) L`, the transport isomorphisms
+  -- of `baseChangeFunctor_obj` cancelling because they are equalities of the same object.
+  simp
 
 end End
 
@@ -134,17 +135,6 @@ the pointwise group law, and base change preserves that law and the identity. -/
 lemma baseChange_mulBy (n : ℤ) :
     Hom.baseChange (mulBy A n) L = mulBy (A.baseChange L) n := by
   rw [mulBy_eq_zpow, mulBy_eq_zpow, Hom.baseChange_zpow, Hom.baseChange_id]
-
-/-- The same compatibility read in the endomorphism rings, where it says that
-`AbelianVariety.End.baseChange` preserves the integer `n`. Proving it from Mathlib's
-`map_intCast` rather than from `AbelianVariety.baseChange_mulBy` checks that the ring structure
-transported here really is the one for which `[n]` is the integer `n`.
-
-Deliberately not `@[simp]`: `AbelianVariety.End.ofHom_mulBy` rewrites both sides to an integer
-cast, so this left-hand side is not in `simp` normal form. -/
-lemma End.baseChange_ofHom_mulBy (n : ℤ) :
-    End.baseChange A L (End.ofHom (mulBy A n)) = End.ofHom (mulBy (A.baseChange L) n) := by
-  rw [End.ofHom_mulBy, End.ofHom_mulBy, map_intCast]
 
 end
 
