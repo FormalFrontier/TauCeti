@@ -226,10 +226,7 @@ theorem exists_wordProd_eq (w : P.weylGroup) :
     exact Submonoid.mem_top w
   rw [← FreeMonoid.mrange_lift] at hw
   obtain ⟨l, hl⟩ := MonoidHom.mem_mrange.mp hw
-  refine ⟨l.toList, ?_⟩
-  change (l.toList.map fun i : b.support => RootPairing.weylGroup.ofIdx P (i : ι)).prod = w
-  rw [← FreeMonoid.lift_apply]
-  exact hl
+  exact ⟨l.toList, by simpa only [wordProd, FreeMonoid.lift_apply] using hl⟩
 
 end Generation
 
