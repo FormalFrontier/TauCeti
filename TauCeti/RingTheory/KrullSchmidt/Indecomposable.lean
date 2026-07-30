@@ -5,9 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.FiniteLength
-public import Mathlib.RingTheory.LocalRing.Basic
 public import Mathlib.RingTheory.Nilpotent.Basic
 public import Mathlib.RingTheory.SimpleModule.Basic
+public import TauCeti.RingTheory.LocalRing.Basic
 
 /-!
 # Indecomposable modules and Fitting's lemma
@@ -223,20 +223,6 @@ theorem isLocalRing_end_of_isIndecomposable (hM : IsFiniteLength A M)
   have := h.nontrivial
   refine IsLocalRing.of_isUnit_or_isUnit_one_sub_self fun f ↦ ?_
   exact (h.isNilpotent_or_isUnit f).symm.imp id IsNilpotent.isUnit_one_sub
-
-/-- An idempotent of a local ring is `0` or `1`. Mathlib's
-`IsLocalRing.isUnit_or_isUnit_one_sub_self` is stated over a commutative ring, so the splitting of
-`1 = a + (1 - a)` is taken here from `IsLocalRing.isUnit_or_isUnit_of_isUnit_add`, which holds over
-any semiring. -/
-theorem IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem {R : Type u} [Ring R] [IsLocalRing R]
-    {a : R} (ha : IsIdempotentElem a) : a = 0 ∨ a = 1 := by
-  have hsum : IsUnit (a + (1 - a)) := by simp
-  rcases IsLocalRing.isUnit_or_isUnit_of_isUnit_add hsum with hu | hu
-  · exact Or.inr (hu.mul_left_cancel (by rw [ha, mul_one]))
-  · refine Or.inl ?_
-    have hidem : IsIdempotentElem (1 - a) := IsIdempotentElem.one_sub ha
-    have hone : (1 : R) - a = 1 := hu.mul_left_cancel (by rw [hidem, mul_one])
-    exact sub_eq_self.mp hone
 
 /-- A nonzero module with local endomorphism ring is indecomposable. This is the converse of
 `TauCeti.isLocalRing_end_of_isIndecomposable`, and needs no finiteness hypothesis. -/
