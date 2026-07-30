@@ -43,8 +43,10 @@ from `Subgroup.card_mul_index`.
 
 That pairing-to-dimension lemma computes `⟨χ_V, χ_W⟩` as `finrank k (W ⟶ V)`, exchanging the two
 arguments.  So the identity stated in the order `⟨Ind χ, ψ⟩ = ⟨χ, Res ψ⟩` is read off the *second*
-reciprocity `finrank_hom_resFDRep`, and the identity in the order `⟨Res ψ, χ⟩ = ⟨ψ, Ind χ⟩` off the
-first, `finrank_hom_indFDRep`.  Neither direction needs a reindexing of the sums.
+reciprocity, `finrank_hom_resFDRep`.  The identity in the order `⟨Res ψ, χ⟩ = ⟨ψ, Ind χ⟩` is then
+just that one with both sides flipped, by `TauCeti.ClassFunction.characterPairing_symm`, so it is
+derived rather than proved again from `finrank_hom_indFDRep`.  Neither direction needs a reindexing
+of the sums.
 
 The two `k`-linear equivalences of intertwining spaces that carry the reciprocities are private:
 only their `finrank` corollaries are intended as API, and both are opaque transports whose bodies
@@ -163,30 +165,6 @@ theorem frobenius_reciprocity [Fintype G] (hG : IsUnit (Nat.card G : k))
     _ = (Nat.card S : k)⁻¹ * ∑ s : S, A.character s * B.character ((s : G)⁻¹) := by simp
 
 open scoped Classical in
-/-- **Frobenius reciprocity in the other direction**: the scalar product over `S` of a restricted
-character with a character of `S` equals the scalar product over `G` of the original character with
-the induced character.  This is the shadow of the second adjunction, `Rep.resIndAdjunction`. -/
-theorem frobenius_reciprocity_resFDRep [Fintype G] (hG : IsUnit (Nat.card G : k))
-    (A : FDRep k S) (B : FDRep k G) :
-    (Nat.card S : k)⁻¹ * ∑ s : S, B.character (s : G) * A.character s⁻¹ =
-      (Nat.card G : k)⁻¹ * ∑ g : G, B.character g * (indFDRep A).character g⁻¹ := by
-  letI : Invertible (Nat.card G : k) := hG.invertible
-  letI : Invertible (Nat.card S : k) := (isUnit_natCard_subgroup S hG).invertible
-  calc (Nat.card S : k)⁻¹ * ∑ s : S, B.character (s : G) * A.character s⁻¹
-      = ClassFunction.characterPairing (ClassFunction.ofFDRep (resFDRep S B))
-          (ClassFunction.ofFDRep A) := by
-        rw [ClassFunction.characterPairing_ofFDRep]
-        simp
-    _ = (Module.finrank k (A ⟶ resFDRep S B) : k) :=
-        ClassFunction.characterPairing_ofFDRep_eq_finrank _ _
-    _ = (Module.finrank k (indFDRep A ⟶ B) : k) := by rw [finrank_hom_indFDRep]
-    _ = ClassFunction.characterPairing (ClassFunction.ofFDRep B)
-          (ClassFunction.ofFDRep (indFDRep A)) :=
-        (ClassFunction.characterPairing_ofFDRep_eq_finrank _ _).symm
-    _ = (Nat.card G : k)⁻¹ * ∑ g : G, B.character g * (indFDRep A).character g⁻¹ :=
-        ClassFunction.characterPairing_ofFDRep _ _
-
-open scoped Classical in
 /-- Frobenius reciprocity, phrased against the normalized pairing of class functions used by the
 character-theory development. -/
 theorem characterPairing_indFDRep [Fintype G] (hG : IsUnit (Nat.card G : k))
@@ -200,15 +178,29 @@ theorem characterPairing_indFDRep [Fintype G] (hG : IsUnit (Nat.card G : k))
 
 open scoped Classical in
 /-- The reciprocity in the other direction, phrased against
-`TauCeti.ClassFunction.characterPairing`. -/
+`TauCeti.ClassFunction.characterPairing`.  The pairing is symmetric, so this is
+`characterPairing_indFDRep` with both sides flipped. -/
 theorem characterPairing_resFDRep [Fintype G] (hG : IsUnit (Nat.card G : k))
     (A : FDRep k S) (B : FDRep k G) :
     ClassFunction.characterPairing (ClassFunction.ofFDRep (resFDRep S B))
         (ClassFunction.ofFDRep A) =
       ClassFunction.characterPairing (ClassFunction.ofFDRep B)
         (ClassFunction.ofFDRep (indFDRep A)) := by
-  rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply]
-  simpa using frobenius_reciprocity_resFDRep hG A B
+  rw [ClassFunction.characterPairing_symm (ClassFunction.ofFDRep (resFDRep S B)),
+    ClassFunction.characterPairing_symm (ClassFunction.ofFDRep B)]
+  exact (characterPairing_indFDRep hG A B).symm
+
+open scoped Classical in
+/-- **Frobenius reciprocity in the other direction**: the scalar product over `S` of a restricted
+character with a character of `S` equals the scalar product over `G` of the original character with
+the induced character.  This is `characterPairing_resFDRep` with the pairing unfolded. -/
+theorem frobenius_reciprocity_resFDRep [Fintype G] (hG : IsUnit (Nat.card G : k))
+    (A : FDRep k S) (B : FDRep k G) :
+    (Nat.card S : k)⁻¹ * ∑ s : S, B.character (s : G) * A.character s⁻¹ =
+      (Nat.card G : k)⁻¹ * ∑ g : G, B.character g * (indFDRep A).character g⁻¹ := by
+  have h := characterPairing_resFDRep hG A B
+  rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply] at h
+  simpa using h
 
 open scoped Classical in
 /-- Reciprocity against the trivial representation: the normalized average of an induced character
