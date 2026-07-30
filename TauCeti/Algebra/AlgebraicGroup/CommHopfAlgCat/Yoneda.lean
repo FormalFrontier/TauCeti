@@ -62,9 +62,14 @@ noncomputable def pointsCorepresentableBy
     (pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{v}).CorepresentableBy
       (CommAlgCat.of R H) where
   homEquiv := ConcreteCategory.homEquiv.trans (WithConv.equiv _).symm
-  homEquiv_comp := by
-    intros
-    rfl
+  homEquiv_comp {A B} g f := by
+    -- Unwrap the corepresenting equivalence: it sends `f` to the algebra homomorphism `f.hom`,
+    -- regarded as a point. Both sides are then the composite `g.hom ∘ f.hom`.
+    change toConv (f ≫ g).hom = (pointsFunctor (R := R) (H := H)).map g (toConv f.hom)
+    apply WithConv.ofConv_injective
+    ext h
+    rw [pointsFunctor_map_apply_apply, WithConv.ofConv_toConv, WithConv.ofConv_toConv,
+      CommAlgCat.hom_comp, AlgHom.comp_apply]
 
 /-- The corepresenting equivalence sends a commutative-algebra morphism to the same algebra
 homomorphism, regarded as a point. -/
@@ -72,8 +77,10 @@ homomorphism, regarded as a point. -/
 theorem pointsCorepresentableBy_homEquiv_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     {A : CommAlgCat.{v} R} (f : CommAlgCat.of R H ⟶ A) :
-    (pointsCorepresentableBy (R := R) H).homEquiv f = toConv f.hom :=
-  (rfl)
+    (pointsCorepresentableBy (R := R) H).homEquiv f = toConv f.hom := by
+  change (ConcreteCategory.homEquiv.trans (WithConv.equiv _).symm) f = _
+  simp only [Equiv.trans_apply, WithConv.symm_equiv_apply, ConcreteCategory.homEquiv,
+    Equiv.coe_fn_mk]
 
 /-- The inverse corepresenting equivalence forgets the convolution wrapper and bundles the
 resulting algebra homomorphism as a morphism in `CommAlgCat`. -/
@@ -82,8 +89,10 @@ theorem pointsCorepresentableBy_homEquiv_symm_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     {A : CommAlgCat.{v} R} (p : points (R := R) (H := H) A) :
     (pointsCorepresentableBy (R := R) H).homEquiv.symm p =
-      CommAlgCat.ofHom p.ofConv :=
-  (rfl)
+      CommAlgCat.ofHom p.ofConv := by
+  apply (pointsCorepresentableBy (R := R) H).homEquiv.injective
+  rw [Equiv.apply_symm_apply, pointsCorepresentableBy_homEquiv_apply,
+    CommAlgCat.hom_ofHom, WithConv.toConv_ofConv]
 
 /-- The coyoneda functor corepresented by `H` is isomorphic to the underlying type-valued
 functor of points of `H`. -/
@@ -106,8 +115,11 @@ point. -/
 theorem coyonedaObjIsoPointsFunctorForget_hom_app_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     (A : CommAlgCat.{v} R) (f : CommAlgCat.of R H ⟶ A) :
-    (coyonedaObjIsoPointsFunctorForget (R := R) H).hom.app A f = toConv f.hom :=
-  (rfl)
+    (coyonedaObjIsoPointsFunctorForget (R := R) H).hom.app A f = toConv f.hom := by
+  simp only [coyonedaObjIsoPointsFunctorForget, Functor.CorepresentableBy.toIso,
+    Functor.corepresentableByEquiv, Equiv.coe_fn_mk, NatIso.ofComponents_hom_app,
+    Equiv.toIso_hom_hom_apply]
+  exact pointsCorepresentableBy_homEquiv_apply (R := R) H f
 
 /-- The inverse map of `coyonedaObjIsoPointsFunctorForget` bundles a point as a morphism in
 `CommAlgCat`. -/
@@ -116,8 +128,11 @@ theorem coyonedaObjIsoPointsFunctorForget_inv_app_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     (A : CommAlgCat.{v} R) (p : points (R := R) (H := H) A) :
     (coyonedaObjIsoPointsFunctorForget (R := R) H).inv.app A p =
-      CommAlgCat.ofHom p.ofConv :=
-  (rfl)
+      CommAlgCat.ofHom p.ofConv := by
+  simp only [coyonedaObjIsoPointsFunctorForget, Functor.CorepresentableBy.toIso,
+    Functor.corepresentableByEquiv, Equiv.coe_fn_mk, NatIso.ofComponents_inv_app,
+    Equiv.toIso_inv_hom_apply]
+  exact pointsCorepresentableBy_homEquiv_symm_apply (R := R) H p
 
 end HopfAlgebra
 
