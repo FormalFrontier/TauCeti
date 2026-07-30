@@ -31,24 +31,26 @@ local-endomorphism-ring theorem. Both are supplied here.
 
 ## Main results
 
-* `TauCeti.isIndecomposableModule_iff_forall_isIdempotentElem`: indecomposability says exactly that
-  `0` and `1` are the only idempotents of `Module.End A M`.
+* `TauCeti.isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem`: indecomposability
+  says exactly that `0` and `1` are the only idempotents of `Module.End A M`.
 * `TauCeti.IsIndecomposableModule.isNilpotent_or_bijective`: **Fitting's lemma**, for a module that
   is Noetherian and Artinian, together with
   `TauCeti.IsIndecomposableModule.isNilpotent_iff_not_isUnit`, which reads it as an identification
   of the non-units of the endomorphism ring with its nilpotents.
 * `TauCeti.isLocalRing_end_of_isIndecomposable`: the endomorphism ring of an indecomposable module
   of finite length is local.
-* `TauCeti.isIndecomposableModule_iff_isLocalRing_end`: for a module of finite length the converse
-  holds too, so indecomposability is *equivalent* to having a local endomorphism ring.
+* `TauCeti.isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`: for a module of finite
+  length the converse holds too, so indecomposability is *equivalent* to having a local
+  endomorphism ring.
 
 ## Implementation notes
 
 The finiteness hypothesis is carried as the pair of instances `[IsNoetherian A M] [IsArtinian A M]`
 on the lemmas that consume it, which is what Mathlib's Fitting decomposition asks for. The
 `IsFiniteLength A M` spelling appears on the headline statements
-`isLocalRing_end_of_isIndecomposable` and `isIndecomposableModule_iff_isLocalRing_end`, which
-unpack it through `isFiniteLength_iff_isNoetherian_isArtinian`.
+`isLocalRing_end_of_isIndecomposable` and
+`isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`, which unpack it through
+`isFiniteLength_iff_isNoetherian_isArtinian`.
 
 ## References
 
@@ -107,7 +109,7 @@ theorem isIndecomposableModule_of_forall_isIdempotentElem [Nontrivial M]
 
 /-- Indecomposability of a module is exactly the statement that its endomorphism ring has no
 idempotents besides `0` and `1`. -/
-theorem isIndecomposableModule_iff_forall_isIdempotentElem :
+theorem isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem :
     IsIndecomposableModule A M ↔
       Nontrivial M ∧ ∀ f : Module.End A M, IsIdempotentElem f → f = 0 ∨ f = 1 :=
   ⟨fun h ↦ ⟨h.nontrivial, fun _ hf ↦ h.eq_zero_or_eq_one_of_isIdempotentElem hf⟩,
@@ -224,7 +226,7 @@ theorem isIndecomposableModule_of_isLocalRing_end [Nontrivial M]
 
 /-- For a module of finite length, indecomposability is **equivalent** to having a local
 endomorphism ring. -/
-theorem isIndecomposableModule_iff_isLocalRing_end (hM : IsFiniteLength A M) :
+theorem isIndecomposableModule_iff_nontrivial_and_isLocalRing_end (hM : IsFiniteLength A M) :
     IsIndecomposableModule A M ↔ Nontrivial M ∧ IsLocalRing (Module.End A M) := by
   refine ⟨fun h ↦ ⟨h.nontrivial, isLocalRing_end_of_isIndecomposable hM h⟩, fun ⟨_, h⟩ ↦ ?_⟩
   have := h
