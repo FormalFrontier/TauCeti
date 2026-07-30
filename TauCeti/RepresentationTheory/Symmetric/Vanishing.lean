@@ -106,21 +106,15 @@ twice.  Concretely one moves `x` and `y` onto `u` and `v` and relabels by the in
 theorem exists_rowMeetsColumnTwice_relabel (t : YoungTableau μ) {x y u v : Fin μ.card} (hxy : x ≠ y)
     (hrow : rowIndex t x = rowIndex t y) (huv : u ≠ v) (hcol : colIndex t u = colIndex t v) :
     ∃ σ : Equiv.Perm (Fin μ.card), RowMeetsColumnTwice t (relabel σ t) := by
-  refine ⟨(Equiv.swap (Equiv.swap x u y) v * Equiv.swap x u)⁻¹, ?_⟩
-  have hy : Equiv.swap x u y ≠ u := by
-    intro h
-    refine hxy ?_
-    have h' := congrArg (Equiv.swap x u) h
-    rw [Equiv.swap_apply_self, Equiv.swap_apply_right] at h'
-    exact h'.symm
-  have hρx : (Equiv.swap (Equiv.swap x u y) v * Equiv.swap x u) x = u := by
-    rw [Equiv.Perm.mul_apply, Equiv.swap_apply_left,
-      Equiv.swap_apply_of_ne_of_ne (Ne.symm hy) huv]
-  have hρy : (Equiv.swap (Equiv.swap x u y) v * Equiv.swap x u) y = v := by
-    rw [Equiv.Perm.mul_apply, Equiv.swap_apply_left]
+  -- a permutation carrying `x` to `u` and `y` to `v`, obtained by extending the injection
+  -- `x, y ↦ u, v` to a permutation
+  obtain ⟨ρ, hρ⟩ := Equiv.Perm.exists_extending_pair (fun b : Bool => bif b then x else y)
+    (fun b : Bool => bif b then u else v) (fun a b h => by cases a <;> cases b <;> simp_all)
+    (fun a b h => by cases a <;> cases b <;> simp_all)
+  refine ⟨ρ⁻¹, ?_⟩
   rw [rowMeetsColumnTwice_relabel_iff]
   refine ⟨x, y, hxy, hrow, ?_⟩
-  rw [inv_inv, hρx, hρy]
+  rw [inv_inv, show ρ x = u from hρ true, show ρ y = v from hρ false]
   exact hcol
 
 /-- **The key vanishing lemma**, in terms of explicit labels: if the distinct labels `x` and `y`
