@@ -135,6 +135,19 @@ private noncomputable def sectionOpenPartialHomeomorph (F : X.Presheaf C) (U : O
     ((isOpenEmbedding_germSection U s).toOpenPartialHomeomorph (germSection F U s)).symm.trans
       (U.openPartialHomeomorphSubtypeCoe inferInstance)
 
+/-- On its source, the chart determined by a section agrees with the étalé projection. -/
+private theorem sectionOpenPartialHomeomorph_apply (F : X.Presheaf C) (U : Opens X)
+    (s : ToType (F.obj (Opposite.op U))) (x₀ : U) {g : F.EtaleSpace}
+    (hg : g ∈ sectionRange F U s) :
+    sectionOpenPartialHomeomorph F U s x₀ g = g.base := by
+  classical
+  letI : Nonempty U := ⟨x₀⟩
+  rw [sectionOpenPartialHomeomorph, OpenPartialHomeomorph.trans_apply,
+    U.openPartialHomeomorphSubtypeCoe_coe inferInstance]
+  simpa only [base_germSection] using congr_arg TopCat.Presheaf.EtaleSpace.base
+    (Topology.IsOpenEmbedding.toOpenPartialHomeomorph_right_inv
+      (f := germSection F U s) (h := isOpenEmbedding_germSection U s) hg)
+
 /-- The projection from the étalé space of a presheaf to the base is a local homeomorphism. -/
 theorem isLocalHomeomorph_base (F : X.Presheaf C) :
     IsLocalHomeomorph (TopCat.Presheaf.EtaleSpace.base (F := F)) := by
@@ -148,16 +161,9 @@ theorem isLocalHomeomorph_base (F : X.Presheaf C) :
   refine ⟨e, ?_, ?_⟩
   · rw [he_source, mem_sectionRange_iff]
     exact ⟨hgU, hs.symm⟩
-  · intro g hg
+  · intro g' hg
     rw [he_source] at hg
-    change
-      g.base =
-        ((isOpenEmbedding_germSection U s).toOpenPartialHomeomorph
-          (germSection F U s)).symm g
-    symm
-    simpa only [base_germSection] using congr_arg TopCat.Presheaf.EtaleSpace.base
-      (Topology.IsOpenEmbedding.toOpenPartialHomeomorph_right_inv
-        (f := germSection F U s) (h := isOpenEmbedding_germSection U s) hg)
+    exact (sectionOpenPartialHomeomorph_apply F U s ⟨g.base, hgU⟩ (g := g') hg).symm
 
 end TopCat.Presheaf.EtaleSpace
 
