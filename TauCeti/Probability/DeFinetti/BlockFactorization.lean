@@ -47,9 +47,10 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
   is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
   witness. That witness is the canonical *directing measure*, not merely a mixing representative;
-  what this file proves about it is the mixture identity. The sharper conditional statement at the
-  same witness is `conditionallyIIDWith_of_contractable_pathSpace` in
-  `TauCeti.Probability.DeFinetti.JointRectangle`.
+  what this file proves about that witness is the mixture identity. The sharp *existential*
+  theorem on an arbitrary sample space is `conditionallyIID_of_contractable`; on path space,
+  `conditionallyIIDWith_of_contractable_pathSpace` exposes its canonical tail-law witness
+  explicitly.
 * `mixedIID_of_contractable` — the existential form, for a contractable process on an
   arbitrary measurable sample space (state space still standard Borel).
 * `mixedIID_of_exchangeable` — the exchangeable form (via `contractable_of_exchangeable`).
