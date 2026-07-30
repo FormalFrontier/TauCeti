@@ -9,15 +9,19 @@ public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Complex.Basic
 
 /-!
-# Estimates for a Rouché count on a small disc
+# Estimates near an isolated zero
 
-The two standing hypotheses of every Rouché comparison made on a disc whose centre is the only
-zero of the function inside it.
+A lower bound on a circle around a point at whose centre the function has its only zero, and two
+ways of concluding that the analytic order at a point is finite.
 
-Both `TauCeti.Analysis.Complex.Conformal.LocalDegree` and
+The first two are the standing hypotheses of every Rouché comparison made on such a disc: both
+`TauCeti.Analysis.Complex.Conformal.LocalDegree` and
 `TauCeti.Analysis.Complex.Conformal.Hurwitz` set up such a comparison, and each needs the same
-two facts about the disc before Rouché can be applied. Neither fact mentions Rouché's theorem, so
-this module does not import it:
+two facts about the disc before Rouché can be applied. The third has no Rouché content at all: it
+draws the same finiteness from the global hypothesis a zero count comes with, that the zeros in an
+open set lie in a finite set, and serves the arbitrary-cycle argument principle
+(`TauCeti.Contour.argumentPrinciple_nullHomologous_of_analyticOnNhd`). No result here mentions
+Rouché's theorem, so this module does not import it:
 
 ## Main results
 
@@ -28,8 +32,7 @@ this module does not import it:
 * `TauCeti.analyticOrderAt_ne_top_of_zeros_subset`: the same finiteness under the hypothesis a
   global zero count comes with, that the zeros in an open set lie in a finite set.
 
-None of them mentions Rouché's theorem itself; they are separated here only because several files
-need them.
+They are separated here only because several files need them.
 -/
 
 public section

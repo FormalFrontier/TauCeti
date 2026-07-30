@@ -38,13 +38,14 @@ Null-homology is load-bearing, as it already is for the residue theorem: on a do
 a loop that merely avoids the zeros and poles can still see the function's behaviour in the hole,
 and `n_w(γ) = 0` for every `w ∉ U` is exactly the hypothesis that rules this out.
 
-Unlike the circle statement, no pointwise "wrong values" of `f` are tolerated. The circle proof
-may replace `f` by its meromorphic normal form because a circle integral is unchanged by a change
-of integrand on a set codiscrete within the sphere
+Unlike the circle statement, the hypotheses ask for genuine analyticity and non-vanishing of `f` at
+every point of `U ∖ S`, so no pointwise "wrong value" there is tolerated. Nothing pointwise is
+asked at the points of `S`, where only meromorphy is required, nor anywhere outside `U`. The circle
+proof may instead replace `f` by its meromorphic normal form, because a circle integral is
+unchanged by a change of integrand on a set codiscrete within the sphere
 (`circleIntegral.circleIntegral_congr_codiscreteWithin`); no such congruence is available for a
 general piecewise-`C¹` contour, and the null-homologous residue theorem used here asks for honest
-differentiability of `logDeriv f` on `U ∖ S`. Accordingly the hypotheses here ask for genuine
-analyticity of `f` off `S`.
+differentiability of `logDeriv f` on `U ∖ S`.
 
 ## Main results
 
