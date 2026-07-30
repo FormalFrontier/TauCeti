@@ -17,8 +17,9 @@ The Schwarz--Pick theorem (`TauCeti.pseudoHyperbolicExpr_map_le`) says a holomor
 case**: if the contraction is an equality at a *single* pair of distinct points, then `f` is a
 disc automorphism, and in particular the contraction is an equality everywhere.
 
-The proof conjugates `f` by the Moebius factors that send `w` to `0` on the source and `f w`
-to `0` on the target, exactly as the contraction estimate does.  The conjugate `g` is a
+The proof runs on the shared `TauCeti.schwarzPickConjugate` construction, which conjugates `f`
+by the Moebius factors that send `w` to `0` on the source and `f w` to `0` on the target,
+exactly as the contraction estimate does.  The conjugate `g = schwarzPickConjugate f w` is a
 holomorphic self-map of the disc fixing the origin, and the hypothesis says `‖g ξ‖ = ‖ξ‖` at
 the nonzero point `ξ = (z - w) / (1 - conj w * z)`.  Mathlib's equality case of the Schwarz
 lemma, `Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div`, then forces `g` to be the
@@ -83,22 +84,15 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
       (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ)
         = C * ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ)) := by
   have hw_norm : ‖w‖ < 1 := by simpa [mem_ball_zero_iff] using hw
-  -- The Schwarz--Pick conjugation scaffold: `g = target ∘ f ∘ source` fixes the origin.
-  let source : ℂ → ℂ :=
-    fun ξ => (ξ - (-w)) / (1 - (starRingEnd ℂ) (-w) * ξ)
-  let target : ℂ → ℂ :=
-    fun η => (η - f w) / (1 - (starRingEnd ℂ) (f w) * η)
-  let g : ℂ → ℂ := target ∘ f ∘ source
-  obtain ⟨hg_diff, hg_maps, hg_zero⟩ :=
+  -- The Schwarz--Pick conjugation scaffold: `schwarzPickConjugate f w` fixes the origin.
+  obtain ⟨hgd, hgm, hg0⟩ :=
     differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hmaps hw_norm
-  have hgd : DifferentiableOn ℂ g (ball (0 : ℂ) 1) := hg_diff
-  have hgm : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := hg_maps
-  have hg0 : g 0 = 0 := hg_zero
-  have hg_maps_closed : MapsTo g (ball (0 : ℂ) 1) (closedBall (g 0) 1) := by
+  have hg_maps_closed : MapsTo (schwarzPickConjugate f w) (ball (0 : ℂ) 1)
+      (closedBall (schwarzPickConjugate f w 0) 1) := by
     intro ζ hζ
     rw [hg0]
     exact ball_subset_closedBall (hgm hζ)
-  -- The point at which the Schwarz estimate for `g` is an equality.
+  -- The point at which the Schwarz estimate for the conjugate is an equality.
   let ξ : ℂ := (z - w) / (1 - (starRingEnd ℂ) w * z)
   have hξ_mem : ξ ∈ ball (0 : ℂ) 1 := by
     simpa [ξ] using mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hz
@@ -107,23 +101,24 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
   have hξ_ne : ξ ≠ 0 := by
     rw [← norm_ne_zero_iff, hξ_norm]
     exact fun h => hne ((pseudoHyperbolicExpr_eq_zero_iff_of_mem_ball hz hw).mp h)
-  have hg_ξ : ‖g ξ‖ = ‖ξ‖ := by
-    have h1 : g ξ = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) :=
-      apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm hz_norm
+  have hg_ξ : ‖schwarzPickConjugate f w ξ‖ = ‖ξ‖ := by
+    have h1 : schwarzPickConjugate f w ξ
+        = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) :=
+      schwarzPickConjugate_apply_unitDiscMoebiusFormula hw_norm hz_norm
     rw [h1, ← pseudoHyperbolicExpr_def, heq, hξ_norm]
-  -- Mathlib's equality case of the Schwarz lemma: `g` is the rotation by `dslope g 0 ξ`.
-  have hdslope : ‖dslope g 0 ξ‖ = 1 / 1 := by
+  -- Mathlib's equality case of the Schwarz lemma: the conjugate is a rotation.
+  have hdslope : ‖dslope (schwarzPickConjugate f w) 0 ξ‖ = 1 / 1 := by
     rw [dslope_of_ne _ hξ_ne, slope_def_field, hg0, sub_zero, sub_zero, norm_div, hg_ξ,
       div_self (norm_ne_zero_iff.mpr hξ_ne)]
     norm_num
   have haffine :=
     Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div hgd hg_maps_closed hξ_mem hdslope
-  refine ⟨dslope g 0 ξ, by simpa using hdslope, fun ζ hζ => ?_⟩
+  refine ⟨dslope (schwarzPickConjugate f w) 0 ξ, by simpa using hdslope, fun ζ hζ => ?_⟩
   have hζ' : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ) ∈ ball (0 : ℂ) 1 :=
     mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hζ
-  have hgζ : g ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))
+  have hgζ : schwarzPickConjugate f w ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))
       = (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ) :=
-    apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm
+    schwarzPickConjugate_apply_unitDiscMoebiusFormula hw_norm
       (by simpa [mem_ball_zero_iff] using hζ)
   have hval := haffine hζ'
   simp only [hgζ, hg0, zero_add, sub_zero, smul_eq_mul] at hval

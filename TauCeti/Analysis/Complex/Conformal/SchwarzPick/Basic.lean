@@ -23,8 +23,10 @@ for callers working directly with disc points.
 This advances the conformal-mapping roadmap's L2 Schwarz--Pick target.  It reuses Mathlib's
 Schwarz lemma and Tau Ceti's unit-disc Moebius API.  As with the rest of the L0--L3
 conformal-mapping material, it is coordinated with the upstream Mathlib RMT effort
-leanprover-community/mathlib4#33505 and should be refactored to upstream API if that work
-lands a human-curated Schwarz--Pick theorem.
+leanprover-community/mathlib4#33505.  Mathlib already contains the preceding human-curated
+work in `Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`; none
+of it is duplicated here, and should that work land a human-curated Schwarz--Pick theorem this
+file should be refactored onto it.
 -/
 
 public section
@@ -43,20 +45,16 @@ theorem pseudoHyperbolicExpr_map_le {f : ℂ → ℂ}
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
     pseudoHyperbolicExpr (f z) (f w) ≤ pseudoHyperbolicExpr z w := by
-  -- Conjugate `f` by the disc automorphisms sending `w ↦ 0` and `f w ↦ 0`, so the conjugated
-  -- map `g = target ∘ f ∘ source` fixes `0`.  Mathlib's Schwarz lemma at `0` then gives
-  -- `‖g ξ‖ ≤ ‖ξ‖`, which unwinds to the pseudo-hyperbolic contraction at `z`, `w`.
-  let source : ℂ → ℂ :=
-    fun ξ => (ξ - (-(w : ℂ))) / (1 - (starRingEnd ℂ) (-(w : ℂ)) * ξ)
-  let target : ℂ → ℂ :=
-    fun η => (η - f w) / (1 - (starRingEnd ℂ) (f w) * η)
-  let g : ℂ → ℂ := target ∘ f ∘ source
+  -- Conjugate `f` by the disc automorphisms sending `w ↦ 0` and `f w ↦ 0`, so the conjugate
+  -- `schwarzPickConjugate f w` fixes `0`.  Mathlib's Schwarz lemma at `0` then bounds its norm
+  -- by the identity, which unwinds to the pseudo-hyperbolic contraction at `z`, `w`.
   have hw_norm : ‖w‖ < 1 := by
     simpa [mem_ball_zero_iff] using hw
-  -- The conjugate `g` is a holomorphic self-map of the disc fixing the origin (shared scaffold).
+  -- The conjugate is a holomorphic self-map of the disc fixing the origin (shared scaffold).
   obtain ⟨hg_diff, hg_maps_ball, hg_zero⟩ :=
     differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hmaps hw_norm
-  have hg_maps_closed : MapsTo g (ball (0 : ℂ) 1) (closedBall (0 : ℂ) 1) := by
+  have hg_maps_closed :
+      MapsTo (schwarzPickConjugate f w) (ball (0 : ℂ) 1) (closedBall (0 : ℂ) 1) := by
     intro ξ hξ
     exact ball_subset_closedBall (hg_maps_ball hξ)
   let ξ : ℂ := (z - w) / (1 - (starRingEnd ℂ) w * z)
@@ -66,12 +64,13 @@ theorem pseudoHyperbolicExpr_map_le {f : ℂ → ℂ}
   have hz_norm : ‖z‖ < 1 := by
     simpa [mem_ball_zero_iff] using hz
   -- The conjugate sends the Moebius image of `z` to the Moebius image of `f z` (shared scaffold).
-  have hg_ξ : g ξ = target (f z) :=
-    apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm hz_norm
+  have hg_ξ : schwarzPickConjugate f w ξ
+      = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) :=
+    schwarzPickConjugate_apply_unitDiscMoebiusFormula hw_norm hz_norm
   have hξ_norm : ‖ξ‖ < 1 := by
     simpa [mem_ball_zero_iff] using hξ_mem
   calc
-    pseudoHyperbolicExpr (f z) (f w) = ‖g ξ‖ := by
+    pseudoHyperbolicExpr (f z) (f w) = ‖schwarzPickConjugate f w ξ‖ := by
       rw [hg_ξ, pseudoHyperbolicExpr_def]
     _ ≤ ‖ξ‖ := by
       exact Complex.norm_le_norm_of_mapsTo_ball hg_diff hg_maps_closed hg_zero hξ_norm

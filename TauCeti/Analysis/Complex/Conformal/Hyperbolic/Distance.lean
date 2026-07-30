@@ -42,10 +42,12 @@ inequality and is future work of the L2 layer.
 This advances the conformal-mapping roadmap's L2 target "the hyperbolic / Poincaré metric on
 `𝔻`" (see `ConformalMapping/README.md`).  It reuses Tau Ceti's pseudo-hyperbolic and
 Schwarz--Pick API.  As with the rest of the L0--L3 conformal-mapping material, it is
-coordinated with the upstream Mathlib RMT effort leanprover-community/mathlib4#33505 and
-should be refactored to upstream API if that work lands a human-curated Poincaré metric.
-Mathlib has the hyperbolic metric on the upper half-plane (`Analysis/Complex/UpperHalfPlane`),
-but no hyperbolic distance on the disc.
+coordinated with the upstream Mathlib RMT effort leanprover-community/mathlib4#33505.  Mathlib
+already contains the preceding human-curated work in `Analysis/Complex/RiemannMapping.lean` and
+`Analysis/Complex/BranchLogRoot.lean`; none of it is duplicated here, and should that work land
+a human-curated Poincaré metric this file should be refactored onto it.  Mathlib has the
+hyperbolic metric on the upper half-plane (`Analysis/Complex/UpperHalfPlane`), but no
+hyperbolic distance on the disc.
 -/
 
 public section
