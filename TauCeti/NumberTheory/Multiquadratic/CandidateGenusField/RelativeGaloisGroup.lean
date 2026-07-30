@@ -45,7 +45,10 @@ noncomputable instance isAbelianGalois_candidateGenusField_over_base {d : ℤ} {
   is_comm.comm σ τ := by
     have h := IsMulCommutative.is_comm.comm (σ.restrictScalars ℚ) (τ.restrictScalars ℚ)
     ext x
-    simpa only [AlgEquiv.mul_apply, AlgEquiv.restrictScalars_apply] using DFunLike.congr_fun h x
+    have hx := DFunLike.congr_fun h x
+    simp only [AlgEquiv.mul_apply, AlgEquiv.restrictScalars_apply] at hx
+    simp only [AlgEquiv.mul_apply]
+    rw [hx]
 
 /-- **Order of the relative Galois group of the candidate genus field over `ℚ(√d)`.** If the
 squarefree integer `d` is not a rational square, then `K_gen` is Galois over its embedded quadratic
