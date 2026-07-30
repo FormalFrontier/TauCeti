@@ -251,6 +251,22 @@ lemma leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one {a : ℂ} (ha : ‖a‖ < 
   simpa [coe_unitDiscMoebius, Complex.UnitDisc.coe_neg, Complex.UnitDisc.coe_mk, map_neg,
     neg_mul, sub_neg_eq_add] using h
 
+/-- **Value of the Schwarz--Pick conjugate at a Moebius image.** The conjugate of `f` built in
+`differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate` sends the Moebius image
+of a disc point `z` to the Moebius image of `f z`.  Taking norms turns a Schwarz-lemma estimate
+for the conjugate at `0` into a pseudo-hyperbolic statement about `f` at `z`, `a`, so this is
+the evaluation step shared by the Schwarz--Pick contraction estimate and its equality case. -/
+lemma apply_unitDiscMoebiusFormula_schwarzPickConjugate {f : ℂ → ℂ} {a z : ℂ}
+    (ha : ‖a‖ < 1) (hz : ‖z‖ < 1) :
+    ((fun η : ℂ => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
+        fun ξ : ℂ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ))
+      ((z - a) / (1 - (starRingEnd ℂ) a * z))
+      = (f z - f a) / (1 - (starRingEnd ℂ) (f a) * f z) := by
+  have hsource : ((z - a) / (1 - (starRingEnd ℂ) a * z) - -a) /
+      (1 - (starRingEnd ℂ) (-a) * ((z - a) / (1 - (starRingEnd ℂ) a * z))) = z :=
+    leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha (by simpa [mem_ball_zero_iff] using hz)
+  simp only [Function.comp_apply, hsource]
+
 /-- The standard Moebius self-equivalence of the unit disc sending `a` to `0`. -/
 noncomputable def unitDiscMoebiusEquiv (a : Complex.UnitDisc) :
     Complex.UnitDisc ≃ Complex.UnitDisc where

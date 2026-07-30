@@ -63,10 +63,11 @@ theorem pseudoHyperbolicExpr_map_le {f : ℂ → ℂ}
   have hξ_mem : ξ ∈ ball (0 : ℂ) 1 := by
     simpa [ξ] using mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one
       (a := w) hw_norm hz
-  have hsource_ξ : source ξ = z := by
-    simpa [source, ξ] using leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hw_norm hz
-  have hg_ξ : g ξ = target (f z) := by
-    simp [g, hsource_ξ]
+  have hz_norm : ‖z‖ < 1 := by
+    simpa [mem_ball_zero_iff] using hz
+  -- The conjugate sends the Moebius image of `z` to the Moebius image of `f z` (shared scaffold).
+  have hg_ξ : g ξ = target (f z) :=
+    apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm hz_norm
   have hξ_norm : ‖ξ‖ < 1 := by
     simpa [mem_ball_zero_iff] using hξ_mem
   calc

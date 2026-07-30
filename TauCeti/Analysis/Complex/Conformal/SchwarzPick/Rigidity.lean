@@ -36,11 +36,11 @@ rotation and a Moebius factor.
 * `TauCeti.bijOn_ball_of_pseudoHyperbolicExpr_map_eq` — `f` is a bijection of the disc;
 * `TauCeti.forall_pseudoHyperbolicExpr_map_eq_of_pseudoHyperbolicExpr_map_eq` — one equality
   propagates to every pair of points, so `f` is a pseudo-hyperbolic isometry;
-* `TauCeti.exists_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq` — `f` has
-  the standard form `u * (ζ - a) / (1 - conj a * ζ)`;
+* `exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq`
+  — `f` has the standard form `u * (ζ - a) / (1 - conj a * ζ)`;
 * `TauCeti.forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq` and
-  `TauCeti.exists_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq` — the same
-  rigidity stated for the hyperbolic (Poincaré) distance.
+  `exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq` — the
+  same rigidity stated for the hyperbolic (Poincaré) distance.
 
 Together with `TauCeti.pseudoHyperbolicExpr_unitDiscStandardAutomorphismEquiv`, which says the
 standard automorphisms *are* pseudo-hyperbolic isometries, these results identify the isometry
@@ -51,8 +51,11 @@ Schwarz--Pick and the disc automorphism group `Aut(𝔻) = {e^{iθ}(z−a)/(1−
 `ConformalMapping/README.md`).  It reuses Mathlib's Schwarz-lemma equality case and Tau Ceti's
 unit-disc Moebius and disc-automorphism API rather than re-deriving either.  As with the rest
 of the L0--L3 conformal-mapping material, it is coordinated with the upstream Mathlib RMT
-effort leanprover-community/mathlib4#33505 and should be refactored to upstream API if a
-human-curated Schwarz--Pick rigidity statement lands there.
+effort leanprover-community/mathlib4#33505.  Mathlib already contains the preceding
+human-curated work in `Analysis/Complex/RiemannMapping.lean` and
+`Analysis/Complex/BranchLogRoot.lean`; none of it is duplicated here, and should a
+human-curated Schwarz--Pick rigidity statement land upstream this file should be refactored
+onto it, or deleted with its consumers refactored.
 -/
 
 public section
@@ -99,15 +102,14 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
   let ξ : ℂ := (z - w) / (1 - (starRingEnd ℂ) w * z)
   have hξ_mem : ξ ∈ ball (0 : ℂ) 1 := by
     simpa [ξ] using mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hz
-  have hsource_ξ : source ξ = z := by
-    simpa [source, ξ] using leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hw_norm hz
+  have hz_norm : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
   have hξ_norm : ‖ξ‖ = pseudoHyperbolicExpr z w := (pseudoHyperbolicExpr_def z w).symm
   have hξ_ne : ξ ≠ 0 := by
     rw [← norm_ne_zero_iff, hξ_norm]
     exact fun h => hne ((pseudoHyperbolicExpr_eq_zero_iff_of_mem_ball hz hw).mp h)
   have hg_ξ : ‖g ξ‖ = ‖ξ‖ := by
-    have h1 : g ξ = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) := by
-      simp only [g, Function.comp_apply, hsource_ξ, target]
+    have h1 : g ξ = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) :=
+      apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm hz_norm
     rw [h1, ← pseudoHyperbolicExpr_def, heq, hξ_norm]
   -- Mathlib's equality case of the Schwarz lemma: `g` is the rotation by `dslope g 0 ξ`.
   have hdslope : ‖dslope g 0 ξ‖ = 1 / 1 := by
@@ -119,11 +121,10 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
   refine ⟨dslope g 0 ξ, by simpa using hdslope, fun ζ hζ => ?_⟩
   have hζ' : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ) ∈ ball (0 : ℂ) 1 :=
     mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hζ
-  have hsource' : source ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ)) = ζ :=
-    leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hw_norm hζ
   have hgζ : g ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))
-      = (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ) := by
-    simp only [g, Function.comp_apply, hsource', target]
+      = (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ) :=
+    apply_unitDiscMoebiusFormula_schwarzPickConjugate hw_norm
+      (by simpa [mem_ball_zero_iff] using hζ)
   have hval := haffine hζ'
   simp only [hgζ, hg0, zero_add, sub_zero, smul_eq_mul] at hval
   exact hval.trans (mul_comm _ _)
@@ -230,7 +231,7 @@ theorem forall_pseudoHyperbolicExpr_map_eq_of_pseudoHyperbolicExpr_map_eq
 that preserves the pseudo-hyperbolic expression at one pair of distinct points is one of the
 standard disc automorphisms `ζ ↦ u * (ζ - a) / (1 - conj a * ζ)`.
 -/
-theorem exists_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq
+theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) (hne : z ≠ w)
@@ -267,14 +268,15 @@ theorem forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq
 the open unit disc that preserves the hyperbolic distance between one pair of distinct points
 is one of the standard disc automorphisms.
 -/
-theorem exists_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq
+theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) (hne : z ≠ w)
     (heq : hyperbolicDist (f z) (f w) = hyperbolicDist z w) :
     ∃ (u : Circle) (a : Complex.UnitDisc),
       ∀ ζ : Complex.UnitDisc, f ζ = (unitDiscStandardAutomorphismEquiv u a ζ : ℂ) :=
-  exists_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq hf hmaps hz hw hne
+  exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_pseudoHyperbolicExpr_map_eq
+    hf hmaps hz hw hne
     ((pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq (hmaps hz) (hmaps hw) hz hw).mpr heq)
 
 end TauCeti
