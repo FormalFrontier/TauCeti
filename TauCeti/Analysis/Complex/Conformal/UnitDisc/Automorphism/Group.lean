@@ -108,8 +108,9 @@ lemma mem_unitDiscAut {e : Equiv.Perm Complex.UnitDisc} :
   Iff.rfl
 
 /-- The inverse of a standard disc automorphism is again one: inverting `z ↦ u * (z - a) /
-(1 - conj a * z)` replaces the rotation `u` by `u⁻¹` and moves the centre to the image `u • (-a)`
-of the origin. -/
+(1 - conj a * z)` replaces the rotation `u` by `u⁻¹` and the centre `a` by `u • (-a)`, the image
+of the origin under the original automorphism.  (The inverse itself sends `0` to `a`, since the
+original sends `a` to `0`.) -/
 lemma unitDiscStandardAutomorphismEquiv_symm_eq (u : Circle) (a : Complex.UnitDisc) :
     (unitDiscStandardAutomorphismEquiv u a).symm =
       unitDiscStandardAutomorphismEquiv u⁻¹ (u • (-a)) := by
@@ -150,6 +151,7 @@ holomorphic automorphism exactly when it is a standard automorphism.
 The forward direction is the classification theorem
 `exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv`, which rests on the Schwarz lemma;
 the converse is the holomorphy of the standard formula and of its inverse. -/
+@[simp]
 theorem mem_unitDiscAut_iff {e : Equiv.Perm Complex.UnitDisc} :
     e ∈ unitDiscAut ↔
       ∃ (u : Circle) (a : Complex.UnitDisc), e = unitDiscStandardAutomorphismEquiv u a := by
@@ -234,6 +236,7 @@ is a rotation exactly when it is a holomorphic automorphism fixing the origin.
 The forward implication is immediate; the converse is the classification, which forces the centre
 of a standard automorphism fixing `0` to be `0`.  This is the group-theoretic form of the
 rigidity statement behind the Schwarz lemma. -/
+@[simp]
 theorem mem_unitDiscRotation_iff {e : Equiv.Perm Complex.UnitDisc} :
     e ∈ unitDiscRotation ↔ e ∈ unitDiscAut ∧ e 0 = 0 := by
   constructor
