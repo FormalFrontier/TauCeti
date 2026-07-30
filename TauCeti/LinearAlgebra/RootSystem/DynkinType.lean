@@ -23,18 +23,24 @@ of a given type under a single simultaneous relabelling of rows and columns.
 
 The enumeration is deliberately plain: the rank ranges `A n (1 ≤ n)`, `B n (2 ≤ n)`, `C n (3 ≤ n)`,
 `D n (4 ≤ n)` are carried by `TauCeti.DynkinType.Valid` rather than baked into the constructors.
-Those bounds remove the degenerate matrices and the low-rank coincidences `B₁ = C₁ = A₁`,
-`C₂ = B₂`, `D₂ = A₁ × A₁` and `D₃ = A₃`; without them neither realization nor uniqueness of the
-type holds. Note in particular that `Valid` is *not* preserved by exchanging `B n` and `C n`: `B 2`
-is valid while `C 2` is not, precisely because they name the same root system.
+Those bounds remove two different kinds of redundancy. The rank-zero types `A 0`, `B 0`, `C 0`,
+`D 0` have empty Cartan matrices, and `D 2` has the reducible matrix of `A₁ × A₁`, so none of these
+names an irreducible root system at all. The other excluded types are low-rank coincidences: `B 1`,
+`C 1` and `D 1` are `A 1`, `C 2` is `B 2`, and `D 3` is `A 3`, so each of them does name an
+irreducible root system, but one the list already carries under a valid name. What the bounds
+secure is therefore uniqueness of the type, not the existence of a root system realizing it. Note
+in particular that `Valid` is *not* preserved by exchanging `B n` and `C n`: `B 2` is valid while
+`C 2` is not, precisely because they name the same root system.
 
 The matching in `TauCeti.HasCartanType` is oriented, using one relabelling `e` on both indices
 rather than allowing the matrix to be transposed. This is what keeps `Bₙ` and `Cₙ` apart from rank
 `3` on, where they are different root systems whose standard Cartan matrices are transposes of one
 another (`CartanMatrix.B_transpose`) and an unoriented match would identify them. At rank at most
-`2` the orientation carries no information: transposing a matrix with at most two indices is itself
-a simultaneous relabelling of them, so `B 2` and `C 2` match exactly the same bases, in keeping with
-their naming the same root system. `Valid` keeps only `B 2` of those two names.
+`2` the orientation carries no information about *these* matrices: relabelling by the swap of two
+indices transposes the off-diagonal entries but exchanges the diagonal ones as well, and every
+diagonal entry of a standard Cartan matrix is `2`, so here transposition is itself a simultaneous
+relabelling. Hence `B 2` and `C 2` match exactly the same bases, in keeping with their naming the
+same root system; `Valid` keeps only `B 2` of those two names.
 
 ## Main definitions
 
