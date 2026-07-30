@@ -29,9 +29,12 @@ type holds. Note in particular that `Valid` is *not* preserved by exchanging `B 
 is valid while `C 2` is not, precisely because they name the same root system.
 
 The matching in `TauCeti.HasCartanType` is oriented, using one relabelling `e` on both indices
-rather than allowing the matrix to be transposed. This is what keeps `Bₙ` and `Cₙ` apart, since
-their standard Cartan matrices are transposes of one another
-(`TauCeti.DynkinType.cartanMatrix_B_transpose`) and an unoriented match would identify them.
+rather than allowing the matrix to be transposed. This is what keeps `Bₙ` and `Cₙ` apart from rank
+`3` on, where they are different root systems whose standard Cartan matrices are transposes of one
+another (`CartanMatrix.B_transpose`) and an unoriented match would identify them. At rank at most
+`2` the orientation carries no information: transposing a matrix with at most two indices is itself
+a simultaneous relabelling of them, so `B 2` and `C 2` match exactly the same bases, in keeping with
+their naming the same root system. `Valid` keeps only `B 2` of those two names.
 
 ## Main definitions
 
@@ -191,9 +194,8 @@ instance : DecidablePred IsSimplyLaced := fun t ↦
 
 /-- The standard integer Cartan matrix of a Dynkin type, indexed by `Fin t.rank`. The classical
 families and the exceptional matrices are Mathlib's `CartanMatrix.A`, `.B`, `.C`, `.D`, `.E₆`,
-`.E₇`, `.E₈`, `.F₄` and `.G₂`, whose conventions this enumeration adopts. This is exposed, like
-`TauCeti.DynkinType.rank`, so that the characterization lemmas below reduce downstream. -/
-@[expose] def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
+`.E₇`, `.E₈`, `.F₄` and `.G₂`, whose conventions this enumeration adopts. -/
+def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | .A n => CartanMatrix.A n
   | .B n => CartanMatrix.B n
   | .C n => CartanMatrix.C n
@@ -204,21 +206,18 @@ families and the exceptional matrices are Mathlib's `CartanMatrix.A`, `.B`, `.C`
   | .F4 => CartanMatrix.F₄
   | .G2 => CartanMatrix.G₂
 
-@[simp] lemma cartanMatrix_A (n : ℕ) : (A n).cartanMatrix = CartanMatrix.A n := rfl
-@[simp] lemma cartanMatrix_B (n : ℕ) : (B n).cartanMatrix = CartanMatrix.B n := rfl
-@[simp] lemma cartanMatrix_C (n : ℕ) : (C n).cartanMatrix = CartanMatrix.C n := rfl
-@[simp] lemma cartanMatrix_D (n : ℕ) : (D n).cartanMatrix = CartanMatrix.D n := rfl
-@[simp] lemma cartanMatrix_E6 : E6.cartanMatrix = CartanMatrix.E₆ := rfl
-@[simp] lemma cartanMatrix_E7 : E7.cartanMatrix = CartanMatrix.E₇ := rfl
-@[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E₈ := rfl
-@[simp] lemma cartanMatrix_F4 : F4.cartanMatrix = CartanMatrix.F₄ := rfl
-@[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ := rfl
-
-/-- Type `Cₙ` is type `Bₙ` with the double edge reversed. This is the only way the two differ, and
-it is why `TauCeti.HasCartanType` matches Cartan matrices without transposing them. -/
-lemma cartanMatrix_B_transpose (n : ℕ) :
-    ((B n).cartanMatrix)ᵀ = (C n).cartanMatrix :=
-  CartanMatrix.B_transpose n
+-- The parenthesized `(rfl)` proofs keep these out of the implicit `@[defeq]` set, which would
+-- otherwise demand that `cartanMatrix` be `@[expose]`d; as `@[simp]` lemmas they are the intended
+-- elimination API either way.
+@[simp] lemma cartanMatrix_A (n : ℕ) : (A n).cartanMatrix = CartanMatrix.A n := (rfl)
+@[simp] lemma cartanMatrix_B (n : ℕ) : (B n).cartanMatrix = CartanMatrix.B n := (rfl)
+@[simp] lemma cartanMatrix_C (n : ℕ) : (C n).cartanMatrix = CartanMatrix.C n := (rfl)
+@[simp] lemma cartanMatrix_D (n : ℕ) : (D n).cartanMatrix = CartanMatrix.D n := (rfl)
+@[simp] lemma cartanMatrix_E6 : E6.cartanMatrix = CartanMatrix.E₆ := (rfl)
+@[simp] lemma cartanMatrix_E7 : E7.cartanMatrix = CartanMatrix.E₇ := (rfl)
+@[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E₈ := (rfl)
+@[simp] lemma cartanMatrix_F4 : F4.cartanMatrix = CartanMatrix.F₄ := (rfl)
+@[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ := (rfl)
 
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
 @[simp] lemma cartanMatrix_apply_self (t : DynkinType) (i : Fin t.rank) :
@@ -260,7 +259,7 @@ lemma cartanMatrix_apply_eq_zero_iff_symm (t : DynkinType) (i j : Fin t.rank) :
 
 /-- The double edge of type `Bₙ`: with at least two simple roots, the last two are joined by an
 entry `-2`. -/
-lemma cartanMatrix_B_apply_eq_neg_two {n : ℕ} (hn : 2 ≤ n) (i j : Fin n)
+private lemma cartanMatrix_B_apply_eq_neg_two {n : ℕ} (hn : 2 ≤ n) (i j : Fin n)
     (hi : (i : ℕ) = n - 2) (hj : (j : ℕ) = n - 1) : CartanMatrix.B n i j = -2 := by
   have hij : i ≠ j := by rintro rfl; omega
   simp only [CartanMatrix.B, Matrix.of_apply, if_neg hij]
@@ -333,8 +332,10 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
 
 /-- A base of a crystallographic root pairing **has Cartan type `t`** when its Cartan matrix agrees
 with the standard Cartan matrix of `t` after a single simultaneous relabelling of rows and columns.
-Matching without transposing is deliberate: `Bₙ` and `Cₙ` have transposed Cartan matrices
-(`TauCeti.DynkinType.cartanMatrix_B_transpose`) and are different root systems. -/
+Matching without transposing is deliberate: from rank `3` on, `Bₙ` and `Cₙ` are different root
+systems with transposed Cartan matrices (`CartanMatrix.B_transpose`), so an unoriented match would
+identify them. It does not separate `B 2` from `C 2`, which are the same root system;
+`TauCeti.DynkinType.Valid` excludes `C 2`. -/
 def HasCartanType (b : P.Base) (t : DynkinType) : Prop :=
   ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j)
 
