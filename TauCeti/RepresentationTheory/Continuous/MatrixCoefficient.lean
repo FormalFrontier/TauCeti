@@ -174,15 +174,10 @@ theorem matrixCoeff_apply_mul_eq_sum {ι : Type*} [Fintype ι] (e : OrthonormalB
 
 /-! ### The trivial representation, and restriction along a homomorphism -/
 
-/-- The action map of the trivial representation is constant, hence continuous. This is the
-continuity witness to feed to `matrixCoeff` for the trivial representation. -/
-theorem continuous_trivial :
-    Continuous (ContRepresentation.trivial 𝕜 G V) :=
-  continuous_const
-
 /-- A matrix coefficient of the trivial representation is the constant function at the inner
-product of its defining vectors. Which constants arise depends on `V`: they are the values of the
-inner product, so all of `𝕜` when some `⟪v, w⟫ ≠ 0`, and only `0` when `V` is trivial. -/
+product of its defining vectors; `continuous_const` is the continuity witness to feed in. Which
+constants arise depends on `V`: they are the values of the inner product, so all of `𝕜` when some
+`⟪v, w⟫ ≠ 0`, and only `0` when `V` is trivial. -/
 @[simp]
 theorem matrixCoeff_trivial (htriv : Continuous (ContRepresentation.trivial 𝕜 G V)) (v w : V) :
     matrixCoeff (ContRepresentation.trivial 𝕜 G V) htriv v w =
