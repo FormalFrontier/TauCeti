@@ -6,8 +6,6 @@ Authors: Claude
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
--- Non-public: the joint kernel's measurability is consumed only inside `Measure.lintegral_bind`.
-import TauCeti.MeasureTheory.Measure.ProductKernel
 -- Non-public: the countable set algebra that compares two random measures set by set.
 import Mathlib.MeasureTheory.SetAlgebra
 -- Non-public: `tendsto_const_div_atTop_nhds_zero_nat` closes the `O(1/n)` squeeze.
@@ -56,6 +54,9 @@ The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promo
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 6, states `conditionallyIID_ae_unique` with
 `[StandardBorelSpace α] [Nonempty α]`, which is stronger — `countablyGenerated_of_standardBorel`
 supplies the instance, and nonemptiness is never used, since no measure is constructed here.
+The coordinates are only assumed a.e. measurable (`∀ i, AEMeasurable (X i) μ`), as elsewhere in the
+measure-theoretic exchangeability API: every statement here sees `X` through integrals, hence only
+modulo `μ`-a.e. equality.
 -/
 
 public section
@@ -83,7 +84,7 @@ Taking `g = 1` recovers the block probabilities that `MixedIIDWith` already dete
 of the conditional predicate is that an arbitrary weight in the directing measure may be carried
 along. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i))
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
     {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (⋂ i : Fin m, X (k i) ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
@@ -95,8 +96,8 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
     with hF_def
   have hF : Measurable F :=
     (hg.comp measurable_fst).mul ((measurable_one.indicator hR).comp measurable_snd)
-  have hΦ : Measurable fun ω => (ν ω, fun i : Fin m => X (k i) ω) :=
-    hν.prodMk (measurable_pi_lambda _ fun i => hX (k i))
+  have hΦ : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
+    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX (k i))
   have hκ : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
@@ -105,7 +106,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
       = ∫⁻ z, F z ∂(μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) := by
     rw [h.jointLaw_eq_disintegration k hk]
-  rw [lintegral_map hF hΦ, Measure.lintegral_bind hκ hF.aemeasurable] at key
+  rw [lintegral_map' hF.aemeasurable hΦ, Measure.lintegral_bind hκ hF.aemeasurable] at key
   calc ∫⁻ ω, g (ν ω) * (⋂ i : Fin m, X (k i) ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, F (ν ω, fun i : Fin m => X (k i) ω) ∂μ := by
         refine lintegral_congr fun ω => ?_
@@ -131,7 +132,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
 
 /-- One-coordinate form of the weighted block identity. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_single
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i)) (i : ℕ)
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (i : ℕ)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (X i ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, g (ν ω) * (ν ω : Measure α) B ∂μ := by
@@ -140,7 +141,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_single
 
 /-- Two-coordinate form of the weighted block identity, at distinct indices. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_pair
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i)) {i j : ℕ} (hij : i ≠ j)
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) {i j : ℕ} (hij : i ≠ j)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, g (ν ω) * (ν ω : Measure α) B ^ 2 ∂μ := by
@@ -169,7 +170,7 @@ private theorem integral_toReal_eq_of_lintegral_eq {F G : Ω → ℝ≥0∞}
 `eᵢ - q` are uncorrelated with common variance `c`, then their average over `Fin n` has mean
 square `c / n`. Private: it is an algebraic repackaging with no probabilistic content of its own. -/
 private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → Ω → ℝ} {q : Ω → ℝ}
-    {c : ℝ} (he : ∀ i, Measurable (e i)) (hq : Measurable q)
+    {c : ℝ} (he : ∀ i, AEMeasurable (e i) μ) (hq : AEMeasurable q μ)
     (heb : ∀ i ω, |e i ω| ≤ 1) (hqb : ∀ ω, |q ω| ≤ 1)
     (hcov : ∀ i j, ∫ ω, (e i ω - q ω) * (e j ω - q ω) ∂μ = if i = j then c else 0)
     {n : ℕ} (hn : n ≠ 0) :
@@ -218,7 +219,7 @@ This is the second-moment law of large numbers for the conditional predicate, re
 joint-law disintegration: the cross term `∫ (ν ·) B · 1_{Xᵢ ∈ B}` is the one moment that the
 mixture identity alone does not determine. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i)) (hB : MeasurableSet B)
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B)
     {n : ℕ} (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ
@@ -229,8 +230,10 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
   have hu : Measurable fun ω => (ν ω : Measure α) B :=
     (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp hν)
   have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal := hu.ennreal_toReal
-  have he : ∀ i, Measurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) := fun i =>
-    measurable_one.indicator (hX i hB)
+  have hXB : ∀ i, NullMeasurableSet (X i ⁻¹' B) μ := fun i =>
+    (hX i).nullMeasurableSet_preimage hB
+  have he : ∀ i, AEMeasurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) μ := fun i =>
+    measurable_one.aemeasurable.indicator₀ (hXB i)
   have hutop : ∀ ω, (ν ω : Measure α) B ≠ ∞ := fun ω => measure_ne_top _ _
   have hindtop : ∀ (s : Set Ω) (ω : Ω), s.indicator (1 : Ω → ℝ≥0∞) ω ≠ ∞ := by
     intro s ω
@@ -246,7 +249,7 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
     have hlin : ∫⁻ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
         = ∫⁻ ω, (ν ω : Measure α) B ∂μ := by
       simpa using h.lintegral_mul_indicator_single (g := fun _ => 1) hX i measurable_const hB
-    have := integral_toReal_eq_of_lintegral_eq (measurable_one.indicator (hX i hB)).aemeasurable
+    have := integral_toReal_eq_of_lintegral_eq (measurable_one.aemeasurable.indicator₀ (hXB i))
       hu.aemeasurable (hindtop _) hutop hlin
     simpa [hindReal] using this
   have hEq2 : ∀ i j, i ≠ j → ∫ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
@@ -257,7 +260,7 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
         = ∫⁻ ω, (ν ω : Measure α) B ^ 2 ∂μ := by
       simpa using h.lintegral_mul_indicator_pair (g := fun _ => 1) hX hij measurable_const hB
     have := integral_toReal_eq_of_lintegral_eq
-      (measurable_one.indicator ((hX i hB).inter (hX j hB))).aemeasurable
+      (measurable_one.aemeasurable.indicator₀ ((hXB i).inter (hXB j)))
       (hu.pow_const 2).aemeasurable (hindtop _) (fun ω => by simp [hutop ω]) hlin
     have hprod : ∀ ω, ((X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω).toReal
         = (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω := by
@@ -273,7 +276,8 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
       (Measure.measurable_coe hB).comp measurable_subtype_coe
     have hlin := h.lintegral_mul_indicator_single (g := fun p => (p : Measure α) B) hX i hg hB
     have := integral_toReal_eq_of_lintegral_eq
-      (hu.mul (measurable_one.indicator (hX i hB))).aemeasurable (hu.mul hu).aemeasurable
+      (hu.aemeasurable.mul (measurable_one.aemeasurable.indicator₀ (hXB i)))
+      (hu.mul hu).aemeasurable
       (fun ω => ENNReal.mul_ne_top (hutop ω) (hindtop _ ω))
       (fun ω => ENNReal.mul_ne_top (hutop ω) (hutop ω)) hlin
     simpa [ENNReal.toReal_mul, hindReal, sq] using this
@@ -303,13 +307,13 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
       nlinarith [he0 i ω, he0 j ω, he1 i ω, he1 j ω]
     have hi2 : Integrable (fun ω => ((ν ω : Measure α) B).toReal
         * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
-      refine Integrable.of_bound (hq.mul (he i)).aestronglyMeasurable 1
+      refine Integrable.of_bound (hq.aemeasurable.mul (he i)).aestronglyMeasurable 1
         (ae_of_all _ fun ω => ?_)
       rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 i ω)]
       nlinarith [hq0 ω, hq1 ω, he0 i ω, he1 i ω]
     have hi3 : Integrable (fun ω => ((ν ω : Measure α) B).toReal
         * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
-      refine Integrable.of_bound (hq.mul (he j)).aestronglyMeasurable 1
+      refine Integrable.of_bound (hq.aemeasurable.mul (he j)).aestronglyMeasurable 1
         (ae_of_all _ fun ω => ?_)
       rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hq0 ω), abs_of_nonneg (he0 j ω)]
       nlinarith [hq0 ω, hq1 ω, he0 j ω, he1 j ω]
@@ -344,14 +348,14 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
       ring
     · rw [if_neg hij, hEq2 i j hij, hEq3 i, hEq3 j]
       ring
-  exact integral_sq_average_sub he hq
+  exact integral_sq_average_sub he hq.aemeasurable
     (fun i ω => abs_le.mpr ⟨by linarith [he0 i ω], he1 i ω⟩)
     (fun ω => abs_le.mpr ⟨by linarith [hq0 ω], hq1 ω⟩) hcov hn
 
 /-- The mean square error of `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` is at most
 `1 / n`: the variance factor is a difference of moments of a `[0, 1]`-valued variable. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilityMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i)) (hB : MeasurableSet B)
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B)
     {n : ℕ} (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ ≤ (n : ℝ)⁻¹ := by
@@ -384,7 +388,7 @@ almost everywhere.
 Both are approximated in `L²` by the *same* empirical frequencies, at a rate that does not depend
 on the witness, so the triangle inequality forces their difference to vanish in `L²`. -/
 theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
-    (hX : ∀ i, Measurable (X i)) (h : ConditionallyIIDWith μ X ν)
+    (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') (hB : MeasurableSet B) :
     (fun ω => (ν ω : Measure α) B) =ᵐ[μ] fun ω => (ν' ω : Measure α) B := by
   have hqm : ∀ ρ : Ω → ProbabilityMeasure α, Measurable ρ →
@@ -396,11 +400,13 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
     intro ρ ω
     simpa using
       ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (ρ ω : Measure α)) (s := B))
-  have hem : ∀ n : ℕ, Measurable fun ω =>
-      (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω := by
+  have hXB : ∀ i, NullMeasurableSet (X i ⁻¹' B) μ := fun i =>
+    (hX i).nullMeasurableSet_preimage hB
+  have hem : ∀ n : ℕ, AEMeasurable (fun ω =>
+      (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := by
     intro n
-    exact measurable_const.mul
-      (Finset.measurable_sum _ fun i _ => measurable_one.indicator (hX i hB))
+    exact aemeasurable_const.mul
+      (Finset.aemeasurable_fun_sum _ fun i _ => measurable_one.aemeasurable.indicator₀ (hXB i))
   have heb : ∀ (n : ℕ) (ω : Ω),
       |(n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω| ≤ 1 := by
     intro n ω
@@ -435,13 +441,15 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
       (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
     have hi1 : Integrable (fun ω => (Y ω - ((ν ω : Measure α) B).toReal) ^ 2) μ := by
       refine Integrable.of_bound
-        (((hem n).sub (hqm ν h.measurable_directing)).pow_const 2).aestronglyMeasurable 4
+        (((hem n).sub (hqm ν h.measurable_directing).aemeasurable).pow_const
+          2).aestronglyMeasurable 4
         (ae_of_all _ fun ω => ?_)
       rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
       nlinarith [abs_le.mp (heb n ω), hq0 ν ω, hq1 ν ω]
     have hi2 : Integrable (fun ω => (Y ω - ((ν' ω : Measure α) B).toReal) ^ 2) μ := by
       refine Integrable.of_bound
-        (((hem n).sub (hqm ν' h'.measurable_directing)).pow_const 2).aestronglyMeasurable 4
+        (((hem n).sub (hqm ν' h'.measurable_directing).aemeasurable).pow_const
+          2).aestronglyMeasurable 4
         (ae_of_all _ fun ω => ?_)
       rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
       nlinarith [abs_le.mp (heb n ω), hq0 ν' ω, hq1 ν' ω]
@@ -482,7 +490,11 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
 
 /-- Almost sure equality of two random probability measures follows from a.e. equality of their
 masses on each fixed measurable set, when the σ-algebra is countably generated. Private: the final
-promotion step, phrased for the two witnesses at hand. -/
+promotion step, phrased for the two witnesses at hand.
+
+The countable-set-algebra argument is adapted from `TauCeti.MeasureTheory.Measure.FiniteMeasure`,
+where the same `generateSetAlgebra (countableGeneratingSet α)` idiom pins a finite measure down from
+its values on a countable set algebra (there, to prove that singletons are measurable). -/
 private theorem ae_eq_of_forall_apply_ae_eq [CountablyGenerated α]
     (h : ∀ s : Set α, MeasurableSet s →
       (fun ω => (ν ω : Measure α) s) =ᵐ[μ] fun ω => (ν' ω : Measure α) s) :
@@ -514,7 +526,7 @@ which supplies `[MeasurableSpace.CountablyGenerated α]` through
 `countablyGenerated_of_standardBorel`; the extra `[Nonempty α]` is not needed, since no measure on
 `α` is constructed here. -/
 theorem conditionallyIID_ae_unique [IsProbabilityMeasure μ] [CountablyGenerated α]
-    (hX : ∀ i, Measurable (X i)) (h : ConditionallyIIDWith μ X ν)
+    (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') : ν =ᵐ[μ] ν' :=
   ae_eq_of_forall_apply_ae_eq fun _ hs => h.ae_measure_apply_eq hX h' hs
 
