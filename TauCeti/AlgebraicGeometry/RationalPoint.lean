@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.ResidueDegree
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Degree
 
 /-!
@@ -71,20 +70,12 @@ lemma apply_section (hs : s ≫ f = 𝟙 S) (y : S) : f (s y) = y :=
   leftInverse_of_section hs y
 
 /-- Distinct points of the base have distinct images under a section. -/
-lemma injective_of_section (hs : s ≫ f = 𝟙 S) : Function.Injective s :=
+lemma section_injective (hs : s ≫ f = 𝟙 S) : Function.Injective s :=
   (leftInverse_of_section hs).injective
 
 /-- A morphism admitting a section is surjective on points. -/
-lemma surjective_of_section (hs : s ≫ f = 𝟙 S) : Function.Surjective f :=
+lemma base_surjective_of_section (hs : s ≫ f = 𝟙 S) : Function.Surjective f :=
   (leftInverse_of_section hs).surjective
-
-/-- Sections compose along a tower: if `s` is a section of `f : X ⟶ S` and `t` is a section of
-`g : S ⟶ Z`, then `t ≫ s` is a section of `f ≫ g`. Over fields this says that a `k`-rational
-point of `X` and an `L`-rational point of `Spec k` compose to an `L`-rational point of `X`. -/
-lemma comp_eq_id_of_section_of_section {g : S ⟶ Z} {t : Z ⟶ S} (hs : s ≫ f = 𝟙 S)
-    (ht : t ≫ g = 𝟙 Z) :
-    (t ≫ s) ≫ f ≫ g = 𝟙 Z := by
-  rw [Category.assoc, ← Category.assoc s f g, hs, Category.id_comp, ht]
 
 /-! ### Residue degrees at a section -/
 
@@ -117,24 +108,24 @@ theorem residueDegree_comp_of_section (hs : s ≫ f = 𝟙 S) (g : S ⟶ Z) (y :
 /-! ### Residue fields at a section -/
 
 /-- The residue-field map of `f` at a point in the image of a section is bijective. -/
-theorem bijective_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
+theorem residueFieldMap_bijective_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
     Function.Bijective (f.residueFieldMap (s y)) :=
   (residueDegree_eq_one_iff f (s y)).mp (residueDegree_eq_one_of_section hs y)
 
 /-- The residue-field map of a section is bijective at every point of the base. -/
-theorem bijective_residueFieldMap_section (hs : s ≫ f = 𝟙 S) (y : S) :
+theorem residueFieldMap_section_bijective (hs : s ≫ f = 𝟙 S) (y : S) :
     Function.Bijective (s.residueFieldMap y) :=
   (residueDegree_eq_one_iff s y).mp (residueDegree_section_eq_one hs y)
 
 /-- The residue-field map of `f` at a point in the image of a section is an isomorphism. -/
 lemma isIso_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
     IsIso (f.residueFieldMap (s y)) :=
-  (ConcreteCategory.isIso_iff_bijective _).mpr (bijective_residueFieldMap_of_section hs y)
+  (ConcreteCategory.isIso_iff_bijective _).mpr (residueFieldMap_bijective_of_section hs y)
 
 /-- The residue-field map of a section is an isomorphism at every point of the base. -/
 lemma isIso_residueFieldMap_section (hs : s ≫ f = 𝟙 S) (y : S) :
     IsIso (s.residueFieldMap y) :=
-  (ConcreteCategory.isIso_iff_bijective _).mpr (bijective_residueFieldMap_section hs y)
+  (ConcreteCategory.isIso_iff_bijective _).mpr (residueFieldMap_section_bijective hs y)
 
 /-- The residue-field map of `f` at a point in the image of a section, followed by the
 residue-field map of the section, is the identity of `κ(y)`. -/
@@ -147,7 +138,6 @@ lemma residueFieldMap_comp_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y
 /-- The residue field of `X` at a point in the image of a section is the residue field of the
 base at the corresponding point of the base. The inverse is the residue-field map of the
 section. -/
-@[expose, simps]
 noncomputable def residueFieldIsoOfSection (hs : s ≫ f = 𝟙 S) (y : S) :
     S.residueField y ≅ X.residueField (s y) where
   hom := (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y)
@@ -159,6 +149,32 @@ noncomputable def residueFieldIsoOfSection (hs : s ≫ f = 𝟙 S) (y : S) :
     rw [← cancel_mono (s.residueFieldMap y)]
     simp only [Category.assoc, Category.id_comp]
     rw [residueFieldMap_comp_residueFieldMap_of_section hs y, Category.comp_id]
+
+-- The isomorphism is intentionally not `@[expose]`, so downstream modules cannot unfold it; both
+-- defining equalities are unfolded once here in `private` lemmas and re-exported through the
+-- public characterization lemmas below.
+private lemma residueFieldIsoOfSection_hom_def (hs : s ≫ f = 𝟙 S) (y : S) :
+    (residueFieldIsoOfSection hs y).hom =
+      (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y) :=
+  rfl
+
+private lemma residueFieldIsoOfSection_inv_def (hs : s ≫ f = 𝟙 S) (y : S) :
+    (residueFieldIsoOfSection hs y).inv = s.residueFieldMap y :=
+  rfl
+
+/-- The forward map of `residueFieldIsoOfSection` is the residue-field map of `f`, transported
+along `f (s y) = y`. -/
+@[simp]
+lemma residueFieldIsoOfSection_hom (hs : s ≫ f = 𝟙 S) (y : S) :
+    (residueFieldIsoOfSection hs y).hom =
+      (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y) :=
+  residueFieldIsoOfSection_hom_def hs y
+
+/-- The inverse of `residueFieldIsoOfSection` is the residue-field map of the section. -/
+@[simp]
+lemma residueFieldIsoOfSection_inv (hs : s ≫ f = 𝟙 S) (y : S) :
+    (residueFieldIsoOfSection hs y).inv = s.residueFieldMap y :=
+  residueFieldIsoOfSection_inv_def hs y
 
 /-! ### Prime divisors at a rational point -/
 
