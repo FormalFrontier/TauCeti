@@ -42,15 +42,17 @@ matrix coefficients built from different continuity proofs are equal by proof ir
 * `TauCeti.ContRepresentation.star_matrixCoeff`: the conjugate of a matrix coefficient of a
   unitary representation is a matrix coefficient composed with inversion.
 * `TauCeti.ContRepresentation.matrixCoeff_trivial`: the matrix coefficients of the trivial
-  representation are the constants.
+  representation are constant.
 * `TauCeti.ContRepresentation.norm_matrixCoeff_le`: the uniform bound `‖v‖ * ‖w‖` for a unitary
   representation.
 
 The algebra of matrix coefficients is the Layer 3 milestone of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap); it is what makes the
-span of the matrix coefficients a translation-stable, conjugation-stable subspace of `C(G)`, and it
-feeds the Schur orthogonality relations of Layer 4. The mathematical development follows
-Daniel Bump, *Lie Groups*, second edition, Chapters 2–4.
+span of the matrix coefficients of a fixed representation a translation-stable subspace of `C(G)`,
+stable under conjugation followed by inversion of the argument, and it feeds the Schur
+orthogonality relations of Layer 4. Conjugation alone leaves that span in general: it produces a
+matrix coefficient of the contragredient representation, which is not built here. The mathematical
+development follows Daniel Bump, *Lie Groups*, second edition, Chapters 2–4.
 -/
 
 public section
@@ -178,8 +180,9 @@ theorem continuous_trivial :
     Continuous (ContRepresentation.trivial 𝕜 G V) :=
   continuous_const
 
-/-- The matrix coefficients of the trivial representation are the constant functions. With
-sesquilinearity this puts every constant in the span of the matrix coefficients. -/
+/-- A matrix coefficient of the trivial representation is the constant function at the inner
+product of its defining vectors. Which constants arise depends on `V`: they are the values of the
+inner product, so all of `𝕜` when some `⟪v, w⟫ ≠ 0`, and only `0` when `V` is trivial. -/
 @[simp]
 theorem matrixCoeff_trivial (htriv : Continuous (ContRepresentation.trivial 𝕜 G V)) (v w : V) :
     matrixCoeff (ContRepresentation.trivial 𝕜 G V) htriv v w =
