@@ -126,27 +126,25 @@ theorem range_matrixCoefficientTensor :
     LinearMap.range
         (matrixCoefficientTensor (R := R) (C := C) (M := M)) =
       matrixCoefficientSubmodule (R := R) (C := C) (M := M) := by
-  let f := matrixCoefficientBilinear (R := R) (C := C) (M := M)
-  have htensor :
-      matrixCoefficientTensor (R := R) (C := C) (M := M) =
-        TensorProduct.lift f := by
-    apply TensorProduct.ext
-    ext φ m
-    simp [f]
-  have htop :
-      LinearMap.range
-          (TensorProduct.mapIncl
-            (⊤ : Submodule R (Module.Dual R M)) (⊤ : Submodule R M)) =
-        ⊤ := by
-    rw [TensorProduct.range_mapIncl, TensorProduct.map₂_mk_top_top_eq_top]
-  rw [htensor]
-  rw [← LinearMap.range_comp_of_range_eq_top (TensorProduct.lift f) htop]
-  rw [← TensorProduct.map₂_eq_range_lift_comp_mapIncl]
-  rw [Submodule.map₂_eq_span_image2]
-  rw [matrixCoefficientSubmodule, matrixCoefficientSet]
-  congr 1
-  ext c
-  simp [f]
+  apply le_antisymm
+  · rintro c ⟨x, rfl⟩
+    induction x using TensorProduct.induction_on with
+    | zero =>
+      rw [map_zero]
+      exact
+        (matrixCoefficientSubmodule (R := R) (C := C) (M := M)).zero_mem
+    | add x y hx hy =>
+      rw [map_add]
+      exact
+        (matrixCoefficientSubmodule (R := R) (C := C) (M := M)).add_mem hx hy
+    | tmul φ m =>
+      rw [matrixCoefficientTensor_tmul]
+      exact matrixCoefficient_mem_submodule (R := R) (C := C) φ m
+  · rw [matrixCoefficientSubmodule, Submodule.span_le]
+    rintro c ⟨⟨φ, m⟩, rfl⟩
+    exact
+      ⟨φ ⊗ₜ[R] m,
+        matrixCoefficientTensor_tmul (R := R) (C := C) φ m⟩
 
 end Submodule
 
