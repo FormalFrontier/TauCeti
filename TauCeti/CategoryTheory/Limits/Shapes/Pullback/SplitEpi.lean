@@ -54,7 +54,7 @@ noncomputable def pullback (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f
   id := Limits.pullback.lift_snd _ _ _
 
 /-- The section underlying `SplitEpi.pullback` is the canonical pullback lift. -/
-lemma pullback_section (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f g] :
+lemma pullback_section_def (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f g] :
     (h.pullback g).section_ =
       Limits.pullback.lift (g ≫ h.section_) (𝟙 T) (by simp) :=
   (rfl)
@@ -64,7 +64,7 @@ the base-change morphism. -/
 @[reassoc (attr := simp)]
 lemma pullback_section_fst (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f g] :
     (h.pullback g).section_ ≫ Limits.pullback.fst f g = g ≫ h.section_ := by
-  simp only [pullback_section, Limits.pullback.lift_fst]
+  simp only [pullback_section_def, Limits.pullback.lift_fst]
 
 /-- The two projection formulas uniquely determine the pulled-back section. -/
 lemma eq_pullback_section (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f g]
@@ -89,11 +89,8 @@ lemma pullback_section_naturality {Y : C} {f' : Y ⟶ S} (h : SplitEpi f)
         Limits.pullback.map f g f' g i (𝟙 T) (𝟙 S) (by simp [hi]) (by simp) =
       (h'.pullback g).section_ := by
   apply Limits.pullback.hom_ext
-  · rw [Category.assoc, Limits.pullback.lift_fst]
-    rw [← Category.assoc, h.pullback_section_fst, Category.assoc, hsection]
-    exact (h'.pullback_section_fst g).symm
-  · rw [Category.assoc, Limits.pullback.lift_snd]
-    rw [Category.comp_id, (h.pullback g).id, (h'.pullback g).id]
+  · simp [Limits.pullback.map, Limits.pullback.lift_fst, Category.assoc, hsection]
+  · simp [Limits.pullback.map, Limits.pullback.lift_snd, Category.assoc]
 
 /-- Pullback of a chosen section is natural in the base-change morphism.
 
@@ -106,14 +103,8 @@ lemma pullback_section_map (h : SplitEpi f) {T T' : C} (g : T ⟶ S) (k : T' ⟶
         Limits.pullback.map f (k ≫ g) f g (𝟙 X) k (𝟙 S) (by simp) (by simp) =
       k ≫ (h.pullback g).section_ := by
   apply Limits.pullback.hom_ext
-  · rw [Category.assoc, Limits.pullback.lift_fst, Category.comp_id]
-    rw [h.pullback_section_fst (k ≫ g)]
-    rw [Category.assoc k (h.pullback g).section_ (Limits.pullback.fst f g),
-      h.pullback_section_fst]
-    rw [Category.assoc]
-  · rw [Category.assoc, Limits.pullback.lift_snd]
-    rw [← Category.assoc, (h.pullback (k ≫ g)).id, Category.id_comp]
-    rw [Category.assoc, (h.pullback g).id, Category.comp_id]
+  · simp [Limits.pullback.map, Limits.pullback.lift_fst, Category.assoc]
+  · simp [Limits.pullback.map, Limits.pullback.lift_snd, Category.assoc]
 
 end SplitEpi
 
