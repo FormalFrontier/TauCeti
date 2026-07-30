@@ -19,6 +19,8 @@ subgroup order.
 
 * `TauCeti.character_indFDRep_sum_quotient` expresses an induced character as a sum over left
   cosets.
+* `TauCeti.character_ind` rewrites the coset sum as an average over the whole group when the
+  subgroup order is invertible in the coefficient field.
 
 ## References
 
@@ -229,5 +231,45 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
       by_cases hmem : t.out⁻¹ * g * t.out ∈ S
       · rw [dif_pos hmem, dif_pos hmem, hforgetCharacter]
       · rw [dif_neg hmem, dif_neg hmem]
+
+open scoped Classical in
+/-- The induced character at `g`, written as an average over the whole group. The subgroup
+order must be invertible in the coefficient field; without this hypothesis,
+`character_indFDRep_sum_quotient` is the division-free formula to use. -/
+theorem character_ind {k G : Type u} [Field k] [Group G] {S : Subgroup G} [S.FiniteIndex]
+    [Fintype G] (hS : IsUnit (Nat.card S : k)) (A : FDRep k S) (g : G) :
+    (indFDRep (k := k) (G := G) A).character g =
+      (Nat.card S : k)⁻¹ * ∑ x : G,
+        if h : x⁻¹ * g * x ∈ S then A.character ⟨x⁻¹ * g * x, h⟩ else 0 := by
+  letI : Fintype (G ⧸ S) := Fintype.ofFinite _
+  let e : G ≃ (G ⧸ S) × S := Subgroup.groupEquivQuotientProdSubgroup
+  let A' : Rep k S := (forget₂ (FDRep k S) (Rep k S)).obj A
+  let term : G → k := fun x ↦ Rep.inducedCharacterTerm A'.ρ g x
+  have he_mk (q : G ⧸ S) (s : S) :
+      QuotientGroup.mk (e.symm (q, s)) = q := by
+    exact congrArg Prod.fst (e.apply_symm_apply (q, s))
+  have hterm (q : G ⧸ S) (s : S) :
+      term (e.symm (q, s)) = term q.out := by
+    apply Rep.inducedCharacterTerm_eq_of_mk_eq
+    exact (he_mk q s).trans (Quotient.out_eq' q).symm
+  have hsum :
+      (∑ x : G, term x) = (Nat.card S : k) * ∑ q : G ⧸ S, term q.out := by
+    rw [← e.symm.sum_comp term, Fintype.sum_prod_type]
+    calc
+      (∑ q : G ⧸ S, ∑ s : S, term (e.symm (q, s))) =
+          ∑ q : G ⧸ S, ∑ _s : S, term q.out := by
+            apply Finset.sum_congr rfl
+            intro q _
+            apply Finset.sum_congr rfl
+            intro s _
+            exact hterm q s
+      _ = (Nat.card S : k) * ∑ q : G ⧸ S, term q.out := by
+        simp [Finset.mul_sum]
+  have haverage :
+      (∑ q : G ⧸ S, term q.out) = (Nat.card S : k)⁻¹ * ∑ x : G, term x := by
+    rw [hsum, ← mul_assoc, inv_mul_cancel₀ hS.ne_zero, one_mul]
+  have hcharacter (s : S) : A'.ρ.character s = A.character s := rfl
+  rw [character_indFDRep_sum_quotient]
+  simpa only [term, Rep.inducedCharacterTerm, hcharacter] using haverage
 
 end TauCeti
