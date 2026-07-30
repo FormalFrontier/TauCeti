@@ -18,7 +18,7 @@ cone collapses to its apex; in particular every finite cone is collapsible.
 
 This file proves that theorem for the collapse relation of
 `TauCeti.PreAbstractSimplicialComplex.CollapsesTo`, and reads it off for the standard cones:
-an abstract simplex, the closed star of a vertex, and the cone construction
+an abstract simplex, the closed star of a face, and the cone construction
 `TauCeti.PreAbstractSimplicialComplex.cone`.  Before this, `Collapsible` was known only for the
 one-vertex complexes of `Collapsible.point`; these theorems supply collapsible complexes of
 arbitrarily many faces, and the simplex case is the base of the recursion on combinatorial balls
@@ -40,8 +40,8 @@ termination measure.
 * `PreAbstractSimplicialComplex.IsCone.collapsible`: a finite cone is collapsible.
 * `PreAbstractSimplicialComplex.collapsesTo_point_simplex`: an abstract simplex collapses to any
   of its vertices.
-* `PreAbstractSimplicialComplex.collapsesTo_point_closedStar`: a finite closed star of a vertex
-  collapses to that vertex.
+* `PreAbstractSimplicialComplex.collapsesTo_point_closedStar`: a finite closed star of a face
+  collapses to any vertex of that face.
 * `PreAbstractSimplicialComplex.collapsesTo_point_cone`: the cone on a finite complex collapses
   to its apex.
 -/
@@ -86,7 +86,7 @@ theorem IsCone.isFreePair (h : IsCone K v) (hσ : σ ∈ K) (hv : v ∉ σ)
 omit [DecidableEq ι] in
 /-- A finite complex with a face missing `v` has one that is maximal among the faces missing
 `v`. -/
-theorem exists_maximal_notMem_of_mem (hfin : K.faces.Finite) (hσ : σ ∈ K) (hv : v ∉ σ) :
+private theorem exists_maximal_notMem_of_mem (hfin : K.faces.Finite) (hσ : σ ∈ K) (hv : v ∉ σ) :
     ∃ τ ∈ K, v ∉ τ ∧ ∀ ⦃ω : Finset ι⦄, ω ∈ K → v ∉ ω → τ ⊆ ω → ω = τ := by
   obtain ⟨τ, -, hτ⟩ :=
     (hfin.subset fun _ hρ => hρ.1 : {ρ : Finset ι | ρ ∈ K ∧ v ∉ ρ}.Finite).exists_le_maximal
@@ -165,15 +165,16 @@ end Simplex
 
 section ClosedStar
 
-/-- A finite closed star of a vertex collapses to that vertex. -/
-theorem collapsesTo_point_closedStar (hfin : (closedStar K {v}).faces.Finite)
-    (hv : ({v} : Finset ι) ∈ K) : CollapsesTo (closedStar K {v}) (point v) :=
-  (isCone_closedStar_singleton hv).collapsesTo_point hfin
+/-- A finite closed star of a face collapses to any vertex of that face. -/
+theorem collapsesTo_point_closedStar (hfin : (closedStar K σ).faces.Finite) (hσ : σ ∈ K)
+    (hv : v ∈ σ) : CollapsesTo (closedStar K σ) (point v) :=
+  (isCone_closedStar hσ hv).collapsesTo_point hfin
 
-/-- A finite closed star of a vertex is collapsible. -/
-theorem collapsible_closedStar (hfin : (closedStar K {v}).faces.Finite)
-    (hv : ({v} : Finset ι) ∈ K) : Collapsible (closedStar K {v}) :=
-  collapsible_iff.mpr ⟨v, collapsesTo_point_closedStar hfin hv⟩
+/-- A finite closed star of a face is collapsible. -/
+theorem collapsible_closedStar (hfin : (closedStar K σ).faces.Finite) (hσ : σ ∈ K) :
+    Collapsible (closedStar K σ) := by
+  obtain ⟨v, hv⟩ := (K.isRelLowerSet_faces hσ).1
+  exact collapsible_iff.mpr ⟨v, collapsesTo_point_closedStar hfin hσ hv⟩
 
 end ClosedStar
 

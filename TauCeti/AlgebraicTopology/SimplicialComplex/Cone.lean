@@ -49,7 +49,7 @@ point.
 * `cone_mono`: coning is monotone.
 * `finite_faces_cone`: the cone on a finite complex is finite.
 * `isCone_deletion`: deleting a face missing the apex leaves a cone with the same apex.
-* `isCone_simplex`, `isCone_closedStar_singleton`, `isCone_cone`: the standard cones.
+* `isCone_simplex`, `isCone_closedStar`, `isCone_cone`: the standard cones.
 -/
 
 public section
@@ -182,14 +182,17 @@ theorem isCone_simplex {V : Finset ι} (hv : v ∈ V) : IsCone (simplex V) v whe
   insert_mem σ hσ :=
     mem_simplex.mpr ⟨Finset.insert_nonempty v σ, Finset.insert_subset hv (mem_simplex.mp hσ).2⟩
 
-/-- The closed star of a vertex is a cone with that vertex as apex: adjoining `v` to a face of
-the closed star is idempotent on the defining condition. -/
-theorem isCone_closedStar_singleton {K : PreAbstractSimplicialComplex ι}
-    (hv : ({v} : Finset ι) ∈ K) : IsCone (closedStar K {v}) v where
-  apex_mem := mem_closedStar_singleton.mpr ⟨hv, by simpa using hv⟩
-  insert_mem σ hσ := by
-    rw [mem_closedStar_singleton] at hσ ⊢
-    exact ⟨hσ.2, by rw [Finset.insert_idem]; exact hσ.2⟩
+/-- The closed star of a face is a cone with apex any vertex of that face: adjoining `v ∈ σ` to
+a face `ρ` of the closed star leaves the defining union `ρ ∪ σ` unchanged. -/
+theorem isCone_closedStar {K : PreAbstractSimplicialComplex ι} (hσ : σ ∈ K) (hv : v ∈ σ) :
+    IsCone (closedStar K σ) v where
+  apex_mem :=
+    mem_closedStar.mpr ⟨Finset.singleton_nonempty v, by
+      rwa [Finset.singleton_union, Finset.insert_eq_self.mpr hv]⟩
+  insert_mem ρ hρ :=
+    mem_closedStar.mpr ⟨Finset.insert_nonempty v ρ, by
+      rw [Finset.insert_union, Finset.insert_eq_self.mpr (Finset.mem_union_right _ hv)]
+      exact (mem_closedStar.mp hρ).2⟩
 
 /-- The cone construction produces a cone in the internal sense, with apex the adjoined
 vertex.  This is what identifies the two accounts of a cone. -/
