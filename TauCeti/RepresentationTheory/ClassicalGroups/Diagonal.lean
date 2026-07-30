@@ -88,14 +88,12 @@ theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
   simpa using this
 
 /-- The standard representation acts at `diagGL t` by coordinatewise multiplication. -/
-@[simp]
 theorem stdRep_diagGL_apply (t : Fin n → kˣ) (v : Fin n → k) (i : Fin n) :
     stdRep k n (diagGL t) v i = (t i : k) * v i := by
   rw [stdRep_apply_apply, diagGL_coe]
   exact Matrix.mulVec_diagonal _ _ _
 
 /-- Every standard basis vector is an eigenvector for a diagonal matrix. -/
-@[simp]
 theorem stdRep_diagGL_apply_basisFun (t : Fin n → kˣ) (i : Fin n) :
     stdRep k n (diagGL t) (Pi.basisFun k (Fin n) i) =
       (t i : k) • Pi.basisFun k (Fin n) i := by
