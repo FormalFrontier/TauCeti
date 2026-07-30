@@ -40,7 +40,7 @@ namespace exteriorPower
 section Trace
 
 variable [CommRing R]
-variable {I : Type*} [Fintype I] [LinearOrder I]
+variable {I : Type*} [Fintype I]
 variable [AddCommGroup M] [Module R M]
 
 /-- If an endomorphism is diagonal in a finite basis, then its trace on the `d`th exterior
@@ -50,6 +50,7 @@ theorem trace_map_of_apply_basis (b : Module.Basis I R M) (f : M →ₗ[R] M)
     LinearMap.trace R (⋀[R]^d M) (map d f) =
       ∑ s : Set.powersetCard I d, ∏ i ∈ (s : Finset I), a i := by
   classical
+  letI : LinearOrder I := linearOrderOfSTO WellOrderingRel
   let B := b.exteriorPower d
   rw [LinearMap.trace_eq_matrix_trace R B, Matrix.trace]
   apply Finset.sum_congr rfl
