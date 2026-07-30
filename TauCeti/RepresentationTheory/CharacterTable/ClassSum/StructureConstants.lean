@@ -13,7 +13,7 @@ of the representative.
 These natural numbers are the coefficients for multiplication in the class-sum basis of the center
 of the group algebra. They are the integral input to the Dixon--Schneider character-table
 algorithm. The class of `1` is a unit for them
-(`TauCeti.structureConstant_mk_one_middle`), since its class sum is the unit of the group algebra.
+(`TauCeti.structureConstant_mk_one_right`), since its class sum is the unit of the group algebra.
 -/
 
 public section
@@ -138,17 +138,17 @@ theorem structureConstant_comm (Cᵢ Cⱼ Cₖ : ConjClasses G) :
 /-- **The class of `1` is a unit for the structure constants**: because `K_{Cᵢ} · K_{[1]} = K_{Cᵢ}`,
 the constant `aᵢ,[1],ₖ` is `1` when `Cₖ = Cᵢ` and `0` otherwise. -/
 @[simp]
-theorem structureConstant_mk_one_middle (Cᵢ Cₖ : ConjClasses G) :
+theorem structureConstant_mk_one_right (Cᵢ Cₖ : ConjClasses G) :
     structureConstant Cᵢ (ConjClasses.mk (1 : G)) Cₖ = if Cₖ = Cᵢ then 1 else 0 := by
   obtain ⟨g, rfl⟩ := ConjClasses.exists_rep Cₖ
   have h := coeff_classSum_mul ℕ Cᵢ (ConjClasses.mk (1 : G)) g
   rw [classSum_mk_one, mul_one, classSum_coeff] at h
   simpa using h.symm
 
-/-- The symmetric companion of `TauCeti.structureConstant_mk_one_middle`. -/
+/-- The symmetric companion of `TauCeti.structureConstant_mk_one_right`. -/
 @[simp]
 theorem structureConstant_mk_one_left (Cⱼ Cₖ : ConjClasses G) :
     structureConstant (ConjClasses.mk (1 : G)) Cⱼ Cₖ = if Cₖ = Cⱼ then 1 else 0 := by
-  rw [structureConstant_comm, structureConstant_mk_one_middle]
+  rw [structureConstant_comm, structureConstant_mk_one_right]
 
 end TauCeti

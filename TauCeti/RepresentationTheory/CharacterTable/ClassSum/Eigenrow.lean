@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.MultiplicationMatrix
 public import Mathlib.Algebra.Algebra.Bilinear
+public import Mathlib.LinearAlgebra.Basis.Bilinear
 
 /-!
 # Common eigenrows of the class-multiplication matrices
@@ -148,7 +149,7 @@ theorem eq_of_vecMul_classMultMatrix_eq_smul {v : ConjClasses G → k}
     (h : v ᵥ* (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) = c • v) : c = v Cᵢ := by
   have h₁ := congrFun h (ConjClasses.mk (1 : G))
   rw [vecMul_classMultMatrix_apply] at h₁
-  simp only [structureConstant_mk_one_middle, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
+  simp only [structureConstant_mk_one_right, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
     ite_mul, one_mul, zero_mul, Finset.sum_ite_eq' Finset.univ Cᵢ v, Finset.mem_univ, if_true,
     Pi.smul_apply, smul_eq_mul, hv₁, mul_one] at h₁
   exact h₁.symm
@@ -179,24 +180,11 @@ private theorem map_mul_of_basis
     {f : Subalgebra.center k (MonoidAlgebra k G) →ₗ[k] k}
     (hf : ∀ Cᵢ Cⱼ : ConjClasses G,
       f (classSumCenter Cᵢ * classSumCenter Cⱼ) = f (classSumCenter Cᵢ) * f (classSumCenter Cⱼ))
-    (x y : Subalgebra.center k (MonoidAlgebra k G)) : f (x * y) = f x * f y := by
-  have hleft : ∀ (Cᵢ : ConjClasses G) (z : Subalgebra.center k (MonoidAlgebra k G)),
-      f (classSumCenter Cᵢ * z) = f (classSumCenter Cᵢ) * f z := by
-    intro Cᵢ
-    have hmap : f ∘ₗ LinearMap.mulLeft k (classSumCenter (k := k) Cᵢ)
-        = f (classSumCenter Cᵢ) • f :=
-      Module.Basis.ext classSumBasis fun Cⱼ => by
-        simpa only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mulLeft_apply,
-          classSumBasis_apply, LinearMap.smul_apply, smul_eq_mul] using hf Cᵢ Cⱼ
-    intro z
-    simpa only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mulLeft_apply,
-      LinearMap.smul_apply, smul_eq_mul] using congrArg (fun L => L z) hmap
-  have hmap : f ∘ₗ LinearMap.mulRight k y = f y • f :=
-    Module.Basis.ext classSumBasis fun Cᵢ => by
-      simpa only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mulRight_apply,
-        classSumBasis_apply, LinearMap.smul_apply, smul_eq_mul, mul_comm] using hleft Cᵢ y
-  simpa only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mulRight_apply,
-    LinearMap.smul_apply, smul_eq_mul, mul_comm] using congrArg (fun L => L x) hmap
+    (x y : Subalgebra.center k (MonoidAlgebra k G)) : f (x * y) = f x * f y :=
+  (LinearMap.map_mul_iff f).mpr
+    (LinearMap.ext_basis classSumBasis classSumBasis fun Cᵢ Cⱼ => by
+      simpa only [LinearMap.compr₂_apply, LinearMap.mul_apply', LinearMap.compl₂_apply,
+        LinearMap.coe_comp, Function.comp_apply, classSumBasis_apply] using hf Cᵢ Cⱼ) x y
 
 variable {v : ConjClasses G → k}
 
