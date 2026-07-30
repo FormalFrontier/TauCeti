@@ -35,9 +35,10 @@ is a simple `k`-module.
 
 ## Implementation notes
 
-`simpleRep` branches on equality of vertices, so it takes a `DecidableEq Q` instance; the
-`Decidable` instances of a proposition are all equal, so the resulting representation does not
-depend on which one is supplied, and `Classical.decEq` is always available.
+`simpleRep` branches on equality of vertices. It is noncomputable in any case, so that branch is
+decided classically and no `DecidableEq Q` instance appears in the interface; `simpleRep_obj_self`
+and `simpleRep_obj_of_ne` describe the two cases without mentioning the branch. Only
+`dimVector_simpleRep` assumes `DecidableEq Q`, because `Pi.single` needs one to be stated.
 
 The objects of `CategoryTheory.Paths Q` are the vertices of `Q`, so the statements below use a
 vertex directly as an object of the path category.
@@ -57,25 +58,25 @@ open scoped ZeroObject
 
 universe u v
 
-variable (k : Type u) (Q : Type v) [Field k] [Quiver Q] [DecidableEq Q]
+variable (k : Type u) (Q : Type v) [Field k] [Quiver Q]
 
+open scoped Classical in
 /-- The **vertex simple** representation `Sᵢ` of a quiver: the base field `k` at the vertex `i`,
 the zero module at every other vertex, and the zero map along every arrow. -/
-@[expose] noncomputable def simpleRep (i : Q) : QuiverRep k Q :=
+noncomputable def simpleRep (i : Q) : QuiverRep k Q :=
   Paths.lift { obj := fun a ↦ if a = i then ModuleCat.of k k else 0, map := fun _ ↦ 0 }
 
 variable {k Q}
 
+/-- At `i`, the vertex simple `Sᵢ` is the base field `k`. -/
 @[simp]
-theorem simpleRep_obj (i a : Q) :
-    (simpleRep k Q i).obj a = if a = i then ModuleCat.of k k else 0 :=
-  rfl
+theorem simpleRep_obj_self (i : Q) : (simpleRep k Q i).obj i = ModuleCat.of k k :=
+  if_pos rfl
 
-theorem simpleRep_obj_self (i : Q) : (simpleRep k Q i).obj i = ModuleCat.of k k := by
-  rw [simpleRep_obj, if_pos rfl]
-
-theorem simpleRep_obj_of_ne {i a : Q} (h : a ≠ i) : (simpleRep k Q i).obj a = 0 := by
-  rw [simpleRep_obj, if_neg h]
+/-- Away from `i`, the vertex simple `Sᵢ` is the zero module. -/
+@[simp]
+theorem simpleRep_obj_of_ne {i a : Q} (h : a ≠ i) : (simpleRep k Q i).obj a = 0 :=
+  if_neg h
 
 /-- Away from `i`, the vertex simple `Sᵢ` vanishes. -/
 theorem isZero_simpleRep_obj {i a : Q} (h : a ≠ i) : IsZero ((simpleRep k Q i).obj a) := by
@@ -138,8 +139,8 @@ theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q
   · exact h
   · exact (isZero_simpleRep_obj (Q := Q) ha).eq_of_src _ _
 
-/-- **The vertex simples are simple.** A monomorphism into `Sᵢ` is zero away from `i`, and at `i` it
-is a monomorphism into the simple `k`-module `k`. -/
+/-- **The vertex simples are simple.** The vertex representation `Sᵢ = simpleRep k Q i` is a simple
+object of `TauCeti.QuiverRep k Q`. -/
 instance simple_simpleRep (i : Q) : Simple (simpleRep k Q i) where
   mono_isIso_iff_nonzero {M} f _ := by
     constructor
@@ -159,16 +160,14 @@ instance simple_simpleRep (i : Q) : Simple (simpleRep k Q i) where
 
 /-- The dimension vector of the vertex simple `Sᵢ` is the standard basis vector at `i`. -/
 @[simp]
-theorem dimVector_simpleRep (i : Q) : dimVector (simpleRep k Q i) = Pi.single i 1 := by
+theorem dimVector_simpleRep [DecidableEq Q] (i : Q) :
+    dimVector (simpleRep k Q i) = Pi.single i 1 := by
   funext a
-  rw [dimVector_apply, Pi.single_apply]
+  rw [dimVector_apply, Paths.of_obj, Pi.single_apply]
   rcases eq_or_ne a i with rfl | ha
-  · rw [if_pos rfl]
-    change Module.finrank k ((simpleRep k Q a).obj a) = 1
-    rw [simpleRep_obj_self]
+  · rw [if_pos rfl, simpleRep_obj_self]
     exact Module.finrank_self k
   · rw [if_neg ha]
-    change Module.finrank k ((simpleRep k Q i).obj a) = 0
     have : Subsingleton ((simpleRep k Q i).obj a) :=
       ModuleCat.subsingleton_of_isZero (isZero_simpleRep_obj ha)
     exact Module.finrank_zero_of_subsingleton
@@ -176,6 +175,7 @@ theorem dimVector_simpleRep (i : Q) : dimVector (simpleRep k Q i) = Pi.single i 
 /-- Vertex simples at distinct vertices are not isomorphic: their dimension vectors differ. -/
 theorem not_nonempty_simpleRep_iso {i j : Q} (h : i ≠ j) :
     ¬ Nonempty (simpleRep k Q i ≅ simpleRep k Q j) := by
+  classical
   rintro ⟨e⟩
   have hd := dimVector_eq_of_iso e
   rw [dimVector_simpleRep, dimVector_simpleRep] at hd
