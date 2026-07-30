@@ -7,6 +7,8 @@ module
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 -- Non-public: `map_bind` is used only inside the projection proof.
 import TauCeti.MeasureTheory.Measure.GiryMonad
+-- Non-public: `MixedIID.exchangeable` and `MixedIID.contractable` are used only in proofs.
+import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
 # Conditionally i.i.d. sequences
@@ -36,6 +38,8 @@ representative*, whereas `ν` here is a genuine **directing measure**.
   their constructor, accessor, and simp-normal-form API.
 * `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
   to the mixture identity.
+* `ConditionallyIID.exchangeable`, `ConditionallyIID.contractable` — the symmetry consequences
+  obtained by composing that projection with the mixture-side implications.
 
 This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
 predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
@@ -43,10 +47,10 @@ projection it pins alongside — which consumes the already-landed Layer 1 joint
 `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
 
 The Layer 1 joint-rectangle common ending `conditionallyIID_of_jointRectangles` lives in
-`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`. Still open here are the Layer 6 summit
-theorems that *conclude* this predicate, `conditionallyIID_of_contractable` and
-`conditionallyIID_of_exchangeable`; the `deFinetti*` handles that return with them; and
-directing-measure uniqueness (`conditionallyIID_ae_unique`).
+`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`, and the Layer 6 summit theorems that
+*conclude* this predicate — `conditionallyIID_of_contractable`, `conditionallyIID_of_exchangeable`,
+and the `deFinetti*` handles that return with them — in `TauCeti.Probability.DeFinetti.Theorem`.
+Directing-measure uniqueness (`conditionallyIID_ae_unique`) remains open.
 -/
 
 public section
@@ -165,6 +169,17 @@ theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
+
+/-- A conditionally i.i.d. process is exchangeable: project to the mixture identity, then apply
+`MixedIID.exchangeable`. No side hypotheses. -/
+theorem ConditionallyIID.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : ConditionallyIID μ X) : Exchangeable μ X :=
+  (mixedIID_of_conditionallyIID h).exchangeable
+
+/-- A conditionally i.i.d. process is contractable. -/
+theorem ConditionallyIID.contractable {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : ConditionallyIID μ X) : Contractable μ X :=
+  (mixedIID_of_conditionallyIID h).contractable
 
 end Probability
 
