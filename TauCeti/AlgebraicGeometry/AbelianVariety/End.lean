@@ -112,10 +112,15 @@ instance instAddCommGroup (A : AbelianVariety K) : AddCommGroup (End A) :=
 @[simp] lemma toHom_sub (x y : End A) : toHom (x - y) = toHom x / toHom y :=
   _root_.toMul_sub x y
 
-@[simp] lemma toHom_nsmul (n : ℕ) (x : End A) : toHom (n • x) = toHom x ^ n :=
+/-! The two scalar-multiplication lemmas are deliberately not `@[simp]`, unlike the rest of this
+section: `simp` rewrites a scalar multiple in a ring to a product (`nsmul_eq_mul`, `zsmul_eq_mul`),
+so their left-hand sides are not in `simp` normal form. Use `AbelianVariety.End.toHom_natCast` or
+`AbelianVariety.End.toHom_intCast` together with `AbelianVariety.End.toHom_mul` instead. -/
+
+lemma toHom_nsmul (n : ℕ) (x : End A) : toHom (n • x) = toHom x ^ n :=
   _root_.toMul_nsmul n x
 
-@[simp] lemma toHom_zsmul (n : ℤ) (x : End A) : toHom (n • x) = toHom x ^ n :=
+lemma toHom_zsmul (n : ℤ) (x : End A) : toHom (n • x) = toHom x ^ n :=
   _root_.toMul_zsmul n x
 
 /-! ### The multiplicative monoid
