@@ -115,12 +115,14 @@ theorem toMonic_cons (a : R) (s : Sym R n) :
 
 /-- The monic polynomial of a union of two tuples is the product of their monic polynomials: this
 is the multiplicativity that makes `Polynomial.ofMultiset` an additive character. -/
+@[simp]
 theorem toMonic_append (s : Sym R n) (t : Sym R m) :
     (toMonic (s.append t) : R[X]) = (toMonic s : R[X]) * (toMonic t : R[X]) := by
   simp only [coe_toMonic, Sym.coe_append]
   exact ofMultiset.map_add_eq_mul _ _
 
 /-- The monic polynomial of a constant tuple is a pure power of a linear factor. -/
+@[simp]
 theorem toMonic_replicate (a : R) :
     (toMonic (Sym.replicate n a) : R[X]) = (X - C a) ^ n := by
   rw [coe_toMonic, Sym.coe_replicate]
@@ -128,6 +130,7 @@ theorem toMonic_replicate (a : R) :
 
 /-- Evaluating the monic polynomial of a tuple at `x` multiplies together the differences between
 `x` and the points of the tuple. -/
+@[simp]
 theorem eval_toMonic (s : Sym R n) (x : R) :
     (toMonic s : R[X]).eval x = ((s : Multiset R).map fun a => x - a).prod := by
   rw [coe_toMonic]
@@ -144,6 +147,7 @@ theorem coeff_toMonic (s : Sym R n) {k : ℕ} (hk : k ≤ n) :
   simpa [hcard] using (s : Multiset R).prod_X_sub_C_coeff hk'
 
 /-- The constant term of the monic polynomial of a tuple is the signed product of its points. -/
+@[simp]
 theorem coeff_zero_toMonic (s : Sym R n) :
     (toMonic s : R[X]).coeff 0 = (-1) ^ n * (s : Multiset R).prod := by
   rw [coeff_zero_eq_eval_zero, eval_toMonic]
@@ -262,12 +266,14 @@ theorem coeffEquiv_apply_eq_coeff (s : Sym K n) (i : Fin n) :
 
 /-- The coordinates of the elementary symmetric chart are the elementary symmetric functions of the
 tuple, in decreasing order and with alternating signs. -/
+@[simp]
 theorem coeffEquiv_apply (s : Sym K n) (i : Fin n) :
     coeffEquiv K n s i = (-1) ^ (n - (i : ℕ)) * (s : Multiset K).esymm (n - (i : ℕ)) := by
   rw [coeffEquiv_apply_eq_coeff, coeff_toMonic s i.2.le]
 
 /-- The inverse chart sends a coefficient tuple to the root multiset of the monic polynomial it
 determines. -/
+@[simp]
 theorem coeffEquiv_symm_apply (f : Fin n → K) :
     (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
       (X ^ n + ∑ i : Fin n, monomial (i : ℕ) (f i)).roots := by
