@@ -101,17 +101,6 @@ theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin
     blockLaw μ X k = μ.map (fun ω i => X (k i) ω) :=
   (rfl)
 
-/-- Reindexing the family before selecting is the same as composing the selection: the
-characteristic lemma for `blockLaw` under precomposition, so callers need not unfold the
-definition.
-
-Not a `simp` lemma: `simp` already derives this from `blockLaw_def` and `Function.comp_apply`, so
-tagging it would be a redundant rewrite. It exists to be cited explicitly, which is what keeps
-downstream proofs off `blockLaw`'s body. -/
-theorem blockLaw_comp (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (g : κ → ι) (k : Fin m → κ) :
-    blockLaw μ (fun j => X (g j)) k = blockLaw μ X (g ∘ k) :=
-  (rfl)
-
 -- Annotated `@[grind =>]` rather than `@[simp]`: `blockLaw_def` already simp-normalizes
 -- `blockLaw μ X k` to `μ.map …` (so a `@[simp]` here would be shadowed), and the preimage form
 -- needs the a.e.-measurability side condition `hXk`, which `simp` cannot discharge.
