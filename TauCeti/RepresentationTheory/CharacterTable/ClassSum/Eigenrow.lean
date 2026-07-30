@@ -35,7 +35,7 @@ which is `TauCeti.classSumCenter_mul`.
 
 The normalization cannot be dropped: `TauCeti.isClassEigenrow_zero` shows `0` is an eigenrow, while
 `TauCeti.classSumRow_mk_one` shows every row of an algebra homomorphism is normalized. Over a ring
-without zero divisors the normalization is exactly the exclusion of that zero row:
+without zero divisors it never has to be checked for a row that is not identically zero:
 `TauCeti.IsClassEigenrow.mk_one_eq_one` shows that under `NoZeroDivisors k` every *nonzero* eigenrow
 already satisfies `v (ConjClasses.mk 1) = 1`.
 
@@ -128,6 +128,7 @@ theorem isClassEigenrow_iff (v : ConjClasses G → k) :
 
 /-- The zero row is a common left eigenrow. This is why the correspondence with algebra
 homomorphisms needs the normalization `v (ConjClasses.mk 1) = 1`. -/
+@[simp]
 theorem isClassEigenrow_zero : IsClassEigenrow (0 : ConjClasses G → k) := by
   intro Cᵢ
   simp
