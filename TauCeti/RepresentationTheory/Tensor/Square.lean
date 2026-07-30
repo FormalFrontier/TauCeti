@@ -66,12 +66,15 @@ private theorem mk_comp_toTensorPower {R : Type} {M : Type*}
   apply exteriorPower.linearMap_ext
   apply AlternatingMap.ext
   intro f
+  -- `SymmetricPower.tprod` is `SymmetricPower.mk` of a pure tensor power, so `tprod_equiv`
+  -- says the two orders have the same symmetric class once that definition is unfolded.
+  have hswap : SymmetricPower.mk R (Fin 2) M (PiTensorProduct.tprod R f) =
+      SymmetricPower.mk R (Fin 2) M
+        (PiTensorProduct.tprod R fun i ↦ f (Equiv.swap 0 1 i)) := by
+    simpa only [SymmetricPower.tprod, LinearMap.compMultilinearMap_apply] using
+      (SymmetricPower.tprod_equiv (Equiv.swap (0 : Fin 2) 1) f).symm
   rw [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
-    toTensorPower_ιMulti_two]
-  change
-    (⨂ₛ[R] i, f i) -
-      (⨂ₛ[R] i, f (Equiv.swap 0 1 i)) = 0
-  rw [SymmetricPower.tprod_equiv]
+    toTensorPower_ιMulti_two, map_sub, hswap, sub_self]
   simp
 
 private noncomputable def symToAlternatingQuotient {R : Type} {M : Type*}
@@ -122,6 +125,15 @@ private theorem range_toTensorPower_eq_ker_mk {R : Type} {M : Type*}
       (LinearMap.range (exteriorPower.toTensorPower R M 2))).mp
     rw [← symToAlternatingQuotient_mk x, hx, map_zero]
 
+-- Mathlib builds `exteriorPower.pairingDual` by dualizing `exteriorPower.toTensorPower`, but
+-- records that factorization only inside the definitions; this states it.
+private theorem pairingDual_ιMulti_apply {R : Type} {M : Type*}
+    [CommRing R] [AddCommGroup M] [Module R M]
+    (g : Fin 2 → Module.Dual R M) (x : ⋀[R]^2 M) :
+    exteriorPower.pairingDual R M 2 (exteriorPower.ιMulti R 2 g) x =
+      TensorPower.multilinearMapToDual R M 2 g (exteriorPower.toTensorPower R M 2 x) := by
+  simp [exteriorPower.pairingDual, exteriorPower.alternatingMapToDual]
+
 private theorem toTensorPower_injective {R : Type} {M : Type*}
     [Field R] [AddCommGroup M] [Module R M] [FiniteDimensional R M] :
     Function.Injective (exteriorPower.toTensorPower R M 2) := by
@@ -130,23 +142,10 @@ private theorem toTensorPower_injective {R : Type} {M : Type*}
   intro x y h
   apply (b.exteriorPower 2).repr.injective
   ext s
+  -- Every basis coordinate on `⋀[R]^2 M` factors through `exteriorPower.toTensorPower`.
   rw [exteriorPower.basis_repr_apply, exteriorPower.basis_repr_apply]
-  change
-    exteriorPower.pairingDual R M 2
-        (exteriorPower.ιMulti_family R 2 b.coord s) x =
-      exteriorPower.pairingDual R M 2
-        (exteriorPower.ιMulti_family R 2 b.coord s) y
-  simp only [exteriorPower.ιMulti_family, exteriorPower.pairingDual,
-    exteriorPower.alternatingMapLinearEquiv_apply_ιMulti,
-    exteriorPower.alternatingMapToDual]
-  change
-    TensorPower.multilinearMapToDual R M 2
-        (b.coord ∘ Set.powersetCard.ofFinEmbEquiv.symm s)
-        (exteriorPower.toTensorPower R M 2 x) =
-      TensorPower.multilinearMapToDual R M 2
-        (b.coord ∘ Set.powersetCard.ofFinEmbEquiv.symm s)
-        (exteriorPower.toTensorPower R M 2 y)
-  rw [h]
+  simp only [exteriorPower.ιMultiDual, exteriorPower.ιMulti_family,
+    pairingDual_ιMulti_apply, h]
 
 -- Split an exact sequence as vector spaces. In that basis the middle action is block triangular,
 -- so its trace is the sum of the traces on the subspace and quotient.
@@ -203,6 +202,9 @@ private theorem trace_eq_add_of_exact
   let e : (A × C) ≃ₗ[K] B :=
     LinearEquiv.ofBijective eMap ⟨eMap_injective, eMap_surjective⟩
   let F : (A × C) →ₗ[K] (A × C) := e.symm.conj fB
+  -- The defining equation of `F`, recorded so that the trace computation below can fold the
+  -- conjugate `e.symm.conj fB` back into `F` by rewriting.
+  have hF_def : e.symm.conj fB = F := rfl
   have he_apply (a : A) (c : C) : e (a, c) = i a + s c := by
     rfl
   have hq_e (a : A) (c : C) : q (e (a, c)) = c := by
@@ -222,13 +224,16 @@ private theorem trace_eq_add_of_exact
     rw [he_apply, he_apply]
     simp only [LinearMap.inl_apply, map_zero, add_zero]
     exact LinearMap.congr_fun hfi a
+  have hF_inl_apply (a : A) : F ((LinearMap.inl K A C) a) =
+      (LinearMap.inl K A C) (fA a) := by
+    simpa only [LinearMap.comp_apply] using LinearMap.congr_fun hF_inl a
   have hsndF : (LinearMap.snd K A C).comp F =
       fC.comp (LinearMap.snd K A C) := by
     apply LinearMap.ext
     rintro ⟨a, c⟩
-    rw [LinearMap.comp_apply, LinearMap.comp_apply]
-    change (LinearMap.snd K A C) (e.symm (fB (e (a, c)))) = fC c
-    rw [hsnd_e_symm, ← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hq_e]
+    simp only [LinearMap.comp_apply, F, LinearEquiv.conj_apply_apply, LinearEquiv.symm_symm]
+    rw [hsnd_e_symm, ← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hq_e,
+      LinearMap.snd_apply]
   let u : C →ₗ[K] A :=
     (LinearMap.fst K A C).comp (F.comp (LinearMap.inr K A C))
   have hF :
@@ -237,22 +242,18 @@ private theorem trace_eq_add_of_exact
     apply LinearMap.ext
     rintro ⟨a, c⟩
     apply Prod.ext
-    · change (F (a, c)).1 = fA a + u c
-      have hsplit : (a, c) = (LinearMap.inl K A C) a +
+    · have hsplit : (a, c) = (LinearMap.inl K A C) a +
           (LinearMap.inr K A C) c := by
         ext <;> simp
-      rw [hsplit, map_add]
-      rw [show F ((LinearMap.inl K A C) a) =
-          (LinearMap.inl K A C) (fA a) by
-            exact LinearMap.congr_fun hF_inl a]
-      rfl
+      rw [hsplit, map_add, hF_inl_apply]
+      simp only [u, LinearMap.add_apply, LinearMap.prodMap_apply, LinearMap.comp_apply,
+        LinearMap.inl_apply, LinearMap.inr_apply, LinearMap.snd_apply, LinearMap.fst_apply,
+        Prod.fst_add, Prod.snd_add, add_zero, zero_add]
     · simpa only [LinearMap.add_apply, LinearMap.prodMap_apply,
         LinearMap.comp_apply, LinearMap.inl_apply, LinearMap.snd_apply,
         Prod.snd_add, add_zero] using
           LinearMap.congr_fun hsndF (a, c)
-  rw [← LinearMap.trace_conj' fB e.symm]
-  change LinearMap.trace K (A × C) F = _
-  rw [hF, map_add, LinearMap.trace_prodMap']
+  rw [← LinearMap.trace_conj' fB e.symm, hF_def, hF, map_add, LinearMap.trace_prodMap']
   have hoff :
       LinearMap.trace K (A × C)
           ((LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C))) = 0 := by
