@@ -71,9 +71,11 @@ variable {𝕜 G V : Type*} [NormedField 𝕜] [Monoid G] [TopologicalSpace G] [
   [TopologicalSpace V] [IsTopologicalAddGroup V] [Module 𝕜 V] [ContinuousConstSMul 𝕜 V]
   {π : ContRepresentation 𝕜 G V} {W : Submodule 𝕜 V} {hW : ∀ g, ∀ v ∈ W, π g v ∈ W}
 
-/-- Restricting a continuous representation to an invariant submodule preserves continuity. The
-inclusion of `W` is inducing, so this reduces to the continuity of `g ↦ π g ∘L W.subtypeL`, which
-is precomposition by a fixed continuous linear map applied to `π`. -/
+/-- Restricting a continuous representation to an invariant submodule preserves continuity: from
+continuity of `g ↦ π g` as a map into the continuous linear endomorphisms of `V`, the restricted
+action `g ↦ subrepresentation π W hW g` is continuous into those of `W`. This supplies the
+continuity argument that `matrixCoeff` and the rest of the continuous-representation API take
+explicitly, so a subrepresentation can be used wherever a continuous representation is expected. -/
 theorem continuous_subrepresentation (hπ : Continuous π) :
     Continuous (subrepresentation π W hW) := by
   rw [(ContinuousLinearMap.isInducing_postcomp W.subtypeL

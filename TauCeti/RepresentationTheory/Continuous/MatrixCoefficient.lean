@@ -7,7 +7,6 @@ module
 public import TauCeti.RepresentationTheory.Continuous.Unitary
 public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Topology.ContinuousMap.Compact
-public import Mathlib.Topology.ContinuousMap.Star
 import Mathlib.Analysis.InnerProductSpace.Continuous
 
 /-!
