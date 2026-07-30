@@ -49,11 +49,26 @@ transform pulls the latter back to `2 * |dz| / (1 - |w| ^ 2)`.  So the Cayley tr
 similarity of ratio `1 / 2` between the two; in particular the L2 Poincaré metric built in this
 area really is the hyperbolic metric, measured against Mathlib's independent definition of it.
 
-This advances the conformal-mapping roadmap: it supplies the explicit L3 Riemann map of the
-upper half-plane and transports the L2 Poincaré metric of `𝔻` to `ℍ` (see
-`ConformalMapping/README.md`, layers L2 and L3, and the entry's commitment to supply the
-conformal inputs the modular layer needs).  It reuses Tau Ceti's pseudo-hyperbolic and
-hyperbolic-distance API and Mathlib's `UpperHalfPlane` metric rather than re-deriving either.
+## Where this sits on the roadmap
+
+This file is the `ℍ`-to-`𝔻` adapter that the conformal-mapping roadmap's own hand-off clause
+asks for.  Under *Relation to sibling roadmaps*, `ConformalMapping/README.md` says of the modular
+layer: "We do **not** claim the modular layer here; we supply the conformal inputs it needs".
+The objects of that layer — `ℍ/Γ(2) ≅ ℂ∖{0,1}`, `Y(Γ)(ℂ) ≅ Γ∖ℍ` — live on `ℍ`, while every
+conformal input this area has built is disc-shaped: `TauCeti.riemannMapping` concludes
+`f '' Ω = Metric.ball 0 1`, and the L2 Schwarz–Pick, disc-automorphism and Poincaré-metric API is
+stated on `Complex.UnitDisc`.  `cayleyTransformEquiv` is what makes those consumable on `ℍ`:
+post-composing a Riemann map with `cayleyTransformInv` turns a disc-valued map into a
+half-plane-valued one, which is the form the modular constructions use.
+
+It also closes the comparison the merged L2 material left open.  Both
+`Conformal/Poincare/MetricSpace.lean` and `Conformal/Hyperbolic/Distance.lean` record that
+Mathlib has the hyperbolic metric on the upper half-plane but none on the disc;
+`hyperbolicDist_cayleyTransform` proves that the disc metric built there *is* that metric, up to
+the curvature normalisation above.
+
+Nothing is re-derived: the file reuses Tau Ceti's pseudo-hyperbolic and
+hyperbolic-distance API and Mathlib's `UpperHalfPlane` metric.
 As with the rest of the L0--L3 conformal-mapping material, it is coordinated with the upstream
 Mathlib Riemann mapping effort leanprover-community/mathlib4#33505 and the preceding
 human-curated `Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`;
