@@ -94,11 +94,6 @@ end WordProd
 
 /-! ## Conjugating a simple reflection -/
 
-/-- A simple reflection is an involution. -/
-lemma ofIdx_mul_self (i : ι) :
-    RootPairing.weylGroup.ofIdx P i * RootPairing.weylGroup.ofIdx P i = 1 :=
-  mul_eq_one_iff_eq_inv.mpr (ofIdx_inv P i).symm
-
 /-- Conjugating the reflection in `αᵢ` by a Weyl-group element `w` gives the reflection in the root
 that `w` sends `αᵢ` to. This is the group-level form of the invariance of the root system under the
 Weyl group, and it is what lets a leading letter of a word be cancelled in the exchange
@@ -131,10 +126,6 @@ theorem ofIdx_weylGroupToPerm (w : P.weylGroup) (i : ι) :
 section Exchange
 
 variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
-
-/-- Every Weyl-group element is the product of some word in the simple reflections. -/
-theorem exists_wordProd_eq (w : P.weylGroup) : ∃ L : List b.support, wordProd P b L = w :=
-  exists_list_prod_ofIdx_eq P b w
 
 /-- **The exchange condition.** If the product of the word `L` sends the simple root `αⱼ` to a
 negative root, then appending `sⱼ` to `L` has the same effect as deleting one of the letters of
@@ -171,9 +162,12 @@ theorem exists_wordProd_eraseIdx_eq (L : List b.support) {j : b.support}
           wordProd P b L * RootPairing.weylGroup.ofIdx P (j : ι) := by
         rw [hconj]
         group
+      have hsq : RootPairing.weylGroup.ofIdx P (i : ι) *
+          RootPairing.weylGroup.ofIdx P (i : ι) = 1 :=
+        mul_eq_one_iff_eq_inv.mpr (ofIdx_inv P (i : ι)).symm
       have hzero : (i :: L).eraseIdx 0 = L := rfl
       refine ⟨0, by simp, ?_⟩
-      rw [hzero, wordProd_cons, mul_assoc, ← hcomm, ← mul_assoc, ofIdx_mul_self, one_mul]
+      rw [hzero, wordProd_cons, mul_assoc, ← hcomm, ← mul_assoc, hsq, one_mul]
     · -- The shorter word already sends `αⱼ` to a negative root.
       obtain ⟨m, hm, hmeq⟩ := ih hpos
       refine ⟨m + 1, by simpa using hm, ?_⟩
@@ -215,7 +209,7 @@ private theorem exists_mem_support_not_isPos_aux (n : ℕ) :
 /-- Every Weyl-group element other than the identity sends some simple root to a negative root. -/
 theorem exists_mem_support_not_isPos_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
     ∃ i ∈ b.support, ¬ b.IsPos (P.weylGroupToPerm w i) := by
-  obtain ⟨L, rfl⟩ := exists_wordProd_eq P b w
+  obtain ⟨L, rfl⟩ := exists_list_prod_ofIdx_eq P b w
   exact exists_mem_support_not_isPos_aux P b L.length L le_rfl hw
 
 /-- A non-identity Weyl-group element has a simple root among its inversions. -/
