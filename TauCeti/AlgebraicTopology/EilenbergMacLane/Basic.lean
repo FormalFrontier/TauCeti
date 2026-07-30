@@ -115,7 +115,7 @@ theorem pi (h : ∀ i, IsAspherical (Z i) (z i)) :
   refine ⟨inferInstance, fun n ↦ ?_⟩
   letI : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
     fun i ↦ (h i).subsingleton_homotopyGroupPi n
-  exact (HomotopyGroup.piEquiv (N := Fin (n + 2)) z).subsingleton_congr.mpr inferInstance
+  exact inferInstance
 
 end IsAspherical
 
