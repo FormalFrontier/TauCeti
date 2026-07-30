@@ -81,7 +81,7 @@ protected theorem pathConnectedSpace (h : IsAspherical X x) : PathConnectedSpace
   h.1
 
 /-- Every homotopy group of an aspherical space in dimension at least two is trivial. -/
-protected theorem subsingleton_homotopyGroupPi (h : IsAspherical X x) (n : ℕ) :
+protected theorem subsingleton_homotopyGroup (h : IsAspherical X x) (n : ℕ) :
     Subsingleton (π_ (n + 2) X x) :=
   h.2 n
 
@@ -90,7 +90,7 @@ theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsAspherical Y y := by
   letI : PathConnectedSpace X := hX.pathConnectedSpace
   refine ⟨e.surjective.pathConnectedSpace e.continuous, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroupPi n
+  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.homeomorphMulEquivOfEq (N := Fin (n + 2)) e he).toEquiv
       |>.subsingleton_congr.mp inferInstance
@@ -101,8 +101,8 @@ theorem prod (hX : IsAspherical X x) (hY : IsAspherical Y y) :
   letI : PathConnectedSpace X := hX.pathConnectedSpace
   letI : PathConnectedSpace Y := hY.pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroupPi n
-  letI : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroupPi n
+  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
+  letI : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.prodEquiv (N := Fin (n + 2)) x y).subsingleton_congr.mpr inferInstance
 
@@ -114,7 +114,7 @@ theorem pi (h : ∀ i, IsAspherical (Z i) (z i)) :
   letI : ∀ i, PathConnectedSpace (Z i) := fun i ↦ (h i).pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
   letI : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
-    fun i ↦ (h i).subsingleton_homotopyGroupPi n
+    fun i ↦ (h i).subsingleton_homotopyGroup n
   exact inferInstance
 
 end IsAspherical
