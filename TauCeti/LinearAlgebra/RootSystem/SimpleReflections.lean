@@ -129,10 +129,11 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
 
 namespace RootPairing.weylGroup
 
-omit [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
 /-- Distinct simple roots give distinct simple reflections: the two reflections already disagree on
 the second simple root, since the two simple roots are linearly independent. -/
-theorem ofIdx_ne_ofIdx_of_ne {i j : ι} (hi : i ∈ b.support) (hj : j ∈ b.support) (hij : i ≠ j) :
+theorem ofIdx_ne_ofIdx_of_ne [NeZero (2 : R)] {i j : ι} (hi : i ∈ b.support) (hj : j ∈ b.support)
+    (hij : i ≠ j) :
     _root_.RootPairing.weylGroup.ofIdx P i ≠ _root_.RootPairing.weylGroup.ofIdx P j := by
   intro hEq
   have hindep : LinearIndependent R ![P.root i, P.root j] :=
