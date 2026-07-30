@@ -27,10 +27,9 @@ is the reparametrisation `Real.artanh p`:
 * `p` depends continuously on `(z, w)` and `Real.artanh` is continuous on `(-1, 1)`, so the
   hyperbolic distance is jointly continuous for the Euclidean topology.
 
-Properness is the statement that the disc's Euclidean boundary circle lies at infinite
-hyperbolic distance: a closed hyperbolic ball around `x` of radius `r` is contained in the
-Euclidean disc of radius `Real.tanh (r + hyperbolicDist x 0) < 1`, a compact subset of the open
-disc.
+Properness comes from a compact exhaustion: a closed hyperbolic ball around `x` of radius `r`
+is contained in the closed Euclidean disc of radius `Real.tanh (r + hyperbolicDist x 0)`, whose
+radius is strictly less than one, so it is a closed subset of a compact subset of the open disc.
 
 ## Main declarations
 
@@ -41,9 +40,9 @@ disc.
 * `TauCeti.hyperbolicDist_zero_le_iff_norm_le_tanh` — the closed hyperbolic ball about the
   origin of radius `r` is the closed Euclidean ball of radius `Real.tanh r`.
 * `TauCeti.PoincareDisc.toUnitDiscHomeomorph` — the identification of the Poincaré disc with
-  `Complex.UnitDisc` is a homeomorphism; `toUnitDiscHomeomorph_apply` and
-  `toUnitDiscHomeomorph_symm_apply` (with the `coe_`-prefixed function-level variants)
-  characterise both directions, so consumers never need to unfold the definition.
+  `Complex.UnitDisc` is a homeomorphism; the `simp` lemmas `toUnitDiscHomeomorph_apply` and
+  `toUnitDiscHomeomorph_symm_apply` characterise both directions, so consumers never need to
+  unfold the definition, whose body is deliberately not exposed.
 * `TauCeti.PoincareDisc.instProperSpace` — the Poincaré disc is a proper metric space, hence
   complete and locally compact.
 
@@ -54,8 +53,12 @@ purposes, and completeness is what makes the Poincaré disc a usable model of th
 plane. It reuses Tau Ceti's pseudo-hyperbolic and hyperbolic-distance API. As with the rest of
 the L0--L3 conformal-mapping material, it is coordinated with the upstream Mathlib Riemann
 mapping effort leanprover-community/mathlib4#33505 and should be refactored to upstream API if
-that work lands a human-curated Poincaré metric. Mathlib has the hyperbolic metric on the upper
-half-plane (`Analysis/Complex/UpperHalfPlane`), but no Poincaré metric on the disc.
+that work lands a human-curated Poincaré metric. Mathlib already contains the preceding
+human-curated work in `Analysis/Complex/RiemannMapping.lean` and
+`Analysis/Complex/BranchLogRoot.lean`; this file duplicates none of their branch-logarithm and
+root API, adding only the topological side of the hyperbolic metric. Mathlib has the hyperbolic
+metric on the upper half-plane (`Analysis/Complex/UpperHalfPlane`), but no Poincaré metric on
+the disc.
 -/
 
 public section
@@ -193,28 +196,27 @@ theorem _root_.Complex.UnitDisc.continuous_toPoincare :
 
 /-- **The Poincaré disc carries the Euclidean topology.** The identification of the Poincaré
 disc with `Complex.UnitDisc` is a homeomorphism, so the hyperbolic metric may be used
-interchangeably with the Euclidean one for topological purposes. -/
-@[expose] def toUnitDiscHomeomorph : PoincareDisc ≃ₜ Complex.UnitDisc where
+interchangeably with the Euclidean one for topological purposes.
+
+The body is not exposed: the two `simp` lemmas below characterise both directions, so consumers
+never depend on how the homeomorphism is assembled. -/
+def toUnitDiscHomeomorph : PoincareDisc ≃ₜ Complex.UnitDisc where
   toEquiv := toUnitDisc
   continuous_toFun := continuous_toUnitDisc
   continuous_invFun := Complex.UnitDisc.continuous_toPoincare
 
+-- The parenthesised `(rfl)` proofs elaborate against the unexposed body, which a bare `rfl`
+-- in an exported theorem may not do.
+
 /-- The homeomorphism acts as the identification `PoincareDisc.toUnitDisc`. -/
 @[simp]
 lemma toUnitDiscHomeomorph_apply (z : PoincareDisc) :
-    toUnitDiscHomeomorph z = toUnitDisc z := rfl
+    toUnitDiscHomeomorph z = toUnitDisc z := (rfl)
 
 /-- The inverse homeomorphism acts as the identification `Complex.UnitDisc.toPoincare`. -/
 @[simp]
 lemma toUnitDiscHomeomorph_symm_apply (z : Complex.UnitDisc) :
-    toUnitDiscHomeomorph.symm z = Complex.UnitDisc.toPoincare z := rfl
-
-/-- The underlying function of the homeomorphism is `PoincareDisc.toUnitDisc`. -/
-lemma coe_toUnitDiscHomeomorph : ⇑toUnitDiscHomeomorph = ⇑toUnitDisc := rfl
-
-/-- The underlying function of the inverse homeomorphism is `Complex.UnitDisc.toPoincare`. -/
-lemma coe_toUnitDiscHomeomorph_symm :
-    ⇑toUnitDiscHomeomorph.symm = ⇑Complex.UnitDisc.toPoincare := rfl
+    toUnitDiscHomeomorph.symm z = Complex.UnitDisc.toPoincare z := (rfl)
 
 end PoincareDisc
 
@@ -225,9 +227,9 @@ end PoincareDisc
 hence of Euclidean norm at most `Real.tanh (r + hyperbolicDist x 0) < 1`; it is therefore a
 closed subset of a compact subset of the open disc.
 
-Concretely, the Euclidean boundary circle lies at infinite hyperbolic distance. Together with
-the instances Mathlib derives from `ProperSpace`, this makes the Poincaré disc a complete and
-locally compact metric space. -/
+Concretely, every bounded hyperbolic ball is contained in a Euclidean subdisc of radius strictly
+less than one. Together with the instances Mathlib derives from `ProperSpace`, this makes the
+Poincaré disc a complete and locally compact metric space. -/
 instance PoincareDisc.instProperSpace : ProperSpace PoincareDisc where
   isCompact_closedBall x r := by
     have hsub : PoincareDisc.toUnitDiscHomeomorph '' closedBall x r ⊆
@@ -241,7 +243,8 @@ instance PoincareDisc.instProperSpace : ProperSpace PoincareDisc where
         linarith [dist_triangle z x (Complex.UnitDisc.toPoincare 0)]
       have hzero : hyperbolicDist ((PoincareDisc.toUnitDisc z : ℂ)) 0
           ≤ r + dist x (Complex.UnitDisc.toPoincare 0) := by
-        simpa using htri
+        simpa only [PoincareDisc.dist_eq, PoincareDisc.toUnitDisc_toPoincare,
+          Complex.UnitDisc.coe_zero] using htri
       exact (hyperbolicDist_zero_le_iff_norm_le_tanh (PoincareDisc.toUnitDisc z).norm_lt_one _).mp
         hzero
     have hclosed : IsClosed (PoincareDisc.toUnitDiscHomeomorph '' closedBall x r) :=
