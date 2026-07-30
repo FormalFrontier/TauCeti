@@ -183,13 +183,13 @@ variable {k G : Type u} [Field k] [Group G] (A : FDRep k G)
 private instance : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
   inferInstanceAs (FiniteDimensional k A)
 
-/-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. Mathlib's
-`FDRep.forget₂_ρ` supplies the equality of the two representations; the closing `rfl` only
-identifies the two names of the single underlying module, the same definitional identification
-that lets `FDRep.forget₂_ρ` be stated at all. Keep that unfolding isolated here. -/
+/-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. -/
 private theorem character_forget₂ (g : G) :
     ((forget₂ (FDRep k G) (Rep k G)).obj A).ρ.character g = A.character g := by
   rw [FDRep.character, Representation.character, FDRep.forget₂_ρ]
+  -- The remaining `rfl` only identifies the two names of the single underlying module, the same
+  -- definitional identification that lets `FDRep.forget₂_ρ` be stated at all. Keeping it here
+  -- means no other proof in this file needs to unfold `forget₂`.
   rfl
 
 end Forget
