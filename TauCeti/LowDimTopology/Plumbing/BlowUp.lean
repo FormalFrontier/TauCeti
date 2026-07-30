@@ -296,6 +296,7 @@ theorem blowUpVertex_intersectionMatrix_some_none (w : V) :
 
 /-- Between old vertices the intersection matrix changes only in the diagonal entry of the
 blown-up vertex, which drops by a unit. -/
+@[simp]
 theorem blowUpVertex_intersectionMatrix_some_some (w w' : V) :
     (P.blowUpVertex v).intersectionMatrix (some w) (some w') =
       P.intersectionMatrix w w' -
