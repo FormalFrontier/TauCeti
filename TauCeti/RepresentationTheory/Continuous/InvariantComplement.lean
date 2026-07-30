@@ -52,6 +52,14 @@ unitary representation of the monoid `ℕ` on `ℓ²` for which the orthogonal c
 invariant subspace need not be invariant. What the proof uses is that the action of `g⁻¹` carries
 the invariant subspace back into itself.
 
+Nothing here assumes `V` complete. Mathlib's `ContinuousLinearMap.orthogonal_mem_invtSubmodule`
+draws the same conclusion for a single operator `T`, from invariance under `T.adjoint`, but
+`ContinuousLinearMap.adjoint` is available only on a complete space, so that route would force
+`[CompleteSpace V]` on every statement below. Instead `IsUnitary.inner_map_right` moves the action
+across the inner product by inverting the group element, which needs no completeness. Mathlib keeps
+a completeness-free counterpart of the same result for symmetric operators, namely
+`LinearMap.IsSymmetric.orthogonalComplement_mem_invtSubmodule`.
+
 Complementation of a single subrepresentation asks only for an orthogonal projection onto it. The
 semisimplicity statement, which asks it of *every* subrepresentation, is stated in finite
 dimensions, where every subspace is complete and hence has one. It is false for a general
