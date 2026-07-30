@@ -14,15 +14,27 @@ public import TauCeti.NumberTheory.ClassGroup.Equiv
 
 For a quadratic number field `K` — presented by an algebraic integer `θ : 𝓞 K` generating `K`
 over `ℚ` whose minimal polynomial over `ℤ` is `X² - d` — this file constructs the nontrivial
-`ℚ`-algebra automorphism `σ : K ≃ₐ[ℚ] K`, characterised by `σ θ = -θ`. It is the field-theoretic
-conjugation of `ℚ(√d)`; its restriction to the ring of integers and its action on the class group
-(by inversion, the genus-theoretic fact `I · σI` principal) are developed downstream.
+`ℚ`-algebra automorphism of `K`, characterised by `θ ↦ -θ`, and restricts it to a ring
+automorphism of `𝓞 K`. This is the field-theoretic conjugation of `ℚ(√d)`.
+
+It is the automorphism whose induced action on the class group `Cl(𝓞 K)` is by **inversion** — the
+genus-theoretic fact that `I · σI` is principal — which is the mechanism behind the summit
+isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` of the multiquadratic roadmap (Layer 3: the genus field
+and the 2-rank theorem). Here we build the automorphism and record that it is an involution on `K`,
+on `𝓞 K`, and on `Cl(𝓞 K)`; the refinement of that involution to inversion (which needs `I · σI`
+principal) is developed downstream.
+
+See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
+classical genus theory this supports.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.quadConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`.
-* `TauCeti.NumberField.quadConj_gen`: `quadConj θ = -θ`.
-* `TauCeti.NumberField.quadConj_involutive`: `quadConj` is an involution.
+* `TauCeti.NumberField.quadConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
+  `quadConj_gen` (`quadConj θ = -θ`) and `quadConj_involutive`.
+* `TauCeti.NumberField.quadConjInt`: its restriction to a ring automorphism `𝓞 K ≃+* 𝓞 K`, with the
+  coercion lemma `quadConjInt_coe` and `quadConjInt_involutive`.
+* `TauCeti.NumberField.mulEquiv_quadConjInt_involutive`: the induced action on `ClassGroup (𝓞 K)`
+  is an involution.
 -/
 
 public section
