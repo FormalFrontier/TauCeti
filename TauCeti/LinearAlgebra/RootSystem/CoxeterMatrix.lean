@@ -52,8 +52,8 @@ roots, and there the two simple reflections commute
   roots lies in `{0, 1, 2, 3}`, so `TauCeti.coxeterOrder` reads a genuine Coxeter order off it.
 * `TauCeti.coxeterMatrixOfBase_eq_two_iff`: an entry is `2` exactly for orthogonal simple roots.
   In particular the diagonal entries are not `2`, since no root is orthogonal to itself.
-* `TauCeti.forall_coxeterMatrixOfBase_le_three_iff`: all entries are at most `3` exactly when the
-  Cartan matrix is simply laced.
+* `TauCeti.isSimplyLaced_iff_forall_coxeterMatrixOfBase_le_three`: the Cartan matrix is simply laced
+  exactly when all entries are at most `3`.
 * `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two`:
   where the matrix entry is `2`, the product of the two simple reflections does have order `2`.
 
@@ -270,22 +270,23 @@ theorem coxeterMatrixOfBase_eq_two_iff (i j : b.support) :
       coxeterOrder_eq_two_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij),
       cartanMatrix_mul_cartanMatrix_eq_zero_iff_isOrthogonal]
 
-/-- **The Coxeter matrix of a base has all entries at most `3` exactly when its Cartan matrix is
-simply laced**, that is, exactly when no two simple roots are joined by a multiple edge. -/
-theorem forall_coxeterMatrixOfBase_le_three_iff :
-    (∀ i j, coxeterMatrixOfBase P b i j ≤ 3) ↔ b.cartanMatrix.IsSimplyLaced := by
+/-- **The Cartan matrix of a base is simply laced exactly when the Coxeter matrix of that base has
+all entries at most `3`**, that is, exactly when no two simple roots are joined by a multiple
+edge. -/
+theorem isSimplyLaced_iff_forall_coxeterMatrixOfBase_le_three :
+    b.cartanMatrix.IsSimplyLaced ↔ ∀ i j, coxeterMatrixOfBase P b i j ≤ 3 := by
   constructor
-  · intro h i j hij
-    rcases (coxeterOrder_le_three_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij)).mp
-      (by simpa using h i j) with h₀ | h₁
-    · exact Or.inl ((cartanMatrix_mul_cartanMatrix_eq_zero_iff P b i j).mp h₀)
-    · exact Or.inr ((cartanMatrix_mul_cartanMatrix_eq_one_iff P b hij).mp h₁).1
   · intro h i j
     rcases eq_or_ne i j with rfl | hij
     · simp
     · rw [coxeterMatrixOfBase_apply,
         coxeterOrder_le_three_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij)]
       rcases h hij with h₁ | h₁ <;> rcases h hij.symm with h₂ | h₂ <;> rw [h₁, h₂] <;> norm_num
+  · intro h i j hij
+    rcases (coxeterOrder_le_three_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij)).mp
+      (by simpa using h i j) with h₀ | h₁
+    · exact Or.inl ((cartanMatrix_mul_cartanMatrix_eq_zero_iff P b i j).mp h₀)
+    · exact Or.inr ((cartanMatrix_mul_cartanMatrix_eq_one_iff P b hij).mp h₁).1
 
 end CoxeterMatrixOfBase
 
