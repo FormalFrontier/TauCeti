@@ -18,11 +18,11 @@ open, and proves that it meets every Weyl orbit: every weight can be moved into 
 dominant chamber by some element of the Weyl group. Equivalently, the Weyl translates of the
 closed dominant chamber cover the whole weight space.
 
-The proof is the classical averaging argument. The Weyl group of a finite root system is finite,
-so the sum of the coroot functionals indexed by the positive roots, evaluated along an orbit,
-attains a maximum. A simple reflection `sᵢ` permutes the positive roots other than `αᵢ` and sends
-`αᵢ` to `-αᵢ`, so applying `sᵢ` changes that sum by `-2⟨αᵢ^∨, x⟩`; maximality therefore forces
-`⟨αᵢ^∨, x⟩ ≥ 0` for every simple root, which is dominance.
+The proof is the classical maximization argument. The Weyl group of a finite root system is
+finite, so the sum of the coroot functionals indexed by the positive roots, evaluated along an
+orbit, attains a maximum. A simple reflection `sᵢ` permutes the positive roots other than `αᵢ`
+and sends `αᵢ` to `-αᵢ`, so applying `sᵢ` changes that sum by `-2⟨αᵢ^∨, x⟩`; maximality
+therefore forces `⟨αᵢ^∨, x⟩ ≥ 0` for every simple root, which is dominance.
 
 ## Main definitions
 
@@ -46,7 +46,7 @@ The roadmap states this layer over `ℝ`. Nothing in the argument uses completen
 the archimedean property, so the statements here are made over an arbitrary linearly ordered
 commutative ring; `ℝ` and `ℚ` are the intended instances.
 
-The averaging argument needs nothing of the ambient pairing beyond finiteness of the Weyl group,
+The maximization argument needs nothing of the ambient pairing beyond finiteness of the Weyl group,
 so it is proved as `exists_mem_dominantChamber_of_finite_weylGroup`; the roadmap-signature
 `exists_mem_dominantChamber` is the root-system case, obtained from
 `TauCeti.RootPairing.finite_weylGroup`.
@@ -193,7 +193,7 @@ section FiniteWeylGroup
 variable [Finite P.weylGroup]
 
 /-- **Every weight is Weyl-conjugate into the closed dominant chamber**, whenever the Weyl group is
-finite. Maximising `posCorootSum` along the orbit produces the dominant representative. -/
+finite. Maximizing `posCorootSum` along the orbit produces the dominant representative. -/
 theorem exists_mem_dominantChamber_of_finite_weylGroup (x : M) :
     ∃ w : P.weylGroup, w • x ∈ dominantChamber P b := by
   obtain ⟨w, hw⟩ := Finite.exists_max fun w : P.weylGroup ↦ posCorootSum P b (w • x)
