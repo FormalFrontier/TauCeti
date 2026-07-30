@@ -19,8 +19,11 @@ expectation. This file carries out the identification for the `L²` composition 
 of a measure-preserving map `T`: the mean ergodic projection `metProjection T hT` of
 `TauCeti.Probability.Ergodic.MeanErgodic` is Mathlib's `condExpL2` for the invariant σ-algebra
 `MeasurableSpace.invariants T`. Passing from `condExpL2` to the conditional expectation
-`μ[· | MeasurableSpace.invariants T]` of representatives costs a finiteness assumption, so the
-pointwise statements below assume `[IsFiniteMeasure μ]` while the `condExpL2` ones do not.
+`μ[· | MeasurableSpace.invariants T]` of representatives costs exactly what Mathlib's
+`MemLp.condExpL2_ae_eq_condExp'` costs — σ-finiteness of the trimmed measure
+`μ.trim (MeasurableSpace.invariants_le T)` and integrability of the observable — so the pointwise
+statements below assume those while the `condExpL2` ones do not. Both hold automatically on a
+finite measure space.
 
 The identification is not a simp step: it rests on `fixedSpace_eq_lpMeas_invariants`, which
 replaces an almost invariant observable by an invariantly measurable representative, together with
@@ -28,8 +31,8 @@ the fact that both operators are orthogonal projections onto the resulting commo
 `L²`.
 
 Feeding the identification into `birkhoffAverage_tendsto_metProjection` turns the Hilbert-space
-statement into the probabilists' mean ergodic theorem: on a finite measure space, the time averages
-`birkhoffAverage ℝ T f n` of a square-integrable observable converge in `L²` to
+statement into the probabilists' mean ergodic theorem: the time averages
+`birkhoffAverage ℝ T f n` of an integrable square-integrable observable converge in `L²` to
 `μ[f | MeasurableSpace.invariants T]`. The translation between the operator Birkhoff averages of
 the composition operator and the pointwise Birkhoff averages of a representative is
 `coeFn_birkhoffAverage_compMeasurePreserving` of `TauCeti.Probability.Ergodic.BirkhoffLp`.
@@ -38,13 +41,13 @@ the composition operator and the pointwise Birkhoff averages of a representative
 
 * `metProjection_eq_condExpL2` — the mean ergodic projection is `condExpL2` for the invariant
   σ-algebra, for an arbitrary measure;
-* `metProjection_ae_eq_condExp` — on a finite measure space, its representatives are the
-  conditional expectation given the invariant σ-algebra;
+* `metProjection_ae_eq_condExp` — its representatives are the conditional expectation given the
+  invariant σ-algebra;
 * `condExpL2_invariants_eq_self_iff` — `condExpL2` for the invariant σ-algebra fixes exactly the
   almost everywhere invariant observables, again for an arbitrary measure;
 * `birkhoffAverage_tendsto_condExpL2` — the Birkhoff averages of the composition operator converge
-  to `condExpL2`, and `tendsto_eLpNorm_birkhoffAverage_sub_condExp` — on a finite measure space,
-  the pointwise Birkhoff averages converge in `L²` to the conditional expectation.
+  to `condExpL2`, and `tendsto_eLpNorm_birkhoffAverage_sub_condExp` — the pointwise Birkhoff
+  averages converge in `L²` to the conditional expectation.
 
 The `Exchangeability` roadmap records this identification as the Layer 5 milestone
 `proj_eq_condexp`, whose migration source is the `Ergodic` subtree of
@@ -91,13 +94,15 @@ theorem metProjection_eq_condExpL2 (T : Ω → Ω) (hT : MeasurePreserving T μ 
   · rw [← fixedSpace_eq_lpMeas_invariants T hT]
     exact sub_metProjection_mem_orthogonal T hT g
 
-/-- On a finite measure space, the mean ergodic projection of a square-integrable observable is
-almost everywhere its conditional expectation given the invariant σ-algebra. -/
-theorem metProjection_ae_eq_condExp [IsFiniteMeasure μ] (T : Ω → Ω)
-    (hT : MeasurePreserving T μ μ) (g : Lp ℝ 2 μ) :
+/-- The mean ergodic projection of an integrable square-integrable observable is almost everywhere
+its conditional expectation given the invariant σ-algebra. -/
+theorem metProjection_ae_eq_condExp (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
+    [SigmaFinite (μ.trim (MeasurableSpace.invariants_le T))] (g : Lp ℝ 2 μ)
+    (hg : Integrable (g : Ω → ℝ) μ) :
     (metProjection (𝕜 := ℝ) T hT g : Ω → ℝ) =ᵐ[μ]
       μ[(g : Ω → ℝ) | MeasurableSpace.invariants T] := by
-  have h := (Lp.memLp g).condExpL2_ae_eq_condExp (𝕜 := ℝ) (MeasurableSpace.invariants_le T)
+  have h :=
+    (Lp.memLp g).condExpL2_ae_eq_condExp' (𝕜 := ℝ) (MeasurableSpace.invariants_le T) hg
   rw [Lp.toLp_coeFn] at h
   rw [metProjection_eq_condExpL2]
   exact h
@@ -131,11 +136,12 @@ theorem birkhoffAverage_tendsto_condExpL2 (T : Ω → Ω) (hT : MeasurePreservin
   simpa only [metProjection_eq_condExpL2 T hT g] using
     birkhoffAverage_tendsto_metProjection (𝕜 := ℝ) T hT g
 
-/-- **The mean ergodic theorem for conditional expectations.** On a finite measure space, the
-Birkhoff time averages of a square-integrable observable converge in `L²` to its conditional
-expectation given the invariant σ-algebra of the transformation. -/
-theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp [IsFiniteMeasure μ] (T : Ω → Ω)
-    (hT : MeasurePreserving T μ μ) {f : Ω → ℝ} (hf : MemLp f 2 μ) :
+/-- **The mean ergodic theorem for conditional expectations.** The Birkhoff time averages of an
+integrable square-integrable observable converge in `L²` to its conditional expectation given the
+invariant σ-algebra of the transformation. -/
+theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
+    [SigmaFinite (μ.trim (MeasurableSpace.invariants_le T))] {f : Ω → ℝ} (hf : MemLp f 2 μ)
+    (hf_int : Integrable f μ) :
     Tendsto
       (fun n => eLpNorm (birkhoffAverage ℝ T f n - μ[f | MeasurableSpace.invariants T]) 2 μ)
       atTop (𝓝 0) := by
@@ -150,7 +156,8 @@ theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp [IsFiniteMeasure μ] (T : Ω
       (hT.quasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq ℝ hf.coeFn_toLp n)
   have hprojection : ⇑(metProjection (𝕜 := ℝ) T hT (hf.toLp f)) =ᵐ[μ]
       μ[f | MeasurableSpace.invariants T] :=
-    (metProjection_ae_eq_condExp T hT (hf.toLp f)).trans (condExp_congr_ae hf.coeFn_toLp)
+    (metProjection_ae_eq_condExp T hT (hf.toLp f)
+      (hf_int.congr hf.coeFn_toLp.symm)).trans (condExp_congr_ae hf.coeFn_toLp)
   exact haverage.sub hprojection
 
 end Probability
