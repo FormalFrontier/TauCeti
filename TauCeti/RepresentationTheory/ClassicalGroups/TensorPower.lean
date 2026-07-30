@@ -20,9 +20,9 @@ polynomial representations.
 
 * `TauCeti.tensorPowerRep` is the `d`-fold tensor power of `stdRep`.
 * `TauCeti.tensorPowerFDRep` is its bundled finite-dimensional form.
-* `TauCeti.schurWeyl_commute` proves that the general-linear and symmetric-group actions
-  commute, and `TauCeti.commute_permTensorActionAlgHom_tensorPowerRep` extends that to the
-  whole group algebra `k[S_d]`.
+* `TauCeti.commute_permTensorAction_tensorPowerRep` proves that the general-linear and
+  symmetric-group actions commute, and `TauCeti.commute_permTensorActionAlgHom_tensorPowerRep`
+  extends that to the whole group algebra `k[S_d]`.
 
 ## References
 
@@ -53,14 +53,14 @@ noncomputable abbrev tensorPowerRep :
 noncomputable abbrev tensorPowerFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (tensorPowerRep k n d)
 
-/-- The actions of `GL n k` and the symmetric group on the tensor power commute. -/
-theorem schurWeyl_commute (g : GL (Fin n) k) (σ : Equiv.Perm (Fin d)) :
-    (permTensorAction k n d σ) ∘ₗ (tensorPowerRep k n d g) =
-      (tensorPowerRep k n d g) ∘ₗ (permTensorAction k n d σ) := by
+/-- The actions of `GL n k` and the symmetric group on the tensor power commute.
+
+This is the commuting-actions half of Schur--Weyl duality, the first Layer 2 target of the
+classical-groups roadmap; it makes no double-centralizer claim. -/
+theorem commute_permTensorAction_tensorPowerRep (σ : Equiv.Perm (Fin d)) (g : GL (Fin n) k) :
+    Commute (permTensorAction k n d σ) (tensorPowerRep k n d g) := by
   rw [tensorPowerRep, Representation.tensorPower_apply]
-  simpa only [Module.End.mul_eq_comp] using
-    (PiTensorProduct.commute_reindexRepresentation_map k (Fin n → k) (Fin d) σ
-      (stdRep k n g)).eq
+  exact PiTensorProduct.commute_reindexRepresentation_map k (Fin n → k) (Fin d) σ (stdRep k n g)
 
 /-- The whole group algebra `k[S_d]` commutes with the general-linear action on the tensor power,
 so a Young symmetrizer cuts out a `GL n k`-subrepresentation. -/
