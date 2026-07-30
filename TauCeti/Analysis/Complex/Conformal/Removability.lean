@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Removability.Circle
+public import TauCeti.Analysis.Complex.Conformal.Removability.Arc
 
 /-!
 # Painlevé removability
 
-This module re-exports Painlevé removability across lines and circles.
+This module re-exports Painlevé removability across lines, circles, and analytic arcs.
 -/

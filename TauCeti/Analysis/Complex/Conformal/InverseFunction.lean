@@ -5,13 +5,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.Analytic
+public import Mathlib.Topology.OpenPartialHomeomorph.Basic
 public import TauCeti.Analysis.Complex.Conformal.LocalDegree
 
 /-!
 # Holomorphic inverse functions
 
-This file supplies a global-on-the-image form of the holomorphic inverse function theorem for
-functions that are injective on an open set.
+This file supplies global-on-the-image forms of the holomorphic inverse function theorem for
+functions that are injective on an open set and for holomorphic open partial homeomorphisms.
 -/
 
 public section
@@ -41,5 +42,19 @@ theorem DifferentiableOn.invFunOn {f : ℂ → ℂ} {U : Set ℂ} (hf : Differen
     analyticAt_id.congr hleft.symm
   exact ((analyticAt_comp_iff_of_deriv_ne_zero hfz hderiv).mp hcomp).differentiableAt
     |>.differentiableWithinAt
+
+/-- The inverse of a holomorphic open partial homeomorphism of `ℂ` is holomorphic on its target. -/
+theorem DifferentiableOn.openPartialHomeomorph_symm {e : OpenPartialHomeomorph ℂ ℂ}
+    (he : DifferentiableOn ℂ e e.source) :
+    DifferentiableOn ℂ e.symm e.target := by
+  have hinv := TauCeti.DifferentiableOn.invFunOn he e.open_source e.injOn
+  rw [e.image_source_eq_target] at hinv
+  exact hinv.congr fun z hz => by
+    calc
+      e.symm z =
+          Function.invFunOn e e.source (e (e.symm z)) :=
+        (e.injOn.leftInvOn_invFunOn (e.map_target hz)).symm
+      _ = Function.invFunOn e e.source z :=
+        congrArg (Function.invFunOn e e.source) (e.right_inv hz)
 
 end TauCeti
