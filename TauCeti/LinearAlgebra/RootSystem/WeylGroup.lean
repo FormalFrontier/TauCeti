@@ -14,12 +14,15 @@ public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 This file proves that the action of the automorphism group of a root system on its root indices is
 faithful.  Consequently, every subgroup of that automorphism group, and in particular the Weyl
 group, is finite when the root index type is finite.  It also records how that action evaluates on
-simple reflections and how it interacts with root negation.
+simple reflections, how it interacts with root negation, and the sign change a reflection induces
+on its own coroot functional.
 
 ## Main results
 
 * `TauCeti.RootPairing.Equiv.indexHom_injective` says that an automorphism of a root system is
   determined by its permutation of the roots.
+* `TauCeti.RootPairing.coroot'_reflection_self` says a reflection reverses the sign of its own
+  coroot functional.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
@@ -69,6 +72,17 @@ theorem indexHom_injective [P.IsRootSystem] :
 end RootPairing.Equiv
 
 namespace RootPairing
+
+/-- Reflecting a root in itself negates its coroot functional. -/
+lemma coroot'_reflectionPerm_self (i : ι) : P.coroot' (P.reflectionPerm i i) = -P.coroot' i := by
+  rw [_root_.RootPairing.coroot', P.coroot_reflectionPerm, P.coreflection_apply_self]
+  simp
+
+/-- A reflection reverses the sign of its own coroot functional. -/
+lemma coroot'_reflection_self (i : ι) (x : M) :
+    P.coroot' i (P.reflection i x) = -P.coroot' i x := by
+  rw [P.coroot'_reflection, coroot'_reflectionPerm_self]
+  simp
 
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
