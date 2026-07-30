@@ -17,8 +17,8 @@ witness `ν`; `MixedIID` is the existential wrapper.
 
 ⚠ This is a property of the **unconditional** finite-dimensional laws: the mixture identity
 constrains each finite block's marginal law, never the joint law of `(ν, X)`. It is therefore
-*not* conditional independence, and is deliberately not named `ConditionallyIID` — that name is
-reserved for the genuine joint-law disintegration
+*not* conditional independence, and is deliberately not named `ConditionallyIID` — that name
+belongs to the genuine joint-law disintegration
 `Law(ν, block) = ∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)` (Kallenberg 2005, §1.1 eq. (2)), which strictly
 strengthens the identity below at a fixed `ν`: for a nondegenerate mixing law an *independent
 copy* of a directing measure also witnesses `MixedIIDWith`, while the process is not

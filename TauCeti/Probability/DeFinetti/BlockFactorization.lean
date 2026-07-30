@@ -47,8 +47,9 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
   is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
   witness. That witness is the canonical *directing measure*, not merely a mixing representative;
-  what this file proves about it is the mixture identity, and the sharper conditional statement
-  awaits the `ConditionallyIID` predicate.
+  what this file proves about it is the mixture identity. The sharper conditional statement at the
+  same witness is `conditionallyIIDWith_of_contractable_pathSpace` in
+  `TauCeti.Probability.DeFinetti.JointRectangle`.
 * `mixedIID_of_contractable` — the existential form, for a contractable process on an
   arbitrary measurable sample space (state space still standard Borel).
 * `mixedIID_of_exchangeable` — the exchangeable form (via `contractable_of_exchangeable`).
@@ -300,8 +301,9 @@ private theorem mixedIID_of_contractable_standardBorelOmega
 
 /-- **de Finetti's theorem, mixture form: contractable ⇒ mixed i.i.d.** A contractable process
 valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. This is
-the roadmap's `mixedIID_of_contractable`; the sharp summit `conditionallyIID_of_contractable`
-awaits the conditional predicate. -/
+the roadmap's `mixedIID_of_contractable`; the sharp summit `conditionallyIID_of_contractable`,
+which concludes the joint-law disintegration rather than only the mixture identity, is in
+`TauCeti.Probability.DeFinetti.Theorem`. -/
 theorem mixedIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
