@@ -77,28 +77,25 @@ section Restriction
 /-- Restriction of a finite-dimensional representation of `G` to a subgroup `S`.  This is Mathlib's
 `Action.res` along `S.subtype`, under the definitional identification
 `FDRep k G = Action (FGModuleCat k) G`; this definition only supplies the representation-theoretic
-name. -/
-@[expose]
+name.
+
+The body is not exposed, as for `TauCeti.indFDRep`; the characteristic properties are
+`character_resFDRep` and `forget₂_obj_resFDRep`, the latter identifying the underlying object with
+Mathlib's `Rep.res` and so carrying the description of the representation itself. -/
 def resFDRep (S : Subgroup G) (B : FDRep k G) : FDRep k S :=
   (Action.res (FGModuleCat k) S.subtype).obj B
-
-/-- Restriction acts on the representation by precomposing with the inclusion of the subgroup. -/
-@[simp]
-theorem resFDRep_ρ (S : Subgroup G) (B : FDRep k G) :
-    (resFDRep S B).ρ = B.ρ.comp S.subtype :=
-  rfl
 
 /-- The character of a restriction is the restriction of the character. -/
 @[simp]
 theorem character_resFDRep (S : Subgroup G) (B : FDRep k G) (s : S) :
     (resFDRep S B).character s = B.character (s : G) :=
-  rfl
+  (rfl)
 
 /-- Restriction commutes with forgetting finite-dimensionality. -/
 theorem forget₂_obj_resFDRep (S : Subgroup G) (B : FDRep k G) :
     (forget₂ (FDRep k S) (Rep k S)).obj (resFDRep S B) =
       Rep.res S.subtype ((forget₂ (FDRep k G) (Rep k G)).obj B) :=
-  rfl
+  (rfl)
 
 end Restriction
 
