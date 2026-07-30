@@ -232,6 +232,11 @@ additively. Here the group law on morphisms is written multiplicatively, so `[n]
 `n`-th power map for that law: see `AbelianVariety.mulBy_eq_zpow`. -/
 def mulBy (A : AbelianVariety K) (n : ℤ) : A ⟶ A := End.toHom (n : End A)
 
+/-- Viewed back in the endomorphism ring, `[n]` is the integer `n`. -/
+@[simp] lemma End.ofHom_mulBy (A : AbelianVariety K) (n : ℤ) :
+    End.ofHom (mulBy A n) = (n : End A) :=
+  End.ofHom_toHom _
+
 variable {A B : AbelianVariety K}
 
 /-- `[n]` is the `n`-th power map for the pointwise group law on endomorphisms. -/
@@ -269,11 +274,13 @@ group law. -/
 lemma mulBy_comp (n : ℤ) (f : A ⟶ B) : mulBy A n ≫ f = f ≫ mulBy B n := by
   simp [mulBy_eq_zpow]
 
-/-- Conjugating `[n]` by an isomorphism of abelian varieties gives `[n]`. -/
-@[simp] lemma congr_ofHom_mulBy (e : A ≅ B) (n : ℤ) :
+/-- Conjugating `[n]` by an isomorphism of abelian varieties gives `[n]`.
+
+Deliberately not `@[simp]`: `AbelianVariety.End.ofHom_mulBy` rewrites both sides to an integer cast,
+so this left-hand side is not in `simp` normal form, and what is left is Mathlib's `map_intCast`. -/
+lemma congr_ofHom_mulBy (e : A ≅ B) (n : ℤ) :
     End.congr e (End.ofHom (mulBy A n)) = End.ofHom (mulBy B n) := by
-  ext
-  simp [mulBy_comp]
+  simp
 
 end
 
