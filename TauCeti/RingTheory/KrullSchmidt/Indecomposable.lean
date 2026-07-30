@@ -30,7 +30,7 @@ local-endomorphism-ring theorem. Both are supplied here.
 ## Main results
 
 * `TauCeti.isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem`: indecomposability
-  says exactly that `0` and `1` are the only idempotents of `Module.End A M`.
+  says exactly that `M` is nontrivial and `0` and `1` are the only idempotents of `Module.End A M`.
 * `TauCeti.IsIndecomposableModule.isNilpotent_or_bijective`: **Fitting's lemma**, for a module that
   is Noetherian and Artinian, together with
   `TauCeti.IsIndecomposableModule.isNilpotent_iff_not_isUnit`, which reads it as an identification
@@ -141,8 +141,8 @@ theorem isIndecomposableModule_of_forall_isIdempotentElem [Nontrivial M]
   · exact Or.inl (by simpa [h₀] using (Submodule.range_projection hNP).symm)
   · exact Or.inr (by simpa [h₁, Module.End.one_eq_id] using (Submodule.ker_projection hNP).symm)
 
-/-- Indecomposability of a module is exactly the statement that its endomorphism ring has no
-idempotents besides `0` and `1`. -/
+/-- Indecomposability of a module is exactly the statement that it is nontrivial and its
+endomorphism ring has no idempotents besides `0` and `1`. -/
 theorem isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem :
     IsIndecomposableModule A M ↔
       Nontrivial M ∧ ∀ f : Module.End A M, IsIdempotentElem f → f = 0 ∨ f = 1 :=
