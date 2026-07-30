@@ -126,12 +126,10 @@ theorem eq_zero_iff {M : Type w} [Zero M] {f : Kronecker A → M} :
 
 /-! ### The arrows -/
 
-/-- The arrow of the generalized Kronecker quiver indexed by an element of the arrow type. -/
-def arrow (a : A) : (src : Kronecker A) ⟶ tgt := a
-
-/-- The arrows from the source to the target are exactly the elements of the arrow type; the
+/-- The arrow of the generalized Kronecker quiver indexed by an element of the arrow type. The
+arrows from the source to the target are exactly the elements of the arrow type, and the
 identification is definitional. -/
-def arrowEquiv : ((src : Kronecker A) ⟶ tgt) ≃ A := Equiv.refl A
+def arrow (a : A) : (src : Kronecker A) ⟶ tgt := a
 
 instance : IsEmpty ((src : Kronecker A) ⟶ src) := inferInstanceAs (IsEmpty PEmpty)
 
@@ -162,7 +160,7 @@ instance instFintypeHom [Fintype A] : ∀ a b : Kronecker A, Fintype (a ⟶ b)
 @[simp]
 theorem card_hom_src_tgt [Fintype A] :
     Fintype.card ((src : Kronecker A) ⟶ tgt) = Fintype.card A :=
-  Fintype.card_congr arrowEquiv
+  rfl
 
 /-! ### The paths -/
 
