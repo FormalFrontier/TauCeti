@@ -26,7 +26,10 @@ linear automorphism group `M ≃ₗ[R] M`, and hence a group to act with.
 This file supplies that subgroup, together with its determinant-one subgroup and the reflections in
 the hyperplanes of vectors of invertible norm. The orthogonal group is the target of the
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
-covers are stated against, and the reflections are what Cartan-Dieudonné factors its elements into.
+covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
+theorem factors an orthogonal automorphism into. Nothing here assumes the hypotheses that theorem
+needs (a field, a nondegenerate form, finite dimension); the declarations below hold over an
+arbitrary commutative ring.
 
 ## Main definitions
 
@@ -40,9 +43,10 @@ covers are stated against, and the reflections are what Cartan-Dieudonné factor
 
 * `TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup`: an orthogonal automorphism preserves
   the polarization of `Q`; it preserves the orthogonality relation as well
-  (`isOrtho_iff_of_mem_orthogonalGroup`). In characteristic not two the converse holds,
-  `TauCeti.QuadraticMap.mem_orthogonalGroup_iff_polar`, which is the usual identification of the
-  isometries of a quadratic form with the isometries of its polar bilinear form.
+  (`isOrtho_iff_of_mem_orthogonalGroup`). As soon as `2` acts injectively on the target the
+  converse holds, `TauCeti.QuadraticMap.mem_orthogonalGroup_iff_polar`, which is the usual
+  identification of the isometries of a quadratic form with the isometries of its polar bilinear
+  form.
 * `TauCeti.QuadraticMap.orthogonalGroupEquivIsometryEquiv`: the underlying set of the orthogonal
   group is Mathlib's type of self-isometries `Q.IsometryEquiv Q`. This is the compatibility with the
   Mathlib vocabulary; the point of `orthogonalGroup` is the group structure, which
@@ -53,8 +57,9 @@ covers are stated against, and the reflections are what Cartan-Dieudonné factor
 * `TauCeti.QuadraticMap.reflection_mem_orthogonalGroup`: the reflection in a vector of invertible
   norm is orthogonal; `TauCeti.QuadraticMap.reflection_mul_self` says it is an involution, and
   `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane. These
-  are the elements Cartan-Dieudonné writes every orthogonal automorphism as a product of, and the
-  image of the Pin group's generating vectors under twisted conjugation.
+  are the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product
+  of, under hypotheses (a field, a nondegenerate form, finite dimension) that are not assumed here,
+  and the image of the Pin group's generating vectors under twisted conjugation.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup_normal`: `SO(Q)` is normal in `O(Q)`, being the
   kernel of the determinant restricted there.
 
@@ -211,17 +216,21 @@ theorem polar_apply_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ ortho
     polar Q (f x) (f y) = polar Q x y := by
   simp only [QuadraticMap.polar, ← map_add, map_app_of_mem_orthogonalGroup hf]
 
-/-- In characteristic not two, preserving the polarization is the same as preserving the quadratic
-map: an automorphism is orthogonal exactly when it is an isometry of the polar bilinear form.
+/-- As soon as `2` acts injectively on the target, preserving the polarization is the same as
+preserving the quadratic map: an automorphism is orthogonal exactly when it is an isometry of the
+polar bilinear form.
 
-This fails in characteristic two, where the polarization forgets `Q` entirely on the diagonal, so
-the hypothesis `Invertible (2 : R)` is not an artefact of the proof. -/
-theorem mem_orthogonalGroup_iff_polar [Invertible (2 : R)] {f : M ≃ₗ[R] M} :
+Only injectivity is needed, not invertibility of `2`, so this covers integral forms as well: over
+`ℤ`, or more generally whenever `N` is `2`-torsion-free, `2` is not a unit but the polarization
+still determines `Q`. When `2` is invertible in `R` the hypothesis is
+`(isUnit_of_invertible (2 : R)).isSMulRegular N`. Some such hypothesis is needed: in characteristic
+two the polarization forgets `Q` entirely on the diagonal. -/
+theorem mem_orthogonalGroup_iff_polar (h2 : IsSMulRegular N (2 : R)) {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ x y, polar Q (f x) (f y) = polar Q x y := by
   refine ⟨polar_apply_of_mem_orthogonalGroup, fun h m => ?_⟩
-  have key : ∀ x : M, Q x = ⅟(2 : R) • polar Q x x := fun x => by
-    rw [polar_self, two_nsmul, ← two_smul R, smul_smul, invOf_mul_self, one_smul]
-  rw [key (f m), key m, h]
+  have key : ∀ x : M, (2 : R) • Q x = polar Q x x := fun x => by
+    rw [polar_self, two_nsmul, two_smul]
+  exact h2 ((key (f m)).trans ((h m m).trans (key m).symm))
 
 end Polar
 
@@ -301,8 +310,19 @@ theorem reflection_apply_of_isOrtho {y : M} (hy : Q.IsOrtho v y) : reflection Q 
 theorem reflection_mul_self : reflection Q v * reflection Q v = 1 :=
   LinearEquiv.ext fun y => Module.involutive_reflection _ y
 
-/-- **Reflections are orthogonal.** Cartan-Dieudonné writes every orthogonal automorphism of a
-nondegenerate form as a product of these, and they are the image of the generating vectors of the
+/-- A reflection is its own inverse. -/
+@[simp]
+theorem reflection_inv : (reflection Q v)⁻¹ = reflection Q v :=
+  Module.reflection_inv _
+
+/-- A reflection is its own inverse, as a linear equivalence. -/
+@[simp]
+theorem reflection_symm : (reflection Q v).symm = reflection Q v :=
+  Module.reflection_symm _
+
+/-- **Reflections are orthogonal.** These are the generators a Cartan-Dieudonné theorem writes an
+orthogonal automorphism as a product of, over a field, for a nondegenerate form, in finite
+dimension; none of that is assumed here. They are also the image of the generating vectors of the
 Pin group under twisted conjugation. -/
 theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q := by
   intro y
