@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Determinant
+public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
 public import Mathlib.LinearAlgebra.Reflection
 
@@ -12,9 +13,12 @@ public import Mathlib.LinearAlgebra.Reflection
 # The orthogonal group of a quadratic form
 
 Mathlib knows the orthogonal group only in matrix form: `Matrix.orthogonalGroup n R` is the group of
-matrices `A` with `Aᵀ * A = 1` (`Matrix.mem_orthogonalGroup_iff'`), that is, the isometry group of
-the *standard* form `x ↦ ∑ i, x i ^ 2` on `n → R`. For an abstract quadratic map
-`Q : QuadraticMap R M N` the
+matrices `A` with `Aᵀ * A = 1` (`Matrix.mem_orthogonalGroup_iff'`). Such matrices preserve the
+*standard* form `x ↦ ∑ i, x i ^ 2` on `n → R`, and, as soon as `2` is not a zero divisor in `R`,
+they are exactly its isometries: evaluating `Q (A x) = Q x` at the basis vectors and their pairwise
+sums says that `Aᵀ * A` has unit diagonal and that twice each off-diagonal entry vanishes. In
+characteristic two the two notions part company, since there the standard form no longer sees the
+off-diagonal entries at all. For an abstract quadratic map `Q : QuadraticMap R M N` the
 corresponding group is missing, even though Mathlib does have the individual isometries as
 `QuadraticMap.IsometryEquiv Q Q`: what it lacks is the observation that they form a subgroup of the
 linear automorphism group `M ≃ₗ[R] M`, and hence a group to act with.
@@ -35,8 +39,8 @@ covers are stated against, and the reflections are what Cartan-Dieudonné factor
 ## Main results
 
 * `TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup`: an orthogonal automorphism preserves
-  the polarization of `Q`, and therefore (`isOrtho_iff_of_mem_orthogonalGroup`) the orthogonality
-  relation. In characteristic not two the converse holds as well,
+  the polarization of `Q`; it preserves the orthogonality relation as well
+  (`isOrtho_iff_of_mem_orthogonalGroup`). In characteristic not two the converse holds,
   `TauCeti.QuadraticMap.mem_orthogonalGroup_iff_polar`, which is the usual identification of the
   isometries of a quadratic form with the isometries of its polar bilinear form.
 * `TauCeti.QuadraticMap.orthogonalGroupEquivIsometryEquiv`: the underlying set of the orthogonal
@@ -57,8 +61,12 @@ covers are stated against, and the reflections are what Cartan-Dieudonné factor
 ## Implementation notes
 
 `orthogonalGroup` is defined for a `QuadraticMap R M N` valued in an arbitrary module `N`, since
-preserving `Q` makes sense at that generality. The reflections need to divide by `Q v` and so are
-stated for a `QuadraticForm R M`, that is, for `N = R`.
+preserving `Q` makes sense at that generality. The file is therefore laid out by hypothesis
+strength: the group itself, its identification with `IsometryEquiv`, and its transport along an
+isometric equivalence need only a `CommSemiring` and additive monoids; the polarization needs
+subtraction in `N`, the determinant needs `M` to be an additive group over a `CommRing`, and the
+reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
+`N = R`.
 
 ## References
 
@@ -78,15 +86,18 @@ namespace TauCeti
 
 namespace QuadraticMap
 
-variable {R : Type u} {M : Type v} {N : Type w} [CommRing R]
-  [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+section CommSemiring
+
+variable {R : Type u} {M : Type v} {N : Type w} [CommSemiring R]
+  [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
 
 /-- The orthogonal group of a quadratic map: the linear automorphisms of `M` that preserve `Q`.
 
-Mathlib's `Matrix.orthogonalGroup n R` is the special case of the standard form on `n → R`, written
-in coordinates; `QuadraticMap.IsometryEquiv Q Q` is the same underlying set (see
-`orthogonalGroupEquivIsometryEquiv`) but carries no group structure. -/
-@[expose] def orthogonalGroup (Q : QuadraticMap R M N) : Subgroup (M ≃ₗ[R] M) where
+Mathlib's `Matrix.orthogonalGroup n R` is a coordinate version of this for the standard form on
+`n → R`: its matrices preserve `x ↦ ∑ i, x i ^ 2`, and are all of its isometries as soon as `2` is
+not a zero divisor in `R`. `QuadraticMap.IsometryEquiv Q Q` is the same underlying set as
+`orthogonalGroup Q` (see `orthogonalGroupEquivIsometryEquiv`) but carries no group structure. -/
+def orthogonalGroup (Q : QuadraticMap R M N) : Subgroup (M ≃ₗ[R] M) where
   carrier := {f | ∀ m, Q (f m) = Q m}
   one_mem' _ := rfl
   mul_mem' hf hg m := (hf _).trans (hg m)
@@ -104,16 +115,101 @@ theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
+/-- An orthogonal automorphism preserves orthogonality of vectors. -/
+theorem isOrtho_iff_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (x y : M) :
+    Q.IsOrtho (f x) (f y) ↔ Q.IsOrtho x y := by
+  simp only [isOrtho_def, ← map_add, map_app_of_mem_orthogonalGroup hf]
+
+/-- The orthogonal group of `Q`, as a set, is Mathlib's type of self-isometries of `Q`. The content
+of `orthogonalGroup` is the group structure, which `QuadraticMap.IsometryEquiv` does not carry. -/
+def orthogonalGroupEquivIsometryEquiv (Q : QuadraticMap R M N) :
+    orthogonalGroup Q ≃ Q.IsometryEquiv Q where
+  toFun f := { (f : M ≃ₗ[R] M) with map_app' := mem_orthogonalGroup_iff.mp f.2 }
+  invFun e := ⟨(e : M ≃ₗ[R] M), mem_orthogonalGroup_iff.mpr e.map_app⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+@[simp]
+theorem coe_orthogonalGroupEquivIsometryEquiv (Q : QuadraticMap R M N) (f : orthogonalGroup Q) :
+    ⇑(orthogonalGroupEquivIsometryEquiv Q f) = ⇑(f : M ≃ₗ[R] M) := by
+  simp only [orthogonalGroupEquivIsometryEquiv]
+  rfl
+
+@[simp]
+theorem coe_orthogonalGroupEquivIsometryEquiv_symm (Q : QuadraticMap R M N)
+    (e : Q.IsometryEquiv Q) :
+    (((orthogonalGroupEquivIsometryEquiv Q).symm e : M ≃ₗ[R] M) : M → M) = ⇑e := by
+  simp [orthogonalGroupEquivIsometryEquiv]
+
+section Congr
+
+variable {M₁ : Type*} {M₂ : Type*} [AddCommMonoid M₁] [Module R M₁] [AddCommMonoid M₂] [Module R M₂]
+  {Q₁ : QuadraticMap R M₁ N} {Q₂ : QuadraticMap R M₂ N}
+
+open LinearMap.GeneralLinearGroup in
+/-- Conjugation by a linear equivalence `e : M₁ ≃ₗ[R] M₂`, as an isomorphism of automorphism
+groups: Mathlib's `LinearMap.GeneralLinearGroup.congrLinearEquiv` read through
+`LinearMap.GeneralLinearGroup.generalLinearEquiv`. -/
+private def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ[R] M₂) :=
+  ((generalLinearEquiv R M₁).symm.trans (congrLinearEquiv e)).trans (generalLinearEquiv R M₂)
+
+private theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
+    congrAut e f m = e (f (e.symm m)) := rfl
+
+private theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
+    (congrAut e).symm g m = e.symm (g (e m)) := rfl
+
+/-- Conjugation by an isometric equivalence carries `O(Q₁)` onto `O(Q₂)`. -/
+private theorem map_orthogonalGroup (e : Q₁.IsometryEquiv Q₂) :
+    (orthogonalGroup Q₁).map (congrAut e.toLinearEquiv : _ →* _) = orthogonalGroup Q₂ := by
+  have key : ∀ x : M₁, Q₂ (e.toLinearEquiv x) = Q₁ x := e.map_app
+  have key' : ∀ x : M₂, Q₁ (e.toLinearEquiv.symm x) = Q₂ x := fun x => by
+    rw [← key (e.toLinearEquiv.symm x), e.toLinearEquiv.apply_symm_apply]
+  ext g
+  simp only [Subgroup.mem_map, MonoidHom.coe_coe, mem_orthogonalGroup_iff]
+  constructor
+  · rintro ⟨f, hf, rfl⟩ m
+    rw [congrAut_apply, key, hf, key']
+  · refine fun hg => ⟨(congrAut e.toLinearEquiv).symm g, fun m => ?_,
+      (congrAut e.toLinearEquiv).apply_symm_apply g⟩
+    rw [congrAut_symm_apply, key', hg, key]
+
+/-- Isometric quadratic maps have isomorphic orthogonal groups: conjugation by an isometric
+equivalence `e : Q₁ ≃qᵢ Q₂` carries `O(Q₁)` onto `O(Q₂)`.
+
+Over an algebraically closed field every nondegenerate quadratic form of a given rank is isometric
+to every other, so this is what makes `O(Q)` depend on the rank alone. -/
+def orthogonalGroupCongr (e : Q₁.IsometryEquiv Q₂) :
+    orthogonalGroup Q₁ ≃* orthogonalGroup Q₂ :=
+  ((congrAut e.toLinearEquiv).subgroupMap _).trans (MulEquiv.subgroupCongr (map_orthogonalGroup e))
+
+@[simp]
+theorem coe_orthogonalGroupCongr_apply (e : Q₁.IsometryEquiv Q₂) (f : orthogonalGroup Q₁) (m : M₂) :
+    (orthogonalGroupCongr e f : M₂ ≃ₗ[R] M₂) m
+      = e.toLinearEquiv ((f : M₁ ≃ₗ[R] M₁) (e.toLinearEquiv.symm m)) := by
+  simp [orthogonalGroupCongr, congrAut_apply]
+
+@[simp]
+theorem coe_orthogonalGroupCongr_symm_apply (e : Q₁.IsometryEquiv Q₂) (g : orthogonalGroup Q₂)
+    (m : M₁) :
+    ((orthogonalGroupCongr e).symm g : M₁ ≃ₗ[R] M₁) m
+      = e.toLinearEquiv.symm ((g : M₂ ≃ₗ[R] M₂) (e.toLinearEquiv m)) := by
+  simp [orthogonalGroupCongr, congrAut_symm_apply]
+
+end Congr
+
+end CommSemiring
+
+section Polar
+
+variable {R : Type u} {M : Type v} {N : Type w} [CommRing R]
+  [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] {Q : QuadraticMap R M N}
+
 /-- An orthogonal automorphism preserves the polarization of `Q`, because the polarization is
 built from `Q` and the additive structure alone. -/
 theorem polar_apply_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (x y : M) :
     polar Q (f x) (f y) = polar Q x y := by
   simp only [QuadraticMap.polar, ← map_add, map_app_of_mem_orthogonalGroup hf]
-
-/-- An orthogonal automorphism preserves orthogonality of vectors. -/
-theorem isOrtho_iff_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (x y : M) :
-    Q.IsOrtho (f x) (f y) ↔ Q.IsOrtho x y := by
-  simp only [isOrtho_def, ← map_add, map_app_of_mem_orthogonalGroup hf]
 
 /-- In characteristic not two, preserving the polarization is the same as preserving the quadratic
 map: an automorphism is orthogonal exactly when it is an isometry of the polar bilinear form.
@@ -127,14 +223,24 @@ theorem mem_orthogonalGroup_iff_polar [Invertible (2 : R)] {f : M ≃ₗ[R] M} :
     rw [polar_self, two_nsmul, ← two_smul R, smul_smul, invOf_mul_self, one_smul]
   rw [key (f m), key m, h]
 
+end Polar
+
+section Det
+
+variable {R : Type u} {M : Type v} {N : Type w} [CommRing R]
+  [AddCommGroup M] [Module R M] [AddCommMonoid N] [Module R N]
+
 /-- The special orthogonal group: the orthogonal automorphisms of determinant one.
 
 The determinant is Mathlib's `LinearEquiv.det`, which is `1` by convention on a module that is not
 finite free; on such a module this subgroup is therefore all of `orthogonalGroup Q`. -/
-@[expose] noncomputable def specialOrthogonalGroup (Q : QuadraticMap R M N) :
+noncomputable def specialOrthogonalGroup (Q : QuadraticMap R M N) :
     Subgroup (M ≃ₗ[R] M) :=
   orthogonalGroup Q ⊓ (LinearEquiv.det (R := R) (M := M)).ker
 
+variable {Q : QuadraticMap R M N}
+
+@[simp]
 theorem mem_specialOrthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ specialOrthogonalGroup Q ↔ f ∈ orthogonalGroup Q ∧ LinearEquiv.det f = 1 := Iff.rfl
 
@@ -147,92 +253,29 @@ instance specialOrthogonalGroup_normal (Q : QuadraticMap R M N) :
   rw [specialOrthogonalGroup, Subgroup.inf_subgroupOf_left]
   infer_instance
 
-/-- The orthogonal group of `Q`, as a set, is Mathlib's type of self-isometries of `Q`. The content
-of `orthogonalGroup` is the group structure, which `QuadraticMap.IsometryEquiv` does not carry. -/
-@[expose] def orthogonalGroupEquivIsometryEquiv (Q : QuadraticMap R M N) :
-    orthogonalGroup Q ≃ Q.IsometryEquiv Q where
-  toFun f := { (f : M ≃ₗ[R] M) with map_app' := mem_orthogonalGroup_iff.mp f.2 }
-  invFun e := ⟨(e : M ≃ₗ[R] M), mem_orthogonalGroup_iff.mpr e.map_app⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-
-@[simp]
-theorem coe_orthogonalGroupEquivIsometryEquiv (Q : QuadraticMap R M N) (f : orthogonalGroup Q) :
-    ⇑(orthogonalGroupEquivIsometryEquiv Q f) = ⇑(f : M ≃ₗ[R] M) := rfl
-
-@[simp]
-theorem coe_orthogonalGroupEquivIsometryEquiv_symm (Q : QuadraticMap R M N)
-    (e : Q.IsometryEquiv Q) :
-    (((orthogonalGroupEquivIsometryEquiv Q).symm e : M ≃ₗ[R] M) : M → M) = ⇑e := rfl
-
-section Congr
-
-variable {M₁ : Type*} {M₂ : Type*} [AddCommGroup M₁] [Module R M₁] [AddCommGroup M₂] [Module R M₂]
-  {Q₁ : QuadraticMap R M₁ N} {Q₂ : QuadraticMap R M₂ N}
-
-/-- Isometric quadratic maps have isomorphic orthogonal groups: conjugation by an isometric
-equivalence `e : Q₁ ≃qᵢ Q₂` carries `O(Q₁)` onto `O(Q₂)`.
-
-Over an algebraically closed field every nondegenerate quadratic form of a given rank is isometric
-to every other, so this is what makes `O(Q)` depend on the rank alone. -/
-@[expose] def orthogonalGroupCongr (e : Q₁.IsometryEquiv Q₂) :
-    orthogonalGroup Q₁ ≃* orthogonalGroup Q₂ where
-  toFun f :=
-    ⟨(e.toLinearEquiv.symm ≪≫ₗ (f : M₁ ≃ₗ[R] M₁)) ≪≫ₗ e.toLinearEquiv,
-      mem_orthogonalGroup_iff.mpr fun m => by
-      have h₁ : Q₁ (e.toLinearEquiv.symm m) = Q₂ m := by
-        conv_rhs => rw [← e.toLinearEquiv.apply_symm_apply m]
-        exact (e.map_app _).symm
-      simp only [LinearEquiv.trans_apply]
-      exact ((e.map_app _).trans
-        (map_app_of_mem_orthogonalGroup f.2 (e.toLinearEquiv.symm m))).trans h₁⟩
-  invFun g :=
-    ⟨(e.toLinearEquiv ≪≫ₗ (g : M₂ ≃ₗ[R] M₂)) ≪≫ₗ e.toLinearEquiv.symm,
-      mem_orthogonalGroup_iff.mpr fun m => by
-      have h₁ : ∀ x : M₂, Q₁ (e.toLinearEquiv.symm x) = Q₂ x := fun x => by
-        conv_rhs => rw [← e.toLinearEquiv.apply_symm_apply x]
-        exact (e.map_app _).symm
-      simp only [LinearEquiv.trans_apply]
-      exact (h₁ _).trans
-        ((map_app_of_mem_orthogonalGroup g.2 (e.toLinearEquiv m)).trans (e.map_app m))⟩
-  left_inv f :=
-    Subtype.ext (LinearEquiv.ext fun m => by
-      simp only [LinearEquiv.trans_apply, LinearEquiv.symm_apply_apply])
-  right_inv g :=
-    Subtype.ext (LinearEquiv.ext fun m => by
-      simp only [LinearEquiv.trans_apply, LinearEquiv.apply_symm_apply])
-  map_mul' f g :=
-    Subtype.ext (LinearEquiv.ext fun m => by
-      simp only [Subgroup.coe_mul, LinearEquiv.mul_apply, LinearEquiv.trans_apply,
-        LinearEquiv.symm_apply_apply])
-
-@[simp]
-theorem coe_orthogonalGroupCongr (e : Q₁.IsometryEquiv Q₂) (f : orthogonalGroup Q₁) (m : M₂) :
-    (orthogonalGroupCongr e f : M₂ ≃ₗ[R] M₂) m
-      = e.toLinearEquiv ((f : M₁ ≃ₗ[R] M₁) (e.toLinearEquiv.symm m)) := rfl
-
-end Congr
+end Det
 
 section Reflection
 
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 variable (Q : QuadraticForm R M) (v : M) [Invertible (Q v)]
 
 /-- The linear functional `y ↦ polar Q v y / Q v` cutting out the hyperplane fixed by the reflection
 in `v`. It is normalized so that it takes the value `2` at `v`, which is Mathlib's convention for
 `Module.reflection`. -/
-def reflectionDual : Module.Dual R M := ⅟(Q v) • Q.polarBilin v
+private def reflectionDual : Module.Dual R M := ⅟(Q v) • Q.polarBilin v
 
-theorem reflectionDual_apply (y : M) : reflectionDual Q v y = ⅟(Q v) * polar Q v y := by
+private theorem reflectionDual_apply (y : M) :
+    reflectionDual Q v y = ⅟(Q v) * polar Q v y := by
   simp [reflectionDual]
 
-@[simp]
-theorem reflectionDual_apply_self : reflectionDual Q v v = 2 := by
+private theorem reflectionDual_apply_self : reflectionDual Q v v = 2 := by
   rw [reflectionDual_apply, polar_self, two_nsmul, ← two_mul, ← mul_assoc, mul_right_comm,
     invOf_mul_self, one_mul]
 
 /-- The reflection of `M` in the hyperplane orthogonal to a vector `v` of invertible norm:
 `y ↦ y - (polar Q v y / Q v) • v`. This is Mathlib's `Module.reflection` for the functional
-`reflectionDual Q v`. -/
+`y ↦ polar Q v y / Q v`. -/
 noncomputable def reflection : M ≃ₗ[R] M :=
   Module.reflection (reflectionDual_apply_self Q v)
 
@@ -262,16 +305,14 @@ theorem reflection_mul_self : reflection Q v * reflection Q v = 1 :=
 nondegenerate form as a product of these, and they are the image of the generating vectors of the
 Pin group under twisted conjugation. -/
 theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q := by
-  have hadd : ∀ a b : M, Q (a + b) = Q a + Q b + polar Q a b := fun a b => by
-    simp only [QuadraticMap.polar]; ring
   intro y
   rw [reflection_apply]
   set c : R := ⅟(Q v) * polar Q v y with hc
   have hcv : c * Q v = polar Q v y := by
     rw [hc, mul_comm (⅟(Q v)) (polar Q v y), mul_assoc, invOf_mul_self, mul_one]
   have hexp : Q (y - c • v) = Q y + c * (c * Q v) - c * polar Q v y := by
-    rw [sub_eq_add_neg, hadd, QuadraticMap.map_neg, QuadraticMap.map_smul, polar_neg_right,
-      polar_smul_right, QuadraticMap.polar_comm ⇑Q y v, smul_eq_mul, smul_eq_mul]
+    rw [sub_eq_add_neg, QuadraticMap.map_add ⇑Q, QuadraticMap.map_neg, QuadraticMap.map_smul,
+      polar_neg_right, polar_smul_right, QuadraticMap.polar_comm ⇑Q y v, smul_eq_mul, smul_eq_mul]
     ring
   rw [hexp, hcv, add_sub_cancel_right]
 
