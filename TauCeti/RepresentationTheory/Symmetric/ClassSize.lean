@@ -170,22 +170,45 @@ theorem card_partition_parts_mul_zPart_fin (n : ℕ) (μ : n.Partition) :
 theorem zPart_dvd_factorial {n : ℕ} (μ : n.Partition) : zPart μ ∣ n ! :=
   ⟨_, ((card_partition_parts_mul_zPart_fin n μ).symm.trans (mul_comm _ _))⟩
 
-/-- The quotient form of the class-size formula. -/
+/-- The quotient form of the class-size formula: the permutations with partition `μ` number
+`(Fintype.card α)! / zPart μ`. -/
+theorem card_partition_div_zPart (μ : (Fintype.card α).Partition) :
+    Nat.card {σ : Equiv.Perm α // σ.partition = μ} = (Fintype.card α)! / zPart μ :=
+  (Nat.div_eq_of_eq_mul_left (zPart_pos μ) (card_partition_mul_zPart μ).symm).symm
+
+/-- The quotient form of the class-size formula, transported along an equality
+`Fintype.card α = n`. -/
+theorem card_partition_parts_div_zPart {n : ℕ} (h : Fintype.card α = n) (μ : n.Partition) :
+    Nat.card {σ : Equiv.Perm α // σ.partition.parts = μ.parts} = n ! / zPart μ :=
+  (Nat.div_eq_of_eq_mul_left (zPart_pos μ) (card_partition_parts_mul_zPart h μ).symm).symm
+
+/-- The quotient form of the class-size formula for `Equiv.Perm (Fin n)`. -/
 theorem card_partition_parts_fin (n : ℕ) (μ : n.Partition) :
     Nat.card {σ : Equiv.Perm (Fin n) // σ.partition.parts = μ.parts} = n ! / zPart μ :=
-  (Nat.div_eq_of_eq_mul_left (zPart_pos μ)
-    (card_partition_parts_mul_zPart_fin n μ).symm).symm
+  card_partition_parts_div_zPart (Fintype.card_fin n) μ
 
-/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)`; for `n = 0` both sides are `1`. -/
-theorem card_partition_parts_indiscrete_fin (n : ℕ) :
-    Nat.card {σ : Equiv.Perm (Fin n) //
+/-- The permutations of `α` whose partition is the one-part partition of `n = Fintype.card α`
+number `(n - 1)!`.
+
+For `0 < n` these are the `n`-cycles.  For `n = 0` the one-part partition has no parts, its fibre
+is all of the trivial group `Equiv.Perm α`, whose only element is the identity, and both sides
+are `1`. -/
+theorem card_partition_parts_indiscrete {n : ℕ} (h : Fintype.card α = n) :
+    Nat.card {σ : Equiv.Perm α //
       σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! := by
-  rw [card_partition_parts_fin]
+  rw [card_partition_parts_div_zPart h]
   rcases eq_or_ne n 0 with rfl | hn
   · simp [zPart_def]
   · rw [zPart_indiscrete hn]
     exact Nat.div_eq_of_eq_mul_left (Nat.pos_of_ne_zero hn)
       (by rw [mul_comm, Nat.mul_factorial_pred hn])
+
+/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)` when `0 < n`; for `n = 0` the fibre is
+the identity permutation of `Fin 0`, which is not a cycle, and both sides are `1`. -/
+theorem card_partition_parts_indiscrete_fin (n : ℕ) :
+    Nat.card {σ : Equiv.Perm (Fin n) //
+      σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! :=
+  card_partition_parts_indiscrete (Fintype.card_fin n)
 
 /-- The permutations of a finite type are partitioned by their partitions. -/
 theorem sum_card_partition (α : Type*) [Fintype α] [DecidableEq α] :
