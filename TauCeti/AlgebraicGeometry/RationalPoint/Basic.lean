@@ -4,16 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Degree
+public import TauCeti.AlgebraicGeometry.ResidueDegree
 
 /-!
 # Rational points of a scheme over a base
 
 A `k`-rational point of a scheme `X` over a field `k` is a morphism `Spec k ⟶ X` over `Spec k`,
 that is, a *section* of the structure morphism `f : X ⟶ Spec k`. This file records what such a
-section gives at the level of points, residue fields, and divisor degrees. Everything is stated
-for a section `s` of an arbitrary morphism of schemes `f : X ⟶ S`, the hypothesis being
-`s ≫ f = 𝟙 S`; the `k`-rational case is the special case `S = Spec k`.
+section gives at the level of points and residue fields. Everything is stated for a section `s`
+of an arbitrary morphism of schemes `f : X ⟶ S`, the hypothesis being `s ≫ f = 𝟙 S`; the
+`k`-rational case is the special case `S = Spec k`.
 
 ## Main results
 
@@ -24,26 +24,22 @@ for a section `s` of an arbitrary morphism of schemes `f : X ⟶ S`, the hypothe
   residue field of the base, `κ(y) ≅ κ(s y)`, with inverse the residue-field map of `s`.
 * `residueDegree_comp_of_section`: residue degrees over a further base are computed on the base,
   `[κ(s y) : κ(g y)] = [κ(y) : κ(g y)]` for `g : S ⟶ Z`.
-* `relativeDegree_ofPoint_of_section`: the prime divisor at a codimension-one rational point has
-  relative degree `1`, and `relativeDegree_sub_zsmul_ofPoint_of_section`: consequently every
-  divisor becomes degree zero after subtracting its own degree times that point.
 
-The last item is the geometric source of the weight-one base point hypothesis that the Layer A
-degree theory runs on. There the weight of a point of a curve over `k` is its residue degree
-`[κ(x) : k]` (`SchemeWeilDivisor.relativeDegree`), and both the class-group splitting
+The divisor-level consequences live in `TauCeti.AlgebraicGeometry.RationalPoint.Degree`, which
+keeps the results here independent of Weil divisor theory. They are the geometric source of the
+weight-one base point hypothesis that the Layer A degree theory runs on: the weight of a point of
+a curve over `k` there is its residue degree `[κ(x) : k]`, and both the class-group splitting
 `OrderSystem.classGroupAddEquivPicZeroProdInt` and the Abel-Jacobi class
-`OrderSystem.weightedAbelJacobiClass` require a base point of weight one. So this file records
-precisely why a `k`-rational point supplies that hypothesis, instead of it having to be assumed.
+`OrderSystem.weightedAbelJacobiClass` require a base point of weight one.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, "Standing hypotheses" ("A chosen
 `k`-rational point `x₀`. ... the `k`-point *rigidifies/normalizes* the Picard functor and supplies
-the Abel-Jacobi morphism") and Layer A ("Degree", `Σ_x [κ(x):k]·ord_x`). Base change of rational
-points is left to a subsequent file, since it is a statement about pullbacks in an arbitrary
-category rather than about schemes.
+the Abel-Jacobi morphism"). Base change of rational points is left to a subsequent file, since it
+is a statement about pullbacks in an arbitrary category rather than about schemes.
 
 No external mathematics is vendored; the proofs reuse Mathlib's `Scheme.Hom.residueFieldMap`,
 `Scheme.residueFieldCongr` and `Scheme.Hom.residueDegree` API together with Tau Ceti's
-`residueDegree_comp`, `residueDegree_eq_one_iff` and `SchemeWeilDivisor.relativeDegree`.
+`residueDegree_comp` and `residueDegree_eq_one_iff`.
 -/
 
 public section
@@ -66,6 +62,7 @@ lemma leftInverse_of_section (hs : s ≫ f = 𝟙 S) : Function.LeftInverse f s 
   simpa using h
 
 /-- A section of `f` is a one-sided inverse of `f` at every point of the base. -/
+@[simp]
 lemma apply_section (hs : s ≫ f = 𝟙 S) (y : S) : f (s y) = y :=
   leftInverse_of_section hs y
 
@@ -89,9 +86,16 @@ private lemma residueDegree_mul_residueDegree_of_section (hs : s ≫ f = 𝟙 S)
 
 For `S = Spec k` this says that a `k`-rational point `x₀` of `X` has residue field `κ(x₀)` of
 degree one over `k`. -/
+@[simp]
 theorem residueDegree_eq_one_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
     f.residueDegree (s y) = 1 :=
   Nat.dvd_one.mp ⟨_, (residueDegree_mul_residueDegree_of_section hs y).symm⟩
+
+-- `apply_section` and `residueDegree_eq_one_of_section` above are the normal-form lemmas of this
+-- file and carry `@[simp]`; their consequences are deliberately *not* annotated. `simpNF` rejects
+-- `@[simp]` on `residueDegree_section_eq_one` outright, since its `f` cannot be inferred from the
+-- left-hand side so the lemma would never apply, and reports the other consequences as already
+-- provable by `simp` from the two lemmas above — `simp [hs]` reaches them with no annotation.
 
 /-- A section has residue degree one at every point of the base. -/
 theorem residueDegree_section_eq_one (hs : s ≫ f = 𝟙 S) (y : S) :
@@ -150,17 +154,9 @@ noncomputable def residueFieldIsoOfSection (hs : s ≫ f = 𝟙 S) (y : S) :
     simp only [Category.assoc, Category.id_comp]
     rw [residueFieldMap_comp_residueFieldMap_of_section hs y, Category.comp_id]
 
--- The isomorphism is intentionally not `@[expose]`, so downstream modules cannot unfold it; both
--- defining equalities are unfolded once here in `private` lemmas and re-exported through the
--- public characterization lemmas below.
-private lemma residueFieldIsoOfSection_hom_def (hs : s ≫ f = 𝟙 S) (y : S) :
-    (residueFieldIsoOfSection hs y).hom =
-      (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y) :=
-  rfl
-
-private lemma residueFieldIsoOfSection_inv_def (hs : s ≫ f = 𝟙 S) (y : S) :
-    (residueFieldIsoOfSection hs y).inv = s.residueFieldMap y :=
-  rfl
+-- The isomorphism is intentionally not `@[expose]`, so downstream modules cannot unfold it; the
+-- two lemmas below are its public characterization, and their `(rfl)` proofs keep consumers from
+-- having to rely on the definitional unfolding.
 
 /-- The forward map of `residueFieldIsoOfSection` is the residue-field map of `f`, transported
 along `f (s y) = y`. -/
@@ -168,45 +164,13 @@ along `f (s y) = y`. -/
 lemma residueFieldIsoOfSection_hom (hs : s ≫ f = 𝟙 S) (y : S) :
     (residueFieldIsoOfSection hs y).hom =
       (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y) :=
-  residueFieldIsoOfSection_hom_def hs y
+  (rfl)
 
 /-- The inverse of `residueFieldIsoOfSection` is the residue-field map of the section. -/
 @[simp]
 lemma residueFieldIsoOfSection_inv (hs : s ≫ f = 𝟙 S) (y : S) :
     (residueFieldIsoOfSection hs y).inv = s.residueFieldMap y :=
-  residueFieldIsoOfSection_inv_def hs y
-
-/-! ### Prime divisors at a rational point -/
-
-/-- A prime divisor whose generic point is a rational point has relative degree one.
-
-This is the geometric origin of the weight-one base point hypothesis of the Layer A degree
-theory: the weight of a codimension-one point `x` of a curve over `k` is its residue degree
-`[κ(x) : k]`, and at a `k`-rational point that weight is one. -/
-theorem relativeDegree_ofPoint_of_section (hs : s ≫ f = 𝟙 S) {y : S}
-    {x₀ : CodimensionOnePoint X} (hx₀ : (x₀ : X) = s y) :
-    SchemeWeilDivisor.relativeDegree f (WeilDivisor.ofPoint x₀) = 1 := by
-  rw [SchemeWeilDivisor.relativeDegree_ofPoint, hx₀, residueDegree_eq_one_of_section hs,
-    Nat.cast_one]
-
-/-- A multiple of the prime divisor at a rational point has that multiple as relative degree:
-`deg (d · x₀) = d`. -/
-theorem relativeDegree_zsmul_ofPoint_of_section (hs : s ≫ f = 𝟙 S) {y : S}
-    {x₀ : CodimensionOnePoint X} (hx₀ : (x₀ : X) = s y) (d : ℤ) :
-    SchemeWeilDivisor.relativeDegree f (d • WeilDivisor.ofPoint x₀) = d := by
-  rw [map_zsmul, relativeDegree_ofPoint_of_section hs hx₀, smul_eq_mul, mul_one]
-
-/-- Correcting a divisor by a multiple of a rational point kills its relative degree:
-`deg (D - (deg D) · x₀) = 0`.
-
-This is the normalization `D ↦ D - d·x₀` of the Abel map: over a base point of relative degree
-one every divisor becomes degree zero after subtracting its own degree times that point, which is
-what makes the degree-zero part of the divisor class group accessible from arbitrary divisors. -/
-theorem relativeDegree_sub_zsmul_ofPoint_of_section (hs : s ≫ f = 𝟙 S) {y : S}
-    {x₀ : CodimensionOnePoint X} (hx₀ : (x₀ : X) = s y) (D : SchemeWeilDivisor X) :
-    SchemeWeilDivisor.relativeDegree f
-        (D - SchemeWeilDivisor.relativeDegree f D • WeilDivisor.ofPoint x₀) = 0 := by
-  rw [map_sub, relativeDegree_zsmul_ofPoint_of_section hs hx₀, sub_self]
+  (rfl)
 
 end AlgebraicGeometry
 
