@@ -103,8 +103,11 @@ theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin
 
 /-- Reindexing the family before selecting is the same as composing the selection: the
 characteristic lemma for `blockLaw` under precomposition, so callers need not unfold the
-definition. -/
-@[simp]
+definition.
+
+Not a `simp` lemma: `simp` already derives this from `blockLaw_def` and `Function.comp_apply`, so
+tagging it would be a redundant rewrite. It exists to be cited explicitly, which is what keeps
+downstream proofs off `blockLaw`'s body. -/
 theorem blockLaw_comp (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (g : κ → ι) (k : Fin m → κ) :
     blockLaw μ (fun j => X (g j)) k = blockLaw μ X (g ∘ k) :=
   (rfl)
