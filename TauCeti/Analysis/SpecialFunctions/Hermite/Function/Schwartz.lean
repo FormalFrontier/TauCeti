@@ -151,7 +151,7 @@ theorem coe_hermiteSchwartzMap (n : ℕ) :
   exact hermiteSchwartzMap_apply n x
 
 /-- The position ladder relation, as an equality in Schwartz space. -/
-@[simp]
+@[simp, grind =]
 theorem mul_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x) (hermiteSchwartzMap n) =
       Real.sqrt (((n : ℝ) + 1) / 2) • hermiteSchwartzMap (n + 1) +
@@ -161,7 +161,7 @@ theorem mul_hermiteSchwartzMap (n : ℕ) :
     hermiteSchwartzMap_apply, add_apply, smul_apply, smul_eq_mul] using mul_hermiteFunction n x
 
 /-- The derivative ladder relation, as an equality in Schwartz space. -/
-@[simp]
+@[simp, grind =]
 theorem deriv_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.derivCLM ℝ ℝ (hermiteSchwartzMap n) =
       Real.sqrt ((n : ℝ) / 2) • hermiteSchwartzMap (n - 1) -
@@ -171,6 +171,7 @@ theorem deriv_hermiteSchwartzMap (n : ℕ) :
   simp only [sub_apply, smul_apply, hermiteSchwartzMap_apply, smul_eq_mul]
 
 /-- The annihilation relation, as an equality in Schwartz space. -/
+@[grind =]
 theorem mul_add_deriv_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x) (hermiteSchwartzMap n) +
         SchwartzMap.derivCLM ℝ ℝ (hermiteSchwartzMap n) =
@@ -183,6 +184,7 @@ theorem mul_add_deriv_hermiteSchwartzMap (n : ℕ) :
   rw [mul_add_deriv_hermiteFunction]
 
 /-- The creation relation, as an equality in Schwartz space. -/
+@[grind =]
 theorem mul_sub_deriv_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x) (hermiteSchwartzMap n) -
         SchwartzMap.derivCLM ℝ ℝ (hermiteSchwartzMap n) =
