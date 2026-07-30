@@ -24,6 +24,8 @@ integrals on the compact image of the homotopy.
 
 * `windingNumber_eq_two_pi_I_inv_mul_curveIntegral` identifies Tau Ceti's raw-function winding
   number of a piecewise-`C¹` path with Mathlib's curve integral of the Cauchy-kernel `1`-form.
+* `isPiecewiseC1On_eval_of_smoothPathHomotopy` supplies piecewise-`C¹` regularity for every path
+  in a smooth homotopy.
 * `windingNumber_eq_of_pathHomotopy` proves the Layer 0 homotopy invariance result.
 * `isNullHomologous_iff_of_pathHomotopy` transfers null-homology across a homotopy in the ambient
   set.
@@ -88,8 +90,9 @@ theorem windingNumber_eq_two_pi_I_inv_mul_curveIntegral {x y w : ℂ} {p : Path 
     curveIntegral_eq_intervalIntegral_deriv]
   simp only [smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul]
 
-/-- Every intermediate path of a smooth path homotopy is piecewise `C¹`. -/
-private theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
+/-- If the extension of a path homotopy is `C²` on the unit square, then every intermediate
+path, extended constantly from the unit interval to `ℝ`, is piecewise `C¹` on `[0, 1]`. -/
+theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x : ℂ} {p q : Path x x}
     (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
       (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
