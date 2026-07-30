@@ -214,6 +214,7 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 /-- The right translate of a matrix coefficient of `π` is again a matrix coefficient of `π`: the
 translation is absorbed into the first vector. -/
+@[simp]
 theorem matrixCoeff_comp_mulRight (v w : V) (g₀ : G) :
     (matrixCoeff π hπ v w).comp (ContinuousMap.mulRight g₀) = matrixCoeff π hπ (π g₀ v) w :=
   ContinuousMap.ext fun g ↦ matrixCoeff_apply_mul_right π hπ v w g g₀
@@ -243,6 +244,7 @@ theorem matrixCoeff_apply_inv (hπ : Continuous π) (hunitary : IsUnitary π) (v
 
 /-- The left translate of a matrix coefficient of a unitary representation is again a matrix
 coefficient: the translation is absorbed into the second vector. -/
+@[simp]
 theorem matrixCoeff_comp_mulLeft [SeparatelyContinuousMul G] (hπ : Continuous π)
     (hunitary : IsUnitary π) (v w : V) (g₀ : G) :
     (matrixCoeff π hπ v w).comp (ContinuousMap.mulLeft g₀) = matrixCoeff π hπ v (π g₀⁻¹ w) :=
@@ -252,6 +254,7 @@ theorem matrixCoeff_comp_mulLeft [SeparatelyContinuousMul G] (hπ : Continuous �
 with its vectors swapped, precomposed with inversion. So the span of the matrix coefficients of a
 unitary representation is stable under the star operation of `C(G, 𝕜)` followed by inversion of the
 argument. -/
+@[simp]
 theorem star_matrixCoeff [ContinuousInv G] (hπ : Continuous π) (hunitary : IsUnitary π)
     (v w : V) :
     star (matrixCoeff π hπ v w) =
