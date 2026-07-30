@@ -6,7 +6,9 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Classification
 public import Mathlib.Algebra.Group.Subgroup.Basic
+public import Mathlib.Algebra.Group.Subgroup.Actions
 public import Mathlib.Algebra.Group.Action.End
+public import Mathlib.GroupTheory.GroupAction.Defs
 
 /-!
 # The automorphism group of the complex unit disc
@@ -30,12 +32,15 @@ holomorphic — while the classification supplies the description of the underly
   of the disc is a holomorphic automorphism iff it is a standard automorphism.
 * `TauCeti.unitDiscStandardAutomorphismEquiv_symm_eq` — the standard family is closed under
   inversion, with the explicit parameters `(u, a) ↦ (u⁻¹, u • (-a))`.
-* `TauCeti.exists_unitDiscStandardAutomorphismEquiv_mul` — it is closed under composition; the
+* `TauCeti.exists_mul_eq_unitDiscStandardAutomorphismEquiv` — it is closed under composition; the
   parameters of the composite are supplied abstractly by the group structure rather than by a
   direct computation.
-* `TauCeti.exists_mem_unitDiscAut_apply_eq` — `Aut(𝔻)` acts transitively on the disc.
-* `TauCeti.mem_unitDiscRotation_iff` — the stabiliser of the origin is the rotation subgroup
-  `unitDiscRotation`, the image of `Circle` under its action on the disc.
+* `TauCeti.unitDiscAut.isPretransitive` — `Aut(𝔻)` acts transitively on the disc, as the standard
+  `MulAction.IsPretransitive` instance (with `TauCeti.exists_mem_unitDiscAut_apply_eq` the
+  corresponding statement about the ambient permutations).
+* `TauCeti.stabilizer_zero_eq_unitDiscRotation_subgroupOf` — the stabiliser of the origin is the
+  rotation subgroup `unitDiscRotation`, the image of `Circle` under its action on the disc
+  (with `TauCeti.mem_unitDiscRotation_iff` the ambient membership criterion).
 
 Transitivity together with the stabiliser description is how `Aut(𝔻)` gets used downstream:
 normalise a map at a chosen base point (transitivity), then read off the freedom that is left
@@ -71,7 +76,7 @@ def IsHolomorphicUnitDiscPerm (e : Equiv.Perm Complex.UnitDisc) : Prop :=
   ∃ f : ℂ → ℂ, DifferentiableOn ℂ f (ball (0 : ℂ) 1) ∧ ∀ z : Complex.UnitDisc, (e z : ℂ) = f z
 
 /-- A scalar representative of a self-map of the disc maps the open unit ball into itself. -/
-lemma mapsTo_ball_of_forall_coe_eq {e : Complex.UnitDisc → Complex.UnitDisc} {f : ℂ → ℂ}
+lemma mapsTo_ball_of_forall_unitDisc_coe_eq {e : Complex.UnitDisc → Complex.UnitDisc} {f : ℂ → ℂ}
     (hf : ∀ z : Complex.UnitDisc, (e z : ℂ) = f z) :
     MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
   intro w hw
@@ -89,8 +94,8 @@ def unitDiscAut : Subgroup (Equiv.Perm Complex.UnitDisc) where
     ⟨⟨id, differentiableOn_id, fun _ => rfl⟩, ⟨id, differentiableOn_id, fun _ => rfl⟩⟩
   mul_mem' := by
     rintro e₁ e₂ ⟨⟨f₁, hf₁, hf₁e⟩, ⟨g₁, hg₁, hg₁e⟩⟩ ⟨⟨f₂, hf₂, hf₂e⟩, ⟨g₂, hg₂, hg₂e⟩⟩
-    refine ⟨⟨f₁ ∘ f₂, hf₁.comp hf₂ (mapsTo_ball_of_forall_coe_eq hf₂e), fun z => ?_⟩,
-      ⟨g₂ ∘ g₁, hg₂.comp hg₁ (mapsTo_ball_of_forall_coe_eq hg₁e), fun z => ?_⟩⟩
+    refine ⟨⟨f₁ ∘ f₂, hf₁.comp hf₂ (mapsTo_ball_of_forall_unitDisc_coe_eq hf₂e), fun z => ?_⟩,
+      ⟨g₂ ∘ g₁, hg₂.comp hg₁ (mapsTo_ball_of_forall_unitDisc_coe_eq hg₁e), fun z => ?_⟩⟩
     · rw [Equiv.Perm.mul_apply, hf₁e (e₂ z), hf₂e z, Function.comp_apply]
     · rw [Equiv.Perm.mul_def, Equiv.symm_trans_apply, hg₂e (e₁.symm z), hg₁e z,
         Function.comp_apply]
@@ -150,8 +155,10 @@ theorem mem_unitDiscAut_iff {e : Equiv.Perm Complex.UnitDisc} :
       ∃ (u : Circle) (a : Complex.UnitDisc), e = unitDiscStandardAutomorphismEquiv u a := by
   refine ⟨fun he => ?_, ?_⟩
   · obtain ⟨⟨f, hf, hfe⟩, ⟨g, hg, hge⟩⟩ := he
-    have hfmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := mapsTo_ball_of_forall_coe_eq hfe
-    have hgmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := mapsTo_ball_of_forall_coe_eq hge
+    have hfmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+      mapsTo_ball_of_forall_unitDisc_coe_eq hfe
+    have hgmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+      mapsTo_ball_of_forall_unitDisc_coe_eq hge
     have hgf' : ∀ z : Complex.UnitDisc, g (f z) = z := fun z => by
       rw [← hfe z, ← hge (e z), Equiv.symm_apply_apply]
     have hfg' : ∀ z : Complex.UnitDisc, f (g z) = z := fun z => by
@@ -184,7 +191,7 @@ theorem coe_unitDiscAut :
 
 This is a corollary of the group structure and the classification: no computation with the
 composite of two Moebius factors is needed. -/
-theorem exists_unitDiscStandardAutomorphismEquiv_mul
+theorem exists_mul_eq_unitDiscStandardAutomorphismEquiv
     (u₁ u₂ : Circle) (a₁ a₂ : Complex.UnitDisc) :
     ∃ (u : Circle) (a : Complex.UnitDisc),
       unitDiscStandardAutomorphismEquiv u₁ a₁ * unitDiscStandardAutomorphismEquiv u₂ a₂ =
@@ -196,29 +203,30 @@ theorem exists_unitDiscStandardAutomorphismEquiv_mul
 /-- **`Aut(𝔻)` acts transitively on the disc.** Any point of the disc can be moved to any other
 by a holomorphic automorphism, namely the composite of the Moebius factor centred at the source
 with the inverse of the one centred at the target. -/
-theorem exists_mem_unitDiscAut_apply_eq (z w : Complex.UnitDisc) :
-    ∃ e ∈ unitDiscAut, e z = w := by
-  refine ⟨(unitDiscMoebiusEquiv w).symm * unitDiscMoebiusEquiv z, ?_, ?_⟩
-  · refine mul_mem ?_ ?_
+instance unitDiscAut.isPretransitive :
+    MulAction.IsPretransitive unitDiscAut Complex.UnitDisc where
+  exists_smul_eq z w := by
+    refine ⟨⟨(unitDiscMoebiusEquiv w).symm * unitDiscMoebiusEquiv z, mul_mem ?_ ?_⟩, ?_⟩
     · rw [← unitDiscStandardAutomorphismEquiv_one w]
       exact inv_mem (unitDiscStandardAutomorphismEquiv_mem_unitDiscAut 1 w)
     · rw [← unitDiscStandardAutomorphismEquiv_one z]
       exact unitDiscStandardAutomorphismEquiv_mem_unitDiscAut 1 z
-  · rw [Equiv.Perm.mul_apply, unitDiscMoebiusEquiv_apply, unitDiscMoebius_self,
-      unitDiscMoebiusEquiv_symm, unitDiscMoebiusEquiv_apply, unitDiscMoebius_apply_zero, neg_neg]
+    · simp
+
+/-- Transitivity of `Aut(𝔻)` on the disc, phrased for the ambient permutations. -/
+theorem exists_mem_unitDiscAut_apply_eq (z w : Complex.UnitDisc) :
+    ∃ e ∈ unitDiscAut, e z = w :=
+  let ⟨e, he⟩ := MulAction.exists_smul_eq unitDiscAut z w
+  ⟨e, e.2, he⟩
 
 /-- The rotations `z ↦ u * z`, as a subgroup of the permutations of the unit disc.  It is the
 image of `Circle` under its multiplicative action on the disc. -/
 noncomputable def unitDiscRotation : Subgroup (Equiv.Perm Complex.UnitDisc) :=
   (MulAction.toPermHom Circle Complex.UnitDisc).range
 
-lemma mem_unitDiscRotation_iff_exists {e : Equiv.Perm Complex.UnitDisc} :
-    e ∈ unitDiscRotation ↔ ∃ u : Circle, MulAction.toPerm u = e := by
-  simp [unitDiscRotation, MonoidHom.mem_range]
-
 lemma unitDiscStandardAutomorphismEquiv_zero_mem_unitDiscRotation (u : Circle) :
     unitDiscStandardAutomorphismEquiv u 0 ∈ unitDiscRotation :=
-  mem_unitDiscRotation_iff_exists.2 ⟨u, (unitDiscStandardAutomorphismEquiv_zero u).symm⟩
+  MonoidHom.mem_range.2 ⟨u, (unitDiscStandardAutomorphismEquiv_zero u).symm⟩
 
 /-- **The stabiliser of the origin in `Aut(𝔻)` is the rotation group.** A permutation of the disc
 is a rotation exactly when it is a holomorphic automorphism fixing the origin.
@@ -230,22 +238,27 @@ theorem mem_unitDiscRotation_iff {e : Equiv.Perm Complex.UnitDisc} :
     e ∈ unitDiscRotation ↔ e ∈ unitDiscAut ∧ e 0 = 0 := by
   constructor
   · intro he
-    obtain ⟨u, rfl⟩ := mem_unitDiscRotation_iff_exists.1 he
-    refine ⟨?_, by simp⟩
-    rw [← unitDiscStandardAutomorphismEquiv_zero u]
-    exact unitDiscStandardAutomorphismEquiv_mem_unitDiscAut u 0
+    obtain ⟨u, rfl⟩ := MonoidHom.mem_range.1 he
+    rw [MulAction.toPermHom_apply, ← unitDiscStandardAutomorphismEquiv_zero u]
+    exact ⟨unitDiscStandardAutomorphismEquiv_mem_unitDiscAut u 0, by simp⟩
   · rintro ⟨he, h0⟩
     obtain ⟨u, a, rfl⟩ := mem_unitDiscAut_iff.1 he
-    have ha : a = 0 := by
-      rw [unitDiscStandardAutomorphismEquiv_apply_zero, ← Complex.UnitDisc.coe_eq_zero,
-        Complex.UnitDisc.coe_circle_smul, Complex.UnitDisc.coe_neg, mul_eq_zero, neg_eq_zero,
-        Complex.UnitDisc.coe_eq_zero] at h0
-      exact h0.resolve_left u.coe_ne_zero
+    have ha : a = 0 := ((unitDiscStandardAutomorphismEquiv_eq_zero_iff u a 0).1 h0).symm
     subst ha
     exact unitDiscStandardAutomorphismEquiv_zero_mem_unitDiscRotation u
 
 /-- The rotations are holomorphic automorphisms of the disc. -/
 theorem unitDiscRotation_le_unitDiscAut : unitDiscRotation ≤ unitDiscAut :=
   fun _ he => (mem_unitDiscRotation_iff.1 he).1
+
+/-- **The stabiliser of the origin in `Aut(𝔻)` is the rotation group**, as subgroups of `Aut(𝔻)`
+itself: the rotations sit inside `Aut(𝔻)` as `unitDiscRotation.subgroupOf unitDiscAut`, and that
+subgroup is exactly `MulAction.stabilizer unitDiscAut 0`. -/
+theorem stabilizer_zero_eq_unitDiscRotation_subgroupOf :
+    MulAction.stabilizer unitDiscAut (0 : Complex.UnitDisc) =
+      unitDiscRotation.subgroupOf unitDiscAut := by
+  ext e
+  rw [MulAction.mem_stabilizer_iff, Subgroup.mem_subgroupOf, mem_unitDiscRotation_iff,
+    and_iff_right e.2, Subgroup.smul_def, Equiv.Perm.smul_def]
 
 end TauCeti
