@@ -25,14 +25,14 @@ The main results are `nat_card_centralizer_eq_zPart`, the multiplicative class-s
 `card_partition_mul_zPart` with its transported form `card_partition_parts_mul_zPart_fin`, and the
 normalisation `sum_factorial_div_zPart`, which says the class sizes add up to `n !`.  These are the
 weights in the orthogonality relations for the characters of the symmetric group, where the class
-of cycle type `μ` is weighted by `1 / zPart μ`.
+with partition `μ` is weighted by `1 / zPart μ`.
 
 Mathlib counts permutations of a given *cycle type*, a multiset recording only the cycles of length
 at least two (`Equiv.Perm.nat_card_centralizer`, `Equiv.Perm.card_isConj_mul_eq`).  The translation
 to partitions, which record the fixed points as parts equal to one, is `zPart_partition`.
 
 Partitions of `Fintype.card α` and of `n` are different types even when `Fintype.card α = n`, so
-the statements about `Equiv.Perm (Fin n)` describe the permutations of cycle type `μ` by the
+the statements about `Equiv.Perm (Fin n)` describe the permutations with partition `μ` by the
 equality `σ.partition.parts = μ.parts` of the underlying multisets, which determines the partition.
 
 ## References
@@ -72,6 +72,12 @@ theorem zPart_eq_prod_of_subset {n : ℕ} (μ : n.Partition) {s : Finset ℕ}
   refine Finset.prod_subset hs fun i _ hi => ?_
   rw [Multiset.count_eq_zero_of_notMem (by simpa using hi)]
   simp
+
+/-- The defining equation of `zPart`: the product of `i ^ mᵢ * mᵢ !` over the parts `i` of `μ`,
+the case `s = μ.parts.toFinset` of `zPart_eq_prod_of_subset`. -/
+theorem zPart_def {n : ℕ} (μ : n.Partition) :
+    zPart μ = ∏ i ∈ μ.parts.toFinset, i ^ μ.parts.count i * (μ.parts.count i)! :=
+  zPart_eq_prod_of_subset μ Finset.Subset.rfl
 
 /-- The weight of a partition is positive; the parts of a partition are positive. -/
 theorem zPart_pos {n : ℕ} (μ : n.Partition) : 0 < zPart μ := by
@@ -155,7 +161,7 @@ theorem card_partition_parts_mul_zPart {n : ℕ} (h : Fintype.card α = n) (μ :
   exact card_partition_mul_zPart μ
 
 /-- The class-size formula for `Equiv.Perm (Fin n)`, the form the roadmap states: the permutations
-of cycle type `μ` number `n ! / zPart μ`. -/
+with partition `μ` number `n ! / zPart μ`. -/
 theorem card_partition_parts_mul_zPart_fin (n : ℕ) (μ : n.Partition) :
     Nat.card {σ : Equiv.Perm (Fin n) // σ.partition.parts = μ.parts} * zPart μ = n ! :=
   card_partition_parts_mul_zPart (Fintype.card_fin n) μ
@@ -170,15 +176,18 @@ theorem card_partition_parts_fin (n : ℕ) (μ : n.Partition) :
   (Nat.div_eq_of_eq_mul_left (zPart_pos μ)
     (card_partition_parts_mul_zPart_fin n μ).symm).symm
 
-/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)`. -/
-theorem card_partition_parts_indiscrete_fin {n : ℕ} (hn : n ≠ 0) :
+/-- There are `(n - 1)!` `n`-cycles in `Equiv.Perm (Fin n)`; for `n = 0` both sides are `1`. -/
+theorem card_partition_parts_indiscrete_fin (n : ℕ) :
     Nat.card {σ : Equiv.Perm (Fin n) //
       σ.partition.parts = (Nat.Partition.indiscrete n).parts} = (n - 1)! := by
-  rw [card_partition_parts_fin, zPart_indiscrete hn]
-  exact Nat.div_eq_of_eq_mul_left (Nat.pos_of_ne_zero hn)
-    (by rw [mul_comm, Nat.mul_factorial_pred hn])
+  rw [card_partition_parts_fin]
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp [zPart_def]
+  · rw [zPart_indiscrete hn]
+    exact Nat.div_eq_of_eq_mul_left (Nat.pos_of_ne_zero hn)
+      (by rw [mul_comm, Nat.mul_factorial_pred hn])
 
-/-- The permutations of a finite type are partitioned by their cycle types. -/
+/-- The permutations of a finite type are partitioned by their partitions. -/
 theorem sum_card_partition (α : Type*) [Fintype α] [DecidableEq α] :
     ∑ μ : (Fintype.card α).Partition, Nat.card {σ : Equiv.Perm α // σ.partition = μ} =
       (Fintype.card α)! := by
@@ -190,20 +199,19 @@ theorem sum_card_partition (α : Type*) [Fintype α] [DecidableEq α] :
     Fintype.card_perm] at h
   simpa [Nat.card_eq_fintype_card] using h
 
+/-- The fibre decomposition transported along an equality `Fintype.card α = n`. -/
+theorem sum_card_partition_parts {n : ℕ} (α : Type*) [Fintype α] [DecidableEq α]
+    (h : Fintype.card α = n) :
+    ∑ μ : n.Partition, Nat.card {σ : Equiv.Perm α // σ.partition.parts = μ.parts} = n ! := by
+  subst h
+  refine Eq.trans (Finset.sum_congr rfl fun μ _ => ?_) (sum_card_partition α)
+  exact Nat.card_congr <| Equiv.subtypeEquivRight fun σ =>
+    ⟨Nat.Partition.ext, fun hσ => by rw [hσ]⟩
+
 /-- The class sizes add up to the order of the group: the identity `∑_μ 1 / z_μ = 1` normalising
 the orthogonality weights. -/
-theorem sum_factorial_div_zPart {n : ℕ} (α : Type*) [Fintype α] (h : Fintype.card α = n) :
-    ∑ μ : n.Partition, n ! / zPart μ = n ! := by
-  classical
-  subst h
-  calc ∑ μ : (Fintype.card α).Partition, (Fintype.card α)! / zPart μ
-      = ∑ μ : (Fintype.card α).Partition, Nat.card {σ : Equiv.Perm α // σ.partition = μ} :=
-        Finset.sum_congr rfl fun μ _ =>
-          Nat.div_eq_of_eq_mul_left (zPart_pos μ) (card_partition_mul_zPart μ).symm
-    _ = (Fintype.card α)! := sum_card_partition α
-
-/-- The class sizes of `Equiv.Perm (Fin n)` add up to `n !`. -/
-theorem sum_factorial_div_zPart_fin (n : ℕ) : ∑ μ : n.Partition, n ! / zPart μ = n ! :=
-  sum_factorial_div_zPart (Fin n) (Fintype.card_fin n)
+theorem sum_factorial_div_zPart (n : ℕ) : ∑ μ : n.Partition, n ! / zPart μ = n ! :=
+  Eq.trans (Finset.sum_congr rfl fun μ _ => (card_partition_parts_fin n μ).symm)
+    (sum_card_partition_parts (Fin n) (Fintype.card_fin n))
 
 end TauCeti
