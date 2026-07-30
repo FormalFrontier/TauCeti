@@ -8,7 +8,6 @@ module
 public import TauCeti.Combinatorics.Enumerative.Partition.Basic
 public import Mathlib.Data.Finite.Perm
 public import Mathlib.GroupTheory.Index
-public import Mathlib.GroupTheory.Perm.DomMulAct
 public import TauCeti.GroupTheory.Perm.FiberSubgroup
 
 /-!

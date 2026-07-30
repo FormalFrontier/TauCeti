@@ -12,8 +12,8 @@ public import Mathlib.GroupTheory.Perm.DomMulAct
 
 Given `f : α → ι`, the permutations `σ` of `α` with `f (σ a) = f a` for every `a` form a subgroup
 of `Equiv.Perm α`, here called `TauCeti.fiberSubgroup f`.  This file records that subgroup, the
-behaviour of the construction under pairing two maps, the criterion for it to be trivial, and the
-isomorphism restricting a fiber-preserving permutation to each fiber,
+behaviour of the construction under conjugation and pairing two maps, the criterion for it to be
+trivial, and the isomorphism restricting a fiber-preserving permutation to each fiber,
 
 `fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i}`,
 

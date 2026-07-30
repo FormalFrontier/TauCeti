@@ -151,7 +151,7 @@ noncomputable def youngSubgroupConjMulEquiv {μ : YoungDiagram} (t : YoungTablea
 
 /-- The subgroup equivalence acts by conjugation with `rowYoungConjugator t`. -/
 @[simp]
-theorem youngSubgroupConjMulEquiv_coe_apply {μ : YoungDiagram} (t : YoungTableau μ)
+theorem youngSubgroupConjMulEquiv_apply_coe {μ : YoungDiagram} (t : YoungTableau μ)
     (σ : youngSubgroup ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩)) :
     ((youngSubgroupConjMulEquiv t σ : rowSubgroup t) : Equiv.Perm (Fin μ.card)) =
       rowYoungConjugator t * σ * (rowYoungConjugator t)⁻¹ :=
