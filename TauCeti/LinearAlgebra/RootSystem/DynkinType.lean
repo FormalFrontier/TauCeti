@@ -6,15 +6,16 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
+import Mathlib.Logic.Equiv.Pairwise
 
-@[expose] public section
+public section
 
 /-!
 # Dynkin types
 
 The Cartan-Killing classification says that an irreducible reduced crystallographic finite root
-system is described by one of a short list of combinatorial types. This file introduces that list as
-a plain enumeration `TauCeti.DynkinType`, equips it with a rank, a validity predicate carving out
+system is described by one of a short list of combinatorial types. This file introduces those types
+as a plain enumeration `TauCeti.DynkinType`, equips it with a rank, a validity predicate carving out
 the rank ranges in which the types are pairwise distinct and irreducible, and attaches to each type
 its standard integer Cartan matrix, taken from Mathlib's `CartanMatrix` family. The predicate
 `TauCeti.HasCartanType` then says that the Cartan matrix of a base agrees with the standard matrix
@@ -48,10 +49,15 @@ their standard Cartan matrices are transposes of one another
   and nonpositive off-diagonal entries.
 * `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_comm`: their zero pattern is symmetric, so each is
   a generalized Cartan matrix.
-* `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: among valid types, the simply-laced Cartan
-  matrices are exactly those of types `A`, `D` and `E`.
-* `TauCeti.HasCartanType.isSimplyLaced_iff`: a base of valid type `t` is simply laced exactly when
-  `t` is.
+* `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: the standard Cartan matrix of a type is
+  simply laced exactly when the type is or has rank at most one; the second alternative covers
+  precisely the degenerate types `B 0`, `B 1`, `C 0` and `C 1`, whose matrices have no off-diagonal
+  entries to constrain.
+* `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff_of_valid`: among valid types the simply-laced
+  Cartan matrices are therefore exactly those of types `A`, `D` and `E`.
+* `TauCeti.HasCartanType.isSimplyLaced_iff` and
+  `TauCeti.HasCartanType.isSimplyLaced_iff_of_valid`: both statements transferred to a base of
+  Cartan type `t`.
 
 ## References
 
@@ -66,18 +72,21 @@ namespace TauCeti
 
 open Matrix
 
+namespace Matrix
+
 /-- Transporting simple-lacedness of a square matrix along a relabelling of its index type. -/
 lemma isSimplyLaced_congr {α β : Type*} {A : Matrix α α ℤ} {B : Matrix β β ℤ} (e : α ≃ β)
     (he : ∀ i j, A i j = B (e i) (e j)) : A.IsSimplyLaced ↔ B.IsSimplyLaced := by
-  constructor
-  · intro h i j hij
-    have hij' : e.symm i ≠ e.symm j := fun hh ↦ hij (by simpa using congrArg e hh)
-    simpa only [he, Equiv.apply_symm_apply] using h hij'
-  · intro h i j hij
-    simpa only [he] using h (e.injective.ne hij)
+  unfold _root_.Matrix.IsSimplyLaced
+  simp only [he]
+  exact EquivLike.pairwise_comp_iff e fun i j ↦ B i j = 0 ∨ B i j = -1
 
-/-- The finite list of Dynkin types. The rank ranges on which these are the types occurring in the
-Cartan-Killing classification are carried by `TauCeti.DynkinType.Valid`, not by the constructors. -/
+end Matrix
+
+/-- The Dynkin types: the four classical families `Aₙ`, `Bₙ`, `Cₙ`, `Dₙ`, whose constructors accept
+every natural number, together with the five exceptional types. The rank ranges on which these are
+the types occurring in the Cartan-Killing classification are carried by
+`TauCeti.DynkinType.Valid`, not by the constructors. -/
 inductive DynkinType where
   /-- Type `Aₙ`, the type of `slₙ₊₁`. -/
   | A (n : ℕ)
@@ -102,8 +111,8 @@ inductive DynkinType where
 namespace DynkinType
 
 /-- The rank of a Dynkin type: the number of simple roots, equivalently the size of its Cartan
-matrix. -/
-def rank : DynkinType → ℕ
+matrix. This is exposed because it appears in the *type* of `TauCeti.DynkinType.cartanMatrix`. -/
+@[expose] def rank : DynkinType → ℕ
   | .A n | .B n | .C n | .D n => n
   | .E6 => 6
   | .E7 => 7
@@ -143,6 +152,11 @@ instance : DecidablePred Valid := fun t ↦
 @[simp] lemma valid_B {n : ℕ} : (B n).Valid ↔ 2 ≤ n := Iff.rfl
 @[simp] lemma valid_C {n : ℕ} : (C n).Valid ↔ 3 ≤ n := Iff.rfl
 @[simp] lemma valid_D {n : ℕ} : (D n).Valid ↔ 4 ≤ n := Iff.rfl
+@[simp] lemma valid_E6 : E6.Valid := trivial
+@[simp] lemma valid_E7 : E7.Valid := trivial
+@[simp] lemma valid_E8 : E8.Valid := trivial
+@[simp] lemma valid_F4 : F4.Valid := trivial
+@[simp] lemma valid_G2 : G2.Valid := trivial
 
 /-- A valid Dynkin type has at least one simple root. -/
 lemma rank_pos {t : DynkinType} (ht : t.Valid) : 0 < t.rank := by
@@ -154,8 +168,8 @@ lemma rank_pos {t : DynkinType} (ht : t.Valid) : 0 < t.rank := by
   all_goals simp
 
 /-- The simply-laced Dynkin types are those all of whose edges are single, namely `A`, `D` and the
-exceptional `E` types; equivalently (`isSimplyLaced_cartanMatrix_iff`) those whose standard Cartan
-matrix has all off-diagonal entries `0` or `-1`. -/
+exceptional `E` types; equivalently (`isSimplyLaced_cartanMatrix_iff_of_valid`) those valid types
+whose standard Cartan matrix has all off-diagonal entries `0` or `-1`. -/
 def IsSimplyLaced : DynkinType → Prop
   | .A _ | .D _ | .E6 | .E7 | .E8 => True
   | .B _ | .C _ | .F4 | .G2 => False
@@ -165,10 +179,21 @@ instance : DecidablePred IsSimplyLaced := fun t ↦
   | .A _ | .D _ | .E6 | .E7 | .E8 => inferInstanceAs (Decidable True)
   | .B _ | .C _ | .F4 | .G2 => inferInstanceAs (Decidable False)
 
+@[simp] lemma isSimplyLaced_A (n : ℕ) : (A n).IsSimplyLaced := trivial
+@[simp] lemma isSimplyLaced_D (n : ℕ) : (D n).IsSimplyLaced := trivial
+@[simp] lemma isSimplyLaced_E6 : E6.IsSimplyLaced := trivial
+@[simp] lemma isSimplyLaced_E7 : E7.IsSimplyLaced := trivial
+@[simp] lemma isSimplyLaced_E8 : E8.IsSimplyLaced := trivial
+@[simp] lemma not_isSimplyLaced_B (n : ℕ) : ¬ (B n).IsSimplyLaced := not_false
+@[simp] lemma not_isSimplyLaced_C (n : ℕ) : ¬ (C n).IsSimplyLaced := not_false
+@[simp] lemma not_isSimplyLaced_F4 : ¬ F4.IsSimplyLaced := not_false
+@[simp] lemma not_isSimplyLaced_G2 : ¬ G2.IsSimplyLaced := not_false
+
 /-- The standard integer Cartan matrix of a Dynkin type, indexed by `Fin t.rank`. The classical
 families and the exceptional matrices are Mathlib's `CartanMatrix.A`, `.B`, `.C`, `.D`, `.E₆`,
-`.E₇`, `.E₈`, `.F₄` and `.G₂`, whose conventions this enumeration adopts. -/
-def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
+`.E₇`, `.E₈`, `.F₄` and `.G₂`, whose conventions this enumeration adopts. This is exposed, like
+`TauCeti.DynkinType.rank`, so that the characterization lemmas below reduce downstream. -/
+@[expose] def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | .A n => CartanMatrix.A n
   | .B n => CartanMatrix.B n
   | .C n => CartanMatrix.C n
@@ -240,14 +265,6 @@ lemma cartanMatrix_B_apply_eq_neg_two {n : ℕ} (hn : 2 ≤ n) (i j : Fin n)
   simp only [CartanMatrix.B, Matrix.of_apply, if_neg hij]
   rw [if_pos (by omega : (i : ℕ) + 1 = (j : ℕ)), if_pos (by omega : (j : ℕ) = n - 1)]
 
-/-- The double edge of type `Cₙ`, pointing the other way from that of type `Bₙ`. -/
-lemma cartanMatrix_C_apply_eq_neg_two {n : ℕ} (hn : 2 ≤ n) (i j : Fin n)
-    (hi : (i : ℕ) = n - 1) (hj : (j : ℕ) = n - 2) : CartanMatrix.C n i j = -2 := by
-  have hij : i ≠ j := by rintro rfl; omega
-  simp only [CartanMatrix.C, Matrix.of_apply, if_neg hij]
-  rw [if_neg (by omega : ¬ (i : ℕ) + 1 = (j : ℕ)), if_pos (by omega : (j : ℕ) + 1 = (i : ℕ)),
-    if_pos (by omega : (i : ℕ) = n - 1)]
-
 private lemma not_isSimplyLaced_cartanMatrix_B {n : ℕ} (hn : 2 ≤ n) :
     ¬ (CartanMatrix.B n).IsSimplyLaced := by
   intro h
@@ -256,30 +273,44 @@ private lemma not_isSimplyLaced_cartanMatrix_B {n : ℕ} (hn : 2 ≤ n) :
   rcases h hij with h1 | h1 <;>
     rw [cartanMatrix_B_apply_eq_neg_two hn _ _ rfl rfl] at h1 <;> omega
 
-private lemma not_isSimplyLaced_cartanMatrix_C {n : ℕ} (hn : 2 ≤ n) :
-    ¬ (CartanMatrix.C n).IsSimplyLaced := by
-  intro h
-  have hij : (⟨n - 1, by omega⟩ : Fin n) ≠ ⟨n - 2, by omega⟩ := by
-    simp only [ne_eq, Fin.mk.injEq]; omega
-  rcases h hij with h1 | h1 <;>
-    rw [cartanMatrix_C_apply_eq_neg_two hn _ _ rfl rfl] at h1 <;> omega
+/-- **A standard Cartan matrix is simply laced exactly when its type is, or the type has rank at
+most one.** The second alternative is not redundant: it holds precisely for `B 0`, `B 1`, `C 0` and
+`C 1`, whose matrices have no off-diagonal entries at all and so are vacuously simply laced even
+though the types are not. Excluding those four is all that
+`isSimplyLaced_cartanMatrix_iff_of_valid` needs. -/
+theorem isSimplyLaced_cartanMatrix_iff (t : DynkinType) :
+    t.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced ∨ t.rank ≤ 1 := by
+  -- A matrix with at most one index has no off-diagonal entry to constrain.
+  have subsingleton_case : ∀ {m : ℕ}, m ≤ 1 → ∀ X : Matrix (Fin m) (Fin m) ℤ, X.IsSimplyLaced := by
+    intro m hm X i j hij
+    have : Subsingleton (Fin m) := Fin.subsingleton_iff_le_one.mpr hm
+    exact absurd (Subsingleton.elim i j) hij
+  cases t
+  case A n => exact iff_of_true (CartanMatrix.isSimplyLaced_A n) (Or.inl trivial)
+  case D n => exact iff_of_true (CartanMatrix.isSimplyLaced_D n) (Or.inl trivial)
+  case E6 => exact iff_of_true CartanMatrix.isSimplyLaced_E₆ (Or.inl trivial)
+  case E7 => exact iff_of_true CartanMatrix.isSimplyLaced_E₇ (Or.inl trivial)
+  case E8 => exact iff_of_true CartanMatrix.isSimplyLaced_E₈ (Or.inl trivial)
+  case F4 => exact iff_of_false CartanMatrix.not_isSimplyLaced_F₄ (by simp)
+  case G2 => exact iff_of_false CartanMatrix.not_isSimplyLaced_G₂ (by simp)
+  case B n =>
+    rcases le_or_gt n 1 with hn | hn
+    · exact iff_of_true (subsingleton_case hn _) (Or.inr (by simpa using hn))
+    · exact iff_of_false (not_isSimplyLaced_cartanMatrix_B hn) (by simp; omega)
+  case C n =>
+    rcases le_or_gt n 1 with hn | hn
+    · exact iff_of_true (subsingleton_case hn _) (Or.inr (by simpa using hn))
+    · have hC : ¬ (CartanMatrix.C n).IsSimplyLaced := by
+        rw [← CartanMatrix.B_transpose, Matrix.isSimplyLaced_transpose]
+        exact not_isSimplyLaced_cartanMatrix_B hn
+      exact iff_of_false hC (by simp; omega)
 
 /-- **Among valid Dynkin types the simply-laced Cartan matrices are exactly those of types `A`, `D`
 and `E`.** Validity is what rules out `B 1 = A 1`, whose matrix is simply laced. -/
-theorem isSimplyLaced_cartanMatrix_iff {t : DynkinType} (ht : t.Valid) :
+theorem isSimplyLaced_cartanMatrix_iff_of_valid {t : DynkinType} (ht : t.Valid) :
     t.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced := by
-  cases t
-  case A n => exact iff_of_true (CartanMatrix.isSimplyLaced_A n) trivial
-  case D n => exact iff_of_true (CartanMatrix.isSimplyLaced_D n) trivial
-  case E6 => exact iff_of_true CartanMatrix.isSimplyLaced_E₆ trivial
-  case E7 => exact iff_of_true CartanMatrix.isSimplyLaced_E₇ trivial
-  case E8 => exact iff_of_true CartanMatrix.isSimplyLaced_E₈ trivial
-  case B n => exact iff_of_false (not_isSimplyLaced_cartanMatrix_B (valid_B.mp ht)) not_false
-  case C n =>
-    have : 3 ≤ n := valid_C.mp ht
-    exact iff_of_false (not_isSimplyLaced_cartanMatrix_C (by omega)) not_false
-  case F4 => exact iff_of_false CartanMatrix.not_isSimplyLaced_F₄ not_false
-  case G2 => exact iff_of_false CartanMatrix.not_isSimplyLaced_G₂ not_false
+  refine (isSimplyLaced_cartanMatrix_iff t).trans (or_iff_left_of_imp fun h ↦ ?_)
+  cases t <;> simp_all <;> omega
 
 /-- A simply-laced Dynkin type has a symmetric Cartan matrix. -/
 lemma cartanMatrix_isSymm_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) :
@@ -323,13 +354,20 @@ lemma HasCartanType.card_support {b : P.Base} {t : DynkinType} (h : HasCartanTyp
   obtain ⟨e, -⟩ := h
   simpa using Fintype.card_congr e
 
+/-- **A base of Cartan type `t` is simply laced exactly when `t` is, or `t` has rank at most one.**
+The second alternative is only reachable for the degenerate types `B 0`, `B 1`, `C 0` and `C 1`. -/
+theorem HasCartanType.isSimplyLaced_iff {b : P.Base} {t : DynkinType} (h : HasCartanType P b t) :
+    b.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced ∨ t.rank ≤ 1 := by
+  obtain ⟨e, he⟩ := h
+  rw [Matrix.isSimplyLaced_congr e he, DynkinType.isSimplyLaced_cartanMatrix_iff]
+
 /-- **A base of valid Cartan type `t` is simply laced exactly when `t` is**, that is, exactly when
 `t` is one of `A`, `D`, `E₆`, `E₇`, `E₈`. -/
-theorem HasCartanType.isSimplyLaced_iff {b : P.Base} {t : DynkinType}
+theorem HasCartanType.isSimplyLaced_iff_of_valid {b : P.Base} {t : DynkinType}
     (h : HasCartanType P b t) (ht : t.Valid) :
     b.cartanMatrix.IsSimplyLaced ↔ t.IsSimplyLaced := by
   obtain ⟨e, he⟩ := h
-  rw [isSimplyLaced_congr e he, DynkinType.isSimplyLaced_cartanMatrix_iff ht]
+  rw [Matrix.isSimplyLaced_congr e he, DynkinType.isSimplyLaced_cartanMatrix_iff_of_valid ht]
 
 end RootPairing
 
