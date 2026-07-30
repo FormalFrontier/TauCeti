@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Analysis.Complex.IsolatedZero
 public import TauCeti.Analysis.Contour.Residue.Cycle
 public import TauCeti.Analysis.Contour.Residue.LogDeriv
 
@@ -35,11 +36,14 @@ point of `S` it is meromorphic because `f` is.
 
 Null-homology is load-bearing, as it already is for the residue theorem: on a domain with a hole
 a loop that merely avoids the zeros and poles can still see the function's behaviour in the hole,
-and `n_w(γ) = 0` for every `w ∉ U` is exactly the hypothesis that rules this out. Unlike the
-circle statement, no pointwise "wrong values" of `f` are tolerated: a circle integral does not
-see a codiscrete change of the integrand, so `argumentPrinciple` may pass to the meromorphic
-normal form of `f`, whereas the image of a general curve is one-dimensional and a single
-misplaced value on it changes the integral. Accordingly the hypotheses here ask for genuine
+and `n_w(γ) = 0` for every `w ∉ U` is exactly the hypothesis that rules this out.
+
+Unlike the circle statement, no pointwise "wrong values" of `f` are tolerated. The circle proof
+may replace `f` by its meromorphic normal form because a circle integral is unchanged by a change
+of integrand on a set codiscrete within the sphere
+(`circleIntegral.circleIntegral_congr_codiscreteWithin`); no such congruence is available for a
+general piecewise-`C¹` contour, and the null-homologous residue theorem used here asks for honest
+differentiability of `logDeriv f` on `U ∖ S`. Accordingly the hypotheses here ask for genuine
 analyticity of `f` off `S`.
 
 ## Main results
@@ -53,9 +57,6 @@ analyticity of `f` off `S`.
   specialisation: for `f` analytic on `U` whose zeros lie in a finite `S`,
   `∮_γ f'/f = 2πi · ∑_{z ∈ S} n_z(γ) · analyticOrderNatAt f z`, the winding-weighted count of the
   zeros of `f` with multiplicity.
-* `TauCeti.Contour.analyticOrderAt_ne_top_of_zeros_subset` — the finiteness of the order that the
-  zero-counting form needs: a function whose zeros in an open set lie in a finite set never
-  vanishes identically near a point of that set.
 
 This is the arbitrary-cycle upgrade of a Layer-2 target of the contour-integration roadmap; like
 the residue theorem it rests on it, it is a Layer-3 statement, since its hypotheses and its proof
@@ -77,35 +78,11 @@ theorem is applied to `logDeriv f`).
 
 public section
 
-open Filter Set Topology
+open Set
 
 open scoped Interval
 
 namespace TauCeti.Contour
-
-/-- **A function whose zeros are confined to a finite set has finite order.** If every zero of `f`
-in an open set `U` lies in a finite set `S`, then `f` does not vanish identically near any point of
-`U`, so `analyticOrderAt f z ≠ ⊤` there.
-
-The point `z` itself is allowed to be a zero — indeed to lie in `S` — since vanishing identically
-near `z` would force a whole punctured neighbourhood of zeros, of which all but finitely many are
-outside `S`. -/
-theorem analyticOrderAt_ne_top_of_zeros_subset {f : ℂ → ℂ} {U : Set ℂ} {S : Finset ℂ} {z : ℂ}
-    (hU : IsOpen U) (hz : z ∈ U) (hzeros : ∀ w ∈ U, f w = 0 → w ∈ S) :
-    analyticOrderAt f z ≠ ⊤ := by
-  intro htop
-  -- Off `z` itself, `S` is a closed set missing `z`, so its complement is a neighbourhood of `z`.
-  have hcompl : ((S : Set ℂ) \ {z})ᶜ ∈ 𝓝 z :=
-    (S.finite_toSet.sdiff).isClosed.compl_mem_nhds (by simp)
-  -- A punctured neighbourhood of `z` would then consist of zeros of `f` lying outside `S`.
-  have hfalse : ∀ᶠ w in 𝓝[≠] z, False := by
-    filter_upwards [self_mem_nhdsWithin,
-      nhdsWithin_le_nhds (analyticOrderAt_eq_top.mp htop),
-      nhdsWithin_le_nhds (hU.mem_nhds hz), nhdsWithin_le_nhds hcompl] with w hwne hw0 hwU hwS
-    exact hwS ⟨hzeros w hwU hw0, hwne⟩
-  -- A punctured neighbourhood in `ℂ` is nonempty, so that is absurd.
-  obtain ⟨_, hcontra⟩ := hfalse.exists
-  exact hcontra
 
 /-- **The argument principle for an arbitrary null-homologous cycle.** Let `U` be open, `S` a
 finite set collecting every zero and pole of `f` in `U`: `f` is analytic and non-vanishing at each
@@ -194,8 +171,8 @@ winding number of `γ` about it. This is the pole-free specialisation of
 `TauCeti.Contour.argumentPrinciple_nullHomologous`, with the orders read off by
 `analyticOrderNatAt` instead of by a caller-supplied `ord`.
 
-The zeros are automatically of finite order (`analyticOrderAt_ne_top_of_zeros_subset`): confining
-them to a finite set already rules out `f` vanishing identically near a point of `U`. -/
+The zeros are automatically of finite order (`TauCeti.analyticOrderAt_ne_top_of_zeros_subset`):
+confining them to a finite set already rules out `f` vanishing identically near a point of `U`. -/
 theorem argumentPrinciple_nullHomologous_of_analyticOnNhd {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : AnalyticOnNhd ℂ f U) (hzeros : ∀ z ∈ U, f z = 0 → z ∈ S)
     {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b)
