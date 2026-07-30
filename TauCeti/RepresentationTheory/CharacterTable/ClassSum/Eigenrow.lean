@@ -21,9 +21,9 @@ the class of `1` — in the row/`ᵥ*` convention pinned by `TauCeti.classMultMa
 Everything rests on the **coordinate identity** `K_{Cᵢ} K_{Cⱼ} = ∑ₖ aᵢⱼₖ K_{Cₖ}` inside the centre,
 which is `TauCeti.classSumCenter_mul`.
 
-* `TauCeti.IsClassEigenrow v` says `v ᵥ* Mᵢ = v Cᵢ • v` for every class `Cᵢ`, and
-  `TauCeti.isClassEigenrow_iff` unwinds it to the scalar identity
-  `∑ₖ aᵢⱼₖ v Cₖ = v Cᵢ * v Cⱼ`.
+* `TauCeti.IsClassEigenrow v` says `v ᵥ* Mᵢ = v Cᵢ • v` for every class `Cᵢ`
+  (`TauCeti.isClassEigenrow_def`), and `TauCeti.isClassEigenrow_iff` unwinds it to the scalar
+  identity `∑ₖ aᵢⱼₖ v Cₖ = v Cᵢ * v Cⱼ`.
 * `TauCeti.isClassEigenrow_of_forall_exists_smul`: for a normalized `v` the eigenvalues need not be
   guessed — being a common left eigenvector at all forces them to be the values of `v`.
 * `TauCeti.isClassEigenrow_classSumRow`: the values of an algebra homomorphism
@@ -98,6 +98,13 @@ be needed for the column/`*ᵥ` convention. -/
 def IsClassEigenrow (v : ConjClasses G → k) : Prop :=
   ∀ Cᵢ : ConjClasses G,
     v ᵥ* (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) = v Cᵢ • v
+
+/-- `TauCeti.IsClassEigenrow` restated in its defining vector form, for consumers that want the
+literal eigenvector equation without unfolding the definition. -/
+theorem isClassEigenrow_def (v : ConjClasses G → k) :
+    IsClassEigenrow v ↔ ∀ Cᵢ : ConjClasses G,
+      v ᵥ* (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) = v Cᵢ • v :=
+  Iff.rfl
 
 /-- Acting with a class-multiplication matrix on a row vector from the left contracts the row
 against the structure constants. -/
