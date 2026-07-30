@@ -16,8 +16,7 @@ torus used to compute characters and weight spaces.
 
 ## Main definitions
 
-* `TauCeti.diagGL` is the diagonal matrix with a prescribed family of unit entries.
-* `TauCeti.diagGLHom` bundles this construction as a group homomorphism.
+* `TauCeti.diagGL` embeds a family of units as an invertible diagonal matrix.
 
 ## References
 
@@ -37,13 +36,9 @@ namespace TauCeti
 variable {k : Type u} [CommRing k] {n : ℕ}
 
 /-- Coordinatewise units embed in `GL n k` as diagonal matrices. -/
-def diagGLHom : (Fin n → kˣ) →* GL (Fin n) k :=
+def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
   (Units.map (Matrix.diagonalRingHom (Fin n) k).toMonoidHom).comp
     (MulEquiv.piUnits).symm.toMonoidHom
-
-/-- The invertible diagonal matrix with diagonal entries `t i`. -/
-def diagGL (t : Fin n → kˣ) : GL (Fin n) k :=
-  diagGLHom t
 
 /-- The matrix underlying `diagGL t` is the diagonal matrix with entries `t i`. -/
 @[simp]
@@ -63,25 +58,19 @@ theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
 @[simp]
 theorem diagGL_one :
     diagGL (1 : Fin n → kˣ) = 1 := by
-  exact map_one diagGLHom
+  exact map_one diagGL
 
 /-- The diagonal construction preserves multiplication. -/
 @[simp]
 theorem diagGL_mul (t s : Fin n → kˣ) :
     diagGL (t * s) = diagGL t * diagGL s := by
-  exact map_mul diagGLHom t s
-
-/-- Applying the diagonal embedding gives `diagGL`. -/
-@[simp]
-theorem diagGLHom_apply (t : Fin n → kˣ) :
-    diagGLHom t = diagGL t :=
-  (rfl)
+  exact map_mul diagGL t s
 
 /-- The diagonal construction preserves inversion. -/
 @[simp]
 theorem diagGL_inv (t : Fin n → kˣ) :
     diagGL t⁻¹ = (diagGL t)⁻¹ := by
-  rw [← diagGLHom_apply, ← diagGLHom_apply, map_inv]
+  exact map_inv diagGL t
 
 /-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
 @[simp]
@@ -99,12 +88,14 @@ theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
   simpa using this
 
 /-- The standard representation acts at `diagGL t` by coordinatewise multiplication. -/
+@[simp]
 theorem stdRep_diagGL_apply (t : Fin n → kˣ) (v : Fin n → k) (i : Fin n) :
     stdRep k n (diagGL t) v i = (t i : k) * v i := by
   rw [stdRep_apply_apply, diagGL_coe]
   exact Matrix.mulVec_diagonal _ _ _
 
 /-- Every standard basis vector is an eigenvector for a diagonal matrix. -/
+@[simp]
 theorem stdRep_diagGL_apply_basisFun (t : Fin n → kˣ) (i : Fin n) :
     stdRep k n (diagGL t) (Pi.basisFun k (Fin n) i) =
       (t i : k) • Pi.basisFun k (Fin n) i := by

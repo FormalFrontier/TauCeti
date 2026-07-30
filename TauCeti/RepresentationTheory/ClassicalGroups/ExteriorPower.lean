@@ -31,6 +31,7 @@ degree-one identifications of `extPowerRep k n` are the generic
 
 * [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
   Layer 1, “Symmetric and exterior power representations”.
+* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), Lecture 15.
 -/
 
 public section
@@ -65,6 +66,7 @@ variable [Field k]
 
 /-- The character of the `d`th exterior power on a diagonal matrix is the `d`th elementary
 symmetric polynomial in its diagonal entries. -/
+@[simp]
 theorem char_extPowerRep_diagonal (t : Fin n → kˣ) :
     (extPowerRep k n d).character (diagGL t) =
       MvPolynomial.eval (fun i => (t i : k)) (MvPolynomial.esymm (Fin n) k d) := by
@@ -74,12 +76,16 @@ theorem char_extPowerRep_diagonal (t : Fin n → kˣ) :
     (stdRep_diagGL_apply_basisFun t)]
   rw [MvPolynomial.esymm_eq_sum_subtype]
   simp only [MvPolynomial.eval_sum, MvPolynomial.eval_prod, MvPolynomial.eval_X]
-  congr 1
-  ext s
-  constructor <;> intro
-  · exact @Finset.mem_univ {s : Finset (Fin n) // s.card = d} (Subtype.fintype _) s
-  · exact @Finset.mem_univ (Set.powersetCard (Fin n) d)
-      (Set.powersetCard.instFintypeElemFinset (Fin n) d) s
+  -- Normalize the two `Fintype` instances on the same subtype of finite sets.
+  refine @Fintype.sum_equiv
+    (Set.powersetCard (Fin n) d)
+    {s : Finset (Fin n) // s.card = d}
+    k
+    (Set.powersetCard.instFintypeElemFinset (Fin n) d)
+    (Subtype.fintype fun s : Finset (Fin n) => s.card = d)
+    _ (Equiv.refl _) _ _ ?_
+  intro s
+  rfl
 
 end Field
 

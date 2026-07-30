@@ -81,7 +81,8 @@ theorem trace_map_of_apply_basis (b : Module.Basis I R M) (f : M →ₗ[R] M)
   rw [← Finset.prod_coe_sort s.1 a]
   apply Fintype.prod_equiv (s.1.orderIsoOfFin s.2).toEquiv
   intro j
-  rfl
+  rw [Set.powersetCard.ofFinEmbEquiv_symm_apply]
+  exact congrArg a (Finset.coe_orderIsoOfFin_apply s.1 s.2 j)
 
 end Trace
 
