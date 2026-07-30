@@ -299,6 +299,7 @@ lemma normalizedChebyshevCosine_zero (θ : ℝ) :
     normalizedChebyshevCosine 0 θ = 1 / Real.sqrt Real.pi := by
   simp [normalizedChebyshevCosine_def]
 
+@[simp high]
 lemma normalizedChebyshevCosine_one (θ : ℝ) :
     normalizedChebyshevCosine 1 θ = Real.cos θ / Real.sqrt (Real.pi / 2) := by
   simp [normalizedChebyshevCosine_def]
