@@ -24,8 +24,10 @@ monic degree-`n` polynomials with their lower coefficients presents `Sym K n` as
 This is the algebraic heart of the *symmetric product chart*: for a Riemann surface `Σ` the
 symmetric product `Sym^g(Σ)` is given its complex manifold structure by exactly this map, read in a
 holomorphic coordinate on `Σ` — a local identification `Sym^g(ℂ) ≅ ℂ^g` whose coordinates are the
-elementary symmetric functions of the `g` points. Only the pointwise algebra is settled here; the
-topology and the complex structure are separate later steps.
+elementary symmetric functions of the `g` points. Only the pointwise algebra is settled here, and
+it takes no analytic input: everything below is a statement about polynomials over a commutative
+ring or a field. The topology of `Sym^g(Σ)`, its complex structure, and the analysis that uses them
+are separate later steps.
 
 ## Main declarations
 
