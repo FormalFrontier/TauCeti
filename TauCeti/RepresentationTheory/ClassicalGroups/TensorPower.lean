@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction
-public import TauCeti.RepresentationTheory.TensorPower
+public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
 # Tensor powers of the standard representation

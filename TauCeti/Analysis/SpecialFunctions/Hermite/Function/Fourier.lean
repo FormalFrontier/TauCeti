@@ -375,33 +375,20 @@ private theorem fourier_deriv_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : �
   rw [deriv_twoPiHermiteFunction_complex, hfourier] at hd
   simpa only [Pi.smul_apply, smul_eq_mul, mul_assoc] using hd
 
-private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
-    (hfourier :
-      𝓕 (fun x : ℝ => (twoPiHermiteFunction n x : ℂ)) =
-        fun x => eigen * twoPiHermiteFunction n x) :
-    𝓕 (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) =
-      fun x => (-Complex.I * eigen) * twoPiHermiteFunction (n + 1) x := by
-  -- Abbreviate the scale, creation-operator terms, and successor function.
+/-- The Fourier transform of the successor, in terms of the transforms of `x ↦ x · hₙ x` and of
+`hₙ'`: the raising relation `twoPiHermiteFunction_succ_complex` pushed through linearity of the
+transform. No eigenfunction hypothesis is involved, so this holds for every `n`. -/
+private theorem fourier_twoPiHermiteFunction_succ_eq (n : ℕ) (w : ℝ) :
+    𝓕 (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) w =
+      (Real.sqrt (2 * ((n : ℝ) + 1)) : ℂ)⁻¹ *
+        ((Real.sqrt (2 * Real.pi) : ℂ) *
+            𝓕 (fun x : ℝ => x • (twoPiHermiteFunction n x : ℂ)) w
+          + (-(Real.sqrt (2 * Real.pi) : ℂ)⁻¹) *
+            𝓕 (fun x : ℝ => ((deriv (twoPiHermiteFunction n) x : ℝ) : ℂ)) w) := by
   let s : ℂ := Real.sqrt (2 * Real.pi)
-  let a : ℂ := Real.sqrt (2 * ((n : ℝ) + 1))
   let xf : ℝ → ℂ := fun x => x • (twoPiHermiteFunction n x : ℂ)
   let df : ℝ → ℂ := fun x => ((deriv (twoPiHermiteFunction n) x : ℝ) : ℂ)
-  let fnext : ℝ → ℂ := fun x => (twoPiHermiteFunction (n + 1) x : ℂ)
-  -- Record the nonvanishing and normalization identities needed by the final scalar calculation.
-  have hs : s ≠ 0 := by
-    dsimp only [s]
-    exact Complex.ofReal_ne_zero.mpr hermiteFourierScale_ne_zero
-  have ha : a ≠ 0 := by
-    dsimp only [a]
-    exact Complex.ofReal_ne_zero.mpr (by positivity)
-  have hs_sq : s ^ 2 = 2 * Real.pi := by
-    dsimp only [s]
-    rw [← Complex.ofReal_pow, hermiteFourierScale_sq]
-    norm_num
-  -- Express the successor by the rescaled creation operator and establish integrability of its
-  -- two summands.
-  have hraise : fnext = a⁻¹ • (s • xf + (-s⁻¹) • df) :=
-    twoPiHermiteFunction_succ_complex n
+  -- Each summand of the raising relation is integrable, which is what linearity needs.
   have hsxf : Integrable (s • xf) volume := by
     apply ((integrable_mul_twoPiHermiteFunction_complex n).const_mul s).congr
     exact Filter.Eventually.of_forall fun x => by rw [Pi.smul_apply, smul_eq_mul]
@@ -409,33 +396,37 @@ private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
     dsimp only [df]
     apply ((integrable_deriv_twoPiHermiteFunction n).ofReal.const_mul (-s⁻¹)).congr
     exact Filter.Eventually.of_forall fun _ => rfl
-  funext w
-  -- Apply Fourier linearity, then substitute the transform identities for multiplication and
-  -- differentiation under the eigenfunction hypothesis.
-  have hadd :
-      𝓕 (s • xf + (-s⁻¹) • df) w = (𝓕 (s • xf) + 𝓕 ((-s⁻¹) • df)) w :=
+  have hadd : 𝓕 (s • xf + (-s⁻¹) • df) w = (𝓕 (s • xf) + 𝓕 ((-s⁻¹) • df)) w :=
     congrFun (VectorFourier.fourierIntegral_add
       (e := 𝐞) (L := innerₗ ℝ) (by fun_prop) (by fun_prop) hsxf hinvdf) w
-  have houter := congrFun (fourier_const_smul a⁻¹ (s • xf + (-s⁻¹) • df)) w
-  have hleftRaise := congrArg (fun g : ℝ → ℂ => 𝓕 g w) hraise
-  have hnext :
-      (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) = fnext := rfl
-  have hnextValue : (twoPiHermiteFunction (n + 1) w : ℂ) = fnext w :=
-    congrFun hnext w
-  have hraiseValue :
-      fnext w = a⁻¹ * (s * xf w + (-s⁻¹) * df w) := by
-    simpa only [Pi.add_apply, Pi.smul_apply, smul_eq_mul] using congrFun hraise w
-  rw [hnext, hnextValue]
-  rw [hleftRaise, houter, Pi.smul_apply, smul_eq_mul, hadd]
-  rw [fourier_const_smul, fourier_const_smul, Pi.add_apply,
-    Pi.smul_apply, Pi.smul_apply, smul_eq_mul,
+  rw [congrArg (fun g : ℝ → ℂ => 𝓕 g w) (twoPiHermiteFunction_succ_complex n),
+    congrFun (fourier_const_smul _ (s • xf + (-s⁻¹) • df)) w, Pi.smul_apply, smul_eq_mul,
+    hadd, Pi.add_apply, fourier_const_smul, fourier_const_smul, Pi.smul_apply, Pi.smul_apply,
+    smul_eq_mul, smul_eq_mul]
+
+private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
+    (hfourier :
+      𝓕 (fun x : ℝ => (twoPiHermiteFunction n x : ℂ)) =
+        fun x => eigen * twoPiHermiteFunction n x) :
+    𝓕 (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) =
+      fun x => (-Complex.I * eigen) * twoPiHermiteFunction (n + 1) x := by
+  have hs : (Real.sqrt (2 * Real.pi) : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr hermiteFourierScale_ne_zero
+  have ha : (Real.sqrt (2 * ((n : ℝ) + 1)) : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (by positivity)
+  have hs_sq : (Real.sqrt (2 * Real.pi) : ℂ) ^ 2 = 2 * Real.pi := by
+    rw [← Complex.ofReal_pow, hermiteFourierScale_sq]
+    norm_num
+  funext w
+  -- Expand both sides by the raising relation, then substitute the transforms of the two
+  -- creation-operator terms, which the eigenfunction hypothesis pins down.
+  rw [fourier_twoPiHermiteFunction_succ_eq n w,
     fourier_mul_twoPiHermiteFunction_of_eigen n eigen hfourier,
-    fourier_deriv_twoPiHermiteFunction_of_eigen n eigen hfourier]
-  rw [hraiseValue]
-  -- The remaining goal is the scalar normalization `s² = 2π`.
+    fourier_deriv_twoPiHermiteFunction_of_eigen n eigen hfourier,
+    congrFun (twoPiHermiteFunction_succ_complex n) w]
+  -- What is left is scalar, and turns on the normalization `√(2π)² = 2π`.
   rw [← hs_sq]
-  dsimp only [xf, df]
-  simp only [Complex.real_smul, smul_eq_mul]
+  simp only [Pi.add_apply, Pi.smul_apply, Complex.real_smul, smul_eq_mul]
   field_simp [ha, hs]
   ring_nf
 

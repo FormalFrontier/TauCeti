@@ -223,6 +223,48 @@ theorem mul_youngSymmetrizer_right (t : YoungTableau μ) (q : colSubgroup t) :
         youngSymmetrizer t := by
   rw [youngSymmetrizer_def, mul_assoc, mul_columnAntisymmetrizer_right, mul_smul_comm]
 
+/-- The coefficient of the identity permutation in a Young symmetrizer is one. -/
+@[simp]
+theorem youngSymmetrizer_coeff_one (t : YoungTableau μ) :
+    (youngSymmetrizer t).coeff 1 = 1 := by
+  rw [youngSymmetrizer_def, rowSymmetrizer_def, columnAntisymmetrizer_def,
+    Finset.sum_mul]
+  simp only [Finset.mul_sum, MonoidAlgebra.coeff_sum, MonoidAlgebra.of_apply]
+  simp only [Finsupp.finsetSum_apply, MonoidAlgebra.coeff_single_mul_apply,
+    MonoidAlgebra.coeff_smul_apply, MonoidAlgebra.coeff_single,
+    Finsupp.single_apply, one_mul]
+  have hmul (p : rowSubgroup t) (q : colSubgroup t) :
+      (p : Equiv.Perm (Fin μ.card)) * q = 1 ↔ p = 1 ∧ q = 1 := by
+    constructor
+    · intro hpq
+      have hpq' := Subgroup.disjoint_iff_mul_eq_one.mp
+        (disjoint_rowSubgroup_colSubgroup t) p.property q.property hpq
+      exact ⟨Subtype.ext hpq'.1, Subtype.ext hpq'.2⟩
+    · rintro ⟨rfl, rfl⟩
+      simp
+  have heq (p : rowSubgroup t) (q : colSubgroup t) :
+      (q : Equiv.Perm (Fin μ.card)) =
+          (p : Equiv.Perm (Fin μ.card))⁻¹ * 1 ↔ p = 1 ∧ q = 1 := by
+    simpa only [mul_one] using
+      ((mul_eq_one_iff_eq_inv' :
+        (p : Equiv.Perm (Fin μ.card)) * q = 1 ↔
+          (q : Equiv.Perm (Fin μ.card)) =
+            (p : Equiv.Perm (Fin μ.card))⁻¹).symm.trans (hmul p q))
+  simp_rw [heq]
+  rw [Finset.sum_eq_single (1 : rowSubgroup t)]
+  · rw [Finset.sum_eq_single (1 : colSubgroup t)] <;> simp
+  · exact fun p _ hp => by simp [hp]
+  · simp
+
+/-- A Young symmetrizer is nonzero. -/
+@[simp]
+theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
+    youngSymmetrizer t ≠ 0 := by
+  intro h
+  have := congrArg (fun x =>
+    x.coeff (1 : Equiv.Perm (Fin μ.card))) h
+  simp at this
+
 end
 
 end YoungTableau
