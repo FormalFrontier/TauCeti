@@ -54,9 +54,10 @@ subgroups differ, and it is the stabiliser, not the kernel, that the classificat
 * `TauCeti.IsCoveringMap.fiberEquivQuotientRange` and
   `TauCeti.IsCoveringMap.card_fiber_eq_index`: the fibre is the coset space of the recovered
   subgroup, so the number of sheets is its index.
-* `TauCeti.IsCoveringMap.range_mapOfEq_monodromy` and
+* `TauCeti.IsCoveringMap.range_mapOfEq_monodromy`,
+  `TauCeti.IsCoveringMap.exists_range_eq_map_conj_of_joined` and
   `TauCeti.IsCoveringMap.exists_range_eq_map_conj`: changing the lift conjugates the recovered
-  subgroup, and realises every conjugate.
+  subgroup, and on a path-connected cover realises every conjugate.
 * `TauCeti.IsCoveringMap.normal_range_iff`: the recovered subgroup is normal exactly when it is
   independent of the chosen lift.
 
@@ -192,6 +193,16 @@ theorem range_mapOfEq_monodromy (hp : IsCoveringMap p) (e : p ⁻¹' {x})
   rw [← stabilizer_eq_range hp e, ← stabilizer_eq_range hp (hp.monodromy γ e)]
   exact MulAction.stabilizer_smul_eq_stabilizer_map_conj γ e
 
+/-- Two lifts of the basepoint joined by a path in the cover recover conjugate subgroups. -/
+theorem exists_range_eq_map_conj_of_joined (hp : IsCoveringMap p) {e e' : p ⁻¹' {x}}
+    (h : Joined (e : E) (e' : E)) :
+    ∃ γ : FundamentalGroup X x,
+      (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e'.2).range =
+        ((FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range).map
+          (MulAut.conj γ).toMonoidHom := by
+  obtain ⟨γ, hγ⟩ := exists_monodromy_eq_of_joined hp h
+  exact ⟨γ, by rw [← hγ, range_mapOfEq_monodromy hp e γ]⟩
+
 /-- On a path-connected cover, any two lifts of the basepoint recover conjugate subgroups: an
 unpointed connected cover determines only the conjugacy class of the subgroup. -/
 theorem exists_range_eq_map_conj [PathConnectedSpace E] (hp : IsCoveringMap p)
@@ -199,9 +210,8 @@ theorem exists_range_eq_map_conj [PathConnectedSpace E] (hp : IsCoveringMap p)
     ∃ γ : FundamentalGroup X x,
       (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e'.2).range =
         ((FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range).map
-          (MulAut.conj γ).toMonoidHom := by
-  obtain ⟨γ, hγ⟩ := exists_monodromy_eq hp e e'
-  exact ⟨γ, by rw [← hγ, range_mapOfEq_monodromy hp e γ]⟩
+          (MulAut.conj γ).toMonoidHom :=
+  exists_range_eq_map_conj_of_joined hp (PathConnectedSpace.joined (e : E) (e' : E))
 
 /-- On a path-connected cover, the subgroup recovered from a lift of the basepoint is normal
 exactly when it does not depend on which lift is chosen. This is the subgroup-side criterion for
