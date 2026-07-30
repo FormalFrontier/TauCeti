@@ -12,7 +12,9 @@ public import TauCeti.Analysis.Complex.Conformal.Poincare.IsometryEquiv
 `Poincare/MetricSpace.lean` makes the complex open unit disc a metric space `TauCeti.PoincareDisc`
 for the hyperbolic distance `TauCeti.hyperbolicDist`, and `Poincare/Topology.lean` shows the
 resulting metric is proper. This file adds the remaining basic geometric fact about that metric:
-it is **geodesic**, and its geodesics through the origin are exactly the Euclidean diameters.
+it is **geodesic**, the Euclidean diameters being unit-speed geodesic lines through the origin.
+(The converse classification — that *every* geodesic through the origin is a Euclidean diameter —
+is a uniqueness statement, and is not proved here.)
 
 The computation behind everything is that along a fixed Euclidean diameter `{u * a | a : ℝ}` of
 the disc, with `‖u‖ = 1`, the hyperbolic distance is the difference of the inverse hyperbolic
@@ -276,7 +278,8 @@ end PoincareDisc
 /-- **The Euclidean radius is a hyperbolic geodesic segment.** For `z` in the open unit disc and
 `t ∈ [0, 1]`, the point `t * z` of the Euclidean segment from the origin to `z` splits the
 hyperbolic distance additively. Together with `TauCeti.PoincareDisc.exists_radialGeodesic_eq`
-this identifies the hyperbolic geodesics through the origin with the Euclidean diameters. -/
+this exhibits each Euclidean diameter as a hyperbolic geodesic through the origin, and every
+point of the disc as lying on one of them. -/
 theorem hyperbolicDist_zero_add_hyperbolicDist_ofReal_mul {z : ℂ} (hz : ‖z‖ < 1) {t : ℝ}
     (ht : t ∈ Icc (0 : ℝ) 1) :
     hyperbolicDist 0 ((t : ℂ) * z) + hyperbolicDist ((t : ℂ) * z) z = hyperbolicDist 0 z := by
