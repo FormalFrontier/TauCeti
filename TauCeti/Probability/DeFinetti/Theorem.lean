@@ -4,16 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Probability.DeFinetti.JointRectangle
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 -- Non-public: used only inside proofs — the Layer-0 bridges `MixedIID.exchangeable` and
 -- `MixedIID.contractable`, from the mixture identity back to exchangeability and contractability.
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
+import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
+import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 
 /-!
-# The de Finetti–Ryll-Nardzewski equivalences, mixture form
+# The de Finetti–Ryll-Nardzewski summit and equivalences
 
-The equivalence forms of the de Finetti summit, in their **mixture** form: for a process with
-measurable coordinates, valued in a nonempty standard Borel space, under a finite measure,
+The de Finetti summit in its **conditional** form, and the equivalences in their **mixture** form.
+
+`conditionallyIID_of_contractable` is the sharp statement: a contractable process valued in a
+nonempty standard Borel space is conditionally i.i.d., a joint-law disintegration given a directing
+measure. The mixture equivalences below are the integrated-out forms, and for a process with
+measurable coordinates, valued in a nonempty standard Borel space, under a finite measure, they read
 
 * exchangeable **iff** mixed i.i.d. (`exchangeable_iff_mixedIID`),
 * contractable **iff** mixed i.i.d. (`contractable_iff_mixedIID`, the two-way form), and
@@ -26,26 +33,33 @@ hard direction is the merged reverse-martingale de Finetti chain
 (`mixedIID_of_contractable`); the converse directions are the Layer-0 bridges
 (`MixedIID.exchangeable`, `MixedIID.contractable`).
 
-The roadmap reserves the names `deFinetti`, `deFinetti_equivalence`, and
-`deFinetti_RyllNardzewski_equivalence` for the theorems concluding the genuine `ConditionallyIID`
-predicate — the joint-law disintegration — and directs that "summit theorems conclude
-`ConditionallyIID`, never merely `MixedIID`"
-(`TauCetiRoadmap/Exchangeability/README.md`, Layers 6–7). That predicate is not yet defined here,
-so this file deliberately exposes no `deFinetti*` handle: the equivalences below are the mixture
-forms, named as such. The handles return with the conditional predicate.
+The roadmap directs that "summit theorems conclude `ConditionallyIID`, never merely `MixedIID`"
+(`TauCetiRoadmap/Exchangeability/README.md`, Layers 6–7), which
+`conditionallyIID_of_contractable` now does. Its witness is reachable explicitly:
+`conditionallyIIDWith_of_contractable_pathSpace` names the tail conditional law on path space and
+`ConditionallyIIDWith.of_pathLaw` transports it.
+
+Still absent are the *equivalence* handles the roadmap reserves — `deFinetti`,
+`deFinetti_equivalence`, `deFinetti_RyllNardzewski_equivalence` — since those also need
+`conditionallyIID_of_exchangeable`, which is open. The equivalences below therefore remain the
+mixture forms, named as such.
 
 Both equivalences hold on an arbitrary measurable sample space `Ω` under `[IsFiniteMeasure μ]`;
 the standard-Borel hypothesis sits only on the state space `α`, each value of the mixing
 representative being a probability measure on `α`. (The *mixing law* itself — the law of `ν` — is a
 measure on `ProbabilityMeasure α`, not on `α`.)
 
-Adapted from `cameronfreer/exchangeability` (`DeFinetti/TheoremViaMartingale.lean`, pin
-`e0532e59ceff23edab44dda9ab0655debbc9cc22`); the statements here are the source's final wrappers,
-generalized from `[StandardBorelSpace Ω]` + probability measures to arbitrary measurable `Ω` +
-finite measures.
+The mixture equivalences are adapted from `cameronfreer/exchangeability`
+(`DeFinetti/TheoremViaMartingale.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`); those
+statements are the source's final wrappers, generalized from `[StandardBorelSpace Ω]` + probability
+measures to arbitrary measurable `Ω` + finite measures. The conditional summit is not adapted
+from it: that repository's legacy `ConditionallyIID` denotes the mixture identity, so it proves
+a strictly weaker statement.
 
 ## Main results
 
+* `conditionallyIID_of_contractable` — the conditional summit: contractable implies conditionally
+  i.i.d., strengthening the forward direction of `contractable_iff_mixedIID`.
 * `exchangeable_iff_mixedIID` — de Finetti's theorem as an equivalence, mixture form.
 * `contractable_iff_mixedIID` — the two-way Ryll-Nardzewski equivalence, mixture form.
 * `contractable_iff_exchangeable_and_mixedIID` — the roadmap's conjunction form.
@@ -92,6 +106,25 @@ theorem contractable_iff_exchangeable_and_mixedIID [StandardBorelSpace α] [None
     Contractable μ X ↔ Exchangeable μ X ∧ MixedIID μ X :=
   (contractable_iff_mixedIID hX_meas).trans
     ⟨fun hX => ⟨hX.exchangeable, hX⟩, And.right⟩
+
+/-- **The conditional summit: contractable ⇒ conditionally i.i.d.** A contractable process valued in
+a nonempty standard Borel space has a directing measure given which every finite distinct block is
+i.i.d., as a joint-law disintegration.
+
+This is the sharp form. It strengthens `contractable_iff_mixedIID`, whose forward direction
+concludes only the mixture identity, which the roadmap is explicit should never be mistaken for the
+summit. No standard-Borel hypothesis is imposed on the sample space.
+
+The witness is available explicitly: `conditionallyIIDWith_of_contractable_pathSpace` names the tail
+conditional law on path space, and `ConditionallyIIDWith.of_pathLaw` transports it here. -/
+theorem conditionallyIID_of_contractable [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_meas : ∀ n, Measurable (X n)) :
+    ConditionallyIID μ X := by
+  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  exact ConditionallyIID.of_directing
+    ((conditionallyIIDWith_of_contractable_pathSpace
+      (Contractable.coordinate_pathLaw hX fun i => (hX_meas i).aemeasurable)).of_pathLaw hX_meas)
 
 end Probability
 
