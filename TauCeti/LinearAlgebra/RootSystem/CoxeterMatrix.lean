@@ -95,6 +95,14 @@ def coxeterOrder (c : ℤ) : ℕ :=
 
 @[simp] lemma coxeterOrder_four : coxeterOrder 4 = 1 := by norm_num [coxeterOrder]
 
+/-- Outside `{0, 1, 2, 3, 4}` the translation falls back to `0`, Mathlib's encoding of an infinite
+order. No such Cartan product occurs for a finite crystallographic pairing; this lemma pins the
+value down at the remaining integers, so the five equation lemmas above determine `coxeterOrder`
+everywhere. -/
+lemma coxeterOrder_eq_zero_iff {c : ℤ} : coxeterOrder c = 0 ↔ c ∉ ({0, 1, 2, 3, 4} : Set ℤ) := by
+  simp only [mem_insert_iff, mem_singleton_iff, not_or, coxeterOrder]
+  split_ifs with h₀ h₁ h₂ h₃ h₄ <;> simp_all
+
 /-- On the products that occur for a pair of independent roots, `coxeterOrder` takes the four
 dihedral values. -/
 lemma coxeterOrder_mem {c : ℤ} (hc : c ∈ ({0, 1, 2, 3} : Set ℤ)) :
@@ -116,7 +124,8 @@ lemma coxeterOrder_le_six {c : ℤ} (hc : c ∈ ({0, 1, 2, 3} : Set ℤ)) : coxe
   simp only [mem_insert_iff, mem_singleton_iff] at this
   omega
 
-/-- The single-edge products are exactly those of Coxeter order at most `3`. -/
+/-- The products with at most one edge, namely `0` (no edge) and `1` (a single edge), are exactly
+those of Coxeter order at most `3`. -/
 lemma coxeterOrder_le_three_iff {c : ℤ} (hc : c ∈ ({0, 1, 2, 3} : Set ℤ)) :
     coxeterOrder c ≤ 3 ↔ c = 0 ∨ c = 1 := by
   simp only [mem_insert_iff, mem_singleton_iff] at hc
@@ -205,8 +214,9 @@ product `4` with itself.
 
 That the entries really are those orders is the classical rank-two computation, and follows in
 general from the Coxeter presentation of the Weyl group, which is not built here; the entry `2` is
-checked directly in `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_of_eq_two`. -/
-@[expose]
+checked directly in `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_of_eq_two`.
+
+The body is not exposed: `TauCeti.coxeterMatrixOfBase_apply` is the entry API. -/
 noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support where
   M := .of fun i j ↦ coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i)
   isSymm := by
@@ -218,9 +228,11 @@ noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support where
     simp only [Matrix.of_apply]
     omega
 
+-- `(rfl)`, not `rfl`: the body of `coxeterMatrixOfBase` is deliberately left unexposed, and the
+-- parenthesised form keeps this proof out of the exported definitional-equality check.
 @[simp]
 lemma coxeterMatrixOfBase_apply (i j : b.support) :
-    coxeterMatrixOfBase P b i j = coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i) := rfl
+    coxeterMatrixOfBase P b i j = coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i) := (rfl)
 
 /-- Off the diagonal the Coxeter matrix of a base takes only the four dihedral values. -/
 lemma coxeterMatrixOfBase_mem_of_ne {i j : b.support} (hij : i ≠ j) :
