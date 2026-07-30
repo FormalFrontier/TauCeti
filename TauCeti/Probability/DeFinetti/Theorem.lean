@@ -11,6 +11,7 @@ public import TauCeti.Probability.DeFinetti.BlockFactorization
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
+import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
 
 /-!
 # The de Finetti–Ryll-Nardzewski theorem and equivalences

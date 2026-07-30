@@ -7,8 +7,6 @@ module
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 -- Non-public: `map_bind` is used only inside the projection proof.
 import TauCeti.MeasureTheory.Measure.GiryMonad
--- Non-public: `MixedIID.exchangeable` and `MixedIID.contractable` are used only in proofs.
-import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
 # Conditionally i.i.d. families
@@ -38,8 +36,6 @@ representative*, whereas `ν` here is a genuine **directing measure**.
   wrapper, with their constructor, accessor, simp-normal-form, and injective-reindexing API.
 * `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
   to the sequence-level mixture identity.
-* `ConditionallyIID.exchangeable`, `ConditionallyIID.contractable` — the sequence-level symmetry
-  consequences obtained by composing that projection with the mixture-side implications.
 
 This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
 predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
@@ -189,17 +185,6 @@ theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
-
-/-- A conditionally i.i.d. sequence is exchangeable: project to the mixture identity, then apply
-`MixedIID.exchangeable`. No side hypotheses. -/
-theorem ConditionallyIID.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
-    (h : ConditionallyIID μ X) : Exchangeable μ X :=
-  (mixedIID_of_conditionallyIID h).exchangeable
-
-/-- A conditionally i.i.d. sequence is contractable. -/
-theorem ConditionallyIID.contractable {μ : Measure Ω} {X : ℕ → Ω → α}
-    (h : ConditionallyIID μ X) : Contractable μ X :=
-  (mixedIID_of_conditionallyIID h).contractable
 
 end Probability
 
