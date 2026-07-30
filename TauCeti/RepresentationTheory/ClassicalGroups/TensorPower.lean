@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
+public import TauCeti.RepresentationTheory.Symmetric.TensorAction
 public import TauCeti.RepresentationTheory.TensorPower
 
 /-!
@@ -19,6 +20,8 @@ polynomial representations.
 
 * `TauCeti.tensorPowerRep` is the `d`-fold tensor power of `stdRep`.
 * `TauCeti.tensorPowerFDRep` is its bundled finite-dimensional form.
+* `TauCeti.schurWeyl_commute` proves that the general-linear and symmetric-group actions
+  commute.
 
 ## References
 
@@ -48,6 +51,15 @@ noncomputable abbrev tensorPowerRep :
 /-- The tensor power of the standard representation, bundled as an object of `FDRep`. -/
 noncomputable abbrev tensorPowerFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (tensorPowerRep k n d)
+
+/-- The actions of `GL n k` and the symmetric group on the tensor power commute. -/
+theorem schurWeyl_commute (g : GL (Fin n) k) (σ : Equiv.Perm (Fin d)) :
+    (permTensorAction k n d σ) ∘ₗ (tensorPowerRep k n d g) =
+      (tensorPowerRep k n d g) ∘ₗ (permTensorAction k n d σ) := by
+  rw [tensorPowerRep, Representation.tensorPower_apply]
+  simpa only [Module.End.mul_eq_comp] using
+    (PiTensorProduct.commute_reindexRepresentation_map k (Fin n → k) (Fin d) σ
+      (stdRep k n g)).eq
 
 end CommRing
 

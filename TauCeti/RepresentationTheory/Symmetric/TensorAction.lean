@@ -1,0 +1,117 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.Algebra.MonoidAlgebra.Basic
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basic
+public import Mathlib.RepresentationTheory.Basic
+
+/-!
+# Permuting tensor factors
+
+This file defines the symmetric-group action on a power of a module by permuting its tensor
+factors. It also extends the action linearly to the group algebra, which is the action used by
+Young symmetrizers.
+
+The construction is the first target in Layer 2 of the
+[classical-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md)
+and the first construction in Layer 8 of the
+[Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md).
+It reuses `PiTensorProduct.reindex`; the convention is
+`σ • (⨂ₜ i, m i) = ⨂ₜ i, m (σ⁻¹ i)`.
+
+## Main definitions
+
+* `PiTensorProduct.reindexRepresentation` is the permutation action for an arbitrary index type
+  and module.
+* `permTensorAction` specializes it to `(Fin n → R)^{⊗d}`.
+* `permTensorActionAlgHom` specializes its group-algebra extension to `(Fin n → R)^{⊗d}`.
+-/
+
+public section
+
+open scoped TensorProduct
+
+universe u v w
+
+namespace PiTensorProduct
+
+variable (R : Type u) (M : Type v) (ι : Type w)
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- The representation of the permutation group of `ι` on the `ι`-indexed tensor power,
+acting by reindexing the tensor factors. -/
+noncomputable def reindexRepresentation :
+    Representation R (Equiv.Perm ι) (⨂[R] _ : ι, M) where
+  toFun σ := (reindex R (fun _ : ι => M) σ).toLinearMap
+  map_one' := by
+    simpa only [Equiv.Perm.one_def, Module.End.one_eq_id,
+      LinearEquiv.refl_toLinearMap] using
+      congrArg LinearEquiv.toLinearMap
+        (reindex_refl (R := R) (s := fun _ : ι => M))
+  map_mul' σ τ := by
+    apply LinearMap.ext
+    intro x
+    simp only [Module.End.mul_apply, LinearEquiv.coe_toLinearMap]
+    simpa only [Equiv.Perm.mul_def] using
+      (reindex_reindex (R := R) (s := fun _ : ι => M) τ σ x).symm
+
+/-- The permutation representation acts by `PiTensorProduct.reindex`. -/
+@[simp]
+theorem reindexRepresentation_apply (σ : Equiv.Perm ι) :
+    reindexRepresentation R M ι σ = (reindex R (fun _ : ι => M) σ).toLinearMap :=
+  (rfl)
+
+/-- Permuting factors commutes with applying the same linear map in every tensor factor. -/
+theorem commute_reindexRepresentation_map (σ : Equiv.Perm ι) (f : M →ₗ[R] M) :
+    Commute (reindexRepresentation R M ι σ) (map fun _ : ι => f) := by
+  apply LinearMap.ext
+  intro x
+  simpa only [Module.End.mul_apply, reindexRepresentation_apply,
+    LinearEquiv.coe_toLinearMap] using
+    (map_reindex (f := fun _ : ι => f) σ x).symm
+
+/-- The linear extension of the tensor-factor permutation action to the group algebra. -/
+noncomputable def reindexRepresentationAlgHom :
+    MonoidAlgebra R (Equiv.Perm ι) →ₐ[R] Module.End R (⨂[R] _ : ι, M) :=
+  MonoidAlgebra.lift R _ _ (reindexRepresentation R M ι)
+
+/-- A group element in the group algebra acts by reindexing the tensor factors. -/
+@[simp]
+theorem reindexRepresentationAlgHom_single (σ : Equiv.Perm ι) :
+    reindexRepresentationAlgHom R M ι (MonoidAlgebra.single σ 1) =
+      (reindex R (fun _ : ι => M) σ).toLinearMap := by
+  simp [reindexRepresentationAlgHom]
+
+/-- The group-algebra action on a pure tensor is the corresponding finite linear combination
+of reindexed pure tensors. -/
+theorem reindexRepresentationAlgHom_apply_tprod
+    (a : MonoidAlgebra R (Equiv.Perm ι)) (m : ι → M) :
+    reindexRepresentationAlgHom R M ι a (tprod R m) =
+      a.coeff.sum fun σ r => r • tprod R (fun i => m (σ.symm i)) := by
+  classical
+  simp [reindexRepresentationAlgHom, MonoidAlgebra.lift_apply, Finsupp.sum,
+    LinearMap.sum_apply]
+
+end PiTensorProduct
+
+namespace TauCeti
+
+variable (R : Type u) (n d : ℕ)
+variable [CommSemiring R]
+
+/-- The symmetric-group action on `(Fin n → R)^{⊗d}` by permutation of tensor factors. -/
+noncomputable abbrev permTensorAction :
+    Representation R (Equiv.Perm (Fin d)) (⨂[R] _ : Fin d, Fin n → R) :=
+  PiTensorProduct.reindexRepresentation R (Fin n → R) (Fin d)
+
+/-- The group-algebra action of `R[S_d]` on `(Fin n → R)^{⊗d}` induced by factor
+permutations. -/
+noncomputable abbrev permTensorActionAlgHom :
+    MonoidAlgebra R (Equiv.Perm (Fin d)) →ₐ[R]
+      Module.End R (⨂[R] _ : Fin d, Fin n → R) :=
+  PiTensorProduct.reindexRepresentationAlgHom R (Fin n → R) (Fin d)
+
+end TauCeti
