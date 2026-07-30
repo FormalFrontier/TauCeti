@@ -8,26 +8,27 @@ public import Mathlib.RingTheory.Ideal.Norm.RelNorm
 public import Mathlib.NumberTheory.NumberField.Norm
 public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.FieldTheory.Fixed
-public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation
+public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Basic
 
 /-!
 # Norm-principality for quadratic conjugation
 
 For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
 `σ = TauCeti.NumberField.ringOfIntegersQuadraticConj`, this file proves the genus-theoretic
-key fact that `I · σI` is principal for every nonzero ideal `I` of `𝓞 K`.  This is the hypothesis
-consumed by `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_eq_inv`.
+key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
+consumed by `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
-The proof runs through the relative ideal norm:
-`I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, and the right-hand side is principal
-because `Ideal.relNorm ℤ I` is an ideal of the PID `ℤ`.
+The proof idea, for `I ≠ 0`, runs through the relative ideal norm: `I · σI` has the same relative
+norm as `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
+extension of a principal `ℤ`-ideal is principal.  (The zero ideal is trivially principal.)
+
+See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
+classical genus theory this norm-principality underlies.
 -/
 
 public section
 
 open Polynomial NumberField
-
-open scoped nonZeroDivisors
 
 namespace TauCeti.NumberField
 
@@ -137,20 +138,22 @@ private theorem relNorm_map_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
   Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) J
 
 /-- **Norm-principality (Lemma A).** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`,
-the product `I · σI` is a principal ideal, for every nonzero ideal `I` of `𝓞 K`. Concretely
-`I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, which is principal because
-`Ideal.relNorm ℤ I` is an ideal of the PID `ℤ`.  This is the genus-theoretic hypothesis fed to
-`mulEquiv_ringOfIntegersQuadraticConj_eq_inv`. -/
+the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
+genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
+
+For `I ≠ 0` the proof idea is that `I · σI` equals `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`,
+the extension of a principal `ℤ`-ideal (`Ideal.relNorm ℤ I` lives in the PID `ℤ`); the equality is
+obtained by matching relative norms and divisibility, not exported separately. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (I : (Ideal (𝓞 K))⁰) :
-    ((I : Ideal (𝓞 K)) *
-      Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K))).IsPrincipal := by
+    (I : Ideal (𝓞 K)) :
+    (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
+  rcases eq_or_ne I 0 with rfl | hJne
+  · exact ⟨0, by simp⟩
   set σ := ringOfIntegersQuadraticConj hmin hgen with hσdef
-  set J : Ideal (𝓞 K) := (I : Ideal (𝓞 K)) with hJ
+  set J : Ideal (𝓞 K) := I with hJ
   set A : Ideal (𝓞 K) := Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ J) with hA
   set B : Ideal (𝓞 K) := J * Ideal.map σ J with hB
-  have hJne : J ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
   have hmapne : Ideal.map σ J ≠ 0 := by
     rw [Ne, Ideal.zero_eq_bot, Ideal.map_eq_bot_iff_of_injective σ.injective, ← Ideal.zero_eq_bot]
     exact hJne

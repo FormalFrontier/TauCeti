@@ -37,7 +37,9 @@ square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` f
   `elementaryTwoQuotientMk_prod` record its additivity, while `elementaryTwoQuotientMk_surjective`
   and `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
 * `TauCeti.ClassGroup.elementaryTwoQuotientCongr`: a multiplicative equivalence of class groups
-  induces a `ZMod 2`-linear equivalence of their elementary-2 quotients.
+  induces a `ZMod 2`-linear equivalence of their elementary-2 quotients, with
+  `elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv` recording that an automorphism acting
+  pointwise by inversion (e.g. quadratic conjugation) is the identity on `Cl(R)/Cl(R)²`.
 * `TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|Cl(R)/Cl(R)²| = |Cl(R)[2]|`,
   the quotient and the 2-torsion subgroup have equal cardinality.
 * `TauCeti.ClassGroup.twoRank` and `card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
@@ -152,6 +154,16 @@ of its inverse image. -/
     elementaryTwoQuotientCongr (e.trans e') x =
       elementaryTwoQuotientCongr e' (elementaryTwoQuotientCongr e x) :=
   TauCeti.elementaryTwoQuotientCongr_trans_apply e e' x
+
+/-- An automorphism of the class group that acts pointwise by inversion induces the identity on the
+maximal elementary-2 quotient `Cl(R)/Cl(R)²`. In genus theory this is the action of quadratic
+conjugation, which sends each ideal class to its inverse. -/
+theorem elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv (e : ClassGroup R ≃* ClassGroup R)
+    (he : ∀ C, e C = C⁻¹) (x : ElementaryTwoQuotient R) :
+    elementaryTwoQuotientCongr e x = x := by
+  -- Reduce the class-group wrapper names to the generic elementary-2 quotient statement.
+  change TauCeti.elementaryTwoQuotientCongr e x = x
+  exact TauCeti.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv e he x
 
 variable (R)
 
