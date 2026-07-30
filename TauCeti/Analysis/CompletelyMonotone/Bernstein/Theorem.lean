@@ -120,23 +120,19 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
     exact tendsto_nhds_unique tendsto_const_nhds hlim
   -- Add the atom `L · δ₀` to recover `f` itself.
   haveI := hμ₀fin
-  haveI hatom : IsFiniteMeasure (ENNReal.ofReal L • Measure.dirac (0 : ℝ≥0)) := by
-    constructor
-    simp [Measure.smul_apply]
-  refine ⟨μ₀ + ENNReal.ofReal L • Measure.dirac 0, inferInstance, fun t ht => ?_⟩
-  · simp only [neg_mul]
-    have hlapint : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ₀ := by
-      have h := (laplaceKernelBoundedContinuous ht).integrable μ₀
-      rwa [funext (laplaceKernelBoundedContinuous_apply ht)] at h
-    have hatomint : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ))))
-        (ENNReal.ofReal L • Measure.dirac 0) := by
-      have h := (laplaceKernelBoundedContinuous ht).integrable
-        (ENNReal.ofReal L • Measure.dirac (0 : ℝ≥0))
-      rwa [funext (laplaceKernelBoundedContinuous_apply ht)] at h
-    rw [integral_add_measure hlapint hatomint]
-    rw [integral_smul_measure, integral_dirac]
-    simp only [NNReal.coe_zero, mul_zero, neg_zero, Real.exp_zero, smul_eq_mul, mul_one]
-    rw [ENNReal.toReal_ofReal hL_nn]
-    linarith [key t ht]
+  refine ⟨μ₀ + L.toNNReal • Measure.dirac 0, inferInstance, fun t ht => ?_⟩
+  simp only [neg_mul]
+  have hlapint : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ₀ := by
+    have h := (laplaceKernelBoundedContinuous ht).integrable μ₀
+    rwa [funext (laplaceKernelBoundedContinuous_apply ht)] at h
+  have hatomint : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ))))
+      (L.toNNReal • Measure.dirac 0) := by
+    have h := (laplaceKernelBoundedContinuous ht).integrable
+      (L.toNNReal • Measure.dirac (0 : ℝ≥0))
+    rwa [funext (laplaceKernelBoundedContinuous_apply ht)] at h
+  rw [integral_add_measure hlapint hatomint, integral_smul_nnreal_measure, integral_dirac]
+  simp only [NNReal.coe_zero, mul_zero, neg_zero, Real.exp_zero, NNReal.smul_def, smul_eq_mul,
+    mul_one, Real.coe_toNNReal L hL_nn]
+  linarith [key t ht]
 
 end TauCeti
