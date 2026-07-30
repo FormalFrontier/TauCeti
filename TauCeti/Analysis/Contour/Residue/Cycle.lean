@@ -34,7 +34,8 @@ Laurent tail at `s`. The remainder `g` integrates to zero by the homology Cauchy
 Laurent tail the simple-pole coefficient integrates to `2πi · n_s(γ) · Res_s f`, by the very
 definition of the winding number (the principal value collapses to an ordinary integral because
 `γ` misses `s`), while every coefficient of order `≥ 2` integrates to zero around the closed
-curve, having the primitive `−(k−1)⁻¹(z − s)^{−(k−1)}`.
+curve, having the primitive `−(k−1)⁻¹(z − s)^{−(k−1)}`
+(`Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed`).
 
 Unlike the Hungerbühler–Wasem generalized residue theorem
 (`Contour.hungerbuhlerWasem_residueTheorem`), whose singularities may lie *on* the curve, nothing
@@ -46,8 +47,6 @@ here and not there.
 
 ## Main results
 
-* `TauCeti.Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed` — a Laurent term of order `≥ 2`
-  integrates to zero around a closed piecewise-`C¹` curve missing the pole.
 * `TauCeti.Contour.PolarPartDecomposition.intervalIntegral_deriv_smul_polarPart` — the contour
   integral of a polar part around such a curve is `2πi · n_s(γ) · Res_s f`.
 * `TauCeti.Contour.classicalResidueTheorem_nullHomologous` — the residue theorem for an arbitrary
@@ -75,36 +74,6 @@ open MeasureTheory Set
 open scoped Interval
 
 namespace TauCeti.Contour
-
-/-- The oriented case of `Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed`. -/
-private theorem integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
-    (hk : 2 ≤ k) (c : ℂ) {a b : ℝ} (hab : a ≤ b) (hγ : IsPiecewiseC1On γ a b)
-    (hclosed : γ a = γ b) (h_ne : ∀ t ∈ Icc a b, γ t ≠ s) :
-    ∫ t in a..b, c / (γ t - s) ^ k * deriv γ t = 0 := by
-  obtain ⟨P, hP, hdiff⟩ := hγ.exists_countable_differentiableAt
-  rw [min_eq_left hab, max_eq_right hab] at hdiff
-  have hcont : ContinuousOn γ (Icc a b) := by
-    rw [← Set.uIcc_of_le hab]; exact hγ.continuousOn
-  rw [integral_pow_inv_mul_deriv_eq_sub hk c hab hP h_ne hdiff hcont
-    hγ.intervalIntegrable_deriv, hclosed, sub_self]
-
-/-- **A Laurent term of order at least two integrates to zero around a closed curve.** On a
-piecewise-`C¹` curve `γ` with `γ a = γ b` that never meets `s`, the integrand
-`c/(z − s)^k · γ'` with `k ≥ 2` is the derivative of `c · (−(k−1)⁻¹ (γ · − s)^{−(k−1)})`, so the
-fundamental theorem of calculus along the contour returns the endpoint difference, which the
-closedness kills. This is why only the simple-pole coefficient of a Laurent tail survives in the
-residue theorem. -/
-theorem integral_pow_inv_mul_deriv_eq_zero_of_closed {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
-    (hk : 2 ≤ k) (c : ℂ) {a b : ℝ} (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
-    (h_ne : ∀ t ∈ uIcc a b, γ t ≠ s) :
-    ∫ t in a..b, c / (γ t - s) ^ k * deriv γ t = 0 := by
-  rcases le_total a b with hab | hba
-  · exact integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le hk c hab hγ hclosed
-      fun t ht => h_ne t (by rwa [Set.uIcc_of_le hab])
-  · rw [intervalIntegral.integral_symm b a,
-      integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le hk c hba hγ.symm hclosed.symm
-        (fun t ht => h_ne t (by rw [Set.uIcc_comm, Set.uIcc_of_le hba]; exact ht)),
-      neg_zero]
 
 namespace PolarPartDecomposition
 
@@ -153,29 +122,15 @@ theorem intervalIntegral_deriv_smul_polarPart (decomp : PolarPartDecomposition f
       ring
     · rw [if_neg (Nat.pos_iff_ne_zero.mp hk_pos)]
       exact integral_pow_inv_mul_deriv_eq_zero_of_closed (by omega) _ hγ hclosed h_ne
-  rw [hsplit, Finset.sum_congr rfl fun k _ => hval k]
-  rcases Nat.eq_zero_or_pos (decomp.order s) with h0 | h_pos
-  · rw [Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega), decomp.residue_eq s,
-      dif_neg (by omega)]
-    ring
-  · have h_pick : ∀ k : Fin (decomp.order s),
-        (if k.val = 0 then
-          decomp.coeff s k * (2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b s) else 0)
-        = if k = ⟨0, h_pos⟩ then
-          decomp.coeff s ⟨0, h_pos⟩ *
-            (2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b s) else 0 := fun k => by
-      rcases eq_or_ne k ⟨0, h_pos⟩ with rfl | hk
-      · simp
-      · rw [if_neg fun h => hk (Fin.ext h), if_neg hk]
-    rw [Finset.sum_congr rfl fun k _ => h_pick k, Finset.sum_ite_eq' Finset.univ,
-      if_pos (Finset.mem_univ _), decomp.residue_eq s, dif_pos h_pos]
-    ring
+  rw [hsplit, Finset.sum_congr rfl fun k _ => hval k, decomp.sum_ite_coeff_eq_residue_mul s]
+  ring
 
 end PolarPartDecomposition
 
 /-- **The classical residue theorem for an arbitrary null-homologous cycle.** Let `U` be open,
-`S` a finite set, `f` differentiable on `U ∖ S` and meromorphic at each point of `S`, and let `γ`
-be a closed piecewise-`C¹` curve in `U`, **null-homologous** in `U`, that **avoids** `S`. Then
+`S` a finite set, `f` differentiable on `U ∖ S` and meromorphic at each point of `S` lying in `U`,
+and let `γ` be a closed piecewise-`C¹` curve in `U`, **null-homologous** in `U`, that **avoids**
+`S`. Then
 
 `∫ t in a..b, γ' t • f (γ t) = 2πi · ∑_{s ∈ S} n_s(γ) · Res_s f`,
 

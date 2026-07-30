@@ -32,6 +32,9 @@ parts.
 
 ## Main results
 
+* `Contour.PolarPartDecomposition.sum_ite_coeff_eq_residue_mul` — a weight carried by the
+  simple-pole coefficient alone sums to `Res_s f` times that weight; the last step of every
+  term-by-term evaluation of a polar part.
 * `Contour.PolarPartDecomposition.intervalIntegral_deriv_smul_analyticRemainder_eq_zero` — the
   contour integral of the analytic remainder along a closed null-homologous piecewise-`C¹` curve
   in `U` vanishes, by the homology Cauchy theorem.
@@ -95,6 +98,27 @@ structure PolarPartDecomposition (f : ℂ → ℂ) (S : Finset ℂ) (U : Set ℂ
 namespace PolarPartDecomposition
 
 variable {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
+
+/-- **Only the simple-pole coefficient survives.** Summing the Laurent coefficients at `s` against
+a weight `c` carried by the simple-pole term alone leaves `Res_s f · c`, the empty polar part
+included (both sides are then `0`). Every evaluation of a polar part term by term — as a contour
+integral or as a principal value — bottoms out here, the higher-order terms having already been
+shown to contribute nothing. -/
+theorem sum_ite_coeff_eq_residue_mul (decomp : PolarPartDecomposition f S U) (s : S) (c : ℂ) :
+    (∑ k : Fin (decomp.order s), if k.val = 0 then decomp.coeff s k * c else 0)
+      = residue f s * c := by
+  classical
+  rcases Nat.eq_zero_or_pos (decomp.order s) with h0 | h_pos
+  · rw [Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega), decomp.residue_eq s,
+      dif_neg (by omega), zero_mul]
+  · have h_pick : ∀ k : Fin (decomp.order s),
+        (if k.val = 0 then decomp.coeff s k * c else 0)
+        = if k = ⟨0, h_pos⟩ then decomp.coeff s ⟨0, h_pos⟩ * c else 0 := fun k => by
+      rcases eq_or_ne k ⟨0, h_pos⟩ with rfl | hk
+      · simp
+      · rw [if_neg fun h => hk (Fin.ext h), if_neg hk]
+    rw [Finset.sum_congr rfl fun k _ => h_pick k, Finset.sum_ite_eq' Finset.univ,
+      if_pos (Finset.mem_univ _), decomp.residue_eq s, dif_pos h_pos]
 
 /-- **The analytic remainder integrates to zero** along any closed null-homologous
 piecewise-`C¹` curve in `U` — even one passing through the poles of `f`, since the remainder
