@@ -269,20 +269,15 @@ section Map
 
 variable {N : Type w} [AddCommGroup N] [Module R N] {Q' : QuadraticForm R N}
 
-/-- The functoriality of the Clifford algebra in the quadratic form takes a product of generators
+/-- An isometry of quadratic forms respects the degree filtration: it takes a product of generators
 to a product of the same length. -/
-theorem map_prod_map_ι (f : Q →qᵢ Q') (l : List M) :
-    CliffordAlgebra.map f (l.map (ι Q)).prod = ((l.map f).map (ι Q')).prod := by
-  rw [map_list_prod, List.map_map, List.map_map]
-  simp [Function.comp_def]
-
-/-- An isometry of quadratic forms respects the degree filtration. -/
 theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
     (hx : x ∈ filtration Q k) : CliffordAlgebra.map f x ∈ filtration Q' k := by
   have h : filtration Q k ≤ (filtration Q' k).comap (CliffordAlgebra.map f).toLinearMap :=
     (filtration_le_iff Q).2 fun l hl => by
-      rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, map_prod_map_ι]
-      exact prod_map_ι_mem_filtration Q' (by simpa using hl)
+      rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, map_list_prod, List.map_map]
+      simpa [Function.comp_def] using
+        prod_map_ι_mem_filtration Q' (l := l.map f) (by simpa using hl)
   exact h hx
 
 end Map
