@@ -43,10 +43,10 @@ projection it pins alongside — which consumes the already-landed Layer 1 joint
 `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
 
 The Layer 1 joint-rectangle common ending `conditionallyIID_of_jointRectangles` lives in
-`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`. Still open here are the Layer 6 summit
-theorems that *conclude* this predicate, `conditionallyIID_of_contractable` and
-`conditionallyIID_of_exchangeable`, together with the `deFinetti*` handles that return with them.
-A.e. uniqueness of the directing measure (`conditionallyIID_ae_unique`) lives in
+`TauCeti.Probability.DeFinetti.ConditionalCommonEnding`. The Layer 6 summit theorems that conclude
+this predicate, together with the `deFinetti*` equivalence handles, live in
+`TauCeti.Probability.DeFinetti.Theorem`. A.e. uniqueness of the directing measure
+(`conditionallyIID_ae_unique`) lives in
 `TauCeti.Probability.Exchangeability.ConditionallyIID.Unique`.
 -/
 
