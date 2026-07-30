@@ -24,6 +24,8 @@ in an exact finite-sample formula for the mean square error of an empirical freq
   frequency of a measurable set `B` along the first `n` coordinates approximates `(ν ·) B` with
   mean square error exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`.
 * `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le` — its `≤ 1 / n` corollary.
+* `ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq` — the limit that corollary
+  gives: fixed-set empirical frequencies converge to `(ν ·) B` in mean square.
 
 ## Implementation
 
@@ -44,7 +46,13 @@ integrals by the private machinery below; the coordinates are only assumed a.e. 
 elsewhere in the measure-theoretic exchangeability API.
 
 These estimates are consumed by `ConditionallyIID.Unique` for a.e. uniqueness of the directing
-measure, and are the finite-sample input to empirical-frequency convergence.
+measure.
+
+The `O(1/n)` rate is **not** summable, so it gives mean-square convergence but not almost-sure
+convergence; the latter needs a different argument. Convergence on a countable determining class,
+empirical probability measures as objects, and weak convergence — which additionally requires a
+chosen Polish topology, since `StandardBorelSpace α` asserts only that *some* compatible topology
+exists — are all separate developments.
 -/
 
 public section
@@ -418,6 +426,24 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilit
   have hn' : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
   rw [h.integral_empiricalFrequency_sub_sq hX hB hn]
   nlinarith [hA, hC, hn']
+
+/-! ### Convergence of empirical frequencies -/
+
+/-- **Fixed-set empirical frequencies converge in mean square.** For a conditionally i.i.d. process,
+the empirical frequency of a fixed measurable set `B` along the first `n` coordinates converges in
+`L²` to the directing measure's evaluation `(ν ·) B`.
+
+Indexed at `n + 1` so that no caller carries an `n ≠ 0` side condition. -/
+theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsProbabilityMeasure μ]
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) :
+    Tendsto (fun n : ℕ => ∫ ω, (((n + 1 : ℕ) : ℝ)⁻¹ *
+          (∑ i ∈ Finset.range (n + 1), (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
+        - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ) atTop (nhds 0) := by
+  have hupper : Tendsto (fun n : ℕ => ((n + 1 : ℕ) : ℝ)⁻¹) atTop (nhds 0) :=
+    tendsto_one_div_add_atTop_nhds_zero_nat.congr fun n => by
+      rw [one_div]; norm_cast
+  refine squeeze_zero (fun n => integral_nonneg fun ω => sq_nonneg _) (fun n => ?_) hupper
+  exact h.integral_empiricalFrequency_sub_sq_le hX hB (Nat.succ_ne_zero n)
 
 end Probability
 
