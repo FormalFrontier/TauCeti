@@ -51,11 +51,12 @@ prescribed points.
 
 This advances the conformal-mapping roadmap's L2 target "the hyperbolic / Poincaré metric on `𝔻`"
 (see `ConformalMapping/README.md`), which the preceding files carried as far as the metric-space
-instance and its topology; being geodesic is what makes the Poincaré disc a model of the
-hyperbolic plane rather than merely a metric on a disc. It reuses Tau Ceti's pseudo-hyperbolic,
-hyperbolic-distance and disc-automorphism API. As with the rest of the L0--L3 conformal-mapping
-material, it is coordinated with the upstream Mathlib Riemann-mapping effort
-leanprover-community/mathlib4#33505, whose preceding human-curated work in
+instance and its topology; being geodesic is a further basic property of that metric, the one
+that makes hyperbolic lines and segments available in this model. (It is not by itself a
+characterisation of the hyperbolic plane: many unrelated metric spaces are geodesic.) It reuses
+Tau Ceti's pseudo-hyperbolic, hyperbolic-distance and disc-automorphism API. As with the rest of
+the L0--L3 conformal-mapping material, it is coordinated with the upstream Mathlib
+Riemann-mapping effort leanprover-community/mathlib4#33505, whose preceding human-curated work in
 `Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean` this file
 duplicates nothing of; should a human-curated Poincaré-disc metric land upstream, this material
 should be refactored onto it. Mathlib has the hyperbolic metric on the upper half-plane
@@ -243,12 +244,10 @@ theorem exists_isometry_apply_zero_apply_dist (z w : PoincareDisc) :
   obtain ⟨u, hu⟩ := exists_radialGeodesic_eq (g w)
   have hdist : dist (g w) (Complex.UnitDisc.toPoincare 0) = dist z w := by
     rw [← hgz, g.dist_eq, dist_comm]
-  refine ⟨fun t => g.symm (radialGeodesic u t),
+  refine ⟨g.symm ∘ radialGeodesic u,
     g.symm.isometry.comp (isometry_radialGeodesic u), ?_, ?_⟩
-  · change g.symm (radialGeodesic u 0) = z
-    rw [radialGeodesic_zero, ← hgz, g.symm_apply_apply]
-  · change g.symm (radialGeodesic u (dist z w)) = w
-    rw [← hdist, hu, g.symm_apply_apply]
+  · rw [Function.comp_apply, radialGeodesic_zero, ← hgz, g.symm_apply_apply]
+  · rw [Function.comp_apply, ← hdist, hu, g.symm_apply_apply]
 
 /-- Every intermediate distance along a geodesic is realised: for `0 ≤ r ≤ dist z w` there is a
 point at hyperbolic distance `r` from `z` and `dist z w - r` from `w`. -/
@@ -293,8 +292,7 @@ theorem hyperbolicDist_zero_add_hyperbolicDist_ofReal_mul {z : ℂ} (hz : ‖z�
     rw [hu_def, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hr0, ← hr,
       div_self hr0.ne']
   have hzu : z = u * (r : ℂ) := by
-    rw [hu_def]
-    field_simp
+    rw [hu_def, div_mul_cancel₀ _ hrne]
   have habs0 : |(0 : ℝ)| < 1 := by norm_num
   have habsr : |r| < 1 := by rwa [abs_of_pos hr0]
   have htr : |t * r| < 1 := by
