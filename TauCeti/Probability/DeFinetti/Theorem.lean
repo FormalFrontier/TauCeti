@@ -15,7 +15,8 @@ import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 /-!
 # The de Finetti–Ryll-Nardzewski summit and equivalences
 
-The de Finetti summit in its **conditional** form, and the equivalences in their **mixture** form.
+The de Finetti summit and equivalences in their **conditional** form, with the **mixture** forms
+retained alongside as the integrated-out statements.
 
 `conditionallyIID_of_contractable` is the sharp statement: a contractable process valued in a
 nonempty standard Borel space is conditionally i.i.d., a joint-law disintegration given a directing
@@ -39,12 +40,11 @@ The roadmap directs that "summit theorems conclude `ConditionallyIID`, never mer
 `conditionallyIIDWith_of_contractable_pathSpace` names the tail conditional law on path space and
 `ConditionallyIIDWith.of_pathLaw` transports it.
 
-Still absent are the *equivalence* handles the roadmap reserves — `deFinetti`,
-`deFinetti_equivalence`, `deFinetti_RyllNardzewski_equivalence` — since those also need
-`conditionallyIID_of_exchangeable`, which is open. The equivalences below therefore remain the
-mixture forms, named as such.
+The handles the roadmap reserves — `deFinetti`, `deFinetti_equivalence`,
+`deFinetti_RyllNardzewski_equivalence` — are supplied here, concluding `ConditionallyIID` as the
+roadmap requires. The mixture equivalences are retained alongside them as the integrated-out forms.
 
-Both equivalences hold on an arbitrary measurable sample space `Ω` under `[IsFiniteMeasure μ]`;
+All equivalences hold on an arbitrary measurable sample space `Ω` under `[IsFiniteMeasure μ]`;
 the standard-Borel hypothesis sits only on the state space `α`, each value of the mixing
 representative being a probability measure on `α`. (The *mixing law* itself — the law of `ν` — is a
 measure on `ProbabilityMeasure α`, not on `α`.)
@@ -60,6 +60,11 @@ a strictly weaker statement.
 
 * `conditionallyIID_of_contractable` — the conditional summit: contractable implies conditionally
   i.i.d., strengthening the forward direction of `contractable_iff_mixedIID`.
+* `conditionallyIID_of_exchangeable` and its handle `deFinetti` — exchangeable implies conditionally
+  i.i.d.
+* `ConditionallyIID.exchangeable` — the easy reverse arrow.
+* `deFinetti_equivalence` — exchangeable iff conditionally i.i.d.
+* `deFinetti_RyllNardzewski_equivalence` — contractable iff conditionally i.i.d.
 * `exchangeable_iff_mixedIID` — de Finetti's theorem as an equivalence, mixture form.
 * `contractable_iff_mixedIID` — the two-way Ryll-Nardzewski equivalence, mixture form.
 * `contractable_iff_exchangeable_and_mixedIID` — the roadmap's conjunction form.
@@ -125,6 +130,45 @@ theorem conditionallyIID_of_contractable [StandardBorelSpace α] [Nonempty α] {
   exact ConditionallyIID.of_directing
     ((conditionallyIIDWith_of_contractable_pathSpace
       (Contractable.coordinate_pathLaw hX fun i => (hX_meas i).aemeasurable)).of_pathLaw hX_meas)
+
+/-- **The easy reverse arrow: conditionally i.i.d. ⇒ exchangeable.** Via the projection to the
+mixture identity and `MixedIID.exchangeable`. -/
+theorem ConditionallyIID.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : ConditionallyIID μ X) : Exchangeable μ X :=
+  (mixedIID_of_conditionallyIID h).exchangeable
+
+/-- **de Finetti's theorem: exchangeable ⇒ conditionally i.i.d.** Exchangeability implies
+contractability, and `conditionallyIID_of_contractable` concludes. -/
+theorem conditionallyIID_of_exchangeable [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Exchangeable μ X)
+    (hX_meas : ∀ n, Measurable (X n)) :
+    ConditionallyIID μ X :=
+  conditionallyIID_of_contractable
+    (hX.contractable fun i => (hX_meas i).aemeasurable) hX_meas
+
+/-- **de Finetti's theorem** (Kallenberg, *Probabilistic Symmetries and Invariance Principles*,
+Theorem 1.1): an exchangeable process valued in a nonempty standard Borel space is conditionally
+i.i.d. The roadmap handle for `conditionallyIID_of_exchangeable`. -/
+theorem deFinetti [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
+    ConditionallyIID μ X :=
+  conditionallyIID_of_exchangeable hX hX_meas
+
+/-- **de Finetti's theorem as an equivalence** (Kallenberg, Theorem 1.1): exchangeable iff
+conditionally i.i.d. -/
+theorem deFinetti_equivalence [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) :
+    Exchangeable μ X ↔ ConditionallyIID μ X :=
+  ⟨fun hX => deFinetti hX hX_meas, ConditionallyIID.exchangeable⟩
+
+/-- **The de Finetti–Ryll-Nardzewski equivalence** (Kallenberg, Theorem 1.1): contractable iff
+conditionally i.i.d. -/
+theorem deFinetti_RyllNardzewski_equivalence [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) :
+    Contractable μ X ↔ ConditionallyIID μ X :=
+  ⟨fun hX => conditionallyIID_of_contractable hX hX_meas,
+    fun h => h.exchangeable.contractable fun i => (hX_meas i).aemeasurable⟩
+
 
 end Probability
 
