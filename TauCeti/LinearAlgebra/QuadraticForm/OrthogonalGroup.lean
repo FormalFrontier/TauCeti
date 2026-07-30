@@ -28,8 +28,10 @@ the hyperplanes of vectors of invertible norm. The orthogonal group is the targe
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
 theorem factors an orthogonal automorphism into. Nothing here assumes the hypotheses that theorem
-needs (a field, a nondegenerate form, finite dimension); the declarations below hold over an
-arbitrary commutative ring.
+needs (a field of characteristic not two, a nondegenerate form, finite dimension); the declarations
+below hold over an arbitrary commutative ring. The characteristic restriction is not incidental: in
+characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
+negating it and is a transvection rather than a reflection in `v ^ ⊥`.
 
 ## Main definitions
 
@@ -58,8 +60,9 @@ arbitrary commutative ring.
   norm is orthogonal; `TauCeti.QuadraticMap.reflection_mul_self` says it is an involution, and
   `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane. These
   are the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product
-  of, under hypotheses (a field, a nondegenerate form, finite dimension) that are not assumed here,
-  and the image of the Pin group's generating vectors under twisted conjugation.
+  of, under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
+  that are not assumed here, and the image of the Pin group's generating vectors under twisted
+  conjugation.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup_normal`: `SO(Q)` is normal in `O(Q)`, being the
   kernel of the determinant restricted there.
 
@@ -69,7 +72,9 @@ arbitrary commutative ring.
 preserving `Q` makes sense at that generality. The file is therefore laid out by hypothesis
 strength: the group itself, its identification with `IsometryEquiv`, and its transport along an
 isometric equivalence need only a `CommSemiring` and additive monoids; the polarization needs
-subtraction in `N`, the determinant needs `M` to be an additive group over a `CommRing`, and the
+subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGroup M]
+[AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
+additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
 `N = R`.
 
@@ -117,10 +122,12 @@ theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ m, Q (f m) = Q m := Iff.rfl
 
 /-- The defining property of an orthogonal automorphism, in the form in which it rewrites. -/
+@[simp]
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
 /-- An orthogonal automorphism preserves orthogonality of vectors. -/
+@[simp]
 theorem isOrtho_iff_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (x y : M) :
     Q.IsOrtho (f x) (f y) ↔ Q.IsOrtho x y := by
   simp only [isOrtho_def, ← map_add, map_app_of_mem_orthogonalGroup hf]
@@ -207,11 +214,12 @@ end CommSemiring
 
 section Polar
 
-variable {R : Type u} {M : Type v} {N : Type w} [CommRing R]
+variable {R : Type u} {M : Type v} {N : Type w} [CommSemiring R]
   [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] {Q : QuadraticMap R M N}
 
 /-- An orthogonal automorphism preserves the polarization of `Q`, because the polarization is
 built from `Q` and the additive structure alone. -/
+@[simp]
 theorem polar_apply_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (x y : M) :
     polar Q (f x) (f y) = polar Q x y := by
   simp only [QuadraticMap.polar, ← map_add, map_app_of_mem_orthogonalGroup hf]
@@ -228,8 +236,12 @@ two the polarization forgets `Q` entirely on the diagonal. -/
 theorem mem_orthogonalGroup_iff_polar (h2 : IsSMulRegular N (2 : R)) {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ x y, polar Q (f x) (f y) = polar Q x y := by
   refine ⟨polar_apply_of_mem_orthogonalGroup, fun h m => ?_⟩
+  -- Mathlib's `polar_self` is stated over a `CommRing`; the diagonal identity itself needs only
+  -- `QuadraticMap.map_add_self`, which holds over a `CommSemiring`.
   have key : ∀ x : M, (2 : R) • Q x = polar Q x x := fun x => by
-    rw [polar_self, two_nsmul, two_smul]
+    rw [two_smul]
+    simp only [QuadraticMap.polar, QuadraticMap.map_add_self]
+    abel
   exact h2 ((key (f m)).trans ((h m m).trans (key m).symm))
 
 end Polar
@@ -321,9 +333,11 @@ theorem reflection_symm : (reflection Q v).symm = reflection Q v :=
   Module.reflection_symm _
 
 /-- **Reflections are orthogonal.** These are the generators a Cartan-Dieudonné theorem writes an
-orthogonal automorphism as a product of, over a field, for a nondegenerate form, in finite
-dimension; none of that is assumed here. They are also the image of the generating vectors of the
-Pin group under twisted conjugation. -/
+orthogonal automorphism as a product of, over a field of characteristic not two, for a nondegenerate
+form, in finite dimension; none of that is assumed here. In characteristic two `polar Q v v` is
+`2 • Q v = 0`, so `reflection Q v` fixes `v` rather than negating it and is a transvection, which is
+why that theorem excludes characteristic two. They are also the image of the generating vectors of
+the Pin group under twisted conjugation. -/
 theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q := by
   intro y
   rw [reflection_apply]
