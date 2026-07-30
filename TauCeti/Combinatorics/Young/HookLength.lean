@@ -36,8 +36,9 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
 
 * `TauCeti.YoungDiagram.card_hook`: the hook of a cell has `hookLength` many elements.
 * `TauCeti.YoungDiagram.hookLength_transpose`: transposition preserves hook lengths.
-* `TauCeti.YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when it is a
-  corner, that is, when neither the cell to its right nor the cell below it lies in the diagram.
+* `TauCeti.YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when neither the
+  cell to its right nor the cell below it lies in the diagram; for a cell of the diagram this says
+  that it is a corner.
 * `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one`: the hook lengths of a
   one-row diagram multiply to `μ.card !`.
 
@@ -139,6 +140,15 @@ def legLength : ℕ := μ.colLen c.2 - c.1 - 1
 /-- The hook length of the cell `c` in the Young diagram `μ`: the number of cells in its hook. -/
 def hookLength : ℕ := armLength μ c + legLength μ c + 1
 
+/-- The arm length of a cell counts the columns of its row beyond it. -/
+theorem armLength_def : armLength μ c = μ.rowLen c.1 - c.2 - 1 := (rfl)
+
+/-- The leg length of a cell counts the rows of its column beyond it. -/
+theorem legLength_def : legLength μ c = μ.colLen c.2 - c.1 - 1 := (rfl)
+
+/-- The hook length of a cell is its arm length plus its leg length plus one, the cell itself. -/
+theorem hookLength_def : hookLength μ c = armLength μ c + legLength μ c + 1 := (rfl)
+
 /-- The arm of a cell has `armLength` many elements. -/
 @[simp]
 theorem card_arm : (arm μ c).card = armLength μ c := by
@@ -233,21 +243,19 @@ theorem prod_hookLength_transpose :
 
 variable {μ c}
 
-theorem armLength_eq_zero_iff (h : c ∈ μ) : armLength μ c = 0 ↔ (c.1, c.2 + 1) ∉ μ := by
-  rw [_root_.YoungDiagram.mem_iff_lt_rowLen] at h ⊢
-  simp only [armLength]
+theorem armLength_eq_zero_iff : armLength μ c = 0 ↔ (c.1, c.2 + 1) ∉ μ := by
+  rw [_root_.YoungDiagram.mem_iff_lt_rowLen, armLength_def]
   omega
 
-theorem legLength_eq_zero_iff (h : c ∈ μ) : legLength μ c = 0 ↔ (c.1 + 1, c.2) ∉ μ := by
-  rw [_root_.YoungDiagram.mem_iff_lt_colLen] at h ⊢
-  simp only [legLength]
+theorem legLength_eq_zero_iff : legLength μ c = 0 ↔ (c.1 + 1, c.2) ∉ μ := by
+  rw [_root_.YoungDiagram.mem_iff_lt_colLen, legLength_def]
   omega
 
-/-- A cell of a Young diagram has hook length `1` exactly when it is a corner of the diagram: the
-cell to its right and the cell below it are both absent. -/
-theorem hookLength_eq_one_iff (h : c ∈ μ) :
+/-- A cell has hook length `1` exactly when the cell to its right and the cell below it are both
+absent from the diagram; for a cell of `μ` this says that it is a corner. -/
+theorem hookLength_eq_one_iff :
     hookLength μ c = 1 ↔ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ := by
-  rw [← armLength_eq_zero_iff h, ← legLength_eq_zero_iff h, hookLength]
+  rw [← armLength_eq_zero_iff, ← legLength_eq_zero_iff, hookLength_def]
   omega
 
 /-- Hook lengths strictly decrease from left to right along a row. -/
