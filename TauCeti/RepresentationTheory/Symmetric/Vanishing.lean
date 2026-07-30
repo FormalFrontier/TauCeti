@@ -72,17 +72,28 @@ off `t` and columns off `s`. -/
 def RowMeetsColumn (t s : YoungTableau μ) : Prop :=
   ∃ x y, x ≠ y ∧ rowIndex t x = rowIndex t y ∧ colIndex s x = colIndex s y
 
+/-- The defining characterisation of `RowMeetsColumn`, for introducing and eliminating the
+predicate on arbitrary tableaux.  Not a `simp` lemma: it would shadow the normal forms
+`rowMeetsColumn_relabel_iff` and `not_rowMeetsColumn_self`. -/
+theorem rowMeetsColumn_def (t s : YoungTableau μ) :
+    RowMeetsColumn t s ↔
+      ∃ x y, x ≠ y ∧ rowIndex t x = rowIndex t y ∧ colIndex s x = colIndex s y :=
+  Iff.rfl
+
 /-- A row of `t` meets a column of the relabelling `relabel σ t` exactly when two distinct labels
 of a common row of `t` have their `σ`-preimages in a common column of `t`. -/
+@[simp]
 theorem rowMeetsColumn_relabel_iff (t : YoungTableau μ) (σ : Equiv.Perm (Fin μ.card)) :
     RowMeetsColumn t (relabel σ t) ↔
       ∃ x y, x ≠ y ∧ rowIndex t x = rowIndex t y ∧
         colIndex t (σ⁻¹ x) = colIndex t (σ⁻¹ y) := by
-  simp only [RowMeetsColumn, colIndex_relabel]
+  simp only [rowMeetsColumn_def, colIndex_relabel]
 
 /-- No row of a tableau meets one of its own columns twice: a label is determined by its row
 together with its column. -/
+@[simp]
 theorem not_rowMeetsColumn_self (t : YoungTableau μ) : ¬RowMeetsColumn t t := by
+  rw [rowMeetsColumn_def]
   rintro ⟨x, y, hxy, hrow, hcol⟩
   exact hxy (rowIndex_colIndex_injective t (Prod.ext hrow hcol))
 
