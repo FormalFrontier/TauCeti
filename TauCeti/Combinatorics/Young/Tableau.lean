@@ -187,6 +187,13 @@ shape. -/
 def relabelPerm (t t' : YoungTableau μ) : Equiv.Perm (Fin μ.card) :=
   t.symm.trans t'
 
+/-- The permutation carrying `t` to `t'` sends the label `k` to the label that `t'` gives to the
+cell that `t` labels `k`. -/
+@[simp]
+theorem relabelPerm_apply (t t' : YoungTableau μ) (k : Fin μ.card) :
+    relabelPerm t t' k = t' (t.symm k) := by
+  rw [relabelPerm, Equiv.trans_apply]
+
 @[simp]
 theorem relabel_relabelPerm (t t' : YoungTableau μ) : relabel (relabelPerm t t') t = t' := by
   rw [relabel, relabelPerm, ← Equiv.trans_assoc, Equiv.self_trans_symm, Equiv.refl_trans]

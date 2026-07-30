@@ -97,13 +97,19 @@ theorem colSubgroup_relabel :
   exact (fiberSubgroup_map_conj σ fun _ _ => by simp).symm
 
 /-- A permutation preserves the rows of the relabeled tableau exactly when its conjugate preserves
-the rows of the original one. -/
+the rows of the original one.
+
+Not a `simp` lemma: `mem_rowSubgroup` and `rowIndex_relabel` already simplify the left-hand side
+past this normal form, to the pointwise condition on rows. -/
 theorem mem_rowSubgroup_relabel {τ : Equiv.Perm (Fin μ.card)} :
     τ ∈ rowSubgroup (relabel σ t) ↔ σ⁻¹ * τ * σ ∈ rowSubgroup t := by
   rw [rowSubgroup_relabel, Subgroup.mem_map_equiv, MulAut.conj_symm_apply]
 
 /-- A permutation preserves the columns of the relabeled tableau exactly when its conjugate
-preserves the columns of the original one. -/
+preserves the columns of the original one.
+
+Not a `simp` lemma: `mem_colSubgroup` and `colIndex_relabel` already simplify the left-hand side
+past this normal form, to the pointwise condition on columns. -/
 theorem mem_colSubgroup_relabel {τ : Equiv.Perm (Fin μ.card)} :
     τ ∈ colSubgroup (relabel σ t) ↔ σ⁻¹ * τ * σ ∈ colSubgroup t := by
   rw [colSubgroup_relabel, Subgroup.mem_map_equiv, MulAut.conj_symm_apply]
@@ -111,6 +117,7 @@ theorem mem_colSubgroup_relabel {τ : Equiv.Perm (Fin μ.card)} :
 /-! ## The symmetrizers of a relabeled tableau -/
 
 /-- Relabeling by `σ` conjugates the row symmetrizer by `σ`. -/
+@[simp]
 theorem rowSymmetrizer_relabel :
     rowSymmetrizer (relabel σ t) =
       MonoidAlgebra.single σ 1 * rowSymmetrizer t * MonoidAlgebra.single σ⁻¹ 1 := by
@@ -122,6 +129,7 @@ theorem rowSymmetrizer_relabel :
 
 /-- Relabeling by `σ` conjugates the column antisymmetrizer by `σ`; the signs are unchanged,
 conjugate permutations having equal signs. -/
+@[simp]
 theorem columnAntisymmetrizer_relabel :
     columnAntisymmetrizer (relabel σ t) =
       MonoidAlgebra.single σ 1 * columnAntisymmetrizer t * MonoidAlgebra.single σ⁻¹ 1 := by
@@ -134,6 +142,7 @@ theorem columnAntisymmetrizer_relabel :
   · rw [if_neg h, if_neg fun hτ => h ((mem_colSubgroup_relabel σ t).mp hτ)]
 
 /-- Relabeling by `σ` conjugates the Young symmetrizer by `σ`: `c_{σt} = σ c_t σ⁻¹`. -/
+@[simp]
 theorem youngSymmetrizer_relabel :
     youngSymmetrizer (relabel σ t) =
       MonoidAlgebra.single σ 1 * youngSymmetrizer t * MonoidAlgebra.single σ⁻¹ 1 := by
@@ -183,14 +192,16 @@ def spechtIdealRelabelEquiv :
 @[simp]
 theorem spechtIdealRelabelEquiv_apply_coe (x : spechtIdeal (relabel σ t)) :
     (spechtIdealRelabelEquiv σ t x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
-      (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ 1 :=
-  (rfl)
+      (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ 1 := by
+  rw [spechtIdealRelabelEquiv, LinearEquiv.ofSubmodules_apply,
+    Units.mulRightLinearEquiv_apply, coe_singleUnit]
 
 @[simp]
 theorem spechtIdealRelabelEquiv_symm_apply_coe (y : spechtIdeal t) :
     ((spechtIdealRelabelEquiv σ t).symm y : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
-      (y : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ⁻¹ 1 :=
-  (rfl)
+      (y : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ⁻¹ 1 := by
+  rw [spechtIdealRelabelEquiv, LinearEquiv.ofSubmodules_symm_apply,
+    Units.symm_mulRightLinearEquiv_apply, coe_inv_singleUnit]
 
 /-- Right multiplication by `σ` is an isomorphism of representations from `ℚ[Sₙ] c_{σt}` to
 `ℚ[Sₙ] c_t`: being a map of left modules over the group algebra, it commutes with the action. -/
@@ -201,10 +212,24 @@ def spechtIdealRelabelRepEquiv :
     -- group algebra respects
     LinearMap.ext fun x => (spechtIdealRelabelEquiv σ t).map_smul (MonoidAlgebra.single g 1) x
 
+@[simp]
+theorem spechtIdealRelabelRepEquiv_apply_coe (x : spechtIdeal (relabel σ t)) :
+    (spechtIdealRelabelRepEquiv σ t x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
+      (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ 1 := by
+  rw [spechtIdealRelabelRepEquiv, Representation.Equiv.mk_apply,
+    LinearEquiv.restrictScalars_apply, spechtIdealRelabelEquiv_apply_coe]
+
 /-- The left ideals of the Young symmetrizers of a tableau and of its relabelings are isomorphic
 representations. -/
 def spechtIdealRelabelRepIso : spechtIdealRep (relabel σ t) ≅ spechtIdealRep t :=
   Rep.mkIso (spechtIdealRelabelRepEquiv σ t)
+
+@[simp]
+theorem spechtIdealRelabelRepIso_hom_hom_apply_coe (x : spechtIdeal (relabel σ t)) :
+    ((spechtIdealRelabelRepIso σ t).hom.hom x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
+      (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) * MonoidAlgebra.single σ 1 := by
+  rw [spechtIdealRelabelRepIso, Rep.mkIso_hom_hom_apply, Representation.Equiv.coe_toLinearMap,
+    spechtIdealRelabelRepEquiv_apply_coe]
 
 end
 
