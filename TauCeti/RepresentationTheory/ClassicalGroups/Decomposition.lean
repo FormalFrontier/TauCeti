@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.TensorSquare
+public import TauCeti.RepresentationTheory.Tensor.Square
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower

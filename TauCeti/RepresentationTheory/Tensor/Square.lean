@@ -8,7 +8,7 @@ public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
 public import TauCeti.RepresentationTheory.SymmetricPower
-public import TauCeti.RepresentationTheory.TensorPower
+public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
 # Tensor-square decompositions of representations

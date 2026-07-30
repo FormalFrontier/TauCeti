@@ -196,9 +196,10 @@ theorem toTensorSquare_injective :
 
 end SymmetricPower
 
-namespace TauCeti
+namespace exteriorPower
 
-private theorem wedge_comp_symmetric_toTensorSquare :
+/-- The exterior projection vanishes on the symmetric-square embedding. -/
+theorem lift_ιMulti_comp_symmetricPower_toTensorSquare :
     (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (SymmetricPower.toTensorSquare R M) = 0 := by
@@ -214,7 +215,19 @@ private theorem wedge_comp_symmetric_toTensorSquare :
   rw [(exteriorPower.ιMulti R 2).map_swap f (by decide)]
   simp
 
-private theorem mk_comp_exterior_toTensorSquare :
+/-- The exterior projection of an element embedded from the symmetric square vanishes. -/
+@[simp]
+theorem lift_ιMulti_symmetricPower_toTensorSquare (x : Sym[R]^2M) :
+    PiTensorProduct.lift (ιMulti R 2 (M := M)).toMultilinearMap
+        (SymmetricPower.toTensorSquare R M x) = 0 :=
+  DFunLike.congr_fun (lift_ιMulti_comp_symmetricPower_toTensorSquare R M) x
+
+end exteriorPower
+
+namespace SymmetricPower
+
+/-- The symmetric projection vanishes on the exterior-square embedding. -/
+theorem mk_comp_exteriorPower_toTensorSquare :
     (SymmetricPower.mk R (Fin 2) M).comp
         (exteriorPower.toTensorSquare R M) = 0 := by
   apply exteriorPower.linearMap_ext
@@ -228,7 +241,13 @@ private theorem mk_comp_exterior_toTensorSquare :
   rw [SymmetricPower.tprod_equiv (Equiv.swap 0 1) f]
   simp
 
-end TauCeti
+/-- The symmetric projection of an element embedded from the exterior square vanishes. -/
+@[simp]
+theorem mk_exteriorPower_toTensorSquare (x : ⋀[R]^2 M) :
+    mk R (Fin 2) M (exteriorPower.toTensorSquare R M x) = 0 :=
+  DFunLike.congr_fun (mk_comp_exteriorPower_toTensorSquare R M) x
+
+end SymmetricPower
 
 namespace exteriorPower
 
@@ -293,8 +312,10 @@ private theorem tensorSquareToSymmetricExterior_comp :
         (symmetricExteriorToTensorSquare R M) = LinearMap.id := by
   rw [tensorSquareToSymmetricExterior, symmetricExteriorToTensorSquare,
     LinearMap.prod_comp, LinearMap.comp_coprod, LinearMap.comp_coprod,
-    SymmetricPower.mk_comp_toTensorSquare, wedge_comp_symmetric_toTensorSquare,
-    mk_comp_exterior_toTensorSquare, exteriorPower.lift_ιMulti_comp_toTensorSquare]
+    SymmetricPower.mk_comp_toTensorSquare,
+    exteriorPower.lift_ιMulti_comp_symmetricPower_toTensorSquare,
+    SymmetricPower.mk_comp_exteriorPower_toTensorSquare,
+    exteriorPower.lift_ιMulti_comp_toTensorSquare]
   rw [← LinearMap.fst_eq_coprod, ← LinearMap.snd_eq_coprod,
     LinearMap.pair_fst_snd]
 
