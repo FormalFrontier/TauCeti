@@ -7,10 +7,9 @@ module
 
 public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Meromorphic.Divisor
+public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Divisor
-import Mathlib.Analysis.Analytic.Uniqueness
 import Mathlib.Analysis.Calculus.LogDeriv
-import Mathlib.Analysis.Normed.Module.Convex
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 
@@ -54,9 +53,10 @@ circle, and `closedBall c R` is convex hence preconnected, so
 point to the whole disc — neither `f` nor `g` vanishes identically near any point of it.
 
 That same observation is what makes the count *detect* zeros rather than merely count them:
-`TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff` says the count vanishes exactly when the
-function has no zero in the open disc, so Rouché transfers the *existence* of a zero from one
-function to the other. That transfer, not the numerical equality, is how Rouché is normally used.
+`TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`, from `TauCeti.Analysis.Complex.ZeroCount`,
+says the count vanishes exactly when the function has no zero in the open disc, so Rouché transfers
+the *existence* of a zero from one function to the other. That transfer, not the numerical
+equality, is how Rouché is normally used.
 
 ## Main results
 
@@ -66,10 +66,9 @@ function to the other. That transfer, not the numerical equality, is how Rouché
   counts in `ball c R`, each counted with multiplicity.
 * `TauCeti.rouche_add` — the classical additive phrasing: if `‖g z‖ < ‖f z‖` on `sphere c R`, then
   `f` and `f + g` have equal zero counts in `ball c R`.
-* `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff` — the zero count over `ball c R` vanishes
-  exactly when the function has no zero there.
-* `TauCeti.rouche_symm_exists_eq_zero_iff`, `TauCeti.rouche_exists_eq_zero_iff` — under the
-  respective hypotheses, `f` has a zero in `ball c R` if and only if `g` does.
+* `TauCeti.rouche_symm_exists_eq_zero_iff`, `TauCeti.rouche_exists_eq_zero_iff`,
+  `TauCeti.rouche_add_exists_eq_zero_iff` — under the respective hypotheses, `f` has a zero in
+  `ball c R` if and only if the function compared to it does.
 
 ## Coordination with upstream Mathlib
 
@@ -291,63 +290,20 @@ theorem rouche_add (hR : 0 < R)
 ## Detecting zeros
 
 Rouché is usually applied not to compare two counts but to transfer the *existence* of a zero. The
-bridge is that the count vanishes exactly when there is no zero, which needs the finite-order
-argument recorded in the module docstring.
+bridge is `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`: the count vanishes exactly when
+there is no zero, provided the function is nonzero somewhere on the closed disc. The Rouché
+hypothesis supplies that witness on the bounding circle.
 -/
 
-/-- Under the standing Rouché hypothesis that `f` is zero-free on the bounding circle, `f` does not
-vanish identically near any point of the closed disc: the disc is preconnected, so a point of
-infinite order would force `f ≡ 0`, contradicting nonvanishing at `c + R`. -/
-private lemma analyticOrderAt_ne_top_of_sphere (hR : 0 < R)
-    (hf : AnalyticOnNhd ℂ f (closedBall c R))
-    (hs : ∀ z ∈ sphere c R, f z ≠ 0) {z₀ : ℂ} (hz₀ : z₀ ∈ closedBall c R) :
-    analyticOrderAt f z₀ ≠ ⊤ := by
-  intro htop
-  have hzero : Set.EqOn f 0 (closedBall c R) :=
-    hf.eqOn_zero_of_preconnected_of_eventuallyEq_zero (convex_closedBall c R).isPreconnected hz₀
-      (analyticOrderAt_eq_top.1 htop)
+/-- A function that is zero-free on the bounding circle of a disc of positive radius does not
+vanish identically on the closed disc — the boundary point `c + R` witnesses it. This is the shape
+in which `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff` wants the Rouché hypothesis. -/
+private lemma exists_mem_closedBall_ne_zero (hR : 0 < R) (hs : ∀ z ∈ sphere c R, f z ≠ 0) :
+    ∃ z ∈ closedBall c R, f z ≠ 0 := by
   have hmem : c + (R : ℂ) ∈ sphere c R := by
     rw [mem_sphere_iff_norm]
     simp [Complex.norm_real, abs_of_pos hR]
-  exact hs _ hmem (by simpa using hzero (sphere_subset_closedBall hmem))
-
-/-- **The Rouché count detects zeros.** For `f` holomorphic on `closedBall c R` and zero-free on the
-bounding circle, the count `∑ᶠ z ∈ ball c R, analyticOrderNatAt f z` vanishes precisely when `f` has
-no zero in the open disc.
-
-The nontrivial direction is that a zero contributes a *nonzero* order: `analyticOrderNatAt` sends a
-point of infinite order to `0`, and it is nonvanishing on the circle that rules that out. -/
-theorem finsum_analyticOrderNatAt_ball_eq_zero_iff (hR : 0 < R)
-    (hf : AnalyticOnNhd ℂ f (closedBall c R)) (hs : ∀ z ∈ sphere c R, f z ≠ 0) :
-    (∑ᶠ z ∈ ball c R, analyticOrderNatAt f z) = 0 ↔ ∀ z ∈ ball c R, f z ≠ 0 := by
-  constructor
-  · intro hsum z₀ hz₀ h0
-    have hana : AnalyticAt ℂ f z₀ := hf z₀ (ball_subset_closedBall hz₀)
-    have hne : analyticOrderNatAt f z₀ ≠ 0 := by
-      have h1 : analyticOrderAt f z₀ ≠ 0 := hana.analyticOrderAt_ne_zero.2 h0
-      have h2 : analyticOrderAt f z₀ ≠ ⊤ :=
-        analyticOrderAt_ne_top_of_sphere hR hf hs (ball_subset_closedBall hz₀)
-      simp [analyticOrderNatAt, ENat.toNat_eq_zero, h1, h2]
-    have hfin : Function.HasFiniteSupport
-        ((ball c R).indicator fun z => analyticOrderNatAt f z) := by
-      change (Function.support _).Finite
-      refine Set.Finite.subset (MeromorphicOn.divisor_ball_support_finite hf.meromorphicOn) ?_
-      intro z hz
-      rw [Set.support_indicator] at hz
-      obtain ⟨hzb, hzs⟩ := hz
-      simp only [Function.mem_support, ne_eq] at hzs ⊢
-      rw [Contour.divisor_eq_analyticOrderNatAt (hf.mono ball_subset_closedBall).meromorphicOn
-        (hf _ (ball_subset_closedBall hzb)) hzb]
-      exact_mod_cast hzs
-    have hle := single_le_finsum z₀ hfin (fun _ => Nat.zero_le _)
-    rw [← finsum_mem_def, hsum, Set.indicator_of_mem hz₀] at hle
-    exact hne (Nat.le_zero.1 hle)
-  · intro h
-    have hz : ∀ z ∈ ball c R, analyticOrderNatAt f z = 0 := fun z hzb => by
-      have := (hf z (ball_subset_closedBall hzb)).analyticOrderAt_eq_zero.2 (h z hzb)
-      simp [analyticOrderNatAt, this]
-    rw [finsum_mem_congr rfl hz]
-    simp
+  exact ⟨_, sphere_subset_closedBall hmem, hs _ hmem⟩
 
 /-- **Rouché's theorem as a zero-detection principle**, symmetric form. Under the hypothesis
 `‖f z - g z‖ < ‖f z‖ + ‖g z‖` on the bounding circle, `f` has a zero in the open disc if and only
@@ -359,8 +315,8 @@ theorem rouche_symm_exists_eq_zero_iff (hR : 0 < R)
   have hnef : ∀ z ∈ sphere c R, f z ≠ 0 := fun z hz => ne_zero_left (hs z hz)
   have hneg : ∀ z ∈ sphere c R, g z ≠ 0 := fun z hz => ne_zero_right (hs z hz)
   have hcount := rouche_symm hR hf hg hs
-  have hef := finsum_analyticOrderNatAt_ball_eq_zero_iff hR hf hnef
-  have heg := finsum_analyticOrderNatAt_ball_eq_zero_iff hR hg hneg
+  have hef := finsum_analyticOrderNatAt_ball_eq_zero_iff hf (exists_mem_closedBall_ne_zero hR hnef)
+  have heg := finsum_analyticOrderNatAt_ball_eq_zero_iff hg (exists_mem_closedBall_ne_zero hR hneg)
   constructor
   · rintro ⟨z, hz, h0⟩
     by_contra hcon
@@ -380,5 +336,15 @@ theorem rouche_exists_eq_zero_iff (hR : 0 < R)
     (∃ z ∈ ball c R, f z = 0) ↔ ∃ z ∈ ball c R, g z = 0 :=
   rouche_symm_exists_eq_zero_iff hR hf hg fun z hz =>
     (hs z hz).trans_le (le_add_of_nonneg_right (norm_nonneg _))
+
+/-- **Rouché's theorem as a zero-detection principle**, additive form: a holomorphic perturbation
+`g` dominated by `f` on the bounding circle neither creates nor destroys zeros inside, so `f` has a
+zero in the open disc if and only if `f + g` does. This is the phrasing that reads a zero of a
+perturbed function off the unperturbed one, the existence counterpart of `TauCeti.rouche_add`. -/
+theorem rouche_add_exists_eq_zero_iff (hR : 0 < R)
+    (hf : AnalyticOnNhd ℂ f (closedBall c R)) (hg : AnalyticOnNhd ℂ g (closedBall c R))
+    (hs : ∀ z ∈ sphere c R, ‖g z‖ < ‖f z‖) :
+    (∃ z ∈ ball c R, f z = 0) ↔ ∃ z ∈ ball c R, f z + g z = 0 :=
+  rouche_exists_eq_zero_iff hR hf (hf.add hg) fun z hz => by simpa using hs z hz
 
 end TauCeti

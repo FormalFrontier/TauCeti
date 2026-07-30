@@ -8,6 +8,7 @@ module
 public import Mathlib.Topology.UniformSpace.LocallyUniformConvergence
 public import TauCeti.Analysis.Complex.Conformal.Rouche
 public import TauCeti.Analysis.Complex.IsolatedZero
+public import TauCeti.Analysis.Complex.ZeroCount
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 
 /-!
@@ -63,34 +64,6 @@ open Complex Metric Filter Topology
 namespace TauCeti
 
 variable {c : ℂ} {R : ℝ}
-
-/-- A function holomorphic and zero-free on the open disc has zero count `0` there. -/
-private lemma count_eq_zero {f : ℂ → ℂ} (hf : AnalyticOnNhd ℂ f (closedBall c R))
-    (hne : ∀ z ∈ ball c R, f z ≠ 0) :
-    (∑ᶠ z ∈ ball c R, analyticOrderNatAt f z) = 0 := by
-  refine finsum_mem_of_eqOn_zero (fun z hz => ?_)
-  simp [analyticOrderNatAt,
-    (hf z (ball_subset_closedBall hz)).analyticOrderAt_eq_zero.2 (hne z hz)]
-
-/-- The order of vanishing at a single point of the open disc is at most the total zero count.
-Both sides read `0` at a point of infinite order, so the bound is trivially true there too. -/
-private lemma le_count {g : ℂ → ℂ} (hg : AnalyticOnNhd ℂ g (closedBall c R))
-    {z₀ : ℂ} (hz₀ : z₀ ∈ ball c R) :
-    analyticOrderNatAt g z₀ ≤ ∑ᶠ z ∈ ball c R, analyticOrderNatAt g z := by
-  classical
-  have hfin : (Function.support
-      fun z => ∑ᶠ (_ : z ∈ ball c R), analyticOrderNatAt g z).Finite := by
-    refine Set.Finite.subset (MeromorphicOn.divisor_ball_support_finite hg.meromorphicOn)
-      (fun z hz => ?_)
-    simp only [Function.mem_support, ne_eq] at hz
-    by_cases hzb : z ∈ ball c R
-    · simp only [hzb, finsum_true] at hz
-      simp only [Function.mem_support, ne_eq,
-        Contour.divisor_eq_analyticOrderNatAt (hg.mono ball_subset_closedBall).meromorphicOn
-          (hg _ (ball_subset_closedBall hzb)) hzb]
-      exact_mod_cast hz
-    · exact absurd (by simp [hzb]) hz
-  simpa [hz₀] using single_le_finsum z₀ hfin (fun _ => Nat.zero_le _)
 
 /-- **A circle on which `g` does not vanish.** If `g` is zero-free on some punctured
 neighbourhood of `z₀ ∈ Ω` with `Ω` open — `z₀` itself may be a zero, or not — there is a radius
@@ -159,8 +132,10 @@ theorem hurwitz {ι : Type*} {l : Filter ι} [l.NeBot] {Ω : Set ℂ} (hΩ : IsO
     lt_of_lt_of_le (by simpa [dist_eq_norm] using hn z hz) (hδle z hz)
   -- Rouché: the counts agree, yet `F n` has no zeros and `g` has one at `z₀`
   have hcount := rouche hr hgA' hFA' hs
-  rw [count_eq_zero hFA' (fun z hz => hnen z (hcb (ball_subset_closedBall hz)))] at hcount
-  have hle := le_count hgA' (mem_ball_self hr)
+  rw [finsum_analyticOrderNatAt_ball_eq_zero_of_forall_ne_zero
+    (hFA'.mono ball_subset_closedBall) (fun z hz => hnen z (hcb (ball_subset_closedBall hz)))]
+    at hcount
+  have hle := analyticOrderNatAt_le_finsum_ball hgA' (mem_ball_self hr)
   rw [hcount] at hle
   have h0 : analyticOrderAt g z₀ = 0 :=
     (ENat.toNat_eq_zero.mp (by simpa [analyticOrderNatAt] using Nat.le_zero.mp hle)).resolve_right
@@ -202,10 +177,12 @@ private lemma eventually_exists_eq {ι : Type*} {l : Filter ι} {Ω : Set ℂ} {
     simpa [analyticOrderNatAt] using fun h => h0 ((ENat.toNat_eq_zero.mp h).resolve_right htop)
   have hne0 : (∑ᶠ z ∈ ball a ρ, analyticOrderNatAt (fun ζ => F n ζ - v) z) ≠ 0 := by
     rw [← hcount]
-    exact fun h => hord (Nat.le_zero.mp (h ▸ le_count hA (mem_ball_self hρ)))
+    exact fun h => hord (Nat.le_zero.mp (h ▸ analyticOrderNatAt_le_finsum_ball hA
+      (mem_ball_self hρ)))
   by_contra hcon
   push Not at hcon
-  exact hne0 (count_eq_zero hB (fun z hz => sub_ne_zero.mpr (hcon z hz)))
+  exact hne0 (finsum_analyticOrderNatAt_ball_eq_zero_of_forall_ne_zero
+    (hB.mono ball_subset_closedBall) (fun z hz => sub_ne_zero.mpr (hcon z hz)))
 
 /-- **Hurwitz's theorem for injectivity.** On a connected open set, a locally uniform limit of
 *injective* holomorphic functions is either injective or constant.
