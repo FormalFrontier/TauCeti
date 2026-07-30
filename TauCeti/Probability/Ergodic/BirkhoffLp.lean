@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Dynamics.BirkhoffSum.NormedSpace
+public import Mathlib.Dynamics.BirkhoffSum.Average
 public import Mathlib.MeasureTheory.Function.LpSpace.Basic
 
 /-!
@@ -13,8 +13,9 @@ public import Mathlib.MeasureTheory.Function.LpSpace.Basic
 The Birkhoff sums and averages of the composition (Koopman) operator of a measure-preserving map
 `T` on `Lᵖ` are elements of `Lᵖ`, while the ergodic theorems a probabilist states are about the
 pointwise Birkhoff averages `birkhoffAverage ℝ T f n` of an observable. This file records that the
-two agree: an `Lᵖ` Birkhoff average of `g` is represented by the pointwise Birkhoff average of any
-representative of `g`.
+two agree: an `Lᵖ` Birkhoff average of `g` is represented by the pointwise Birkhoff average of the
+coercion `⇑g`. For another representative `f =ᵐ[μ] ⇑g`, compose with Mathlib's
+`Measure.QuasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq`.
 
 ## Main results
 
@@ -22,7 +23,7 @@ representative of `g`.
   iterated transformation;
 * `coeFn_birkhoffSum_compMeasurePreserving` and `coeFn_birkhoffAverage_compMeasurePreserving` —
   the Birkhoff sums and averages of the composition operator are represented by the pointwise
-  Birkhoff sums and averages of a representative.
+  Birkhoff sums and averages of the coercion of the argument.
 -/
 
 public section
@@ -46,7 +47,7 @@ theorem coeFn_iterate_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePreserv
   exact Lp.coeFn_compMeasurePreserving g (hT.iterate n)
 
 /-- The Birkhoff sums of the `Lᵖ` composition operator are represented by the pointwise Birkhoff
-sums of any representative. -/
+sums of the coercion of `g`. -/
 theorem coeFn_birkhoffSum_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePreserving T μ μ)
     (g : Lp E p μ) (n : ℕ) :
     ⇑(birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g) =ᵐ[μ]
@@ -64,7 +65,7 @@ theorem coeFn_birkhoffSum_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePre
       exact congrArg₂ _ hsum hiter
 
 /-- The Birkhoff averages of the `Lᵖ` composition operator are represented by the pointwise
-Birkhoff averages of any representative. -/
+Birkhoff averages of the coercion of `g`. -/
 theorem coeFn_birkhoffAverage_compMeasurePreserving [NormedSpace ℝ E] {T : Ω → Ω}
     (hT : MeasurePreserving T μ μ) (g : Lp E p μ) (n : ℕ) :
     ⇑(birkhoffAverage ℝ (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g) =ᵐ[μ]
