@@ -38,7 +38,6 @@ variable {X : TopCat.{v}} {C : Type u} [Category.{v} C] {CC : C → Type v}
 variable {F : X.Presheaf C}
 
 /-- A section of a presheaf, viewed as a section of the étalé projection. -/
-@[expose]
 noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
     (s : ToType (F.obj (Opposite.op U))) :
     U → F.EtaleSpace :=
@@ -51,7 +50,8 @@ theorem base_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x :
 
 @[simp]
 theorem germ_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
-    (germSection F U s x).germ = F.germ U x x.2 s :=
+    cast (congrArg (fun y : X ↦ ToType (F.stalk y)) (base_germSection U s x))
+      (germSection F U s x).germ = F.germ U x x.2 s :=
   (rfl)
 
 /-- The open set in the étalé space swept out by the germs of a section. -/
@@ -109,6 +109,19 @@ theorem continuous_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))
   · exact W.isOpen.preimage continuous_subtype_val
   · exact hxW
 
+/-- A germ section is an open embedding of its domain into the étalé space. -/
+theorem isOpenEmbedding_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) :
+    Topology.IsOpenEmbedding (germSection F U s) := by
+  refine ⟨?_, isOpen_sectionRange U s⟩
+  apply Topology.IsEmbedding.of_comp (continuous_germSection U s)
+    (TopCat.Presheaf.EtaleSpace.continuous_base F)
+  have hcomp :
+      TopCat.Presheaf.EtaleSpace.base ∘ germSection F U s = (Subtype.val : U → X) := by
+    funext x
+    exact base_germSection U s x
+  rw [hcomp]
+  exact U.isOpen.isOpenEmbedding_subtypeVal.isEmbedding
+
 /-- The local chart on the étalé space determined by a section of a presheaf.
 
 On `sectionRange F U s`, the chart is the étalé projection to `U`; its inverse sends a point
@@ -117,43 +130,10 @@ private noncomputable def sectionOpenPartialHomeomorph (F : X.Presheaf C) (U : O
     (s : ToType (F.obj (Opposite.op U))) (x₀ : U) :
     OpenPartialHomeomorph F.EtaleSpace X := by
   classical
+  letI : Nonempty U := ⟨x₀⟩
   exact
-    { toFun := TopCat.Presheaf.EtaleSpace.base
-      invFun x := if hx : x ∈ U then germSection F U s ⟨x, hx⟩ else germSection F U s x₀
-      source := sectionRange F U s
-      target := U
-      map_source' := by
-        rintro g ⟨x, rfl⟩
-        exact x.2
-      map_target' := by
-        intro x hx
-        split
-        · exact ⟨⟨x, hx⟩, rfl⟩
-        · contradiction
-      left_inv' := by
-        rintro g ⟨x, rfl⟩
-        split
-        · rename_i h
-          congr
-        · rename_i h
-          exact (h x.2).elim
-      right_inv' := by
-        intro x hx
-        split
-        · rfl
-        · contradiction
-      open_source := isOpen_sectionRange U s
-      open_target := U.isOpen
-      continuousOn_toFun := (TopCat.Presheaf.EtaleSpace.continuous_base F).continuousOn
-      continuousOn_invFun := by
-        rw [continuousOn_iff_continuous_restrict]
-        apply (continuous_germSection U s).congr
-        intro x
-        dsimp only [Set.restrict]
-        split
-        · congr
-        · rename_i h
-          exact (h x.2).elim }
+    ((isOpenEmbedding_germSection U s).toOpenPartialHomeomorph (germSection F U s)).symm.trans
+      (U.openPartialHomeomorphSubtypeCoe inferInstance)
 
 /-- The projection from the étalé space of a presheaf to the base is a local homeomorphism. -/
 theorem isLocalHomeomorph_base (F : X.Presheaf C) :
@@ -161,24 +141,23 @@ theorem isLocalHomeomorph_base (F : X.Presheaf C) :
   apply IsLocalHomeomorph.mk
   intro g
   obtain ⟨U, hgU, s, hs⟩ := F.exists_germ_eq g.germ
+  letI : Nonempty U := ⟨⟨g.base, hgU⟩⟩
   let e := sectionOpenPartialHomeomorph F U s ⟨g.base, hgU⟩
-  refine ⟨e, ?_, fun _ _ ↦ rfl⟩
-  -- Unfold the private chart only to expose its source as the range of the chosen germ section.
-  change g ∈ sectionRange F U s
-  rw [mem_sectionRange_iff]
-  exact ⟨hgU, hs.symm⟩
-
-/-- A germ section is an open embedding of its domain into the étalé space. -/
-theorem isOpenEmbedding_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) :
-    Topology.IsOpenEmbedding (germSection F U s) := by
-  apply (isLocalHomeomorph_base F).isOpenEmbedding_of_comp
-  · have hcomp :
-        TopCat.Presheaf.EtaleSpace.base ∘ germSection F U s = (Subtype.val : U → X) := by
-      funext x
-      exact base_germSection U s x
-    rw [hcomp]
-    exact U.isOpen.isOpenEmbedding_subtypeVal
-  · exact continuous_germSection U s
+  have he_source : e.source = sectionRange F U s := by
+    simp [e, sectionOpenPartialHomeomorph, sectionRange]
+  refine ⟨e, ?_, ?_⟩
+  · rw [he_source, mem_sectionRange_iff]
+    exact ⟨hgU, hs.symm⟩
+  · intro g hg
+    rw [he_source] at hg
+    change
+      g.base =
+        ((isOpenEmbedding_germSection U s).toOpenPartialHomeomorph
+          (germSection F U s)).symm g
+    symm
+    simpa only [base_germSection] using congr_arg TopCat.Presheaf.EtaleSpace.base
+      (Topology.IsOpenEmbedding.toOpenPartialHomeomorph_right_inv
+        (f := germSection F U s) (h := isOpenEmbedding_germSection U s) hg)
 
 end TopCat.Presheaf.EtaleSpace
 
