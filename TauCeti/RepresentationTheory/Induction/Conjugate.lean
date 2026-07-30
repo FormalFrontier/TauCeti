@@ -30,9 +30,11 @@ are their evaluations.
 For a *normal* subgroup `N` the conjugated subgroup is `N` itself, so no transport is needed:
 conjugation by `g` is an endofunctor of `Rep k N`, indeed an autoequivalence, and the coherence
 makes `g ↦ conjNormalRep g` a `MulAction` of `G` on `Rep k N`.  This is the action of `G` on
-`Rep k N` that Clifford theory runs on: the inertia group of a representation is its stabilizer
-for this action.  (That the action preserves irreducibility, so restricts to `Irr(N)`, is not
-proved here.)
+`Rep k N` that Clifford theory runs on.  Its inertia group of a representation `A` is the
+stabilizer of the *isomorphism class* of `A`, `{g | {}^g A ≅ A}`, which this action cuts out but
+which is not `MulAction.stabilizer G A`: the latter asks for `{}^g A = A` on the nose.  Neither
+the induced action on isomorphism classes, nor the fact that the action preserves irreducibility
+(so restricts to `Irr(N)`), is proved here.
 
 ## Main definitions
 
@@ -223,6 +225,9 @@ theorem conjRepFunctor_mul (s t : G) (H : Subgroup G) :
     conjRepFunctor (k := k) (s * t) H =
       conjRepFunctor t H ⋙ conjRepFunctor s (MulAut.conj t • H) ⋙
         Rep.resFunctor (MulEquiv.subgroupCongr (conj_mul_smul s t H)).toMonoidHom := by
+  -- `conjRepFunctor (s * t) H` is by definition restriction along
+  -- `conjSubgroupEquiv (s * t) H`; unfolding the wrapper definitionally is what exposes that
+  -- homomorphism, which is the thing `conjSubgroupEquiv_mul` rewrites.
   change Rep.resFunctor (conjSubgroupEquiv (s * t) H).toMonoidHom = _
   rw [conjSubgroupEquiv_mul, resFunctor_comp, resFunctor_comp]
   rfl
@@ -305,6 +310,8 @@ theorem conjFDRepFunctor_mul (s t : G) (H : Subgroup G) :
     conjFDRepFunctor (k := k) (s * t) H =
       conjFDRepFunctor t H ⋙ conjFDRepFunctor s (MulAut.conj t • H) ⋙
         Action.res (FGModuleCat k) (MulEquiv.subgroupCongr (conj_mul_smul s t H)).toMonoidHom := by
+  -- As in `conjRepFunctor_mul`: unfold the `conjFDRepFunctor` wrapper to expose the homomorphism
+  -- `conjSubgroupEquiv (s * t) H` that `conjSubgroupEquiv_mul` rewrites.
   change Action.res (FGModuleCat k) (conjSubgroupEquiv (s * t) H).toMonoidHom = _
   rw [conjSubgroupEquiv_mul, actionRes_comp, actionRes_comp]
   rfl
@@ -439,6 +446,9 @@ theorem res_conjRepFunctor (g : G) :
         Rep.resFunctor
           (MulEquiv.subgroupCongr (Subgroup.Normal.conj_smul_eq_self g N).symm).toMonoidHom =
       conjNormalRepFunctor g := by
+  -- Unfold the `conjRepFunctor` wrapper on the left: `resFunctor_comp` contracts the composite
+  -- only once both halves are visibly `Rep.resFunctor`, and it is the resulting composite
+  -- homomorphism that `conjSubgroupEquiv_comp_subgroupCongr` identifies.
   change Rep.resFunctor (conjSubgroupEquiv g N).toMonoidHom ⋙ Rep.resFunctor _ = _
   rw [← resFunctor_comp, conjSubgroupEquiv_comp_subgroupCongr]
   rfl
@@ -453,6 +463,8 @@ theorem res_conjRep (g : G) (A : Rep k N) :
 /-- Conjugating by `1` is the identity endofunctor. -/
 theorem conjNormalRepFunctor_one :
     conjNormalRepFunctor (k := k) (N := N) (1 : G) = 𝟭 (Rep k N) := by
+  -- `conjNormalRepFunctor 1` is by definition restriction along `MulAut.conjNormal (1 : G)⁻¹`;
+  -- unfolding the wrapper is what exposes that automorphism to `conjNormal_inv_one`.
   change Rep.resFunctor (MulAut.conjNormal ((1 : G)⁻¹) : MulAut N).toMonoidHom = _
   rw [conjNormal_inv_one]
   rfl
@@ -461,6 +473,9 @@ theorem conjNormalRepFunctor_one :
 theorem conjNormalRepFunctor_mul (s t : G) :
     conjNormalRepFunctor (k := k) (N := N) (s * t) =
       conjNormalRepFunctor t ⋙ conjNormalRepFunctor s := by
+  -- Unfold the wrapper to expose `MulAut.conjNormal (s * t)⁻¹`, the automorphism
+  -- `conjNormal_inv_mul` splits; `resFunctor_comp` then turns that split into a composite of
+  -- functors.
   change Rep.resFunctor (MulAut.conjNormal ((s * t)⁻¹) : MulAut N).toMonoidHom = _
   rw [conjNormal_inv_mul, resFunctor_comp]
   rfl
@@ -497,8 +512,10 @@ theorem conjNormalRepEquiv_inverse (g : G) :
     (conjNormalRepEquiv (k := k) (N := N) g).inverse = conjNormalRepFunctor g⁻¹ :=
   rfl
 
-/-- Conjugation is a left action of `G` on `Rep k N`: `g • A` is `conjNormalRep g A`.  The
-stabilizer of `A` for this action is the inertia group Clifford theory works with. -/
+/-- Conjugation is a left action of `G` on `Rep k N`: `g • A` is `conjNormalRep g A`.  Clifford
+theory's inertia group of `A` is the stabilizer of the isomorphism class of `A`,
+`{g | {}^g A ≅ A}`, rather than `MulAction.stabilizer G A`, which asks for `{}^g A = A` on the
+nose; the induced action on isomorphism classes is not constructed here. -/
 instance conjNormalRepMulAction : MulAction G (Rep k N) where
   smul := conjNormalRep
   one_smul := conjNormalRep_one
@@ -560,6 +577,8 @@ theorem res_conjFDRepFunctor (g : G) :
         Action.res (FGModuleCat k)
           (MulEquiv.subgroupCongr (Subgroup.Normal.conj_smul_eq_self g N).symm).toMonoidHom =
       conjNormalFDRepFunctor g := by
+  -- As in `res_conjRepFunctor`: unfold the `conjFDRepFunctor` wrapper so that `actionRes_comp`
+  -- can contract the composite into a single restriction.
   change Action.res (FGModuleCat k) (conjSubgroupEquiv g N).toMonoidHom ⋙ Action.res _ _ = _
   rw [← actionRes_comp, conjSubgroupEquiv_comp_subgroupCongr]
   rfl
@@ -575,6 +594,7 @@ theorem res_conjFDRep (g : G) (A : FDRep k N) :
 `conjNormalRepFunctor_one`. -/
 theorem conjNormalFDRepFunctor_one :
     conjNormalFDRepFunctor (k := k) (N := N) (1 : G) = 𝟭 (FDRep k N) := by
+  -- As in `conjNormalRepFunctor_one`: unfold the wrapper to expose `MulAut.conjNormal (1 : G)⁻¹`.
   change Action.res (FGModuleCat k) (MulAut.conjNormal ((1 : G)⁻¹) : MulAut N).toMonoidHom = _
   rw [conjNormal_inv_one]
   rfl
@@ -584,6 +604,8 @@ theorem conjNormalFDRepFunctor_one :
 theorem conjNormalFDRepFunctor_mul (s t : G) :
     conjNormalFDRepFunctor (k := k) (N := N) (s * t) =
       conjNormalFDRepFunctor t ⋙ conjNormalFDRepFunctor s := by
+  -- As in `conjNormalRepFunctor_mul`: unfold the wrapper to expose `MulAut.conjNormal (s * t)⁻¹`
+  -- for `conjNormal_inv_mul`.
   change Action.res (FGModuleCat k) (MulAut.conjNormal ((s * t)⁻¹) : MulAut N).toMonoidHom = _
   rw [conjNormal_inv_mul, actionRes_comp]
   rfl
