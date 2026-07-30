@@ -138,9 +138,7 @@ theorem columnAntisymmetrizer_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin 
 theorem mul_rowSymmetrizer_left (t : YoungTableau μ) (p : rowSubgroup t) :
     MonoidAlgebra.single (p : Equiv.Perm (Fin μ.card)) 1 * rowSymmetrizer t =
       rowSymmetrizer t := by
-  change MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) p * rowSymmetrizer t =
-    rowSymmetrizer t
-  rw [rowSymmetrizer_def, Finset.mul_sum]
+  rw [← MonoidAlgebra.of_apply, rowSymmetrizer_def, Finset.mul_sum]
   simp_rw [← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
   apply Fintype.sum_equiv (Equiv.mulLeft p)
   intro q
@@ -151,9 +149,7 @@ theorem mul_rowSymmetrizer_left (t : YoungTableau μ) (p : rowSubgroup t) :
 theorem mul_rowSymmetrizer_right (t : YoungTableau μ) (p : rowSubgroup t) :
     rowSymmetrizer t * MonoidAlgebra.single (p : Equiv.Perm (Fin μ.card)) 1 =
       rowSymmetrizer t := by
-  change rowSymmetrizer t * MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) p =
-    rowSymmetrizer t
-  rw [rowSymmetrizer_def, Finset.sum_mul]
+  rw [← MonoidAlgebra.of_apply, rowSymmetrizer_def, Finset.sum_mul]
   simp_rw [← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
   apply Fintype.sum_equiv (Equiv.mulRight p)
   intro q
@@ -166,10 +162,7 @@ theorem mul_columnAntisymmetrizer_left (t : YoungTableau μ) (q : colSubgroup t)
     MonoidAlgebra.single (q : Equiv.Perm (Fin μ.card)) 1 * columnAntisymmetrizer t =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
-  change MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) q * columnAntisymmetrizer t =
-    ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
-      columnAntisymmetrizer t
-  rw [columnAntisymmetrizer_def, Finset.mul_sum, Finset.smul_sum]
+  rw [← MonoidAlgebra.of_apply, columnAntisymmetrizer_def, Finset.mul_sum, Finset.smul_sum]
   simp_rw [mul_smul_comm,
     ← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
   apply Fintype.sum_equiv (Equiv.mulLeft q)
@@ -185,10 +178,7 @@ theorem mul_columnAntisymmetrizer_right (t : YoungTableau μ) (q : colSubgroup t
     columnAntisymmetrizer t * MonoidAlgebra.single (q : Equiv.Perm (Fin μ.card)) 1 =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
-  change columnAntisymmetrizer t * MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) q =
-    ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
-      columnAntisymmetrizer t
-  rw [columnAntisymmetrizer_def, Finset.sum_mul, Finset.smul_sum]
+  rw [← MonoidAlgebra.of_apply, columnAntisymmetrizer_def, Finset.sum_mul, Finset.smul_sum]
   simp_rw [smul_mul_assoc,
     ← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
   apply Fintype.sum_equiv (Equiv.mulRight q)
@@ -223,9 +213,7 @@ theorem columnAntisymmetrizer_sq (t : YoungTableau μ) :
 theorem mul_youngSymmetrizer_left (t : YoungTableau μ) (p : rowSubgroup t) :
     MonoidAlgebra.single (p : Equiv.Perm (Fin μ.card)) 1 * youngSymmetrizer t =
       youngSymmetrizer t := by
-  change MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) p * youngSymmetrizer t =
-    youngSymmetrizer t
-  rw [youngSymmetrizer_def, ← mul_assoc, MonoidAlgebra.of_apply, mul_rowSymmetrizer_left]
+  rw [youngSymmetrizer_def, ← mul_assoc, mul_rowSymmetrizer_left]
 
 /-- The column group acts on the Young symmetrizer on the right through its sign character. -/
 @[simp]
@@ -233,11 +221,7 @@ theorem mul_youngSymmetrizer_right (t : YoungTableau μ) (q : colSubgroup t) :
     youngSymmetrizer t * MonoidAlgebra.single (q : Equiv.Perm (Fin μ.card)) 1 =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         youngSymmetrizer t := by
-  change youngSymmetrizer t * MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card)) q =
-    ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
-      youngSymmetrizer t
-  rw [youngSymmetrizer_def, mul_assoc, MonoidAlgebra.of_apply,
-    mul_columnAntisymmetrizer_right, mul_smul_comm]
+  rw [youngSymmetrizer_def, mul_assoc, mul_columnAntisymmetrizer_right, mul_smul_comm]
 
 end
 
