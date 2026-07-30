@@ -23,7 +23,8 @@ transported back through `e`.
 
 This is the analytic-arc case requested by layer L4 of the conformal-mapping roadmap. It follows
 the standard coordinate reduction of removability across an analytic arc to the real axis; see
-Ahlfors, *Complex Analysis*, Chapter 4.6, and Rudin, *Real and Complex Analysis*, Chapter 11.
+Ahlfors, *Complex Analysis*, Chapter 6, §1.4, and Rudin, *Real and Complex Analysis*, Chapter 11,
+Exercise 11.
 
 ## Main results
 
@@ -53,8 +54,8 @@ theorem
     differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_coord_im_eq_zero
     (e : OpenPartialHomeomorph ℂ ℂ) {Ω S : Set ℂ} (he : DifferentiableOn ℂ e Ω)
     (hΩ : IsOpen Ω) (hΩe : Ω ⊆ e.source)
-    (hS : Ω ∩ S ⊆ {z : ℂ | (e z).im = 0})
-    (hcont : ContinuousOn F Ω) (hdiff : DifferentiableOn ℂ F (Ω \ S)) :
+    (hcont : ContinuousOn F Ω) (hdiff : DifferentiableOn ℂ F (Ω \ S))
+    (hS : Ω ∩ S ⊆ {z : ℂ | (e z).im = 0}) :
     DifferentiableOn ℂ F Ω := by
   have himage_target : e '' Ω ⊆ e.target := by
     rw [← e.image_source_eq_target]
@@ -96,7 +97,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_diff_coord_im_eq_ze
     (hdiff : DifferentiableOn ℂ F (Ω \ {z : ℂ | (e z).im = 0})) :
     DifferentiableOn ℂ F Ω :=
   differentiableOn_of_continuousOn_of_differentiableOn_diff_of_subset_coord_im_eq_zero
-    e he hΩ hΩe (fun _ hz => hz.2) hcont hdiff
+    e he hΩ hΩe hcont hdiff (fun _ hz => hz.2)
 
 /-- **Gluing across a charted analytic arc.** A continuous function on an open part of the source
 of a holomorphic chart that is holomorphic on both open sides of the charted real locus is
