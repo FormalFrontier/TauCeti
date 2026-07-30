@@ -324,16 +324,17 @@ theorem isSimplyLaced_cartanMatrix_iff_of_valid {t : DynkinType} (ht : t.Valid) 
   refine (isSimplyLaced_cartanMatrix_iff t).trans (or_iff_left_of_imp fun h ↦ ?_)
   cases t <;> simp_all <;> omega
 
-/-- A simply-laced Dynkin type has a symmetric Cartan matrix. -/
-lemma cartanMatrix_isSymm_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) :
+/-- A standard Cartan matrix that is simply laced is symmetric: its off-diagonal entries are `0`
+or `-1`, and by `cartanMatrix_apply_eq_zero_iff_symm` which of the two an entry is depends only on
+the unordered pair of indices. By `isSimplyLaced_cartanMatrix_iff` the hypothesis holds for every
+simply-laced type, and for the degenerate `B 0`, `B 1`, `C 0`, `C 1` besides. -/
+lemma cartanMatrix_isSymm_of_isSimplyLaced {t : DynkinType} (ht : t.cartanMatrix.IsSimplyLaced) :
     t.cartanMatrix.IsSymm := by
-  cases t
-  case A n => exact CartanMatrix.A_isSymm n
-  case D n => exact CartanMatrix.D_isSymm n
-  case E6 => exact CartanMatrix.E₆_isSymm
-  case E7 => exact CartanMatrix.E₇_isSymm
-  case E8 => exact CartanMatrix.E₈_isSymm
-  all_goals exact ht.elim
+  refine Matrix.IsSymm.ext fun i j ↦ ?_
+  rcases eq_or_ne j i with rfl | hji
+  · rfl
+  · have hzero := cartanMatrix_apply_eq_zero_iff_symm t j i
+    rcases ht hji with h | h <;> rcases ht hji.symm with h' | h' <;> omega
 
 end DynkinType
 
