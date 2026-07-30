@@ -47,7 +47,6 @@ that it preserves the hypothesis under which the invariant is defined.
 
 ## Main definitions
 
-* `TauCeti.PlumbingGraph.BlowUpVertexAdj`: the adjacency relation of the blow-up.
 * `TauCeti.PlumbingGraph.blowUpVertex`: the blow-up of a plumbing graph at a vertex.
 * `TauCeti.PlumbingGraph.blowUpVertexEquiv`: the total-transform identification of the blown-up
   lattice with `(V → ℤ) × ℤ`.
@@ -61,7 +60,7 @@ that it preserves the hypothesis under which the invariant is defined.
 * `TauCeti.PlumbingGraph.intersectionForm_single_none_self` and
   `TauCeti.PlumbingGraph.intersectionForm_blowUpVertexEquiv_single_none`: the exceptional class has
   square `-1` and is orthogonal to the image of the original lattice.
-* `TauCeti.PlumbingGraph.blowUpVertex_isNegativeDefinite_iff`: the blow-up is negative definite
+* `TauCeti.PlumbingGraph.isNegativeDefinite_blowUpVertex_iff`: the blow-up is negative definite
   exactly when the original plumbing is.
 
 ## References
@@ -75,7 +74,7 @@ singularities and degenerating complex curves*, Trans. Amer. Math. Soc. **268** 
 the lattice conventions follow Némethi, [arXiv:0709.0841](https://arxiv.org/abs/0709.0841).
 -/
 
-@[expose] public section
+public section
 
 open Matrix
 
@@ -84,6 +83,15 @@ namespace TauCeti
 namespace PlumbingGraph
 
 variable {V : Type*}
+
+/-! ### Implementation notes
+
+The bodies of `blowUpVertexEquiv` and `blowUpVertex` stay unexposed, and the raw adjacency
+relation behind the blow-up is `private`: consumers work through the coordinate, adjacency and
+weight lemmas rather than through the definitions. Those defining equations are proved by a
+parenthesised `(rfl)`, which keeps them ordinary propositional lemmas instead of implicitly
+`@[defeq]` ones; an exported `@[defeq]` theorem would have to expose every definition it unfolds.
+-/
 
 /-- The total-transform identification of the blown-up plumbing lattice.
 
@@ -102,29 +110,28 @@ def blowUpVertexEquiv (v : V) : ((V → ℤ) × ℤ) ≃ₗ[ℤ] (Option V → �
     funext a
     cases a with
     | none =>
-        change (p.1 + q.1) v + (p.2 + q.2) = p.1 v + p.2 + (q.1 v + q.2)
-        simp only [Pi.add_apply]
+        simp only [Option.elim_none, Prod.fst_add, Prod.snd_add, Pi.add_apply]
         ring
     | some w => rfl
   map_smul' c p := by
     funext a
     cases a with
     | none =>
-        change (c • p.1) v + c • p.2 = c • (p.1 v + p.2)
-        simp only [Pi.smul_apply, smul_eq_mul]
+        simp only [Option.elim_none, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, smul_eq_mul,
+          RingHom.id_apply]
         ring
     | some w => rfl
   invFun y := (fun w => y (some w), y none - y (some v))
   left_inv p := by
     rw [Prod.ext_iff]
     refine ⟨funext fun w => rfl, ?_⟩
-    change p.1 v + p.2 - p.1 v = p.2
+    simp only [Option.elim_none, Option.elim_some]
     ring
   right_inv y := by
     funext a
     cases a with
     | none =>
-        change y (some v) + (y none - y (some v)) = y none
+        simp only [Option.elim_none]
         ring
     | some w => rfl
 
@@ -132,19 +139,19 @@ def blowUpVertexEquiv (v : V) : ((V → ℤ) × ℤ) ≃ₗ[ℤ] (Option V → �
 @[simp]
 theorem blowUpVertexEquiv_apply_none (v : V) (x : V → ℤ) (s : ℤ) :
     blowUpVertexEquiv v (x, s) none = x v + s :=
-  rfl
+  (rfl)
 
 /-- The coordinate of a lifted lattice point at an old vertex. -/
 @[simp]
 theorem blowUpVertexEquiv_apply_some (v : V) (x : V → ℤ) (s : ℤ) (w : V) :
     blowUpVertexEquiv v (x, s) (some w) = x w :=
-  rfl
+  (rfl)
 
 /-- The inverse identification reads off the old coordinates and the exceptional multiplicity. -/
 @[simp]
 theorem blowUpVertexEquiv_symm_apply (v : V) (y : Option V → ℤ) :
     (blowUpVertexEquiv v).symm y = (fun w => y (some w), y none - y (some v)) :=
-  rfl
+  (rfl)
 
 /-- The pair `(0, 1)` is the exceptional class, the basis vector at the new vertex. -/
 theorem blowUpVertexEquiv_zero_one [DecidableEq V] (v : V) :
@@ -155,14 +162,17 @@ theorem blowUpVertexEquiv_zero_one [DecidableEq V] (v : V) :
   | some w => simp
 
 /-- The adjacency relation of the blow-up of a plumbing graph at a vertex: the new vertex `none`
-is joined exactly to `some v`, and the old vertices keep their adjacencies. -/
-def BlowUpVertexAdj (P : PlumbingGraph V) (v : V) : Option V → Option V → Prop
+is joined exactly to `some v`, and the old vertices keep their adjacencies.
+
+This is internal to the construction of `blowUpVertex`; consumers use the adjacency lemmas
+`blowUpVertex_adj_none_some`, `blowUpVertex_adj_some_none` and `blowUpVertex_adj_some_some`. -/
+private def BlowUpVertexAdj (P : PlumbingGraph V) (v : V) : Option V → Option V → Prop
   | none, none => False
   | none, some w => w = v
   | some w, none => w = v
   | some w, some w' => P.toSimpleGraph.Adj w w'
 
-instance decidableBlowUpVertexAdj [DecidableEq V] (P : PlumbingGraph V) (v : V) :
+private instance decidableBlowUpVertexAdj [DecidableEq V] (P : PlumbingGraph V) (v : V) :
     DecidableRel (P.BlowUpVertexAdj v)
   | none, none => inferInstanceAs (Decidable False)
   | none, some w => inferInstanceAs (Decidable (w = v))
@@ -170,7 +180,7 @@ instance decidableBlowUpVertexAdj [DecidableEq V] (P : PlumbingGraph V) (v : V) 
   | some w, some w' => inferInstanceAs (Decidable (P.toSimpleGraph.Adj w w'))
 
 /-- The blow-up adjacency relation is symmetric. -/
-theorem blowUpVertexAdj_symm (P : PlumbingGraph V) (v : V) :
+private theorem blowUpVertexAdj_symm (P : PlumbingGraph V) (v : V) :
     Std.Symm (P.BlowUpVertexAdj v) :=
   ⟨by
     rintro (_ | a) (_ | b) h
@@ -180,7 +190,7 @@ theorem blowUpVertexAdj_symm (P : PlumbingGraph V) (v : V) :
     · exact (h : P.toSimpleGraph.Adj a b).symm⟩
 
 /-- The blow-up adjacency relation is irreflexive. -/
-theorem blowUpVertexAdj_irrefl (P : PlumbingGraph V) (v : V) :
+private theorem blowUpVertexAdj_irrefl (P : PlumbingGraph V) (v : V) :
     Std.Irrefl (P.BlowUpVertexAdj v) :=
   ⟨by
     rintro (_ | a) h
@@ -224,13 +234,13 @@ theorem blowUpVertex_adj_some_some (w w' : V) :
 /-- The new vertex is `-1`-framed. -/
 @[simp]
 theorem blowUpVertex_weight_none : (P.blowUpVertex v).weight none = -1 :=
-  rfl
+  (rfl)
 
 /-- The framings of the old vertices, with the blown-up one dropped by a unit. -/
 @[simp]
 theorem blowUpVertex_weight_some (w : V) :
     (P.blowUpVertex v).weight (some w) = if w = v then P.weight w - 1 else P.weight w :=
-  rfl
+  (rfl)
 
 /-- Blowing up drops the framing of the blown-up vertex by a unit. -/
 theorem blowUpVertex_weight_some_self :
@@ -307,15 +317,6 @@ section Lattice
 
 variable [Fintype V]
 
-/-- The coordinate of an indicator-weighted sum at the marked index. -/
-private theorem sum_ite_one_mul (y : V → ℤ) (v : V) :
-    ∑ w : V, (if w = v then (1 : ℤ) else 0) * y w = y v := by
-  have hterm : ∀ w : V, (if w = v then (1 : ℤ) else 0) * y w = if w = v then y w else 0 := by
-    intro w
-    split_ifs <;> simp
-  simp only [hterm]
-  simp
-
 /-- The `none`-coordinate of the image of a lifted lattice point under the blown-up intersection
 matrix: the exceptional class is orthogonal to the total transforms, so only the exceptional
 multiplicity survives. -/
@@ -323,8 +324,8 @@ private theorem blowUpVertex_mulVec_apply_none (y : V → ℤ) (t : ℤ) :
     ((P.blowUpVertex v).intersectionMatrix *ᵥ blowUpVertexEquiv v (y, t)) none = -t := by
   rw [Matrix.mulVec_apply_eq_sum, Fintype.sum_option]
   simp only [blowUpVertex_intersectionMatrix_none_none, blowUpVertex_intersectionMatrix_none_some,
-    blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some]
-  rw [sum_ite_one_mul y v]
+    blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, ite_mul, one_mul, zero_mul,
+    Finset.sum_ite_eq', Finset.mem_univ, if_true]
   ring
 
 /-- The `some`-coordinates of the image of a lifted lattice point under the blown-up intersection
@@ -342,8 +343,8 @@ private theorem blowUpVertex_mulVec_apply_some (y : V → ℤ) (t : ℤ) (w : V)
   rw [Matrix.mulVec_apply_eq_sum, Fintype.sum_option]
   simp only [blowUpVertex_intersectionMatrix_some_none, blowUpVertex_intersectionMatrix_some_some,
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, hsplit]
-  rw [Finset.sum_sub_distrib, ← Finset.mul_sum, sum_ite_one_mul y v,
-    Matrix.mulVec_apply_eq_sum]
+  rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Matrix.mulVec_apply_eq_sum]
+  simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, if_true]
   by_cases h : w = v
   · simp [h]
     ring
@@ -393,7 +394,7 @@ end Lattice
 intersection form is the old one plus a `⟨-1⟩` summand, so it is negative definite exactly when
 the old one is. Since negative-definiteness is the standing hypothesis of lattice homology, the
 blow-up move stays inside the class of plumbings the theory applies to. -/
-theorem blowUpVertex_isNegativeDefinite_iff [Finite V] :
+theorem isNegativeDefinite_blowUpVertex_iff [Finite V] :
     (P.blowUpVertex v).IsNegativeDefinite ↔ P.IsNegativeDefinite := by
   obtain ⟨_⟩ := nonempty_fintype V
   rw [isNegativeDefinite_iff_forall_intersectionForm_self_neg,
