@@ -53,7 +53,7 @@ same root system; `Valid` keeps only `B 2` of those two names.
 
 ## Main results
 
-* `TauCeti.DynkinType.cartanMatrix_apply_self` and
+* `TauCeti.DynkinType.cartanMatrix_apply_same` and
   `TauCeti.DynkinType.cartanMatrix_apply_le_zero_of_ne`: the standard matrices have diagonal `2`
   and nonpositive off-diagonal entries.
 * `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_iff_symm`: their zero pattern is symmetric, so each
@@ -231,7 +231,7 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
 @[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ := (rfl)
 
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
-@[simp] lemma cartanMatrix_apply_self (t : DynkinType) (i : Fin t.rank) :
+@[simp] lemma cartanMatrix_apply_same (t : DynkinType) (i : Fin t.rank) :
     t.cartanMatrix i i = 2 := by
   cases t <;> simp [CartanMatrix.A]
 
@@ -250,7 +250,7 @@ lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : 
   case G2 => exact CartanMatrix.G₂_off_diag_nonpos i j h
 
 /-- The zero pattern of a standard Cartan matrix is symmetric: two simple roots are orthogonal in
-one order exactly when they are in the other. With `cartanMatrix_apply_self` and
+one order exactly when they are in the other. With `cartanMatrix_apply_same` and
 `cartanMatrix_apply_le_zero_of_ne` this says each standard matrix is a generalized Cartan matrix.
 This is the `DynkinType` analogue of `RootPairing.Base.cartanMatrix_apply_eq_zero_iff_symm`. -/
 lemma cartanMatrix_apply_eq_zero_iff_symm (t : DynkinType) (i j : Fin t.rank) :
