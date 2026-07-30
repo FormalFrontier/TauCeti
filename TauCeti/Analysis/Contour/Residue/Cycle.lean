@@ -49,6 +49,8 @@ here and not there.
 
 * `TauCeti.Contour.PolarPartDecomposition.intervalIntegral_deriv_smul_polarPart` — the contour
   integral of a polar part around such a curve is `2πi · n_s(γ) · Res_s f`.
+* `PolarPartDecomposition.intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue` — the
+  residue theorem for a fixed decomposition, assuming nothing about `f` beyond it.
 * `TauCeti.Contour.classicalResidueTheorem_nullHomologous` — the residue theorem for an arbitrary
   null-homologous cycle avoiding the poles.
 
@@ -126,6 +128,58 @@ theorem intervalIntegral_deriv_smul_polarPart (decomp : PolarPartDecomposition f
   rw [hsplit, Finset.sum_congr rfl fun k _ => hval k, decomp.sum_ite_coeff_eq_residue_mul s]
   ring
 
+/-- **The residue theorem for a fixed polar-part decomposition.** Once `f` is presented on `U` as
+an analytic remainder plus finite Laurent tails at the points of `S`, a closed null-homologous
+piecewise-`C¹` curve in `U` avoiding `S` integrates to the winding-weighted residue sum. This is
+the sum of the two preceding facts: the remainder contributes nothing
+(`intervalIntegral_deriv_smul_analyticRemainder_eq_zero`) and the tail at `s` contributes
+`2πi · n_s(γ) · Res_s f` (`intervalIntegral_deriv_smul_polarPart`).
+
+Nothing is assumed about `f` beyond the decomposition itself: no differentiability or meromorphy
+hypothesis appears, a decomposition already carrying everything the argument uses. When `decomp`
+is obtained from `ofMeromorphic`, those hypotheses were consumed there. -/
+theorem intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue
+    (decomp : PolarPartDecomposition f S U) (hU : IsOpen U) {γ : ℝ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
+    (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) (hnull : IsNullHomologous γ a b U) :
+    ∫ t in a..b, deriv γ t • f (γ t)
+      = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s := by
+  classical
+  have hcont : ContinuousOn γ (uIcc a b) := hγ.continuousOn
+  have hderiv : IntervalIntegrable (fun t => deriv γ t) volume a b := hγ.intervalIntegrable_deriv
+  have hne : ∀ s : S, ∀ t ∈ uIcc a b, γ t ≠ (s : ℂ) := fun s t ht h_eq =>
+    hoff t ht (h_eq ▸ Finset.mem_coe.mpr s.2)
+  have hpol_cont : ∀ s : S, ContinuousOn (fun t => decomp.polarPart s (γ t)) (uIcc a b) :=
+    fun s => ContinuousOn.congr
+      (continuousOn_finsetSum Finset.univ fun k _ => continuousOn_const.div
+        ((hcont.sub continuousOn_const).pow (k.val + 1))
+        fun t ht => pow_ne_zero _ (sub_ne_zero.mpr (hne s t ht)))
+      fun t _ => decomp.polarPart_eq s (γ t)
+  have hrem_int : IntervalIntegrable
+      (fun t => deriv γ t • decomp.analyticRemainder (γ t)) volume a b :=
+    hderiv.smul_continuousOn
+      (decomp.analyticRemainder_differentiableOn.continuousOn.comp hcont hγU)
+  have hpol_int : ∀ s ∈ S.attach, IntervalIntegrable
+      (fun t => deriv γ t • decomp.polarPart s (γ t)) volume a b :=
+    fun s _ => hderiv.smul_continuousOn (hpol_cont s)
+  have hsum_int : IntervalIntegrable
+      (fun t => ∑ s ∈ S.attach, deriv γ t • decomp.polarPart s (γ t)) volume a b := by
+    have h := IntervalIntegrable.sum S.attach hpol_int
+    rwa [Finset.sum_fn] at h
+  have hf_eq : EqOn (fun t => deriv γ t • f (γ t))
+      (fun t => deriv γ t • decomp.analyticRemainder (γ t)
+        + ∑ s ∈ S.attach, deriv γ t • decomp.polarPart s (γ t)) (uIcc a b) := fun t ht => by
+    simp only
+    rw [decomp.f_eq (γ t) ⟨hγU t ht, hoff t ht⟩, smul_add, Finset.smul_sum]
+  rw [intervalIntegral.integral_congr hf_eq, intervalIntegral.integral_add hrem_int hsum_int,
+    intervalIntegral.integral_finsetSum hpol_int,
+    decomp.intervalIntegral_deriv_smul_analyticRemainder_eq_zero hU hγ hγU hclosed hnull,
+    zero_add, Finset.sum_congr rfl fun s _ =>
+      decomp.intervalIntegral_deriv_smul_polarPart s hγ hclosed (hne s),
+    Finset.mul_sum, ← Finset.sum_attach S
+      fun s => 2 * (Real.pi : ℂ) * Complex.I * (windingNumber γ a b s * residue f s)]
+  exact Finset.sum_congr rfl fun s _ => by ring
+
 end PolarPartDecomposition
 
 /-- **The classical residue theorem for an arbitrary null-homologous cycle.** Let `U` be open,
@@ -168,44 +222,9 @@ theorem classicalResidueTheorem_nullHomologous {f : ℂ → ℂ} {S : Finset ℂ
       (Finset.sum_filter_of_ne fun s _ hs => not_not.mp fun hsU =>
         hs (by rw [isNullHomologous_iff.mp hnull s hsU, zero_mul])).symm⟩
   rw [hsum]
-  obtain ⟨decomp⟩ : Nonempty (PolarPartDecomposition f T U) :=
-    ⟨.ofMeromorphic hU hfT hmeroT⟩
-  have hcont : ContinuousOn γ (uIcc a b) := hγ.continuousOn
-  have hderiv : IntervalIntegrable (fun t => deriv γ t) volume a b := hγ.intervalIntegrable_deriv
-  have hoffT : ∀ t ∈ uIcc a b, γ t ∉ (↑T : Set ℂ) := fun t ht h =>
-    hoff t ht (Finset.mem_coe.mpr (hTS _ (Finset.mem_coe.mp h)))
-  have hne : ∀ s : T, ∀ t ∈ uIcc a b, γ t ≠ (s : ℂ) := fun s t ht h_eq =>
-    hoffT t ht (h_eq ▸ Finset.mem_coe.mpr s.2)
-  have hpol_cont : ∀ s : T, ContinuousOn (fun t => decomp.polarPart s (γ t)) (uIcc a b) :=
-    fun s => ContinuousOn.congr
-      (continuousOn_finsetSum Finset.univ fun k _ => continuousOn_const.div
-        ((hcont.sub continuousOn_const).pow (k.val + 1))
-        fun t ht => pow_ne_zero _ (sub_ne_zero.mpr (hne s t ht)))
-      fun t _ => decomp.polarPart_eq s (γ t)
-  have hrem_int : IntervalIntegrable
-      (fun t => deriv γ t • decomp.analyticRemainder (γ t)) volume a b :=
-    hderiv.smul_continuousOn
-      (decomp.analyticRemainder_differentiableOn.continuousOn.comp hcont hγU)
-  have hpol_int : ∀ s ∈ T.attach, IntervalIntegrable
-      (fun t => deriv γ t • decomp.polarPart s (γ t)) volume a b :=
-    fun s _ => hderiv.smul_continuousOn (hpol_cont s)
-  have hsum_int : IntervalIntegrable
-      (fun t => ∑ s ∈ T.attach, deriv γ t • decomp.polarPart s (γ t)) volume a b := by
-    have h := IntervalIntegrable.sum T.attach hpol_int
-    rwa [Finset.sum_fn] at h
-  have hf_eq : EqOn (fun t => deriv γ t • f (γ t))
-      (fun t => deriv γ t • decomp.analyticRemainder (γ t)
-        + ∑ s ∈ T.attach, deriv γ t • decomp.polarPart s (γ t)) (uIcc a b) := fun t ht => by
-    simp only
-    rw [decomp.f_eq (γ t) ⟨hγU t ht, hoffT t ht⟩, smul_add, Finset.smul_sum]
-  rw [intervalIntegral.integral_congr hf_eq, intervalIntegral.integral_add hrem_int hsum_int,
-    intervalIntegral.integral_finsetSum hpol_int,
-    decomp.intervalIntegral_deriv_smul_analyticRemainder_eq_zero hU hγ hγU hclosed hnull,
-    zero_add, Finset.sum_congr rfl fun s _ =>
-      decomp.intervalIntegral_deriv_smul_polarPart s hγ hclosed (hne s),
-    Finset.mul_sum, ← Finset.sum_attach T
-      fun s => 2 * (Real.pi : ℂ) * Complex.I * (windingNumber γ a b s * residue f s)]
-  exact Finset.sum_congr rfl fun s _ => by ring
+  exact PolarPartDecomposition.intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue
+    (.ofMeromorphic hU hfT hmeroT) hU hγ hγU hclosed
+    (fun t ht h => hoff t ht (Finset.mem_coe.mpr (hTS _ (Finset.mem_coe.mp h)))) hnull
 
 end TauCeti.Contour
 

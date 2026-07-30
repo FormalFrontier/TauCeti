@@ -11,9 +11,9 @@ import TauCeti.MeasureTheory.Measure.GiryMonad
 import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
-# Conditionally i.i.d. sequences
+# Conditionally i.i.d. families
 
-The **conditional** strengthening of the mixture identity: a process is *conditionally i.i.d.*
+The **conditional** strengthening of the mixture identity: a family is *conditionally i.i.d.*
 with directing measure `ν` when, along every finite selection of distinct coordinates, the
 **joint** law of `(ν, block)` is the disintegration `∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)` — conditionally
 on `ν`, the block is i.i.d. `ν` (Kallenberg 2005, §1.1 eq. (2)).
@@ -34,12 +34,12 @@ representative*, whereas `ν` here is a genuine **directing measure**.
 
 ## Main results
 
-* `ConditionallyIIDWith`, `ConditionallyIID` — the predicate and its existential wrapper, with
-  their constructor, accessor, and simp-normal-form API.
+* `ConditionallyIIDWith`, `ConditionallyIID` — the index-generic predicate and its existential
+  wrapper, with their constructor, accessor, simp-normal-form, and injective-reindexing API.
 * `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
-  to the mixture identity.
-* `ConditionallyIID.exchangeable`, `ConditionallyIID.contractable` — the symmetry consequences
-  obtained by composing that projection with the mixture-side implications.
+  to the sequence-level mixture identity.
+* `ConditionallyIID.exchangeable`, `ConditionallyIID.contractable` — the sequence-level symmetry
+  consequences obtained by composing that projection with the mixture-side implications.
 
 This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
 predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
@@ -64,7 +64,7 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α ι κ : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- Conditional i.i.d.-ness with a specified directing measure `ν`: the random measure `ν` is
 measurable, and along every finite selection `k` of **distinct** coordinates the *joint* law of
@@ -73,17 +73,18 @@ measurable, and along every finite selection `k` of **distinct** coordinates the
 Constraining the joint law, rather than just the block's marginal, is exactly what makes this the
 conditional statement: see `MixedIIDWith` for the marginal-only version and
 `mixedIIDWith_of_conditionallyIIDWith` for the arrow between them. -/
-def ConditionallyIIDWith (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) : Prop :=
+def ConditionallyIIDWith (μ : Measure Ω) (X : ι → Ω → α) (ν : Ω → ProbabilityMeasure α) : Prop :=
   Measurable ν ∧
-    ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+    ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
         μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure
 
 /-- Constructor: a measurable directing measure together with the joint-law disintegration. -/
-theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
+theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α}
     (hν : Measurable ν)
-    (h : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+    (h : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
         μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) :
@@ -92,11 +93,11 @@ theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ℕ → Ω → α} {ν
 
 /-- Simp normal form for `ConditionallyIIDWith`. -/
 @[simp]
-theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} :
     ConditionallyIIDWith μ X ν ↔
       Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+        ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
             μ.bind fun ω =>
               (Measure.dirac (ν ω)).prod
@@ -104,41 +105,59 @@ theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ℕ → Ω → α}
   Iff.rfl
 
 /-- Conditional i.i.d.-ness: existence of a directing measure. -/
-def ConditionallyIID (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
+def ConditionallyIID (μ : Measure Ω) (X : ι → Ω → α) : Prop :=
   ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν
 
 /-- Constructor from a directing measure together with its witness. -/
-theorem ConditionallyIID.of_directing {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIID.of_directing {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : ConditionallyIID μ X :=
   ⟨ν, h⟩
 
 /-- Simp normal form for the existential wrapper `ConditionallyIID`. -/
 @[simp]
-theorem conditionallyIID_iff {μ : Measure Ω} {X : ℕ → Ω → α} :
+theorem conditionallyIID_iff {μ : Measure Ω} {X : ι → Ω → α} :
     ConditionallyIID μ X ↔ ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν :=
   Iff.rfl
 
 /-- The directing measure of a `ConditionallyIIDWith` witness is measurable. -/
 @[grind →]
-theorem ConditionallyIIDWith.measurable_directing {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIIDWith.measurable_directing {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Measurable ν :=
   h.1
 
 /-- The defining joint-law disintegration of a `ConditionallyIIDWith` witness. -/
 @[grind =>]
-theorem ConditionallyIIDWith.jointLaw_eq_disintegration {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIIDWith.jointLaw_eq_disintegration {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
-    {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k) :
+    {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k) :
     μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
       μ.bind fun ω =>
         (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   h.2 m k hk
 
-/-- A `ConditionallyIID` process has a directing measure. -/
-theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ℕ → Ω → α}
+/-- A `ConditionallyIID` family has a directing measure. -/
+theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ι → Ω → α}
     (h : ConditionallyIID μ X) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν :=
   h
+
+/-- Conditional i.i.d.-ness with a named directing measure is preserved by reindexing along an
+injection. The directing measure is unchanged. -/
+theorem ConditionallyIIDWith.comp_injective
+    {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (h : ConditionallyIIDWith μ X ν) {f : κ → ι} (hf : Function.Injective f) :
+    ConditionallyIIDWith μ (fun j => X (f j)) ν := by
+  refine ConditionallyIIDWith.intro h.measurable_directing fun m k hk => ?_
+  simpa only [Function.comp_apply] using
+    h.jointLaw_eq_disintegration (f ∘ k) (hf.comp hk)
+
+/-- Conditional i.i.d.-ness is preserved by reindexing along an injection. -/
+theorem ConditionallyIID.comp_injective
+    {μ : Measure Ω} {X : ι → Ω → α} (h : ConditionallyIID μ X)
+    {f : κ → ι} (hf : Function.Injective f) :
+    ConditionallyIID μ fun j => X (f j) :=
+  let ⟨_, hν⟩ := h.exists_directing
+  ConditionallyIID.of_directing (hν.comp_injective hf)
 
 /-- **The easy arrow.** A directing measure is in particular a mixing representative: the mixture
 identity is the joint disintegration with the `ν` coordinate integrated out.
@@ -171,13 +190,13 @@ theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
 
-/-- A conditionally i.i.d. process is exchangeable: project to the mixture identity, then apply
+/-- A conditionally i.i.d. sequence is exchangeable: project to the mixture identity, then apply
 `MixedIID.exchangeable`. No side hypotheses. -/
 theorem ConditionallyIID.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : Exchangeable μ X :=
   (mixedIID_of_conditionallyIID h).exchangeable
 
-/-- A conditionally i.i.d. process is contractable. -/
+/-- A conditionally i.i.d. sequence is contractable. -/
 theorem ConditionallyIID.contractable {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : Contractable μ X :=
   (mixedIID_of_conditionallyIID h).contractable

@@ -205,10 +205,7 @@ private theorem trace_eq_add_of_exact
   have hoff : LinearMap.trace K (A × C)
       ((LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C))) = 0 := by
     rw [LinearMap.trace_comp_comm']
-    have hz : (u.comp (LinearMap.snd K A C)).comp (LinearMap.inl K A C) = 0 := by
-      apply LinearMap.ext
-      intro a
-      simp
+    have hz : (u.comp (LinearMap.snd K A C)).comp (LinearMap.inl K A C) = 0 := by ext a; simp
     rw [hz, map_zero]
   rw [← LinearMap.trace_conj' fB e, ← hF_def, hF, map_add, LinearMap.trace_prodMap', hoff,
     add_zero]

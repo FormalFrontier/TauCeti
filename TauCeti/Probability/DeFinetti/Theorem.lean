@@ -146,8 +146,8 @@ theorem conditionallyIID_of_exchangeable [StandardBorelSpace α] [Nonempty α] {
 conditionally i.i.d. This is the conventional theorem-name handle for
 `conditionallyIID_of_exchangeable`. -/
 theorem deFinetti [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω}
-    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Exchangeable μ X)
-    (hX_meas : ∀ n, Measurable (X n)) :
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    (hX : Exchangeable μ X) :
     ConditionallyIID μ X :=
   conditionallyIID_of_exchangeable hX hX_meas
 
