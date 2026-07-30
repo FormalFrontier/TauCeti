@@ -177,6 +177,7 @@ theorem colIndex_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (
 theorem relabel_one (t : YoungTableau μ) : relabel 1 t = t := by
   rw [relabel, Equiv.Perm.one_def, Equiv.trans_refl]
 
+@[simp]
 theorem relabel_relabel (σ τ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) :
     relabel σ (relabel τ t) = relabel (σ * τ) t := by
   rw [relabel, relabel, relabel, Equiv.trans_assoc, Equiv.Perm.mul_def]
