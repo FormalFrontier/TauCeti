@@ -19,8 +19,8 @@ Base change also respects the pointwise group law on homomorphisms of
 `AbelianVariety.Hom.baseChangeMonoidHom` bundles it as a homomorphism
 `(A ⟶ B) →* (A.baseChange L ⟶ B.baseChange L)` of the homomorphism groups, with
 `AbelianVariety.Hom.baseChange_one`, `baseChange_mul`, `baseChange_inv`, `baseChange_div` and
-`baseChange_zpow` its unbundled forms. `AbelianVariety.baseChangeIso` is the action of base change
-on isomorphisms, which the functor supplies but which is worth having in `Iso` form.
+`baseChange_zpow` its unbundled forms. `AbelianVariety.baseChangeIso` is the functor's action on
+isomorphisms, `CategoryTheory.Functor.mapIso`, restated at the types the rest of this API uses.
 
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E's basic
 abelian-variety API and the base-change compatibility required in the end goal. It will allow
@@ -125,7 +125,10 @@ lemma Hom.baseChange_comp {A B C : AbelianVariety K} (f : A ⟶ B) (g : B ⟶ C)
   simp [Category.assoc]
 
 /-- Extension of the base field defines a functor between the categories of abelian varieties.
--/
+
+Exposed so that `(baseChangeFunctor L).obj A` reduces to `A.baseChange L`, the form the rest of
+the base-change API is stated in. -/
+@[expose]
 noncomputable def baseChangeFunctor (L : Type u) [Field L] [Algebra K L] :
     AbelianVariety K ⥤ AbelianVariety L where
   obj A := A.baseChange L
@@ -231,37 +234,32 @@ lemma Hom.baseChange_zpow {A B : AbelianVariety K} (f : A ⟶ B) (n : ℤ)
 
 /-! ### Base change of an isomorphism -/
 
-/-- Base change of an isomorphism of abelian varieties along a field extension `K → L`. -/
-@[expose, simps]
+/-- Base change of an isomorphism of abelian varieties along a field extension `K → L`.
+
+This is nothing but `AbelianVariety.baseChangeFunctor` acting on isomorphisms; it is worth naming
+only because `Functor.mapIso` produces the type
+`(baseChangeFunctor L).obj A ≅ (baseChangeFunctor L).obj B`, whereas the rest of the base-change
+API — and the `simp` lemmas keyed on it — is stated for `A.baseChange L` and `B.baseChange L`.
+Compatibility with `Iso.refl`, `Iso.symm` and `Iso.trans` is Mathlib's `Functor.mapIso_refl`,
+`Functor.mapIso_symm` and `Functor.mapIso_trans`, applied through this definitional equality. -/
+@[expose]
 def baseChangeIso {A B : AbelianVariety K} (e : A ≅ B) (L : Type u) [Field L] [Algebra K L] :
-    A.baseChange L ≅ B.baseChange L where
-  hom := Hom.baseChange e.hom L
-  inv := Hom.baseChange e.inv L
-  hom_inv_id := by rw [← Hom.baseChange_comp, e.hom_inv_id, Hom.baseChange_id]
-  inv_hom_id := by rw [← Hom.baseChange_comp, e.inv_hom_id, Hom.baseChange_id]
+    A.baseChange L ≅ B.baseChange L :=
+  (baseChangeFunctor L).mapIso e
 
-/-- Base change of the identity isomorphism is the identity. -/
+/-- The forward map of a base-changed isomorphism is the base change of its forward map. -/
 @[simp]
-lemma baseChangeIso_refl (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L] :
-    baseChangeIso (Iso.refl A) L = Iso.refl (A.baseChange L) := by
-  apply Iso.ext
-  simp only [baseChangeIso_hom, Iso.refl_hom, Hom.baseChange_id]
-
-/-- Base change commutes with inverting an isomorphism. -/
-@[simp]
-lemma baseChangeIso_symm {A B : AbelianVariety K} (e : A ≅ B)
+lemma baseChangeIso_hom {A B : AbelianVariety K} (e : A ≅ B)
     (L : Type u) [Field L] [Algebra K L] :
-    baseChangeIso e.symm L = (baseChangeIso e L).symm := by
-  apply Iso.ext
-  simp only [baseChangeIso_hom, Iso.symm_hom, baseChangeIso_inv]
+    (baseChangeIso e L).hom = Hom.baseChange e.hom L :=
+  (rfl)
 
-/-- Base change commutes with composing isomorphisms. -/
+/-- The inverse map of a base-changed isomorphism is the base change of its inverse map. -/
 @[simp]
-lemma baseChangeIso_trans {A B C : AbelianVariety K} (e : A ≅ B) (f : B ≅ C)
+lemma baseChangeIso_inv {A B : AbelianVariety K} (e : A ≅ B)
     (L : Type u) [Field L] [Algebra K L] :
-    baseChangeIso (e.trans f) L = (baseChangeIso e L).trans (baseChangeIso f L) := by
-  apply Iso.ext
-  simp only [baseChangeIso_hom, Iso.trans_hom, Hom.baseChange_comp]
+    (baseChangeIso e L).inv = Hom.baseChange e.inv L :=
+  (rfl)
 
 end
 
