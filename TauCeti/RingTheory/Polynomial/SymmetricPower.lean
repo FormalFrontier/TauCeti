@@ -49,9 +49,13 @@ are separate later steps.
 * `TauCeti.Sym.coeffEquiv_one_apply` and `TauCeti.Sym.coeffEquiv_two_apply`: the chart in degrees
   one and two, pinning down the sign convention.
 
-The correspondence between an unordered tuple and its monic polynomial, and the complex structure
-it puts on `Sym^g(Σ)`, is the opening item of Lane F4.1 of the analytic Heegaard Floer roadmap
-(Ozsváth--Szabó, [arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1). Vieta's formulas,
+Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
+structure (elementary symmetric functions), the totally real tori `T_α`, `T_β`, …", after
+Ozsváth--Szabó ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1). This file supplies
+the algebra the first clause rests on, the correspondence between an unordered tuple and its monic
+polynomial, and stops there; the linear algebra behind the second clause is
+`TauCeti.IsMaximalTotallyReal.finrank_eq_half` in
+`TauCeti/LinearAlgebra/TotallyReal/Finrank.lean`. Vieta's formulas,
 the root multiset of a split monic polynomial, the multiset-to-polynomial map itself, and the
 equivalence between monic polynomials of degree `n` and polynomials of degree `< n` are all
 Mathlib's (`Multiset.prod_X_sub_C_coeff`,
