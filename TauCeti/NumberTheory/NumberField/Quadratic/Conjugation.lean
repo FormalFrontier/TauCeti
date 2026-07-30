@@ -28,12 +28,12 @@ classical genus theory this supports.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.quadConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
-  `quadConj_gen` (`quadConj θ = -θ`) and `quadConj_involutive`.
-* `TauCeti.NumberField.ringOfIntegersQuadConj`: its restriction to a ring automorphism
-  `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadConj`, `ringOfIntegersQuadConj_gen`, and
-  `ringOfIntegersQuadConj_involutive`.
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadConj_involutive`: the induced action on
+* `TauCeti.NumberField.quadraticConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
+  `quadraticConj_gen` (`quadraticConj θ = -θ`) and `quadraticConj_involutive`.
+* `TauCeti.NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
+  `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
+  `ringOfIntegersQuadraticConj_involutive`.
+* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_involutive`: the induced action on
   `ClassGroup (𝓞 K)` is an involution.
 -/
 
@@ -57,12 +57,12 @@ private theorem minpoly_rat_eq_neg (hmin : minpoly ℤ θ = X ^ 2 - C d) :
   ring
 
 /-- The power basis `1, θ` of the quadratic field `K` over `ℚ`. -/
-private noncomputable def quadPowerBasis (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+private noncomputable def quadraticPowerBasis (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     PowerBasis ℚ K :=
   PowerBasis.ofAdjoinEqTop' θ.isIntegral_coe.tower_top hgen
 
-private theorem quadPowerBasis_gen (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    (quadPowerBasis hgen).gen = (θ : K) :=
+private theorem quadraticPowerBasis_gen (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    (quadraticPowerBasis hgen).gen = (θ : K) :=
   PowerBasis.ofAdjoinEqTop'_gen _ hgen
 
 /-- `-θ` also generates `K` over `ℚ`, so it too carries a power basis. -/
@@ -76,81 +76,81 @@ private theorem adjoin_neg_eq_top (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
   exact Algebra.adjoin_le (Set.singleton_subset_iff.mpr hmem)
 
 /-- The power basis `1, -θ` of `K` over `ℚ`. -/
-private noncomputable def quadPowerBasisNeg (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+private noncomputable def quadraticPowerBasisNeg (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     PowerBasis ℚ K :=
   PowerBasis.ofAdjoinEqTop' θ.isIntegral_coe.tower_top.neg (adjoin_neg_eq_top hgen)
 
-private theorem quadPowerBasisNeg_gen (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    (quadPowerBasisNeg hgen).gen = -(θ : K) :=
+private theorem quadraticPowerBasisNeg_gen (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    (quadraticPowerBasisNeg hgen).gen = -(θ : K) :=
   PowerBasis.ofAdjoinEqTop'_gen _ (adjoin_neg_eq_top hgen)
 
 /-- **Quadratic conjugation.** The nontrivial `ℚ`-automorphism of the quadratic field `K = ℚ(√d)`,
 characterised by `θ ↦ -θ`. Since `θ` and `-θ` share a minimal polynomial, it is the
 `PowerBasis.equivOfMinpoly` between their power bases. -/
-noncomputable def quadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+noncomputable def quadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : K ≃ₐ[ℚ] K :=
-  (quadPowerBasis hgen).equivOfMinpoly (quadPowerBasisNeg hgen) (by
-    rw [quadPowerBasis_gen, quadPowerBasisNeg_gen]; exact minpoly_rat_eq_neg hmin)
+  (quadraticPowerBasis hgen).equivOfMinpoly (quadraticPowerBasisNeg hgen) (by
+    rw [quadraticPowerBasis_gen, quadraticPowerBasisNeg_gen]; exact minpoly_rat_eq_neg hmin)
 
 /-- Quadratic conjugation sends the generator `θ` to `-θ`. -/
-@[simp] theorem quadConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem quadraticConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    quadConj hmin hgen (θ : K) = -(θ : K) := by
-  rw [quadConj]
-  nth_rewrite 1 [← quadPowerBasis_gen hgen]
-  rw [PowerBasis.equivOfMinpoly_gen, quadPowerBasisNeg_gen]
+    quadraticConj hmin hgen (θ : K) = -(θ : K) := by
+  rw [quadraticConj]
+  nth_rewrite 1 [← quadraticPowerBasis_gen hgen]
+  rw [PowerBasis.equivOfMinpoly_gen, quadraticPowerBasisNeg_gen]
 
 /-- Quadratic conjugation is an involution on `K` (applying it twice is the identity). -/
-@[simp] theorem quadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem quadraticConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    Function.Involutive (quadConj hmin hgen) := by
-  have hext : (quadConj hmin hgen).toAlgHom.comp (quadConj hmin hgen).toAlgHom
+    Function.Involutive (quadraticConj hmin hgen) := by
+  have hext : (quadraticConj hmin hgen).toAlgHom.comp (quadraticConj hmin hgen).toAlgHom
       = AlgHom.id ℚ K := by
-    apply (quadPowerBasis hgen).algHom_ext
-    simp only [AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, quadPowerBasis_gen, quadConj_gen,
-      map_neg, neg_neg, AlgHom.id_apply]
+    apply (quadraticPowerBasis hgen).algHom_ext
+    simp only [AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, quadraticPowerBasis_gen,
+      quadraticConj_gen, map_neg, neg_neg, AlgHom.id_apply]
   intro x
   have := AlgHom.congr_fun hext x
   simpa only [AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, AlgHom.id_apply] using this
 
-/-- **Quadratic conjugation on the ring of integers.** The restriction of `quadConj` to `𝓞 K`, a
-ring automorphism `𝓞 K ≃+* 𝓞 K`. This is the automorphism whose action on `ClassGroup (𝓞 K)` is by
-inversion (the genus-theoretic fact that `I · σI` is principal). -/
-noncomputable def ringOfIntegersQuadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- **Quadratic conjugation on the ring of integers.** The restriction of `quadraticConj` to
+`𝓞 K`, a ring automorphism `𝓞 K ≃+* 𝓞 K`. This is the automorphism whose action on
+`ClassGroup (𝓞 K)` is by inversion (the genus-theoretic fact that `I · σI` is principal). -/
+noncomputable def ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : 𝓞 K ≃+* 𝓞 K :=
-  RingOfIntegers.mapRingEquiv (quadConj hmin hgen).toRingEquiv
+  RingOfIntegers.mapRingEquiv (quadraticConj hmin hgen).toRingEquiv
 
-/-- Passing to `K`, `ringOfIntegersQuadConj x` is `quadConj` of the image of `x`. -/
-@[simp] theorem coe_ringOfIntegersQuadConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- Passing to `K`, `ringOfIntegersQuadraticConj x` is `quadraticConj` of the image of `x`. -/
+@[simp] theorem coe_ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
-    (ringOfIntegersQuadConj hmin hgen x : K) = quadConj hmin hgen (x : K) := by
-  rw [ringOfIntegersQuadConj, RingOfIntegers.mapRingEquiv_apply, AlgEquiv.coe_ringEquiv]
+    (ringOfIntegersQuadraticConj hmin hgen x : K) = quadraticConj hmin hgen (x : K) := by
+  rw [ringOfIntegersQuadraticConj, RingOfIntegers.mapRingEquiv_apply, AlgEquiv.coe_ringEquiv]
 
 /-- Quadratic conjugation on `𝓞 K` sends the generator `θ` to `-θ`. -/
-@[simp] theorem ringOfIntegersQuadConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem ringOfIntegersQuadraticConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    ringOfIntegersQuadConj hmin hgen θ = -θ := by
-  have h : (ringOfIntegersQuadConj hmin hgen θ : K) = ((-θ : 𝓞 K) : K) := by
-    rw [coe_ringOfIntegersQuadConj, quadConj_gen]; push_cast; ring
+    ringOfIntegersQuadraticConj hmin hgen θ = -θ := by
+  have h : (ringOfIntegersQuadraticConj hmin hgen θ : K) = ((-θ : 𝓞 K) : K) := by
+    rw [coe_ringOfIntegersQuadraticConj, quadraticConj_gen]; push_cast; ring
   exact RingOfIntegers.coe_injective h
 
 /-- Quadratic conjugation is an involution on `𝓞 K` (applying it twice is the identity). -/
-@[simp] theorem ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem ringOfIntegersQuadraticConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    Function.Involutive (ringOfIntegersQuadConj hmin hgen) := by
+    Function.Involutive (ringOfIntegersQuadraticConj hmin hgen) := by
   intro x
-  have h : (ringOfIntegersQuadConj hmin hgen (ringOfIntegersQuadConj hmin hgen x) : K)
+  have h : (ringOfIntegersQuadraticConj hmin hgen (ringOfIntegersQuadraticConj hmin hgen x) : K)
       = (x : K) := by
-    rw [coe_ringOfIntegersQuadConj, coe_ringOfIntegersQuadConj]
-    exact quadConj_involutive hmin hgen (x : K)
+    rw [coe_ringOfIntegersQuadraticConj, coe_ringOfIntegersQuadraticConj]
+    exact quadraticConj_involutive hmin hgen (x : K)
   exact RingOfIntegers.coe_injective h
 
 /-- Quadratic conjugation acts as an **involution on the class group** `Cl(𝓞 K)`. This is the
-group-action shadow of `ringOfIntegersQuadConj_involutive`, and the first step towards the
+group-action shadow of `ringOfIntegersQuadraticConj_involutive`, and the first step towards the
 genus-theoretic fact that the induced action is inversion (hence trivial on `Cl/Cl²`). -/
-@[simp] theorem mulEquiv_ringOfIntegersQuadConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem mulEquiv_ringOfIntegersQuadraticConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    Function.Involutive (ClassGroup.mulEquiv (ringOfIntegersQuadConj hmin hgen)) :=
-  ClassGroup.mulEquiv_involutive (ringOfIntegersQuadConj_involutive hmin hgen)
+    Function.Involutive (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) :=
+  ClassGroup.mulEquiv_involutive (ringOfIntegersQuadraticConj_involutive hmin hgen)
 
 end TauCeti.NumberField
