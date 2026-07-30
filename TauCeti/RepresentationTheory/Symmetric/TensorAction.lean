@@ -101,15 +101,49 @@ variable (R : Type u) (n d : ℕ)
 variable [CommSemiring R]
 
 /-- The symmetric-group action on `(Fin n → R)^{⊗d}` by permutation of tensor factors. -/
-noncomputable abbrev permTensorAction :
+noncomputable def permTensorAction :
     Representation R (Equiv.Perm (Fin d)) (⨂[R] _ : Fin d, Fin n → R) :=
   PiTensorProduct.reindexRepresentation R (Fin n → R) (Fin d)
 
+/-- The symmetric-group action on `(Fin n → R)^{⊗d}` is the reindexing representation for the
+index type `Fin d`. -/
+theorem permTensorAction_def :
+    permTensorAction R n d = PiTensorProduct.reindexRepresentation R (Fin n → R) (Fin d) :=
+  (rfl)
+
+/-- A permutation acts on `(Fin n → R)^{⊗d}` by `PiTensorProduct.reindex`. -/
+@[simp]
+theorem permTensorAction_apply (σ : Equiv.Perm (Fin d)) :
+    permTensorAction R n d σ =
+      (PiTensorProduct.reindex R (fun _ : Fin d => Fin n → R) σ).toLinearMap :=
+  (rfl)
+
 /-- The group-algebra action of `R[S_d]` on `(Fin n → R)^{⊗d}` induced by factor
 permutations. -/
-noncomputable abbrev permTensorActionAlgHom :
+noncomputable def permTensorActionAlgHom :
     MonoidAlgebra R (Equiv.Perm (Fin d)) →ₐ[R]
       Module.End R (⨂[R] _ : Fin d, Fin n → R) :=
   (permTensorAction R n d).asAlgebraHom
+
+/-- The group-algebra action of `R[S_d]` is the linear extension of `permTensorAction`. -/
+theorem permTensorActionAlgHom_def :
+    permTensorActionAlgHom R n d = (permTensorAction R n d).asAlgebraHom :=
+  (rfl)
+
+/-- A single permutation, viewed in the group algebra, acts by `permTensorAction`. -/
+theorem permTensorActionAlgHom_of (σ : Equiv.Perm (Fin d)) :
+    permTensorActionAlgHom R n d (MonoidAlgebra.of R (Equiv.Perm (Fin d)) σ) =
+      permTensorAction R n d σ := by
+  rw [permTensorActionAlgHom_def, Representation.asAlgebraHom_of]
+
+/-- The group-algebra action on a pure tensor of `(Fin n → R)^{⊗d}` is the corresponding finite
+linear combination of reindexed pure tensors. -/
+@[simp]
+theorem permTensorActionAlgHom_apply_tprod (a : MonoidAlgebra R (Equiv.Perm (Fin d)))
+    (m : Fin d → (Fin n → R)) :
+    permTensorActionAlgHom R n d a (PiTensorProduct.tprod R m) =
+      a.coeff.sum fun σ r => r • PiTensorProduct.tprod R fun i => m (σ.symm i) := by
+  rw [permTensorActionAlgHom_def, permTensorAction_def]
+  exact PiTensorProduct.reindexRepresentation_asAlgebraHom_apply_tprod R (Fin n → R) (Fin d) a m
 
 end TauCeti
