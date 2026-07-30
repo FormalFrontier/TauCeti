@@ -6,8 +6,8 @@ Authors: Codex
 module
 
 public import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.PoissonSummation
-public import Mathlib.RingTheory.Polynomial.Hermite.Gaussian
+import Mathlib.Analysis.SpecialFunctions.Gaussian.PoissonSummation
+import Mathlib.RingTheory.Polynomial.Hermite.Gaussian
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Ladder
 
 /-!
@@ -94,18 +94,18 @@ private theorem hasTemperateGrowth_hermiteFactor (n : ℕ) :
   have hp : Function.HasTemperateGrowth (fun x : ℝ => p.eval x) := by
     induction p using Polynomial.induction_on' with
     | add p q hp hq =>
-        rw [show (fun x : ℝ => (p + q).eval x) =
-          (fun x : ℝ => p.eval x) + fun x : ℝ => q.eval x by
-            funext x
-            simp only [Pi.add_apply, eval_add]]
-        exact hp.add hq
+        -- `HasTemperateGrowth` does not eta-expand pointwise operations, so compare the functions.
+        convert hp.add hq using 1
+        ext x
+        simp only [Pi.add_apply, eval_add]
     | monomial k c =>
-        rw [show (fun x : ℝ => (monomial k c).eval x) =
-          (fun _ : ℝ => c) * (fun x : ℝ => x) ^ k by
-            funext x
-            simp only [Pi.mul_apply, Pi.pow_apply, eval_monomial]]
-        exact (Function.HasTemperateGrowth.const c).mul
-          (Function.HasTemperateGrowth.id'.pow k)
+        have hmonomial :
+            Function.HasTemperateGrowth ((fun _ : ℝ => c) * (fun x : ℝ => x) ^ k) :=
+          (Function.HasTemperateGrowth.const c).mul
+            (Function.HasTemperateGrowth.id'.pow k)
+        convert hmonomial using 1
+        ext x
+        simp only [Pi.mul_apply, Pi.pow_apply, eval_monomial]
   have hcomp : Function.HasTemperateGrowth (fun x : ℝ => p.eval (x * Real.sqrt 2)) := by
     have haff : Function.HasTemperateGrowth (fun x : ℝ => x * Real.sqrt 2) :=
       Function.HasTemperateGrowth.id'.mul
@@ -151,6 +151,7 @@ theorem coe_hermiteSchwartzMap (n : ℕ) :
   exact hermiteSchwartzMap_apply n x
 
 /-- The position ladder relation, as an equality in Schwartz space. -/
+@[simp]
 theorem mul_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x) (hermiteSchwartzMap n) =
       Real.sqrt (((n : ℝ) + 1) / 2) • hermiteSchwartzMap (n + 1) +
@@ -160,6 +161,7 @@ theorem mul_hermiteSchwartzMap (n : ℕ) :
     hermiteSchwartzMap_apply, add_apply, smul_apply, smul_eq_mul] using mul_hermiteFunction n x
 
 /-- The derivative ladder relation, as an equality in Schwartz space. -/
+@[simp]
 theorem deriv_hermiteSchwartzMap (n : ℕ) :
     SchwartzMap.derivCLM ℝ ℝ (hermiteSchwartzMap n) =
       Real.sqrt ((n : ℝ) / 2) • hermiteSchwartzMap (n - 1) -
