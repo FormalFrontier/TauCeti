@@ -12,8 +12,8 @@ public import Mathlib.RepresentationTheory.Basic
 # Permuting tensor factors
 
 This file defines the symmetric-group action on a power of a module by permuting its tensor
-factors. It also extends the action linearly to the group algebra, which is the action used by
-Young symmetrizers.
+factors. Mathlib's `Representation.asAlgebraHom` then extends the action linearly to the group
+algebra, which is the action used by Young symmetrizers.
 
 The construction is the first target in Layer 2 of the
 [classical-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md)
@@ -27,7 +27,7 @@ It reuses `PiTensorProduct.reindex`; the convention is
 * `PiTensorProduct.reindexRepresentation` is the permutation action for an arbitrary index type
   and module.
 * `permTensorAction` specializes it to `(Fin n → R)^{⊗d}`.
-* `permTensorActionAlgHom` specializes its group-algebra extension to `(Fin n → R)^{⊗d}`.
+* `permTensorActionAlgHom` is its `Representation.asAlgebraHom` extension to `R[S_d]`.
 -/
 
 public section
@@ -73,26 +73,14 @@ theorem commute_reindexRepresentation_map (σ : Equiv.Perm ι) (f : M →ₗ[R] 
     LinearEquiv.coe_toLinearMap] using
     (map_reindex (f := fun _ : ι => f) σ x).symm
 
-/-- The linear extension of the tensor-factor permutation action to the group algebra. -/
-noncomputable def reindexRepresentationAlgHom :
-    MonoidAlgebra R (Equiv.Perm ι) →ₐ[R] Module.End R (⨂[R] _ : ι, M) :=
-  MonoidAlgebra.lift R _ _ (reindexRepresentation R M ι)
-
-/-- A group element in the group algebra acts by reindexing the tensor factors. -/
-@[simp]
-theorem reindexRepresentationAlgHom_single (σ : Equiv.Perm ι) :
-    reindexRepresentationAlgHom R M ι (MonoidAlgebra.single σ 1) =
-      (reindex R (fun _ : ι => M) σ).toLinearMap := by
-  simp [reindexRepresentationAlgHom]
-
 /-- The group-algebra action on a pure tensor is the corresponding finite linear combination
 of reindexed pure tensors. -/
-theorem reindexRepresentationAlgHom_apply_tprod
+theorem reindexRepresentation_asAlgebraHom_apply_tprod
     (a : MonoidAlgebra R (Equiv.Perm ι)) (m : ι → M) :
-    reindexRepresentationAlgHom R M ι a (tprod R m) =
+    (reindexRepresentation R M ι).asAlgebraHom a (tprod R m) =
       a.coeff.sum fun σ r => r • tprod R (fun i => m (σ.symm i)) := by
   classical
-  simp [reindexRepresentationAlgHom, MonoidAlgebra.lift_apply, Finsupp.sum,
+  simp [Representation.asAlgebraHom_def, MonoidAlgebra.lift_apply, Finsupp.sum,
     LinearMap.sum_apply]
 
 end PiTensorProduct
@@ -112,6 +100,6 @@ permutations. -/
 noncomputable abbrev permTensorActionAlgHom :
     MonoidAlgebra R (Equiv.Perm (Fin d)) →ₐ[R]
       Module.End R (⨂[R] _ : Fin d, Fin n → R) :=
-  PiTensorProduct.reindexRepresentationAlgHom R (Fin n → R) (Fin d)
+  (permTensorAction R n d).asAlgebraHom
 
 end TauCeti
