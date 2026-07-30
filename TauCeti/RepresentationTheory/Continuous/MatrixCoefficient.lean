@@ -51,13 +51,6 @@ theorem matrixCoeff_apply (π : ContRepresentation 𝕜 G V) (hπ : Continuous �
     matrixCoeff π hπ v w g = ⟪π g v, w⟫_𝕜 :=
   (rfl)
 
-/-- A matrix coefficient at the identity is the inner product of its defining vectors. -/
-@[simp]
-theorem matrixCoeff_apply_one (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
-    (v w : V) :
-    matrixCoeff π hπ v w 1 = ⟪v, w⟫_𝕜 := by
-  simp
-
 end Coefficients
 
 section CompactDomain
