@@ -100,8 +100,8 @@ theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → �
     (h : ExchangeableFamily μ X) {f : κ → ι} (hf : Function.Injective f) :
     ExchangeableFamily μ fun j => X (f j) := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  simpa only [blockLaw_def, Function.comp_apply] using
-    h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
+  rw [blockLaw_comp, blockLaw_comp]
+  exact h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
 
 /-! ## Comparison with the sequence predicates -/
 

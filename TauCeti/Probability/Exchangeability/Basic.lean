@@ -38,7 +38,7 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α β ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α β ι κ : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- The finite-dimensional law of a family along a coordinate selection `k`.
 
@@ -100,6 +100,14 @@ def Contractable (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
 @[simp]
 theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι) :
     blockLaw μ X k = μ.map (fun ω i => X (k i) ω) :=
+  rfl
+
+/-- Reindexing the family before selecting is the same as composing the selection: the
+characteristic lemma for `blockLaw` under precomposition, so callers need not unfold the
+definition. -/
+@[simp]
+theorem blockLaw_comp (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (g : κ → ι) (k : Fin m → κ) :
+    blockLaw μ (fun j => X (g j)) k = blockLaw μ X (g ∘ k) :=
   rfl
 
 -- Annotated `@[grind =>]` rather than `@[simp]`: `blockLaw_def` already simp-normalizes
