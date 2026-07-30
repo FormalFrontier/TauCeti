@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.AbelianVariety.MorphismGroup
-public import TauCeti.AlgebraicGeometry.AbelianVariety.Trivial
 public import Mathlib.Algebra.Group.TypeTags.Basic
 public import Mathlib.Algebra.Ring.Equiv
 public import Mathlib.CategoryTheory.Conj
@@ -38,9 +37,11 @@ conjugation by an isomorphism is Mathlib's `CategoryTheory.Iso.conj`.
   identifying it with the `n`-th power map and `AbelianVariety.mulBy_comp` recording that every
   homomorphism of abelian varieties commutes with it;
 * `AbelianVariety.End.congr`: an isomorphism of abelian varieties conjugates one endomorphism ring
-  isomorphically onto the other;
-* `AbelianVariety.End.instUniqueTrivial`: the trivial abelian variety has the zero ring as its
-  endomorphism ring, so `[n]` there is the identity for every `n`.
+  isomorphically onto the other.
+
+The specialization to the trivial abelian variety is in
+`TauCeti.AlgebraicGeometry.AbelianVariety.End.Trivial`, which is where the trivial-variety theory
+gets imported.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, "Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API", and its item "`[n]` as an
@@ -187,6 +188,13 @@ The multiplicative part is Mathlib's `CategoryTheory.Iso.conj`; only additivity 
 respects the pointwise group law — has to be proved here. -/
 def congr (e : A ≅ B) : End A ≃+* End B where
   __ := e.conj
+  -- Mathlib's `e.conj` lives on `CategoryTheory.End`, of which `End A` is the definitional
+  -- synonym `Additive (A ⟶ A)`, so the `map_add'` goal mixes the two views: it applies `e.conj` to
+  -- elements of `End A` and takes `toHom` of a categorical composite. That mismatch cannot be
+  -- bridged by a rewrite lemma, because a statement about `toHom (e.conj x)` for `x : End A` does
+  -- not elaborate: the coercion of `e.conj` fixes its argument type to `CategoryTheory.End A`.
+  -- So the goal is moved into the morphism view once, definitionally, and `simp` closes it from
+  -- `Hom.mul_comp` and `Hom.comp_mul`.
   map_add' x y := toHom_injective <| by
     change e.inv ≫ toHom (x + y) ≫ e.hom
       = (e.inv ≫ toHom x ≫ e.hom) * (e.inv ≫ toHom y ≫ e.hom)
@@ -209,13 +217,6 @@ lemma congr_trans (e : A ≅ B) (f : B ≅ C) :
     congr (e.trans f) = (congr e).trans (congr f) := by
   ext x
   simp
-
-/-! ### The trivial abelian variety -/
-
-/-- The trivial abelian variety has a unique endomorphism, so its endomorphism ring is the zero
-ring. -/
-instance instUniqueTrivial : Unique (End (trivial K)) :=
-  inferInstanceAs (Unique (Additive (trivial K ⟶ trivial K)))
 
 end
 
@@ -246,39 +247,33 @@ group law. -/
 @[simp] lemma mulBy_one (A : AbelianVariety K) : mulBy A 1 = 𝟙 A := by
   simp [mulBy]
 
-lemma mulBy_add (A : AbelianVariety K) (m n : ℤ) :
+/-- `[m + n]` is the pointwise product of `[m]` and `[n]`. -/
+@[simp] lemma mulBy_add (A : AbelianVariety K) (m n : ℤ) :
     mulBy A (m + n) = mulBy A m * mulBy A n := by
   simp [mulBy]
 
 @[simp] lemma mulBy_neg (A : AbelianVariety K) (n : ℤ) : mulBy A (-n) = (mulBy A n)⁻¹ := by
   simp [mulBy]
 
-lemma mulBy_sub (A : AbelianVariety K) (m n : ℤ) :
+/-- `[m - n]` is the pointwise quotient of `[m]` and `[n]`. -/
+@[simp] lemma mulBy_sub (A : AbelianVariety K) (m n : ℤ) :
     mulBy A (m - n) = mulBy A m / mulBy A n := by
   simp [mulBy]
 
 /-- `[m * n]` is `[m]` composed with `[n]`. -/
-lemma mulBy_mul (A : AbelianVariety K) (m n : ℤ) :
+@[simp] lemma mulBy_mul (A : AbelianVariety K) (m n : ℤ) :
     mulBy A (m * n) = mulBy A n ≫ mulBy A m := by
   simp [mulBy]
 
 /-- Every homomorphism of abelian varieties commutes with multiplication by `n`. -/
 lemma mulBy_comp (n : ℤ) (f : A ⟶ B) : mulBy A n ≫ f = f ≫ mulBy B n := by
-  rw [mulBy_eq_zpow, mulBy_eq_zpow, Hom.zpow_comp, Hom.comp_zpow, Category.id_comp,
-    Category.comp_id]
+  simp [mulBy_eq_zpow]
 
 /-- Conjugating `[n]` by an isomorphism of abelian varieties gives `[n]`. -/
 @[simp] lemma congr_ofHom_mulBy (e : A ≅ B) (n : ℤ) :
     End.congr e (End.ofHom (mulBy A n)) = End.ofHom (mulBy B n) := by
   ext
-  rw [End.toHom_congr, End.toHom_ofHom, End.toHom_ofHom, mulBy_comp, Iso.inv_hom_id_assoc]
-
-/-- Every endomorphism of the trivial abelian variety, in particular every `[n]`, is the
-identity. -/
-@[simp] lemma mulBy_trivial (n : ℤ) :
-    mulBy (trivial K) n = 𝟙 (trivial K) := by
-  rw [← mulBy_one (trivial K)]
-  exact congrArg End.toHom (Subsingleton.elim _ _)
+  simp [mulBy_comp]
 
 end
 
