@@ -119,13 +119,6 @@ theorem condExpL2_invariants_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving
 
 /-! ## The mean ergodic theorem for conditional expectations -/
 
-private theorem coe_compMeasurePreservingₗᵢ_toContinuousLinearMap (T : Ω → Ω)
-    (hT : MeasurePreserving T μ μ) :
-    ⇑(Lp.compMeasurePreservingₗᵢ ℝ (E := ℝ) (p := 2) T hT).toContinuousLinearMap =
-      ⇑(Lp.compMeasurePreserving (E := ℝ) (p := 2) T hT) := by
-  funext g
-  rfl
-
 /-- The Birkhoff averages of the `L²` composition operator converge to the `L²` conditional
 expectation for the invariant σ-algebra. -/
 theorem birkhoffAverage_tendsto_condExpL2 (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
@@ -150,9 +143,9 @@ theorem tendsto_eLpNorm_birkhoffAverage_sub_condExp (T : Ω → Ω) (hT : Measur
   refine Filter.Tendsto.congr (fun n => eLpNorm_congr_ae ?_) hBA
   have haverage : ⇑(birkhoffAverage ℝ
       (Lp.compMeasurePreservingₗᵢ ℝ T hT).toContinuousLinearMap id n (hf.toLp f)) =ᵐ[μ]
-      birkhoffAverage ℝ T f n := by
-    rw [coe_compMeasurePreservingₗᵢ_toContinuousLinearMap T hT]
-    exact (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
+      birkhoffAverage ℝ T f n :=
+    -- the isometry's underlying map is `Lp.compMeasurePreserving T hT` by definition
+    (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
       (hT.quasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq ℝ hf.coeFn_toLp n)
   have hprojection : ⇑(metProjection (𝕜 := ℝ) T hT (hf.toLp f)) =ᵐ[μ]
       μ[f | MeasurableSpace.invariants T] :=
