@@ -84,8 +84,10 @@ open Matrix
 
 namespace Matrix
 
-/-- Transporting simple-lacedness of a square matrix along a relabelling of its index type. -/
-lemma isSimplyLaced_congr {α β : Type*} {A : Matrix α α ℤ} {B : Matrix β β ℤ} (e : α ≃ β)
+/-- Transporting simple-lacedness of a square matrix along a relabelling of its index type. This is
+a proof helper for `TauCeti.HasCartanType.isSimplyLaced_iff`, so it stays private rather than adding
+generic matrix API to this Dynkin-specific file. -/
+private lemma isSimplyLaced_congr {α β : Type*} {A : Matrix α α ℤ} {B : Matrix β β ℤ} (e : α ≃ β)
     (he : ∀ i j, A i j = B (e i) (e j)) : A.IsSimplyLaced ↔ B.IsSimplyLaced := by
   unfold _root_.Matrix.IsSimplyLaced
   simp only [he]
