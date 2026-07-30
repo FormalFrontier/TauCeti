@@ -24,8 +24,8 @@ under restriction and under nonnegative scalar multiples. Adding the range condi
 `lambda • I - A` onto `X` for *some* `lambda > 0` — gives **m-dissipativity**
 (`IsMDissipative`). On a Banach space that single point is enough: inverting `lambda • I - A`
 and expanding a Neumann series propagates the range condition from `lambda` to every
-`mu ∈ (0, 2 lambda)`, and doubling from there covers all of `(0, ∞)`, so `mu • I - A : D(A) → X`
-is bijective for every `mu > 0`.
+`mu ∈ (0, 2 lambda)`, and iterating that step along the geometric sequence `(3/2)^n lambda`
+covers all of `(0, ∞)`, so `mu • I - A : D(A) → X` is bijective for every `mu > 0`.
 
 The file then connects dissipativity to C₀-semigroups. For a semigroup with growth bound
 `(ω, M)` and `lambda > ω`, the Laplace-transform resolvent turns the bound `‖R(lambda)‖ ≤
@@ -250,11 +250,14 @@ theorem IsDissipative.smul_sub_surjective_of_lt_two_mul {A : X →ₗ.[ℝ] X} (
     rw [hu] at h1
     simpa using h1
   refine ⟨e.symm y, ?_⟩
+  -- the surjectivity goal is the beta-redex `(fun x => mu • ↑x - A x) (e.symm y) = z`, which
+  -- `rw` cannot see through; `change` beta-reduces it (the style linter reserves `show` for
+  -- goals that are already displayed in this form)
   change mu • ((e.symm y : A.domain) : X) - A (e.symm y) = z
-  rw [show mu • ((e.symm y : A.domain) : X) - A (e.symm y)
-        = (lambda • ((e.symm y : A.domain) : X) - A (e.symm y))
-          - (lambda - mu) • ((e.symm y : A.domain) : X) from by module,
-    he y, ← hTapp y, hyz]
+  have hsplit : mu • ((e.symm y : A.domain) : X) - A (e.symm y)
+      = (lambda • ((e.symm y : A.domain) : X) - A (e.symm y))
+        - (lambda - mu) • ((e.symm y : A.domain) : X) := by module
+  rw [hsplit, he y, ← hTapp y, hyz]
 
 /-- The range condition of an m-dissipative operator holds at *every* positive `lambda`, not
 just at the one its definition provides: propagate the given `lambda₀` through
