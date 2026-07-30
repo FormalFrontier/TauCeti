@@ -45,6 +45,13 @@ local-endomorphism-ring theorem. Both are supplied here.
 
 ## Implementation notes
 
+`IsIndecomposableModule`, its two projections, and its transport along a linear equivalence are
+stated for a semimodule over a semiring, since the submodule lattice and the order isomorphism it
+inherits from a linear equivalence need no subtraction. Everything from the idempotent
+reformulation onwards is stated over a ring, which is where Mathlib puts the tools it uses:
+`LinearMap.IsIdempotentElem.isCompl` and `Submodule.projection` build a projection by subtracting,
+and `IsSimpleModule` is itself only defined for modules over a ring.
+
 The finiteness hypothesis is carried as the pair of instances `[IsNoetherian A M] [IsArtinian A M]`
 on the lemmas that consume it, which is what Mathlib's Fitting decomposition asks for. The
 `IsFiniteLength A M` spelling appears on the headline statements
@@ -68,7 +75,9 @@ namespace TauCeti
 
 universe u v w
 
-variable (A : Type u) (M : Type v) [Ring A] [AddCommGroup M] [Module A M]
+section Semiring
+
+variable (A : Type u) (M : Type v) [Semiring A] [AddCommMonoid M] [Module A M]
 
 /-- A module is **indecomposable** when it is nonzero and is not the internal direct sum of two
 nonzero submodules. -/
@@ -82,6 +91,20 @@ theorem IsIndecomposableModule.nontrivial (h : IsIndecomposableModule A M) : Non
 theorem IsIndecomposableModule.eq_bot_or_eq_bot (h : IsIndecomposableModule A M)
     {N P : Submodule A M} (hNP : IsCompl N P) : N = ⊥ ∨ P = ⊥ :=
   h.2 N P hNP
+
+/-- Indecomposability transfers along a linear equivalence: the induced order isomorphism of
+submodules carries a decomposition of the target back to one of the source. -/
+theorem IsIndecomposableModule.of_linearEquiv {N : Type w} [AddCommMonoid N] [Module A N]
+    (h : IsIndecomposableModule A M) (e : M ≃ₗ[A] N) : IsIndecomposableModule A N := by
+  have := h.nontrivial
+  refine ⟨e.symm.toEquiv.nontrivial, fun P Q hPQ ↦ ?_⟩
+  simpa using h.eq_bot_or_eq_bot ((Submodule.orderIsoMapComap e.symm).isCompl hPQ)
+
+end Semiring
+
+section Ring
+
+variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 
 /-! ### Indecomposability through idempotent endomorphisms -/
 
@@ -114,19 +137,6 @@ theorem isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem :
       Nontrivial M ∧ ∀ f : Module.End A M, IsIdempotentElem f → f = 0 ∨ f = 1 :=
   ⟨fun h ↦ ⟨h.nontrivial, fun _ hf ↦ h.eq_zero_or_eq_one_of_isIdempotentElem hf⟩,
     fun ⟨_, h⟩ ↦ isIndecomposableModule_of_forall_isIdempotentElem h⟩
-
-/-- Indecomposability transfers along a linear equivalence. -/
-theorem IsIndecomposableModule.of_linearEquiv {N : Type w} [AddCommGroup N] [Module A N]
-    (h : IsIndecomposableModule A M) (e : M ≃ₗ[A] N) : IsIndecomposableModule A N := by
-  have := h.nontrivial
-  have : Nontrivial N := e.symm.toEquiv.nontrivial
-  refine isIndecomposableModule_of_forall_isIdempotentElem fun f hf ↦ ?_
-  have hf' : IsIdempotentElem (e.conjRingEquiv.symm f) := by
-    have hmul : e.conjRingEquiv.symm (f * f) = e.conjRingEquiv.symm f := congrArg _ hf
-    rwa [map_mul] at hmul
-  rcases h.eq_zero_or_eq_one_of_isIdempotentElem hf' with h₀ | h₁
-  · exact Or.inl (e.conjRingEquiv.symm.injective (by simpa using h₀))
-  · exact Or.inr (e.conjRingEquiv.symm.injective (by simpa using h₁))
 
 /-- A simple module is indecomposable: it has no proper nonzero submodule to decompose along. -/
 theorem IsSimpleModule.isIndecomposableModule [IsSimpleModule A M] :
@@ -231,5 +241,7 @@ theorem isIndecomposableModule_iff_nontrivial_and_isLocalRing_end (hM : IsFinite
   refine ⟨fun h ↦ ⟨h.nontrivial, isLocalRing_end_of_isIndecomposable hM h⟩, fun ⟨_, h⟩ ↦ ?_⟩
   have := h
   exact isIndecomposableModule_of_isLocalRing_end
+
+end Ring
 
 end TauCeti
