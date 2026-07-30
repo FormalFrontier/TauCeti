@@ -26,12 +26,12 @@ module-internal form -- no ambient base field is involved, only finiteness over 
 ## Main results
 
 * `TauCeti.faithfulSMul_of_isSimpleRing`: a nontrivial module over a simple ring is faithful.
-* `TauCeti.toModuleEnd_bijective`: **the double centralizer theorem**. For a faithful semisimple
-  module `M` finite over `D = Module.End R M`, the map `R → Module.End D M` is bijective;
+* `TauCeti.toModuleEnd_moduleEnd_bijective`: **the double centralizer theorem**. For a faithful
+  semisimple module `M` finite over `D = Module.End R M`, the map `R → Module.End D M` is bijective;
   `TauCeti.ringEquivEndEnd` packages it as a ring isomorphism, and
   `TauCeti.algEquivEndEnd` as an algebra isomorphism over a compatible base ring.
-* `TauCeti.toModuleEnd_bijective_of_isSimpleRing`: the specialization to a simple module over a
-  simple ring, where faithfulness is automatic.
+* `TauCeti.toModuleEnd_moduleEnd_bijective_of_isSimpleRing`: the specialization to a simple module
+  over a simple ring, where faithfulness is automatic.
 * `TauCeti.exists_smul_eq_of_linearIndependent`: the Jacobson-Chevalley form of density. Over a
   simple module, a single element of `R` carries any `D`-linearly independent family to an
   arbitrary family of targets.
@@ -47,8 +47,12 @@ density actually needs, and `TauCeti.finite_end_of_smulCommClass` derives it fro
 hypothesis when one is available.
 
 A faithful simple module makes `R` a *primitive* ring, not necessarily a simple one, so
-`TauCeti.toModuleEnd_bijective` is genuinely more general than its simple-ring corollary. It is
-also stated for a merely semisimple `M`, which is all that Mathlib's surjectivity needs.
+`TauCeti.toModuleEnd_moduleEnd_bijective` is genuinely more general than its simple-ring corollary.
+It is also stated for a merely semisimple `M`, which is all that Mathlib's surjectivity needs.
+
+The main theorem is named after the Mathlib lemma it sharpens,
+`Module.Finite.toModuleEnd_moduleEnd_surjective`, keeping the surjective/bijective pair in step; the
+roadmap calls the same statement `toModuleEnd_bijective`.
 
 ## References
 
@@ -91,7 +95,7 @@ bijective: `R` is exactly the ring of `D`-linear endomorphisms of `M`.
 
 This sharpens Mathlib's `Module.Finite.toModuleEnd_moduleEnd_surjective` from surjectivity to
 bijectivity; the extra input is faithfulness, which is what makes the map injective. -/
-theorem toModuleEnd_bijective [IsSemisimpleModule R M] [FaithfulSMul R M]
+theorem toModuleEnd_moduleEnd_bijective [IsSemisimpleModule R M] [FaithfulSMul R M]
     [Module.Finite (Module.End R M) M] :
     Function.Bijective (Module.toModuleEnd (Module.End R M) M (S := R)) :=
   ⟨fun _ _ h ↦ eq_of_smul_eq_smul (α := M) fun m ↦ LinearMap.congr_fun h m,
@@ -102,7 +106,7 @@ its endomorphism ring `D` identifies `R` with `Module.End D M`. -/
 noncomputable def ringEquivEndEnd [IsSemisimpleModule R M] [FaithfulSMul R M]
     [Module.Finite (Module.End R M) M] :
     R ≃+* Module.End (Module.End R M) M :=
-  RingEquiv.ofBijective _ (toModuleEnd_bijective R M)
+  RingEquiv.ofBijective _ (toModuleEnd_moduleEnd_bijective R M)
 
 variable {R M}
 
@@ -122,7 +126,7 @@ variable (R M)
 
 /-- The double centralizer isomorphism as an isomorphism of `K`-algebras, for a commutative base
 ring `K` acting on `M` compatibly with `R`. -/
-noncomputable def algEquivEndEnd (K : Type*) [CommRing K] [Algebra K R] [Module K M]
+noncomputable def algEquivEndEnd (K : Type*) [CommSemiring K] [Algebra K R] [Module K M]
     [IsScalarTower K R M] [IsSemisimpleModule R M] [FaithfulSMul R M]
     [Module.Finite (Module.End R M) M] :
     R ≃ₐ[K] Module.End (Module.End R M) M :=
@@ -133,7 +137,7 @@ noncomputable def algEquivEndEnd (K : Type*) [CommRing K] [Algebra K R] [Module 
 variable {R M}
 
 @[simp]
-theorem algEquivEndEnd_apply (K : Type*) [CommRing K] [Algebra K R] [Module K M]
+theorem algEquivEndEnd_apply (K : Type*) [CommSemiring K] [Algebra K R] [Module K M]
     [IsScalarTower K R M] [IsSemisimpleModule R M] [FaithfulSMul R M]
     [Module.Finite (Module.End R M) M] (r : R) (m : M) :
     algEquivEndEnd R M K r m = r • m :=
@@ -145,12 +149,12 @@ variable (R M)
 automatically faithful, so a simple module finite over its endomorphism ring `D` presents `R` as
 `Module.End D M`. This is Wedderburn's theorem for a simple ring, stated without reference to any
 base ring. -/
-theorem toModuleEnd_bijective_of_isSimpleRing [IsSimpleRing R] [IsSimpleModule R M]
+theorem toModuleEnd_moduleEnd_bijective_of_isSimpleRing [IsSimpleRing R] [IsSimpleModule R M]
     [Module.Finite (Module.End R M) M] :
     Function.Bijective (Module.toModuleEnd (Module.End R M) M (S := R)) :=
   have := IsSimpleModule.nontrivial R M
   have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
-  toModuleEnd_bijective R M
+  toModuleEnd_moduleEnd_bijective R M
 
 end Density
 
@@ -183,8 +187,7 @@ theorem exists_smul_eq_of_linearIndependent [IsSimpleModule R M]
       show (⟨v i, hmem⟩ : Submodule.span (Module.End R M) (Set.range v)) = (Basis.span hv) i from
         Subtype.ext (Basis.coe_span_apply hv i).symm,
       Basis.constr_basis]
-  rw [← hvi, ← hr]
-  rfl
+  rw [← hvi, ← hr, Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply]
 
 /-! ### Supplying the finiteness hypothesis -/
 
@@ -206,12 +209,21 @@ variable (R M)
 simple `K`-algebra and `M` a simple `R`-module which is finite as a `K`-module, then `M` presents
 `R` as the algebra of `D`-linear endomorphisms of `M`, where `D = Module.End R M`. This is the form
 in which Layer 3 of the roadmap is consumed by the central-simple theory. -/
-noncomputable def algEquivEndEndOfIsSimpleRing (K : Type*) [CommRing K] [Algebra K R] [Module K M]
-    [IsScalarTower K R M] [Module.Finite K M] [IsSimpleRing R] [IsSimpleModule R M] :
+noncomputable def algEquivEndEndOfIsSimpleRing (K : Type*) [CommSemiring K] [Algebra K R]
+    [Module K M] [IsScalarTower K R M] [Module.Finite K M] [IsSimpleRing R] [IsSimpleModule R M] :
     R ≃ₐ[K] Module.End (Module.End R M) M :=
   have := IsSimpleModule.nontrivial R M
   have := faithfulSMul_of_isSimpleRing (R := R) (M := M)
   have := finite_end_of_smulCommClass (R := R) (M := M) K
   algEquivEndEnd R M K
+
+variable {R M}
+
+@[simp]
+theorem algEquivEndEndOfIsSimpleRing_apply (K : Type*) [CommSemiring K] [Algebra K R] [Module K M]
+    [IsScalarTower K R M] [Module.Finite K M] [IsSimpleRing R] [IsSimpleModule R M] (r : R)
+    (m : M) :
+    algEquivEndEndOfIsSimpleRing R M K r m = r • m :=
+  (rfl)
 
 end TauCeti
