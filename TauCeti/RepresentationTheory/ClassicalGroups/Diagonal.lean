@@ -54,24 +54,6 @@ theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
   rw [diagGL_coe]
   exact Matrix.diagonal_apply ..
 
-/-- The diagonal construction preserves the identity. -/
-@[simp]
-theorem diagGL_one :
-    diagGL (1 : Fin n → kˣ) = 1 := by
-  exact map_one diagGL
-
-/-- The diagonal construction preserves multiplication. -/
-@[simp]
-theorem diagGL_mul (t s : Fin n → kˣ) :
-    diagGL (t * s) = diagGL t * diagGL s := by
-  exact map_mul diagGL t s
-
-/-- The diagonal construction preserves inversion. -/
-@[simp]
-theorem diagGL_inv (t : Fin n → kˣ) :
-    diagGL t⁻¹ = (diagGL t)⁻¹ := by
-  exact map_inv diagGL t
-
 /-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
 @[simp]
 theorem det_diagGL (t : Fin n → kˣ) :
