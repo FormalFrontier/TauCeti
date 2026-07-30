@@ -54,6 +54,14 @@ Step 1 uses `finite_measure_cluster_limit` rather than its subsequence form
 Mathlib's metrizability instances for spaces of measures are stated for `ProbabilityMeasure`, not
 `FiniteMeasure`. No subsequence is actually required — every ingredient is a filter limit, so an
 ultrafilter below `atTop` suffices, and being `NeBot` it still gives uniqueness of limits.
+
+## References
+
+* Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Bernstein theorem milestone).
+
+* D. Chafaï, *Aspects of the Bernstein theorem* (2013) — the approximating measures this proof
+  passes to the limit.
+* R. Schilling, R. Song, Z. Vondraček, *Bernstein Functions* (de Gruyter, 2nd ed. 2012), Ch. 1.
 -/
 
 public section
