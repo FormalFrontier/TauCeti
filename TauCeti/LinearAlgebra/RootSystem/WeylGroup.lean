@@ -144,6 +144,7 @@ lemma coe_ofIdx (i : ι) :
   rfl
 
 /-- A simple reflection of the Weyl group is its own inverse. -/
+@[simp]
 lemma ofIdx_inv_eq (i : ι) :
     (_root_.RootPairing.weylGroup.ofIdx P i)⁻¹ = _root_.RootPairing.weylGroup.ofIdx P i :=
   Subtype.ext (_root_.RootPairing.Equiv.reflection_inv P i)
