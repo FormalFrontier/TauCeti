@@ -59,14 +59,20 @@ comes up `true` with probability `p`.
 Phrasing the example through this kernel — rather than through a `Bernoulli` random variable —
 keeps it independent of any particular parametrized-distribution API: all it needs is that the
 family is measurable in the bias. -/
+-- `@[expose]` is forced by the exported `rfl`-unfold `coinKernel_toMeasure` below: a public theorem
+-- proved by unfolding the body requires the body to be exposed.
 @[expose]
 def coinKernel (p : I) : ProbabilityMeasure Bool :=
   ⟨bernoulliMeasure true false p, inferInstance⟩
 
+/-- The measure underlying `coinKernel p` is Mathlib's Bernoulli measure on `Bool`. -/
+@[simp]
 theorem coinKernel_toMeasure (p : I) :
     (coinKernel p : Measure Bool) = bernoulliMeasure true false p :=
   rfl
 
+-- Not `@[simp]`: with `coinKernel_toMeasure` in the simp set this left-hand side is not
+-- simp-normal, and `simp` closes the statement outright — the `simpNF` linter rejects the tag.
 /-- The bias is read back off the coin: `coinKernel p` gives mass `p` to `{true}`. -/
 theorem coinKernel_apply_true (p : I) :
     (coinKernel p : Measure Bool) {true} = (toNNReal p : ℝ≥0∞) := by
@@ -84,7 +90,7 @@ theorem measurable_coinKernel : Measurable coinKernel := by
     Pi.smul_apply]
   exact (hp.mul_const _).add (hσ.mul_const _)
 
-variable (π : Measure I) [IsProbabilityMeasure π]
+variable (π : Measure I)
 
 /-- **The worked example.** Draw a bias from `π`, then flip i.i.d. coins with that bias: the
 resulting `Bool`-valued sequence is conditionally i.i.d. with directing measure
@@ -112,14 +118,15 @@ theorem contractable_coinFlips :
     Contractable (iidMixtureLaw π coinKernel) fun n ω => ω.2 n :=
   contractable_iidMixtureLaw measurable_coinKernel
 
-/-- Independent flips force a deterministic bias: reading the bias back off the directing measure
-turns the degeneracy of the mixing law (`exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw`) into
-degeneracy of the bias law itself. -/
-theorem exists_map_toNNReal_eq_dirac_of_iIndepFun_coinFlips
+/-- **Independent flips force a deterministic bias.** If the coordinates of the coin-flip sequence
+are independent, then the law of the bias — pushed forward along `toNNReal` — is a Dirac
+measure. -/
+theorem exists_map_toNNReal_eq_dirac_of_iIndepFun_coinFlips [IsProbabilityMeasure π]
     (h : iIndepFun (fun n (ω : I × (ℕ → Bool)) => ω.2 n) (iidMixtureLaw π coinKernel)) :
     ∃ c : ℝ≥0∞, π.map (fun p : I => (toNNReal p : ℝ≥0∞)) = Measure.dirac c := by
   have hev : Measurable fun Q : ProbabilityMeasure Bool => (Q : Measure Bool) {true} :=
     (Measure.measurable_coe (measurableSet_singleton true)).comp measurable_subtype_coe
+  -- degeneracy of the mixing law, transported along the bias readout `Q ↦ Q {true}`
   obtain ⟨Q, hQ⟩ := exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw measurable_coinKernel h
   refine ⟨(Q : Measure Bool) {true}, ?_⟩
   have hcomp : (fun p : I => (toNNReal p : ℝ≥0∞))

@@ -83,10 +83,14 @@ coordinates i.i.d. from `P t`, keeping `t` as the first coordinate of the sample
 Retaining the parameter is what makes this a *conditional* construction rather than only a mixture
 of i.i.d. laws: the sequence and its directing measure live on the same space, so the joint law of
 the two can be compared with the disintegration `ConditionallyIIDWith` demands. -/
+-- `@[expose]` is forced by the exported `rfl`-unfold `iidMixtureLaw_def` below: a public theorem
+-- proved by unfolding the body requires the body to be exposed.
 @[expose]
 def iidMixtureLaw (π : Measure T) (P : T → ProbabilityMeasure α) : Measure (T × (ℕ → α)) :=
   π.bind fun t => (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α))
 
+/-- The canonical law unfolded as the `π`-mixture of the parameter-tagged countable powers. -/
+@[simp]
 theorem iidMixtureLaw_def (π : Measure T) (P : T → ProbabilityMeasure α) :
     iidMixtureLaw π P =
       π.bind fun t => (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α)) :=
@@ -103,7 +107,7 @@ theorem isProbabilityMeasure_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measu
     (.of_forall fun _ => inferInstance)
 
 /-- The parameter coordinate of the canonical law is distributed as `π`. -/
-theorem iidMixtureLaw_map_fst [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem iidMixtureLaw_map_fst (hP : Measurable P) :
     (iidMixtureLaw π P).map Prod.fst = π := by
   have hfst : ∀ t : T,
       ((Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α))).map Prod.fst
@@ -115,23 +119,24 @@ theorem iidMixtureLaw_map_fst [IsProbabilityMeasure π] (hP : Measurable P) :
   exact Measure.bind_dirac
 
 /-- The directing measure of the canonical law has the prescribed mixing law `π.map P`. -/
-theorem iidMixtureLaw_map_directing [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem iidMixtureLaw_map_directing (hP : Measurable P) :
     (iidMixtureLaw π P).map (fun ω => P ω.1) = π.map P := by
   have hcomp : (fun ω : T × (ℕ → α) => P ω.1) = P ∘ Prod.fst := rfl
   rw [hcomp, ← Measure.map_map hP measurable_fst, iidMixtureLaw_map_fst hP]
 
-/-- **The canonical process is conditionally i.i.d.** with the prescribed directing measure.
+/-- **The canonical process is conditionally i.i.d.** For a measurable family `P`, the coordinate
+process of `iidMixtureLaw π P` is conditionally i.i.d. with directing measure `ω ↦ P ω.1`: along
+every finite selection of distinct coordinates, the joint law of the directing measure and the
+selected block is the disintegration `∫ δ_{P ω.1} ⊗ (P ω.1)^{⊗ Fin m}`.
 
-Both sides of the joint-law disintegration collapse to the same `π`-mixture of
-`δ_{P t} ⊗ (P t)^{⊗ Fin m}`. On the left, naturality of `bind` pushes the selection
-`ω ↦ (P ω.1, (ω.2 ∘ k))` inside the mixture, where `Measure.dirac_prod` turns each fibre into a
-pushforward of `(P t)^{⊗ℕ}` and `Measure.map_infinitePi_infinitePi_of_inj` — this is where
-injectivity of `k` enters — reads off the block as `(P t)^{⊗ Fin m}`. On the right, the mixing
-kernel factors through the parameter, so `bind_map` reindexes the mixture over `π`. -/
-theorem conditionallyIIDWith_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
+This is the sharp conditional conclusion — the directing measure is pinned to the process, not
+merely to the block laws — which is what makes `iidMixtureLaw` a realization of `P` as a directing
+measure rather than only as a mixing representative. -/
+theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
     ConditionallyIIDWith (iidMixtureLaw π P) (fun n ω => ω.2 n) (fun ω => P ω.1) := by
-  haveI := isProbabilityMeasure_iidMixtureLaw (π := π) hP
-  have hker := TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const P hP
+  -- Both sides of the disintegration collapse to the same `π`-mixture of
+  -- `δ_{P t} ⊗ (P t)^{⊗ Fin m}`.
+  have hker := TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ) P hP
   refine ConditionallyIIDWith.intro (hP.comp measurable_fst) fun m k hk => ?_
   -- the joint kernel `Q ↦ δ_Q ⊗ Q^{⊗ Fin m}`, through which both sides factor
   set g : ProbabilityMeasure α → Measure (ProbabilityMeasure α × (Fin m → α)) := fun Q =>
@@ -142,7 +147,10 @@ theorem conditionallyIIDWith_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measu
   have hsel : Measurable fun ω : T × (ℕ → α) => (P ω.1, fun i : Fin m => ω.2 (k i)) :=
     (hP.comp measurable_fst).prodMk
       (measurable_pi_lambda _ fun i => (measurable_pi_apply (k i)).comp measurable_snd)
-  -- each fibre of the mixture selects its block out of a countable power
+  -- Each fibre of the mixture selects its block out of a countable power: `Measure.dirac_prod`
+  -- turns the fibre into a pushforward of `(P t)^{⊗ℕ}`, and
+  -- `Measure.map_infinitePi_infinitePi_of_inj` — this is where injectivity of `k` enters — reads
+  -- the block off as `(P t)^{⊗ Fin m}`.
   have hblk : Measurable fun x : ℕ → α => fun i : Fin m => x (k i) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
   have hfib : ∀ t : T,
@@ -167,12 +175,14 @@ theorem conditionallyIIDWith_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measu
       _ = g (P t) := by
           simp only [hg]
           rw [ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
-  -- the left-hand side: push the selection through the mixture, fibre by fibre
+  -- the left-hand side: naturality of `bind` pushes the selection through the mixture, fibre by
+  -- fibre
   have hleft : (iidMixtureLaw π P).map (fun ω => (P ω.1, fun i : Fin m => ω.2 (k i)))
       = π.bind fun t => g (P t) := by
     rw [iidMixtureLaw_def, TauCeti.MeasureTheory.map_bind hker.aemeasurable hsel]
     simp_rw [hfib]
-  -- the right-hand side: the mixing kernel factors through the parameter
+  -- the right-hand side: the mixing kernel factors through the parameter, so `bind_map` reindexes
+  -- the mixture over `π`
   have hright : ((iidMixtureLaw π P).bind fun ω =>
       (Measure.dirac (P ω.1)).prod (ProbabilityMeasure.pi fun _ : Fin m => P ω.1).toMeasure)
       = π.bind fun t => g (P t) :=
@@ -186,22 +196,22 @@ theorem conditionallyIIDWith_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measu
   rw [hleft, hright]
 
 /-- The canonical process is conditionally i.i.d. (existential form). -/
-theorem conditionallyIID_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem conditionallyIID_iidMixtureLaw (hP : Measurable P) :
     ConditionallyIID (iidMixtureLaw π P) fun n ω => ω.2 n :=
   .of_directing (conditionallyIIDWith_iidMixtureLaw hP)
 
 /-- The prescribed family is in particular a mixing representative of the canonical process. -/
-theorem mixedIIDWith_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem mixedIIDWith_iidMixtureLaw (hP : Measurable P) :
     MixedIIDWith (iidMixtureLaw π P) (fun n ω => ω.2 n) fun ω => P ω.1 :=
   mixedIIDWith_of_conditionallyIIDWith (conditionallyIIDWith_iidMixtureLaw hP)
 
 /-- The canonical process is exchangeable. -/
-theorem exchangeable_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem exchangeable_iidMixtureLaw (hP : Measurable P) :
     Exchangeable (iidMixtureLaw π P) fun n ω => ω.2 n :=
   (mixedIIDWith_iidMixtureLaw hP).exchangeable
 
 /-- The canonical process is contractable. -/
-theorem contractable_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
+theorem contractable_iidMixtureLaw (hP : Measurable P) :
     Contractable (iidMixtureLaw π P) fun n ω => ω.2 n :=
   (mixedIIDWith_iidMixtureLaw hP).contractable
 
@@ -218,22 +228,22 @@ theorem pathLaw_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
 
 /-- **The construction is genuinely richer than i.i.d.** If the canonical process happens to have
 independent coordinates, then its mixing law `π.map P` is a point mass — so a nondegenerate `π.map
-P` produces an exchangeable sequence that is *not* independent.
-
-The coordinates are automatically identically distributed (the process is contractable), so
-independence would exhibit a constant mixing representative; uniqueness of the mixing law
-(`mixedIID_mixingLaw_unique`) then identifies `π.map P` with that constant's law. -/
+P` produces an exchangeable sequence that is *not* independent, and the directing measure the
+construction supplies is genuinely random rather than an a.e. constant. -/
 theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
     (hP : Measurable P) (h : iIndepFun (fun n (ω : T × (ℕ → α)) => ω.2 n) (iidMixtureLaw π P)) :
     ∃ Q : ProbabilityMeasure α, π.map P = Measure.dirac Q := by
   haveI := isProbabilityMeasure_iidMixtureLaw (π := π) hP
   have hX : ∀ n, AEMeasurable (fun ω : T × (ℕ → α) => ω.2 n) (iidMixtureLaw π P) :=
     fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable
+  -- the coordinates are automatically identically distributed, the process being contractable, so
+  -- independence exhibits a constant mixing representative
   have hident : ∀ i, IdentDistrib (fun ω : T × (ℕ → α) => ω.2 i)
       (fun ω : T × (ℕ → α) => ω.2 0) (iidMixtureLaw π P) (iidMixtureLaw π P) :=
     fun i => (contractable_iidMixtureLaw hP).identDistrib_coord (hX i) (hX 0)
   refine ⟨⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
     Measure.isProbabilityMeasure_map (hX 0)⟩, ?_⟩
+  -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,
     mixedIID_mixingLaw_unique hX (mixedIIDWith_iidMixtureLaw hP)
       (MixedIIDWith.of_iIndepFun_identDistrib h hident),

@@ -36,10 +36,10 @@ Measurability:
   `ω ↦ δ_{ν ω} ⊗ (ν ω)^{⊗ Fin m}`, pairing the block kernel with a Dirac mass at the mixing
   measure. This is the joint-space input a conditional (joint-law) reading of the mixture
   identity needs, as opposed to the block kernel alone.
-* `measurable_dirac_prod_infinitePi_const` — the parameter-tagged countable-product kernel
-  `t ↦ δ_t ⊗ (P t)^{⊗ℕ}`, for a measurable family `P` of probability measures. Here the Dirac
-  factor sits on the parameter rather than on the measure it selects, which is what a mixture
-  retaining its parameter as a coordinate needs.
+* `measurable_dirac_prod_infinitePi_const` — the parameter-tagged product kernel
+  `t ↦ δ_t ⊗ (P t)^{⊗ι}` over an **arbitrary** index type, for a measurable family `P` of
+  probability measures. Here the Dirac factor sits on the parameter rather than on the measure it
+  selects, which is what a mixture retaining its parameter as a coordinate needs.
 * `measurable_infinitePi` — the product `p ↦ ⊗ᵢ p i` over an **arbitrary** index type, of a
   dependent family of probability measures, is measurable in the measure argument;
   `measurable_infinitePi_const` is the `ℕ`-constant-power specialization `p ↦ p^{⊗ℕ}`. Mathlib
@@ -203,25 +203,25 @@ theorem measurable_infinitePi_const {α : Type*} [MeasurableSpace α] :
       Measure.infinitePi (fun _ : ℕ => (p : Measure α)) :=
   measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => measurable_id)
 
-/-- **Parameter-tagged countable-product kernel.** For a measurable family of probability measures
-`P : T → ProbabilityMeasure α`, the random measure `t ↦ δ_t ⊗ (P t)^{⊗ℕ}` on `T × (ℕ → α)` is
-measurable.
+/-- **Parameter-tagged product kernel.** For a measurable family of probability measures
+`P : T → ProbabilityMeasure α`, the random measure `t ↦ δ_t ⊗ (P t)^{⊗ι}` on `T × (ι → α)` is
+measurable, over an arbitrary index type `ι`.
 
-This is the countable-power companion of
+This is the arbitrary-power companion of
 `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`, with the Dirac factor sitting on the
 *parameter* rather than on the measure it selects. It is what a mixture that retains its parameter
 as a coordinate needs for `Measure.bind_apply`. -/
 @[fun_prop]
-theorem measurable_dirac_prod_infinitePi_const {T α : Type*} [MeasurableSpace T]
+theorem measurable_dirac_prod_infinitePi_const {T α ι' : Type*} [MeasurableSpace T]
     [MeasurableSpace α] (P : T → ProbabilityMeasure α) (hP : Measurable P) :
     Measurable fun t =>
-      (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α)) := by
+      (Measure.dirac t).prod (Measure.infinitePi fun _ : ι' => (P t : Measure α)) := by
   have hdirac : Measurable fun t => (⟨Measure.dirac t, inferInstance⟩ : ProbabilityMeasure T) :=
     Measure.measurable_dirac.subtype_mk
   have hpow : Measurable fun t =>
-      (⟨Measure.infinitePi fun _ : ℕ => (P t : Measure α), inferInstance⟩ :
-        ProbabilityMeasure (ℕ → α)) :=
-    (measurable_infinitePi_const.comp hP).subtype_mk
+      (⟨Measure.infinitePi fun _ : ι' => (P t : Measure α), inferInstance⟩ :
+        ProbabilityMeasure (ι' → α)) :=
+    (measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => hP)).subtype_mk
   exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpow)
 
 /-- **Finite-prefix marginal of a countable product.** Restricting `⊗ⱼ p j` to its first `n`
