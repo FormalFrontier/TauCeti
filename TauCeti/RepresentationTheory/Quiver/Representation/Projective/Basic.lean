@@ -49,12 +49,12 @@ proved is projectivity, and the universal property that makes `Pᵢ` the represe
 
 `Pᵢ` is built by `CategoryTheory.Paths.lift`: a representation of `Q` is a functor out of the free
 category on `Q`, so a module at each vertex and a map along each arrow suffice, and Mathlib
-supplies functoriality along path concatenation. Only `indecProjRep` itself is `@[expose]`d: the
-vector space `(Pᵢ)_j` is a space of finitely supported functions only after unfolding, so the
-statement of every lemma naming an element of it — that is, of every lemma about the action of a
-path — needs that body. The definitions derived from it keep their bodies hidden, and are used
-through the lemmas below; the abstract handle on `(Pᵢ)_j` is the basis `indecProjRepBasis`, indexed
-by the paths `i → j`.
+supplies functoriality along path concatenation. No definition here exposes its body. Downstream
+names an element of `(Pᵢ)_j` through the basis `indecProjRepBasis`, indexed by the paths `i → j`,
+and every public lemma — on the action of a path, on the morphism attached to an element of the
+target, on the universal property — is stated on those basis vectors; anyone who wants the
+underlying free module has the explicit transport `(indecProjRepBasis k i j).repr`. The lemmas that
+name finitely supported functions directly are private to this file.
 
 A vertex `i : Q` is used below as an object of the free category `CategoryTheory.Paths Q`, which is
 `Q` itself only by unfolding a semireducible definition. Goals about the action of a path are
@@ -88,7 +88,6 @@ variable (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q]
 /-- **The projective representation at a vertex** `Pᵢ`: the free `k`-module on the paths `i → j`
 at the vertex `j`, an arrow acting by appending itself to a path. Under the identification of
 representations with left modules over the path algebra this is the left ideal `kQ · eᵢ`. -/
-@[expose]
 noncomputable def indecProjRep (i : Q) : QuiverRep k Q :=
   Paths.lift
     { obj := fun j ↦ ModuleCat.of k (Quiver.Path i j →₀ k)
@@ -97,25 +96,17 @@ noncomputable def indecProjRep (i : Q) : QuiverRep k Q :=
 
 variable {k Q}
 
--- Not `@[simp]`: this rewrites the *type* of the vector space at a vertex, which would take the
--- left-hand side of every lemma below out of simp normal form.
-/-- At the vertex `j`, the representation `Pᵢ` is the free `k`-module on the paths `i → j`. -/
-theorem indecProjRep_obj (i j : Q) :
-    (indecProjRep k Q i).obj j = ModuleCat.of k (Quiver.Path i j →₀ k) :=
-  rfl
-
-/-- An arrow acts on `Pᵢ` by appending it to a path. -/
-@[simp]
-theorem indecProjRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
+/-- An arrow acts on `Pᵢ` by appending it to a path. Private: its statement names the underlying
+finitely supported functions, which the public API hides behind `indecProjRepBasis`. -/
+private theorem indecProjRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
     (indecProjRep k Q i).map e.toPath
       = ModuleCat.ofHom (Finsupp.lmapDomain k k fun p : Quiver.Path i a ↦ p.cons e) :=
   Paths.lift_toPath _ e
 
 /-- A path carries the basis element of `q : Quiver.Path i a` in `(Pᵢ)_a` to the basis element of
-the concatenation `q.comp p`. -/
-@[simp]
-theorem indecProjRep_map_single (i : Q) {a b : Q} (p : Quiver.Path a b) (q : Quiver.Path i a)
-    (c : k) :
+the concatenation `q.comp p`. Private: `indecProjRep_map_basis` is its public form. -/
+private theorem indecProjRep_map_single (i : Q) {a b : Q} (p : Quiver.Path a b)
+    (q : Quiver.Path i a) (c : k) :
     (indecProjRep k Q i).map p (Finsupp.single q c) = Finsupp.single (q.comp p) c := by
   induction p with
   | nil =>
@@ -130,8 +121,9 @@ theorem indecProjRep_map_single (i : Q) {a b : Q} (p : Quiver.Path a b) (q : Qui
     rw [hcons, ModuleCat.comp_apply, ih, indecProjRep_map_toPath]
     exact Finsupp.mapDomain_single
 
-/-- A path acts on `Pᵢ` by concatenation on the right. -/
-theorem indecProjRep_map (i : Q) {a b : Q} (p : Quiver.Path a b) :
+/-- A path acts on `Pᵢ` by concatenation on the right. Private: it is the `Finsupp.lmapDomain`
+form of `indecProjRep_map_basis`, used below to get at `Finsupp.lmapDomain_linearCombination`. -/
+private theorem indecProjRep_map (i : Q) {a b : Q} (p : Quiver.Path a b) :
     (indecProjRep k Q i).map p
       = ModuleCat.ofHom (Finsupp.lmapDomain k k fun q : Quiver.Path i a ↦ q.comp p) := by
   refine ModuleCat.hom_ext (Finsupp.lhom_ext fun q c ↦ ?_)
@@ -144,16 +136,19 @@ theorem indecProjRep_map (i : Q) {a b : Q} (p : Quiver.Path a b) :
   rw [Finsupp.mapDomain_single, indecProjRep_map_single]
 
 variable (k) in
-/-- The paths `i → j` are a `k`-basis of the vector space that `Pᵢ` puts at `j`. -/
+/-- The paths `i → j` are a `k`-basis of the vector space that `Pᵢ` puts at `j`. This is the handle
+on `(Pᵢ)_j`: the construction of `Pᵢ` is opaque, and the lemmas below name the elements of `(Pᵢ)_j`
+through this basis. -/
 noncomputable def indecProjRepBasis (i j : Q) :
     Module.Basis (Quiver.Path i j) k ((indecProjRep k Q i).obj j) :=
   Finsupp.basisSingleOne
 
-/-- The basis of `(Pᵢ)_j` consists of the basis elements of the paths `i → j`. -/
+/-- **A path acts on `Pᵢ` by concatenation**: it carries the basis vector of a path `q : i → a` to
+the basis vector of the concatenation `q.comp p`. -/
 @[simp]
-theorem coe_indecProjRepBasis (i j : Q) :
-    ⇑(indecProjRepBasis k i j) = fun p : Quiver.Path i j ↦ Finsupp.single p (1 : k) :=
-  Finsupp.coe_basisSingleOne
+theorem indecProjRep_map_basis (i : Q) {a b : Q} (p : Quiver.Path a b) (q : Quiver.Path i a) :
+    (indecProjRep k Q i).map p (indecProjRepBasis k i a q) = indecProjRepBasis k i b (q.comp p) :=
+  indecProjRep_map_single i p q 1
 
 instance finiteDimensional_indecProjRep_obj (i j : Q) [Finite (Quiver.Path i j)] :
     FiniteDimensional k ((indecProjRep k Q i).obj j) :=
@@ -180,49 +175,54 @@ noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
       (v := fun q : Quiver.Path i a ↦ M.map q x) (v' := fun r : Quiver.Path i b ↦ M.map r x)
       (fun q : Quiver.Path i a ↦ q.comp p) (M.map p).hom hcomp)
 
-/-- The morphism attached to `x : Mᵢ` sends the basis element of a path `p` to the action of `p`
+/-- The morphism attached to `x : Mᵢ` sends the basis vector of a path `p` to the action of `p`
 on `x`. -/
 @[simp]
-theorem indecProjRepHom_app_single (i : Q) (M : QuiverRep k Q) (x : M.obj i) (j : Q)
-    (p : Quiver.Path i j) (c : k) :
-    (indecProjRepHom i M x).app j (Finsupp.single p c) = c • M.map p x :=
-  Finsupp.linearCombination_single k c p
+theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q) (x : M.obj i) (j : Q)
+    (p : Quiver.Path i j) :
+    (indecProjRepHom i M x).app j (indecProjRepBasis k i j p) = M.map p x := by
+  have h : (indecProjRepHom i M x).app j (indecProjRepBasis k i j p) = (1 : k) • M.map p x :=
+    Finsupp.linearCombination_single k 1 p
+  rwa [one_smul] at h
 
--- Not `@[simp]`: `indecProjRepHom_app_single` and `one_smul` already rewrite this left-hand side
--- to `M.map Quiver.Path.nil x`, so tagging it is a simp-normal-form violation (`simpNF`).
-/-- The morphism attached to `x : Mᵢ` sends the basis element of the trivial path back to `x`. -/
+-- Not `@[simp]`: `indecProjRepHom_app_basis` already rewrites this left-hand side to
+-- `M.map Quiver.Path.nil x`, so tagging it is a simp-normal-form violation (`simpNF`).
+/-- The morphism attached to `x : Mᵢ` sends the basis vector of the trivial path back to `x`. -/
 theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
-    (indecProjRepHom i M x).app i (Finsupp.single Quiver.Path.nil 1) = x := by
-  rw [indecProjRepHom_app_single, one_smul]
+    (indecProjRepHom i M x).app i (indecProjRepBasis k i i Quiver.Path.nil) = x := by
+  rw [indecProjRepHom_app_basis]
   exact congrArg (fun g : M.obj i ⟶ M.obj i ↦ g x) (M.map_id i)
 
-/-- A morphism out of `Pᵢ` is determined by the image of the trivial path at `i`. -/
+/-- A morphism out of `Pᵢ` is determined by the image of the basis vector of the trivial path
+at `i`. -/
 @[simp]
 theorem indecProjRepHom_app_nil_self {i : Q} {M : QuiverRep k Q} (f : indecProjRep k Q i ⟶ M) :
-    indecProjRepHom i M (f.app i (Finsupp.single Quiver.Path.nil 1)) = f := by
+    indecProjRepHom i M (f.app i (indecProjRepBasis k i i Quiver.Path.nil)) = f := by
   refine NatTrans.ext (funext fun j ↦ ModuleCat.hom_ext
     ((indecProjRepBasis k i j).ext fun p ↦ ?_))
   have h := LinearMap.congr_fun (congrArg ModuleCat.Hom.hom (f.naturality p))
-    (Finsupp.single Quiver.Path.nil (1 : k))
+    (indecProjRepBasis k i i Quiver.Path.nil)
   simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
-    indecProjRep_map_single, Quiver.Path.nil_comp] at h
-  simp only [coe_indecProjRepBasis, indecProjRepHom_app_single, one_smul, h]
+    indecProjRep_map_basis, Quiver.Path.nil_comp] at h
+  simp only [indecProjRepHom_app_basis, h]
 
 /-- **`Pᵢ` represents evaluation at `i`.** A morphism out of `Pᵢ` is determined by, and can be
-prescribed by, the image of the trivial path at `i`; the bijection is `k`-linear. -/
+prescribed by, the image of the basis vector of the trivial path at `i`; the bijection is
+`k`-linear. -/
 noncomputable def indecProjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
     (indecProjRep k Q i ⟶ M) ≃ₗ[k] M.obj i where
-  toFun f := f.app i (Finsupp.single Quiver.Path.nil 1)
+  toFun f := f.app i (indecProjRepBasis k i i Quiver.Path.nil)
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun x := indecProjRepHom i M x
   left_inv f := indecProjRepHom_app_nil_self f
   right_inv x := indecProjRepHom_app_nil i M x
 
-/-- The trivial path is the element of `Pᵢ` at `i` that the universal property picks out. -/
+/-- The basis vector of the trivial path is the element of `Pᵢ` at `i` that the universal property
+picks out. -/
 @[simp]
 theorem indecProjRepHomEquiv_apply (i : Q) (M : QuiverRep k Q) (f : indecProjRep k Q i ⟶ M) :
-    indecProjRepHomEquiv i M f = f.app i (Finsupp.single Quiver.Path.nil 1) :=
+    indecProjRepHomEquiv i M f = f.app i (indecProjRepBasis k i i Quiver.Path.nil) :=
   (rfl)
 
 @[simp]
@@ -262,12 +262,11 @@ theorem finrank_hom_indecProjRep_indecProjRep (i j : Q) :
     Module.finrank k (indecProjRep k Q i ⟶ indecProjRep k Q j) = Nat.card (Quiver.Path j i) := by
   rw [finrank_hom_indecProjRep, dimVector_indecProjRep]
 
-/-- The representation `Pᵢ` is nonzero: the trivial path at `i` is a nonzero element of `(Pᵢ)_i`. -/
+/-- The representation `Pᵢ` is nonzero: the basis vector of the trivial path at `i` is a nonzero
+element of `(Pᵢ)_i`. -/
 theorem not_isZero_indecProjRep (i : Q) : ¬ IsZero (indecProjRep k Q i) := by
   intro h
-  letI : Subsingleton (Quiver.Path i i →₀ k) := ModuleCat.subsingleton_of_isZero (h.obj i)
-  exact one_ne_zero (α := k)
-    (Finsupp.single_eq_zero.mp (Subsingleton.elim
-      (Finsupp.single (Quiver.Path.nil : Quiver.Path i i) (1 : k)) 0))
+  letI := ModuleCat.subsingleton_of_isZero (h.obj i)
+  exact (indecProjRepBasis k i i).ne_zero Quiver.Path.nil (Subsingleton.elim _ _)
 
 end TauCeti
