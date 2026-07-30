@@ -16,10 +16,11 @@ independence makes `M = K(rootᵢ : i)` an abelian Galois extension of `K` with 
 automorphisms that fix `F`. `TauCeti.NumberTheory.Multiquadratic.RelativeDegree` records the
 relative *degree* `[M : F] = 2 ^ dim U`; this file records the relative *group*.
 
-Two things happen. First, both halves of the tower inherit the structure of `M / K`: because that
-group is abelian, every intermediate field is abelian Galois over `K`, and `M` is abelian Galois
-over every intermediate field. Moreover a relative automorphism restricts to a `K`-automorphism,
-and those are involutions, so `Gal(M/F)` is again elementary abelian of exponent dividing two.
+Two things happen. First, a relative automorphism restricts to a `K`-automorphism, and those are
+involutions, so `Gal(M/F)` has exponent dividing two; commutativity comes for free, since Mathlib's
+tower instances for `IsAbelianGalois` already make both halves of the tower abelian Galois once
+`TauCeti.Multiquadratic.isAbelianGalois` supplies `IsAbelianGalois K M`. So `Gal(M/F)` is again
+elementary abelian, exactly as `Gal(M/K)` is.
 Second, the sign pattern identifies `Gal(M/F)` precisely: restriction of scalars embeds it into
 `Gal(M/K) ≃ (ℤ/2)ⁿ`, its image is exactly the subspace `U` attached to `F`, and the resulting map
 
@@ -35,8 +36,6 @@ its Galois group over the quadratic base `ℚ(√d)`, a relative group of exactl
 
 ## Main results
 
-* `TauCeti.Multiquadratic.isAbelianGalois_top_over_intermediateField`: `M / F` is abelian Galois.
-* `TauCeti.Multiquadratic.isAbelianGalois_intermediateField`: so is `F / K`.
 * `TauCeti.Multiquadratic.aut_top_over_intermediateField_mul_self_eq_one`: every relative
   automorphism is an involution.
 * `TauCeti.Multiquadratic.aut_top_over_intermediateField_exponent_dvd_two`: `Gal(M/F)` has exponent
@@ -71,23 +70,6 @@ namespace TauCeti.Multiquadratic
 variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
   {d : ι → K} {root : ι → L}
 
-/-- **A multiquadratic field is abelian Galois over any intermediate field.** Since
-`M = K(rootᵢ : i)` is abelian Galois over `K`, it is abelian Galois over every intermediate field
-`F` of `M / K`. No square-class independence is needed. -/
-theorem isAbelianGalois_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (F : IntermediateField K (adjoin K (Set.range root))) :
-    IsAbelianGalois F (adjoin K (Set.range root)) :=
-  haveI := isAbelianGalois hroot
-  inferInstance
-
-/-- **A multiquadratic field is Galois over any intermediate field.** -/
-theorem isGalois_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (F : IntermediateField K (adjoin K (Set.range root))) :
-    IsGalois F (adjoin K (Set.range root)) :=
-  (isAbelianGalois_top_over_intermediateField hroot F).toIsGalois
-
 /-- A multiquadratic field is finite-dimensional over any intermediate field. -/
 theorem finiteDimensional_top_over_intermediateField [Finite ι]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
@@ -97,16 +79,6 @@ theorem finiteDimensional_top_over_intermediateField [Finite ι]
   haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
   Module.Finite.of_restrictScalars_finite K F (adjoin K (Set.range root))
-
-/-- **Every intermediate field of a multiquadratic field is abelian Galois over the base.** The
-Galois group of `M / K` is abelian, so every subgroup is normal and every intermediate field `F` is
-itself an abelian Galois extension of `K`. No square-class independence is needed. -/
-theorem isAbelianGalois_intermediateField [Finite ι] [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (F : IntermediateField K (adjoin K (Set.range root))) :
-    IsAbelianGalois K F :=
-  haveI := isAbelianGalois hroot
-  inferInstance
 
 /-- Restricting an `F`-automorphism of `M` to `K` lands in the subgroup fixing `F`. -/
 theorem restrictScalars_mem_fixingSubgroup
@@ -127,9 +99,10 @@ theorem aut_top_over_intermediateField_mul_self_eq_one
     σ * σ = 1 :=
   AlgEquiv.restrictScalars_injective K (aut_mul_self_eq_one hroot (σ.restrictScalars K))
 
-/-- **The relative Galois group has exponent dividing two.** Together with commutativity
-(`TauCeti.Multiquadratic.isAbelianGalois_top_over_intermediateField`) this says `Gal(M/F)` is
-elementary abelian, exactly as `Gal(M/K)` is (`TauCeti.Multiquadratic.aut_exponent_dvd_two`). -/
+/-- **The relative Galois group has exponent dividing two.** Together with commutativity — which
+Mathlib's `IsAbelianGalois` tower instance supplies from
+`TauCeti.Multiquadratic.isAbelianGalois` — this says `Gal(M/F)` is elementary abelian, exactly as
+`Gal(M/K)` is (`TauCeti.Multiquadratic.aut_exponent_dvd_two`). -/
 theorem aut_top_over_intermediateField_exponent_dvd_two
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
@@ -240,7 +213,7 @@ theorem card_aut_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isGalois_top_over_intermediateField hroot F
+  haveI := isAbelianGalois hroot
   haveI := finiteDimensional_top_over_intermediateField hroot F
   rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
     finrank_top_over_intermediateField hroot hindep F]
@@ -255,7 +228,7 @@ theorem card_aut_intermediateField [Finite ι] [NeZero (2 : K)]
     Nat.card (F ≃ₐ[K] F) =
       2 ^ (Nat.card ι
         - Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual) := by
-  haveI := (isAbelianGalois_intermediateField hroot F).toIsGalois
+  haveI := isAbelianGalois hroot
   haveI := isSplittingField hroot
   haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
@@ -273,8 +246,7 @@ theorem card_aut_intermediateField_mul_card_aut_top_over_intermediateField [Fini
     Nat.card (F ≃ₐ[K] F) *
         Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ Nat.card ι := by
-  haveI := (isAbelianGalois_intermediateField hroot F).toIsGalois
-  haveI := isGalois_top_over_intermediateField hroot F
+  haveI := isAbelianGalois hroot
   haveI := finiteDimensional_top_over_intermediateField hroot F
   haveI := isSplittingField hroot
   haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
@@ -295,7 +267,7 @@ theorem card_aut_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZer
     (hF : Module.finrank K F = 2) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ (Nat.card ι - 1) := by
-  haveI := isGalois_top_over_intermediateField hroot F
+  haveI := isAbelianGalois hroot
   haveI := finiteDimensional_top_over_intermediateField hroot F
   rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
     finrank_top_over_intermediateField_of_finrank_eq_two hroot hindep F hF]
