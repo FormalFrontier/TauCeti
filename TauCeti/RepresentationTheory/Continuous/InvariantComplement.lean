@@ -5,10 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
-public import Mathlib.Analysis.InnerProductSpace.Subspace
 public import Mathlib.RepresentationTheory.Semisimple
 public import Mathlib.RepresentationTheory.Submodule
-public import TauCeti.RepresentationTheory.Continuous.Subrepresentation
 public import TauCeti.RepresentationTheory.Continuous.Unitary
 
 /-!
@@ -123,13 +121,6 @@ theorem toSubmodule_orthogonalSubrepresentation (hπ : IsUnitary π)
     (hπ.orthogonalSubrepresentation σ).toSubmodule = σ.toSubmoduleᗮ :=
   (rfl)
 
-/-- The restriction of a unitary representation to an invariant submodule is unitary. -/
-theorem subrepresentation (hπ : IsUnitary π) (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) :
-    IsUnitary (subrepresentation π W hW) :=
-  (isUnitary_iff_norm_map _).mpr fun g v => by
-    rw [← Submodule.norm_coe, ← Submodule.norm_coe (s := W) v, coe_subrepresentation_apply,
-      hπ.norm_map]
-
 section Projection
 
 variable [W.HasOrthogonalProjection]
@@ -151,6 +142,12 @@ noncomputable def starProjectionIntertwiner (hπ : IsUnitary π)
   isIntertwining' g := by
     ext v
     exact hπ.starProjection_apply_comm hW g v
+
+@[simp]
+theorem toContinuousLinearMap_starProjectionIntertwiner (hπ : IsUnitary π)
+    (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) :
+    (hπ.starProjectionIntertwiner hW).toContinuousLinearMap = W.starProjection :=
+  (rfl)
 
 @[simp]
 theorem starProjectionIntertwiner_apply (hπ : IsUnitary π) (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) (v : V) :
