@@ -35,7 +35,7 @@ square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` f
   `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
   `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
   `elementaryTwoQuotientMk_prod` record its additivity, and `elementaryTwoQuotientMk_inv_eq` records
-  that inversion is trivial (`[I⁻¹] = [I]` in the quotient); `elementaryTwoQuotientMk_surjective` and
+  that inversion is trivial in the quotient; `elementaryTwoQuotientMk_surjective` and
   `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
 * `TauCeti.ClassGroup.elementaryTwoQuotientCongr`: a multiplicative equivalence of class groups
   induces a `ZMod 2`-linear equivalence of their elementary-2 quotients.
