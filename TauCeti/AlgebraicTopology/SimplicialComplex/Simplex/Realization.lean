@@ -132,6 +132,11 @@ private theorem stdSimplexHomeomorphUnitInterval_apply (x : stdSimplex ℝ (Fin 
     (stdSimplexHomeomorphUnitInterval x : ℝ) = x 1 :=
   rfl
 
+private theorem stdSimplexHomeomorphUnitInterval_symm_apply (x : unitInterval) :
+    (stdSimplexHomeomorphUnitInterval.symm x : Fin 2 → ℝ) =
+      ![1 - (x : ℝ), (x : ℝ)] :=
+  stdSimplexEquivIcc_symm_apply_coe ℝ x
+
 /-- The one-simplex homeomorphism is its second barycentric coordinate. -/
 @[simp]
 theorem realizationOneSimplexHomeomorphUnitInterval_coe (x : Realization
@@ -139,6 +144,26 @@ theorem realizationOneSimplexHomeomorphUnitInterval_coe (x : Realization
     (realizationOneSimplexHomeomorphUnitInterval x : ℝ) = x.1 1 := by
   rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.trans_apply,
     stdSimplexHomeomorphUnitInterval_apply, realizationTopHomeomorphStdSimplex_apply]
+
+/-- The zeroth barycentric coordinate of the interval inverse is one minus the interval
+coordinate. -/
+@[simp]
+theorem realizationOneSimplexHomeomorphUnitInterval_symm_apply_val_zero (x : unitInterval) :
+    (realizationOneSimplexHomeomorphUnitInterval.symm x : Fin 2 →₀ ℝ) 0 =
+      1 - (x : ℝ) := by
+  rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.symm_trans_apply,
+    realizationTopHomeomorphStdSimplex_symm_apply_val,
+    stdSimplexHomeomorphUnitInterval_symm_apply]
+  rfl
+
+/-- The first barycentric coordinate of the interval inverse is the interval coordinate. -/
+@[simp]
+theorem realizationOneSimplexHomeomorphUnitInterval_symm_apply_val_one (x : unitInterval) :
+    (realizationOneSimplexHomeomorphUnitInterval.symm x : Fin 2 →₀ ℝ) 1 = (x : ℝ) := by
+  rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.symm_trans_apply,
+    realizationTopHomeomorphStdSimplex_symm_apply_val,
+    stdSimplexHomeomorphUnitInterval_symm_apply]
+  rfl
 
 /-- The zeroth vertex of the realized one-simplex is the left endpoint of the interval. -/
 @[simp]
@@ -206,6 +231,24 @@ theorem realizationOneSimplexBoundaryHomeomorphSphereZero_vertex_one :
       (vertex (⊥ : AbstractSimplicialComplex (Fin 2)) 1) : ℝ) = -1 := by
   rw [realizationOneSimplexBoundaryHomeomorphSphereZero, Homeomorph.trans_apply,
     realizationBotHomeomorph_apply_vertex, finTwoHomeomorphSphereZero_one]
+
+/-- The inverse zero-sphere homeomorphism sends `1` to the zeroth boundary vertex. -/
+@[simp]
+theorem realizationOneSimplexBoundaryHomeomorphSphereZero_symm_apply_one :
+    realizationOneSimplexBoundaryHomeomorphSphereZero.symm ⟨1, by simp⟩ =
+      vertex (⊥ : AbstractSimplicialComplex (Fin 2)) 0 := by
+  apply realizationOneSimplexBoundaryHomeomorphSphereZero.injective
+  apply Subtype.ext
+  simp
+
+/-- The inverse zero-sphere homeomorphism sends `-1` to the first boundary vertex. -/
+@[simp]
+theorem realizationOneSimplexBoundaryHomeomorphSphereZero_symm_apply_neg_one :
+    realizationOneSimplexBoundaryHomeomorphSphereZero.symm ⟨-1, by simp⟩ =
+      vertex (⊥ : AbstractSimplicialComplex (Fin 2)) 1 := by
+  apply realizationOneSimplexBoundaryHomeomorphSphereZero.injective
+  apply Subtype.ext
+  simp
 
 end AbstractSimplicialComplex
 
