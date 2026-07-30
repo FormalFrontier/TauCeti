@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
+public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
 # Abstract simplices and their boundaries
@@ -78,6 +79,12 @@ theorem singleton_mem_simplex {v : ι} : {v} ∈ simplex V ↔ v ∈ V := by
 /-- An abstract simplex has finitely many faces: they are subsets of the spanning set. -/
 theorem finite_faces_simplex (V : Finset ι) : (simplex V).faces.Finite :=
   V.powerset.finite_toSet.subset fun _ hσ => Finset.mem_powerset.mpr (mem_simplex.mp hσ).2
+
+/-- An abstract simplex is a cone with apex any of its vertices. -/
+theorem isCone_simplex [DecidableEq ι] {v : ι} (hv : v ∈ V) : IsCone (simplex V) v where
+  apex_mem := mem_simplex.mpr ⟨Finset.singleton_nonempty v, Finset.singleton_subset_iff.mpr hv⟩
+  insert_mem σ hσ :=
+    mem_simplex.mpr ⟨Finset.insert_nonempty v σ, Finset.insert_subset hv (mem_simplex.mp hσ).2⟩
 
 /-- A singleton is a boundary face exactly when its vertex belongs to a spanning set containing
 at least one other vertex. -/

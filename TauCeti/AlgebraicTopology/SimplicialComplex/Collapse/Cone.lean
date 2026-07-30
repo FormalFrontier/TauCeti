@@ -25,9 +25,9 @@ arbitrarily many faces, and the simplex case is the base of the recursion on com
 in layer 11 of the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`).
 
-The cone predicate `IsCone` and the recognition of the standard cones live with the cone
-construction in `TauCeti.AlgebraicTopology.SimplicialComplex.Cone`; this file adds only what
-depends on collapse theory.
+The cone predicate `IsCone` lives in `TauCeti.AlgebraicTopology.SimplicialComplex.IsCone`, and
+each standard cone is recognised in the file of its own construction (`isCone_simplex`,
+`isCone_closedStar`, `isCone_cone`); this file adds only what depends on collapse theory.
 
 The proof is the usual one: pick a face `σ` maximal among the faces missing the apex.
 Maximality makes `σ` a free face with unique proper coface `insert v σ`, deleting it leaves a
@@ -67,7 +67,7 @@ theorem isCone_point (v : ι) : IsCone (point v) v where
 
 Maximality is used twice: a coface of `σ` missing the apex is `σ` itself, and a coface `ω`
 containing the apex has `ω.erase v` a coface of `σ` missing the apex, hence equal to `σ`. -/
-theorem IsCone.isFreePair (h : IsCone K v) (hσ : σ ∈ K) (hv : v ∉ σ)
+private theorem IsCone.isFreePair (h : IsCone K v) (hσ : σ ∈ K) (hv : v ∉ σ)
     (hmax : ∀ ⦃τ : Finset ι⦄, τ ∈ K → v ∉ τ → σ ⊆ τ → τ = σ) :
     IsFreePair K σ (insert v σ) where
   lower_mem := hσ
