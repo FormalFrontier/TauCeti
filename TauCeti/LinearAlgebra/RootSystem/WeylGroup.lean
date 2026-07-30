@@ -74,6 +74,7 @@ end RootPairing.Equiv
 namespace RootPairing
 
 /-- Reflecting a root in itself negates its coroot functional. -/
+@[simp]
 lemma coroot'_reflectionPerm_self (i : ι) : P.coroot' (P.reflectionPerm i i) = -P.coroot' i := by
   rw [_root_.RootPairing.coroot', P.coroot_reflectionPerm, P.coreflection_apply_self]
   simp
