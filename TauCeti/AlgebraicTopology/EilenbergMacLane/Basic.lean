@@ -51,7 +51,7 @@ open scoped Topology Topology.Homotopy
 
 noncomputable section
 
-universe u v w
+universe u v w w'
 
 /-- A based space is aspherical when it is path-connected and every homotopy group in
 dimension at least two is trivial. -/
@@ -59,7 +59,6 @@ def IsAspherical (X : Type u) [TopologicalSpace X] (x : X) : Prop :=
   PathConnectedSpace X ∧ ∀ n : ℕ, Subsingleton (π_ (n + 2) X x)
 
 /-- Characteristic restatement of asphericity. -/
-@[simp]
 theorem isAspherical_iff {X : Type u} [TopologicalSpace X] {x : X} :
     IsAspherical X x ↔
       PathConnectedSpace X ∧ ∀ n : ℕ, Subsingleton (π_ (n + 2) X x) :=
@@ -126,7 +125,6 @@ def IsEilenbergMacLaneSpaceOne (G : Type u) [Group G]
   IsAspherical X x ∧ Nonempty (FundamentalGroup X x ≃* G)
 
 /-- Characteristic restatement of the `K(G, 1)` property. -/
-@[simp]
 theorem isEilenbergMacLaneSpaceOne_iff {G : Type u} [Group G]
     {X : Type v} [TopologicalSpace X] {x : X} :
     IsEilenbergMacLaneSpaceOne G X x ↔
@@ -136,7 +134,7 @@ theorem isEilenbergMacLaneSpaceOne_iff {G : Type u} [Group G]
 namespace IsEilenbergMacLaneSpaceOne
 
 variable {G : Type u} {H : Type v} [Group G] [Group H]
-  {X : Type v} {Y : Type w} [TopologicalSpace X] [TopologicalSpace Y]
+  {X : Type w} {Y : Type w'} [TopologicalSpace X] [TopologicalSpace Y]
   {x : X} {y : Y}
 
 /-- Construct the `K(G, 1)` property from asphericity and an isomorphism between the
@@ -171,7 +169,7 @@ theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x)
       (FundamentalGroup.homeomorphMulEquivOfEq e he).symm.trans f⟩
 
 variable {G₁ : Type u} {G₂ : Type v} [Group G₁] [Group G₂]
-  {X₁ : Type v} {X₂ : Type w} [TopologicalSpace X₁] [TopologicalSpace X₂]
+  {X₁ : Type w} {X₂ : Type w'} [TopologicalSpace X₁] [TopologicalSpace X₂]
   {x₁ : X₁} {x₂ : X₂}
 
 /-- The product of a `K(G₁, 1)` space and a `K(G₂, 1)` space is a
