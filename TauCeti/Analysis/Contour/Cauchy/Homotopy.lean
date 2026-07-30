@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Analysis.Contour.NullHomologous
 public import TauCeti.Analysis.Contour.Winding.Number.Homotopy
 import TauCeti.Analysis.Contour.HomologyCauchy
 
@@ -21,7 +22,6 @@ path, matching the raw-curve interface expected by `homologyCauchyTheorem`.
 
 ## Main results
 
-* `windingNumber_const` — a constant curve has winding number zero on every parameter interval.
 * `windingNumber_eq_zero_of_pathHomotopy_refl` — a loop smoothly homotopic to its constant path
   through a point-avoiding homotopy has winding number zero about that point.
 * `isNullHomologous_of_pathHomotopy_refl` — a loop smoothly contracted inside `Ω` is
@@ -45,30 +45,6 @@ open scoped unitInterval
 open Set
 
 namespace TauCeti.Contour
-
-/-- The generalized winding number of a constant curve is zero on every parameter interval. -/
-@[simp]
-theorem windingNumber_const (x : ℂ) (a b : ℝ) (z : ℂ) :
-    windingNumber (fun _ : ℝ => x) a b z = 0 := by
-  have hpv :
-      HasCauchyPVAt (fun _ : ℝ => x) a b (fun w => (w - z)⁻¹) z 0 := by
-    refine HasCauchyPVAt.intro ?_ ?_
-    · filter_upwards with ε
-      simp only [deriv_const, mul_zero, ite_self]
-      exact IntervalIntegrable.zero
-    · simpa only [deriv_const, mul_zero, ite_self, intervalIntegral.integral_zero] using
-        (tendsto_const_nhds :
-          Filter.Tendsto (fun _ : ℝ => (0 : ℂ)) (nhdsWithin 0 (Set.Ioi 0)) (nhds 0))
-  rw [windingNumber_eq_of_hasCauchyPVAt hpv]
-  simp
-
-/-- A constant curve is null-homologous in every ambient set and on every parameter interval. -/
-@[simp]
-theorem isNullHomologous_const (x : ℂ) (a b : ℝ) (Ω : Set ℂ) :
-    IsNullHomologous (fun _ : ℝ => x) a b Ω := by
-  rw [isNullHomologous_iff]
-  intro w _hw
-  exact windingNumber_const x a b w
 
 /-- A loop smoothly homotopic to its constant path through points avoiding `w` has winding number
 zero about `w`. -/

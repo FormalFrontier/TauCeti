@@ -28,6 +28,8 @@ value does not exist.
   `cauchyPVAt` defining value.
 * `TauCeti.Contour.windingNumber_eq_of_hasCauchyPVAt` — evaluate `windingNumber` from a Cauchy
   principal-value witness, without unfolding the definition.
+* `TauCeti.Contour.windingNumber_const` — a constant curve has winding number zero on every
+  parameter interval.
 * `TauCeti.Contour.windingNumber_congr_curve_ae` — the winding number is unchanged when the curves
   agree almost everywhere on the integration interval and their derivatives agree almost everywhere
   where the curve misses `z₀`;
@@ -93,6 +95,22 @@ theorem windingNumber_same (γ : ℝ → ℂ) (a : ℝ) (z₀ : ℂ) :
   rw [windingNumber_eq_of_hasCauchyPVAt
     (HasCauchyPVAt.refl γ a (fun z : ℂ => (z - z₀)⁻¹) z₀)]
   ring
+
+/-- The generalized winding number of a constant curve is zero on every parameter interval. -/
+@[simp]
+theorem windingNumber_const (x : ℂ) (a b : ℝ) (z : ℂ) :
+    windingNumber (fun _ : ℝ => x) a b z = 0 := by
+  have hpv :
+      HasCauchyPVAt (fun _ : ℝ => x) a b (fun w => (w - z)⁻¹) z 0 := by
+    refine HasCauchyPVAt.intro ?_ ?_
+    · filter_upwards with ε
+      simp only [deriv_const, mul_zero, ite_self]
+      exact IntervalIntegrable.zero
+    · simpa only [deriv_const, mul_zero, ite_self, intervalIntegral.integral_zero] using
+        (tendsto_const_nhds :
+          Filter.Tendsto (fun _ : ℝ => (0 : ℂ)) (nhdsWithin 0 (Set.Ioi 0)) (nhds 0))
+  rw [windingNumber_eq_of_hasCauchyPVAt hpv]
+  simp
 
 /-- **The generalized winding number is unchanged when the curves agree almost everywhere and
 their derivatives agree almost everywhere off `z₀`.** Derivative agreement is only needed where

@@ -27,7 +27,8 @@ domains and the proof only needs the vanishing of the winding number on the comp
   hypotheses by intersecting domains.
 * `Contour.IsNullHomologous.union_left`, `Contour.IsNullHomologous.union_right` — a null-homologous
   curve remains null-homologous after adjoining an extra part of the domain.
-* `Contour.isNullHomologous_empty_iff`, `Contour.isNullHomologous_univ` — the two boundary cases.
+* `Contour.isNullHomologous_const`, `Contour.isNullHomologous_empty_iff`,
+  `Contour.isNullHomologous_univ` — constant curves and the two boundary cases.
 * `Contour.IsNullHomologous.refl`, `Contour.IsNullHomologous.of_eq` — a zero-length parameter
   interval is null-homologous in every ambient set.
 * `Contour.IsNullHomologous.congr_windingNumber` — replace a curve by another with the same winding
@@ -56,6 +57,14 @@ theorem isNullHomologous_univ (γ : ℝ → ℂ) (a b : ℝ) :
   rw [isNullHomologous_iff]
   intro w hw
   simp at hw
+
+/-- A constant curve is null-homologous in every ambient set and on every parameter interval. -/
+@[simp]
+theorem isNullHomologous_const (x : ℂ) (a b : ℝ) (Ω : Set ℂ) :
+    IsNullHomologous (fun _ : ℝ => x) a b Ω := by
+  rw [isNullHomologous_iff]
+  intro w _hw
+  exact windingNumber_const x a b w
 
 /-- Null-homology in the empty set is exactly vanishing of the winding number about every point. -/
 @[simp]
