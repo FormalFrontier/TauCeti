@@ -75,6 +75,7 @@ theorem ConditionallyIIDWith.exchangeableFamily
     {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (h : ConditionallyIIDWith μ X ν) : ExchangeableFamily μ X := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
+  rw [blockLaw_def, blockLaw_def]
   calc
     μ.map (fun ω i => X (k i) ω) =
         (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
@@ -100,8 +101,9 @@ theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → �
     (h : ExchangeableFamily μ X) {f : κ → ι} (hf : Function.Injective f) :
     ExchangeableFamily μ fun j => X (f j) := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  rw [blockLaw_comp, blockLaw_comp]
-  exact h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
+  exact (blockLaw_comp μ X f k).trans
+    ((h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)).trans
+      (blockLaw_comp μ X f l).symm)
 
 /-! ## Comparison with the sequence predicates -/
 

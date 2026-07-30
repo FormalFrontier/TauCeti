@@ -45,7 +45,6 @@ variable {Ω α β ι κ : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 The index type is arbitrary: nothing about a finite selection needs the indices to be natural
 numbers, and `ExchangeableFamily` selects from an arbitrary type. Sequence-level users get the
 `ι = ℕ` case by unification. -/
-@[expose]
 def blockLaw (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι) :
     Measure (Fin m → α) :=
   μ.map fun ω i => X (k i) ω
@@ -100,7 +99,7 @@ def Contractable (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
 @[simp]
 theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin m → ι) :
     blockLaw μ X k = μ.map (fun ω i => X (k i) ω) :=
-  rfl
+  (rfl)
 
 /-- Reindexing the family before selecting is the same as composing the selection: the
 characteristic lemma for `blockLaw` under precomposition, so callers need not unfold the
@@ -108,7 +107,7 @@ definition. -/
 @[simp]
 theorem blockLaw_comp (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (g : κ → ι) (k : Fin m → κ) :
     blockLaw μ (fun j => X (g j)) k = blockLaw μ X (g ∘ k) :=
-  rfl
+  (rfl)
 
 -- Annotated `@[grind =>]` rather than `@[simp]`: `blockLaw_def` already simp-normalizes
 -- `blockLaw μ X k` to `μ.map …` (so a `@[simp]` here would be shadowed), and the preimage form

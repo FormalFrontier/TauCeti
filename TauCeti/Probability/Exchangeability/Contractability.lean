@@ -120,11 +120,12 @@ theorem Contractable.comp {μ : Measure Ω} {X : ℕ → Ω → α} (h : Contrac
   intro m k hk
   calc
     blockLaw μ (fun n ω => X (φ n) ω) k =
-        blockLaw μ X (φ ∘ k) := rfl
+        blockLaw μ X (φ ∘ k) := blockLaw_comp μ X φ k
     _ = prefixLaw μ X m := h.map (hφ.comp hk)
-    _ = blockLaw μ (fun n ω => X (φ n) ω) (fun i : Fin m => i.val) := by
-      exact (h.map (hφ.comp (Fin.val_strictMono : StrictMono (fun i : Fin m => i.val)))).symm
-    _ = prefixLaw μ (fun n ω => X (φ n) ω) m := rfl
+    _ = blockLaw μ (fun n ω => X (φ n) ω) (fun i : Fin m => i.val) :=
+      ((h.map (hφ.comp (Fin.val_strictMono : StrictMono (fun i : Fin m => i.val)))).symm).trans
+        (blockLaw_comp μ X φ (fun i : Fin m => i.val)).symm
+    _ = prefixLaw μ (fun n ω => X (φ n) ω) m := (prefixLaw_def _ _ _).symm
 
 /-- **An exchangeable sequence has the prefix law along any injective finite selection:**
 `blockLaw μ X k = prefixLaw μ X n` for injective `k : Fin n → ℕ`. -/
