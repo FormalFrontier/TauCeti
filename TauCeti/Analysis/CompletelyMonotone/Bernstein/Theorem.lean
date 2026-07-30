@@ -26,9 +26,10 @@ reserved name `bernstein` — stated there as a single `∃!` biconditional — 
 assembly that combines all three.
 
 Finiteness of the representing measure is not an extra hypothesis but a consequence of complete
-monotonicity on the *closed* half-line: `IsCompletelyMonotone` builds in `Set.Ici 0`, hence
-`f 0⁺ < ∞`. On the open half-line alone the representing measure can be infinite — `1/t` is
-completely monotone on `(0, ∞)` with representing measure Lebesgue.
+monotonicity on the *closed* half-line: `IsCompletelyMonotone` builds in `Set.Ici 0`, so `f` takes a
+real value at `0`, and the representing measure has total mass `f 0`. On the open half-line alone
+the value at `0` need not exist and the representing measure can be infinite — `1/t` is completely
+monotone on `(0, ∞)` with representing measure Lebesgue.
 
 ## Implementation
 
@@ -66,7 +67,7 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
     (hcm : IsCompletelyMonotone f) :
     ∃ μ : Measure ℝ≥0, IsFiniteMeasure μ ∧
       ∀ t : ℝ, 0 ≤ t → f t = ∫ x, Real.exp (-t * (x : ℝ)) ∂μ := by
-  obtain ⟨L, C, hL, hL_nn, hCval, hmass⟩ := chafaiRescaled_prokhorov_mass_bound f hcm
+  obtain ⟨L, C, hL, hL_nn, -, hmass⟩ := chafaiRescaled_prokhorov_mass_bound f hcm
   have hfin : ∀ n, IsFiniteMeasure (chafaiRescaled f n) := fun n => (hmass n).1
   have hmass' : ∀ n, (chafaiRescaled f n) univ ≤ (C : ℝ≥0∞) := fun n => (hmass n).2
   obtain ⟨μ₀, U, hU, hμ₀fin, -, hweak⟩ :=
