@@ -19,7 +19,9 @@ This file defines the two subgroups `YoungTableau.rowSubgroup t` and `YoungTable
 of `Equiv.Perm (Fin μ.card)` cut out by those conditions, and proves the two facts the symmetrizer
 theory rests on: the row and column groups meet trivially, because a cell is determined by its row
 together with its column; and each of them is the product of the symmetric groups of the rows,
-respectively columns, of `μ`.
+respectively columns, of `μ`.  It also records the transpositions that the two groups contain:
+swapping two labels of a common row lies in the row group, and swapping two labels of a common
+column lies in the column group.
 
 ## References
 
@@ -55,6 +57,29 @@ theorem mem_rowSubgroup {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
 theorem mem_colSubgroup {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
     σ ∈ colSubgroup t ↔ ∀ k, colIndex t (σ k) = colIndex t k :=
   mem_fiberSubgroup
+
+/-- The transposition of two labels lying in a common row of `t` belongs to the row group. -/
+theorem swap_mem_rowSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : rowIndex t x = rowIndex t y) : Equiv.swap x y ∈ rowSubgroup t := by
+  rw [mem_rowSubgroup]
+  intro k
+  rcases eq_or_ne k x with rfl | hkx
+  · rw [Equiv.swap_apply_left, h]
+  · rcases eq_or_ne k y with rfl | hky
+    · rw [Equiv.swap_apply_right, h]
+    · rw [Equiv.swap_apply_of_ne_of_ne hkx hky]
+
+/-- The transposition of two labels lying in a common column of `t` belongs to the column
+group. -/
+theorem swap_mem_colSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : colIndex t x = colIndex t y) : Equiv.swap x y ∈ colSubgroup t := by
+  rw [mem_colSubgroup]
+  intro k
+  rcases eq_or_ne k x with rfl | hkx
+  · rw [Equiv.swap_apply_left, h]
+  · rcases eq_or_ne k y with rfl | hky
+    · rw [Equiv.swap_apply_right, h]
+    · rw [Equiv.swap_apply_of_ne_of_ne hkx hky]
 
 /-- The row group of `t` is the group of permutations preserving the fibers of `rowIndex t`. -/
 theorem rowSubgroup_def (t : YoungTableau μ) :
