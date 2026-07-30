@@ -5,6 +5,7 @@ Authors: Codex, Claude
 -/
 module
 
+public import TauCeti.RepresentationTheory.Induction.Restriction
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.GroupTheory.GroupAction.ConjAct
 
@@ -40,7 +41,8 @@ the induced action on isomorphism classes, nor the fact that the action preserve
 
 * `TauCeti.conjSubgroupEquiv`: the canonical isomorphism from `sHs⁻¹` to `H`.
 * `TauCeti.conjRepFunctor`, `TauCeti.conjFDRepFunctor`: conjugation as a functor between
-  representation categories.
+  representation categories, with `TauCeti.conjRepEquiv` and `TauCeti.conjFDRepEquiv` the
+  equivalences `Rep k H ≌ Rep k (sHs⁻¹)` and `FDRep k H ≌ FDRep k (sHs⁻¹)` they underlie.
 * `TauCeti.conjRep`: the conjugate of a representation.
 * `TauCeti.conjFDRep`: the finite-dimensional version.
 * `TauCeti.conjNormalRepFunctor`, `TauCeti.conjNormalFDRepFunctor`: for a normal subgroup,
@@ -158,22 +160,6 @@ theorem conjRep_ρ_mk [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H)
 
 section Coherence
 
-/-- Restricting representations along a composite homomorphism is restricting twice over.
-Mathlib has no equality of this shape (`Action.resComp` is the natural isomorphism for `Action`),
-and the coherence statements below are equalities of functors, so we record the equality form
-rather than leaving the reduction implicit in their proofs. -/
-theorem resFunctor_comp [Semiring k] {H K L : Type*} [Monoid H] [Monoid K] [Monoid L]
-    (φ : K →* L) (ψ : H →* K) :
-    Rep.resFunctor (k := k) (φ.comp ψ) = Rep.resFunctor φ ⋙ Rep.resFunctor ψ :=
-  rfl
-
-/-- The `Action` form of `resFunctor_comp`, used for the `FDRep` statements below; the equality
-strengthens Mathlib's natural isomorphism `Action.resComp`. -/
-theorem actionRes_comp {V : Type*} [Category V] {H K L : Type*} [Monoid H] [Monoid K] [Monoid L]
-    (φ : K →* L) (ψ : H →* K) :
-    Action.res V (φ.comp ψ) = Action.res V φ ⋙ Action.res V ψ :=
-  rfl
-
 /-- Conjugating a subgroup by `1` leaves it unchanged. -/
 theorem conj_one_smul (H : Subgroup G) : MulAut.conj (1 : G) • H = H := by
   simp
@@ -183,11 +169,25 @@ theorem conj_mul_smul (s t : G) (H : Subgroup G) :
     MulAut.conj (s * t) • H = MulAut.conj s • (MulAut.conj t • H) := by
   rw [map_mul, mul_smul]
 
+/-- Conjugating a subgroup by `s⁻¹` undoes conjugating it by `s`. -/
+theorem conj_inv_smul_smul (s : G) (H : Subgroup G) :
+    MulAut.conj s⁻¹ • (MulAut.conj s • H) = H := by
+  rw [← mul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
+
 /-- The transported form of `conjSubgroupEquiv 1`: conjugating by `1` is the identification of
 `1 · H · 1⁻¹` with `H`. -/
 theorem conjSubgroupEquiv_one (H : Subgroup G) :
     (conjSubgroupEquiv (1 : G) H).toMonoidHom =
       (MulEquiv.subgroupCongr (conj_one_smul H)).toMonoidHom :=
+  MonoidHom.ext fun x => Subtype.ext (by simp)
+
+/-- Conjugating by `s⁻¹`, after identifying `H` with `s⁻¹(sHs⁻¹)s`, is the identification
+`H →* sHs⁻¹` inverse to the one `{}^s` restricts along.  This is what makes the inverse of the
+conjugation equivalence conjugation by `s⁻¹`. -/
+theorem conjSubgroupEquiv_inv_comp_subgroupCongr (s : G) (H : Subgroup G) :
+    (conjSubgroupEquiv s⁻¹ (MulAut.conj s • H)).toMonoidHom.comp
+        (MulEquiv.subgroupCongr (conj_inv_smul_smul s H).symm).toMonoidHom =
+      (conjSubgroupEquiv s H).symm.toMonoidHom :=
   MonoidHom.ext fun x => Subtype.ext (by simp)
 
 /-- The homomorphism `(st)H(st)⁻¹ →* H` underlying `{}^{st}` is the one underlying `{}^t`
@@ -246,11 +246,51 @@ theorem conjRep_mul (s t : G) {H : Subgroup G} (A : Rep k H) :
         (conjRep s (conjRep t A)) :=
   Functor.congr_obj (conjRepFunctor_mul s t H) A
 
+/-- **Conjugation is an equivalence of categories** `Rep k H ≌ Rep k (sHs⁻¹)`: it is restriction
+along the isomorphism `conjSubgroupEquiv s H`, and `resFunctorEquiv` makes any such restriction an
+equivalence.  Its inverse is conjugation by `s⁻¹`, read through `s⁻¹(sHs⁻¹)s = H`
+(`conjRepEquiv_inverse_eq_conjRepFunctor`).
+
+`conjNormalRepEquiv` is the normal-subgroup form, where source and target coincide, so that the
+equivalence is an autoequivalence and the coherence below becomes an action. -/
+def conjRepEquiv (s : G) (H : Subgroup G) :
+    Rep k H ≌ Rep k (MulAut.conj s • H : Subgroup G) :=
+  resFunctorEquiv (conjSubgroupEquiv s H)
+
+@[simp]
+theorem conjRepEquiv_functor (s : G) (H : Subgroup G) :
+    (conjRepEquiv (k := k) s H).functor = conjRepFunctor s H := by
+  -- Unfold both wrappers to expose the restriction functor they share.
+  change (resFunctorEquiv (conjSubgroupEquiv s H)).functor =
+    Rep.resFunctor (conjSubgroupEquiv s H).toMonoidHom
+  rw [resFunctorEquiv_functor]
+
+@[simp]
+theorem conjRepEquiv_inverse (s : G) (H : Subgroup G) :
+    (conjRepEquiv (k := k) s H).inverse =
+      Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
+  -- Unfold the `conjRepEquiv` wrapper to expose `resFunctorEquiv`.
+  change (resFunctorEquiv (conjSubgroupEquiv s H)).inverse = _
+  rw [resFunctorEquiv_inverse]
+
+/-- The inverse of the conjugation equivalence is conjugation by `s⁻¹`, once `s⁻¹(sHs⁻¹)s` is
+identified with `H`. -/
+theorem conjRepEquiv_inverse_eq_conjRepFunctor (s : G) (H : Subgroup G) :
+    (conjRepEquiv (k := k) s H).inverse =
+      conjRepFunctor s⁻¹ (MulAut.conj s • H) ⋙
+        Rep.resFunctor (MulEquiv.subgroupCongr (conj_inv_smul_smul s H).symm).toMonoidHom := by
+  -- Unfold the `conjRepFunctor` wrapper on the right, so that `resFunctor_comp` can contract the
+  -- composite into the single restriction that `conjSubgroupEquiv_inv_comp_subgroupCongr`
+  -- identifies with restriction along `(conjSubgroupEquiv s H).symm`.
+  change _ = Rep.resFunctor (conjSubgroupEquiv s⁻¹ (MulAut.conj s • H)).toMonoidHom ⋙
+    Rep.resFunctor _
+  rw [conjRepEquiv_inverse, ← resFunctor_comp, conjSubgroupEquiv_inv_comp_subgroupCongr]
+
 end Coherence
 
 section FDRep
 
-variable [CommRing k]
+variable [Ring k]
 
 /-- Conjugating finite-dimensional representations by `s` is restriction along the isomorphism
 `sHs⁻¹ ≃* H`.  The `FDRep` mirror of `conjRepFunctor`: `FDRep k H` is by definition
@@ -271,28 +311,6 @@ theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
   -- Unfold the local wrappers to expose Mathlib's restriction carrier.
   change ((Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom).obj A).V = A.V
   exact Action.res_obj_V _ _ _
-
-/-- The conjugate finite-dimensional action, as a heterogeneous equality. -/
-theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
-    (x : (MulAut.conj s • H : Subgroup G)) :
-    HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) :=
-  -- Restriction precomposes the action with the homomorphism (`Action.res_obj_ρ`), and `FDRep.ρ`
-  -- reads `Action.ρ` through the same equivalences on both sides, so the two agree on the nose.
-  HEq.rfl
-
-/-- The conjugate action, transported along `conjFDRep_V`. -/
-theorem conjFDRep_ρ_cast (s : G) {H : Subgroup G} (A : FDRep k H)
-    (x : (MulAut.conj s • H : Subgroup G)) :
-    cast (congrArg (fun V : FGModuleCat k => V →ₗ[k] V) (conjFDRep_V s A))
-      ((conjFDRep s A).ρ x) = A.ρ (conjSubgroupEquiv s H x) :=
-  -- The cast only moves along the carrier equality, so this is `conjFDRep_ρ` read as an equality.
-  eq_of_heq ((cast_heq _ _).trans (conjFDRep_ρ s A x))
-
-/-- Conjugation preserves the dimension (finrank) of a finite-dimensional representation. -/
-@[simp]
-theorem finrank_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
-    Module.finrank k (conjFDRep s A) = Module.finrank k A := by
-  exact congrArg (fun V : FGModuleCat k => Module.finrank k V) (conjFDRep_V s A)
 
 /-- Conjugating by `1` does nothing, as an equality of functors.  The `FDRep` mirror of
 `conjRepFunctor_one`. -/
@@ -334,7 +352,79 @@ theorem conjFDRep_mul (s t : G) {H : Subgroup G} (A : FDRep k H) :
           (conjFDRep s (conjFDRep t A)) :=
   Functor.congr_obj (conjFDRepFunctor_mul s t H) A
 
+/-- **Conjugation is an equivalence** `FDRep k H ≌ FDRep k (sHs⁻¹)`.  The `FDRep` mirror of
+`conjRepEquiv`; here `FDRep k H` is `Action (FGModuleCat k) H`, so this is Mathlib's
+`Action.resEquiv` for `conjSubgroupEquiv s H`. -/
+def conjFDRepEquiv (s : G) (H : Subgroup G) :
+    FDRep k H ≌ FDRep k (MulAut.conj s • H : Subgroup G) :=
+  Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)
+
+@[simp]
+theorem conjFDRepEquiv_functor (s : G) (H : Subgroup G) :
+    (conjFDRepEquiv (k := k) s H).functor = conjFDRepFunctor s H := by
+  -- Unfold both wrappers to expose the restriction functor they share.
+  change (Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)).functor =
+    Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom
+  rw [Action.resEquiv_functor]
+  rfl
+
+@[simp]
+theorem conjFDRepEquiv_inverse (s : G) (H : Subgroup G) :
+    (conjFDRepEquiv (k := k) s H).inverse =
+      Action.res (FGModuleCat k) (conjSubgroupEquiv s H).symm.toMonoidHom := by
+  -- Unfold the `conjFDRepEquiv` wrapper to expose Mathlib's `Action.resEquiv`.
+  change (Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)).inverse = _
+  rw [Action.resEquiv_inverse]
+  rfl
+
+/-- The inverse of the conjugation equivalence is conjugation by `s⁻¹`, once `s⁻¹(sHs⁻¹)s` is
+identified with `H`.  The `FDRep` mirror of `conjRepEquiv_inverse_eq_conjRepFunctor`. -/
+theorem conjFDRepEquiv_inverse_eq_conjFDRepFunctor (s : G) (H : Subgroup G) :
+    (conjFDRepEquiv (k := k) s H).inverse =
+      conjFDRepFunctor s⁻¹ (MulAut.conj s • H) ⋙
+        Action.res (FGModuleCat k)
+          (MulEquiv.subgroupCongr (conj_inv_smul_smul s H).symm).toMonoidHom := by
+  -- As in `conjRepEquiv_inverse_eq_conjRepFunctor`: unfold the `conjFDRepFunctor` wrapper so that
+  -- `actionRes_comp` can contract the composite into a single restriction.
+  change _ = Action.res (FGModuleCat k) (conjSubgroupEquiv s⁻¹ (MulAut.conj s • H)).toMonoidHom ⋙
+    Action.res (FGModuleCat k) _
+  rw [conjFDRepEquiv_inverse, ← actionRes_comp, conjSubgroupEquiv_inv_comp_subgroupCongr]
+
 end FDRep
+
+/-! ## The conjugate action on a finite-dimensional representation
+
+Mathlib develops `FDRep.ρ` and the coercion of an `FDRep` to a type only over a commutative ring,
+so the statements about the conjugate action and the dimension ask for `[CommRing k]`, while the
+definitions and the coherence above need only `[Ring k]`. -/
+
+section FDRepAction
+
+variable [CommRing k]
+
+/-- The conjugate finite-dimensional action, as a heterogeneous equality. -/
+theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
+    (x : (MulAut.conj s • H : Subgroup G)) :
+    HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) :=
+  -- Restriction precomposes the action with the homomorphism (`Action.res_obj_ρ`), and `FDRep.ρ`
+  -- reads `Action.ρ` through the same equivalences on both sides, so the two agree on the nose.
+  HEq.rfl
+
+/-- The conjugate action, transported along `conjFDRep_V`. -/
+theorem conjFDRep_ρ_cast (s : G) {H : Subgroup G} (A : FDRep k H)
+    (x : (MulAut.conj s • H : Subgroup G)) :
+    cast (congrArg (fun V : FGModuleCat k => V →ₗ[k] V) (conjFDRep_V s A))
+      ((conjFDRep s A).ρ x) = A.ρ (conjSubgroupEquiv s H x) :=
+  -- The cast only moves along the carrier equality, so this is `conjFDRep_ρ` read as an equality.
+  eq_of_heq ((cast_heq _ _).trans (conjFDRep_ρ s A x))
+
+/-- Conjugation preserves the dimension (finrank) of a finite-dimensional representation. -/
+@[simp]
+theorem finrank_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
+    Module.finrank k (conjFDRep s A) = Module.finrank k A := by
+  exact congrArg (fun V : FGModuleCat k => Module.finrank k V) (conjFDRep_V s A)
+
+end FDRepAction
 
 section Character
 
@@ -529,7 +619,7 @@ end NormalRep
 
 section NormalFDRep
 
-variable [CommRing k]
+variable [Ring k]
 
 /-- Conjugation by `g` as an endofunctor of `FDRep k N`.  The `FDRep` mirror of
 `conjNormalRepFunctor`: `FDRep k N` is by definition `Action (FGModuleCat k) N`, so this is
@@ -548,25 +638,6 @@ def conjNormalFDRep (g : G) (A : FDRep k N) : FDRep k N :=
 /-- Conjugation on a normal subgroup preserves the underlying module.  Not a `simp` lemma, for the
 same reason as `conjNormalRep_V`. -/
 theorem conjNormalFDRep_V (g : G) (A : FDRep k N) : (conjNormalFDRep g A).V = A.V :=
-  rfl
-
-/-- The conjugate finite-dimensional action on a normal subgroup, as an honest equality. -/
-@[simp]
-theorem conjNormalFDRep_ρ (g : G) (A : FDRep k N) (x : N) :
-    (conjNormalFDRep g A).ρ x = A.ρ (MulAut.conjNormal g⁻¹ x) :=
-  rfl
-
-/-- The conjugate finite-dimensional action, written in the ambient group. -/
-theorem conjNormalFDRep_ρ_mk (g : G) (A : FDRep k N) (x : N) :
-    (conjNormalFDRep g A).ρ x = A.ρ ⟨g⁻¹ * (x : G) * g, hN.conj_mem' (x : G) x.2 g⟩ := by
-  rw [conjNormalFDRep_ρ]
-  congr 1
-  exact Subtype.ext (by simp)
-
-/-- Conjugation on a normal subgroup preserves the dimension. -/
-@[simp]
-theorem finrank_conjNormalFDRep (g : G) (A : FDRep k N) :
-    Module.finrank k (conjNormalFDRep g A) = Module.finrank k A :=
   rfl
 
 /-- On a normal subgroup, the conjugation functor `conjFDRepFunctor`, read through the
@@ -652,6 +723,36 @@ theorem smul_eq_conjNormalFDRep (g : G) (A : FDRep k N) : g • A = conjNormalFD
   rfl
 
 end NormalFDRep
+
+/-! ### The conjugate action on a normal subgroup, in finite dimensions
+
+As in the general case, `FDRep.ρ` and the coercion of an `FDRep` to a type are Mathlib API over a
+commutative ring, so these statements ask for `[CommRing k]`. -/
+
+section NormalFDRepAction
+
+variable [CommRing k]
+
+/-- The conjugate finite-dimensional action on a normal subgroup, as an honest equality. -/
+@[simp]
+theorem conjNormalFDRep_ρ (g : G) (A : FDRep k N) (x : N) :
+    (conjNormalFDRep g A).ρ x = A.ρ (MulAut.conjNormal g⁻¹ x) :=
+  rfl
+
+/-- The conjugate finite-dimensional action, written in the ambient group. -/
+theorem conjNormalFDRep_ρ_mk (g : G) (A : FDRep k N) (x : N) :
+    (conjNormalFDRep g A).ρ x = A.ρ ⟨g⁻¹ * (x : G) * g, hN.conj_mem' (x : G) x.2 g⟩ := by
+  rw [conjNormalFDRep_ρ]
+  congr 1
+  exact Subtype.ext (by simp)
+
+/-- Conjugation on a normal subgroup preserves the dimension. -/
+@[simp]
+theorem finrank_conjNormalFDRep (g : G) (A : FDRep k N) :
+    Module.finrank k (conjNormalFDRep g A) = Module.finrank k A :=
+  rfl
+
+end NormalFDRepAction
 
 section NormalCharacter
 
