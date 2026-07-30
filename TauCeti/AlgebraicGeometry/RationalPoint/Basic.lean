@@ -63,7 +63,7 @@ lemma leftInverse_of_section (hs : s ≫ f = 𝟙 S) : Function.LeftInverse f s 
 
 /-- A section of `f` is a one-sided inverse of `f` at every point of the base. -/
 @[simp]
-lemma apply_section (hs : s ≫ f = 𝟙 S) (y : S) : f (s y) = y :=
+lemma section_apply (hs : s ≫ f = 𝟙 S) (y : S) : f (s y) = y :=
   leftInverse_of_section hs y
 
 /-- Distinct points of the base have distinct images under a section. -/
@@ -91,7 +91,7 @@ theorem residueDegree_eq_one_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
     f.residueDegree (s y) = 1 :=
   Nat.dvd_one.mp ⟨_, (residueDegree_mul_residueDegree_of_section hs y).symm⟩
 
--- `apply_section` and `residueDegree_eq_one_of_section` above are the normal-form lemmas of this
+-- `section_apply` and `residueDegree_eq_one_of_section` above are the normal-form lemmas of this
 -- file and carry `@[simp]`; their consequences are deliberately *not* annotated. `simpNF` rejects
 -- `@[simp]` on `residueDegree_section_eq_one` outright, since its `f` cannot be inferred from the
 -- left-hand side so the lemma would never apply, and reports the other consequences as already
@@ -107,7 +107,7 @@ theorem residueDegree_section_eq_one (hs : s ≫ f = 𝟙 S) (y : S) :
 section of `f : X ⟶ S`, the residue degree of `f ≫ g` agrees with that of `g : S ⟶ Z`. -/
 theorem residueDegree_comp_of_section (hs : s ≫ f = 𝟙 S) (g : S ⟶ Z) (y : S) :
     (f ≫ g).residueDegree (s y) = g.residueDegree y := by
-  rw [residueDegree_comp, residueDegree_eq_one_of_section hs, Nat.mul_one, apply_section hs]
+  rw [residueDegree_comp, residueDegree_eq_one_of_section hs, Nat.mul_one, section_apply hs]
 
 /-! ### Residue fields at a section -/
 
@@ -134,7 +134,7 @@ lemma isIso_residueFieldMap_section (hs : s ≫ f = 𝟙 S) (y : S) :
 /-- The residue-field map of `f` at a point in the image of a section, followed by the
 residue-field map of the section, is the identity of `κ(y)`. -/
 lemma residueFieldMap_comp_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y : S) :
-    (S.residueFieldCongr (apply_section hs y).symm).hom ≫
+    (S.residueFieldCongr (section_apply hs y).symm).hom ≫
         f.residueFieldMap (s y) ≫ s.residueFieldMap y = 𝟙 (S.residueField y) := by
   rw [← Scheme.residueFieldMap_comp, Scheme.Hom.residueFieldMap_congr hs y]
   simp [Scheme.residueFieldCongr]
@@ -144,7 +144,7 @@ base at the corresponding point of the base. The inverse is the residue-field ma
 section. -/
 noncomputable def residueFieldIsoOfSection (hs : s ≫ f = 𝟙 S) (y : S) :
     S.residueField y ≅ X.residueField (s y) where
-  hom := (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y)
+  hom := (S.residueFieldCongr (section_apply hs y).symm).hom ≫ f.residueFieldMap (s y)
   inv := s.residueFieldMap y
   hom_inv_id := by
     rw [Category.assoc, residueFieldMap_comp_residueFieldMap_of_section hs y]
@@ -163,7 +163,7 @@ along `f (s y) = y`. -/
 @[simp]
 lemma residueFieldIsoOfSection_hom (hs : s ≫ f = 𝟙 S) (y : S) :
     (residueFieldIsoOfSection hs y).hom =
-      (S.residueFieldCongr (apply_section hs y).symm).hom ≫ f.residueFieldMap (s y) :=
+      (S.residueFieldCongr (section_apply hs y).symm).hom ≫ f.residueFieldMap (s y) :=
   (rfl)
 
 /-- The inverse of `residueFieldIsoOfSection` is the residue-field map of the section. -/
