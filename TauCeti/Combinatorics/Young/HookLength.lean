@@ -105,7 +105,7 @@ theorem mem_hook {d : ℕ × ℕ} :
     d ∈ hook μ c ↔ d = c ∨ (d ∈ μ ∧ d.1 = c.1 ∧ c.2 < d.2) ∨ (d ∈ μ ∧ d.2 = c.2 ∧ c.1 < d.1) := by
   simp [hook]
 
-theorem self_mem_hook : c ∈ hook μ c := by simp [mem_hook]
+theorem mem_hook_self : c ∈ hook μ c := by simp [mem_hook]
 
 theorem arm_subset_cells : arm μ c ⊆ μ.cells := fun _ hd => (mem_arm.mp hd).1
 
@@ -205,12 +205,10 @@ theorem leg_transpose :
 @[simp]
 theorem hook_transpose :
     hook μ.transpose c = (hook μ c.swap).map (Equiv.prodComm ℕ ℕ).toEmbedding := by
-  ext d
-  rw [Finset.mem_map_equiv]
-  simp only [mem_hook, Equiv.prodComm_symm, Equiv.prodComm_apply, _root_.YoungDiagram.mem_transpose,
-    Prod.fst_swap, Prod.snd_swap, Prod.swap_inj]
+  simp only [hook, Finset.map_insert, Finset.map_union, arm_transpose, leg_transpose,
+    Equiv.coe_toEmbedding, Equiv.prodComm_apply, Prod.swap_swap]
   -- the arm and the leg have traded places
-  exact or_congr Iff.rfl or_comm
+  rw [Finset.union_comm]
 
 /-- Transposition exchanges arm lengths with leg lengths. -/
 @[simp]
@@ -243,16 +241,19 @@ theorem prod_hookLength_transpose :
 
 variable {μ c}
 
+@[simp]
 theorem armLength_eq_zero_iff : armLength μ c = 0 ↔ (c.1, c.2 + 1) ∉ μ := by
   rw [_root_.YoungDiagram.mem_iff_lt_rowLen, armLength_def]
   omega
 
+@[simp]
 theorem legLength_eq_zero_iff : legLength μ c = 0 ↔ (c.1 + 1, c.2) ∉ μ := by
   rw [_root_.YoungDiagram.mem_iff_lt_colLen, legLength_def]
   omega
 
 /-- A cell has hook length `1` exactly when the cell to its right and the cell below it are both
 absent from the diagram; for a cell of `μ` this says that it is a corner. -/
+@[simp]
 theorem hookLength_eq_one_iff :
     hookLength μ c = 1 ↔ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ := by
   rw [← armLength_eq_zero_iff, ← legLength_eq_zero_iff, hookLength_def]
