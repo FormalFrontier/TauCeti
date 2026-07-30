@@ -162,6 +162,55 @@ variable {E F : Type*}
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
 
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] in
+/-- **Invertibility is an open condition along a family continuous at a point.** If `D T` is an
+equivalence and `D` is continuous at `T`, then `D S` is an equivalence for every `S` near `T`.
+
+This is the sole topological input to the stability theorem; nothing in it is specific to block
+forms. -/
+private theorem eventually_exists_continuousLinearEquiv_eq {G : Type*} [TopologicalSpace G]
+    {X Y : Type*} [NormedAddCommGroup X] [NormedSpace 𝕜 X] [CompleteSpace X]
+    [SeminormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    {D : G → (X →L[𝕜] Y)} {T : G} (hD : ContinuousAt D T) {e₀ : X ≃L[𝕜] Y}
+    (hT : D T = (e₀ : X →L[𝕜] Y)) :
+    ∀ᶠ S in 𝓝 T, ∃ e : X ≃L[𝕜] Y, D S = (e : X →L[𝕜] Y) := by
+  -- Mathlib's `ContinuousLinearEquiv.nhds` says the equivalences are a neighbourhood of each of
+  -- their members; continuity at `T` pulls that back along `D`.
+  have hmem : D ⁻¹' Set.range ((↑) : (X ≃L[𝕜] Y) → (X →L[𝕜] Y)) ∈ 𝓝 T := by
+    apply hD.preimage_mem_nhds
+    rw [hT]
+    exact ContinuousLinearEquiv.nhds e₀
+  filter_upwards [hmem] with S hS
+  obtain ⟨e, he⟩ := hS
+  exact ⟨e, he.symm⟩
+
+omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- **A splitting with an invertible corner makes an operator Fredholm.** Suppose the domain splits
+as `K × X` and the codomain as `Y × C`, with `K` and `C` finite-dimensional, and that in the
+resulting block form of `S` the corner `X → Y` is an equivalence. Then `S` is Fredholm of index
+`finrank K - finrank C`. -/
+private theorem isFredholm_and_index_eq_of_splitting
+    {K X Y C : Type*}
+    [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
+    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
+    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
+    (S : E →L[𝕜] F) (p : (K × X) ≃L[𝕜] E) (q : (Y × C) ≃L[𝕜] F) {e : X ≃L[𝕜] Y}
+    (he : blockCorner ((q.symm : F →L[𝕜] Y × C).comp (S.comp (p : K × X →L[𝕜] E))) =
+      (e : X →L[𝕜] Y)) :
+    IsFredholm S ∧
+      ContinuousLinearMap.index S = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
+  -- Conjugating by the two splitting equivalences changes neither Fredholmness nor the index, so
+  -- this is `isFredholm_and_index_eq_of_blockCorner_equiv` transported along `p` and `q`.
+  set A := (q.symm : F →L[𝕜] Y × C).comp (S.comp (p : K × X →L[𝕜] E)) with hAdef
+  obtain ⟨hAfredholm, hAindex⟩ := isFredholm_and_index_eq_of_blockCorner_equiv A e he
+  have hrecover : S = (q : Y × C →L[𝕜] F).comp (A.comp (p.symm : E →L[𝕜] K × X)) := by
+    ext x
+    simp [hAdef]
+  refine ⟨by rw [hrecover]; exact (hAfredholm.comp_equiv p.symm).equiv_comp q, ?_⟩
+  rw [← hAindex, hrecover]
+  simp
+
 /-- Fredholmness and the Fredholm index are stable in a neighbourhood of a Fredholm operator. -/
 theorem IsFredholm.eventually_isFredholm_and_index_eq {T : E →L[𝕜] F}
     (hT : IsFredholm T) :
@@ -193,38 +242,13 @@ theorem IsFredholm.eventually_isFredholm_and_index_eq {T : E →L[𝕜] F}
   have hD : Continuous D := by
     dsimp only [D, A, blockCorner]
     fun_prop
-  -- Equivalences form an open subset of the operator space, so this corner remains invertible
-  -- for all operators in a neighbourhood of `T`.
-  have hnhds :
-      D ⁻¹' Set.range ((↑) :
-        (hT.kerComplement ≃L[𝕜] LinearMap.range (T : E →ₗ[𝕜] F)) →
-          hT.kerComplement →L[𝕜] LinearMap.range (T : E →ₗ[𝕜] F)) ∈ 𝓝 T := by
-    apply hD.continuousAt.preimage_mem_nhds
-    rw [hDT]
-    exact ContinuousLinearEquiv.nhds hT.kerComplementEquivRange
-  filter_upwards [hnhds] with S hS
+  filter_upwards [eventually_exists_continuousLinearEquiv_eq hD.continuousAt hDT] with S hS
   obtain ⟨e, he⟩ := hS
-  have hA := isFredholm_and_index_eq_of_blockCorner_equiv (A S) e he.symm
-  have hSfredholm : IsFredholm S := by
-    have hAS : IsFredholm (A S) := hA.1
-    have hrecover :
-        S = (codomainEquiv : _ →L[𝕜] F).comp
-          ((A S).comp (domainEquiv.symm : E →L[𝕜] _)) := by
-      ext x
-      simp [A]
-    rw [hrecover]
-    exact (hAS.comp_equiv domainEquiv.symm).equiv_comp codomainEquiv
+  obtain ⟨hSfredholm, hSindex⟩ :=
+    isFredholm_and_index_eq_of_splitting S domainEquiv codomainEquiv he
   refine ⟨hSfredholm, ?_⟩
-  have hindexAS : ContinuousLinearMap.index (A S) =
-      (finrank 𝕜 (LinearMap.ker (T : E →ₗ[𝕜] F)) : ℤ) -
-        finrank 𝕜 hT.cokerComplement :=
-    hA.2
-  rw [ContinuousLinearMap.index_eq_finrank_sub T,
+  rw [hSindex, ContinuousLinearMap.index_eq_finrank_sub T,
     LinearEquiv.finrank_eq hT.cokerEquivComplement.toLinearEquiv]
-  calc
-    ContinuousLinearMap.index S = ContinuousLinearMap.index (A S) := by
-      simp [A]
-    _ = _ := hindexAS
 
 /-- A sufficiently small operator-norm perturbation of a Fredholm operator is Fredholm with the
 same index. -/
