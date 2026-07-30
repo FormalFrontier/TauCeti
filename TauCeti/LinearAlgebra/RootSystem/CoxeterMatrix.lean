@@ -7,8 +7,7 @@ module
 public import Mathlib.GroupTheory.Coxeter.Matrix
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
-public import Mathlib.LinearAlgebra.RootSystem.Finite.Lemmas
-public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 
 public section
 
@@ -36,9 +35,10 @@ simple root has Cartan product `4` with itself. Products outside `{0, 1, 2, 3, 4
 here and are sent to `0`, Mathlib's encoding of an infinite Coxeter order.
 
 The final section checks the smallest of the intended braid relations, the one available before the
-Coxeter presentation of the Weyl group is built: the entry of two distinct simple roots is `2`
-exactly when they are orthogonal, and there the two simple reflections commute and their product
-has order exactly `2`, as the entry asserts.
+Coxeter presentation of the Weyl group is built: an entry is `2` exactly for orthogonal simple
+roots, and there the two simple reflections commute
+(`TauCeti.RootPairing.weylGroup.commute_ofIdx_of_isOrthogonal`) and their product has order exactly
+`2`, as the entry asserts.
 
 ## Main definitions
 
@@ -51,6 +51,7 @@ has order exactly `2`, as the entry asserts.
 * `TauCeti.cartanMatrix_mul_cartanMatrix_mem_of_ne`: the Cartan product of two distinct simple
   roots lies in `{0, 1, 2, 3}`, so `TauCeti.coxeterOrder` reads a genuine Coxeter order off it.
 * `TauCeti.coxeterMatrixOfBase_eq_two_iff`: an entry is `2` exactly for orthogonal simple roots.
+  In particular the diagonal entries are not `2`, since no root is orthogonal to itself.
 * `TauCeti.forall_coxeterMatrixOfBase_le_three_iff`: all entries are at most `3` exactly when the
   Cartan matrix is simply laced.
 * `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_of_eq_two`: where the matrix entry is `2`,
@@ -230,6 +231,8 @@ noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support where
 
 -- `(rfl)`, not `rfl`: the body of `coxeterMatrixOfBase` is deliberately left unexposed, and the
 -- parenthesised form keeps this proof out of the exported definitional-equality check.
+/-- The entry of the Coxeter matrix of a base at a pair of simple roots is `coxeterOrder` applied
+to the product of the two Cartan entries. -/
 @[simp]
 lemma coxeterMatrixOfBase_apply (i j : b.support) :
     coxeterMatrixOfBase P b i j = coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i) := (rfl)
@@ -255,12 +258,16 @@ lemma coxeterMatrixOfBase_le_six (i j : b.support) : coxeterMatrixOfBase P b i j
   · simp
   · exact coxeterOrder_le_six (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij)
 
-/-- **Two distinct simple roots carry the Coxeter entry `2` exactly when they are orthogonal.** -/
-theorem coxeterMatrixOfBase_eq_two_iff {i j : b.support} (hij : i ≠ j) :
+/-- **Two simple roots carry the Coxeter entry `2` exactly when they are orthogonal.** On the
+diagonal both sides fail: the entry there is `1`, and no root is orthogonal to itself. -/
+theorem coxeterMatrixOfBase_eq_two_iff (i j : b.support) :
     coxeterMatrixOfBase P b i j = 2 ↔ P.IsOrthogonal (i : ι) (j : ι) := by
-  rw [coxeterMatrixOfBase_apply,
-    coxeterOrder_eq_two_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij),
-    cartanMatrix_mul_cartanMatrix_eq_zero_iff_isOrthogonal]
+  rcases eq_or_ne i j with rfl | hij
+  · rw [← cartanMatrix_mul_cartanMatrix_eq_zero_iff_isOrthogonal P b]
+    simp
+  · rw [coxeterMatrixOfBase_apply,
+      coxeterOrder_eq_two_iff (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij),
+      cartanMatrix_mul_cartanMatrix_eq_zero_iff_isOrthogonal]
 
 /-- **The Coxeter matrix of a base has all entries at most `3` exactly when its Cartan matrix is
 simply laced**, that is, exactly when no two simple roots are joined by a multiple edge. -/
@@ -285,57 +292,18 @@ end CoxeterMatrixOfBase
 
 namespace RootPairing.weylGroup
 
-/-- A simple reflection of the Weyl group is the corresponding reflection of the root pairing. -/
-@[simp]
-lemma coe_ofIdx (i : ι) :
-    ((_root_.RootPairing.weylGroup.ofIdx P i : P.weylGroup) : P.Aut) =
-      _root_.RootPairing.Equiv.reflection P i :=
-  rfl
-
-/-- A simple reflection of the Weyl group is an involution. -/
-lemma ofIdx_mul_self (i : ι) :
-    _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P i = 1 := by
-  rw [mul_eq_one_iff_eq_inv]
-  exact Subtype.ext (_root_.RootPairing.Equiv.reflection_inv P i).symm
-
-/-- **Orthogonal simple roots have commuting simple reflections**: this is the braid relation that
-the Coxeter entry `2` asserts. -/
-theorem commute_ofIdx_of_isOrthogonal {i j : ι} (h : P.IsOrthogonal i j) :
-    Commute (_root_.RootPairing.weylGroup.ofIdx P i) (_root_.RootPairing.weylGroup.ofIdx P j) := by
-  refine Subtype.ext ?_
-  simp only [Subgroup.coe_mul]
-  apply _root_.RootPairing.Equiv.weightHom_injective P
-  simpa only [coe_ofIdx, map_mul, _root_.RootPairing.Equiv.weightHom_apply,
-    _root_.RootPairing.Equiv.reflection_weightEquiv] using
-    (_root_.RootPairing.isOrthogonal_comm P i j h).eq
-
 variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
-
-/-- Distinct simple roots give distinct simple reflections: a simple reflection turns its own
-simple root negative and leaves every other one positive. -/
-theorem ofIdx_ne_ofIdx_of_ne (b : P.Base) {i j : ι}
-    (hi : i ∈ b.support) (hj : j ∈ b.support) (hij : i ≠ j) :
-    _root_.RootPairing.weylGroup.ofIdx P i ≠ _root_.RootPairing.weylGroup.ofIdx P j := by
-  letI := P.indexNeg
-  intro hEq
-  have hpos : b.IsPos (P.reflectionPerm i j) :=
-    (b.isPos_of_mem_support hj).reflectionPerm hi hij.symm
-  have hneg : ¬ b.IsPos (P.reflectionPerm j j) := by
-    rw [← _root_.RootPairing.indexNeg_neg, _root_.RootPairing.Base.IsPos.neg_iff_not]
-    exact not_not_intro (b.isPos_of_mem_support hj)
-  refine hneg ?_
-  rw [← weylGroupToPerm_ofIdx_apply P j j, ← hEq, weylGroupToPerm_ofIdx_apply P i j]
-  exact hpos
 
 /-- **Where the Coxeter matrix of a base has the entry `2`, the product of the two simple
 reflections does have order `2`.** This is the one entry of `coxeterMatrixOfBase` that can be
 checked before the Coxeter presentation of the Weyl group is available. -/
-theorem orderOf_ofIdx_mul_ofIdx_of_eq_two (b : P.Base) {i j : b.support} (hij : i ≠ j)
+theorem orderOf_ofIdx_mul_ofIdx_of_eq_two (b : P.Base) {i j : b.support}
     (h : coxeterMatrixOfBase P b i j = 2) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P (i : ι) *
       _root_.RootPairing.weylGroup.ofIdx P (j : ι)) = 2 := by
+  have hij : i ≠ j := by rintro rfl; simp at h
   have hij' : (i : ι) ≠ (j : ι) := fun h ↦ hij (Subtype.ext h)
-  have hcomm := commute_ofIdx_of_isOrthogonal P ((coxeterMatrixOfBase_eq_two_iff P b hij).mp h)
+  have hcomm := commute_ofIdx_of_isOrthogonal P ((coxeterMatrixOfBase_eq_two_iff P b i j).mp h)
   refine orderOf_eq_prime ?_ ?_
   · rw [hcomm.mul_pow, sq, sq, ofIdx_mul_self, ofIdx_mul_self, mul_one]
   · rw [Ne, mul_eq_one_iff_eq_inv, inv_eq_of_mul_eq_one_right (ofIdx_mul_self P (j : ι))]

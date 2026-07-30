@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Base
-public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
 import Mathlib.Algebra.Group.Submonoid.Membership
 import Mathlib.GroupTheory.OrderOfElement
 
@@ -29,6 +29,8 @@ while root negation does not change the reflection.
   its simple reflections.
 * `TauCeti.exists_list_prod_ofIdx_eq` writes every Weyl-group element as a product of simple
   reflections.
+* `TauCeti.RootPairing.weylGroup.ofIdx_ne_ofIdx_of_ne` says distinct simple roots give distinct
+  simple reflections.
 
 ## References
 
@@ -70,19 +72,7 @@ omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] 
 private lemma ofIdx_reflectionPerm_self_eq (i : ι) :
     RootPairing.weylGroup.ofIdx P (P.reflectionPerm i i) =
     RootPairing.weylGroup.ofIdx P i := by
-  rw [ofIdx_reflectionPerm_eq P i i]
-  have hsquare :
-      RootPairing.weylGroup.ofIdx P i * RootPairing.weylGroup.ofIdx P i = 1 := by
-    rw [mul_eq_one_iff_eq_inv]
-    apply Subtype.ext
-    exact (RootPairing.Equiv.reflection_inv P i).symm
-  rw [hsquare, one_mul]
-
-omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
-private lemma ofIdx_inv_eq (i : ι) :
-    (RootPairing.weylGroup.ofIdx P i)⁻¹ = RootPairing.weylGroup.ofIdx P i := by
-  apply Subtype.ext
-  exact RootPairing.Equiv.reflection_inv P i
+  rw [ofIdx_reflectionPerm_eq P i i, RootPairing.weylGroup.ofIdx_mul_self, one_mul]
 
 private lemma ofIdx_mem_closure_simple (i : ι) :
     RootPairing.weylGroup.ofIdx P i ∈
@@ -128,7 +118,7 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
       apply Subgroup.closure_toSubmonoid_of_isOfFinOrder
       rintro x ⟨i, rfl⟩
       exact isOfFinOrder_iff_pow_eq_one.2 ⟨2, Nat.zero_lt_succ 1, by
-        rw [sq, mul_eq_one_iff_eq_inv, ofIdx_inv_eq P i]⟩
+        rw [sq, RootPairing.weylGroup.ofIdx_mul_self]⟩
     rw [← hclosure, ← weylGroup_eq_closure_simple P b]
     exact Submonoid.mem_top w
   rw [← FreeMonoid.mrange_lift] at hw
@@ -136,5 +126,24 @@ theorem exists_list_prod_ofIdx_eq (w : P.weylGroup) :
   refine ⟨l.toList, ?_⟩
   rw [← FreeMonoid.lift_apply]
   exact hl
+
+namespace RootPairing.weylGroup
+
+/-- Distinct simple roots give distinct simple reflections: a simple reflection turns its own
+simple root negative and leaves every other one positive. -/
+theorem ofIdx_ne_ofIdx_of_ne {i j : ι} (hi : i ∈ b.support) (hj : j ∈ b.support) (hij : i ≠ j) :
+    _root_.RootPairing.weylGroup.ofIdx P i ≠ _root_.RootPairing.weylGroup.ofIdx P j := by
+  letI := P.indexNeg
+  intro hEq
+  have hpos : b.IsPos (P.reflectionPerm i j) :=
+    (b.isPos_of_mem_support hj).reflectionPerm hi hij.symm
+  have hneg : ¬ b.IsPos (P.reflectionPerm j j) := by
+    rw [← _root_.RootPairing.indexNeg_neg, _root_.RootPairing.Base.IsPos.neg_iff_not]
+    exact not_not_intro (b.isPos_of_mem_support hj)
+  refine hneg ?_
+  rw [← weylGroupToPerm_ofIdx_apply P j j, ← hEq, weylGroupToPerm_ofIdx_apply P i j]
+  exact hpos
+
+end RootPairing.weylGroup
 
 end TauCeti

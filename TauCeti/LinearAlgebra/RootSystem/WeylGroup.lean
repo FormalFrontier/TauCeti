@@ -25,6 +25,9 @@ on its own coroot functional.
   coroot functional.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
+* `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
+* `TauCeti.RootPairing.weylGroup.commute_ofIdx_of_isOrthogonal` says orthogonal roots have
+  commuting reflections.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
   a finite root system is finite.
 * `TauCeti.RootPairing.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
@@ -130,6 +133,38 @@ lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
       congrArg Neg.neg (P.weylGroup_apply_root w j)
     _ = P.root (-(P.weylGroupToPerm w j)) := by
       rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
+
+namespace weylGroup
+
+/-- A simple reflection of the Weyl group is the corresponding reflection of the root pairing. -/
+@[simp]
+lemma coe_ofIdx (i : ι) :
+    ((_root_.RootPairing.weylGroup.ofIdx P i : P.weylGroup) : P.Aut) =
+      _root_.RootPairing.Equiv.reflection P i :=
+  rfl
+
+/-- A simple reflection of the Weyl group is its own inverse. -/
+lemma ofIdx_inv_eq (i : ι) :
+    (_root_.RootPairing.weylGroup.ofIdx P i)⁻¹ = _root_.RootPairing.weylGroup.ofIdx P i :=
+  Subtype.ext (_root_.RootPairing.Equiv.reflection_inv P i)
+
+/-- A simple reflection of the Weyl group is an involution. -/
+@[simp]
+lemma ofIdx_mul_self (i : ι) :
+    _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P i = 1 := by
+  rw [mul_eq_one_iff_eq_inv, ofIdx_inv_eq]
+
+/-- **Orthogonal roots have commuting reflections** in the Weyl group. -/
+theorem commute_ofIdx_of_isOrthogonal {i j : ι} (h : P.IsOrthogonal i j) :
+    Commute (_root_.RootPairing.weylGroup.ofIdx P i) (_root_.RootPairing.weylGroup.ofIdx P j) := by
+  refine Subtype.ext ?_
+  simp only [Subgroup.coe_mul]
+  apply _root_.RootPairing.Equiv.weightHom_injective P
+  simpa only [coe_ofIdx, map_mul, _root_.RootPairing.Equiv.weightHom_apply,
+    _root_.RootPairing.Equiv.reflection_weightEquiv] using
+    (_root_.RootPairing.isOrthogonal_comm P i j h).eq
+
+end weylGroup
 
 variable [Finite ι]
 
