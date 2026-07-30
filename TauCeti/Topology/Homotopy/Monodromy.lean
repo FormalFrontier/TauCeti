@@ -103,6 +103,7 @@ theorem monodromy_eq_self_iff_mem_range (hp : IsCoveringMap p) (e : p ⁻¹' {x}
 
 /-- The stabiliser of a chosen lift `e` of the basepoint, for the monodromy action of
 `π₁(X, x)` on the fibre over `x`, is the image of `π₁(E, e)` under the covering map. -/
+@[simp]
 theorem stabilizer_eq_range (hp : IsCoveringMap p) (e : p ⁻¹' {x}) :
     letI := hp.fundamentalGroupMulAction x
     MulAction.stabilizer (FundamentalGroup X x) e =
@@ -166,7 +167,7 @@ noncomputable def fiberEquivQuotientRange [PathConnectedSpace E] (hp : IsCoverin
 /-- The inverse of the orbit-stabiliser identification sends the coset of a loop class to the
 monodromy translate of the chosen lift. -/
 @[simp]
-theorem fiberEquivQuotientRange_symm_mk [PathConnectedSpace E] (hp : IsCoveringMap p)
+theorem fiberEquivQuotientRange_symm_apply_mk [PathConnectedSpace E] (hp : IsCoveringMap p)
     (e : p ⁻¹' {x}) (γ : FundamentalGroup X x) :
     (fiberEquivQuotientRange hp e).symm (QuotientGroup.mk γ) = hp.monodromy γ e :=
   letI := hp.fundamentalGroupMulAction x
