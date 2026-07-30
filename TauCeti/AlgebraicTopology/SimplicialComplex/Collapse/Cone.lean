@@ -55,13 +55,6 @@ namespace PreAbstractSimplicialComplex
 variable {ι : Type*} [DecidableEq ι] {K : _root_.PreAbstractSimplicialComplex ι}
   {v : ι} {σ : Finset ι}
 
-/-- The one-vertex complex is a cone with apex its vertex. -/
-theorem isCone_point (v : ι) : IsCone (point v) v where
-  apex_mem := mem_point.mpr rfl
-  insert_mem σ hσ := by
-    rw [mem_point.mp hσ]
-    simp
-
 /-- In a cone, a face `σ` missing the apex and maximal with that property is a free face, with
 `insert v σ` as its unique proper coface.
 
@@ -90,7 +83,7 @@ private theorem exists_maximal_notMem_of_mem (hfin : K.faces.Finite) (hσ : σ �
     ∃ τ ∈ K, v ∉ τ ∧ ∀ ⦃ω : Finset ι⦄, ω ∈ K → v ∉ ω → τ ⊆ ω → ω = τ := by
   obtain ⟨τ, -, hτ⟩ :=
     (hfin.subset fun _ hρ => hρ.1 : {ρ : Finset ι | ρ ∈ K ∧ v ∉ ρ}.Finite).exists_le_maximal
-      (show σ ∈ {ρ : Finset ι | ρ ∈ K ∧ v ∉ ρ} from ⟨hσ, hv⟩)
+      ⟨hσ, hv⟩
   exact ⟨τ, hτ.prop.1, hτ.prop.2, fun _ hω hvω hτω => hτ.eq_of_ge ⟨hω, hvω⟩ hτω⟩
 
 /-- A cone with apex `v` that is not the one-vertex complex at `v` has a face missing `v`. -/
