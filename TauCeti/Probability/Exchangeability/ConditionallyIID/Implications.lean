@@ -22,8 +22,9 @@ implications out of it do not.
 
 ## Main results
 
-* `ConditionallyIID.exchangeable`
-* `ConditionallyIID.contractable`
+* `ConditionallyIIDWith.exchangeable`, `ConditionallyIIDWith.contractable` — at a named directing
+  measure.
+* `ConditionallyIID.exchangeable`, `ConditionallyIID.contractable` — their existential corollaries.
 -/
 
 public section
@@ -38,15 +39,27 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
+/-- A sequence with a named directing measure is exchangeable. -/
+theorem ConditionallyIIDWith.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Exchangeable μ X :=
+  (mixedIIDWith_of_conditionallyIIDWith h).exchangeable
+
 /-- A conditionally i.i.d. sequence is exchangeable. -/
 theorem ConditionallyIID.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : Exchangeable μ X :=
-  (mixedIID_of_conditionallyIID h).exchangeable
+  let ⟨_, hν⟩ := h.exists_directing
+  hν.exchangeable
+
+/-- A sequence with a named directing measure is contractable. -/
+theorem ConditionallyIIDWith.contractable {μ : Measure Ω} {X : ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Contractable μ X :=
+  (mixedIIDWith_of_conditionallyIIDWith h).contractable
 
 /-- A conditionally i.i.d. sequence is contractable. -/
 theorem ConditionallyIID.contractable {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : ConditionallyIID μ X) : Contractable μ X :=
-  (mixedIID_of_conditionallyIID h).contractable
+  let ⟨_, hν⟩ := h.exists_directing
+  hν.contractable
 
 
 end Probability
