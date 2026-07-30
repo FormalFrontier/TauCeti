@@ -128,12 +128,17 @@ noncomputable def realizationOneSimplexHomeomorphUnitInterval :
     Realization (⊤ : AbstractSimplicialComplex (Fin 2)) ≃ₜ unitInterval :=
   (realizationTopHomeomorphStdSimplex (ι := Fin 2)).trans stdSimplexHomeomorphUnitInterval
 
+private theorem stdSimplexHomeomorphUnitInterval_apply (x : stdSimplex ℝ (Fin 2)) :
+    (stdSimplexHomeomorphUnitInterval x : ℝ) = x 1 :=
+  rfl
+
 /-- The one-simplex homeomorphism is its second barycentric coordinate. -/
 @[simp]
 theorem realizationOneSimplexHomeomorphUnitInterval_coe (x : Realization
     (⊤ : AbstractSimplicialComplex (Fin 2))) :
-    (realizationOneSimplexHomeomorphUnitInterval x : ℝ) = x.1 1 :=
-  (rfl)
+    (realizationOneSimplexHomeomorphUnitInterval x : ℝ) = x.1 1 := by
+  rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.trans_apply,
+    stdSimplexHomeomorphUnitInterval_apply, realizationTopHomeomorphStdSimplex_apply]
 
 /-- The zeroth vertex of the realized one-simplex is the left endpoint of the interval. -/
 @[simp]
@@ -169,6 +174,16 @@ private noncomputable def finTwoHomeomorphSphereZero : Fin 2 ≃ₜ sphere (0 : 
     Finite.of_equiv (Fin 2) finTwoEquivSphereZero
   exact Homeomorph.ofDiscrete finTwoEquivSphereZero
 
+@[simp]
+private theorem finTwoHomeomorphSphereZero_zero :
+    (finTwoHomeomorphSphereZero 0 : ℝ) = 1 :=
+  rfl
+
+@[simp]
+private theorem finTwoHomeomorphSphereZero_one :
+    (finTwoHomeomorphSphereZero 1 : ℝ) = -1 :=
+  rfl
+
 /-- The realization of the boundary of the standard one-simplex is homeomorphic to the unit
 zero-sphere. By `simplexBoundary_univ_fin_two`, the underlying precomplex of the source is exactly
 the boundary of the simplex on the two vertices. -/
@@ -182,8 +197,7 @@ theorem realizationOneSimplexBoundaryHomeomorphSphereZero_vertex_zero :
     (realizationOneSimplexBoundaryHomeomorphSphereZero
       (vertex (⊥ : AbstractSimplicialComplex (Fin 2)) 0) : ℝ) = 1 := by
   rw [realizationOneSimplexBoundaryHomeomorphSphereZero, Homeomorph.trans_apply,
-    realizationBotHomeomorph_apply_vertex]
-  rfl
+    realizationBotHomeomorph_apply_vertex, finTwoHomeomorphSphereZero_zero]
 
 /-- The first boundary vertex maps to `-1` on the zero-sphere. -/
 @[simp]
@@ -191,8 +205,7 @@ theorem realizationOneSimplexBoundaryHomeomorphSphereZero_vertex_one :
     (realizationOneSimplexBoundaryHomeomorphSphereZero
       (vertex (⊥ : AbstractSimplicialComplex (Fin 2)) 1) : ℝ) = -1 := by
   rw [realizationOneSimplexBoundaryHomeomorphSphereZero, Homeomorph.trans_apply,
-    realizationBotHomeomorph_apply_vertex]
-  rfl
+    realizationBotHomeomorph_apply_vertex, finTwoHomeomorphSphereZero_one]
 
 end AbstractSimplicialComplex
 
