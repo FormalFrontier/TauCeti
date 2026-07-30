@@ -22,9 +22,9 @@ Dedekind domains, `ClassGroup.mulEquiv f` sends the class of an ideal to the cla
 pushforward `Ideal.map f` (`ClassGroup.mulEquiv_mk0`), derived from the fraction-field computation
 `ClassGroup.mulEquiv_mk_fractionRing`. Second the **inversion**: the ideal class of `σI` is the
 inverse of the class of `I` because `I · σI` is principal — the norm-principality theorem
-`isPrincipal_mul_map_ringOfIntegersQuadraticConj` (in `Quadratic/ConjugationNorm.lean`) combined with
-`ClassGroup.mk0_eq_mk0_inv_iff`. Reducing to `IsSquare (C⁻¹ / C)` in the elementary-2 quotient then
-gives the identity on `Cl/Cl²`.
+`isPrincipal_mul_map_ringOfIntegersQuadraticConj` (in `Quadratic/ConjugationNorm.lean`) combined
+with `ClassGroup.mk0_eq_mk0_inv_iff`. Reducing to `IsSquare (C⁻¹ / C)` in the elementary-2 quotient
+then gives the identity on `Cl/Cl²`.
 
 This is Layer 3 of the multiquadratic roadmap: the summit isomorphism
 `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` factors the conjugation action through its triviality on `Cl/Cl²`.
