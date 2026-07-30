@@ -16,7 +16,8 @@ A locally bounded family of holomorphic functions on an open set `Ω ⊆ ℂ` is
 sequence drawn from it has a subsequence converging locally uniformly on `Ω`, and the limit is
 again holomorphic. This is the **Montel selection** component of layer **L1 (normal families /
 Montel)** of the conformal-mapping roadmap, and the compactness engine the Riemann mapping theorem
-runs on. L1 also lists Vitali's theorem, which is not proved here, so the layer is not complete.
+runs on. The other component L1 lists, Vitali's theorem, is proved in `Conformal/Vitali.lean`,
+which applies the selection theorem below.
 
 The equicontinuity half is already available in `Conformal/NormalFamilies.lean`
 (`TauCeti.IsLocallyBoundedOn.equicontinuousOn`, from Cauchy's estimate); what is added here is the
