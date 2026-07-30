@@ -37,6 +37,15 @@ namespace TauCeti
 
 namespace YoungTableau
 
+private theorem ofModule'_apply
+    {k G M : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid M]
+    [Module k M] [Module (MonoidAlgebra k G) M]
+    [IsScalarTower k (MonoidAlgebra k G) M]
+    (g : G) (x : M) :
+    Representation.ofModule' (k := k) (G := G) M g x =
+      MonoidAlgebra.single g (1 : k) • x := by
+  rfl
+
 variable {μ : YoungDiagram}
 
 noncomputable section
@@ -48,6 +57,7 @@ def spechtIdeal (t : YoungTableau μ) :
   MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)) ∙ youngSymmetrizer t
 
 /-- An element lies in `ℚ[Sₙ] c_t` exactly when it is a left multiple of `c_t`. -/
+@[simp]
 theorem mem_spechtIdeal_iff (t : YoungTableau μ)
     (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) :
     x ∈ spechtIdeal t ↔
@@ -91,7 +101,10 @@ theorem spechtIdealRep_ρ_apply_coe (t : YoungTableau μ)
       MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
       MonoidAlgebra.single g 1 *
         (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) := by
-  rfl
+  rw [show (spechtIdealRep t).ρ =
+    Representation.ofModule' (spechtIdeal t) from
+      Rep.of_ρ (spechtIdeal t) (Representation.ofModule' (spechtIdeal t))]
+  rw [ofModule'_apply, Submodule.coe_smul, smul_eq_mul]
 
 /-- A Young-symmetrizer left ideal is finite-dimensional over `ℚ`. -/
 noncomputable instance instModuleFiniteSpechtIdeal (t : YoungTableau μ) :

@@ -237,20 +237,9 @@ theorem youngSymmetrizer_coeff_one (t : YoungTableau μ) :
       (p : Equiv.Perm (Fin μ.card)) * q = 1 ↔ p = 1 ∧ q = 1 := by
     constructor
     · intro hpq
-      have hpcol : (p : Equiv.Perm (Fin μ.card)) ∈ colSubgroup t := by
-        rw [show (p : Equiv.Perm (Fin μ.card)) =
-          (q : Equiv.Perm (Fin μ.card))⁻¹ by
-            exact eq_inv_of_mul_eq_one_left hpq]
-        exact (colSubgroup t).inv_mem q.property
-      have hpinf :
-          (p : Equiv.Perm (Fin μ.card)) ∈ rowSubgroup t ⊓ colSubgroup t :=
-        ⟨p.property, hpcol⟩
-      rw [rowSubgroup_inf_colSubgroup_eq_bot t] at hpinf
-      have hp : p = 1 := Subtype.ext (Subgroup.mem_bot.mp hpinf)
-      subst p
-      have hq : (q : Equiv.Perm (Fin μ.card)) = 1 := by
-        simpa using hpq
-      exact ⟨rfl, Subtype.ext hq⟩
+      have hpq' := Subgroup.disjoint_iff_mul_eq_one.mp
+        (disjoint_rowSubgroup_colSubgroup t) p.property q.property hpq
+      exact ⟨Subtype.ext hpq'.1, Subtype.ext hpq'.2⟩
     · rintro ⟨rfl, rfl⟩
       simp
   have heq (p : rowSubgroup t) (q : colSubgroup t) :
@@ -268,6 +257,7 @@ theorem youngSymmetrizer_coeff_one (t : YoungTableau μ) :
   · simp
 
 /-- A Young symmetrizer is nonzero. -/
+@[simp]
 theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
     youngSymmetrizer t ≠ 0 := by
   intro h
