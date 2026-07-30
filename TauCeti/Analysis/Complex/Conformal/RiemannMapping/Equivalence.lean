@@ -5,9 +5,10 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Analysis.Complex.Liouville
-public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Conformal
+import Mathlib.Analysis.Complex.Liouville
+import Mathlib.Topology.OpenPartialHomeomorph.Composition
+import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 
 /-!
@@ -29,10 +30,12 @@ other. This file proves those two statements, and the sharpness of the propernes
   `OpenPartialHomeomorph ℂ ℂ` conformal in both directions, and as a homeomorphism of subtypes.
 * `TauCeti.exists_bijOn_self_apply_eq_of_isSimplyConnected` — homogeneity: the biholomorphic
   self-maps of a simply connected open proper `Ω ⊆ ℂ` act transitively on `Ω`.
-* `TauCeti.Differentiable.exists_eq_const_of_isSimplyConnected` and
+* `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected` and
   `TauCeti.not_bijOn_univ_of_isSimplyConnected` — an entire function with values in a simply
   connected open proper set is constant, so `ℂ` itself is biholomorphic to no such set. This is
-  why `Ω ≠ Set.univ` cannot be dropped from the statements above.
+  why `Ω ≠ Set.univ` cannot be dropped from the two equivalence statements above. It *can* be
+  dropped from homogeneity, which also holds for `Ω = Set.univ` because the translations already
+  act transitively on `ℂ`; only the proof given here needs properness.
 
 ## Proof outline
 
@@ -40,9 +43,10 @@ Everything runs through the Riemann map. Transporting a domain `Ω` to the disc 
 `Ω'` back off it composes to a biholomorphism `Ω ≃ Ω'`; the inverse of a holomorphic injection on
 an open set is holomorphic by `TauCeti.DifferentiableOn.invFunOn`, so the composite inverse needs
 no separate argument. Homogeneity inserts, between the two transports of one and the same domain,
-a disc Moebius factor `z ↦ (z - a) / (1 - conj a * z)` composed with the factor centred at `-b`;
-this disc automorphism carries `a` to `0` and then `0` to `b`. Sharpness is Liouville's theorem:
-composing an entire map into `Ω` with the Riemann map of `Ω` gives a bounded entire function.
+a disc automorphism carrying one image point to the other; that automorphism is supplied by the
+transitivity of `TauCeti.unitDiscAut` and read back as a scalar map. Sharpness is Liouville's
+theorem: composing an entire map into `Ω` with the Riemann map of `Ω` gives a bounded entire
+function.
 
 ## Scope
 
@@ -114,10 +118,10 @@ theorem exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected
   exact ⟨_, hbij, hfd, differentiableOn_invFunOn_of_bijOn hΩo hfd hbij,
     hbij.injOn.leftInvOn_invFunOn, hbij.surjOn.rightInvOn_invFunOn⟩
 
-/-- **Conformal equivalence of simply connected proper domains, packaged.** The biholomorphism of
-`TauCeti.exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected` as an
-`OpenPartialHomeomorph ℂ ℂ` whose source is `Ω` and whose target is `Ω'`, holomorphic and conformal
-in both directions.
+/-- **Conformal equivalence of simply connected proper domains, packaged.** A biholomorphism of
+`Ω` onto `Ω'` as an `OpenPartialHomeomorph ℂ ℂ` whose source is `Ω` and whose target is `Ω'`,
+holomorphic and conformal in both directions. It is the Riemann map of `Ω` followed by the inverse
+of the Riemann map of `Ω'`, both taken from `TauCeti.riemannMapping_openPartialHomeomorph`.
 
 This is the packaged-equivalence companion the generality bar of
 `TauCetiRoadmap/ConformalMapping/README.md` asks for, in the same form as
@@ -132,54 +136,84 @@ theorem exists_openPartialHomeomorph_of_isSimplyConnected
       DifferentiableOn ℂ e.symm Ω' ∧
       (∀ z ∈ Ω, ConformalAt e z) ∧
       ∀ w ∈ Ω', ConformalAt e.symm w := by
-  obtain ⟨f, hbij, hfd, -, -, -⟩ :=
-    exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected hΩo hΩc hΩ hΩ'o hΩ'c hΩ'
-  refine ⟨TauCeti.DifferentiableOn.toOpenPartialHomeomorph hfd hΩo hbij.injOn,
-    TauCeti.DifferentiableOn.toOpenPartialHomeomorph_source hfd hΩo hbij.injOn,
-    (TauCeti.DifferentiableOn.toOpenPartialHomeomorph_target hfd hΩo hbij.injOn).trans
-      hbij.image_eq, ?_, ?_, ?_, ?_⟩
-  · rw [TauCeti.DifferentiableOn.toOpenPartialHomeomorph_coe hfd hΩo hbij.injOn]
-    exact hfd
-  · have hinv :=
-      TauCeti.DifferentiableOn.differentiableOn_toOpenPartialHomeomorph_symm hfd hΩo hbij.injOn
-    simpa only [hbij.image_eq] using hinv
-  · exact fun z hz =>
-      TauCeti.DifferentiableOn.conformalAt_toOpenPartialHomeomorph hfd hΩo hbij.injOn hz
-  · exact fun w hw =>
-      TauCeti.DifferentiableOn.conformalAt_toOpenPartialHomeomorph_symm hfd hΩo hbij.injOn
-        (hbij.image_eq ▸ hw)
+  obtain ⟨e, hesrc, htgt, hed, hesymmd, hec, hesymmc⟩ :=
+    riemannMapping_openPartialHomeomorph hΩo hΩc hΩ
+  obtain ⟨e', hesrc', htgt', hed', hesymmd', hec', hesymmc'⟩ :=
+    riemannMapping_openPartialHomeomorph hΩ'o hΩ'c hΩ'
+  have hmaps : MapsTo e Ω (ball (0 : ℂ) 1) := fun z hz => htgt ▸ e.map_source (hesrc ▸ hz)
+  have hmaps' : MapsTo e' Ω' (ball (0 : ℂ) 1) := fun w hw => htgt' ▸ e'.map_source (hesrc' ▸ hw)
+  refine ⟨e.trans e'.symm, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [OpenPartialHomeomorph.trans_source, OpenPartialHomeomorph.symm_source, hesrc, htgt']
+    exact inter_eq_left.2 hmaps
+  · rw [OpenPartialHomeomorph.trans_target, OpenPartialHomeomorph.symm_target,
+      OpenPartialHomeomorph.symm_symm, hesrc', htgt]
+    exact inter_eq_left.2 hmaps'
+  · rw [OpenPartialHomeomorph.coe_trans]
+    exact hesymmd'.comp hed hmaps
+  · rw [OpenPartialHomeomorph.coe_trans_symm, OpenPartialHomeomorph.symm_symm]
+    exact hesymmd.comp hed' hmaps'
+  · intro z hz
+    rw [OpenPartialHomeomorph.coe_trans]
+    exact ConformalAt.comp z (hesymmc' _ (hmaps hz)) (hec z hz)
+  · intro w hw
+    rw [OpenPartialHomeomorph.coe_trans_symm, OpenPartialHomeomorph.symm_symm]
+    exact ConformalAt.comp w (hesymmc _ (hmaps' hw)) (hec' w hw)
 
 /-- **Any two simply connected proper domains of `ℂ` are homeomorphic**, by a homeomorphism of
-subtypes induced by a biholomorphism. -/
+subtypes induced by a biholomorphism: both are homeomorphic to `Complex.UnitDisc` by
+`TauCeti.riemannMapping_homeomorph`. -/
 theorem nonempty_homeomorph_of_isSimplyConnected
     (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ)
     (hΩ'o : IsOpen Ω') (hΩ'c : IsSimplyConnected Ω') (hΩ' : Ω' ≠ univ) :
     Nonempty (Ω ≃ₜ Ω') := by
-  obtain ⟨f, hbij, hfd, -, -, -⟩ :=
-    exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected hΩo hΩc hΩ hΩ'o hΩ'c hΩ'
-  exact ⟨TauCeti.DifferentiableOn.toHomeomorphOfBijOn hfd hΩo hbij⟩
+  obtain ⟨e⟩ := riemannMapping_homeomorph hΩo hΩc hΩ
+  obtain ⟨e'⟩ := riemannMapping_homeomorph hΩ'o hΩ'c hΩ'
+  exact ⟨e.trans e'.symm⟩
 
-/-- A disc automorphism carrying a prescribed point of the open unit disc to another: the Moebius
-factor centred at `a`, which sends `a` to `0`, followed by the factor centred at `-b`, which sends
-`0` to `b`. -/
+/-- A self-equivalence of `Complex.UnitDisc`, read through a scalar representative, is a bijection
+of `Metric.ball 0 1` onto itself. -/
+private lemma bijOn_ball_of_unitDiscEquiv (E : Complex.UnitDisc ≃ Complex.UnitDisc) {φ : ℂ → ℂ}
+    (hφ : ∀ z : Complex.UnitDisc, (E z : ℂ) = φ z) :
+    BijOn φ (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
+  have mem : ∀ z : Complex.UnitDisc, (z : ℂ) ∈ ball (0 : ℂ) 1 := fun z => by
+    simpa [mem_ball_zero_iff] using z.norm_lt_one
+  have exists_coe : ∀ w ∈ ball (0 : ℂ) 1, ∃ z : Complex.UnitDisc, (z : ℂ) = w := fun w hw =>
+    ⟨Complex.UnitDisc.mk w (by simpa [mem_ball_zero_iff] using hw), Complex.UnitDisc.coe_mk _ _⟩
+  refine ⟨fun w hw => ?_, fun w₁ h₁ w₂ h₂ h => ?_, fun v hv => ?_⟩
+  · obtain ⟨z, rfl⟩ := exists_coe w hw
+    exact hφ z ▸ mem (E z)
+  · obtain ⟨z₁, rfl⟩ := exists_coe w₁ h₁
+    obtain ⟨z₂, rfl⟩ := exists_coe w₂ h₂
+    rw [← hφ z₁, ← hφ z₂] at h
+    exact congrArg _ (E.injective (Complex.UnitDisc.coe_injective h))
+  · obtain ⟨v', rfl⟩ := exists_coe v hv
+    exact ⟨(E.symm v' : ℂ), mem _, by rw [← hφ (E.symm v'), Equiv.apply_symm_apply]⟩
+
+/-- A holomorphic automorphism of the open unit disc carrying a prescribed point to another, as a
+scalar map of `Metric.ball 0 1`.
+
+The automorphism comes from the transitivity of `TauCeti.unitDiscAut` on `Complex.UnitDisc`,
+namely `TauCeti.exists_mem_unitDiscAut_apply_eq`; the classification
+`TauCeti.mem_unitDiscAut_iff` then names its scalar formula, whose holomorphy is
+`TauCeti.differentiableOn_unitDiscStandardAutomorphismFormula`. -/
 private lemma exists_bijOn_ball_apply_eq {a b : ℂ} (ha : ‖a‖ < 1) (hb : ‖b‖ < 1) :
     ∃ φ : ℂ → ℂ, BijOn φ (ball 0 1) (ball 0 1) ∧ DifferentiableOn ℂ φ (ball 0 1) ∧ φ a = b := by
-  have hnb : ‖(-b : ℂ)‖ < 1 := by simpa using hb
-  refine ⟨(fun w : ℂ => (w - (-b)) / (1 - (starRingEnd ℂ) (-b) * w)) ∘
-      fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z), ?_, ?_, ?_⟩
-  · exact (bijOn_ball_unitDiscMoebiusFormula_of_norm_lt_one hnb).comp
-      (bijOn_ball_unitDiscMoebiusFormula_of_norm_lt_one ha)
-  · exact (differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hnb).comp
-      (differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one ha)
-      (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha)
-  · simp
+  obtain ⟨e, he, hab⟩ :=
+    exists_mem_unitDiscAut_apply_eq (Complex.UnitDisc.mk a ha) (Complex.UnitDisc.mk b hb)
+  obtain ⟨u, c, rfl⟩ := mem_unitDiscAut_iff.1 he
+  refine ⟨_, bijOn_ball_of_unitDiscEquiv _ (coe_unitDiscStandardAutomorphismEquiv_apply u c),
+    differentiableOn_unitDiscStandardAutomorphismFormula u c, ?_⟩
+  have hval := coe_unitDiscStandardAutomorphismEquiv_apply u c (Complex.UnitDisc.mk a ha)
+  rw [hab] at hval
+  simpa using hval.symm
 
 /-- **A simply connected proper domain is homogeneous.** The biholomorphic self-maps of a simply
 connected open proper `Ω ⊆ ℂ` act transitively on `Ω`: given `z₀, z₁ ∈ Ω` there is a holomorphic
 bijection of `Ω` onto itself, with holomorphic inverse, carrying `z₀` to `z₁`.
 
-Transitivity is inherited from the disc, where the Moebius factors already act transitively; the
-Riemann map transports the action. It fails badly without simple connectivity — the punctured disc,
+Transitivity is inherited from the disc, where `TauCeti.unitDiscAut` already acts transitively;
+the Riemann map transports the action. It fails badly without simple connectivity — the punctured
+disc,
 for instance, is not homogeneous. -/
 theorem exists_bijOn_self_apply_eq_of_isSimplyConnected
     (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ) {z₀ z₁ : ℂ}
@@ -205,8 +239,9 @@ too.
 
 For bounded `Ω` this is Liouville's theorem itself, but the statement covers unbounded `Ω` such as
 the slit plane, where the Riemann map is doing genuine work. -/
-theorem Differentiable.exists_eq_const_of_isSimplyConnected {f : ℂ → ℂ} (hf : Differentiable ℂ f)
-    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ) (hmaps : ∀ z, f z ∈ Ω) :
+theorem Differentiable.exists_const_forall_eq_of_isSimplyConnected {f : ℂ → ℂ}
+    (hf : Differentiable ℂ f) (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ)
+    (hmaps : ∀ z, f z ∈ Ω) :
     ∃ c, ∀ z, f z = c := by
   obtain ⟨r, hrbij, hrd, -⟩ := riemannMapping hΩo hΩc hΩ
   have hcomp : Differentiable ℂ (r ∘ f) := fun z =>
@@ -215,12 +250,12 @@ theorem Differentiable.exists_eq_const_of_isSimplyConnected {f : ℂ → ℂ} (h
     Metric.isBounded_ball.subset (by
       rintro _ ⟨z, rfl⟩
       exact hrbij.mapsTo (hmaps z))
-  exact ⟨f 0, fun z =>
-    hrbij.injOn (hmaps z) (hmaps 0) (hcomp.apply_eq_apply_of_bounded hbdd z 0)⟩
+  obtain ⟨c, hc⟩ := hcomp.exists_const_forall_eq_of_bounded hbdd
+  exact ⟨f 0, fun z => hrbij.injOn (hmaps z) (hmaps 0) ((hc z).trans (hc 0).symm)⟩
 
 /-- **`ℂ` is conformally equivalent to no simply connected proper domain.** No entire function maps
 `ℂ` bijectively onto a simply connected open proper subset of `ℂ`, since by
-`TauCeti.Differentiable.exists_eq_const_of_isSimplyConnected` it would be constant.
+`TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected` it would be constant.
 
 So the properness hypothesis in
 `TauCeti.exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected` cannot be dropped: `ℂ` is a
@@ -230,7 +265,7 @@ theorem not_bijOn_univ_of_isSimplyConnected {f : ℂ → ℂ} (hf : Differentiab
     ¬ BijOn f univ Ω := by
   intro hbij
   obtain ⟨c, hc⟩ :=
-    Differentiable.exists_eq_const_of_isSimplyConnected hf hΩo hΩc hΩ fun z =>
+    Differentiable.exists_const_forall_eq_of_isSimplyConnected hf hΩo hΩc hΩ fun z =>
       hbij.mapsTo (mem_univ z)
   exact zero_ne_one (hbij.injOn (mem_univ 0) (mem_univ 1) ((hc 0).trans (hc 1).symm))
 

@@ -251,23 +251,6 @@ lemma leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one {a : ℂ} (ha : ‖a‖ < 
   simpa [coe_unitDiscMoebius, Complex.UnitDisc.coe_neg, Complex.UnitDisc.coe_mk, map_neg,
     neg_mul, sub_neg_eq_add] using h
 
-/-- The scalar unit-disc Moebius formula centered at `a` is a bijection of the open unit disc
-onto itself, the formula centered at `-a` inverting it on both sides. -/
-lemma bijOn_ball_unitDiscMoebiusFormula_of_norm_lt_one {a : ℂ} (ha : ‖a‖ < 1) :
-    BijOn
-      (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
-      (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-  have hna : ‖(-a : ℂ)‖ < 1 := by simpa using ha
-  have hright :
-      LeftInvOn
-        (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
-        (fun z : ℂ => (z - (-a)) / (1 - (starRingEnd ℂ) (-a) * z))
-        (ball (0 : ℂ) 1) := by
-    simpa only [neg_neg] using leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hna
-  exact Set.InvOn.bijOn ⟨leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha, hright⟩
-    (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha)
-    (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one hna)
-
 /-- The standard Moebius self-equivalence of the unit disc sending `a` to `0`. -/
 noncomputable def unitDiscMoebiusEquiv (a : Complex.UnitDisc) :
     Complex.UnitDisc ≃ Complex.UnitDisc where
