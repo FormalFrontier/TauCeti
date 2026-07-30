@@ -15,8 +15,9 @@ simple pole at `z₀` and
 
 `Res_{z₀} (g / h) = g z₀ / h' z₀`.
 
-This is the textbook recipe for the residue of a quotient — the one used to evaluate essentially
-every concrete residue of a rational or meromorphic function, and hence the computational input to
+This is the textbook recipe for the residue at a *simple* pole of a quotient: it applies exactly
+when the denominator's zero at `z₀` is simple, and says nothing about higher-order zeros of `h` or
+about more general meromorphic singularities. Within that range it is the computational input to
 the roadmap's applications: the classical residue theorem
 (`TauCeti.Contour.classicalResidueTheorem_circle`) and the improper integrals reached by the
 Hungerbühler–Wasem generalized residue theorem
@@ -32,18 +33,18 @@ No Laurent expansion of `h` is needed: only the first-order information `h z₀ 
 
 The companion order computation is recorded alongside, because the Hungerbühler–Wasem hypotheses
 are stated in terms of pole orders: a simple zero of the denominator drops the order by exactly
-one (`meromorphicOrderAt_div_of_deriv_ne_zero`), so `g / h` has an *exactly* simple pole as soon as
-`g z₀ ≠ 0` (`meromorphicOrderAt_div_eq_neg_one`). That is precisely the shape of hypothesis that
-`TauCeti.Contour.hasCauchyPV_half_residue_of_simple_pole` and
+one (`meromorphicOrderAt_div_of_zero_deriv_ne_zero`), so `g / h` has an *exactly* simple pole as
+soon as `g z₀ ≠ 0` (`meromorphicOrderAt_div_eq_neg_one`). That is precisely the shape of hypothesis
+that `TauCeti.Contour.hasCauchyPV_half_residue_of_simple_pole` and
 `TauCeti.Contour.hungerbuhlerWasem_residueTheorem_of_simple_poles` consume.
 
 ## Main results
 
-* `TauCeti.Contour.residue_div_of_deriv_ne_zero` — `residue (g / h) z₀ = g z₀ / deriv h z₀` at a
-  simple zero `z₀` of `h`.
-* `TauCeti.Contour.residue_inv_of_deriv_ne_zero` — the numerator-free case
+* `TauCeti.Contour.residue_div_of_zero_deriv_ne_zero` — `residue (g / h) z₀ = g z₀ / deriv h z₀`
+  at a simple zero `z₀` of `h`.
+* `TauCeti.Contour.residue_inv_of_zero_deriv_ne_zero` — the numerator-free case
   `residue (fun z => (h z)⁻¹) z₀ = (deriv h z₀)⁻¹`.
-* `TauCeti.Contour.meromorphicOrderAt_div_of_deriv_ne_zero` — a simple zero of the denominator
+* `TauCeti.Contour.meromorphicOrderAt_div_of_zero_deriv_ne_zero` — a simple zero of the denominator
   lowers the meromorphic order by one.
 * `TauCeti.Contour.meromorphicOrderAt_div_eq_neg_one` — the pole is *exactly* simple when the
   numerator does not vanish, the `meromorphicOrderAt … = −1` hypothesis of the simple-pole
@@ -94,7 +95,8 @@ at `z₀` with `h z₀ = 0` and `deriv h z₀ ≠ 0`, then
 
 This is the textbook computation rule for residues of quotients; it needs only the first-order
 data `h z₀ = 0` and `deriv h z₀ ≠ 0` at the denominator's zero, no Laurent expansion. -/
-theorem residue_div_of_deriv_ne_zero (hg : AnalyticAt ℂ g z₀) (hh : AnalyticAt ℂ h z₀)
+@[simp]
+theorem residue_div_of_zero_deriv_ne_zero (hg : AnalyticAt ℂ g z₀) (hh : AnalyticAt ℂ h z₀)
     (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
     residue (fun z => g z / h z) z₀ = g z₀ / deriv h z₀ := by
   have hquot : Tendsto (fun z => (z - z₀) / h z) (𝓝[≠] z₀) (𝓝 (deriv h z₀)⁻¹) :=
@@ -110,13 +112,14 @@ theorem residue_div_of_deriv_ne_zero (hg : AnalyticAt ℂ g z₀) (hh : Analytic
     (Tendsto.congr' (Eventually.of_forall fun z => by ring) hkey)
 
 /-- **The residue of a reciprocal at a simple zero.** The numerator-free case of
-`TauCeti.Contour.residue_div_of_deriv_ne_zero`: at a zero of `h` with non-vanishing derivative,
-`residue (fun z => (h z)⁻¹) z₀ = (deriv h z₀)⁻¹`. -/
-theorem residue_inv_of_deriv_ne_zero (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ = 0)
+`TauCeti.Contour.residue_div_of_zero_deriv_ne_zero`: at a zero of `h` with non-vanishing
+derivative, `residue (fun z => (h z)⁻¹) z₀ = (deriv h z₀)⁻¹`. -/
+@[simp]
+theorem residue_inv_of_zero_deriv_ne_zero (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ = 0)
     (hh' : deriv h z₀ ≠ 0) :
     residue (fun z => (h z)⁻¹) z₀ = (deriv h z₀)⁻¹ := by
   simpa only [one_div] using
-    residue_div_of_deriv_ne_zero (g := fun _ => 1) analyticAt_const hh hh0 hh'
+    residue_div_of_zero_deriv_ne_zero (g := fun _ => 1) analyticAt_const hh hh0 hh'
 
 /-- A simple zero of the denominator lowers the meromorphic order by one: if `g` is meromorphic at
 `z₀` and `h` is analytic at `z₀` with `h z₀ = 0` and `deriv h z₀ ≠ 0`, then
@@ -126,8 +129,8 @@ theorem residue_inv_of_deriv_ne_zero (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ 
 The denominator's analytic order at a zero with non-vanishing derivative is `1`
 (`AnalyticAt.analyticOrderAt_eq_one_of_zero_deriv_ne_zero`), and orders subtract across a quotient
 (`fun_meromorphicOrderAt_div`). -/
-theorem meromorphicOrderAt_div_of_deriv_ne_zero (hg : MeromorphicAt g z₀) (hh : AnalyticAt ℂ h z₀)
-    (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
+theorem meromorphicOrderAt_div_of_zero_deriv_ne_zero (hg : MeromorphicAt g z₀)
+    (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
     meromorphicOrderAt (fun z => g z / h z) z₀ = meromorphicOrderAt g z₀ - 1 := by
   have hord : meromorphicOrderAt h z₀ = 1 := by
     rw [hh.meromorphicOrderAt_eq, hh.analyticOrderAt_eq_one_of_zero_deriv_ne_zero hh0 hh']
@@ -140,11 +143,11 @@ analytic at `z₀` with `g z₀ ≠ 0`, `h z₀ = 0` and `deriv h z₀ ≠ 0`, t
 the simple-pole residue theorems
 (`TauCeti.Contour.hungerbuhlerWasem_residueTheorem_of_simple_poles`,
 `TauCeti.Contour.hasCauchyPV_half_residue_of_simple_pole`), whose residue is then
-`g z₀ / deriv h z₀` by `TauCeti.Contour.residue_div_of_deriv_ne_zero`. -/
+`g z₀ / deriv h z₀` by `TauCeti.Contour.residue_div_of_zero_deriv_ne_zero`. -/
 theorem meromorphicOrderAt_div_eq_neg_one (hg : AnalyticAt ℂ g z₀) (hgne : g z₀ ≠ 0)
     (hh : AnalyticAt ℂ h z₀) (hh0 : h z₀ = 0) (hh' : deriv h z₀ ≠ 0) :
     meromorphicOrderAt (fun z => g z / h z) z₀ = -1 := by
-  rw [meromorphicOrderAt_div_of_deriv_ne_zero hg.meromorphicAt hh hh0 hh',
+  rw [meromorphicOrderAt_div_of_zero_deriv_ne_zero hg.meromorphicAt hh hh0 hh',
     hg.meromorphicOrderAt_eq, analyticOrderAt_eq_zero.mpr (Or.inr hgne)]
   simp
 
@@ -154,12 +157,19 @@ Two concrete residues that the quotient rule reads off in a few lines, and that 
 residue theorem's right-hand side needs in order to produce a number. -/
 
 /-- **The residue of `(z ^ n − 1)⁻¹` at an `n`-th root of unity** is `ζ / n`. The denominator has a
-simple zero at `ζ` with derivative `n · ζ ^ (n − 1) = n · ζ⁻¹`, so the residue is `ζ / n`;
-summing
+simple zero at `ζ` with derivative `n · ζ ^ (n − 1) = n · ζ⁻¹`, so the residue is `ζ / n`; summing
 over the `n`-th roots of unity recovers the familiar partial-fraction coefficients of
-`(z ^ n − 1)⁻¹`. -/
-theorem residue_inv_pow_sub_one {n : ℕ} (hn : n ≠ 0) {ζ : ℂ} (hζ : ζ ^ n = 1) :
+`(z ^ n − 1)⁻¹`. For `n = 0` the statement degenerates: both sides are `0`. -/
+@[simp]
+theorem residue_inv_pow_sub_one {n : ℕ} {ζ : ℂ} (hζ : ζ ^ n = 1) :
     residue (fun z => (z ^ n - 1)⁻¹) ζ = ζ / n := by
+  rcases eq_or_ne n 0 with rfl | hn
+  · -- Degenerate case: `z ^ 0 − 1 = 0`, so the function is identically `0` and both sides vanish.
+    have hzero : (fun z : ℂ => (z ^ 0 - 1)⁻¹) = fun _ : ℂ => (0 : ℂ) := by
+      funext z
+      simp
+    rw [hzero, residue_eq_zero_of_analyticAt analyticAt_const]
+    simp
   have hζ0 : ζ ≠ 0 := by
     rintro rfl
     rw [zero_pow hn] at hζ
@@ -176,20 +186,21 @@ theorem residue_inv_pow_sub_one {n : ℕ} (hn : n ≠ 0) {ζ : ℂ} (hζ : ζ ^ 
   have hd0 : deriv (fun z : ℂ => z ^ n - 1) ζ ≠ 0 := by
     rw [hda.deriv]
     exact mul_ne_zero (Nat.cast_ne_zero.mpr hn) (inv_ne_zero hζ0)
-  rw [residue_inv_of_deriv_ne_zero (h := fun z : ℂ => z ^ n - 1) (by fun_prop)
+  rw [residue_inv_of_zero_deriv_ne_zero (h := fun z : ℂ => z ^ n - 1) (by fun_prop)
     (by rw [hζ, sub_self]) hd0, hda.deriv, mul_inv, inv_inv]
   ring
 
 /-- **The residue of `(z ^ 2 + 1)⁻¹` at `I`** is `−(I / 2)`: the denominator has a simple zero at
 `I` with derivative `2 I`, so the residue is `(2 I)⁻¹ = −(I / 2)`. This is the residue behind the
 classical evaluation of the improper integral `∫ dx / (1 + x ^ 2) = π`. -/
+@[simp]
 theorem residue_inv_sq_add_one_I : residue (fun z => (z ^ 2 + 1)⁻¹) I = -(I / 2) := by
   have hda : HasDerivAt (fun z : ℂ => z ^ 2 + 1) (2 * I) I := by
     simpa using (hasDerivAt_pow 2 I).add_const 1
   have hd0 : deriv (fun z : ℂ => z ^ 2 + 1) I ≠ 0 := by
     rw [hda.deriv]
     exact mul_ne_zero two_ne_zero I_ne_zero
-  rw [residue_inv_of_deriv_ne_zero (h := fun z : ℂ => z ^ 2 + 1) (by fun_prop)
+  rw [residue_inv_of_zero_deriv_ne_zero (h := fun z : ℂ => z ^ 2 + 1) (by fun_prop)
     (by rw [I_sq]; ring) hd0, hda.deriv, mul_inv, inv_I]
   ring
 
