@@ -46,10 +46,11 @@ The roadmap states this layer over `ℝ`. Nothing in the argument uses completen
 the archimedean property, so the statements here are made over an arbitrary linearly ordered
 commutative ring; `ℝ` and `ℚ` are the intended instances.
 
-The maximization argument needs nothing of the ambient pairing beyond finiteness of the Weyl group,
-so it is proved as `exists_mem_dominantChamber_of_finite_weylGroup`; the roadmap-signature
-`exists_mem_dominantChamber` is the root-system case, obtained from
-`TauCeti.RootPairing.finite_weylGroup`.
+The maximization argument is proved as `exists_mem_dominantChamber_of_finite_weylGroup`, which
+asks for no root-system assumption: on top of the standing `Finite ι`, `P.IsCrystallographic` and
+`P.IsReduced` hypotheses that the positive-root permutation step needs, it assumes only
+`Finite P.weylGroup`. The roadmap-signature `exists_mem_dominantChamber` is the root-system case,
+where that finiteness comes from `TauCeti.RootPairing.finite_weylGroup`.
 
 ## References
 
@@ -192,8 +193,9 @@ section FiniteWeylGroup
 
 variable [Finite P.weylGroup]
 
-/-- **Every weight is Weyl-conjugate into the closed dominant chamber**, whenever the Weyl group is
-finite. Maximizing `posCorootSum` along the orbit produces the dominant representative. -/
+/-- **Every weight is Weyl-conjugate into the closed dominant chamber**, for a crystallographic
+reduced pairing with finitely many roots whose Weyl group is finite. Maximizing `posCorootSum`
+along the orbit produces the dominant representative. -/
 theorem exists_mem_dominantChamber_of_finite_weylGroup (x : M) :
     ∃ w : P.weylGroup, w • x ∈ dominantChamber P b := by
   obtain ⟨w, hw⟩ := Finite.exists_max fun w : P.weylGroup ↦ posCorootSum P b (w • x)
