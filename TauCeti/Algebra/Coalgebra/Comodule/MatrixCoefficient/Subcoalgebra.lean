@@ -64,6 +64,8 @@ theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
       TensorProduct.map
         (matrixCoefficientLinear (R := R) (C := C) φ) LinearMap.id
         (coact (R := R) (C := C) (M := M) m) := by
+  -- Expose matrix coefficients as composite linear maps so `coassoc_simps` can rewrite
+  -- coassociativity without tensor induction.
   change (Coalgebra.comul ∘ₗ (TensorProduct.lid R C).toLinearMap ∘ₗ
           TensorProduct.map φ LinearMap.id ∘ₗ
           coact (R := R) (C := C) (M := M)) m =
@@ -120,7 +122,7 @@ private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
       congr 1
       funext i
       rw [TensorProduct.equivFinsuppOfBasisLeft_apply]
-      rfl
+      simp only [LinearMap.rTensor]
 
 private theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι]
     (b : Basis ι R M) (m : M) :
@@ -151,6 +153,8 @@ theorem comul_matrixCoefficient_eq_sum {ι : Type x} [Fintype ι]
     (matrixCoefficientSubmodule (R := R) (C := C) (M := M)) <| by
       intro c hc
       let D := matrixCoefficientSubmodule (R := R) (C := C) (M := M)
+      -- Fold the carrier into `D` and expose the tensor-inclusion range required by
+      -- `Subcoalgebra.ofSubmodule`.
       change Coalgebra.comul (R := R) (A := C) c ∈
         LinearMap.range (TensorProduct.map D.subtype D.subtype)
       rw [TensorProduct.range_mapIncl]
