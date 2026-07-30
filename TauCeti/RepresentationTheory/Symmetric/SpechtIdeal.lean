@@ -43,11 +43,9 @@ public section
 
 namespace TauCeti
 
-namespace YoungTableau
-
-/-- `Representation.ofModule'` has no public application lemma, so this private bridge
-isolates its definitional reduction to the group-algebra action. -/
-private theorem ofModule'_apply
+/-- Mathlib has no application lemma for `Representation.ofModule'`, so this one isolates its
+definitional reduction to the group-algebra action. -/
+theorem ofModule'_apply
     {k G M : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid M]
     [Module k M] [Module (MonoidAlgebra k G) M]
     [IsScalarTower k (MonoidAlgebra k G) M]
@@ -55,6 +53,8 @@ private theorem ofModule'_apply
     Representation.ofModule' (k := k) (G := G) M g x =
       MonoidAlgebra.single g (1 : k) • x := by
   rfl
+
+namespace YoungTableau
 
 variable {μ : YoungDiagram}
 

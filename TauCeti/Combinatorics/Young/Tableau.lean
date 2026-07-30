@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Group.End
 public import Mathlib.Combinatorics.Young.YoungDiagram
 
 /-!
@@ -12,7 +13,9 @@ public import Mathlib.Combinatorics.Young.YoungDiagram
 A `μ`-tableau is a bijective filling `t : ↥μ.cells ≃ Fin μ.card` of the cells of a Young diagram
 `μ` by the labels `Fin μ.card`.  This file defines `YoungTableau`, the row and the column of a
 label, and identifies the labels lying in a given row, respectively column, with the cells of that
-row, respectively column, of `μ`.
+row, respectively column, of `μ`.  It also defines `YoungTableau.relabel`, the transitive action of
+the permutations of the labels on the tableaux of a fixed shape, which is how two tableaux of the
+same shape are compared.
 
 Note that `YoungTableau μ` is an abbreviation, so that the whole `Equiv` API applies to a tableau
 directly.  As a consequence dot notation on a tableau resolves in the `Equiv` namespace, and the
@@ -133,6 +136,63 @@ theorem colFiberEquiv_symm_apply_coe (t : YoungTableau μ) (j : ℕ) (c : ↥(μ
   rw [Equiv.symm_apply_apply]
   refine Subtype.ext ?_
   rw [← colFiberEquiv_apply_coe, Equiv.apply_symm_apply]
+
+/-! ## Relabeling -/
+
+/-- The tableau `t` with its labels permuted by `σ`: the cell that `t` labels `k` is labelled
+`σ k` by `relabel σ t`.
+
+Relabeling is the left action of `Equiv.Perm (Fin μ.card)` on `YoungTableau μ` recorded by
+`relabel_one` and `relabel_relabel`, and it is transitive by `exists_relabel_eq`.  It is not
+registered as a `MulAction` instance because `YoungTableau μ` is an abbreviation for a type of
+equivalences, so such an instance would fire on equivalences at large, far outside the tableaux
+it is meant for. -/
+def relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) : YoungTableau μ :=
+  t.trans σ
+
+@[simp]
+theorem relabel_apply (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (c : ↥μ.cells) :
+    relabel σ t c = σ (t c) :=
+  (rfl)
+
+@[simp]
+theorem relabel_symm_apply (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ)
+    (k : Fin μ.card) :
+    (relabel σ t).symm k = t.symm (σ⁻¹ k) := by
+  rw [relabel, Equiv.symm_trans_apply, Equiv.Perm.inv_def]
+
+/-- Relabeling by `σ` moves the label `k` to the row that `t` gives to `σ⁻¹ k`. -/
+@[simp]
+theorem rowIndex_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (k : Fin μ.card) :
+    rowIndex (relabel σ t) k = rowIndex t (σ⁻¹ k) := by
+  rw [rowIndex_def, rowIndex_def, relabel_symm_apply]
+
+/-- Relabeling by `σ` moves the label `k` to the column that `t` gives to `σ⁻¹ k`. -/
+@[simp]
+theorem colIndex_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (k : Fin μ.card) :
+    colIndex (relabel σ t) k = colIndex t (σ⁻¹ k) := by
+  rw [colIndex_def, colIndex_def, relabel_symm_apply]
+
+@[simp]
+theorem relabel_one (t : YoungTableau μ) : relabel 1 t = t := by
+  rw [relabel, Equiv.Perm.one_def, Equiv.trans_refl]
+
+theorem relabel_relabel (σ τ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) :
+    relabel σ (relabel τ t) = relabel (σ * τ) t := by
+  rw [relabel, relabel, relabel, Equiv.trans_assoc, Equiv.Perm.mul_def]
+
+/-- The permutation of the labels carrying the tableau `t` to the tableau `t'` of the same
+shape. -/
+def relabelPerm (t t' : YoungTableau μ) : Equiv.Perm (Fin μ.card) :=
+  t.symm.trans t'
+
+@[simp]
+theorem relabel_relabelPerm (t t' : YoungTableau μ) : relabel (relabelPerm t t') t = t' := by
+  rw [relabel, relabelPerm, ← Equiv.trans_assoc, Equiv.self_trans_symm, Equiv.refl_trans]
+
+/-- Any two tableaux of the same shape differ by a relabeling. -/
+theorem exists_relabel_eq (t t' : YoungTableau μ) : ∃ σ, relabel σ t = t' :=
+  ⟨relabelPerm t t', relabel_relabelPerm t t'⟩
 
 end YoungTableau
 
