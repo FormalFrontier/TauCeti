@@ -110,9 +110,7 @@ private theorem indecProjRep_map_single (i : Q) {a b : Q} (p : Quiver.Path a b)
     (indecProjRep k Q i).map p (Finsupp.single q c) = Finsupp.single (q.comp p) c := by
   induction p with
   | nil =>
-    have hnil : (indecProjRep k Q i).map (Quiver.Path.nil : Quiver.Path a a)
-        = 𝟙 ((indecProjRep k Q i).obj a) := (indecProjRep k Q i).map_id a
-    rw [hnil, ModuleCat.id_apply]
+    rw [QuiverRep.map_nil, ModuleCat.id_apply]
     rfl
   | cons p e ih =>
     have hcons : (indecProjRep k Q i).map (p.cons e)
@@ -185,13 +183,13 @@ theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q) (x : M.obj i) (j :
     Finsupp.linearCombination_single k 1 p
   rwa [one_smul] at h
 
--- Not `@[simp]`: `indecProjRepHom_app_basis` already rewrites this left-hand side to
--- `M.map Quiver.Path.nil x`, so tagging it is a simp-normal-form violation (`simpNF`).
+-- Not `@[simp]`: `simp` proves this outright, from `indecProjRepHom_app_basis` and
+-- `QuiverRep.map_nil`, so tagging it is a simp-normal-form violation (`simpNF`). It is kept as a
+-- named lemma because it is one half of the universal property below.
 /-- The morphism attached to `x : Mᵢ` sends the basis vector of the trivial path back to `x`. -/
 theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
     (indecProjRepHom i M x).app i (indecProjRepBasis k i i Quiver.Path.nil) = x := by
-  rw [indecProjRepHom_app_basis]
-  exact congrArg (fun g : M.obj i ⟶ M.obj i ↦ g x) (M.map_id i)
+  simp
 
 /-- A morphism out of `Pᵢ` is determined by the image of the basis vector of the trivial path
 at `i`. -/
