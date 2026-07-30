@@ -162,9 +162,11 @@ theorem roots_toMonic (s : Sym R n) : (toMonic s : R[X]).roots = (s : Multiset R
   rw [coe_toMonic]
   exact roots_ofMultiset _
 
-theorem toMonic_injective : Function.Injective (toMonic (R := R) (n := n)) := fun s t h => by
-  refine Sym.coe_injective ?_
-  rw [← roots_toMonic s, ← roots_toMonic t, h]
+/-- Over an integral domain a tuple is determined by its monic polynomial: two unordered `n`-tuples
+with the same monic polynomial are equal. -/
+theorem toMonic_injective : Function.Injective (toMonic (R := R) (n := n)) := fun s t h =>
+  Sym.coe_injective <| ofMultiset_injective R <| by
+    rw [← coe_toMonic s, ← coe_toMonic t, h]
 
 /-- A scalar lies in a tuple exactly when it is a root of the tuple's monic polynomial. -/
 theorem mem_iff_isRoot {a : R} {s : Sym R n} :
@@ -176,6 +178,40 @@ end Domain
 end Basic
 
 /-! ### The chart over an algebraically closed field -/
+
+section Components
+
+variable {K : Type*} [Field K] {n : ℕ}
+
+/-! Mathlib builds `Polynomial.monicEquivDegreeLT` and `Polynomial.degreeLTEquiv` as anonymous
+structure instances and states no `apply` or `symm_apply` lemma for either — it unfolds their
+definitions where it needs them, as in `Mathlib/ModelTheory/Algebra/Field/IsAlgClosed.lean`. The
+four lemmas here supply those missing component lemmas once, so that the chart proofs below rewrite
+with named equations instead of reducing the composite equivalence. -/
+
+/-- `Polynomial.degreeLTEquiv` reads off coefficients. -/
+private theorem degreeLTEquiv_toEquiv_apply (p : degreeLT K n) (i : Fin n) :
+    (degreeLTEquiv K n).toEquiv p i = (p : K[X]).coeff (i : ℕ) :=
+  rfl
+
+/-- `Polynomial.monicEquivDegreeLT` removes the leading term. -/
+private theorem coe_monicEquivDegreeLT_apply (p : { p : K[X] // p.Monic ∧ p.natDegree = n }) :
+    ((monicEquivDegreeLT n p : degreeLT K n) : K[X]) = (p : K[X]).eraseLead :=
+  rfl
+
+/-- The inverse of `Polynomial.degreeLTEquiv` assembles a polynomial from its coefficients. -/
+private theorem coe_degreeLTEquiv_toEquiv_symm_apply (f : Fin n → K) :
+    (((degreeLTEquiv K n).toEquiv.symm f : degreeLT K n) : K[X]) =
+      ∑ i : Fin n, monomial (i : ℕ) (f i) :=
+  rfl
+
+/-- The inverse of `Polynomial.monicEquivDegreeLT` restores the leading term `X ^ n`. -/
+private theorem coe_monicEquivDegreeLT_symm_apply (p : degreeLT K n) :
+    (((monicEquivDegreeLT n).symm p : { p : K[X] // p.Monic ∧ p.natDegree = n }) : K[X]) =
+      X ^ n + (p : K[X]) :=
+  rfl
+
+end Components
 
 section AlgClosed
 
@@ -209,7 +245,6 @@ its monic polynomial.
 
 By `TauCeti.Sym.coeffEquiv_apply` the `i`-th coordinate is `(-1) ^ (n - i)` times the `(n - i)`-th
 elementary symmetric function of the tuple. -/
-@[expose]
 noncomputable def coeffEquiv : Sym K n ≃ (Fin n → K) :=
   (monicEquiv K n).trans ((monicEquivDegreeLT n).trans (degreeLTEquiv K n).toEquiv)
 
@@ -221,7 +256,8 @@ theorem coeffEquiv_apply_eq_coeff (s : Sym K n) (i : Fin n) :
   have hne : (i : ℕ) ≠ (toMonic s : K[X]).natDegree := by
     rw [natDegree_toMonic]
     exact i.2.ne
-  change (toMonic s : K[X]).eraseLead.coeff (i : ℕ) = _
+  rw [coeffEquiv, Equiv.trans_apply, Equiv.trans_apply, monicEquiv_apply,
+    degreeLTEquiv_toEquiv_apply, coe_monicEquivDegreeLT_apply]
   exact eraseLead_coeff_of_ne _ hne
 
 /-- The coordinates of the elementary symmetric chart are the elementary symmetric functions of the
@@ -234,27 +270,23 @@ theorem coeffEquiv_apply (s : Sym K n) (i : Fin n) :
 determines. -/
 theorem coeffEquiv_symm_apply (f : Fin n → K) :
     (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
-      (X ^ n + ∑ i : Fin n, monomial (i : ℕ) (f i)).roots :=
-  rfl
+      (X ^ n + ∑ i : Fin n, monomial (i : ℕ) (f i)).roots := by
+  rw [coeffEquiv, Equiv.symm_trans_apply, Equiv.symm_trans_apply, coe_monicEquiv_symm_apply,
+    coe_monicEquivDegreeLT_symm_apply, coe_degreeLTEquiv_toEquiv_symm_apply]
 
 /-- In degree one the chart is negation: the single coordinate of a one-point tuple is minus that
 point. -/
 theorem coeffEquiv_one_apply {s : Sym K 1} {a : K} (hs : (s : Multiset K) = {a}) :
     coeffEquiv K 1 s 0 = -a := by
-  rw [coeffEquiv_apply_eq_coeff, coe_toMonic, hs]
-  simp
+  rw [coeffEquiv_apply, hs]
+  simp [Multiset.esymm, Multiset.powersetCard_one]
 
 /-- In degree two the chart is `{a, b} ↦ (ab, -(a + b))`: the two lower coefficients of
 `(X - a) (X - b) = X ^ 2 - (a + b) X + ab`. -/
 theorem coeffEquiv_two_apply {s : Sym K 2} {a b : K} (hs : (s : Multiset K) = {a, b}) :
     coeffEquiv K 2 s = ![a * b, -(a + b)] := by
-  have hp : (toMonic s : K[X]) = X ^ 2 - C (a + b) * X + C (a * b) := by
-    rw [coe_toMonic, hs, C_add, C_mul]
-    simp only [ofMultiset_apply, Multiset.insert_eq_cons, Multiset.map_cons, Multiset.prod_cons,
-      Multiset.map_singleton, Multiset.prod_singleton]
-    ring
   ext i
-  fin_cases i <;> rw [coeffEquiv_apply_eq_coeff, hp] <;> simp
+  fin_cases i <;> rw [coeffEquiv_apply, hs] <;> simp
 
 end AlgClosed
 
