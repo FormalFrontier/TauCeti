@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Topology.Homeomorph.Lemmas
 public import Mathlib.Topology.MetricSpace.Bounded
+public import TauCeti.Analysis.Complex.Conformal.Biholomorph
 public import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
-public import TauCeti.Analysis.Complex.Conformal.InverseFunction
 
 /-!
 # The boundary correspondence of a conformal map
@@ -31,12 +31,13 @@ available, into the boundary homeomorphism the milestone asks for.
 
 ## The argument
 
-Properness is the holomorphic inverse function theorem in disguise. `Function.invFunOn f U` is
-holomorphic on `f '' U` (`TauCeti.DifferentiableOn.invFunOn`), and `U ∩ f ⁻¹' K` is exactly its
-image of `K`, so it is compact as the continuous image of a compact set. Everything else follows
-from that one fact. If `z i → w` with `z i ∈ U` and `w ∉ U`, then `f (z i)` cannot lie in a compact
-`K ⊆ f '' U` frequently: otherwise `z i` would frequently lie in the compact — hence closed — set
-`U ∩ f ⁻¹' K`, which would then contain the limit `w`.
+Properness is the inverse function theorem in disguise. An injective holomorphic map on an open set
+is an open partial homeomorphism onto its image
+(`TauCeti.DifferentiableOn.toOpenPartialHomeomorph`), and `U ∩ f ⁻¹' K` is exactly the image of `K`
+under its inverse `Function.invFunOn f U`, so it is compact as the continuous image of a compact
+set. Everything else follows from that one fact. If `z i → w` with `z i ∈ U` and `w ∉ U`, then
+`f (z i)` cannot lie in a compact `K ⊆ f '' U` frequently: otherwise `z i` would frequently lie in
+the compact — hence closed — set `U ∩ f ⁻¹' K`, which would then contain the limit `w`.
 
 For a boundary point `w ∈ frontier U`, the filter `𝓝[U] w` is the one to run this along: it is
 `NeBot` precisely because `w ∈ closure U`. If a continuous extension `F` had `F w` inside the open
@@ -46,11 +47,11 @@ impossible on a nontrivial filter. Hence `F w ∉ f '' U`, while `F w ∈ closur
 is continuous on `closure U`; that is membership in `frontier (f '' U)`.
 
 The argument beyond the two holomorphic inputs — the open mapping theorem, through
-`TauCeti.isOpen_image_of_differentiableOn_of_injOn`, and the holomorphic inverse function theorem —
-is purely topological, and no continuity hypothesis on the inverse of `f` appears precisely because
-those two supply it. In accordance with the generality bar of `ConformalMapping/README.md`, which
-fixes scalar `ℂ` for every theorem added in layers L0–L6, the results are stated for conformal maps
-of `ℂ` rather than for an abstract proper map.
+`TauCeti.isOpen_image_of_differentiableOn_of_injOn`, and its packaging as an open partial
+homeomorphism — is purely topological, and no continuity hypothesis on the inverse of `f` appears
+precisely because those two supply it. In accordance with the generality bar of
+`ConformalMapping/README.md`, which fixes scalar `ℂ` for every theorem added in layers L0–L6, the
+results are stated for conformal maps of `ℂ` rather than for an abstract proper map.
 
 ## Main results
 
@@ -75,8 +76,9 @@ Mathlib has no boundary correspondence for conformal maps, and — unlike the L0
 L5 is absent from [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the
 in-progress human-curated Riemann-mapping-theorem effort, which stops at the mapping theorem itself.
 So this file is new Lean formalization rather than a temporary shim. It does consume the L0–L3 shims
-`TauCeti.isOpen_image_of_differentiableOn_of_injOn` and `TauCeti.DifferentiableOn.invFunOn`, which
-are to be refactored onto Mathlib once the upstream work lands.
+`TauCeti.isOpen_image_of_differentiableOn_of_injOn` and
+`TauCeti.DifferentiableOn.toOpenPartialHomeomorph`, which are to be refactored onto Mathlib once the
+upstream work lands.
 
 ## References
 
@@ -104,19 +106,16 @@ boundary of `U` while its image stays in a compact part of `f '' U`. -/
 theorem isCompact_inter_preimage_of_differentiableOn_of_injOn (hUo : IsOpen U)
     (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hK : IsCompact K) (hKf : K ⊆ f '' U) :
     IsCompact (U ∩ f ⁻¹' K) := by
-  -- `U ∩ f ⁻¹' K` is the image of `K` under the holomorphic inverse `Function.invFunOn f U`.
-  have hinv : DifferentiableOn ℂ (Function.invFunOn f U) (f '' U) :=
-    TauCeti.DifferentiableOn.invFunOn hfd hUo hfi
-  have hset : U ∩ f ⁻¹' K = Function.invFunOn f U '' K := by
-    ext z
-    constructor
-    · rintro ⟨hzU, hzK⟩
-      exact ⟨f z, hzK, hfi.leftInvOn_invFunOn hzU⟩
-    · rintro ⟨w, hwK, rfl⟩
-      exact ⟨Function.invFunOn_mem (hKf hwK), by
-        simpa only [mem_preimage, Function.invFunOn_eq (hKf hwK)] using hwK⟩
-  rw [hset]
-  exact hK.image_of_continuousOn (hinv.continuousOn.mono hKf)
+  -- In the packaging of `f` as an open partial homeomorphism onto its image, `U ∩ f ⁻¹' K` is the
+  -- image of `K` under the inverse, hence compact.
+  set e := TauCeti.DifferentiableOn.toOpenPartialHomeomorph hfd hUo hfi with he
+  have hKt : K ⊆ e.target := by
+    simpa only [he, TauCeti.DifferentiableOn.toOpenPartialHomeomorph_target] using hKf
+  have hset : e.symm '' K = U ∩ f ⁻¹' K := by
+    simpa only [he, TauCeti.DifferentiableOn.toOpenPartialHomeomorph_source,
+      TauCeti.DifferentiableOn.toOpenPartialHomeomorph_coe] using
+      e.symm_image_eq_source_inter_preimage hKt
+  exact hset ▸ hK.image_of_continuousOn (e.continuousOn_symm.mono hKt)
 
 /-- **A conformal map carries a family converging out of `U` out of every compact subset of the
 image.** If `z i ∈ U` eventually, `z i → w` and `w ∉ U`, then eventually `f (z i)` avoids any
@@ -195,22 +194,26 @@ theorem image_frontier_subset_frontier_image (hUo : IsOpen U) (hfd : Differentia
 
 /-! ## The boundary homeomorphism -/
 
-/-- **An injective continuous extension of a conformal map is a bijection of the closures.** The
-set-level form of `TauCeti.closureHomeomorph`: injectivity is the hypothesis, and surjectivity onto
-`closure (f '' U)` is `TauCeti.image_closure_eq_closure_image`. -/
+/-- **An injective continuous extension is a bijection of the closures.** If `F` is continuous on
+`closure U` for a bounded `U`, agrees with `f` on `U`, and is injective on `closure U`, then it maps
+`closure U` bijectively onto `closure (f '' U)`. The set-level form of
+`TauCeti.closureHomeomorph`: injectivity is the hypothesis, and surjectivity onto
+`closure (f '' U)` is `TauCeti.image_closure_eq_closure_image`. Neither holomorphy of `f` nor
+openness of `U` is needed; a conformal `f` is the intended application. -/
 theorem bijOn_closure_closure_image (hUb : Bornology.IsBounded U)
     (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U)) :
     BijOn F (closure U) (closure (f '' U)) :=
   (image_closure_eq_closure_image hUb hFc hFf) ▸ hFi.bijOn_image
 
-/-- **The boundary homeomorphism of a conformal map with an injective continuous extension.** If
-`F` is continuous on `closure U` for a bounded open `U`, agrees with the conformal map `f` on `U`,
-and is injective on `closure U`, then `F` is a homeomorphism of `closure U` onto
-`closure (f '' U)`.
+/-- **The homeomorphism of closures induced by an injective continuous extension.** If `F` is
+continuous on `closure U` for a bounded `U`, agrees with `f` on `U`, and is injective on
+`closure U`, then `F` is a homeomorphism of `closure U` onto `closure (f '' U)`. Neither holomorphy
+of `f` nor openness of `U` is assumed; the intended instance is a conformal map `f` on an open `U`
+together with a continuous extension `F`.
 
-This is the conclusion the Carathéodory correspondence (layer **L5**) asks for; what that milestone
-adds is the *existence* of such an `F` for a Riemann map of a Jordan domain, which is not proved
-here. Continuity of the inverse is free: `closure U` is compact and `ℂ` is Hausdorff.
+For a Riemann map of a Jordan domain this is the conclusion the Carathéodory correspondence
+(layer **L5**) asks for; what that milestone adds is the *existence* of such an `F`, which is not
+proved here. Continuity of the inverse is free: `closure U` is compact and `ℂ` is Hausdorff.
 
 The definition is not exposed; `TauCeti.coe_closureHomeomorph_apply` and
 `TauCeti.coe_closureHomeomorph_symm_apply` are its characterizations. -/
@@ -219,19 +222,17 @@ noncomputable def closureHomeomorph (hUb : Bornology.IsBounded U)
     closure U ≃ₜ closure (f '' U) :=
   haveI : CompactSpace (closure U) := isCompact_iff_compactSpace.mp hUb.isCompact_closure
   Continuous.homeoOfEquivCompactToT2
-    (f := Equiv.ofBijective
-      (fun x : closure U =>
-        (⟨F x, (bijOn_closure_closure_image hUb hFc hFf hFi).mapsTo x.2⟩ : closure (f '' U)))
-      ⟨fun a b hab => Subtype.ext (hFi a.2 b.2 (congrArg Subtype.val hab)), fun y => by
-        obtain ⟨x, hx, hxy⟩ := (bijOn_closure_closure_image hUb hFc hFf hFi).surjOn y.2
-        exact ⟨⟨x, hx⟩, Subtype.ext hxy⟩⟩)
-    (Continuous.subtype_mk hFc.restrict _)
+    (f := (bijOn_closure_closure_image hUb hFc hFf hFi).equiv F)
+    (hFc.mapsToRestrict (bijOn_closure_closure_image hUb hFc hFf hFi).mapsTo)
 
 /-- The boundary homeomorphism is the extension `F` itself. -/
 @[simp]
 lemma coe_closureHomeomorph_apply (hUb : Bornology.IsBounded U) (hFc : ContinuousOn F (closure U))
     (hFf : EqOn F f U) (hFi : InjOn F (closure U)) (x : closure U) :
-    (closureHomeomorph hUb hFc hFf hFi x : ℂ) = F x := (rfl)
+    (closureHomeomorph hUb hFc hFf hFi x : ℂ) = F x := by
+  simp only [closureHomeomorph, ← Homeomorph.coe_toEquiv,
+    Continuous.toEquiv_homeoOfEquivCompactToT2, BijOn.equiv, Equiv.coe_ofBijective,
+    MapsTo.val_restrict_apply]
 
 /-- The inverse of the boundary homeomorphism is the set-level inverse
 `Function.invFunOn F (closure U)`. -/
