@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.ClusterPt
+public import Mathlib.Topology.ExtendFrom
 public import Mathlib.Topology.MetricSpace.Basic
 public import Mathlib.Topology.MetricSpace.Bounded
 
@@ -21,17 +22,19 @@ element. The compactness is not decoration: the cluster set of `z ↦ 1 / z` on 
 
 Nothing in this file is specific to one geometry. The definition and its basic API live over an
 arbitrary pair of topological spaces, the `ε`-`δ` characterization over metric spaces, and the
-extension theorem over a metric space and a *proper* metric codomain, where boundedness of the
-image is what supplies the compactness the criterion runs on. The complex-analytic consequences —
-that the boundary cluster set of a
-conformal map lies on the frontier of the image — are in
+extension theorem over an arbitrary `T3` codomain, into a compact subset of which the map is
+assumed to take its values; a proper metric codomain with a bounded image is the special case in
+which that compact set is supplied by the boundedness. The complex-analytic consequences — that the
+boundary cluster set of a conformal map lies on the frontier of the image — are in
 `TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`, the consumer this file was written for:
 Carathéodory's boundary correspondence, layer **L5** of the conformal-mapping roadmap, is applied
 by checking that the boundary cluster sets of a Riemann map are singletons and feeding that into
 `TauCeti.exists_continuousOn_closure_eqOn`.
 
 The cluster set is `{v | MapClusterPt v (𝓝[U] w) f}`; Mathlib has the `ClusterPt`/`MapClusterPt`
-API, on which everything below is built, but no name for this set.
+API, on which everything below is built, but no name for this set. The extension itself is
+Mathlib's `extendFrom U f`, whose continuity comes from `continuousOn_extendFrom`: all the
+criterion adds is the production of the pointwise limits that theorem asks for.
 
 ## Main definitions
 
@@ -49,11 +52,10 @@ API, on which everything below is built, but no name for this set.
   `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` — a limit along `𝓝[U] w` makes the cluster
   set a singleton; conversely a subsingleton cluster set at a point of `closure U` produces a limit,
   provided `f` maps `U` into a compact set.
-* `TauCeti.continuousOn_closure_of_forall_tendsto` — a pointwise limit at every point of `closure U`
-  is automatically a continuous function of the point.
 * `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map into a
-  proper metric space, with bounded image and subsingleton boundary cluster sets, extends
-  continuously to `closure U`.
+  compact set, with subsingleton boundary cluster sets, extends continuously to `closure U`;
+  `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the proper-metric form, where the
+  compact set is the closure of the bounded image.
 
 ## References
 
@@ -168,7 +170,7 @@ end TopologicalSpace
 
 section PseudoMetricSpace
 
-variable {X Y : Type*} [PseudoMetricSpace X] [PseudoMetricSpace Y] {U : Set X} {f F : X → Y}
+variable {X Y : Type*} [PseudoMetricSpace X] [PseudoMetricSpace Y] {U : Set X} {f : X → Y}
   {v : Y} {w : X}
 
 /-- The `ε`-`δ` form of membership in the cluster set: `f` takes values arbitrarily close to `v` at
@@ -189,53 +191,25 @@ lemma mem_clusterSetOn_iff_forall_exists :
     obtain ⟨z, hzU, hzd, hfz⟩ := h ε hε δ hδ
     exact ⟨z, ⟨mem_ball.mpr hzd, hzU⟩, hball (mem_ball.mpr hfz)⟩
 
-/-- **A pointwise limit at every point of the closure is continuous on the closure.** If `F w` is
-the limit of `f` along `𝓝[U] w` for every `w ∈ closure U`, then `F` is continuous on `closure U`.
-
-No continuity of `F` is assumed anywhere; it is forced by the limits. Given `ε > 0`, pick `δ` with
-`dist (f z) (F w) < ε / 2` for `z ∈ U ∩ ball w δ`. A point `w' ∈ closure U` within `δ / 2` of `w`
-has `U ∩ ball w' (δ / 2) ⊆ U ∩ ball w δ`, so `f` stays in the *closed* ball of radius `ε / 2`
-about `F w` along the nontrivial filter `𝓝[U] w'`, and therefore so does its limit `F w'`.
-
-This is the step that upgrades pointwise boundary limits to a continuous extension. It is purely
-metric: nothing about `f` beyond the hypothesis is used. -/
-theorem continuousOn_closure_of_forall_tendsto
-    (hF : ∀ w ∈ closure U, Tendsto f (𝓝[U] w) (𝓝 (F w))) : ContinuousOn F (closure U) := by
-  intro w hw
-  rw [ContinuousWithinAt, Metric.tendsto_nhdsWithin_nhds]
-  intro ε hε
-  obtain ⟨δ, hδ, hclose⟩ := Metric.tendsto_nhdsWithin_nhds.mp (hF w hw) (ε / 2) (by linarith)
-  have hδ2 : (0 : ℝ) < δ / 2 := by linarith
-  refine ⟨δ / 2, hδ2, fun {w'} hw' hw'd => ?_⟩
-  haveI : (𝓝[U] w').NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw'
-  -- Near `w'`, the values of `f` are within `ε / 2` of `F w`, because they are also near `w`.
-  have hmem : ∀ᶠ z in 𝓝[U] w', f z ∈ closedBall (F w) (ε / 2) := by
-    filter_upwards [self_mem_nhdsWithin,
-      mem_nhdsWithin_of_mem_nhds (ball_mem_nhds w' hδ2)] with z hzU hzb
-    refine mem_closedBall.mpr (hclose hzU ?_).le
-    calc dist z w ≤ dist z w' + dist w' w := dist_triangle z w' w
-      _ < δ / 2 + δ / 2 := add_lt_add (mem_ball.mp hzb) hw'd
-      _ = δ := by ring
-  have hlim : F w' ∈ closedBall (F w) (ε / 2) :=
-    isClosed_closedBall.mem_of_tendsto (hF w' hw') hmem
-  exact lt_of_le_of_lt (mem_closedBall.mp hlim) (by linarith)
-
 end PseudoMetricSpace
 
 /-! ## The extension criterion -/
 
 section Extension
 
-variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] [ProperSpace Y] {U : Set X} {f : X → Y}
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] [T3Space Y] {U : Set X}
+  {K : Set Y} {f : X → Y}
 
-/-- **The extension criterion.** A continuous function on an open `U`, valued in a proper metric
-space and with bounded image, whose cluster set at each boundary point has at most one element
-extends continuously to `closure U`.
+/-- **The extension criterion.** A continuous function on an open `U`, taking values in a compact
+set and whose cluster set at each boundary point has at most one element, extends continuously to
+`closure U`.
 
-The codomain is assumed proper so that the bounded image has compact closure; that compactness is
-what `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` consumes to turn each subsingleton
-boundary cluster set into a limit. Over a codomain that is not proper the same statement holds with
-boundedness of `f '' U` replaced by the hypothesis that `f` maps `U` into a compact set.
+The compactness is what `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` consumes to turn each
+subsingleton boundary cluster set into a limit; at an interior point continuity already supplies
+the limit. Having a limit at every point of `closure U`, the map extends by Mathlib's `extendFrom`,
+which is continuous on `closure U` by `continuousOn_extendFrom` and agrees with `f` on `U` by
+`extendFrom_extends`. `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the common special
+case of a bounded-image map into a proper metric space.
 
 This is the form in which a boundary-correspondence theorem is applied: whatever geometric
 hypothesis one places on `frontier U`, it is used only to check that the boundary cluster sets are
@@ -247,29 +221,33 @@ The conclusion is exactly a continuous extension: `F` is continuous on `closure 
 `f` on `U`. Nothing is claimed about injectivity of `F` on `closure U`; that is an independent
 matter, requiring a separate proof that `F` is injective on `frontier U`. -/
 theorem exists_continuousOn_closure_eqOn (hUo : IsOpen U) (hfc : ContinuousOn f U)
-    (hfb : Bornology.IsBounded (f '' U))
+    (hK : IsCompact K) (hfK : MapsTo f U K)
     (hsub : ∀ w ∈ frontier U, (clusterSetOn f U w).Subsingleton) :
     ∃ F : X → Y, ContinuousOn F (closure U) ∧ EqOn F f U := by
-  classical
-  have hK : IsCompact (closure (f '' U)) := hfb.isCompact_closure
-  have hfK : MapsTo f U (closure (f '' U)) := fun z hz => subset_closure ⟨z, hz, rfl⟩
-  -- At an interior point continuity already supplies the limit.
-  have hlim : ∀ w ∈ U, Tendsto f (𝓝[U] w) (𝓝 (f w)) := fun w hw => hfc w hw
   have hall : ∀ w ∈ closure U, ∃ v, Tendsto f (𝓝[U] w) (𝓝 v) := by
     intro w hw
     by_cases hwU : w ∈ U
-    · exact ⟨f w, hlim w hwU⟩
+    · exact ⟨f w, hfc w hwU⟩
     · exact exists_tendsto_of_clusterSetOn_subsingleton hK hfK hw
         (hsub w (by rw [hUo.frontier_eq]; exact ⟨hw, hwU⟩))
-  choose F₀ hF₀ using hall
-  -- Off `closure U` the extension is defined to be `f` itself, so that no `Nonempty Y` is needed.
-  refine ⟨fun z => if hz : z ∈ closure U then F₀ z hz else f z, ?_, fun z hz => ?_⟩
-  · exact continuousOn_closure_of_forall_tendsto fun z hz => by
-      simpa only [dif_pos hz] using hF₀ z hz
-  · have hz' : z ∈ closure U := subset_closure hz
-    haveI : (𝓝[U] z).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hz'
-    simpa only [dif_pos hz'] using tendsto_nhds_unique (hF₀ z hz') (hlim z hz)
+  exact ⟨extendFrom U f, continuousOn_extendFrom subset_rfl hall, extendFrom_extends hfc⟩
 
 end Extension
+
+section ProperExtension
+
+variable {X Y : Type*} [TopologicalSpace X] [MetricSpace Y] [ProperSpace Y] {U : Set X} {f : X → Y}
+
+/-- **The extension criterion for a bounded map into a proper metric space.** The special case of
+`TauCeti.exists_continuousOn_closure_eqOn` in which the compact set containing the values of `f` is
+the closure of a bounded image, properness of the codomain being what makes that closure compact. -/
+theorem exists_continuousOn_closure_eqOn_of_isBounded (hUo : IsOpen U) (hfc : ContinuousOn f U)
+    (hfb : Bornology.IsBounded (f '' U))
+    (hsub : ∀ w ∈ frontier U, (clusterSetOn f U w).Subsingleton) :
+    ∃ F : X → Y, ContinuousOn F (closure U) ∧ EqOn F f U :=
+  exists_continuousOn_closure_eqOn hUo hfc hfb.isCompact_closure
+    (fun z hz => subset_closure ⟨z, hz, rfl⟩) hsub
+
+end ProperExtension
 
 end TauCeti

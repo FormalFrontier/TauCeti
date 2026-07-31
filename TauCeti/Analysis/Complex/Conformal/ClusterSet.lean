@@ -16,8 +16,10 @@ The cluster set `TauCeti.clusterSetOn f U w` of a map `f` on `U` at a point `w`,
 `TauCeti.exists_continuousOn_closure_eqOn` turning subsingleton boundary cluster sets into a
 continuous extension, use nothing about conformality and live in `TauCeti/Topology/ClusterSet.lean`:
 the cluster set is defined over an arbitrary pair of topological spaces, and the criterion is a
-metric-and-compactness statement, holding for a bounded-image map into a proper metric space. This
-file adds what conformality contributes.
+compactness statement, holding for any map of a `T3` codomain taking its values in a compact set —
+a bounded-image map into a proper metric space being the special case
+`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded`. This file adds what conformality
+contributes.
 
 `Conformal/BoundaryCorrespondence.lean` proves what a conformal map does *given* a continuous
 extension to the closure. This file supplies the missing half of that interface: it removes the
