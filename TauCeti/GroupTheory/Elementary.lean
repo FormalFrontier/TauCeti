@@ -225,21 +225,14 @@ theorem subgroupComap_injective {f : H →* G} (hf : Function.Injective f) (K : 
     Function.Injective (f.subgroupComap K) :=
   fun _ _ hxy => Subtype.ext (hf (congrArg Subtype.val hxy))
 
-/-- The preimage of a subgroup along an injective homomorphism into a finite group has order
-dividing that of the subgroup. -/
-theorem card_comap_dvd_card [Finite G] {f : H →* G} (hf : Function.Injective f) (K : Subgroup G) :
-    Nat.card (K.comap f) ∣ Nat.card K := by
-  rw [Nat.card_congr (MonoidHom.ofInjective (subgroupComap_injective hf K)).toEquiv]
-  exact Subgroup.card_subgroup_dvd_card _
-
 /-- `p`-hyperelementarity passes to subgroups, in the form of an injective homomorphism into the
 group. -/
-theorem IsPHyperelementary.of_injective [Finite G] (h : IsPHyperelementary p G) (f : H →* G)
+theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →* G)
     (hf : Function.Injective f) : IsPHyperelementary p H := by
   obtain ⟨C, hCnormal, hCcyclic, hCp, hquot⟩ := h
   haveI := hCcyclic
   refine ⟨C.comap f, hCnormal.comap f, isCyclic_of_injective _ (subgroupComap_injective hf C),
-    fun hdvd => hCp (hdvd.trans (card_comap_dvd_card hf C)), fun y => ?_⟩
+    fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)), fun y => ?_⟩
   obtain ⟨k, hk⟩ := hquot (f y)
   exact ⟨k, mem_comap.mpr (by rwa [map_pow])⟩
 
@@ -279,7 +272,7 @@ theorem IsPElementary.of_injective [Finite G] [Fact p.Prime] (h : IsPElementary 
     rw [← zpow_natCast y n, ← zpow_natCast y m, ← zpow_mul, ← zpow_mul, ← zpow_add,
       ← hbez, Nat.cast_one, zpow_one]
   refine ⟨C.comap f, P.comap f, isCyclic_of_injective _ (subgroupComap_injective hf C),
-    fun hdvd => hCp (hdvd.trans (card_comap_dvd_card hf C)),
+    fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)),
     hP.of_injective _ (subgroupComap_injective hf P), ?_, ?_⟩
   · intro c hc x hx
     refine hf ?_
@@ -296,7 +289,7 @@ theorem IsPElementary.of_injective [Finite G] [Fact p.Prime] (h : IsPElementary 
       exact Set.mem_mul.mpr ⟨c, hc, x, hx, hcx⟩
 
 /-- `p`-hyperelementarity passes to subgroups. -/
-theorem IsPHyperelementary.subgroup [Finite G] (h : IsPHyperelementary p G) (K : Subgroup G) :
+theorem IsPHyperelementary.subgroup (h : IsPHyperelementary p G) (K : Subgroup G) :
     IsPHyperelementary p K :=
   h.of_injective K.subtype K.subtype_injective
 
@@ -306,7 +299,7 @@ theorem IsPElementary.subgroup [Finite G] [Fact p.Prime] (h : IsPElementary p G)
   h.of_injective K.subtype K.subtype_injective
 
 /-- Hyperelementarity passes to subgroups. -/
-theorem IsHyperelementary.subgroup [Finite G] (h : IsHyperelementary G) (K : Subgroup G) :
+theorem IsHyperelementary.subgroup (h : IsHyperelementary G) (K : Subgroup G) :
     IsHyperelementary K :=
   h.imp fun _ hq => ⟨hq.1, hq.2.subgroup K⟩
 
