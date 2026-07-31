@@ -21,8 +21,11 @@ itself this is `4`. Finite-dimensionality needs nothing specific to this quiver:
 * `TauCeti.Quiver.Kronecker.card_totalPath` and
   `TauCeti.Quiver.Kronecker.finrank_pathAlgebra`: there are `n + 2` paths, so the path algebra has
   dimension `n + 2`.
-* `TauCeti.Quiver.Kronecker.finrank_pathAlgebra_eq_four`: for the Kronecker quiver `• ⇉ •` the path
-  algebra is four-dimensional.
+* `TauCeti.Quiver.Kronecker.totalPath_eq_or`: for a single arrow the three paths are named
+  individually.
+* `TauCeti.Quiver.Kronecker.finrank_pathAlgebra_eq_four` and
+  `TauCeti.Quiver.Kronecker.finrank_pathAlgebra_eq_three`: for the Kronecker quiver `• ⇉ •` the
+  path algebra is four-dimensional, and for the `A₂` quiver `• → •` three-dimensional.
 
 ## References
 
@@ -56,6 +59,20 @@ theorem card_totalPath [Fintype A] :
   simp only [sum_univ, card_path_src_tgt, Fintype.card_unique, Fintype.card_eq_zero]
   omega
 
+/-- The `A₂` quiver has exactly three paths: the trivial path at each vertex, and its arrow. -/
+theorem totalPath_eq_or [Unique A] (x : Quiver.TotalPath (Kronecker A)) :
+    x = ⟨tgt, tgt, Path.nil⟩ ∨ x = ⟨src, tgt, arrowPath default⟩ ∨
+      x = ⟨src, src, Path.nil⟩ := by
+  obtain ⟨a, b, p⟩ := x
+  cases a <;> cases b
+  · exact Or.inr (Or.inr (by rw [path_src_src_eq_nil p]))
+  · refine Or.inr (Or.inl ?_)
+    have h := arrowPath_pathEquivArrow p
+    rw [Unique.eq_default (pathEquivArrow p)] at h
+    rw [h]
+  · exact isEmptyElim p
+  · exact Or.inl (by rw [path_tgt_tgt_eq_nil p])
+
 /-- The path algebra of the generalized Kronecker quiver on `n` arrows has dimension `n + 2`. For
 the Kronecker quiver `• ⇉ •` itself this is `4`. -/
 theorem finrank_pathAlgebra (k : Type w) [DivisionRing k] [Fintype A] :
@@ -67,6 +84,13 @@ arrows. -/
 theorem finrank_pathAlgebra_eq_four [Fintype A] (h : Fintype.card A = 2) (k : Type w)
     [DivisionRing k] : Module.finrank k (pathAlgebra k (Kronecker A)) = 4 := by
   rw [finrank_pathAlgebra k, h]
+
+/-- The path algebra of the `A₂` quiver is three-dimensional: the two trivial paths and the
+arrow. -/
+theorem finrank_pathAlgebra_eq_three [Unique A] (k : Type w) [DivisionRing k] :
+    Module.finrank k (pathAlgebra k (Kronecker A)) = 3 := by
+  letI : Fintype A := Fintype.ofFinite A
+  rw [finrank_pathAlgebra k, Fintype.card_unique]
 
 end Quiver.Kronecker
 
