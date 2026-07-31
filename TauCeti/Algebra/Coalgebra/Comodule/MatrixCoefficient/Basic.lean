@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.RingTheory.Coalgebra.CoassocSimps
 public import TauCeti.Algebra.Coalgebra.Comodule.Hom
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 
@@ -173,10 +174,8 @@ theorem counit_matrixCoefficient (φ : Module.Dual R M) (m : M) :
           (TensorProduct.lid R C (TensorProduct.map φ LinearMap.id x)) =
         TensorProduct.lid R R
           (TensorProduct.map φ (Coalgebra.counit (R := R) (A := C)) x) := by
-    induction x using TensorProduct.induction_on with
-    | zero => simp
-    | add x y hx hy => simp only [map_add, hx, hy]
-    | tmul x c => simp
+    exact (LinearMap.congr_fun
+      (CoassocSimps.lid_comp_map φ (Coalgebra.counit (R := R) (A := C))) x).symm
   have h := congrArg
     (fun x : M ⊗[R] R =>
       TensorProduct.lid R R (TensorProduct.map φ LinearMap.id x))

@@ -57,11 +57,10 @@ theorem dual_coe (M : FGComoduleCat.{u, v, u} k H) :
   rfl
 
 /-- The coaction on the finite dual is the basis-free dual coaction. -/
-@[simp]
 theorem dual_coact (M : FGComoduleCat.{u, v, u} k H) :
     Comodule.coact (R := k) (C := H) (M := dual k H M) =
       Comodule.dualCoact (R := k) (H := H) (M := M) :=
-  rfl
+  Comodule.dual_coact (R := k) (H := H) (M := M)
 
 /-- The inclusion into all comodules sends the finite dual to the ambient dual comodule. -/
 @[simp]

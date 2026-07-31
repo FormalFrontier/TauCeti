@@ -87,6 +87,7 @@ theorem dualCoact_counit :
   ext φ
   apply (dualTensorHomEquiv R M R).injective
   ext m
+  -- Display both tensors through the characteristic map used by the injectivity argument.
   change dualTensorHom R M R
       ((Coalgebra.counit (R := R) (A := H)).lTensor (Module.Dual R M)
         (dualCoact (R := R) (H := H) (M := M) φ)) m =
@@ -103,6 +104,7 @@ theorem dualCoact_counit :
           (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ)) := by
     simpa only [LinearMap.comp_apply] using hcomp
   rw [hcomp']
+  -- Evaluate `compRight` and the pure tensor under `dualTensorHom`.
   change Coalgebra.counit (R := R) (A := H)
       (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ) m) =
     φ m • (1 : R)
@@ -156,6 +158,7 @@ theorem dualCoact_coassoc :
   ext φ
   apply (dualTensorHomEquiv R M (H ⊗[R] H)).injective
   ext m
+  -- Display both iterated coactions through the characteristic map used for injectivity.
   change dualTensorHom R M (H ⊗[R] H)
       (TensorProduct.assoc R (Module.Dual R M) H H
         ((dualCoact (R := R) (H := H) (M := M)).rTensor H
@@ -176,6 +179,7 @@ theorem dualCoact_coassoc :
           (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ)) := by
     simpa only [LinearMap.comp_apply] using hcomp
   rw [hcomp']
+  -- Evaluate the postcomposition by comultiplication pointwise.
   change TensorProduct.comm R H H
       (TensorProduct.map
         (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ))
@@ -184,6 +188,7 @@ theorem dualCoact_coassoc :
     Coalgebra.comul (R := R) (A := H)
       (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ) m)
   rw [dualTensorHom_dualCoact]
+  -- Expand the characteristic equation pointwise, exposing the matrix coefficient.
   change TensorProduct.comm R H H
       (TensorProduct.map
         ((HopfAlgebra.antipode R (A := H)).comp
@@ -204,7 +209,7 @@ variable (R H M) in
 
 This is deliberately not a global instance: a module can carry multiple coactions. Downstream
 code should select it explicitly, typically as a local instance. -/
-@[expose, implicit_reducible]
+@[instance_reducible]
 noncomputable def dual : Comodule R H (Module.Dual R M) where
   coact := dualCoact (R := R) (H := H) (M := M)
   coassoc := dualCoact_coassoc (R := R) (H := H) (M := M)
@@ -216,8 +221,7 @@ attribute [local instance] dual
 @[simp]
 theorem dual_coact :
     coact (R := R) (C := H) (M := Module.Dual R M) =
-      dualCoact (R := R) (H := H) (M := M) :=
-  rfl
+      dualCoact (R := R) (H := H) (M := M) := (rfl)
 
 end
 
