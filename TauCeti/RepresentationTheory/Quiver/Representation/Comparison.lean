@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.Abelian.FunctorCategory
+public import Mathlib.CategoryTheory.Preadditive.Schur
 public import TauCeti.RepresentationTheory.Quiver.Representation.Injective
 public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
@@ -135,6 +137,9 @@ theorem indecProjRepToSimpleRep_app_basis_eq_zero_of_length_ne_zero {i j : Q} (p
   rw [indecProjRepToSimpleRep_app_basis, simpleRep_map_eq_zero_of_length_ne_zero i p hp]
   rfl
 
+-- Kept although the epimorphism instance below no longer goes through it: `Epi` in a functor
+-- category is not by definition componentwise, so this is the element-level statement, and it is
+-- what a computation at a single vertex needs.
 /-- Every component of `Pᵢ ⟶ Sᵢ` is surjective: at `i` because the generator spans, and away from
 `i` because the target vanishes. -/
 theorem indecProjRepToSimpleRep_app_surjective (i j : Q) :
@@ -155,25 +160,16 @@ theorem indecProjRepToSimpleRep_app_surjective (i j : Q) :
       ModuleCat.subsingleton_of_isZero (isZero_simpleRep_obj (Q := Q) hj)
     exact fun y ↦ ⟨0, Subsingleton.elim _ _⟩
 
-/-- **`Pᵢ ↠ Sᵢ` is an epimorphism.** Epimorphisms of representations are detected vertexwise, and
-each component is surjective. -/
-instance epi_indecProjRepToSimpleRep (i : Q) : Epi (indecProjRepToSimpleRep k i) := by
-  haveI : ∀ X : Paths Q, Epi ((indecProjRepToSimpleRep k i).app X) := by
-    intro X
-    -- `NatTrans.epi_of_epi_app` quantifies over objects of the free category `Paths Q`, while the
-    -- component lemma is stated for a vertex `j : Q`. `Paths Q` is a semireducible copy of `Q`, so
-    -- the two types agree only by unfolding it: no lemma rewrites `X` and `change` is what crosses
-    -- the identification. The `(Paths.of Q).obj` in the component lemma records the same step in
-    -- the other direction.
-    change Q at X
-    exact (ModuleCat.epi_iff_surjective _).mpr (indecProjRepToSimpleRep_app_surjective k i X)
-  exact NatTrans.epi_of_epi_app _
-
 /-- The surjection `Pᵢ ↠ Sᵢ` is nonzero. -/
 theorem indecProjRepToSimpleRep_ne_zero (i : Q) : indecProjRepToSimpleRep k i ≠ 0 := by
   intro h
   refine simpleRepGenerator_ne_zero k i ?_
   rw [← indecProjRepHomEquiv_indecProjRepToSimpleRep k i, h, map_zero]
+
+/-- **`Pᵢ ↠ Sᵢ` is an epimorphism.** It is nonzero, and a nonzero morphism into a simple object is
+an epimorphism; `Sᵢ` is simple by `TauCeti.simpleRep_simple`. -/
+instance epi_indecProjRepToSimpleRep (i : Q) : Epi (indecProjRepToSimpleRep k i) :=
+  epi_of_nonzero_to_simple (indecProjRepToSimpleRep_ne_zero k i)
 
 /-- **The surjection `Pᵢ ↠ Sᵢ` is unique up to a scalar**: `Hom(Pᵢ, Sᵢ)` is the line spanned by
 `TauCeti.indecProjRepToSimpleRep`. -/
@@ -210,6 +206,8 @@ theorem indecInjRepHomEquiv_simpleRepToIndecInjRep (i : Q) :
   exact (simpleRepToIndecInjRep_app_apply k x Quiver.Path.nil).trans
     (congrArg _ (QuiverRep.map_nil_apply (simpleRep k Q i) i x))
 
+-- Kept for the same reason as `TauCeti.indecProjRepToSimpleRep_app_surjective`: it is the
+-- element-level statement, which the monomorphism instance below does not by itself supply.
 /-- Every component of `Sᵢ ⟶ Iᵢ` is injective: at `i` because the coefficient on the trivial path
 recovers the element, and away from `i` because the source vanishes. -/
 theorem simpleRepToIndecInjRep_app_injective (i j : Q) :
@@ -228,18 +226,6 @@ theorem simpleRepToIndecInjRep_app_injective (i j : Q) :
       ModuleCat.subsingleton_of_isZero (isZero_simpleRep_obj (Q := Q) hj)
     exact fun x y _ ↦ Subsingleton.elim x y
 
-/-- **`Sᵢ ↪ Iᵢ` is a monomorphism.** Monomorphisms of representations are detected vertexwise, and
-each component is injective. -/
-instance mono_simpleRepToIndecInjRep (i : Q) : Mono (simpleRepToIndecInjRep k i) := by
-  haveI : ∀ X : Paths Q, Mono ((simpleRepToIndecInjRep k i).app X) := by
-    intro X
-    -- As in `TauCeti.epi_indecProjRepToSimpleRep`: `NatTrans.mono_of_mono_app` quantifies over
-    -- objects of `Paths Q` and the component lemma over vertices, and only unfolding the
-    -- semireducible `Paths Q` identifies the two, which is what `change` does.
-    change Q at X
-    exact (ModuleCat.mono_iff_injective _).mpr (simpleRepToIndecInjRep_app_injective k i X)
-  exact NatTrans.mono_of_mono_app _
-
 /-- The embedding `Sᵢ ↪ Iᵢ` is nonzero. -/
 theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 0 := by
   intro h
@@ -248,6 +234,11 @@ theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 
   have h1 := congrArg (fun φ : Module.Dual k _ ↦ φ (simpleRepGenerator k i)) hzero
   simp only [LinearEquiv.coe_coe, simpleRepSelfEquiv_apply_generator, LinearMap.zero_apply] at h1
   exact one_ne_zero h1
+
+/-- **`Sᵢ ↪ Iᵢ` is a monomorphism.** It is nonzero, and a nonzero morphism out of a simple object is
+a monomorphism; `Sᵢ` is simple by `TauCeti.simpleRep_simple`. -/
+instance mono_simpleRepToIndecInjRep (i : Q) : Mono (simpleRepToIndecInjRep k i) :=
+  mono_of_nonzero_from_simple (simpleRepToIndecInjRep_ne_zero k i)
 
 /-- **The embedding `Sᵢ ↪ Iᵢ` is unique up to a scalar**: `Hom(Sᵢ, Iᵢ)` is the line spanned by
 `TauCeti.simpleRepToIndecInjRep`. -/
