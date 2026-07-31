@@ -31,7 +31,7 @@ scalar-kernel bridge and its characteristic API.
 ## Main declarations
 
 * `TauCeti.positiveDefiniteKernelOperator`: regard a scalar kernel as an operator-valued kernel.
-* `TauCeti.IsPositiveDefiniteKernel.positiveDefiniteKernelOperator_posSemidef`: positivity of that
+* `TauCeti.IsPositiveDefiniteKernel.posSemidef_positiveDefiniteKernelOperator`: positivity of that
   operator kernel.
 * `TauCeti.IsPositiveDefiniteKernel.KolmogorovSpace`: the canonical Hilbert space.
 * `TauCeti.IsPositiveDefiniteKernel.kolmogorovFeature`: its canonical feature map.
@@ -76,7 +76,7 @@ variable {K : α → α → 𝕜}
 
 /-- The operator-valued kernel obtained from a scalar positive-definite kernel is positive
 semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` construction. -/
-theorem positiveDefiniteKernelOperator_posSemidef (hK : IsPositiveDefiniteKernel K) :
+theorem posSemidef_positiveDefiniteKernelOperator (hK : IsPositiveDefiniteKernel K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
   apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
@@ -112,7 +112,7 @@ This is an abbreviation because Mathlib's `RKHS.OfKernel` currently has to be an
 order for its normed-group and inner-product instances to reduce. -/
 noncomputable abbrev KolmogorovSpace (hK : IsPositiveDefiniteKernel K) :=
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
+    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   RKHS.OfKernel (positiveDefiniteKernelOperator K)
 
 /-- The canonical feature map into the Kolmogorov space.  It sends `a` to the reproducing-kernel
@@ -120,7 +120,7 @@ vector at `a`, evaluated on the scalar `1`. -/
 noncomputable def kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a : α) :
     hK.KolmogorovSpace := by
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
+    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   exact RKHS.kerFun hK.KolmogorovSpace a 1
 
 /-- **Kolmogorov identity.** Inner products of the canonical feature vectors recover the
@@ -129,7 +129,7 @@ original kernel. -/
 theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
+    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
     RKHS.OfKernel.kernel_ofKernel]
@@ -156,7 +156,7 @@ construction is minimal: it contains no orthogonal summand invisible to the kern
 theorem kolmogorovFeature_dense (hK : IsPositiveDefiniteKernel K) :
     (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature)).topologicalClosure = ⊤ := by
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
+    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   have hspan :
       Submodule.span 𝕜
           {y | ∃ (a : α) (z : 𝕜), RKHS.kerFun hK.KolmogorovSpace a z = y} =
