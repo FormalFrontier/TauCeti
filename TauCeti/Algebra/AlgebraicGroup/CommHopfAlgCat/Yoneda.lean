@@ -93,16 +93,18 @@ only as a field of `pointsCorepresentableBy`, in the same way as Mathlib's
 `Functor.RepresentableBy.homEquiv'`. It is what carries the computation rules: a left-hand
 side mentioning the value `(pointsFunctor ⋙ forget GrpCat).obj A` of the corepresented
 functor is not in `simp` normal form, since `Functor.comp_obj` rewrites that type. The
-codomain is spelled as the underlying type of `points A`, so that the two sides of the rules
-below have the same type; `simp` does not use a rule whose sides agree only definitionally. -/
-noncomputable def pointsHomEquiv (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
+codomain is spelled as `WithConv (H →ₐ[R] A)`, the underlying type of `points A`, so that
+the two sides of the rules below have the same type; `simp` does not use a rule whose sides
+agree only definitionally. Only the commutative `R`-algebra structure of `H` is used here;
+the Hopf structure enters when the codomain carries its convolution group structure. -/
+noncomputable def pointsHomEquiv (H : Type v) [CommRing H] [Algebra R H]
     (A : CommAlgCat.{v} R) :
     (CommAlgCat.of R H ⟶ A) ≃ WithConv (H →ₐ[R] A) :=
   ConcreteCategory.homEquiv.trans (WithConv.equiv _).symm
 
 /-- `pointsHomEquiv` regards a morphism of commutative `R`-algebras as an `A`-valued point. -/
 @[simp]
-theorem pointsHomEquiv_apply (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
+theorem pointsHomEquiv_apply (H : Type v) [CommRing H] [Algebra R H]
     {A : CommAlgCat.{v} R} (f : CommAlgCat.of R H ⟶ A) :
     pointsHomEquiv H A f = toConv f.hom := by
   -- The defining equation of `pointsHomEquiv`: the two equivalences it composes are structures
@@ -115,7 +117,7 @@ theorem pointsHomEquiv_apply (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
 /-- The inverse of `pointsHomEquiv` forgets the convolution wrapper and bundles the resulting
 algebra homomorphism as a morphism in `CommAlgCat`. -/
 @[simp]
-theorem pointsHomEquiv_symm_apply (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
+theorem pointsHomEquiv_symm_apply (H : Type v) [CommRing H] [Algebra R H]
     {A : CommAlgCat.{v} R} (p : WithConv (H →ₐ[R] A)) :
     (pointsHomEquiv H A).symm p = CommAlgCat.ofHom p.ofConv := by
   apply (pointsHomEquiv H A).injective
