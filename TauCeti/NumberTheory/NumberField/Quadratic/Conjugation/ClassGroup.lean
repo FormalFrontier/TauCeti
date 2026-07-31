@@ -22,10 +22,8 @@ The reduction has two moves. First the general **bridge** `ClassGroup.mulEquiv_m
 Second the **inversion**: the ideal class of `σI` is the inverse of the class of `I` because
 `I · σI` is principal — the norm-principality theorem
 `isPrincipal_mul_map_ringOfIntegersQuadraticConj` (in `Quadratic/Conjugation/Norm.lean`) combined
-with `ClassGroup.mk0_eq_mk0_inv_iff`. The generic fact that pointwise inversion is trivial on the
-elementary-2 quotient
-(`TauCeti.ClassGroup.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv`) then gives the
-identity on `Cl/Cl²`.
+with `ClassGroup.mk0_eq_mk0_inv_iff`. Since each `C⁻¹` and `C` differ by a square, inversion is
+trivial on the elementary-2 quotient, giving the identity on `Cl/Cl²`.
 
 This is Layer 3 of the multiquadratic roadmap: the summit isomorphism
 `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` factors the conjugation action through its triviality on `Cl/Cl²`.
@@ -66,9 +64,13 @@ quotient is the identity. This is the capstone reduction feeding the genus-field
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (x : TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K)) :
     TauCeti.ClassGroup.elementaryTwoQuotientCongr
-      (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) x = x :=
-  TauCeti.ClassGroup.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv
-    (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen))
-    (mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen) x
+      (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) x = x := by
+  -- Write `x` as the class of an ideal class `C`; conjugation sends `C` to `C⁻¹`, and
+  -- `C⁻¹` and `C` differ by the square `C⁻¹ = (C⁻¹)² / C`, so they agree in `Cl/Cl²`.
+  obtain ⟨C, rfl⟩ := TauCeti.ClassGroup.elementaryTwoQuotientMk_surjective (𝓞 K) x
+  rw [TauCeti.ClassGroup.elementaryTwoQuotientCongr_mk,
+    mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen]
+  exact (TauCeti.ClassGroup.elementaryTwoQuotientMk_eq_iff (𝓞 K) C⁻¹ C).2
+    ⟨C⁻¹, div_eq_mul_inv C⁻¹ C⟩
 
 end TauCeti.NumberField
