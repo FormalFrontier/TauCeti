@@ -75,7 +75,7 @@ theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
 /-- The coordinates of a process with a constant mixing representative are independent. Along an
 injective selection the block law is a product measure, and `Measure.pi` on a finite index set is
 exactly what independence of that finite subfamily means. -/
-theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ι → Ω → α}
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) : iIndepFun X μ := by
   have hX : ∀ i, AEMeasurable (X i) μ := h.aemeasurable_of_const
   rw [iIndepFun_iff_finset]
@@ -84,19 +84,20 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
   -- finite subfamily is presented as an honest lambda for `iIndepFun_iff_map_fun_eq_pi_map`.
   simp only [Finset.restrict_def]
   rw [iIndepFun_iff_map_fun_eq_pi_map fun i : s => hX i]
-  -- Enumerate `s` increasingly to turn it into a `Fin s.card`-indexed injective selection.
-  set e : Fin s.card ≃ s := (s.orderIsoOfFin rfl).toEquiv
-  have hk : Function.Injective fun i : Fin s.card => ((e i : s) : ℕ) :=
+  -- Enumerate `s` as a `Fin s.card`-indexed injective selection. Any bijection serves:
+  -- only injectivity and the round trip are used, never an order on the index type.
+  set e : Fin s.card ≃ s := (Fintype.equivFinOfCardEq (Fintype.card_coe s)).symm
+  have hk : Function.Injective fun i : Fin s.card => ((e i : s) : ι) :=
     Subtype.val_injective.comp e.injective
-  have hblock := h.blockLaw_eq_pi_of_const (fun i : Fin s.card => ((e i : s) : ℕ)) hk
-  have hcomp : (fun ω (j : s) => X (j : ℕ) ω) =
-      (fun g (j : s) => g (e.symm j)) ∘ fun ω (i : Fin s.card) => X ((e i : s) : ℕ) ω := by
+  have hblock := h.blockLaw_eq_pi_of_const (fun i : Fin s.card => ((e i : s) : ι)) hk
+  have hcomp : (fun ω (j : s) => X (j : ι) ω) =
+      (fun g (j : s) => g (e.symm j)) ∘ fun ω (i : Fin s.card) => X ((e i : s) : ι) ω := by
     funext ω j
     simp [e.apply_symm_apply j]
-  have hae : AEMeasurable (fun ω (i : Fin s.card) => X ((e i : s) : ℕ) ω) μ :=
+  have hae : AEMeasurable (fun ω (i : Fin s.card) => X ((e i : s) : ι) ω) μ :=
     aemeasurable_pi_lambda _ fun i => hX _
-  calc μ.map (fun ω (j : s) => X (j : ℕ) ω)
-      = (μ.map fun ω (i : Fin s.card) => X ((e i : s) : ℕ) ω).map
+  calc μ.map (fun ω (j : s) => X (j : ι) ω)
+      = (μ.map fun ω (i : Fin s.card) => X ((e i : s) : ι) ω).map
           (fun g (j : s) => g (e.symm j)) := by
         rw [(measurable_pi_lambda _ fun j => measurable_pi_apply
           (e.symm j)).aemeasurable.map_map_of_aemeasurable hae, hcomp]
@@ -115,7 +116,7 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
         simpa using Equiv.piCongrLeft_apply_apply (fun _ : s => α) e g (e.symm j)
       rw [← hpiCongrLeft]
       exact Measure.pi_map_piCongrLeft e fun _ : s => (p : Measure α)
-    _ = Measure.pi fun j : s => μ.map (X (j : ℕ)) :=
+    _ = Measure.pi fun j : s => μ.map (X (j : ι)) :=
         congrArg Measure.pi (funext fun j => (h.map_eq_of_const j).symm)
 
 /-- **A constant mixing representative means plain i.i.d.**: `fun _ => p` witnesses `MixedIIDWith`
