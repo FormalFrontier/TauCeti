@@ -59,6 +59,7 @@ noncomputable def degreePart (q : ℕ) : Submodule PlumbingCoefficient (Plumbing
 
 /-- A chain lies in cubical degree `q` exactly when every cube in its support has dimension
 `q`. -/
+@[simp]
 theorem mem_degreePart (q : ℕ) (c : PlumbingChain V) :
     c ∈ degreePart V q ↔ ∀ C ∈ c.support, C.dimension = q := by
   rw [degreePart, Finsupp.mem_supported]
@@ -71,6 +72,7 @@ theorem single_mem_degreePart {q : ℕ} (C : PlumbingCube V) (a : PlumbingCoeffi
   Finsupp.single_mem_supported PlumbingCoefficient a hC
 
 /-- A nonzero single-cube chain has cubical degree `q` exactly when its cube has dimension `q`. -/
+@[simp]
 theorem single_mem_degreePart_iff {q : ℕ} (C : PlumbingCube V) {a : PlumbingCoefficient}
     (ha : a ≠ 0) :
     Finsupp.single C a ∈ degreePart V q ↔ C.dimension = q := by
@@ -80,14 +82,10 @@ theorem single_mem_degreePart_iff {q : ℕ} (C : PlumbingCube V) {a : PlumbingCo
 /-- Distinct cubical-degree submodules intersect trivially. -/
 theorem disjoint_degreePart {q r : ℕ} (hqr : q ≠ r) :
     Disjoint (degreePart V q) (degreePart V r) := by
-  rw [Submodule.disjoint_def]
-  intro c hcq hcr
-  apply Finsupp.ext
-  intro C
-  by_cases hC : C ∈ c.support
-  · exact (hqr (((mem_degreePart V q c).mp hcq C hC).symm.trans
-      ((mem_degreePart V r c).mp hcr C hC))).elim
-  · simp [Finsupp.notMem_support_iff.mp hC]
+  unfold degreePart
+  apply Finsupp.disjoint_supported_supported
+  refine Set.disjoint_left.mpr fun C hCq hCr => ?_
+  exact hqr (hCq.symm.trans hCr)
 
 end PlumbingChain
 
@@ -163,9 +161,8 @@ theorem latticeDifferentialDegree_comp
   apply LinearMap.ext
   intro c
   apply Subtype.ext
-  have h := LinearMap.congr_fun (P.latticeDifferential_comp_self k) (c : PlumbingChain V)
-  change P.latticeDifferential k (P.latticeDifferential k (c : PlumbingChain V)) = 0
-  simpa only [LinearMap.comp_apply, LinearMap.zero_apply] using h
+  simp only [LinearMap.comp_apply, latticeDifferentialDegree_apply, LinearMap.zero_apply]
+  exact LinearMap.congr_fun (P.latticeDifferential_comp_self k) (c : PlumbingChain V)
 
 end PlumbingGraph
 
