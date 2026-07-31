@@ -78,7 +78,10 @@ This is groundwork for layer **L6 — Schwarz–Christoffel** of the conformal-m
 analytic half of that layer is developed here — the integrand, its holomorphy, and the
 straight-line boundary behaviour — none of which needs the boundary theory of layers L4–L5. That
 the resulting map is *onto* a polygon needs the L5 boundary correspondence and is left to a later
-file. Layer L6 is absent from the upstream Mathlib Riemann-mapping effort
+file; the roadmap currently sequences all of L6 after L4 + L5, and whether the analytic half may
+precede them is asked in
+[TauCetiRoadmap issue #116](https://github.com/TauCetiProject/TauCetiRoadmap/issues/116). Layer L6
+is absent from the upstream Mathlib Riemann-mapping effort
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), so this is new
 formalization rather than a temporary shim.
 
@@ -144,6 +147,37 @@ theorem schwarzChristoffelSideDirection_empty (a β : ι → ℝ) (t : ℝ) :
     schwarzChristoffelSideDirection ∅ a β t = 1 := by
   rw [schwarzChristoffelSideDirection_def]
   simp
+
+/-- Adjoining a prevertex multiplies the integrand by the corresponding factor. -/
+@[simp]
+theorem schwarzChristoffelIntegrand_insert [DecidableEq ι] {i : ι} (hi : i ∉ s) (a β : ι → ℝ)
+    (ζ : ℂ) :
+    schwarzChristoffelIntegrand (insert i s) a β ζ
+      = (ζ - (a i : ℂ)) ^ ((β i : ℝ) : ℂ) * schwarzChristoffelIntegrand s a β ζ := by
+  rw [schwarzChristoffelIntegrand_def, schwarzChristoffelIntegrand_def, Finset.prod_insert hi]
+
+/-- Adjoining a prevertex multiplies the modulus by the corresponding factor. -/
+@[simp]
+theorem schwarzChristoffelModulus_insert [DecidableEq ι] {i : ι} (hi : i ∉ s) (a β : ι → ℝ)
+    (t : ℝ) :
+    schwarzChristoffelModulus (insert i s) a β t
+      = |t - a i| ^ β i * schwarzChristoffelModulus s a β t := by
+  rw [schwarzChristoffelModulus_def, schwarzChristoffelModulus_def, Finset.prod_insert hi]
+
+/-- Adjoining a prevertex rotates the side direction by `exp (π * I * β i)` when the new prevertex
+lies to the right of `t`, and leaves it unchanged otherwise. -/
+@[simp]
+theorem schwarzChristoffelSideDirection_insert [DecidableEq ι] {i : ι} (hi : i ∉ s) (a β : ι → ℝ)
+    (t : ℝ) :
+    schwarzChristoffelSideDirection (insert i s) a β t
+      = (if t < a i then Complex.exp ((π : ℂ) * I * (β i : ℂ)) else 1) *
+        schwarzChristoffelSideDirection s a β t := by
+  rw [schwarzChristoffelSideDirection_def, schwarzChristoffelSideDirection_def,
+    Finset.filter_insert]
+  split_ifs with hlt
+  · rw [Finset.sum_insert fun h => hi (Finset.mem_filter.mp h).1, Complex.ofReal_add, mul_add,
+      Complex.exp_add]
+  · rw [one_mul]
 
 section Holomorphy
 
@@ -218,35 +252,38 @@ end Holomorphy
 
 section RealAxis
 
-/-- A single Schwarz–Christoffel factor evaluated at a real point `t` which is distinct from its
-prevertex `x` unless the exponent vanishes: it is a positive real number, times `exp (π * I * c)`
-when the prevertex lies to the right of `t`. -/
-private lemma cpow_ofReal_sub_ofReal {t x : ℝ} (c : ℝ) (h : c ≠ 0 → x ≠ t) :
+/-- A single Schwarz–Christoffel factor evaluated at a real point `t`: it is a nonnegative real
+number, times `exp (π * I * c)` when the prevertex `x` lies to the right of `t`. Both sides vanish
+at `x = t` unless the exponent does. -/
+private lemma cpow_ofReal_sub_ofReal {t x : ℝ} (c : ℝ) :
     ((t : ℂ) - (x : ℂ)) ^ ((c : ℝ) : ℂ)
       = ((|t - x| ^ c : ℝ) : ℂ) * Complex.exp ((π : ℂ) * I * (if t < x then (c : ℂ) else 0)) := by
   rcases eq_or_ne c 0 with hc | hc
   · subst hc; simp
   rw [← Complex.ofReal_sub]
-  rcases lt_or_gt_of_ne (h hc) with hlt | hgt
+  rcases lt_trichotomy x t with hlt | heq | hgt
   · -- The prevertex is to the left: the base is a positive real.
     have h0 : (0 : ℝ) < t - x := sub_pos.mpr hlt
     rw [if_neg (not_lt.mpr hlt.le), abs_of_pos h0, Complex.ofReal_cpow h0.le]
     simp
+  · -- The point is the prevertex itself: with a nonzero exponent both sides vanish.
+    subst heq
+    simp [Real.zero_rpow hc, Complex.zero_cpow (Complex.ofReal_ne_zero.mpr hc)]
   · -- The prevertex is to the right: the base is a negative real, and the principal branch picks
     -- up the factor `exp (π * I * c)`.
     have h0 : t - x < 0 := sub_neg.mpr hgt
     rw [if_pos hgt, Complex.ofReal_cpow_of_nonpos h0.le, abs_of_neg h0, ← Complex.ofReal_neg,
       Complex.ofReal_cpow (by linarith : (0 : ℝ) ≤ -(t - x))]
 
-/-- **Polar decomposition of the Schwarz–Christoffel integrand along the real axis.** At a real
-point `t` distinct from every contributing prevertex the integrand is its (positive) modulus times
-a unit complex number determined by the prevertices to the right of `t`. -/
-theorem schwarzChristoffelIntegrand_ofReal {t : ℝ} (h : ∀ k ∈ s, β k ≠ 0 → a k ≠ t) :
+/-- **Polar decomposition of the Schwarz–Christoffel integrand along the real axis.** At every real
+point the integrand is its modulus times a unit complex number determined by the prevertices to the
+right of `t`; at a contributing prevertex both factors of the product vanish. -/
+theorem schwarzChristoffelIntegrand_ofReal (t : ℝ) :
     schwarzChristoffelIntegrand s a β (t : ℂ)
       = (schwarzChristoffelModulus s a β t : ℂ) * schwarzChristoffelSideDirection s a β t := by
   rw [schwarzChristoffelIntegrand_def, schwarzChristoffelModulus_def,
     schwarzChristoffelSideDirection_def, Complex.ofReal_prod,
-    Finset.prod_congr rfl fun k hk => cpow_ofReal_sub_ofReal (β k) (h k hk),
+    Finset.prod_congr rfl fun k _ => cpow_ofReal_sub_ofReal (β k),
     Finset.prod_mul_distrib, ← Complex.exp_sum]
   congr 1
   have hsum : ((∑ k ∈ s.filter fun k => t < a k, β k : ℝ) : ℂ)
@@ -262,6 +299,12 @@ theorem norm_schwarzChristoffelSideDirection (t : ℝ) :
   rw [schwarzChristoffelSideDirection_def, Complex.norm_exp]
   simp
 
+/-- The modulus of the Schwarz–Christoffel integrand is nonnegative: it is a product of real
+powers of nonnegative numbers. -/
+theorem schwarzChristoffelModulus_nonneg (t : ℝ) : 0 ≤ schwarzChristoffelModulus s a β t := by
+  rw [schwarzChristoffelModulus_def]
+  exact Finset.prod_nonneg fun k _ => Real.rpow_nonneg (abs_nonneg _) _
+
 /-- The modulus of the Schwarz–Christoffel integrand is positive away from the contributing
 prevertices. -/
 theorem schwarzChristoffelModulus_pos {t : ℝ} (h : ∀ k ∈ s, β k ≠ 0 → a k ≠ t) :
@@ -273,11 +316,12 @@ theorem schwarzChristoffelModulus_pos {t : ℝ} (h : ∀ k ∈ s, β k ≠ 0 →
   · exact Real.rpow_pos_of_pos (abs_pos.mpr (sub_ne_zero.mpr (h k hk hβ).symm)) _
 
 /-- The name `schwarzChristoffelModulus` is justified: it is the modulus of the integrand. -/
-theorem norm_schwarzChristoffelIntegrand_ofReal {t : ℝ} (h : ∀ k ∈ s, β k ≠ 0 → a k ≠ t) :
+@[simp]
+theorem norm_schwarzChristoffelIntegrand_ofReal (t : ℝ) :
     ‖schwarzChristoffelIntegrand s a β (t : ℂ)‖ = schwarzChristoffelModulus s a β t := by
-  rw [schwarzChristoffelIntegrand_ofReal h, norm_mul, norm_schwarzChristoffelSideDirection,
+  rw [schwarzChristoffelIntegrand_ofReal, norm_mul, norm_schwarzChristoffelSideDirection,
     mul_one, Complex.norm_real, Real.norm_eq_abs,
-    abs_of_pos (schwarzChristoffelModulus_pos h)]
+    abs_of_nonneg (schwarzChristoffelModulus_nonneg t)]
 
 end RealAxis
 
@@ -288,6 +332,12 @@ variable {u v : ℝ}
 /-- On an interval containing no contributing prevertex, no point of the interval is one. -/
 private lemma ne_of_mem_Ioo (hnv : ∀ k ∈ s, β k ≠ 0 → a k ∉ Ioo u v) {t : ℝ} (ht : t ∈ Ioo u v) :
     ∀ k ∈ s, β k ≠ 0 → a k ≠ t := fun k hk hβ h => hnv k hk hβ (h ▸ ht)
+
+/-- A prevertex an interval does meet, if the interval contains no contributing prevertex, has
+exponent `0`; in particular a nonnegative one. -/
+private lemma nonneg_of_mem_Ioo (hnv : ∀ k ∈ s, β k ≠ 0 → a k ∉ Ioo u v) :
+    ∀ k ∈ s, a k ∈ Ioo u v → 0 ≤ β k := fun k hk hak =>
+  (not_not.mp fun hβ => hnv k hk hβ hak).ge
 
 /-- The exponents summed over the prevertices lying to the right of a point do not change as the
 point moves inside an interval containing no contributing prevertex: a prevertex the interval does
@@ -315,8 +365,11 @@ theorem schwarzChristoffelSideDirection_eq_of_mem_Ioo (hnv : ∀ k ∈ s, β k �
   rw [schwarzChristoffelSideDirection_def, schwarzChristoffelSideDirection_def,
     sum_filter_lt_eq_of_mem_Ioo hnv ht ht']
 
-/-- The modulus is continuous on a prevertex-free interval. -/
-theorem continuousOn_schwarzChristoffelModulus (hnv : ∀ k ∈ s, β k ≠ 0 → a k ∉ Ioo u v) :
+/-- The modulus is continuous on an interval every prevertex of which has nonnegative exponent:
+`|t - a k| ^ β k` is continuous through its own prevertex as soon as `0 ≤ β k`. An interval
+containing no contributing prevertex satisfies this, every prevertex it meets having exponent
+`0`. -/
+theorem continuousOn_schwarzChristoffelModulus (hβ : ∀ k ∈ s, a k ∈ Ioo u v → 0 ≤ β k) :
     ContinuousOn (schwarzChristoffelModulus s a β) (Ioo u v) := by
   have hfun : schwarzChristoffelModulus s a β = fun t : ℝ => ∏ k ∈ s, |t - a k| ^ β k :=
     funext (schwarzChristoffelModulus_def s a β)
@@ -324,10 +377,10 @@ theorem continuousOn_schwarzChristoffelModulus (hnv : ∀ k ∈ s, β k ≠ 0 �
   refine continuousOn_finsetProd s fun k hk t ht => ?_
   have hinner : ContinuousAt (fun t : ℝ => |t - a k|) t :=
     (continuous_abs.comp (continuous_id.sub continuous_const)).continuousAt
-  rcases eq_or_ne (β k) 0 with hβ | hβ
-  · exact (hinner.rpow_const (Or.inr hβ.ge)).continuousWithinAt
-  · have hne : |t - a k| ≠ 0 :=
-      abs_ne_zero.mpr (sub_ne_zero.mpr (ne_of_mem_Ioo hnv ht k hk hβ).symm)
+  rcases eq_or_ne (a k) t with hak | hak
+  · have hmem : a k ∈ Ioo u v := by rwa [hak]
+    exact (hinner.rpow_const (Or.inr (hβ k hk hmem))).continuousWithinAt
+  · have hne : |t - a k| ≠ 0 := abs_ne_zero.mpr (sub_ne_zero.mpr hak.symm)
     exact (hinner.rpow_const (Or.inl hne)).continuousWithinAt
 
 /-- The integrand is continuous along a prevertex-free interval of the real axis: it is the
@@ -339,8 +392,9 @@ theorem continuousOn_schwarzChristoffelIntegrand_ofReal
   refine ContinuousOn.congr (f := fun t : ℝ =>
     (schwarzChristoffelModulus s a β t : ℂ) * schwarzChristoffelSideDirection s a β t₀)
     ((Complex.continuous_ofReal.comp_continuousOn
-      (continuousOn_schwarzChristoffelModulus hnv)).mul continuousOn_const) fun t ht => ?_
-  rw [schwarzChristoffelIntegrand_ofReal (ne_of_mem_Ioo hnv ht),
+      (continuousOn_schwarzChristoffelModulus (nonneg_of_mem_Ioo hnv))).mul
+        continuousOn_const) fun t ht => ?_
+  rw [schwarzChristoffelIntegrand_ofReal,
     schwarzChristoffelSideDirection_eq_of_mem_Ioo hnv ht ht₀]
 
 /-- **The increment of a Schwarz–Christoffel primitive along a side.** If `F` has the
@@ -362,7 +416,7 @@ theorem sub_eq_integral_mul_schwarzChristoffelSideDirection {F : ℝ → ℂ}
       (hcont.intervalIntegrable)
   rw [← hFTC, ← intervalIntegral.integral_ofReal, ← intervalIntegral.integral_mul_const]
   refine intervalIntegral.integral_congr fun t ht => ?_
-  rw [schwarzChristoffelIntegrand_ofReal (ne_of_mem_Ioo hnv (hsub ht)),
+  rw [schwarzChristoffelIntegrand_ofReal,
     schwarzChristoffelSideDirection_eq_of_mem_Ioo hnv (hsub ht) hp]
 
 /-- The integral of the modulus over a subinterval of a prevertex-free interval is positive: the
@@ -372,7 +426,8 @@ theorem integral_schwarzChristoffelModulus_pos (hnv : ∀ k ∈ s, β k ≠ 0 �
     0 < ∫ t in p..q, schwarzChristoffelModulus s a β t := by
   have hsub : uIcc p q ⊆ Ioo u v := (ordConnected_Ioo).uIcc_subset hp hq
   refine intervalIntegral.intervalIntegral_pos_of_pos_on
-    (((continuousOn_schwarzChristoffelModulus hnv).mono hsub).intervalIntegrable)
+    (((continuousOn_schwarzChristoffelModulus (nonneg_of_mem_Ioo hnv)).mono
+      hsub).intervalIntegrable)
     (fun t ht => schwarzChristoffelModulus_pos (ne_of_mem_Ioo hnv (hsub (by
       rw [Set.uIcc_of_le hpq.le]; exact Ioo_subset_Icc_self ht)))) hpq
 
