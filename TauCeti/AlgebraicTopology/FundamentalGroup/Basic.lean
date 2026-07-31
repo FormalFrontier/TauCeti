@@ -20,6 +20,8 @@ maps on fundamental groups.
   subsingleton, any induced-map range lies in any target subgroup.
 * `TauCeti.FundamentalGroup.map_range_le_of_simplyConnectedSpace`: a simply connected domain has
   induced-map range contained in any target subgroup.
+* `TauCeti.FundamentalGroup.mapOfEq_range_eq_bot_of_subsingleton`: the same triviality for the
+  basepoint-transported induced map `FundamentalGroup.mapOfEq`.
 -/
 
 public section
@@ -60,6 +62,16 @@ theorem FundamentalGroup.map_range_le_of_subsingleton
     (_root_.FundamentalGroup.map f a₀).range ≤ H := by
   rw [FundamentalGroup.map_range_eq_bot_of_subsingleton f]
   exact bot_le
+
+/-- If the source fundamental group is subsingleton, the range of the induced map transported to
+a prescribed target basepoint is trivial. -/
+@[simp]
+theorem FundamentalGroup.mapOfEq_range_eq_bot_of_subsingleton
+    [Subsingleton (_root_.FundamentalGroup A a₀)] (f : C(A, X)) {x : X} (h : f a₀ = x) :
+    (_root_.FundamentalGroup.mapOfEq f h).range = ⊥ := by
+  have : Subsingleton ((_root_.FundamentalGroup.mapOfEq f h).range) :=
+    (Set.subsingleton_coe _).mpr ((_root_.FundamentalGroup.mapOfEq f h).subsingleton_coe_range)
+  exact Subgroup.eq_bot_of_subsingleton _
 
 /-- A simply connected domain has induced fundamental-group range contained in any target
 subgroup. -/
