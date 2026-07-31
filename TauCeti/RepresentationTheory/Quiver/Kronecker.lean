@@ -285,7 +285,9 @@ section Forms
 variable [Fintype A]
 
 /-- The Euler form of the generalized Kronecker quiver, in the coordinates of its two vertices. -/
-@[simp]
+-- Deliberately not `@[simp]`: `TauCeti.eulerForm_def` together with `sum_univ` and
+-- `card_hom_src_tgt` already rewrites `eulerForm (Kronecker A) d e` to the right-hand side below,
+-- so tagging this lemma would only duplicate that normal form.
 theorem eulerForm_apply (d e : Kronecker A → ℤ) :
     eulerForm (Kronecker A) d e =
       d src * e src + d tgt * e tgt - (Fintype.card A : ℤ) * (d src * e tgt) := by
@@ -296,8 +298,8 @@ theorem eulerForm_apply (d e : Kronecker A → ℤ) :
 /-- The Tits form of the generalized Kronecker quiver on `n` arrows is
 `q(d) = d₁ ^ 2 + d₂ ^ 2 - n * d₁ * d₂`. -/
 -- Deliberately not `@[simp]`: `TauCeti.titsForm_def` is already `simp`, so `simp` rewrites
--- `titsForm` to `eulerForm` and finishes with `eulerForm_apply` below; tagging this lemma too
--- would only add one that never fires.
+-- `titsForm` to `eulerForm` and reaches the same normal form as `eulerForm_apply` above; tagging
+-- this lemma too would only add one that never fires.
 theorem titsForm_apply (d : Kronecker A → ℤ) :
     titsForm (Kronecker A) d =
       d src ^ 2 + d tgt ^ 2 - (Fintype.card A : ℤ) * (d src * d tgt) := by
