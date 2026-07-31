@@ -211,9 +211,8 @@ theorem norm_matrixCoeffLp_trivial (v w : V) :
     ‖matrixCoeffLp (ContRepresentation.trivial 𝕜 G V) continuous_const v w‖ = ‖⟪v, w⟫_𝕜‖ := by
   have h : ‖matrixCoeffLp (ContRepresentation.trivial 𝕜 G V) continuous_const v w‖ ^ 2
       = ‖⟪v, w⟫_𝕜‖ ^ 2 := by
-    rw [norm_matrixCoeffLp_sq]
-    simp
-  rw [← Real.sqrt_sq (norm_nonneg _), h, Real.sqrt_sq (norm_nonneg _)]
+    simpa using norm_matrixCoeffLp_sq (ContRepresentation.trivial 𝕜 G V) continuous_const v w
+  exact (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).1 h
 
 /-- A matrix coefficient of an invariant submodule is the matrix coefficient of the ambient
 representation at the underlying vectors, so passing to a subrepresentation creates no new
