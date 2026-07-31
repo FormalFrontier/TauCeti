@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.PathAlgebra
-public import Mathlib.Data.Matrix.Basis
 public import Mathlib.LinearAlgebra.Matrix.Block
 
 /-!
@@ -24,23 +23,22 @@ the component at its target, so it is the target that indexes the row. The singl
 
 ## Main definitions
 
-* `TauCeti.Quiver.Kronecker.vertexEquiv`: the two vertices as indices in `Fin 2`, the target
-  first.
 * `TauCeti.Quiver.Kronecker.upperTriangularAlgEquiv`: the path algebra of the `A₂` quiver as the
   algebra of upper-triangular `2 × 2` matrices, that is, `Matrix.blockTriangularSubalgebra` for
   the identity ordering of `Fin 2`.
 
 ## Main results
 
-* `TauCeti.Quiver.Kronecker.totalPath_eq_or`: the `A₂` quiver has exactly three paths, the two
-  trivial ones and its arrow.
+* `TauCeti.Quiver.Kronecker.upperTriangularAlgEquiv_symm_apply`: the inverse identification reads
+  a matrix off as the combination of the three paths given by its entries on and above the
+  diagonal.
 * `TauCeti.Quiver.Kronecker.upperTriangularAlgEquiv_vertexIdempotent_tgt`,
   `TauCeti.Quiver.Kronecker.upperTriangularAlgEquiv_vertexIdempotent_src` and
   `TauCeti.Quiver.Kronecker.upperTriangularAlgEquiv_ofArrow`: the identification sends the two
   vertex idempotents to the two diagonal matrix units and the arrow to the off-diagonal one.
-* `TauCeti.Quiver.Kronecker.finrank_pathAlgebra_eq_three` and
-  `TauCeti.Quiver.Kronecker.finrank_blockTriangularSubalgebra_eq_three`: both algebras are
-  three-dimensional.
+* `TauCeti.Quiver.Kronecker.finrank_blockTriangularSubalgebra_eq_three`: the algebra of
+  upper-triangular `2 × 2` matrices is three-dimensional, transporting
+  `TauCeti.Quiver.Kronecker.finrank_pathAlgebra_eq_three` along the identification.
 
 ## References
 
@@ -62,32 +60,6 @@ universe v w
 namespace Quiver.Kronecker
 
 variable {A : Type v}
-
-/-! ### Indexing the vertices, target first -/
-
-/-- The two vertices of the generalized Kronecker quiver as indices in `Fin 2`, **the target
-first**: `tgt` is `0` and `src` is `1`.
-
-The order is the one that makes the path algebra upper triangular rather than lower triangular. A
-path is sent to the matrix unit in the row of its target and the column of its source, because an
-arrow acts on a left module from its source to its target; so the arrows, all of which run from
-`src` to `tgt`, occupy entries above the diagonal exactly when `tgt` comes first. -/
-def vertexEquiv : Kronecker A ≃ Fin 2 where
-  toFun
-    | .src => 1
-    | .tgt => 0
-  invFun i := if i = 0 then tgt else src
-  left_inv v := by cases v <;> rfl
-  right_inv i := by fin_cases i <;> rfl
-
-@[simp]
-theorem vertexEquiv_src : vertexEquiv (src : Kronecker A) = 1 :=
-  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
-  -- would force `vertexEquiv` to be `@[expose]`.
-  (rfl)
-
-@[simp]
-theorem vertexEquiv_tgt : vertexEquiv (tgt : Kronecker A) = 0 := (rfl)
 
 /-! ### Collapsing the paths onto the matrix units -/
 
@@ -158,25 +130,9 @@ private theorem toMatrixAlgHom_single (x : Quiver.TotalPath (Kronecker A)) (c : 
 
 end ToMatrix
 
-/-! ### The three paths of the `A₂` quiver -/
+/-! ### The identification with the upper-triangular matrices -/
 
 variable [Unique A]
-
-/-- The `A₂` quiver has exactly three paths: the trivial path at each vertex, and its arrow. -/
-theorem totalPath_eq_or (x : Quiver.TotalPath (Kronecker A)) :
-    x = ⟨tgt, tgt, Path.nil⟩ ∨ x = ⟨src, tgt, arrowPath default⟩ ∨
-      x = ⟨src, src, Path.nil⟩ := by
-  obtain ⟨a, b, p⟩ := x
-  cases a <;> cases b
-  · exact Or.inr (Or.inr (by rw [path_src_src_eq_nil p]))
-  · refine Or.inr (Or.inl ?_)
-    have h := arrowPath_pathEquivArrow p
-    rw [Unique.eq_default (pathEquivArrow p)] at h
-    rw [h]
-  · exact isEmptyElim p
-  · exact Or.inl (by rw [path_tgt_tgt_eq_nil p])
-
-/-! ### The identification with the upper-triangular matrices -/
 
 section AlgEquiv
 
@@ -248,6 +204,20 @@ theorem upperTriangularAlgEquiv_single (x : Quiver.TotalPath (Kronecker A)) (c :
       = Matrix.single (vertexEquiv x.2.1) (vertexEquiv x.1) c :=
   toMatrixAlgHom_single k x c
 
+/-- The inverse identification reads an upper-triangular matrix off as a combination of the three
+paths: the two diagonal entries carry the trivial paths, and the entry above the diagonal carries
+the arrow. The entry below the diagonal, which vanishes, is reached by no path. -/
+@[simp]
+theorem upperTriangularAlgEquiv_symm_apply
+    (M : Matrix.blockTriangularSubalgebra k k (id : Fin 2 → Fin 2)) :
+    (upperTriangularAlgEquiv (A := A) k).symm M
+      = PathAlgebra.single ⟨tgt, tgt, Path.nil⟩ ((M : Matrix (Fin 2) (Fin 2) k) 0 0)
+        + PathAlgebra.single ⟨src, tgt, arrowPath default⟩ ((M : Matrix (Fin 2) (Fin 2) k) 0 1)
+        + PathAlgebra.single ⟨src, src, Path.nil⟩ ((M : Matrix (Fin 2) (Fin 2) k) 1 1) := by
+  rw [AlgEquiv.symm_apply_eq]
+  exact Subtype.ext (toMatrixAlgHom_ofMatrixLinear (A := A) k
+    (Matrix.mem_blockTriangularSubalgebra.mp M.2)).symm
+
 /-- The vertex idempotent at the target goes to the first diagonal matrix unit. -/
 @[simp]
 theorem upperTriangularAlgEquiv_vertexIdempotent_tgt :
@@ -281,18 +251,12 @@ section Field
 
 variable (k : Type w) [Field k]
 
-/-- The path algebra of the `A₂` quiver is three-dimensional: the two trivial paths and the
-arrow. -/
-theorem finrank_pathAlgebra_eq_three :
-    Module.finrank k (pathAlgebra k (Kronecker A)) = 3 := by
-  letI : Fintype A := Fintype.ofFinite A
-  rw [TauCeti.finrank_pathAlgebra k, card_totalPath, Fintype.card_unique]
-
-/-- The algebra of upper-triangular `2 × 2` matrices is three-dimensional. -/
+/-- The algebra of upper-triangular `2 × 2` matrices is three-dimensional, since it is the path
+algebra of the `A₂` quiver. -/
 theorem finrank_blockTriangularSubalgebra_eq_three :
     Module.finrank k (Matrix.blockTriangularSubalgebra k k (id : Fin 2 → Fin 2)) = 3 := by
   rw [← (upperTriangularAlgEquiv (A := Unit) k).toLinearEquiv.finrank_eq]
-  exact finrank_pathAlgebra_eq_three k
+  exact finrank_pathAlgebra_eq_three (A := Unit) k
 
 end Field
 
