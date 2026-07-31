@@ -72,7 +72,10 @@ def ones (n : ℕ) : n.Partition where
 @[simp]
 theorem ones_parts (n : ℕ) : (ones n).parts = Multiset.replicate n 1 := by simp [ones]
 
-/-- The product of the factorials of the parts of `(1ⁿ)` is `1`. -/
+/-- The product of the factorials of the parts of `(1ⁿ)` is `1`.
+
+This is not a `simp` lemma: `simp` already reaches it from the `simp` lemma
+`Nat.Partition.ones_parts`. -/
 theorem prod_map_factorial_ones (n : ℕ) :
     ((ones n).parts.map Nat.factorial).prod = 1 := by
   simp [Multiset.map_replicate]

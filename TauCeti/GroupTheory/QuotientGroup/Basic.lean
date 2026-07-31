@@ -29,14 +29,19 @@ namespace TauCeti
 
 variable {G : Type*} [Group G]
 
-/-- Left translation on the cosets of the trivial subgroup is left translation in the group. -/
+/-- Left translation on the cosets of the trivial subgroup is left translation in the group.
+
+Not a `simp` lemma: `simp` rewrites the left-hand side further, to
+`QuotientGroup.quotientBot (↑g * ↑x)`. -/
 theorem quotientBot_smul (g x : G) :
     QuotientGroup.quotientBot (g • (x : G ⧸ (⊥ : Subgroup G))) =
       g * QuotientGroup.quotientBot (x : G ⧸ (⊥ : Subgroup G)) :=
   rfl
 
 /-- Identifying the cosets of the trivial subgroup with the group is equivariant for left
-translation. -/
+translation.
+
+Not a `simp` lemma: `simp` rewrites `MulEquiv.toEquiv` away in the left-hand side. -/
 theorem quotientBot_equivariant (g : G) (q : G ⧸ (⊥ : Subgroup G)) :
     QuotientGroup.quotientBot.toEquiv (g • q) =
       g • QuotientGroup.quotientBot.toEquiv q := by
@@ -44,6 +49,7 @@ theorem quotientBot_equivariant (g : G) (q : G ⧸ (⊥ : Subgroup G)) :
   | H x => exact quotientBot_smul g x
 
 /-- A group element fixes a coset of the trivial subgroup exactly when it is the identity. -/
+@[simp]
 theorem quotientBot_smul_eq_self_iff (g : G) (q : G ⧸ (⊥ : Subgroup G)) :
     g • q = q ↔ g = 1 := by
   constructor

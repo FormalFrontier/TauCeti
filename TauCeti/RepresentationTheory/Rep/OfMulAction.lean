@@ -40,8 +40,11 @@ open CategoryTheory
 
 section Congr
 
-variable (k : Type u) [Ring k] {G : Type v} [Monoid G] {X Y : Type w} [MulAction G X]
-  [MulAction G Y]
+variable {G : Type v} [Monoid G] {X Y : Type w} [MulAction G X] [MulAction G Y]
+
+section Semiring
+
+variable (k : Type u) [Semiring k]
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an equivalence of the permutation
 representations on their free modules. -/
@@ -49,6 +52,13 @@ noncomputable def ofMulActionEquivCongr (e : X ≃ Y)
     (he : ∀ (g : G) (x : X), e (g • x) = g • e x) :
     (Representation.ofMulAction k G X).Equiv (Representation.ofMulAction k G Y) :=
   .mk (MonoidAlgebra.mapDomainLinearEquiv k k e) fun _ => by ext; simp [he]
+
+end Semiring
+
+-- Objects of `Rep k G` carry an `AddCommGroup`, so `Rep.ofMulAction k G X` needs `k[X]` to be
+-- one; Mathlib declares `Rep.ofMulAction` in its `ring` section for exactly this reason, and
+-- everything below is stated in terms of it.
+variable (k : Type u) [Ring k]
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an isomorphism of the permutation
 representations they carry. -/
@@ -138,16 +148,17 @@ noncomputable def quotientTopIsoTrivial :
 theorem quotientTopIsoTrivial_hom_hom_single (q : G ⧸ (⊤ : Subgroup G)) (r : k) :
     (quotientTopIsoTrivial k).hom.hom (MonoidAlgebra.single q r) = r := by
   haveI := QuotientGroup.subsingleton_quotient_top (G := G)
-  simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial,
-    MonoidAlgebra.uniqueLinearEquiv, Subsingleton.elim q 1]
+  rw [quotientTopIsoTrivial, Rep.mkIso_hom_hom_apply,
+    Representation.ofMulActionSubsingletonEquivTrivial_apply, Subsingleton.elim q 1]
+  simp
 
 @[simp]
 theorem quotientTopIsoTrivial_inv_hom_apply (r : k) :
     (quotientTopIsoTrivial k).inv.hom r =
       MonoidAlgebra.single ((1 : G) : G ⧸ (⊤ : Subgroup G)) r := by
   haveI := QuotientGroup.subsingleton_quotient_top (G := G)
-  simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial,
-    MonoidAlgebra.uniqueLinearEquiv]
+  rw [quotientTopIsoTrivial, Rep.mkIso_inv_hom_apply, ← Representation.Equiv.coe_toLinearMap,
+    Representation.ofMulActionSubsingletonEquivTrivial_symm_apply, QuotientGroup.mk_one]
 
 end QuotientTop
 

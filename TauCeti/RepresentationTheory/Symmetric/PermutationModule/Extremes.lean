@@ -84,7 +84,10 @@ theorem finrank_permutationModule_indiscrete (n : ℕ) :
   rw [finrank_permutationModule, Nat.Partition.prod_map_factorial_indiscrete,
     Nat.div_self n.factorial_pos]
 
-/-- The character of the Young permutation module of `(n)` is constantly `1`. -/
+/-- The character of the Young permutation module of `(n)` is constantly `1`.
+
+Not a `simp` lemma: `char_ofMulAction` already rewrites the left-hand side to the fixed-tabloid
+count. -/
 theorem char_permutationModule_indiscrete (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     (permutationModule (Nat.Partition.indiscrete n)).ρ.character σ = 1 := by
   rw [char_permutationModule, youngSubgroup_indiscrete]
@@ -131,7 +134,10 @@ theorem finrank_permutationModule_ones (n : ℕ) :
   rw [finrank_permutationModule, Nat.Partition.prod_map_factorial_ones, Nat.div_one]
 
 /-- The character of the Young permutation module of `(1ⁿ)` is the regular character: it is `n !`
-at the identity and vanishes elsewhere. -/
+at the identity and vanishes elsewhere.
+
+Not a `simp` lemma: `char_ofMulAction` already rewrites the left-hand side to the fixed-tabloid
+count. -/
 theorem char_permutationModule_ones (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     (permutationModule (Nat.Partition.ones n)).ρ.character σ =
       if σ = 1 then (n.factorial : ℚ) else 0 := by
