@@ -26,7 +26,7 @@ selection argument that turns it into a convergent subsequence.
 The proof is Mathlib's compact-open Arzelà–Ascoli framework, applied in `C(Ω, ℂ)`. The family
 restricts to a set of continuous maps there;
 `ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact` together with
-`UniformOnFun.isClosed_setOf_continuous` exhibits `C(Ω, ℂ)` as a closed subspace of the
+`UniformOnFun.isClosed_setOfPred_continuous` exhibits `C(Ω, ℂ)` as a closed subspace of the
 uniform-on-compacts function space, so
 `ArzelaAscoli.isCompact_closure_of_isClosedEmbedding` applies: equicontinuity on each compact comes
 from `IsLocallyBoundedOn.equicontinuousOn`, and pointwise relative compactness from local
@@ -95,7 +95,7 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     rw [show (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
         (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) = ContinuousMap.toUniformOnFunIsCompact from rfl,
       ContinuousMap.range_toUniformOnFunIsCompact]
-    exact UniformOnFun.isClosed_setOf_continuous CompactlyCoherentSpace.isCoherentWith
+    exact UniformOnFun.isClosed_setOfPred_continuous CompactlyCoherentSpace.isCoherentWith
   -- Arzelà–Ascoli in the compact-open topology
   have hcpt : IsCompact (closure (Set.range f)) := by
     refine ArzelaAscoli.isCompact_closure_of_isClosedEmbedding (fun K hK => hK) hclemb ?_ ?_
