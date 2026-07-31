@@ -28,8 +28,15 @@ conditional predicate's witness.
 
 The index type is arbitrary, matching `ConditionallyIIDWith`: the definition quantifies only over
 injective selections `Fin m → ι`, and nothing in it uses the order structure of `ℕ`. Sequence-level
-users get the `ι = ℕ` case by unification. The *consequences* over `ℕ` — `prefixLaw_eq_mixture`,
-`blockLaw_eq_prefixLaw_of_injective`, exchangeability and contractability, the path-law
+users get the `ι = ℕ` case by unification.
+
+Exchangeability splits along that line. At an arbitrary index type the mixture identity gives
+`MixedIIDWith.exchangeableFamily`, in `TauCeti.Probability.Exchangeability.Family`; the
+sequence-level `MixedIIDWith.exchangeable` and `.exchangeableAt`, which conclude the `ℕ`-indexed
+`Exchangeable` predicate, stay in `MixedIID/Implications.lean`.
+
+The other *consequences* over `ℕ` — `prefixLaw_eq_mixture`,
+`blockLaw_eq_prefixLaw_of_injective`, contractability, the path-law
 representation, and mixing-law uniqueness — remain sequence-level, because those genuinely use
 prefixes, shifts, or `ℕ`-indexed products.
 

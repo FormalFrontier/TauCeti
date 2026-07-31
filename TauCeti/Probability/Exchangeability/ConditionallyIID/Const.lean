@@ -14,9 +14,11 @@ At a constant random measure `ω ↦ p`, the conditional and mixture identities 
 i.i.d. sequence is conditionally i.i.d. with its common law as a constant directing measure.
 
 The equivalence itself holds at an arbitrary index type
-(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`); the
-`iIndepFun` characterizations below stay sequence-level, since independence of the coordinates is
-stated for an `ℕ`-indexed family.
+(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`). The
+`iIndepFun` characterizations below stay over `ℕ`, but not because independence needs it: Mathlib's
+`ProbabilityTheory.iIndepFun` is already stated for an arbitrary index type. The limitation is in
+the proof, which enumerates each finite subset of coordinates through the order on `ℕ`; carrying it
+to an arbitrary `ι` means reindexing finite subsets by a `Fintype` equivalence instead.
 -/
 
 public section
