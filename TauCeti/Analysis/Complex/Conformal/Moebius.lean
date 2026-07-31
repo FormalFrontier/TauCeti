@@ -148,67 +148,6 @@ lemma differentiableOn_unitDiscMoebiusFormula (a : Complex.UnitDisc) :
       (ball (0 : ℂ) 1) :=
   differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one
 
-/-- **The Schwarz--Pick conjugate** of a self-map `f` of the open unit disc at a point `a`:
-`f` conjugated by the scalar Moebius formulas centred at `-a` on the source and at `f a` on the
-target.  When `f` is a holomorphic self-map of the disc and `‖a‖ < 1` the conjugate is again a
-holomorphic self-map of the disc, but now fixing the origin
-(`differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate`), so Schwarz's lemma
-applies to it at `0`.  This is the construction shared by the finite and infinitesimal
-Schwarz--Pick estimates and by the equality case of the finite estimate. -/
-noncomputable def schwarzPickConjugate (f : ℂ → ℂ) (a : ℂ) : ℂ → ℂ :=
-  (fun η => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
-    fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ)
-
-/-- The Schwarz--Pick conjugate as a composite: the scalar Moebius formula centred at `-a` on the
-source, then `f`, then the scalar Moebius formula centred at `f a` on the target.  The body of
-`schwarzPickConjugate` is not `@[expose]`d, so downstream files rewrite with this lemma rather
-than unfolding the definition. -/
-lemma schwarzPickConjugate_def (f : ℂ → ℂ) (a : ℂ) :
-    schwarzPickConjugate f a =
-      (fun η => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
-        fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ) := by
-  rw [schwarzPickConjugate]
-
-/-- The Schwarz--Pick conjugate of `f` at `a` fixes the origin: the source factor sends `0` to
-`a`, and the target factor sends `f a` to `0`.  No hypothesis on `f` or `a` is needed. -/
-@[simp]
-lemma schwarzPickConjugate_apply_zero (f : ℂ → ℂ) (a : ℂ) :
-    schwarzPickConjugate f a 0 = 0 := by
-  simp [schwarzPickConjugate]
-
-/-- **Schwarz--Pick conjugation scaffold.** For a holomorphic self-map `f` of the open unit
-disc and a disc point `a`, conjugating `f` by the Moebius automorphisms centred at `a` (on the
-source) and at `f a` (on the target) yields a holomorphic self-map of the disc that fixes the
-origin.  This is the common scaffold of the finite and infinitesimal Schwarz--Pick estimates:
-applying Schwarz's lemma at `0` to the conjugate unwinds to the contraction estimate for
-`f`. -/
-lemma differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate {f : ℂ → ℂ}
-    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) {a : ℂ} (ha : ‖a‖ < 1) :
-    DifferentiableOn ℂ (schwarzPickConjugate f a) (ball (0 : ℂ) 1) ∧
-      MapsTo (schwarzPickConjugate f a) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧
-      schwarzPickConjugate f a 0 = 0 := by
-  have ha_mem : a ∈ ball (0 : ℂ) 1 := by simpa [mem_ball_zero_iff] using ha
-  have hfa_norm : ‖f a‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps ha_mem
-  have hsource_maps :
-      MapsTo (fun ξ : ℂ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ))
-        (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
-    mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := -a) (by simpa using ha)
-  have htarget_maps :
-      MapsTo (fun η : ℂ => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η))
-        (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
-    mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := f a) hfa_norm
-  have hsource_diff :
-      DifferentiableOn ℂ (fun ξ : ℂ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ))
-        (ball (0 : ℂ) 1) :=
-    differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -a) (by simpa using ha)
-  have htarget_diff :
-      DifferentiableOn ℂ (fun η : ℂ => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η))
-        (ball (0 : ℂ) 1) :=
-    differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one (a := f a) hfa_norm
-  refine ⟨htarget_diff.comp (hf.comp hsource_diff hsource_maps) (hmaps.comp hsource_maps),
-    fun ξ hξ => htarget_maps (hmaps (hsource_maps hξ)), schwarzPickConjugate_apply_zero f a⟩
-
 private lemma unitDiscMoebius_neg_apply_unitDiscMoebius_apply_scalar {a z : ℂ}
     (hden : 1 - (starRingEnd ℂ) a * z ≠ 0)
     (hnorm : 1 - (starRingEnd ℂ) a * a ≠ 0) :
@@ -272,20 +211,6 @@ lemma leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one {a : ℂ} (ha : ‖a‖ < 
       (Complex.UnitDisc.mk z hz_norm))
   simpa [coe_unitDiscMoebius, Complex.UnitDisc.coe_neg, Complex.UnitDisc.coe_mk, map_neg,
     neg_mul, sub_neg_eq_add] using h
-
-/-- **Value of the Schwarz--Pick conjugate at a Moebius image.** The Schwarz--Pick conjugate
-`schwarzPickConjugate f a` sends the Moebius image of a disc point `z` to the Moebius image of
-`f z`.  Taking norms turns a Schwarz-lemma estimate for the conjugate at `0` into a
-pseudo-hyperbolic statement about `f` at `z`, `a`, so this is the evaluation step shared by the
-Schwarz--Pick contraction estimate and its equality case. -/
-lemma schwarzPickConjugate_apply_unitDiscMoebiusFormula {f : ℂ → ℂ} {a z : ℂ}
-    (ha : ‖a‖ < 1) (hz : ‖z‖ < 1) :
-    schwarzPickConjugate f a ((z - a) / (1 - (starRingEnd ℂ) a * z))
-      = (f z - f a) / (1 - (starRingEnd ℂ) (f a) * f z) := by
-  have hsource : ((z - a) / (1 - (starRingEnd ℂ) a * z) - -a) /
-      (1 - (starRingEnd ℂ) (-a) * ((z - a) / (1 - (starRingEnd ℂ) a * z))) = z :=
-    leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha (by simpa [mem_ball_zero_iff] using hz)
-  simp only [schwarzPickConjugate, Function.comp_apply, hsource]
 
 /-- The standard Moebius self-equivalence of the unit disc sending `a` to `0`. -/
 noncomputable def unitDiscMoebiusEquiv (a : Complex.UnitDisc) :

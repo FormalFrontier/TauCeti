@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
+import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 
 /-!
 # The infinitesimal Schwarz--Pick inequality
