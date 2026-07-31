@@ -258,10 +258,8 @@ theorem mulEquiv_apply_eq_inv_of_forall_isPrincipal [IsDedekindDomain R] {f : R 
   rw [mulEquiv_mk0, ClassGroup.mk0_eq_mk0_inv_iff]
   obtain ⟨x, hx⟩ := (hf I).principal
   have hIne : (I : Ideal R) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
-  have hmapne : Ideal.map (f : R →+* R) (I : Ideal R) ≠ 0 := by
-    rw [ne_eq, Ideal.zero_eq_bot,
-      Ideal.map_eq_bot_iff_of_injective (f := (f : R →+* R)) f.injective, ← Ideal.zero_eq_bot]
-    exact hIne
+  have hmapne : Ideal.map (f : R →+* R) (I : Ideal R) ≠ 0 :=
+    mem_nonZeroDivisors_iff_ne_zero.mp (idealMap_mem_nonZeroDivisors f I.2)
   refine ⟨x, ?_, ?_⟩
   · intro hx0
     subst hx0

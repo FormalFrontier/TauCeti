@@ -128,7 +128,10 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
   AlgEquiv.ofRingEquiv (f := ringOfIntegersQuadraticConj hmin hgen)
     (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
 
-/-- The relative norm is invariant under pushforward by quadratic conjugation. -/
+/-- The relative norm is invariant under pushforward by quadratic conjugation. This restates
+`Ideal.relNorm_map_algEquiv` for the ring isomorphism `ringOfIntegersQuadraticConj` (via its
+`ℤ`-algebra packaging `ringOfIntegersQuadraticConjₐ`) — the form used below, where ideals are
+pushed forward along the ring equivalence rather than the algebra equivalence. -/
 private theorem relNorm_map_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (J : Ideal (𝓞 K)) :
     Ideal.relNorm ℤ (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) J)
@@ -156,9 +159,9 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
   have hBne : B ≠ 0 := by rw [hB]; exact mul_ne_zero hJne hmapne
   -- (1) `A` is principal (extension of a principal `ℤ`-ideal).
   have hAprin : A.IsPrincipal := by
-    obtain ⟨m, hm⟩ := (IsPrincipalIdealRing.principal (Ideal.relNorm ℤ J)).principal
-    exact ⟨algebraMap ℤ (𝓞 K) m, by
-      rw [hA, hm, Ideal.map_span, Set.image_singleton, Ideal.submodule_span_eq]⟩
+    have : (Ideal.relNorm ℤ J).IsPrincipal := IsPrincipalIdealRing.principal _
+    rw [hA]
+    infer_instance
   -- (2) `A ≤ B`: each generator `N(x) = x·σx` lies in `J · σJ`.
   have hAB : A ≤ B := by
     rw [hA, Ideal.map_relNorm, Ideal.span_le]
