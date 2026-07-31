@@ -51,9 +51,7 @@ criterion adds is the production of the pointwise limits that theorem asks for.
 ## Main results
 
 * `TauCeti.clusterSetOn_eq_iInter` and `TauCeti.mem_clusterSetOn_iff_forall_exists` — the two
-  textbook characterizations, as a nested intersection and in `ε`-`δ` form;
-  `TauCeti.clusterSetOn_eq_iInter_of_hasBasis` cuts the first down to a basis of the approach
-  filter.
+  textbook characterizations, as a nested intersection and in `ε`-`δ` form.
 * `TauCeti.isClosed_clusterSetOn`, `TauCeti.clusterSetOn_subset_closure_image`,
   `TauCeti.isCompact_clusterSetOn` and `TauCeti.clusterSetOn_nonempty` — the cluster set is a closed
   subset of `closure (f '' U)`, and is compact and nonempty at every point of `closure U` once `f`
@@ -111,25 +109,16 @@ lemma mem_clusterSetOn_iff_frequently :
   mapClusterPt_iff_frequently
 
 /-- **The cluster set as a nested intersection**, the form in which it is usually defined: the
-values that cannot be separated from `f` on any approach region. -/
+values that cannot be separated from `f` on any approach region.
+
+Since `closure (f '' ·)` is monotone, `Filter.HasBasis.biInter_mem` cuts the intersection down to
+any basis of `𝓝[U] w`; that is how the cluster set is exhibited as a *directed* intersection in
+`TauCeti.isPreconnected_clusterSetOn`, a basis being directed by design. -/
 lemma clusterSetOn_eq_iInter : clusterSetOn f U w = ⋂ s ∈ 𝓝[U] w, closure (f '' s) := by
   ext v
   rw [mem_clusterSetOn_iff, MapClusterPt, clusterPt_iff_forall_mem_closure, mem_iInter₂]
   refine ⟨fun h s hs => h _ (image_mem_map hs), fun h t ht => ?_⟩
   exact closure_mono (image_preimage_subset f t) (h _ (mem_map.mp ht))
-
-/-- **The cluster set along a basis of the approach filter.** Only a basis of `𝓝[U] w` is needed in
-`TauCeti.clusterSetOn_eq_iInter`, because `closure (f '' ·)` is monotone. This is the form used to
-exhibit the cluster set as a *directed* intersection, a basis being directed by design. -/
-lemma clusterSetOn_eq_iInter_of_hasBasis {ι : Sort*} {p : ι → Prop} {s : ι → Set X}
-    (h : (𝓝[U] w).HasBasis p s) :
-    clusterSetOn f U w = ⋂ i, ⋂ _ : p i, closure (f '' s i) := by
-  rw [clusterSetOn_eq_iInter]
-  refine subset_antisymm (fun v hv => mem_iInter₂.mpr fun i hi => ?_)
-    (fun v hv => mem_iInter₂.mpr fun u hu => ?_)
-  · exact mem_iInter₂.mp hv _ (h.mem_of_mem hi)
-  · obtain ⟨i, hi, hsub⟩ := h.mem_iff.mp hu
-    exact closure_mono (image_mono hsub) (mem_iInter₂.mp hv i hi)
 
 /-- The cluster set is closed: it is a set of cluster points of a filter. -/
 lemma isClosed_clusterSetOn : IsClosed (clusterSetOn f U w) := isClosed_setOfPred_clusterPt
@@ -294,9 +283,10 @@ dropped — the cluster set of a map on a disconnected `U` is a union of the clu
 pieces, which have no reason to meet.
 
 The proof writes the cluster set as `⋂ t, closure (f '' (U ∩ t))` over such a basis, by
-`TauCeti.clusterSetOn_eq_iInter_of_hasBasis`. Each member is a compact preconnected set — the
-continuous image of a preconnected set, closed up, inside the compact `K` — and the family is
-directed downwards because the basis is. So `TauCeti.isPreconnected_iInter_of_directed` applies. -/
+`TauCeti.clusterSetOn_eq_iInter` and `Filter.HasBasis.biInter_mem`, whose monotonicity hypothesis
+is met by `closure (f '' ·)`. Each member is a compact preconnected set — the continuous image of a
+preconnected set, closed up, inside the compact `K` — and the family is directed downwards because
+the basis is. So `TauCeti.isPreconnected_iInter_of_directed` applies. -/
 theorem isPreconnected_clusterSetOn (hK : IsCompact K) (hfK : MapsTo f U K)
     (hfc : ContinuousOn f U)
     (hconn : ∀ s ∈ 𝓝 w, ∃ t ∈ 𝓝 w, t ⊆ s ∧ IsPreconnected (U ∩ t)) :
@@ -309,7 +299,8 @@ theorem isPreconnected_clusterSetOn (hK : IsCompact K) (hfK : MapsTo f U K)
     ⟨fun s => ⟨hp s, fun ⟨t, ht, hts⟩ => mem_of_superset ht.1 hts⟩⟩
   have hEq : clusterSetOn f U w =
       ⋂ t : {t : Set X // t ∈ 𝓝 w ∧ IsPreconnected (t ∩ U)}, closure (f '' (t.1 ∩ U)) := by
-    rw [clusterSetOn_eq_iInter_of_hasBasis (nhdsWithin_hasBasis hbasis U), iInter_subtype]
+    rw [clusterSetOn_eq_iInter, (nhdsWithin_hasBasis hbasis U).biInter_mem
+      (fun _ _ hst => closure_mono (image_mono hst)), iInter_subtype]
   have : Nonempty {t : Set X // t ∈ 𝓝 w ∧ IsPreconnected (t ∩ U)} := by
     obtain ⟨t, ht, -⟩ := hp univ univ_mem
     exact ⟨⟨t, ht⟩⟩
