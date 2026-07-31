@@ -90,10 +90,12 @@ theorem aut_top_over_intermediateField_mul_self_eq_one
     σ * σ = 1 :=
   AlgEquiv.restrictScalars_injective K (aut_mul_self_eq_one hroot (σ.restrictScalars K))
 
-/-- **The relative Galois group has exponent dividing two.** Together with commutativity — which
-Mathlib's `IsAbelianGalois` tower instance supplies from
-`TauCeti.Multiquadratic.isAbelianGalois` — this says `Gal(M/F)` is elementary abelian, exactly as
-`Gal(M/K)` is (`TauCeti.Multiquadratic.aut_exponent_dvd_two`). -/
+/-- **The relative Galois group has exponent dividing two.** As stated this needs no finiteness or
+characteristic hypothesis, just as `TauCeti.Multiquadratic.aut_exponent_dvd_two` does not for
+`Gal(M/K)`. Under the extra hypotheses `[Finite ι]` and `[NeZero (2 : K)]` of
+`TauCeti.Multiquadratic.isAbelianGalois`, Mathlib's `IsAbelianGalois.tower_top` supplies
+commutativity as well, and then this says `Gal(M/F)` is elementary abelian, exactly as `Gal(M/K)`
+is. -/
 theorem aut_top_over_intermediateField_exponent_dvd_two
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
