@@ -54,6 +54,8 @@ private noncomputable def spinConj :
 omit [Invertible (2 : R)] in
 private theorem spinConj_apply (x : spinGroup Q) (a : CliffordAlgebra Q) :
     spinConj Q x a = (x : CliffordAlgebra Q) * a * star (x : CliffordAlgebra Q) := by
+  -- `toModuleAut` has no application theorem reducing through a composed `MonoidHom`, so expose
+  -- its underlying conjugation action before applying the public `ConjAct` simplification API.
   change ConjAct.toConjAct (spinGroup.toUnits x) • a = _
   simp [ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct,
     ← spinGroup.star_eq_inv]
