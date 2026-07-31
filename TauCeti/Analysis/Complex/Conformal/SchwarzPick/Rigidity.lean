@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.Distance
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Classification
-import Mathlib.Analysis.Complex.Schwarz
 
 /-!
 # Rigidity in the Schwarz--Pick theorem

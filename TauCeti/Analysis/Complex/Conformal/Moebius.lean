@@ -169,6 +169,13 @@ lemma schwarzPickConjugate_def (f : ℂ → ℂ) (a : ℂ) :
         fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ) := by
   rw [schwarzPickConjugate]
 
+/-- The Schwarz--Pick conjugate of `f` at `a` fixes the origin: the source factor sends `0` to
+`a`, and the target factor sends `f a` to `0`.  No hypothesis on `f` or `a` is needed. -/
+@[simp]
+lemma schwarzPickConjugate_apply_zero (f : ℂ → ℂ) (a : ℂ) :
+    schwarzPickConjugate f a 0 = 0 := by
+  simp [schwarzPickConjugate]
+
 /-- **Schwarz--Pick conjugation scaffold.** For a holomorphic self-map `f` of the open unit
 disc and a disc point `a`, conjugating `f` by the Moebius automorphisms centred at `a` (on the
 source) and at `f a` (on the target) yields a holomorphic self-map of the disc that fixes the
@@ -200,8 +207,7 @@ lemma differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate {f : 
         (ball (0 : ℂ) 1) :=
     differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one (a := f a) hfa_norm
   refine ⟨htarget_diff.comp (hf.comp hsource_diff hsource_maps) (hmaps.comp hsource_maps),
-    fun ξ hξ => htarget_maps (hmaps (hsource_maps hξ)), ?_⟩
-  simp [schwarzPickConjugate]
+    fun ξ hξ => htarget_maps (hmaps (hsource_maps hξ)), schwarzPickConjugate_apply_zero f a⟩
 
 private lemma unitDiscMoebius_neg_apply_unitDiscMoebius_apply_scalar {a z : ℂ}
     (hden : 1 - (starRingEnd ℂ) a * z ≠ 0)
