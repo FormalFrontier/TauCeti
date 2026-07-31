@@ -4,15 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.HopfAlgebra.Basic
+public import Mathlib.RingTheory.HopfAlgebra.Convolution
 
 /-!
 # The antipode reverses comultiplication
 
 The antipode of a Hopf algebra is an antihomomorphism for both its algebra and coalgebra
-structures. Mathlib already proves the multiplicative statement directly. This file records
-the coalgebraic statement: applying the antipode before comultiplication is the same as
-comultiplying, swapping the two tensor factors, and applying the antipode to each factor.
+structures. Mathlib already proves the multiplicative statement directly, as
+`HopfAlgebra.antipode_mul_antidistrib`. This file records the coalgebraic statement: applying
+the antipode before comultiplication is the same as comultiplying, swapping the two tensor
+factors, and applying the antipode to each factor.
 
 ## Main declarations
 
@@ -23,15 +24,18 @@ comultiplying, swapping the two tensor factors, and applying the antipode to eac
 
 The proof takes place in the convolution monoid of linear maps from the Hopf algebra to its
 tensor square. Comultiplication factors as the convolution product of the two canonical tensor
-inclusions. The antipode identities, postcomposed with those inclusions, exhibit the proposed
-opposite comultiplication as a right inverse to comultiplication. Comultiplication postcomposed
-with the other antipode identity supplies a left inverse, so uniqueness of inverses finishes
-the proof.
+inclusions, and postcomposing Mathlib's antipode convolution identity
+`LinearMap.antipode_mul_id` with those inclusions exhibits the proposed opposite
+comultiplication as a left inverse of comultiplication. Mathlib's `LinearMap.comul_right_inv`
+supplies the matching right inverse, so uniqueness of inverses finishes the proof.
 
 ## References
 
 This is the standard anti-coalgebra identity for a Hopf antipode; see Sweedler,
-*Hopf Algebras*, Chapter 4.
+*Hopf Algebras*, Chapter 4. Mathlib formalizes it for a Hopf object in a braided monoidal
+category as `CategoryTheory.HopfObj.antipode_comul`, by the same left-inverse-equals-right-inverse
+argument in the convolution monoid; the proof below is the ring-level analogue of that argument,
+stated for `HopfAlgebra R C` so that it applies directly to `Coalgebra.comul`.
 -/
 
 public section
@@ -50,48 +54,29 @@ variable [CommSemiring R] [Semiring C] [_root_.HopfAlgebra R C]
 
 noncomputable section
 
+/-- Postcomposing the antipode convolution identity `LinearMap.antipode_mul_id` with an algebra
+homomorphism `f`: the map `f ∘ₗ antipode` is a left convolution inverse of `f`. -/
 private lemma algHom_comp_antipode_mul_self {D : Type w} [Semiring D] [Algebra R D]
     (f : C →ₐ[R] D) :
     (toConv (f.toLinearMap ∘ₗ antipode R) : WithConv (C →ₗ[R] D)) *
         toConv f.toLinearMap = 1 := by
   refine WithConv.ofConv_injective ?_
-  have h := LinearMap.algHom_comp_convMul_distrib f
-    (toConv (antipode R)) (toConv (LinearMap.id : C →ₗ[R] C))
-  rw [antipode_convMul_id] at h
-  change
-    WithConv.ofConv
-        ((toConv (f.toLinearMap ∘ₗ antipode R) : WithConv (C →ₗ[R] D)) *
-          toConv f.toLinearMap) =
-      WithConv.ofConv (1 : WithConv (C →ₗ[R] D))
-  calc
-    _ = f.toLinearMap.comp
-        (1 : WithConv (C →ₗ[R] C)).ofConv := h.symm
+  calc ((toConv (f.toLinearMap ∘ₗ antipode R) : WithConv (C →ₗ[R] D)) *
+        toConv f.toLinearMap).ofConv
+      = f.toLinearMap ∘ₗ
+          (toConv (antipode R) * toConv LinearMap.id : WithConv (C →ₗ[R] C)).ofConv := by
+        rw [LinearMap.algHom_comp_convMul_distrib]
+        simp
+    -- `LinearMap.algHom_comp_convOne` is the last step, but it lives in
+    -- `Mathlib.RingTheory.HopfAlgebra.Quotient`, whose Hopf-ideal theory is unrelated here.
     _ = (1 : WithConv (C →ₗ[R] D)).ofConv := by
-      ext c
-      simp [LinearMap.convOne_apply]
-
-private lemma algHom_self_mul_comp_antipode {D : Type w} [Semiring D] [Algebra R D]
-    (f : C →ₐ[R] D) :
-    (toConv f.toLinearMap : WithConv (C →ₗ[R] D)) *
-        toConv (f.toLinearMap ∘ₗ antipode R) = 1 := by
-  refine WithConv.ofConv_injective ?_
-  have h := LinearMap.algHom_comp_convMul_distrib f
-    (toConv (LinearMap.id : C →ₗ[R] C)) (toConv (antipode R))
-  rw [id_convMul_antipode] at h
-  change
-    WithConv.ofConv
-        ((toConv f.toLinearMap : WithConv (C →ₗ[R] D)) *
-          toConv (f.toLinearMap ∘ₗ antipode R)) =
-      WithConv.ofConv (1 : WithConv (C →ₗ[R] D))
-  calc
-    _ = f.toLinearMap.comp
-        (1 : WithConv (C →ₗ[R] C)).ofConv := h.symm
-    _ = (1 : WithConv (C →ₗ[R] D)).ofConv := by
-      ext c
-      simp [LinearMap.convOne_apply]
+        rw [LinearMap.antipode_mul_id]
+        ext c
+        simp
 
 /-- The antipode reverses comultiplication: after comultiplication, swap the tensor factors
-and apply the antipode to each of them. -/
+and apply the antipode to each of them. This is the coalgebraic counterpart of
+`HopfAlgebra.antipode_mul_antidistrib`. -/
 theorem antipode_comul_antidistrib :
     Coalgebra.comul ∘ₗ antipode R =
       TensorProduct.map (antipode R) (antipode R) ∘ₗ
@@ -102,8 +87,6 @@ theorem antipode_comul_antidistrib :
     Algebra.TensorProduct.includeRight.toLinearMap
   let Δ : WithConv (C →ₗ[R] C ⊗[R] C) :=
     toConv Coalgebra.comul
-  let ΔS : WithConv (C →ₗ[R] C ⊗[R] C) :=
-    toConv (Coalgebra.comul ∘ₗ antipode R)
   let SΔop : WithConv (C →ₗ[R] C ⊗[R] C) :=
     toConv
       (TensorProduct.map (antipode R) (antipode R) ∘ₗ
@@ -141,33 +124,32 @@ theorem antipode_comul_antidistrib :
     have h := congrArg (fun f => f ∘ₗ (Coalgebra.comul (R := R) (A := C)))
       hmul_ιrS_ιlS
     simpa only [LinearMap.comp_assoc] using h.symm
-  -- The ordinary and proposed comultiplications are opposite-sided inverses.
-  have hleft : ΔS * Δ = 1 := by
-    simpa only [ΔS, Δ, Bialgebra.toLinearMap_comulAlgHom] using
+  -- Each inclusion, precomposed with the antipode, is a left convolution inverse of itself.
+  have hLS : LS * L = 1 := by
+    simpa only [LS, L, ιl] using
       (algHom_comp_antipode_mul_self
         (R := R) (C := C) (D := C ⊗[R] C)
-        (Bialgebra.comulAlgHom R C))
-  have hP : P * PS = 1 := by
-    simpa only [P, PS, ιr] using
-      (algHom_self_mul_comp_antipode
+        (Algebra.TensorProduct.includeLeft : C →ₐ[R] C ⊗[R] C))
+  have hPS : PS * P = 1 := by
+    simpa only [PS, P, ιr] using
+      (algHom_comp_antipode_mul_self
         (R := R) (C := C) (D := C ⊗[R] C)
         (Algebra.TensorProduct.includeRight : C →ₐ[R] C ⊗[R] C))
-  have hL : L * LS = 1 := by
-    simpa only [L, LS, ιl] using
-      (algHom_self_mul_comp_antipode
-        (R := R) (C := C) (D := C ⊗[R] C)
-        (Algebra.TensorProduct.includeLeft : C →ₐ[R] C ⊗[R] C))
-  have hright : Δ * SΔop = 1 := by
+  -- So the proposed opposite comultiplication is a left inverse of comultiplication, while
+  -- `LinearMap.comul_right_inv` makes `comul ∘ₗ antipode` a right inverse of it.
+  have hleft : SΔop * Δ = 1 := by
     rw [hΔ, hSΔop]
     calc
-      (L * P) * (PS * LS) = L * ((P * PS) * LS) := by
+      (PS * LS) * (L * P) = PS * ((LS * L) * P) := by
         simp only [mul_assoc]
-      _ = L * LS := by rw [hP, one_mul]
-      _ = 1 := hL
+      _ = PS * P := by rw [hLS, one_mul]
+      _ = 1 := hPS
   -- A left inverse and a right inverse of the same element coincide.
-  exact WithConv.toConv_injective (left_inv_eq_right_inv hleft hright)
+  exact (WithConv.toConv_injective
+    (left_inv_eq_right_inv hleft LinearMap.comul_right_inv)).symm
 
 /-- Pointwise form of `antipode_comul_antidistrib`. -/
+@[simp]
 theorem antipode_comul_antidistrib_apply (c : C) :
     Coalgebra.comul (antipode R c) =
       TensorProduct.map (antipode R) (antipode R)
