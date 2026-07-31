@@ -148,9 +148,18 @@ jobs:
       # nested project. Copy its exact resolved pins into the nested manifest before computing the
       # docs cache key. Do not use `lake update` here: TauCeti normally nominates Mathlib's moving
       # `master` branch, so an independent update could select a commit newer than main's lockfile.
+      # Elan and Lake find the root toolchain by walking to the parent, but Mathlib's cache executable
+      # reads `lean-toolchain` from its current directory. Give it a symlink, not another copy that
+      # can drift.
       - name: Synchronize the docs dependencies with TauCeti
         working-directory: docbuild
-        run: python3 sync_manifest.py
+        run: |
+          if [ -e lean-toolchain ] || [ -L lean-toolchain ]; then
+            echo "::error title=Unexpected docs toolchain::docbuild/lean-toolchain must be generated as a link to the root toolchain"
+            exit 1
+          fi
+          ln -s ../lean-toolchain lean-toolchain
+          python3 sync_manifest.py
 
       # Restore-only avoids the automatic post-job re-upload that plain actions/cache does
       # on runs that merely reused the docs. The save below runs only after an actual rebuild.
@@ -182,10 +191,10 @@ jobs:
         working-directory: docbuild
         run: lake exe cache get
 
-      # docbuild deliberately has no lean-toolchain file: elan inherits TauCeti's root toolchain,
-      # so there is no second copy to drift. The pinned doc-gen4 source still uses Lean internals,
-      # though, and may need updating after a Lean bump. Compile it on its own first so an
-      # incompatibility fails in minutes rather than near the end of the full documentation build.
+      # The generated docbuild/lean-toolchain symlink resolves to TauCeti's root toolchain, so
+      # there is no second independently pinned copy to drift. The pinned doc-gen4 source still
+      # uses Lean internals, though, and may need updating after a Lean bump. Compile it on its own
+      # first so an incompatibility fails in minutes rather than near the end of the full build.
       - name: Verify doc-gen4 is compatible with TauCeti's toolchain
         if: steps.docs-plan.outputs.build == 'true'
         working-directory: docbuild

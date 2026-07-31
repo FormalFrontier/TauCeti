@@ -27,6 +27,8 @@ coefficients.
   functional `φ : M →ₗ[R] R`.
 * `TauCeti.Comodule.matrixCoefficient`: the coefficient element attached to `φ` and `m`.
 * `TauCeti.Comodule.matrixCoefficientBilinear`: bilinearity in the functional and vector.
+* `TauCeti.Comodule.matrixCoefficientTensor`: the induced linear map
+  `Module.Dual R M ⊗[R] M →ₗ[R] C`.
 
 ## Implementation notes
 
@@ -128,6 +130,19 @@ theorem matrixCoefficientBilinear_apply_apply (φ : M →ₗ[R] R) (m : M) :
     matrixCoefficientBilinear (R := R) (C := C) (M := M) φ m =
       matrixCoefficient (R := R) (C := C) φ m :=
   rfl
+
+/-- The linear map from the tensor product of the dual and a right comodule to the ambient
+coalgebra, whose pure tensors give the matrix coefficients. -/
+def matrixCoefficientTensor : Module.Dual R M ⊗[R] M →ₗ[R] C :=
+  TensorProduct.lift
+    (matrixCoefficientBilinear (R := R) (C := C) (M := M))
+
+/-- On a pure tensor, `matrixCoefficientTensor` is the corresponding matrix coefficient. -/
+@[simp]
+theorem matrixCoefficientTensor_tmul (φ : Module.Dual R M) (m : M) :
+    matrixCoefficientTensor (R := R) (C := C) (M := M) (φ ⊗ₜ[R] m) =
+      matrixCoefficient (R := R) (C := C) φ m := by
+  simp [matrixCoefficientTensor]
 
 @[simp]
 theorem matrixCoefficient_zero_functional (m : M) :
