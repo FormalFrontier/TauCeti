@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.Analysis.InnerProductSpace.Dual
 public import TauCeti.Geometry.Symplectic.Cotangent.Basic
 public import TauCeti.Geometry.Symplectic.Lagrangian.TotallyReal
-public import TauCeti.Geometry.Symplectic.StandardCompatible
 public import TauCeti.Geometry.Symplectic.SymplecticTransport
 
 /-!
@@ -49,34 +48,24 @@ namespace TauCeti
 open scoped InnerProductSpace
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-
-private lemma innerBilinForm_nondegenerate :
-    (innerₗ V).Nondegenerate := by
-  constructor
-  · intro v hv
-    exact inner_self_eq_zero.mp (hv v)
-  · intro v hv
-    exact inner_self_eq_zero.mp (hv v)
-
-variable [FiniteDimensional ℝ V]
+  [FiniteDimensional ℝ V]
 
 /-- The Riesz identification of a finite-dimensional real inner product space with its algebraic
 dual, sending `v` to the functional `w ↦ ⟪v, w⟫`. -/
 noncomputable def cotangentRieszEquiv : V ≃ₗ[ℝ] Module.Dual ℝ V :=
-  LinearMap.BilinForm.toDual (innerₗ V) innerBilinForm_nondegenerate
+  (InnerProductSpace.toDual ℝ V).toLinearEquiv ≪≫ₗ LinearMap.toContinuousLinearMap.symm
 
 /-- The Riesz functional associated to `v` evaluates at `w` as `⟪v, w⟫`. -/
 @[simp]
 lemma cotangentRieszEquiv_apply_apply (v w : V) :
     cotangentRieszEquiv (V := V) v w = ⟪v, w⟫_ℝ := by
-  exact LinearMap.BilinForm.toDual_def innerBilinForm_nondegenerate
+  exact InnerProductSpace.toDual_apply_apply
 
 /-- The vector dual to `α` under the Riesz identification represents `α` by the inner product. -/
 @[simp]
-lemma cotangentRieszEquiv_symm_inner (α : Module.Dual ℝ V) (v : V) :
+lemma cotangentRieszEquiv_symm_apply (α : Module.Dual ℝ V) (v : V) :
     ⟪(cotangentRieszEquiv (V := V)).symm α, v⟫_ℝ = α v := by
-  exact LinearMap.BilinForm.apply_toDual_symm_apply
-    (B := innerₗ V) (hB := innerBilinForm_nondegenerate) α v
+  exact InnerProductSpace.toDual_symm_apply
 
 /-- Identify the standard doubled model `V × V` with the linear cotangent space by applying the
 Riesz equivalence in the second coordinate. -/
