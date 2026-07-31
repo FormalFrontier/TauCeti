@@ -145,6 +145,10 @@ theorem isEmpty_hom_to_src (a : Kronecker A) : IsEmpty (a ⟶ (src : Kronecker A
 theorem isEmpty_hom_from_tgt (b : Kronecker A) : IsEmpty ((tgt : Kronecker A) ⟶ b) := by
   cases b <;> infer_instance
 
+/-- The source vertex is a source. -/
+theorem isSource_src : IsSource (src : Kronecker A) :=
+  (IsSource_def _).mpr isEmpty_hom_to_src
+
 /-- The target vertex is a sink. -/
 theorem isSink_tgt : IsSink (tgt : Kronecker A) :=
   (IsSink_def _).mpr isEmpty_hom_from_tgt
