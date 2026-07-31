@@ -119,6 +119,23 @@ theorem meromorphicOrderAt_lt_neg_one_of_one_lt_meromorphicPolarOrderAt {f : ℂ
   rw [meromorphicOrderAt_eq_neg_of_meromorphicPolarOrderAt_pos (by omega)]
   exact_mod_cast WithTop.coe_lt_coe.mpr (by omega)
 
+/-- The canonical polar order is at most one exactly when the meromorphic order is at least
+`-1`. This includes analytic and removable points (polar order zero) as well as genuine simple
+poles (polar order one). -/
+@[simp]
+theorem meromorphicPolarOrderAt_le_one_iff {f : ℂ → ℂ} {s : ℂ} :
+    meromorphicPolarOrderAt f s ≤ 1 ↔
+      ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s := by
+  constructor
+  · intro h
+    have hneg : (-1 : ℤ) ≤ -(meromorphicPolarOrderAt f s : ℤ) := by omega
+    exact (WithTop.coe_le_coe.mpr hneg).trans (neg_meromorphicPolarOrderAt_le f s)
+  · intro h
+    by_contra hle
+    have hlt : meromorphicOrderAt f s < ((-1 : ℤ) : WithTop ℤ) :=
+      meromorphicOrderAt_lt_neg_one_of_one_lt_meromorphicPolarOrderAt (by omega)
+    exact (not_lt_of_ge h) hlt
+
 /-- Taylor decomposition of an analytic function to order `k`:
 `g z = ∑ j < k, c j * (z - s)^j + (z - s)^k * R z` with `R` analytic at `s`. Mathlib's
 `AnalyticAt.exists_eventuallyEq_sum_add_pow_mul` at the translate `g (· + s)`. -/

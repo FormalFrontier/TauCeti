@@ -252,7 +252,7 @@ theorem condExp_indicator_sup_eq_of_condIndep {Ω : Type*} {mΩ : MeasurableSpac
 
 The pair-law/L² machinery below is generic conditional-expectation infrastructure: its hypotheses
 mention only measurable maps, equality of pair laws, and the σ-algebra ordering `σ(W) ≤ σ(W')` —
-never contractability.  The four support lemmas stay `private`; the contraction-independence
+never contractability. The support lemmas stay `private`; the contraction-independence
 conclusion is public so the de Finetti prefix-deletion file can reuse it across the module boundary.
 -/
 
@@ -328,7 +328,7 @@ private lemma integral_sq_condExp_eq_of_pair_law [IsFiniteMeasure μ]
               | MeasurableSpace.comap W' inferInstance]) ω ∂μ := by
   have hρ_eq : Measure.map W μ = Measure.map W' μ :=
     marginal_law_eq_of_pair_law X W W' hX hW hW' h_law
-  let φ : Ω → ℝ := (X ⁻¹' A).indicator (fun _ => (1 : ℝ))
+  set φ : Ω → ℝ := (X ⁻¹' A).indicator (fun _ => (1 : ℝ)) with hφ_def
   let μ₁ : Ω → ℝ := μ[φ | MeasurableSpace.comap W inferInstance]
   let μ₂ : Ω → ℝ := μ[φ | MeasurableSpace.comap W' inferInstance]
   have hφ_int : Integrable φ μ := Integrable.indicator (integrable_const 1) (hX hA)
@@ -404,7 +404,15 @@ private lemma ae_eq_of_integral_mul_eq_of_integral_sq_eq {Ω : Type*} {mΩ : Mea
   have h_diff_zero : ∀ᵐ ω ∂μ, (g₂ ω - g₁ ω) ^ 2 = 0 :=
     (integral_eq_zero_iff_of_nonneg_ae (ae_of_all μ fun ω => sq_nonneg _) h_sq_int).mp h_L2_zero
   filter_upwards [h_diff_zero] with ω hω
-  nlinarith [sq_nonneg (g₂ ω - g₁ ω)]
+  exact (sub_eq_zero.mp (sq_eq_zero_iff.mp hω)).symm
+
+/-- The conditional expectation of a `0/1` indicator is bounded by `1` in norm almost everywhere,
+on any sub-σ-algebra: the indicator itself is, and conditioning does not increase the bound. -/
+private lemma ae_norm_condExp_indicator_le_one {Ω : Type*} {m0 : MeasurableSpace Ω}
+    {μ : Measure Ω} (m' : MeasurableSpace Ω) {s : Set Ω} :
+    ∀ᵐ ω ∂μ, ‖μ[s.indicator (fun _ => (1 : ℝ)) | m'] ω‖ ≤ 1 :=
+  ae_bdd_norm_condExp_of_ae_bdd_norm (m := m') <| Filter.Eventually.of_forall fun ω => by
+    simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) ω
 
 /-- **Kallenberg Lemma 1.3 (contraction-independence).** If `(X, W) =ᵈ (X, W')` and
 `σ(W) ≤ σ(W')` (so `W` is a contraction of `W'`), then conditioning the indicator of `X` on the
@@ -419,7 +427,7 @@ theorem condExp_indicator_eq_of_law_eq_of_comap_le [IsFiniteMeasure μ]
       =ᵐ[μ]
     μ[(X ⁻¹' A).indicator (fun _ => (1 : ℝ)) | MeasurableSpace.comap W inferInstance] := by
   have h_sq_eq_raw := integral_sq_condExp_eq_of_pair_law X W W' hX hW hW' h_law hA
-  let φ : Ω → ℝ := (X ⁻¹' A).indicator (fun _ => (1 : ℝ))
+  set φ : Ω → ℝ := (X ⁻¹' A).indicator (fun _ => (1 : ℝ)) with hφ_def
   let mW : MeasurableSpace Ω := MeasurableSpace.comap W inferInstance
   let mW' : MeasurableSpace Ω := MeasurableSpace.comap W' inferInstance
   have hmW_le : mW ≤ _ := measurable_iff_comap_le.mp hW
@@ -432,25 +440,12 @@ theorem condExp_indicator_eq_of_law_eq_of_comap_le [IsFiniteMeasure μ]
   set μ₁ := μ[φ | mW] with hμ₁_def
   set μ₂ := μ[φ | mW'] with hμ₂_def
   have h_tower : μ[μ₂ | mW] =ᵐ[μ] μ₁ := condExp_condExp_of_le h_le hmW'_le
-  have hφ_bdd : ∀ ω, 0 ≤ φ ω ∧ φ ω ≤ 1 := fun ω => by
-    by_cases hω : ω ∈ X ⁻¹' A
-    · have h : φ ω = 1 := Set.indicator_of_mem hω _
-      rw [h]; exact ⟨zero_le_one, le_rfl⟩
-    · have h : φ ω = 0 := Set.indicator_of_notMem hω _
-      rw [h]; exact ⟨le_rfl, zero_le_one⟩
-  -- `|φ| ≤ 1` a.e., so each conditional expectation `μ[φ | ·]` inherits the same bound via
-  -- Mathlib's conditional-expectation bound; the helper is applied once per σ-algebra below.
-  have hφ_abs : ∀ᵐ ω ∂μ, |φ ω| ≤ (1 : ℝ) := by
-    filter_upwards with ω
-    rw [abs_of_nonneg (hφ_bdd ω).1]; exact (hφ_bdd ω).2
-  have condExp_abs_le : ∀ m' : MeasurableSpace Ω, ∀ᵐ ω ∂μ, |μ[φ | m'] ω| ≤ 1 := fun m' => by
-    simpa using ae_bdd_abs_condExp_of_ae_bdd_abs (m := m') (R := (1 : ℝ)) hφ_abs
   have hμ₁_int : Integrable μ₁ μ := integrable_condExp
   have hμ₂_int : Integrable μ₂ μ := integrable_condExp
   have hμ₁_bound : ∀ᵐ ω ∂μ, ‖μ₁ ω‖ ≤ 1 := by
-    filter_upwards [condExp_abs_le mW] with ω hω; rwa [Real.norm_eq_abs, hμ₁_def]
+    rw [hμ₁_def, hφ_def]; exact ae_norm_condExp_indicator_le_one mW
   have hμ₂_bound : ∀ᵐ ω ∂μ, ‖μ₂ ω‖ ≤ 1 := by
-    filter_upwards [condExp_abs_le mW'] with ω hω; rwa [Real.norm_eq_abs, hμ₂_def]
+    rw [hμ₂_def, hφ_def]; exact ae_norm_condExp_indicator_le_one mW'
   have hμ₁sq_int : Integrable (fun ω => μ₁ ω * μ₁ ω) μ :=
     hμ₁_int.bdd_mul hμ₁_int.aestronglyMeasurable hμ₁_bound
   have hμ₂sq_int : Integrable (fun ω => μ₂ ω * μ₂ ω) μ :=

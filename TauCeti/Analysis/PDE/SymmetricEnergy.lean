@@ -89,13 +89,6 @@ lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.
   intro V
   exact energyIntegrand_zero_drift_comm_of_isSymm hA c V U
 
-/-- The identity principal coefficient gives a symmetric zero-drift jet form. -/
-lemma energyIntegrand_one_zero_drift_comm (c : ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
-    energyIntegrand (1 : Matrix n n ℝ) 0 c U V =
-      energyIntegrand (1 : Matrix n n ℝ) 0 c V U :=
-  energyIntegrand_zero_drift_comm_of_isSymm isSymm_one c U V
-
 /-- The symmetric part's zero-drift jet form is the average of the original form and its
 transpose. -/
 lemma energyIntegrand_coefficientSymmetricPart_zero_drift_apply (A : Matrix n n ℝ)
@@ -115,13 +108,6 @@ lemma energyIntegrand_coefficientSymmetricPart_self (A : Matrix n n ℝ)
       energyIntegrand A b c U U := by
   classical
   rw [energyIntegrand_self, energyIntegrand_self, toQuadraticForm'_coefficientSymmetricPart]
-
-/-- The symmetric part always gives a symmetric zero-drift jet form. -/
-lemma energyIntegrand_coefficientSymmetricPart_zero_drift_comm (A : Matrix n n ℝ)
-    (c : ℝ) (U V : ℝ × EuclideanSpace ℝ n) :
-    energyIntegrand (coefficientSymmetricPart A) 0 c U V =
-      energyIntegrand (coefficientSymmetricPart A) 0 c V U :=
-  energyIntegrand_zero_drift_comm_of_isSymm (coefficientSymmetricPart_isSymm A) c U V
 
 /-- Bundled-map form of symmetry for the symmetric-part zero-drift jet integrand. -/
 @[simp]

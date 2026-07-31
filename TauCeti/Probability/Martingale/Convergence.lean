@@ -57,6 +57,45 @@ namespace MeasureTheory
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
+/-- **Identification of the reverse-martingale limit.** If `μ[f | 𝔽 n]` converges to `Xlim` both
+almost everywhere and in `L¹`, along an antitone filtration, then `Xlim` is the conditional
+expectation of `f` on the tail σ-algebra `⨅ n, 𝔽 n`.
+
+The proof uses the a.e. convergence to make `Xlim` measurable for `⨅ n, 𝔽 n`, and the `L¹`
+convergence to transport the tower property `μ[μ[f | 𝔽 n] | ⨅ n, 𝔽 n] =ᵐ μ[f | ⨅ n, 𝔽 n]` to the
+limit. -/
+private lemma condExp_iInf_ae_eq_of_tendsto_ae_of_tendsto_eLpNorm
+    [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω} {f Xlim : Ω → ℝ}
+    (h_filtration : Antitone 𝔽)
+    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
+    (hXlimint : Integrable Xlim μ)
+    (h_tendsto : ∀ᵐ ω ∂μ, Tendsto (fun n => μ[f | 𝔽 n] ω) atTop (𝓝 (Xlim ω)))
+    (hL1_conv : Tendsto (fun n => eLpNorm (μ[f | 𝔽 n] - Xlim) 1 μ) atTop (𝓝 0)) :
+    μ[f | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim := by
+  -- Antitonicity upgrades measurability at index `0` to every index.
+  have h_le : ∀ n, 𝔽 n ≤ (inferInstance : MeasurableSpace Ω) :=
+    fun n => (h_filtration (Nat.zero_le n)).trans h_le0
+  -- `Xlim` is `AEStronglyMeasurable[⨅ n, 𝔽 n]` (a.e. limit of `𝔽 n`-strongly-measurable functions).
+  have hXlim_iInf_meas : AEStronglyMeasurable[⨅ n, 𝔽 n] Xlim μ :=
+    aestronglyMeasurable_iInf_of_tendsto_ae_antitone h_filtration
+      (fun n => stronglyMeasurable_condExp.aestronglyMeasurable) h_tendsto
+  -- We work with the raw `⨅ n, 𝔽 n` rather than a `set` alias: a local of type
+  -- `MeasurableSpace Ω` shadows the ambient σ-algebra during the instance synthesis triggered by
+  -- the L¹-continuity call below.
+  have h_tower : ∀ n, μ[μ[f | 𝔽 n] | ⨅ n, 𝔽 n] =ᵐ[μ] μ[f | ⨅ n, 𝔽 n] :=
+    fun n => condExp_condExp_of_le (iInf_le 𝔽 n) (h_le n)
+  have hiInf_le : (⨅ n, 𝔽 n) ≤ (inferInstance : MeasurableSpace Ω) :=
+    le_trans (iInf_le 𝔽 0) (h_le 0)
+  have hL1_conv' : Tendsto (fun n => eLpNorm (Xlim - μ[f | 𝔽 n]) 1 μ) atTop (𝓝 0) := by
+    simpa [eLpNorm_sub_comm] using hL1_conv
+  -- L¹-continuity of conditional expectation carries the tower property to the limit.
+  have hCE_eqY : μ[Xlim | ⨅ n, 𝔽 n] =ᵐ[μ] μ[f | ⨅ n, 𝔽 n] :=
+    condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm hXlimint
+      (fun _ => integrable_condExp) h_tower hL1_conv'
+  have hXlim_condExp_self : μ[Xlim | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim :=
+    condExp_of_aestronglyMeasurable' hiInf_le hXlim_iInf_meas hXlimint
+  exact hCE_eqY.symm.trans hXlim_condExp_self
+
 /-- Lévy's downward theorem, proving the almost-everywhere and `L¹` forms together.
 
 The `L¹` convergence is not an afterthought of the a.e. convergence: the Vitali step that upgrades
@@ -98,32 +137,10 @@ private theorem tendsto_ae_and_eLpNorm_condExp_iInf
     · exact memLp_one_iff_integrable.2 hXlimint
     · exact hUI.unifIntegrable
     · exact h_tendsto
-  -- `Xlim` is `AEStronglyMeasurable[⨅ n, 𝔽 n]` (a.e. limit of `𝔽 n`-strongly-measurable functions).
-  have hXlim_iInf_meas : AEStronglyMeasurable[⨅ n, 𝔽 n] Xlim μ :=
-    aestronglyMeasurable_iInf_of_tendsto_ae_antitone h_filtration
-      (fun n => stronglyMeasurable_condExp.aestronglyMeasurable) h_tendsto
-  -- 3) Pass the limit through `condExp` at `⨅ n, 𝔽 n`. We work with the raw `⨅ n, 𝔽 n` rather than
-  -- a `set` alias: a local of type `MeasurableSpace Ω` shadows the ambient σ-algebra during the
-  -- instance synthesis triggered by the L¹-continuity call below.
-  -- Tower property: for every `n`, `μ[μ[f | 𝔽 n] | ⨅ n, 𝔽 n] =ᵐ μ[f | ⨅ n, 𝔽 n]`.
-  have h_tower : ∀ n, μ[μ[f | 𝔽 n] | ⨅ n, 𝔽 n] =ᵐ[μ] μ[f | ⨅ n, 𝔽 n] :=
-    fun n => condExp_condExp_of_le (iInf_le 𝔽 n) (h_le n)
-  have hiInf_le : (⨅ n, 𝔽 n) ≤ (inferInstance : MeasurableSpace Ω) :=
-    le_trans (iInf_le 𝔽 0) (h_le 0)
-  -- Rephrase the L¹ convergence with the subtraction in the other order.
-  have hL1_conv' : Tendsto (fun n => eLpNorm (Xlim - μ[f | 𝔽 n]) 1 μ) atTop (𝓝 0) := by
-    simpa [eLpNorm_sub_comm] using hL1_conv
-  -- Identify `μ[Xlim | ⨅ n, 𝔽 n]` with `μ[f | ⨅ n, 𝔽 n]` by L¹-continuity of conditional
-  -- expectation (the tower property gives `μ[Xn n | ⨅ n, 𝔽 n] =ᵐ μ[f | ⨅ n, 𝔽 n]`).
-  have hCE_eqY : μ[Xlim | ⨅ n, 𝔽 n] =ᵐ[μ] μ[f | ⨅ n, 𝔽 n] :=
-    condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm hXlimint
-      (fun _ => integrable_condExp) h_tower hL1_conv'
-  -- `Xlim` is `AEStronglyMeasurable[⨅ n, 𝔽 n]` (a.e. limit of `⨅ n, 𝔽 n`-measurable functions), so
-  -- `μ[Xlim | ⨅ n, 𝔽 n] =ᵐ Xlim`; combined with `hCE_eqY` this identifies `μ[f | ⨅ n, 𝔽 n]`.
-  have hXlim_eq : μ[f | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim := by
-    have hXlim_condExp_self : μ[Xlim | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim :=
-      condExp_of_aestronglyMeasurable' hiInf_le hXlim_iInf_meas hXlimint
-    exact hCE_eqY.symm.trans hXlim_condExp_self
+  -- 3) Identify the a.e. limit as the conditional expectation on the tail σ-algebra.
+  have hXlim_eq : μ[f | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim :=
+    condExp_iInf_ae_eq_of_tendsto_ae_of_tendsto_eLpNorm h_filtration h_le0 hXlimint
+      h_tendsto hL1_conv
   refine ⟨?_, ?_⟩
   · -- Combine `h_tendsto : μ[f | 𝔽 n] → Xlim` with `hXlim_eq : μ[f | ⨅ n, 𝔽 n] =ᵐ Xlim`.
     filter_upwards [h_tendsto, hXlim_eq] with ω h_tend h_eq

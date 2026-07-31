@@ -43,13 +43,6 @@ section PrimeFamily
 
 variable [Finite ι] (p : ι → ℕ) (hp : ∀ i, (p i).Prime) (hinj : Function.Injective p)
 
-omit [Finite ι] in
-/-- The square roots `√(p i)` of a prime family satisfy the radicand equation `√(p i)² = p i`,
-the `hroot` hypothesis the field-generic multiquadratic results consume. This also pins the
-radicand data `d i = p i` and the generators `root i = √(p i)` for those results. -/
-private theorem sqrtPrime_sq (i : ι) : Real.sqrt (p i) ^ 2 = algebraMap ℚ ℝ (p i : ℚ) :=
-  sq_sqrt_natCast (p i)
-
 include hp hinj
 
 /-- **The Galois group of a prime-radicand multiquadratic field is `(ℤ/2)ⁿ`.** For a finite family
@@ -60,7 +53,8 @@ noncomputable def galoisGroupEquivSqrtPrimes :
     (adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ)) ≃ₐ[ℚ]
         adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))) ≃*
       Multiplicative (ι → ZMod 2) :=
-  galoisGroupEquiv (sqrtPrime_sq p) (not_isSquare_prod_primes_of_injective p hp hinj)
+  galoisGroupEquiv (fun i => sq_sqrt_natCast (p i))
+    (not_isSquare_prod_primes_of_injective p hp hinj)
 
 /-- The prime-radicand Galois equivalence sends an automorphism to its sign pattern on the
 generators `√(p i)`. -/
@@ -69,7 +63,7 @@ generators `√(p i)`. -/
         adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))) :
     galoisGroupEquivSqrtPrimes p hp hinj σ =
       Multiplicative.ofAdd (signPattern (fun i => (Real.sqrt (p i) : ℝ)) σ) :=
-  galoisGroupEquiv_apply (sqrtPrime_sq p)
+  galoisGroupEquiv_apply (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj) σ
 
 /-- The inverse prime-radicand Galois equivalence realizes a sign pattern by sending each
@@ -78,7 +72,7 @@ generator `√(p i)` to `(-1)^(ε i) · √(p i)`. -/
     ((galoisGroupEquivSqrtPrimes p hp hinj).symm (Multiplicative.ofAdd ε))
         (gen (fun i => (Real.sqrt (p i) : ℝ)) i)
       = (-1) ^ (ε i).val * gen (fun i => (Real.sqrt (p i) : ℝ)) i :=
-  galoisGroupEquiv_symm_apply_gen (sqrtPrime_sq p)
+  galoisGroupEquiv_symm_apply_gen (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj) ε i
 
 /-- **Cardinality of the Galois group of a prime-radicand multiquadratic field.** For a finite
@@ -86,7 +80,7 @@ family of distinct primes `p : ι → ℕ`, `|Gal(ℚ(√p₁, …, √pₙ)/ℚ
 theorem card_aut_adjoin_sqrt_primes :
     Nat.card (adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ)) ≃ₐ[ℚ]
         adjoin ℚ (Set.range fun i => (Real.sqrt (p i) : ℝ))) = 2 ^ Nat.card ι :=
-  card_aut_adjoin_range (sqrtPrime_sq p)
+  card_aut_adjoin_range (fun i => sq_sqrt_natCast (p i))
     (not_isSquare_prod_primes_of_injective p hp hinj)
 
 end PrimeFamily

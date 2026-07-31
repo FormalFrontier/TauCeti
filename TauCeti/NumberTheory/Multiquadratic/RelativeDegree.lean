@@ -32,6 +32,8 @@ relative degree the genus-field constructions consume.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.finiteDimensional_top_over_intermediateField`: `M` is finite-dimensional
+  over any intermediate field `F`, the instance the relative degrees are read against.
 * `TauCeti.Multiquadratic.finrank_intermediateField_mul_finrank_top`: the tower identity
   `[F : K] · [M : F] = 2ⁿ`.
 * `TauCeti.Multiquadratic.finrank_top_over_intermediateField`: `[M : F] = 2 ^ dim U`, the relative
@@ -59,6 +61,16 @@ namespace TauCeti.Multiquadratic
 
 variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
   {d : ι → K} {root : ι → L}
+
+/-- A multiquadratic field is finite-dimensional over any intermediate field. -/
+theorem finiteDimensional_top_over_intermediateField [Finite ι]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (F : IntermediateField K (adjoin K (Set.range root))) :
+    FiniteDimensional F (adjoin K (Set.range root)) :=
+  haveI := isSplittingField hroot
+  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  Module.Finite.of_restrictScalars_finite K F (adjoin K (Set.range root))
 
 /-- **The tower identity `[F : K] · [M : F] = 2ⁿ`.** Under square-class independence, an
 intermediate field `F` of `M = K(rootᵢ : i)` and the whole multiquadratic field multiply their

@@ -66,11 +66,6 @@ private noncomputable def bridgeModRangeNSMul (G : Type*) [CommGroup G] :
     ElementaryTwoQuotient G ≃+ Additive G ⧸ (nsmulAddMonoidHom (α := Additive G) 2).range :=
   QuotientAddGroup.quotientAddEquivOfEq (range_lsmul_two_toAddSubgroup_eq_range_nsmul G)
 
-/-- The bridge sends the class of `g` to the coset of `Additive.ofMul g`. -/
-private theorem bridgeModRangeNSMul_mk (G : Type*) [CommGroup G] (g : G) :
-    bridgeModRangeNSMul G (elementaryTwoQuotientMk g) = QuotientAddGroup.mk (Additive.ofMul g) := by
-  rw [elementaryTwoQuotientMk_eq_mkQ]; rfl
-
 section Prod
 
 variable (G H : Type*) [CommGroup G] [CommGroup H]

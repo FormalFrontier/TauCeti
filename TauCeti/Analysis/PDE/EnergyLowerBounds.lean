@@ -24,10 +24,11 @@ inequality `∫ (min (λ/2) (μ − β²/2λ)) · ‖U‖² ≤ energyFormIntegr
 `TauCeti.Analysis.PDE.Integrated.EnergyForm`, obtained by integrating them; no
 finite-dimensional jet fibre is fed into Lax--Milgram.
 
-The ellipticity floor, the drift bound, and the mass lower bound are all stated inline, as
-`∀ x ∈ Ω, λ‖ξ‖² ≤ (a x).toQuadraticForm' ξ`, `∀ x ∈ Ω, ‖b x‖ ≤ β`, and `∀ x ∈ Ω, μ ≤ c x`; a
-caller holding a `UniformlyEllipticOn` hypothesis passes its lower-bound projection for the
-first.
+The lower-bound theorems below take a single principal coefficient `A`, drift coefficient
+`b₀`, and mass coefficient `c₀`, together with their pointwise bounds. Callers holding a
+field-level `UniformlyEllipticOn Ω a λ Λ` hypothesis should use the pointwise specializations
+in `TauCeti.Analysis.PDE.Uniform.EllipticEnergy`, which supply the principal lower bound at a
+chosen point `x ∈ Ω`.
 
 Symmetry of the same zero-drift integrand is recorded in
 `TauCeti.Analysis.PDE.SymmetricEnergy`.  Consumers that need the hypotheses side by side
@@ -56,7 +57,7 @@ namespace PDE
 open Matrix
 open scoped InnerProductSpace
 
-variable {X n : Type*} [Fintype n]
+variable {n : Type*} [Fintype n]
 
 /-- Local classical decidable equality for finite coordinate indices in lower-bound proofs. -/
 noncomputable local instance energyLowerBoundsDecidableEq : DecidableEq n := Classical.decEq n
@@ -106,19 +107,6 @@ lemma garding_energyIntegrand_self_of_mass_lower_bound_of_bounds (hlam : 0 < lam
   rw [hrw]
   linarith [hgard]
 
-/-- Pointwise Gårding lower bound with a mass floor on a domain, obtained by applying
-`garding_energyIntegrand_self_of_mass_lower_bound_of_bounds` at `x`. -/
-lemma garding_energyIntegrand_self_of_mass_lower_bound_of_bounds_on {Ω : Set X}
-    {a : X → Matrix n n ℝ} {b : X → EuclideanSpace ℝ n} {c : X → ℝ} (hlam : 0 < lam)
-    (hA : ∀ ⦃x⦄, x ∈ Ω → ∀ ξ : EuclideanSpace ℝ n,
-      lam * ‖ξ‖ ^ 2 ≤ (a x).toQuadraticForm' ξ)
-    (hb : ∀ ⦃x⦄, x ∈ Ω → ‖b x‖ ≤ beta)
-    (hc : ∀ ⦃x⦄, x ∈ Ω → mu ≤ c x) {x : X} (hx : x ∈ Ω)
-    (U : ℝ × EuclideanSpace ℝ n) :
-    lam / 2 * ‖U.2‖ ^ 2 + (mu - beta ^ 2 / (2 * lam)) * U.1 ^ 2
-      ≤ energyIntegrand (a x) (b x) (c x) U U :=
-  garding_energyIntegrand_self_of_mass_lower_bound_of_bounds hlam (hA hx) (hb hx) (hc hx) U
-
 /-- The mass-floor Gårding lower bound implies the explicit diagonal estimate with constant
 `min (λ / 2) (μ - β² / (2λ))`, assuming this second coefficient is nonnegative. -/
 lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self (hlam : 0 < lam)
@@ -134,20 +122,6 @@ lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self (hlam : 0 < l
   rw [Real.norm_eq_abs, sq_abs] at hnorm
   exact hnorm.trans
     (garding_energyIntegrand_self_of_mass_lower_bound_of_bounds hlam hA hb hc U)
-
-/-- Explicit diagonal lower bound on a domain, obtained by applying
-`min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self` at `x`. -/
-lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self_on {Ω : Set X}
-    {a : X → Matrix n n ℝ} {b : X → EuclideanSpace ℝ n} {c : X → ℝ} (hlam : 0 < lam)
-    (hA : ∀ ⦃x⦄, x ∈ Ω → ∀ ξ : EuclideanSpace ℝ n,
-      lam * ‖ξ‖ ^ 2 ≤ (a x).toQuadraticForm' ξ)
-    (hb : ∀ ⦃x⦄, x ∈ Ω → ‖b x‖ ≤ beta)
-    (hc : ∀ ⦃x⦄, x ∈ Ω → mu ≤ c x) (hmu : beta ^ 2 / (2 * lam) ≤ mu)
-    {x : X} (hx : x ∈ Ω) (U : ℝ × EuclideanSpace ℝ n) :
-    min (lam / 2) (mu - beta ^ 2 / (2 * lam)) * ‖U‖ ^ 2
-      ≤ energyIntegrand (a x) (b x) (c x) U U :=
-  min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self hlam
-    (hA hx) (hb hx) (hc hx) hmu U
 
 /-- Zero-drift diagonal lower bound from a principal quadratic lower bound and nonnegative
 mass coefficient. -/

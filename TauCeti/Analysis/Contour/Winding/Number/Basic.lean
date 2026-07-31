@@ -28,6 +28,14 @@ value does not exist.
   `cauchyPVAt` defining value.
 * `TauCeti.Contour.windingNumber_eq_of_hasCauchyPVAt` — evaluate `windingNumber` from a Cauchy
   principal-value witness, without unfolding the definition.
+* `TauCeti.Contour.windingNumber_const` — a constant curve has winding number zero on every
+  parameter interval.
+* `TauCeti.Contour.windingNumber_congr_curve_ae` — the winding number is unchanged when the curves
+  agree almost everywhere on the integration interval and their derivatives agree almost everywhere
+  where the curve misses `z₀`;
+  `TauCeti.Contour.windingNumber_congr_curve` — the pointwise corollary, needing agreement only on
+  the open interval `Set.uIoo a b`. This is what lets a piecewise contour be evaluated one piece
+  at a time.
 * `TauCeti.Contour.windingNumber_same` — the generalized winding number on `[a, a]` is `0`.
 * `TauCeti.Contour.isNullHomologous_iff` — restates `IsNullHomologous` as its vanishing condition,
   so consumers use the predicate without unfolding its hidden body.
@@ -87,6 +95,45 @@ theorem windingNumber_same (γ : ℝ → ℂ) (a : ℝ) (z₀ : ℂ) :
   rw [windingNumber_eq_of_hasCauchyPVAt
     (HasCauchyPVAt.refl γ a (fun z : ℂ => (z - z₀)⁻¹) z₀)]
   ring
+
+/-- The generalized winding number of a constant curve is zero on every parameter interval. -/
+@[simp]
+theorem windingNumber_const (x : ℂ) (a b : ℝ) (z : ℂ) :
+    windingNumber (fun _ : ℝ => x) a b z = 0 := by
+  have hpv :
+      HasCauchyPVAt (fun _ : ℝ => x) a b (fun w => (w - z)⁻¹) z 0 := by
+    refine HasCauchyPVAt.intro ?_ ?_
+    · filter_upwards with ε
+      simp only [deriv_const, mul_zero, ite_self]
+      exact IntervalIntegrable.zero
+    · simpa only [deriv_const, mul_zero, ite_self, intervalIntegral.integral_zero] using
+        (tendsto_const_nhds :
+          Filter.Tendsto (fun _ : ℝ => (0 : ℂ)) (nhdsWithin 0 (Set.Ioi 0)) (nhds 0))
+  rw [windingNumber_eq_of_hasCauchyPVAt hpv]
+  simp
+
+/-- **The generalized winding number is unchanged when the curves agree almost everywhere and
+their derivatives agree almost everywhere off `z₀`.** Derivative agreement is only needed where
+the curve misses `z₀`: the `ε`-truncation deletes the integrand at `z₀` for every positive `ε`.
+Curve equality alone does not suffice — the index integrand contains `deriv γ`. -/
+theorem windingNumber_congr_curve_ae {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    (h_eq : γ₁ =ᵐ[MeasureTheory.volume.restrict (Set.uIoc a b)] γ₂)
+    (h_deriv : ∀ᵐ t ∂MeasureTheory.volume.restrict (Set.uIoc a b),
+      γ₁ t ≠ z₀ → deriv γ₁ t = deriv γ₂ t) :
+    windingNumber γ₁ a b z₀ = windingNumber γ₂ a b z₀ := by
+  unfold windingNumber
+  rw [cauchyPVAt_congr_curve_ae h_eq h_deriv]
+
+/-- **The generalized winding number depends on the curve only through its values on the open
+interval between `a` and `b`.** Agreement on the open interval suffices even though the index
+integrand involves `deriv γ`, since an open set is a neighbourhood of each of its points. This is
+what lets a piecewise contour be evaluated one piece at a time: on each piece the assembled curve
+agrees with the simple curve computing that piece's contribution. -/
+theorem windingNumber_congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    (h_eq : Set.EqOn γ₁ γ₂ (Set.uIoo a b)) :
+    windingNumber γ₁ a b z₀ = windingNumber γ₂ a b z₀ := by
+  unfold windingNumber
+  rw [cauchyPVAt_congr_curve h_eq]
 
 /-- If the two endpoints are equal, the generalized winding number is `0`. -/
 theorem windingNumber_eq_zero_of_eq (γ : ℝ → ℂ) {a b : ℝ} (hab : a = b) (z₀ : ℂ) :

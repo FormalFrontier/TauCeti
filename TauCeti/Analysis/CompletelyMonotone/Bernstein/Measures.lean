@@ -6,6 +6,9 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+-- Non-public: `BoundedContinuousFunction.integrable` supplies integrability of the bounded
+-- kernels against a finite measure.
+import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Integral
 
@@ -39,6 +42,9 @@ These build on the `IsCompletelyMonotone` API in `CompletelyMonotone/Basic.lean`
   `TauCeti.bernsteinKernel_tendsto`: the rescaled Laplace kernel, its bundled
   bounded-continuous `p`-dependence on the nonnegative half-line, and its bundled pointwise
   limit `e^{-xp}`.
+* `TauCeti.integrable_exp_neg_mul`, `TauCeti.integral_exp_neg_mul_add_smul_dirac_zero`: the
+  Laplace kernel is integrable against any finite measure on `ℝ≥0`, and adjoining an atom
+  `c • δ₀` adds exactly `c` to the transform, the kernel being `1` at `0`.
 * `TauCeti.chafaiRescaled`, `TauCeti.chafaiRescaled_mass_eq`: the `ℝ≥0`-valued pushed-forward
   measures and mass preservation.
 * `TauCeti.chafaiRescaled_integral_bernsteinKernel`,
@@ -283,6 +289,25 @@ lemma laplaceKernelBoundedContinuous_apply {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0
     laplaceKernelBoundedContinuous hx p = Real.exp (-(x * (p : ℝ))) := by
   rw [laplaceKernelBoundedContinuous]; rfl
 
+/-- **The Laplace kernel is integrable against a finite measure.** For `0 ≤ x` the kernel
+`p ↦ e^{-xp}` is bounded and continuous on `ℝ≥0`, hence integrable against any finite measure. -/
+lemma integrable_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : ℝ} (hx : 0 ≤ x) :
+    Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ := by
+  have h := (laplaceKernelBoundedContinuous hx).integrable μ
+  rwa [funext (laplaceKernelBoundedContinuous_apply hx)] at h
+
+/-- **An atom at `0` shifts the Laplace transform by its mass.** The kernel takes the value `1` at
+`p = 0`, so adjoining `c • δ₀` to a finite measure adds exactly `c`. -/
+@[simp]
+lemma integral_exp_neg_mul_add_smul_dirac_zero (μ : Measure ℝ≥0) [IsFiniteMeasure μ] (c : ℝ≥0)
+    {x : ℝ} (hx : 0 ≤ x) :
+    ∫ p : ℝ≥0, Real.exp (-(x * (p : ℝ))) ∂(μ + c • Measure.dirac (0 : ℝ≥0))
+      = (∫ p : ℝ≥0, Real.exp (-(x * (p : ℝ))) ∂μ) + c := by
+  rw [integral_add_measure (integrable_exp_neg_mul μ hx)
+      (integrable_exp_neg_mul (c • Measure.dirac (0 : ℝ≥0)) hx),
+    integral_smul_nnreal_measure, integral_dirac]
+  simp [NNReal.smul_def]
+
 /-- The Bernstein kernel is measurable in `p` for fixed `n` and `x`. -/
 lemma measurable_bernsteinKernel (n : ℕ) (x : ℝ) : Measurable (bernsteinKernel n x) := by
   unfold bernsteinKernel; split_ifs
@@ -302,7 +327,7 @@ lemma bernsteinKernel_tendsto (x p : ℝ) :
   rw [eventuallyEq_iff_exists_mem]
   refine ⟨{n : ℕ | n ≥ Nat.ceil (x * p) + 2}, mem_atTop _, ?_⟩
   intro n hn
-  simp only [Set.mem_setOf_eq] at hn
+  simp only [Set.mem_ofPred_eq] at hn
   simp only [bernsteinKernel, hg_def]
   have hn1 : ¬(n ≤ 1) := by omega
   simp only [hn1, ite_false]
@@ -512,6 +537,13 @@ private lemma chafaiRescaled_lintegral_coe_eq_chafaiMeasure_neg_derivWithin
   simp only [Pi.mul_apply]
   rw [hscale, ← ENNReal.ofReal_mul hdens_nonneg, mul_comm, ← hdens_eq]
 
+/-- The Chafaï density of order `n` is interval-integrable on `[0, T]`: it is continuous on
+`Ici 0` given `n`-fold differentiability there, and `[0, T]` sits inside that ray. -/
+private lemma intervalIntegrable_chafaiDensity {f : ℝ → ℝ} {n : ℕ}
+    (hf : ContDiffOn ℝ ((n : ℕ) : WithTop ℕ∞) f (Ici 0)) {T : ℝ} (hT : 0 ≤ T) :
+    IntervalIntegrable (fun t => chafaiDensity f n t) volume 0 T :=
+  ((continuousOn_chafaiDensity hf).mono Icc_subset_Ici_self).intervalIntegrable_of_Icc hT
+
 /-- **IBP identity** for the CM density:
 `∫₀ᵀ ρ_{m+2}(t) dt = B_{m+2}(T) + ∫₀ᵀ ρ_{m+1}(t) dt`. -/
 private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
@@ -520,54 +552,34 @@ private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
     (-1 : ℝ) ^ (m + 2) * T ^ (m + 1) / ↑(m + 1).factorial *
       iteratedDerivWithin (m + 1) f (Ici 0) T +
     ∫ t in (0 : ℝ)..T, chafaiDensity f (m + 1) t := by
-  -- Set up the primitive whose derivative is the difference of successive densities.
-  set g := iteratedDerivWithin (m + 1) f (Ici 0)
-  set g' := iteratedDerivWithin (m + 2) f (Ici 0)
   set c : ℝ := (-1) ^ (m + 2) / ↑(m + 1).factorial
+  set g := iteratedDerivWithin (m + 1) f (Ici 0)
   set F := fun t : ℝ => t ^ (m + 1) * (c * g t)
-  -- Smoothness gives continuity of the primitive and differentiability of the iterated
-  -- derivative on the open interval.
-  have hg_cont : ContinuousOn g (Ici 0) :=
-    (hf.of_le (by exact_mod_cast (by omega : m + 1 ≤ m + 2))).continuousOn_iteratedDerivWithin
-      le_rfl (uniqueDiffOn_Ici 0)
-  have hg_deriv : ∀ t, 0 < t → HasDerivAt g (g' t) t :=
-    fun t ht =>
-      ContDiffOn.hasDerivAt_iteratedDerivWithin hf (uniqueDiffOn_Ici 0) (Ici_mem_nhds ht)
-  have huIcc : uIcc (0 : ℝ) T = Icc 0 T := uIcc_of_le hT.le
+  have hf_m1 : ContDiffOn ℝ ((m + 1 : ℕ) : WithTop ℕ∞) f (Ici 0) :=
+    hf.of_le (by exact_mod_cast (by omega : m + 1 ≤ m + 2))
+  -- The primitive is continuous up to the endpoints, and differentiates to the density difference.
   have hF_cont : ContinuousOn F (Icc 0 T) :=
-    ((continuous_pow _).continuousOn).mul
-      (continuousOn_const.mul (hg_cont.mono Icc_subset_Ici_self))
+    ((continuous_pow _).continuousOn).mul (continuousOn_const.mul
+      ((hf_m1.continuousOn_iteratedDerivWithin le_rfl (uniqueDiffOn_Ici 0)).mono
+        Icc_subset_Ici_self))
+  -- The product rule gives two summands; `chafaiDensity_succ_succ_sub_succ` identifies them with
+  -- the density difference, which is the form the integrability and FTC steps below want.
   have hF_deriv : ∀ t ∈ Ioo 0 T, HasDerivAt F
-      (↑(m + 1) * t ^ m * (c * g t) + t ^ (m + 1) * (c * g' t)) t :=
-    fun t ht => (hasDerivAt_pow (m + 1) t).mul ((hg_deriv t ht.1).const_mul c)
-  -- Transfer interval integrability from continuity of the two density branches.
-  have h_int_m2 : IntervalIntegrable (fun t => chafaiDensity f (m + 2) t) volume 0 T := by
-    apply ContinuousOn.intervalIntegrable; rw [huIcc]
-    exact (continuousOn_chafaiDensity (n := m + 2) hf).mono Icc_subset_Ici_self
-  have h_int_m1 : IntervalIntegrable (fun t => chafaiDensity f (m + 1) t) volume 0 T := by
-    apply ContinuousOn.intervalIntegrable; rw [huIcc]
-    exact (continuousOn_chafaiDensity (n := m + 1)
-      (hf.of_le (by exact_mod_cast (by omega : m + 1 ≤ m + 2)))).mono Icc_subset_Ici_self
-  have hF'_eq : ∀ t, ↑(m + 1) * t ^ m * (c * g t) + t ^ (m + 1) * (c * g' t) =
-      chafaiDensity f (m + 2) t - chafaiDensity f (m + 1) t := by
-    intro t
-    simp only [g, g', c]
-    exact (chafaiDensity_succ_succ_sub_succ f m t).symm
-  have hF'_int : IntervalIntegrable
-      (fun t => ↑(m + 1) * t ^ m * (c * g t) + t ^ (m + 1) * (c * g' t)) volume 0 T :=
-    (h_int_m2.sub h_int_m1).congr fun t _ => (hF'_eq t).symm
-  -- Apply FTC to the primitive and rewrite the derivative integral as the difference of the
-  -- Chafaï density integrals.
-  have hftc := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hT.le hF_cont hF_deriv hF'_int
-  have hstep1 : ∫ t in (0 : ℝ)..T,
-      (chafaiDensity f (m + 2) t - chafaiDensity f (m + 1) t) = F T - F 0 := by
-    rw [← hftc]
-    exact intervalIntegral.integral_congr_ae
-      (Filter.Eventually.of_forall fun t _ => (hF'_eq t).symm)
-  have hm1 : m + 1 ≠ 0 := by omega
-  have hF0 : F 0 = 0 := by simp [F, zero_pow hm1]
-  rw [hF0, sub_zero] at hstep1
-  rw [intervalIntegral.integral_sub h_int_m2 h_int_m1] at hstep1
+      (chafaiDensity f (m + 2) t - chafaiDensity f (m + 1) t) t := fun t ht => by
+    have hg : HasDerivAt g (iteratedDerivWithin (m + 2) f (Ici 0) t) t :=
+      ContDiffOn.hasDerivAt_iteratedDerivWithin hf (uniqueDiffOn_Ici 0) (Ici_mem_nhds ht.1)
+    exact (chafaiDensity_succ_succ_sub_succ f m t).symm ▸
+      (hasDerivAt_pow (m + 1) t).mul (hg.const_mul _)
+  -- Both density branches are interval-integrable, so the difference is too.
+  have h_int_m2 : IntervalIntegrable (fun t => chafaiDensity f (m + 2) t) volume 0 T :=
+    intervalIntegrable_chafaiDensity hf hT.le
+  have h_int_m1 : IntervalIntegrable (fun t => chafaiDensity f (m + 1) t) volume 0 T :=
+    intervalIntegrable_chafaiDensity hf_m1 hT.le
+  -- FTC now reads off the difference of the two integrals directly.
+  have hstep1 := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hT.le hF_cont hF_deriv
+    (h_int_m2.sub h_int_m1)
+  have hF0 : F 0 = 0 := by simp [F, zero_pow (by omega : m + 1 ≠ 0)]
+  rw [hF0, sub_zero, intervalIntegral.integral_sub h_int_m2 h_int_m1] at hstep1
   -- The lower endpoint vanishes; the upper endpoint is the boundary term in the statement.
   suffices hgoal : (-1 : ℝ) ^ (m + 2) * T ^ (m + 1) / ↑(m + 1).factorial * g T = F T by linarith
   simp only [F, c]; ring
@@ -847,6 +859,15 @@ private lemma chafai_kernel_density_eq (f : ℝ → ℝ)
           iteratedDerivWithin n f (Ici 0) t := by ring
     _ = _ := by rw [key]
 
+/-- For `k ≠ 0`, dividing by `k!` and multiplying by `k` is dividing by `(k - 1)!`. This is the
+coefficient bookkeeping produced by differentiating the order-`k` kernel. -/
+private lemma div_factorial_mul_natCast {k : ℕ} (hk : k ≠ 0) (c z : ℝ) :
+    c / ↑k.factorial * ((k : ℝ) * z) = c / ↑(k - 1).factorial * z := by
+  have hfact : k.factorial = k * (k - 1).factorial := (Nat.mul_factorial_pred hk).symm
+  rw [hfact]
+  push_cast
+  field_simp
+
 private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (k : ℕ) (hk : k ≠ 0) (x T : ℝ) (hx : 0 ≤ x) (hxT : x < T) :
     ∫ t in x..T, (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
@@ -861,23 +882,13 @@ private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
   set u := fun t : ℝ => c * (t - x) ^ k
   set u' := fun t : ℝ => c * (↑k * (t - x) ^ (k - 1))
   have hu'_eq : ∀ t, u' t =
-      (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) := by
-    intro t
+      (-1 : ℝ) ^ (k + 1) / ↑(k - 1).factorial * (t - x) ^ (k - 1) := fun t => by
     simp only [u', c]
-    have hfact : k.factorial = k * (k - 1).factorial := by
-      cases k with
-      | zero => contradiction
-      | succ n => simp [Nat.factorial_succ]
-    rw [hfact]
-    push_cast
-    field_simp
+    exact div_factorial_mul_natCast hk _ _
   have hu_cont : ContinuousOn u (uIcc x T) :=
     continuousOn_const.mul ((continuousOn_id.sub continuousOn_const).pow _)
-  have hg_cont : ContinuousOn g (uIcc x T) := by
-    rw [uIcc_of_le hxT.le]
-    exact (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top k)
-      (uniqueDiffOn_Ici 0)).mono
-        (Icc_subset_Ici_self.trans (Ici_subset_Ici.mpr hx))
+  have hg_cont : ContinuousOn g (uIcc x T) :=
+    hcm.continuousOn_iteratedDerivWithin_uIcc k hx (hx.trans hxT.le)
   have hu_deriv : ∀ t ∈ Ioo (min x T) (max x T),
       HasDerivWithinAt u (u' t) (Ioi t) t := by
     intro t _ht
@@ -893,12 +904,8 @@ private lemma ibp_finite_interval (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
   have hu'_int : IntervalIntegrable u' volume x T :=
     (continuousOn_const.mul (continuousOn_const.mul
       ((continuousOn_id.sub continuousOn_const).pow _))).intervalIntegrable
-  have hg'_int : IntervalIntegrable g' volume x T := by
-    apply ContinuousOn.intervalIntegrable
-    rw [uIcc_of_le hxT.le]
-    exact (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top (k + 1))
-      (uniqueDiffOn_Ici 0)).mono
-        (Icc_subset_Ici_self.trans (Ici_subset_Ici.mpr hx))
+  have hg'_int : IntervalIntegrable g' volume x T :=
+    (hcm.continuousOn_iteratedDerivWithin_uIcc (k + 1) hx (hx.trans hxT.le)).intervalIntegrable
   have hibp := integral_mul_deriv_eq_deriv_mul_of_hasDeriv_right
     hu_cont hg_cont hu_deriv hg_deriv hu'_int hg'_int
   have hu0 : u x = 0 := by simp [u, sub_self, zero_pow hk]
@@ -1065,17 +1072,12 @@ private lemma boundary_term_decay (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
     have h_antitone : AntitoneOn h (Ici 0) := by simpa [h] using h_antitone₀
     have hint_density : IntegrableOn (chafaiDensity f k) (Ioi 0) :=
       chafaiDensity_integrableOn_Ioi_of_tendsto f hcm k hk1 L hL
-    have htail : Tendsto (fun S : ℝ => ∫ t in Ioi S, chafaiDensity f k t)
-        atTop (nhds 0) :=
-      tendsto_integral_Ioi_zero tendsto_id
+    -- `tendsto_integral_Ioi_zero` takes the cut point along any map to `atTop`, so `T / 2` needs
+    -- no separate composition argument.
     have htail_half : Tendsto (fun T : ℝ => ∫ t in Ioi (T / 2), chafaiDensity f k t)
-        atTop (nhds 0) := by
-      have hhalf_map : Tendsto (fun T : ℝ => (1 / 2 : ℝ) * T) atTop atTop :=
-        (tendsto_const_mul_atTop_of_pos (show (0 : ℝ) < 1 / 2 by positivity)).2 tendsto_id
-      refine (htail.comp hhalf_map).congr' ?_
-      filter_upwards with T
-      simp
-      ring_nf
+        atTop (nhds 0) :=
+      tendsto_integral_Ioi_zero (b := fun T : ℝ => T / 2)
+        (tendsto_id.atTop_div_const (by norm_num))
     have hupper := density_tail_lower_bound_eventually f hcm k hk x hx h h_nonneg h_antitone
       (by
         intro t
@@ -1102,8 +1104,41 @@ private lemma boundary_term_decay (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
     simp only [h, pow_succ]
     ring
   simp_rw [heq]
-  rw [show (0 : ℝ) = -(1 / ↑k.factorial) * 0 from by ring]
-  exact hkey.const_mul _
+  simpa using hkey.const_mul (-(1 / (k.factorial : ℝ)))
+
+/-- **The shifted order-`k` kernel is dominated by the Chafaï density.** For `0 ≤ x ≤ t` the
+kernel built from `(t - x) ^ (k - 1)` is nonnegative and bounded by the density built from
+`t ^ (k - 1)`. -/
+private lemma norm_ibp_kernel_le_chafaiDensity (f : ℝ → ℝ)
+    {k : ℕ} (hk0 : k ≠ 0) {x t : ℝ} (hx : 0 ≤ x) (ht : x ≤ t)
+    (hcm_sign : 0 ≤ (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) :
+    ‖(-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t‖ ≤ chafaiDensity f k t := by
+  have htx : 0 ≤ t - x := by linarith
+  have htx_le : t - x ≤ t := by linarith
+  rw [chafaiDensity_of_ne_zero hk0]
+  have hfact : (0 : ℝ) < ↑(k - 1).factorial := Nat.cast_pos.mpr (Nat.factorial_pos _)
+  have hval_nn : 0 ≤ (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+      iteratedDerivWithin k f (Ici 0) t := by
+    calc
+      (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+          iteratedDerivWithin k f (Ici 0) t
+          = (t - x) ^ (k - 1) / ↑(k - 1).factorial *
+            ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
+      _ ≥ 0 := mul_nonneg (div_nonneg (pow_nonneg htx _) hfact.le) hcm_sign
+  rw [Real.norm_eq_abs, abs_of_nonneg hval_nn]
+  calc
+    (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t
+        = (1 / ↑(k - 1).factorial) * (t - x) ^ (k - 1) *
+          ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
+    _ ≤ (1 / ↑(k - 1).factorial) * t ^ (k - 1) *
+        ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left (pow_le_pow_left₀ htx htx_le _) (by positivity))
+            hcm_sign
+    _ = (-1 : ℝ) ^ k / ↑(k - 1).factorial * t ^ (k - 1) *
+        iteratedDerivWithin k f (Ici 0) t := by field_simp
 
 private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x)
@@ -1121,37 +1156,8 @@ private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonot
         (uniqueDiffOn_Ici 0)).mono
         (fun t ht => mem_Ici.mpr (lt_of_le_of_lt hx ht).le)))
   · rw [ae_restrict_iff' measurableSet_Ioi]
-    apply ae_of_all
-    intro t ht
-    simp only [Ioi, mem_setOf_eq] at ht
-    have ht0 : 0 < t := lt_of_le_of_lt hx ht
-    have htx : 0 ≤ t - x := by linarith
-    have htx_le : t - x ≤ t := by linarith
-    rw [chafaiDensity_of_ne_zero hk0]
-    have hcm_sign : 0 ≤ (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t :=
-      hcm.neg_one_pow_mul_iteratedDerivWithin_nonneg k ht0.le
-    have hfact : (0 : ℝ) < ↑(k - 1).factorial := Nat.cast_pos.mpr (Nat.factorial_pos _)
-    have hval_nn : 0 ≤ (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-        iteratedDerivWithin k f (Ici 0) t := by
-      calc
-        (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-            iteratedDerivWithin k f (Ici 0) t
-            = (t - x) ^ (k - 1) / ↑(k - 1).factorial *
-              ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
-        _ ≥ 0 := mul_nonneg (div_nonneg (pow_nonneg htx _) hfact.le) hcm_sign
-    rw [Real.norm_eq_abs, abs_of_nonneg hval_nn]
-    calc
-      (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t
-          = (1 / ↑(k - 1).factorial) * (t - x) ^ (k - 1) *
-            ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by field_simp
-      _ ≤ (1 / ↑(k - 1).factorial) * t ^ (k - 1) *
-          ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) t) := by
-            exact mul_le_mul_of_nonneg_right
-              (mul_le_mul_of_nonneg_left (pow_le_pow_left₀ htx htx_le _) (by positivity))
-              hcm_sign
-      _ = (-1 : ℝ) ^ k / ↑(k - 1).factorial * t ^ (k - 1) *
-          iteratedDerivWithin k f (Ici 0) t := by field_simp
+    exact ae_of_all _ fun t ht => norm_ibp_kernel_le_chafaiDensity f hk0 hx (le_of_lt ht)
+      (hcm.neg_one_pow_mul_iteratedDerivWithin_nonneg k (le_trans hx (le_of_lt ht)))
 
 /-- Raising the sign exponent of the order-`k` kernel by one negates its integral. -/
 private lemma intervalIntegral_neg_one_pow_succ_kernel (f : ℝ → ℝ) (k : ℕ) (x T : ℝ) :

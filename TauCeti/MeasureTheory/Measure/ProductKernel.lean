@@ -5,13 +5,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Measure.FiniteMeasurePi
+-- Public: `Measure.infinitePi` appears in the infinite-product statement.
+public import Mathlib.Probability.ProductMeasure
+-- Non-public: `map_infinitePi_infinitePi_of_inj` is used inside the prefix-marginal and
+-- block-selection proofs.
+import Mathlib.Probability.Independence.InfinitePi
+-- Non-public: `map_bind` is used only inside the mixture prefix-rectangle proof.
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
-# Finite product probability-measure kernels
+# Product probability-measure kernels
 
-This file provides the basic theory of the finite product of probability measures over a finite
-index type, phrased directly over Mathlib's `ProbabilityMeasure.pi`: measurability of the product
-kernel, and `Measure.bind`-evaluation of the mixture it induces.
+This file provides the basic theory of products of probability measures, phrased directly over
+Mathlib's `ProbabilityMeasure.pi` and `Measure.infinitePi`: measurability of the product kernel —
+finite and countable — and `Measure.bind`-evaluation of the mixture the finite product induces.
 
 Measurability:
 * `measurable_probabilityMeasure_pi` — the product combinator
@@ -26,6 +33,29 @@ Measurability:
 * the constant-coordinate (`fun _ : Fin m => ν ω`) specializations
   `measurable_probabilityMeasure_pi_const_toMeasure` and
   `aemeasurable_probabilityMeasure_pi_const_toMeasure`.
+* `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure` — the **joint** kernel
+  `ω ↦ δ_{ν ω} ⊗ (ν ω)^{⊗ Fin m}`, pairing the block kernel with a Dirac mass at the mixing
+  measure. This is the joint-space input a conditional (joint-law) reading of the mixture
+  identity needs, as opposed to the block kernel alone.
+* `measurable_dirac_prod_infinitePi_const` — the parameter-tagged product kernel
+  `t ↦ δ_t ⊗ (P t)^{⊗ι}` over an **arbitrary** index type, for a measurable family `P` of
+  probability measures. Here the Dirac factor sits on the parameter rather than on the measure it
+  selects, which is what a mixture retaining its parameter as a coordinate needs.
+* `measurable_infinitePi` — the product `p ↦ ⊗ᵢ p i` over an **arbitrary** index type, of a
+  dependent family of probability measures, is measurable in the measure argument;
+  `measurable_infinitePi_const` is the `ℕ`-constant-power specialization `p ↦ p^{⊗ℕ}`. Mathlib
+  supplies `Measure.infinitePi` and its projective-limit API but not this measurability, which is
+  what a mixture of such products needs for `Measure.bind_apply` and the expected evaluation of
+  the mixture as an integral.
+* `map_prefixProj_infinitePi` — the finite-prefix marginal of a countable product, its first `n`
+  coordinates being the corresponding finite product, with `map_prefixProj_infinitePi_const` the
+  constant-family form. Mathlib's `Measure.infinitePi_map_restrict` gives the marginal indexed by a
+  coerced `Finset`; this is the `Fin n`-prefix form that prefix-marginal arguments on `ℕ → α` use.
+* `map_infinitePi_pair_block` — an **arbitrary injective block** of coordinates read off a constant
+  countable power, and tagged with the law it came from: `Q^{⊗ℕ}` pushed along
+  `x ↦ (Q, x ∘ k)` is `δ_Q ⊗ Q^{⊗ Fin m}`. This generalizes the prefix marginal above from `Fin.val`
+  to any injective `k`, and pairs it with the Dirac factor, which is the form a disintegration
+  against a directing measure consumes.
 
 Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure`:
 * `bind_probabilityMeasure_pi_apply` — evaluation on a measurable set as the integral of the product
@@ -33,10 +63,14 @@ Bind-evaluation of the mixture `μ.bind fun ω => (ProbabilityMeasure.pi fun i =
 * `bind_probabilityMeasure_pi_pi` — evaluation on a measurable rectangle as the integral of the
   product of coordinate measures, with `Fin m` constant-coordinate forms
   `bind_probabilityMeasure_pi_const_apply` and `bind_probabilityMeasure_pi_const_pi`.
+* `map_prefixProj_bind_infinitePi_pi` — the same evaluation for the *countable*-product mixture
+  `π.bind (P ↦ P^{⊗ℕ})`: its finite-prefix rectangle probabilities are the mixed moments
+  `∫⁻ P, ∏ i, P (B i) ∂π` of the evaluation maps. This pairs the prefix-marginal lemma above with
+  bind-evaluation, and is what identifiability arguments for the mixing measure consume.
 
 This file does not introduce a new product-kernel structure; the lemmas live directly over Mathlib's
-`ProbabilityMeasure.pi`. It advances `TauCetiRoadmap/Exchangeability`, Layer 1 (product kernels,
-conditional independence, mixtures), and is motivated by the product-kernel layer of
+`ProbabilityMeasure.pi`. It advances `TauCetiRoadmap/Exchangeability`, Layer 1 (product kernels and
+mixtures), and is motivated by the product-kernel layer of
 `cameronfreer/exchangeability` (`MeasureKernels.lean` and the `bind_pi_apply` of
 `DeFinetti/CommonEnding.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`), implemented using
 Mathlib's `ProbabilityMeasure.pi`, `Measure.bind_apply`, and Giry measurability API; the combinator
@@ -108,12 +142,137 @@ theorem measurable_probabilityMeasure_pi_const_toMeasure {α : Type*} [Measurabl
   measurable_probabilityMeasure_pi_toMeasure (fun _ => ν) (fun _ => hν)
 
 /-- Constant-coordinate specialization of `aemeasurable_probabilityMeasure_pi_toMeasure`: the random
-product `ω ↦ (ν ω)^{⊗ Fin m}` is `AEMeasurable` from an a.e.-measurable directing kernel. -/
+product `ω ↦ (ν ω)^{⊗ Fin m}` is `AEMeasurable` from an a.e.-measurable kernel `ν`. -/
 @[fun_prop]
 theorem aemeasurable_probabilityMeasure_pi_const_toMeasure {α : Type*} [MeasurableSpace α] {m : ℕ}
     (ν : Ω → ProbabilityMeasure α) (hν : AEMeasurable ν μ) :
     AEMeasurable (fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
   aemeasurable_probabilityMeasure_pi_toMeasure (fun _ => ν) (fun _ => hν)
+
+/-- **Joint-kernel measurability.** The random measure
+`ω ↦ δ_{ν ω} ⊗ (ν ω)^{⊗ Fin m}` on `ProbabilityMeasure α × (Fin m → α)` is measurable.
+
+This is the joint-space companion of `measurable_probabilityMeasure_pi_const_toMeasure`: where that
+one gives the block kernel alone, this one pairs it with a Dirac mass at the mixing measure itself,
+which is what a conditional (joint-law) reading of the de Finetti mixture identity has to speak
+about. It supplies the `Measure.bind_apply` and measure-extensionality inputs on the joint space
+(`TauCetiRoadmap/Exchangeability/README.md`, Layer 1). No hypotheses beyond measurability of `ν`. -/
+-- The product step is Mathlib's `ProbabilityMeasure.measurable_fun_prod`; all this adds is that
+-- both components are measurable in `ω`. Applying it needs both presented as
+-- `ProbabilityMeasure`-valued, hence the `subtype_mk` bundling of the Dirac side.
+@[fun_prop]
+theorem measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure {α : Type*}
+    [MeasurableSpace α] {m : ℕ} (ν : Ω → ProbabilityMeasure α) (hν : Measurable ν) :
+    Measurable fun ω =>
+      (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure := by
+  have hdirac : Measurable fun ω =>
+      (⟨Measure.dirac (ν ω), inferInstance⟩ : ProbabilityMeasure (ProbabilityMeasure α)) :=
+    (Measure.measurable_dirac.comp hν).subtype_mk
+  have hpi : Measurable fun ω => ProbabilityMeasure.pi fun _ : Fin m => ν ω :=
+    measurable_probabilityMeasure_pi.comp (measurable_pi_lambda _ fun _ => hν)
+  exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpi)
+
+/-- **Product measurability in the measure argument.** For an arbitrary index type and a dependent
+family of measurable spaces, `p ↦ ⊗ᵢ p i` is a measurable map
+`(∀ i, ProbabilityMeasure (β i)) → Measure (∀ i, β i)`.
+
+This is the arbitrary-index companion of `measurable_probabilityMeasure_pi_toMeasure`, which covers
+the finite case through `ProbabilityMeasure.pi`. Mathlib supplies `Measure.infinitePi` and its
+projective-limit API but not this measurability, which is what a mixture of such products needs for
+`Measure.bind_apply` and for evaluating the mixture as an integral — the shape the de Finetti
+mixture representation takes. -/
+@[fun_prop]
+theorem measurable_infinitePi {ι' : Type*} {β : ι' → Type*} [∀ i, MeasurableSpace (β i)] :
+    Measurable fun p : ∀ i, ProbabilityMeasure (β i) =>
+      Measure.infinitePi fun i => (p i : Measure (β i)) := by
+  refine Measurable.measure_of_isPiSystem_of_isProbabilityMeasure
+    (S := measurableCylinders β) generateFrom_measurableCylinders.symm
+    isSetRing_measurableCylinders.isSetSemiring.isPiSystem ?_
+  intro t ht
+  obtain ⟨s, S, hS, rfl⟩ := (mem_measurableCylinders t).mp ht
+  have hval : ∀ p : ∀ i, ProbabilityMeasure (β i),
+      Measure.infinitePi (fun i => (p i : Measure (β i))) (cylinder s S)
+        = Measure.pi (fun i : s => (p i : Measure (β i))) S :=
+    fun p => Measure.infinitePi_cylinder _ hS
+  simp_rw [hval]
+  simpa only [ProbabilityMeasure.toMeasure_pi, Function.comp_def] using
+    (Measure.measurable_coe hS).comp
+      (measurable_probabilityMeasure_pi_toMeasure
+        (fun i : s => fun p : ∀ j, ProbabilityMeasure (β j) => p i.1)
+        fun i => measurable_pi_apply i.1)
+
+/-- Constant-coordinate `ℕ` specialization of `measurable_infinitePi`: the countable power
+`p ↦ p^{⊗ℕ}` is measurable. -/
+@[fun_prop]
+theorem measurable_infinitePi_const {α : Type*} [MeasurableSpace α] :
+    Measurable fun p : ProbabilityMeasure α =>
+      Measure.infinitePi (fun _ : ℕ => (p : Measure α)) :=
+  measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => measurable_id)
+
+/-- **Parameter-tagged product kernel.** For a measurable family of probability measures
+`P : T → ProbabilityMeasure α`, the random measure `t ↦ δ_t ⊗ (P t)^{⊗ι}` on `T × (ι → α)` is
+measurable, over an arbitrary index type `ι`.
+
+This is the arbitrary-power companion of
+`measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`, with the Dirac factor sitting on the
+*parameter* rather than on the measure it selects. It is what a mixture that retains its parameter
+as a coordinate needs for `Measure.bind_apply`. -/
+@[fun_prop]
+theorem measurable_dirac_prod_infinitePi_const {T α ι' : Type*} [MeasurableSpace T]
+    [MeasurableSpace α] (P : T → ProbabilityMeasure α) (hP : Measurable P) :
+    Measurable fun t =>
+      (Measure.dirac t).prod (Measure.infinitePi fun _ : ι' => (P t : Measure α)) := by
+  have hdirac : Measurable fun t => (⟨Measure.dirac t, inferInstance⟩ : ProbabilityMeasure T) :=
+    Measure.measurable_dirac.subtype_mk
+  have hpow : Measurable fun t =>
+      (⟨Measure.infinitePi fun _ : ι' => (P t : Measure α), inferInstance⟩ :
+        ProbabilityMeasure (ι' → α)) :=
+    (measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => hP)).subtype_mk
+  exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpow)
+
+/-- **Finite-prefix marginal of a countable product.** Restricting `⊗ⱼ p j` to its first `n`
+coordinates gives the finite product `⊗_{i : Fin n} p i`.
+
+Mathlib's `Measure.infinitePi_map_restrict` gives the marginal along a `Finset.restrict`, indexed by
+the coerced finite set; this is the `Fin n`-prefix form, which is what prefix-marginal arguments on
+`ℕ → α` use. Stated with the bare prefix map rather than any particular prefix abbreviation, so it
+stays independent of downstream conventions. -/
+theorem map_prefixProj_infinitePi {α : Type*} [MeasurableSpace α] (p : ℕ → ProbabilityMeasure α)
+    (n : ℕ) :
+    (Measure.infinitePi fun j : ℕ => (p j : Measure α)).map (fun x : ℕ → α => fun i : Fin n => x i)
+      = Measure.pi fun i : Fin n => (p i : Measure α) := by
+  rw [Measure.map_infinitePi_infinitePi_of_inj Fin.val_injective, Measure.infinitePi_eq_pi]
+
+/-- Constant-coordinate specialization of `map_prefixProj_infinitePi`: the first `n` coordinates of
+`p^{⊗ℕ}` are distributed as `p^{⊗ Fin n}`. -/
+theorem map_prefixProj_infinitePi_const {α : Type*} [MeasurableSpace α] (p : ProbabilityMeasure α)
+    (n : ℕ) :
+    (Measure.infinitePi (fun _ : ℕ => (p : Measure α))).map (fun x : ℕ → α => fun i : Fin n => x i)
+      = Measure.pi (fun _ : Fin n => (p : Measure α)) :=
+  map_prefixProj_infinitePi (fun _ => p) n
+
+/-- **Selecting a block from an i.i.d. power, tagged with its own law.** Reading an injective block
+`k : Fin m → ℕ` of coordinates off the countable power `Q^{⊗ℕ}` and recording `Q` alongside the
+result gives `δ_Q ⊗ Q^{⊗ Fin m}`; injectivity is what makes the selected coordinates independent.
+
+This is `map_prefixProj_infinitePi_const` for an arbitrary injective block rather than a prefix,
+paired with the law, which is the form a disintegration against a directing measure consumes. -/
+theorem map_infinitePi_pair_block {α : Type*} [MeasurableSpace α] (Q : ProbabilityMeasure α)
+    {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
+    (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
+      = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+  have hblk : Measurable fun x : ℕ → α => fun i : Fin m => x (k i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+  calc (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
+      = ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
+          fun x : ℕ → α => fun i : Fin m => x (k i)).map (Prod.mk Q) :=
+        (Measure.map_map measurable_prodMk_left hblk).symm
+    _ = (Measure.pi fun _ : Fin m => (Q : Measure α)).map (Prod.mk Q) := by
+        rw [Measure.map_infinitePi_infinitePi_of_inj hk, Measure.infinitePi_eq_pi]
+    _ = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+        rw [ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives
@@ -126,7 +285,7 @@ theorem bind_probabilityMeasure_pi_apply
   Measure.bind_apply hs (aemeasurable_probabilityMeasure_pi_toMeasure ν hν)
 
 -- Not `@[simp]`: `simp` unfolds `(ProbabilityMeasure.pi …).toMeasure` via `toMeasure_pi`, so the
--- `.toMeasure`-shaped (`ConditionallyIIDWith`-shaped) LHS here is not simp-normal and a `@[simp]`
+-- `.toMeasure`-shaped (`MixedIIDWith`-shaped) LHS here is not simp-normal and a `@[simp]`
 -- tag never fires; this is an explicit `rw` lemma in the shape later de Finetti code rewrites with.
 /-- **Bind-evaluation on a rectangle.** On a rectangle `Set.univ.pi B`, the mixture equals
 `∫⁻ ω, ∏ i, (ν i ω) (B i) ∂μ`. -/
@@ -154,6 +313,26 @@ theorem bind_probabilityMeasure_pi_const_pi {α : Type*} [MeasurableSpace α] {m
     (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) (Set.univ.pi B)
       = ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ :=
   bind_probabilityMeasure_pi_pi (fun _ => ν) (fun _ => hν) B hB
+
+/-- The mixture's finite-dimensional rectangle probabilities are the mixed moments of the
+evaluation maps: pushing `π.bind (P ↦ P^{⊗ℕ})` to its first `n` coordinates and evaluating on a
+rectangle `∏ i, B i` gives `∫⁻ P, ∏ i, P (B i) ∂π`. -/
+theorem map_prefixProj_bind_infinitePi_pi {α : Type*} [MeasurableSpace α]
+    (π : Measure (ProbabilityMeasure α)) {n : ℕ} (B : Fin n → Set α)
+    (hB : ∀ i, MeasurableSet (B i)) :
+    ((π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
+        (fun x : ℕ → α => fun i : Fin n => x i)) (Set.univ.pi B)
+      = ∫⁻ P, ∏ i, (P : Measure α) (B i) ∂π := by
+  have hproj : Measurable (fun x : ℕ → α => fun i : Fin n => x i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply _
+  have hmeas : AEMeasurable (fun P : ProbabilityMeasure α =>
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
+        fun x : ℕ → α => fun i : Fin n => x i) π :=
+    ((Measure.measurable_map _ hproj).comp measurable_infinitePi_const).aemeasurable
+  rw [map_bind measurable_infinitePi_const.aemeasurable hproj,
+    Measure.bind_apply (MeasurableSet.univ_pi hB) hmeas]
+  refine lintegral_congr fun P => ?_
+  rw [map_prefixProj_infinitePi_const, Measure.pi_pi]
 
 end MeasureTheory
 

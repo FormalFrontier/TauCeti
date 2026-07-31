@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import Mathlib.Probability.Moments.ComplexMGF
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.Analysis.Analytic.Order
@@ -152,7 +152,7 @@ private lemma zero_mem_interior_integrableExpSet_id_of_exists_integrable_exp
   obtain ⟨a, ha, hint⟩ := h
   refine mem_interior.mpr ⟨Set.Ioo (-a) a, ?_, isOpen_Ioo, Set.mem_Ioo.mpr ⟨neg_lt_zero.mpr ha, ha⟩⟩
   intro t ht
-  simp only [integrableExpSet, Set.mem_setOf_eq, id_eq]
+  simp only [integrableExpSet, Set.mem_ofPred_eq, id_eq]
   refine hint.mono'
     ((Real.continuous_exp.comp (continuous_const.mul continuous_id)).aestronglyMeasurable) ?_
   filter_upwards with x

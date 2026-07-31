@@ -101,6 +101,17 @@ class FailClosedTest(unittest.TestCase):
         self.assertTrue(z.updated[0][1].lstrip().startswith(sa.GREEN))
 
 
+class AutoMergeScopeTest(unittest.TestCase):
+    def test_lakefile_exception_is_exact_author_only(self):
+        files = ["lakefile.toml", "lake-manifest.json"]
+        self.assertTrue(sa.is_automerge_scope(files, "tauceti-review-bot[bot]"))
+        self.assertFalse(sa.is_automerge_scope(files, "someone-else"))
+
+    def test_bot_authorship_does_not_allow_other_infrastructure(self):
+        self.assertFalse(sa.is_automerge_scope(
+            ["lakefile.toml", ".github/workflows/x.yml"], "tauceti-review-bot[bot]"))
+
+
 class ReconcileTest(unittest.TestCase):
     def test_new_alert_posts_message(self):
         z = FakeZulip([])
@@ -123,6 +134,48 @@ class ReconcileTest(unittest.TestCase):
         sa.reconcile(z, [{"key": "main-red", "title": "t", "body": "b"}], set(), False)
         self.assertEqual(len(z.sent), 1)
         self.assertEqual(z.updated, [])
+
+
+class ReviewStuckTest(unittest.TestCase):
+    """An issue outliving its PR must not alert; anything unreadable still must."""
+
+    ISSUES = '{"number": 1137, "title": "Review stuck: PR #1134"}\n'
+
+    def fake_gh(self, pr_state):
+        """Serve the issue list, then `pr_state` for the PR lookup (or raise)."""
+        def gh_api(path, jq=None, paginate=False):
+            if path.startswith("/repos/") and "/pulls/" in path:
+                if isinstance(pr_state, Exception):
+                    raise pr_state
+                return pr_state + "\n"
+            return self.ISSUES
+        self.addCleanup(setattr, core, "gh_api", core.gh_api)
+        core.gh_api = gh_api
+
+    def test_open_pr_alerts(self):
+        self.fake_gh("open")
+        self.assertEqual([a["key"] for a in sa.detect_review_stuck()],
+                         ["review-stuck/1137"])
+
+    def test_finished_pr_does_not_alert(self):
+        # The exact shape of issue #1137: its PR #1134 merged, the worker never
+        # closed the issue, and the alert fired for two days.
+        self.fake_gh("closed")
+        self.assertEqual(sa.detect_review_stuck(), [])
+
+    def test_unreadable_pr_state_still_alerts(self):
+        # Fail closed: an API blip must never silence a live wedge.
+        self.fake_gh(RuntimeError("gh api failed: 502"))
+        self.assertEqual([a["key"] for a in sa.detect_review_stuck()],
+                         ["review-stuck/1137"])
+
+    def test_alert_body_names_only_the_issue(self):
+        # The PR number reaches an API path and nothing else: no untrusted title
+        # text, and no PR reference, may enter the rendered message.
+        self.fake_gh("open")
+        body = sa.detect_review_stuck()[0]["body"]
+        self.assertIn("/issues/1137", body)
+        self.assertNotIn("1134", body)
 
 
 class MarkerSafetyTest(unittest.TestCase):

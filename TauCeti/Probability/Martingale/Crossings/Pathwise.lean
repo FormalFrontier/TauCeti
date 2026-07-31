@@ -53,7 +53,7 @@ private lemma hitting_congr {Ω β ι : Type*} [Preorder ι] [InfSet ι] {u v : 
     simp only [if_pos hex, if_pos hex']
     congr 1
     ext k
-    simp only [Set.mem_inter_iff, Set.mem_setOf_eq]
+    simp only [Set.mem_inter_iff, Set.mem_ofPred_eq]
     constructor
     · intro ⟨hk_Icc, hk_mem⟩
       refine ⟨hk_Icc, ?_⟩
@@ -172,7 +172,7 @@ lemma upcrossingsBefore_le_upcrossingsBefore_neg_revProcess_succ
     have hsub : {n | upperCrossingTime a b X N n ω < N} ⊆
         {n | upperCrossingTime (-b) (-a) (-(revProcess X N)) (N + 1) n ω < N + 1} := by
       intro n hn
-      simp only [Set.mem_setOf_eq] at hn ⊢
+      simp only [Set.mem_ofPred_eq] at hn ⊢
       -- With horizon `N + 1` the bijection works: crossings completing at time `N` are now counted
       -- since `N < N + 1`.
       cases n with

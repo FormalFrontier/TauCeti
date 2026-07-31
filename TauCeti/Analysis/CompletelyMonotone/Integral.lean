@@ -23,6 +23,8 @@ for the first derivative within `[0, ∞)`.
 
 * `TauCeti.IsCompletelyMonotone.neg_one_pow_mul_taylor_remainder_nonneg`: the Taylor integral
   remainder has sign `(-1)ⁿ`.
+* `TauCeti.IsCompletelyMonotone.continuousOn_iteratedDerivWithin_uIcc`: every iterated derivative
+  within `[0, ∞)` is continuous on a compact interval `[x, T] ⊆ [0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub`: on a compact
   interval in `[0, ∞)`, the integral of `-f'` is the endpoint drop `f x - f T`.
 * `TauCeti.IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn`,
@@ -105,6 +107,15 @@ private lemma IsCompletelyMonotone.iteratedDerivWithin_one_nonpos
     (hf : IsCompletelyMonotone f) {t : ℝ} (ht : 0 ≤ t) :
     iteratedDerivWithin 1 f (Ici 0) t ≤ 0 := by
   rw [iteratedDerivWithin_one]; exact hf.derivWithin_nonpos ht
+
+/-- Every iterated derivative within `[0, ∞)` of a completely monotone function is continuous on
+the interval spanned by any two nonnegative endpoints. The endpoints need no ordering: `uIcc` is
+the unordered interval, and `[0, ∞)` is order-connected. -/
+lemma IsCompletelyMonotone.continuousOn_iteratedDerivWithin_uIcc (hcm : IsCompletelyMonotone f)
+    (m : ℕ) {x T : ℝ} (hx : 0 ≤ x) (hT : 0 ≤ T) :
+    ContinuousOn (iteratedDerivWithin m f (Ici 0)) (uIcc x T) :=
+  (hcm.contDiffOn.continuousOn_iteratedDerivWithin (nat_le_top m)
+    (uniqueDiffOn_Ici 0)).mono (ordConnected_Ici.uIcc_subset hx hT)
 
 /-- On a compact interval in `[0, ∞)`, the integral of `-f'` for a completely monotone
 function is the endpoint drop, with the derivative taken within `[0, ∞)`. -/

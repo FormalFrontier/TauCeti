@@ -243,13 +243,16 @@ lemma cast_subgroupFiberOrbitClass {H K : Subgroup (Deck p)} (hHK : H = K) (e : 
 /-- The identity over-base homeomorphism induces the identity on subgroup fibre-orbit
 quotients, up to the canonical rewrite identifying the image of a subgroup under the identity
 conjugation with the original subgroup. -/
+-- The compatibility argument is written `by change p e = p e; rfl` rather than `rfl`: a bare
+-- `rfl` elaborates at `p ((Homeomorph.refl E) e) = p ((Homeomorph.refl E) e)`, and the rewrite by
+-- `subgroupFiberOrbitQuotientEquiv_apply` in the proof below then no longer matches.
 @[simp]
 lemma subgroupFiberOrbitQuotientEquiv_refl (H : Subgroup (Deck p))
     (x : SubgroupFiberOrbitQuotient H b) :
     cast (congrArg (fun H' => SubgroupFiberOrbitQuotient H' b)
         (subgroup_map_conj_refl (p := p) H))
       (subgroupFiberOrbitQuotientEquiv (Homeomorph.refl E) (p := p) (q := p)
-        (fun e => by rfl) H b x) =
+        (fun e => by change p e = p e; rfl) H b x) =
       x := by
   rw [← Equiv.cast_apply]
   refine Quotient.inductionOn' x ?_
@@ -260,7 +263,7 @@ lemma subgroupFiberOrbitQuotientEquiv_refl (H : Subgroup (Deck p))
     Equiv.cast (congrArg (fun H' => SubgroupFiberOrbitQuotient H' b)
         (subgroup_map_conj_refl (p := p) H))
       (subgroupFiberOrbitQuotientEquiv (Homeomorph.refl E) (p := p) (q := p)
-        (fun e => by rfl) H b (subgroupFiberOrbitClass H e)) =
+        (fun e => by change p e = p e; rfl) H b (subgroupFiberOrbitClass H e)) =
       subgroupFiberOrbitClass H e
   rw [subgroupFiberOrbitQuotientEquiv_apply, fiberMap_refl]
   exact cast_subgroupFiberOrbitClass (subgroup_map_conj_refl (p := p) H) e

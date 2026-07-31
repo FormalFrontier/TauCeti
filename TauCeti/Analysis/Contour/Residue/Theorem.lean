@@ -81,14 +81,13 @@ private lemma circleIntegral_const_mul_zpow_sub {c s₀ : ℂ} {R : ℝ} {n : �
     (hs₀ : s₀ ∈ ball c R) (hn : n < 0) :
     (∮ z in C(c, R), a * (z - s₀) ^ n)
       = 2 * ↑Real.pi * Complex.I * residue (fun z => a * (z - s₀) ^ n) s₀ := by
-  have hQ_mero : MeromorphicAt (fun z => (z - s₀) ^ n) s₀ := by fun_prop
   -- Residue of the pure monomial: the Taylor coefficient of the constant `1` at index `−1 − n`.
   have hresQ : residue (fun z => (z - s₀) ^ n) s₀
       = (if (-1 - n).toNat = 0 then (1 : ℂ) else 0) / ((-1 - n).toNat.factorial : ℂ) := by
     have h1 : AnalyticAt ℂ (fun _ : ℂ => (1 : ℂ)) s₀ := analyticAt_const
     rw [residue_eq_of_eventuallyEq_zpow_smul (by omega : n ≤ -1) h1
       (Filter.Eventually.of_forall fun z => by simp [smul_eq_mul]), iteratedDeriv_const]
-  rw [residue_const_mul a hQ_mero, hresQ]
+  rw [residue_const_mul a, hresQ]
   rcases eq_or_ne n (-1) with hn1 | hn1
   · subst hn1
     have hinv : (fun z => a * (z - s₀) ^ (-1 : ℤ)) = fun z => a * (z - s₀)⁻¹ := by
@@ -152,6 +151,52 @@ private lemma circleIntegrable_of_analyticOn_sphere {A : ℂ → ℂ} {c : ℂ} 
     (hA : ∀ z ∈ sphere c R, AnalyticAt ℂ A z) : CircleIntegrable A c R :=
   ContinuousOn.circleIntegrable hR fun z hz => (hA z hz).continuousAt.continuousWithinAt
 
+/-- **Peeling lowers the total pole depth.** A term `P` analytic away from `s₀` cannot deepen the
+pole at any other point of `S`, so a strict drop at `s₀` is a strict drop in the sum over `S`. -/
+private lemma sum_depthTerm_sub_lt {c : ℂ} {R : ℝ} (S : Finset ℂ)
+    {F P : ℂ → ℂ} (hF_mero : MeromorphicOn F (closedBall c R))
+    (hmem_cb : ∀ s ∈ S, s ∈ closedBall c R)
+    {s₀ : ℂ} (hs₀S : s₀ ∈ S) (hP_an_off : ∀ z, z ≠ s₀ → AnalyticAt ℂ P z)
+    {n₀ : ℤ} (hn₀_neg : n₀ < 0) (hFs₀ : meromorphicOrderAt F s₀ = (n₀ : WithTop ℤ))
+    (hG_ord_s₀ : (n₀ : WithTop ℤ) < meromorphicOrderAt (fun z => F z - P z) s₀) :
+    (∑ s ∈ S, (-(meromorphicOrderAt (fun z => F z - P z) s).untop₀).toNat)
+      < (∑ s ∈ S, (-(meromorphicOrderAt F s).untop₀).toNat) := by
+  have hdepth_s₀ : (-(meromorphicOrderAt (fun z => F z - P z) s₀).untop₀).toNat
+      < (-(meromorphicOrderAt F s₀).untop₀).toNat := by
+    rw [hFs₀]; exact depthTerm_lt_of_lt hn₀_neg hG_ord_s₀
+  refine Finset.sum_lt_sum (fun s hs => ?_) ⟨s₀, hs₀S, hdepth_s₀⟩
+  by_cases hss₀ : s = s₀
+  · subst hss₀; exact le_of_lt hdepth_s₀
+  · refine depthTerm_le_of_sub (hP_an_off s hss₀).meromorphicOrderAt_nonneg ?_
+    have hadd := meromorphicOrderAt_add (hF_mero s (hmem_cb s hs))
+      (hP_an_off s hss₀).meromorphicAt.neg
+    rwa [← meromorphicOrderAt_neg, ← sub_eq_add_neg] at hadd
+
+/-- **Transferring the residue formula across a peeled term.** If the formula holds for the
+remainder `F − P` and `P` contributes its own residue sum, it holds for `F`: both the circle
+integral and the residue sum split additively across the subtraction. -/
+private lemma circleIntegral_eq_residueSum_of_sub {c : ℂ} {R : ℝ} (S : Finset ℂ)
+    {F P : ℂ → ℂ} (hF_int : CircleIntegrable F c R) (hP_int : CircleIntegrable P c R)
+    (hF_mero : MeromorphicOn F (closedBall c R)) (hP_mero : MeromorphicOn P (closedBall c R))
+    (hmem_cb : ∀ s ∈ S, s ∈ closedBall c R)
+    (hP : circleIntegral P c R = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, residue P s)
+    (hG : circleIntegral (fun z => F z - P z) c R
+      = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, residue (fun z => F z - P z) s) :
+    circleIntegral F c R = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, residue F s := by
+  have hG_mero : MeromorphicOn (fun z => F z - P z) (closedBall c R) := hF_mero.sub hP_mero
+  have hint : circleIntegral F c R
+      = circleIntegral (fun z => F z - P z) c R + circleIntegral P c R := by
+    simpa using circleIntegral.integral_add (hF_int.sub hP_int) hP_int
+  have hres_add : ∑ s ∈ S, residue F s
+      = (∑ s ∈ S, residue (fun z => F z - P z) s) + ∑ s ∈ S, residue P s := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun s hs => ?_
+    have hfun : (fun z => F z - P z) + P = F := by funext z; simp
+    conv_lhs => rw [← hfun]
+    exact residue_add (hG_mero s (hmem_cb s hs)) (hP_mero s (hmem_cb s hs))
+  rw [hint, hG, hP, hres_add]
+  ring
+
 /-- One pole-peeling step of the residue theorem. Given `F` analytic off the finite set `S` with a
 pole at `s₀ ∈ S`, subtracting the leading Laurent term at `s₀` yields `G` that is still analytic off
 `S`, has strictly smaller total pole depth, and whose residue formula implies that of `F`. -/
@@ -200,33 +245,17 @@ private lemma residueTheorem_step {c : ℂ} {R : ℝ} (hR : 0 < R) (S : Finset �
     simp only [hG_def, hP_def, hz, smul_eq_mul]
   have hG_ord_s₀ : (n₀ : WithTop ℤ) < meromorphicOrderAt G s₀ := by
     rw [meromorphicOrderAt_congr hG_germ]; exact meromorphicOrderAt_sub_leadingTerm_gt hg_an
-  have hdepth_s₀ : (-(meromorphicOrderAt G s₀).untop₀).toNat
-      < (-(meromorphicOrderAt F s₀).untop₀).toNat := by
-    rw [← hn₀_def]; exact depthTerm_lt_of_lt hn₀_neg hG_ord_s₀
   have hdepth_lt : (∑ s ∈ S, (-(meromorphicOrderAt G s).untop₀).toNat)
-      < (∑ s ∈ S, (-(meromorphicOrderAt F s).untop₀).toNat) := by
-    refine Finset.sum_lt_sum (fun s hs => ?_) ⟨s₀, hs₀S, hdepth_s₀⟩
-    by_cases hss₀ : s = s₀
-    · subst hss₀; exact le_of_lt hdepth_s₀
-    · refine depthTerm_le_of_sub (hP_an_off s hss₀).meromorphicOrderAt_nonneg ?_
-      have hadd := meromorphicOrderAt_add (hF_mero s (hmem_cb s hs))
-        ((hP_mero s (hmem_cb s hs)).neg)
-      rwa [← meromorphicOrderAt_neg, ← sub_eq_add_neg] at hadd
+      < (∑ s ∈ S, (-(meromorphicOrderAt F s).untop₀).toNat) :=
+    sum_depthTerm_sub_lt S hF_mero hmem_cb hs₀S hP_an_off hn₀_neg hFs₀ hG_ord_s₀
   -- Split `∮ F = ∮ G + ∮ P` and `∑ res F = ∑ res G + ∑ res P`, transferring `G`'s formula to `F`.
   have hP_int : CircleIntegrable P c R :=
     circleIntegrable_of_analyticOn_sphere hR.le fun z hz =>
       hP_an_off z fun h => hsphere_notS z hz (h ▸ hs₀S)
-  have hint : circleIntegral F c R = circleIntegral G c R + circleIntegral P c R := by
-    have hFGP : F = fun z => G z + P z := by funext z; simp only [hG_def]; ring
-    rw [hFGP]; exact circleIntegral.integral_add (hF_int.sub hP_int) hP_int
   have hPint : circleIntegral P c R = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, residue P s := by
     rw [hP_def]; exact circleIntegral_leadingTerm_eq_residueSum (g s₀) hs₀_ball hn₀_neg S hs₀S
-  have hres_add : ∑ s ∈ S, residue F s = (∑ s ∈ S, residue G s) + ∑ s ∈ S, residue P s := by
-    rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun s hs => ?_
-    have hFGP : F = G + P := by funext z; simp only [hG_def, Pi.add_apply]; ring
-    rw [hFGP, residue_add (hG_mero s (hmem_cb s hs)) (hP_mero s (hmem_cb s hs))]
-  exact ⟨G, hG_mero, hG_off, hdepth_lt, fun hG_eq => by rw [hint, hG_eq, hPint, hres_add]; ring⟩
+  exact ⟨G, hG_mero, hG_off, hdepth_lt, fun hG_eq =>
+    circleIntegral_eq_residueSum_of_sub S hF_int hP_int hF_mero hP_mero hmem_cb hPint hG_eq⟩
 
 /-- The residue theorem for a function `F` analytic off the finite set `S` (so `S` contains every
 pole and `F` is continuous on the boundary circle): `∮ F = 2πi · ∑_{s ∈ S} residue F s`. The

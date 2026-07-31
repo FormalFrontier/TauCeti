@@ -154,6 +154,51 @@ private theorem eq_sq_mul_prod_insert_of_mul_radicand {d : ℕ → K} {n : ℕ} 
     _ = s ^ 2 * (∏ j ∈ T, d j) / d n := by rw [hmul]
     _ = (s / d n) ^ 2 * (d n * ∏ j ∈ T, d j) := by field_simp
 
+/-- If the chosen square root of `d n` lies outside the `n`-th tower, then `d n ≠ 0`: a zero
+radicand has `root n = 0`, which lies in every tower. -/
+private theorem radicand_ne_zero_of_root_notMem (d : ℕ → K) (root : ℕ → L) {n : ℕ}
+    (hroot : root n ^ 2 = algebraMap K L (d n))
+    (hnext : root n ∉ sqrtTower (K := K) root n) : d n ≠ 0 := by
+  intro hdn
+  apply hnext
+  have hroot_zero : root n = 0 := by
+    apply eq_zero_of_pow_eq_zero
+    rw [hroot, hdn, map_zero]
+  rw [hroot_zero]
+  exact zero_mem _
+
+/-- Descent step of `squareClass_of_sq_mem` in the branch where `y = b · rootₙ` with `b` in the
+`n`-th tower — the `a = 0` case left by the vanishing cross term. Then `y · rootₙ` lies in the
+`n`-th tower and squares to `r · dₙ`, so the level-`n` descent hypothesis produces a
+representation of `r` over `Set.Iio (n + 1)` with `n` adjoined to the subset. -/
+private theorem exists_sq_mul_prod_of_eq_mul_root (d : ℕ → K) (root : ℕ → L)
+    {n : ℕ} {r : K} {y b : L}
+    (hroot : root n ^ 2 = algebraMap K L (d n)) (hdn0 : d n ≠ 0)
+    (hb : b ∈ sqrtTower (K := K) root n) (heq : y = b * root n)
+    (hy : y ^ 2 = algebraMap K L r)
+    (ih : ∀ r : K, ∀ y : L, y ^ 2 = algebraMap K L r → y ∈ sqrtTower (K := K) root n →
+      ∃ (T : Finset ℕ) (s : K), ↑T ⊆ Set.Iio n ∧ r = s ^ 2 * ∏ j ∈ T, d j) :
+    ∃ (T : Finset ℕ) (s : K), ↑T ⊆ Set.Iio (n + 1) ∧ r = s ^ 2 * ∏ j ∈ T, d j := by
+  have hy_mul_mem : y * root n ∈ sqrtTower (K := K) root n := by
+    have hy_mul_eq : y * root n = b * algebraMap K L (d n) := by
+      calc y * root n = b * root n ^ 2 := by rw [heq]; ring
+        _ = b * algebraMap K L (d n) := by rw [hroot]
+    rw [hy_mul_eq]
+    exact mul_mem hb ((sqrtTower (K := K) root n).algebraMap_mem (d n))
+  have hy_mul_sq : (y * root n) ^ 2 = algebraMap K L (r * d n) := by
+    rw [map_mul, ← hy, ← hroot]
+    ring
+  obtain ⟨T, s, hT, hmul⟩ := ih (r * d n) (y * root n) hy_mul_sq hy_mul_mem
+  have hnT : n ∉ T := fun hn => Nat.lt_irrefl n (hT hn)
+  refine ⟨insert n T, s / d n, ?_, ?_⟩
+  · intro j hj
+    rw [Finset.mem_coe, Finset.mem_insert] at hj
+    rw [Set.mem_Iio]
+    rcases hj with rfl | hj
+    · omega
+    · exact Nat.lt_trans (hT hj) n.lt_succ_self
+  · exact eq_sq_mul_prod_insert_of_mul_radicand hnT hdn0 hmul
+
 /-- **Square-class descent.** In characteristic not two, if `y² = r` over `K` and
 `y ∈ K(root₀, …, rootₙ₋₁)`, where `root j` is a chosen square root of `d j`, then `r` is a
 square times a subset product of the `d j` with `j < n`. -/
@@ -193,35 +238,9 @@ theorem squareClass_of_sq_mem (d : ℕ → K) (root : ℕ → L)
         have hab : a * b = 0 :=
           TauCeti.IntermediateField.mul_eq_zero_of_add_mul_sq_mem hx2 hnext ha hb hab_mem
         rcases mul_eq_zero.mp hab with ha0 | hb0
-        · have hy_mul_mem : y * root n ∈ sqrtTower (K := K) root n := by
-            have hy_mul_eq : y * root n = b * algebraMap K L (d n) := by
-              calc
-                y * root n = (b * root n) * root n := by rw [heq, ha0, zero_add]
-                _ = b * (root n ^ 2) := by ring
-                _ = b * algebraMap K L (d n) := by rw [hroot n]
-            rw [hy_mul_eq]
-            exact mul_mem hb ((sqrtTower (K := K) root n).algebraMap_mem (d n))
-          have hy_mul_sq : (y * root n) ^ 2 = algebraMap K L (r * d n) := by
-            rw [map_mul, ← hy, ← hroot n]
-            ring
-          obtain ⟨T, s, hT, hmul⟩ := ih (r * d n) (y * root n) hy_mul_sq hy_mul_mem
-          have hnT : n ∉ T := fun hn => Nat.lt_irrefl n (hT hn)
-          refine ⟨insert n T, s / d n, ?_, ?_⟩
-          · intro j hj
-            rw [Finset.mem_coe, Finset.mem_insert] at hj
-            rw [Set.mem_Iio]
-            rcases hj with rfl | hj
-            · omega
-            · exact Nat.lt_trans (hT hj) n.lt_succ_self
-          · have hdn0 : d n ≠ 0 := by
-              intro hdn
-              apply hnext
-              have hroot_zero : root n = 0 := by
-                apply eq_zero_of_pow_eq_zero
-                rw [hroot n, hdn, map_zero]
-              rw [hroot_zero]
-              exact zero_mem _
-            exact eq_sq_mul_prod_insert_of_mul_radicand hnT hdn0 hmul
+        · exact exists_sq_mul_prod_of_eq_mul_root d root (hroot n)
+            (radicand_ne_zero_of_root_notMem d root (hroot n) hnext) hb
+            (by rw [heq, ha0, zero_add]) hy ih
         · have hy_mem : y ∈ sqrtTower (K := K) root n := by
             rw [heq, hb0, zero_mul, add_zero]
             exact ha

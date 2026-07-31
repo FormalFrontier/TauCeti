@@ -9,7 +9,7 @@ require subverso from git
 -- pin overrides the `master` revision TauCeti requests transitively), so the slice of the
 -- library we import here compiles exactly as it does upstream.
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @ "81a5d257c8e410db227a6665ed08f64fea08e997"
+  "https://github.com/leanprover-community/mathlib4" @ "28313485bc624fcd16dcb162dd2e2c3c813aa8fe"
 
 -- The real Tau Ceti library, from the repository root, so the showcased theorems are
 -- type-checked against exactly the library that proves them.

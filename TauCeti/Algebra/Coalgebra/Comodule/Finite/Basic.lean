@@ -29,6 +29,8 @@ reconstruction should be built on this full subcategory rather than on all comod
 * `TauCeti.FGComoduleCat.of`: build a finitely generated bundled comodule from unbundled data.
 * `TauCeti.FGComoduleCat.ofHom`: lift an unbundled comodule morphism between finitely generated
   comodules.
+* `TauCeti.FGComoduleCat.isoOfLinearEquiv`: build an isomorphism from a coaction-compatible
+  linear equivalence.
 * `TauCeti.FGComoduleCat.isZero_zero`: `FGComoduleCat.zero` is a zero object.
 * `HasZeroObject (FGComoduleCat R C)`.
 
@@ -197,6 +199,58 @@ theorem ofHom_apply {M N : Type w} [AddCommMonoid M] [Module R M] [Comodule R C 
     [Module.Finite R M] [AddCommMonoid N] [Module R N] [Comodule R C N]
     [Module.Finite R N] (f : Comodule.Hom R C M N) (m : M) :
     ofHom (R := R) (C := C) f m = f m :=
+  rfl
+
+/-- Build an isomorphism of finitely generated comodules from a linear equivalence of the
+underlying modules whose *forward* map respects the coactions.
+
+Compatibility of the inverse is automatic, and is supplied by
+`TauCeti.ComoduleCat.isoOfLinearEquiv`; being a full subcategory, `FGComoduleCat` then inherits
+the isomorphism from `ComoduleCat`. -/
+def isoOfLinearEquiv {M N : FGComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N)
+    (h : TensorProduct.map e.toLinearMap LinearMap.id ∘ₗ
+        Comodule.coact (R := R) (C := C) (M := M) =
+      Comodule.coact (R := R) (C := C) (M := N) ∘ₗ e.toLinearMap) :
+    M ≅ N :=
+  (ComoduleCat.isFG (R := R) (C := C)).isoMk
+    (ComoduleCat.isoOfLinearEquiv (R := R) (C := C) e h)
+
+/-- The forward morphism of `FGComoduleCat.isoOfLinearEquiv` has the original linear equivalence
+underneath. -/
+@[simp]
+theorem isoOfLinearEquiv_hom_toLinearMap {M N : FGComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N)
+    (h : TensorProduct.map e.toLinearMap LinearMap.id ∘ₗ
+        Comodule.coact (R := R) (C := C) (M := M) =
+      Comodule.coact (R := R) (C := C) (M := N) ∘ₗ e.toLinearMap) :
+    (isoOfLinearEquiv e h).hom.hom.toLinearMap = e.toLinearMap :=
+  rfl
+
+/-- The inverse morphism of `FGComoduleCat.isoOfLinearEquiv` has the inverse linear equivalence
+underneath. -/
+@[simp]
+theorem isoOfLinearEquiv_inv_toLinearMap {M N : FGComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N)
+    (h : TensorProduct.map e.toLinearMap LinearMap.id ∘ₗ
+        Comodule.coact (R := R) (C := C) (M := M) =
+      Comodule.coact (R := R) (C := C) (M := N) ∘ₗ e.toLinearMap) :
+    (isoOfLinearEquiv e h).inv.hom.toLinearMap = e.symm.toLinearMap :=
+  rfl
+
+/-- The forward map of `FGComoduleCat.isoOfLinearEquiv` is the given linear equivalence. -/
+@[simp]
+theorem isoOfLinearEquiv_hom_apply {M N : FGComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N)
+    (h : TensorProduct.map e.toLinearMap LinearMap.id ∘ₗ
+        Comodule.coact (R := R) (C := C) (M := M) =
+      Comodule.coact (R := R) (C := C) (M := N) ∘ₗ e.toLinearMap) (m : M) :
+    (isoOfLinearEquiv e h).hom m = e m :=
+  rfl
+
+/-- The inverse map of `FGComoduleCat.isoOfLinearEquiv` is the inverse linear equivalence. -/
+@[simp]
+theorem isoOfLinearEquiv_inv_apply {M N : FGComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N)
+    (h : TensorProduct.map e.toLinearMap LinearMap.id ∘ₗ
+        Comodule.coact (R := R) (C := C) (M := M) =
+      Comodule.coact (R := R) (C := C) (M := N) ∘ₗ e.toLinearMap) (n : N) :
+    (isoOfLinearEquiv e h).inv n = e.symm n :=
   rfl
 
 variable (R C)

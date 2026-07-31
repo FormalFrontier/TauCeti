@@ -25,8 +25,10 @@ Detectors (each names the infra failure it implies):
                      green for any pin change), `build` green, every blocking
                      rubric green at HEAD, not draft/hold, mergeable, and quiet for
                      the grace window. auto-merge / the queue / merge-sweep broke.
-  4. review-stuck    An open `Review stuck: PR #N` issue: the review engine
-                     self-flagged a PR it cannot resolve.
+  4. review-stuck    An open `Review stuck: PR #N` issue whose PR #N is also still
+                     open: the review engine self-flagged a PR it cannot resolve.
+                     An issue left open after its PR merged or closed is stale
+                     bookkeeping by the (out-of-repo) worker, not a live wedge.
   5. dead-scheduler  A scheduled workflow is missing, disabled, or its last
                      SCHEDULED run is older than its cadence + slack. GitHub
                      disabled the cron (60-day inactivity), or it errors at dispatch.
@@ -257,11 +259,21 @@ def detect_stale_pin():
     }]
 
 
+def is_automerge_scope(files, author):
+    """Mirror the author-aware path exception enforced by pr-build and TauCetiReview."""
+    if not files:
+        return False
+    allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
+    if author == "tauceti-review-bot[bot]":
+        allowed_roots.add("lakefile.toml")
+    return all(path.startswith("TauCeti/") or path in allowed_roots for path in files)
+
+
 def detect_stranded_prs():
     prs = gh_stream(
         f"/repos/{REPO}/pulls?state=open&base=main&per_page=100",
         jq='.[] | {number, head: .head.sha, draft, updated_at, '
-           'labels: [.labels[].name]}')
+           'author: .user.login, labels: [.labels[].name]}')
     out = []
     for pr in prs:
         if pr.get("draft"):
@@ -291,9 +303,9 @@ def detect_stranded_prs():
                          jq='.[].filename')
         if not files:
             continue
-        allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
-        touches_pin = any(f in ("lake-manifest.json", "lean-toolchain") for f in files)
-        if not all(f.startswith("TauCeti/") or f in allowed_roots for f in files):
+        touches_pin = any(
+            f in ("lake-manifest.json", "lean-toolchain", "lakefile.toml") for f in files)
+        if not is_automerge_scope(files, pr.get("author")):
             continue  # a human-owned path legitimately does not auto-merge
         if touches_pin and newest_status(head, "bump-guard")[0] != "success":
             continue
@@ -317,24 +329,57 @@ def detect_stranded_prs():
     return out
 
 
+REVIEW_STUCK_TITLE_RE = re.compile(r"Review stuck: PR #([0-9]+)")
+
+
+def flagged_pr_is_finished(number):
+    """True iff the PR the issue flagged is definitely merged or closed.
+
+    Any doubt (an API error, a number that is not a PR, an unexpected state) is
+    False, so the caller keeps alerting. Fail closed: a live wedge must never be
+    silenced by a lookup that did not work.
+    """
+    try:
+        return gh_scalar(f"/repos/{REPO}/pulls/{number}", jq='.state // ""') == "closed"
+    except Exception as exc:
+        zp.log(f"review-stuck: state of PR #{number} unreadable ({exc}); alerting anyway")
+        return False
+
+
 def detect_review_stuck():
     # Match the exact title grammar and interpolate NOTHING from the (untrusted)
     # title into the message: the alert renders a fixed title and links the issue
     # by its numeric id, so a crafted title cannot inject a marker or a mention.
+    # The flagged PR's number is recovered from that same grammar and re-checked
+    # here against a digits-only pattern before it reaches an API path.
     issues = gh_stream(
         f"/repos/{REPO}/issues?state=open&per_page=100",
         jq='.[] | select(.pull_request == null) '
-           '| select(.title | test("^Review stuck: PR #[0-9]+$")) | {number}')
-    return [{
-        "key": f"review-stuck/{i['number']}",
-        "title": "Review engine self-flagged a PR it cannot resolve",
-        "body": (
-            f"An open `Review stuck` issue is unresolved: "
-            f"https://github.com/{REPO}/issues/{i['number']}\n\n"
-            f"**Fix:** this is not a one-off review to nudge — the engine hit a state "
-            f"it has no rule for (a rubric contradiction, an error loop). Fix the "
-            f"review logic / rubric in TauCetiReview so it cannot re-wedge."),
-    } for i in issues]
+           '| select(.title | test("^Review stuck: PR #[0-9]+$")) | {number, title}')
+    out = []
+    for i in issues:
+        # The engine is wedged only while the PR it flagged is still open. The
+        # worker that files these issues closes them once their PR merges or is
+        # closed, but that self-close is out of this repo and has been observed to
+        # miss: issue #1137's PR #1134 merged 16 minutes later and the alert still
+        # fired for two days. An issue outliving its PR is stale bookkeeping, not
+        # an emergency, and the topic is worthless once it cries wolf.
+        m = REVIEW_STUCK_TITLE_RE.fullmatch(i.get("title") or "")
+        if m and flagged_pr_is_finished(m.group(1)):
+            zp.log(f"review-stuck: issue #{i['number']} names finished PR #{m.group(1)}; skipping")
+            continue
+        out.append({
+            "key": f"review-stuck/{i['number']}",
+            "title": "Review engine self-flagged a PR it cannot resolve",
+            "body": (
+                f"An open `Review stuck` issue is unresolved: "
+                f"https://github.com/{REPO}/issues/{i['number']}\n\n"
+                f"**Fix:** this is not a one-off review to nudge. The engine hit a "
+                f"state it has no rule for, e.g. a rubric contradiction or an error "
+                f"loop. Fix the review logic / rubric in TauCetiReview so it cannot "
+                f"re-wedge."),
+        })
+    return out
 
 
 def detect_dead_schedulers():

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.FieldTheory.Galois.Basic
+public import Mathlib.FieldTheory.Galois.Abelian
 public import Mathlib.FieldTheory.Normal.Basic
 public import Mathlib.FieldTheory.SeparableClosure
 public import Mathlib.GroupTheory.Exponent
@@ -28,6 +28,7 @@ The explicit identification of the group with `(ℤ/2)ⁿ` is a separate, later 
 * `TauCeti.Multiquadratic.isGalois`: `M / K` is Galois (when `2 ≠ 0` in `K`).
 * `TauCeti.Multiquadratic.aut_mul_self_eq_one`: every `σ : M ≃ₐ[K] M` satisfies `σ * σ = 1`.
 * `TauCeti.Multiquadratic.aut_commute`: the automorphism group is commutative.
+* `TauCeti.Multiquadratic.isAbelianGalois`: `M / K` is abelian Galois.
 
 ## Provenance
 
@@ -222,5 +223,12 @@ theorem aut_commute (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     Commute a b :=
   Commute.of_orderOf_dvd_two
     (fun σ => orderOf_dvd_of_pow_eq_one (by rw [pow_two]; exact aut_mul_self_eq_one hroot σ)) a b
+
+/-- A finite multiquadratic extension in characteristic different from two is abelian Galois. -/
+theorem isAbelianGalois [Finite ι] [NeZero (2 : K)]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
+    IsAbelianGalois K (IntermediateField.adjoin K (Set.range root)) where
+  toIsGalois := isGalois hroot
+  is_comm.comm a b := (aut_commute hroot a b).eq
 
 end TauCeti.Multiquadratic

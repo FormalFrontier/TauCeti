@@ -46,8 +46,9 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
   nonnegativity and monotonicity on `[0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.neg_one_pow_mul_iteratedDeriv_nonneg`: on the open half-line,
   the sign condition also holds for ordinary iterated derivatives.
-* `TauCeti.IsCompletelyMonotone.add`, `TauCeti.IsCompletelyMonotone.smul`: closure under
-  sums and nonnegative scalar multiples.
+* `TauCeti.IsCompletelyMonotone.add`, `TauCeti.IsCompletelyMonotone.sum`,
+  `TauCeti.IsCompletelyMonotone.smul`: closure under addition, finite sums, and nonnegative
+  scalar multiples.
 * `TauCeti.IsCompletelyMonotoneOnIoi`: the open-half-line analogue, using ordinary iterated
   derivatives on `(0, ∞)`.
 * `TauCeti.isCompletelyMonotone_const`: a nonnegative constant is completely monotone.
@@ -95,9 +96,9 @@ lemma isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg {f : ℝ → ℝ} :
     · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Ici 0) = Iic 0 := by
         ext x
         simp
-      simpa [Function.comp_def, hpre] using
-        (hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ) :
-          ContDiffOn ℝ ∞ (fun u : ℝ => f (-u)) ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Ici 0))
+      rw [← hpre]
+      simpa [Function.comp_def] using
+        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
     · rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) u]
       have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by
         ext x
@@ -110,10 +111,9 @@ lemma isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg {f : ℝ → ℝ} :
     · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Iic 0) = Ici 0 := by
         ext x
         simp
-      simpa [Function.comp_def, hpre] using
-        (hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ) :
-          ContDiffOn ℝ ∞ ((fun u : ℝ => f (-u)) ∘ (-ContinuousLinearMap.id ℝ ℝ))
-            ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Iic 0))
+      rw [← hpre]
+      simpa [Function.comp_def] using
+        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
     · have hsign' := hsign n (-t) (mem_Iic.mpr (neg_nonpos.mpr ht))
       rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) (-t)] at hsign'
       have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by
@@ -248,6 +248,20 @@ lemma isCompletelyMonotone_const {c : ℝ} (hc : 0 ≤ c) :
   rcases n with _ | n
   · simpa [iteratedDerivWithin_const] using hc
   · simp [iteratedDerivWithin_const]
+
+/-- Completely monotone functions are closed under finite sums. -/
+theorem IsCompletelyMonotone.sum {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ}
+    (hf : ∀ i ∈ s, IsCompletelyMonotone (f i)) :
+    IsCompletelyMonotone (fun t => ∑ i ∈ s, f i t) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+      simpa using isCompletelyMonotone_const (c := 0) le_rfl
+  | @insert i s hi ih =>
+      have hsum := (hf i (Finset.mem_insert_self i s)).add
+        (ih fun j hj => hf j (Finset.mem_insert_of_mem hj))
+      exact hsum.congr fun t _ => by
+        simp [hi, Pi.add_apply]
 
 /-- The prototype completely monotone function `t ↦ e^{-x t}` for `x ≥ 0`. Its `n`-th
 derivative is `(-x)ⁿ e^{-x t}`, so `(-1)ⁿ` times it is `xⁿ e^{-x t} ≥ 0`. -/

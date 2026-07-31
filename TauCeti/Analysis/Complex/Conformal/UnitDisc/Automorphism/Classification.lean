@@ -22,7 +22,9 @@ This discharges the conformal-mapping roadmap's L2 description of the disc autom
 `Aut(𝔻) = {e^{iθ}(z−a)/(1−āz)}`.  It builds on Mathlib's Schwarz lemma and on the standard
 disc-Moebius API developed in Tau Ceti.  As with the other L0--L3 conformal-mapping material,
 this statement is coordinated with the upstream Mathlib Riemann-mapping effort
-leanprover-community/mathlib4#33505 and should be replaced by human-curated upstream API if a
+leanprover-community/mathlib4#33505, whose preceding human-curated work is
+`Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`; none of it is
+duplicated here, and this statement should be replaced by human-curated upstream API if a
 disc-automorphism classification lands there.
 -/
 
@@ -30,7 +32,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 variable {f g : ℂ → ℂ}
@@ -63,7 +65,7 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
   have hFdata : DifferentiableOn ℂ F (ball (0 : ℂ) 1) ∧
       MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧ F 0 = 0 := by
     -- The target factor is centered at `f (g 0) = 0`, so it simplifies to the identity.
-    simpa [F, hfg0, Function.comp_def] using
+    simpa [F, schwarzPickConjugate_def, hfg0, Function.comp_def] using
       differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hfmaps ha
   obtain ⟨hFdiff, hFmaps, hFzero⟩ := hFdata
   have hGdiff : DifferentiableOn ℂ G (ball (0 : ℂ) 1) :=
@@ -78,7 +80,11 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
       leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -(g 0)) hneg hz
   obtain ⟨u, hu, hFu⟩ :=
     exists_eqOn_const_mul_of_leftInvOn_ball_of_map_zero hFdiff hGdiff hFmaps hGmaps hGF hFzero
-  refine ⟨⟨u, mem_sphere_zero_iff_norm.mpr hu⟩,
+  refine ⟨⟨u, by
+      have hmem : u ∈ (↑(Submonoid.unitSphere ℂ) : Set ℂ) := by
+        rw [Submonoid.coe_unitSphere]
+        exact mem_sphere_zero_iff_norm.mpr hu
+      exact hmem⟩,
     Complex.UnitDisc.mk (g 0) ha, Complex.UnitDisc.coe_mk _ _, fun z => ?_⟩
   have hz : (z : ℂ) ∈ ball (0 : ℂ) 1 := by
     simpa [mem_ball_zero_iff] using z.norm_lt_one
@@ -90,7 +96,7 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
   -- Beta-reduce the two scalar Moebius formulas so the inverse equality rewrites `hF`.
   dsimp only at hInv
   rw [hInv] at hF
-  rw [coe_unitDiscStandardAutomorphismEquiv_apply]
+  erw [coe_unitDiscStandardAutomorphismEquiv_apply]
   simpa only [Complex.UnitDisc.coe_mk] using hF
 
 end TauCeti
