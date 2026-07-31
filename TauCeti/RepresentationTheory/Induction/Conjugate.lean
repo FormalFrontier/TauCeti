@@ -6,7 +6,6 @@ Authors: Codex, Claude
 module
 
 public import TauCeti.RepresentationTheory.Induction.Restriction
-public import Mathlib.GroupTheory.GroupAction.ConjAct
 
 /-!
 # Conjugate representations
