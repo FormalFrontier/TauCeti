@@ -121,10 +121,9 @@ theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) 
 
 /-- The descended endpoint projection is continuous. -/
 theorem continuous_subgroupQuotientProj
-    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
-    [SemilocallySimplyConnectedSpace X] (H : Subgroup (FundamentalGroup X x₀)) :
+    (H : Subgroup (FundamentalGroup X x₀)) :
     Continuous (subgroupQuotientProj x₀ H) :=
-  (isCoveringMap x₀).continuous.quotient_lift fun _ _ h => by
+  (continuous_proj x₀).quotient_lift fun _ _ h => by
     change MulAction.orbitRel H (UniversalCover x₀) _ _ at h
     rw [MulAction.orbitRel_apply] at h
     obtain ⟨g, rfl⟩ := h
