@@ -311,17 +311,12 @@ The conjugating unit is the action of `g⁻¹`, viewed through `Representation.a
 private theorem trace_conjFamily (T : V →L[𝕜] V) (g : G) :
     LinearMap.trace 𝕜 V (conjFamily π hπ π hπ T g : V →ₗ[𝕜] V)
       = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-  set u : (V →ₗ[𝕜] V)ˣ := π.toRepresentation.asGroupHom g⁻¹ with hu
-  have hval : (u : V →ₗ[𝕜] V) = ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) :=
-    Representation.asGroupHom_apply π.toRepresentation g⁻¹
-  have hinv : ((u⁻¹ : (V →ₗ[𝕜] V)ˣ) : V →ₗ[𝕜] V) = ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) := by
-    rw [hu, ← map_inv, inv_inv]
-    exact Representation.asGroupHom_apply π.toRepresentation g
   have hconj : ((conjFamily π hπ π hπ T g : V →L[𝕜] V) : V →ₗ[𝕜] V)
-      = (u : V →ₗ[𝕜] V) * (T : V →ₗ[𝕜] V) * ((u⁻¹ : (V →ₗ[𝕜] V)ˣ) : V →ₗ[𝕜] V) := by
-    rw [hval, hinv]
+      = ↑(π.toRepresentation.asGroupHom g⁻¹) * (T : V →ₗ[𝕜] V)
+        * ↑(π.toRepresentation.asGroupHom g⁻¹)⁻¹ := by
     ext v
-    simp
+    simp [← map_inv, Representation.asGroupHom_apply,
+      ContRepresentation.toMonoidHom_apply]
   rw [hconj, LinearMap.trace_conj]
 
 /-- **Averaging preserves the trace.** In finite dimensions each conjugate `π g⁻¹ ∘ T ∘ π g` has the
