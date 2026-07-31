@@ -18,9 +18,9 @@ a Hilbert basis, an orthonormal family, a spectral decomposition — needs the e
 
 A change of variables rarely supplies a `MeasurableEquiv`. The maps that arise in practice are
 inverse to each other only *almost everywhere*: `Real.cos` and `Real.arccos` are mutually inverse
-on `[-1, 1]` and on `(0, π]`, not on all of `ℝ`. This file therefore takes the weakest hypothesis
-that still yields an equivalence — a pair of measure-preserving maps that compose to the identity
-almost everywhere in each direction — and builds the isometric equivalence from it.
+on `[-1, 1]` and on `(0, π]`, not on all of `ℝ`. This file therefore takes a convenient sufficient
+hypothesis — a pair of measure-preserving maps that compose to the identity almost everywhere in
+each direction — and builds the isometric equivalence from it.
 
 ## Main declarations
 
@@ -29,8 +29,15 @@ almost everywhere in each direction — and builds the isometric equivalence fro
   which unfolds one level too far to rewrite with.
 * `MeasureTheory.Lp.compMeasurePreservingₗᵢEquiv` upgrades that linear isometry to a
   `LinearIsometryEquiv` given an almost-everywhere inverse partner.
-* `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv` identifies the equivalence with
-  precomposition by `f`.
+* `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv` and
+  `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm` identify the equivalence and its
+  inverse with precomposition by `f` and by `g` respectively.
+
+This construction generalizes the by-hand equivalence
+`TauCeti.chebyshevCosineL2Equiv`
+(`TauCeti/Analysis/SpecialFunctions/Trigonometric/Chebyshev/Cosine/Transfer.lean`), which builds
+exactly this `≃ₗᵢ` for the specific `Real.cos` / `Real.arccos` pair via `ofLinearIsometry` with a
+separately constructed inverse; the proof plan here is drawn from it.
 -/
 
 public section
@@ -55,18 +62,17 @@ theorem compMeasurePreservingₗᵢ_apply {α β E : Type*} [MeasurableSpace α]
 
 /-- If `f` and `g` are measure-preserving and `f ∘ g` is the identity almost everywhere, then
 precomposing by `g` undoes precomposing by `f`. -/
-theorem compMeasurePreserving_comp_of_ae_id {α β E : Type*} [MeasurableSpace α]
+theorem compMeasurePreserving_comp_apply_of_ae_id {α β E : Type*} [MeasurableSpace α]
     [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
     {f : α → β} {g : β → α}
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
     (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μb) :
     compMeasurePreserving g hg (compMeasurePreserving f hf x) = x := by
-  refine Lp.ext ?_
   rw [← compMeasurePreserving_comp_apply (E := E) (p := p) x hf hg]
-  filter_upwards [coeFn_compMeasurePreserving (E := E) (p := p) x (hf.comp hg), hfg]
-    with b hb hid
-  rw [hb]
-  simpa using congrArg (fun a => (x : β → E) a) hid
+  refine Subtype.ext ?_
+  rw [compMeasurePreserving_val,
+    AEEqFun.compMeasurePreserving_congr _ _ measurable_id hfg,
+    AEEqFun.compMeasurePreserving_id]
 
 /-- **The `L^p` isometric equivalence induced by an almost-everywhere inverse pair of
 measure-preserving maps.**
@@ -77,7 +83,6 @@ with inverse precomposition by `g`.
 
 The almost-everywhere hypotheses are what make this usable for a change of variables: `Real.cos`
 and `Real.arccos` satisfy them without forming a `MeasurableEquiv`. -/
-@[expose]
 noncomputable def compMeasurePreservingₗᵢEquiv {α β E : Type*} [MeasurableSpace α]
     [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
     {f : α → β} {g : β → α}
@@ -87,8 +92,8 @@ noncomputable def compMeasurePreservingₗᵢEquiv {α β E : Type*} [Measurable
     Lp E p μb ≃ₗᵢ[𝕜] Lp E p μ :=
   LinearIsometryEquiv.ofLinearIsometry (compMeasurePreservingₗᵢ 𝕜 f hf)
     (compMeasurePreservingₗ 𝕜 g hg)
-    (LinearMap.ext fun x => compMeasurePreserving_comp_of_ae_id (E := E) (p := p) hg hf hgf x)
-    (LinearMap.ext fun x => compMeasurePreserving_comp_of_ae_id (E := E) (p := p) hf hg hfg x)
+    (LinearMap.ext fun x => compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p) hg hf hgf x)
+    (LinearMap.ext fun x => compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p) hf hg hfg x)
 
 @[simp]
 theorem compMeasurePreservingₗᵢEquiv_apply {α β E : Type*} [MeasurableSpace α]
@@ -97,8 +102,9 @@ theorem compMeasurePreservingₗᵢEquiv_apply {α β E : Type*} [MeasurableSpac
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
     (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μb) :
-    compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf x = compMeasurePreserving f hf x :=
-  rfl
+    compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf x = compMeasurePreserving f hf x := by
+  rw [compMeasurePreservingₗᵢEquiv, LinearIsometryEquiv.coe_ofLinearIsometry,
+    compMeasurePreservingₗᵢ_apply]
 
 @[simp]
 theorem compMeasurePreservingₗᵢEquiv_symm_apply {α β E : Type*} [MeasurableSpace α]
@@ -107,7 +113,8 @@ theorem compMeasurePreservingₗᵢEquiv_symm_apply {α β E : Type*} [Measurabl
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
     (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μ) :
-    (compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf).symm x = compMeasurePreserving g hg x :=
+    (compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf).symm x = compMeasurePreserving g hg x := by
+  rw [compMeasurePreservingₗᵢEquiv, LinearIsometryEquiv.coe_ofLinearIsometry_symm]
   rfl
 
 /-- The equivalence is almost everywhere precomposition by `f`. -/
@@ -119,6 +126,16 @@ theorem coeFn_compMeasurePreservingₗᵢEquiv {α β E : Type*} [MeasurableSpac
     (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μb) :
     ⇑(compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf x) =ᵐ[μ] ⇑x ∘ f := by
   simpa using coeFn_compMeasurePreserving (E := E) (p := p) x hf
+
+/-- The inverse equivalence is almost everywhere precomposition by `g`. -/
+theorem coeFn_compMeasurePreservingₗᵢEquiv_symm {α β E : Type*} [MeasurableSpace α]
+    [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
+    {f : α → β} {g : β → α}
+    (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
+    (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
+    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μ) :
+    ⇑((compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf).symm x) =ᵐ[μb] ⇑x ∘ g := by
+  simpa using coeFn_compMeasurePreserving (E := E) (p := p) x hg
 
 end Lp
 end MeasureTheory
