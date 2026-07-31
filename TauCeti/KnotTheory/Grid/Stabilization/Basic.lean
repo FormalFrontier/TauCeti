@@ -323,7 +323,8 @@ def IsDestabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) : Prop :=
 
 /-- A destabilization from the larger diagram to the smaller one is the reverse orientation of
 the corresponding stabilization. -/
-theorem isDestabilization_iff (G' : GridDiagram (n + 1)) (G : GridDiagram n) :
+theorem isDestabilization_iff_isStabilization (G' : GridDiagram (n + 1))
+    (G : GridDiagram n) :
     IsDestabilization G' G ↔ IsStabilization G G' :=
   Iff.rfl
 
