@@ -174,7 +174,7 @@ theorem conj_inv_smul_smul (s : G) (H : Subgroup G) :
 
 /-- The transported form of `conjSubgroupEquiv 1`: conjugating by `1` is the identification of
 `1 · H · 1⁻¹` with `H`. -/
-theorem conjSubgroupEquiv_one (H : Subgroup G) :
+private theorem conjSubgroupEquiv_one (H : Subgroup G) :
     (conjSubgroupEquiv (1 : G) H).toMonoidHom =
       (MulEquiv.subgroupCongr (conj_one_smul H)).toMonoidHom :=
   MonoidHom.ext fun x => Subtype.ext (by simp)
@@ -182,7 +182,7 @@ theorem conjSubgroupEquiv_one (H : Subgroup G) :
 /-- Conjugating by `s⁻¹`, after identifying `H` with `s⁻¹(sHs⁻¹)s`, is the identification
 `H →* sHs⁻¹` inverse to the one `{}^s` restricts along.  This is what makes the inverse of the
 conjugation equivalence conjugation by `s⁻¹`. -/
-theorem conjSubgroupEquiv_inv_comp_subgroupCongr (s : G) (H : Subgroup G) :
+private theorem conjSubgroupEquiv_inv_comp_subgroupCongr (s : G) (H : Subgroup G) :
     (conjSubgroupEquiv s⁻¹ (MulAut.conj s • H)).toMonoidHom.comp
         (MulEquiv.subgroupCongr (conj_inv_smul_smul s H).symm).toMonoidHom =
       (conjSubgroupEquiv s H).symm.toMonoidHom :=
@@ -192,7 +192,7 @@ theorem conjSubgroupEquiv_inv_comp_subgroupCongr (s : G) (H : Subgroup G) :
 composed with the one underlying `{}^s`, after identifying `(st)H(st)⁻¹` with `s(tHt⁻¹)s⁻¹`.
 This is the sole computation behind the coherence statements below: `(st)⁻¹ x (st) = t⁻¹(s⁻¹ x s)t`.
 -/
-theorem conjSubgroupEquiv_mul (s t : G) (H : Subgroup G) :
+private theorem conjSubgroupEquiv_mul (s t : G) (H : Subgroup G) :
     (conjSubgroupEquiv (s * t) H).toMonoidHom =
       ((conjSubgroupEquiv t H).toMonoidHom.comp
           (conjSubgroupEquiv s (MulAut.conj t • H)).toMonoidHom).comp
@@ -403,10 +403,15 @@ variable [CommRing k]
 /-- The conjugate finite-dimensional action, as a heterogeneous equality. -/
 theorem conjFDRep_ρ (s : G) {H : Subgroup G} (A : FDRep k H)
     (x : (MulAut.conj s • H : Subgroup G)) :
-    HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) :=
-  -- Restriction precomposes the action with the homomorphism (`Action.res_obj_ρ`), and `FDRep.ρ`
-  -- reads `Action.ρ` through the same equivalences on both sides, so the two agree on the nose.
-  HEq.rfl
+    HEq ((conjFDRep s A).ρ x) (A.ρ (conjSubgroupEquiv s H x)) := by
+  -- Unfold the local wrappers to expose Mathlib's restriction, then read both sides through
+  -- `FDRep.hom_hom_action_ρ`, which turns `FDRep.ρ` into `Action.ρ`, so that Mathlib's
+  -- `Action.res_obj_ρ` supplies the precomposition and `MonoidHom.comp_apply` evaluates it.
+  change HEq (FDRep.ρ ((Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom).obj A) x) _
+  refine heq_of_eq ?_
+  rw [← FDRep.hom_hom_action_ρ, ← FDRep.hom_hom_action_ρ, Action.res_obj_ρ]
+  exact congrArg (fun f : A.V ⟶ A.V => f.hom.hom)
+    (MonoidHom.comp_apply (Action.ρ A) (conjSubgroupEquiv s H).toMonoidHom x)
 
 /-- The conjugate action, transported along `conjFDRep_V`. -/
 theorem conjFDRep_ρ_cast (s : G) {H : Subgroup G} (A : FDRep k H)
@@ -460,14 +465,14 @@ variable {N : Subgroup G} [hN : N.Normal]
 
 /-- Conjugating a normal subgroup by `1` is the identity automorphism.  The `MulAut.conjNormal`
 form of `conj_one_smul`. -/
-theorem conjNormal_inv_one :
+private theorem conjNormal_inv_one :
     (MulAut.conjNormal ((1 : G)⁻¹) : MulAut N).toMonoidHom = MonoidHom.id N :=
   MonoidHom.ext fun x => Subtype.ext (by simp)
 
 /-- Conjugating a normal subgroup by `s * t` is conjugating by `t` after conjugating by `s`.  The
 `MulAut.conjNormal` form of `conj_mul_smul`; note the order, which is the one `Rep.res` reverses
 into a left action. -/
-theorem conjNormal_inv_mul (s t : G) :
+private theorem conjNormal_inv_mul (s t : G) :
     (MulAut.conjNormal ((s * t)⁻¹) : MulAut N).toMonoidHom =
       (MulAut.conjNormal (t⁻¹) : MulAut N).toMonoidHom.comp
         (MulAut.conjNormal (s⁻¹) : MulAut N).toMonoidHom :=
@@ -478,7 +483,7 @@ theorem conjNormal_inv_mul (s t : G) :
 
 /-- On a normal subgroup, the homomorphism `N →* gNg⁻¹ →* N` that `conjRep` restricts along is
 `MulAut.conjNormal g⁻¹`. -/
-theorem conjSubgroupEquiv_comp_subgroupCongr (g : G) :
+private theorem conjSubgroupEquiv_comp_subgroupCongr (g : G) :
     (conjSubgroupEquiv g N).toMonoidHom.comp
         (MulEquiv.subgroupCongr (Subgroup.Normal.conj_smul_eq_self g N).symm).toMonoidHom =
       (MulAut.conjNormal (g⁻¹) : MulAut N).toMonoidHom :=
