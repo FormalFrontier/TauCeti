@@ -21,9 +21,8 @@ mechanism that forces the boundary to go to the boundary, and it is the first st
 Carathéodory boundary correspondence, layer **L5** of the conformal-mapping roadmap. This file
 proves it, deduces that a point approached from inside `U` is carried out of every compact subset
 of `f '' U`, and packages the consequences for a map that *does* extend continuously to `closure U`:
-such an extension carries `frontier U` into `frontier (f '' U)`, and — when `U` is in addition
-bounded and the extension is injective on `closure U` — is a homeomorphism of the closures carrying
-`frontier U` *onto* `frontier (f '' U)`.
+such an extension carries `frontier U` into `frontier (f '' U)`, *onto* it once `U` is in addition
+bounded, and — when the extension is injective on `closure U` — is a homeomorphism of the closures.
 
 The existence of the continuous extension is the hard, hypothesis-laden half of Carathéodory's
 theorem (it needs the boundary of the image to be a Jordan curve, or at least locally connected),
@@ -67,10 +66,10 @@ results are stated for conformal maps of `ℂ` rather than for an abstract prope
   `closure U` onto `closure (f '' U)`.
 * `TauCeti.image_frontier_subset_frontier_image` — a continuous extension carries `frontier U` into
   `frontier (f '' U)`; no boundedness is needed.
-* `TauCeti.bijOn_closure_closure_image`, `TauCeti.closureHomeomorph` and
-  `TauCeti.image_frontier_eq_frontier_image` — for bounded `U`, an extension injective on
-  `closure U` is a homeomorphism `closure U ≃ₜ closure (f '' U)`, and it carries `frontier U` onto
-  `frontier (f '' U)`.
+* `TauCeti.image_frontier_eq_frontier_image` — for bounded `U`, that inclusion is an equality: a
+  continuous extension carries `frontier U` onto `frontier (f '' U)`.
+* `TauCeti.bijOn_closure_closure_image` and `TauCeti.closureHomeomorph` — for bounded `U`, an
+  extension injective on `closure U` is a homeomorphism `closure U ≃ₜ closure (f '' U)`.
 
 ## Coordination with upstream Mathlib
 
@@ -194,6 +193,22 @@ theorem image_frontier_subset_frontier_image (hUo : IsOpen U) (hfd : Differentia
   exact ⟨hcl ⟨w, frontier_subset_closure hw, rfl⟩,
     notMem_image_of_mem_frontier hUo hfd hfi hFc hFf hw⟩
 
+/-- **A continuous extension of a conformal map carries the boundary onto the boundary**, for a
+bounded `U`. No injectivity of the extension is needed, only the injectivity of `f` on `U` that
+makes it conformal: the inclusion of `TauCeti.image_frontier_subset_frontier_image` is an equality
+because a point of `frontier (f '' U)` lies in `closure (f '' U) = F '' closure U`, so it is `F z`
+for some `z ∈ closure U`, and `z ∈ U` is impossible — it would put `F z = f z` back inside the open
+set `f '' U`, which `frontier (f '' U)` avoids. -/
+theorem image_frontier_eq_frontier_image (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hFc : ContinuousOn F (closure U))
+    (hFf : EqOn F f U) :
+    F '' frontier U = frontier (f '' U) := by
+  refine (image_frontier_subset_frontier_image hUo hfd hfi hFc hFf).antisymm fun w hw => ?_
+  rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq,
+    ← image_closure_eq_closure_image hUb hFc hFf] at hw
+  obtain ⟨⟨z, hz, rfl⟩, hwU⟩ := hw
+  exact ⟨z, hUo.frontier_eq ▸ ⟨hz, fun hzU => hwU ⟨z, hzU, (hFf hzU).symm⟩⟩, rfl⟩
+
 /-! ## The boundary homeomorphism -/
 
 /-- **An injective continuous extension is a bijection of the closures.** If `F` is continuous on
@@ -250,24 +265,5 @@ lemma coe_closureHomeomorph_symm_apply (hUb : Bornology.IsBounded U)
     ⟨_, ((closureHomeomorph hUb hFc hFf hFi).symm y).2, hFsymm⟩
   exact hFi ((closureHomeomorph hUb hFc hFf hFi).symm y).2 (Function.invFunOn_mem hex)
     (by rw [hFsymm, Function.invFunOn_eq hex])
-
-/-- **A conformal map with an injective continuous extension carries the boundary onto the
-boundary.** For a bounded `U` and an injective `F` the inclusion of
-`TauCeti.image_frontier_subset_frontier_image` is an equality: `frontier U = closure U \ U` and
-`frontier (f '' U) = closure (f '' U) \ f '' U` are images of each other because injectivity lets
-`F` be removed from a set difference. Injectivity of `f` on `U` is not assumed: it follows from
-that of `F` on `closure U`. -/
-theorem image_frontier_eq_frontier_image (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
-    (hfd : DifferentiableOn ℂ f U) (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U)
-    (hFi : InjOn F (closure U)) :
-    F '' frontier U = frontier (f '' U) := by
-  have hfi : InjOn f U := fun x hx y hy hxy =>
-    hFi (subset_closure hx) (subset_closure hy) (by rw [hFf hx, hFf hy]; exact hxy)
-  calc F '' frontier U = F '' (closure U \ U) := by rw [hUo.frontier_eq]
-    _ = F '' closure U \ F '' U := hFi.image_sdiff_subset subset_closure
-    _ = closure (f '' U) \ f '' U := by
-        rw [image_closure_eq_closure_image hUb hFc hFf, hFf.image_eq]
-    _ = frontier (f '' U) :=
-        ((isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq).symm
 
 end TauCeti

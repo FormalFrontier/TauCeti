@@ -70,6 +70,37 @@ namespace TauCeti
 
 variable {Ω : Set ℂ} {F : ℕ → ℂ → ℂ}
 
+-- `C(X, Y)` sits inside the uniform-on-compacts function space as a closed subspace: the
+-- coercion is a uniform embedding, and its range is the continuous maps, which is closed when
+-- the topology of `X` is coherent with its compacts. This is the shape Arzelà–Ascoli asks for.
+private theorem isClosedEmbedding_ofFun_comp_coe {X Y : Type*} [TopologicalSpace X]
+    [CompactlyCoherentSpace X] [UniformSpace Y] :
+    IsClosedEmbedding (⇑(UniformOnFun.ofFun {K : Set X | IsCompact K}) ∘
+      (DFunLike.coe : C(X, Y) → (X → Y))) := by
+  refine ⟨ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact.isEmbedding, ?_⟩
+  -- The `rfl` below is just `ContinuousMap.toUniformOnFunIsCompact` unfolded (Mathlib
+  -- `Topology/UniformSpace/CompactConvergence.lean`): Arzelà–Ascoli asks for the map in the
+  -- `UniformOnFun.ofFun 𝔖 ∘ F` form, while `range_toUniformOnFunIsCompact` is stated for the
+  -- packaged name, so this bridges the two.
+  rw [show (⇑(UniformOnFun.ofFun {K : Set X | IsCompact K}) ∘
+      (DFunLike.coe : C(X, Y) → (X → Y))) = ContinuousMap.toUniformOnFunIsCompact from rfl,
+    ContinuousMap.range_toUniformOnFunIsCompact]
+  exact UniformOnFun.isClosed_setOfPred_continuous CompactlyCoherentSpace.isCoherentWith
+
+-- Equicontinuity of a family transfers to its range viewed as a subtype: every element of the
+-- range is some member of the family, and equicontinuity is stable under reindexing.
+private theorem equicontinuous_subtype_val_range {ι X Y : Type*} [TopologicalSpace X]
+    [UniformSpace Y] {f : ι → C(X, Y)} (h : Equicontinuous fun n => (f n : X → Y)) :
+    Equicontinuous ((DFunLike.coe : C(X, Y) → (X → Y)) ∘
+      (Subtype.val : ↥(Set.range f) → C(X, Y))) := by
+  classical
+  choose σ hσ using fun x : ↥(Set.range f) => x.2
+  have heq : ((DFunLike.coe : C(X, Y) → (X → Y)) ∘ (Subtype.val : ↥(Set.range f) → C(X, Y)))
+      = (fun n => (f n : X → Y)) ∘ σ := funext fun x => by
+    rw [Function.comp_apply, Function.comp_apply, hσ x]
+  rw [heq]
+  exact h.comp σ
+
 /-- **Montel's selection theorem.** A locally bounded family of holomorphic functions on an open
 set `Ω ⊆ ℂ` is normal: every sequence from it has a subsequence converging locally uniformly on
 `Ω`, and the limit is holomorphic.
@@ -85,41 +116,19 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
   haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
   set f : ℕ → C(Ω, ℂ) :=
     fun n => ⟨Ω.domRestrict (F n), ((hF n).continuousOn).domRestrict⟩ with hfdef
-  -- `C(Ω, ℂ)` sits as a closed subspace of the uniform-on-compacts function space
-  have hclemb : IsClosedEmbedding (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
-      (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) := by
-    refine ⟨ContinuousMap.isUniformEmbedding_toUniformOnFunIsCompact.isEmbedding, ?_⟩
-    -- The `rfl` below is just `ContinuousMap.toUniformOnFunIsCompact` unfolded (Mathlib
-    -- `Topology/UniformSpace/CompactConvergence.lean`): Arzelà–Ascoli asks for the map in the
-    -- `UniformOnFun.ofFun 𝔖 ∘ F` form, while `range_toUniformOnFunIsCompact` is stated for the
-    -- packaged name, so this bridges the two.
-    rw [show (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
-        (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) = ContinuousMap.toUniformOnFunIsCompact from rfl,
-      ContinuousMap.range_toUniformOnFunIsCompact]
-    exact UniformOnFun.isClosed_setOfPred_continuous CompactlyCoherentSpace.isCoherentWith
-  -- Arzelà–Ascoli in the compact-open topology
+  -- Arzelà–Ascoli in the compact-open topology: equicontinuity comes from Cauchy's estimate and
+  -- pointwise relative compactness from local boundedness.
   have hcpt : IsCompact (closure (Set.range f)) := by
-    refine ArzelaAscoli.isCompact_closure_of_isClosedEmbedding (fun K hK => hK) hclemb ?_ ?_
-    · intro K _
-      have hbase : Equicontinuous (fun n => (f n : Ω → ℂ)) :=
-        (equicontinuous_restrict_iff F).mpr (hb.equicontinuousOn hΩ hF)
-      have hchoice : ∀ x : ↥(Set.range f), ∃ n, f n = (x : C(Ω, ℂ)) := fun x => x.2
-      choose σ hσ using hchoice
-      have heq : ((DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ)) ∘ (Subtype.val : ↥(Set.range f) → C(Ω, ℂ)))
-          = (fun n => (f n : Ω → ℂ)) ∘ σ := by
-        funext x
-        rw [Function.comp_apply, Function.comp_apply, hσ x]
-      rw [heq]
-      exact (hbase.comp σ).equicontinuousOn K
-    · intro K _ x _
-      obtain ⟨C, hC⟩ := hb.exists_forall_norm_le x.2
-      refine ⟨closedBall 0 C, isCompact_closedBall _ _, fun i hi => ?_⟩
-      obtain ⟨n, rfl⟩ := hi
-      simpa [hfdef, mem_closedBall, dist_zero_right] using hC n
+    refine ArzelaAscoli.isCompact_closure_of_isClosedEmbedding (fun K hK => hK)
+      isClosedEmbedding_ofFun_comp_coe (fun K _ => (equicontinuous_subtype_val_range
+        ((equicontinuous_restrict_iff F).mpr (hb.equicontinuousOn hΩ hF))).equicontinuousOn K) ?_
+    intro K _ x _
+    obtain ⟨C, hC⟩ := hb.exists_forall_norm_le x.2
+    refine ⟨closedBall 0 C, isCompact_closedBall _ _, fun i hi => ?_⟩
+    obtain ⟨n, rfl⟩ := hi
+    simpa [hfdef, mem_closedBall, dist_zero_right] using hC n
   obtain ⟨a, -, φ, hφ, hconv⟩ := hcpt.tendsto_subseq (x := f) fun n => subset_closure ⟨n, rfl⟩
-  -- compact-open convergence is locally uniform convergence
-  have hlu : TendstoLocallyUniformly (fun n (x : Ω) => F (φ n) x) (fun x : Ω => a x) atTop :=
-    ContinuousMap.tendsto_iff_tendstoLocallyUniformly.mp hconv
+  -- Compact-open convergence is locally uniform convergence; extend the limit off `Ω` by zero.
   have hlim : ((fun z => if hz : z ∈ Ω then a ⟨z, hz⟩ else 0) ∘ (Subtype.val : Ω → ℂ))
       = fun x : Ω => a x := by
     funext x
@@ -127,7 +136,7 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
   have hconvOn : TendstoLocallyUniformlyOn (fun n => F (φ n))
       (fun z => if hz : z ∈ Ω then a ⟨z, hz⟩ else 0) atTop Ω := by
     rw [tendstoLocallyUniformlyOn_iff_tendstoLocallyUniformly_comp_coe, hlim]
-    exact hlu
+    exact ContinuousMap.tendsto_iff_tendstoLocallyUniformly.mp hconv
   exact ⟨φ, _, hφ, hconvOn.differentiableOn (Eventually.of_forall fun n => hF (φ n)) hΩ, hconvOn⟩
 
 end TauCeti

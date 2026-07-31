@@ -24,10 +24,13 @@ is a simple `k`-module.
 ## Main definitions
 
 * `TauCeti.simpleRep k Q i`: the vertex simple representation `Sᵢ`.
+* `TauCeti.simpleRepSelfEquiv`: the identification `(Sᵢ)ᵢ ≃ₗ[k] k`, and
+  `TauCeti.simpleRepGenerator`: the element of `(Sᵢ)ᵢ` it sends to `1`.
 
 ## Main results
 
 * `TauCeti.simpleRep_simple`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
+* `TauCeti.exists_eq_smul_simpleRepGenerator`: `(Sᵢ)ᵢ` is the line spanned by the generator.
 * `TauCeti.hom_simpleRep_eq_zero_iff` and `TauCeti.simpleRep_hom_eq_zero_iff`: a morphism into or
   out of `Sᵢ` is detected by its component at `i`.
 * `TauCeti.dimVector_simpleRep`: the dimension vector of `Sᵢ` is `Pi.single i 1`.
@@ -100,6 +103,43 @@ instance finiteDimensional_simpleRep_obj (i a : Q) :
     have : Subsingleton ((0 : ModuleCat k) : Type u) :=
       ModuleCat.subsingleton_of_isZero (isZero_zero _)
     infer_instance
+
+/-! ### The vertex simple is a line at its vertex -/
+
+variable (k)
+
+/-- The vector space that the vertex simple `Sᵢ` puts at `i` is the base field. -/
+noncomputable def simpleRepSelfEquiv (i : Q) :
+    (simpleRep k Q i).obj ((Paths.of Q).obj i) ≃ₗ[k] k :=
+  (eqToIso (simpleRep_obj_self i)).toLinearEquiv
+
+/-- The canonical generator of the line `(Sᵢ)ᵢ`: the element corresponding to `1 : k`. -/
+noncomputable def simpleRepGenerator (i : Q) : (simpleRep k Q i).obj ((Paths.of Q).obj i) :=
+  (simpleRepSelfEquiv k i).symm 1
+
+/-- The generator of `(Sᵢ)ᵢ` corresponds to `1 : k`. -/
+@[simp]
+theorem simpleRepSelfEquiv_apply_generator (i : Q) :
+    simpleRepSelfEquiv k i (simpleRepGenerator k i) = 1 :=
+  (simpleRepSelfEquiv k i).apply_symm_apply 1
+
+/-- **The vertex simple is a line at its vertex**: every element of `(Sᵢ)ᵢ` is a multiple of the
+generator. -/
+theorem exists_eq_smul_simpleRepGenerator {i : Q}
+    (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
+    ∃ c : k, x = c • simpleRepGenerator k i := by
+  refine ⟨simpleRepSelfEquiv k i x, ?_⟩
+  rw [simpleRepGenerator, ← LinearEquiv.map_smul, smul_eq_mul, mul_one,
+    LinearEquiv.symm_apply_apply]
+
+/-- The generator of `(Sᵢ)ᵢ` is nonzero. -/
+theorem simpleRepGenerator_ne_zero (i : Q) : simpleRepGenerator k i ≠ 0 := by
+  intro h
+  have h1 := congrArg (simpleRepSelfEquiv k i) h
+  rw [simpleRepSelfEquiv_apply_generator, map_zero] at h1
+  exact one_ne_zero h1
+
+variable {k}
 
 /-- Every arrow of the quiver acts by zero on the vertex simple `Sᵢ`. -/
 @[simp]

@@ -185,8 +185,8 @@ private theorem ConditionallyIIDWith.integral_directing_sub_sq_le_four_div
         (ae_of_all _ (heb n)) (ae_of_all _ (habs ν)))
       (integrable_sub_sq_of_abs_le_one (hem n) (hqm ν' h'.measurable_directing).aemeasurable
         (ae_of_all _ (heb n)) (ae_of_all _ (habs ν')))
-      (h.integral_empiricalFrequency_sub_sq_le hX hB hn)
-      (h'.integral_empiricalFrequency_sub_sq_le hX hB hn)
+      (h.integral_empiricalFrequency_sub_sq_le (fun i _ => hX i) hB hn)
+      (h'.integral_empiricalFrequency_sub_sq_le (fun i _ => hX i) hB hn)
   rw [div_eq_mul_inv]
   linarith
 
