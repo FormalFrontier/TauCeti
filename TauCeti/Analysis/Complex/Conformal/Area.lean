@@ -27,12 +27,10 @@ That finiteness is the analytic input of the *length–area method*, the classic
 correspondence: for a conformal map of the disc onto a bounded domain, the finite Dirichlet
 integral is spent along the circular arcs `{z ∈ ball 0 1 | ‖z - ζ‖ = ρ}` approaching a boundary
 point `ζ`, so by Cauchy–Schwarz the images of those arcs must be short for some arbitrarily small
-`ρ`, which is what forces the boundary cluster set at `ζ` to degenerate to a point. The two
-topological halves of that argument are already on `main` —
-`TauCeti.exists_continuousOn_closure_eqOn` turns a subsingleton cluster set into a continuous
-extension, and `TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` makes the cluster set a
-continuum — while the analytic half, of which the area formula is the first component, is not; the
-degeneracy itself is not proved here.
+`ρ`, which is what forces the boundary cluster set at `ζ` to degenerate to a point. The topological
+half of that argument is already on `main`: `TauCeti.exists_continuousOn_closure_eqOn` turns a
+subsingleton cluster set into a continuous extension. The analytic half, of which the area formula
+is the first component, is not; the degeneracy itself is not proved here.
 
 The proof is Mathlib's change-of-variables formula
 `MeasureTheory.lintegral_abs_det_fderiv_eq_addHaar_image` for an injective differentiable map,
