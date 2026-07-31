@@ -123,7 +123,7 @@ def arrow (a : A) : (src : Kronecker A) ⟶ tgt := a
 that identification. This is not `@[simp]`: rewriting `arrow a` to `a` would erase the named
 constructor from every goal, leaving `toPath_arrow` and the `pathEquivArrow` lemmas below unable to
 fire. -/
-theorem arrow_eq (a : A) : arrow a = (a : (src : Kronecker A) ⟶ tgt) :=
+theorem arrow_def (a : A) : arrow a = (a : (src : Kronecker A) ⟶ tgt) :=
   -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
   -- would force `arrow` to be `@[expose]`.
   (rfl)
