@@ -141,13 +141,13 @@ theorem multiplicativeGroup_pointEquiv_inclusion (n : ℕ)
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
     Units.map (inclusion n f).ofConv
         (MultiplicativeGroup.unitOfPoint
-          (AddMonoidAlgebra.toMultiplicativeAlgEquiv R ℤ).toAlgHom) =
+          (AddMonoidAlgebra.toMultiplicativeAlgEquiv (R := R) R ℤ).toAlgHom) =
       (RootsOfUnityGroup.pointsMulEquiv n f : Aˣ) := by
   -- `Units.map` uses the underlying monoid hom of the algebra map; expose that coercion so
   -- `MultiplicativeGroup.unitOfPoint_comp` matches the goal.
   change Units.map ((inclusion n f).ofConv).toMonoidHom
         (MultiplicativeGroup.unitOfPoint
-          (AddMonoidAlgebra.toMultiplicativeAlgEquiv R ℤ).toAlgHom) =
+          (AddMonoidAlgebra.toMultiplicativeAlgEquiv (R := R) R ℤ).toAlgHom) =
       (RootsOfUnityGroup.pointsMulEquiv n f : Aˣ)
   rw [← MultiplicativeGroup.unitOfPoint_comp,
     ← MultiplicativeGroup.pointEquiv_apply,

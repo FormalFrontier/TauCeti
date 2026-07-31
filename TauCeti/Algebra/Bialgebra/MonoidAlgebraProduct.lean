@@ -81,15 +81,15 @@ private theorem commute_mapDomainAlgHom_inl_inr (x : MonoidAlgebra R G) (y : Mon
     Commute (mapDomainAlgHom R R (MonoidHom.inl G H) x)
       (mapDomainAlgHom R R (MonoidHom.inr G H) y) := by
   induction x using MonoidAlgebra.induction_on with
-  | hM g =>
+  | of g =>
     induction y using MonoidAlgebra.induction_on with
-    | hM h =>
+    | of h =>
       simp only [of_apply, mapDomainAlgHom_apply, mapDomain_single, MonoidHom.inl_apply,
         MonoidHom.inr_apply, commute_iff_eq, single_mul_single, Prod.mk_mul_mk, mul_one, one_mul]
-    | hadd y₁ y₂ hy₁ hy₂ => rw [map_add]; exact hy₁.add_right hy₂
-    | hsmul r y hy => rw [map_smul]; exact hy.smul_right r
-  | hadd x₁ x₂ hx₁ hx₂ => rw [map_add]; exact hx₁.add_left hx₂
-  | hsmul r x hx => rw [map_smul]; exact hx.smul_left r
+    | add y₁ y₂ hy₁ hy₂ => rw [map_add]; exact hy₁.add_right hy₂
+    | smul r y hy => rw [map_smul]; exact hy.smul_right r
+  | add x₁ x₂ hx₁ hx₂ => rw [map_add]; exact hx₁.add_left hx₂
+  | smul r x hx => rw [map_smul]; exact hx.smul_left r
 
 /-- The inverse algebra map `R[G] ⊗[R] R[H] →ₐ[R] R[G × H]`, the tensor-product universal map of
 the two inclusions `R[G] → R[G × H]` and `R[H] → R[G × H]`. -/

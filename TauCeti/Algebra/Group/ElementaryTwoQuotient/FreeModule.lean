@@ -56,7 +56,10 @@ private theorem map_range_lsmul_two_additiveMultiplicative :
         ((AddEquiv.additiveMultiplicative A).toIntLinearEquiv :
           Additive (Multiplicative A) →ₗ[ℤ] A) := by
     ext x
-    simp
+    simp only [Nat.cast_ofNat, LinearMap.coe_comp, LinearEquiv.coe_coe,
+      AddEquiv.coe_toIntLinearEquiv, Function.comp_apply, LinearMap.lsmul_apply,
+      AddEquiv.additiveMultiplicative_apply, toMul_zsmul, zpow_ofNat, toAdd_pow]
+    exact (natCast_zsmul (Multiplicative.toAdd (Additive.toMul x)) 2).symm
   rw [hcomp, LinearMap.range_comp, LinearEquiv.range, Submodule.map_top]
 
 variable [Module.Free ℤ A] [Module.Finite ℤ A]

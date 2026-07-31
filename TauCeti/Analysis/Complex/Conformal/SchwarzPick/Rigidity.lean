@@ -123,6 +123,45 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
   simp only [hgζ, hg0, zero_add, sub_zero, smul_eq_mul] at hval
   exact hval.trans (mul_comm _ _)
 
+/-- **The explicit inverse undoes `f` from the right.** If the Moebius factor at `a` conjugates
+`f` into the rotation by `C` composed with the Moebius factor at `w`, then the composite
+`M₋w ∘ (C⁻¹ · ) ∘ M_a` is a right inverse of `f` on the disc.
+
+Only the conjugation identity, the two norm bounds and the self-map properties of `f` and of the
+inverse rotation are used; differentiability of `f` and of the factors plays no part in this half.
+The scalar `C` enters only through `C ≠ 0` and through `hR_maps`, so the caller may supply any
+nonzero `C` whose inverse contracts the disc — in particular a unimodular one. -/
+private lemma rightInvOn_moebius_rotate_moebius_of_forall_eq {a C : ℂ} (ha : ‖a‖ < 1)
+    (hw : ‖w‖ < 1) (hC0 : C ≠ 0)
+    (hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hCeq : ∀ ζ ∈ ball (0 : ℂ) 1, (f ζ - a) / (1 - (starRingEnd ℂ) a * f ζ)
+      = C * ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))) :
+    RightInvOn ((fun ξ : ℂ => (ξ - (-w)) / (1 - (starRingEnd ℂ) (-w) * ξ)) ∘
+        (fun η : ℂ => C⁻¹ * η) ∘
+        (fun η : ℂ => (η - a) / (1 - (starRingEnd ℂ) a * η)))
+      f (ball (0 : ℂ) 1) := by
+  have hnegw : ‖(-w : ℂ)‖ < 1 := by simpa using hw
+  have hT_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha
+  have hS_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw
+  have hTinj : InjOn (fun ζ : ℂ => (ζ - a) / (1 - (starRingEnd ℂ) a * ζ)) (ball (0 : ℂ) 1) :=
+    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha).injOn
+  intro η hη
+  simp only [Function.comp_apply]
+  set ζ : ℂ := (C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) - -w) /
+      (1 - (starRingEnd ℂ) (-w) * (C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)))) with hζdef
+  have hRTη : C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) ∈ ball (0 : ℂ) 1 :=
+    hR_maps (hT_maps hη)
+  have hζ : ζ ∈ ball (0 : ℂ) 1 := hS_maps hRTη
+  -- Undo the outer Moebius factor, then the rotation, and compare through the injective `M_a`.
+  have hmoebius : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ)
+      = C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) := by
+    simpa [hζdef] using
+      leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw hRTη
+  refine hTinj (hmaps hζ) hη ?_
+  dsimp only
+  rw [hCeq ζ hζ, hmoebius, mul_inv_cancel_left₀ hC0]
+
 /--
 **The inverse map produced by Schwarz--Pick rigidity.**  Under the hypotheses of
 `TauCeti.exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq`, the map `f` has an
@@ -142,10 +181,7 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
   have hw_norm : ‖w‖ < 1 := by simpa [mem_ball_zero_iff] using hw
   have hnegw : ‖(-w : ℂ)‖ < 1 := by simpa using hw_norm
   have hfw_norm : ‖f w‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps hw
-  have hC0 : C ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hC
-    exact zero_ne_one hC
+  have hC0 : C ≠ 0 := fun h => zero_ne_one (by rw [h, norm_zero] at hC; exact hC)
   have hCinv : ‖C⁻¹‖ = 1 := by rw [norm_inv, hC, inv_one]
   have hT_diff := differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm
   have hT_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm
@@ -153,13 +189,11 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
   have hS_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw
   have hR_diff : DifferentiableOn ℂ (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) :=
     differentiableOn_id.const_mul _
-  have hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-    intro η hη
-    rw [mem_ball_zero_iff] at hη ⊢
-    simpa [hCinv] using hη
-  have hTinj : InjOn (fun ζ : ℂ => (ζ - f w) / (1 - (starRingEnd ℂ) (f w) * ζ))
-      (ball (0 : ℂ) 1) :=
-    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm).injOn
+  -- The inverse rotation is a disc self-map because a ball at the origin is balanced.
+  have hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+    fun η hη => by
+      have h := (balanced_ball_zero (𝕜 := ℂ) (r := 1)).smul_mem hCinv.le hη
+      rwa [smul_eq_mul] at h
   refine ⟨(fun ξ : ℂ => (ξ - (-w)) / (1 - (starRingEnd ℂ) (-w) * ξ)) ∘
       (fun η : ℂ => C⁻¹ * η) ∘
       (fun η : ℂ => (η - f w) / (1 - (starRingEnd ℂ) (f w) * η)), ?_, ?_, ?_, ?_⟩
@@ -169,25 +203,7 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
     intro ζ hζ
     simp only [Function.comp_apply, hCeq ζ hζ, inv_mul_cancel_left₀ hC0]
     exact leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hw_norm hζ
-  · -- `f (g η) = η`: run the identity at `g η`, then cancel the outer Moebius factor.
-    intro η hη
-    simp only [Function.comp_apply]
-    set ζ : ℂ :=
-      (C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) - -w) /
-        (1 - (starRingEnd ℂ) (-w) * (C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η))))
-      with hζdef
-    have hTη : (η - f w) / (1 - (starRingEnd ℂ) (f w) * η) ∈ ball (0 : ℂ) 1 := hT_maps hη
-    have hRTη : C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) ∈ ball (0 : ℂ) 1 :=
-      hR_maps hTη
-    have hζ : ζ ∈ ball (0 : ℂ) 1 := hS_maps hRTη
-    have hmoebius : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ)
-        = C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) := by
-      simpa [hζdef] using
-        leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw hRTη
-    have hTfζ : (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ)
-        = (η - f w) / (1 - (starRingEnd ℂ) (f w) * η) := by
-      rw [hCeq ζ hζ, hmoebius, mul_inv_cancel_left₀ hC0]
-    exact hTinj (hmaps hζ) hη hTfζ
+  · exact rightInvOn_moebius_rotate_moebius_of_forall_eq hfw_norm hw_norm hC0 hR_maps hmaps hCeq
 
 /--
 **Schwarz--Pick rigidity, bijectivity form.**  A holomorphic self-map of the open unit disc

@@ -236,7 +236,7 @@ theorem multiplicativeGroup_pointEquiv_apply
     (f : MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A) :
     charOfPoint f (Multiplicative.ofAdd 1) =
       MultiplicativeGroup.pointEquiv
-        (f.comp (AddMonoidAlgebra.toMultiplicativeAlgEquiv R ℤ).toAlgHom) := by
+        (f.comp (AddMonoidAlgebra.toMultiplicativeAlgEquiv (R := R) R ℤ).toAlgHom) := by
   ext
   rw [charOfPoint_apply_coe, MultiplicativeGroup.pointEquiv_apply,
     MultiplicativeGroup.unitOfPoint_val, AlgHom.comp_apply]
