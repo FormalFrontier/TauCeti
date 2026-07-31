@@ -126,11 +126,16 @@ def fiberSubgroupMulEquivStabilizer (f : α → ι) :
 
 /-- Read in `(Equiv.Perm α)ᵈᵐᵃ`, the stabilizer element attached to a fiber-preserving permutation
 is that permutation. -/
+-- This is the defining equation of `fiberSubgroupMulEquivStabilizer`: its `toFun` is literally
+-- `fun σ => MulOpposite.op ⟨DomMulAct.mk σ, _⟩`, so after `unop` and the subtype coercion the two
+-- sides are the same term and `rfl` proves it.  The definition is deliberately not `@[expose]`d, so
+-- the pre-bump `simp [fiberSubgroupMulEquivStabilizer]` has nothing to unfold; the parentheses in
+-- `(rfl)` keep the definitional step inside this module, leaving this lemma and
+-- `fiberSubgroupMulEquivStabilizer_symm_apply_coe` as the whole interface for importers.
 @[simp]
 theorem fiberSubgroupMulEquivStabilizer_apply_unop_coe (f : α → ι) (σ : fiberSubgroup f) :
     ((fiberSubgroupMulEquivStabilizer f σ).unop : (Equiv.Perm α)ᵈᵐᵃ) =
-      DomMulAct.mk (σ : Equiv.Perm α) := by
-  simp [fiberSubgroupMulEquivStabilizer]
+      DomMulAct.mk (σ : Equiv.Perm α) := (rfl)
 
 /-- Read in `Equiv.Perm α`, the fiber-preserving permutation attached to an element of the
 stabilizer is that element. -/

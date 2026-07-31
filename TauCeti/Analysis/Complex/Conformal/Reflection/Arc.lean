@@ -60,7 +60,7 @@ private theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
     MapsTo e.symm (e.target ∩ {w : ℂ | P w.im})
       (e.source ∩ {z : ℂ | P (e z).im}) := by
   rintro w ⟨hw, hP⟩
-  exact ⟨e.map_target hw, by simpa only [Set.mem_setOf_eq, e.right_inv hw] using hP⟩
+  exact ⟨e.map_target hw, by simpa only [Set.mem_ofPred_eq, e.right_inv hw] using hP⟩
 
 /-- If both coordinate domains are conjugation-invariant, the reflected coordinate values stay
 in the target coordinate domain. -/
@@ -79,7 +79,7 @@ private theorem mapsTo_schwarzReflection
     apply d.map_source
     apply hf
     refine mapsTo_symm_inter_im e ⟨he_symm hw, ?_⟩
-    rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
     exact neg_nonneg.mpr him_neg.le
 
 /-- Charted Schwarz reflection maps the source chart domain into the target chart domain. -/
@@ -136,7 +136,7 @@ private theorem differentiableOn_in_coordinates
     hf.comp (he_inv.mono inter_subset_left) (mapsTo_symm_inter_im e)
   refine hd.comp hfe fun w hw => hf_maps ?_
   rcases hw with ⟨hw_target, hw_im⟩
-  simp only [Set.mem_setOf_eq] at hw_im
+  simp only [Set.mem_ofPred_eq] at hw_im
   apply mapsTo_symm_inter_im e
   exact ⟨hw_target, hw_im.le⟩
 

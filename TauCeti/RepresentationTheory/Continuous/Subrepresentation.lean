@@ -60,8 +60,7 @@ the underlying representation. -/
 theorem toRepresentation_subrepresentation :
     (subrepresentation π W hW).toRepresentation
       = π.toRepresentation.subrepresentation W fun g _ hv => hW g _ hv := by
-  ext g v
-  simp [_root_.ContRepresentation.toMonoidHom_apply]
+  rfl
 
 end Restriction
 

@@ -337,7 +337,6 @@ theorem corestrict_map_apply (f : C →ₗc[R] D) {M N : ComoduleCat.{u, v, x} R
 variable {E : Type*} [AddCommMonoid E] [Module R E] [Coalgebra R E]
 
 /-- Corestriction functors compose in the coalgebra morphism on underlying linear maps. -/
-@[simp]
 theorem corestrict_map_comp_coalg_toLinearMap (f : C →ₗc[R] D) (g : D →ₗc[R] E)
     {M N : ComoduleCat.{u, v, x} R C} (h : M ⟶ N) :
     ((corestrict (R := R) (C := C) (D := E) (g.comp f)).map h).toLinearMap =

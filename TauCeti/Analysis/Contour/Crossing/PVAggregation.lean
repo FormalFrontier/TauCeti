@@ -214,7 +214,7 @@ Sorting commutes with the strictly monotone window map — that is Mathlib's
 `StrictMonoOn.map_finsetSort` — so the `i`-th sorted pair is the `i`-th sorted crossing
 shifted by `±r`. -/
 private theorem orderEmbOfFin_window_fst_snd {crossings : Finset ℝ} {r : ℝ} {k : ℕ}
-    (hc : crossings.card = k) {F : Finset (ℝ × ℝ)}
+    (hc : crossings.card = k) {F : Finset (ℝ ×ₗ ℝ)}
     (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r)) (hF : F.card = k) (i : Fin k) :
     ((Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF) i).1 = crossings.orderEmbOfFin hc i - r
       ∧ ((Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF) i).2 = crossings.orderEmbOfFin hc i + r := by
@@ -226,7 +226,8 @@ private theorem orderEmbOfFin_window_fst_snd {crossings : Finset ℝ} {r : ℝ} 
     exact ((windowLexEmb r).strictMono.strictMonoOn _).map_finsetSort
   have key : Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF i
       = windowLexEmb r (crossings.orderEmbOfFin hc i) := by
-    simp [Finset.orderEmbOfFin_apply, ← hmap]
+    rw [Finset.orderEmbOfFin_apply, Finset.orderEmbOfFin_apply]
+    simp [← hmap]
   exact ⟨congrArg Prod.fst key, congrArg Prod.snd key⟩
 
 /-- **The piece/window sum is Mathlib's interval-gap sum.** Along the suffix of the sorted
@@ -235,7 +236,7 @@ window values of that suffix. The `j = 0` case identifies `windowPieceSum` with
 `Finset.intervalGapsWithin`. -/
 private theorem windowPieceSum_eq_sum_intervalGapsWithin_add_sum {p : ℝ → ℝ → ℂ} {w : ℝ → ℂ}
     {a b r : ℝ} {k : ℕ} {crossings : Finset ℝ} (hc : crossings.card = k)
-    {F : Finset (ℝ × ℝ)} (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r))
+    {F : Finset (ℝ ×ₗ ℝ)} (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r))
     (hF : F.card = k) :
     ∀ j : ℕ, j ≤ k →
       windowPieceSum r p w b ((crossings.sort (· ≤ ·)).drop j)

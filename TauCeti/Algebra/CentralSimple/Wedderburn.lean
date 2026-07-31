@@ -119,7 +119,7 @@ noncomputable def baseFieldAlgEquivOfFinite : D ≃ₐ[K] K :=
 @[simp]
 theorem baseFieldAlgEquivOfFinite_symm_apply (a : K) :
     (baseFieldAlgEquivOfFinite K D).symm a = algebraMap K D a := by
-  simp [baseFieldAlgEquivOfFinite]
+  rfl
 
 @[simp]
 theorem algebraMap_baseFieldAlgEquivOfFinite (x : D) :

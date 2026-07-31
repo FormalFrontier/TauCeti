@@ -84,24 +84,24 @@ variable {μ c}
 @[simp]
 theorem mem_arm {d : ℕ × ℕ} : d ∈ arm μ c ↔ d ∈ μ ∧ d.1 = c.1 ∧ c.2 < d.2 := by
   obtain ⟨a, b⟩ := d
-  simp only [arm, Finset.mem_map, Finset.mem_Ico, Function.Embedding.coeFn_mk, Prod.mk.injEq,
+  simp only [arm, Finset.mem_map, Finset.mem_Ico,
     _root_.YoungDiagram.mem_iff_lt_rowLen]
   constructor
   · rintro ⟨j, ⟨hj₁, hj₂⟩, rfl, rfl⟩
     exact ⟨hj₂, rfl, hj₁⟩
   · rintro ⟨hb, rfl, hc⟩
-    exact ⟨b, ⟨hc, hb⟩, rfl, rfl⟩
+    exact ⟨b, ⟨hc, hb⟩, rfl⟩
 
 @[simp]
 theorem mem_leg {d : ℕ × ℕ} : d ∈ leg μ c ↔ d ∈ μ ∧ d.2 = c.2 ∧ c.1 < d.1 := by
   obtain ⟨a, b⟩ := d
-  simp only [leg, Finset.mem_map, Finset.mem_Ico, Function.Embedding.coeFn_mk, Prod.mk.injEq,
+  simp only [leg, Finset.mem_map, Finset.mem_Ico,
     _root_.YoungDiagram.mem_iff_lt_colLen]
   constructor
   · rintro ⟨i, ⟨hi₁, hi₂⟩, rfl, rfl⟩
     exact ⟨hi₂, rfl, hi₁⟩
   · rintro ⟨ha, rfl, hc⟩
-    exact ⟨a, ⟨hc, ha⟩, rfl, rfl⟩
+    exact ⟨a, ⟨hc, ha⟩, rfl⟩
 
 @[simp]
 theorem mem_hook {d : ℕ × ℕ} :

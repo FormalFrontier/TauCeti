@@ -260,14 +260,14 @@ private theorem isEmbedding_halfRight : IsEmbedding halfRight :=
 
 private theorem range_half : Set.range half = {t : I | (t : ℝ) ≤ 1 / 2} := by
   ext t
-  simp only [Set.mem_range, Set.mem_setOf_eq]
+  simp only [Set.mem_range, Set.mem_ofPred_eq]
   refine ⟨?_, fun ht => ⟨⟨2 * t, ⟨by linarith [t.2.1], by linarith⟩⟩, ?_⟩⟩
   · rintro ⟨s, rfl⟩; rw [coe_half]; linarith [s.2.2]
   · exact half_left_inv t ht
 
 private theorem range_halfRight : Set.range halfRight = {t : I | 1 / 2 ≤ (t : ℝ)} := by
   ext t
-  simp only [Set.mem_range, Set.mem_setOf_eq]
+  simp only [Set.mem_range, Set.mem_ofPred_eq]
   refine ⟨?_, fun ht => ⟨⟨2 * t - 1, ⟨by linarith, by linarith [t.2.2]⟩⟩, ?_⟩⟩
   · rintro ⟨s, rfl⟩; rw [coe_halfRight]; linarith [s.2.1]
   · exact halfRight_right_inv t ht
@@ -312,7 +312,7 @@ noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f�
       set D₂ : Set (I × Y) := {q | 1 / 2 ≤ (q.1 : ℝ)} with hD₂def
       have hcov : D₁ ∪ D₂ = Set.univ := by
         ext q
-        simp only [hD₁def, hD₂def, Set.mem_union, Set.mem_setOf_eq, Set.mem_univ, iff_true]
+        simp only [hD₁def, hD₂def, Set.mem_union, Set.mem_ofPred_eq, Set.mem_univ, iff_true]
         exact le_total _ _
       have hrange₁ : Set.range (Prod.map half (id : X → X)) = T ⁻¹' D₁ := by
         rw [Set.range_prodMap, Set.range_id, range_half]; ext ⟨t, x⟩; simp [hT, hD₁def]

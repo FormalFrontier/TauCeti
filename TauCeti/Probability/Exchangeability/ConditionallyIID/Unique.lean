@@ -6,8 +6,8 @@ Authors: Claude
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Moments
--- Non-public: `measurable_probabilityMeasure_apply_real` evaluates a random measure at a fixed
--- measurable set.
+-- Non-public: `measurable_probabilityMeasure_toMeasure_apply_toReal` evaluates a random measure at
+-- a fixed measurable set in the `.toReal` form.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
 -- Non-public: the countable set algebra that compares two random measures set by set.
 import Mathlib.MeasureTheory.SetAlgebra
@@ -143,8 +143,10 @@ private theorem integrable_toReal_directing_sub_sq [IsFiniteMeasure μ]
     simpa using
       ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (σ ω : Measure α)) (s := B))
   exact integrable_sub_sq_of_abs_le_one
-    ((TauCeti.MeasureTheory.measurable_probabilityMeasure_apply_real hB).comp hρ).aemeasurable
-    ((TauCeti.MeasureTheory.measurable_probabilityMeasure_apply_real hB).comp hρ').aemeasurable
+    ((TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
+      hρ).aemeasurable
+    ((TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
+      hρ').aemeasurable
     (ae_of_all _ (habs ρ)) (ae_of_all _ (habs ρ'))
 
 /-- **The `L²` rate between two directing measures.** Two directing measures of the same process
@@ -159,7 +161,7 @@ private theorem ConditionallyIIDWith.integral_directing_sub_sq_le_four_div
     ∫ ω, (((ν ω : Measure α) B).toReal - ((ν' ω : Measure α) B).toReal) ^ 2 ∂μ ≤ 4 / n := by
   have hqm : ∀ ρ : Ω → ProbabilityMeasure α, Measurable ρ →
       Measurable fun ω => ((ρ ω : Measure α) B).toReal := fun _ hρ =>
-    (TauCeti.MeasureTheory.measurable_probabilityMeasure_apply_real hB).comp hρ
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp hρ
   have habs : ∀ (ρ : Ω → ProbabilityMeasure α) (ω : Ω),
       |((ρ ω : Measure α) B).toReal| ≤ 1 := fun ρ ω => by
     rw [abs_of_nonneg ENNReal.toReal_nonneg]
