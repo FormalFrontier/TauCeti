@@ -66,7 +66,12 @@ theorem detRowAlternating_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     Matrix.detRowAlternating_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
 
 /-- The special linear group acts trivially on the top exterior power of the standard
-representation: a matrix acts there by its determinant, which is one. -/
+representation: a matrix acts there by its determinant, which is one.
+
+As with `TauCeti.detRowAlternating_stdSLRep`, this is deliberately not a `simp` lemma:
+`Representation.exteriorPower_apply` and `stdSLRep_apply` already rewrite the left-hand side to
+`exteriorPower.map n (Matrix.mulVecLin ↑g)`, so it is not in `simp` normal form and the rewrite
+could never fire. -/
 theorem stdSLRep_exteriorPower_self_apply (g : Matrix.SpecialLinearGroup (Fin n) k) :
     (stdSLRep k n).exteriorPower n g = LinearMap.id := by
   rw [Representation.exteriorPower_apply, stdSLRep_apply, ← Matrix.toLin'_apply',

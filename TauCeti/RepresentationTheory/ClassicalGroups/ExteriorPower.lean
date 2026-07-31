@@ -70,7 +70,12 @@ noncomputable abbrev extPowerRep :
 noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
   FDRep.of (extPowerRep k n d)
 
-/-- In the top degree a matrix acts on the exterior power by multiplication by its determinant. -/
+/-- In the top degree a matrix acts on the exterior power by multiplication by its determinant.
+
+This is deliberately not a `simp` lemma: `Representation.exteriorPower_apply` and `stdRep_apply`
+already rewrite the left-hand side to `exteriorPower.map n (Matrix.mulVecLin ↑g)`, so it is not in
+`simp` normal form and the rewrite could never fire. The `simp`-normal statement is Mathlib's
+`exteriorPower.map_eq_det_smul`, applied here to `Pi.basisFun k (Fin n)`. -/
 theorem extPowerRep_self_apply (g : GL (Fin n) k) :
     extPowerRep k n n g = Matrix.det (g : Matrix (Fin n) (Fin n) k) • LinearMap.id := by
   rw [Representation.exteriorPower_apply, stdRep_apply, ← Matrix.toLin'_apply',
@@ -111,6 +116,14 @@ equivalence. -/
 theorem extPowerFDRepDetIso_hom_hom :
     (extPowerFDRepDetIso k n).hom.hom =
       ConcreteCategory.ofHom (topExtPowerEquivDet k n).toLinearMap := by
+  rw [extPowerFDRepDetIso]
+  rfl
+
+/-- The inverse map of the bundled identification is the inverse representation equivalence. -/
+@[simp]
+theorem extPowerFDRepDetIso_inv_hom :
+    (extPowerFDRepDetIso k n).inv.hom =
+      ConcreteCategory.ofHom (topExtPowerEquivDet k n).symm.toLinearMap := by
   rw [extPowerFDRepDetIso]
   rfl
 
