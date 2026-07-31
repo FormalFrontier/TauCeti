@@ -4,20 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.Basic
-public import TauCeti.Probability.Exchangeability.Contractability
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
 public import TauCeti.Probability.Exchangeability.Map
 public import TauCeti.Probability.Exchangeability.Family
 public import TauCeti.Probability.Exchangeability.FiniteMarginals
-public import TauCeti.Probability.Exchangeability.IID
-public import TauCeti.Probability.Exchangeability.MixedIID.Implications
-public import TauCeti.Probability.Exchangeability.MixedIID.Const
 public import TauCeti.Probability.Exchangeability.MixedIID.Map
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
-public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
 /-!
 # Exchangeability: the symmetry layer
@@ -47,6 +42,10 @@ on this one, never the reverse, and this module does not transitively import
 `TauCeti.Probability.DeFinetti.Theorem`.
 
 Also excluded: the martingale, `L²`, and Koopman route internals; the Hewitt–Savage and path-space
-σ-field development; and the worked examples. Those are reachable by importing their own modules,
-and are not part of the curated surface.
+σ-field development; and the worked examples — the random-bias coin flips, the three-cycle, and the
+stationary example. Those are reachable by importing their own modules, and are not part of the
+curated surface.
+
+`Exchangeability.IID` *is* included, and is API rather than an example: the constructors that build
+the representation predicates from independence together with a common law.
 -/

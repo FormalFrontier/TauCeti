@@ -5,10 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability
-public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.DeFinetti.Representation
 public import TauCeti.Probability.DeFinetti.CountableIndex
-public import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Unique
 
 /-!
@@ -40,5 +38,5 @@ Route-specific endpoints. The `L²` and Koopman developments are not complete, s
 `viaKoopman` names exist to export; this facade grows when they land. Likewise the empirical and
 extreme-point work beyond what has already merged.
 
-Worked examples are also excluded, and are reachable from their own modules.
+The worked examples are excluded, and are reachable from their own modules.
 -/
