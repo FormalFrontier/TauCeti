@@ -61,9 +61,8 @@ the scalars and the vectors, the disjointness of the two pins that step down to 
   `TauCeti.CliffordAlgebra.ι_range_disjoint_one`: a vector is a scalar only when both vanish.
 * `TauCeti.CliffordAlgebra.mem_range_ι_iff`: membership of `range (ι Q)` is detected by the vector
   part.
-* `TauCeti.CliffordAlgebra.finrank_ι_range` and
-  `TauCeti.CliffordAlgebra.finrank_filtration_one`: the vectors have the dimension of `M`, and the
-  first step of the degree filtration has one more.
+* `TauCeti.CliffordAlgebra.finrank_filtration_one`: the first step of the degree filtration has one
+  more dimension than `M`.
 
 ## References
 
@@ -226,11 +225,6 @@ theorem mem_range_ι_iff {x : CliffordAlgebra Q} :
 theorem ιRangeEquiv_symm_apply (x : LinearMap.range (ι Q)) :
     (ιRangeEquiv Q).symm x = ιInv Q x :=
   (ι_injective Q) <| by rw [ι_ιRangeEquiv_symm_apply, ι_ιInv_of_mem Q x.2]
-
-/-- The module of vectors has the rank of `M`, being a copy of it. -/
-theorem finrank_ι_range :
-    Module.finrank R (LinearMap.range (ι Q)) = Module.finrank R M :=
-  (ιRangeEquiv Q).finrank_eq.symm
 
 /-! ### The first step of the degree filtration -/
 
