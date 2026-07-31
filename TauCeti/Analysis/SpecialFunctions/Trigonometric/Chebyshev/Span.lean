@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Codex
 -/
+module
+
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Moments
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Measure
 import TauCeti.RingTheory.Polynomial.Chebyshev.Basis

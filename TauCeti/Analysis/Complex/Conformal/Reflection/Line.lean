@@ -100,6 +100,51 @@ private lemma mapsTo_affineChart_inter_im {p a : ℂ} (ha : a ≠ 0) {Ω : Set �
   refine (Set.mapsTo_preimage _ Ω).inter_inter fun w hw => ?_
   simpa only [Set.mem_setOf_eq, affineChart_right_inv ha] using hw
 
+/-- **The chart pullback of a line-symmetric domain is conjugation-symmetric.** If `Ω` is carried
+into itself by reflection in the line `p + a·ℝ`, then its pullback along `w ↦ p + a·w` is carried
+into itself by ordinary complex conjugation — which is what the half-plane reflection theorem asks
+for. -/
+private lemma mapsTo_conj_affineChart_preimage {p a : ℂ} (ha : a ≠ 0) {Ω : Set ℂ}
+    (hΩ : MapsTo (fun z => p + a * (starRingEnd ℂ) ((z - p) / a)) Ω Ω) :
+    MapsTo (starRingEnd ℂ) ((fun w : ℂ => p + a * w) ⁻¹' Ω)
+      ((fun w : ℂ => p + a * w) ⁻¹' Ω) := fun _ hw => by
+  simpa only [Set.mem_preimage, affineChart_right_inv ha] using hΩ hw
+
+/-- **Continuity transports along the chart.** Reading `f` in the source coordinate `w ↦ p + a·w`
+and normalizing its values by `(· - q) / b` turns continuity on the closed positive side of the line
+into continuity on the closed upper half-plane. -/
+private lemma continuousOn_targetChart_comp_affineChart {p a q b : ℂ} (ha : a ≠ 0) {Ω : Set ℂ}
+    {f : ℂ → ℂ} (hcont : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ ((z - p) / a).im})) :
+    ContinuousOn (fun w : ℂ => (f (p + a * w) - q) / b)
+      ((fun w : ℂ => p + a * w) ⁻¹' Ω ∩ {w : ℂ | 0 ≤ w.im}) := by
+  have hfcomp : ContinuousOn (f ∘ fun w : ℂ => p + a * w)
+      ((fun w : ℂ => p + a * w) ⁻¹' Ω ∩ {w : ℂ | 0 ≤ w.im}) :=
+    hcont.comp (by fun_prop) (mapsTo_affineChart_inter_im ha)
+  simpa [Function.comp_apply] using hfcomp.sub continuousOn_const |>.div_const b
+
+/-- **Holomorphy transports along the chart**, the open-side companion of
+`continuousOn_targetChart_comp_affineChart`. -/
+private lemma differentiableOn_targetChart_comp_affineChart {p a q b : ℂ} (ha : a ≠ 0) {Ω : Set ℂ}
+    {f : ℂ → ℂ} (hholo : DifferentiableOn ℂ f (Ω ∩ {z : ℂ | 0 < ((z - p) / a).im})) :
+    DifferentiableOn ℂ (fun w : ℂ => (f (p + a * w) - q) / b)
+      ((fun w : ℂ => p + a * w) ⁻¹' Ω ∩ {w : ℂ | 0 < w.im}) := by
+  have hfcomp : DifferentiableOn ℂ (f ∘ fun w : ℂ => p + a * w)
+      ((fun w : ℂ => p + a * w) ⁻¹' Ω ∩ {w : ℂ | 0 < w.im}) :=
+    hholo.comp (Differentiable.differentiableOn (by fun_prop))
+      (mapsTo_affineChart_inter_im ha)
+  simpa only [Function.comp_apply] using hfcomp.sub_const q |>.div_const b
+
+/-- **The boundary condition transports to the real axis.** In the source coordinate the line
+`p + a·ℝ` is the real axis, so the hypothesis that the normalized values `(f z - q) / b` are real on
+the line becomes the hypothesis that the transported function is real on the reals. For `b ≠ 0` that
+says `f` maps the source line into the target line `q + b·ℝ`; at `b = 0` the normalization is
+identically `0`, so both conditions are vacuous. -/
+private lemma im_targetChart_comp_affineChart_eq_zero {p a q b : ℂ} (ha : a ≠ 0) {Ω : Set ℂ}
+    {f : ℂ → ℂ} (hline : ∀ z ∈ Ω, ((z - p) / a).im = 0 → ((f z - q) / b).im = 0) :
+    ∀ w ∈ (fun w : ℂ => p + a * w) ⁻¹' Ω, w.im = 0 →
+      ((fun w : ℂ => (f (p + a * w) - q) / b) w).im = 0 := fun w hw hwim =>
+  hline (p + a * w) hw (by rw [affineChart_right_inv ha]; exact hwim)
+
 /-- **Schwarz reflection principle across an affine line, holomorphy form.** Let the source line
 be `p + a * ℝ`, with `a ≠ 0`. Suppose an open domain `Ω` is invariant under reflection in this
 line. If `f` is continuous on the closed positive side, holomorphic on the open positive side,
@@ -118,54 +163,23 @@ theorem differentiableOn_lineSchwarzReflection_of_symmetric
     (hholo : DifferentiableOn ℂ f (Ω ∩ {z : ℂ | 0 < ((z - p) / a).im}))
     (hline : ∀ z ∈ Ω, ((z - p) / a).im = 0 → ((f z - q) / b).im = 0) :
     DifferentiableOn ℂ (lineSchwarzReflection p a q b f) Ω := by
-  let φ := fun w : ℂ => p + a * w
-  let ψ := fun z : ℂ => (z - p) / a
-  let g := fun w : ℂ => (f (φ w) - q) / b
-  let U := φ ⁻¹' Ω
-  have hφdiff : Differentiable ℂ φ := by
-    dsimp only [φ]
-    fun_prop
-  have hψdiff : Differentiable ℂ ψ := by
-    dsimp only [ψ]
-    fun_prop
-  have hφψ : ∀ z : ℂ, φ (ψ z) = z := by
-    intro z
-    exact affineChart_left_inv ha z
-  have hψφ : ∀ w : ℂ, ψ (φ w) = w := by
-    intro w
-    exact affineChart_right_inv ha w
-  have hUopen : IsOpen U := hΩopen.preimage hφdiff.continuous
-  have hUsymm : MapsTo (starRingEnd ℂ) U U := by
-    intro w hw
-    -- Expose the pullback chart so the source-reflection hypothesis can be applied.
-    change φ ((starRingEnd ℂ) w) ∈ Ω
-    have hreflect := hΩ hw
-    simpa only [φ, ψ, hψφ] using hreflect
-  have hgcont : ContinuousOn g (U ∩ {w : ℂ | 0 ≤ w.im}) := by
-    have hfcomp : ContinuousOn (f ∘ φ) (U ∩ {w : ℂ | 0 ≤ w.im}) :=
-      hcont.comp hφdiff.continuous.continuousOn (mapsTo_affineChart_inter_im ha)
-    simpa [g, Function.comp_apply] using hfcomp.sub continuousOn_const |>.div_const b
-  have hgdiff : DifferentiableOn ℂ g (U ∩ {w : ℂ | 0 < w.im}) := by
-    have hfcomp : DifferentiableOn ℂ (f ∘ φ) (U ∩ {w : ℂ | 0 < w.im}) :=
-      hholo.comp hφdiff.differentiableOn (mapsTo_affineChart_inter_im ha)
-    simpa only [g, Function.comp_apply] using hfcomp.sub_const q |>.div_const b
-  have hgline : ∀ w ∈ U, w.im = 0 → (g w).im = 0 := by
-    intro w hw hwim
-    apply hline (φ w) hw
-    -- Pull the source-line condition back to the real axis.
-    change (ψ (φ w)).im = 0
-    rw [hψφ]
-    exact hwim
-  have hg := differentiableOn_schwarzReflection_of_symmetric hUopen hUsymm hgcont hgdiff hgline
-  have hcomp : DifferentiableOn ℂ (fun z => schwarzReflection g (ψ z)) Ω := by
-    refine hg.comp hψdiff.differentiableOn ?_
-    intro z hz
-    -- Membership in the pulled-back domain reduces along the other inverse law.
-    change φ (ψ z) ∈ Ω
-    simpa only [hφψ] using hz
-  have hresult : DifferentiableOn ℂ (fun z => q + b * schwarzReflection g (ψ z)) Ω :=
-    (differentiableOn_const q).add ((differentiableOn_const b).mul hcomp)
-  exact hresult.congr fun z _ => lineSchwarzReflection_def p a q b f z
+  -- Read everything in the charts `φ w = p + a·w` and `ψ z = (z - p)/a`, where the source line is
+  -- the real axis and the four hypotheses become those of the half-plane theorem.
+  have hUopen : IsOpen ((fun w : ℂ => p + a * w) ⁻¹' Ω) :=
+    hΩopen.preimage (by fun_prop)
+  have hg := differentiableOn_schwarzReflection_of_symmetric
+    (f := fun w : ℂ => (f (p + a * w) - q) / b) hUopen
+    (mapsTo_conj_affineChart_preimage ha hΩ)
+    (continuousOn_targetChart_comp_affineChart ha hcont)
+    (differentiableOn_targetChart_comp_affineChart ha hholo)
+    (im_targetChart_comp_affineChart_eq_zero ha hline)
+  -- Push back along `ψ`, whose image lands in `φ⁻¹(Ω)` by the other inverse law.
+  have hcomp : DifferentiableOn ℂ
+      (fun z => schwarzReflection (fun w : ℂ => (f (p + a * w) - q) / b) ((z - p) / a)) Ω := by
+    refine hg.comp (Differentiable.differentiableOn (by fun_prop)) fun z hz => ?_
+    simpa only [Set.mem_preimage, affineChart_left_inv ha] using hz
+  exact ((differentiableOn_const q).add ((differentiableOn_const b).mul hcomp)).congr
+    fun z _ => lineSchwarzReflection_def p a q b f z
 
 /-- Affine-line Schwarz reflection intertwines reflection in the source line with reflection in
 the target line. The boundary hypothesis says precisely that the original function takes the

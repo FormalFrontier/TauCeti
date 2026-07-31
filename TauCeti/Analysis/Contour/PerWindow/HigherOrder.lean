@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.RegularityConditions
 import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 import TauCeti.Analysis.Calculus.OneSidedDerivLimit
@@ -32,12 +33,20 @@ each side integral evaluates by the fundamental theorem of calculus to a boundar
 cancellation (`antiderivative_diff_across_crossing_tendsto_zero`) — the mechanism of
 Hungerbühler–Wasem condition (B) at a higher-order pole.
 
+The fundamental theorem of calculus the window integral is built on
+(`Contour.integral_pow_inv_mul_deriv_eq_sub`) is stated here for its own sake, together with its
+closed-curve corollary: around a loop missing the pole the boundary difference cancels, so an
+order-`k ≥ 2` term contributes nothing at all — the fact that leaves only the simple-pole
+coefficient in a residue theorem.
+
 ## Main results
 
 * `Contour.perWindow_higherOrder_truncated_integral_tendsto` — the truncated window integral
   of the order-`k` polar term converges, with the explicit boundary-difference value.
 * `Contour.integral_pow_inv_mul_deriv_eq_sub` — the fundamental theorem of calculus for the
   order-`k` polar term along the curve, on an interval avoiding the pole.
+* `Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed` — the same term integrates to zero
+  around a *closed* piecewise-`C¹` curve missing the pole, the endpoint difference cancelling.
 * `Contour.intervalIntegrable_pow_inv_mul_deriv_truncated` — the truncated order-`k` polar
   integrand is interval-integrable at every truncation level `ε > 0`.
 
@@ -139,6 +148,36 @@ theorem integral_pow_inv_mul_deriv_eq_sub {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
       c).comp_continuousWithinAt (hγ_cont t ht)
   exact MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le _ _ hlu hP h_G_cont
     h_G_deriv (intervalIntegrable_pow_inv_mul_deriv c k hlu hγ_cont h_ne hderiv_int)
+
+/-- The oriented case of `Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed`. -/
+private theorem integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
+    (hk : 2 ≤ k) (c : ℂ) {a b : ℝ} (hab : a ≤ b) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) (h_ne : ∀ t ∈ Icc a b, γ t ≠ s) :
+    ∫ t in a..b, c / (γ t - s) ^ k * deriv γ t = 0 := by
+  obtain ⟨P, hP, hdiff⟩ := hγ.exists_countable_differentiableAt
+  rw [min_eq_left hab, max_eq_right hab] at hdiff
+  have hcont : ContinuousOn γ (Icc a b) := by
+    rw [← Set.uIcc_of_le hab]; exact hγ.continuousOn
+  rw [integral_pow_inv_mul_deriv_eq_sub hk c hab hP h_ne hdiff hcont
+    hγ.intervalIntegrable_deriv, hclosed, sub_self]
+
+/-- **A Laurent term of order at least two integrates to zero around a closed curve.** On a
+piecewise-`C¹` curve `γ` with `γ a = γ b` that never meets `s`, the integrand
+`c/(z − s)^k · γ'` with `k ≥ 2` is the derivative of `c · (−(k−1)⁻¹ (γ · − s)^{−(k−1)})`, so
+`Contour.integral_pow_inv_mul_deriv_eq_sub` returns the endpoint difference, which the closedness
+kills. This is why only the simple-pole coefficient of a Laurent tail survives in the residue
+theorem. -/
+theorem integral_pow_inv_mul_deriv_eq_zero_of_closed {γ : ℝ → ℂ} {s : ℂ} {k : ℕ}
+    (hk : 2 ≤ k) (c : ℂ) {a b : ℝ} (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (h_ne : ∀ t ∈ uIcc a b, γ t ≠ s) :
+    ∫ t in a..b, c / (γ t - s) ^ k * deriv γ t = 0 := by
+  rcases le_total a b with hab | hba
+  · exact integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le hk c hab hγ hclosed
+      fun t ht => h_ne t (by rwa [Set.uIcc_of_le hab])
+  · rw [intervalIntegral.integral_symm b a,
+      integral_pow_inv_mul_deriv_eq_zero_of_closed_of_le hk c hba hγ.symm hclosed.symm
+        (fun t ht => h_ne t (by rw [Set.uIcc_comm, Set.uIcc_of_le hba]; exact ht)),
+      neg_zero]
 
 /-- **Antiderivative evaluation on a subinterval missing the crossing.** On a subinterval
 `[l, u]` of the window `[t_i - r, t_i + r]`, where the curve meets `s` only at `t_i` and

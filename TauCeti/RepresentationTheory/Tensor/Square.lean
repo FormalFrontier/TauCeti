@@ -108,6 +108,7 @@ private theorem symToAlternatingQuotient_mk {R : Type} {M : Type*}
         (SymmetricPower.mk R (Fin 2) M x) =
       Submodule.Quotient.mk x := by
   simp [symToAlternatingQuotient, SymmetricPower.mk]
+  rfl
 
 -- These maps form the characteristic-free exact sequence `⋀²M → M⊗M → Sym²M`.
 private theorem range_toTensorPower_eq_ker_mk {R : Type} {M : Type*}
@@ -147,12 +148,12 @@ private theorem toTensorPower_injective {R : Type} {M : Type*}
   simp only [exteriorPower.ιMultiDual, exteriorPower.ιMulti_family,
     pairingDual_ιMulti_apply, h]
 
--- Split an exact sequence as vector spaces. In that basis the middle action is block triangular,
--- so its trace is the sum of the traces on the subspace and quotient.
+-- Split an exact sequence as vector spaces. In that splitting the middle action is block
+-- triangular, so its trace is the sum of the traces on the subspace and the quotient.
 private theorem trace_eq_add_of_exact
     {K A B C : Type*} [Field K]
     [AddCommGroup A] [Module K A] [FiniteDimensional K A]
-    [AddCommGroup B] [Module K B] [FiniteDimensional K B]
+    [AddCommGroup B] [Module K B]
     [AddCommGroup C] [Module K C] [FiniteDimensional K C]
     (i : A →ₗ[K] B) (q : B →ₗ[K] C)
     (fA : A →ₗ[K] A) (fB : B →ₗ[K] B) (fC : C →ₗ[K] C)
@@ -162,109 +163,53 @@ private theorem trace_eq_add_of_exact
     LinearMap.trace K B fB =
       LinearMap.trace K A fA + LinearMap.trace K C fC := by
   classical
-  obtain ⟨s, hs⟩ :=
-    q.exists_rightInverse_of_surjective (LinearMap.range_eq_top.mpr hq)
-  have hqs : q.comp s = LinearMap.id := hs
-  have hqi : q.comp i = 0 := by
+  -- Split `B ≃ₗ A × C`, using Mathlib's correspondence between sections of `q` and splittings.
+  obtain ⟨s, hs⟩ := q.exists_rightInverse_of_surjective (LinearMap.range_eq_top.mpr hq)
+  obtain ⟨e, hie, hqe⟩ :=
+    (LinearMap.exact_iff.mpr hexact.symm).splitSurjectiveEquiv hi ⟨s, hs⟩
+  -- `B` inherits finite-dimensionality from the splitting, so it need not be assumed.
+  haveI : FiniteDimensional K B := e.symm.finiteDimensional
+  -- In that splitting `fB` becomes block upper triangular: it fixes the `A` summand, acting there
+  -- as `fA`, and covers `fC` on the `C` factor.
+  set F : (A × C) →ₗ[K] (A × C) := e.conj fB with hF_def
+  have hia : ∀ x : A, e.symm ((LinearMap.inl K A C) x) = i x := fun x => by rw [hie]; rfl
+  have hie' : ∀ x : A, e (i x) = (LinearMap.inl K A C) x := fun x => by
+    rw [← hia x, LinearEquiv.apply_symm_apply]
+  have hF_inl : F.comp (LinearMap.inl K A C) = (LinearMap.inl K A C).comp fA := by
     apply LinearMap.ext
     intro a
-    rw [LinearMap.comp_apply, LinearMap.zero_apply]
-    apply LinearMap.mem_ker.mp
-    rw [← hexact]
-    exact ⟨a, rfl⟩
-  have hqi_apply (a : A) : q (i a) = 0 := by
-    exact LinearMap.congr_fun hqi a
-  have hqs_apply (c : C) : q (s c) = c := by
-    exact LinearMap.congr_fun hqs c
-  let eMap : (A × C) →ₗ[K] B := i.coprod s
-  have eMap_injective : Function.Injective eMap := by
-    rintro ⟨a, c⟩ ⟨a', c'⟩ h
-    have hc : c = c' := by
-      have := congrArg q h
-      simp only [eMap, LinearMap.coprod_apply, map_add] at this
-      rw [hqi_apply, hqi_apply, hqs_apply, hqs_apply, zero_add, zero_add] at this
-      exact this
-    subst c'
-    apply Prod.ext
-    · apply hi
-      simpa only [eMap, LinearMap.coprod_apply, add_left_inj] using h
-    · rfl
-  have eMap_surjective : Function.Surjective eMap := by
-    intro b
-    have hb : b - s (q b) ∈ LinearMap.range i := by
-      rw [hexact, LinearMap.mem_ker]
-      rw [map_sub, hqs_apply, sub_self]
-    obtain ⟨a, ha⟩ := hb
-    exact ⟨(a, q b), by
-      simp only [eMap, LinearMap.coprod_apply]
-      rw [ha]
-      abel⟩
-  let e : (A × C) ≃ₗ[K] B :=
-    LinearEquiv.ofBijective eMap ⟨eMap_injective, eMap_surjective⟩
-  let F : (A × C) →ₗ[K] (A × C) := e.symm.conj fB
-  -- The defining equation of `F`, recorded so that the trace computation below can fold the
-  -- conjugate `e.symm.conj fB` back into `F` by rewriting.
-  have hF_def : e.symm.conj fB = F := rfl
-  have he_apply (a : A) (c : C) : e (a, c) = i a + s c := by
-    rfl
-  have hq_e (a : A) (c : C) : q (e (a, c)) = c := by
-    rw [he_apply, map_add, hqi_apply, hqs_apply, zero_add]
-  have hsnd_e_symm (b : B) :
-      (LinearMap.snd K A C) (e.symm b) = q b := by
-    rw [← e.apply_symm_apply b]
-    obtain ⟨a, c⟩ := e.symm b
-    simpa only [e.symm_apply_apply, LinearMap.snd_apply] using (hq_e a c).symm
-  have hF_inl : F.comp (LinearMap.inl K A C) =
-      (LinearMap.inl K A C).comp fA := by
+    simp only [LinearMap.comp_apply, hF_def, LinearEquiv.conj_apply_apply, hia]
+    rw [← LinearMap.comp_apply, hfi, LinearMap.comp_apply, hie']
+  have hsnd : ∀ b : B, (LinearMap.snd K A C) (e b) = q b := fun b => by rw [hqe]; rfl
+  have hqsymm : ∀ x : A × C, q (e.symm x) = (LinearMap.snd K A C) x := fun x => by
+    rw [← hsnd (e.symm x), LinearEquiv.apply_symm_apply]
+  have hsndF : (LinearMap.snd K A C).comp F = fC.comp (LinearMap.snd K A C) := by
     apply LinearMap.ext
-    intro a
-    apply e.injective
-    simp only [LinearMap.comp_apply, F, LinearEquiv.conj_apply_apply,
-      LinearEquiv.symm_symm, LinearEquiv.apply_symm_apply]
-    rw [he_apply, he_apply]
-    simp only [LinearMap.inl_apply, map_zero, add_zero]
-    exact LinearMap.congr_fun hfi a
-  have hF_inl_apply (a : A) : F ((LinearMap.inl K A C) a) =
-      (LinearMap.inl K A C) (fA a) := by
-    simpa only [LinearMap.comp_apply] using LinearMap.congr_fun hF_inl a
-  have hsndF : (LinearMap.snd K A C).comp F =
-      fC.comp (LinearMap.snd K A C) := by
+    intro x
+    simp only [LinearMap.comp_apply, hF_def, LinearEquiv.conj_apply_apply, hsnd]
+    rw [← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hqsymm]
+  -- Triangularity: the only off-diagonal block is `C → A`. Composed the other way round it is
+  -- zero, so `trace_comp_comm'` makes its contribution vanish.
+  set u : C →ₗ[K] A := (LinearMap.fst K A C).comp (F.comp (LinearMap.inr K A C)) with hu_def
+  have hF : F = LinearMap.prodMap fA fC +
+      (LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C)) := by
     apply LinearMap.ext
     rintro ⟨a, c⟩
-    simp only [LinearMap.comp_apply, F, LinearEquiv.conj_apply_apply, LinearEquiv.symm_symm]
-    rw [hsnd_e_symm, ← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hq_e,
-      LinearMap.snd_apply]
-  let u : C →ₗ[K] A :=
-    (LinearMap.fst K A C).comp (F.comp (LinearMap.inr K A C))
-  have hF :
-      F = LinearMap.prodMap fA fC +
-        (LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C)) := by
-    apply LinearMap.ext
-    rintro ⟨a, c⟩
+    have hsplit : ((a, c) : A × C) = (LinearMap.inl K A C) a + (LinearMap.inr K A C) c := by
+      ext <;> simp
     apply Prod.ext
-    · have hsplit : (a, c) = (LinearMap.inl K A C) a +
-          (LinearMap.inr K A C) c := by
-        ext <;> simp
-      rw [hsplit, map_add, hF_inl_apply]
-      simp only [u, LinearMap.add_apply, LinearMap.prodMap_apply, LinearMap.comp_apply,
-        LinearMap.inl_apply, LinearMap.inr_apply, LinearMap.snd_apply, LinearMap.fst_apply,
-        Prod.fst_add, Prod.snd_add, add_zero, zero_add]
-    · simpa only [LinearMap.add_apply, LinearMap.prodMap_apply,
-        LinearMap.comp_apply, LinearMap.inl_apply, LinearMap.snd_apply,
-        Prod.snd_add, add_zero] using
+    · rw [hsplit, map_add, ← LinearMap.comp_apply, hF_inl]
+      simp [hu_def]
+    · simpa only [LinearMap.add_apply, LinearMap.prodMap_apply, LinearMap.comp_apply,
+        LinearMap.inl_apply, LinearMap.snd_apply, Prod.snd_add, add_zero] using
           LinearMap.congr_fun hsndF (a, c)
-  rw [← LinearMap.trace_conj' fB e.symm, hF_def, hF, map_add, LinearMap.trace_prodMap']
-  have hoff :
-      LinearMap.trace K (A × C)
-          ((LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C))) = 0 := by
+  have hoff : LinearMap.trace K (A × C)
+      ((LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C))) = 0 := by
     rw [LinearMap.trace_comp_comm']
-    have hz :
-        (u.comp (LinearMap.snd K A C)).comp (LinearMap.inl K A C) = 0 := by
-      apply LinearMap.ext
-      intro a
-      simp
+    have hz : (u.comp (LinearMap.snd K A C)).comp (LinearMap.inl K A C) = 0 := by ext a; simp
     rw [hz, map_zero]
-  rw [hoff, add_zero]
+  rw [← LinearMap.trace_conj' fB e, ← hF_def, hF, map_add, LinearMap.trace_prodMap', hoff,
+    add_zero]
 
 end TauCeti.TensorSquare
 

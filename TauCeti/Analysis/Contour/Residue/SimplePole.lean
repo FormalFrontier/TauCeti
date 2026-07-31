@@ -163,10 +163,12 @@ theorem residue_sub_inv (z₀ : ℂ) : residue (fun z => (z - z₀)⁻¹) z₀ =
 
 /-- The residue of `c · (· − z₀)⁻¹` at `z₀` is `c`: scaling the elementary simple pole scales its
 residue. -/
-@[simp]
+-- Deliberately not `@[simp]`: `simp` already derives this from the unconditional
+-- `residue_const_mul` together with `residue_sub_inv`, so simpNF rejects the attribute as
+-- redundant. Kept as named API because several proofs rewrite with it directly.
 theorem residue_const_mul_sub_inv (c z₀ : ℂ) :
     residue (fun z => c * (z - z₀)⁻¹) z₀ = c := by
-  rw [residue_const_mul c (meromorphicAt_sub_inv z₀), residue_sub_inv, mul_one]
+  rw [residue_const_mul c, residue_sub_inv, mul_one]
 
 end TauCeti.Contour
 

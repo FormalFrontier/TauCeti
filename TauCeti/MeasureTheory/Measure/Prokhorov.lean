@@ -145,6 +145,9 @@ lemma finite_measure_subseq_limit
   refine ⟨μ₀, φ, hμ₀_fin, hφ, hmass_μ₀, fun g => ?_⟩
   have hweak :=
     (FiniteMeasure.tendsto_iff_forall_integral_tendsto.mp hφ_tendsto) g
-  simpa [σf, μf, Function.comp_def] using hweak
+  -- `hweak` is stated through the `FiniteMeasure` integral coercion; `change` reads it back as
+  -- the plain Bochner integral against the underlying measures, which is the statement wanted.
+  change Tendsto (fun k => ∫ x, g x ∂σ (φ k)) atTop (𝓝 (∫ x, g x ∂μ₀)) at hweak
+  exact hweak
 
 end TauCeti

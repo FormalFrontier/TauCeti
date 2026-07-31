@@ -19,7 +19,9 @@ This file defines the two subgroups `YoungTableau.rowSubgroup t` and `YoungTable
 of `Equiv.Perm (Fin μ.card)` cut out by those conditions, and proves the two facts the symmetrizer
 theory rests on: the row and column groups meet trivially, because a cell is determined by its row
 together with its column; and each of them is the product of the symmetric groups of the rows,
-respectively columns, of `μ`.
+respectively columns, of `μ`.  It also records the transpositions that the two groups contain:
+swapping two labels of a common row lies in the row group, and swapping two labels of a common
+column lies in the column group.
 
 ## References
 
@@ -67,6 +69,19 @@ theorem colSubgroup_def (t : YoungTableau μ) :
     colSubgroup t = fiberSubgroup (colIndex t) := by
   ext σ
   rw [mem_colSubgroup, mem_fiberSubgroup]
+
+/-- The transposition of two labels lying in a common row of `t` belongs to the row group. -/
+theorem swap_mem_rowSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : rowIndex t x = rowIndex t y) : Equiv.swap x y ∈ rowSubgroup t := by
+  rw [rowSubgroup_def]
+  exact swap_mem_fiberSubgroup h
+
+/-- The transposition of two labels lying in a common column of `t` belongs to the column
+group. -/
+theorem swap_mem_colSubgroup {t : YoungTableau μ} {x y : Fin μ.card}
+    (h : colIndex t x = colIndex t y) : Equiv.swap x y ∈ colSubgroup t := by
+  rw [colSubgroup_def]
+  exact swap_mem_fiberSubgroup h
 
 /-- The row and column groups of a `μ`-tableau meet only in the identity: a permutation of the
 labels that stays inside the rows and inside the columns fixes every cell. -/
