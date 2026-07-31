@@ -6,7 +6,6 @@ Authors: Codex, Claude
 module
 
 public import TauCeti.RepresentationTheory.Induction.Restriction
-public import Mathlib.RepresentationTheory.Character
 public import Mathlib.GroupTheory.GroupAction.ConjAct
 
 /-!
@@ -584,9 +583,8 @@ theorem conjNormalRep_mul (s t : G) (A : Rep k N) :
 /-- Conjugation by `g` is an autoequivalence of `Rep k N`, with inverse conjugation by `g⁻¹`: the
 autoequivalence the roadmap asks for, built from the coherence of the previous two lemmas.
 
-`@[expose]`, like `conjNormalRepFunctor`, so that `conjNormalRepEquiv_functor` and
-`conjNormalRepEquiv_inverse` identify it with conjugation downstream. -/
-@[expose]
+The body is sealed; `conjNormalRepEquiv_functor` and `conjNormalRepEquiv_inverse` are the
+interface identifying it with conjugation. -/
 def conjNormalRepEquiv (g : G) : Rep k N ≌ Rep k N :=
   CategoryTheory.Equivalence.mk (conjNormalRepFunctor g) (conjNormalRepFunctor g⁻¹)
     (eqToIso (by rw [← conjNormalRepFunctor_mul, inv_mul_cancel, conjNormalRepFunctor_one]))
@@ -595,12 +593,12 @@ def conjNormalRepEquiv (g : G) : Rep k N ≌ Rep k N :=
 @[simp]
 theorem conjNormalRepEquiv_functor (g : G) :
     (conjNormalRepEquiv (k := k) (N := N) g).functor = conjNormalRepFunctor g :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem conjNormalRepEquiv_inverse (g : G) :
     (conjNormalRepEquiv (k := k) (N := N) g).inverse = conjNormalRepFunctor g⁻¹ :=
-  rfl
+  (rfl)
 
 /-- Conjugation is a left action of `G` on `Rep k N`: `g • A` is `conjNormalRep g A`.  Clifford
 theory's inertia group of `A` is the stabilizer of the isomorphism class of `A`,
@@ -695,15 +693,15 @@ theorem conjNormalFDRep_mul (s t : G) (A : FDRep k N) :
 /-- Conjugation by `g` is an autoequivalence of `FDRep k N`, with inverse conjugation by `g⁻¹`:
 Mathlib's `Action.resEquiv` for the automorphism `MulAut.conjNormal g⁻¹` of `N`.
 
-`@[expose]` for the same reason as `conjNormalFDRepFunctor`. -/
-@[expose]
+The body is sealed, as for `conjNormalRepEquiv`; `conjNormalFDRepEquiv_functor` and
+`conjNormalFDRepEquiv_inverse` are the interface identifying it with conjugation. -/
 def conjNormalFDRepEquiv (g : G) : FDRep k N ≌ FDRep k N :=
   Action.resEquiv (FGModuleCat k) (MulAut.conjNormal g⁻¹ : MulAut N)
 
 @[simp]
 theorem conjNormalFDRepEquiv_functor (g : G) :
     (conjNormalFDRepEquiv (k := k) (N := N) g).functor = conjNormalFDRepFunctor g :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem conjNormalFDRepEquiv_inverse (g : G) :

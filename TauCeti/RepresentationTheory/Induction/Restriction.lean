@@ -82,9 +82,8 @@ theorem resFunctor_id : Rep.resFunctor (k := k) (MonoidHom.id H) = 𝟭 (Rep k H
 restriction along the inverse isomorphism.  This is the `Rep` analogue of Mathlib's
 `Action.resEquiv`, which does not apply because `Rep` is a structure rather than an `Action`.
 
-`@[expose]` so that `resFunctorEquiv_functor` and `resFunctorEquiv_inverse` identify its two
-functors with restriction downstream. -/
-@[expose]
+The body is sealed; `resFunctorEquiv_functor` and `resFunctorEquiv_inverse` are the interface
+identifying its two functors with restriction. -/
 def resFunctorEquiv (e : H ≃* K) : Rep k K ≌ Rep k H :=
   CategoryTheory.Equivalence.mk (Rep.resFunctor e.toMonoidHom) (Rep.resFunctor e.symm.toMonoidHom)
     (eqToIso (by
@@ -101,12 +100,12 @@ def resFunctorEquiv (e : H ≃* K) : Rep k K ≌ Rep k H :=
 @[simp]
 theorem resFunctorEquiv_functor (e : H ≃* K) :
     (resFunctorEquiv (k := k) e).functor = Rep.resFunctor e.toMonoidHom :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem resFunctorEquiv_inverse (e : H ≃* K) :
     (resFunctorEquiv (k := k) e).inverse = Rep.resFunctor e.symm.toMonoidHom :=
-  rfl
+  (rfl)
 
 end Functor
 
