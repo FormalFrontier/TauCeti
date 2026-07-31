@@ -49,7 +49,6 @@ variable {V : Type*} [DecidableEq V] [Fintype V]
 
 /-- A chain object in the cubically graded lattice complex is zero exactly above the number of
 plumbing vertices. -/
-@[simp]
 theorem isZero_latticeChainComplex_X_iff_card_lt
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
     IsZero ((P.latticeChainComplex k).X q) ↔ Fintype.card V < q := by
