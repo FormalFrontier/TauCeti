@@ -219,13 +219,16 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
   have hident : ∀ i, IdentDistrib (fun ω : T × (ℕ → α) => ω.2 i)
       (fun ω : T × (ℕ → α) => ω.2 0) (iidMixtureLaw π P) (iidMixtureLaw π P) :=
     fun i => (contractable_iidMixtureLaw hP).identDistrib_coord (hX i) (hX 0)
-  refine ⟨⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
-    Measure.isProbabilityMeasure_map (hX 0)⟩, ?_⟩
+  let Q : ProbabilityMeasure α :=
+    ⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
+      Measure.isProbabilityMeasure_map (hX 0)⟩
+  refine ⟨Q, ?_⟩
   -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,
     mixedIID_mixingLaw_unique hX (mixedIIDWith_iidMixtureLaw hP)
-      (MixedIIDWith.of_iIndepFun_identDistrib h hident),
-    Measure.map_const, measure_univ, one_smul]
+      (MixedIIDWith.of_iIndepFun_identDistrib h hident)]
+  change Measure.map (fun _ : T × (ℕ → α) => Q) (iidMixtureLaw π P) = Measure.dirac Q
+  rw [Measure.map_const, measure_univ, one_smul]
 
 end Probability
 

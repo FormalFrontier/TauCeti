@@ -6,6 +6,9 @@ Authors: Claude
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+-- Non-public: the `measurable_probabilityMeasure_toMeasure_apply` lemmas evaluate a random measure
+-- at a fixed measurable set, in the `ℝ≥0∞` and `.toReal` forms.
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
 
 /-!
 # Conditional moment identities and the empirical-frequency rate
@@ -259,7 +262,8 @@ private theorem ConditionallyIIDWith.integral_indicator_single
     ∫ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ∂μ := by
   have hu : Measurable fun ω => (ν ω : Measure α) B :=
-    (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp h.measurable_directing)
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply hB).comp
+      h.measurable_directing
   have hlin : ∫⁻ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, (ν ω : Measure α) B ∂μ := by
     simpa using h.lintegral_mul_indicator_single (g := fun _ => 1) hX i measurable_const hB
@@ -276,7 +280,8 @@ private theorem ConditionallyIIDWith.integral_indicator_pair
     ∫ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ := by
   have hu : Measurable fun ω => (ν ω : Measure α) B :=
-    (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp h.measurable_directing)
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply hB).comp
+      h.measurable_directing
   have hlin : ∫⁻ ω, (X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, (ν ω : Measure α) B ^ 2 ∂μ := by
     simpa using h.lintegral_mul_indicator_pair (g := fun _ => 1) hX hij measurable_const hB
@@ -299,9 +304,10 @@ private theorem ConditionallyIIDWith.integral_directing_mul_indicator
     ∫ ω, ((ν ω : Measure α) B).toReal * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ := by
   have hu : Measurable fun ω => (ν ω : Measure α) B :=
-    (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp h.measurable_directing)
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply hB).comp
+      h.measurable_directing
   have hg : Measurable fun p : ProbabilityMeasure α => (p : Measure α) B :=
-    (Measure.measurable_coe hB).comp measurable_subtype_coe
+    TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply hB
   have hlin := h.lintegral_mul_indicator_single (g := fun p => (p : Measure α) B) hX i hg hB
   have := integral_toReal_eq_of_lintegral_eq
     (hu.aemeasurable.mul
@@ -326,9 +332,9 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
           (∫ ω, ((ν ω : Measure α) B).toReal ∂μ - ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ)
         else 0 := by
   classical
-  have hu : Measurable fun ω => (ν ω : Measure α) B :=
-    (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp h.measurable_directing)
-  have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal := hu.ennreal_toReal
+  have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal :=
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
+      h.measurable_directing
   have he : ∀ i, AEMeasurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) μ := fun i =>
     measurable_one.aemeasurable.indicator₀ ((hX i).nullMeasurableSet_preimage hB)
   have hb : ∀ i, ∀ᵐ ω ∂μ, 0 ≤ (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
@@ -336,9 +342,7 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
     by_cases hmem : ω ∈ X i ⁻¹' B <;> simp [hmem]
   have hbq : ∀ᵐ ω ∂μ, 0 ≤ ((ν ω : Measure α) B).toReal
       ∧ ((ν ω : Measure α) B).toReal ≤ 1 := ae_of_all _ fun ω =>
-    ⟨ENNReal.toReal_nonneg, by
-      simpa using
-        ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (ν ω : Measure α)) (s := B))⟩
+    ⟨ENNReal.toReal_nonneg, measureReal_le_one⟩
   rw [integral_sub_mul_sub
     (integrable_mul_of_nonneg_of_le_one (he i) (he j) (hb i) (hb j))
     (integrable_mul_of_nonneg_of_le_one hq.aemeasurable (he i) hbq (hb i))
@@ -378,17 +382,14 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
       = (n : ℝ)⁻¹ * (∫ ω, ((ν ω : Measure α) B).toReal ∂μ
           - ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ) := by
   classical
-  have hu : Measurable fun ω => (ν ω : Measure α) B :=
-    (Measure.measurable_coe hB).comp (measurable_subtype_coe.comp h.measurable_directing)
-  have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal := hu.ennreal_toReal
+  have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal :=
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
+      h.measurable_directing
   have he : ∀ i, AEMeasurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) μ := fun i =>
     measurable_one.aemeasurable.indicator₀ ((hX i).nullMeasurableSet_preimage hB)
   -- the `[0, 1]` bounds feeding the `|·| ≤ 1` hypotheses of `integral_sq_average_sub`
   have hq0 : ∀ ω, 0 ≤ ((ν ω : Measure α) B).toReal := fun _ => ENNReal.toReal_nonneg
-  have hq1 : ∀ ω, ((ν ω : Measure α) B).toReal ≤ 1 := by
-    intro ω
-    simpa using
-      ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (ν ω : Measure α)) (s := B))
+  have hq1 : ∀ ω, ((ν ω : Measure α) B).toReal ≤ 1 := fun _ => measureReal_le_one
   have he0 : ∀ i ω, 0 ≤ (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω := fun i ω =>
     Set.indicator_nonneg (fun _ _ => zero_le_one) ω
   have he1 : ∀ i ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ≤ 1 := by
@@ -406,14 +407,11 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilit
     {n : ℕ} (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ ≤ (n : ℝ)⁻¹ := by
-  have hν := h.measurable_directing
   have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal :=
-    ((Measure.measurable_coe hB).comp (measurable_subtype_coe.comp hν)).ennreal_toReal
+    (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
+      h.measurable_directing
   have hq0 : ∀ ω, 0 ≤ ((ν ω : Measure α) B).toReal := fun _ => ENNReal.toReal_nonneg
-  have hq1 : ∀ ω, ((ν ω : Measure α) B).toReal ≤ 1 := by
-    intro ω
-    simpa using
-      ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := (ν ω : Measure α)) (s := B))
+  have hq1 : ∀ ω, ((ν ω : Measure α) B).toReal ≤ 1 := fun _ => measureReal_le_one
   have hqint : Integrable (fun ω => ((ν ω : Measure α) B).toReal) μ :=
     Integrable.of_bound hq.aestronglyMeasurable 1 <| ae_of_all _ fun ω => by
       rw [Real.norm_eq_abs]
