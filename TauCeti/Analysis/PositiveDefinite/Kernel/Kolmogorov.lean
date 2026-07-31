@@ -292,8 +292,9 @@ theorem kolmogorovEquiv_apply {E : Type w} [NormedAddCommGroup E]
     [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b)
     (hφdense : (Submodule.span 𝕜 (Set.range φ)).topologicalClosure = ⊤) (a : α) :
-    hK.kolmogorovEquiv φ hφ hφdense (hK.kolmogorovFeature a) = φ a :=
-  hK.kolmogorovIsometry_apply φ hφ a
+    hK.kolmogorovEquiv φ hφ hφdense (hK.kolmogorovFeature a) = φ a := by
+  rw [kolmogorovEquiv, LinearIsometryEquiv.coe_ofSurjective]
+  exact hK.kolmogorovIsometry_apply φ hφ a
 
 end IsPositiveDefiniteKernel
 
