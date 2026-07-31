@@ -105,6 +105,67 @@ namespace IsAnalyticContinuationAlong
 
 /-! ### Uniform disc representatives -/
 
+/-- Around any parameter time of a continuation there is an open neighbourhood on which the
+carried germ is constant and the path has moved by less than a prescribed `ε`.
+
+The two clauses are the continuation's own local data — `locallyEq` and continuity of `γ` —
+intersected; `ε` is arbitrary rather than tied to any disc radius. -/
+private lemma exists_isOpen_locallyEq_and_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
+    {t : X} (ht : t ∈ s) {ε : ℝ} (hε : 0 < ε) :
+    ∃ V : Set X, IsOpen V ∧ t ∈ V ∧
+      ∀ u ∈ V ∩ s, (f u =ᶠ[𝓝 (γ u)] f t) ∧ dist (γ u) (γ t) < ε := by
+  have h₁ : ∀ᶠ u in 𝓝[s] t, dist (γ u) (γ t) < ε :=
+    Metric.tendsto_nhds.1 (hf.continuousOn t ht) _ hε
+  obtain ⟨V, hVo, htV, hVsub⟩ := mem_nhdsWithin.1 (h₁.and (hf.locallyEq t ht))
+  exact ⟨V, hVo, htV, fun u hu => ⟨(hVsub hu).2, (hVsub hu).1⟩⟩
+
+/-- **Sampling a compact parameter set.** Compactness turns the purely local data of a
+continuation into a *uniform* package: one radius `ρ > 0`, a sampling `i` of parameter times, and
+a radius `R t` for the disc of analyticity at the sampled time, such that
+
+* the disc of analyticity at the sample has radius `R t ≥ 4ρ`;
+* `f t` and `f (i t)` carry the same germ, with `γ t` well inside that disc; and
+* the same holds for every `u` near `t`, still measured against the sample `i t`.
+
+The last clause is the finite subcover doing its work: one sample serves a whole parameter
+neighbourhood. -/
+private lemma exists_uniform_sampling (hf : IsAnalyticContinuationAlong f γ s) (hs : IsCompact s)
+    (hsne : s.Nonempty) :
+    ∃ ρ > 0, ∃ (i : X → X) (R : X → ℝ),
+      (∀ t ∈ s, i t ∈ s) ∧
+      (∀ t ∈ s, 4 * ρ ≤ R t) ∧
+      (∀ t ∈ s, AnalyticOnNhd ℂ (f (i t)) (ball (γ (i t)) (R t))) ∧
+      (∀ t ∈ s, (f t =ᶠ[𝓝 (γ t)] f (i t)) ∧ dist (γ t) (γ (i t)) < R t / 4) ∧
+      (∀ t ∈ s, ∀ᶠ u in 𝓝[s] t,
+        (f u =ᶠ[𝓝 (γ u)] f (i t)) ∧ dist (γ u) (γ (i t)) < R t / 4) := by
+  -- A disc of analyticity for each carried germ.
+  choose! r hr hra using fun t (ht : t ∈ s) =>
+    AnalyticAt.exists_ball_analyticOnNhd (hf.analyticAt t ht)
+  -- An open parameter neighbourhood on which the germ is constant and the path barely moves.
+  have hV : ∀ t ∈ s, ∃ V : Set X, IsOpen V ∧ t ∈ V ∧
+      ∀ u ∈ V ∩ s, (f u =ᶠ[𝓝 (γ u)] f t) ∧ dist (γ u) (γ t) < r t / 4 := fun t ht =>
+    exists_isOpen_locallyEq_and_dist_lt hf ht (by have hrt := hr t ht; linarith)
+  choose! V hVo hVt hVmem using hV
+  obtain ⟨T, hTs, hTcov⟩ := hs.elim_nhds_subcover V fun t ht => (hVo t ht).mem_nhds (hVt t ht)
+  have hTne : T.Nonempty := by
+    obtain ⟨t, ht⟩ := hsne
+    obtain ⟨j, hj, -⟩ := mem_iUnion₂.1 (hTcov ht)
+    exact ⟨j, hj⟩
+  choose! i hiT hiV using fun t (ht : t ∈ s) => mem_iUnion₂.1 (hTcov ht)
+  have hmem : ∀ t ∈ s, i t ∈ s := fun t ht => hTs _ (hiT t ht)
+  have hρpos : 0 < T.inf' hTne r / 4 := by
+    have hinf : 0 < T.inf' hTne r := (Finset.lt_inf'_iff hTne).2 fun j hj => hr j (hTs j hj)
+    linarith
+  refine ⟨T.inf' hTne r / 4, hρpos, i, fun t => r (i t), hmem, fun t ht => ?_,
+    fun t ht => hra _ (hmem t ht), fun t ht => hVmem (i t) (hmem t ht) t ⟨hiV t ht, ht⟩,
+    fun t ht => ?_⟩
+  · have hinf := Finset.inf'_le r (hiT t ht)
+    linarith
+  · have hnear : ∀ᶠ u in 𝓝[s] t, u ∈ V (i t) :=
+      mem_nhdsWithin_of_mem_nhds ((hVo _ (hmem t ht)).mem_nhds (hiV t ht))
+    filter_upwards [hnear, self_mem_nhdsWithin] with u huV hus
+    exact hVmem (i t) (hmem t ht) u ⟨huV, hus⟩
+
 /-- **Uniform disc representatives for a continuation over a compact parameter set.** The germs
 carried by a continuation can be represented by honest functions `F t`, each analytic on a disc
 about `γ t` of one radius `ρ > 0` independent of `t`, in such a way that nearby parameter times
@@ -120,71 +181,35 @@ theorem exists_representatives (hf : IsAnalyticContinuationAlong f γ s) (hs : I
       (∀ t ∈ s, ∀ᶠ u in 𝓝[s] t, EqOn (F u) (F t) (ball (γ t) ρ)) := by
   rcases s.eq_empty_or_nonempty with rfl | hsne
   · exact ⟨1, one_pos, 0, by simp, by simp, by simp⟩
-  -- A disc of analyticity for each carried germ.
-  choose! r hr hra using fun t (ht : t ∈ s) =>
-    AnalyticAt.exists_ball_analyticOnNhd (hf.analyticAt t ht)
-  -- An open parameter neighbourhood on which the germ is constant and the path barely moves.
-  have hV : ∀ t ∈ s, ∃ V : Set X, IsOpen V ∧ t ∈ V ∧
-      ∀ u ∈ V ∩ s, (f u =ᶠ[𝓝 (γ u)] f t) ∧ dist (γ u) (γ t) < r t / 4 := by
-    intro t ht
-    have hpos : 0 < r t / 4 := by have hrt := hr t ht; linarith
-    have h₁ : ∀ᶠ u in 𝓝[s] t, dist (γ u) (γ t) < r t / 4 :=
-      Metric.tendsto_nhds.1 (hf.continuousOn t ht) _ hpos
-    obtain ⟨V, hVo, htV, hVsub⟩ := mem_nhdsWithin.1 (h₁.and (hf.locallyEq t ht))
-    exact ⟨V, hVo, htV, fun u hu => ⟨(hVsub hu).2, (hVsub hu).1⟩⟩
-  choose! V hVo hVt hVmem using hV
-  obtain ⟨T, hTs, hTcov⟩ := hs.elim_nhds_subcover V fun t ht => (hVo t ht).mem_nhds (hVt t ht)
-  have hTne : T.Nonempty := by
-    obtain ⟨t, ht⟩ := hsne
-    obtain ⟨j, hj, -⟩ := mem_iUnion₂.1 (hTcov ht)
-    exact ⟨j, hj⟩
-  choose! i hiT hiV using fun t (ht : t ∈ s) => mem_iUnion₂.1 (hTcov ht)
-  -- The sampled index `i t` provides the representative `f (i t)`.
-  have hmem : ∀ t ∈ s, i t ∈ s := fun t ht => hTs _ (hiT t ht)
-  have hle : ∀ t ∈ s, T.inf' hTne r / 4 ≤ r (i t) / 4 := fun t ht => by
-    have hinf := Finset.inf'_le r (hiT t ht)
-    linarith
-  have key : ∀ t ∈ s, (f t =ᶠ[𝓝 (γ t)] f (i t)) ∧ dist (γ t) (γ (i t)) < r (i t) / 4 :=
-    fun t ht => hVmem (i t) (hmem t ht) t ⟨hiV t ht, ht⟩
-  have hρpos : 0 < T.inf' hTne r / 4 := by
-    have hinf : 0 < T.inf' hTne r := (Finset.lt_inf'_iff hTne).2 fun j hj => hr j (hTs j hj)
-    linarith
-  refine ⟨T.inf' hTne r / 4, hρpos, fun t => f (i t), fun t ht => ?_, fun t ht => (key t ht).1.symm,
+  obtain ⟨ρ, hρpos, i, R, hmem, hR, hra, key, hloc⟩ := exists_uniform_sampling hf hs hsne
+  refine ⟨ρ, hρpos, fun t => f (i t), fun t ht => ?_, fun t ht => (key t ht).1.symm,
     fun t ht => ?_⟩
-  · refine (hra _ (hmem t ht)).mono (ball_subset_ball' ?_)
+  · refine (hra t ht).mono (ball_subset_ball' ?_)
     have hdt := (key t ht).2
-    have hlet := hle t ht
-    have hrt := hr _ (hmem t ht)
+    have hRt := hR t ht
     linarith
   -- Local agreement of representatives: compare them on the overlap of their two discs.
-  · have hcont : ∀ᶠ u in 𝓝[s] t, dist (γ u) (γ t) < T.inf' hTne r / 4 :=
+  · have hcont : ∀ᶠ u in 𝓝[s] t, dist (γ u) (γ t) < ρ :=
       Metric.tendsto_nhds.1 (hf.continuousOn t ht) _ hρpos
-    have hnear : ∀ᶠ u in 𝓝[s] t, u ∈ V (i t) :=
-      mem_nhdsWithin_of_mem_nhds ((hVo _ (hmem t ht)).mem_nhds (hiV t ht))
-    filter_upwards [hcont, hnear, self_mem_nhdsWithin] with u hud huV hus
-    have hju : (f u =ᶠ[𝓝 (γ u)] f (i t)) ∧ dist (γ u) (γ (i t)) < r (i t) / 4 :=
-      hVmem (i t) (hmem t ht) u ⟨huV, hus⟩
-    have hru := hr _ (hmem u hus)
-    have hrt := hr _ (hmem t ht)
-    have hagree : f (i u) =ᶠ[𝓝 (γ u)] f (i t) := ((key u hus).1.symm).trans hju.1
-    have hCconn : IsPreconnected (ball (γ (i u)) (r (i u)) ∩ ball (γ (i t)) (r (i t))) :=
-      ((convex_ball _ _).inter (convex_ball _ _)).isPreconnected
-    have hEq : EqOn (f (i u)) (f (i t))
-        (ball (γ (i u)) (r (i u)) ∩ ball (γ (i t)) (r (i t))) :=
-      ((hra _ (hmem u hus)).mono inter_subset_left).eqOn_of_preconnected_of_eventuallyEq
-        ((hra _ (hmem t ht)).mono inter_subset_right) hCconn
+    filter_upwards [hcont, hloc t ht, self_mem_nhdsWithin] with u hud hju hus
+    have hRu := hR u hus
+    have hRt := hR t ht
+    -- The overlap of the two discs is convex, hence preconnected, so the identity principle
+    -- upgrades germ agreement at `γ u` to equality on all of it.
+    have hEq : EqOn (f (i u)) (f (i t)) (ball (γ (i u)) (R u) ∩ ball (γ (i t)) (R t)) :=
+      ((hra u hus).mono inter_subset_left).eqOn_of_preconnected_of_eventuallyEq
+        ((hra t ht).mono inter_subset_right)
+        ((convex_ball _ _).inter (convex_ball _ _)).isPreconnected
         ⟨mem_ball.2 (by have hdu := (key u hus).2; linarith),
-          mem_ball.2 (by linarith [hju.2])⟩ hagree
+          mem_ball.2 (by linarith [hju.2])⟩ (((key u hus).1.symm).trans hju.1)
     refine fun z hz => hEq ⟨?_, ?_⟩
     · refine ball_subset_ball' ?_ hz
       have htri : dist (γ t) (γ (i u)) ≤ dist (γ t) (γ u) + dist (γ u) (γ (i u)) := dist_triangle ..
       have hsymm : dist (γ t) (γ u) = dist (γ u) (γ t) := dist_comm ..
       have hdu := (key u hus).2
-      have hleu := hle u hus
       linarith
     · refine ball_subset_ball' ?_ hz
       have hdt := (key t ht).2
-      have hlet := hle t ht
       linarith
 
 /-! ### Stability under uniform perturbation of the path -/
