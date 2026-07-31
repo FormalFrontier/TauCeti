@@ -4,16 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Central.Basic
+-- `TauCeti.Algebra.Central.TensorProduct` is imported publicly, so that importing this module
+-- delivers both halves of the closure statement this file advertises: the centrality instance
+-- `TauCeti.Algebra.IsCentral.tensorProduct` as well as the simplicity instance proved here.
+-- Downstream inference then recognizes `A ⊗[K] B` as central simple from this import alone (the
+-- worked examples at the end of the file need Mathlib's matrix instances on top of that, which is
+-- why the matrix modules stay non-public). It also re-exports `Mathlib.Algebra.Central.Basic`
+-- and `Mathlib.RingTheory.TensorProduct.Basic`, which is why neither is imported again here.
+public import TauCeti.Algebra.Central.TensorProduct
 public import Mathlib.RingTheory.SimpleRing.Basic
-public import Mathlib.RingTheory.TensorProduct.Basic
 public import Mathlib.RingTheory.TensorProduct.Free
--- Non-public: none of these appears in the type of an exported declaration. The centralizer
--- characterization and the centrality instance of `TauCeti.Algebra.Central.TensorProduct`,
--- `Basis.ofVectorSpace`, flatness and `TwoSidedIdeal.comap` are used only inside proofs, and the
--- matrix algebras only by the worked examples at the end of the file, so downstream importers of
--- this module do not pay for any of them.
-import TauCeti.Algebra.Central.TensorProduct
+-- Non-public: none of these appears in the type of an exported declaration. `Basis.ofVectorSpace`,
+-- flatness and `TwoSidedIdeal.comap` are used only inside proofs, and the matrix algebras only by
+-- the worked examples at the end of the file, so downstream importers of this module do not pay
+-- for any of them.
 import Mathlib.Algebra.Central.Matrix
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 import Mathlib.RingTheory.Flat.Basic
@@ -40,9 +44,10 @@ uses only that `A` is simple with centre `K` and that `B` is simple.
   simple. Only `A` is required to be central; the mirror-image statement, with `B` central and `A`
   merely simple, follows by transporting along `Algebra.TensorProduct.comm`.
 
-This is an instance, so together with `TauCeti.Algebra.IsCentral.tensorProduct` typeclass inference
-recognizes `Mₘ(K) ⊗[K] Mₙ(K)` as a central simple `K`-algebra; that is the worked example checked
-at the end of the file.
+This is an instance, and `TauCeti.Algebra.IsCentral.tensorProduct` is re-exported by this module, so
+importing this file alone lets typeclass inference recognize `A ⊗[K] B` as a central simple
+`K`-algebra whenever `A` and `B` are. With Mathlib's matrix instances that reads
+`Mₘ(K) ⊗[K] Mₙ(K)` off with no glue; that is the worked example checked at the end of the file.
 
 ## Implementation notes
 
