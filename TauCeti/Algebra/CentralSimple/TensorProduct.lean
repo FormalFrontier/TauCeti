@@ -13,15 +13,16 @@ module
 -- and `Mathlib.RingTheory.TensorProduct.Basic`, which is why neither is imported again here.
 public import TauCeti.Algebra.Central.TensorProduct
 public import Mathlib.RingTheory.SimpleRing.Basic
-public import Mathlib.RingTheory.TensorProduct.Free
 -- Non-public: none of these appears in the type of an exported declaration. `Basis.ofVectorSpace`,
--- flatness and `TwoSidedIdeal.comap` are used only inside proofs, and the matrix algebras only by
--- the worked examples at the end of the file, so downstream importers of this module do not pay
--- for any of them.
+-- the `A`-basis `Algebra.TensorProduct.basis` of `A ⊗[K] B`, flatness and `TwoSidedIdeal.comap` are
+-- used only inside proofs (the sole declaration stating a coordinate of that basis is `private`),
+-- and the matrix algebras only by the worked examples at the end of the file, so downstream
+-- importers of this module do not pay for any of them.
 import Mathlib.Algebra.Central.Matrix
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
+import Mathlib.RingTheory.TensorProduct.Free
 import Mathlib.RingTheory.TwoSidedIdeal.Operations
 
 /-!
