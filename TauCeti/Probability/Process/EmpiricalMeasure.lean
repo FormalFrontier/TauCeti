@@ -42,6 +42,7 @@ def empiricalMeasure (x : ℕ → α) (n : ℕ) : ProbabilityMeasure α :=
     simpa using ENNReal.mul_inv_cancel hn0 hntop⟩
 
 /-- The measure underlying an empirical measure is the uniform finite sum of Dirac measures. -/
+@[simp]
 theorem empiricalMeasure_toMeasure (x : ℕ → α) (n : ℕ) :
     (empiricalMeasure x n : Measure α) =
       ∑ i ∈ Finset.range (n + 1), (((n + 1 : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i)) :=
@@ -79,7 +80,10 @@ theorem empiricalMeasure_process_apply_toReal {X : ℕ → Ω → α} {ω : Ω} 
       ((n + 1 : ℕ) : ℝ)⁻¹ *
         ∑ i ∈ Finset.range (n + 1), (X i ⁻¹' s).indicator (1 : Ω → ℝ) ω := by
   rw [empiricalMeasure_apply_toReal hs]
-  congr 1
+  refine congrArg (fun z : ℝ => ((n + 1 : ℕ) : ℝ)⁻¹ * z) ?_
+  apply Finset.sum_congr rfl
+  intro i hi
+  by_cases hxi : X i ω ∈ s <;> simp [hxi]
 
 /-- Integrating against an empirical measure is averaging over the sampled values. -/
 theorem integral_empiricalMeasure [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -96,19 +100,16 @@ theorem integral_empiricalMeasure [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
     exact (integrable_dirac' hf (by simp)).smul_measure (by simp)
 
 /-- Empirical measures depend measurably on a sequence of measurable observations. -/
-theorem measurable_empiricalMeasure {X : ℕ → Ω → α} (hX : ∀ i, Measurable (X i)) (n : ℕ) :
+theorem measurable_empiricalMeasure {X : ℕ → Ω → α}
+    (n : ℕ) (hX : ∀ i ∈ Finset.range (n + 1), Measurable (X i)) :
     Measurable fun ω => empiricalMeasure (fun i => X i ω) n := by
   have hmeasure : Measurable fun ω =>
       (empiricalMeasure (fun i => X i ω) n : Measure α) := by
-    rw [show (fun ω => (empiricalMeasure (fun i => X i ω) n : Measure α)) =
-      fun ω => ∑ i ∈ Finset.range (n + 1),
-        (((n + 1 : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (X i ω)) by
-      funext ω
-      exact empiricalMeasure_toMeasure _ _]
-    exact Finset.measurable_fun_sum _ fun i _ =>
+    simp_rw [empiricalMeasure_toMeasure]
+    exact Finset.measurable_fun_sum _ fun i hi =>
       Measure.measurable_of_measurable_coe _ fun s hs => by
         simp only [Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
-        exact measurable_const.mul (measurable_one.indicator (hX i hs))
+        exact measurable_const.mul (measurable_one.indicator (hX i hi hs))
   exact hmeasure.subtype_mk
 
 end Probability

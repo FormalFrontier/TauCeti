@@ -39,8 +39,9 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 process.  At sample size `n + 1`, the error is the Bernoulli variance of the directing measure's
 mass on `B`, divided by `n + 1`. -/
 theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsProbabilityMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
-    (hB : MeasurableSet B) (n : ℕ) :
+    (h : ConditionallyIIDWith μ X ν) (n : ℕ)
+    (hX : ∀ i ∈ Finset.range (n + 1), AEMeasurable (X i) μ)
+    (hB : MeasurableSet B) :
     ∫ ω, ((((empiricalMeasure (fun i => X i ω) n : ProbabilityMeasure α) : Measure α) B).toReal
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ =
       ((n + 1 : ℕ) : ℝ)⁻¹ *
@@ -51,8 +52,9 @@ theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsProbabili
 
 /-- Empirical-measure evaluation has mean-square error at most `1 / (n + 1)`. -/
 theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq_le
-    [IsProbabilityMeasure μ] (h : ConditionallyIIDWith μ X ν)
-    (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) (n : ℕ) :
+    [IsProbabilityMeasure μ] (h : ConditionallyIIDWith μ X ν) (n : ℕ)
+    (hX : ∀ i ∈ Finset.range (n + 1), AEMeasurable (X i) μ)
+    (hB : MeasurableSet B) :
     ∫ ω, ((((empiricalMeasure (fun i => X i ω) n : ProbabilityMeasure α) : Measure α) B).toReal
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ ≤ ((n + 1 : ℕ) : ℝ)⁻¹ := by
   simpa only [empiricalMeasure_process_apply_toReal hB] using
