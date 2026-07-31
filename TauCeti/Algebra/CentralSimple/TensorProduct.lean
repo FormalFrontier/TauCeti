@@ -9,14 +9,15 @@ public import Mathlib.RingTheory.SimpleRing.Basic
 public import Mathlib.RingTheory.TensorProduct.Basic
 public import Mathlib.RingTheory.TensorProduct.Free
 -- Non-public: none of these appears in the type of an exported declaration. The centralizer
--- subalgebra, `Basis.ofVectorSpace` and flatness are used only inside proofs, and the matrix
--- algebras only by the worked examples at the end of the file, so downstream importers of this
--- module do not pay for any of them.
+-- subalgebra, `Basis.ofVectorSpace`, flatness and `TwoSidedIdeal.comap` are used only inside
+-- proofs, and the matrix algebras only by the worked examples at the end of the file, so
+-- downstream importers of this module do not pay for any of them.
 import Mathlib.Algebra.Algebra.Subalgebra.Centralizer
 import Mathlib.Algebra.Central.Matrix
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
+import Mathlib.RingTheory.TwoSidedIdeal.Operations
 
 /-!
 # Central simple algebras are closed under tensor product
@@ -69,10 +70,11 @@ commutator `(a ⊗ₜ 1) * y - y * (a ⊗ₜ 1)` to vanish, so `y = 1 ⊗ₜ b` 
 `TauCeti.forall_commute_tmul_one_iff`; simplicity of `B` then pushes `1` into `I`.
 
 Both appeals to simplicity in `TauCeti.isSimpleRing_tensorProduct` are made by exhibiting a
-`TwoSidedIdeal.mk'`: the `i₀`-th coordinates of the elements of a two-sided ideal `I` supported in a
-fixed finite set form a two-sided ideal of `A`, and the `c : B` with `1 ⊗ₜ c ∈ I` form a two-sided
-ideal of `B`. Both ideals are nonzero, hence everything, which is how `1` enters `I`; phrasing the
-argument this way avoids ever expanding `1` as an explicit sum `∑ uⱼ a vⱼ`.
+two-sided ideal that is nonzero, hence everything: on the `A` side the `i₀`-th coordinates of the
+elements of a two-sided ideal `I` supported in a fixed finite set, built as a `TwoSidedIdeal.mk'`,
+and on the `B` side the `c : B` with `1 ⊗ₜ c ∈ I`, which is `I.comap` along
+`Algebra.TensorProduct.includeRight`. That is how `1` enters `I`; phrasing the argument this way
+avoids ever expanding `1` as an explicit sum `∑ uⱼ a vⱼ`.
 
 ## References
 
@@ -283,28 +285,12 @@ instance isSimpleRing_tensorProduct [Algebra.IsCentral K A] [IsSimpleRing A] [Is
     exact sub_eq_zero.mp hz
   obtain ⟨b, rfl⟩ := forall_commute_tmul_one_iff.mp hcomm
   have hb : b ≠ 0 := by rintro rfl; exact hy0 (by simp)
-  -- The elements `c` of `B` with `1 ⊗ₜ c ∈ I` form a two-sided ideal of `B`, and it is nonzero.
-  have hzeroB : (0 : B) ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} := by simp
-  have haddB : ∀ {c c' : B}, c ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} →
-      c' ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} → c + c' ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} := by
-    intro c c' hc hc'
-    simpa [TensorProduct.tmul_add] using I.add_mem hc hc'
-  have hnegB : ∀ {c : B}, c ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} →
-      -c ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} := by
-    intro c hc
-    simpa [TensorProduct.tmul_neg] using I.neg_mem hc
-  have hmulleftB : ∀ {c c' : B}, c' ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} →
-      c * c' ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} := by
-    intro c c' hc'
-    simpa [Algebra.TensorProduct.tmul_mul_tmul] using I.mul_mem_left ((1 : A) ⊗ₜ[K] c) _ hc'
-  have hmulrightB : ∀ {c c' : B}, c ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} →
-      c * c' ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} := by
-    intro c c' hc
-    simpa [Algebra.TensorProduct.tmul_mul_tmul] using I.mul_mem_right _ ((1 : A) ⊗ₜ[K] c') hc
-  have honeB : (1 : B) ∈ {c : B | (1 : A) ⊗ₜ[K] c ∈ I} :=
-    (TwoSidedIdeal.mem_mk' ..).mp <| IsSimpleRing.one_mem_of_ne_zero_mem
-      (TwoSidedIdeal.mk' _ hzeroB haddB hnegB hmulleftB hmulrightB) hb
-      ((TwoSidedIdeal.mem_mk' ..).mpr hyI)
+  -- The `c : B` with `1 ⊗ₜ c ∈ I` form a two-sided ideal of `B`, namely the preimage of `I` along
+  -- `Algebra.TensorProduct.includeRight`; it contains `b ≠ 0`, hence it is everything.
+  have honeB : (1 : B) ∈
+      I.comap (Algebra.TensorProduct.includeRight : B →ₐ[K] A ⊗[K] B) :=
+    IsSimpleRing.one_mem_of_ne_zero_mem _ hb ((TwoSidedIdeal.mem_comap _).mpr (by simpa using hyI))
+  rw [TwoSidedIdeal.mem_comap] at honeB
   simpa [Algebra.TensorProduct.one_def] using honeB
 
 end Field
