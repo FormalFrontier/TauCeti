@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
   statuses: read
 
@@ -29,12 +30,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: read
       - uses: actions/checkout@v4
         with:
           sparse-checkout: scripts/pr_status
       - name: Reconcile all existing PR posts
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com

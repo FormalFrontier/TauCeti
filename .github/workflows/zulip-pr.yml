@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read        # checkout the script
+  issues: read          # read review scoreboards and in-progress markers
   pull-requests: read   # read PR state
   statuses: read        # read the `build` commit status
 
@@ -33,6 +34,16 @@ jobs:
     if: github.repository == 'TauCetiProject/TauCeti'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: read
       - uses: actions/checkout@v4
         with:
           sparse-checkout: scripts/pr_status
@@ -43,7 +54,7 @@ jobs:
         # required checks, and auto-merge gates on the build status + review
         # ledger, not on this workflow.
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com

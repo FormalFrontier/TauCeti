@@ -33,7 +33,7 @@ public section
 
 namespace TauCeti
 
-open Complex Filter Function Metric Set
+open _root_.Complex Filter Function Metric Set
 open scoped ComplexConjugate Topology
 
 /--

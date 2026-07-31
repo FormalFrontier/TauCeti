@@ -107,7 +107,10 @@ lemma mapPointsFunctor_id (H : CommHopfAlgCat.{v} R) :
       𝟙 (HopfAlgebra.pointsFunctor (R := R) (H := H) :
         CommAlgCat.{w} R ⥤ GrpCat.{max v w}) := by
   ext A f
-  simp
+  -- `mapPointsFunctor (𝟙 H)` precomposes each point with the identity coordinate morphism, so
+  -- both sides are the same map on `A`-points by construction; after the bump no `simp` lemma
+  -- spans the `GrpCat.Hom.hom` wrapper the `ext` leaves behind.
+  rfl
 
 /-- `mapPointsFunctor` sends coordinate-algebra composition to reverse composition of natural
 transformations. -/
@@ -115,7 +118,10 @@ lemma mapPointsFunctor_comp {H K L : CommHopfAlgCat.{v} R} (φ : H ⟶ K) (ψ : 
     mapPointsFunctor (φ ≫ ψ) =
       mapPointsFunctor ψ ≫ mapPointsFunctor φ := by
   ext A f
-  simp [mapPointsFunctor_app_apply, AlgHom.comp_assoc]
+  -- as in `mapPointsFunctor_id`: precomposition with `φ ≫ ψ` is precomposition with `ψ` then
+  -- with `φ` by associativity of `AlgHom.comp`, which holds definitionally, and the residual
+  -- `GrpCat.Hom.hom` wrapper has no rewrite lemma after the bump.
+  rfl
 
 /-- The contravariant functor assigning to a commutative Hopf algebra its group-valued
 functor of points.

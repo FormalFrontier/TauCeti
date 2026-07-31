@@ -29,7 +29,7 @@ invariant alternating form required for the standard representation of `SL(n, k)
 
 namespace TauCeti
 
-open Matrix
+open _root_.Matrix
 
 universe u
 

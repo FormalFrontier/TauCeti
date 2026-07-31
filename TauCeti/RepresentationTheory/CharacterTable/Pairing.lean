@@ -181,7 +181,6 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
         rw [hcarrier, Nat.card_eq_fintype_card]
         rw [(Fintype.card_ofFinset (p := {g | IsConj g x})
           (Finset.univ.filter fun g => IsConj g x) (by simp)).symm]
-        rfl
   have hpair := hf (classIndicator (k := k) x⁻¹)
   rw [characterPairing_apply, hsum] at hpair
   exact (mul_ne_zero (inv_ne_zero (Invertible.ne_zero _))
