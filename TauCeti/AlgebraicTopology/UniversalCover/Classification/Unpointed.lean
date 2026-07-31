@@ -40,8 +40,8 @@ subgroup, not to compare two covers which already exist.
 
 This advances `TauCetiRoadmap/UniversalCovers/README.md`, Stage 2, item 8, second bullet:
 unpointed connected covers correspond to conjugacy classes of subgroups. It proves the
-fully faithful part of that correspondence; constructing a cover from every subgroup is the
-separate existence milestone in item 7.
+comparison-up-to-isomorphism half of that correspondence; constructing a cover from every
+subgroup is the separate existence milestone in item 7.
 
 The proof reuses `TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_iff_range_eq` for pointed
 covers and `TauCeti.IsCoveringMap.exists_range_eq_map_conj` for change of the chosen lift.
@@ -67,18 +67,18 @@ The homeomorphism need not carry `e₀` to `f₀`: its image of `e₀` is anothe
 target fibre, and changing from that point to `f₀` accounts for the conjugation. -/
 theorem exists_range_eq_map_conj_of_homeomorph_comp_eq
     [PathConnectedSpace F]
-    (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
+    (hp : Continuous p) (hq : _root_.IsCoveringMap q)
     (hpe : p e₀ = x) (hqf : q f₀ = x) (h : E ≃ₜ F) (hcomp : q ∘ h = p) :
     ∃ γ : FundamentalGroup X x,
       (mapOfEq ⟨q, hq.continuous⟩ hqf).range =
-        (mapOfEq ⟨p, hp.continuous⟩ hpe).range.map (MulAut.conj γ).toMonoidHom := by
+        (mapOfEq ⟨p, hp⟩ hpe).range.map (MulAut.conj γ).toMonoidHom := by
   have hqh : q (h e₀) = x := (congrFun hcomp e₀).trans hpe
   let f₁ : q ⁻¹' {x} := ⟨h e₀, Set.mem_singleton_iff.mpr hqh⟩
   have hrange :
-      (mapOfEq ⟨p, hp.continuous⟩ hpe).range =
+      (mapOfEq ⟨p, hp⟩ hpe).range =
         (mapOfEq ⟨q, hq.continuous⟩ hqh).range := by
     have hpcomp : (⟨q, hq.continuous⟩ : C(F, X)).comp ⟨h, h.continuous⟩ =
-        ⟨p, hp.continuous⟩ := by
+        ⟨p, hp⟩ := by
       ext e
       exact congrFun hcomp e
     apply le_antisymm
@@ -101,10 +101,7 @@ theorem exists_range_eq_map_conj_of_homeomorph_comp_eq
     hrange.symm)
 
 /-- If two pointed connected covers recover conjugate subgroups, then forgetting the chosen
-fibre points makes the covers isomorphic over the base.
-
-The source basepoint is first moved by monodromy so that its recovered subgroup equals the
-target subgroup, after which the pointed comparison theorem applies. -/
+fibre points makes the covers isomorphic over the base. -/
 theorem exists_homeomorph_comp_eq_of_range_eq_map_conj
     [PathConnectedSpace E] [LocallyPathConnectedSpace E]
     [PathConnectedSpace F] [LocallyPathConnectedSpace F]
@@ -147,7 +144,7 @@ theorem exists_homeomorph_comp_eq_iff_exists_range_eq_map_conj
   constructor
   · rintro ⟨h, hcomp⟩
     exact IsCoveringMap.exists_range_eq_map_conj_of_homeomorph_comp_eq
-      hp hq hpe hqf h hcomp
+      hp.continuous hq hpe hqf h hcomp
   · rintro ⟨γ, hrange⟩
     exact IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq_map_conj hp hq hpe hqf γ hrange
 
