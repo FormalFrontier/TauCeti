@@ -58,6 +58,12 @@ basepoint. -/
 def basepoint (H : Subgroup (FundamentalGroup X x₀)) : SubgroupQuotient x₀ H :=
   Quotient.mk'' (mk x₀ (Path.Homotopic.Quotient.refl x₀))
 
+/-- The distinguished point is the quotient class of the constant path at the basepoint. -/
+@[simp]
+theorem basepoint_eq_mk (H : Subgroup (FundamentalGroup X x₀)) :
+    basepoint x₀ H = Quotient.mk'' (mk x₀ (Path.Homotopic.Quotient.refl x₀)) :=
+  (rfl)
+
 end SubgroupQuotient
 
 /-- The canonical map from the universal cover to its orbit quotient by `H`. -/
@@ -140,7 +146,6 @@ theorem subgroupQuotientProj_comp_subgroupQuotientMap
   exact subgroupQuotientProj_mk x₀ H e
 
 /-- The distinguished point of the subgroup quotient lies over the basepoint. -/
-@[simp]
 theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupQuotientProj x₀ H (SubgroupQuotient.basepoint x₀ H) = x₀ :=
   subgroupQuotientProj_mk x₀ H _
