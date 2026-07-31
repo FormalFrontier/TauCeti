@@ -11,10 +11,12 @@ import Mathlib.Analysis.Analytic.Uniqueness
 /-!
 # Boundary uniqueness across a circular arc
 
-A holomorphic function on a disc that extends continuously to an *arc* of the bounding circle and
-is constant there is constant on the whole disc. Here an arc is `V ∩ sphere c r` for an open
-`V ⊆ ℂ` meeting the circle — a relatively open, nonempty piece of the boundary — and no hypothesis
-whatever is placed on the function along the rest of the circle.
+A holomorphic function on a disc that extends continuously to a relatively open piece of the
+bounding circle and is constant there is constant on the whole disc. That piece is
+`V ∩ sphere c r` for an open `V ⊆ ℂ` meeting the circle, and no hypothesis whatever is placed on
+the function along the rest of the circle. Nothing forces `V ∩ sphere c r` to be connected, so the
+declarations are named after that literal hypothesis, `inter_sphere`; the prose below calls such a
+set a boundary *arc*, the case of interest, but no arc parameterization is assumed.
 
 The proof is Painlevé removability, not the identity principle applied to the boundary: the
 boundary values are a set with no limit point *inside* the disc, so no uniqueness statement about
@@ -29,24 +31,39 @@ which is open and nonempty because `Ω` straddles the circle, so the identity pr
 `Ω` and hence on the nonempty open set `Ω ∩ ball c r`; a second application of the identity
 principle, this time inside `ball c r`, propagates `f = a` to the whole disc.
 
-The point of the statement is its contrapositive for injective maps: a conformal map of the disc
-that extends continuously to the closed disc is constant on *no* boundary arc, so each of its
-boundary fibres has empty interior in the circle. That is the input that layer **L5** of the
-conformal-mapping roadmap needs for boundary injectivity — the hypothesis
-`TauCeti.injOn_closure_of_injOn_frontier` runs on, and which
-`Conformal/ClusterSet.lean` records as not yet available. Carathéodory's argument identifying two
-boundary points of a Jordan domain proceeds by producing an arc on which the extension is constant
-and contradicting exactly the theorem proved here.
+The point of the statement is its contrapositive: a function that is *not* the constant `a` on the
+disc is not the constant `a` on any boundary arc, so — for an injective map, which is constant
+nowhere — every boundary fibre has empty interior in the circle.
+
+## What this does and does not supply towards L5
+
+This is a prerequisite for layer **L5** of the conformal-mapping roadmap, not that layer's
+boundary-injectivity step. Carathéodory's proof that the extension of a Riemann map of a Jordan
+domain is injective on `frontier` argues by contradiction in two halves: two identified boundary
+points cut the circle into two arcs, and the Jordan-curve geometry of the image forces the
+extension to be constant on one of them; that constancy is then impossible. Only the second half
+is proved here. Producing the constant arc from an identification of two boundary points is a
+Jordan-curve argument about the image, and is **not** proved here, nor is the singleton
+cluster-set property that produces the continuous extension in the first place —
+`Conformal/ClusterSet.lean` records both as still missing, which is why
+`TauCeti.injOn_closure_of_injOn_frontier` there carries boundary injectivity as a hypothesis. So no
+boundary-injectivity claim is discharged by this file; what it adds is the analytic
+non-degeneracy input that the missing step will consume, and there is at present no lemma in the
+repository or in Mathlib that bridges the two.
 
 ## Main results
 
-* `TauCeti.eqOn_const_ball_of_eqOn_const_arc` — a holomorphic function continuous up to a boundary
-  arc and constant on it is constant on the disc.
-* `TauCeti.eqOn_ball_of_eqOn_arc` — the two-function form: holomorphic functions agreeing on a
-  boundary arc agree on the disc.
-* `TauCeti.not_eqOn_const_arc_of_injOn` — a conformal map is constant on no boundary arc.
-* `TauCeti.interior_setOf_eq_eq_empty_of_injOn` — equivalently, each boundary fibre of a conformal
-  map of the disc has empty interior in the circle.
+* `TauCeti.eqOn_const_ball_of_eqOn_const_inter_sphere` — a holomorphic function continuous up to a
+  boundary arc and constant on it is constant on the disc.
+* `TauCeti.eqOn_ball_of_eqOn_inter_sphere` — the two-function form: holomorphic functions agreeing
+  on a boundary arc agree on the disc.
+* `TauCeti.not_eqOn_const_inter_sphere_of_not_eqOn_const_ball` and
+  `TauCeti.interior_setOf_eq_eq_empty_of_not_eqOn_const_ball` — the contrapositive, for a function
+  that is not that constant on the disc, in the two forms.
+* `TauCeti.not_eqOn_const_inter_sphere_of_injOn` and
+  `TauCeti.interior_setOf_eq_eq_empty_of_injOn` — the roadmap-facing corollaries for a conformal
+  map, which is constant on no boundary arc and each of whose boundary fibres therefore has empty
+  interior in the circle.
 
 ## Coordination with upstream Mathlib
 
@@ -104,14 +121,14 @@ private lemma exists_mem_ball_of_mem_sphere {c w : ℂ} {r δ : ℝ} (hr : 0 < r
   constructor
   · refine ⟨c + ((1 - ε : ℝ) : ℂ) * (w - c), ?_, ?_⟩
     · rw [mem_ball, dist_radialPoint_self, hwc]
-      have : |(1 - ε) - 1| = ε := by rw [show (1 - ε) - 1 = -ε by ring, abs_neg, abs_of_pos hε0]
+      have : |(1 - ε) - 1| = ε := by rw [sub_sub_cancel_left, abs_neg, abs_of_pos hε0]
       rw [this]
       exact hεδ
     · rw [mem_ball, dist_radialPoint_center, hwc, abs_of_pos (by linarith)]
       nlinarith
   · refine ⟨c + ((1 + ε : ℝ) : ℂ) * (w - c), ?_, ?_⟩
     · rw [mem_ball, dist_radialPoint_self, hwc]
-      have : |(1 + ε) - 1| = ε := by rw [show (1 + ε) - 1 = ε by ring, abs_of_pos hε0]
+      have : |(1 + ε) - 1| = ε := by rw [add_sub_cancel_left, abs_of_pos hε0]
       rw [this]
       exact hεδ
     · rw [mem_closedBall, not_le, dist_radialPoint_center, hwc, abs_of_pos (by linarith)]
@@ -124,7 +141,7 @@ arc `V ∩ sphere c r`. If that arc is nonempty, then `f` is the constant `a` on
 No hypothesis is placed on `f` along the rest of the circle: the arc alone determines the function.
 The proof continues `f - a` past the arc by `0` and applies Painlevé removability across the
 circle, then the identity principle twice; see the module docstring. -/
-theorem eqOn_const_ball_of_eqOn_const_arc (hr : 0 < r) (hV : IsOpen V)
+theorem eqOn_const_ball_of_eqOn_const_inter_sphere (hr : 0 < r) (hV : IsOpen V)
     (hcont : ContinuousOn f (V ∩ closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
     (harc : EqOn f (fun _ => a) (V ∩ sphere c r)) (hne : (V ∩ sphere c r).Nonempty) :
     EqOn f (fun _ => a) (ball c r) := by
@@ -182,32 +199,54 @@ theorem eqOn_const_ball_of_eqOn_const_arc (hr : 0 < r) (hV : IsOpen V)
 
 /-- **Boundary uniqueness on an arc, two-function form.** Holomorphic functions on `ball c r` that
 extend continuously to a nonempty boundary arc `V ∩ sphere c r` and agree there agree on the whole
-disc. This is `TauCeti.eqOn_const_ball_of_eqOn_const_arc` applied to the difference. -/
-theorem eqOn_ball_of_eqOn_arc (hr : 0 < r) (hV : IsOpen V)
+disc. This is `TauCeti.eqOn_const_ball_of_eqOn_const_inter_sphere` applied to the difference. -/
+theorem eqOn_ball_of_eqOn_inter_sphere (hr : 0 < r) (hV : IsOpen V)
     (hfc : ContinuousOn f (V ∩ closedBall c r)) (hgc : ContinuousOn g (V ∩ closedBall c r))
     (hfd : DifferentiableOn ℂ f (ball c r)) (hgd : DifferentiableOn ℂ g (ball c r))
     (harc : EqOn f g (V ∩ sphere c r)) (hne : (V ∩ sphere c r).Nonempty) :
     EqOn f g (ball c r) := by
   have h : EqOn (fun z => f z - g z) (fun _ => 0) (ball c r) :=
-    eqOn_const_ball_of_eqOn_const_arc hr hV (hfc.sub hgc) (hfd.sub hgd)
+    eqOn_const_ball_of_eqOn_const_inter_sphere hr hV (hfc.sub hgc) (hfd.sub hgd)
       (fun z hz => by simpa [sub_eq_zero] using harc hz) hne
   intro z hz
   simpa [sub_eq_zero] using h hz
 
-/-- **A conformal map is constant on no boundary arc.** If `f` is holomorphic and injective on
-`ball c r` and continuous up to a nonempty boundary arc `V ∩ sphere c r`, it takes no value
-constantly on that arc.
+/-- **A function nonconstant on the disc is constant on no boundary arc.** If `f` is holomorphic on
+`ball c r`, continuous up to a nonempty boundary arc `V ∩ sphere c r`, and is not the constant `a`
+on the disc, then it is not the constant `a` on that arc.
 
-Were it constant there, `TauCeti.eqOn_const_ball_of_eqOn_const_arc` would make it constant on the
-disc, which has more than one point. This is the boundary non-degeneracy that layer L5 of the
-conformal-mapping roadmap needs: Carathéodory's identification of two boundary points of a Jordan
-domain is contradicted by exactly this statement. -/
-theorem not_eqOn_const_arc_of_injOn (hr : 0 < r) (hV : IsOpen V)
+This is the contrapositive of `TauCeti.eqOn_const_ball_of_eqOn_const_inter_sphere`; injectivity of
+`f` is not needed, only its failure to be this one constant. -/
+theorem not_eqOn_const_inter_sphere_of_not_eqOn_const_ball (hr : 0 < r) (hV : IsOpen V)
     (hcont : ContinuousOn f (V ∩ closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) (hne : (V ∩ sphere c r).Nonempty) (a : ℂ) :
-    ¬ EqOn f (fun _ => a) (V ∩ sphere c r) := by
-  intro harc
-  have hconst := eqOn_const_ball_of_eqOn_const_arc hr hV hcont hdiff harc hne
+    (hne : (V ∩ sphere c r).Nonempty) (hnc : ¬ EqOn f (fun _ => a) (ball c r)) :
+    ¬ EqOn f (fun _ => a) (V ∩ sphere c r) := fun harc =>
+  hnc (eqOn_const_ball_of_eqOn_const_inter_sphere hr hV hcont hdiff harc hne)
+
+/-- **The boundary fibres of a nonconstant function contain no arc.** For `f` holomorphic on
+`ball c r`, continuous on the closed disc and not the constant `a` on the disc, the set of boundary
+points at which `f` takes the value `a` has empty interior in the circle.
+
+This is the relative-topology packaging of
+`TauCeti.not_eqOn_const_inter_sphere_of_not_eqOn_const_ball`: a nonempty open subset of
+`sphere c r` is precisely a nonempty arc `V ∩ sphere c r` for an open `V ⊆ ℂ`. -/
+theorem interior_setOf_eq_eq_empty_of_not_eqOn_const_ball (hr : 0 < r)
+    (hcont : ContinuousOn f (closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
+    (hnc : ¬ EqOn f (fun _ => a) (ball c r)) :
+    interior {z : sphere c r | f (z : ℂ) = a} = ∅ := by
+  rw [eq_empty_iff_forall_notMem]
+  intro z hz
+  obtain ⟨u, hu, hsub⟩ := (mem_nhds_subtype _ z _).mp (mem_interior_iff_mem_nhds.mp hz)
+  obtain ⟨V, hVu, hVo, hzV⟩ := _root_.mem_nhds_iff.mp hu
+  refine not_eqOn_const_inter_sphere_of_not_eqOn_const_ball hr hVo
+    (hcont.mono inter_subset_right) hdiff ⟨z, hzV, z.2⟩ hnc fun y hy => ?_
+  have hyu : (⟨y, hy.2⟩ : sphere c r) ∈ Subtype.val ⁻¹' u := Set.mem_preimage.mpr (hVu hy.1)
+  exact hsub hyu
+
+/-- An injective function is no constant on the disc: the disc has more than one point. -/
+private lemma not_eqOn_const_ball_of_injOn (hr : 0 < r) (hinj : InjOn f (ball c r)) (a : ℂ) :
+    ¬ EqOn f (fun _ => a) (ball c r) := by
+  intro hconst
   have hc : c ∈ ball c r := mem_ball_self hr
   have hc' : c + ((r / 2 : ℝ) : ℂ) ∈ ball c r := by
     rw [mem_ball, dist_eq_norm, add_sub_cancel_left, Complex.norm_real, Real.norm_eq_abs,
@@ -217,21 +256,31 @@ theorem not_eqOn_const_arc_of_injOn (hr : 0 < r) (hV : IsOpen V)
   have hzero : ((r / 2 : ℝ) : ℂ) = 0 := by linear_combination -heq
   exact absurd (Complex.ofReal_eq_zero.mp hzero) (by linarith)
 
+/-- **A conformal map is constant on no boundary arc.** If `f` is holomorphic and injective on
+`ball c r` and continuous up to a nonempty boundary arc `V ∩ sphere c r`, it takes no value
+constantly on that arc.
+
+This is the roadmap-facing corollary of
+`TauCeti.not_eqOn_const_inter_sphere_of_not_eqOn_const_ball`, an injective map being constant
+nowhere. It is the boundary non-degeneracy that layer L5 of the conformal-mapping roadmap needs;
+see the module docstring for what still separates it from boundary injectivity. -/
+theorem not_eqOn_const_inter_sphere_of_injOn (hr : 0 < r) (hV : IsOpen V)
+    (hcont : ContinuousOn f (V ∩ closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) (hne : (V ∩ sphere c r).Nonempty) (a : ℂ) :
+    ¬ EqOn f (fun _ => a) (V ∩ sphere c r) :=
+  not_eqOn_const_inter_sphere_of_not_eqOn_const_ball hr hV hcont hdiff hne
+    (not_eqOn_const_ball_of_injOn hr hinj a)
+
 /-- **The boundary fibres of a conformal map contain no arc.** For `f` holomorphic and injective on
 `ball c r` and continuous on the closed disc, the set of boundary points at which `f` takes a fixed
 value has empty interior in the circle.
 
-This is the relative-topology packaging of `TauCeti.not_eqOn_const_arc_of_injOn`: a nonempty open
-subset of `sphere c r` is precisely a nonempty arc `V ∩ sphere c r` for an open `V ⊆ ℂ`. -/
+This is the roadmap-facing corollary of
+`TauCeti.interior_setOf_eq_eq_empty_of_not_eqOn_const_ball`. -/
 theorem interior_setOf_eq_eq_empty_of_injOn (hr : 0 < r) (hcont : ContinuousOn f (closedBall c r))
     (hdiff : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) (a : ℂ) :
-    interior {z : sphere c r | f (z : ℂ) = a} = ∅ := by
-  rw [eq_empty_iff_forall_notMem]
-  intro z hz
-  obtain ⟨u, hu, hsub⟩ := (mem_nhds_subtype _ z _).mp (mem_interior_iff_mem_nhds.mp hz)
-  obtain ⟨V, hVu, hVo, hzV⟩ := _root_.mem_nhds_iff.mp hu
-  refine not_eqOn_const_arc_of_injOn hr hVo (hcont.mono inter_subset_right) hdiff hinj
-    ⟨z, hzV, z.2⟩ a fun y hy => ?_
-  exact hsub (show ((⟨y, hy.2⟩ : sphere c r) : ℂ) ∈ u from hVu hy.1)
+    interior {z : sphere c r | f (z : ℂ) = a} = ∅ :=
+  interior_setOf_eq_eq_empty_of_not_eqOn_const_ball hr hcont hdiff
+    (not_eqOn_const_ball_of_injOn hr hinj a)
 
 end TauCeti
