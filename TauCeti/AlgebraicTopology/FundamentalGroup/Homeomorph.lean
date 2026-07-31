@@ -34,6 +34,7 @@ the unit circle `Circle ⊆ ℂ`, obtained from the additive-circle computation 
 
 * `TauCeti.FundamentalGroup.mapOfEq_comp`: `mapOfEq g hg (mapOfEq f hf p) = mapOfEq (g.comp f) _ p`.
 * `TauCeti.FundamentalGroup.mapOfEq_id`: `mapOfEq (ContinuousMap.id X) h = id`.
+* `TauCeti.FundamentalGroup.mapOfEq_rfl`: along the reflexivity proof, `mapOfEq` is `map`.
 * `TauCeti.FundamentalGroup.homeomorphMulEquivOfEq`: `π₁(X, x) ≃* π₁(Y, y)` from `e : X ≃ₜ Y`
   with `e x = y`.
 * `TauCeti.FundamentalGroup.homeomorphMulEquiv`: `π₁(X, x) ≃* π₁(Y, e x)`.
@@ -72,6 +73,18 @@ theorem mapOfEq_id (h : (ContinuousMap.id X) x = x) (p : _root_.FundamentalGroup
     | h γ => exact congrArg _ (Path.map_id γ)
   rw [_root_.FundamentalGroup.mapOfEq_apply, key]
   exact Path.Homotopic.Quotient.cast_rfl_rfl p
+
+/-- Transporting the target basepoint along the reflexivity proof does nothing: `mapOfEq f rfl`
+is Mathlib's `FundamentalGroup.map f x`.
+
+This is the comparison needed whenever a statement phrased with a general basepoint equation
+`f x = y` is applied to a lifting criterion phrased at the basepoint `f x` itself. -/
+@[simp]
+theorem mapOfEq_rfl (f : C(X, Y)) :
+    _root_.FundamentalGroup.mapOfEq f (rfl : f x = f x) = _root_.FundamentalGroup.map f x := by
+  ext γ
+  rw [_root_.FundamentalGroup.mapOfEq_apply]
+  exact Path.Homotopic.Quotient.cast_rfl_rfl _
 
 /-- The induced map `mapOfEq` depends only on the underlying continuous map, not on the chosen
 proof of the basepoint equation: two equal continuous maps induce the same map. -/

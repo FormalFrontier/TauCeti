@@ -234,7 +234,6 @@ def lift (f : ∀ n, GridDiagram n → α)
 
 /-- Evaluating a lifted function on the class of a diagram recovers its value on that
 diagram. -/
-@[simp]
 theorem lift_toGridLink (f : ∀ n, GridDiagram n → α)
     (hrows : ∀ {n} (G : GridDiagram n), f n G = f n (G.relabelRows (finRotate n)))
     (hcolumns : ∀ {n} (G : GridDiagram n), f n G = f n (G.relabelColumns (finRotate n)))
