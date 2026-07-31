@@ -33,8 +33,8 @@ that line and the functional dual to it, and both are read off the identificatio
 
 * `TauCeti.epi_indecProjRepToSimpleRep`: `Pᵢ ↠ Sᵢ` is an epimorphism, and
   `TauCeti.mono_simpleRepToIndecInjRep`: `Sᵢ ↪ Iᵢ` is a monomorphism.
-* `TauCeti.exists_smul_indecProjRepToSimpleRep` and
-  `TauCeti.exists_smul_simpleRepToIndecInjRep`: every morphism `Pᵢ ⟶ Sᵢ`, respectively
+* `TauCeti.exists_eq_smul_indecProjRepToSimpleRep` and
+  `TauCeti.exists_eq_smul_simpleRepToIndecInjRep`: every morphism `Pᵢ ⟶ Sᵢ`, respectively
   `Sᵢ ⟶ Iᵢ`, is a scalar multiple of the canonical one, so each comparison morphism is unique up
   to a scalar.
 
@@ -46,27 +46,27 @@ envelope* (an essential extension) is neither proved nor true in this generality
 with one vertex and one loop the path algebra is `k[X]`, the kernel of `Pᵢ ↠ Sᵢ` is the ideal
 `(X)`, and `(X) + (X - 1) = k[X]` with `(X - 1)` proper, so that kernel is not superfluous. What is
 recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_of_length_ne_zero`: the morphism
-kills the basis vector of every path of positive length, so its kernel contains the arrow ideal.
-That ideal is the Jacobson radical when it is nilpotent, for instance for a finite acyclic quiver,
-but not in general: for the one-loop quiver the radical of `k[X]` is zero. Identifying the kernel
-with the radical, and with it the technical statements, is left to the Layer 3 theory of covers and
-envelopes, which is not yet available.
+kills the basis vector of every path of positive length, hence, by linearity, their whole span.
+That span is what the arrow ideal of the path algebra cuts out of `Pᵢ`, but no ideal of the path
+algebra is defined here and none is claimed: the statement quantifies over path basis vectors and
+nothing else. Naming that subrepresentation, comparing it with the Jacobson radical — the two agree
+when the arrow ideal is nilpotent, for instance for a finite acyclic quiver, and not in general,
+since for the one-loop quiver the radical of `k[X]` is zero — and with them the technical
+statements above, is left to the Layer 3 theory of covers and envelopes, which is not yet
+available.
 
-The field, the vertex type and the arrow types share one universe here, where the three files
-building `Sᵢ`, `Pᵢ` and `Iᵢ` each keep them separate. The reason is that the vertex spaces of `Pᵢ`
-and `Iᵢ` are built on `Quiver.Path i j`, so they live in the universe `max u v w` of the field, the
-vertices and the arrows, whereas `Sᵢ` is built on the field itself and lives in the universe `u` of
-the field alone. The three objects therefore lie in a common category `TauCeti.QuiverRep k Q`
-exactly when `v, w ≤ u`, and `u = v = w` is the strongest such alignment Lean can state, there
-being no way to hypothesize a universe inequality. Writing the alignment as `k : Type (max u v w)`
-with `Q : Type v` and `Quiver.{w} Q` is not an option, tempting as it looks: a declaration whose
-signature mentions `u`, `v` and `w` only inside that one `max` cannot be applied afterwards, since
-every use asks Lean to solve `max ?a ?b ?c =?= max u v w`, which has no unique solution and is
-reported as `stuck at solving universe constraint`; Lean's own `linter.checkUnivs` flags the
-signature for exactly this reason. Lifting the restriction would instead mean rebuilding `Sᵢ` on a
-`ULift` of the field, which would re-index every existing statement about it; `Sᵢ`, `Pᵢ` and `Iᵢ`
-themselves are constructed with no relation between the universes, and only the statements
-*comparing* them are restricted here.
+The field lives in the universe `max v w` of the vertices and the arrows here, where the three
+files building `Sᵢ`, `Pᵢ` and `Iᵢ` let its universe be independent. The reason is that the vertex
+spaces of `Pᵢ` and `Iᵢ` are built on `Quiver.Path i j`, so for `k : Type u` they live in
+`max u v w`, whereas `Sᵢ` is built on the field itself and lives in `u`. The three objects
+therefore lie in a common category `TauCeti.QuiverRep k Q` exactly when `v, w ≤ u`, which Lean has
+no way to hypothesize; `u = max v w` is the least such `u`, and stating it that way leaves the
+vertex and the arrow universes independent of each other, so these declarations apply to a quiver
+whose vertices and arrows are in different universes as readily as to one where all three universes
+agree. What they do not cover is a field in a universe strictly larger than the vertices and the
+arrows; reaching that would mean rebuilding `Sᵢ` on a `ULift` of the field, re-indexing every
+existing statement about it. `Sᵢ`, `Pᵢ` and `Iᵢ` themselves are constructed with no relation
+between the universes, and only the statements *comparing* them are restricted here.
 
 A vertex `i : Q` is used below as an object of the free category `CategoryTheory.Paths Q`, which is
 `Q` itself only by unfolding a semireducible definition; the `(Paths.of Q).obj` annotations record
@@ -85,9 +85,9 @@ namespace TauCeti
 
 open CategoryTheory CategoryTheory.Limits
 
-universe u
+universe v w
 
-variable (k : Type u) {Q : Type u} [Field k] [Quiver.{u} Q]
+variable (k : Type (max v w)) {Q : Type v} [Field k] [Quiver.{w} Q]
 
 /-! ### The surjection from a vertex projective onto its vertex simple -/
 
@@ -127,8 +127,8 @@ theorem indecProjRepHomEquiv_indecProjRepToSimpleRep (i : Q) :
 -- lemma could fire and `simpNF` reports "Left-hand side simplifies ... using
 -- simp only [*, TauCeti.indecProjRepToSimpleRep_app_basis]". The `simp` form of this statement is
 -- `simpleRep_map_eq_zero_of_length_ne_zero`, which the proof below is exactly the composite with.
-/-- **The surjection `Pᵢ ↠ Sᵢ` kills the arrow ideal**: the basis vector of a path of positive
-length goes to zero. -/
+/-- **The surjection `Pᵢ ↠ Sᵢ` kills every path of positive length**: the basis vector of such a
+path goes to zero, and so, by linearity, does everything in the span of those basis vectors. -/
 theorem indecProjRepToSimpleRep_app_basis_of_length_ne_zero {i j : Q} (p : Quiver.Path i j)
     (hp : p.length ≠ 0) :
     (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) = 0 := by
@@ -141,7 +141,7 @@ theorem indecProjRepToSimpleRep_app_surjective (i j : Q) :
     Function.Surjective ((indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j)) := by
   rcases eq_or_ne j i with rfl | hj
   · intro y
-    obtain ⟨c, rfl⟩ := exists_smul_simpleRepGenerator k y
+    obtain ⟨c, rfl⟩ := exists_eq_smul_simpleRepGenerator k y
     refine ⟨c • indecProjRepBasis k j j Quiver.Path.nil, ?_⟩
     -- Stated as a `have`: the component is a `ModuleCat` morphism read through
     -- `ConcreteCategory.hom`, which `rw [map_smul]` cannot see past.
@@ -160,6 +160,11 @@ each component is surjective. -/
 instance epi_indecProjRepToSimpleRep (i : Q) : Epi (indecProjRepToSimpleRep k i) := by
   haveI : ∀ X : Paths Q, Epi ((indecProjRepToSimpleRep k i).app X) := by
     intro X
+    -- `NatTrans.epi_of_epi_app` quantifies over objects of the free category `Paths Q`, while the
+    -- component lemma is stated for a vertex `j : Q`. `Paths Q` is a semireducible copy of `Q`, so
+    -- the two types agree only by unfolding it: no lemma rewrites `X` and `change` is what crosses
+    -- the identification. The `(Paths.of Q).obj` in the component lemma records the same step in
+    -- the other direction.
     change Q at X
     exact (ModuleCat.epi_iff_surjective _).mpr (indecProjRepToSimpleRep_app_surjective k i X)
   exact NatTrans.epi_of_epi_app _
@@ -172,9 +177,9 @@ theorem indecProjRepToSimpleRep_ne_zero (i : Q) : indecProjRepToSimpleRep k i �
 
 /-- **The surjection `Pᵢ ↠ Sᵢ` is unique up to a scalar**: `Hom(Pᵢ, Sᵢ)` is the line spanned by
 `TauCeti.indecProjRepToSimpleRep`. -/
-theorem exists_smul_indecProjRepToSimpleRep {i : Q} (f : indecProjRep k Q i ⟶ simpleRep k Q i) :
+theorem exists_eq_smul_indecProjRepToSimpleRep {i : Q} (f : indecProjRep k Q i ⟶ simpleRep k Q i) :
     ∃ c : k, f = c • indecProjRepToSimpleRep k i := by
-  obtain ⟨c, hc⟩ := exists_smul_simpleRepGenerator k (indecProjRepHomEquiv i (simpleRep k Q i) f)
+  obtain ⟨c, hc⟩ := exists_eq_smul_simpleRepGenerator k (indecProjRepHomEquiv i (simpleRep k Q i) f)
   refine ⟨c, (indecProjRepHomEquiv i (simpleRep k Q i)).injective ?_⟩
   rw [map_smul, indecProjRepHomEquiv_indecProjRepToSimpleRep, hc]
 
@@ -228,6 +233,9 @@ each component is injective. -/
 instance mono_simpleRepToIndecInjRep (i : Q) : Mono (simpleRepToIndecInjRep k i) := by
   haveI : ∀ X : Paths Q, Mono ((simpleRepToIndecInjRep k i).app X) := by
     intro X
+    -- As in `TauCeti.epi_indecProjRepToSimpleRep`: `NatTrans.mono_of_mono_app` quantifies over
+    -- objects of `Paths Q` and the component lemma over vertices, and only unfolding the
+    -- semireducible `Paths Q` identifies the two, which is what `change` does.
     change Q at X
     exact (ModuleCat.mono_iff_injective _).mpr (simpleRepToIndecInjRep_app_injective k i X)
   exact NatTrans.mono_of_mono_app _
@@ -243,13 +251,13 @@ theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 
 
 /-- **The embedding `Sᵢ ↪ Iᵢ` is unique up to a scalar**: `Hom(Sᵢ, Iᵢ)` is the line spanned by
 `TauCeti.simpleRepToIndecInjRep`. -/
-theorem exists_smul_simpleRepToIndecInjRep {i : Q} (f : simpleRep k Q i ⟶ indecInjRep k Q i) :
+theorem exists_eq_smul_simpleRepToIndecInjRep {i : Q} (f : simpleRep k Q i ⟶ indecInjRep k Q i) :
     ∃ c : k, f = c • simpleRepToIndecInjRep k i := by
   refine ⟨indecInjRepHomEquiv i (simpleRep k Q i) f (simpleRepGenerator k i),
     (indecInjRepHomEquiv i (simpleRep k Q i)).injective ?_⟩
   rw [map_smul, indecInjRepHomEquiv_simpleRepToIndecInjRep]
   refine LinearMap.ext fun x ↦ ?_
-  obtain ⟨c, rfl⟩ := exists_smul_simpleRepGenerator k x
+  obtain ⟨c, rfl⟩ := exists_eq_smul_simpleRepGenerator k x
   simp [smul_eq_mul, mul_comm]
 
 end TauCeti

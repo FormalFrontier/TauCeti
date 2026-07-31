@@ -30,7 +30,7 @@ is a simple `k`-module.
 ## Main results
 
 * `TauCeti.simpleRep_simple`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
-* `TauCeti.exists_smul_simpleRepGenerator`: `(Sᵢ)ᵢ` is the line spanned by the generator.
+* `TauCeti.exists_eq_smul_simpleRepGenerator`: `(Sᵢ)ᵢ` is the line spanned by the generator.
 * `TauCeti.hom_simpleRep_eq_zero_iff` and `TauCeti.simpleRep_hom_eq_zero_iff`: a morphism into or
   out of `Sᵢ` is detected by its component at `i`.
 * `TauCeti.dimVector_simpleRep`: the dimension vector of `Sᵢ` is `Pi.single i 1`.
@@ -125,7 +125,7 @@ theorem simpleRepSelfEquiv_apply_generator (i : Q) :
 
 /-- **The vertex simple is a line at its vertex**: every element of `(Sᵢ)ᵢ` is a multiple of the
 generator. -/
-theorem exists_smul_simpleRepGenerator {i : Q}
+theorem exists_eq_smul_simpleRepGenerator {i : Q}
     (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
     ∃ c : k, x = c • simpleRepGenerator k i := by
   refine ⟨simpleRepSelfEquiv k i x, ?_⟩
