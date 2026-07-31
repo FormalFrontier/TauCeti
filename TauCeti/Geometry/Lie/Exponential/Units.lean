@@ -11,21 +11,23 @@ public import Mathlib.Analysis.Normed.Algebra.Exponential
 
 The exponential of an element of a complete normed real algebra is invertible, with inverse the
 exponential of its negation. This file packages that fact as a units-valued map
-`TauCeti.expUnits : R → Rˣ` and records its one-parameter subgroup law along every real line
+`TauCeti.expUnit : R → Rˣ` and records its one-parameter subgroup law along every real line
 through the algebra.
 
 This is the Banach-algebra model for the exponential map of a Lie group. The later abstract
-construction should recover `expUnits` when specialized to the Lie group `Rˣ`.
+construction should recover `expUnit` when specialized to the Lie group `Rˣ`.
 
 ## Main definitions
 
-* `TauCeti.expUnits`: `NormedSpace.exp x`, regarded as a unit of the algebra.
+* `TauCeti.expUnit`: `NormedSpace.exp x`, regarded as a unit of the algebra.
 
 ## Main results
 
-* `TauCeti.expUnits_coe`: coercing `expUnits x` back to the algebra gives `NormedSpace.exp x`.
+* `TauCeti.expUnit_coe`: coercing `expUnit x` back to the algebra gives `NormedSpace.exp x`.
+* `TauCeti.expUnit_add_of_commute`: the exponential addition law as an equality of units.
+* `TauCeti.expUnit_zero`, `TauCeti.expUnit_neg`: the identity and inverse laws.
 * `TauCeti.exp_add_smul`: `t ↦ exp (t • x)` satisfies the one-parameter subgroup law.
-* `TauCeti.expUnits_add_smul`: the same law as an equality in the group of units.
+* `TauCeti.expUnit_add_smul`: the same law as an equality in the group of units.
 
 ## References
 
@@ -49,13 +51,35 @@ private theorem isUnit_exp_real (x : R) : IsUnit (exp x) :=
 
 Its inverse is represented by `NormedSpace.exp (-x)`, as witnessed by
 `NormedSpace.isUnit_exp_of_mem_ball`. -/
-noncomputable def expUnits (x : R) : Rˣ :=
+noncomputable def expUnit (x : R) : Rˣ :=
   (isUnit_exp_real x).unit
 
-/-- Coercing `expUnits x` to the algebra recovers `NormedSpace.exp x`. -/
+/-- Coercing `expUnit x` to the algebra recovers `NormedSpace.exp x`. -/
 @[simp]
-theorem expUnits_coe (x : R) : (expUnits x : R) = exp x :=
+theorem expUnit_coe (x : R) : (expUnit x : R) = exp x :=
   (isUnit_exp_real x).unit_spec
+
+/-- The exponential addition law for commuting elements, lifted to the group of units. -/
+theorem expUnit_add_of_commute {x y : R} (hxy : Commute x y) :
+    expUnit (x + y) = expUnit x * expUnit y := by
+  apply Units.ext
+  simpa only [expUnit_coe, Units.val_mul] using
+    exp_add_of_commute_of_mem_ball (𝕂 := ℝ) hxy
+      ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
+      ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
+
+/-- The exponential of zero is the identity unit. -/
+@[simp]
+theorem expUnit_zero : expUnit (0 : R) = 1 := by
+  apply Units.ext
+  simp
+
+/-- The exponential of a negation is the inverse unit. -/
+@[simp]
+theorem expUnit_neg (x : R) : expUnit (-x) = (expUnit x)⁻¹ := by
+  apply eq_inv_of_mul_eq_one_left
+  rw [← expUnit_add_of_commute ((Commute.refl x).neg_left)]
+  simp
 
 /-- Along a fixed direction `x`, the Banach-algebra exponential is a one-parameter subgroup. -/
 theorem exp_add_smul (x : R) (s t : ℝ) :
@@ -67,9 +91,9 @@ theorem exp_add_smul (x : R) (s t : ℝ) :
     ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
 
 /-- The one-parameter subgroup law lifted from the algebra to its group of units. -/
-theorem expUnits_add_smul (x : R) (s t : ℝ) :
-    expUnits ((s + t) • x) = expUnits (s • x) * expUnits (t • x) := by
-  apply Units.ext
-  simpa only [expUnits_coe, Units.val_mul] using exp_add_smul x s t
+theorem expUnit_add_smul (x : R) (s t : ℝ) :
+    expUnit ((s + t) • x) = expUnit (s • x) * expUnit (t • x) := by
+  rw [add_smul]
+  exact expUnit_add_of_commute (((Commute.refl x).smul_left s).smul_right t)
 
 end TauCeti
