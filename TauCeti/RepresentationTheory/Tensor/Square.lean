@@ -8,6 +8,7 @@ public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
 public import TauCeti.RepresentationTheory.SymmetricPower
+public import TauCeti.LinearAlgebra.Trace.Prod
 public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
@@ -148,6 +149,35 @@ private theorem toTensorPower_injective {R : Type} {M : Type*}
   simp only [exteriorPower.ιMultiDual, exteriorPower.ιMulti_family,
     pairingDual_ιMulti_apply, h]
 
+-- Along a splitting `e` identifying `A` with the first summand via `i`, conjugating by `e` sends
+-- an endomorphism restricting to `fA` along `i` to one preserving that summand, acting as `fA`.
+private theorem conj_comp_inl_eq_inl_comp {R A B C : Type*} [Semiring R]
+    [AddCommMonoid A] [Module R A] [AddCommMonoid B] [Module R B] [AddCommMonoid C] [Module R C]
+    {i : A →ₗ[R] B} {fA : A →ₗ[R] A} {fB : B →ₗ[R] B} (e : B ≃ₗ[R] A × C)
+    (hi : ∀ x : A, e.symm ((LinearMap.inl R A C) x) = i x) (hfi : fB.comp i = i.comp fA) :
+    (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B)).comp (LinearMap.inl R A C)
+      = (LinearMap.inl R A C).comp fA := by
+  have hi' : ∀ x : A, e (i x) = (LinearMap.inl R A C) x := fun x => by
+    rw [← hi x, LinearEquiv.apply_symm_apply]
+  refine LinearMap.ext fun a => ?_
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hi]
+  rw [← LinearMap.comp_apply, hfi, LinearMap.comp_apply, hi']
+
+-- Dually, along a splitting `e` identifying `C` with the second summand via `q`, conjugating by
+-- `e` sends an endomorphism covering `fC` along `q` to one covering `fC` on that summand.
+private theorem snd_comp_conj_eq_comp_snd {R A B C : Type*} [Semiring R]
+    [AddCommMonoid A] [Module R A] [AddCommMonoid B] [Module R B] [AddCommMonoid C] [Module R C]
+    {q : B →ₗ[R] C} {fB : B →ₗ[R] B} {fC : C →ₗ[R] C} (e : B ≃ₗ[R] A × C)
+    (hq : ∀ b : B, (LinearMap.snd R A C) (e b) = q b) (hfq : q.comp fB = fC.comp q) :
+    (LinearMap.snd R A C).comp
+        (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B))
+      = fC.comp (LinearMap.snd R A C) := by
+  have hq' : ∀ x : A × C, q (e.symm x) = (LinearMap.snd R A C) x := fun x => by
+    rw [← hq (e.symm x), LinearEquiv.apply_symm_apply]
+  refine LinearMap.ext fun x => ?_
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hq]
+  rw [← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hq']
+
 -- Split an exact sequence as vector spaces. In that splitting the middle action is block
 -- triangular, so its trace is the sum of the traces on the subspace and the quotient.
 private theorem trace_eq_add_of_exact
@@ -167,49 +197,13 @@ private theorem trace_eq_add_of_exact
   obtain ⟨s, hs⟩ := q.exists_rightInverse_of_surjective (LinearMap.range_eq_top.mpr hq)
   obtain ⟨e, hie, hqe⟩ :=
     (LinearMap.exact_iff.mpr hexact.symm).splitSurjectiveEquiv hi ⟨s, hs⟩
-  -- `B` inherits finite-dimensionality from the splitting, so it need not be assumed.
-  haveI : FiniteDimensional K B := e.symm.finiteDimensional
-  -- In that splitting `fB` becomes block upper triangular: it fixes the `A` summand, acting there
-  -- as `fA`, and covers `fC` on the `C` factor.
-  set F : (A × C) →ₗ[K] (A × C) := e.conj fB with hF_def
   have hia : ∀ x : A, e.symm ((LinearMap.inl K A C) x) = i x := fun x => by rw [hie]; rfl
-  have hie' : ∀ x : A, e (i x) = (LinearMap.inl K A C) x := fun x => by
-    rw [← hia x, LinearEquiv.apply_symm_apply]
-  have hF_inl : F.comp (LinearMap.inl K A C) = (LinearMap.inl K A C).comp fA := by
-    apply LinearMap.ext
-    intro a
-    simp only [LinearMap.comp_apply, hF_def, LinearEquiv.conj_apply_apply, hia]
-    rw [← LinearMap.comp_apply, hfi, LinearMap.comp_apply, hie']
   have hsnd : ∀ b : B, (LinearMap.snd K A C) (e b) = q b := fun b => by rw [hqe]; rfl
-  have hqsymm : ∀ x : A × C, q (e.symm x) = (LinearMap.snd K A C) x := fun x => by
-    rw [← hsnd (e.symm x), LinearEquiv.apply_symm_apply]
-  have hsndF : (LinearMap.snd K A C).comp F = fC.comp (LinearMap.snd K A C) := by
-    apply LinearMap.ext
-    intro x
-    simp only [LinearMap.comp_apply, hF_def, LinearEquiv.conj_apply_apply, hsnd]
-    rw [← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hqsymm]
-  -- Triangularity: the only off-diagonal block is `C → A`. Composed the other way round it is
-  -- zero, so `trace_comp_comm'` makes its contribution vanish.
-  set u : C →ₗ[K] A := (LinearMap.fst K A C).comp (F.comp (LinearMap.inr K A C)) with hu_def
-  have hF : F = LinearMap.prodMap fA fC +
-      (LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C)) := by
-    apply LinearMap.ext
-    rintro ⟨a, c⟩
-    have hsplit : ((a, c) : A × C) = (LinearMap.inl K A C) a + (LinearMap.inr K A C) c := by
-      ext <;> simp
-    apply Prod.ext
-    · rw [hsplit, map_add, ← LinearMap.comp_apply, hF_inl]
-      simp [hu_def]
-    · simpa only [LinearMap.add_apply, LinearMap.prodMap_apply, LinearMap.comp_apply,
-        LinearMap.inl_apply, LinearMap.snd_apply, Prod.snd_add, add_zero] using
-          LinearMap.congr_fun hsndF (a, c)
-  have hoff : LinearMap.trace K (A × C)
-      ((LinearMap.inl K A C).comp (u.comp (LinearMap.snd K A C))) = 0 := by
-    rw [LinearMap.trace_comp_comm']
-    have hz : (u.comp (LinearMap.snd K A C)).comp (LinearMap.inl K A C) = 0 := by ext a; simp
-    rw [hz, map_zero]
-  rw [← LinearMap.trace_conj' fB e, ← hF_def, hF, map_add, LinearMap.trace_prodMap', hoff,
-    add_zero]
+  -- In that splitting `fB` becomes block upper triangular, so its trace splits.
+  rw [← LinearMap.trace_conj' fB e, LinearEquiv.conj_apply,
+    LinearMap.eq_prodMap_add_inl_comp_snd _ (conj_comp_inl_eq_inl_comp e hia hfi)
+      (snd_comp_conj_eq_comp_snd e hsnd hfq),
+    LinearMap.trace_prodMap_add_inl_comp_snd]
 
 end TauCeti.TensorSquare
 

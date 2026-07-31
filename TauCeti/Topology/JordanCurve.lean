@@ -7,6 +7,8 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Topology.Homeomorph.Lemmas
+public import TauCeti.Topology.LocallyConnected
+import Mathlib.Analysis.LocallyConvex.WithSeminorms
 
 /-!
 # Jordan curves
@@ -47,6 +49,8 @@ transporting the property back to a compact set from an image already known to b
   needed.
 * `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
   in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
+* `TauCeti.locallyConnectedSpace_sphere` and `TauCeti.IsJordanCurve.locallyConnectedSpace` — a
+  circle in `ℂ`, and hence every Jordan curve, is locally connected.
 
 ## Motivation
 
@@ -56,6 +60,15 @@ boundary correspondence, is about the Riemann map of a *Jordan domain*, and the 
 that the pinned Mathlib has no Jordan-curve vocabulary to state it against. The complex-analytic
 half — Jordan domains, the discs among them, and the boundary of a domain that a conformal map
 carries onto a disc — is in `TauCeti/Analysis/Complex/Conformal/JordanDomain.lean`.
+
+Local connectedness of a Jordan curve is what that milestone needs of the *hypothesis* side: the
+route to the extension theorem for a Jordan domain `Ω` runs through Carathéodory's continuity
+theorem, whose hypothesis is that `frontier Ω` be locally connected, and
+`TauCeti.IsJordanCurve.locallyConnectedSpace` is what discharges it (as
+`TauCeti.IsJordanDomain.locallyConnectedSpace_frontier`). Mathlib knows the circle is compact,
+connected and path connected, but records no local connectedness for it, and the property is not
+preserved by continuous images, so it is proved here from
+`TauCeti.locallyConnectedSpace_image_of_isCompact`.
 
 ## References
 
@@ -218,5 +231,53 @@ lemma coe_sphereCircleHomeomorph_symm_apply (c : ℂ) (hr : 0 < r) (z : Circle) 
 /-- A circle of positive radius in `ℂ` is a Jordan curve. -/
 theorem isJordanCurve_sphere (c : ℂ) (hr : 0 < r) : IsJordanCurve (sphere c r) :=
   isJordanCurve_iff.mpr ⟨sphereCircleHomeomorph c hr⟩
+
+/-! ## Local connectedness -/
+
+open Complex in
+/-- **A circle in `ℂ` is locally connected.** It is the image of the compact interval `[-π, π]`,
+which is convex and hence locally connected, under the continuous `θ ↦ c + r * exp (θ * I)`, so
+`TauCeti.locallyConnectedSpace_image_of_isCompact` applies. A sphere of negative radius is empty,
+and vacuously locally connected. -/
+instance locallyConnectedSpace_sphere (c : ℂ) (r : ℝ) : LocallyConnectedSpace (sphere c r) := by
+  rcases lt_or_ge r 0 with hr | hr
+  · have hempty : sphere c r = (∅ : Set ℂ) := by
+      ext z
+      simp only [mem_sphere_iff_norm, mem_empty_iff_false, iff_false]
+      intro h
+      have : (0 : ℝ) ≤ r := h ▸ norm_nonneg (z - c)
+      linarith
+    rw [hempty]
+    exact ⟨fun x => absurd x.2 (notMem_empty _)⟩
+  · have hparam :
+        sphere c r = (fun θ : ℝ => c + r * exp (θ * I)) '' Icc (-Real.pi) Real.pi := by
+      ext z
+      simp only [mem_sphere_iff_norm, mem_image, mem_Icc]
+      constructor
+      · intro hz
+        refine ⟨arg (z - c), ⟨(neg_pi_lt_arg (z - c)).le, arg_le_pi (z - c)⟩, ?_⟩
+        rw [← hz, norm_mul_exp_arg_mul_I (z - c)]
+        ring
+      · rintro ⟨θ, -, rfl⟩
+        simp [abs_of_nonneg hr]
+    haveI := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
+    rw [hparam]
+    exact locallyConnectedSpace_image_of_isCompact isCompact_Icc
+      (Continuous.continuousOn (by fun_prop))
+
+/-- **The circle is locally connected.** `Circle` is the unit circle of `ℂ`, so this is the unit
+case of `TauCeti.locallyConnectedSpace_sphere` transported along `TauCeti.sphereCircleHomeomorph`.
+Mathlib records the circle as compact, connected and path connected, but not as locally
+connected. -/
+instance locallyConnectedSpace_circle : LocallyConnectedSpace Circle :=
+  (sphereCircleHomeomorph (0 : ℂ) one_pos).symm.locallyConnectedSpace
+
+/-- **A Jordan curve is locally connected**, being homeomorphic to the circle.
+
+This is the form in which the hypothesis of Carathéodory's continuity theorem — that the boundary
+of the domain be locally connected — is met by a Jordan domain, which is what layer **L5** of the
+conformal-mapping roadmap is about; see `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier`. -/
+theorem IsJordanCurve.locallyConnectedSpace (h : IsJordanCurve C) : LocallyConnectedSpace C :=
+  (isJordanCurve_iff.mp h).elim fun e => e.locallyConnectedSpace
 
 end TauCeti

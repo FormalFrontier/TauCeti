@@ -28,6 +28,7 @@ paths are the arrows themselves. The dimension of its path algebra is computed i
 * `TauCeti.Quiver.Kronecker A`: the vertex type, with constructors `src` and `tgt` and a `Quiver`
   instance whose only arrows are `src ⟶ tgt`, indexed by `A`.
 * `TauCeti.Quiver.Kronecker.arrow`: the arrow attached to an element of the arrow type.
+* `TauCeti.Quiver.Kronecker.vertexEquiv`: the two vertices as indices in `Fin 2`, the target first.
 * `TauCeti.Quiver.Kronecker.pathEquivArrow`: the paths from `src` to `tgt` are the arrows.
 
 ## Main results
@@ -114,6 +115,38 @@ theorem eq_zero_iff {M : Type w} [Zero M] {f : Kronecker A → M} :
   cases v
   · exact h.1
   · exact h.2
+
+/-- The two vertices as indices in `Fin 2`, **the target first**: `tgt` is `0` and `src` is `1`.
+
+The order is the one that makes the path algebra upper triangular rather than lower triangular. In
+`TauCeti.RepresentationTheory.Quiver.Kronecker.UpperTriangular` a path is sent to the matrix unit
+in the row of its target and the column of its source, because an arrow acts on a left module from
+its source to its target; so the arrows, all of which run from `src` to `tgt`, occupy entries above
+the diagonal exactly when `tgt` comes first. -/
+def vertexEquiv : Kronecker A ≃ Fin 2 where
+  toFun
+    | .src => 1
+    | .tgt => 0
+  invFun i := if i = 0 then tgt else src
+  left_inv v := by cases v <;> rfl
+  right_inv
+    | 0 => rfl
+    | 1 => rfl
+
+@[simp]
+theorem vertexEquiv_src : vertexEquiv (src : Kronecker A) = 1 :=
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would force `vertexEquiv` to be `@[expose]`.
+  (rfl)
+
+@[simp]
+theorem vertexEquiv_tgt : vertexEquiv (tgt : Kronecker A) = 0 := (rfl)
+
+@[simp]
+theorem vertexEquiv_symm_zero : vertexEquiv.symm (0 : Fin 2) = (tgt : Kronecker A) := (rfl)
+
+@[simp]
+theorem vertexEquiv_symm_one : vertexEquiv.symm (1 : Fin 2) = (src : Kronecker A) := (rfl)
 
 /-! ### The arrows -/
 
