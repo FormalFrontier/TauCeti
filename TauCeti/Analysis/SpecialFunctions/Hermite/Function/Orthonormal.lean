@@ -30,6 +30,7 @@ This file proves that the Hermite functions
   field `𝕜`, obtained by rewriting the `L²` inner product as the pointwise integral above.
 * `TauCeti.orthonormal_hermiteFunctionLp`: `Orthonormal 𝕜 (hermiteFunctionLp 𝕜)`, immediate from the
   inner-product formula via `orthonormal_iff_ite`.
+* `TauCeti.norm_hermiteFunctionLp`: every Hermite mode has `L²` norm one.
 
 The zeroth-mode normalization `TauCeti.integral_hermiteFunction_zero_mul_self` and
 `TauCeti.norm_hermiteFunctionLp_zero` are the `n = 0` special cases of the results here.
@@ -114,5 +115,11 @@ theorem inner_hermiteFunctionLp (m n : ℕ) :
 `hermiteHilbertBasis` construction feeds to `HilbertBasis.mkOfOrthogonalEqBot`. -/
 theorem orthonormal_hermiteFunctionLp : Orthonormal 𝕜 (hermiteFunctionLp 𝕜) :=
   orthonormal_iff_ite.mpr inner_hermiteFunctionLp
+
+/-- **Target A2 (unit norm).** Every Hermite function has `L²` norm one, over any `RCLike`
+scalar field. -/
+@[simp]
+theorem norm_hermiteFunctionLp (n : ℕ) : ‖hermiteFunctionLp 𝕜 n‖ = 1 :=
+  orthonormal_hermiteFunctionLp.norm_eq_one n
 
 end TauCeti
