@@ -58,13 +58,20 @@ inherits that shim's status: the Riemann mapping theorem is being formalized ups
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), alongside the
 human-curated `Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`.
 Once the human-curated Mathlib theorem lands, `TauCeti.isBiholomorphicToDisc_of_isSimplyConnected`
-should be re-proved on top of it and the shim deleted. The transported distance itself is L2
-material with no Mathlib counterpart (Mathlib has the hyperbolic metric only on the upper
-half-plane, and no plane-domain version).
+should be re-proved on top of it and the shim deleted. The transported distance itself has no
+Mathlib counterpart (Mathlib has the hyperbolic metric only on the upper half-plane, and no
+plane-domain version), so only the dependence on the L3 shim is temporary.
 
-This advances `TauCetiRoadmap/ConformalMapping/README.md`, layer **L2 — Schwarz lemma
-extensions** ("the **hyperbolic / Poincaré metric**"), by carrying that metric from `𝔻` to the
-domains the L3 summit uniformizes.
+## Roadmap status
+
+`TauCetiRoadmap/ConformalMapping/README.md` scopes its hyperbolic-metric target to the disc: L2
+reads "the **hyperbolic / Poincaré metric** on `𝔻`", and that target is already discharged by
+`Conformal/Poincare/MetricSpace.lean`. Carrying the metric to a general disc-uniformizable domain
+is not covered by it, and no later layer (L4 reflection, L5 Carathéodory, L6 Schwarz--Christoffel)
+consumes it. So this file is pending a roadmap decision:
+[TauCetiRoadmap#112](https://github.com/TauCetiProject/TauCetiRoadmap/issues/112) asks for a node
+for the conformally invariant metric on disc-uniformizable domains. Replace this section with a
+citation of that node once it exists.
 
 ## References
 
