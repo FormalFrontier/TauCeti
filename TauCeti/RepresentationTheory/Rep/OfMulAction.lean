@@ -34,17 +34,17 @@ public section
 
 namespace TauCeti
 
-universe u v w
+universe u v w w'
 
 open CategoryTheory
 
 section Congr
 
-variable {G : Type v} [Monoid G] {X Y : Type w} [MulAction G X] [MulAction G Y]
+variable {G : Type v} [Monoid G]
 
 section Semiring
 
-variable (k : Type u) [Semiring k]
+variable (k : Type u) [Semiring k] {X : Type w} {Y : Type w'} [MulAction G X] [MulAction G Y]
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an equivalence of the permutation
 representations on their free modules. -/
@@ -53,12 +53,26 @@ noncomputable def ofMulActionEquivCongr (e : X ≃ Y)
     (Representation.ofMulAction k G X).Equiv (Representation.ofMulAction k G Y) :=
   .mk (MonoidAlgebra.mapDomainLinearEquiv k k e) fun _ => by ext; simp [he]
 
+@[simp]
+theorem ofMulActionEquivCongr_apply_single (e : X ≃ Y)
+    (he : ∀ (g : G) (x : X), e (g • x) = g • e x) (x : X) (r : k) :
+    ofMulActionEquivCongr k e he (MonoidAlgebra.single x r) = MonoidAlgebra.single (e x) r := by
+  simp [ofMulActionEquivCongr]
+
+@[simp]
+theorem ofMulActionEquivCongr_symm_apply_single (e : X ≃ Y)
+    (he : ∀ (g : G) (x : X), e (g • x) = g • e x) (y : Y) (r : k) :
+    (ofMulActionEquivCongr k e he).symm (MonoidAlgebra.single y r) =
+      MonoidAlgebra.single (e.symm y) r := by
+  simp [ofMulActionEquivCongr]
+
 end Semiring
 
 -- Objects of `Rep k G` carry an `AddCommGroup`, so `Rep.ofMulAction k G X` needs `k[X]` to be
 -- one; Mathlib declares `Rep.ofMulAction` in its `ring` section for exactly this reason, and
--- everything below is stated in terms of it.
-variable (k : Type u) [Ring k]
+-- everything below is stated in terms of it.  An isomorphism in `Rep k G` also compares two
+-- objects of the same category, so here `X` and `Y` share a universe.
+variable (k : Type u) [Ring k] {X Y : Type w} [MulAction G X] [MulAction G Y]
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an isomorphism of the permutation
 representations they carry. -/
@@ -96,16 +110,30 @@ noncomputable def quotientIsoCongr {H K : Subgroup G} (h : H = K) :
     | H x => rfl
 
 @[simp]
-theorem quotientIsoCongr_hom_hom_single {H K : Subgroup G} (h : H = K) (x : G) (r : k) :
-    (quotientIsoCongr k h).hom.hom (MonoidAlgebra.single (x : G ⧸ H) r) =
-      MonoidAlgebra.single (x : G ⧸ K) r :=
-  ofMulActionIsoCongr_hom_hom_single k _ _ _ r
+theorem quotientIsoCongr_hom_hom_single {H K : Subgroup G} (h : H = K) (q : G ⧸ H) (r : k) :
+    (quotientIsoCongr k h).hom.hom (MonoidAlgebra.single q r) =
+      MonoidAlgebra.single (Subgroup.quotientEquivOfEq h q) r :=
+  ofMulActionIsoCongr_hom_hom_single k _ _ q r
 
 @[simp]
-theorem quotientIsoCongr_inv_hom_single {H K : Subgroup G} (h : H = K) (x : G) (r : k) :
+theorem quotientIsoCongr_inv_hom_single {H K : Subgroup G} (h : H = K) (q : G ⧸ K) (r : k) :
+    (quotientIsoCongr k h).inv.hom (MonoidAlgebra.single q r) =
+      MonoidAlgebra.single (Subgroup.quotientEquivOfEq h.symm q) r :=
+  ofMulActionIsoCongr_inv_hom_single k _ _ q r
+
+/-- The basis element indexed by the coset of a representative, in the forward direction. -/
+@[simp]
+theorem quotientIsoCongr_hom_hom_single_mk {H K : Subgroup G} (h : H = K) (x : G) (r : k) :
+    (quotientIsoCongr k h).hom.hom (MonoidAlgebra.single (x : G ⧸ H) r) =
+      MonoidAlgebra.single (x : G ⧸ K) r :=
+  quotientIsoCongr_hom_hom_single k h _ r
+
+/-- The basis element indexed by the coset of a representative, in the inverse direction. -/
+@[simp]
+theorem quotientIsoCongr_inv_hom_single_mk {H K : Subgroup G} (h : H = K) (x : G) (r : k) :
     (quotientIsoCongr k h).inv.hom (MonoidAlgebra.single (x : G ⧸ K) r) =
       MonoidAlgebra.single (x : G ⧸ H) r :=
-  ofMulActionIsoCongr_inv_hom_single k _ _ _ r
+  quotientIsoCongr_inv_hom_single k h _ r
 
 /-- The permutation representation of `G` on the cosets of the trivial subgroup is the left
 regular representation. -/
@@ -114,12 +142,20 @@ noncomputable def quotientBotIsoLeftRegular :
   ofMulActionIsoCongr k QuotientGroup.quotientBot.toEquiv quotientBot_equivariant
 
 @[simp]
-theorem quotientBotIsoLeftRegular_hom_hom_single (x : G) (r : k) :
+theorem quotientBotIsoLeftRegular_hom_hom_single (q : G ⧸ (⊥ : Subgroup G)) (r : k) :
+    (quotientBotIsoLeftRegular k).hom.hom (MonoidAlgebra.single q r) =
+      MonoidAlgebra.single (QuotientGroup.quotientBot q) r :=
+  ofMulActionIsoCongr_hom_hom_single k QuotientGroup.quotientBot.toEquiv
+    quotientBot_equivariant q r
+
+/-- The basis element indexed by the coset of a representative is sent to that
+representative. -/
+@[simp]
+theorem quotientBotIsoLeftRegular_hom_hom_single_mk (x : G) (r : k) :
     (quotientBotIsoLeftRegular k).hom.hom
         (MonoidAlgebra.single (x : G ⧸ (⊥ : Subgroup G)) r) =
       MonoidAlgebra.single x r :=
-  ofMulActionIsoCongr_hom_hom_single k QuotientGroup.quotientBot.toEquiv
-    quotientBot_equivariant _ r
+  quotientBotIsoLeftRegular_hom_hom_single k _ r
 
 @[simp]
 theorem quotientBotIsoLeftRegular_inv_hom_single (x : G) (r : k) :

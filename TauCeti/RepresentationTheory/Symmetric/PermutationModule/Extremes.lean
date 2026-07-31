@@ -58,10 +58,8 @@ noncomputable def permutationModuleIndiscreteIsoTrivial (n : ℕ) :
 /-- Every `(n)`-tabloid is sent to `1`. -/
 @[simp]
 theorem permutationModuleIndiscreteIsoTrivial_hom_hom_single (n : ℕ)
-    (σ : Equiv.Perm (Fin n)) (r : ℚ) :
-    (permutationModuleIndiscreteIsoTrivial n).hom.hom
-        (MonoidAlgebra.single
-          (σ : Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.indiscrete n)) r) = r := by
+    (t : Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.indiscrete n)) (r : ℚ) :
+    (permutationModuleIndiscreteIsoTrivial n).hom.hom (MonoidAlgebra.single t r) = r := by
   simp only [permutationModuleIndiscreteIsoTrivial, Iso.trans_hom, Rep.hom_comp,
     Representation.IntertwiningMap.comp_apply]
   rw [quotientIsoCongr_hom_hom_single, quotientTopIsoTrivial_hom_hom_single]
@@ -75,7 +73,7 @@ theorem permutationModuleIndiscreteIsoTrivial_inv_hom_apply (n : ℕ) (r : ℚ) 
           Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.indiscrete n)) r := by
   simp only [permutationModuleIndiscreteIsoTrivial, Iso.trans_inv, Rep.hom_comp,
     Representation.IntertwiningMap.comp_apply]
-  rw [quotientTopIsoTrivial_inv_hom_apply, quotientIsoCongr_inv_hom_single]
+  rw [quotientTopIsoTrivial_inv_hom_apply, quotientIsoCongr_inv_hom_single_mk]
 
 /-- The Young permutation module of the one-part partition `(n)` is one-dimensional. -/
 @[simp]
@@ -104,17 +102,26 @@ noncomputable def permutationModuleOnesIsoLeftRegular (n : ℕ) :
     permutationModule (Nat.Partition.ones n) ≅ Rep.leftRegular ℚ (Equiv.Perm (Fin n)) :=
   quotientIsoCongr ℚ (youngSubgroup_ones n) ≪≫ quotientBotIsoLeftRegular ℚ
 
-/-- The `(1ⁿ)`-tabloid of a permutation is sent to that permutation. -/
+/-- A `(1ⁿ)`-tabloid is sent to the permutation it names. -/
 @[simp]
 theorem permutationModuleOnesIsoLeftRegular_hom_hom_single (n : ℕ)
+    (t : Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.ones n)) (r : ℚ) :
+    (permutationModuleOnesIsoLeftRegular n).hom.hom (MonoidAlgebra.single t r) =
+      MonoidAlgebra.single
+        (QuotientGroup.quotientBot (Subgroup.quotientEquivOfEq (youngSubgroup_ones n) t)) r := by
+  simp only [permutationModuleOnesIsoLeftRegular, Iso.trans_hom, Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply]
+  rw [quotientIsoCongr_hom_hom_single, quotientBotIsoLeftRegular_hom_hom_single]
+
+/-- The `(1ⁿ)`-tabloid of a permutation is sent to that permutation. -/
+@[simp]
+theorem permutationModuleOnesIsoLeftRegular_hom_hom_single_mk (n : ℕ)
     (σ : Equiv.Perm (Fin n)) (r : ℚ) :
     (permutationModuleOnesIsoLeftRegular n).hom.hom
         (MonoidAlgebra.single
           (σ : Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.ones n)) r) =
-      MonoidAlgebra.single σ r := by
-  simp only [permutationModuleOnesIsoLeftRegular, Iso.trans_hom, Rep.hom_comp,
-    Representation.IntertwiningMap.comp_apply]
-  rw [quotientIsoCongr_hom_hom_single, quotientBotIsoLeftRegular_hom_hom_single]
+      MonoidAlgebra.single σ r :=
+  permutationModuleOnesIsoLeftRegular_hom_hom_single n _ r
 
 /-- The inverse sends a permutation back to its `(1ⁿ)`-tabloid. -/
 @[simp]
@@ -125,7 +132,7 @@ theorem permutationModuleOnesIsoLeftRegular_inv_hom_single (n : ℕ)
         (σ : Equiv.Perm (Fin n) ⧸ youngSubgroup (Nat.Partition.ones n)) r := by
   simp only [permutationModuleOnesIsoLeftRegular, Iso.trans_inv, Rep.hom_comp,
     Representation.IntertwiningMap.comp_apply]
-  rw [quotientBotIsoLeftRegular_inv_hom_single, quotientIsoCongr_inv_hom_single]
+  rw [quotientBotIsoLeftRegular_inv_hom_single, quotientIsoCongr_inv_hom_single_mk]
 
 /-- The Young permutation module of the all-ones partition `(1ⁿ)` has dimension `n !`. -/
 @[simp]
