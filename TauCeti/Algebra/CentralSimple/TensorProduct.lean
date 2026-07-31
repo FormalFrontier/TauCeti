@@ -6,12 +6,14 @@ module
 
 public import Mathlib.Algebra.Algebra.Subalgebra.Centralizer
 public import Mathlib.Algebra.Central.Basic
-public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.SimpleRing.Basic
-public import Mathlib.RingTheory.SimpleRing.Matrix
 public import Mathlib.RingTheory.TensorProduct.Free
+-- Non-public: matrix algebras are used only by the worked examples at the end of the file, so
+-- they are not part of this module's interface and downstream importers do not pay for them.
+import Mathlib.Algebra.Central.Matrix
+import Mathlib.RingTheory.SimpleRing.Matrix
 
 /-!
 # Central simple algebras are closed under tensor product
@@ -33,7 +35,9 @@ it uses only that `A` is simple with centre `K` and that `B` is simple.
 * `TauCeti.forall_commute_tmul_one_iff`: for `A` central over `K`, the centralizer of `A ⊗ 1` in
   `A ⊗[K] B` is exactly `1 ⊗ B`. This is Mathlib's
   `Subalgebra.centralizer_coe_range_includeLeft_eq_center_tensorProduct` specialized to
-  `Z(A) = K` and phrased elementwise, and it is the engine of both theorems below.
+  `Z(A) = K` and phrased elementwise, and it is the engine of both theorems below. It is stated
+  over a commutative base ring with `B` free, the hypotheses that theorem needs; the case of a
+  field is picked up by typeclass inference.
 * `TauCeti.isSimpleRing_tensorProduct`: `A ⊗[K] B` is simple when `A` is central simple and `B` is
   simple. Only `A` is required to be central; the mirror-image statement, with `B` central and `A`
   merely simple, follows by transporting along `Algebra.TensorProduct.comm`.
@@ -51,7 +55,15 @@ the `bᵢ` linearly independent over `K`", with the Finsupp support playing the 
 that expression, and `TauCeti.basis_repr_tmul_one_mul` and `TauCeti.basis_repr_mul_tmul_one` record
 that multiplying by `a ⊗ₜ 1` on one side multiplies every coordinate on that same side. They are
 what makes the coordinatewise bookkeeping of that argument -- the two-sided ideal of `i₀`-th
-coordinates, and the support of an additive commutator -- available.
+coordinates, and the support of an additive commutator -- available. The right-hand version is
+where it matters that the coordinates are taken with respect to a basis of `B` over the *base*
+field: that is what lets the scalars pass through `a`.
+
+Simplicity itself is then the classical minimal-length argument: given a nonzero two-sided ideal
+`I`, pick a nonzero `y ∈ I` with as few nonzero coordinates as possible; after rescaling one
+coordinate to `1` (which is where simplicity of `A` is used), minimality forces every additive
+commutator `(a ⊗ₜ 1) * y - y * (a ⊗ₜ 1)` to vanish, so `y = 1 ⊗ₜ b` by
+`TauCeti.forall_commute_tmul_one_iff`; simplicity of `B` then pushes `1` into `I`.
 
 Both appeals to simplicity in `TauCeti.isSimpleRing_tensorProduct` are made by exhibiting a
 `TwoSidedIdeal.mk'`: the `i₀`-th coordinates of the elements of a two-sided ideal `I` supported in a
@@ -75,6 +87,7 @@ variable {K A B ι : Type*} [CommSemiring K] [Semiring A] [Semiring B] [Algebra 
 
 /-- Left multiplication by `a ⊗ₜ 1` on `A ⊗[K] B` is the left `A`-module action, the one that
 `Algebra.TensorProduct.basis` is a basis for. -/
+@[simp]
 theorem tmul_one_mul_eq_smul (a : A) (x : A ⊗[K] B) : (a ⊗ₜ[K] (1 : B)) * x = a • x := by
   induction x using TensorProduct.induction_on with
   | zero => simp
@@ -83,15 +96,17 @@ theorem tmul_one_mul_eq_smul (a : A) (x : A ⊗[K] B) : (a ⊗ₜ[K] (1 : B)) * 
 
 variable (𝓑 : Basis ι K B)
 
-/-- Multiplying by `a ⊗ₜ 1` on the left multiplies each coordinate of `x` by `a` on the left. -/
+/-- Multiplying by `a ⊗ₜ 1` on the left multiplies each coordinate of `x` by `a` on the left.
+
+Not `@[simp]`: `simp` already normalizes this left-hand side, via `tmul_one_mul_eq_smul` and the
+`Finsupp` scalar-action lemmas, so tagging it as well makes it a `simpNF` duplicate. -/
 theorem basis_repr_tmul_one_mul (a : A) (x : A ⊗[K] B) (j : ι) :
     (Algebra.TensorProduct.basis A 𝓑).repr ((a ⊗ₜ[K] (1 : B)) * x) j =
       a * (Algebra.TensorProduct.basis A 𝓑).repr x j := by
   rw [tmul_one_mul_eq_smul, map_smul, Finsupp.smul_apply, smul_eq_mul]
 
-/-- Multiplying by `a ⊗ₜ 1` on the right multiplies each coordinate of `x` by `a` on the right.
-This is where the coordinates being taken with respect to a basis of `B` over the *base* field
-matters: it lets the scalars pass through `a`. -/
+/-- Multiplying by `a ⊗ₜ 1` on the right multiplies each coordinate of `x` by `a` on the right. -/
+@[simp]
 theorem basis_repr_mul_tmul_one (a : A) (x : A ⊗[K] B) (j : ι) :
     (Algebra.TensorProduct.basis A 𝓑).repr (x * (a ⊗ₜ[K] (1 : B))) j =
       (Algebra.TensorProduct.basis A 𝓑).repr x j * a := by
@@ -107,18 +122,19 @@ theorem basis_repr_mul_tmul_one (a : A) (x : A ⊗[K] B) (j : ι) :
 
 end Coordinates
 
-section Field
+section Centralizer
 
-variable {K A B : Type*} [Field K] [Ring A] [Ring B] [Algebra K A] [Algebra K B]
+variable {K A B : Type*} [CommSemiring K] [Semiring A] [Semiring B] [Algebra K A] [Algebra K B]
 
-/-- **The centralizer of `A ⊗ 1` in `A ⊗[K] B` is `1 ⊗ B`**, for `A` a central `K`-algebra: an
-element of `A ⊗[K] B` commutes with every `a ⊗ₜ 1` exactly when it is of the form `1 ⊗ₜ b`.
+/-- **The centralizer of `A ⊗ 1` in `A ⊗[K] B` is `1 ⊗ B`**, for `A` a central `K`-algebra and `B`
+free: an element of `A ⊗[K] B` commutes with every `a ⊗ₜ 1` exactly when it is of the form
+`1 ⊗ₜ b`.
 
 This is Mathlib's `Subalgebra.centralizer_coe_range_includeLeft_eq_center_tensorProduct`, which
 computes that centralizer as `Z(A) ⊗ B`, specialized to `Z(A) = K` and repackaged as a statement
 about elements. Centrality of `A` is what shrinks the centralizer to `1 ⊗ B`; without it `Z(A) ⊗ B`
 can be strictly larger. -/
-theorem forall_commute_tmul_one_iff [Algebra.IsCentral K A] {x : A ⊗[K] B} :
+theorem forall_commute_tmul_one_iff [Module.Free K B] [Algebra.IsCentral K A] {x : A ⊗[K] B} :
     (∀ a : A, Commute (a ⊗ₜ[K] (1 : B)) x) ↔ ∃ b : B, x = 1 ⊗ₜ[K] b := by
   refine ⟨fun h => ?_, ?_⟩
   · have hx : x ∈ Subalgebra.centralizer K
@@ -143,13 +159,26 @@ theorem forall_commute_tmul_one_iff [Algebra.IsCentral K A] {x : A ⊗[K] B} :
   · rintro ⟨b, rfl⟩ a
     simp [Commute, SemiconjBy, Algebra.TensorProduct.tmul_mul_tmul]
 
+end Centralizer
+
+section Field
+
+variable {K A B : Type*} [Field K] [Ring A] [Ring B] [Algebra K A] [Algebra K B]
+
 variable (K A B) in
 /-- **The tensor product of two central `K`-algebras is central.** Mathlib has the two converses
 (`Algebra.IsCentral.left_of_tensor_of_field` and `Algebra.IsCentral.right_of_tensor_of_field`);
 this is the forward implication. -/
-instance isCentral_tensorProduct [Nontrivial A] [Algebra.IsCentral K A] [Algebra.IsCentral K B] :
+instance isCentral_tensorProduct [Algebra.IsCentral K A] [Algebra.IsCentral K B] :
     Algebra.IsCentral K (A ⊗[K] B) where
   out x hx := by
+    rcases subsingleton_or_nontrivial A with _ | _
+    -- If `A` is trivial then so is `A ⊗[K] B`, and every element of a trivial algebra is in `⊥`.
+    · have : Subsingleton (A ⊗[K] B) :=
+        subsingleton_of_zero_eq_one <| by
+          rw [Algebra.TensorProduct.one_def, Subsingleton.elim (1 : A) 0, TensorProduct.zero_tmul]
+      rw [Algebra.mem_bot]
+      exact ⟨0, Subsingleton.elim _ _⟩
     rw [Subalgebra.mem_center_iff] at hx
     obtain ⟨b, rfl⟩ := forall_commute_tmul_one_iff.mp fun a => hx _
     have hbc : b ∈ Subalgebra.center K B := by
@@ -168,11 +197,7 @@ variable (K A B) in
 Together with `TauCeti.isCentral_tensorProduct` this says that central simple `K`-algebras are
 closed under `⊗[K]`.
 
-No finite-dimensionality is needed on either side. Given a nonzero two-sided ideal `I`, pick a
-nonzero `y ∈ I` with as few nonzero coordinates as possible with respect to a `K`-basis of `B`;
-after rescaling one coordinate to `1` (which is where simplicity of `A` is used), minimality forces
-every additive commutator `(a ⊗ₜ 1) * y - y * (a ⊗ₜ 1)` to vanish, so `y = 1 ⊗ₜ b` by
-`TauCeti.forall_commute_tmul_one_iff`; simplicity of `B` then pushes `1` into `I`. -/
+No finite-dimensionality is needed on either side. -/
 instance isSimpleRing_tensorProduct [Algebra.IsCentral K A] [IsSimpleRing A] [IsSimpleRing B] :
     IsSimpleRing (A ⊗[K] B) := by
   classical
