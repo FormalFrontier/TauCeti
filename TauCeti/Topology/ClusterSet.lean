@@ -20,8 +20,10 @@ element. The compactness is not decoration: the cluster set of `z ↦ 1 / z` on 
 `0` is empty, so it is a subsingleton while the map has no limit.
 
 Nothing in this file is specific to one geometry. The definition and its basic API live over an
-arbitrary pair of topological spaces, and the `ε`-`δ` characterization and the extension theorem
-over metric spaces. The complex-analytic consequences — that the boundary cluster set of a
+arbitrary pair of topological spaces, the `ε`-`δ` characterization over metric spaces, and the
+extension theorem over a metric space and a *proper* metric codomain, where boundedness of the
+image is what supplies the compactness the criterion runs on. The complex-analytic consequences —
+that the boundary cluster set of a
 conformal map lies on the frontier of the image — are in
 `TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`, the consumer this file was written for:
 Carathéodory's boundary correspondence, layer **L5** of the conformal-mapping roadmap, is applied
@@ -49,8 +51,9 @@ API, on which everything below is built, but no name for this set.
   provided `f` maps `U` into a compact set.
 * `TauCeti.continuousOn_closure_of_forall_tendsto` — a pointwise limit at every point of `closure U`
   is automatically a continuous function of the point.
-* `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map with
-  bounded image whose boundary cluster sets are subsingletons extends continuously to `closure U`.
+* `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map into a
+  proper metric space, with bounded image and subsingleton boundary cluster sets, extends
+  continuously to `closure U`.
 
 ## References
 
@@ -225,8 +228,14 @@ section Extension
 
 variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] [ProperSpace Y] {U : Set X} {f : X → Y}
 
-/-- **The extension criterion.** A continuous function on an open `U` with bounded image whose
-cluster set at each boundary point has at most one element extends continuously to `closure U`.
+/-- **The extension criterion.** A continuous function on an open `U`, valued in a proper metric
+space and with bounded image, whose cluster set at each boundary point has at most one element
+extends continuously to `closure U`.
+
+The codomain is assumed proper so that the bounded image has compact closure; that compactness is
+what `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` consumes to turn each subsingleton
+boundary cluster set into a limit. Over a codomain that is not proper the same statement holds with
+boundedness of `f '' U` replaced by the hypothesis that `f` maps `U` into a compact set.
 
 This is the form in which a boundary-correspondence theorem is applied: whatever geometric
 hypothesis one places on `frontier U`, it is used only to check that the boundary cluster sets are
