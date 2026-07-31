@@ -94,10 +94,10 @@ private lemma artanh_abs {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
   · rw [abs_of_neg hx0, artanh_neg_eq hx, abs_of_nonpos (Real.artanh_nonpos hx0.le)]
 
 /-- **Subtraction formula for the inverse hyperbolic tangent.** For `a, b ∈ (-1, 1)`,
-`artanh ((a - b) / (1 - a * b)) = artanh a - artanh b`. This is the addition formula
-`TauCeti.artanh_add`, which underlies the hyperbolic triangle inequality, read in reverse. -/
-private lemma artanh_sub_div {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh ((a - b) / (1 - a * b)) = Real.artanh a - Real.artanh b := by
+`artanh a - artanh b = artanh ((a - b) / (1 - a * b))`. This is the addition formula
+`TauCeti.artanh_add`, which underlies the hyperbolic triangle inequality, with `b` negated. -/
+private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 : ℝ) 1) :
+    Real.artanh a - Real.artanh b = Real.artanh ((a - b) / (1 - a * b)) := by
   have hb' : -b ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [hb.2], by linarith [hb.1]⟩
   have h := artanh_add ha hb'
   rw [artanh_neg_eq hb] at h
@@ -147,7 +147,7 @@ theorem hyperbolicDist_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a
     constructor <;> nlinarith [h₁, h₂]
   rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu ha hb,
     show |a - b| / (1 - a * b) = |(a - b) / (1 - a * b)| by rw [abs_div, abs_of_pos hab],
-    artanh_abs hquot, artanh_sub_div ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
+    artanh_abs hquot, ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
 
 /-- Reparametrising a Euclidean diameter by `Real.tanh` makes it unit speed: the hyperbolic
 distance between `u * Real.tanh s` and `u * Real.tanh t` is `|s - t|`. -/
@@ -170,15 +170,13 @@ noncomputable def radialGeodesic (u : Circle) (t : ℝ) : PoincareDisc :=
     rw [Complex.norm_real, Real.norm_eq_abs]
     exact abs_lt.2 ⟨Real.neg_one_lt_tanh t, Real.tanh_lt_one t⟩))
 
--- The parenthesised `(rfl)` proof elaborates against the unexposed body of `radialGeodesic`,
--- which a bare `rfl` in an exported theorem may not do.
-
 /-- The point `radialGeodesic u t` of the Poincaré disc is the complex number
 `u * Real.tanh t`. -/
 @[simp]
 lemma coe_radialGeodesic (u : Circle) (t : ℝ) :
-    ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ) = (u : ℂ) * Real.tanh t :=
-  (rfl)
+    ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ) = (u : ℂ) * Real.tanh t := by
+  simp only [radialGeodesic, toUnitDisc_toPoincare, Complex.UnitDisc.coe_circle_smul,
+    Complex.UnitDisc.coe_mk]
 
 /-- Every radial geodesic starts at the origin. -/
 @[simp]
