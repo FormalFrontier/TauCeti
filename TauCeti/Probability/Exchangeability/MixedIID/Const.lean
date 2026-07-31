@@ -56,7 +56,7 @@ theorem MixedIIDWith.aemeasurable_of_const {μ : Measure Ω} [IsProbabilityMeasu
     rw [hblock]; exact IsProbabilityMeasure.ne_zero _
   exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
 
-/-- Every coordinate of a process with a constant mixing representative `p` has law `p`. -/
+/-- Every coordinate of a family with a constant mixing representative `p` has law `p`. -/
 theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ι → Ω → α}
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     μ.map (X i) = (p : Measure α) := by

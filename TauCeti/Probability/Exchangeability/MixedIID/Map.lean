@@ -9,11 +9,11 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
-# Coordinatewise maps of mixed i.i.d. sequences
+# Coordinatewise maps of mixed i.i.d. families
 
 This file completes the Layer 0 closure API for the exchangeability symmetry classes: applying a
-measurable map `f : α → β` to every coordinate of a mixed i.i.d. process gives another mixed
-i.i.d. process, whose mixing representative is the coordinatewise pushforward
+measurable map `f : α → β` to every coordinate of a mixed i.i.d. family gives another mixed
+i.i.d. family, whose mixing representative is the coordinatewise pushforward
 `ω ↦ (ν ω).map f` of the original mixing representative `ν`.
 
 `TauCeti.Probability.Exchangeability.Map` already records this closure for `ExchangeableAt`,
@@ -21,7 +21,10 @@ i.i.d. process, whose mixing representative is the coordinatewise pushforward
 symmetry class from the roadmap item asking for closure of each class under the coordinatewise
 pushforward `X ↦ (f ∘ Xᵢ)` (`TauCetiRoadmap/Exchangeability/README.md`, Layer 0). The
 transformation of the mixing representative is the expected one: the mixture identity for the
-mapped process is the original identity with each product factor pushed forward by `f`.
+mapped family is the original identity with each product factor pushed forward by `f`.
+
+`map_values` holds at an arbitrary index type; `mixedIID_of_mixedIID_pathLaw` below is genuinely
+sequence-level, since it transfers along the `ℕ`-indexed path law.
 
 The proof runs at the level of the finite-block mixture identity. It reuses `map_blockLaw`
 (the coordinatewise pushforward of a block law), the random-product measurability of
