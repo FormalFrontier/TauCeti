@@ -551,7 +551,7 @@ theorem isOpen_refined_tubeNeighborhood
             (Set.Icc (part.t i.castSucc) (part.t i.succ) : Set I) (U i)} := by
       ext β; simp [Set.MapsTo, Set.mem_Icc]
     rw [h_U_preimage]
-    exact (ContinuousMap.isOpen_setOf_mapsTo isCompact_Icc (hU_open i)).preimage
+    exact (ContinuousMap.isOpen_setOfPred_mapsTo isCompact_Icc (hU_open i)).preimage
       continuous_subtype_val
   · have h_V_iInter : {β : BasedPath x₀ | ∀ j, β.1 (part.t j) ∈ V j} =
         ⋂ j : Fin (n' + 2), {β : BasedPath x₀ | β.1 (part.t j) ∈ V j} := by ext β; simp

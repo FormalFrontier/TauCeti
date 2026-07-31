@@ -240,7 +240,7 @@ private theorem isOpen_setOf_forall_segment_mapsTo {x y : X} {n : ℕ}
       ⋂ i : Fin n, {γ' : Path x y | ∀ s : unitInterval,
         (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} := by
     ext γ'
-    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
   rw [hrw]
   apply isOpen_iInter_of_finite
   intro i
@@ -250,7 +250,7 @@ private theorem isOpen_setOf_forall_segment_mapsTo {x y : X} {n : ℕ}
       (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i} =
     {γ' : Path x y | Set.MapsTo γ' K_i (U i)} := by
     ext γ'
-    simp only [Set.mem_setOf_eq, Set.MapsTo, K_i, Set.mem_Icc]
+    simp only [Set.mem_ofPred_eq, Set.MapsTo, K_i, Set.mem_Icc]
     refine forall_congr' fun s ↦ ?_
     constructor
     · intro h hs; exact h hs
@@ -262,7 +262,7 @@ private theorem isOpen_setOf_forall_segment_mapsTo {x y : X} {n : ℕ}
   have hpre : {γ' : Path x y | Set.MapsTo γ' K_i (U i)} =
       (↑) ⁻¹' {f : C(unitInterval, X) | Set.MapsTo f K_i (U i)} := rfl
   rw [hpre]
-  exact (ContinuousMap.isOpen_setOf_mapsTo h_compact_K (hU_open i)).preimage
+  exact (ContinuousMap.isOpen_setOfPred_mapsTo h_compact_K (hU_open i)).preimage
     continuous_induced_dom
 
 /-- The set of paths sending each partition vertex `part.t j` into the corresponding set `V j` is
@@ -274,7 +274,7 @@ private theorem isOpen_setOf_forall_vertex_mem {x y : X} {n : ℕ}
   have hrw : {γ' : Path x y | ∀ j, γ' (part.t j) ∈ V j} =
       ⋂ j : Fin (n + 1), {γ' : Path x y | γ' (part.t j) ∈ V j} := by
     ext γ'
-    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
   rw [hrw]
   apply isOpen_iInter_of_finite
   intro j
@@ -291,7 +291,7 @@ theorem isOpen_pathTube {x y : X} {n : ℕ}
       (∀ i (s : unitInterval),
         (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ U i) ∧
       ∀ j, γ' (part.t j) ∈ V j} := by
-  rw [Set.setOf_and]
+  rw [Set.ofPred_and]
   exact (isOpen_setOf_forall_segment_mapsTo part U hU_open).inter
     (isOpen_setOf_forall_vertex_mem part V hV_open)
 
@@ -305,7 +305,7 @@ theorem TubeData.isOpen {x y : X} {n : ℕ}
           (part.t i.castSucc : ℝ) ≤ s ∧ s ≤ (part.t i.succ : ℝ) → γ' s ∈ T.U i) ∧
         ∀ j, γ' (part.t j) ∈ T.V j} := by
     ext γ'
-    simp only [TubeData.mem_toSet_iff, Set.mem_setOf_eq]
+    simp only [TubeData.mem_toSet_iff, Set.mem_ofPred_eq]
     constructor
     · intro h
       exact ⟨h.stays_in_U, h.passes_through_V⟩

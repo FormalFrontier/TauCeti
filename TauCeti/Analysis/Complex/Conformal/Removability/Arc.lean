@@ -81,7 +81,7 @@ theorem
     intro hmem
     have him_zero := hS ⟨hsymm_maps hw.1, hmem⟩
     exact hw.2
-      (by simpa only [Set.mem_setOf_eq, e.right_inv (himage_target hw.1)] using him_zero)
+      (by simpa only [Set.mem_ofPred_eq, e.right_inv (himage_target hw.1)] using him_zero)
   have hpull : DifferentiableOn ℂ (F ∘ e.symm) (e '' Ω) :=
     differentiableOn_of_continuousOn_of_differentiableOn_im_ne_zero
       (e.isOpen_image_of_subset_source hΩ hΩe) hpull_cont hpull_diff
@@ -116,7 +116,7 @@ theorem
         (Ω ∩ {z : ℂ | 0 < (e z).im}) ∪
           (Ω ∩ {z : ℂ | (e z).im < 0}) := by
     ext z
-    simp only [mem_sdiff, mem_setOf_eq, mem_union, mem_inter_iff]
+    simp only [mem_sdiff, mem_ofPred_eq, mem_union, mem_inter_iff]
     constructor
     · rintro ⟨hz, him⟩
       rcases lt_or_gt_of_ne him with h | h
