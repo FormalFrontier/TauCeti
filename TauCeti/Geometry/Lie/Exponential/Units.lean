@@ -43,14 +43,19 @@ open NormedSpace
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-private theorem isUnit_exp_real (x : R) : IsUnit (exp x) :=
-  isUnit_exp_of_mem_ball (𝕂 := ℝ)
-    ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
+private theorem isUnit_exp_real (x : R) : IsUnit (exp x) := by
+  let +nondep : NormedAlgebra ℚ R := .restrictScalars ℚ ℝ R
+  exact isUnit_exp x
+
+private theorem exp_add_of_commute_real {x y : R} (hxy : Commute x y) :
+    exp (x + y) = exp x * exp y := by
+  let +nondep : NormedAlgebra ℚ R := .restrictScalars ℚ ℝ R
+  exact exp_add_of_commute hxy
 
 /-- The exponential of an element of a complete normed real algebra, regarded as a unit.
 
 Its inverse is represented by `NormedSpace.exp (-x)`, as witnessed by
-`NormedSpace.isUnit_exp_of_mem_ball`. -/
+`NormedSpace.isUnit_exp`. -/
 noncomputable def expUnit (x : R) : Rˣ :=
   (isUnit_exp_real x).unit
 
@@ -63,10 +68,7 @@ theorem expUnit_coe (x : R) : (expUnit x : R) = exp x :=
 theorem expUnit_add_of_commute {x y : R} (hxy : Commute x y) :
     expUnit (x + y) = expUnit x * expUnit y := by
   apply Units.ext
-  simpa only [expUnit_coe, Units.val_mul] using
-    exp_add_of_commute_of_mem_ball (𝕂 := ℝ) hxy
-      ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
-      ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
+  simpa only [expUnit_coe, Units.val_mul] using exp_add_of_commute_real hxy
 
 /-- The exponential of zero is the identity unit. -/
 @[simp]
@@ -86,10 +88,7 @@ theorem expUnit_neg (x : R) : expUnit (-x) = (expUnit x)⁻¹ := by
 theorem exp_add_smul (x : R) (s t : ℝ) :
     exp ((s + t) • x) = exp (s • x) * exp (t • x) := by
   rw [add_smul]
-  exact exp_add_of_commute_of_mem_ball (𝕂 := ℝ)
-    (((Commute.refl x).smul_left s).smul_right t)
-    ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
-    ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
+  exact exp_add_of_commute_real (((Commute.refl x).smul_left s).smul_right t)
 
 /-- The one-parameter subgroup law lifted from the algebra to its group of units. -/
 @[simp]
