@@ -106,6 +106,33 @@ private lemma mul_indicator_one_eq_indicator {Ω : Type*} (s : Set Ω) (φ : Ω 
   rw [Pi.mul_apply, ← Set.indicator_mul_right]
   simp
 
+/-- Multiplying by the constant-`1` indicator of `s` trades a product against a restriction:
+integrating `φ * 1_s` over `t` is integrating `φ` over the rectangle `s ∩ t`. -/
+private lemma setIntegral_mul_indicator_one {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure Ω}
+    {s : Set Ω} (hs : MeasurableSet[m0] s) (t : Set Ω) (φ : Ω → ℝ) :
+    ∫ x in t, (φ * s.indicator fun _ => (1 : ℝ)) x ∂μ = ∫ x in s ∩ t, φ x ∂μ := by
+  rw [mul_indicator_one_eq_indicator, setIntegral_indicator hs, Set.inter_comm]
+
+/-- If the conditional expectation of a product splits, then over a `mG`-measurable set one
+factor may be replaced by its conditional expectation without changing the integral. The
+splitting hypothesis is what conditional independence supplies at the call site. -/
+private lemma setIntegral_condExp_mul_eq_setIntegral_mul {Ω : Type*} {m0 mG : MeasurableSpace Ω}
+    (hmG : mG ≤ m0) {μ : @Measure Ω m0} [SigmaFinite (μ.trim hmG)]
+    {f g : Ω → ℝ} {t : Set Ω} (ht : MeasurableSet[mG] t)
+    (hsplit : μ[f * g | mG] =ᵐ[μ] μ[f | mG] * μ[g | mG])
+    (hint_ceg : Integrable (μ[f | mG] * g) μ) (hint_g : Integrable g μ)
+    (hint_fg : Integrable (f * g) μ) :
+    ∫ x in t, (μ[f | mG] * g) x ∂μ = ∫ x in t, (f * g) x ∂μ := by
+  have h_pull : μ[(μ[f | mG]) * g | mG] =ᵐ[μ] (μ[f | mG]) * μ[g | mG] :=
+    condExp_mul_of_aestronglyMeasurable_left
+      stronglyMeasurable_condExp.aestronglyMeasurable hint_ceg hint_g
+  calc ∫ x in t, (μ[f | mG] * g) x ∂μ
+      = ∫ x in t, μ[(μ[f | mG]) * g | mG] x ∂μ := (setIntegral_condExp hmG hint_ceg ht).symm
+    _ = ∫ x in t, μ[f * g | mG] x ∂μ :=
+        setIntegral_congr_ae (hmG _ ht) <| by
+          filter_upwards [h_pull, hsplit] with x h1 h2 _; rw [h1, h2]
+    _ = ∫ x in t, (f * g) x ∂μ := setIntegral_condExp hmG hint_fg ht
+
 /-- Rectangle step for `condExp_indicator_sup_eq_of_condIndep`: over a rectangle `tF ∩ tG` (`tF`
 `mF`-measurable, `tG` `mG`-measurable), the conditional expectation given `mG` of an
 `mH`-measurable indicator integrates to the same value as the indicator itself. -/
@@ -119,52 +146,29 @@ private lemma setIntegral_condExp_indicator_eq_on_rectangle {Ω : Type*} {mΩ : 
     ∫ x in tF ∩ tG, (μ[H.indicator (fun _ => (1 : ℝ)) | mG]) x ∂μ
       = ∫ x in tF ∩ tG, H.indicator (fun _ => (1 : ℝ)) x ∂μ := by
   classical
-  let m0 : MeasurableSpace Ω := mΩ
   set f : Ω → ℝ := H.indicator (fun _ => (1 : ℝ)) with hf_def
-  have htF_m0 : MeasurableSet[m0] tF := hmF _ htF
   set gB : Ω → ℝ := tF.indicator (fun _ => (1 : ℝ)) with hgB_def
-  have hInt_ce : Integrable (μ[f | mG]) μ := integrable_condExp
-  have h_mul_eq_indicator :
-      (fun ω => μ[f | mG] ω * gB ω) = tF.indicator (μ[f | mG]) := by
-    rw [hgB_def]; exact mul_indicator_one_eq_indicator tF (μ[f | mG])
-  have hint_prod : Integrable (fun ω => μ[f | mG] ω * gB ω) μ := by
-    simpa only [h_mul_eq_indicator] using hInt_ce.indicator htF_m0
-  have hint_B : Integrable gB μ := Integrable.indicator (integrable_const 1) htF_m0
+  have htF_m0 : MeasurableSet[mΩ] tF := hmF _ htF
+  have hint_ceg : Integrable (μ[f | mG] * gB) μ := by
+    rw [hgB_def, mul_indicator_one_eq_indicator]
+    exact integrable_condExp.indicator htF_m0
   have hfg : (f * gB) = (tF ∩ H).indicator (fun _ => (1 : ℝ)) := by
     rw [hgB_def, mul_indicator_one_eq_indicator, hf_def, Set.indicator_indicator]
   have hprod_int : Integrable (f * gB) μ := by
     rw [hfg]
     exact Integrable.indicator (integrable_const 1) ((hmF _ htF).inter (hmH _ hH))
+  -- Conditional independence of `mF` and `mH` given `mG` splits the conditional expectation of
+  -- the rectangle indicator into the two factors.
   have hprodf : μ[f * gB | mG] =ᵐ[μ] μ[f | mG] * μ[gB | mG] := by
     rw [hfg]
     exact ((condIndep_iff mG mF mH hmG hmF hmH μ).mp hCI _ _ htF hH).trans
       (Filter.EventuallyEq.of_eq (mul_comm _ _))
-  have h_pull : μ[(μ[f | mG]) * gB | mG] =ᵐ[μ] (μ[f | mG]) * μ[gB | mG] :=
-    condExp_mul_of_aestronglyMeasurable_left
-      stronglyMeasurable_condExp.aestronglyMeasurable hint_prod hint_B
   calc ∫ x in tF ∩ tG, (μ[f | mG]) x ∂μ
-      = ∫ x in tG, (μ[f | mG] * gB) x ∂μ := by
-        have hh1 : ∫ ω in tG ∩ tF, μ[f | mG] ω ∂μ
-            = ∫ ω in tG, tF.indicator (μ[f | mG]) ω ∂μ := by
-          rw [setIntegral_indicator htF_m0]
-        have hh2 : ∫ ω in tG, tF.indicator (μ[f | mG]) ω ∂μ
-            = ∫ ω in tG, μ[f | mG] ω * gB ω ∂μ := by rw [h_mul_eq_indicator]
-        rw [Set.inter_comm]; exact hh1.trans hh2
-    _ = ∫ x in tG, (μ[f | mG] * μ[gB | mG]) x ∂μ := by
-        have h_set_eq : ∫ x in tG, μ[(μ[f | mG]) * gB | mG] x ∂μ
-            = ∫ x in tG, ((μ[f | mG]) * gB) x ∂μ :=
-          setIntegral_condExp hmG hint_prod htG
-        rw [← h_set_eq]
-        exact setIntegral_congr_ae (hmG _ htG)
-          (by filter_upwards [h_pull] with x hx _; exact hx)
-    _ = ∫ x in tG, (μ[f * gB | mG]) x ∂μ :=
-        setIntegral_congr_ae (hmG _ htG)
-          (by filter_upwards [hprodf] with x hx _; exact hx.symm)
-    _ = ∫ x in tG, (f * gB) x ∂μ := setIntegral_condExp hmG hprod_int htG
-    _ = ∫ x in tF ∩ tG, f x ∂μ := by
-        have h_fg : (f * gB) = tF.indicator f := by
-          rw [hgB_def, mul_indicator_one_eq_indicator]
-        rw [h_fg, Set.inter_comm tF, setIntegral_indicator htF_m0]
+      = ∫ x in tG, (μ[f | mG] * gB) x ∂μ := (setIntegral_mul_indicator_one htF_m0 _ _).symm
+    _ = ∫ x in tG, (f * gB) x ∂μ :=
+        setIntegral_condExp_mul_eq_setIntegral_mul hmG htG hprodf hint_ceg
+          (Integrable.indicator (integrable_const 1) htF_m0) hprod_int
+    _ = ∫ x in tF ∩ tG, f x ∂μ := setIntegral_mul_indicator_one htF_m0 _ _
 
 /-- The sets `tF ∩ tG`, with `tF` being `mF`-measurable and `tG` being `mG`-measurable, form a
 π-system. -/
