@@ -122,7 +122,7 @@ theorem tendsto_sub_mul_nhds_residue_of_order_eq_neg_one (hord : meromorphicOrde
   have h := hf.tendsto_nhds_meromorphicTrailingCoeffAt
   rw [huntop, ← residue_eq_meromorphicTrailingCoeffAt_of_order_eq_neg_one hord] at h
   refine h.congr fun z => ?_
-  simp [Pi.smul_apply', neg_neg, zpow_one, smul_eq_mul]
+  simp [Pi.smul_apply', neg_neg, smul_eq_mul]
 
 /-- **The residue as a limit, at most a simple pole.** If `f` has at most a simple pole at `z₀`
 (`−1 ≤ meromorphicOrderAt f z₀`), then `(z − z₀) · f z → residue f z₀` as `z → z₀`. In the analytic
