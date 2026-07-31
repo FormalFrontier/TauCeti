@@ -75,7 +75,8 @@ universe of `k` unless the vertex and arrow types are small. The vertex simple `
 `TauCeti.RepresentationTheory.Quiver.Representation.Simple` is built on `k` itself, so the two
 objects sit in a common category only when those universes agree, and the injective envelope
 `Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the projective cover `Pᵢ ↠ Sᵢ` is not stated in
-`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`.
+`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`; both are stated in
+`TauCeti.RepresentationTheory.Quiver.Representation.Cover`, where those universes are aligned.
 
 ## References
 
