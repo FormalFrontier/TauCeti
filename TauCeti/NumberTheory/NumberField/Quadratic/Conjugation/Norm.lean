@@ -6,7 +6,6 @@ module
 
 public import Mathlib.RingTheory.Ideal.Norm.RelNorm
 public import Mathlib.NumberTheory.NumberField.Norm
-public import Mathlib.FieldTheory.Galois.Basic
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Basic
 
 /-!
