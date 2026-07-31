@@ -221,6 +221,8 @@ namespace ClassGroup
 
 variable {R R' : Type*} [CommRing R] [CommRing R']
 
+-- Works around a `RingHomInvPair` defeq diamond in Mathlib's `semilinearEquivOfRingEquiv`
+-- (since the mathlib `79d0395` bump) so the `semilinearEquivOfRingEquiv_algebraMap` rewrites fire.
 set_option backward.isDefEq.respectTransparency.types false in
 /-- Transport of a `coeIdeal` along `FractionalIdeal.ringEquivOfRingEquiv f` is the `coeIdeal` of
 the pushforward ideal `Ideal.map f`. This is the fraction-field shadow of `Ideal.map` used to
