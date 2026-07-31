@@ -20,9 +20,9 @@ product twisted by `α`,
 
 `⟨a, g⟩ * ⟨b, h⟩ = ⟨a * g • b * α (g, h), g * h⟩`.
 
-The cocycle identity is exactly associativity of this product and the normalization is exactly its
-unitality, so both are carried as fields of `FactorSet` rather than as hypotheses of the results
-below; without them the multiplication is neither associative nor unital.
+The cocycle identity is exactly associativity of this product, and the normalization is exactly
+what makes `⟨1, 1⟩` its identity, so both are carried as fields of `FactorSet` rather than as
+hypotheses of the results below.
 
 Two facts identify `α` as *the* factor set of the extension it builds. The set-theoretic section
 `g ↦ ⟨1, g⟩` fails to be a homomorphism by exactly `α` (`TauCeti.FactorSet.canonicalSection_mul`),
@@ -81,8 +81,8 @@ variable (G : Type u) (M : Type v) [Group G] [CommGroup M] [MulDistribMulAction 
 
 /-- A **factor set** of `G` with values in the `G`-module `M`: a multiplicative `2`-cocycle
 `α : G × G → M` normalized by `α (1, 1) = 1`. The cocycle identity is Mathlib's
-`groupCohomology.IsMulCocycle₂`, and the two fields are exactly what makes
-`TauCeti.FactorSet.Extension` a group. -/
+`groupCohomology.IsMulCocycle₂`; it gives associativity of `TauCeti.FactorSet.Extension`, while the
+normalization makes `⟨1, 1⟩` the identity there. -/
 structure FactorSet where
   /-- The underlying function of a factor set. -/
   toFun : G × G → M
@@ -113,14 +113,13 @@ section
 
 variable (α : FactorSet G M)
 
+/-- The cocycle identity of a factor set, restated for the coercion `⇑α` rather than for the
+field `toFun`, so that it rewrites in the goals the rest of the API produces. -/
 theorem isMulCocycle₂ : IsMulCocycle₂ ⇑α := α.isMulCocycle₂'
 
-/-- The cocycle identity of a factor set, in the form that gives associativity of the twisted
-product `TauCeti.FactorSet.Extension`. -/
-theorem cocycle (g h j : G) : α (g * h, j) * α (g, h) = g • α (h, j) * α (g, h * j) :=
-  α.isMulCocycle₂ g h j
-
--- Not `@[simp]`: the two lemmas below subsume it.
+/-- The normalization of a factor set, restated for the coercion `⇑α` rather than for the field
+`toFun`, so that it rewrites in the goals the rest of the API produces. Not `@[simp]`: the two
+lemmas below subsume it. -/
 theorem map_one_one : α (1, 1) = 1 := α.map_one_one'
 
 @[simp]
@@ -188,7 +187,7 @@ private theorem mul_assoc_left (a b c : M) (g h j : G) :
       = a * g • (b * h • c * α (h, j)) * α (g, h * j) :=
   calc a * g • b * α (g, h) * (g * h) • c * α (g * h, j)
       = a * g • b * (g • h • c) * (α (g * h, j) * α (g, h)) := by rw [mul_smul]; ac_rfl
-    _ = a * g • b * (g • h • c) * (g • α (h, j) * α (g, h * j)) := by rw [α.cocycle]
+    _ = a * g • b * (g • h • c) * (g • α (h, j) * α (g, h * j)) := by rw [α.isMulCocycle₂ g h j]
     _ = a * g • (b * h • c * α (h, j)) * α (g, h * j) := by simp only [smul_mul']; ac_rfl
 
 /-- The `M`-component of `x⁻¹ * x` in the twisted product is trivial: the two values of `α` on
