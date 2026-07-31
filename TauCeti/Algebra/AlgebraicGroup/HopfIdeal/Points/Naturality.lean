@@ -59,7 +59,7 @@ lemma mapPoints_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) {A B : CommAlgCat.{w} R}
     (χ : A ⟶ B) :
     quotientPointsSubgroup H I A →* quotientPointsSubgroup H I B :=
-  (((HopfAlgebra.mapPoints (H := H) χ).hom.restrict (quotientPointsSubgroup H I A)).codRestrict
+  (((HopfAlgebra.mapPoints (H := H) χ).hom.domRestrict (quotientPointsSubgroup H I A)).codRestrict
     (quotientPointsSubgroup H I B)
     fun g => mapPoints_mem_quotientPointsSubgroup H I χ g.property)
 
