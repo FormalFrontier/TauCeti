@@ -153,7 +153,7 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
   letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
   have hcarrier : (ConjClasses.mk x).carrier = {g | IsConj g x} := by
     ext g
-    simp only [ConjClasses.mem_carrier_iff_mk_eq, Set.mem_setOf_eq]
+    simp only [ConjClasses.mem_carrier_iff_mk_eq, Set.mem_ofPred_eq]
     exact ConjClasses.mk_eq_mk_iff_isConj
   have hconj (g : G) :
       ConjClasses.mk g⁻¹ = ConjClasses.mk x⁻¹ ↔ IsConj g x := by
