@@ -26,10 +26,14 @@ Second, the sign pattern identifies `Gal(M/F)` precisely: restriction of scalars
 
 `Gal(M/F) ≃* Multiplicative U`
 
-is an isomorphism. Cardinalities then come from `IsGalois.card_aut_eq_finrank` together with the
-relative degrees of `TauCeti.NumberTheory.Multiquadratic.RelativeDegree`; the one reading recorded
-here is the one the genus-field constructions consume, `|Gal(M/F)| = 2 ^ (n - 1)` over a quadratic
-subfield.
+is an isomorphism. Nothing is proved bijective by hand for this: it is Mathlib's
+`IntermediateField.fixingSubgroupEquiv` composed with the restriction of
+`TauCeti.Multiquadratic.galoisGroupEquiv` to the fixing subgroup of `F`, whose image the subfield
+dictionary already identifies with `U`. Cardinalities then come from
+`IsGalois.card_aut_eq_finrank` together with the relative degrees of
+`TauCeti.NumberTheory.Multiquadratic.RelativeDegree`: `|Gal(M/F)| = 2 ^ dim U` in general, and
+`|Gal(M/F)| = 2 ^ (n - 1)` over a quadratic subfield, the reading the genus-field constructions
+consume.
 
 This is the group-theoretic half of the relative picture the genus-field constructions consume: the
 genus field is multiquadratic over `ℚ`, and the group the genus theory identifies with `Cl/Cl²` is
@@ -43,6 +47,7 @@ its Galois group over the quadratic base `ℚ(√d)`, a relative group of exactl
   dividing two.
 * `TauCeti.Multiquadratic.galoisGroupEquivIntermediateFieldSubmodule`: the isomorphism
   `Gal(M/F) ≃* Multiplicative U` given by the sign pattern of the restricted automorphism.
+* `TauCeti.Multiquadratic.card_aut_top_over_intermediateField`: `|Gal(M/F)| = 2 ^ dim U`.
 * `TauCeti.Multiquadratic.card_aut_top_over_intermediateField_of_finrank_eq_two`: over a quadratic
   subfield, `|Gal(M/F)| = 2 ^ (n - 1)`.
 
@@ -110,72 +115,39 @@ theorem signPattern_restrictScalars_mem [Finite ι] [NeZero (2 : K)]
   (mem_intermediateFieldEquivSubmodule_apply_ofDual_iff hroot hindep F _).mpr
     ⟨σ.restrictScalars K, restrictScalars_mem_fixingSubgroup F σ, rfl⟩
 
-/-- The relative sign-pattern homomorphism underlying
-`TauCeti.Multiquadratic.galoisGroupEquivIntermediateFieldSubmodule`: an `F`-automorphism of
-`M = K(rootᵢ : i)` is sent to the sign pattern of the `K`-automorphism underlying it, which lands
-in the `𝔽₂`-subspace attached to `F`. -/
-private noncomputable def relativeSignHom [Finite ι] [NeZero (2 : K)]
+/-- The image of the fixing subgroup of `F` under the sign-pattern Galois-group equivalence is the
+subgroup underlying the `𝔽₂`-subspace attached to `F`. This is
+`TauCeti.Multiquadratic.intermediateFieldEquivSubmodule_apply_ofDual`, read as an equality of
+subgroups of `Multiplicative (ι → ℤ/2)`. -/
+private theorem fixingSubgroup_map_galoisGroupEquiv [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
-    (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) →*
-      Multiplicative ↥(intermediateFieldEquivSubmodule hroot hindep F).ofDual :=
-  MonoidHom.mk'
-    (fun σ => Multiplicative.ofAdd
-      ⟨signPattern root (σ.restrictScalars K), signPattern_restrictScalars_mem hroot hindep F σ⟩)
-    fun σ τ => congrArg Multiplicative.ofAdd (Subtype.ext
-      (signPattern_mul hroot (σ.restrictScalars K) (τ.restrictScalars K)))
-
-/-- Evaluation rule for `relativeSignHom`: it records the sign pattern of the restricted
-automorphism. -/
-private theorem relativeSignHom_apply [Finite ι] [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (F : IntermediateField K (adjoin K (Set.range root)))
-    (σ : adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) :
-    relativeSignHom hroot hindep F σ =
-      Multiplicative.ofAdd
-        ⟨signPattern root (σ.restrictScalars K),
-          signPattern_restrictScalars_mem hroot hindep F σ⟩ :=
-  rfl
-
-private theorem relativeSignHom_bijective [Finite ι] [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (F : IntermediateField K (adjoin K (Set.range root))) :
-    Function.Bijective (relativeSignHom hroot hindep F) := by
-  constructor
-  · intro σ τ h
-    rw [relativeSignHom_apply, relativeSignHom_apply] at h
-    exact AlgEquiv.restrictScalars_injective K (signPattern_injective hroot
-      (congrArg Subtype.val (Multiplicative.ofAdd.injective h)))
-  · intro v
-    obtain ⟨⟨w, hw⟩, rfl⟩ : ∃ u, Multiplicative.ofAdd u = v := ⟨Multiplicative.toAdd v, rfl⟩
-    obtain ⟨τ, hτ, hv⟩ :=
-      (mem_intermediateFieldEquivSubmodule_apply_ofDual_iff hroot hindep F w).mp hw
-    -- `fixingSubgroupEquiv` inverts restriction of scalars, so the `K`-automorphism underlying the
-    -- relative automorphism it produces from `τ` is `τ` itself.
-    have hres : (IntermediateField.fixingSubgroupEquiv F ⟨τ, hτ⟩).restrictScalars K = τ :=
-      congrArg Subtype.val ((IntermediateField.fixingSubgroupEquiv F).symm_apply_apply ⟨τ, hτ⟩)
-    -- The membership proof inside the subtype depends on the automorphism, so `hres` cannot be
-    -- rewritten into the goal; transport it through `signPattern root` on the values instead.
-    refine ⟨IntermediateField.fixingSubgroupEquiv F ⟨τ, hτ⟩, ?_⟩
-    rw [relativeSignHom_apply]
-    exact congrArg Multiplicative.ofAdd
-      (Subtype.ext ((congrArg (signPattern root) hres).trans hv))
+    F.fixingSubgroup.map (galoisGroupEquiv hroot hindep : _ →* _)
+      = Subgroup.toAddSubgroup'.symm
+          ((intermediateFieldEquivSubmodule hroot hindep F).ofDual.toAddSubgroup) := by
+  ext σ
+  simp [intermediateFieldEquivSubmodule_apply_ofDual hroot hindep F]
 
 /-- **The relative Galois group of a multiquadratic field is the subspace attached to its base.**
 Under square-class independence, restricting an `F`-automorphism of `M = K(rootᵢ : i)` to `K` and
 reading its sign pattern is an isomorphism of `Gal(M/F)` onto the `𝔽₂`-subspace `U` of `ι → ℤ/2`
 that the subfield dictionary attaches to `F`. For `F = ⊥` the subspace is everything and this is
-`TauCeti.Multiquadratic.galoisGroupEquiv`. -/
+`TauCeti.Multiquadratic.galoisGroupEquiv`.
+
+No bijection is proved here: this is the composite of Mathlib's
+`IntermediateField.fixingSubgroupEquiv`, which inverts restriction of scalars, with the restriction
+of `TauCeti.Multiquadratic.galoisGroupEquiv` to the fixing subgroup of `F`, whose image is `U` by
+`TauCeti.Multiquadratic.intermediateFieldEquivSubmodule_apply_ofDual`. -/
 noncomputable def galoisGroupEquivIntermediateFieldSubmodule [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
     (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) ≃*
       Multiplicative ↥(intermediateFieldEquivSubmodule hroot hindep F).ofDual :=
-  MulEquiv.ofBijective (relativeSignHom hroot hindep F) (relativeSignHom_bijective hroot hindep F)
+  (IntermediateField.fixingSubgroupEquiv F).symm.trans
+    (((galoisGroupEquiv hroot hindep).subgroupMap F.fixingSubgroup).trans
+      (MulEquiv.subgroupCongr (fixingSubgroup_map_galoisGroupEquiv hroot hindep F)))
 
 /-- The relative Galois equivalence sends an automorphism to the sign pattern of its restriction. -/
 @[simp] theorem galoisGroupEquivIntermediateFieldSubmodule_apply [Finite ι] [NeZero (2 : K)]
@@ -186,15 +158,57 @@ noncomputable def galoisGroupEquivIntermediateFieldSubmodule [Finite ι] [NeZero
     galoisGroupEquivIntermediateFieldSubmodule hroot hindep F σ =
       Multiplicative.ofAdd
         ⟨signPattern root (σ.restrictScalars K),
-          signPattern_restrictScalars_mem hroot hindep F σ⟩ := by
-  rw [galoisGroupEquivIntermediateFieldSubmodule, MulEquiv.ofBijective_apply,
-    relativeSignHom_apply]
+          signPattern_restrictScalars_mem hroot hindep F σ⟩ :=
+  -- Both transports act as the identity on underlying sign vectors, so the value is the one
+  -- `galoisGroupEquiv` reads off the restricted automorphism.
+  Subtype.ext ((MulEquiv.coe_subgroupMap_apply (galoisGroupEquiv hroot hindep)
+    F.fixingSubgroup ((IntermediateField.fixingSubgroupEquiv F).symm σ)).trans
+      (galoisGroupEquiv_apply hroot hindep (σ.restrictScalars K)))
+
+/-- The inverse of the relative Galois equivalence realizes a sign pattern `v` in the subspace
+attached to `F` as the `F`-automorphism sending each generator `rootᵢ` to `(-1)^(vᵢ) · rootᵢ`. This
+is the relative reading of `TauCeti.Multiquadratic.galoisGroupEquiv_symm_apply_gen`. -/
+@[simp] theorem galoisGroupEquivIntermediateFieldSubmodule_symm_apply_gen [Finite ι]
+    [NeZero (2 : K)]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
+    (F : IntermediateField K (adjoin K (Set.range root)))
+    (v : (intermediateFieldEquivSubmodule hroot hindep F).ofDual) (i : ι) :
+    ((galoisGroupEquivIntermediateFieldSubmodule hroot hindep F).symm (Multiplicative.ofAdd v))
+        (gen root i) = (-1) ^ ((v : ι → ZMod 2) i).val * gen root i := by
+  set σ := (galoisGroupEquivIntermediateFieldSubmodule hroot hindep F).symm
+    (Multiplicative.ofAdd v)
+  have hsign : signPattern root (σ.restrictScalars K) = (v : ι → ZMod 2) := by
+    have happ := (galoisGroupEquivIntermediateFieldSubmodule hroot hindep F).apply_symm_apply
+      (Multiplicative.ofAdd v)
+    rw [galoisGroupEquivIntermediateFieldSubmodule_apply] at happ
+    exact congrArg Subtype.val (Multiplicative.ofAdd.injective happ)
+  -- `σ` and its restriction of scalars have the same underlying function.
+  exact (aut_gen_eq_signPattern hroot (σ.restrictScalars K) i).trans (by rw [hsign])
+
+/-- **The order of the relative Galois group of a multiquadratic field.** Under square-class
+independence, the relative Galois group `Gal(M/F)` of `M = K(rootᵢ : i)` over an intermediate field
+`F` has order `2 ^ dim U`, where `U` is the `𝔽₂`-subspace of `ι → ℤ/2` attached to `F`. This is the
+cardinality reading of `TauCeti.Multiquadratic.galoisGroupEquivIntermediateFieldSubmodule`, taken
+here from the relative degree `TauCeti.Multiquadratic.finrank_top_over_intermediateField`, and it
+is to the relative group what `TauCeti.Multiquadratic.card_aut_adjoin_range` is to the absolute
+one. -/
+theorem card_aut_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
+    (F : IntermediateField K (adjoin K (Set.range root))) :
+    Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
+      2 ^ finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
+  haveI := isAbelianGalois hroot
+  haveI := finiteDimensional_top_over_intermediateField hroot F
+  rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
+    finrank_top_over_intermediateField hroot hindep F]
 
 /-- **The relative Galois group over a quadratic subfield has order `2 ^ (n - 1)`.** Under
 square-class independence, over any quadratic subfield `F` of the degree-`2ⁿ` multiquadratic field
 `M = K(rootᵢ : i)`, the relative Galois group `Gal(M/F)` is elementary abelian of order
-`2 ^ (|ι| - 1)`. This is the group the genus-field constructions read off over the quadratic
-base. -/
+`2 ^ (|ι| - 1)`: a quadratic subfield is a hyperplane, so its subspace is a line's worth short of
+everything. This is the group the genus-field constructions read off over the quadratic base. -/
 theorem card_aut_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
@@ -202,9 +216,9 @@ theorem card_aut_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZer
     (hF : Module.finrank K F = 2) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ (Nat.card ι - 1) := by
-  haveI := isAbelianGalois hroot
-  haveI := finiteDimensional_top_over_intermediateField hroot F
-  rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
-    finrank_top_over_intermediateField_of_finrank_eq_two hroot hindep F hF]
+  rw [card_aut_top_over_intermediateField hroot hindep F]
+  congr 1
+  have := (finrank_intermediateField_eq_two_iff hroot hindep F).mp hF
+  omega
 
 end TauCeti.Multiquadratic
