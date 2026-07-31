@@ -141,7 +141,8 @@ theorem permutationModuleOnesIsoLeftRegular_inv_hom_single (n : ℕ)
 @[simp]
 theorem finrank_permutationModule_ones (n : ℕ) :
     Module.finrank ℚ (permutationModule (Nat.Partition.ones n)).V = n.factorial := by
-  rw [finrank_permutationModule, Nat.Partition.prod_map_factorial_ones, Nat.div_one]
+  rw [finrank_permutationModule]
+  simp
 
 /-- The character of the Young permutation module of `(1ⁿ)` is the regular character: it is `n !`
 at the identity and vanishes elsewhere.

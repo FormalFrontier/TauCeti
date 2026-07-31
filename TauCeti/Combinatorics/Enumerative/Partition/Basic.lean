@@ -65,21 +65,12 @@ This is the finest partition of `n`, opposite to Mathlib's coarsest `Nat.Partiti
 whose parts are the single part `n` when `n ≠ 0`, and none when `n = 0`.
 
 The parts are exposed only through `Nat.Partition.ones_parts`. -/
-def ones (n : ℕ) : n.Partition where
-  parts := Multiset.replicate n 1
-  parts_pos hi := by simp [Multiset.eq_of_mem_replicate hi]
-  parts_sum := by simp
+def ones (n : ℕ) : n.Partition :=
+  _root_.Nat.Partition.ofSums n (Multiset.replicate n 1) (by simp)
 
 @[simp]
-theorem ones_parts (n : ℕ) : (ones n).parts = Multiset.replicate n 1 := by simp [ones]
-
-/-- The product of the factorials of the parts of `(1ⁿ)` is `1`.
-
-This is not a `simp` lemma: `simp` already reaches it from the `simp` lemma
-`Nat.Partition.ones_parts`. -/
-theorem prod_map_factorial_ones (n : ℕ) :
-    ((ones n).parts.map Nat.factorial).prod = 1 := by
-  simp [Multiset.map_replicate]
+theorem ones_parts (n : ℕ) : (ones n).parts = Multiset.replicate n 1 := by
+  simp [ones, Multiset.filter_eq_self, Multiset.mem_replicate]
 
 /-- The product of the factorials of the parts of the coarsest partition `(n)` is `n !`.
 

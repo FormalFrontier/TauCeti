@@ -184,17 +184,15 @@ noncomputable def quotientTopIsoTrivial :
 theorem quotientTopIsoTrivial_hom_hom_single (q : G ⧸ (⊤ : Subgroup G)) (r : k) :
     (quotientTopIsoTrivial k).hom.hom (MonoidAlgebra.single q r) = r := by
   haveI := QuotientGroup.subsingleton_quotient_top (G := G)
-  rw [quotientTopIsoTrivial, Rep.mkIso_hom_hom_apply,
-    Representation.ofMulActionSubsingletonEquivTrivial_apply, Subsingleton.elim q 1]
-  simp
+  rw [Subsingleton.elim q 1]
+  simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial]
 
 @[simp]
 theorem quotientTopIsoTrivial_inv_hom_apply (r : k) :
     (quotientTopIsoTrivial k).inv.hom r =
       MonoidAlgebra.single ((1 : G) : G ⧸ (⊤ : Subgroup G)) r := by
   haveI := QuotientGroup.subsingleton_quotient_top (G := G)
-  rw [quotientTopIsoTrivial, Rep.mkIso_inv_hom_apply, ← Representation.Equiv.coe_toLinearMap,
-    Representation.ofMulActionSubsingletonEquivTrivial_symm_apply, QuotientGroup.mk_one]
+  simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial]
 
 end QuotientTop
 

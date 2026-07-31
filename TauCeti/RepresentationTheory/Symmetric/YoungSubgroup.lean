@@ -229,7 +229,8 @@ so only the identity preserves them all. -/
 @[simp]
 theorem youngSubgroup_ones (n : ℕ) : youngSubgroup (Nat.Partition.ones n) = ⊥ :=
   Subgroup.eq_bot_of_card_eq _ <| by
-    rw [card_youngSubgroup, Nat.Partition.prod_map_factorial_ones]
+    rw [card_youngSubgroup]
+    simp
 
 /-- The index of a Young subgroup is the multinomial quotient by the factorials of the parts. -/
 theorem youngSubgroup_index {n : ℕ} (μ : n.Partition) :
