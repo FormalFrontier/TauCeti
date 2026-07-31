@@ -22,7 +22,7 @@ tangents of the signed radii:
 `hyperbolicDist (u * a) (u * b) = |artanh a - artanh b|`
 (`TauCeti.hyperbolicDist_mul_ofReal_of_norm_eq_one`). Indeed the Moebius denominator
 `1 - conj (u * b) * (u * a)` collapses to the real number `1 - a * b`, so the pseudo-hyperbolic
-expression is `|a - b| / (1 - a * b)`, and the subtraction formula for `Real.artanh` — the
+expression is `|a - b| / |1 - a * b|`, and the subtraction formula for `Real.artanh` — the
 mirror image of the addition formula `TauCeti.artanh_add` proved for the triangle inequality —
 turns that into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Real.tanh t` makes
 it a unit-speed line: `TauCeti.PoincareDisc.radialGeodesic u` is an isometric embedding of `ℝ`.
@@ -106,22 +106,22 @@ private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ I
 
 /-! ### The hyperbolic distance along a Euclidean diameter -/
 
-/-- The pseudo-hyperbolic expression of two points `u * a`, `u * b` of the same Euclidean
-diameter of the disc (`‖u‖ = 1`, `a` and `b` real) is `|a - b| / (1 - a * b)`: the rotation by
+/-- The pseudo-hyperbolic expression of two points `u * a`, `u * b` of the same real line
+through the origin (`‖u‖ = 1`, `a` and `b` real) is `|a - b| / |1 - a * b|`: the rotation by
 `u` is invisible (`TauCeti.pseudoHyperbolicExpr_const_mul`), and on the real axis the Moebius
-denominator is the real number `1 - a * b`. -/
-theorem pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a b : ℝ}
-    (ha : |a| < 1) (hb : |b| < 1) :
-    pseudoHyperbolicExpr (u * a) (u * b) = |a - b| / (1 - a * b) := by
-  have ha' := abs_lt.1 ha
-  have hb' := abs_lt.1 hb
-  have hab : (0 : ℝ) < 1 - a * b := by nlinarith [ha'.1, ha'.2, hb'.1, hb'.2]
+denominator is the real number `1 - a * b`.
+
+Like `TauCeti.pseudoHyperbolicExpr` itself this is a total algebraic identity, needing no
+disc-membership hypothesis on `a` and `b`. For points of the disc the denominator is positive,
+so `|1 - a * b|` may be read as `1 - a * b`. -/
+theorem pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) (a b : ℝ) :
+    pseudoHyperbolicExpr (u * a) (u * b) = |a - b| / |1 - a * b| := by
   have hcast : ((a : ℂ) - (b : ℂ)) / (1 - (b : ℂ) * (a : ℂ)) =
       (((a - b) / (1 - a * b) : ℝ) : ℂ) := by
     push_cast
     ring
   rw [pseudoHyperbolicExpr_const_mul hu, pseudoHyperbolicExpr_def, Complex.conj_ofReal, hcast,
-    Complex.norm_real, Real.norm_eq_abs, abs_div, abs_of_pos hab]
+    Complex.norm_real, Real.norm_eq_abs, abs_div]
 
 /-- **The hyperbolic distance along a Euclidean diameter.** For `‖u‖ = 1` and real `a, b` of
 absolute value less than one, the hyperbolic distance between the disc points `u * a` and
@@ -141,9 +141,8 @@ theorem hyperbolicDist_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a
     have h₂ : (0 : ℝ) < (1 - a) * (1 + b) :=
       mul_pos (by linarith [ha'.2]) (by linarith [hb'.1])
     constructor <;> nlinarith [h₁, h₂]
-  rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu ha hb,
-    ← abs_of_pos hab, ← abs_div, artanh_abs hquot,
-    ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
+  rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu a b,
+    ← abs_div, artanh_abs hquot, ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
 
 /-- Reparametrising a Euclidean diameter by `Real.tanh` makes it unit speed: the hyperbolic
 distance between `u * Real.tanh s` and `u * Real.tanh t` is `|s - t|`. -/
