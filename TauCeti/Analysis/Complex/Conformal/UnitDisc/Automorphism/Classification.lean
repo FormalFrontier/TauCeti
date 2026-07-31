@@ -22,7 +22,9 @@ This discharges the conformal-mapping roadmap's L2 description of the disc autom
 `Aut(𝔻) = {e^{iθ}(z−a)/(1−āz)}`.  It builds on Mathlib's Schwarz lemma and on the standard
 disc-Moebius API developed in Tau Ceti.  As with the other L0--L3 conformal-mapping material,
 this statement is coordinated with the upstream Mathlib Riemann-mapping effort
-leanprover-community/mathlib4#33505 and should be replaced by human-curated upstream API if a
+leanprover-community/mathlib4#33505, whose preceding human-curated work is
+`Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`; none of it is
+duplicated here, and this statement should be replaced by human-curated upstream API if a
 disc-automorphism classification lands there.
 -/
 
@@ -63,7 +65,7 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
   have hFdata : DifferentiableOn ℂ F (ball (0 : ℂ) 1) ∧
       MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧ F 0 = 0 := by
     -- The target factor is centered at `f (g 0) = 0`, so it simplifies to the identity.
-    simpa [F, hfg0, Function.comp_def] using
+    simpa [F, schwarzPickConjugate_def, hfg0, Function.comp_def] using
       differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hfmaps ha
   obtain ⟨hFdiff, hFmaps, hFzero⟩ := hFdata
   have hGdiff : DifferentiableOn ℂ G (ball (0 : ℂ) 1) :=
