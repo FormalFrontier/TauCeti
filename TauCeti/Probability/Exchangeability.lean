@@ -48,4 +48,8 @@ curated surface.
 
 `Exchangeability.IID` *is* included, and is API rather than an example: the constructors that build
 the representation predicates from independence together with a common law.
+## References
+
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies
+  this facade and its companion `TauCeti.Probability.DeFinetti`.
 -/

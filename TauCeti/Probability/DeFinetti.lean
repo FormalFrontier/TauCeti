@@ -39,4 +39,10 @@ Route-specific endpoints. The `L²` and Koopman developments are not complete, s
 extreme-point work beyond what has already merged.
 
 The worked examples are excluded, and are reachable from their own modules.
+## References
+
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies
+  this facade and the symmetry facade it builds on.
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), Theorem 1.1,
+  for the representation theorem this module exposes.
 -/
