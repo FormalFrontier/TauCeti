@@ -111,13 +111,6 @@ theorem degreePart_eq_bot_iff_card_lt (q : ℕ) :
       omega
     · exact Finsupp.notMem_support_iff.mp hC
 
-/-- The degree-`q` part of the plumbing chain module is nonzero exactly in the possible cubical
-range. -/
-theorem degreePart_ne_bot_iff_le_card (q : ℕ) :
-    degreePart V q ≠ ⊥ ↔ q ≤ Fintype.card V := by
-  rw [ne_eq, degreePart_eq_bot_iff_card_lt]
-  omega
-
 end
 
 /-- Distinct cubical-degree submodules intersect trivially. -/
@@ -206,14 +199,6 @@ theorem latticeDifferentialDegree_eq_zero_of_card_le
     rw [hsource]
     infer_instance
   exact Subsingleton.elim _ _
-
-/-- The differential from the first impossible cubical degree into the top possible degree is
-zero. -/
-@[simp]
-theorem latticeDifferentialDegree_card_eq_zero
-    (P : PlumbingGraph V) (k : P.characteristicVectors) :
-    P.latticeDifferentialDegree k (Fintype.card V) = 0 :=
-  P.latticeDifferentialDegree_eq_zero_of_card_le k _ le_rfl
 
 /-- Consecutive cubical-degree lattice differentials compose to zero. -/
 theorem latticeDifferentialDegree_comp

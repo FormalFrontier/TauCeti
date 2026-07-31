@@ -49,6 +49,7 @@ variable {V : Type*} [DecidableEq V] [Fintype V]
 
 /-- A chain object in the cubically graded lattice complex is zero exactly above the number of
 plumbing vertices. -/
+@[simp]
 theorem isZero_latticeChainComplex_X_iff_card_lt
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
     IsZero ((P.latticeChainComplex k).X q) ↔ Fintype.card V < q := by
@@ -57,7 +58,7 @@ theorem isZero_latticeChainComplex_X_iff_card_lt
 
 /-- The cubically graded lattice complex is exact in every degree above the number of plumbing
 vertices because its chain object there is zero. -/
-theorem latticeChainComplex_exactAt_of_card_lt
+theorem exactAt_latticeChainComplex_of_card_lt
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ)
     (hq : Fintype.card V < q) :
     (P.latticeChainComplex k).ExactAt q :=
@@ -70,7 +71,7 @@ theorem isZero_latticeChainHomology_of_card_lt
     (hq : Fintype.card V < q) :
     IsZero (P.latticeChainHomology k q) := by
   rw [P.latticeChainHomology_def k q]
-  exact (P.latticeChainComplex_exactAt_of_card_lt k q hq).isZero_homology
+  exact (P.exactAt_latticeChainComplex_of_card_lt k q hq).isZero_homology
 
 end PlumbingGraph
 
