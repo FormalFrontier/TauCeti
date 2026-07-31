@@ -155,7 +155,7 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
   set B : Ideal (𝓞 K) := J * Ideal.map σ J with hB
   have hmapne : Ideal.map σ J ≠ 0 :=
     mem_nonZeroDivisors_iff_ne_zero.mp
-      (ClassGroup.idealMap_mem_nonZeroDivisors σ (mem_nonZeroDivisors_iff_ne_zero.mpr hJne))
+      (Ideal.map_mem_nonZeroDivisors σ (mem_nonZeroDivisors_iff_ne_zero.mpr hJne))
   have hBne : B ≠ 0 := by rw [hB]; exact mul_ne_zero hJne hmapne
   -- (1) `A` is principal (extension of a principal `ℤ`-ideal).
   have hAprin : A.IsPrincipal := by
