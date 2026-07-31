@@ -94,7 +94,7 @@ theorem mapsTo_schwarzReflection_im_pos
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im}) :
     Set.MapsTo (schwarzReflection f) (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im} := by
   rintro z ⟨hzΩ, (hzim : 0 < z.im)⟩
-  rw [Set.mem_setOf_eq, schwarzReflection_of_im_nonneg hzim.le]
+  rw [Set.mem_ofPred_eq, schwarzReflection_of_im_nonneg hzim.le]
   exact hupper ⟨hzΩ, hzim⟩
 
 /-- The reflected branch takes the lower part of a conjugation-symmetric domain into the open
@@ -107,9 +107,9 @@ theorem mapsTo_schwarzReflection_im_neg
   rintro z ⟨hzΩ, (hzim : z.im < 0)⟩
   have hconj : (starRingEnd ℂ) z ∈ Ω ∩ {z : ℂ | 0 < z.im} := by
     refine ⟨hΩ hzΩ, ?_⟩
-    rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
     exact neg_pos.mpr hzim
-  rw [Set.mem_setOf_eq, schwarzReflection_of_im_neg hzim, starRingEnd_apply, Complex.star_def,
+  rw [Set.mem_ofPred_eq, schwarzReflection_of_im_neg hzim, starRingEnd_apply, Complex.star_def,
     Complex.conj_im]
   exact neg_neg_of_pos (hupper hconj)
 
@@ -157,7 +157,7 @@ theorem injOn_schwarzReflection_of_symmetric
     have hmem : ∀ {v : ℂ}, v ∈ Ω → v.im < 0 → (starRingEnd ℂ) v ∈ Ω ∩ {z : ℂ | 0 ≤ z.im} := by
       intro v hvΩ hvim
       refine ⟨hΩ hvΩ, ?_⟩
-      rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+      rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
       exact (neg_pos.mpr hvim).le
     have hf : f ((starRingEnd ℂ) z) = f ((starRingEnd ℂ) w) := by
       simpa using congrArg (starRingEnd ℂ) hzw
@@ -179,7 +179,7 @@ theorem image_schwarzReflection_of_symmetric
     · exact Or.inl ⟨z, ⟨hzΩ, hz0⟩, (schwarzReflection_of_im_nonneg hz0).symm⟩
     · have hconj : (starRingEnd ℂ) z ∈ Ω ∩ {z : ℂ | 0 ≤ z.im} := by
         refine ⟨hΩ hzΩ, ?_⟩
-        rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+        rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
         exact (neg_pos.mpr hz0).le
       exact Or.inr ⟨f ((starRingEnd ℂ) z), ⟨(starRingEnd ℂ) z, hconj, rfl⟩,
         (schwarzReflection_of_im_neg hz0).symm⟩
