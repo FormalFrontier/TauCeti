@@ -80,6 +80,102 @@ theorem measure_eq_of_fin_marginals_eq {μ ν : Measure (ℕ → α)} [IsFiniteM
       μ.map (prefixProj α n) S = ν.map (prefixProj α n) S) : μ = ν :=
   measure_eq_of_prefixProj_map_eq fun n => Measure.ext fun S hS => h n S hS
 
+/-- The prefix map onto the first `n` path coordinates, with the directing measure carried along. -/
+@[expose]
+def prefixPair (T α : Type*) (n : ℕ) : T × (ℕ → α) → T × (Fin n → α) :=
+  fun q => (q.1, fun i : Fin n => q.2 i)
+
+theorem measurable_prefixPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
+    (n : ℕ) : Measurable (prefixPair T α n) :=
+  measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+    (measurable_pi_apply (i : ℕ)).comp measurable_snd)
+
+
+/-! ## Paired prefix marginals -/
+
+
+/-- Longer prefixes refine shorter ones. -/
+theorem prefixPair_comp {T α : Type*} [MeasurableSpace T] [MeasurableSpace α] {m n : ℕ}
+    (hmn : m ≤ n) : prefixPair T α m
+      = (fun r : T × (Fin n → α) =>
+          (r.1, fun i : Fin m => r.2 (Fin.castLE hmn i))) ∘ prefixPair T α n := by
+  funext q
+  simp only [prefixPair, Function.comp_apply, Fin.val_castLE]
+
+/-- Sets pulled back from a finite prefix, with the directing measure carried along. -/
+def prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+    Set (Set (T × (ℕ → α))) :=
+  {C | ∃ (n : ℕ) (A : Set (T × (Fin n → α))),
+        MeasurableSet A ∧ C = prefixPair T α n ⁻¹' A}
+
+theorem isPiSystem_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+    IsPiSystem (prefixSets T α) := by
+  rintro _ ⟨m, A, hA, rfl⟩ _ ⟨n, B, hB, rfl⟩ -
+  -- Re-present both sets at the longer prefix, where the intersection is a single preimage.
+  refine ⟨max m n,
+    (fun r : T × (Fin (max m n) → α) =>
+        (r.1, fun i : Fin m => r.2 (Fin.castLE (le_max_left m n) i))) ⁻¹' A ∩
+      (fun r : T × (Fin (max m n) → α) =>
+        (r.1, fun i : Fin n => r.2 (Fin.castLE (le_max_right m n) i))) ⁻¹' B, ?_, ?_⟩
+  · exact ((measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+      (measurable_pi_apply _).comp measurable_snd)) hA).inter
+      ((measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+        (measurable_pi_apply _).comp measurable_snd)) hB)
+  · rw [Set.preimage_inter, ← Set.preimage_comp, ← Set.preimage_comp,
+      ← prefixPair_comp (T := T) (le_max_left m n), ← prefixPair_comp (T := T) (le_max_right m n)]
+
+theorem generateFrom_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+    MeasurableSpace.generateFrom (prefixSets T α)
+      = (inferInstance : MeasurableSpace (T × (ℕ → α))) := by
+  refine le_antisymm ?_ ?_
+  · -- Every prefix preimage is measurable.
+    refine MeasurableSpace.generateFrom_le ?_
+    rintro _ ⟨n, A, hA, rfl⟩
+    exact measurable_prefixPair T α n hA
+  · -- The product σ-algebra is the sup of the two coordinate comaps; catch each.
+    rw [Prod.instMeasurableSpace]
+    refine sup_le ?_ ?_
+    · -- First factor: read it off the empty prefix.
+      rintro _ ⟨S, hS, rfl⟩
+      refine MeasurableSpace.measurableSet_generateFrom ⟨0, S ×ˢ Set.univ, hS.prod .univ, ?_⟩
+      ext q
+      simp [prefixPair]
+    · -- Second factor: the path σ-algebra is the sup of the coordinate comaps, so the comap of
+      -- `snd` is the sup of the comaps of the coordinate readings.
+      have hpi : (MeasurableSpace.pi : MeasurableSpace (ℕ → α))
+          = ⨆ k : ℕ, MeasurableSpace.comap (fun x : ℕ → α => x k) inferInstance := rfl
+      rw [hpi, MeasurableSpace.comap_iSup]
+      refine iSup_le fun k => ?_
+      rintro _ ⟨_, ⟨U, hU, rfl⟩, rfl⟩
+      refine MeasurableSpace.measurableSet_generateFrom
+        ⟨k + 1, (fun r : T × (Fin (k + 1) → α) =>
+          r.2 ⟨k, Nat.lt_succ_self k⟩) ⁻¹' U, ?_, ?_⟩
+      · exact ((measurable_pi_apply _).comp measurable_snd) hU
+      · ext q
+        simp [prefixPair]
+
+
+/-- **Paired finite-marginal uniqueness.** Two measures on `T × (ℕ → α)` that agree under every
+prefix projection — keeping the `T` coordinate — are equal.
+
+As with `measure_eq_of_prefixProj_map_eq`, only one of the two measures need be assumed finite: the
+`n = 0` projection already forces the total masses to agree, since `prefixPair` retains the first
+factor even at the empty prefix. -/
+theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
+    {μ ν : Measure (T × (ℕ → α))} [IsFiniteMeasure μ]
+    (h : ∀ n, μ.map (prefixPair T α n) = ν.map (prefixPair T α n)) : μ = ν := by
+  have huniv : μ Set.univ = ν Set.univ := by
+    have h0 := congrArg (fun ρ : Measure (T × (Fin 0 → α)) => ρ Set.univ) (h 0)
+    simpa only [Measure.map_apply (measurable_prefixPair T α 0) MeasurableSet.univ,
+      Set.preimage_univ] using h0
+  haveI : IsFiniteMeasure ν := ⟨by rw [← huniv]; exact measure_lt_top μ Set.univ⟩
+  refine ext_of_generate_finite (prefixSets T α)
+    (generateFrom_prefixSets T α).symm (isPiSystem_prefixSets T α) ?_ huniv
+  rintro _ ⟨n, A, hA, rfl⟩
+  rw [← Measure.map_apply (measurable_prefixPair T α n) hA,
+    ← Measure.map_apply (measurable_prefixPair T α n) hA, h n]
+
+
 end Probability
 
 end TauCeti
