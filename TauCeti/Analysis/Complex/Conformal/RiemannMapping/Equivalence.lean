@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Conformal
 import Mathlib.Analysis.Complex.Liouville
+import Mathlib.Analysis.Normed.Module.Ball.Homeomorph
 import Mathlib.Topology.OpenPartialHomeomorph.Composition
 import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
@@ -25,18 +26,20 @@ other. This file proves those two statements, and the sharpness of the propernes
 * `TauCeti.exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected` — any two simply connected
   open proper subsets of `ℂ` are biholomorphic: there is a holomorphic bijection from one onto the
   other whose inverse is again holomorphic.
-* `TauCeti.exists_openPartialHomeomorph_of_isSimplyConnected` and
-  `TauCeti.nonempty_homeomorph_of_isSimplyConnected` — the same equivalence packaged as an
-  `OpenPartialHomeomorph ℂ ℂ` conformal in both directions, and as a homeomorphism of subtypes.
+* `TauCeti.exists_openPartialHomeomorph_of_isSimplyConnected` — the same equivalence packaged as an
+  `OpenPartialHomeomorph ℂ ℂ` conformal in both directions.
+* `TauCeti.nonempty_homeomorph_of_isSimplyConnected` — any two simply connected open subsets of `ℂ`
+  are homeomorphic as subtypes. Merely topologically, properness is not needed: the plane too is
+  homeomorphic to the disc.
 * `TauCeti.exists_bijOn_self_apply_eq_of_isSimplyConnected` — homogeneity: the biholomorphic
   self-maps of a simply connected open `Ω ⊆ ℂ` act transitively on `Ω`.
 * `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected`,
   `TauCeti.not_injOn_univ_of_isSimplyConnected` and
   `TauCeti.not_bijOn_univ_of_isSimplyConnected` — an entire function with values in a simply
   connected open proper set is constant, hence not injective, so `ℂ` itself is biholomorphic to no
-  such set. This is why `Ω ≠ Set.univ` cannot be dropped from the equivalence statements above.
-  Homogeneity needs no properness hypothesis: `Ω = Set.univ` is homogeneous too, because the
-  translations already act transitively on `ℂ`.
+  such set. This is why `Ω ≠ Set.univ` cannot be dropped from the *biholomorphic* equivalence
+  statements above. Homogeneity needs no properness hypothesis either: `Ω = Set.univ` is
+  homogeneous too, because the translations already act transitively on `ℂ`.
 
 ## Proof outline
 
@@ -46,7 +49,8 @@ an open set is holomorphic by `TauCeti.DifferentiableOn.invFunOn`, so the compos
 no separate argument. Homogeneity inserts, between the two transports of one and the same domain,
 a disc automorphism carrying one image point to the other; that automorphism is supplied by the
 transitivity of `TauCeti.unitDiscAut` and read back as a scalar map. The whole plane, which has no
-Riemann map, is the one case of homogeneity handled separately, by a translation. Sharpness is
+Riemann map, is handled separately in the two statements that admit it: by a translation for
+homogeneity, and by `Homeomorph.unitBall` for the merely topological equivalence. Sharpness is
 Liouville's theorem: composing an entire map into `Ω` with the Riemann map of `Ω` gives a bounded
 entire function.
 
@@ -161,15 +165,26 @@ theorem exists_openPartialHomeomorph_of_isSimplyConnected
     rw [OpenPartialHomeomorph.coe_trans_symm, OpenPartialHomeomorph.symm_symm]
     exact ConformalAt.comp w (hesymmc _ (hmaps' hw)) (hec' w hw)
 
-/-- **Any two simply connected proper domains of `ℂ` are homeomorphic**, by a homeomorphism of
-subtypes induced by a biholomorphism: both are homeomorphic to `Complex.UnitDisc` by
-`TauCeti.riemannMapping_homeomorph`. -/
+/-- **Every simply connected domain of `ℂ` is homeomorphic to the disc**, properness included.
+For a proper domain this is `TauCeti.riemannMapping_homeomorph`; the whole plane is homeomorphic
+to the disc as well, by `Homeomorph.unitBall`, even though it is not biholomorphic to it. -/
+private lemma nonempty_homeomorph_unitDisc_of_isSimplyConnected
+    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) :
+    Nonempty (Ω ≃ₜ Complex.UnitDisc) := by
+  rcases eq_or_ne Ω univ with rfl | hΩ
+  · exact ⟨(Homeomorph.Set.univ ℂ).trans Homeomorph.unitBall⟩
+  · exact riemannMapping_homeomorph hΩo hΩc hΩ
+
+/-- **Any two simply connected domains of `ℂ` are homeomorphic**, as subtypes.
+
+Unlike the biholomorphism statements above this needs no properness hypothesis: the plane is not
+biholomorphic to the disc, but it is homeomorphic to it. -/
 theorem nonempty_homeomorph_of_isSimplyConnected
-    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ)
-    (hΩ'o : IsOpen Ω') (hΩ'c : IsSimplyConnected Ω') (hΩ' : Ω' ≠ univ) :
+    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω)
+    (hΩ'o : IsOpen Ω') (hΩ'c : IsSimplyConnected Ω') :
     Nonempty (Ω ≃ₜ Ω') := by
-  obtain ⟨e⟩ := riemannMapping_homeomorph hΩo hΩc hΩ
-  obtain ⟨e'⟩ := riemannMapping_homeomorph hΩ'o hΩ'c hΩ'
+  obtain ⟨e⟩ := nonempty_homeomorph_unitDisc_of_isSimplyConnected hΩo hΩc
+  obtain ⟨e'⟩ := nonempty_homeomorph_unitDisc_of_isSimplyConnected hΩ'o hΩ'c
   exact ⟨e.trans e'.symm⟩
 
 /-- A self-equivalence of `Complex.UnitDisc`, read through a scalar representative, is a bijection
