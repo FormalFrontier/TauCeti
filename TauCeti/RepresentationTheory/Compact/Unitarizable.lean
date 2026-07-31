@@ -46,10 +46,11 @@ of the averaged form is then the operator identity `(π g)† ∘ S ∘ (π g) =
   averaging changes nothing.
 
 This is Layer 1 of the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
-It is the compact-group replacement for the invertibility of `|G|` in Maschke's theorem: the
+It is the compact-group replacement for the invertibility of `|G|` in Maschke's theorem. The
 invariant-complement and complete-reducibility results of
-`TauCeti.RepresentationTheory.Continuous.InvariantComplement` assume unitarity, and this file is
-what supplies it.
+`TauCeti.RepresentationTheory.Continuous.InvariantComplement` take `IsUnitary` as a hypothesis; this
+file does not discharge that hypothesis, but the invariant form built here is the input a
+unitarization construction needs.
 
 The mathematical development follows Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 -/
@@ -62,6 +63,36 @@ open scoped InnerProductSpace
 namespace TauCeti
 
 namespace ContRepresentation
+
+section NormedField
+
+variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [Group G] [TopologicalSpace G]
+  [CompactSpace G] [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+
+/-- The action operators of a continuous representation of a compact group are uniformly
+bounded below: there is a `c > 0` with `c * ‖v‖ ≤ ‖π g v‖` for every `g` and `v`.
+
+The bound comes from applying the inverse operator `π g⁻¹`, whose norm is bounded uniformly in `g`
+because `G` is compact and `π` is continuous. Only the normed-space structure is involved, so this
+is stated before the inner product enters. -/
+theorem exists_pos_mul_norm_le_norm_map (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) :
+    ∃ c : ℝ, 0 < c ∧ ∀ (g : G) (v : V), c * ‖v‖ ≤ ‖π g v‖ := by
+  obtain ⟨M, hM⟩ := isCompact_univ.exists_bound_of_continuousOn (f := fun g : G ↦ π g)
+    hπ.continuousOn
+  set M' := max M 1
+  have hM'pos : 0 < M' := lt_of_lt_of_le zero_lt_one (le_max_right _ _)
+  refine ⟨M'⁻¹, inv_pos.mpr hM'pos, fun g v ↦ ?_⟩
+  have hcancel : π g⁻¹ (π g v) = v := Representation.inv_self_apply π.toRepresentation g v
+  have hstep : ‖v‖ ≤ M' * ‖π g v‖ :=
+    calc ‖v‖ = ‖π g⁻¹ (π g v)‖ := by rw [hcancel]
+      _ ≤ ‖π g⁻¹‖ * ‖π g v‖ := (π g⁻¹).le_opNorm _
+      _ ≤ M' * ‖π g v‖ :=
+        mul_le_mul_of_nonneg_right ((hM g⁻¹ (Set.mem_univ _)).trans (le_max_left _ _))
+          (norm_nonneg _)
+  rw [inv_mul_le_iff₀ hM'pos]
+  exact hstep
+
+end NormedField
 
 variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
@@ -130,39 +161,12 @@ private theorem integrable_norm_sq (v : V) :
   ((continuous_norm.comp (hπ.clm_apply continuous_const)).pow 2).integrable_of_hasCompactSupport
     (HasCompactSupport.of_compactSpace _)
 
-omit [IsTopologicalGroup G] [MeasurableSpace G] [BorelSpace G] [CompleteSpace V]
-  [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] in
-/-- The action operators of a continuous representation of a compact group are uniformly
-bounded below: there is a `c > 0` with `c * ‖v‖ ≤ ‖π g v‖` for every `g` and `v`.
-
-The bound comes from applying the inverse operator `π g⁻¹`, whose norm is bounded uniformly in `g`
-because `G` is compact and `π` is continuous. -/
-theorem exists_pos_mul_norm_le_norm_map :
-    ∃ c : ℝ, 0 < c ∧ ∀ (g : G) (v : V), c * ‖v‖ ≤ ‖π g v‖ := by
-  obtain ⟨M, hM⟩ := isCompact_univ.exists_bound_of_continuousOn (f := fun g : G ↦ π g)
-    hπ.continuousOn
-  set M' := max M 1
-  have hM'pos : 0 < M' := lt_of_lt_of_le zero_lt_one (le_max_right _ _)
-  refine ⟨M'⁻¹, inv_pos.mpr hM'pos, fun g v ↦ ?_⟩
-  have hcancel : π g⁻¹ (π g v) = v := Representation.inv_self_apply π.toRepresentation g v
-  have hstep : ‖v‖ ≤ M' * ‖π g v‖ :=
-    calc ‖v‖ = ‖π g⁻¹ (π g v)‖ := by rw [hcancel]
-      _ ≤ ‖π g⁻¹‖ * ‖π g v‖ := (π g⁻¹).le_opNorm _
-      _ ≤ M' * ‖π g v‖ :=
-        mul_le_mul_of_nonneg_right ((hM g⁻¹ (Set.mem_univ _)).trans (le_max_left _ _))
-          (norm_nonneg _)
-  rw [inv_mul_le_iff₀ hM'pos]
-  exact hstep
-
 /-- The averaged form evaluated on the diagonal is the average of `‖π g v‖ ^ 2`. -/
 theorem inner_gramOperator_self (v : V) :
     ⟪gramOperator π hπ v, v⟫_𝕜 = ((∫ g, ‖π g v‖ ^ 2 ∂haarProb G : ℝ) : 𝕜) := by
   rw [inner_gramOperator_left, ← integral_ofReal]
   refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
-  change ⟪π g v, π g v⟫_𝕜 = ((‖π g v‖ ^ 2 : ℝ) : 𝕜)
-  rw [inner_self_eq_norm_sq_to_K]
-  push_cast
-  ring
+  simp [inner_self_eq_norm_sq_to_K]
 
 /-- The Gram operator of the averaged form is a positive operator. -/
 theorem isPositive_gramOperator : (gramOperator π hπ).IsPositive := by
@@ -189,7 +193,7 @@ theorem re_inner_gramOperator_self_pos {v : V} (hv : v ≠ 0) :
   exact lt_of_lt_of_le hpos hconst
 
 /-- The averaged form is nondegenerate, so the Gram operator is injective. -/
-theorem injective_gramOperator : Function.Injective (gramOperator π hπ) := by
+theorem gramOperator_injective : Function.Injective (gramOperator π hπ) := by
   rw [injective_iff_map_eq_zero]
   intro v hv
   by_contra hne
@@ -199,32 +203,64 @@ theorem injective_gramOperator : Function.Injective (gramOperator π hπ) := by
 
 /-! ### Invariance -/
 
-/-- **The averaged form is `G`-invariant.** This is the whole point of the unitarian trick: `π` is
-unitary for `⟪v, w⟫_G = ⟪gramOperator π hπ v, w⟫`, even when it is not unitary for the inner
-product `V` was given. -/
-theorem inner_gramOperator_map_map (g : G) (v w : V) :
-    ⟪π g v, gramOperator π hπ (π g w)⟫_𝕜 = ⟪v, gramOperator π hπ w⟫_𝕜 := by
-  rw [inner_gramOperator, inner_gramOperator]
-  have : ∀ h : G, ⟪π h (π g v), π h (π g w)⟫_𝕜 = ⟪π (h * g) v, π (h * g) w⟫_𝕜 := fun h ↦ by
-    rw [map_mul]; rfl
-  rw [integral_congr_ae (Filter.Eventually.of_forall this)]
-  exact integral_mul_right_eq_self (fun h ↦ ⟪π h v, π h w⟫_𝕜) g
+omit hπ [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
+  [SMulCommClass ℝ 𝕜 V] in
+/-- Conjugation `S ↦ (π g)† ∘ S ∘ (π g)` by an action operator, packaged as a continuous linear
+map on operators.
 
-/-- The operator form of `G`-invariance of the averaged form: `(π g)† ∘ S ∘ (π g) = S`. -/
+Bundling it this way is what lets it commute with Haar averaging, via
+`ContinuousLinearMap.haarAverage_comp_comm`. -/
+private noncomputable def conjAction (g : G) : (V →L[𝕜] V) →L[𝕜] V →L[𝕜] V :=
+  (ContinuousLinearMap.compL 𝕜 V V V (ContinuousLinearMap.adjoint (π g))).comp
+    ((ContinuousLinearMap.compL 𝕜 V V V).flip (π g))
+
+omit hπ [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
+  [BorelSpace G] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] in
+/-- `conjAction` is conjugation, unfolded. -/
+private theorem conjAction_apply (g : G) (S : V →L[𝕜] V) :
+    conjAction π g S = (ContinuousLinearMap.adjoint (π g)).comp (S.comp (π g)) := by
+  simp [conjAction, ContinuousLinearMap.compL_apply]
+
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
+  [SMulCommClass ℝ 𝕜 V] in
+/-- Conjugating by `π g` translates the integrand of the unitarian trick on the right by `g`:
+`(π g)† ∘ ((π h)† ∘ (π h)) ∘ (π g) = (π (h * g))† ∘ (π (h * g))`. -/
+private theorem conjAction_comp_gramFamily (g : G) :
+    (conjAction π g : C(V →L[𝕜] V, V →L[𝕜] V)).comp (gramFamily π hπ) =
+      (gramFamily π hπ).comp (ContinuousMap.mulRight g) :=
+  ContinuousMap.ext fun h ↦ by
+    simp only [ContinuousMap.comp_apply, ContinuousMap.coe_mulRight, conjAction_apply,
+      gramFamily, ContinuousMap.coe_mk, map_mul, ContinuousLinearMap.mul_def,
+      ContinuousLinearMap.adjoint_comp]
+    exact (ContinuousLinearMap.comp_assoc _ _ _).symm
+
+/-- **The operator form of `G`-invariance of the averaged form:** `(π g)† ∘ S ∘ (π g) = S`.
+
+Conjugation by `π g` is a continuous linear map on operators, so it commutes with Haar averaging,
+and on the integrand it is right translation by `g`, which the Haar average does not see. -/
+@[simp]
 theorem adjoint_comp_gramOperator_comp (g : G) :
     (ContinuousLinearMap.adjoint (π g)).comp ((gramOperator π hπ).comp (π g)) =
       gramOperator π hπ := by
-  ext w
-  refine ext_inner_left 𝕜 fun v ↦ ?_
-  rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
-    ContinuousLinearMap.adjoint_inner_right, inner_gramOperator_map_map]
+  rw [← conjAction_apply π g, gramOperator, ← ContinuousLinearMap.haarAverage_comp_comm,
+    conjAction_comp_gramFamily π hπ g, haarAverage_comp_mulRight]
+
+/-- **The averaged form is `G`-invariant.** This is the whole point of the unitarian trick: `π` is
+unitary for `⟪v, w⟫_G = ⟪gramOperator π hπ v, w⟫`, even when it is not unitary for the inner
+product `V` was given. -/
+@[simp]
+theorem inner_gramOperator_map_map (g : G) (v w : V) :
+    ⟪π g v, gramOperator π hπ (π g w)⟫_𝕜 = ⟪v, gramOperator π hπ w⟫_𝕜 := by
+  simpa only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.adjoint_inner_right] using
+    congrArg (fun S : V →L[𝕜] V ↦ ⟪v, S w⟫_𝕜) (adjoint_comp_gramOperator_comp π hπ g)
 
 /-- **Weyl's unitarian trick.** Every continuous representation of a compact group on a Hilbert
 space carries a `G`-invariant positive-definite Hermitian form, represented by a positive-definite
 self-adjoint operator `S` with `(π g)† ∘ S ∘ (π g) = S`.
 
-Downstream results may therefore assume unitarity: retopologizing `V` by `⟪S ·, ·⟫`, or conjugating
-`π` by `S ^ (1/2)`, makes every `π g` unitary. -/
+This operator is the input to unitarization: retopologizing `V` by `⟪S ·, ·⟫`, or conjugating `π`
+by `S ^ (1 / 2)`, makes every `π g` unitary. Neither construction is carried out here, so this file
+does not itself produce an `IsUnitary` representation. -/
 theorem isUnitarizable :
     ∃ S : V →L[𝕜] V, IsSelfAdjoint S ∧ (∀ v : V, v ≠ 0 → 0 < re ⟪S v, v⟫_𝕜) ∧
       ∀ g : G, (ContinuousLinearMap.adjoint (π g)).comp (S.comp (π g)) = S :=
@@ -234,10 +270,9 @@ theorem isUnitarizable :
 /-- Averaging a form that is already invariant changes nothing: the Gram operator of a unitary
 representation is the identity. -/
 theorem gramOperator_eq_one (hunitary : IsUnitary π) : gramOperator π hπ = 1 := by
-  ext w
-  refine ext_inner_left 𝕜 fun v ↦ ?_
-  rw [inner_gramOperator]
-  simp [hunitary.inner_map_map]
+  have hconst : gramFamily π hπ = ContinuousMap.const G 1 :=
+    ContinuousMap.ext fun g ↦ hunitary.adjoint_comp_self g
+  rw [gramOperator, hconst, haarAverage_const]
 
 end ContRepresentation
 
