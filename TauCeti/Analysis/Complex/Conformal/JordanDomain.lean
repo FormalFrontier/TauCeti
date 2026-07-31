@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Topology.JordanCurve
-import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Normed.Module.Convex
+import TauCeti.Analysis.Complex.Conformal.Biholomorph
 
 /-!
 # Jordan domains, and the domains a conformal map takes onto a disc
@@ -47,10 +47,9 @@ are.
 
 ## Main results
 
-* `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
-  in `ℂ` is a Jordan curve, by the explicit affine parametrization `w ↦ (w - c) / r`.
 * `TauCeti.isJordanDomain_ball` — a disc of positive radius is a Jordan domain, the basic example
-  and the one Carathéodory's theorem compares every other Jordan domain to.
+  and the one Carathéodory's theorem compares every other Jordan domain to. Its frontier is a
+  circle, which `TauCeti.isJordanCurve_sphere` already knows to be a Jordan curve.
 * `TauCeti.isJordanCurve_frontier_of_isJordanCurve_frontier_image` and
   `TauCeti.isJordanDomain_of_image_eq_ball` — **the converse half of the Carathéodory
   correspondence**: if a conformal map on a bounded open `U` extends continuously and injectively
@@ -60,8 +59,9 @@ are.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
-`Conformal/BoundaryCorrespondence.lean`; the purely topological content is in
-`TauCeti/Topology/JordanCurve.lean`, where it is stated for an arbitrary topological space.
+`Conformal/BoundaryCorrespondence.lean`; the Jordan-curve vocabulary they are phrased in, together
+with the circle that models it, is in `TauCeti/Topology/JordanCurve.lean`, where the predicate and
+its transfer lemmas are stated for an arbitrary topological space.
 
 ## Coordination with upstream Mathlib
 
@@ -89,48 +89,7 @@ open Metric Set Topology
 
 variable {U : Set ℂ} {f F : ℂ → ℂ} {c : ℂ} {r : ℝ}
 
-/-! ## Circles and discs -/
-
-/-- The affine parametrization `w ↦ (w - c) / r` of a circle of centre `c` and positive radius `r`
-in `ℂ` by the unit circle. -/
-noncomputable def sphereCircleHomeomorph (c : ℂ) (hr : 0 < r) : sphere c r ≃ₜ Circle where
-  toFun w := ⟨((w : ℂ) - c) / r, mem_sphere_zero_iff_norm.2 (by
-    have hw : ‖(w : ℂ) - c‖ = r := mem_sphere_iff_norm.1 w.2
-    rw [norm_div, hw, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hr, div_self hr.ne'])⟩
-  invFun z := ⟨c + r * (z : ℂ), by
-    simp [mem_sphere_iff_norm, Circle.norm_coe, abs_of_pos hr]⟩
-  left_inv w := by
-    have hr0 : (r : ℂ) ≠ 0 := by exact_mod_cast hr.ne'
-    apply Subtype.ext
-    field_simp
-    ring
-  right_inv z := by
-    have hr0 : (r : ℂ) ≠ 0 := by exact_mod_cast hr.ne'
-    apply Circle.coe_injective
-    field_simp
-    ring
-  continuous_toFun := by fun_prop
-  continuous_invFun := by fun_prop
-
-/-- The parametrization of `sphere c r` by the unit circle divides out the affine change of
-coordinates. -/
-@[simp]
-lemma coe_sphereCircleHomeomorph_apply (c : ℂ) (hr : 0 < r) (w : sphere c r) :
-    (sphereCircleHomeomorph c hr w : ℂ) = ((w : ℂ) - c) / r := by
-  rw [sphereCircleHomeomorph]
-  rfl
-
-/-- The inverse parametrization of `sphere c r` by the unit circle is the affine change of
-coordinates. -/
-@[simp]
-lemma coe_sphereCircleHomeomorph_symm_apply (c : ℂ) (hr : 0 < r) (z : Circle) :
-    (((sphereCircleHomeomorph c hr).symm z : sphere c r) : ℂ) = c + r * (z : ℂ) := by
-  rw [sphereCircleHomeomorph]
-  rfl
-
-/-- A circle of positive radius in `ℂ` is a Jordan curve. -/
-theorem isJordanCurve_sphere (c : ℂ) (hr : 0 < r) : IsJordanCurve (sphere c r) :=
-  isJordanCurve_iff.mpr ⟨sphereCircleHomeomorph c hr⟩
+/-! ## Jordan domains, and the discs among them -/
 
 /-- A **Jordan domain**: a bounded domain of `ℂ` bounded by a Jordan curve.
 
@@ -207,13 +166,28 @@ Jordan domain.
 Carathéodory's theorem — layer **L5** of the conformal-mapping roadmap — is the converse: for a
 Jordan domain such an extension *exists*. Together the two say that, among bounded domains, being a
 Jordan domain is exactly the condition under which the Riemann map extends to a homeomorphism of
-the closures. -/
-theorem isJordanDomain_of_image_eq_ball (hUo : IsOpen U) (hUc : IsConnected U)
+the closures.
+
+Connectedness of `U` is not assumed: `f` is an open partial homeomorphism of `U` onto `f '' U`
+(`TauCeti.DifferentiableOn.toOpenPartialHomeomorph`), so `U` is the image of the connected set
+`ball c r` under the continuous inverse. -/
+theorem isJordanDomain_of_image_eq_ball (hUo : IsOpen U)
     (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U)
     (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U))
     (hr : 0 < r) (himg : f '' U = ball c r) : IsJordanDomain U where
   isOpen := hUo
-  isConnected := hUc
+  isConnected := by
+    have hfi : InjOn f U := fun x hx y hy hxy =>
+      hFi (subset_closure hx) (subset_closure hy) (by rw [hFf hx, hFf hy]; exact hxy)
+    set e := DifferentiableOn.toOpenPartialHomeomorph hfd hUo hfi with he
+    have htgt : e.target = f '' U := DifferentiableOn.toOpenPartialHomeomorph_target hfd hUo hfi
+    have hsymm : e.symm '' (f '' U) = U := by
+      rw [← htgt, e.symm_image_target_eq_source, he,
+        DifferentiableOn.toOpenPartialHomeomorph_source]
+    have hball : IsConnected (f '' U) := by
+      rw [himg]
+      exact (convex_ball c r).isConnected (nonempty_ball.2 hr)
+    exact hsymm ▸ hball.image _ (e.continuousOn_symm.mono htgt.ge)
   isBounded := hUb
   isJordanCurve_frontier := by
     refine isJordanCurve_frontier_of_isJordanCurve_frontier_image hUo hUb hfd hFc hFf hFi ?_

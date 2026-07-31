@@ -16,14 +16,17 @@ the circle. This file introduces the predicate `TauCeti.IsJordanCurve` and its b
 
 The circle is Mathlib's `Circle`, the unit circle of `ℂ` as a topological group; the notion itself
 is purely topological, so `TauCeti.IsJordanCurve` is stated for a subset of an arbitrary
-topological space, and only the model curve is complex-analytic.
+topological space. Only the model curve — a circle `Metric.sphere c r` of positive radius in `ℂ`,
+at the end of the file — mentions `ℂ`, and it needs nothing beyond the metric structure.
 
 Phrasing the predicate as *the set is homeomorphic to the circle*, rather than *the set is the
 range of a continuous map on `[0, 1]` that is injective except for matching endpoints*, is what
-makes it usable: the two agree, because a continuous injection out of a compact space into a
-Hausdorff space is an embedding, but the parametrized form buries that argument in every use. It is
-recovered where needed from `TauCeti.IsJordanCurve.of_image`, which says exactly that a compact set
-carried injectively and continuously onto a Jordan curve is itself one.
+makes it usable: over a Hausdorff ambient space the two agree, because there a continuous injection
+out of a compact space is an embedding, but the parametrized form buries that argument in every
+use. Passing from a parametrization to the predicate is `TauCeti.IsJordanCurve.image`, which turns
+a continuous injective map defined on a set already known to be a Jordan curve — a circle in `ℂ`,
+say — into a proof that its image is one; `TauCeti.IsJordanCurve.of_image` runs the other way,
+transporting the property back to a compact set from an image already known to be a Jordan curve.
 
 ## Main definitions
 
@@ -36,10 +39,12 @@ carried injectively and continuously onto a Jordan curve is itself one.
   a nonempty compact path-connected set with more than one point.
 * `TauCeti.IsJordanCurve.image` and `TauCeti.IsJordanCurve.of_image` — being a Jordan curve
   transfers in both directions along a map that is continuous and injective on the set, provided
-  the codomain is Hausdorff (and, in the direction that creates the curve out of nothing, the
-  source set is known to be compact).
+  the codomain is Hausdorff (and, in the direction that transports the property back from the
+  image, the source set is known to be compact).
 * `TauCeti.IsJordanCurve.image_homeomorph` — the image of a Jordan curve under a homeomorphism of
   the ambient spaces is a Jordan curve; no separation axiom is needed.
+* `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
+  in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
 
 ## Motivation
 
@@ -47,9 +52,8 @@ This is the vocabulary layer **L5** of the conformal-mapping roadmap
 (`TauCetiRoadmap/ConformalMapping/README.md`) is stated in: its milestone, the Carathéodory
 boundary correspondence, is about the Riemann map of a *Jordan domain*, and the roadmap records
 that the pinned Mathlib has no Jordan-curve vocabulary to state it against. The complex-analytic
-half — Jordan domains, the circle as the boundary of a disc, and the boundary of a domain that a
-conformal map carries onto a disc — is in
-`TauCeti/Analysis/Complex/Conformal/JordanDomain.lean`.
+half — Jordan domains, the discs among them, and the boundary of a domain that a conformal map
+carries onto a disc — is in `TauCeti/Analysis/Complex/Conformal/JordanDomain.lean`.
 
 ## References
 
@@ -61,9 +65,9 @@ public section
 
 namespace TauCeti
 
-open Set Topology
+open Metric Set Topology
 
-variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X}
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X} {r : ℝ}
 
 /-- A **Jordan curve**, or simple closed curve, in a topological space: a subset homeomorphic to
 the circle.
@@ -129,8 +133,9 @@ theorem IsJordanCurve.image [T2Space Y] (h : IsJordanCurve C) {g : X → Y} (hg 
 /-- **A compact set carried onto a Jordan curve by a continuous injection is a Jordan curve.**
 This is the converse of `TauCeti.IsJordanCurve.image`; compactness of the source has to be assumed
 here, since it is no longer inherited from the curve. It is the form in which the predicate is
-usually verified: one exhibits a continuous injective parametrization or, as in the boundary
-correspondence, a continuous injective map of the set onto a circle. -/
+verified when the curve is the *unknown* rather than the parameter: one exhibits a continuous
+injective map of the set onto a set already known to be a Jordan curve, as the boundary
+correspondence does with the boundary of a disc. -/
 theorem IsJordanCurve.of_image [T2Space Y] (hC : IsCompact C) {g : X → Y} (hg : ContinuousOn g C)
     (hgi : InjOn g C) (h : IsJordanCurve (g '' C)) : IsJordanCurve C := by
   obtain ⟨e⟩ := h
@@ -143,5 +148,38 @@ theorem IsJordanCurve.image_homeomorph (h : IsJordanCurve C) (e : X ≃ₜ Y) :
     IsJordanCurve (e '' C) := by
   obtain ⟨f⟩ := h
   exact ⟨(e.image C).symm.trans f⟩
+
+/-! ## The model curve: a circle in `ℂ` -/
+
+/-- The affine parametrization `w ↦ (w - c) / r` of a circle of centre `c` and positive radius `r`
+in `ℂ` by the unit circle. It is the restriction to the spheres of the ambient homeomorphism
+`w ↦ (w - c) * r⁻¹` of `ℂ`, so only the membership equivalence is proved here. -/
+noncomputable def sphereCircleHomeomorph (c : ℂ) (hr : 0 < r) : sphere c r ≃ₜ Circle :=
+  haveI hr0 : (r : ℂ) ≠ 0 := by exact_mod_cast hr.ne'
+  ((Homeomorph.subRight c).trans (Homeomorph.mulRight₀ (r : ℂ)⁻¹ (inv_ne_zero hr0))).subtype
+    fun w => by
+      simp [Submonoid.unitSphere, mem_sphere_iff_norm, abs_of_pos hr,
+        mul_inv_eq_one₀ hr.ne', eq_comm]
+
+/-- The parametrization of `sphere c r` by the unit circle divides out the affine change of
+coordinates. -/
+@[simp]
+lemma coe_sphereCircleHomeomorph_apply (c : ℂ) (hr : 0 < r) (w : sphere c r) :
+    (sphereCircleHomeomorph c hr w : ℂ) = ((w : ℂ) - c) / r := by
+  rw [div_eq_mul_inv]
+  rfl
+
+/-- The inverse parametrization of `sphere c r` by the unit circle is the affine change of
+coordinates. -/
+@[simp]
+lemma coe_sphereCircleHomeomorph_symm_apply (c : ℂ) (hr : 0 < r) (z : Circle) :
+    (((sphereCircleHomeomorph c hr).symm z : sphere c r) : ℂ) = c + r * (z : ℂ) := by
+  change (z : ℂ) * ((r : ℂ)⁻¹)⁻¹ + c = c + r * (z : ℂ)
+  rw [inv_inv]
+  ring
+
+/-- A circle of positive radius in `ℂ` is a Jordan curve. -/
+theorem isJordanCurve_sphere (c : ℂ) (hr : 0 < r) : IsJordanCurve (sphere c r) :=
+  isJordanCurve_iff.mpr ⟨sphereCircleHomeomorph c hr⟩
 
 end TauCeti
