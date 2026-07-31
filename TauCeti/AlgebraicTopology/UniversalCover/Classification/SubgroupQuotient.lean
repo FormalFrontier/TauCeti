@@ -15,8 +15,8 @@ cover and proves that this map is a quotient covering map. The quotient is path 
 and the class of the constant path supplies its distinguished point.
 
 This is the first construction step in the subgroup-to-cover direction of the classification
-of covering spaces. A later file can descend `UniversalCover.proj` to this quotient, prove that
-the descended map to `X` is a covering map, and identify the subgroup it recovers.
+of covering spaces. This file descends `UniversalCover.proj` to the quotient; a later file will
+prove that the descended map is a covering map and identify the subgroup it recovers.
 
 ## Main declarations
 
@@ -64,12 +64,21 @@ def subgroupQuotientMap (H : Subgroup (FundamentalGroup X x₀)) :
     UniversalCover x₀ → SubgroupQuotient x₀ H :=
   Quotient.mk''
 
-/-- The subgroup quotient map sends the constant-path point to the distinguished point. -/
+/-- The subgroup quotient map sends a representative to its quotient class. -/
 @[simp]
-theorem subgroupQuotientMap_basepoint (H : Subgroup (FundamentalGroup X x₀)) :
-    subgroupQuotientMap x₀ H (mk x₀ (Path.Homotopic.Quotient.refl x₀)) =
-      SubgroupQuotient.basepoint x₀ H :=
+theorem subgroupQuotientMap_apply (H : Subgroup (FundamentalGroup X x₀))
+    (e : UniversalCover x₀) :
+    subgroupQuotientMap x₀ H e = Quotient.mk'' e :=
   (rfl)
+
+/-- Two points have the same image in the subgroup quotient exactly when they lie in the same
+`H`-orbit. -/
+theorem subgroupQuotientMap_eq_iff (H : Subgroup (FundamentalGroup X x₀))
+    {e₁ e₂ : UniversalCover x₀} :
+    subgroupQuotientMap x₀ H e₁ = subgroupQuotientMap x₀ H e₂ ↔
+      e₁ ∈ MulAction.orbit H e₂ := by
+  rw [subgroupQuotientMap_apply, subgroupQuotientMap_apply, Quotient.eq'',
+    MulAction.orbitRel_apply]
 
 /-- The quotient map by any subgroup of the fundamental group is a quotient covering map. -/
 theorem isQuotientCoveringMap_subgroupQuotientMap
@@ -90,14 +99,18 @@ theorem isCoveringMap_subgroupQuotientMap
     IsCoveringMap (subgroupQuotientMap x₀ H) :=
   (isQuotientCoveringMap_subgroupQuotientMap x₀ H).isCoveringMap
 
+/-- The endpoint projection is invariant under the orbit relation defining the subgroup quotient. -/
+private theorem proj_eq_of_orbitRel (H : Subgroup (FundamentalGroup X x₀))
+    {e₁ e₂ : UniversalCover x₀} (h : MulAction.orbitRel H (UniversalCover x₀) e₁ e₂) :
+    proj e₁ = proj e₂ := by
+  rw [MulAction.orbitRel_apply] at h
+  obtain ⟨g, rfl⟩ := h
+  exact proj_smul g.1 _
+
 /-- The endpoint projection descended to the subgroup quotient. -/
 def subgroupQuotientProj (H : Subgroup (FundamentalGroup X x₀)) :
     SubgroupQuotient x₀ H → X :=
-  Quotient.lift proj fun _ _ h => by
-    change MulAction.orbitRel H (UniversalCover x₀) _ _ at h
-    rw [MulAction.orbitRel_apply] at h
-    obtain ⟨g, rfl⟩ := h
-    exact proj_smul g.1 _
+  Quotient.lift proj fun _ _ h => proj_eq_of_orbitRel x₀ H h
 
 /-- The descended endpoint projection evaluates on an orbit representative as `proj`. -/
 @[simp]
@@ -117,24 +130,22 @@ theorem subgroupQuotientProj_comp_subgroupQuotientMap
 @[simp]
 theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupQuotientProj x₀ H (SubgroupQuotient.basepoint x₀ H) = x₀ :=
-  (rfl)
+  subgroupQuotientProj_mk x₀ H _
 
 /-- The descended endpoint projection is continuous. -/
 theorem continuous_subgroupQuotientProj
     (H : Subgroup (FundamentalGroup X x₀)) :
-    Continuous (subgroupQuotientProj x₀ H) :=
-  (continuous_proj x₀).quotient_lift fun _ _ h => by
-    change MulAction.orbitRel H (UniversalCover x₀) _ _ at h
-    rw [MulAction.orbitRel_apply] at h
-    obtain ⟨g, rfl⟩ := h
-    exact proj_smul g.1 _
+    Continuous (subgroupQuotientProj x₀ H) := by
+  apply isQuotientMap_quotient_mk'.continuous_iff.mpr
+  change Continuous (subgroupQuotientProj x₀ H ∘ subgroupQuotientMap x₀ H)
+  rw [subgroupQuotientProj_comp_subgroupQuotientMap]
+  exact continuous_proj x₀
 
 /-- The descended endpoint projection is surjective when the base is path connected. -/
 theorem subgroupQuotientProj_surjective [PathConnectedSpace X]
     (H : Subgroup (FundamentalGroup X x₀)) :
     Function.Surjective (subgroupQuotientProj x₀ H) := by
-  intro x
-  obtain ⟨e, rfl⟩ := proj_surjective (x₀ := x₀) x
-  exact ⟨Quotient.mk'' e, subgroupQuotientProj_mk x₀ H e⟩
+  unfold subgroupQuotientProj
+  exact Quotient.lift_surjective proj _ (proj_surjective (x₀ := x₀))
 
 end TauCeti.UniversalCover
