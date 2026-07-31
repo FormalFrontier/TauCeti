@@ -41,6 +41,7 @@ public section
 noncomputable section
 
 open scoped unitInterval
+open Topology
 
 variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 
@@ -62,7 +63,7 @@ end SubgroupQuotient
 /-- The canonical map from the universal cover to its orbit quotient by `H`. -/
 def subgroupQuotientMap (H : Subgroup (FundamentalGroup X x₀)) :
     UniversalCover x₀ → SubgroupQuotient x₀ H :=
-  Quotient.mk''
+  @Quotient.mk' _ (MulAction.orbitRel H (UniversalCover x₀))
 
 /-- The subgroup quotient map sends a representative to its quotient class. -/
 @[simp]
@@ -80,24 +81,36 @@ theorem subgroupQuotientMap_eq_iff (H : Subgroup (FundamentalGroup X x₀))
   rw [subgroupQuotientMap_apply, subgroupQuotientMap_apply, Quotient.eq'',
     MulAction.orbitRel_apply]
 
+/-- The fundamental-group action is locally disjoint without a global connectedness assumption. -/
+private theorem fundamentalGroup_disjoint [LocallyPathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X] (e : UniversalCover x₀) :
+    ∃ U ∈ 𝓝 e, ∀ g : FundamentalGroup X x₀,
+      ((g • ·) '' U ∩ U).Nonempty → g = 1 := by
+  rcases e with ⟨x, q⟩
+  induction q using Quotient.inductionOn with
+  | h p =>
+    obtain ⟨U, hU_open, hxU, -, hU_slsc⟩ :=
+      exists_isOpen_mem_isPathConnected_isPathHomotopyTrivial x
+    let V := sheet (x₀ := x₀) U hxU (Path.Homotopic.Quotient.mk p)
+    have heV : UniversalCover.mk x (Path.Homotopic.Quotient.mk p) ∈ V :=
+      by simpa only [V, ofBasedPath_ofPath] using mem_sheet_self (x₀ := x₀) hxU p
+    refine ⟨V, (isOpen_sheet U hU_open hxU _).mem_nhds heV, fun g hg ↦ ?_⟩
+    obtain ⟨z, ⟨u, huV, rfl⟩, hguV⟩ := hg
+    have hgu : g • u = u :=
+      (proj_injOn_sheet hU_slsc hxU (Path.Homotopic.Quotient.mk p)) hguV huV (proj_smul g u)
+    exact IsCancelSMul.right_cancel g 1 u (hgu.trans (one_smul _ u).symm)
+
 /-- The quotient map by any subgroup of the fundamental group is a quotient covering map. -/
 theorem isQuotientCoveringMap_subgroupQuotientMap
-    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [LocallyPathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] (H : Subgroup (FundamentalGroup X x₀)) :
     IsQuotientCoveringMap (subgroupQuotientMap x₀ H) H where
   __ := isQuotientMap_quotient_mk'
   continuous_const_smul g := continuous_const_smul g.1
   apply_eq_iff_mem_orbit := Quotient.eq''
   disjoint e := by
-    obtain ⟨U, heU, hU⟩ := (isQuotientCoveringMap (x₀ := x₀)).disjoint e
+    obtain ⟨U, heU, hU⟩ := fundamentalGroup_disjoint x₀ e
     exact ⟨U, heU, fun g hg => Subtype.ext (hU g hg)⟩
-
-/-- The quotient map by any subgroup of the fundamental group is a covering map. -/
-theorem isCoveringMap_subgroupQuotientMap
-    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
-    [SemilocallySimplyConnectedSpace X] (H : Subgroup (FundamentalGroup X x₀)) :
-    IsCoveringMap (subgroupQuotientMap x₀ H) :=
-  (isQuotientCoveringMap_subgroupQuotientMap x₀ H).isCoveringMap
 
 /-- The endpoint projection is invariant under the orbit relation defining the subgroup quotient. -/
 private theorem proj_eq_of_orbitRel (H : Subgroup (FundamentalGroup X x₀))
@@ -136,9 +149,10 @@ theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) 
 theorem continuous_subgroupQuotientProj
     (H : Subgroup (FundamentalGroup X x₀)) :
     Continuous (subgroupQuotientProj x₀ H) := by
-  apply isQuotientMap_quotient_mk'.continuous_iff.mpr
-  change Continuous (subgroupQuotientProj x₀ H ∘ subgroupQuotientMap x₀ H)
-  rw [subgroupQuotientProj_comp_subgroupQuotientMap]
+  rw [isQuotientMap_quotient_mk'.continuous_iff]
+  have h := subgroupQuotientProj_comp_subgroupQuotientMap x₀ H
+  simp only [subgroupQuotientMap] at h
+  rw [h]
   exact continuous_proj x₀
 
 /-- The descended endpoint projection is surjective when the base is path connected. -/
