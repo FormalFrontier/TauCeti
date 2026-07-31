@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Algebra.Central.Defs
 public import Mathlib.Algebra.Quaternion
-public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Data.Matrix.Basic
 import Mathlib.Tactic.LinearCombination
 
 public section
