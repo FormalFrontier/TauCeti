@@ -221,9 +221,6 @@ namespace ClassGroup
 
 variable {R R' : Type*} [CommRing R] [CommRing R']
 
--- Works around a `RingHomInvPair` defeq diamond in Mathlib's `semilinearEquivOfRingEquiv`
--- (since the mathlib `79d0395` bump) so the `semilinearEquivOfRingEquiv_algebraMap` rewrites fire.
-set_option backward.isDefEq.respectTransparency.types false in
 /-- Transport of a `coeIdeal` along `FractionalIdeal.ringEquivOfRingEquiv f` is the `coeIdeal` of
 the pushforward ideal `Ideal.map f`. This is the fraction-field shadow of `Ideal.map` used to
 compute the induced class-group map on `ClassGroup.mk0`. -/
@@ -232,6 +229,10 @@ private theorem ringEquivOfRingEquiv_coeIdeal [IsDomain R] [IsDomain R'] (K L : 
     (I : Ideal R) :
     FractionalIdeal.ringEquivOfRingEquiv K L f (I : FractionalIdeal R⁰ K) =
       (Ideal.map (f : R →+* R') I : FractionalIdeal R'⁰ L) := by
+  -- Pin the `RingHomInvPair` instances to resolve an `f`/`f.symm.symm` defeq diamond, so the `erw`
+  -- rewrites below fire without a transparency option.
+  letI : RingHomInvPair (f : R →+* R') (f.symm : R' →+* R) := RingHomInvPair.of_ringEquiv f
+  letI : RingHomInvPair (f.symm : R' →+* R) (f : R →+* R') := RingHomInvPair.of_ringEquiv f.symm
   apply FractionalIdeal.coeToSubmodule_injective
   dsimp only
   rw [← FractionalIdeal.val_eq_coe, FractionalIdeal.ringEquivOfRingEquiv_apply_val,
@@ -241,11 +242,11 @@ private theorem ringEquivOfRingEquiv_coeIdeal [IsDomain R] [IsDomain R'] (K L : 
   constructor
   · rintro ⟨y, ⟨r, hr, rfl⟩, rfl⟩
     exact ⟨f r, Ideal.mem_map_of_mem _ hr, by
-      simp [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]⟩
+      erw [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]⟩
   · rintro ⟨s, hs, rfl⟩
     obtain ⟨r, hr, rfl⟩ := (Ideal.mem_map_iff_of_surjective (f : R →+* R') f.surjective).mp hs
     exact ⟨algebraMap R K r, ⟨r, hr, rfl⟩, by
-      simp [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]⟩
+      erw [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]; rfl⟩
 
 /-- The pushforward of a nonzero ideal along a ring isomorphism is nonzero, hence stays a nonzero
 divisor in the ideal monoid. -/
