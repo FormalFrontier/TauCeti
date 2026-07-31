@@ -29,13 +29,13 @@ other. This file proves those two statements, and the sharpness of the propernes
   `TauCeti.nonempty_homeomorph_of_isSimplyConnected` — the same equivalence packaged as an
   `OpenPartialHomeomorph ℂ ℂ` conformal in both directions, and as a homeomorphism of subtypes.
 * `TauCeti.exists_bijOn_self_apply_eq_of_isSimplyConnected` — homogeneity: the biholomorphic
-  self-maps of a simply connected open proper `Ω ⊆ ℂ` act transitively on `Ω`.
+  self-maps of a simply connected open `Ω ⊆ ℂ` act transitively on `Ω`.
 * `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected` and
   `TauCeti.not_bijOn_univ_of_isSimplyConnected` — an entire function with values in a simply
   connected open proper set is constant, so `ℂ` itself is biholomorphic to no such set. This is
-  why `Ω ≠ Set.univ` cannot be dropped from the two equivalence statements above. It *can* be
-  dropped from homogeneity, which also holds for `Ω = Set.univ` because the translations already
-  act transitively on `ℂ`; only the proof given here needs properness.
+  why `Ω ≠ Set.univ` cannot be dropped from the equivalence statements above. Homogeneity needs
+  no properness hypothesis: `Ω = Set.univ` is homogeneous too, because the translations already
+  act transitively on `ℂ`.
 
 ## Proof outline
 
@@ -44,9 +44,10 @@ Everything runs through the Riemann map. Transporting a domain `Ω` to the disc 
 an open set is holomorphic by `TauCeti.DifferentiableOn.invFunOn`, so the composite inverse needs
 no separate argument. Homogeneity inserts, between the two transports of one and the same domain,
 a disc automorphism carrying one image point to the other; that automorphism is supplied by the
-transitivity of `TauCeti.unitDiscAut` and read back as a scalar map. Sharpness is Liouville's
-theorem: composing an entire map into `Ω` with the Riemann map of `Ω` gives a bounded entire
-function.
+transitivity of `TauCeti.unitDiscAut` and read back as a scalar map. The whole plane, which has no
+Riemann map, is the one case of homogeneity handled separately, by a translation. Sharpness is
+Liouville's theorem: composing an entire map into `Ω` with the Riemann map of `Ω` gives a bounded
+entire function.
 
 ## Scope
 
@@ -207,19 +208,28 @@ private lemma exists_bijOn_ball_apply_eq {a b : ℂ} (ha : ‖a‖ < 1) (hb : �
   rw [hab] at hval
   simpa using hval.symm
 
-/-- **A simply connected proper domain is homogeneous.** The biholomorphic self-maps of a simply
-connected open proper `Ω ⊆ ℂ` act transitively on `Ω`: given `z₀, z₁ ∈ Ω` there is a holomorphic
+/-- **A simply connected domain is homogeneous.** The biholomorphic self-maps of a simply
+connected open `Ω ⊆ ℂ` act transitively on `Ω`: given `z₀, z₁ ∈ Ω` there is a holomorphic
 bijection of `Ω` onto itself, with holomorphic inverse, carrying `z₀` to `z₁`.
 
-Transitivity is inherited from the disc, where `TauCeti.unitDiscAut` already acts transitively;
-the Riemann map transports the action. It fails badly without simple connectivity — the punctured
-disc,
-for instance, is not homogeneous. -/
+Unlike the equivalence statements above, this needs no properness hypothesis: for `Ω = Set.univ`
+the translation `z ↦ z + (z₁ - z₀)` already does the job. Otherwise transitivity is inherited from
+the disc, where `TauCeti.unitDiscAut` already acts transitively, and the Riemann map transports the
+action. It fails badly without simple connectivity — the punctured disc, for instance, is not
+homogeneous. -/
 theorem exists_bijOn_self_apply_eq_of_isSimplyConnected
-    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ) {z₀ z₁ : ℂ}
+    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) {z₀ z₁ : ℂ}
     (hz₀ : z₀ ∈ Ω) (hz₁ : z₁ ∈ Ω) :
     ∃ f : ℂ → ℂ, BijOn f Ω Ω ∧ DifferentiableOn ℂ f Ω ∧
       DifferentiableOn ℂ (Function.invFunOn f Ω) Ω ∧ f z₀ = z₁ := by
+  rcases eq_or_ne Ω univ with rfl | hΩ
+  · have hbij : BijOn (· + (z₁ - z₀)) (univ : Set ℂ) univ :=
+      (Equiv.addRight (z₁ - z₀)).bijective.bijOn_univ
+    have hfd : DifferentiableOn ℂ (· + (z₁ - z₀)) (univ : Set ℂ) :=
+      (differentiable_id.add_const _).differentiableOn
+    refine ⟨_, hbij, hfd, differentiableOn_invFunOn_of_bijOn hΩo hfd hbij, ?_⟩
+    show z₀ + (z₁ - z₀) = z₁
+    ring
   obtain ⟨g, hgbij, hgd, hginvd, hgleft, -⟩ :=
     exists_bijOn_ball_differentiableOn_invFunOn hΩo hΩc hΩ
   have ha : ‖g z₀‖ < 1 := by simpa [mem_ball_zero_iff] using hgbij.mapsTo hz₀
