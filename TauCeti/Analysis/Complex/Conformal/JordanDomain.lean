@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Topology.JordanCurve
-import Mathlib.Analysis.Normed.Module.Convex
+import Mathlib.Analysis.Normed.Module.Connected
 import TauCeti.Analysis.Complex.Conformal.Biholomorph
 
 /-!
@@ -50,10 +50,11 @@ are.
 * `TauCeti.isJordanDomain_ball` — a disc of positive radius is a Jordan domain, the basic example
   and the one Carathéodory's theorem compares every other Jordan domain to. Its frontier is a
   circle, which `TauCeti.isJordanCurve_sphere` already knows to be a Jordan curve.
-* `TauCeti.isJordanCurve_frontier_of_isJordanCurve_frontier_image` and
-  `TauCeti.isJordanDomain_of_image_eq_ball` — **the converse half of the Carathéodory
-  correspondence**: if a conformal map on a bounded open `U` extends continuously and injectively
-  to `closure U` and carries `U` onto a disc, then `U` is a Jordan domain.
+* `TauCeti.isJordanCurve_frontier_of_isJordanCurve_frontier_image`,
+  `TauCeti.isJordanDomain_of_isJordanDomain_image` and `TauCeti.isJordanDomain_of_image_eq_ball` —
+  **the converse half of the Carathéodory correspondence**: if a conformal map on a bounded open
+  `U` extends continuously and injectively to `closure U` and carries `U` onto a Jordan domain —
+  a disc, in the last of the three — then `U` is itself a Jordan domain.
 
 ## Generality
 
@@ -110,7 +111,7 @@ structure IsJordanDomain (U : Set ℂ) : Prop where
 radius. This is the model Jordan domain, and the target of every Riemann map. -/
 theorem isJordanDomain_ball (c : ℂ) (hr : 0 < r) : IsJordanDomain (ball c r) where
   isOpen := isOpen_ball
-  isConnected := (convex_ball c r).isConnected (nonempty_ball.2 hr)
+  isConnected := isConnected_ball hr
   isBounded := isBounded_ball
   isJordanCurve_frontier := by
     rw [frontier_ball c hr.ne']
@@ -159,22 +160,22 @@ theorem isJordanCurve_frontier_of_isJordanCurve_frontier_image (hUo : IsOpen U)
     (hFi.mono frontier_subset_closure)
     (image_frontier_eq_frontier_image hUo hUb hfd hFc hFf hFi ▸ h)
 
-/-- **The converse half of the Carathéodory boundary correspondence.** A bounded domain of `ℂ` that
-a holomorphic map carries onto a disc, extending continuously and injectively to the closure, is a
-Jordan domain.
+/-- **The converse half of the Carathéodory boundary correspondence.** A bounded open set of `ℂ`
+that a holomorphic map carries onto a Jordan domain, extending continuously and injectively to the
+closure, is itself a Jordan domain.
 
-Carathéodory's theorem — layer **L5** of the conformal-mapping roadmap — is the converse: for a
-Jordan domain such an extension *exists*. Together the two say that, among bounded domains, being a
-Jordan domain is exactly the condition under which the Riemann map extends to a homeomorphism of
-the closures.
+Carathéodory's theorem — layer **L5** of the conformal-mapping roadmap — is the converse for the
+disc: for a Jordan domain such an extension *exists*. Together the two say that, among bounded
+domains, being a Jordan domain is exactly the condition under which the Riemann map extends to a
+homeomorphism of the closures.
 
 Connectedness of `U` is not assumed: `f` is an open partial homeomorphism of `U` onto `f '' U`
 (`TauCeti.DifferentiableOn.toOpenPartialHomeomorph`), so `U` is the image of the connected set
-`ball c r` under the continuous inverse. -/
-theorem isJordanDomain_of_image_eq_ball (hUo : IsOpen U)
+`f '' U` under the continuous inverse. -/
+theorem isJordanDomain_of_isJordanDomain_image (hUo : IsOpen U)
     (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U)
     (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U))
-    (hr : 0 < r) (himg : f '' U = ball c r) : IsJordanDomain U where
+    (himg : IsJordanDomain (f '' U)) : IsJordanDomain U where
   isOpen := hUo
   isConnected := by
     have hfi : InjOn f U := fun x hx y hy hxy =>
@@ -184,14 +185,24 @@ theorem isJordanDomain_of_image_eq_ball (hUo : IsOpen U)
     have hsymm : e.symm '' (f '' U) = U := by
       rw [← htgt, e.symm_image_target_eq_source, he,
         DifferentiableOn.toOpenPartialHomeomorph_source]
-    have hball : IsConnected (f '' U) := by
-      rw [himg]
-      exact (convex_ball c r).isConnected (nonempty_ball.2 hr)
-    exact hsymm ▸ hball.image _ (e.continuousOn_symm.mono htgt.ge)
+    exact hsymm ▸ himg.isConnected.image _ (e.continuousOn_symm.mono htgt.ge)
   isBounded := hUb
-  isJordanCurve_frontier := by
-    refine isJordanCurve_frontier_of_isJordanCurve_frontier_image hUo hUb hfd hFc hFf hFi ?_
-    rw [himg, frontier_ball c hr.ne']
-    exact isJordanCurve_sphere c hr
+  isJordanCurve_frontier :=
+    isJordanCurve_frontier_of_isJordanCurve_frontier_image hUo hUb hfd hFc hFf hFi
+      himg.isJordanCurve_frontier
+
+/-- **The converse half of the Carathéodory boundary correspondence, for the disc.** A bounded open
+set of `ℂ` that a holomorphic map carries onto a disc, extending continuously and injectively to
+the closure, is a Jordan domain.
+
+This is the case of `TauCeti.isJordanDomain_of_isJordanDomain_image` in which the image is the
+model Jordan domain, and it is the form the Carathéodory correspondence is stated in, the disc
+being the target of every Riemann map. -/
+theorem isJordanDomain_of_image_eq_ball (hUo : IsOpen U)
+    (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U)
+    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U))
+    (hr : 0 < r) (himg : f '' U = ball c r) : IsJordanDomain U :=
+  isJordanDomain_of_isJordanDomain_image hUo hUb hfd hFc hFf hFi
+    (himg ▸ isJordanDomain_ball c hr)
 
 end TauCeti
