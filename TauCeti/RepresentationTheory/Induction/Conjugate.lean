@@ -221,9 +221,9 @@ noncomputable def conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H) :
     FDRep k (MulAut.conj s • H : Subgroup G) :=
   FDRep.of (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom)
 
-/-- The forward object map of the finite-dimensional conjugation equivalence is `conjFDRep`. -/
+/-- Restriction along `conjSubgroupEquiv` sends `A` to `conjFDRep s A`. -/
 @[simp]
-theorem conjFDRepEquivalence_functor_obj (s : G) (H : Subgroup G) (A : FDRep k H) :
+theorem res_obj_eq_conjFDRep (s : G) (H : Subgroup G) (A : FDRep k H) :
     (Action.res (FGModuleCat k) (conjSubgroupEquiv s H : _ →* _)).obj A = conjFDRep s A := by
   rfl
 
