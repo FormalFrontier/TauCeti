@@ -173,7 +173,7 @@ variable [Finite ι]
 is finite. -/
 theorem finite_subgroup_aut_of_span_eq_top (hspan : Submodule.span R (range P.root) = ⊤)
     (G : Subgroup P.Aut) : Finite G :=
-  Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).restrict G)
+  Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).domRestrict G)
     ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective)
 
 /-- Every subgroup of the automorphism group of a finite root system is finite. -/
@@ -199,7 +199,7 @@ theorem card_subgroup_aut_le_factorial_of_span_eq_top
     (G : Subgroup P.Aut) : Nat.card G ≤ Nat.factorial (Nat.card ι) := by
   calc
     Nat.card G ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
-      ((_root_.RootPairing.Equiv.indexHom P).restrict G)
+      ((_root_.RootPairing.Equiv.indexHom P).domRestrict G)
         ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp
           Subtype.val_injective)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm
