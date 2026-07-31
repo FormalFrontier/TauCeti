@@ -27,8 +27,8 @@ local connectedness is not preserved by continuous images in general, but it is 
 quotient maps, and a continuous map of a compact space into a Hausdorff one is a quotient map onto
 its image. `Conformal/BoundaryCorrespondence.lean` has already identified the two images in
 question — a continuous extension `F` of a conformal map carries `closure U` onto
-`closure (f '' U)` and, when it is injective, `frontier U` onto `frontier (f '' U)` — so all that
-remains is to feed those identifications the compactness that boundedness of `U` provides.
+`closure (f '' U)` and `frontier U` onto `frontier (f '' U)` — so all that remains is to feed those
+identifications the compactness that boundedness of `U` provides.
 
 For the Riemann map itself the source side of the hypothesis is automatic, and the file records
 that: the closed unit disc is convex and hence locally connected, and the unit circle is locally
@@ -56,8 +56,8 @@ topological spaces.
   boundary, to the image.
 * `TauCeti.locallyConnectedSpace_closure_image_ball` and
   `TauCeti.locallyConnectedSpace_frontier_image_ball` — the Riemann-map case: if a conformal map on
-  the unit disc extends continuously to the closed disc, the closure of its image is locally
-  connected, and if the extension is injective the boundary of its image is locally connected.
+  the unit disc extends continuously to the closed disc, the closure and the boundary of its image
+  are locally connected.
 
 ## Coordination with upstream Mathlib
 
@@ -132,19 +132,19 @@ theorem locallyConnectedSpace_closure_image [LocallyConnectedSpace (closure U)]
   rw [← image_closure_eq_closure_image hUb hFc hFf]
   exact locallyConnectedSpace_image_of_isCompact hUb.isCompact_closure hFc
 
-/-- **A continuous injective extension carries a locally connected boundary to a locally connected
+/-- **A continuous extension carries a locally connected boundary to a locally connected
 boundary.** This is the "only if" half of Carathéodory's continuity theorem: a conformal map on a
-bounded domain with locally connected boundary can extend continuously and injectively to the
-closure only if the boundary of its image is locally connected too.
+bounded domain with locally connected boundary can extend continuously to the closure only if the
+boundary of its image is locally connected too. No injectivity of the extension is assumed — only
+the injectivity of `f` on `U` that makes it conformal.
 
-Injectivity is what turns the inclusion `TauCeti.image_frontier_subset_frontier_image` into the
-equality `TauCeti.image_frontier_eq_frontier_image` needed to reach *all* of the image boundary;
-injectivity of `f` on `U` is not assumed separately, as it follows from that of `F`. -/
+The equality `TauCeti.image_frontier_eq_frontier_image` is what reaches *all* of the image boundary;
+holomorphy enters only through it, to know that `f '' U` is open. -/
 theorem locallyConnectedSpace_frontier_image [LocallyConnectedSpace (frontier U)] (hUo : IsOpen U)
-    (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U)
-    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U)) :
+    (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U)
+    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) :
     LocallyConnectedSpace (frontier (f '' U)) := by
-  rw [← image_frontier_eq_frontier_image hUo hUb hfd hFc hFf hFi]
+  rw [← image_frontier_eq_frontier_image hUo hUb hfd hfi hFc hFf]
   exact locallyConnectedSpace_image_of_isCompact
     (isCompact_of_isClosed_isBounded isClosed_frontier
       (hUb.closure.subset frontier_subset_closure))
@@ -166,22 +166,22 @@ theorem locallyConnectedSpace_closure_image_ball (hFc : ContinuousOn F (closedBa
   refine locallyConnectedSpace_closure_image (isBounded_ball) ?_ hFf
   rwa [closure_ball (0 : ℂ) one_ne_zero]
 
-/-- **The boundary of the image of a Riemann map with an injective continuous extension is locally
+/-- **The boundary of the image of a Riemann map with a continuous extension is locally
 connected.** The unit disc case of `TauCeti.locallyConnectedSpace_frontier_image`: the unit circle
-is locally connected by `TauCeti.locallyConnectedSpace_sphere`.
+is locally connected by `TauCeti.locallyConnectedSpace_sphere`, so no hypothesis on the source
+boundary is left.
 
 Contrapositively, a simply connected domain whose boundary is not locally connected — the comb
 domain and the slit disc with a spiralling slit are the standard examples — admits no conformal
-map from the disc extending injectively and continuously to the closed disc. -/
+map from the disc extending continuously to the closed disc. -/
 theorem locallyConnectedSpace_frontier_image_ball (hfd : DifferentiableOn ℂ f (ball 0 1))
-    (hFc : ContinuousOn F (closedBall 0 1)) (hFf : EqOn F f (ball 0 1))
-    (hFi : InjOn F (closedBall 0 1)) :
+    (hfi : InjOn f (ball 0 1)) (hFc : ContinuousOn F (closedBall 0 1))
+    (hFf : EqOn F f (ball 0 1)) :
     LocallyConnectedSpace (frontier (f '' ball (0 : ℂ) 1)) := by
   haveI : LocallyConnectedSpace (frontier (ball (0 : ℂ) 1)) := by
     rw [frontier_ball (0 : ℂ) one_ne_zero]
     infer_instance
   have hcl : closure (ball (0 : ℂ) 1) = closedBall 0 1 := closure_ball (0 : ℂ) one_ne_zero
-  exact locallyConnectedSpace_frontier_image isOpen_ball isBounded_ball hfd
-    (hcl ▸ hFc) hFf (hcl ▸ hFi)
+  exact locallyConnectedSpace_frontier_image isOpen_ball isBounded_ball hfd hfi (hcl ▸ hFc) hFf
 
 end TauCeti
