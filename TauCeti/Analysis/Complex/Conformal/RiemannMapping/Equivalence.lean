@@ -79,7 +79,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 
 variable {Ω Ω' : Set ℂ}
 
