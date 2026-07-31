@@ -20,7 +20,7 @@ cokernel of a product submodule and the product of the two cokernels.
 
 ## Main declarations
 
-* `TauCeti.IsFredholm.prodMap`: a product of Fredholm operators is Fredholm.
+* `ContinuousLinearMap.IsFredholm.prodMap`: a product of Fredholm operators is Fredholm.
 * `TauCeti.ContinuousLinearMap.index_prodMap`: the Fredholm index is additive under products.
 -/
 
@@ -79,19 +79,38 @@ end Submodule
 variable {T : E₁ →L[K] F₁} {S : E₂ →L[K] F₂}
 
 /-- The Cartesian product of two Fredholm operators is Fredholm. -/
-lemma IsFredholm.prodMap (hT : IsFredholm T) (hS : IsFredholm S) :
-    IsFredholm (T.prodMap S) := by
-  haveI := hT.finiteDimensional_ker
-  haveI := hS.finiteDimensional_ker
-  haveI := hT.finiteDimensional_coker
-  haveI := hS.finiteDimensional_coker
-  refine ⟨?_, ?_, ?_⟩
+lemma _root_.ContinuousLinearMap.IsFredholm.prodMap
+    (hT : ContinuousLinearMap.IsFredholm T) (hS : ContinuousLinearMap.IsFredholm S) :
+    ContinuousLinearMap.IsFredholm (T.prodMap S) := by
+  have := hT.finite_ker
+  have := hS.finite_ker
+  have := hT.finite_coker
+  have := hS.finite_coker
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · -- `LinearMap.isStrictMap_prodMap` is stated for the underlying linear maps.
+    change Topology.IsStrictMap ⇑((T : E₁ →ₗ[K] F₁).prodMap (S : E₂ →ₗ[K] F₂))
+    exact LinearMap.isStrictMap_prodMap hT.isStrictMap hS.isStrictMap
+  · rw [ContinuousLinearMap.coe_prodMap T S, LinearMap.range_prodMap]
+    exact hT.isClosed_range.prod hS.isClosed_range
   · rw [ContinuousLinearMap.coe_prodMap T S, LinearMap.ker_prodMap]
     exact (Submodule.prodSubtypeEquiv _ _).symm.finiteDimensional
   · rw [ContinuousLinearMap.coe_prodMap T S, LinearMap.range_prodMap]
-    exact hT.isClosed_range.prod hS.isClosed_range
-  · rw [ContinuousLinearMap.coe_prodMap T S, LinearMap.range_prodMap]
     exact (Submodule.quotientProdEquiv _ _).symm.finiteDimensional
+  · rw [ContinuousLinearMap.coe_prodMap T S, LinearMap.ker_prodMap]
+    obtain ⟨PT, hPT⟩ := hT.closedComplemented_ker
+    obtain ⟨PS, hPS⟩ := hS.closedComplemented_ker
+    let P : E₁ × E₂ →L[K] E₁ × E₂ :=
+      (T.ker.subtypeL.prodMap S.ker.subtypeL).comp (PT.prodMap PS)
+    refine ⟨P.codRestrict (T.ker.prod S.ker) ?_, ?_⟩
+    · rintro ⟨x, y⟩
+      exact ⟨(PT x).property, (PS y).property⟩
+    · rintro ⟨⟨x, y⟩, hx, hy⟩
+      apply Subtype.ext
+      -- Rewrite the corestricted product projection as its two component projections.
+      rw [ContinuousLinearMap.coe_codRestrict_apply, ContinuousLinearMap.comp_apply,
+        ContinuousLinearMap.coe_prodMap', ContinuousLinearMap.coe_prodMap', Prod.map_apply,
+        Prod.map_apply, Submodule.subtypeL_apply, Submodule.subtypeL_apply, hPT ⟨x, hx⟩,
+        hPS ⟨y, hy⟩]
 
 namespace ContinuousLinearMap
 
@@ -112,12 +131,12 @@ private lemma index_prodMap_of_finiteDimensional (T : E₁ →L[K] F₁) (S : E�
 /-- The Fredholm index is additive under Cartesian products of Fredholm operators. -/
 @[simp]
 lemma index_prodMap (T : E₁ →L[K] F₁) (S : E₂ →L[K] F₂)
-    (hT : IsFredholm T) (hS : IsFredholm S) :
+    (hT : ContinuousLinearMap.IsFredholm T) (hS : ContinuousLinearMap.IsFredholm S) :
     index (T.prodMap S) = index T + index S := by
-  letI := hT.finiteDimensional_ker
-  letI := hS.finiteDimensional_ker
-  letI := hT.finiteDimensional_coker
-  letI := hS.finiteDimensional_coker
+  letI := hT.finite_ker
+  letI := hS.finite_ker
+  letI := hT.finite_coker
+  letI := hS.finite_coker
   exact index_prodMap_of_finiteDimensional T S
 
 end ContinuousLinearMap
