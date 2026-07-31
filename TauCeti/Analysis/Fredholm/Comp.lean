@@ -4,17 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.ClosedRange
+public import TauCeti.Analysis.Fredholm.Basic
 
 /-!
 # Composition of Fredholm operators
 
-This file proves that the composite of two Fredholm operators between Banach spaces is Fredholm
-and that its index is the sum of their indices. It also records the corresponding statements for
-powers of a Fredholm endomorphism.
+This file proves that, over a complete nontrivially normed scalar field, the composite of two
+Fredholm operators between normed spaces is Fredholm and that its index is the sum of their
+indices. It also records the corresponding statements for powers of a Fredholm endomorphism.
 
-The finite-dimensional kernel and cokernel statements for a composite are algebraic. Closedness
-of its range then follows from `ContinuousLinearMap.isClosed_range_of_finiteDimensional_coker`.
+Fredholmness of a composite follows by composing the continuous quasi-inverses supplied by
+Mathlib's Fredholm API.
 Index additivity reuses Mathlib's `LinearMap.index_comp`, whose proof is the six-term exact
 sequence
 
@@ -25,9 +25,9 @@ Lane F0 of the analytic Heegaard Floer roadmap.
 
 ## Main declarations
 
-* `TauCeti.IsFredholm.comp`: a composite of Fredholm operators is Fredholm.
+* `ContinuousLinearMap.IsFredholm.comp`: a composite of Fredholm operators is Fredholm.
 * `TauCeti.ContinuousLinearMap.index_comp`: the index of a composite is the sum of the indices.
-* `TauCeti.IsFredholm.pow`: every power of a Fredholm endomorphism is Fredholm.
+* `ContinuousLinearMap.IsFredholm.pow`: every power of a Fredholm endomorphism is Fredholm.
 * `TauCeti.ContinuousLinearMap.index_pow`: the index of the `n`th power is `n` times the index.
 
 The conventions and the composition theorem follow McDuff--Salamon,
@@ -42,40 +42,34 @@ open Module
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
 variable {E F G : Type*}
-variable [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
+variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-variable [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
+variable [NormedAddCommGroup G] [NormedSpace 𝕜 G]
 
 variable {T : E →L[𝕜] F} {S : F →L[𝕜] G}
 
-/-- The composite of two Fredholm operators is Fredholm.
-
-Only the source and target of the composite need to be complete: completeness of the intermediate
-space is not used. -/
-theorem IsFredholm.comp (hS : IsFredholm S) (hT : IsFredholm T) :
-    IsFredholm (S.comp T) := by
-  letI := hT.finiteDimensional_ker
-  letI := hT.finiteDimensional_coker
-  letI := hS.finiteDimensional_ker
-  letI := hS.finiteDimensional_coker
-  apply IsFredholm.of_finiteDimensional_ker_coker
-  · rw [ContinuousLinearMap.toLinearMap_comp, LinearMap.ker_comp]
-    infer_instance
-  · rw [ContinuousLinearMap.toLinearMap_comp, LinearMap.range_comp]
-    infer_instance
+/-- Over a complete nontrivially normed scalar field, the composite of two Fredholm operators is
+Fredholm. -/
+theorem _root_.ContinuousLinearMap.IsFredholm.comp
+    (hS : ContinuousLinearMap.IsFredholm S) (hT : ContinuousLinearMap.IsFredholm T) :
+    ContinuousLinearMap.IsFredholm (S.comp T) := by
+  obtain ⟨T', hT'⟩ := hT.exists_isQuasiInverse
+  obtain ⟨S', hS'⟩ := hS.exists_isQuasiInverse
+  refine ContinuousLinearMap.IsFredholm.of_isQuasiInverse (v := T'.comp S') ?_
+  simpa only [ContinuousLinearMap.toLinearMap_comp] using hT'.comp hS'
 
 namespace ContinuousLinearMap
 
-omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace G] in
+omit [CompleteSpace 𝕜] in
 /-- The Fredholm index is additive under composition. -/
 @[simp]
 theorem index_comp (S : F →L[𝕜] G) (T : E →L[𝕜] F)
-    (hS : IsFredholm S) (hT : IsFredholm T) :
+    (hS : ContinuousLinearMap.IsFredholm S) (hT : ContinuousLinearMap.IsFredholm T) :
     index (S.comp T) = index S + index T := by
-  letI := hT.finiteDimensional_ker
-  letI := hT.finiteDimensional_coker
-  letI := hS.finiteDimensional_ker
-  letI := hS.finiteDimensional_coker
+  letI := hT.finite_ker
+  letI := hT.finite_coker
+  letI := hS.finite_ker
+  letI := hS.finite_coker
   simp only [index_eq_finrank_sub]
   rw [ContinuousLinearMap.toLinearMap_comp]
   have h := LinearMap.index_comp (f := (T : E →ₗ[𝕜] F)) (S : F →ₗ[𝕜] G)
@@ -85,11 +79,13 @@ end ContinuousLinearMap
 
 section Pow
 
-variable {X : Type*} [NormedAddCommGroup X] [NormedSpace 𝕜 X] [CompleteSpace X]
+variable {X : Type*} [NormedAddCommGroup X] [NormedSpace 𝕜 X]
 variable {A : X →L[𝕜] X}
 
-/-- Every natural-number power of a Fredholm endomorphism is Fredholm. -/
-theorem IsFredholm.pow (hA : IsFredholm A) : ∀ n : ℕ, IsFredholm (A ^ n)
+/-- Over a complete nontrivially normed scalar field, every natural-number power of a Fredholm
+endomorphism is Fredholm. -/
+theorem _root_.ContinuousLinearMap.IsFredholm.pow (hA : ContinuousLinearMap.IsFredholm A) :
+    ∀ n : ℕ, ContinuousLinearMap.IsFredholm (A ^ n)
   | 0 => by
       rw [pow_zero, ContinuousLinearMap.one_def]
       exact isFredholm_id
@@ -101,7 +97,7 @@ namespace ContinuousLinearMap
 
 /-- The index of the `n`th power of a Fredholm endomorphism is `n` times its index. -/
 @[simp]
-theorem index_pow (A : X →L[𝕜] X) (hA : IsFredholm A) (n : ℕ) :
+theorem index_pow (A : X →L[𝕜] X) (hA : ContinuousLinearMap.IsFredholm A) (n : ℕ) :
     index (A ^ n) = (n : ℤ) * index A := by
   induction n with
   | zero =>
