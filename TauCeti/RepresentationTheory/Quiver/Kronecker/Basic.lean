@@ -118,6 +118,15 @@ arrows from the source to the target are exactly the elements of the arrow type,
 identification is definitional. -/
 def arrow (a : A) : (src : Kronecker A) ⟶ tgt := a
 
+/-- The arrows from the source to the target are the elements of the arrow type, and `arrow` is
+that identification. This is not `@[simp]`: rewriting `arrow a` to `a` would erase the named
+constructor from every goal, leaving `toPath_arrow` and the `pathEquivArrow` lemmas below unable to
+fire. -/
+theorem arrow_eq (a : A) : arrow a = (a : (src : Kronecker A) ⟶ tgt) :=
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would force `arrow` to be `@[expose]`.
+  (rfl)
+
 instance : IsEmpty ((src : Kronecker A) ⟶ src) := inferInstanceAs (IsEmpty PEmpty)
 
 instance : IsEmpty ((tgt : Kronecker A) ⟶ src) := inferInstanceAs (IsEmpty PEmpty)
@@ -192,6 +201,10 @@ instance : IsEmpty (Path (tgt : Kronecker A) src) :=
 
 /-- The length-one path traced by an arrow of the generalized Kronecker quiver. -/
 def arrowPath (a : A) : Path (src : Kronecker A) tgt := (arrow a).toPath
+
+/-- The length-one path of an arrow is the path that arrow traces. -/
+@[simp]
+theorem toPath_arrow (a : A) : (arrow a).toPath = arrowPath a := (rfl)
 
 /-- Distinct arrows trace distinct paths. -/
 theorem arrowPath_injective : Function.Injective (arrowPath (A := A)) := by
