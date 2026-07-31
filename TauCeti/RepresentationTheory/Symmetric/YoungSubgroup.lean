@@ -215,6 +215,22 @@ theorem youngSubgroup_index_mul {n : ℕ} (μ : n.Partition) :
     (youngSubgroup μ).index * (μ.parts.map Nat.factorial).prod = n.factorial := by
   rw [← card_youngSubgroup, Subgroup.index_mul_card, Nat.card_perm, Nat.card_fin]
 
+/-- The Young subgroup of the one-part partition `(n)` is the whole symmetric group: a single
+block imposes no condition. -/
+@[simp]
+theorem youngSubgroup_indiscrete (n : ℕ) :
+    youngSubgroup (Nat.Partition.indiscrete n) = ⊤ :=
+  Subgroup.eq_top_of_card_eq _ <| by
+    rw [card_youngSubgroup, Nat.Partition.prod_map_factorial_indiscrete, Nat.card_perm,
+      Nat.card_fin]
+
+/-- The Young subgroup of the all-ones partition `(1ⁿ)` is trivial: every block is a singleton,
+so only the identity preserves them all. -/
+@[simp]
+theorem youngSubgroup_ones (n : ℕ) : youngSubgroup (Nat.Partition.ones n) = ⊥ :=
+  Subgroup.eq_bot_of_card_eq _ <| by
+    rw [card_youngSubgroup, Nat.Partition.prod_map_factorial_ones]
+
 /-- The index of a Young subgroup is the multinomial quotient by the factorials of the parts. -/
 theorem youngSubgroup_index {n : ℕ} (μ : n.Partition) :
     (youngSubgroup μ).index =
