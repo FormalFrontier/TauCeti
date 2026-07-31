@@ -11,8 +11,8 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Action
 
 For a subgroup `H` of the fundamental group of `X`, this file defines the orbit quotient
 `UniversalCover x₀ / H`. It equips that quotient with its canonical map from the universal
-cover and proves that this map is a quotient covering map. The quotient is path connected,
-and the class of the constant path supplies its distinguished point.
+cover and proves that this map is a quotient covering map. The class of the constant path
+supplies its distinguished point.
 
 This is the first construction step in the subgroup-to-cover direction of the classification
 of covering spaces. This file descends `UniversalCover.proj` to the quotient; a later file will
