@@ -66,18 +66,26 @@ private noncomputable def spinConjRange (x : spinGroup Q) :
     LinearMap.range (ι Q) ≃ₗ[R] LinearMap.range (ι Q) :=
   (spinConj Q x).ofSubmodules _ _ (spinConj_map_range Q x)
 
+private theorem coe_spinConjRange_apply (x : spinGroup Q) (a : LinearMap.range (ι Q)) :
+    (spinConjRange Q x a : CliffordAlgebra Q) = spinConj Q x (a : CliffordAlgebra Q) :=
+  rfl
+
 private noncomputable def spinConjRangeHom :
     spinGroup Q →* LinearMap.range (ι Q) ≃ₗ[R] LinearMap.range (ι Q) where
   toFun := spinConjRange Q
   map_one' := by
     ext a
-    change spinConj Q 1 (a : CliffordAlgebra Q) = (a : CliffordAlgebra Q)
+    rw [coe_spinConjRange_apply]
     exact DFunLike.congr_fun (map_one (spinConj Q)) (a : CliffordAlgebra Q)
   map_mul' x y := by
     ext a
-    change spinConj Q (x * y) (a : CliffordAlgebra Q) =
-      spinConj Q x (spinConj Q y (a : CliffordAlgebra Q))
+    rw [LinearEquiv.mul_apply, coe_spinConjRange_apply, coe_spinConjRange_apply,
+      coe_spinConjRange_apply]
     exact DFunLike.congr_fun (map_mul (spinConj Q) x y) (a : CliffordAlgebra Q)
+
+private theorem coe_spinConjRangeHom_apply (x : spinGroup Q) (a : LinearMap.range (ι Q)) :
+    (spinConjRangeHom Q x a : CliffordAlgebra Q) = spinConj Q x (a : CliffordAlgebra Q) := by
+  exact coe_spinConjRange_apply Q x a
 
 private noncomputable def spinVectorActionHom : spinGroup Q →* M ≃ₗ[R] M where
   toFun x := (ιRangeEquiv Q).trans ((spinConjRangeHom Q x).trans (ιRangeEquiv Q).symm)
@@ -94,20 +102,20 @@ back to the underlying module. It is characterized by
 noncomputable def spinVectorAction (x : spinGroup Q) : M ≃ₗ[R] M :=
   spinVectorActionHom Q x
 
+private theorem spinVectorAction_apply (x : spinGroup Q) (m : M) :
+    spinVectorAction Q x m =
+      (ιRangeEquiv Q).trans ((spinConjRangeHom Q x).trans (ιRangeEquiv Q).symm) m :=
+  rfl
+
 /-- A spin element acts on a vector by conjugation inside the Clifford algebra. -/
 @[simp]
 theorem ι_spinVectorAction_apply (x : spinGroup Q) (m : M) :
     ι Q (spinVectorAction Q x m) =
       (x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q) :=
   by
-    rw [spinVectorAction, spinVectorActionHom]
-    change ι Q (((ιRangeEquiv Q).trans
-      ((spinConjRangeHom Q x).trans (ιRangeEquiv Q).symm)) m) = _
-    rw [LinearEquiv.trans_apply, LinearEquiv.trans_apply,
-      ι_ιRangeEquiv_symm_apply]
-    rw [show spinConjRangeHom Q x = spinConjRange Q x from rfl]
-    rw [spinConjRange, LinearEquiv.ofSubmodules_apply]
-    rw [coe_ιRangeEquiv_apply]
+    rw [spinVectorAction_apply, LinearEquiv.trans_apply,
+      LinearEquiv.trans_apply, ι_ιRangeEquiv_symm_apply, coe_spinConjRangeHom_apply,
+      coe_ιRangeEquiv_apply]
     exact spinConj_apply Q x (ι Q m)
 
 /-- Conjugation by a spin element preserves the quadratic form. -/
