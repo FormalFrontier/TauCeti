@@ -7,6 +7,7 @@ module
 public import Mathlib.Combinatorics.Quiver.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.RepresentationTheory.Quiver.LastArrow
 import Mathlib.Tactic.Ring
 
 /-!
@@ -14,6 +15,10 @@ import Mathlib.Tactic.Ring
 
 The Euler form records the oriented incidence data of a finite quiver. Its diagonal,
 the Tits form, is the numerical form used by reflection functors and Gabriel's theorem.
+
+`TauCeti.eulerForm_card_path_left` evaluates the Euler form against the vector counting the paths
+out of a vertex `i`: it is evaluation at `i`, the last-arrow recursion for path counts cancelling
+the arrow sum.
 
 The last section evaluates both forms on the simple dimension vectors `αᵢ = Pi.single i 1`;
 in particular `TauCeti.titsPolarForm_single_single` computes the Gram matrix of the polarized
@@ -112,6 +117,37 @@ public theorem titsPolarForm_comm (d e : Q → ℤ) :
     titsPolarForm Q d e = titsPolarForm Q e d := by
   simpa only [titsPolarForm, QuadraticMap.polarBilin_apply_apply] using
     QuadraticMap.polar_comm (titsForm Q) d e
+
+/-! ### The Euler form against a path-count vector -/
+
+/-- **The Euler form against a path-count vector is evaluation.** Pairing the vector counting the
+paths out of `i` against any `e : Q → ℤ` returns `eᵢ`: at each vertex `b` the path count `#(i → b)`
+cancels the arrow-weighted sum `∑ₐ #(a ⟶ b) · #(i → a)` up to the trivial path, by the last-arrow
+recursion `TauCeti.card_path_eq_ite_add_sum`. -/
+public theorem eulerForm_card_path_left (i : Q) [∀ a : Q, Finite (Quiver.Path i a)] (e : Q → ℤ) :
+    eulerForm Q (fun v ↦ (Nat.card (Quiver.Path i v) : ℤ)) e = e i := by
+  classical
+  have key : ∀ b : Q,
+      (Nat.card (Quiver.Path i b) : ℤ)
+          - ∑ a : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path i a) : ℤ)
+        = if i = b then 1 else 0 := by
+    intro b
+    have h := congrArg (fun n : ℕ ↦ (n : ℤ)) (card_path_eq_ite_add_sum (V := Q) i b)
+    push_cast [Nat.card_eq_fintype_card] at h
+    rw [h, Finset.sum_congr rfl fun a _ ↦
+      mul_comm ((Fintype.card (a ⟶ b) : ℤ)) ((Nat.card (Quiver.Path i a) : ℤ))]
+    ring
+  have hswap : ∑ a : Q, ∑ b : Q,
+        (Fintype.card (a ⟶ b) : ℤ) * ((Nat.card (Quiver.Path i a) : ℤ) * e b)
+      = ∑ b : Q,
+          (∑ a : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path i a) : ℤ)) * e b := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun b _ ↦ ?_
+    rw [Finset.sum_mul]
+    exact Finset.sum_congr rfl fun a _ ↦ by ring
+  rw [eulerForm_eq_sum_card, hswap, ← Finset.sum_sub_distrib,
+    Finset.sum_congr rfl fun b _ ↦ by rw [← sub_mul, key b]]
+  simp
 
 /-! ### The Euler and Tits forms in the simple dimension vectors -/
 

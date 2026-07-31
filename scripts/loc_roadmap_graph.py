@@ -4,19 +4,21 @@
 Unlike scripts/loc_graph.py, which counts the lines present in the tree straight
 from git, this chart needs to know *which roadmap* each line belongs to — and that
 attribution lives in the PR labels (`roadmap/<Area>`), not in git. So the series is
-built from the merged pull requests: each PR contributes its net diff (additions
-minus deletions) to its roadmap's running total on the day it merged, and the bands
-are the cumulative totals over time.
+built from merged new-mathematics pull requests: each PR contributes its net diff
+(additions minus deletions) to its roadmap's running total on the day it merged,
+and the bands are the cumulative totals over time.
 
 That makes this a churn-based measure (a line rewritten by a later PR is counted in
 both), not a `wc -l` of the tree; it answers "how much labelled work has landed per
 roadmap", which is the question the labels make answerable. Infrastructure and
-refactor PRs (`roadmap/none`) and any unresolved `roadmap/Unknown` are excluded — the
-chart is about roadmap mathematics.
+unresolved `roadmap/Unknown` PRs are excluded, as are maintenance PRs recognized
+from their conventional-commit title. The latter is deliberately independent of
+`roadmap/none`, so adding roadmap attribution to a refactor does not change the
+chart's meaning.
 
 Data comes from `gh` by default (needs auth: GH_TOKEN with pull-requests:read), or
 from a `--data` JSON file (the output of
-`gh pr list --state merged --json number,labels,mergedAt,additions,deletions`) for
+`gh pr list --state merged --json number,title,labels,mergedAt,additions,deletions`) for
 offline rendering and tests. Pure stdlib otherwise, matching loc_graph.py so CI needs
 no pip install. Styled for the navy Tau Ceti site (see web/static_files/style.css).
 """
@@ -26,6 +28,7 @@ import datetime as dt
 import html
 import json
 import math
+import re
 import subprocess
 import sys
 
@@ -47,17 +50,23 @@ PALETTE = [
 
 AREA_PREFIX = "roadmap/"
 EXCLUDE = {"roadmap/none", "roadmap/Unknown"}
+MAINTENANCE_TITLE = re.compile(
+    r"^(?:refactor|fix|chore|style|test|perf|docs?|ci|build|revert|harden)(?:[(!:/]| )",
+    re.IGNORECASE,
+)
 
 
 def fetch_gh(repo: str) -> list[dict]:
     out = subprocess.run(
         ["gh", "pr", "list", "--repo", repo, "--state", "merged", "--limit", "2000",
-         "--json", "number,labels,mergedAt,additions,deletions"],
+         "--json", "number,title,labels,mergedAt,additions,deletions"],
         check=True, text=True, stdout=subprocess.PIPE).stdout
     return json.loads(out)
 
 
 def roadmap_of(pr: dict) -> str | None:
+    if MAINTENANCE_TITLE.match(pr.get("title") or ""):
+        return None
     labs = [l["name"] for l in pr.get("labels") or []
             if l["name"].startswith(AREA_PREFIX) and l["name"] not in EXCLUDE]
     return labs[0] if len(labs) == 1 else None
@@ -89,6 +98,8 @@ def build_series(prs: list[dict]):
     for day in dates:
         for a in order:
             cum[a] += by_day_area[day].get(a, 0)
+            if cum[a] < 0:
+                raise ValueError(f"{a} has a negative cumulative line count on {day}")
             series[a].append(cum[a])
     return dates, order, series, totals
 

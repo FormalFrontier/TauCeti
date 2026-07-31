@@ -182,7 +182,8 @@ underlying graph of the quiver, not on its orientation. -/
 theorem titsForm_reflect (i : V) (d : V → ℤ) :
     titsForm (Quiver.Reflect V i) d = titsForm V d := by
   have key := sum_sum_card_reflectHom i (fun a b ↦ d a * d b) fun a b ↦ mul_comm (d a) (d b)
-  rw [titsForm_def, titsForm_def, eulerForm_reflect_eq_sum_card, eulerForm_eq_sum_card]
+  rw [titsForm_def (Quiver.Reflect V i) d, titsForm_def V d,
+    eulerForm_reflect_eq_sum_card i d d, eulerForm_eq_sum_card V d d]
   linarith [key]
 
 /-- Reflecting at a vertex leaves the polarized Tits form unchanged. -/
@@ -194,8 +195,9 @@ theorem titsPolarForm_reflect (i : V) (d e : V → ℤ) :
         = (∑ a : V, ∑ b : V, N a b * (d a * e b)) + ∑ a : V, ∑ b : V, N a b * (e a * d b) :=
     fun N ↦ by simp only [mul_add, Finset.sum_add_distrib]
   rw [hsplit, hsplit] at key
-  rw [titsPolarForm_def, titsPolarForm_def, eulerForm_reflect_eq_sum_card,
-    eulerForm_reflect_eq_sum_card, eulerForm_eq_sum_card, eulerForm_eq_sum_card]
+  rw [titsPolarForm_def (Quiver.Reflect V i) d e, titsPolarForm_def V d e,
+    eulerForm_reflect_eq_sum_card i d e, eulerForm_reflect_eq_sum_card i e d,
+    eulerForm_eq_sum_card V d e, eulerForm_eq_sum_card V e d]
   linarith [key]
 
 variable [DecidableEq V]
@@ -205,7 +207,8 @@ these are built from the polarized Tits form, which reflection preserves. -/
 theorem vertexPreReflection_reflect_apply (i j : V) (d : V → ℤ) (w : V) :
     vertexPreReflection (Quiver.Reflect V i) j d w = vertexPreReflection V j d w := by
   by_cases hw : w = j
-  · rw [hw, vertexPreReflection_apply_self, vertexPreReflection_apply_self]
+  · rw [hw, vertexPreReflection_apply_self (Quiver.Reflect V i) j d,
+      vertexPreReflection_apply_self V j d]
     congr 1
     refine Finset.sum_congr rfl fun x _ ↦ ?_
     congr 1
@@ -232,7 +235,9 @@ theorem eulerForm_reflect_vertexPreReflection {i : V} (h : Quiver.IsSink i) (d e
     congr 1
     refine Finset.sum_congr rfl fun x _ ↦ ?_
     rw [hcard x, zero_add]
-  rw [eulerForm_eq_sum_card (Quiver.Reflect V i), eulerForm_eq_sum_card V]
+  rw [eulerForm_eq_sum_card (Quiver.Reflect V i) (vertexPreReflection V i d)
+      (vertexPreReflection V i e),
+    eulerForm_eq_sum_card V d e]
   refine sub_sum_sum_eq_of_reflect_data i (fun a b ↦ (Fintype.card (a ⟶ b) : ℤ))
     (fun a b ↦ (Fintype.card (Quiver.reflectHom i a b) : ℤ)) d e _ _
     hcard (fun b ↦ by rw [Quiver.card_reflectHom_left])
@@ -259,7 +264,9 @@ theorem eulerForm_reflect_vertexPreReflection_of_isSource {i : V} (h : Quiver.Is
     congr 1
     refine Finset.sum_congr rfl fun x _ ↦ ?_
     rw [hcard x, add_zero]
-  rw [eulerForm_eq_sum_card (Quiver.Reflect V i), eulerForm_eq_sum_card V]
+  rw [eulerForm_eq_sum_card (Quiver.Reflect V i) (vertexPreReflection V i d)
+      (vertexPreReflection V i e),
+    eulerForm_eq_sum_card V d e]
   refine sub_sum_sum_eq_of_reflect_data_of_source i
     (fun a b ↦ (Fintype.card (a ⟶ b) : ℤ))
     (fun a b ↦ (Fintype.card (Quiver.reflectHom i a b) : ℤ)) d e _ _

@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Polynomial.Hermite.Basic
 public import Mathlib.Analysis.RCLike.Basic
 public import TauCeti.Probability.Distributions.Gaussian.PolynomialMemLp
+public import TauCeti.RingTheory.Polynomial.Hermite.Real
 
 /-!
 # `L²` membership of the Hermite polynomials against a Gaussian measure
@@ -46,9 +47,9 @@ theorem memLp_hermite_gaussianReal (n : ℕ) (v : ℝ≥0) :
     MemLp (fun x => (algebraMap ℝ 𝕜) (aeval x (hermite n) / Real.sqrt (n.factorial))) 2
       (gaussianReal 0 v) := by
   have key : ∀ x : ℝ, aeval x (hermite n) / Real.sqrt (n.factorial)
-      = ((hermite n).map (Int.castRingHom ℝ)).eval x * (Real.sqrt (n.factorial))⁻¹ := by
+      = (hermiteℝ n).eval x * (Real.sqrt (n.factorial))⁻¹ := by
     intro x
-    rw [div_eq_mul_inv, Polynomial.aeval_def, algebraMap_int_eq, Polynomial.eval_map]
+    rw [div_eq_mul_inv, eval_hermiteℝ]
   simp only [key]
   simpa only [← RCLike.algebraMap_eq_ofReal] using
     ((memLp_two_eval_gaussianReal 0 v _).mul_const _).ofReal (K := 𝕜)

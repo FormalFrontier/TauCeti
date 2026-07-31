@@ -15,7 +15,7 @@ This file collects the family-agnostic facts that a real polynomial, evaluated p
 integrable and square-integrable against a real Gaussian measure `gaussianReal μ v`, together with
 the companion statement that a polynomial times a Gaussian *envelope* `exp (-(x - μ)²/(2v))` is
 Lebesgue-integrable.  These hold for **any** `q : ℝ[X]` and feed the Hermite-specific `L²`
-membership in `TauCeti.Probability.Distributions.Gaussian.HermiteMemLp` and the Hermite-function
+membership in `TauCeti.Probability.Distributions.Gaussian.Hermite.MemLp` and the Hermite-function
 integrability in `TauCeti.Analysis.SpecialFunctions.Hermite.Function.MemLp`.
 
 The `L²` argument factors through the family-agnostic `memLp_two_eval_of_forall_integrable_pow`

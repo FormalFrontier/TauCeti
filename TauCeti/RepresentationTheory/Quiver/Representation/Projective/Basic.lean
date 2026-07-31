@@ -121,13 +121,22 @@ private theorem indecProjRep_map_single (i : Q) {a b : Q} (p : Quiver.Path a b)
     (indecProjRep k Q i).map p (Finsupp.single q c) = Finsupp.single (q.comp p) c := by
   induction p with
   | nil =>
-    rw [QuiverRep.map_nil, ModuleCat.id_apply]
-    rfl
+    rw [QuiverRep.map_nil]
+    -- The identity component is indexed by `(Paths.of Q).obj _`; expose its definitional
+    -- identification with the underlying vertex before rewriting path concatenation.
+    change Finsupp.single q c = Finsupp.single (q.comp Quiver.Path.nil) c
+    rw [Quiver.Path.comp_nil]
   | cons p e ih =>
     have hcons : (indecProjRep k Q i).map (p.cons e)
         = (indecProjRep k Q i).map p ≫ (indecProjRep k Q i).map e.toPath :=
       (indecProjRep k Q i).map_comp p e.toPath
-    rw [hcons, ModuleCat.comp_apply, ih, indecProjRep_map_toPath]
+    rw [hcons]
+    -- `ModuleCat.comp_apply` cannot cross the `Paths.of` object wrapper, so expose the component
+    -- types definitionally before applying the explicit arrow-action lemma.
+    change (indecProjRep k Q i).map e.toPath
+        ((indecProjRep k Q i).map p (Finsupp.single q c)) =
+      Finsupp.single (q.comp (p.cons e)) c
+    rw [ih, indecProjRep_map_toPath]
     exact Finsupp.mapDomain_single
 
 /-- A path acts on `Pᵢ` by concatenation on the right. Private: it is the `Finsupp.lmapDomain`
@@ -171,12 +180,19 @@ theorem dimVector_indecProjRep (i j : Q) :
 
 /-! ### The universal property -/
 
+-- A representation is now indexed by the free category `Paths Q`. Mathlib's `Paths.of Q` is
+-- definitionally the identity on objects, but elaboration no longer unfolds that fact
+-- automatically in dependent component types. The explicit `(Paths.of Q).obj` annotations and
+-- `change` steps below expose that canonical object identification without adding a parallel API.
+
 /-- The morphism `Pᵢ ⟶ M` determined by an element `x` of `M` at the vertex `i`: it sends the basis
 element of a path `p : i → j` to the image of `x` under the action of `p`. -/
-noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
+noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q)
+    (x : M.obj ((Paths.of Q).obj i)) :
     indecProjRep k Q i ⟶ M where
   app j := ModuleCat.ofHom (Finsupp.linearCombination k fun p : Quiver.Path i j ↦ M.map p x)
   naturality {a b} p := by
+    change Q at a b
     have hcomp : ∀ q : Quiver.Path i a, (M.map p) ((M.map q) x) = M.map (q.comp p) x := fun q ↦
       (congrArg (fun g : M.obj i ⟶ M.obj b ↦ g x) (M.map_comp q p)).symm
     rw [indecProjRep_map]
@@ -187,40 +203,56 @@ noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
 /-- The morphism attached to `x : Mᵢ` sends the basis vector of a path `p` to the action of `p`
 on `x`. -/
 @[simp]
-theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q) (x : M.obj i) (j : Q)
+theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q)
+    (x : M.obj ((Paths.of Q).obj i)) (j : Q)
     (p : Quiver.Path i j) :
-    (indecProjRepHom i M x).app j (indecProjRepBasis k i j p) = M.map p x := by
-  have h : (indecProjRepHom i M x).app j (indecProjRepBasis k i j p) = (1 : k) • M.map p x :=
+    (indecProjRepHom i M x).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) = M.map p x := by
+  have h : (indecProjRepHom i M x).app ((Paths.of Q).obj j)
+      (indecProjRepBasis k i j p) = (1 : k) • M.map p x :=
     Finsupp.linearCombination_single k 1 p
   rwa [one_smul] at h
 
--- Not `@[simp]`: `simp` proves this outright, from `indecProjRepHom_app_basis` and
--- `QuiverRep.map_nil`, so tagging it is a simp-normal-form violation (`simpNF`). It is kept as a
--- named lemma because it is one half of the universal property below.
+-- Not `@[simp]`: `simp` uses `indecProjRepHom_app_basis` and `QuiverRep.map_nil` to reduce this to
+-- the definitional identification of the vertex `i` with `(Paths.of Q).obj i`; tagging the theorem
+-- is therefore a simp-normal-form violation (`simpNF`). It remains named because it is one half of
+-- the universal property below.
 /-- The morphism attached to `x : Mᵢ` sends the basis vector of the trivial path back to `x`. -/
-theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
-    (indecProjRepHom i M x).app i (indecProjRepBasis k i i Quiver.Path.nil) = x := by
+theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q)
+    (x : M.obj ((Paths.of Q).obj i)) :
+    (indecProjRepHom i M x).app ((Paths.of Q).obj i)
+      (indecProjRepBasis k i i Quiver.Path.nil) = x := by
   simp
+  -- The residual goal is the object identification described above.
+  rfl
 
 /-- A morphism out of `Pᵢ` is determined by the image of the basis vector of the trivial path
 at `i`. -/
 @[simp]
 theorem indecProjRepHom_app_nil_self {i : Q} {M : QuiverRep k Q} (f : indecProjRep k Q i ⟶ M) :
-    indecProjRepHom i M (f.app i (indecProjRepBasis k i i Quiver.Path.nil)) = f := by
-  refine NatTrans.ext (funext fun j ↦ ModuleCat.hom_ext
-    ((indecProjRepBasis k i j).ext fun p ↦ ?_))
+    indecProjRepHom i M
+      (f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)) = f := by
+  refine NatTrans.ext (funext fun j ↦ ?_)
+  change Q at j
+  refine ModuleCat.hom_ext ((indecProjRepBasis k i j).ext fun p ↦ ?_)
   have h := LinearMap.congr_fun (congrArg ModuleCat.Hom.hom (f.naturality p))
     (indecProjRepBasis k i i Quiver.Path.nil)
   simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
     indecProjRep_map_basis, Quiver.Path.nil_comp] at h
-  simp only [indecProjRepHom_app_basis, h]
+  change f.app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) =
+    M.map p (f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)) at h
+  change (indecProjRepHom i M
+      (f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil))).app
+        ((Paths.of Q).obj j) (indecProjRepBasis k i j p) =
+    f.app ((Paths.of Q).obj j) (indecProjRepBasis k i j p)
+  rw [indecProjRepHom_app_basis]
+  exact h.symm
 
 /-- **`Pᵢ` represents evaluation at `i`.** A morphism out of `Pᵢ` is determined by, and can be
 prescribed by, the image of the basis vector of the trivial path at `i`; the bijection is
 `k`-linear. -/
 noncomputable def indecProjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
-    (indecProjRep k Q i ⟶ M) ≃ₗ[k] M.obj i where
-  toFun f := f.app i (indecProjRepBasis k i i Quiver.Path.nil)
+    (indecProjRep k Q i ⟶ M) ≃ₗ[k] M.obj ((Paths.of Q).obj i) where
+  toFun f := f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun x := indecProjRepHom i M x
@@ -231,11 +263,13 @@ noncomputable def indecProjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
 picks out. -/
 @[simp]
 theorem indecProjRepHomEquiv_apply (i : Q) (M : QuiverRep k Q) (f : indecProjRep k Q i ⟶ M) :
-    indecProjRepHomEquiv i M f = f.app i (indecProjRepBasis k i i Quiver.Path.nil) :=
+    indecProjRepHomEquiv i M f =
+      f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil) :=
   (rfl)
 
 @[simp]
-theorem indecProjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q) (x : M.obj i) :
+theorem indecProjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q)
+    (x : M.obj ((Paths.of Q).obj i)) :
     (indecProjRepHomEquiv i M).symm x = indecProjRepHom i M x :=
   (rfl)
 
@@ -245,7 +279,8 @@ theorem indecProjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q) (x : M.obj i
 applying `g` at `i`. -/
 theorem indecProjRepHomEquiv_comp (i : Q) {M N : QuiverRep k Q} (f : indecProjRep k Q i ⟶ M)
     (g : M ⟶ N) :
-    indecProjRepHomEquiv i N (f ≫ g) = g.app i (indecProjRepHomEquiv i M f) :=
+    indecProjRepHomEquiv i N (f ≫ g) =
+      g.app ((Paths.of Q).obj i) (indecProjRepHomEquiv i M f) :=
   (rfl)
 
 /-- **The representations `Pᵢ` are projective.** A morphism out of `Pᵢ` lifts along any
@@ -254,9 +289,13 @@ of representations is surjective there. -/
 instance projective_indecProjRep (i : Q) : Projective (indecProjRep k Q i) where
   factors {E X} f e he := by
     obtain ⟨y, hy⟩ :=
-      (ModuleCat.epi_iff_surjective (e.app i)).mp inferInstance (indecProjRepHomEquiv i X f)
+      (ModuleCat.epi_iff_surjective (e.app ((Paths.of Q).obj i))).mp inferInstance
+        (indecProjRepHomEquiv i X f)
     refine ⟨(indecProjRepHomEquiv i E).symm y, (indecProjRepHomEquiv i X).injective ?_⟩
-    rw [indecProjRepHomEquiv_comp, LinearEquiv.apply_symm_apply, hy]
+    change e.app ((Paths.of Q).obj i)
+        ((indecProjRepHomEquiv i E) ((indecProjRepHomEquiv i E).symm y)) =
+      indecProjRepHomEquiv i X f
+    rw [LinearEquiv.apply_symm_apply, hy]
 
 /-- Morphisms out of `Pᵢ` are as many as the elements of the target at `i`: the dimension of
 `Hom(Pᵢ, M)` is the `i`-th entry of the dimension vector of `M`. -/

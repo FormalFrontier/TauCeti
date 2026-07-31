@@ -164,6 +164,9 @@ lemma ofGeometricallyIntegral_mul (G : Over (Spec (.of K))) [GrpObj G]
       (eqToHom (ofGeometricallyIntegral_toOver G) ⊗ₘ
           eqToHom (ofGeometricallyIntegral_toOver G)) ≫ μ[G] := by
   unfold ofGeometricallyIntegral
+  -- After `unfold` the named casts are between syntactically equal objects, so `change` reduces
+  -- them to identities and `simp` cancels them.
+  change μ[G] = (𝟙 G ⊗ₘ 𝟙 G) ≫ μ[G]
   simp
 
 /-- The inverse of `ofGeometricallyIntegral G` is the inverse of `G`. -/
@@ -174,6 +177,8 @@ lemma ofGeometricallyIntegral_inv (G : Over (Spec (.of K))) [GrpObj G]
         eqToHom (ofGeometricallyIntegral_toOver G) =
       eqToHom (ofGeometricallyIntegral_toOver G) ≫ ι[G] := by
   unfold ofGeometricallyIntegral
+  -- As in `ofGeometricallyIntegral_mul`, the named casts reduce to identities.
+  change ι[G] = 𝟙 G ≫ ι[G]
   simp
 
 /-! ### Base change along a field extension -/
@@ -233,6 +238,9 @@ lemma baseChange_mul (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L]
         (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap K L)))).map μ[A.toOver] :=
   by
     unfold baseChange
+    -- After `unfold` the named casts are between syntactically equal objects, so `change` reduces
+    -- them to identities and `simp` cancels them.
+    change _ = (𝟙 _ ⊗ₘ 𝟙 _) ≫ _
     simp
 
 /-- The inverse of a base-changed abelian variety is the pullback of the original inverse. -/
@@ -243,6 +251,8 @@ lemma baseChange_inv (A : AbelianVariety K) (L : Type u) [Field L] [Algebra K L]
       (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap K L)))).map ι[A.toOver] :=
   by
     unfold baseChange
+    -- As in `baseChange_mul`, the named casts reduce to identities.
+    change _ = 𝟙 _ ≫ _
     simp
 
 /-- The underlying scheme of a base change is the fibre product of the abelian variety with

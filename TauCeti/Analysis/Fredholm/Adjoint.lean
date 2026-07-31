@@ -78,7 +78,11 @@ theorem orthogonalKerEquivRange_apply (T : E →L[𝕜] F)
     (LinearMap.ker (T : E →ₗ[𝕜] F)).isClosed_orthogonal.completeSpace_coe
   letI : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
     hT.completeSpace_coe
-  rw [orthogonalKerEquivRange, LinearEquiv.coeFn_toContinuousLinearEquivOfContinuous]
+  -- `orthogonalKerEquivRange` is built by `toContinuousLinearEquivOfContinuous`, which is
+  -- transparent on the underlying function, so it has no usable equation lemma; `change` strips
+  -- the continuous-equivalence wrapper to reach Mathlib's `LinearEquiv` application lemma.
+  change ((LinearMap.kerComplementEquivRange (T : E →ₗ[𝕜] F)
+    (LinearMap.ker (T : E →ₗ[𝕜] F)).isCompl_orthogonal.symm) x : F) = T x
   exact LinearMap.kerComplementEquivRange_apply_coe _ _ x
 
 /-- Applying a closed-range operator to the inverse of its orthogonal-kernel restriction
@@ -108,12 +112,10 @@ private theorem adjoint_bijective (e : E ≃L[𝕜] F) :
   let B : E →L[𝕜] F := ((e.symm : F →L[𝕜] E)†)
   have hBA : B.comp A = ContinuousLinearMap.id 𝕜 F := by
     rw [← ContinuousLinearMap.adjoint_comp]
-    ext x
-    simp
+    rw [e.coe_comp_coe_symm, ContinuousLinearMap.adjoint_id]
   have hAB : A.comp B = ContinuousLinearMap.id 𝕜 E := by
     rw [← ContinuousLinearMap.adjoint_comp]
-    ext x
-    simp
+    rw [e.coe_symm_comp_coe, ContinuousLinearMap.adjoint_id]
   -- Fold the displayed adjoint back to the local name used for the inverse identities.
   change Function.Bijective A
   constructor
@@ -150,8 +152,12 @@ theorem range_adjoint_eq_orthogonal_ker_of_isClosed_range (T : E →L[𝕜] F)
     calc
       inner 𝕜 x (B y) = inner 𝕜 (x : E) ((T†) (y : F)) := by
         rw [Submodule.coe_inner]
-        simp only [B, ContinuousLinearMap.coe_codRestrict_apply,
-          ContinuousLinearMap.domRestrict_apply]
+        -- `B` is `(T†).domRestrict R` corestricted to `Kᗮ`, so its value at `y` carries `(T†) y`
+        -- as its underlying vector.  The pre-bump
+        -- `simp only [B, ContinuousLinearMap.coe_codRestrict_apply,
+        -- ContinuousLinearMap.domRestrict_apply]` no longer closes this, so unfold the two
+        -- restriction wrappers definitionally.
+        rfl
       _ = inner 𝕜 (T (x : E)) (y : F) := T.adjoint_inner_right x y
       _ = inner 𝕜 ((e x : R) : F) (y : F) := by
         rw [he_apply]

@@ -165,6 +165,12 @@ faithful. -/
 instance : (Hom.toOverFunctor (K := K)).Faithful where
   map_injective h := Hom.ext (congrArg Over.Hom.left h)
 
+/-- Two homomorphisms of abelian varieties with the same underlying morphism over `Spec K` are
+equal. -/
+lemma Hom.toOverHom_injective {A B : AbelianVariety K} {f g : A ⟶ B}
+    (h : Hom.toOverHom f = Hom.toOverHom g) : f = g :=
+  Hom.toOverFunctor.map_injective h
+
 end
 
 end AbelianVariety
