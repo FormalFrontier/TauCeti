@@ -18,7 +18,13 @@ machinery (`IsProjectiveLimit.unique`), not new measure theory.
 
 The public API:
 * `measure_eq_of_prefixProj_map_eq` — the map-equality form;
-* `measure_eq_of_fin_marginals_eq` — the roadmap-named setwise form.
+* `measure_eq_of_fin_marginals_eq` — the roadmap-named setwise form;
+* `prefixPair`, `measurable_prefixPair`, `prefixPair_comp` — the same prefix projection carrying an
+  extra factor along;
+* `measure_eq_of_prefixPair_map_eq` — paired finite-marginal uniqueness on `T × (ℕ → α)`.
+
+The paired form is not a corollary of the unpaired one: Mathlib's `IsProjectiveLimit` is stated for
+dependent products `∀ i, α i`, and a product `T × (ℕ → α)` is not of that shape.
 
 Both apply directly to probability measures, since `IsProbabilityMeasure` provides
 `IsFiniteMeasure`, so no separate probability-measure theorem is needed.
@@ -80,10 +86,15 @@ theorem measure_eq_of_fin_marginals_eq {μ ν : Measure (ℕ → α)} [IsFiniteM
       μ.map (prefixProj α n) S = ν.map (prefixProj α n) S) : μ = ν :=
   measure_eq_of_prefixProj_map_eq fun n => Measure.ext fun S hS => h n S hS
 
-/-- The prefix map onto the first `n` path coordinates, with the directing measure carried along. -/
-@[expose]
+/-- The prefix map onto the first `n` path coordinates, keeping the first factor. -/
 def prefixPair (T α : Type*) (n : ℕ) : T × (ℕ → α) → T × (Fin n → α) :=
   fun q => (q.1, fun i : Fin n => q.2 i)
+
+/-- Applying the paired prefix map. -/
+@[simp]
+theorem prefixPair_apply {T α : Type*} (n : ℕ) (q : T × (ℕ → α)) :
+    prefixPair T α n q = (q.1, fun i : Fin n => q.2 i) :=
+  (rfl)
 
 theorem measurable_prefixPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
     (n : ℕ) : Measurable (prefixPair T α n) :=
@@ -95,20 +106,22 @@ theorem measurable_prefixPair (T α : Type*) [MeasurableSpace T] [MeasurableSpac
 
 
 /-- Longer prefixes refine shorter ones. -/
-theorem prefixPair_comp {T α : Type*} [MeasurableSpace T] [MeasurableSpace α] {m n : ℕ}
-    (hmn : m ≤ n) : prefixPair T α m
+theorem prefixPair_comp {T α : Type*} {m n : ℕ} (hmn : m ≤ n) : prefixPair T α m
       = (fun r : T × (Fin n → α) =>
           (r.1, fun i : Fin m => r.2 (Fin.castLE hmn i))) ∘ prefixPair T α n := by
   funext q
   simp only [prefixPair, Function.comp_apply, Fin.val_castLE]
 
-/-- Sets pulled back from a finite prefix, with the directing measure carried along. -/
-def prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+/-- Sets pulled back from a finite prefix, keeping the first factor. Private: it exists only to
+feed `ext_of_generate_finite` in `measure_eq_of_prefixPair_map_eq` below. -/
+private def prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
     Set (Set (T × (ℕ → α))) :=
   {C | ∃ (n : ℕ) (A : Set (T × (Fin n → α))),
         MeasurableSet A ∧ C = prefixPair T α n ⁻¹' A}
 
-theorem isPiSystem_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+/-- The prefix preimages form a π-system: two of them can be re-presented at the longer of their
+two prefixes, where the intersection is again a single preimage. -/
+private theorem isPiSystem_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
     IsPiSystem (prefixSets T α) := by
   rintro _ ⟨m, A, hA, rfl⟩ _ ⟨n, B, hB, rfl⟩ -
   -- Re-present both sets at the longer prefix, where the intersection is a single preimage.
@@ -124,7 +137,10 @@ theorem isPiSystem_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpac
   · rw [Set.preimage_inter, ← Set.preimage_comp, ← Set.preimage_comp,
       ← prefixPair_comp (T := T) (le_max_left m n), ← prefixPair_comp (T := T) (le_max_right m n)]
 
-theorem generateFrom_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
+/-- The prefix preimages generate the product σ-algebra. The first factor is read off the *empty*
+prefix, which `prefixPair` retains; the path factor comes from `MeasurableSpace.comap_iSup` on the
+coordinate evaluations. -/
+private theorem generateFrom_prefixSets (T α : Type*) [MeasurableSpace T] [MeasurableSpace α] :
     MeasurableSpace.generateFrom (prefixSets T α)
       = (inferInstance : MeasurableSpace (T × (ℕ → α))) := by
   refine le_antisymm ?_ ?_

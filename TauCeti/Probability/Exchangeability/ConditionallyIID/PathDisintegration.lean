@@ -36,6 +36,13 @@ each fibre `δ_Q ⊗ Q^{⊗ℕ}` through `map_prefixProj_infinitePi_const`. Exte
 Mathlib's `IsProjectiveLimit` is stated for pure dependent products `∀ i, α i`, so it does not apply
 to this product directly; the π-system argument avoids reindexing the pair through `Option ℕ`.
 
+## References
+
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6 (directing measures) — the
+  path-level form of the conditional disintegration the directing-measure layer is stated against.
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), §1.1, where
+  the conditional predicate is stated blockwise.
+
 The path-level form is what downstream work consumes — empirical measures as objects, the
 affine/barycenter representation, and ergodic decomposition all read the joint law of `(ν, X)` in
 one piece rather than block by block.
@@ -54,13 +61,18 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
 
-/-- The joint path law: the law of the directing measure together with the whole path. -/
+/-- The joint path law: the law of the directing measure together with the whole path.
+
+`@[expose]` is load-bearing: `jointPathLaw_def` below is the definitional unfolding, and under the
+module system an exported theorem may only unfold exposed definitions. Unlike `blockLaw`, writing
+the proof as `(rfl)` does not discharge it here. -/
 @[expose]
 def jointPathLaw (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     Measure (ProbabilityMeasure α × (ℕ → α)) :=
   μ.map fun ω => (ν ω, fun i => X i ω)
 
-/-- The full-path disintegration measure `∫ δ_{ν ω} ⊗ (ν ω)^{⊗ℕ} dμ(ω)`. -/
+/-- The full-path disintegration measure `∫ δ_{ν ω} ⊗ (ν ω)^{⊗ℕ} dμ(ω)`. Exposed for the same
+reason as `jointPathLaw`. -/
 @[expose]
 def pathDisintegration (μ : Measure Ω) (ν : Ω → ProbabilityMeasure α) :
     Measure (ProbabilityMeasure α × (ℕ → α)) :=
@@ -76,29 +88,29 @@ theorem pathDisintegration_def (μ : Measure Ω) (ν : Ω → ProbabilityMeasure
 
 /-- The prefix pushforward of the joint path law is the joint block law of the first `n`
 coordinates. -/
-theorem map_prefix_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) (n : ℕ) :
+theorem map_prefixPair_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) (n : ℕ) :
     (jointPathLaw μ X ν).map (prefixPair (ProbabilityMeasure α) α n)
       = μ.map fun ω => (ν ω, fun i : Fin n => X i ω) := by
   have hpath : Measurable (fun ω => (ν ω, fun i => X i ω) :
       Ω → ProbabilityMeasure α × (ℕ → α)) :=
     hν.prodMk (measurable_pi_lambda _ hX)
   rw [jointPathLaw_def, Measure.map_map (measurable_prefixPair (ProbabilityMeasure α) α n) hpath]
-  rfl
+  simp only [Function.comp_def, prefixPair_apply]
 
 /-- The prefix pushforward of the joint path law is the block-level disintegration, by the defining
 identity at the first `n` coordinates. -/
-theorem map_prefix_jointPathLaw_eq (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i))
+theorem map_prefixPair_jointPathLaw_eq (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i))
     (n : ℕ) :
     (jointPathLaw μ X ν).map (prefixPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-  rw [map_prefix_jointPathLaw hX h.measurable_directing n]
+  rw [map_prefixPair_jointPathLaw hX h.measurable_directing n]
   exact h.jointLaw_eq_disintegration (fun i : Fin n => (i : ℕ)) Fin.val_injective
 
 /-- The prefix pushforward of the full-path disintegration is the block-level disintegration:
 projecting `δ_{ν ω} ⊗ (ν ω)^{⊗ℕ}` onto the first `n` path coordinates leaves
 `δ_{ν ω} ⊗ (ν ω)^{⊗ Fin n}`. -/
-theorem map_prefix_pathDisintegration (hν : Measurable ν) (n : ℕ) :
+theorem map_prefixPair_pathDisintegration (hν : Measurable ν) (n : ℕ) :
     (pathDisintegration μ ν).map (prefixPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
@@ -120,7 +132,9 @@ theorem map_prefix_pathDisintegration (hν : Measurable ν) (n : ℕ) :
             ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
               fun x : ℕ → α => fun i : Fin n => x (i : ℕ)) := by
           rw [Measure.map_prod_map _ _ measurable_id hpref]
-          rfl
+          congr 1
+          funext q
+          simp [prefixPair_apply, Prod.map]
       _ = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin n => Q).toMeasure := by
           rw [Measure.map_id, TauCeti.MeasureTheory.map_prefixProj_infinitePi_const Q n,
             ProbabilityMeasure.toMeasure_pi]
@@ -148,7 +162,8 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_pathDisintegration [IsFiniteMeasure
   haveI : IsFiniteMeasure (jointPathLaw μ X ν) := by
     rw [jointPathLaw_def]; exact Measure.isFiniteMeasure_map _ _
   refine measure_eq_of_prefixPair_map_eq fun n => ?_
-  rw [map_prefix_jointPathLaw_eq h hX n, map_prefix_pathDisintegration h.measurable_directing n]
+  rw [map_prefixPair_jointPathLaw_eq h hX n,
+    map_prefixPair_pathDisintegration h.measurable_directing n]
 
 end Probability
 
