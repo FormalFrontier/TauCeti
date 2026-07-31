@@ -31,6 +31,11 @@ and conjugating the copy of `M` inside the extension is the given action of `G` 
 so the extension is a central extension; that is the case `M = kˣ` in which a projective
 representation of `G` with factor set `α` becomes a linear representation of `E_α`.
 
+A factor set is a multiplicative `2`-cocycle by definition, so no conversion is needed to reach
+group cohomology: `groupCohomology.cocyclesOfIsMulCocycle₂ α.isMulCocycle₂` reads `α` as a
+`2`-cocycle for the `ℤ`-linear representation of `G` on `Additive M`, the input to
+`groupCohomology.H2`.
+
 ## Main definitions
 
 * `TauCeti.FactorSet G M`: a normalized multiplicative `2`-cocycle `G × G → M`, bundled with its
@@ -42,8 +47,6 @@ representation of `G` with factor set `α` becomes a linear representation of `E
 * `TauCeti.FactorSet.rescaleEquiv`: the equivalence of extensions obtained by rescaling that
   section.
 * `TauCeti.FactorSet.trivial`: the factor set that is constantly `1`.
-* `TauCeti.FactorSet.toCocycles₂`: a factor set as a `2`-cocycle for the `ℤ`-linear representation
-  of `G` on `Additive M`, the input to `groupCohomology.H2`.
 
 ## Main results
 
@@ -400,19 +403,6 @@ def trivialSplitting : (trivial G M).groupExtension.Splitting :=
 @[simp] theorem trivialSplitting_apply (g : G) : trivialSplitting G M g = ⟨1, g⟩ := (rfl)
 
 end Trivial
-
-/-- A factor set, read as a `2`-cocycle for the `ℤ`-linear representation of `G` on `Additive M`.
-Its class in `groupCohomology.H2` is the factor set up to the rescaling of
-`TauCeti.FactorSet.canonicalSection` that a coboundary records. The universes are pinned to `Type`
-because `Rep ℤ G` forces its group and its module into the universe of `ℤ`. -/
-def toCocycles₂ {G M : Type} [Group G] [CommGroup M] [MulDistribMulAction G M]
-    (α : FactorSet G M) : cocycles₂ (Rep.ofMulDistribMulAction G M) :=
-  cocyclesOfIsMulCocycle₂ α.isMulCocycle₂
-
-@[simp]
-theorem toCocycles₂_apply {G M : Type} [Group G] [CommGroup M] [MulDistribMulAction G M]
-    (α : FactorSet G M) (p : G × G) : (toCocycles₂ α).1 p = Additive.ofMul (α p) :=
-  (rfl)
 
 end FactorSet
 
