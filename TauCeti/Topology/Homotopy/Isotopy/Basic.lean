@@ -83,7 +83,7 @@ though the analogous statement for an arbitrary closed cover of the domain fails
 private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
     [TopologicalSpace W] {f : Z → W} (hf : Continuous f) {D₁ D₂ : Set W}
     (h₁ : IsClosed D₁) (h₂ : IsClosed D₂) (hcov : D₁ ∪ D₂ = Set.univ)
-    (hi₁ : IsInducing ((f ⁻¹' D₁).restrict f)) (hi₂ : IsInducing ((f ⁻¹' D₂).restrict f)) :
+    (hi₁ : IsInducing ((f ⁻¹' D₁).domRestrict f)) (hi₂ : IsInducing ((f ⁻¹' D₂).domRestrict f)) :
     IsInducing f := by
   rw [isInducing_iff_nhds]
   intro z
@@ -91,7 +91,7 @@ private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
   rw [Filter.le_def]
   intro U hU
   rw [Filter.mem_comap]
-  have extract : ∀ D : Set W, IsInducing ((f ⁻¹' D).restrict f) → f z ∈ D →
+  have extract : ∀ D : Set W, IsInducing ((f ⁻¹' D).domRestrict f) → f z ∈ D →
       ∃ V ∈ 𝓝 (f z), f ⁻¹' V ∩ f ⁻¹' D ⊆ U := by
     intro D hi hzD
     rw [isInducing_iff_nhds] at hi
@@ -103,8 +103,8 @@ private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
     rintro y ⟨hyV, hyD⟩
     -- The restricted map applies definitionally to `f y`, so this `show` only changes
     -- `hyV : f y ∈ V` into the preimage-membership type expected by `hVsub`.
-    exact hVsub (show ((f ⁻¹' D).restrict f) ⟨y, hyD⟩ ∈ V from hyV)
-  have wstep : ∀ D : Set W, IsClosed D → IsInducing ((f ⁻¹' D).restrict f) →
+    exact hVsub (show ((f ⁻¹' D).domRestrict f) ⟨y, hyD⟩ ∈ V from hyV)
+  have wstep : ∀ D : Set W, IsClosed D → IsInducing ((f ⁻¹' D).domRestrict f) →
       ∃ V ∈ 𝓝 (f z), f ⁻¹' V ∩ f ⁻¹' D ⊆ U := by
     intro D hD hi
     by_cases hzD : f z ∈ D
@@ -126,15 +126,15 @@ restriction of `f` to `f ⁻¹' D` is inducing. -/
 private theorem isInducing_restrict_of_embedding {Z W A : Type*} [TopologicalSpace Z]
     [TopologicalSpace W] [TopologicalSpace A] {f : Z → W} {D : Set W} {e : A → Z}
     (he : IsEmbedding e) (hrange : Set.range e = f ⁻¹' D) (hfe : IsInducing (f ∘ e)) :
-    IsInducing ((f ⁻¹' D).restrict f) := by
+    IsInducing ((f ⁻¹' D).domRestrict f) := by
   let φ : A ≃ₜ (f ⁻¹' D) := he.toHomeomorph.trans (Homeomorph.setCongr hrange)
   have hφ_apply (a : A) : (φ a : Z) = e a := by
     simp only [φ, Homeomorph.trans_apply]
     simp [Homeomorph.setCongr]
-  have hcomp : (f ⁻¹' D).restrict f ∘ φ = f ∘ e := by
+  have hcomp : (f ⁻¹' D).domRestrict f ∘ φ = f ∘ e := by
     funext a
     exact congrArg f (hφ_apply a)
-  have h0 : IsInducing ((f ⁻¹' D).restrict f ∘ φ) := hcomp ▸ hfe
+  have h0 : IsInducing ((f ⁻¹' D).domRestrict f ∘ φ) := hcomp ▸ hfe
   have h2 := h0.comp φ.symm.isInducing
   rwa [Function.comp_assoc, Homeomorph.self_comp_symm, Function.comp_id] at h2
 

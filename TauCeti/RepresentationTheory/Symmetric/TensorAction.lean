@@ -78,10 +78,10 @@ theorem commute_reindexRepresentation_asAlgebraHom_map
     (a : MonoidAlgebra R (Equiv.Perm ι)) (f : M →ₗ[R] M) :
     Commute ((reindexRepresentation R M ι).asAlgebraHom a) (map fun _ : ι => f) := by
   induction a using MonoidAlgebra.induction_on with
-  | hM σ =>
+  | of σ =>
     simpa only [Representation.asAlgebraHom_of] using commute_reindexRepresentation_map R M ι σ f
-  | hadd a b ha hb => simpa only [map_add] using ha.add_left hb
-  | hsmul r a ha => simpa only [map_smul] using ha.smul_left r
+  | add a b ha hb => simpa only [map_add] using ha.add_left hb
+  | smul r a ha => simpa only [map_smul] using ha.smul_left r
 
 /-- The group-algebra action on a pure tensor is the corresponding finite linear combination
 of reindexed pure tensors. -/

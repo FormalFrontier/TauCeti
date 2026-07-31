@@ -5,31 +5,30 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Fredholm.Prod
-public import TauCeti.Analysis.Fredholm.Splitting
-import Mathlib.Analysis.Normed.Operator.BoundedLinearMaps
+public import Mathlib.Analysis.Normed.Operator.BoundedLinearMaps
 
 /-!
 # Stability of Fredholm operators under small perturbations
 
-This file proves that Fredholm operators between Banach spaces form an open set in the operator
-norm topology and that their index is locally constant. Equivalently, every Fredholm operator
-`T` has an `ε > 0` such that any operator `S` with `‖S - T‖ < ε` is Fredholm and has the same
-index.
+This file proves that Fredholm operators from a Banach space to a normed space form an open set
+in the operator norm topology and that their index is locally constant. Equivalently, every
+Fredholm operator `T` has an `ε > 0` such that any operator `S` with `‖S - T‖ < ε` is Fredholm
+and has the same index.
 
-The proof uses the kernel and cokernel splittings from
-`TauCeti.Analysis.Fredholm.Splitting`. In the resulting block decomposition, the corner from the
-chosen kernel complement to the range is an equivalence for `T`, and remains an equivalence in a
-neighbourhood of `T` because continuous linear equivalences form an open subset of the operator
-space. Elementary block elimination then reduces a nearby operator to the product of that
-invertible corner with a map between the finite-dimensional kernel and cokernel.
+The proof uses Mathlib's `ContinuousLinearMap.FredholmPackage`. In the resulting block
+decomposition, the corner between the essential domain and codomain summands is an equivalence
+for `T`, and remains an equivalence in a neighbourhood of `T` because continuous linear
+equivalences form an open subset of the operator space. Elementary block elimination then reduces
+a nearby operator to the product of that invertible corner with a map between the two
+finite-dimensional summands.
 The openness input is Mathlib's `ContinuousLinearEquiv.isOpen`; no implementation is vendored.
 
 ## Main declarations
 
-* `TauCeti.IsFredholm.eventually_isFredholm_and_index_eq`: Fredholmness and the index are stable
-  in a neighbourhood of a Fredholm operator.
-* `TauCeti.IsFredholm.exists_pos_isFredholm_and_index_eq_of_norm_sub_lt`: the corresponding
-  operator-norm `ε` statement.
+* `ContinuousLinearMap.IsFredholm.eventually_isFredholm_and_index_eq`: Fredholmness and the index
+  are stable in a neighbourhood of a Fredholm operator.
+* `ContinuousLinearMap.IsFredholm.exists_pos_isFredholm_and_index_eq_of_norm_sub_lt`: the
+  corresponding operator-norm `ε` statement.
 * `TauCeti.isOpen_setOf_isFredholm`: Fredholm operators form an open set.
 * `TauCeti.isOpen_setOf_isFredholm_index_eq`: Fredholm operators of a fixed index form an open
   set.
@@ -46,8 +45,7 @@ namespace TauCeti
 open Filter Module
 open scoped Topology
 
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [IsRCLikeNormedField 𝕜]
-  [CompleteSpace 𝕜]
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
 
 private def blockCorner
     {K X Y C : Type*}
@@ -59,7 +57,7 @@ private def blockCorner
   (ContinuousLinearMap.fst 𝕜 Y C).comp
     (A.comp (ContinuousLinearMap.inr 𝕜 K X))
 
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] in
+omit [CompleteSpace 𝕜] in
 /-- Block elimination. Write the operator as the block matrix `!![a, e; c, d]`, acting by
 `(k, x) ↦ (a k + e x, c k + d x)`, and suppose the corner `e : X → Y` is invertible. Shearing the
 domain by `x ↦ x - e⁻¹ a k` kills `a`, and then shearing the codomain by `z ↦ z - d e⁻¹ y` kills
@@ -97,7 +95,6 @@ private theorem exists_factorization_of_blocks
   · simp [hA, add_comm]
   · simp [hA, map_add]
 
-omit [IsRCLikeNormedField 𝕜] in
 private theorem isFredholm_and_index_eq_of_blocks
     {K X Y C : Type*}
     [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
@@ -106,14 +103,15 @@ private theorem isFredholm_and_index_eq_of_blocks
     [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
     (A : K × X →L[𝕜] Y × C) (a : K →L[𝕜] Y) (c : K →L[𝕜] C) (d : X →L[𝕜] C) (e : X ≃L[𝕜] Y)
     (hA : ∀ (k : K) (x : X), A (k, x) = (a k + e x, c k + d x)) :
-    IsFredholm A ∧
+    ContinuousLinearMap.IsFredholm A ∧
       ContinuousLinearMap.index A = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
   letI : CompleteSpace K := FiniteDimensional.complete 𝕜 K
   letI : CompleteSpace C := FiniteDimensional.complete 𝕜 C
   obtain ⟨f, P, Q, hfac⟩ := exists_factorization_of_blocks A a c d e hA
-  have hf : IsFredholm f := isFredholm_of_finiteDimensional f
-  have he : IsFredholm (e : X →L[𝕜] Y) := IsFredholm.of_continuousLinearEquiv e
-  have hprod : IsFredholm (f.prodMap (e : X →L[𝕜] Y)) := hf.prodMap he
+  have hf : ContinuousLinearMap.IsFredholm f := isFredholm_of_finiteDimensional f
+  have he : ContinuousLinearMap.IsFredholm (e : X →L[𝕜] Y) :=
+    ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv e
+  have hprod : ContinuousLinearMap.IsFredholm (f.prodMap (e : X →L[𝕜] Y)) := hf.prodMap he
   refine ⟨by rw [hfac]; exact (hprod.comp_equiv P).equiv_comp Q, ?_⟩
   calc
     ContinuousLinearMap.index A
@@ -126,7 +124,6 @@ private theorem isFredholm_and_index_eq_of_blocks
       simp
     _ = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := add_zero _
 
-omit [IsRCLikeNormedField 𝕜] in
 private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     {K X Y C : Type*}
     [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
@@ -135,7 +132,7 @@ private theorem isFredholm_and_index_eq_of_blockCorner_equiv
     [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
     (A : K × X →L[𝕜] Y × C) (e : X ≃L[𝕜] Y)
     (he : blockCorner A = (e : X →L[𝕜] Y)) :
-    IsFredholm A ∧
+    ContinuousLinearMap.IsFredholm A ∧
       ContinuousLinearMap.index A = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
   -- Read off the other three corners of `A`, so that `isFredholm_and_index_eq_of_blocks`
   -- applies. The hypothesis `he` names the fourth.
@@ -162,7 +159,7 @@ variable {E F : Type*}
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
 
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] in
+omit [CompleteSpace 𝕜] in
 /-- **Invertibility is an open condition along a family continuous at a point.** If `D T` is an
 equivalence and `D` is continuous at `T`, then `D S` is an equivalence for every `S` near `T`.
 
@@ -184,7 +181,7 @@ private theorem eventually_exists_continuousLinearEquiv_eq {G : Type*} [Topologi
   obtain ⟨e, he⟩ := hS
   exact ⟨e, he.symm⟩
 
-omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in
+omit [CompleteSpace E] [CompleteSpace F] in
 /-- **A splitting with an invertible corner makes an operator Fredholm.** Suppose the domain splits
 as `K × X` and the codomain as `Y × C`, with `K` and `C` finite-dimensional, and that in the
 resulting block form of `S` the corner `X → Y` is an equivalence. Then `S` is Fredholm of index
@@ -198,7 +195,7 @@ private theorem isFredholm_and_index_eq_of_splitting
     (S : E →L[𝕜] F) (p : (K × X) ≃L[𝕜] E) (q : (Y × C) ≃L[𝕜] F) {e : X ≃L[𝕜] Y}
     (he : blockCorner ((q.symm : F →L[𝕜] Y × C).comp (S.comp (p : K × X →L[𝕜] E))) =
       (e : X →L[𝕜] Y)) :
-    IsFredholm S ∧
+    ContinuousLinearMap.IsFredholm S ∧
       ContinuousLinearMap.index S = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
   -- Conjugating by the two splitting equivalences changes neither Fredholmness nor the index, so
   -- this is `isFredholm_and_index_eq_of_blockCorner_equiv` transported along `p` and `q`.
@@ -211,34 +208,35 @@ private theorem isFredholm_and_index_eq_of_splitting
   rw [← hAindex, hrecover]
   simp
 
+omit [CompleteSpace F] in
 /-- Fredholmness and the Fredholm index are stable in a neighbourhood of a Fredholm operator. -/
-theorem IsFredholm.eventually_isFredholm_and_index_eq {T : E →L[𝕜] F}
-    (hT : IsFredholm T) :
+theorem _root_.ContinuousLinearMap.IsFredholm.eventually_isFredholm_and_index_eq {T : E →L[𝕜] F}
+    (hT : ContinuousLinearMap.IsFredholm T) :
     ∀ᶠ S : E →L[𝕜] F in 𝓝 T,
-      IsFredholm S ∧ ContinuousLinearMap.index S = ContinuousLinearMap.index T := by
-  letI := hT.finiteDimensional_ker
-  letI := hT.finiteDimensional_coker
-  letI : CompleteSpace hT.kerComplement := hT.isClosed_kerComplement.completeSpace_coe
-  letI : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
-    hT.isClosed_range.completeSpace_coe
-  let domainEquiv := hT.kerProdComplementEquiv
-  let codomainEquiv := hT.rangeProdCokerComplementEquiv
+      ContinuousLinearMap.IsFredholm S ∧
+        ContinuousLinearMap.index S = ContinuousLinearMap.index T := by
+  obtain ⟨pkg⟩ := hT.nonempty_fredholmPackage
+  letI := pkg.decDom.finite_X₀
+  letI := pkg.decCodom.finite_X₀
+  letI : CompleteSpace pkg.decDom.X₁ :=
+    pkg.decDom.isTopCompl.isClosed.completeSpace_coe
+  let domainEquiv : (pkg.decDom.X₀ × pkg.decDom.X₁) ≃L[𝕜] E :=
+    Submodule.prodEquivOfIsTopCompl _ _ pkg.decDom.isTopCompl.symm
+  let codomainEquiv : (pkg.decCodom.X₁ × pkg.decCodom.X₀) ≃L[𝕜] F :=
+    Submodule.prodEquivOfIsTopCompl _ _ pkg.decCodom.isTopCompl
   let A (S : E →L[𝕜] F) :
-      (LinearMap.ker (T : E →ₗ[𝕜] F) × hT.kerComplement) →L[𝕜]
-        (LinearMap.range (T : E →ₗ[𝕜] F) × hT.cokerComplement) :=
+      (pkg.decDom.X₀ × pkg.decDom.X₁) →L[𝕜]
+        (pkg.decCodom.X₁ × pkg.decCodom.X₀) :=
     (codomainEquiv.symm : F →L[𝕜]
-      LinearMap.range (T : E →ₗ[𝕜] F) × hT.cokerComplement).comp
+      pkg.decCodom.X₁ × pkg.decCodom.X₀).comp
       (S.comp (domainEquiv :
-        (LinearMap.ker (T : E →ₗ[𝕜] F) × hT.kerComplement) →L[𝕜] E))
+        (pkg.decDom.X₀ × pkg.decDom.X₁) →L[𝕜] E))
   let D (S : E →L[𝕜] F) :
-      hT.kerComplement →L[𝕜] LinearMap.range (T : E →ₗ[𝕜] F) :=
+      pkg.decDom.X₁ →L[𝕜] pkg.decCodom.X₁ :=
     blockCorner (A S)
-  -- For `T`, the distinguished corner is exactly the equivalence from the chosen kernel
-  -- complement onto the range.
-  have hDT : D T = (hT.kerComplementEquivRange :
-      hT.kerComplement →L[𝕜] LinearMap.range (T : E →ₗ[𝕜] F)) := by
+  have hDT : D T = (pkg.equiv : pkg.decDom.X₁ →L[𝕜] pkg.decCodom.X₁) := by
     ext x
-    simp [D, A, blockCorner, domainEquiv, codomainEquiv]
+    simp [D, A, blockCorner, domainEquiv, codomainEquiv, pkg.eq_equiv]
   have hD : Continuous D := by
     dsimp only [D, A, blockCorner]
     fun_prop
@@ -248,32 +246,39 @@ theorem IsFredholm.eventually_isFredholm_and_index_eq {T : E →L[𝕜] F}
     isFredholm_and_index_eq_of_splitting S domainEquiv codomainEquiv he
   refine ⟨hSfredholm, ?_⟩
   rw [hSindex, ContinuousLinearMap.index_eq_finrank_sub T,
-    LinearEquiv.finrank_eq hT.cokerEquivComplement.toLinearEquiv]
+    pkg.ker_eq, pkg.range_eq,
+    LinearEquiv.finrank_eq
+      (Submodule.quotientEquivOfIsTopCompl pkg.decCodom.X₁ pkg.decCodom.X₀
+        pkg.decCodom.isTopCompl).toLinearEquiv]
 
+omit [CompleteSpace F] in
 /-- A sufficiently small operator-norm perturbation of a Fredholm operator is Fredholm with the
 same index. -/
-theorem IsFredholm.exists_pos_isFredholm_and_index_eq_of_norm_sub_lt
-    {T : E →L[𝕜] F} (hT : IsFredholm T) :
+theorem _root_.ContinuousLinearMap.IsFredholm.exists_pos_isFredholm_and_index_eq_of_norm_sub_lt
+    {T : E →L[𝕜] F} (hT : ContinuousLinearMap.IsFredholm T) :
     ∃ ε > 0, ∀ S : E →L[𝕜] F, ‖S - T‖ < ε →
-      IsFredholm S ∧ ContinuousLinearMap.index S = ContinuousLinearMap.index T := by
+      ContinuousLinearMap.IsFredholm S ∧
+        ContinuousLinearMap.index S = ContinuousLinearMap.index T := by
   obtain ⟨ε, hε, hball⟩ :=
     Metric.mem_nhds_iff.mp hT.eventually_isFredholm_and_index_eq
   exact ⟨ε, hε, fun S hS => hball (by simpa [dist_eq_norm] using hS)⟩
 
-/-- The set of Fredholm operators between two Banach spaces is open in the operator norm
+omit [CompleteSpace F] in
+/-- The set of Fredholm operators from a Banach space to a normed space is open in the operator norm
 topology. -/
 theorem isOpen_setOf_isFredholm :
-    IsOpen {T : E →L[𝕜] F | IsFredholm T} := by
+    IsOpen {T : E →L[𝕜] F | ContinuousLinearMap.IsFredholm T} := by
   rw [isOpen_iff_mem_nhds]
   intro T hT
   filter_upwards [hT.eventually_isFredholm_and_index_eq] with S hS
   exact hS.1
 
+omit [CompleteSpace F] in
 /-- For every integer `n`, the set of Fredholm operators of index `n` is open in the operator
 norm topology. -/
 theorem isOpen_setOf_isFredholm_index_eq (n : ℤ) :
     IsOpen {T : E →L[𝕜] F |
-      IsFredholm T ∧ ContinuousLinearMap.index T = n} := by
+      ContinuousLinearMap.IsFredholm T ∧ ContinuousLinearMap.index T = n} := by
   rw [isOpen_iff_mem_nhds]
   rintro T ⟨hT, hindex⟩
   filter_upwards [hT.eventually_isFredholm_and_index_eq] with S hS
