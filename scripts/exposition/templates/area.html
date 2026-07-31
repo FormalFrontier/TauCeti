@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>${TITLE} · Tau Ceti exposition</title>
+  <link rel="icon" href="../../../static/favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&amp;display=swap">
+  <link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="graph-body" data-slug="${SLUG}">
+  <header class="site-header">
+    <a class="site-title" href="../../index.html">Tau Ceti <span class="brand-sub">· exposition</span></a>
+    <nav class="site-nav">
+      <a href="../../index.html">Areas</a>
+      <a href="../../decls/index.html">Declarations</a>
+      <a href="../../../docs/index.html">API docs</a>
+      <a href="../../../index.html">Tau Ceti</a>
+      <a href="https://github.com/TauCetiProject/TauCeti" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <section class="info-strip">
+    <h1 class="area-title" id="area-title">${TITLE}</h1>
+    <span class="info-stats" id="info-stats"></span>
+    <span class="kind-legend" id="kind-legend"></span>
+  </section>
+  <section class="graph-toolbar">
+    <input class="search-input" id="search-input" type="search"
+           placeholder="Search declarations" autocomplete="off" spellcheck="false"
+           aria-label="Search declarations">
+    <span class="search-count" id="search-count" aria-live="polite"></span>
+    <button class="btn" id="fit-button" type="button">Fit</button>
+  </section>
+  <nav class="breadcrumb-bar" id="cone-breadcrumb" hidden>
+    <a id="cone-back" href="#">&#8249; back to full graph</a><span id="cone-label"></span>
+  </nav>
+  <div class="graph-viewport" id="graph-viewport">
+    <canvas id="graph-canvas"></canvas>
+    <div class="graph-tooltip" id="graph-tooltip" hidden></div>
+    <div class="graph-message" id="graph-message" hidden></div>
+    <aside class="decl-panel" id="decl-panel" hidden>
+      <div class="panel-bar">
+        <button class="panel-close" id="panel-close" type="button" aria-label="Close panel">&#215;</button>
+      </div>
+      <div class="panel-body" id="panel-body"></div>
+    </aside>
+  </div>
+  <script src="../../assets/graph.js"></script>
+</body>
+</html>

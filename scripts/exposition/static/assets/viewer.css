@@ -1,0 +1,595 @@
+/* Styles specific to the landing page and the all-declarations viewer.
+ * Consumes the tokens defined in style.css (loaded first on both pages):
+ * --bg --fg --muted --card --border --accent --accent-fg --hover and the
+ * --kind-* colors. Shared chrome (header, base typography) lives in
+ * style.css and is NOT redefined here.
+ *
+ * Adapted from Lean Pool's exposition viewer stylesheet (Vasily Ilin,
+ * https://github.com/Vilin97/lean-pool, Apache 2.0); the area dependency
+ * map is new here. */
+
+/* ---------- small shared bits ---------- */
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.load-error {
+  color: var(--kind-structure);
+  margin: 24px 0;
+}
+
+/* Kind chip: colored label used in the viewer rows and filter chips.
+ * The per-kind classes only set --kc; the chips derive tint/border from it.
+ * (.kfilter-chip, not .kind-chip: the latter is a shared graph-page class.) */
+.kchip,
+.kfilter-chip {
+  --kc: var(--muted);
+  color: var(--kc);
+}
+
+.k-theorem { --kc: var(--kind-theorem); }
+.k-lemma { --kc: var(--kind-lemma); }
+.k-def { --kc: var(--kind-def); }
+.k-abbrev { --kc: var(--kind-abbrev); }
+.k-instance { --kc: var(--kind-instance); }
+.k-structure { --kc: var(--kind-structure); }
+.k-class { --kc: var(--kind-class); }
+.k-inductive { --kc: var(--kind-inductive); }
+.k-axiom { --kc: var(--kind-axiom); }
+.k-opaque { --kc: var(--kind-opaque); }
+.k-other { --kc: var(--muted); }
+
+/* ---------- landing page ---------- */
+
+.landing-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 36px 24px 48px;
+}
+
+.hero h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+}
+
+.hero p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 72ch;
+}
+
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.stat-tile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 3px;
+}
+
+.kind-breakdown {
+  margin-top: 20px;
+}
+
+.kind-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.kind-seg {
+  flex-basis: 0; /* flex-grow set inline, proportional to count */
+  min-width: 2px;
+}
+
+.pool-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.legend-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- area dependency map ---------- */
+
+.area-map {
+  margin-top: 36px;
+}
+
+.area-map h2,
+.areas h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.map-note {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.map-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+
+.map-scroll svg {
+  display: block;
+}
+
+.map-node {
+  cursor: pointer;
+}
+
+.map-node rect {
+  fill: rgba(255, 255, 255, 0.04);
+  stroke: var(--border);
+  rx: 6px;
+}
+
+.map-node:hover rect,
+.map-node.hot rect {
+  stroke: var(--accent);
+  fill: rgba(94, 234, 212, 0.08);
+}
+
+.map-node text {
+  fill: var(--fg);
+  font-family: var(--font-display);
+  font-size: 12px;
+}
+
+.map-node text.map-count {
+  fill: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+}
+
+.map-edge {
+  fill: none;
+  stroke: var(--muted);
+  opacity: 0.35;
+}
+
+.map-edge.hot {
+  stroke: var(--accent);
+  opacity: 0.9;
+}
+
+.map-tip {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 4px 9px;
+  font-size: 12px;
+  color: var(--fg);
+  max-width: 360px;
+}
+
+/* ---------- area table ---------- */
+
+.areas {
+  margin-top: 36px;
+}
+
+.table-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.table-tools input[type="search"],
+.viewer-toolbar input[type="search"],
+.viewer-toolbar select {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.table-tools input[type="search"] {
+  flex: 0 1 280px;
+  min-width: 160px;
+}
+
+.table-tools input[type="search"]:focus-visible,
+.viewer-toolbar input[type="search"]:focus-visible,
+.viewer-toolbar select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.table-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+
+.area-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.area-table th {
+  text-align: left;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.area-table th.num,
+.area-table td.num {
+  text-align: right;
+}
+
+.area-table td.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sort-button {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  width: 100%;
+  text-align: inherit;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  color: var(--fg);
+}
+
+.sort-button:focus-visible,
+.vsort:focus-visible,
+.kfilter-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sort-button[data-dir]::after {
+  content: " ↑";
+  color: var(--accent);
+}
+
+.sort-button[data-dir="desc"]::after {
+  content: " ↓";
+}
+
+.area-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.area-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.area-table tbody tr:hover {
+  background: var(--hover);
+}
+
+.cell-area a {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.area-name {
+  display: block;
+  color: var(--accent);
+  font-weight: 550;
+}
+
+.cell-area a:hover .area-name {
+  text-decoration: underline;
+}
+
+.area-modules {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.table-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 28px 14px;
+}
+
+.landing-footer {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- declarations viewer ---------- */
+
+.viewer-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-h, 49px));
+  height: calc(100dvh - var(--header-h, 49px));
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px 16px;
+  box-sizing: border-box;
+}
+
+.viewer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.viewer-toolbar input[type="search"] {
+  flex: 1 1 260px;
+  min-width: 180px;
+}
+
+.viewer-toolbar select {
+  max-width: 240px;
+}
+
+.decl-count {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+.kind-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-basis: 100%;
+}
+
+.kfilter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--kc) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kc) 35%, transparent);
+}
+
+.kfilter-chip:hover {
+  background: color-mix(in srgb, var(--kc) 18%, transparent);
+}
+
+.kfilter-chip.chip-off {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.kfilter-chip.chip-off:hover {
+  background: var(--hover);
+}
+
+.chip-count {
+  font-weight: 400;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+/* virtual list */
+
+.vscroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  position: relative;
+}
+
+.vhead,
+.vrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 200px;
+  gap: 12px;
+  align-items: center;
+  padding: 0 14px;
+  box-sizing: border-box;
+}
+
+.vhead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.vsort {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.vsort:hover {
+  color: var(--fg);
+}
+
+.vsort[data-dir]::after {
+  content: " ↑";
+  color: var(--accent);
+}
+
+.vsort[data-dir="desc"]::after {
+  content: " ↓";
+}
+
+.vspacer {
+  position: relative;
+}
+
+.vwindow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.vrow {
+  height: 34px; /* must match ROW_HEIGHT in viewer.js */
+  cursor: pointer;
+  font-size: 13.5px;
+  box-shadow: inset 0 -1px var(--border); /* hairline that keeps height exact */
+}
+
+.vrow:hover {
+  background: var(--hover);
+}
+
+.vcell-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the name cell is a real link (keyboard/a11y) but renders as plain text */
+a.vcell-name,
+a.vcell-name:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.vcell-name:hover,
+a.vcell-name:focus-visible {
+  color: var(--accent);
+}
+
+.vrow .kchip {
+  justify-self: start;
+  background: color-mix(in srgb, var(--kc) 10%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vcell-area {
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vcell-area:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.vempty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 900px) {
+  .landing-wrap,
+  .viewer-wrap {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .vhead,
+  .vrow {
+    grid-template-columns: minmax(0, 1fr) 92px 150px;
+    gap: 8px;
+  }
+}

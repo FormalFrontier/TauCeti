@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Tau Ceti exposition</title>
+  <link rel="icon" href="../static/favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&amp;display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/viewer.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title" href="./">Tau Ceti <span class="brand-sub">· exposition</span></a>
+    <nav class="site-nav">
+      <a href="./" aria-current="page">Areas</a>
+      <a href="decls/">Declarations</a>
+      <a href="../docs/">API docs</a>
+      <a href="../">Tau Ceti</a>
+      <a href="https://github.com/TauCetiProject/TauCeti">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="landing-wrap">
+    <section class="hero">
+      <h1>Tau Ceti exposition</h1>
+      <p>Interactive dependency graphs and a declaration index for the whole
+        AI-authored library, area by area — the <a href="../docs/">API docs</a>
+        hold the full signatures.</p>
+    </section>
+
+    <section class="stat-tiles" id="statTiles" hidden></section>
+
+    <section class="kind-breakdown" id="kindBreakdown" hidden>
+      <div class="kind-bar" id="kindBar" role="img"
+           aria-label="Declarations by kind"></div>
+      <div class="pool-legend" id="kindLegend"></div>
+    </section>
+
+    <section class="area-map" id="areaMapSection" hidden>
+      <h2>How the areas build on each other</h2>
+      <p class="map-note" id="mapNote">Each arrow points from an area to one it
+        uses; wider arrows carry more dependencies. Areas with no arrows only
+        build on Mathlib.</p>
+      <div class="map-scroll">
+        <svg id="areaMap" role="img" aria-label="Area dependency graph"></svg>
+      </div>
+    </section>
+
+    <section class="areas" id="areasSection" hidden>
+      <h2>Areas</h2>
+      <div class="table-tools">
+        <input id="areaFilter" type="search" placeholder="Filter areas…"
+               autocomplete="off" spellcheck="false"
+               aria-label="Filter areas by name">
+        <span id="areaCount" class="table-count"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="area-table">
+          <thead><tr id="areaHead"></tr></thead>
+          <tbody id="areaBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="load-error" id="loadError" hidden></p>
+
+    <footer class="landing-footer" id="landingFooter"></footer>
+  </main>
+
+  <script src="assets/landing.js"></script>
+</body>
+</html>

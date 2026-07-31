@@ -27,6 +27,7 @@ def theme : Theme := { Theme.default with
               <a class="brand" href="."><img src="static/header.png" alt="Tau Ceti"/></a>
               <nav class="nav-links">
                 <a href=".">"Home"</a>
+                <a href="exposition/">"Exposition"</a>
                 <a href="statistics">"Statistics"</a>
                 <a href="about">"About"</a>
                 <a href="https://github.com/TauCetiProject/TauCeti">"GitHub"</a>
@@ -63,6 +64,7 @@ def theme : Theme := { Theme.default with
             <p class="hero-sub">"AI-authored Lean mathematics, directed by a human-owned roadmap and gated by open, adversarial review."</p>
             <div class="cta-row">
               <a class="cta" href="https://github.com/TauCetiProject/TauCeti">"Explore the code →"</a>
+              <a class="cta secondary" href="exposition/">"Browse the exposition →"</a>
               <a class="cta secondary" href="docs/">"Read the docs →"</a>
             </div>
           </div>

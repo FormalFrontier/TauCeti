@@ -18,6 +18,11 @@ name: Pages
 # only web/ (or the chart scripts) reuses the cached docs, since the mathematics has not
 # changed, so those site deploys stay fast.
 #
+# The exposition under /exposition (interactive dependency graphs and a declaration index,
+# see scripts/exposition/) is generated on the same cadence and cached the same way: its
+# extractor needs the built library, which only exists in runs that rebuild the docs, so the
+# two share one rebuild decision, and web-only deploys carry the cached tree forward.
+#
 # The Statistics page's "lines of code by date" charts are regenerated here, at deploy
 # time, straight from git history (see scripts/loc_graph.py) — they are not committed
 # state. The per-roadmap chart (scripts/loc_roadmap_graph.py) is regenerated the same
@@ -39,6 +44,7 @@ on:
       - 'scripts/loc_graph.py'
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
+      - 'scripts/exposition/**'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
@@ -155,15 +161,30 @@ jobs:
           restore-keys: |
             docs-html-v2-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-
 
-      # Rebuild on the three-hour schedule / manual dispatch, or whenever no cached docs exist at
-      # all (e.g. the first run after this workflow lands) so /docs is never missing for long.
+      # The exposition (dependency graphs + declaration index, see scripts/exposition/) is
+      # generated from the built library on the same cadence as the API docs and cached the
+      # same way, so web-only deploys reuse the last generated tree.
+      - name: Restore the generated exposition
+        id: exposition-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: exposition-site
+          key: exposition-site-v1-${{ github.run_id }}
+          restore-keys: |
+            exposition-site-v1-
+
+      # Rebuild on the three-hour schedule / manual dispatch, or whenever no cached docs (or
+      # exposition — it needs the same built library) exist at all, e.g. the first run after
+      # this workflow lands, so /docs and /exposition are never missing for long.
       - name: Decide whether to (re)build the API docs
         id: docs-plan
         env:
           EVENT: ${{ github.event_name }}
           MATCHED: ${{ steps.docs-cache.outputs.cache-matched-key }}
+          MATCHED_EXPOSITION: ${{ steps.exposition-cache.outputs.cache-matched-key }}
         run: |
-          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ] || [ -z "$MATCHED" ]; then
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ] \
+              || [ -z "$MATCHED" ] || [ -z "$MATCHED_EXPOSITION" ]; then
             echo "build=true" >> "$GITHUB_OUTPUT"
           else
             echo "build=false" >> "$GITHUB_OUTPUT"
@@ -224,6 +245,39 @@ jobs:
         with:
           path: docbuild/.lake/build/doc
           key: docs-html-v2-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ github.run_id }}
+
+      # --- Exposition (scripts/exposition/): dependency graphs + declaration index ---------
+      # Runs only when the docs were rebuilt, because that is what guarantees freshly built
+      # TauCeti oleans in the root .lake (doc-gen4's aggregator imports every module). The
+      # root `lake exe cache get` + `lake build` are fast no-ops on top of that build; they
+      # exist so this step keeps working if the docs steps above ever change shape. A failure
+      # here is a warning, not an error: the fold below then reuses the restored tree (if
+      # any), and the next scheduled run retries within three hours.
+      - name: Build the exposition (extract + generate)
+        if: steps.docs-plan.outputs.build == 'true'
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -uo pipefail
+          if lake exe cache get \
+              && lake build \
+              && lake env lean --run scripts/exposition/Extract.lean exposition-dump.jsonl \
+              && python3 scripts/exposition/generate.py \
+                   --dump exposition-dump.jsonl \
+                   --repo-root . \
+                   --out exposition-fresh \
+                   --commit "${{ github.sha }}"; then
+            rm -rf exposition-site
+            mv exposition-fresh exposition-site
+          else
+            echo "::warning title=exposition build failed::keeping the previously generated exposition tree, if any"
+          fi
+
+      - name: Save the generated exposition
+        if: steps.docs-plan.outputs.build == 'true' && hashFiles('exposition-site/data/index.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: exposition-site
+          key: exposition-site-v1-${{ github.run_id }}
 
       - name: Cache Lake builds (site + examples)
         uses: actions/cache@v4
@@ -307,6 +361,21 @@ jobs:
           fi
           echo "docs-source-sha=$sha" >> "$GITHUB_OUTPUT"
           printf 'deploying /docs generated from %s\n' "$sha"
+
+      # Place the exposition (fresh from this run, or restored from the latest cache) at
+      # /exposition. Unlike /docs above, a missing tree is a WARNING, not an error: the
+      # exposition is a secondary subsite, losing it must not sink a deploy that refreshes
+      # the charts and documentation, and the build-decision step above forces a rebuild
+      # whenever its cache is gone — so an absence heals on the next run.
+      - name: Fold the exposition into the site under /exposition
+        run: |
+          if [ -s ../exposition-site/data/index.json ]; then
+            rm -rf _out/exposition
+            cp -a ../exposition-site _out/exposition
+            echo "deploying /exposition ($(du -sh _out/exposition | cut -f1))"
+          else
+            echo "::warning title=exposition missing::no exposition tree to deploy; /exposition will be absent until the next scheduled build"
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
