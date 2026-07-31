@@ -32,9 +32,10 @@ The payoff is `TauCeti.CliffordAlgebra.ιRangeEquiv`, the linear equivalence `M 
 It is what turns a statement about elements of `CliffordAlgebra Q` that happen to lie in
 `range (ι Q)` into a statement about vectors of `M`: Mathlib's twisted conjugation lemmas
 (`lipschitzGroup.conjAct_smul_range_ι`, `spinGroup.involute_act_ι_mem_range_ι`) say only that the
-Lipschitz and spin groups act on `range (ι Q)`, and it is `ιRangeEquiv` that converts such an
-action into an honest linear automorphism of `M`, hence into an element of the orthogonal group of
-`Q`.
+Lipschitz and spin groups act on `range (ι Q)`, and it is `ιRangeEquiv` that transports such an
+action to an honest linear automorphism of `M`. Landing in the orthogonal group of `Q` is a
+further step: a linear automorphism is not orthogonal for free, and that the transported action
+preserves `Q` has to be proved separately.
 
 Against the degree filtration `TauCeti.CliffordAlgebra.filtration`, whose first step is spanned by
 the scalars and the vectors, the disjointness of the two pins that step down to `R ⊕ M`:
@@ -195,8 +196,9 @@ theorem ι_range_disjoint_one :
 Clifford algebra.
 
 Mathlib's twisted-conjugation lemmas say that the Lipschitz and spin groups act on
-`LinearMap.range (ι Q)`; this equivalence is what converts such an action into a linear
-automorphism of `M`, and so into an element of the orthogonal group of `Q`. -/
+`LinearMap.range (ι Q)`; this equivalence is what transports such an action to a linear
+automorphism of `M`. It says nothing about `Q`: to place that automorphism in the orthogonal
+group one still has to prove that it preserves `Q`. -/
 noncomputable def ιRangeEquiv : M ≃ₗ[R] LinearMap.range (ι Q) :=
   LinearEquiv.ofInjective (ι Q) (ι_injective Q)
 
