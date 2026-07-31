@@ -212,7 +212,8 @@ This is the conclusion the Carathéodory correspondence (layer **L5**) asks for;
 adds is the *existence* of such an `F` for a Riemann map of a Jordan domain, which is not proved
 here. Continuity of the inverse is free: `closure U` is compact and `ℂ` is Hausdorff.
 
-The definition is not exposed; `TauCeti.closureHomeomorph_apply` is its characterization. -/
+The definition is not exposed; `TauCeti.closureHomeomorph_apply` and
+`TauCeti.closureHomeomorph_symm_apply` are its characterizations. -/
 noncomputable def closureHomeomorph (hUb : Bornology.IsBounded U)
     (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U)) :
     closure U ≃ₜ closure (f '' U) :=
@@ -231,6 +232,21 @@ noncomputable def closureHomeomorph (hUb : Bornology.IsBounded U)
 lemma closureHomeomorph_apply (hUb : Bornology.IsBounded U) (hFc : ContinuousOn F (closure U))
     (hFf : EqOn F f U) (hFi : InjOn F (closure U)) (x : closure U) :
     (closureHomeomorph hUb hFc hFf hFi x : ℂ) = F x := (rfl)
+
+/-- The inverse of the boundary homeomorphism is the set-level inverse
+`Function.invFunOn F (closure U)`. -/
+@[simp]
+lemma closureHomeomorph_symm_apply (hUb : Bornology.IsBounded U)
+    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) (hFi : InjOn F (closure U))
+    (y : closure (f '' U)) :
+    ((closureHomeomorph hUb hFc hFf hFi).symm y : ℂ) = Function.invFunOn F (closure U) y := by
+  -- Both sides lie in `closure U` and are carried to `y` by `F`, which is injective there.
+  have hFsymm : F ((closureHomeomorph hUb hFc hFf hFi).symm y : ℂ) = (y : ℂ) := by
+    rw [← closureHomeomorph_apply hUb hFc hFf hFi, Homeomorph.apply_symm_apply]
+  have hex : ∃ x ∈ closure U, F x = (y : ℂ) :=
+    ⟨_, ((closureHomeomorph hUb hFc hFf hFi).symm y).2, hFsymm⟩
+  exact hFi ((closureHomeomorph hUb hFc hFf hFi).symm y).2 (Function.invFunOn_mem hex)
+    (by rw [hFsymm, Function.invFunOn_eq hex])
 
 /-- **A conformal map with an injective continuous extension carries the boundary onto the
 boundary.** For a bounded `U` and an injective `F` the inclusion of
