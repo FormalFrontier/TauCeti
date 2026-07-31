@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Poincare.Geodesic
 public import Mathlib.Analysis.Convex.Segment
-public import Mathlib.Analysis.Normed.Module.Ray
+import Mathlib.Analysis.Normed.Module.Ray
 
 /-!
 # Betweenness in the Poincaré disc: the hyperbolic geodesic is unique

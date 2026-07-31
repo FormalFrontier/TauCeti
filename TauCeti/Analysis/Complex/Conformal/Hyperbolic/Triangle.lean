@@ -101,6 +101,25 @@ lemma artanh_add {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 :
     field_simp
   rw [← key, Real.artanh_tanh]
 
+/-- **Poincaré defect identity.** The factorisation behind the strong pseudo-hyperbolic triangle
+inequality against the origin: the difference of the squared cross-multiplied sides of
+`pseudoHyperbolicExpr z w ≤ (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖)` is
+`2 (1 - ‖z‖ ^ 2)(1 - ‖w‖ ^ 2)(‖z‖ ‖w‖ + (z conj w).re)`.
+
+Kept private: it is a bookkeeping step shared by that inequality and its equality case, and only
+the two named consequences below are meant to be used. -/
+private lemma sq_sub_sq_triangle (z w : ℂ) :
+    ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
+      - (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
+      = 2 * ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+          (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re)) := by
+  have hN2 : ‖z - w‖ ^ 2 = ‖z‖ ^ 2 + ‖w‖ ^ 2 - 2 * (z * (starRingEnd ℂ) w).re := by
+    simpa [Complex.normSq_eq_norm_sq] using Complex.normSq_sub z w
+  have hD2 : ‖1 - (starRingEnd ℂ) w * z‖ ^ 2
+      = 1 - 2 * (z * (starRingEnd ℂ) w).re + ‖z‖ ^ 2 * ‖w‖ ^ 2 := by
+    linear_combination norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w + hN2
+  rw [mul_pow, mul_pow, hD2, hN2]; ring
+
 /-- **Strong pseudo-hyperbolic triangle inequality (origin form).** For two points of the open
 unit disc, `pseudoHyperbolicExpr z w ≤ (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖)`. This is the
 `ρ(z, w) ≤ (ρ(z, 0) + ρ(0, w)) / (1 + ρ(z, 0) ρ(0, w))` form of the pseudo-hyperbolic triangle
@@ -111,9 +130,7 @@ theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one {z w : ℂ}
   have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
     norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
   have hABpos : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
-  have hN2 : ‖z - w‖ ^ 2 = ‖z‖ ^ 2 + ‖w‖ ^ 2 - 2 * (z * (starRingEnd ℂ) w).re := by
-    simpa [Complex.normSq_eq_norm_sq] using Complex.normSq_sub z w
-  have hF1 := norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w
+  have hdiff := sq_sub_sq_triangle z w
   have htabs : |(z * (starRingEnd ℂ) w).re| ≤ ‖z‖ * ‖w‖ := by
     have h := Complex.abs_re_le_norm (z * (starRingEnd ℂ) w)
     rwa [norm_mul, Complex.norm_conj] at h
@@ -125,14 +142,6 @@ theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one {z w : ℂ}
   have hfac : 0 ≤ (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
       (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re) :=
     mul_nonneg (mul_nonneg h1A h1B) hfacarg
-  have hD2 : ‖1 - (starRingEnd ℂ) w * z‖ ^ 2
-      = 1 - 2 * (z * (starRingEnd ℂ) w).re + ‖z‖ ^ 2 * ‖w‖ ^ 2 := by
-    linear_combination hF1 + hN2
-  have hdiff : ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
-      - (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
-      = 2 * ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
-          (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re)) := by
-    rw [mul_pow, mul_pow, hD2, hN2]; ring
   have hsq : (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
       ≤ ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2 := by
     linarith [hfac, hdiff]
@@ -145,9 +154,9 @@ theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one {z w : ℂ}
   rw [pseudoHyperbolicExpr_def, norm_div, div_le_div_iff₀ hDpos hABpos]
   exact hcore
 
-/-- **Poincaré defect identity, reverse form.** The mirror of the factorisation behind
-`pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one`, obtained from it by replacing the
-sum `‖z‖ + ‖w‖` by the difference `|‖z‖ - ‖w‖|` and the denominator `1 + ‖z‖ * ‖w‖` by
+/-- **Poincaré defect identity, reverse form.** The mirror of `sq_sub_sq_triangle`, obtained from
+it by replacing the sum `‖z‖ + ‖w‖` by the difference `|‖z‖ - ‖w‖|` and the denominator
+`1 + ‖z‖ * ‖w‖` by
 `1 - ‖z‖ * ‖w‖`; the effect on the right-hand side is to flip the sign of `(z * conj w).re`.
 
 Kept private: it is a bookkeeping step shared by the reverse inequality and its equality case, and
@@ -171,7 +180,7 @@ exactly when `(z * conj w).re = -(‖z‖ * ‖w‖)`, that is (by the equality 
 
 The two sides of the inequality are quotients of nonnegative reals with positive denominators, so
 they agree exactly when the cross-multiplied products do, hence exactly when the squares of those
-products do; and the factorisation `hdiff` displays that difference of squares as
+products do; and the shared defect identity displays that difference of squares as
 `2 (1 - ‖z‖ ^ 2)(1 - ‖w‖ ^ 2)(‖z‖ ‖w‖ + (z conj w).re)`, whose first two factors are positive on
 the disc. -/
 theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one {z w : ℂ}
@@ -181,16 +190,7 @@ theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one {z w : �
   have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
     norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
   have hABpos : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
-  have hN2 : ‖z - w‖ ^ 2 = ‖z‖ ^ 2 + ‖w‖ ^ 2 - 2 * (z * (starRingEnd ℂ) w).re := by
-    simpa [Complex.normSq_eq_norm_sq] using Complex.normSq_sub z w
-  have hD2 : ‖1 - (starRingEnd ℂ) w * z‖ ^ 2
-      = 1 - 2 * (z * (starRingEnd ℂ) w).re + ‖z‖ ^ 2 * ‖w‖ ^ 2 := by
-    linear_combination norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w + hN2
-  have hdiff : ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
-      - (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
-      = 2 * ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
-          (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re)) := by
-    rw [mul_pow, mul_pow, hD2, hN2]; ring
+  have hdiff := sq_sub_sq_triangle z w
   have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
     have h₁ : 0 < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
     have h₂ : 0 < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
