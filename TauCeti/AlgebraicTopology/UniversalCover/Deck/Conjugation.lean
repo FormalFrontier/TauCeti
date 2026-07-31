@@ -158,6 +158,9 @@ lemma conjMulEquivRefl :
       MulEquiv.refl (Deck p) := by
   ext φ e
   simp
+  -- conjugation by `Homeomorph.refl E` inserts `refl` on both sides of `φ`, so the residual
+  -- goal `↑((conjMulEquiv (Homeomorph.refl E) _) φ) e = ↑φ e` holds by definition.
+  rfl
 
 /-- Conjugating along a composite over-base homeomorphism is the composite of the two
 conjugation equivalences. -/

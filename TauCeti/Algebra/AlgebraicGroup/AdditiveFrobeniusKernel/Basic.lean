@@ -249,7 +249,11 @@ theorem mem_range_pointsHom_iff (a : Multiplicative A) :
       rw [map_mul, map_pow, hfx, h, mul_zero]
     have hlift : Ideal.Quotient.liftₐ (hopfIdeal (R := R) p).toIdeal f hfker
         (Ideal.Quotient.mk (hopfIdeal (R := R) p).toIdeal (ι R R 1)) = f (ι R R 1) := by
-      simp only [Ideal.Quotient.liftₐ_apply, Ideal.Quotient.lift_mk, AlgHom.coe_toRingHom]
+      -- `liftₐ` computes on a `mk` representative by construction.  The pre-bump chain
+      -- `simp only [Ideal.Quotient.liftₐ_apply, Ideal.Quotient.lift_mk, AlgHom.coe_toRingHom]`
+      -- no longer reaches the goal, and nothing else spans the `AlgHom` wrapper, so take the
+      -- definitional step.
+      rfl
     refine ⟨toConv (Ideal.Quotient.liftₐ (hopfIdeal (R := R) p).toIdeal f hfker), ?_⟩
     apply Multiplicative.toAdd.injective
     rw [toAdd_pointsHom, ofConv_toConv, hlift, hfx]

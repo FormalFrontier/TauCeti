@@ -68,8 +68,9 @@ noncomputable def fractionalIdealDivisor :
     Additive (FractionalIdeal R⁰ K)ˣ →+ WeilDivisor (HeightOneSpectrum R) where
   toFun I := Finsupp.ofSupportFinite
     (fun v => FractionalIdeal.count K v (Units.val (Additive.toMul I)))
-    (Filter.eventually_cofinite.mp
-      (FractionalIdeal.finite_factors (Units.val (Additive.toMul I))))
+    (by
+      simpa only [Function.support] using Filter.eventually_cofinite.mp
+        (FractionalIdeal.finite_factors (Units.val (Additive.toMul I))))
   map_zero' := by
     apply Finsupp.ext
     intro v
@@ -148,7 +149,10 @@ underlying homomorphism `fractionalIdealDivisor`. -/
 @[simp]
 lemma fractionalIdealDivisorAddEquiv_apply (I : Additive (FractionalIdeal R⁰ K)ˣ) :
     fractionalIdealDivisorAddEquiv R K I = fractionalIdealDivisor R K I := by
-  rw [fractionalIdealDivisorAddEquiv, AddEquiv.ofBijective_apply]
+  -- `AddEquiv.ofBijective` stores the given homomorphism as its underlying map.  After the bump
+  -- `rw [fractionalIdealDivisorAddEquiv, AddEquiv.ofBijective_apply]` no longer matches the
+  -- coercion appearing here, so take the definitional step.
+  rfl
 
 /-- The inverse of `fractionalIdealDivisorAddEquiv` sends a Weil divisor `D` to the invertible
 fractional ideal `∏_v v^(D v)`: the product of the prime ideals `v.asIdeal` raised to the

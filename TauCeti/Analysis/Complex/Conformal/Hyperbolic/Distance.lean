@@ -52,7 +52,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 /-- The hyperbolic (Poincaré) distance on the complex unit disc, written as a total
