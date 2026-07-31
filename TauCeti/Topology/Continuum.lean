@@ -5,9 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Compactness.Compact
 public import Mathlib.Topology.Connected.Basic
-public import Mathlib.Topology.Separation.Hausdorff
 
 /-!
 # Nested intersections of continua

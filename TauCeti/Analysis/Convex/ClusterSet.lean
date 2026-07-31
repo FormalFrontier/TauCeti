@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Convex.PathConnected
 public import Mathlib.Analysis.Normed.Module.Convex
 public import TauCeti.Topology.ClusterSet
 

@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
-public import TauCeti.Analysis.Convex.ClusterSet
 public import TauCeti.Topology.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
