@@ -140,11 +140,8 @@ theorem range_matrixCoefficientTensor :
     | tmul φ m =>
       rw [matrixCoefficientTensor_tmul]
       exact matrixCoefficient_mem_submodule (R := R) (C := C) φ m
-  · rw [matrixCoefficientSubmodule, Submodule.span_le]
-    rintro c ⟨⟨φ, m⟩, rfl⟩
-    exact
-      ⟨φ ⊗ₜ[R] m,
-        matrixCoefficientTensor_tmul (R := R) (C := C) φ m⟩
+  · exact matrixCoefficientSubmodule_le (R := R) (C := C) (M := M)
+      fun φ m => ⟨φ ⊗ₜ[R] m, matrixCoefficientTensor_tmul (R := R) (C := C) φ m⟩
 
 end Submodule
 
