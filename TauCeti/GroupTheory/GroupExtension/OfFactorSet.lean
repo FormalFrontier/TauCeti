@@ -180,7 +180,7 @@ theorem inv_left (x : α.Extension) :
 
 /-- The `M`-component of associativity in the twisted product, which is exactly the cocycle
 identity of `α` after collecting the two factor-set values. -/
-theorem mul_assoc_left (a b c : M) (g h j : G) :
+private theorem mul_assoc_left (a b c : M) (g h j : G) :
     a * g • b * α (g, h) * (g * h) • c * α (g * h, j)
       = a * g • (b * h • c * α (h, j)) * α (g, h * j) :=
   calc a * g • b * α (g, h) * (g * h) • c * α (g * h, j)
@@ -190,7 +190,7 @@ theorem mul_assoc_left (a b c : M) (g h j : G) :
 
 /-- The `M`-component of `x⁻¹ * x` in the twisted product is trivial: the two values of `α` on
 `x.right` and its inverse cancel by `TauCeti.FactorSet.smul_apply_inv_left`. -/
-theorem inv_mul_left (x : α.Extension) : (x⁻¹ * x).left = 1 := by
+private theorem inv_mul_left (x : α.Extension) : (x⁻¹ * x).left = 1 := by
   have key : x.right⁻¹ • α (x.right, x.right⁻¹) = α (x.right⁻¹, x.right) := by
     simpa using α.smul_apply_inv_left x.right⁻¹
   simp only [mul_left, inv_left, inv_right, smul_inv', smul_mul', key, mul_assoc, inv_mul_cancel]
@@ -328,6 +328,11 @@ def rescaleEquiv : α.groupExtension.Equiv β.groupExtension where
 @[simp]
 theorem rescaleEquiv_apply (y : α.Extension) :
     rescaleEquiv α β x hx y = ⟨y.left * x y.right, y.right⟩ :=
+  (rfl)
+
+@[simp]
+theorem rescaleEquiv_symm_apply (y : β.Extension) :
+    (rescaleEquiv α β x hx).symm y = ⟨y.left * (x y.right)⁻¹, y.right⟩ :=
   (rfl)
 
 end Rescale
