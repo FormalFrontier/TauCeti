@@ -75,7 +75,7 @@ could never fire. -/
 theorem stdSLRep_exteriorPower_self_apply (g : Matrix.SpecialLinearGroup (Fin n) k) :
     (stdSLRep k n).exteriorPower n g = LinearMap.id := by
   rw [Representation.exteriorPower_apply, stdSLRep_apply, ← Matrix.toLin'_apply',
-    exteriorPower.map_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin', g.det_coe,
+    exteriorPower.map_top_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin', g.det_coe,
     one_smul]
 
 /-- **The volume element is invariant**: the top exterior power of the standard representation of

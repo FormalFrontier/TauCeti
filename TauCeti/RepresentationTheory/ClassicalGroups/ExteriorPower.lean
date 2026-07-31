@@ -74,12 +74,12 @@ noncomputable abbrev extPowerFDRep : FDRep k (GL (Fin n) k) :=
 
 This is deliberately not a `simp` lemma: `Representation.exteriorPower_apply` and `stdRep_apply`
 already rewrite the left-hand side to `exteriorPower.map n (Matrix.mulVecLin ↑g)`, so it is not in
-`simp` normal form and the rewrite could never fire. The `simp`-normal statement is Mathlib's
-`exteriorPower.map_eq_det_smul`, applied here to `Pi.basisFun k (Fin n)`. -/
+`simp` normal form and the rewrite could never fire. The `simp`-normal statement is
+`exteriorPower.map_top_eq_det_smul`, applied here to `Pi.basisFun k (Fin n)`. -/
 theorem extPowerRep_self_apply (g : GL (Fin n) k) :
     extPowerRep k n n g = Matrix.det (g : Matrix (Fin n) (Fin n) k) • LinearMap.id := by
   rw [Representation.exteriorPower_apply, stdRep_apply, ← Matrix.toLin'_apply',
-    exteriorPower.map_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin']
+    exteriorPower.map_top_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin']
 
 /-- **The top exterior power of the standard representation is the determinant representation.**
 The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/

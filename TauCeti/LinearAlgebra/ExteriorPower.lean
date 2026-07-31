@@ -33,7 +33,7 @@ one, spanned by the exterior product of a basis, and an endomorphism acts on it 
   eigenvalues of an endomorphism on a finite basis.
 * `exteriorPower.ιMulti_eq_basis_det_smul` expands a top-degree exterior product of vectors in
   terms of the exterior product of a basis.
-* `exteriorPower.map_eq_det_smul` says an endomorphism acts on the top exterior power as
+* `exteriorPower.map_top_eq_det_smul` says an endomorphism acts on the top exterior power as
   multiplication by its determinant, and `exteriorPower.trace_map_top` computes the resulting
   trace.
 
@@ -136,8 +136,7 @@ theorem ιMulti_eq_basis_det_smul (b : Module.Basis (Fin n) R M) (v : Fin n → 
   set φ : M [⋀^Fin n]→ₗ[R] R := (ιMultiDual R n b s).compAlternatingMap (ιMulti R n) with hφ
   have hφ_apply (w : Fin n → M) :
       φ w = (b.exteriorPower n).repr (ιMulti R n w) s := by
-    rw [hφ, basis_repr_apply]
-    rfl
+    rw [hφ, basis_repr_apply, LinearMap.compAlternatingMap_apply]
   have hdet : φ = φ ⇑b • b.det := φ.eq_smul_basis_det b
   calc (b.exteriorPower n).repr (ιMulti R n v) s
       = φ v := (hφ_apply v).symm
@@ -147,7 +146,7 @@ theorem ιMulti_eq_basis_det_smul (b : Module.Basis (Fin n) R M) (v : Fin n → 
     _ = (b.exteriorPower n).repr (b.det v • ιMulti R n ⇑b) s := by simp
 
 /-- **An endomorphism acts on the top exterior power as multiplication by its determinant.** -/
-theorem map_eq_det_smul (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
+theorem map_top_eq_det_smul (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
     map n f = LinearMap.det f • LinearMap.id := by
   refine LinearMap.ext_on (ιMulti_span R n M) ?_
   rintro _ ⟨v, rfl⟩
@@ -155,12 +154,12 @@ theorem map_eq_det_smul (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
     Module.Basis.det_comp, mul_smul]
   simp only [LinearMap.smul_apply, LinearMap.id_coe, id_eq]
 
-/-- The basis-free form of `exteriorPower.map_eq_det_smul`: on the exterior power in the degree
+/-- The basis-free form of `exteriorPower.map_top_eq_det_smul`: on the exterior power in the degree
 equal to the rank, an endomorphism of a finite free module acts by its determinant. -/
 theorem map_finrank_eq_det_smul [Nontrivial R] [Module.Free R M] [Module.Finite R M]
     (f : M →ₗ[R] M) :
     map (Module.finrank R M) f = LinearMap.det f • LinearMap.id :=
-  map_eq_det_smul (Module.finBasis R M) f
+  map_top_eq_det_smul (Module.finBasis R M) f
 
 /-- The top exterior power of a module with a basis indexed by `Fin n` is free of rank one: it is
 identified with the scalars by sending an exterior product of vectors to their determinant against
@@ -192,7 +191,7 @@ theorem trace_map_top [Nontrivial R] (b : Module.Basis (Fin n) R M) (f : M →�
   haveI := Module.Free.of_basis b
   haveI := Module.Finite.of_basis b
   -- The top exterior power is one-dimensional, the diagonal case `Nat.choose n n = 1`.
-  rw [map_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_eq,
+  rw [map_top_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_eq,
     Module.finrank_eq_card_basis b, Fintype.card_fin, Nat.choose_self]
   simp
 
