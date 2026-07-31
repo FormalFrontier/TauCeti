@@ -22,8 +22,8 @@ Cartan--Dieudonné argument and are deliberately not asserted here.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.spinAction Q x` is the linear automorphism induced by conjugation by
-  the spin element `x`.
+* `TauCeti.CliffordAlgebra.spinVectorAction Q x` is the linear automorphism induced by conjugation
+  by the spin element `x`.
 * `TauCeti.CliffordAlgebra.spinToOrthogonal Q` is the resulting homomorphism into `O(Q)`.
 
 ## References
@@ -48,30 +48,17 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
 private noncomputable def spinConj (x : spinGroup Q) :
     CliffordAlgebra Q ≃ₗ[R] CliffordAlgebra Q :=
-  ((spinGroup.toUnits x).mulLeftLinearEquiv R _).trans
-    (((spinGroup.toUnits x)⁻¹).mulRightLinearEquiv R)
+  DistribMulAction.toLinearEquiv R _ (ConjAct.toConjAct (spinGroup.toUnits x))
+
+omit [Invertible (2 : R)] in
+private theorem spinConj_apply (x : spinGroup Q) (a : CliffordAlgebra Q) :
+    spinConj Q x a = (x : CliffordAlgebra Q) * a * star (x : CliffordAlgebra Q) := by
+  simp [spinConj, ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct,
+    ← spinGroup.star_eq_inv]
 
 private theorem spinConj_map_range (x : spinGroup Q) :
     (LinearMap.range (ι Q)).map (spinConj Q x).toLinearMap = LinearMap.range (ι Q) := by
-  apply le_antisymm
-  · rintro _ ⟨_, ⟨m, rfl⟩, rfl⟩
-    change (x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q) ∈ _
-    have h := spinGroup.conjAct_smul_ι_mem_range_ι (x := spinGroup.toUnits x) x.2 m
-    convert h using 1
-    all_goals
-      simp [ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct, ← spinGroup.star_eq_inv]
-  · intro a ha
-    refine ⟨(spinConj Q x).symm a, ?_, (spinConj Q x).apply_symm_apply a⟩
-    · rcases ha with ⟨m, rfl⟩
-      rw [spinConj]
-      rw [LinearEquiv.symm_trans_apply, Units.symm_mulRightLinearEquiv_apply,
-        Units.symm_mulLeftLinearEquiv_apply]
-      have h := spinGroup.conjAct_smul_ι_mem_range_ι
-        (x := spinGroup.toUnits x⁻¹) (x⁻¹).2 m
-      convert h using 1
-      all_goals
-        simp [ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct, ← spinGroup.star_eq_inv,
-            mul_assoc]
+  exact spinGroup.conjAct_smul_range_ι (x := spinGroup.toUnits x) x.2
 
 private noncomputable def spinConjRange (x : spinGroup Q) :
     LinearMap.range (ι Q) ≃ₗ[R] LinearMap.range (ι Q) :=
@@ -79,29 +66,29 @@ private noncomputable def spinConjRange (x : spinGroup Q) :
 
 /-- The action of a spin element on the generating vectors of its Clifford algebra, transported
 back to the underlying module. It is characterized by
-`ι_spinAction_apply`, which identifies it with conjugation inside the Clifford algebra. -/
-noncomputable def spinAction (x : spinGroup Q) : M ≃ₗ[R] M where
+`ι_spinVectorAction_apply`, which identifies it with conjugation inside the Clifford algebra. -/
+noncomputable def spinVectorAction (x : spinGroup Q) : M ≃ₗ[R] M where
   __ := (ιRangeEquiv Q).trans ((spinConjRange Q x).trans (ιRangeEquiv Q).symm)
 
 /-- A spin element acts on a vector by conjugation inside the Clifford algebra. -/
 @[simp]
-theorem ι_spinAction_apply (x : spinGroup Q) (m : M) :
-    ι Q (spinAction Q x m) =
+theorem ι_spinVectorAction_apply (x : spinGroup Q) (m : M) :
+    ι Q (spinVectorAction Q x m) =
       (x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q) :=
   by
-    rw [spinAction, LinearEquiv.trans_apply, LinearEquiv.trans_apply,
+    rw [spinVectorAction, LinearEquiv.trans_apply, LinearEquiv.trans_apply,
       ι_ιRangeEquiv_symm_apply]
     rw [spinConjRange, LinearEquiv.ofSubmodules_apply]
     rw [coe_ιRangeEquiv_apply]
-    change (spinConj Q x) (ι Q m) = _
-    rw [spinConj]
-    rfl
+    exact spinConj_apply Q x (ι Q m)
 
 /-- Conjugation by a spin element preserves the quadratic form. -/
 @[simp]
-theorem spinAction_map_app (x : spinGroup Q) (m : M) : Q (spinAction Q x m) = Q m := by
+theorem spinVectorAction_map_app (x : spinGroup Q) (m : M) :
+    Q (spinVectorAction Q x m) = Q m := by
   apply algebraMap_injective Q
-  rw [← ι_sq_scalar Q (spinAction Q x m), ← ι_sq_scalar Q m, ι_spinAction_apply]
+  rw [← ι_sq_scalar Q (spinVectorAction Q x m), ← ι_sq_scalar Q m,
+    ι_spinVectorAction_apply]
   calc
     (x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q) *
           ((x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q)) =
@@ -125,7 +112,9 @@ theorem spinAction_map_app (x : spinGroup Q) (m : M) : Q (spinAction Q x m) = Q 
 
 /-- The representation of the spin group on the quadratic space by Clifford conjugation. -/
 noncomputable def spinToOrthogonal : spinGroup Q →* QuadraticMap.orthogonalGroup Q where
-  toFun x := ⟨spinAction Q x, QuadraticMap.mem_orthogonalGroup_iff.mpr (spinAction_map_app Q x)⟩
+  toFun x :=
+    ⟨spinVectorAction Q x,
+      QuadraticMap.mem_orthogonalGroup_iff.mpr (spinVectorAction_map_app Q x)⟩
   map_one' := by
     ext m
     apply ι_injective Q
@@ -135,9 +124,10 @@ noncomputable def spinToOrthogonal : spinGroup Q →* QuadraticMap.orthogonalGro
     apply LinearEquiv.ext
     intro m
     -- Multiplication of bundled linear equivalences is composition on their underlying functions.
-    change spinAction Q (x * y) m = spinAction Q x (spinAction Q y m)
+    change spinVectorAction Q (x * y) m =
+      spinVectorAction Q x (spinVectorAction Q y m)
     apply ι_injective Q
-    rw [ι_spinAction_apply, ι_spinAction_apply, ι_spinAction_apply]
+    rw [ι_spinVectorAction_apply, ι_spinVectorAction_apply, ι_spinVectorAction_apply]
     -- Coercion of a product in `spinGroup` is multiplication in the Clifford algebra.
     change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) * ι Q m *
         star ((x : CliffordAlgebra Q) * (y : CliffordAlgebra Q)) =
@@ -150,7 +140,7 @@ noncomputable def spinToOrthogonal : spinGroup Q →* QuadraticMap.orthogonalGro
 @[simp]
 theorem coe_spinToOrthogonal_apply (x : spinGroup Q) (m : M) :
     ((spinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m =
-      spinAction Q x m := by
+      spinVectorAction Q x m := by
   rw [spinToOrthogonal]
   rfl
 
