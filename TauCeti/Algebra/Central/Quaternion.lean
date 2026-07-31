@@ -30,23 +30,28 @@ than excluding it.
 
 * `TauCeti.Quaternion.commute_iff`: two quaternions commute iff `2` annihilates the cross product
   of their imaginary parts, and `TauCeti.Quaternion.commute_iff'`, its classical form for `2`
-  regular: two quaternions commute iff their imaginary parts are parallel.
+  regular: two quaternions commute iff the cross product of their imaginary parts vanishes, that
+  is, iff the three `2 × 2` minors of the pair of imaginary parts all vanish. Over a field that is
+  the statement that the imaginary parts are parallel; over a general commutative ring vanishing
+  minors are weaker than one imaginary part being a scalar multiple of the other.
 * `TauCeti.Quaternion.mem_center_iff`: a quaternion is central iff `2` annihilates each of its
   three imaginary coordinates.
 * `TauCeti.Quaternion.center_eq_bot`: if `2` is left regular in `R`, the centre of `ℍ[R]` is the
   image of `R`.
 * `TauCeti.Quaternion.instIsCentral`: `ℍ[R]` is a central `R`-algebra when `R` has no zero divisors
   and `2 ≠ 0` in `R`. This is the roadmap's `quaternion_isCentral` at `R = ℝ`.
-* `TauCeti.Quaternion.isEmpty_algEquiv_matrix`: over a linearly ordered field, `ℍ[R]` is not
-  isomorphic to a matrix algebra of size at least two, so its Brauer class is nontrivial.
+* `TauCeti.Quaternion.isEmpty_algEquiv_matrix`: over a linearly ordered commutative ring, `ℍ[R]` is
+  not isomorphic to a matrix algebra of size at least two, so over a field its Brauer class is
+  nontrivial.
 
 ## Implementation notes
 
 Everything is stated for `Quaternion R = ℍ[R]` rather than for Mathlib's general
 `QuaternionAlgebra R c₁ c₂ c₃`. That is not a missed generalization: the centre genuinely depends on
 the structure constants, and the general algebra need not be central even over `ℝ`. For instance in
-`ℍ[ℝ, 0, 0, 0]` every product of two imaginary units vanishes, so `k` is a central element outside
-the image of `ℝ`.
+`ℍ[ℝ, 0, 0, 0]` the products of `k` with each imaginary unit all vanish (`i * k = k * i = 0`,
+`j * k = k * j = 0` and `k * k = 0`), so `k` is a central element outside the image of `ℝ`; the
+other products of imaginary units are not all zero there, since `i * j = k` and `j * i = -k`.
 
 The regularity hypothesis of `center_eq_bot` is carried as `IsLeftRegular (2 : R)`, which is exactly
 what the proof consumes. `instIsCentral` restates it with the typeclass assumptions
@@ -105,8 +110,10 @@ theorem commute_iff :
 
 /-- **Two quaternions commute exactly when the cross product of their imaginary parts vanishes**,
 once `2` is a left regular element of `R`. This is the classical form of
-`TauCeti.Quaternion.commute_iff`: two quaternions commute precisely when their imaginary parts are
-parallel. -/
+`TauCeti.Quaternion.commute_iff`: two quaternions commute precisely when the three `2 × 2` minors
+of their imaginary parts vanish. Over a field that says the imaginary parts are parallel, but over
+a general commutative ring vanishing minors do not force one imaginary part to be a scalar multiple
+of the other. -/
 theorem commute_iff' (h2 : IsLeftRegular (2 : R)) :
     Commute x y ↔
       x.imJ * y.imK = x.imK * y.imJ ∧
@@ -158,17 +165,17 @@ instance instIsCentral [NoZeroDivisors R] [NeZero (2 : R)] : Algebra.IsCentral R
 
 end CommRing
 
-section LinearOrderedField
+section LinearOrderedCommRing
 
-variable (R : Type*) [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+variable (R : Type*) [CommRing R] [LinearOrder R] [IsStrictOrderedRing R]
 
-/-- **The Hamilton quaternions over a linearly ordered field are not split**: they are not
-isomorphic, as an `R`-algebra, to a matrix algebra of size at least two. Such a matrix algebra has
-nonzero zero divisors while `ℍ[R]` is a division ring, so no isomorphism can exist.
+/-- **The Hamilton quaternions over a linearly ordered commutative ring are not split**: they are
+not isomorphic, as an `R`-algebra, to a matrix algebra of size at least two. Such a matrix algebra
+has nonzero zero divisors while `ℍ[R]` has none, so no isomorphism can exist.
 
-Together with `TauCeti.Quaternion.instIsCentral` and the simplicity of a division ring this says
-that the Brauer class of `ℍ[R]` is nontrivial; over `ℝ` it is the nonidentity element of the Brauer
-group. -/
+Together with `TauCeti.Quaternion.instIsCentral` and the simplicity of a division ring this says,
+for `R` a linearly ordered field, that the Brauer class of `ℍ[R]` is nontrivial; over `ℝ` it is the
+nonidentity element of the Brauer group. -/
 theorem isEmpty_algEquiv_matrix (n : Type*) [Fintype n] [DecidableEq n] [Nontrivial n] :
     IsEmpty (ℍ[R] ≃ₐ[R] Matrix n n R) := by
   refine ⟨fun f ↦ ?_⟩
@@ -188,7 +195,7 @@ theorem isEmpty_algEquiv_matrix (n : Type*) [Fintype n] [DecidableEq n] [Nontriv
   · exact hd (by simpa using congrArg f h)
   · exact he (by simpa using congrArg f h)
 
-end LinearOrderedField
+end LinearOrderedCommRing
 
 end Quaternion
 
