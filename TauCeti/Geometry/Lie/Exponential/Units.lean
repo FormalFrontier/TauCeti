@@ -54,8 +54,8 @@ private theorem exp_add_of_commute_real {x y : R} (hxy : Commute x y) :
 
 /-- The exponential of an element of a complete normed real algebra, regarded as a unit.
 
-Its inverse is represented by `NormedSpace.exp (-x)`, as witnessed by
-`NormedSpace.isUnit_exp`. -/
+Invertibility follows from `NormedSpace.isUnit_exp`; `TauCeti.expUnit_neg` below identifies its
+inverse with the unit represented by `NormedSpace.exp (-x)`. -/
 noncomputable def expUnit (x : R) : Rˣ :=
   (isUnit_exp_real x).unit
 
