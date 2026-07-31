@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
-public import TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.Projective.EulerForm
 
 /-!

@@ -33,7 +33,9 @@ and `Quiver.Path.cons` the right one, so both directions are definitional matche
 `i = b` is wrapped in `PLift` only to make the summand a type, so that `Nat.card` applies. The
 `simp` lemmas `TauCeti.pathLastArrowEquiv_nil`, `TauCeti.pathLastArrowEquiv_cons`,
 `TauCeti.pathLastArrowEquiv_symm_inl` and `TauCeti.pathLastArrowEquiv_symm_inr` record those matches
-on both summands, so consumers compute with the equivalence without unfolding it.
+on both summands, so consumers compute with the equivalence without unfolding it. Their proofs are
+written `(rfl)` rather than `rfl`: the parenthesised form keeps the proof opaque to the module
+system, so the equivalence itself need not be `@[expose]`d.
 
 The dual decomposition, by the *first* arrow of a path, is not available in this form: the
 recursion of `Quiver.Path` is on the target vertex, so the first arrow is not visible to a match.
@@ -56,7 +58,7 @@ variable {V : Type u} [Quiver.{v} V]
 
 /-- **The last-arrow decomposition of a path.** A path `i → b` is either trivial, and then `i = b`,
 or a path `i → a` followed by a last arrow `a ⟶ b`, uniquely so. -/
-@[expose] def pathLastArrowEquiv (i b : V) :
+def pathLastArrowEquiv (i b : V) :
     Quiver.Path i b ≃ (PLift (i = b) ⊕ Σ a : V, Quiver.Path i a × (a ⟶ b)) where
   toFun p := match b, p with
     | _, .nil => Sum.inl ⟨rfl⟩
@@ -74,32 +76,33 @@ or a path `i → a` followed by a last arrow `a ⟶ b`, uniquely so. -/
 @[simp]
 theorem pathLastArrowEquiv_nil (i : V) :
     pathLastArrowEquiv i i Quiver.Path.nil = Sum.inl ⟨rfl⟩ :=
-  rfl
+  (rfl)
 
 /-- A path with a last arrow is the right summand of the last-arrow decomposition. -/
 @[simp]
 theorem pathLastArrowEquiv_cons {i a b : V} (p : Quiver.Path i a) (e : a ⟶ b) :
     pathLastArrowEquiv i b (p.cons e) = Sum.inr ⟨a, p, e⟩ :=
-  rfl
+  (rfl)
 
 /-- The left summand of the last-arrow decomposition recomposes to the trivial path. -/
 @[simp]
 theorem pathLastArrowEquiv_symm_inl (i : V) :
     (pathLastArrowEquiv i i).symm (Sum.inl ⟨rfl⟩) = Quiver.Path.nil :=
-  rfl
+  (rfl)
 
 /-- The right summand of the last-arrow decomposition recomposes by appending the last arrow. -/
 @[simp]
 theorem pathLastArrowEquiv_symm_inr {i b : V} (a : V) (p : Quiver.Path i a) (e : a ⟶ b) :
     (pathLastArrowEquiv i b).symm (Sum.inr ⟨a, p, e⟩) = p.cons e :=
-  rfl
+  (rfl)
 
 /-- **The last-arrow recursion for path counts.** The paths `i → b` are the trivial one, present
 exactly when `i = b`, together with a path `i → a` and an arrow `a ⟶ b`. All three cardinalities
 are honest counts only when the paths out of `i` are finite, which is what the hypothesis
-`[∀ a, Finite (Quiver.Path i a)]` provides. -/
-theorem card_path_eq_ite_add_sum [DecidableEq V] [Fintype V] [∀ a b : V, Finite (a ⟶ b)]
-    (i : V) [∀ a : V, Finite (Quiver.Path i a)] (b : V) :
+`[∀ a, Finite (Quiver.Path i a)]` provides. The only arrows counted are those into `b`, so
+`[∀ a, Finite (a ⟶ b)]` suffices for the arrow factors. -/
+theorem card_path_eq_ite_add_sum [DecidableEq V] [Fintype V] (i : V)
+    [∀ a : V, Finite (Quiver.Path i a)] (b : V) [∀ a : V, Finite (a ⟶ b)] :
     Nat.card (Quiver.Path i b)
       = (if i = b then 1 else 0)
         + ∑ a : V, Nat.card (Quiver.Path i a) * Nat.card (a ⟶ b) := by
