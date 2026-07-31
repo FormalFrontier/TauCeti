@@ -221,6 +221,7 @@ namespace ClassGroup
 
 variable {R R' : Type*} [CommRing R] [CommRing R']
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- Transport of a `coeIdeal` along `FractionalIdeal.ringEquivOfRingEquiv f` is the `coeIdeal` of
 the pushforward ideal `Ideal.map f`. This is the fraction-field shadow of `Ideal.map` used to
 compute the induced class-group map on `ClassGroup.mk0`. -/
