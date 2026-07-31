@@ -170,12 +170,12 @@ lemma image_conj_inter_im_pos_of_symmetric {Ω : Set ℂ}
   · rintro ⟨w, ⟨hwΩ, hwim⟩, rfl⟩
     constructor
     · exact hΩ hwΩ
-    · rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    · rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
       exact neg_neg_of_pos hwim
   · rintro ⟨hzΩ, hzim⟩
     refine ⟨(starRingEnd ℂ) z, ⟨?_, ?_⟩, ?_⟩
     · exact hΩ hzΩ
-    · rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    · rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
       exact neg_pos.mpr hzim
     · rw [starRingEnd_self_apply]
 
@@ -191,12 +191,12 @@ lemma image_conj_inter_im_neg_of_symmetric {Ω : Set ℂ}
   · rintro ⟨w, ⟨hwΩ, hwim⟩, rfl⟩
     constructor
     · exact hΩ hwΩ
-    · rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    · rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
       exact neg_pos.mpr hwim
   · rintro ⟨hzΩ, hzim⟩
     refine ⟨(starRingEnd ℂ) z, ⟨?_, ?_⟩, ?_⟩
     · exact hΩ hzΩ
-    · rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    · rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
       exact neg_neg_of_pos hzim
     · rw [starRingEnd_self_apply]
 
@@ -276,7 +276,7 @@ lemma image_conj_inter_im_nonneg_of_symmetric {Ω : Set ℂ}
     (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
     (starRingEnd ℂ) '' (Ω ∩ {z | 0 ≤ z.im}) = Ω ∩ {z | z.im ≤ 0} := by
   ext w
-  simp only [Set.mem_image, Set.mem_inter_iff, Set.mem_setOf_eq]
+  simp only [Set.mem_image, Set.mem_inter_iff, Set.mem_ofPred_eq]
   constructor
   · rintro ⟨x, ⟨hxΩ, hxim⟩, rfl⟩
     refine ⟨hΩ hxΩ, ?_⟩
@@ -309,12 +309,12 @@ lemma continuousOn_schwarzReflection_of_symmetric {Ω : Set ℂ}
         if 0 ≤ z.im then f z else (starRingEnd ℂ) (f ((starRingEnd ℂ) z))) Ω := by
     refine ContinuousOn.if ?_ ?_ ?_
     · intro z hz
-      rw [Set.mem_inter_iff, Complex.frontier_setOf_le_im, Set.mem_setOf_eq] at hz
+      rw [Set.mem_inter_iff, Complex.frontier_setOfPred_le_im, Set.mem_ofPred_eq] at hz
       exact apply_eq_conj_apply_conj_of_im_zero_of_apply_im_zero (f := f) hz.2
         (hreal z hz.1 hz.2)
     · rwa [hUclosed.closure_eq]
     · simp only [not_le]
-      rw [Complex.closure_setOf_im_lt]
+      rw [Complex.closure_setOfPred_im_lt]
       exact hlower
   exact hpiece.congr fun z _ => schwarzReflection_def f z
 

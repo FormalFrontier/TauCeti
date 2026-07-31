@@ -46,7 +46,7 @@ def integralFractionalIdealSubmonoid :
   carrier := {I | Units.val (Additive.toMul I) ≤ 1}
   zero_mem' := by simp
   add_mem' {I J} hI hJ := by
-    simpa only [Set.mem_setOf_eq, toMul_add, Units.val_mul] using mul_le_one' hI hJ
+    simpa only [Set.mem_ofPred_eq, toMul_add, Units.val_mul] using mul_le_one' hI hJ
 
 /-- Membership in `integralFractionalIdealSubmonoid` means that the fractional ideal is contained
 in the base ring. -/

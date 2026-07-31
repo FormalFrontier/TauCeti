@@ -152,7 +152,7 @@ theorem StandardSimplex.nonneg {σ : Finset ι} (x : StandardSimplex σ) (v : ι
       by_cases h : w = v <;> simp [h])
     (by
       intro y hy z hz a b ha hb hab
-      simp only [Set.mem_setOf_eq, Finsupp.add_apply, Finsupp.smul_apply] at hy hz ⊢
+      simp only [Set.mem_ofPred_eq, Finsupp.add_apply, Finsupp.smul_apply] at hy hz ⊢
       exact add_nonneg (mul_nonneg ha hy) (mul_nonneg hb hz))
     x.2
 
@@ -170,7 +170,7 @@ theorem StandardSimplex.sum_eq_one {σ : Finset ι} (x : StandardSimplex σ) :
       simp)
     (by
       intro y hy z hz a b _ _ hab
-      simp only [Set.mem_setOf_eq] at hy hz ⊢
+      simp only [Set.mem_ofPred_eq] at hy hz ⊢
       rw [Finsupp.sum_add_index]
       · rw [Finsupp.sum_smul_index_linearMap', Finsupp.sum_smul_index_linearMap', hy, hz]
         simpa [smul_eq_mul] using hab

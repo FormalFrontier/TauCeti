@@ -203,7 +203,7 @@ theorem differentiableOn_of_continuousOn_of_differentiableOn_im_pos_of_different
       Ω ∩ {z : ℂ | z.im ≠ 0} =
         (Ω ∩ {z : ℂ | 0 < z.im}) ∪ (Ω ∩ {z : ℂ | z.im < 0}) := by
     ext z
-    simp only [mem_inter_iff, mem_setOf_eq, mem_union]
+    simp only [mem_inter_iff, mem_ofPred_eq, mem_union]
     constructor
     · rintro ⟨hz, him⟩
       rcases lt_or_gt_of_ne him with h | h

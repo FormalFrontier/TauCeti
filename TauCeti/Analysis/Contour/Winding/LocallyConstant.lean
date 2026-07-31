@@ -108,7 +108,7 @@ theorem isLocallyConstant_windingNumber_of_closed {γ : ℝ → ℂ} {a b : ℝ}
 private theorem setOf_forall_ne_eq_compl_image {γ : ℝ → ℂ} {a b : ℝ} :
     {w : ℂ | ∀ t ∈ uIcc a b, γ t ≠ w} = (γ '' uIcc a b)ᶜ := by
   ext w
-  simp only [mem_setOf_eq, mem_compl_iff, mem_image, not_exists, not_and]
+  simp only [mem_ofPred_eq, mem_compl_iff, mem_image, not_exists, not_and]
 
 /-- **The winding number is constant on a connected component of the curve complement.**
 For a closed curve that is continuous on `[[a, b]]`, differentiable away from a countable set,
@@ -163,7 +163,7 @@ theorem exists_ball_windingNumber_zero {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} 
   have hSopen : IsOpen {z : ℂ | ∀ t ∈ uIcc a b, γ t ≠ z} := by
     have hset : {z : ℂ | ∀ t ∈ uIcc a b, γ t ≠ z} = (γ '' uIcc a b)ᶜ := by
       ext z
-      simp only [Set.mem_setOf_eq, Set.mem_compl_iff, Set.mem_image, not_exists, not_and, ne_eq]
+      simp only [Set.mem_ofPred_eq, Set.mem_compl_iff, Set.mem_image, not_exists, not_and, ne_eq]
     rw [hset]
     exact (isCompact_uIcc.image_of_continuousOn hγ_cont).isClosed.isOpen_compl
   -- The winding number is locally constant off the curve, so it is `0` on a subtype-open set
