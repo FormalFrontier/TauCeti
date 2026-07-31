@@ -12,6 +12,11 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Const
 
 At a constant random measure `ω ↦ p`, the conditional and mixture identities coincide. Thus an
 i.i.d. sequence is conditionally i.i.d. with its common law as a constant directing measure.
+
+The equivalence itself holds at an arbitrary index type
+(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`); the
+`iIndepFun` characterizations below stay sequence-level, since independence of the coordinates is
+stated for an `ℕ`-indexed family.
 -/
 
 public section
@@ -24,13 +29,13 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **At a constant `ν` the conditional identity is free.** The joint law of `(p, block)` is the
 block law pushed forward by `Prod.mk p`, and the disintegration `δ_p ⊗ p^{⊗m}` is the product law
 pushed forward by the same map, so the mixture identity already gives the joint one. -/
 theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
     ConditionallyIIDWith μ X fun _ => p := by
   by_cases hμ : μ = 0
   · subst μ
@@ -59,7 +64,7 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
 `mixedIIDWith_of_conditionallyIIDWith` is available and the two need not agree; at a constant `ν`
 the converse holds too, so they coincide. -/
 theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
   ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
 
