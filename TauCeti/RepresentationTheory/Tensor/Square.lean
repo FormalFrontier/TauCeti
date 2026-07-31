@@ -108,6 +108,7 @@ private theorem symToAlternatingQuotient_mk {R : Type} {M : Type*}
         (SymmetricPower.mk R (Fin 2) M x) =
       Submodule.Quotient.mk x := by
   simp [symToAlternatingQuotient, SymmetricPower.mk]
+  rfl
 
 -- These maps form the characteristic-free exact sequence `⋀²M → M⊗M → Sym²M`.
 private theorem range_toTensorPower_eq_ker_mk {R : Type} {M : Type*}

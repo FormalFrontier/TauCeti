@@ -43,7 +43,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 /-- **Schwarz--Pick equality.** A holomorphic self-map of the unit disc that admits a

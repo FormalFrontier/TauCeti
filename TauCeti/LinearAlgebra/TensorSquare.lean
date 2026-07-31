@@ -115,11 +115,8 @@ theorem toTensorSquare_tprod (f : Fin 2 → M) :
       (⅟ (2 : R)) •
         (PiTensorProduct.tprod R f +
           PiTensorProduct.tprod R (fun i ↦ f (Equiv.swap 0 1 i))) := by
-  simp only [toTensorSquare, tprod, LinearMap.compMultilinearMap_apply, mk,
-    LinearMap.coe_mk, AddHom.coe_mk, AddMonoidHom.toFun_eq_coe,
-    TauCeti.symmetricProjection]
-  rw [AddCon.lift_mk']
-  simp [TauCeti.tensorSwap]
+  change TauCeti.symmetricProjection R M (PiTensorProduct.tprod R f) = _
+  simp [TauCeti.symmetricProjection, TauCeti.tensorSwap]
 
 end SymmetricPower
 

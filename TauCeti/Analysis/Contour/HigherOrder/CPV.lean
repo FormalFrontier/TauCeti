@@ -143,9 +143,8 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
   rcases hab.eq_or_lt with rfl | hab
   · simpa using HasCauchyPVAt.of_eq γ rfl (fun z => c / (z - s) ^ k) s
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
-  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {t} => by
-    rw [hT_def, Set.Finite.mem_toFinset, Set.mem_inter_iff, Set.mem_preimage,
-      Set.mem_singleton_iff, uIcc_of_le hab.le]
+  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
+    rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
   have h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ T := fun t ht h_eq => hT_mem.mpr ⟨ht, h_eq⟩
   have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht =>
     h_interior t (hT_mem.mp ht).1 (hT_mem.mp ht).2
@@ -180,10 +179,8 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
         (hT_mem.mp ht₀).2 hk hkn (h_flat t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
         (h_B t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2) c p.countable_toSet hp hρ_pos
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq
-          (fun u hu => ⟨(h_endpts u hu).1.le, (h_endpts u hu).2.le⟩)
-          (fun u hu u' hu' hne => by linarith [h_pair u hu u' hu' hne])
-          h_complete ht₀ ht h_eq)
+        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+          (h_pair t₀ ht₀) h_complete ht h_eq)
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
         fun t _ => hρ_pos)
 

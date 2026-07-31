@@ -60,7 +60,9 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     haveI := hindep.isProbabilityMeasure
     MixedIIDWith μ X
-      (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) := by
+      (fun _ => (⟨μ.map (X 0),
+        Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩ :
+          ProbabilityMeasure α)) := by
   haveI := hindep.isProbabilityMeasure
   refine MixedIIDWith.intro measurable_const ?_
   intro m k hk
@@ -73,7 +75,7 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
     rw [h1]
     exact congrArg Measure.pi (funext fun i => (hident (k i)).map_eq)
   -- Binding a probability measure against a constant measure returns that measure.
-  rw [hblock, Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
+  rw [hblock, Measure.bind_const, measure_univ, one_smul]
   rfl
 
 /-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/

@@ -51,7 +51,16 @@ jobs:
         run: |
           PR=$(echo '${{ toJSON(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')
           if [ -z "$PR" ]; then
-            PR=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" --jq '.[0].number // empty' 2>/dev/null || true)
+            # Fork PRs leave pull_requests[] empty, and commits/<sha>/pulls
+            # need not associate their head commit with the base repository.
+            # Accept exactly one open PR whose current head is this SHA.
+            MATCHES=$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls?state=open&per_page=100" \
+              --jq ".[] | select(.head.sha == \"$HEAD_SHA\") | .number" 2>/dev/null || true)
+            mapfile -t PRS <<< "$MATCHES"
+            if [ -n "$MATCHES" ] && [ "${#PRS[@]}" -eq 1 ]; then
+              PR="${PRS[0]}"
+            fi
           fi
           if [ -z "$PR" ]; then
             echo "No PR for $HEAD_SHA; skipping"; echo "skip=true" >> "$GITHUB_OUTPUT"

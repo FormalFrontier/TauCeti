@@ -13,10 +13,10 @@ name: Pages
 # interproject linking (DOCGEN_LOCAL_MODULE_ROOTS / DOCGEN_DEPS_DOCS_URL, see the doc build
 # step) doc-gen4 renders pages for only the TauCeti.* modules and links references to Mathlib
 # out to the hosted mathlib4_docs, so the output is small (tens of MB, not the whole rendered
-# closure). It is rebuilt at most once a day — on the schedule below, plus the first run that
-# finds no cached docs — and cached under a date-bucketed key. A push that touches only web/
-# (or the chart scripts) reuses the cached docs, since the mathematics has not changed, so
-# those site deploys stay fast.
+# closure). It is normally rebuilt every three hours — on the schedule below, plus the first
+# run that finds no cached docs — and cached under a run-specific key. A push that touches
+# only web/ (or the chart scripts) reuses the cached docs, since the mathematics has not
+# changed, so those site deploys stay fast.
 #
 # The Statistics page's "lines of code by date" charts are regenerated here, at deploy
 # time, straight from git history (see scripts/loc_graph.py) — they are not committed
@@ -24,7 +24,7 @@ name: Pages
 # way, but from the PR labels rather than git, since roadmap attribution lives in the
 # `roadmap/<Area>` labels; it reads them via gh (hence pull-requests: read below). The
 # participation snapshot likewise reads GitHub through gh, but deduplicates the current
-# human actors instead of reconstructing a historical series. The daily `schedule` below
+# human actors instead of reconstructing a historical series. The three-hour `schedule` below
 # redeploys the site so the charts track the project as it grows.
 # (This replaces the old loc-graph workflow, which committed the SVGs to main on a
 # schedule; main now sits behind a merge queue that refuses direct pushes, so generating
@@ -41,7 +41,7 @@ on:
       - 'scripts/participant_graph.py'
       - '.github/workflows/pages.yml'
   schedule:
-    - cron: "0 6 * * *"   # Daily 06:00 UTC: refresh the lines-of-code charts and the API docs
+    - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
   workflow_dispatch:
 
 permissions:
@@ -55,7 +55,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Let an active deployment finish before a newly triggered run starts.
+  cancel-in-progress: false
 
 env:
   # Run JavaScript actions on Node 24 (Node 20 is deprecated on GitHub runners).
@@ -69,7 +70,10 @@ jobs:
   build-site:
     runs-on: ubuntu-latest
     outputs:
-      docs-rebuilt: ${{ steps.docs-plan.outputs.build }}
+      # The commit the /docs actually being deployed were generated from, read from the tree itself.
+      # This is what `advance-docgen-ref` follows; there is deliberately no output for whether a
+      # rebuild was *planned*, because that says nothing about what ended up being published.
+      docs-source-sha: ${{ steps.fold.outputs.docs-source-sha }}
     defaults:
       run:
         working-directory: web
@@ -118,7 +122,7 @@ jobs:
 
       # A current snapshot rather than a historical series: participants are deduplicated
       # across PRs, issues, comments/reviews, and default-branch commits in all four repos.
-      # This API scan runs only in the daily/deploy build, never at request time.
+      # This API scan runs only in the scheduled/deploy build, never at request time.
       - name: Regenerate the participation snapshot into static_files
         working-directory: ${{ github.workspace }}
         env:
@@ -135,28 +139,23 @@ jobs:
           ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      # --- API documentation (doc-gen4), built at most once a day ------------------------
+      # --- API documentation (doc-gen4), normally built every three hours ----------------
       # The doc build is the heavy part of this job, and the mathematics only changes on
       # pushes to TauCeti/ (never on the web/-only pushes that trigger this workflow), so the
-      # generated HTML is cached under a per-day key and reused on same-day / web-only runs.
+      # generated HTML is cached under a run-specific key and reused on web-only runs.
 
-      - name: Compute today's date (the daily docs cache bucket)
-        id: date
-        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-
-      # restore-only: the doc tree is several GB, so we do not want the automatic post-job
-      # re-upload that plain actions/cache does on runs that merely reused the docs. The save
-      # below runs only when we actually rebuilt.
+      # Restore-only avoids the automatic post-job re-upload that plain actions/cache does
+      # on runs that merely reused the docs. The save below runs only after an actual rebuild.
       - name: Restore the generated API docs
         id: docs-cache
         uses: actions/cache/restore@v4
         with:
           path: docbuild/.lake/build/doc
-          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ steps.date.outputs.today }}
+          key: docs-html-v2-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ github.run_id }}
           restore-keys: |
-            docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-
+            docs-html-v2-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-
 
-      # Rebuild on the daily schedule / manual dispatch, or whenever no cached docs exist at
+      # Rebuild on the three-hour schedule / manual dispatch, or whenever no cached docs exist at
       # all (e.g. the first run after this workflow lands) so /docs is never missing for long.
       - name: Decide whether to (re)build the API docs
         id: docs-plan
@@ -196,12 +195,35 @@ jobs:
           rm -rf .lake/build/doc .lake/build/doc-data
           lake build TauCetiDocs:docs
 
-      - name: Save the generated API docs to today's cache bucket
+      # Stamp the tree with the commit it was generated from, BEFORE it is cached, so the
+      # provenance travels with the tree wherever it is later restored. This is what makes the
+      # `docgen` branch trustworthy: the branch follows the marker of the tree that was actually
+      # deployed, rather than `github.sha` of whichever run happened to deploy it.
+      - name: Record the commit the API docs were generated from
+        if: steps.docs-plan.outputs.build == 'true'
+        # This job's default working directory is `web/`; like every other step that touches the
+        # docs project, this one runs in `docbuild/` instead.
+        working-directory: docbuild
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          marker=.lake/build/doc/SOURCE_SHA
+          # The name must be ours alone. If doc-gen4 ever emits anything at that path, silently
+          # overwriting it would corrupt the documentation, and trusting it would let a generated
+          # file dictate where the docgen branch points.
+          if [ -e "$marker" ] || [ -L "$marker" ]; then
+            echo "::error title=SOURCE_SHA is taken::doc-gen4 produced an entry at $marker; the provenance marker needs another name"
+            exit 1
+          fi
+          printf '%s\n' "$SHA" > "$marker"
+
+      - name: Save the generated API docs
         if: steps.docs-plan.outputs.build == 'true'
         uses: actions/cache/save@v4
         with:
           path: docbuild/.lake/build/doc
-          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ steps.date.outputs.today }}
+          key: docs-html-v2-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ github.run_id }}
 
       - name: Cache Lake builds (site + examples)
         uses: actions/cache@v4
@@ -226,18 +248,65 @@ jobs:
       - name: Generate static site
         run: lake exe web --output _out
 
-      # Place the doc-gen4 output (fresh from this run, or restored from the daily cache) at
+      # Place the doc-gen4 output (fresh from this run, or restored from the latest cache) at
       # /docs inside the site artifact. deploy-pages replaces the whole site each time, so the
       # docs must ride along in every deploy — hence the cache that keeps them available on
       # runs that did not rebuild them.
+      # A missing doc tree is ALWAYS fatal here, whether or not this run planned a rebuild.
+      #
+      # A Pages deployment replaces the whole site, so deploying without `/docs` deletes the live
+      # documentation — which breaks the `docgen` invariant even though no ref moves. The decision is
+      # made from the filesystem rather than from `cache-matched-key`, because that key reports what
+      # the cache *claimed*, not what was restored. There is no legitimate path here with no tree: a
+      # genuine cache miss sets `build=true` (see `docs-plan`) and the docs are built, so an absent
+      # tree means either that build produced nothing or a hit restored nothing, and both deserve to
+      # stop the deploy.
       - name: Fold the API docs into the site under /docs
+        id: fold
         run: |
-          if [ -d ../docbuild/.lake/build/doc ]; then
-            rm -rf _out/docs
-            cp -a ../docbuild/.lake/build/doc _out/docs
-          else
-            echo "::warning::no generated API docs found; /docs will be absent from this deploy"
+          if [ ! -d ../docbuild/.lake/build/doc ]; then
+            echo "::error title=API docs missing::no doc tree to deploy; refusing to publish a site without /docs, which would delete the live documentation"
+            exit 1
           fi
+          rm -rf _out/docs
+          cp -a ../docbuild/.lake/build/doc _out/docs
+          if [ ! -s _out/docs/index.html ]; then
+            echo "::error title=API docs are empty::the doc tree has no index.html, so /docs would deploy unusable"
+            exit 1
+          fi
+          # The marker rides inside the tree, so it is there whether the docs were just built or
+          # restored from cache. An unmarked tree is FATAL rather than a warning: deploying one would
+          # replace the live documentation with something whose provenance is unknown, leaving the
+          # branch naming a commit that is no longer published and no way to notice. The cache key
+          # namespace was bumped alongside this, so no pre-existing cache can supply one; a miss
+          # therefore rebuilds and stamps.
+          if [ ! -s _out/docs/SOURCE_SHA ]; then
+            echo "::error title=API docs have no provenance::the doc tree carries no SOURCE_SHA, so the commit it documents is unknown; refusing to deploy it"
+            exit 1
+          fi
+          # Validated as BYTES, against the exact form this workflow writes.
+          #
+          # Reading the file into a shell variable and matching a regex is not enough on its own:
+          # command substitution silently drops NUL bytes, so forty hex characters followed by a NUL
+          # arrives as a perfectly valid sha. Rendering the parsed value back into canonical form and
+          # comparing the raw bytes catches that, along with CRLF, a BOM, and any trailing junk --
+          # whatever is on disk must be exactly `<sha>\n` and nothing else.
+          #
+          # A symlink is refused outright: both this read and the Pages uploader follow one, so a
+          # link left in a cached tree could point the branch at whatever it resolved to at upload
+          # time rather than at what was read here.
+          marker=_out/docs/SOURCE_SHA
+          if [ -L "$marker" ] || [ ! -f "$marker" ]; then
+            echo "::error title=SOURCE_SHA is not a regular file::refusing to read provenance through a link or special file"
+            exit 1
+          fi
+          sha=$(< "$marker")
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]] || ! printf '%s\n' "$sha" | cmp -s - "$marker"; then
+            echo "::error title=API docs have a malformed SOURCE_SHA::the marker is not exactly one 40-character commit sha followed by a newline"
+            exit 1
+          fi
+          echo "docs-source-sha=$sha" >> "$GITHUB_OUTPUT"
+          printf 'deploying /docs generated from %s\n' "$sha"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -255,40 +324,97 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # A moving source ref for consumers that need to stay in lockstep with the published API
-  # documentation. Advance it only after this run freshly rebuilt the docs and successfully
-  # deployed them. Cached site-only deploys must leave it alone: their docs belong to the
-  # earlier commit already named by this ref.
+  # Point `docgen` at the commit whose documentation is now live.
+  #
+  # The candidate is the marker carried inside the deployed doc tree, NOT `github.sha`. Those differ
+  # whenever a deploy reuses cached documentation, which is the normal path for a `web/`-only push --
+  # and taking `github.sha` there would assert that documentation exists for a commit that was never
+  # documented. Following the marker also lets the branch heal: every successful deploy from `main`
+  # ATTEMPTS to move it to whatever is published, in either direction, so drift is corrected rather
+  # than persisting until someone notices. Only attempts, though -- this job can fail, and a manual
+  # dispatch from another branch deploys while skipping it entirely, so drift outlives both.
+  #
+  # Nothing here keys on whether a rebuild was *planned*: that is decided before anything is built
+  # and says nothing about what ended up published, whereas the marker records the outcome, which is
+  # the question the branch is actually answering.
+  #
+  # The branch is BEST-EFFORT, not exact. Publishing to Pages and updating a git ref are separate
+  # operations that cannot be made atomic, so between the site being replaced and this job running,
+  # `docgen` names documentation that is already gone; if this job then fails, it stays wrong until
+  # the next deploy repairs it. Anything that needs certainty should read `/docs/SOURCE_SHA` from
+  # the deployed site, which is the only value that is true at the moment it is read.
   advance-docgen-ref:
     needs: [build-site, deploy]
-    if: needs.build-site.outputs.docs-rebuilt == 'true' && github.ref == 'refs/heads/main'
+    if: needs.build-site.outputs.docs-source-sha != '' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Fast-forward the docgen branch to the documented commit
+      - name: Point the docgen branch at the documented commit
         env:
           GH_TOKEN: ${{ github.token }}
-          CANDIDATE: ${{ github.sha }}
+          CANDIDATE: ${{ needs.build-site.outputs.docs-source-sha }}
           REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           endpoint="repos/$REPO/git/refs/heads/docgen"
+
+          # The candidate must be a commit on this repository's mainline. Checked FIRST, before the
+          # branch is even read, so it applies equally to creating the branch, to leaving it
+          # unchanged, and to moving it -- an unrelated commit must never be installed just because
+          # the branch happened to be absent or already wrong.
+          #
+          # Direction matters: `compare/A...B` reports how B stands relative to A, so asking for
+          # CANDIDATE...DEFAULT and requiring ahead|identical is asking "does the default branch
+          # contain the candidate". A candidate that is not in the repository at all fails the call,
+          # which `|| echo unknown` turns into a refusal rather than a crash.
+          rel=$(gh api "repos/$REPO/compare/$CANDIDATE...$DEFAULT_BRANCH" --jq .status || echo unknown)
+          case "$rel" in
+            ahead|identical) ;;
+            *)
+              echo "::error title=documented commit is not on the mainline::$CANDIDATE compares '$rel' to $DEFAULT_BRANCH; refusing to point docgen at it"
+              exit 1 ;;
+          esac
+
           current=$(gh api "repos/$REPO/git/matching-refs/heads/docgen" \
             --jq '.[] | select(.ref == "refs/heads/docgen") | .object.sha')
 
-          if [ -n "$current" ]; then
-            if [ "$current" = "$CANDIDATE" ]; then
-              echo "docgen already points to $CANDIDATE"
-              exit 0
-            fi
-
-            # force=false makes an unexpected rewind or divergent update fail closed.
-            gh api --method PATCH "$endpoint" \
-              -f sha="$CANDIDATE" \
-              -F force=false
-          else
+          if [ -z "$current" ]; then
             gh api --method POST "repos/$REPO/git/refs" \
               -f ref='refs/heads/docgen' \
-              -f sha="$CANDIDATE"
+              -f sha="$CANDIDATE" > /dev/null
+            echo "docgen created at $CANDIDATE"
+            exit 0
           fi
+
+          if [ "$current" = "$CANDIDATE" ]; then
+            echo "docgen already points to $CANDIDATE"
+            exit 0
+          fi
+
+          # Whether this is a fast-forward is a question the API answers, so ask it rather than
+          # parsing the CLI's English error text: a reworded message or a change of output stream
+          # would silently turn a legitimate rewind into a failure, leaving the branch stale after
+          # the site had already been replaced.
+          #
+          # `docgen` is a POINTER TO CURRENT STATE, not an append-only history: it answers "which
+          # commit's documentation is live". Once this run has replaced the site, a branch left
+          # anywhere but the deployed commit names documentation that is no longer published, so a
+          # rewind is not a hazard to avoid but the correct repair -- and it is how the branch
+          # recovers from having been set ahead of reality. It is guarded by the mainline check
+          # above, so it can only ever move to a commit the default branch contains.
+          step=$(gh api "repos/$REPO/compare/$current...$CANDIDATE" --jq .status || echo unknown)
+          case "$step" in
+            ahead)
+              force=false ;;
+            behind|diverged)
+              force=true
+              echo "::warning title=docgen rewound::$current is not an ancestor of the deployed commit ($step); pointing docgen back to what is actually live" ;;
+            *)
+              echo "::error title=cannot compare docgen with the deployed commit::got '$step'"
+              exit 1 ;;
+          esac
+
+          gh api --method PATCH "$endpoint" -f sha="$CANDIDATE" -F force="$force" > /dev/null
+          echo "docgen moved $current -> $CANDIDATE (force=$force)"

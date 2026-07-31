@@ -183,6 +183,7 @@ theorem matrixCoeff_trivial (v w : V) :
       ContinuousMap.const G ⟪v, w⟫_𝕜 := by
   ext g
   simp
+  rfl
 
 /-- A matrix coefficient of an invariant submodule is the matrix coefficient of the ambient
 representation at the underlying vectors, so passing to a subrepresentation creates no new
