@@ -55,6 +55,7 @@ variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 /-- Comultiplication of a matrix coefficient is obtained by applying its coefficient map to
 the vector factor of the coaction. -/
+@[simp]
 theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
     Coalgebra.comul (R := R) (A := C)
         (matrixCoefficient (R := R) (C := C) φ m) =
