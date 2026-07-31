@@ -42,6 +42,7 @@ variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {p : E → X}
 Both sides transport a point of the fibre over `x` to the fibre over `y`: one first applies the
 deck transformation and then lifts the path, while the other first lifts the path and then
 applies the deck transformation. -/
+@[simp]
 theorem monodromy_fiber_smul (hp : IsCoveringMap p)
     (γ : Path.Homotopic.Quotient x y) (φ : Deck p) (e : p ⁻¹' {x}) :
     hp.monodromy γ (φ • e) = φ • hp.monodromy γ e := by
