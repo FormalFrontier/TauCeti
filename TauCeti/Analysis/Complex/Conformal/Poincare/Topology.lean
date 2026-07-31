@@ -235,7 +235,7 @@ instance PoincareDisc.instProperSpace : ProperSpace PoincareDisc where
         {z : Complex.UnitDisc |
           ‖(z : ℂ)‖ ≤ Real.tanh (r + dist x (Complex.UnitDisc.toPoincare 0))} := by
       rintro _ ⟨z, hz, rfl⟩
-      simp only [Set.mem_setOf_eq, PoincareDisc.toUnitDiscHomeomorph_apply]
+      simp only [Set.mem_ofPred_eq, PoincareDisc.toUnitDiscHomeomorph_apply]
       have htri : dist z (Complex.UnitDisc.toPoincare 0)
           ≤ r + dist x (Complex.UnitDisc.toPoincare 0) := by
         have hzx : dist z x ≤ r := mem_closedBall.mp hz

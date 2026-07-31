@@ -120,7 +120,7 @@ private def trueFrequentlyAtEvenTimes : Set (ℕ → Bool) :=
 times. -/
 private theorem mem_trueFrequentlyAtEvenTimes {x : ℕ → Bool} :
     x ∈ trueFrequentlyAtEvenTimes ↔ ∀ N, ∃ n, N ≤ n ∧ x (2 * n) = true := by
-  simp only [trueFrequentlyAtEvenTimes, Set.mem_iInter, Set.mem_iUnion, Set.mem_setOf_eq]
+  simp only [trueFrequentlyAtEvenTimes, Set.mem_iInter, Set.mem_iUnion, Set.mem_ofPred_eq]
   constructor
   · intro h N
     obtain ⟨n, hn⟩ := h N
@@ -135,7 +135,7 @@ private theorem trueFrequentlyAtEvenTimes_eq_iInter_iUnion (r : ℕ) :
     trueFrequentlyAtEvenTimes =
       ⋂ N : ℕ, ⋃ n : ℕ, {x : ℕ → Bool | x (2 * (r + N + n)) = true} := by
   ext x
-  simp only [mem_trueFrequentlyAtEvenTimes, Set.mem_iInter, Set.mem_iUnion, Set.mem_setOf_eq]
+  simp only [mem_trueFrequentlyAtEvenTimes, Set.mem_iInter, Set.mem_iUnion, Set.mem_ofPred_eq]
   constructor
   · intro h N
     obtain ⟨n, hn, hx⟩ := h (r + N)

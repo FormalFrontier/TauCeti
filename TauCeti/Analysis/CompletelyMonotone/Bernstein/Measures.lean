@@ -327,7 +327,7 @@ lemma bernsteinKernel_tendsto (x p : ℝ) :
   rw [eventuallyEq_iff_exists_mem]
   refine ⟨{n : ℕ | n ≥ Nat.ceil (x * p) + 2}, mem_atTop _, ?_⟩
   intro n hn
-  simp only [Set.mem_setOf_eq] at hn
+  simp only [Set.mem_ofPred_eq] at hn
   simp only [bernsteinKernel, hg_def]
   have hn1 : ¬(n ≤ 1) := by omega
   simp only [hn1, ite_false]

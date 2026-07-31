@@ -9,10 +9,12 @@ public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.Rep.Res
 
 /-!
-# Restriction of a finite-dimensional representation to a subgroup
+# Restriction of representations
 
-For a subgroup `S` of a group `G` this file names the restriction of a finite-dimensional
-representation of `G` to `S` and records its character.
+This file collects restriction infrastructure shared by the induction files: how the restriction
+functors `Rep.resFunctor` and `Action.res` behave under composing and inverting the homomorphism
+restricted along, and, for a subgroup `S` of a group `G`, the restriction of a finite-dimensional
+representation of `G` to `S` together with its character.
 
 `FDRep k G` is by definition `Action (FGModuleCat k) G`, so Mathlib's `Action.res` along
 `S.subtype` *is* the restriction functor `FDRep k G ⥤ FDRep k S`; nothing has to be built.
@@ -24,7 +26,14 @@ restriction of an intertwiner, the functor laws, naturality — is used straight
 
 ## Main definitions
 
+* `TauCeti.resFunctorEquiv`: restriction along a monoid isomorphism, as an equivalence of
+  categories.
 * `TauCeti.resFDRep`: restriction of a finite-dimensional representation to a subgroup.
+
+## Main statements
+
+* `TauCeti.resFunctor_comp`, `TauCeti.actionRes_comp`: restriction along a composite is
+  restriction twice over.
 
 ## Implementation notes
 
@@ -46,6 +55,58 @@ namespace TauCeti
 universe u
 
 variable {k G : Type u} [Group G]
+
+section Functor
+
+variable [Semiring k] {H K L : Type*} [Monoid H] [Monoid K] [Monoid L]
+
+/-- Restricting representations along a composite homomorphism is restricting twice over.
+Mathlib has no equality of this shape (`Action.resComp` is the natural isomorphism for `Action`),
+so we record the equality form, which keeps the reduction out of proofs that state equalities of
+restriction functors. -/
+theorem resFunctor_comp (φ : K →* L) (ψ : H →* K) :
+    Rep.resFunctor (k := k) (φ.comp ψ) = Rep.resFunctor φ ⋙ Rep.resFunctor ψ :=
+  rfl
+
+/-- The `Action` form of `resFunctor_comp`, which is the one that applies to `FDRep`; the equality
+strengthens Mathlib's natural isomorphism `Action.resComp`. -/
+theorem actionRes_comp {V : Type*} [Category V] (φ : K →* L) (ψ : H →* K) :
+    Action.res V (φ.comp ψ) = Action.res V φ ⋙ Action.res V ψ :=
+  rfl
+
+/-- Restricting along the identity is the identity functor. -/
+theorem resFunctor_id : Rep.resFunctor (k := k) (MonoidHom.id H) = 𝟭 (Rep k H) :=
+  rfl
+
+/-- Restriction along a monoid isomorphism is an equivalence of categories, with inverse
+restriction along the inverse isomorphism.  This is the `Rep` analogue of Mathlib's
+`Action.resEquiv`, which does not apply because `Rep` is a structure rather than an `Action`.
+
+The body is sealed; `resFunctorEquiv_functor` and `resFunctorEquiv_inverse` are the interface
+identifying its two functors with restriction. -/
+def resFunctorEquiv (e : H ≃* K) : Rep k K ≌ Rep k H :=
+  -- Mathlib's `MulEquiv.coe_monoidHom_comp_coe_monoidHom_symm` and its mirror, restated for
+  -- `MulEquiv.toMonoidHom`: the coercion in those lemmas is `toMonoidHom` definitionally but not
+  -- syntactically, so `rw` needs this form.
+  have comp_symm : e.toMonoidHom.comp e.symm.toMonoidHom = MonoidHom.id K :=
+    MulEquiv.coe_monoidHom_comp_coe_monoidHom_symm e
+  have symm_comp : e.symm.toMonoidHom.comp e.toMonoidHom = MonoidHom.id H :=
+    MulEquiv.coe_monoidHom_symm_comp_coe_monoidHom e
+  CategoryTheory.Equivalence.mk (Rep.resFunctor e.toMonoidHom) (Rep.resFunctor e.symm.toMonoidHom)
+    (eqToIso (by rw [← resFunctor_comp, comp_symm, resFunctor_id]))
+    (eqToIso (by rw [← resFunctor_comp, symm_comp, resFunctor_id]))
+
+@[simp]
+theorem resFunctorEquiv_functor (e : H ≃* K) :
+    (resFunctorEquiv (k := k) e).functor = Rep.resFunctor e.toMonoidHom :=
+  (rfl)
+
+@[simp]
+theorem resFunctorEquiv_inverse (e : H ≃* K) :
+    (resFunctorEquiv (k := k) e).inverse = Rep.resFunctor e.symm.toMonoidHom :=
+  (rfl)
+
+end Functor
 
 section Representation
 
