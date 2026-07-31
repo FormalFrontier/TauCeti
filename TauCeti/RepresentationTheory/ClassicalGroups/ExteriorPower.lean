@@ -78,7 +78,7 @@ theorem extPowerRep_self_apply (g : GL (Fin n) k) :
 
 /-- **The top exterior power of the standard representation is the determinant representation.**
 The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/
-@[expose] noncomputable def topExtPowerEquivDet : (extPowerRep k n n).Equiv (detRep k n) :=
+noncomputable def topExtPowerEquivDet : (extPowerRep k n n).Equiv (detRep k n) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     refine LinearMap.ext fun x ↦ ?_
     simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
@@ -90,7 +90,7 @@ identification of the exterior power with the scalars. -/
 @[simp]
 theorem topExtPowerEquivDet_toLinearEquiv :
     (topExtPowerEquivDet k n).toLinearEquiv = exteriorPower.topEquiv (Pi.basisFun k (Fin n)) :=
-  rfl
+  (rfl)
 
 /-- The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/
 @[simp]

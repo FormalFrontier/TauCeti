@@ -18,8 +18,10 @@ This file applies the determinant transformation law to matrices of determinant 
 invariant alternating form required for the standard representation of `SL(n, k)`.
 
 The same computation, read on the top exterior power rather than on the determinant form, says
-that the volume form is an invariant vector: the top exterior power of the standard representation
-of `SL(n, k)` is the trivial one-dimensional representation.
+that the volume element `e₁ ∧ ⋯ ∧ eₙ` of `⋀[k]^n (Fin n → k)` is an invariant vector: the top
+exterior power of the standard representation of `SL(n, k)` is the trivial one-dimensional
+representation. (The volume *form* is the alternating covector `Matrix.detRowAlternating`; the
+volume element is the multivector dual to it.)
 
 ## Main definitions
 
@@ -71,9 +73,9 @@ theorem stdSLRep_exteriorPower_self_apply (g : Matrix.SpecialLinearGroup (Fin n)
     exteriorPower.map_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin', g.det_coe,
     one_smul]
 
-/-- **The volume form is invariant**: the top exterior power of the standard representation of
+/-- **The volume element is invariant**: the top exterior power of the standard representation of
 `SL(n, k)` is the trivial one-dimensional representation. -/
-@[expose] noncomputable def topExtPowerSLEquivTrivial :
+noncomputable def topExtPowerSLEquivTrivial :
     ((stdSLRep k n).exteriorPower n).Equiv
       (Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
@@ -86,7 +88,7 @@ identification of the exterior power with the scalars. -/
 theorem topExtPowerSLEquivTrivial_toLinearEquiv :
     (topExtPowerSLEquivTrivial k n).toLinearEquiv =
       exteriorPower.topEquiv (Pi.basisFun k (Fin n)) :=
-  rfl
+  (rfl)
 
 /-- The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/
 @[simp]
