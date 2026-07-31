@@ -292,7 +292,7 @@ theorem exists_complement_windows_dist_lower_bound {γ : ℝ → ℂ} {s : ℂ} 
   have hC_closed : IsClosed C := by
     have h_eq : C = Icc a b ∩ ⋂ t_i ∈ crossings, (Ioo (t_i - r_at t_i) (t_i + r_at t_i))ᶜ := by
       ext t
-      simp only [hC_def, mem_setOf_eq, mem_inter_iff, mem_iInter, mem_compl_iff]
+      simp only [hC_def, mem_ofPred_eq, mem_inter_iff, mem_iInter, mem_compl_iff]
     rw [h_eq]
     exact isClosed_Icc.inter (isClosed_biInter fun _ _ => isOpen_Ioo.isClosed_compl)
   have hC_compact : IsCompact C := isCompact_Icc.of_isClosed_subset hC_closed hC_subset

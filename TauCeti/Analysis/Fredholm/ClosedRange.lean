@@ -81,7 +81,7 @@ theorem isClosed_range_of_finiteDimensional_coker (T : E →L[𝕜] F)
   -- The preimage of `range T` under `Φ` is the closed subset `{p | p.2 = 0}`.
   have hpre : Φ ⁻¹' (R : Set F) = {p : E × N | p.2 = 0} := by
     ext p
-    simp only [Set.mem_preimage, SetLike.mem_coe, hΦ, Set.mem_setOf_eq]
+    simp only [Set.mem_preimage, SetLike.mem_coe, hΦ, Set.mem_ofPred_eq]
     have hTp : T p.1 ∈ R := by
       rw [hR, ← ContinuousLinearMap.coe_coe]; exact LinearMap.mem_range_self _ p.1
     constructor

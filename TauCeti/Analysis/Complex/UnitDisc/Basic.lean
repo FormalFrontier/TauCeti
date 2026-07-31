@@ -46,7 +46,7 @@ lemma isCompact_setOf_norm_le {ρ : ℝ} (hρ : ρ < 1) :
   have himg : ((↑) : _root_.Complex.UnitDisc → ℂ) ''
       {z : _root_.Complex.UnitDisc | ‖(z : ℂ)‖ ≤ ρ} = Metric.closedBall (0 : ℂ) ρ := by
     ext w
-    simp only [Set.mem_image, Set.mem_setOf_eq, Metric.mem_closedBall, dist_zero_right]
+    simp only [Set.mem_image, Set.mem_ofPred_eq, Metric.mem_closedBall, dist_zero_right]
     exact ⟨fun ⟨z, hz, hzw⟩ => hzw ▸ hz, fun hw =>
       ⟨_root_.Complex.UnitDisc.mk w (lt_of_le_of_lt hw hρ), by simpa using hw, by simp⟩⟩
   rw [himg]

@@ -21,7 +21,7 @@ naturals with product `≤ absNorm I` (distributing, for each rational prime `p`
 `p^{vₚ}` of the `i`-th prime above `p` into the `i`-th coordinate); the valuations of the
 tuple recover the ideal, and there are at most `X²·2ⁿ` such tuples.
 
-Mathlib's `Ideal.finite_setOf_absNorm_le` already gives finiteness (and `Ideal/Asymptotics`
+Mathlib's `Ideal.finite_setOfPred_absNorm_le` already gives finiteness (and `Ideal/Asymptotics`
 the sharp asymptotic `~ ρ·X`); the contribution here is the explicit elementary bound, the
 input to the effective class-number estimate.
 
@@ -78,7 +78,7 @@ with product at most `X` is an `n`-tuple with product at most `X / j` followed b
 private theorem prodLeTuples_succ_eq_iUnion (n : ℕ) (X : ℝ) :
     prodLeTuples (n + 1) X = ⋃ j ∈ Finset.Icc 1 ⌊X⌋₊,
       (fun e => Fin.snoc e j) '' (prodLeTuples n (X / j)) := by
-  ext d; simp only [prodLeTuples, Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_image,
+  ext d; simp only [prodLeTuples, Set.mem_ofPred_eq, Set.mem_iUnion, Set.mem_image,
     Finset.mem_Icc]
   constructor <;> intro h
   · refine ⟨d (Fin.last n), ⟨h.1 _, Nat.le_floor ?_⟩, Fin.init d, ⟨?_, ?_⟩,
@@ -404,7 +404,7 @@ theorem card_ideal_absNorm_le (F : Type*) [Field F] [NumberField F]
       (({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard : ℝ)) ≤
         X ^ 2 * 2 ^ Module.finrank ℚ F := by
   refine ⟨?_, ?_⟩
-  · apply Set.Finite.subset (Ideal.finite_setOf_absNorm_le ⌊X⌋₊)
+  · apply Set.Finite.subset (Ideal.finite_setOfPred_absNorm_le ⌊X⌋₊)
     rintro I ⟨-, hI⟩
     exact Nat.le_floor hI
   · calc ((({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}).ncard : ℝ))
@@ -436,7 +436,7 @@ private abbrev idealsWithAbsNormRealLe (F : Type*) [Field F] [NumberField F] (X 
 
 private theorem idealsWithAbsNormNatLe_finite (F : Type*) [Field F] [NumberField F] (N : ℕ) :
     (idealsWithAbsNormNatLe F N).Finite :=
-  (Ideal.finite_setOf_absNorm_le N).subset fun _ hI => hI.2
+  (Ideal.finite_setOfPred_absNorm_le N).subset fun _ hI => hI.2
 
 private theorem idealsWithAbsNormNatLe_eq_real (F : Type*) [Field F] [NumberField F] (N : ℕ) :
     idealsWithAbsNormNatLe F N = idealsWithAbsNormRealLe F (N : ℝ) := by
@@ -446,7 +446,7 @@ private theorem idealsWithAbsNormNatLe_eq_real (F : Type*) [Field F] [NumberFiel
 private theorem idealsWithAbsNormNatLe_zero (F : Type*) [Field F] [NumberField F] :
     idealsWithAbsNormNatLe F 0 = ∅ := by
   ext I
-  simp only [idealsWithAbsNormNatLe, Set.mem_setOf_eq, Set.mem_empty_iff_false,
+  simp only [idealsWithAbsNormNatLe, Set.mem_ofPred_eq, Set.mem_empty_iff_false,
     iff_false, not_and]
   intro hI0 hI
   exact hI0 (Ideal.absNorm_eq_zero_iff.mp (Nat.eq_zero_of_le_zero hI))

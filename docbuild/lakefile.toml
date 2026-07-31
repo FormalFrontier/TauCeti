@@ -15,12 +15,13 @@ packagesDir = "../.lake/packages"
 # own modules and link references to Mathlib out to the hosted mathlib4_docs (see the
 # `DOCGEN_LOCAL_MODULE_ROOTS` / `DOCGEN_DEPS_DOCS_URL` env vars set in the Pages workflow),
 # instead of rendering the whole Mathlib closure locally. The revision is built against Lean
-# v4.32.0; when `lean-toolchain` moves forward, bump this to the matching doc-gen4 revision
-# and re-run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake update doc-gen4` in this directory.
+# v4.33.0-rc1. This nested project inherits the root `lean-toolchain`; when it moves forward,
+# bump this to a compatible doc-gen4 revision and re-run
+# `MATHLIB_NO_CACHE_ON_UPDATE=1 lake update doc-gen4` in this directory.
 [[require]]
 name = "doc-gen4"
 git = "https://github.com/kim-em/doc-gen4"
-rev = "7ae50b89123da640dd3b7a23a41fc1b281273ca0"
+rev = "4cac5a75c52048204e6d015554fbc10ce3f269a2"
 
 [[require]]
 name = "TauCeti"
