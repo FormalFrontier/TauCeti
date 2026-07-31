@@ -71,14 +71,6 @@ theorem single_mem_degreePart {q : ℕ} (C : PlumbingCube V) (a : PlumbingCoeffi
     Finsupp.single C a ∈ degreePart V q :=
   Finsupp.single_mem_supported PlumbingCoefficient a hC
 
-/-- A nonzero single-cube chain has cubical degree `q` exactly when its cube has dimension `q`. -/
-@[simp]
-theorem single_mem_degreePart_iff {q : ℕ} (C : PlumbingCube V) {a : PlumbingCoefficient}
-    (ha : a ≠ 0) :
-    Finsupp.single C a ∈ degreePart V q ↔ C.dimension = q := by
-  rw [mem_degreePart]
-  simp [Finsupp.support_single C ha]
-
 /-- Distinct cubical-degree submodules intersect trivially. -/
 theorem disjoint_degreePart {q r : ℕ} (hqr : q ≠ r) :
     Disjoint (degreePart V q) (degreePart V r) := by
