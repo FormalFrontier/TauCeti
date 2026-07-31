@@ -24,8 +24,6 @@ closed disc — lies in the domain.
 
 * `TauCeti.DifferentiableOn.isExactOn_of_isSimplyConnected` — a holomorphic function on a simply
   connected open set has a primitive there, in Mathlib's `Complex.IsExactOn` vocabulary.
-* `TauCeti.exists_differentiableOn_deriv_eqOn_of_isSimplyConnected` — the same primitive, packaged
-  as a holomorphic `F` with `deriv F = f` on the domain.
 * `TauCeti.isExactOn_iff_differentiableOn_of_isSimplyConnected` — on a simply connected open set,
   having a primitive and being holomorphic are the same condition.
 * `TauCeti.cauchyTheorem_of_isSimplyConnected` — **Cauchy's theorem for a simply connected
@@ -47,6 +45,15 @@ because `ψ ∘ φ` is the identity near `z`.
 This is the standard "uniformisation" proof, and it is why the result belongs to the conformal
 layer rather than to the contour-integration layer below it: the only nonformal input is the
 Riemann mapping theorem itself.
+
+## Generality
+
+Statements are scalar, `f : ℂ → ℂ`. Mathlib's `Complex.IsExactOn` API is stated for a function
+valued in a complete normed `ℂ`-space and the proof below goes through verbatim at that
+generality, but the `ConformalMapping` roadmap fixes a generality bar for everything its layers
+add — "every theorem this entry *adds*, from L0 … through L6, is scalar `ℂ`" — while allowing
+`E`-valued Mathlib results to be *consumed*. If a Banach-valued consumer ever appears, the
+`E`-valued statement is a one-line generalisation of this file.
 
 ## Relation to the null-homotopic Cauchy theorem
 
@@ -79,8 +86,7 @@ namespace TauCeti
 open Complex MeasureTheory Metric Set
 open scoped Interval Topology
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
-variable {f : ℂ → E} {Ω : Set ℂ}
+variable {f : ℂ → ℂ} {Ω : Set ℂ}
 
 /-- **A holomorphic function on a simply connected domain has a primitive.**
 
@@ -118,16 +124,6 @@ theorem DifferentiableOn.isExactOn_of_isSimplyConnected (hf : DifferentiableOn �
   have hHφz : HasDerivAt H (deriv ψ (φ z) • f (ψ (φ z))) (φ z) := hH _ hzφ
   have hHz := hHφz.scomp z hφz
   rwa [hleft hz, smul_smul, hchain, one_smul] at hHz
-
-/-- A holomorphic function on a simply connected open set is the derivative of a holomorphic
-function there. This is `TauCeti.DifferentiableOn.isExactOn_of_isSimplyConnected` in the
-`deriv`-and-`Set.EqOn` idiom, for consumers that prefer to rewrite with `deriv F`. -/
-theorem exists_differentiableOn_deriv_eqOn_of_isSimplyConnected (hf : DifferentiableOn ℂ f Ω)
-    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) :
-    ∃ F : ℂ → E, DifferentiableOn ℂ F Ω ∧ EqOn (deriv F) f Ω := by
-  obtain ⟨F, hF⟩ := TauCeti.DifferentiableOn.isExactOn_of_isSimplyConnected hf hΩo hΩc
-  exact ⟨F, fun z hz => (hF z hz).differentiableAt.differentiableWithinAt,
-    fun z hz => (hF z hz).deriv⟩
 
 /-- On a simply connected open set, having a primitive is *equivalent* to being holomorphic.
 
