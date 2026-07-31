@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Continuous.Basic
+public import Mathlib.Topology.Algebra.Module.Spaces.ContinuousLinearMap
 
 /-!
 # Restricting a continuous representation to an invariant submodule
@@ -21,6 +22,8 @@ action operator, the continuous counterpart of Mathlib's `Representation.subrepr
 
 * `TauCeti.ContRepresentation.toRepresentation_subrepresentation`: the underlying representation of
   a restricted continuous representation is the restriction of the underlying representation.
+* `TauCeti.ContRepresentation.continuous_subrepresentation`: the restriction of a continuous
+  representation to an invariant submodule is again continuous.
 -/
 
 public section
@@ -28,6 +31,8 @@ public section
 namespace TauCeti
 
 namespace ContRepresentation
+
+section Restriction
 
 variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [TopologicalSpace V]
   [IsTopologicalAddGroup V] [Module R V]
@@ -55,8 +60,28 @@ the underlying representation. -/
 theorem toRepresentation_subrepresentation :
     (subrepresentation π W hW).toRepresentation
       = π.toRepresentation.subrepresentation W fun g _ hv => hW g _ hv := by
-  ext g v
-  simp [_root_.ContRepresentation.toMonoidHom_apply]
+  rfl
+
+end Restriction
+
+section Continuity
+
+variable {𝕜 G V : Type*} [NormedField 𝕜] [Monoid G] [TopologicalSpace G] [AddCommGroup V]
+  [TopologicalSpace V] [IsTopologicalAddGroup V] [Module 𝕜 V] [ContinuousConstSMul 𝕜 V]
+  {π : ContRepresentation 𝕜 G V} {W : Submodule 𝕜 V} {hW : ∀ g, ∀ v ∈ W, π g v ∈ W}
+
+/-- Restricting a continuous representation to an invariant submodule preserves continuity: from
+continuity of `g ↦ π g` as a map into the continuous linear endomorphisms of `V`, the restricted
+action `g ↦ subrepresentation π W hW g` is continuous into those of `W`. This supplies the
+continuity argument that `matrixCoeff` and the rest of the continuous-representation API take
+explicitly, so a subrepresentation can be used wherever a continuous representation is expected. -/
+theorem continuous_subrepresentation (hπ : Continuous π) :
+    Continuous (subrepresentation π W hW) := by
+  rw [(ContinuousLinearMap.isInducing_postcomp W.subtypeL
+    Topology.IsInducing.subtypeVal).continuous_iff]
+  exact (ContinuousLinearMap.precomp V W.subtypeL).continuous.comp hπ
+
+end Continuity
 
 end ContRepresentation
 

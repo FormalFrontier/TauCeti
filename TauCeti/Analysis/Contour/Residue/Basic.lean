@@ -34,10 +34,11 @@ As an unconditional value it is junk (`0`) when `f` is not meromorphic at `z₀`
   residue is `iteratedDeriv (−1 − n) g z₀ / (−1 − n)!`, independently of the presentation.
 * `TauCeti.Contour.residue_eq_of_eventuallyEq_zpow_smul` — the same value from any presentation
   `f =ᶠ[𝓝[≠] z₀] (· − z₀) ^ n • g` with `g` analytic and `n ≤ −1`, dropping `g z₀ ≠ 0`.
-* `TauCeti.Contour.residue_add`, `TauCeti.Contour.residue_const_mul`,
-  `TauCeti.Contour.residue_const_smul`, `TauCeti.Contour.residue_sub`,
-  `TauCeti.Contour.residue_sum` — the residue is linear in `f` (over functions meromorphic at
-  `z₀`), including over finite sums.
+* `TauCeti.Contour.residue_add`, `TauCeti.Contour.residue_sub`, `TauCeti.Contour.residue_sum` —
+  additivity of the residue, over functions meromorphic at `z₀`, including over finite sums. The
+  hypotheses are essential: two functions that are not meromorphic can sum to one that is.
+* `TauCeti.Contour.residue_const_mul` and `TauCeti.Contour.residue_const_smul` — homogeneity, in
+  the applied and unapplied forms. These are unconditional, the junk value scaling correctly.
 * `TauCeti.Contour.residue_congr_nhdsNE` — the residue depends only on the germ of `f` on a
   punctured neighborhood of `z₀`.
 * `TauCeti.Contour.residue_eq_zero_of_analyticAt` — the residue vanishes where `f` is analytic.
@@ -343,10 +344,23 @@ theorem residue_add {f g : ℂ → ℂ} {z₀ : ℂ} (hf : MeromorphicAt f z₀)
     residue_eq_of_eventuallyEq_zpow_smul hm1 (hφf_an.add hφg_an) hφfg_eq,
     iteratedDeriv_add hφf_an.contDiffAt hφg_an.contDiffAt, add_div]
 
-/-- **Scaling of the residue.** Scaling `f` by a constant scales its residue by that constant. -/
+/-- **Scaling of the residue.** Scaling `f` by a constant scales its residue by that constant.
+
+No meromorphy hypothesis is needed: the identity holds for every `f`, through the junk value where
+`f` is not meromorphic at `z₀`. Contrast `residue_add`, whose hypotheses are essential — two
+functions that are not meromorphic can sum to one that is. -/
 @[simp]
-theorem residue_const_mul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) (hf : MeromorphicAt f z₀) :
+theorem residue_const_mul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) :
     residue (fun z => c * f z) z₀ = c * residue f z₀ := by
+  by_cases hf : MeromorphicAt f z₀
+  case neg =>
+    -- `c = 0` collapses both sides to `0`; for `c ≠ 0` the scaled function is not meromorphic
+    -- either, so both sides are the junk value.
+    rcases eq_or_ne c 0 with rfl | hc
+    · simpa using residue_eq_zero_of_analyticAt (f := fun _ : ℂ => (0 : ℂ)) analyticAt_const
+    · have hcf : ¬ MeromorphicAt (fun z => c * f z) z₀ := fun h =>
+        hf ((meromorphicAt_mul_iff_of_ne_zero (g := fun _ => c) analyticAt_const hc).1 h)
+      rw [residue_of_not_meromorphicAt hcf, residue_of_not_meromorphicAt hf, mul_zero]
   obtain ⟨m, hm1, hmf⟩ : ∃ m : ℤ, m ≤ -1 ∧ (m : WithTop ℤ) ≤ meromorphicOrderAt f z₀ := by
     refine ⟨min (meromorphicOrderAt f z₀).untop₀ (-1), min_le_right _ _, ?_⟩
     rcases eq_or_ne (meromorphicOrderAt f z₀) ⊤ with h | h
@@ -364,14 +378,21 @@ theorem residue_const_mul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) (hf : Meromor
 /-- **Scaling of the residue (unapplied `•`).** The residue commutes with scalar multiplication;
 the `Pi.smul` companion to `residue_const_mul`. -/
 @[simp]
-theorem residue_const_smul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) (hf : MeromorphicAt f z₀) :
+theorem residue_const_smul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) :
     residue (c • f) z₀ = c • residue f z₀ :=
   -- `c • f` unfolds to `fun z => c * f z` by `Pi.smul_apply`, and `c • r` to `c * r` in `ℂ` by
   -- `smul_eq_mul`; both are definitional, so `residue_const_mul` applies directly.
-  residue_const_mul c hf
+  residue_const_mul c
 
-@[deprecated (since := "2026-07-30")]
-alias residue_smul := residue_const_smul
+/-- Compatibility wrapper for the former name of `residue_const_smul`. Stated with the signature
+that name carried, so existing `residue_smul c hf` calls keep elaborating; the meromorphy argument
+is ignored, that lemma now being unconditional. Migrate to `residue_const_smul`, dropping that
+argument — which is why no automatic replacement is named here: `residue_const_smul c hf` would not
+elaborate. -/
+@[deprecated "Use `residue_const_smul`, which is unconditional: drop the meromorphy argument."
+  (since := "2026-07-30")]
+theorem residue_smul {f : ℂ → ℂ} {z₀ : ℂ} (c : ℂ) (_hf : MeromorphicAt f z₀) :
+    residue (c • f) z₀ = c • residue f z₀ := residue_const_smul c
 
 /-- **Subtractivity of the residue.** The residue distributes over subtraction of meromorphic
 functions; the `−1` scaling case of `residue_add` and `residue_const_mul`. -/
@@ -382,7 +403,7 @@ theorem residue_sub {f g : ℂ → ℂ} {z₀ : ℂ} (hf : MeromorphicAt f z₀)
     analyticAt_const.meromorphicAt.mul hg
   have heq : f - g = f + fun z => (-1 : ℂ) * g z := by
     funext z; simp only [Pi.sub_apply, Pi.add_apply, neg_one_mul]; ring
-  rw [heq, residue_add hf hng, residue_const_mul (-1) hg]
+  rw [heq, residue_add hf hng, residue_const_mul (-1)]
   ring
 
 /-- **The residue of a finite sum.** For a finite family of functions meromorphic at `z₀`, the

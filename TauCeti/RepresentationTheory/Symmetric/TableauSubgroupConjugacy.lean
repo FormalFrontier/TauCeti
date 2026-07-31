@@ -155,7 +155,9 @@ theorem youngSubgroupConjMulEquiv_apply_coe {μ : YoungDiagram} (t : YoungTablea
     (σ : youngSubgroup ((partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩)) :
     ((youngSubgroupConjMulEquiv t σ : rowSubgroup t) : Equiv.Perm (Fin μ.card)) =
       rowYoungConjugator t * σ * (rowYoungConjugator t)⁻¹ :=
-  by simp [youngSubgroupConjMulEquiv, MulAut.conj_apply]
+  by
+    simp [youngSubgroupConjMulEquiv]
+    rfl
 
 /-- The inverse subgroup equivalence acts by conjugation with the inverse of
 `rowYoungConjugator t`. -/
@@ -167,6 +169,7 @@ theorem youngSubgroupConjMulEquiv_symm_apply_coe {μ : YoungDiagram} (t : YoungT
       Equiv.Perm (Fin μ.card)) =
       (rowYoungConjugator t)⁻¹ * τ * rowYoungConjugator t := by
   simp [youngSubgroupConjMulEquiv]
+  rfl
 
 end YoungTableau
 

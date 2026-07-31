@@ -252,7 +252,7 @@ theorem condExp_indicator_sup_eq_of_condIndep {Ω : Type*} {mΩ : MeasurableSpac
 
 The pair-law/L² machinery below is generic conditional-expectation infrastructure: its hypotheses
 mention only measurable maps, equality of pair laws, and the σ-algebra ordering `σ(W) ≤ σ(W')` —
-never contractability.  The four support lemmas stay `private`; the contraction-independence
+never contractability. The support lemmas stay `private`; the contraction-independence
 conclusion is public so the de Finetti prefix-deletion file can reuse it across the module boundary.
 -/
 
@@ -404,7 +404,7 @@ private lemma ae_eq_of_integral_mul_eq_of_integral_sq_eq {Ω : Type*} {mΩ : Mea
   have h_diff_zero : ∀ᵐ ω ∂μ, (g₂ ω - g₁ ω) ^ 2 = 0 :=
     (integral_eq_zero_iff_of_nonneg_ae (ae_of_all μ fun ω => sq_nonneg _) h_sq_int).mp h_L2_zero
   filter_upwards [h_diff_zero] with ω hω
-  nlinarith [sq_nonneg (g₂ ω - g₁ ω)]
+  exact (sub_eq_zero.mp (sq_eq_zero_iff.mp hω)).symm
 
 /-- The conditional expectation of a `0/1` indicator is bounded by `1` in norm almost everywhere,
 on any sub-σ-algebra: the indicator itself is, and conditioning does not increase the bound. -/

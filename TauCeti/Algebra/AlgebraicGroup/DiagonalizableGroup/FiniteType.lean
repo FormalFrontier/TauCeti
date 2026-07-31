@@ -38,6 +38,10 @@ on the general Hopf-algebra/affine-group-scheme anti-equivalence.
   homomorphism.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor`: the group-algebra functor from
   finitely generated commutative groups to finite-type commutative Hopf algebras.
+* `TauCeti.DiagonalizableGroup.coordinateMap_injective`: coordinate maps remember their
+  underlying group homomorphisms over a nontrivial base.
+* `TauCeti.DiagonalizableGroup.coordinateRingFunctor_faithful`: the coordinate-ring
+  functor is faithful over a nontrivial base.
 
 ## References
 
@@ -92,6 +96,24 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
   rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
+/-- Over a nontrivial base ring, the coordinate morphism remembers the group homomorphism
+that induced it. -/
+theorem coordinateMap_injective [Nontrivial R] {G H : FGCommGrpCat.{v}} :
+    Function.Injective (coordinateMap R :
+      (G ⟶ H) → (coordinateRing R G ⟶ coordinateRing R H)) := by
+  intro φ ψ h
+  apply FGCommGrpCat.hom_ext
+  ext g
+  apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
+  calc
+    MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) 1 =
+        FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)
+          (MonoidAlgebra.single g 1) := (coordinateMap_single R φ g 1).symm
+    _ = FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R ψ)
+          (MonoidAlgebra.single g 1) := by rw [h]
+    _ = MonoidAlgebra.single (FGCommGrpCat.toMonoidHom ψ g) 1 :=
+      coordinateMap_single R ψ g 1
+
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
 
 It is covariant on coordinate Hopf algebras. After applying the contravariant spectrum
@@ -125,6 +147,12 @@ Hopf-algebra morphism. -/
 theorem coordinateRingFunctor_map {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
     (coordinateRingFunctor R).map φ = coordinateMap R φ :=
   rfl
+
+/-- The coordinate-ring functor of finite-type diagonalizable groups is faithful over a
+nontrivial base ring. -/
+noncomputable instance coordinateRingFunctor_faithful [Nontrivial R] :
+    (coordinateRingFunctor R).Faithful where
+  map_injective h := coordinateMap_injective R h
 
 end DiagonalizableGroup
 

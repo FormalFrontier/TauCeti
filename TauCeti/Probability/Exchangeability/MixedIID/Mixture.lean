@@ -141,13 +141,16 @@ theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure 
     ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
       hν.measurable_mixingRepresentative.aemeasurable
   refine ⟨π, ?_, ?_⟩
-  · simpa only [π, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk] using
-      pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν
+  · change pathLaw μ X = (Measure.map ν μ).bind
+      fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
+    exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν
   · intro π' hπ'
     apply ProbabilityMeasure.toMeasure_injective
     refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
-    simpa only [π, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk] using
-      hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν)
+    change (π' : Measure (ProbabilityMeasure α)).bind
+        (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) =
+      (Measure.map ν μ).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
+    exact hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν)
 
 end Probability
 

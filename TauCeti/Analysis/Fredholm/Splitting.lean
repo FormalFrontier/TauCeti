@@ -170,7 +170,11 @@ theorem kerComplementEquivRange_apply (x : hT.kerComplement) :
   letI : CompleteSpace hT.kerComplement := hT.isClosed_kerComplement.completeSpace_coe
   letI : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
     (_root_.TauCeti.IsFredholm.isClosed_range hT).completeSpace_coe
-  rw [kerComplementEquivRange, LinearEquiv.coeFn_toContinuousLinearEquivOfContinuous]
+  -- `kerComplementEquivRange` is built by `toContinuousLinearEquivOfContinuous`, which is
+  -- transparent on the underlying function, so it has no usable equation lemma; `change` strips
+  -- the continuous-equivalence wrapper to reach Mathlib's `LinearEquiv` application lemma.
+  change ((LinearMap.kerComplementEquivRange (T : E →ₗ[𝕜] F)
+    hT.isTopCompl_ker_kerComplement.isCompl.symm) x : F) = T x
   exact LinearMap.kerComplementEquivRange_apply_coe _ _ x
 
 omit [IsRCLikeNormedField 𝕜] [CompleteSpace E] [CompleteSpace F] in

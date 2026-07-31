@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Basic
+public import TauCeti.RingTheory.Polynomial.Hermite.Real
 public import TauCeti.Probability.Distributions.Gaussian.PolynomialMemLp
 
 /-!
@@ -54,20 +55,19 @@ Hermite function `ψₙ`.
 It is defined at this layer rather than at the basis layer because every `MemLp` result below is
 already about it: `ψₙ` *is* this polynomial times `exp(-x²/2)`, up to normalization. -/
 noncomputable def hermiteDilated (n : ℕ) : Polynomial ℝ :=
-  ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * X)
+  (hermiteℝ n).comp (Polynomial.C (Real.sqrt 2) * X)
 
 /-- The defining equation of `TauCeti.hermiteDilated`, exported so that consumers in other modules
 can rewrite with it. -/
 theorem hermiteDilated_def (n : ℕ) :
     hermiteDilated n
-      = ((hermite n).map (Int.castRingHom ℝ)).comp (Polynomial.C (Real.sqrt 2) * Polynomial.X) := by
+      = (hermiteℝ n).comp (Polynomial.C (Real.sqrt 2) * Polynomial.X) := by
   rw [hermiteDilated]
 
 /-- Evaluating the dilated Hermite polynomial is `aeval (·√2)`. -/
 theorem eval_hermiteDilated (n : ℕ) (x : ℝ) :
     (hermiteDilated n).eval x = aeval (x * Real.sqrt 2) (hermite n) := by
-  rw [hermiteDilated_def, eval_comp, eval_mul, eval_X, eval_C, aeval_def, algebraMap_int_eq,
-    ← eval_map, mul_comm]
+  rw [hermiteDilated_def, eval_comp, eval_mul, eval_X, eval_C, eval_hermiteℝ, mul_comm]
 
 /-- **Target A2 (`L¹`).** Each Hermite function is integrable against Lebesgue measure: it is a
 polynomial in `x` times the Gaussian envelope `exp(-x²/2)`, the `v = 1` case of

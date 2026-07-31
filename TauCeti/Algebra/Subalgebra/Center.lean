@@ -90,16 +90,20 @@ def centerPiAlgEquiv :
     map_add' := fun _ _ => rfl
     commutes' := fun _ => rfl }
 
+-- This and `centerPiAlgEquiv_symm_apply_coe` are the defining equations of `centerPiAlgEquiv`:
+-- its `toFun` is literally `fun x i => ⟨x.1 i, _⟩` and its `invFun` is `fun y => ⟨fun i => (y i).1,
+-- _⟩`, so both sides differ only by the subtype coercion and hold by `rfl`.  The definition is
+-- deliberately not `@[expose]`d, so the pre-bump `simp [centerPiAlgEquiv]` has nothing to unfold;
+-- the parentheses in `(rfl)` keep the definitional step inside this module, leaving these two
+-- lemmas as the whole interface for importers.
 @[simp]
 theorem centerPiAlgEquiv_apply_coe (x : Subalgebra.center R (Π i, S i)) (i : ι) :
-    (centerPiAlgEquiv x i : S i) = (x : Π i, S i) i := by
-  simp [centerPiAlgEquiv]
+    (centerPiAlgEquiv x i : S i) = (x : Π i, S i) i := (rfl)
 
 /-- The inverse of `centerPiAlgEquiv` assembles a tuple of central elements componentwise. -/
 @[simp]
 theorem centerPiAlgEquiv_symm_apply_coe (y : Π i, Subalgebra.center R (S i)) (i : ι) :
-    (centerPiAlgEquiv.symm y : Π i, S i) i = (y i : S i) := by
-  simp [centerPiAlgEquiv]
+    (centerPiAlgEquiv.symm y : Π i, S i) i = (y i : S i) := (rfl)
 
 end Pi
 
