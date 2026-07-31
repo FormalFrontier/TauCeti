@@ -110,10 +110,6 @@ lemma prod_inv (A B : AbelianVariety K) :
 
 namespace prod
 
-private lemma toOverHom_injective {A B : AbelianVariety K} {f g : A ⟶ B}
-    (h : Hom.toOverHom f = Hom.toOverHom g) : f = g :=
-  (Hom.toOverFunctor (K := K)).map_injective h
-
 /-- The first projection from a product of abelian varieties. -/
 def fst (A B : AbelianVariety K) : prod A B ⟶ A := by
   refine Hom.mk'
@@ -167,7 +163,7 @@ lemma toOverHom_lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 @[simp]
 lemma lift_fst {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
     lift f g ≫ fst A B = f := by
-  apply toOverHom_injective
+  apply Hom.toOverHom_injective
   rw [Hom.toOverHom_comp, toOverHom_lift, toOverHom_fst]
   simp only [← Category.assoc]
   simp
@@ -176,7 +172,7 @@ lemma lift_fst {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 @[simp]
 lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
     lift f g ≫ snd A B = g := by
-  apply toOverHom_injective
+  apply Hom.toOverHom_injective
   rw [Hom.toOverHom_comp, toOverHom_lift, toOverHom_snd]
   simp only [← Category.assoc]
   simp
@@ -186,7 +182,7 @@ lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B}
     (hfst : f ≫ fst A B = g ≫ fst A B)
     (hsnd : f ≫ snd A B = g ≫ snd A B) : f = g := by
-  apply toOverHom_injective
+  apply Hom.toOverHom_injective
   rw [← cancel_mono (eqToHom (prod_toOver A B))]
   apply CartesianMonoidalCategory.hom_ext
   · have h := congrArg Hom.toOverHom hfst

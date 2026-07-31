@@ -122,7 +122,10 @@ theorem prodFundamentalGroupMulEquiv_zero_apply {p q : ℝ} (hp : p ≠ 0) (hq :
         fundamentalGroupMulEquiv_zero q hq
           (FundamentalGroup.map
             (ContinuousMap.snd : C(AddCircle p × AddCircle q, _)) (0, 0) γ)) := by
-  simp [prodFundamentalGroupMulEquiv_zero]
+  rw [prodFundamentalGroupMulEquiv_zero, prodFundamentalGroupMulEquiv_apply]
+  apply Prod.ext
+  · exact (fundamentalGroupMulEquiv_zero_apply p hp _).symm
+  · exact (fundamentalGroupMulEquiv_zero_apply q hq _).symm
 
 @[simp]
 theorem prodFundamentalGroupMulEquiv_zero_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
@@ -146,7 +149,8 @@ theorem piFundamentalGroupMulEquiv_zero_apply {ι : Type*} {p : ι → ℝ}
     piFundamentalGroupMulEquiv_zero hp γ i =
       fundamentalGroupMulEquiv_zero (p i) (hp i)
         (FundamentalGroup.map (ContinuousMap.eval i) (fun _ => 0) γ) := by
-  simp [piFundamentalGroupMulEquiv_zero]
+  rw [piFundamentalGroupMulEquiv_zero, piFundamentalGroupMulEquiv_apply]
+  exact (fundamentalGroupMulEquiv_zero_apply (p i) (hp i) _).symm
 
 @[simp]
 theorem piFundamentalGroupMulEquiv_zero_symm_apply {ι : Type*} {p : ι → ℝ}

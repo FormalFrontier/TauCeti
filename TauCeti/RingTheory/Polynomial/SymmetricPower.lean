@@ -233,7 +233,8 @@ multiplicity. -/
 @[expose]
 noncomputable def monicEquiv : Sym K n ≃ { p : K[X] // p.Monic ∧ p.natDegree = n } where
   toFun := toMonic
-  invFun p := ⟨p.1.roots, by rw [splits_iff_card_roots.mp (IsAlgClosed.splits p.1), p.2.2]⟩
+  invFun p := Sym.mk p.1.roots <| by
+    rw [splits_iff_card_roots.mp (IsAlgClosed.splits p.1), p.2.2]
   left_inv s := Sym.coe_injective (roots_toMonic s)
   right_inv p := Subtype.ext <| by
     rw [coe_toMonic]
