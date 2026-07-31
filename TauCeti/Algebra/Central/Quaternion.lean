@@ -127,6 +127,7 @@ theorem commute_iff' (h2 : IsLeftRegular (2 : R)) :
 Commuting with `i` and with `j` already forces all three conditions, and conversely those conditions
 make the cross product criterion of `TauCeti.Quaternion.commute_iff` hold against every
 quaternion. -/
+@[simp]
 theorem mem_center_iff :
     x ∈ Subalgebra.center R ℍ[R] ↔ 2 * x.imI = 0 ∧ 2 * x.imJ = 0 ∧ 2 * x.imK = 0 := by
   rw [Subalgebra.mem_center_iff]
