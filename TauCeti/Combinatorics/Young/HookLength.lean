@@ -48,7 +48,10 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
   1, Example 1, where the arm, leg and hook lengths of a cell are introduced.
 * [B. E. Sagan, *The Symmetric Group*][sagan2001], Section 3.10, for the hook-length formula.
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 5.
+  Layer 5, where `hookLength` is a pinned, individually claimable target.  Its milestone
+  `standardCount μ * ∏ c ∈ μ.cells, hookLength μ c = μ.card !` is stated in terms of Layer 0's
+  `standardCount`, so nothing here depends on the Specht modules of Layer 3; the Specht-module
+  dimension form is a derived corollary of Layer 5's separate standard-basis target.
 -/
 
 public section
