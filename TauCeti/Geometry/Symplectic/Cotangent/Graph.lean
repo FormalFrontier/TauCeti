@@ -20,16 +20,15 @@ in Lane F3 of the analytic Heegaard Floer roadmap.
 
 ## Main declarations
 
-* `TauCeti.SymplecticForm.orthogonal_cotangentGraph`: its symplectic orthogonal is the graph of
+* `TauCeti.SymplecticForm.orthogonal_graph_cotangent`: its symplectic orthogonal is the graph of
   the flipped map.
-* `TauCeti.SymplecticForm.isIsotropic_cotangentGraph_iff`: the graph is isotropic exactly when
+* `TauCeti.SymplecticForm.isIsotropic_graph_cotangent_iff`: the graph is isotropic exactly when
   the corresponding bilinear form is symmetric.
-* `TauCeti.SymplecticForm.isLagrangian_cotangentGraph_iff`: the same condition characterizes
+* `TauCeti.SymplecticForm.isLagrangian_graph_cotangent_iff`: the same condition characterizes
   Lagrangian graphs.
 
 The sign convention is `ω((v, α), (w, β)) = β(v) - α(w)`, as in
-`TauCeti.cotangentSymplecticForm`. The argument is the standard cotangent-space calculation;
-see McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Section 3.3.
+`TauCeti.cotangentSymplecticForm`. The argument is the routine cotangent-space calculation.
 -/
 
 public section
@@ -47,7 +46,7 @@ variable {A : V →ₗ[ℝ] Module.Dual ℝ V}
 No finite-dimensionality or reflexivity hypothesis is required: orthogonality to every
 `(w, A w)` directly says that the covector component is `w ↦ A w v`. -/
 @[simp]
-lemma orthogonal_cotangentGraph :
+lemma orthogonal_graph_cotangent :
     (cotangentSymplecticForm (V := V)).orthogonal A.graph = A.flip.graph := by
   ext x
   rw [mem_orthogonal_iff, LinearMap.mem_graph_iff]
@@ -67,7 +66,7 @@ lemma orthogonal_cotangentGraph :
 /-- The graph of `A : V → V*` is isotropic exactly when its associated bilinear form is
 symmetric. -/
 @[simp]
-lemma isIsotropic_cotangentGraph_iff :
+lemma isIsotropic_graph_cotangent_iff :
     (cotangentSymplecticForm (V := V)).IsIsotropic A.graph ↔ A.IsSymm := by
   rw [isIsotropic_iff]
   constructor
@@ -86,9 +85,9 @@ lemma isIsotropic_cotangentGraph_iff :
 /-- The graph of `A : V → V*` is coisotropic exactly when its associated bilinear form is
 symmetric. -/
 @[simp]
-lemma isCoisotropic_cotangentGraph_iff :
+lemma isCoisotropic_graph_cotangent_iff :
     (cotangentSymplecticForm (V := V)).IsCoisotropic A.graph ↔ A.IsSymm := by
-  rw [isCoisotropic_iff_le, orthogonal_cotangentGraph]
+  rw [isCoisotropic_iff_le, orthogonal_graph_cotangent]
   constructor
   · intro h
     refine ⟨fun v w => ?_⟩
@@ -108,16 +107,18 @@ lemma isCoisotropic_cotangentGraph_iff :
 Unlike dimension-counting proofs of this familiar fact, this statement works for arbitrary real
 modules: symmetry identifies the graph with its symplectic orthogonal directly. -/
 @[simp]
-lemma isLagrangian_cotangentGraph_iff :
+lemma isLagrangian_graph_cotangent_iff :
     (cotangentSymplecticForm (V := V)).IsLagrangian A.graph ↔ A.IsSymm := by
-  rw [isLagrangian_iff, isIsotropic_cotangentGraph_iff,
-    isCoisotropic_cotangentGraph_iff, and_self]
-
-/-- A symmetric linear map `V → V*` has Lagrangian graph in the cotangent symplectic space. -/
-lemma LinearMap.IsSymm.isLagrangian_cotangentGraph (hA : A.IsSymm) :
-    (cotangentSymplecticForm (V := V)).IsLagrangian A.graph :=
-  isLagrangian_cotangentGraph_iff.2 hA
+  rw [isLagrangian_iff, isIsotropic_graph_cotangent_iff,
+    isCoisotropic_graph_cotangent_iff, and_self]
 
 end SymplecticForm
+
+variable {A : V →ₗ[ℝ] Module.Dual ℝ V}
+
+/-- A symmetric linear map `V → V*` has Lagrangian graph in the cotangent symplectic space. -/
+lemma LinearMap.IsSymm.isLagrangian_graph_cotangent (hA : A.IsSymm) :
+    (cotangentSymplecticForm (V := V)).IsLagrangian A.graph :=
+  SymplecticForm.isLagrangian_graph_cotangent_iff.2 hA
 
 end TauCeti
