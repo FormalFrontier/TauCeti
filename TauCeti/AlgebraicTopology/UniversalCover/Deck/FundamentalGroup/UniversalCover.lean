@@ -61,7 +61,9 @@ lemma loopDeck_apply (g : FundamentalGroup X x₀) (p : UniversalCover x₀) :
 
 /-- The identity loop class induces the identity deck transformation. -/
 @[simp]
-lemma loopDeck_one : loopDeck x₀ 1 = 1 := by
+lemma loopDeck_one :
+    loopDeck x₀ (CategoryTheory.CategoryStruct.id
+      ({ as := x₀ } : FundamentalGroupoid X)) = 1 := by
   apply Subtype.ext
   apply Homeomorph.ext
   intro p
@@ -71,7 +73,7 @@ lemma loopDeck_one : loopDeck x₀ 1 = 1 := by
 /-- Multiplication of loop classes corresponds to composition of their deck transformations. -/
 @[simp]
 lemma loopDeck_mul (g h : FundamentalGroup X x₀) :
-    loopDeck x₀ (g * h) = loopDeck x₀ g * loopDeck x₀ h := by
+    loopDeck x₀ (CategoryTheory.CategoryStruct.comp h g) = loopDeck x₀ g * loopDeck x₀ h := by
   apply Subtype.ext
   apply Homeomorph.ext
   intro p
