@@ -5,10 +5,10 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Analysis.Analytic.Uniqueness
+public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Calculus.Deriv.Basic
-public import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Calculus.FDeriv.Analytic
+public import Mathlib.Analysis.Complex.Basic
+import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.LocallyConstant.Basic
 
 /-!
@@ -19,12 +19,17 @@ holomorphic germ into a multi-valued function: one carries the germ along `γ`, 
 each parameter time. This file introduces that notion and proves its fundamental property, that a
 continuation is **determined by its initial germ**.
 
-A continuation is recorded as a family `f : ℝ → ℂ → ℂ` of functions indexed by the path parameter,
+A continuation is recorded as a family `f : X → ℂ → ℂ` of functions indexed by the path parameter,
 subject to the requirement that `f t` be analytic at `γ t` and that the germ of `f u` at `γ u`
 agree with the germ of `f t` at `γ u` for all `u` near `t`. Equivalently — and this is the way to
 read the definition — the assignment `t ↦ (germ of f t at γ t)` is a *continuous lift* of `γ` to
 the étale space of holomorphic germs. The classical "chain of overlapping discs" definition is the
 same condition written with explicit discs; the germ formulation avoids carrying the discs around.
+
+The parameter space `X` is an arbitrary topological space, and the parameter set `s : Set X` is
+constrained only by `IsPreconnected` where the mathematics needs it. Nothing here uses the order or
+the field structure of the reals, so the usual `X = ℝ` with `s = Set.Icc 0 1` and Mathlib's
+`Path`, whose parameter space is `unitInterval`, are both directly available.
 
 ## The uniqueness theorem
 
@@ -62,8 +67,6 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   preconnected parameter set is determined by its germ at a single time.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
   along a path that stays inside its domain gives that function back.
-* `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_one_of_eventuallyEq_zero` — the uniqueness
-  theorem for a path parametrized by `[0, 1]`.
 
 ## References
 
@@ -76,9 +79,9 @@ public section
 
 namespace TauCeti
 
-open Filter Metric Set Topology
+open Filter Metric Topology
 
-variable {f g : ℝ → ℂ → ℂ} {γ : ℝ → ℂ} {s : Set ℝ}
+variable {X : Type*} [TopologicalSpace X] {f g : X → ℂ → ℂ} {γ : X → ℂ} {s : Set X}
 
 /-! ### Germ agreement is a locally constant property -/
 
@@ -115,8 +118,7 @@ theorem eventually_eventuallyEq_iff_of_analyticAt {F G : ℂ → ℂ} {z : ℂ} 
 This is `IsLocallyConstant.apply_eq_of_preconnectedSpace` transported to the subspace `s`; it is
 kept private because the general-topology statement belongs upstream rather than in a
 complex-analysis file. -/
-private theorem eq_of_isPreconnected_of_eventually_iff {X : Type*} [TopologicalSpace X]
-    {s : Set X} (hs : IsPreconnected s) {P : X → Prop}
+private theorem eq_of_isPreconnected_of_eventually_iff (hs : IsPreconnected s) {P : X → Prop}
     (hP : ∀ t ∈ s, ∀ᶠ u in 𝓝[s] t, (P u ↔ P t)) {a b : X} (ha : a ∈ s) (hb : b ∈ s) (hPa : P a) :
     P b := by
   have hlc : IsLocallyConstant fun x : s => P x.1 := by
@@ -138,7 +140,7 @@ sense that `f u` and `f t` have the same germ at `γ u` for every `u ∈ s` clos
 Only the germ of `f t` at `γ t` matters; the values of `f t` away from `γ t` are unconstrained.
 Reading the germs as points of the étale space of holomorphic germs over `ℂ`, the condition says
 precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`. -/
-structure IsAnalyticContinuationAlong (f : ℝ → ℂ → ℂ) (γ : ℝ → ℂ) (s : Set ℝ) : Prop where
+structure IsAnalyticContinuationAlong (f : X → ℂ → ℂ) (γ : X → ℂ) (s : Set X) : Prop where
   /-- The path is continuous on the parameter set. -/
   continuousOn : ContinuousOn γ s
   /-- At each parameter time the carried function is analytic at the corresponding path point. -/
@@ -149,7 +151,7 @@ structure IsAnalyticContinuationAlong (f : ℝ → ℂ → ℂ) (γ : ℝ → �
 namespace IsAnalyticContinuationAlong
 
 /-- A continuation restricts to any smaller parameter set. -/
-theorem mono (hf : IsAnalyticContinuationAlong f γ s) {s' : Set ℝ} (hs' : s' ⊆ s) :
+theorem mono (hf : IsAnalyticContinuationAlong f γ s) {s' : Set X} (hs' : s' ⊆ s) :
     IsAnalyticContinuationAlong f γ s' where
   continuousOn := hf.continuousOn.mono hs'
   analyticAt t ht := hf.analyticAt t (hs' ht)
@@ -172,7 +174,7 @@ theorem of_differentiableOn {U : Set ℂ} {F : ℂ → ℂ} (hU : IsOpen U) (hF 
 
 /-- **A continuation depends only on the germs it carries.** Replacing each `f t` by a function
 with the same germ at `γ t` again gives a continuation along `γ`. -/
-protected theorem congr (hf : IsAnalyticContinuationAlong f γ s) {f' : ℝ → ℂ → ℂ}
+protected theorem congr (hf : IsAnalyticContinuationAlong f γ s) {f' : X → ℂ → ℂ}
     (h : ∀ t ∈ s, f' t =ᶠ[𝓝 (γ t)] f t) : IsAnalyticContinuationAlong f' γ s where
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).congr (h t ht).symm
@@ -190,19 +192,19 @@ protected theorem deriv (hf : IsAnalyticContinuationAlong f γ s) :
   analyticAt t ht := (hf.analyticAt t ht).deriv
   locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.deriv
 
-/-- Continuations add. -/
+/-- Continuations add: the pointwise sum family `f + g` continues along `γ` as well. -/
 protected theorem add (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) :
-    IsAnalyticContinuationAlong (fun t => f t + g t) γ s where
+    IsAnalyticContinuationAlong (f + g) γ s where
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).add (hg.analyticAt t ht)
   locallyEq t ht := by
     filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.add hu'
 
-/-- Continuations multiply. -/
+/-- Continuations multiply: the pointwise product family `f * g` continues along `γ` as well. -/
 protected theorem mul (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) :
-    IsAnalyticContinuationAlong (fun t => f t * g t) γ s where
+    IsAnalyticContinuationAlong (f * g) γ s where
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).mul (hg.analyticAt t ht)
   locallyEq t ht := by
@@ -213,7 +215,7 @@ protected theorem mul (hf : IsAnalyticContinuationAlong f γ s)
 /-- Agreement of two continuations along the same path is a locally constant property of the
 parameter. This is the local step of the uniqueness theorem. -/
 theorem eventually_eventuallyEq_iff (hf : IsAnalyticContinuationAlong f γ s)
-    (hg : IsAnalyticContinuationAlong g γ s) {t : ℝ} (ht : t ∈ s) :
+    (hg : IsAnalyticContinuationAlong g γ s) {t : X} (ht : t ∈ s) :
     ∀ᶠ u in 𝓝[s] t, ((f u =ᶠ[𝓝 (γ u)] g u) ↔ (f t =ᶠ[𝓝 (γ t)] g t)) := by
   have hball := eventually_eventuallyEq_iff_of_analyticAt (hf.analyticAt t ht) (hg.analyticAt t ht)
   filter_upwards [(hf.continuousOn t ht).eventually hball, hf.locallyEq t ht, hg.locallyEq t ht]
@@ -225,10 +227,10 @@ theorem eventually_eventuallyEq_iff (hf : IsAnalyticContinuationAlong f γ s)
 path, over a preconnected parameter set, that carry the same germ at one parameter time carry the
 same germ at every parameter time.
 
-Preconnectedness of the parameter set cannot be dropped: over `s = {0, 1}` the hypotheses put no
-relation at all between the germs carried at `0` and at `1`. -/
+Preconnectedness of the parameter set cannot be dropped: over a two-point parameter set the
+hypotheses put no relation at all between the germs carried at its two points. -/
 theorem eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
-    (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : ℝ} (ha : a ∈ s)
+    (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b =ᶠ[𝓝 (γ b)] g b :=
   eq_of_isPreconnected_of_eventually_iff hs
@@ -238,7 +240,7 @@ theorem eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
 /-- Two continuations along the same path that carry the same germ at one parameter time take the
 same value at every parameter time. -/
 theorem eq_of_eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
-    (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : ℝ} (ha : a ∈ s)
+    (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b (γ b) = g b (γ b) :=
   (hf.eventuallyEq hg hs ha hb hab).eq_of_nhds
@@ -249,18 +251,9 @@ carries the germ of `F` throughout. So continuing a holomorphic function inside 
 produces a new branch: new branches can only appear once the path leaves the domain. -/
 theorem eventuallyEq_of_mapsTo {U : Set ℂ} {F : ℂ → ℂ} (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsPreconnected s) (hU : IsOpen U) (hF : DifferentiableOn ℂ F U)
-    (hmem : ∀ t ∈ s, γ t ∈ U) {a b : ℝ} (ha : a ∈ s) (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] F) :
+    (hmem : ∀ t ∈ s, γ t ∈ U) {a b : X} (ha : a ∈ s) (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] F) :
     f b =ᶠ[𝓝 (γ b)] F :=
   hf.eventuallyEq (of_differentiableOn hU hF hf.continuousOn hmem) hs ha hb hab
-
-/-- **Uniqueness of analytic continuation along a path parametrized by `[0, 1]`**, the form the
-monodromy theorem consumes: the germ reached at the endpoint of the path is determined by the germ
-at its start. -/
-theorem eventuallyEq_one_of_eventuallyEq_zero (hf : IsAnalyticContinuationAlong f γ (Icc 0 1))
-    (hg : IsAnalyticContinuationAlong g γ (Icc 0 1)) (h : f 0 =ᶠ[𝓝 (γ 0)] g 0) :
-    f 1 =ᶠ[𝓝 (γ 1)] g 1 :=
-  hf.eventuallyEq hg isPreconnected_Icc (left_mem_Icc.mpr zero_le_one)
-    (right_mem_Icc.mpr zero_le_one) h
 
 end IsAnalyticContinuationAlong
 
