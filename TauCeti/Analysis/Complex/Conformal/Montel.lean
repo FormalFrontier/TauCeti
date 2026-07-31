@@ -83,7 +83,8 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
       TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω := by
   classical
   haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
-  set f : ℕ → C(Ω, ℂ) := fun n => ⟨Ω.restrict (F n), ((hF n).continuousOn).restrict⟩ with hfdef
+  set f : ℕ → C(Ω, ℂ) :=
+    fun n => ⟨Ω.domRestrict (F n), ((hF n).continuousOn).domRestrict⟩ with hfdef
   -- `C(Ω, ℂ)` sits as a closed subspace of the uniform-on-compacts function space
   have hclemb : IsClosedEmbedding (⇑(UniformOnFun.ofFun {K : Set Ω | IsCompact K}) ∘
       (DFunLike.coe : C(Ω, ℂ) → (Ω → ℂ))) := by

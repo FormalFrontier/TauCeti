@@ -73,9 +73,10 @@ cross it do so by `change`, and each says in a comment which definitional equali
 The vector space `(Iᵢ)_j` lives in the universe of `Quiver.Path j i → k`, which is larger than the
 universe of `k` unless the vertex and arrow types are small. The vertex simple `Sᵢ` of
 `TauCeti.RepresentationTheory.Quiver.Representation.Simple` is built on `k` itself, so the two
-objects sit in a common category only when those universes agree, and the injective envelope
-`Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the projective cover `Pᵢ ↠ Sᵢ` is not stated in
-`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`.
+objects sit in a common category only when those universes agree, and the embedding
+`Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the surjection `Pᵢ ↠ Sᵢ` is not stated in
+`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`; both are stated in
+`TauCeti.RepresentationTheory.Quiver.Representation.Comparison`, where those universes are aligned.
 
 ## References
 
