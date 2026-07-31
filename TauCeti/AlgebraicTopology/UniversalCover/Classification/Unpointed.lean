@@ -31,7 +31,7 @@ subgroup, not to compare two covers which already exist.
 
 * `TauCeti.IsCoveringMap.exists_range_eq_map_conj_of_homeomorph_comp_eq`: an isomorphism of
   unpointed covers makes their recovered subgroups conjugate.
-* `TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_of_range_conj`: conjugate recovered
+* `TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq_map_conj`: conjugate recovered
   subgroups give an isomorphism of unpointed covers.
 * `TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_iff_exists_range_eq_map_conj`: the
   unpointed connected-cover comparison theorem.
@@ -66,8 +66,7 @@ source basepoint to a conjugate of the subgroup recovered from the target basepo
 The homeomorphism need not carry `e₀` to `f₀`: its image of `e₀` is another point of the
 target fibre, and changing from that point to `f₀` accounts for the conjugation. -/
 theorem exists_range_eq_map_conj_of_homeomorph_comp_eq
-    [PathConnectedSpace E] [LocallyPathConnectedSpace E]
-    [PathConnectedSpace F] [LocallyPathConnectedSpace F]
+    [PathConnectedSpace F]
     (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
     (hpe : p e₀ = x) (hqf : q f₀ = x) (h : E ≃ₜ F) (hcomp : q ∘ h = p) :
     ∃ γ : FundamentalGroup X x,
@@ -77,9 +76,23 @@ theorem exists_range_eq_map_conj_of_homeomorph_comp_eq
   let f₁ : q ⁻¹' {x} := ⟨h e₀, Set.mem_singleton_iff.mpr hqh⟩
   have hrange :
       (mapOfEq ⟨p, hp.continuous⟩ hpe).range =
-        (mapOfEq ⟨q, hq.continuous⟩ hqh).range :=
-    (IsCoveringMap.exists_homeomorph_comp_eq_iff_range_eq hp hq hpe hqh).mp
-      ⟨h, rfl, hcomp⟩
+        (mapOfEq ⟨q, hq.continuous⟩ hqh).range := by
+    have hpcomp : (⟨q, hq.continuous⟩ : C(F, X)).comp ⟨h, h.continuous⟩ =
+        ⟨p, hp.continuous⟩ := by
+      ext e
+      exact congrFun hcomp e
+    apply le_antisymm
+    · rintro _ ⟨γ, rfl⟩
+      refine ⟨mapOfEq ⟨h, h.continuous⟩ rfl γ, ?_⟩
+      rw [TauCeti.FundamentalGroup.mapOfEq_comp]
+      exact TauCeti.FundamentalGroup.mapOfEq_congr hpcomp _ _ γ
+    · rintro _ ⟨δ, rfl⟩
+      obtain ⟨γ, rfl⟩ :=
+        (TauCeti.FundamentalGroup.homeomorphMulEquiv h e₀).surjective δ
+      refine ⟨γ, ?_⟩
+      rw [TauCeti.FundamentalGroup.homeomorphMulEquiv_apply,
+        TauCeti.FundamentalGroup.mapOfEq_comp]
+      exact (TauCeti.FundamentalGroup.mapOfEq_congr hpcomp _ _ γ).symm
   let f : q ⁻¹' {x} := ⟨f₀, Set.mem_singleton_iff.mpr hqf⟩
   obtain ⟨γ, hγ⟩ := IsCoveringMap.exists_range_eq_map_conj hq f₁ f
   refine ⟨γ, ?_⟩
@@ -92,7 +105,7 @@ fibre points makes the covers isomorphic over the base.
 
 The source basepoint is first moved by monodromy so that its recovered subgroup equals the
 target subgroup, after which the pointed comparison theorem applies. -/
-theorem exists_homeomorph_comp_eq_of_range_conj
+theorem exists_homeomorph_comp_eq_of_range_eq_map_conj
     [PathConnectedSpace E] [LocallyPathConnectedSpace E]
     [PathConnectedSpace F] [LocallyPathConnectedSpace F]
     (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
@@ -136,7 +149,7 @@ theorem exists_homeomorph_comp_eq_iff_exists_range_eq_map_conj
     exact IsCoveringMap.exists_range_eq_map_conj_of_homeomorph_comp_eq
       hp hq hpe hqf h hcomp
   · rintro ⟨γ, hrange⟩
-    exact IsCoveringMap.exists_homeomorph_comp_eq_of_range_conj hp hq hpe hqf γ hrange
+    exact IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq_map_conj hp hq hpe hqf γ hrange
 
 end IsCoveringMap
 
