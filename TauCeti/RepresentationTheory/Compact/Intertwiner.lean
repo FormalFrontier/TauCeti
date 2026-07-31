@@ -95,6 +95,16 @@ private noncomputable def conjFamily (T : V →L[𝕜] W) : C(G, V →L[𝕜] W)
   continuous_toFun :=
     (hρ.comp continuous_inv).clm_comp (Continuous.clm_comp continuous_const hπ)
 
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
+  [CompleteSpace W] in
+/-- The integrand of the averaging construction, evaluated at a group element and a vector. This
+is the unfolding lemma that keeps the proofs below from reaching through `conjFamily`'s
+definition. -/
+@[simp]
+private theorem conjFamily_apply_apply (T : V →L[𝕜] W) (g : G) (v : V) :
+    conjFamily π hπ ρ hρ T g v = ρ g⁻¹ (T (π g v)) :=
+  rfl
+
 /-- The **Haar average of an operator over a pair of representations**,
 `∫ g, ρ g⁻¹ ∘ T ∘ π g ∂(haarProb G)`.
 
@@ -119,7 +129,6 @@ theorem averageOperator_apply (T : V →L[𝕜] W) (v : V) :
 theorem averageOperator_zero : averageOperator π hπ ρ hρ 0 = 0 := by
   have hzero : conjFamily π hπ ρ hρ 0 = 0 := by
     ext g v
-    change ρ g⁻¹ ((0 : V →L[𝕜] W) (π g v)) = 0
     simp
   rw [averageOperator, hzero, map_zero]
 
@@ -130,7 +139,6 @@ theorem averageOperator_add (T₁ T₂ : V →L[𝕜] W) :
   have hadd : conjFamily π hπ ρ hρ (T₁ + T₂)
       = conjFamily π hπ ρ hρ T₁ + conjFamily π hπ ρ hρ T₂ := by
     ext g v
-    change ρ g⁻¹ ((T₁ + T₂) (π g v)) = ρ g⁻¹ (T₁ (π g v)) + ρ g⁻¹ (T₂ (π g v))
     simp
   rw [averageOperator, averageOperator, averageOperator, hadd, map_add]
 
@@ -139,7 +147,6 @@ theorem averageOperator_smul (c : 𝕜) (T : V →L[𝕜] W) :
     averageOperator π hπ ρ hρ (c • T) = c • averageOperator π hπ ρ hρ T := by
   have hsmul : conjFamily π hπ ρ hρ (c • T) = c • conjFamily π hπ ρ hρ T := by
     ext g v
-    change ρ g⁻¹ ((c • T) (π g v)) = c • ρ g⁻¹ (T (π g v))
     simp
   rw [averageOperator, averageOperator, hsmul, map_smul]
 
@@ -184,9 +191,9 @@ private theorem conjAction_comp_conjFamily (T : V →L[𝕜] W) (g : G) :
     (conjAction π ρ g : C(V →L[𝕜] W, V →L[𝕜] W)).comp (conjFamily π hπ ρ hρ T)
       = (conjFamily π hπ ρ hρ T).comp (ContinuousMap.mulRight g) := by
   ext h v
-  change ρ g⁻¹ (ρ h⁻¹ (T (π h (π g v)))) = ρ (h * g)⁻¹ (T (π (h * g) v))
-  rw [mul_inv_rev, map_mul ρ, map_mul π]
-  rfl
+  simp only [ContinuousMap.comp_apply, ContinuousMap.coe_coe, conjAction_apply,
+    ContinuousLinearMap.comp_apply, conjFamily_apply_apply, ContinuousMap.coe_mulRight,
+    mul_inv_rev, map_mul ρ, map_mul π, mul_apply_eq_comp]
 
 /-- The averaged operator is fixed by conjugation: `ρ g⁻¹ ∘ A ∘ π g = A`. -/
 private theorem conjAction_averageOperator (T : V →L[𝕜] W) (g : G) :
@@ -208,8 +215,9 @@ theorem averageOperator_comp (T : V →L[𝕜] W) (g : G) :
     _ = (ρ g).comp ((ρ g⁻¹).comp ((averageOperator π hπ ρ hρ T).comp (π g))) := rfl
     _ = (ρ g).comp (averageOperator π hπ ρ hρ T) := by rw [h]
 
-/-- The intertwining identity, applied to a vector. -/
-theorem averageOperator_map (T : V →L[𝕜] W) (g : G) (v : V) :
+/-- The intertwining identity, applied to a vector, in the shape of Mathlib's
+`ContIntertwiningMap.isIntertwining`. -/
+theorem averageOperator_isIntertwining (T : V →L[𝕜] W) (g : G) (v : V) :
     averageOperator π hπ ρ hρ T (π g v) = ρ g (averageOperator π hπ ρ hρ T v) :=
   congrArg (fun S : V →L[𝕜] W ↦ S v) (averageOperator_comp π hπ ρ hρ T g)
 
@@ -232,8 +240,8 @@ theorem averageOperator_eq_self (T : V →L[𝕜] W)
     averageOperator π hπ ρ hρ T = T := by
   have hconst : conjFamily π hπ ρ hρ T = ContinuousMap.const G T := by
     ext g v
-    change ρ g⁻¹ (T (π g v)) = T v
-    rw [show T (π g v) = ρ g (T v) from congrArg (fun S : V →L[𝕜] W ↦ S v) (hT g)]
+    rw [conjFamily_apply_apply,
+      show T (π g v) = ρ g (T v) from congrArg (fun S : V →L[𝕜] W ↦ S v) (hT g)]
     exact Representation.inv_self_apply ρ.toRepresentation g (T v)
   rw [averageOperator, hconst, haarAverage_const]
 
@@ -269,23 +277,43 @@ theorem averageOperator_id :
   averageOperator_eq_self π hπ π hπ _ fun g ↦ by
     rw [ContinuousLinearMap.id_comp, ContinuousLinearMap.comp_id]
 
-omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
-  [CompleteSpace V] in
+end SelfAverage
+
+section Trace
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+/-- Completeness of `V` is not an extra hypothesis on the trace results below: a finite-dimensional
+normed space over an `RCLike` field is already complete. Mathlib keeps `FiniteDimensional.complete`
+out of the global instance set, so it is installed here as a local instance instead. -/
+local instance completeSpace_of_finiteDimensional : CompleteSpace V :=
+  FiniteDimensional.complete 𝕜 V
+
+variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
+
+include hπ
+
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
+  [SMulCommClass ℝ 𝕜 V] [FiniteDimensional 𝕜 V] in
 /-- Conjugation does not change the trace, so each value of the integrand has the trace of `T`. -/
-private theorem trace_conjFamily [FiniteDimensional 𝕜 V] (T : V →L[𝕜] V) (g : G) :
+private theorem trace_conjFamily (T : V →L[𝕜] V) (g : G) :
     LinearMap.trace 𝕜 V (conjFamily π hπ π hπ T g : V →ₗ[𝕜] V)
       = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
   have hid : ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) * ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) = 1 :=
     congrArg (fun S : V →L[𝕜] V ↦ (S : V →ₗ[𝕜] V)) (comp_inv_self π g)
   have hconj : ((conjFamily π hπ π hπ T g : V →L[𝕜] V) : V →ₗ[𝕜] V)
-      = ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) * (T : V →ₗ[𝕜] V) * ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) :=
-    rfl
+      = ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) * (T : V →ₗ[𝕜] V) * ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) := by
+    ext v
+    simp
   rw [hconj, LinearMap.trace_mul_comm, ← mul_assoc, hid, one_mul]
 
 /-- **Averaging preserves the trace.** In finite dimensions each conjugate `π g⁻¹ ∘ T ∘ π g` has the
 trace of `T`, and averaging a constant returns that constant. This is what fixes the normalizing
 factor `(dim V)⁻¹` in the first Schur orthogonality relation. -/
-theorem trace_averageOperator [FiniteDimensional 𝕜 V] (T : V →L[𝕜] V) :
+theorem trace_averageOperator (T : V →L[𝕜] V) :
     LinearMap.trace 𝕜 V (averageOperator π hπ π hπ T : V →ₗ[𝕜] V)
       = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
   set tr : (V →L[𝕜] V) →L[𝕜] 𝕜 :=
@@ -303,7 +331,7 @@ theorem trace_averageOperator [FiniteDimensional 𝕜 V] (T : V →L[𝕜] V) :
   rw [hconst, haarAverage_const] at h
   rw [← htr_apply, averageOperator, ← h]
 
-end SelfAverage
+end Trace
 
 section Orthogonality
 
@@ -335,12 +363,14 @@ theorem inner_averageOperator_of_isUnitary (hunitary : IsUnitary ρ) (T : V →L
     ⟪w, averageOperator π hπ ρ hρ T v⟫_𝕜 = ∫ g, ⟪ρ g w, T (π g v)⟫_𝕜 ∂haarProb G := by
   rw [inner_averageOperator π hπ ρ hρ T v w]
   refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
-  change ⟪w, ρ g⁻¹ (T (π g v))⟫_𝕜 = ⟪ρ g w, T (π g v)⟫_𝕜
+  -- `integral_congr_ae` leaves the two integrands applied but unreduced.
+  beta_reduce
   rw [hunitary.inner_map_right g⁻¹ w (T (π g v)), inv_inv]
 
 /-- **The `L²` inner product of two matrix coefficients is a matrix entry of an averaged rank-one
-operator.** With `T = ⟪w, ·⟫ • w'` the integrand `⟪ρ g v', T (π g v)⟫` is exactly the pointwise
-product `⟪ρ g v', w'⟫ · conj ⟪π g v, w⟫` computed by
+operator.** For the rank-one operator `InnerProductSpace.rankOne 𝕜 w' w = ⟪w, ·⟫ • w'` the
+integrand `⟪ρ g v', T (π g v)⟫` is exactly the pointwise product
+`⟪ρ g v', w'⟫ · conj ⟪π g v, w⟫` computed by
 `TauCeti.ContRepresentation.inner_matrixCoeffLp`.
 
 This is the identity that reduces Schur orthogonality to a statement about the intertwiner space:
@@ -349,15 +379,13 @@ the operator on the right is an intertwiner `π → ρ` by
 theorem inner_matrixCoeffLp_eq_inner_averageOperator (hunitary : IsUnitary ρ)
     (v w : V) (v' w' : W) :
     ⟪matrixCoeffLp π hπ v w, matrixCoeffLp ρ hρ v' w'⟫_𝕜
-      = ⟪v', averageOperator π hπ ρ hρ ((innerSL 𝕜 w).smulRight w') v⟫_𝕜 := by
+      = ⟪v', averageOperator π hπ ρ hρ (InnerProductSpace.rankOne 𝕜 w' w) v⟫_𝕜 := by
   rw [inner_matrixCoeffLp π hπ ρ hρ v w v' w',
     inner_averageOperator_of_isUnitary π hπ ρ hρ hunitary _ v v']
   refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
-  change ⟪ρ g v', w'⟫_𝕜 * (starRingEnd 𝕜) ⟪π g v, w⟫_𝕜
-    = ⟪ρ g v', ((innerSL 𝕜 w).smulRight w') (π g v)⟫_𝕜
-  rw [ContinuousLinearMap.smulRight_apply, innerSL_apply_apply, inner_smul_right,
-    inner_conj_symm w (π g v)]
-  exact mul_comm _ _
+  -- `integral_congr_ae` leaves the two integrands applied but unreduced.
+  beta_reduce
+  rw [InnerProductSpace.inner_right_rankOne_apply, inner_conj_symm w (π g v)]
 
 /-- **Schur orthogonality for inequivalent representations.** If the only continuous intertwiner
 `π → ρ` is zero, then every matrix coefficient of `π` is `L²`-orthogonal to every matrix
@@ -370,8 +398,8 @@ theorem schur_orthogonality_distinct (hunitary : IsUnitary ρ)
     (hdistinct : ∀ f : ContIntertwiningMap π ρ, f.toContinuousLinearMap = 0)
     (v w : V) (v' w' : W) :
     ⟪matrixCoeffLp π hπ v w, matrixCoeffLp ρ hρ v' w'⟫_𝕜 = 0 := by
-  have hzero : averageOperator π hπ ρ hρ ((innerSL 𝕜 w).smulRight w') = 0 := by
-    simpa using hdistinct (averageIntertwiner π hπ ρ hρ ((innerSL 𝕜 w).smulRight w'))
+  have hzero : averageOperator π hπ ρ hρ (InnerProductSpace.rankOne 𝕜 w' w) = 0 := by
+    simpa using hdistinct (averageIntertwiner π hπ ρ hρ (InnerProductSpace.rankOne 𝕜 w' w))
   rw [inner_matrixCoeffLp_eq_inner_averageOperator π hπ ρ hρ hunitary v w v' w', hzero]
   simp
 
