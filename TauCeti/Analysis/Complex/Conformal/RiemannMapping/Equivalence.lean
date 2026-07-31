@@ -30,12 +30,13 @@ other. This file proves those two statements, and the sharpness of the propernes
   `OpenPartialHomeomorph ℂ ℂ` conformal in both directions, and as a homeomorphism of subtypes.
 * `TauCeti.exists_bijOn_self_apply_eq_of_isSimplyConnected` — homogeneity: the biholomorphic
   self-maps of a simply connected open `Ω ⊆ ℂ` act transitively on `Ω`.
-* `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected` and
+* `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected`,
+  `TauCeti.not_injOn_univ_of_isSimplyConnected` and
   `TauCeti.not_bijOn_univ_of_isSimplyConnected` — an entire function with values in a simply
-  connected open proper set is constant, so `ℂ` itself is biholomorphic to no such set. This is
-  why `Ω ≠ Set.univ` cannot be dropped from the equivalence statements above. Homogeneity needs
-  no properness hypothesis: `Ω = Set.univ` is homogeneous too, because the translations already
-  act transitively on `ℂ`.
+  connected open proper set is constant, hence not injective, so `ℂ` itself is biholomorphic to no
+  such set. This is why `Ω ≠ Set.univ` cannot be dropped from the equivalence statements above.
+  Homogeneity needs no properness hypothesis: `Ω = Set.univ` is homogeneous too, because the
+  translations already act transitively on `ℂ`.
 
 ## Proof outline
 
@@ -263,20 +264,30 @@ theorem Differentiable.exists_const_forall_eq_of_isSimplyConnected {f : ℂ → 
   obtain ⟨c, hc⟩ := hcomp.exists_const_forall_eq_of_bounded hbdd
   exact ⟨f 0, fun z => hrbij.injOn (hmaps z) (hmaps 0) ((hc z).trans (hc 0).symm)⟩
 
+/-- **No injective entire function takes its values in a simply connected proper domain.** Such a
+function is constant by `TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected`, and a
+constant map on `ℂ` is not injective.
+
+Only the values of `f` are constrained, not the image: `f` is not required to cover `Ω`. -/
+theorem not_injOn_univ_of_isSimplyConnected {f : ℂ → ℂ} (hf : Differentiable ℂ f)
+    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ) (hmaps : MapsTo f univ Ω) :
+    ¬ InjOn f univ := by
+  intro hinj
+  obtain ⟨c, hc⟩ :=
+    Differentiable.exists_const_forall_eq_of_isSimplyConnected hf hΩo hΩc hΩ fun z =>
+      hmaps (mem_univ z)
+  exact zero_ne_one (hinj (mem_univ 0) (mem_univ 1) ((hc 0).trans (hc 1).symm))
+
 /-- **`ℂ` is conformally equivalent to no simply connected proper domain.** No entire function maps
-`ℂ` bijectively onto a simply connected open proper subset of `ℂ`, since by
-`TauCeti.Differentiable.exists_const_forall_eq_of_isSimplyConnected` it would be constant.
+`ℂ` bijectively onto a simply connected open proper subset of `ℂ`: it is already barred from being
+injective there by `TauCeti.not_injOn_univ_of_isSimplyConnected`.
 
 So the properness hypothesis in
 `TauCeti.exists_bijOn_differentiableOn_invFunOn_of_isSimplyConnected` cannot be dropped: `ℂ` is a
 simply connected domain lying in a biholomorphism class of its own. -/
 theorem not_bijOn_univ_of_isSimplyConnected {f : ℂ → ℂ} (hf : Differentiable ℂ f)
     (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩ : Ω ≠ univ) :
-    ¬ BijOn f univ Ω := by
-  intro hbij
-  obtain ⟨c, hc⟩ :=
-    Differentiable.exists_const_forall_eq_of_isSimplyConnected hf hΩo hΩc hΩ fun z =>
-      hbij.mapsTo (mem_univ z)
-  exact zero_ne_one (hbij.injOn (mem_univ 0) (mem_univ 1) ((hc 0).trans (hc 1).symm))
+    ¬ BijOn f univ Ω := fun hbij =>
+  not_injOn_univ_of_isSimplyConnected hf hΩo hΩc hΩ hbij.mapsTo hbij.injOn
 
 end TauCeti
