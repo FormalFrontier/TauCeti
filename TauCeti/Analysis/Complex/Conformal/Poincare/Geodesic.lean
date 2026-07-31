@@ -107,25 +107,19 @@ private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ I
 /-! ### The hyperbolic distance along a Euclidean diameter -/
 
 /-- The pseudo-hyperbolic expression of two points `u * a`, `u * b` of the same Euclidean
-diameter of the disc (`‖u‖ = 1`, `a` and `b` real) is `|a - b| / (1 - a * b)`: the Moebius
-denominator collapses to the real number `1 - a * b`. -/
+diameter of the disc (`‖u‖ = 1`, `a` and `b` real) is `|a - b| / (1 - a * b)`: the rotation by
+`u` is invisible (`TauCeti.pseudoHyperbolicExpr_const_mul`), and on the real axis the Moebius
+denominator is the real number `1 - a * b`. -/
 theorem pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a b : ℝ}
     (ha : |a| < 1) (hb : |b| < 1) :
     pseudoHyperbolicExpr (u * a) (u * b) = |a - b| / (1 - a * b) := by
   have ha' := abs_lt.1 ha
   have hb' := abs_lt.1 hb
   have hab : (0 : ℝ) < 1 - a * b := by nlinarith [ha'.1, ha'.2, hb'.1, hb'.2]
-  have hu1 : (starRingEnd ℂ) u * u = 1 := by
-    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, hu]
-    norm_num
-  have hden : (starRingEnd ℂ) (u * (b : ℂ)) * (u * (a : ℂ)) = (a : ℂ) * (b : ℂ) := by
-    rw [map_mul, Complex.conj_ofReal]
-    linear_combination ((a : ℂ) * (b : ℂ)) * hu1
-  rw [pseudoHyperbolicExpr_def, hden,
-    show u * (a : ℂ) - u * (b : ℂ) = u * ((a - b : ℝ) : ℂ) by push_cast; ring,
-    show (1 : ℂ) - (a : ℂ) * (b : ℂ) = ((1 - a * b : ℝ) : ℂ) by push_cast; ring,
-    norm_div, norm_mul, hu, one_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
-    Real.norm_eq_abs, abs_of_pos hab]
+  rw [pseudoHyperbolicExpr_const_mul hu, pseudoHyperbolicExpr_def, Complex.conj_ofReal,
+    show ((a : ℂ) - (b : ℂ)) / (1 - (b : ℂ) * (a : ℂ)) = (((a - b) / (1 - a * b) : ℝ) : ℂ) by
+      push_cast; ring,
+    Complex.norm_real, Real.norm_eq_abs, abs_div, abs_of_pos hab]
 
 /-- **The hyperbolic distance along a Euclidean diameter.** For `‖u‖ = 1` and real `a, b` of
 absolute value less than one, the hyperbolic distance between the disc points `u * a` and
