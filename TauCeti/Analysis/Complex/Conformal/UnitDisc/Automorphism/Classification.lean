@@ -22,7 +22,9 @@ This discharges the conformal-mapping roadmap's L2 description of the disc autom
 `Aut(𝔻) = {e^{iθ}(z−a)/(1−āz)}`.  It builds on Mathlib's Schwarz lemma and on the standard
 disc-Moebius API developed in Tau Ceti.  As with the other L0--L3 conformal-mapping material,
 this statement is coordinated with the upstream Mathlib Riemann-mapping effort
-leanprover-community/mathlib4#33505 and should be replaced by human-curated upstream API if a
+leanprover-community/mathlib4#33505, whose preceding human-curated work is
+`Analysis/Complex/RiemannMapping.lean` and `Analysis/Complex/BranchLogRoot.lean`; none of it is
+duplicated here, and this statement should be replaced by human-curated upstream API if a
 disc-automorphism classification lands there.
 -/
 
