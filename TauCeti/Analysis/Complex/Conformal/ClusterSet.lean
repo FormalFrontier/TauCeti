@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
+public import TauCeti.Analysis.Convex.ClusterSet
 public import TauCeti.Topology.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
@@ -34,6 +35,14 @@ extension from the hypotheses.
 * **An extension injective on the frontier is injective on the closure.** This supplies the
   injectivity hypothesis of `TauCeti.closureHomeomorph`, reducing it to a condition on the boundary
   alone, because the boundary values have just been shown to avoid the image.
+
+A third ingredient is again not about conformality and is proved upstream, in
+`TauCeti/Analysis/Convex/ClusterSet.lean`: on a **convex** domain — the unit disc, in the
+Riemann-mapping application — the cluster set of a continuous map with bounded image is a
+*continuum*, by `TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`. Combining it with the
+first item above, the boundary cluster set of a conformal map of the disc onto a bounded region is
+a nonempty compact connected subset of the frontier of the image, and Carathéodory's theorem is
+exactly the assertion that this continuum degenerates to a point.
 
 Together with the extension criterion these are the two halves of the vocabulary that layer **L5**
 of the conformal-mapping roadmap — Carathéodory's boundary correspondence — is stated in.
