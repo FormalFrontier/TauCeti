@@ -73,6 +73,15 @@ Both appeals to simplicity in `TauCeti.isSimpleRing_tensorProduct` are made by e
 fixed finite set form a two-sided ideal of `A`, and the `c : B` with `1 ⊗ₜ c ∈ I` form a two-sided
 ideal of `B`. Both ideals are nonzero, hence everything, which is how `1` enters `I`; phrasing the
 argument this way avoids ever expanding `1` as an explicit sum `∑ uⱼ a vⱼ`.
+
+## References
+
+This implements the **Tensor product of central simple is central simple** bullet of Layer 4 of the
+[semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md).
+That bullet also asks for `finrank K (A ⊗ B) = finrank K A * finrank K B`, which needs nothing new
+here: it is Mathlib's `Module.finrank_tensorProduct`, applicable to `A ⊗[K] B` as it stands. See
+R. S. Pierce, *Associative Algebras*, GTM 88, Chapter 12, and P. Gille, T. Szamuely, *Central Simple
+Algebras and Galois Cohomology*, Chapter 2.
 -/
 
 public section
