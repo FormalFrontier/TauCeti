@@ -102,12 +102,14 @@ theorem LocalGeneratorsData.IsInvertible.ofIso {q : SheafOfModules.LocalGenerato
         intro i
         rw [SheafOfModules.GeneratingSections.ofEpi_π]
         exact IsIso.comp_isIso' (hq.isLocallyFreeData.isIso i) inferInstance }
+  -- the index type of the transported presentation is the untouched `(q.generators i).I`, but the
+  -- goal presents it through `ofEpi`; `change` names it directly, there being no lemma for it.
   basisNonempty i := by
-    simpa only [LocalGeneratorsData.ofIso_generators,
-      SheafOfModules.GeneratingSections.ofEpi_I] using hq.basisNonempty i
+    change Nonempty (q.generators i).I
+    exact hq.basisNonempty i
   basisSubsingleton i := by
-    simpa only [LocalGeneratorsData.ofIso_generators,
-      SheafOfModules.GeneratingSections.ofEpi_I] using hq.basisSubsingleton i
+    change Subsingleton (q.generators i).I
+    exact hq.basisSubsingleton i
 
 /-- Invertibility transports along an isomorphism of sheaves of modules. -/
 theorem IsInvertible.of_iso (e : M ≅ N) [h : IsInvertible M] : IsInvertible N := by
@@ -126,14 +128,14 @@ instance free_isInvertible (I : Type u) [Nonempty I] [Subsingleton I] :
   exists_isInvertible :=
     ⟨(SheafOfModules.free.generatingSections (R := R) I).localGeneratorsData,
       { isLocallyFreeData := inferInstance
+        -- the index type of `free.generatingSections I` is `I` itself, so the two goals are the
+        -- ambient instances; `change` names `I` so instance search can see them.
         basisNonempty := fun _ => by
-          simpa only [SheafOfModules.GeneratingSections.localGeneratorsData_generators,
-            SheafOfModules.GeneratingSections.map_I,
-            SheafOfModules.free.generatingSections_I] using ‹Nonempty I›
+          change Nonempty I
+          infer_instance
         basisSubsingleton := fun _ => by
-          simpa only [SheafOfModules.GeneratingSections.localGeneratorsData_generators,
-            SheafOfModules.GeneratingSections.map_I,
-            SheafOfModules.free.generatingSections_I] using ‹Subsingleton I› }⟩
+          change Subsingleton I
+          infer_instance }⟩
 
 end
 

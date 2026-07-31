@@ -244,7 +244,8 @@ noncomputable def pi (a : ∀ i, HomotopyGroup N (Z i) (z i)) :
 theorem pi_mk (p : ∀ i, Ω^ N (Z i) (z i)) :
     pi (fun i ↦ (⟦p i⟧ : HomotopyGroup N (Z i) (z i))) =
       (⟦GenLoop.pi p⟧ : HomotopyGroup N (∀ i, Z i) z) := by
-  rw [pi, Quotient.choice_eq, Quotient.map_mk]
+  unfold pi
+  rw [Quotient.choice_eq, Quotient.map_mk]
 
 /-- Taking a coordinate of an indexed product of homotopy classes recovers that coordinate. -/
 @[simp]

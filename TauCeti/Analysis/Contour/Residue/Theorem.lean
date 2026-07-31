@@ -81,14 +81,13 @@ private lemma circleIntegral_const_mul_zpow_sub {c s₀ : ℂ} {R : ℝ} {n : �
     (hs₀ : s₀ ∈ ball c R) (hn : n < 0) :
     (∮ z in C(c, R), a * (z - s₀) ^ n)
       = 2 * ↑Real.pi * Complex.I * residue (fun z => a * (z - s₀) ^ n) s₀ := by
-  have hQ_mero : MeromorphicAt (fun z => (z - s₀) ^ n) s₀ := by fun_prop
   -- Residue of the pure monomial: the Taylor coefficient of the constant `1` at index `−1 − n`.
   have hresQ : residue (fun z => (z - s₀) ^ n) s₀
       = (if (-1 - n).toNat = 0 then (1 : ℂ) else 0) / ((-1 - n).toNat.factorial : ℂ) := by
     have h1 : AnalyticAt ℂ (fun _ : ℂ => (1 : ℂ)) s₀ := analyticAt_const
     rw [residue_eq_of_eventuallyEq_zpow_smul (by omega : n ≤ -1) h1
       (Filter.Eventually.of_forall fun z => by simp [smul_eq_mul]), iteratedDeriv_const]
-  rw [residue_const_mul a hQ_mero, hresQ]
+  rw [residue_const_mul a, hresQ]
   rcases eq_or_ne n (-1) with hn1 | hn1
   · subst hn1
     have hinv : (fun z => a * (z - s₀) ^ (-1 : ℤ)) = fun z => a * (z - s₀)⁻¹ := by

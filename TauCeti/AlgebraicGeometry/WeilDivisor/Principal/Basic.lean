@@ -324,7 +324,8 @@ noncomputable def unweightedDegreeClass (h : S.IsUnweightedDegreeZero) : S.Class
 @[simp]
 lemma unweightedDegreeClass_divisorClass (h : S.IsUnweightedDegreeZero) (D : WeilDivisor X) :
     unweightedDegreeClass h (S.divisorClass D) = degree D := by
-  rw [unweightedDegreeClass, weightedDegreeClass_divisorClass, weightedDegree_one_eq_degree]
+  exact (weightedDegreeClass_divisorClass (S := S) (fun _ => 1) h D).trans
+    (weightedDegree_one_eq_degree D)
 
 end OrderSystem
 

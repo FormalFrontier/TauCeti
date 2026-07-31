@@ -111,7 +111,7 @@ chosen generator. -/
     (P : {P // P ∈ genusPrimeDiscriminants hd}) :
     candidateGenusFieldSignPattern hd σ P =
       if σ (candidateGenusFieldGen hd P) = candidateGenusFieldGen hd P then 0 else 1 := by
-  rw [candidateGenusFieldSignPattern, signPattern]
+  simp only [candidateGenusFieldSignPattern, signPattern]
   congr 1
   exact propext (candidateGenusField_autCongr_fixes_gen_iff hd σ P)
 
@@ -134,8 +134,7 @@ chosen prime-discriminant roots. -/
     (σ : candidateGenusField hd ≃ₐ[ℚ] candidateGenusField hd) :
     galoisGroupEquivCandidateGenusField hd σ =
       Multiplicative.ofAdd (candidateGenusFieldSignPattern hd σ) := by
-  simp only [galoisGroupEquivCandidateGenusField,
-    candidateGenusFieldSignPattern, MulEquiv.trans_apply]
+  simp only [galoisGroupEquivCandidateGenusField, candidateGenusFieldSignPattern]
   exact galoisGroupEquivPrimeDiscriminantRadicands_apply
     (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
     (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)
