@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Conformal
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Normed.Module.Ball.Homeomorph
-import Mathlib.Topology.OpenPartialHomeomorph.Composition
 import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 
