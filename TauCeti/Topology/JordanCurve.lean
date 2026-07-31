@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.LocallyConvex.WithSeminorms
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Topology.Homeomorph.Lemmas
 public import TauCeti.Topology.LocallyConnected
+import Mathlib.Analysis.LocallyConvex.WithSeminorms
 
 /-!
 # Jordan curves

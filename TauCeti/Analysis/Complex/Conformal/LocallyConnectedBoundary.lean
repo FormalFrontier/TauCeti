@@ -5,13 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.LocallyConvex.WithSeminorms
-public import Mathlib.Analysis.Normed.Module.Convex
-public import Mathlib.Analysis.Normed.Module.RCLike.Real
-public import Mathlib.Topology.Algebra.Module.LocallyConvex
-public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Analysis.Complex.Conformal.JordanDomain
-public import TauCeti.Topology.LocallyConnected
+import Mathlib.Analysis.LocallyConvex.WithSeminorms
+import Mathlib.Analysis.Normed.Module.Convex
 
 /-!
 # Local connectedness of the boundary of a conformally mapped domain
@@ -30,12 +26,11 @@ question — a continuous extension `F` of a conformal map carries `closure U` o
 `closure (f '' U)` and `frontier U` onto `frontier (f '' U)` — so all that remains is to feed those
 identifications the compactness that boundedness of `U` provides.
 
-For the Riemann map itself the source side of the hypothesis is automatic, and the file records
-that: the closed unit disc is convex and hence locally connected, and the unit circle is locally
-connected by `TauCeti.locallyConnectedSpace_sphere`, an application of the same image theorem in
-`TauCeti/Topology/JordanCurve.lean`. So the disc corollaries below carry no local-connectedness
-hypothesis at all, and neither does the Jordan-domain corollary at the end of the file, whose
-boundary is locally connected because it is a Jordan curve.
+For a Jordan domain the source side of the hypothesis is automatic, its boundary being a Jordan
+curve, and the Riemann map is the case of the disc: so the Jordan-domain corollary below, and the
+disc corollary derived from it, carry no local-connectedness hypothesis at all. The closure
+corollary for the disc discharges its own hypothesis differently, the closed disc being convex and
+hence locally connected.
 
 Together with `TauCeti.exists_continuousOn_closure_eqOn`, the extension criterion of
 `TauCeti/Topology/ClusterSet.lean`, this delimits the L5 milestone from both sides: the criterion
@@ -57,12 +52,12 @@ topological spaces.
   `TauCeti.locallyConnectedSpace_frontier_image` — a continuous extension of a conformal map to the
   closure of a bounded domain carries local connectedness of the closure, respectively of the
   boundary, to the image.
+* `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier_image` — the same for a conformal map on
+  any Jordan domain, whose boundary is locally connected for free.
 * `TauCeti.locallyConnectedSpace_closure_image_ball` and
   `TauCeti.locallyConnectedSpace_frontier_image_ball` — the Riemann-map case: if a conformal map on
   the unit disc extends continuously to the closed disc, the closure and the boundary of its image
   are locally connected.
-* `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier_image` — the same for a conformal map on
-  any Jordan domain, whose boundary is locally connected for free.
 
 ## Coordination with upstream Mathlib
 
@@ -123,6 +118,22 @@ theorem locallyConnectedSpace_frontier_image [LocallyConnectedSpace (frontier U)
       (hUb.closure.subset frontier_subset_closure))
     (hFc.mono frontier_subset_closure)
 
+/-! ## The Jordan-domain case -/
+
+/-- **A conformal map of a Jordan domain that extends continuously has locally connected image
+boundary.** The source-side hypothesis of `TauCeti.locallyConnectedSpace_frontier_image` is
+automatic for a Jordan domain, since its boundary is a Jordan curve
+(`TauCeti.IsJordanDomain.locallyConnectedSpace_frontier`).
+
+Contrapositively: a domain whose boundary is not locally connected is not the image of a Jordan
+domain under a conformal map extending continuously to the closure — in particular, taking the
+disc for the Jordan domain, it is not one the Riemann map reaches with a continuous extension. -/
+theorem IsJordanDomain.locallyConnectedSpace_frontier_image (hU : IsJordanDomain U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hFc : ContinuousOn F (closure U))
+    (hFf : EqOn F f U) : LocallyConnectedSpace (frontier (f '' U)) :=
+  haveI := hU.locallyConnectedSpace_frontier
+  _root_.TauCeti.locallyConnectedSpace_frontier_image hU.isOpen hU.isBounded hfd hfi hFc hFf
+
 /-! ## The Riemann-map case -/
 
 /-- **The closure of the image of a Riemann map with a continuous extension is locally connected.**
@@ -140,8 +151,8 @@ theorem locallyConnectedSpace_closure_image_ball (hFc : ContinuousOn F (closedBa
   rwa [closure_ball (0 : ℂ) one_ne_zero]
 
 /-- **The boundary of the image of a Riemann map with a continuous extension is locally
-connected.** The unit disc case of `TauCeti.locallyConnectedSpace_frontier_image`: the unit circle
-is locally connected by `TauCeti.locallyConnectedSpace_sphere`, so no hypothesis on the source
+connected.** The unit disc case of `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier_image`,
+the disc being a Jordan domain (`TauCeti.isJordanDomain_ball`), so no hypothesis on the source
 boundary is left.
 
 Contrapositively, a simply connected domain whose boundary is not locally connected — the comb
@@ -150,27 +161,8 @@ map from the disc extending continuously to the closed disc. -/
 theorem locallyConnectedSpace_frontier_image_ball (hfd : DifferentiableOn ℂ f (ball 0 1))
     (hfi : InjOn f (ball 0 1)) (hFc : ContinuousOn F (closedBall 0 1))
     (hFf : EqOn F f (ball 0 1)) :
-    LocallyConnectedSpace (frontier (f '' ball (0 : ℂ) 1)) := by
-  haveI : LocallyConnectedSpace (frontier (ball (0 : ℂ) 1)) := by
-    rw [frontier_ball (0 : ℂ) one_ne_zero]
-    infer_instance
+    LocallyConnectedSpace (frontier (f '' ball (0 : ℂ) 1)) :=
   have hcl : closure (ball (0 : ℂ) 1) = closedBall 0 1 := closure_ball (0 : ℂ) one_ne_zero
-  exact locallyConnectedSpace_frontier_image isOpen_ball isBounded_ball hfd hfi (hcl ▸ hFc) hFf
-
-/-! ## The Jordan-domain case -/
-
-/-- **A conformal map of a Jordan domain that extends continuously has locally connected image
-boundary.** The source-side hypothesis of `TauCeti.locallyConnectedSpace_frontier_image` is
-automatic for a Jordan domain, since its boundary is a Jordan curve
-(`TauCeti.IsJordanDomain.locallyConnectedSpace_frontier`).
-
-Contrapositively: a domain whose boundary is not locally connected is not the image of a Jordan
-domain under a conformal map extending continuously to the closure — in particular, taking the
-disc for the Jordan domain, it is not one the Riemann map reaches with a continuous extension. -/
-theorem IsJordanDomain.locallyConnectedSpace_frontier_image (hU : IsJordanDomain U)
-    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hFc : ContinuousOn F (closure U))
-    (hFf : EqOn F f U) : LocallyConnectedSpace (frontier (f '' U)) :=
-  haveI := hU.locallyConnectedSpace_frontier
-  _root_.TauCeti.locallyConnectedSpace_frontier_image hU.isOpen hU.isBounded hfd hfi hFc hFf
+  (isJordanDomain_ball 0 one_pos).locallyConnectedSpace_frontier_image hfd hfi (hcl ▸ hFc) hFf
 
 end TauCeti
