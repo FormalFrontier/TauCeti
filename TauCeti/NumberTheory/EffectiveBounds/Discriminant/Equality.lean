@@ -83,13 +83,20 @@ theorem discr_eq_of_basis_isIntegral_of_span_eq_top
       LinearIndependent.restrict_scalars' ℤ b.linearIndependent
     have hcomp :
         ⇑(IsScalarTower.toAlgHom ℤ (𝓞 K) K).toLinearMap ∘ v = (b : ι → K) := by
-      funext i; simp [hv]
+      funext i
+      -- `v i` is `⟨b i, hb i⟩`, so the inclusion `𝒪_K → K` returns `b i` by definition; the
+      -- pre-bump `simp [hv]` no longer closes this.
+      rfl
     rw [← hcomp] at hb'
     exact hb'.of_comp _
   -- Package it as a `ℤ`-basis of `𝒪_K`, whose image in `K` is `b`.
   let c : Basis ι ℤ (𝓞 K) := Basis.mk hli hspan.ge
   have hc : (fun i => algebraMap (𝓞 K) K (c i)) = (b : ι → K) := by
-    funext i; simp [c, Basis.mk_apply, hv]
+    funext i
+    have hi : c i = v i := Basis.mk_apply hli hspan.ge i
+    rw [hi]
+    -- as above, `algebraMap (𝓞 K) K ⟨b i, hb i⟩` is `b i` by definition.
+    rfl
   have := discr_eq_of_integralBasis c
   rwa [hc] at this
 

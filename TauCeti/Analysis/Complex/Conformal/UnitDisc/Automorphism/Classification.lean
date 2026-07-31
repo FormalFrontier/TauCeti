@@ -30,7 +30,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 variable {f g : ℂ → ℂ}
@@ -78,7 +78,11 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
       leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -(g 0)) hneg hz
   obtain ⟨u, hu, hFu⟩ :=
     exists_eqOn_const_mul_of_leftInvOn_ball_of_map_zero hFdiff hGdiff hFmaps hGmaps hGF hFzero
-  refine ⟨⟨u, mem_sphere_zero_iff_norm.mpr hu⟩,
+  refine ⟨⟨u, by
+      have hmem : u ∈ (↑(Submonoid.unitSphere ℂ) : Set ℂ) := by
+        rw [Submonoid.coe_unitSphere]
+        exact mem_sphere_zero_iff_norm.mpr hu
+      exact hmem⟩,
     Complex.UnitDisc.mk (g 0) ha, Complex.UnitDisc.coe_mk _ _, fun z => ?_⟩
   have hz : (z : ℂ) ∈ ball (0 : ℂ) 1 := by
     simpa [mem_ball_zero_iff] using z.norm_lt_one
@@ -90,7 +94,7 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
   -- Beta-reduce the two scalar Moebius formulas so the inverse equality rewrites `hF`.
   dsimp only at hInv
   rw [hInv] at hF
-  rw [coe_unitDiscStandardAutomorphismEquiv_apply]
+  erw [coe_unitDiscStandardAutomorphismEquiv_apply]
   simpa only [Complex.UnitDisc.coe_mk] using hF
 
 end TauCeti

@@ -63,7 +63,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 /-- A permutation of the complex unit disc is *holomorphic* when it is the restriction of a

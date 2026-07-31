@@ -87,8 +87,23 @@ theorem joined_basepoint_ofBasedPath (α : BasedPath x₀) :
           apply Continuous.subtype_mk
           exact ContinuousMap.continuous_of_continuous_uncurry _
             (Path.continuous_initialSegmentFamily_uncurry α.toPath)
-      source' := by simp
-      target' := by simp }⟩
+      source' := by
+        rw [Path.initialSegmentFamily_zero, ofBasedPath_ofPath]
+        simp only [ofBasedPath_def]
+        apply UniversalCover.ext α.2
+        apply Path.Homotopic.hpath_hext
+        intro t
+        -- `BasedPath.ofPath` packages a path and `toPath` unpacks it, so the two sides agree
+        -- pointwise by definition.
+        rfl
+      target' := by
+        rw [Path.initialSegmentFamily_one, ofBasedPath_def]
+        simp only [ofBasedPath_def]
+        apply UniversalCover.ext rfl
+        apply Path.Homotopic.hpath_hext
+        intro t
+        -- as in `source'`, the two sides differ only in the proof arguments of `Path.cast`.
+        rfl }⟩
 
 /-- The universal cover is path-connected. -/
 instance pathConnectedSpace (x₀ : X) :

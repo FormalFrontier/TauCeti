@@ -147,7 +147,6 @@ theorem forget₂_semimoduleCat_corestrict_obj (f : C →ₗc[R] D)
   rfl
 
 /-- Corestriction leaves the underlying semimodule morphism unchanged. -/
-@[simp]
 theorem forget₂_semimoduleCat_corestrict_map (f : C →ₗc[R] D)
     {M N : FGComoduleCat.{u, v, x} R C} (g : M ⟶ N) :
     (forget₂ (FGComoduleCat.{u, w, x} R D) (SemimoduleCat.{x} R)).map
@@ -166,7 +165,6 @@ theorem corestrict_obj_coact_id (M : FGComoduleCat.{u, v, x} R C) :
   Comodule.corestrictCoact_id (R := R) (C := C) (M := M)
 
 /-- Corestriction functors compose in the coalgebra morphism on underlying linear maps. -/
-@[simp]
 theorem corestrict_map_comp_coalg_toLinearMap (f : C →ₗc[R] D) (g : D →ₗc[R] E)
     {M N : FGComoduleCat.{u, v, x} R C} (h : M ⟶ N) :
     (((corestrict (R := R) (C := C) (D := E) (g.comp f)).map h).hom).toLinearMap =
