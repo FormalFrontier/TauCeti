@@ -4,15 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Algebra.Subalgebra.Centralizer
 public import Mathlib.Algebra.Central.Basic
-public import Mathlib.LinearAlgebra.Basis.VectorSpace
-public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.SimpleRing.Basic
+public import Mathlib.RingTheory.TensorProduct.Basic
 public import Mathlib.RingTheory.TensorProduct.Free
--- Non-public: matrix algebras are used only by the worked examples at the end of the file, so
--- they are not part of this module's interface and downstream importers do not pay for them.
+-- Non-public: none of these appears in the type of an exported declaration. The centralizer
+-- subalgebra, `Basis.ofVectorSpace` and flatness are used only inside proofs, and the matrix
+-- algebras only by the worked examples at the end of the file, so downstream importers of this
+-- module do not pay for any of them.
+import Mathlib.Algebra.Algebra.Subalgebra.Centralizer
 import Mathlib.Algebra.Central.Matrix
+import Mathlib.LinearAlgebra.Basis.VectorSpace
+import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
 
 /-!
