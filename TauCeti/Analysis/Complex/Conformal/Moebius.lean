@@ -160,8 +160,9 @@ noncomputable def schwarzPickConjugate (f : ℂ → ℂ) (a : ℂ) : ℂ → ℂ
     fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ)
 
 /-- The Schwarz--Pick conjugate as a composite: the scalar Moebius formula centred at `-a` on the
-source, then `f`, then the scalar Moebius formula centred at `f a` on the target.  This is the
-characterisation to rewrite with; `schwarzPickConjugate` itself is not exposed. -/
+source, then `f`, then the scalar Moebius formula centred at `f a` on the target.  The body of
+`schwarzPickConjugate` is not `@[expose]`d, so downstream files rewrite with this lemma rather
+than unfolding the definition. -/
 lemma schwarzPickConjugate_def (f : ℂ → ℂ) (a : ℂ) :
     schwarzPickConjugate f a =
       (fun η => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
