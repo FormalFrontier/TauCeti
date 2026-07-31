@@ -78,10 +78,11 @@ This is groundwork for layer **L6 — Schwarz–Christoffel** of the conformal-m
 analytic half of that layer is developed here — the integrand, its holomorphy, and the
 straight-line boundary behaviour — none of which needs the boundary theory of layers L4–L5. That
 the resulting map is *onto* a polygon needs the L5 boundary correspondence and is left to a later
-file; the roadmap currently sequences all of L6 after L4 + L5, and whether the analytic half may
-precede them is asked in
-[TauCetiRoadmap issue #116](https://github.com/TauCetiProject/TauCetiRoadmap/issues/116). Layer L6
-is absent from the upstream Mathlib Riemann-mapping effort
+file. As the roadmap is written, however, all of L6 is sequenced after L4 + L5, and L5's concrete
+milestone — that the Riemann map of a Jordan domain extends to a homeomorphism of closures — has
+not landed, neither on `main` nor in an open PR. So this file runs ahead of the roadmap's
+sequencing: only a human maintainer can decide whether the analytic half may precede L5 or must
+wait for it. Layer L6 is absent from the upstream Mathlib Riemann-mapping effort
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), so this is new
 formalization rather than a temporary shim.
 
