@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Continuation
 public import Mathlib.Topology.Homotopy.Path
-import Mathlib.Analysis.Analytic.ChangeOrigin
 import Mathlib.Analysis.Analytic.Uniqueness
 import Mathlib.Topology.ContinuousMap.Compact
 import Mathlib.Topology.LocallyConstant.Basic
@@ -43,14 +42,15 @@ equality on the whole overlap.
 
 ## Monodromy
 
-With the engine in place, `TauCeti.monodromy` is a second connectedness argument, this time in
-the homotopy parameter: the terminal germ of the continuation along `h (t, ·)` is a locally
-constant function of `t`, because the paths `h (t, ·)` and `h (t₀, ·)` are uniformly close for
-`t` near `t₀` — that uniformity is the continuity of the curried homotopy `I → C(I, ℂ)` into the
-sup metric. A locally constant function on the connected parameter interval is constant.
+With the engine in place, `TauCeti.monodromy_theorem` is a second connectedness argument, this
+time in the homotopy parameter: the terminal germ of the continuation along `h (t, ·)` is a
+locally constant function of `t`, because the paths `h (t, ·)` and `h (t₀, ·)` are uniformly close
+for `t` near `t₀` — that uniformity is the continuity of the curried homotopy `I → C(I, ℂ)` into
+the sup metric. A locally constant function on the connected parameter interval is constant.
 
-`TauCeti.monodromy_refl` records the loop form: continuing a germ around a null-homotopic loop
-returns the germ one started with, since the continuation along the constant loop is constant.
+`TauCeti.monodromy_theorem_of_homotopy_refl` records the loop form: continuing a germ around a
+null-homotopic loop returns the germ one started with, since the continuation along the constant
+loop is constant.
 
 ## Main results
 
@@ -61,9 +61,10 @@ returns the germ one started with, since the continuation along the constant loo
 * `TauCeti.IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt` — **stability**: a
   continuation along a nearby path with the same endpoints and the same initial germ has the same
   terminal germ.
-* `TauCeti.monodromy` — **the monodromy theorem**: continuations along the paths of a homotopy
-  rel endpoints, all starting from one germ, all end at one germ.
-* `TauCeti.monodromy_refl` — a germ continued around a null-homotopic loop comes back to itself.
+* `TauCeti.monodromy_theorem` — **the monodromy theorem**: continuations along the paths of a
+  homotopy rel endpoints, all starting from one germ, all end at one germ.
+* `TauCeti.monodromy_theorem_of_homotopy_refl` — a germ continued around a null-homotopic loop
+  comes back to itself.
 
 ## Relation to Mathlib
 
@@ -76,8 +77,8 @@ construction is a larger, independent piece of work. The route taken instead reu
 area already has — germ-level uniqueness of continuation along a fixed path
 (`IsAnalyticContinuationAlong.eventuallyEq`) — and adds only the metric stability engine, which
 is the concrete content that the abstract theorem's separatedness hypothesis packages. Building
-the étale space and rederiving `monodromy` from Mathlib's abstract theorem remains worthwhile
-follow-up work.
+the étale space and rederiving `monodromy_theorem` from Mathlib's abstract theorem remains
+worthwhile follow-up work.
 
 This advances the conformal-mapping roadmap's L4 target "the monodromy theorem (continuations
 along homotopic paths agree)" (see `ConformalMapping/README.md`). L4 is not covered by the
@@ -217,14 +218,14 @@ This is the metric heart of the monodromy theorem: nearby paths with common endp
 germ to the same place. -/
 theorem exists_eventuallyEq_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsCompact s) (hsc : IsPreconnected s) {a b : X} (ha : a ∈ s) (hb : b ∈ s) :
-    ∃ ρ > 0, ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ), ContinuousOn γ' s →
+    ∃ ρ > 0, ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ),
       (∀ t ∈ s, dist (γ' t) (γ t) < ρ) → γ' a = γ a → γ' b = γ b →
       IsAnalyticContinuationAlong g γ' s → g a =ᶠ[𝓝 (γ a)] f a → g b =ᶠ[𝓝 (γ b)] f b := by
   obtain ⟨ρ, hρ, F, hF, hcont⟩ := hf.exists_isAnalyticContinuationAlong_of_dist_lt hs
-  refine ⟨ρ, hρ, fun γ' g hγ' hd hga hgb hg hstart => ?_⟩
+  refine ⟨ρ, hρ, fun γ' g hd hga hgb hg hstart => ?_⟩
   have h₀ : g a =ᶠ[𝓝 (γ' a)] F a := by
     rw [hga]; exact hstart.trans (hF a ha).symm
-  have h₁ := hg.eventuallyEq (hcont γ' hγ' hd) hsc ha hb h₀
+  have h₁ := hg.eventuallyEq (hcont γ' hg.continuousOn hd) hsc ha hb h₀
   rw [hgb] at h₁
   exact h₁.trans (hF b hb)
 
@@ -242,7 +243,8 @@ The proof is a connectedness argument in the homotopy parameter. For `t` near `t
 map into `C(I, ℂ)` with its sup metric; so
 `IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt` applies and the terminal germ
 is a locally constant function of `t` on the connected interval. -/
-theorem monodromy {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homotopy p₁) {f : I → I → ℂ → ℂ}
+theorem monodromy_theorem {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homotopy p₁)
+    {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : ∀ t, f t 0 =ᶠ[𝓝 z₀] f 0 0) (t : I) :
     f t 1 =ᶠ[𝓝 z₁] f 0 1 := by
@@ -267,8 +269,7 @@ theorem monodromy {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homot
     have hstep : f t 1 =ᶠ[𝓝 z₁] f t₀ 1 := by
       have h₀ : f t 0 =ᶠ[𝓝 (h (t₀, 0))] f t₀ 0 := by
         simpa using (hstart t).trans (hstart t₀).symm
-      have := hkey (fun x => h (t, x)) (f t) (hf t).continuousOn (fun x _ => ht x) (by simp)
-        (by simp) (hf t) h₀
+      have := hkey (fun x => h (t, x)) (f t) (fun x _ => ht x) (by simp) (by simp) (hf t) h₀
       simpa using this
     exact propext ⟨fun hp => hstep.symm.trans hp, fun hp => hstep.trans hp⟩
   have := hloc.apply_eq_of_preconnectedSpace t 0
@@ -278,10 +279,11 @@ theorem monodromy {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homot
 is homotopic rel endpoints to the constant loop and a germ at `z₀` continues along every path of
 the homotopy, then continuing it along `p` gives the germ back.
 
-Together with the uniqueness of continuation along a fixed path, this is the reason a germ on a
-simply connected domain is single-valued: no loop there can create a new branch. -/
-theorem monodromy_refl {z₀ : ℂ} {p : Path z₀ z₀} (h : p.Homotopy (Path.refl z₀))
-    {f : I → I → ℂ → ℂ}
+Together with the uniqueness of continuation along a fixed path, this is the reason a germ that
+can be analytically continued along every path of a simply connected domain is single-valued
+there: no loop in such a domain can create a new branch. -/
+theorem monodromy_theorem_of_homotopy_refl {z₀ : ℂ} {p : Path z₀ z₀}
+    (h : p.Homotopy (Path.refl z₀)) {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : ∀ t, f t 0 =ᶠ[𝓝 z₀] f 0 0) :
     f 0 1 =ᶠ[𝓝 z₀] f 0 0 := by
@@ -292,9 +294,9 @@ theorem monodromy_refl {z₀ : ℂ} {p : Path z₀ z₀} (h : p.Homotopy (Path.r
     .const continuousOn_const fun _ _ => hc.analyticAt 0 (mem_univ 0)
   have hloop : f 1 1 =ᶠ[𝓝 z₀] f 1 0 :=
     hc.eventuallyEq hc' isPreconnected_univ (mem_univ 0) (mem_univ 1) .rfl
-  exact (monodromy h hf hstart 1).symm.trans (hloop.trans (hstart 1))
+  exact (monodromy_theorem h hf hstart 1).symm.trans (hloop.trans (hstart 1))
 
-/-- The hypotheses of `monodromy` are satisfiable, so the theorem is not vacuous: a function
+/-- The hypotheses of `monodromy_theorem` are satisfiable, so it is not vacuous: a function
 holomorphic on an open set through which the whole homotopy passes continues itself along every
 path of that homotopy, from one and the same germ. (What monodromy then says in this special
 case is of course trivial — a single-valued function carries a single germ; the theorem has
