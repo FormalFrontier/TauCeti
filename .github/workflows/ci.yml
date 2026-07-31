@@ -23,6 +23,7 @@ jobs:
           python3 scripts/pr_status/test_stuck_alerts.py
           python3 scripts/test_roadmap_label.py
           python3 scripts/pr_status/test_pr_labels.py
+          python3 scripts/pr_status/test_zulip.py
           python3 scripts/test_structure_nudge.py
 
       # The two-library split is build convenience, not a trust boundary.

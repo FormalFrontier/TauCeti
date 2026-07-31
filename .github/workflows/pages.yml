@@ -13,10 +13,10 @@ name: Pages
 # interproject linking (DOCGEN_LOCAL_MODULE_ROOTS / DOCGEN_DEPS_DOCS_URL, see the doc build
 # step) doc-gen4 renders pages for only the TauCeti.* modules and links references to Mathlib
 # out to the hosted mathlib4_docs, so the output is small (tens of MB, not the whole rendered
-# closure). It is rebuilt at most once a day — on the schedule below, plus the first run that
-# finds no cached docs — and cached under a date-bucketed key. A push that touches only web/
-# (or the chart scripts) reuses the cached docs, since the mathematics has not changed, so
-# those site deploys stay fast.
+# closure). It is normally rebuilt every three hours — on the schedule below, plus the first
+# run that finds no cached docs — and cached under a run-specific key. A push that touches
+# only web/ (or the chart scripts) reuses the cached docs, since the mathematics has not
+# changed, so those site deploys stay fast.
 #
 # The Statistics page's "lines of code by date" charts are regenerated here, at deploy
 # time, straight from git history (see scripts/loc_graph.py) — they are not committed
@@ -24,7 +24,7 @@ name: Pages
 # way, but from the PR labels rather than git, since roadmap attribution lives in the
 # `roadmap/<Area>` labels; it reads them via gh (hence pull-requests: read below). The
 # participation snapshot likewise reads GitHub through gh, but deduplicates the current
-# human actors instead of reconstructing a historical series. The daily `schedule` below
+# human actors instead of reconstructing a historical series. The three-hour `schedule` below
 # redeploys the site so the charts track the project as it grows.
 # (This replaces the old loc-graph workflow, which committed the SVGs to main on a
 # schedule; main now sits behind a merge queue that refuses direct pushes, so generating
@@ -41,7 +41,7 @@ on:
       - 'scripts/participant_graph.py'
       - '.github/workflows/pages.yml'
   schedule:
-    - cron: "0 6 * * *"   # Daily 06:00 UTC: refresh the lines-of-code charts and the API docs
+    - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
   workflow_dispatch:
 
 permissions:
@@ -55,7 +55,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Let an active deployment finish before a newly triggered run starts.
+  cancel-in-progress: false
 
 env:
   # Run JavaScript actions on Node 24 (Node 20 is deprecated on GitHub runners).
@@ -68,6 +69,8 @@ jobs:
   # is hygiene so a future PR trigger here could never reintroduce the collision.
   build-site:
     runs-on: ubuntu-latest
+    outputs:
+      docs-rebuilt: ${{ steps.docs-plan.outputs.build }}
     defaults:
       run:
         working-directory: web
@@ -116,7 +119,7 @@ jobs:
 
       # A current snapshot rather than a historical series: participants are deduplicated
       # across PRs, issues, comments/reviews, and default-branch commits in all four repos.
-      # This API scan runs only in the daily/deploy build, never at request time.
+      # This API scan runs only in the scheduled/deploy build, never at request time.
       - name: Regenerate the participation snapshot into static_files
         working-directory: ${{ github.workspace }}
         env:
@@ -133,28 +136,23 @@ jobs:
           ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      # --- API documentation (doc-gen4), built at most once a day ------------------------
+      # --- API documentation (doc-gen4), normally built every three hours ----------------
       # The doc build is the heavy part of this job, and the mathematics only changes on
       # pushes to TauCeti/ (never on the web/-only pushes that trigger this workflow), so the
-      # generated HTML is cached under a per-day key and reused on same-day / web-only runs.
+      # generated HTML is cached under a run-specific key and reused on web-only runs.
 
-      - name: Compute today's date (the daily docs cache bucket)
-        id: date
-        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-
-      # restore-only: the doc tree is several GB, so we do not want the automatic post-job
-      # re-upload that plain actions/cache does on runs that merely reused the docs. The save
-      # below runs only when we actually rebuilt.
+      # Restore-only avoids the automatic post-job re-upload that plain actions/cache does
+      # on runs that merely reused the docs. The save below runs only after an actual rebuild.
       - name: Restore the generated API docs
         id: docs-cache
         uses: actions/cache/restore@v4
         with:
           path: docbuild/.lake/build/doc
-          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ steps.date.outputs.today }}
+          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ github.run_id }}
           restore-keys: |
             docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-
 
-      # Rebuild on the daily schedule / manual dispatch, or whenever no cached docs exist at
+      # Rebuild on the three-hour schedule / manual dispatch, or whenever no cached docs exist at
       # all (e.g. the first run after this workflow lands) so /docs is never missing for long.
       - name: Decide whether to (re)build the API docs
         id: docs-plan
@@ -194,12 +192,12 @@ jobs:
           rm -rf .lake/build/doc .lake/build/doc-data
           lake build TauCetiDocs:docs
 
-      - name: Save the generated API docs to today's cache bucket
+      - name: Save the generated API docs
         if: steps.docs-plan.outputs.build == 'true'
         uses: actions/cache/save@v4
         with:
           path: docbuild/.lake/build/doc
-          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ steps.date.outputs.today }}
+          key: docs-html-${{ hashFiles('lean-toolchain', 'docbuild/lake-manifest.json') }}-${{ github.run_id }}
 
       - name: Cache Lake builds (site + examples)
         uses: actions/cache@v4
@@ -224,7 +222,7 @@ jobs:
       - name: Generate static site
         run: lake exe web --output _out
 
-      # Place the doc-gen4 output (fresh from this run, or restored from the daily cache) at
+      # Place the doc-gen4 output (fresh from this run, or restored from the latest cache) at
       # /docs inside the site artifact. deploy-pages replaces the whole site each time, so the
       # docs must ride along in every deploy — hence the cache that keeps them available on
       # runs that did not rebuild them.
@@ -252,3 +250,41 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # A moving source ref for consumers that need to stay in lockstep with the published API
+  # documentation. Advance it only after this run freshly rebuilt the docs and successfully
+  # deployed them. Cached site-only deploys must leave it alone: their docs belong to the
+  # earlier commit already named by this ref.
+  advance-docgen-ref:
+    needs: [build-site, deploy]
+    if: needs.build-site.outputs.docs-rebuilt == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fast-forward the docgen branch to the documented commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          endpoint="repos/$REPO/git/refs/heads/docgen"
+          current=$(gh api "repos/$REPO/git/matching-refs/heads/docgen" \
+            --jq '.[] | select(.ref == "refs/heads/docgen") | .object.sha')
+
+          if [ -n "$current" ]; then
+            if [ "$current" = "$CANDIDATE" ]; then
+              echo "docgen already points to $CANDIDATE"
+              exit 0
+            fi
+
+            # force=false makes an unexpected rewind or divergent update fail closed.
+            gh api --method PATCH "$endpoint" \
+              -f sha="$CANDIDATE" \
+              -F force=false
+          else
+            gh api --method POST "repos/$REPO/git/refs" \
+              -f ref='refs/heads/docgen' \
+              -f sha="$CANDIDATE"
+          fi

@@ -20,12 +20,12 @@ reactions can never disagree:
 | --- | --- | --- |
 | lifecycle `merged` / `closed` | *(no label)* | `:merge:` / `:closed-pr:` |
 | ci `running` | `awaiting-CI` | 🟡 `yellow` |
-| ci not reported | `awaiting-CI` | *(no CI reaction)* |
+| ci not reported | `awaiting-CI` | 🟡 `yellow` |
 | ci `failure` | `awaiting-author` | 🔴 `red_circle` |
 | ci `success`, review `changes` | `awaiting-author` | 🟢 + ✍️ `writing` |
 | ci `success`, review `approved` | `ready-to-merge` | 🟢 + ✔️ `check` |
-| ci `success`, review pending, live marker | `review-in-progress` | 🟢 + 👀/▶️ |
-| ci `success`, review pending, no marker | `awaiting-review` | 🟢 + 👀/▶️ |
+| ci `success`, review pending, live marker | `review-in-progress` | 🟢 + 👀 |
+| ci `success`, review pending, no marker | `awaiting-review` | 🟢 |
 
 Both review signals (the scoreboard meta and the in-progress marker) are read
 only from comments by a repo-associated author (OWNER/MEMBER/COLLABORATOR), from
@@ -85,27 +85,33 @@ reconciles two independent, mutually-exclusive reaction groups from `core.derive
 
 | Group | State | Emoji |
 | --- | --- | --- |
-| **CI (build)** | running | 🟡 `yellow` |
+| **CI (build)** | waiting / running | 🟡 `yellow` |
 | | passed | 🟢 `green_circle` |
 | | failed | 🔴 `red_circle` |
-| **Review / lifecycle** | review has begun | 👀 `eyes` |
-| | running, green so far | ▶️ `play` |
+| **Review / lifecycle** | review in progress | 👀 `eyes` |
+| | waiting for review | *(none)* |
 | | changes requested / blocked | ✍️ `writing` |
 | | all review done, all green | ✔️ `check` |
 | | merged | `:merge:` |
 | | closed, not merged | `:closed-pr:` |
 
-The message is found-or-created from the PR's title *before* the fallible CI and
-review reads, so a transient GitHub hiccup can never leave a PR without its
-durable Zulip message. Only the bot's *own* reactions are authoritative (presence
-is judged by the bot's user id), so a human reacting on a status message never
-confuses reconciliation.
+Each message includes the PR's author and the area from every `roadmap/...`
+label (with `unlabelled` distinct from the deliberate `roadmap/none`). A later
+label change edits the existing message in place, so a roadmap label added after
+the PR opens is still shown. The message is found-or-created from the PR's
+metadata *before* the fallible CI and review reads, so a transient GitHub hiccup
+can never leave a PR without its durable Zulip message. Only the bot's *own*
+reactions are authoritative (presence is judged by the bot's user id), so a
+human reacting on a status message never confuses reconciliation.
 
-Three workflows drive it:
+Three event-driven workflows drive it:
 
 - [`zulip-pr.yml`](../../.github/workflows/zulip-pr.yml): on PR
-  `opened`/`reopened`/`closed`. Creates the message and owns the merged/closed
-  ending.
+  `opened`/`reopened`/`closed` and label changes. Creates the message, keeps its
+  roadmap metadata current, and owns the merged/closed ending. The automatic
+  status-label transitions also make review reactions refresh promptly; on an
+  open PR they can self-heal a message missed by a transient opening failure,
+  while label churn on a closed PR can never create a late post.
 - [`zulip-pr-status.yml`](../../.github/workflows/zulip-pr-status.yml): on
   `workflow_run` of `pr-build` and `Review`. Refreshes the CI and review groups.
 - [`zulip-healthcheck.yml`](../../.github/workflows/zulip-healthcheck.yml): a
@@ -194,25 +200,43 @@ for pr in $(gh pr list --repo TauCetiProject/TauCeti --state open --json number 
   python3 scripts/pr_status/labels.py reconcile "$pr"
 done
 
-# Zulip: needs the bot credentials exported. Ascending == chronological.
+# Zulip: needs the status bot credentials exported. This paginates the complete
+# PR history in one low-request stream and edits existing posts in place,
+# including posts whose URL predates the FormalFrontier -> TauCetiProject transfer.
 export ZULIP_API_KEY=... ZULIP_EMAIL=... ZULIP_SITE=https://leanprover.zulipchat.com
-for pr in $(gh pr list --repo TauCetiProject/TauCeti --state all --limit 1000 --json number --jq '.[].number' | sort -n); do
-  python3 scripts/pr_status/zulip.py reconcile "$pr" --create
-done
+gh api --paginate \
+  'repos/TauCetiProject/TauCeti/pulls?state=all&sort=created&direction=asc&per_page=100' \
+  --jq '.[] | {
+    number,
+    state,
+    merged: (.merged_at != null),
+    head: .head.sha,
+    title,
+    author: .user.login,
+    roadmaps: [.labels[].name | select(startswith("roadmap/"))]
+  }' | python3 scripts/pr_status/zulip.py backfill --dry-run --strict
+
+# After reviewing the dry-run summary, omit --dry-run to apply it.
 ```
 
 Re-running either is safe: it converges to current GitHub state and changes
-nothing else. `pr-labels.yml` also has a `workflow_dispatch` that reconciles a
-single PR's label from the Actions tab.
+nothing else. The `Zulip PR backfill` workflow runs the same full-history post
+update with the repository's status-bot secrets, so old posts can be migrated
+without copying credentials locally. It defaults to a dry run, continues past
+individual failures and reports them together, retries transient Zulip failures,
+and intentionally does not create missing messages. `pr-labels.yml` also has a
+`workflow_dispatch` that reconciles a single PR's label from the Actions tab.
 
 ## Unit tests
 
 ```bash
 cd scripts/pr_status
-python3 -m unittest test_pr_labels test_stuck_alerts
+python3 -m unittest test_pr_labels test_zulip test_stuck_alerts
 ```
 
 `test_pr_labels` covers the derivation (`core.review_state`, `core.inprogress_from`,
-`core.derive`), the label collapse (`labels.derived_label`), and the reconcile
-convergence, all with the GitHub reads and label writes stubbed, so it needs no
+`core.derive`), metadata plumbing, the label collapse (`labels.derived_label`),
+and reconcile convergence. `test_zulip` covers review reactions, PR post
+rendering, legacy-message rewriting, batch continuation, dry runs, and rate-limit
+retry. All GitHub and Zulip reads and writes are stubbed, so these need no
 network.

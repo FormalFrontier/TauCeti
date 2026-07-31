@@ -141,8 +141,12 @@ Finally, we understand that participating in AI-assisted mathematics research re
 Generated API documentation for every declaration in Tau Ceti, hyperlinked into its Mathlib
 dependencies, is published at
 [taucetiproject.github.io/TauCeti/docs](https://taucetiproject.github.io/TauCeti/docs/). It is
-rebuilt daily from `main` with [`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside
-the [project website](https://taucetiproject.github.io/TauCeti/).
+scheduled for regeneration every three hours from `main` with
+[`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside the
+[project website](https://taucetiproject.github.io/TauCeti/). The moving `docgen` branch
+points to the newest commit from `main` whose freshly generated API documentation was
+successfully deployed. Downstream processes that require source and published documentation
+to agree can follow that branch instead of `main`.
 
 ## Building
 
