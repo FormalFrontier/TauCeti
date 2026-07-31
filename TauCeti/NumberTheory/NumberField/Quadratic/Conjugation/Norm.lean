@@ -112,14 +112,11 @@ private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
   exact Algebra.coe_norm_int x
 
-attribute [local instance] FractionRing.liftAlgebra
-
-/-- The degree of `Frac(𝓞 K)/Frac(ℤ)` is `2`, matching `finrank ℚ K`. -/
-private theorem finrank_frac_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- The degree of `𝓞 K` over `ℤ` is `2`, matching `finrank ℚ K`. -/
+private theorem finrank_int_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    Module.finrank (FractionRing ℤ) (FractionRing (𝓞 K)) = 2 := by
-  rw [Algebra.IsAlgebraic.finrank_of_isFractionRing ℤ (FractionRing ℤ) (𝓞 K) (FractionRing (𝓞 K)),
-    RingOfIntegers.rank, finrank_rat_eq_two hmin hgen]
+    Module.finrank ℤ (𝓞 K) = 2 := by
+  rw [RingOfIntegers.rank, finrank_rat_eq_two hmin hgen]
 
 /-- Quadratic conjugation packaged as a `ℤ`-algebra automorphism of `𝓞 K` (every ring
 automorphism is automatically `ℤ`-linear). -/
@@ -171,7 +168,7 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
   -- (3) `relNorm A = relNorm B = (relNorm J)²`.
   have hnorm : Ideal.relNorm ℤ A = Ideal.relNorm ℤ B := by
     rw [hB, map_mul (Ideal.relNorm ℤ), relNorm_map_eq hmin hgen, ← sq, hA,
-      Ideal.relNorm_algebraMap, finrank_frac_eq_two hmin hgen]
+      Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen]
   -- (4) `A = B`, from `B ∣ A` together with the equal norms.
   have hAeqB : A = B := by
     obtain ⟨C, hC⟩ := Ideal.dvd_iff_le.mpr hAB
