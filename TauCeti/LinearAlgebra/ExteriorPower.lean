@@ -156,6 +156,7 @@ theorem map_top_eq_det_smul (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
 
 /-- The basis-free form of `exteriorPower.map_top_eq_det_smul`: on the exterior power in the degree
 equal to the rank, an endomorphism of a finite free module acts by its determinant. -/
+@[simp]
 theorem map_finrank_eq_det_smul [Nontrivial R] [Module.Free R M] [Module.Finite R M]
     (f : M →ₗ[R] M) :
     map (Module.finrank R M) f = LinearMap.det f • LinearMap.id :=
