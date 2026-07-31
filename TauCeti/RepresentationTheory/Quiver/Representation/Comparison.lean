@@ -45,14 +45,14 @@ Only the two comparison morphisms and their formal properties are proved here. T
 envelope* (an essential extension) is neither proved nor true in this generality: for the quiver
 with one vertex and one loop the path algebra is `k[X]`, the kernel of `Pᵢ ↠ Sᵢ` is the ideal
 `(X)`, and `(X) + (X - 1) = k[X]` with `(X - 1)` proper, so that kernel is not superfluous. What is
-recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_of_length_ne_zero`: the morphism
-kills the basis vector of every path of positive length, hence, by linearity, their whole span.
-That span is what the arrow ideal of the path algebra cuts out of `Pᵢ`, but no ideal of the path
-algebra is defined here and none is claimed: the statement quantifies over path basis vectors and
-nothing else. Naming that subrepresentation, comparing it with the Jacobson radical — the two agree
-when the arrow ideal is nilpotent, for instance for a finite acyclic quiver, and not in general,
-since for the one-loop quiver the radical of `k[X]` is zero — and with them the technical
-statements above, is left to the Layer 3 theory of covers and envelopes, which is not yet
+recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_eq_zero_of_length_ne_zero`:
+the morphism kills the basis vector of every path of positive length, hence, by linearity, their
+whole span. That span is what the arrow ideal of the path algebra cuts out of `Pᵢ`, but no ideal
+of the path algebra is defined here and none is claimed: the statement quantifies over path basis
+vectors and nothing else. Naming that subrepresentation, comparing it with the Jacobson radical —
+the two agree when the arrow ideal is nilpotent, for instance for a finite acyclic quiver, and not
+in general, since for the one-loop quiver the radical of `k[X]` is zero — and with them the
+technical statements above, is left to the Layer 3 theory of covers and envelopes, which is not yet
 available.
 
 The field lives in the universe `max v w` of the vertices and the arrows here, where the three
@@ -129,7 +129,7 @@ theorem indecProjRepHomEquiv_indecProjRepToSimpleRep (i : Q) :
 -- `simpleRep_map_eq_zero_of_length_ne_zero`, which the proof below is exactly the composite with.
 /-- **The surjection `Pᵢ ↠ Sᵢ` kills every path of positive length**: the basis vector of such a
 path goes to zero, and so, by linearity, does everything in the span of those basis vectors. -/
-theorem indecProjRepToSimpleRep_app_basis_of_length_ne_zero {i j : Q} (p : Quiver.Path i j)
+theorem indecProjRepToSimpleRep_app_basis_eq_zero_of_length_ne_zero {i j : Q} (p : Quiver.Path i j)
     (hp : p.length ≠ 0) :
     (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) = 0 := by
   rw [indecProjRepToSimpleRep_app_basis, simpleRep_map_eq_zero_of_length_ne_zero i p hp]
