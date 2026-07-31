@@ -67,7 +67,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 
 /-! ### Inverse hyperbolic tangent helpers -/
 
@@ -211,14 +211,19 @@ theorem exists_radialGeodesic_eq (z : PoincareDisc) :
         rw [toUnitDisc_toPoincare, Complex.UnitDisc.coe_zero]; exact hc0
     have hzero : dist z (Complex.UnitDisc.toPoincare 0) = 0 := by rw [hz, dist_self]
     rw [hzero, radialGeodesic_zero, hz]
-  · refine ⟨⟨(toUnitDisc z : ℂ) / (‖(toUnitDisc z : ℂ)‖ : ℂ), mem_sphere_zero_iff_norm.2 ?_⟩, ?_⟩
-    · rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
+  · have hne : (‖(toUnitDisc z : ℂ)‖ : ℂ) ≠ 0 := by
+      simpa using norm_ne_zero_iff.2 hc0
+    have hnorm : ‖(toUnitDisc z : ℂ) / (‖(toUnitDisc z : ℂ)‖ : ℂ)‖ = 1 := by
+      rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
         div_self (norm_ne_zero_iff.2 hc0)]
-    · refine toUnitDisc.injective <| Complex.UnitDisc.coe_injective ?_
-      rw [coe_radialGeodesic, htanh]
-      have hne : (‖(toUnitDisc z : ℂ)‖ : ℂ) ≠ 0 := by
-        simpa using norm_ne_zero_iff.2 hc0
-      field_simp
+    -- Name the direction of `z` as an element of `Circle`, rather than leaving the anonymous
+    -- constructor in the goal, where its `Metric.sphere`/`Submonoid.unitSphere` membership proof
+    -- would block rewriting under `radialGeodesic`.
+    obtain ⟨u, hu⟩ : ∃ u : Circle, (u : ℂ) = (toUnitDisc z : ℂ) / (‖(toUnitDisc z : ℂ)‖ : ℂ) :=
+      ⟨⟨_, mem_sphere_zero_iff_norm.2 hnorm⟩, rfl⟩
+    refine ⟨u, toUnitDisc.injective <| Complex.UnitDisc.coe_injective ?_⟩
+    rw [coe_radialGeodesic, htanh, hu]
+    field_simp
 
 /-! ### The Poincaré disc is a geodesic space -/
 
