@@ -78,7 +78,7 @@ the universe of `k` unless the vertex and arrow types are small. The vertex simp
 `TauCeti.RepresentationTheory.Quiver.Representation.Simple` is built on `k` itself, so the two
 objects sit in a common category only when those universes agree, and the surjection
 `Pᵢ ↠ Sᵢ` is therefore not stated here, but in
-`TauCeti.RepresentationTheory.Quiver.Representation.Cover`, where those universes are aligned.
+`TauCeti.RepresentationTheory.Quiver.Representation.Comparison`, where those universes are aligned.
 
 ## References
 

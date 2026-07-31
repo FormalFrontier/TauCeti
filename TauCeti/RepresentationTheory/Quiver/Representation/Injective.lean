@@ -76,7 +76,7 @@ universe of `k` unless the vertex and arrow types are small. The vertex simple `
 objects sit in a common category only when those universes agree, and the embedding
 `Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the surjection `Pᵢ ↠ Sᵢ` is not stated in
 `TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`; both are stated in
-`TauCeti.RepresentationTheory.Quiver.Representation.Cover`, where those universes are aligned.
+`TauCeti.RepresentationTheory.Quiver.Representation.Comparison`, where those universes are aligned.
 
 ## References
 

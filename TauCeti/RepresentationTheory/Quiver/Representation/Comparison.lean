@@ -24,8 +24,6 @@ that line and the functional dual to it, and both are read off the identificatio
 
 ## Main definitions
 
-* `TauCeti.simpleRepSelfEquiv`: the identification `(Sᵢ)ᵢ ≃ₗ[k] k`, and
-  `TauCeti.simpleRepGenerator`: the element of `(Sᵢ)ᵢ` it sends to `1`.
 * `TauCeti.indecProjRepToSimpleRep`: the morphism `Pᵢ ⟶ Sᵢ`, sending the trivial path to the
   generator and killing every path of positive length.
 * `TauCeti.simpleRepToIndecInjRep`: the morphism `Sᵢ ⟶ Iᵢ`, reading off the coefficient of an
@@ -39,9 +37,6 @@ that line and the functional dual to it, and both are read off the identificatio
   `TauCeti.exists_smul_simpleRepToIndecInjRep`: every morphism `Pᵢ ⟶ Sᵢ`, respectively
   `Sᵢ ⟶ Iᵢ`, is a scalar multiple of the canonical one, so each comparison morphism is unique up
   to a scalar.
-* `TauCeti.finrank_hom_indecProjRep_simpleRep` and
-  `TauCeti.finrank_hom_simpleRep_indecInjRep`: the `Hom`-spaces those scalars exhaust are the
-  Kronecker delta, `dim Hom(Pᵢ, Sⱼ) = dim Hom(Sⱼ, Iᵢ) = δᵢⱼ`.
 
 ## Implementation notes
 
@@ -63,10 +58,15 @@ and `Iᵢ` are built on `Quiver.Path i j`, so they live in the universe `max u v
 vertices and the arrows, whereas `Sᵢ` is built on the field itself and lives in the universe `u` of
 the field alone. The three objects therefore lie in a common category `TauCeti.QuiverRep k Q`
 exactly when `v, w ≤ u`, and `u = v = w` is the strongest such alignment Lean can state, there
-being no way to hypothesize a universe inequality. Lifting the restriction would mean rebuilding
-`Sᵢ` on a `ULift` of the field, which would re-index every existing statement about it; `Sᵢ`, `Pᵢ`
-and `Iᵢ` themselves are constructed with no relation between the universes, and only the
-statements *comparing* them are restricted here.
+being no way to hypothesize a universe inequality. Writing the alignment as `k : Type (max u v w)`
+with `Q : Type v` and `Quiver.{w} Q` is not an option, tempting as it looks: a declaration whose
+signature mentions `u`, `v` and `w` only inside that one `max` cannot be applied afterwards, since
+every use asks Lean to solve `max ?a ?b ?c =?= max u v w`, which has no unique solution and is
+reported as `stuck at solving universe constraint`; Lean's own `linter.checkUnivs` flags the
+signature for exactly this reason. Lifting the restriction would instead mean rebuilding `Sᵢ` on a
+`ULift` of the field, which would re-index every existing statement about it; `Sᵢ`, `Pᵢ` and `Iᵢ`
+themselves are constructed with no relation between the universes, and only the statements
+*comparing* them are restricted here.
 
 A vertex `i : Q` is used below as an object of the free category `CategoryTheory.Paths Q`, which is
 `Q` itself only by unfolding a semireducible definition; the `(Paths.of Q).obj` annotations record
@@ -88,39 +88,6 @@ open CategoryTheory CategoryTheory.Limits
 universe u
 
 variable (k : Type u) {Q : Type u} [Field k] [Quiver.{u} Q]
-
-/-! ### The vertex simple is a line at its vertex -/
-
-/-- The vector space that the vertex simple `Sᵢ` puts at `i` is the base field. -/
-noncomputable def simpleRepSelfEquiv (i : Q) :
-    (simpleRep k Q i).obj ((Paths.of Q).obj i) ≃ₗ[k] k :=
-  (eqToIso (simpleRep_obj_self i)).toLinearEquiv
-
-/-- The canonical generator of the line `(Sᵢ)ᵢ`: the element corresponding to `1 : k`. -/
-noncomputable def simpleRepGenerator (i : Q) : (simpleRep k Q i).obj ((Paths.of Q).obj i) :=
-  (simpleRepSelfEquiv k i).symm 1
-
-/-- The generator of `(Sᵢ)ᵢ` corresponds to `1 : k`. -/
-@[simp]
-theorem simpleRepSelfEquiv_generator (i : Q) :
-    simpleRepSelfEquiv k i (simpleRepGenerator k i) = 1 :=
-  (simpleRepSelfEquiv k i).apply_symm_apply 1
-
-/-- **The vertex simple is a line at its vertex**: every element of `(Sᵢ)ᵢ` is a multiple of the
-generator. -/
-theorem exists_smul_simpleRepGenerator {i : Q}
-    (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
-    ∃ c : k, x = c • simpleRepGenerator k i := by
-  refine ⟨simpleRepSelfEquiv k i x, ?_⟩
-  rw [simpleRepGenerator, ← LinearEquiv.map_smul, smul_eq_mul, mul_one,
-    LinearEquiv.symm_apply_apply]
-
-/-- The generator of `(Sᵢ)ᵢ` is nonzero. -/
-theorem simpleRepGenerator_ne_zero (i : Q) : simpleRepGenerator k i ≠ 0 := by
-  intro h
-  have h1 := congrArg (simpleRepSelfEquiv k i) h
-  rw [simpleRepSelfEquiv_generator, map_zero] at h1
-  exact one_ne_zero h1
 
 /-! ### The surjection from a vertex projective onto its vertex simple -/
 
@@ -155,6 +122,11 @@ theorem indecProjRepHomEquiv_indecProjRepToSimpleRep (i : Q) :
       = simpleRepGenerator k i := by
   rw [indecProjRepHomEquiv_apply, indecProjRepToSimpleRep_app_nil]
 
+-- Not `@[simp]` either, for the same reason: its left-hand side is the left-hand side of the
+-- `@[simp]` lemma `indecProjRepToSimpleRep_app_basis` above, so `simp` rewrites it before this
+-- lemma could fire and `simpNF` reports "Left-hand side simplifies ... using
+-- simp only [*, TauCeti.indecProjRepToSimpleRep_app_basis]". The `simp` form of this statement is
+-- `simpleRep_map_eq_zero_of_length_ne_zero`, which the proof below is exactly the composite with.
 /-- **The surjection `Pᵢ ↠ Sᵢ` kills the arrow ideal**: the basis vector of a path of positive
 length goes to zero. -/
 theorem indecProjRepToSimpleRep_app_basis_of_length_ne_zero {i j : Q} (p : Quiver.Path i j)
@@ -165,7 +137,7 @@ theorem indecProjRepToSimpleRep_app_basis_of_length_ne_zero {i j : Q} (p : Quive
 
 /-- Every component of `Pᵢ ⟶ Sᵢ` is surjective: at `i` because the generator spans, and away from
 `i` because the target vanishes. -/
-theorem surjective_indecProjRepToSimpleRep_app (i j : Q) :
+theorem indecProjRepToSimpleRep_app_surjective (i j : Q) :
     Function.Surjective ((indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j)) := by
   rcases eq_or_ne j i with rfl | hj
   · intro y
@@ -189,7 +161,7 @@ instance epi_indecProjRepToSimpleRep (i : Q) : Epi (indecProjRepToSimpleRep k i)
   haveI : ∀ X : Paths Q, Epi ((indecProjRepToSimpleRep k i).app X) := by
     intro X
     change Q at X
-    exact (ModuleCat.epi_iff_surjective _).mpr (surjective_indecProjRepToSimpleRep_app k i X)
+    exact (ModuleCat.epi_iff_surjective _).mpr (indecProjRepToSimpleRep_app_surjective k i X)
   exact NatTrans.epi_of_epi_app _
 
 /-- The surjection `Pᵢ ↠ Sᵢ` is nonzero. -/
@@ -205,12 +177,6 @@ theorem exists_smul_indecProjRepToSimpleRep {i : Q} (f : indecProjRep k Q i ⟶ 
   obtain ⟨c, hc⟩ := exists_smul_simpleRepGenerator k (indecProjRepHomEquiv i (simpleRep k Q i) f)
   refine ⟨c, (indecProjRepHomEquiv i (simpleRep k Q i)).injective ?_⟩
   rw [map_smul, indecProjRepHomEquiv_indecProjRepToSimpleRep, hc]
-
-/-- The `Hom`-space from the vertex projective at `i` to the vertex simple at `j` is the Kronecker
-delta: the vertex projectives and the vertex simples are dual families for the `Hom`-pairing. -/
-theorem finrank_hom_indecProjRep_simpleRep [DecidableEq Q] (i j : Q) :
-    Module.finrank k (indecProjRep k Q i ⟶ simpleRep k Q j) = if i = j then 1 else 0 := by
-  rw [finrank_hom_indecProjRep, dimVector_simpleRep, Pi.single_apply]
 
 /-! ### The embedding of a vertex simple into its vertex injective -/
 
@@ -241,7 +207,7 @@ theorem indecInjRepHomEquiv_simpleRepToIndecInjRep (i : Q) :
 
 /-- Every component of `Sᵢ ⟶ Iᵢ` is injective: at `i` because the coefficient on the trivial path
 recovers the element, and away from `i` because the source vanishes. -/
-theorem injective_simpleRepToIndecInjRep_app (i j : Q) :
+theorem simpleRepToIndecInjRep_app_injective (i j : Q) :
     Function.Injective ((simpleRepToIndecInjRep k i).app ((Paths.of Q).obj j)) := by
   rcases eq_or_ne j i with rfl | hj
   · refine (injective_iff_map_eq_zero _).mpr fun x hx ↦ ?_
@@ -263,7 +229,7 @@ instance mono_simpleRepToIndecInjRep (i : Q) : Mono (simpleRepToIndecInjRep k i)
   haveI : ∀ X : Paths Q, Mono ((simpleRepToIndecInjRep k i).app X) := by
     intro X
     change Q at X
-    exact (ModuleCat.mono_iff_injective _).mpr (injective_simpleRepToIndecInjRep_app k i X)
+    exact (ModuleCat.mono_iff_injective _).mpr (simpleRepToIndecInjRep_app_injective k i X)
   exact NatTrans.mono_of_mono_app _
 
 /-- The embedding `Sᵢ ↪ Iᵢ` is nonzero. -/
@@ -272,7 +238,7 @@ theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 
   have hzero : (simpleRepSelfEquiv k i).toLinearMap = 0 := by
     rw [← indecInjRepHomEquiv_simpleRepToIndecInjRep k i, h, map_zero]
   have h1 := congrArg (fun φ : Module.Dual k _ ↦ φ (simpleRepGenerator k i)) hzero
-  simp only [LinearEquiv.coe_coe, simpleRepSelfEquiv_generator, LinearMap.zero_apply] at h1
+  simp only [LinearEquiv.coe_coe, simpleRepSelfEquiv_apply_generator, LinearMap.zero_apply] at h1
   exact one_ne_zero h1
 
 /-- **The embedding `Sᵢ ↪ Iᵢ` is unique up to a scalar**: `Hom(Sᵢ, Iᵢ)` is the line spanned by
@@ -285,11 +251,5 @@ theorem exists_smul_simpleRepToIndecInjRep {i : Q} (f : simpleRep k Q i ⟶ inde
   refine LinearMap.ext fun x ↦ ?_
   obtain ⟨c, rfl⟩ := exists_smul_simpleRepGenerator k x
   simp [smul_eq_mul, mul_comm]
-
-/-- The `Hom`-space from the vertex simple at `j` to the vertex injective at `i` is the Kronecker
-delta, the same count as `TauCeti.finrank_hom_indecProjRep_simpleRep`. -/
-theorem finrank_hom_simpleRep_indecInjRep [DecidableEq Q] (i j : Q) :
-    Module.finrank k (simpleRep k Q j ⟶ indecInjRep k Q i) = if i = j then 1 else 0 := by
-  rw [finrank_hom_indecInjRep, dimVector_simpleRep, Pi.single_apply]
 
 end TauCeti
