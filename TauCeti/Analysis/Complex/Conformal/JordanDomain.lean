@@ -157,9 +157,11 @@ theorem isJordanCurve_frontier_of_isJordanCurve_frontier_image (hUo : IsOpen U)
     (h : IsJordanCurve (frontier (f '' U))) : IsJordanCurve (frontier U) := by
   have hcpt : IsCompact (frontier U) :=
     hUb.isCompact_closure.of_isClosed_subset isClosed_frontier frontier_subset_closure
+  have hfi : InjOn f U := fun x hx y hy hxy =>
+    hFi (subset_closure hx) (subset_closure hy) (by rw [hFf hx, hFf hy]; exact hxy)
   exact IsJordanCurve.of_image hcpt (hFc.mono frontier_subset_closure)
     (hFi.mono frontier_subset_closure)
-    (image_frontier_eq_frontier_image hUo hUb hfd hFc hFf hFi ▸ h)
+    (image_frontier_eq_frontier_image hUo hUb hfd hfi hFc hFf ▸ h)
 
 /-- **The converse half of the Carathéodory boundary correspondence.** A bounded open set of `ℂ`
 that a holomorphic map carries onto a connected set with Jordan frontier, extending continuously
