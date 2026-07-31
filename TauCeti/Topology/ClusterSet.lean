@@ -268,9 +268,11 @@ refinement of `TauCeti.closure_image_eq_biUnion_clusterSetOn` for a continuous `
 `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`, so the whole of the new material sits
 over `frontier U`.
 
-This is the form in which the covering is used: subtracting `f '' U` from both sides identifies the
-*frontier* of the image with the union of the boundary cluster sets, as soon as one knows that the
-boundary cluster values avoid `f '' U`. -/
+This is the form in which the covering is used: subtracting `f '' U` from both sides identifies
+`closure (f '' U) \ f '' U` with the union of the boundary cluster sets, as soon as one knows that
+the boundary cluster values avoid `f '' U`. That difference is the *frontier* of the image only
+when `f '' U` is open — which is an extra hypothesis, not part of this theorem, and is what
+conformality supplies in `TauCeti.biUnion_clusterSetOn_eq_frontier_image`. -/
 theorem closure_image_eq_image_union_biUnion_clusterSetOn [T2Space Y] (hU : IsCompact (closure U))
     (hfc : ContinuousOn f U) :
     closure (f '' U) = f '' U ∪ ⋃ w ∈ frontier U, clusterSetOn f U w := by
