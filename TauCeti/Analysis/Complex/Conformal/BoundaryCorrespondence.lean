@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
+public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Topology.Homeomorph.Lemmas
 public import Mathlib.Topology.MetricSpace.Bounded
-public import TauCeti.Analysis.Complex.Conformal.Biholomorph
-public import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
+import TauCeti.Analysis.Complex.Conformal.Biholomorph
+import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!
 # The boundary correspondence of a conformal map
