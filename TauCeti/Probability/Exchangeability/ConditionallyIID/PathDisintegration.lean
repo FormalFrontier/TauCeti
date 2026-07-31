@@ -108,6 +108,79 @@ theorem map_prefix_pathDisintegration (hν : Measurable ν) (n : ℕ) :
   funext ω
   exact hfibre (ν ω)
 
+/-! ### The prefix π-system -/
+
+/-- The prefix map onto the first `n` path coordinates, with the directing measure carried along. -/
+@[expose]
+def prefixPair (α : Type*) [MeasurableSpace α] (n : ℕ) :
+    ProbabilityMeasure α × (ℕ → α) → ProbabilityMeasure α × (Fin n → α) :=
+  fun q => (q.1, fun i : Fin n => q.2 i)
+
+theorem measurable_prefixPair (α : Type*) [MeasurableSpace α] (n : ℕ) :
+    Measurable (prefixPair α n) :=
+  measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+    (measurable_pi_apply (i : ℕ)).comp measurable_snd)
+
+/-- Longer prefixes refine shorter ones. -/
+theorem prefixPair_comp {α : Type*} [MeasurableSpace α] {m n : ℕ} (hmn : m ≤ n) :
+    prefixPair α m
+      = (fun r : ProbabilityMeasure α × (Fin n → α) =>
+          (r.1, fun i : Fin m => r.2 (Fin.castLE hmn i))) ∘ prefixPair α n := by
+  funext q
+  simp only [prefixPair, Function.comp_apply, Fin.val_castLE]
+
+/-- Sets pulled back from a finite prefix, with the directing measure carried along. -/
+def prefixSets (α : Type*) [MeasurableSpace α] :
+    Set (Set (ProbabilityMeasure α × (ℕ → α))) :=
+  {C | ∃ (n : ℕ) (A : Set (ProbabilityMeasure α × (Fin n → α))),
+        MeasurableSet A ∧ C = prefixPair α n ⁻¹' A}
+
+theorem isPiSystem_prefixSets (α : Type*) [MeasurableSpace α] :
+    IsPiSystem (prefixSets α) := by
+  rintro _ ⟨m, A, hA, rfl⟩ _ ⟨n, B, hB, rfl⟩ -
+  -- Re-present both sets at the longer prefix, where the intersection is a single preimage.
+  refine ⟨max m n,
+    (fun r : ProbabilityMeasure α × (Fin (max m n) → α) =>
+        (r.1, fun i : Fin m => r.2 (Fin.castLE (le_max_left m n) i))) ⁻¹' A ∩
+      (fun r : ProbabilityMeasure α × (Fin (max m n) → α) =>
+        (r.1, fun i : Fin n => r.2 (Fin.castLE (le_max_right m n) i))) ⁻¹' B, ?_, ?_⟩
+  · exact ((measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+      (measurable_pi_apply _).comp measurable_snd)) hA).inter
+      ((measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+        (measurable_pi_apply _).comp measurable_snd)) hB)
+  · rw [Set.preimage_inter, ← Set.preimage_comp, ← Set.preimage_comp,
+      ← prefixPair_comp (le_max_left m n), ← prefixPair_comp (le_max_right m n)]
+
+theorem generateFrom_prefixSets (α : Type*) [MeasurableSpace α] :
+    MeasurableSpace.generateFrom (prefixSets α)
+      = (inferInstance : MeasurableSpace (ProbabilityMeasure α × (ℕ → α))) := by
+  refine le_antisymm ?_ ?_
+  · -- Every prefix preimage is measurable.
+    refine MeasurableSpace.generateFrom_le ?_
+    rintro _ ⟨n, A, hA, rfl⟩
+    exact measurable_prefixPair α n hA
+  · -- The product σ-algebra is the sup of the two coordinate comaps; catch each.
+    rw [Prod.instMeasurableSpace]
+    refine sup_le ?_ ?_
+    · -- First factor: read it off the empty prefix.
+      rintro _ ⟨S, hS, rfl⟩
+      refine MeasurableSpace.measurableSet_generateFrom ⟨0, S ×ˢ Set.univ, hS.prod .univ, ?_⟩
+      ext q
+      simp [prefixPair]
+    · -- Second factor: the path σ-algebra is the sup of the coordinate comaps, so the comap of
+      -- `snd` is the sup of the comaps of the coordinate readings.
+      have hpi : (MeasurableSpace.pi : MeasurableSpace (ℕ → α))
+          = ⨆ k : ℕ, MeasurableSpace.comap (fun x : ℕ → α => x k) inferInstance := rfl
+      rw [hpi, MeasurableSpace.comap_iSup]
+      refine iSup_le fun k => ?_
+      rintro _ ⟨_, ⟨U, hU, rfl⟩, rfl⟩
+      refine MeasurableSpace.measurableSet_generateFrom
+        ⟨k + 1, (fun r : ProbabilityMeasure α × (Fin (k + 1) → α) =>
+          r.2 ⟨k, Nat.lt_succ_self k⟩) ⁻¹' U, ?_, ?_⟩
+      · exact ((measurable_pi_apply _).comp measurable_snd) hU
+      · ext q
+        simp [prefixPair]
+
 end Probability
 
 end TauCeti
