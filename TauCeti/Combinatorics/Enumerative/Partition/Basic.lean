@@ -61,14 +61,16 @@ theorem equivSortedParts_symm_apply_parts (n : ℕ)
 /-- The partition `(1ⁿ)` of `n` into `n` parts, each equal to `1`.
 
 This is the finest partition of `n`, opposite to Mathlib's coarsest `Nat.Partition.indiscrete n`,
-which has the single part `n`. -/
-@[expose] def ones (n : ℕ) : n.Partition where
+which has the single part `n`.
+
+The parts are exposed only through `Nat.Partition.ones_parts`. -/
+def ones (n : ℕ) : n.Partition where
   parts := Multiset.replicate n 1
   parts_pos hi := by simp [Multiset.eq_of_mem_replicate hi]
   parts_sum := by simp
 
 @[simp]
-theorem ones_parts (n : ℕ) : (ones n).parts = Multiset.replicate n 1 := rfl
+theorem ones_parts (n : ℕ) : (ones n).parts = Multiset.replicate n 1 := by simp [ones]
 
 /-- The product of the factorials of the parts of `(1ⁿ)` is `1`. -/
 theorem prod_map_factorial_ones (n : ℕ) :
