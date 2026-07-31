@@ -29,7 +29,8 @@ scalar-kernel bridge and its characteristic API.
 ## Main declarations
 
 * `TauCeti.positiveDefiniteKernelOperator`: regard a scalar kernel as an operator-valued kernel.
-* `TauCeti.IsPositiveDefiniteKernel.operator_posSemidef`: positivity of that operator kernel.
+* `TauCeti.IsPositiveDefiniteKernel.positiveDefiniteKernelOperator_posSemidef`: positivity of that
+  operator kernel.
 * `TauCeti.IsPositiveDefiniteKernel.KolmogorovSpace`: the canonical Hilbert space.
 * `TauCeti.IsPositiveDefiniteKernel.kolmogorovFeature`: its canonical feature map.
 * `TauCeti.IsPositiveDefiniteKernel.inner_kolmogorovFeature`: the Kolmogorov identity.
@@ -70,7 +71,7 @@ variable {K : α → α → 𝕜}
 
 /-- The operator-valued kernel obtained from a scalar positive-definite kernel is positive
 semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` construction. -/
-theorem operator_posSemidef (hK : IsPositiveDefiniteKernel K) :
+theorem positiveDefiniteKernelOperator_posSemidef (hK : IsPositiveDefiniteKernel K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
   apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
@@ -87,29 +88,43 @@ theorem operator_posSemidef (hK : IsPositiveDefiniteKernel K) :
   · intro f
     have hnonneg := ((isPositiveDefiniteKernel_def K).mp hK).2 f
     have hre := (RCLike.nonneg_iff.mp hnonneg).1
-    simpa [positiveDefiniteKernelOperator_apply, RCLike.star_def, mul_assoc, mul_left_comm,
-      mul_comm, isPositiveDefiniteKernel_conj_symm hK] using hre
+    have hinner (a b : α) (x y : 𝕜) :
+        ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
+      rw [positiveDefiniteKernelOperator_apply, RCLike.inner_apply', map_mul,
+        isPositiveDefiniteKernel_conj_symm hK, RCLike.star_def]
+      ring
+    have hquadratic :
+        RCLike.re (f.sum fun a x => f.sum fun b y =>
+          ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜) =
+          RCLike.re (f.sum fun a x => f.sum fun b y => star x * K a b * y) := by
+      simp only [hinner]
+    rw [hquadratic]
+    simpa only [Matrix.of_apply] using hre
 
 /-- The canonical Hilbert space in the Kolmogorov decomposition of `K`.
 
 This is an abbreviation because Mathlib's `RKHS.OfKernel` currently has to be an abbreviation in
 order for its normed-group and inner-product instances to reduce. -/
 noncomputable abbrev KolmogorovSpace (hK : IsPositiveDefiniteKernel K) :=
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef := ⟨hK.operator_posSemidef⟩
+  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
   RKHS.OfKernel (positiveDefiniteKernelOperator K)
 
 /-- The canonical feature map into the Kolmogorov space.  It sends `a` to the reproducing-kernel
 vector at `a`, evaluated on the scalar `1`. -/
 noncomputable def kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a : α) :
     hK.KolmogorovSpace := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef := ⟨hK.operator_posSemidef⟩
+  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
   exact RKHS.kerFun hK.KolmogorovSpace a 1
 
 /-- **Kolmogorov identity.** Inner products of the canonical feature vectors recover the
 original kernel. -/
+@[simp]
 theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef := ⟨hK.operator_posSemidef⟩
+  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
     RKHS.OfKernel.kernel_ofKernel]
@@ -117,12 +132,14 @@ theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
 
 /-- The squared norm of a canonical feature vector is the real part of the corresponding
 diagonal kernel value. -/
+@[simp]
 theorem norm_kolmogorovFeature_sq (hK : IsPositiveDefiniteKernel K) (a : α) :
     ‖hK.kolmogorovFeature a‖ ^ 2 = RCLike.re (K a a) := by
   rw [← inner_self_eq_norm_sq (𝕜 := 𝕜), hK.inner_kolmogorovFeature]
 
 /-- The squared distance between two canonical feature vectors, expressed entirely in terms of
 the original kernel. -/
+@[simp]
 theorem norm_kolmogorovFeature_sub_sq (hK : IsPositiveDefiniteKernel K) (a b : α) :
     ‖hK.kolmogorovFeature a - hK.kolmogorovFeature b‖ ^ 2 =
       RCLike.re (K a a) - 2 * RCLike.re (K a b) + RCLike.re (K b b) := by
@@ -133,7 +150,8 @@ theorem norm_kolmogorovFeature_sub_sq (hK : IsPositiveDefiniteKernel K) (a b : �
 construction is minimal: it contains no orthogonal summand invisible to the kernel. -/
 theorem kolmogorovFeature_dense (hK : IsPositiveDefiniteKernel K) :
     (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature)).topologicalClosure = ⊤ := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef := ⟨hK.operator_posSemidef⟩
+  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator_posSemidef⟩
   have hspan :
       Submodule.span 𝕜
           {y | ∃ (a : α) (z : 𝕜), RKHS.kerFun hK.KolmogorovSpace a z = y} =
