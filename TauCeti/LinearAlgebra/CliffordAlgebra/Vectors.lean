@@ -22,8 +22,8 @@ form (`ExteriorAlgebra.ι_leftInverse`, `ExteriorAlgebra.ι_inj`,
 square-zero extension `TrivSqZeroExt R M` as an auxiliary algebra. That trick is unavailable for a
 general `Q`: in `TrivSqZeroExt R M` the square of a vector is `0`, so it computes `Q = 0` and
 nothing else. What is available instead is Mathlib's module isomorphism
-`CliffordAlgebra.equivExterior Q : CliffordAlgebra Q ≃ₗ[R] ExteriorAlgebra R M`, valid in
-characteristic not two, which sends generators to generators and scalars to scalars. This file
+`CliffordAlgebra.equivExterior Q : CliffordAlgebra Q ≃ₗ[R] ExteriorAlgebra R M`, valid whenever
+`2` is invertible, which sends generators to generators and scalars to scalars. This file
 transports the exterior-algebra statements along it, so all of them hold for an arbitrary
 quadratic form over a commutative ring in which `2` is invertible; no hypothesis on `Q` — no
 nondegeneracy, no finiteness, no freeness — is needed.
@@ -58,7 +58,7 @@ the scalars and the vectors, the disjointness of the two pins that step down to 
   Mathlib's `FaithfulSMul` simp lemmas apply.
 * `TauCeti.CliffordAlgebra.ι_eq_algebraMap_iff`, `TauCeti.CliffordAlgebra.ι_ne_one` and
   `TauCeti.CliffordAlgebra.ι_range_disjoint_one`: a vector is a scalar only when both vanish.
-* `TauCeti.CliffordAlgebra.mem_ι_range_iff`: membership of `range (ι Q)` is detected by the vector
+* `TauCeti.CliffordAlgebra.mem_range_ι_iff`: membership of `range (ι Q)` is detected by the vector
   part.
 * `TauCeti.CliffordAlgebra.finrank_ι_range` and
   `TauCeti.CliffordAlgebra.finrank_filtration_one`: the vectors have the dimension of `M`, and the
@@ -121,20 +121,28 @@ theorem ιInv_ι (m : M) : ιInv Q (ι Q m) = m := by
 
 theorem ι_leftInverse : Function.LeftInverse (ιInv Q) (ι Q) := ιInv_ι Q
 
+/-- The vector part of a scalar vanishes.
+
+The exterior-algebra half of the argument is that `ExteriorAlgebra.map 0` fixes scalars while it
+kills vector parts (`ExteriorAlgebra.ιInv_comp_map`). -/
 @[simp]
 theorem ιInv_algebraMap (r : R) : ιInv Q (algebraMap R (CliffordAlgebra Q) r) = 0 := by
-  rw [ιInv, LinearMap.comp_apply, LinearEquiv.coe_coe, equivExterior_algebraMap]
-  simp [ExteriorAlgebra.ιInv, TrivSqZeroExt.sndHom, TrivSqZeroExt.algebraMap_eq_inl]
+  rw [ιInv, LinearMap.comp_apply, LinearEquiv.coe_coe, equivExterior_algebraMap,
+    ← (ExteriorAlgebra.map (0 : M →ₗ[R] M)).commutes r, ← AlgHom.toLinearMap_apply,
+    ← LinearMap.comp_apply, ExteriorAlgebra.ιInv_comp_map, LinearMap.comp_apply,
+    LinearMap.zero_apply]
 
 /-! ### `ι` is injective -/
 
-/-- **The generators of a Clifford algebra are a faithful copy of `M`.** In characteristic not two
+/-- **The generators of a Clifford algebra are a faithful copy of `M`.** When `2` is invertible
 this needs no hypothesis on `Q`. -/
 theorem ι_injective : Function.Injective (ι Q) := (ι_leftInverse Q).injective
 
+/-- Two generators are equal exactly when the vectors they come from are. -/
 @[simp]
 theorem ι_inj (m n : M) : ι Q m = ι Q n ↔ m = n := (ι_injective Q).eq_iff
 
+/-- The only generator that vanishes is the one coming from `0`. -/
 @[simp]
 theorem ι_eq_zero_iff (m : M) : ι Q m = 0 ↔ m = 0 := by
   rw [← ι_inj Q m 0, map_zero]
@@ -163,6 +171,7 @@ theorem ι_eq_algebraMap_iff (m : M) (r : R) :
   rw [← (equivExterior Q).injective.eq_iff, equivExterior_ι, equivExterior_algebraMap,
     ExteriorAlgebra.ι_eq_algebraMap_iff]
 
+/-- No generator is the unit of a Clifford algebra. -/
 @[simp]
 theorem ι_ne_one [Nontrivial R] (m : M) : ι Q m ≠ 1 := by
   rw [← map_one (algebraMap R (CliffordAlgebra Q)), Ne, ι_eq_algebraMap_iff]
@@ -192,13 +201,13 @@ noncomputable def ιRangeEquiv : M ≃ₗ[R] LinearMap.range (ι Q) :=
   LinearEquiv.ofInjective (ι Q) (ι_injective Q)
 
 @[simp]
-theorem coe_ιRangeEquiv (m : M) : (ιRangeEquiv Q m : CliffordAlgebra Q) = ι Q m := by
+theorem coe_ιRangeEquiv_apply (m : M) : (ιRangeEquiv Q m : CliffordAlgebra Q) = ι Q m := by
   rw [ιRangeEquiv, LinearEquiv.ofInjective_apply]
 
 @[simp]
-theorem ι_ιRangeEquiv_symm (x : LinearMap.range (ι Q)) :
+theorem ι_ιRangeEquiv_symm_apply (x : LinearMap.range (ι Q)) :
     ι Q ((ιRangeEquiv Q).symm x) = x := by
-  rw [← coe_ιRangeEquiv, LinearEquiv.apply_symm_apply]
+  rw [← coe_ιRangeEquiv_apply, LinearEquiv.apply_symm_apply]
 
 /-- The vector part reconstructs a vector. -/
 theorem ι_ιInv_of_mem {x : CliffordAlgebra Q} (hx : x ∈ LinearMap.range (ι Q)) :
@@ -207,14 +216,14 @@ theorem ι_ιInv_of_mem {x : CliffordAlgebra Q} (hx : x ∈ LinearMap.range (ι 
   rw [ιInv_ι]
 
 /-- Membership of the module of vectors is detected by the vector part. -/
-theorem mem_ι_range_iff {x : CliffordAlgebra Q} :
+theorem mem_range_ι_iff {x : CliffordAlgebra Q} :
     x ∈ LinearMap.range (ι Q) ↔ ι Q (ιInv Q x) = x :=
   ⟨ι_ιInv_of_mem Q, fun h => ⟨_, h⟩⟩
 
 /-- On a vector, the retraction `ιInv` computes the inverse of the vector equivalence. -/
 theorem ιRangeEquiv_symm_apply (x : LinearMap.range (ι Q)) :
     (ιRangeEquiv Q).symm x = ιInv Q x :=
-  (ι_injective Q) <| by rw [ι_ιRangeEquiv_symm, ι_ιInv_of_mem Q x.2]
+  (ι_injective Q) <| by rw [ι_ιRangeEquiv_symm_apply, ι_ιInv_of_mem Q x.2]
 
 /-- The module of vectors has the rank of `M`, being a copy of it. -/
 theorem finrank_ι_range :
@@ -239,16 +248,16 @@ omit [Invertible (2 : R)] in
 theorem range_scalarAddVector : LinearMap.range (scalarAddVector Q) = filtration Q 1 := by
   rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range, ← filtration_one]
 
-/-- A scalar and a vector summing to zero both vanish, by `ι_eq_algebraMap_iff`. -/
+/-- A scalar and a vector summing to zero both vanish, the scalars and the vectors being disjoint
+(`TauCeti.CliffordAlgebra.ι_range_disjoint_one`). -/
 theorem scalarAddVector_injective : Function.Injective (scalarAddVector Q) := by
-  rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
-  rintro ⟨r, m⟩ hx
-  rw [LinearMap.mem_ker, scalarAddVector_apply] at hx
-  have h : ι Q m = algebraMap R (CliffordAlgebra Q) (-r) := by
-    rw [map_neg]
-    exact eq_neg_of_add_eq_zero_right hx
-  rw [ι_eq_algebraMap_iff] at h
-  simp [Prod.ext_iff, h.1, neg_eq_zero.mp h.2]
+  have hd : Disjoint (LinearMap.range (Algebra.linearMap R (CliffordAlgebra Q)))
+      (LinearMap.range (ι Q)) := by
+    rw [← Submodule.one_eq_range]
+    exact (ι_range_disjoint_one Q).symm
+  rw [← LinearMap.ker_eq_bot, scalarAddVector, LinearMap.ker_coprod_of_disjoint_range _ _ hd,
+    LinearMap.ker_eq_bot.2 (algebraMap_injective Q), LinearMap.ker_eq_bot.2 (ι_injective Q),
+    Submodule.prod_bot]
 
 /-- **The first step of the degree filtration is `R ⊕ M`.** The scalars and the vectors span it
 (`TauCeti.CliffordAlgebra.filtration_one`) and meet only in `0`
@@ -258,7 +267,7 @@ noncomputable def filtrationOneEquiv : (R × M) ≃ₗ[R] filtration Q 1 :=
     (LinearEquiv.ofEq _ _ (range_scalarAddVector Q))
 
 @[simp]
-theorem coe_filtrationOneEquiv (x : R × M) :
+theorem coe_filtrationOneEquiv_apply (x : R × M) :
     (filtrationOneEquiv Q x : CliffordAlgebra Q)
       = algebraMap R (CliffordAlgebra Q) x.1 + ι Q x.2 := by
   rw [filtrationOneEquiv, LinearEquiv.trans_apply, LinearEquiv.coe_ofEq_apply,
