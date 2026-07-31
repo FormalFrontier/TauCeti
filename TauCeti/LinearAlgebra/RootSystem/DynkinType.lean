@@ -233,7 +233,28 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
 @[simp] lemma cartanMatrix_apply_same (t : DynkinType) (i : Fin t.rank) :
     t.cartanMatrix i i = 2 := by
-  cases t <;> simp [CartanMatrix.A]
+  -- After splitting on `t`, the dependent index `Fin t.rank` reduces to the rank of the selected
+  -- constructor. The `change` steps make that reduction explicit before applying Mathlib's
+  -- type-specific diagonal lemmas.
+  cases t with
+  | A n =>
+      change Fin n at i
+      change CartanMatrix.A n i i = 2
+      exact congrFun (CartanMatrix.A_diag n) i
+  | B n =>
+      change Fin n at i
+      exact CartanMatrix.B_diag n i
+  | C n =>
+      change Fin n at i
+      exact CartanMatrix.C_diag n i
+  | D n =>
+      change Fin n at i
+      exact CartanMatrix.D_diag n i
+  | E6 => exact CartanMatrix.E₆_diag i
+  | E7 => exact CartanMatrix.E₇_diag i
+  | E8 => exact CartanMatrix.E₈_diag i
+  | F4 => exact CartanMatrix.F₄_diag i
+  | G2 => exact CartanMatrix.G₂_diag i
 
 /-- Every off-diagonal entry of a standard Cartan matrix is nonpositive. -/
 lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : i ≠ j) :
@@ -263,10 +284,23 @@ lemma cartanMatrix_apply_eq_zero_iff_symm (t : DynkinType) (i j : Fin t.rank) :
   case E6 => exact symm_case CartanMatrix.E₆_isSymm i j
   case E7 => exact symm_case CartanMatrix.E₇_isSymm i j
   case E8 => exact symm_case CartanMatrix.E₈_isSymm i j
-  case B n => simp only [cartanMatrix_B, CartanMatrix.B, Matrix.of_apply]; grind
-  case C n => simp only [cartanMatrix_C, CartanMatrix.C, Matrix.of_apply]; grind
-  case F4 => revert i j; decide
-  case G2 => revert i j; decide
+  case B n =>
+    -- Splitting on `t` leaves dependent indices that elaborate as `Fin t.rank`; expose their
+    -- definitional reduction to `Fin n` before unfolding the non-symmetric matrix.
+    change Fin n at i j
+    simp only [cartanMatrix_B]
+    unfold CartanMatrix.B
+    simp only [Matrix.of_apply]
+    split_ifs <;> norm_num at * <;> omega
+  case C n =>
+    -- As in the `B` branch, make the reduced dependent index explicit.
+    change Fin n at i j
+    simp only [cartanMatrix_C]
+    unfold CartanMatrix.C
+    simp only [Matrix.of_apply]
+    split_ifs <;> norm_num at * <;> omega
+  case F4 => fin_cases i <;> fin_cases j <;> decide
+  case G2 => fin_cases i <;> fin_cases j <;> decide
 
 /-- The double edge of type `Bₙ`: with at least two simple roots, the last two are joined by an
 entry `-2`. -/

@@ -185,6 +185,7 @@ lemma Hom.baseChange_one (A B : AbelianVariety K) (L : Type u) [Field L] [Algebr
   apply Hom.toOverFunctor.map_injective
   simp only [Hom.toOverHom_baseChange, Hom.toOverHom_one, Functor.map_one, MonObj.one_comp,
     MonObj.comp_one]
+  rfl
 
 /-- Base change is multiplicative for the pointwise group law: pulling back the pointwise product
 of two homomorphisms gives the pointwise product of their pullbacks. -/
@@ -195,6 +196,7 @@ lemma Hom.baseChange_mul {A B : AbelianVariety K} (f g : A ⟶ B)
   apply Hom.toOverFunctor.map_injective
   simp only [Hom.toOverHom_baseChange, Hom.toOverHom_mul, Functor.map_mul, MonObj.mul_comp,
     MonObj.comp_mul]
+  rfl
 
 /-- Base change along a field extension, as a homomorphism of the groups of homomorphisms of
 abelian varieties. -/
