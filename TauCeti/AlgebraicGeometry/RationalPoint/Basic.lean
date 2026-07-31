@@ -130,7 +130,10 @@ lemma residueFieldMap_comp_residueFieldMap_of_section (hs : s ≫ f = 𝟙 S) (y
     (S.residueFieldCongr (section_apply hs y).symm).hom ≫
         f.residueFieldMap (s y) ≫ s.residueFieldMap y = 𝟙 (S.residueField y) := by
   rw [← Scheme.residueFieldMap_comp, Scheme.Hom.residueFieldMap_congr hs y]
-  simp [Scheme.residueFieldCongr]
+  simp only [Scheme.residueFieldMap_id]
+  change (S.residueFieldCongr (section_apply hs y).symm).hom ≫
+      (S.residueFieldCongr (section_apply hs y)).hom = 𝟙 _
+  simp
 
 /-- The residue field of `X` at a point in the image of a section is the residue field of the
 base at the corresponding point of the base. The inverse is the residue-field map of the

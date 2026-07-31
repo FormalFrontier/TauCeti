@@ -61,7 +61,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 /-- **Addition formula for the inverse hyperbolic tangent.** For `a, b ∈ (-1, 1)`,

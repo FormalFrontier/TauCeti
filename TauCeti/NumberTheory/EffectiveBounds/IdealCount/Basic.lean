@@ -420,7 +420,7 @@ natural-number and degree-monotone forms that later effective estimates carry. -
 
 section Consumer
 
-open scoped NumberField
+open scoped _root_.NumberField
 
 open Module _root_.NumberField
 

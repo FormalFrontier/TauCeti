@@ -130,7 +130,8 @@ theorem inner_gramOperator (v w : V) :
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.apply_apply] at h
   rw [gramOperator, ← innerSL_apply_apply, ← h, haarAverage_apply]
   refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
-  simp [gramFamily, innerSL_apply_apply, ContinuousLinearMap.adjoint_inner_right]
+  change ⟪v, ContinuousLinearMap.adjoint (π g) (π g w)⟫_𝕜 = ⟪π g v, π g w⟫_𝕜
+  exact ContinuousLinearMap.adjoint_inner_right (π g) v (π g w)
 
 /-- The Gram operator represents the Haar-averaged inner product, written on the left. -/
 theorem inner_gramOperator_left (v w : V) :
@@ -229,10 +230,12 @@ private theorem conjAction_comp_gramFamily (g : G) :
     (conjAction π g : C(V →L[𝕜] V, V →L[𝕜] V)).comp (gramFamily π hπ) =
       (gramFamily π hπ).comp (ContinuousMap.mulRight g) :=
   ContinuousMap.ext fun h ↦ by
-    simp only [ContinuousMap.comp_apply, ContinuousMap.coe_mulRight, conjAction_apply,
-      gramFamily, ContinuousMap.coe_mk, map_mul, ContinuousLinearMap.mul_def,
+    change (ContinuousLinearMap.adjoint (π g)).comp
+        (((ContinuousLinearMap.adjoint (π h)).comp (π h)).comp (π g)) =
+      (ContinuousLinearMap.adjoint (π (h * g))).comp (π (h * g))
+    rw [show π (h * g) = π h * π g from map_mul π h g, ContinuousLinearMap.mul_def,
       ContinuousLinearMap.adjoint_comp]
-    exact (ContinuousLinearMap.comp_assoc _ _ _).symm
+    rfl
 
 /-- **The operator form of `G`-invariance of the averaged form:** `(π g)† ∘ S ∘ (π g) = S`.
 

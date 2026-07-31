@@ -121,12 +121,21 @@ theorem indecInjRep_map_apply (i : Q) {a b : Q} (p : Quiver.Path a b)
     (indecInjRep k Q i).map p x q = x (p.comp q) := by
   induction p with
   | nil =>
-    rw [QuiverRep.map_nil, ModuleCat.id_apply, Quiver.Path.nil_comp]
+    rw [QuiverRep.map_nil]
+    -- The identity component is indexed by `(Paths.of Q).obj _`; expose its definitional
+    -- identification with the underlying vertex before rewriting path concatenation.
+    change x q = x (Quiver.Path.nil.comp q)
+    rw [Quiver.Path.nil_comp]
   | cons p e ih =>
     have hcons : (indecInjRep k Q i).map (p.cons e)
         = (indecInjRep k Q i).map p ≫ (indecInjRep k Q i).map e.toPath :=
       (indecInjRep k Q i).map_comp p e.toPath
-    rw [hcons, ModuleCat.comp_apply, indecInjRep_map_toPath]
+    rw [hcons]
+    -- `ModuleCat.comp_apply` cannot cross the `Paths.of` object wrapper, so expose the component
+    -- types definitionally before applying the explicit arrow-action lemma.
+    change (indecInjRep k Q i).map e.toPath ((indecInjRep k Q i).map p x) q =
+      x ((p.cons e).comp q)
+    rw [indecInjRep_map_toPath]
     exact (ih (e.toPath.comp q)).trans
       (congrArg x (Quiver.Path.comp_assoc p e.toPath q).symm)
 
@@ -162,12 +171,19 @@ theorem dimVector_indecInjRep_eq_dimVector_indecProjRep (i j : Q) :
 
 /-! ### The universal property -/
 
+-- A representation is now indexed by the free category `Paths Q`. Mathlib's `Paths.of Q` is
+-- definitionally the identity on objects, but elaboration no longer unfolds that fact
+-- automatically in dependent component types. The explicit `(Paths.of Q).obj` annotations and
+-- `change` steps below expose that canonical object identification without adding a parallel API.
+
 /-- The morphism `M ⟶ Iᵢ` determined by a linear functional `φ` on `M` at the vertex `i`: at the
 vertex `j` it sends `x` to the function reading off `φ` of the action of a path `j → i` on `x`. -/
-def indecInjRepHom (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj i)) :
+def indecInjRepHom (i : Q) (M : QuiverRep k Q)
+    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
     M ⟶ indecInjRep k Q i where
   app j := ModuleCat.ofHom (LinearMap.pi fun q : Quiver.Path (V := Q) j i ↦ φ ∘ₗ (M.map q).hom)
   naturality {a b} p := by
+    change Q at a b
     refine ModuleCat.hom_ext (LinearMap.ext fun x ↦ funext fun q ↦ ?_)
     have hcomp : (M.map q) ((M.map p) x) = M.map (p.comp q) x :=
       (congrArg (fun g : M.obj a ⟶ M.obj i ↦ g x) (M.map_comp p q)).symm
@@ -183,9 +199,10 @@ def indecInjRepHom (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj i)) :
 /-- The morphism attached to `φ : Module.Dual k Mᵢ` sends `x` at the vertex `j` to the function
 whose value on a path `q : j → i` is `φ` of the action of `q` on `x`. -/
 @[simp]
-theorem indecInjRepHom_app_apply (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj i)) (j : Q)
-    (x : M.obj j) (q : Quiver.Path j i) :
-    (indecInjRepHom i M φ).app j x q = φ (M.map q x) :=
+theorem indecInjRepHom_app_apply (i : Q) (M : QuiverRep k Q)
+    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) (j : Q)
+    (x : M.obj ((Paths.of Q).obj j)) (q : Quiver.Path j i) :
+    (indecInjRepHom i M φ).app ((Paths.of Q).obj j) x q = φ (M.map q x) :=
   -- The parentheses are load-bearing, as in `TauCeti.indecProjRepHomEquiv_apply`: `indecInjRepHom`
   -- does not expose its body, and the bare-`rfl` elaborator refuses to unfold a definition whose
   -- body is sealed, even inside the module that defines it. The same holds of the three `(rfl)`
@@ -195,17 +212,36 @@ theorem indecInjRepHom_app_apply (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k
 /-- **A morphism into `Iᵢ` is determined by its value on the trivial path at `i`**: naturality
 propagates that single functional to every vertex. -/
 theorem hom_indecInjRep_app_apply (i : Q) {M : QuiverRep k Q} (f : M ⟶ indecInjRep k Q i) (j : Q)
-    (x : M.obj j) (q : Quiver.Path j i) :
-    f.app j x q = f.app i (M.map q x) Quiver.Path.nil := by
+    (x : M.obj ((Paths.of Q).obj j)) (q : Quiver.Path j i) :
+    f.app ((Paths.of Q).obj j) x q =
+      f.app ((Paths.of Q).obj i) (M.map q x) Quiver.Path.nil := by
   have h := LinearMap.congr_fun (congrArg ModuleCat.Hom.hom (f.naturality q)) x
-  simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply] at h
-  rw [h, indecInjRep_map_apply, Quiver.Path.comp_nil]
+  simp only [ModuleCat.hom_comp, LinearMap.coe_comp] at h
+  change f.app ((Paths.of Q).obj i) (M.map q x) =
+    (indecInjRep k Q i).map q (f.app ((Paths.of Q).obj j) x) at h
+  have hn := congrFun h Quiver.Path.nil
+  have hmap :
+      (indecInjRep k Q i).map q (f.app ((Paths.of Q).obj j) x) Quiver.Path.nil =
+        f.app ((Paths.of Q).obj j) x (q.comp Quiver.Path.nil) :=
+    indecInjRep_map_apply i q _ _
+  have hn' := hn.trans hmap
+  rw [Quiver.Path.comp_nil] at hn'
+  exact hn'.symm
 
 /-- A morphism into `Iᵢ` is recovered from the functional it induces at `i`. -/
 @[simp]
 theorem indecInjRepHom_app_nil_self {i : Q} {M : QuiverRep k Q} (f : M ⟶ indecInjRep k Q i) :
-    indecInjRepHom i M (LinearMap.proj Quiver.Path.nil ∘ₗ (f.app i).hom) = f := by
-  refine NatTrans.ext (funext fun j ↦ ModuleCat.hom_ext (LinearMap.ext fun x ↦ funext fun q ↦ ?_))
+    indecInjRepHom i M
+      (LinearMap.proj Quiver.Path.nil ∘ₗ (f.app ((Paths.of Q).obj i)).hom) = f := by
+  refine NatTrans.ext (funext fun j ↦ ?_)
+  change Q at j
+  refine ModuleCat.hom_ext (LinearMap.ext fun x ↦ ?_)
+  change M.obj ((Paths.of Q).obj j) at x
+  refine funext fun q ↦ ?_
+  change (indecInjRepHom i M
+      (LinearMap.proj Quiver.Path.nil ∘ₗ (f.app ((Paths.of Q).obj i)).hom)).app
+        ((Paths.of Q).obj j) x q =
+    f.app ((Paths.of Q).obj j) x q
   rw [indecInjRepHom_app_apply]
   exact (hom_indecInjRep_app_apply i f j x q).symm
 
@@ -213,8 +249,8 @@ theorem indecInjRepHom_app_nil_self {i : Q} {M : QuiverRep k Q} (f : M ⟶ indec
 can be prescribed by, the linear functional reading off its value on the trivial path at `i`; the
 bijection is `k`-linear. This is the exact dual of `TauCeti.indecProjRepHomEquiv`. -/
 def indecInjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
-    (M ⟶ indecInjRep k Q i) ≃ₗ[k] Module.Dual k (M.obj i) where
-  toFun f := LinearMap.proj Quiver.Path.nil ∘ₗ (f.app i).hom
+    (M ⟶ indecInjRep k Q i) ≃ₗ[k] Module.Dual k (M.obj ((Paths.of Q).obj i)) where
+  toFun f := LinearMap.proj Quiver.Path.nil ∘ₗ (f.app ((Paths.of Q).obj i)).hom
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun φ := indecInjRepHom i M φ
@@ -226,17 +262,20 @@ def indecInjRepHomEquiv (i : Q) (M : QuiverRep k Q) :
     -- goal is not syntactically a projection of a pi type. The `change` records that unfolding:
     -- applying `LinearMap.proj Quiver.Path.nil ∘ₗ (·.app i).hom` to `x` *is* evaluating the
     -- component at `i` on the trivial path.
-    change (indecInjRepHom i M φ).app i x Quiver.Path.nil = φ x
-    rw [indecInjRepHom_app_apply, QuiverRep.map_nil, ModuleCat.id_apply]
+    change φ (M.map (Quiver.Path.nil : Quiver.Path i i) x) = φ x
+    rw [QuiverRep.map_nil]
+    rfl
 
 @[simp]
 theorem indecInjRepHomEquiv_apply (i : Q) (M : QuiverRep k Q) (f : M ⟶ indecInjRep k Q i)
-    (x : M.obj i) :
-    indecInjRepHomEquiv i M f x = f.app i x Quiver.Path.nil :=
+    (x : M.obj ((Paths.of Q).obj i)) :
+    indecInjRepHomEquiv i M f x =
+      f.app ((Paths.of Q).obj i) x Quiver.Path.nil :=
   (rfl)
 
 @[simp]
-theorem indecInjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj i)) :
+theorem indecInjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q)
+    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
     (indecInjRepHomEquiv i M).symm φ = indecInjRepHom i M φ :=
   (rfl)
 
@@ -244,7 +283,8 @@ theorem indecInjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q) (φ : Module.
 precomposition of functionals with `g` at `i`. -/
 theorem indecInjRepHomEquiv_comp (i : Q) {M N : QuiverRep k Q} (g : M ⟶ N)
     (f : N ⟶ indecInjRep k Q i) :
-    indecInjRepHomEquiv i M (g ≫ f) = indecInjRepHomEquiv i N f ∘ₗ (g.app i).hom :=
+    indecInjRepHomEquiv i M (g ≫ f) =
+      indecInjRepHomEquiv i N f ∘ₗ (g.app ((Paths.of Q).obj i)).hom :=
   (rfl)
 
 /-- **The representations `Iᵢ` are injective.** A morphism into `Iᵢ` is a single linear functional
@@ -252,8 +292,8 @@ on the source at `i`, a monomorphism of representations is injective there, and 
 extends along an injective linear map of vector spaces. -/
 instance injective_indecInjRep (i : Q) : Injective (indecInjRep k Q i) where
   factors {X Y} f g _ := by
-    have hinj : Function.Injective (g.app i).hom :=
-      (ModuleCat.mono_iff_injective (g.app i)).mp inferInstance
+    have hinj : Function.Injective (g.app ((Paths.of Q).obj i)).hom :=
+      (ModuleCat.mono_iff_injective (g.app ((Paths.of Q).obj i))).mp inferInstance
     obtain ⟨ψ, hψ⟩ := LinearMap.dualMap_surjective_of_injective hinj (indecInjRepHomEquiv i X f)
     exact ⟨(indecInjRepHomEquiv i Y).symm ψ, (indecInjRepHomEquiv i X).injective (by
       rw [indecInjRepHomEquiv_comp, LinearEquiv.apply_symm_apply]
@@ -263,8 +303,10 @@ instance injective_indecInjRep (i : Q) : Injective (indecInjRep k Q i) where
 of `Hom(M, Iᵢ)` is the `i`-th entry of the dimension vector of `M`. -/
 theorem finrank_hom_indecInjRep (i : Q) (M : QuiverRep k Q) :
     Module.finrank k (M ⟶ indecInjRep k Q i) = dimVector M i := by
-  rw [dimVector_apply, Paths.of_obj, (indecInjRepHomEquiv i M).finrank_eq,
-    Subspace.dual_finrank_eq]
+  rw [dimVector_apply]
+  change Module.finrank k (M ⟶ indecInjRep k Q i) =
+    Module.finrank k (M.obj ((Paths.of Q).obj i))
+  rw [(indecInjRepHomEquiv i M).finrank_eq, Subspace.dual_finrank_eq]
 
 /-- **The path-counting form of the Cartan matrix, read on injectives**: the dimension of
 `Hom(Iᵢ, Iⱼ)` is the number of paths `j → i`, the same count as for `Hom(Pⱼ, Pᵢ)`. -/

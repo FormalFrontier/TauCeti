@@ -75,7 +75,7 @@ public section
 
 namespace TauCeti
 
-open Complex Filter Metric Set
+open _root_.Complex Filter Metric Set
 open scoped ComplexOrder Topology
 
 variable {Ω : Set ℂ} {f g : ℂ → ℂ} {z₀ : ℂ}
