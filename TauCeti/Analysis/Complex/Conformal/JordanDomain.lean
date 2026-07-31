@@ -50,6 +50,10 @@ are.
 * `TauCeti.isJordanDomain_ball` — a disc of positive radius is a Jordan domain, the basic example
   and the one Carathéodory's theorem compares every other Jordan domain to. Its frontier is a
   circle, which `TauCeti.isJordanCurve_sphere` already knows to be a Jordan curve.
+* `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` — the boundary of a Jordan domain is
+  locally connected, which is the hypothesis the *hard* direction of the L5 milestone runs on:
+  Carathéodory's continuity theorem produces a continuous extension of the Riemann map exactly for
+  a locally connected boundary.
 * `TauCeti.isJordanCurve_frontier_of_isJordanCurve_frontier_image`,
   `TauCeti.isJordanDomain_of_isJordanCurve_frontier_image` and
   `TauCeti.isJordanDomain_of_image_eq_ball` — **the converse half of the Carathéodory
@@ -132,6 +136,18 @@ subset of `ℂ`, so that — once it is also simply connected — it satisfies t
 Riemann mapping theorem. -/
 theorem IsJordanDomain.frontier_nonempty (h : IsJordanDomain U) : (frontier U).Nonempty :=
   h.isJordanCurve_frontier.nonempty
+
+/-- **The boundary of a Jordan domain is locally connected**, being a Jordan curve
+(`TauCeti.IsJordanCurve.locallyConnectedSpace`).
+
+This is the hypothesis under which Carathéodory's continuity theorem produces the continuous
+extension, so it is what the hard direction of the L5 milestone asks of a Jordan domain; the
+converse reading — that any continuous extension *carries* local connectedness to the image
+boundary — is `TauCeti.locallyConnectedSpace_frontier_image` in
+`Conformal/LocallyConnectedBoundary.lean`. -/
+theorem IsJordanDomain.locallyConnectedSpace_frontier (h : IsJordanDomain U) :
+    LocallyConnectedSpace (frontier U) :=
+  h.isJordanCurve_frontier.locallyConnectedSpace
 
 /-- A Jordan domain is not all of `ℂ`. -/
 theorem IsJordanDomain.ne_univ (h : IsJordanDomain U) : U ≠ univ := by

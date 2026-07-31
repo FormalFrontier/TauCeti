@@ -8,9 +8,9 @@ module
 public import Mathlib.Analysis.LocallyConvex.WithSeminorms
 public import Mathlib.Analysis.Normed.Module.Convex
 public import Mathlib.Analysis.Normed.Module.RCLike.Real
-public import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 public import Mathlib.Topology.Algebra.Module.LocallyConvex
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
+public import TauCeti.Analysis.Complex.Conformal.JordanDomain
 public import TauCeti.Topology.LocallyConnected
 
 /-!
@@ -32,15 +32,19 @@ identifications the compactness that boundedness of `U` provides.
 
 For the Riemann map itself the source side of the hypothesis is automatic, and the file records
 that: the closed unit disc is convex and hence locally connected, and the unit circle is locally
-connected because it is the image of a compact interval under `θ ↦ exp (θ * I)`, a first
-application of the same image theorem. So the disc corollaries below carry no local-connectedness
-hypothesis at all.
+connected by `TauCeti.locallyConnectedSpace_sphere`, an application of the same image theorem in
+`TauCeti/Topology/JordanCurve.lean`. So the disc corollaries below carry no local-connectedness
+hypothesis at all, and neither does the Jordan-domain corollary at the end of the file, whose
+boundary is locally connected because it is a Jordan curve.
 
 Together with `TauCeti.exists_continuousOn_closure_eqOn`, the extension criterion of
 `TauCeti/Topology/ClusterSet.lean`, this delimits the L5 milestone from both sides: the criterion
 says which boundary behaviour *produces* a continuous extension, and the results here say what any
-continuous extension *forces* on the image boundary. Neither the sufficiency half of the continuity
-theorem nor the Jordan-domain milestone itself is proved here.
+continuous extension *forces* on the image boundary. The sufficiency half of the continuity
+theorem, and with it the Jordan-domain milestone itself, is not proved here; what this file and
+`TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` supply for it is the hypothesis it runs
+on — local connectedness of the boundary of a Jordan domain — together with the machinery that
+transports it.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
@@ -49,7 +53,6 @@ topological spaces.
 
 ## Main results
 
-* `TauCeti.locallyConnectedSpace_sphere` — a circle in `ℂ` is locally connected.
 * `TauCeti.locallyConnectedSpace_closure_image` and
   `TauCeti.locallyConnectedSpace_frontier_image` — a continuous extension of a conformal map to the
   closure of a bounded domain carries local connectedness of the closure, respectively of the
@@ -58,6 +61,8 @@ topological spaces.
   `TauCeti.locallyConnectedSpace_frontier_image_ball` — the Riemann-map case: if a conformal map on
   the unit disc extends continuously to the closed disc, the closure and the boundary of its image
   are locally connected.
+* `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier_image` — the same for a conformal map on
+  any Jordan domain, whose boundary is locally connected for free.
 
 ## Coordination with upstream Mathlib
 
@@ -85,38 +90,6 @@ namespace TauCeti
 open Complex Metric Set Topology
 
 variable {U : Set ℂ} {f F : ℂ → ℂ}
-
-/-! ## Circles -/
-
-/-- **A circle in `ℂ` is locally connected.** It is the image of the compact interval `[-π, π]`,
-which is convex and hence locally connected, under the continuous `θ ↦ c + r * exp (θ * I)`, so
-`TauCeti.locallyConnectedSpace_image_of_isCompact` applies. A sphere of negative radius is empty,
-and vacuously locally connected. -/
-instance locallyConnectedSpace_sphere (c : ℂ) (r : ℝ) : LocallyConnectedSpace (sphere c r) := by
-  rcases lt_or_ge r 0 with hr | hr
-  · have hempty : sphere c r = (∅ : Set ℂ) := by
-      ext z
-      simp only [mem_sphere_iff_norm, mem_empty_iff_false, iff_false]
-      intro h
-      have : (0 : ℝ) ≤ r := h ▸ norm_nonneg (z - c)
-      linarith
-    rw [hempty]
-    exact ⟨fun x => absurd x.2 (notMem_empty _)⟩
-  · have hparam :
-        sphere c r = (fun θ : ℝ => c + r * exp (θ * I)) '' Icc (-Real.pi) Real.pi := by
-      ext z
-      simp only [mem_sphere_iff_norm, mem_image, mem_Icc]
-      constructor
-      · intro hz
-        refine ⟨arg (z - c), ⟨(neg_pi_lt_arg (z - c)).le, arg_le_pi (z - c)⟩, ?_⟩
-        rw [← hz, norm_mul_exp_arg_mul_I (z - c)]
-        ring
-      · rintro ⟨θ, -, rfl⟩
-        simp [abs_of_nonneg hr]
-    haveI := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
-    rw [hparam]
-    exact locallyConnectedSpace_image_of_isCompact isCompact_Icc
-      (Continuous.continuousOn (by fun_prop))
 
 /-! ## Local connectedness under a continuous extension -/
 
@@ -183,5 +156,21 @@ theorem locallyConnectedSpace_frontier_image_ball (hfd : DifferentiableOn ℂ f 
     infer_instance
   have hcl : closure (ball (0 : ℂ) 1) = closedBall 0 1 := closure_ball (0 : ℂ) one_ne_zero
   exact locallyConnectedSpace_frontier_image isOpen_ball isBounded_ball hfd hfi (hcl ▸ hFc) hFf
+
+/-! ## The Jordan-domain case -/
+
+/-- **A conformal map of a Jordan domain that extends continuously has locally connected image
+boundary.** The source-side hypothesis of `TauCeti.locallyConnectedSpace_frontier_image` is
+automatic for a Jordan domain, since its boundary is a Jordan curve
+(`TauCeti.IsJordanDomain.locallyConnectedSpace_frontier`).
+
+Contrapositively: a domain whose boundary is not locally connected is not the image of a Jordan
+domain under a conformal map extending continuously to the closure — in particular, taking the
+disc for the Jordan domain, it is not one the Riemann map reaches with a continuous extension. -/
+theorem IsJordanDomain.locallyConnectedSpace_frontier_image (hU : IsJordanDomain U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hFc : ContinuousOn F (closure U))
+    (hFf : EqOn F f U) : LocallyConnectedSpace (frontier (f '' U)) :=
+  haveI := hU.locallyConnectedSpace_frontier
+  _root_.TauCeti.locallyConnectedSpace_frontier_image hU.isOpen hU.isBounded hfd hfi hFc hFf
 
 end TauCeti
