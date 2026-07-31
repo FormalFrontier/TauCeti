@@ -98,7 +98,7 @@ private lemma mapsTo_affineChart_inter_im {p a : ℂ} (ha : a ≠ 0) {Ω : Set �
       ((fun w : ℂ => p + a * w) ⁻¹' Ω ∩ {w : ℂ | P w.im})
       (Ω ∩ {z : ℂ | P ((z - p) / a).im}) := by
   refine (Set.mapsTo_preimage _ Ω).inter_inter fun w hw => ?_
-  simpa only [Set.mem_setOf_eq, affineChart_right_inv ha] using hw
+  simpa only [Set.mem_ofPred_eq, affineChart_right_inv ha] using hw
 
 /-- **The chart pullback of a line-symmetric domain is conjugation-symmetric.** If `Ω` is carried
 into itself by reflection in the line `p + a·ℝ`, then its pullback along `w ↦ p + a·w` is carried

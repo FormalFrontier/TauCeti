@@ -90,15 +90,31 @@ theorem monodromy_eq_self_iff_mem_range (hp : IsCoveringMap p) (e : p ⁻¹' {x}
     (γ : FundamentalGroup X x) :
     hp.monodromy γ e = e ↔
       γ ∈ (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range := by
+  have he : p (e : E) = x := by simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+  change hp.monodromy γ e = e ↔
+    γ ∈ (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ he).range
   constructor
   · intro h
     refine ⟨(hp.liftPathQuotient γ e).cast rfl (congrArg Subtype.val h.symm), ?_⟩
-    rw [FundamentalGroup.mapOfEq_apply, Path.Homotopic.Quotient.map_cast,
-      hp.map_liftPathQuotient]
-    simp
+    rw [FundamentalGroup.mapOfEq_apply]
+    let δ := (hp.liftPathQuotient γ e).cast rfl (congrArg Subtype.val h.symm)
+    let γ'' := δ.map ⟨p, hp.continuous⟩
+    let γ' := (hp.liftPathQuotient γ e).map ⟨p, hp.continuous⟩
+    have hγ' : γ' ≍ γ := by
+      dsimp only [γ']
+      rw [hp.map_liftPathQuotient]
+      exact Path.Homotopic.Quotient.cast_heq _ _
+    have hγ'' : γ'' ≍ γ := by
+      dsimp only [γ'', δ]
+      rw [Path.Homotopic.Quotient.map_cast]
+      exact (show _ ≍ γ' from Path.Homotopic.Quotient.cast_heq _ _).trans hγ'
+    apply eq_of_heq
+    exact (show _ ≍ γ'' from Path.Homotopic.Quotient.cast_heq _ _).trans hγ''
   · rintro ⟨δ, rfl⟩
     refine hp.monodromy_eq_of_map_eq δ ?_
-    simp [FundamentalGroup.mapOfEq_apply]
+    rw [FundamentalGroup.mapOfEq_apply]
+    erw [Path.Homotopic.Quotient.cast_cast]
+    exact eq_of_heq (Path.Homotopic.Quotient.cast_heq _ _).symm
 
 /-- The stabiliser of a chosen lift `e` of the basepoint, for the monodromy action of
 `π₁(X, x)` on the fibre over `x`, is the image of `π₁(E, e)` under the covering map. -/
@@ -117,10 +133,13 @@ theorem stabilizer_eq_range (hp : IsCoveringMap p) (e : p ⁻¹' {x}) :
 carries the first lift to the second. -/
 theorem exists_monodromy_eq_of_joined (hp : IsCoveringMap p) {e e' : p ⁻¹' {x}}
     (h : Joined (e : E) (e' : E)) : ∃ γ : FundamentalGroup X x, hp.monodromy γ e = e' := by
+  have he : p (e : E) = x := by simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+  have he' : p (e' : E) = x := by simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e'.2
   set Γ : Path.Homotopic.Quotient (e : E) (e' : E) := Path.Homotopic.Quotient.mk h.somePath
   refine ⟨FundamentalGroup.fromPath
-    ((Γ.map ⟨p, hp.continuous⟩).cast e.2.symm e'.2.symm), hp.monodromy_eq_of_map_eq Γ ?_⟩
-  simp
+    ((Γ.map ⟨p, hp.continuous⟩).cast he.symm he'.symm), hp.monodromy_eq_of_map_eq Γ ?_⟩
+  erw [Path.Homotopic.Quotient.cast_cast]
+  exact (eq_of_heq (Path.Homotopic.Quotient.cast_heq _ _)).symm
 
 /-- On a fibre of a path-connected cover, monodromy is transitive. -/
 theorem exists_monodromy_eq [PathConnectedSpace E] (hp : IsCoveringMap p) (e e' : p ⁻¹' {x}) :

@@ -127,7 +127,10 @@ other components land in a zero module. -/
 @[simp]
 theorem hom_simpleRep_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : M ⟶ simpleRep k Q i) :
     f = 0 ↔ f.app i = 0 := by
-  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine ⟨fun h ↦ by
+    rw [h]
+    exact CategoryTheory.Limits.zero_app (ModuleCat k) M (simpleRep k Q i)
+      ((Paths.of Q).obj i), fun h ↦ ?_⟩
   refine NatTrans.ext (funext fun a ↦ ?_)
   rcases eq_or_ne a i with rfl | ha
   · exact h
@@ -138,7 +141,10 @@ all its other components start from a zero module. -/
 @[simp]
 theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q i ⟶ M) :
     f = 0 ↔ f.app i = 0 := by
-  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine ⟨fun h ↦ by
+    rw [h]
+    exact CategoryTheory.Limits.zero_app (ModuleCat k) (simpleRep k Q i) M
+      ((Paths.of Q).obj i), fun h ↦ ?_⟩
   refine NatTrans.ext (funext fun a ↦ ?_)
   rcases eq_or_ne a i with rfl | ha
   · exact h
@@ -156,11 +162,19 @@ instance simpleRep_simple (i : Q) : Simple (simpleRep k Q i) where
     · intro h
       rw [NatTrans.isIso_iff_isIso_app]
       intro a
+      change Q at a
+      change IsIso (f.app ((Paths.of Q).obj a))
       rcases eq_or_ne a i with rfl | ha
-      · exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)
-      · have ht : IsZero ((simpleRep k Q i).obj a) := isZero_simpleRep_obj (Q := Q) ha
-        have hs : IsZero (M.obj a) := IsZero.of_mono (f.app a) ht
-        rw [hs.eq_of_src (f.app a) (hs.iso ht).hom]
+      · letI : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
+          change Simple ((simpleRep k Q a).obj a)
+          exact simple_simpleRep_obj_self a
+        exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)
+      · have ht : IsZero ((simpleRep k Q i).obj ((Paths.of Q).obj a)) := by
+          change IsZero ((simpleRep k Q i).obj a)
+          exact isZero_simpleRep_obj (Q := Q) ha
+        have hs : IsZero (M.obj ((Paths.of Q).obj a)) :=
+          IsZero.of_mono (f.app ((Paths.of Q).obj a)) ht
+        rw [hs.eq_of_src (f.app ((Paths.of Q).obj a)) (hs.iso ht).hom]
         infer_instance
 
 /-- The dimension vector of the vertex simple `Sᵢ` is the standard basis vector at `i`. -/

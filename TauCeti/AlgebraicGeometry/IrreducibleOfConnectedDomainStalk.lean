@@ -172,7 +172,7 @@ private theorem val_equivIrreducibleComponents (R : Type*) [CommRing R]
     (Q := fun s ↦ s ∈ irreducibleComponents (PrimeSpectrum R))
     h_eq.symm
   erw [h_cast]
-  dsimp [OrderIso.setOfMinimalIsoSetOfMaximal, OrderIso.trans]
+  dsimp [OrderIso.setOfPredMinimalIsoSetOfPredMaximal, OrderIso.trans]
   dsimp [PrimeSpectrum.pointsEquivIrreducibleCloseds]
   exact PrimeSpectrum.closure_singleton ⟨q.val, q.property.1.1⟩
 

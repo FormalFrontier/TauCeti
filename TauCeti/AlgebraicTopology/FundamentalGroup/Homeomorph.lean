@@ -60,7 +60,6 @@ theorem mapOfEq_comp (g : C(Y, Z)) (f : C(X, Y)) (hf : f x = y) (hg : g y = z)
   simp only [_root_.FundamentalGroup.mapOfEq_apply]
   rw [Path.Homotopic.Quotient.map_cast, Path.Homotopic.Quotient.cast_cast,
     ← Path.Homotopic.Quotient.map_comp]
-  rfl
 
 /-- The map induced on fundamental groups by the identity continuous map is the identity. -/
 @[simp]

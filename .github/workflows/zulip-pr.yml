@@ -1,19 +1,24 @@
 name: Zulip PR status (lifecycle)
 
 # Maintain the per-PR message + emoji in the "Tau Ceti" Zulip channel as a PR is
-# opened, reopened, merged, or closed. CI- and review-status changes are handled
-# by zulip-pr-status.yml; this one owns the message's existence and its
-# merged/closed lifecycle. A one-off reaction hiccup is cosmetic and the script
-# swallows it (exit 0); a *config* break (bad ZULIP_API_KEY, bot not subscribed)
-# makes the script exit non-zero so this run goes red -- that is the only way the
-# breakage is visible, since the integration otherwise fails silently.
+# opened, reopened, merged, closed, or relabeled. CI- and review-status changes
+# are also handled by zulip-pr-status.yml; label events keep the roadmap shown in
+# the post current and make the emoji follow the automatic status-label changes
+# promptly. A one-off reaction hiccup is cosmetic and the script swallows it
+# (exit 0); a *config* break (bad ZULIP_API_KEY, bot not subscribed) makes the
+# script exit non-zero so this run goes red -- that is the only way the breakage
+# is visible, since the integration otherwise fails silently.
 
 on:
+  # These label writes use the repository GitHub App, not GITHUB_TOKEN, so they
+  # generate workflow events. That is what makes review/roadmap changes refresh
+  # the Zulip post promptly.
   pull_request_target:
-    types: [opened, reopened, closed]
+    types: [opened, reopened, closed, labeled, unlabeled]
 
 permissions:
   contents: read        # checkout the script
+  issues: read          # read review scoreboards and in-progress markers
   pull-requests: read   # read PR state
   statuses: read        # read the `build` commit status
 
@@ -29,6 +34,16 @@ jobs:
     if: github.repository == 'TauCetiProject/TauCeti'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: read
       - uses: actions/checkout@v4
         with:
           sparse-checkout: scripts/pr_status
@@ -39,7 +54,7 @@ jobs:
         # required checks, and auto-merge gates on the build status + review
         # ledger, not on this workflow.
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com
@@ -52,8 +67,23 @@ jobs:
           PR_MERGED: ${{ github.event.pull_request.merged }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_LABELS_JSON: ${{ toJSON(github.event.pull_request.labels) }}
         run: |
-          # Create the message when a PR opens/reopens; otherwise only react to it.
+          # A label event's payload can be stale when several label writes race.
+          # Force those events through the API fallback so they read current truth.
+          if [ "$ACTION" = "labeled" ] || [ "$ACTION" = "unlabeled" ]; then
+            unset PR_STATE PR_MERGED PR_HEAD PR_TITLE PR_AUTHOR PR_LABELS_JSON
+          fi
+
+          # Only opening/reopening may create a post. Label churn on a closed PR
+          # must never resurrect a missing announcement out of chronological order.
           CREATE=""
-          if [ "$ACTION" != "closed" ]; then CREATE="--create"; fi
+          if [ "$ACTION" = "opened" ] || [ "$ACTION" = "reopened" ]; then
+            CREATE="--create"
+          elif [ "$ACTION" = "labeled" ] || [ "$ACTION" = "unlabeled" ]; then
+            # Self-heal a transient failure in the original opened run, but
+            # only while current GitHub truth still says the PR is open.
+            CREATE="--create-if-open"
+          fi
           python3 scripts/pr_status/zulip.py reconcile "$PR" $CREATE

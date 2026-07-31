@@ -44,7 +44,7 @@ theorem algebraMap_centerPiMatrixAlgEquiv_apply [∀ i, NeZero (d i)]
     (x : Subalgebra.center k (Π i, Matrix (Fin (d i)) (Fin (d i)) k)) (i : ι) :
     algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (centerPiMatrixAlgEquiv k d x i) =
       (x : Π i, Matrix (Fin (d i)) (Fin (d i)) k) i := by
-  simp [centerPiMatrixAlgEquiv, AlgEquiv.piCongrRight]
+  simp [centerPiMatrixAlgEquiv]
 
 /-- The inverse of `centerPiMatrixAlgEquiv` assembles a function on the index into the tuple of the
 corresponding scalar matrices. -/
@@ -52,7 +52,7 @@ corresponding scalar matrices. -/
 theorem centerPiMatrixAlgEquiv_symm_apply_coe [∀ i, NeZero (d i)] (f : ι → k) (i : ι) :
     ((centerPiMatrixAlgEquiv k d).symm f : Π i, Matrix (Fin (d i)) (Fin (d i)) k) i =
       algebraMap k (Matrix (Fin (d i)) (Fin (d i)) k) (f i) := by
-  simp [centerPiMatrixAlgEquiv, AlgEquiv.piCongrRight]
+  simp [centerPiMatrixAlgEquiv]
 
 variable [Fintype ι]
 

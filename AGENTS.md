@@ -18,6 +18,25 @@ expanding the project's mathematical scope), relocating a misplaced declaration,
 cleaner idiom, and documenting existing code are all welcome at any time. The roadmap conditions
 what new mathematics gets *added*, not whether already-merged code may be made better.
 
+Every pull request description must also contain one standalone attribution line:
+
+```text
+Roadmap: CanonicalAreaName
+```
+
+or:
+
+```text
+Roadmap: none
+```
+
+Use the canonical roadmap directory name. This is attribution, not authorization: new
+mathematics must still cite the exact roadmap file and target it advances, while a refactor
+needs no fresh roadmap claim but should name the one roadmap chiefly motivating it. Use
+`Roadmap: none` for genuinely general, cross-cutting, infrastructure, or dependency work.
+Do not infer the association from a `TauCeti/` directory name; code organization and roadmap
+scope do not coincide.
+
 ## The rules of the repo
 
 - `main` is always green. CI builds against pinned Mathlib and enforces: no `sorry`, no

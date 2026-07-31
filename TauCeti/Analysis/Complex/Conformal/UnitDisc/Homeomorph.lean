@@ -26,7 +26,7 @@ public section
 
 namespace TauCeti
 
-open Complex
+open _root_.Complex
 open scoped ComplexConjugate
 
 /--
