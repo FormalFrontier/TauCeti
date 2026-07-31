@@ -60,9 +60,10 @@ of `ℂ` rather than for an abstract proper map.
   `U`, in particular to a boundary point, is carried out of every compact subset of the image.
 * `TauCeti.notMem_image_of_mem_frontier` — a continuous extension to `closure U` sends `frontier U`
   outside `f '' U`.
-* `TauCeti.image_closure_eq_closure_image` and `TauCeti.image_frontier_subset_frontier_image` — for
-  bounded `U`, a continuous extension carries `closure U` onto `closure (f '' U)`, and `frontier U`
-  into `frontier (f '' U)`.
+* `TauCeti.image_closure_eq_closure_image` — for bounded `U`, a continuous extension carries
+  `closure U` onto `closure (f '' U)`.
+* `TauCeti.image_frontier_subset_frontier_image` — a continuous extension carries `frontier U` into
+  `frontier (f '' U)`; no boundedness is needed.
 * `TauCeti.bijOn_closure_closure_image`, `TauCeti.closureHomeomorph` and
   `TauCeti.image_frontier_eq_frontier_image` — for bounded `U`, an extension injective on
   `closure U` is a homeomorphism `closure U ≃ₜ closure (f '' U)`, and it carries `frontier U` onto
@@ -99,11 +100,11 @@ variable {U K : Set ℂ} {f F : ℂ → ℂ}
 set `U` and `K ⊆ f '' U` is compact, then the part of the preimage of `K` lying in `U` is compact.
 
 Properness is what distinguishes `f '' U` as the *whole* image: the preimage cannot escape to the
-boundary of `U` while its image stays in a compact part of `f '' U`. The proof is that
-`U ∩ f ⁻¹' K` is the image of `K` under the holomorphic inverse `Function.invFunOn f U`. -/
+boundary of `U` while its image stays in a compact part of `f '' U`. -/
 theorem isCompact_inter_preimage_of_differentiableOn_of_injOn (hUo : IsOpen U)
     (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hK : IsCompact K) (hKf : K ⊆ f '' U) :
     IsCompact (U ∩ f ⁻¹' K) := by
+  -- `U ∩ f ⁻¹' K` is the image of `K` under the holomorphic inverse `Function.invFunOn f U`.
   have hinv : DifferentiableOn ℂ (Function.invFunOn f U) (f '' U) :=
     TauCeti.DifferentiableOn.invFunOn hfd hUo hfi
   have hset : U ∩ f ⁻¹' K = Function.invFunOn f U '' K := by
@@ -119,16 +120,14 @@ theorem isCompact_inter_preimage_of_differentiableOn_of_injOn (hUo : IsOpen U)
 
 /-- **A conformal map carries a family converging out of `U` out of every compact subset of the
 image.** If `z i ∈ U` eventually, `z i → w` and `w ∉ U`, then eventually `f (z i)` avoids any
-compact `K ⊆ f '' U`.
-
-Were it otherwise, `z i` would frequently lie in the compact — hence closed — set `U ∩ f ⁻¹' K` of
-`TauCeti.isCompact_inter_preimage_of_differentiableOn_of_injOn`, which would therefore contain the
-limit `w`, contradicting `w ∉ U`. -/
+compact `K ⊆ f '' U`. -/
 theorem eventually_notMem_of_tendsto_of_notMem {ι : Type*} {l : Filter ι} {z : ι → ℂ} {w : ℂ}
     (hUo : IsOpen U) (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U)
     (hz : ∀ᶠ i in l, z i ∈ U) (hlim : Tendsto z l (𝓝 w)) (hwU : w ∉ U)
     (hK : IsCompact K) (hKf : K ⊆ f '' U) :
     ∀ᶠ i in l, f (z i) ∉ K := by
+  -- Otherwise `z i` frequently lies in the compact — hence closed — set `U ∩ f ⁻¹' K`, which would
+  -- therefore contain the limit `w`.
   have hC := isCompact_inter_preimage_of_differentiableOn_of_injOn hUo hfd hfi hK hKf
   by_contra hcon
   rw [Filter.not_eventually] at hcon
@@ -143,14 +142,15 @@ theorem eventually_notMem_of_tendsto_of_notMem {ι : Type*} {l : Filter ι} {z :
 continuous on `closure U` and agrees with `f` on `U`, then `F` maps no boundary point of `U` into
 the open set `f '' U`.
 
-This is properness run along the filter `𝓝[U] w`, which is `NeBot` because `w ∈ closure U`: if
-`F w` were in the open set `f '' U`, a small closed ball `K` around it would be a compact subset of
-`f '' U`, and `f = F` would both enter `K` eventually along `𝓝[U] w` (continuity of `F` at `w`) and
-avoid `K` eventually (`TauCeti.eventually_notMem_of_tendsto_of_notMem`, applied to the
-nonmembership component of `w ∈ frontier U = closure U \ U`). -/
+For open `U` the hypothesis `w ∈ frontier U` is `w ∈ closure U` together with `w ∉ U`; both halves
+are used, the first to make the filter `𝓝[U] w` nontrivial and the second to invoke
+`TauCeti.eventually_notMem_of_tendsto_of_notMem`. -/
 theorem notMem_image_of_mem_frontier (hUo : IsOpen U) (hfd : DifferentiableOn ℂ f U)
     (hfi : InjOn f U) (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U)
     {w : ℂ} (hw : w ∈ frontier U) : F w ∉ f '' U := by
+  -- If `F w` were in the open set `f '' U`, a small closed ball `K` around it would be a compact
+  -- subset of `f '' U` that `f = F` both enters eventually along `𝓝[U] w`, by continuity of `F`
+  -- at `w`, and avoids eventually, by properness — impossible on a nontrivial filter.
   intro hmem
   have hVo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi
   obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp hVo _ hmem
@@ -170,34 +170,27 @@ theorem notMem_image_of_mem_frontier (hUo : IsOpen U) (hfd : DifferentiableOn �
   obtain ⟨x, hx1, hx2⟩ := (hesc.and hnear).exists
   exact hx1 hx2
 
-/-- A continuous extension of `f` to `closure U` maps `closure U` into `closure (f '' U)`: the
-image of a closure lands in the closure of the image. -/
-private lemma image_closure_subset_closure_image (hFc : ContinuousOn F (closure U))
-    (hFf : EqOn F f U) : F '' closure U ⊆ closure (f '' U) := by
-  rw [← hFf.image_eq]
-  exact hFc.image_closure
-
 /-- **A continuous extension of a conformal map carries the closure onto the closure of the
-image**, for a bounded `U`. Only boundedness and continuity are used: `closure U` is then compact,
-so `F '' closure U` is compact, hence closed, and squeezed between `f '' U` and its closure. -/
+image**, for a bounded `U`. Only boundedness and continuity are used; no holomorphy hypothesis
+appears. -/
 theorem image_closure_eq_closure_image (hUb : Bornology.IsBounded U)
     (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) :
     F '' closure U = closure (f '' U) := by
-  refine subset_antisymm (image_closure_subset_closure_image hFc hFf) (closure_minimal ?_ ?_)
-  · calc f '' U = F '' U := hFf.image_eq.symm
-      _ ⊆ F '' closure U := image_mono subset_closure
-  · exact (hUb.isCompact_closure.image_of_continuousOn hFc).isClosed
+  rw [image_closure_of_isCompact hUb.isCompact_closure hFc, hFf.image_eq]
 
 /-- **A continuous extension of a conformal map carries the boundary into the boundary.** No
-boundedness is needed: a boundary point lands in `closure (f '' U)` by continuity and outside
-`f '' U` by `TauCeti.notMem_image_of_mem_frontier`, and `f '' U` is open, so its frontier is
-`closure (f '' U) \ f '' U`. -/
+boundedness is needed. -/
 theorem image_frontier_subset_frontier_image (hUo : IsOpen U) (hfd : DifferentiableOn ℂ f U)
     (hfi : InjOn f U) (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) :
     F '' frontier U ⊆ frontier (f '' U) := by
+  -- A boundary point lands in `closure (f '' U)` by continuity and outside `f '' U` by
+  -- `TauCeti.notMem_image_of_mem_frontier`; `f '' U` is open, so its frontier is the difference.
+  have hcl : F '' closure U ⊆ closure (f '' U) := by
+    rw [← hFf.image_eq]
+    exact hFc.image_closure
   rintro _ ⟨w, hw, rfl⟩
   rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq]
-  exact ⟨image_closure_subset_closure_image hFc hFf ⟨w, frontier_subset_closure hw, rfl⟩,
+  exact ⟨hcl ⟨w, frontier_subset_closure hw, rfl⟩,
     notMem_image_of_mem_frontier hUo hfd hfi hFc hFf hw⟩
 
 /-! ## The boundary homeomorphism -/
