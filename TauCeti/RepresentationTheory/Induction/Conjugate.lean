@@ -585,24 +585,32 @@ theorem conjNormalRep_mul (s t : G) (A : Rep k N) :
   Functor.congr_obj (conjNormalRepFunctor_mul s t) A
 
 /-- Conjugation by `g` is an autoequivalence of `Rep k N`, with inverse conjugation by `g⁻¹`: the
-autoequivalence the roadmap asks for, built from the coherence of the previous two lemmas.
+autoequivalence the roadmap asks for.  Conjugation on a normal subgroup is restriction along the
+automorphism `MulAut.conjNormal g⁻¹`, so this is `resFunctorEquiv` for that automorphism, exactly
+as `conjNormalFDRepEquiv` is Mathlib's `Action.resEquiv` for it.
 
 The body is sealed; `conjNormalRepEquiv_functor` and `conjNormalRepEquiv_inverse` are the
 interface identifying it with conjugation. -/
 def conjNormalRepEquiv (g : G) : Rep k N ≌ Rep k N :=
-  CategoryTheory.Equivalence.mk (conjNormalRepFunctor g) (conjNormalRepFunctor g⁻¹)
-    (eqToIso (by rw [← conjNormalRepFunctor_mul, inv_mul_cancel, conjNormalRepFunctor_one]))
-    (eqToIso (by rw [← conjNormalRepFunctor_mul, mul_inv_cancel, conjNormalRepFunctor_one]))
+  resFunctorEquiv (MulAut.conjNormal g⁻¹ : MulAut N)
 
 @[simp]
 theorem conjNormalRepEquiv_functor (g : G) :
-    (conjNormalRepEquiv (k := k) (N := N) g).functor = conjNormalRepFunctor g :=
-  (rfl)
+    (conjNormalRepEquiv (k := k) (N := N) g).functor = conjNormalRepFunctor g := by
+  -- Unfold the `conjNormalRepEquiv` wrapper to expose `resFunctorEquiv`.
+  change (resFunctorEquiv (MulAut.conjNormal g⁻¹ : MulAut N)).functor = _
+  rw [resFunctorEquiv_functor]
+  rfl
 
 @[simp]
 theorem conjNormalRepEquiv_inverse (g : G) :
-    (conjNormalRepEquiv (k := k) (N := N) g).inverse = conjNormalRepFunctor g⁻¹ :=
-  (rfl)
+    (conjNormalRepEquiv (k := k) (N := N) g).inverse = conjNormalRepFunctor g⁻¹ := by
+  -- Unfold the wrapper as above; the inverse is restriction along `(MulAut.conjNormal g⁻¹)⁻¹`,
+  -- which `map_inv` identifies with `MulAut.conjNormal (g⁻¹)⁻¹`, as in the `FDRep` mirror.
+  change (resFunctorEquiv (MulAut.conjNormal g⁻¹ : MulAut N)).inverse = _
+  rw [resFunctorEquiv_inverse]
+  exact congrArg (fun e : MulAut N => Rep.resFunctor (k := k) (MulEquiv.toMonoidHom e))
+    (map_inv MulAut.conjNormal (g⁻¹ : G)).symm
 
 /-- Conjugation is a left action of `G` on `Rep k N`: `g • A` is `conjNormalRep g A`.  Clifford
 theory's inertia group of `A` is the stabilizer of the isomorphism class of `A`,
