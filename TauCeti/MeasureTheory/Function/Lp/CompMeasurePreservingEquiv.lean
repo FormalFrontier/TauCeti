@@ -20,7 +20,9 @@ A change of variables rarely supplies a `MeasurableEquiv`. The maps that arise i
 inverse to each other only *almost everywhere*: `Real.cos` and `Real.arccos` are mutually inverse
 on `[-1, 1]` and on `(0, π]`, not on all of `ℝ`. This file therefore takes a convenient sufficient
 hypothesis — a pair of measure-preserving maps that compose to the identity almost everywhere in
-each direction — and builds the isometric equivalence from it.
+one direction — and builds the isometric equivalence from it. One direction is enough: both
+precompositions are linear isometries, hence injective, and an injective map with a one-sided
+inverse has that inverse on both sides.
 
 ## Main declarations
 
@@ -28,7 +30,7 @@ each direction — and builds the isometric equivalence from it.
   linear isometry. Mathlib's `@[simps!]` generates only `compMeasurePreservingₗᵢ_apply_coe`,
   which unfolds one level too far to rewrite with.
 * `MeasureTheory.Lp.compMeasurePreservingₗᵢEquiv` upgrades that linear isometry to a
-  `LinearIsometryEquiv` given an almost-everywhere inverse partner.
+  `LinearIsometryEquiv` given a one-sided almost-everywhere inverse partner.
 * `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv` and
   `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm` identify the equivalence and its
   inverse with precomposition by `f` and by `g` respectively.
@@ -77,22 +79,29 @@ theorem compMeasurePreserving_comp_apply_of_ae_id {α β E : Type*} [MeasurableS
 /-- **The `L^p` isometric equivalence induced by an almost-everywhere inverse pair of
 measure-preserving maps.**
 
-`f` and `g` are each measure-preserving and compose to the identity almost everywhere in both
-directions; precomposition by `f` is then an isometric isomorphism `Lp E p μb ≃ₗᵢ[𝕜] Lp E p μ`,
-with inverse precomposition by `g`.
+`f` and `g` are each measure-preserving and `f ∘ g` is the identity almost everywhere;
+precomposition by `f` is then an isometric isomorphism `Lp E p μb ≃ₗᵢ[𝕜] Lp E p μ`, with inverse
+precomposition by `g`.
 
-The almost-everywhere hypotheses are what make this usable for a change of variables: `Real.cos`
-and `Real.arccos` satisfy them without forming a `MeasurableEquiv`. -/
+Only the one composition identity is needed. It makes precomposition by `g` a retraction of
+precomposition by `f`, and precomposition by `g` is a linear isometry, hence injective, so that
+retraction is already a two-sided inverse. The symmetric hypothesis `g ∘ f =ᵐ[μ] id` is therefore
+not required as an argument.
+
+The almost-everywhere hypothesis is what makes this usable for a change of variables: `Real.cos`
+and `Real.arccos` satisfy it without forming a `MeasurableEquiv`. -/
 noncomputable def compMeasurePreservingₗᵢEquiv {α β E : Type*} [MeasurableSpace α]
     [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) :
+    (hfg : f ∘ g =ᵐ[μb] id) :
     Lp E p μb ≃ₗᵢ[𝕜] Lp E p μ :=
   LinearIsometryEquiv.ofLinearIsometry (compMeasurePreservingₗᵢ 𝕜 f hf)
     (compMeasurePreservingₗ 𝕜 g hg)
-    (LinearMap.ext fun x => compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p) hg hf hgf x)
+    (LinearMap.ext fun x => (compMeasurePreservingₗᵢ 𝕜 g hg).injective
+      (compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p) hf hg hfg
+        (compMeasurePreserving g hg x)))
     (LinearMap.ext fun x => compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p) hf hg hfg x)
 
 @[simp]
@@ -101,8 +110,8 @@ theorem compMeasurePreservingₗᵢEquiv_apply {α β E : Type*} [MeasurableSpac
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μb) :
-    compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf x = compMeasurePreserving f hf x := by
+    (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μb) :
+    compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg x = compMeasurePreserving f hf x := by
   rw [compMeasurePreservingₗᵢEquiv, LinearIsometryEquiv.coe_ofLinearIsometry,
     compMeasurePreservingₗᵢ_apply]
 
@@ -112,8 +121,8 @@ theorem compMeasurePreservingₗᵢEquiv_symm_apply {α β E : Type*} [Measurabl
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μ) :
-    (compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf).symm x = compMeasurePreserving g hg x := by
+    (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μ) :
+    (compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg).symm x = compMeasurePreserving g hg x := by
   rw [compMeasurePreservingₗᵢEquiv, LinearIsometryEquiv.coe_ofLinearIsometry_symm]
   rfl
 
@@ -123,8 +132,8 @@ theorem coeFn_compMeasurePreservingₗᵢEquiv {α β E : Type*} [MeasurableSpac
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μb) :
-    ⇑(compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf x) =ᵐ[μ] ⇑x ∘ f := by
+    (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μb) :
+    ⇑(compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg x) =ᵐ[μ] ⇑x ∘ f := by
   simpa using coeFn_compMeasurePreserving (E := E) (p := p) x hf
 
 /-- The inverse equivalence is almost everywhere precomposition by `g`. -/
@@ -133,8 +142,8 @@ theorem coeFn_compMeasurePreservingₗᵢEquiv_symm {α β E : Type*} [Measurabl
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
     (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) (hgf : g ∘ f =ᵐ[μ] id) (x : Lp E p μ) :
-    ⇑((compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg hgf).symm x) =ᵐ[μb] ⇑x ∘ g := by
+    (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μ) :
+    ⇑((compMeasurePreservingₗᵢEquiv 𝕜 hf hg hfg).symm x) =ᵐ[μb] ⇑x ∘ g := by
   simpa using coeFn_compMeasurePreserving (E := E) (p := p) x hg
 
 end Lp
