@@ -136,9 +136,6 @@ theorem smul_apply_inv_left (g : G) : g • α (g⁻¹, g) = α (g, g⁻¹) := b
 
 end
 
--- Don't generate sizeOf and injectivity lemmas, which the `simpNF` linter will complain about.
-set_option genSizeOfSpec false in
-set_option genInjectivity false in
 /-- The **twisted product** `M × G` attached to a factor set `α`: the underlying set of the group
 extension of `G` by `M` that `α` determines, with multiplication
 `⟨a, g⟩ * ⟨b, h⟩ = ⟨a * g • b * α (g, h), g * h⟩`. For the trivial factor set this is the
