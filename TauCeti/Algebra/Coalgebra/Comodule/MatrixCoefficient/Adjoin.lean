@@ -126,22 +126,11 @@ theorem range_matrixCoefficientTensor :
     LinearMap.range
         (matrixCoefficientTensor (R := R) (C := C) (M := M)) =
       matrixCoefficientSubmodule (R := R) (C := C) (M := M) := by
-  apply le_antisymm
-  · rintro c ⟨x, rfl⟩
-    induction x using TensorProduct.induction_on with
-    | zero =>
-      rw [map_zero]
-      exact
-        (matrixCoefficientSubmodule (R := R) (C := C) (M := M)).zero_mem
-    | add x y hx hy =>
-      rw [map_add]
-      exact
-        (matrixCoefficientSubmodule (R := R) (C := C) (M := M)).add_mem hx hy
-    | tmul φ m =>
-      rw [matrixCoefficientTensor_tmul]
-      exact matrixCoefficient_mem_submodule (R := R) (C := C) φ m
-  · exact matrixCoefficientSubmodule_le (R := R) (C := C) (M := M)
-      fun φ m => ⟨φ ⊗ₜ[R] m, matrixCoefficientTensor_tmul (R := R) (C := C) φ m⟩
+  rw [LinearMap.range_eq_map, ← TensorProduct.span_tmul_eq_top, Submodule.map_span,
+    matrixCoefficientSubmodule, matrixCoefficientSet]
+  congr 1
+  ext c
+  simp
 
 end Submodule
 
