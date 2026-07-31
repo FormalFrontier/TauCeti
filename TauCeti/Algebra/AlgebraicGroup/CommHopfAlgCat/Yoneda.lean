@@ -51,6 +51,30 @@ namespace TauCeti
 
 universe u v
 
+section CorepresentableByToIso
+
+universe u' v'
+
+variable {C : Type u'} [Category.{v'} C] {F : C ⥤ Type v'} {X : C}
+
+/-- Mathlib's `Functor.CorepresentableBy.toIso` is `Functor.corepresentableByEquiv`, whose
+components are the isomorphisms `Equiv.toIso` attached to `homEquiv`. This local lemma is the
+one place that unfolds that implementation, so the computation rules below can be stated
+purely in terms of `homEquiv`. -/
+private theorem corepresentableBy_toIso_hom_app (e : F.CorepresentableBy X) (Y : C)
+    (f : X ⟶ Y) : e.toIso.hom.app Y f = e.homEquiv f := by
+  simp only [Functor.CorepresentableBy.toIso, Functor.corepresentableByEquiv, Equiv.coe_fn_mk,
+    NatIso.ofComponents_hom_app, Equiv.toIso_hom_hom_apply]
+
+/-- The inverse form of `corepresentableBy_toIso_hom_app`, obtained from it by applying the
+injective map `homEquiv`. -/
+private theorem corepresentableBy_toIso_inv_app (e : F.CorepresentableBy X) (Y : C)
+    (y : F.obj Y) : e.toIso.inv.app Y y = e.homEquiv.symm y :=
+  e.homEquiv.injective <| by
+    rw [← corepresentableBy_toIso_hom_app, Iso.inv_hom_id_app_apply, Equiv.apply_symm_apply]
+
+end CorepresentableByToIso
+
 namespace HopfAlgebra
 
 variable {R : Type u} [CommRing R]
@@ -78,9 +102,14 @@ theorem pointsCorepresentableBy_homEquiv_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     {A : CommAlgCat.{v} R} (f : CommAlgCat.of R H ⟶ A) :
     (pointsCorepresentableBy (R := R) H).homEquiv f = toConv f.hom := by
-  change (ConcreteCategory.homEquiv.trans (WithConv.equiv _).symm) f = _
-  simp only [Equiv.trans_apply, WithConv.symm_equiv_apply, ConcreteCategory.homEquiv,
-    Equiv.coe_fn_mk]
+  -- The corepresenting equivalence is `ConcreteCategory.homEquiv` followed by
+  -- `(WithConv.equiv _).symm`, so both sides are literally `toConv f.hom`. The conversion has
+  -- to be definitional: the value type `(pointsFunctor ⋙ forget GrpCat).obj A` becomes
+  -- `WithConv (H →ₐ[R] A)` only after unfolding `Functor.comp` and `forget`, so rewriting with
+  -- `WithConv.symm_equiv_apply` fails — its instance of `WithConv.equiv` does not even
+  -- typecheck at the unreduced value type. This lemma is the single definitional step; every
+  -- computation rule below is derived from it by rewriting.
+  rfl
 
 /-- The inverse corepresenting equivalence forgets the convolution wrapper and bundles the
 resulting algebra homomorphism as a morphism in `CommAlgCat`. -/
@@ -116,10 +145,8 @@ theorem coyonedaObjIsoPointsFunctorForget_hom_app_apply
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
     (A : CommAlgCat.{v} R) (f : CommAlgCat.of R H ⟶ A) :
     (coyonedaObjIsoPointsFunctorForget (R := R) H).hom.app A f = toConv f.hom := by
-  simp only [coyonedaObjIsoPointsFunctorForget, Functor.CorepresentableBy.toIso,
-    Functor.corepresentableByEquiv, Equiv.coe_fn_mk, NatIso.ofComponents_hom_app,
-    Equiv.toIso_hom_hom_apply]
-  exact pointsCorepresentableBy_homEquiv_apply (R := R) H f
+  rw [coyonedaObjIsoPointsFunctorForget, corepresentableBy_toIso_hom_app,
+    pointsCorepresentableBy_homEquiv_apply]
 
 /-- The inverse map of `coyonedaObjIsoPointsFunctorForget` bundles a point as a morphism in
 `CommAlgCat`. -/
@@ -129,10 +156,8 @@ theorem coyonedaObjIsoPointsFunctorForget_inv_app_apply
     (A : CommAlgCat.{v} R) (p : points (R := R) (H := H) A) :
     (coyonedaObjIsoPointsFunctorForget (R := R) H).inv.app A p =
       CommAlgCat.ofHom p.ofConv := by
-  simp only [coyonedaObjIsoPointsFunctorForget, Functor.CorepresentableBy.toIso,
-    Functor.corepresentableByEquiv, Equiv.coe_fn_mk, NatIso.ofComponents_inv_app,
-    Equiv.toIso_inv_hom_apply]
-  exact pointsCorepresentableBy_homEquiv_symm_apply (R := R) H p
+  rw [coyonedaObjIsoPointsFunctorForget, corepresentableBy_toIso_inv_app,
+    pointsCorepresentableBy_homEquiv_symm_apply]
 
 end HopfAlgebra
 
