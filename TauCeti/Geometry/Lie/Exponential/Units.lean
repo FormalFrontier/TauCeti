@@ -82,6 +82,7 @@ theorem expUnit_neg (x : R) : expUnit (-x) = (expUnit x)⁻¹ := by
   simp
 
 /-- Along a fixed direction `x`, the Banach-algebra exponential is a one-parameter subgroup. -/
+@[simp]
 theorem exp_add_smul (x : R) (s t : ℝ) :
     exp ((s + t) • x) = exp (s • x) * exp (t • x) := by
   rw [add_smul]
@@ -91,6 +92,7 @@ theorem exp_add_smul (x : R) (s t : ℝ) :
     ((expSeries_radius_eq_top ℝ R).symm ▸ edist_lt_top _ _)
 
 /-- The one-parameter subgroup law lifted from the algebra to its group of units. -/
+@[simp]
 theorem expUnit_add_smul (x : R) (s t : ℝ) :
     expUnit ((s + t) • x) = expUnit (s • x) * expUnit (t • x) := by
   rw [add_smul]
