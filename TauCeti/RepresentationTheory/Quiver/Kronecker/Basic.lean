@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
+public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
 public import Mathlib.Data.Fintype.BigOperators
 
 /-!
@@ -141,6 +142,10 @@ theorem isEmpty_hom_to_src (a : Kronecker A) : IsEmpty (a ⟶ (src : Kronecker A
 theorem isEmpty_hom_from_tgt (b : Kronecker A) : IsEmpty ((tgt : Kronecker A) ⟶ b) := by
   cases b <;> infer_instance
 
+/-- The target vertex is a sink. -/
+theorem isSink_tgt : IsSink (tgt : Kronecker A) :=
+  (IsSink_def _).mpr isEmpty_hom_from_tgt
+
 instance instFiniteHom [Finite A] : ∀ a b : Kronecker A, Finite (a ⟶ b)
   | .src, .src => inferInstanceAs (Finite PEmpty)
   | .src, .tgt => inferInstanceAs (Finite A)
@@ -160,11 +165,9 @@ theorem card_hom_src_tgt [Fintype A] :
 
 /-! ### The paths -/
 
-/-- A path leaving the target vertex ends there: the target has no outgoing arrows. -/
-theorem eq_tgt_of_path_from_tgt {b : Kronecker A} (p : Path (tgt : Kronecker A) b) : b = tgt := by
-  induction p with
-  | nil => rfl
-  | cons _ e ih => subst ih; exact (isEmpty_hom_from_tgt _).elim e
+/-- A path leaving the target vertex ends there: the target is a sink. -/
+theorem eq_tgt_of_path_from_tgt {b : Kronecker A} (p : Path (tgt : Kronecker A) b) : b = tgt :=
+  (isSink_tgt.eq_of_path p).symm
 
 /-- The only closed path at the source vertex is the trivial one. -/
 theorem path_src_src_eq_nil (p : Path (src : Kronecker A) src) : p = Path.nil := by
