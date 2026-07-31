@@ -212,7 +212,8 @@ theorem averageOperator_comp (T : V →L[𝕜] W) (g : G) :
         rw [ContinuousLinearMap.id_comp]
     _ = ((ρ g).comp (ρ g⁻¹)).comp ((averageOperator π hπ ρ hρ T).comp (π g)) := by
         rw [comp_inv_self ρ g]
-    _ = (ρ g).comp ((ρ g⁻¹).comp ((averageOperator π hπ ρ hρ T).comp (π g))) := rfl
+    _ = (ρ g).comp ((ρ g⁻¹).comp ((averageOperator π hπ ρ hρ T).comp (π g))) :=
+        ContinuousLinearMap.comp_assoc _ _ _
     _ = (ρ g).comp (averageOperator π hπ ρ hρ T) := by rw [h]
 
 /-- The intertwining identity, applied to a vector, in the shape of Mathlib's
@@ -231,6 +232,12 @@ theorem toContinuousLinearMap_averageIntertwiner (T : V →L[𝕜] W) :
     (averageIntertwiner π hπ ρ hρ T).toContinuousLinearMap = averageOperator π hπ ρ hρ T :=
   (rfl)
 
+/-- The bundled average, evaluated at a vector. -/
+@[simp]
+theorem averageIntertwiner_apply (T : V →L[𝕜] W) (v : V) :
+    averageIntertwiner π hπ ρ hρ T v = averageOperator π hπ ρ hρ T v :=
+  (rfl)
+
 /-! ### Averaging is a projection onto the intertwiners -/
 
 /-- **Averaging fixes an operator that already intertwines.** The integrand is then constant, and
@@ -238,10 +245,11 @@ normalized Haar measure has total mass one. -/
 theorem averageOperator_eq_self (T : V →L[𝕜] W)
     (hT : ∀ g : G, T.comp (π g) = (ρ g).comp T) :
     averageOperator π hπ ρ hρ T = T := by
+  have hT_apply (g : G) (v : V) : T (π g v) = ρ g (T v) :=
+    congrArg (fun S : V →L[𝕜] W ↦ S v) (hT g)
   have hconst : conjFamily π hπ ρ hρ T = ContinuousMap.const G T := by
     ext g v
-    rw [conjFamily_apply_apply,
-      show T (π g v) = ρ g (T v) from congrArg (fun S : V →L[𝕜] W ↦ S v) (hT g)]
+    rw [conjFamily_apply_apply, hT_apply g v]
     exact Representation.inv_self_apply ρ.toRepresentation g (T v)
   rw [averageOperator, hconst, haarAverage_const]
 
@@ -298,17 +306,23 @@ include hπ
 
 omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
   [SMulCommClass ℝ 𝕜 V] [FiniteDimensional 𝕜 V] in
-/-- Conjugation does not change the trace, so each value of the integrand has the trace of `T`. -/
+/-- Conjugation does not change the trace, so each value of the integrand has the trace of `T`.
+The conjugating unit is the action of `g⁻¹`, viewed through `Representation.asGroupHom`. -/
 private theorem trace_conjFamily (T : V →L[𝕜] V) (g : G) :
     LinearMap.trace 𝕜 V (conjFamily π hπ π hπ T g : V →ₗ[𝕜] V)
       = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-  have hid : ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) * ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) = 1 :=
-    congrArg (fun S : V →L[𝕜] V ↦ (S : V →ₗ[𝕜] V)) (comp_inv_self π g)
+  set u : (V →ₗ[𝕜] V)ˣ := π.toRepresentation.asGroupHom g⁻¹ with hu
+  have hval : (u : V →ₗ[𝕜] V) = ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) :=
+    Representation.asGroupHom_apply π.toRepresentation g⁻¹
+  have hinv : ((u⁻¹ : (V →ₗ[𝕜] V)ˣ) : V →ₗ[𝕜] V) = ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) := by
+    rw [hu, ← map_inv, inv_inv]
+    exact Representation.asGroupHom_apply π.toRepresentation g
   have hconj : ((conjFamily π hπ π hπ T g : V →L[𝕜] V) : V →ₗ[𝕜] V)
-      = ((π g⁻¹ : V →L[𝕜] V) : V →ₗ[𝕜] V) * (T : V →ₗ[𝕜] V) * ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) := by
+      = (u : V →ₗ[𝕜] V) * (T : V →ₗ[𝕜] V) * ((u⁻¹ : (V →ₗ[𝕜] V)ˣ) : V →ₗ[𝕜] V) := by
+    rw [hval, hinv]
     ext v
     simp
-  rw [hconj, LinearMap.trace_mul_comm, ← mul_assoc, hid, one_mul]
+  rw [hconj, LinearMap.trace_conj]
 
 /-- **Averaging preserves the trace.** In finite dimensions each conjugate `π g⁻¹ ∘ T ∘ π g` has the
 trace of `T`, and averaging a constant returns that constant. This is what fixes the normalizing
