@@ -227,7 +227,6 @@ theorem exists_bijOn_self_apply_eq_of_isSimplyConnected
     have hfd : DifferentiableOn ℂ (· + (z₁ - z₀)) (univ : Set ℂ) :=
       (differentiable_id.add_const _).differentiableOn
     refine ⟨_, hbij, hfd, differentiableOn_invFunOn_of_bijOn hΩo hfd hbij, ?_⟩
-    show z₀ + (z₁ - z₀) = z₁
     ring
   obtain ⟨g, hgbij, hgd, hginvd, hgleft, -⟩ :=
     exists_bijOn_ball_differentiableOn_invFunOn hΩo hΩc hΩ
