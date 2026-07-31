@@ -14,8 +14,10 @@ import Mathlib.Tactic.Linarith
 
 The generalized Kronecker quiver has two vertices, a source and a target, and one arrow from the
 source to the target for each element of an arrow type `A`. Taking `A = Fin 2` gives the
-*Kronecker quiver* `• ⇉ •`, the smallest connected quiver that is not of Dynkin type and hence the
-boundary case of Gabriel's theorem; `A = Fin 1` gives the `A₂` quiver `• → •`.
+*Kronecker quiver* `• ⇉ •`, the smallest connected acyclic quiver that is not of Dynkin type and
+hence the boundary case of Gabriel's theorem; `A = Fin 1` gives the `A₂` quiver `• → •`. (Dropping
+acyclicity there would be wrong: the one-loop quiver of
+`TauCeti.RepresentationTheory.Quiver.PathAlgebra` is connected, smaller, and not of Dynkin type.)
 
 This file constructs the quiver, classifies its paths, computes the dimension of its path algebra,
 and evaluates its Euler and Tits forms. The arithmetic of the Tits form pins down exactly where the
@@ -112,6 +114,7 @@ theorem card_eq_two : Fintype.card (Kronecker A) = 2 := by
   rw [Fintype.card, univ_eq, Finset.card_pair src_ne_tgt]
 
 /-- A sum over the two vertices is the sum of its two values. -/
+@[simp]
 theorem sum_univ {M : Type w} [AddCommMonoid M] (f : Kronecker A → M) :
     ∑ v, f v = f src + f tgt := by
   rw [univ_eq, Finset.sum_pair src_ne_tgt]
@@ -212,7 +215,8 @@ theorem arrowPath_injective : Function.Injective (arrowPath (A := A)) := by
   simpa [arrowPath, arrow, Hom.toPath] using h
 
 /-- Every path from the source to the target is a single arrow. -/
-theorem exists_arrowPath (p : Path (src : Kronecker A) tgt) : ∃ a, arrowPath a = p := by
+theorem arrowPath_surjective : Function.Surjective (arrowPath (A := A)) := by
+  intro p
   cases p with
   | @cons b _ q e =>
       cases b with
@@ -220,8 +224,24 @@ theorem exists_arrowPath (p : Path (src : Kronecker A) tgt) : ∃ a, arrowPath a
       | tgt => exact (isEmpty_hom_from_tgt _).elim e
 
 /-- The paths from the source to the target of the generalized Kronecker quiver are its arrows. -/
-noncomputable def pathEquivArrow : Path (src : Kronecker A) tgt ≃ A :=
-  (Equiv.ofBijective arrowPath ⟨arrowPath_injective, exists_arrowPath⟩).symm
+@[expose] noncomputable def pathEquivArrow : Path (src : Kronecker A) tgt ≃ A :=
+  (Equiv.ofBijective arrowPath ⟨arrowPath_injective, arrowPath_surjective⟩).symm
+
+/-- The inverse of the classification sends an arrow to the path it traces; the two are the same
+construction, so this holds definitionally. -/
+@[simp]
+theorem pathEquivArrow_symm_apply (a : A) : pathEquivArrow.symm a = arrowPath a := rfl
+
+/-- The classification sends the path traced by an arrow back to that arrow. -/
+@[simp]
+theorem pathEquivArrow_arrowPath (a : A) : pathEquivArrow (arrowPath a) = a := by
+  rw [← pathEquivArrow_symm_apply, Equiv.apply_symm_apply]
+
+/-- Every path from the source to the target is traced by the arrow it classifies. -/
+@[simp]
+theorem arrowPath_pathEquivArrow (p : Path (src : Kronecker A) tgt) :
+    arrowPath (pathEquivArrow p) = p := by
+  rw [← pathEquivArrow_symm_apply, Equiv.symm_apply_apply]
 
 noncomputable instance instFintypePath [Fintype A] : ∀ a b : Kronecker A, Fintype (Path a b)
   | .src, .src => Unique.fintype
@@ -265,6 +285,7 @@ section Forms
 variable [Fintype A]
 
 /-- The Euler form of the generalized Kronecker quiver, in the coordinates of its two vertices. -/
+@[simp]
 theorem eulerForm_apply (d e : Kronecker A → ℤ) :
     eulerForm (Kronecker A) d e =
       d src * e src + d tgt * e tgt - (Fintype.card A : ℤ) * (d src * e tgt) := by
@@ -274,6 +295,9 @@ theorem eulerForm_apply (d e : Kronecker A → ℤ) :
 
 /-- The Tits form of the generalized Kronecker quiver on `n` arrows is
 `q(d) = d₁ ^ 2 + d₂ ^ 2 - n * d₁ * d₂`. -/
+-- Deliberately not `@[simp]`: `TauCeti.titsForm_def` is already `simp`, so `simp` rewrites
+-- `titsForm` to `eulerForm` and finishes with `eulerForm_apply` below; tagging this lemma too
+-- would only add one that never fires.
 theorem titsForm_apply (d : Kronecker A → ℤ) :
     titsForm (Kronecker A) d =
       d src ^ 2 + d tgt ^ 2 - (Fintype.card A : ℤ) * (d src * d tgt) := by
@@ -381,9 +405,9 @@ theorem titsForm_eq_zero_iff_exists_smul (d : Kronecker A → ℤ) :
   · rintro ⟨c, rfl⟩
     simp
 
-/-- For the Kronecker quiver the dimension vectors of Tits norm one -- the real roots of the affine
-root system `Ã₁` -- are exactly those whose two coordinates differ by one, that is `(m, m + 1)` and
-`(m + 1, m)`. -/
+/-- For the Kronecker quiver the integer vectors of Tits norm one -- the real roots of the affine
+root system `Ã₁`, positive and negative alike -- are exactly those whose two coordinates differ by
+one, that is `(m, m + 1)` and `(m + 1, m)`. -/
 theorem titsForm_eq_one_iff (d : Kronecker A → ℤ) :
     titsForm (Kronecker A) d = 1 ↔ d src = d tgt + 1 ∨ d tgt = d src + 1 := by
   rw [titsForm_eq_sq h, sq_eq_one_iff]
