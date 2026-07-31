@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
-public import TauCeti.KnotTheory.Grid.Homology.Basic
+public import TauCeti.KnotTheory.Grid.Homology
 
 /-!
 # An explicit basis for small-grid homology

@@ -219,6 +219,58 @@ theorem fullyBlockedBoundariesRotateEquiv_apply (c : G.fullyBlockedBoundaries) :
   simp only [fullyBlockedBoundariesRotateEquiv, LinearEquiv.trans_apply,
     LinearEquiv.coe_ofEq_apply, LinearEquiv.submoduleMap_apply]
 
+/-- The inverse of the diagonal-reflection cycle equivalence acts on underlying chains by the
+inverse transpose chain relabeling: the transpose equivalence swaps rows and columns of the
+underlying chain and inverting the cycle-level equivalence undoes exactly that. -/
+@[simp]
+theorem fullyBlockedCyclesTransposeEquiv_symm_apply (c : G.transpose.fullyBlockedCycles) :
+    ((G.fullyBlockedCyclesTransposeEquiv.symm c : G.fullyBlockedCycles) :
+        GridChain (ZMod 2) n) =
+      (GridChain.transposeEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
+  have hstep := congrArg
+    (fun z : G.transpose.fullyBlockedCycles => (z : GridChain (ZMod 2) n))
+    (G.fullyBlockedCyclesTransposeEquiv.apply_symm_apply c)
+  rw [fullyBlockedCyclesTransposeEquiv_apply] at hstep
+  have hsymm := congrArg (GridChain.transposeEquiv (ZMod 2) n).symm hstep
+  rwa [LinearEquiv.symm_apply_apply] at hsymm
+
+/-- The inverse of the half-turn rotation cycle equivalence acts on underlying chains by the
+inverse rotation chain relabeling: the rotation equivalence half-turns the underlying chain and
+inverting the cycle-level equivalence undoes exactly that. -/
+@[simp]
+theorem fullyBlockedCyclesRotateEquiv_symm_apply (c : G.rotate.fullyBlockedCycles) :
+    ((G.fullyBlockedCyclesRotateEquiv.symm c : G.fullyBlockedCycles) :
+        GridChain (ZMod 2) n) =
+      (GridChain.rotateEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
+  have hstep := congrArg
+    (fun z : G.rotate.fullyBlockedCycles => (z : GridChain (ZMod 2) n))
+    (G.fullyBlockedCyclesRotateEquiv.apply_symm_apply c)
+  rw [fullyBlockedCyclesRotateEquiv_apply] at hstep
+  have hsymm := congrArg (GridChain.rotateEquiv (ZMod 2) n).symm hstep
+  rwa [LinearEquiv.symm_apply_apply] at hsymm
+
+/-- The marking swap as a linear equivalence between the fully blocked cycles of `G` and those of
+`G.swapMarkings`. The two cycle submodules of `GridChain` coincide, since the marking swap fixes
+the differential, so this is transport along that equality. -/
+noncomputable def fullyBlockedCyclesSwapMarkingsEquiv :
+    G.fullyBlockedCycles ≃ₗ[ZMod 2] G.swapMarkings.fullyBlockedCycles :=
+  LinearEquiv.ofEq _ _ G.fullyBlockedCycles_swapMarkings.symm
+
+/-- The marking-swap cycle equivalence preserves underlying chains. -/
+@[simp]
+theorem fullyBlockedCyclesSwapMarkingsEquiv_apply (c : G.fullyBlockedCycles) :
+    ((G.fullyBlockedCyclesSwapMarkingsEquiv c : G.swapMarkings.fullyBlockedCycles) :
+        GridChain (ZMod 2) n) = (c : GridChain (ZMod 2) n) := by
+  simp [fullyBlockedCyclesSwapMarkingsEquiv]
+
+/-- The inverse of the marking-swap cycle equivalence preserves underlying chains. -/
+@[simp]
+theorem fullyBlockedCyclesSwapMarkingsEquiv_symm_apply
+    (c : G.swapMarkings.fullyBlockedCycles) :
+    ((G.fullyBlockedCyclesSwapMarkingsEquiv.symm c : G.fullyBlockedCycles) :
+        GridChain (ZMod 2) n) = (c : GridChain (ZMod 2) n) := by
+  simp [fullyBlockedCyclesSwapMarkingsEquiv]
+
 end GridDiagram
 
 end TauCeti
