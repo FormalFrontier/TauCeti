@@ -18,17 +18,19 @@ never has to unfold `hermiteHilbertBasis` to expand a function in Hermite functi
 
 ## Main statements
 
-* `TauCeti.repr_hermiteFunctionLp_apply` — the `n`-th coordinate of `f` is `⟪ψₙ, f⟫`.
+* `TauCeti.hermiteHilbertBasis_repr_apply` — the `n`-th coordinate of `f` is `⟪ψₙ, f⟫`.
 * `TauCeti.tsum_inner_mul_inner_hermiteFunctionLp` — Parseval in polarized form,
   `∑' n, ⟪f, ψₙ⟫ * ⟪ψₙ, g⟫ = ⟪f, g⟫`.
 * `TauCeti.tsum_norm_sq_inner_hermiteFunctionLp` — Parseval in norm-square form,
   `∑' n, ‖⟪ψₙ, f⟫‖² = ‖f‖²`.
-* `TauCeti.repr_hermiteFunctionLp` — the coordinates of a basis vector are a single `1`.
+* `TauCeti.hermiteHilbertBasis_repr_self` — the coordinates of a basis vector are a single `1`.
 * `TauCeti.hasSum_hermiteFunctionLp_expansion` — the Hermite expansion `∑' n, ⟪ψₙ, f⟫ • ψₙ = f`.
 
 Every statement holds for an arbitrary `RCLike` scalar field, so `𝕜 = ℝ` and `𝕜 = ℂ` are the same
-theorem; the roadmap `OrthogonalL2Bases` Part A3 acceptance criteria are the specializations at
-`f = ψ₀` recorded below.
+theorem. The roadmap `OrthogonalL2Bases` Part A3 acceptance criteria on the coordinates and norm
+of `ψ₀` follow by instantiating `hermiteHilbertBasis_repr_self` and
+`tsum_norm_sq_inner_hermiteFunctionLp` at `f = ψ₀`, together with `norm_hermiteFunctionLp_zero`;
+no separate declaration is needed for that specialization.
 -/
 
 public section
@@ -41,7 +43,8 @@ variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-- The coordinates of `f` in the Hermite basis are its inner products against the Hermite
 functions. -/
-theorem repr_hermiteFunctionLp_apply (f : Lp 𝕜 2 (volume : Measure ℝ)) (n : ℕ) :
+@[simp]
+theorem hermiteHilbertBasis_repr_apply (f : Lp 𝕜 2 (volume : Measure ℝ)) (n : ℕ) :
     (hermiteHilbertBasis 𝕜).repr f n = inner 𝕜 (hermiteFunctionLp 𝕜 n) f := by
   simpa using (hermiteHilbertBasis 𝕜).repr_apply_apply f n
 
@@ -66,19 +69,13 @@ theorem summable_norm_sq_inner_hermiteFunctionLp (f : Lp 𝕜 2 (volume : Measur
 /-- **The Hermite expansion.** Every `f ∈ L²(ℝ)` is the sum of its Hermite series. -/
 theorem hasSum_hermiteFunctionLp_expansion (f : Lp 𝕜 2 (volume : Measure ℝ)) :
     HasSum (fun n : ℕ => inner 𝕜 (hermiteFunctionLp 𝕜 n) f • hermiteFunctionLp 𝕜 n) f := by
-  simpa [repr_hermiteFunctionLp_apply] using (hermiteHilbertBasis 𝕜).hasSum_repr f
+  simpa [hermiteHilbertBasis_repr_apply] using (hermiteHilbertBasis 𝕜).hasSum_repr f
 
-/-- The coordinates of the `n`-th Hermite function are a single `1` in position `n`. At `n = 0`
-this is the roadmap's Part A3 acceptance criterion on the coordinates of `ψ₀`. -/
-theorem repr_hermiteFunctionLp (n : ℕ) :
+/-- The coordinates of the `n`-th Hermite function are a single `1` in position `n`. -/
+@[simp]
+theorem hermiteHilbertBasis_repr_self (n : ℕ) :
     (hermiteHilbertBasis 𝕜).repr (hermiteFunctionLp 𝕜 n) = lp.single 2 n (1 : 𝕜) := by
   classical
   simpa using (hermiteHilbertBasis 𝕜).repr_self n
-
-/-- Parseval at the explicit function `ψ₀`: its Hermite coefficients are `1` at `n = 0` and `0`
-elsewhere, so the squared coefficients sum to `‖ψ₀‖² = 1`. -/
-theorem tsum_norm_sq_inner_hermiteFunctionLp_zero :
-    ∑' n : ℕ, ‖inner 𝕜 (hermiteFunctionLp 𝕜 n) (hermiteFunctionLp 𝕜 0)‖ ^ 2 = 1 := by
-  rw [tsum_norm_sq_inner_hermiteFunctionLp, norm_hermiteFunctionLp_zero, one_pow]
 
 end TauCeti
