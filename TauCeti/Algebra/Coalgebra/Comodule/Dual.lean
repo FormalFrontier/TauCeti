@@ -76,7 +76,7 @@ theorem dualTensorHom_dualCoact_apply (φ : Module.Dual R M) (m : M) :
       HopfAlgebra.antipode R
         (matrixCoefficient (R := R) (C := H) φ m) := by
   rw [dualTensorHom_dualCoact]
-  rfl
+  simp only [LinearMap.comp_apply, matrixCoefficientBilinear_apply_apply]
 
 /-- Applying the counit to the coefficient leg of the dual coaction recovers the original
 functional. -/
@@ -85,13 +85,9 @@ theorem dualCoact_counit :
         dualCoact (R := R) (H := H) (M := M) =
       (TensorProduct.mk R (Module.Dual R M) R).flip 1 := by
   ext φ
-  apply (dualTensorHomEquiv R M R).injective
+  apply (dualTensorHom_bijective (R := R) (M := M) (N := R)).1
   ext m
-  -- Display both tensors through the characteristic map used by the injectivity argument.
-  change dualTensorHom R M R
-      ((Coalgebra.counit (R := R) (A := H)).lTensor (Module.Dual R M)
-        (dualCoact (R := R) (H := H) (M := M) φ)) m =
-    dualTensorHom R M R (φ ⊗ₜ[R] (1 : R)) m
+  simp only [LinearMap.comp_apply, LinearMap.flip_apply, TensorProduct.mk_apply]
   have hcomp := LinearMap.congr_fun
     (dualTensorHom_comp_lTensor (M := M)
       (Coalgebra.counit (R := R) (A := H)))
@@ -104,10 +100,7 @@ theorem dualCoact_counit :
           (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ)) := by
     simpa only [LinearMap.comp_apply] using hcomp
   rw [hcomp']
-  -- Evaluate `compRight` and the pure tensor under `dualTensorHom`.
-  change Coalgebra.counit (R := R) (A := H)
-      (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ) m) =
-    φ m • (1 : R)
+  simp only [LinearMap.compRight_apply, LinearMap.comp_apply, dualTensorHom_apply]
   rw [dualTensorHom_dualCoact_apply]
   simp
 
@@ -131,12 +124,14 @@ private theorem dualTensorHom_assoc_dualCoact_rTensor (x : Module.Dual R M ⊗[R
           dualTensorHom R M (H ⊗[R] H)
               (TensorProduct.assoc R (Module.Dual R M) H H (y ⊗ₜ[R] h)) m =
             dualTensorHom R M H y m ⊗ₜ[R] h := by
-        induction y using TensorProduct.induction_on with
-        | zero => simp
-        | add y z hy hz =>
-            simpa only [TensorProduct.add_tmul, map_add, LinearMap.add_apply]
-              using congrArg₂ (· + ·) hy hz
-        | tmul ψ a => rfl
+        calc
+          _ = (rTensorHomEquivHomRTensor R M H H
+              (dualTensorHom R M H y ⊗ₜ[R] h)) m := by
+            simp [rTensorHomEquivHomRTensor]
+          _ = _ := by
+            rw [rTensorHomEquivHomRTensor_apply]
+            exact TensorProduct.rTensorHomToHomRTensor_apply
+              (dualTensorHom R M H y) h m
       rw [LinearMap.rTensor_tmul, hleft, dualTensorHom_dualCoact_apply]
       rw [matrixCoefficient_def]
       generalize coact (R := R) (C := H) (M := M) m = z
@@ -156,53 +151,38 @@ theorem dualCoact_coassoc :
       (Coalgebra.comul (R := R) (A := H)).lTensor (Module.Dual R M) ∘ₗ
         dualCoact (R := R) (H := H) (M := M) := by
   ext φ
-  apply (dualTensorHomEquiv R M (H ⊗[R] H)).injective
+  apply (dualTensorHom_bijective (R := R) (M := M) (N := H ⊗[R] H)).1
   ext m
-  -- Display both iterated coactions through the characteristic map used for injectivity.
-  change dualTensorHom R M (H ⊗[R] H)
-      (TensorProduct.assoc R (Module.Dual R M) H H
-        ((dualCoact (R := R) (H := H) (M := M)).rTensor H
-          (dualCoact (R := R) (H := H) (M := M) φ))) m =
-    dualTensorHom R M (H ⊗[R] H)
-      ((Coalgebra.comul (R := R) (A := H)).lTensor (Module.Dual R M)
-        (dualCoact (R := R) (H := H) (M := M) φ)) m
-  rw [dualTensorHom_assoc_dualCoact_rTensor]
-  have hcomp := LinearMap.congr_fun
-    (dualTensorHom_comp_lTensor (M := M)
-      (Coalgebra.comul (R := R) (A := H)))
-    (dualCoact (R := R) (H := H) (M := M) φ)
-  have hcomp' :
-      dualTensorHom R M (H ⊗[R] H)
-          ((Coalgebra.comul (R := R) (A := H)).lTensor (Module.Dual R M)
-            (dualCoact (R := R) (H := H) (M := M) φ)) =
-        (Coalgebra.comul (R := R) (A := H)).compRight R
-          (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ)) := by
-    simpa only [LinearMap.comp_apply] using hcomp
-  rw [hcomp']
-  -- Evaluate the postcomposition by comultiplication pointwise.
-  change TensorProduct.comm R H H
-      (TensorProduct.map
-        (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ))
-        (HopfAlgebra.antipode R)
-        (coact (R := R) (C := H) (M := M) m)) =
-    Coalgebra.comul (R := R) (A := H)
-      (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ) m)
-  rw [dualTensorHom_dualCoact]
-  -- Expand the characteristic equation pointwise, exposing the matrix coefficient.
-  change TensorProduct.comm R H H
-      (TensorProduct.map
-        ((HopfAlgebra.antipode R (A := H)).comp
-          (matrixCoefficientBilinear (R := R) (C := H) (M := M) φ))
-        (HopfAlgebra.antipode R)
-        (coact (R := R) (C := H) (M := M) m)) =
-    Coalgebra.comul (R := R) (A := H)
-      (HopfAlgebra.antipode R
-        (matrixCoefficient (R := R) (C := H) φ m))
-  rw [TauCeti.HopfAlgebra.antipode_comul_antidistrib_apply,
-    comul_matrixCoefficient]
-  rw [TensorProduct.map_comm]
-  rw [TensorProduct.map_map]
-  rfl
+  simp only [LinearMap.comp_apply]
+  calc
+    _ = TensorProduct.comm R H H
+        (TensorProduct.map
+          (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ))
+          (HopfAlgebra.antipode R)
+          (coact (R := R) (C := H) (M := M) m)) :=
+      dualTensorHom_assoc_dualCoact_rTensor
+        (dualCoact (R := R) (H := H) (M := M) φ) m
+    _ = _ := by
+      have hcomp := LinearMap.congr_fun
+        (dualTensorHom_comp_lTensor (M := M)
+          (Coalgebra.comul (R := R) (A := H)))
+        (dualCoact (R := R) (H := H) (M := M) φ)
+      have hcomp' :
+          dualTensorHom R M (H ⊗[R] H)
+              ((Coalgebra.comul (R := R) (A := H)).lTensor (Module.Dual R M)
+                (dualCoact (R := R) (H := H) (M := M) φ)) =
+            (Coalgebra.comul (R := R) (A := H)).compRight R
+              (dualTensorHom R M H (dualCoact (R := R) (H := H) (M := M) φ)) := by
+        simpa only [LinearMap.comp_apply] using hcomp
+      rw [hcomp']
+      simp only [LinearMap.compRight_apply, LinearMap.comp_apply]
+      rw [dualTensorHom_dualCoact]
+      simp only [LinearMap.comp_apply, matrixCoefficientBilinear_apply_apply]
+      rw [TauCeti.HopfAlgebra.antipode_comul_antidistrib_apply,
+        comul_matrixCoefficient]
+      rw [TensorProduct.map_comm]
+      rw [TensorProduct.map_map]
+      rfl
 
 variable (R H M) in
 /-- The right-comodule structure on the linear dual of a finite projective right comodule.
