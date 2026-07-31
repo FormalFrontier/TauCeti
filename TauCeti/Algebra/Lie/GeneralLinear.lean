@@ -20,12 +20,14 @@ commutative ring and any finite index type: one inclusion is the vanishing of th
 commutator, and the other writes a trace-zero matrix as a combination of the commutators
 `Eᵢⱼ = ⁅Eᵢᵢ, Eᵢⱼ⁆` (for `i ≠ j`) and `Eᵢᵢ - Eⱼⱼ = ⁅Eᵢⱼ, Eⱼᵢ⁆`.
 
-The two pieces are complementary exactly when the size of the matrices is invertible in `R`: the
+The two pieces are complementary whenever the size of the matrices is invertible in `R`: the
 intersection is cut out by `Fintype.card n * r = 0`, and the projection onto the centre divides the
 trace by `Fintype.card n`. Under that hypothesis `gl n R` is the direct sum of its centre and its
-derived ideal, which is the linear half of the reductivity criterion `radical = center`. Without it
-the decomposition genuinely fails: over `ZMod p` the identity matrix of `gl p (ZMod p)` has trace
-zero, so there the centre sits *inside* the derived ideal.
+derived ideal, which is the linear half of the reductivity criterion `radical = center`. Only this
+sufficiency is proved here; the hypothesis is not necessary in general, since for an empty index
+type `gl n R` is the zero Lie algebra and the decomposition is vacuous. It cannot simply be dropped
+either: over `ZMod p` the identity matrix of `gl p (ZMod p)` has trace zero, so there the centre
+sits *inside* the derived ideal and the two are not complementary.
 
 ## Main definitions
 
@@ -42,7 +44,8 @@ zero, so there the centre sits *inside* the derived ideal.
   `TauCeti.derivedSeries_one_toLieSubalgebra_eq_sl` reads this as `LieAlgebra.SpecialLinear.sl n R`.
 * `TauCeti.isCompl_center_derivedSeries_one_matrix`: when `Fintype.card n` is invertible in `R`,
   the centre and the derived ideal are complementary submodules of `gl n R`.
-* `TauCeti.derivedSeries_one_matrix_ne_top`: consequently `gl n R` is then not perfect.
+* `TauCeti.derivedSeries_one_matrix_ne_top`: for nonempty `n` over a nontrivial `R`, `gl n R` is
+  not perfect.
 * `TauCeti.not_hasTrivialRadical_matrix`: for nonempty `n` over a nontrivial `R`, `gl n R` is not
   semisimple, since its centre is then a nonzero abelian ideal (`TauCeti.center_matrix_ne_bot`).
 
@@ -50,7 +53,7 @@ zero, so there the centre sits *inside* the derived ideal.
 
 Everything is stated over an arbitrary commutative ring `R`; no field, characteristic, or
 algebraic closure hypothesis is used, and the invertibility of `Fintype.card n` is carried as an
-`Invertible` hypothesis only on the two results that need it.
+`Invertible` hypothesis only on the one result that needs it.
 
 Mathlib does not register `LieRing.ofAssociativeRing` as a global instance, so, as in
 `Mathlib/Algebra/Lie/Matrix.lean`, it is a local instance here.
@@ -223,8 +226,9 @@ variable (R n) in
 `gl n R` are complementary: `gl n R = R·1 ⊕ sl n R`. This is the linear half of the reductivity
 criterion `radical = center`, made concrete for `gl n R`.
 
-The invertibility hypothesis is necessary: in `gl p (ZMod p)` the identity matrix has trace `0`,
-so there the centre is contained in the derived ideal. -/
+The invertibility hypothesis cannot simply be dropped: in `gl p (ZMod p)` the identity matrix has
+trace `0`, so there the centre is contained in the derived ideal and the two are not complementary.
+It is not necessary either, since for an empty index type `gl n R` is the zero Lie algebra. -/
 theorem isCompl_center_derivedSeries_one_matrix [Invertible (Fintype.card n : R)] :
     IsCompl (LieAlgebra.center R (Matrix n n R)).toSubmodule
       (derivedSeries R (Matrix n n R) 1).toSubmodule := by
@@ -250,15 +254,16 @@ theorem isCompl_center_derivedSeries_one_matrix [Invertible (Fintype.card n : R)
       Matrix.trace_sub, htr, sub_self]
 
 variable (R n) in
-/-- `gl n R` is not perfect: its derived ideal misses the identity matrix whenever the size of the
-matrices is invertible in `R`. -/
-theorem derivedSeries_one_matrix_ne_top [Nontrivial R] [Invertible (Fintype.card n : R)] :
+/-- `gl n R` is not perfect: for nonempty `n` over a nontrivial ring its derived ideal misses the
+diagonal matrix unit `Eᵢᵢ`, whose trace is `1`. -/
+theorem derivedSeries_one_matrix_ne_top [Nonempty n] [Nontrivial R] :
     derivedSeries R (Matrix n n R) 1 ≠ ⊤ := by
+  obtain ⟨i⟩ := ‹Nonempty n›
   intro h
-  have h1 : (1 : Matrix n n R) ∈ slIdeal R n := by
+  have h1 : single i i (1 : R) ∈ slIdeal R n := by
     rw [← derivedSeries_one_eq_slIdeal R n, h]; exact LieSubmodule.mem_top _
-  rw [mem_slIdeal_iff, Matrix.trace_one] at h1
-  exact (isUnit_of_invertible ((Fintype.card n : R))).ne_zero h1
+  rw [mem_slIdeal_iff, Matrix.trace_single_eq_same] at h1
+  exact one_ne_zero h1
 
 /-! ### `gl n R` is not semisimple, for nonempty `n` over a nontrivial ring -/
 
