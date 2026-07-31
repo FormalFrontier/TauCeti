@@ -66,7 +66,7 @@ of Finite Groups*, Marcel Dekker (1985), Ch. 1, and I. M. Isaacs, *Character The
 Groups*, AMS Chelsea (1976), Ch. 11.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -121,18 +121,18 @@ theorem cocycle (g h j : G) : α (g * h, j) * α (g, h) = g • α (h, j) * α (
 theorem map_one_one : α (1, 1) = 1 := α.map_one_one'
 
 @[simp]
-theorem map_one_left (g : G) : α (1, g) = 1 := by
+theorem map_one_fst (g : G) : α (1, g) = 1 := by
   rw [map_one_fst_of_isMulCocycle₂ α.isMulCocycle₂, map_one_one]
 
 @[simp]
-theorem map_one_right (g : G) : α (g, 1) = 1 := by
+theorem map_one_snd (g : G) : α (g, 1) = 1 := by
   rw [map_one_snd_of_isMulCocycle₂ α.isMulCocycle₂, map_one_one, smul_one]
 
 /-- The two values of a factor set on an element and its inverse agree up to the action. This is
 what makes the inverse of `TauCeti.FactorSet.Extension` a two-sided inverse. -/
 theorem smul_apply_inv_left (g : G) : g • α (g⁻¹, g) = α (g, g⁻¹) := by
   have h := smul_map_inv_div_map_inv_of_isMulCocycle₂ α.isMulCocycle₂ g
-  rwa [map_one_one, map_one_right, div_self', div_eq_one] at h
+  rwa [map_one_one, map_one_snd, div_self', div_eq_one] at h
 
 end
 
@@ -178,24 +178,34 @@ theorem inv_left (x : α.Extension) :
 
 @[simp] theorem inv_right (x : α.Extension) : x⁻¹.right = x.right⁻¹ := rfl
 
+/-- The `M`-component of associativity in the twisted product, which is exactly the cocycle
+identity of `α` after collecting the two factor-set values. -/
+theorem mul_assoc_left (a b c : M) (g h j : G) :
+    a * g • b * α (g, h) * (g * h) • c * α (g * h, j)
+      = a * g • (b * h • c * α (h, j)) * α (g, h * j) :=
+  calc a * g • b * α (g, h) * (g * h) • c * α (g * h, j)
+      = a * g • b * (g • h • c) * (α (g * h, j) * α (g, h)) := by rw [mul_smul]; ac_rfl
+    _ = a * g • b * (g • h • c) * (g • α (h, j) * α (g, h * j)) := by rw [α.cocycle]
+    _ = a * g • (b * h • c * α (h, j)) * α (g, h * j) := by simp only [smul_mul']; ac_rfl
+
+/-- The `M`-component of `x⁻¹ * x` in the twisted product is trivial: the two values of `α` on
+`x.right` and its inverse cancel by `TauCeti.FactorSet.smul_apply_inv_left`. -/
+theorem inv_mul_left (x : α.Extension) : (x⁻¹ * x).left = 1 := by
+  have key : x.right⁻¹ • α (x.right, x.right⁻¹) = α (x.right⁻¹, x.right) := by
+    simpa using α.smul_apply_inv_left x.right⁻¹
+  simp only [mul_left, inv_left, inv_right, smul_inv', smul_mul', key, mul_assoc, inv_mul_cancel]
+
 instance instGroup : Group α.Extension where
   mul_assoc x y z := by
     ext
-    · simp only [mul_left, mul_right, smul_mul', mul_smul]
-      rw [show x.left * x.right • y.left * α (x.right, y.right) * (x.right • y.right • z.left) *
-            α (x.right * y.right, z.right)
-          = x.left * x.right • y.left * (x.right • y.right • z.left) *
-            (α (x.right * y.right, z.right) * α (x.right, y.right)) from by ac_rfl, α.cocycle]
-      ac_rfl
+    · simp only [mul_left, mul_right]
+      exact mul_assoc_left _ _ _ _ _ _
     · exact mul_assoc _ _ _
   one_mul x := by ext <;> simp
   mul_one x := by ext <;> simp
   inv_mul_cancel x := by
-    have key : x.right⁻¹ • α (x.right, x.right⁻¹) = α (x.right⁻¹, x.right) := by
-      simpa using α.smul_apply_inv_left x.right⁻¹
     ext
-    · rw [mul_left, inv_left, inv_right, one_left, smul_inv', smul_mul', key, mul_assoc,
-        inv_mul_cancel]
+    · exact inv_mul_left x
     · simp
 
 end Extension
@@ -210,9 +220,9 @@ def inl : M →* α.Extension where
   map_one' := rfl
   map_mul' a b := by ext <;> simp
 
-@[simp] theorem inl_left (a : M) : (inl α a).left = a := rfl
+@[simp] theorem inl_left (a : M) : (inl α a).left = a := (rfl)
 
-@[simp] theorem inl_right (a : M) : (inl α a).right = 1 := rfl
+@[simp] theorem inl_right (a : M) : (inl α a).right = 1 := (rfl)
 
 /-- The projection of the twisted product onto `G`. -/
 def rightHom : α.Extension →* G where
@@ -220,7 +230,7 @@ def rightHom : α.Extension →* G where
   map_one' := rfl
   map_mul' _ _ := rfl
 
-@[simp] theorem rightHom_apply (x : α.Extension) : rightHom α x = x.right := rfl
+@[simp] theorem rightHom_apply (x : α.Extension) : rightHom α x = x.right := (rfl)
 
 theorem inl_injective : Function.Injective (inl α) := fun _ _ h => congrArg Extension.left h
 
@@ -246,9 +256,9 @@ def groupExtension : GroupExtension M α.Extension G where
   range_inl_eq_ker_rightHom := range_inl_eq_ker_rightHom α
   rightHom_surjective := rightHom_surjective α
 
-@[simp] theorem groupExtension_inl : α.groupExtension.inl = inl α := rfl
+@[simp] theorem groupExtension_inl : α.groupExtension.inl = inl α := (rfl)
 
-@[simp] theorem groupExtension_rightHom : α.groupExtension.rightHom = rightHom α := rfl
+@[simp] theorem groupExtension_rightHom : α.groupExtension.rightHom = rightHom α := (rfl)
 
 /-- The canonical set-theoretic section `g ↦ ⟨1, g⟩` of the projection. It fails to be a
 homomorphism by exactly `α`; see `TauCeti.FactorSet.canonicalSection_mul`. -/
@@ -256,7 +266,7 @@ def canonicalSection : α.groupExtension.Section where
   toFun g := ⟨1, g⟩
   rightInverse_rightHom _ := rfl
 
-@[simp] theorem canonicalSection_apply (g : G) : α.canonicalSection g = ⟨1, g⟩ := rfl
+@[simp] theorem canonicalSection_apply (g : G) : α.canonicalSection g = ⟨1, g⟩ := (rfl)
 
 /-- **A factor set is the factor set of the extension it builds**: the canonical section fails to
 be a homomorphism by exactly `α`. -/
@@ -303,23 +313,22 @@ def rescaleEquiv : α.groupExtension.Equiv β.groupExtension where
   right_inv _ := by ext <;> simp
   map_mul' y z := by
     ext
-    · change y.left * y.right • z.left * α (y.right, z.right) * x (y.right * z.right)
-        = y.left * x y.right * y.right • (z.left * x z.right) * β (y.right, z.right)
+    · simp only [Extension.mul_left, Extension.mul_right]
       rw [mul_assoc, hx, smul_mul']
       ac_rfl
     · rfl
   inl_comm := by
     funext a
     ext
-    · change a * x 1 = a
-      rw [rescale_one α β x hx, mul_one]
+    · simp only [Function.comp_apply, MulEquiv.coe_mk, Equiv.coe_fn_mk, groupExtension_inl,
+        inl_left, inl_right, rescale_one α β x hx, mul_one]
     · rfl
   rightHom_comm := rfl
 
 @[simp]
 theorem rescaleEquiv_apply (y : α.Extension) :
     rescaleEquiv α β x hx y = ⟨y.left * x y.right, y.right⟩ :=
-  rfl
+  (rfl)
 
 end Rescale
 
@@ -353,7 +362,7 @@ def trivial : FactorSet G M where
   isMulCocycle₂' g h j := by simp
   map_one_one' := rfl
 
-@[simp] theorem trivial_apply (p : G × G) : trivial G M p = 1 := rfl
+@[simp] theorem trivial_apply (p : G × G) : trivial G M p = 1 := (rfl)
 
 /-- The extension attached to the trivial factor set is the semidirect product of `M` by `G`. -/
 def trivialMulEquiv :
@@ -364,6 +373,16 @@ def trivialMulEquiv :
   right_inv _ := rfl
   map_mul' x y := by ext <;> simp
 
+@[simp]
+theorem trivialMulEquiv_apply (x : (trivial G M).Extension) :
+    trivialMulEquiv G M x = ⟨x.left, x.right⟩ :=
+  (rfl)
+
+@[simp]
+theorem trivialMulEquiv_symm_apply (x : M ⋊[MulDistribMulAction.toMulAut G M] G) :
+    (trivialMulEquiv G M).symm x = ⟨x.left, x.right⟩ :=
+  (rfl)
+
 /-- The extension attached to the trivial factor set is split: there the canonical section is a
 homomorphism. -/
 def trivialSplitting : (trivial G M).groupExtension.Splitting :=
@@ -373,7 +392,7 @@ def trivialSplitting : (trivial G M).groupExtension.Splitting :=
       map_mul' _ _ := by ext <;> simp }
     fun _ => rfl
 
-@[simp] theorem trivialSplitting_apply (g : G) : trivialSplitting G M g = ⟨1, g⟩ := rfl
+@[simp] theorem trivialSplitting_apply (g : G) : trivialSplitting G M g = ⟨1, g⟩ := (rfl)
 
 end Trivial
 
@@ -388,7 +407,7 @@ def toCocycles₂ {G M : Type} [Group G] [CommGroup M] [MulDistribMulAction G M]
 @[simp]
 theorem toCocycles₂_apply {G M : Type} [Group G] [CommGroup M] [MulDistribMulAction G M]
     (α : FactorSet G M) (p : G × G) : (toCocycles₂ α).1 p = Additive.ofMul (α p) :=
-  rfl
+  (rfl)
 
 end FactorSet
 
