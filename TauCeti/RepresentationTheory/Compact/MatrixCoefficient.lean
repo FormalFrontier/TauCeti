@@ -7,7 +7,6 @@ module
 public import TauCeti.RepresentationTheory.Compact.Haar
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 public import Mathlib.MeasureTheory.Function.L2Space
-import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
 /-!
 # Matrix coefficients in `L²` of a compact group
@@ -67,7 +66,7 @@ variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTo
 A matrix coefficient is continuous and `G` is compact, so `ContinuousMap.toLp` applies; the
 normalization of Haar measure to a probability measure is what makes the resulting `L²` norms
 comparable to the uniform norm without a measure-dependent constant. -/
-@[expose] noncomputable def matrixCoeffLp (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
+noncomputable def matrixCoeffLp (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
     (v w : V) : Lp 𝕜 2 (haarProb G) :=
   ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w)
 
@@ -75,7 +74,7 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 theorem matrixCoeffLp_def (v w : V) :
     matrixCoeffLp π hπ v w = ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w) :=
-  rfl
+  (rfl)
 
 /-- A matrix coefficient in `L²` is represented, almost everywhere, by the function it comes
 from. -/
@@ -120,34 +119,30 @@ theorem matrixCoeffLp_smul_right (v : V) (c : 𝕜) (w : V) :
 /-- The `L²` matrix coefficients of a fixed representation, bundled as a sesquilinear map:
 conjugate linear in the first vector, linear in the second, exactly as Mathlib's `innerₛₗ`.
 
-This is the map whose range spans the `π`-isotypic block of `L²(G)`, and bundling supplies the
-remaining additive identities (`map_neg`, `map_sub`, `map_sum`) through the `LinearMap` API. -/
-noncomputable def matrixCoeffLpₛₗ : V →ₗ⋆[𝕜] V →ₗ[𝕜] Lp 𝕜 2 (haarProb G) where
-  toFun v :=
-    { toFun := matrixCoeffLp π hπ v
-      map_add' := matrixCoeffLp_add_right π hπ v
-      map_smul' := matrixCoeffLp_smul_right π hπ v }
-  map_add' v₁ v₂ := LinearMap.ext fun w ↦ matrixCoeffLp_add_left π hπ v₁ v₂ w
-  map_smul' c v := LinearMap.ext fun w ↦ matrixCoeffLp_smul_left π hπ c v w
+This is `matrixCoeffₛₗ` postcomposed with the linear map `ContinuousMap.toLp`, so the
+sesquilinearity is inherited rather than reproved; bundling supplies the remaining additive
+identities (`map_neg`, `map_sub`, `map_sum`) through the `LinearMap` API. -/
+noncomputable def matrixCoeffLpₛₗ : V →ₗ⋆[𝕜] V →ₗ[𝕜] Lp 𝕜 2 (haarProb G) :=
+  (matrixCoeffₛₗ π hπ).compr₂ₛₗ (ContinuousMap.toLp 2 (haarProb G) 𝕜).toLinearMap
 
 @[simp]
 theorem matrixCoeffLpₛₗ_apply_apply (v w : V) :
-    matrixCoeffLpₛₗ π hπ v w = matrixCoeffLp π hπ v w :=
-  (rfl)
+    matrixCoeffLpₛₗ π hπ v w = matrixCoeffLp π hπ v w := by
+  rw [matrixCoeffLpₛₗ, LinearMap.compr₂ₛₗ_apply, ContinuousLinearMap.coe_coe,
+    matrixCoeffₛₗ_apply_apply, matrixCoeffLp_def]
 
 /-! ### Passing to `L²` loses no information
 
 Haar measure is positive on nonempty open sets, so two continuous functions agreeing almost
 everywhere agree. -/
 
+/-- A matrix coefficient vanishes in `L²` exactly when the continuous function it comes from is
+the zero function: `ContinuousMap.toLp` is injective for a measure that is positive on nonempty
+open sets, and normalized Haar measure is one. -/
 theorem matrixCoeffLp_eq_zero_iff (v w : V) :
     matrixCoeffLp π hπ v w = 0 ↔ matrixCoeff π hπ v w = 0 := by
-  constructor
-  · intro h
-    refine ContinuousMap.toLp_injective (𝕜 := 𝕜) (p := 2) (haarProb G) ?_
-    rw [← matrixCoeffLp_def, h, map_zero]
-  · intro h
-    rw [matrixCoeffLp_def, h, map_zero]
+  rw [matrixCoeffLp_def, ← map_zero (ContinuousMap.toLp (E := 𝕜) 2 (haarProb G) 𝕜),
+    ContinuousMap.toLp_inj]
 
 /-- A matrix coefficient vanishes in `L²` exactly when it vanishes identically. -/
 theorem matrixCoeffLp_eq_zero_iff_forall (v w : V) :
@@ -190,21 +185,22 @@ theorem norm_matrixCoeffLp_sq (v w : V) :
 /-! ### Bounds from the normalization of Haar measure -/
 
 /-- The `L²` norm of a matrix coefficient of a unitary representation is at most the product of the
-norms of its defining vectors, with no constant: the pointwise bound `‖v‖ * ‖w‖` integrates to
-itself because normalized Haar measure has total mass one. -/
+norms of its defining vectors, with no constant: normalized Haar measure has total mass one, so
+`ContinuousMap.toLp` is a contraction from the uniform norm, where `norm_matrixCoeff_le` is the
+matching bound. -/
 theorem norm_matrixCoeffLp_le (hunitary : IsUnitary π) (v w : V) :
     ‖matrixCoeffLp π hπ v w‖ ≤ ‖v‖ * ‖w‖ := by
-  have hsq : ‖matrixCoeffLp π hπ v w‖ ^ 2 ≤ (‖v‖ * ‖w‖) ^ 2 := by
-    rw [norm_matrixCoeffLp_sq]
-    calc ∫ g, ‖⟪π g v, w⟫_𝕜‖ ^ 2 ∂(haarProb G)
-        ≤ ∫ _ : G, (‖v‖ * ‖w‖) ^ 2 ∂(haarProb G) :=
-          integral_mono_of_nonneg (.of_forall fun _ ↦ sq_nonneg _) (integrable_const _)
-            (.of_forall fun g ↦
-              pow_le_pow_left₀ (norm_nonneg _) (hunitary.norm_inner_map_le g v w) 2)
-      _ = (‖v‖ * ‖w‖) ^ 2 := by simp
-  rw [← Real.sqrt_sq (norm_nonneg (matrixCoeffLp π hπ v w)),
-    ← Real.sqrt_sq (mul_nonneg (norm_nonneg v) (norm_nonneg w))]
-  exact Real.sqrt_le_sqrt hsq
+  have hmass : measureUnivNNReal (haarProb G) = 1 :=
+    ENNReal.coe_inj.1 (by simp [coe_measureUnivNNReal])
+  have hop : ‖(ContinuousMap.toLp (E := 𝕜) 2 (haarProb G) 𝕜)‖ ≤ 1 := by
+    simpa [hmass] using ContinuousMap.toLp_norm_le (E := 𝕜) (p := 2) (𝕜 := 𝕜) (haarProb G)
+  rw [matrixCoeffLp_def]
+  calc ‖ContinuousMap.toLp (E := 𝕜) 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w)‖
+      ≤ ‖(ContinuousMap.toLp (E := 𝕜) 2 (haarProb G) 𝕜)‖ * ‖matrixCoeff π hπ v w‖ :=
+        ContinuousLinearMap.le_opNorm _ _
+    _ ≤ 1 * (‖v‖ * ‖w‖) :=
+        mul_le_mul hop (norm_matrixCoeff_le π hπ hunitary v w) (norm_nonneg _) zero_le_one
+    _ = ‖v‖ * ‖w‖ := one_mul _
 
 /-! ### The trivial representation, and subrepresentations -/
 
