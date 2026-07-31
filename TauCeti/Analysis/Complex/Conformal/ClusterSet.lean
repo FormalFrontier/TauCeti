@@ -34,6 +34,9 @@ extension from the hypotheses.
 * **An extension injective on the frontier is injective on the closure.** This supplies the
   injectivity hypothesis of `TauCeti.closureHomeomorph`, reducing it to a condition on the boundary
   alone, because the boundary values have just been shown to avoid the image.
+* **Conversely, the boundary cluster sets exhaust the frontier of the image**, for a bounded
+  domain: no boundary point of `f '' U` is missed. This is the surjectivity of the boundary
+  correspondence, and it is what makes the inclusion of the first item an equality.
 
 A third ingredient is again not about conformality and is proved upstream, in
 `TauCeti/Analysis/Convex/ClusterSet.lean`: on a **convex** domain — the unit disc, in the
@@ -62,6 +65,11 @@ every theorem added in layers L0–L6, the results below are stated for maps of 
   boundary cluster value of a conformal map lies on the frontier of the image.
 * `TauCeti.injOn_closure_of_injOn_frontier` — an extension injective on the frontier is injective
   on the closure.
+* `TauCeti.exists_mem_frontier_mem_clusterSetOn` and
+  `TauCeti.biUnion_clusterSetOn_eq_frontier_image` — **the boundary correspondence is onto**: on a
+  bounded domain the boundary cluster sets cover, hence exactly exhaust, the frontier of the image.
+  `TauCeti.biUnion_clusterSetOn_sphere_eq_frontier_image` is the case of the unit disc, the one a
+  Riemann map presents.
 
 ## Coordination with upstream Mathlib
 
@@ -155,5 +163,66 @@ theorem injOn_closure_of_injOn_frontier (hUo : IsOpen U) (hfd : DifferentiableOn
     rw [hab, hFf hbU]
     exact ⟨b, hbU, rfl⟩
   · exact hFfr haF hbF hab
+
+/-! ## The boundary correspondence is onto -/
+
+/-- **Every boundary point of the image is a boundary cluster value.** If `f` is holomorphic and
+injective on a bounded open `U`, then each point of `frontier (f '' U)` is approached by `f` at some
+point of `frontier U`.
+
+Boundedness of `U` is what is doing the work, through
+`TauCeti.exists_mem_closure_mem_clusterSetOn`: it makes `closure U` compact, so the points of `U` at
+which `f` approaches a given boundary value of the image cannot escape, and accumulate somewhere on
+`closure U`. That accumulation point does not lie in `U`, because at a point of `U` the only cluster
+value is `f w` itself, which lies in the *open* set `f '' U` and so not on its frontier.
+
+This is the converse of `TauCeti.clusterSetOn_subset_frontier_image`, and the two together say that
+the boundary correspondence `w ↦ clusterSetOn f U w` is onto `frontier (f '' U)`. Carathéodory's
+theorem — layer **L5** of the conformal-mapping roadmap — refines this to a *bijection* by showing
+each of these cluster sets to be a singleton; the surjectivity below holds with no hypothesis on
+`frontier U` whatever. -/
+theorem exists_mem_frontier_mem_clusterSetOn (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hv : v ∈ frontier (f '' U)) :
+    ∃ w ∈ frontier U, v ∈ clusterSetOn f U w := by
+  rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq] at hv
+  obtain ⟨w, hw, hvw⟩ := exists_mem_closure_mem_clusterSetOn hUb.isCompact_closure hv.1
+  refine ⟨w, ?_, hvw⟩
+  rw [hUo.frontier_eq]
+  refine ⟨hw, fun hwU => hv.2 ?_⟩
+  rw [clusterSetOn_eq_singleton_of_continuousWithinAt hwU (hfd.continuousOn w hwU),
+    mem_singleton_iff] at hvw
+  rw [hvw]
+  exact mem_image_of_mem f hwU
+
+/-- **The boundary cluster sets exhaust the frontier of the image.** For a conformal map of a
+bounded open set, the union of the cluster sets over `frontier U` is exactly `frontier (f '' U)`.
+
+One inclusion is `TauCeti.clusterSetOn_subset_frontier_image` — no boundary cluster value is
+attained, and none escapes the closure of the image — and the other is
+`TauCeti.exists_mem_frontier_mem_clusterSetOn`. Neither connectedness nor simple connectedness of
+`U` is used, and nothing is assumed about `frontier U`. -/
+theorem biUnion_clusterSetOn_eq_frontier_image (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) :
+    ⋃ w ∈ frontier U, clusterSetOn f U w = frontier (f '' U) :=
+  subset_antisymm (iUnion₂_subset fun _ hw => clusterSetOn_subset_frontier_image hUo hfd hfi hw)
+    fun _ hv => by
+      obtain ⟨w, hw, hvw⟩ := exists_mem_frontier_mem_clusterSetOn hUo hUb hfd hfi hv
+      exact mem_biUnion hw hvw
+
+/-- **The boundary correspondence of a conformal map of the unit disc.** The case of
+`TauCeti.biUnion_clusterSetOn_eq_frontier_image` in which the domain is `ball 0 1`, so that the
+frontier is the unit circle: the frontier of the image is the union of the cluster sets taken over
+the unit circle.
+
+This is the shape in which the boundary correspondence is met in practice, a Riemann map being a
+conformal map *of* the disc. Each of the sets in the union is moreover a continuum, by
+`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`, the disc being convex; Carathéodory's
+theorem asserts that for a Jordan image every one of them degenerates to a point. -/
+theorem biUnion_clusterSetOn_sphere_eq_frontier_image
+    (hfd : DifferentiableOn ℂ f (ball 0 1)) (hfi : InjOn f (ball 0 1)) :
+    ⋃ w ∈ sphere (0 : ℂ) 1, clusterSetOn f (ball 0 1) w = frontier (f '' ball 0 1) := by
+  have h := biUnion_clusterSetOn_eq_frontier_image (U := ball (0 : ℂ) 1) isOpen_ball isBounded_ball
+    hfd hfi
+  rwa [frontier_ball (0 : ℂ) one_ne_zero] at h
 
 end TauCeti
