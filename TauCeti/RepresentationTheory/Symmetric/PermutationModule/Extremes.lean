@@ -11,7 +11,7 @@ public import TauCeti.RepresentationTheory.Symmetric.PermutationModule.Basic
 # The two extreme Young permutation modules
 
 The Young permutation module `M^μ` of a partition `μ` of `n` interpolates between two extremes.
-For the one-part partition `(n)` there is a single `μ`-tabloid and `M^{(n)}` is the trivial
+For the coarsest partition `(n)` there is a single `μ`-tabloid and `M^{(n)}` is the trivial
 representation; for the all-ones partition `(1ⁿ)` the tabloids are the permutations themselves
 and `M^{(1ⁿ)}` is the regular representation `ℚ[Sₙ]`.
 
@@ -46,9 +46,12 @@ open CategoryTheory
 
 namespace TauCeti
 
-/-! ## The one-part partition `(n)` -/
+/-! ## The coarsest partition `(n)`
 
-/-- The Young permutation module of the one-part partition `(n)` is the trivial representation:
+Mathlib's `Nat.Partition.indiscrete n` is the partition with the single part `n` when `n ≠ 0`,
+and the empty partition of `0` when `n = 0`; either way its Young subgroup is all of `Sₙ`. -/
+
+/-- The Young permutation module of the coarsest partition `(n)` is the trivial representation:
 there is only one `(n)`-tabloid. -/
 noncomputable def permutationModuleIndiscreteIsoTrivial (n : ℕ) :
     permutationModule (Nat.Partition.indiscrete n) ≅
@@ -75,7 +78,7 @@ theorem permutationModuleIndiscreteIsoTrivial_inv_hom_apply (n : ℕ) (r : ℚ) 
     Representation.IntertwiningMap.comp_apply]
   rw [quotientTopIsoTrivial_inv_hom_apply, quotientIsoCongr_inv_hom_single_mk]
 
-/-- The Young permutation module of the one-part partition `(n)` is one-dimensional. -/
+/-- The Young permutation module of the coarsest partition `(n)` is one-dimensional. -/
 @[simp]
 theorem finrank_permutationModule_indiscrete (n : ℕ) :
     Module.finrank ℚ (permutationModule (Nat.Partition.indiscrete n)).V = 1 := by

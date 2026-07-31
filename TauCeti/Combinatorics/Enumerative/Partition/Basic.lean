@@ -15,7 +15,8 @@ provides the equivalence `Nat.Partition.equivSortedParts` between partitions of 
 decreasing lists of positive natural numbers summing to `n`, obtained by sorting the parts.
 
 It also records the partition `Nat.Partition.ones n = (1ⁿ)` into `n` parts equal to `1`, the
-opposite extreme to Mathlib's one-part `Nat.Partition.indiscrete n = (n)`.
+opposite extreme to Mathlib's coarsest partition `Nat.Partition.indiscrete n = (n)`, whose parts
+are the single part `n` when `n ≠ 0`, and none when `n = 0`.
 -/
 
 public section
@@ -61,7 +62,7 @@ theorem equivSortedParts_symm_apply_parts (n : ℕ)
 /-- The partition `(1ⁿ)` of `n` into `n` parts, each equal to `1`.
 
 This is the finest partition of `n`, opposite to Mathlib's coarsest `Nat.Partition.indiscrete n`,
-which has the single part `n`.
+whose parts are the single part `n` when `n ≠ 0`, and none when `n = 0`.
 
 The parts are exposed only through `Nat.Partition.ones_parts`. -/
 def ones (n : ℕ) : n.Partition where
@@ -80,7 +81,9 @@ theorem prod_map_factorial_ones (n : ℕ) :
     ((ones n).parts.map Nat.factorial).prod = 1 := by
   simp [Multiset.map_replicate]
 
-/-- The product of the factorials of the parts of the one-part partition `(n)` is `n !`. -/
+/-- The product of the factorials of the parts of the coarsest partition `(n)` is `n !`.
+
+For `n = 0` this is the empty product, and `0! = 1` agrees with it. -/
 @[simp]
 theorem prod_map_factorial_indiscrete (n : ℕ) :
     ((_root_.Nat.Partition.indiscrete n).parts.map Nat.factorial).prod = n.factorial := by

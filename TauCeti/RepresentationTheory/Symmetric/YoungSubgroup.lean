@@ -215,8 +215,8 @@ theorem youngSubgroup_index_mul {n : ℕ} (μ : n.Partition) :
     (youngSubgroup μ).index * (μ.parts.map Nat.factorial).prod = n.factorial := by
   rw [← card_youngSubgroup, Subgroup.index_mul_card, Nat.card_perm, Nat.card_fin]
 
-/-- The Young subgroup of the one-part partition `(n)` is the whole symmetric group: a single
-block imposes no condition. -/
+/-- The Young subgroup of the coarsest partition `(n)` is the whole symmetric group: its at most
+one block imposes no condition. -/
 @[simp]
 theorem youngSubgroup_indiscrete (n : ℕ) :
     youngSubgroup (Nat.Partition.indiscrete n) = ⊤ :=
