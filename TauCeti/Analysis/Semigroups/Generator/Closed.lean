@@ -24,7 +24,7 @@ reverse implication uses that the resolvent maps into the domain and is a right 
 
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.mem_generator_graph_iff_resolvent_eq`:
   membership in the generator graph is characterized by one resolvent equation.
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.generator_isClosed`: the generator of every
+* `TauCeti.Semigroups.StronglyContinuousSemigroup.isClosed_generator`: the generator of every
   strongly continuous semigroup is closed.
 
 ## References
@@ -87,7 +87,7 @@ theorem mem_generator_graph_iff_resolvent_eq (S : StronglyContinuousSemigroup X)
 
 /-- The infinitesimal generator of a strongly continuous semigroup on a real Banach space is a
 closed unbounded operator. -/
-theorem generator_isClosed (S : StronglyContinuousSemigroup X) : S.generator.IsClosed := by
+theorem isClosed_generator (S : StronglyContinuousSemigroup X) : S.generator.IsClosed := by
   obtain ⟨omega, M, hb⟩ := S.existsGrowthBound
   let lambda := omega + 1
   have hlambda : omega < lambda := by simp [lambda]
