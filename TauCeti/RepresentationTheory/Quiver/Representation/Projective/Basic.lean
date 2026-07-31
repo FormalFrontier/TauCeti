@@ -76,7 +76,7 @@ by `change`, and says so in a comment.
 The vector space `(Pᵢ)_j` lives in the universe of `Quiver.Path i j →₀ k`, which is larger than
 the universe of `k` unless the vertex and arrow types are small. The vertex simple `Sᵢ` of
 `TauCeti.RepresentationTheory.Quiver.Representation.Simple` is built on `k` itself, so the two
-objects sit in a common category only when those universes agree, and the projective cover
+objects sit in a common category only when those universes agree, and the surjection
 `Pᵢ ↠ Sᵢ` is therefore not stated here, but in
 `TauCeti.RepresentationTheory.Quiver.Representation.Cover`, where those universes are aligned.
 

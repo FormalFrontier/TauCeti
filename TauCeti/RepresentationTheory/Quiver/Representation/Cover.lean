@@ -8,7 +8,7 @@ public import TauCeti.RepresentationTheory.Quiver.Representation.Injective
 public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
 /-!
-# The projective cover and the injective envelope of a vertex simple
+# Comparing a vertex simple with its projective and its injective
 
 For a vertex `i` of a quiver `Q` there are three representations attached to `i`: the vertex
 simple `Sᵢ`, the projective `Pᵢ` and the injective `Iᵢ`. This file builds the two comparison
@@ -47,9 +47,15 @@ that line and the functional dual to it, and both are read off the identificatio
 
 Only the two comparison morphisms and their formal properties are proved here. That `Pᵢ ↠ Sᵢ` is a
 *projective cover* in the technical sense (a superfluous kernel) and `Sᵢ ↪ Iᵢ` an *injective
-envelope* (an essential extension) belongs to the Layer 3 theory of covers and envelopes, which is
-not yet available; `TauCeti.indecProjRepToSimpleRep_app_basis_of_length_ne_zero`, that the cover
-kills every path of positive length, is the concrete half of that statement available now.
+envelope* (an essential extension) is neither proved nor true in this generality: for the quiver
+with one vertex and one loop the path algebra is `k[X]`, the kernel of `Pᵢ ↠ Sᵢ` is the ideal
+`(X)`, and `(X) + (X - 1) = k[X]` with `(X - 1)` proper, so that kernel is not superfluous. What is
+recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_of_length_ne_zero`: the morphism
+kills the basis vector of every path of positive length, so its kernel contains the arrow ideal.
+That ideal is the Jacobson radical when it is nilpotent, for instance for a finite acyclic quiver,
+but not in general: for the one-loop quiver the radical of `k[X]` is zero. Identifying the kernel
+with the radical, and with it the technical statements, is left to the Layer 3 theory of covers and
+envelopes, which is not yet available.
 
 The field, the vertex type and the arrow types share one universe here, where the three files
 building `Sᵢ`, `Pᵢ` and `Iᵢ` each keep them separate. The reason is that the vertex spaces of `Pᵢ`
@@ -116,23 +122,24 @@ theorem simpleRepGenerator_ne_zero (i : Q) : simpleRepGenerator k i ≠ 0 := by
   rw [simpleRepSelfEquiv_generator, map_zero] at h1
   exact one_ne_zero h1
 
-/-! ### The projective cover of a vertex simple -/
+/-! ### The surjection from a vertex projective onto its vertex simple -/
 
-/-- **The projective cover of a vertex simple**, `Pᵢ ↠ Sᵢ`: under the universal property of `Pᵢ`
-it is the generator of the line `(Sᵢ)ᵢ`. It sends the basis vector of the trivial path to that
-generator and kills the basis vector of every path of positive length. -/
+/-- **The canonical surjection `Pᵢ ↠ Sᵢ`**: under the universal property of `Pᵢ` it is the
+generator of the line `(Sᵢ)ᵢ`. It sends the basis vector of the trivial path to that generator and
+kills the basis vector of every path of positive length. -/
 noncomputable def indecProjRepToSimpleRep (i : Q) : indecProjRep k Q i ⟶ simpleRep k Q i :=
   indecProjRepHom i (simpleRep k Q i) (simpleRepGenerator k i)
 
-/-- The projective cover carries the basis vector of a path `p : i → j` to the action of `p` on the
-generator. -/
+/-- The surjection `Pᵢ ↠ Sᵢ` carries the basis vector of a path `p : i → j` to the action of `p` on
+the generator. -/
 @[simp]
 theorem indecProjRepToSimpleRep_app_basis {i j : Q} (p : Quiver.Path i j) :
     (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p)
       = (simpleRep k Q i).map p (simpleRepGenerator k i) :=
   indecProjRepHom_app_basis i (simpleRep k Q i) (simpleRepGenerator k i) j p
 
-/-- The projective cover sends the basis vector of the trivial path to the generator of `(Sᵢ)ᵢ`. -/
+/-- The surjection `Pᵢ ↠ Sᵢ` sends the basis vector of the trivial path to the generator of
+`(Sᵢ)ᵢ`. -/
 theorem indecProjRepToSimpleRep_app_nil (i : Q) :
     (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj i)
         (indecProjRepBasis k i i Quiver.Path.nil) = simpleRepGenerator k i :=
@@ -140,24 +147,24 @@ theorem indecProjRepToSimpleRep_app_nil (i : Q) :
 
 -- Not `@[simp]`: `simp` reduces the left-hand side through `indecProjRepHomEquiv_apply` and
 -- `indecProjRepToSimpleRep_app_basis`, so tagging the theorem is a simp-normal-form violation
--- (`simpNF`). It stays named because it is the universal-property reading of the cover.
-/-- The projective cover is the morphism that the universal property of `Pᵢ` attaches to the
+-- (`simpNF`). It stays named because it is the universal-property reading of the surjection.
+/-- The surjection `Pᵢ ↠ Sᵢ` is the morphism that the universal property of `Pᵢ` attaches to the
 generator of the line `(Sᵢ)ᵢ`. -/
 theorem indecProjRepHomEquiv_indecProjRepToSimpleRep (i : Q) :
     indecProjRepHomEquiv i (simpleRep k Q i) (indecProjRepToSimpleRep k i)
       = simpleRepGenerator k i := by
   rw [indecProjRepHomEquiv_apply, indecProjRepToSimpleRep_app_nil]
 
-/-- **The projective cover kills the radical**: the basis vector of a path of positive length goes
-to zero. -/
+/-- **The surjection `Pᵢ ↠ Sᵢ` kills the arrow ideal**: the basis vector of a path of positive
+length goes to zero. -/
 theorem indecProjRepToSimpleRep_app_basis_of_length_ne_zero {i j : Q} (p : Quiver.Path i j)
     (hp : p.length ≠ 0) :
     (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) = 0 := by
   rw [indecProjRepToSimpleRep_app_basis, simpleRep_map_eq_zero_of_length_ne_zero i p hp]
   rfl
 
-/-- Every component of the projective cover is surjective: at `i` because the generator spans, and
-away from `i` because the target vanishes. -/
+/-- Every component of `Pᵢ ⟶ Sᵢ` is surjective: at `i` because the generator spans, and away from
+`i` because the target vanishes. -/
 theorem surjective_indecProjRepToSimpleRep_app (i j : Q) :
     Function.Surjective ((indecProjRepToSimpleRep k i).app ((Paths.of Q).obj j)) := by
   rcases eq_or_ne j i with rfl | hj
@@ -185,13 +192,13 @@ instance epi_indecProjRepToSimpleRep (i : Q) : Epi (indecProjRepToSimpleRep k i)
     exact (ModuleCat.epi_iff_surjective _).mpr (surjective_indecProjRepToSimpleRep_app k i X)
   exact NatTrans.epi_of_epi_app _
 
-/-- The projective cover is nonzero. -/
+/-- The surjection `Pᵢ ↠ Sᵢ` is nonzero. -/
 theorem indecProjRepToSimpleRep_ne_zero (i : Q) : indecProjRepToSimpleRep k i ≠ 0 := by
   intro h
   refine simpleRepGenerator_ne_zero k i ?_
   rw [← indecProjRepHomEquiv_indecProjRepToSimpleRep k i, h, map_zero]
 
-/-- **The projective cover is unique up to a scalar**: `Hom(Pᵢ, Sᵢ)` is the line spanned by
+/-- **The surjection `Pᵢ ↠ Sᵢ` is unique up to a scalar**: `Hom(Pᵢ, Sᵢ)` is the line spanned by
 `TauCeti.indecProjRepToSimpleRep`. -/
 theorem exists_smul_indecProjRepToSimpleRep {i : Q} (f : indecProjRep k Q i ⟶ simpleRep k Q i) :
     ∃ c : k, f = c • indecProjRepToSimpleRep k i := by
@@ -205,14 +212,14 @@ theorem finrank_hom_indecProjRep_simpleRep [DecidableEq Q] (i j : Q) :
     Module.finrank k (indecProjRep k Q i ⟶ simpleRep k Q j) = if i = j then 1 else 0 := by
   rw [finrank_hom_indecProjRep, dimVector_simpleRep, Pi.single_apply]
 
-/-! ### The injective envelope of a vertex simple -/
+/-! ### The embedding of a vertex simple into its vertex injective -/
 
-/-- **The injective envelope of a vertex simple**, `Sᵢ ↪ Iᵢ`: under the universal property of `Iᵢ`
-it is the linear functional identifying the line `(Sᵢ)ᵢ` with the base field. -/
+/-- **The canonical embedding `Sᵢ ↪ Iᵢ`**: under the universal property of `Iᵢ` it is the linear
+functional identifying the line `(Sᵢ)ᵢ` with the base field. -/
 noncomputable def simpleRepToIndecInjRep (i : Q) : simpleRep k Q i ⟶ indecInjRep k Q i :=
   indecInjRepHom i (simpleRep k Q i) (simpleRepSelfEquiv k i).toLinearMap
 
-/-- The injective envelope sends `x` at the vertex `j` to the function whose value on a path
+/-- The embedding `Sᵢ ↪ Iᵢ` sends `x` at the vertex `j` to the function whose value on a path
 `q : j → i` is the coefficient of the action of `q` on `x`. -/
 @[simp]
 theorem simpleRepToIndecInjRep_app_apply {i j : Q}
@@ -221,7 +228,7 @@ theorem simpleRepToIndecInjRep_app_apply {i j : Q}
       = simpleRepSelfEquiv k i ((simpleRep k Q i).map q x) :=
   indecInjRepHom_app_apply i (simpleRep k Q i) (simpleRepSelfEquiv k i).toLinearMap j x q
 
-/-- The injective envelope is the morphism that the universal property of `Iᵢ` attaches to the
+/-- The embedding `Sᵢ ↪ Iᵢ` is the morphism that the universal property of `Iᵢ` attaches to the
 functional identifying the line `(Sᵢ)ᵢ` with the base field. -/
 @[simp]
 theorem indecInjRepHomEquiv_simpleRepToIndecInjRep (i : Q) :
@@ -232,8 +239,8 @@ theorem indecInjRepHomEquiv_simpleRepToIndecInjRep (i : Q) :
   exact (simpleRepToIndecInjRep_app_apply k x Quiver.Path.nil).trans
     (congrArg _ (QuiverRep.map_nil_apply (simpleRep k Q i) i x))
 
-/-- Every component of the injective envelope is injective: at `i` because the coefficient on the
-trivial path recovers the element, and away from `i` because the source vanishes. -/
+/-- Every component of `Sᵢ ⟶ Iᵢ` is injective: at `i` because the coefficient on the trivial path
+recovers the element, and away from `i` because the source vanishes. -/
 theorem injective_simpleRepToIndecInjRep_app (i j : Q) :
     Function.Injective ((simpleRepToIndecInjRep k i).app ((Paths.of Q).obj j)) := by
   rcases eq_or_ne j i with rfl | hj
@@ -259,7 +266,7 @@ instance mono_simpleRepToIndecInjRep (i : Q) : Mono (simpleRepToIndecInjRep k i)
     exact (ModuleCat.mono_iff_injective _).mpr (injective_simpleRepToIndecInjRep_app k i X)
   exact NatTrans.mono_of_mono_app _
 
-/-- The injective envelope is nonzero. -/
+/-- The embedding `Sᵢ ↪ Iᵢ` is nonzero. -/
 theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 0 := by
   intro h
   have hzero : (simpleRepSelfEquiv k i).toLinearMap = 0 := by
@@ -268,7 +275,7 @@ theorem simpleRepToIndecInjRep_ne_zero (i : Q) : simpleRepToIndecInjRep k i ≠ 
   simp only [LinearEquiv.coe_coe, simpleRepSelfEquiv_generator, LinearMap.zero_apply] at h1
   exact one_ne_zero h1
 
-/-- **The injective envelope is unique up to a scalar**: `Hom(Sᵢ, Iᵢ)` is the line spanned by
+/-- **The embedding `Sᵢ ↪ Iᵢ` is unique up to a scalar**: `Hom(Sᵢ, Iᵢ)` is the line spanned by
 `TauCeti.simpleRepToIndecInjRep`. -/
 theorem exists_smul_simpleRepToIndecInjRep {i : Q} (f : simpleRep k Q i ⟶ indecInjRep k Q i) :
     ∃ c : k, f = c • simpleRepToIndecInjRep k i := by
