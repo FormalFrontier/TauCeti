@@ -68,10 +68,10 @@ plane-domain version), so only the dependence on the L3 shim is temporary.
 reads "the **hyperbolic / Poincaré metric** on `𝔻`", and that target is already discharged by
 `Conformal/Poincare/MetricSpace.lean`. Carrying the metric to a general disc-uniformizable domain
 is not covered by it, and no later layer (L4 reflection, L5 Carathéodory, L6 Schwarz--Christoffel)
-consumes it. So this file is pending a roadmap decision:
-[TauCetiRoadmap#112](https://github.com/TauCetiProject/TauCetiRoadmap/issues/112) asks for a node
-for the conformally invariant metric on disc-uniformizable domains. Replace this section with a
-citation of that node once it exists.
+consumes it. So this file is pending a roadmap decision that only a human can make: a
+`ConformalMapping` node for the conformally invariant metric on disc-uniformizable domains
+(Ahlfors, *Conformal Invariants*, Ch. 1, already in that entry's References). Replace this section
+with a citation of that node once it exists.
 
 ## References
 
