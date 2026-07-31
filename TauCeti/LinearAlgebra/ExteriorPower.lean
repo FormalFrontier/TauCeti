@@ -126,11 +126,11 @@ section Top
 variable [CommRing R] [AddCommGroup M] [Module R M] {n : ℕ}
 
 /-- In the top degree, an exterior product of `n` vectors is the determinant of that family
-against a basis, times the exterior product of the basis. Both sides are read off coordinatewise
-in the basis of `⋀[R]^n M` induced by `b`, where each coordinate is an `R`-valued alternating form
-and is therefore a multiple of `b.det`. -/
+against a basis, times the exterior product of the basis. -/
 theorem ιMulti_eq_basis_det_smul (b : Module.Basis (Fin n) R M) (v : Fin n → M) :
     ιMulti R n v = b.det v • ιMulti R n ⇑b := by
+  -- Compare both sides coordinatewise in the basis of `⋀[R]^n M` induced by `b`: each coordinate
+  -- is an `R`-valued alternating form, hence a multiple of `b.det`.
   refine (b.exteriorPower n).ext_elem fun s ↦ ?_
   -- The `s`th coordinate of `ιMulti R n v` is an alternating form in `v`.
   set φ : M [⋀^Fin n]→ₗ[R] R := (ιMultiDual R n b s).compAlternatingMap (ιMulti R n) with hφ
@@ -186,21 +186,14 @@ lemma topEquiv_symm_apply (b : Module.Basis (Fin n) R M) (r : R) :
     (topEquiv b).symm r = r • ιMulti R n ⇑b := by
   simp [topEquiv]
 
-/-- The top exterior power of a module of rank `n` is one-dimensional. This is the diagonal case
-`Nat.choose n n = 1` of Mathlib's `exteriorPower.finrank_eq`, with the freeness and finiteness
-hypotheses supplied by the given basis. -/
-lemma finrank_top [Nontrivial R] (b : Module.Basis (Fin n) R M) :
-    Module.finrank R (⋀[R]^n M) = 1 := by
-  haveI := Module.Free.of_basis b
-  haveI := Module.Finite.of_basis b
-  rw [finrank_eq, Module.finrank_eq_card_basis b, Fintype.card_fin, Nat.choose_self]
-
 /-- The trace of the induced endomorphism of the top exterior power is the determinant. -/
 theorem trace_map_top [Nontrivial R] (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
     LinearMap.trace R (⋀[R]^n M) (map n f) = LinearMap.det f := by
   haveI := Module.Free.of_basis b
   haveI := Module.Finite.of_basis b
-  rw [map_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_top b]
+  -- The top exterior power is one-dimensional, the diagonal case `Nat.choose n n = 1`.
+  rw [map_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_eq,
+    Module.finrank_eq_card_basis b, Fintype.card_fin, Nat.choose_self]
   simp
 
 end Top

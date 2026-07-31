@@ -78,12 +78,41 @@ theorem extPowerRep_self_apply (g : GL (Fin n) k) :
 
 /-- **The top exterior power of the standard representation is the determinant representation.**
 The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/
-noncomputable def topExtPowerEquivDet : (extPowerRep k n n).Equiv (detRep k n) :=
+@[expose] noncomputable def topExtPowerEquivDet : (extPowerRep k n n).Equiv (detRep k n) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     refine LinearMap.ext fun x ↦ ?_
     simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
       extPowerRep_self_apply, LinearMap.smul_apply, LinearMap.id_coe, id_eq, map_smul,
       smul_eq_mul, detPowerRep_apply, zpow_one, Matrix.GeneralLinearGroup.val_det_apply]
+
+/-- The underlying linear equivalence of `TauCeti.topExtPowerEquivDet` is the top-degree
+identification of the exterior power with the scalars. -/
+@[simp]
+theorem topExtPowerEquivDet_toLinearEquiv :
+    (topExtPowerEquivDet k n).toLinearEquiv = exteriorPower.topEquiv (Pi.basisFun k (Fin n)) :=
+  rfl
+
+/-- The identification sends a wedge of `n` vectors to the determinant of the matrix they form. -/
+@[simp]
+theorem topExtPowerEquivDet_apply_ιMulti (v : Fin n → (Fin n → k)) :
+    topExtPowerEquivDet k n (exteriorPower.ιMulti k n v) = (Matrix.of v).det := by
+  simp [topExtPowerEquivDet, ← Pi.basisFun_det_apply]
+
+/-- The identification of the top exterior power with the determinant representation, bundled as
+an isomorphism in `FDRep`. -/
+noncomputable def extPowerFDRepDetIso : extPowerFDRep k n n ≅ detFDRep k n :=
+  Action.mkIso (topExtPowerEquivDet k n).toLinearEquiv.toFGModuleCatIso fun g ↦ by
+    apply FGModuleCat.hom_ext
+    exact (topExtPowerEquivDet k n).isIntertwining' g
+
+/-- The forward map of the bundled identification is the underlying representation
+equivalence. -/
+@[simp]
+theorem extPowerFDRepDetIso_hom_hom :
+    (extPowerFDRepDetIso k n).hom.hom =
+      ConcreteCategory.ofHom (topExtPowerEquivDet k n).toLinearMap := by
+  rw [extPowerFDRepDetIso]
+  rfl
 
 end CommRing
 
@@ -115,25 +144,8 @@ This is deliberately not a `simp` lemma: on a diagonal matrix its left-hand side
 normal form. -/
 theorem char_extPowerRep_self (g : GL (Fin n) k) :
     (extPowerRep k n n).character g = Matrix.det (g : Matrix (Fin n) (Fin n) k) := by
-  rw [Representation.character, Representation.exteriorPower_apply, stdRep_apply,
-    ← Matrix.toLin'_apply', exteriorPower.trace_map_top (Pi.basisFun k (Fin n)),
-    LinearMap.det_toLin']
-
-/-- The identification of the top exterior power with the determinant representation, bundled as
-an isomorphism in `FDRep`. -/
-noncomputable def extPowerFDRepDetIso : extPowerFDRep k n n ≅ detFDRep k n :=
-  Action.mkIso (topExtPowerEquivDet k n).toLinearEquiv.toFGModuleCatIso fun g ↦ by
-    apply FGModuleCat.hom_ext
-    exact (topExtPowerEquivDet k n).isIntertwining' g
-
-/-- The forward map of the bundled identification is the underlying representation
-equivalence. -/
-@[simp]
-theorem extPowerFDRepDetIso_hom_hom :
-    (extPowerFDRepDetIso k n).hom.hom =
-      ConcreteCategory.ofHom (topExtPowerEquivDet k n).toLinearMap := by
-  rw [extPowerFDRepDetIso]
-  rfl
+  rw [Representation.char_iso (topExtPowerEquivDet k n), char_detPowerRep k n 1 g, zpow_one,
+    Matrix.GeneralLinearGroup.val_det_apply]
 
 end Field
 
