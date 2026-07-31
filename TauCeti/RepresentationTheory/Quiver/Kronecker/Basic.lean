@@ -92,7 +92,10 @@ instance : Fintype (Kronecker A) where
   complete x := by cases x <;> simp
 
 /-- The vertex type is the pair `{src, tgt}`. -/
-theorem univ_eq : (Finset.univ : Finset (Kronecker A)) = {(src : Kronecker A), tgt} := rfl
+theorem univ_eq : (Finset.univ : Finset (Kronecker A)) = {(src : Kronecker A), tgt} :=
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would expose the body of the `Fintype` instance.
+  (rfl)
 
 @[simp]
 theorem card_eq_two : Fintype.card (Kronecker A) = 2 := by
@@ -158,10 +161,14 @@ instance instFintypeHom [Fintype A] : ∀ a b : Kronecker A, Fintype (a ⟶ b)
   | .tgt, .src => Fintype.ofIsEmpty
   | .tgt, .tgt => Fintype.ofIsEmpty
 
+/-- There are as many arrows from the source to the target as there are elements of the arrow
+type. -/
 @[simp]
 theorem card_hom_src_tgt [Fintype A] :
     Fintype.card ((src : Kronecker A) ⟶ tgt) = Fintype.card A :=
-  rfl
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would expose the bodies of the `Quiver` and `Fintype` instances.
+  (rfl)
 
 /-! ### The paths -/
 
@@ -248,6 +255,8 @@ noncomputable instance instFintypePath [Fintype A] : ∀ a b : Kronecker A, Fint
   | .tgt, .src => Fintype.ofIsEmpty
   | .tgt, .tgt => Unique.fintype
 
+/-- There are as many paths from the source to the target as there are arrows: by
+`pathEquivArrow`, each such path is a single arrow. -/
 @[simp]
 theorem card_path_src_tgt [Fintype A] :
     Fintype.card (Path (src : Kronecker A) tgt) = Fintype.card A :=
