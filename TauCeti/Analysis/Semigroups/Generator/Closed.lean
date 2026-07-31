@@ -86,7 +86,7 @@ theorem mem_generator_graph_iff_resolvent_eq (S : StronglyContinuousSemigroup X)
       _ = p.2 := sub_sub_cancel _ _
 
 /-- The infinitesimal generator of a strongly continuous semigroup on a real Banach space is a
-closed unbounded operator. -/
+closed linear partial map. -/
 theorem isClosed_generator (S : StronglyContinuousSemigroup X) : S.generator.IsClosed := by
   obtain ⟨omega, M, hb⟩ := S.existsGrowthBound
   let lambda := omega + 1
