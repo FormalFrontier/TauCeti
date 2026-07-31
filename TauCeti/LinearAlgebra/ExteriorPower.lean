@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 public import Mathlib.LinearAlgebra.Trace
 
@@ -11,8 +12,18 @@ public import Mathlib.LinearAlgebra.Trace
 # Further results on exterior powers
 
 This file records that the `d`th exterior power of a finite free module over a commutative ring
-vanishes as soon as `d` exceeds the rank of the module. It also computes the trace of an induced
+vanishes as soon as `d` exceeds the rank of the module, and computes the trace of an induced
 endomorphism from a basis of eigenvectors.
+
+It then describes the exterior power in the top degree, that is, in the degree equal to the rank of
+the module. There an exterior product of `n` vectors is the determinant of those vectors against a
+fixed basis, times the exterior product of that basis; so the top exterior power is free of rank
+one, spanned by the exterior product of a basis, and an endomorphism acts on it by its determinant.
+
+## Main definitions
+
+* `exteriorPower.topEquiv` identifies the top exterior power of a module with the scalars, using a
+  basis indexed by `Fin n`.
 
 ## Main results
 
@@ -20,11 +31,17 @@ endomorphism from a basis of eigenvectors.
   `Module.finrank R M < d`.
 * `exteriorPower.trace_map_of_apply_basis` computes the trace on `⋀[R]^d M` from the
   eigenvalues of an endomorphism on a finite basis.
+* `exteriorPower.ιMulti_eq_basis_det_smul` expands a top-degree exterior product of vectors in
+  terms of the exterior product of a basis.
+* `exteriorPower.map_eq_det_smul` says an endomorphism acts on the top exterior power as
+  multiplication by its determinant, and `exteriorPower.trace_map_top` computes the resulting
+  trace.
 
 ## References
 
 The results use Mathlib's exterior-power basis and dimension formula from
-`Mathlib.LinearAlgebra.ExteriorPower.Basis`, by Sophie Morel and Daniel Morrison.
+`Mathlib.LinearAlgebra.ExteriorPower.Basis`, by Sophie Morel and Daniel Morrison, and the
+determinant of a family of vectors against a basis from `Mathlib.LinearAlgebra.Determinant`.
 -/
 
 public section
@@ -103,5 +120,89 @@ theorem eq_zero_of_finrank_lt (d : ℕ) (h : Module.finrank R M < d) (x : ⋀[R]
   exact Subsingleton.elim x 0
 
 end Vanishing
+
+section Top
+
+variable [CommRing R] [AddCommGroup M] [Module R M] {n : ℕ}
+
+/-- In the top degree, an exterior product of `n` vectors is the determinant of that family
+against a basis, times the exterior product of the basis. Both sides are read off coordinatewise
+in the basis of `⋀[R]^n M` induced by `b`, where each coordinate is an `R`-valued alternating form
+and is therefore a multiple of `b.det`. -/
+theorem ιMulti_eq_basis_det_smul (b : Module.Basis (Fin n) R M) (v : Fin n → M) :
+    ιMulti R n v = b.det v • ιMulti R n ⇑b := by
+  refine (b.exteriorPower n).ext_elem fun s ↦ ?_
+  -- The `s`th coordinate of `ιMulti R n v` is an alternating form in `v`.
+  set φ : M [⋀^Fin n]→ₗ[R] R := (ιMultiDual R n b s).compAlternatingMap (ιMulti R n) with hφ
+  have hφ_apply (w : Fin n → M) :
+      φ w = (b.exteriorPower n).repr (ιMulti R n w) s := by
+    rw [hφ, basis_repr_apply]
+    rfl
+  have hdet : φ = φ ⇑b • b.det := φ.eq_smul_basis_det b
+  calc (b.exteriorPower n).repr (ιMulti R n v) s
+      = φ v := (hφ_apply v).symm
+    _ = φ ⇑b * b.det v := by rw [hdet]; simp [Module.Basis.det_self]
+    _ = b.det v * (b.exteriorPower n).repr (ιMulti R n ⇑b) s := by
+        rw [← hφ_apply ⇑b, mul_comm]
+    _ = (b.exteriorPower n).repr (b.det v • ιMulti R n ⇑b) s := by simp
+
+/-- **An endomorphism acts on the top exterior power as multiplication by its determinant.** -/
+theorem map_eq_det_smul (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
+    map n f = LinearMap.det f • LinearMap.id := by
+  refine LinearMap.ext_on (ιMulti_span R n M) ?_
+  rintro _ ⟨v, rfl⟩
+  rw [map_apply_ιMulti, ιMulti_eq_basis_det_smul b (f ∘ v), ιMulti_eq_basis_det_smul b v,
+    Module.Basis.det_comp, mul_smul]
+  simp only [LinearMap.smul_apply, LinearMap.id_coe, id_eq]
+
+/-- The basis-free form of `exteriorPower.map_eq_det_smul`: on the exterior power in the degree
+equal to the rank, an endomorphism of a finite free module acts by its determinant. -/
+theorem map_finrank_eq_det_smul [Nontrivial R] [Module.Free R M] [Module.Finite R M]
+    (f : M →ₗ[R] M) :
+    map (Module.finrank R M) f = LinearMap.det f • LinearMap.id :=
+  map_eq_det_smul (Module.finBasis R M) f
+
+/-- The top exterior power of a module with a basis indexed by `Fin n` is free of rank one: it is
+identified with the scalars by sending an exterior product of vectors to their determinant against
+the basis. -/
+noncomputable def topEquiv (b : Module.Basis (Fin n) R M) : ⋀[R]^n M ≃ₗ[R] R :=
+  LinearEquiv.ofLinear (alternatingMapLinearEquiv b.det)
+    (LinearMap.toSpanSingleton R (⋀[R]^n M) (ιMulti R n ⇑b))
+    (by
+      ext
+      simp [Module.Basis.det_self])
+    (by
+      refine LinearMap.ext_on (ιMulti_span R n M) ?_
+      rintro _ ⟨v, rfl⟩
+      simp [ιMulti_eq_basis_det_smul b v, Module.Basis.det_self])
+
+@[simp]
+lemma topEquiv_apply_ιMulti (b : Module.Basis (Fin n) R M) (v : Fin n → M) :
+    topEquiv b (ιMulti R n v) = b.det v := by
+  simp [topEquiv]
+
+@[simp]
+lemma topEquiv_symm_apply (b : Module.Basis (Fin n) R M) (r : R) :
+    (topEquiv b).symm r = r • ιMulti R n ⇑b := by
+  simp [topEquiv]
+
+/-- The top exterior power of a module of rank `n` is one-dimensional. This is the diagonal case
+`Nat.choose n n = 1` of Mathlib's `exteriorPower.finrank_eq`, with the freeness and finiteness
+hypotheses supplied by the given basis. -/
+lemma finrank_top [Nontrivial R] (b : Module.Basis (Fin n) R M) :
+    Module.finrank R (⋀[R]^n M) = 1 := by
+  haveI := Module.Free.of_basis b
+  haveI := Module.Finite.of_basis b
+  rw [finrank_eq, Module.finrank_eq_card_basis b, Fintype.card_fin, Nat.choose_self]
+
+/-- The trace of the induced endomorphism of the top exterior power is the determinant. -/
+theorem trace_map_top [Nontrivial R] (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
+    LinearMap.trace R (⋀[R]^n M) (map n f) = LinearMap.det f := by
+  haveI := Module.Free.of_basis b
+  haveI := Module.Finite.of_basis b
+  rw [map_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_top b]
+  simp
+
+end Top
 
 end exteriorPower

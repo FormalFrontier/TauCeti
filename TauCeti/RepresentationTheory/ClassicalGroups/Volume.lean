@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.LinearAlgebra.Determinant
+public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.Restriction
 
 public section
@@ -16,10 +17,21 @@ public section
 This file applies the determinant transformation law to matrices of determinant one, giving the
 invariant alternating form required for the standard representation of `SL(n, k)`.
 
+The same computation, read on the top exterior power rather than on the determinant form, says
+that the volume form is an invariant vector: the top exterior power of the standard representation
+of `SL(n, k)` is the trivial one-dimensional representation.
+
+## Main definitions
+
+* `TauCeti.topExtPowerSLEquivTrivial` identifies the top exterior power of the standard
+  representation of the special linear group with the trivial representation.
+
 ## Main results
 
 * `TauCeti.detRowAlternating_stdSLRep` states the invariance of the determinant form under the
   standard representation of the special linear group.
+* `TauCeti.exteriorPower_stdSLRep_self_apply` says the special linear group acts trivially on the
+  top exterior power.
 
 ## References
 
@@ -50,6 +62,23 @@ theorem detRowAlternating_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
       Matrix.detRowAlternating v := by
   simpa only [stdSLRep_apply_apply, g.det_coe, one_mul] using
     Matrix.detRowAlternating_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
+
+/-- The special linear group acts trivially on the top exterior power of the standard
+representation: a matrix acts there by its determinant, which is one. -/
+theorem exteriorPower_stdSLRep_self_apply (g : Matrix.SpecialLinearGroup (Fin n) k) :
+    (stdSLRep k n).exteriorPower n g = LinearMap.id := by
+  rw [Representation.exteriorPower_apply, stdSLRep_apply, ← Matrix.toLin'_apply',
+    exteriorPower.map_eq_det_smul (Pi.basisFun k (Fin n)), LinearMap.det_toLin', g.det_coe,
+    one_smul]
+
+/-- **The volume form is invariant**: the top exterior power of the standard representation of
+`SL(n, k)` is the trivial one-dimensional representation. -/
+noncomputable def topExtPowerSLEquivTrivial :
+    ((stdSLRep k n).exteriorPower n).Equiv
+      (Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k) :=
+  .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
+    rw [exteriorPower_stdSLRep_self_apply]
+    simp
 
 end CommRing
 
