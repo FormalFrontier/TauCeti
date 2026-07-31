@@ -6,16 +6,13 @@ module
 
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.MonoidAlgebra.Basic
-public import Mathlib.Algebra.MonoidAlgebra.Module
-public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
-public import Mathlib.LinearAlgebra.Finsupp.LSum
 public import Mathlib.LinearAlgebra.FreeModule.Basic
 
 /-!
 # The twisted group algebra of a factor set
 
-A **factor set** on a group `G` with values in the units of a commutative semiring `k` is a
+A **factor set** on a monoid `G` with values in the units of a commutative semiring `k` is a
 normalized multiplicative `2`-cocycle `α : G → G → kˣ`. The **twisted group algebra** `k_α[G]` is
 the `k`-algebra with a basis `e g` indexed by `G` and multiplication
 `e g * e h = α g h • e (g * h)`; for the trivial factor set it is the ordinary group algebra
@@ -57,6 +54,11 @@ on `kˣ`: the twisted algebra wants `α` curried, and wants the normalization, w
 identity alone gives only up to the constant `α 1 1`. Carrying the hypotheses in a class keeps the
 type `twistedGroupAlgebra k G α` free of proof arguments.
 
+Nothing in the construction uses inverses in `G`, so `IsFactorSet`, the twisted algebra, its basis,
+the universal property and the two comparison isomorphisms are all stated for a monoid `G`. A group
+is assumed only where an inverse appears, in `TauCeti.IsFactorSet.apply_inv_eq_inv_apply` and
+`TauCeti.TwistedGroupAlgebra.isUnit_of`.
+
 `twistedGroupAlgebra k G α` is a `Subalgebra k (Module.End k (G →₀ k))` rather than a fresh type
 carrying a hand-built ring structure on `G →₀ k`. The two are the same algebra:
 `TauCeti.TwistedGroupAlgebra.basis` exhibits `G` as a basis and
@@ -79,11 +81,11 @@ namespace TauCeti
 
 open Module
 
-/-- A **normalized factor set** on a group `G` with values in the units of a commutative semiring
+/-- A **normalized factor set** on a monoid `G` with values in the units of a commutative semiring
 `k`: a function `α : G → G → kˣ` satisfying the multiplicative `2`-cocycle identity and normalized
-at `1`. These are exactly the factor sets arising from projective representations of `G` over
-`k`. -/
-class IsFactorSet {k G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ) : Prop where
+at `1`. For a group `G` these are exactly the factor sets arising from projective representations
+of `G` over `k`. -/
+class IsFactorSet {k G : Type*} [CommSemiring k] [Monoid G] (α : G → G → kˣ) : Prop where
   /-- The multiplicative `2`-cocycle identity, the associativity constraint of the twisted
   product. -/
   cocycle (g h j : G) : α (g * h) j * α g h = α h j * α g (h * j)
@@ -94,7 +96,9 @@ class IsFactorSet {k G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ
 
 namespace IsFactorSet
 
-variable {k G : Type*} [CommSemiring k] [Group G]
+section Monoid
+
+variable {k G : Type*} [CommSemiring k] [Monoid G]
 
 /-- The trivial factor set, whose twisted group algebra is the ordinary group algebra. -/
 instance : IsFactorSet (1 : G → G → kˣ) where
@@ -102,21 +106,25 @@ instance : IsFactorSet (1 : G → G → kˣ) where
   one_left _ := rfl
   one_right _ := rfl
 
-variable (α : G → G → kˣ) [IsFactorSet α]
+end Monoid
+
+section Group
+
+variable {k G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ) [IsFactorSet α]
 
 /-- A factor set is symmetric on an inverse pair: it takes the same value at `(g, g⁻¹)` as at
 `(g⁻¹, g)`. This is the cocycle identity at `(g, g⁻¹, g)`, and it is the coherence making the
 twisted basis elements two-sided units. -/
-theorem apply_inv_comm (g : G) : α g g⁻¹ = α g⁻¹ g := by
-  have h := cocycle (α := α) g g⁻¹ g
-  rwa [mul_inv_cancel, inv_mul_cancel, one_left (α := α), one_right (α := α), one_mul,
-    mul_one] at h
+theorem apply_inv_eq_inv_apply (g : G) : α g g⁻¹ = α g⁻¹ g := by
+  simpa [one_left (α := α), one_right (α := α)] using cocycle (α := α) g g⁻¹ g
+
+end Group
 
 end IsFactorSet
 
 section Translation
 
-variable (k : Type*) {G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ)
+variable (k : Type*) {G : Type*} [CommSemiring k] [Monoid G] (α : G → G → kˣ)
 
 /-- The `α`-twisted translation by `g` on `G →₀ k`: it sends the basis vector at `h` to `α g h`
 times the basis vector at `g * h`. For the trivial factor set this is the regular representation
@@ -165,13 +173,13 @@ end Translation
 
 section Algebra
 
-variable (k G : Type*) [CommSemiring k] [Group G] (α : G → G → kˣ) [IsFactorSet α]
+variable (k G : Type*) [CommSemiring k] [Monoid G] (α : G → G → kˣ) [IsFactorSet α]
 
 /-- **The twisted group algebra** `k_α[G]` of a factor set `α`, realized as the `k`-span of the
 twisted translations inside `Module.End k (G →₀ k)`. It is a subalgebra because the cocycle
 identity makes the span closed under composition (`TauCeti.twistedTranslation_mul`) and the
 normalization puts the identity operator into it (`TauCeti.twistedTranslation_one`). -/
-@[expose] noncomputable def twistedGroupAlgebra : Subalgebra k (Module.End k (G →₀ k)) :=
+noncomputable def twistedGroupAlgebra : Subalgebra k (Module.End k (G →₀ k)) :=
   Submodule.toSubalgebra (Submodule.span k (Set.range (twistedTranslation k α)))
     (by
       rw [← twistedTranslation_one k α]
@@ -194,13 +202,19 @@ theorem toSubmodule_twistedGroupAlgebra :
       Submodule.span k (Set.range (twistedTranslation k α)) :=
   Submodule.toSubalgebra_toSubmodule _ _ _
 
+/-- The twisted translations lie in the twisted group algebra: they are its basis elements. -/
+theorem twistedTranslation_mem_twistedGroupAlgebra (g : G) :
+    twistedTranslation k α g ∈ twistedGroupAlgebra k G α := by
+  rw [← Subalgebra.mem_toSubmodule, toSubmodule_twistedGroupAlgebra]
+  exact Submodule.subset_span ⟨g, rfl⟩
+
 namespace TwistedGroupAlgebra
 
 variable {k G α}
 
 /-- The basis element of `k_α[G]` at `g : G`, namely the `α`-twisted translation by `g`. -/
 @[expose] noncomputable def of (g : G) : twistedGroupAlgebra k G α :=
-  ⟨twistedTranslation k α g, Submodule.subset_span ⟨g, rfl⟩⟩
+  ⟨twistedTranslation k α g, twistedTranslation_mem_twistedGroupAlgebra k G α g⟩
 
 @[simp]
 theorem coe_of (g : G) :
@@ -217,19 +231,23 @@ theorem of_mul_of (g h : G) :
     (of g : twistedGroupAlgebra k G α) * of h = (α g h : k) • of (g * h) :=
   Subtype.ext <| by simpa using twistedTranslation_mul k α g h
 
+section Group
+
+variable {k G : Type*} [CommSemiring k] [Group G] {α : G → G → kˣ} [IsFactorSet α]
+
 /-- The basis elements are units, with `(α g g⁻¹)⁻¹ • e g⁻¹` as a two-sided inverse. -/
 theorem isUnit_of (g : G) : IsUnit (of g : twistedGroupAlgebra k G α) := by
   refine ⟨⟨of g, (((α g g⁻¹)⁻¹ : kˣ) : k) • of g⁻¹, ?_, ?_⟩, rfl⟩
-  · rw [mul_smul_comm, of_mul_of, smul_smul, mul_inv_cancel, of_one, ← Units.val_mul,
-      inv_mul_cancel, Units.val_one, one_smul]
-  · rw [smul_mul_assoc, of_mul_of, smul_smul, inv_mul_cancel, of_one,
-      ← IsFactorSet.apply_inv_comm α g, ← Units.val_mul, inv_mul_cancel, Units.val_one, one_smul]
+  · simp [smul_smul, ← Units.val_mul]
+  · simp [smul_smul, ← Units.val_mul, IsFactorSet.apply_inv_eq_inv_apply α g]
+
+end Group
 
 variable (k G α)
 
 /-- The twisted translations form a basis of `k_α[G]` indexed by `G`: the twisted group algebra is
 free with basis the elements `TauCeti.TwistedGroupAlgebra.of`. -/
-@[expose] noncomputable def basis : Basis G k (twistedGroupAlgebra k G α) :=
+noncomputable def basis : Basis G k (twistedGroupAlgebra k G α) :=
   Basis.span (linearIndependent_twistedTranslation k α)
 
 @[simp]
@@ -240,7 +258,7 @@ instance : Module.Free k (twistedGroupAlgebra k G α) :=
   Module.Free.of_basis (basis k G α)
 
 /-- The twisted group algebra has dimension `#G`, as the ordinary group algebra does. For an
-infinite group both sides are `0`. -/
+infinite `G` both sides are `0`. -/
 theorem finrank_eq_natCard [StrongRankCondition k] :
     finrank k (twistedGroupAlgebra k G α) = Nat.card G :=
   finrank_eq_nat_card_basis (basis k G α)
@@ -348,12 +366,9 @@ variable (α) (β : G → G → kˣ) [IsFactorSet β]
 
 /-- A function witnessing that two factor sets are cohomologous is automatically normalized at
 `1`. -/
-theorem apply_one_of_coboundary (c : G → kˣ)
+theorem eq_one_of_coboundary (c : G → kˣ)
     (hc : ∀ g h : G, β g h * c (g * h) = α g h * (c g * c h)) : c 1 = 1 := by
-  have h := hc 1 1
-  rw [mul_one, IsFactorSet.one_left (α := β), IsFactorSet.one_left (α := α), one_mul,
-    one_mul] at h
-  exact (mul_left_cancel (a := c 1) (by rw [mul_one]; exact h)).symm
+  simpa [IsFactorSet.one_left (α := α), IsFactorSet.one_left (α := β)] using hc 1 1
 
 /-- Rescaling the basis elements by `c` carries the multiplication table of `β` to that of `α`,
 giving an algebra map `k_β[G] →ₐ[k] k_α[G]`. -/
@@ -361,12 +376,8 @@ noncomputable def homOfCoboundary (c : G → kˣ)
     (hc : ∀ g h : G, β g h * c (g * h) = α g h * (c g * c h)) :
     twistedGroupAlgebra k G β →ₐ[k] twistedGroupAlgebra k G α :=
   lift (α := β) (fun g ↦ (c g : k) • (of g : twistedGroupAlgebra k G α))
-    (by rw [apply_one_of_coboundary α β c hc, Units.val_one, one_smul, of_one])
-    (fun g h ↦ by
-      have hval : (c g * c h * α g h : kˣ) = β g h * c (g * h) := by
-        rw [hc g h]; exact mul_comm _ _
-      rw [smul_mul_assoc, mul_smul_comm, smul_smul, of_mul_of, smul_smul, smul_smul,
-        ← Units.val_mul, ← Units.val_mul, ← Units.val_mul, hval])
+    (by simp [eq_one_of_coboundary α β c hc])
+    (fun g h ↦ by simp [smul_smul, ← Units.val_mul, hc g h, mul_comm, mul_left_comm])
 
 @[simp]
 theorem homOfCoboundary_of (c : G → kˣ)
