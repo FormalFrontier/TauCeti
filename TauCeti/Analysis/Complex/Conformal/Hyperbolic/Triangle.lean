@@ -25,6 +25,15 @@ factorisation
 `  = 2 (1 - ‖z‖ ^ 2)(1 - ‖w‖ ^ 2)(‖z‖ ‖w‖ + (z conj w).re)`,
 each factor of which is nonnegative on the disc.
 
+The same factorisation, read as an equation rather than as a sign, says *when* the inequality is
+tight: the first two factors are strictly positive on the disc, so equality holds exactly when
+`(z * conj w).re = -(‖z‖ * ‖w‖)`, that is exactly when `z` and `w` point in opposite directions.
+Flipping the sign of the difference `‖z‖ - ‖w‖` throughout gives the mirror statements — the
+*reverse* triangle inequality `|‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ≤ pseudoHyperbolicExpr z w` and its
+own equality case `(z * conj w).re = ‖z‖ * ‖w‖`, that is `z` and `w` pointing in the same
+direction. These two equality cases are what identify the degenerate hyperbolic triangles, and
+hence the hyperbolic geodesics, in `Conformal/Poincare/Betweenness.lean`.
+
 Passing to the hyperbolic distance `hyperbolicDist = artanh ∘ pseudoHyperbolicExpr` uses the
 addition formula for the inverse hyperbolic tangent,
 `Real.artanh a + Real.artanh b = Real.artanh ((a + b) / (1 + a * b))` (`artanh_add`, proved
@@ -37,7 +46,11 @@ Main results:
 
 * `artanh_add` — the addition formula for `Real.artanh` on `Ioo (-1) 1`;
 * `pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one` — the strong pseudo-hyperbolic
-  triangle inequality against the origin;
+  triangle inequality against the origin, and
+  `pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one` — its equality case;
+* `abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr_of_norm_lt_one` — the reverse
+  pseudo-hyperbolic triangle inequality against the origin, and
+  `pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff_of_norm_lt_one` — its equality case;
 * `hyperbolicDist_triangle_zero` — the hyperbolic triangle inequality with the origin as the
   middle point;
 * `hyperbolicDist_triangle` / `hyperbolicDist_triangle_unitDisc` — the full hyperbolic triangle
@@ -131,6 +144,146 @@ theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one {z w : ℂ}
     rwa [Real.sqrt_sq hLnn, Real.sqrt_sq hRnn] at h
   rw [pseudoHyperbolicExpr_def, norm_div, div_le_div_iff₀ hDpos hABpos]
   exact hcore
+
+/-- **Poincaré defect identity, reverse form.** The mirror of the factorisation behind
+`pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one`, obtained from it by replacing the
+sum `‖z‖ + ‖w‖` by the difference `|‖z‖ - ‖w‖|` and the denominator `1 + ‖z‖ * ‖w‖` by
+`1 - ‖z‖ * ‖w‖`; the effect on the right-hand side is to flip the sign of `(z * conj w).re`.
+
+Kept private: it is a bookkeeping step shared by the reverse inequality and its equality case, and
+only the two named consequences below are meant to be used. -/
+private lemma sq_sub_sq_reverse_triangle (z w : ℂ) :
+    (‖z - w‖ * (1 - ‖z‖ * ‖w‖)) ^ 2
+      - (|‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
+      = 2 * ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+          (‖z‖ * ‖w‖ - (z * (starRingEnd ℂ) w).re)) := by
+  have hN2 : ‖z - w‖ ^ 2 = ‖z‖ ^ 2 + ‖w‖ ^ 2 - 2 * (z * (starRingEnd ℂ) w).re := by
+    simpa [Complex.normSq_eq_norm_sq] using Complex.normSq_sub z w
+  have hD2 : ‖1 - (starRingEnd ℂ) w * z‖ ^ 2
+      = 1 - 2 * (z * (starRingEnd ℂ) w).re + ‖z‖ ^ 2 * ‖w‖ ^ 2 := by
+    linear_combination norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w + hN2
+  rw [mul_pow, mul_pow, sq_abs, hD2, hN2]; ring
+
+/-- **Equality in the strong pseudo-hyperbolic triangle inequality against the origin.** For two
+points of the open unit disc, `pseudoHyperbolicExpr z w = (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖)` holds
+exactly when `(z * conj w).re = -(‖z‖ * ‖w‖)`, that is (by the equality case of
+`Complex.abs_re_le_norm`) exactly when `z` and `w` point in opposite directions.
+
+The two sides of the inequality are quotients of nonnegative reals with positive denominators, so
+they agree exactly when the cross-multiplied products do, hence exactly when the squares of those
+products do; and the factorisation `hdiff` displays that difference of squares as
+`2 (1 - ‖z‖ ^ 2)(1 - ‖w‖ ^ 2)(‖z‖ ‖w‖ + (z conj w).re)`, whose first two factors are positive on
+the disc. -/
+theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one {z w : ℂ}
+    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    pseudoHyperbolicExpr z w = (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) ↔
+      (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
+    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hABpos : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
+  have hN2 : ‖z - w‖ ^ 2 = ‖z‖ ^ 2 + ‖w‖ ^ 2 - 2 * (z * (starRingEnd ℂ) w).re := by
+    simpa [Complex.normSq_eq_norm_sq] using Complex.normSq_sub z w
+  have hD2 : ‖1 - (starRingEnd ℂ) w * z‖ ^ 2
+      = 1 - 2 * (z * (starRingEnd ℂ) w).re + ‖z‖ ^ 2 * ‖w‖ ^ 2 := by
+    linear_combination norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w + hN2
+  have hdiff : ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
+      - (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
+      = 2 * ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+          (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re)) := by
+    rw [mul_pow, mul_pow, hD2, hN2]; ring
+  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
+    have h₁ : 0 < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
+    have h₂ : 0 < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
+    exact mul_pos h₁ h₂
+  rw [pseudoHyperbolicExpr_def, norm_div, div_eq_div_iff hDpos.ne' hABpos.ne']
+  constructor
+  · intro h
+    have hzero : (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+        (‖z‖ * ‖w‖ + (z * (starRingEnd ℂ) w).re) = 0 := by
+      rw [h] at hdiff; linarith
+    have := (mul_eq_zero.mp hzero).resolve_left hposfac.ne'
+    linarith
+  · intro h
+    have hsq : (‖z - w‖ * (1 + ‖z‖ * ‖w‖)) ^ 2
+        = ((‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2 := by
+      rw [h] at hdiff; linarith
+    have hL : 0 ≤ ‖z - w‖ * (1 + ‖z‖ * ‖w‖) := by positivity
+    have hR : 0 ≤ (‖z‖ + ‖w‖) * ‖1 - (starRingEnd ℂ) w * z‖ := by positivity
+    have := congrArg Real.sqrt hsq
+    rwa [Real.sqrt_sq hL, Real.sqrt_sq hR] at this
+
+/-- **Reverse strong pseudo-hyperbolic triangle inequality (origin form).** For two points of the
+open unit disc, `|‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ≤ pseudoHyperbolicExpr z w`. This is the
+pseudo-hyperbolic form of `|d(z, 0) - d(0, w)| ≤ d(z, w)`, the reverse triangle inequality against
+the origin, and it rests on the mirror factorisation
+`(‖z - w‖ (1 - ‖z‖ ‖w‖)) ^ 2 - (|‖z‖ - ‖w‖| ‖1 - conj w z‖) ^ 2`
+`  = 2 (1 - ‖z‖ ^ 2)(1 - ‖w‖ ^ 2)(‖z‖ ‖w‖ - (z conj w).re)`
+of the one behind `pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one`. -/
+theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr_of_norm_lt_one {z w : ℂ}
+    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    |‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ≤ pseudoHyperbolicExpr z w := by
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
+    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hABpos : (0 : ℝ) < 1 - ‖z‖ * ‖w‖ := by
+    nlinarith [norm_nonneg z, norm_nonneg w]
+  have hsq := sq_sub_sq_reverse_triangle z w
+  have hL : 0 ≤ ‖z - w‖ * (1 - ‖z‖ * ‖w‖) := by positivity
+  have hle : |‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖ ≤ ‖z - w‖ * (1 - ‖z‖ * ‖w‖) := by
+    have hfac : 0 ≤ (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+        (‖z‖ * ‖w‖ - (z * (starRingEnd ℂ) w).re) := by
+      have h₁ : 0 ≤ 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
+      have h₂ : 0 ≤ 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
+      have h₃ : (z * (starRingEnd ℂ) w).re ≤ ‖z‖ * ‖w‖ := by
+        have h := Complex.abs_re_le_norm (z * (starRingEnd ℂ) w)
+        rw [norm_mul, Complex.norm_conj] at h
+        exact (abs_le.mp h).2
+      exact mul_nonneg (mul_nonneg h₁ h₂) (by linarith)
+    have hsq' : (|‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2
+        ≤ (‖z - w‖ * (1 - ‖z‖ * ‖w‖)) ^ 2 := by linarith
+    calc |‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖
+        ≤ |(|‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖)| := le_abs_self _
+      _ = Real.sqrt ((|‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2) :=
+          (Real.sqrt_sq_eq_abs _).symm
+      _ ≤ Real.sqrt ((‖z - w‖ * (1 - ‖z‖ * ‖w‖)) ^ 2) := Real.sqrt_le_sqrt hsq'
+      _ = ‖z - w‖ * (1 - ‖z‖ * ‖w‖) := Real.sqrt_sq hL
+  rw [pseudoHyperbolicExpr_def, norm_div, div_le_div_iff₀ hABpos hDpos]
+  exact hle
+
+/-- **Equality in the reverse pseudo-hyperbolic triangle inequality against the origin.** For two
+points of the open unit disc, `pseudoHyperbolicExpr z w = |‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖)` holds
+exactly when `(z * conj w).re = ‖z‖ * ‖w‖`, that is exactly when `z` and `w` point in the same
+direction. Together with
+`TauCeti.pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one` this pins down the two
+degenerate positions of a hyperbolic triangle with a vertex at the origin. -/
+theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff_of_norm_lt_one {z w : ℂ}
+    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    pseudoHyperbolicExpr z w = |‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ↔
+      (z * (starRingEnd ℂ) w).re = ‖z‖ * ‖w‖ := by
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
+    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hABpos : (0 : ℝ) < 1 - ‖z‖ * ‖w‖ := by
+    nlinarith [norm_nonneg z, norm_nonneg w]
+  have hsq := sq_sub_sq_reverse_triangle z w
+  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
+    have h₁ : 0 < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
+    have h₂ : 0 < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
+    exact mul_pos h₁ h₂
+  rw [pseudoHyperbolicExpr_def, norm_div, div_eq_div_iff hDpos.ne' hABpos.ne']
+  constructor
+  · intro h
+    have hzero : (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) *
+        (‖z‖ * ‖w‖ - (z * (starRingEnd ℂ) w).re) = 0 := by
+      rw [h] at hsq; linarith
+    have := (mul_eq_zero.mp hzero).resolve_left hposfac.ne'
+    linarith
+  · intro h
+    have hsq' : (‖z - w‖ * (1 - ‖z‖ * ‖w‖)) ^ 2
+        = (|‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖) ^ 2 := by
+      rw [h] at hsq; linarith
+    have hL : 0 ≤ ‖z - w‖ * (1 - ‖z‖ * ‖w‖) := by positivity
+    have hR : 0 ≤ |‖z‖ - ‖w‖| * ‖1 - (starRingEnd ℂ) w * z‖ := by positivity
+    have := congrArg Real.sqrt hsq'
+    rwa [Real.sqrt_sq hL, Real.sqrt_sq hR] at this
 
 /-- **Hyperbolic triangle inequality against the origin.** For two points of the open unit
 disc, `hyperbolicDist z w ≤ hyperbolicDist z 0 + hyperbolicDist 0 w`. -/
