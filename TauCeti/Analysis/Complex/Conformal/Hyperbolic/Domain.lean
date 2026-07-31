@@ -83,7 +83,7 @@ public section
 
 namespace TauCeti
 
-open Complex Function Metric Set
+open _root_.Complex Function Metric Set
 open scoped ComplexConjugate
 
 variable {Ω Ω' : Set ℂ} {f φ : ℂ → ℂ} {z w u : ℂ}
