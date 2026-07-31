@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Homology.HomologicalComplex
 public import Mathlib.Algebra.Homology.ShortComplex.HomologicalComplex
 public import Mathlib.Algebra.Homology.ShortComplex.ModuleCat
 public import TauCeti.LowDimTopology.Plumbing.Grading
@@ -20,13 +19,13 @@ lattice differential from degree `q + 1` to degree `q`.
 The degreewise square-zero result from `Grading.lean` is exactly the compatibility required by
 Mathlib's `ChainComplex.of`. Consequently the standard homology API for homological complexes is
 available without introducing a parallel quotient construction. The homology in cubical degree
-`q` is named `latticeHomologyDegree`.
+`q` is named `latticeChainHomology`.
 
 ## Main definitions
 
 * `TauCeti.PlumbingGraph.latticeChainComplex`: the cubically graded lattice chain complex over
   `𝔽₂[U]`.
-* `TauCeti.PlumbingGraph.latticeHomologyDegree`: its homology in a specified cubical degree.
+* `TauCeti.PlumbingGraph.latticeChainHomology`: its homology in a specified cubical degree.
 
 ## References
 
@@ -64,8 +63,9 @@ noncomputable def latticeChainComplex
 theorem latticeChainComplex_X
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
     (P.latticeChainComplex k).X q =
-      ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) :=
-  (rfl)
+      ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) := by
+  unfold latticeChainComplex
+  exact congrFun (ChainComplex.of_X _ _ _) q
 
 /-- The differential from cubical degree `q + 1` to degree `q` is the restriction of the total
 lattice differential. -/
@@ -85,7 +85,7 @@ theorem latticeChainComplex_d
 
 /-- The characteristic-two lattice homology in cubical degree `q`, obtained from Mathlib's
 canonical homology object of the graded lattice chain complex. -/
-noncomputable def latticeHomologyDegree
+noncomputable def latticeChainHomology
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
     ModuleCat PlumbingCoefficient :=
   (P.latticeChainComplex k).homology q
@@ -93,9 +93,9 @@ noncomputable def latticeHomologyDegree
 /-- Degreewise lattice homology is the canonical homology object of the cubically graded lattice
 chain complex. -/
 @[simp]
-theorem latticeHomologyDegree_def
+theorem latticeChainHomology_def
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
-    P.latticeHomologyDegree k q = (P.latticeChainComplex k).homology q :=
+    P.latticeChainHomology k q = (P.latticeChainComplex k).homology q :=
   (rfl)
 
 end PlumbingGraph
