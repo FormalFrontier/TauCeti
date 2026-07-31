@@ -181,9 +181,7 @@ private lemma bijOn_ball_of_unitDiscEquiv (E : Complex.UnitDisc ≃ Complex.Unit
     simpa [mem_ball_zero_iff] using z.norm_lt_one
   have exists_coe : ∀ w ∈ ball (0 : ℂ) 1, ∃ z : Complex.UnitDisc, (z : ℂ) = w := fun w hw =>
     ⟨Complex.UnitDisc.mk w (by simpa [mem_ball_zero_iff] using hw), Complex.UnitDisc.coe_mk _ _⟩
-  refine ⟨fun w hw => ?_, fun w₁ h₁ w₂ h₂ h => ?_, fun v hv => ?_⟩
-  · obtain ⟨z, rfl⟩ := exists_coe w hw
-    exact hφ z ▸ mem (E z)
+  refine ⟨mapsTo_ball_of_forall_unitDisc_coe_eq hφ, fun w₁ h₁ w₂ h₂ h => ?_, fun v hv => ?_⟩
   · obtain ⟨z₁, rfl⟩ := exists_coe w₁ h₁
     obtain ⟨z₂, rfl⟩ := exists_coe w₂ h₂
     rw [← hφ z₁, ← hφ z₂] at h
