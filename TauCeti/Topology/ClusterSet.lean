@@ -63,11 +63,13 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   subsingleton cluster set at a point of `closure U` produces a limit, provided `f` maps `U` into a
   compact set.
 * `TauCeti.exists_mem_closure_mem_clusterSetOn`,
+  `TauCeti.exists_mem_frontier_mem_clusterSetOn_of_notMem_image`,
   `TauCeti.closure_image_eq_biUnion_clusterSetOn` and
   `TauCeti.closure_image_eq_image_union_biUnion_clusterSetOn` — **the cluster sets cover the closure
   of the image** once `closure U` is compact: every adherent value of `f '' U` is a cluster value at
-  some point of `closure U`, so `closure (f '' U)` is the union of the cluster sets, and — for
-  continuous `f` — is the image together with the *boundary* cluster values.
+  some point of `closure U` — at a point of `frontier U`, if the value is not attained and `f` is
+  continuous — so `closure (f '' U)` is the union of the cluster sets, and — for continuous `f` —
+  is the image together with the *boundary* cluster values.
 * `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map into a
   compact set, with subsingleton boundary cluster sets, extends continuously to `closure U`;
   `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the proper-metric form, where the
@@ -228,6 +230,24 @@ theorem exists_mem_closure_mem_clusterSetOn (hU : IsCompact (closure U))
   have hw' : 𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U) ≤ 𝓝[U] w :=
     le_inf inf_le_left (inf_le_right.trans inf_le_right)
   exact (hnb.map f).mono (le_inf hv' (map_mono hw'))
+
+/-- **An unattained adherent value of the image is a cluster value at a boundary point.** The
+sharpening of `TauCeti.exists_mem_closure_mem_clusterSetOn` that puts the witness on `frontier U`
+rather than merely on `closure U`, for a `f` continuous on `U`: a witness inside `U` would have the
+single cluster value `f w`, by `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`, and `v` is
+assumed not to be a value of `f` on `U`.
+
+Neither openness of `U` nor any hypothesis on `frontier U` is needed. -/
+theorem exists_mem_frontier_mem_clusterSetOn_of_notMem_image [T2Space Y]
+    (hU : IsCompact (closure U)) (hfc : ContinuousOn f U) (hvc : v ∈ closure (f '' U))
+    (hvn : v ∉ f '' U) : ∃ w ∈ frontier U, v ∈ clusterSetOn f U w := by
+  obtain ⟨w, hw, hvw⟩ := exists_mem_closure_mem_clusterSetOn hU hvc
+  have hwU : w ∉ U := fun hwU => by
+    rw [clusterSetOn_eq_singleton_of_continuousWithinAt hwU (hfc w hwU), mem_singleton_iff] at hvw
+    exact hvn (hvw ▸ mem_image_of_mem f hwU)
+  refine ⟨w, ?_, hvw⟩
+  rw [← closure_sdiff_interior]
+  exact ⟨hw, fun hwi => hwU (interior_subset hwi)⟩
 
 /-- **The cluster sets cover the closure of the image.** For a compact `closure U`, the closure of
 `f '' U` is exactly the union of the cluster sets of `f` on `U` over the points of `closure U`.
