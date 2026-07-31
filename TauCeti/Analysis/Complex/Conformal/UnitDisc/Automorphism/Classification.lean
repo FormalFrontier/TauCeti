@@ -65,7 +65,7 @@ theorem exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv
   have hFdata : DifferentiableOn ℂ F (ball (0 : ℂ) 1) ∧
       MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧ F 0 = 0 := by
     -- The target factor is centered at `f (g 0) = 0`, so it simplifies to the identity.
-    simpa [F, schwarzPickConjugate, hfg0, Function.comp_def] using
+    simpa [F, schwarzPickConjugate_def, hfg0, Function.comp_def] using
       differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hfmaps ha
   obtain ⟨hFdiff, hFmaps, hFzero⟩ := hFdata
   have hGdiff : DifferentiableOn ℂ G (ball (0 : ℂ) 1) :=

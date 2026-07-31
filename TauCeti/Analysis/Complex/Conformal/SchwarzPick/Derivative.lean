@@ -69,8 +69,8 @@ private lemma norm_deriv_schwarzPickConjugate_at_zero {f : ℂ → ℂ} {df z : 
   have hf' : HasDerivAt f df (source 0) := by rw [hsz]; exact hf
   have ht' : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) ((f ∘ source) 0) := by
     rw [Function.comp_apply, hsz]; exact ht
-  -- The conjugate *is* the composite `target ∘ f ∘ source`, by definition.
-  have hconj : schwarzPickConjugate f z = target ∘ f ∘ source := rfl
+  -- The conjugate *is* the composite `target ∘ f ∘ source`.
+  have hconj : schwarzPickConjugate f z = target ∘ f ∘ source := schwarzPickConjugate_def f z
   rw [hconj, (ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)).deriv, norm_mul, norm_mul, norm_div,
     norm_one, norm_one_sub_conj_mul_self_of_norm_le_one hz.le,
     norm_one_sub_conj_mul_self_of_norm_le_one hfz.le]

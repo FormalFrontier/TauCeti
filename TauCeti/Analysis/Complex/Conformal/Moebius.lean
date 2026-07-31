@@ -155,9 +155,18 @@ holomorphic self-map of the disc, but now fixing the origin
 (`differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate`), so Schwarz's lemma
 applies to it at `0`.  This is the construction shared by the finite and infinitesimal
 Schwarz--Pick estimates and by the equality case of the finite estimate. -/
-@[expose] noncomputable def schwarzPickConjugate (f : ℂ → ℂ) (a : ℂ) : ℂ → ℂ :=
+noncomputable def schwarzPickConjugate (f : ℂ → ℂ) (a : ℂ) : ℂ → ℂ :=
   (fun η => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
     fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ)
+
+/-- The Schwarz--Pick conjugate as a composite: the scalar Moebius formula centred at `-a` on the
+source, then `f`, then the scalar Moebius formula centred at `f a` on the target.  This is the
+characterisation to rewrite with; `schwarzPickConjugate` itself is not exposed. -/
+lemma schwarzPickConjugate_def (f : ℂ → ℂ) (a : ℂ) :
+    schwarzPickConjugate f a =
+      (fun η => (η - f a) / (1 - (starRingEnd ℂ) (f a) * η)) ∘ f ∘
+        fun ξ => (ξ - (-a)) / (1 - (starRingEnd ℂ) (-a) * ξ) := by
+  rw [schwarzPickConjugate]
 
 /-- **Schwarz--Pick conjugation scaffold.** For a holomorphic self-map `f` of the open unit
 disc and a disc point `a`, conjugating `f` by the Moebius automorphisms centred at `a` (on the
