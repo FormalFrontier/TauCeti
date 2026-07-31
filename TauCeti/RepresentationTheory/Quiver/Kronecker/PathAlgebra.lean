@@ -5,14 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
-public import TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
 
 /-!
 # The path algebra of the generalized Kronecker quiver
 
 The generalized Kronecker quiver on `n` arrows has `n + 2` paths: the two trivial paths and the
-arrows themselves. It is acyclic, so its path algebra is finite-dimensional, of dimension `n + 2`;
-for the Kronecker quiver `• ⇉ •` itself this is `4`.
+arrows themselves. So its path algebra has dimension `n + 2`; for the Kronecker quiver `• ⇉ •`
+itself this is `4`. Finite-dimensionality needs nothing specific to this quiver: it is acyclic, so
+`TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` applies to it as it stands, via
+`TauCeti.Quiver.Kronecker.isAcyclic`.
 
 ## Main results
 
@@ -59,12 +61,6 @@ the Kronecker quiver `• ⇉ •` itself this is `4`. -/
 theorem finrank_pathAlgebra (k : Type w) [DivisionRing k] [Fintype A] :
     Module.finrank k (pathAlgebra k (Kronecker A)) = Fintype.card A + 2 := by
   rw [TauCeti.finrank_pathAlgebra k (Kronecker A), card_totalPath]
-
-/-- The path algebra of the generalized Kronecker quiver is finite-dimensional: unlike the one-loop
-quiver, it is acyclic, so it has only finitely many paths. -/
-theorem finiteDimensional_pathAlgebra (k : Type w) [DivisionRing k] [Finite A] :
-    FiniteDimensional k (pathAlgebra k (Kronecker A)) :=
-  finiteDimensional_pathAlgebra_of_isAcyclic k (Kronecker A) isAcyclic
 
 /-- The path algebra of the Kronecker quiver is four-dimensional: two trivial paths and two
 arrows. -/
