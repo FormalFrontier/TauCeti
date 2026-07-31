@@ -122,16 +122,10 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
 /-- **A constant mixing representative means plain i.i.d.**: `fun _ => p` witnesses `MixedIIDWith`
 exactly when the coordinates are independent and each has law `p`. -/
 theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
-    (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) := by
-  refine ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩, fun ⟨hindep, hlaw⟩ => ?_⟩
-  have hX : ∀ i, AEMeasurable (X i) μ := fun i =>
-    AEMeasurable.of_map_ne_zero (by rw [hlaw i]; exact IsProbabilityMeasure.ne_zero _)
-  have hident : ∀ i, IdentDistrib (X i) (X 0) μ μ :=
-    fun i => ⟨hX i, hX 0, by rw [hlaw i, hlaw 0]⟩
-  have hp : (⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hX 0)⟩ : ProbabilityMeasure α) = p :=
-    Subtype.ext (hlaw 0)
-  simpa [hp] using MixedIIDWith.of_iIndepFun_identDistrib hindep hident
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} :
+    (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
+  ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩,
+    fun ⟨hindep, hlaw⟩ => MixedIIDWith.of_iIndepFun_map_eq hindep hlaw⟩
 
 end Probability
 

@@ -15,13 +15,14 @@ i.i.d. sequence is conditionally i.i.d. with its common law as a constant direct
 
 The equivalence itself holds at an arbitrary index type
 (`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`). The
-`iIndepFun` characterizations below stay over `ℕ` for a narrower reason than it may appear.
-Independence itself does not need it — Mathlib's `ProbabilityTheory.iIndepFun` is stated for an
-arbitrary index type — and neither does the forward direction: `MixedIIDWith.iIndepFun_of_const`
-is index-generic, since enumerating a finite subset needs only *some* bijection with `Fin s.card`,
-not an order. What is still sequence-level is the *reverse* direction, which reconstructs the
-common law as `μ.map (X 0)` and so nominates a reference coordinate that an abstract index type
-does not supply. Removing that means restating the constructor with the common law as a parameter.
+The mixture-side constant-witness API is index-generic throughout: independence itself never needed
+`ℕ` (Mathlib's `ProbabilityTheory.iIndepFun` is stated for an arbitrary index type), the forward
+direction enumerates finite subsets by *some* bijection with `Fin s.card` rather than by an order,
+and the reverse direction takes the common law as a parameter
+(`MixedIIDWith.of_iIndepFun_map_eq`) instead of reconstructing it from a reference coordinate.
+
+The `of_iIndepFun_identDistrib` characterizations *here* remain sequence-level, since they are
+stated through `IdentDistrib (X i) (X 0)`, which names the coordinate `0`.
 -/
 
 public section
