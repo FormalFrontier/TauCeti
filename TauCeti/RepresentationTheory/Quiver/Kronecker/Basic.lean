@@ -165,10 +165,6 @@ theorem card_hom_src_tgt [Fintype A] :
 
 /-! ### The paths -/
 
-/-- A path leaving the target vertex ends there: the target is a sink. -/
-theorem eq_tgt_of_path_from_tgt {b : Kronecker A} (p : Path (tgt : Kronecker A) b) : b = tgt :=
-  (isSink_tgt.eq_of_path p).symm
-
 /-- The only closed path at the source vertex is the trivial one. -/
 theorem path_src_src_eq_nil (p : Path (src : Kronecker A) src) : p = Path.nil := by
   cases p with
@@ -179,7 +175,7 @@ theorem path_src_src_eq_nil (p : Path (src : Kronecker A) src) : p = Path.nil :=
 theorem path_tgt_tgt_eq_nil (p : Path (tgt : Kronecker A) tgt) : p = Path.nil := by
   cases p with
   | cons q e =>
-      have h := eq_tgt_of_path_from_tgt q
+      have h := isSink_tgt.eq_of_path q
       subst h
       exact (isEmpty_hom_from_tgt _).elim e
   | nil => rfl
@@ -200,7 +196,7 @@ instance : Unique (Path (tgt : Kronecker A) tgt) where
   uniq := path_tgt_tgt_eq_nil
 
 instance : IsEmpty (Path (tgt : Kronecker A) src) :=
-  ⟨fun p => src_ne_tgt (eq_tgt_of_path_from_tgt p)⟩
+  ⟨fun p => src_ne_tgt (isSink_tgt.eq_of_path p).symm⟩
 
 /-- The length-one path traced by an arrow of the generalized Kronecker quiver. -/
 def arrowPath (a : A) : Path (src : Kronecker A) tgt := (arrow a).toPath
