@@ -28,7 +28,8 @@ in Lane F3 of the analytic Heegaard Floer roadmap.
   Lagrangian graphs.
 
 The sign convention is `ω((v, α), (w, β)) = β(v) - α(w)`, as in
-`TauCeti.cotangentSymplecticForm`. The argument is the routine cotangent-space calculation.
+`TauCeti.cotangentSymplecticForm`. This is the standard cotangent-space calculation described in
+Y.-G. Oh, *Symplectic Topology and Floer Homology*, Volumes 1 and 2 (Cambridge, 2015).
 -/
 
 public section
