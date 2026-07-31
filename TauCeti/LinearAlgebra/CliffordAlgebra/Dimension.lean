@@ -34,7 +34,8 @@ commutative ring, as soon as some vector `v` has `Q v` a unit, right multiplicat
 linear automorphism of the Clifford algebra carrying `evenOdd Q i` onto `evenOdd Q (i + 1)`, because
 a vector is odd and because `ι Q v * ι Q v = Q v` makes `ι Q v` a unit
 (`CliffordAlgebra.isUnit_ι_of_isUnit`). Over a field the two halves therefore have the same
-dimension, `2 ^ (n - 1)` each, and so in particular does the even subalgebra
+dimension, and over a field in which `2` is invertible, where the count `2 ^ n` above is available,
+that dimension is `2 ^ (n - 1)` each, as is the dimension of the even subalgebra
 `CliffordAlgebra.even Q`.
 
 These counts are what make the structure theory of Clifford algebras run: over an algebraically
@@ -77,9 +78,9 @@ separate milestone.
   coefficients.
 * `TauCeti.CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector whose norm is a
   unit exchanges the two halves of the `ℤ/2`-grading.
-* `TauCeti.CliffordAlgebra.finrank_evenOdd` and `TauCeti.CliffordAlgebra.finrank_even`: over a field
-  each half of the grading, and in particular the even subalgebra, has dimension
-  `2 ^ (finrank K V - 1)`.
+* `TauCeti.CliffordAlgebra.finrank_evenOdd` and `TauCeti.CliffordAlgebra.finrank_even`: over a
+  field in which `2` is invertible, each half of the grading, and in particular the even
+  subalgebra, has dimension `2 ^ (finrank K V - 1)`.
 
 ## References
 
@@ -115,6 +116,7 @@ has to unfold this definition. -/
     Basis (Finset I) R (CliffordAlgebra Q) :=
   b.ExteriorAlgebra.map (equivExterior Q).symm
 
+@[simp]
 theorem basis_apply {I : Type w} [LinearOrder I] (b : Basis I R M) (s : Finset I) :
     basis Q b s = (equivExterior Q).symm (b.ExteriorAlgebra s) :=
   rfl
@@ -246,8 +248,10 @@ section Field
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
   (Q : QuadraticForm K V) {v : V}
 
-/-- Each half of the `ℤ/2`-grading of a Clifford algebra on a finite-dimensional space carrying a
-vector of nonzero norm has half the dimension of the whole: `2 ^ (n - 1)` for `n = finrank K V`.
+/-- Over a field in which `2` is invertible, each half of the `ℤ/2`-grading of a Clifford algebra on
+a finite-dimensional space carrying a vector of nonzero norm has half the dimension of the whole:
+`2 ^ (n - 1)` for `n = finrank K V`. The invertibility of `2` is inherited from
+`finrank_eq_two_pow`, which counts the whole algebra.
 
 The vector of nonzero norm is what the proof multiplies by; it is not the sharpest hypothesis,
 since for the zero form the two halves of the exterior algebra are equidimensional as well
@@ -269,10 +273,10 @@ theorem finrank_evenOdd [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0
     rw [← pow_succ', Nat.sub_add_cancel hpos]
   omega
 
-/-- The even Clifford algebra of a finite-dimensional space carrying a vector of nonzero norm has
-dimension `2 ^ (n - 1)`, one power of two below the whole algebra. This is the dimension count
-behind the identification of the even subalgebra with a product of two matrix algebras one size
-down. -/
+/-- Over a field in which `2` is invertible, the even Clifford algebra of a finite-dimensional space
+carrying a vector of nonzero norm has dimension `2 ^ (n - 1)`, one power of two below the whole
+algebra. This is the dimension count behind the identification of the even subalgebra with a
+product of two matrix algebras one size down. -/
 theorem finrank_even [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0) :
     finrank K (_root_.CliffordAlgebra.even Q) = 2 ^ (finrank K V - 1) :=
   (LinearEquiv.ofEq _ _ (_root_.CliffordAlgebra.even_toSubmodule Q)).finrank_eq.trans
