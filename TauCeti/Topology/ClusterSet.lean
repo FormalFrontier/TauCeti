@@ -177,7 +177,11 @@ lemma clusterSetOn_eq_singleton_of_tendsto [T2Space Y] (hw : w ∈ closure U)
 
 /-- **At a point of `U` where `f` is continuous the cluster set is the value.** Nothing but `f w`
 is approached, so a cluster set carries information only at points off `U` — which is why a
-boundary-correspondence theorem never has to say anything about the interior. -/
+boundary-correspondence theorem never has to say anything about the interior.
+
+This is the normal form of a cluster set at an interior continuity point, and is tagged `@[simp]`:
+with the two hypotheses to hand, `simp [*]` rewrites `clusterSetOn f U w` to `{f w}`. -/
+@[simp]
 lemma clusterSetOn_eq_singleton_of_continuousWithinAt [T2Space Y] (hw : w ∈ U)
     (hfc : ContinuousWithinAt f U w) : clusterSetOn f U w = {f w} :=
   clusterSetOn_eq_singleton_of_tendsto (subset_closure hw) hfc
