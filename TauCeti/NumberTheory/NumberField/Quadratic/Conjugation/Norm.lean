@@ -125,16 +125,6 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
   AlgEquiv.ofRingEquiv (f := ringOfIntegersQuadraticConj hmin hgen)
     (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
 
-/-- The relative norm is invariant under pushforward by quadratic conjugation. This restates
-`Ideal.relNorm_map_algEquiv` for the ring isomorphism `ringOfIntegersQuadraticConj` (via its
-`ℤ`-algebra packaging `ringOfIntegersQuadraticConjₐ`) — the form used below, where ideals are
-pushed forward along the ring equivalence rather than the algebra equivalence. -/
-private theorem relNorm_map_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (J : Ideal (𝓞 K)) :
-    Ideal.relNorm ℤ (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) J)
-      = Ideal.relNorm ℤ J :=
-  Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) J
-
 /-- **Norm-principality (Lemma A).** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`,
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
 genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
@@ -150,9 +140,8 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
   set J : Ideal (𝓞 K) := I with hJ
   set A : Ideal (𝓞 K) := Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ J) with hA
   set B : Ideal (𝓞 K) := J * Ideal.map σ J with hB
-  have hmapne : Ideal.map σ J ≠ 0 :=
-    mem_nonZeroDivisors_iff_ne_zero.mp
-      (Ideal.map_mem_nonZeroDivisors σ (mem_nonZeroDivisors_iff_ne_zero.mpr hJne))
+  have hmapne : Ideal.map σ J ≠ 0 := by
+    simpa [Ideal.zero_eq_bot, Ideal.map_eq_bot_iff_of_injective σ.injective] using hJne
   have hBne : B ≠ 0 := by rw [hB]; exact mul_ne_zero hJne hmapne
   -- (1) `A` is principal (extension of a principal `ℤ`-ideal).
   have hAprin : A.IsPrincipal := by
@@ -167,7 +156,10 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
     exact Ideal.mul_mem_mul hx (Ideal.mem_map_of_mem σ hx)
   -- (3) `relNorm A = relNorm B = (relNorm J)²`.
   have hnorm : Ideal.relNorm ℤ A = Ideal.relNorm ℤ B := by
-    rw [hB, map_mul (Ideal.relNorm ℤ), relNorm_map_eq hmin hgen, ← sq, hA,
+    -- `relNorm` is invariant under `σ`, from `Ideal.relNorm_map_algEquiv` for its `ℤ`-algebra form.
+    have hreln : Ideal.relNorm ℤ (Ideal.map σ J) = Ideal.relNorm ℤ J :=
+      Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) J
+    rw [hB, map_mul (Ideal.relNorm ℤ), hreln, ← sq, hA,
       Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen]
   -- (4) `A = B`, from `B ∣ A` together with the equal norms.
   have hAeqB : A = B := by
