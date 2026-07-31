@@ -66,7 +66,7 @@ instance FiniteMeasure.instMeasurableSingletonClass [CountablyGenerated α] :
     have hset : ({μ} : Set (FiniteMeasure α))
         = ⋂ s ∈ 𝒜, {ν : FiniteMeasure α | (ν : Measure α) s = (μ : Measure α) s} := by
       ext ν
-      simp only [Set.mem_singleton_iff, Set.mem_iInter, Set.mem_setOf_eq]
+      simp only [Set.mem_singleton_iff, Set.mem_iInter, Set.mem_ofPred_eq]
       refine ⟨fun h s _ => by rw [h], fun h => ?_⟩
       haveI := ν.2
       refine Subtype.ext ?_

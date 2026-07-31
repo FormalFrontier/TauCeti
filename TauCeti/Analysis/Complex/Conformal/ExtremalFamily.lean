@@ -182,7 +182,7 @@ theorem exists_isMaxOn_norm_deriv (hΩo : IsOpen Ω) (hconn : IsPreconnected Ω)
     lt_of_lt_of_le (norm_pos_iff.mpr (hf₀.deriv_ne_zero hΩo hz₀)) (le_csSup hbdd ⟨f₀, hf₀, rfl⟩)
   -- A maximizing sequence, indexed by `ℕ` as Montel's theorem requires.
   obtain ⟨u, -, hu_tendsto, hu_mem⟩ := exists_seq_tendsto_sSup hSne hbdd
-  simp only [Set.mem_image, Set.mem_setOf_eq] at hu_mem
+  simp only [Set.mem_image, Set.mem_ofPred_eq] at hu_mem
   choose F hF hFu using hu_mem
   have hb : IsLocallyBoundedOn F Ω :=
     isLocallyBoundedOn_of_forall_norm_le fun n z hz => (hF n).norm_le_one hz
