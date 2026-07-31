@@ -82,8 +82,8 @@ private lemma artanh_neg_eq {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
   have h1 : (0 : ℝ) < 1 + x := by linarith [hx.1]
   have h2 : (0 : ℝ) < 1 - x := by linarith [hx.2]
   rw [Real.artanh_eq_half_log ⟨by linarith [hx.2], by linarith [hx.1]⟩,
-    Real.artanh_eq_half_log (Ioo_subset_Icc_self hx),
-    show (1 + -x) / (1 - -x) = ((1 + x) / (1 - x))⁻¹ by rw [inv_div]; ring_nf, Real.log_inv]
+    Real.artanh_eq_half_log (Ioo_subset_Icc_self hx), ← sub_eq_add_neg, sub_neg_eq_add,
+    ← inv_div (1 + x) (1 - x), Real.log_inv]
   ring
 
 /-- The absolute value passes through `Real.artanh` on `(-1, 1)`. -/
@@ -101,7 +101,7 @@ private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ I
   have hb' : -b ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [hb.2], by linarith [hb.1]⟩
   have h := artanh_add ha hb'
   rw [artanh_neg_eq hb] at h
-  rw [show (a - b) / (1 - a * b) = (a + -b) / (1 + a * -b) by ring_nf, ← h]
+  rw [sub_eq_add_neg a b, sub_eq_add_neg 1 (a * b), ← mul_neg, ← h]
   ring
 
 /-! ### The hyperbolic distance along a Euclidean diameter -/
@@ -116,9 +116,11 @@ theorem pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ =
   have ha' := abs_lt.1 ha
   have hb' := abs_lt.1 hb
   have hab : (0 : ℝ) < 1 - a * b := by nlinarith [ha'.1, ha'.2, hb'.1, hb'.2]
-  rw [pseudoHyperbolicExpr_const_mul hu, pseudoHyperbolicExpr_def, Complex.conj_ofReal,
-    show ((a : ℂ) - (b : ℂ)) / (1 - (b : ℂ) * (a : ℂ)) = (((a - b) / (1 - a * b) : ℝ) : ℂ) by
-      push_cast; ring,
+  have hcast : ((a : ℂ) - (b : ℂ)) / (1 - (b : ℂ) * (a : ℂ)) =
+      (((a - b) / (1 - a * b) : ℝ) : ℂ) := by
+    push_cast
+    ring
+  rw [pseudoHyperbolicExpr_const_mul hu, pseudoHyperbolicExpr_def, Complex.conj_ofReal, hcast,
     Complex.norm_real, Real.norm_eq_abs, abs_div, abs_of_pos hab]
 
 /-- **The hyperbolic distance along a Euclidean diameter.** For `‖u‖ = 1` and real `a, b` of
@@ -140,8 +142,8 @@ theorem hyperbolicDist_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a
       mul_pos (by linarith [ha'.2]) (by linarith [hb'.1])
     constructor <;> nlinarith [h₁, h₂]
   rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu ha hb,
-    show |a - b| / (1 - a * b) = |(a - b) / (1 - a * b)| by rw [abs_div, abs_of_pos hab],
-    artanh_abs hquot, ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
+    ← abs_of_pos hab, ← abs_div, artanh_abs hquot,
+    ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
 
 /-- Reparametrising a Euclidean diameter by `Real.tanh` makes it unit speed: the hyperbolic
 distance between `u * Real.tanh s` and `u * Real.tanh t` is `|s - t|`. -/
@@ -290,7 +292,6 @@ theorem hyperbolicDist_zero_add_hyperbolicDist_ofReal_mul {z : ℂ} (hz : ‖z�
       div_self hr0.ne']
   have hzu : z = u * (r : ℂ) := by
     rw [hu_def, div_mul_cancel₀ _ hrne]
-  have habs0 : |(0 : ℝ)| < 1 := by norm_num
   have habsr : |r| < 1 := by rwa [abs_of_pos hr0]
   have htr : |t * r| < 1 := by
     rw [abs_of_nonneg (mul_nonneg ht.1 hr0.le)]
@@ -298,20 +299,20 @@ theorem hyperbolicDist_zero_add_hyperbolicDist_ofReal_mul {z : ℂ} (hz : ‖z�
   have hle : Real.artanh (t * r) ≤ Real.artanh r := by
     refine Real.artanh_le_artanh (by linarith [abs_lt.1 htr]) (by linarith) ?_
     nlinarith [ht.2, hr0]
+  -- Both distances to the origin are given by the closed form `hyperbolicDist_zero_right`.
   have h0 : hyperbolicDist 0 ((t : ℂ) * z) = Real.artanh (t * r) := by
-    rw [show (t : ℂ) * z = u * ((t * r : ℝ) : ℂ) by rw [hzu]; push_cast; ring,
-      show (0 : ℂ) = u * ((0 : ℝ) : ℂ) by simp,
-      hyperbolicDist_mul_ofReal_of_norm_eq_one hu habs0 htr, Real.artanh_zero, zero_sub, abs_neg,
-      abs_of_nonneg (Real.artanh_nonneg (mul_nonneg ht.1 hr0.le))]
-  have h1 : hyperbolicDist ((t : ℂ) * z) z = Real.artanh r - Real.artanh (t * r) := by
-    rw [show (t : ℂ) * z = u * ((t * r : ℝ) : ℂ) by rw [hzu]; push_cast; ring,
-      show z = u * ((r : ℝ) : ℂ) from hzu,
-      hyperbolicDist_mul_ofReal_of_norm_eq_one hu htr habsr,
-      abs_of_nonpos (sub_nonpos.2 hle), neg_sub]
+    rw [hyperbolicDist_comm, hyperbolicDist_zero_right, norm_mul, Complex.norm_real,
+      Real.norm_eq_abs, abs_of_nonneg ht.1, ← hr]
   have h2 : hyperbolicDist 0 z = Real.artanh r := by
-    rw [show z = u * ((r : ℝ) : ℂ) from hzu, show (0 : ℂ) = u * ((0 : ℝ) : ℂ) by simp,
-      hyperbolicDist_mul_ofReal_of_norm_eq_one hu habs0 habsr, Real.artanh_zero, zero_sub,
-      abs_neg, abs_of_nonneg (Real.artanh_nonneg hr0.le)]
+    rw [hyperbolicDist_comm, hyperbolicDist_zero_right, ← hr]
+  -- The remaining distance is between two points of the diameter in direction `u`.
+  have htz : (t : ℂ) * z = u * ((t * r : ℝ) : ℂ) := by
+    rw [hzu]
+    push_cast
+    ring
+  have h1 : hyperbolicDist ((t : ℂ) * z) z = Real.artanh r - Real.artanh (t * r) := by
+    rw [htz, hzu, hyperbolicDist_mul_ofReal_of_norm_eq_one hu htr habsr,
+      abs_of_nonpos (sub_nonpos.2 hle), neg_sub]
   rw [h0, h1, h2]
   ring
 
