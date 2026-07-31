@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
+public import Mathlib.LinearAlgebra.CliffordAlgebra.Inversion
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Dimension
 
 /-!
@@ -13,7 +14,8 @@ public import TauCeti.LinearAlgebra.ExteriorAlgebra.Dimension
 
 The Clifford relation `ι Q m * ι Q m = Q m` does not preserve the number of generators in a
 product, so a Clifford algebra is not graded by degree; what it does do is leave the *size* of the
-algebra alone. In characteristic not two this is Mathlib's `CliffordAlgebra.equivExterior`, a
+algebra alone. Over a ring in which `2` is invertible this is Mathlib's
+`CliffordAlgebra.equivExterior`, a
 linear (not algebra) isomorphism `CliffordAlgebra Q ≃ₗ[R] ExteriorAlgebra R M` valid for every
 quadratic form. Deforming the form therefore deforms the multiplication and nothing else, and the
 underlying module of `CliffordAlgebra Q` is as free, and as large, as the exterior algebra of `M`.
@@ -27,11 +29,12 @@ degree-graded argument would produce one exterior power at a time; here it is th
 of a basis index set instead, because the basis is transported from Mathlib's basis
 `Module.Basis.ExteriorAlgebra` of the exterior algebra, indexed by finite subsets.
 
-A second section splits that count in half along Mathlib's `ℤ/2`-grading `evenOdd Q`. Over a field,
-and as soon as some vector `v` has `Q v ≠ 0`, right multiplication by `ι Q v` is a linear
-automorphism of the Clifford algebra carrying `evenOdd Q i` onto `evenOdd Q (i + 1)`, because a
-vector is odd and because `ι Q v * ι Q v = Q v` supplies the inverse. The two halves therefore have
-the same dimension, `2 ^ (n - 1)` each, and so in particular does the even subalgebra
+A second section splits that count in half along Mathlib's `ℤ/2`-grading `evenOdd Q`. Over any
+commutative ring, as soon as some vector `v` has `Q v` a unit, right multiplication by `ι Q v` is a
+linear automorphism of the Clifford algebra carrying `evenOdd Q i` onto `evenOdd Q (i + 1)`, because
+a vector is odd and because `ι Q v * ι Q v = Q v` makes `ι Q v` a unit
+(`CliffordAlgebra.isUnit_ι_of_isUnit`). Over a field the two halves therefore have the same
+dimension, `2 ^ (n - 1)` each, and so in particular does the even subalgebra
 `CliffordAlgebra.even Q`.
 
 These counts are what make the structure theory of Clifford algebras run: over an algebraically
@@ -55,9 +58,9 @@ separate milestone.
 ## Main definitions
 
 * `TauCeti.CliffordAlgebra.basis`: the basis of `CliffordAlgebra Q` indexed by the finite subsets of
-  the index set of a basis of `M`, in characteristic not two.
-* `TauCeti.CliffordAlgebra.mulRightιEquiv`: right multiplication by a vector of nonzero norm, as a
-  linear automorphism of the Clifford algebra, and
+  the index set of a basis of `M`, over a ring in which `2` is invertible.
+* `TauCeti.CliffordAlgebra.mulRightιEquiv`: right multiplication by a vector whose norm is a unit,
+  as a linear automorphism of the Clifford algebra, and
   `TauCeti.CliffordAlgebra.evenOddEquivAddOne`, the isomorphism between consecutive halves of the
   `ℤ/2`-grading that it restricts to.
 
@@ -72,8 +75,8 @@ separate milestone.
 * `TauCeti.CliffordAlgebra.finrank_eq_two_pow`: `finrank R (CliffordAlgebra Q) = 2 ^ finrank R M`,
   with `TauCeti.CliffordAlgebra.finrank_eq_sum_choose` the same count as a sum of binomial
   coefficients.
-* `TauCeti.CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector of nonzero norm
-  exchanges the two halves of the `ℤ/2`-grading.
+* `TauCeti.CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector whose norm is a
+  unit exchanges the two halves of the `ℤ/2`-grading.
 * `TauCeti.CliffordAlgebra.finrank_evenOdd` and `TauCeti.CliffordAlgebra.finrank_even`: over a field
   each half of the grading, and in particular the even subalgebra, has dimension
   `2 ^ (finrank K V - 1)`.
@@ -104,7 +107,10 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M] [I
 of the index set of `b`, obtained by transporting Mathlib's basis of `ExteriorAlgebra R M` along
 `CliffordAlgebra.equivExterior`.
 
-Its elements are not products of generators by construction; see the implementation notes. -/
+Its elements are not products of generators by construction; see the implementation notes.
+
+`@[expose]` because the characteristic equation `basis_apply` below is a public theorem whose proof
+has to unfold this definition. -/
 @[expose] noncomputable def basis {I : Type w} [LinearOrder I] (b : Basis I R M) :
     Basis (Finset I) R (CliffordAlgebra Q) :=
   b.ExteriorAlgebra.map (equivExterior Q).symm
@@ -113,17 +119,22 @@ theorem basis_apply {I : Type w} [LinearOrder I] (b : Basis I R M) (s : Finset I
     basis Q b s = (equivExterior Q).symm (b.ExteriorAlgebra s) :=
   rfl
 
-/-- Not a `simp` lemma: `simp` unfolds `CliffordAlgebra.equivExterior` to the underlying
+/-- `CliffordAlgebra.equivExterior` sends the basis element `basis Q b s` back to the exterior
+algebra basis element `b.ExteriorAlgebra s` it was transported from.
+
+Not a `simp` lemma: `simp` unfolds `CliffordAlgebra.equivExterior` to the underlying
 `CliffordAlgebra.changeForm`, so the left-hand side is not in normal form. -/
 theorem equivExterior_basis {I : Type w} [LinearOrder I] (b : Basis I R M) (s : Finset I) :
     equivExterior Q (basis Q b s) = b.ExteriorAlgebra s := by
   rw [basis_apply, LinearEquiv.apply_symm_apply]
 
-/-- The Clifford algebra of a free module is a free module, in characteristic not two. -/
+/-- The Clifford algebra of a free module is a free module, over a ring in which `2` is
+invertible. -/
 instance instFree [Module.Free R M] : Module.Free R (CliffordAlgebra Q) :=
   Module.Free.of_equiv (equivExterior Q).symm
 
-/-- The Clifford algebra of a finite free module is a finite module, in characteristic not two. -/
+/-- The Clifford algebra of a finite free module is a finite module, over a ring in which `2` is
+invertible. -/
 instance instFinite [Module.Free R M] [Module.Finite R M] :
     Module.Finite R (CliffordAlgebra Q) :=
   Module.Finite.equiv (equivExterior Q).symm
@@ -164,59 +175,76 @@ end CommRing
 
 section EvenOdd
 
-variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-  (Q : QuadraticForm K V) {v : V}
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+  (Q : QuadraticForm R M) {v : M}
 
-/-- Right multiplication by a vector of nonzero norm, as a linear automorphism of the Clifford
-algebra. The Clifford relation `ι Q v * ι Q v = Q v` makes it invertible, its inverse being the
-same multiplication scaled by `(Q v)⁻¹`. -/
-@[expose] noncomputable def mulRightιEquiv (hv : Q v ≠ 0) :
-    CliffordAlgebra Q ≃ₗ[K] CliffordAlgebra Q :=
-  LinearEquiv.ofLinear (LinearMap.mulRight K (ι Q v)) ((Q v)⁻¹ • LinearMap.mulRight K (ι Q v))
-    (by
-      ext y
-      simp only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.mulRight_apply,
-        LinearMap.id_apply, smul_mul_assoc, mul_assoc, ι_sq_scalar]
-      rw [← Algebra.commutes, ← Algebra.smul_def, smul_smul, inv_mul_cancel₀ hv, one_smul])
-    (by
-      ext y
-      simp only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.mulRight_apply,
-        LinearMap.id_apply, mul_assoc, ι_sq_scalar]
-      rw [← Algebra.commutes, ← Algebra.smul_def, smul_smul, inv_mul_cancel₀ hv, one_smul])
+/-- Right multiplication by a vector whose norm is a unit, as a linear automorphism of the Clifford
+algebra. The Clifford relation `ι Q v * ι Q v = Q v` makes `ι Q v` itself a unit
+(`CliffordAlgebra.isUnit_ι_of_isUnit`), and right multiplication by a unit is
+`Units.mulRightLinearEquiv`. -/
+noncomputable def mulRightιEquiv (hv : IsUnit (Q v)) :
+    CliffordAlgebra Q ≃ₗ[R] CliffordAlgebra Q :=
+  (isUnit_ι_of_isUnit Q hv).unit.mulRightLinearEquiv R
 
 @[simp]
-theorem mulRightιEquiv_apply (hv : Q v ≠ 0) (x : CliffordAlgebra Q) :
-    mulRightιEquiv Q hv x = x * ι Q v :=
-  rfl
+theorem mulRightιEquiv_apply (hv : IsUnit (Q v)) (x : CliffordAlgebra Q) :
+    mulRightιEquiv Q hv x = x * ι Q v := by
+  rw [mulRightιEquiv, Units.mulRightLinearEquiv_apply, IsUnit.unit_spec]
 
-/-- Multiplying by a vector of nonzero norm exchanges the two halves of the `ℤ/2`-grading, since a
-vector is odd. This is what makes the even and the odd part of a Clifford algebra equidimensional
-as soon as the form is not identically zero. -/
-theorem map_evenOdd_mulRightιEquiv (hv : Q v ≠ 0) (i : ZMod 2) :
+@[simp]
+theorem mulRightιEquiv_symm_apply (hv : IsUnit (Q v)) (x : CliffordAlgebra Q) :
+    (mulRightιEquiv Q hv).symm x = x * ι Q (Ring.inverse (Q v) • v) := by
+  refine (LinearEquiv.symm_apply_eq _).2 ?_
+  rw [mulRightιEquiv_apply, map_smul, mul_smul_comm, smul_mul_assoc, mul_assoc, ι_sq_scalar,
+    ← Algebra.commutes, ← Algebra.smul_def, smul_smul, Ring.inverse_mul_cancel _ hv, one_smul]
+
+/-- Multiplying by a vector whose norm is a unit exchanges the two halves of the `ℤ/2`-grading,
+since a vector is odd. This is what makes the even and the odd part of a Clifford algebra
+equidimensional as soon as some vector has a unit norm; over a field that is exactly the
+condition that the form is not identically zero. -/
+theorem map_evenOdd_mulRightιEquiv (hv : IsUnit (Q v)) (i : ZMod 2) :
     (evenOdd Q i).map (mulRightιEquiv Q hv).toLinearMap = evenOdd Q (i + 1) := by
   have h2 : (1 : ZMod 2) + 1 = 0 := by decide
   refine le_antisymm (Submodule.map_le_iff_le_comap.2 fun x hx => ?_) fun y hy => ?_
-  · exact evenOdd_mul_le Q i 1 (Submodule.mul_mem_mul hx (ι_mem_evenOdd_one Q v))
-  · refine Submodule.mem_map.2 ⟨(Q v)⁻¹ • (y * ι Q v), ?_, ?_⟩
-    · have hmem : (Q v)⁻¹ • (y * ι Q v) ∈ evenOdd Q (i + 1 + 1) :=
-        Submodule.smul_mem _ _
-          (evenOdd_mul_le Q (i + 1) 1 (Submodule.mul_mem_mul hy (ι_mem_evenOdd_one Q v)))
+  · rw [Submodule.mem_comap, LinearEquiv.coe_coe, mulRightιEquiv_apply]
+    exact evenOdd_mul_le Q i 1 (Submodule.mul_mem_mul hx (ι_mem_evenOdd_one Q v))
+  · refine Submodule.mem_map.2 ⟨(mulRightιEquiv Q hv).symm y, ?_, ?_⟩
+    · have hmem : (mulRightιEquiv Q hv).symm y ∈ evenOdd Q (i + 1 + 1) := by
+        rw [mulRightιEquiv_symm_apply]
+        exact evenOdd_mul_le Q (i + 1) 1
+          (Submodule.mul_mem_mul hy (ι_mem_evenOdd_one Q _))
       rwa [add_assoc, h2, add_zero] at hmem
-    · simp only [LinearEquiv.coe_coe, mulRightιEquiv_apply, smul_mul_assoc, mul_assoc,
-        ι_sq_scalar]
-      rw [← Algebra.commutes, ← Algebra.smul_def, smul_smul, inv_mul_cancel₀ hv, one_smul]
+    · rw [LinearEquiv.coe_coe, LinearEquiv.apply_symm_apply]
 
 /-- The two halves of the `ℤ/2`-grading of a Clifford algebra are isomorphic as modules, provided
-some vector has nonzero norm: multiplication by that vector carries one onto the other. -/
-@[expose] noncomputable def evenOddEquivAddOne (hv : Q v ≠ 0) (i : ZMod 2) :
-    evenOdd Q i ≃ₗ[K] evenOdd Q (i + 1) :=
+some vector has a unit norm: multiplication by that vector carries one onto the other. -/
+noncomputable def evenOddEquivAddOne (hv : IsUnit (Q v)) (i : ZMod 2) :
+    evenOdd Q i ≃ₗ[R] evenOdd Q (i + 1) :=
   (Submodule.equivMapOfInjective _ (mulRightιEquiv Q hv).injective _).trans
     (LinearEquiv.ofEq _ _ (map_evenOdd_mulRightιEquiv Q hv i))
 
 @[simp]
-theorem coe_evenOddEquivAddOne (hv : Q v ≠ 0) (i : ZMod 2) (x : evenOdd Q i) :
-    (evenOddEquivAddOne Q hv i x : CliffordAlgebra Q) = x * ι Q v :=
-  rfl
+theorem coe_evenOddEquivAddOne_apply (hv : IsUnit (Q v)) (i : ZMod 2) (x : evenOdd Q i) :
+    (evenOddEquivAddOne Q hv i x : CliffordAlgebra Q) = x * ι Q v := by
+  rw [evenOddEquivAddOne, LinearEquiv.trans_apply, LinearEquiv.coe_ofEq_apply,
+    Submodule.coe_equivMapOfInjective_apply, LinearEquiv.coe_coe, mulRightιEquiv_apply]
+
+@[simp]
+theorem coe_evenOddEquivAddOne_symm_apply (hv : IsUnit (Q v)) (i : ZMod 2)
+    (y : evenOdd Q (i + 1)) :
+    ((evenOddEquivAddOne Q hv i).symm y : CliffordAlgebra Q) =
+      y * ι Q (Ring.inverse (Q v) • v) := by
+  have h := coe_evenOddEquivAddOne_apply Q hv i ((evenOddEquivAddOne Q hv i).symm y)
+  rw [LinearEquiv.apply_symm_apply] at h
+  rw [h, ← mulRightιEquiv_apply Q hv, ← mulRightιEquiv_symm_apply Q hv,
+    LinearEquiv.symm_apply_apply]
+
+end EvenOdd
+
+section Field
+
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+  (Q : QuadraticForm K V) {v : V}
 
 /-- Each half of the `ℤ/2`-grading of a Clifford algebra on a finite-dimensional space carrying a
 vector of nonzero norm has half the dimension of the whole: `2 ^ (n - 1)` for `n = finrank K V`.
@@ -232,7 +260,7 @@ theorem finrank_evenOdd [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0
   have hsum : finrank K (evenOdd Q 0) + finrank K (evenOdd Q 1) = 2 ^ finrank K V := by
     rw [Submodule.finrank_add_eq_of_isCompl (evenOdd_isCompl Q), finrank_eq_two_pow]
   have hswap : finrank K (evenOdd Q 0) = finrank K (evenOdd Q 1) :=
-    (evenOddEquivAddOne Q hv 0).finrank_eq
+    (evenOddEquivAddOne Q (isUnit_iff_ne_zero.2 hv) 0).finrank_eq
   have hi : finrank K (evenOdd Q i) = finrank K (evenOdd Q 0) := by
     fin_cases i
     · rfl
@@ -250,7 +278,7 @@ theorem finrank_even [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0) :
   (LinearEquiv.ofEq _ _ (_root_.CliffordAlgebra.even_toSubmodule Q)).finrank_eq.trans
     (finrank_evenOdd Q hv 0)
 
-end EvenOdd
+end Field
 
 end CliffordAlgebra
 

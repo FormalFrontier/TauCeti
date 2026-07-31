@@ -20,10 +20,11 @@ This file supplies that. Nothing here is new mathematics — the basis does all 
 rank count is `Fintype.card_finset`, the observation that a finite set with `n` elements has `2 ^ n`
 subsets, which is the same `∑ₖ (n choose k) = 2 ^ n` that summing `exteriorPower.finrank_eq` over
 the graded pieces would give. The point is to have the statement, because it is what the dimension
-count for a Clifford algebra rests on: in characteristic not two `CliffordAlgebra.equivExterior`
-identifies `CliffordAlgebra Q` with `ExteriorAlgebra R M` as a module, so every rank statement about
-the Clifford algebra is a rank statement about the exterior algebra transported along that
-isomorphism. See `TauCeti/LinearAlgebra/CliffordAlgebra/Dimension.lean`.
+count for a Clifford algebra rests on: over a ring in which `2` is invertible,
+`CliffordAlgebra.equivExterior` identifies `CliffordAlgebra Q` with `ExteriorAlgebra R M` as a
+module, so every rank statement about the Clifford algebra is a rank statement about the exterior
+algebra transported along that isomorphism. See
+`TauCeti/LinearAlgebra/CliffordAlgebra/Dimension.lean`.
 
 The hypotheses are the weakest the basis needs: a commutative ring `R` and a free `R`-module `M`,
 with no invertibility of `2` anywhere, since the exterior algebra has a basis over any commutative
