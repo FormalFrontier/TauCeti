@@ -321,6 +321,12 @@ theorem isStabilization_swapMarkings (G : GridDiagram n)
 def IsDestabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) : Prop :=
   IsStabilization G G'
 
+/-- A destabilization from the larger diagram to the smaller one is the reverse orientation of
+the corresponding stabilization. -/
+theorem isDestabilization_iff (G' : GridDiagram (n + 1)) (G : GridDiagram n) :
+    IsDestabilization G' G ↔ IsStabilization G G' :=
+  Iff.rfl
+
 /-- Exchanging the marking types preserves the elementary destabilization relation. -/
 @[simp]
 theorem isDestabilization_swapMarkings (G' : GridDiagram (n + 1))
