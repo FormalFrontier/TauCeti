@@ -11,17 +11,16 @@ public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 public import Mathlib.LinearAlgebra.Finsupp.LSum
 public import Mathlib.LinearAlgebra.FreeModule.Basic
-public import Mathlib.RingTheory.FiniteType
 
 /-!
 # The twisted group algebra of a factor set
 
-A **factor set** on a group `G` with values in the units of a commutative ring `k` is a normalized
-multiplicative `2`-cocycle `α : G → G → kˣ`. The **twisted group algebra** `k_α[G]` is the
-`k`-algebra with a basis `e g` indexed by `G` and multiplication `e g * e h = α g h • e (g * h)`;
-for the trivial factor set it is the ordinary group algebra `MonoidAlgebra k G`. It is the
-module-theoretic home of projective representation theory: a projective representation of `G` with
-factor set `α` is exactly a `k_α[G]`-module.
+A **factor set** on a group `G` with values in the units of a commutative semiring `k` is a
+normalized multiplicative `2`-cocycle `α : G → G → kˣ`. The **twisted group algebra** `k_α[G]` is
+the `k`-algebra with a basis `e g` indexed by `G` and multiplication
+`e g * e h = α g h • e (g * h)`; for the trivial factor set it is the ordinary group algebra
+`MonoidAlgebra k G`. It is the module-theoretic home of projective representation theory: a
+projective representation of `G` with factor set `α` is exactly a `k_α[G]`-module.
 
 This file constructs the algebra as the image of the **twisted regular representation**. The
 operator `TauCeti.twistedTranslation k α g` on `G →₀ k` sends the basis vector at `h` to `α g h`
@@ -74,16 +73,17 @@ whose `twistedMul` is the multiplication realized here.
 * G. Karpilovsky, *Projective Representations of Finite Groups*, Marcel Dekker (1985), Ch. 3.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
 open Module
 
-/-- A **normalized factor set** on a group `G` with values in the units of a commutative ring `k`:
-a function `α : G → G → kˣ` satisfying the multiplicative `2`-cocycle identity and normalized at
-`1`. These are exactly the factor sets arising from projective representations of `G` over `k`. -/
-class IsFactorSet {k G : Type*} [CommRing k] [Group G] (α : G → G → kˣ) : Prop where
+/-- A **normalized factor set** on a group `G` with values in the units of a commutative semiring
+`k`: a function `α : G → G → kˣ` satisfying the multiplicative `2`-cocycle identity and normalized
+at `1`. These are exactly the factor sets arising from projective representations of `G` over
+`k`. -/
+class IsFactorSet {k G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ) : Prop where
   /-- The multiplicative `2`-cocycle identity, the associativity constraint of the twisted
   product. -/
   cocycle (g h j : G) : α (g * h) j * α g h = α h j * α g (h * j)
@@ -94,7 +94,7 @@ class IsFactorSet {k G : Type*} [CommRing k] [Group G] (α : G → G → kˣ) : 
 
 namespace IsFactorSet
 
-variable {k G : Type*} [CommRing k] [Group G]
+variable {k G : Type*} [CommSemiring k] [Group G]
 
 /-- The trivial factor set, whose twisted group algebra is the ordinary group algebra. -/
 instance : IsFactorSet (1 : G → G → kˣ) where
@@ -116,7 +116,7 @@ end IsFactorSet
 
 section Translation
 
-variable (k : Type*) {G : Type*} [CommRing k] [Group G] (α : G → G → kˣ)
+variable (k : Type*) {G : Type*} [CommSemiring k] [Group G] (α : G → G → kˣ)
 
 /-- The `α`-twisted translation by `g` on `G →₀ k`: it sends the basis vector at `h` to `α g h`
 times the basis vector at `g * h`. For the trivial factor set this is the regular representation
@@ -165,13 +165,13 @@ end Translation
 
 section Algebra
 
-variable (k G : Type*) [CommRing k] [Group G] (α : G → G → kˣ) [IsFactorSet α]
+variable (k G : Type*) [CommSemiring k] [Group G] (α : G → G → kˣ) [IsFactorSet α]
 
 /-- **The twisted group algebra** `k_α[G]` of a factor set `α`, realized as the `k`-span of the
 twisted translations inside `Module.End k (G →₀ k)`. It is a subalgebra because the cocycle
 identity makes the span closed under composition (`TauCeti.twistedTranslation_mul`) and the
 normalization puts the identity operator into it (`TauCeti.twistedTranslation_one`). -/
-noncomputable def twistedGroupAlgebra : Subalgebra k (Module.End k (G →₀ k)) :=
+@[expose] noncomputable def twistedGroupAlgebra : Subalgebra k (Module.End k (G →₀ k)) :=
   Submodule.toSubalgebra (Submodule.span k (Set.range (twistedTranslation k α)))
     (by
       rw [← twistedTranslation_one k α]
@@ -184,8 +184,7 @@ noncomputable def twistedGroupAlgebra : Subalgebra k (Module.End k (G →₀ k))
         refine Submodule.span_le.2 ?_
         rintro _ ⟨_, ⟨g, rfl⟩, _, ⟨h, rfl⟩, rfl⟩
         refine SetLike.mem_coe.2 ?_
-        change twistedTranslation k α g * twistedTranslation k α h ∈ _
-        rw [twistedTranslation_mul]
+        simp only [twistedTranslation_mul]
         exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨g * h, rfl⟩)
       exact fun x y hx hy ↦ hle (Submodule.mul_mem_mul hx hy))
 
@@ -200,7 +199,7 @@ namespace TwistedGroupAlgebra
 variable {k G α}
 
 /-- The basis element of `k_α[G]` at `g : G`, namely the `α`-twisted translation by `g`. -/
-noncomputable def of (g : G) : twistedGroupAlgebra k G α :=
+@[expose] noncomputable def of (g : G) : twistedGroupAlgebra k G α :=
   ⟨twistedTranslation k α g, Submodule.subset_span ⟨g, rfl⟩⟩
 
 @[simp]
@@ -213,6 +212,7 @@ theorem of_one : (of 1 : twistedGroupAlgebra k G α) = 1 :=
   Subtype.ext <| by simp
 
 /-- **The multiplication table of the twisted group algebra**: `e g * e h = α g h • e (g * h)`. -/
+@[simp]
 theorem of_mul_of (g h : G) :
     (of g : twistedGroupAlgebra k G α) * of h = (α g h : k) • of (g * h) :=
   Subtype.ext <| by simpa using twistedTranslation_mul k α g h
@@ -229,7 +229,7 @@ variable (k G α)
 
 /-- The twisted translations form a basis of `k_α[G]` indexed by `G`: the twisted group algebra is
 free with basis the elements `TauCeti.TwistedGroupAlgebra.of`. -/
-noncomputable def basis : Basis G k (twistedGroupAlgebra k G α) :=
+@[expose] noncomputable def basis : Basis G k (twistedGroupAlgebra k G α) :=
   Basis.span (linearIndependent_twistedTranslation k α)
 
 @[simp]
@@ -241,7 +241,8 @@ instance : Module.Free k (twistedGroupAlgebra k G α) :=
 
 /-- The twisted group algebra has dimension `#G`, as the ordinary group algebra does. For an
 infinite group both sides are `0`. -/
-theorem finrank_eq_natCard [Nontrivial k] : finrank k (twistedGroupAlgebra k G α) = Nat.card G :=
+theorem finrank_eq_natCard [StrongRankCondition k] :
+    finrank k (twistedGroupAlgebra k G α) = Nat.card G :=
   finrank_eq_nat_card_basis (basis k G α)
 
 variable {k G α}
