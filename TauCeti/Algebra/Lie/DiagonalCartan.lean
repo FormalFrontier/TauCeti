@@ -4,10 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.CartanSubalgebra
 public import Mathlib.Algebra.Lie.Weights.Cartan
-public import Mathlib.LinearAlgebra.Basis.Defs
-public import Mathlib.LinearAlgebra.Dual.Defs
+public import Mathlib.LinearAlgebra.Dual.Basis
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
 
 /-!
@@ -17,11 +15,14 @@ The general linear Lie algebra `gl n R` is `Matrix n n R` with the commutator br
 builds its *diagonal Cartan subalgebra*: the diagonal matrices form an abelian, self-normalizing
 Lie subalgebra, hence a Cartan subalgebra in the sense of `LieSubalgebra.IsCartanSubalgebra`. It
 also records the resulting dictionary between `n`-tuples and weights, and computes the adjoint
-action of the diagonal on the matrix units, which exhibits the matrix units as root vectors.
+action of the diagonal on the matrix units, which places each matrix unit in the root space of a
+difference of coordinate functionals.
 
-The Killing form of `gl n R` is degenerate, so none of Mathlib's `LieAlgebra.IsKilling` machinery
-(in particular `LieAlgebra.IsKilling.rootSystem`) applies to it, and its Cartan subalgebra has to be
-produced by hand.
+This development cannot assume `LieAlgebra.IsKilling` for `gl n R`: whenever `R` is nontrivial and
+`n` is nonempty the identity matrix is a nonzero element of the radical of the Killing form of
+`gl n R`, since it is central and so has vanishing adjoint action. So none of Mathlib's
+`LieAlgebra.IsKilling` machinery (in particular `LieAlgebra.IsKilling.rootSystem`) is available
+here, and the Cartan subalgebra has to be produced by hand.
 
 ## Main definitions
 
@@ -36,7 +37,7 @@ produced by hand.
 ## Main results
 
 * `TauCeti.instIsCartanSubalgebraDiagonalCartan`: `diagonalCartan R n` is a Cartan subalgebra.
-* `TauCeti.normalizer_diagonalCartan`: the diagonal Cartan is self-normalizing.
+* `TauCeti.diagonalCartan_normalizer_eq_self`: the diagonal Cartan is self-normalizing.
 * `TauCeti.lie_single_of_mem_diagonalCartan`: for diagonal `A`, the matrix unit `Eᵢⱼ` is an
   eigenvector of `ad A` with eigenvalue the difference `A i i - A j j`.
 * `TauCeti.single_mem_rootSpace`: consequently `Eᵢⱼ` lies in the root space for the weight
@@ -59,7 +60,7 @@ This implements the opening `gl n` targets (`diagonalCartan`, `mem_diagonalCarta
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -74,7 +75,7 @@ theorem lie_eq_zero_of_isDiag {A B : Matrix n n R} (hA : A.IsDiag) (hB : B.IsDia
     ⁅A, B⁆ = 0 := by
   obtain ⟨d, rfl⟩ : ∃ d, A = diagonal d := ⟨diag A, hA.diagonal_diag.symm⟩
   obtain ⟨e, rfl⟩ : ∃ e, B = diagonal e := ⟨diag B, hB.diagonal_diag.symm⟩
-  rw [LieRing.of_associative_ring_bracket, (commute_diagonal d e).eq, sub_self]
+  exact (commute_diagonal d e).lie_eq
 
 variable (R n)
 
@@ -91,6 +92,8 @@ def diagonalCartan : LieSubalgebra R (Matrix n n R) where
 
 variable {R n}
 
+/-- Membership in the diagonal Cartan subalgebra is `Matrix.IsDiag`. -/
+@[simp]
 theorem mem_diagonalCartan_iff_isDiag {A : Matrix n n R} :
     A ∈ diagonalCartan R n ↔ A.IsDiag := Iff.rfl
 
@@ -99,11 +102,11 @@ theorem mem_diagonalCartan_iff {A : Matrix n n R} :
     A ∈ diagonalCartan R n ↔ ∀ i j, i ≠ j → A i j = 0 :=
   ⟨fun h _ _ hij => h hij, fun h _ _ hij => h _ _ hij⟩
 
-@[simp]
+/-- Every diagonal matrix lies in the diagonal Cartan subalgebra. -/
 theorem diagonal_mem_diagonalCartan (d : n → R) : diagonal d ∈ diagonalCartan R n :=
   isDiag_diagonal d
 
-@[simp]
+/-- The diagonal matrix units lie in the diagonal Cartan subalgebra. -/
 theorem single_self_mem_diagonalCartan (i : n) (c : R) : single i i c ∈ diagonalCartan R n := by
   rw [← diagonal_single]
   exact diagonal_mem_diagonalCartan _
@@ -114,8 +117,8 @@ instance : IsLieAbelian (diagonalCartan R n) where
 /-! ### The adjoint action of the diagonal on the matrix units -/
 
 /-- The matrix unit `Eᵢⱼ` is an eigenvector of `ad A` for every diagonal `A`, with eigenvalue the
-difference `A i i - A j j` of the corresponding diagonal entries. This is the computation that makes
-the functionals `εᵢ - εⱼ` the roots of `gl n R`. -/
+difference `A i i - A j j` of the corresponding diagonal entries. This is the computation
+underlying `TauCeti.single_mem_rootSpace`. -/
 theorem lie_single_of_mem_diagonalCartan {A : Matrix n n R} (hA : A ∈ diagonalCartan R n)
     (i j : n) (c : R) : ⁅A, single i j c⁆ = (A i i - A j j) • single i j c := by
   obtain ⟨d, rfl⟩ : ∃ d, A = diagonal d :=
@@ -132,8 +135,11 @@ theorem lie_single_of_mem_diagonalCartan {A : Matrix n n R} (hA : A ∈ diagonal
 
 variable (R n)
 
+/-- The diagonal Cartan subalgebra is self-normalizing: a matrix normalizing the diagonal matrices
+is itself diagonal. -/
 @[simp]
-theorem normalizer_diagonalCartan : (diagonalCartan R n).normalizer = diagonalCartan R n := by
+theorem diagonalCartan_normalizer_eq_self :
+    (diagonalCartan R n).normalizer = diagonalCartan R n := by
   refine le_antisymm (fun X hX => mem_diagonalCartan_iff.mpr fun i j hij => ?_)
     (diagonalCartan R n).le_normalizer
   have h := (LieSubalgebra.mem_normalizer_iff _ X).mp hX _ (single_self_mem_diagonalCartan i 1)
@@ -143,9 +149,11 @@ theorem normalizer_diagonalCartan : (diagonalCartan R n).normalizer = diagonalCa
     simp [Ne.symm hij]
   simpa [hentry] using h i j hij
 
+/-- The diagonal matrices form a Cartan subalgebra of `gl n R`: they are nilpotent (indeed abelian)
+and self-normalizing. -/
 instance instIsCartanSubalgebraDiagonalCartan : (diagonalCartan R n).IsCartanSubalgebra where
   nilpotent := inferInstance
-  self_normalizing := normalizer_diagonalCartan R n
+  self_normalizing := diagonalCartan_normalizer_eq_self R n
 
 /-! ### Coordinates on the diagonal Cartan -/
 
@@ -159,26 +167,30 @@ def diagonalEquiv : (n → R) ≃ₗ[R] diagonalCartan R n where
   left_inv _ := diag_diagonal _
   right_inv A := Subtype.ext (mem_diagonalCartan_iff_isDiag.mp A.2).diagonal_diag
 
+/-- `diagonalEquiv` sends a tuple to the corresponding diagonal matrix. -/
 @[simp]
-theorem coe_diagonalEquiv (d : n → R) :
-    (diagonalEquiv R n d : Matrix n n R) = diagonal d := rfl
+theorem diagonalEquiv_apply (d : n → R) :
+    (diagonalEquiv R n d : Matrix n n R) = diagonal d := (rfl)
 
+/-- The inverse of `diagonalEquiv` reads off the diagonal of a matrix. -/
 @[simp]
 theorem diagonalEquiv_symm_apply (A : diagonalCartan R n) :
-    (diagonalEquiv R n).symm A = diag (A : Matrix n n R) := rfl
+    (diagonalEquiv R n).symm A = diag (A : Matrix n n R) := (rfl)
 
 /-- The diagonal matrix units form a basis of the diagonal Cartan subalgebra. -/
 noncomputable def diagonalCartanBasis : Module.Basis n R (diagonalCartan R n) :=
   Module.Basis.ofEquivFun (diagonalEquiv R n).symm
 
+/-- The `i`-th vector of `diagonalCartanBasis` is the diagonal matrix unit `Eᵢᵢ`. -/
 @[simp]
-theorem coe_diagonalCartanBasis (i : n) :
+theorem diagonalCartanBasis_apply (i : n) :
     (diagonalCartanBasis R n i : Matrix n n R) = single i i 1 := by
-  rw [diagonalCartanBasis, Module.Basis.coe_ofEquivFun, LinearEquiv.symm_symm, coe_diagonalEquiv,
+  rw [diagonalCartanBasis, Module.Basis.coe_ofEquivFun, LinearEquiv.symm_symm, diagonalEquiv_apply,
     diagonal_single]
 
+/-- The coordinates of a diagonal matrix in `diagonalCartanBasis` are its diagonal entries. -/
 @[simp]
-theorem diagonalCartanBasis_repr (A : diagonalCartan R n) (i : n) :
+theorem diagonalCartanBasis_repr_apply (A : diagonalCartan R n) (i : n) :
     (diagonalCartanBasis R n).repr A i = (A : Matrix n n R) i i := by
   rw [diagonalCartanBasis, Module.Basis.ofEquivFun_repr_apply, diagonalEquiv_symm_apply, diag_apply]
 
@@ -188,12 +200,15 @@ instance : Module.Free R (diagonalCartan R n) :=
 instance : Module.Finite R (diagonalCartan R n) :=
   Module.Finite.of_basis (diagonalCartanBasis R n)
 
+/-- The diagonal Cartan subalgebra of `gl n R` has rank the number of indices. -/
 theorem finrank_diagonalCartan [StrongRankCondition R] :
     Module.finrank R (diagonalCartan R n) = Fintype.card n := by
   rw [Module.finrank_eq_card_basis (diagonalCartanBasis R n)]
 
 variable {R n}
 
+/-- A diagonal matrix is the combination of the diagonal matrix units with its diagonal entries as
+coefficients. -/
 theorem sum_smul_diagonalCartanBasis (A : diagonalCartan R n) :
     ∑ i, (A : Matrix n n R) i i • diagonalCartanBasis R n i = A := by
   simpa using (diagonalCartanBasis R n).sum_repr A
@@ -203,30 +218,27 @@ theorem sum_smul_diagonalCartanBasis (A : diagonalCartan R n) :
 variable (R n)
 
 /-- Weights of `gl n R` are `n`-tuples: the linear equivalence sending `μ : n → R` to the functional
-`A ↦ ∑ i, μ i * A i i` on the diagonal Cartan subalgebra. -/
-noncomputable def glWeightEquiv : (n → R) ≃ₗ[R] Module.Dual R (diagonalCartan R n) where
-  toFun mu :=
-    { toFun A := ∑ i, mu i * (A : Matrix n n R) i i
-      map_add' A B := by simp [mul_add, Finset.sum_add_distrib]
-      map_smul' c A := by simp [Finset.mul_sum, mul_left_comm] }
-  map_add' mu nu := by ext; simp [add_mul, Finset.sum_add_distrib]
-  map_smul' c mu := by ext; simp [Finset.mul_sum, mul_assoc]
-  invFun f i := f (diagonalCartanBasis R n i)
-  left_inv mu := by ext i; simp [single_apply, Finset.sum_ite_eq]
-  right_inv f := by
-    ext A
-    conv_rhs => rw [← sum_smul_diagonalCartanBasis A]
-    simp [mul_comm]
+`A ↦ ∑ i, μ i * A i i` on the diagonal Cartan subalgebra, obtained by transporting the self-duality
+`Module.Basis.toDualEquiv` of `diagonalCartanBasis` along `diagonalEquiv`. -/
+noncomputable def glWeightEquiv : (n → R) ≃ₗ[R] Module.Dual R (diagonalCartan R n) :=
+  (diagonalEquiv R n).trans (diagonalCartanBasis R n).toDualEquiv
 
 variable {R n}
 
+/-- The weight attached to `μ : n → R` pairs `μ` with the diagonal entries. -/
 @[simp]
 theorem glWeightEquiv_apply (mu : n → R) (A : diagonalCartan R n) :
-    glWeightEquiv R n mu A = ∑ i, mu i * (A : Matrix n n R) i i := rfl
+    glWeightEquiv R n mu A = ∑ i, mu i * (A : Matrix n n R) i i := by
+  conv_lhs => rw [← sum_smul_diagonalCartanBasis A]
+  simp [glWeightEquiv, Module.Basis.toDual_apply_left, mul_comm]
 
+/-- The tuple attached to a weight reads it off on the diagonal matrix units. -/
 @[simp]
 theorem glWeightEquiv_symm_apply (f : Module.Dual R (diagonalCartan R n)) (i : n) :
-    (glWeightEquiv R n).symm f i = f (diagonalCartanBasis R n i) := rfl
+    (glWeightEquiv R n).symm f i = f (diagonalCartanBasis R n i) := by
+  rw [glWeightEquiv, LinearEquiv.symm_trans_apply, diagonalEquiv_symm_apply, diag_apply,
+    ← diagonalCartanBasis_repr_apply, ← Module.Basis.toDual_apply_left,
+    ← Module.Basis.toDualEquiv_apply, LinearEquiv.apply_symm_apply]
 
 /-- The functional `εᵢ - εⱼ` reads off the difference of two diagonal entries. -/
 theorem glWeightEquiv_sub_single_apply (i j : n) (A : diagonalCartan R n) :
@@ -235,9 +247,9 @@ theorem glWeightEquiv_sub_single_apply (i j : n) (A : diagonalCartan R n) :
   simp only [glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul, one_mul,
     zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
 
-/-- The matrix unit `Eᵢⱼ` lies in the root space of `gl n R` for the weight `εᵢ - εⱼ`. For `i ≠ j`
-this identifies the roots of `gl n R` relative to the diagonal Cartan; for `i = j` it says that the
-diagonal Cartan lies in the zero root space. -/
+/-- The matrix unit `Eᵢⱼ` lies in the root space of `gl n R`, relative to the diagonal Cartan, for
+the weight `εᵢ - εⱼ`. For `i = j` this says that the diagonal Cartan lies in the zero root
+space. -/
 theorem single_mem_rootSpace (i j : n) (c : R) :
     single i j c ∈ LieAlgebra.rootSpace (diagonalCartan R n)
       (glWeightEquiv R n (Pi.single i 1 - Pi.single j 1)) := by
