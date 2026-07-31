@@ -23,16 +23,17 @@ This is the form layer **L5** of `ConformalMapping/README.md` consumes: the boun
 correspondence extends a Riemann map across an *analytic boundary arc* by reflecting it, and what
 that step needs is not merely a holomorphic continuation but a conformal one — a continuation that
 is again injective, and whose derivative therefore does not vanish *on the boundary arc itself*.
-That last point is the payoff: `f` has no derivative at a real point of `Ω` to begin with, only a
-one-sided one, yet `conformalAt_schwarzReflection_of_symmetric` produces a nonvanishing derivative
-there for the extension.
+That last point is the payoff: `f` is not assumed differentiable at the real points of `Ω` at all,
+only continuous there from above, yet `conformalAt_schwarzReflection_of_symmetric` produces a
+nonvanishing derivative there for the extension.
 
 ## The proof
 
 Purely a matter of which half-plane each branch lands in, once the sign bookkeeping is recorded:
 
 * on `Ω ∩ {0 < im}` the extension is `f`, which lands in `{0 < im}` by hypothesis;
-* on `Ω ∩ ℝ` the extension is `f`, which is real by hypothesis;
+* on `Ω ∩ ℝ` the extension is `f`, which is real by hypothesis — for injectivity alone only the
+  weaker `0 ≤ (f z).im` is used there;
 * on `Ω ∩ {im < 0}` the extension is `conj ∘ f ∘ conj`, and conjugation twice reverses the sign of
   the imaginary part, so it lands in `{im < 0}`.
 
@@ -93,8 +94,7 @@ theorem mapsTo_schwarzReflection_im_pos
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im}) :
     Set.MapsTo (schwarzReflection f) (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im} := by
   rintro z ⟨hzΩ, (hzim : 0 < z.im)⟩
-  change 0 < (schwarzReflection f z).im
-  rw [schwarzReflection_of_im_nonneg hzim.le]
+  rw [Set.mem_setOf_eq, schwarzReflection_of_im_nonneg hzim.le]
   exact hupper ⟨hzΩ, hzim⟩
 
 /-- The reflected branch takes the lower part of a conjugation-symmetric domain into the open
@@ -109,31 +109,36 @@ theorem mapsTo_schwarzReflection_im_neg
     refine ⟨hΩ hzΩ, ?_⟩
     rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
     exact neg_pos.mpr hzim
-  change (schwarzReflection f z).im < 0
-  rw [schwarzReflection_of_im_neg hzim, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+  rw [Set.mem_setOf_eq, schwarzReflection_of_im_neg hzim, starRingEnd_apply, Complex.star_def,
+    Complex.conj_im]
   exact neg_neg_of_pos (hupper hconj)
 
 /-- On the closed upper part the extension has nonnegative imaginary part: positive above the
-axis, and zero on it because `f` is real there. -/
+axis, and nonnegative on it. Only nonnegativity of `(f z).im` on the axis is needed, not the
+reflection principle's stronger `(f z).im = 0`. -/
 theorem im_schwarzReflection_nonneg
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im})
-    (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0)
+    (haxis : ∀ z ∈ Ω, z.im = 0 → 0 ≤ (f z).im)
     {z : ℂ} (hz : z ∈ Ω) (hzim : 0 ≤ z.im) : 0 ≤ (schwarzReflection f z).im := by
   rw [schwarzReflection_of_im_nonneg hzim]
   rcases hzim.lt_or_eq with h | h
   · exact (hupper ⟨hz, h⟩).le
-  · exact (hreal z hz h.symm).ge
+  · exact haxis z hz h.symm
 
 /-- **Schwarz reflection preserves injectivity.** On a conjugation-symmetric open set `Ω`, if `f`
-is injective on the closed upper part, real on `Ω ∩ ℝ`, and maps the open upper part into the open
-upper half-plane, then the reflection extension `schwarzReflection f` is injective on all of `Ω`.
+is injective on the closed upper part, has nonnegative imaginary part on `Ω ∩ ℝ`, and maps the open
+upper part into the open upper half-plane, then the reflection extension `schwarzReflection f` is
+injective on all of `Ω`.
 
 The two branches take values in the two open half-planes, so they cannot meet; within a single
-branch the injectivity of `f` applies, on the lower branch after cancelling the conjugations. -/
+branch the injectivity of `f` applies, on the lower branch after cancelling the conjugations.
+
+Injectivity alone does not need `f` to be *real* on the axis, only to stay in the closed upper
+half-plane there; the corollaries below feed `haxis` from the reflection principle's `hreal`. -/
 theorem injOn_schwarzReflection_of_symmetric
     (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im})
-    (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0)
+    (haxis : ∀ z ∈ Ω, z.im = 0 → 0 ≤ (f z).im)
     (hinj : Set.InjOn f (Ω ∩ {z : ℂ | 0 ≤ z.im})) :
     Set.InjOn (schwarzReflection f) Ω := by
   intro z hz w hw hzw
@@ -142,11 +147,11 @@ theorem injOn_schwarzReflection_of_symmetric
     rw [schwarzReflection_of_im_nonneg hz0, schwarzReflection_of_im_nonneg hw0] at hzw
     exact hinj ⟨hz, hz0⟩ ⟨hw, hw0⟩ hzw
   · -- the value at `z` lies in the closed upper half-plane, the one at `w` strictly below it
-    exact absurd (hzw ▸ im_schwarzReflection_nonneg hupper hreal hz hz0)
+    exact absurd (hzw ▸ im_schwarzReflection_nonneg hupper haxis hz hz0)
       (not_le.mpr (mapsTo_schwarzReflection_im_neg hΩ hupper ⟨hw, hw0⟩))
   · -- the mirror image of the previous case
     exact absurd (hzw ▸ mapsTo_schwarzReflection_im_neg hΩ hupper ⟨hz, hz0⟩)
-      (not_lt.mpr (im_schwarzReflection_nonneg hupper hreal hw hw0))
+      (not_lt.mpr (im_schwarzReflection_nonneg hupper haxis hw hw0))
   · -- both points lie strictly below the axis: cancel the two conjugations
     rw [schwarzReflection_of_im_neg hz0, schwarzReflection_of_im_neg hw0] at hzw
     have hmem : ∀ {v : ℂ}, v ∈ Ω → v.im < 0 → (starRingEnd ℂ) v ∈ Ω ∩ {z : ℂ | 0 ≤ z.im} := by
@@ -190,7 +195,7 @@ theorem image_schwarzReflection_of_symmetric
 hypotheses of the reflection principle, together with injectivity of `f` on the closed upper part
 and the requirement that the open upper part goes to the open upper half-plane, the derivative of
 the extension vanishes nowhere on `Ω`. At a point of `Ω ∩ ℝ` this is a statement about the
-boundary behaviour of `f`, which has no two-sided derivative there at all. -/
+boundary behaviour of `f`, which is not assumed differentiable there. -/
 theorem deriv_schwarzReflection_ne_zero
     (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hcont : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ z.im}))
@@ -203,12 +208,13 @@ theorem deriv_schwarzReflection_ne_zero
     (differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal).analyticAt
       (hΩopen.mem_nhds hz)
   exact (exists_injOn_nhds_iff_deriv_ne_zero hA).mp
-    ⟨Ω, hΩopen.mem_nhds hz, injOn_schwarzReflection_of_symmetric hΩ hupper hreal hinj⟩
+    ⟨Ω, hΩopen.mem_nhds hz,
+      injOn_schwarzReflection_of_symmetric hΩ hupper (fun w hw h => (hreal w hw h).ge) hinj⟩
 
 /-- **Schwarz reflection of a conformal map is conformal.** Under the hypotheses of the reflection
 principle, together with injectivity of `f` on the closed upper part and the requirement that the
 open upper part goes to the open upper half-plane, the extension is conformal at every point of
-`Ω` — in particular at the points of the real axis, where `f` itself is only one-sidedly
+`Ω` — in particular at the points of the real axis, where `f` itself is not assumed
 differentiable. -/
 theorem conformalAt_schwarzReflection_of_symmetric
     (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
@@ -220,7 +226,7 @@ theorem conformalAt_schwarzReflection_of_symmetric
     {z : ℂ} (hz : z ∈ Ω) : ConformalAt (schwarzReflection f) z :=
   TauCeti.DifferentiableOn.conformalAt_of_isOpen_of_injOn
     (differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal) hΩopen
-    (injOn_schwarzReflection_of_symmetric hΩ hupper hreal hinj) hz
+    (injOn_schwarzReflection_of_symmetric hΩ hupper (fun w hw h => (hreal w hw h).ge) hinj) hz
 
 /-- The inverse of the reflection extension is holomorphic on its image: the extension is a
 biholomorphism of `Ω` onto the doubled image described by
@@ -235,7 +241,7 @@ theorem differentiableOn_invFunOn_schwarzReflection_of_symmetric
     DifferentiableOn ℂ (Function.invFunOn (schwarzReflection f) Ω) (schwarzReflection f '' Ω) :=
   TauCeti.DifferentiableOn.invFunOn
     (differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal) hΩopen
-    (injOn_schwarzReflection_of_symmetric hΩ hupper hreal hinj)
+    (injOn_schwarzReflection_of_symmetric hΩ hupper (fun w hw h => (hreal w hw h).ge) hinj)
 
 /-- **The conformal reflection principle**, packaged existential form: a conformal map of the
 upper part of a conjugation-symmetric open set that is real on the axis and takes the open upper
@@ -256,7 +262,7 @@ theorem exists_differentiableOn_injOn_eqOn_conj_of_symmetric
       ∀ z ∈ Ω, F ((starRingEnd ℂ) z) = (starRingEnd ℂ) (F z) :=
   ⟨schwarzReflection f,
     differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal,
-    injOn_schwarzReflection_of_symmetric hΩ hupper hreal hinj,
+    injOn_schwarzReflection_of_symmetric hΩ hupper (fun w hw h => (hreal w hw h).ge) hinj,
     eqOn_schwarzReflection_of_subset_im_nonneg fun _ hz => hz.2,
     fun _ hz => schwarzReflection_conj_of_real_on_axis hreal hz⟩
 
