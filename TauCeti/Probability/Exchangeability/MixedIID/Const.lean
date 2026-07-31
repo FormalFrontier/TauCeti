@@ -32,13 +32,13 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- A constant mixing representative says exactly that every injective block law is the
 corresponding product of `p`. -/
 theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p)
-    {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k) :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p)
+    {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k) :
     blockLaw μ X k = Measure.pi fun _ : Fin m => (p : Measure α) := by
   rw [h.blockLaw_eq_mixture k hk, Measure.bind_const, measure_univ, one_smul,
     ProbabilityMeasure.toMeasure_pi]
@@ -47,7 +47,7 @@ theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMea
 such hypothesis is needed alongside it: the singleton block law is the probability measure `p`,
 hence nonzero, while `Measure.map` of a non-a.e.-measurable function is `0`. -/
 theorem MixedIIDWith.aemeasurable_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ℕ) :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     AEMeasurable (X i) μ := by
   have hblock :=
     h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
@@ -57,8 +57,8 @@ theorem MixedIIDWith.aemeasurable_of_const {μ : Measure Ω} [IsProbabilityMeasu
   exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
 
 /-- Every coordinate of a process with a constant mixing representative `p` has law `p`. -/
-theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ℕ) :
+theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ι → Ω → α}
+    {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     μ.map (X i) = (p : Measure α) := by
   have hone : AEMeasurable (fun ω (_ : Fin 1) => X i ω) μ :=
     aemeasurable_pi_lambda _ fun _ => h.aemeasurable_of_const i

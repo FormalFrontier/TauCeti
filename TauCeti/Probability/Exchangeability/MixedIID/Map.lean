@@ -41,13 +41,13 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α β : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [MeasurableSpace β]
+variable {Ω α β ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [MeasurableSpace β]
 
 /-- Mixed i.i.d.-ness with a named mixing representative is preserved by a coordinatewise
 measurable map of the value space: if `X` is mixed i.i.d. with mixing representative `ν`, then
 `fun i ω => f (X i ω)` is mixed i.i.d. with mixing representative the coordinatewise
 pushforward `fun ω => (ν ω).map f`. -/
-theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
     MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
@@ -82,7 +82,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
             exact Measure.pi_map_pi fun _ : Fin m => hf.aemeasurable
 
 /-- Mixed i.i.d.-ness is preserved by a coordinatewise measurable map of the value space. -/
-theorem MixedIID.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem MixedIID.map_values {μ : Measure Ω} {X : ι → Ω → α}
     (h : MixedIID μ X) {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
     MixedIID μ (fun i ω => f (X i ω)) := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
