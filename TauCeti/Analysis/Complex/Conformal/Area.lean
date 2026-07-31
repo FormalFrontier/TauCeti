@@ -12,15 +12,15 @@ import Mathlib.RingTheory.Complex
 import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
-# The area of the image of a conformal map
+# The area of the image of a holomorphic map
 
-A holomorphic map is conformal, so at a point `z` it acts on the plane as a rotation followed by a
-dilation of ratio `‖deriv f z‖`; it therefore multiplies infinitesimal area by `‖deriv f z‖ ^ 2`.
-Integrating that pointwise distortion over a set on which `f` is injective gives the **area
-formula** for conformal maps,
+Where its derivative does not vanish a holomorphic map is conformal: at such a point `z` it acts on
+the plane as a rotation followed by a dilation of ratio `‖deriv f z‖`. At every point, critical or
+not, it multiplies infinitesimal area by `‖deriv f z‖ ^ 2`. Integrating that pointwise distortion
+over a set on which `f` is injective gives the **area formula**,
 `volume (f '' s) = ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2`,
-and its immediate corollary that a conformal map with bounded image has a finite Dirichlet
-integral `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2`.
+and its immediate corollary that a holomorphic injection whose image has finite area has a finite
+Dirichlet integral `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2`.
 
 That finiteness is the analytic input of the *length–area method*, the classical route to layer
 **L5** of the conformal-mapping roadmap (`ConformalMapping/README.md`), Carathéodory's boundary
@@ -30,9 +30,9 @@ point `ζ`, so by Cauchy–Schwarz the images of those arcs must be short for so
 `ρ`, which is what forces the boundary cluster set at `ζ` to degenerate to a point. The two
 topological halves of that argument are already on `main` —
 `TauCeti.exists_continuousOn_closure_eqOn` turns a subsingleton cluster set into a continuous
-extension, and `TauCeti.isConnected_clusterSetOn` makes the cluster set a continuum — while the
-analytic half, of which the area formula is the first component, is not; the degeneracy itself is
-not proved here.
+extension, and `TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` makes the cluster set a
+continuum — while the analytic half, of which the area formula is the first component, is not; the
+degeneracy itself is not proved here.
 
 The proof is Mathlib's change-of-variables formula
 `MeasureTheory.lintegral_abs_det_fderiv_eq_addHaar_image` for an injective differentiable map,
@@ -56,12 +56,14 @@ argument integrates over the sub-annuli `U ∩ {z | ρ₁ < ‖z - ζ‖ < ρ₂
 * `TauCeti.volume_image_eq_lintegral_enorm_deriv_sq` — the area formula: the area of the image of
   a set on which a holomorphic map is injective is the integral of `‖deriv f‖ ^ 2` over it.
 * `TauCeti.volume_image_le_lintegral_enorm_deriv_sq` — the inequality form, with no injectivity.
-* `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded` and
-  `TauCeti.integrableOn_norm_deriv_sq_of_isBounded` — a conformal map with bounded image has a
-  finite Dirichlet integral.
+* `TauCeti.lintegral_enorm_deriv_sq_ne_top` and `TauCeti.integrableOn_norm_deriv_sq` — a
+  holomorphic injection whose image has finite area has a finite Dirichlet integral;
+  `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded` and
+  `TauCeti.integrableOn_norm_deriv_sq_of_isBounded` are the forms taking a bounded image.
 * `TauCeti.integral_norm_deriv_sq_eq_toReal_volume_image` — the Bochner-integral form of the area
   formula.
-* `TauCeti.volume_image_eq_zero_iff` — a conformal map carries null sets to null sets and back.
+* `TauCeti.volume_image_eq_zero_iff` — a holomorphic injection whose derivative is almost
+  everywhere nonzero carries null sets to null sets and back.
 * `TauCeti.lintegral_enorm_deriv_sq_eq_pi_of_image_eq_ball` — the Dirichlet integral of a Riemann
   map is exactly `π`.
 
@@ -120,8 +122,8 @@ private theorem ofReal_abs_det_eq (c : ℂ) :
   rw [det_restrictScalars_smulRight_one, abs_of_nonneg (by positivity), ← ofReal_norm,
     ENNReal.ofReal_pow (norm_nonneg _)]
 
-/-- **The area formula for conformal maps.** If `f` is holomorphic on an open set `U` and injective
-on a measurable `s ⊆ U`, then the area of `f '' s` is the integral over `s` of the area distortion
+/-- **The area formula.** If `f` is holomorphic on an open set `U` and injective on a measurable
+`s ⊆ U`, then the area of `f '' s` is the integral over `s` of the area distortion
 `‖deriv f z‖ ^ 2`.
 
 Injectivity is essential: without it the map covers part of its image more than once and only the
@@ -143,67 +145,87 @@ theorem volume_image_le_lintegral_enorm_deriv_sq (hUo : IsOpen U) (hf : Differen
     (fun z hz => hasFDerivWithinAt_smulRight_deriv hUo hf hsU hz)) ?_
   exact le_of_eq (lintegral_congr fun z => ofReal_abs_det_eq (deriv f z))
 
-/-- **A conformal map with bounded image has a finite Dirichlet integral.** This is the finiteness
-that the length–area method spends: the whole of `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2` is available to
-bound the lengths of the images of the circular arcs approaching a boundary point, so all but
-finitely much of it must be spread thinly. -/
+/-- The area distortion of a holomorphic map is continuous, because the derivative of a holomorphic
+function is again holomorphic. -/
+private theorem continuousOn_norm_deriv_sq (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (hsU : s ⊆ U) : ContinuousOn (fun z => ‖deriv f z‖ ^ 2) s :=
+  ((((hf.analyticOnNhd hUo).deriv).continuousOn).mono hsU).norm.pow 2
+
+/-- **A holomorphic injection whose image has finite area has a finite Dirichlet integral.** This is
+the finiteness that the length–area method spends: the whole of `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2` is
+available to bound the lengths of the images of the circular arcs approaching a boundary point, so
+all but finitely much of it must be spread thinly. -/
+theorem lintegral_enorm_deriv_sq_ne_top (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) (hfin : volume (f '' s) ≠ ⊤) :
+    ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 ≠ ⊤ := by
+  rwa [← volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs hsU hinj]
+
+/-- The bounded-image form of `TauCeti.lintegral_enorm_deriv_sq_ne_top`: a holomorphic injection
+with bounded image has a finite Dirichlet integral. -/
 theorem lintegral_enorm_deriv_sq_ne_top_of_isBounded (hUo : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
     (hb : IsBounded (f '' s)) :
-    ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 ≠ ⊤ := by
-  rw [← volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs hsU hinj]
-  exact hb.measure_lt_top.ne
+    ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 ≠ ⊤ :=
+  lintegral_enorm_deriv_sq_ne_top hUo hf hs hsU hinj hb.measure_lt_top.ne
 
-/-- The Bochner-integrability form of `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded`: the
-area distortion of a conformal map with bounded image is integrable. Measurability is free because
+/-- The Bochner-integrability form of `TauCeti.lintegral_enorm_deriv_sq_ne_top`: the area distortion
+of a holomorphic injection whose image has finite area is integrable. Measurability is free because
 the derivative of a holomorphic function is again holomorphic, hence continuous. -/
-theorem integrableOn_norm_deriv_sq_of_isBounded (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) (hb : IsBounded (f '' s)) :
+theorem integrableOn_norm_deriv_sq (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) (hfin : volume (f '' s) ≠ ⊤) :
     IntegrableOn (fun z => ‖deriv f z‖ ^ 2) s := by
-  have hcont : ContinuousOn (fun z => ‖deriv f z‖ ^ 2) s :=
-    ((((hf.analyticOnNhd hUo).deriv).continuousOn).mono hsU).norm.pow 2
-  refine ⟨hcont.aestronglyMeasurable hs, ?_⟩
+  refine ⟨(continuousOn_norm_deriv_sq hUo hf hsU).aestronglyMeasurable hs, ?_⟩
   rw [hasFiniteIntegral_iff_enorm]
   refine lt_of_le_of_lt (le_of_eq (lintegral_congr fun z => ?_))
-    (lt_top_iff_ne_top.mpr (lintegral_enorm_deriv_sq_ne_top_of_isBounded hUo hf hs hsU hinj hb))
+    (lt_top_iff_ne_top.mpr (lintegral_enorm_deriv_sq_ne_top hUo hf hs hsU hinj hfin))
   rw [Real.enorm_eq_ofReal (by positivity), ← ofReal_norm, ENNReal.ofReal_pow (norm_nonneg _)]
 
-/-- **The area formula, Bochner form.** For a conformal map with bounded image the area of the
-image is the ordinary integral of the area distortion. -/
+/-- The bounded-image form of `TauCeti.integrableOn_norm_deriv_sq`: the area distortion of a
+holomorphic injection with bounded image is integrable. -/
+theorem integrableOn_norm_deriv_sq_of_isBounded (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) (hb : IsBounded (f '' s)) :
+    IntegrableOn (fun z => ‖deriv f z‖ ^ 2) s :=
+  integrableOn_norm_deriv_sq hUo hf hs hsU hinj hb.measure_lt_top.ne
+
+/-- **The area formula, Bochner form.** The area of the image of a holomorphic injection is the
+ordinary integral of the area distortion.
+
+No finiteness is needed: if the area distortion is not integrable then both sides are `0`, the
+Bochner integral by convention and the right-hand side because `(⊤ : ℝ≥0∞).toReal = 0`. -/
 theorem integral_norm_deriv_sq_eq_toReal_volume_image (hUo : IsOpen U)
-    (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
-    (hb : IsBounded (f '' s)) :
+    (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) :
     ∫ z in s, ‖deriv f z‖ ^ 2 = (volume (f '' s)).toReal := by
   rw [volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs hsU hinj,
     integral_eq_lintegral_of_nonneg_ae (Filter.Eventually.of_forall fun z => by positivity)
-      (integrableOn_norm_deriv_sq_of_isBounded hUo hf hs hsU hinj hb).aestronglyMeasurable]
+      ((continuousOn_norm_deriv_sq hUo hf hsU).aestronglyMeasurable hs)]
   congr 1
   refine lintegral_congr fun z => ?_
   rw [← ofReal_norm, ENNReal.ofReal_pow (norm_nonneg _)]
 
-/-- **A conformal map carries null sets to null sets and back.** Where the derivative does not
-vanish, the image of a measurable set is null exactly when the set is.
+/-- **A holomorphic injection carries null sets to null sets and back.** Where the derivative is
+almost everywhere nonzero, the image of a measurable set is null exactly when the set is.
 
 The nonvanishing is not an extra assumption in the intended case `s = U`: a holomorphic map
 injective on the open set `U` has nonvanishing derivative throughout `U`, by
-`TauCeti.not_injOn_of_deriv_eq_zero`. It is kept as a hypothesis so that the statement also covers a
-proper subset `s`, which need not be a neighbourhood of its points.
+`TauCeti.not_injOn_of_deriv_eq_zero`, so `MeasureTheory.ae_restrict_of_forall_mem` supplies `hd`. It
+is kept as a hypothesis so that the statement also covers a proper subset `s`, which need not be a
+neighbourhood of its points.
 
 Only the forward implication needs the derivative: a differentiable map carries null sets to null
 sets whatever its derivative does, whereas a set of positive measure has a null image only if the
 area distortion `‖deriv f‖ ^ 2` vanishes on much of it. -/
 theorem volume_image_eq_zero_iff (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s) (hd : ∀ z ∈ s, deriv f z ≠ 0) :
+    (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
+    (hd : ∀ᵐ z ∂volume.restrict s, deriv f z ≠ 0) :
     volume (f '' s) = 0 ↔ volume s = 0 := by
   have hm : AEMeasurable (fun z => ‖deriv f z‖ₑ ^ 2) (volume.restrict s) :=
     ((((hf.analyticOnNhd hUo).deriv).continuousOn).mono hsU).aemeasurable hs |>.enorm.pow_const 2
   rw [volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs hsU hinj, lintegral_eq_zero_iff' hm]
   refine ⟨fun h => ?_, fun h => ?_⟩
-  · rw [Filter.EventuallyEq, ae_restrict_iff' hs] at h
-    have hout : ∀ᵐ z, z ∉ s := by
-      filter_upwards [h] with z hz hzs
-      exact pow_ne_zero 2 (enorm_ne_zero.mpr (hd z hzs)) (hz hzs)
-    simpa [ae_iff] using hout
+  · have hfalse : ∀ᵐ z ∂volume.restrict s, False := by
+      filter_upwards [h, hd] with z hz hz0
+      exact hz0 (enorm_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp hz))
+    simpa [ae_iff, Measure.restrict_apply_univ] using hfalse
   · rw [MeasureTheory.Measure.restrict_eq_zero.mpr h, ae_zero]
     exact Filter.eventually_bot
 
