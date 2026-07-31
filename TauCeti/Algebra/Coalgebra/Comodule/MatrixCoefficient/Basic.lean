@@ -162,6 +162,30 @@ theorem matrixCoefficient_smul_functional (r : R) (φ : M →ₗ[R] R) (m : M) :
       r • matrixCoefficient (R := R) (C := C) φ m := by
   simp [matrixCoefficient_def, TensorProduct.map_smul_left]
 
+/-- Applying the coalgebra counit to a matrix coefficient recovers evaluation of the
+functional on the vector. -/
+@[simp]
+theorem counit_matrixCoefficient (φ : Module.Dual R M) (m : M) :
+    Coalgebra.counit (R := R) (A := C)
+        (matrixCoefficient (R := R) (C := C) φ m) = φ m := by
+  have hnat (x : M ⊗[R] C) :
+      Coalgebra.counit (R := R) (A := C)
+          (TensorProduct.lid R C (TensorProduct.map φ LinearMap.id x)) =
+        TensorProduct.lid R R
+          (TensorProduct.map φ (Coalgebra.counit (R := R) (A := C)) x) := by
+    induction x using TensorProduct.induction_on with
+    | zero => simp
+    | add x y hx hy => simp only [map_add, hx, hy]
+    | tmul x c => simp
+  have h := congrArg
+    (fun x : M ⊗[R] R =>
+      TensorProduct.lid R R (TensorProduct.map φ LinearMap.id x))
+    (lTensor_counit_coact (R := R) (C := C) (M := M) m)
+  rw [matrixCoefficient_def, hnat]
+  simpa only [LinearMap.lTensor, TensorProduct.map_map, LinearMap.id_comp,
+    LinearMap.comp_id, TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.lid_tmul,
+    smul_eq_mul, mul_one] using h
+
 /-- Matrix coefficients are natural in comodule morphisms: pushing the vector forward is
 the same as pulling the functional back. -/
 @[simp]
