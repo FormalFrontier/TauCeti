@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Topology.LocallyConstant.Basic
 public import Mathlib.Topology.Homotopy.Path
+public import Mathlib.Analysis.Convex.PathConnected
 public import TauCeti.Analysis.Fredholm.SmallPerturbation
 
 /-!
@@ -27,7 +28,7 @@ together with Mathlib's general API for locally constant functions on preconnect
 
 * `Continuous.isLocallyConstant_fredholmIndex`: the index of a continuous Fredholm family is
   locally constant.
-* `Continuous.fredholmIndex_eq_of_mem_preconnected`: two parameters in the same preconnected set
+* `ContinuousOn.fredholmIndex_eq_of_isPreconnected`: two parameters in the same preconnected set
   give operators of equal index.
 * `Continuous.fredholmIndex_eq_of_preconnectedSpace`: a continuous Fredholm family over a
   preconnected space has constant index.
@@ -61,12 +62,14 @@ theorem Continuous.isLocallyConstant_fredholmIndex {A : X → E →L[K] F}
 
 /-- Along a continuous family of Fredholm operators, parameters in the same preconnected set give
 operators with equal index. -/
-theorem Continuous.fredholmIndex_eq_of_mem_preconnected {A : X → E →L[K] F}
-    (hA : Continuous A) (hFredholm : ∀ x, ContinuousLinearMap.IsFredholm (A x))
-    {s : Set X} (hs : IsPreconnected s) {x y : X} (hx : x ∈ s) (hy : y ∈ s) :
+theorem ContinuousOn.fredholmIndex_eq_of_isPreconnected {A : X → E →L[K] F} {s : Set X}
+    (hA : ContinuousOn A s)
+    (hFredholm : ∀ x ∈ s, ContinuousLinearMap.IsFredholm (A x))
+    (hs : IsPreconnected s) {x y : X} (hx : x ∈ s) (hy : y ∈ s) :
     ContinuousLinearMap.index (A x) = ContinuousLinearMap.index (A y) := by
-  exact (Continuous.isLocallyConstant_fredholmIndex hA hFredholm).apply_eq_of_isPreconnected
-    hs hx hy
+  letI := Subtype.preconnectedSpace hs
+  exact (Continuous.isLocallyConstant_fredholmIndex hA.domRestrict
+    (fun x ↦ hFredholm x x.2)).apply_eq_of_preconnectedSpace ⟨x, hx⟩ ⟨y, hy⟩
 
 /-- A continuous family of Fredholm operators over a preconnected parameter space has constant
 index. -/
@@ -95,13 +98,8 @@ theorem fredholmIndex_eq_of_segment (T S : E' →L[ℝ] F')
     (hFredholm : ∀ t : unitInterval,
       ContinuousLinearMap.IsFredholm ((1 - (t : ℝ)) • T + (t : ℝ) • S)) :
     ContinuousLinearMap.index T = ContinuousLinearMap.index S := by
-  let A : unitInterval → E' →L[ℝ] F' := fun t ↦
-    (1 - (t : ℝ)) • T + (t : ℝ) • S
-  have hA : Continuous A := by
-    fun_prop
-  have hindex :=
-    Continuous.fredholmIndex_eq_of_preconnectedSpace hA hFredholm (0 : unitInterval) 1
-  simpa [A] using hindex
+  apply Path.fredholmIndex_eq (Path.segment T S)
+  simpa only [Path.segment_apply, AffineMap.lineMap_apply_module] using hFredholm
 
 end Real
 
