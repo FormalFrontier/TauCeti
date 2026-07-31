@@ -47,8 +47,7 @@ Two theorems record what makes this distance the natural conformal invariant of 
 * `TauCeti.hyperbolicDistOn_comm`, `TauCeti.hyperbolicDistOn_self`,
   `TauCeti.hyperbolicDistOn_nonneg`, `TauCeti.hyperbolicDistOn_eq_zero_iff`,
   `TauCeti.hyperbolicDistOn_triangle` — the metric axioms.
-* `TauCeti.hyperbolicDistOn_image`, `TauCeti.hyperbolicDistOn_self_image` — conformal
-  invariance, and its self-map form.
+* `TauCeti.hyperbolicDistOn_image` — conformal invariance.
 * `TauCeti.hyperbolicDistOn_map_le` — Schwarz--Pick for domains.
 
 ## Coordination with upstream Mathlib
@@ -91,12 +90,6 @@ property; see `TauCeti.isBiholomorphicToDisc_of_isSimplyConnected`. -/
 def IsBiholomorphicToDisc (Ω : Set ℂ) : Prop :=
   ∃ f : ℂ → ℂ, DifferentiableOn ℂ f Ω ∧ InjOn f Ω ∧ f '' Ω = ball (0 : ℂ) 1
 
-/-- A map whose image is the unit disc carries points of its domain into the unit disc. -/
-theorem mem_ball_of_image_eq_ball (hfim : f '' Ω = ball (0 : ℂ) 1) (hz : z ∈ Ω) :
-    f z ∈ ball (0 : ℂ) 1 := by
-  rw [← hfim]
-  exact mem_image_of_mem f hz
-
 /-- The unit disc is biholomorphic to itself, via the identity. -/
 theorem isBiholomorphicToDisc_ball : IsBiholomorphicToDisc (ball (0 : ℂ) 1) :=
   ⟨id, differentiableOn_id, injOn_id _, image_id _⟩
@@ -127,8 +120,10 @@ theorem hyperbolicDistOn_eq (hΩo : IsOpen Ω) (hf : DifferentiableOn ℂ f Ω) 
     hyperbolicDistOn Ω z w = hyperbolicDist (f z) (f w) := by
   have hΩ : IsBiholomorphicToDisc Ω := ⟨f, hf, hfi, hfim⟩
   obtain ⟨hg, hgi, hgim⟩ := hΩ.choose_spec
+  have hgmaps : MapsTo hΩ.choose Ω (ball (0 : ℂ) 1) :=
+    (mapsTo_image hΩ.choose Ω).mono_right hgim.subset
   have hnorm : ∀ {x : ℂ}, x ∈ Ω → ‖hΩ.choose x‖ < 1 := fun {x} hx => by
-    simpa [mem_ball_zero_iff] using mem_ball_of_image_eq_ball hgim hx
+    simpa [mem_ball_zero_iff] using hgmaps hx
   -- The chosen map and `f` differ by a standard disc automorphism `z ↦ u * (z - a)/(1 - ā z)`.
   obtain ⟨u, a, hua⟩ :=
     exists_eqOn_unitDiscStandardAutomorphismFormula_comp hΩo hg hf hgi hfi hgim hfim
@@ -180,9 +175,9 @@ theorem hyperbolicDistOn_nonneg (Ω : Set ℂ) (z w : ℂ) : 0 ≤ hyperbolicDis
 theorem hyperbolicDistOn_eq_zero_iff (hΩo : IsOpen Ω) (hΩ : IsBiholomorphicToDisc Ω)
     (hz : z ∈ Ω) (hw : w ∈ Ω) : hyperbolicDistOn Ω z w = 0 ↔ z = w := by
   obtain ⟨f, hf, hfi, hfim⟩ := hΩ
+  have hmaps : MapsTo f Ω (ball (0 : ℂ) 1) := (mapsTo_image f Ω).mono_right hfim.subset
   rw [hyperbolicDistOn_eq hΩo hf hfi hfim hz hw,
-    hyperbolicDist_eq_zero_iff_of_mem_ball (mem_ball_of_image_eq_ball hfim hz)
-      (mem_ball_of_image_eq_ball hfim hw)]
+    hyperbolicDist_eq_zero_iff_of_mem_ball (hmaps hz) (hmaps hw)]
   exact ⟨fun h => hfi hz hw h, fun h => by rw [h]⟩
 
 /-- **The hyperbolic triangle inequality on a domain.** -/
@@ -190,44 +185,35 @@ theorem hyperbolicDistOn_triangle (hΩo : IsOpen Ω) (hΩ : IsBiholomorphicToDis
     (hz : z ∈ Ω) (hw : w ∈ Ω) (hu : u ∈ Ω) :
     hyperbolicDistOn Ω z w ≤ hyperbolicDistOn Ω z u + hyperbolicDistOn Ω u w := by
   obtain ⟨f, hf, hfi, hfim⟩ := hΩ
+  have hmaps : MapsTo f Ω (ball (0 : ℂ) 1) := (mapsTo_image f Ω).mono_right hfim.subset
   rw [hyperbolicDistOn_eq hΩo hf hfi hfim hz hw, hyperbolicDistOn_eq hΩo hf hfi hfim hz hu,
     hyperbolicDistOn_eq hΩo hf hfi hfim hu hw]
-  exact hyperbolicDist_triangle (mem_ball_of_image_eq_ball hfim hz)
-    (mem_ball_of_image_eq_ball hfim hw) (mem_ball_of_image_eq_ball hfim hu)
+  exact hyperbolicDist_triangle (hmaps hz) (hmaps hw) (hmaps hu)
 
 /-- **Conformal invariance of the hyperbolic distance.** A biholomorphism `φ` of an open set `Ω`
 onto an open set `Ω'` biholomorphic to the disc is an isometry for the two hyperbolic distances.
 
 This is what singles the hyperbolic distance out among metrics on a plane domain: it is
-attached to the conformal structure alone. -/
+attached to the conformal structure alone. Taking `Ω' = Ω` it says that the biholomorphic
+automorphisms of a domain act on it by isometries. -/
 theorem hyperbolicDistOn_image (hΩo : IsOpen Ω) (hΩ'o : IsOpen Ω')
     (hΩ' : IsBiholomorphicToDisc Ω') (hφ : DifferentiableOn ℂ φ Ω) (hφi : InjOn φ Ω)
     (hφim : φ '' Ω = Ω') (hz : z ∈ Ω) (hw : w ∈ Ω) :
     hyperbolicDistOn Ω' (φ z) (φ w) = hyperbolicDistOn Ω z w := by
   obtain ⟨g, hg, hgi, hgim⟩ := hΩ'
-  have hmaps : MapsTo φ Ω Ω' := by
-    rw [← hφim]
-    exact mapsTo_image φ Ω
+  have hmaps : MapsTo φ Ω Ω' := (mapsTo_image φ Ω).mono_right hφim.subset
   -- Transporting `Ω'` to the disc by `g` transports `Ω` to the disc by `g ∘ φ`.
   have hgφim : (g ∘ φ) '' Ω = ball (0 : ℂ) 1 := by rw [image_comp, hφim, hgim]
   rw [hyperbolicDistOn_eq hΩ'o hg hgi hgim (hmaps hz) (hmaps hw),
     hyperbolicDistOn_eq hΩo (hg.comp hφ hmaps) (hgi.comp hφi hmaps) hgφim hz hw]
   rfl
 
-/-- A biholomorphic self-map of a domain biholomorphic to the disc is a hyperbolic isometry;
-in particular the automorphism group of the domain acts by isometries. -/
-theorem hyperbolicDistOn_self_image (hΩo : IsOpen Ω) (hΩ : IsBiholomorphicToDisc Ω)
-    (hφ : DifferentiableOn ℂ φ Ω) (hφi : InjOn φ Ω) (hφim : φ '' Ω = Ω)
-    (hz : z ∈ Ω) (hw : w ∈ Ω) :
-    hyperbolicDistOn Ω (φ z) (φ w) = hyperbolicDistOn Ω z w :=
-  hyperbolicDistOn_image hΩo hΩo hΩ hφ hφi hφim hz hw
-
 /-- **Schwarz--Pick for domains.** Every holomorphic map from a domain biholomorphic to the disc
 into another one decreases the hyperbolic distance. No injectivity is assumed: the map is
 conjugated into a holomorphic self-map of the disc, where `TauCeti.hyperbolicDist_map_le`
 applies.
 
-Equality throughout forces a biholomorphism, by `TauCeti.hyperbolicDistOn_image`; the case
+Biholomorphisms attain equality, by `TauCeti.hyperbolicDistOn_image`; the case
 `Ω = Ω' = Metric.ball 0 1` recovers the classical disc statement. -/
 theorem hyperbolicDistOn_map_le (hΩo : IsOpen Ω) (hΩ'o : IsOpen Ω')
     (hΩ : IsBiholomorphicToDisc Ω) (hΩ' : IsBiholomorphicToDisc Ω')
@@ -235,6 +221,8 @@ theorem hyperbolicDistOn_map_le (hΩo : IsOpen Ω) (hΩ'o : IsOpen Ω')
     hyperbolicDistOn Ω' (f z) (f w) ≤ hyperbolicDistOn Ω z w := by
   obtain ⟨F, hF, hFi, hFim⟩ := hΩ
   obtain ⟨G, hG, hGi, hGim⟩ := hΩ'
+  have hFmaps : MapsTo F Ω (ball (0 : ℂ) 1) := (mapsTo_image F Ω).mono_right hFim.subset
+  have hGmaps : MapsTo G Ω' (ball (0 : ℂ) 1) := (mapsTo_image G Ω').mono_right hGim.subset
   -- `F` transports `Ω` to the disc; its inverse is holomorphic there.
   have hFinv : DifferentiableOn ℂ (invFunOn F Ω) (ball (0 : ℂ) 1) := by
     rw [← hFim]
@@ -246,12 +234,9 @@ theorem hyperbolicDistOn_map_le (hΩo : IsOpen Ω) (hΩ'o : IsOpen Ω')
   -- `G ∘ f ∘ F⁻¹` is a holomorphic self-map of the disc, so Schwarz--Pick applies to it.
   have hcompd : DifferentiableOn ℂ (G ∘ f ∘ invFunOn F Ω) (ball (0 : ℂ) 1) :=
     hG.comp (hf.comp hFinv hFinvmaps) (hmaps.comp hFinvmaps)
-  have hcompmaps : MapsTo (G ∘ f ∘ invFunOn F Ω) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-    intro x hx
-    change G (f (invFunOn F Ω x)) ∈ ball (0 : ℂ) 1
-    exact mem_ball_of_image_eq_ball hGim (hmaps (hFinvmaps hx))
-  have key := hyperbolicDist_map_le hcompd hcompmaps (mem_ball_of_image_eq_ball hFim hz)
-    (mem_ball_of_image_eq_ball hFim hw)
+  have hcompmaps : MapsTo (G ∘ f ∘ invFunOn F Ω) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+    hGmaps.comp (hmaps.comp hFinvmaps)
+  have key := hyperbolicDist_map_le hcompd hcompmaps (hFmaps hz) (hFmaps hw)
   simp only [Function.comp_apply, hFi.leftInvOn_invFunOn hz, hFi.leftInvOn_invFunOn hw] at key
   rw [hyperbolicDistOn_eq hΩ'o hG hGi hGim (hmaps hz) (hmaps hw),
     hyperbolicDistOn_eq hΩo hF hFi hFim hz hw]
