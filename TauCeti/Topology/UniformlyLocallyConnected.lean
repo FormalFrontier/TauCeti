@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Convex.PathConnected
-public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.Analysis.Normed.Module.Convex
 public import Mathlib.Topology.Connected.LocallyConnected
 public import Mathlib.Topology.MetricSpace.Bounded
@@ -27,9 +25,11 @@ a Lebesgue-number argument, and `TauCeti.IsUniformlyLocallyConnected.locallyConn
 from the uniform statement to the local one with no compactness at all.
 
 Compactness is genuinely needed for the first direction. The graph of `x ↦ sin (1 / x)` over
-`(0, 1]` is homeomorphic to an interval, hence locally connected, but not uniformly so: points on
-it with nearly equal ordinates and wildly different abscissae are joined only by long arcs, so no
-`δ` works for a small `ε`. It fails no hypothesis but compactness.
+`(0, 1]` is homeomorphic to an interval, hence locally connected, but not uniformly so: the
+oscillations crowd together as `x → 0`, so two points of equal ordinate on distinct oscillations
+come arbitrarily close to one another, while every connected subset of the graph joining them
+sweeps out a whole oscillation and so meets ordinates near both `1` and `-1`. Such a set has
+diameter at least `2`, so no `δ` works for `ε = 1`. It fails no hypothesis but compactness.
 
 ## Why this notion
 
@@ -108,14 +108,27 @@ theorem IsUniformlyLocallyConnected.exists_isConnected_diam_le (h : IsUniformlyL
   exact ⟨C, hCs, hCconn, hCa, hCb, isBounded_iff.mpr ⟨ε, hCsmall⟩,
     diam_le_of_forall_dist_le hε.le hCsmall⟩
 
+/-- `TauCeti.IsUniformlyLocallyConnected` is equivalent to its diameter phrasing: it may be
+established, and not just used, from joining sets that are bounded and of diameter at most `ε`. -/
+theorem isUniformlyLocallyConnected_iff_exists_isConnected_diam_le :
+    IsUniformlyLocallyConnected s ↔ ∀ ε > 0, ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
+      ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ Bornology.IsBounded C ∧ diam C ≤ ε := by
+  refine ⟨fun h ε hε => h.exists_isConnected_diam_le hε, fun h ε hε => ?_⟩
+  obtain ⟨δ, hδ, hjoin⟩ := h ε hε
+  refine ⟨δ, hδ, fun a ha b hb hab => ?_⟩
+  obtain ⟨C, hCs, hCconn, hCa, hCb, hCbdd, hCdiam⟩ := hjoin a ha b hb hab
+  exact ⟨C, hCs, hCconn, hCa, hCb,
+    fun x hx y hy => (dist_le_diam_of_mem hCbdd hx hy).trans hCdiam⟩
+
 /-- The empty set is uniformly locally connected, vacuously. -/
+@[simp]
 theorem isUniformlyLocallyConnected_empty : IsUniformlyLocallyConnected (∅ : Set X) :=
   fun ε hε => ⟨ε, hε, by simp⟩
 
 /-- **A convex set is uniformly locally connected**: two points at distance less than `ε / 2` are
-joined by the segment between them, which stays in the set by convexity and inside the closed ball
-of radius `ε / 2` about the first endpoint because closed balls are convex too, so its points are
-pairwise within `ε`.
+joined by the segment between them, which stays in the set by convexity and, by
+`segment_subset_closedBall_left`, inside the closed ball of radius `dist a b < ε / 2` about the
+first endpoint, so its points are pairwise within `ε`.
 
 This is the basic example, and the one the closed disc supplies in the conformal application. -/
 protected theorem Convex.isUniformlyLocallyConnected {E : Type*} [NormedAddCommGroup E]
@@ -123,11 +136,8 @@ protected theorem Convex.isUniformlyLocallyConnected {E : Type*} [NormedAddCommG
   refine fun ε hε => ⟨ε / 2, by linarith, fun a ha b hb hab => ⟨segment ℝ a b,
     ht.segment_subset ha hb, (convex_segment a b).isConnected ⟨a, left_mem_segment ℝ a b⟩,
     left_mem_segment ℝ a b, right_mem_segment ℝ a b, fun x hx y hy => ?_⟩⟩
-  have hsub : segment ℝ a b ⊆ closedBall a (ε / 2) :=
-    (convex_closedBall a (ε / 2)).segment_subset (mem_closedBall_self (by linarith))
-      (mem_closedBall'.mpr hab.le)
-  have hx' := mem_closedBall.mp (hsub hx)
-  have hy' := mem_closedBall.mp (hsub hy)
+  have hx' := mem_closedBall.mp (segment_subset_closedBall_left a b hx)
+  have hy' := mem_closedBall.mp (segment_subset_closedBall_left a b hy)
   linarith [dist_triangle_right x y a]
 
 /-! ## The compact case: local connectedness suffices -/
