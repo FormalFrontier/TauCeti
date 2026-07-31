@@ -67,7 +67,7 @@ lemma loopDeck_one :
   apply Subtype.ext
   apply Homeomorph.ext
   intro p
-  change (1 : FundamentalGroup X x₀) • p = p
+  rw [loopDeck_apply]
   exact one_smul _ _
 
 /-- Multiplication of loop classes corresponds to composition of their deck transformations. -/
@@ -93,8 +93,7 @@ lemma loopDeckHom_apply (g : FundamentalGroup X x₀) :
   rfl
 
 /-- The endpoint projection of the universal cover has regular deck action. -/
-theorem isRegular_proj [LocallyPathConnectedSpace X] [PathConnectedSpace X]
-    [SemilocallySimplyConnectedSpace X] :
+theorem isRegular_proj [PathConnectedSpace X] :
     Deck.IsRegular (proj : UniversalCover x₀ → X) := by
   rw [Deck.isRegular_iff_exists_apply_eq]
   refine ⟨proj_surjective, ?_⟩
@@ -105,11 +104,25 @@ theorem isRegular_proj [LocallyPathConnectedSpace X] [PathConnectedSpace X]
 
 /-- The deck transformation group of the based-path universal cover is the opposite of the
 fundamental group of the base. -/
-@[expose] noncomputable def deckFundamentalGroupEquiv
+noncomputable def deckFundamentalGroupEquiv
     [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] :
     Deck (proj : UniversalCover x₀ → X) ≃* (FundamentalGroup X x₀)ᵐᵒᵖ :=
   (isRegular_proj x₀).deckFundamentalGroupEquiv (isCoveringMap x₀)
     ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩
+
+/-- A deck transformation corresponds to a loop class exactly when the loop's monodromy moves
+the canonical lift by that deck transformation. -/
+lemma deckFundamentalGroupEquiv_apply_eq_op_iff
+    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X]
+    (φ : Deck (proj : UniversalCover x₀ → X)) (g : FundamentalGroup X x₀) :
+    deckFundamentalGroupEquiv x₀ φ = MulOpposite.op g ↔
+      ((isCoveringMap x₀).monodromy g
+        ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩ : UniversalCover x₀) =
+        φ • mk x₀ (Path.Homotopic.Quotient.refl x₀) := by
+  exact Deck.IsRegular.deckFundamentalGroupEquiv_apply_eq_op_iff
+    (isRegular_proj x₀) (isCoveringMap x₀)
+      ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩ φ g
 
 end TauCeti.UniversalCover
