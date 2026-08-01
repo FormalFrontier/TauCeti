@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
+public import TauCeti.Algebra.Coalgebra.MonoidAlgebraGroupLike
 
 /-!
 # Finite-type diagonalizable groups
@@ -22,14 +22,15 @@ On affine schemes the variance reverses once more under `Spec`, so this covarian
 ring functor is the algebraic side of the contravariant assignment `G ↦ D(G)`. Its morphism
 part is `MonoidAlgebra.mapDomainBialgHom`; the `DiagonalizableGroup.Functoriality` module
 separately shows that the resulting map of represented groups acts by precomposition on
-characters. Over an integral domain, every coordinate Hopf-algebra morphism arises uniquely
-from a character-group homomorphism, so the coordinate-ring functor is fully faithful.
+characters. When the base ring has connected prime spectrum, every coordinate Hopf-algebra
+morphism arises uniquely from a character-group homomorphism, so the coordinate-ring functor
+is fully faithful.
 
 This advances the reductive-groups roadmap Layer 4 target constructing the anti-equivalence
 between finitely generated abelian groups and diagonalizable groups. It supplies the
-finite-type source and the coordinate-algebra functor, which is full and faithful over an
-integral domain. It does not prove essential surjectivity, construct the scheme-side functor,
-or depend on the general Hopf-algebra/affine-group-scheme anti-equivalence.
+finite-type source and the coordinate-algebra functor, which is full and faithful over a base
+with connected prime spectrum. It does not prove essential surjectivity, construct the
+scheme-side functor, or depend on the general Hopf-algebra/affine-group-scheme anti-equivalence.
 
 ## Main declarations
 
@@ -42,16 +43,16 @@ or depend on the general Hopf-algebra/affine-group-scheme anti-equivalence.
   finitely generated commutative groups to finite-type commutative Hopf algebras.
 * `TauCeti.DiagonalizableGroup.coordinateMap_injective`: coordinate maps remember their
   underlying group homomorphisms over a nontrivial base.
-* `TauCeti.DiagonalizableGroup.isGroupLikeElem_iff_eq_single`: group-like elements of a monoid
-  algebra over an integral domain are exactly its standard basis elements.
 * `TauCeti.DiagonalizableGroup.coordinateMapPreimage`: recover the character-group homomorphism
-  inducing a coordinate Hopf-algebra morphism over an integral domain.
+  inducing a coordinate Hopf-algebra morphism over a base with connected prime spectrum.
+* `TauCeti.DiagonalizableGroup.coordinateMapPreimage_apply_eq_iff`: characterize the recovered
+  homomorphism without exposing its choice-based construction.
 * `TauCeti.DiagonalizableGroup.coordinateMap_surjective`: every coordinate Hopf-algebra
-  morphism over an integral domain comes from a character-group homomorphism.
+  morphism over a base with connected prime spectrum comes from a character-group homomorphism.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor_faithful`: the coordinate-ring
   functor is faithful over a nontrivial base.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor_full`: the coordinate-ring functor is
-  full over an integral domain.
+  full over a base with connected prime spectrum.
 
 ## References
 
@@ -72,42 +73,6 @@ universe u v
 namespace DiagonalizableGroup
 
 variable (R : Type u) [CommRing R]
-
-private theorem isGroupLikeElem_single_one {H : Type v} [Monoid H] (h : H) :
-    IsGroupLikeElem R (MonoidAlgebra.single h (1 : R)) := by
-  constructor
-  · simp
-  · rw [MonoidAlgebra.comul_single, Bialgebra.comul_one,
-      Algebra.TensorProduct.one_def, TensorProduct.map_tmul,
-      MonoidAlgebra.lsingle_apply]
-
-/-- Over an integral domain, the group-like elements of a monoid algebra are exactly
-the standard basis elements, with a unique basis index. -/
-theorem isGroupLikeElem_iff_eq_single [IsDomain R] {H : Type v} [Monoid H]
-    (x : MonoidAlgebra R H) :
-    IsGroupLikeElem R x ↔ ∃! h : H, x = MonoidAlgebra.single h 1 := by
-  constructor
-  · intro hx
-    have hx_mem : x ∈ Set.range (fun h : H ↦ MonoidAlgebra.single h (1 : R)) := by
-      by_contra hx_not_mem
-      have hli : LinearIndepOn R id
-          (Set.insert x (Set.range (fun h : H ↦ MonoidAlgebra.single h (1 : R)))) :=
-        linearIndepOn_isGroupLikeElem.mono (by
-          rintro y (rfl | ⟨h, rfl⟩)
-          · exact hx
-          · exact isGroupLikeElem_single_one R h)
-      have hspan := (MonoidAlgebra.basis H R).mem_span x
-      change x ∈ Submodule.span R
-        (Set.range (fun h : H ↦ MonoidAlgebra.single h (1 : R))) at hspan
-      exact hli.notMem_span_of_insert hx_not_mem (by
-        simpa using hspan)
-    obtain ⟨h, hx_eq⟩ := hx_mem
-    refine ⟨h, hx_eq.symm, ?_⟩
-    intro h' hx_eq'
-    exact MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-      (hx_eq'.symm.trans hx_eq.symm)
-  · rintro ⟨h, rfl, -⟩
-    exact isGroupLikeElem_single_one R h
 
 /-- The coordinate Hopf algebra `R[G]` of the diagonalizable group `D(G)`, bundled as a
 finite-type commutative Hopf algebra when `G` is finitely generated. -/
@@ -142,24 +107,43 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
   rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
-/-- The unique index of a group-like element in a monoid algebra over a domain. -/
-private noncomputable def groupLikeIndex [IsDomain R] {H : Type v} [Monoid H]
+/-- The unique index of a group-like element in a monoid algebra over a base with
+connected prime spectrum. -/
+private noncomputable def groupLikeIndex [ConnectedSpace (PrimeSpectrum R)]
+    {H : Type v} [Monoid H]
     (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x) : H :=
-  Classical.choose ((isGroupLikeElem_iff_eq_single R x).mp hx)
+  Classical.choose ((TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single R x).mp hx)
 
-private theorem eq_single_groupLikeIndex [IsDomain R] {H : Type v} [Monoid H]
+private theorem eq_single_groupLikeIndex [ConnectedSpace (PrimeSpectrum R)]
+    {H : Type v} [Monoid H]
     (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x) :
     x = MonoidAlgebra.single (groupLikeIndex R x hx) 1 :=
-  Classical.choose_spec ((isGroupLikeElem_iff_eq_single R x).mp hx) |>.1
+  Classical.choose_spec
+    ((TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single R x).mp hx) |>.1
+
+private theorem groupLikeIndex_eq_iff [ConnectedSpace (PrimeSpectrum R)]
+    {H : Type v} [Monoid H] (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x)
+    (h : H) :
+    groupLikeIndex R x hx = h ↔ x = MonoidAlgebra.single h 1 := by
+  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  constructor
+  · rintro rfl
+    exact eq_single_groupLikeIndex R x hx
+  · intro hx_single
+    apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
+    exact (eq_single_groupLikeIndex R x hx).symm.trans hx_single
 
 /-- Recover the character-group homomorphism that induces a morphism between coordinate
-Hopf algebras of finite-type diagonalizable groups over an integral domain. -/
-noncomputable def coordinateMapPreimage [IsDomain R] {G H : FGCommGrpCat.{v}}
+Hopf algebras of finite-type diagonalizable groups over a base with connected prime
+spectrum. -/
+noncomputable def coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
     (F : coordinateRing R G ⟶ coordinateRing R H) : G ⟶ H :=
+  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   let f := FiniteTypeCommHopfAlgCat.toBialgHom F
   let φ : G → H := fun g ↦
     groupLikeIndex R (f (MonoidAlgebra.single g 1))
-      ((isGroupLikeElem_single_one R g).map f)
+      ((TauCeti.MonoidAlgebra.isGroupLikeElem_single_one R g).map f)
   have hφ (g : G) :
       f (MonoidAlgebra.single g 1) = MonoidAlgebra.single (φ g) 1 :=
     eq_single_groupLikeIndex R _ _
@@ -184,26 +168,37 @@ noncomputable def coordinateMapPreimage [IsDomain R] {G H : FGCommGrpCat.{v}}
             rw [hφ g, hφ g']
           _ = MonoidAlgebra.single (φ g * φ g') 1 := by simp }
 
+/-- The recovered character-group homomorphism takes `g` to `h` exactly when the
+coordinate Hopf-algebra morphism takes the corresponding standard basis element to
+the standard basis element indexed by `h`. -/
+theorem coordinateMapPreimage_apply_eq_iff [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} (F : coordinateRing R G ⟶ coordinateRing R H)
+    (g : G) (h : H) :
+    FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g = h ↔
+      FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
+        MonoidAlgebra.single h 1 := by
+  let f := FiniteTypeCommHopfAlgCat.toBialgHom F
+  let hx : IsGroupLikeElem R (f (MonoidAlgebra.single g 1)) :=
+    (TauCeti.MonoidAlgebra.isGroupLikeElem_single_one R g).map f
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom,
+    MonoidHom.coe_mk, OneHom.coe_mk] using
+    groupLikeIndex_eq_iff R (f (MonoidAlgebra.single g 1)) hx h
+
 /-- The recovered character-group homomorphism is characterized by the image of each
 standard basis element under the coordinate Hopf-algebra morphism. -/
-theorem coordinateMapPreimage_single [IsDomain R] {G H : FGCommGrpCat.{v}}
+theorem coordinateMapPreimage_single [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
     (F : coordinateRing R G ⟶ coordinateRing R H) (g : G) :
     FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
       MonoidAlgebra.single
         (FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g) 1 := by
-  rw [coordinateMapPreimage]
-  change FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
-    MonoidAlgebra.single
-      (groupLikeIndex R
-        (FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1))
-        ((isGroupLikeElem_single_one R g).map
-          (FiniteTypeCommHopfAlgCat.toBialgHom F))) 1
-  exact eq_single_groupLikeIndex R _
-    ((isGroupLikeElem_single_one R g).map (FiniteTypeCommHopfAlgCat.toBialgHom F))
+  exact (coordinateMapPreimage_apply_eq_iff R F g _).mp rfl
 
 /-- Applying the coordinate-map construction to the recovered character-group
 homomorphism gives the original coordinate Hopf-algebra morphism. -/
-theorem coordinateMap_coordinateMapPreimage [IsDomain R] {G H : FGCommGrpCat.{v}}
+@[simp]
+theorem coordinateMap_coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
     (F : coordinateRing R G ⟶ coordinateRing R H) :
     coordinateMap R (coordinateMapPreimage R F) = F := by
   apply FiniteTypeCommHopfAlgCat.hom_ext
@@ -215,8 +210,10 @@ theorem coordinateMap_coordinateMapPreimage [IsDomain R] {G H : FGCommGrpCat.{v}
   · ext
 
 /-- Every morphism between coordinate Hopf algebras of finite-type diagonalizable
-groups over an integral domain is induced by a character-group homomorphism. -/
-theorem coordinateMap_surjective [IsDomain R] {G H : FGCommGrpCat.{v}} :
+groups over a base with connected prime spectrum is induced by a character-group
+homomorphism. -/
+theorem coordinateMap_surjective [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} :
     Function.Surjective (coordinateMap R :
       (G ⟶ H) → (coordinateRing R G ⟶ coordinateRing R H)) := by
   intro F
@@ -239,6 +236,16 @@ theorem coordinateMap_injective [Nontrivial R] {G H : FGCommGrpCat.{v}} :
           (MonoidAlgebra.single g 1) := by rw [h]
     _ = MonoidAlgebra.single (FGCommGrpCat.toMonoidHom ψ g) 1 :=
       coordinateMap_single R ψ g 1
+
+/-- Recovering a character-group homomorphism from its coordinate map returns the
+original homomorphism. -/
+@[simp]
+theorem coordinateMapPreimage_coordinateMap [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+    coordinateMapPreimage R (coordinateMap R φ) = φ := by
+  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  apply coordinateMap_injective R
+  rw [coordinateMap_coordinateMapPreimage]
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
 
@@ -280,9 +287,9 @@ noncomputable instance coordinateRingFunctor_faithful [Nontrivial R] :
     (coordinateRingFunctor R).Faithful where
   map_injective h := coordinateMap_injective R h
 
-/-- The coordinate-ring functor of finite-type diagonalizable groups is full over an
-integral domain. -/
-noncomputable instance coordinateRingFunctor_full [IsDomain R] :
+/-- The coordinate-ring functor of finite-type diagonalizable groups is full over a
+base with connected prime spectrum. -/
+noncomputable instance coordinateRingFunctor_full [ConnectedSpace (PrimeSpectrum R)] :
     (coordinateRingFunctor R).Full where
   map_surjective := coordinateMap_surjective R
 
