@@ -125,14 +125,31 @@ lemma groupScheme_tensor_X_left (G : FGCommGrpCat.{u}) :
 /-- Specialize Mathlib's `algSpec_map_left` computation to an explicit algebra morphism.
 
 This is the sole boundary where the `CommAlgCat`/under-category wrapper left in that public
-computation lemma is reduced. Keeping it here avoids proof-sensitive reductions at the public
-projection lemmas below. -/
+computation lemma is reduced: `algSpec_map_left` phrases its answer through
+`(commAlgCatEquivUnder R).functor.map`, and Mathlib provides no computation lemma for the
+`Under.Hom.right` of that morphism, so the last step is definitional. Keeping it here avoids
+proof-sensitive reductions at the public projection lemmas below. -/
 private lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
     [Algebra R A] [Algebra R B] (f : A →ₐ[R] B) :
     ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
       (CommAlgCat.ofHom f).op).left =
         Spec.map (CommRingCat.ofHom f.toRingHom) := by
   rw [AlgebraicGeometry.algSpec_map_left]
+  rfl
+
+/-- `D(G)` is Mathlib's group object `(Spec R[G]).asOver (Spec R)`.
+
+`hopfSpec` builds `D(G)` as the `algSpec`-image of the cogroup algebra `R[G]`, and Mathlib's
+`AlgebraicGeometry.instGrpObjSpecAsOverSpec` is defined to be exactly that image, so the two
+group objects are equal by definition. Mathlib has no lemma identifying the two instance paths:
+its computation lemmas for the operations of a functor image (`Functor.mapGrp_obj_grp_mul`,
+`Functor.obj.ι_def`) are keyed on the `Functor.grpObjObj` instance, which `rw` cannot see
+through the bundled `Grp` object here. This lemma is therefore the single place where that
+identification is made, and the operation computations below rewrite with it instead of
+reducing `hopfSpec` themselves. -/
+private lemma groupScheme_eq_asOver (G : FGCommGrpCat.{u}) :
+    groupScheme R G =
+      Grp.mk ((Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R))) :=
   rfl
 
 /-- The unit of `D(G)` is induced by the counit of the group algebra. -/
@@ -148,7 +165,7 @@ lemma groupScheme_one_left (G : FGCommGrpCat.{u}) :
       (Spec.map (CommRingCat.ofHom
         (Bialgebra.counitAlgHom R (MonoidAlgebra R G))))
       rfl (groupScheme_X_left R G)).2 (by
-        unfold groupScheme
+        rw [groupScheme_eq_asOver]
         exact heq_of_eq (AlgebraicGeometry.one_spec_asOver_spec_left
           (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
 
@@ -169,8 +186,7 @@ lemma groupScheme_mul_left (G : FGCommGrpCat.{u}) :
         Spec.map (CommRingCat.ofHom
           (Bialgebra.comulAlgHom R (MonoidAlgebra R G))))
       (groupScheme_tensor_X_left R G) (groupScheme_X_left R G)).2 (by
-        change μ[((Spec (CommRingCat.of (MonoidAlgebra R G))).asOver
-          (Spec (CommRingCat.of R)))].left ≍ _
+        rw [groupScheme_eq_asOver]
         exact heq_of_eq (AlgebraicGeometry.mul_spec_asOver_spec_left
           (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
 
@@ -184,10 +200,10 @@ lemma groupScheme_inv_left (G : FGCommGrpCat.{u}) :
       eqToHom (groupScheme_X_left R G).symm := by
   apply (conj_eqToHom_iff_heq _ _
     (groupScheme_X_left R G) (groupScheme_X_left R G)).2
-  unfold groupScheme
-  change ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
-    (CommAlgCat.ofHom
-      (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G))).op).left ≍ _
+  -- Mathlib computes the unit and the multiplication of `(Spec A).asOver (Spec R)` but not its
+  -- inverse, which is the `algSpec`-image of the antipode; `algSpec_map_left_ofAlgHom` turns
+  -- that image into the expected `Spec.map`.
+  rw [groupScheme_eq_asOver]
   exact heq_of_eq (algSpec_map_left_ofAlgHom R
     (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G)))
 
@@ -210,9 +226,12 @@ lemma groupSchemeMap_hom_left {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
   apply (conj_eqToHom_iff_heq _ _
     (groupScheme_X_left R H) (groupScheme_X_left R G)).2
   unfold groupSchemeMap
-  change ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
-    (CommAlgCat.ofHom
-      (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R f)).toAlgHom).op).left ≍ _
+  -- `hopfSpec` is `(commHopfAlgCatEquivCogrpCommAlgCat R).functor.leftOp ⋙ (algSpec R).mapGrp`,
+  -- so these two computation lemmas reduce the morphism to an `algSpec` image. Identifying that
+  -- image with the coordinate algebra morphism is definitional: unlike its bialgebra counterpart
+  -- `commBialgCatEquivComonCommAlgCat_functor_map_unop_hom`, the Hopf-algebra equivalence has no
+  -- computation lemma for its morphism component.
+  rw [Functor.comp_map, Functor.mapGrp_map_hom_hom]
   exact heq_of_eq (algSpec_map_left_ofAlgHom R
     (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R f)).toAlgHom)
 
@@ -316,9 +335,6 @@ instance locallyOfFiniteType_schemeFunctor_obj (G : (FGCommGrpCat.{u})ᵒᵖ) :
 /-- The diagonalizable group-scheme functor is faithful over a nontrivial base ring. -/
 noncomputable instance schemeFunctor_faithful [Nontrivial R] :
     (schemeFunctor R).Faithful := by
-  letI : (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
-      (_root_.CommHopfAlgCat.{u} R)).op.Faithful :=
-    (finiteTypeCommHopfAlgProperty (R := R)).fullyFaithfulι.op.faithful
   letI : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Faithful :=
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).faithful
   unfold schemeFunctor
