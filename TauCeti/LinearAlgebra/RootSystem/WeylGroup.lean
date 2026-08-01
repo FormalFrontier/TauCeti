@@ -33,8 +33,10 @@ along its action on weights, matching the coroot functional of a root with that 
 * `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
 * `TauCeti.RootPairing.weylGroup.eq_one_of_smul_eq_self` says a Weyl-group element acting trivially
   on the weight space is the identity.
-* `TauCeti.RootPairing.weylGroup.ofIdx_weylGroupToPerm` says that conjugating a simple reflection by
-  a Weyl-group element gives the reflection in the image root index.
+* `TauCeti.RootPairing.weylGroup.ext` says two Weyl-group elements agreeing on the weight space are
+  equal.
+* `TauCeti.RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj` says that conjugating a simple
+  reflection by a Weyl-group element gives the reflection in the image root index.
 * `TauCeti.RootPairing.weylGroup.commute_ofIdx_of_isOrthogonal` says orthogonal roots have
   commuting reflections.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
@@ -202,17 +204,18 @@ theorem eq_one_of_smul_eq_self {w : P.weylGroup} (h : ∀ x : M, w • x = x) : 
 
 variable {P} in
 /-- Two Weyl-group elements agreeing on the weight space are equal. -/
-theorem ext_of_smul_eq {v w : P.weylGroup} (h : ∀ x : M, v • x = w • x) : v = w := by
+@[ext]
+theorem ext {v w : P.weylGroup} (h : ∀ x : M, v • x = w • x) : v = w := by
   rw [← mul_inv_eq_one]
   refine eq_one_of_smul_eq_self fun x ↦ ?_
   rw [mul_smul, h, smul_inv_smul]
 
 /-- **Conjugating a simple reflection transports it along the permutation action**: the reflection
 in the image of a root index is the conjugate of the reflection in that root index. -/
-theorem ofIdx_weylGroupToPerm (w : P.weylGroup) (i : ι) :
+theorem ofIdx_weylGroupToPerm_eq_conj (w : P.weylGroup) (i : ι) :
     _root_.RootPairing.weylGroup.ofIdx P (P.weylGroupToPerm w i) =
       w * _root_.RootPairing.weylGroup.ofIdx P i * w⁻¹ := by
-  refine ext_of_smul_eq fun x ↦ ?_
+  refine ext fun x ↦ ?_
   -- Both sides send `x` to `x - ⟨x, αᵢ^∨⟩ • w αᵢ`, the right-hand side after undoing `w`.
   have hcoroot : P.coroot' i (w⁻¹ • x) = P.coroot' (P.weylGroupToPerm w i) x := by
     conv_rhs => rw [← smul_inv_smul w x]

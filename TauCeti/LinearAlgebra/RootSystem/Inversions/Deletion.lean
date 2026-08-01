@@ -76,7 +76,7 @@ theorem exists_simpleWordProd_eq_mul_ofIdx_of_not_isPos {k : ι} (hk : k ∈ b.s
           ⟨(mem_posRoots P b _).mpr hpos, by simpa using hne⟩
         exact h ((mem_posRoots P b _).mp
           ((reflectionPerm_mem_posRoots_diff_singleton_iff P b j.2 _).mpr hmem).1)
-      rw [simpleWordProd_cons, ← hkey, RootPairing.weylGroup.ofIdx_weylGroupToPerm,
+      rw [simpleWordProd_cons, ← hkey, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
         inv_mul_cancel_right, mul_assoc, RootPairing.weylGroup.ofIdx_mul_self, mul_one]
     · -- The shorter word already makes `αₖ` negative, so a letter is deleted from it.
       obtain ⟨l', hl', hlen⟩ := ih hpos
@@ -114,6 +114,7 @@ theorem eq_one_of_inversions_eq_empty {w : P.weylGroup} (h : inversions P b w = 
     omega
 
 /-- The inversion set of a Weyl-group element is empty exactly when the element is the identity. -/
+@[simp]
 theorem inversions_eq_empty_iff_eq_one {w : P.weylGroup} : inversions P b w = ∅ ↔ w = 1 :=
   ⟨eq_one_of_inversions_eq_empty, fun h ↦ by rw [h, inversions_one]⟩
 
