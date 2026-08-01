@@ -88,6 +88,10 @@ construction actually reads, and the one already carried by an algebra known to 
 other reason (Mathlib's `IsAzumaya.matrix`, `IsAzumaya.of_AlgEquiv`). For a central simple `A` the
 way in is `TauCeti.IsSimpleRing.isAzumaya`, installed with `haveI`.
 
+`TauCeti.Algebra.tensorOpAlgEquivEnd` uses nothing else, so it is stated over the commutative
+semiring `K` and semiring `A` that `IsAzumaya` itself is defined over. Only the matrix half needs a
+field, to read the isomorphism off a basis.
+
 The real quaternions run all of this concretely in
 `TauCeti/Algebra/CentralSimple/Quaternion.lean`.
 
@@ -178,23 +182,34 @@ end IsSimpleRing
 
 namespace Algebra
 
-variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [IsAzumaya K A]
+section Azumaya
+
+variable (K : Type*) [CommSemiring K] (A : Type*) [Semiring A] [Algebra K A] [IsAzumaya K A]
 
 /-- The Azumaya map of an Azumaya algebra, promoted to an isomorphism
 `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A`. Its value on a pure tensor is
 `TauCeti.Algebra.tensorOpAlgEquivEnd_tmul_apply`.
 
-Bijectivity is the field `IsAzumaya.bij`, so this needs no hypothesis beyond `IsAzumaya K A`. For a
-finite-dimensional central simple `A` that hypothesis is
-`TauCeti.IsSimpleRing.isAzumaya K A`, which is not an instance and has to be installed by hand:
-`haveI := TauCeti.IsSimpleRing.isAzumaya K A`. -/
+Bijectivity is the field `IsAzumaya.bij`, so this needs no hypothesis beyond `IsAzumaya K A`, and in
+particular no field and no finiteness: it is stated over the commutative semiring `K` that
+`IsAzumaya` itself is defined over. For a finite-dimensional central simple `A` over a field the
+hypothesis is `TauCeti.IsSimpleRing.isAzumaya K A`, which is not an instance and has to be installed
+by hand: `haveI := TauCeti.IsSimpleRing.isAzumaya K A`. -/
 noncomputable def tensorOpAlgEquivEnd : A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A :=
   AlgEquiv.ofBijective (AlgHom.mulLeftRight K A) IsAzumaya.bij
 
+/-- The Azumaya isomorphism `TauCeti.Algebra.tensorOpAlgEquivEnd` sends a pure tensor `a ⊗ₜ b` to
+the endomorphism `x ↦ a * x * b.unop`, since it is `AlgHom.mulLeftRight` underneath. Pure tensors
+span `A ⊗[K] Aᵐᵒᵖ`, so this determines the isomorphism, and it is the only computation rule it
+needs. -/
 @[simp]
 theorem tensorOpAlgEquivEnd_tmul_apply (a : A) (b : Aᵐᵒᵖ) (x : A) :
     tensorOpAlgEquivEnd K A (a ⊗ₜ[K] b) x = a * x * b.unop :=
   AlgHom.mulLeftRight_apply K A a b x
+
+end Azumaya
+
+variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [IsAzumaya K A]
 
 /-- **The opposite isomorphism.** An Azumaya `K`-algebra `A` of dimension `n` -- over a field, a
 finite-dimensional central simple algebra -- satisfies `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K`:
