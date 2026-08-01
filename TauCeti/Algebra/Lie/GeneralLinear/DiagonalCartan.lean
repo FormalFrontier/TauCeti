@@ -254,14 +254,10 @@ variable (R n)
 
 /-- The weight `εᵢ - εⱼ` of `gl n R`, as a functional on the diagonal Cartan subalgebra. For `i ≠ j`
 these are the roots of `gl n R`; for `i = j` the functional is zero. -/
-@[expose] noncomputable def glRoot (i j : n) : Module.Dual R (diagonalCartan R n) :=
+noncomputable def glRoot (i j : n) : Module.Dual R (diagonalCartan R n) :=
   glWeightEquiv R n (Pi.single i 1 - Pi.single j 1)
 
 variable {R n}
-
-/-- `glRoot` is the weight attached to the tuple `εᵢ - εⱼ` under `glWeightEquiv`. -/
-theorem glRoot_def (i j : n) :
-    glRoot R n i j = glWeightEquiv R n (Pi.single i 1 - Pi.single j 1) := rfl
 
 /-- The functional `εᵢ - εⱼ` reads off the difference of two diagonal entries. -/
 @[simp]
@@ -269,6 +265,13 @@ theorem glRoot_apply (i j : n) (A : diagonalCartan R n) :
     glRoot R n i j A = (A : Matrix n n R) i i - (A : Matrix n n R) j j := by
   simp only [glRoot, glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul, one_mul,
     zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+
+/-- `glRoot` is the weight attached to the tuple `εᵢ - εⱼ` under `glWeightEquiv`. -/
+theorem glRoot_def (i j : n) :
+    glRoot R n i j = glWeightEquiv R n (Pi.single i 1 - Pi.single j 1) := by
+  ext A
+  rw [glRoot_apply, glWeightEquiv_apply]
+  simp [Pi.single_apply, sub_mul, Finset.sum_sub_distrib]
 
 /-- The functionals `εᵢ - εᵢ` vanish. -/
 @[simp]
