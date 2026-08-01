@@ -33,7 +33,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [LieGroup I ∞ G]
+  [ContMDiffMul I ∞ G]
 
 /-- A left-invariant derivation is determined by its value at any point. -/
 theorem evalAt_injective (g₀ : G) :
@@ -53,6 +53,8 @@ theorem evalAt_injective (g₀ : G) :
       _ = 𝒅ₕ (smoothLeftMul_one I g) (evalAt (I := I) (1 : G) Y) :=
         congrArg (𝒅ₕ (smoothLeftMul_one I g)) hOne
       _ = evalAt (I := I) g Y := left_invariant (I := I) (g := g) (X := Y)
+  rw [← evalAt_apply (I := I) (g := g) (X := X) (f := f),
+    ← evalAt_apply (I := I) (g := g) (X := Y) (f := f)]
   exact congrArg (fun D => D f) hEval
 
 end LeftInvariantDerivation
