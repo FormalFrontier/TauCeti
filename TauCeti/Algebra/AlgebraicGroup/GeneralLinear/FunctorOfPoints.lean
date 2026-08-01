@@ -200,6 +200,7 @@ theorem generalLinearToPoint_pointToGeneralLinear
 
 /-- Reading points as invertible matrices carries convolution to ordinary matrix
 multiplication, with the tensor-factor order unchanged. -/
+@[simp]
 theorem pointToGeneralLinear_mul
     (f g : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
     pointToGeneralLinear n (f * g) = pointToGeneralLinear n f * pointToGeneralLinear n g := by
@@ -251,6 +252,13 @@ theorem pointToGeneralLinear_mapValue (phi : A →ₐ[R] B)
   intro i j
   simp
 
+@[simp]
+private theorem pointToGeneralLinear_toConv_comp (phi : A →ₐ[R] B)
+    (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
+    pointToGeneralLinear n (toConv (phi.comp f.ofConv)) =
+      Matrix.GeneralLinearGroup.map phi.toRingHom (pointToGeneralLinear n f) := by
+  simpa only [AlgHom.mapValue_apply] using pointToGeneralLinear_mapValue n phi f
+
 /-- The pointwise group equivalence is natural in the value algebra. -/
 theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
@@ -268,6 +276,15 @@ theorem mapValue_pointsMulEquiv_symm_apply (phi : A →ₐ[R] B)
   apply (pointsMulEquiv (R := R) (A := B) n).injective
   rw [pointsMulEquiv_mapValue]
   simp
+
+@[simp]
+private theorem toConv_comp_generalLinearToPoint_ofConv (phi : A →ₐ[R] B)
+    (g : Matrix.GeneralLinearGroup (Fin n) A) :
+    toConv (phi.comp (generalLinearToPoint (R := R) n g).ofConv) =
+      generalLinearToPoint (R := R) n
+        (Matrix.GeneralLinearGroup.map phi.toRingHom g) := by
+  simpa only [AlgHom.mapValue_apply, pointsMulEquiv_symm_apply] using
+    mapValue_pointsMulEquiv_symm_apply n phi g
 
 end Naturality
 
