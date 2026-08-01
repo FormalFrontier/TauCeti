@@ -25,6 +25,10 @@ there extends to the full joint-law identity in `ConditionallyIIDWith`.
 ## Main results
 
 * `conditionallyIID_of_jointRectangles` — the Layer 1 common ending, at a named directing measure;
+* `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — the form each proof route
+  actually reaches: a set-integral factorization of the mass of a directing-measure event met with a
+  block cylinder, converted here into the joint-rectangle identity above. This is the neutral seam
+  between the routes, and it assumes no standard-Borel structure on either space;
 * `ConditionallyIIDWith.jointLaw_prod_univ_pi` — the converse rectangle identity;
 * `conditionallyIIDWith_iff_forall_jointRectangles` and
   `conditionallyIID_iff_exists_forall_jointRectangles` — characteristic forms for the named and
@@ -108,7 +112,7 @@ identity — the martingale route from tail conditional laws, the Koopman route 
 and nothing here mentions how `ν` was built. In particular there is **no** standard-Borel or
 non-empty hypothesis on either space: those are needed to *construct* a directing measure, not to
 recognise one. -/
-theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_lintegral {μ : Measure Ω}
+theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
     {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
     (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
