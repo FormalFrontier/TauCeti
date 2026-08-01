@@ -49,7 +49,28 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+
+/-- **Independent coordinates with a common named law are mixed i.i.d.**, at an arbitrary index
+type. Naming the common law as a parameter avoids nominating a reference coordinate, which an
+abstract index type does not supply; over `ℕ` that reference is `X 0`, and
+`MixedIIDWith.of_iIndepFun_identDistrib` recovers that form. -/
+theorem MixedIIDWith.of_iIndepFun_map_eq {μ : Measure Ω} {X : ι → Ω → α}
+    {p : ProbabilityMeasure α} (hindep : iIndepFun X μ)
+    (hlaw : ∀ i, μ.map (X i) = (p : Measure α)) :
+    MixedIIDWith μ X fun _ => p := by
+  haveI := hindep.isProbabilityMeasure
+  have hX : ∀ i, AEMeasurable (X i) μ := fun i =>
+    AEMeasurable.of_map_ne_zero (by rw [hlaw i]; exact IsProbabilityMeasure.ne_zero _)
+  refine MixedIIDWith.intro measurable_const fun m k hk => ?_
+  have hindep_k : iIndepFun (fun i : Fin m => X (k i)) μ := hindep.precomp hk
+  have hblock : blockLaw μ X k = Measure.pi (fun _ : Fin m => (p : Measure α)) := by
+    have h1 : blockLaw μ X k = Measure.pi (fun i : Fin m => μ.map (X (k i))) := by
+      rw [blockLaw_def]
+      exact hindep_k.map_fun_eq_pi_map fun i => hX (k i)
+    rw [h1]
+    exact congrArg Measure.pi (funext fun i => hlaw (k i))
+  rw [hblock, Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
 
 /-- **An i.i.d. sequence is mixed i.i.d.**, with the constant mixing representative
 `ω ↦ μ.map (X 0)` (the common law of the coordinates). For independent, identically
@@ -64,19 +85,7 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
         Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩ :
           ProbabilityMeasure α)) := by
   haveI := hindep.isProbabilityMeasure
-  refine MixedIIDWith.intro measurable_const ?_
-  intro m k hk
-  -- The block law along an injective selection is the `m`-fold product of the common law.
-  have hindep_k : iIndepFun (fun i : Fin m => X (k i)) μ := hindep.precomp hk
-  have hblock : blockLaw μ X k = Measure.pi (fun _ : Fin m => μ.map (X 0)) := by
-    have h1 : blockLaw μ X k = Measure.pi (fun i : Fin m => μ.map (X (k i))) := by
-      rw [blockLaw_def]
-      exact hindep_k.map_fun_eq_pi_map (fun i => (hident (k i)).aemeasurable_fst)
-    rw [h1]
-    exact congrArg Measure.pi (funext fun i => (hident (k i)).map_eq)
-  -- Binding a probability measure against a constant measure returns that measure.
-  rw [hblock, Measure.bind_const, measure_univ, one_smul]
-  rfl
+  exact MixedIIDWith.of_iIndepFun_map_eq hindep fun i => (hident i).map_eq
 
 /-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/
 theorem MixedIID.of_iIndepFun_identDistrib {μ : Measure Ω}

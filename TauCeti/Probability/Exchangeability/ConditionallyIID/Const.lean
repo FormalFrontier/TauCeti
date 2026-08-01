@@ -12,6 +12,19 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Const
 
 At a constant random measure `ω ↦ p`, the conditional and mixture identities coincide. Thus an
 i.i.d. sequence is conditionally i.i.d. with its common law as a constant directing measure.
+
+The equivalence itself holds at an arbitrary index type
+(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`). The
+The *named-law* constant-witness API is index-generic:
+`MixedIIDWith.iIndepFun_of_const`, `mixedIIDWith_const_iff_iIndepFun_and_map_eq`, and
+`MixedIIDWith.of_iIndepFun_map_eq` all take an arbitrary index type. Independence itself never
+needed `ℕ` — Mathlib's `ProbabilityTheory.iIndepFun` is stated generically — the forward direction
+enumerates finite subsets by *some* bijection with `Fin s.card` rather than by an order, and the
+reverse direction takes the common law as a parameter instead of reconstructing it from a reference
+coordinate.
+
+The `of_iIndepFun_identDistrib` forms, both here and in `Exchangeability/IID.lean`, stay
+sequence-level: they are stated through `IdentDistrib (X i) (X 0)`, which names the coordinate `0`.
 -/
 
 public section
@@ -24,13 +37,13 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **At a constant `ν` the conditional identity is free.** The joint law of `(p, block)` is the
 block law pushed forward by `Prod.mk p`, and the disintegration `δ_p ⊗ p^{⊗m}` is the product law
 pushed forward by the same map, so the mixture identity already gives the joint one. -/
 theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) :
     ConditionallyIIDWith μ X fun _ => p := by
   by_cases hμ : μ = 0
   · subst μ
@@ -59,14 +72,14 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
 `mixedIIDWith_of_conditionallyIIDWith` is available and the two need not agree; at a constant `ν`
 the converse holds too, so they coincide. -/
 theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
-    {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
+    {X : ι → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ MixedIIDWith μ X fun _ => p :=
   ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
 
 /-- **A constant directing measure means plain i.i.d.**: `fun _ => p` witnesses
 `ConditionallyIIDWith` exactly when the coordinates are independent and each has law `p`. -/
 theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
-    [IsProbabilityMeasure μ] {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
+    [IsProbabilityMeasure μ] {X : ι → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   conditionallyIIDWith_const_iff_mixedIIDWith.trans mixedIIDWith_const_iff_iIndepFun_and_map_eq
 
