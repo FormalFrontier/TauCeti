@@ -5,6 +5,7 @@ Authors: Codex, Claude
 -/
 module
 
+public import Mathlib.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Induction.Restriction
 
 /-!
@@ -29,11 +30,12 @@ are their evaluations.
 For a *normal* subgroup `N` the conjugated subgroup is `N` itself, so no transport is needed:
 conjugation by `g` is an endofunctor of `Rep k N`, indeed an autoequivalence, and the coherence
 makes `g ↦ conjNormalRep g` a `MulAction` of `G` on `Rep k N`.  This is the action of `G` on
-`Rep k N` that Clifford theory runs on.  Its inertia group of a representation `A` is the
-stabilizer of the *isomorphism class* of `A`, `{g | {}^g A ≅ A}`, which this action cuts out but
-which is not `MulAction.stabilizer G A`: the latter asks for `{}^g A = A` on the nose.  Neither
-the induced action on isomorphism classes, nor the fact that the action preserves irreducibility
-(so restricts to `Irr(N)`), is proved here.
+`Rep k N` that Clifford theory runs on.  Because conjugation is a *functor*, it descends along
+`CategoryTheory.Functor.mapSkeleton` to isomorphism classes, giving the action of `G` on
+`CategoryTheory.Skeleton (FDRep k N)` whose stabilizers are the inertia groups
+(`TauCeti.RepresentationTheory.Induction.Inertia`); those stabilizers are not
+`MulAction.stabilizer G A`, which asks for `{}^g A = A` on the nose.  That the action preserves
+irreducibility (so restricts to `Irr(N)`) is not proved here.
 
 ## Main definitions
 
@@ -51,6 +53,8 @@ the induced action on isomorphism classes, nor the fact that the action preserve
   `Rep k N` and on `FDRep k N`.
 * `TauCeti.conjNormalFDRepSelfIso`: conjugating by an element of `N` itself is an inner twist, so
   it gives an isomorphic representation.
+* `TauCeti.conjNormalFDRepSkeletonSMul`, `TauCeti.conjNormalFDRepSkeletonMulAction`: conjugation
+  acting on isomorphism classes of finite-dimensional representations of `N`.
 
 ## Main statements
 
@@ -757,6 +761,31 @@ def conjNormalFDRepSelfIso (A : FDRep k N) (n : N) : conjNormalFDRep (n : G) A �
 theorem conjNormalFDRepSelfIso_hom_hom (A : FDRep k N) (n : N) :
     (conjNormalFDRepSelfIso A n).hom.hom = Action.ρ A n :=
   (rfl)
+
+/-- Conjugation acts on the isomorphism classes of finite-dimensional representations of `N`: the
+descent of the conjugation functor to the skeleton is Mathlib's
+`CategoryTheory.Functor.mapSkeleton`. -/
+noncomputable instance conjNormalFDRepSkeletonSMul : SMul G (Skeleton (FDRep k N)) where
+  smul g := (conjNormalFDRepFunctor g).mapSkeleton.obj
+
+/-- The action on isomorphism classes is induced by the action on representations. -/
+@[simp]
+theorem smul_toSkeleton (g : G) (A : FDRep k N) :
+    g • toSkeleton A = toSkeleton (conjNormalFDRep g A) :=
+  (conjNormalFDRepFunctor g).mapSkeleton_obj_toSkeleton A
+
+/-- Conjugation on isomorphism classes is an action, because conjugation is one
+(`conjNormalFDRep_one`, `conjNormalFDRep_mul`); every class is `toSkeleton` of a representative, so
+`smul_toSkeleton` reduces both laws to their counterparts on representations.
+
+This is the action whose stabilizers are the inertia groups (`TauCeti.inertia`). -/
+noncomputable instance conjNormalFDRepSkeletonMulAction : MulAction G (Skeleton (FDRep k N)) where
+  one_smul X := by
+    obtain ⟨A, rfl⟩ : ∃ A, toSkeleton A = X := ⟨_, toSkeleton_fromSkeleton_obj X⟩
+    rw [smul_toSkeleton, conjNormalFDRep_one]
+  mul_smul s t X := by
+    obtain ⟨A, rfl⟩ : ∃ A, toSkeleton A = X := ⟨_, toSkeleton_fromSkeleton_obj X⟩
+    rw [smul_toSkeleton, smul_toSkeleton, smul_toSkeleton, conjNormalFDRep_mul]
 
 end NormalFDRep
 

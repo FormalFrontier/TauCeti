@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Induction.Conjugate
 
 /-!
@@ -19,15 +18,11 @@ of the isomorphism class of `A`,
 This is not `MulAction.stabilizer G A`, which asks for `{}^g A = A` on the nose; the two are
 compared in `TauCeti.stabilizer_le_inertia`.  Instead, isomorphism classes of objects of a
 category are Mathlib's `CategoryTheory.Skeleton`, and conjugation descends to them because it is a
-*functor*, via `CategoryTheory.Functor.mapSkeleton`; that descent is the `MulAction` instance
-`TauCeti.conjNormalFDRepSkeletonMulAction`, and `inertia A` is literally
+*functor*; that descent is the `MulAction` instance
+`TauCeti.conjNormalFDRepSkeletonMulAction` of the conjugation file, and `inertia A` is literally
 `MulAction.stabilizer G (toSkeleton A)`.  Everything else — that the inertia group is a subgroup,
 that it only depends on the isomorphism class, and that conjugating the representation conjugates
 it — is then Mathlib's generic stabilizer API.
-
-The conjugation file `TauCeti.RepresentationTheory.Induction.Conjugate` deliberately stops at the
-action of `G` on `FDRep k N` itself and leaves the induced action on isomorphism classes to a later
-file; this is that file.
 
 The inertia group contains `N` (`TauCeti.le_inertia`), because conjugating by an element `n` of `N`
 itself is an inner twist: `A.ρ n` intertwines `{}^n A` with `A`
@@ -41,8 +36,6 @@ theorem identifies the constituents of a restriction with a single `G`-orbit.
 
 ## Main definitions
 
-* `TauCeti.conjNormalFDRepSkeletonSMul`, `TauCeti.conjNormalFDRepSkeletonMulAction`: conjugation
-  acting on isomorphism classes of finite-dimensional representations of `N`.
 * `TauCeti.inertia`: the inertia group of a representation of a normal subgroup.
 
 ## Main statements
@@ -79,31 +72,6 @@ variable {k : Type u} {G : Type v} [Group G] {N : Subgroup G} [hN : N.Normal]
 section Ring
 
 variable [Ring k]
-
-/-- Conjugation acts on the isomorphism classes of finite-dimensional representations of `N`: the
-descent of the conjugation functor to the skeleton is Mathlib's
-`CategoryTheory.Functor.mapSkeleton`. -/
-noncomputable instance conjNormalFDRepSkeletonSMul : SMul G (Skeleton (FDRep k N)) where
-  smul g := (conjNormalFDRepFunctor g).mapSkeleton.obj
-
-/-- The action on isomorphism classes is induced by the action on representations. -/
-@[simp]
-theorem smul_toSkeleton (g : G) (A : FDRep k N) :
-    g • toSkeleton A = toSkeleton (conjNormalFDRep g A) :=
-  (conjNormalFDRepFunctor g).mapSkeleton_obj_toSkeleton A
-
-/-- Conjugation on isomorphism classes is an action, because conjugation is one
-(`conjNormalFDRep_one`, `conjNormalFDRep_mul`); every class is `toSkeleton` of a representative, so
-`smul_toSkeleton` reduces both laws to their counterparts on representations.
-
-This is the action whose stabilizers are the inertia groups. -/
-noncomputable instance conjNormalFDRepSkeletonMulAction : MulAction G (Skeleton (FDRep k N)) where
-  one_smul X := by
-    obtain ⟨A, rfl⟩ : ∃ A, toSkeleton A = X := ⟨_, toSkeleton_fromSkeleton_obj X⟩
-    rw [smul_toSkeleton, conjNormalFDRep_one]
-  mul_smul s t X := by
-    obtain ⟨A, rfl⟩ : ∃ A, toSkeleton A = X := ⟨_, toSkeleton_fromSkeleton_obj X⟩
-    rw [smul_toSkeleton, smul_toSkeleton, smul_toSkeleton, conjNormalFDRep_mul]
 
 /-- The **inertia group** of `A : FDRep k N`, for `N` a normal subgroup of `G`: the elements of
 `G` whose conjugate representation `{}^g A` is isomorphic to `A`, i.e. the stabilizer of the
