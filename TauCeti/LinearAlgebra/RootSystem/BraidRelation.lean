@@ -83,45 +83,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 /-! ## The rank-two computation -/
 
-/-- **The product of two reflections on the weight space.** The product changes `x` by an element
-of the span of the two roots, with coefficients recorded by the two coroot functionals. -/
-@[grind =]
-theorem ofIdx_mul_ofIdx_smul (x : M) :
-    (_root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j) • x =
-      x - P.coroot' j x • P.root j -
-        (P.coroot' i x - P.pairing j i * P.coroot' j x) • P.root i := by
-  rw [mul_smul]
-  simp only [_root_.RootPairing.weylGroup.ofIdx_smul, _root_.RootPairing.Equiv.reflection_smul,
-    _root_.RootPairing.reflection_apply, map_sub, map_smul,
-    _root_.RootPairing.root_coroot'_eq_pairing]
-  module
-
-/-- The `αᵢ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. -/
-@[grind =]
-theorem coroot'_left_ofIdx_mul_ofIdx_smul (x : M) :
-    P.coroot' i ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) • x) =
-      P.pairing j i * P.coroot' j x - P.coroot' i x := by
-  rw [ofIdx_mul_ofIdx_smul]
-  simp only [map_sub, map_smul, smul_eq_mul, _root_.RootPairing.root_coroot'_eq_pairing,
-    _root_.RootPairing.pairing_same]
-  ring
-
-/-- The `αⱼ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. Together with
-`TauCeti.RootPairing.weylGroup.coroot'_left_ofIdx_mul_ofIdx_smul` this is the matrix of the action
-on the two coroot coordinates: determinant `1` and trace `⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`, the value at
-which `TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul` evaluates its Chebyshev
-polynomials. -/
-@[grind =]
-theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
-    P.coroot' j ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) • x) =
-      (P.pairing i j * P.pairing j i - 1) * P.coroot' j x - P.pairing i j * P.coroot' i x := by
-  rw [ofIdx_mul_ofIdx_smul]
-  simp only [map_sub, map_smul, smul_eq_mul, _root_.RootPairing.root_coroot'_eq_pairing,
-    _root_.RootPairing.pairing_same]
-  ring
-
 /-- The action of an iterate of the product of the two reflections is the action of the
 corresponding iterate of the product of the two linear reflections. -/
 private lemma pow_ofIdx_mul_ofIdx_smul_eq (n : ℕ) (x : M) :
