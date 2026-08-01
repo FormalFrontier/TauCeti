@@ -86,7 +86,7 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
   rw [iIndepFun_iff_map_fun_eq_pi_map fun i : s => hX i]
   -- Enumerate `s` as a `Fin s.card`-indexed injective selection. Any bijection serves:
   -- only injectivity and the round trip are used, never an order on the index type.
-  set e : Fin s.card ≃ s := (Fintype.equivFinOfCardEq (Fintype.card_coe s)).symm
+  set e : Fin s.card ≃ s := (Finset.equivFin s).symm
   have hk : Function.Injective fun i : Fin s.card => ((e i : s) : ι) :=
     Subtype.val_injective.comp e.injective
   have hblock := h.blockLaw_eq_pi_of_const (fun i : Fin s.card => ((e i : s) : ι)) hk
