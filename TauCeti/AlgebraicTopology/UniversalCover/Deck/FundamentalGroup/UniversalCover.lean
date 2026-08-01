@@ -92,6 +92,20 @@ lemma loopDeckHom_apply (g : FundamentalGroup X x₀) :
     loopDeckHom x₀ g = loopDeck x₀ g :=
   (rfl)
 
+/-- The constant-path lift of the basepoint, regarded as a point of the fibre over the
+basepoint. -/
+private def reflFiberPoint : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} :=
+  ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)),
+    Set.mem_singleton_iff.mpr (by
+      rw [proj_ofBasedPath]
+      exact BasedPath.endpoint_ofPath _)⟩
+
+@[simp]
+private lemma reflFiberPoint_val :
+    (reflFiberPoint x₀ : UniversalCover x₀) =
+      ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) :=
+  rfl
+
 /-- The endpoint projection of the universal cover has regular deck action. -/
 theorem isRegular_proj [PathConnectedSpace X] :
     Deck.IsRegular (proj : UniversalCover x₀ → X) := by
@@ -109,10 +123,7 @@ noncomputable def deckFundamentalGroupEquiv
     [SemilocallySimplyConnectedSpace X] :
     Deck (proj : UniversalCover x₀ → X) ≃* (FundamentalGroup X x₀)ᵐᵒᵖ :=
   (isRegular_proj x₀).deckFundamentalGroupEquiv (isCoveringMap x₀)
-    ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
-      change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
-      rw [Set.mem_singleton_iff, proj_ofBasedPath]
-      exact BasedPath.endpoint_ofPath _⟩
+    (reflFiberPoint x₀)
 
 /-- The inverse deck-to-fundamental-group equivalence recovers the explicit loop deck
 transformation, with the inverse forced by the left-action convention. -/
@@ -123,14 +134,13 @@ lemma deckFundamentalGroupEquiv_symm_op
     (g : FundamentalGroup X x₀) :
     (deckFundamentalGroupEquiv x₀).symm (MulOpposite.op g) = loopDeck x₀ g⁻¹ := by
   have hmonodromy : ((isCoveringMap x₀).monodromy g.toPath
-      ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
-        change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
-        rw [Set.mem_singleton_iff, proj_ofBasedPath]
-        exact BasedPath.endpoint_ofPath _⟩ :
+      (reflFiberPoint x₀) :
         UniversalCover x₀) =
       g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
     obtain ⟨γ, hγ⟩ := Quotient.exists_rep g.toPath
     rw [← hγ]
+    -- `monodromy` is defined by quotient-lifting the endpoint of `liftPath`; unfolding it
+    -- after choosing the representative `γ` exposes exactly that defining computation.
     change (isCoveringMap x₀).liftPath γ
         (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 = _
     let δ : Path (BasedPath.endpoint (BasedPath.ofPath (Path.refl x₀))) x₀ :=
@@ -153,6 +163,8 @@ lemma deckFundamentalGroupEquiv_symm_op
               ((Path.refl x₀).trans γ)) :=
           Path.Homotopic.hpath_hext (fun _ ↦ rfl)
         refine hcast.trans (heq_of_eq ?_)
+        -- The preceding `HEq` has aligned the dependent path endpoints.  What remains is
+        -- its underlying quotient equality, whose displayed types differ only by those casts.
         change Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ) =
           g.toPath.trans (Path.Homotopic.Quotient.refl x₀)
         rw [← hγ, Path.Homotopic.Quotient.mk_trans, Path.Homotopic.Quotient.mk_refl,
@@ -160,11 +172,12 @@ lemma deckFundamentalGroupEquiv_symm_op
         exact (Path.Homotopic.Quotient.trans_refl _).symm
   apply (Deck.IsRegular.deckFundamentalGroupEquiv_symm_op_eq_iff
     (isRegular_proj x₀) (isCoveringMap x₀)
-      ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
-        change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
-        rw [Set.mem_singleton_iff, proj_ofBasedPath]
-        exact BasedPath.endpoint_ofPath _⟩
+      (reflFiberPoint x₀)
       g (loopDeck x₀ g⁻¹)).2
-  simpa only [Deck.smul_eq_apply, loopDeck_apply] using hmonodromy
+  -- Display the fundamental-group coercion and the chosen fibre point explicitly so the
+  -- named monodromy calculation above applies without unfolding either wrapper.
+  change ((isCoveringMap x₀).monodromy g.toPath (reflFiberPoint x₀) :
+    UniversalCover x₀) = (loopDeck x₀ g⁻¹).1 (reflFiberPoint x₀)
+  simpa only [Deck.smul_eq_apply, loopDeck_apply, reflFiberPoint_val] using hmonodromy
 
 end TauCeti.UniversalCover
