@@ -12,10 +12,12 @@ public section
 # The order of a product of two simple reflections
 
 The product of the reflections in two roots `αᵢ`, `αⱼ` changes every weight by an element of the
-span of the two roots, and its order is therefore read off the Cartan product
-`c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the values `1`, `2`, `3` give the orders `3`, `4`, `6`. This file
-proves that, and — for two simple roots of a base of a finite crystallographic pairing, where
-`c = 0` is the remaining possibility and gives the order `2` — that the entries of
+span of the two roots. Over a characteristic-zero ring, its order is read off the Cartan product
+`c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the values `1`, `2`, `3` give the orders `3`, `4`, `6`. This file proves
+the corresponding upper bounds over an arbitrary commutative ring and these exact orders under
+characteristic zero. It then proves — for two simple roots of a base of a finite crystallographic
+pairing over a characteristic-zero domain, where `c = 0` is the remaining possibility and gives the
+order `2` — that the entries of
 `TauCeti.coxeterMatrixOfBase` really are the orders they are named for, so that the braid relations
 of the Coxeter presentation of a Weyl group hold in the Weyl group.
 
@@ -36,7 +38,8 @@ That the order is no smaller is checked on the single vector `αᵢ`: its `αᵢ
 orbit of `g` is again a Chebyshev expression in `c`, and for the relevant powers that expression
 avoids the value `⟨αᵢ, αᵢ^∨⟩ = 2`.
 
-Everything before the last section is stated for an arbitrary pair of roots of an arbitrary root
+The iterate formulas and upper bounds are stated over an arbitrary commutative ring. The exact-order
+results add characteristic zero, but still concern an arbitrary pair of roots of an arbitrary root
 pairing, the Cartan product entering only as a hypothesis on `RootPairing.pairing`; no finiteness,
 crystallographic or reducedness assumption is used there. The last section specialises to a pair of
 simple roots of a base, where `TauCeti.cartanMatrix_mul_cartanMatrix_mem_of_ne` confines the Cartan
@@ -53,7 +56,8 @@ product to `{0, 1, 2, 3}` and the case analysis closes.
   product `1`, `2`, `3`, and
   `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_three`,
   `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_four`,
-  `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_six`: the matching exact orders.
+  `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_six`: the matching exact orders under
+  characteristic zero.
 * `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase`: **the entries of
   the Coxeter matrix of a base are the orders of the products of the corresponding simple
   reflections.**
