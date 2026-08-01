@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.AlgebraRepresentation.Basic
-public import Mathlib.RingTheory.SimpleModule.IsAlgClosed
 
 /-!
 # Schur's lemma for simple modules
@@ -35,8 +34,10 @@ equivalence.
   when their hom group is nontrivial.
 * `TauCeti.nonempty_algEquiv_self_of_isIntegral`: an integral domain algebra over an algebraically
   closed field is isomorphic to that field as an algebra, with
-  `TauCeti.algEquiv_self_of_finiteDimensional_divisionRing` the finite-dimensional division algebra
-  special case.
+  `TauCeti.nonempty_algEquiv_self_of_finiteDimensional_divisionRing` the finite-dimensional
+  division algebra special case (the roadmap pins this last result as
+  `algEquiv_self_of_finiteDimensional_divisionRing`; it carries the `nonempty_` prefix here
+  because its conclusion is a `Nonempty`, matching its two neighbours).
 * `TauCeti.nonempty_end_algEquiv_self_of_isSimpleModule`: the endomorphism ring of a
   finite-dimensional simple module over an algebraically closed field collapses to that field.
 
@@ -119,18 +120,13 @@ theorem nonempty_algEquiv_self_of_isIntegral [Algebra.IsIntegral k D] : Nonempty
   ⟨(AlgEquiv.ofBijective (Algebra.ofId k D)
     IsAlgClosed.algebraMap_bijective_of_isIntegral).symm⟩
 
-/-- An integral domain algebra over an algebraically closed field has dimension one. -/
-@[simp]
-theorem finrank_eq_one_of_isAlgClosed [Algebra.IsIntegral k D] : Module.finrank k D = 1 :=
-  Module.finrank_of_bijective_algebraMap IsAlgClosed.algebraMap_bijective_of_isIntegral
-
 end Domain
 
 /-- A finite-dimensional division algebra over an algebraically closed field is the field itself,
 as an isomorphism of algebras. Finite dimensionality supplies integrality, so this is the
 special case of `nonempty_algEquiv_self_of_isIntegral` that the semisimple-algebra development
 uses. -/
-theorem algEquiv_self_of_finiteDimensional_divisionRing [DivisionRing D] [Algebra k D]
+theorem nonempty_algEquiv_self_of_finiteDimensional_divisionRing [DivisionRing D] [Algebra k D]
     [FiniteDimensional k D] : Nonempty (D ≃ₐ[k] k) :=
   nonempty_algEquiv_self_of_isIntegral
 
