@@ -21,8 +21,8 @@ No flatness or noetherian hypothesis is needed.
 
 ## Main declarations
 
-* `TauCeti.Subcomodule.exists_finite`: every element belongs to a subcomodule whose
-  underlying module is finite.
+* `TauCeti.Subcomodule.exists_finite_subcomodule_mem`: every element belongs to a
+  subcomodule whose underlying module is finite.
 
 ## References
 
@@ -72,7 +72,7 @@ private theorem coeff_assoc_symm_tmul
 /-- If a coalgebra is free as a module over a commutative semiring, every element
 of a right comodule belongs to a subcomodule that is finitely generated as a
 module. -/
-theorem exists_finite [Module.Free R C] (m : M) :
+theorem exists_finite_subcomodule_mem [Module.Free R C] (m : M) :
     ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N := by
   classical
   let b := Module.Free.chooseBasis R C
@@ -109,16 +109,10 @@ theorem exists_finite [Module.Free R C] (m : M) :
       rw [Finsupp.finsetSum_apply]
       apply Submodule.sum_mem
       intro j _
-      change
-        TensorProduct.equivFinsuppOfBasisRight b
-            ((TensorProduct.assoc R M C C).symm
-              (Coalgebra.comul.lTensor M (a j ⊗ₜ[R] b j))) i ∈
-          LinearMap.range
-            (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))
       refine ⟨(⟨a j, ha_mem j⟩ : N) ⊗ₜ[R]
         TensorProduct.rid R C
           ((b.coord i).lTensor C (Coalgebra.comul (b j))), ?_⟩
-      simp [coeff_assoc_symm_tmul]
+      simp [a, coeff_assoc_symm_tmul]
     · intro x y _ _ hx hy
       simpa only [map_add] using (LinearMap.range
         (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))).add_mem hx hy
@@ -127,9 +121,12 @@ theorem exists_finite [Module.Free R C] (m : M) :
         (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))).smul_mem r hx
   let S := ofSubmodule (R := R) (C := C) (M := M) N hstable
   refine ⟨S, ?_, ?_⟩
-  · change Module.Finite R N
+  · have hSN : S.toSubmodule = N := by
+      rw [toSubmodule_carrier]
+      exact ofSubmodule_carrier N hstable
+    rw [hSN]
     exact Module.Finite.span_of_finite R a.finite_range
-  · change m ∈ N
+  · apply mem_ofSubmodule.mpr
     have hcounit := Comodule.lTensor_counit_coact (R := R) (C := C) (M := M) m
     rw [← (TensorProduct.equivFinsuppOfBasisRight b).symm_apply_apply
       (Comodule.coact (R := R) (C := C) (M := M) m)] at hcounit
