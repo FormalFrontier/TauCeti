@@ -118,15 +118,15 @@ noncomputable def chebyshevCosineL2Equiv :
 theorem chebyshevCosineL2Equiv_apply (f : Lp 𝕜 2 measureT) :
     ⇑(chebyshevCosineL2Equiv 𝕜 f) =ᵐ[chebyshevAngleMeasure] fun θ => f (Real.cos θ) := by
   rw [chebyshevCosineL2Equiv]
-  simpa using Lp.coeFn_compMeasurePreservingₗᵢEquiv 𝕜 measurePreserving_cos_chebyshev
-    measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
+  simpa [Function.comp_def] using Lp.coeFn_compMeasurePreservingₗᵢEquiv 𝕜
+    measurePreserving_cos_chebyshev measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
 
 /-- The inverse Chebyshev-to-cosine equivalence is composition with `Real.arccos`. -/
 theorem chebyshevCosineL2Equiv_symm_apply (f : Lp 𝕜 2 chebyshevAngleMeasure) :
     ⇑((chebyshevCosineL2Equiv 𝕜).symm f) =ᵐ[measureT] fun x => f (Real.arccos x) := by
   rw [chebyshevCosineL2Equiv]
-  simpa using Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm 𝕜 measurePreserving_cos_chebyshev
-    measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
+  simpa [Function.comp_def] using Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm 𝕜
+    measurePreserving_cos_chebyshev measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
 
 end L2
 
