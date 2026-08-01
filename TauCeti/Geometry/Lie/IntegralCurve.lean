@@ -76,3 +76,23 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
   exact hg.hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
 
 end IsMIntegralCurveOn
+
+/-- Every left-invariant vector field on a real Lie group modeled on a complete space has a global
+integral curve through every point. -/
+theorem exists_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) :
+    ∃ γ : ℝ → G, γ 0 = x ∧ IsMIntegralCurve γ (mulInvariantVectorField v) := by
+  let V := mulInvariantVectorField v
+  have hV : CMDiff 1 (fun g ↦ (⟨g, V g⟩ : TangentBundle I G)) :=
+    (contMDiff_mulInvariantVectorField v).of_le (by simp)
+  obtain ⟨γ, hγ0, hγ⟩ :=
+    exists_isMIntegralCurveAt_of_contMDiffAt_boundaryless (x₀ := (1 : G)) 0 hV.contMDiffAt
+  obtain ⟨ε, hε, hγ⟩ := isMIntegralCurveAt_iff'.mp hγ
+  rw [Real.ball_eq_Ioo] at hγ
+  have hγ : IsMIntegralCurveOn γ V (Ioo (-ε) ε) := by
+    simpa only [zero_sub, zero_add] using hγ
+  apply exists_isMIntegralCurve_of_isMIntegralCurveOn hV hε
+  intro y
+  refine ⟨fun t ↦ y * γ t, by simp [hγ0], ?_⟩
+  exact hγ.const_mul_mulInvariantVectorField y
