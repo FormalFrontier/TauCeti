@@ -13,7 +13,8 @@ This file records the scalar pseudo-hyperbolic expression
 `‖(z - w) / (1 - conj w * z)‖` used in the Schwarz--Pick layer of the conformal-mapping
 roadmap.  The main API proves that the denominator is nonzero on the open unit disc, the
 expression is symmetric, it is strictly less than one for two points of the unit disc, and it is
-exactly one as soon as one of the two points lies on the unit circle.
+exactly one as soon as one of the two points lies on the unit circle and the two points are
+distinct (in particular whenever one lies on the circle and the other in the open disc).
 
 This L2 material is coordinated with the upstream Mathlib RMT effort in
 leanprover-community/mathlib4#33505.  Mathlib already contains the preceding human-curated

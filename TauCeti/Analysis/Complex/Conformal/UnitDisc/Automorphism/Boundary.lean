@@ -167,6 +167,10 @@ lemma coe_unitDiscMoebiusClosedBallHomeomorph_apply (a : Complex.UnitDisc)
     MapsTo.val_restrict_apply]
 
 /-- The inverse of the closed-disc homeomorphism is given by the Moebius formula centred at `-a`. -/
+-- Not `@[simp]`: `simp` already reduces the left-hand side, rewriting with the `@[simp]` lemma
+-- `unitDiscMoebiusClosedBallHomeomorph_symm` and then with
+-- `coe_unitDiscMoebiusClosedBallHomeomorph_apply`, so tagging this lemma `@[simp]` is a `simpNF`
+-- violation.
 @[norm_cast]
 lemma coe_unitDiscMoebiusClosedBallHomeomorph_symm_apply (a : Complex.UnitDisc)
     (w : closedBall (0 : ℂ) 1) :
@@ -217,6 +221,8 @@ lemma coe_unitDiscMoebiusSphereHomeomorph_apply (a : Complex.UnitDisc) (z : sphe
     MapsTo.val_restrict_apply]
 
 /-- The inverse of the circle homeomorphism is given by the Moebius formula centred at `-a`. -/
+-- Not `@[simp]`, for the same reason as the closed-ball lemma above: `simp` reduces the left-hand
+-- side through `unitDiscMoebiusSphereHomeomorph_symm`.
 @[norm_cast]
 lemma coe_unitDiscMoebiusSphereHomeomorph_symm_apply (a : Complex.UnitDisc)
     (w : sphere (0 : ℂ) 1) :
