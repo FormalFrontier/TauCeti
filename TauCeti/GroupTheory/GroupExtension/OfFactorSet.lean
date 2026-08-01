@@ -270,6 +270,10 @@ def canonicalSection : α.groupExtension.Section where
 
 @[simp] theorem canonicalSection_apply (g : G) : α.canonicalSection g = ⟨1, g⟩ := (rfl)
 
+/-- The canonical section is normalized. Not `@[simp]`: `canonicalSection_apply` already rewrites
+the left-hand side, to `⟨1, 1⟩`. -/
+theorem canonicalSection_one : α.canonicalSection 1 = 1 := by ext <;> simp
+
 /-- **A factor set is the factor set of the extension it builds**: the canonical section fails to
 be a homomorphism by exactly `α`. -/
 theorem canonicalSection_mul (g h : G) :
@@ -346,8 +350,7 @@ variable (α β : FactorSet G M)
 /-- **Cohomologous factor sets build equivalent extensions.** Two factor sets whose quotient is a
 multiplicative `2`-coboundary give equivalent group extensions of `G` by `M`, the equivalence
 rescaling the canonical section by the function the coboundary comes from. -/
-theorem nonempty_groupExtensionEquiv
-    (h : IsMulCoboundary₂ fun p : G × G => α p / β p) :
+theorem nonempty_groupExtensionEquiv (h : IsMulCoboundary₂ fun p : G × G => α p / β p) :
     Nonempty (α.groupExtension.Equiv β.groupExtension) := by
   obtain ⟨x, hx⟩ := h
   refine ⟨rescaleEquiv α β x fun g h => ?_⟩
@@ -372,8 +375,7 @@ def trivial : FactorSet G M where
 @[simp] theorem trivial_apply (p : G × G) : trivial G M p = 1 := (rfl)
 
 /-- The extension attached to the trivial factor set is the semidirect product of `M` by `G`. -/
-def trivialMulEquiv :
-    (trivial G M).Extension ≃* M ⋊[MulDistribMulAction.toMulAut G M] G where
+def trivialMulEquiv : (trivial G M).Extension ≃* M ⋊[MulDistribMulAction.toMulAut G M] G where
   toFun x := ⟨x.left, x.right⟩
   invFun x := ⟨x.left, x.right⟩
   left_inv _ := rfl

@@ -430,8 +430,7 @@ private theorem countable_setOf_deriv_ne_zero_on_fiber (g : ℝ → ℂ) (c : �
 eventually integrable as `ε → 0⁺`, there is a single `ε₀ > 0` at which both are integrable and at
 which distinct points of `S₁` and `S₂` are more than `2 * ε₀` apart. -/
 private theorem exists_pos_separating_intervalIntegrable_truncatedIntegrand {γ : ℝ → ℂ} {a b : ℝ}
-    {f : ℂ → ℂ} (S₁ S₂ : Finset ℂ)
-    (hint₁ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+    {f : ℂ → ℂ} (S₁ S₂ : Finset ℂ) (hint₁ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       IntervalIntegrable (truncatedIntegrand γ f S₁ ε) MeasureTheory.volume a b)
     (hint₂ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       IntervalIntegrable (truncatedIntegrand γ f S₂ ε) MeasureTheory.volume a b) :
@@ -465,8 +464,7 @@ pointwise by the sum of the `ε₀`-truncation norms: a point excised at `ε` by
 other is, by the `2·ε₀`-separation, more than `ε₀` from that other set — so the other set's
 `ε₀`-truncation retains the full integrand value there, and that value dominates the difference. -/
 private theorem norm_truncatedIntegrand_sub_le {γ : ℝ → ℂ} {f : ℂ → ℂ} {S₁ S₂ : Finset ℂ}
-    {ε ε₀ : ℝ} (t : ℝ) (hεlt : ε < ε₀)
-    (hP1 : ∀ s₁ ∈ S₁, ∀ s₂ ∈ S₂, s₁ ≠ s₂ → 2 * ε₀ < ‖s₁ - s₂‖) :
+    {ε ε₀ : ℝ} (t : ℝ) (hεlt : ε < ε₀) (hP1 : ∀ s₁ ∈ S₁, ∀ s₂ ∈ S₂, s₁ ≠ s₂ → 2 * ε₀ < ‖s₁ - s₂‖) :
     ‖truncatedIntegrand γ f S₁ ε t - truncatedIntegrand γ f S₂ ε t‖ ≤
       ‖truncatedIntegrand γ f S₁ ε₀ t‖ + ‖truncatedIntegrand γ f S₂ ε₀ t‖ := by
   classical
@@ -549,8 +547,7 @@ truncation (using that the excision sets are finite and disjoint from each other
 is killed in the limit by dominated convergence, the excess `f (γ ·) · γ'` vanishing a.e. on each
 singleton fibre of `γ`. -/
 private theorem tendsto_integral_truncatedIntegrand_sub {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
-    (S₁ S₂ : Finset ℂ)
-    (hint₁ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+    (S₁ S₂ : Finset ℂ) (hint₁ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       IntervalIntegrable (truncatedIntegrand γ f S₁ ε) MeasureTheory.volume a b)
     (hint₂ : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       IntervalIntegrable (truncatedIntegrand γ f S₂ ε) MeasureTheory.volume a b) :
@@ -691,8 +688,7 @@ theorem CauchyPVExists.hasCauchyPV_cauchyPV {γ : ℝ → ℂ} {a b : ℝ} {f : 
   exact hv
 
 /-- Reversing the interval orientation negates a set-level Cauchy principal value. -/
-theorem HasCauchyPV.symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ}
-    (h : HasCauchyPV γ a b f v) :
+theorem HasCauchyPV.symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ} (h : HasCauchyPV γ a b f v) :
     HasCauchyPV γ b a f (-v) := by
   obtain ⟨S, hint, htend⟩ := hasCauchyPV_iff.mp h
   refine HasCauchyPV.intro S ?_ ?_
@@ -704,16 +700,14 @@ theorem HasCauchyPV.symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : �
 
 /-- Existence of a set-level Cauchy principal value is invariant under reversing the interval
 orientation. -/
-theorem CauchyPVExists.symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
-    (h : CauchyPVExists γ a b f) :
+theorem CauchyPVExists.symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} (h : CauchyPVExists γ a b f) :
     CauchyPVExists γ b a f :=
   let ⟨_, hv⟩ := cauchyPVExists_iff.mp h
   cauchyPVExists_iff.mpr ⟨_, hv.symm⟩
 
 /-- Value form of `HasCauchyPV.symm`: if the set-level principal value exists on `[a, b]`, then
 the value on `[b, a]` is its negative. -/
-theorem cauchyPV_symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
-    (h : CauchyPVExists γ a b f) :
+theorem cauchyPV_symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} (h : CauchyPVExists γ a b f) :
     cauchyPV γ b a f = -cauchyPV γ a b f :=
   h.hasCauchyPV_cauchyPV.symm.cauchyPV_eq
 
@@ -827,8 +821,7 @@ parameter where `γ` avoids the finite set `P`, a principal value of `f` is one 
 witnessing excision enlarges to include `P`, and off the enlarged excision the curve avoids
 `P`. Needs the curve continuous on `[[a, b]]` for the enlargement. -/
 theorem HasCauchyPV.congr_along_curve_off {γ : ℝ → ℂ} {a b : ℝ} {f g : ℂ → ℂ} {v : ℂ}
-    (hγ_cont : ContinuousOn γ (Set.uIcc a b)) (P : Finset ℂ)
-    (h : HasCauchyPV γ a b f v)
+    (hγ_cont : ContinuousOn γ (Set.uIcc a b)) (P : Finset ℂ) (h : HasCauchyPV γ a b f v)
     (h_eq : ∀ t ∈ Set.uIoo a b, γ t ∉ (P : Set ℂ) → f (γ t) = g (γ t)) :
     HasCauchyPV γ a b g v := by
   obtain ⟨T, hint, htend⟩ := h
@@ -868,8 +861,7 @@ theorem CauchyPVExists.add {γ : ℝ → ℂ} {a b : ℝ} {f g : ℂ → ℂ}
 
 /-- Existence form of `HasCauchyPV.sum`. -/
 theorem CauchyPVExists.sum {ι : Type*} {γ : ℝ → ℂ} {a b : ℝ} {f : ι → ℂ → ℂ} {s : Finset ι}
-    (hγ_cont : ContinuousOn γ (Set.uIcc a b))
-    (h : ∀ i ∈ s, CauchyPVExists γ a b (f i)) :
+    (hγ_cont : ContinuousOn γ (Set.uIcc a b)) (h : ∀ i ∈ s, CauchyPVExists γ a b (f i)) :
     CauchyPVExists γ a b (fun z => ∑ i ∈ s, f i z) := by
   classical
   induction s using Finset.induction_on with

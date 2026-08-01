@@ -49,8 +49,7 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
 
 attribute [local instance] Classical.decEq
 
-private theorem univ_mem_top :
-    (Finset.univ : Finset ι) ∈ (⊤ : AbstractSimplicialComplex ι) :=
+private theorem univ_mem_top : (Finset.univ : Finset ι) ∈ (⊤ : AbstractSimplicialComplex ι) :=
   Finset.univ_nonempty
 
 private def topFace : Face (⊤ : AbstractSimplicialComplex ι) :=
@@ -200,13 +199,11 @@ private noncomputable def finTwoHomeomorphSphereZero : Fin 2 ≃ₜ sphere (0 : 
   exact Homeomorph.ofDiscrete finTwoEquivSphereZero
 
 @[simp]
-private theorem finTwoHomeomorphSphereZero_zero :
-    (finTwoHomeomorphSphereZero 0 : ℝ) = 1 :=
+private theorem finTwoHomeomorphSphereZero_zero : (finTwoHomeomorphSphereZero 0 : ℝ) = 1 :=
   rfl
 
 @[simp]
-private theorem finTwoHomeomorphSphereZero_one :
-    (finTwoHomeomorphSphereZero 1 : ℝ) = -1 :=
+private theorem finTwoHomeomorphSphereZero_one : (finTwoHomeomorphSphereZero 1 : ℝ) = -1 :=
   rfl
 
 /-- The realization of the boundary of the standard one-simplex is homeomorphic to the unit

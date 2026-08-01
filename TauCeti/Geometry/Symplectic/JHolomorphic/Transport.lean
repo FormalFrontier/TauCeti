@@ -64,8 +64,7 @@ variable {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W}
 equivalences of the
 source and target coordinates. -/
 lemma IsConstStructureJHolomorphicAt.transport {f : V → W} {x : V}
-    (hf : IsConstStructureJHolomorphicAt J J' f x)
-    (eV : V ≃L[ℝ] V') (eW : W ≃L[ℝ] W') :
+    (hf : IsConstStructureJHolomorphicAt J J' f x) (eV : V ≃L[ℝ] V') (eW : W ≃L[ℝ] W') :
     IsConstStructureJHolomorphicAt (J.transport eV.toLinearEquiv) (J'.transport eW.toLinearEquiv)
       (fun y : V' => eW (f (eV.symm y))) (eV x) := by
   have hsource :
@@ -206,8 +205,7 @@ lemma isConstStructureJHolomorphicOn_transport_iff (f : V → W) (s : Set V)
 /-- Global constant-structure `J`-holomorphicity is invariant under continuous real-linear
 coordinate changes. -/
 @[simp]
-lemma isConstStructureJHolomorphic_transport_iff (f : V → W)
-    (eV : V ≃L[ℝ] V') (eW : W ≃L[ℝ] W') :
+lemma isConstStructureJHolomorphic_transport_iff (f : V → W) (eV : V ≃L[ℝ] V') (eW : W ≃L[ℝ] W') :
     IsConstStructureJHolomorphic (J.transport eV.toLinearEquiv) (J'.transport eW.toLinearEquiv)
       (fun y : V' => eW (f (eV.symm y))) ↔ IsConstStructureJHolomorphic J J' f := by
   refine ⟨fun h => isConstStructureJHolomorphic_of_forall fun x => ?_,

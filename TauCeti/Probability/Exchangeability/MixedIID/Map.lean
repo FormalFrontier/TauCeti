@@ -9,11 +9,11 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
-# Coordinatewise maps of mixed i.i.d. sequences
+# Coordinatewise maps of mixed i.i.d. families
 
 This file completes the Layer 0 closure API for the exchangeability symmetry classes: applying a
-measurable map `f : α → β` to every coordinate of a mixed i.i.d. process gives another mixed
-i.i.d. process, whose mixing representative is the coordinatewise pushforward
+measurable map `f : α → β` to every coordinate of a mixed i.i.d. family gives another mixed
+i.i.d. family, whose mixing representative is the coordinatewise pushforward
 `ω ↦ (ν ω).map f` of the original mixing representative `ν`.
 
 `TauCeti.Probability.Exchangeability.Map` already records this closure for `ExchangeableAt`,
@@ -21,7 +21,10 @@ i.i.d. process, whose mixing representative is the coordinatewise pushforward
 symmetry class from the roadmap item asking for closure of each class under the coordinatewise
 pushforward `X ↦ (f ∘ Xᵢ)` (`TauCetiRoadmap/Exchangeability/README.md`, Layer 0). The
 transformation of the mixing representative is the expected one: the mixture identity for the
-mapped process is the original identity with each product factor pushed forward by `f`.
+mapped family is the original identity with each product factor pushed forward by `f`.
+
+`map_values` holds at an arbitrary index type; `mixedIID_of_mixedIID_pathLaw` below is genuinely
+sequence-level, since it transfers along the `ℕ`-indexed path law.
 
 The proof runs at the level of the finite-block mixture identity. It reuses `map_blockLaw`
 (the coordinatewise pushforward of a block law), the random-product measurability of
@@ -41,13 +44,13 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω α β : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [MeasurableSpace β]
+variable {Ω α β ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [MeasurableSpace β]
 
 /-- Mixed i.i.d.-ness with a named mixing representative is preserved by a coordinatewise
 measurable map of the value space: if `X` is mixed i.i.d. with mixing representative `ν`, then
 `fun i ω => f (X i ω)` is mixed i.i.d. with mixing representative the coordinatewise
 pushforward `fun ω => (ν ω).map f`. -/
-theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
     MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
@@ -82,7 +85,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
             exact Measure.pi_map_pi fun _ : Fin m => hf.aemeasurable
 
 /-- Mixed i.i.d.-ness is preserved by a coordinatewise measurable map of the value space. -/
-theorem MixedIID.map_values {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem MixedIID.map_values {μ : Measure Ω} {X : ι → Ω → α}
     (h : MixedIID μ X) {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
     MixedIID μ (fun i ω => f (X i ω)) := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative

@@ -161,8 +161,7 @@ private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 < R) (S
 on the disc with order `ord z` at each `z ∈ S` and is analytic and non-vanishing off `S`, then
 `logDeriv F − ∑_{s∈S} ord s · (· − s)⁻¹` is pole-free, so its circle integral vanishes. -/
 private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → ℂ} {c : ℂ} {R : ℝ}
-    (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ)
-    (hF_mero : MeromorphicOn F (Metric.closedBall c R))
+    (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ) (hF_mero : MeromorphicOn F (Metric.closedBall c R))
     (hord_F : ∀ z ∈ S, meromorphicOrderAt F z = (ord z : WithTop ℤ))
     (hoffF : ∀ z ∈ Metric.closedBall c R, z ∉ S → AnalyticAt ℂ F z ∧ F z ≠ 0) :
     circleIntegral (fun z => logDeriv F z - ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R = 0 := by
@@ -202,8 +201,7 @@ then the contour integral of the logarithmic derivative counts the zeros minus t
 multiplicity:
 `∮_{C(c,R)} f'/f = 2πi · ∑_{z ∈ S} ord z`. -/
 theorem argumentPrinciple {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ)
-    (hf : MeromorphicOn f (Metric.closedBall c R))
-    (hS : (S : Set ℂ) ⊆ Metric.ball c R)
+    (hf : MeromorphicOn f (Metric.closedBall c R)) (hS : (S : Set ℂ) ⊆ Metric.ball c R)
     (hsupp : ∀ z ∈ Metric.closedBall c R, meromorphicOrderAt f z ≠ 0 → z ∈ S)
     (hord : ∀ z ∈ S, meromorphicOrderAt f z = (ord z : WithTop ℤ)) :
     circleIntegral (logDeriv f) c R = 2 * (Real.pi : ℂ) * Complex.I * (∑ z ∈ S, (ord z : ℂ)) := by

@@ -44,16 +44,18 @@ scope do not coincide.
   Mathlib linter set (style, file length, no `maxHeartbeats` overrides). Do not try to disable
   these.
 - One topic per PR. Ship a prerequisite refactor as its own PR.
+- When Mathlib adds mathematics that duplicates Tau Ceti code, migrate all uses to Mathlib and
+  delete the duplicate Tau Ceti declarations. Do not preserve the old API with compatibility
+  aliases, wrapper declarations, deprecated shims, or duplicate theorem names: Tau Ceti defers to
+  Mathlib's names, definitions, and design decisions directly.
 - `TauCeti/` is the only place code goes. `scripts/`, `.github/`, and the lakefile
   (`lakefile.toml`/`lakefile.lean`) are human-owned. The two Lake *pins* —
   `lake-manifest.json` and `lean-toolchain` — are an exception: a **forward-only** bump of
   them (Mathlib moving forward on the branch the lakefile nominates, with the toolchain moving
   monotonically forward) is machine-validated by the `bump-guard` check and is welcome, but
-  never edit the lakefile or move a pin backward. The sole automated exception is an
-  incompatibility PR opened by `tauceti-review-bot[bot]`: it may pin Mathlib's lakefile `rev`
-  to the same immutable first-known-bad SHA recorded in the manifest, and the following compatible
-  bot bump may restore that line to `master`. The trusted bump guard validates those exact one-line
-  transitions before either can build or merge.
+  never edit the lakefile or move a pin backward. Mathlib's lakefile `rev` must always remain
+  `master`; `lake-manifest.json` alone records the exact commit used by ordinary bumps and
+  first-known-bad repair PRs.
 - **Never delete a PR's human-owned changes to get it past the build gate.** When a PR
   *intentionally* touches `scripts/`, `.github/`, or the lakefile (for example, a PR that adds
   a new CI check), those changes are the deliverable, not an obstacle. The gate routes such a
@@ -83,9 +85,8 @@ and round). Explain why both cannot hold. Show the contradiction; do not just as
 When every rubric approves on the current commit and the PR changes only `TauCeti/` (with CI
 green), it **merges automatically**. A PR that *also* changes `lake-manifest.json` and/or
 `lean-toolchain` can auto-merge too, but only once the `bump-guard` check confirms it is a
-forward-only bump and the sandboxed build passes against the new pins. The exact review-bot
-first-known-bad lakefile pin described above can auto-merge under the same checks. A PR that
-touches any other human-owned path (`scripts/`, `.github/`, or any other lakefile change) always
+forward-only bump and the sandboxed build passes against the new pins. A PR that touches any
+other human-owned path (`scripts/`, `.github/`, or the lakefile) always
 needs a human review. The
 review pipeline is sandboxed so it can run on untrusted PRs; see
 [`SECURITY.md`](https://github.com/TauCetiProject/TauCetiReview/blob/main/SECURITY.md) in

@@ -62,8 +62,7 @@ family are quadratic residues modulo an odd prime `q` is equivalent to the same 
 their associated squarefree radicands. This is the conversion used before applying the
 multiquadratic splitting law to genus-field prime discriminants. -/
 theorem forall_legendreSym_primeDiscriminant_eq_one_iff_radicand {ι : Type*} (D : ι → ℤ)
-    (hq : q ≠ 2) :
-    (∀ i, legendreSym q (D i) = 1) ↔
+    (hq : q ≠ 2) : (∀ i, legendreSym q (D i) = 1) ↔
       ∀ i, legendreSym q (primeDiscriminantRadicand (D i)) = 1 := by
   refine forall_congr' fun i => ?_
   rw [legendreSym_eq_legendreSym_primeDiscriminantRadicand (D i) hq]
@@ -72,8 +71,7 @@ theorem forall_legendreSym_primeDiscriminant_eq_one_iff_radicand {ι : Type*} (D
 For the three even prime discriminants this is the corresponding supplementary congruence
 condition on `q`; for an odd prime discriminant `p*` it is the reciprocal condition
 `(q / p) = 1`. -/
-theorem legendreSym_primeDiscriminant_eq_one_iff {D : ℤ}
-    (hD : IsPrimeDiscriminant D) (hq : q ≠ 2) :
+theorem legendreSym_primeDiscriminant_eq_one_iff {D : ℤ} (hD : IsPrimeDiscriminant D) (hq : q ≠ 2) :
     legendreSym q D = 1 ↔
       (IsEvenPrimeDiscriminant D ∧
         (if D = -4 then q % 4 = 1
@@ -123,8 +121,7 @@ theorem legendreSym_primeDiscriminantRadicand_eq_one_iff {D : ℤ}
 
 /-- Indexed-family form of the uniform prime-discriminant residue criterion. -/
 theorem forall_legendreSym_primeDiscriminant_eq_one_iff {ι : Type*} (D : ι → ℤ)
-    (hD : ∀ i, IsPrimeDiscriminant (D i)) (hq : q ≠ 2) :
-    (∀ i, legendreSym q (D i) = 1) ↔
+    (hD : ∀ i, IsPrimeDiscriminant (D i)) (hq : q ≠ 2) : (∀ i, legendreSym q (D i) = 1) ↔
       ∀ i,
         (IsEvenPrimeDiscriminant (D i) ∧
           (if D i = -4 then q % 4 = 1

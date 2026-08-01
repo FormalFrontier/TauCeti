@@ -71,10 +71,13 @@ private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (
 namespace Quiver.IsAcyclic
 
 /-- Every path in an acyclic finite quiver has length strictly below the number of vertices. -/
-theorem length_lt_card (h : Quiver.IsAcyclic V) [Fintype V] {a b : V}
-    (p : _root_.Quiver.Path a b) :
+theorem length_lt_card (h : Quiver.IsAcyclic V) [Fintype V] {a b : V} (p : _root_.Quiver.Path a b) :
     p.length < Fintype.card V := by
-  simpa [Nat.lt_iff_add_one_le] using List.Nodup.length_le_card (h.vertices_nodup p)
+  -- The bound is unfolded by hand rather than by `simpa`: `Quiver.IsAcyclic.card_path_self` puts
+  -- `Nat.card` in scope for this file, and simp then exceeds `maxRecDepth` on this goal.
+  have hle := List.Nodup.length_le_card (h.vertices_nodup p)
+  rw [_root_.Quiver.Path.vertices_length] at hle
+  omega
 
 private theorem finite_paths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (h : Quiver.IsAcyclic V) :
     Finite (Σ a b : V, _root_.Quiver.Path a b) := by

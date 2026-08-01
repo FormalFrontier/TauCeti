@@ -196,8 +196,7 @@ lemma isConstStructureJHolomorphicOn_congr (hfg : Set.EqOn f g s) :
     fun hg => hg.congr hfg⟩
 
 /-- A globally constant-structure `J`-holomorphic map may be replaced by a pointwise equal map. -/
-lemma IsConstStructureJHolomorphic.congr
-    (hf : IsConstStructureJHolomorphic J J' f)
+lemma IsConstStructureJHolomorphic.congr (hf : IsConstStructureJHolomorphic J J' f)
     (hfg : ∀ x, g x = f x) :
     IsConstStructureJHolomorphic J J' g :=
   isConstStructureJHolomorphic_of_forall fun x =>

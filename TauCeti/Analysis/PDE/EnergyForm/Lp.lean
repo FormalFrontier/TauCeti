@@ -58,16 +58,14 @@ value-gradient jets.
 
 This is the Hölder pairing induced by `energyIntegrand A b c`; in particular it is bundled as
 a continuous bilinear map, with no integrability hypotheses required at use sites. -/
-noncomputable def energyFormLp (μ : Measure X) (A : Matrix n n ℝ)
-    (b : EuclideanSpace ℝ n) (c : ℝ) :
+noncomputable def energyFormLp (μ : Measure X) (A : Matrix n n ℝ) (b : EuclideanSpace ℝ n) (c : ℝ) :
     Lp (ℝ × EuclideanSpace ℝ n) 2 μ →L[ℝ]
       Lp (ℝ × EuclideanSpace ℝ n) 2 μ →L[ℝ] ℝ :=
   (energyIntegrand A b c).lpPairing μ 2 2
 
 /-- The `L²` energy form is the integral of the pointwise jet energy density. -/
 @[simp]
-theorem energyFormLp_apply (μ : Measure X) (A : Matrix n n ℝ)
-    (b : EuclideanSpace ℝ n) (c : ℝ)
+theorem energyFormLp_apply (μ : Measure X) (A : Matrix n n ℝ) (b : EuclideanSpace ℝ n) (c : ℝ)
     (U V : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLp μ A b c U V =
       ∫ x, energyIntegrand A b c (U x) (V x) ∂μ := by
@@ -84,8 +82,7 @@ theorem energyFormLp_one_zero_mass_apply (μ : Measure X) (c : ℝ)
   exact energyIntegrand_one_zero_mass_apply c (U x) (V x)
 
 /-- The Dirichlet energy form pairs the gradient components of two `L²` jets. -/
-theorem energyFormLp_one_zero_zero_apply (μ : Measure X)
-    (U V : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
+theorem energyFormLp_one_zero_zero_apply (μ : Measure X) (U V : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLp μ (1 : Matrix n n ℝ) 0 0 U V =
       ∫ x, (V x).2 ⬝ᵥ (U x).2 ∂μ := by
   rw [energyFormLp_one_zero_mass_apply]
@@ -103,8 +100,7 @@ theorem energyFormLp_one_zero_mass_self (μ : Measure X) (c : ℝ)
 
 /-- The diagonal of the Dirichlet `L²` energy form is the integral of the squared gradient
 norm. -/
-theorem energyFormLp_one_zero_zero_self (μ : Measure X)
-    (U : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
+theorem energyFormLp_one_zero_zero_self (μ : Measure X) (U : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLp μ (1 : Matrix n n ℝ) 0 0 U U =
       ∫ x, ‖(U x).2‖ ^ 2 ∂μ := by
   rw [energyFormLp_one_zero_mass_self]
@@ -113,8 +109,7 @@ theorem energyFormLp_one_zero_zero_self (μ : Measure X)
 /-- Replacing the principal coefficient by its symmetric part does not change the diagonal
 `L²` energy form. -/
 theorem energyFormLp_coefficientSymmetricPart_self (μ : Measure X) (A : Matrix n n ℝ)
-    (b : EuclideanSpace ℝ n) (c : ℝ)
-    (U : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
+    (b : EuclideanSpace ℝ n) (c : ℝ) (U : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLp μ (coefficientSymmetricPart A) b c U U =
       energyFormLp μ A b c U U := by
   rw [energyFormLp_apply, energyFormLp_apply]
@@ -164,8 +159,7 @@ theorem energyFormLp_zero_drift_comm_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSy
 flip. -/
 @[simp]
 theorem energyFormLp_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm)
-    (μ : Measure X) (c : ℝ) :
-    (energyFormLp μ A 0 c).flip = energyFormLp μ A 0 c := by
+    (μ : Measure X) (c : ℝ) : (energyFormLp μ A 0 c).flip = energyFormLp μ A 0 c := by
   ext U V
   exact energyFormLp_zero_drift_comm_of_isSymm hA μ c V U
 
@@ -179,8 +173,7 @@ theorem energyFormLp_coefficientSymmetricPart_zero_drift_comm (μ : Measure X)
 /-- The symmetric-part zero-drift `L²` energy form is equal to its flip. -/
 @[simp]
 theorem energyFormLp_coefficientSymmetricPart_zero_drift_flip_eq (μ : Measure X)
-    (A : Matrix n n ℝ) (c : ℝ) :
-    (energyFormLp μ (coefficientSymmetricPart A) 0 c).flip =
+    (A : Matrix n n ℝ) (c : ℝ) : (energyFormLp μ (coefficientSymmetricPart A) 0 c).flip =
       energyFormLp μ (coefficientSymmetricPart A) 0 c :=
   energyFormLp_zero_drift_flip_eq_of_isSymm (coefficientSymmetricPart_isSymm A) μ c
 

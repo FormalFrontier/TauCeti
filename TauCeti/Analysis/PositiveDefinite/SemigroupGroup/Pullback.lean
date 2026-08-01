@@ -118,8 +118,7 @@ theorem comp_spatial_iff_of_surjective {Φ : Type*} [FunLike Φ W V] [AddHomClas
   ⟨of_comp_spatial_surjective φ hsurj, fun hF => hF.comp_spatial φ⟩
 
 /-- The explicit `AddMonoidHom` form of the spatial pullback equivalence for surjective maps. -/
-theorem comp_spatial_addMonoidHom_iff_of_surjective (φ : W →+ V)
-    (hsurj : Function.Surjective φ) :
+theorem comp_spatial_addMonoidHom_iff_of_surjective (φ : W →+ V) (hsurj : Function.Surjective φ) :
     IsSemigroupGroupPD (fun p : ℝ≥0 × W => F (p.1, φ p.2)) ↔ IsSemigroupGroupPD F :=
   comp_spatial_iff_of_surjective φ hsurj
 

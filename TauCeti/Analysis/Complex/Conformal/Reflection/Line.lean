@@ -79,13 +79,11 @@ private lemma affineChart_left_inv {p a : ℂ} (ha : a ≠ 0) (z : ℂ) :
   rw [mul_div_cancel₀ _ ha]
   ring
 
-private lemma affineChart_right_inv {p a : ℂ} (ha : a ≠ 0) (w : ℂ) :
-    (p + a * w - p) / a = w := by
+private lemma affineChart_right_inv {p a : ℂ} (ha : a ≠ 0) (w : ℂ) : (p + a * w - p) / a = w := by
   rw [add_sub_cancel_left, mul_div_cancel_left₀ _ ha]
 
 private lemma affineChart_reflection_coord {p a z : ℂ} (ha : a ≠ 0) :
-    (p + a * (starRingEnd ℂ) ((z - p) / a) - p) / a =
-      (starRingEnd ℂ) ((z - p) / a) :=
+    (p + a * (starRingEnd ℂ) ((z - p) / a) - p) / a = (starRingEnd ℂ) ((z - p) / a) :=
   affineChart_right_inv ha _
 
 /-- **The affine chart carries a pulled-back imaginary-coordinate cut to the original one.** For
@@ -155,8 +153,7 @@ The side and boundary conditions are expressed in the affine coordinates `(z - p
 `(f z - q) / b`. The target direction `b` need not be nonzero for holomorphy: when `b = 0`, the
 conclusion is the constant function with value `q`. The packaged reflection theorem below assumes
 `b ≠ 0` to obtain branch agreement and target-line symmetry. -/
-theorem differentiableOn_lineSchwarzReflection_of_symmetric
-    {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ}
+theorem differentiableOn_lineSchwarzReflection_of_symmetric {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ}
     (ha : a ≠ 0) (hΩopen : IsOpen Ω)
     (hΩ : MapsTo (fun z => p + a * (starRingEnd ℂ) ((z - p) / a)) Ω Ω)
     (hcont : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ ((z - p) / a).im}))
@@ -184,10 +181,8 @@ theorem differentiableOn_lineSchwarzReflection_of_symmetric
 /-- Affine-line Schwarz reflection intertwines reflection in the source line with reflection in
 the target line. The boundary hypothesis says precisely that the original function takes the
 source line into the target line. -/
-theorem lineSchwarzReflection_sourceReflection
-    {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ}
-    (ha : a ≠ 0) (hb : b ≠ 0)
-    (hline : ∀ z ∈ Ω, ((z - p) / a).im = 0 → ((f z - q) / b).im = 0)
+theorem lineSchwarzReflection_sourceReflection {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ}
+    (ha : a ≠ 0) (hb : b ≠ 0) (hline : ∀ z ∈ Ω, ((z - p) / a).im = 0 → ((f z - q) / b).im = 0)
     {z : ℂ} (hz : z ∈ Ω) :
     lineSchwarzReflection p a q b f
         (p + a * (starRingEnd ℂ) ((z - p) / a)) =
@@ -208,8 +203,7 @@ directions nonzero, there is a holomorphic extension which agrees with `f` on th
 side and intertwines reflection in the source and target lines. The witness is the explicit
 function `lineSchwarzReflection p a q b f`. -/
 theorem exists_differentiableOn_eqOn_lineReflection_of_symmetric
-    {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ}
-    (ha : a ≠ 0) (hb : b ≠ 0) (hΩopen : IsOpen Ω)
+    {Ω : Set ℂ} {p a q b : ℂ} {f : ℂ → ℂ} (ha : a ≠ 0) (hb : b ≠ 0) (hΩopen : IsOpen Ω)
     (hΩ : MapsTo (fun z => p + a * (starRingEnd ℂ) ((z - p) / a)) Ω Ω)
     (hcont : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ ((z - p) / a).im}))
     (hholo : DifferentiableOn ℂ f (Ω ∩ {z : ℂ | 0 < ((z - p) / a).im}))

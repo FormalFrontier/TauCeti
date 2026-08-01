@@ -71,8 +71,7 @@ lemma weightedAbelJacobiDivisorClass_change_base (w : X → ℤ)
 base points is the weighted degree times the class `[x₀] - [y₀]`. -/
 lemma weightedAbelJacobiDivisorClass_sub_change_base_coe (w : X → ℤ)
     (h : S.IsWeightedDegreeZero w) {x₀ y₀ : X} (hx₀ : w x₀ = 1) (hy₀ : w y₀ = 1)
-    (D : WeilDivisor X) :
-    (S.weightedAbelJacobiDivisorClass w h hy₀ D : S.ClassGroup) -
+    (D : WeilDivisor X) : (S.weightedAbelJacobiDivisorClass w h hy₀ D : S.ClassGroup) -
         (S.weightedAbelJacobiDivisorClass w h hx₀ D : S.ClassGroup) =
       weightedDegree w D • S.divisorClass (pointDifference x₀ y₀) := by
   have hchange := S.degreeCorrection_change_base w h x₀ y₀ (S.divisorClass D)

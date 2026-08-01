@@ -63,10 +63,8 @@ noncomputable def fiberTorsorOfPretransitive [PreconnectedSpace E] (hp : IsCover
 
 /-- In the local fibre torsor, `e₁ /ₛ e₂` is the inverse local equivalence from `e₂` applied
 to `e₁`. -/
-lemma fiber_sdiv_eq_deckEquivFiberOfSurjective_symm [PreconnectedSpace E]
-    (hp : IsCoveringMap p)
-    [Nonempty (p ⁻¹' {b})] [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})]
-    (e₁ e₂ : p ⁻¹' {b}) :
+lemma fiber_sdiv_eq_deckEquivFiberOfSurjective_symm [PreconnectedSpace E] (hp : IsCoveringMap p)
+    [Nonempty (p ⁻¹' {b})] [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] (e₁ e₂ : p ⁻¹' {b}) :
     letI := fiberTorsorOfPretransitive hp b
     e₁ /ₛ e₂ =
       (deckEquivFiberOfSurjective hp e₂ (MulAction.surjective_smul (Deck p) e₂)).symm e₁ :=
@@ -77,8 +75,7 @@ by
 quotient of a point by the chosen base point. -/
 @[simp]
 lemma deckEquivFiberOfSurjective_symm_eq_sdiv [PreconnectedSpace E] (hp : IsCoveringMap p)
-    [Nonempty (p ⁻¹' {b})] [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})]
-    (e e' : p ⁻¹' {b}) :
+    [Nonempty (p ⁻¹' {b})] [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] (e e' : p ⁻¹' {b}) :
     letI := fiberTorsorOfPretransitive hp b
     (deckEquivFiberOfSurjective hp e (MulAction.surjective_smul (Deck p) e)).symm e' =
       e' /ₛ e := by

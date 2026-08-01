@@ -64,8 +64,7 @@ lemma coe_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X
   Classical.choose_spec (exists_sup D E)
 
 /-- The coefficient of the union is the maximum of the two coefficients. -/
-lemma coeff_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e)
-    (x : X) :
+lemma coeff_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) (x : X) :
     coeff (sup D E : WeilDivisor X) x =
       coeff (D : WeilDivisor X) x ⊔ coeff (E : WeilDivisor X) x := by
   rw [coe_sup, WeilDivisor.coeff_sup]
@@ -99,15 +98,13 @@ lemma equivSym_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDeg
   simp
 
 /-- The left input divisor lies below the union. -/
-lemma le_sup_left (D : EffectiveDivisorOfDegree X d)
-    (E : EffectiveDivisorOfDegree X e) :
+lemma le_sup_left (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) :
     (D : WeilDivisor X) ≤ sup D E := by
   rw [coe_sup]
   exact _root_.le_sup_left
 
 /-- The right input divisor lies below the union. -/
-lemma le_sup_right (D : EffectiveDivisorOfDegree X d)
-    (E : EffectiveDivisorOfDegree X e) :
+lemma le_sup_right (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) :
     (E : WeilDivisor X) ≤ sup D E := by
   rw [coe_sup]
   exact _root_.le_sup_right
@@ -115,21 +112,18 @@ lemma le_sup_right (D : EffectiveDivisorOfDegree X d)
 /-- Any Weil divisor above both inputs lies above their union. -/
 lemma sup_le {F : WeilDivisor X} {D : EffectiveDivisorOfDegree X d}
     {E : EffectiveDivisorOfDegree X e} (hDF : (D : WeilDivisor X) ≤ F)
-    (hEF : (E : WeilDivisor X) ≤ F) :
-    (sup D E : WeilDivisor X) ≤ F := by
+    (hEF : (E : WeilDivisor X) ≤ F) : (sup D E : WeilDivisor X) ≤ F := by
   rw [coe_sup]
   exact _root_.sup_le hDF hEF
 
 /-- The union is the left input exactly when the right input is below the left input. -/
-lemma sup_eq_left {D : EffectiveDivisorOfDegree X d}
-    {E : EffectiveDivisorOfDegree X e} :
+lemma sup_eq_left {D : EffectiveDivisorOfDegree X d} {E : EffectiveDivisorOfDegree X e} :
     (sup D E : WeilDivisor X) = D ↔ (E : WeilDivisor X) ≤ D := by
   rw [coe_sup]
   exact _root_.sup_eq_left
 
 /-- The union is the right input exactly when the left input is below the right input. -/
-lemma sup_eq_right {D : EffectiveDivisorOfDegree X d}
-    {E : EffectiveDivisorOfDegree X e} :
+lemma sup_eq_right {D : EffectiveDivisorOfDegree X d} {E : EffectiveDivisorOfDegree X e} :
     (sup D E : WeilDivisor X) = E ↔ (D : WeilDivisor X) ≤ E := by
   rw [coe_sup]
   exact _root_.sup_eq_right
@@ -142,14 +136,12 @@ lemma sup_comm (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree 
   rw [coe_sup, coe_cast, coe_sup, _root_.sup_comm]
 
 /-- The left degree index is bounded above by the degree of the union. -/
-lemma left_le_degree_sup (D : EffectiveDivisorOfDegree X d)
-    (E : EffectiveDivisorOfDegree X e) :
+lemma left_le_degree_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) :
     d ≤ (degree ((D : WeilDivisor X) ⊔ E)).toNat :=
   EffectiveDivisorOfDegree.degree_le_of_le (le_sup_left D E)
 
 /-- The right degree index is bounded above by the degree of the union. -/
-lemma right_le_degree_sup (D : EffectiveDivisorOfDegree X d)
-    (E : EffectiveDivisorOfDegree X e) :
+lemma right_le_degree_sup (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) :
     e ≤ (degree ((D : WeilDivisor X) ⊔ E)).toNat :=
   EffectiveDivisorOfDegree.degree_le_of_le (le_sup_right D E)
 
@@ -168,8 +160,7 @@ lemma degree_inf_toNat_add_degree_sup_toNat (D : EffectiveDivisorOfDegree X d)
   omega
 
 /-- The degree of the union is `d + e` minus the degree of the common part. -/
-lemma degree_sup_toNat (D : EffectiveDivisorOfDegree X d)
-    (E : EffectiveDivisorOfDegree X e) :
+lemma degree_sup_toNat (D : EffectiveDivisorOfDegree X d) (E : EffectiveDivisorOfDegree X e) :
     (degree ((D : WeilDivisor X) ⊔ E)).toNat =
       d + e - (degree ((D : WeilDivisor X) ⊓ E)).toNat := by
   have := degree_inf_toNat_add_degree_sup_toNat D E

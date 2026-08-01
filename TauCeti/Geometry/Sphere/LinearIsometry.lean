@@ -55,8 +55,7 @@ theorem coe_unitSphereEquiv_apply (e : E ≃ₗᵢ[R] F) (x : sphere (0 : E) 1) 
   (rfl)
 
 @[simp]
-theorem unitSphereEquiv_symm (e : E ≃ₗᵢ[R] F) :
-    (unitSphereEquiv e).symm = unitSphereEquiv e.symm :=
+theorem unitSphereEquiv_symm (e : E ≃ₗᵢ[R] F) : (unitSphereEquiv e).symm = unitSphereEquiv e.symm :=
   (rfl)
 
 @[simp]

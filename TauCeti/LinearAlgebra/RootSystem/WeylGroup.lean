@@ -15,7 +15,9 @@ This file proves that the action of the automorphism group of a root system on i
 faithful.  Consequently, every subgroup of that automorphism group, and in particular the Weyl
 group, is finite when the root index type is finite.  It also records how that action evaluates on
 simple reflections, how it interacts with root negation, and the sign change a reflection induces
-on its own coroot functional.
+on its own coroot functional.  Alongside it, the weight-space action of the Weyl group is faithful,
+with no spanning hypothesis needed.  More generally, an automorphism transports coroot functionals
+along its action on weights, matching the coroot functional of a root with that of its image.
 
 ## Main results
 
@@ -23,9 +25,14 @@ on its own coroot functional.
   determined by its permutation of the roots.
 * `TauCeti.RootPairing.coroot'_reflection_self` says a reflection reverses the sign of its own
   coroot functional.
+* `TauCeti.RootPairing.coroot'_smul` and `TauCeti.RootPairing.coroot'_weylGroupToPerm_smul` say an
+  automorphism, and in particular a Weyl-group element, carries the coroot functional of a root to
+  the coroot functional of its image.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
+* `TauCeti.RootPairing.weylGroup.eq_one_of_smul_eq_self` says a Weyl-group element acting trivially
+  on the weight space is the identity.
 * `TauCeti.RootPairing.weylGroup.commute_ofIdx_of_isOrthogonal` says orthogonal roots have
   commuting reflections.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
@@ -88,6 +95,25 @@ lemma coroot'_reflection_self (i : ι) (x : M) :
     P.coroot' i (P.reflection i x) = -P.coroot' i x := by
   rw [P.coroot'_reflection, coroot'_reflectionPerm_self]
   simp
+
+/-- An automorphism of a root pairing transports coroot functionals along its action on weights. -/
+@[grind =]
+lemma coroot'_smul (g : P.Aut) (i : ι) (x : M) :
+    P.coroot' i (g • x) = P.coroot' (g.indexEquiv.symm i) x := by
+  -- This is the transpose condition packaged in `RootPairing.Hom.weight_coweight_transpose`.
+  have h := congrFun (congrArg DFunLike.coe
+    (_root_.RootPairing.Hom.weight_coweight_transpose_apply P P (P.coroot i) g.toHom)) x
+  simp only [LinearMap.dualMap_apply, _root_.RootPairing.Hom.coroot_coweightMap_apply] at h
+  exact h
+
+/-- **A Weyl-group element matches the coroot functional of a root with the coroot functional of
+its image.** -/
+@[grind =]
+lemma coroot'_weylGroupToPerm_smul (w : P.weylGroup) (i : ι) (x : M) :
+    P.coroot' (P.weylGroupToPerm w i) (w • x) = P.coroot' i x := by
+  have h := coroot'_smul P (w : P.Aut) ((w : P.Aut).indexEquiv i) x
+  rw [_root_.Equiv.symm_apply_apply] at h
+  exact h
 
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
@@ -154,6 +180,16 @@ lemma ofIdx_inv_eq (i : ι) :
 lemma ofIdx_mul_self (i : ι) :
     _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P i = 1 := by
   rw [mul_eq_one_iff_eq_inv, ofIdx_inv_eq]
+
+variable {P} in
+/-- A Weyl-group element acting trivially on the weight space is the identity: the weight-space
+representation of the automorphism group of a root pairing is faithful. -/
+theorem eq_one_of_smul_eq_self {w : P.weylGroup} (h : ∀ x : M, w • x = x) : w = 1 := by
+  have hw : (w : P.Aut) = 1 := by
+    refine _root_.RootPairing.Equiv.weightHom_injective P ?_
+    rw [map_one]
+    exact LinearEquiv.ext fun x ↦ h x
+  exact Subtype.ext (by simpa using hw)
 
 /-- **Orthogonal roots have commuting reflections** in the Weyl group. -/
 theorem commute_ofIdx_of_isOrthogonal {i j : ι} (h : P.IsOrthogonal i j) :

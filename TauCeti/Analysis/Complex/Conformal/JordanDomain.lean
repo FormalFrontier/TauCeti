@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
-public import TauCeti.Topology.JordanCurve
+public import TauCeti.Topology.JordanCurve.Basic
+public import TauCeti.Topology.UniformlyLocallyConnected
 import Mathlib.Analysis.Normed.Module.Connected
 import TauCeti.Analysis.Complex.Conformal.Biholomorph
 
@@ -54,6 +55,8 @@ are.
   locally connected, which is the hypothesis the *hard* direction of the L5 milestone runs on:
   Carathéodory's continuity theorem produces a continuous extension of the Riemann map exactly for
   a locally connected boundary.
+* `TauCeti.IsJordanDomain.isUniformlyLocallyConnected_frontier` — the same hypothesis in the
+  uniform `ε`–`δ` form that proof actually consumes, available because the boundary is compact.
 * `TauCeti.isJordanCurve_frontier_of_isJordanCurve_frontier_image`,
   `TauCeti.isJordanDomain_of_isJordanCurve_frontier_image` and
   `TauCeti.isJordanDomain_of_image_eq_ball` — **the converse half of the Carathéodory
@@ -66,8 +69,8 @@ are.
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
 `Conformal/BoundaryCorrespondence.lean`; the Jordan-curve vocabulary they are phrased in, together
-with the circle that models it, is in `TauCeti/Topology/JordanCurve.lean`, where the predicate and
-its transfer lemmas are stated for an arbitrary topological space.
+with the circle that models it, is in `TauCeti/Topology/JordanCurve/Basic.lean`, where the
+predicate and its transfer lemmas are stated for an arbitrary topological space.
 
 ## Coordination with upstream Mathlib
 
@@ -148,6 +151,21 @@ boundary — is `TauCeti.locallyConnectedSpace_frontier_image` in
 theorem IsJordanDomain.locallyConnectedSpace_frontier (h : IsJordanDomain U) :
     LocallyConnectedSpace (frontier U) :=
   h.isJordanCurve_frontier.locallyConnectedSpace
+
+/-- **The boundary of a Jordan domain is uniformly locally connected**: nearby boundary points are
+joined by connected subsets of the boundary that are small at a rate independent of where they sit.
+
+This is `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` upgraded by
+`TauCeti.IsCompact.isUniformlyLocallyConnected`, the upgrade costing nothing because the boundary
+of a bounded set is compact. The uniform form is what the hard direction of the L5 milestone
+consumes: Carathéodory's continuity theorem controls the image of a crosscut by joining its two
+boundary endpoints inside a small connected piece of `frontier U`, and the estimate has to be
+uniform over all crosscuts at once. -/
+theorem IsJordanDomain.isUniformlyLocallyConnected_frontier (h : IsJordanDomain U) :
+    IsUniformlyLocallyConnected (frontier U) :=
+  haveI := h.locallyConnectedSpace_frontier
+  IsCompact.isUniformlyLocallyConnected
+    (h.isCompact_closure.of_isClosed_subset isClosed_frontier frontier_subset_closure)
 
 /-- A Jordan domain is not all of `ℂ`. -/
 theorem IsJordanDomain.ne_univ (h : IsJordanDomain U) : U ≠ univ := by

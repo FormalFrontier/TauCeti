@@ -80,8 +80,7 @@ nonsymmetric principal coefficient, first pass to `coefficientSymmetricPart` usi
 ellipticity API in `TauCeti.Analysis.PDE.Uniform.Ellipticity`, then apply this lemma to the
 symmetric coefficient field. -/
 @[simp]
-lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm)
-    (c : ℝ) :
+lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm) (c : ℝ) :
     (energyIntegrand A 0 c).flip = energyIntegrand A 0 c := by
   apply ContinuousLinearMap.ext
   intro U
@@ -111,8 +110,7 @@ lemma energyIntegrand_coefficientSymmetricPart_self (A : Matrix n n ℝ)
 
 /-- Bundled-map form of symmetry for the symmetric-part zero-drift jet integrand. -/
 @[simp]
-lemma energyIntegrand_coefficientSymmetricPart_zero_drift_flip_eq (A : Matrix n n ℝ)
-    (c : ℝ) :
+lemma energyIntegrand_coefficientSymmetricPart_zero_drift_flip_eq (A : Matrix n n ℝ) (c : ℝ) :
     (energyIntegrand (coefficientSymmetricPart A) 0 c).flip =
       energyIntegrand (coefficientSymmetricPart A) 0 c :=
   energyIntegrand_zero_drift_flip_eq_of_isSymm (coefficientSymmetricPart_isSymm A) c

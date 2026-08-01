@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Combinatorics.Quiver.Path.Vertices
 public import Mathlib.Data.List.Nodup
+public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Acyclic quivers
@@ -94,8 +95,7 @@ theorem iff_not_exists_ne_nil :
 
 /-- The composition of paths in opposite directions is trivial in an acyclic quiver. -/
 @[simp]
-theorem comp_eq_nil (h : Quiver.IsAcyclic V) {a b : V}
-    (p : Path a b) (q : Path b a) :
+theorem comp_eq_nil (h : Quiver.IsAcyclic V) {a b : V} (p : Path a b) (q : Path b a) :
     p.comp q = Path.nil :=
   h.eq_nil (p.comp q)
 
@@ -112,8 +112,7 @@ theorem length_eq_zero_of_paths_right (h : Quiver.IsAcyclic V) {a b : V}
   h.length_eq_zero_of_paths_left q p
 
 /-- Vertices joined by paths in both directions in an acyclic quiver are equal. -/
-theorem eq_of_paths (h : Quiver.IsAcyclic V) {a b : V}
-    (p : Path a b) (q : Path b a) :
+theorem eq_of_paths (h : Quiver.IsAcyclic V) {a b : V} (p : Path a b) (q : Path b a) :
     a = b :=
   p.eq_of_length_zero (h.length_eq_zero_of_paths_left p q)
 
@@ -132,15 +131,13 @@ theorem vertices_nodup (h : Quiver.IsAcyclic V) {a b : V} (p : Path a b) :
     omega
 
 /-- Between distinct vertices of an acyclic quiver, paths cannot exist in both directions. -/
-theorem not_nonempty_path_and_nonempty_path (h : Quiver.IsAcyclic V) {a b : V}
-    (hab : a ≠ b) :
+theorem not_nonempty_path_and_nonempty_path (h : Quiver.IsAcyclic V) {a b : V} (hab : a ≠ b) :
     ¬(Nonempty (Path a b) ∧ Nonempty (Path b a)) := by
   rintro ⟨⟨p⟩, ⟨q⟩⟩
   exact hab (h.eq_of_paths p q)
 
 /-- A path between distinct vertices of an acyclic quiver excludes every reverse path. -/
-theorem isEmpty_path_of_path (h : Quiver.IsAcyclic V) {a b : V}
-    (hab : a ≠ b) (p : Path a b) :
+theorem isEmpty_path_of_path (h : Quiver.IsAcyclic V) {a b : V} (hab : a ≠ b) (p : Path a b) :
     IsEmpty (Path b a) :=
   ⟨fun q ↦ hab (h.eq_of_paths p q)⟩
 
@@ -150,14 +147,19 @@ theorem isEmpty_hom_self (h : Quiver.IsAcyclic V) (a : V) :
   ⟨fun e ↦ Path.cons_ne_nil Path.nil e (h e.toPath)⟩
 
 /-- In an acyclic quiver, an arrow excludes every reverse arrow. -/
-theorem isEmpty_hom_of_hom (h : Quiver.IsAcyclic V) {a b : V}
-    (e : a ⟶ b) : IsEmpty (b ⟶ a) :=
+theorem isEmpty_hom_of_hom (h : Quiver.IsAcyclic V) {a b : V} (e : a ⟶ b) : IsEmpty (b ⟶ a) :=
   ⟨fun f ↦ by simpa using h.length_eq_zero_of_paths_left e.toPath f.toPath⟩
 
 /-- Closed paths in an acyclic quiver form a subsingleton. -/
 theorem subsingleton_path_self (h : Quiver.IsAcyclic V) (a : V) :
     Subsingleton (Path a a) :=
   ⟨fun p q ↦ (h.eq_nil p).trans (h.eq_nil q).symm⟩
+
+/-- An acyclic quiver has exactly one closed path at each vertex, the trivial one. -/
+theorem card_path_self (h : Quiver.IsAcyclic V) (a : V) : Nat.card (Path a a) = 1 := by
+  haveI : Nonempty (Path a a) := ⟨Path.nil⟩
+  letI : Subsingleton (Path a a) := h.subsingleton_path_self a
+  exact Nat.card_unique
 
 /-- A quiver with no arrows is acyclic. -/
 theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :
@@ -169,8 +171,7 @@ theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :
 
 /-- A quiver mapping to an acyclic quiver is acyclic if the induced map on each closed-path
 type is injective. -/
-theorem of_mapPath_self_injective {W : Type*} [Quiver W] (F : V ⥤q W)
-    (hW : Quiver.IsAcyclic W)
+theorem of_mapPath_self_injective {W : Type*} [Quiver W] (F : V ⥤q W) (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a : V⦄, Function.Injective (F.mapPath : Path a a → Path (F.obj a) (F.obj a))) :
     Quiver.IsAcyclic V := by
   intro a p
@@ -180,8 +181,7 @@ theorem of_mapPath_self_injective {W : Type*} [Quiver W] (F : V ⥤q W)
 
 /-- A quiver is acyclic if its induced maps on all path types are injective and its target is
 acyclic. -/
-theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W)
-    (hW : Quiver.IsAcyclic W)
+theorem of_mapPath_injective {W : Type*} [Quiver W] (F : V ⥤q W) (hW : Quiver.IsAcyclic W)
     (hinj : ∀ ⦃a b : V⦄, Function.Injective (F.mapPath : Path a b → Path (F.obj a) (F.obj b))) :
     Quiver.IsAcyclic V :=
   of_mapPath_self_injective F hW fun {_} ↦ @hinj _ _

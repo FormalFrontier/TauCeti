@@ -56,10 +56,20 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   `TauCeti.isCompact_clusterSetOn` and `TauCeti.clusterSetOn_nonempty` — the cluster set is a closed
   subset of `closure (f '' U)`, and is compact and nonempty at every point of `closure U` once `f`
   maps `U` into a compact set.
-* `TauCeti.clusterSetOn_eq_singleton_of_tendsto` and
+* `TauCeti.clusterSetOn_eq_singleton_of_tendsto`,
+  `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt` and
   `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` — a limit along `𝓝[U] w` makes the cluster
-  set a singleton; conversely a subsingleton cluster set at a point of `closure U` produces a limit,
-  provided `f` maps `U` into a compact set.
+  set a singleton, in particular at a point of `U` where `f` is continuous; conversely a
+  subsingleton cluster set at a point of `closure U` produces a limit, provided `f` maps `U` into a
+  compact set.
+* `TauCeti.exists_mem_closure_mem_clusterSetOn`,
+  `TauCeti.exists_mem_frontier_mem_clusterSetOn_of_notMem_image`,
+  `TauCeti.closure_image_eq_biUnion_clusterSetOn` and
+  `TauCeti.closure_image_eq_image_union_biUnion_clusterSetOn` — **the cluster sets cover the closure
+  of the image** once `closure U` is compact: every adherent value of `f '' U` is a cluster value at
+  some point of `closure U` — at a point of `frontier U`, if the value is not attained and `f` is
+  continuous — so `closure (f '' U)` is the union of the cluster sets, and — for continuous `f` —
+  is the image together with the *boundary* cluster values.
 * `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map into a
   compact set, with subsingleton boundary cluster sets, extends continuously to `closure U`;
   `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the proper-metric form, where the
@@ -165,6 +175,17 @@ lemma clusterSetOn_eq_singleton_of_tendsto [T2Space Y] (hw : w ∈ closure U)
     (tendsto_nhds_unique (f := id) (tendsto_id.mono_left inf_le_left)
       (tendsto_id.mono_left (inf_le_right.trans hv')))
 
+/-- **At a point of `U` where `f` is continuous the cluster set is the value.** Nothing but `f w`
+is approached, so a cluster set carries information only at points off `U` — which is why a
+boundary-correspondence theorem never has to say anything about the interior.
+
+This is the normal form of a cluster set at an interior continuity point, and is tagged `@[simp]`:
+with the two hypotheses to hand, `simp [*]` rewrites `clusterSetOn f U w` to `{f w}`. -/
+@[simp]
+lemma clusterSetOn_eq_singleton_of_continuousWithinAt [T2Space Y] (hw : w ∈ U)
+    (hfc : ContinuousWithinAt f U w) : clusterSetOn f U w = {f w} :=
+  clusterSetOn_eq_singleton_of_tendsto (subset_closure hw) hfc
+
 /-- **A subsingleton cluster set is an honest limit.** If `f` maps `U` into a compact set and the
 cluster set at `w ∈ closure U` has at most one element, then `f` converges along `𝓝[U] w`.
 
@@ -179,6 +200,97 @@ theorem exists_tendsto_of_clusterSetOn_subsingleton (hK : IsCompact K) (hfK : Ma
   obtain ⟨v, hv⟩ := clusterSetOn_nonempty hK hfK hw
   exact ⟨v, hK.tendsto_nhds_of_unique_mapClusterPt
     (mem_of_superset self_mem_nhdsWithin hfK) fun _ _ hu => hsub hu hv⟩
+
+/-! ## The cluster sets cover the closure of the image -/
+
+/-- **Every adherent value of the image is a cluster value at some point of `closure U`**, provided
+`closure U` is compact.
+
+Aggregated over `w`, this is the converse of `TauCeti.clusterSetOn_subset_closure_image`, and it is
+where compactness of the *domain* side enters. That hypothesis cannot be dropped: on
+`U = Set.Ici (0 : ℝ)`, whose closure is not compact, the map `f x = 1 / (1 + x)` has image
+`Set.Ioc 0 1` and so has `0` adherent to it, yet `0` is a cluster value of `f` at no point at all —
+the approach points have escaped to infinity.
+
+No continuity is needed, and the proof is pure filter theory. The filter
+`comap f (𝓝 v) ⊓ 𝓟 U` — "inside `U`, with image near `v`" — is nontrivial *because* `v` is adherent
+to `f '' U`, and it is carried by `𝓟 (closure U)`; compactness supplies a cluster point `w` of it,
+and the witnessing filter `𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U)` is a nontrivial filter refining `𝓝[U] w`
+whose image under `f` refines `𝓝 v`, which is exactly what `v ∈ clusterSetOn f U w` asserts. -/
+theorem exists_mem_closure_mem_clusterSetOn (hU : IsCompact (closure U))
+    (hv : v ∈ closure (f '' U)) : ∃ w ∈ closure U, v ∈ clusterSetOn f U w := by
+  haveI : (comap f (𝓝 v) ⊓ 𝓟 U).NeBot := by
+    refine Filter.inf_principal_neBot_iff.mpr fun t ht => ?_
+    obtain ⟨s, hs, hst⟩ := ht
+    obtain ⟨y, hys, z, hzU, rfl⟩ := mem_closure_iff_nhds.mp hv s hs
+    exact ⟨z, hst hys, hzU⟩
+  have hle : comap f (𝓝 v) ⊓ 𝓟 U ≤ 𝓟 (closure U) :=
+    inf_le_right.trans (principal_mono.mpr subset_closure)
+  obtain ⟨w, hw, hcp⟩ := hU.exists_clusterPt hle
+  refine ⟨w, hw, ?_⟩
+  have hnb : (𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U)).NeBot := hcp
+  have hv' : map f (𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U)) ≤ 𝓝 v :=
+    (map_mono (inf_le_right.trans inf_le_left)).trans map_comap_le
+  have hw' : 𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U) ≤ 𝓝[U] w :=
+    le_inf inf_le_left (inf_le_right.trans inf_le_right)
+  exact (hnb.map f).mono (le_inf hv' (map_mono hw'))
+
+/-- **An unattained adherent value of the image is a cluster value at a boundary point.** The
+sharpening of `TauCeti.exists_mem_closure_mem_clusterSetOn` that puts the witness on `frontier U`
+rather than merely on `closure U`, for a `f` continuous on `U`: a witness inside `U` would have the
+single cluster value `f w`, by `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`, and `v` is
+assumed not to be a value of `f` on `U`.
+
+Neither openness of `U` nor any hypothesis on `frontier U` is needed. -/
+theorem exists_mem_frontier_mem_clusterSetOn_of_notMem_image [T2Space Y]
+    (hU : IsCompact (closure U)) (hfc : ContinuousOn f U) (hvc : v ∈ closure (f '' U))
+    (hvn : v ∉ f '' U) : ∃ w ∈ frontier U, v ∈ clusterSetOn f U w := by
+  obtain ⟨w, hw, hvw⟩ := exists_mem_closure_mem_clusterSetOn hU hvc
+  have hwU : w ∉ U := fun hwU => by
+    rw [clusterSetOn_eq_singleton_of_continuousWithinAt hwU (hfc w hwU), mem_singleton_iff] at hvw
+    exact hvn (hvw ▸ mem_image_of_mem f hwU)
+  refine ⟨w, ?_, hvw⟩
+  rw [← closure_sdiff_interior]
+  exact ⟨hw, fun hwi => hwU (interior_subset hwi)⟩
+
+/-- **The cluster sets cover the closure of the image.** For a compact `closure U`, the closure of
+`f '' U` is exactly the union of the cluster sets of `f` on `U` over the points of `closure U`.
+
+Both inclusions have already been recorded: `TauCeti.clusterSetOn_subset_closure_image` gives one
+and `TauCeti.exists_mem_closure_mem_clusterSetOn` the other. -/
+theorem closure_image_eq_biUnion_clusterSetOn (hU : IsCompact (closure U)) :
+    closure (f '' U) = ⋃ w ∈ closure U, clusterSetOn f U w :=
+  subset_antisymm
+    (fun _ hv => by
+      obtain ⟨w, hw, hvw⟩ := exists_mem_closure_mem_clusterSetOn hU hv
+      exact mem_biUnion hw hvw)
+    (iUnion₂_subset fun _ _ => clusterSetOn_subset_closure_image)
+
+/-- **The closure of the image is the image together with the boundary cluster values.** The
+refinement of `TauCeti.closure_image_eq_biUnion_clusterSetOn` for a continuous `f`: the points of
+`U` contribute only the values `f w` themselves, by
+`TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`, so the whole of the new material sits
+over `frontier U`.
+
+This is the form in which the covering is used: subtracting `f '' U` from both sides identifies
+`closure (f '' U) \ f '' U` with the union of the boundary cluster sets, as soon as one knows that
+the boundary cluster values avoid `f '' U`. That difference is the *frontier* of the image only
+when `f '' U` is open — which is an extra hypothesis, not part of this theorem, and is what
+conformality supplies in `TauCeti.biUnion_clusterSetOn_eq_frontier_image`. -/
+theorem closure_image_eq_image_union_biUnion_clusterSetOn [T2Space Y] (hU : IsCompact (closure U))
+    (hfc : ContinuousOn f U) :
+    closure (f '' U) = f '' U ∪ ⋃ w ∈ frontier U, clusterSetOn f U w := by
+  have hint : ⋃ w ∈ U, clusterSetOn f U w = f '' U := by
+    ext v
+    simp only [mem_iUnion₂, mem_image]
+    refine ⟨fun ⟨w, hw, hv⟩ => ⟨w, hw, ?_⟩, fun ⟨w, hw, hv⟩ => ⟨w, hw, ?_⟩⟩
+    · rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw),
+        mem_singleton_iff] at hv
+      exact hv.symm
+    · rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw), mem_singleton_iff]
+      exact hv.symm
+  rw [closure_image_eq_biUnion_clusterSetOn hU, closure_eq_self_union_frontier, biUnion_union,
+    hint]
 
 end TopologicalSpace
 
@@ -208,6 +320,42 @@ lemma mem_clusterSetOn_iff_forall_exists :
     exact ⟨z, ⟨mem_ball.mpr hzd, hzU⟩, hball (mem_ball.mpr hfz)⟩
 
 end PseudoMetricSpace
+
+/-! ## The Cauchy criterion for a subsingleton cluster set -/
+
+section MetricSpace
+
+variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] {U : Set X} {f : X → Y} {w : X}
+
+/-- **A uniformly small oscillation on the approach regions makes the cluster set a
+subsingleton.** If, for every `ε > 0`, the values of `f` on `U ∩ ball w δ` are within `ε` of one
+another for some `δ > 0`, then `f` has at most one cluster value at `w` along `U`.
+
+This is the Cauchy criterion in cluster-set form, and it is how a *quantitative* boundary estimate
+is turned into the hypothesis of `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` and of
+`TauCeti.exists_continuousOn_closure_eqOn`: two cluster values are approached at points of
+`U` arbitrarily close to `w`, hence at two points of a single approach region, where the
+hypothesis holds them within `ε` of each other.
+
+Nothing is claimed about *existence* of a cluster value, which is a compactness matter; the
+codomain is a genuine metric space rather than a pseudometric one because the conclusion is an
+equality of points. -/
+theorem subsingleton_clusterSetOn_of_forall_exists
+    (h : ∀ ε > 0, ∃ δ > 0, ∀ x ∈ U ∩ Metric.ball w δ, ∀ y ∈ U ∩ Metric.ball w δ,
+      dist (f x) (f y) ≤ ε) :
+    (clusterSetOn f U w).Subsingleton := by
+  intro v₁ h₁ v₂ h₂
+  refine eq_of_forall_dist_le fun ε hε => ?_
+  obtain ⟨δ, hδ, hosc⟩ := h (ε / 3) (by positivity)
+  obtain ⟨x, hxU, hxd, hx⟩ := mem_clusterSetOn_iff_forall_exists.mp h₁ (ε / 3) (by positivity) δ hδ
+  obtain ⟨y, hyU, hyd, hy⟩ := mem_clusterSetOn_iff_forall_exists.mp h₂ (ε / 3) (by positivity) δ hδ
+  have hxy := hosc x ⟨hxU, Metric.mem_ball.mpr hxd⟩ y ⟨hyU, Metric.mem_ball.mpr hyd⟩
+  have h₁' : dist v₁ (f x) < ε / 3 := by rwa [dist_comm]
+  calc dist v₁ v₂ ≤ dist v₁ (f x) + dist (f x) (f y) + dist (f y) v₂ := dist_triangle4 _ _ _ _
+    _ ≤ ε / 3 + ε / 3 + ε / 3 := add_le_add (add_le_add h₁'.le hxy) hy.le
+    _ = ε := by ring
+
+end MetricSpace
 
 /-! ## The extension criterion -/
 

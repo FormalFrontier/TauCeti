@@ -69,8 +69,7 @@ lemma energyFormIntegral_zero_drift_transpose_apply :
 
 /-- A.e. symmetric principal coefficients make the zero-drift integrated energy form
 symmetric. -/
-lemma energyFormIntegral_zero_drift_comm_of_isSymm_ae
-    (ha : ∀ᵐ x ∂μ, (a x).IsSymm) :
+lemma energyFormIntegral_zero_drift_comm_of_isSymm_ae (ha : ∀ᵐ x ∂μ, (a x).IsSymm) :
     energyFormIntegral μ a (fun _ => 0) c U V =
       energyFormIntegral μ a (fun _ => 0) c V U := by
   calc
@@ -91,8 +90,7 @@ lemma energyFormIntegral_zero_drift_comm_of_isSymm_ae
 /-- Bundled-map form of symmetry for a zero-drift integrated energy form with a.e. symmetric
 principal coefficients. -/
 @[simp]
-lemma energyFormIntegral_zero_drift_swap_eq_of_isSymm_ae
-    (ha : ∀ᵐ x ∂μ, (a x).IsSymm) :
+lemma energyFormIntegral_zero_drift_swap_eq_of_isSymm_ae (ha : ∀ᵐ x ∂μ, (a x).IsSymm) :
     Function.swap (energyFormIntegral μ a (fun _ => 0) c) =
       energyFormIntegral μ a (fun _ => 0) c := by
   funext U V

@@ -30,8 +30,7 @@ public section
 namespace TauCeti
 
 /-- A class sum is integral over `ℤ` as an element of the center of `ℤ[G]`. -/
-theorem isIntegral_classSum {G : Type*} [Group G] [Fintype G] [DecidableEq G]
-    (C : ConjClasses G) :
+theorem isIntegral_classSum {G : Type*} [Group G] [Fintype G] [DecidableEq G] (C : ConjClasses G) :
     IsIntegral ℤ (classSumCenter (k := ℤ) C) :=
   Algebra.IsIntegral.isIntegral _
 

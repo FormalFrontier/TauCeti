@@ -65,6 +65,44 @@ open Asymptotics Complex Filter Topology
 
 variable {γ : ℝ → ℂ} {t₀ : ℝ} {A : ℂ}
 
+-- The second-order remainder `γ t - γ t₀ - (t - t₀) · L - (t - t₀)² · A / 2` differentiates to
+-- `deriv γ t - L - (t - t₀) · A`. Only differentiability of `γ` at the single point is used: no
+-- neighbourhood, no second derivative, and `L`, `A` are arbitrary.
+private theorem hasDerivAt_chordRemainder {D L : ℂ} {t : ℝ} (hγt : HasDerivAt γ D t) :
+    HasDerivAt (fun s : ℝ ↦ γ s - γ t₀ - ((s - t₀ : ℝ) : ℂ) * L
+        - ((s - t₀ : ℝ) : ℂ) ^ 2 * (A / 2))
+      (D - L - ((t - t₀ : ℝ) : ℂ) * A) t := by
+  have hu : HasDerivAt (fun x : ℝ ↦ ((x - t₀ : ℝ) : ℂ)) 1 t := by
+    simpa using (((hasDerivAt_id t).sub_const t₀).ofReal_comp)
+  refine (((hγt.sub_const (γ t₀)).sub (hu.mul_const L)).sub
+    ((hu.pow 2).mul_const (A / 2))).congr_deriv ?_
+  push_cast
+  ring
+
+-- A little-o against the real power `(t - t₀) ^ (1 + 1)` is one against the complex-coerced
+-- square, since the two comparison functions have equal norms pointwise.
+private theorem isLittleO_ofReal_sq_of_isLittleO_pow {F : ℝ → ℂ} {l : Filter ℝ}
+    (h : F =o[l] fun t ↦ (t - t₀) ^ (1 + 1)) :
+    F =o[l] fun t ↦ ((t - t₀ : ℝ) : ℂ) ^ 2 := by
+  have hnorm : ∀ t : ℝ, ‖(t - t₀) ^ (1 + 1)‖ = ‖((t - t₀ : ℝ) : ℂ) ^ 2‖ := fun t ↦ by
+    rw [norm_pow, norm_pow, Complex.norm_real]
+  rw [← isLittleO_norm_right] at h ⊢
+  exact h.congr' EventuallyEq.rfl (Eventually.of_forall hnorm)
+
+-- Divide a second-order estimate by the square: if `G` agrees with `(t - t₀)² · c` to higher
+-- order, its quotient by `(t - t₀)²` tends to `c` along the punctured neighbourhood.
+private theorem tendsto_div_ofReal_sq_of_isLittleO {G : ℝ → ℂ} {c : ℂ}
+    (h : (fun t ↦ G t - ((t - t₀ : ℝ) : ℂ) ^ 2 * c) =o[𝓝 t₀] fun t ↦ ((t - t₀ : ℝ) : ℂ) ^ 2) :
+    Tendsto (fun t ↦ G t / ((t - t₀ : ℝ) : ℂ) ^ 2) (𝓝[≠] t₀) (𝓝 c) := by
+  have hshift := (h.tendsto_div_nhds_zero.mono_left
+    (nhdsWithin_le_nhds (s := {t₀}ᶜ))).add_const c
+  rw [zero_add] at hshift
+  refine hshift.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with t ht
+  have hτ : ((t - t₀ : ℝ) : ℂ) ≠ 0 := by exact_mod_cast sub_ne_zero.mpr ht
+  field_simp
+  ring
+
 /-- The second-order chord expansion at `t₀`: if `γ` is differentiable near `t₀` and its derivative
 has derivative `A` at `t₀`, then the chord `γ t - γ t₀` differs from its first-order part by
 `(t - t₀)² · A / 2` to leading order.
@@ -84,17 +122,9 @@ private theorem tendsto_chord_secondOrder
   set F : ℝ → ℂ :=
     fun t ↦ γ t - γ t₀ - ((t - t₀ : ℝ) : ℂ) * L - ((t - t₀ : ℝ) : ℂ) ^ 2 * (A / 2) with hF
   set F' : ℝ → ℂ := fun t ↦ deriv γ t - L - ((t - t₀ : ℝ) : ℂ) * A with hF'
-  have hff' : ∀ t ∈ V, HasDerivWithinAt F (F' t) V t := by
-    intro t ht
-    have hu : HasDerivAt (fun x : ℝ ↦ ((x - t₀ : ℝ) : ℂ)) 1 t := by
-      simpa using (((hasDerivAt_id t).sub_const t₀).ofReal_comp)
-    have hγt : HasDerivAt γ (deriv γ t) t := (hball (Metric.mem_ball.1 ht)).hasDerivAt
-    refine HasDerivAt.hasDerivWithinAt ?_
-    refine (((hγt.sub_const (γ t₀)).sub (hu.mul_const L)).sub
-      ((hu.pow 2).mul_const (A / 2))).congr_deriv ?_
-    simp only [hF']
-    push_cast
-    ring
+  have hff' : ∀ t ∈ V, HasDerivWithinAt F (F' t) V t := fun t ht => by
+    simpa only [hF, hF'] using
+      (hasDerivAt_chordRemainder (hball (Metric.mem_ball.1 ht)).hasDerivAt).hasDerivWithinAt
   have hFo : F' =o[𝓝[V] t₀] fun t ↦ (t - t₀) ^ 1 := by
     have hlit := hasDerivAt_iff_isLittleO.1 hA
     refine (hlit.mono nhdsWithin_le_nhds).congr' ?_ (Eventually.of_forall fun t ↦ ?_)
@@ -105,22 +135,8 @@ private theorem tendsto_chord_secondOrder
   have hFt₀ : F t₀ = 0 := by simp [hF]
   rw [hFt₀, hVopen.nhdsWithin_eq ht₀V] at hmain
   simp only [sub_zero] at hmain
-  -- Move the comparison function to the complex square, then divide. The real square `(t - t₀) ^ 2`
-  -- and its complex coercion have the same norm, so comparing norms transfers the estimate.
-  have hnorm : ∀ t : ℝ, ‖(t - t₀) ^ (1 + 1)‖ = ‖((t - t₀ : ℝ) : ℂ) ^ 2‖ := fun t ↦ by
-    rw [norm_pow, norm_pow, Complex.norm_real]
-  have hcx : F =o[𝓝 t₀] fun t ↦ ((t - t₀ : ℝ) : ℂ) ^ 2 := by
-    rw [← isLittleO_norm_right] at hmain ⊢
-    exact hmain.congr' EventuallyEq.rfl (Eventually.of_forall hnorm)
-  have hzero := (hcx.tendsto_div_nhds_zero).mono_left (nhdsWithin_le_nhds (s := {t₀}ᶜ))
-  have hshift := hzero.add_const (A / 2)
-  rw [zero_add] at hshift
-  refine hshift.congr' ?_
-  filter_upwards [self_mem_nhdsWithin] with t ht
-  have hτ : ((t - t₀ : ℝ) : ℂ) ≠ 0 := by
-    exact_mod_cast sub_ne_zero.mpr ht
-  field_simp [hF]
-  ring
+  -- Move the comparison to the complex square, then divide by it.
+  exact tendsto_div_ofReal_sq_of_isLittleO (isLittleO_ofReal_sq_of_isLittleO_pow hmain)
 
 /-- **Hungerbühler–Wasem Proposition 2.3, crossing value, in second-derivative form.** Let `γ` be
 differentiable near `t₀`, with `deriv γ` differentiable at `t₀` with derivative `A`, and let the

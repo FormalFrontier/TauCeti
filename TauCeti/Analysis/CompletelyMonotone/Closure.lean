@@ -87,8 +87,7 @@ theorem mul (hf : IsCompletelyMonotone f) (hg : IsCompletelyMonotone g) :
   exact mul_nonneg (mul_nonneg (Nat.cast_nonneg _) e1) e2
 
 /-- Completely monotone functions are closed under finite products. -/
-theorem prod {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ}
-    (hf : ∀ i ∈ s, IsCompletelyMonotone (f i)) :
+theorem prod {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ} (hf : ∀ i ∈ s, IsCompletelyMonotone (f i)) :
     IsCompletelyMonotone (fun t => ∏ i ∈ s, f i t) := by
   have h := Finset.prod_induction f IsCompletelyMonotone
     (fun _ _ => IsCompletelyMonotone.mul) (isCompletelyMonotone_const zero_le_one) hf

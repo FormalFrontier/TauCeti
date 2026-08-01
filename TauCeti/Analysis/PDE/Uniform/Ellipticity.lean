@@ -140,8 +140,7 @@ lemma toQuadraticForm'_add (A B : Matrix n n ℝ) (ξ : EuclideanSpace ℝ n) :
 
 omit [DecidableEq n] in
 /-- Matrix bilinear forms are linear in scalar multiplication of the coefficient matrix. -/
-lemma matrixBilinearForm_smul_apply (c : ℝ) (A : Matrix n n ℝ)
-    (η ξ : EuclideanSpace ℝ n) :
+lemma matrixBilinearForm_smul_apply (c : ℝ) (A : Matrix n n ℝ) (η ξ : EuclideanSpace ℝ n) :
     matrixBilinearForm (c • A) η ξ = c * matrixBilinearForm A η ξ := by
   rw [matrixBilinearForm_apply, matrixBilinearForm_apply, smul_mulVec, dotProduct_smul]
   simp [smul_eq_mul]
@@ -248,8 +247,7 @@ noncomputable def coefficientSymmetricPart (A : Matrix n n ℝ) : Matrix n n ℝ
 
 omit [Fintype n] [DecidableEq n] in
 /-- The symmetric part of a coefficient matrix is symmetric. -/
-lemma coefficientSymmetricPart_isSymm (A : Matrix n n ℝ) :
-    (coefficientSymmetricPart A).IsSymm :=
+lemma coefficientSymmetricPart_isSymm (A : Matrix n n ℝ) : (coefficientSymmetricPart A).IsSymm :=
   (isSymm_add_transpose_self A).smul (1 / 2 : ℝ)
 
 omit [Fintype n] [DecidableEq n] in
@@ -270,8 +268,7 @@ lemma coefficientSymmetricPart_eq_self_of_isSymm {A : Matrix n n ℝ} (hA : A.Is
 
 /-- The symmetric part has the same quadratic form as the original coefficient matrix. -/
 @[simp]
-lemma toQuadraticForm'_coefficientSymmetricPart (A : Matrix n n ℝ)
-    (ξ : EuclideanSpace ℝ n) :
+lemma toQuadraticForm'_coefficientSymmetricPart (A : Matrix n n ℝ) (ξ : EuclideanSpace ℝ n) :
     (coefficientSymmetricPart A).toQuadraticForm' ξ = A.toQuadraticForm' ξ := by
   rw [coefficientSymmetricPart, toQuadraticForm'_smul, toQuadraticForm'_add,
     toQuadraticForm'_transpose]
@@ -304,8 +301,7 @@ bilinear form.
 This is the matrix-coefficient specialization of Mathlib's
 `ContinuousLinearMap.opNorm_le_bound₂`. -/
 lemma matrixBilinearForm_opNorm_le_of_upper_bound (A : Matrix n n ℝ) {Lam : ℝ}
-    (hLam_nonneg : 0 ≤ Lam)
-    (hA : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖) :
+    (hLam_nonneg : 0 ≤ Lam) (hA : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖) :
     ‖matrixBilinearForm A‖ ≤ Lam := by
   refine (matrixBilinearForm A).opNorm_le_bound₂ hLam_nonneg ?_
   intro η ξ
@@ -315,8 +311,7 @@ omit [DecidableEq n] in
 /-- A pointwise bilinear upper bound gives a radius-restricted estimate for the bundled
 matrix bilinear form. -/
 lemma matrixBilinearForm_apply_norm_le_of_upper_bound {A : Matrix n n ℝ} {Lam R S : ℝ}
-    (hLam_nonneg : 0 ≤ Lam)
-    (hA : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
+    (hLam_nonneg : 0 ≤ Lam) (hA : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
     {η ξ : EuclideanSpace ℝ n} (hη : ‖η‖ ≤ R) (hξ : ‖ξ‖ ≤ S) :
     ‖matrixBilinearForm A η ξ‖ ≤ Lam * R * S :=
   (matrixBilinearForm A).le_of_opNorm₂_le_of_le
@@ -350,8 +345,7 @@ omit [DecidableEq n] in
 /-- Adding two pointwise bilinear upper bounds adds the constants. -/
 lemma abs_dotProduct_add_mulVec_le {A B : Matrix n n ℝ} {Lam Mu : ℝ}
     (hA : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
-    (hB : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (B *ᵥ ξ)| ≤ Mu * ‖η‖ * ‖ξ‖)
-    (η ξ : EuclideanSpace ℝ n) :
+    (hB : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (B *ᵥ ξ)| ≤ Mu * ‖η‖ * ‖ξ‖) (η ξ : EuclideanSpace ℝ n) :
     |η ⬝ᵥ ((A + B) *ᵥ ξ)| ≤ (Lam + Mu) * ‖η‖ * ‖ξ‖ := by
   rw [add_mulVec, dotProduct_add]
   calc
@@ -390,8 +384,7 @@ lemma abs_dotProduct_coefficientSymmetricPart_mulVec_le {A : Matrix n n ℝ} {La
 /-- Adding a nonnegative quadratic form preserves a lower quadratic bound. -/
 lemma lower_bound_toQuadraticForm'_add {A B : Matrix n n ℝ} {lam : ℝ}
     (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
-    (hB : ∀ ξ : EuclideanSpace ℝ n, 0 ≤ B.toQuadraticForm' ξ)
-    (ξ : EuclideanSpace ℝ n) :
+    (hB : ∀ ξ : EuclideanSpace ℝ n, 0 ≤ B.toQuadraticForm' ξ) (ξ : EuclideanSpace ℝ n) :
     lam * ‖ξ‖ ^ 2 ≤ (A + B).toQuadraticForm' ξ := by
   rw [toQuadraticForm'_add]
   exact (hA ξ).trans (le_add_of_nonneg_right (hB ξ))
@@ -401,8 +394,7 @@ bound by the size of that perturbation. -/
 lemma lower_bound_toQuadraticForm'_add_of_lower_bound {A B : Matrix n n ℝ} {lam Mu : ℝ}
     (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
     (hB : ∀ ξ : EuclideanSpace ℝ n, -(Mu * ‖ξ‖ ^ 2) ≤ B.toQuadraticForm' ξ)
-    (ξ : EuclideanSpace ℝ n) :
-    (lam - Mu) * ‖ξ‖ ^ 2 ≤ (A + B).toQuadraticForm' ξ := by
+    (ξ : EuclideanSpace ℝ n) : (lam - Mu) * ‖ξ‖ ^ 2 ≤ (A + B).toQuadraticForm' ξ := by
   rw [toQuadraticForm'_add]
   have hA_lower := hA ξ
   have hB_lower := hB ξ
@@ -411,8 +403,7 @@ lemma lower_bound_toQuadraticForm'_add_of_lower_bound {A B : Matrix n n ℝ} {la
 /-- A bilinear upper bound for a coefficient matrix bounds its quadratic form in absolute
 value by the same constant. -/
 lemma abs_toQuadraticForm'_le_of_abs_dotProduct_mulVec_le {B : Matrix n n ℝ} {Mu : ℝ}
-    (hB : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (B *ᵥ ξ)| ≤ Mu * ‖η‖ * ‖ξ‖)
-    (ξ : EuclideanSpace ℝ n) :
+    (hB : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (B *ᵥ ξ)| ≤ Mu * ‖η‖ * ‖ξ‖) (ξ : EuclideanSpace ℝ n) :
     |B.toQuadraticForm' ξ| ≤ Mu * ‖ξ‖ ^ 2 := by
   rw [toQuadraticForm'_eq_dotProduct]
   have h := hB ξ ξ
@@ -420,8 +411,7 @@ lemma abs_toQuadraticForm'_le_of_abs_dotProduct_mulVec_le {B : Matrix n n ℝ} {
 
 /-- A pointwise quadratic lower bound makes the associated matrix bilinear form coercive in
 Mathlib's Lax--Milgram sense. -/
-lemma isCoercive_matrixBilinearForm_of_lower_bound (A : Matrix n n ℝ) {lam : ℝ}
-    (hlam : 0 < lam)
+lemma isCoercive_matrixBilinearForm_of_lower_bound (A : Matrix n n ℝ) {lam : ℝ} (hlam : 0 < lam)
     (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ) :
     IsCoercive (matrixBilinearForm A) := by
   refine ⟨lam, hlam, fun ξ => ?_⟩
@@ -560,8 +550,7 @@ lemma norm_point_matrixBilinearForm_le (h : UniformlyEllipticOn Ω a lam Lam) {x
 /-- At every point of the domain, uniform ellipticity bounds the operator norm of the
 attached matrix bilinear form by the upper ellipticity constant. -/
 @[grind =>]
-lemma opNorm_matrixBilinearForm_le (h : UniformlyEllipticOn Ω a lam Lam) {x : X}
-    (hx : x ∈ Ω) :
+lemma opNorm_matrixBilinearForm_le (h : UniformlyEllipticOn Ω a lam Lam) {x : X} (hx : x ∈ Ω) :
     ‖matrixBilinearForm (a x)‖ ≤ Lam :=
   matrixBilinearForm_opNorm_le_of_upper_bound (a x) h.upper_nonneg (h.upper_bound hx)
 
@@ -578,8 +567,7 @@ lemma norm_point_matrixBilinearForm_le_mul_of_norm_le
 /-- At every point of the domain, uniform ellipticity gives coercivity of the attached matrix
 bilinear form. -/
 @[grind =>]
-lemma isCoercive_matrixBilinearForm (h : UniformlyEllipticOn Ω a lam Lam) {x : X}
-    (hx : x ∈ Ω) :
+lemma isCoercive_matrixBilinearForm (h : UniformlyEllipticOn Ω a lam Lam) {x : X} (hx : x ∈ Ω) :
     IsCoercive (matrixBilinearForm (a x)) :=
   isCoercive_matrixBilinearForm_of_lower_bound (a x) h.pos (h.lower_bound hx)
 
@@ -616,8 +604,7 @@ increased by the upper bound for the perturbation. This is the pointwise matrix 
 used when an energy form is split into a uniformly elliptic principal part plus a
 nonnegative bounded perturbation. -/
 lemma add_nonneg (h : UniformlyEllipticOn Ω a lam Lam) {b : X → Matrix n n ℝ}
-    {Mu : ℝ} (hMu : 0 ≤ Mu)
-    (hb_nonneg : ∀ ⦃x⦄, x ∈ Ω → ∀ ξ : EuclideanSpace ℝ n,
+    {Mu : ℝ} (hMu : 0 ≤ Mu) (hb_nonneg : ∀ ⦃x⦄, x ∈ Ω → ∀ ξ : EuclideanSpace ℝ n,
       0 ≤ (b x).toQuadraticForm' ξ)
     (hb_upper : ∀ ⦃x⦄, x ∈ Ω → ∀ η ξ : EuclideanSpace ℝ n,
       |η ⬝ᵥ (b x *ᵥ ξ)| ≤ Mu * ‖η‖ * ‖ξ‖) :
@@ -656,8 +643,7 @@ reducing the lower ellipticity constant by the scalar bound.
 This is the scalar-coefficient specialization of `UniformlyEllipticOn.add_bounded`: no sign
 condition is imposed on `c`, only the pointwise bound `|c x| ≤ μ`. -/
 lemma add_smul_one_bounded (h : UniformlyEllipticOn Ω a lam Lam) {c : X → ℝ} {Mu : ℝ}
-    (hMu_nonneg : 0 ≤ Mu) (hMu_lt : Mu < lam)
-    (hc_abs : ∀ ⦃x⦄, x ∈ Ω → |c x| ≤ Mu) :
+    (hMu_nonneg : 0 ≤ Mu) (hMu_lt : Mu < lam) (hc_abs : ∀ ⦃x⦄, x ∈ Ω → |c x| ≤ Mu) :
     UniformlyEllipticOn Ω (fun x => a x + c x • (1 : Matrix n n ℝ)) (lam - Mu)
       (Lam + Mu) :=
   h.add_bounded hMu_nonneg hMu_lt
@@ -674,8 +660,7 @@ lemma add_const_smul_one_bounded (h : UniformlyEllipticOn Ω a lam Lam) {c Mu : 
 /-- Adding a bounded nonnegative scalar multiple of the identity preserves uniform
 ellipticity, with the upper constant increased by the scalar bound. -/
 lemma add_smul_one (h : UniformlyEllipticOn Ω a lam Lam) {c : X → ℝ} {Mu : ℝ}
-    (hMu : 0 ≤ Mu) (hc_nonneg : ∀ ⦃x⦄, x ∈ Ω → 0 ≤ c x)
-    (hc_upper : ∀ ⦃x⦄, x ∈ Ω → c x ≤ Mu) :
+    (hMu : 0 ≤ Mu) (hc_nonneg : ∀ ⦃x⦄, x ∈ Ω → 0 ≤ c x) (hc_upper : ∀ ⦃x⦄, x ∈ Ω → c x ≤ Mu) :
     UniformlyEllipticOn Ω (fun x => a x + c x • (1 : Matrix n n ℝ)) lam (Lam + Mu) := by
   refine h.add_nonneg hMu (fun {x} hx ξ => ?_) (fun {x} hx η ξ => ?_)
   · simp only [toQuadraticForm'_smul_one]
@@ -735,8 +720,7 @@ lies between the lower and upper constants.
 This packages the common model `a(x) = c(x) I`: if `λ ≤ c x ≤ Λ` on `Ω`, then `c x • 1`
 satisfies the lower quadratic bound and the bilinear upper bound with constants `λ` and `Λ`. -/
 lemma uniformlyEllipticOn_smul_one (Ω : Set X) (c : X → ℝ) {lam Lam : ℝ}
-    (hlam : 0 < lam) (hlamLam : lam ≤ Lam)
-    (hbound : ∀ ⦃x⦄, x ∈ Ω → lam ≤ c x ∧ c x ≤ Lam) :
+    (hlam : 0 < lam) (hlamLam : lam ≤ Lam) (hbound : ∀ ⦃x⦄, x ∈ Ω → lam ≤ c x ∧ c x ≤ Lam) :
     UniformlyEllipticOn Ω (fun x => c x • (1 : Matrix n n ℝ)) lam Lam := by
   refine UniformlyEllipticOn.of_bounds hlam hlamLam (fun {x} hx ξ => ?_)
     (fun {x} hx η ξ => ?_)

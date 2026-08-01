@@ -125,15 +125,13 @@ lemma energyIntegrand_one_zero_zero_self (U : ℝ × EuclideanSpace ℝ n) :
 
 /-- The shifted Laplacian model `-Δ + c` has jet form
 `(U, V) ↦ ∇u · ∇v + c u v`. -/
-lemma energyIntegrand_one_zero_mass_apply (c : ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+lemma energyIntegrand_one_zero_mass_apply (c : ℝ) (U V : ℝ × EuclideanSpace ℝ n) :
     energyIntegrand (1 : Matrix n n ℝ) 0 c U V = V.2 ⬝ᵥ U.2 + c * U.1 * V.1 := by
   simp [energyIntegrand_apply, massForm_apply]
 
 /-- The shifted Laplacian model `-Δ + c` has diagonal jet density
 `‖∇u‖² + c u²`. -/
-lemma energyIntegrand_one_zero_mass_self (c : ℝ)
-    (U : ℝ × EuclideanSpace ℝ n) :
+lemma energyIntegrand_one_zero_mass_self (c : ℝ) (U : ℝ × EuclideanSpace ℝ n) :
     energyIntegrand (1 : Matrix n n ℝ) 0 c U U = ‖U.2‖ ^ 2 + c * U.1 ^ 2 := by
   rw [energyIntegrand_self, toQuadraticForm'_one]
   simp
@@ -168,8 +166,7 @@ norms. -/
 lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
     {A : Matrix n n ℝ} {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
     (ha : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
-    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma) (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand A b₀ c₀ U V‖ ≤ (Lam + beta + gamma) * ‖U‖ * ‖V‖ := by
   have step : ∀ {K p q : ℝ}, 0 ≤ K → 0 ≤ p → 0 ≤ q → p ≤ ‖U‖ → q ≤ ‖V‖ →
       K * p * q ≤ K * ‖U‖ * ‖V‖ := by
@@ -230,8 +227,7 @@ lemma opNorm_energyIntegrand_le_of_bounds (hLam : 0 ≤ Lam)
   exact norm_energyIntegrand_apply_le_of_bounds hLam ha hb hc U V
 
 /-- Pointwise boundedness of the shifted Laplacian jet form with constant `1 + ‖c‖`. -/
-lemma norm_energyIntegrand_one_zero_mass_apply_le (c : ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+lemma norm_energyIntegrand_one_zero_mass_apply_le (c : ℝ) (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand (1 : Matrix n n ℝ) 0 c U V‖ ≤
       (1 + ‖c‖) * ‖U‖ * ‖V‖ := by
   simpa using
@@ -255,8 +251,7 @@ mass defect proportional to `β²/λ`. Integrating over `Ω` this is Gårding's 
 lemma garding_energyIntegrand_self_of_bounds (hlam : 0 < lam)
     {A : Matrix n n ℝ} {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
     (hQ : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
-    (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀)
-    (U : ℝ × EuclideanSpace ℝ n) :
+    (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀) (U : ℝ × EuclideanSpace ℝ n) :
     lam / 2 * ‖U.2‖ ^ 2 - beta ^ 2 / (2 * lam) * U.1 ^ 2
       ≤ energyIntegrand A b₀ c₀ U U := by
   rw [energyIntegrand_self]

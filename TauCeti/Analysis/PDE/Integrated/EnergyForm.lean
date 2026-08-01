@@ -60,14 +60,12 @@ For a Sobolev function `u`, the intended jet field is `x ↦ (u x, ∇u x)`.  Th
 at the raw-jet level because the roadmap's weak-derivative Sobolev spaces are a separate
 prerequisite. -/
 public noncomputable def energyFormIntegral (μ : Measure X) (a : X → Matrix n n ℝ)
-    (b : X → EuclideanSpace ℝ n) (c : X → ℝ)
-    (U V : X → ℝ × EuclideanSpace ℝ n) : ℝ :=
+    (b : X → EuclideanSpace ℝ n) (c : X → ℝ) (U V : X → ℝ × EuclideanSpace ℝ n) : ℝ :=
   ∫ x, (energyIntegrand (a x) (b x) (c x) (U x) (V x)) ∂μ
 
 /-- Unfolding rule for the integrated energy form. -/
 theorem energyFormIntegral_def (μ : Measure X) (a : X → Matrix n n ℝ)
-    (b : X → EuclideanSpace ℝ n) (c : X → ℝ)
-    (U V : X → ℝ × EuclideanSpace ℝ n) :
+    (b : X → EuclideanSpace ℝ n) (c : X → ℝ) (U V : X → ℝ × EuclideanSpace ℝ n) :
     energyFormIntegral μ a b c U V =
       ∫ x, (energyIntegrand (a x) (b x) (c x) (U x) (V x)) ∂μ :=
   by simp [energyFormIntegral]
@@ -80,8 +78,7 @@ variable (U V W : X → ℝ × EuclideanSpace ℝ n)
 fields. -/
 lemma energyFormIntegral_congr_ae {a' : X → Matrix n n ℝ} {b' : X → EuclideanSpace ℝ n}
     {c' : X → ℝ} {U' V' : X → ℝ × EuclideanSpace ℝ n}
-    (ha : a =ᵐ[μ] a') (hb : b =ᵐ[μ] b') (hc : c =ᵐ[μ] c')
-    (hU : U =ᵐ[μ] U') (hV : V =ᵐ[μ] V') :
+    (ha : a =ᵐ[μ] a') (hb : b =ᵐ[μ] b') (hc : c =ᵐ[μ] c') (hU : U =ᵐ[μ] U') (hV : V =ᵐ[μ] V') :
     energyFormIntegral μ a b c U V = energyFormIntegral μ a' b' c' U' V' := by
   rw [energyFormIntegral_def, energyFormIntegral_def]
   apply MeasureTheory.integral_congr_ae
@@ -296,10 +293,8 @@ lemma energyFormIntegral_principal_drift_mass
 
 /-- The integrated full energy form is a shifted-Laplacian model plus the residual
 coefficient perturbation. -/
-lemma energyFormIntegral_eq_one_zero_baseMass_add_perturbation
-    (hmodel : Integrable
-      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (m x) (U x) (V x)) μ)
-    (hpert : Integrable
+lemma energyFormIntegral_eq_one_zero_baseMass_add_perturbation (hmodel : Integrable
+      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (m x) (U x) (V x)) μ) (hpert : Integrable
       (fun x => energyIntegrand (a x - 1) (b x) (c x - m x) (U x) (V x)) μ) :
     energyFormIntegral μ a b c U V =
       energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) m U V +
@@ -315,10 +310,8 @@ lemma energyFormIntegral_eq_one_zero_baseMass_add_perturbation
 
 /-- The integrated full energy form is the shifted-Laplacian form with the same mass plus the
 principal-and-drift perturbation. -/
-lemma energyFormIntegral_eq_one_zero_mass_add_perturbation
-    (hmodel : Integrable
-      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (c x) (U x) (V x)) μ)
-    (hpert : Integrable
+lemma energyFormIntegral_eq_one_zero_mass_add_perturbation (hmodel : Integrable
+      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (c x) (U x) (V x)) μ) (hpert : Integrable
       (fun x => energyIntegrand (a x - 1) (b x) 0 (U x) (V x)) μ) :
     energyFormIntegral μ a b c U V =
       energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) c U V +
@@ -415,8 +408,7 @@ lemma garding_energyFormIntegral_self_of_mass_lower_bound_of_bounds (hlam : 0 < 
 
 /-- Integrated zero-drift diagonal lower bound from an a.e. principal quadratic lower bound
 and a.e. nonnegative mass coefficient. -/
-lemma integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self
-    (hlam : 0 ≤ lam)
+lemma integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self (hlam : 0 ≤ lam)
     (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n,
       lam * ‖ξ‖ ^ 2 ≤ ξ ⬝ᵥ (a x *ᵥ ξ))
     (hc : ∀ᵐ x ∂μ, 0 ≤ c x)
@@ -433,8 +425,7 @@ lemma integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self
 /-- A zero-drift diagonal integrated energy form is nonnegative when the principal quadratic
 form and mass coefficient are a.e. nonnegative. -/
 lemma energyFormIntegral_zero_drift_self_nonneg
-    (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n, 0 ≤ ξ ⬝ᵥ (a x *ᵥ ξ))
-    (hc : ∀ᵐ x ∂μ, 0 ≤ c x) :
+    (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n, 0 ≤ ξ ⬝ᵥ (a x *ᵥ ξ)) (hc : ∀ᵐ x ∂μ, 0 ≤ c x) :
     0 ≤ energyFormIntegral μ a (fun _ => 0) c U U := by
   rw [energyFormIntegral_def]
   refine integral_nonneg_of_ae ?_
@@ -448,8 +439,7 @@ lemma energyFormIntegral_zero_drift_self_nonneg
 /-- Integrated explicit diagonal lower bound from a.e. lower ellipticity, a.e.
 lower-order coefficient hypotheses, and a mass floor that dominates the drift defect. -/
 lemma integral_min_diagonal_lower_bound_mul_norm_sq_le_energyFormIntegral_self_of_bounds
-    (hlam : 0 < lam)
-    (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n,
+    (hlam : 0 < lam) (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n,
       lam * ‖ξ‖ ^ 2 ≤ ξ ⬝ᵥ (a x *ᵥ ξ))
     (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, mu ≤ c x)
     (hmu : beta ^ 2 / (2 * lam) ≤ mu)
@@ -473,8 +463,7 @@ variable {U V : X → ℝ × EuclideanSpace ℝ n}
 /-- Integrated boundedness of the energy form from uniform ellipticity and a.e. lower-order
 coefficient bounds. -/
 lemma norm_energyFormIntegral_le_on (h : UniformlyEllipticOn Ω a lam Lam)
-    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
+    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
     (hUV : Integrable (fun x => (Lam + beta + gamma) * (‖U x‖ * ‖V x‖)) μ) :
     ‖energyFormIntegral μ a b c U V‖ ≤
       ∫ x, ((Lam + beta + gamma) * (‖U x‖ * ‖V x‖)) ∂μ := by
@@ -486,10 +475,8 @@ lemma norm_energyFormIntegral_le_on (h : UniformlyEllipticOn Ω a lam Lam)
 /-- Integrated Gårding lower bound from uniform ellipticity and a.e. lower-order
 coefficient hypotheses. -/
 lemma garding_energyFormIntegral_self_on (h : UniformlyEllipticOn Ω a lam Lam)
-    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc : ∀ᵐ x ∂μ, 0 ≤ c x)
-    (hlower : Integrable
-      (fun x => lam / 2 * ‖(U x).2‖ ^ 2 - beta ^ 2 / (2 * lam) * (U x).1 ^ 2) μ)
+    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, 0 ≤ c x)
+    (hlower : Integrable (fun x => lam / 2 * ‖(U x).2‖ ^ 2 - beta ^ 2 / (2 * lam) * (U x).1 ^ 2) μ)
     (henergy : Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (U x)) μ) :
     ∫ x, (lam / 2 * ‖(U x).2‖ ^ 2 - beta ^ 2 / (2 * lam) * (U x).1 ^ 2) ∂μ
       ≤ energyFormIntegral μ a b c U U := by
@@ -503,10 +490,8 @@ lemma garding_energyFormIntegral_self_on (h : UniformlyEllipticOn Ω a lam Lam)
 coefficient hypotheses. -/
 lemma garding_energyFormIntegral_self_of_mass_lower_bound_on
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
-    (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, mu ≤ c x)
-    (hlower : Integrable
-      (fun x => lam / 2 * ‖(U x).2‖ ^ 2 +
-        (mu - beta ^ 2 / (2 * lam)) * (U x).1 ^ 2) μ)
+    (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, mu ≤ c x) (hlower : Integrable
+      (fun x => lam / 2 * ‖(U x).2‖ ^ 2 + (mu - beta ^ 2 / (2 * lam)) * (U x).1 ^ 2) μ)
     (henergy : Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (U x)) μ) :
     ∫ x, (lam / 2 * ‖(U x).2‖ ^ 2 +
         (mu - beta ^ 2 / (2 * lam)) * (U x).1 ^ 2) ∂μ
@@ -521,10 +506,8 @@ lemma garding_energyFormIntegral_self_of_mass_lower_bound_on
 coefficient hypotheses, and a mass floor that dominates the drift defect. -/
 lemma integral_min_diagonal_lower_bound_mul_norm_sq_le_energyFormIntegral_self_on
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
-    (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, mu ≤ c x)
-    (hmu : beta ^ 2 / (2 * lam) ≤ mu)
-    (hlower : Integrable
-      (fun x => min (lam / 2) (mu - beta ^ 2 / (2 * lam)) * ‖U x‖ ^ 2) μ)
+    (hb : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc : ∀ᵐ x ∂μ, mu ≤ c x) (hmu : beta ^ 2 / (2 * lam) ≤ mu)
+    (hlower : Integrable (fun x => min (lam / 2) (mu - beta ^ 2 / (2 * lam)) * ‖U x‖ ^ 2) μ)
     (henergy : Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (U x)) μ) :
     ∫ x, (min (lam / 2) (mu - beta ^ 2 / (2 * lam)) * ‖U x‖ ^ 2) ∂μ
       ≤ energyFormIntegral μ a b c U U := by

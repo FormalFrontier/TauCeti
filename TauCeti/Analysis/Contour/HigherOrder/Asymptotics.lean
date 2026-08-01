@@ -65,8 +65,7 @@ open Asymptotics Complex Filter Set Topology
 
 /-- **The antiderivative of `1/(z-s)^k`** (`k ≥ 2`): the function
 `F(z) = -1/[(k-1)(z-s)^(k-1)]` has complex derivative `1/(z-s)^k` at any `z ≠ s`. -/
-theorem hasDerivAt_antiderivative_pow_inv
-    {s : ℂ} {k : ℕ} (hk : 2 ≤ k) {z : ℂ} (hz : z ≠ s) :
+theorem hasDerivAt_antiderivative_pow_inv {s : ℂ} {k : ℕ} (hk : 2 ≤ k) {z : ℂ} (hz : z ≠ s) :
     HasDerivAt (fun w => -(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹)
       (1 / (z - s) ^ k) z := by
   have h_pow : HasDerivAt (fun w : ℂ => (w - s) ^ (k - 1))
@@ -151,10 +150,8 @@ private theorem eventually_ne_of_hasDerivWithinAt
 `s`, the chord from `γ t` to the tangent target at the same distance is dominated by the
 perpendicular deviation, hence `o(‖γ t - s‖ ^ n)` whenever the deviation is. The right side
 instantiates `T = L`, `l = 𝓝[>] t₀`; the left side `T = -L`, `l = 𝓝[<] t₀`. -/
-theorem chord_to_tangent_isLittleO
-    {γ : ℝ → ℂ} {s : ℂ} {l : Filter ℝ} {T : ℂ} {n : ℕ} (hT : T ≠ 0)
-    (h_re : ∀ᶠ t in l, 0 ≤ ((γ t - s) * starRingEnd ℂ T).re)
-    (h_ne : ∀ᶠ t in l, γ t ≠ s)
+theorem chord_to_tangent_isLittleO {γ : ℝ → ℂ} {s : ℂ} {l : Filter ℝ} {T : ℂ} {n : ℕ} (hT : T ≠ 0)
+    (h_re : ∀ᶠ t in l, 0 ≤ ((γ t - s) * starRingEnd ℂ T).re) (h_ne : ∀ᶠ t in l, γ t ≠ s)
     (h_dev : (fun t => ‖tangentDeviation (γ t - s) T‖) =o[l]
       fun t => ‖γ t - s‖ ^ n) :
     (fun t => ‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖) =o[l]
@@ -180,10 +177,8 @@ theorem chord_to_tangent_isLittleO
 
 /-- On the segment between two points equidistant (distance `d`) from `s`, every point satisfies
 `‖z - s‖² ≥ d² - ‖z₁ - z₂‖²/4`. -/
-private theorem norm_sq_segment_to_pole_lower_bound
-    {z₁ z₂ s : ℂ} {d : ℝ}
-    (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d)
-    {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
+private theorem norm_sq_segment_to_pole_lower_bound {z₁ z₂ s : ℂ} {d : ℝ}
+    (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d) {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
     d ^ 2 - ‖z₁ - z₂‖ ^ 2 / 4 ≤ ‖z - s‖ ^ 2 := by
   obtain ⟨α, β, hα, hβ, h_sum, rfl⟩ := hz
   rw [show α • z₁ + β • z₂ - s = α • (z₁ - s) + β • (z₂ - s) by
@@ -216,8 +211,7 @@ private theorem norm_sq_segment_to_pole_lower_bound
 
 /-- When the chord between two points at distance `d` from `s` is at most `d`, their segment
 stays at distance `≥ d/2` from `s`. -/
-private theorem norm_segment_to_pole_lower_bound_half
-    {z₁ z₂ s : ℂ} {d : ℝ}
+private theorem norm_segment_to_pole_lower_bound_half {z₁ z₂ s : ℂ} {d : ℝ}
     (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d) (h_chord : ‖z₁ - z₂‖ ≤ d)
     {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
     d / 2 ≤ ‖z - s‖ := by
@@ -229,10 +223,8 @@ private theorem norm_segment_to_pole_lower_bound_half
 /-- For `w ≠ s` with the chord to the tangent target at most `‖w - s‖`, the antiderivative
 difference between `w` and the tangent target `s + (‖w - s‖/‖L‖) • L` is bounded by
 `(1/(‖w - s‖/2)^k) · chord`. -/
-private theorem norm_antiderivative_diff_at_tangent_target_le
-    {w s L : ℂ} {k : ℕ} (hk : 2 ≤ k)
-    (hL : L ≠ 0) (hw_ne : w ≠ s)
-    (h_chord_le : ‖w - (s + (‖w - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖w - s‖) :
+private theorem norm_antiderivative_diff_at_tangent_target_le {w s L : ℂ} {k : ℕ} (hk : 2 ≤ k)
+    (hL : L ≠ 0) (hw_ne : w ≠ s) (h_chord_le : ‖w - (s + (‖w - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖w - s‖) :
     ‖(-(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹) -
       (-(↑(k - 1) : ℂ)⁻¹ * (((s + (‖w - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹)‖ ≤
       (1 / (‖w - s‖ / 2) ^ k) * ‖w - (s + (‖w - s‖ / ‖L‖ : ℝ) • L)‖ := by
@@ -255,8 +247,7 @@ private theorem norm_antiderivative_diff_at_tangent_target_le
   exact h_F_diff
 
 /-- If `chord = o(d^n)`, `d → 0` with `d > 0` eventually, and `k ≤ n`, then `chord/d^k → 0`. -/
-private theorem tendsto_div_pow_zero_of_isLittleO
-    {chord d : ℝ → ℝ} {l : Filter ℝ} {n k : ℕ}
+private theorem tendsto_div_pow_zero_of_isLittleO {chord d : ℝ → ℝ} {l : Filter ℝ} {n k : ℕ}
     (h_chord : chord =o[l] (fun t => d t ^ n)) (h_d : Tendsto d l (𝓝 0))
     (h_d_pos : ∀ᶠ t in l, 0 < d t) (hkn : k ≤ n) :
     Tendsto (fun t => chord t / d t ^ k) l (𝓝 0) := by
@@ -285,8 +276,7 @@ chord to the `+T` tangent target is `o(‖γ t - s‖ ^ n)` along `l`, `γ → s
 `2 ≤ k ≤ n`, then `F(γ t) - F(target)` tends to `0` along `l`, for the antiderivative `F` of the
 order-`k` pole integrand. -/
 theorem antiderivative_diff_at_tangent_target_tendsto_zero
-    {γ : ℝ → ℂ} {s : ℂ} {l : Filter ℝ} {T : ℂ} {n k : ℕ}
-    (hT : T ≠ 0) (hk : 2 ≤ k) (hkn : k ≤ n)
+    {γ : ℝ → ℂ} {s : ℂ} {l : Filter ℝ} {T : ℂ} {n k : ℕ} (hT : T ≠ 0) (hk : 2 ≤ k) (hkn : k ≤ n)
     (h_chord : (fun t => ‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖) =o[l]
       fun t => ‖γ t - s‖ ^ n)
     (h_ne : ∀ᶠ t in l, γ t ≠ s) (h_to : Tendsto γ l (𝓝 s)) :

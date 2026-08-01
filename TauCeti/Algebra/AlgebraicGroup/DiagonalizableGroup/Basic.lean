@@ -60,7 +60,6 @@ example of the Tau Ceti reductive-groups roadmap (Layer 4 and Layer 0).
 public section
 
 open WithConv
-open scoped TensorProduct
 
 namespace TauCeti
 
@@ -141,23 +140,6 @@ theorem pointEquiv_symm_apply (χ : G →* Aˣ) :
     (pointEquiv (R := R) (A := A) (G := G)).symm χ = point χ :=
   rfl
 
-omit [CommGroup G] in
-/-- The comultiplication of `R[G]` on a group-like element: `single g 1` is group-like. -/
-private theorem comul_single_one (g : G) :
-    Coalgebra.comul (R := R) (MonoidAlgebra.single g (1 : R)) =
-      MonoidAlgebra.single g 1 ⊗ₜ[R] MonoidAlgebra.single g 1 := by
-  rw [MonoidAlgebra.comul_single, Bialgebra.comul_one, Algebra.TensorProduct.one_def,
-    TensorProduct.map_tmul, MonoidAlgebra.lsingle_apply]
-
-/-- A convolution product of points, evaluated on the group-like `single x 1`, is the product
-of the two values: convolution restricted to group-like elements is pointwise multiplication.
-This is the reusable fact behind `charOfPoint_convMul`. -/
-@[simp]
-theorem convMul_ofConv_single_one (f g : WithConv (MonoidAlgebra R G →ₐ[R] A)) (x : G) :
-    (f * g).ofConv (MonoidAlgebra.single x 1) =
-      f.ofConv (MonoidAlgebra.single x 1) * g.ofConv (MonoidAlgebra.single x 1) := by
-  rw [AlgHom.convMul_apply, comul_single_one, Algebra.TensorProduct.lift_tmul]
-
 /-- Reading off characters turns the convolution product of points into the pointwise
 product of characters. -/
 @[simp]
@@ -165,7 +147,7 @@ theorem charOfPoint_convMul (f g : WithConv (MonoidAlgebra R G →ₐ[R] A)) :
     charOfPoint ((f * g).ofConv) = charOfPoint f.ofConv * charOfPoint g.ofConv := by
   ext x
   rw [charOfPoint_apply_coe, MonoidHom.mul_apply, Units.val_mul, charOfPoint_apply_coe,
-    charOfPoint_apply_coe, convMul_ofConv_single_one]
+    charOfPoint_apply_coe, MonoidAlgebra.convMul_algHom_single_one]
 
 variable {B : Type*} [CommSemiring B] [Algebra R B]
 

@@ -72,8 +72,7 @@ noncomputable def galoisGroupEquivISqrtPrimes :
 
 /-- The inverse CM Galois equivalence realizes a sign pattern by sending each generator to
 `(-1)^(ε x)` times itself: `i ↦ ±i` and `√(p i) ↦ ±√(p i)`. -/
-@[simp] theorem galoisGroupEquivISqrtPrimes_symm_apply_gen (ε : Option ι → ZMod 2)
-    (x : Option ι) :
+@[simp] theorem galoisGroupEquivISqrtPrimes_symm_apply_gen (ε : Option ι → ZMod 2) (x : Option ι) :
     ((galoisGroupEquivISqrtPrimes p hp hinj).symm (Multiplicative.ofAdd ε)) (gen (cmRoot p) x)
       = (-1) ^ (ε x).val * gen (cmRoot p) x :=
   galoisGroupEquiv_symm_apply_gen (cmRoot_sq p) (not_isSquare_prod_cmRadicand p hp hinj) ε x

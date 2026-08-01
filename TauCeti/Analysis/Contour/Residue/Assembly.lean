@@ -57,8 +57,7 @@ gated-flat and gated-sector-compatible, the set-level principal value of `f` is
 theorem hasCauchyPV_residue_sum {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
     (decomp : PolarPartDecomposition f S U) (hU : IsOpen U)
     {γ : ℝ → ℂ} {a b : ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (hclosed : γ a = γ b) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U)
-    (hnull : IsNullHomologous γ a b U)
+    (hclosed : γ a = γ b) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hnull : IsNullHomologous γ a b U)
     (h_interior : ∀ s : S, ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b)
     (h_flat : ∀ s : S, ∀ k : Fin (decomp.order s), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
       ∀ t ∈ Icc a b, γ t = (s : ℂ) → FlatOfOrder γ t (k.val + 1))

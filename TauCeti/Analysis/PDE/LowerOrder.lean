@@ -149,8 +149,7 @@ end Continuity
 /-! ## Drift form bounds -/
 
 /-- The drift form is bounded by the norm of the drift coefficient. -/
-lemma norm_driftForm_apply_le (b : EuclideanSpace ℝ n) (u : ℝ)
-    (ξ : EuclideanSpace ℝ n) :
+lemma norm_driftForm_apply_le (b : EuclideanSpace ℝ n) (u : ℝ) (ξ : EuclideanSpace ℝ n) :
     ‖driftForm b u ξ‖ ≤ ‖b‖ * ‖u‖ * ‖ξ‖ := by
   rw [driftForm_apply, norm_mul]
   calc
@@ -187,8 +186,7 @@ grind_pattern opNorm_driftForm_le_of_norm_le =>
 
 /-- Radius-restricted drift estimate from a coefficient bound. -/
 lemma norm_driftForm_apply_le_of_norm_le_of_le {b : EuclideanSpace ℝ n}
-    {β R S : ℝ} (hb : ‖b‖ ≤ β) {u : ℝ} {ξ : EuclideanSpace ℝ n}
-    (hu : ‖u‖ ≤ R) (hξ : ‖ξ‖ ≤ S) :
+    {β R S : ℝ} (hb : ‖b‖ ≤ β) {u : ℝ} {ξ : EuclideanSpace ℝ n} (hu : ‖u‖ ≤ R) (hξ : ‖ξ‖ ≤ S) :
     ‖driftForm b u ξ‖ ≤ β * R * S :=
   (driftForm b).le_of_opNorm₂_le_of_le (opNorm_driftForm_le_of_norm_le hb) hu hξ
 

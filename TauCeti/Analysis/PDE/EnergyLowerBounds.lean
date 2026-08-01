@@ -126,8 +126,7 @@ lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self (hlam : 0 < l
 /-- Zero-drift diagonal lower bound from a principal quadratic lower bound and nonnegative
 mass coefficient. -/
 lemma min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self {A : Matrix n n ℝ}
-    {c₀ : ℝ} (hlam : 0 ≤ lam)
-    (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
+    {c₀ : ℝ} (hlam : 0 ≤ lam) (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
     (hc : 0 ≤ c₀) (U : ℝ × EuclideanSpace ℝ n) :
     min lam c₀ * ‖U‖ ^ 2 ≤ energyIntegrand A 0 c₀ U U := by
   have hprod := min_mul_prod_norm_sq_le_add hlam hc U

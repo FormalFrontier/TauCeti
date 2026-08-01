@@ -18,6 +18,11 @@ open, and proves that it meets every Weyl orbit: every weight can be moved into 
 dominant chamber by some element of the Weyl group. Equivalently, the Weyl translates of the
 closed dominant chamber cover the whole weight space.
 
+The two chambers are defined by the signs of the *simple* coroot functionals. Since the coroot of
+a positive root is a nonnegative integer combination of the simple coroots, the same sign
+conditions in fact hold for all of the positive roots at once, and the file ends by recording that
+description of both chambers.
+
 The proof is the classical maximization argument. The Weyl group of a finite root system is
 finite, so the sum of the coroot functionals indexed by the positive roots, evaluated along an
 orbit, attains a maximum. A simple reflection `sᵢ` permutes the positive roots other than `αᵢ`
@@ -39,6 +44,9 @@ therefore forces `⟨αᵢ^∨, x⟩ ≥ 0` for every simple root, which is domi
 * `TauCeti.ofIdx_smul_notMem_dominantChamber` and
   `TauCeti.ofIdx_smul_ne_of_mem_openDominantChamber`: a simple reflection moves every point of the
   open dominant chamber, and moves it out of the closed chamber.
+* `TauCeti.mem_dominantChamber_iff_forall_mem_posRoots` and
+  `TauCeti.mem_openDominantChamber_iff_forall_mem_posRoots`: the two chambers are cut out by all of
+  the positive coroot functionals, not just the simple ones.
 
 ## Implementation notes
 
@@ -51,6 +59,10 @@ asks for no root-system assumption: on top of the standing `Finite ι`, `P.IsCry
 `P.IsReduced` hypotheses that the positive-root permutation step needs, it assumes only
 `Finite P.weylGroup`. The roadmap-signature `exists_mem_dominantChamber` is the root-system case,
 where that finiteness comes from `TauCeti.RootPairing.finite_weylGroup`.
+
+The statements that measure a coroot against the base assume `P.flip.IsReduced` alongside
+`P.IsReduced`; Mathlib's `RootPairing.instFlipIsReduced` supplies it whenever `N` is torsion free,
+which is automatic over a field.
 
 ## References
 
@@ -231,5 +243,83 @@ theorem exists_mem_dominantChamber [P.IsRootSystem] (x : M) :
   exists_mem_dominantChamber_of_finite_weylGroup P b x
 
 end Finite
+
+section PosRoots
+
+variable [Finite ι] [P.IsCrystallographic] [P.IsReduced] [P.flip.IsReduced]
+
+/-- A positive coroot functional is a nonnegative integer combination of the simple coroot
+functionals, with at least one simple coroot genuinely occurring. -/
+private lemma exists_coroot'_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    ∃ f : ι → ℕ, (∃ j ∈ b.support, f j ≠ 0) ∧
+      ∀ x : M, P.coroot' i x = ∑ j ∈ b.support, (f j : R) * P.coroot' j x := by
+  obtain ⟨f, -, hsum⟩ := exists_coroot_eq_sum_nat_of_mem_posRoots P b hi
+  refine ⟨f, ?_, fun x ↦ ?_⟩
+  · by_contra hcon
+    push Not at hcon
+    haveI : NeZero (2 : R) := ⟨by exact_mod_cast (by norm_num : (2 : ℕ) ≠ 0)⟩
+    refine P.ne_zero' i ?_
+    rw [hsum]
+    exact Finset.sum_eq_zero fun j hj ↦ by simp [hcon j hj]
+  · -- `RootPairing.coroot'` is an abbreviation for the transpose of `P.toLinearMap` applied to a
+    -- coroot, so unfolding it is what carries the expansion of `P.coroot i` to the dual side.
+    have hcoroot' : P.coroot' i = ∑ j ∈ b.support, (f j : R) • P.coroot' j := by
+      simp only [_root_.RootPairing.coroot']
+      rw [hsum, map_sum]
+      exact Finset.sum_congr rfl fun j _ ↦ by simp [Nat.cast_smul_eq_nsmul]
+    rw [hcoroot', LinearMap.sum_apply]
+    exact Finset.sum_congr rfl fun j _ ↦ by simp
+
+variable {x : M}
+
+/-- Every positive coroot functional is nonnegative on the closed dominant chamber. -/
+theorem coroot'_nonneg_of_mem_posRoots (hx : x ∈ dominantChamber P b) {i : ι}
+    (hi : i ∈ posRoots P b) : 0 ≤ P.coroot' i x := by
+  obtain ⟨f, -, hsum⟩ := exists_coroot'_eq_sum_nat_of_mem_posRoots P b hi
+  rw [hsum x]
+  exact Finset.sum_nonneg fun j hj ↦
+    mul_nonneg (by positivity) ((mem_dominantChamber P b x).mp hx j hj)
+
+/-- Every negative coroot functional is nonpositive on the closed dominant chamber. -/
+theorem coroot'_nonpos_of_mem_negRoots (hx : x ∈ dominantChamber P b) {i : ι}
+    (hi : i ∈ negRoots P b) : P.coroot' i x ≤ 0 := by
+  have h := coroot'_nonneg_of_mem_posRoots P b hx
+    ((reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mpr hi)
+  rw [RootPairing.coroot'_reflectionPerm_self] at h
+  simpa using h
+
+/-- Every positive coroot functional is positive on the open dominant chamber. -/
+theorem coroot'_pos_of_mem_posRoots (hx : x ∈ openDominantChamber P b) {i : ι}
+    (hi : i ∈ posRoots P b) : 0 < P.coroot' i x := by
+  -- Some simple coroot really occurs in the expansion, because a coroot is never zero.
+  obtain ⟨f, ⟨j, hj, hfj⟩, hsum⟩ := exists_coroot'_eq_sum_nat_of_mem_posRoots P b hi
+  have hx' := (mem_openDominantChamber P b x).mp hx
+  rw [hsum x]
+  refine Finset.sum_pos' (fun k hk ↦ mul_nonneg (by positivity) (hx' k hk).le) ⟨j, hj, ?_⟩
+  exact mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hfj) (hx' j hj)
+
+/-- Every negative coroot functional is negative on the open dominant chamber. -/
+theorem coroot'_neg_of_mem_negRoots (hx : x ∈ openDominantChamber P b) {i : ι}
+    (hi : i ∈ negRoots P b) : P.coroot' i x < 0 := by
+  have h := coroot'_pos_of_mem_posRoots P b hx
+    ((reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mpr hi)
+  rw [RootPairing.coroot'_reflectionPerm_self] at h
+  simpa using h
+
+/-- **The closed dominant chamber is cut out by the positive coroot functionals**, not just by the
+simple ones. -/
+theorem mem_dominantChamber_iff_forall_mem_posRoots :
+    x ∈ dominantChamber P b ↔ ∀ i ∈ posRoots P b, 0 ≤ P.coroot' i x := by
+  refine ⟨fun hx _ hi ↦ coroot'_nonneg_of_mem_posRoots P b hx hi, fun h ↦ ?_⟩
+  exact (mem_dominantChamber P b x).mpr fun i hi ↦ h i (support_subset_posRoots P b hi)
+
+/-- **The open dominant chamber is cut out by the positive coroot functionals**, not just by the
+simple ones. -/
+theorem mem_openDominantChamber_iff_forall_mem_posRoots :
+    x ∈ openDominantChamber P b ↔ ∀ i ∈ posRoots P b, 0 < P.coroot' i x := by
+  refine ⟨fun hx _ hi ↦ coroot'_pos_of_mem_posRoots P b hx hi, fun h ↦ ?_⟩
+  exact (mem_openDominantChamber P b x).mpr fun i hi ↦ h i (support_subset_posRoots P b hi)
+
+end PosRoots
 
 end TauCeti

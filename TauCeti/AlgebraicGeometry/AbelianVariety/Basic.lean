@@ -142,8 +142,7 @@ noncomputable def ofGeometricallyIntegral (G : Over (Spec (.of K))) [GrpObj G]
 
 @[simp]
 lemma ofGeometricallyIntegral_toOver (G : Over (Spec (.of K))) [GrpObj G]
-    [IsProper G.hom] [GeometricallyIntegral G.hom] :
-    (ofGeometricallyIntegral G).toOver = G :=
+    [IsProper G.hom] [GeometricallyIntegral G.hom] : (ofGeometricallyIntegral G).toOver = G :=
   (rfl)
 
 /-- The unit of `ofGeometricallyIntegral G` is the unit of `G`. -/

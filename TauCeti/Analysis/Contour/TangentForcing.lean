@@ -89,8 +89,7 @@ private theorem abs_im_mul_conj_div_mul_le_of_sub_smul {γ : ℝ → ℂ} {t₀ 
 `|Im(L * conj v)| / ‖v‖` is bounded by the given positive `ε`. (The zero-forcing conclusion
 `Im(L · conj v) = 0` is drawn by the caller `im_mul_conj_eq_zero_of_flat_right`.) -/
 private theorem abs_im_mul_conj_div_le_of_isLittleO {γ : ℝ → ℂ} {t₀ : ℝ} {v L : ℂ} {n : ℕ}
-    (hv : v ≠ 0) (hn : 1 ≤ n)
-    (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[>] t₀]
+    (hv : v ≠ 0) (hn : 1 ≤ n) (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[>] t₀]
       fun t => ‖γ t - γ t₀‖ ^ n)
     (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) {ε : ℝ} (hε : 0 < ε) :
     |(L * starRingEnd ℂ v).im| / ‖v‖ ≤ ε := by
@@ -127,8 +126,7 @@ private theorem abs_im_mul_conj_div_le_of_isLittleO {γ : ℝ → ℂ} {t₀ : �
 together with a right derivative `L`, forces `Im(L · conj v) = 0` — the flatness direction and
 the tangent are colinear. -/
 private theorem im_mul_conj_eq_zero_of_flat_right {γ : ℝ → ℂ} {t₀ : ℝ} {v L : ℂ} {n : ℕ}
-    (hv : v ≠ 0) (hn : 1 ≤ n)
-    (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[>] t₀]
+    (hv : v ≠ 0) (hn : 1 ≤ n) (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[>] t₀]
       fun t => ‖γ t - γ t₀‖ ^ n)
     (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) :
     (L * starRingEnd ℂ v).im = 0 := by
@@ -146,8 +144,7 @@ private theorem im_mul_conj_eq_zero_of_flat_right {γ : ℝ → ℂ} {t₀ : ℝ
 reflection `t ↦ 2t₀ - t`, which carries the left data of `γ` to right data of the reflected
 curve with tangent `-L` — and `Im((-L) · conj v) = 0` iff `Im(L · conj v) = 0`. -/
 private theorem im_mul_conj_eq_zero_of_flat_left {γ : ℝ → ℂ} {t₀ : ℝ} {v L : ℂ} {n : ℕ}
-    (hv : v ≠ 0) (hn : 1 ≤ n)
-    (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[<] t₀]
+    (hv : v ≠ 0) (hn : 1 ≤ n) (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[𝓝[<] t₀]
       fun t => ‖γ t - γ t₀‖ ^ n)
     (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) :
     (L * starRingEnd ℂ v).im = 0 := by
@@ -184,8 +181,7 @@ private theorem im_mul_conj_eq_zero_of_flat_left {γ : ℝ → ℂ} {t₀ : ℝ}
 (`Im(L · conj v) = 0`, so `L ∈ ℝ • v`), the deviation bound against `v` becomes a deviation
 bound against `L` by line-invariance of the deviation norm. -/
 private theorem tangentDeviation_isLittleO_of_im_mul_conj_eq_zero {γ : ℝ → ℂ} {t₀ : ℝ}
-    {v L : ℂ} {n : ℕ} {l : Filter ℝ} (hv : v ≠ 0) (hL : L ≠ 0)
-    (h_im : (L * starRingEnd ℂ v).im = 0)
+    {v L : ℂ} {n : ℕ} {l : Filter ℝ} (hv : v ≠ 0) (hL : L ≠ 0) (h_im : (L * starRingEnd ℂ v).im = 0)
     (h_dev : (fun t => |((γ t - γ t₀) * star v).im| / ‖v‖) =o[l]
       fun t => ‖γ t - γ t₀‖ ^ n) :
     (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[l]

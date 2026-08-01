@@ -188,8 +188,7 @@ lemma deckEquivFiber_mul [PreconnectedSpace E] (hp : IsCoveringMap p) (hreg : Is
 /-- The inverse of `deckEquivFiber` is characterized by the deck transformation it returns:
 it sends the chosen fibre point to the requested fibre point. -/
 lemma deckEquivFiber_symm_smul [PreconnectedSpace E] (hp : IsCoveringMap p)
-    (hreg : IsRegular p) (e e' : p ⁻¹' {b}) :
-    (deckEquivFiber hp hreg e).symm e' • e = e' :=
+    (hreg : IsRegular p) (e e' : p ⁻¹' {b}) : (deckEquivFiber hp hreg e).symm e' • e = e' :=
   (deckEquivFiber hp hreg e).apply_symm_apply e'
 
 /-- On underlying points, the inverse of `deckEquivFiber` sends the chosen point to the

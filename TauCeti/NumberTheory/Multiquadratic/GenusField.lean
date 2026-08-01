@@ -55,6 +55,43 @@ private lemma primeDiscriminant_eq_sq_mul_radicand {P : ℤ} (hP : IsPrimeDiscri
   · exact ⟨1, one_ne_zero, by linear_combination h⟩
   · exact ⟨2, two_ne_zero, by linear_combination h⟩
 
+/-- The product of the radicands of prime discriminants whose product is
+`fundamentalDiscriminant d` is a nonzero rational square times `d`. -/
+theorem exists_prod_radicand_eq_sq_mul_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) :
+    ∃ a : ℚ, a ≠ 0 ∧
+      (∏ P ∈ s.attach, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) =
+        a ^ 2 * ((d : ℤ) : ℚ) := by
+  classical
+  choose c hc0 hcP using fun (P : ℤ) (hP : IsPrimeDiscriminant P) =>
+    primeDiscriminant_eq_sq_mul_radicand hP
+  let C : ℤ := ∏ P ∈ s.attach, c P.1 (hs P.1 P.2)
+  let R : ℤ := ∏ P ∈ s.attach, primeDiscriminantRadicand P.1
+  have hCprod : ∏ P ∈ s, P = C ^ 2 * R := by
+    dsimp only [C, R]
+    rw [← Finset.prod_pow, ← Finset.prod_mul_distrib,
+      ← Finset.prod_attach s (fun P => P)]
+    exact Finset.prod_congr rfl fun P _ => hcP P.1 (hs P.1 P.2)
+  obtain ⟨c0, hc0ne, hfd⟩ := exists_sq_mul_eq_fundamentalDiscriminant d
+  have hCne : C ≠ 0 :=
+    Finset.prod_ne_zero_iff.mpr fun P _ => hc0 P.1 (hs P.1 P.2)
+  have hkey : C ^ 2 * R = c0 ^ 2 * d := by rw [← hCprod, hprod, hfd]
+  let a : ℚ := (c0 : ℚ) / (C : ℚ)
+  have hCQ : (C : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hCne
+  have hc0Q : (c0 : ℚ) ≠ 0 :=
+    Int.cast_ne_zero.mpr (by rcases hc0ne with h | h <;> simp [h])
+  have hane : a ≠ 0 := div_ne_zero hc0Q hCQ
+  have hcast : (C : ℚ) ^ 2 * (R : ℚ) = (c0 : ℚ) ^ 2 * ((d : ℤ) : ℚ) := by
+    exact_mod_cast hkey
+  have hRa : (R : ℚ) = a ^ 2 * ((d : ℤ) : ℚ) := by
+    dsimp only [a]
+    rw [div_pow]
+    field_simp
+    linear_combination hcast
+  refine ⟨a, hane, ?_⟩
+  rw [← Int.cast_prod]
+  exact hRa
+
 /-- **A square root of `d` in the prime-discriminant compositum.** Let `d : ℤ` and let `s` be a
 finite set of prime discriminants whose product is the fundamental discriminant
 `fundamentalDiscriminant d`. For any chosen square roots `root` of the radicands of the members of
@@ -62,40 +99,19 @@ finite set of prime discriminants whose product is the fundamental discriminant
 squaring to `d`. This is the square-class containment underlying the genus-field construction. -/
 theorem exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
-    {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L)
-    (hroot : ∀ P : {P // P ∈ s},
+    {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L) (hroot : ∀ P : {P // P ∈ s},
       root P ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) :
     ∃ x ∈ IntermediateField.adjoin ℚ (Set.range root), x ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
   classical
-  -- Per-factor square multiplier `c P` with `P = (c P)² · radicand P`.
-  choose c hc0 hcP using fun (P : ℤ) (hP : IsPrimeDiscriminant P) =>
-    primeDiscriminant_eq_sq_mul_radicand hP
-  -- `∏ P = (∏ c P)² · ∏ radicand P` over `s`, in `ℤ`.
-  have hCprod : ∏ P ∈ s, P =
-      (∏ P ∈ s.attach, c P.1 (hs P.1 P.2)) ^ 2 *
-        ∏ P ∈ s.attach, primeDiscriminantRadicand P.1 := by
-    rw [← Finset.prod_pow, ← Finset.prod_mul_distrib, ← Finset.prod_attach s (fun P => P)]
-    exact Finset.prod_congr rfl fun P _ => hcP P.1 (hs P.1 P.2)
-  obtain ⟨c0, hc0ne, hfd⟩ := exists_sq_mul_eq_fundamentalDiscriminant d
-  set C : ℤ := ∏ P ∈ s.attach, c P.1 (hs P.1 P.2) with hC
-  set R : ℤ := ∏ P ∈ s.attach, primeDiscriminantRadicand P.1 with hR
-  have hCne : C ≠ 0 := Finset.prod_ne_zero_iff.mpr fun P _ => hc0 P.1 (hs P.1 P.2)
-  have hkey : C ^ 2 * R = c0 ^ 2 * d := by rw [← hCprod, hprod, hfd]
-  -- In `ℚ`, `R` is a nonzero square times `d`.
-  set a : ℚ := (c0 : ℚ) / (C : ℚ) with ha
-  have hCQ : (C : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hCne
-  have hc0Q : (c0 : ℚ) ≠ 0 := Int.cast_ne_zero.mpr (by rcases hc0ne with h | h <;> simp [h])
-  have hane : a ≠ 0 := by rw [ha]; exact div_ne_zero hc0Q hCQ
-  have hRa : (R : ℚ) = a ^ 2 * ((d : ℤ) : ℚ) := by
-    have hcast : (C : ℚ) ^ 2 * (R : ℚ) = (c0 : ℚ) ^ 2 * ((d : ℤ) : ℚ) := by exact_mod_cast hkey
-    rw [ha, div_pow]
-    field_simp
-    linear_combination hcast
-  -- The product of all roots lies in `M` and squares to `R` (reusing the subset-product API).
+  obtain ⟨a, hane, hRa⟩ :=
+    exists_prod_radicand_eq_sq_mul_of_prod_primeDiscriminant_eq hs hprod
+  -- The product of all roots lies in `M` and squares to the product of the radicands.
   set x0 : L := ∏ P ∈ s.attach, root P with hx0
   have hx0mem : x0 ∈ IntermediateField.adjoin ℚ (Set.range root) := prod_root_mem_adjoin s.attach
-  have hx0sq : x0 ^ 2 = algebraMap ℚ L (R : ℚ) := by
-    rw [hx0, prod_root_sq hroot s.attach, hR, Int.cast_prod]
+  have hx0sq : x0 ^ 2 =
+      algebraMap ℚ L (∏ P ∈ s.attach,
+        ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
+    rw [hx0, prod_root_sq hroot s.attach]
   -- Scale by `a⁻¹` to land a square root of `d`.
   have ha_inv_sq : a⁻¹ ^ 2 * a ^ 2 = 1 := by rw [← mul_pow, inv_mul_cancel₀ hane, one_pow]
   refine ⟨algebraMap ℚ L a⁻¹ * x0, mul_mem (IntermediateField.algebraMap_mem _ _) hx0mem, ?_⟩

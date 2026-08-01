@@ -89,8 +89,7 @@ def IsConstStructureJHolomorphicAt (J : AlmostComplexStructure V) (J' : AlmostCo
 within the
 set exists there and intertwines the source and target almost complex structures. -/
 def IsConstStructureJHolomorphicWithinAt (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (f : V → W) (s : Set V) (x : V) : Prop :=
+    (J' : AlmostComplexStructure W) (f : V → W) (s : Set V) (x : V) : Prop :=
   ∃ f' : V →L[ℝ] W, HasFDerivWithinAt f f' s x ∧ IsComplexLinearMap J J' f'.toLinearMap
 
 /-- A map is constant-structure `J`-holomorphic on a set if it is constant-structure `J`-holomorphic
@@ -109,8 +108,7 @@ def IsConstStructureJHolomorphic (J : AlmostComplexStructure V) (J' : AlmostComp
 /-- Restate pointwise constant-structure `J`-holomorphicity as existence of a complex-linear Frechet
 derivative. -/
 lemma isConstStructureJHolomorphicAt_iff (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (f : V → W) (x : V) :
+    (J' : AlmostComplexStructure W) (f : V → W) (x : V) :
     IsConstStructureJHolomorphicAt J J' f x ↔
       ∃ f' : V →L[ℝ] W, HasFDerivAt f f' x ∧ IsComplexLinearMap J J' f'.toLinearMap :=
   Iff.rfl
@@ -129,8 +127,7 @@ lemma isConstStructureJHolomorphicWithinAt_iff (J : AlmostComplexStructure V)
 each
 point of the set. -/
 lemma isConstStructureJHolomorphicOn_iff (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (f : V → W) (s : Set V) :
+    (J' : AlmostComplexStructure W) (f : V → W) (s : Set V) :
     IsConstStructureJHolomorphicOn J J' f s ↔
       ∀ x ∈ s, ∃ f' : V →L[ℝ] W,
         HasFDerivWithinAt f f' s x ∧ IsComplexLinearMap J J' f'.toLinearMap :=
@@ -139,8 +136,7 @@ lemma isConstStructureJHolomorphicOn_iff (J : AlmostComplexStructure V)
 /-- Restate global constant-structure `J`-holomorphicity as the pointwise derivative condition at
 every point. -/
 lemma isConstStructureJHolomorphic_iff (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (f : V → W) :
+    (J' : AlmostComplexStructure W) (f : V → W) :
     IsConstStructureJHolomorphic J J' f ↔
       ∀ x, ∃ f' : V →L[ℝ] W, HasFDerivAt f f' x ∧
         IsComplexLinearMap J J' f'.toLinearMap :=
@@ -182,8 +178,7 @@ lemma isConstStructureJHolomorphicOn_of_forall {J : AlmostComplexStructure V}
 
 /-- Extract pointwise constant-structure `J`-holomorphicity from a global one. -/
 lemma IsConstStructureJHolomorphic.isConstStructureJHolomorphicAt {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
+    {J' : AlmostComplexStructure W} {f : V → W} (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
     IsConstStructureJHolomorphicAt J J' f x :=
   (isConstStructureJHolomorphicAt_iff J J' f x).mpr
     ((isConstStructureJHolomorphic_iff J J' f).mp hf x)
@@ -200,8 +195,7 @@ lemma isConstStructureJHolomorphic_of_forall {J : AlmostComplexStructure V}
 constant-structure `J`-holomorphicity. -/
 @[simp]
 lemma isConstStructureJHolomorphicOn_univ (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (f : V → W) :
+    (J' : AlmostComplexStructure W) (f : V → W) :
     IsConstStructureJHolomorphicOn J J' f Set.univ ↔ IsConstStructureJHolomorphic J J' f := by
   simp [IsConstStructureJHolomorphicOn, IsConstStructureJHolomorphicWithinAt,
     IsConstStructureJHolomorphic, IsConstStructureJHolomorphicAt, hasFDerivWithinAt_univ]
@@ -263,8 +257,7 @@ lemma IsConstStructureJHolomorphicAt.fderiv_apply_commute {J : AlmostComplexStru
 /-- A pointwise constant-structure `J`-holomorphic map is constant-structure `J`-holomorphic within
 any set. -/
 lemma IsConstStructureJHolomorphicAt.isConstStructureJHolomorphicWithinAt
-    {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
+    {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
     (hf : IsConstStructureJHolomorphicAt J J' f x) :
     IsConstStructureJHolomorphicWithinAt J J' f s x :=
   ⟨_, hf.hasFDerivAt.hasFDerivWithinAt, hf.derivative_isComplexLinear⟩
@@ -305,8 +298,7 @@ lemma IsConstStructureJHolomorphicWithinAt.continuousWithinAt {J : AlmostComplex
 
 /-- The within-set Frechet derivative is complex-linear when the set has unique derivatives. -/
 lemma IsConstStructureJHolomorphicWithinAt.fderivWithin_isComplexLinear
-    {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
+    {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
     (hf : IsConstStructureJHolomorphicWithinAt J J' f s x) (hs : UniqueDiffWithinAt ℝ s x) :
     IsComplexLinearMap J J' (fderivWithin ℝ f s x).toLinearMap := by
   simpa [hf.hasFDerivWithinAt.fderivWithin hs] using hf.derivative_isComplexLinear
@@ -323,8 +315,7 @@ lemma IsConstStructureJHolomorphicWithinAt.fderivWithin_apply_commute {J : Almos
 `J`-holomorphic when the set is a
 neighborhood of the point. -/
 lemma IsConstStructureJHolomorphicWithinAt.isConstStructureJHolomorphicAt_of_mem_nhds
-    {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
+    {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
     (hf : IsConstStructureJHolomorphicWithinAt J J' f s x) (hs : s ∈ nhds x) :
     IsConstStructureJHolomorphicAt J J' f x :=
   ⟨_, (hasFDerivWithinAt_of_mem_nhds hs).mp hf.hasFDerivWithinAt,
@@ -343,8 +334,7 @@ lemma IsConstStructureJHolomorphicWithinAt.continuousAt_of_mem_nhds {J : AlmostC
 differentiable at the
 point. -/
 lemma IsConstStructureJHolomorphicWithinAt.differentiableAt_of_mem_nhds
-    {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
+    {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W} {f : V → W} {s : Set V} {x : V}
     (hf : IsConstStructureJHolomorphicWithinAt J J' f s x) (hs : s ∈ nhds x) :
     DifferentiableAt ℝ f x :=
   (hf.isConstStructureJHolomorphicAt_of_mem_nhds hs).differentiableAt
@@ -380,8 +370,7 @@ lemma isConstStructureJHolomorphicAt_id' (J : AlmostComplexStructure V) (x : V) 
 
 /-- Chain rule for pointwise constant-structure `J`-holomorphic maps. -/
 lemma IsConstStructureJHolomorphicAt.comp {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {J'' : AlmostComplexStructure X}
-    {f : V → W} {g : W → X} {x : V}
+    {J' : AlmostComplexStructure W} {J'' : AlmostComplexStructure X} {f : V → W} {g : W → X} {x : V}
     (hg : IsConstStructureJHolomorphicAt J' J'' g (f x))
     (hf : IsConstStructureJHolomorphicAt J J' f x) :
     IsConstStructureJHolomorphicAt J J'' (g ∘ f) x := by
@@ -528,29 +517,25 @@ lemma IsConstStructureJHolomorphic.isConstStructureJHolomorphicOn {J : AlmostCom
 
 /-- A globally constant-structure `J`-holomorphic map is differentiable. -/
 lemma IsConstStructureJHolomorphic.differentiable {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f) :
+    {J' : AlmostComplexStructure W} {f : V → W} (hf : IsConstStructureJHolomorphic J J' f) :
     Differentiable ℝ f :=
   fun x => (hf x).differentiableAt
 
 /-- A globally constant-structure `J`-holomorphic map is differentiable at every point. -/
 lemma IsConstStructureJHolomorphic.differentiableAt {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
+    {J' : AlmostComplexStructure W} {f : V → W} (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
     DifferentiableAt ℝ f x :=
   (hf x).differentiableAt
 
 /-- A globally constant-structure `J`-holomorphic map is continuous. -/
 lemma IsConstStructureJHolomorphic.continuous {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f) :
+    {J' : AlmostComplexStructure W} {f : V → W} (hf : IsConstStructureJHolomorphic J J' f) :
     Continuous f :=
   continuous_iff_continuousAt.mpr fun x => (hf x).continuousAt
 
 /-- A globally constant-structure `J`-holomorphic map is continuous at every point. -/
 lemma IsConstStructureJHolomorphic.continuousAt {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
+    {J' : AlmostComplexStructure W} {f : V → W} (hf : IsConstStructureJHolomorphic J J' f) (x : V) :
     ContinuousAt f x :=
   (hf x).continuousAt
 
@@ -571,8 +556,7 @@ lemma IsConstStructureJHolomorphic.continuousOn {J : AlmostComplexStructure V}
 /-- A constant map is globally constant-structure `J`-holomorphic. -/
 @[simp]
 lemma isConstStructureJHolomorphic_const (J : AlmostComplexStructure V)
-    (J' : AlmostComplexStructure W)
-    (c : W) : IsConstStructureJHolomorphic J J' (fun _ : V => c) :=
+    (J' : AlmostComplexStructure W) (c : W) : IsConstStructureJHolomorphic J J' (fun _ : V => c) :=
   fun x => isConstStructureJHolomorphicAt_const J J' c x
 
 /-- The identity map is globally constant-structure `J`-holomorphic. -/
@@ -589,8 +573,7 @@ lemma isConstStructureJHolomorphic_id' (J : AlmostComplexStructure V) :
 
 /-- Chain rule for global constant-structure `J`-holomorphic maps. -/
 lemma IsConstStructureJHolomorphic.comp {J : AlmostComplexStructure V}
-    {J' : AlmostComplexStructure W} {J'' : AlmostComplexStructure X}
-    {f : V → W} {g : W → X}
+    {J' : AlmostComplexStructure W} {J'' : AlmostComplexStructure X} {f : V → W} {g : W → X}
     (hg : IsConstStructureJHolomorphic J' J'' g) (hf : IsConstStructureJHolomorphic J J' f) :
     IsConstStructureJHolomorphic J J'' (g ∘ f) :=
   fun x => (hg (f x)).comp (hf x)
@@ -743,8 +726,7 @@ lemma IsConstStructureJHolomorphic.sub {f g : V → W}
 
 /-- A real scalar multiple of a globally constant-structure `J`-holomorphic map is
 constant-structure `J`-holomorphic. -/
-lemma IsConstStructureJHolomorphic.const_smul {f : V → W}
-    (hf : IsConstStructureJHolomorphic J J' f)
+lemma IsConstStructureJHolomorphic.const_smul {f : V → W} (hf : IsConstStructureJHolomorphic J J' f)
     (c : ℝ) :
     IsConstStructureJHolomorphic J J' (c • f) :=
   fun x => (hf x).const_smul c

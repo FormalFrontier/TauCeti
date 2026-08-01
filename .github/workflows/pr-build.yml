@@ -3,11 +3,9 @@ name: pr-build
 # Builds untrusted PR code in a TRUSTED, base-branch-defined workflow. A PR cannot change what
 # runs here (pull_request_target uses the base definition). The build/audit configuration
 # (lakefile, scripts/, manifest, toolchain) is the TRUSTED base's: we overlay only the PR's
-# `TauCeti/` sources and validated Lake pins onto a base checkout. The sole config exception is a
-# PR opened by tauceti-review-bot[bot] that changes exactly Mathlib's lakefile rev to the matching
-# immutable manifest SHA, or restores it to `master`; the trusted bump validator proves and
-# overlays that exact change. Any other PR touching anything outside the allowed paths is routed
-# to a human. PR `TauCeti/` code
+# `TauCeti/` sources and validated Lake pins onto a base checkout. Lakefiles remain entirely
+# base-trusted; dependency repair PRs carry exact first-known-bad commits only in the manifest.
+# Any PR touching anything outside the allowed paths is routed to a human. PR `TauCeti/` code
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
 # reach). The `build` commit status on the PR head SHA is the required merge check.
 #
@@ -117,11 +115,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Building PR #$NUM @ $SHA from $REPO (author=${AUTHOR:-merge-group}, status -> $STATUS_SHA, bump delta vs merge-base $MB)"
 
-      - name: Scope guard — allow TauCeti sources, validated pins, and the review bot's exact lakefile pin
+      - name: Scope guard — allow TauCeti sources and validated pins
         env:
           GH_TOKEN: "${{ github.token }}"
-          PR_AUTHOR: "${{ steps.pr.outputs.author }}"
-          EVENT_NAME: "${{ github.event_name }}"
         run: |
           if [ "${{ github.event_name }}" = "merge_group" ]; then
             # The whole batch's combined change set vs the trusted base (every batched PR).
@@ -141,12 +137,7 @@ jobs:
           # empty) library root, normally untouched, but a PR may edit it. It is overlaid
           # into the sandbox below and the import-boundary guard covers it. Everything else
           # outside TauCeti/ (scripts/, .github/, arbitrary Lake config) stays trusted-base-only and
-          # routes to a human. lakefile.toml has one narrow exception: the review bot may pin Mathlib
-          # to the exact immutable SHA in the manifest, then restore `master` in the next compatible
-          # bump. The trusted bump validator proves the single-line relationship before that config
-          # is overlaid or built. A merge group has no
-          # single author, but it can contain this path only after the author-aware enqueue gate; the
-          # same strict content validation is repeated here.
+          # routes to a human. The lakefiles are always human-owned and never overlaid automatically.
           # lake-manifest.json and lean-toolchain are also permitted, but ONLY as a
           # machine-validated forward bump: the "Validate the Lake-pin bump" step below
           # runs the trusted base scripts/check-bump.sh and routes to a human if it is
@@ -154,12 +145,6 @@ jobs:
           # transitive pins derived from mathlib, toolchain monotonic).
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine the overlay, routing to human"
-          elif echo "$files" | grep -qE '^lakefile\.toml$' \
-            && ! echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^lakefile\.toml$' \
-            && { [ "$PR_AUTHOR" = "tauceti-review-bot[bot]" ] || [ "$EVENT_NAME" = "merge_group" ]; }; then
-            echo "BOT_LAKEFILE=1" >> "$GITHUB_ENV"
-            echo "BUMP=1" >> "$GITHUB_ENV"
-            echo "::notice::trusted review-bot Mathlib lakefile pin detected — validating the exact config and manifest relationship"
           elif echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
             if echo "$files" | grep -qE '^lakefile\.toml$'; then
               echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
@@ -269,22 +254,8 @@ jobs:
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          args=(base mergebase pr)
-          if [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            args+=(--allow-bot-lakefile)
-          fi
-          if bash base/scripts/check-bump.sh "${args[@]}"; then
+          if bash base/scripts/check-bump.sh base mergebase pr; then
             echo "Lake-pin bump validated — building with the PR's pins."
-          elif [ "${{ github.event_name }}" = "merge_group" ] \
-              && [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            # A human-reviewed arbitrary lakefile change can enter the queue too. It is not eligible
-            # for the bot exception, so preserve the pre-exception behavior: build with trusted base
-            # config, keep scope red, and let the human decision (not automation) authorize landing.
-            echo "BOT_LAKEFILE=" >> "$GITHUB_ENV"
-            echo "BUMP=" >> "$GITHUB_ENV"
-            echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
-            echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
-            echo "::warning::merge-group lakefile is not the exact bot pin — building trusted base config for the human merge path"
           else
             echo "BUMP_BAD=1" >> "$GITHUB_ENV"
             echo "INFRA=1" >> "$GITHUB_ENV"
@@ -315,14 +286,6 @@ jobs:
               [ -e "pr/$f" ] && cp -a "pr/$f" "base/$f"
             done
           fi
-          # The trusted-bot exception is an exact, validator-proven Mathlib rev replacement.
-          # Overlay that lakefile only after check-bump accepted it; arbitrary Lake config remains
-          # base-trusted and can never reach the build through this path.
-          if [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            test ! -L pr/lakefile.toml || { echo "::error::lakefile.toml must not be a symlink"; exit 1; }
-            cp -a pr/lakefile.toml base/lakefile.toml
-          fi
-
       - name: Import-boundary guard (TauCeti/ and TauCeti.lean ⊬ roadmap/review)
         if: ${{ env.INFRA != '1' }}
         run: |
@@ -466,15 +429,15 @@ jobs:
           # bump-guard: this job already ran the trusted base scripts/check-bump.sh inline
           # (the "Validate the Lake-pin bump" step), so we post the required `bump-guard`
           # status from its result here rather than from a separate workflow. BUMP_BAD is set
-          # only when a manifest/toolchain/config change failed that validator; anything else (no pin
+          # only when a manifest/toolchain change failed that validator; anything else (no pin
           # change, or a validated forward bump) is a pass. Posting it from this job also means
           # both required statuses land together, before the auto-merge workflow_run fires.
           if [ "${{ env.BUMP_BAD }}" = "1" ]; then
-            bg_state=failure; bg_desc="Lake pin/config change is not a validated forward bump — needs human review"
+            bg_state=failure; bg_desc="Lake pin change is not a validated forward bump — needs human review"
           elif [ "${{ env.HUMAN_LAKEFILE }}" = "1" ]; then
             bg_state=success; bg_desc="lakefile not auto-validated; trusted base config built — human merge required"
           else
-            bg_state=success; bg_desc="validated forward Lake pin/config bump (or no pin change)"
+            bg_state=success; bg_desc="validated forward Lake pin bump (or no pin change)"
           fi
           gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
             -f state="$bg_state" -f context="bump-guard" -f description="$bg_desc" \
@@ -512,7 +475,7 @@ jobs:
           elif [ "${{ env.OUT_OF_SCOPE }}" = "1" ]; then
             sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
           elif [ "${{ env.BUMP_BAD }}" = "1" ]; then
-            sc_state=failure; sc_desc="Lake pin/config change failed the trusted bump validator"
+            sc_state=failure; sc_desc="Lake pin change failed the trusted bump validator"
           elif [ "${{ env.INFRA }}" = "1" ]; then
             sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
           elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
@@ -521,8 +484,6 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
-          elif [ "${{ env.BOT_LAKEFILE }}" = "1" ]; then
-            sc_state=success; sc_desc="trusted review-bot Mathlib lakefile pin validated and in scope"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi
