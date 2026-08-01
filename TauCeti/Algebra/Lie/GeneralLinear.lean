@@ -83,13 +83,13 @@ section Ring
 variable [Ring R]
 
 /-- An off-diagonal matrix unit is a commutator: `Eᵢⱼ = ⁅Eᵢᵢ, Eᵢⱼ⁆` when `i ≠ j`. -/
-theorem lie_single_diag_single {i j : n} (hij : i ≠ j) (c : R) :
+theorem lie_single_self_single_of_ne {i j : n} (hij : i ≠ j) (c : R) :
     ⁅single i i (1 : R), single i j c⁆ = single i j c := by
   rw [LieRing.of_associative_ring_bracket, single_mul_single_same,
     single_mul_single_of_ne (h := Ne.symm hij), one_mul, sub_zero]
 
 /-- A difference of diagonal matrix units is a commutator: `Eᵢᵢ - Eⱼⱼ = ⁅Eᵢⱼ, Eⱼᵢ⁆`. -/
-theorem lie_single_single_swap (i j : n) (c : R) :
+theorem lie_single_single_eq_sub (i j : n) (c : R) :
     ⁅single i j c, single j i (1 : R)⁆ = single i i c - single j j c := by
   rw [LieRing.of_associative_ring_bracket, single_mul_single_same, single_mul_single_same, mul_one,
     one_mul]
@@ -157,21 +157,23 @@ variable (R n) in
 
 One inclusion is the vanishing of the trace of a commutator. For the other, a trace-zero matrix is
 the sum of its off-diagonal matrix units `Eᵢⱼ (Aᵢⱼ)`, commutators by
-`TauCeti.lie_single_diag_single`, and of the differences `Eᵢᵢ (Aᵢᵢ) - E₀₀ (Aᵢᵢ)`, commutators by
-`TauCeti.lie_single_single_swap`; the discrepancy between the two sums is `E₀₀ (trace A)`, which
-vanishes. For an empty index type both sides are the zero ideal. -/
+`TauCeti.lie_single_self_single_of_ne`, and of the differences `Eᵢᵢ (Aᵢᵢ) - E₀₀ (Aᵢᵢ)`, commutators
+by `TauCeti.lie_single_single_eq_sub`; the discrepancy between the two sums is `E₀₀ (trace A)`,
+which vanishes. For an empty index type both sides are the zero ideal. -/
 theorem derivedSeries_one_eq_slIdeal :
     derivedSeries R (Matrix n n R) 1 = slIdeal R n := by
   classical
   have hderived : derivedSeries R (Matrix n n R) 1
-      = ⁅(⊤ : LieIdeal R (Matrix n n R)), (⊤ : LieIdeal R (Matrix n n R))⁆ := rfl
+      = ⁅(⊤ : LieIdeal R (Matrix n n R)), (⊤ : LieIdeal R (Matrix n n R))⁆ := by
+    rw [derivedSeries_def, derivedSeriesOfIdeal_succ, derivedSeriesOfIdeal_zero]
   refine le_antisymm ?_ fun A hA => ?_
   · rw [hderived, LieSubmodule.lie_le_iff]
     intro X _ Y _
     exact mem_slIdeal_iff.mpr (matrix_trace_commutator_zero n R X Y)
   -- With no indices at all the only matrix is `0`, which lies in every ideal.
   rcases isEmpty_or_nonempty n with hn | hne
-  · rw [show A = 0 from Matrix.ext fun i => hn.elim i]
+  · haveI := hn
+    rw [Subsingleton.elim A 0]
     exact zero_mem _
   obtain ⟨i₀⟩ := hne
   -- The commutators available to us, as members of the derived ideal.
@@ -185,8 +187,9 @@ theorem derivedSeries_one_eq_slIdeal :
     intro p q
     by_cases hpq : p = q
     · subst hpq
-      simpa [lie_single_single_swap p i₀ (A p p)] using hcomm (single p i₀ (A p p)) (single i₀ p 1)
-    · simpa [hpq, lie_single_diag_single hpq (A p q)] using
+      simpa [lie_single_single_eq_sub p i₀ (A p p)] using
+        hcomm (single p i₀ (A p p)) (single i₀ p 1)
+    · simpa [hpq, lie_single_self_single_of_ne hpq (A p q)] using
         hcomm (single p p (1 : R)) (single p q (A p q))
   -- The correction subtracted along the diagonal totals `E₀₀ (trace A)`, which vanishes.
   have hsingle_sum : ∀ f : n → R, ∑ p : n, single i₀ i₀ (f p) = single i₀ i₀ (∑ p : n, f p) :=
