@@ -227,6 +227,7 @@ theorem coe_sSup_of_directed {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
 
 /-- Membership in the supremum of a nonempty directed set of subcomodules reduces to membership
 in one member of the set. -/
+@[simp]
 theorem mem_sSup_of_directed {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
     (hdir : DirectedOn (· ≤ ·) S) {m : M} :
     m ∈ sSup S ↔ ∃ N ∈ S, m ∈ N := by
