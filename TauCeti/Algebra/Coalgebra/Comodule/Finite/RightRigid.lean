@@ -30,6 +30,9 @@ antipode need not be bijective.
 
 ## References
 
+The exact-pairing packaging adapts the finite-dimensional module construction in
+`Mathlib/Algebra/Category/FGModuleCat/Basic.lean`.
+
 See Etingof--Gelaki--Nikshych--Ostrik, *Tensor Categories*, Definition 2.10.1 and
 Remark 5.3.8; Milne, *Algebraic Groups* (2017), Section 9.26; and Humphreys,
 *Linear Algebraic Groups*, Section 8.2.
@@ -170,9 +173,12 @@ private theorem tensorCoact_coevaluation_apply_one
           (Comodule.matrixCoefficient (R := k) (C := H)
             ((Module.Basis.ofVectorSpace k M).coord x) (q : M))) =
         if q = p then 1 else 0 by
-    simpa [bt, Module.Basis.coe_ofVectorSpace,
-      Module.Basis.tensorProduct_repr_tmul_apply, Module.Basis.dualBasis_repr,
-      hrepr] using h
+    simpa only [Module.Basis.coe_ofVectorSpace, map_sum,
+      TensorProduct.equivFinsuppOfBasisLeft_apply_tmul, Finsupp.coe_finsetSum,
+      Finset.sum_apply, Finsupp.mapRange_apply, Module.Basis.tensorProduct_repr_tmul_apply,
+      Module.Basis.dualBasis_repr, Module.Basis.coord_apply, hrepr, smul_eq_mul, mul_ite,
+      mul_one, mul_zero, ite_smul, one_smul, zero_smul, Finset.sum_ite_eq',
+      Finset.mem_univ, ↓reduceIte, Finset.sum_ite_eq, bt] using h
   calc
     _ = LinearMap.mul' k H
         ((HopfAlgebra.antipode k).lTensor H
@@ -221,63 +227,46 @@ theorem dualCoevaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualCoevaluation k H M).hom.toLinearMap = coevaluation k M :=
   rfl
 
-/-- The first triangle identity for the antipode-twisted dual: coevaluation followed by
-evaluation is the identity on the dual, up to the unitors. -/
-theorem dualCoevaluation_dualEvaluation
-    (M : FGComoduleCat.{u, v, u} k H) :
-    letI M' : FGComoduleCat.{u, v, u} k H := dual k H M
-    M' ◁ dualCoevaluation k H M ≫ (α_ M' M M').inv ≫
-        dualEvaluation k H M ▷ M' =
-      (ρ_ M').hom ≫ (λ_ M').inv := by
-  have h :
-      ((dual k H M ◁ dualCoevaluation k H M ≫
-          (α_ (dual k H M) M (dual k H M)).inv ≫
-            dualEvaluation k H M ▷ dual k H M).hom).toLinearMap =
-        (((ρ_ (dual k H M)).hom ≫ (λ_ (dual k H M)).inv).hom).toLinearMap := by
-    rw [← id_tensorHom, ← tensorHom_id]
-    simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
-      tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
-      ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
-      dualEvaluation_toLinearMap, associator_inv_toLinearMap,
-      rightUnitor_hom_toLinearMap, leftUnitor_inv_toLinearMap,
-      dual_coe, LinearMap.comp_assoc]
-    exact contractLeft_assoc_coevaluation k M
-  apply ObjectProperty.hom_ext
-  apply ComoduleCat.hom_ext
-  exact fun x => LinearMap.congr_fun h x
-
-/-- The second triangle identity for the antipode-twisted dual: coevaluation followed by
-evaluation is the identity on the comodule, up to the unitors. -/
-theorem dualEvaluation_dualCoevaluation
-    (M : FGComoduleCat.{u, v, u} k H) :
-    dualCoevaluation k H M ▷ M ≫
-        (α_ M (dual k H M) M).hom ≫ M ◁ dualEvaluation k H M =
-      (λ_ M).hom ≫ (ρ_ M).inv := by
-  have h :
-      ((dualCoevaluation k H M ▷ M ≫
-          (α_ M (dual k H M) M).hom ≫
-            M ◁ dualEvaluation k H M).hom).toLinearMap =
-        (((λ_ M).hom ≫ (ρ_ M).inv).hom).toLinearMap := by
-    rw [← tensorHom_id, ← id_tensorHom]
-    simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
-      tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
-      ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
-      dualEvaluation_toLinearMap, associator_hom_toLinearMap,
-      leftUnitor_hom_toLinearMap, rightUnitor_inv_toLinearMap,
-      dual_coe, LinearMap.comp_assoc]
-    exact contractLeft_assoc_coevaluation' k M
-  apply ObjectProperty.hom_ext
-  apply ComoduleCat.hom_ext
-  exact fun x => LinearMap.congr_fun h x
-
 /-- The antipode-twisted linear dual is an exact right dual of a finite-dimensional
 comodule. -/
 noncomputable instance instExactPairingDual
     (M : FGComoduleCat.{u, v, u} k H) : ExactPairing M (dual k H M) where
   coevaluation' := dualCoevaluation k H M
   evaluation' := dualEvaluation k H M
-  coevaluation_evaluation' := dualCoevaluation_dualEvaluation k H M
-  evaluation_coevaluation' := dualEvaluation_dualCoevaluation k H M
+  coevaluation_evaluation' := by
+    have h :
+        ((dual k H M ◁ dualCoevaluation k H M ≫
+            (α_ (dual k H M) M (dual k H M)).inv ≫
+              dualEvaluation k H M ▷ dual k H M).hom).toLinearMap =
+          (((ρ_ (dual k H M)).hom ≫ (λ_ (dual k H M)).inv).hom).toLinearMap := by
+      rw [← id_tensorHom, ← tensorHom_id]
+      simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
+        tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
+        ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
+        dualEvaluation_toLinearMap, associator_inv_toLinearMap,
+        rightUnitor_hom_toLinearMap, leftUnitor_inv_toLinearMap,
+        dual_coe, LinearMap.comp_assoc]
+      exact contractLeft_assoc_coevaluation k M
+    apply ObjectProperty.hom_ext
+    apply ComoduleCat.hom_ext
+    exact fun x => LinearMap.congr_fun h x
+  evaluation_coevaluation' := by
+    have h :
+        ((dualCoevaluation k H M ▷ M ≫
+            (α_ M (dual k H M) M).hom ≫
+              M ◁ dualEvaluation k H M).hom).toLinearMap =
+          (((λ_ M).hom ≫ (ρ_ M).inv).hom).toLinearMap := by
+      rw [← tensorHom_id, ← id_tensorHom]
+      simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
+        tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
+        ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
+        dualEvaluation_toLinearMap, associator_hom_toLinearMap,
+        leftUnitor_hom_toLinearMap, rightUnitor_inv_toLinearMap,
+        dual_coe, LinearMap.comp_assoc]
+      exact contractLeft_assoc_coevaluation' k M
+    apply ObjectProperty.hom_ext
+    apply ComoduleCat.hom_ext
+    exact fun x => LinearMap.congr_fun h x
 
 /-- Every finite-dimensional comodule has the antipode-twisted linear dual as a right dual. -/
 noncomputable instance instHasRightDual
