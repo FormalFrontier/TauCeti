@@ -47,32 +47,11 @@ theorem monodromy_smul (hp : IsCoveringMap p)
   have hgp : p'.comp g = p' := by
     ext z
     exact map_proj φ z
-  have hmapComp : Γ.map (p'.comp g) ≍ Γ.map p' :=
-    congr_arg_heq (fun q : C(E, X) ↦ Γ.map q) hgp
-  have hmapMap : (Γ.map g).map p' = Γ.map (p'.comp g) :=
-    Path.Homotopic.Quotient.map_comp.symm
-  have hmap : (Γ.map g).map p' ≍ Γ.map p' :=
-    (heq_of_eq hmapMap).trans hmapComp
-  let Γ' : Path.Homotopic.Quotient ((φ • e : p ⁻¹' {x}) : E)
-      ((φ • hp.monodromy γ e : p ⁻¹' {y}) : E) :=
-    (Γ.map g).cast (fiber_smul_coe φ e) (fiber_smul_coe φ (hp.monodromy γ e))
-  apply hp.monodromy_eq_of_map_eq Γ'
-  dsimp only [Γ']
-  rw [Path.Homotopic.Quotient.map_cast]
-  apply eq_of_heq
-  have hcastSource :
-      ((Γ.map g).map p').cast
-          (congrArg p' (fiber_smul_coe φ e))
-          (congrArg p' (fiber_smul_coe φ (hp.monodromy γ e))) ≍
-        (Γ.map g).map p' :=
-    Path.Homotopic.Quotient.cast_heq _ _
-  have hlift : Γ.map p' ≍ γ.cast e.2 (hp.monodromy γ e).2 :=
-    heq_of_eq (hp.map_liftPathQuotient γ e)
-  have hcastLift : γ.cast e.2 (hp.monodromy γ e).2 ≍ γ :=
-    Path.Homotopic.Quotient.cast_heq _ _
-  have hcastTarget : γ ≍ γ.cast (φ • e).2 (φ • hp.monodromy γ e).2 :=
-    (Path.Homotopic.Quotient.cast_heq _ _).symm
-  exact hcastSource.trans (hmap.trans (hlift.trans (hcastLift.trans hcastTarget)))
+  apply hp.monodromy_eq_of_map_eq (Γ.map g)
+  change (Γ.map g).map p' = _
+  rw [← Path.Homotopic.Quotient.map_comp]
+  convert hp.map_liftPathQuotient γ e using 2
+  grind
 
 end Deck
 
