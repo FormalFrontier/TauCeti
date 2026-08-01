@@ -444,9 +444,9 @@ radius `pseudoHyperbolicRadius a (Real.tanh R)`; for `R < 0` both sides are empt
 radius being negative.
 
 The Euclidean centre is `a` only for `a = 0` or `R = 0`; for `a ≠ 0` the hyperbolic ball is an
-off-centre Euclidean disc, pulled towards the origin. Specialising to `a = 0` recovers
-`TauCeti.hyperbolicDist_zero_le_iff_norm_le_tanh` of `Poincare/Topology.lean`, where the
-Euclidean centre is the origin and the Euclidean radius is `Real.tanh R`. -/
+off-centre Euclidean disc, pulled towards the origin. For `a = 0` the Euclidean centre is the
+origin and the Euclidean radius is `Real.tanh R`
+(`TauCeti.pseudoHyperbolicCenter_zero_left`, `TauCeti.pseudoHyperbolicRadius_zero_left`). -/
 theorem sep_ball_hyperbolicDist_lt_eq_ball (ha : ‖a‖ < 1) :
     {z ∈ ball (0 : ℂ) 1 | hyperbolicDist z a < R}
       = ball (pseudoHyperbolicCenter a (Real.tanh R)) (pseudoHyperbolicRadius a (Real.tanh R)) := by
@@ -460,7 +460,11 @@ theorem sep_ball_hyperbolicDist_lt_eq_ball (ha : ‖a‖ < 1) :
     exact and_congr_right fun hw => hyperbolicDist_lt_iff_pseudoHyperbolicExpr_lt_tanh ha hw
 
 /-- **A closed hyperbolic ball of the Poincaré disc is a closed Euclidean disc**, the `≤`
-companion of `TauCeti.sep_ball_hyperbolicDist_lt_eq_ball`. -/
+companion of `TauCeti.sep_ball_hyperbolicDist_lt_eq_ball`.
+
+Specialising to `a = 0` recovers `TauCeti.hyperbolicDist_zero_le_iff_norm_le_tanh` of
+`Poincare/Topology.lean`: the Euclidean centre is then the origin and the Euclidean radius is
+`Real.tanh R`. -/
 theorem sep_ball_hyperbolicDist_le_eq_closedBall (ha : ‖a‖ < 1) :
     {z ∈ ball (0 : ℂ) 1 | hyperbolicDist z a ≤ R}
       = closedBall (pseudoHyperbolicCenter a (Real.tanh R))
