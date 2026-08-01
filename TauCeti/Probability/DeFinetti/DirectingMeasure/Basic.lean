@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Kernel.CondDistrib
+public import TauCeti.Probability.Kernel.ProbabilityMeasure
 public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.Probability.Kernel.CondDistrib
-public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 /-!
 # The de Finetti directing measure
@@ -112,18 +111,20 @@ theorem directingMeasure_ae_eq_condExp {μ : Measure Ω} [IsFiniteMeasure μ] {X
 `MixedIIDWith` consumes as its witness `ν`. -/
 def directingProbabilityMeasure (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → α) (ω : Ω) :
     ProbabilityMeasure α :=
-  condDistribProbabilityMeasure (mβ := tailProcess X) (X 0) id μ ω
+  Kernel.probabilityMeasure (mβ := tailProcess X)
+    (@condDistrib Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _) ω
 
 /-- The underlying measure of the bundled directing measure is `directingMeasure μ X ω`. -/
 @[simp]
 theorem directingProbabilityMeasure_toMeasure {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (ω : Ω) : (directingProbabilityMeasure μ X ω : Measure α) = directingMeasure μ X ω := by
-  simp only [directingProbabilityMeasure, condDistribProbabilityMeasure_toMeasure, directingMeasure]
+  simp only [directingProbabilityMeasure, Kernel.probabilityMeasure_toMeasure, directingMeasure]
 
 /-- The bundled directing measure is **`tailProcess X`-measurable** into `ProbabilityMeasure α`. -/
 theorem measurable_tailProcess_directingProbabilityMeasure {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} : Measurable[tailProcess X] (directingProbabilityMeasure μ X) :=
-  measurable_condDistribProbabilityMeasure (mβ := tailProcess X)
+  Kernel.measurable_probabilityMeasure (mβ := tailProcess X)
+    (@condDistrib Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _)
 
 /-- The bundled directing measure is measurable into `ProbabilityMeasure α` — the ambient corollary
 of the `tailProcess X`-measurable form, the measurability that `MixedIIDWith` requires. -/
