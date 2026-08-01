@@ -77,7 +77,7 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
   have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
   simp only [toContinuousLinearMap_averageIntertwiner,
     ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one] at hc
+    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc
   have htrace := trace_averageOperator π hπ T
   rw [hc] at htrace
   have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
@@ -87,7 +87,6 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     apply (eq_inv_mul_iff_mul_eq₀ hdim).2
     simpa [mul_comm] using htrace
   rw [hc, hc']
-  rfl
 
 /-! ### The first Schur orthogonality relation -/
 
