@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 public import Mathlib.LinearAlgebra.Eigenspace.Matrix
-public import Mathlib.LinearAlgebra.Matrix.StdBasis
 
 /-!
 # The root space decomposition of `gl n R`
