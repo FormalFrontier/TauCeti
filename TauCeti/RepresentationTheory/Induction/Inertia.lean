@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Induction.Conjugate
 
 /-!
@@ -16,10 +17,17 @@ of the isomorphism class of `A`,
 `inertia A = {g : G | {}^g A ≅ A}`.
 
 This is not `MulAction.stabilizer G A`, which asks for `{}^g A = A` on the nose; the two are
-compared in `TauCeti.stabilizer_le_inertia`.  That the isomorphism-class stabilizer is a subgroup
-at all is the content of the definition: conjugation by `g` is a *functor*
-(`TauCeti.conjNormalFDRepFunctor`), so it carries an isomorphism `{}^h A ≅ A` to an isomorphism
-`{}^{gh} A ≅ {}^g A`, and the group axioms of the action do the rest.
+compared in `TauCeti.stabilizer_le_inertia`.  Instead, isomorphism classes of objects of a
+category are Mathlib's `CategoryTheory.Skeleton`, and conjugation descends to them because it is a
+*functor* (`TauCeti.conjNormalFDRepMapIso`); that descent is the `MulAction` instance
+`TauCeti.conjNormalFDRepSkeletonMulAction`, and `inertia A` is literally
+`MulAction.stabilizer G (toSkeleton A)`.  Everything else — that the inertia group is a subgroup,
+that it only depends on the isomorphism class, and that conjugating the representation conjugates
+it — is then Mathlib's generic stabilizer API.
+
+The conjugation file `TauCeti.RepresentationTheory.Induction.Conjugate` deliberately stops at the
+action of `G` on `FDRep k N` itself and leaves the induced action on isomorphism classes to a later
+file; this is that file.
 
 The inertia group contains `N` (`TauCeti.le_inertia`), because conjugating by an element `n` of `N`
 itself is an inner twist: `A.ρ n` intertwines `{}^n A` with `A`
@@ -27,20 +35,14 @@ itself is an inner twist: `A.ρ n` intertwines `{}^n A` with `A`
 Mathlib's `Subgroup.normal_subgroupOf` instance supplies for any subgroup of `G`, this is what makes
 the quotient `inertia A / N` — where the Clifford-theory obstruction lives — available.
 
-The conjugation file `TauCeti.RepresentationTheory.Induction.Conjugate` deliberately stops at the
-action of `G` on `FDRep k N` itself and leaves the induced action on isomorphism classes to a later
-file; this is that file, so the two isomorphisms feeding the subgroup axioms are stated here rather
-than there.
-
 Nothing here needs `A` to be irreducible: the inertia group is defined for every
 finite-dimensional representation of `N`, and irreducibility only enters later, when Clifford's
 theorem identifies the constituents of a restriction with a single `G`-orbit.
 
 ## Main definitions
 
-* `TauCeti.conjNormalFDRepMapIso`: conjugation carries isomorphisms to isomorphisms.
-* `TauCeti.conjNormalFDRepSelfIso`: conjugating by an element of `N` gives an isomorphic
-  representation.
+* `TauCeti.conjNormalFDRepSkeletonMulAction`: conjugation acting on isomorphism classes of
+  finite-dimensional representations of `N`.
 * `TauCeti.inertia`: the inertia group of a representation of a normal subgroup.
 
 ## Main statements
@@ -51,7 +53,7 @@ theorem identifies the constituents of a restriction with a single `G`-orbit.
 * `TauCeti.inertia_congr`: isomorphic representations have the same inertia group, so the inertia
   group is an invariant of the isomorphism class.
 * `TauCeti.inertia_conjNormalFDRep`: conjugating the representation conjugates its inertia group.
-* `TauCeti.character_conj_eq_of_mem_inertia`: the character of `A` is invariant under conjugation
+* `TauCeti.char_conj_eq_of_mem_inertia`: the character of `A` is invariant under conjugation
   by an element of the inertia group.
 
 ## References
@@ -78,82 +80,58 @@ section Ring
 
 variable [Ring k]
 
-/-- Conjugation carries isomorphic representations to isomorphic representations: this is
-`CategoryTheory.Functor.mapIso` for `TauCeti.conjNormalFDRepFunctor`, phrased in terms of
-`TauCeti.conjNormalFDRep` so that the coherence equalities `TauCeti.conjNormalFDRep_one` and
-`TauCeti.conjNormalFDRep_mul` rewrite in its type.  It is what makes the inertia group a
-subgroup. -/
-def conjNormalFDRepMapIso (g : G) {A B : FDRep k N} (e : A ≅ B) :
-    conjNormalFDRep g A ≅ conjNormalFDRep g B :=
-  (conjNormalFDRepFunctor g).mapIso e
+-- `CategoryTheory.Skeleton` is by definition the quotient of the objects by `isIsomorphicSetoid`,
+-- but Mathlib keeps that setoid a local instance, so descending conjugation along it asks for the
+-- same local instance here.
+attribute [local instance] CategoryTheory.isIsomorphicSetoid
 
-/-- Conjugation changes only the action, not the underlying map: the intertwiner underlying
-`conjNormalFDRepMapIso g e` is the one underlying `e`. -/
+/-- Conjugation descends to an action of `G` on the isomorphism classes of finite-dimensional
+representations of `N`: it is well defined on classes because conjugation is a functor
+(`conjNormalFDRepMapIso`), and it is an action because conjugation is one
+(`conjNormalFDRep_one`, `conjNormalFDRep_mul`).
+
+This is the action whose stabilizers are the inertia groups. -/
+instance conjNormalFDRepSkeletonMulAction : MulAction G (Skeleton (FDRep k N)) where
+  smul g := Quotient.map (conjNormalFDRep g) fun _ _ ⟨e⟩ => ⟨conjNormalFDRepMapIso g e⟩
+  one_smul := Quotient.ind fun A => congrArg toSkeleton (conjNormalFDRep_one A)
+  mul_smul s t := Quotient.ind fun A => congrArg toSkeleton (conjNormalFDRep_mul s t A)
+
+/-- The action on isomorphism classes is induced by the action on representations. -/
 @[simp]
-theorem conjNormalFDRepMapIso_hom_hom (g : G) {A B : FDRep k N} (e : A ≅ B) :
-    (conjNormalFDRepMapIso g e).hom.hom = e.hom.hom :=
-  (rfl)
-
-/-- Conjugating a representation of a normal subgroup `N` by an element `n` **of `N` itself**
-does not change its isomorphism class: the action of `n` is an isomorphism `{}^n A ≅ A`.
-
-The intertwining property is the computation `n · (n⁻¹xn) = xn` in `N`. -/
-def conjNormalFDRepSelfIso (A : FDRep k N) (n : N) : conjNormalFDRep (n : G) A ≅ A :=
-  Action.mkIso (A.ρAut n) fun x => by
-    -- `{}^n A` has the same underlying object as `A`, and its action is by definition
-    -- `Action.ρ A` at the conjugated element, but there is no restatement of that at the level
-    -- of `Action.ρ` to rewrite with, so `change` is what puts the commutation square into
-    -- `End A.V`.  There composition is multiplication in the other order, so each side
-    -- collapses to a single value of `Action.ρ A`.
-    change Action.ρ A _ ≫ Action.ρ A _ = Action.ρ A _ ≫ Action.ρ A _
-    rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul]
-    exact congrArg (Action.ρ A) (Subtype.ext (by simp [mul_assoc]))
-
-/-- The isomorphism `{}^n A ≅ A` for `n : N` is the action of `n`. -/
-@[simp]
-theorem conjNormalFDRepSelfIso_hom_hom (A : FDRep k N) (n : N) :
-    (conjNormalFDRepSelfIso A n).hom.hom = Action.ρ A n :=
+theorem smul_toSkeleton (g : G) (A : FDRep k N) :
+    g • toSkeleton A = toSkeleton (conjNormalFDRep g A) :=
   (rfl)
 
 /-- The **inertia group** of `A : FDRep k N`, for `N` a normal subgroup of `G`: the elements of
-`G` whose conjugate representation `{}^g A` is isomorphic to `A`.
+`G` whose conjugate representation `{}^g A` is isomorphic to `A`, i.e. the stabilizer of the
+isomorphism class of `A` under `conjNormalFDRepSkeletonMulAction`.
 
-This is the stabilizer of the isomorphism class of `A` for the conjugation action of `G` on
-`FDRep k N`; see `TauCeti.stabilizer_le_inertia` for the comparison with the stabilizer of `A`
-itself. -/
-def inertia (A : FDRep k N) : Subgroup G where
-  carrier := {g | Nonempty (conjNormalFDRep g A ≅ A)}
-  one_mem' := ⟨eqToIso (conjNormalFDRep_one A)⟩
-  mul_mem' := fun {a b} ⟨e⟩ ⟨f⟩ =>
-    ⟨eqToIso (conjNormalFDRep_mul a b A) ≪≫ conjNormalFDRepMapIso a f ≪≫ e⟩
-  inv_mem' := fun {a} ⟨e⟩ =>
-    ⟨conjNormalFDRepMapIso a⁻¹ e.symm ≪≫
-      eqToIso (by rw [← conjNormalFDRep_mul, inv_mul_cancel, conjNormalFDRep_one])⟩
+See `TauCeti.mem_inertia_iff` for the description as `{g | {}^g A ≅ A}`, and
+`TauCeti.stabilizer_le_inertia` for the comparison with the stabilizer of `A` itself. -/
+def inertia (A : FDRep k N) : Subgroup G :=
+  MulAction.stabilizer G (toSkeleton A)
 
 /-- An element lies in the inertia group exactly when it conjugates the representation to an
 isomorphic one. -/
 @[simp]
 theorem mem_inertia_iff {A : FDRep k N} {g : G} :
-    g ∈ inertia A ↔ Nonempty (conjNormalFDRep g A ≅ A) :=
-  (Iff.rfl)
+    g ∈ inertia A ↔ Nonempty (conjNormalFDRep g A ≅ A) := by
+  rw [inertia, MulAction.mem_stabilizer_iff, smul_toSkeleton, toSkeleton_eq_toSkeleton_iff]
 
 /-- The inertia group of `A` contains the elements fixing `A` on the nose. -/
 theorem stabilizer_le_inertia (A : FDRep k N) :
     MulAction.stabilizer G A ≤ inertia A :=
-  fun _ hg => ⟨eqToIso hg⟩
+  fun _ hg => congrArg toSkeleton hg
 
 /-- **The inertia group contains the normal subgroup**: conjugating by an element of `N` is an
 inner twist, so it fixes the isomorphism class. -/
 theorem le_inertia (A : FDRep k N) : N ≤ inertia A :=
-  fun n hn => ⟨conjNormalFDRepSelfIso A ⟨n, hn⟩⟩
+  fun n hn => mem_inertia_iff.2 ⟨conjNormalFDRepSelfIso A ⟨n, hn⟩⟩
 
 /-- Isomorphic representations have the same inertia group: the inertia group depends only on the
-isomorphism class, which is what makes it the stabilizer of a point of `Irr(N)`. -/
-theorem inertia_congr {A B : FDRep k N} (e : A ≅ B) : inertia A = inertia B := by
-  ext g
-  simp only [mem_inertia_iff]
-  exact ⟨fun ⟨f⟩ => ⟨conjNormalFDRepMapIso g e.symm ≪≫ f ≪≫ e⟩,
-    fun ⟨f⟩ => ⟨conjNormalFDRepMapIso g e ≪≫ f ≪≫ e.symm⟩⟩
+isomorphism class of `A`, which — once `A` is irreducible — is a point of `Irr(N)`. -/
+theorem inertia_congr {A B : FDRep k N} (e : A ≅ B) : inertia A = inertia B :=
+  congrArg (MulAction.stabilizer G) (congr_toSkeleton_of_iso e)
 
 /-- **Conjugating the representation conjugates the inertia group**: `I({}^g A) = g I(A) g⁻¹`.
 
@@ -161,21 +139,9 @@ Equivalently the inertia groups along a `G`-orbit in `Irr(N)` are all conjugate,
 index; that index is the number of constituents in Clifford's theorem. -/
 theorem inertia_conjNormalFDRep (g : G) (A : FDRep k N) :
     inertia (conjNormalFDRep g A) = MulAut.conj g • inertia A := by
-  ext h
-  rw [mem_conj_smul, mem_inertia_iff, mem_inertia_iff]
-  constructor
-  · rintro ⟨e⟩
-    -- Conjugating the isomorphism `{}^{hg} A ≅ {}^g A` by `g⁻¹` gives `{}^{g⁻¹hg} A ≅ A`.
-    have e' := conjNormalFDRepMapIso g⁻¹ e
-    rw [← conjNormalFDRep_mul, ← conjNormalFDRep_mul, ← conjNormalFDRep_mul, inv_mul_cancel,
-      conjNormalFDRep_one] at e'
-    exact ⟨e'⟩
-  · rintro ⟨e⟩
-    -- Conjugating the isomorphism `{}^{g⁻¹hg} A ≅ A` by `g` gives `{}^{hg} A ≅ {}^g A`.
-    have e' := conjNormalFDRepMapIso g e
-    rw [← conjNormalFDRep_mul, ← mul_assoc, ← mul_assoc, mul_inv_cancel, one_mul,
-      conjNormalFDRep_mul] at e'
-    exact ⟨e'⟩
+  rw [inertia, ← smul_toSkeleton, MulAction.stabilizer_smul_eq_stabilizer_map_conj,
+    Subgroup.pointwise_smul_def]
+  rfl
 
 end Ring
 
@@ -188,9 +154,9 @@ variable [Field k]
 
 This is the character shadow of `mem_inertia_iff`, and the form in which Clifford's theorem uses
 the inertia group. -/
-theorem character_conj_eq_of_mem_inertia {A : FDRep k N} {g : G} (hg : g ∈ inertia A) (x : N) :
+theorem char_conj_eq_of_mem_inertia {A : FDRep k N} {g : G} (hg : g ∈ inertia A) (x : N) :
     A.character ⟨g⁻¹ * (x : G) * g, hN.conj_mem' (x : G) x.2 g⟩ = A.character x := by
-  obtain ⟨e⟩ := hg
+  obtain ⟨e⟩ := mem_inertia_iff.1 hg
   rw [← char_conjNormalFDRep_mk, FDRep.char_iso e]
 
 end Field
