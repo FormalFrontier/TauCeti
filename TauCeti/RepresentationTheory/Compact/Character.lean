@@ -52,6 +52,12 @@ than `π → ρ`, and asks unitarity of `π` rather than of `ρ`: those are exac
 `TauCeti.ContRepresentation.schur_orthogonality_distinct` at the transposed pair. The reverse
 orientation is the conjugate statement, since `⟪χ_π, χ_ρ⟫ = conj ⟪χ_ρ, χ_π⟫`.
 
+Packaging the character in `L²` asks nothing of `V` beyond the finite-dimensional normed structure
+that the character itself needs, so `characterLp` is stated there; `V` carries an inner product only
+from `inner_characterLp_eq_sum` on, where an orthonormal basis enters. The scalars stay `RCLike`
+even for that packaging: `ContinuousMap.toLp` needs `SecondCountableTopologyEither G 𝕜`, which a
+general complete nontrivially normed field does not supply.
+
 This is the first half of Layer 6 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
 its remaining item, that the characters span the central subspace of `L²(G)`, needs the Peter-Weyl
@@ -68,12 +74,11 @@ namespace TauCeti
 
 namespace ContRepresentation
 
-section CompactGroup
+section CharacterLp
 
-variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
-  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [FiniteDimensional 𝕜 W]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
 
 /-- The character of a finite-dimensional continuous representation as an element of `L²(G)` for
 normalized Haar measure.
@@ -97,6 +102,17 @@ theorem coeFn_characterLp :
   filter_upwards [ContinuousMap.coeFn_toLp (𝕜 := 𝕜) (p := 2) (haarProb G)
     (character π hπ)] with g hg
   rw [characterLp_def, hg, character_apply]
+
+end CharacterLp
+
+section CompactGroup
+
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [FiniteDimensional 𝕜 W]
+
+variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 /-- Conjugating both arguments of the `L²` inner product of two continuous functions conjugates
 the result: passing to `L²` is linear, and conjugation commutes with the Haar integral. -/
