@@ -79,8 +79,8 @@ in Mathlib's `Mathlib/LinearAlgebra/Matrix/Block.lean`. Upper triangularity is M
 subalgebra `Matrix.blockTriangularSubalgebra` read as a Lie subalgebra along
 `lieSubalgebraOfSubalgebra`. Strict upper triangularity is not a `Matrix.BlockTriangular` condition
 for any block map, so `TauCeti.strictUpperTriangular` is spelled out. It is closed under the
-associative product as well as under the bracket (that closure is the `key` step of its `lie_mem'`
-field), and so is a nonunital associative subalgebra; but over a nontrivial `R` it does not contain
+associative product (`TauCeti.mul_mem_strictUpperTriangular`) as well as under the bracket, and so
+is a nonunital associative subalgebra; but over a nontrivial `R` it does not contain
 `1` unless `n` is empty (over the trivial ring `1 = 0` lies in it for every `n`), so it is not a
 Mathlib `Subalgebra`, which is unital, and it cannot be read off one along
 `lieSubalgebraOfSubalgebra` the way `TauCeti.upperTriangular` is.
@@ -125,6 +125,53 @@ roots `εᵢ - εⱼ` with `i < j`. -/
 def upperTriangular : LieSubalgebra R (Matrix n n R) :=
   lieSubalgebraOfSubalgebra R (Matrix n n R) (blockTriangularSubalgebra R R (id : n → n))
 
+variable {R n}
+
+/-- Membership in the Borel subalgebra is Mathlib's `Matrix.BlockTriangular` for the identity block
+map. -/
+@[simp]
+theorem mem_upperTriangular_iff_blockTriangular {A : Matrix n n R} :
+    A ∈ upperTriangular R n ↔ A.BlockTriangular id := Iff.rfl
+
+/-- The entrywise description of the Borel subalgebra. -/
+theorem mem_upperTriangular_iff {A : Matrix n n R} :
+    A ∈ upperTriangular R n ↔ ∀ i j, j < i → A i j = 0 :=
+  ⟨fun h _ _ hij => h hij, fun h _ _ hij => h _ _ hij⟩
+
+/-- The Borel subalgebra is closed under the associative product. -/
+theorem mul_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
+    (hB : B ∈ upperTriangular R n) : A * B ∈ upperTriangular R n :=
+  mem_upperTriangular_iff_blockTriangular.mpr
+    ((mem_upperTriangular_iff_blockTriangular.mp hA).mul
+      (mem_upperTriangular_iff_blockTriangular.mp hB))
+
+/-- The diagonal of a product of upper triangular matrices is the pointwise product of the
+diagonals. -/
+theorem mul_apply_diag_of_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
+    (hB : B ∈ upperTriangular R n) (i : n) : (A * B) i i = A i i * B i i := by
+  -- the only surviving term of `∑ k, A i k * B k i` is the one with `k = i`
+  rw [Matrix.mul_apply, Finset.sum_eq_single i]
+  · intro k _ hk
+    rcases lt_or_gt_of_ne hk with h | h
+    · rw [hA h, zero_mul]
+    · rw [hB h, mul_zero]
+  · exact fun h => absurd (Finset.mem_univ i) h
+
+/-- The bracket of two upper triangular matrices vanishes on and below the diagonal. -/
+theorem lie_apply_eq_zero_of_mem_upperTriangular {A B : Matrix n n R}
+    (hA : A ∈ upperTriangular R n) (hB : B ∈ upperTriangular R n) {i j : n} (hij : j ≤ i) :
+    ⁅A, B⁆ i j = 0 := by
+  rw [LieRing.of_associative_ring_bracket, Matrix.sub_apply]
+  rcases hij.lt_or_eq with h | rfl
+  · -- strictly below the diagonal both products vanish
+    rw [mem_upperTriangular_iff.mp (mul_mem_upperTriangular hA hB) _ _ h,
+      mem_upperTriangular_iff.mp (mul_mem_upperTriangular hB hA) _ _ h, sub_zero]
+  · -- on the diagonal the two products agree, by commutativity of `R`
+    rw [mul_apply_diag_of_mem_upperTriangular hA hB,
+      mul_apply_diag_of_mem_upperTriangular hB hA, mul_comm, sub_self]
+
+variable (R n)
+
 /-- The strictly upper triangular matrices, as a Lie subalgebra of `gl n R = Matrix n n R`.
 
 This is the positive nilpotent ideal `𝔫⁺` of the standard Borel subalgebra
@@ -139,35 +186,19 @@ def strictUpperTriangular : LieSubalgebra R (Matrix n n R) where
   smul_mem' c _ hA := fun i j hij => by simp [hA i j hij]
   lie_mem' {A B} hA hB := by
     intro i j hij
-    have key : ∀ C D : Matrix n n R, (∀ i j, j ≤ i → C i j = 0) → (∀ i j, j ≤ i → D i j = 0) →
-        (C * D) i j = 0 := by
-      intro C D hC hD
-      rw [Matrix.mul_apply]
-      refine Finset.sum_eq_zero fun k _ => ?_
-      rcases le_or_gt k i with hk | hk
-      · rw [hC i k hk, zero_mul]
-      · rw [hD k j (hij.trans hk.le), mul_zero]
-    rw [LieRing.of_associative_ring_bracket, Matrix.sub_apply, key A B hA hB, key B A hB hA,
-      sub_zero]
+    exact lie_apply_eq_zero_of_mem_upperTriangular
+      (mem_upperTriangular_iff.mpr fun a b h => hA a b h.le)
+      (mem_upperTriangular_iff.mpr fun a b h => hB a b h.le) hij
 
 variable {R n}
 
-/-- Membership in the Borel subalgebra is Mathlib's `Matrix.BlockTriangular` for the identity block
-map. -/
-theorem mem_upperTriangular_iff_blockTriangular {A : Matrix n n R} :
-    A ∈ upperTriangular R n ↔ A.BlockTriangular id := Iff.rfl
-
-/-- The entrywise description of the Borel subalgebra. -/
-theorem mem_upperTriangular_iff {A : Matrix n n R} :
-    A ∈ upperTriangular R n ↔ ∀ i j, j < i → A i j = 0 :=
-  ⟨fun h _ _ hij => h hij, fun h _ _ hij => h _ _ hij⟩
-
 /-- The entrywise description of `𝔫⁺`. -/
+@[simp]
 theorem mem_strictUpperTriangular_iff {A : Matrix n n R} :
     A ∈ strictUpperTriangular R n ↔ ∀ i j, j ≤ i → A i j = 0 := Iff.rfl
 
-/-- A strictly upper triangular matrix has zero diagonal. -/
-theorem diag_eq_zero_of_mem_strictUpperTriangular {A : Matrix n n R}
+/-- A strictly upper triangular matrix vanishes on the diagonal. -/
+theorem apply_diag_eq_zero_of_mem_strictUpperTriangular {A : Matrix n n R}
     (hA : A ∈ strictUpperTriangular R n) (i : n) : A i i = 0 :=
   hA i i le_rfl
 
@@ -175,6 +206,26 @@ theorem diag_eq_zero_of_mem_strictUpperTriangular {A : Matrix n n R}
 theorem strictUpperTriangular_le_upperTriangular :
     strictUpperTriangular R n ≤ upperTriangular R n :=
   fun _ hA _ _ hij => hA _ _ hij.le
+
+/-- `𝔫⁺` is closed under the associative product. -/
+theorem mul_mem_strictUpperTriangular {A B : Matrix n n R}
+    (hA : A ∈ strictUpperTriangular R n) (hB : B ∈ strictUpperTriangular R n) :
+    A * B ∈ strictUpperTriangular R n := by
+  have hA' := strictUpperTriangular_le_upperTriangular hA
+  have hB' := strictUpperTriangular_le_upperTriangular hB
+  intro i j hij
+  rcases hij.lt_or_eq with h | rfl
+  · exact mem_upperTriangular_iff.mp (mul_mem_upperTriangular hA' hB') _ _ h
+  · rw [mul_apply_diag_of_mem_upperTriangular hA' hB',
+      apply_diag_eq_zero_of_mem_strictUpperTriangular hA, zero_mul]
+
+/-- **The bracket of two upper triangular matrices is strictly upper triangular.** So the derived
+subalgebra of the Borel subalgebra lies in `𝔫⁺`; in particular `𝔫⁺` is a Lie ideal of the Borel
+subalgebra, `TauCeti.strictUpperTriangularIdeal`. -/
+theorem lie_mem_strictUpperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
+    (hB : B ∈ upperTriangular R n) : ⁅A, B⁆ ∈ strictUpperTriangular R n :=
+  mem_strictUpperTriangular_iff.mpr fun _ _ hij =>
+    lie_apply_eq_zero_of_mem_upperTriangular hA hB hij
 
 /-- The diagonal Cartan subalgebra is contained in the Borel subalgebra. -/
 theorem diagonalCartan_le_upperTriangular : diagonalCartan R n ≤ upperTriangular R n := by
@@ -216,33 +267,6 @@ theorem single_mem_strictUpperTriangular_iff {i j : n} {c : R} (hc : c ≠ 0) :
   refine ⟨fun h => ?_, fun h => single_mem_strictUpperTriangular h c⟩
   by_contra hij
   exact hc (by simpa using h i j (not_lt.mp hij))
-
-/-! ### Products and brackets -/
-
-/-- The diagonal of a product of upper triangular matrices is the pointwise product of the
-diagonals: the only surviving term of `∑ k, A i k * B k i` is the one with `k = i`. -/
-theorem mul_apply_diag_of_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
-    (hB : B ∈ upperTriangular R n) (i : n) : (A * B) i i = A i i * B i i := by
-  rw [Matrix.mul_apply, Finset.sum_eq_single i]
-  · intro k _ hk
-    rcases lt_or_gt_of_ne hk with h | h
-    · rw [hA h, zero_mul]
-    · rw [hB h, mul_zero]
-  · exact fun h => absurd (Finset.mem_univ i) h
-
-/-- **The bracket of two upper triangular matrices is strictly upper triangular.** Below the
-diagonal both products vanish, and on the diagonal the two products agree, by
-`TauCeti.mul_apply_diag_of_mem_upperTriangular` and commutativity of `R`. So the derived subalgebra
-of the Borel subalgebra lies in `𝔫⁺`; in particular `𝔫⁺` is a Lie ideal of the Borel subalgebra,
-`TauCeti.strictUpperTriangularIdeal`. -/
-theorem lie_mem_strictUpperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
-    (hB : B ∈ upperTriangular R n) : ⁅A, B⁆ ∈ strictUpperTriangular R n := by
-  intro i j hij
-  rw [LieRing.of_associative_ring_bracket, Matrix.sub_apply]
-  rcases hij.lt_or_eq with h | rfl
-  · rw [hA.mul hB h, hB.mul hA h, sub_zero]
-  · rw [mul_apply_diag_of_mem_upperTriangular hA hB,
-      mul_apply_diag_of_mem_upperTriangular hB hA, mul_comm, sub_self]
 
 variable (R n)
 
@@ -292,22 +316,21 @@ theorem disjoint_diagonalCartan_strictUpperTriangular :
   intro A hd hs
   ext i j
   rcases eq_or_ne i j with rfl | hij
-  · simpa using diag_eq_zero_of_mem_strictUpperTriangular hs i
+  · simpa using apply_diag_eq_zero_of_mem_strictUpperTriangular hs i
   · simpa using (mem_diagonalCartan_iff.mp hd) i j hij
 
 /-! ### The Borel subalgebra is self-normalizing -/
 
 variable (R n)
 
-/-- **The standard Borel subalgebra of `gl n R` is self-normalizing.** If `X` normalizes the upper
-triangular matrices then `⁅Eⱼⱼ, X⁆` is upper triangular for the diagonal matrix unit `Eⱼⱼ`, and
-that bracket has `(i, j)` entry `-X i j` whenever `i ≠ j`; so `X i j` vanishes below the
-diagonal. -/
+/-- **The standard Borel subalgebra of `gl n R` is self-normalizing.** -/
 @[simp]
 theorem upperTriangular_normalizer_eq_self :
     (upperTriangular R n).normalizer = upperTriangular R n := by
   refine le_antisymm (fun X hX => mem_upperTriangular_iff.mpr fun i j hij => ?_)
     (upperTriangular R n).le_normalizer
+  -- if `X` normalizes the upper triangular matrices then `⁅Eⱼⱼ, X⁆` is upper triangular for the
+  -- diagonal matrix unit `Eⱼⱼ`, and that bracket has `(i, j)` entry `-X i j` whenever `i ≠ j`
   have hmem := diagonalCartan_le_upperTriangular (single_self_mem_diagonalCartan j (1 : R))
   have h := (LieSubalgebra.mem_normalizer_iff' _ X).mp hX _ hmem
   have hentry : ⁅single j j (1 : R), X⁆ i j = -X i j := by
