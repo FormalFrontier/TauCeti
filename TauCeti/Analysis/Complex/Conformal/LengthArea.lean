@@ -30,15 +30,15 @@ integrating `ℓ ρ ^ 2 / ρ` in `ρ` reassembles the right-hand side, in polar 
 `∫⁻ ρ in Ioi 0, ℓ ρ ^ 2 / ρ ≤ 2 π ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2`.
 
 Since `∫⁻ ρ in Ioo r R, ρ⁻¹ = log (R / r)` diverges as `r → 0`, a finite Dirichlet integral cannot
-keep `ℓ` away from `0`: on every annulus there is a radius with
-`ℓ ρ < (2 π A / log (R / r)) ^ (1 / 2)`, an estimate that improves without bound as the annulus is
-made longer — and for a holomorphic `f` that bounds the chords of the image arc, by
-`TauCeti.ofReal_dist_le_circleImageLength`. That is Wolff's lemma, and it is the analytic engine of
-layer **L5** of the conformal-mapping roadmap (`ConformalMapping/README.md`), Carathéodory's
-boundary correspondence. Only that quantitative input is proved here: a radius whose circle has
-short image, and a bound on the chords of its arcs. The crosscuts of a Riemann map at a boundary
-point `ζ` are not constructed here, nor is the bound on their diameter that a later file is to
-draw from these estimates in order to force the cluster set at `ζ` to degenerate to a point.
+keep `ℓ` away from `0`: on every annulus, and for every `c` strictly above the average
+`2 π A / log (R / r)`, there is a radius with `ℓ ρ ^ 2 < c` — a threshold that falls without
+limit as the annulus is made longer — and for a holomorphic `f` that bounds the chords of the
+image arc, by `TauCeti.ofReal_dist_le_circleImageLength`. That is Wolff's lemma, and it is the
+analytic engine of layer **L5** of the conformal-mapping roadmap (`ConformalMapping/README.md`),
+Carathéodory's boundary correspondence. Only that quantitative input is proved here: a radius whose
+circle has short image, and a bound on the chords of its arcs. The crosscuts of a Riemann map at a
+boundary point `ζ` are not constructed here, nor is the bound on their diameter that a later file
+is to draw from these estimates in order to force the cluster set at `ζ` to degenerate to a point.
 
 ## Main results
 
