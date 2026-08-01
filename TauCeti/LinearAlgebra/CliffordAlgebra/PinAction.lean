@@ -307,6 +307,13 @@ def pinToOrthogonal : pinGroup Q →* QuadraticMap.orthogonalGroup Q :=
 
 variable {Q}
 
+/-- A Pin element acts through its image in the Lipschitz group. -/
+@[simp]
+theorem coe_pinToOrthogonal_apply (x : pinGroup Q) (m : M) :
+    ((pinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m =
+      lipschitzVectorAction Q (pinToLipschitz Q x) m := by
+  rw [pinToOrthogonal, MonoidHom.comp_apply, coe_lipschitzToOrthogonal_apply]
+
 /-- A Pin element acts on a vector by twisted conjugation inside the Clifford algebra. Since a Pin
 element is unitary, the inverse appearing there is `star`. -/
 @[simp]
