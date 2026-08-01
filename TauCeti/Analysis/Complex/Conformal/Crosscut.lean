@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Complex.AbsMax
-public import TauCeti.Topology.ClusterSet
+public import TauCeti.Topology.ClusterSet.Basic
 import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Normed.Module.RCLike.Real
 

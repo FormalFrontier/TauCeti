@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
-public import TauCeti.Topology.ClusterSet
+public import TauCeti.Topology.ClusterSet.Basic
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!
@@ -14,7 +14,8 @@ import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 The cluster set `TauCeti.clusterSetOn f U w` of a map `f` on `U` at a point `w`, and the criterion
 `TauCeti.exists_continuousOn_closure_eqOn` turning subsingleton boundary cluster sets into a
-continuous extension, use nothing about conformality and live in `TauCeti/Topology/ClusterSet.lean`:
+continuous extension, use nothing about conformality and live in
+`TauCeti/Topology/ClusterSet/Basic.lean`:
 the cluster set is defined over an arbitrary pair of topological spaces, and the criterion is a
 compactness statement, holding for any map of a `T3` codomain taking its values in a compact set —
 a bounded-image map into a proper metric space being the special case
