@@ -11,21 +11,23 @@ public section
 /-!
 # The order of a product of two simple reflections
 
-The product of the reflections in two roots `αᵢ`, `αⱼ` acts on the weight space as a rotation of
-the plane they span, and as the identity transverse to it. Its order is therefore read off the
-Cartan product `c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the values `0`, `1`, `2`, `3` give the orders `2`, `3`,
-`4`, `6`. This file proves that, so the entries of `TauCeti.coxeterMatrixOfBase` really are the
-orders they are named for, and the braid relations of the Coxeter presentation of a Weyl group hold
-in the Weyl group.
+The product of the reflections in two roots `αᵢ`, `αⱼ` moves every weight inside the span of the
+two roots, and its order is therefore read off the Cartan product `c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the
+values `1`, `2`, `3` give the orders `3`, `4`, `6`. This file proves that, and — for two simple
+roots of a base of a finite crystallographic pairing, where `c = 0` is the remaining possibility
+and gives the order `2` — that the entries of `TauCeti.coxeterMatrixOfBase` really are the orders
+they are named for, so that the braid relations of the Coxeter presentation of a Weyl group hold in
+the Weyl group.
 
 The route is elementary and diagonalises nothing. Writing `g` for the product of the two
-reflections, `g` fixes the intersection of the two reflecting hyperplanes pointwise and preserves
-the plane spanned by the two roots, where it has determinant `1` and trace `c - 2`. So `g` is
-annihilated by the cubic `(X - 1)(X² - (c - 2)X + 1)`, which
+reflections, `g` fixes the common kernel of the two coroots pointwise, and on the two coroot
+coordinates it acts with determinant `1` and trace `c - 2`. So `g` is annihilated by the cubic
+`(X - 1)(X² - (c - 2)X + 1)`, which
 `TauCeti.RootPairing.weylGroup.pow_add_three_ofIdx_mul_ofIdx_smul` states as a three-term
 recursion for the iterates of `g`. Substituting `c = 1, 2, 3` and chasing the recursion a few steps
 gives `g³ = 1`, `g⁴ = 1`, `g⁶ = 1`; the remaining value `c = 0` is the orthogonal case, already
-settled in `TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix`, where the two reflections commute.
+settled in `TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix`, where the two reflections commute, and
+where the order is pinned to `2` only for two distinct simple roots of a base.
 
 That the order is no smaller is checked on the single vector `αᵢ`: its `αᵢ^∨`-coordinate along the
 orbit of `g` is a polynomial in `c`, and for the relevant powers that polynomial avoids the value
@@ -90,7 +92,7 @@ theorem eq_one_of_smul_eq_self {w : P.weylGroup} (h : ∀ x : M, w • x = x) : 
 /-! ## The rank-two computation -/
 
 /-- **The product of two reflections on the weight space.** The two reflections move `x` inside the
-plane spanned by the two roots, by an amount recorded by the two coroot functionals. -/
+span of the two roots, by an amount recorded by the two coroot functionals. -/
 theorem ofIdx_mul_ofIdx_smul (x : M) :
     (_root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j) • x =
       x - P.coroot' j x • P.root j -
@@ -112,9 +114,8 @@ theorem coroot'_left_ofIdx_mul_ofIdx_smul (x : M) :
   ring
 
 /-- The `αⱼ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. Together with
-`TauCeti.RootPairing.weylGroup.coroot'_left_ofIdx_mul_ofIdx_smul` this is the matrix of the
-rotation on the plane of the two roots: determinant `1` and trace
-`⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`. -/
+`TauCeti.RootPairing.weylGroup.coroot'_left_ofIdx_mul_ofIdx_smul` this is the matrix of the action
+on the two coroot coordinates: determinant `1` and trace `⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`. -/
 theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
     P.coroot' j ((_root_.RootPairing.weylGroup.ofIdx P i *
         _root_.RootPairing.weylGroup.ofIdx P j) • x) =
@@ -124,9 +125,9 @@ theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
     _root_.RootPairing.pairing_same]
   ring
 
-/-- **The cubic annihilating a product of two reflections.** The product fixes the intersection of
-the two reflecting hyperplanes and acts on the plane of the two roots with determinant `1` and
-trace `c - 2`, so it is annihilated by `(X - 1)(X² - (c - 2)X + 1)`. -/
+/-- **The cubic annihilating a product of two reflections.** The product fixes the common kernel of
+the two coroots and acts on the two coroot coordinates with determinant `1` and trace `c - 2`, so
+it is annihilated by `(X - 1)(X² - (c - 2)X + 1)`. -/
 theorem pow_three_ofIdx_mul_ofIdx_smul (x : M) :
     ((_root_.RootPairing.weylGroup.ofIdx P i *
         _root_.RootPairing.weylGroup.ofIdx P j) ^ 3) • x =
@@ -137,13 +138,14 @@ theorem pow_three_ofIdx_mul_ofIdx_smul (x : M) :
           ((_root_.RootPairing.weylGroup.ofIdx P i *
             _root_.RootPairing.weylGroup.ofIdx P j) • x) + x := by
   have hA := ofIdx_mul_ofIdx_smul P i j
-  have hL := coroot'_left_ofIdx_mul_ofIdx_smul P i j
-  have hR := coroot'_right_ofIdx_mul_ofIdx_smul P i j
   set g := _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j
   have h2 : ∀ y : M, (g ^ 2) • y = g • (g • y) := fun y ↦ by rw [sq, mul_smul]
-  have h3 : (g ^ 3) • x = g • (g • (g • x)) := by
-    rw [show (3 : ℕ) = 2 + 1 from rfl, pow_succ', mul_smul, h2]
-  rw [h3, h2, hA (g • (g • x)), hL (g • x), hR (g • x), hL x, hR x, hA (g • x), hL x, hR x, hA x]
+  have h3 : (g ^ 3) • x = g • (g • (g • x)) := by rw [pow_succ', mul_smul, h2]
+  -- Unfold the three applications of `g`, expand the coroot functionals of the results, and
+  -- compare the coefficients of `x`, `αᵢ` and `αⱼ` on the two sides.
+  rw [h3, h2]
+  simp only [hA, map_sub, map_smul, smul_eq_mul, _root_.RootPairing.root_coroot'_eq_pairing,
+    _root_.RootPairing.pairing_same]
   module
 
 /-- **The three-term recursion for the iterates of a product of two reflections**, obtained by
@@ -160,16 +162,15 @@ theorem pow_add_three_ofIdx_mul_ofIdx_smul (n : ℕ) (x : M) :
         ((_root_.RootPairing.weylGroup.ofIdx P i *
           _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • x := by
   set g := _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j
-  have key : ∀ m : ℕ, (g ^ (m + n)) • x = (g ^ m) • ((g ^ n) • x) := fun m ↦ by
-    rw [pow_add, mul_smul]
-  rw [show n + 3 = 3 + n from Nat.add_comm n 3, show n + 2 = 2 + n from Nat.add_comm n 2,
-    show n + 1 = 1 + n from Nat.add_comm n 1, key 3, key 2, key 1, pow_one]
+  have key : ∀ m : ℕ, (g ^ (n + m)) • x = (g ^ m) • ((g ^ n) • x) := fun m ↦ by
+    rw [add_comm n m, pow_add, mul_smul]
+  rw [key 3, key 2, key 1, pow_one]
   exact pow_three_ofIdx_mul_ofIdx_smul P i j ((g ^ n) • x)
 
 /-! ## The braid relations -/
 
-/-- **The braid relation at Cartan product `1`**: the product of the two reflections is a rotation
-of order dividing `3`, the `A₂` configuration. -/
+/-- **The braid relation at Cartan product `1`**: the product of the two reflections has order
+dividing `3`, the `A₂` configuration. -/
 theorem pow_three_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 1) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 3 = 1 := by
@@ -186,8 +187,8 @@ theorem pow_three_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 1)
     _root_.RootPairing.weylGroup.ofIdx P j) • x = z
   module
 
-/-- **The braid relation at Cartan product `2`**: the product of the two reflections is a rotation
-of order dividing `4`, the `B₂` configuration. -/
+/-- **The braid relation at Cartan product `2`**: the product of the two reflections has order
+dividing `4`, the `B₂` configuration. -/
 theorem pow_four_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 2) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 4 = 1 := by
@@ -205,8 +206,8 @@ theorem pow_four_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 2) 
     _root_.RootPairing.weylGroup.ofIdx P j) • x = z
   module
 
-/-- **The braid relation at Cartan product `3`**: the product of the two reflections is a rotation
-of order dividing `6`, the `G₂` configuration. -/
+/-- **The braid relation at Cartan product `3`**: the product of the two reflections has order
+dividing `6`, the `G₂` configuration. -/
 theorem pow_six_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 3) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 6 = 1 := by
@@ -281,7 +282,7 @@ private lemma coroot'_left_pow_three_smul_root :
         _root_.RootPairing.weylGroup.ofIdx P j) ^ 3) • P.root i) =
       (P.pairing i j * P.pairing j i) ^ 3 - 6 * (P.pairing i j * P.pairing j i) ^ 2 +
         9 * (P.pairing i j * P.pairing j i) - 2 := by
-  rw [show (3 : ℕ) = 2 + 1 from rfl, pow_succ', mul_smul, coroot'_left_ofIdx_mul_ofIdx_smul,
+  rw [pow_succ', mul_smul, coroot'_left_ofIdx_mul_ofIdx_smul,
     coroot'_left_pow_two_smul_root, coroot'_right_pow_two_smul_root]
   ring
 
@@ -314,8 +315,8 @@ theorem orderOf_ofIdx_mul_ofIdx_eq_four (h : P.pairing i j * P.pairing j i = 2) 
   refine orderOf_eq_of_pow_and_pow_div_prime (by norm_num)
     (pow_four_ofIdx_mul_ofIdx_eq_one P i j h) fun p hp hpd ↦ ?_
   have hp' : p = 2 := by
-    rw [show (4 : ℕ) = 2 ^ 2 by norm_num] at hpd
-    exact (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow hpd)
+    have hpd' : p ∣ 2 ^ 2 := by simpa using hpd
+    exact (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow hpd')
   subst hp'
   exact hne
 
@@ -336,8 +337,8 @@ theorem orderOf_ofIdx_mul_ofIdx_eq_six (h : P.pairing i j * P.pairing j i = 3) :
   refine orderOf_eq_of_pow_and_pow_div_prime (by norm_num)
     (pow_six_ofIdx_mul_ofIdx_eq_one P i j h) fun p hp hpd ↦ ?_
   have hp' : p = 2 ∨ p = 3 := by
-    rw [show (6 : ℕ) = 2 * 3 by norm_num] at hpd
-    rcases (Nat.Prime.dvd_mul hp).mp hpd with h' | h'
+    have hpd' : p ∣ 2 * 3 := by simpa using hpd
+    rcases (Nat.Prime.dvd_mul hp).mp hpd' with h' | h'
     · exact Or.inl ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h')
     · exact Or.inr ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).mp h')
   rcases hp' with rfl | rfl
@@ -365,6 +366,7 @@ private lemma pairing_mul_pairing_eq_cast (k l : b.support) :
 corresponding simple reflections.** On the diagonal both sides are `1`, a simple reflection being
 an involution; off the diagonal the four Cartan products `0`, `1`, `2`, `3` give the four dihedral
 orders `2`, `3`, `4`, `6`. -/
+@[simp]
 theorem orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase (k l : b.support) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P (k : ι) *
       _root_.RootPairing.weylGroup.ofIdx P (l : ι)) = coxeterMatrixOfBase P b k l := by
