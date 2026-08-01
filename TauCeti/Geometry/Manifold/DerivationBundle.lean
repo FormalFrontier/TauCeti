@@ -16,6 +16,7 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 ## Main results
 
 * `tangentToPointDerivation`: the point derivation associated to a tangent vector.
+* `tangentToPointDerivation_mfderiv`: this association commutes with differentials.
 
 ## References
 
@@ -34,7 +35,10 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
-/-- A tangent vector acts on smooth functions by directional differentiation. -/
+/-- A tangent vector acts on smooth functions by directional differentiation.
+
+This definition is exposed because the exported characteristic equation
+`tangentToPointDerivation_apply` must unfold it under the module system. -/
 @[expose]
 def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDerivation I x where
   toFun v :=
@@ -69,7 +73,26 @@ def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDeriva
     change mvfderiv I f x (c • v) = _
     exact (mvfderiv I f x).map_smul c v
 
+/-- The point derivation associated to a tangent vector evaluates a smooth function by its
+directional derivative. -/
 @[simp]
 theorem tangentToPointDerivation_apply (x : M) (v : TangentSpace I x)
     (f : C^∞⟮I, M; 𝕜⟯) : tangentToPointDerivation x v f = mvfderiv I f x v :=
   rfl
+
+variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
+  {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners 𝕜 E' H'}
+  {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+
+/-- Sending tangent vectors to point derivations commutes with the differential of a smooth map. -/
+theorem tangentToPointDerivation_mfderiv (f : C^∞⟮I, M; I', M'⟯) (x : M)
+    (v : TangentSpace I x) :
+    tangentToPointDerivation (f x) (mfderiv I I' f x v) =
+      𝒅 f x (tangentToPointDerivation x v) := by
+  ext g
+  change mvfderiv I' g (f x) (mfderiv I I' f x v) =
+    tangentToPointDerivation x v (g.comp f)
+  rw [tangentToPointDerivation_apply]
+  exact (mfderiv_comp_apply x
+    (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
+    (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt v).symm
