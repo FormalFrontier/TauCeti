@@ -23,6 +23,12 @@ mixing representative: `MixedIIDWith.of_iIndepFun_identDistrib`. Exchangeability
 contractability then follow from the Layer 0 implications
 `MixedIIDWith.exchangeable` and `MixedIIDWith.contractable`.
 
+Only the *conclusions* `Exchangeable` and `Contractable` need `ℕ`. The mixed-i.i.d. results hold
+for a family over an arbitrary index type: `MixedIIDWith.of_iIndepFun_map_eq` takes the common law
+as a parameter, and `MixedIIDWith.of_iIndepFun_identDistrib_at` takes a caller-supplied reference
+coordinate in place of `0`. The unsuffixed `of_iIndepFun_identDistrib` forms are their `ℕ`
+specializations.
+
 The mathematical content is the block-law identity: along an injective selection
 `k : Fin m → ℕ` the coordinates `X ∘ k` are independent (a subfamily of an independent
 family, `ProbabilityTheory.iIndepFun.precomp`) with common law `μ.map (X 0)`, so their joint
@@ -102,7 +108,8 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
           ProbabilityMeasure α)) :=
   MixedIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
 
-/-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/
+/-- **An i.i.d. family is mixed i.i.d.** (existential mixing-representative form), at an arbitrary
+index type, with `i₀` the caller-supplied reference coordinate. -/
 theorem MixedIID.of_iIndepFun_identDistrib_at {μ : Measure Ω}
     {X : ι → Ω → α} (i₀ : ι) (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :

@@ -106,7 +106,9 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : �
       (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) :=
   ConditionallyIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
 
-/-- **An i.i.d. sequence is conditionally i.i.d.** (existential directing-measure form). -/
+/-- **An i.i.d. family is conditionally i.i.d.** (existential directing-measure form), at an
+arbitrary index type, with `i₀` the caller-supplied reference coordinate. The `ℕ` specialization
+follows. -/
 theorem ConditionallyIID.of_iIndepFun_identDistrib_at {μ : Measure Ω} {X : ι → Ω → α}
     (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     ConditionallyIID μ X :=
