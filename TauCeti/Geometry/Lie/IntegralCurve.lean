@@ -18,10 +18,13 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 
 * `IsMIntegralCurveOn.const_mul_mulInvariantVectorField`: left translation preserves invariant
   integral curves.
+* `IsMIntegralCurve.const_mul_mulInvariantVectorField`: the global version of that translation law.
 * `exists_isMIntegralCurve_mulInvariantVectorField`: every left-invariant vector field has a global
   integral curve through every point.
 * `existsUnique_isMIntegralCurve_mulInvariantVectorField`: that global curve is unique.
 * `mulInvariantIntegralCurve`: the resulting canonical global integral curve.
+* `mulInvariantIntegralCurve_eq_const_mul`: curves through arbitrary points are left translates of
+  the curve through the identity.
 
 ## References
 
@@ -89,6 +92,18 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
 
 end IsMIntegralCurveOn
 
+namespace IsMIntegralCurve
+
+/-- Left translation preserves global integral curves of a left-invariant vector field. -/
+theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
+    {v : GroupLieAlgebra I G} {γ : ℝ → G}
+    (hγ : IsMIntegralCurve γ (mulInvariantVectorField v)) (g : G) :
+    IsMIntegralCurve (fun t ↦ g * γ t) (mulInvariantVectorField v) := by
+  rw [isMIntegralCurve_iff_isMIntegralCurveOn]
+  exact (hγ.isMIntegralCurveOn univ).const_mul_mulInvariantVectorField g
+
+end IsMIntegralCurve
+
 /-- Every left-invariant vector field on a real Lie group modeled on a complete space has a global
 integral curve through every point. -/
 theorem exists_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
@@ -153,3 +168,14 @@ theorem eq_mulInvariantIntegralCurve [CompleteSpace E]
     γ = mulInvariantIntegralCurve v x :=
   (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).unique ⟨hγ0, hγ⟩
     (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).choose_spec.1
+
+/-- The canonical invariant integral curve through `x` is the left translate by `x` of the
+canonical curve through the identity. -/
+theorem mulInvariantIntegralCurve_eq_const_mul [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) :
+    mulInvariantIntegralCurve v x = fun t ↦ x * mulInvariantIntegralCurve v 1 t := by
+  symm
+  apply eq_mulInvariantIntegralCurve v x
+  · simp
+  · exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).const_mul_mulInvariantVectorField x
