@@ -27,7 +27,7 @@ because a simple reflection permutes the remaining positive roots, and then conj
 
 ## Main results
 
-* `TauCeti.exists_simpleWordProd_eq_mul_ofIdx_of_not_isPos` is the deletion condition.
+* `TauCeti.exists_wordProd_eq_mul_ofIdx_of_not_isPos` is the deletion condition.
 * `TauCeti.eq_one_of_inversions_eq_empty` and `TauCeti.inversions_eq_empty_iff_eq_one` say that the
   inversion set of a Weyl-group element is empty exactly when the element is the identity.
 * `TauCeti.eq_one_of_mapsTo_posRoots` restates this as: a Weyl-group element keeping every positive
@@ -57,31 +57,31 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 /-- **The deletion condition.** If the word `l` spells a Weyl-group element sending the simple root
 `αₖ` to a negative root, then the word `l` with `sₖ` appended is spelled by a word one letter
 shorter than `l`, hence two letters shorter than `l` with `sₖ` appended. -/
-theorem exists_simpleWordProd_eq_mul_ofIdx_of_not_isPos {k : ι} (hk : k ∈ b.support)
-    (l : List b.support) (h : ¬ b.IsPos (P.weylGroupToPerm (simpleWordProd P b l) k)) :
+theorem exists_wordProd_eq_mul_ofIdx_of_not_isPos {k : ι} (hk : k ∈ b.support)
+    (l : List b.support) (h : ¬ b.IsPos (P.weylGroupToPerm (wordProd P b l) k)) :
     ∃ l' : List b.support,
-      simpleWordProd P b l' = simpleWordProd P b l * RootPairing.weylGroup.ofIdx P k ∧
+      wordProd P b l' = wordProd P b l * RootPairing.weylGroup.ofIdx P k ∧
         l'.length + 1 = l.length := by
   induction l with
   | nil =>
     exact absurd (by simpa using b.isPos_of_mem_support hk) h
   | cons j l ih =>
-    rw [simpleWordProd_cons, RootPairing.weylGroupToPerm_ofIdx_mul_apply] at h
-    by_cases hpos : b.IsPos (P.weylGroupToPerm (simpleWordProd P b l) k)
+    rw [wordProd_cons, RootPairing.weylGroupToPerm_ofIdx_mul_apply] at h
+    by_cases hpos : b.IsPos (P.weylGroupToPerm (wordProd P b l) k)
     · -- The shorter word keeps `αₖ` positive, so the image is the simple root `αⱼ` itself.
       refine ⟨l, ?_, by simp⟩
-      have hkey : P.weylGroupToPerm (simpleWordProd P b l) k = (j : ι) := by
+      have hkey : P.weylGroupToPerm (wordProd P b l) k = (j : ι) := by
         by_contra hne
-        have hmem : P.weylGroupToPerm (simpleWordProd P b l) k ∈ posRoots P b \ {(j : ι)} :=
+        have hmem : P.weylGroupToPerm (wordProd P b l) k ∈ posRoots P b \ {(j : ι)} :=
           ⟨(mem_posRoots P b _).mpr hpos, by simpa using hne⟩
         exact h ((mem_posRoots P b _).mp
           ((reflectionPerm_mem_posRoots_diff_singleton_iff P b j.2 _).mpr hmem).1)
-      rw [simpleWordProd_cons, ← hkey, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
+      rw [wordProd_cons, ← hkey, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
         inv_mul_cancel_right, mul_assoc, RootPairing.weylGroup.ofIdx_mul_self, mul_one]
     · -- The shorter word already makes `αₖ` negative, so a letter is deleted from it.
       obtain ⟨l', hl', hlen⟩ := ih hpos
       refine ⟨j :: l', ?_, by simp only [List.length_cons]; omega⟩
-      rw [simpleWordProd_cons, hl', simpleWordProd_cons, mul_assoc]
+      rw [wordProd_cons, hl', wordProd_cons, mul_assoc]
 
 variable {P b}
 
@@ -90,23 +90,22 @@ it must be empty: otherwise its final simple reflection is an inversion of the w
 the deletion condition produces a shorter word. -/
 theorem eq_one_of_inversions_eq_empty {w : P.weylGroup} (h : inversions P b w = ∅) : w = 1 := by
   classical
-  have hex : ∃ n : ℕ, ∃ l : List b.support, l.length = n ∧ simpleWordProd P b l = w := by
-    obtain ⟨l, hl⟩ := exists_simpleWordProd_eq P b w
+  have hex : ∃ n : ℕ, ∃ l : List b.support, l.length = n ∧ wordProd P b l = w := by
+    obtain ⟨l, hl⟩ := exists_wordProd_eq P b w
     exact ⟨l.length, l, rfl, hl⟩
   obtain ⟨l, hlen, hl⟩ := Nat.find_spec hex
   rcases List.eq_nil_or_concat l with rfl | ⟨l₁, k, rfl⟩
   · simpa using hl.symm
   · exfalso
     -- Split off the final letter: `w = v * sₖ`, where `v` is spelled by the word `l₁`.
-    rw [List.concat_eq_append, simpleWordProd_append, simpleWordProd_cons,
-      simpleWordProd_nil, mul_one] at hl
+    rw [List.concat_eq_append, wordProd_append, wordProd_cons, wordProd_nil, mul_one] at hl
     -- The final simple root is not an inversion of `w`, so it is an inversion of `v`.
     have hkw : k.1 ∉ inversions P b w := by simp [h]
-    have hkv : k.1 ∈ inversions P b (simpleWordProd P b l₁) := by
+    have hkv : k.1 ∈ inversions P b (wordProd P b l₁) := by
       by_contra hc
       exact hkw (hl ▸ (mem_inversions_mul_ofIdx_iff_not_mem P _ b k.2).mpr hc)
     obtain ⟨l', hl'w, hl'len⟩ :=
-      exists_simpleWordProd_eq_mul_ofIdx_of_not_isPos P b k.2 l₁
+      exists_wordProd_eq_mul_ofIdx_of_not_isPos P b k.2 l₁
         ((mem_inversions P b _ _).mp hkv).2
     -- The resulting word spells `w` and is two letters shorter, contradicting minimality.
     refine Nat.find_min hex (m := l'.length) ?_ ⟨l', rfl, hl'w.trans hl⟩
