@@ -39,12 +39,14 @@ shrinking part.
   corepresentability instance.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctor`: the group-object Yoneda model of the
   functor of points.
+* `TauCeti.CommHopfAlgCat.groupYonedaPointsHomEquiv`: the carrier equivalence from the opaque
+  group-Yoneda model to algebra morphisms.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctorIso`: the group-valued Yoneda model is
   naturally isomorphic to the existing points functor.
 * `TauCeti.CommHopfAlgCat.pointsFunctor_faithful` and
   `TauCeti.CommHopfAlgCat.pointsFunctor_full`: points recover coordinate Hopf algebra
   morphisms.
-* `TauCeti.CommHopfAlgCat.pointsFunctor_essImage`: the essential image consists exactly of
+* `TauCeti.CommHopfAlgCat.essImage_pointsFunctor`: the essential image consists exactly of
   group functors with corepresentable underlying functor.
 
 ## References
@@ -237,20 +239,75 @@ The Hopf-algebra/cogroup equivalence sends an opposite commutative Hopf algebra 
 object in opposite commutative algebras. Group-valued Yoneda then produces a functor on the
 double opposite of `CommAlgCat`, and the final equivalence precomposes it with `opOp` to give
 a covariant functor on commutative algebras. -/
-@[expose] noncomputable def groupYonedaPointsFunctor :
+noncomputable def groupYonedaPointsFunctor :
     (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u} :=
   (commHopfAlgCatEquivCogrpCommAlgCat R).leftOp.functor ⋙
     yonedaGrp (C := (CommAlgCat.{u} R)ᵒᵖ) ⋙
       (opOpEquivalence (CommAlgCat.{u} R)).congrLeft.functor
 
-/-- On a Hopf algebra `H` and a value algebra `A`, the group-Yoneda model has carrier
-`(op A ⟶ op H)`, which is tautologically the type of algebra morphisms `H ⟶ A`. -/
+/-- The carrier of the group-Yoneda model at a Hopf algebra `H` and value algebra `A` is
+canonically the type of algebra morphisms `H ⟶ A`. This equivalence is the narrow carrier API
+for the otherwise opaque composite `groupYonedaPointsFunctor`. -/
+noncomputable def groupYonedaPointsHomEquiv
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R) :
+    ((groupYonedaPointsFunctor (R := R)).obj H).obj A ≃
+      (CommAlgCat.of R H.unop ⟶ A) := by
+  unfold groupYonedaPointsFunctor
+  exact opEquiv _ _
+
+/-- On a Hopf algebra `H` and a value algebra `A`, a group-Yoneda element is a point after
+unopping its underlying morphism. -/
 private noncomputable def groupYonedaPointsEquiv
     (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R) :
     ((groupYonedaPointsFunctor (R := R)).obj H).obj A ≃
       ((pointsFunctor (R := R) :
         (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).obj A :=
-  (opEquiv _ _).trans (HopfAlgebra.pointsHomEquiv H.unop A)
+  (groupYonedaPointsHomEquiv H A).trans (HopfAlgebra.pointsHomEquiv H.unop A)
+
+/-- The point obtained from a group-Yoneda element is the convolution wrapper of its
+underlying algebra morphism. -/
+private theorem groupYonedaPointsEquiv_apply
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R)
+    (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
+    groupYonedaPointsEquiv H A f =
+      toConv ((groupYonedaPointsHomEquiv H A) f).hom := by
+  exact HopfAlgebra.pointsHomEquiv_apply H.unop (groupYonedaPointsHomEquiv H A f)
+
+/-- Under a map of value algebras, the algebra morphism underlying a group-Yoneda element
+is postcomposed with that map. -/
+private theorem groupYonedaPointsHomEquiv_map
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) {A B : CommAlgCat.{u} R}
+    (g : A ⟶ B) (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
+    groupYonedaPointsHomEquiv H B
+        (((groupYonedaPointsFunctor (R := R)).obj H).map g f) =
+      groupYonedaPointsHomEquiv H A f ≫ g := by
+  unfold groupYonedaPointsHomEquiv groupYonedaPointsFunctor
+  rfl
+
+/-- A map of value algebras acts on the point functor at `H` by postcomposition. This form
+keeps the outer coordinate-algebra functor visible for the naturality calculation below. -/
+private theorem pointsFunctor_obj_map_apply_apply
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) {A B : CommAlgCat.{u} R}
+    (g : A ⟶ B)
+    (p : ((pointsFunctor (R := R) :
+      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).obj A)
+    (h : H.unop) :
+    ((((pointsFunctor (R := R) :
+      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).map g p).ofConv) h =
+      g.hom (p.ofConv h) :=
+  HopfAlgebra.pointsFunctor_map_apply_apply g p h
+
+/-- Under a map of coordinate Hopf algebras, the algebra morphism underlying a
+group-Yoneda element is precomposed with that map. -/
+private theorem groupYonedaPointsHomEquiv_map_app
+    {H K : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ} (f : H ⟶ K) (A : CommAlgCat.{u} R)
+    (p : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
+    groupYonedaPointsHomEquiv K A
+        (((groupYonedaPointsFunctor (R := R)).map f).app A p) =
+      CommAlgCat.ofHom (f.unop.hom : K.unop →ₐ[R] H.unop) ≫
+        groupYonedaPointsHomEquiv H A p := by
+  unfold groupYonedaPointsHomEquiv groupYonedaPointsFunctor
+  rfl
 
 /-- The tautological carrier equivalence respects group-Yoneda multiplication: unopping
 `lift f g ≫ μ` gives comultiplication followed by `f` and `g`, which is convolution. -/
@@ -276,6 +333,15 @@ private noncomputable def groupYonedaPointsMulEquiv
       CommAlgCat.mul_op_of_unop_hom, AlgHom.comp_apply, AlgHom.convMul_apply]
     exact congrArg _ (Bialgebra.comulAlgHom_apply R H.unop h)
 
+/-- The forward homomorphism of the pointwise group equivalence is computed by the carrier
+equivalence followed by the convolution wrapper. -/
+private theorem groupYonedaPointsMulEquiv_apply
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R)
+    (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
+    (groupYonedaPointsMulEquiv H A).toGrpIso.hom f =
+      toConv ((groupYonedaPointsHomEquiv H A) f).hom :=
+  groupYonedaPointsEquiv_apply H A f
+
 /-- The pointwise group equivalences are natural in the value algebra. -/
 private noncomputable def groupYonedaPointsObjIso
     (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) :
@@ -291,7 +357,20 @@ private noncomputable def groupYonedaPointsObjIso
       apply WithConv.ofConv_injective
       apply AlgHom.ext
       intro h
-      rfl)
+      rw [GrpCat.comp_apply, GrpCat.comp_apply,
+        pointsFunctor_obj_map_apply_apply,
+        groupYonedaPointsMulEquiv_apply, groupYonedaPointsMulEquiv_apply,
+        groupYonedaPointsHomEquiv_map]
+      simp only [CommAlgCat.hom_comp, AlgHom.comp_apply])
+
+/-- The objectwise natural isomorphism has the same carrier-level computation as its
+pointwise group equivalence. -/
+private theorem groupYonedaPointsObjIso_hom_app_apply
+    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R)
+    (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
+    (groupYonedaPointsObjIso H).hom.app A f =
+      toConv ((groupYonedaPointsHomEquiv H A) f).hom :=
+  groupYonedaPointsMulEquiv_apply H A f
 
 /-- Group-object Yoneda, transported through the Hopf-algebra/cogroup and double-opposite
 equivalences, is naturally isomorphic to the existing group-valued functor of points. -/
@@ -302,7 +381,13 @@ noncomputable def groupYonedaPointsFunctorIso :
   NatIso.ofComponents (groupYonedaPointsObjIso (R := R))
     (fun {H K} φ ↦ by
       ext A f
-      rfl)
+      apply WithConv.ofConv_injective
+      apply AlgHom.ext
+      intro h
+      simp only [NatTrans.comp_app, GrpCat.comp_apply, groupYonedaPointsObjIso_hom_app_apply,
+        groupYonedaPointsHomEquiv_map_app, pointsFunctor_map_app_apply_apply,
+        WithConv.ofConv_toConv, CommAlgCat.hom_comp, CommAlgCat.hom_ofHom,
+        AlgHom.comp_apply, BialgHom.coe_toAlgHom])
 
 /-- The forward map of `groupYonedaPointsFunctorIso` unops a Yoneda morphism and regards
 its underlying algebra homomorphism as a convolution point. -/
@@ -310,8 +395,9 @@ its underlying algebra homomorphism as a convolution point. -/
 theorem groupYonedaPointsFunctorIso_hom_app_app_apply
     (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R)
     (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
-    ((groupYonedaPointsFunctorIso (R := R)).hom.app H).app A f = toConv f.unop.hom := by
-  rfl
+    ((groupYonedaPointsFunctorIso (R := R)).hom.app H).app A f =
+      toConv ((groupYonedaPointsHomEquiv H A) f).hom := by
+  exact groupYonedaPointsObjIso_hom_app_apply H A f
 
 /-- The inverse map of `groupYonedaPointsFunctorIso` bundles a convolution point as a
 commutative-algebra morphism and takes its opposite. -/
@@ -320,7 +406,7 @@ theorem groupYonedaPointsFunctorIso_inv_app_app_apply
     (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) (A : CommAlgCat.{u} R)
     (p : HopfAlgebra.points (R := R) (H := H.unop) A) :
     ((groupYonedaPointsFunctorIso (R := R)).inv.app H).app A p =
-      (CommAlgCat.ofHom p.ofConv).op := by
+      (groupYonedaPointsHomEquiv H A).symm (CommAlgCat.ofHom p.ofConv) := by
   rfl
 
 /-- The same-universe group-valued functor of points is full: every natural group
@@ -333,6 +419,22 @@ instance pointsFunctor_full :
     infer_instance
   exact Functor.Full.of_iso (groupYonedaPointsFunctorIso (R := R))
 
+/-- Mapping an opposite morphism through `unopUnop ⋙ F` is the same as mapping its
+unop through `F`. -/
+private theorem unopUnop_comp_map_op
+    (F : CommAlgCat.{u} R ⥤ Type u)
+    {A B : (CommAlgCat.{u} R)ᵒᵖ} (f : A ⟶ B) :
+    (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op = F.map f.unop := by
+  simp only [Functor.comp_map, unopUnop_map, Quiver.Hom.unop_op]
+  rfl
+
+/-- The double-opposite form of `unopUnop_comp_map_op`. -/
+private theorem unopUnop_comp_map_op_op
+    (F : CommAlgCat.{u} R ⥤ Type u)
+    {A B : CommAlgCat.{u} R} (f : A ⟶ B) :
+    (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op.op = F.map f := by
+  simpa only [Quiver.Hom.unop_op] using unopUnop_comp_map_op (R := R) F f.op
+
 /-- Precomposition by `unopUnop` turns representability on a double opposite into
 corepresentability. This is the type-valued variance correction underlying the essential-image
 calculation below. -/
@@ -341,18 +443,28 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
     (unopUnop (CommAlgCat.{u} R) ⋙ F).IsRepresentable ↔ F.IsCorepresentable := by
   constructor
   · rintro ⟨X, ⟨e⟩⟩
-    exact (show F.CorepresentableBy X.unop from
+    let c : F.CorepresentableBy X.unop :=
       { homEquiv {Y} := (opEquiv (op Y) X).symm.trans e.homEquiv
         homEquiv_comp {Y Y'} g f := by
+          -- The structure field is a composite equivalence. This conversion unfolds only
+          -- `Equiv.trans` and the inverse application of `opEquiv`; `op_comp` and the named
+          -- `unopUnop ⋙ F` map rule below record the actual variance calculation.
           change e.homEquiv ((f ≫ g).op) = F.map g (e.homEquiv f.op)
-          rw [op_comp, e.homEquiv_comp]
-          rfl }).isCorepresentable
+          rw [op_comp, e.homEquiv_comp, unopUnop_comp_map_op_op]
+          rfl }
+    exact c.isCorepresentable
   · rintro ⟨X, ⟨e⟩⟩
-    exact (show (unopUnop (CommAlgCat.{u} R) ⋙ F).RepresentableBy (op X) from
+    let r : (unopUnop (CommAlgCat.{u} R) ⋙ F).RepresentableBy (op X) :=
       { homEquiv {Y} := (opEquiv Y (op X)).trans e.homEquiv
         homEquiv_comp {Y Y'} f g := by
-          change e.homEquiv ((f ≫ g).unop) = F.map f.unop (e.homEquiv g.unop)
-          rw [unop_comp, e.homEquiv_comp] }).isRepresentable
+          -- As above, this conversion unfolds only `Equiv.trans` and the forward application
+          -- of `opEquiv`. The composite-functor map stays visible for the explicit variance
+          -- rewrite rather than being discharged by definitional equality.
+          change e.homEquiv ((f ≫ g).unop) =
+            (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op (e.homEquiv g.unop)
+          rw [unop_comp, e.homEquiv_comp, unopUnop_comp_map_op]
+          rfl }
+    exact r.isRepresentable
 
 /-- Transport the generic essential image of group-object Yoneda across the double-opposite
 equivalence. -/
@@ -382,7 +494,7 @@ private theorem essImage_yonedaGrp_doubleOp :
 /-- A same-universe group-valued functor on commutative `R`-algebras lies in the essential
 image of the functor of points exactly when its underlying type-valued functor is
 corepresentable. -/
-theorem pointsFunctor_essImage :
+theorem essImage_pointsFunctor :
     (pointsFunctor (R := R) :
       (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).essImage =
       fun F ↦ (F ⋙ forget GrpCat.{u}).IsCorepresentable := by
