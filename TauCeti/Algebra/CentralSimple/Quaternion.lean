@@ -16,7 +16,9 @@ public import TauCeti.Algebra.CentralSimple.Opposite
 -- `Quaternion.starAe`, and `Quaternion.finrank_eq_four`.
 public import TauCeti.Algebra.Central.Quaternion
 -- `Mathlib.Data.Real.Basic` is imported publicly because the field structure on `ℝ` is what makes
--- the statements below typecheck.
+-- the statements below typecheck: the public imports above reach `Mathlib.Algebra.Quaternion`,
+-- which supplies `ℍ[·]` over an arbitrary base but not `ℝ` itself, so without this import `ℝ` is
+-- not even in scope as a name.
 public import Mathlib.Data.Real.Basic
 
 /-!
@@ -34,11 +36,12 @@ The second follows from the first because quaternion conjugation is an `ℝ`-alg
 
 Everything here is an isomorphism of `ℝ`-algebras; `BrauerGroup ℝ` is not yet a group in this
 library, so nothing below is a statement about it. Informally, the isomorphisms exhibit the Brauer
-class of `ℍ[ℝ]` as **self-inverse**. Two further steps, neither taken here, would turn that into the
-order of the class. Saying the class is nontrivial needs the passage from nonsplitting to Brauer
-nontriviality applied to `TauCeti.Quaternion.isEmpty_algEquiv_matrix`, which says `ℍ[ℝ]` is
-isomorphic to no matrix algebra of size at least two -- the only candidate in dimension `4` being
-`Matrix (Fin 2) (Fin 2) ℝ`. Saying that `BrauerGroup ℝ ≃ ℤ/2` needs, beyond that, the classification
+class of `ℍ[ℝ]` as **self-inverse**. One further step, not taken here, would turn that into the
+order of the class: the passage from nonsplitting to Brauer nontriviality, applied to
+`TauCeti.Quaternion.isEmpty_algEquiv_matrix` -- which says `ℍ[ℝ]` is isomorphic to no matrix algebra
+of size at least two, the only candidate in dimension `4` being `Matrix (Fin 2) (Fin 2) ℝ` -- makes
+the class nontrivial, and a self-inverse class that is not the identity has order exactly `2`.
+Saying that `BrauerGroup ℝ ≃ ℤ/2` is a further and independent matter: it needs the classification
 of real division algebras, to know the class generates. Both are separate long-term targets.
 
 The matrix size is `4` and not `2`: it is the **dimension** `Module.finrank ℝ ℍ[ℝ] = 4` of the

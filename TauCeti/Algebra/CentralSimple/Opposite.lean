@@ -77,7 +77,7 @@ subalgebra of the `4`-dimensional `Module.End ℝ ℂ`.
 * `TauCeti.Algebra.tensorOpAlgEquivEnd`: the resulting isomorphism
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A`.
 * `TauCeti.Algebra.endAlgEquivMatrix`: the matrix half of the composite,
-  `Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `K`-algebra of dimension `n`.
+  `Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `K`-vector space of dimension `n`.
 * `TauCeti.Algebra.tensorOpAlgEquivMatrix`: **the opposite isomorphism**
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `n` with `Module.finrank K A = n`.
 
@@ -166,21 +166,21 @@ namespace Algebra
 
 section Basis
 
-variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [FiniteDimensional K A]
+variable (K : Type*) [Field K] (M : Type*) [AddCommGroup M] [Module K M] [FiniteDimensional K M]
 
-/-- A `K`-algebra `A` of dimension `n` has `Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K`: the
-matrix half of the opposite isomorphism, read off a chosen `K`-basis of `A`.
+/-- A `K`-vector space `M` of dimension `n` has `Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K`: the
+matrix half of the opposite isomorphism, read off a chosen `K`-basis of `M`.
 
 This is Mathlib's `algEquivMatrix` at the basis `Module.finBasisOfFinrankEq`, named here because it
 is a step of the opposite isomorphism that the roadmap asks for separately, to be reused where a
-finite-dimensional endomorphism algebra has to be turned into matrices of a known size. Central
-simplicity plays no part: only the dimension does.
+finite-dimensional endomorphism algebra has to be turned into matrices of a known size. Neither an
+algebra structure on `M` nor central simplicity plays any part: only the dimension does.
 
 The basis is a choice, and nothing downstream should depend on which one it is; there is
 deliberately no lemma computing the matrix entries. -/
-noncomputable def endAlgEquivMatrix {n : ℕ} (hn : Module.finrank K A = n) :
-    Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
-  algEquivMatrix (Module.finBasisOfFinrankEq K A hn)
+noncomputable def endAlgEquivMatrix {n : ℕ} (hn : Module.finrank K M = n) :
+    Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
+  algEquivMatrix (Module.finBasisOfFinrankEq K M hn)
 
 end Basis
 
