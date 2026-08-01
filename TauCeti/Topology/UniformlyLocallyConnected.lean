@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Analysis.Normed.Module.Convex
 public import Mathlib.Topology.Connected.LocallyConnected
-public import Mathlib.Topology.MetricSpace.Bounded
-public import Mathlib.Topology.MetricSpace.Pseudo.Lemmas
 import TauCeti.Topology.LocallyConnected
 
 /-!
