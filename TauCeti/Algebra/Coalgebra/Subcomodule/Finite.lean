@@ -37,6 +37,10 @@ No flatness or noetherian hypothesis is needed.
 
 ## References
 
+The directed-union theorem sequence from `finiteSubcomodules_nonempty` through
+`iUnion_finiteSubcomodules_eq_univ_of_exists_mem` is adapted from the corresponding
+subcoalgebra development in `TauCeti.Algebra.Coalgebra.Subcoalgebra.Finite`.
+
 See Sweedler, *Hopf Algebras*, Chapter 2.
 -/
 
