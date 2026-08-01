@@ -75,7 +75,11 @@ integer. -/
 @[simp]
 theorem coe_intUnits_smul {r : ℝ} (u : ℤˣ) (x : sphere (0 : E) r) :
     ((u • x : sphere (0 : E) r) : E) = ((u : ℤ) : ℝ) • (x : E) :=
-  (rfl)
+  by
+    -- Unfold only the pulled-back sphere action; its scalar is then exposed to the public
+    -- coercion lemma above.
+    change (intUnitsToRealUnitSphere u : ℝ) • (x : E) = _
+    rw [coe_intUnitsToRealUnitSphere]
 
 /-- The nontrivial integer unit acts on a sphere as the antipodal map. -/
 @[simp]
@@ -101,13 +105,6 @@ instance instIsCancelSMulIntUnitsUnitSphere :
       exact (ne_neg_of_mem_unit_sphere ℝ x) (by simpa using h.symm)
     · rfl
 
-/-- An integer unit fixes a point of the unit sphere exactly when it is the identity. -/
-theorem smul_eq_self_iff (u : ℤˣ) (x : sphere (0 : E) 1) : u • x = x ↔ u = 1 := by
-  constructor
-  · exact isCancelSMul_iff_eq_one_of_smul_eq.mp inferInstance u x
-  · rintro rfl
-    exact one_smul ℤˣ x
-
 end Sphere
 
 /-- Real projective `n`-space, modelled as the orbit quotient of the unit sphere `Sⁿ` under the
@@ -126,7 +123,6 @@ def mk : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → RealProjectiveSpace
     (MulAction.orbitRel ℤˣ (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
 /-- The quotient map evaluates to the class of its representative. -/
-@[simp]
 theorem mk_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     mk n x = Quotient.mk'' x :=
   (rfl)
@@ -137,6 +133,7 @@ theorem mk_surjective : Function.Surjective (mk n) :=
 
 /-- Two unit vectors define the same point of real projective space exactly when they are equal
 or antipodal. -/
+@[simp]
 theorem mk_eq_mk_iff (x y : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     mk n x = mk n y ↔ x = y ∨ x = -y := by
   rw [mk_apply, mk_apply, Quotient.eq'', MulAction.orbitRel_apply]
