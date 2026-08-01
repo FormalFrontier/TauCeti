@@ -290,8 +290,9 @@ private theorem rightUnitor_inv_toLinearMap
   intro m
   exact rightUnitor_inv_apply m
 
-set_option backward.privateInPublic true in
-private theorem coevaluation_evaluation
+/-- The first triangle identity for the antipode-twisted dual: coevaluation followed by
+evaluation is the identity on the dual, up to the unitors. -/
+theorem dualCoevaluation_dualEvaluation
     (M : FGComoduleCat.{u, v, u} k H) :
     letI M' : FGComoduleCat.{u, v, u} k H := dual k H M
     M' ◁ dualCoevaluation k H M ≫ (α_ M' M M').inv ≫
@@ -328,8 +329,9 @@ private theorem coevaluation_evaluation
   rw [hleft, hright]
   exact LinearMap.congr_fun (contractLeft_assoc_coevaluation k M) x
 
-set_option backward.privateInPublic true in
-private theorem evaluation_coevaluation
+/-- The second triangle identity for the antipode-twisted dual: coevaluation followed by
+evaluation is the identity on the comodule, up to the unitors. -/
+theorem dualEvaluation_dualCoevaluation
     (M : FGComoduleCat.{u, v, u} k H) :
     dualCoevaluation k H M ▷ M ≫
         (α_ M (dual k H M) M).hom ≫ M ◁ dualEvaluation k H M =
@@ -365,16 +367,14 @@ private theorem evaluation_coevaluation
   rw [hleft, hright]
   exact LinearMap.congr_fun (contractLeft_assoc_coevaluation' k M) x
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 /-- The antipode-twisted linear dual is an exact right dual of a finite-dimensional
 comodule. -/
 noncomputable instance instExactPairingDual
     (M : FGComoduleCat.{u, v, u} k H) : ExactPairing M (dual k H M) where
   coevaluation' := dualCoevaluation k H M
   evaluation' := dualEvaluation k H M
-  coevaluation_evaluation' := coevaluation_evaluation k H M
-  evaluation_coevaluation' := evaluation_coevaluation k H M
+  coevaluation_evaluation' := dualCoevaluation_dualEvaluation k H M
+  evaluation_coevaluation' := dualEvaluation_dualCoevaluation k H M
 
 /-- Every finite-dimensional comodule has the antipode-twisted linear dual as a right dual. -/
 noncomputable instance instHasRightDual
