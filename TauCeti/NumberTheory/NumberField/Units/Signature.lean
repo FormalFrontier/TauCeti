@@ -51,17 +51,17 @@ noncomputable def fieldUnitSignature :
       (Units.map (embedding_of_isReal w.2).toMonoidHom)
 
 /-- Componentwise evaluation of the field-unit signature. -/
-theorem fieldUnitSignature_apply (u : Kˣ) (w : {w : InfinitePlace K // w.IsReal}) :
-    fieldUnitSignature u w = QuotientGroup.mk' (Units.posSubgroup ℝ)
-      (Units.map (embedding_of_isReal w.2).toMonoidHom u) := by
-  simp only [fieldUnitSignature, MonoidHom.pi_apply, MonoidHom.comp_apply]
+@[simp] theorem fieldUnitSignature_apply (u : Kˣ) (w : {w : InfinitePlace K // w.IsReal}) :
+    fieldUnitSignature u w =
+      (Units.map (embedding_of_isReal w.2).toMonoidHom u : ℝˣ ⧸ Units.posSubgroup ℝ) := by
+  simp only [fieldUnitSignature, MonoidHom.pi_apply, MonoidHom.comp_apply, QuotientGroup.mk'_apply]
 
 /-- The kernel of the field-unit signature is exactly the subgroup of totally positive units. -/
 theorem ker_fieldUnitSignature :
     MonoidHom.ker (fieldUnitSignature (K := K)) = totallyPositiveUnits := by
   ext u
   simp only [MonoidHom.mem_ker, funext_iff, Pi.one_apply, fieldUnitSignature_apply,
-    QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff, Units.mem_posSubgroup, Units.coe_map,
+    QuotientGroup.eq_one_iff, Units.mem_posSubgroup, Units.coe_map,
     RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe, mem_totallyPositiveUnits, isTotallyPositive_iff,
     Subtype.forall]
 
@@ -99,12 +99,12 @@ noncomputable def unitSignature :
   fieldUnitSignature.comp (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
 
 omit [NumberField K] in
-/-- Componentwise evaluation of the integer-unit signature, in terms of the field signature of the
-image in `Kˣ`. -/
+/-- Componentwise evaluation of the integer-unit signature: the class, in the sign group, of the
+image of `u` under the real embedding `w` composed with `(𝓞 K) → K`. -/
 @[simp] theorem unitSignature_apply (u : (𝓞 K)ˣ) (w : {w : InfinitePlace K // w.IsReal}) :
-    unitSignature u w =
-      fieldUnitSignature (Units.map (algebraMap (𝓞 K) K).toMonoidHom u) w := by
-  simp only [unitSignature, MonoidHom.comp_apply]
+    unitSignature u w = (Units.map (embedding_of_isReal w.2).toMonoidHom
+      (Units.map (algebraMap (𝓞 K) K).toMonoidHom u) : ℝˣ ⧸ Units.posSubgroup ℝ) := by
+  simp only [unitSignature, MonoidHom.comp_apply, fieldUnitSignature_apply]
 
 omit [NumberField K] in
 /-- The kernel of the integer-unit signature is exactly the totally positive integer units. -/
