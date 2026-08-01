@@ -73,10 +73,10 @@ theorem injOn_frontier_of_clusterSetOn_invFunOn_subsingleton (hUo : IsOpen U)
       (clusterSetOn (Function.invFunOn f U) (f '' U) v).Subsingleton) :
     InjOn F (frontier U) := by
   have hbij : BijOn f U (f '' U) := hfi.bijOn_image
-  exact injOn_of_clusterSetOn_invOn_subsingleton_of_continuousOn_extension
+  exact injOn_of_clusterSetOn_leftInvOn_subsingleton_of_continuousOn_extension
     frontier_subset_closure
     (image_subset_iff.mp (image_frontier_subset_frontier_image hUo hfd hfi hFc hFf))
-    hFc hFf hbij.invOn_invFunOn hbij.mapsTo hbij.surjOn.mapsTo_invFunOn hsub
+    hFc hFf hbij.injOn.leftInvOn_invFunOn hbij.mapsTo hsub
 
 /-- **Singleton inverse boundary cluster sets make a continuous extension injective on the whole
 closure.** This is the closure form of
