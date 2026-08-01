@@ -148,8 +148,7 @@ almost-everywhere strong measurability for the invariant σ-algebra is equivalen
 almost-everywhere invariance under composition. -/
 @[simp]
 theorem aestronglyMeasurable_invariants_iff_comp_ae_eq {T : Ω → Ω}
-    (hT : Measure.QuasiMeasurePreserving T μ μ) {f : Ω → ℝ}
-    (hf : AEStronglyMeasurable f μ) :
+    (hT : Measure.QuasiMeasurePreserving T μ μ) {f : Ω → ℝ} (hf : AEStronglyMeasurable f μ) :
     AEStronglyMeasurable[MeasurableSpace.invariants T] f μ ↔ f ∘ T =ᵐ[μ] f :=
   ⟨fun h => AEStronglyMeasurable.comp_ae_eq_of_invariants hT h,
     aestronglyMeasurable_invariants_of_comp_ae_eq hT hf⟩

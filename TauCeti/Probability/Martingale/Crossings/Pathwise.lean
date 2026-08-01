@@ -40,8 +40,7 @@ variable {𝔽 : ℕ → MeasurableSpace Ω}
 
 /-- Helper: hitting respects pointwise equality on `[n, m]`. -/
 private lemma hitting_congr {Ω β ι : Type*} [Preorder ι] [InfSet ι] {u v : ι → Ω → β}
-    {s : Set β} {n m : ι} {ω : Ω}
-    (h : ∀ k, n ≤ k → k ≤ m → u k ω = v k ω) :
+    {s : Set β} {n m : ι} {ω : Ω} (h : ∀ k, n ≤ k → k ≤ m → u k ω = v k ω) :
     hittingBtwn u s n m ω = hittingBtwn v s n m ω := by
   simp only [hittingBtwn]
   by_cases hex : ∃ j ∈ Set.Icc n m, u j ω ∈ s

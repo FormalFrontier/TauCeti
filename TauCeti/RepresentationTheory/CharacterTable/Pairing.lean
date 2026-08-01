@@ -112,8 +112,7 @@ private noncomputable def classIndicator (x : G) : ClassFunction k G := by
   exact equivConjClasses.symm (Pi.single (ConjClasses.mk x) 1)
 
 open scoped Classical in
-private theorem classIndicator_apply (x y : G) :
-    (classIndicator (k := k) x).1 y =
+private theorem classIndicator_apply (x y : G) : (classIndicator (k := k) x).1 y =
       if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 :=
   by
     classical
@@ -187,10 +186,8 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
     (mul_ne_zero (card_conjClass_cast_ne_zero (k := k) x) hfx)) hpair
 
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
-theorem characterPairing_ofCharacter
-    {V W : Type*} [AddCommGroup V] [Module k V]
-    [AddCommGroup W] [Module k W]
-    (ρ : Representation k G V) (σ : Representation k G W) :
+theorem characterPairing_ofCharacter {V W : Type*} [AddCommGroup V] [Module k V]
+    [AddCommGroup W] [Module k W] (ρ : Representation k G V) (σ : Representation k G W) :
     characterPairing (ofCharacter ρ) (ofCharacter σ) =
       (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character g * σ.character g⁻¹ := by
   rw [characterPairing_apply]

@@ -58,8 +58,7 @@ private theorem sum_map_min_rowLens_eq_card_filter_snd (μ : YoungDiagram) (k : 
       simp
 
 private theorem card_filter_fst_transpose (μ : YoungDiagram) (k : ℕ) :
-    (μ.transpose.cells.filter fun c => c.1 < k).card =
-      (μ.cells.filter fun c => c.2 < k).card := by
+    (μ.transpose.cells.filter fun c => c.1 < k).card = (μ.cells.filter fun c => c.2 < k).card := by
   apply Finset.card_equiv (Equiv.prodComm ℕ ℕ)
   intro c
   simp

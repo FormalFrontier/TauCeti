@@ -141,8 +141,7 @@ theorem isPositiveDefiniteKernel_mul {K L : α → α → 𝕜}
   rfl
 
 private theorem posSemidef_of_support_posSemidef (K : α → α → 𝕜)
-    (hHerm : (Matrix.of fun a b => K a b).IsHermitian)
-    (hgram : ∀ x : α →₀ 𝕜,
+    (hHerm : (Matrix.of fun a b => K a b).IsHermitian) (hgram : ∀ x : α →₀ 𝕜,
       (Matrix.of fun i j : x.support => K (i : α) (j : α)).PosSemidef) :
     (Matrix.of fun a b => K a b).PosSemidef := by
   classical

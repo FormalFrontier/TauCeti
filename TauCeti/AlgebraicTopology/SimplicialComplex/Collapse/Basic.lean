@@ -148,8 +148,7 @@ theorem property_of_antitone {p : _root_.PreAbstractSimplicialComplex ι → Pro
   hp h.le hK
 
 /-- A property preserved by each elementary collapse is preserved by a collapse sequence. -/
-theorem property_of_elementaryCollapsesTo
-    {p : _root_.PreAbstractSimplicialComplex ι → Prop}
+theorem property_of_elementaryCollapsesTo {p : _root_.PreAbstractSimplicialComplex ι → Prop}
     (hp : ∀ ⦃A B⦄, ElementaryCollapsesTo A B → p A → p B)
     (h : CollapsesTo K L) (hK : p K) : p L := by
   induction h with

@@ -48,8 +48,7 @@ variable (k : Type u) [Semiring k] {X : Type w} {Y : Type w'} [MulAction G X] [M
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an equivalence of the permutation
 representations on their free modules. -/
-noncomputable def ofMulActionEquivCongr (e : X ≃ Y)
-    (he : ∀ (g : G) (x : X), e (g • x) = g • e x) :
+noncomputable def ofMulActionEquivCongr (e : X ≃ Y) (he : ∀ (g : G) (x : X), e (g • x) = g • e x) :
     (Representation.ofMulAction k G X).Equiv (Representation.ofMulAction k G Y) :=
   .mk (MonoidAlgebra.mapDomainLinearEquiv k k e) fun _ => by ext; simp [he]
 
@@ -76,8 +75,7 @@ variable (k : Type u) [Ring k] {X Y : Type w} [MulAction G X] [MulAction G Y]
 
 /-- A `G`-equivariant equivalence of `G`-sets induces an isomorphism of the permutation
 representations they carry. -/
-noncomputable def ofMulActionIsoCongr (e : X ≃ Y)
-    (he : ∀ (g : G) (x : X), e (g • x) = g • e x) :
+noncomputable def ofMulActionIsoCongr (e : X ≃ Y) (he : ∀ (g : G) (x : X), e (g • x) = g • e x) :
     Rep.ofMulAction k G X ≅ Rep.ofMulAction k G Y :=
   Rep.mkIso (ofMulActionEquivCongr k e he)
 
@@ -152,8 +150,7 @@ theorem quotientBotIsoLeftRegular_hom_hom_single (q : G ⧸ (⊥ : Subgroup G)) 
 representative. -/
 @[simp]
 theorem quotientBotIsoLeftRegular_hom_hom_single_mk (x : G) (r : k) :
-    (quotientBotIsoLeftRegular k).hom.hom
-        (MonoidAlgebra.single (x : G ⧸ (⊥ : Subgroup G)) r) =
+    (quotientBotIsoLeftRegular k).hom.hom (MonoidAlgebra.single (x : G ⧸ (⊥ : Subgroup G)) r) =
       MonoidAlgebra.single x r :=
   quotientBotIsoLeftRegular_hom_hom_single k _ r
 
@@ -188,8 +185,7 @@ theorem quotientTopIsoTrivial_hom_hom_single (q : G ⧸ (⊤ : Subgroup G)) (r :
   simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial]
 
 @[simp]
-theorem quotientTopIsoTrivial_inv_hom_apply (r : k) :
-    (quotientTopIsoTrivial k).inv.hom r =
+theorem quotientTopIsoTrivial_inv_hom_apply (r : k) : (quotientTopIsoTrivial k).inv.hom r =
       MonoidAlgebra.single ((1 : G) : G ⧸ (⊤ : Subgroup G)) r := by
   haveI := QuotientGroup.subsingleton_quotient_top (G := G)
   simp [quotientTopIsoTrivial, Representation.ofMulActionSubsingletonEquivTrivial]

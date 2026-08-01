@@ -66,19 +66,15 @@ instance instMul : Mul (M ≃ₘ^n⟮I, I⟯ M) where mul f g := g.trans f
 instance instInv : Inv (M ≃ₘ^n⟮I, I⟯ M) where inv f := f.symm
 
 /-- Composition of diffeomorphisms is associative. -/
-theorem trans_assoc
-    {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
+theorem trans_assoc {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
     {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     {F' : Type*} [NormedAddCommGroup F'] [NormedSpace 𝕜 F']
     {H' : Type*} [TopologicalSpace H'] {G : Type*} [TopologicalSpace G]
-    {G' : Type*} [TopologicalSpace G']
-    {I' : ModelWithCorners 𝕜 E' H'} {J : ModelWithCorners 𝕜 F G}
-    {J' : ModelWithCorners 𝕜 F' G'}
-    {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+    {G' : Type*} [TopologicalSpace G'] {I' : ModelWithCorners 𝕜 E' H'} {J : ModelWithCorners 𝕜 F G}
+    {J' : ModelWithCorners 𝕜 F' G'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
     {N : Type*} [TopologicalSpace N] [ChartedSpace G N]
     {N' : Type*} [TopologicalSpace N'] [ChartedSpace G' N']
-    (f : M ≃ₘ^n⟮I, I'⟯ M') (g : M' ≃ₘ^n⟮I', J⟯ N)
-    (h : N ≃ₘ^n⟮J, J'⟯ N') :
+    (f : M ≃ₘ^n⟮I, I'⟯ M') (g : M' ≃ₘ^n⟮I', J⟯ N) (h : N ≃ₘ^n⟮J, J'⟯ N') :
     (f.trans g).trans h = f.trans (g.trans h) :=
   _root_.Diffeomorph.ext fun _ => rfl
 

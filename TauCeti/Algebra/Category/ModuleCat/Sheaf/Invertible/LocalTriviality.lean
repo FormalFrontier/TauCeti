@@ -84,8 +84,7 @@ def trivializationIso {q : SheafOfModules.LocalGeneratorsData M}
 followed by the original local free presentation. -/
 @[simp]
 lemma trivializationIso_hom {q : SheafOfModules.LocalGeneratorsData M}
-    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    (hq.trivializationIso i).hom =
+    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) : (hq.trivializationIso i).hom =
       (_root_.SheafOfModules.freeFunctor (R := R.over (q.X i))).map
         (@Equiv.punitOfNonemptyOfSubsingleton (q.generators i).I
           (hq.basisNonempty i) (hq.basisSubsingleton i)).symm.toIso.hom ≫
@@ -110,8 +109,7 @@ def ofIso (t : LocalTrivializations M) (e : M ≅ N) : LocalTrivializations N wh
 
 /-- Transporting local trivializations preserves the indexing type. -/
 @[simp]
-lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) :
-    (t.ofIso e).I = t.I := (rfl)
+lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) : (t.ofIso e).I = t.I := (rfl)
 
 /-- Transporting local trivializations preserves the covering objects. -/
 @[simp]
@@ -120,8 +118,7 @@ lemma ofIso_X (t : LocalTrivializations M) (e : M ≅ N) :
 
 /-- The transported trivializations are obtained by composing with the restricted isomorphism. -/
 @[simp]
-lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : (t.ofIso e).I) :
-    (t.ofIso e).iso i =
+lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : (t.ofIso e).I) : (t.ofIso e).iso i =
       cast (by rw [ofIso_X])
         (t.iso ((ofIso_I t e).mp i) ≪≫
           (SheafOfModules.overFunctor R (t.X ((ofIso_I t e).mp i))).mapIso e) := (rfl)

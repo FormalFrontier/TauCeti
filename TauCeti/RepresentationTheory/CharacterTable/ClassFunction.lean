@@ -141,8 +141,7 @@ noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
 /-- The class function of a representation evaluates to its character. -/
 @[simp]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
-    (ρ : Representation k G V) (g : G) :
-    (ofCharacter ρ).1 g = ρ.character g :=
+    (ρ : Representation k G V) (g : G) : (ofCharacter ρ).1 g = ρ.character g :=
   (rfl)
 
 /-- The character of a finite-dimensional bundled representation is a class function. -/
@@ -151,8 +150,7 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 
 /-- The class function of a bundled finite-dimensional representation evaluates to its character. -/
 @[simp]
-theorem ofFDRep_apply (V : FDRep k G) (g : G) :
-    (ofFDRep V).1 g = V.character g :=
+theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
   (rfl)
 
 end ClassFunction

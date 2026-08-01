@@ -117,8 +117,7 @@ theorem pi_map_eval (p : Ω^ N (∀ i, Z i) z) :
   rfl
 
 /-- Indexed products preserve coordinatewise homotopy relative to the cube boundary. -/
-theorem pi_homotopic {p q : ∀ i, Ω^ N (Z i) (z i)}
-    (h : ∀ i, _root_.GenLoop.Homotopic (p i) (q i)) :
+theorem pi_homotopic {p q : ∀ i, Ω^ N (Z i) (z i)} (h : ∀ i, _root_.GenLoop.Homotopic (p i) (q i)) :
     _root_.GenLoop.Homotopic (pi p) (pi q) :=
   ⟨ContinuousMap.HomotopyRel.pi fun i ↦ Classical.choice (h i)⟩
 
@@ -189,8 +188,7 @@ theorem prodEquiv_apply (x : X) (y : Y) (a : HomotopyGroup N (X × Y) (x, y)) :
   (rfl)
 
 @[simp]
-theorem prodEquiv_symm_apply (x : X) (y : Y)
-    (a : HomotopyGroup N X x × HomotopyGroup N Y y) :
+theorem prodEquiv_symm_apply (x : X) (y : Y) (a : HomotopyGroup N X x × HomotopyGroup N Y y) :
     (prodEquiv x y).symm a = prod a.1 a.2 :=
   (rfl)
 
@@ -212,8 +210,7 @@ theorem prodMulEquiv_apply [DecidableEq N] [Nonempty N] (x : X) (y : Y)
 
 @[simp]
 theorem prodMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (x : X) (y : Y)
-    (a : HomotopyGroup N X x × HomotopyGroup N Y y) :
-    (prodMulEquiv x y).symm a = prod a.1 a.2 :=
+    (a : HomotopyGroup N X x × HomotopyGroup N Y y) : (prodMulEquiv x y).symm a = prod a.1 a.2 :=
   (rfl)
 
 /-- The coordinatewise product of identity homotopy classes is the identity. -/
@@ -278,8 +275,7 @@ theorem piEquiv_apply (z : ∀ i, Z i) (a : HomotopyGroup N (∀ i, Z i) z) (i :
   (rfl)
 
 @[simp]
-theorem piEquiv_symm_apply (z : ∀ i, Z i)
-    (a : ∀ i, HomotopyGroup N (Z i) (z i)) :
+theorem piEquiv_symm_apply (z : ∀ i, Z i) (a : ∀ i, HomotopyGroup N (Z i) (z i)) :
     (piEquiv z).symm a = pi a :=
   (rfl)
 
@@ -305,8 +301,7 @@ theorem piMulEquiv_apply [DecidableEq N] [Nonempty N] (z : ∀ i, Z i)
 
 @[simp]
 theorem piMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (z : ∀ i, Z i)
-    (a : ∀ i, HomotopyGroup N (Z i) (z i)) :
-    (piMulEquiv z).symm a = pi a :=
+    (a : ∀ i, HomotopyGroup N (Z i) (z i)) : (piMulEquiv z).symm a = pi a :=
   (rfl)
 
 /-- The coordinatewise indexed product of identity homotopy classes is the identity. -/
@@ -318,8 +313,7 @@ theorem pi_one [DecidableEq N] [Nonempty N] :
 
 /-- Coordinatewise indexed products commute with multiplication of homotopy classes. -/
 @[simp]
-theorem pi_mul [DecidableEq N] [Nonempty N]
-    (a b : ∀ i, HomotopyGroup N (Z i) (z i)) :
+theorem pi_mul [DecidableEq N] [Nonempty N] (a b : ∀ i, HomotopyGroup N (Z i) (z i)) :
     pi (a * b) = pi a * pi b := by
   simpa only [piMulEquiv_symm_apply] using
     (piMulEquiv (N := N) z).symm.map_mul a b

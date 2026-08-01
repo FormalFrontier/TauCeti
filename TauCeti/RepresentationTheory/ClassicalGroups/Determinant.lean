@@ -77,8 +77,7 @@ theorem detPowerRep_add_apply (m l : ℤ) (g : GL (Fin n) k) (x : k) :
 
 /-- Every determinant-power representation restricts to the trivial representation of `SL n k`. -/
 @[simp]
-theorem detPowerRep_comp_toGL (m : ℤ) :
-    (detPowerRep k n m).comp Matrix.SpecialLinearGroup.toGL =
+theorem detPowerRep_comp_toGL (m : ℤ) : (detPowerRep k n m).comp Matrix.SpecialLinearGroup.toGL =
       Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k := by
   apply MonoidHom.ext
   intro g

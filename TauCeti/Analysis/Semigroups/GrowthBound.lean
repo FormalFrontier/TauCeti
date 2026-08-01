@@ -78,16 +78,14 @@ theorem StronglyContinuousSemigroup.HasGrowthBound.mono
 omit [CompleteSpace X] in
 /-- A growth bound can be weakened by increasing the exponential rate. -/
 theorem StronglyContinuousSemigroup.HasGrowthBound.mono_omega
-    {S : StronglyContinuousSemigroup X} {ω M ω' : ℝ}
-    (hb : S.HasGrowthBound ω M) (hω : ω ≤ ω') :
+    {S : StronglyContinuousSemigroup X} {ω M ω' : ℝ} (hb : S.HasGrowthBound ω M) (hω : ω ≤ ω') :
     S.HasGrowthBound ω' M :=
   hb.mono hω le_rfl
 
 omit [CompleteSpace X] in
 /-- A growth bound can be weakened by increasing the multiplicative constant. -/
 theorem StronglyContinuousSemigroup.HasGrowthBound.mono_const
-    {S : StronglyContinuousSemigroup X} {ω M M' : ℝ}
-    (hb : S.HasGrowthBound ω M) (hM : M ≤ M') :
+    {S : StronglyContinuousSemigroup X} {ω M M' : ℝ} (hb : S.HasGrowthBound ω M) (hM : M ≤ M') :
     S.HasGrowthBound ω M' :=
   hb.mono le_rfl hM
 
@@ -123,8 +121,7 @@ theorem ContractionSemigroup.hasGrowthBound_of_nonneg_omega_of_one_le_const
 
 /-- Every C₀-semigroup has a finite exponential growth bound
 ([EN] Prop. I.5.5, [Linares] Thm. 1). -/
-theorem StronglyContinuousSemigroup.existsGrowthBound
-    (S : StronglyContinuousSemigroup X) :
+theorem StronglyContinuousSemigroup.existsGrowthBound (S : StronglyContinuousSemigroup X) :
     ∃ (ω : ℝ) (M : ℝ), S.HasGrowthBound ω M := by
   obtain ⟨M, hM1, hMbound⟩ := S.normBoundedOnUnitInterval
   have hM_pos : 0 < M := by linarith
