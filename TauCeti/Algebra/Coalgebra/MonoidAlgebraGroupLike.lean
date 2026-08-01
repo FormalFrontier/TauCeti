@@ -174,9 +174,9 @@ noncomputable def mapDomainBialgHomPreimage [CommRing R]
       calc
         _root_.MonoidAlgebra.single (φ 1) 1 =
             F (_root_.MonoidAlgebra.single 1 1) := (hφ 1).symm
-        _ = F 1 := rfl
+        _ = F 1 := congrArg F _root_.MonoidAlgebra.one_def.symm
         _ = 1 := map_one F
-        _ = _root_.MonoidAlgebra.single 1 1 := rfl
+        _ = _root_.MonoidAlgebra.single 1 1 := _root_.MonoidAlgebra.one_def
     map_mul' := by
       intro g g'
       apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
@@ -208,6 +208,7 @@ theorem mapDomainBialgHomPreimage_apply_eq_iff [CommRing R]
 
 /-- The image of a standard basis element under a bialgebra morphism is indexed by
 the recovered monoid homomorphism. -/
+@[simp]
 theorem mapDomainBialgHomPreimage_single [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {G : Type v} {H : Type w}
     [Monoid G] [Monoid H]
