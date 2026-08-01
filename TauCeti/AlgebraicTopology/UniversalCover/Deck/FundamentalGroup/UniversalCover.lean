@@ -49,7 +49,7 @@ variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 
 /-- A loop class acts on the universal cover by a deck transformation of the endpoint
 projection. -/
-@[expose] def loopDeck (g : FundamentalGroup X x₀) :
+def loopDeck (g : FundamentalGroup X x₀) :
     Deck (proj : UniversalCover x₀ → X) :=
   ⟨Homeomorph.smul g, fun p => proj_smul g p⟩
 
@@ -57,7 +57,7 @@ projection. -/
 @[simp]
 lemma loopDeck_apply (g : FundamentalGroup X x₀) (p : UniversalCover x₀) :
     (loopDeck x₀ g).1 p = g • p :=
-  rfl
+  (rfl)
 
 /-- The identity loop class induces the identity deck transformation. -/
 @[simp]
@@ -81,7 +81,7 @@ lemma loopDeck_mul (g h : FundamentalGroup X x₀) :
 
 /-- The fundamental-group action, bundled as a homomorphism into the deck group of the
 universal-cover projection. -/
-@[expose] def loopDeckHom :
+def loopDeckHom :
     FundamentalGroup X x₀ →* Deck (proj : UniversalCover x₀ → X) where
   toFun := loopDeck x₀
   map_one' := loopDeck_one x₀
@@ -90,7 +90,7 @@ universal-cover projection. -/
 @[simp]
 lemma loopDeckHom_apply (g : FundamentalGroup X x₀) :
     loopDeckHom x₀ g = loopDeck x₀ g :=
-  rfl
+  (rfl)
 
 /-- The endpoint projection of the universal cover has regular deck action. -/
 theorem isRegular_proj [PathConnectedSpace X] :
