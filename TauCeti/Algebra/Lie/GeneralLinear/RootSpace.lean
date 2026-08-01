@@ -77,9 +77,11 @@ is a plane rather than a line. The statements that do not separate `εᵢ - ε�
 particular `TauCeti.mem_rootSpace_diagonalCartan_iff` and `TauCeti.iSup_rootSpace_glRoot_eq_top`,
 need no such hypothesis.
 
-Since the Killing form of `gl n R` is degenerate, `LieAlgebra.IsKilling` is unavailable and with it
-all of Mathlib's `LieAlgebra.IsKilling.rootSystem` machinery, including `finrank_rootSpace_eq_one`;
-the analogues here are proved from scratch. See the module documentation of
+`LieAlgebra.IsKilling` is unavailable for `gl n R`: whenever `R` is nontrivial and `n` is nonempty
+the identity matrix is central, hence a nonzero element of the radical of the Killing form, so that
+form is degenerate. With `LieAlgebra.IsKilling` goes all of Mathlib's
+`LieAlgebra.IsKilling.rootSystem` machinery, including `finrank_rootSpace_eq_one`; the analogues
+here are proved from scratch. See the module documentation of
 `TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan`.
 
 ## References

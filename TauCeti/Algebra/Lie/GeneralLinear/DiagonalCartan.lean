@@ -253,7 +253,9 @@ theorem glWeightEquiv_symm_apply (f : Module.Dual R (diagonalCartan R n)) (i : n
 variable (R n)
 
 /-- The weight `εᵢ - εⱼ` of `gl n R`, as a functional on the diagonal Cartan subalgebra. For `i ≠ j`
-these are the roots of `gl n R`; for `i = j` the functional is zero. -/
+these are the candidate roots of `gl n R`; over a nontrivial ring they are genuine roots, since
+`TauCeti.single_mem_rootSpace` places the nonzero matrix unit `Eᵢⱼ` in the root space. For `i = j`
+the functional is zero. -/
 noncomputable def glRoot (i j : n) : Module.Dual R (diagonalCartan R n) :=
   glWeightEquiv R n (Pi.single i 1 - Pi.single j 1)
 
