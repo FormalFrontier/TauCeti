@@ -29,6 +29,8 @@ Kudryashov and Heather Macbeth.
 ## Main declarations
 
 * `TauCeti.RealProjectiveSpace`: real projective `n`-space as an antipodal quotient of `Sⁿ`.
+* `TauCeti.RealProjectiveSpace.inductionOn` and `TauCeti.RealProjectiveSpace.lift`: elimination
+  principles for the antipodal quotient.
 * `TauCeti.RealProjectiveSpace.mk_eq_mk_iff`: two unit vectors define the same projective point
   exactly when they are equal or antipodal.
 * `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk`: the unit-sphere quotient is a quotient
@@ -108,7 +110,7 @@ end Sphere
 
 /-- Real projective `n`-space, modelled as the orbit quotient of the unit sphere `Sⁿ` under the
 antipodal action of the two-element group `ℤˣ = {1, -1}`. -/
-abbrev RealProjectiveSpace (n : ℕ) :=
+def RealProjectiveSpace (n : ℕ) :=
   Quotient (MulAction.orbitRel ℤˣ
     (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
@@ -116,26 +118,57 @@ namespace RealProjectiveSpace
 
 variable (n : ℕ)
 
+/-- The quotient topology on real projective space. -/
+instance instTopologicalSpace : TopologicalSpace (RealProjectiveSpace n) :=
+  inferInstanceAs (TopologicalSpace (Quotient (MulAction.orbitRel ℤˣ
+    (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))))
+
 /-- The quotient map from the unit sphere to real projective space. -/
 def mk : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → RealProjectiveSpace n :=
   Quotient.mk
     (MulAction.orbitRel ℤˣ (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
-/-- The quotient map evaluates to the class of its representative. -/
-private theorem mk_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
-    mk n x = Quotient.mk'' x :=
-  (rfl)
-
 /-- Every point of real projective space has a unit-vector representative. -/
 theorem mk_surjective : Function.Surjective (mk n) :=
   Quotient.mk_surjective
+
+/-- To prove a property of every point of real projective space, it suffices to prove it on the
+image of every unit vector. -/
+@[elab_as_elim]
+protected theorem inductionOn {motive : RealProjectiveSpace n → Prop}
+    (x : RealProjectiveSpace n)
+    (h : ∀ y : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1, motive (mk n y)) :
+    motive x :=
+  Quotient.inductionOn' x h
+
+/-- An antipodal-invariant function on the unit sphere descends to real projective space. -/
+protected def lift {α : Sort*}
+    (f : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → α)
+    (h : ∀ x, f (-x) = f x) : RealProjectiveSpace n → α :=
+  Quotient.lift f fun x y hxy => by
+    change ∃ u : ℤˣ, u • y = x at hxy
+    obtain ⟨u, rfl⟩ := hxy
+    obtain rfl | rfl := Int.units_eq_one_or u
+    · rw [one_smul]
+    · simpa using h y
+
+/-- Lifting an antipodal-invariant function and applying it to a representative recovers the
+original function. -/
+@[simp]
+protected theorem lift_mk {α : Sort*}
+    (f : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → α)
+    (h : ∀ x, f (-x) = f x)
+    (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
+    RealProjectiveSpace.lift n f h (mk n x) = f x :=
+  (rfl)
 
 /-- Two unit vectors define the same point of real projective space exactly when they are equal
 or antipodal. -/
 @[simp]
 theorem mk_eq_mk_iff (x y : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     mk n x = mk n y ↔ x = y ∨ x = -y := by
-  rw [mk_apply, mk_apply, Quotient.eq'', MulAction.orbitRel_apply]
+  change Quotient.mk'' x = Quotient.mk'' y ↔ _
+  rw [Quotient.eq'', MulAction.orbitRel_apply]
   constructor
   · rintro ⟨u, rfl⟩
     obtain rfl | rfl := Int.units_eq_one_or u
@@ -154,9 +187,10 @@ theorem mk_neg (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
 /-- The unit sphere modulo the antipodal action is a quotient covering map.  Its fibres are the
 two-element orbits `{x, -x}`. -/
 theorem isQuotientCoveringMap_mk : IsQuotientCoveringMap (mk n) ℤˣ := by
-  simpa only [mk, RealProjectiveSpace] using
+  convert
     (isQuotientCoveringMap_quotientMk_of_properlyDiscontinuousSMul
-      (G := ℤˣ) (E := sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
+      (G := ℤˣ) (E := sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)) using 1 <;>
+    rfl
 
 /-- The unit-sphere projection onto real projective space is a quotient map. -/
 theorem isQuotientMap_mk : IsQuotientMap (mk n) :=
