@@ -5,8 +5,8 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Perm
+public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Nat.Factorial.DoubleFactorial
 
 /-!
@@ -102,7 +102,6 @@ theorem apply_ne_and_ne_iff (hab : D.val a = b) (x : α) :
     · rw [← hba, ← D.apply_eq_of_apply_eq h]
 
 /-- The perfect matching induced on the complement of the arc joining `a` to `b`. -/
-@[expose]
 def restrict (D : PerfectMatching α) (hab : D.val a = b) :
     PerfectMatching {x : α // x ≠ a ∧ x ≠ b} :=
   ⟨D.val.subtypePerm (apply_ne_and_ne_iff hab), fun x => Subtype.ext (D.apply_apply x.val),
@@ -110,7 +109,7 @@ def restrict (D : PerfectMatching α) (hab : D.val a = b) :
 
 @[simp]
 theorem restrict_apply_coe (D : PerfectMatching α) (hab : D.val a = b)
-    (x : {x : α // x ≠ a ∧ x ≠ b}) : ((D.restrict hab).val x : α) = D.val x := rfl
+    (x : {x : α // x ≠ a ∧ x ≠ b}) : ((D.restrict hab).val x : α) = D.val x := (rfl)
 
 section Extend
 
@@ -199,6 +198,16 @@ def fiberEquiv (hab : a ≠ b) :
   left_inv D := Subtype.ext (extend_restrict hab D.1 D.2)
   right_inv E := restrict_extend hab E
 
+/-- The fiber equivalence restricts away the arc joining `a` to `b`. -/
+@[simp]
+theorem fiberEquiv_apply (hab : a ≠ b) (D : {D : PerfectMatching α // D.val a = b}) :
+    fiberEquiv hab D = D.1.restrict D.2 := (rfl)
+
+/-- The inverse of the fiber equivalence adjoins the arc joining `a` to `b`. -/
+@[simp]
+theorem fiberEquiv_symm_apply (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
+    ((fiberEquiv hab).symm E : PerfectMatching α) = extend hab E := (rfl)
+
 end Extend
 
 end PerfectMatching
@@ -206,15 +215,10 @@ end PerfectMatching
 /-- Deleting two distinct points from a finite type drops its cardinality by two. -/
 private theorem card_subtype_ne_ne {α : Type u} [Fintype α] [DecidableEq α] {a b : α}
     (hab : a ≠ b) : Fintype.card {x : α // x ≠ a ∧ x ≠ b} = Fintype.card α - 2 := by
-  have hfilter : (Finset.univ.filter fun x : α => x ≠ a ∧ x ≠ b)
-      = (Finset.univ.erase a).erase b := by
-    ext x
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_erase]
-    tauto
-  rw [Fintype.card_subtype, hfilter,
-    Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hab.symm, Finset.mem_univ _⟩),
-    Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ]
-  omega
+  have hcompl : Fintype.card {x : α // x ≠ a ∧ x ≠ b}
+      = Fintype.card {x : α // ¬(x = a ∨ x = b)} :=
+    Fintype.card_congr (Equiv.subtypeEquivRight fun _ => not_or.symm)
+  rw [hcompl, Fintype.card_subtype_compl, Fintype.card_subtype_eq_or_eq_of_ne hab]
 
 private theorem even_card_aux :
     ∀ (n : ℕ) {α : Type u} [Fintype α], Fintype.card α = n →
@@ -278,9 +282,18 @@ private theorem card_perfectMatching_aux :
         D.val a ∈ Finset.univ.erase a :=
       fun D _ => Finset.mem_erase.mpr ⟨D.apply_ne a, Finset.mem_univ _⟩
     have hodd : 2 * (m + 1) - 1 = 2 * m + 1 := by omega
-    rw [← Finset.card_univ, Finset.card_eq_sum_card_fiberwise hmem, Finset.sum_const_nat key,
-      Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard, hodd,
-      Nat.doubleFactorial_add_one]
+    have herase : (Finset.univ.erase a).card = 2 * m + 1 := by
+      rw [Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]
+      omega
+    calc Fintype.card (PerfectMatching α)
+        = (Finset.univ : Finset (PerfectMatching α)).card := Finset.card_univ.symm
+      _ = ∑ b ∈ Finset.univ.erase a,
+            (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card :=
+          Finset.card_eq_sum_card_fiberwise hmem
+      _ = (Finset.univ.erase a).card * (2 * m - 1)‼ := Finset.sum_const_nat key
+      _ = (2 * m + 1) * (2 * m - 1)‼ := by rw [herase]
+      _ = (2 * m + 1)‼ := (Nat.doubleFactorial_add_one (2 * m)).symm
+      _ = (2 * (m + 1) - 1)‼ := by rw [hodd]
 
 /-- **The number of perfect matchings of a finite type.** A type with `2 * m` elements has
 exactly `(2 * m - 1)‼ = 1 · 3 · 5 ⋯ (2 * m - 1)` perfect matchings. -/

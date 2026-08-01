@@ -146,7 +146,6 @@ theorem isCup_val : D.IsCup (D.val x) ↔ D.IsCup x := by
 end BrauerDiagram
 
 /-- The **permutation diagram** of `σ`, joining the bottom point `i` to the top point `σ i`. -/
-@[expose]
 def permToBrauer {k : ℕ} (σ : Equiv.Perm (Fin k)) : BrauerDiagram k :=
   ⟨(Equiv.sumComm (Fin k) (Fin k)).trans (Equiv.sumCongr σ.symm σ),
     fun x => by rcases x with i | i <;> simp, fun x => by rcases x with i | i <;> simp⟩
@@ -157,11 +156,11 @@ variable {k : ℕ}
 
 @[simp]
 theorem permToBrauer_val_inl (σ : Equiv.Perm (Fin k)) (i : Fin k) :
-    (permToBrauer σ).val (Sum.inl i) = Sum.inr (σ i) := rfl
+    (permToBrauer σ).val (Sum.inl i) = Sum.inr (σ i) := (rfl)
 
 @[simp]
 theorem permToBrauer_val_inr (σ : Equiv.Perm (Fin k)) (j : Fin k) :
-    (permToBrauer σ).val (Sum.inr j) = Sum.inl (σ.symm j) := rfl
+    (permToBrauer σ).val (Sum.inr j) = Sum.inl (σ.symm j) := (rfl)
 
 /-- A permutation diagram has no cap and no cup: every arc goes through. -/
 theorem isThrough_permToBrauer (σ : Equiv.Perm (Fin k)) (x : Fin k ⊕ Fin k) :
@@ -191,7 +190,6 @@ theorem getRight_val_inl (hD : ∀ x, D.IsThrough x) {i j : Fin k}
 
 /-- The permutation read off a Brauer diagram all of whose arcs go through: it sends the
 bottom point `i` to the top point matched with it. -/
-@[expose]
 noncomputable def throughPerm (D : BrauerDiagram k) (hD : ∀ x, D.IsThrough x) :
     Equiv.Perm (Fin k) :=
   Equiv.ofBijective (fun i => (D.val (Sum.inl i)).getRight (isRight_val_inl hD i))
@@ -203,7 +201,7 @@ noncomputable def throughPerm (D : BrauerDiagram k) (hD : ∀ x, D.IsThrough x) 
 
 @[simp]
 theorem throughPerm_apply (hD : ∀ x, D.IsThrough x) (i : Fin k) :
-    throughPerm D hD i = (D.val (Sum.inl i)).getRight (isRight_val_inl hD i) := rfl
+    throughPerm D hD i = (D.val (Sum.inl i)).getRight (isRight_val_inl hD i) := (rfl)
 
 /-- The diagram of the permutation read off a through diagram is the diagram itself. -/
 theorem permToBrauer_throughPerm (hD : ∀ x, D.IsThrough x) :
@@ -224,7 +222,6 @@ theorem throughPerm_permToBrauer (σ : Equiv.Perm (Fin k)) :
 end BrauerDiagram
 
 /-- **Permutations are exactly the Brauer diagrams with no horizontal arc.** -/
-@[expose]
 noncomputable def permToBrauerEquiv (k : ℕ) :
     Equiv.Perm (Fin k) ≃ {D : BrauerDiagram k // ∀ x, D.IsThrough x} where
   toFun σ := ⟨permToBrauer σ, BrauerDiagram.isThrough_permToBrauer σ⟩
@@ -234,11 +231,11 @@ noncomputable def permToBrauerEquiv (k : ℕ) :
 
 @[simp]
 theorem permToBrauerEquiv_apply {k : ℕ} (σ : Equiv.Perm (Fin k)) :
-    (permToBrauerEquiv k σ : BrauerDiagram k) = permToBrauer σ := rfl
+    (permToBrauerEquiv k σ : BrauerDiagram k) = permToBrauer σ := (rfl)
 
 @[simp]
 theorem permToBrauerEquiv_symm_apply {k : ℕ} (D : {D : BrauerDiagram k // ∀ x, D.IsThrough x}) :
-    (permToBrauerEquiv k).symm D = BrauerDiagram.throughPerm D.1 D.2 := rfl
+    (permToBrauerEquiv k).symm D = BrauerDiagram.throughPerm D.1 D.2 := (rfl)
 
 /-- The Brauer diagrams with no cap and no cup are `k !` in number. -/
 theorem card_brauerDiagram_forall_isThrough (k : ℕ) :
