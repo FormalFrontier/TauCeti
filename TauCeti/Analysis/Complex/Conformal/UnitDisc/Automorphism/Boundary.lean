@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Basic
+public import TauCeti.Analysis.Complex.Conformal.Moebius
 
 /-!
 # Disc automorphisms on the closed disc and on the unit circle
@@ -138,16 +138,6 @@ theorem bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
     (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha)
     (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one (by rwa [norm_neg]))
 
-/-- **A Moebius factor is a bijection of the open unit disc onto itself.** The scalar counterpart of
-the bundled `TauCeti.unitDiscMoebiusEquiv`. -/
-theorem bijOn_ball_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
-    BijOn (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
-      (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
-  ((invOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha).mono ball_subset_closedBall
-      ball_subset_closedBall).bijOn
-    (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha)
-    (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (by rwa [norm_neg]))
-
 /-! ## The bundled homeomorphisms of the closed disc and of the circle -/
 
 /-- **A Moebius factor of the unit disc, as a homeomorphism of the closed disc.** Continuity of the
@@ -167,7 +157,7 @@ noncomputable def unitDiscMoebiusClosedBallHomeomorph (a : Complex.UnitDisc) :
       (bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one).mapsTo)
 
 /-- The closed-disc homeomorphism is given by the Moebius formula. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscMoebiusClosedBallHomeomorph_apply (a : Complex.UnitDisc)
     (z : closedBall (0 : ℂ) 1) :
     (unitDiscMoebiusClosedBallHomeomorph a z : ℂ) =
@@ -177,6 +167,7 @@ lemma coe_unitDiscMoebiusClosedBallHomeomorph_apply (a : Complex.UnitDisc)
     MapsTo.val_restrict_apply]
 
 /-- The inverse of the closed-disc homeomorphism is given by the Moebius formula centred at `-a`. -/
+@[norm_cast]
 lemma coe_unitDiscMoebiusClosedBallHomeomorph_symm_apply (a : Complex.UnitDisc)
     (w : closedBall (0 : ℂ) 1) :
     ((unitDiscMoebiusClosedBallHomeomorph a).symm w : ℂ) =
@@ -217,7 +208,7 @@ noncomputable def unitDiscMoebiusSphereHomeomorph (a : Complex.UnitDisc) :
         (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one).mapsTo)
 
 /-- The circle homeomorphism is given by the Moebius formula. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscMoebiusSphereHomeomorph_apply (a : Complex.UnitDisc) (z : sphere (0 : ℂ) 1) :
     (unitDiscMoebiusSphereHomeomorph a z : ℂ) =
       ((z : ℂ) - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * (z : ℂ)) := by
@@ -226,6 +217,7 @@ lemma coe_unitDiscMoebiusSphereHomeomorph_apply (a : Complex.UnitDisc) (z : sphe
     MapsTo.val_restrict_apply]
 
 /-- The inverse of the circle homeomorphism is given by the Moebius formula centred at `-a`. -/
+@[norm_cast]
 lemma coe_unitDiscMoebiusSphereHomeomorph_symm_apply (a : Complex.UnitDisc)
     (w : sphere (0 : ℂ) 1) :
     ((unitDiscMoebiusSphereHomeomorph a).symm w : ℂ) =
@@ -249,6 +241,12 @@ lemma unitDiscMoebiusSphereHomeomorph_symm (a : Complex.UnitDisc) :
     Complex.UnitDisc.coe_neg]
 
 /-! ## The full standard automorphism -/
+
+/-- A rotation factor is undone by its conjugate: Mathlib's `Complex.conj_mul'` specialized to
+`‖u‖ = 1`.  This is the only computation the rotation factor of a standard automorphism needs, so
+it is recorded once here instead of being reproved at each use below. -/
+private lemma conj_mul_eq_one_of_norm_eq_one (hu : ‖u‖ = 1) : (starRingEnd ℂ) u * u = 1 := by
+  rw [Complex.conj_mul', hu, Complex.ofReal_one, one_pow]
 
 /-- The rotation factor of a standard disc automorphism preserves the unit circle. -/
 theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : ‖u‖ = 1)
@@ -319,13 +317,10 @@ theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : �
   obtain ⟨z, hz, hzw⟩ := (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha).surjOn hrot
   refine ⟨z, hz, ?_⟩
   have hzw' : (z - a) / (1 - (starRingEnd ℂ) a * z) = (starRingEnd ℂ) u * w := hzw
-  have huu : u * (starRingEnd ℂ) u = 1 := by
-    rw [Complex.mul_conj, Complex.normSq_eq_norm_sq, hu]
-    norm_num
   calc
     u * ((z - a) / (1 - (starRingEnd ℂ) a * z)) = u * ((starRingEnd ℂ) u * w) := by rw [hzw']
-    _ = (u * (starRingEnd ℂ) u) * w := by ring
-    _ = w := by rw [huu, one_mul]
+    _ = ((starRingEnd ℂ) u * u) * w := by ring
+    _ = w := by rw [conj_mul_eq_one_of_norm_eq_one hu, one_mul]
 
 /-- **A standard disc automorphism, as a homeomorphism of the closed disc.** The definition is not
 exposed; `TauCeti.coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply` characterizes it. -/
@@ -342,7 +337,7 @@ noncomputable def unitDiscStandardAutomorphismClosedBallHomeomorph (u : Circle)
           a.norm_lt_one).mapsTo)
 
 /-- The closed-disc automorphism homeomorphism is given by the standard automorphism formula. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply (u : Circle)
     (a : Complex.UnitDisc) (z : closedBall (0 : ℂ) 1) :
     (unitDiscStandardAutomorphismClosedBallHomeomorph u a z : ℂ) =
@@ -363,16 +358,15 @@ lemma unitDiscStandardAutomorphismClosedBallHomeomorph_one (a : Complex.UnitDisc
 
 /-- The inverse of the closed-disc automorphism homeomorphism undoes the rotation first: it is the
 Moebius factor centred at `-a` evaluated at `conj u * w`. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscStandardAutomorphismClosedBallHomeomorph_symm_apply (u : Circle)
     (a : Complex.UnitDisc) (w : closedBall (0 : ℂ) 1) :
     ((unitDiscStandardAutomorphismClosedBallHomeomorph u a).symm w : ℂ) =
       ((starRingEnd ℂ) (u : ℂ) * (w : ℂ) - (-(a : ℂ))) /
         (1 - (starRingEnd ℂ) (-(a : ℂ)) * ((starRingEnd ℂ) (u : ℂ) * (w : ℂ))) := by
   set x : ℂ := ((unitDiscStandardAutomorphismClosedBallHomeomorph u a).symm w : ℂ) with hx
-  have huu : (starRingEnd ℂ) (u : ℂ) * (u : ℂ) = 1 := by
-    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, u.norm_coe]
-    norm_num
+  have huu : (starRingEnd ℂ) (u : ℂ) * (u : ℂ) = 1 :=
+    conj_mul_eq_one_of_norm_eq_one u.norm_coe
   have himg :
       (u : ℂ) * ((x - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * x)) = (w : ℂ) := by
     rw [hx, ← coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply u a,
@@ -403,7 +397,7 @@ noncomputable def unitDiscStandardAutomorphismSphereHomeomorph (u : Circle)
           a.norm_lt_one).mapsTo)
 
 /-- The circle automorphism homeomorphism is given by the standard automorphism formula. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_apply (u : Circle) (a : Complex.UnitDisc)
     (z : sphere (0 : ℂ) 1) :
     (unitDiscStandardAutomorphismSphereHomeomorph u a z : ℂ) =
@@ -422,16 +416,15 @@ lemma unitDiscStandardAutomorphismSphereHomeomorph_one (a : Complex.UnitDisc) :
 
 /-- The inverse of the circle automorphism homeomorphism undoes the rotation first: it is the
 Moebius factor centred at `-a` evaluated at `conj u * w`. -/
-@[simp]
+@[simp, norm_cast]
 lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_symm_apply (u : Circle)
     (a : Complex.UnitDisc) (w : sphere (0 : ℂ) 1) :
     ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w : ℂ) =
       ((starRingEnd ℂ) (u : ℂ) * (w : ℂ) - (-(a : ℂ))) /
         (1 - (starRingEnd ℂ) (-(a : ℂ)) * ((starRingEnd ℂ) (u : ℂ) * (w : ℂ))) := by
   set x : ℂ := ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w : ℂ) with hx
-  have huu : (starRingEnd ℂ) (u : ℂ) * (u : ℂ) = 1 := by
-    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, u.norm_coe]
-    norm_num
+  have huu : (starRingEnd ℂ) (u : ℂ) * (u : ℂ) = 1 :=
+    conj_mul_eq_one_of_norm_eq_one u.norm_coe
   have himg : (u : ℂ) * ((x - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * x)) = (w : ℂ) := by
     rw [hx, ← coe_unitDiscStandardAutomorphismSphereHomeomorph_apply u a,
       Homeomorph.apply_symm_apply]
