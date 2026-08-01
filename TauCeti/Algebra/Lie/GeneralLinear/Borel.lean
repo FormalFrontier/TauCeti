@@ -8,7 +8,7 @@ public import TauCeti.Algebra.Lie.GeneralLinear.RootSpace
 public import Mathlib.LinearAlgebra.Matrix.Block
 
 /-!
-# The standard Borel subalgebra of `gl n R` and its nilradical
+# The standard Borel subalgebra of `gl n R` and its positive nilpotent ideal
 
 Order the index type `n` linearly. The upper triangular matrices form a Lie subalgebra
 `TauCeti.upperTriangular R n` of `gl n R = Matrix n n R`, and the strictly upper triangular
@@ -34,7 +34,8 @@ triangular matrices are a Lie ideal of the Borel subalgebra,
 * `TauCeti.upperTriangular R n`: the upper triangular matrices, as a
   `LieSubalgebra R (Matrix n n R)`. This is the standard Borel subalgebra of `gl n R`.
 * `TauCeti.strictUpperTriangular R n`: the strictly upper triangular matrices, as a
-  `LieSubalgebra R (Matrix n n R)`. This is the nilradical of the standard Borel subalgebra.
+  `LieSubalgebra R (Matrix n n R)`. This is the positive nilpotent ideal `𝔫⁺` of the standard
+  Borel subalgebra.
 * `TauCeti.strictUpperTriangularIdeal R n`: the same subalgebra, packaged as a Lie ideal of
   `upperTriangular R n`.
 
@@ -53,6 +54,16 @@ triangular matrices are a Lie ideal of the Borel subalgebra,
   spaces of the positive roots.
 
 ## Implementation notes
+
+`𝔫⁺` is called here the *positive nilpotent ideal* of the Borel subalgebra, never its nilradical:
+for `gl n R` the two differ, because the scalar matrices are central in `gl n R` and so span a
+further nilpotent ideal of `upperTriangular R n` outside `strictUpperTriangular R n`. For a
+singleton index type this is the whole story: `upperTriangular R n` is then all of `gl n R`, which
+is abelian and hence its own nilradical, while `strictUpperTriangular R n` is zero. It is in
+`sl n R`, where the scalars have been removed, that the strict upper triangle is the nilradical of
+the Borel; what makes `𝔫⁺` the right object here regardless is that it is the sum of the positive
+root spaces (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`), which is what the
+highest weight theory downstream uses.
 
 The index type carries both `[DecidableEq n]`, for the matrix units, and `[LinearOrder n]`, which
 is what "upper triangular" refers to; the two decidability structures are not identified, exactly as
@@ -104,8 +115,10 @@ def upperTriangular : LieSubalgebra R (Matrix n n R) :=
 
 /-- The strictly upper triangular matrices, as a Lie subalgebra of `gl n R = Matrix n n R`.
 
-This is the nilradical `𝔫⁺` of the standard Borel subalgebra `TauCeti.upperTriangular R n`: it is
-the sum of the root spaces of the roots `εᵢ - εⱼ` with `i < j`, with no Cartan part. -/
+This is the positive nilpotent ideal `𝔫⁺` of the standard Borel subalgebra
+`TauCeti.upperTriangular R n`: it is the sum of the root spaces of the roots `εᵢ - εⱼ` with
+`i < j`, with no Cartan part. It is not the nilradical of `TauCeti.upperTriangular R n`, which is
+larger; see the implementation notes of this file. -/
 def strictUpperTriangular : LieSubalgebra R (Matrix n n R) where
   carrier := {A | ∀ i j, j ≤ i → A i j = 0}
   add_mem' hA hB := fun i j hij => by simp [hA i j hij, hB i j hij]
@@ -136,7 +149,7 @@ theorem mem_upperTriangular_iff {A : Matrix n n R} :
     A ∈ upperTriangular R n ↔ ∀ i j, j < i → A i j = 0 :=
   ⟨fun h _ _ hij => h hij, fun h _ _ hij => h _ _ hij⟩
 
-/-- The entrywise description of the nilradical. -/
+/-- The entrywise description of `𝔫⁺`. -/
 theorem mem_strictUpperTriangular_iff {A : Matrix n n R} :
     A ∈ strictUpperTriangular R n ↔ ∀ i j, j ≤ i → A i j = 0 := Iff.rfl
 
@@ -145,7 +158,7 @@ theorem diag_eq_zero_of_mem_strictUpperTriangular {A : Matrix n n R}
     (hA : A ∈ strictUpperTriangular R n) (i : n) : A i i = 0 :=
   hA i i le_rfl
 
-/-- The nilradical is contained in the Borel subalgebra. -/
+/-- `𝔫⁺` is contained in the Borel subalgebra. -/
 theorem strictUpperTriangular_le_upperTriangular :
     strictUpperTriangular R n ≤ upperTriangular R n :=
   fun _ hA _ _ hij => hA _ _ hij.le
@@ -207,8 +220,8 @@ theorem mul_apply_diag_of_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ u
 /-- **The bracket of two upper triangular matrices is strictly upper triangular.** Below the
 diagonal both products vanish, and on the diagonal the two products agree, by
 `TauCeti.mul_apply_diag_of_mem_upperTriangular` and commutativity of `R`. So the derived subalgebra
-of the Borel subalgebra lies in its nilradical; in particular the nilradical is a Lie ideal of the
-Borel subalgebra, `TauCeti.strictUpperTriangularIdeal`. -/
+of the Borel subalgebra lies in `𝔫⁺`; in particular `𝔫⁺` is a Lie ideal of the Borel subalgebra,
+`TauCeti.strictUpperTriangularIdeal`. -/
 theorem lie_mem_strictUpperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
     (hB : B ∈ upperTriangular R n) : ⁅A, B⁆ ∈ strictUpperTriangular R n := by
   intro i j hij
@@ -220,8 +233,8 @@ theorem lie_mem_strictUpperTriangular {A B : Matrix n n R} (hA : A ∈ upperTria
 
 variable (R n)
 
-/-- The nilradical of the standard Borel subalgebra of `gl n R`, as a Lie ideal of that Borel
-subalgebra. Its underlying set is `TauCeti.strictUpperTriangular R n`. -/
+/-- The positive nilpotent ideal `𝔫⁺` of the standard Borel subalgebra of `gl n R`, as a Lie ideal
+of that Borel subalgebra. Its underlying set is `TauCeti.strictUpperTriangular R n`. -/
 def strictUpperTriangularIdeal : LieIdeal R (upperTriangular R n) where
   carrier := {A | (A : Matrix n n R) ∈ strictUpperTriangular R n}
   add_mem' hA hB := (strictUpperTriangular R n).add_mem hA hB
@@ -247,7 +260,7 @@ theorem sub_diagonal_diag_mem_strictUpperTriangular {A : Matrix n n R}
   · simp [hA h, diagonal_apply_ne' _ h.ne]
   · simp
 
-/-- **The Borel subalgebra is the sum of the diagonal Cartan subalgebra and the nilradical**: every
+/-- **The Borel subalgebra is the sum of the diagonal Cartan subalgebra and `𝔫⁺`**: every
 upper triangular matrix is its diagonal plus a strictly upper triangular matrix. -/
 theorem upperTriangular_toSubmodule_eq_sup :
     (upperTriangular R n).toSubmodule
@@ -290,9 +303,9 @@ theorem upperTriangular_normalizer_eq_self :
   rw [mem_upperTriangular_iff] at h
   simpa [hentry] using h i j hij
 
-/-! ### The nilradical as the span of the raising operators -/
+/-! ### `𝔫⁺` as the span of the raising operators -/
 
-/-- **The nilradical is spanned by the raising matrix units** `Eᵢⱼ`, `i < j`. -/
+/-- **`𝔫⁺` is spanned by the raising matrix units** `Eᵢⱼ`, `i < j`. -/
 theorem strictUpperTriangular_toSubmodule_eq_iSup :
     (strictUpperTriangular R n).toSubmodule
       = ⨆ i : n, ⨆ j : n, ⨆ _ : i < j, R ∙ single i j (1 : R) := by
@@ -314,7 +327,7 @@ theorem strictUpperTriangular_toSubmodule_eq_iSup :
     rw [Submodule.span_le, Set.singleton_subset_iff]
     exact single_mem_strictUpperTriangular hij 1
 
-/-- **The nilradical is the sum of the positive root spaces.** Over a domain, away from
+/-- **`𝔫⁺` is the sum of the positive root spaces.** Over a domain, away from
 characteristic two, the root space of `εᵢ - εⱼ` is the line spanned by `Eᵢⱼ`
 (`TauCeti.rootSpace_glWeightSub_eq_span`), so
 `TauCeti.strictUpperTriangular_toSubmodule_eq_iSup` says exactly that `𝔫⁺` is the sum of the root
