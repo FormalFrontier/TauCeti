@@ -9,21 +9,21 @@ public import TauCeti.Combinatorics.Young.HookLength
 public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 
 /-!
-# Reading tableaux and the shapes with a unique standard Young tableau
+# Reading order, the superstandard tableaux, and the shapes with a unique standard tableau
 
 Numbering the cells of a Young diagram `μ` in *reading order* -- left to right along the first
 row, then left to right along the second, and so on -- labels the cell `(i, j)` by
 `TauCeti.YoungDiagram.readingIndex μ (i, j) = μ.rowLen 0 + ⋯ + μ.rowLen (i - 1) + j`.  Reading
-order increases along rows and down columns, so this labelling is a standard Young tableau
-`TauCeti.StandardYoungTableau.rowReading μ`; in particular `TauCeti.standardCount μ`, the number
-`f^μ` of standard Young tableaux, is never zero.
+order increases along rows and down columns, so this labelling is a standard Young tableau, the
+**row-superstandard tableau** `TauCeti.StandardYoungTableau.rowSuperstandard μ`; in particular
+`TauCeti.standardCount μ`, the number `f^μ` of standard Young tableaux, is never zero.
 
 Numbering the cells column by column instead gives a second standard Young tableau
-`TauCeti.StandardYoungTableau.colReading μ`, the transpose of the row-reading tableau of the
-transposed diagram.  The two disagree as soon as `μ` has a cell outside its first row *and* a cell
-outside its first column, while a diagram that is a single row or a single column has only one
-standard Young tableau at all.  So `f^μ = 1` holds exactly for the single rows and the single
-columns.
+`TauCeti.StandardYoungTableau.colSuperstandard μ`, the transpose of the row-superstandard tableau
+of the transposed diagram.  The two disagree as soon as `μ` has a cell outside its first row *and*
+a cell outside its first column, while a diagram with at most one row, or with at most one column
+-- the empty diagram included -- has only one standard Young tableau at all.  So `f^μ = 1` holds
+exactly for the diagrams with at most one row and those with at most one column.
 
 Those are also exactly the shapes whose hook lengths are already known to multiply to `μ.card !`,
 by `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one` and its transpose, so the
@@ -32,17 +32,20 @@ multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.
 ## Main definitions
 
 * `TauCeti.YoungDiagram.readingIndex`: the position of a cell in reading order.
-* `TauCeti.StandardYoungTableau.rowReading`: the tableau numbering the cells row by row.
-* `TauCeti.StandardYoungTableau.colReading`: the tableau numbering the cells column by column.
+* `TauCeti.StandardYoungTableau.rowSuperstandard`: the tableau numbering the cells row by row.
+* `TauCeti.StandardYoungTableau.colSuperstandard`: the tableau numbering the cells column by
+  column.
 
 ## Main results
 
 * `TauCeti.standardCount_pos`: every Young diagram has a standard Young tableau.
 * `TauCeti.standardCount_eq_one_iff`: a Young diagram has exactly one standard Young tableau
-  precisely when it is a single row or a single column.
-* `TauCeti.standardCount_mul_prod_hookLength_of_colLen_le_one` and
-  `TauCeti.standardCount_mul_prod_hookLength_of_rowLen_le_one`: the multiplicative hook-length
-  formula for a single row and for a single column.
+  precisely when it has at most one row or at most one column, the empty diagram included.
+* `TauCeti.standardCount_mul_prod_hookLength_of_standardCount_eq_one`: the multiplicative
+  hook-length formula for the diagrams with a unique standard Young tableau, together with its
+  specialisations `TauCeti.standardCount_mul_prod_hookLength_of_colLen_le_one` and
+  `TauCeti.standardCount_mul_prod_hookLength_of_rowLen_le_one` to the diagrams with at most one
+  row and to those with at most one column.
 
 ## References
 
@@ -51,7 +54,7 @@ multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.
   Layers 0 and 5.
 -/
 
-@[expose] public section
+public section
 
 open scoped Nat
 
@@ -69,8 +72,8 @@ def readingIndex (μ : YoungDiagram) (c : ℕ × ℕ) : ℕ :=
 /-- The reading index of a cell is the sum of the lengths of the rows above it, plus its column
 index. -/
 theorem readingIndex_def (μ : YoungDiagram) (c : ℕ × ℕ) :
-    readingIndex μ c = (∑ i ∈ Finset.range c.1, μ.rowLen i) + c.2 :=
-  rfl
+    readingIndex μ c = (∑ i ∈ Finset.range c.1, μ.rowLen i) + c.2 := by
+  rw [readingIndex]
 
 /-- A cell of the first row has its column index as its reading index. -/
 @[simp]
@@ -129,10 +132,11 @@ namespace StandardYoungTableau
 
 variable {μ : YoungDiagram}
 
-/-- The **row-reading tableau** of `μ`: the standard Young tableau numbering the cells of `μ` in
-reading order, left to right along the first row, then left to right along the second, and so
-on. -/
-noncomputable def rowReading (μ : YoungDiagram) : StandardYoungTableau μ where
+/-- The **row-superstandard tableau** of `μ`: the standard Young tableau numbering the cells of
+`μ` in reading order, left to right along the first row, then left to right along the second, and
+so on.  This is the tableau at which the classical-groups roadmap fixes the Young symmetrizer
+`c_λ`. -/
+noncomputable def rowSuperstandard (μ : YoungDiagram) : StandardYoungTableau μ where
   toEquiv :=
     Equiv.ofBijective
       (fun c => ⟨YoungDiagram.readingIndex μ c.1, YoungDiagram.readingIndex_lt_card c.2⟩)
@@ -147,28 +151,31 @@ noncomputable def rowReading (μ : YoungDiagram) : StandardYoungTableau μ where
     Fin.lt_def.mpr (YoungDiagram.readingIndex_lt_readingIndex_of_fst_lt
       (c := (i₁, j)) (d := (i₂, j)) (μ.up_left_mem h.le (le_refl j) hcell) h)
 
-/-- The row-reading tableau labels a cell by its reading index. -/
+/-- The row-superstandard tableau labels a cell by its reading index. -/
 @[simp]
-theorem rowReading_apply_val (μ : YoungDiagram) (c : ↥μ.cells) :
-    (rowReading μ c).val = YoungDiagram.readingIndex μ c.1 :=
+theorem rowSuperstandard_apply_val (μ : YoungDiagram) (c : ↥μ.cells) :
+    (rowSuperstandard μ c).val = YoungDiagram.readingIndex μ c.1 := by
+  -- `rowSuperstandard` is not `@[expose]`d, so its body is reached through its equation lemma
+  -- rather than by definitional unfolding.
+  rw [rowSuperstandard]
   rfl
 
-/-- The **column-reading tableau** of `μ`: the standard Young tableau numbering the cells of `μ`
-top to bottom down the first column, then top to bottom down the second, and so on.  It is the
-transpose of the row-reading tableau of the transposed diagram. -/
-noncomputable def colReading (μ : YoungDiagram) : StandardYoungTableau μ :=
-  (transposeEquiv μ).symm (rowReading μ.transpose)
+/-- The **column-superstandard tableau** of `μ`: the standard Young tableau numbering the cells of
+`μ` top to bottom down the first column, then top to bottom down the second, and so on.  It is the
+transpose of the row-superstandard tableau of the transposed diagram. -/
+noncomputable def colSuperstandard (μ : YoungDiagram) : StandardYoungTableau μ :=
+  (transposeEquiv μ).symm (rowSuperstandard μ.transpose)
 
-/-- The column-reading tableau labels a cell by the reading index of the transposed cell in the
-transposed diagram. -/
+/-- The column-superstandard tableau labels a cell by the reading index of the transposed cell in
+the transposed diagram. -/
 @[simp]
-theorem colReading_apply_val (μ : YoungDiagram) (c : ↥μ.cells) :
-    (colReading μ c).val = YoungDiagram.readingIndex μ.transpose c.1.swap := by
-  rw [colReading, transposeEquiv_symm_apply_val, rowReading_apply_val]
+theorem colSuperstandard_apply_val (μ : YoungDiagram) (c : ↥μ.cells) :
+    (colSuperstandard μ c).val = YoungDiagram.readingIndex μ.transpose c.1.swap := by
+  rw [colSuperstandard, transposeEquiv_symm_apply_val, rowSuperstandard_apply_val]
 
 /-- Every Young diagram carries a standard Young tableau. -/
 instance instNonempty (μ : YoungDiagram) : Nonempty (StandardYoungTableau μ) :=
-  ⟨rowReading μ⟩
+  ⟨rowSuperstandard μ⟩
 
 /-! ### Diagrams with a unique standard Young tableau -/
 
@@ -179,10 +186,10 @@ private theorem fst_eq_zero_of_colLen_le_one (h : μ.colLen 0 ≤ 1) {c : ℕ ×
   have := _root_.YoungDiagram.mem_iff_lt_colLen.mp h₀
   omega
 
-/-- A diagram with at most one row admits only the row-reading tableau: a standard Young tableau
-on a single row labels the cells in increasing order of column index. -/
-theorem eq_rowReading_of_colLen_le_one (h : μ.colLen 0 ≤ 1) (T : StandardYoungTableau μ) :
-    T = rowReading μ := by
+/-- A diagram with at most one row admits only the row-superstandard tableau: a standard Young
+tableau on a single row labels the cells in increasing order of column index. -/
+theorem eq_rowSuperstandard_of_colLen_le_one (h : μ.colLen 0 ≤ 1) (T : StandardYoungTableau μ) :
+    T = rowSuperstandard μ := by
   have hcard : μ.card = μ.rowLen 0 := YoungDiagram.card_eq_rowLen_of_colLen_le_one h
   have hmem : ∀ k : Fin μ.card, ((0, (k : ℕ)) : ℕ × ℕ) ∈ μ := fun k =>
     _root_.YoungDiagram.mem_iff_lt_rowLen.mpr (hcard ▸ k.isLt)
@@ -195,14 +202,15 @@ theorem eq_rowReading_of_colLen_le_one (h : μ.colLen 0 ≤ 1) (T : StandardYoun
   subst hi
   have hlt : j < μ.card := hcard ▸ _root_.YoungDiagram.mem_iff_lt_rowLen.mp hmemij
   refine Fin.ext ?_
-  rw [rowReading_apply_val, YoungDiagram.readingIndex_zero]
+  rw [rowSuperstandard_apply_val, YoungDiagram.readingIndex_zero]
   exact congrArg Fin.val (congrFun hid ⟨j, hlt⟩)
 
 /-- A diagram with at most one row has at most one standard Young tableau. -/
 theorem subsingleton_of_colLen_le_one (h : μ.colLen 0 ≤ 1) :
     Subsingleton (StandardYoungTableau μ) :=
   ⟨fun T U =>
-    (eq_rowReading_of_colLen_le_one h T).trans (eq_rowReading_of_colLen_le_one h U).symm⟩
+    (eq_rowSuperstandard_of_colLen_le_one h T).trans
+      (eq_rowSuperstandard_of_colLen_le_one h U).symm⟩
 
 /-- A diagram with at most one column has at most one standard Young tableau. -/
 theorem subsingleton_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1) :
@@ -210,14 +218,14 @@ theorem subsingleton_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1) :
   (transposeEquiv μ).subsingleton_congr.mpr (subsingleton_of_colLen_le_one (by simpa using h))
 
 /-- If `μ` has a cell outside its first row and a cell outside its first column, then the
-row-reading and the column-reading tableaux differ: reading by rows labels the cell `(0, 1)` by
-`1`, while reading by columns labels it by the length of the first column. -/
-theorem rowReading_ne_colReading (hrow : 1 < μ.rowLen 0) (hcol : 1 < μ.colLen 0) :
-    rowReading μ ≠ colReading μ := by
+row-superstandard and the column-superstandard tableaux differ: reading by rows labels the cell
+`(0, 1)` by `1`, while reading by columns labels it by the length of the first column. -/
+theorem rowSuperstandard_ne_colSuperstandard (hrow : 1 < μ.rowLen 0) (hcol : 1 < μ.colLen 0) :
+    rowSuperstandard μ ≠ colSuperstandard μ := by
   have hmem : ((0, 1) : ℕ × ℕ) ∈ μ := _root_.YoungDiagram.mem_iff_lt_rowLen.mpr hrow
   intro heq
   have hval := congrArg Fin.val (DFunLike.congr_fun heq ⟨(0, 1), hmem⟩)
-  rw [rowReading_apply_val, colReading_apply_val, YoungDiagram.readingIndex_zero,
+  rw [rowSuperstandard_apply_val, colSuperstandard_apply_val, YoungDiagram.readingIndex_zero,
     Prod.swap_prod_mk, YoungDiagram.readingIndex_one_zero,
     _root_.YoungDiagram.rowLen_transpose] at hval
   omega
@@ -226,7 +234,7 @@ end StandardYoungTableau
 
 /-! ### Counting standard Young tableaux of extreme shapes -/
 
-/-- **Every Young diagram has a standard Young tableau**, namely the row-reading one. -/
+/-- **Every Young diagram has a standard Young tableau**, namely the row-superstandard one. -/
 theorem standardCount_pos (μ : YoungDiagram) : 0 < standardCount μ := by
   rw [standardCount_def]
   exact Fintype.card_pos
@@ -241,7 +249,7 @@ theorem standardCount_eq_one_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen
   haveI := StandardYoungTableau.subsingleton_of_colLen_le_one h
   rw [standardCount_def]
   exact Fintype.card_eq_one_iff.mpr
-    ⟨StandardYoungTableau.rowReading μ, fun T => Subsingleton.elim _ _⟩
+    ⟨StandardYoungTableau.rowSuperstandard μ, fun T => Subsingleton.elim _ _⟩
 
 /-- A Young diagram with at most one column has exactly one standard Young tableau. -/
 theorem standardCount_eq_one_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
@@ -255,11 +263,12 @@ theorem one_lt_standardCount {μ : YoungDiagram} (hrow : 1 < μ.rowLen 0) (hcol 
     1 < standardCount μ := by
   rw [standardCount_def]
   exact Fintype.one_lt_card_iff_nontrivial.mpr
-    ⟨StandardYoungTableau.rowReading μ, StandardYoungTableau.colReading μ,
-      StandardYoungTableau.rowReading_ne_colReading hrow hcol⟩
+    ⟨StandardYoungTableau.rowSuperstandard μ, StandardYoungTableau.colSuperstandard μ,
+      StandardYoungTableau.rowSuperstandard_ne_colSuperstandard hrow hcol⟩
 
-/-- **The shapes with a unique standard Young tableau** are exactly the single rows and the single
-columns. -/
+/-- **The shapes with a unique standard Young tableau** are exactly the diagrams with at most one
+row and those with at most one column; the empty diagram, which satisfies both hypotheses, is one
+of them. -/
 theorem standardCount_eq_one_iff {μ : YoungDiagram} :
     standardCount μ = 1 ↔ μ.rowLen 0 ≤ 1 ∨ μ.colLen 0 ≤ 1 := by
   refine ⟨fun h => ?_, fun h =>
@@ -273,18 +282,32 @@ theorem standardCount_eq_one_iff {μ : YoungDiagram} :
     exact hcon (Or.inr (by omega))
   exact absurd h (one_lt_standardCount hrow hcol).ne'
 
-/-- **The hook-length formula for a single row.** -/
+/-- **The multiplicative hook-length formula for the shapes with a unique standard Young
+tableau**: by `standardCount_eq_one_iff` these are the diagrams with at most one row and those
+with at most one column, the empty diagram included, and their hook lengths are already known to
+multiply to `μ.card !`. -/
+theorem standardCount_mul_prod_hookLength_of_standardCount_eq_one {μ : YoungDiagram}
+    (h : standardCount μ = 1) :
+    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! := by
+  rw [h, one_mul]
+  rcases standardCount_eq_one_iff.mp h with hrow | hcol
+  · exact YoungDiagram.prod_hookLength_eq_factorial_of_rowLen_le_one hrow
+  · exact YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one hcol
+
+/-- **The hook-length formula for a Young diagram with at most one row** (in particular for the
+empty diagram). -/
 theorem standardCount_mul_prod_hookLength_of_colLen_le_one {μ : YoungDiagram}
     (h : μ.colLen 0 ≤ 1) :
-    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! := by
-  rw [standardCount_eq_one_of_colLen_le_one h, one_mul,
-    YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one h]
+    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! :=
+  standardCount_mul_prod_hookLength_of_standardCount_eq_one
+    (standardCount_eq_one_of_colLen_le_one h)
 
-/-- **The hook-length formula for a single column.** -/
+/-- **The hook-length formula for a Young diagram with at most one column** (in particular for the
+empty diagram). -/
 theorem standardCount_mul_prod_hookLength_of_rowLen_le_one {μ : YoungDiagram}
     (h : μ.rowLen 0 ≤ 1) :
-    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! := by
-  rw [standardCount_eq_one_of_rowLen_le_one h, one_mul,
-    YoungDiagram.prod_hookLength_eq_factorial_of_rowLen_le_one h]
+    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! :=
+  standardCount_mul_prod_hookLength_of_standardCount_eq_one
+    (standardCount_eq_one_of_rowLen_le_one h)
 
 end TauCeti
