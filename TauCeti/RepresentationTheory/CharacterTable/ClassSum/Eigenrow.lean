@@ -169,8 +169,7 @@ theorem eq_of_vecMul_classMultMatrix_eq_smul {v : ConjClasses G → k}
 Only the existence of *some* eigenvalue for each matrix has to be checked; the normalization forces
 it to be the row's own value. -/
 theorem isClassEigenrow_of_forall_exists_smul {v : ConjClasses G → k}
-    (hv₁ : v (ConjClasses.mk (1 : G)) = 1)
-    (h : ∀ Cᵢ : ConjClasses G,
+    (hv₁ : v (ConjClasses.mk (1 : G)) = 1) (h : ∀ Cᵢ : ConjClasses G,
       ∃ c : k, v ᵥ* (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) = c • v) :
     IsClassEigenrow v := fun Cᵢ => by
   obtain ⟨c, hc⟩ := h Cᵢ
@@ -187,8 +186,7 @@ theorem isClassEigenrow_classSumRow (φ : Subalgebra.center k (MonoidAlgebra k G
 
 /-- The linear extension of a row of scalars along the class-sum basis is multiplicative as soon as
 it is multiplicative on the basis itself. -/
-private theorem map_mul_of_basis
-    {f : Subalgebra.center k (MonoidAlgebra k G) →ₗ[k] k}
+private theorem map_mul_of_basis {f : Subalgebra.center k (MonoidAlgebra k G) →ₗ[k] k}
     (hf : ∀ Cᵢ Cⱼ : ConjClasses G,
       f (classSumCenter Cᵢ * classSumCenter Cⱼ) = f (classSumCenter Cᵢ) * f (classSumCenter Cⱼ))
     (x y : Subalgebra.center k (MonoidAlgebra k G)) : f (x * y) = f x * f y :=
@@ -239,8 +237,7 @@ theorem isClassEigenrow_iff_exists_algHom (hv₁ : v (ConjClasses.mk (1 : G)) = 
 /-- **The algebra homomorphisms out of the centre of `k[G]` are the normalized common left
 eigenrows of the class-multiplication matrices**, bundled as an equivalence: a homomorphism goes to
 its row of values on the class sums, and a row extends linearly along the class-sum basis. -/
-noncomputable def algHomEquivEigenrow :
-    (Subalgebra.center k (MonoidAlgebra k G) →ₐ[k] k) ≃
+noncomputable def algHomEquivEigenrow : (Subalgebra.center k (MonoidAlgebra k G) →ₐ[k] k) ≃
       {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} where
   toFun φ := ⟨classSumRow φ, classSumRow_mk_one φ, isClassEigenrow_classSumRow φ⟩
   invFun v := eigenrowAlgHom v.2.1 v.2.2

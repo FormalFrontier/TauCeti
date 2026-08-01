@@ -60,8 +60,7 @@ private theorem toTensorPower_ιMulti_two {R : Type} {M : Type*}
   simp [sub_eq_add_neg]
 
 private theorem mk_comp_toTensorPower {R : Type} {M : Type*}
-    [Field R] [AddCommGroup M] [Module R M] :
-    (SymmetricPower.mk R (Fin 2) M).comp
+    [Field R] [AddCommGroup M] [Module R M] : (SymmetricPower.mk R (Fin 2) M).comp
       (exteriorPower.toTensorPower R M 2) = 0 := by
   classical
   apply exteriorPower.linearMap_ext
@@ -130,8 +129,7 @@ private theorem range_toTensorPower_eq_ker_mk {R : Type} {M : Type*}
 -- Mathlib builds `exteriorPower.pairingDual` by dualizing `exteriorPower.toTensorPower`, but
 -- records that factorization only inside the definitions; this states it.
 private theorem pairingDual_ιMulti_apply {R : Type} {M : Type*}
-    [CommRing R] [AddCommGroup M] [Module R M]
-    (g : Fin 2 → Module.Dual R M) (x : ⋀[R]^2 M) :
+    [CommRing R] [AddCommGroup M] [Module R M] (g : Fin 2 → Module.Dual R M) (x : ⋀[R]^2 M) :
     exteriorPower.pairingDual R M 2 (exteriorPower.ιMulti R 2 g) x =
       TensorPower.multilinearMapToDual R M 2 g (exteriorPower.toTensorPower R M 2 x) := by
   simp [exteriorPower.pairingDual, exteriorPower.alternatingMapToDual]
@@ -169,8 +167,7 @@ private theorem snd_comp_conj_eq_comp_snd {R A B C : Type*} [Semiring R]
     [AddCommMonoid A] [Module R A] [AddCommMonoid B] [Module R B] [AddCommMonoid C] [Module R C]
     {q : B →ₗ[R] C} {fB : B →ₗ[R] B} {fC : C →ₗ[R] C} (e : B ≃ₗ[R] A × C)
     (hq : ∀ b : B, (LinearMap.snd R A C) (e b) = q b) (hfq : q.comp fB = fC.comp q) :
-    (LinearMap.snd R A C).comp
-        (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B))
+    (LinearMap.snd R A C).comp (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B))
       = fC.comp (LinearMap.snd R A C) := by
   have hq' : ∀ x : A × C, q (e.symm x) = (LinearMap.snd R A C) x := fun x => by
     rw [← hq (e.symm x), LinearEquiv.apply_symm_apply]
@@ -180,12 +177,9 @@ private theorem snd_comp_conj_eq_comp_snd {R A B C : Type*} [Semiring R]
 
 -- Split an exact sequence as vector spaces. In that splitting the middle action is block
 -- triangular, so its trace is the sum of the traces on the subspace and the quotient.
-private theorem trace_eq_add_of_exact
-    {K A B C : Type*} [Field K]
-    [AddCommGroup A] [Module K A] [FiniteDimensional K A]
-    [AddCommGroup B] [Module K B]
-    [AddCommGroup C] [Module K C] [FiniteDimensional K C]
-    (i : A →ₗ[K] B) (q : B →ₗ[K] C)
+private theorem trace_eq_add_of_exact {K A B C : Type*} [Field K]
+    [AddCommGroup A] [Module K A] [FiniteDimensional K A] [AddCommGroup B] [Module K B]
+    [AddCommGroup C] [Module K C] [FiniteDimensional K C] (i : A →ₗ[K] B) (q : B →ₗ[K] C)
     (fA : A →ₗ[K] A) (fB : B →ₗ[K] B) (fC : C →ₗ[K] C)
     (hi : Function.Injective i) (hq : Function.Surjective q)
     (hexact : LinearMap.range i = LinearMap.ker q)
@@ -254,8 +248,7 @@ variable [AddCommGroup M] [Module R M] [FiniteDimensional R M]
 
 /-- Over any field, the tensor-square character is the sum of the symmetric-square and
 exterior-square characters. -/
-theorem char_tensorSquare (ρ : Representation R G M) (g : G) :
-    (ρ.character g) ^ 2 =
+theorem char_tensorSquare (ρ : Representation R G M) (g : G) : (ρ.character g) ^ 2 =
       (ρ.symmetricPower 2).character g + (ρ.exteriorPower 2).character g := by
   classical
   rw [← char_tensorPower ρ 2 g]
