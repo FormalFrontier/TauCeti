@@ -33,6 +33,10 @@ compute it on ideal classes.
   `(R ≃+* R) →* MulAut (ClassGroup R)`.
 * `ClassGroup.mulEquiv_involutive`: an involutive ring equivalence acts involutively on the class
   group.
+* `ClassGroup.mulEquiv_mk0`: the induced class-group equivalence sends the class `ClassGroup.mk0 I`
+  of a nonzero ideal to the class of its pushforward ideal `Ideal.map f I`.
+* `ClassGroup.mulEquiv_apply_eq_inv_of_isPrincipal_mul_map`: if `I · (Ideal.map f I)` is principal
+  for every nonzero ideal, the induced class-group map is inversion `C ↦ C⁻¹`.
 -/
 
 public section
@@ -208,5 +212,78 @@ theorem mulEquiv_involutive {f : R ≃+* R} (hf : Function.Involutive f) :
   intro x
   have := DFunLike.congr_fun h x
   rwa [MulAut.mul_apply, MulAut.one_apply] at this
+
+end ClassGroup
+
+namespace ClassGroup
+
+variable {R R' : Type*} [CommRing R] [CommRing R']
+
+/-- Transport of a `coeIdeal` along `FractionalIdeal.ringEquivOfRingEquiv f` is the `coeIdeal` of
+the pushforward ideal `Ideal.map f`. This is the fraction-field shadow of `Ideal.map` used to
+compute the induced class-group map on `ClassGroup.mk0`. -/
+private theorem ringEquivOfRingEquiv_coeIdeal [IsDomain R] [IsDomain R'] (K L : Type*) [Field K]
+    [Field L] [Algebra R K] [Algebra R' L] [IsFractionRing R K] [IsFractionRing R' L] (f : R ≃+* R')
+    (I : Ideal R) :
+    FractionalIdeal.ringEquivOfRingEquiv K L f (I : FractionalIdeal R⁰ K) =
+      (Ideal.map (f : R →+* R') I : FractionalIdeal R'⁰ L) := by
+  -- Pin the `RingHomInvPair` instances to resolve an `f`/`f.symm.symm` defeq diamond, so the `erw`
+  -- rewrites below fire without a transparency option.
+  letI : RingHomInvPair (f : R →+* R') (f.symm : R' →+* R) := RingHomInvPair.of_ringEquiv f
+  letI : RingHomInvPair (f.symm : R' →+* R) (f : R →+* R') := RingHomInvPair.of_ringEquiv f.symm
+  apply FractionalIdeal.coeToSubmodule_injective
+  dsimp only
+  rw [← FractionalIdeal.val_eq_coe, FractionalIdeal.ringEquivOfRingEquiv_apply_val,
+    FractionalIdeal.val_eq_coe, FractionalIdeal.coe_coeIdeal, FractionalIdeal.coe_coeIdeal]
+  ext x
+  simp only [Submodule.mem_map, FractionalIdeal.mem_coeSubmodule]
+  constructor
+  · rintro ⟨y, ⟨r, hr, rfl⟩, rfl⟩
+    exact ⟨f r, Ideal.mem_map_of_mem _ hr, by
+      erw [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]⟩
+  · rintro ⟨s, hs, rfl⟩
+    obtain ⟨r, hr, rfl⟩ := (Ideal.mem_map_iff_of_surjective (f : R →+* R') f.surjective).mp hs
+    exact ⟨algebraMap R K r, ⟨r, hr, rfl⟩, by
+      erw [IsFractionRing.semilinearEquivOfRingEquiv_algebraMap]; rfl⟩
+
+/-- **The class-group map induced by a ring isomorphism, on ideal classes.** For a ring isomorphism
+`f : R ≃+* R'` of Dedekind domains, `ClassGroup.mulEquiv f` sends the class of a nonzero ideal `I`
+to the class of its pushforward `Ideal.map f I`. This is the bridge between the abstract functorial
+action `ClassGroup.mulEquiv` and the concrete pushforward of ideals. -/
+@[simp high] theorem mulEquiv_mk0 [IsDedekindDomain R] [IsDedekindDomain R'] (f : R ≃+* R')
+    (I : (Ideal R)⁰) :
+    ClassGroup.mulEquiv f (ClassGroup.mk0 I) =
+      ClassGroup.mk0 ⟨Ideal.map (f : R →+* R') (I : Ideal R), mem_nonZeroDivisors_iff_ne_zero.mpr
+        (by rw [ne_eq, Ideal.zero_eq_bot,
+              Ideal.map_eq_bot_iff_of_injective (f := (f : R →+* R')) f.injective,
+              ← Ideal.zero_eq_bot]
+            exact mem_nonZeroDivisors_iff_ne_zero.mp I.2)⟩ := by
+  rw [← ClassGroup.mk_mk0 (FractionRing R) I, ClassGroup.mulEquiv_mk_fractionRing,
+    ← ClassGroup.mk_mk0 (FractionRing R')]
+  congr 1
+  apply Units.ext
+  simp only [Units.coe_mapEquiv, FractionalIdeal.coe_mk0, RingEquiv.coe_toMulEquiv]
+  exact ringEquivOfRingEquiv_coeIdeal (FractionRing R) (FractionRing R') f I
+
+/-- **Inversion criterion for the class-group action.** If a ring automorphism `f : R ≃+* R` of a
+Dedekind domain makes `I · (Ideal.map f I)` principal for every nonzero ideal `I`, then the induced
+map on the class group is inversion: `ClassGroup.mulEquiv f C = C⁻¹`. -/
+theorem mulEquiv_apply_eq_inv_of_isPrincipal_mul_map [IsDedekindDomain R] {f : R ≃+* R}
+    (hf : ∀ I : (Ideal R)⁰, ((I : Ideal R) * Ideal.map (f : R →+* R) (I : Ideal R)).IsPrincipal)
+    (C : ClassGroup R) : ClassGroup.mulEquiv f C = C⁻¹ := by
+  obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective C
+  rw [mulEquiv_mk0, ClassGroup.mk0_eq_mk0_inv_iff]
+  obtain ⟨x, hx⟩ := (hf I).principal
+  have hIne : (I : Ideal R) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp I.2
+  have hmapne : Ideal.map (f : R →+* R) (I : Ideal R) ≠ 0 := by
+    rw [ne_eq, Ideal.zero_eq_bot,
+      Ideal.map_eq_bot_iff_of_injective (f := (f : R →+* R)) f.injective, ← Ideal.zero_eq_bot]
+    exact hIne
+  refine ⟨x, ?_, ?_⟩
+  · intro hx0
+    subst hx0
+    rw [Submodule.span_zero_singleton] at hx
+    exact mul_ne_zero hIne hmapne (hx.trans Ideal.zero_eq_bot.symm)
+  · rw [mul_comm]; exact hx
 
 end ClassGroup

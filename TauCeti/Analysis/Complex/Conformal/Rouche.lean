@@ -66,6 +66,9 @@ equality, is how Rouché is normally used.
   counts in `ball c R`, each counted with multiplicity.
 * `TauCeti.rouche_add` — the classical additive phrasing: if `‖g z‖ < ‖f z‖` on `sphere c R`, then
   `f` and `f + g` have equal zero counts in `ball c R`.
+* `TauCeti.exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero` — the witness those
+  transfers need: a function that is zero-free on the bounding circle does not vanish identically
+  on the closed disc.
 * `TauCeti.rouche_symm_exists_eq_zero_iff`, `TauCeti.rouche_exists_eq_zero_iff`,
   `TauCeti.rouche_add_exists_eq_zero_iff` — under the respective hypotheses, `f` has a zero in
   `ball c R` if and only if the function compared to it does.
@@ -295,14 +298,17 @@ there is no zero, provided the function is nonzero somewhere on the closed disc.
 hypothesis supplies that witness on the bounding circle.
 -/
 
-/-- A function that is zero-free on the bounding circle of a disc of positive radius does not
-vanish identically on the closed disc — the boundary point `c + R` witnesses it. This is the shape
-in which `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff` wants the Rouché hypothesis. -/
-private lemma exists_mem_closedBall_ne_zero (hR : 0 < R) (hs : ∀ z ∈ sphere c R, f z ≠ 0) :
+/-- A function that is zero-free on the bounding circle of a disc does not vanish identically on
+the closed disc — the boundary point `c + R` witnesses it. The radius may be `0`, where both discs
+degenerate to `{c}`. This is the shape in which
+`TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff` wants the Rouché hypothesis, and it is the
+same shape every zero-detection argument on a disc needs. -/
+theorem exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero (hR : 0 ≤ R)
+    (hs : ∀ z ∈ sphere c R, f z ≠ 0) :
     ∃ z ∈ closedBall c R, f z ≠ 0 := by
   have hmem : c + (R : ℂ) ∈ sphere c R := by
     rw [mem_sphere_iff_norm]
-    simp [Complex.norm_real, abs_of_pos hR]
+    simp [Complex.norm_real, abs_of_nonneg hR]
   exact ⟨_, sphere_subset_closedBall hmem, hs _ hmem⟩
 
 /-- **Rouché's theorem as a zero-detection principle**, symmetric form. Under the hypothesis
@@ -315,8 +321,10 @@ theorem rouche_symm_exists_eq_zero_iff (hR : 0 < R)
   have hnef : ∀ z ∈ sphere c R, f z ≠ 0 := fun z hz => ne_zero_left (hs z hz)
   have hneg : ∀ z ∈ sphere c R, g z ≠ 0 := fun z hz => ne_zero_right (hs z hz)
   have hcount := rouche_symm hR hf hg hs
-  have hef := finsum_analyticOrderNatAt_ball_eq_zero_iff hf (exists_mem_closedBall_ne_zero hR hnef)
-  have heg := finsum_analyticOrderNatAt_ball_eq_zero_iff hg (exists_mem_closedBall_ne_zero hR hneg)
+  have hef := finsum_analyticOrderNatAt_ball_eq_zero_iff hf
+    (exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero hR.le hnef)
+  have heg := finsum_analyticOrderNatAt_ball_eq_zero_iff hg
+    (exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero hR.le hneg)
   constructor
   · rintro ⟨z, hz, h0⟩
     by_contra hcon

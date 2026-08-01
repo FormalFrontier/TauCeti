@@ -270,6 +270,10 @@ def canonicalSection : α.groupExtension.Section where
 
 @[simp] theorem canonicalSection_apply (g : G) : α.canonicalSection g = ⟨1, g⟩ := (rfl)
 
+/-- The canonical section is normalized. Not `@[simp]`: `canonicalSection_apply` already rewrites
+the left-hand side, to `⟨1, 1⟩`. -/
+theorem canonicalSection_one : α.canonicalSection 1 = 1 := by ext <;> simp
+
 /-- **A factor set is the factor set of the extension it builds**: the canonical section fails to
 be a homomorphism by exactly `α`. -/
 theorem canonicalSection_mul (g h : G) :

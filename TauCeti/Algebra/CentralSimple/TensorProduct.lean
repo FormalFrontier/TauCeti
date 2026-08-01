@@ -163,34 +163,34 @@ namespace IsSimpleRing
 
 variable {K A B : Type*} [Field K] [Ring A] [Ring B] [Algebra K A] [Algebra K B]
 
-variable (K A B) in
-/-- **The tensor product of a central simple `K`-algebra with a simple `K`-algebra is simple.**
-Together with `TauCeti.Algebra.IsCentral.tensorProduct` this says that central simple `K`-algebras
-are closed under `⊗[K]`.
-
-No finite-dimensionality is needed on either side. -/
-instance tensorProduct [Algebra.IsCentral K A] [IsSimpleRing A] [IsSimpleRing B] :
-    IsSimpleRing (A ⊗[K] B) := by
+-- A nonzero two-sided ideal contains a nonzero element whose coordinate support against the
+-- tensor basis is minimal: `Nat.find` on the set of achievable support cardinalities. Neither
+-- simplicity nor centrality is used, only that the ideal is nonzero.
+private lemma exists_minimal_support_mem {ι : Type*} (𝓑 : Basis ι K B)
+    {I : TwoSidedIdeal (A ⊗[K] B)} (hI : I ≠ ⊥) :
+    ∃ y ∈ I, y ≠ 0 ∧ ∀ z ∈ I,
+      ((Algebra.TensorProduct.basis A 𝓑).repr z).support.card <
+        ((Algebra.TensorProduct.basis A 𝓑).repr y).support.card → z = 0 := by
   classical
-  have : Nontrivial (A ⊗[K] B) :=
-    Algebra.TensorProduct.nontrivial_of_algebraMap_injective_of_flat_left K A B
-      (FaithfulSMul.algebraMap_injective K B)
-  refine IsSimpleRing.of_eq_bot_or_eq_top fun I => ?_
-  rw [or_iff_not_imp_left, ← I.one_mem_iff]
-  intro hI
-  obtain ⟨ι, 𝓑⟩ : Σ ι : Type _, Basis ι K B := ⟨_, Basis.ofVectorSpace K B⟩
   obtain ⟨x, hxI, hx0 : x ≠ 0⟩ := SetLike.exists_of_lt (bot_lt_iff_ne_bot.mpr hI : ⊥ < I)
   have hex : ∃ n : ℕ, ∃ y ∈ I, y ≠ 0 ∧
       ((Algebra.TensorProduct.basis A 𝓑).repr y).support.card = n := ⟨_, x, hxI, hx0, rfl⟩
   obtain ⟨y₀, hy₀I, hy₀0, hcard⟩ := Nat.find_spec hex
-  have hmin : ∀ y ∈ I,
-      ((Algebra.TensorProduct.basis A 𝓑).repr y).support.card < Nat.find hex → y = 0 := by
-    intro y hy hlt
-    by_contra h0
-    exact Nat.find_min hex hlt ⟨y, hy, h0, rfl⟩
-  set S := ((Algebra.TensorProduct.basis A 𝓑).repr y₀).support
-  obtain ⟨i₀, hi₀⟩ : S.Nonempty := Finsupp.support_nonempty_iff.mpr (by simpa using hy₀0)
-  -- The `i₀`-th coordinates of the elements of `I` supported on `S` form a two-sided ideal of `A`.
+  refine ⟨y₀, hy₀I, hy₀0, fun z hz hlt => ?_⟩
+  by_contra h0
+  exact Nat.find_min hex (hcard ▸ hlt) ⟨z, hz, h0, rfl⟩
+
+-- Rescale a coordinate to `1`. The `i₀`-th coordinates of the elements of `I` supported in `S`
+-- form a two-sided ideal of `A`; it is nonzero because `y₀` contributes a nonzero one, so
+-- simplicity of `A` puts `1` in it. Only simplicity of `A` is used — not of `B`, not centrality,
+-- and not minimality of the support.
+private lemma exists_mem_repr_eq_one [IsSimpleRing A] {ι : Type*} (𝓑 : Basis ι K B)
+    {I : TwoSidedIdeal (A ⊗[K] B)} {S : Finset ι} {i₀ : ι} {y₀ : A ⊗[K] B} (hy₀I : y₀ ∈ I)
+    (hy₀S : ∀ j ∉ S, (Algebra.TensorProduct.basis A 𝓑).repr y₀ j = 0)
+    (hne : (Algebra.TensorProduct.basis A 𝓑).repr y₀ i₀ ≠ 0) :
+    ∃ y ∈ I, (∀ j ∉ S, (Algebra.TensorProduct.basis A 𝓑).repr y j = 0) ∧
+      (Algebra.TensorProduct.basis A 𝓑).repr y i₀ = 1 := by
+  classical
   set carrier : Set A :=
     {a | ∃ y ∈ I, (∀ j ∉ S, (Algebra.TensorProduct.basis A 𝓑).repr y j = 0) ∧
       (Algebra.TensorProduct.basis A 𝓑).repr y i₀ = a}
@@ -212,43 +212,81 @@ instance tensorProduct [Algebra.IsCentral K A] [IsSimpleRing A] [IsSimpleRing B]
     exact ⟨y * (a' ⊗ₜ[K] (1 : B)), I.mul_mem_right _ _ hy,
       fun j hj => by rw [Algebra.TensorProduct.basis_repr_mul_tmul_one, hys j hj, zero_mul],
       Algebra.TensorProduct.basis_repr_mul_tmul_one ..⟩
-  obtain ⟨y, hyI, hyS, hy1⟩ : (1 : A) ∈ carrier := by
-    have hne : (Algebra.TensorProduct.basis A 𝓑).repr y₀ i₀ ≠ 0 := Finsupp.mem_support_iff.mp hi₀
-    have hmem : (Algebra.TensorProduct.basis A 𝓑).repr y₀ i₀ ∈ carrier :=
-      ⟨y₀, hy₀I, fun j hj => Finsupp.notMem_support_iff.mp hj, rfl⟩
-    have := IsSimpleRing.one_mem_of_ne_zero_mem
+  have hone : (1 : A) ∈ carrier := by
+    have hmem : (Algebra.TensorProduct.basis A 𝓑).repr y₀ i₀ ∈ carrier := ⟨y₀, hy₀I, hy₀S, rfl⟩
+    have := _root_.IsSimpleRing.one_mem_of_ne_zero_mem
       (TwoSidedIdeal.mk' carrier hzero hadd hneg hmulleft hmulright) hne
       ((TwoSidedIdeal.mem_mk' ..).mpr hmem)
     exact (TwoSidedIdeal.mem_mk' ..).mp this
+  exact hone
+
+-- Minimality forces the additive commutators to vanish. For each `a`, the commutator
+-- `(a ⊗ₜ 1) * y - y * (a ⊗ₜ 1)` lies in `I` and is supported in `S.erase i₀` — the `i₀` term
+-- cancels because that coordinate of `y` is `1`, and everything off `S` was already zero — so its
+-- support cardinality is strictly below `S.card` and the supplied minimality hypothesis kills it.
+-- (`S` is an arbitrary `Finset` here; the caller instantiates it at the support of the
+-- minimal-support element, which is what makes `hmin` available.)
+private lemma commute_tmul_one_of_repr_eq_one {ι : Type*} (𝓑 : Basis ι K B)
+    {I : TwoSidedIdeal (A ⊗[K] B)} {S : Finset ι} {i₀ : ι} (hi₀ : i₀ ∈ S) {y : A ⊗[K] B}
+    (hyI : y ∈ I) (hyS : ∀ j ∉ S, (Algebra.TensorProduct.basis A 𝓑).repr y j = 0)
+    (hy1 : (Algebra.TensorProduct.basis A 𝓑).repr y i₀ = 1)
+    (hmin : ∀ z ∈ I, ((Algebra.TensorProduct.basis A 𝓑).repr z).support.card < S.card → z = 0)
+    (a : A) : Commute (a ⊗ₜ[K] (1 : B)) y := by
+  classical
+  have hsupp : ((Algebra.TensorProduct.basis A 𝓑).repr
+      ((a ⊗ₜ[K] (1 : B)) * y - y * (a ⊗ₜ[K] (1 : B)))).support ⊆ S.erase i₀ := by
+    intro j hj
+    rw [Finsupp.mem_support_iff, map_sub, Finsupp.sub_apply,
+      Algebra.TensorProduct.tmul_one_mul_eq_smul, map_smul, Finsupp.smul_apply, smul_eq_mul,
+      Algebra.TensorProduct.basis_repr_mul_tmul_one] at hj
+    refine Finset.mem_erase.mpr ⟨?_, not_imp_comm.mp (fun hjS => ?_) hj⟩
+    · rintro rfl
+      exact hj (by rw [hy1, mul_one, one_mul, sub_self])
+    · rw [hyS j hjS, mul_zero, zero_mul, sub_self]
+  have hz : (a ⊗ₜ[K] (1 : B)) * y - y * (a ⊗ₜ[K] (1 : B)) = 0 :=
+    hmin _ (I.sub_mem (I.mul_mem_left _ _ hyI) (I.mul_mem_right _ _ hyI))
+      (lt_of_le_of_lt (Finset.card_le_card hsupp) (Finset.card_erase_lt_of_mem hi₀))
+  exact sub_eq_zero.mp hz
+
+variable (K A B) in
+/-- **The tensor product of a central simple `K`-algebra with a simple `K`-algebra is simple.**
+Together with `TauCeti.Algebra.IsCentral.tensorProduct` this says that central simple `K`-algebras
+are closed under `⊗[K]`.
+
+No finite-dimensionality is needed on either side. -/
+instance tensorProduct [Algebra.IsCentral K A] [IsSimpleRing A] [IsSimpleRing B] :
+    IsSimpleRing (A ⊗[K] B) := by
+  classical
+  have : Nontrivial (A ⊗[K] B) :=
+    Algebra.TensorProduct.nontrivial_of_algebraMap_injective_of_flat_left K A B
+      (FaithfulSMul.algebraMap_injective K B)
+  refine IsSimpleRing.of_eq_bot_or_eq_top fun I => ?_
+  rw [or_iff_not_imp_left, ← I.one_mem_iff]
+  intro hI
+  obtain ⟨ι, 𝓑⟩ : Σ ι : Type _, Basis ι K B := ⟨_, Basis.ofVectorSpace K B⟩
+  obtain ⟨y₀, hy₀I, hy₀0, hmin⟩ := exists_minimal_support_mem 𝓑 hI
+  set S := ((Algebra.TensorProduct.basis A 𝓑).repr y₀).support
+  obtain ⟨i₀, hi₀⟩ : S.Nonempty := Finsupp.support_nonempty_iff.mpr (by simpa using hy₀0)
+  -- Rescale the `i₀`-th coordinate to `1`, using simplicity of `A`.
+  obtain ⟨y, hyI, hyS, hy1⟩ := exists_mem_repr_eq_one 𝓑 hy₀I
+    (fun j hj => Finsupp.notMem_support_iff.mp hj) (Finsupp.mem_support_iff.mp hi₀)
   have hy0 : y ≠ 0 := by
     rintro rfl
     simp only [map_zero, Finsupp.coe_zero, Pi.zero_apply] at hy1
     exact zero_ne_one hy1
   -- Every coordinate of `y` commutes with `A`, so `y = 1 ⊗ₜ b`.
-  have hcomm : ∀ a : A, Commute (a ⊗ₜ[K] (1 : B)) y := by
-    intro a
-    have hsupp : ((Algebra.TensorProduct.basis A 𝓑).repr
-        ((a ⊗ₜ[K] (1 : B)) * y - y * (a ⊗ₜ[K] (1 : B)))).support ⊆ S.erase i₀ := by
-      intro j hj
-      rw [Finsupp.mem_support_iff, map_sub, Finsupp.sub_apply,
-        Algebra.TensorProduct.tmul_one_mul_eq_smul, map_smul, Finsupp.smul_apply, smul_eq_mul,
-        Algebra.TensorProduct.basis_repr_mul_tmul_one] at hj
-      refine Finset.mem_erase.mpr ⟨?_, not_imp_comm.mp (fun hjS => ?_) hj⟩
-      · rintro rfl
-        exact hj (by rw [hy1, mul_one, one_mul, sub_self])
-      · rw [hyS j hjS, mul_zero, zero_mul, sub_self]
-    have hz : (a ⊗ₜ[K] (1 : B)) * y - y * (a ⊗ₜ[K] (1 : B)) = 0 :=
-      hmin _ (I.sub_mem (I.mul_mem_left _ _ hyI) (I.mul_mem_right _ _ hyI))
-        (lt_of_le_of_lt (Finset.card_le_card hsupp)
-          (hcard ▸ Finset.card_erase_lt_of_mem hi₀))
-    exact sub_eq_zero.mp hz
+  -- Every coordinate of `y` commutes with `A`, so `y = 1 ⊗ₜ b`.
+  have hcomm := commute_tmul_one_of_repr_eq_one 𝓑 hi₀ hyI hyS hy1 hmin
   obtain ⟨b, rfl⟩ := Algebra.TensorProduct.forall_commute_tmul_one_iff.mp hcomm
   have hb : b ≠ 0 := by rintro rfl; exact hy0 (by simp)
   -- The `c : B` with `1 ⊗ₜ c ∈ I` form a two-sided ideal of `B`, namely the preimage of `I` along
   -- `Algebra.TensorProduct.includeRight`; it contains `b ≠ 0`, hence it is everything.
+  -- The `c : B` with `1 ⊗ₜ c ∈ I` form the preimage of `I` along `includeRight`, a two-sided
+  -- ideal of the simple ring `B`; it contains `b ≠ 0`, hence it is everything.
   have honeB : (1 : B) ∈
       I.comap (Algebra.TensorProduct.includeRight : B →ₐ[K] A ⊗[K] B) :=
-    IsSimpleRing.one_mem_of_ne_zero_mem _ hb ((TwoSidedIdeal.mem_comap _).mpr (by simpa using hyI))
+    _root_.IsSimpleRing.one_mem_of_ne_zero_mem _ hb
+      ((TwoSidedIdeal.mem_comap _).mpr (by simpa using hyI))
   rw [TwoSidedIdeal.mem_comap] at honeB
   simpa [Algebra.TensorProduct.one_def] using honeB
 

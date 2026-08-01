@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Topology.UnitInterval
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.LocallyConstant.Basic
 
@@ -44,6 +45,15 @@ germs agree at one point of `D` exactly when they agree at every point of `D` �
 A locally constant property on a preconnected parameter set is constant
 (`IsLocallyConstant.apply_eq_of_preconnectedSpace`).
 
+## Continuability as a property of the initial germ
+
+A continuation is determined by its initial germ, so *being continuable* is a property of that
+germ alone. `TauCeti.ContinuesAlong` records it for a single path of the unit interval, and
+`TauCeti.ContinuesInside` for every path inside a domain issuing from a base point; both transport
+across eventual equality of the initial function (`TauCeti.continuesAlong_congr`,
+`TauCeti.continuesInside_congr`). `TauCeti.ContinuesInside` is the hypothesis of the monodromy
+theorem for a simply connected domain (`Conformal/GlobalBranch.lean`).
+
 ## Relation to the monodromy theorem
 
 This is the L4 prerequisite that the monodromy theorem of the conformal-mapping roadmap needs:
@@ -67,6 +77,10 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   preconnected parameter set is determined by its germ at a single time.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
   along a path that stays inside its domain gives that function back.
+* `TauCeti.ContinuesAlong`, `TauCeti.ContinuesInside` — continuability of a germ along one path,
+  and along every path inside a domain. Neither body is exposed; downstream files use them through
+  `TauCeti.continuesAlong_iff_exists`, `TauCeti.ContinuesInside.continuesAlong` and
+  `TauCeti.ContinuesInside.of_forall`.
 
 ## References
 
@@ -256,5 +270,110 @@ theorem eventuallyEq_of_mapsTo {U : Set ℂ} {F : ℂ → ℂ} (hf : IsAnalyticC
   hf.eventuallyEq (of_differentiableOn hU hF hf.continuousOn hmem) hs ha hb hab
 
 end IsAnalyticContinuationAlong
+
+section Germ
+
+open unitInterval
+
+variable {U : Set ℂ} {z₀ : ℂ} {f₀ g₀ : ℂ → ℂ} {c : I → ℂ}
+
+/-! ### Continuation along a path, as a property of the initial germ -/
+
+/-- The germ of `f₀` at `c 0` **continues along the path `c`**: there is an analytic continuation
+along `c` whose germ at the initial time is that of `f₀`.
+
+Only the germ of `f₀` at `c 0` enters, so this is a property of that germ rather than of `f₀`
+(`TauCeti.continuesAlong_congr`). -/
+def ContinuesAlong (f₀ : ℂ → ℂ) (c : I → ℂ) : Prop :=
+  ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀
+
+/-- **The defining property of `TauCeti.ContinuesAlong`**: a germ continues along `c` exactly when
+some analytic continuation along `c` starts at it. This is the introduction and elimination rule
+for the predicate, whose body is not exposed. -/
+theorem continuesAlong_iff_exists :
+    ContinuesAlong f₀ c ↔
+      ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀ :=
+  Iff.rfl
+
+namespace ContinuesAlong
+
+/-- A germ that continues along a path is a germ of an analytic function at the initial point. -/
+theorem analyticAt (h : ContinuesAlong f₀ c) : AnalyticAt ℂ f₀ (c 0) := by
+  obtain ⟨f, hf, h0⟩ := h
+  exact (hf.analyticAt 0 (Set.mem_univ 0)).congr h0
+
+/-- **Continuability along a path depends only on the initial germ.** -/
+protected theorem congr (h : ContinuesAlong f₀ c) (hfg : f₀ =ᶠ[𝓝 (c 0)] g₀) :
+    ContinuesAlong g₀ c :=
+  let ⟨f, hf, h0⟩ := h
+  ⟨f, hf, h0.trans hfg⟩
+
+/-- A function analytic at every point of a path continues itself along it: the constant family is
+the continuation. -/
+theorem of_analyticAt (hc : Continuous c) (hf₀ : ∀ x, AnalyticAt ℂ f₀ (c x)) :
+    ContinuesAlong f₀ c :=
+  ⟨fun _ => f₀, .const hc.continuousOn fun t _ => hf₀ t, .rfl⟩
+
+/-- A function holomorphic on an open set continues along every path that stays in that set. -/
+theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) (hc : Continuous c)
+    (hcU : ∀ x, c x ∈ U) : ContinuesAlong f₀ c :=
+  of_analyticAt hc fun x => hf₀.analyticOnNhd hUo _ (hcU x)
+
+end ContinuesAlong
+
+/-- Continuability along a path is a property of the germ of `f₀` at the initial point. -/
+theorem continuesAlong_congr (h : f₀ =ᶠ[𝓝 (c 0)] g₀) : ContinuesAlong f₀ c ↔ ContinuesAlong g₀ c :=
+  ⟨fun hf => hf.congr h, fun hg => hg.congr h.symm⟩
+
+/-! ### Continuation inside a domain -/
+
+/-- The germ of `f₀` at `z₀` **continues inside `U`**: it continues along every path that starts
+at `z₀` and stays in `U`.
+
+This is the hypothesis of the monodromy theorem. It is a condition on the germ
+(`TauCeti.continuesInside_congr`) and on the domain jointly: the germ of `Complex.log` at `1`
+continues inside `ℂ \ {0}`, and continues inside the slit plane, but is single-valued only on the
+latter. -/
+def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
+  ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c
+
+namespace ContinuesInside
+
+/-- **Elimination for `TauCeti.ContinuesInside`**: a germ that continues inside `U` continues
+along each individual path that starts at `z₀` and stays in `U`. -/
+theorem continuesAlong (H : ContinuesInside f₀ U z₀) (hc : Continuous c) (hcU : ∀ x, c x ∈ U)
+    (hc0 : c 0 = z₀) : ContinuesAlong f₀ c :=
+  H c hc hcU hc0
+
+/-- **Introduction for `TauCeti.ContinuesInside`**: a germ that continues along every path
+starting at `z₀` and staying in `U` continues inside `U`. -/
+theorem of_forall
+    (h : ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c) :
+    ContinuesInside f₀ U z₀ :=
+  h
+
+/-- A germ that continues inside `U` is analytic at the base point, as witnessed by the constant
+path. -/
+theorem analyticAt (H : ContinuesInside f₀ U z₀) (hz₀ : z₀ ∈ U) : AnalyticAt ℂ f₀ z₀ :=
+  (H.continuesAlong (c := fun _ => z₀) continuous_const (fun _ => hz₀) rfl).analyticAt
+
+/-- **Continuability inside a domain depends only on the germ at the base point.** -/
+protected theorem congr (H : ContinuesInside f₀ U z₀) (hfg : f₀ =ᶠ[𝓝 z₀] g₀) :
+    ContinuesInside g₀ U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).congr (hc0 ▸ hfg)
+
+/-- A function holomorphic on an open set continues inside that set from each of its points. -/
+theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
+    ContinuesInside f₀ U z₀ :=
+  of_forall fun _ hc hcU _ => .of_differentiableOn hUo hf₀ hc hcU
+
+end ContinuesInside
+
+/-- Continuability inside `U` is a property of the germ of `f₀` at the base point. -/
+theorem continuesInside_congr (h : f₀ =ᶠ[𝓝 z₀] g₀) :
+    ContinuesInside f₀ U z₀ ↔ ContinuesInside g₀ U z₀ :=
+  ⟨fun hf => hf.congr h, fun hg => hg.congr h.symm⟩
+
+end Germ
 
 end TauCeti

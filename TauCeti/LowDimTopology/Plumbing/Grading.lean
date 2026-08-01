@@ -22,6 +22,10 @@ square-zero identity then shows that consecutive graded differentials compose to
 maps are the data needed to package lattice homology as a `ℕ`-indexed chain complex, rather than
 only as the ungraded short complex currently used for its total homology.
 
+Since a cube's directions form a finite subset of the plumbing vertices, this file also records
+the sharp bound on the nonzero cubical degrees and the resulting vanishing of differentials whose
+source lies above that range.
+
 ## Main definitions
 
 * `TauCeti.PlumbingChain.degreePart`: chains supported on cubes of one cubical dimension.
@@ -36,6 +40,10 @@ only as the ungraded short complex currently used for its total homology.
   degree-`q + 1` submodule into the degree-`q` submodule.
 * `TauCeti.PlumbingGraph.latticeDifferentialDegree_comp`: consecutive graded differentials
   compose to zero.
+* `TauCeti.PlumbingChain.degreePart_eq_bot_iff_card_lt`: the degree-`q` chain group is zero
+  exactly when the plumbing graph has fewer than `q` vertices.
+* `TauCeti.PlumbingGraph.latticeDifferentialDegree_eq_zero_of_card_le`: no differential leaves
+  an impossible source degree above the number of vertices.
 
 ## References
 
@@ -70,6 +78,40 @@ theorem single_mem_degreePart {q : ℕ} (C : PlumbingCube V) (a : PlumbingCoeffi
     (hC : C.dimension = q) :
     Finsupp.single C a ∈ degreePart V q :=
   Finsupp.single_mem_supported PlumbingCoefficient a hC
+
+section
+
+variable [Fintype V]
+
+/-- The degree-`q` part of the plumbing chain module is zero exactly when `q` is larger than the
+number of plumbing vertices. -/
+@[simp]
+theorem degreePart_eq_bot_iff_card_lt (q : ℕ) :
+    degreePart V q = ⊥ ↔ Fintype.card V < q := by
+  classical
+  constructor
+  · intro hzero
+    by_contra hq
+    obtain ⟨S, _hSsub, hScard⟩ :=
+      Finset.exists_subset_card_eq (s := (Finset.univ : Finset V)) (Nat.le_of_not_gt hq)
+    let C : PlumbingCube V := { base := 0, directions := S }
+    have hsingle : Finsupp.single C (1 : PlumbingCoefficient) ∈ degreePart V q :=
+      single_mem_degreePart V C 1 (by simpa [C] using hScard)
+    rw [hzero, Submodule.mem_bot] at hsingle
+    exact one_ne_zero (Finsupp.single_eq_zero.mp hsingle)
+  · intro hq
+    refine le_antisymm ?_ bot_le
+    intro c hc
+    rw [mem_degreePart] at hc
+    apply Finsupp.ext
+    intro C
+    by_cases hC : C ∈ c.support
+    · have hdim := hc C hC
+      have hle : C.dimension ≤ Fintype.card V := C.dimension_le_card
+      omega
+    · exact Finsupp.notMem_support_iff.mp hC
+
+end
 
 /-- Distinct cubical-degree submodules intersect trivially. -/
 theorem disjoint_degreePart {q r : ℕ} (hqr : q ≠ r) :
@@ -144,6 +186,19 @@ theorem latticeDifferentialDegree_apply
     (P.latticeDifferentialDegree k q c : PlumbingChain V) =
       P.latticeDifferential k c :=
   (rfl)
+
+/-- The degreewise differential is zero once its source degree `q + 1` lies above the number of
+plumbing vertices. -/
+theorem latticeDifferentialDegree_eq_zero_of_card_le
+    (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ)
+    (hq : Fintype.card V ≤ q) :
+    P.latticeDifferentialDegree k q = 0 := by
+  have hsource :=
+    (PlumbingChain.degreePart_eq_bot_iff_card_lt V (q + 1)).mpr (Nat.lt_succ_of_le hq)
+  haveI : Subsingleton (PlumbingChain.degreePart V (q + 1)) := by
+    rw [hsource]
+    infer_instance
+  exact Subsingleton.elim _ _
 
 /-- Consecutive cubical-degree lattice differentials compose to zero. -/
 theorem latticeDifferentialDegree_comp

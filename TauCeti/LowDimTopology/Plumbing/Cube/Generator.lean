@@ -103,6 +103,13 @@ theorem dimension_mk (x : V → ℤ) (S : Finset V) :
     dimension ({ base := x, directions := S } : PlumbingCube V) = S.card :=
   rfl
 
+omit [DecidableEq V] in
+/-- The dimension of a plumbing cube is at most the number of plumbing vertices. -/
+theorem dimension_le_card [Fintype V] (C : PlumbingCube V) :
+    C.dimension ≤ Fintype.card V := by
+  classical
+  exact Finset.card_le_univ C.directions
+
 @[simp]
 theorem eraseDirection_mk (x : V → ℤ) (S : Finset V) (v : V) :
     eraseDirection ({ base := x, directions := S } : PlumbingCube V) v =

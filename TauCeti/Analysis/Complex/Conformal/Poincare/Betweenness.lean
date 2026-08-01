@@ -149,67 +149,76 @@ private lemma mem_segment_zero_left_iff_re_mul_conj :
         ring
       exact sub_eq_zero.mp (norm_eq_zero.mp (sq_eq_zero_iff.mp hzero))
 
+-- Forward direction. Write `0 = a • z + b • w` with `a + b = 1`. If `a = 0` the point `w` is the
+-- origin and both sides vanish; otherwise multiply by `conj w`, which turns each side into a real
+-- scalar times a single complex number, and cancel `a`.
+private lemma re_mul_conj_of_zero_mem_segment (h : (0 : ℂ) ∈ segment ℝ z w) :
+    (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
+  obtain ⟨a, b, ha, hb, hab, h⟩ := h
+  rcases eq_or_lt_of_le ha with rfl | hapos
+  · have hb1 : b = 1 := by linarith
+    rw [hb1, one_smul, zero_smul, zero_add] at h
+    simp [h]
+  · have h' : (a : ℂ) * z = -((b : ℂ) * w) := by
+      rw [eq_neg_iff_add_eq_zero, ← Complex.real_smul, ← Complex.real_smul]
+      exact h
+    have hnormeq : a * ‖z‖ = b * ‖w‖ := by
+      have hn := congrArg norm h'
+      rwa [norm_mul, norm_neg, norm_mul, Complex.norm_real, Complex.norm_real,
+        Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg ha, abs_of_nonneg hb] at hn
+    -- Multiplying `h'` by `conj w` makes each side a real scalar times a single complex number:
+    -- `z * conj w` on the left, `w * conj w = ‖w‖ ^ 2` on the right.
+    have hright : -((b : ℂ) * w) * (starRingEnd ℂ) w
+        = -((b : ℂ) * (w * (starRingEnd ℂ) w)) := by ring
+    have hre : a * (z * (starRingEnd ℂ) w).re = -(b * ‖w‖ ^ 2) := by
+      have hc := congrArg (fun x : ℂ => (x * (starRingEnd ℂ) w).re) h'
+      rwa [mul_assoc, hright, Complex.re_ofReal_mul, Complex.neg_re, Complex.re_ofReal_mul,
+        Complex.mul_conj, Complex.ofReal_re, Complex.normSq_eq_norm_sq] at hc
+    refine mul_left_cancel₀ hapos.ne' ?_
+    linear_combination hre + ‖w‖ * hnormeq
+
+-- Reverse direction. The degenerate cases `z = 0` and `w = 0` are endpoints of the segment; when
+-- both are nonzero, `‖w‖ • z + ‖z‖ • w` has vanishing norm by `normSq_add`, which places the
+-- origin at the barycentre with weights proportional to the two norms.
+private lemma zero_mem_segment_of_re_mul_conj (h : (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖)) :
+    (0 : ℂ) ∈ segment ℝ z w := by
+  rcases eq_or_ne z 0 with rfl | hz
+  · exact ⟨1, 0, zero_le_one, le_refl 0, by ring, by simp⟩
+  rcases eq_or_ne w 0 with rfl | hw
+  · exact ⟨0, 1, le_refl 0, zero_le_one, by ring, by simp⟩
+  have hzpos : 0 < ‖z‖ := norm_pos_iff.mpr hz
+  have hwpos : 0 < ‖w‖ := norm_pos_iff.mpr hw
+  have hsum : 0 < ‖z‖ + ‖w‖ := by linarith
+  refine ⟨‖w‖ / (‖z‖ + ‖w‖), ‖z‖ / (‖z‖ + ‖w‖), by positivity, by positivity,
+    by field_simp; ring, ?_⟩
+  -- Conjugation fixes the two real scalars, so the cross term of `normSq_add` is a real
+  -- multiple of `z * conj w`, which is the shape the hypothesis `h` is about.
+  have hcross : (‖w‖ : ℂ) * z * (starRingEnd ℂ) ((‖z‖ : ℂ) * w)
+      = ((‖w‖ * ‖z‖ : ℝ) : ℂ) * (z * (starRingEnd ℂ) w) := by
+    rw [map_mul, Complex.conj_ofReal]; push_cast; ring
+  have hzero : ‖(‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w‖ ^ 2 = 0 := by
+    have h3 := Complex.normSq_add ((‖w‖ : ℂ) * z) ((‖z‖ : ℂ) * w)
+    rw [Complex.normSq_eq_norm_sq, Complex.normSq_eq_norm_sq,
+      Complex.normSq_eq_norm_sq] at h3
+    rw [h3, norm_mul, norm_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
+      Real.norm_eq_abs, abs_of_nonneg hwpos.le, abs_of_nonneg hzpos.le, hcross,
+      Complex.re_ofReal_mul, h]
+    ring
+  have hcancel : (‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w = 0 :=
+    norm_eq_zero.mp (sq_eq_zero_iff.mp hzero)
+  rw [Complex.real_smul, Complex.real_smul]
+  push_cast
+  have hsumC : ((‖z‖ : ℂ) + (‖w‖ : ℂ)) ≠ 0 := by
+    simpa using Complex.ofReal_ne_zero.mpr hsum.ne'
+  field_simp
+  linear_combination hcancel
+
 /-- **The origin lies between two points exactly when their Hermitian product is negative real.**
 This is the mirror of `TauCeti.mem_segment_zero_left_iff_re_mul_conj`, for the origin at the
 middle of a Euclidean segment rather than at one of its ends. -/
 private lemma zero_mem_segment_iff_re_mul_conj :
-    (0 : ℂ) ∈ segment ℝ z w ↔ (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
-  constructor
-  · rintro ⟨a, b, ha, hb, hab, h⟩
-    rcases eq_or_lt_of_le ha with rfl | hapos
-    · have hb1 : b = 1 := by linarith
-      rw [hb1, one_smul, zero_smul, zero_add] at h
-      simp [h]
-    · have h' : (a : ℂ) * z = -((b : ℂ) * w) := by
-        rw [eq_neg_iff_add_eq_zero, ← Complex.real_smul, ← Complex.real_smul]
-        exact h
-      have hnormeq : a * ‖z‖ = b * ‖w‖ := by
-        have hn := congrArg norm h'
-        rwa [norm_mul, norm_neg, norm_mul, Complex.norm_real, Complex.norm_real,
-          Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg ha, abs_of_nonneg hb] at hn
-      -- Multiplying `h'` by `conj w` makes each side a real scalar times a single complex
-      -- number: `z * conj w` on the left, `w * conj w = ‖w‖ ^ 2` on the right.
-      have hleft : (a : ℂ) * z * (starRingEnd ℂ) w = (a : ℂ) * (z * (starRingEnd ℂ) w) :=
-        mul_assoc _ _ _
-      have hright : -((b : ℂ) * w) * (starRingEnd ℂ) w
-          = -((b : ℂ) * (w * (starRingEnd ℂ) w)) := by ring
-      have hre : a * (z * (starRingEnd ℂ) w).re = -(b * ‖w‖ ^ 2) := by
-        have hc := congrArg (fun x : ℂ => (x * (starRingEnd ℂ) w).re) h'
-        rwa [hleft, hright, Complex.re_ofReal_mul, Complex.neg_re, Complex.re_ofReal_mul,
-          Complex.mul_conj, Complex.ofReal_re, Complex.normSq_eq_norm_sq] at hc
-      refine mul_left_cancel₀ hapos.ne' ?_
-      linear_combination hre + ‖w‖ * hnormeq
-  · intro h
-    rcases eq_or_ne z 0 with rfl | hz
-    · exact ⟨1, 0, zero_le_one, le_refl 0, by ring, by simp⟩
-    rcases eq_or_ne w 0 with rfl | hw
-    · exact ⟨0, 1, le_refl 0, zero_le_one, by ring, by simp⟩
-    have hzpos : 0 < ‖z‖ := norm_pos_iff.mpr hz
-    have hwpos : 0 < ‖w‖ := norm_pos_iff.mpr hw
-    have hsum : 0 < ‖z‖ + ‖w‖ := by linarith
-    refine ⟨‖w‖ / (‖z‖ + ‖w‖), ‖z‖ / (‖z‖ + ‖w‖), by positivity, by positivity,
-      by field_simp; ring, ?_⟩
-    -- Conjugation fixes the two real scalars, so the cross term of `normSq_add` is a real
-    -- multiple of `z * conj w`, which is the shape the hypothesis `h` is about.
-    have hcross : (‖w‖ : ℂ) * z * (starRingEnd ℂ) ((‖z‖ : ℂ) * w)
-        = ((‖w‖ * ‖z‖ : ℝ) : ℂ) * (z * (starRingEnd ℂ) w) := by
-      rw [map_mul, Complex.conj_ofReal]; push_cast; ring
-    have hzero : ‖(‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w‖ ^ 2 = 0 := by
-      have h3 := Complex.normSq_add ((‖w‖ : ℂ) * z) ((‖z‖ : ℂ) * w)
-      rw [Complex.normSq_eq_norm_sq, Complex.normSq_eq_norm_sq,
-        Complex.normSq_eq_norm_sq] at h3
-      rw [h3, norm_mul, norm_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
-        Real.norm_eq_abs, abs_of_nonneg hwpos.le, abs_of_nonneg hzpos.le, hcross,
-        Complex.re_ofReal_mul, h]
-      ring
-    have hcancel : (‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w = 0 :=
-      norm_eq_zero.mp (sq_eq_zero_iff.mp hzero)
-    rw [Complex.real_smul, Complex.real_smul]
-    push_cast
-    have hsumC : ((‖z‖ : ℂ) + (‖w‖ : ℂ)) ≠ 0 := by
-      simpa using Complex.ofReal_ne_zero.mpr hsum.ne'
-    field_simp
-    linear_combination hcancel
+    (0 : ℂ) ∈ segment ℝ z w ↔ (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) :=
+  ⟨re_mul_conj_of_zero_mem_segment, zero_mem_segment_of_re_mul_conj⟩
 
 /-! ### Hyperbolic betweenness -/
 
@@ -368,6 +377,121 @@ theorem eqOn_Icc_of_isometry {γ₁ γ₂ : ℝ → PoincareDisc} {z w : Poincar
   · rw [ha₂, hb₂]; ring
   · rw [ha₁, ha₂]
 
+-- The isometry transports the real distance to the hyperbolic one, in the disc coordinates the
+-- betweenness lemmas are stated in. Both specialisations below are used repeatedly.
+private lemma hyperbolicDist_toUnitDisc_eq_abs_sub {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (s t : ℝ) :
+    hyperbolicDist (toUnitDisc (γ s) : ℂ) (toUnitDisc (γ t) : ℂ) = |s - t| := by
+  have h := hγ.dist_eq s t
+  rwa [dist_eq, Real.dist_eq] at h
+
+private lemma hyperbolicDist_zero_toUnitDisc_eq_abs {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) (t : ℝ) :
+    hyperbolicDist 0 (toUnitDisc (γ t) : ℂ) = |t| := by
+  have h := hyperbolicDist_toUnitDisc_eq_abs_sub hγ 0 t
+  rwa [h0, toUnitDisc_toPoincare, Complex.UnitDisc.coe_zero, zero_sub, abs_neg] at h
+
+-- An isometry of `ℝ` into the disc sending `0` to the origin has `‖γ t‖ = tanh |t|`: the
+-- hyperbolic distance to the origin is `|t|`, and `tanh` inverts `artanh` on the disc.
+private lemma norm_toUnitDisc_eq_tanh_abs {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) (t : ℝ) :
+    ‖(toUnitDisc (γ t) : ℂ)‖ = Real.tanh |t| := by
+  have hi : Real.artanh ‖(toUnitDisc (γ t) : ℂ)‖ = |t| := by
+    rw [← dist_toPoincare_zero_right, ← h0, hγ.dist_eq, Real.dist_eq, sub_zero]
+  rw [← hi]
+  exact (Real.tanh_artanh ⟨by linarith [norm_nonneg (toUnitDisc (γ t) : ℂ)],
+    (toUnitDisc (γ t)).norm_lt_one⟩).symm
+
+-- The forward ray is a Euclidean radius: for `0 ≤ s ≤ t` the origin, `γ s` and `γ t` are collinear,
+-- so every `γ t` with `t ≥ 0` is a nonnegative multiple of `γ 1`; normalising `γ 1` names the
+-- direction `u`, and the norm formula pins the multiple to `tanh t`.
+private lemma exists_circle_toUnitDisc_eq_of_nonneg {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) :
+    ∃ u : Circle, ∀ t : ℝ, 0 ≤ t →
+      (toUnitDisc (γ t) : ℂ) = (u : ℂ) * ((Real.tanh t : ℝ) : ℂ) := by
+  have hmem : ∀ p : PoincareDisc, ‖(toUnitDisc p : ℂ)‖ < 1 := fun p => (toUnitDisc p).norm_lt_one
+  have hnorm : ∀ t : ℝ, ‖(toUnitDisc (γ t) : ℂ)‖ = Real.tanh |t| :=
+    norm_toUnitDisc_eq_tanh_abs hγ h0
+  have hdist0 : ∀ t : ℝ, hyperbolicDist 0 (toUnitDisc (γ t) : ℂ) = |t| :=
+    hyperbolicDist_zero_toUnitDisc_eq_abs hγ h0
+  have hne : ∀ s : ℝ, s ≠ 0 → (toUnitDisc (γ s) : ℂ) ≠ 0 := by
+    intro s hs hzero
+    have hi := hdist0 s
+    rw [hzero, hyperbolicDist_self, eq_comm, abs_eq_zero] at hi
+    exact hs hi
+  have hbetween : ∀ s t : ℝ, 0 ≤ s → s ≤ t →
+      (toUnitDisc (γ s) : ℂ) ∈ segment ℝ 0 (toUnitDisc (γ t) : ℂ) := by
+    intro s t hs hst
+    refine (hyperbolicDist_zero_add_eq_iff_of_norm_lt_one (hmem _) (hmem _)).mp ?_
+    rw [hdist0, hyperbolicDist_toUnitDisc_eq_abs_sub hγ, hdist0, abs_of_nonneg hs,
+      abs_of_nonneg (by linarith : (0 : ℝ) ≤ t), abs_of_nonpos (by linarith : s - t ≤ 0)]
+    ring
+  have hray : ∀ t : ℝ, 0 ≤ t → ∃ κ : ℝ, 0 ≤ κ ∧
+      (toUnitDisc (γ t) : ℂ) = (κ : ℂ) * (toUnitDisc (γ 1) : ℂ) := by
+    intro t ht
+    rcases le_total t 1 with hle | hle
+    · obtain ⟨κ, hκ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween t 1 ht hle)
+      exact ⟨κ, hκ.1, heq⟩
+    · obtain ⟨θ, hθ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween 1 t zero_le_one hle)
+      have hθ0 : θ ≠ 0 := by
+        rintro rfl
+        rw [Complex.ofReal_zero, zero_mul] at heq
+        exact hne 1 one_ne_zero heq
+      refine ⟨θ⁻¹, inv_nonneg.mpr hθ.1, ?_⟩
+      rw [heq, Complex.ofReal_inv, inv_mul_cancel_left₀ (Complex.ofReal_ne_zero.mpr hθ0)]
+  -- The direction is already named by `exists_radialGeodesic_eq` at the point `γ 1`, whose
+  -- distance to the origin is `1` because `γ` is an isometry fixing it.
+  have hd1 : dist (γ 1) (Complex.UnitDisc.toPoincare 0) = 1 := by
+    rw [← h0, hγ.dist_eq, Real.dist_eq, sub_zero, abs_one]
+  obtain ⟨u, hu1⟩ := exists_radialGeodesic_eq (γ 1)
+  rw [hd1] at hu1
+  have hu : (toUnitDisc (γ 1) : ℂ) = (u : ℂ) * ((Real.tanh 1 : ℝ) : ℂ) := by
+    rw [← hu1, coe_radialGeodesic]
+  refine ⟨u, fun t ht => ?_⟩
+  obtain ⟨κ, hκ, heq⟩ := hray t ht
+  have hn : ‖(toUnitDisc (γ t) : ℂ)‖ = κ * ‖(toUnitDisc (γ 1) : ℂ)‖ := by
+    rw [heq, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hκ]
+  have hnorm1 : ‖(toUnitDisc (γ 1) : ℂ)‖ = Real.tanh 1 := by
+    rw [hnorm 1, abs_one]
+  have hκval : (κ : ℂ) * ((Real.tanh 1 : ℝ) : ℂ) = ((Real.tanh t : ℝ) : ℂ) := by
+    rw [← Complex.ofReal_mul, ← hnorm1, ← hn, hnorm t, abs_of_nonneg ht]
+  rw [heq, hu, ← mul_assoc, mul_comm (κ : ℂ) (u : ℂ), mul_assoc, hκval]
+
+-- Opposite times sit on opposite radii. The origin is *between* `γ (-s)` and `γ s`, so the two
+-- lie on a common Euclidean line through `0`; equal norms then force the segment parameters to be
+-- `1/2` each, i.e. `γ (-s) = -γ s`.
+private lemma toUnitDisc_neg_eq_neg {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) {s : ℝ} (hs : 0 < s) :
+    (toUnitDisc (γ (-s)) : ℂ) = -(toUnitDisc (γ s) : ℂ) := by
+  have hdist0 : ∀ r : ℝ, hyperbolicDist 0 (toUnitDisc (γ r) : ℂ) = |r| :=
+    hyperbolicDist_zero_toUnitDisc_eq_abs hγ h0
+  obtain ⟨a, b, ha, hb, hab, heq⟩ :
+      (0 : ℂ) ∈ segment ℝ (toUnitDisc (γ (-s)) : ℂ) (toUnitDisc (γ s) : ℂ) := by
+    refine (hyperbolicDist_add_zero_eq_iff_of_norm_lt_one (toUnitDisc _).norm_lt_one
+      (toUnitDisc _).norm_lt_one).mp ?_
+    rw [hyperbolicDist_comm _ 0, hdist0, hdist0,
+      hyperbolicDist_toUnitDisc_eq_abs_sub hγ (-s) s, abs_of_nonpos (by linarith),
+      abs_of_nonneg hs.le, abs_of_nonpos (by linarith : -s - s ≤ 0)]
+    ring
+  have hnormeq : ‖(toUnitDisc (γ (-s)) : ℂ)‖ = ‖(toUnitDisc (γ s) : ℂ)‖ := by
+    rw [norm_toUnitDisc_eq_tanh_abs hγ h0, norm_toUnitDisc_eq_tanh_abs hγ h0, abs_neg]
+  have hnz : ‖(toUnitDisc (γ s) : ℂ)‖ ≠ 0 := by
+    refine norm_ne_zero_iff.mpr fun hzero => ?_
+    have h := hdist0 s
+    rw [hzero, hyperbolicDist_self, eq_comm, abs_eq_zero] at h
+    exact hs.ne' h
+  have hsplit : a • (toUnitDisc (γ (-s)) : ℂ) = -(b • (toUnitDisc (γ s) : ℂ)) := by
+    rw [eq_neg_iff_add_eq_zero]; exact heq
+  have hab' : a = b := by
+    have hn := congrArg norm hsplit
+    rw [norm_smul, norm_neg, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
+      abs_of_nonneg ha, abs_of_nonneg hb, hnormeq] at hn
+    exact mul_right_cancel₀ hnz hn
+  rw [(by linarith : a = 1 / 2), (by linarith : b = 1 / 2), Complex.real_smul,
+    Complex.real_smul] at heq
+  push_cast at heq
+  linear_combination 2 * heq
+
 /-- **Every geodesic line through the origin is a Euclidean diameter.** This is the converse to
 `TauCeti.PoincareDisc.isometry_radialGeodesic`, and it completes the description of the geodesics
 of the Poincaré disc: an isometric embedding of the real line sending `0` to the origin *is* one of
@@ -385,92 +509,8 @@ The direction is unique: evaluating `radialGeodesic u = radialGeodesic v` at tim
 particular `u ↦ radialGeodesic u` is injective, so distinct directions give distinct lines. -/
 theorem existsUnique_eq_radialGeodesic {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
     (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) : ∃! u : Circle, γ = radialGeodesic u := by
-  have hmem : ∀ p : PoincareDisc, ‖(toUnitDisc p : ℂ)‖ < 1 := fun p => (toUnitDisc p).norm_lt_one
-  have hdist0 : ∀ t : ℝ, hyperbolicDist 0 (toUnitDisc (γ t) : ℂ) = |t| := by
-    intro t
-    have hi := hγ.dist_eq 0 t
-    rwa [dist_eq, h0, toUnitDisc_toPoincare, Complex.UnitDisc.coe_zero, Real.dist_eq, zero_sub,
-      abs_neg] at hi
-  have hdistst : ∀ s t : ℝ,
-      hyperbolicDist (toUnitDisc (γ s) : ℂ) (toUnitDisc (γ t) : ℂ) = |s - t| := by
-    intro s t
-    have hi := hγ.dist_eq s t
-    rwa [dist_eq, Real.dist_eq] at hi
-  have hnorm : ∀ t : ℝ, ‖(toUnitDisc (γ t) : ℂ)‖ = Real.tanh |t| := by
-    intro t
-    have hi := hdist0 t
-    rw [hyperbolicDist_comm, hyperbolicDist_zero_right] at hi
-    rw [← hi]
-    exact (Real.tanh_artanh ⟨by linarith [norm_nonneg (toUnitDisc (γ t) : ℂ)], hmem (γ t)⟩).symm
-  have hne : ∀ s : ℝ, s ≠ 0 → (toUnitDisc (γ s) : ℂ) ≠ 0 := by
-    intro s hs hzero
-    have hi := hdist0 s
-    rw [hzero, hyperbolicDist_self, eq_comm, abs_eq_zero] at hi
-    exact hs hi
-  -- Points of the nonnegative half-line lie on a common Euclidean radius.
-  have hbetween : ∀ s t : ℝ, 0 ≤ s → s ≤ t →
-      (toUnitDisc (γ s) : ℂ) ∈ segment ℝ 0 (toUnitDisc (γ t) : ℂ) := by
-    intro s t hs hst
-    refine (hyperbolicDist_zero_add_eq_iff_of_norm_lt_one (hmem _) (hmem _)).mp ?_
-    rw [hdist0, hdistst, hdist0, abs_of_nonneg hs, abs_of_nonneg (by linarith : (0 : ℝ) ≤ t),
-      abs_of_nonpos (by linarith : s - t ≤ 0)]
-    ring
-  have hray : ∀ t : ℝ, 0 ≤ t → ∃ κ : ℝ, 0 ≤ κ ∧
-      (toUnitDisc (γ t) : ℂ) = (κ : ℂ) * (toUnitDisc (γ 1) : ℂ) := by
-    intro t ht
-    rcases le_total t 1 with hle | hle
-    · obtain ⟨κ, hκ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween t 1 ht hle)
-      exact ⟨κ, hκ.1, heq⟩
-    · obtain ⟨θ, hθ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween 1 t zero_le_one hle)
-      have hθ0 : θ ≠ 0 := by
-        rintro rfl
-        rw [Complex.ofReal_zero, zero_mul] at heq
-        exact hne 1 one_ne_zero heq
-      refine ⟨θ⁻¹, inv_nonneg.mpr hθ.1, ?_⟩
-      rw [heq, Complex.ofReal_inv, inv_mul_cancel_left₀ (Complex.ofReal_ne_zero.mpr hθ0)]
-  -- The direction of the ray.
-  have hcne : (toUnitDisc (γ 1) : ℂ) ≠ 0 := hne 1 one_ne_zero
-  have hpos1 : 0 < ‖(toUnitDisc (γ 1) : ℂ)‖ := norm_pos_iff.mpr hcne
-  obtain ⟨u, hu⟩ : ∃ u : Circle,
-      (u : ℂ) = (toUnitDisc (γ 1) : ℂ) / ((‖(toUnitDisc (γ 1) : ℂ)‖ : ℝ) : ℂ) :=
-    ⟨⟨_, mem_sphere_zero_iff_norm.2 (by
-      rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hpos1,
-        div_self hpos1.ne'])⟩, rfl⟩
-  have hX1 : ((‖(toUnitDisc (γ 1) : ℂ)‖ : ℝ) : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hpos1.ne'
-  have hnonneg : ∀ t : ℝ, 0 ≤ t →
-      (toUnitDisc (γ t) : ℂ) = (u : ℂ) * ((Real.tanh t : ℝ) : ℂ) := by
-    intro t ht
-    obtain ⟨κ, hκ, heq⟩ := hray t ht
-    have hn : ‖(toUnitDisc (γ t) : ℂ)‖ = κ * ‖(toUnitDisc (γ 1) : ℂ)‖ := by
-      rw [heq, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hκ]
-    have hκval : (κ : ℂ) = ((Real.tanh t : ℝ) : ℂ) / ((‖(toUnitDisc (γ 1) : ℂ)‖ : ℝ) : ℂ) := by
-      rw [eq_div_iff hX1, ← Complex.ofReal_mul, ← hn, hnorm t, abs_of_nonneg ht]
-    rw [heq, hu, hκval]
-    field_simp
-  -- Opposite times sit on opposite radii.
-  have hopp : ∀ s : ℝ, 0 < s → (toUnitDisc (γ (-s)) : ℂ) = -(toUnitDisc (γ s) : ℂ) := by
-    intro s hs
-    obtain ⟨a, b, ha, hb, hab, heq⟩ :
-        (0 : ℂ) ∈ segment ℝ (toUnitDisc (γ (-s)) : ℂ) (toUnitDisc (γ s) : ℂ) := by
-      refine (hyperbolicDist_add_zero_eq_iff_of_norm_lt_one (hmem _) (hmem _)).mp ?_
-      rw [hyperbolicDist_comm _ 0, hdist0, hdist0, hdistst, abs_of_nonpos (by linarith),
-        abs_of_nonneg hs.le, abs_of_nonpos (by linarith : -s - s ≤ 0)]
-      ring
-    have hnormeq : ‖(toUnitDisc (γ (-s)) : ℂ)‖ = ‖(toUnitDisc (γ s) : ℂ)‖ := by
-      rw [hnorm, hnorm, abs_neg]
-    have hnz : ‖(toUnitDisc (γ s) : ℂ)‖ ≠ 0 := norm_ne_zero_iff.mpr (hne s hs.ne')
-    have hsplit : a • (toUnitDisc (γ (-s)) : ℂ) = -(b • (toUnitDisc (γ s) : ℂ)) := by
-      rw [eq_neg_iff_add_eq_zero]; exact heq
-    have hab' : a = b := by
-      have hn := congrArg norm hsplit
-      rw [norm_smul, norm_neg, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
-        abs_of_nonneg ha, abs_of_nonneg hb, hnormeq] at hn
-      exact mul_right_cancel₀ hnz hn
-    have ha2 : a = 1 / 2 := by linarith
-    have hb2 : b = 1 / 2 := by linarith
-    rw [ha2, hb2, Complex.real_smul, Complex.real_smul] at heq
-    push_cast at heq
-    linear_combination 2 * heq
+  obtain ⟨u, hnonneg⟩ := exists_circle_toUnitDisc_eq_of_nonneg hγ h0
+  have hopp := fun s (hs : 0 < s) => toUnitDisc_neg_eq_neg hγ h0 hs
   have heq : γ = radialGeodesic u := by
     refine funext fun t => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)
     rw [coe_radialGeodesic]
@@ -484,15 +524,7 @@ theorem existsUnique_eq_radialGeodesic {γ : ℝ → PoincareDisc} (hγ : Isomet
         push_cast
         ring
   -- The direction is pinned by the value at time `1`, where `Real.tanh` does not vanish.
-  refine ⟨u, heq, fun v hv => ?_⟩
-  have htanh : (Real.tanh 1 : ℂ) ≠ 0 := by
-    refine Complex.ofReal_ne_zero.mpr fun hzero => one_ne_zero (α := ℝ) ?_
-    exact Real.tanh_injective (hzero.trans Real.tanh_zero.symm)
-  have hval : (v : ℂ) * (Real.tanh 1 : ℝ) = (u : ℂ) * (Real.tanh 1 : ℝ) := by
-    have hcoe := congrArg (fun p : PoincareDisc => (toUnitDisc p : ℂ))
-      (congrFun (hv.symm.trans heq) 1)
-    simpa only [coe_radialGeodesic] using hcoe
-  exact Circle.ext (mul_right_cancel₀ htanh hval)
+  exact ⟨u, heq, fun v hv => radialGeodesic_injective (hv.symm.trans heq)⟩
 
 end PoincareDisc
 
