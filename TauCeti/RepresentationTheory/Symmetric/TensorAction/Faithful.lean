@@ -75,6 +75,8 @@ theorem tensorPowerBasis_apply (f : Fin d → Fin n) :
   rw [tensorPowerBasis, Basis.piTensorProduct_apply]
   simp
 
+-- These two derived normal forms remain explicit rewrite lemmas: `simpNF` detects each as already
+-- provable from the underlying tensor-action rules, so adding them to the simp set is redundant.
 /-- A permutation acts on the monomial basis of `(Rⁿ)^{⊗d}` by precomposing the index function
 with its inverse. -/
 theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d → Fin n) :
