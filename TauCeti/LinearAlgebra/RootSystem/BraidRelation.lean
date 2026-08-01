@@ -11,13 +11,13 @@ public section
 /-!
 # The order of a product of two simple reflections
 
-The product of the reflections in two roots `αᵢ`, `αⱼ` moves every weight inside the span of the
-two roots, and its order is therefore read off the Cartan product `c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the
-values `1`, `2`, `3` give the orders `3`, `4`, `6`. This file proves that, and — for two simple
-roots of a base of a finite crystallographic pairing, where `c = 0` is the remaining possibility
-and gives the order `2` — that the entries of `TauCeti.coxeterMatrixOfBase` really are the orders
-they are named for, so that the braid relations of the Coxeter presentation of a Weyl group hold in
-the Weyl group.
+The product of the reflections in two roots `αᵢ`, `αⱼ` changes every weight by an element of the
+span of the two roots, and its order is therefore read off the Cartan product
+`c = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩`: the values `1`, `2`, `3` give the orders `3`, `4`, `6`. This file
+proves that, and — for two simple roots of a base of a finite crystallographic pairing, where
+`c = 0` is the remaining possibility and gives the order `2` — that the entries of
+`TauCeti.coxeterMatrixOfBase` really are the orders they are named for, so that the braid relations
+of the Coxeter presentation of a Weyl group hold in the Weyl group.
 
 The route is elementary and diagonalises nothing. Writing `g` for the product of the two
 reflections, `g` fixes the common kernel of the two coroots pointwise, and on the two coroot
@@ -79,8 +79,9 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 /-! ## The rank-two computation -/
 
-/-- **The product of two reflections on the weight space.** The two reflections move `x` inside the
-span of the two roots, by an amount recorded by the two coroot functionals. -/
+/-- **The product of two reflections on the weight space.** The product changes `x` by an element
+of the span of the two roots, with coefficients recorded by the two coroot functionals. -/
+@[grind =]
 theorem ofIdx_mul_ofIdx_smul (x : M) :
     (_root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j) • x =
       x - P.coroot' j x • P.root j -
@@ -92,6 +93,7 @@ theorem ofIdx_mul_ofIdx_smul (x : M) :
   module
 
 /-- The `αᵢ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. -/
+@[grind =]
 theorem coroot'_left_ofIdx_mul_ofIdx_smul (x : M) :
     P.coroot' i ((_root_.RootPairing.weylGroup.ofIdx P i *
         _root_.RootPairing.weylGroup.ofIdx P j) • x) =
@@ -104,6 +106,7 @@ theorem coroot'_left_ofIdx_mul_ofIdx_smul (x : M) :
 /-- The `αⱼ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. Together with
 `TauCeti.RootPairing.weylGroup.coroot'_left_ofIdx_mul_ofIdx_smul` this is the matrix of the action
 on the two coroot coordinates: determinant `1` and trace `⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`. -/
+@[grind =]
 theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
     P.coroot' j ((_root_.RootPairing.weylGroup.ofIdx P i *
         _root_.RootPairing.weylGroup.ofIdx P j) • x) =
@@ -354,7 +357,7 @@ private lemma pairing_mul_pairing_eq_cast (k l : b.support) :
 corresponding simple reflections.** On the diagonal both sides are `1`, a simple reflection being
 an involution; off the diagonal the four Cartan products `0`, `1`, `2`, `3` give the four dihedral
 orders `2`, `3`, `4`, `6`. -/
-@[simp]
+@[simp, grind =]
 theorem orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase (k l : b.support) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P (k : ι) *
       _root_.RootPairing.weylGroup.ofIdx P (l : ι)) = coxeterMatrixOfBase P b k l := by
@@ -377,7 +380,10 @@ theorem orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase (k l : b.support) :
     exact orderOf_ofIdx_mul_ofIdx_eq_six P _ _ hcast
 
 /-- **The braid relations of the Coxeter matrix of a base hold in the Weyl group.** This is the
-relation half of the Coxeter presentation of the Weyl group. -/
+relation half of the Coxeter presentation of the Weyl group. It is not a `simp` lemma: its
+left-hand side is not in simp normal form, because the exponent `coxeterMatrixOfBase P b k l` is
+itself rewritten by `TauCeti.coxeterMatrixOfBase_apply`. -/
+@[grind =]
 theorem pow_coxeterMatrixOfBase_ofIdx_mul_ofIdx_eq_one (k l : b.support) :
     (_root_.RootPairing.weylGroup.ofIdx P (k : ι) *
       _root_.RootPairing.weylGroup.ofIdx P (l : ι)) ^ coxeterMatrixOfBase P b k l = 1 := by
