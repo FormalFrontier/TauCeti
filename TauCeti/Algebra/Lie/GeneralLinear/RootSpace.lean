@@ -130,11 +130,15 @@ instance instIsTriangularizableMatrixDiagonalCartan :
 
 /-! ### The weight spaces of `gl n R` -/
 
-/-- **The weight spaces of `gl n R` are honest simultaneous eigenspaces**, not merely generalized
-ones: the diagonal Cartan subalgebra acts diagonally on the matrix units, so no nilpotent part
-survives. For a Killing-semisimple Lie algebra the corresponding statement is the abstract Jordan
-decomposition; here it is Mathlib's `Matrix.maxGenEigenspace_toLin_diagonal_eq_eigenspace` applied
-to `TauCeti.toEnd_diagonalCartan_eq_toLin_diagonal`, one operator at a time. -/
+/-- **Over a domain the weight spaces of `gl n R` are honest simultaneous eigenspaces**, not merely
+generalized ones: the diagonal Cartan subalgebra acts diagonally on the matrix units, so no
+nilpotent part survives. For a Killing-semisimple Lie algebra the corresponding statement is the
+abstract Jordan decomposition; here it is Mathlib's
+`Matrix.maxGenEigenspace_toLin_diagonal_eq_eigenspace` applied to
+`TauCeti.toEnd_diagonalCartan_eq_toLin_diagonal`, one operator at a time. The hypothesis
+`[IsDomain R]` is the one that Mathlib lemma needs, and it is not decorative: over a ring with
+nilpotents a generalized eigenspace of a diagonal operator can be strictly larger than the
+eigenspace. -/
 theorem rootSpace_diagonalCartan_eq_weightSpace [IsDomain R]
     (χ : Module.Dual R (diagonalCartan R n)) :
     LieAlgebra.rootSpace (diagonalCartan R n) χ
@@ -167,9 +171,13 @@ theorem mem_rootSpace_diagonalCartan_of_forall {χ : Module.Dual R (diagonalCart
   · rw [← glRoot_apply a b A, hab]
   · rw [h a b hab, mul_zero, mul_zero]
 
-/-- **The weight spaces of `gl n R`**: a matrix lies in the root space of a functional `χ` on the
-diagonal Cartan subalgebra exactly when its `(a, b)` entry vanishes for every pair with
-`εₐ - ε_b ≠ χ`. -/
+/-- **The weight spaces of `gl n R`, over a domain**: for `[IsDomain R]`, a matrix lies in the root
+space of a functional `χ` on the diagonal Cartan subalgebra exactly when its `(a, b)` entry vanishes
+for every pair with `εₐ - ε_b ≠ χ`. The domain hypothesis is used only for the forward implication,
+through `TauCeti.rootSpace_diagonalCartan_eq_weightSpace`; the converse is
+`TauCeti.mem_rootSpace_diagonalCartan_of_forall`, which holds over any commutative ring. No
+hypothesis on the characteristic is needed, since the statement does not separate `εᵢ - εⱼ` from
+`εⱼ - εᵢ`. -/
 @[simp]
 theorem mem_rootSpace_diagonalCartan_iff [IsDomain R] (χ : Module.Dual R (diagonalCartan R n))
     (B : Matrix n n R) :
@@ -253,10 +261,13 @@ theorem glRoot_eq_glRoot_iff (h2 : (2 : R) ≠ 0) {i j : n} (hij : i ≠ j) (a b
       have h10 : (1 : R) = 0 := by linear_combination hj
       exact one_ne_zero h10
 
-/-- **The root spaces of `gl n R` are lines**: for `i ≠ j`, and away from characteristic two, the
-root space of `εᵢ - εⱼ` is spanned by the matrix unit `Eᵢⱼ`. This is the `gl n` analogue of
-Mathlib's `LieAlgebra.IsKilling.finrank_rootSpace_eq_one`, which is unavailable here because the
-Killing form of `gl n R` is degenerate. -/
+/-- **The root spaces of `gl n R` are lines**: over a domain (`[IsDomain R]`), away from
+characteristic two (`(2 : R) ≠ 0`), and for `i ≠ j`, the root space of `εᵢ - εⱼ` is spanned by the
+matrix unit `Eᵢⱼ`. All three hypotheses are needed: for `i = j` the root space is the zero root
+space, which contains the whole diagonal Cartan subalgebra, and in characteristic two `Eᵢⱼ` and
+`Eⱼᵢ` share a root space, which is then a plane. This is the `gl n` analogue of Mathlib's
+`LieAlgebra.IsKilling.finrank_rootSpace_eq_one`, which is unavailable here because the Killing form
+of `gl n R` is degenerate. -/
 theorem rootSpace_glRoot_eq_span [IsDomain R] (h2 : (2 : R) ≠ 0) {i j : n} (hij : i ≠ j) :
     (LieAlgebra.rootSpace (diagonalCartan R n) (glRoot R n i j)).toSubmodule
       = R ∙ single i j 1 := by
@@ -275,7 +286,9 @@ theorem rootSpace_glRoot_eq_span [IsDomain R] (h2 : (2 : R) ≠ 0) {i j : n} (hi
   · rw [Submodule.span_le, Set.singleton_subset_iff]
     exact single_mem_rootSpace i j 1
 
-/-- The root spaces of `gl n K` attached to the roots `εᵢ - εⱼ` are one-dimensional. -/
+/-- Over a field `K` of characteristic other than two (`(2 : K) ≠ 0`), the root space of `gl n K`
+attached to the root `εᵢ - εⱼ` with `i ≠ j` is one-dimensional. This is
+`TauCeti.rootSpace_glRoot_eq_span` counted, so it carries the same hypotheses. -/
 theorem finrank_rootSpace_glRoot_eq_one {K : Type*} [Field K] (h2 : (2 : K) ≠ 0) {i j : n}
     (hij : i ≠ j) :
     Module.finrank K
@@ -286,8 +299,8 @@ theorem finrank_rootSpace_glRoot_eq_one {K : Type*} [Field K] (h2 : (2 : K) ≠ 
   rw [rootSpace_glRoot_eq_span h2 hij]
   exact finrank_span_singleton hne
 
-/-- A functional on the diagonal Cartan subalgebra that is not one of the `εₐ - ε_b` has trivial
-root space. -/
+/-- Over a domain (`[IsDomain R]`), a functional on the diagonal Cartan subalgebra that is not one
+of the `εₐ - ε_b` has trivial root space. -/
 theorem rootSpace_diagonalCartan_eq_bot [IsDomain R] {χ : Module.Dual R (diagonalCartan R n)}
     (h : ∀ a b, glRoot R n a b ≠ χ) :
     LieAlgebra.rootSpace (diagonalCartan R n) χ = ⊥ := by
@@ -297,8 +310,10 @@ theorem rootSpace_diagonalCartan_eq_bot [IsDomain R] {χ : Module.Dual R (diagon
   rw [Matrix.zero_apply]
   exact (mem_rootSpace_diagonalCartan_iff _ _).mp hB a b (h a b)
 
-/-- **The roots of `gl n R`**: a functional with a nonzero root space is one of the `εᵢ - εⱼ`, and
-`i ≠ j` unless the functional is zero. -/
+/-- **The roots of `gl n R`**: over a domain (`[IsDomain R]`), a nonzero functional `χ` with a
+nonzero root space is `εᵢ - εⱼ` for some `i ≠ j`. The hypothesis `χ ≠ 0` is what rules out the
+diagonal pairs, since every `εₐ - ε_a` is the zero functional and the zero root space contains the
+whole diagonal Cartan subalgebra. -/
 theorem exists_glRoot_eq_of_rootSpace_ne_bot [IsDomain R]
     {χ : Module.Dual R (diagonalCartan R n)} (hχ : χ ≠ 0)
     (h : LieAlgebra.rootSpace (diagonalCartan R n) χ ≠ ⊥) :
