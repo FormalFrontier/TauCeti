@@ -152,10 +152,8 @@ noncomputable def bialgebra : Bialgebra R (CoordinateRing R n) :=
         simp [hkj]
       · simp)
 
--- These private defining equations are elaborated with compatibility transparency so that Lean
--- recognizes the module structure stored in the opaque bialgebra as the canonical one. Their
+-- These private defining equations expose the operations stored in the named bialgebra. Their
 -- public wrappers below are the abstraction boundary used by downstream code.
-set_option backward.isDefEq.respectTransparency false in
 private theorem bialgebra_comul_def :
     (bialgebra R n).toCoalgebra.toCoalgebraStruct.comul = (comul R n).toLinearMap :=
   rfl
@@ -169,7 +167,6 @@ theorem bialgebra_comul :
       Coalgebra.comul (R := R) (A := CoordinateRing R n)) (comul R n).toLinearMap :=
   heq_of_eq (bialgebra_comul_def R n)
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem bialgebra_counit_def :
     (bialgebra R n).toCoalgebra.toCoalgebraStruct.counit = (counit R n).toLinearMap :=
   rfl
@@ -182,7 +179,6 @@ theorem bialgebra_counit :
       Coalgebra.counit (R := R) (A := CoordinateRing R n)) (counit R n).toLinearMap :=
   heq_of_eq (bialgebra_counit_def R n)
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem bialgebra_comul_X_def (i j : Fin n) :
     letI : Module R (CoordinateRing R n) := (bialgebra R n).toAlgebra.toModule
     (bialgebra R n).toCoalgebra.toCoalgebraStruct.comul (MvPolynomial.X (i, j)) =
@@ -199,7 +195,6 @@ theorem bialgebra_comul_X (i j : Fin n) :
       ∑ k : Fin n, MvPolynomial.X (i, k) ⊗ₜ[R] MvPolynomial.X (k, j) :=
   bialgebra_comul_X_def R n i j
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem bialgebra_counit_X_def (i j : Fin n) :
     (bialgebra R n).toCoalgebra.toCoalgebraStruct.counit (MvPolynomial.X (i, j)) =
       if i = j then 1 else 0 := by
@@ -262,7 +257,6 @@ noncomputable def coordinateBialgebra : CommBialgCat R :=
   letI : Bialgebra R (CoordinateRing R n) := bialgebra R n
   CommBialgCat.of R (CoordinateRing R n)
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem coordinateBialgebra_comul_def (x : CoordinateRing R n) :
     Coalgebra.comul (R := R) (A := coordinateBialgebra R n)
         (x : coordinateBialgebra R n) = comul R n x :=
@@ -275,7 +269,6 @@ theorem coordinateBialgebra_comul (x : CoordinateRing R n) :
         (x : coordinateBialgebra R n)) (comul R n x) :=
   heq_of_eq (coordinateBialgebra_comul_def R n x)
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem coordinateBialgebra_counit_def (x : CoordinateRing R n) :
     Coalgebra.counit (R := R) (A := coordinateBialgebra R n)
         (x : coordinateBialgebra R n) = counit R n x :=
@@ -287,7 +280,6 @@ theorem coordinateBialgebra_counit (x : CoordinateRing R n) :
         (x : coordinateBialgebra R n) = counit R n x :=
   coordinateBialgebra_counit_def R n x
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem coordinateBialgebra_comul_X_def (i j : Fin n) :
     Coalgebra.comul (R := R) (A := coordinateBialgebra R n)
         (MvPolynomial.X (i, j) : coordinateBialgebra R n) =
@@ -309,7 +301,6 @@ theorem coordinateBialgebra_comul_X (i j : Fin n) :
         coordinateBialgebra R n ⊗[R] coordinateBialgebra R n) :=
   coordinateBialgebra_comul_X_def R n i j
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem coordinateBialgebra_counit_X_def (i j : Fin n) :
     Coalgebra.counit (R := R) (A := coordinateBialgebra R n)
         (MvPolynomial.X (i, j) : coordinateBialgebra R n) =
@@ -326,7 +317,6 @@ theorem coordinateBialgebra_counit_X (i j : Fin n) :
       if i = j then 1 else 0 :=
   coordinateBialgebra_counit_X_def R n i j
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem isGroupLikeElem_determinant_def :
     IsGroupLikeElem (A := coordinateBialgebra R n) R
       (determinant R n : coordinateBialgebra R n) := by
