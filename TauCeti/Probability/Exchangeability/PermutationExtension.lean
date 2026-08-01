@@ -35,7 +35,11 @@ beyond the selection it adds a fixed constant.
 
 The eventual-translation clause matters for invariant events. Composing with `φ` changes only the
 first `m` coordinates and then acts as a fixed iterate of the shift, so any event that is unchanged
-by dropping a finite prefix — a shift-invariant or tail event — is preserved by the reindexing. -/
+by dropping a finite prefix — a shift-invariant or tail event — is preserved by the reindexing.
+
+This concerns **exact** invariance: sets measurable in `MeasurableSpace.invariants (shift α)`, or in
+the path tail, which are literally unchanged by the shift. It says nothing about the a.e.-invariant
+formulation Mathlib's `ErgodicSMul` uses; relating the two is a separate matter. -/
 theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
     ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
       ∀ n, m ≤ n → φ n = n + C := by
