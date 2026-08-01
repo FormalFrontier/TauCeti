@@ -226,12 +226,17 @@ theorem exists_finite_subcomodule_of_setFinite_of_exists_mem
     {s : Set M} (hs : s.Finite) :
     ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ s ⊆ N := by
   classical
-  letI : Fintype s := hs.fintype
-  choose N hNfinite hNmem using fun m : s ↦ hM m
-  refine ⟨⨆ m : s, N m, iSup_finite N hNfinite, ?_⟩
-  intro m hm
-  exact (le_sSup (s := Set.range N) (Set.mem_range_self ⟨m, hm⟩))
-    (hNmem ⟨m, hm⟩)
+  obtain ⟨N, hNfinite, hsN⟩ :=
+    DirectedOn.exists_mem_subset_of_finset_subset_biUnion
+      (f := fun N : Subcomodule R C M => (N : Set M))
+      finiteSubcomodules_nonempty directedOn_finiteSubcomodules
+      (s := hs.toFinset) (by
+        intro m _
+        obtain ⟨N, hNfinite, hmN⟩ := hM m
+        exact Set.mem_iUnion₂_of_mem
+          (mem_finiteSubcomodules.mpr hNfinite) hmN)
+  exact ⟨N, mem_finiteSubcomodules.mp hNfinite, by
+    simpa only [hs.coe_toFinset] using hsN⟩
 
 /-- If every element lies in a finite subcomodule, then every finitely generated submodule lies
 in one finite subcomodule. -/
