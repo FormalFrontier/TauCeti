@@ -127,8 +127,7 @@ omit [NumberField K] in
 `p ∤ d`) iff `d` is a square mod `p`. -/
 private theorem card_monicFactorsMod_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d) {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hcop : ¬ (p : ℤ) ∣ d) :
-    (monicFactorsMod θ p).card = 2 ↔ legendreSym p d = 1 := by
+    (hcop : ¬ (p : ℤ) ∣ d) : (monicFactorsMod θ p).card = 2 ↔ legendreSym p d = 1 := by
   classical
   have hc0 : (d : ZMod p) ≠ 0 := by rw [Ne, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hcop
   have h2 : (2 : ZMod p) ≠ 0 := by

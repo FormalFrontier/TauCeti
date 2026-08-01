@@ -64,8 +64,7 @@ by the two coordinate projections; the inverse sends a pair of loop classes to t
       ((FundamentalGroup.map (ContinuousMap.snd : C(X × Y, Y)) (x, y)).map_mul γ δ)
 
 @[simp]
-theorem FundamentalGroup.prodMulEquiv_apply (x : X) (y : Y)
-    (γ : FundamentalGroup (X × Y) (x, y)) :
+theorem FundamentalGroup.prodMulEquiv_apply (x : X) (y : Y) (γ : FundamentalGroup (X × Y) (x, y)) :
     FundamentalGroup.prodMulEquiv x y γ =
       (FundamentalGroup.map (ContinuousMap.fst : C(X × Y, X)) (x, y) γ,
         FundamentalGroup.map (ContinuousMap.snd : C(X × Y, Y)) (x, y) γ) :=
@@ -99,8 +98,7 @@ theorem FundamentalGroup.piMulEquiv_apply (x : ∀ i, X i)
 
 @[simp]
 theorem FundamentalGroup.piMulEquiv_symm_apply (x : ∀ i, X i)
-    (γ : ∀ i, FundamentalGroup (X i) (x i)) :
-    (FundamentalGroup.piMulEquiv x).symm γ = pi γ :=
+    (γ : ∀ i, FundamentalGroup (X i) (x i)) : (FundamentalGroup.piMulEquiv x).symm γ = pi γ :=
   rfl
 
 end

@@ -52,8 +52,7 @@ namespace Probability
 `mH` are conditionally independent given `mG`. -/
 theorem condIndep_of_indicator_condExp_eq {Ω : Type*} {mΩ : MeasurableSpace Ω}
     [StandardBorelSpace Ω] {μ : Measure Ω} [IsFiniteMeasure μ] {mF mG mH : MeasurableSpace Ω}
-    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ)
-    (h : ∀ H, MeasurableSet[mH] H →
+    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ) (h : ∀ H, MeasurableSet[mH] H →
       μ[H.indicator (fun _ => (1 : ℝ)) | mF ⊔ mG]
         =ᵐ[μ] μ[H.indicator (fun _ => (1 : ℝ)) | mG]) :
     CondIndep mG mF mH hmG μ := by
@@ -137,10 +136,8 @@ private lemma setIntegral_condExp_mul_eq_setIntegral_mul {Ω : Type*} {m0 mG : M
 `mF`-measurable, `tG` `mG`-measurable), the conditional expectation given `mG` of an
 `mH`-measurable indicator integrates to the same value as the indicator itself. -/
 private lemma setIntegral_condExp_indicator_eq_on_rectangle {Ω : Type*} {mΩ : MeasurableSpace Ω}
-    [StandardBorelSpace Ω] {μ : @Measure Ω mΩ} [IsFiniteMeasure μ]
-    {mF mG mH : MeasurableSpace Ω}
-    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ)
-    (hCI : CondIndep mG mF mH hmG μ)
+    [StandardBorelSpace Ω] {μ : @Measure Ω mΩ} [IsFiniteMeasure μ] {mF mG mH : MeasurableSpace Ω}
+    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ) (hCI : CondIndep mG mF mH hmG μ)
     {H : Set Ω} (hH : MeasurableSet[mH] H)
     {tF tG : Set Ω} (htF : MeasurableSet[mF] tF) (htG : MeasurableSet[mG] tG) :
     ∫ x in tF ∩ tG, (μ[H.indicator (fun _ => (1 : ℝ)) | mG]) x ∂μ
@@ -237,10 +234,8 @@ given `mG` (in the sense of Mathlib's `ProbabilityTheory.CondIndep`), then condi
 indicator of an `mH`-measurable set `H` on the join `mF ⊔ mG` collapses to conditioning on `mG`.
 This is the converse of `condIndep_of_indicator_condExp_eq`. -/
 theorem condExp_indicator_sup_eq_of_condIndep {Ω : Type*} {mΩ : MeasurableSpace Ω}
-    [StandardBorelSpace Ω] {μ : @Measure Ω mΩ} [IsFiniteMeasure μ]
-    {mF mG mH : MeasurableSpace Ω}
-    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ)
-    (hCI : CondIndep mG mF mH hmG μ)
+    [StandardBorelSpace Ω] {μ : @Measure Ω mΩ} [IsFiniteMeasure μ] {mF mG mH : MeasurableSpace Ω}
+    (hmF : mF ≤ mΩ) (hmG : mG ≤ mΩ) (hmH : mH ≤ mΩ) (hCI : CondIndep mG mF mH hmG μ)
     {H : Set Ω} (hH : MeasurableSet[mH] H) :
     μ[H.indicator (fun _ => (1 : ℝ)) | mF ⊔ mG]
       =ᵐ[μ]
@@ -274,8 +269,7 @@ private lemma marginal_law_eq_of_pair_law (X : Ω → α) (W W' : Ω → γ)
 
 /-- If the pair laws agree, `(X, W) =ᵈ (X, W')`, the indicator of `X ⁻¹' A` has the same integral
 over `W ⁻¹' B` as over `W' ⁻¹' B`. -/
-private lemma setIntegral_indicator_preimage_eq_of_pair_law
-    (X : Ω → α) (W W' : Ω → γ)
+private lemma setIntegral_indicator_preimage_eq_of_pair_law (X : Ω → α) (W W' : Ω → γ)
     (hX : Measurable X) (hW : Measurable W) (hW' : Measurable W')
     (h_law : Measure.map (fun ω => (X ω, W ω)) μ = Measure.map (fun ω => (X ω, W' ω)) μ)
     {A : Set α} (hA : MeasurableSet A) {B : Set γ} (hB : MeasurableSet B) :
@@ -351,8 +345,7 @@ private lemma integral_mul_self_condExp_comap_eq_integral_sq_map
 /-- The Doob–Dynkin factors of the two conditional expectations agree a.e. on the common law: the
 pair law makes their set-integrals over corresponding preimages match, and an integrable function
 is determined a.e. by those. -/
-private lemma ae_eq_of_condExp_comap_comp_of_pair_law [IsFiniteMeasure μ]
-    (X : Ω → α) (W W' : Ω → γ)
+private lemma ae_eq_of_condExp_comap_comp_of_pair_law [IsFiniteMeasure μ] (X : Ω → α) (W W' : Ω → γ)
     (hX : Measurable X) (hW : Measurable W) (hW' : Measurable W')
     (h_law : Measure.map (fun ω => (X ω, W ω)) μ = Measure.map (fun ω => (X ω, W' ω)) μ)
     {A : Set α} (hA : MeasurableSet A) {g₁ g₂ : γ → ℝ}
@@ -381,8 +374,7 @@ private lemma ae_eq_of_condExp_comap_comp_of_pair_law [IsFiniteMeasure μ]
           hW' hg₂_sm hφ_int hμ₂_eq hB).symm
 
 /-- Helper for Kallenberg 1.3: the square-integrals of the two conditional expectations agree. -/
-private lemma integral_sq_condExp_eq_of_pair_law [IsFiniteMeasure μ]
-    (X : Ω → α) (W W' : Ω → γ)
+private lemma integral_sq_condExp_eq_of_pair_law [IsFiniteMeasure μ] (X : Ω → α) (W W' : Ω → γ)
     (hX : Measurable X) (hW : Measurable W) (hW' : Measurable W')
     (h_law : Measure.map (fun ω => (X ω, W ω)) μ = Measure.map (fun ω => (X ω, W' ω)) μ)
     {A : Set α} (hA : MeasurableSet A) :
@@ -424,10 +416,8 @@ integral (`∫ g₂ g₁ = ∫ g₁²`) are a.e. equal: the `L²` distance polar
 `∫ (g₂ - g₁)² = ∫ g₂² - 2 ∫ g₂ g₁ + ∫ g₁² = 0`. The products `g₁²`, `g₂²`, `g₂ g₁` are assumed
 integrable. -/
 private lemma ae_eq_of_integral_mul_eq_of_integral_sq_eq {Ω : Type*} {mΩ : MeasurableSpace Ω}
-    {μ : Measure Ω} {g₁ g₂ : Ω → ℝ}
-    (hg₁sq : Integrable (fun ω => g₁ ω * g₁ ω) μ)
-    (hg₂sq : Integrable (fun ω => g₂ ω * g₂ ω) μ)
-    (hg₂g₁ : Integrable (fun ω => g₂ ω * g₁ ω) μ)
+    {μ : Measure Ω} {g₁ g₂ : Ω → ℝ} (hg₁sq : Integrable (fun ω => g₁ ω * g₁ ω) μ)
+    (hg₂sq : Integrable (fun ω => g₂ ω * g₂ ω) μ) (hg₂g₁ : Integrable (fun ω => g₂ ω * g₁ ω) μ)
     (h_cross : ∫ ω, g₂ ω * g₁ ω ∂μ = ∫ ω, g₁ ω * g₁ ω ∂μ)
     (h_sq : ∫ ω, g₁ ω * g₁ ω ∂μ = ∫ ω, g₂ ω * g₂ ω ∂μ) :
     g₁ =ᵐ[μ] g₂ := by
@@ -462,8 +452,7 @@ private lemma ae_norm_condExp_indicator_le_one {Ω : Type*} {m0 : MeasurableSpac
 /-- **Kallenberg Lemma 1.3 (contraction-independence).** If `(X, W) =ᵈ (X, W')` and
 `σ(W) ≤ σ(W')` (so `W` is a contraction of `W'`), then conditioning the indicator of `X` on the
 finer `σ(W')` equals conditioning on the coarser `σ(W)`, almost everywhere. -/
-theorem condExp_indicator_eq_of_law_eq_of_comap_le [IsFiniteMeasure μ]
-    (X : Ω → α) (W W' : Ω → γ)
+theorem condExp_indicator_eq_of_law_eq_of_comap_le [IsFiniteMeasure μ] (X : Ω → α) (W W' : Ω → γ)
     (hX : Measurable X) (hW : Measurable W) (hW' : Measurable W')
     (h_law : Measure.map (fun ω => (X ω, W ω)) μ = Measure.map (fun ω => (X ω, W' ω)) μ)
     (h_le : MeasurableSpace.comap W inferInstance ≤ MeasurableSpace.comap W' inferInstance)

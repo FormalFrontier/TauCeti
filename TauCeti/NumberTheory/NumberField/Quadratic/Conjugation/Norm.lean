@@ -53,8 +53,7 @@ private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K)
 /-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
 sends the nonzero generator `θ` to its negative `-θ`. -/
 private theorem quadraticConj_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    (1 : K ≃ₐ[ℚ] K) ≠ quadraticConj hmin hgen := by
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : (1 : K ≃ₐ[ℚ] K) ≠ quadraticConj hmin hgen := by
   intro h
   have hθ : (θ : K) = -(θ : K) := by
     have := DFunLike.congr_fun h (θ : K)
@@ -129,8 +128,7 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
 genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
-    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (I : Ideal (𝓞 K)) :
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
     (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
   -- For `I ≠ 0`, `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a
   -- principal `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.

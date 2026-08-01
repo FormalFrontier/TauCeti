@@ -64,8 +64,7 @@ def prod (A B : AbelianVariety K) : AbelianVariety K :=
 
 /-- The group scheme underlying a product is the fibre product group scheme. -/
 @[simp]
-lemma prod_toOver (A B : AbelianVariety K) :
-    (prod A B).toOver = A.toOver ⊗ B.toOver := by
+lemma prod_toOver (A B : AbelianVariety K) : (prod A B).toOver = A.toOver ⊗ B.toOver := by
   letI := isProper_tensor A B
   letI := geometricallyIntegral_tensor A B
   exact ofGeometricallyIntegral_toOver _
@@ -179,8 +178,7 @@ lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 
 /-- Homomorphisms into a product are determined by their two projections. -/
 @[ext]
-lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B}
-    (hfst : f ≫ fst A B = g ≫ fst A B)
+lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B} (hfst : f ≫ fst A B = g ≫ fst A B)
     (hsnd : f ≫ snd A B = g ≫ snd A B) : f = g := by
   apply Hom.toOverHom_injective
   rw [← cancel_mono (eqToHom (prod_toOver A B))]
