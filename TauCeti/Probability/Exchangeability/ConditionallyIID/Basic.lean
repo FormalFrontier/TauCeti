@@ -162,7 +162,7 @@ Taking the second marginal of both sides does exactly that. On the left, `Measur
 discards the `ν` coordinate needing only measurability of `ν` itself — which the predicate
 supplies — so no hypothesis on the coordinates of `X` is required. On the right, naturality of
 `bind` pushes the marginal inside the mixture, where each `δ_{ν ω}` factor integrates away. -/
-theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
   refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
   have hK : AEMeasurable (fun ω =>
@@ -181,7 +181,7 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ℕ → Ω �
         simp
 
 /-- The existential form of the easy arrow. -/
-theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ι → Ω → α}
     (h : ConditionallyIID μ X) : MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
