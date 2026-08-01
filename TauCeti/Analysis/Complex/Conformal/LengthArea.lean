@@ -123,24 +123,17 @@ radius, for which `circleMap` traverses the same circle backwards, gives the val
 noncomputable def circleImageLength (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ)
 
-/-- The defining formula for `TauCeti.circleImageLength`, for use outside this module. -/
-theorem circleImageLength_def (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
-    circleImageLength f s ζ ρ =
-      ENNReal.ofReal ρ *
-        ∫⁻ θ in Ioo (-π) π, s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ) := by
-  rw [circleImageLength]
-
 /-- Enlarging the set can only increase the arc length measured inside it. -/
 theorem circleImageLength_mono (f : ℂ → ℂ) (ζ : ℂ) (ρ : ℝ) (hst : s ⊆ t) :
     circleImageLength f s ζ ρ ≤ circleImageLength f t ζ ρ := by
-  rw [circleImageLength_def, circleImageLength_def]
+  rw [circleImageLength, circleImageLength]
   gcongr with θ
 
 /-- A circle of nonpositive radius contributes no length. -/
 @[simp]
 theorem circleImageLength_of_nonpos (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) {ρ : ℝ} (hρ : ρ ≤ 0) :
     circleImageLength f s ζ ρ = 0 := by
-  rw [circleImageLength_def, ENNReal.ofReal_of_nonpos hρ, zero_mul]
+  rw [circleImageLength, ENNReal.ofReal_of_nonpos hρ, zero_mul]
 
 /-- The angular integrand has period `2 * π`, because `circleMap ζ ρ` does. -/
 private theorem periodic_indicator_circleMap (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
@@ -167,7 +160,7 @@ theorem circleImageLength_eq_lintegral_Ioc (f : ℂ → ℂ) (s : Set ℂ) (ζ :
       ENNReal.ofReal ρ *
         ∫⁻ θ in Ioc t (t + 2 * π), s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ) := by
   have hπ : -π + 2 * π = π := by ring
-  rw [circleImageLength_def, ← lintegral_Ioc_indicator_circleMap f s ζ ρ (-π) t, hπ]
+  rw [circleImageLength, ← lintegral_Ioc_indicator_circleMap f s ζ ρ (-π) t, hπ]
   exact congrArg _ (setLIntegral_congr Ioo_ae_eq_Ioc)
 
 /-- The area distortion of `f`, cut off outside `s`. This is the integrand on both sides of the
@@ -184,7 +177,7 @@ private theorem measurable_enormDerivIndicator (f : ℂ → ℂ) (hs : Measurabl
 private theorem circleImageLength_eq (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
     circleImageLength f s ζ ρ =
       ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, enormDerivIndicator f s (circleMap ζ ρ θ) := by
-  rw [circleImageLength_def, enormDerivIndicator]
+  rw [circleImageLength, enormDerivIndicator]
 
 private theorem enormDerivIndicator_sq (f : ℂ → ℂ) (s : Set ℂ) (z : ℂ) :
     enormDerivIndicator f s z ^ 2 = s.indicator (fun z => ‖deriv f z‖ₑ ^ 2) z := by
