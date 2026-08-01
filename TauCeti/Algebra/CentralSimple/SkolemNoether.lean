@@ -5,9 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- Public: exactly the modules supplying types and classes that occur in the statements exported
--- from here. `Mathlib.RingTheory.TensorProduct.Basic` carries the algebra structure on
--- `B ⊗[K] Aᵐᵒᵖ` (and with it `AlgHom`, `AlgEquiv` and `Subalgebra`); the other three carry
--- `Algebra.IsCentral`, `IsSimpleRing` and `FiniteDimensional`.
+-- from here. `Mathlib.RingTheory.TensorProduct.Basic` carries `AlgHom`, `AlgEquiv` and `Subalgebra`
+-- (and the algebra structure on `B ⊗[K] Aᵐᵒᵖ` that the private construction below uses); the other
+-- three carry `Algebra.IsCentral`, `IsSimpleRing` and `FiniteDimensional`.
 public import Mathlib.Algebra.Central.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.SimpleRing.Defs
@@ -37,18 +37,16 @@ automorphism of a finite-dimensional central simple algebra is inner.
 
 The proof is the classical module-theoretic one. A homomorphism `f : B →ₐ[K] A` makes `A` into a
 module over `R = B ⊗[K] Aᵐᵒᵖ`, with `B` acting on the left through `f` and `A` on the right by
-multiplication; this is `TauCeti.Bimodule f`. Because `B` is central simple and `Aᵐᵒᵖ` is simple,
-`R` is a simple ring (`TauCeti.IsSimpleRing.tensorProduct`), and it is finite-dimensional over `K`,
-hence Artinian. The two modules `TauCeti.Bimodule f` and `TauCeti.Bimodule g` are carried by one
-and the same `K`-vector space `A`, so they have equal dimension, so they are isomorphic `R`-modules
+multiplication; this is the private `Bimodule f` below. Because `B` is central simple and `Aᵐᵒᵖ` is
+simple, `R` is a simple ring (`TauCeti.IsSimpleRing.tensorProduct`), and it is finite-dimensional
+over `K`, hence Artinian. The two modules `Bimodule f` and `Bimodule g` are carried by one and the
+same `K`-vector space `A`, so they have equal dimension, so they are isomorphic `R`-modules
 (`TauCeti.IsSimpleRing.nonempty_linearEquiv_of_finrank_eq`). An `R`-linear isomorphism is in
 particular linear for the right action of `A`, hence is multiplication on the left by the unit
 `u = φ 1`, and its linearity for the left action of `B` is exactly `u * f x = g x * u`.
 
 ## Main results
 
-* `TauCeti.Bimodule`: `A` as a module over `B ⊗[K] Aᵐᵒᵖ` through an algebra homomorphism
-  `f : B →ₐ[K] A`, with its basic API (`TauCeti.Bimodule.of`, `TauCeti.Bimodule.smul_of`).
 * `TauCeti.skolemNoether`: **the Skolem-Noether theorem**.
 * `TauCeti.exists_unit_conj_of_algEquiv`: every `K`-algebra automorphism of a finite-dimensional
   central simple `K`-algebra is inner.
@@ -63,8 +61,10 @@ Centrality is asked of the **source** `B`, not of the target `A`: what the proof
 and `A` simple. So the statement here is slightly stronger than the usual one, which asks `A` to be
 central simple as well; the roadmap's central simple form is the case `Algebra.IsCentral K A`, which
 the statement covers because a central simple algebra is in particular simple. Finite-dimensionality
-of `B` is essential and is carried explicitly: the classification of modules that supplies `φ` needs
-`B ⊗[K] Aᵐᵒᵖ` to be finite-dimensional over `K`, and with it Artinian.
+of `B` is *not* assumed: the proof does need it, because the classification of modules that supplies
+`φ` needs `B ⊗[K] Aᵐᵒᵖ` to be finite-dimensional over `K` and with it Artinian, but it comes for
+free from the other hypotheses, since a homomorphism out of the simple ring `B` into the nontrivial
+ring `A` is injective and `A` is finite-dimensional.
 
 Centrality of the source really is needed, and not just by this proof: the worked example at the end
 of the file exhibits `ℂ` as a simple finite-dimensional `ℝ`-algebra, not central over `ℝ`, whose
@@ -73,13 +73,21 @@ simple `B` provided the ambient `A` is central simple, but that form needs the c
 and is a separate, later target; the central simple form pinned here is what the centralizer theorem
 itself consumes.
 
-`TauCeti.Bimodule f` is a type synonym for `A` rather than a `Module` instance on `A` itself,
-because the whole point is to compare the two different `B ⊗[K] Aᵐᵒᵖ`-module structures coming from
-`f` and from `g`; indexing the synonym by the homomorphism keeps both available at once. Mathlib
-takes the same route for `A ⊗[R] Aᵐᵒᵖ` acting on `A` in `Mathlib/Algebra/Azumaya/Defs.lean`, where
+`Bimodule f` is a type synonym for `A` rather than a `Module` instance on `A` itself, because the
+whole point is to compare the two different `B ⊗[K] Aᵐᵒᵖ`-module structures coming from `f` and from
+`g`; indexing the synonym by the homomorphism keeps both available at once. Mathlib takes the same
+route for `A ⊗[R] Aᵐᵒᵖ` acting on `A` in `Mathlib/Algebra/Azumaya/Defs.lean`, where
 `instModuleTensorProductMop` is deliberately not an instance. The action map is built from Mathlib's
 `AlgHom.mulLeftRight` by restricting along `f` on the left factor, so the two agree for `f` the
 identity of `A`.
+
+The whole construction is `private`: it is the mechanism of the proof below and has no consumer
+outside this file, so none of it — the synonym, its representation as `A`, the action map, or the
+instances — reaches the interface, and no importer can depend on `Bimodule f` being `A`
+definitionally. A type synonym cannot be carried by a `Module` instance without unfolding its body,
+so making it public would mean exposing that body; the exported statements are the three theorems
+below, all phrased in `A` and `B` alone. Should a later file need the bimodule, it can be made
+public then, together with an interface that pins down what that file actually uses.
 
 ## References
 
@@ -104,61 +112,60 @@ variable {K A B : Type*} [CommSemiring K] [Ring A] [Algebra K A] [Semiring B] [A
 
 Equivalently this is the `B`-`A`-bimodule `A` obtained by restricting the left action along `f`,
 packaged as a left module over `B ⊗[K] Aᵐᵒᵖ` in the usual way. It is a type synonym for `A`
-precisely so that the structures coming from two different homomorphisms can be compared. -/
-@[expose] def Bimodule (_f : B →ₐ[K] A) : Type _ := A
+precisely so that the structures coming from two different homomorphisms can be compared, and it is
+`private` because it is the mechanism of the proof below rather than part of the interface. -/
+private def Bimodule (_f : B →ₐ[K] A) : Type _ := A
 
 namespace Bimodule
 
 variable (f : B →ₐ[K] A)
 
-instance : AddCommGroup (Bimodule f) := inferInstanceAs (AddCommGroup A)
+private instance : AddCommGroup (Bimodule f) := inferInstanceAs (AddCommGroup A)
 
-instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
+private instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
 
-/-- `TauCeti.Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
-def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
+/-- `Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
+private def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
 
-/-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `TauCeti.Bimodule f`, as an algebra homomorphism
-into `Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left
-factor, so for `f = AlgHom.id K A` it is `AlgHom.mulLeftRight K A` itself. -/
-noncomputable def toEnd : B ⊗[K] Aᵐᵒᵖ →ₐ[K] Module.End K A :=
+/-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `Bimodule f`, as an algebra homomorphism into
+`Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left factor, so
+for `f = AlgHom.id K A` it is `AlgHom.mulLeftRight K A` itself. -/
+private noncomputable def toEnd : B ⊗[K] Aᵐᵒᵖ →ₐ[K] Module.End K A :=
   (AlgHom.mulLeftRight K A).comp (Algebra.TensorProduct.map f (AlgHom.id K Aᵐᵒᵖ))
 
-/-- A pure tensor `b ⊗ₜ op a` acts on `x : A` through `TauCeti.Bimodule.toEnd f` by
-`x ↦ f b * x * a`. -/
+/-- A pure tensor `b ⊗ₜ op a` acts on `x : A` through `toEnd f` by `x ↦ f b * x * a`. -/
 @[simp]
-theorem toEnd_tmul_apply (b : B) (a : Aᵐᵒᵖ) (x : A) : toEnd f (b ⊗ₜ a) x = f b * x * a.unop := by
+private theorem toEnd_tmul_apply (b : B) (a : Aᵐᵒᵖ) (x : A) :
+    toEnd f (b ⊗ₜ a) x = f b * x * a.unop := by
   simp [toEnd]
 
-noncomputable instance : Module (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) :=
+private noncomputable instance : Module (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) :=
   Module.compHom (M := A) (toEnd f).toRingHom
 
-/-- A scalar `r : B ⊗[K] Aᵐᵒᵖ` acts on `TauCeti.Bimodule f` through `TauCeti.Bimodule.toEnd f`.
-This is the defining equation of the module structure, and the single place it is unfolded: the
-scalar tower instance below rewrites with it instead of reasoning up to definitional equality. It is
-`private` because its proof is that unfolding, and the bodies of `TauCeti.Bimodule.of` and
-`TauCeti.Bimodule.toEnd` are not exposed, so a module-exported theorem may not appeal to them; the
-public interface is `TauCeti.Bimodule.smul_of` and `TauCeti.Bimodule.symm_smul`. -/
+/-- A scalar `r : B ⊗[K] Aᵐᵒᵖ` acts on `Bimodule f` through `toEnd f`. This is the defining equation
+of the module structure, and the single place it is unfolded: the scalar tower instance below
+rewrites with it instead of reasoning up to definitional equality. -/
 private theorem smul_def (r : B ⊗[K] Aᵐᵒᵖ) (x : A) : r • of f x = of f (toEnd f r x) := rfl
 
-instance : IsScalarTower K (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) where
+private instance : IsScalarTower K (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) where
   smul_assoc c r x := by
     rw [← (of f).apply_symm_apply x, smul_def, smul_def, map_smul (toEnd f),
       LinearMap.smul_apply, map_smul (of f)]
 
-instance [Module.Finite K A] : Module.Finite K (Bimodule f) := inferInstanceAs (Module.Finite K A)
+private instance [Module.Finite K A] : Module.Finite K (Bimodule f) :=
+  inferInstanceAs (Module.Finite K A)
 
-/-- A pure tensor `b ⊗ₜ op a` acts on `TauCeti.Bimodule f` by `x ↦ f b * x * a`: the left factor
-acts on the left through `f`, the right factor on the right by multiplication. -/
+/-- A pure tensor `b ⊗ₜ op a` acts on `Bimodule f` by `x ↦ f b * x * a`: the left factor acts on the
+left through `f`, the right factor on the right by multiplication. -/
 @[simp]
-theorem smul_of (b : B) (a : Aᵐᵒᵖ) (x : A) :
+private theorem smul_of (b : B) (a : Aᵐᵒᵖ) (x : A) :
     (b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • of f x = of f (f b * x * a.unop) :=
   toEnd_tmul_apply f b a x
 
-/-- `TauCeti.Bimodule.smul_of` read back through `TauCeti.Bimodule.of`: the action of a pure tensor
-`b ⊗ₜ op a`, transported to `A`, is `x ↦ f b * x * a`. -/
+/-- `smul_of` read back through `of`: the action of a pure tensor `b ⊗ₜ op a`, transported to `A`,
+is `x ↦ f b * x * a`. -/
 @[simp]
-theorem symm_smul (b : B) (a : Aᵐᵒᵖ) (y : Bimodule f) :
+private theorem symm_smul (b : B) (a : Aᵐᵒᵖ) (y : Bimodule f) :
     (of f).symm ((b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • y) = f b * (of f).symm y * a.unop :=
   toEnd_tmul_apply f b a ((of f).symm y)
 
@@ -174,11 +181,15 @@ variable (K : Type*) {A B : Type*} [Field K] [Ring A] [Algebra K A] [Ring B] [Al
 finite-dimensional **central simple** `K`-algebra `B` to a finite-dimensional **simple** `K`-algebra
 `A` are conjugate: there is a unit `u` of `A` with `g x = u * f x * u⁻¹` for all `x : B`.
 
-Finite-dimensionality of `B` cannot be dropped; it is what makes `B ⊗[K] Aᵐᵒᵖ` Artinian, and with it
-the classification of modules that produces the conjugating isomorphism. -/
+Finite-dimensionality of `B` is not among the hypotheses: it follows from them, because `f` is
+injective, `B` being simple and `A` nontrivial. The proof does use it, to make `B ⊗[K] Aᵐᵒᵖ`
+Artinian, and with it the classification of modules that produces the conjugating isomorphism. -/
 theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
-    [Algebra.IsCentral K B] [IsSimpleRing B] [FiniteDimensional K B] (f g : B →ₐ[K] A) :
+    [Algebra.IsCentral K B] [IsSimpleRing B] (f g : B →ₐ[K] A) :
     ∃ u : Aˣ, ∀ x : B, g x = (u : A) * f x * (↑u⁻¹ : A) := by
+  -- `B` is simple and `A` nontrivial, so `f` is injective and `B` inherits finite-dimensionality.
+  have hf : Function.Injective f := f.toRingHom.injective
+  have : FiniteDimensional K B := FiniteDimensional.of_injective f.toLinearMap hf
   have : FiniteDimensional K Aᵐᵒᵖ := Module.Finite.equiv (MulOpposite.opLinearEquiv K)
   have hrank : Module.finrank K (Bimodule f) = Module.finrank K (Bimodule g) :=
     ((Bimodule.of f).symm.trans (Bimodule.of g)).finrank_eq
