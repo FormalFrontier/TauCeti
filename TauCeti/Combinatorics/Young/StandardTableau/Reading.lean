@@ -64,23 +64,27 @@ namespace YoungDiagram
 
 variable {μ : YoungDiagram}
 
-/-- The position of the cell `c` in reading order: the number of cells of `μ` lying in earlier
-rows, plus the column index of `c`. -/
+/-- The position of the coordinate pair `c` in reading order: the number of cells of `μ` lying in
+rows above `c.1`, plus the column index `c.2`.  This is defined for an arbitrary pair, but it
+numbers `μ` in reading order only on the cells of `μ`. -/
 def readingIndex (μ : YoungDiagram) (c : ℕ × ℕ) : ℕ :=
   (∑ i ∈ Finset.range c.1, μ.rowLen i) + c.2
 
-/-- The reading index of a cell is the sum of the lengths of the rows above it, plus its column
-index. -/
+/-- The reading index of a coordinate pair is the sum of the lengths of the rows of `μ` above it,
+plus its column index. -/
 theorem readingIndex_def (μ : YoungDiagram) (c : ℕ × ℕ) :
     readingIndex μ c = (∑ i ∈ Finset.range c.1, μ.rowLen i) + c.2 := by
   rw [readingIndex]
 
-/-- A cell of the first row has its column index as its reading index. -/
+/-- In row `0` the reading index is the column index; for a cell of the first row of `μ` this says
+that it is numbered by its column index. -/
 @[simp]
 theorem readingIndex_zero (μ : YoungDiagram) (j : ℕ) : readingIndex μ (0, j) = j := by
   simp [readingIndex]
 
-/-- The first cell of the second row is numbered by the length of the first row. -/
+/-- The reading index of `(1, 0)` is the length of the first row of `μ`; when `μ` has a second row,
+`(1, 0)` is its first cell. -/
+@[simp]
 theorem readingIndex_one_zero (μ : YoungDiagram) : readingIndex μ (1, 0) = μ.rowLen 0 := by
   simp [readingIndex]
 
@@ -173,6 +177,13 @@ theorem colSuperstandard_apply_val (μ : YoungDiagram) (c : ↥μ.cells) :
     (colSuperstandard μ c).val = YoungDiagram.readingIndex μ.transpose c.1.swap := by
   rw [colSuperstandard, transposeEquiv_symm_apply_val, rowSuperstandard_apply_val]
 
+/-- Transposing the column-superstandard tableau of `μ` gives the row-superstandard tableau of the
+transposed diagram: this is the defining property of `colSuperstandard`. -/
+@[simp]
+theorem transpose_colSuperstandard (μ : YoungDiagram) :
+    (colSuperstandard μ).transpose = rowSuperstandard μ.transpose := by
+  rw [colSuperstandard, ← transposeEquiv_apply, Equiv.apply_symm_apply]
+
 /-- Every Young diagram carries a standard Young tableau. -/
 instance instNonempty (μ : YoungDiagram) : Nonempty (StandardYoungTableau μ) :=
   ⟨rowSuperstandard μ⟩
@@ -240,6 +251,7 @@ theorem standardCount_pos (μ : YoungDiagram) : 0 < standardCount μ := by
   exact Fintype.card_pos
 
 /-- The number of standard Young tableaux of a given shape is never zero. -/
+@[simp]
 theorem standardCount_ne_zero (μ : YoungDiagram) : standardCount μ ≠ 0 :=
   (standardCount_pos μ).ne'
 
@@ -269,6 +281,7 @@ theorem one_lt_standardCount {μ : YoungDiagram} (hrow : 1 < μ.rowLen 0) (hcol 
 /-- **The shapes with a unique standard Young tableau** are exactly the diagrams with at most one
 row and those with at most one column; the empty diagram, which satisfies both hypotheses, is one
 of them. -/
+@[simp]
 theorem standardCount_eq_one_iff {μ : YoungDiagram} :
     standardCount μ = 1 ↔ μ.rowLen 0 ≤ 1 ∨ μ.colLen 0 ≤ 1 := by
   refine ⟨fun h => ?_, fun h =>
