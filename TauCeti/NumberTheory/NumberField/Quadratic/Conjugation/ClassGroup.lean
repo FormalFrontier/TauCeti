@@ -76,15 +76,9 @@ quotient is the identity. This is the capstone reduction feeding the genus-field
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (x : TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K)) :
     TauCeti.ClassGroup.elementaryTwoQuotientCongr
-      (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) x = x := by
-  -- `ClassGroup.elementaryTwoQuotientCongr` is an opaque (non-exposed) `def`, so the generic
-  -- `elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv` cannot be applied across the module
-  -- boundary; reprove through the public `@[simp]` API. Conjugation sends `C ↦ C⁻¹`, and `C⁻¹`
-  -- and `C` differ by the square `C⁻¹ / C = (C⁻¹)²`, so they agree in `Cl/Cl²`.
-  obtain ⟨C, rfl⟩ := TauCeti.ClassGroup.elementaryTwoQuotientMk_surjective (𝓞 K) x
-  rw [TauCeti.ClassGroup.elementaryTwoQuotientCongr_mk,
-    mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen]
-  exact (TauCeti.ClassGroup.elementaryTwoQuotientMk_eq_iff (𝓞 K) C⁻¹ C).2
-    ⟨C⁻¹, div_eq_mul_inv C⁻¹ C⟩
+      (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) x = x :=
+  TauCeti.ClassGroup.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv
+    (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen))
+    (mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen) x
 
 end TauCeti.NumberField
