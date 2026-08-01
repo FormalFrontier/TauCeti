@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.RingTheory.Derivation.DualNumber
+public import Mathlib.Algebra.Group.Equiv.TypeTags
+public import Mathlib.Algebra.Module.TransferInstance
 
 /-!
 # The tangent space at the identity point
@@ -26,10 +28,10 @@ the additive monoid of derivations at the identity
 (the `CommGroup (tangentKer R A B)` instance).
 
 This identifies counit-valued derivations with the first-order infinitesimal kernel.
-Over commutative rings this is the additive group of the tangent space at the identity
-of the corresponding affine group scheme; no Lie bracket, no scalar structure on the
-kernel, and no functoriality in `B` are constructed here — first-order commutativity
-of the kernel says nothing about the Lie bracket, which appears at second order.
+The additive wrapper of the kernel inherits its natural `R`-module structure through this
+identification, and `derivationLinearEquivTangent` records the resulting linear equivalence.
+No Lie bracket or functoriality in `B` is constructed here — first-order commutativity of the
+kernel says nothing about the Lie bracket, which appears at second order.
 
 The synonym `CounitAlgebra` is a fresh scope for the point-induced algebra structure,
 as the dictionary requires; it does not install instances on `B` itself, and
@@ -333,6 +335,38 @@ noncomputable instance : CommGroup (tangentKer R A B) :=
     mul_comm x y := by
       refine (derivationMulEquivTangentKer R A B).symm.injective ?_
       rw [map_mul, map_mul, mul_comm] }
+
+variable (R A B) in
+/-- Counit-valued derivations are additively equivalent to the tangent kernel, with the
+multiplication of infinitesimal points read as addition through the `Additive` wrapper. -/
+noncomputable def derivationAddEquivTangent :
+    Derivation R A (Bialgebra.CounitAlgebra R A B) ≃+
+      Additive (tangentKer R A B) :=
+  AddEquiv.toAdditive_toMultiplicative.symm.trans
+    (derivationMulEquivTangentKer R A B).toAdditive
+
+@[simp]
+lemma derivationAddEquivTangent_symm_apply
+    (ψ : tangentKer R A B) (a : A) :
+    (derivationAddEquivTangent R A B).symm (.ofMul ψ) a =
+      TrivSqZeroExt.snd (ψ.val.ofConv a) := by
+  exact derivationMulEquivTangentKer_symm_apply ψ a
+
+/-- The natural `R`-module structure on the tangent kernel, written additively. It is
+transported from counit-valued derivations through `derivationAddEquivTangent`. -/
+noncomputable instance : Module R (Additive (tangentKer R A B)) :=
+  (derivationAddEquivTangent R A B).symm.module R
+
+variable (R A B) in
+/-- The tangent kernel at the identity is linearly equivalent to the module of derivations
+at the counit point. -/
+noncomputable def derivationLinearEquivTangent :
+    Derivation R A (Bialgebra.CounitAlgebra R A B) ≃ₗ[R]
+      Additive (tangentKer R A B) :=
+  { derivationAddEquivTangent R A B with
+    map_smul' := fun r d => by
+      apply (derivationAddEquivTangent R A B).symm.injective
+      simp [Equiv.smul_def] }
 
 end Hopf
 
