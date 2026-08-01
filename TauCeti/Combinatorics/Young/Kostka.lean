@@ -72,7 +72,7 @@ noncomputable def content (T : _root_.SemistandardYoungTableau μ) : ℕ →₀ 
   (μ.cells.val.map fun c => T c.1 c.2).toFinsupp
 
 /-- The content of a tableau counts the cells of its shape carrying a given entry. -/
-theorem content_def (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
+theorem content_apply (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
     content T i = (μ.cells.filter fun c => T c.1 c.2 = i).card := by
   rw [content, Multiset.toFinsupp_apply, Multiset.count_map]
   simp [Finset.card, Finset.filter_val, eq_comm]
@@ -115,7 +115,7 @@ theorem sum_content_eq_card_filter (T : _root_.SemistandardYoungTableau μ) (k :
     _ = ∑ i ∈ Finset.range k, content T i := by
       refine Finset.sum_congr rfl fun i hi => ?_
       have hik : i < k := Finset.mem_range.mp hi
-      rw [content_def]
+      rw [content_apply]
       refine congrArg Finset.card (Finset.ext fun c => ?_)
       simp only [Finset.mem_filter, and_assoc]
       exact ⟨fun h => ⟨h.1, h.2.2⟩, fun h => ⟨h.1, h.2 ▸ hik, h.2⟩⟩
@@ -140,7 +140,7 @@ its shape. -/
 theorem content_highestWeight (μ : YoungDiagram) :
     ⇑(content (_root_.SemistandardYoungTableau.highestWeight μ)) = μ.rowLen := by
   funext i
-  rw [content_def, μ.rowLen_eq_card]
+  rw [content_apply, μ.rowLen_eq_card]
   refine congrArg Finset.card (Finset.ext fun c => ?_)
   simp only [_root_.YoungDiagram.mem_row_iff,
     _root_.SemistandardYoungTableau.highestWeight_apply]
