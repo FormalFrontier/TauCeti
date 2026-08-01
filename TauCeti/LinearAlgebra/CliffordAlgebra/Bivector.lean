@@ -91,7 +91,7 @@ theorem cliffordBivectorAlternating_apply (a b : M) :
     cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
 
 /-- The linear map from the second exterior power induced by the Clifford bivector. -/
-@[expose] noncomputable def cliffordBivectorExterior : ⋀[R]^2 M →ₗ[R] CliffordAlgebra Q :=
+noncomputable def cliffordBivectorExterior : ⋀[R]^2 M →ₗ[R] CliffordAlgebra Q :=
   exteriorPower.alternatingMapLinearEquiv (cliffordBivectorAlternating Q)
 
 /-- The exterior-square Clifford bivector map on a decomposable bivector. -/
