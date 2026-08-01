@@ -66,11 +66,15 @@ neighbourhood — all of it data about `f` inside the disc. Feeding those oscill
 each tolerance `ε`, to `TauCeti.subsingleton_clusterSetOn_of_forall_exists`, one gets:
 
 > a bounded holomorphic function on a disc has a limit at a boundary point `ζ` as soon as, for
-> every `ε > 0`, there is *some* crosscut radius `ρ > 0` at which `f` is within `ε` of a single
-> value on the crosscut arc and on a collar of the boundary.
+> every `ε > 0`, there is *some* radius `ρ > 0` at which `f` is within `ε` of a single value on
+> the part `ball c r ∩ sphere ζ ρ` of the circle around `ζ` inside the disc and on a collar of
+> the boundary.
 
 The radius is quantified per `ε`, and need not tend to zero: it is `ε` that shrinks, while `ρ`
-(along with the collar and the value approximated) is merely allowed to depend on it.
+(along with the collar and the value approximated) is merely allowed to depend on it. Nor is `ρ`
+asked to stay below `2 * r`, so a witness need not describe a circular crosscut: admitting the
+larger radii too only weakens the hypothesis, and the crosscut radii the application supplies are
+among the admissible ones.
 
 This is `TauCeti.exists_tendsto_nhdsWithin_ball`, and `TauCeti.exists_continuousOn_closedBall_eqOn`
 is its global form, a continuous extension to the closed disc. Boundedness alone is far from
@@ -437,10 +441,10 @@ theorem dist_le_of_mem_ball_inter_ball (hd : DifferentiableOn ℂ f (ball c r)) 
 
 /-! ## The crosscut criterion for boundary behaviour -/
 
-/-- **The crosscut criterion, cluster-set form.** If for every `ε > 0` there is *some* crosscut
-radius `ρ > 0` at which the function `f` is within `ε` of a single value on the part of the crosscut
-circle inside the disc and on a collar of the boundary, then `f` has at most one cluster value at
-`ζ` along the disc.
+/-- **The crosscut criterion, cluster-set form.** If for every `ε > 0` there is *some* radius
+`ρ > 0` at which the function `f` is within `ε` of a single value on the part
+`ball c r ∩ sphere ζ ρ` of the circle around `ζ` inside the disc and on a collar of the boundary,
+then `f` has at most one cluster value at `ζ` along the disc.
 
 The maximum modulus principle turns each such estimate into an oscillation bound on the crosscut
 neighbourhood `ball c r ∩ ball ζ ρ`
@@ -448,7 +452,8 @@ neighbourhood `ball c r ∩ ball ζ ρ`
 exactly the traces on the disc of the balls around `ζ`, so
 `TauCeti.subsingleton_clusterSetOn_of_forall_exists` applies verbatim. Only the values of `f` on
 the *open* disc are constrained, and only holomorphy there is assumed; note that `ζ` need not be
-on the boundary circle for this statement, and that `ρ`, `r₀` and `a` may all depend on `ε`. -/
+on the boundary circle for this statement, that `ρ`, `r₀` and `a` may all depend on `ε`, and that
+`ρ` is not bounded above by `2 * r`, so a witness need not cut a circular crosscut. -/
 theorem subsingleton_clusterSetOn_ball (hd : DifferentiableOn ℂ f (ball c r))
     (h : ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ, (∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
       ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
@@ -460,9 +465,11 @@ theorem subsingleton_clusterSetOn_ball (hd : DifferentiableOn ℂ f (ball c r))
   linarith
 
 /-- **The crosscut criterion for a boundary limit.** A bounded holomorphic function on a disc has a
-limit at a boundary point `ζ`, along the disc, as soon as for every `ε > 0` there is some crosscut
-radius at which it is within `ε` of a single value on the crosscut arc and on a collar of the
-boundary.
+limit at a boundary point `ζ`, along the disc, as soon as for every `ε > 0` there is some radius
+`ρ > 0` at which it is within `ε` of a single value on the part `ball c r ∩ sphere ζ ρ` of the
+circle around `ζ` inside the disc and on a collar of the boundary. As in
+`TauCeti.subsingleton_clusterSetOn_ball`, no upper bound on `ρ` is imposed, so a witness need not
+cut a circular crosscut.
 
 Nothing is assumed at the boundary circle itself: the input is the behaviour of `f` inside the
 disc, and the limit is a conclusion. Boundedness alone is far from enough — a bounded holomorphic
@@ -489,10 +496,11 @@ holomorphic function `f` extends continuously to `closedBall c r`.
 
 This is the shape in which the Carathéodory boundary correspondence is proved: whatever geometric
 hypothesis is placed on the image, it is used only to produce, at each boundary point and each
-`ε`, a crosscut radius along which `f` varies by at most `ε` on the arc and on the collar. The
-extension is genuinely produced here rather than assumed, since only holomorphy and boundedness on
-the *open* disc are hypotheses. Nothing here asserts that the extension is injective, which is an
-independent matter. -/
+`ε`, a radius `ρ > 0` — a crosscut radius in the application, though the statement imposes no
+upper bound on it — along which `f` varies by at most `ε` on `ball c r ∩ sphere ζ ρ` and on the
+collar. The extension is genuinely produced here rather than assumed, since only holomorphy and
+boundedness on the *open* disc are hypotheses. Nothing here asserts that the extension is
+injective, which is an independent matter. -/
 theorem exists_continuousOn_closedBall_eqOn (hr : 0 < r) (hd : DifferentiableOn ℂ f (ball c r))
     (hb : IsBounded (f '' ball c r))
     (h : ∀ ζ ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ,
