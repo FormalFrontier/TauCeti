@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Combinatorics.Young.SemistandardTableau
+public import Mathlib.Data.Finsupp.Multiset
 public import Mathlib.SetTheory.Cardinal.Finite
 public import TauCeti.Combinatorics.Enumerative.Partition.Conjugate
 
@@ -64,33 +65,23 @@ namespace SemistandardYoungTableau
 
 variable {μ : YoungDiagram}
 
-/-- The content, or weight, of a semistandard Young tableau: `content T i` is the number of cells
-of the shape whose entry is `i`. -/
-def content (T : _root_.SemistandardYoungTableau μ) (i : ℕ) : ℕ :=
-  (μ.cells.filter fun c => T c.1 c.2 = i).card
+/-- The content, or weight, of a semistandard Young tableau: the multiset of its entries, read as
+a finitely supported multiplicity function, so `content T i` is the number of cells of the shape
+whose entry is `i`. -/
+noncomputable def content (T : _root_.SemistandardYoungTableau μ) : ℕ →₀ ℕ :=
+  (μ.cells.val.map fun c => T c.1 c.2).toFinsupp
 
 /-- The content of a tableau counts the cells of its shape carrying a given entry. -/
 theorem content_def (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
-    content T i = (μ.cells.filter fun c => T c.1 c.2 = i).card := (rfl)
+    content T i = (μ.cells.filter fun c => T c.1 c.2 = i).card := by
+  rw [content, Multiset.toFinsupp_apply, Multiset.count_map]
+  simp [Finset.card, Finset.filter_val, eq_comm]
 
-/-- The entries of a tableau are exactly the values on which its content is nonzero. -/
-theorem mem_image_iff_content_ne_zero (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
-    i ∈ μ.cells.image (fun c => T c.1 c.2) ↔ content T i ≠ 0 := by
-  rw [content_def, ← Nat.pos_iff_ne_zero, Finset.card_pos]
-  constructor
-  · rintro hi
-    obtain ⟨c, hc, hci⟩ := Finset.mem_image.mp hi
-    exact ⟨c, Finset.mem_filter.mpr ⟨hc, hci⟩⟩
-  · rintro ⟨c, hc⟩
-    rw [Finset.mem_filter] at hc
-    exact Finset.mem_image.mpr ⟨c, hc.1, hc.2⟩
-
-/-- The content of a tableau is finitely supported: it spreads the cells of the shape over the
-finitely many entries the tableau uses. -/
-theorem finite_support_content (T : _root_.SemistandardYoungTableau μ) :
-    (Function.support (content T)).Finite :=
-  Set.Finite.subset (μ.cells.image fun c => T c.1 c.2).finite_toSet fun _ hi =>
-    (mem_image_iff_content_ne_zero T _).mpr hi
+/-- The support of the content of a tableau is the set of entries it uses. -/
+@[simp]
+theorem support_content (T : _root_.SemistandardYoungTableau μ) :
+    (content T).support = μ.cells.image fun c => T c.1 c.2 := by
+  rw [content, Multiset.toFinsupp_support, Multiset.toFinset_map, Finset.val_toFinset]
 
 /-- The entries of a semistandard Young tableau increase strictly down a column, so the entry in
 row `i` is at least `i`. -/
@@ -124,6 +115,7 @@ theorem sum_content_eq_card_filter (T : _root_.SemistandardYoungTableau μ) (k :
     _ = ∑ i ∈ Finset.range k, content T i := by
       refine Finset.sum_congr rfl fun i hi => ?_
       have hik : i < k := Finset.mem_range.mp hi
+      rw [content_def]
       refine congrArg Finset.card (Finset.ext fun c => ?_)
       simp only [Finset.mem_filter, and_assoc]
       exact ⟨fun h => ⟨h.1, h.2.2⟩, fun h => ⟨h.1, h.2 ▸ hik, h.2⟩⟩
@@ -146,7 +138,7 @@ theorem sum_content_le_sum_take_rowLens (T : _root_.SemistandardYoungTableau μ)
 its shape. -/
 @[simp]
 theorem content_highestWeight (μ : YoungDiagram) :
-    content (_root_.SemistandardYoungTableau.highestWeight μ) = μ.rowLen := by
+    ⇑(content (_root_.SemistandardYoungTableau.highestWeight μ)) = μ.rowLen := by
   funext i
   rw [content_def, μ.rowLen_eq_card]
   refine congrArg Finset.card (Finset.ext fun c => ?_)
@@ -158,7 +150,7 @@ theorem content_highestWeight (μ : YoungDiagram) :
 is the row lengths of `μ` has an `i` in every cell of row `i`, so it is
 `SemistandardYoungTableau.highestWeight μ`. -/
 theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTableau μ}
-    (h : content T = μ.rowLen) : T = _root_.SemistandardYoungTableau.highestWeight μ := by
+    (h : ⇑(content T) = μ.rowLen) : T = _root_.SemistandardYoungTableau.highestWeight μ := by
   have key : ∀ i j : ℕ, (i, j) ∈ μ → T i j = i := by
     intro i j hij
     have hcards : (μ.cells.filter fun c => T c.1 c.2 < i + 1).card =
@@ -178,20 +170,19 @@ theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTable
 
 /-- The semistandard tableaux of a fixed shape and content are finite. -/
 instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
-    Finite {T : _root_.SemistandardYoungTableau μ // content T = w} := by
-  by_cases hne : Nonempty {T : _root_.SemistandardYoungTableau μ // content T = w}
+    Finite {T : _root_.SemistandardYoungTableau μ // ⇑(content T) = w} := by
+  by_cases hne : Nonempty {T : _root_.SemistandardYoungTableau μ // ⇑(content T) = w}
   swap
   · rw [not_nonempty_iff] at hne
     infer_instance
   obtain ⟨T₀, hT₀⟩ := hne.some
-  have hmem : ∀ T : _root_.SemistandardYoungTableau μ, content T = w →
+  have hmem : ∀ T : _root_.SemistandardYoungTableau μ, ⇑(content T) = w →
       ∀ c ∈ μ.cells, T c.1 c.2 ∈ μ.cells.image fun d => T₀ d.1 d.2 := by
     intro T hT c hc
-    refine (mem_image_iff_content_ne_zero T₀ _).mpr ?_
-    rw [congrFun hT₀ (T c.1 c.2), ← congrFun hT (T c.1 c.2)]
-    exact (mem_image_iff_content_ne_zero T _).mp (Finset.mem_image.mpr ⟨c, hc, rfl⟩)
+    rw [← support_content T₀, DFunLike.coe_injective (hT₀.trans hT.symm), support_content T]
+    exact Finset.mem_image.mpr ⟨c, hc, rfl⟩
   refine Finite.of_injective
-    (fun (T : {T : _root_.SemistandardYoungTableau μ // content T = w}) (c : ↥μ.cells) =>
+    (fun (T : {T : _root_.SemistandardYoungTableau μ // ⇑(content T) = w}) (c : ↥μ.cells) =>
       (⟨T.1 (c : ℕ × ℕ).1 (c : ℕ × ℕ).2, hmem T.1 T.2 _ c.2⟩ :
         ↥(μ.cells.image fun d => T₀ d.1 d.2))) fun T T' hTT' => ?_
   refine Subtype.ext (_root_.SemistandardYoungTableau.ext fun i j => ?_)
@@ -204,20 +195,21 @@ end SemistandardYoungTableau
 /-- The **Kostka number** `K_{μ w}` of a shape and a weight function: the number of semistandard
 Young tableaux of shape `μ` whose content is `w`. -/
 noncomputable def diagramKostkaNumber (μ : YoungDiagram) (w : ℕ → ℕ) : ℕ :=
-  Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w}
+  Nat.card {T : _root_.SemistandardYoungTableau μ // ⇑(SemistandardYoungTableau.content T) = w}
 
 /-- The Kostka number of a shape and a weight function counts the semistandard tableaux of that
 shape whose content is that weight. -/
 theorem diagramKostkaNumber_def (μ : YoungDiagram) (w : ℕ → ℕ) :
     diagramKostkaNumber μ w =
-      Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w} :=
+      Nat.card
+        {T : _root_.SemistandardYoungTableau μ // ⇑(SemistandardYoungTableau.content T) = w} :=
   (rfl)
 
 /-- A Kostka number is nonzero exactly when a tableau of the prescribed shape and content
 exists. -/
 theorem diagramKostkaNumber_ne_zero_iff {μ : YoungDiagram} {w : ℕ → ℕ} :
     diagramKostkaNumber μ w ≠ 0 ↔
-      ∃ T : _root_.SemistandardYoungTableau μ, SemistandardYoungTableau.content T = w := by
+      ∃ T : _root_.SemistandardYoungTableau μ, ⇑(SemistandardYoungTableau.content T) = w := by
   rw [diagramKostkaNumber_def, Nat.card_ne_zero]
   exact ⟨fun h => h.1.elim fun T => ⟨T.1, T.2⟩, fun ⟨T, hT⟩ => ⟨⟨⟨T, hT⟩⟩, inferInstance⟩⟩
 
@@ -260,7 +252,7 @@ theorem kostkaNumber_def {n : ℕ} (μ ν : n.Partition) :
 `ν` exists. -/
 theorem kostkaNumber_ne_zero_iff {n : ℕ} {μ ν : n.Partition} :
     kostkaNumber μ ν ≠ 0 ↔ ∃ T : _root_.SemistandardYoungTableau (diagramOf μ),
-      SemistandardYoungTableau.content T = (diagramOf ν).rowLen := by
+      ⇑(SemistandardYoungTableau.content T) = (diagramOf ν).rowLen := by
   rw [kostkaNumber_def, diagramKostkaNumber_ne_zero_iff]
 
 /-- A partition contributes exactly one tableau to its own Kostka number. -/
