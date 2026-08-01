@@ -27,10 +27,8 @@ as an API statement even though it looked formally convenient.
 
 ## Main results
 
-* `Contour.hasCauchyPVAt_inv_sub_sum_range` concatenates explicit Cauchy-kernel principal values
-  over a finite partition.
-* `Contour.windingNumber_eq_sum_range` writes the winding number on the whole interval as the sum
-  over its adjacent pieces.
+* `Contour.windingNumber_eq_sum_range` uses the generic finite principal-value concatenation API
+  to write a winding number as a sum over a finite partition.
 * `Contour.windingNumber_eq_sum_range_of_eqOn` allows each piece to be computed using a different
   curve that agrees with the assembled curve on that open subinterval.  This is the form used by
   an avoiding-part plus model-sector decomposition.
@@ -53,30 +51,6 @@ variable {γ : ℝ → ℂ} {z₀ : ℂ}
 /-- The Cauchy kernel about `z₀`, used throughout the winding-number API. -/
 local notation "κ[" z "]" => (fun w : ℂ => (w - z)⁻¹)
 
-/-- **Finite concatenation of explicit Cauchy-kernel principal values.**  If the principal value
-on every adjacent interval `[t k, t (k + 1)]` is `L k`, then the principal value on
-`[t 0, t n]` is their sum.  The endpoints need not be ordered. -/
-theorem hasCauchyPVAt_inv_sub_sum_range {n : ℕ} {t : ℕ → ℝ} {L : ℕ → ℂ}
-    (h : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k)) :
-    HasCauchyPVAt γ (t 0) (t n) κ[z₀] z₀ (∑ k ∈ Finset.range n, L k) := by
-  induction n with
-  | zero =>
-      simpa using HasCauchyPVAt.refl γ (t 0) κ[z₀] z₀
-  | succ n ih =>
-      have hprefix : HasCauchyPVAt γ (t 0) (t n) κ[z₀] z₀
-          (∑ k ∈ Finset.range n, L k) :=
-        ih fun k hk => h k (hk.trans n.lt_succ_self)
-      simpa only [Finset.sum_range_succ] using hprefix.concat (h n n.lt_succ_self)
-
-/-- Existence of the Cauchy-kernel principal value on every adjacent interval of a finite
-partition gives existence on the whole interval. -/
-theorem cauchyPVExistsAt_inv_sub_of_forall_lt {n : ℕ} {t : ℕ → ℝ}
-    (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀) :
-    CauchyPVExistsAt γ (t 0) (t n) κ[z₀] z₀ := by
-  refine CauchyPVExistsAt.intro (hasCauchyPVAt_inv_sub_sum_range (L := fun k =>
-    cauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀) ?_)
-  exact fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
-
 /-- **Finite-partition additivity of the generalized winding number.**  If the Cauchy-kernel
 principal value exists on every adjacent interval, the winding number from `t 0` to `t n` is the
 sum of the winding numbers of those pieces. -/
@@ -87,7 +61,7 @@ theorem windingNumber_eq_sum_range {n : ℕ} {t : ℕ → ℝ}
   let L : ℕ → ℂ := fun k => cauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀
   have hpiece : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k) :=
     fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
-  rw [windingNumber_eq_of_hasCauchyPVAt (hasCauchyPVAt_inv_sub_sum_range hpiece),
+  rw [windingNumber_eq_of_hasCauchyPVAt (HasCauchyPVAt.concat_range hpiece),
     Finset.mul_sum]
   apply Finset.sum_congr rfl
   intro k hk

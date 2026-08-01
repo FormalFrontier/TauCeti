@@ -488,6 +488,21 @@ theorem HasCauchyPVAt.concat {γ : ℝ → ℂ} {a b c : ℝ} {f : ℂ → ℂ} 
     filter_upwards [h_ab.1, h_bc.1] with ε hab_int hbc_int
     exact intervalIntegral.integral_add_adjacent_intervals hab_int hbc_int
 
+/-- **Finite concatenation.** If the principal value on every adjacent interval
+`[t k, t (k + 1)]` is `L k`, then the principal value on `[t 0, t n]` is their sum. The
+endpoints need not be ordered. -/
+theorem HasCauchyPVAt.concat_range {γ : ℝ → ℂ} {f : ℂ → ℂ} {z₀ : ℂ} {n : ℕ}
+    {t : ℕ → ℝ} {L : ℕ → ℂ}
+    (h : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) f z₀ (L k)) :
+    HasCauchyPVAt γ (t 0) (t n) f z₀ (∑ k ∈ Finset.range n, L k) := by
+  induction n with
+  | zero => simpa using HasCauchyPVAt.refl γ (t 0) f z₀
+  | succ n ih =>
+      have hprefix : HasCauchyPVAt γ (t 0) (t n) f z₀
+          (∑ k ∈ Finset.range n, L k) :=
+        ih fun k hk => h k (hk.trans n.lt_succ_self)
+      simpa only [Finset.sum_range_succ] using hprefix.concat (h n n.lt_succ_self)
+
 /-- Existence form of `HasCauchyPVAt.of_dist_lower_bound`. -/
 theorem cauchyPVExistsAt_of_dist_lower_bound {γ : ℝ → ℂ} {z₀ : ℂ} {f : ℂ → ℂ} {a b m : ℝ}
     (hm_pos : 0 < m) (h_far : ∀ t ∈ Set.uIcc a b, m ≤ ‖γ t - z₀‖)
@@ -697,6 +712,15 @@ theorem CauchyPVExistsAt.concat {γ : ℝ → ℂ} {a b c : ℝ} {f : ℂ → �
   let ⟨_, hL₁⟩ := h_ab
   let ⟨_, hL₂⟩ := h_bc
   ⟨_, hL₁.concat hL₂⟩
+
+/-- Existence form of `HasCauchyPVAt.concat_range`: existence on every adjacent interval of a
+finite partition gives existence on the whole interval. -/
+theorem CauchyPVExistsAt.concat_range {γ : ℝ → ℂ} {f : ℂ → ℂ} {z₀ : ℂ} {n : ℕ}
+    {t : ℕ → ℝ} (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) f z₀) :
+    CauchyPVExistsAt γ (t 0) (t n) f z₀ := by
+  refine CauchyPVExistsAt.intro (HasCauchyPVAt.concat_range (L := fun k =>
+    cauchyPVAt γ (t k) (t (k + 1)) f z₀) ?_)
+  exact fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
 
 end TauCeti.Contour
 
