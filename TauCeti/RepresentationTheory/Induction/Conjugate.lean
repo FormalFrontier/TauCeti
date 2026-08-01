@@ -51,7 +51,7 @@ irreducibility (so restricts to `Irr(N)`) is not proved here.
 * `TauCeti.conjNormalRep`, `TauCeti.conjNormalFDRep`: conjugation of a representation of a normal
   subgroup, again a representation of that subgroup; these are the `MulAction` of `G` on
   `Rep k N` and on `FDRep k N`.
-* `TauCeti.conjNormalFDRepSelfIso`: conjugating by an element of `N` itself is an inner twist, so
+* `TauCeti.conjNormalFDRepIso`: conjugating by an element of `N` itself is an inner twist, so
   it gives an isomorphic representation.
 * `TauCeti.conjNormalFDRepSkeletonSMul`, `TauCeti.conjNormalFDRepSkeletonMulAction`: conjugation
   acting on isomorphism classes of finite-dimensional representations of `N`.
@@ -745,7 +745,7 @@ theorem smul_eq_conjNormalFDRep (g : G) (A : FDRep k N) : g • A = conjNormalFD
 does not change its isomorphism class: the action of `n` is an isomorphism `{}^n A ≅ A`.
 
 The intertwining property is the computation `n · (n⁻¹xn) = xn` in `N`. -/
-def conjNormalFDRepSelfIso (A : FDRep k N) (n : N) : conjNormalFDRep (n : G) A ≅ A :=
+def conjNormalFDRepIso (A : FDRep k N) (n : N) : conjNormalFDRep (n : G) A ≅ A :=
   Action.mkIso (A.ρAut n) fun x => by
     -- `{}^n A` has the same underlying object as `A`, and its action is by definition
     -- `Action.ρ A` at the conjugated element, but there is no restatement of that at the level
@@ -758,8 +758,8 @@ def conjNormalFDRepSelfIso (A : FDRep k N) (n : N) : conjNormalFDRep (n : G) A �
 
 /-- The isomorphism `{}^n A ≅ A` for `n : N` is the action of `n`. -/
 @[simp]
-theorem conjNormalFDRepSelfIso_hom_hom (A : FDRep k N) (n : N) :
-    (conjNormalFDRepSelfIso A n).hom.hom = Action.ρ A n :=
+theorem conjNormalFDRepIso_hom_hom (A : FDRep k N) (n : N) :
+    (conjNormalFDRepIso A n).hom.hom = Action.ρ A n :=
   (rfl)
 
 /-- Conjugation acts on the isomorphism classes of finite-dimensional representations of `N`: the
