@@ -84,8 +84,8 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   is a continuum** once the approach regions `U ∩ t` are preconnected along a neighbourhood basis
   of `w`; `TauCeti.isCompact_clusterSetOn_of_isBounded` and
   `TauCeti.isConnected_clusterSetOn_of_isBounded` are again the proper-metric forms.
-* `TauCeti.mem_clusterSetOn_invOn_iff`, `TauCeti.clusterSetOn_invOn` and their `invFunOn`
-  specializations — **cluster-set reciprocity for inverse maps**; the corresponding
+* `TauCeti.mem_clusterSetOn_of_leftInvOn` and `TauCeti.mem_clusterSetOn_invOn_iff` —
+  **cluster-set reciprocity for inverse maps**; the corresponding
   `TauCeti.injOn_of_clusterSetOn_leftInvOn_subsingleton` criterion detects injectivity from
   subsingleton inverse cluster sets.
 
@@ -579,14 +579,6 @@ theorem mem_clusterSetOn_invOn_iff (hinv : InvOn g f U V) (hf : MapsTo f U V)
   ⟨mem_clusterSetOn_of_leftInvOn hinv.1 hf,
     mem_clusterSetOn_of_leftInvOn hinv.2 hg⟩
 
-/-- The cluster set of an inverse map at `v` consists exactly of the source points `w` whose
-forward cluster set contains `v`. -/
-theorem clusterSetOn_invOn (hinv : InvOn g f U V) (hf : MapsTo f U V)
-    (hg : MapsTo g V U) :
-    clusterSetOn g V v = {w | v ∈ clusterSetOn f U w} := by
-  ext x
-  exact (mem_clusterSetOn_invOn_iff hinv hf hg).symm
-
 /-- **Inverse cluster sets detect injectivity.** Suppose every `F x` for `x ∈ A` is a forward
 cluster value of `f` at `x`, and `F` maps `A` into a set `B` at whose points the cluster sets of a
 left inverse `g : V → U` are subsingletons. Then `F` is injective on `A`.
@@ -620,28 +612,6 @@ theorem injOn_of_clusterSetOn_leftInvOn_subsingleton_of_continuousOn_extension
     (fun x hx ↦ mem_clusterSetOn_of_continuousWithinAt_extension (hA hx)
       ((hFc x (hA hx)).mono subset_closure) hFf)
     hFB hgf hf hsub
-
-section InvFunOn
-
-variable [Nonempty X]
-
-/-- **Cluster-set reciprocity for `Function.invFunOn`.** For a bijection `f : U → V`, a value `v`
-is in the forward cluster set at `w` exactly when `w` is in the cluster set of the canonical
-set-level inverse at `v`. -/
-theorem mem_clusterSetOn_invFunOn_iff (hbij : BijOn f U V) :
-    v ∈ clusterSetOn f U w ↔
-      w ∈ clusterSetOn (Function.invFunOn f U) V v :=
-  mem_clusterSetOn_invOn_iff hbij.invOn_invFunOn hbij.mapsTo
-    hbij.surjOn.mapsTo_invFunOn
-
-/-- The cluster set of `Function.invFunOn f U` at `v`, expressed entirely through the forward
-cluster sets of a bijection `f : U → V`. -/
-theorem clusterSetOn_invFunOn (hbij : BijOn f U V) :
-    clusterSetOn (Function.invFunOn f U) V v =
-      {w | v ∈ clusterSetOn f U w} :=
-  clusterSetOn_invOn hbij.invOn_invFunOn hbij.mapsTo hbij.surjOn.mapsTo_invFunOn
-
-end InvFunOn
 
 end InverseMaps
 
