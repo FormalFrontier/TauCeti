@@ -9,6 +9,7 @@ public import TauCeti.Probability.Exchangeability.Cylinder
 public import TauCeti.Probability.Exchangeability.Contractability
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
+public import TauCeti.Probability.DeFinetti.DirectingMeasure.Integral
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
 -- Non-public: used only inside proofs — the tail factorization
@@ -57,7 +58,8 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 
 The `..._of_iCondIndepFun_tailProcess` theorems expose the intermediate reduction (de Finetti given
 tail conditional independence of the coordinates). All of the rectangle-mixture staging lemmas and
-the standard-Borel-`Ω` existential are `private` (proof staging).
+the standard-Borel-`Ω` existential are `private` (proof staging); the integrability and real/`ℝ≥0∞`
+conversion facts this file runs on are `DirectingMeasure/Integral.lean`.
 
 The reverse-martingale ("third") proof follows Kallenberg, *Probabilistic Symmetries and Invariance
 Principles*, Theorem 1.1 (pp. 26–28). Adapted from `cameronfreer/exchangeability`
@@ -131,18 +133,7 @@ private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
   haveI : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
   set g : Ω → ℝ := fun ω => ∏ i, (directingMeasure μ X ω).real (C i) with hg
-  have hg_meas : Measurable g :=
-    Finset.measurable_prod _ fun i _ =>
-      (measurable_directingMeasure_coe hTail (hC i)).ennreal_toReal
-  have hg_bound : ∀ ω, ‖g ω‖ ≤ 1 := fun ω => by
-    have hval : g ω = ∏ i, ((directingMeasure μ X ω) (C i)).toReal := by
-      simp only [hg, measureReal_def]
-    rw [hval, Real.norm_of_nonneg (Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-    refine Finset.prod_le_one (fun i _ => ENNReal.toReal_nonneg) fun i _ => ?_
-    exact ENNReal.toReal_le_of_le_ofReal zero_le_one
-      (by rw [ENNReal.ofReal_one]; exact (measure_mono (Set.subset_univ _)).trans_eq measure_univ)
-  have hg_int : Integrable g μ :=
-    (integrable_const (1 : ℝ)).mono' hg_meas.aestronglyMeasurable (ae_of_all _ hg_bound)
+  have hg_int : Integrable g μ := integrable_prod_directingMeasure_real hTail hC
   have hbl : (blockLaw μ X k (Set.univ.pi C)).toReal = ∫ ω, g ω ∂μ := by
     rw [← integral_blockIndicatorProd (fun i => (hX_meas (k i)).aemeasurable) hC,
       ← integral_condExp hTail]
@@ -150,13 +141,8 @@ private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
   have hbl_ne : blockLaw μ X k (Set.univ.pi C) ≠ ⊤ := by
     rw [blockLaw_blockCylinder X (fun i => (hX_meas (k i)).aemeasurable) hC]
     exact measure_ne_top μ _
-  rw [← ENNReal.ofReal_toReal hbl_ne, hbl,
-    ofReal_integral_eq_lintegral_ofReal hg_int (ae_of_all _ fun ω =>
-      Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-  refine lintegral_congr fun ω => ?_
-  simp only [hg, measureReal_def]
-  rw [ENNReal.ofReal_prod_of_nonneg fun i _ => ENNReal.toReal_nonneg]
-  exact Finset.prod_congr rfl fun i _ => ENNReal.ofReal_toReal (measure_ne_top _ _)
+  rw [← ENNReal.ofReal_toReal hbl_ne, hbl, hg,
+    ofReal_integral_eq_lintegral_prod_directingMeasure hg_int]
 
 /-- **Block law of a rectangle as a directing-measure mixture** (given tail conditional
 independence). The block law of the rectangle `∏ᵢ C i` is the `μ`-average of the directing-measure

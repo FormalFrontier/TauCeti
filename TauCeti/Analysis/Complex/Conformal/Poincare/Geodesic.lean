@@ -195,6 +195,17 @@ lemma dist_radialGeodesic_zero (u : Circle) (t : ℝ) :
     dist (radialGeodesic u t) (Complex.UnitDisc.toPoincare 0) = |t| := by
   rw [← radialGeodesic_zero u, (isometry_radialGeodesic u).dist_eq, Real.dist_eq, sub_zero]
 
+/-- Distinct directions give distinct radial geodesics. -/
+theorem radialGeodesic_injective : Function.Injective radialGeodesic := by
+  intro u v huv
+  -- Evaluate at time `1`, where the two geodesics read `u * Real.tanh 1` and `v * Real.tanh 1`.
+  have htanh : (Real.tanh 1 : ℂ) ≠ 0 := by
+    refine Complex.ofReal_ne_zero.mpr fun hzero => one_ne_zero (α := ℝ) ?_
+    exact Real.tanh_injective (hzero.trans Real.tanh_zero.symm)
+  refine Circle.ext (mul_right_cancel₀ htanh ?_)
+  have hcoe := congrArg (fun p : PoincareDisc => (toUnitDisc p : ℂ)) (congrFun huv 1)
+  simpa only [coe_radialGeodesic] using hcoe
+
 /-- **Every point of the Poincaré disc lies on a geodesic through the origin**, namely the
 Euclidean diameter through it, and it is reached at time its distance to the origin. -/
 theorem exists_radialGeodesic_eq (z : PoincareDisc) :

@@ -40,8 +40,10 @@ the failure being exactly that its structure map is not surjective.
 * `TauCeti.baseFieldAlgEquivOfFinite`: a finite central division algebra over a field is the base
   field.
 * `TauCeti.IsSimpleRing.exists_algEquiv_matrix_of_finite`: a central simple algebra over a
-  **finite** field is a full matrix algebra over that field, and
-  `TauCeti.IsSimpleRing.isSquare_finrank_of_finite`: its dimension is a perfect square.
+  **finite** field is a full matrix algebra over that field, so in particular its dimension is the
+  perfect square `n ^ 2`. That dimension count holds over every base field, by
+  `TauCeti.IsSimpleRing.isSquare_finrank` in `TauCeti/Algebra/CentralSimple/Degree.lean`, which is
+  the statement to use; only the matrix presentation itself is special to a finite field.
 
 ## Implementation notes
 
@@ -152,11 +154,6 @@ theorem exists_algEquiv_matrix_of_finite :
   have : Finite D := Module.finite_of_finite K
   refine ⟨n, hn, ?_, ⟨e.trans (AlgEquiv.mapMatrix (baseFieldAlgEquivOfFinite K D))⟩⟩
   rw [hrank, finrank_eq_one_of_finite K D, mul_one]
-
-/-- The dimension of a central simple algebra over a finite field is a perfect square. -/
-theorem isSquare_finrank_of_finite : IsSquare (Module.finrank K A) := by
-  obtain ⟨n, _, hrank, -⟩ := exists_algEquiv_matrix_of_finite K A
-  exact ⟨n, by rw [hrank, sq]⟩
 
 end IsSimpleRing
 

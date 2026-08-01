@@ -7,6 +7,7 @@ module
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 public import TauCeti.Analysis.Semigroups.Generator.Invariance
+public import TauCeti.Analysis.Semigroups.Generator.Closed
 
 /-!
 # Infinitesimal generators of strongly continuous semigroups
