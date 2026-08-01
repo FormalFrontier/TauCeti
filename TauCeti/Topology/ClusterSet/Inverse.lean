@@ -34,8 +34,10 @@ That conformal consequence is in `TauCeti/Analysis/Complex/Conformal/Reciprocity
 * `TauCeti.mem_clusterSetOn_invOn_iff` — reciprocity for mutual inverses.
 * `TauCeti.clusterSetOn_invOn` — the inverse cluster set as the set of source points whose forward
   cluster set contains the given value.
-* `TauCeti.injOn_of_clusterSetOn_inverse_subsingleton` — a continuous extension is injective on a
-  set if the corresponding inverse cluster sets are subsingletons.
+* `TauCeti.injOn_of_clusterSetOn_invOn_subsingleton` — forward cluster membership and
+  subsingleton inverse cluster sets imply injectivity.
+* `TauCeti.injOn_of_clusterSetOn_invOn_subsingleton_of_continuousOn_extension` — the corresponding
+  criterion for a continuous extension.
 * `TauCeti.mem_clusterSetOn_invFunOn_iff` and `TauCeti.clusterSetOn_invFunOn` — the corresponding
   forms for `Function.invFunOn` of a `Set.BijOn` map.
 
@@ -91,31 +93,38 @@ theorem clusterSetOn_invOn (hinv : InvOn g f U V) (hf : MapsTo f U V)
   ext x
   exact (mem_clusterSetOn_invOn_iff hinv hf hg).symm
 
-/-- **Inverse cluster sets detect injectivity of a continuous extension.** Let `F` be a continuous
-extension of `f` from `U` to `closure U`, and let `A ⊆ closure U`. Suppose `F` maps `A` into a set
-`B` at whose points the cluster sets of an inverse `g : V → U` are subsingletons. Then `F` is
-injective on `A`.
+/-- **Inverse cluster sets detect injectivity.** Suppose every `F x` for `x ∈ A` is a forward
+cluster value of `f` at `x`, and `F` maps `A` into a set `B` at whose points the cluster sets of an
+inverse `g : V → U` are subsingletons. Then `F` is injective on `A`.
 
-Indeed, `F x` belongs to the forward cluster set at each `x ∈ A`, because `F` is a continuous
-extension. Reciprocity puts `x` in the inverse cluster set at `F x`; hence two points of `A` with
-the same `F`-value lie in one subsingleton inverse cluster set. No separation hypothesis is
-needed. -/
-theorem injOn_of_clusterSetOn_inverse_subsingleton {A : Set X} {B : Set Y}
-    {F : X → Y} (hA : A ⊆ closure U) (hFB : MapsTo F A B)
-    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U)
+Reciprocity puts each `x` in the inverse cluster set at `F x`; hence two points of `A` with the
+same `F`-value lie in one subsingleton inverse cluster set. No continuity or separation hypothesis
+is needed. -/
+theorem injOn_of_clusterSetOn_invOn_subsingleton {A : Set X} {B : Set Y}
+    {F : X → Y} (hmem : ∀ x ∈ A, F x ∈ clusterSetOn f U x) (hFB : MapsTo F A B)
     (hinv : InvOn g f U V) (hf : MapsTo f U V) (hg : MapsTo g V U)
     (hsub : ∀ y ∈ B, (clusterSetOn g V y).Subsingleton) :
     InjOn F A := by
   intro x hx y hy hxy
-  have hxmem : F x ∈ clusterSetOn f U x :=
-    mem_clusterSetOn_of_continuousOn_extension (hA hx) hFc hFf
-  have hymem : F y ∈ clusterSetOn f U y :=
-    mem_clusterSetOn_of_continuousOn_extension (hA hy) hFc hFf
   have hxinv : x ∈ clusterSetOn g V (F x) :=
-    (mem_clusterSetOn_invOn_iff hinv hf hg).mp hxmem
+    (mem_clusterSetOn_invOn_iff hinv hf hg).mp (hmem x hx)
   have hyinv : y ∈ clusterSetOn g V (F x) := by
-    simpa only [hxy] using (mem_clusterSetOn_invOn_iff hinv hf hg).mp hymem
+    simpa only [hxy] using (mem_clusterSetOn_invOn_iff hinv hf hg).mp (hmem y hy)
   exact hsub (F x) (hFB hx) hxinv hyinv
+
+/-- **Inverse cluster sets detect injectivity of a continuous extension.** Let `F` be a continuous
+extension of `f` from `U` to `closure U`, and let `A ⊆ closure U`. Suppose `F` maps `A` into a set
+`B` at whose points the cluster sets of an inverse `g : V → U` are subsingletons. Then `F` is
+injective on `A`. -/
+theorem injOn_of_clusterSetOn_invOn_subsingleton_of_continuousOn_extension
+    {A : Set X} {B : Set Y} {F : X → Y} (hA : A ⊆ closure U) (hFB : MapsTo F A B)
+    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U)
+    (hinv : InvOn g f U V) (hf : MapsTo f U V) (hg : MapsTo g V U)
+    (hsub : ∀ y ∈ B, (clusterSetOn g V y).Subsingleton) :
+    InjOn F A :=
+  injOn_of_clusterSetOn_invOn_subsingleton
+    (fun _ hx ↦ mem_clusterSetOn_of_continuousOn_extension (hA hx) hFc hFf)
+    hFB hinv hf hg hsub
 
 section InvFunOn
 
