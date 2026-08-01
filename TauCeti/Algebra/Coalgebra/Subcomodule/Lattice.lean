@@ -202,29 +202,18 @@ theorem coe_iSup_of_directed {iota : Type*} [Nonempty iota]
     obtain ⟨k, hik, hjk⟩ := hN i j
     exact ⟨k, toSubmodule_le_toSubmodule.2 hik, toSubmodule_le_toSubmodule.2 hjk⟩
   ext m
-  constructor
-  · intro hm
-    have hm' : m ∈ (⨆ i, N i).toSubmodule := mem_toSubmodule.2 hm
-    rw [iSup_toSubmodule] at hm'
-    obtain ⟨i, hi⟩ :=
-      (Submodule.mem_iSup_of_directed (fun i ↦ (N i).toSubmodule) hN').1 hm'
-    exact Set.mem_iUnion.2 ⟨i, mem_toSubmodule.1 hi⟩
-  · intro hm
-    obtain ⟨i, hi⟩ := Set.mem_iUnion.1 hm
-    apply mem_toSubmodule.1
-    rw [iSup_toSubmodule]
-    exact (Submodule.mem_iSup_of_directed (fun i ↦ (N i).toSubmodule) hN').2
-      ⟨i, mem_toSubmodule.2 hi⟩
+  rw [SetLike.mem_coe, ← mem_toSubmodule, iSup_toSubmodule, ← SetLike.mem_coe,
+    Submodule.coe_iSup_of_directed _ hN']
+  simp only [Set.mem_iUnion, SetLike.mem_coe, mem_toSubmodule]
 
 /-- An element belongs to a directed supremum of subcomodules exactly when it belongs to one
 member of the family. -/
+@[simp]
 theorem mem_iSup_of_directed {iota : Type*} [Nonempty iota]
     (N : iota → Subcomodule R C M) (hN : Directed (· ≤ ·) N) {m : M} :
     m ∈ ⨆ i, N i ↔ ∃ i, m ∈ N i := by
-  rw [← mem_toSubmodule, iSup_toSubmodule]
-  exact Submodule.mem_iSup_of_directed (fun i ↦ (N i).toSubmodule) fun i j ↦ by
-    obtain ⟨k, hik, hjk⟩ := hN i j
-    exact ⟨k, toSubmodule_le_toSubmodule.2 hik, toSubmodule_le_toSubmodule.2 hjk⟩
+  rw [← SetLike.mem_coe, coe_iSup_of_directed N hN, Set.mem_iUnion]
+  simp only [SetLike.mem_coe]
 
 /-- The carrier of the supremum of a nonempty directed set of subcomodules is the union of its
 carriers. -/
