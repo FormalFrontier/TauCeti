@@ -4,11 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Group.Coprime
+public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Data.Nat.Factorization.Basic
 public import Mathlib.GroupTheory.Complement
 public import Mathlib.GroupTheory.Nilpotent
 public import Mathlib.GroupTheory.PGroup
-public import Mathlib.GroupTheory.Solvable
 
 /-!
 # Elementary and hyperelementary groups
@@ -48,7 +49,7 @@ Each of the four predicates is restated as an `Iff` by `TauCeti.isPElementary_de
   closed under passing to a subgroup, in the form of an injective homomorphism into the group. The
   subgroup forms are `TauCeti.IsPElementary.subgroup` and `TauCeti.IsPHyperelementary.subgroup`.
 * `TauCeti.IsHyperelementary.isSolvable`: a finite hyperelementary group is solvable, whence
-  `TauCeti.not_isElementary_perm_fin_five`, the symmetric group on five letters is not elementary.
+  `TauCeti.not_isElementary_perm_fin_5`, the symmetric group on five letters is not elementary.
 
 ## Implementation notes
 
@@ -269,13 +270,6 @@ theorem isHyperelementary_of_isCyclic [Finite G] [IsCyclic G] : IsHyperelementar
 
 /-! ### Closure under subgroups -/
 
-/-- The comparison map from the preimage of a subgroup to that subgroup is injective as soon as the
-underlying homomorphism is. Companion to Mathlib's
-`MonoidHom.subgroupComap_surjective_of_surjective`. -/
-theorem MonoidHom.subgroupComap_injective_of_injective {f : H →* G} (hf : Function.Injective f)
-    (K : Subgroup G) : Function.Injective (f.subgroupComap K) :=
-  fun _ _ hxy => Subtype.ext (hf (congrArg Subtype.val hxy))
-
 /-- `p`-hyperelementarity passes to subgroups, in the form of an injective homomorphism into the
 group. -/
 theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →* G)
@@ -291,8 +285,9 @@ theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →*
 /-- `p`-elementarity passes to subgroups, in the form of an injective homomorphism into the group.
 
 The decomposition of a subgroup is inherited factor by factor: the crux is that the subgroup is
-still the product of the two intersections, which follows from a Bézout identity between the orders
-of the two factors, coprime because one is prime to `p` and the other is a power of `p`. -/
+still the product of the two intersections, which follows via
+`TauCeti.exists_zpow_mul_zpow_eq_of_coprime` from a Bézout identity between the orders of the two
+factors, coprime because one is prime to `p` and the other is a power of `p`. -/
 theorem IsPElementary.of_injective [Fact p.Prime] (h : IsPElementary p G) (f : H →* G)
     (hf : Function.Injective f) : IsPElementary p H := by
   obtain ⟨C, P, hC, hCp, hP, hcomm, hcompl⟩ := h
@@ -316,12 +311,9 @@ theorem IsPElementary.of_injective [Fact p.Prime] (h : IsPElementary p G) (f : H
     have hym : f (y ^ m) ∈ P := by
       rw [map_pow, ← hab, (hcomm a a.2 b b.2).mul_pow, ha, one_mul]
       exact pow_mem b.2 _
-    have hbez : ((1 : ℕ) : ℤ) = (n : ℤ) * Nat.gcdA n m + (m : ℤ) * Nat.gcdB n m := by
-      rw [← hcop]; exact Nat.gcd_eq_gcd_ab n m
-    refine ⟨(y ^ n) ^ Nat.gcdA n m, zpow_mem (mem_comap.mpr hyn) _,
-      (y ^ m) ^ Nat.gcdB n m, zpow_mem (mem_comap.mpr hym) _, ?_⟩
-    rw [← zpow_natCast y n, ← zpow_natCast y m, ← zpow_mul, ← zpow_mul, ← zpow_add,
-      ← hbez, Nat.cast_one, zpow_one]
+    obtain ⟨i, j, hij⟩ := exists_zpow_mul_zpow_eq_of_coprime hcop y
+    exact ⟨(y ^ n) ^ i, zpow_mem (mem_comap.mpr hyn) _,
+      (y ^ m) ^ j, zpow_mem (mem_comap.mpr hym) _, hij⟩
   refine ⟨C.comap f, P.comap f,
     isCyclic_of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf C),
     fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)),
@@ -391,11 +383,11 @@ theorem IsElementary.isSolvable [Finite G] (h : IsElementary G) : Group.IsSolvab
 /-- The symmetric group on five letters is not hyperelementary, since it is not solvable. Together
 with `TauCeti.isElementary_of_isCyclic` this pins the two predicates between the cyclic groups and
 the solvable ones. -/
-theorem not_isHyperelementary_perm_fin_five : ¬ IsHyperelementary (Equiv.Perm (Fin 5)) :=
+theorem not_isHyperelementary_perm_fin_5 : ¬ IsHyperelementary (Equiv.Perm (Fin 5)) :=
   fun h => Equiv.Perm.not_isSolvable_fin_5 h.isSolvable
 
 /-- The symmetric group on five letters is not elementary. -/
-theorem not_isElementary_perm_fin_five : ¬ IsElementary (Equiv.Perm (Fin 5)) :=
-  fun h => not_isHyperelementary_perm_fin_five h.isHyperelementary
+theorem not_isElementary_perm_fin_5 : ¬ IsElementary (Equiv.Perm (Fin 5)) :=
+  fun h => not_isHyperelementary_perm_fin_5 h.isHyperelementary
 
 end TauCeti
