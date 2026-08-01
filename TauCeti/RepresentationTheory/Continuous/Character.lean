@@ -115,7 +115,6 @@ theorem character_apply (g : G) :
   (rfl)
 
 /-- The character at the identity is the dimension of the representation. -/
-@[simp]
 theorem character_one : character π hπ 1 = (Module.finrank 𝕜 V : 𝕜) :=
   Representation.char_one π.toRepresentation
 
