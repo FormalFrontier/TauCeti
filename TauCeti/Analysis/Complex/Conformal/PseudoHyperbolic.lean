@@ -122,7 +122,7 @@ lemma one_sub_conj_mul_ne_zero_of_norm_mul_norm_lt_one {z w : ℂ} (h : ‖w‖ 
 /-- On the *closed* unit disc, the denominator in the pseudo-hyperbolic expression is nonzero, as
 soon as the centre `w` lies in the open disc: then `‖conj w * z‖ = ‖w‖ * ‖z‖ ≤ ‖w‖ < 1`, so the
 denominator cannot vanish. -/
-lemma one_sub_conj_mul_ne_zero_of_norm_le_one {z w : ℂ}
+lemma one_sub_conj_mul_ne_zero_of_norm_le_one_of_norm_lt_one {z w : ℂ}
     (hz : ‖z‖ ≤ 1) (hw : ‖w‖ < 1) :
     1 - (starRingEnd ℂ) w * z ≠ 0 :=
   one_sub_conj_mul_ne_zero_of_norm_mul_norm_lt_one <| by
@@ -131,11 +131,24 @@ lemma one_sub_conj_mul_ne_zero_of_norm_le_one {z w : ℂ}
       _ = ‖w‖ := mul_one _
       _ < 1 := hw
 
+/-- On the *unit circle*, the denominator in the pseudo-hyperbolic expression is nonzero for every
+centre `w` off the circle: `‖conj w * z‖ = ‖w‖ ≠ 1 = ‖1‖`, so the two terms cannot cancel.  Unlike
+`TauCeti.one_sub_conj_mul_ne_zero_of_norm_le_one_of_norm_lt_one` this allows a centre outside the
+closed disc. -/
+lemma one_sub_conj_mul_ne_zero_of_norm_eq_one_of_norm_ne_one {z w : ℂ}
+    (hz : ‖z‖ = 1) (hw : ‖w‖ ≠ 1) :
+    1 - (starRingEnd ℂ) w * z ≠ 0 := by
+  intro h
+  refine hw ?_
+  have hmul : (starRingEnd ℂ) w * z = 1 := by
+    rwa [sub_eq_zero, eq_comm] at h
+  simpa [norm_mul, hz] using congrArg norm hmul
+
 /-- On the open unit disc, the denominator in the pseudo-hyperbolic expression is nonzero. -/
 lemma one_sub_conj_mul_ne_zero_of_norm_lt_one {z w : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     1 - (starRingEnd ℂ) w * z ≠ 0 :=
-  one_sub_conj_mul_ne_zero_of_norm_le_one hz.le hw
+  one_sub_conj_mul_ne_zero_of_norm_le_one_of_norm_lt_one hz.le hw
 
 /-- For points in the open unit ball, the denominator in the pseudo-hyperbolic expression is
 nonzero. -/

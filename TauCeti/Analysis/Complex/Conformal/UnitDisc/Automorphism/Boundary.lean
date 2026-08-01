@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Basic
 
 /-!
@@ -28,8 +27,11 @@ every other point — are generic facts about `TauCeti.pseudoHyperbolicExpr` and
 ## Main statements
 
 * `TauCeti.bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one` and
-  `TauCeti.bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one`: the scalar Moebius factor is a
-  bijection of the closed disc, and of the unit circle, onto itself.
+  `TauCeti.bijOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one`: the scalar Moebius factor is a
+  bijection of the closed disc, and of the unit circle, onto itself.  The circle statements need
+  only that the centre `a` avoids the circle: for `‖a‖ > 1` the formula no longer preserves the
+  closed disc, but it still permutes the boundary, and it is inverted there by the factor centred
+  at `-a` just as in the disc case.
 * `TauCeti.unitDiscMoebiusClosedBallHomeomorph` and `TauCeti.unitDiscMoebiusSphereHomeomorph`: those
   bijections bundled as homeomorphisms, with the factor centred at `-a` as the explicit inverse.
 * `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph` and
@@ -71,14 +73,15 @@ variable {a u : ℂ}
 /-! ## The Moebius factor on the closed disc -/
 
 /-- The scalar unit-disc Moebius formula maps the unit circle to itself: on the circle its modulus
-is the pseudo-hyperbolic expression, which equals one there. -/
-theorem mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
+is the pseudo-hyperbolic expression, which equals one there.  Only `‖a‖ ≠ 1` is needed — the centre
+may lie anywhere off the circle, inside or outside the disc. -/
+theorem mapsTo_sphere_unitDiscMoebiusFormula_of_norm_ne_one (ha : ‖a‖ ≠ 1) :
     MapsTo (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
   intro z hz
   rw [mem_sphere_zero_iff_norm] at hz ⊢
   rw [← pseudoHyperbolicExpr_def]
-  exact pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one hz ha
+  exact pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne hz fun h => ha (h ▸ hz)
 
 /-- The scalar unit-disc Moebius formula maps the closed unit disc to itself, being the union of the
 open disc and the unit circle. -/
@@ -89,7 +92,7 @@ theorem mapsTo_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 
   rw [← ball_union_sphere] at hz
   rcases hz with h | h
   · exact ball_subset_closedBall (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha h)
-  · exact sphere_subset_closedBall (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha h)
+  · exact sphere_subset_closedBall (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha.ne h)
 
 /-- The scalar unit-disc Moebius formula is continuous on the *closed* unit disc: there
 `‖conj a * z‖ = ‖a‖ * ‖z‖ ≤ ‖a‖ < 1`, so the denominator is nowhere zero. -/
@@ -97,7 +100,7 @@ theorem continuousOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a
     ContinuousOn (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
       (closedBall (0 : ℂ) 1) :=
   ContinuousOn.div (by fun_prop) (by fun_prop) fun z hz =>
-    one_sub_conj_mul_ne_zero_of_norm_le_one (mem_closedBall_zero_iff.mp hz) ha
+    one_sub_conj_mul_ne_zero_of_norm_le_one_of_norm_lt_one (mem_closedBall_zero_iff.mp hz) ha
 
 /-- **The Moebius factor centred at `-a` inverts the one centred at `a` on the closed disc.**
 The identity is known on the open disc (`TauCeti.leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one`)
@@ -134,15 +137,70 @@ theorem bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1
     (mapsTo_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha)
     (mapsTo_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (by rwa [norm_neg]))
 
+/-- The pointwise inversion identity behind the Moebius factor.  Wherever the denominator at `z`
+does not vanish, the factor centred at `-a` sends the value back to `z`, provided the centre is off
+the unit circle: numerator and denominator both pick up the factor `1 - conj a * a`, which is
+`1 - ‖a‖ ^ 2 ≠ 0`.  Unlike
+`TauCeti.leftInvOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one` above, which comes from the
+open disc by continuity, this is pure algebra, so it also applies to a centre outside the disc. -/
+private lemma unitDiscMoebiusFormula_neg_apply_of_norm_ne_one (ha : ‖a‖ ≠ 1) {z : ℂ}
+    (hz : 1 - (starRingEnd ℂ) a * z ≠ 0) :
+    ((z - a) / (1 - (starRingEnd ℂ) a * z) - (-a)) /
+        (1 - (starRingEnd ℂ) (-a) * ((z - a) / (1 - (starRingEnd ℂ) a * z))) = z := by
+  have haa : (1 : ℂ) - (starRingEnd ℂ) a * a ≠ 0 := by
+    have hsq : (starRingEnd ℂ) a * a = ((‖a‖ ^ 2 : ℝ) : ℂ) := by
+      rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq]
+    rw [hsq, sub_ne_zero]
+    intro hcontra
+    have hnorm : ‖a‖ ^ 2 = 1 := by exact_mod_cast hcontra.symm
+    have hfac : (‖a‖ - 1) * (‖a‖ + 1) = 0 := by nlinarith
+    rcases mul_eq_zero.mp hfac with h | h
+    · exact ha (by linarith)
+    · nlinarith [norm_nonneg a]
+  -- `field_simp` normalizes the denominator to `1 - z * conj a`, so it needs the hypothesis in
+  -- that orientation as well.
+  have hz' : 1 - z * (starRingEnd ℂ) a ≠ 0 := by rwa [mul_comm]
+  have hnum : (z - a) / (1 - (starRingEnd ℂ) a * z) - (-a) =
+      z * (1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) := by
+    field_simp
+    ring
+  have hden : 1 - (starRingEnd ℂ) (-a) * ((z - a) / (1 - (starRingEnd ℂ) a * z)) =
+      (1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) := by
+    rw [map_neg]
+    field_simp
+    ring
+  rw [hnum, hden, div_div_div_cancel_right₀ hz]
+  exact mul_div_cancel_right₀ z haa
+
+/-- **The Moebius factor centred at `-a` inverts the one centred at `a` on the unit circle**, for
+every centre off the circle.  On the circle the denominator never vanishes
+(`TauCeti.one_sub_conj_mul_ne_zero_of_norm_eq_one_of_norm_ne_one`), so the pointwise algebraic
+identity applies. -/
+theorem leftInvOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one (ha : ‖a‖ ≠ 1) :
+    LeftInvOn (fun z : ℂ => (z - (-a)) / (1 - (starRingEnd ℂ) (-a) * z))
+      (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z)) (sphere (0 : ℂ) 1) := fun _z hz =>
+  unitDiscMoebiusFormula_neg_apply_of_norm_ne_one ha
+    (one_sub_conj_mul_ne_zero_of_norm_eq_one_of_norm_ne_one (mem_sphere_zero_iff_norm.mp hz) ha)
+
+/-- The Moebius factors centred at `a` and at `-a` are mutually inverse on the unit circle, for
+every centre off the circle. -/
+theorem invOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one (ha : ‖a‖ ≠ 1) :
+    InvOn (fun z : ℂ => (z - (-a)) / (1 - (starRingEnd ℂ) (-a) * z))
+      (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
+      (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
+  have hneg : ‖(-a : ℂ)‖ ≠ 1 := by rwa [norm_neg]
+  refine ⟨leftInvOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha, ?_⟩
+  have h := leftInvOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one hneg
+  simpa only [neg_neg] using h
+
 /-- **A Moebius factor is a bijection of the unit circle onto itself.** This is the boundary action
-of the disc automorphism group. -/
-theorem bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
+of the disc automorphism group; it needs only that the centre is off the circle. -/
+theorem bijOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one (ha : ‖a‖ ≠ 1) :
     BijOn (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) :=
-  ((invOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha).mono sphere_subset_closedBall
-      sphere_subset_closedBall).bijOn
-    (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha)
-    (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one (by rwa [norm_neg]))
+  (invOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha).bijOn
+    (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha)
+    (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_ne_one (by rwa [norm_neg]))
 
 /-! ## The bundled homeomorphisms of the closed disc and of the circle -/
 
@@ -212,10 +270,10 @@ noncomputable def unitDiscMoebiusSphereHomeomorph (a : Complex.UnitDisc) :
   haveI : CompactSpace (sphere (0 : ℂ) 1) :=
     isCompact_iff_compactSpace.mp (isCompact_sphere _ _)
   Continuous.homeoOfEquivCompactToT2
-    (f := (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one).equiv _)
+    (f := (bijOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one a.norm_lt_one.ne).equiv _)
     (((continuousOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one).mono
       sphere_subset_closedBall).mapsToRestrict
-        (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one).mapsTo)
+        (bijOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one a.norm_lt_one.ne).mapsTo)
 
 /-- The circle homeomorphism is given by the Moebius formula. -/
 @[simp, norm_cast]
@@ -299,13 +357,14 @@ private lemma bijOn_mul_left_of_norm_eq_one (hu : ‖u‖ = 1) {s : Set ℂ}
     exact zero_ne_one hu
   exact (Equiv.mulLeft₀ u hu0).bijOn fun w => hs (u * w) w (by rw [norm_mul, hu, one_mul])
 
-/-- The rotation factor of a standard disc automorphism preserves the unit circle. -/
-theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
+/-- The rotation factor of a standard disc automorphism preserves the unit circle.  As for the
+Moebius factor alone, the centre only has to lie off the circle. -/
+theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_ne_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ ≠ 1) :
     MapsTo (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
   intro z hz
-  have h := mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha hz
+  have h := mapsTo_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha hz
   rw [mem_sphere_zero_iff_norm] at h ⊢
   rw [norm_mul, hu, one_mul, h]
 
@@ -339,16 +398,16 @@ theorem bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_n
     hrot.comp (bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha)
 
 /-- **A standard disc automorphism is a bijection of the unit circle onto itself**: the boundary
-action of `Aut(𝔻)`.  Again the Moebius factor followed by the rotation by `u`, now on the
-circle. -/
-theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
+action of `Aut(𝔻)`.  Again the Moebius factor followed by the rotation by `u`, now on the circle,
+and again for every centre off the circle. -/
+theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_ne_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ ≠ 1) :
     BijOn (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
   have hrot := bijOn_mul_left_of_norm_eq_one (s := sphere (0 : ℂ) 1) hu fun z w h => by
     rw [mem_sphere_zero_iff_norm, mem_sphere_zero_iff_norm, h]
   simpa only [Function.comp_def] using
-    hrot.comp (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha)
+    hrot.comp (bijOn_sphere_unitDiscMoebiusFormula_of_norm_ne_one ha)
 
 /-- A point of `Circle` as a point of the unit sphere of `ℂ`, which is the index type of Mathlib's
 actions `Metric.mulActionSphereClosedBall` and `Metric.mulActionSphereSphere`.  Those actions are
