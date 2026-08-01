@@ -58,7 +58,11 @@ They are therefore handled in two ways here. The relational lemmas
 injectivity and well-definedness of `M ↦ isotypicComponent R R M` without naming a type of classes
 at all. The bundled bijection instead uses `TauCeti.SimpleSubmoduleClasses R R`, the classes of
 simple *left ideals*, which is a type in `Type u`; over a semisimple ring
-`TauCeti.simpleModuleClass` identifies it with the classes of abstract simple modules.
+`TauCeti.simpleModuleClass` identifies it with the classes of abstract simple modules. It is used
+through `TauCeti.SimpleSubmoduleClasses.mk`, `TauCeti.SimpleSubmoduleClasses.mk_eq_mk_iff` and the
+eliminators `TauCeti.SimpleSubmoduleClasses.lift` (into `Sort`, with its defining equation
+`TauCeti.SimpleSubmoduleClasses.lift_mk`) and `TauCeti.SimpleSubmoduleClasses.ind` (into `Prop`),
+which is a complete API: nothing downstream has to know it is a quotient.
 
 Each proof over a semisimple ring realizes the abstract module as a left ideal and transports along
 that realization; nothing here redoes the isotypic theory.
@@ -91,36 +95,55 @@ theorem le_isotypicComponent_iff {S : Type w} [AddCommGroup S] [Module R S] [IsS
     fun ⟨e⟩ ↦ le_sSup ⟨e.symm⟩⟩
 
 variable (R M) in
-/-- Linear isomorphism, as an equivalence relation on the simple submodules of `M`. -/
-@[expose, instance_reducible]
-def simpleSubmoduleSetoid : Setoid {N : Submodule R M // IsSimpleModule R N} where
-  r N N' := Nonempty (N.1 ≃ₗ[R] N'.1)
-  iseqv := ⟨fun _ ↦ ⟨.refl R _⟩, fun ⟨e⟩ ↦ ⟨e.symm⟩, fun ⟨e⟩ ⟨f⟩ ↦ ⟨e.trans f⟩⟩
-
-attribute [local instance] simpleSubmoduleSetoid
-
-variable (R M) in
 /-- The isomorphism classes of simple submodules of `M`. Unlike the isomorphism classes of abstract
 simple modules, which range over every universe, this is a type; over a semisimple ring the two
-agree for `M = R`, by `TauCeti.simpleModuleClass`. -/
+agree for `M = R`, by `TauCeti.simpleModuleClass`.
+
+That this is a quotient of the simple submodules by linear isomorphism is an implementation
+detail: build a class with `TauCeti.SimpleSubmoduleClasses.mk`, compare classes with
+`TauCeti.SimpleSubmoduleClasses.mk_eq_mk_iff`, and eliminate with
+`TauCeti.SimpleSubmoduleClasses.lift` into `Sort` or `TauCeti.SimpleSubmoduleClasses.ind` into
+`Prop`. The `@[expose]` annotations here and on those declarations are forced by the module
+system, which refuses the defining equations `TauCeti.SimpleSubmoduleClasses.lift_mk` and
+`TauCeti.coe_simpleSubmoduleClassesEquiv_mk` over a definition it cannot unfold; Mathlib exposes
+its own quotient constructions wholesale for the same reason. -/
 @[expose]
-def SimpleSubmoduleClasses := Quotient (simpleSubmoduleSetoid R M)
+def SimpleSubmoduleClasses :=
+  Quot fun N N' : {N : Submodule R M // IsSimpleModule R N} ↦ Nonempty (N.1 ≃ₗ[R] N'.1)
 
 namespace SimpleSubmoduleClasses
 
 /-- The isomorphism class of a simple submodule of `M`. -/
 @[expose]
-def mk (N : Submodule R M) [IsSimpleModule R N] : SimpleSubmoduleClasses R M := ⟦⟨N, ‹_›⟩⟧
+def mk (N : Submodule R M) [IsSimpleModule R N] : SimpleSubmoduleClasses R M := Quot.mk _ ⟨N, ‹_›⟩
 
 theorem mk_eq_mk_iff {N N' : Submodule R M} [IsSimpleModule R N] [IsSimpleModule R N'] :
-    mk N = mk N' ↔ Nonempty (N ≃ₗ[R] N') := Quotient.eq
+    mk N = mk N' ↔ Nonempty (N ≃ₗ[R] N') :=
+  Quot.eq.trans <| Equivalence.eqvGen_iff
+    ⟨fun _ ↦ ⟨.refl R _⟩, fun ⟨e⟩ ↦ ⟨e.symm⟩, fun ⟨e⟩ ⟨f⟩ ↦ ⟨e.trans f⟩⟩
 
-/-- Every isomorphism class is the class of a simple submodule. -/
+/-- Every isomorphism class is the class of a simple submodule: the eliminator into `Prop`. -/
 @[elab_as_elim]
 theorem ind {motive : SimpleSubmoduleClasses R M → Prop}
     (mk : ∀ (N : Submodule R M) (_ : IsSimpleModule R N), motive (.mk N))
     (c : SimpleSubmoduleClasses R M) : motive c :=
-  Quotient.ind (fun N ↦ mk N.1 N.2) c
+  Quot.ind (fun N ↦ mk N.1 N.2) c
+
+/-- **The eliminator into `Sort`.** To define data on the isomorphism classes of simple submodules
+of `M` it suffices to give a value on each simple submodule and to check that isomorphic simple
+submodules get the same value; the value on a class is then read off by
+`TauCeti.SimpleSubmoduleClasses.lift_mk`. -/
+@[expose]
+def lift {α : Sort*} (f : ∀ (N : Submodule R M) [IsSimpleModule R N], α)
+    (hf : ∀ (N N' : Submodule R M) [IsSimpleModule R N] [IsSimpleModule R N'],
+      Nonempty (N ≃ₗ[R] N') → f N = f N')
+    (c : SimpleSubmoduleClasses R M) : α :=
+  Quot.lift (fun N ↦ @f N.1 N.2) (fun N N' h ↦ @hf N.1 N'.1 N.2 N'.2 h) c
+
+/-- The defining equation of `TauCeti.SimpleSubmoduleClasses.lift`. -/
+@[simp]
+theorem lift_mk {α : Sort*} {f : ∀ (N : Submodule R M) [IsSimpleModule R N], α} {hf}
+    (N : Submodule R M) [IsSimpleModule R N] : lift f hf (mk N) = f N := rfl
 
 end SimpleSubmoduleClasses
 
@@ -134,14 +157,14 @@ copy of the module cutting it out. Surjectivity is the definition of `isotypicCo
 noncomputable def simpleSubmoduleClassesEquiv :
     SimpleSubmoduleClasses R M ≃ isotypicComponents R M :=
   Equiv.ofBijective
-    (Quotient.lift (fun N ↦ (⟨isotypicComponent R M N.1, N.1, N.2, rfl⟩ : isotypicComponents R M))
-      fun _ _ ⟨e⟩ ↦ Subtype.ext e.isotypicComponent_eq)
+    (SimpleSubmoduleClasses.lift
+      (fun N hN ↦ (⟨isotypicComponent R M N, N, hN, rfl⟩ : isotypicComponents R M))
+      fun _ _ _ _ ⟨e⟩ ↦ Subtype.ext e.isotypicComponent_eq)
     ⟨by
-      refine Quotient.ind₂ fun N N' h ↦ Quotient.sound ?_
-      have := N.2
-      have := N'.2
-      have h' : isotypicComponent R M N.1 = isotypicComponent R M N'.1 := congrArg Subtype.val h
-      exact ⟨((le_isotypicComponent_iff N.1).mp (h' ▸ N.1.le_isotypicComponent)).some.symm⟩,
+      refine SimpleSubmoduleClasses.ind fun N _ ↦ SimpleSubmoduleClasses.ind fun N' _ ↦ fun h ↦ ?_
+      rw [SimpleSubmoduleClasses.mk_eq_mk_iff]
+      have h' : isotypicComponent R M N = isotypicComponent R M N' := congrArg Subtype.val h
+      exact ⟨((le_isotypicComponent_iff N).mp (h' ▸ N.le_isotypicComponent)).some.symm⟩,
      by rintro ⟨_, N, _, rfl⟩; exact ⟨.mk N, rfl⟩⟩
 
 @[simp]
