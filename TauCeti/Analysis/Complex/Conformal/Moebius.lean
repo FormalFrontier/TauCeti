@@ -148,7 +148,17 @@ lemma differentiableOn_unitDiscMoebiusFormula (a : Complex.UnitDisc) :
       (ball (0 : ℂ) 1) :=
   differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one
 
-private lemma unitDiscMoebius_neg_apply_unitDiscMoebius_apply_scalar {a z : ℂ}
+/-- **The pointwise inversion identity for the scalar Moebius formula.** Wherever the denominator
+at `z` does not vanish and the centre contributes a nonzero factor `1 - conj a * a`, the formula
+centred at `-a` — expanded here as `w ↦ (w + a) / (1 + conj a * w)`, since `conj (-a) = -conj a` —
+sends the value at `z` back to `z`.
+
+This is pure algebra, with no constraint on `‖a‖` beyond `1 - conj a * a ≠ 0`, so it is the common
+core of the inversion statements: the open-disc
+`TauCeti.leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one` below and, for a centre anywhere off the
+unit circle, the boundary inversion in
+`TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Boundary.lean`. -/
+lemma unitDiscMoebiusFormula_neg_apply_unitDiscMoebiusFormula_apply {a z : ℂ}
     (hden : 1 - (starRingEnd ℂ) a * z ≠ 0)
     (hnorm : 1 - (starRingEnd ℂ) a * a ≠ 0) :
     (((z - a) / (1 - (starRingEnd ℂ) a * z) + a) /
@@ -181,7 +191,7 @@ private lemma unitDiscMoebius_neg_apply_unitDiscMoebius_apply (a z : Complex.Uni
     one_sub_conj_mul_ne_zero_unitDisc a a
   simp only [coe_unitDiscMoebius, Complex.UnitDisc.coe_neg, map_neg]
   simpa [sub_neg_eq_add] using
-    unitDiscMoebius_neg_apply_unitDiscMoebius_apply_scalar hden₁ hnorm
+    unitDiscMoebiusFormula_neg_apply_unitDiscMoebiusFormula_apply hden₁ hnorm
 
 /-- The inverse of the unit-disc Moebius factor centered at `a` is the factor centered at `-a`. -/
 @[simp]

@@ -139,10 +139,12 @@ theorem bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1
 
 /-- The pointwise inversion identity behind the Moebius factor.  Wherever the denominator at `z`
 does not vanish, the factor centred at `-a` sends the value back to `z`, provided the centre is off
-the unit circle: numerator and denominator both pick up the factor `1 - conj a * a`, which is
-`1 - ‖a‖ ^ 2 ≠ 0`.  Unlike
+the unit circle: the algebraic core is
+`TauCeti.unitDiscMoebiusFormula_neg_apply_unitDiscMoebiusFormula_apply`, whose hypothesis
+`1 - conj a * a ≠ 0` reads here as `1 - ‖a‖ ^ 2 ≠ 0`.  Unlike
 `TauCeti.leftInvOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one` above, which comes from the
-open disc by continuity, this is pure algebra, so it also applies to a centre outside the disc. -/
+open disc by continuity, that core is pure algebra, so it also applies to a centre outside the
+disc. -/
 private lemma unitDiscMoebiusFormula_neg_apply_of_norm_ne_one (ha : ‖a‖ ≠ 1) {z : ℂ}
     (hz : 1 - (starRingEnd ℂ) a * z ≠ 0) :
     ((z - a) / (1 - (starRingEnd ℂ) a * z) - (-a)) /
@@ -157,20 +159,10 @@ private lemma unitDiscMoebiusFormula_neg_apply_of_norm_ne_one (ha : ‖a‖ ≠ 
     rcases mul_eq_zero.mp hfac with h | h
     · exact ha (by linarith)
     · nlinarith [norm_nonneg a]
-  -- `field_simp` normalizes the denominator to `1 - z * conj a`, so it needs the hypothesis in
-  -- that orientation as well.
-  have hz' : 1 - z * (starRingEnd ℂ) a ≠ 0 := by rwa [mul_comm]
-  have hnum : (z - a) / (1 - (starRingEnd ℂ) a * z) - (-a) =
-      z * (1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) := by
-    field_simp
-    ring
-  have hden : 1 - (starRingEnd ℂ) (-a) * ((z - a) / (1 - (starRingEnd ℂ) a * z)) =
-      (1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) := by
-    rw [map_neg]
-    field_simp
-    ring
-  rw [hnum, hden, div_div_div_cancel_right₀ hz]
-  exact mul_div_cancel_right₀ z haa
+  -- `conj (-a) = -conj a` turns the outer denominator into `1 + conj a * _` and the outer
+  -- numerator's `- (-a)` into `+ a`, which is exactly the shape of the core identity.
+  simpa only [map_neg, neg_mul, sub_neg_eq_add] using
+    unitDiscMoebiusFormula_neg_apply_unitDiscMoebiusFormula_apply hz haa
 
 /-- **The Moebius factor centred at `-a` inverts the one centred at `a` on the unit circle**, for
 every centre off the circle.  On the circle the denominator never vanishes
