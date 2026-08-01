@@ -109,6 +109,7 @@ lemma groupScheme_X_hom (G : FGCommGrpCat.{u}) :
 
 /-- The source scheme of multiplication on `D(G)` is the fibre product of two copies of
 `Spec R[G]` over `Spec R`. -/
+@[simp↓]
 lemma groupScheme_tensor_X_left (G : FGCommGrpCat.{u}) :
     ((groupScheme R G).X ⊗ (groupScheme R G).X).left =
       Limits.pullback
