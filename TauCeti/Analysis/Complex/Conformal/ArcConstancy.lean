@@ -108,6 +108,79 @@ private lemma exists_mem_ball_of_mem_sphere {c w : ℂ} {r δ : ℝ} (hr : 0 < r
   · obtain ⟨z, hz, hwz⟩ := Metric.mem_closure_iff.mp hout δ hδ
     exact ⟨z, mem_ball.mpr (by rwa [dist_comm]), hz⟩
 
+/-- The function glued from `f - a` inside the closed disc and from `0` outside it is continuous on
+any ball contained in `V`: the two branches agree along the circle, which is the frontier of the
+closed disc, and there `f` is the constant `a` by hypothesis. -/
+private lemma continuousOn_piecewise_sub_const {w : ℂ} {δ : ℝ}
+    [∀ z, Decidable (z ∈ closedBall c r)] (hr : r ≠ 0) (hδV : ball w δ ⊆ V)
+    (hcont : ContinuousOn f (V ∩ closedBall c r))
+    (harc : EqOn f (fun _ => a) (V ∩ sphere c r)) :
+    ContinuousOn ((closedBall c r).piecewise (fun z => f z - a) 0) (ball w δ) := by
+  refine ContinuousOn.piecewise (fun z hz => ?_) ?_ ?_
+  · have hzS : z ∈ V ∩ sphere c r :=
+      ⟨hδV hz.1, by rw [frontier_closedBall c hr] at hz; exact hz.2⟩
+    simp [harc hzS]
+  · rw [isClosed_closedBall.closure_eq]
+    exact (hcont.mono (inter_subset_inter_left _ hδV)).sub continuousOn_const
+  · exact continuousOn_const
+
+/-- Off the circle the glued function is holomorphic in its own right: near an interior point it
+agrees with `f - a`, and near an exterior point with `0`. Only holomorphy of `f` on the open disc
+is used — neither continuity up to the boundary nor the boundary values play any role here. -/
+private lemma differentiableOn_piecewise_sub_const_compl_sphere
+    [∀ z, Decidable (z ∈ closedBall c r)] (hdiff : DifferentiableOn ℂ f (ball c r)) :
+    DifferentiableOn ℂ ((closedBall c r).piecewise (fun z => f z - a) 0) (sphere c r)ᶜ := by
+  intro z hz
+  have hzne : dist z c ≠ r := fun h => hz (mem_sphere.mpr h)
+  rcases lt_or_gt_of_ne hzne with hlt | hgt
+  · have hzb : z ∈ ball c r := mem_ball.mpr hlt
+    have hev : (closedBall c r).piecewise (fun z => f z - a) 0 =ᶠ[𝓝 z] fun y => f y - a := by
+      filter_upwards [isOpen_ball.mem_nhds hzb] with y hy
+      exact Set.piecewise_eq_of_mem _ _ _ (ball_subset_closedBall hy)
+    have hfd : DifferentiableAt ℂ f z := (hdiff z hzb).differentiableAt (isOpen_ball.mem_nhds hzb)
+    exact ((hfd.sub_const a).congr_of_eventuallyEq hev).differentiableWithinAt
+  · have hzc : z ∈ (closedBall c r)ᶜ := by
+      simp only [mem_compl_iff, mem_closedBall, not_le]
+      exact hgt
+    have hev : (closedBall c r).piecewise (fun z => f z - a) 0 =ᶠ[𝓝 z] fun _ => (0 : ℂ) := by
+      filter_upwards [isClosed_closedBall.isOpen_compl.mem_nhds hzc] with y hy
+      exact Set.piecewise_eq_of_notMem _ _ _ hy
+    exact ((differentiableAt_const (0 : ℂ)).congr_of_eventuallyEq hev).differentiableWithinAt
+
+/-- **The local step of boundary uniqueness.** A single point `w` of the arc already forces `f` to
+be the constant `a` on a neighbourhood of *some* interior point of the disc. Which interior point
+is not recorded: the conclusion asserts only that one exists.
+
+This is where Painlevé removability enters. On a ball `Ω` around `w` the glued function is
+continuous and holomorphic off the circle, hence holomorphic on all of `Ω`; it vanishes on the part
+of `Ω` outside the closed disc, which is open and nonempty because `Ω` straddles the circle, so the
+identity principle kills it on `Ω`. The interior point produced is one of the points of
+`Ω ∩ ball c r`, but only its existence is needed to run the identity principle on the disc. -/
+private lemma exists_mem_ball_eventuallyEq_const (hr : 0 < r) (hV : IsOpen V)
+    (hcont : ContinuousOn f (V ∩ closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
+    (harc : EqOn f (fun _ => a) (V ∩ sphere c r)) {w : ℂ} (hwV : w ∈ V) (hwS : w ∈ sphere c r) :
+    ∃ z₀ ∈ ball c r, f =ᶠ[𝓝 z₀] fun _ => a := by
+  classical
+  obtain ⟨δ, hδ, hδV⟩ := Metric.isOpen_iff.mp hV w hwV
+  set G : ℂ → ℂ := (closedBall c r).piecewise (fun z => f z - a) 0 with hGdef
+  have hΩo : IsOpen (ball w δ) := isOpen_ball
+  have hGan : AnalyticOnNhd ℂ G (ball w δ) :=
+    (differentiableOn_of_continuousOn_of_differentiableOn_diff_sphere hr hΩo
+      (continuousOn_piecewise_sub_const hr.ne' hδV hcont harc)
+      ((differentiableOn_piecewise_sub_const_compl_sphere hdiff).mono
+        fun _ hz => hz.2)).analyticOnNhd hΩo
+  obtain ⟨⟨z₀, hz₀Ω, hz₀in⟩, z₁, hz₁Ω, hz₁out⟩ := exists_mem_ball_of_mem_sphere hr hδ hwS
+  have hGzero : EqOn G 0 (ball w δ) := by
+    refine hGan.eqOn_zero_of_preconnected_of_eventuallyEq_zero (convex_ball w δ).isPreconnected
+      hz₁Ω ?_
+    filter_upwards [isClosed_closedBall.isOpen_compl.mem_nhds hz₁out] with y hy
+    exact Set.piecewise_eq_of_notMem _ _ _ hy
+  refine ⟨z₀, hz₀in, ?_⟩
+  filter_upwards [(hΩo.inter isOpen_ball).mem_nhds ⟨hz₀Ω, hz₀in⟩] with y hy
+  have hy0 := hGzero hy.1
+  rw [hGdef, Set.piecewise_eq_of_mem _ _ _ (ball_subset_closedBall hy.2)] at hy0
+  simpa [sub_eq_zero] using hy0
+
 /-- **Boundary uniqueness across a circular arc.** Let `f` be holomorphic on `ball c r`, continuous
 up to the part of the closed disc lying in an open set `V`, and equal to the constant `a` on the
 arc `V ∩ sphere c r`. If that arc is nonempty, then `f` is the constant `a` on the whole disc.
@@ -119,55 +192,9 @@ theorem eqOn_const_ball_of_eqOn_const_inter_sphere (hr : 0 < r) (hV : IsOpen V)
     (hcont : ContinuousOn f (V ∩ closedBall c r)) (hdiff : DifferentiableOn ℂ f (ball c r))
     (harc : EqOn f (fun _ => a) (V ∩ sphere c r)) (hne : (V ∩ sphere c r).Nonempty) :
     EqOn f (fun _ => a) (ball c r) := by
-  classical
   obtain ⟨w, hwV, hwS⟩ := hne
-  obtain ⟨δ, hδ, hδV⟩ := Metric.isOpen_iff.mp hV w hwV
-  set Ω : Set ℂ := ball w δ
-  have hΩo : IsOpen Ω := isOpen_ball
-  set G : ℂ → ℂ := (closedBall c r).piecewise (fun z => f z - a) 0 with hGdef
-  -- The two branches agree on the circle, so the glued function is continuous on `Ω`.
-  have hGcont : ContinuousOn G Ω := by
-    refine ContinuousOn.piecewise (fun z hz => ?_) ?_ ?_
-    · have hzS : z ∈ V ∩ sphere c r :=
-        ⟨hδV hz.1, by rw [frontier_closedBall c hr.ne'] at hz; exact hz.2⟩
-      simp [harc hzS]
-    · rw [isClosed_closedBall.closure_eq]
-      exact (hcont.mono (inter_subset_inter_left _ hδV)).sub continuousOn_const
-    · exact continuousOn_const
-  -- Off the circle each branch is holomorphic in its own right.
-  have hGdiff : DifferentiableOn ℂ G (Ω \ sphere c r) := by
-    intro z hz
-    have hzne : dist z c ≠ r := fun h => hz.2 (mem_sphere.mpr h)
-    rcases lt_or_gt_of_ne hzne with hlt | hgt
-    · have hzb : z ∈ ball c r := mem_ball.mpr hlt
-      have hev : G =ᶠ[𝓝 z] fun y => f y - a := by
-        filter_upwards [isOpen_ball.mem_nhds hzb] with y hy
-        exact Set.piecewise_eq_of_mem _ _ _ (ball_subset_closedBall hy)
-      have hfd : DifferentiableAt ℂ f z := (hdiff z hzb).differentiableAt (isOpen_ball.mem_nhds hzb)
-      exact ((hfd.sub_const a).congr_of_eventuallyEq hev).differentiableWithinAt
-    · have hzc : z ∈ (closedBall c r)ᶜ := by
-        simp only [mem_compl_iff, mem_closedBall, not_le]
-        exact hgt
-      have hev : G =ᶠ[𝓝 z] fun _ => (0 : ℂ) := by
-        filter_upwards [isClosed_closedBall.isOpen_compl.mem_nhds hzc] with y hy
-        exact Set.piecewise_eq_of_notMem _ _ _ hy
-      exact ((differentiableAt_const (0 : ℂ)).congr_of_eventuallyEq hev).differentiableWithinAt
-  have hGan : AnalyticOnNhd ℂ G Ω :=
-    (differentiableOn_of_continuousOn_of_differentiableOn_diff_sphere hr hΩo hGcont
-      hGdiff).analyticOnNhd hΩo
-  obtain ⟨⟨z₀, hz₀Ω, hz₀in⟩, z₁, hz₁Ω, hz₁out⟩ := exists_mem_ball_of_mem_sphere hr hδ hwS
-  -- The glued function vanishes on the outside part of `Ω`, hence on all of `Ω`.
-  have hGzero : EqOn G 0 Ω := by
-    refine hGan.eqOn_zero_of_preconnected_of_eventuallyEq_zero (convex_ball w δ).isPreconnected
-      hz₁Ω ?_
-    filter_upwards [isClosed_closedBall.isOpen_compl.mem_nhds hz₁out] with y hy
-    exact Set.piecewise_eq_of_notMem _ _ _ hy
-  -- So `f` is the constant `a` near an interior point of `Ω`, and the identity principle finishes.
-  have hfz₀ : f =ᶠ[𝓝 z₀] fun _ => a := by
-    filter_upwards [(hΩo.inter isOpen_ball).mem_nhds ⟨hz₀Ω, hz₀in⟩] with y hy
-    have hy0 := hGzero hy.1
-    rw [hGdef, Set.piecewise_eq_of_mem _ _ _ (ball_subset_closedBall hy.2)] at hy0
-    simpa [sub_eq_zero] using hy0
+  obtain ⟨z₀, hz₀in, hfz₀⟩ :=
+    exists_mem_ball_eventuallyEq_const hr hV hcont hdiff harc hwV hwS
   exact (hdiff.analyticOnNhd isOpen_ball).eqOn_of_preconnected_of_eventuallyEq analyticOnNhd_const
     (convex_ball c r).isPreconnected hz₀in hfz₀
 

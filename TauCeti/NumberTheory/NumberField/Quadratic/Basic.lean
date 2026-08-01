@@ -12,7 +12,7 @@ public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 
 Shared facts about a quadratic number field `K` presented by an algebraic integer `θ : 𝓞 K` whose
 minimal polynomial over `ℤ` is `X² - d`. These feed both the prime-splitting law
-(`Quadratic/Splitting.lean`) and the conjugation automorphism (`Quadratic/Conjugation.lean`).
+(`Quadratic/Splitting.lean`) and the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`).
 
 ## Main results
 

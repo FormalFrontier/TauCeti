@@ -51,9 +51,12 @@ sits *inside* the derived ideal and the two are not complementary.
 
 ## Implementation notes
 
-Everything is stated over an arbitrary commutative ring `R`; no field, characteristic, or
-algebraic closure hypothesis is used, and the invertibility of `Fintype.card n` is carried as an
-`Invertible` hypothesis only on the one result that needs it.
+Every result about `gl n R` is stated over an arbitrary commutative ring `R`; no field,
+characteristic, or algebraic closure hypothesis is used, and the invertibility of `Fintype.card n`
+is carried as an `Invertible` hypothesis only on the one result that needs it. Two groups of
+declarations ask for less: the matrix-unit bracket identities need only a ring, and the
+decomposition of a trace-zero matrix into matrix units needs only an additive commutative group,
+no multiplication at all.
 
 Mathlib does not register `LieRing.ofAssociativeRing` as a global instance, so, as in
 `Mathlib/Algebra/Lie/Matrix.lean`, it is a local instance here.
@@ -75,6 +78,41 @@ open Matrix LieAlgebra
 attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {R : Type*} {n : Type*} [DecidableEq n] [Fintype n]
+
+/-! ### Trace-zero matrices as sums of matrix units -/
+
+section AddCommGroup
+
+variable [AddCommGroup R]
+
+/-- **A trace-zero matrix as a sum of commutator-shaped matrix units.** Every matrix is the sum of
+its matrix units `Eₚq (Aₚq)`; subtracting `E₀₀ (Aₚₚ)` from each diagonal one changes the total by
+`E₀₀ (trace A)`, so for a trace-zero `A` the corrected sum is still `A`.
+
+The correction is what puts each summand in commutator form: the membership helper below exhibits
+an explicit bracket for every one of them. Only the additive structure of `R` is involved here. -/
+private lemma eq_sum_sum_ite_single_sub_of_trace_eq_zero (i₀ : n) {A : Matrix n n R}
+    (hA : A.trace = 0) :
+    A = ∑ p : n, ∑ q : n,
+      (if p = q then single p p (A p q) - single i₀ i₀ (A p q) else single p q (A p q)) := by
+  have hsplit : ∀ p q : n,
+      (if p = q then single p p (A p q) - single i₀ i₀ (A p q) else single p q (A p q))
+        = single p q (A p q) - (if p = q then single i₀ i₀ (A p q) else 0) := fun p q => by
+    by_cases hpq : p = q <;> simp [hpq]
+  have hrow : ∀ p : n, (∑ q : n, if p = q then single i₀ i₀ (A p q) else (0 : Matrix n n R))
+      = single i₀ i₀ (A p p) := fun p => by simp
+  have hsingle_sum : ∀ f : n → R, ∑ p : n, single i₀ i₀ (f p) = single i₀ i₀ (∑ p : n, f p) :=
+    fun f => (map_sum (Matrix.singleAddMonoidHom i₀ i₀) f Finset.univ).symm
+  have hcorr : ∑ p : n, ∑ q : n, (if p = q then single i₀ i₀ (A p q) else 0)
+      = single i₀ i₀ A.trace := by
+    rw [Finset.sum_congr rfl fun p _ => hrow p, hsingle_sum]
+    -- `Matrix.trace` is by definition the sum of the diagonal entries.
+    rfl
+  rw [Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => hsplit p q]
+  simp only [Finset.sum_sub_distrib, hcorr, hA, Matrix.single_zero, sub_zero]
+  exact Matrix.matrix_eq_sum_single A
+
+end AddCommGroup
 
 /-! ### Matrix units as commutators -/
 
@@ -152,6 +190,23 @@ theorem slIdeal_toLieSubalgebra_eq_sl :
 
 /-! ### The derived ideal of `gl n R` -/
 
+/-- Each summand of the corrected double sum above lies in the derived ideal of `gl n R`, being a
+commutator: an off-diagonal unit by `TauCeti.lie_single_self_single_of_ne`, and a corrected diagonal
+one by `TauCeti.lie_single_single_eq_sub`. -/
+private lemma ite_single_sub_mem_derivedSeries_one (i₀ : n) (c : R) (p q : n) :
+    (if p = q then single p p c - single i₀ i₀ c else single p q c)
+      ∈ derivedSeries R (Matrix n n R) 1 := by
+  classical
+  have hcomm : ∀ X Y : Matrix n n R, ⁅X, Y⁆ ∈ derivedSeries R (Matrix n n R) 1 := fun X Y => by
+    have hmem : ⁅X, Y⁆ ∈ Submodule.span R {⁅x, y⁆ | (x : Matrix n n R) (y : Matrix n n R)} :=
+      Submodule.subset_span ⟨X, Y, rfl⟩
+    rwa [← coe_derivedSeries_one_eq] at hmem
+  by_cases hpq : p = q
+  · subst hpq
+    simpa [lie_single_single_eq_sub p i₀ c] using hcomm (single p i₀ c) (single i₀ p 1)
+  · simpa [hpq, lie_single_self_single_of_ne hpq c] using
+      hcomm (single p p (1 : R)) (single p q c)
+
 variable (R n) in
 /-- The derived ideal of `gl n R` is the special linear ideal: `⁅gl n R, gl n R⁆ = sl n R`.
 
@@ -163,57 +218,23 @@ which vanishes. For an empty index type both sides are the zero ideal. -/
 theorem derivedSeries_one_eq_slIdeal :
     derivedSeries R (Matrix n n R) 1 = slIdeal R n := by
   classical
-  have hderived : derivedSeries R (Matrix n n R) 1
-      = ⁅(⊤ : LieIdeal R (Matrix n n R)), (⊤ : LieIdeal R (Matrix n n R))⁆ := by
-    rw [derivedSeries_def, derivedSeriesOfIdeal_succ, derivedSeriesOfIdeal_zero]
   refine le_antisymm ?_ fun A hA => ?_
-  · rw [hderived, LieSubmodule.lie_le_iff]
-    intro X _ Y _
-    exact mem_slIdeal_iff.mpr (matrix_trace_commutator_zero n R X Y)
+  · have hspan : Submodule.span R {⁅X, Y⁆ | (X : Matrix n n R) (Y : Matrix n n R)}
+        ≤ (slIdeal R n : Submodule R (Matrix n n R)) := by
+      rw [Submodule.span_le]
+      rintro - ⟨X, Y, rfl⟩
+      exact mem_slIdeal_iff.mpr (matrix_trace_commutator_zero n R X Y)
+    rw [← coe_derivedSeries_one_eq] at hspan
+    exact hspan
   -- With no indices at all the only matrix is `0`, which lies in every ideal.
   rcases isEmpty_or_nonempty n with hn | hne
   · haveI := hn
     rw [Subsingleton.elim A 0]
     exact zero_mem _
   obtain ⟨i₀⟩ := hne
-  -- The commutators available to us, as members of the derived ideal.
-  have hcomm : ∀ X Y : Matrix n n R, ⁅X, Y⁆ ∈ derivedSeries R (Matrix n n R) 1 := fun X Y => by
-    rw [hderived]
-    exact LieSubmodule.lie_mem_lie (LieSubmodule.mem_top X) (LieSubmodule.mem_top Y)
-  -- Every summand of the corrected double sum below is such a commutator.
-  have hmem : ∀ p q : n,
-      (if p = q then single p p (A p q) - single i₀ i₀ (A p q) else single p q (A p q))
-        ∈ derivedSeries R (Matrix n n R) 1 := by
-    intro p q
-    by_cases hpq : p = q
-    · subst hpq
-      simpa [lie_single_single_eq_sub p i₀ (A p p)] using
-        hcomm (single p i₀ (A p p)) (single i₀ p 1)
-    · simpa [hpq, lie_single_self_single_of_ne hpq (A p q)] using
-        hcomm (single p p (1 : R)) (single p q (A p q))
-  -- The correction subtracted along the diagonal totals `E₀₀ (trace A)`, which vanishes.
-  have hsingle_sum : ∀ f : n → R, ∑ p : n, single i₀ i₀ (f p) = single i₀ i₀ (∑ p : n, f p) :=
-    fun f => (map_sum (Matrix.singleLinearMap R i₀ i₀) f Finset.univ).symm
-  have hrow : ∀ p : n, (∑ q : n, if p = q then single i₀ i₀ (A p q) else (0 : Matrix n n R))
-      = single i₀ i₀ (A p p) := fun p => by simp
-  have hcorr : ∑ p : n, ∑ q : n, (if p = q then single i₀ i₀ (A p q) else 0)
-      = single i₀ i₀ A.trace := by
-    rw [Finset.sum_congr rfl fun p _ => hrow p, hsingle_sum]
-    -- `Matrix.trace` is by definition the sum of the diagonal entries.
-    rfl
-  -- Hence the corrected double sum is `A` itself.
-  have hsplit : ∀ p q : n,
-      (if p = q then single p p (A p q) - single i₀ i₀ (A p q) else single p q (A p q))
-        = single p q (A p q) - (if p = q then single i₀ i₀ (A p q) else 0) := by
-    intro p q
-    by_cases hpq : p = q <;> simp [hpq]
-  have hsum : A = ∑ p : n, ∑ q : n,
-      (if p = q then single p p (A p q) - single i₀ i₀ (A p q) else single p q (A p q)) := by
-    rw [Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => hsplit p q]
-    simp only [Finset.sum_sub_distrib, hcorr, mem_slIdeal_iff.mp hA, Matrix.single_zero, sub_zero]
-    exact Matrix.matrix_eq_sum_single A
-  rw [hsum]
-  exact Submodule.sum_mem _ fun p _ => Submodule.sum_mem _ fun q _ => hmem p q
+  rw [eq_sum_sum_ite_single_sub_of_trace_eq_zero i₀ (mem_slIdeal_iff.mp hA)]
+  exact Submodule.sum_mem _ fun p _ => Submodule.sum_mem _ fun q _ =>
+    ite_single_sub_mem_derivedSeries_one i₀ (A p q) p q
 
 variable (R n) in
 /-- The derived ideal of `gl n R` is Mathlib's special linear Lie algebra `sl n R`. -/
