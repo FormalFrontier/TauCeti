@@ -109,14 +109,25 @@ lemma pseudoHyperbolicExpr_eq_zero_iff_of_den_ne_zero {z w : ℂ}
   simp only [hden, or_false]
   exact sub_eq_zero
 
-/-- On the open unit disc, the denominator in the pseudo-hyperbolic expression is nonzero. -/
-lemma one_sub_conj_mul_ne_zero_of_norm_lt_one {z w : ℂ}
-    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+/-- On the *closed* unit disc, the denominator in the pseudo-hyperbolic expression is nonzero, as
+soon as the centre `w` lies in the open disc: the denominator vanishes only at `z = 1 / conj w`,
+which has norm `1 / ‖w‖ > 1`. -/
+lemma one_sub_conj_mul_ne_zero_of_norm_le_one {z w : ℂ}
+    (hz : ‖z‖ ≤ 1) (hw : ‖w‖ < 1) :
     1 - (starRingEnd ℂ) w * z ≠ 0 :=
   (isUnit_one_sub_of_norm_lt_one (x := (starRingEnd ℂ) w * z)
     (by
       rw [norm_mul, norm_conj]
-      exact mul_lt_one_of_nonneg_of_lt_one_right hw.le (norm_nonneg _) hz)).ne_zero
+      calc
+        ‖w‖ * ‖z‖ ≤ ‖w‖ * 1 := by gcongr
+        _ = ‖w‖ := mul_one _
+        _ < 1 := hw)).ne_zero
+
+/-- On the open unit disc, the denominator in the pseudo-hyperbolic expression is nonzero. -/
+lemma one_sub_conj_mul_ne_zero_of_norm_lt_one {z w : ℂ}
+    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    1 - (starRingEnd ℂ) w * z ≠ 0 :=
+  one_sub_conj_mul_ne_zero_of_norm_le_one hz.le hw
 
 /-- For points in the open unit ball, the denominator in the pseudo-hyperbolic expression is
 nonzero. -/
