@@ -161,9 +161,9 @@ limit on a connected open `Ω` of functions `F i` that are holomorphic for all s
 `i`, is not identically zero, and vanishes at `z₀ ∈ Ω`, then every ball about `z₀` contains a zero
 of `F i` for all sufficiently large `i`.
 
-The hypothesis that `g` is not identically zero cannot be dropped: the constant functions
-`F i = 1 / (i + 1)` are holomorphic and nowhere zero and converge locally uniformly to `g = 0`,
-which vanishes at every `z₀`, yet no `F i` has a zero anywhere.
+The hypothesis that `g` is not identically zero cannot be dropped: for `ι = ℕ` and `l = atTop`,
+the constant functions `F n z = 1 / (n + 1 : ℂ)` are holomorphic and nowhere zero and converge
+locally uniformly to `g = 0`, which vanishes at every `z₀`, yet no `F n` has a zero anywhere.
 
 Note that the ball is *not* assumed to lie in `Ω`; the zero produced is located in `Ω ∩ ball z₀ ε`,
 which the proof reaches by shrinking `ε` first. -/
@@ -241,8 +241,8 @@ theorem hurwitz_forall_ne [l.NeBot] (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω
 uniform limit of functions that are holomorphic and avoid the value `v` for all sufficiently large
 `i` either avoids `v` everywhere or is constantly `v`.
 
-The dichotomy is genuine: on any `Ω` the functions `F i = v + 1 / (i + 1)` avoid `v` and converge
-locally uniformly to the constant `v`. -/
+The dichotomy is genuine: for `ι = ℕ` and `l = atTop`, the functions `F n z = v + 1 / (n + 1 : ℂ)`
+avoid `v` on any `Ω` and converge locally uniformly to the constant `v`. -/
 theorem hurwitz_forall_ne_or_forall_eq [l.NeBot] (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
     (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω)
     (hconv : TendstoLocallyUniformlyOn F g l Ω) {v : ℂ}
@@ -257,8 +257,8 @@ holomorphic and nowhere zero for all sufficiently large `i` is itself either now
 identically zero.
 
 This is the value `v = 0` of `TauCeti.hurwitz_forall_ne_or_forall_eq`. The dichotomy is genuine:
-the constant functions `F i = 1 / (i + 1)` on any `Ω` converge locally uniformly to `0`, so the
-second alternative cannot be dropped. -/
+for `ι = ℕ` and `l = atTop`, the constant functions `F n z = 1 / (n + 1 : ℂ)` on any `Ω` converge
+locally uniformly to `0`, so the second alternative cannot be dropped. -/
 theorem hurwitz [l.NeBot] (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
     (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω)
     (hconv : TendstoLocallyUniformlyOn F g l Ω)
@@ -271,8 +271,8 @@ functions that are holomorphic and *injective* for all sufficiently large `i` is
 or constant.
 
 This is the form the Riemann mapping theorem consumes: it is what keeps the extremal map injective
-in the limit. Both alternatives genuinely occur — the injective maps `z ↦ z / (i + 1)` converge
-locally uniformly to the constant `0`.
+in the limit. Both alternatives genuinely occur — for `ι = ℕ` and `l = atTop`, the injective maps
+`F n z = z / (n + 1 : ℂ)` converge locally uniformly to the constant `0`.
 
 The proof does not route through `TauCeti.hurwitz` on the punctured domain `Ω \ {b}`, which would
 need that set to be connected — a fact Mathlib does not currently provide for an open connected
