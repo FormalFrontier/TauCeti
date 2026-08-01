@@ -113,30 +113,21 @@ theorem map_prefixPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
       (Measure.dirac (ν ω)).prod (Measure.infinitePi fun _ : ℕ => (ν ω : Measure α))) :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ)
       (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id).comp hν
-  -- Projecting one fibre `δ_Q ⊗ Q^{⊗ℕ}` onto the first `n` path coordinates.
+  have hker0 : Measurable (fun Q : ProbabilityMeasure α =>
+      (Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ)
+      (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id
+  -- Each fibre is the tagged-block identity already proved in `Measure/ProductKernel.lean`,
+  -- specialised to the prefix selection `Fin.val`.
   have hfibre : ∀ Q : ProbabilityMeasure α,
       ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))).map
           (prefixPair (ProbabilityMeasure α) α n)
         = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin n => Q).toMeasure := by
     intro Q
-    have hpref : Measurable (fun x : ℕ → α => fun i : Fin n => x (i : ℕ)) :=
-      measurable_pi_lambda _ fun i => measurable_pi_apply (i : ℕ)
-    calc ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))).map
-            (prefixPair (ProbabilityMeasure α) α n)
-        = ((Measure.dirac Q).map id).prod
-            ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
-              fun x : ℕ → α => fun i : Fin n => x (i : ℕ)) := by
-          rw [Measure.map_prod_map _ _ measurable_id hpref]
-          congr 1
-          funext q
-          simp [prefixPair_apply, Prod.map]
-      _ = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin n => Q).toMeasure := by
-          rw [Measure.map_id, TauCeti.MeasureTheory.map_prefixProj_infinitePi_const Q n,
-            ProbabilityMeasure.toMeasure_pi]
-  have hid : Measurable (id : ProbabilityMeasure α → ProbabilityMeasure α) := measurable_id
-  have hker0 : Measurable (fun Q : ProbabilityMeasure α =>
-      (Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) :=
-    TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ) id hid
+    rw [Measure.dirac_prod, Measure.map_map (measurable_prefixPair (ProbabilityMeasure α) α n)
+      measurable_prodMk_left]
+    simpa only [Function.comp_def, prefixPair_apply] using
+      TauCeti.MeasureTheory.map_infinitePi_pair_block Q (Fin.val_injective (n := n))
   rw [iidMixtureLaw_def,
     TauCeti.MeasureTheory.bind_map hν.aemeasurable (by simpa using hker0.aemeasurable)]
   simp only [Function.comp_def, id_eq]
