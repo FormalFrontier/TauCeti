@@ -37,7 +37,7 @@ from it: the tail-measurability step is assembled from Tau Ceti's existing gener
 adapted from that repository's `Probability/SigmaAlgebraHelpers.lean`, and carrying attribution
 there), rather than by porting a bridge file. The divergence is deliberate: separating tail
 measurability from the conditional-expectation identification keeps this prerequisite independent
-of the directing measure, so it can serve the Koopman route as well.
+of the directing measure.
 -/
 
 public section
