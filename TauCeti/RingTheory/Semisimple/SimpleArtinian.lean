@@ -39,7 +39,7 @@ is exactly the input the Skolem-Noether theorem needs, in
   which compares simple submodules of a single module, to a comparison against a fixed simple
   module, which is what lets two different modules be compared with each other.
 * `TauCeti.IsSimpleRing.nonempty_linearEquiv_of_finrank_eq`: two finite-dimensional modules over a
-  simple Artinian `K`-algebra with the same `K`-dimension are isomorphic.
+  finite-dimensional simple `K`-algebra with the same `K`-dimension are isomorphic.
 * `TauCeti.IsSimpleRing.nonempty_linearEquiv_iff_finrank_eq`: the two-way form, the classification
   itself.
 
@@ -49,6 +49,11 @@ The chosen simple module is a minimal left ideal `S : Submodule R R`, produced a
 lattice of submodules of the regular module rather than assumed. Taking it inside `R` rather than
 inside `M` is what makes it available to `M` and `N` at once, and it inherits the `K`-module
 structure from `R`, so its dimension is finite and nonzero and can be cancelled.
+
+The two classification statements ask `R` to be finite-dimensional over `K` and do not also ask it
+to be Artinian: `IsArtinianRing.of_finite` derives that from finite-dimensionality, so callers never
+have to supply it. Only `TauCeti.IsIsotypicOfType.of_isSimpleRing`, which has no field in sight,
+takes `IsArtinianRing R` as a hypothesis.
 
 Simplicity of `R` is not weakened to semisimplicity: over a semisimple ring with more than one block
 the dimension is not a complete invariant, since a module can distribute the same total dimension
@@ -69,7 +74,7 @@ namespace TauCeti
 
 open Module
 
-variable {R : Type*} [Ring R] [IsSimpleRing R] [IsArtinianRing R]
+variable {R : Type*} [Ring R] [IsSimpleRing R]
 
 /-- Over a **simple Artinian** ring `R`, every `R`-module is isotypic of the type of a chosen
 minimal left ideal `S`: every simple submodule of every `R`-module is isomorphic to `S`.
@@ -79,7 +84,7 @@ content added here is that the comparison can be made against a fixed simple mod
 itself, so that simple submodules of *different* modules become comparable: a simple submodule of
 `M` is isomorphic to some ideal of `R` because `R` is semisimple, and that ideal is isomorphic to
 `S` because `R` is isotypic over itself. -/
-theorem IsIsotypicOfType.of_isSimpleRing (S : Submodule R R) [IsSimpleModule R S]
+theorem IsIsotypicOfType.of_isSimpleRing [IsArtinianRing R] (S : Submodule R R) [IsSimpleModule R S]
     (M : Type*) [AddCommGroup M] [Module R M] : IsIsotypicOfType R M S := by
   intro m _
   obtain ⟨I, ⟨e⟩⟩ := IsSemisimpleRing.exists_linearEquiv_ideal_of_isSimpleModule (R := R) (M := m)
@@ -103,6 +108,7 @@ Both modules are direct sums of copies of one and the same simple module `S`
 `n * finrank K S = m * finrank K S`, and `finrank K S ≠ 0`, so `n = m`. -/
 theorem nonempty_linearEquiv_of_finrank_eq (h : finrank K M = finrank K N) :
     Nonempty (M ≃ₗ[R] N) := by
+  haveI : IsArtinianRing R := IsArtinianRing.of_finite K R
   obtain ⟨S, hS⟩ := IsAtomic.exists_atom (Submodule R R)
   rw [← isSimpleModule_iff_isAtom] at hS
   have : Module.Finite R M := Module.Finite.of_restrictScalars_finite K R M
@@ -111,12 +117,14 @@ theorem nonempty_linearEquiv_of_finrank_eq (h : finrank K M = finrank K N) :
   obtain ⟨m, ⟨eN⟩⟩ := (IsIsotypicOfType.of_isSimpleRing S N).linearEquiv_fun
   have : Nontrivial S := IsSimpleModule.nontrivial R S
   have hSpos : 0 < finrank K S := Module.finrank_pos
+  -- `Sᵏ` has `K`-dimension `k * finrank K S`; this is the only dimension count the proof makes.
+  have hpow : ∀ k : ℕ, finrank K (Fin k → S) = k * finrank K S := fun k ↦ by
+    rw [Module.finrank_pi_fintype, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      smul_eq_mul]
   have hM : finrank K M = n * finrank K S := by
-    rw [(eM.restrictScalars K).finrank_eq, Module.finrank_pi_fintype, Finset.sum_const,
-      Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+    rw [(eM.restrictScalars K).finrank_eq, hpow]
   have hN : finrank K N = m * finrank K S := by
-    rw [(eN.restrictScalars K).finrank_eq, Module.finrank_pi_fintype, Finset.sum_const,
-      Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+    rw [(eN.restrictScalars K).finrank_eq, hpow]
   obtain rfl : n = m := Nat.eq_of_mul_eq_mul_right hSpos (hM.symm.trans (h.trans hN))
   exact ⟨eM.trans eN.symm⟩
 

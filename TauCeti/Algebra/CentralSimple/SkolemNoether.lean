@@ -4,19 +4,27 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.CentralSimple.TensorProduct
-public import TauCeti.RingTheory.Semisimple.SimpleArtinian
-public import Mathlib.Algebra.Azumaya.Defs
-public import Mathlib.RingTheory.TensorProduct.Maps
--- Non-public: none of these appears in the type of an exported declaration. Finiteness of a tensor
--- product, the passage from a finite-dimensional algebra to an Artinian ring, and the `Aᵐᵒᵖ`
--- linear equivalence are used only inside the proof of Skolem-Noether.
+-- Public: exactly the modules supplying types and classes that occur in the statements exported
+-- from here. `Mathlib.RingTheory.TensorProduct.Basic` carries the algebra structure on
+-- `B ⊗[K] Aᵐᵒᵖ` (and with it `AlgHom`, `AlgEquiv` and `Subalgebra`); the other three carry
+-- `Algebra.IsCentral`, `IsSimpleRing` and `FiniteDimensional`.
+public import Mathlib.Algebra.Central.Defs
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+public import Mathlib.RingTheory.SimpleRing.Defs
+public import Mathlib.RingTheory.TensorProduct.Basic
+-- Non-public: none of these appears in the type of an exported declaration. Simplicity of a tensor
+-- product, the classification of modules over a simple Artinian algebra, `AlgHom.mulLeftRight`,
+-- `Algebra.TensorProduct.map` and finiteness of a tensor product are used only inside proofs, and
+-- the matrix, complex and quaternion modules only by the worked examples at the end of the file.
+import Mathlib.Algebra.Azumaya.Defs
 import Mathlib.Algebra.Central.Matrix
 import Mathlib.Data.Complex.Basic
-import Mathlib.RingTheory.Artinian.Algebra
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.RingTheory.TensorProduct.Finite
+import Mathlib.RingTheory.TensorProduct.Maps
 import TauCeti.Algebra.Central.Quaternion
+import TauCeti.Algebra.CentralSimple.TensorProduct
+import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
 /-!
 # The Skolem-Noether theorem
@@ -42,9 +50,9 @@ particular linear for the right action of `A`, hence is multiplication on the le
 * `TauCeti.Bimodule`: `A` as a module over `B ⊗[K] Aᵐᵒᵖ` through an algebra homomorphism
   `f : B →ₐ[K] A`, with its basic API (`TauCeti.Bimodule.of`, `TauCeti.Bimodule.smul_of`).
 * `TauCeti.skolemNoether`: **the Skolem-Noether theorem**.
-* `TauCeti.exists_units_conj_of_algEquiv`: every `K`-algebra automorphism of a finite-dimensional
+* `TauCeti.exists_unit_conj_of_algEquiv`: every `K`-algebra automorphism of a finite-dimensional
   central simple `K`-algebra is inner.
-* `TauCeti.exists_units_conj_subalgebra_val`: a `K`-algebra homomorphism out of a central simple
+* `TauCeti.exists_unit_conj_subalgebra_val`: a `K`-algebra homomorphism out of a central simple
   subalgebra `B ⊆ A` is conjugate to the inclusion of `B`. This is the form the centralizer theorem
   consumes.
 
@@ -56,7 +64,7 @@ and `A` simple. So the statement here is slightly stronger than the usual one, w
 central simple as well; the roadmap's central simple form is the case `Algebra.IsCentral K A`, which
 the statement covers because a central simple algebra is in particular simple. Finite-dimensionality
 of `B` is essential and is carried explicitly: the classification of modules that supplies `φ` needs
-`B ⊗[K] Aᵐᵒᵖ` to be Artinian.
+`B ⊗[K] Aᵐᵒᵖ` to be finite-dimensional over `K`, and with it Artinian.
 
 Centrality of the source really is needed, and not just by this proof: the worked example at the end
 of the file exhibits `ℂ` as a simple finite-dimensional `ℝ`-algebra, not central over `ℝ`, whose
@@ -107,12 +115,17 @@ instance : AddCommGroup (Bimodule f) := inferInstanceAs (AddCommGroup A)
 
 instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
 
+/-- `TauCeti.Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
+def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
+
 /-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `TauCeti.Bimodule f`, as an algebra homomorphism
 into `Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left
 factor, so for `f = AlgHom.id K A` it is `AlgHom.mulLeftRight K A` itself. -/
 noncomputable def toEnd : B ⊗[K] Aᵐᵒᵖ →ₐ[K] Module.End K A :=
   (AlgHom.mulLeftRight K A).comp (Algebra.TensorProduct.map f (AlgHom.id K Aᵐᵒᵖ))
 
+/-- A pure tensor `b ⊗ₜ op a` acts on `x : A` through `TauCeti.Bimodule.toEnd f` by
+`x ↦ f b * x * a`. -/
 @[simp]
 theorem toEnd_tmul_apply (b : B) (a : Aᵐᵒᵖ) (x : A) : toEnd f (b ⊗ₜ a) x = f b * x * a.unop := by
   simp [toEnd]
@@ -120,22 +133,30 @@ theorem toEnd_tmul_apply (b : B) (a : Aᵐᵒᵖ) (x : A) : toEnd f (b ⊗ₜ a)
 noncomputable instance : Module (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) :=
   Module.compHom (M := A) (toEnd f).toRingHom
 
+/-- A scalar `r : B ⊗[K] Aᵐᵒᵖ` acts on `TauCeti.Bimodule f` through `TauCeti.Bimodule.toEnd f`.
+This is the defining equation of the module structure, and the single place it is unfolded: the
+scalar tower instance below rewrites with it instead of reasoning up to definitional equality. It is
+`private` because its proof is that unfolding, and the bodies of `TauCeti.Bimodule.of` and
+`TauCeti.Bimodule.toEnd` are not exposed, so a module-exported theorem may not appeal to them; the
+public interface is `TauCeti.Bimodule.smul_of` and `TauCeti.Bimodule.symm_smul`. -/
+private theorem smul_def (r : B ⊗[K] Aᵐᵒᵖ) (x : A) : r • of f x = of f (toEnd f r x) := rfl
+
 instance : IsScalarTower K (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) where
   smul_assoc c r x := by
-    change (toEnd f (c • r)) _ = c • (toEnd f r) _
-    rw [map_smul]
-    rfl
+    rw [← (of f).apply_symm_apply x, smul_def, smul_def, map_smul (toEnd f),
+      LinearMap.smul_apply, map_smul (of f)]
 
 instance [Module.Finite K A] : Module.Finite K (Bimodule f) := inferInstanceAs (Module.Finite K A)
 
-/-- `TauCeti.Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
-def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
-
+/-- A pure tensor `b ⊗ₜ op a` acts on `TauCeti.Bimodule f` by `x ↦ f b * x * a`: the left factor
+acts on the left through `f`, the right factor on the right by multiplication. -/
 @[simp]
 theorem smul_of (b : B) (a : Aᵐᵒᵖ) (x : A) :
     (b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • of f x = of f (f b * x * a.unop) :=
   toEnd_tmul_apply f b a x
 
+/-- `TauCeti.Bimodule.smul_of` read back through `TauCeti.Bimodule.of`: the action of a pure tensor
+`b ⊗ₜ op a`, transported to `A`, is `x ↦ f b * x * a`. -/
 @[simp]
 theorem symm_smul (b : B) (a : Aᵐᵒᵖ) (y : Bimodule f) :
     (of f).symm ((b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • y) = f b * (of f).symm y * a.unop :=
@@ -159,8 +180,8 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
     [Algebra.IsCentral K B] [IsSimpleRing B] [FiniteDimensional K B] (f g : B →ₐ[K] A) :
     ∃ u : Aˣ, ∀ x : B, g x = (u : A) * f x * (↑u⁻¹ : A) := by
   have : FiniteDimensional K Aᵐᵒᵖ := Module.Finite.equiv (MulOpposite.opLinearEquiv K)
-  have : IsArtinianRing (B ⊗[K] Aᵐᵒᵖ) := IsArtinianRing.of_finite K _
-  have hrank : Module.finrank K (Bimodule f) = Module.finrank K (Bimodule g) := rfl
+  have hrank : Module.finrank K (Bimodule f) = Module.finrank K (Bimodule g) :=
+    ((Bimodule.of f).symm.trans (Bimodule.of g)).finrank_eq
   obtain ⟨φ⟩ := IsSimpleRing.nonempty_linearEquiv_of_finrank_eq (R := B ⊗[K] Aᵐᵒᵖ) K hrank
   set u : A := (Bimodule.of g).symm (φ (Bimodule.of f 1)) with hu
   -- Linearity of `φ` for the right action of `A` makes it left multiplication by `u`.
@@ -205,12 +226,11 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
       _ = (Bimodule.of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of g u) := by rw [hu']
       _ = g b * u := by rw [Bimodule.smul_of]; simp
   refine ⟨⟨u, v, huv, hvu⟩, fun x ↦ ?_⟩
-  change g x = u * f x * v
-  rw [hb x, mul_assoc, huv, mul_one]
+  rw [Units.inv_mk, Units.val_mk, Units.val_mk, hb x, mul_assoc, huv, mul_one]
 
 /-- **Every automorphism of a central simple algebra is inner.** A `K`-algebra automorphism of a
 finite-dimensional central simple `K`-algebra `A` is conjugation by a unit of `A`. -/
-theorem exists_units_conj_of_algEquiv [Algebra.IsCentral K A] [IsSimpleRing A]
+theorem exists_unit_conj_of_algEquiv [Algebra.IsCentral K A] [IsSimpleRing A]
     [FiniteDimensional K A] (e : A ≃ₐ[K] A) :
     ∃ u : Aˣ, ∀ x : A, e x = (u : A) * x * (↑u⁻¹ : A) :=
   skolemNoether K (AlgHom.id K A) e.toAlgHom
@@ -218,7 +238,7 @@ theorem exists_units_conj_of_algEquiv [Algebra.IsCentral K A] [IsSimpleRing A]
 /-- A `K`-algebra homomorphism out of a **central simple** subalgebra `B` of a finite-dimensional
 simple `K`-algebra `A` is conjugate to the inclusion of `B`: it extends to an inner automorphism of
 `A`. This is the form the centralizer theorem consumes. -/
-theorem exists_units_conj_subalgebra_val [IsSimpleRing A] [FiniteDimensional K A]
+theorem exists_unit_conj_subalgebra_val [IsSimpleRing A] [FiniteDimensional K A]
     (B : Subalgebra K A) [Algebra.IsCentral K B] [IsSimpleRing B] (f : B →ₐ[K] A) :
     ∃ u : Aˣ, ∀ x : B, f x = (u : A) * (x : A) * (↑u⁻¹ : A) :=
   skolemNoether K B.val f
@@ -234,20 +254,20 @@ section Examples
 open scoped _root_.Quaternion
 
 /-- **Every automorphism of a matrix algebra is inner.** All three hypotheses of
-`TauCeti.exists_units_conj_of_algEquiv` are found by instance search: `Mₙ(K)` is central over `K`,
+`TauCeti.exists_unit_conj_of_algEquiv` are found by instance search: `Mₙ(K)` is central over `K`,
 simple, and finite-dimensional. -/
 example (K : Type*) [Field K] (n : ℕ) [NeZero n]
     (e : Matrix (Fin n) (Fin n) K ≃ₐ[K] Matrix (Fin n) (Fin n) K) :
     ∃ u : (Matrix (Fin n) (Fin n) K)ˣ, ∀ x, e x =
       (u : Matrix (Fin n) (Fin n) K) * x * (↑u⁻¹ : Matrix (Fin n) (Fin n) K) :=
-  exists_units_conj_of_algEquiv K e
+  exists_unit_conj_of_algEquiv K e
 
 /-- **Skolem-Noether in the small**: every `ℝ`-algebra automorphism of the real quaternions is
 inner. Centrality comes from `TauCeti.Quaternion.instIsCentral`, simplicity from `ℍ[ℝ]` being a
 division ring. -/
 example (e : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]) :
     ∃ u : ℍ[ℝ]ˣ, ∀ x : ℍ[ℝ], e x = (u : ℍ[ℝ]) * x * (↑u⁻¹ : ℍ[ℝ]) :=
-  exists_units_conj_of_algEquiv ℝ e
+  exists_unit_conj_of_algEquiv ℝ e
 
 /-- The negative control for `TauCeti.skolemNoether`: centrality of the **source** cannot be
 dropped. Take `K = ℝ` and `A = B = ℂ`, a simple finite-dimensional `ℝ`-algebra which is not central
