@@ -16,7 +16,10 @@ public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 This file develops the pointwise Bochner-integral resolvent for a C₀-semigroup with a
 growth bound, proves that it maps into the generator domain, and establishes the
-right-inverse identity and norm estimate.
+right-inverse identity and norm estimate. It also packages the resolvent as a function of
+the spectral parameter alone (`resolventFun`, extended by the junk value `0` below the
+growth exponent), the form in which it is differentiated in
+`TauCeti/Analysis/Semigroups/Resolvent/Deriv.lean`.
 
 ## References
 Ported and adapted (Apache 2.0) from `mrdouglasny/hille-yosida`; references include
@@ -294,6 +297,48 @@ theorem StronglyContinuousSemigroup.resolvent_norm_le
   LinearMap.mkContinuous_norm_le _
     (div_nonneg (by linarith [hb.one_le]) (by linarith)) _
 
+/-! ## The resolvent as a function of the spectral parameter
+
+`StronglyContinuousSemigroup.resolvent` carries the proof `ω < λ` as an argument, so it is not
+a function of `λ` alone. The variant below drops that argument, extending the resolvent by the
+junk value `0` on `λ ≤ ω`, which is what lets one speak of its limits, derivatives and
+integrals in `λ`. -/
+
+/-- The Laplace-transform resolvent of `S` as a function of the spectral parameter alone,
+extended by the junk value `0` on `λ ≤ ω`. Unlike `StronglyContinuousSemigroup.resolvent` it
+does not carry the proof `ω < λ`, so it can be differentiated in `λ`. -/
+noncomputable def StronglyContinuousSemigroup.resolventFun
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) (lambda : ℝ) :
+    X →L[ℝ] X :=
+  if h : ω < lambda then S.resolvent hb lambda h else 0
+
+/-- Above the growth exponent, `resolventFun` is the Laplace-transform resolvent. -/
+@[simp] theorem StronglyContinuousSemigroup.resolventFun_of_lt
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) : S.resolventFun hb lambda = S.resolvent hb lambda h :=
+  dif_pos h
+
+/-- Below the growth exponent, `resolventFun` takes its junk value `0`. -/
+@[simp] theorem StronglyContinuousSemigroup.resolventFun_of_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : lambda ≤ ω) : S.resolventFun hb lambda = 0 :=
+  dif_neg (not_lt.mpr h)
+
+/-- `resolventFun` in integral form. -/
+theorem StronglyContinuousSemigroup.resolventFun_apply
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) (x : X) :
+    S.resolventFun hb lambda x
+      = ∫ t in Set.Ioi 0, Real.exp (-(lambda * t)) • S.realOperator t x := by
+  rw [S.resolventFun_of_lt hb h, S.resolvent_apply]
+
+/-- The Hille--Yosida bound `‖R λ‖ ≤ M/(λ-ω)` for `resolventFun`. -/
+theorem StronglyContinuousSemigroup.resolventFun_norm_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) : ‖S.resolventFun hb lambda‖ ≤ M / (lambda - ω) := by
+  rw [S.resolventFun_of_lt hb h]
+  exact S.resolvent_norm_le hb lambda h
+
 /-! ## Contraction-semigroup specializations (`M = 1`, `ω = 0`) -/
 
 /-- The resolvent of a contraction semigroup, the `(0, 1)` case. -/
@@ -336,6 +381,25 @@ theorem ContractionSemigroup.resolvent_norm_le (S : ContractionSemigroup X)
     (by simpa using hlam)
   rw [sub_zero] at h
   exact h
+
+/-- The resolvent of a contraction semigroup as a function of the spectral parameter alone,
+the `(ω, M) = (0, 1)` case of `StronglyContinuousSemigroup.resolventFun`. It is `@[expose]`d so
+that the calculus corollaries in `Resolvent/Deriv.lean` can read it as that case. -/
+@[expose] noncomputable def ContractionSemigroup.resolventFun (S : ContractionSemigroup X)
+    (lambda : ℝ) : X →L[ℝ] X :=
+  S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound lambda
+
+/-- For a positive parameter, `resolventFun` is the contraction resolvent. -/
+@[simp] theorem ContractionSemigroup.resolventFun_of_pos (S : ContractionSemigroup X)
+    {lambda : ℝ} (h : 0 < lambda) : S.resolventFun lambda = S.resolvent lambda h := by
+  ext x
+  rw [resolventFun, S.toStronglyContinuousSemigroup.resolventFun_of_lt S.hasGrowthBound h,
+    S.toStronglyContinuousSemigroup.resolvent_apply, S.resolvent_apply]
+
+/-- For a nonpositive parameter, `resolventFun` takes its junk value `0`. -/
+@[simp] theorem ContractionSemigroup.resolventFun_of_nonpos (S : ContractionSemigroup X)
+    {lambda : ℝ} (h : lambda ≤ 0) : S.resolventFun lambda = 0 :=
+  S.toStronglyContinuousSemigroup.resolventFun_of_le S.hasGrowthBound h
 
 end TauCeti.Semigroups
 

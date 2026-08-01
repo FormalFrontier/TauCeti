@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Identity
-public import Mathlib.Analysis.Calculus.Deriv.Mul
+public import Mathlib.Analysis.Calculus.Deriv.Pow
 public import Mathlib.Analysis.Calculus.ContDiff.Deriv
 public import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 
@@ -14,9 +14,8 @@ public import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 
 The Laplace-transform resolvent `R(lambda) x = ∫₀^∞ e^{-lambda t} S(t)x dt` of a C₀-semigroup
 `S` with growth bound `(omega, M)` is defined for `lambda > omega`, and it carries the proof
-`omega < lambda` as an argument. To speak about its dependence on `lambda` we package it as an
-honest function `StronglyContinuousSemigroup.resolventFun`, extended by the junk value `0`
-below the growth exponent.
+`omega < lambda` as an argument; `StronglyContinuousSemigroup.resolventFun` packages it as an
+honest function of `lambda`, extended by the junk value `0` below the growth exponent.
 
 The resolvent identity then upgrades to a second-order expansion
 
@@ -32,8 +31,6 @@ is smooth on `(omega, ∞)`.
 
 ## Main results
 
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.resolventFun`: the resolvent as a function of
-  the spectral parameter alone.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.hasDerivAt_resolventFun`:
   `R'(lambda) = -R(lambda)²`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.hasDerivAt_resolventFun_pow`:
@@ -49,9 +46,10 @@ The contraction case `(omega, M) = (0, 1)` is recorded as a corollary.
 
 Mathlib's `spectrum.hasDerivAt_resolvent_const_left` proves the same derivative formula for the
 resolvent of an element of a Banach algebra. It does not apply here: the generator of a
-C₀-semigroup is an unbounded operator, so `R(lambda)` is not `resolvent a lambda` for any
-algebra element `a`, and the present proof runs off the semigroup resolvent identity instead of
-off differentiability of `Ring.inverse`.
+C₀-semigroup need not be bounded (it is a densely defined operator on a subspace, and is
+bounded exactly for the uniformly continuous semigroups), so in general there is no algebra
+element `a` with `R(lambda) = resolvent a lambda`. The present proof therefore runs off the
+semigroup resolvent identity instead of off differentiability of `Ring.inverse`.
 
 ## References
 
@@ -72,46 +70,6 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 namespace StronglyContinuousSemigroup
 
 variable (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-
-/-! ## The resolvent as a function of the spectral parameter -/
-
-/-- The Laplace-transform resolvent of `S` as a function of the spectral parameter alone,
-extended by the junk value `0` on `lambda ≤ omega`. Unlike
-`StronglyContinuousSemigroup.resolvent` it does not carry the proof `omega < lambda`, so it can
-be differentiated in `lambda`. -/
-def resolventFun (hb : S.HasGrowthBound omega M) (lambda : ℝ) : X →L[ℝ] X :=
-  if h : omega < lambda then S.resolvent hb lambda h else 0
-
-/-- Above the growth exponent, `resolventFun` is the Laplace-transform resolvent. -/
-theorem resolventFun_of_lt (hb : S.HasGrowthBound omega M) {lambda : ℝ} (h : omega < lambda) :
-    S.resolventFun hb lambda = S.resolvent hb lambda h :=
-  dif_pos h
-
-/-- Below the growth exponent, `resolventFun` takes its junk value `0`. -/
-theorem resolventFun_of_le (hb : S.HasGrowthBound omega M) {lambda : ℝ} (h : lambda ≤ omega) :
-    S.resolventFun hb lambda = 0 :=
-  dif_neg (not_lt.mpr h)
-
-/-- `resolventFun` in integral form. -/
-theorem resolventFun_apply (hb : S.HasGrowthBound omega M) {lambda : ℝ} (h : omega < lambda)
-    (x : X) :
-    S.resolventFun hb lambda x
-      = ∫ t in Set.Ioi 0, Real.exp (-(lambda * t)) • S.realOperator t x := by
-  rw [S.resolventFun_of_lt hb h, S.resolvent_apply]
-
-/-- The Hille--Yosida bound `‖R(lambda)‖ ≤ M / (lambda - omega)` for `resolventFun`. -/
-theorem norm_resolventFun_le (hb : S.HasGrowthBound omega M) {lambda : ℝ} (h : omega < lambda) :
-    ‖S.resolventFun hb lambda‖ ≤ M / (lambda - omega) := by
-  rw [S.resolventFun_of_lt hb h]
-  exact S.resolvent_norm_le hb lambda h
-
-/-- The resolvent identity for `resolventFun`, written in the ring `X →L[ℝ] X`. -/
-theorem resolventFun_sub_resolventFun (hb : S.HasGrowthBound omega M) {lambda mu : ℝ}
-    (hl : omega < lambda) (hm : omega < mu) :
-    S.resolventFun hb lambda - S.resolventFun hb mu
-      = (mu - lambda) • (S.resolventFun hb lambda * S.resolventFun hb mu) := by
-  rw [S.resolventFun_of_lt hb hl, S.resolventFun_of_lt hb hm]
-  exact S.resolvent_sub_resolvent hb hb lambda mu hl hm
 
 /-! ## The first derivative -/
 
@@ -147,8 +105,8 @@ private theorem norm_resolventFun_second_order_le (hb : S.HasGrowthBound omega M
           exact norm_pow_le' _ two_pos
       _ ≤ (M / (lambda - omega)) ^ 2 * (M / (mu - omega)) :=
           mul_le_mul
-            (pow_le_pow_left₀ (norm_nonneg _) (S.norm_resolventFun_le hb hl) 2)
-            (S.norm_resolventFun_le hb hm) (norm_nonneg _)
+            (pow_le_pow_left₀ (norm_nonneg _) (S.resolventFun_norm_le hb hl) 2)
+            (S.resolventFun_norm_le hb hm) (norm_nonneg _)
             (pow_nonneg (div_nonneg hMpos.le (by linarith)) 2)
   rw [S.resolventFun_second_order_eq hb hl hm, norm_smul, Real.norm_eq_abs,
     abs_of_nonneg (sq_nonneg _)]
@@ -157,7 +115,7 @@ private theorem norm_resolventFun_second_order_le (hb : S.HasGrowthBound omega M
 /-- **The resolvent is differentiable in the spectral parameter**, with derivative `-R(lambda)²`
 taken in the operator norm. This is the semigroup analogue of Mathlib's
 `spectrum.hasDerivAt_resolvent_const_left`, proved from the resolvent identity because the
-generator is unbounded. -/
+generator need not be a bounded operator. -/
 theorem hasDerivAt_resolventFun (hb : S.HasGrowthBound omega M) {lambda : ℝ}
     (hl : omega < lambda) :
     HasDerivAt (S.resolventFun hb) (-(S.resolventFun hb lambda ^ 2)) lambda := by
@@ -210,17 +168,21 @@ theorem hasDerivAt_resolventFun_pow (hb : S.HasGrowthBound omega M) {lambda : �
     (hl : omega < lambda) (n : ℕ) :
     HasDerivAt (fun l => S.resolventFun hb l ^ n)
       (-(n • S.resolventFun hb lambda ^ (n + 1))) lambda := by
-  induction n with
-  | zero => simpa using hasDerivAt_const lambda (1 : X →L[ℝ] X)
-  | succ n ih =>
-      have hfun : (fun l => S.resolventFun hb l ^ (n + 1))
-          = fun l => S.resolventFun hb l ^ n * S.resolventFun hb l := by
-        funext l
-        rw [pow_succ]
-      rw [hfun]
-      refine (ih.mul (S.hasDerivAt_resolventFun hb hl)).congr_deriv ?_
-      noncomm_ring
-      rw [succ_nsmul, smul_add]
+  refine ((S.hasDerivAt_resolventFun hb hl).fun_pow' n).congr_deriv ?_
+  cases n with
+  | zero => simp
+  | succ n =>
+      have hterm : ∀ i ∈ Finset.range (n + 1),
+          S.resolventFun hb lambda ^ ((n + 1).pred - i) * -(S.resolventFun hb lambda ^ 2)
+              * S.resolventFun hb lambda ^ i
+            = -(S.resolventFun hb lambda ^ (n + 1 + 1)) := by
+        intro i hi
+        have hexp : (n + 1).pred - i + 2 + i = n + 1 + 1 := by
+          have := Finset.mem_range.mp hi
+          simp only [Nat.pred_eq_sub_one]
+          omega
+        rw [mul_neg, neg_mul, ← pow_add, ← pow_add, hexp]
+      rw [Finset.sum_congr rfl hterm, Finset.sum_const, Finset.card_range, smul_neg]
 
 /-- **The iterated derivative of the resolvent**:
 `dⁿR(lambda)/dlambdaⁿ = (-1)ⁿ n! R(lambda)ⁿ⁺¹`. -/
@@ -238,9 +200,8 @@ theorem iteratedDeriv_resolventFun (hb : S.HasGrowthBound omega M) (n : ℕ) {la
           (fun l => ((-1 : ℝ) ^ n * n !) • S.resolventFun hb l ^ (n + 1))
           (((-1 : ℝ) ^ n * n !) • -((n + 1) • S.resolventFun hb lambda ^ (n + 1 + 1))) lambda :=
         (S.hasDerivAt_resolventFun_pow hb hl (n + 1)).const_smul ((-1 : ℝ) ^ n * n !)
-      rw [iteratedDeriv_succ, heq.deriv_eq, hderiv.deriv,
-        ← Nat.cast_smul_eq_nsmul ℝ, smul_neg, smul_smul, ← neg_smul]
-      congr 1
+      rw [iteratedDeriv_succ, heq.deriv_eq, hderiv.deriv]
+      match_scalars
       push_cast [Nat.factorial_succ]
       ring
 
@@ -251,12 +212,11 @@ theorem norm_iteratedDeriv_resolventFun_le (hb : S.HasGrowthBound omega M) (n : 
     (hl : omega < lambda) :
     ‖iteratedDeriv n (S.resolventFun hb) lambda‖
       ≤ n ! * (M / (lambda - omega)) ^ (n + 1) := by
-  have hscalar : ‖((-1 : ℝ) ^ n * n !)‖ = (n ! : ℝ) := by
-    rw [Real.norm_eq_abs, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, Nat.abs_cast]
+  have hscalar : ‖((-1 : ℝ) ^ n * n !)‖ = (n ! : ℝ) := by simp
   rw [S.iteratedDeriv_resolventFun hb n hl, norm_smul, hscalar]
   refine mul_le_mul_of_nonneg_left ?_ (Nat.cast_nonneg _)
   exact (norm_pow_le' _ n.succ_pos).trans
-    (pow_le_pow_left₀ (norm_nonneg _) (S.norm_resolventFun_le hb hl) (n + 1))
+    (pow_le_pow_left₀ (norm_nonneg _) (S.resolventFun_norm_le hb hl) (n + 1))
 
 /-- The resolvent is smooth on the half-line above the growth exponent. -/
 theorem contDiffOn_resolventFun (hb : S.HasGrowthBound omega M) :
@@ -277,18 +237,6 @@ end StronglyContinuousSemigroup
 namespace ContractionSemigroup
 
 variable (S : ContractionSemigroup X)
-
-/-- The resolvent of a contraction semigroup as a function of the spectral parameter alone,
-the `(omega, M) = (0, 1)` case of `StronglyContinuousSemigroup.resolventFun`. -/
-def resolventFun (lambda : ℝ) : X →L[ℝ] X :=
-  S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound lambda
-
-/-- For a positive parameter, `resolventFun` is the contraction resolvent. -/
-theorem resolventFun_of_pos {lambda : ℝ} (h : 0 < lambda) :
-    S.resolventFun lambda = S.resolvent lambda h := by
-  ext x
-  rw [resolventFun, S.toStronglyContinuousSemigroup.resolventFun_of_lt S.hasGrowthBound h,
-    S.toStronglyContinuousSemigroup.resolvent_apply, S.resolvent_apply]
 
 /-- The derivative of the contraction resolvent is `-R(lambda)²`. -/
 theorem hasDerivAt_resolventFun {lambda : ℝ} (h : 0 < lambda) :
