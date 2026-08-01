@@ -44,14 +44,14 @@ namespace TauCeti
 
 namespace ContRepresentation
 
-section CompactGroup
+section Average
 
 variable {𝕜 G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [TopologicalSpace G]
   [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
   [FiniteDimensional 𝕜 V]
 
-local instance instCompleteSpaceSchurOrthogonality : CompleteSpace V :=
+local instance instCompleteSpaceSchurAverage : CompleteSpace V :=
   FiniteDimensional.complete 𝕜 V
 
 variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
@@ -71,7 +71,11 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
         ContinuousLinearMap.id 𝕜 V := by
   letI : Representation.IsIrreducible π.toRepresentation := hirr
   haveI : IsSimpleModule 𝕜[G] π.toRepresentation.asModule := inferInstance
-  haveI : Nontrivial V := IsSimpleModule.nontrivial 𝕜[G] π.toRepresentation.asModule
+  haveI : Nontrivial π.toRepresentation.asModule :=
+    IsSimpleModule.nontrivial 𝕜[G] π.toRepresentation.asModule
+  -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
+  -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
+  haveI : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
   obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
     (averageIntertwiner π hπ π hπ T)
   have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
@@ -87,6 +91,20 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     apply (eq_inv_mul_iff_mul_eq₀ hdim).2
     simpa [mul_comm] using htrace
   rw [hc, hc']
+
+end Average
+
+section Orthogonality
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+local instance instCompleteSpaceSchurOrthogonality : CompleteSpace V :=
+  FiniteDimensional.complete 𝕜 V
+
+variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 /-! ### The first Schur orthogonality relation -/
 
@@ -125,7 +143,7 @@ theorem schur_orthogonality_basis (hunitary : IsUnitary π)
   simp only [orthonormal_iff_ite.mp e.orthonormal]
   split_ifs <;> simp_all
 
-end CompactGroup
+end Orthogonality
 
 end ContRepresentation
 
