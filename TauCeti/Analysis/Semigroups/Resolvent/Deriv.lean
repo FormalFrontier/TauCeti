@@ -240,25 +240,29 @@ variable (S : ContractionSemigroup X)
 
 /-- The derivative of the contraction resolvent is `-R(lambda)²`. -/
 theorem hasDerivAt_resolventFun {lambda : ℝ} (h : 0 < lambda) :
-    HasDerivAt S.resolventFun (-(S.resolventFun lambda ^ 2)) lambda :=
-  S.toStronglyContinuousSemigroup.hasDerivAt_resolventFun S.hasGrowthBound h
+    HasDerivAt S.resolventFun (-(S.resolventFun lambda ^ 2)) lambda := by
+  rw [S.resolventFun_eq]
+  exact S.toStronglyContinuousSemigroup.hasDerivAt_resolventFun S.hasGrowthBound h
 
 /-- The iterated derivative of the contraction resolvent. -/
 theorem iteratedDeriv_resolventFun (n : ℕ) {lambda : ℝ} (h : 0 < lambda) :
     iteratedDeriv n S.resolventFun lambda
-      = ((-1 : ℝ) ^ n * n !) • S.resolventFun lambda ^ (n + 1) :=
-  S.toStronglyContinuousSemigroup.iteratedDeriv_resolventFun S.hasGrowthBound n h
+      = ((-1 : ℝ) ^ n * n !) • S.resolventFun lambda ^ (n + 1) := by
+  rw [S.resolventFun_eq]
+  exact S.toStronglyContinuousSemigroup.iteratedDeriv_resolventFun S.hasGrowthBound n h
 
 /-- The Hille--Yosida derivative bound `‖dⁿR(lambda)/dlambdaⁿ‖ ≤ n! / lambdaⁿ⁺¹` in the
 contraction case. -/
 theorem norm_iteratedDeriv_resolventFun_le (n : ℕ) {lambda : ℝ} (h : 0 < lambda) :
     ‖iteratedDeriv n S.resolventFun lambda‖ ≤ n ! * (1 / lambda) ^ (n + 1) := by
   have := S.toStronglyContinuousSemigroup.norm_iteratedDeriv_resolventFun_le S.hasGrowthBound n h
-  rwa [sub_zero] at this
+  rw [sub_zero] at this
+  rwa [S.resolventFun_eq]
 
 /-- The contraction resolvent is smooth on `(0, ∞)`. -/
-theorem contDiffOn_resolventFun : ContDiffOn ℝ ∞ S.resolventFun (Set.Ioi 0) :=
-  S.toStronglyContinuousSemigroup.contDiffOn_resolventFun S.hasGrowthBound
+theorem contDiffOn_resolventFun : ContDiffOn ℝ ∞ S.resolventFun (Set.Ioi 0) := by
+  rw [S.resolventFun_eq]
+  exact S.toStronglyContinuousSemigroup.contDiffOn_resolventFun S.hasGrowthBound
 
 end ContractionSemigroup
 

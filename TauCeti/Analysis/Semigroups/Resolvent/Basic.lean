@@ -383,17 +383,24 @@ theorem ContractionSemigroup.resolvent_norm_le (S : ContractionSemigroup X)
   exact h
 
 /-- The resolvent of a contraction semigroup as a function of the spectral parameter alone,
-the `(ω, M) = (0, 1)` case of `StronglyContinuousSemigroup.resolventFun`. It is `@[expose]`d so
-that the calculus corollaries in `Resolvent/Deriv.lean` can read it as that case. -/
-@[expose] noncomputable def ContractionSemigroup.resolventFun (S : ContractionSemigroup X)
+the `(ω, M) = (0, 1)` case of `StronglyContinuousSemigroup.resolventFun`. -/
+noncomputable def ContractionSemigroup.resolventFun (S : ContractionSemigroup X)
     (lambda : ℝ) : X →L[ℝ] X :=
   S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound lambda
+
+/-- The contraction resolvent function is the `(ω, M) = (0, 1)` case of
+`StronglyContinuousSemigroup.resolventFun`. -/
+theorem ContractionSemigroup.resolventFun_eq (S : ContractionSemigroup X) :
+    S.resolventFun = S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound :=
+  -- the parentheses suppress the automatic `@[defeq]` tag, which an exported theorem may not
+  -- carry when its proof unfolds an unexposed definition
+  (rfl)
 
 /-- For a positive parameter, `resolventFun` is the contraction resolvent. -/
 @[simp] theorem ContractionSemigroup.resolventFun_of_pos (S : ContractionSemigroup X)
     {lambda : ℝ} (h : 0 < lambda) : S.resolventFun lambda = S.resolvent lambda h := by
   ext x
-  rw [resolventFun, S.toStronglyContinuousSemigroup.resolventFun_of_lt S.hasGrowthBound h,
+  rw [S.resolventFun_eq, S.toStronglyContinuousSemigroup.resolventFun_of_lt S.hasGrowthBound h,
     S.toStronglyContinuousSemigroup.resolvent_apply, S.resolvent_apply]
 
 /-- For a nonpositive parameter, `resolventFun` takes its junk value `0`. -/
