@@ -115,7 +115,7 @@ instead could consume the same statement, though none currently does.
 In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
 needed to *construct* a directing measure, not to recognise one. -/
 theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ : Measure Ω}
-    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ)
     {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
     (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
       ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
@@ -125,8 +125,8 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
     ConditionallyIIDWith μ X ν := by
   classical
   refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
-  have hjoint : Measurable fun ω => (ν ω, fun i : Fin r => X (k i) ω) :=
-    hν.prodMk (measurable_pi_lambda _ fun i => hX_meas _)
+  have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
+    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
   have hker : Measurable fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure :=
     TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν
@@ -134,7 +134,7 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
   have hpre : (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) ⁻¹' (S ×ˢ Set.univ.pi B)
       = (ν ⁻¹' S) ∩ blockCylinder X k B := by
     rw [Set.mk_preimage_prod, ← blockCylinder_eq_preimage_univ_pi X k B]
-  rw [Measure.map_apply hjoint hrect, hpre, hcore r k hk S hS B hB,
+  rw [Measure.map_apply_of_aemeasurable hjoint hrect, hpre, hcore r k hk S hS B hB,
     Measure.bind_apply hrect hker.aemeasurable, ← lintegral_indicator (hν hS)]
   refine lintegral_congr fun ω => ?_
   have hprod : (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure (Set.univ.pi B)

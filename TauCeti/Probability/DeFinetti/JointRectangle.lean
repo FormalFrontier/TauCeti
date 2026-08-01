@@ -218,7 +218,8 @@ theorem conditionallyIIDWith_of_contractable_pathSpace
     ConditionallyIIDWith μ (fun j (x : ℕ → α) => x j)
       (directingProbabilityMeasure μ fun j (x : ℕ → α) => x j) := by
   have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
-  refine conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral hY_meas
+  refine conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral
+    (fun j => (hY_meas j).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ)
       (tailProcess_le_ambient 0 fun j _ => hY_meas j))
     fun m sel hsel S hS B hB => ?_
