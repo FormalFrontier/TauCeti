@@ -85,6 +85,23 @@ lemma mapsTo_ball_of_forall_unitDisc_coe_eq {e : Complex.UnitDisc → Complex.Un
   rw [hf (Complex.UnitDisc.mk w hw')] at this
   simpa [mem_ball_zero_iff] using this
 
+/-- A self-equivalence of `Complex.UnitDisc`, read through a scalar representative, is a bijection
+of `Metric.ball 0 1` onto itself. -/
+lemma bijOn_ball_of_unitDiscEquiv (E : Complex.UnitDisc ≃ Complex.UnitDisc) {φ : ℂ → ℂ}
+    (hφ : ∀ z : Complex.UnitDisc, (E z : ℂ) = φ z) :
+    BijOn φ (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
+  have mem : ∀ z : Complex.UnitDisc, (z : ℂ) ∈ ball (0 : ℂ) 1 := fun z => by
+    simpa [mem_ball_zero_iff] using z.norm_lt_one
+  have exists_coe : ∀ w ∈ ball (0 : ℂ) 1, ∃ z : Complex.UnitDisc, (z : ℂ) = w := fun w hw =>
+    ⟨Complex.UnitDisc.mk w (by simpa [mem_ball_zero_iff] using hw), Complex.UnitDisc.coe_mk _ _⟩
+  refine ⟨mapsTo_ball_of_forall_unitDisc_coe_eq hφ, fun w₁ h₁ w₂ h₂ h => ?_, fun v hv => ?_⟩
+  · obtain ⟨z₁, rfl⟩ := exists_coe w₁ h₁
+    obtain ⟨z₂, rfl⟩ := exists_coe w₂ h₂
+    rw [← hφ z₁, ← hφ z₂] at h
+    exact congrArg _ (E.injective (Complex.UnitDisc.coe_injective h))
+  · obtain ⟨v', rfl⟩ := exists_coe v hv
+    exact ⟨(E.symm v' : ℂ), mem _, by rw [← hφ (E.symm v'), Equiv.apply_symm_apply]⟩
+
 /-- **The automorphism group of the unit disc.** A permutation of `Complex.UnitDisc` is a
 holomorphic automorphism when both it and its inverse extend to functions that are holomorphic
 on the open unit ball. -/

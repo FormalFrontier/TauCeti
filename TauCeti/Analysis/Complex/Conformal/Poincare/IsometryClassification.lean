@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Poincare.IsometryEquiv
+public import TauCeti.Analysis.Complex.Conformal.Poincare.MetricSpace
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
+public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-!
@@ -51,7 +52,8 @@ fixing `0`, and there the hyperbolic metric collapses to the Euclidean one:
   preserves, equality of the quotients `A / B` forces equality of the numerators.
 
 A Euclidean isometry of the disc fixing `0` preserves the real inner product by polarisation
-(`TauCeti.real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq`) — the inner product in question is
+(`TauCeti.real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq`, proved from Mathlib's
+`norm_sub_sq_real`) — the inner product in question is
 Mathlib's own, `ℂ` carrying the `InnerProductSpace ℝ ℂ` instance with `⟪w, z⟫_ℝ = (z * conj w).re`
 (`Complex.inner`), so nothing about the Euclidean plane is re-encoded here. Two evaluations then
 pin the map down: the images of `1 / 2` and of `I / 2`, doubled, are orthogonal unit vectors
@@ -63,8 +65,6 @@ per point. Undoing the Moebius factor turns `e₁` into the rotation `u` and `g 
 
 ## Main results
 
-* `TauCeti.norm_sub_eq_of_pseudoHyperbolicExpr_eq` — equal norms and equal pseudo-hyperbolic
-  expression force equal Euclidean distance.
 * `TauCeti.real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq` — an isometry fixing the origin
   preserves the real inner product.
 * `TauCeti.exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj` — the classification for an
@@ -142,90 +142,43 @@ private lemma mul_conj_self_eq_one {u : ℂ} (hu : ‖u‖ = 1) : u * conj u = 1
   have h : Complex.normSq u = 1 := by rw [Complex.normSq_eq_norm_sq, hu]; norm_num
   rw [Complex.mul_conj, h, Complex.ofReal_one]
 
-/-! ## From the pseudo-hyperbolic expression to the Euclidean distance -/
-
-/-- **Equal norms plus equal pseudo-hyperbolic expression force equal distance.** For four points
-of the open unit disc with `‖z'‖ = ‖z‖` and `‖w'‖ = ‖w‖`, the pseudo-hyperbolic expression
-determines the Euclidean distance.
-
-The Poincaré defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub` writes the squared
-denominator of `pseudoHyperbolicExpr z w` as the squared numerator plus
-`(1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)`. That correction depends only on the two norms, which the two
-pairs share, so `t ↦ t / (t + c)` being injective for `c > 0` transfers equality of the quotients
-to the numerators. -/
-theorem norm_sub_eq_of_pseudoHyperbolicExpr_eq {z w z' w' : ℂ}
-    (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) (hz' : ‖z'‖ < 1) (hw' : ‖w'‖ < 1)
-    (hnz : ‖z'‖ = ‖z‖) (hnw : ‖w'‖ = ‖w‖)
-    (h : pseudoHyperbolicExpr z' w' = pseudoHyperbolicExpr z w) :
-    ‖z' - w'‖ = ‖z - w‖ := by
-  have hc : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have h1 : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-    have h2 : (0 : ℝ) < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
-    exact mul_pos h1 h2
-  have hden : ‖(1 : ℂ) - conj w * z‖ ≠ 0 :=
-    norm_ne_zero_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
-  have hden' : ‖(1 : ℂ) - conj w' * z'‖ ≠ 0 :=
-    norm_ne_zero_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz' hw')
-  have hB : ‖(1 : ℂ) - conj w * z‖ ^ 2 = ‖z - w‖ ^ 2 + (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have := norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w
-    linarith
-  have hB' : ‖(1 : ℂ) - conj w' * z'‖ ^ 2 = ‖z' - w'‖ ^ 2 + (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have := norm_sq_one_sub_conj_mul_sub_norm_sq_sub z' w'
-    rw [hnz, hnw] at this
-    linarith
-  have hquot : ‖z' - w'‖ * ‖(1 : ℂ) - conj w * z‖ = ‖z - w‖ * ‖(1 : ℂ) - conj w' * z'‖ := by
-    have h' : ‖z' - w'‖ / ‖(1 : ℂ) - conj w' * z'‖ = ‖z - w‖ / ‖(1 : ℂ) - conj w * z‖ := by
-      simpa only [pseudoHyperbolicExpr_def, norm_div] using h
-    exact (div_eq_div_iff hden' hden).mp h'
-  have hsq : ‖z' - w'‖ ^ 2 * ‖(1 : ℂ) - conj w * z‖ ^ 2
-      = ‖z - w‖ ^ 2 * ‖(1 : ℂ) - conj w' * z'‖ ^ 2 := by
-    rw [← mul_pow, ← mul_pow, hquot]
-  rw [hB, hB'] at hsq
-  have hAA : ‖z' - w'‖ ^ 2 = ‖z - w‖ ^ 2 := by nlinarith [hsq, hc]
-  exact (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp hAA
-
 /-! ## Isometries of the Poincaré disc that fix the origin -/
 
 section FixZero
 
-variable (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
-  (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
+variable (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
     pseudoHyperbolicExpr (g z) (g w) = pseudoHyperbolicExpr z w)
 
 include hg
 
-omit hmaps in
-/-- **An isometry fixing the origin preserves norms.** The pseudo-hyperbolic expression against
-the origin is the norm, so a map fixing the origin and preserving the former preserves the
-latter. -/
+/-- **An isometry fixing the origin preserves norms.** A self-map of the open unit disc that
+preserves the pseudo-hyperbolic expression and fixes `0` preserves the norm. -/
 theorem norm_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z : ℂ} (hz : z ∈ ball (0 : ℂ) 1) :
     ‖g z‖ = ‖z‖ := by
+  -- The pseudo-hyperbolic expression against the origin is the norm.
   have := hg z hz 0 (mem_ball_self one_pos)
   rwa [h0, pseudoHyperbolicExpr_zero_right, pseudoHyperbolicExpr_zero_right] at this
 
-include hmaps
-
-/-- **An isometry fixing the origin is a Euclidean isometry.** Norms are preserved, so the
-correction term in the Poincaré defect identity is the same on both sides and
-`TauCeti.norm_sub_eq_of_pseudoHyperbolicExpr_eq` applies. -/
+/-- **An isometry fixing the origin is a Euclidean isometry.** It preserves the Euclidean
+distance between any two points of the open unit disc. -/
 theorem norm_sub_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
     ‖g z - g w‖ = ‖z - w‖ :=
+  -- Norms are preserved, so the correction term in the Poincaré defect identity is the same on
+  -- both sides.
   norm_sub_eq_of_pseudoHyperbolicExpr_eq (mem_ball_zero_iff.mp hz) (mem_ball_zero_iff.mp hw)
-    (mem_ball_zero_iff.mp (hmaps hz)) (mem_ball_zero_iff.mp (hmaps hw))
     (norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz)
     (norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hw) (hg z hz w hw)
 
-/-- **An isometry fixing the origin preserves the real inner product.** This is polarisation: by
-`norm_sub_sq_real` the inner product is determined by the three norms `‖z‖`, `‖w‖` and `‖z - w‖`,
-each of which is preserved. -/
+/-- **An isometry fixing the origin preserves the real inner product.** -/
 theorem real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
     ⟪g z, g w⟫_ℝ = ⟪z, w⟫_ℝ := by
+  -- Polarisation: the inner product is determined by the three norms `‖z‖`, `‖w‖`, `‖z - w‖`.
   have hnz := norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz
   have hnw := norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hw
-  have hsub := norm_sub_map_eq_of_pseudoHyperbolicExpr_map_eq hmaps hg h0 hz hw
+  have hsub := norm_sub_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz hw
   have h1 := norm_sub_sq_real (g z) (g w)
   have h2 := norm_sub_sq_real z w
   rw [hsub, hnz, hnw] at h1
@@ -260,12 +213,8 @@ private lemma eq_mul_I_or_eq_neg_mul_I {e₁ e₂ : ℂ} (h₁ : ‖e₁‖ = 1)
 
 /-- **Isometries fixing the origin are rotations and rotated conjugations.** A self-map of the
 open unit disc that preserves the pseudo-hyperbolic expression and fixes `0` is `z ↦ u * z` or
-`z ↦ u * conj z` for a single unit `u`.
-
-The doubled images `e₁` of `1 / 2` and `e₂` of `I / 2` form an orthonormal frame, and the
-preserved inner product reads the coordinates of `g z` in it off the coordinates of `z`. -/
+`z ↦ u * conj z` for a single unit `u`. -/
 theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
-    (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
       pseudoHyperbolicExpr (g z) (g w) = pseudoHyperbolicExpr z w)
     (h0 : g 0 = 0) :
@@ -294,7 +243,7 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   -- The frame is orthonormal.
   have horth : ⟪e₁, e₂⟫_ℝ = 0 := by
     rw [he₁_def, he₂_def, real_inner_two_mul_left, real_inner_two_mul_right,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hmaps hg h0 hp hq, real_inner_eq]
+      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
     simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
     ring
@@ -302,13 +251,13 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   have hcoord₁ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re := by
     intro z hz
     rw [he₁_def, real_inner_two_mul_left,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hmaps hg h0 hp hz, real_inner_eq]
+      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
     simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
     ring
   have hcoord₂ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im := by
     intro z hz
     rw [he₂_def, real_inner_two_mul_left,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hmaps hg h0 hq hz, real_inner_eq]
+      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
     simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
     ring
@@ -318,7 +267,6 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   rcases eq_mul_I_or_eq_neg_mul_I hn₁ hn₂ horth with hcase | hcase
   · left
     intro z hz
-    change g z = e₁ * z
     have him : (conj e₁ * g z).im = z.im := by
       rw [im_conj_mul, ← hcase]
       exact hcoord₂ z hz
@@ -327,7 +275,6 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
       _ = e₁ * z := by rw [hxi]
   · right
     intro z hz
-    change g z = e₁ * conj z
     have him : (conj e₁ * g z).im = -z.im := by
       have h2 := hcoord₂ z hz
       rw [hcase, real_inner_eq] at h2
@@ -372,9 +319,6 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHy
         EqOn g (fun z => u * ((conj z - b) / (1 - conj b * conj z))) (ball (0 : ℂ) 1)) := by
   have ha : ‖g 0‖ < 1 := mem_ball_zero_iff.mp (hmaps (mem_ball_self one_pos))
   -- Normalise: post-composing with the Moebius factor at `g 0` fixes the origin.
-  have hcmaps : MapsTo (fun z => (g z - g 0) / (1 - conj (g 0) * g z))
-      (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
-    fun z hz => mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha (hmaps hz)
   have hczero : (g 0 - g 0) / (1 - conj (g 0) * g 0) = 0 := by rw [sub_self, zero_div]
   have hciso : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
       pseudoHyperbolicExpr ((g z - g 0) / (1 - conj (g 0) * g z))
@@ -384,7 +328,7 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHy
     rw [pseudoHyperbolicExpr_unitDiscMoebiusFormula_of_norm_lt_one ha (hmaps hz) (hmaps hw)]
     exact hg z hz w hw
   obtain ⟨u, hu, hcase⟩ :=
-    exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj hcmaps hciso hczero
+    exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj hciso hczero
   have hmul : u * conj u = 1 := mul_conj_self_eq_one hu
   refine ⟨u, -g 0 * conj u, hu, ?_, ?_⟩
   · rw [norm_mul, norm_neg, Complex.norm_conj, hu, mul_one]; exact ha
@@ -427,28 +371,21 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbol
 
 /-! ## Isometric self-embeddings are onto -/
 
-/-- A standard disc automorphism maps the open unit disc onto itself. -/
+/-- A standard disc automorphism maps the open unit disc onto itself: it is the scalar formula of
+the bundled equivalence `TauCeti.unitDiscStandardAutomorphismEquiv`. -/
 private lemma surjOn_ball_unitDiscStandardAutomorphismFormula {u b : ℂ} (hu : ‖u‖ = 1)
     (hb : ‖b‖ < 1) :
     SurjOn (fun z : ℂ => u * ((z - b) / (1 - conj b * z))) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-  intro y hy
-  have hy' : conj u * y ∈ ball (0 : ℂ) 1 := by
-    rw [mem_ball_zero_iff, norm_mul, Complex.norm_conj, hu, one_mul]
-    exact mem_ball_zero_iff.mp hy
-  have hb' : ‖-b‖ < 1 := by rwa [norm_neg]
-  have hmem : (conj u * y - -b) / (1 - conj (-b) * (conj u * y)) ∈ ball (0 : ℂ) 1 :=
-    mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one hb' hy'
-  have hleft := leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hb' hy'
-  simp only [neg_neg] at hleft
-  have hmul : u * conj u = 1 := mul_conj_self_eq_one hu
-  refine ⟨(conj u * y - -b) / (1 - conj (-b) * (conj u * y)), hmem, ?_⟩
-  change u * (((conj u * y - -b) / (1 - conj (-b) * (conj u * y)) - b) /
-    (1 - conj b * ((conj u * y - -b) / (1 - conj (-b) * (conj u * y))))) = y
-  rw [hleft, ← mul_assoc, hmul, one_mul]
+  -- Name the rotation as an element of `Circle`, rather than leaving the anonymous constructor
+  -- with its `Submonoid.unitSphere` membership proof in the goal.
+  obtain ⟨c, hc⟩ : ∃ c : Circle, (c : ℂ) = u := ⟨⟨u, mem_sphere_zero_iff_norm.2 hu⟩, rfl⟩
+  refine (bijOn_ball_of_unitDiscEquiv
+    (unitDiscStandardAutomorphismEquiv c (Complex.UnitDisc.mk b hb)) fun z => ?_).surjOn
+  rw [coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc]
 
-/-- **An isometric self-embedding of the Poincaré disc is onto.** No surjectivity hypothesis is
-needed in the classification, and the classification returns it: the hyperbolic plane contains no
-proper isometric copy of itself. -/
+/-- **An isometric self-embedding of the Poincaré disc is onto.** A self-map of the open unit disc
+preserving the hyperbolic distance is a bijection of the disc onto itself: the hyperbolic plane
+contains no proper isometric copy of itself. -/
 theorem bijOn_ball_of_hyperbolicDist_map_eq
     (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
@@ -476,8 +413,8 @@ theorem bijOn_ball_of_hyperbolicDist_map_eq
 
 namespace PoincareDisc
 
-/-- **Every isometry of the Poincaré disc is a bijection.** An `Isometry` is injective for free;
-surjectivity is the content, and comes from `TauCeti.bijOn_ball_of_hyperbolicDist_map_eq`. -/
+/-- **Every isometry of the Poincaré disc is a bijection.** Injectivity comes with any `Isometry`;
+surjectivity is the content. -/
 theorem bijective_of_isometry {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
     Function.Bijective f := by
   classical
