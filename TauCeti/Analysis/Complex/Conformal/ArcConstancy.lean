@@ -90,49 +90,23 @@ open Complex Metric Set Topology
 
 variable {a c : ℂ} {r : ℝ} {V : Set ℂ} {f g : ℂ → ℂ}
 
-/-- Distance from the centre `c` to the point of the ray through `w` at parameter `t`. -/
-private lemma dist_radialPoint_center (c w : ℂ) (t : ℝ) :
-    dist (c + (t : ℂ) * (w - c)) c = |t| * dist w c := by
-  rw [dist_eq_norm, dist_eq_norm, add_sub_cancel_left, norm_mul, Complex.norm_real,
-    Real.norm_eq_abs]
-
-/-- Distance from `w` to the point of the ray from `c` through `w` at parameter `t`. -/
-private lemma dist_radialPoint_self (c w : ℂ) (t : ℝ) :
-    dist (c + (t : ℂ) * (w - c)) w = |t - 1| * dist w c := by
-  have h : c + (t : ℂ) * (w - c) - w = ((t - 1 : ℝ) : ℂ) * (w - c) := by push_cast; ring
-  rw [dist_eq_norm, h, norm_mul, Complex.norm_real, Real.norm_eq_abs, dist_eq_norm]
-
 /-- Every ball centred at a point of a positive-radius sphere straddles that sphere: it meets both
-the open ball and the complement of the closed ball. Both witnesses are taken on the radius
-through the centre of the small ball, one just inside and one just outside. -/
+the open ball and the complement of the closed ball. The sphere is the frontier of each of those
+two discs, and a frontier point lies in the closure of the set as well as of its complement. -/
 private lemma exists_mem_ball_of_mem_sphere {c w : ℂ} {r δ : ℝ} (hr : 0 < r) (hδ : 0 < δ)
     (hw : w ∈ sphere c r) :
     (∃ z ∈ ball w δ, z ∈ ball c r) ∧ ∃ z ∈ ball w δ, z ∉ closedBall c r := by
-  have hr' : r ≠ 0 := hr.ne'
-  have hwc : dist w c = r := hw
-  set ε : ℝ := min (δ / (2 * r)) (1 / 2)
-  have hε0 : 0 < ε := lt_min (by positivity) (by norm_num)
-  have hε1 : ε ≤ 1 / 2 := min_le_right _ _
-  have hεδ : ε * r < δ := by
-    have h1 : ε * r ≤ δ / (2 * r) * r := mul_le_mul_of_nonneg_right (min_le_left _ _) hr.le
-    have h2 : δ / (2 * r) * r = δ / 2 := by field_simp
-    rw [h2] at h1
-    linarith
+  have hin : w ∈ closure (ball c r) :=
+    frontier_subset_closure (by rwa [frontier_ball c hr.ne'])
+  have hout : w ∈ closure (closedBall c r)ᶜ := by
+    have hfr : w ∈ frontier (closedBall c r) := by rwa [frontier_closedBall c hr.ne']
+    rw [frontier_eq_closure_inter_closure] at hfr
+    exact hfr.2
   constructor
-  · refine ⟨c + ((1 - ε : ℝ) : ℂ) * (w - c), ?_, ?_⟩
-    · rw [mem_ball, dist_radialPoint_self, hwc]
-      have : |(1 - ε) - 1| = ε := by rw [sub_sub_cancel_left, abs_neg, abs_of_pos hε0]
-      rw [this]
-      exact hεδ
-    · rw [mem_ball, dist_radialPoint_center, hwc, abs_of_pos (by linarith)]
-      nlinarith
-  · refine ⟨c + ((1 + ε : ℝ) : ℂ) * (w - c), ?_, ?_⟩
-    · rw [mem_ball, dist_radialPoint_self, hwc]
-      have : |(1 + ε) - 1| = ε := by rw [add_sub_cancel_left, abs_of_pos hε0]
-      rw [this]
-      exact hεδ
-    · rw [mem_closedBall, not_le, dist_radialPoint_center, hwc, abs_of_pos (by linarith)]
-      nlinarith
+  · obtain ⟨z, hz, hwz⟩ := Metric.mem_closure_iff.mp hin δ hδ
+    exact ⟨z, mem_ball.mpr (by rwa [dist_comm]), hz⟩
+  · obtain ⟨z, hz, hwz⟩ := Metric.mem_closure_iff.mp hout δ hδ
+    exact ⟨z, mem_ball.mpr (by rwa [dist_comm]), hz⟩
 
 /-- **Boundary uniqueness across a circular arc.** Let `f` be holomorphic on `ball c r`, continuous
 up to the part of the closed disc lying in an open set `V`, and equal to the constant `a` on the
@@ -249,8 +223,9 @@ private lemma not_eqOn_const_ball_of_injOn (hr : 0 < r) (hinj : InjOn f (ball c 
   intro hconst
   have hc : c ∈ ball c r := mem_ball_self hr
   have hc' : c + ((r / 2 : ℝ) : ℂ) ∈ ball c r := by
-    rw [mem_ball, dist_eq_norm, add_sub_cancel_left, Complex.norm_real, Real.norm_eq_abs,
-      abs_of_pos (by linarith)]
+    have hd : dist (c + ((r / 2 : ℝ) : ℂ)) c = r / 2 := by
+      simp [dist_eq_norm, hr.le]
+    rw [mem_ball, hd]
     linarith
   have heq : c = c + ((r / 2 : ℝ) : ℂ) := hinj hc hc' (by rw [hconst hc, hconst hc'])
   have hzero : ((r / 2 : ℝ) : ℂ) = 0 := by linear_combination -heq
