@@ -29,8 +29,8 @@ Kudryashov and Heather Macbeth.
 ## Main declarations
 
 * `TauCeti.RealProjectiveSpace`: real projective `n`-space as an antipodal quotient of `Sⁿ`.
-* `TauCeti.RealProjectiveSpace.inductionOn` and `TauCeti.RealProjectiveSpace.lift`: elimination
-  principles for the antipodal quotient.
+* `TauCeti.RealProjectiveSpace.inductionOn`, `TauCeti.RealProjectiveSpace.lift`, and
+  `TauCeti.RealProjectiveSpace.lift_unique`: elimination principles for the antipodal quotient.
 * `TauCeti.RealProjectiveSpace.mk_eq_mk_iff`: two unit vectors define the same projective point
   exactly when they are equal or antipodal.
 * `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk`: the unit-sphere quotient is a quotient
@@ -161,6 +161,18 @@ protected theorem lift_mk {α : Sort*}
     (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     RealProjectiveSpace.lift n f h (mk n x) = f x :=
   (rfl)
+
+/-- A function out of real projective space agreeing with an antipodal-invariant function on
+representatives is its lift. -/
+protected theorem lift_unique {α : Sort*}
+    (f : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → α)
+    (h : ∀ x, f (-x) = f x)
+    (g : RealProjectiveSpace n → α)
+    (hg : ∀ x, g (mk n x) = f x) :
+    g = RealProjectiveSpace.lift n f h := by
+  funext x
+  exact RealProjectiveSpace.inductionOn n x fun y =>
+    (hg y).trans (RealProjectiveSpace.lift_mk n f h y).symm
 
 /-- Two unit vectors define the same point of real projective space exactly when they are equal
 or antipodal. -/
