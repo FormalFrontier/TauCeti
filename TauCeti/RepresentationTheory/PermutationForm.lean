@@ -20,8 +20,10 @@ of an invariant submodule is again invariant.
 Over an ordered ring the form is positive definite, so its restriction to *any* submodule is
 nondegenerate, and over an ordered field the orthogonal complement of a subrepresentation is a
 genuine complement.  This exhibits a canonical invariant complement of a subrepresentation of a
-permutation representation: one that needs no averaging operator and no hypothesis on `G` or on the
-characteristic, and whose orthogonality relation is a tool in its own right.
+permutation representation: one that needs no averaging operator and no hypothesis on `G`, and
+whose orthogonality relation is a tool in its own right.  An ordered field has characteristic zero,
+so the complementation statements say nothing about positive characteristic; what they drop
+relative to Maschke's theorem is finiteness of `G` and invertibility of `|G|`.
 
 ## Main definitions
 
@@ -75,7 +77,7 @@ open LinearMap (BilinForm)
 
 section Ring
 
-variable (k : Type*) [CommRing k] (X : Type*)
+variable (k : Type*) [CommSemiring k] (X : Type*)
 
 /-- The **permutation form** on `k[X]`: the bilinear form for which the standard basis of `k[X]`
 is orthonormal.  On a pair of elements it is the sum of the products of matching coefficients. -/
@@ -184,7 +186,7 @@ end Ordered
 
 section MulAction
 
-variable {k : Type*} [CommRing k] {G X : Type*} [Group G] [MulAction G X]
+variable {k : Type*} [CommSemiring k] {G X : Type*} [Group G] [MulAction G X]
 
 /-- The action of a group element permutes the standard basis of `k[X]`, so it preserves the
 permutation form. -/
@@ -228,7 +230,6 @@ theorem orthogonal_mem_invtSubmodule {W : Submodule k (MonoidAlgebra k X)}
 
 /-- The orthogonal complement of a subrepresentation of a permutation representation, as a
 subrepresentation. -/
-@[expose]
 noncomputable def orthogonalSubrepresentation
     (σ : Subrepresentation (Representation.ofMulAction k G X)) :
     Subrepresentation (Representation.ofMulAction k G X) where
@@ -242,7 +243,9 @@ theorem toSubmodule_orthogonalSubrepresentation
     (σ : Subrepresentation (Representation.ofMulAction k G X)) :
     (orthogonalSubrepresentation σ).toSubmodule =
       (permutationForm k X).orthogonal σ.toSubmodule :=
-  rfl
+  -- `(rfl)`, not `rfl`: the body of `orthogonalSubrepresentation` is not `@[expose]`d, so this
+  -- must not be inferred `@[defeq]`.
+  (rfl)
 
 end MulAction
 
@@ -255,7 +258,8 @@ variable {k : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
 
 /-- **Invariant complements without averaging.**  Over an ordered field a subrepresentation of the
 permutation representation on a finite `G`-set is complemented by its orthogonal complement.  No
-hypothesis on `G` or on the characteristic is needed. -/
+hypothesis on `G` is needed: neither finiteness nor invertibility of `|G|`.  The ordered field is
+of characteristic zero, so this is not a statement about positive characteristic. -/
 theorem isCompl_orthogonalSubrepresentation
     (σ : Subrepresentation (Representation.ofMulAction k G X)) :
     IsCompl σ (orthogonalSubrepresentation σ) := by
