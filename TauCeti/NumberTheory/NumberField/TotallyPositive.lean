@@ -54,8 +54,7 @@ positivity at every real infinite place. -/
     IsTotallyPositive x ↔ ∀ (w : InfinitePlace K) (hw : w.IsReal), 0 < embedding_of_isReal hw x :=
   Iff.rfl
 
-/-- The element `1` is totally positive: every real embedding sends it to `1 > 0`. (Not a `simp`
-lemma: with `isTotallyPositive_iff` as `simp`, this is already discharged automatically.) -/
+/-- The element `1` is totally positive: every real embedding sends it to `1 > 0`. -/
 theorem isTotallyPositive_one : IsTotallyPositive (1 : K) :=
   isTotallyPositive_iff.mpr fun _ _ => by rw [map_one]; exact one_pos
 
@@ -74,32 +73,24 @@ theorem IsTotallyPositive.inv {x : K} (hx : IsTotallyPositive x) : IsTotallyPosi
 nonzero real. -/
 theorem isTotallyPositive_sq {x : K} (hx : x ≠ 0) : IsTotallyPositive (x ^ 2) :=
   isTotallyPositive_iff.mpr fun w hw => by
-    rw [map_pow]
-    exact sq_pos_iff.mpr fun h =>
-      hx ((embedding_of_isReal hw).injective (h.trans (map_zero _).symm))
+    rw [map_pow]; exact sq_pos_iff.mpr ((map_ne_zero _).mpr hx)
 
-/-- The subgroup of **totally positive units** of `Kˣ`: those units whose underlying element is
-totally positive. It is the kernel of the sign (signature) map on units, and controls the
-comparison between the narrow class group `Cl⁺(K)` and the ordinary class group `Cl(K)`. -/
-def totallyPositiveUnits : Subgroup Kˣ where
-  carrier := {u | IsTotallyPositive (u : K)}
-  -- Each proof `change`s across the carrier `{u | IsTotallyPositive ↑u}` and the unit coercion
-  -- (`↑(1 : Kˣ) = 1`, `↑(x * y) = ↑x * ↑y`, `↑x⁻¹ = (↑x)⁻¹`) to reduce to the element-level lemma.
-  one_mem' := by
-    change IsTotallyPositive ((1 : Kˣ) : K)
-    rw [Units.val_one]; exact isTotallyPositive_one
-  mul_mem' {x y} hx hy := by
-    change IsTotallyPositive ((x * y : Kˣ) : K)
-    rw [Units.val_mul]; exact IsTotallyPositive.mul hx hy
-  inv_mem' {x} hx := by
-    change IsTotallyPositive ((x⁻¹ : Kˣ) : K)
-    rw [Units.val_inv_eq_inv_val]; exact hx.inv
+/-- The subgroup of **totally positive units** of `Kˣ`: the intersection, over the real infinite
+places `w`, of the preimages of the positive units of `ℝ` under the real embedding `w`. It is the
+kernel of the sign (signature) map on units, and controls the comparison between the narrow class
+group `Cl⁺(K)` and the ordinary class group `Cl(K)`. -/
+noncomputable def totallyPositiveUnits : Subgroup Kˣ :=
+  ⨅ (w : InfinitePlace K) (hw : w.IsReal),
+    (Units.posSubgroup ℝ).comap (Units.map (embedding_of_isReal hw).toMonoidHom)
 
 /-- A unit lies in `totallyPositiveUnits` exactly when its underlying field element is totally
 positive. -/
 @[simp]
 theorem mem_totallyPositiveUnits {u : Kˣ} :
-    u ∈ totallyPositiveUnits ↔ IsTotallyPositive (u : K) := Iff.rfl
+    u ∈ totallyPositiveUnits ↔ IsTotallyPositive (u : K) := by
+  simp only [totallyPositiveUnits, Subgroup.mem_iInf, Subgroup.mem_comap,
+    Units.mem_posSubgroup, Units.coe_map, RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe,
+    isTotallyPositive_iff]
 
 /-- Every square of a unit is a totally positive unit. -/
 theorem sq_mem_totallyPositiveUnits (u : Kˣ) : u ^ 2 ∈ totallyPositiveUnits := by
