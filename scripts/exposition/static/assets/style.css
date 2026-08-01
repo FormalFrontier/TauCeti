@@ -541,11 +541,157 @@ pre.statement {
   flex: none;
 }
 
+/* ---------- main-results (highlights) view ----------
+   Area pages open on a card view of the area's main results; the graph UI
+   is display-toggled behind it. `mode-hl` on <body> picks the mode: the
+   card view scrolls like a normal page, the graph mode keeps the fixed
+   full-height layout. */
+
+body.mode-hl .graph-toolbar,
+body.mode-hl .breadcrumb-bar,
+body.mode-hl .graph-viewport {
+  display: none;
+}
+
+body.graph-body.mode-hl {
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
+}
+
+body:not(.mode-hl) .hl-section {
+  display: none;
+}
+
+.hl-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 20px 48px;
+}
+
+.hl-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.hl-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+}
+
+.hl-sub {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.hl-head .btn {
+  margin-left: auto;
+}
+
+.hl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+}
+
+.hl-empty {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.hl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.hl-name {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fg);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.hl-name:hover {
+  color: var(--accent);
+}
+
+.hl-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hl-doc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  opacity: 0.92;
+}
+
+.hl-doc code,
+.panel-doc code {
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 0 3px;
+}
+
+.hl-card pre.statement {
+  margin: 0;
+  max-height: 9.5em;
+  overflow: auto;
+}
+
+.hl-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 2px;
+  font-size: 12.5px;
+}
+
+.hl-links a {
+  text-decoration: none;
+}
+
+.hl-links a:hover {
+  text-decoration: underline;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 800px) {
   .site-nav {
     gap: 12px;
+  }
+
+  .hl-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hl-head .btn {
+    margin-left: 0;
   }
 
   .kind-legend {

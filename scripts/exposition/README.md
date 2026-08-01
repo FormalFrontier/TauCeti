@@ -91,8 +91,19 @@ source links pin the shard's `commit`:
            "kinds": {"theorem": 1027, ...}},
  "modules": ["TauCeti.Algebra.Group.Basic", ...],
  "layers": [40, 31, ...],      // node count per area-local layer
+ "hl": [812, 64, ...],         // main results: node ids, best first (≤ 12)
  "decls": [ ... ]}
 ```
+
+`hl` drives the area page's default "Main results" card view. With no
+human-curated registry to draw on, the ids are score-picked: documented,
+non-private `theorem`/`lemma` nodes ranked by whole-library depth, with
+smaller nudges for docstring length, for being widely built upon, and for
+being an as-yet-undepended-on capstone. Naming-convention API lemmas
+(`…_hom_app_apply`) are excluded, and at most two picks come from any one
+module so a single development cannot monopolize the cards
+(`select_highlights` in `generate.py`). May be empty (pseudo-areas with
+no documented theorems); the page then opens straight in the graph view.
 
 `decls[i]` — the node with id `i` (ids are shard-local array indices):
 

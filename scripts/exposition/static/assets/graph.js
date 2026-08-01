@@ -1,8 +1,14 @@
-/* Tau Ceti exposition — per-area dependency-graph viewer.
+/* Tau Ceti exposition — per-area page: main-results cards + dependency graph.
    Vanilla JS, Canvas 2D. Loaded by a/<Area>/index.html, which carries the
    area slug in <body data-slug>. Fetches ../../data/areas/<slug>.json.
-   Hash routing: #d<id> selects declaration <id>, #cone=<id> shows its
-   dependency cone.
+
+   The page has two modes, switched by the `mode-hl` class on <body>: the
+   default "Main results" card view (the shard's score-picked `hl` ids) and
+   the full graph. Entering the graph is hash-driven and sticky; only the
+   explicit "Main results" toolbar button (or browser-back to an empty
+   hash) returns to the cards. Areas with no highlights open straight in
+   the graph. Hash routing: #d<id> selects declaration <id>, #cone=<id>
+   shows its dependency cone, #graph opens the graph unselected.
 
    Adapted from Lean Pool's exposition graph viewer (Vasily Ilin,
    https://github.com/Vilin97/lean-pool, Apache 2.0). Changes for Tau Ceti:
@@ -50,6 +56,10 @@
   const titleEl = byId('area-title');
   const statsEl = byId('info-stats');
   const legendEl = byId('kind-legend');
+  const hlGridEl = byId('hl-grid');
+  const hlSubEl = byId('hl-sub');
+  const hlExploreEl = byId('hl-explore');
+  const hlBackEl = byId('hl-back');
   const slug = document.body.dataset.slug || '';
 
   function elWith(tag, className, text) {
@@ -733,7 +743,10 @@
       const parts = String(d.doc).split(/\n\s*\n/);
       for (const part of parts) {
         const trimmed = part.trim();
-        if (trimmed) doc.appendChild(elWith('p', null, trimmed));
+        if (!trimmed) continue;
+        const paragraph = elWith('p', null, null);
+        appendRich(paragraph, trimmed);
+        doc.appendChild(paragraph);
       }
       panelBodyEl.appendChild(doc);
     }
@@ -987,6 +1000,128 @@
     }
   }
 
+  // ----- main-results cards / mode switching ----------------------------------
+
+  let highlights = []; // shard-local ids, best first; [] => graph-only page
+
+  // graphMode=false shows the card view, true the graph. The canvas sizes
+  // itself when revealed: the ResizeObserver fires and refits (or re-pans to
+  // the selection) via resizeCanvas's stale-size handling.
+  function setMode(graphMode) {
+    document.body.classList.toggle('mode-hl', !graphMode);
+    if (graphMode) dirty = true;
+  }
+
+  function firstParagraph(text) {
+    const parts = String(text).split(/\n\s*\n/);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed) return trimmed;
+    }
+    return '';
+  }
+
+  // Docstring rendering: `backtick` spans become <code>, **double-starred**
+  // spans become <strong>. Built from text nodes only, so no HTML in
+  // docstrings is ever interpreted; unbalanced markers fall back to plain
+  // text.
+  function appendCode(parent, text) {
+    const pieces = text.split('`');
+    if (pieces.length % 2 === 0) {
+      parent.appendChild(document.createTextNode(text));
+      return;
+    }
+    for (let i = 0; i < pieces.length; i++) {
+      if (!pieces[i]) continue;
+      if (i % 2 === 1) parent.appendChild(elWith('code', null, pieces[i]));
+      else parent.appendChild(document.createTextNode(pieces[i]));
+    }
+  }
+
+  function appendRich(parent, text) {
+    const pieces = text.split('**');
+    if (pieces.length % 2 === 0) {
+      appendCode(parent, text);
+      return;
+    }
+    for (let i = 0; i < pieces.length; i++) {
+      if (!pieces[i]) continue;
+      if (i % 2 === 1) {
+        const strong = elWith('strong', null, null);
+        appendCode(strong, pieces[i]);
+        parent.appendChild(strong);
+      } else {
+        appendCode(parent, pieces[i]);
+      }
+    }
+  }
+
+  function buildHighlightCard(id) {
+    const d = decls[id];
+    const card = elWith('article', 'hl-card', null);
+    const name = elWith('a', 'hl-name', labels[id]);
+    name.href = '#d' + id;
+    card.appendChild(name);
+
+    const meta = elWith('div', 'hl-meta', null);
+    const kindChip = elWith('span', 'kind-chip', null);
+    kindChip.appendChild(kindDotEl(d.kind));
+    kindChip.appendChild(document.createTextNode(d.kind || ''));
+    meta.appendChild(kindChip);
+    meta.appendChild(elWith('span', null,
+      'depth ' + (d.gdepth || 0) + ' in the library'));
+    const uses = rev[id].length + (Array.isArray(d.xrev) ? d.xrev.length : 0);
+    meta.appendChild(elWith('span', null,
+      uses === 0 ? 'nothing builds on it yet'
+        : 'used by ' + uses + ' declaration' + (uses === 1 ? '' : 's')));
+    card.appendChild(meta);
+
+    if (d.doc) {
+      const doc = elWith('p', 'hl-doc', null);
+      appendRich(doc, firstParagraph(d.doc));
+      card.appendChild(doc);
+    }
+    if (d.statement) card.appendChild(elWith('pre', 'statement', d.statement));
+
+    const links = elWith('div', 'hl-links', null);
+    const graphLink = elWith('a', null, 'view in graph');
+    graphLink.href = '#d' + id;
+    links.appendChild(graphLink);
+    const moduleName = modules[d.module] || '';
+    const src = elWith('a', null, 'source');
+    src.href = GITHUB_BLOB + encodeURIComponent(commit) + '/'
+      + moduleSourcePath(moduleName)
+      + '#L' + d.line + '-L' + (d.endLine || d.line);
+    src.target = '_blank';
+    src.rel = 'noopener';
+    links.appendChild(src);
+    if (!d.full) {
+      const docsLink = elWith('a', null, 'API docs');
+      docsLink.href = '../../../docs/' + moduleDocsPath(moduleName)
+        + '#' + d.name;
+      docsLink.target = '_blank';
+      docsLink.rel = 'noopener';
+      links.appendChild(docsLink);
+    }
+    card.appendChild(links);
+    return card;
+  }
+
+  function buildHighlights() {
+    if (!hlGridEl) return;
+    hlGridEl.textContent = '';
+    if (hlSubEl) {
+      hlSubEl.textContent = 'the ' + highlights.length + ' most notable of '
+        + N + ' declarations — picked by depth, documentation, and use';
+    }
+    if (highlights.length === 0) {
+      hlGridEl.appendChild(elWith('div', 'hl-empty',
+        'No documented theorems to feature in this area yet.'));
+      return;
+    }
+    for (const id of highlights) hlGridEl.appendChild(buildHighlightCard(id));
+  }
+
   // ----- search ---------------------------------------------------------------
 
   function updateSearchCount() {
@@ -1033,10 +1168,15 @@
   function applyHash() {
     if (N === 0) return;
     const h = location.hash;
+    if (h === '#graph') {
+      setMode(true);
+      return;
+    }
     let m = /^#cone=(\d+)$/.exec(h);
     if (m) {
       const id = Number(m[1]);
       if (id >= 0 && id < N) {
+        setMode(true);
         enterCone(id);
         return;
       }
@@ -1045,6 +1185,7 @@
     if (m) {
       const id = Number(m[1]);
       if (id >= 0 && id < N) {
+        setMode(true);
         if (view === coneView && coneView) exitCone(false);
         if (selected !== id) selectNode(id, { pan: true, hash: false });
         return;
@@ -1052,6 +1193,10 @@
     }
     if (view === coneView && coneView) exitCone(false);
     deselect(false);
+    // Only real navigation lands here (in-app hash clearing uses pushState,
+    // which fires no hashchange): browser-back to an empty hash returns to
+    // the cards when the area has any.
+    if (highlights.length > 0) setMode(false);
   }
 
   // ----- pointer / wheel / keyboard interaction ---------------------------------
@@ -1183,6 +1328,21 @@
 
   if (fitButtonEl) fitButtonEl.addEventListener('click', () => fitCamera());
   if (panelCloseEl) panelCloseEl.addEventListener('click', () => deselect(true));
+  if (hlExploreEl) {
+    hlExploreEl.addEventListener('click', () => {
+      // setHash no-ops when the hash is already #graph; switch directly then.
+      if (location.hash === '#graph') setMode(true);
+      else setHash('graph');
+    });
+  }
+  if (hlBackEl) {
+    hlBackEl.addEventListener('click', () => {
+      if (view === coneView && coneView) exitCone(false);
+      deselect(false);
+      clearHash();
+      setMode(false);
+    });
+  }
   window.addEventListener('hashchange', applyHash);
 
   // ----- resize wiring --------------------------------------------------------
@@ -1326,12 +1486,26 @@
     updateDerivedColors();
     messageEl.hidden = true;
     fitCamera();
+    const rawHighlights = Array.isArray(json.hl) ? json.hl : [];
+    highlights = [];
+    for (const value of rawHighlights) {
+      if (typeof value === 'number' && value >= 0 && value < N) {
+        highlights.push(value);
+      }
+    }
+    buildHighlights();
+    if (hlBackEl) hlBackEl.hidden = highlights.length === 0;
+    if (highlights.length === 0) setMode(true);
     applyHash();
     dirty = true;
   }
 
   function loadShard() {
     showMessage('Loading…');
+    if (hlGridEl) {
+      hlGridEl.textContent = '';
+      hlGridEl.appendChild(elWith('div', 'hl-empty', 'Loading…'));
+    }
     fetch('../../data/areas/' + encodeURIComponent(slug) + '.json')
       .then((response) => {
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -1341,9 +1515,14 @@
         initData(json);
       })
       .catch((error) => {
-        showMessage('Could not load the dependency graph for “' + slug
+        const text = 'Could not load the data for “' + slug
           + '” — data/areas/' + slug + '.json failed to load ('
-          + error.message + ').');
+          + error.message + ').';
+        showMessage(text); // the graph-mode surface…
+        if (hlGridEl) { // …and the card-mode surface
+          hlGridEl.textContent = '';
+          hlGridEl.appendChild(elWith('div', 'hl-empty', text));
+        }
       });
   }
 
@@ -1352,6 +1531,9 @@
   readTheme();
   updateDerivedColors();
   resizeCanvas();
+  // Deep links (cross-area references, shared URLs) open the graph directly;
+  // everything else starts on the main-results cards.
+  if (/^#(d\d+|cone=\d+|graph)$/.test(location.hash)) setMode(true);
   loadShard();
   requestAnimationFrame(frame);
 })();

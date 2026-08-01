@@ -20,6 +20,7 @@ from generate import (
     build_site_model,
     generate_site,
     read_dump,
+    select_highlights,
 )
 
 
@@ -54,8 +55,9 @@ FIXTURE = [
            deps=["TauCeti.Alg.base"], ext=2),
     record("TauCeti.Ana.base", "TauCeti.Analysis.B", line=1,
            deps=["TauCeti.Alg.base"]),
-    record("TauCeti.Ana.top", "TauCeti.Analysis.B", line=5,
-           deps=["TauCeti.Ana.base", "TauCeti.Alg.mid"]),
+    record("TauCeti.Ana.main", "TauCeti.Analysis.B", line=5,
+           deps=["TauCeti.Ana.base", "TauCeti.Alg.mid"],
+           d="The headline result."),
 ]
 
 
@@ -88,7 +90,7 @@ class BuildSiteModelTest(unittest.TestCase):
     def test_intra_dependencies_are_local_ids(self):
         # Algebra order: base (line 1) then mid (line 5).
         self.assertEqual(self.model.intra_deps["Algebra"], [[], [0]])
-        # Analysis order: base then top; top uses base locally.
+        # Analysis order: base then main; main uses base locally.
         self.assertEqual(self.model.intra_deps["Analysis"], [[], [0]])
 
     def test_cross_dependencies_point_into_the_other_area(self):
@@ -105,7 +107,7 @@ class BuildSiteModelTest(unittest.TestCase):
 
     def test_global_depths_cross_area_chains(self):
         self.assertEqual(self.model.global_depths["Algebra"], [0, 1])
-        # Ana.base sits above Alg.base; Ana.top above Alg.mid and Ana.base.
+        # Ana.base sits above Alg.base; Ana.main above Alg.mid and Ana.base.
         self.assertEqual(self.model.global_depths["Analysis"], [1, 2])
 
     def test_dangling_and_self_dependencies_are_dropped(self):
@@ -116,6 +118,120 @@ class BuildSiteModelTest(unittest.TestCase):
         model = build_site_model(records)
         self.assertEqual(model.intra_deps["A"], [[]])
         self.assertEqual(model.cross_deps["A"], [[]])
+
+
+def hl_node(
+    name: str,
+    kind: str = "theorem",
+    gdepth: int = 0,
+    doc: str | None = None,
+    private: bool = False,
+    module: int = 0,
+) -> dict:
+    """A shard node with just the fields the highlight scorer reads."""
+    node = {"name": name, "kind": kind, "gdepth": gdepth, "module": module}
+    if doc is not None:
+        node["doc"] = doc
+    if private:
+        node["private"] = True
+    return node
+
+
+class SelectHighlightsTest(unittest.TestCase):
+    def test_only_documented_public_theorems_qualify(self):
+        nodes = [
+            hl_node("t.doc", doc="d", gdepth=1),
+            hl_node("t.undoc"),
+            hl_node("d.doc", kind="def", doc="d"),
+            hl_node("t.priv", doc="d", private=True),
+            hl_node("i.doc", kind="instance", doc="d"),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [0])
+
+    def test_deeper_results_rank_first(self):
+        nodes = [
+            hl_node("a", doc="d", gdepth=1),
+            hl_node("b", kind="lemma", doc="d", gdepth=5),
+            hl_node("c", doc="d", gdepth=3),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [1, 2, 0])
+
+    def test_capstone_bonus_beats_light_use(self):
+        # Both candidates are equal apart from use: `used.once` has one
+        # dependent (a small log-use credit next to the 10-use hub that sets
+        # the scale), `capstone` has none and takes the flat bonus instead.
+        nodes = [hl_node("used.once", doc="d"), hl_node("capstone", doc="d"),
+                 hl_node("hub")]
+        dependency_lists: list[list[int]] = [[], [], []]
+        nodes.append(hl_node("user0", kind="def"))
+        dependency_lists.append([0])
+        for i in range(10):
+            nodes.append(hl_node(f"user{i + 1}", kind="def"))
+            dependency_lists.append([2])
+        picked = select_highlights(nodes, dependency_lists, [0] * len(nodes))
+        self.assertEqual(picked, [1, 0])
+
+    def test_limit_and_name_tiebreak(self):
+        nodes = [hl_node("b", doc="d"), hl_node("a", doc="d"),
+                 hl_node("c", doc="d")]
+        picked = select_highlights(
+            nodes, [[] for _ in nodes], [0] * len(nodes), limit=2
+        )
+        self.assertEqual(picked, [1, 0])
+
+    def test_cross_area_dependents_count_as_use(self):
+        # If cross-area dependents were ignored, both would tie as capstones
+        # and sort by name (`capstone` first); counting them makes `crossed`
+        # the area's most-used result and puts it on top.
+        nodes = [hl_node("crossed", doc="d"), hl_node("capstone", doc="d")]
+        picked = select_highlights(nodes, [[], []], [3, 0])
+        self.assertEqual(picked, [0, 1])
+
+    def test_empty_area(self):
+        self.assertEqual(select_highlights([], [], []), [])
+
+    def test_api_convention_names_are_excluded(self):
+        nodes = [
+            hl_node("Foo.natIso_hom_app_apply", doc="d", gdepth=9),
+            hl_node("Foo.inclusion_comp", doc="d", gdepth=9),
+            hl_node("Foo.functor_obj", doc="d", gdepth=9),
+            hl_node("Foo.something_inv_app", doc="d", gdepth=9),
+            hl_node("Foo.tensorAssociator_eq", doc="d", gdepth=9),
+            hl_node("Foo.tensorHom_toLinearMap", doc="d", gdepth=9),
+            hl_node("Foo.boundary_inv", doc="d", gdepth=1),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        # Only `boundary_inv` survives: a lone weak token is mathematics
+        # (the inverse function), stacked or strong API tokens and coercion
+        # comparisons are not.
+        self.assertEqual(picked, [6])
+
+    def test_one_module_cannot_monopolize(self):
+        nodes = [
+            hl_node("M0.a", doc="d", gdepth=9, module=0),
+            hl_node("M0.b", doc="d", gdepth=8, module=0),
+            hl_node("M0.c", doc="d", gdepth=7, module=0),
+            hl_node("M1.d", doc="d", gdepth=1, module=1),
+        ]
+        picked = select_highlights(
+            nodes, [[] for _ in nodes], [0] * len(nodes), limit=3
+        )
+        # Module 0 yields its two best, module 1 takes the third slot ahead
+        # of the deeper spillover.
+        self.assertEqual(picked, [0, 1, 3])
+
+    def test_spillover_refills_unused_slots(self):
+        nodes = [
+            hl_node("M0.a", doc="d", gdepth=9, module=0),
+            hl_node("M0.b", doc="d", gdepth=8, module=0),
+            hl_node("M0.c", doc="d", gdepth=7, module=0),
+        ]
+        picked = select_highlights(
+            nodes, [[] for _ in nodes], [0] * len(nodes), limit=3
+        )
+        self.assertEqual(picked, [0, 1, 2])
 
 
 class BuildAreaShardTest(unittest.TestCase):
@@ -153,9 +269,9 @@ class BuildAreaShardTest(unittest.TestCase):
                          "theorem base : True")
 
     def test_cross_references_carry_area_id_and_name(self):
-        top = self.shard["decls"][1]
-        self.assertEqual(top["xdeps"], [[0, 1, "TauCeti.Alg.mid"]])
-        self.assertNotIn("xrev", top)
+        main = self.shard["decls"][1]
+        self.assertEqual(main["xdeps"], [[0, 1, "TauCeti.Alg.mid"]])
+        self.assertNotIn("xrev", main)
 
     def test_global_depth_is_recorded(self):
         self.assertEqual([node["gdepth"] for node in self.shard["decls"]],
@@ -178,6 +294,17 @@ class BuildAreaShardTest(unittest.TestCase):
         )
         self.assertEqual(shard["decls"][0]["kind"], "theorem")
         self.assertEqual(shard["decls"][0]["statement"], "")
+
+    def test_highlights_pick_documented_theorems(self):
+        # Only Ana.main carries a docstring, so it alone is featured.
+        self.assertEqual(self.shard["hl"], [1])
+
+    def test_highlights_empty_without_documented_theorems(self):
+        shard = build_area_shard(
+            self.model, "Algebra", SourceCache(pathlib.Path(self.tmp.name)),
+            commit="abc123",
+        )
+        self.assertEqual(shard["hl"], [])
 
 
 class BuildIndexTest(unittest.TestCase):
@@ -262,6 +389,8 @@ class GenerateSiteTest(unittest.TestCase):
             for slug in ("Algebra", "Analysis"):
                 shard_path = out / "data" / "areas" / f"{slug}.json"
                 self.assertTrue(shard_path.is_file())
+                shard = json.loads(shard_path.read_text("utf-8"))
+                self.assertIn("hl", shard)
                 page = (out / "a" / slug / "index.html").read_text("utf-8")
                 self.assertIn(f'data-slug="{slug}"', page)
                 self.assertIn(f"<title>{slug}</title>", page)

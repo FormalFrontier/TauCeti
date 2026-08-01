@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&amp;display=swap">
   <link rel="stylesheet" href="../../assets/style.css">
 </head>
-<body class="graph-body" data-slug="${SLUG}">
+<body class="graph-body mode-hl" data-slug="${SLUG}">
   <header class="site-header">
     <a class="site-title" href="../../index.html">Tau Ceti <span class="brand-sub">· exposition</span></a>
     <nav class="site-nav">
@@ -26,7 +26,16 @@
     <span class="info-stats" id="info-stats"></span>
     <span class="kind-legend" id="kind-legend"></span>
   </section>
+  <section class="hl-section" id="hl-section">
+    <div class="hl-head">
+      <h2 class="hl-title">Main results</h2>
+      <span class="hl-sub" id="hl-sub"></span>
+      <button class="btn btn-accent" id="hl-explore" type="button">Explore the dependency graph</button>
+    </div>
+    <div class="hl-grid" id="hl-grid"></div>
+  </section>
   <section class="graph-toolbar">
+    <button class="btn" id="hl-back" type="button" hidden>&#8249; Main results</button>
     <input class="search-input" id="search-input" type="search"
            placeholder="Search declarations" autocomplete="off" spellcheck="false"
            aria-label="Search declarations">

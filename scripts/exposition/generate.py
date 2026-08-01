@@ -7,7 +7,8 @@ Lean sources under the repository root, and writes a static site:
 * ``data/areas/<Area>.json`` — one shard per top-level library area
   (``TauCeti.Algebra.* -> Algebra``): a layered dependency graph of the
   area's declarations, with cross-area edges resolved to (area, id, name)
-  triples so the graph pages can link across areas;
+  triples so the graph pages can link across areas, plus a score-picked
+  list of the area's main results (``hl``) for the card view;
 * ``data/index.json`` — library totals, per-area rows, and the area-level
   dependency matrix for the landing page;
 * ``data/decls.json`` — a compact all-declarations index for the viewer;
@@ -36,6 +37,7 @@ import argparse
 import html
 import json
 import logging
+import math
 import shutil
 import string
 from collections import Counter
@@ -247,6 +249,104 @@ def _cross_reference(model: SiteModel, target: tuple[int, int]) -> list:
     return [target_area, target_local, name]
 
 
+HIGHLIGHT_LIMIT = 12
+HIGHLIGHT_KINDS = frozenset({"theorem", "lemma"})
+HIGHLIGHT_MODULE_CAP = 2
+
+# Naming-convention API lemmas (`…NatIso_hom_app_apply`, `…Inclusion_comp`)
+# score high on depth but are never an area's headline. A name is technical
+# when its last underscore token is in STRONG, or its last two tokens are
+# both API-ish (so `…_boundary_inv` — mathematics about an inverse — stays,
+# while `…_inv_app` goes).
+STRONG_API_TOKENS = frozenset(
+    {"add", "app", "apply", "assoc", "aux", "bot", "cast", "coe", "comp",
+     "def", "div", "empty", "eq", "fst", "id", "intCast", "map", "mk", "mul",
+     "natCast", "neg", "none", "obj", "one", "pow", "refl", "self", "smul",
+     "snd", "some", "sub", "succ", "symm", "tmul", "top", "trans", "univ",
+     "zero"}
+)
+WEAK_API_TOKENS = frozenset({"hom", "inv"})
+
+
+def _is_technical_name(name: str) -> bool:
+    """True for API-convention names that should never make the cards."""
+    tokens = name.rsplit(".", 1)[-1].split("_")
+    last = tokens[-1]
+    if last in STRONG_API_TOKENS:
+        return True
+    if len(last) > 2 and last.startswith("to") and last[2].isupper():
+        return True  # coercion-comparison lemmas: `…_toLinearMap`
+    api_tokens = STRONG_API_TOKENS | WEAK_API_TOKENS
+    return (
+        len(tokens) >= 2
+        and last in api_tokens
+        and tokens[-2] in api_tokens
+    )
+
+
+def select_highlights(
+    nodes: list[dict],
+    dependency_lists: list[list[int]],
+    cross_dependent_counts: list[int],
+    limit: int = HIGHLIGHT_LIMIT,
+) -> list[int]:
+    """Pick an area's main results: the shard-local ids shown as cards.
+
+    There is no human-curated registry to draw on, so notability is scored
+    from the data: only documented, non-private theorems qualify (API-named
+    lemmas excluded, see ``_is_technical_name``), and the score favors
+    depth in the whole-library graph (headline results sit at the end of
+    long chains), with smaller nudges for a substantial docstring, for
+    being widely built upon, and for being a capstone nothing depends on
+    yet. So that a single development cannot monopolize the cards, at most
+    ``HIGHLIGHT_MODULE_CAP`` picks come from any one module while other
+    candidates remain (best-scored spillovers refill unused slots at the
+    end). Ties break by name so the selection is deterministic.
+    """
+    total = len(nodes)
+    reverse_counts = [0] * total
+    for dependencies in dependency_lists:
+        for target in dependencies:
+            reverse_counts[target] += 1
+    use_counts = [
+        reverse_counts[local_id] + cross_dependent_counts[local_id]
+        for local_id in range(total)
+    ]
+    max_global_depth = max((node["gdepth"] for node in nodes), default=0)
+    max_uses = max(use_counts, default=0)
+    scored: list[tuple[float, str, int]] = []
+    for local_id, node in enumerate(nodes):
+        if node["kind"] not in HIGHLIGHT_KINDS or node.get("private"):
+            continue
+        doc = node.get("doc", "")
+        if not doc or _is_technical_name(node["name"]):
+            continue
+        score = 3.0 * node["gdepth"] / max(max_global_depth, 1)
+        # Docstring length is a weak nudge only: at full weight a wordy
+        # corollary outranks the eponymous theorem it follows from.
+        score += 0.5 * min(len(doc), 400) / 400.0
+        if max_uses:
+            score += 1.5 * math.log1p(use_counts[local_id]) / math.log1p(max_uses)
+        if use_counts[local_id] == 0:
+            score += 0.75  # capstone: nothing builds on it (yet)
+        scored.append((-score, node["name"], local_id))
+    scored.sort()
+    picked: list[int] = []
+    per_module: dict[int, int] = {}
+    spillover: list[int] = []
+    for _, _, local_id in scored:
+        if len(picked) == limit:
+            break
+        module = nodes[local_id].get("module", 0)
+        if per_module.get(module, 0) >= HIGHLIGHT_MODULE_CAP:
+            spillover.append(local_id)
+            continue
+        per_module[module] = per_module.get(module, 0) + 1
+        picked.append(local_id)
+    picked.extend(spillover[: limit - len(picked)])
+    return picked
+
+
 def build_area_shard(
     model: SiteModel,
     slug: str,
@@ -299,6 +399,9 @@ def build_area_shard(
         "gmaxDepth": max(model.global_depths[slug], default=0),
         "kinds": _kind_counts([node["kind"] for node in nodes]),
     }
+    cross_dependent_counts = [
+        len(dependents) for dependents in model.cross_dependents[slug]
+    ]
     return {
         "schema": SCHEMA_VERSION,
         "area": slug,
@@ -307,6 +410,7 @@ def build_area_shard(
         "stats": stats,
         "modules": modules,
         "layers": layout.layer_sizes,
+        "hl": select_highlights(nodes, dependency_lists, cross_dependent_counts),
         "decls": nodes,
     }
 
