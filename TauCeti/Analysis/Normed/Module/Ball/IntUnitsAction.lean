@@ -10,10 +10,10 @@ public import Mathlib.Analysis.Normed.Module.Ball.Action
 /-!
 # The integer-unit action on real spheres
 
-The two units of the integers act on every sphere in a real normed space by the identity and the
-antipodal map.  This file restricts Mathlib's scalar action on spheres to that action, proves its
-basic coercion rules and continuity, and shows that the action on every nonzero-radius sphere is
-free.
+The two units of the integers act on every sphere in a real seminormed space by the identity and
+the antipodal map.  This file restricts Mathlib's scalar action on spheres to that action, proves
+its basic coercion rules and continuity, and shows that the action on every nonzero-radius sphere
+is free.
 
 The scalar action on spheres and `ne_neg_of_mem_sphere` are from Mathlib's
 `Analysis.Normed.Module.Ball.Action`, due to Yury Kudryashov and Heather Macbeth.
@@ -37,7 +37,7 @@ universe u
 
 namespace Sphere
 
-variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type u} [SeminormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- The homomorphism that regards an integer unit as a real scalar of norm one. -/
 def intUnitsToUnitSphere : ℤˣ →* sphere (0 : ℝ) 1 where
@@ -45,6 +45,13 @@ def intUnitsToUnitSphere : ℤˣ →* sphere (0 : ℝ) 1 where
     obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
   map_one' := Subtype.ext (by simp)
   map_mul' u v := Subtype.ext (by simp)
+
+/-- An integer unit, regarded as a unit-norm real scalar, has the expected underlying value. -/
+@[simp]
+theorem coe_intUnitsToUnitSphere (u : ℤˣ) :
+    ((intUnitsToUnitSphere u : sphere (0 : ℝ) 1) : ℝ) = ((u : ℤ) : ℝ) :=
+  by
+    obtain rfl | rfl := Int.units_eq_one_or u <;> simp [intUnitsToUnitSphere]
 
 /-- The coercion of Mathlib's sphere action is scalar multiplication in the ambient space. -/
 private theorem coe_sphere_smul {r : ℝ} (c : sphere (0 : ℝ) 1)
@@ -63,8 +70,7 @@ integer. -/
 theorem coe_intUnits_smul {r : ℝ} (u : ℤˣ) (x : sphere (0 : E) r) :
     ((u • x : sphere (0 : E) r) : E) = ((u : ℤ) : ℝ) • (x : E) :=
   by
-    rw [MulAction.compHom_smul_def, coe_sphere_smul]
-    rfl
+    rw [MulAction.compHom_smul_def, coe_sphere_smul, coe_intUnitsToUnitSphere]
 
 /-- The restricted integer-unit action agrees with Mathlib's sphere-scalar action. -/
 private theorem intUnits_smul_eq_sphere_smul {r : ℝ} (u : ℤˣ) (x : sphere (0 : E) r) :
