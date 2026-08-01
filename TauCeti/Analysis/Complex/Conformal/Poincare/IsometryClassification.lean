@@ -104,7 +104,7 @@ variable {g : ℂ → ℂ}
 
 `ℂ` is a real inner product space in Mathlib (`InnerProductSpace ℝ ℂ`, with
 `Complex.inner : ⟪w, z⟫_ℝ = (z * conj w).re`), and that is the inner product used throughout. The
-four lemmas here only translate between it and the coordinates `Complex.re`, `Complex.im` in which
+three lemmas here only translate between it and the coordinates `Complex.re`, `Complex.im` in which
 the frame argument below reads off a point.
 -/
 
@@ -124,23 +124,6 @@ private lemma im_conj_mul (z w : ℂ) : (conj z * w).im = ⟪z * I, w⟫_ℝ := 
   simp only [Complex.inner, map_mul, Complex.conj_I, Complex.mul_re, Complex.mul_im,
     Complex.conj_re, Complex.conj_im, Complex.neg_re, Complex.neg_im, Complex.I_re, Complex.I_im]
   ring
-
-/-- Doubling the left argument of the real inner product doubles it. -/
-private lemma real_inner_two_mul_left (z w : ℂ) : ⟪(2 : ℂ) * z, w⟫_ℝ = 2 * ⟪z, w⟫_ℝ := by
-  have h : (2 : ℂ) * z = z + z := by ring
-  rw [h, inner_add_left]
-  ring
-
-/-- Doubling the right argument of the real inner product doubles it. -/
-private lemma real_inner_two_mul_right (z w : ℂ) : ⟪z, (2 : ℂ) * w⟫_ℝ = 2 * ⟪z, w⟫_ℝ := by
-  have h : (2 : ℂ) * w = w + w := by ring
-  rw [h, inner_add_right]
-  ring
-
-/-- A complex number of norm one times its conjugate is one. -/
-private lemma mul_conj_self_eq_one {u : ℂ} (hu : ‖u‖ = 1) : u * conj u = 1 := by
-  have h : Complex.normSq u = 1 := by rw [Complex.normSq_eq_norm_sq, hu]; norm_num
-  rw [Complex.mul_conj, h, Complex.ofReal_one]
 
 /-! ## Isometries of the Poincaré disc that fix the origin -/
 
@@ -189,7 +172,7 @@ end FixZero
 /-- Two unit complex numbers with vanishing real inner product differ by a quarter turn. -/
 private lemma eq_mul_I_or_eq_neg_mul_I {e₁ e₂ : ℂ} (h₁ : ‖e₁‖ = 1) (h₂ : ‖e₂‖ = 1)
     (h : ⟪e₁, e₂⟫_ℝ = 0) : e₂ = e₁ * I ∨ e₂ = e₁ * (-I) := by
-  have hmul : e₁ * conj e₁ = 1 := mul_conj_self_eq_one h₁
+  have hmul : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', h₁]; norm_num
   have hrecover : e₁ * (conj e₁ * e₂) = e₂ := by rw [← mul_assoc, hmul, one_mul]
   have hre : (conj e₁ * e₂).re = 0 := by rw [re_conj_mul, h]
   have hnorm : ‖conj e₁ * e₂‖ = 1 := by rw [norm_mul, Complex.norm_conj, h₁, h₂, one_mul]
@@ -229,20 +212,18 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
     norm_num
   have hp : p ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnp]; norm_num
   have hq : q ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnq]; norm_num
-  set e₁ : ℂ := 2 * g p with he₁_def
-  set e₂ : ℂ := 2 * g q with he₂_def
+  set e₁ : ℂ := (2 : ℝ) • g p with he₁_def
+  set e₂ : ℂ := (2 : ℝ) • g q with he₂_def
   have hn₁ : ‖e₁‖ = 1 := by
-    rw [he₁_def, norm_mul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp,
-      RCLike.norm_two]
+    rw [he₁_def, norm_smul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]
     norm_num
   have hn₂ : ‖e₂‖ = 1 := by
-    rw [he₂_def, norm_mul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq,
-      RCLike.norm_two]
+    rw [he₂_def, norm_smul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]
     norm_num
-  have hmul₁ : e₁ * conj e₁ = 1 := mul_conj_self_eq_one hn₁
+  have hmul₁ : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', hn₁]; norm_num
   -- The frame is orthonormal.
   have horth : ⟪e₁, e₂⟫_ℝ = 0 := by
-    rw [he₁_def, he₂_def, real_inner_two_mul_left, real_inner_two_mul_right,
+    rw [he₁_def, he₂_def, real_inner_smul_left, real_inner_smul_right,
       real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
     simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
@@ -250,13 +231,13 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   -- The frame reads off the coordinates of `g z`.
   have hcoord₁ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re := by
     intro z hz
-    rw [he₁_def, real_inner_two_mul_left,
+    rw [he₁_def, real_inner_smul_left,
       real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
     simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
     ring
   have hcoord₂ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im := by
     intro z hz
-    rw [he₂_def, real_inner_two_mul_left,
+    rw [he₂_def, real_inner_smul_left,
       real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
     simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
@@ -298,7 +279,7 @@ private lemma const_mul_add_div_eq_unitDiscStandardAutomorphismFormula {a u : �
     (w : ℂ) :
     (u * w + a) / (1 + conj a * (u * w))
       = u * ((w - -a * conj u) / (1 - conj (-a * conj u) * w)) := by
-  have hmul : u * conj u = 1 := mul_conj_self_eq_one hu
+  have hmul : u * conj u = 1 := by rw [Complex.mul_conj', hu]; norm_num
   have hden : (1 : ℂ) - conj (-a * conj u) * w = 1 + conj a * (u * w) := by
     rw [map_mul, map_neg, Complex.conj_conj]; ring
   have hnum : u * (w - -a * conj u) = u * w + a := by
@@ -329,7 +310,6 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHy
     exact hg z hz w hw
   obtain ⟨u, hu, hcase⟩ :=
     exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj hciso hczero
-  have hmul : u * conj u = 1 := mul_conj_self_eq_one hu
   refine ⟨u, -g 0 * conj u, hu, ?_, ?_⟩
   · rw [norm_mul, norm_neg, Complex.norm_conj, hu, mul_one]; exact ha
   · -- Undo the normalisation, using that the Moebius factor at `-g 0` inverts it.
