@@ -33,7 +33,7 @@ here, and the Cartan subalgebra has to be produced by hand.
   units, whence `TauCeti.finrank_diagonalCartan`.
 * `TauCeti.glWeightEquiv R n`: the linear equivalence between `n`-tuples and weights, sending
   `μ : n → R` to the functional `A ↦ ∑ i, μ i * A i i` on the diagonal Cartan.
-* `TauCeti.glRoot R n i j`: the weight `εᵢ - εⱼ`, the candidate roots of `gl n R`.
+* `TauCeti.glWeightSub R n i j`: the weight `εᵢ - εⱼ` of `gl n R`.
 
 ## Main results
 
@@ -252,25 +252,25 @@ theorem glWeightEquiv_symm_apply (f : Module.Dual R (diagonalCartan R n)) (i : n
 
 variable (R n)
 
-/-- The weight `εᵢ - εⱼ` of `gl n R`, as a functional on the diagonal Cartan subalgebra. For `i ≠ j`
-these are the candidate roots of `gl n R`; over a nontrivial ring they are genuine roots, since
-`TauCeti.single_mem_rootSpace` places the nonzero matrix unit `Eᵢⱼ` in the root space. For `i = j`
-the functional is zero. -/
-noncomputable def glRoot (i j : n) : Module.Dual R (diagonalCartan R n) :=
+/-- The weight `εᵢ - εⱼ` of `gl n R`, as a functional on the diagonal Cartan subalgebra. This is a
+weight, not a root: for `i = j` the functional is zero, and the zero weight is never a root. For
+`i ≠ j` over a nontrivial ring it is a root, since `TauCeti.single_mem_rootSpace` places the nonzero
+matrix unit `Eᵢⱼ` in the root space. -/
+noncomputable def glWeightSub (i j : n) : Module.Dual R (diagonalCartan R n) :=
   glWeightEquiv R n (Pi.single i 1 - Pi.single j 1)
 
 variable {R n}
 
 /-- The functional `εᵢ - εⱼ` reads off the difference of two diagonal entries. -/
 @[simp]
-theorem glRoot_apply (i j : n) (A : diagonalCartan R n) :
-    glRoot R n i j A = (A : Matrix n n R) i i - (A : Matrix n n R) j j := by
-  simp only [glRoot, glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul, one_mul,
-    zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+theorem glWeightSub_apply (i j : n) (A : diagonalCartan R n) :
+    glWeightSub R n i j A = (A : Matrix n n R) i i - (A : Matrix n n R) j j := by
+  simp only [glWeightSub, glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul,
+    one_mul, zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
 
 /-- The functionals `εᵢ - εᵢ` vanish. -/
 @[simp]
-theorem glRoot_self (i : n) : glRoot R n i i = 0 := by
+theorem glWeightSub_self (i : n) : glWeightSub R n i i = 0 := by
   ext A
   simp
 
@@ -278,11 +278,11 @@ theorem glRoot_self (i : n) : glRoot R n i i = 0 := by
 the weight `εᵢ - εⱼ`. For `i = j` this says that the diagonal Cartan lies in the zero root
 space. -/
 theorem single_mem_rootSpace (i j : n) (c : R) :
-    single i j c ∈ LieAlgebra.rootSpace (diagonalCartan R n) (glRoot R n i j) := by
+    single i j c ∈ LieAlgebra.rootSpace (diagonalCartan R n) (glWeightSub R n i j) := by
   rw [LieAlgebra.rootSpace, LieModule.mem_genWeightSpace]
   refine fun A => ⟨1, ?_⟩
   simp only [pow_one, LinearMap.sub_apply, LieModule.toEnd_apply_apply, LinearMap.smul_apply,
-    Module.End.one_apply, LieSubalgebra.coe_bracket_of_module, glRoot_apply,
+    Module.End.one_apply, LieSubalgebra.coe_bracket_of_module, glWeightSub_apply,
     lie_single_of_mem_diagonalCartan A.2 i j c, sub_self]
 
 end TauCeti
