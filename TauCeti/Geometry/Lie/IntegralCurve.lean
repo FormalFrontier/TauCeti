@@ -25,6 +25,8 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 * `mulInvariantIntegralCurve`: the resulting canonical global integral curve.
 * `mulInvariantIntegralCurve_eq_const_mul`: curves through arbitrary points are left translates of
   the curve through the identity.
+* `mulInvariantIntegralCurve_add`: the identity curve satisfies the one-parameter subgroup law.
+* `mulInvariantOneParameterSubgroup`: the identity curve bundled as a continuous homomorphism.
 
 ## References
 
@@ -178,3 +180,47 @@ theorem mulInvariantIntegralCurve_eq_const_mul [CompleteSpace E]
   apply eq_mulInvariantIntegralCurve v x
   · simp
   · exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).const_mul_mulInvariantVectorField x
+
+/-- The canonical invariant curve through the identity satisfies the one-parameter subgroup law. -/
+@[simp]
+theorem mulInvariantIntegralCurve_add [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (s t : ℝ) :
+    mulInvariantIntegralCurve v 1 (s + t) =
+      mulInvariantIntegralCurve v 1 s * mulInvariantIntegralCurve v 1 t := by
+  let γ := mulInvariantIntegralCurve v 1
+  have hshift : γ ∘ (· + s) = mulInvariantIntegralCurve v (γ s) := by
+    apply eq_mulInvariantIntegralCurve v (γ s)
+    · simp [γ]
+    · exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).comp_add s
+  calc
+    γ (s + t) = (γ ∘ (· + s)) t := by simp [add_comm]
+    _ = mulInvariantIntegralCurve v (γ s) t := congrFun hshift t
+    _ = γ s * γ t := congrFun (mulInvariantIntegralCurve_eq_const_mul v (γ s)) t
+
+/-- The canonical invariant curve through the identity, bundled as a continuous one-parameter
+subgroup.
+
+This definition is exposed so its exported evaluation theorem can unfold the bundled homomorphism
+under the module system. -/
+@[expose]
+noncomputable def mulInvariantOneParameterSubgroup [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) :
+    ContinuousMonoidHom (Multiplicative ℝ) G where
+  toFun t := mulInvariantIntegralCurve v 1 (Multiplicative.toAdd t)
+  map_one' := by simp
+  map_mul' s t := by
+    simp
+  continuous_toFun :=
+    (isMIntegralCurve_mulInvariantIntegralCurve v 1).continuous.comp continuous_toAdd
+
+/-- Evaluating the invariant one-parameter subgroup at time `t` recovers the canonical integral
+curve through the identity. -/
+@[simp]
+theorem mulInvariantOneParameterSubgroup_apply [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
+    mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd t) =
+      mulInvariantIntegralCurve v 1 t :=
+  rfl
