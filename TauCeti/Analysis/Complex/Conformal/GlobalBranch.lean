@@ -20,20 +20,14 @@ function on the whole domain**. Equivalently, on such a domain continuation crea
 branches, so "multi-valued analytic function" is a phenomenon of the topology of the domain and
 not of the germ.
 
-## Main definitions
-
-* `TauCeti.ContinuesAlong f₀ γ` — the germ of `f₀` at `γ 0` continues analytically along the path
-  `γ`: some `TauCeti.IsAnalyticContinuationAlong` family along `γ` starts from that germ. Only the
-  germ of `f₀` at `γ 0` is constrained, which is the right notion: continuation is a statement
-  about germs, and two functions with the same germ at `γ 0` continue along exactly the same
-  paths.
-* `TauCeti.ContinuesInside f₀ U z₀` — the germ of `f₀` at `z₀` continues along *every* path in `U`
-  issuing from `z₀`. This is the hypothesis of the monodromy theorem, and it is exactly what a
-  holomorphic function on `U` supplies (`TauCeti.ContinuesInside.of_differentiableOn`).
+The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation.lean`: the germ
+of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
+holomorphic function on `U` supplies (`TauCeti.ContinuesInside.of_differentiableOn`), and by the
+two-way form below it is supplied by nothing else once `U` is simply connected.
 
 ## Main results
 
-* `TauCeti.ContinuesInside.eventuallyEq_one` — **path independence**: on a simply connected `U`,
+* `TauCeti.ContinuesInside.eventuallyEq_at_one` — **path independence**: on a simply connected `U`,
   two continuations of one germ along two paths in `U` with the same endpoints end at the same
   germ.
 * `TauCeti.ContinuesInside.eventuallyEq_of_loop` — the loop form: continuing a germ around a loop
@@ -54,8 +48,8 @@ lift to paths in the subspace `↥U`, where `SimplyConnectedSpace.paths_homotopi
 homotopy rel endpoints; pushing that homotopy back down to `ℂ` keeps every intermediate path
 inside `U`, so the hypothesis supplies a continuation along each of them and
 `TauCeti.monodromy_theorem` applies. Uniqueness of continuation along a *fixed* path
-(`TauCeti.IsAnalyticContinuationAlong.eventuallyEq_one`) then matches the two given continuations
-with the two extreme members of that family.
+(`TauCeti.IsAnalyticContinuationAlong.eventuallyEq`, over the preconnected parameter interval)
+then matches the two given continuations with the two extreme members of that family.
 
 The global branch is `F w = (value at w of the terminal germ of a continuation to w)`, chosen once
 per point of `U` by path connectedness; path independence says the choice does not matter. The
@@ -104,69 +98,9 @@ open Filter Metric Set Topology unitInterval
 
 variable {U : Set ℂ} {z₀ : ℂ} {f₀ : ℂ → ℂ} {γ δ : I → ℂ} {f g : I → ℂ → ℂ}
 
-/-! ### Continuation along a path, as a property of the initial germ -/
-
-/-- The germ of `f₀` at `γ 0` **continues along the path `γ`**: there is an analytic continuation
-along `γ` whose germ at the initial time is that of `f₀`.
-
-Only the germ of `f₀` at `γ 0` enters, so this is a property of that germ rather than of `f₀`. -/
-def ContinuesAlong (f₀ : ℂ → ℂ) (γ : I → ℂ) : Prop :=
-  ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f γ univ ∧ f 0 =ᶠ[𝓝 (γ 0)] f₀
-
-namespace ContinuesAlong
-
-/-- A germ that continues along a path is a germ of an analytic function at the initial point. -/
-theorem analyticAt (h : ContinuesAlong f₀ γ) : AnalyticAt ℂ f₀ (γ 0) := by
-  obtain ⟨f, hf, h0⟩ := h
-  exact (hf.analyticAt 0 (mem_univ 0)).congr h0
-
-/-- A function analytic at every point of a path continues itself along it: the constant family is
-the continuation. -/
-theorem of_analyticAt (hγ : Continuous γ) (hf₀ : ∀ x, AnalyticAt ℂ f₀ (γ x)) :
-    ContinuesAlong f₀ γ :=
-  ⟨fun _ => f₀, .const hγ.continuousOn fun t _ => hf₀ t, .rfl⟩
-
-/-- A function holomorphic on an open set continues along every path that stays in that set. -/
-theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) (hγ : Continuous γ)
-    (hγU : ∀ x, γ x ∈ U) : ContinuesAlong f₀ γ :=
-  of_analyticAt hγ fun x => hf₀.analyticOnNhd hUo _ (hγU x)
-
-end ContinuesAlong
-
-namespace IsAnalyticContinuationAlong
-
-/-- **Uniqueness of the terminal germ.** Two continuations along one path that start from the same
-germ end at the same germ. This is `TauCeti.IsAnalyticContinuationAlong.eventuallyEq` for the
-parameter interval, whose preconnectedness discharges the hypothesis of the general statement. -/
-theorem eventuallyEq_one (hf : IsAnalyticContinuationAlong f γ univ)
-    (hg : IsAnalyticContinuationAlong g γ univ) (h0 : f 0 =ᶠ[𝓝 (γ 0)] g 0) :
-    f 1 =ᶠ[𝓝 (γ 1)] g 1 :=
-  hf.eventuallyEq hg isPreconnected_univ (mem_univ 0) (mem_univ 1) h0
-
-end IsAnalyticContinuationAlong
-
-/-! ### Continuation inside a domain -/
-
-/-- The germ of `f₀` at `z₀` **continues inside `U`**: it continues along every path that starts
-at `z₀` and stays in `U`.
-
-This is the hypothesis of the monodromy theorem. It is a condition on the germ and on the domain
-jointly: the germ of `Complex.log` at `1` continues inside `ℂ \ {0}`, and continues inside the
-slit plane, but is single-valued only on the latter. -/
-def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
-  ∀ γ : I → ℂ, Continuous γ → (∀ x, γ x ∈ U) → γ 0 = z₀ → ContinuesAlong f₀ γ
+/-! ### Path independence and the global branch -/
 
 namespace ContinuesInside
-
-/-- A germ that continues inside `U` is analytic at the base point, as witnessed by the constant
-path. -/
-theorem analyticAt (H : ContinuesInside f₀ U z₀) (hz₀ : z₀ ∈ U) : AnalyticAt ℂ f₀ z₀ :=
-  (H (fun _ => z₀) continuous_const (fun _ => hz₀) rfl).analyticAt
-
-/-- A function holomorphic on an open set continues inside that set from each of its points. -/
-theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
-    ContinuesInside f₀ U z₀ :=
-  fun _ hγ hγU _ => .of_differentiableOn hUo hf₀ hγ hγU
 
 /-- **Path independence of continuation on a simply connected domain.** Two continuations of one
 germ, along two paths in `U` that start at `z₀` and share their endpoint, carry the same germ at
@@ -177,7 +111,7 @@ rel endpoints, pushes the homotopy back to `ℂ` — every intermediate path sti
 hypothesis continues the germ along it — and applies `TauCeti.monodromy_theorem` to the resulting
 family. The two given continuations are then matched with the extreme members of that family by
 uniqueness along a fixed path. -/
-theorem eventuallyEq_one (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U z₀)
+theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U z₀)
     (hγ : Continuous γ) (hγU : ∀ x, γ x ∈ U) (hγ0 : γ 0 = z₀)
     (hδ : Continuous δ) (hδU : ∀ x, δ x ∈ U) (hδ0 : δ 0 = z₀) (hend : δ 1 = γ 1)
     (hf : IsAnalyticContinuationAlong f γ univ) (hf0 : f 0 =ᶠ[𝓝 z₀] f₀)
@@ -212,9 +146,11 @@ theorem eventuallyEq_one (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U
   have hmono := monodromy_theorem K hF (fun t => (hF₀' t).trans (hF₀' 0).symm) 1
   -- Match the two given continuations with the extremes of the family.
   have e₀ : f 1 =ᶠ[𝓝 (γ 1)] F 0 1 :=
-    hf.eventuallyEq_one (hKp ▸ hF 0) (by rw [hγ0]; exact hf0.trans (hF₀' 0).symm)
+    hf.eventuallyEq (hKp ▸ hF 0) isPreconnected_univ (mem_univ 0) (mem_univ 1)
+      (by rw [hγ0]; exact hf0.trans (hF₀' 0).symm)
   have e₁ : g 1 =ᶠ[𝓝 (δ 1)] F 1 1 :=
-    hg.eventuallyEq_one (hKq ▸ hF 1) (by rw [hδ0]; exact hg0.trans (hF₀' 1).symm)
+    hg.eventuallyEq (hKq ▸ hF 1) isPreconnected_univ (mem_univ 0) (mem_univ 1)
+      (by rw [hδ0]; exact hg0.trans (hF₀' 1).symm)
   rw [hend] at e₁
   exact (e₀.trans hmono.symm).trans e₁.symm
 
@@ -226,7 +162,7 @@ theorem eventuallyEq_of_loop (hUc : IsSimplyConnected U) (H : ContinuesInside f�
     f 1 =ᶠ[𝓝 z₀] f₀ := by
   have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
   have han : AnalyticAt ℂ f₀ z₀ := H.analyticAt hz₀U
-  have := H.eventuallyEq_one hUc hγ hγU hγ0 continuous_const (fun _ => hz₀U) rfl (by rw [hγ1]) hf
+  have := H.eventuallyEq_at_one hUc hγ hγU hγ0 continuous_const (fun _ => hz₀U) rfl (by rw [hγ1]) hf
     hf0 (.const continuousOn_const fun _ _ => han) .rfl
   rwa [hγ1] at this
 
@@ -288,7 +224,7 @@ theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀
     have hG0 : G 0 =ᶠ[𝓝 z₀] f₀ := by
       have := hGg 0 (mem_univ 0); rw [hδ0] at this; exact this.trans hg0
     -- Path independence: the chosen continuation to `w` and `G` end at the same germ.
-    have hterm := H.eventuallyEq_one hUc (hγc w hwU) (hγU w hwU) (hγ0 w hwU) hδ'c hδ'U hδ'0
+    have hterm := H.eventuallyEq_at_one hUc (hγc w hwU) (hγU w hwU) (hγ0 w hwU) hδ'c hδ'U hδ'0
       (by rw [hδ'1, hγ1 w hwU]) (hf w hwU) (hf₀' w hwU) hGδ' hG0
     have hval := hterm.eq_of_nhds
     rw [hγ1 w hwU] at hval
