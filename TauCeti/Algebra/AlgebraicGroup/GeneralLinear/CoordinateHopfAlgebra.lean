@@ -73,6 +73,7 @@ noncomputable def coordinateRingMap :
   IsScalarTower.toAlgHom R (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n)
 
 /-- The canonical map into the determinant localization agrees with its algebra map. -/
+@[simp← ]
 theorem coordinateRingMap_apply (x : MatrixMonoid.CoordinateRing R n) :
     coordinateRingMap R n x =
       algebraMap (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n) x :=
@@ -162,13 +163,13 @@ theorem comul_coordinateRingMap (x : MatrixMonoid.CoordinateRing R n) :
     comul R n (coordinateRingMap R n x) =
       Algebra.TensorProduct.map (coordinateRingMap R n) (coordinateRingMap R n)
         (MatrixMonoid.comul R n x) := by
-  simp [comul, coordinateRingMap, comulBase]
+  simp [-coordinateRingMap_apply, comul, coordinateRingMap, comulBase]
 
 /-- The localized counit restricts to the matrix-monoid counit. -/
 @[simp low]
 theorem counit_coordinateRingMap (x : MatrixMonoid.CoordinateRing R n) :
     counit R n (coordinateRingMap R n x) = MatrixMonoid.counit R n x := by
-  simp [counit, coordinateRingMap]
+  simp [-coordinateRingMap_apply, counit, coordinateRingMap]
 
 private noncomputable def antipodeBase :
     MatrixMonoid.CoordinateRing R n →ₐ[R] CoordinateRing R n :=
@@ -195,7 +196,7 @@ theorem antipode_coordinateRingMap (x : MatrixMonoid.CoordinateRing R n) :
     antipode R n (coordinateRingMap R n x) =
       MvPolynomial.aeval
         (fun ij : Fin n × Fin n => ((localizedGenericMatrix R n)⁻¹) ij.1 ij.2) x := by
-  simp [antipode, coordinateRingMap, antipodeBase]
+  simp [-coordinateRingMap_apply, antipode, coordinateRingMap, antipodeBase]
 
 /-- Two algebra homomorphisms out of the determinant localization are equal if they agree on the
 matrix-monoid coordinate ring. -/

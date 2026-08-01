@@ -124,7 +124,7 @@ private theorem localizedEvaluationOfGeneralLinear_coordinateRingMap
     localizedEvaluationOfGeneralLinear (R := R) n g (coordinateRingMap R n x) =
       evaluationOfGeneralLinear (R := R) n g x := by
   rw [coordinateRingMap_apply]
-  simp [localizedEvaluationOfGeneralLinear]
+  simp [-coordinateRingMap_apply, localizedEvaluationOfGeneralLinear]
 
 /-- The point of the bundled general linear coordinate Hopf algebra obtained by evaluating the
 generic matrix at an invertible matrix. -/
