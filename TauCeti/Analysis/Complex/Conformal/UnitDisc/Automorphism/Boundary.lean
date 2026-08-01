@@ -350,19 +350,28 @@ theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_
   simpa only [Function.comp_def] using
     hrot.comp (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha)
 
-/-- **A standard disc automorphism, as a homeomorphism of the closed disc.** The definition is not
-exposed; `TauCeti.coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply` characterizes it. -/
+/-- A point of `Circle` as a point of the unit sphere of `ℂ`, which is the index type of Mathlib's
+actions `Metric.mulActionSphereClosedBall` and `Metric.mulActionSphereSphere`.  Those actions are
+what rotates the closed disc and the circle below. -/
+private def circleToUnitSphere (u : Circle) : sphere (0 : ℂ) 1 :=
+  ⟨(u : ℂ), mem_sphere_zero_iff_norm.mpr u.norm_coe⟩
+
+/-- Mathlib's action of the unit sphere of `ℂ` on `closedBall (0 : ℂ) 1` is multiplication in `ℂ`:
+`Metric.mulActionSphereClosedBall` is defined by `c • x = ⟨(c : ℂ) * (x : ℂ), _⟩`, so this unfolds
+the instance.  The corresponding statement for the action on `sphere (0 : ℂ) 1` is already available
+upstream, as `Metric.unitSphere.coe_mul`. -/
+private lemma coe_sphere_smul_closedBall (c : sphere (0 : ℂ) 1) (x : closedBall (0 : ℂ) 1) :
+    ((c • x : closedBall (0 : ℂ) 1) : ℂ) = (c : ℂ) * (x : ℂ) :=
+  rfl
+
+/-- **A standard disc automorphism, as a homeomorphism of the closed disc.** It is the Moebius
+factor `TauCeti.unitDiscMoebiusClosedBallHomeomorph` followed by the rotation by `u`, the latter
+being Mathlib's continuous action of the unit sphere of `ℂ` on `closedBall (0 : ℂ) 1`
+(`Metric.mulActionSphereClosedBall`) bundled by `Homeomorph.smul`.  The definition is not exposed;
+`TauCeti.coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply` characterizes it. -/
 noncomputable def unitDiscStandardAutomorphismClosedBallHomeomorph (u : Circle)
     (a : Complex.UnitDisc) : closedBall (0 : ℂ) 1 ≃ₜ closedBall (0 : ℂ) 1 :=
-  haveI : CompactSpace (closedBall (0 : ℂ) 1) :=
-    isCompact_iff_compactSpace.mp (isCompact_closedBall _ _)
-  Continuous.homeoOfEquivCompactToT2
-    (f := (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-      u.norm_coe a.norm_lt_one).equiv _)
-    ((continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_one (u : ℂ)
-      a.norm_lt_one).mapsToRestrict
-        (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-          u.norm_coe a.norm_lt_one).mapsTo)
+  (unitDiscMoebiusClosedBallHomeomorph a).trans (Homeomorph.smul (circleToUnitSphere u))
 
 /-- The closed-disc automorphism homeomorphism is given by the standard automorphism formula. -/
 @[simp, norm_cast]
@@ -370,9 +379,9 @@ lemma coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply (u : Circle)
     (a : Complex.UnitDisc) (z : closedBall (0 : ℂ) 1) :
     (unitDiscStandardAutomorphismClosedBallHomeomorph u a z : ℂ) =
       (u : ℂ) * (((z : ℂ) - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * (z : ℂ))) := by
-  simp only [unitDiscStandardAutomorphismClosedBallHomeomorph, ← Homeomorph.coe_toEquiv,
-    Continuous.toEquiv_homeoOfEquivCompactToT2, BijOn.equiv, Equiv.coe_ofBijective,
-    MapsTo.val_restrict_apply]
+  rw [unitDiscStandardAutomorphismClosedBallHomeomorph, Homeomorph.trans_apply,
+    Homeomorph.smul_apply, coe_sphere_smul_closedBall,
+    coe_unitDiscMoebiusClosedBallHomeomorph_apply, circleToUnitSphere]
 
 /-- With trivial rotation factor the standard automorphism of the closed disc is the Moebius
 factor. -/
@@ -409,20 +418,14 @@ lemma coe_unitDiscStandardAutomorphismClosedBallHomeomorph_symm_apply (u : Circl
 
 /-- **A standard disc automorphism, as a homeomorphism of the unit circle.** The boundary
 restriction of `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph`, and the boundary action
-of `Aut(𝔻)` on the circle.  The definition is not exposed;
+of `Aut(𝔻)` on the circle.  Again the Moebius factor followed by the rotation by `u`, now through
+Mathlib's action of the unit sphere of `ℂ` on `sphere (0 : ℂ) 1` (`Metric.mulActionSphereSphere`).
+The definition is not exposed;
 `TauCeti.coe_unitDiscStandardAutomorphismSphereHomeomorph_apply` and
 `TauCeti.coe_unitDiscStandardAutomorphismSphereHomeomorph_symm_apply` characterize it. -/
 noncomputable def unitDiscStandardAutomorphismSphereHomeomorph (u : Circle)
     (a : Complex.UnitDisc) : sphere (0 : ℂ) 1 ≃ₜ sphere (0 : ℂ) 1 :=
-  haveI : CompactSpace (sphere (0 : ℂ) 1) :=
-    isCompact_iff_compactSpace.mp (isCompact_sphere _ _)
-  Continuous.homeoOfEquivCompactToT2
-    (f := (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-      u.norm_coe a.norm_lt_one).equiv _)
-    (((continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_one (u : ℂ)
-      a.norm_lt_one).mono sphere_subset_closedBall).mapsToRestrict
-        (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
-          u.norm_coe a.norm_lt_one).mapsTo)
+  (unitDiscMoebiusSphereHomeomorph a).trans (Homeomorph.smul (circleToUnitSphere u))
 
 /-- The circle automorphism homeomorphism is given by the standard automorphism formula. -/
 @[simp, norm_cast]
@@ -430,9 +433,9 @@ lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_apply (u : Circle) (a : C
     (z : sphere (0 : ℂ) 1) :
     (unitDiscStandardAutomorphismSphereHomeomorph u a z : ℂ) =
       (u : ℂ) * (((z : ℂ) - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * (z : ℂ))) := by
-  simp only [unitDiscStandardAutomorphismSphereHomeomorph, ← Homeomorph.coe_toEquiv,
-    Continuous.toEquiv_homeoOfEquivCompactToT2, BijOn.equiv, Equiv.coe_ofBijective,
-    MapsTo.val_restrict_apply]
+  rw [unitDiscStandardAutomorphismSphereHomeomorph, Homeomorph.trans_apply,
+    Homeomorph.smul_apply, smul_eq_mul, unitSphere.coe_mul,
+    coe_unitDiscMoebiusSphereHomeomorph_apply, circleToUnitSphere]
 
 /-- With trivial rotation factor the standard automorphism of the circle is the Moebius factor. -/
 @[simp]
