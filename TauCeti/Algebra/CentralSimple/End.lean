@@ -10,11 +10,13 @@ module
 -- why neither is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
 public import Mathlib.Algebra.Module.LinearMap.End
--- Non-public: the matrix presentation `algEquivMatrix (Module.finBasis K V)` and the two matrix
--- facts it transports, `Algebra.IsCentral.matrix` and `IsSimpleRing.matrix`, are used only inside
--- proofs, as is the transport `IsSimpleRing.of_ringEquiv` itself and the dimension count
--- `Module.finrank_linearMap`.
-import Mathlib.Algebra.Central.Matrix
+-- Public: Mathlib's `Algebra.IsCentral` instance for the endomorphisms of a free module is the
+-- centrality half of "central simple", so it has to reach everywhere `Module.End K V` is asked for
+-- as a central simple algebra.
+public import Mathlib.Algebra.Central.End
+-- Non-public: the matrix presentation `algEquivMatrix (Module.finBasis K V)` and the matrix fact it
+-- transports, `IsSimpleRing.matrix`, are used only inside a proof, as is the transport
+-- `IsSimpleRing.of_ringEquiv` itself and the dimension count `Module.finrank_linearMap`.
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.RingTheory.SimpleRing.Congr
@@ -25,28 +27,26 @@ import Mathlib.RingTheory.SimpleRing.Matrix
 
 For a nonzero finite-dimensional vector space `V` over a field `K`, the algebra `Module.End K V` is
 central simple over `K`: it is the untwisted, "split" central simple algebra of degree
-`Module.finrank K V`. This file records that as the two instances typeclass inference needs, so
-that `Module.End K V` is available wherever a central simple algebra is asked for, and computes its
-degree.
+`Module.finrank K V`. Centrality is already Mathlib's: its `Algebra.IsCentral` instance in
+`Mathlib.Algebra.Central.End` covers the endomorphisms of any free module. This file supplies the
+missing half, simplicity, as the instance typeclass inference needs, so that `Module.End K V` is
+available wherever a central simple algebra is asked for, and computes the degree.
 
-Nothing here is a new theorem. A choice of basis turns `Module.End K V` into the matrix algebra
+Simplicity is not a new theorem. A choice of basis turns `Module.End K V` into the matrix algebra
 `Matrix (Fin n) (Fin n) K` with `n = Module.finrank K V` (Mathlib's `algEquivMatrix`), and Mathlib
-already knows that a matrix algebra over a central algebra is central (`Algebra.IsCentral.matrix`)
-and that a matrix algebra over a simple ring is simple (`IsSimpleRing.matrix`); both facts are
-transported back along that isomorphism. The content is that the transport is available to instance
-search, which it is not while the isomorphism has to be produced by hand from a basis.
+already knows that a matrix algebra over a simple ring is simple (`IsSimpleRing.matrix`); that fact
+is transported back along the isomorphism. The content is that the transport is available to
+instance search, which it is not while the isomorphism has to be produced by hand from a basis.
 
-Finite-dimensionality is essential for simplicity, and only for simplicity: on an
-infinite-dimensional `V` the endomorphisms of finite rank form a proper nonzero two-sided ideal of
-`Module.End K V`, whereas the centre is the scalars in any dimension. The centrality instance below
-nonetheless carries the same hypotheses as the simplicity one, since it is proved by the same
-transport along a finite basis; the infinite-dimensional statement would need a different argument,
-along the lines of Mathlib's `LinearMap.commute_transvections_iff_of_basis`, and is not needed here.
+Finite-dimensionality is essential for simplicity: on an infinite-dimensional `V` the endomorphisms
+of finite rank form a proper nonzero two-sided ideal of `Module.End K V`. The centre, by contrast,
+is the scalars in any dimension, which is why Mathlib's centrality instance carries no finiteness
+hypothesis.
 
 ## Main results
 
-* `TauCeti.IsSimpleRing.moduleEnd` and `TauCeti.Algebra.IsCentral.moduleEnd`: `Module.End K V` is a
-  simple ring and a central `K`-algebra, for `V` a nonzero finite-dimensional `K`-vector space.
+* `TauCeti.IsSimpleRing.moduleEnd`: `Module.End K V` is a simple ring, for `V` a nonzero
+  finite-dimensional `K`-vector space.
 * `TauCeti.Algebra.deg_moduleEnd`: its degree is `Module.finrank K V`. Equivalently
   `Module.finrank K (Module.End K V) = (Module.finrank K V) ^ 2`, which is Mathlib's
   `Module.finrank_linearMap`; the point of stating it degree-side is that
@@ -73,35 +73,16 @@ section Nontrivial
 
 variable [Nontrivial V]
 
-/-- The chosen matrix presentation of `Module.End K V`, in the basis `Module.finBasis K V`. Both
-instances below are transported along it; nothing downstream depends on the choice. -/
-private noncomputable def endAlgEquivFinBasis :
-    Module.End K V ≃ₐ[K] Matrix (Fin (Module.finrank K V)) (Fin (Module.finrank K V)) K :=
-  algEquivMatrix (Module.finBasis K V)
-
-private theorem nonempty_fin_finrank : Nonempty (Fin (Module.finrank K V)) :=
-  ⟨⟨0, Module.finrank_pos⟩⟩
-
 /-- **The endomorphism algebra of a nonzero finite-dimensional vector space is a simple ring.**
+
+The proof is the transport of `IsSimpleRing.matrix` along the matrix presentation
+`algEquivMatrix (Module.finBasis K V)`; nothing downstream depends on that choice of basis.
 
 Finite-dimensionality cannot be dropped: on an infinite-dimensional `V` the finite-rank
 endomorphisms are a proper nonzero two-sided ideal. -/
 instance IsSimpleRing.moduleEnd : IsSimpleRing (Module.End K V) :=
-  have := nonempty_fin_finrank K V
-  .of_ringEquiv (endAlgEquivFinBasis K V).symm.toRingEquiv inferInstance
-
-/-- **The endomorphism algebra of a nonzero finite-dimensional vector space is central.**
-
-Mathlib's `Algebra.IsCentral.of_algEquiv` is not usable here: it places the two algebras in a
-single universe, while `Module.End K V` lives in the universe of `V` and its matrix presentation
-in the universe of `K`. The proof is the same transport, run by hand. -/
-instance Algebra.IsCentral.moduleEnd : Algebra.IsCentral K (Module.End K V) where
-  out f hf := by
-    obtain ⟨c, hc⟩ := (_root_.Algebra.IsCentral.mem_center_iff (D := Matrix
-      (Fin (Module.finrank K V)) (Fin (Module.finrank K V)) K) K).mp
-      ((MulEquivClass.apply_mem_center_iff (endAlgEquivFinBasis K V)).mpr hf)
-    exact _root_.Algebra.mem_bot.mpr
-      ⟨c, by simpa using congrArg (endAlgEquivFinBasis K V).symm hc.symm⟩
+  have : Nonempty (Fin (Module.finrank K V)) := ⟨⟨0, Module.finrank_pos⟩⟩
+  .of_ringEquiv (algEquivMatrix (Module.finBasis K V)).symm.toRingEquiv inferInstance
 
 end Nontrivial
 

@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `TauCeti.Algebra.CentralSimple.End` is imported publicly: its two instances are what let
+-- `TauCeti.Algebra.CentralSimple.End` is imported publicly: its simplicity instance, together with
+-- the centrality instance it re-exports from `Mathlib.Algebra.Central.End`, is what lets
 -- `CSA.of K (Module.End K V)` elaborate in the statement of
 -- `TauCeti.isBrauerEquivalent_moduleEnd_base`. It re-exports `TauCeti.Algebra.CentralSimple.Degree`
 -- and hence `TauCeti.Algebra.CentralSimple.TensorProduct`, whose instances
