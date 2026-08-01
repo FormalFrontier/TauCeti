@@ -7,7 +7,6 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RelativeDegree
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Relative
-import Mathlib.Algebra.Module.ZMod
 
 /-!
 # The relative Galois group of the candidate genus field
