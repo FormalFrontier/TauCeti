@@ -132,6 +132,7 @@ theorem coordinateMapPreimage_apply_eq_iff [ConnectedSpace (PrimeSpectrum R)]
 
 /-- The recovered character-group homomorphism is characterized by the image of each
 standard basis element under the coordinate Hopf-algebra morphism. -/
+@[simp↓]
 theorem coordinateMapPreimage_single [ConnectedSpace (PrimeSpectrum R)]
     {G H : FGCommGrpCat.{v}}
     (F : coordinateRing R G ⟶ coordinateRing R H) (g : G) :
