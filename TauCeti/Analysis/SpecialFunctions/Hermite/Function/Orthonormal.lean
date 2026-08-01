@@ -32,9 +32,10 @@ This file proves that the Hermite functions
   inner-product formula via `orthonormal_iff_ite`.
 * `TauCeti.norm_hermiteFunctionLp`: every Hermite mode has `L²` norm one.
 
-The zeroth-mode normalization `TauCeti.integral_hermiteFunction_zero_mul_self` is the `n = 0`
-special case of the pointwise result here; the `Lp` counterpart is
-`TauCeti.norm_hermiteFunctionLp 0`.
+The lower-level zeroth-mode normalizations `TauCeti.integral_hermiteFunction_zero_mul_self` and
+`TauCeti.norm_hermiteFunctionLp_zero` remain available to importers that do not need the full
+orthonormality development; `TauCeti.norm_hermiteFunctionLp 0` is the general theorem specialized
+to that mode.
 -/
 
 public section

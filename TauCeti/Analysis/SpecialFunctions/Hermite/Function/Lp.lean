@@ -64,4 +64,34 @@ lemma coeFn_hermiteFunctionLp_real (n : ℕ) :
   filter_upwards [coeFn_hermiteFunctionLp (𝕜 := ℝ) n] with x hx
   simpa using hx
 
+/-! ## Zeroth-mode normalization -/
+
+/-- The zeroth `Lp` Hermite function has inner product one with itself, over any `RCLike`
+scalar field. This lower-level result is available without importing the full orthonormality
+development. -/
+lemma inner_hermiteFunctionLp_zero_zero :
+    inner 𝕜 (hermiteFunctionLp 𝕜 0) (hermiteFunctionLp 𝕜 0) = 1 := by
+  calc
+    inner 𝕜 (hermiteFunctionLp 𝕜 0) (hermiteFunctionLp 𝕜 0)
+      = ∫ x : ℝ, (algebraMap ℝ 𝕜) (hermiteFunction 0 x * hermiteFunction 0 x) := by
+        rw [MeasureTheory.L2.inner_def]
+        refine integral_congr_ae ?_
+        filter_upwards [coeFn_hermiteFunctionLp (𝕜 := 𝕜) 0] with x hx
+        rw [hx]
+        exact inner_algebraMap_algebraMap (𝕜 := 𝕜)
+          (hermiteFunction 0 x) (hermiteFunction 0 x)
+    _ = 1 := by
+        rw [integral_ofReal, integral_hermiteFunction_zero_mul_self, RCLike.ofReal_one]
+
+/-- The zeroth `Lp` Hermite function is a unit vector, over any `RCLike` scalar field. This
+lower-level result is available without importing the full orthonormality development. It has
+high simp priority so it remains the preferred zeroth-mode rule when the general theorem is also
+imported. -/
+@[simp high]
+lemma norm_hermiteFunctionLp_zero : ‖hermiteFunctionLp 𝕜 0‖ = 1 := by
+  have h := inner_hermiteFunctionLp_zero_zero (𝕜 := 𝕜)
+  rw [inner_self_eq_norm_sq_to_K, ← RCLike.ofReal_pow] at h
+  have h2 : ‖hermiteFunctionLp 𝕜 0‖ ^ 2 = 1 := by exact_mod_cast h
+  rw [← Real.sqrt_one, ← h2, Real.sqrt_sq (norm_nonneg _)]
+
 end TauCeti
