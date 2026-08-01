@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Compact.Intertwiner
+public import TauCeti.RepresentationTheory.Continuous.Schur
 public import Mathlib.Analysis.InnerProductSpace.Trace
-public import Mathlib.RepresentationTheory.Irreducible
 
 /-!
 # Schur orthogonality for one irreducible compact-group representation
@@ -22,11 +22,8 @@ the inner product is conjugate-linear in its first argument.
 
 ## Main statements
 
-* `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible`: every continuous
-  self-intertwiner of an irreducible finite-dimensional representation over an algebraically closed
-  normed field is scalar.
-* `TauCeti.ContRepresentation.averageOperator_eq_finrank_inv_smul`: the average of a self-map is
-  its normalized trace times the identity.
+* `TauCeti.ContRepresentation.averageOperator_eq_finrank_inv_mul_trace_smul_id`: the average of a
+  self-map is its normalized trace times the identity.
 * `TauCeti.ContRepresentation.schur_orthogonality_self`: the coordinate-free first Schur
   orthogonality relation.
 * `TauCeti.ContRepresentation.schur_orthogonality_basis`: the corresponding Kronecker-delta
@@ -46,37 +43,6 @@ open scoped MonoidAlgebra
 namespace TauCeti
 
 namespace ContRepresentation
-
-/-! ### Schur's lemma for continuous self-intertwiners -/
-
-section Schur
-
-variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [IsAlgClosed 𝕜] [Group G]
-  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
-
-variable (π : ContRepresentation 𝕜 G V)
-
-/-- Every continuous self-intertwiner of an irreducible finite-dimensional representation over an
-algebraically closed normed field is a scalar multiple of the identity.
-
-This is Mathlib's algebraic Schur lemma
-`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`, applied after
-forgetting the continuity of the intertwiner. -/
-theorem exists_eq_smul_one_of_irreducible
-    (hirr : Representation.IsIrreducible π.toRepresentation)
-    (f : ContIntertwiningMap π π) :
-    ∃ c : 𝕜, f = c • 1 := by
-  letI : Representation.IsIrreducible π.toRepresentation := hirr
-  obtain ⟨c, hc⟩ :=
-    (Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed
-      (ρ := π.toRepresentation)).2 f.toIntertwiningMap
-  refine ⟨c, ?_⟩
-  apply ContIntertwiningMap.ext
-  ext v
-  simpa using (congrArg
-    (fun T : Representation.IntertwiningMap π.toRepresentation π.toRepresentation ↦ T v) hc).symm
-
-end Schur
 
 section CompactGroup
 
@@ -98,7 +64,7 @@ normalized trace times the identity.
 Schur's lemma first gives an unspecified scalar. Since averaging preserves the trace, that scalar
 times `finrank 𝕜 V` equals the trace of the original map; irreducibility ensures that the dimension
 is nonzero. -/
-theorem averageOperator_eq_finrank_inv_smul
+theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     (hirr : Representation.IsIrreducible π.toRepresentation) (T : V →L[𝕜] V) :
     averageOperator π hπ π hπ T =
       ((Module.finrank 𝕜 V : 𝕜)⁻¹ * LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) •
@@ -137,7 +103,7 @@ theorem schur_orthogonality_self (hunitary : IsUnitary π)
       (Module.finrank 𝕜 V : 𝕜)⁻¹ *
         ((starRingEnd 𝕜) ⟪v₁, v₂⟫_𝕜 * ⟪w₁, w₂⟫_𝕜) := by
   rw [inner_matrixCoeffLp_eq_inner_averageOperator π hπ π hπ hunitary,
-    averageOperator_eq_finrank_inv_smul π hπ hirr,
+    averageOperator_eq_finrank_inv_mul_trace_smul_id π hπ hirr,
     smul_apply, ContinuousLinearMap.id_apply, InnerProductSpace.trace_rankOne, inner_smul_right]
   rw [← inner_conj_symm v₂ v₁]
   ring
