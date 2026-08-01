@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+public import TauCeti.Probability.Exchangeability.Cylinder
 
 /-!
 # The conditional rectangle common ending for de Finetti
@@ -97,6 +98,47 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
   haveI : IsFiniteMeasure (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
+
+/-- **Set-integral common de Finetti ending.** The form each proof route actually reaches: if for
+every injective block the mass of a directing-measure event met with a block cylinder is the
+set-integral of the product of the witness's evaluations, then the witness directs the process.
+
+This is the neutral seam between the routes. A route has to supply only its own factorization
+identity — the martingale route from tail conditional laws, the Koopman route from invariant ones —
+and nothing here mentions how `ν` was built. In particular there is **no** standard-Borel or
+non-empty hypothesis on either space: those are needed to *construct* a directing measure, not to
+recognise one. -/
+theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_lintegral {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
+      ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
+        ∀ B : Fin r → Set α, (∀ i, MeasurableSet (B i)) →
+          μ ((ν ⁻¹' S) ∩ blockCylinder X k B)
+            = ∫⁻ ω in ν ⁻¹' S, ∏ i, (ν ω : Measure α) (B i) ∂μ) :
+    ConditionallyIIDWith μ X ν := by
+  classical
+  refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
+  have hjoint : Measurable fun ω => (ν ω, fun i : Fin r => X (k i) ω) :=
+    hν.prodMk (measurable_pi_lambda _ fun i => hX_meas _)
+  have hker : Measurable fun ω =>
+      (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν
+  have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) := hS.prod (MeasurableSet.univ_pi hB)
+  have hpre : (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) ⁻¹' (S ×ˢ Set.univ.pi B)
+      = (ν ⁻¹' S) ∩ blockCylinder X k B := by
+    ext ω
+    simp [Set.mem_prod, mem_blockCylinder, Set.mem_pi]
+  rw [Measure.map_apply hjoint hrect, hpre, hcore r k hk S hS B hB,
+    Measure.bind_apply hrect hker.aemeasurable, ← lintegral_indicator (hν hS)]
+  refine lintegral_congr fun ω => ?_
+  have hprod : (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure (Set.univ.pi B)
+      = ∏ i, (ν ω : Measure α) (B i) := by
+    rw [ProbabilityMeasure.toMeasure_pi, Measure.pi_pi]
+  rw [Measure.prod_prod, Measure.dirac_apply' _ hS, hprod]
+  by_cases hω : ν ω ∈ S
+  · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
+  · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
 
 /-- A `ConditionallyIIDWith` witness gives the joint disintegration on a product of an arbitrary
 set in the directing-measure coordinate and an arbitrary finite block rectangle. -/
