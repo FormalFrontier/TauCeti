@@ -123,7 +123,8 @@ theorem injOn_of_clusterSetOn_leftInvOn_subsingleton_of_continuousOn_extension
     (hsub : ∀ y ∈ B, (clusterSetOn g V y).Subsingleton) :
     InjOn F A :=
   injOn_of_clusterSetOn_leftInvOn_subsingleton
-    (fun x hx ↦ mem_clusterSetOn_of_continuousWithinAt_extension (hA hx) (hFc x (hA hx)) hFf)
+    (fun x hx ↦ mem_clusterSetOn_of_continuousWithinAt_extension (hA hx)
+      ((hFc x (hA hx)).mono subset_closure) hFf)
     hFB hgf hf hsub
 
 section InvFunOn
