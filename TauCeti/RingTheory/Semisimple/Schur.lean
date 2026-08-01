@@ -17,10 +17,11 @@ two modules are not linearly equivalent. When an equivalence does exist, Mathlib
 `LinearEquiv.arrowCongrAddEquiv` identifies the hom group with either endomorphism ring by
 composition; no separate construction is needed here.
 
-Over an algebraically closed field, an integral domain algebra is the base field. The proof uses
-Mathlib's theorem that the algebra map from an algebraically closed field into an integral domain
-algebra is bijective; a finite-dimensional division algebra is the special case that the roadmap
-names. The same collapse for the endomorphism ring of a finite-dimensional simple module is
+Over an algebraically closed field `k`, a domain algebra that is integral over `k` is `k` itself.
+The proof uses Mathlib's theorem that the algebra map from an algebraically closed field into such
+an algebra is bijective; a finite-dimensional division algebra is the special case that the roadmap
+names, integrality there coming from finite dimensionality. The same collapse for the endomorphism
+ring of a finite-dimensional simple module is
 Mathlib's `IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed`, packaged here as an algebra
 equivalence.
 
@@ -32,12 +33,11 @@ equivalence.
   the whole hom group.
 * `TauCeti.nontrivial_linearMap_iff_nonempty_linearEquiv`: two simple modules are equivalent exactly
   when their hom group is nontrivial.
-* `TauCeti.nonempty_algEquiv_self_of_isIntegral`: an integral domain algebra over an algebraically
-  closed field is isomorphic to that field as an algebra, with
+* `TauCeti.nonempty_algEquiv_self_of_isIntegral`: a domain algebra over an algebraically closed
+  field that is integral over that field is isomorphic to it as an algebra, with
   `TauCeti.nonempty_algEquiv_self_of_finiteDimensional_divisionRing` the finite-dimensional
-  division algebra special case (the roadmap pins this last result as
-  `algEquiv_self_of_finiteDimensional_divisionRing`; it carries the `nonempty_` prefix here
-  because its conclusion is a `Nonempty`, matching its two neighbours).
+  division algebra special case, also available under the name the roadmap pins,
+  `TauCeti.algEquiv_self_of_finiteDimensional_divisionRing`.
 * `TauCeti.nonempty_end_algEquiv_self_of_isSimpleModule`: the endomorphism ring of a
   finite-dimensional simple module over an algebraically closed field collapses to that field.
 
@@ -111,8 +111,8 @@ section Domain
 
 variable [Ring D] [IsDomain D] [Algebra k D]
 
-/-- An integral domain algebra over an algebraically closed field is the field itself, as an
-isomorphism of algebras.
+/-- A domain algebra over an algebraically closed field `k` that is integral over `k` is `k`
+itself, as an isomorphism of algebras.
 
 Mathlib proves that the algebra map from an algebraically closed field to such an algebra is
 bijective; this packages that bijection as an algebra equivalence. -/
@@ -129,6 +129,10 @@ uses. -/
 theorem nonempty_algEquiv_self_of_finiteDimensional_divisionRing [DivisionRing D] [Algebra k D]
     [FiniteDimensional k D] : Nonempty (D ≃ₐ[k] k) :=
   nonempty_algEquiv_self_of_isIntegral
+
+/-- The roadmap pins the previous theorem under this name; it is available under both. -/
+alias algEquiv_self_of_finiteDimensional_divisionRing :=
+  nonempty_algEquiv_self_of_finiteDimensional_divisionRing
 
 end IsAlgClosed
 
