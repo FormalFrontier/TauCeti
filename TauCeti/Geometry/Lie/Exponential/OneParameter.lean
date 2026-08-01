@@ -21,8 +21,8 @@ abstract Lie-group exponential map.
 ## Main results
 
 * `TauCeti.contDiff_exp_smul`: the algebra-valued exponential curve is real analytic.
-* `TauCeti.contMDiff_expUnit_smul`: the corresponding units-valued curve is smooth.
-* `TauCeti.contMDiff_expUnitHom`: the bundled subgroup's underlying curve is smooth.
+* `TauCeti.contMDiff_expUnit_smul`: the corresponding units-valued curve is real analytic.
+* `TauCeti.contMDiff_expUnitHom`: the bundled subgroup's underlying curve is real analytic.
 * `TauCeti.hasDerivAt_expUnitHom_val_zero`: its initial velocity is `x`.
 * `TauCeti.continuousMonoidHom_eq_expUnitHom_of_hasDerivAt`: it is the unique continuous
   one-parameter subgroup with that initial velocity.
@@ -55,19 +55,19 @@ theorem contDiff_exp_smul (x : R) :
   exact (AnalyticAt.comp (f := fun s : ℝ => s • x)
     (NormedSpace.exp_analytic (𝕂 := ℝ) (t • x)) h).contDiffAt
 
-/-- The units-valued exponential curve `t ↦ expUnit (t • x)` is smooth. -/
+/-- The units-valued exponential curve `t ↦ expUnit (t • x)` is real analytic. -/
 theorem contMDiff_expUnit_smul (x : R) :
-    ContMDiff 𝓘(ℝ, ℝ) 𝓘(ℝ, R) ∞ (fun t : ℝ => expUnit (t • x)) := by
+    ContMDiff 𝓘(ℝ, ℝ) 𝓘(ℝ, R) ω (fun t : ℝ => expUnit (t • x)) := by
   apply ContMDiff.of_comp_isOpenEmbedding Units.isOpenEmbedding_val
   rw [show Units.val ∘ (fun t : ℝ => expUnit (t • x)) =
       fun t : ℝ => NormedSpace.exp (t • x) by
     funext t
     exact expUnit_coe (t • x)]
-  exact ((contDiff_exp_smul x).of_le le_top).contMDiff
+  exact (contDiff_exp_smul x).contMDiff
 
-/-- The curve underlying `expUnitHom x` is smooth. -/
+/-- The curve underlying `expUnitHom x` is real analytic. -/
 theorem contMDiff_expUnitHom (x : R) :
-    ContMDiff 𝓘(ℝ, ℝ) 𝓘(ℝ, R) ∞
+    ContMDiff 𝓘(ℝ, ℝ) 𝓘(ℝ, R) ω
       (fun t : ℝ => expUnitHom x (Multiplicative.ofAdd t)) := by
   simpa only [expUnitHom_apply] using contMDiff_expUnit_smul x
 
