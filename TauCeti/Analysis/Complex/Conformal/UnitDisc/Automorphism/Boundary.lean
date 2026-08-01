@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Moebius
+public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Basic
 
 /-!
 # Disc automorphisms on the closed disc and on the unit circle
@@ -34,6 +35,11 @@ every other point — are generic facts about `TauCeti.pseudoHyperbolicExpr` and
 * `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph` and
   `TauCeti.unitDiscStandardAutomorphismSphereHomeomorph`: the same for the full standard
   automorphism, rotation factor included.
+* `TauCeti.unitDiscMoebiusClosedBallHomeomorph_mk_coe_unitDisc` and its three siblings: the
+  commuting squares saying that the closed-disc maps *extend* the open-disc automorphisms
+  `TauCeti.unitDiscMoebiusEquiv` / `TauCeti.unitDiscStandardAutomorphismEquiv`, and *restrict* to
+  the circle maps along the inclusions `ball 0 1 ⊆ closedBall 0 1` and
+  `sphere 0 1 ⊆ closedBall 0 1`.
 
 Two of the layers of the conformal-mapping roadmap meet here.  The **L2** target is the disc
 automorphism group `Aut(𝔻) = {e^{iθ}(z - a)/(1 - conj a * z)}`, of which this file describes the
@@ -246,6 +252,32 @@ lemma unitDiscMoebiusSphereHomeomorph_symm (a : Complex.UnitDisc) :
   rw [coe_unitDiscMoebiusSphereHomeomorph_symm_apply, coe_unitDiscMoebiusSphereHomeomorph_apply,
     Complex.UnitDisc.coe_neg]
 
+/-- **The closed-disc Moebius homeomorphism extends the open-disc Moebius equivalence.** The square
+formed by `TauCeti.unitDiscMoebiusEquiv`, `TauCeti.unitDiscMoebiusClosedBallHomeomorph` and the
+inclusion `ball 0 1 ⊆ closedBall 0 1` commutes. -/
+@[simp]
+lemma unitDiscMoebiusClosedBallHomeomorph_mk_coe_unitDisc (a z : Complex.UnitDisc) :
+    unitDiscMoebiusClosedBallHomeomorph a ⟨(z : ℂ), mem_closedBall_zero_iff.mpr z.norm_lt_one.le⟩ =
+      ⟨(unitDiscMoebiusEquiv a z : ℂ),
+        mem_closedBall_zero_iff.mpr (unitDiscMoebiusEquiv a z).norm_lt_one.le⟩ := by
+  have h : (unitDiscMoebiusEquiv a z : ℂ)
+      = ((z : ℂ) - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * (z : ℂ)) := by
+    rw [unitDiscMoebiusEquiv_apply, coe_unitDiscMoebius]
+  ext
+  rw [coe_unitDiscMoebiusClosedBallHomeomorph_apply]
+  exact h.symm
+
+/-- **The circle Moebius homeomorphism is the restriction of the closed-disc one.** The square
+formed by the two homeomorphisms and the inclusion `sphere 0 1 ⊆ closedBall 0 1` commutes. -/
+@[simp]
+lemma unitDiscMoebiusClosedBallHomeomorph_mk_coe_sphere (a : Complex.UnitDisc)
+    (z : sphere (0 : ℂ) 1) :
+    unitDiscMoebiusClosedBallHomeomorph a ⟨(z : ℂ), sphere_subset_closedBall z.2⟩ =
+      ⟨(unitDiscMoebiusSphereHomeomorph a z : ℂ),
+        sphere_subset_closedBall (unitDiscMoebiusSphereHomeomorph a z).2⟩ := by
+  ext
+  rw [coe_unitDiscMoebiusClosedBallHomeomorph_apply, coe_unitDiscMoebiusSphereHomeomorph_apply]
+
 /-! ## The full standard automorphism -/
 
 /-- A rotation factor is undone by its conjugate: Mathlib's `Complex.conj_mul'` specialized to
@@ -441,5 +473,34 @@ lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_symm_apply (u : Circle)
     (sphere_subset_closedBall ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w).2)
   simp only [← hx, hmoe] at hinv
   exact hinv.symm
+
+/-- **The closed-disc automorphism homeomorphism extends the open-disc standard automorphism.** The
+square formed by `TauCeti.unitDiscStandardAutomorphismEquiv`,
+`TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph` and the inclusion
+`ball 0 1 ⊆ closedBall 0 1` commutes. -/
+@[simp]
+lemma unitDiscStandardAutomorphismClosedBallHomeomorph_mk_coe_unitDisc (u : Circle)
+    (a z : Complex.UnitDisc) :
+    unitDiscStandardAutomorphismClosedBallHomeomorph u a
+        ⟨(z : ℂ), mem_closedBall_zero_iff.mpr z.norm_lt_one.le⟩ =
+      ⟨(unitDiscStandardAutomorphismEquiv u a z : ℂ),
+        mem_closedBall_zero_iff.mpr (unitDiscStandardAutomorphismEquiv u a z).norm_lt_one.le⟩ := by
+  have h := coe_unitDiscStandardAutomorphismEquiv_apply u a z
+  ext
+  rw [coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply]
+  exact h.symm
+
+/-- **The circle automorphism homeomorphism is the restriction of the closed-disc one.** The square
+formed by the two homeomorphisms and the inclusion `sphere 0 1 ⊆ closedBall 0 1` commutes. -/
+@[simp]
+lemma unitDiscStandardAutomorphismClosedBallHomeomorph_mk_coe_sphere (u : Circle)
+    (a : Complex.UnitDisc) (z : sphere (0 : ℂ) 1) :
+    unitDiscStandardAutomorphismClosedBallHomeomorph u a
+        ⟨(z : ℂ), sphere_subset_closedBall z.2⟩ =
+      ⟨(unitDiscStandardAutomorphismSphereHomeomorph u a z : ℂ),
+        sphere_subset_closedBall (unitDiscStandardAutomorphismSphereHomeomorph u a z).2⟩ := by
+  ext
+  rw [coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply,
+    coe_unitDiscStandardAutomorphismSphereHomeomorph_apply]
 
 end TauCeti
