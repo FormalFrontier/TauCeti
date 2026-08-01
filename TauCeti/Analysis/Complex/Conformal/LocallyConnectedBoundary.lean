@@ -40,11 +40,10 @@ corollary for the disc discharges its own hypothesis differently, the closed dis
 hence locally connected.
 
 Together with `TauCeti.exists_continuousOn_closure_eqOn`, the extension criterion of
-`TauCeti/Topology/ClusterSet/Basic.lean`, this delimits the L5 milestone from both sides: the
-criterion says which boundary behaviour *produces* a continuous extension, and the results here
-say what any continuous extension *forces* on the image boundary. The sufficiency half of the
-continuity theorem, and with it the Jordan-domain milestone itself, is not proved here; what this
-file and
+`TauCeti/Topology/ClusterSet.lean`, this delimits the L5 milestone from both sides: the criterion
+says which boundary behaviour *produces* a continuous extension, and the results here say what any
+continuous extension *forces* on the image boundary. The sufficiency half of the continuity
+theorem, and with it the Jordan-domain milestone itself, is not proved here; what this file and
 `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` supply for it is the hypothesis it runs
 on — local connectedness of the boundary of a Jordan domain — together with the machinery that
 transports it.

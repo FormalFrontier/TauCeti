@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Analysis.Complex.AbsMax
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
-public import TauCeti.Topology.ClusterSet.Basic
+public import TauCeti.Topology.ClusterSet
 import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Normed.Module.RCLike.Real
 

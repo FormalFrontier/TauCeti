@@ -17,8 +17,7 @@ counterpart, `IsPreconnected.sUnion_directed`, and Cantor's intersection theorem
 `IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed`, but not the preservation of
 connectedness under a directed intersection; this file supplies it.
 
-It is written for `TauCeti/Topology/ClusterSet/Basic.lean`, where the boundary cluster set of a
-map is
+It is written for `TauCeti/Topology/ClusterSet.lean`, where the boundary cluster set of a map is
 exhibited as such an intersection and is thereby a continuum — the first step of the Carathéodory
 boundary correspondence, layer **L5** of the conformal-mapping roadmap.
 

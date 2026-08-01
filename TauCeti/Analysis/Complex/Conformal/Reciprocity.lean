@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.ClusterSet
-public import TauCeti.Topology.ClusterSet.Inverse
 
 /-!
 # Boundary cluster reciprocity for conformal maps
@@ -14,9 +13,8 @@ public import TauCeti.Topology.ClusterSet.Inverse
 For a conformal injection `f : U → ℂ`, the set-level inverse
 `Function.invFunOn f U : f '' U → U` exchanges boundary cluster membership with `f`: a boundary
 value `v` belongs to the cluster set of `f` at `w` exactly when `w` belongs to the cluster set of
-the inverse at `v`. The topological reciprocity theorem lives in
-`TauCeti/Topology/ClusterSet/Inverse.lean`; this file applies it to the injectivity problem in the
-Carathéodory boundary correspondence.
+the inverse at `v`. The topological reciprocity theorem lives in `TauCeti/Topology/ClusterSet.lean`;
+this file applies it to the injectivity problem in the Carathéodory boundary correspondence.
 
 Suppose `F` extends `f` continuously to `closure U`. At every `w ∈ frontier U`, continuity makes
 `F w` a cluster value of `f` at `w`, while conformality puts `F w` on
@@ -34,7 +32,7 @@ Layer L5 is absent from the in-progress human-curated Mathlib Riemann-mapping pr
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), which stops at L3.
 Nothing here is vendored from that work. The conformal input is Tau Ceti's existing boundary-image
 theorem `TauCeti.image_frontier_subset_frontier_image`; the reciprocal cluster-set argument is the
-general topological result proved in the new sibling module.
+general topological result proved in the cluster-set module.
 
 ## Main results
 

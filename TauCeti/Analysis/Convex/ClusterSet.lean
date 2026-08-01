@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Normed.Module.Convex
-public import TauCeti.Topology.ClusterSet.Basic
+public import TauCeti.Topology.ClusterSet
 
 /-!
 # The cluster set of a map on a convex domain

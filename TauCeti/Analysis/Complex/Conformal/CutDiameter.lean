@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 public import TauCeti.Analysis.Normed.Module.DiamFrontier
-public import TauCeti.Topology.ClusterSet.Basic
+public import TauCeti.Topology.ClusterSet
 
 /-!
 # The piece a crosscut cuts off, measured by its boundary
@@ -47,7 +47,7 @@ above is already a diameter bound: for any `E` containing the boundary points of
 > `diam A ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E)`
 
 (`TauCeti.diam_image_ball_inter_ball_le`). Feeding those bounds, one for each tolerance, to the
-Cauchy criterion of `Topology/ClusterSet/Basic.lean` gives the boundary limit
+Cauchy criterion of `Topology/ClusterSet.lean` gives the boundary limit
 `TauCeti.exists_tendsto_nhdsWithin_ball_of_forall_exists_diam_union_le` and, if the bounds are
 available at every point of the boundary circle, the continuous extension to the closed disc
 `TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le`.
