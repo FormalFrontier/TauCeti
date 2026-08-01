@@ -12,7 +12,8 @@ public import Mathlib.Analysis.Complex.UnitDisc.Basic
 This file records the scalar pseudo-hyperbolic expression
 `‖(z - w) / (1 - conj w * z)‖` used in the Schwarz--Pick layer of the conformal-mapping
 roadmap.  The main API proves that the denominator is nonzero on the open unit disc, the
-expression is symmetric, and it is strictly less than one for two points of the unit disc.
+expression is symmetric, it is strictly less than one for two points of the unit disc, and it is
+exactly one as soon as one of the two points lies on the unit circle.
 
 This L2 material is coordinated with the upstream Mathlib RMT effort in
 leanprover-community/mathlib4#33505.  Mathlib already contains the preceding human-curated
@@ -109,19 +110,25 @@ lemma pseudoHyperbolicExpr_eq_zero_iff_of_den_ne_zero {z w : ℂ}
   simp only [hden, or_false]
   exact sub_eq_zero
 
+/-- **The denominator of the pseudo-hyperbolic expression is nonzero below the critical
+product.** If `‖w‖ * ‖z‖ < 1` then `‖conj w * z‖ < 1`, so `1 - conj w * z` is a unit.  This is the
+hypothesis the argument actually uses; the disc statements below are special cases. -/
+lemma one_sub_conj_mul_ne_zero_of_norm_mul_norm_lt_one {z w : ℂ} (h : ‖w‖ * ‖z‖ < 1) :
+    1 - (starRingEnd ℂ) w * z ≠ 0 :=
+  (isUnit_one_sub_of_norm_lt_one (x := (starRingEnd ℂ) w * z)
+    (by rwa [norm_mul, norm_conj])).ne_zero
+
 /-- On the *closed* unit disc, the denominator in the pseudo-hyperbolic expression is nonzero, as
-soon as the centre `w` lies in the open disc: the denominator vanishes only at `z = 1 / conj w`,
-which has norm `1 / ‖w‖ > 1`. -/
+soon as the centre `w` lies in the open disc: then `‖conj w * z‖ = ‖w‖ * ‖z‖ ≤ ‖w‖ < 1`, so the
+denominator cannot vanish. -/
 lemma one_sub_conj_mul_ne_zero_of_norm_le_one {z w : ℂ}
     (hz : ‖z‖ ≤ 1) (hw : ‖w‖ < 1) :
     1 - (starRingEnd ℂ) w * z ≠ 0 :=
-  (isUnit_one_sub_of_norm_lt_one (x := (starRingEnd ℂ) w * z)
-    (by
-      rw [norm_mul, norm_conj]
-      calc
-        ‖w‖ * ‖z‖ ≤ ‖w‖ * 1 := by gcongr
-        _ = ‖w‖ := mul_one _
-        _ < 1 := hw)).ne_zero
+  one_sub_conj_mul_ne_zero_of_norm_mul_norm_lt_one <| by
+    calc
+      ‖w‖ * ‖z‖ ≤ ‖w‖ * 1 := by gcongr
+      _ = ‖w‖ := mul_one _
+      _ < 1 := hw
 
 /-- On the open unit disc, the denominator in the pseudo-hyperbolic expression is nonzero. -/
 lemma one_sub_conj_mul_ne_zero_of_norm_lt_one {z w : ℂ}
@@ -211,6 +218,29 @@ lemma norm_sub_lt_norm_one_sub_conj_mul_of_norm_lt_one {z w : ℂ}
   have hdiff := normSq_one_sub_conj_mul_sub_normSq_sub z w
   nlinarith
 
+/-- **Numerator and denominator of a Moebius factor have equal modulus on the unit circle.**
+For `‖z‖ = 1` the conjugate of `z` turns the denominator into the conjugate of the numerator:
+`conj z * (1 - conj w * z) = conj z - conj w * (conj z * z) = conj (z - w)`.  No hypothesis on the
+centre `w` is needed.
+
+Mathlib's `Complex.norm_canonicalFactor_eval_circle_eq_one`, in
+`Analysis/Complex/CanonicalDecomposition.lean`, is the same computation for the reciprocal factor
+`(R ^ 2 - conj w * z) / (R * (z - w))`, under the extra hypothesis `‖w‖ < R`; the form proved here
+holds for every centre `w`. -/
+theorem norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one {z : ℂ} (hz : ‖z‖ = 1) (w : ℂ) :
+    ‖z - w‖ = ‖1 - (starRingEnd ℂ) w * z‖ := by
+  have hzz : (starRingEnd ℂ) z * z = 1 := by
+    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, hz]
+    norm_num
+  have key : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z) = (starRingEnd ℂ) (z - w) := by
+    have hexpand : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z) =
+        (starRingEnd ℂ) z - (starRingEnd ℂ) w * ((starRingEnd ℂ) z * z) := by ring
+    rw [hexpand, hzz, mul_one, map_sub]
+  calc
+    ‖z - w‖ = ‖(starRingEnd ℂ) (z - w)‖ := (norm_conj _).symm
+    _ = ‖(starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z)‖ := by rw [key]
+    _ = ‖1 - (starRingEnd ℂ) w * z‖ := by rw [norm_mul, norm_conj, hz, one_mul]
+
 /-- The pseudo-hyperbolic expression of two points of norm less than one is strictly less
 than one. -/
 lemma pseudoHyperbolicExpr_lt_one_of_norm_lt_one {z w : ℂ}
@@ -236,5 +266,25 @@ than one. -/
 lemma pseudoHyperbolicExpr_lt_one_unitDisc (z w : Complex.UnitDisc) :
     pseudoHyperbolicExpr (z : ℂ) (w : ℂ) < 1 :=
   pseudoHyperbolicExpr_lt_one_of_norm_lt_one z.norm_lt_one w.norm_lt_one
+
+/-- **A point of the unit circle is at pseudo-hyperbolic distance one from every other point.**
+By `TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` numerator and denominator have the
+same modulus, so the quotient is `1` exactly when that common modulus is nonzero, that is when
+`z ≠ w`.  No hypothesis on `w` beyond `z ≠ w` is needed. -/
+theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne {z w : ℂ} (hz : ‖z‖ = 1) (hne : z ≠ w) :
+    pseudoHyperbolicExpr z w = 1 := by
+  have hden : ‖1 - (starRingEnd ℂ) w * z‖ ≠ 0 := by
+    rw [← norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one hz w, norm_ne_zero_iff, sub_ne_zero]
+    exact hne
+  rw [pseudoHyperbolicExpr_def, norm_div, norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one hz w,
+    div_self hden]
+
+/-- **A point of the unit circle is at pseudo-hyperbolic distance one from any interior point.**
+The boundary counterpart of `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
+theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one {z w : ℂ} (hz : ‖z‖ = 1) (hw : ‖w‖ < 1) :
+    pseudoHyperbolicExpr z w = 1 :=
+  pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne hz fun h => by
+    rw [← h, hz] at hw
+    exact lt_irrefl 1 hw
 
 end TauCeti

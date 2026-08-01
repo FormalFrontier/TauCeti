@@ -10,21 +10,19 @@ public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Basic
 # Disc automorphisms on the closed disc and on the unit circle
 
 A disc automorphism `z ↦ u * (z - a) / (1 - conj a * z)` is given by a formula that already makes
-sense on the *closed* disc: the denominator only vanishes at `z = 1 / conj a`, which lies outside
-`closedBall 0 1` when `‖a‖ < 1`.  This file shows that the formula is a homeomorphism of
-`closedBall (0 : ℂ) 1` onto itself which carries `sphere 0 1` onto `sphere 0 1`, so that the
-automorphism group of the disc acts on the boundary circle.
+sense on the *closed* disc: for `‖a‖ < 1` and `‖z‖ ≤ 1` the product `conj a * z` has norm
+`‖a‖ * ‖z‖ ≤ ‖a‖ < 1`, so the denominator never vanishes there.  This file shows that the formula
+is a homeomorphism of `closedBall (0 : ℂ) 1` onto itself which carries `sphere 0 1` onto
+`sphere 0 1`, so that the automorphism group of the disc acts on the boundary circle.
 
 The computational heart is a one-line identity: for `‖z‖ = 1`,
 `conj z * (1 - conj a * z) = conj (z - a)`, so numerator and denominator of the Moebius factor have
-the *same* modulus on the unit circle and the quotient has modulus one
-(`TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one`).  In the pseudo-hyperbolic language of
-`TauCeti.pseudoHyperbolicExpr` this says that a boundary point is at pseudo-hyperbolic distance
-exactly `1` from every interior point.  Mathlib knows the same identity for the reciprocal,
-meromorphic, factor: `Complex.norm_canonicalFactor_eval_circle_eq_one` in
-`Analysis/Complex/CanonicalDecomposition.lean`, stated for `(R ^ 2 - conj w * z) / (R * (z - w))`;
-the form proved here is the reciprocal one, and holds for every centre `a`, not only for
-`‖a‖ < R`.
+the *same* modulus on the unit circle and the quotient has modulus one.  That identity and its
+pseudo-hyperbolic reading — a boundary point is at pseudo-hyperbolic distance exactly `1` from
+every other point — are generic facts about `TauCeti.pseudoHyperbolicExpr` and live in
+`TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean`, as
+`TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` and
+`TauCeti.pseudoHyperbolicExpr_eq_one_of_norm_eq_one`.
 
 ## Main statements
 
@@ -33,7 +31,8 @@ the form proved here is the reciprocal one, and holds for every centre `a`, not 
   bijection of the closed disc, and of the unit circle, onto itself.
 * `TauCeti.unitDiscMoebiusClosedBallHomeomorph` and `TauCeti.unitDiscMoebiusSphereHomeomorph`: those
   bijections bundled as homeomorphisms, with the factor centred at `-a` as the explicit inverse.
-* `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph`: the same for the full standard
+* `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph` and
+  `TauCeti.unitDiscStandardAutomorphismSphereHomeomorph`: the same for the full standard
   automorphism, rotation factor included.
 
 Two of the layers of the conformal-mapping roadmap meet here.  The **L2** target is the disc
@@ -61,40 +60,7 @@ namespace TauCeti
 open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
-variable {a u z : ℂ}
-
-/-! ## The Moebius factor on the unit circle -/
-
-/-- **Numerator and denominator of a Moebius factor have equal modulus on the unit circle.**
-For `‖z‖ = 1` the conjugate of `z` turns the denominator into the conjugate of the numerator:
-`conj z * (1 - conj a * z) = conj z - conj a * (conj z * z) = conj (z - a)`.  No hypothesis on the
-centre `a` is needed.
-
-Mathlib's `Complex.norm_canonicalFactor_eval_circle_eq_one` is the same computation for the
-reciprocal factor `(R ^ 2 - conj a * z) / (R * (z - a))`, under the extra hypothesis
-`‖a‖ < R`. -/
-theorem norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one (hz : ‖z‖ = 1) (a : ℂ) :
-    ‖z - a‖ = ‖1 - (starRingEnd ℂ) a * z‖ := by
-  have hzz : (starRingEnd ℂ) z * z = 1 := by
-    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, hz]
-    norm_num
-  have key : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) a * z) = (starRingEnd ℂ) (z - a) := by
-    have hexpand : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) a * z) =
-        (starRingEnd ℂ) z - (starRingEnd ℂ) a * ((starRingEnd ℂ) z * z) := by ring
-    rw [hexpand, hzz, mul_one, map_sub]
-  calc
-    ‖z - a‖ = ‖(starRingEnd ℂ) (z - a)‖ := (norm_conj _).symm
-    _ = ‖(starRingEnd ℂ) z * (1 - (starRingEnd ℂ) a * z)‖ := by rw [key]
-    _ = ‖1 - (starRingEnd ℂ) a * z‖ := by rw [norm_mul, norm_conj, hz, one_mul]
-
-/-- **A point of the unit circle is at pseudo-hyperbolic distance one from any interior point.**
-This is `TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` read through
-`TauCeti.pseudoHyperbolicExpr`, and the boundary counterpart of
-`TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
-theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one (hz : ‖z‖ = 1) (ha : ‖a‖ < 1) :
-    pseudoHyperbolicExpr z a = 1 := by
-  rw [pseudoHyperbolicExpr_def, norm_div, norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one hz a,
-    div_self (norm_ne_zero_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_le_one hz.le ha))]
+variable {a u : ℂ}
 
 /-! ## The Moebius factor on the closed disc -/
 
@@ -119,8 +85,8 @@ theorem mapsTo_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 
   · exact ball_subset_closedBall (mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha h)
   · exact sphere_subset_closedBall (mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha h)
 
-/-- The scalar unit-disc Moebius formula is continuous on the *closed* unit disc: its only pole
-`1 / conj a` has modulus `1 / ‖a‖ > 1`. -/
+/-- The scalar unit-disc Moebius formula is continuous on the *closed* unit disc: there
+`‖conj a * z‖ = ‖a‖ * ‖z‖ ≤ ‖a‖ < 1`, so the denominator is nowhere zero. -/
 theorem continuousOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
     ContinuousOn (fun z : ℂ => (z - a) / (1 - (starRingEnd ℂ) a * z))
       (closedBall (0 : ℂ) 1) :=
@@ -346,11 +312,11 @@ theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : �
     (((bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one hu ha).injOn).mono
       sphere_subset_closedBall) ?_
   intro w hw
-  obtain ⟨z, hz, hzw⟩ :=
-    (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha).surjOn
-      (show (starRingEnd ℂ) u * w ∈ sphere (0 : ℂ) 1 by
-        rw [mem_sphere_zero_iff_norm] at hw ⊢
-        rw [norm_mul, norm_conj, hu, one_mul, hw])
+  -- Undoing the rotation keeps the point on the circle, so it is hit by the Moebius factor.
+  have hrot : (starRingEnd ℂ) u * w ∈ sphere (0 : ℂ) 1 := by
+    rw [mem_sphere_zero_iff_norm] at hw ⊢
+    rw [norm_mul, norm_conj, hu, one_mul, hw]
+  obtain ⟨z, hz, hzw⟩ := (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha).surjOn hrot
   refine ⟨z, hz, ?_⟩
   have hzw' : (z - a) / (1 - (starRingEnd ℂ) a * z) = (starRingEnd ℂ) u * w := hzw
   have huu : u * (starRingEnd ℂ) u = 1 := by
@@ -416,6 +382,64 @@ lemma coe_unitDiscStandardAutomorphismClosedBallHomeomorph_symm_apply (u : Circl
     rw [← himg, ← mul_assoc, huu, one_mul]
   have hinv := leftInvOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one
     ((unitDiscStandardAutomorphismClosedBallHomeomorph u a).symm w).2
+  simp only [← hx, hmoe] at hinv
+  exact hinv.symm
+
+/-- **A standard disc automorphism, as a homeomorphism of the unit circle.** The boundary
+restriction of `TauCeti.unitDiscStandardAutomorphismClosedBallHomeomorph`, and the boundary action
+of `Aut(𝔻)` on the circle.  The definition is not exposed;
+`TauCeti.coe_unitDiscStandardAutomorphismSphereHomeomorph_apply` and
+`TauCeti.coe_unitDiscStandardAutomorphismSphereHomeomorph_symm_apply` characterize it. -/
+noncomputable def unitDiscStandardAutomorphismSphereHomeomorph (u : Circle)
+    (a : Complex.UnitDisc) : sphere (0 : ℂ) 1 ≃ₜ sphere (0 : ℂ) 1 :=
+  haveI : CompactSpace (sphere (0 : ℂ) 1) :=
+    isCompact_iff_compactSpace.mp (isCompact_sphere _ _)
+  Continuous.homeoOfEquivCompactToT2
+    (f := (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
+      a.norm_lt_one).equiv _)
+    (((continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_one (u : ℂ)
+      a.norm_lt_one).mono sphere_subset_closedBall).mapsToRestrict
+        (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
+          a.norm_lt_one).mapsTo)
+
+/-- The circle automorphism homeomorphism is given by the standard automorphism formula. -/
+@[simp]
+lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_apply (u : Circle) (a : Complex.UnitDisc)
+    (z : sphere (0 : ℂ) 1) :
+    (unitDiscStandardAutomorphismSphereHomeomorph u a z : ℂ) =
+      (u : ℂ) * (((z : ℂ) - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * (z : ℂ))) := by
+  simp only [unitDiscStandardAutomorphismSphereHomeomorph, ← Homeomorph.coe_toEquiv,
+    Continuous.toEquiv_homeoOfEquivCompactToT2, BijOn.equiv, Equiv.coe_ofBijective,
+    MapsTo.val_restrict_apply]
+
+/-- With trivial rotation factor the standard automorphism of the circle is the Moebius factor. -/
+@[simp]
+lemma unitDiscStandardAutomorphismSphereHomeomorph_one (a : Complex.UnitDisc) :
+    unitDiscStandardAutomorphismSphereHomeomorph 1 a = unitDiscMoebiusSphereHomeomorph a := by
+  ext z
+  rw [coe_unitDiscStandardAutomorphismSphereHomeomorph_apply,
+    coe_unitDiscMoebiusSphereHomeomorph_apply, Circle.coe_one, one_mul]
+
+/-- The inverse of the circle automorphism homeomorphism undoes the rotation first: it is the
+Moebius factor centred at `-a` evaluated at `conj u * w`. -/
+@[simp]
+lemma coe_unitDiscStandardAutomorphismSphereHomeomorph_symm_apply (u : Circle)
+    (a : Complex.UnitDisc) (w : sphere (0 : ℂ) 1) :
+    ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w : ℂ) =
+      ((starRingEnd ℂ) (u : ℂ) * (w : ℂ) - (-(a : ℂ))) /
+        (1 - (starRingEnd ℂ) (-(a : ℂ)) * ((starRingEnd ℂ) (u : ℂ) * (w : ℂ))) := by
+  set x : ℂ := ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w : ℂ) with hx
+  have huu : (starRingEnd ℂ) (u : ℂ) * (u : ℂ) = 1 := by
+    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, u.norm_coe]
+    norm_num
+  have himg : (u : ℂ) * ((x - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * x)) = (w : ℂ) := by
+    rw [hx, ← coe_unitDiscStandardAutomorphismSphereHomeomorph_apply u a,
+      Homeomorph.apply_symm_apply]
+  have hmoe : (x - (a : ℂ)) / (1 - (starRingEnd ℂ) (a : ℂ) * x)
+      = (starRingEnd ℂ) (u : ℂ) * (w : ℂ) := by
+    rw [← himg, ← mul_assoc, huu, one_mul]
+  have hinv := leftInvOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one a.norm_lt_one
+    (sphere_subset_closedBall ((unitDiscStandardAutomorphismSphereHomeomorph u a).symm w).2)
   simp only [← hx, hmoe] at hinv
   exact hinv.symm
 
