@@ -16,6 +16,8 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 
 ## Main results
 
+* `IsMIntegralCurveOn.const_mul_mulInvariantVectorField`: left translation preserves invariant
+  integral curves.
 * `exists_isMIntegralCurve_mulInvariantVectorField`: every left-invariant vector field has a global
   integral curve through every point.
 
