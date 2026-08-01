@@ -37,7 +37,7 @@ No flatness or noetherian hypothesis is needed.
 
 ## References
 
-The directed-union theorem sequence from `finiteSubcomodules_nonempty` through
+The directed-union theorem sequence from `nonempty_finiteSubcomodules` through
 `iUnion_finiteSubcomodules_eq_univ_of_exists_mem` is adapted from the corresponding
 subcoalgebra development in `TauCeti.Algebra.Coalgebra.Subcoalgebra.Finite`.
 
@@ -186,7 +186,7 @@ theorem mem_finiteSubcomodules {N : Subcomodule R C M} :
   Iff.rfl
 
 /-- The zero subcomodule makes the family of finite subcomodules nonempty. -/
-theorem finiteSubcomodules_nonempty :
+theorem nonempty_finiteSubcomodules :
     (finiteSubcomodules (R := R) (C := C) (M := M)).Nonempty := by
   refine ⟨⊥, ?_⟩
   rw [mem_finiteSubcomodules]
@@ -212,7 +212,7 @@ theorem coe_sSup_finiteSubcomodules :
     ((sSup (finiteSubcomodules (R := R) (C := C) (M := M)) :
         Subcomodule R C M) : Set M) =
       ⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M) :=
-  coe_sSup_of_directedOn finiteSubcomodules_nonempty directedOn_finiteSubcomodules
+  coe_sSup_of_directedOn nonempty_finiteSubcomodules directedOn_finiteSubcomodules
 
 /-- Membership in the supremum of all finite subcomodules means membership in one finite
 subcomodule. -/
@@ -221,7 +221,7 @@ theorem mem_sSup_finiteSubcomodules {m : M} :
     m ∈ sSup (finiteSubcomodules (R := R) (C := C) (M := M)) ↔
       ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N := by
   simpa only [mem_finiteSubcomodules] using
-    (mem_sSup_of_directedOn finiteSubcomodules_nonempty directedOn_finiteSubcomodules (m := m))
+    (mem_sSup_of_directedOn nonempty_finiteSubcomodules directedOn_finiteSubcomodules (m := m))
 
 /-- If every element lies in a finite subcomodule, then every finite set lies in one finite
 subcomodule. -/
@@ -233,7 +233,7 @@ theorem exists_finite_subcomodule_of_setFinite_of_exists_mem
   obtain ⟨N, hNfinite, hsN⟩ :=
     DirectedOn.exists_mem_subset_of_finset_subset_biUnion
       (f := fun N : Subcomodule R C M => (N : Set M))
-      finiteSubcomodules_nonempty directedOn_finiteSubcomodules
+      nonempty_finiteSubcomodules directedOn_finiteSubcomodules
       (s := hs.toFinset) (by
         intro m _
         obtain ⟨N, hNfinite, hmN⟩ := hM m
