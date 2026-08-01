@@ -68,8 +68,10 @@ Euclidean ball (`TauCeti.hyperbolicDist_zero_le_iff_norm_le_tanh`, the case `a =
 Moebius denominator is `1` and the computation is immediate) and uses it for properness. The
 general centre is what a *local* argument needs, and it is not a formal consequence of the special
 case: the disc automorphism moving `a` to the origin is a hyperbolic isometry but not a Euclidean
-one, so it does not transport a Euclidean ball to a Euclidean ball. The explicit centre and radius
-are the point.
+one. Being a Moebius map it does carry the centred Euclidean disc onto a Euclidean disc — that is
+the very fact being proved here — but it preserves neither the Euclidean centre nor the Euclidean
+radius, so transport through it still leaves both to be computed. Those transformed values are the
+point.
 
 Two immediate consequences are recorded: hyperbolic balls are convex for the *Euclidean* structure
 (`TauCeti.convex_sep_ball_hyperbolicDist_lt`), a fact with no hyperbolic proof at this stage of the
@@ -240,14 +242,10 @@ lemma norm_pseudoHyperbolicCenter_add_pseudoHyperbolicRadius_lt_one
 /-- The closed Euclidean disc describing a pseudo-hyperbolic ball is contained in the open unit
 disc; a fortiori so is the open one. -/
 lemma closedBall_pseudoHyperbolicCenter_subset_ball (ha : ‖a‖ < 1) (ht₀ : 0 ≤ t) (ht₁ : t < 1) :
-    closedBall (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) ⊆ ball (0 : ℂ) 1 := by
-  intro w hw
-  have h := norm_pseudoHyperbolicCenter_add_pseudoHyperbolicRadius_lt_one ha ht₀ ht₁
-  have hle : ‖w - pseudoHyperbolicCenter a t‖ ≤ pseudoHyperbolicRadius a t := by
-    simpa [dist_eq_norm] using hw
-  have : ‖w‖ ≤ ‖w - pseudoHyperbolicCenter a t‖ + ‖pseudoHyperbolicCenter a t‖ := by
-    simpa using norm_add_le (w - pseudoHyperbolicCenter a t) (pseudoHyperbolicCenter a t)
-  exact mem_ball_zero_iff.2 (by linarith)
+    closedBall (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) ⊆ ball (0 : ℂ) 1 :=
+  closedBall_subset_ball' <| by
+    simpa [dist_eq_norm, add_comm] using
+      norm_pseudoHyperbolicCenter_add_pseudoHyperbolicRadius_lt_one ha ht₀ ht₁
 
 /-! ### The Apollonius identity -/
 
