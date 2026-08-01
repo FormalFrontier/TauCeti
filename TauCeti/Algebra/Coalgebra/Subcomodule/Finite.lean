@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import Mathlib.Order.SupClosed
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Lattice
@@ -18,7 +17,7 @@ subcomodule. It also packages the order-theoretic consequences: finite subcomodu
 form a nonempty directed family, finite subsets and finitely generated submodules
 are contained in one finite subcomodule, and the supremum and literal union of the
 finite subcomodules are the whole comodule. Over a field these become statements
-about finite-dimensional subcomodules.
+about finite-dimensional subcomodules through the same generic API.
 
 For the elementwise result, the carrier is the span of the finitely many coefficients
 occurring when the element's coaction is expanded in a basis of the coalgebra. The
@@ -31,12 +30,10 @@ No flatness or noetherian hypothesis is needed.
 
 * `TauCeti.Subcomodule.exists_finite_subcomodule_mem`: every element belongs to a
   subcomodule whose underlying module is finite.
-* `TauCeti.Subcomodule.finiteSubcomodules_directedOn`: finite subcomodules form a
+* `TauCeti.Subcomodule.directedOn_finiteSubcomodules`: finite subcomodules form a
   directed family.
 * `TauCeti.Subcomodule.sSup_finiteSubcomodules_eq_top`: for a free coefficient coalgebra,
   the finite subcomodules have supremum `⊤`.
-* `TauCeti.Subcomodule.exists_finiteDimensional_subcomodule_mem`: over a field, every
-  element belongs to a finite-dimensional subcomodule.
 
 ## References
 
@@ -192,7 +189,7 @@ theorem finiteSubcomodules_nonempty :
   exact Module.Finite.bot R M
 
 /-- Finite subcomodules are closed under binary joins. -/
-theorem finiteSubcomodules_supClosed :
+theorem supClosed_finiteSubcomodules :
     SupClosed (finiteSubcomodules (R := R) (C := C) (M := M)) := by
   intro N hN P hP
   rw [mem_finiteSubcomodules] at hN hP ⊢
@@ -201,9 +198,9 @@ theorem finiteSubcomodules_supClosed :
   exact sup_finite N P
 
 /-- Finite subcomodules form a directed family under inclusion. -/
-theorem finiteSubcomodules_directedOn :
+theorem directedOn_finiteSubcomodules :
     DirectedOn (· ≤ ·) (finiteSubcomodules (R := R) (C := C) (M := M)) :=
-  finiteSubcomodules_supClosed.directedOn
+  supClosed_finiteSubcomodules.directedOn
 
 /-- The carrier of the supremum of all finite subcomodules is their literal union. -/
 @[simp]
@@ -211,15 +208,16 @@ theorem coe_sSup_finiteSubcomodules :
     ((sSup (finiteSubcomodules (R := R) (C := C) (M := M)) :
         Subcomodule R C M) : Set M) =
       ⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M) :=
-  coe_sSup_of_directed finiteSubcomodules_nonempty finiteSubcomodules_directedOn
+  coe_sSup_of_directed finiteSubcomodules_nonempty directedOn_finiteSubcomodules
 
 /-- Membership in the supremum of all finite subcomodules means membership in one finite
 subcomodule. -/
+@[simp]
 theorem mem_sSup_finiteSubcomodules {m : M} :
     m ∈ sSup (finiteSubcomodules (R := R) (C := C) (M := M)) ↔
       ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N := by
   simpa only [mem_finiteSubcomodules] using
-    (mem_sSup_of_directed finiteSubcomodules_nonempty finiteSubcomodules_directedOn (m := m))
+    (mem_sSup_of_directed finiteSubcomodules_nonempty directedOn_finiteSubcomodules (m := m))
 
 /-- If every element lies in a finite subcomodule, then every finite set lies in one finite
 subcomodule. -/
@@ -292,77 +290,6 @@ theorem iUnion_finiteSubcomodules_eq_univ [Module.Free R C] :
   iUnion_finiteSubcomodules_eq_univ_of_exists_mem exists_finite_subcomodule_mem
 
 end General
-
-section Field
-
-variable {k : Type u} {C : Type v} {M : Type w}
-variable [Field k]
-variable [AddCommGroup C] [Module k C] [Coalgebra k C]
-variable [AddCommGroup M] [Module k M] [Comodule k C M]
-
-/-- The set of finite-dimensional subcomodules of a comodule over a field. -/
-def finiteDimensionalSubcomodules : Set (Subcomodule k C M) :=
-  {N | FiniteDimensional k N.toSubmodule}
-
-@[simp]
-theorem mem_finiteDimensionalSubcomodules {N : Subcomodule k C M} :
-    N ∈ finiteDimensionalSubcomodules (k := k) (C := C) (M := M) ↔
-      FiniteDimensional k N.toSubmodule :=
-  Iff.rfl
-
-/-- Finite-dimensional subcomodules form a nonempty family. -/
-theorem finiteDimensionalSubcomodules_nonempty :
-    (finiteDimensionalSubcomodules (k := k) (C := C) (M := M)).Nonempty :=
-  finiteSubcomodules_nonempty
-
-/-- Finite-dimensional subcomodules form a directed family under inclusion. -/
-theorem finiteDimensionalSubcomodules_directedOn :
-    DirectedOn (· ≤ ·)
-      (finiteDimensionalSubcomodules (k := k) (C := C) (M := M)) :=
-  finiteSubcomodules_directedOn
-
-/-- The carrier of the supremum of the finite-dimensional subcomodules is their literal union. -/
-@[simp]
-theorem coe_sSup_finiteDimensionalSubcomodules :
-    ((sSup (finiteDimensionalSubcomodules (k := k) (C := C) (M := M)) :
-        Subcomodule k C M) : Set M) =
-      ⋃ N : finiteDimensionalSubcomodules (k := k) (C := C) (M := M), (N.1 : Set M) :=
-  coe_sSup_of_directed finiteDimensionalSubcomodules_nonempty
-    finiteDimensionalSubcomodules_directedOn
-
-/-- Every element of a comodule over a field lies in a finite-dimensional subcomodule. -/
-theorem exists_finiteDimensional_subcomodule_mem (m : M) :
-    ∃ N : Subcomodule k C M, FiniteDimensional k N.toSubmodule ∧ m ∈ N :=
-  exists_finite_subcomodule_mem (R := k) (C := C) (M := M) m
-
-/-- Every finite subset of a comodule over a field lies in a finite-dimensional subcomodule. -/
-theorem exists_finiteDimensional_subcomodule_of_setFinite {s : Set M} (hs : s.Finite) :
-    ∃ N : Subcomodule k C M, FiniteDimensional k N.toSubmodule ∧ s ⊆ N :=
-  exists_finite_subcomodule_of_setFinite (R := k) (C := C) (M := M) hs
-
-/-- Every finite-dimensional subspace of a comodule over a field lies in a finite-dimensional
-subcomodule. -/
-theorem exists_finiteDimensional_subcomodule_of_submodule (P : Submodule k M)
-    [FiniteDimensional k P] :
-    ∃ N : Subcomodule k C M, FiniteDimensional k N.toSubmodule ∧ P ≤ N.toSubmodule :=
-  exists_finite_subcomodule_of_fg (R := k) (C := C) (M := M) P
-    (Module.Finite.iff_fg.mp inferInstance)
-
-/-- The supremum of the finite-dimensional subcomodules of a comodule over a field is `⊤`. -/
-theorem sSup_finiteDimensionalSubcomodules_eq_top :
-    sSup (finiteDimensionalSubcomodules (k := k) (C := C) (M := M)) = ⊤ :=
-  sSup_finiteSubcomodules_eq_top (R := k) (C := C) (M := M)
-
-/-- The union of the finite-dimensional subcomodules of a comodule over a field is the whole
-carrier. -/
-theorem iUnion_finiteDimensionalSubcomodules_eq_univ :
-    (⋃ N : finiteDimensionalSubcomodules (k := k) (C := C) (M := M), (N.1 : Set M)) =
-      Set.univ := by
-  rw [← coe_sSup_finiteDimensionalSubcomodules,
-    sSup_finiteDimensionalSubcomodules_eq_top]
-  rfl
-
-end Field
 
 end Subcomodule
 
