@@ -141,8 +141,8 @@ theorem cosh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
 
 /-- **The hyperbolic tangent of the hyperbolic distance** is the pseudo-hyperbolic expression:
 `hyperbolicDist` and `pseudoHyperbolicExpr` are two readings of the same geometry, the first
-additive and the second multiplicative. The disc analogue of Mathlib's
-`UpperHalfPlane.tanh_half_dist`. -/
+unbounded and additive along geodesics, the second confined to `[0, 1)`. The disc analogue of
+Mathlib's `UpperHalfPlane.tanh_half_dist`. -/
 theorem tanh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     Real.tanh (hyperbolicDist z w) = pseudoHyperbolicExpr z w := by
   rw [hyperbolicDist_def, Real.tanh_artanh (pseudoHyperbolicExpr_mem_Ioo hz hw)]
@@ -232,9 +232,10 @@ theorem hyperbolicDist_le_div_sqrt (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
   rw [← sinh_hyperbolicDist hz hw]
   exact Real.self_le_sinh_iff.mpr (hyperbolicDist_nonneg z w)
 
-/-- **The unit disc has infinite hyperbolic diameter.** Points of Euclidean norm `Real.tanh t`
-are at hyperbolic distance exactly `t` from the origin, so no bound holds on the hyperbolic
-distance to the origin; the Euclidean boundary is infinitely far away in the Poincaré metric. -/
+/-- **The unit disc has infinite hyperbolic diameter**: no real number bounds the hyperbolic
+distance to the origin. The witnesses are supplied by `hyperbolicDist_zero_right`: for `0 ≤ t`
+the point of Euclidean norm `Real.tanh t` lies in the disc and is at hyperbolic distance exactly
+`t` from the origin. So the Euclidean boundary is infinitely far away in the Poincaré metric. -/
 theorem exists_mem_ball_lt_hyperbolicDist (C : ℝ) :
     ∃ z ∈ ball (0 : ℂ) 1, C < hyperbolicDist z 0 := by
   set t : ℝ := |C| + 1
