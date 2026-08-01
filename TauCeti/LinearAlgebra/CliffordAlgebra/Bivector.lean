@@ -69,21 +69,26 @@ fixes the normalization. -/
 noncomputable def cliffordBivector (a b : M) : CliffordAlgebra Q :=
   (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a)
 
+/-- The defining half-normalized commutator formula for a Clifford bivector. -/
+theorem cliffordBivector_def (a b : M) :
+    cliffordBivector Q a b = (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a) := by
+  rw [cliffordBivector]
+
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
 noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
   { toFun := fun v => cliffordBivector Q (v 0) (v 1)
     map_update_add' := by
       intro _ v i x y
       fin_cases i <;>
-        simp [cliffordBivector, add_mul, mul_add, smul_sub] <;>
+        simp [cliffordBivector_def, add_mul, mul_add, smul_sub] <;>
         module
     map_update_smul' := by
       intro _ v i c x
       fin_cases i <;>
-        simp [cliffordBivector, smul_sub, smul_smul, mul_comm]
+        simp [cliffordBivector_def, smul_sub, smul_smul, mul_comm]
     map_eq_zero_of_eq' := by
       intro v i j h hij
-      fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector] }
+      fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector_def] }
 
 private theorem cliffordBivectorAlternating_apply_internal (a b : M) :
     cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
@@ -124,22 +129,48 @@ theorem cliffordBivector_self (a : M) : cliffordBivector Q a a = 0 := by
 /-- Clifford bivectors are even. -/
 theorem cliffordBivector_mem_evenOdd_zero (a b : M) :
     cliffordBivector Q a b ∈ evenOdd Q 0 := by
-  rw [cliffordBivector]
+  rw [cliffordBivector_def]
   exact Submodule.smul_mem _ _ <|
     Submodule.sub_mem _ (ι_mul_ι_mem_evenOdd_zero Q a b) (ι_mul_ι_mem_evenOdd_zero Q b a)
 
 /-- Clifford bivectors have filtration degree at most two. -/
 theorem cliffordBivector_mem_filtration_two (a b : M) :
     cliffordBivector Q a b ∈ filtration Q 2 := by
-  rw [cliffordBivector]
+  rw [cliffordBivector_def]
   exact Submodule.smul_mem _ _ <|
     Submodule.sub_mem _ (ι_mul_ι_mem_filtration_two Q a b) (ι_mul_ι_mem_filtration_two Q b a)
+
+private theorem cliffordBivectorExterior_range_le (P : Submodule R (CliffordAlgebra Q))
+    (hP : ∀ a b : M, cliffordBivector Q a b ∈ P) :
+    LinearMap.range (cliffordBivectorExterior Q) ≤ P := by
+  rw [LinearMap.range_eq_map, Submodule.map_le_iff_le_comap,
+    ← exteriorPower.ιMulti_span R 2 M]
+  refine Submodule.span_le.2 ?_
+  rintro _ ⟨v, rfl⟩
+  have hv : v = ![v 0, v 1] := by
+    funext i
+    fin_cases i <;> rfl
+  rw [hv]
+  -- Rewriting does not unfold membership in the comap, so expose the map application explicitly.
+  change cliffordBivectorExterior Q (exteriorPower.ιMulti R 2 ![v 0, v 1]) ∈ P
+  rw [cliffordBivectorExterior_apply_ιMulti]
+  exact hP _ _
+
+/-- The exterior-square Clifford bivector map takes values in the even component. -/
+theorem cliffordBivectorExterior_range_le_evenOdd_zero :
+    LinearMap.range (cliffordBivectorExterior Q) ≤ evenOdd Q 0 :=
+  cliffordBivectorExterior_range_le Q _ (cliffordBivector_mem_evenOdd_zero Q)
+
+/-- The exterior-square Clifford bivector map takes values in filtration degree at most two. -/
+theorem cliffordBivectorExterior_range_le_filtration_two :
+    LinearMap.range (cliffordBivectorExterior Q) ≤ filtration Q 2 :=
+  cliffordBivectorExterior_range_le Q _ (cliffordBivector_mem_filtration_two Q)
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem cliffordBivector_lie_ι (a b x : M) :
     ⁅cliffordBivector Q a b, ι Q x⁆ =
       ι Q (QuadraticMap.polar Q b x • a - QuadraticMap.polar Q a x • b) := by
-  rw [cliffordBivector, Ring.lie_def]
+  rw [cliffordBivector_def, Ring.lie_def]
   rw [smul_mul_assoc, mul_smul_comm, ← smul_sub]
   rw [map_sub, map_smul, map_smul]
   have hbx := ι_mul_ι_add_swap (Q := Q) b x
