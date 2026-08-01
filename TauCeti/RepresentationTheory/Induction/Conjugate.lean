@@ -49,7 +49,6 @@ the induced action on isomorphism classes, nor the fact that the action preserve
 * `TauCeti.conjNormalRep`, `TauCeti.conjNormalFDRep`: conjugation of a representation of a normal
   subgroup, again a representation of that subgroup; these are the `MulAction` of `G` on
   `Rep k N` and on `FDRep k N`.
-* `TauCeti.conjNormalFDRepMapIso`: conjugation carries isomorphisms to isomorphisms.
 * `TauCeti.conjNormalFDRepSelfIso`: conjugating by an element of `N` itself is an inner twist, so
   it gives an isomorphic representation.
 
@@ -737,21 +736,6 @@ instance conjNormalFDRepMulAction : MulAction G (FDRep k N) where
 @[simp]
 theorem smul_eq_conjNormalFDRep (g : G) (A : FDRep k N) : g • A = conjNormalFDRep g A :=
   rfl
-
-/-- Conjugation carries isomorphic representations to isomorphic representations: this is
-`CategoryTheory.Functor.mapIso` for `TauCeti.conjNormalFDRepFunctor`, phrased in terms of
-`TauCeti.conjNormalFDRep` so that the coherence equalities `TauCeti.conjNormalFDRep_one` and
-`TauCeti.conjNormalFDRep_mul` rewrite in its type. -/
-def conjNormalFDRepMapIso (g : G) {A B : FDRep k N} (e : A ≅ B) :
-    conjNormalFDRep g A ≅ conjNormalFDRep g B :=
-  (conjNormalFDRepFunctor g).mapIso e
-
-/-- Conjugation changes only the action, not the underlying map: the intertwiner underlying
-`conjNormalFDRepMapIso g e` is the one underlying `e`. -/
-@[simp]
-theorem conjNormalFDRepMapIso_hom_hom (g : G) {A B : FDRep k N} (e : A ≅ B) :
-    (conjNormalFDRepMapIso g e).hom.hom = e.hom.hom :=
-  (rfl)
 
 /-- Conjugating a representation of a normal subgroup `N` by an element `n` **of `N` itself**
 does not change its isomorphism class: the action of `n` is an isomorphism `{}^n A ≅ A`.
