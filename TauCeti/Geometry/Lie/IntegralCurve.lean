@@ -29,7 +29,7 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 
 public section
 
-open Function Manifold Set
+open Function Manifold Set VectorField
 open scoped Manifold
 
 noncomputable section
@@ -54,16 +54,23 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
         (1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)) := by
     have hvec : mfderiv% (fun x : G ↦ g * x) (γ t)
         (mulInvariantVectorField v (γ t)) = mulInvariantVectorField v (g * γ t) := by
-      have D : (fun x : G ↦ (g * γ t) * x) =
-          (fun x : G ↦ g * x) ∘ (fun x : G ↦ γ t * x) := by
-        funext z
-        simp [mul_assoc]
-      rw [mulInvariantVectorField, mulInvariantVectorField, D]
-      exact (mfderiv_comp_apply_of_eq (I' := I) (f := fun x : G ↦ γ t * x)
-        (g := fun x : G ↦ g * x) (y := γ t) (1 : G)
-        ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
-        ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
-        (by simp) v).symm
+      have hpull := congrFun (mpullback_mulInvariantVectorField g v) (γ t)
+      have hcancel :
+          mfderiv% (fun x : G ↦ g * x) (γ t)
+              (mfderiv% (fun x : G ↦ g⁻¹ * x) (g * γ t)
+                (mulInvariantVectorField v (g * γ t))) =
+            mulInvariantVectorField v (g * γ t) := by
+        rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun x : G ↦ g⁻¹ * x)
+          (g := fun x : G ↦ g * x) (y := γ t) (g * γ t)
+          ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
+          ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
+          (by simp)]
+        have D : (fun x : G ↦ g * x) ∘ (fun x : G ↦ g⁻¹ * x) = id := by
+          funext z
+          simp
+        rw [D, mfderiv_id, ContinuousLinearMap.id_apply]
+      rw [← hpull, mpullback, inverse_mfderiv_mul_left]
+      exact hcancel
     calc
       _ = (1 : ℝ →L[ℝ] ℝ).smulRight
           (mfderiv% (fun x : G ↦ g * x) (γ t) (mulInvariantVectorField v (γ t))) := by
@@ -72,6 +79,7 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
         rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
           ContinuousLinearMap.smulRight_apply, map_smul]
       _ = _ := by rw [hvec]
+  -- Write the translated curve as a composition so the manifold chain rule applies directly.
   change HasMFDerivAt[s] ((fun x : G ↦ g * x) ∘ γ) t
     ((1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)))
   rw [← hder]
