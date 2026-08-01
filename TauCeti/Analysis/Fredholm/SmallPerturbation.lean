@@ -47,13 +47,9 @@ open scoped Topology
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
 
-private def blockCorner
-    {K X Y C : Type*}
-    [NormedAddCommGroup K] [NormedSpace 𝕜 K]
-    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
-    [NormedAddCommGroup C] [NormedSpace 𝕜 C]
-    (A : K × X →L[𝕜] Y × C) : X →L[𝕜] Y :=
+private def blockCorner {K X Y C : Type*} [NormedAddCommGroup K] [NormedSpace 𝕜 K]
+    [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    [NormedAddCommGroup C] [NormedSpace 𝕜 C] (A : K × X →L[𝕜] Y × C) : X →L[𝕜] Y :=
   (ContinuousLinearMap.fst 𝕜 Y C).comp
     (A.comp (ContinuousLinearMap.inr 𝕜 K X))
 
@@ -68,12 +64,9 @@ swap in the statement comes from.
 Only the factorization is recorded, not the Schur complement itself: all the index computation
 needs is that the remaining factor is *some* operator `K → C`, since between finite-dimensional
 spaces every operator has index `finrank K - finrank C`. -/
-private theorem exists_factorization_of_blocks
-    {K X Y C : Type*}
-    [NormedAddCommGroup K] [NormedSpace 𝕜 K]
-    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
-    [NormedAddCommGroup C] [NormedSpace 𝕜 C]
+private theorem exists_factorization_of_blocks {K X Y C : Type*}
+    [NormedAddCommGroup K] [NormedSpace 𝕜 K] [NormedAddCommGroup X] [NormedSpace 𝕜 X]
+    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y] [NormedAddCommGroup C] [NormedSpace 𝕜 C]
     (A : K × X →L[𝕜] Y × C) (a : K →L[𝕜] Y) (c : K →L[𝕜] C) (d : X →L[𝕜] C) (e : X ≃L[𝕜] Y)
     (hA : ∀ (k : K) (x : X), A (k, x) = (a k + e x, c k + d x)) :
     ∃ (f : K →L[𝕜] C) (P : (K × X) ≃L[𝕜] (K × X)) (Q : (C × Y) ≃L[𝕜] (Y × C)),
@@ -95,11 +88,9 @@ private theorem exists_factorization_of_blocks
   · simp [hA, add_comm]
   · simp [hA, map_add]
 
-private theorem isFredholm_and_index_eq_of_blocks
-    {K X Y C : Type*}
+private theorem isFredholm_and_index_eq_of_blocks {K X Y C : Type*}
     [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
-    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
     [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
     (A : K × X →L[𝕜] Y × C) (a : K →L[𝕜] Y) (c : K →L[𝕜] C) (d : X →L[𝕜] C) (e : X ≃L[𝕜] Y)
     (hA : ∀ (k : K) (x : X), A (k, x) = (a k + e x, c k + d x)) :
@@ -124,14 +115,11 @@ private theorem isFredholm_and_index_eq_of_blocks
       simp
     _ = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := add_zero _
 
-private theorem isFredholm_and_index_eq_of_blockCorner_equiv
-    {K X Y C : Type*}
+private theorem isFredholm_and_index_eq_of_blockCorner_equiv {K X Y C : Type*}
     [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
-    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
     [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
-    (A : K × X →L[𝕜] Y × C) (e : X ≃L[𝕜] Y)
-    (he : blockCorner A = (e : X →L[𝕜] Y)) :
+    (A : K × X →L[𝕜] Y × C) (e : X ≃L[𝕜] Y) (he : blockCorner A = (e : X →L[𝕜] Y)) :
     ContinuousLinearMap.IsFredholm A ∧
       ContinuousLinearMap.index A = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
   -- Read off the other three corners of `A`, so that `isFredholm_and_index_eq_of_blocks`
@@ -186,11 +174,9 @@ omit [CompleteSpace E] [CompleteSpace F] in
 as `K × X` and the codomain as `Y × C`, with `K` and `C` finite-dimensional, and that in the
 resulting block form of `S` the corner `X → Y` is an equivalence. Then `S` is Fredholm of index
 `finrank K - finrank C`. -/
-private theorem isFredholm_and_index_eq_of_splitting
-    {K X Y C : Type*}
+private theorem isFredholm_and_index_eq_of_splitting {K X Y C : Type*}
     [NormedAddCommGroup K] [NormedSpace 𝕜 K] [FiniteDimensional 𝕜 K]
-    [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-    [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+    [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
     [NormedAddCommGroup C] [NormedSpace 𝕜 C] [FiniteDimensional 𝕜 C]
     (S : E →L[𝕜] F) (p : (K × X) ≃L[𝕜] E) (q : (Y × C) ≃L[𝕜] F) {e : X ≃L[𝕜] Y}
     (he : blockCorner ((q.symm : F →L[𝕜] Y × C).comp (S.comp (p : K × X →L[𝕜] E))) =

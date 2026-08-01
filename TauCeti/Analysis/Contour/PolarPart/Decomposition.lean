@@ -126,8 +126,7 @@ extends differentiably to all of `U`. The homology Cauchy theorem applied to the
 theorem intervalIntegral_deriv_smul_analyticRemainder_eq_zero
     (decomp : PolarPartDecomposition f S U)
     (hU : IsOpen U) {γ : ℝ → ℂ} {a b : ℝ} (hγ_pc1 : IsPiecewiseC1On γ a b)
-    (hγ : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
-    (hnull : IsNullHomologous γ a b U) :
+    (hγ : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b) (hnull : IsNullHomologous γ a b U) :
     ∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t) = 0 :=
   homologyCauchyTheorem hU γ a b hγ_pc1 hγ hclosed decomp.analyticRemainder_differentiableOn hnull
 

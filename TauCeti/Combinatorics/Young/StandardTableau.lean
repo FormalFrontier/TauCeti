@@ -69,8 +69,7 @@ theorem toEquiv_apply {μ : YoungDiagram} (T : StandardYoungTableau μ) (c : ↥
 
 /-- Two standard Young tableaux are equal when all of their entries agree. -/
 @[ext]
-theorem ext {μ : YoungDiagram} {T U : StandardYoungTableau μ}
-    (h : ∀ c, T c = U c) : T = U :=
+theorem ext {μ : YoungDiagram} {T U : StandardYoungTableau μ} (h : ∀ c, T c = U c) : T = U :=
   DFunLike.ext T U h
 
 /-- The entries of a standard Young tableau form a bijection. -/
@@ -139,8 +138,7 @@ def transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
 /-- Transposition preserves the numeric label of each cell. -/
 @[simp]
 theorem transpose_apply_val {μ : YoungDiagram} (T : StandardYoungTableau μ)
-    (c : ↥μ.transpose.cells) :
-    (T.transpose c).val =
+    (c : ↥μ.transpose.cells) : (T.transpose c).val =
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩).val :=
   calc
     (T.transpose c).val = (T.transpose.toEquiv c).val :=
@@ -164,8 +162,7 @@ private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpo
       T.row_strict h (YoungDiagram.mem_transpose.mpr hcell)
 
 private theorem untranspose_apply_val {μ : YoungDiagram}
-    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) :
-    (untranspose T c).val =
+    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) : (untranspose T c).val =
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
   calc
     (untranspose T c).val = ((untranspose T).toEquiv c).val :=
@@ -199,8 +196,7 @@ theorem transposeEquiv_apply {μ : YoungDiagram} (T : StandardYoungTableau μ) :
 /-- The inverse transpose equivalence swaps cells while preserving their numeric labels. -/
 @[simp]
 theorem transposeEquiv_symm_apply_val {μ : YoungDiagram}
-    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) :
-    (((transposeEquiv μ).symm T) c).val =
+    (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) : (((transposeEquiv μ).symm T) c).val =
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
   untranspose_apply_val T c
 

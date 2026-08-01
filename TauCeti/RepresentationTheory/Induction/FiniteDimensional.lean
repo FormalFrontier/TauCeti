@@ -74,8 +74,7 @@ theorem rightCosetFactor_mul (s : S) (g : G) :
 
 /-- The right-coset factor carries the chosen representative back to the original element. -/
 @[simp]
-theorem rightCosetFactor_mul_out (g : G) :
-    (rightCosetFactor (S := S) g : G) *
+theorem rightCosetFactor_mul_out (g : G) : (rightCosetFactor (S := S) g : G) *
         Quotient.out (Quotient.mk'' g :
           Quotient (QuotientGroup.rightRel S)) = g := by
   simp [rightCosetFactor]
@@ -135,8 +134,7 @@ theorem coindSubtypeEquivPi_apply (A : Rep.{max u v w} k S)
 /-- The inverse coset model extends a value from each representative by `S`-equivariance. -/
 @[simp]
 theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v w} k S)
-    (x : Quotient (QuotientGroup.rightRel S) → A) (g : G) :
-    ((coindSubtypeEquivPi A).symm x).1 g =
+    (x : Quotient (QuotientGroup.rightRel S) → A) (g : G) : ((coindSubtypeEquivPi A).symm x).1 g =
       A.ρ (rightCosetFactor (S := S) g) (x (Quotient.mk'' g)) := by
   rw [coindSubtypeEquivPi]
   rfl
@@ -198,8 +196,7 @@ along `Rep.indCoindIso`.
 Not a `simp` lemma, for the same reason as `indSubtypeEquivPi_apply`: it rewrites the coset
 model into the comparison isomorphism. -/
 theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
-    (x : Quotient (QuotientGroup.rightRel S) → A) :
-    (indSubtypeEquivPi A).symm x =
+    (x : Quotient (QuotientGroup.rightRel S) → A) : (indSubtypeEquivPi A).symm x =
       (letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
        Rep.indCoindIso.{max u v w, u, v} A).inv.hom
         ((coindSubtypeEquivPi A).symm x) := by
@@ -290,8 +287,7 @@ conjugated by `indFDRepForgetIso`. This is the only fact about `indFDRepMap` use
 @[simp]
 theorem forget₂_map_indFDRepMap {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
-    (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) =
-      (indFDRepForgetIso A).hom ≫
+    (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) = (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
           (indFDRepForgetIso B).inv := by
   rw [indFDRepMap]

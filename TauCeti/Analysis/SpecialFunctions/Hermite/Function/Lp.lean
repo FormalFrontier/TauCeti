@@ -67,7 +67,8 @@ lemma coeFn_hermiteFunctionLp_real (n : ℕ) :
 /-! ## Zeroth-mode normalization -/
 
 /-- The zeroth `Lp` Hermite function has inner product one with itself, over any `RCLike`
-scalar field. -/
+scalar field. This lower-level result is available without importing the full orthonormality
+development. -/
 lemma inner_hermiteFunctionLp_zero_zero :
     inner 𝕜 (hermiteFunctionLp 𝕜 0) (hermiteFunctionLp 𝕜 0) = 1 := by
   calc
@@ -82,8 +83,11 @@ lemma inner_hermiteFunctionLp_zero_zero :
     _ = 1 := by
         rw [integral_ofReal, integral_hermiteFunction_zero_mul_self, RCLike.ofReal_one]
 
-/-- The zeroth `Lp` Hermite function is a unit vector, over any `RCLike` scalar field. -/
-@[simp]
+/-- The zeroth `Lp` Hermite function is a unit vector, over any `RCLike` scalar field. This
+lower-level result is available without importing the full orthonormality development. It has
+high simp priority so it remains the preferred zeroth-mode rule when the general theorem is also
+imported. -/
+@[simp high]
 lemma norm_hermiteFunctionLp_zero : ‖hermiteFunctionLp 𝕜 0‖ = 1 := by
   have h := inner_hermiteFunctionLp_zero_zero (𝕜 := 𝕜)
   rw [inner_self_eq_norm_sq_to_K, ← RCLike.ofReal_pow] at h

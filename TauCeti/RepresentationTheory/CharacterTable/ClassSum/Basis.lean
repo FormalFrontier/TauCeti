@@ -125,8 +125,7 @@ noncomputable def centerEquivConjClasses :
 
 /-- The forward map of `centerEquivConjClasses` reads the coefficients of a central element. -/
 @[simp]
-theorem centerEquivConjClasses_apply
-    (z : Subalgebra.center k (MonoidAlgebra k G)) :
+theorem centerEquivConjClasses_apply (z : Subalgebra.center k (MonoidAlgebra k G)) :
     centerEquivConjClasses z = centerToConjClasses z :=
   (rfl)
 
@@ -154,8 +153,7 @@ theorem classSumBasis_apply (C : ConjClasses G) :
 /-- The coordinate of a central element in the class-sum basis is its coefficient on that
 conjugacy class. -/
 @[simp]
-theorem classSumBasis_repr_apply
-    (z : Subalgebra.center k (MonoidAlgebra k G)) (C : ConjClasses G) :
+theorem classSumBasis_repr_apply (z : Subalgebra.center k (MonoidAlgebra k G)) (C : ConjClasses G) :
     (classSumBasis (k := k)).repr z C = centerToConjClasses z C :=
   Module.Basis.ofEquivFun_repr_apply centerEquivConjClasses z C
 

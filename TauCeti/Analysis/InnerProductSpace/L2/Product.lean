@@ -183,8 +183,7 @@ theorem inner_L2prodMul [SFinite μ] [SFinite ν] (F₁ F₂ : Lp 𝕜 2 μ) (G�
 `L²(ν)`, their pointwise products form an orthonormal family of `L²(μ ⊗ ν)`, indexed by the product
 of index types. -/
 theorem orthonormal_L2prodMul [SFinite μ] [SFinite ν] {ι₁ ι₂ : Type*}
-    {b : ι₁ → Lp 𝕜 2 μ} {c : ι₂ → Lp 𝕜 2 ν}
-    (hb : Orthonormal 𝕜 b) (hc : Orthonormal 𝕜 c) :
+    {b : ι₁ → Lp 𝕜 2 μ} {c : ι₂ → Lp 𝕜 2 ν} (hb : Orthonormal 𝕜 b) (hc : Orthonormal 𝕜 c) :
     Orthonormal 𝕜 (fun ij : ι₁ × ι₂ => L2prodMul (b ij.1) (c ij.2)) := by
   classical
   rw [orthonormal_iff_ite] at hb hc ⊢
@@ -251,8 +250,7 @@ theorem inner_L2prodMul_eq_zero_of_forall_basis [SFinite μ] [SFinite ν] {ι₁
 
 /-- The tensor of two indicators is the indicator of the rectangle, so orthogonality to every
 elementary tensor makes the integral over every finite-measure rectangle vanish. -/
-theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν]
-    {h : Lp 𝕜 2 (μ.prod ν)}
+theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν] {h : Lp 𝕜 2 (μ.prod ν)}
     (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
     {A : Set α} (hA : MeasurableSet A) (hμA : μ A ≠ ⊤)
     {B : Set β} (hB : MeasurableSet B) (hνB : ν B ≠ ⊤) :
@@ -277,8 +275,7 @@ theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν]
 /-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by finite
 boxes `spanningSets μ n ×ˢ spanningSets ν n`, run the Dynkin step inside each box, and pass to the
 monotone limit. -/
-theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν]
-    {h : Lp 𝕜 2 (μ.prod ν)}
+theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν] {h : Lp 𝕜 2 (μ.prod ν)}
     (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
     (u : Set (α × β)) (hu : MeasurableSet u) (hfin : (μ.prod ν) u < ⊤) :
     ∫ p in u, h p ∂(μ.prod ν) = 0 := by
@@ -330,8 +327,7 @@ trivial orthogonal complement in `L²(μ ⊗ ν)`: a vector orthogonal to all of
 every elementary tensor, hence integrates to zero on every rectangle, hence on every finite-measure
 set, hence vanishes. -/
 theorem orthogonal_span_range_L2prodMul_eq_bot [SigmaFinite μ] [SigmaFinite ν] {ι₁ ι₂ : Type*}
-    (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) :
-    (Submodule.span 𝕜
+    (b₁ : HilbertBasis ι₁ 𝕜 (Lp 𝕜 2 μ)) (b₂ : HilbertBasis ι₂ 𝕜 (Lp 𝕜 2 ν)) : (Submodule.span 𝕜
       (Set.range (fun ij : ι₁ × ι₂ => L2prodMul (b₁ ij.1) (b₂ ij.2))))ᗮ = ⊥ := by
   refine (Submodule.eq_bot_iff _).2 fun h hh => ?_
   rw [Submodule.mem_orthogonal] at hh

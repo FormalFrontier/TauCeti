@@ -80,8 +80,7 @@ theorem stdSLRep_exteriorPower_self_apply (g : Matrix.SpecialLinearGroup (Fin n)
 
 /-- **The volume element is invariant**: the top exterior power of the standard representation of
 `SL(n, k)` is the trivial one-dimensional representation. -/
-noncomputable def topExtPowerSLEquivTrivial :
-    ((stdSLRep k n).exteriorPower n).Equiv
+noncomputable def topExtPowerSLEquivTrivial : ((stdSLRep k n).exteriorPower n).Equiv
       (Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     rw [stdSLRep_exteriorPower_self_apply]
@@ -90,8 +89,7 @@ noncomputable def topExtPowerSLEquivTrivial :
 /-- The underlying linear equivalence of `TauCeti.topExtPowerSLEquivTrivial` is the top-degree
 identification of the exterior power with the scalars. -/
 @[simp]
-theorem topExtPowerSLEquivTrivial_toLinearEquiv :
-    (topExtPowerSLEquivTrivial k n).toLinearEquiv =
+theorem topExtPowerSLEquivTrivial_toLinearEquiv : (topExtPowerSLEquivTrivial k n).toLinearEquiv =
       exteriorPower.topEquiv (Pi.basisFun k (Fin n)) :=
   (rfl)
 

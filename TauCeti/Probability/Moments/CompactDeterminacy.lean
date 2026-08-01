@@ -176,8 +176,7 @@ support implies: with genuine moments, a Markov bound on `x i ^ (2 * m)` confine
 box. That is left to a follow-up; the Layer 6 consumer already has both mixing laws on a common
 compact box. -/
 theorem Measure.ext_of_forall_integral_monomial_eq_of_support [Fintype ι] (hK : IsCompact K)
-    {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
+    {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν] (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
     (hmom : ∀ n : ι → ℕ, ∫ x, ∏ i, x i ^ n i ∂μ = ∫ x, ∏ i, x i ^ n i ∂ν) :
     μ = ν := by
   haveI : CompactSpace K := isCompact_iff_compactSpace.mp hK

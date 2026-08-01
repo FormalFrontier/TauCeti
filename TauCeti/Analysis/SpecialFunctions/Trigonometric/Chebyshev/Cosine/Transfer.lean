@@ -237,8 +237,7 @@ lemma integral_eval_T_real_measureT_eq_integral_chebyshevCosine (n : ℕ) :
 
 /-- Transfer a product of two Chebyshev `T` polynomials from `measureT` to the
 angular cosine-side integral. -/
-lemma integral_eval_T_real_mul_eval_T_real_measureT_eq_integral_chebyshevCosine_mul
-    (m n : ℕ) :
+lemma integral_eval_T_real_mul_eval_T_real_measureT_eq_integral_chebyshevCosine_mul (m n : ℕ) :
     ∫ x, (T ℝ m).eval x * (T ℝ n).eval x ∂Polynomial.Chebyshev.measureT =
       ∫ θ in (0)..Real.pi, chebyshevCosine m θ * chebyshevCosine n θ := by
   rw [integral_measureT_eq_integral_cos]

@@ -40,8 +40,7 @@ variable {K : Type*} [Field K] [NumberField K]
 prime `p` dividing none of the `D i`, `p` splits completely in `K` exactly when every `D i` is
 a quadratic residue modulo `p`. -/
 theorem ncard_primesOver_primeDiscriminantRadicands_iff {ι : Type*} [Finite ι]
-    (D : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 =
+    (D : ι → ℤ) (r : ι → K) (hr : ∀ i, r i ^ 2 =
       algebraMap ℤ K (TauCeti.Multiquadratic.primeDiscriminantRadicand (D i)))
     (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ D i) :

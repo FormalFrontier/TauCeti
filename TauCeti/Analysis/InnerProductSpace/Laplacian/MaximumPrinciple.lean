@@ -76,8 +76,7 @@ and satisfies `0 < Δ f x` throughout `interior K`, then some maximum point of `
 `frontier K`. -/
 theorem exists_mem_frontier_isMaxOn_of_laplacian_pos {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 < Δ f x) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 < Δ f x) :
     ∃ x ∈ frontier K, IsMaxOn f K x := by
   exact exists_mem_frontier_isMaxOn_of_forall_mem_interior_not_isLocalMax hK hne hcont
     fun {x} hxint => not_isLocalMax_of_laplacian_pos (hcd (x := x) hxint) (hlap (x := x) hxint)
@@ -89,8 +88,7 @@ and satisfies `Δ f x < 0` throughout `interior K`, then some minimum point of `
 `frontier K`. -/
 theorem exists_mem_frontier_isMinOn_of_laplacian_neg {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x < 0) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x < 0) :
     ∃ x ∈ frontier K, IsMinOn f K x := by
   exact exists_mem_frontier_isMinOn_of_forall_mem_interior_not_isLocalMin hK hne hcont
     fun {x} hxint => not_isLocalMin_of_laplacian_neg (hcd (x := x) hxint) (hlap (x := x) hxint)

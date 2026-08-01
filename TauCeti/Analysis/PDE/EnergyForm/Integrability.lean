@@ -56,11 +56,9 @@ noncomputable local instance energyFormIntegrabilityDecidableEq : DecidableEq n 
 integrable scalar energy density. -/
 lemma integrable_energyIntegrand_apply₂_of_integrable_norm_mul
     {a : α → Matrix n n ℝ} {b : α → EuclideanSpace ℝ n} {c : α → ℝ}
-    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma : ℝ}
-    (hLam : 0 ≤ Lam)
+    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma : ℝ} (hLam : 0 ≤ Lam)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ)
-    (hV : AEStronglyMeasurable V μ)
+    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ) (hV : AEStronglyMeasurable V μ)
     (ha_bound : ∀ᵐ x ∂μ, ∀ η ξ : EuclideanSpace ℝ n,
       |η ⬝ᵥ (a x *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
     (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
@@ -76,8 +74,7 @@ lemma integrable_energyIntegrand_apply₂_of_integrable_norm_mul
 scalar energy density. -/
 lemma integrable_energyIntegrand_apply₂_of_memLp_two
     {a : α → Matrix n n ℝ} {b : α → EuclideanSpace ℝ n} {c : α → ℝ}
-    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma : ℝ}
-    (hLam : 0 ≤ Lam)
+    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma : ℝ} (hLam : 0 ≤ Lam)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
     (hc : AEStronglyMeasurable c μ) (hU : MemLp U 2 μ) (hV : MemLp V 2 μ)
     (ha_bound : ∀ᵐ x ∂μ, ∀ η ξ : EuclideanSpace ℝ n,
@@ -98,11 +95,9 @@ lemma integrable_energyIntegrand_apply₂_of_memLp_two
 scalar energy density on a finite-measure space. -/
 lemma integrable_energyIntegrand_apply₂_of_bounds [IsFiniteMeasure μ]
     {a : α → Matrix n n ℝ} {b : α → EuclideanSpace ℝ n} {c : α → ℝ}
-    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma R S : ℝ}
-    (hLam : 0 ≤ Lam)
+    {U V : α → ℝ × EuclideanSpace ℝ n} {Lam beta gamma R S : ℝ} (hLam : 0 ≤ Lam)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ)
-    (hV : AEStronglyMeasurable V μ)
+    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ) (hV : AEStronglyMeasurable V μ)
     (ha_bound : ∀ᵐ x ∂μ, ∀ η ξ : EuclideanSpace ℝ n,
       |η ⬝ᵥ (a x *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
     (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
@@ -120,12 +115,9 @@ lemma integrable_energyIntegrand_apply₂_of_bounds [IsFiniteMeasure μ]
 
 /-- Fixed-jet specialization of `integrable_energyIntegrand_apply₂_of_bounds`. -/
 lemma integrable_energyIntegrand_apply_of_bounds [IsFiniteMeasure μ]
-    {a : α → Matrix n n ℝ} {b : α → EuclideanSpace ℝ n} {c : α → ℝ}
-    {Lam beta gamma : ℝ}
-    (hLam : 0 ≤ Lam)
-    (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ)
-    (ha_bound : ∀ᵐ x ∂μ, ∀ η ξ : EuclideanSpace ℝ n,
+    {a : α → Matrix n n ℝ} {b : α → EuclideanSpace ℝ n} {c : α → ℝ} {Lam beta gamma : ℝ}
+    (hLam : 0 ≤ Lam) (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
+    (hc : AEStronglyMeasurable c μ) (ha_bound : ∀ᵐ x ∂μ, ∀ η ξ : EuclideanSpace ℝ n,
       |η ⬝ᵥ (a x *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
     (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
     (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
@@ -151,10 +143,8 @@ If `μ` is a.e. supported on `Ω`, the named principal coefficient hypothesis
 lemma integrable_energyIntegrand_apply₂_of_integrable_norm_mul_on
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ)
-    (hV : AEStronglyMeasurable V μ)
-    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
+    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ) (hV : AEStronglyMeasurable V μ)
+    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
     (hUV : Integrable (fun x => ‖U x‖ * ‖V x‖) μ) :
     Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (V x)) μ :=
   integrable_energyIntegrand_apply₂_of_integrable_norm_mul h.upper_nonneg ha hb hc hU hV
@@ -165,8 +155,7 @@ lemma integrable_energyIntegrand_apply₂_of_memLp_two_on
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
     (hc : AEStronglyMeasurable c μ) (hU : MemLp U 2 μ) (hV : MemLp V 2 μ)
-    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma) :
+    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma) :
     Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (V x)) μ :=
   integrable_energyIntegrand_apply₂_of_memLp_two h.upper_nonneg ha hb hc hU hV
     (hΩ.mono fun _ hx => h.upper_bound hx) hb_bound hc_bound
@@ -175,12 +164,9 @@ lemma integrable_energyIntegrand_apply₂_of_memLp_two_on
 lemma integrable_energyIntegrand_apply₂_of_bounds_on [IsFiniteMeasure μ]
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
     (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ)
-    (hV : AEStronglyMeasurable V μ)
-    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
-    (hU_bound : ∀ᵐ x ∂μ, ‖U x‖ ≤ R)
-    (hV_bound : ∀ᵐ x ∂μ, ‖V x‖ ≤ S) :
+    (hc : AEStronglyMeasurable c μ) (hU : AEStronglyMeasurable U μ) (hV : AEStronglyMeasurable V μ)
+    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
+    (hU_bound : ∀ᵐ x ∂μ, ‖U x‖ ≤ R) (hV_bound : ∀ᵐ x ∂μ, ‖V x‖ ≤ S) :
     Integrable (fun x => energyIntegrand (a x) (b x) (c x) (U x) (V x)) μ :=
   integrable_energyIntegrand_apply₂_of_bounds h.upper_nonneg ha hb hc hU hV
     (hΩ.mono fun _ hx => h.upper_bound hx) hb_bound hc_bound hU_bound hV_bound
@@ -189,10 +175,8 @@ lemma integrable_energyIntegrand_apply₂_of_bounds_on [IsFiniteMeasure μ]
 `UniformlyEllipticOn.integrable_energyIntegrand_apply₂_of_bounds_on`. -/
 lemma integrable_energyIntegrand_apply_of_bounds_on [IsFiniteMeasure μ]
     (h : UniformlyEllipticOn Ω a lam Lam) (hΩ : ∀ᵐ x ∂μ, x ∈ Ω)
-    (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ)
-    (hc : AEStronglyMeasurable c μ)
-    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta)
-    (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
+    (ha : AEStronglyMeasurable a μ) (hb : AEStronglyMeasurable b μ) (hc : AEStronglyMeasurable c μ)
+    (hb_bound : ∀ᵐ x ∂μ, ‖b x‖ ≤ beta) (hc_bound : ∀ᵐ x ∂μ, ‖c x‖ ≤ gamma)
     (U V : ℝ × EuclideanSpace ℝ n) :
     Integrable (fun x => energyIntegrand (a x) (b x) (c x) U V) μ :=
   integrable_energyIntegrand_apply_of_bounds h.upper_nonneg ha hb hc

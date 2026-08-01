@@ -25,6 +25,10 @@ finite-dimensional subcoalgebras: finite sums of finite subcoalgebras remain fin
 * `Subcoalgebra.instCompleteSemilatticeSup`: arbitrary suprema of subcoalgebras.
 * `Subcoalgebra.iSup_toSubmodule`, `Subcoalgebra.mem_iSup`, `Subcoalgebra.mem_sSup`:
   characteristic API for arbitrary joins.
+* `Subcoalgebra.mem_iSup_of_directed`, `Subcoalgebra.coe_iSup_of_directed`:
+  a nonempty directed supremum is the union of its members.
+* `Subcoalgebra.mem_sSup_of_directedOn`, `Subcoalgebra.coe_sSup_of_directedOn`:
+  the corresponding set-indexed directed-union results.
 * `Subcoalgebra.sup_toSubmodule`, `Subcoalgebra.mem_sup`: characteristic API for binary joins.
 * `Subcoalgebra.iSup_finite`, `Subcoalgebra.sup_finite`, `Subcoalgebra.finset_sup_finite`:
   finite generation is preserved by finite joins.
@@ -166,6 +170,39 @@ theorem mem_iSup {ι : Type*} {D : ι → Subcoalgebra R C} {c : C} :
       ∃ f : ι →₀ C, (∀ i, f i ∈ D i) ∧ f.sum (fun _ x => x) = c := by
   rw [← mem_toSubmodule, iSup_toSubmodule]
   exact Submodule.mem_iSup_iff_exists_finsupp (fun i => (D i).toSubmodule) c
+
+/-- Membership in a nonempty directed supremum of subcoalgebras reduces to membership in one
+member of the family. -/
+theorem mem_iSup_of_directed {ι : Type*} [Nonempty ι] {D : ι → Subcoalgebra R C}
+    (hD : Directed (· ≤ ·) D) {c : C} :
+    c ∈ ⨆ i, D i ↔ ∃ i, c ∈ D i := by
+  rw [← mem_toSubmodule, iSup_toSubmodule]
+  apply Submodule.mem_iSup_of_directed
+  intro i j
+  obtain ⟨k, hik, hjk⟩ := hD i j
+  exact ⟨k, toSubmodule_le_toSubmodule.2 hik, toSubmodule_le_toSubmodule.2 hjk⟩
+
+/-- The carrier of a nonempty directed supremum of subcoalgebras is the union of their
+carriers. -/
+theorem coe_iSup_of_directed {ι : Type*} [Nonempty ι] {D : ι → Subcoalgebra R C}
+    (hD : Directed (· ≤ ·) D) : ((⨆ i, D i : Subcoalgebra R C) : Set C) = ⋃ i, (D i : Set C) := by
+  ext c
+  simp only [SetLike.mem_coe, Set.mem_iUnion, mem_iSup_of_directed hD]
+
+/-- Membership in the supremum of a nonempty directed set of subcoalgebras reduces to
+membership in one member of the set. -/
+theorem mem_sSup_of_directedOn {S : Set (Subcoalgebra R C)} (hne : S.Nonempty)
+    (hS : DirectedOn (· ≤ ·) S) {c : C} :
+    c ∈ sSup S ↔ ∃ D ∈ S, c ∈ D := by
+  haveI : Nonempty S := hne.to_subtype
+  simp only [sSup_eq_iSup', mem_iSup_of_directed hS.directed_val, SetCoe.exists, exists_prop]
+
+/-- The carrier of the supremum of a nonempty directed set of subcoalgebras is the union of
+their carriers. -/
+theorem coe_sSup_of_directedOn {S : Set (Subcoalgebra R C)} (hne : S.Nonempty)
+    (hS : DirectedOn (· ≤ ·) S) : (↑(sSup S) : Set C) = ⋃ D ∈ S, (D : Set C) := by
+  ext c
+  simp [mem_sSup_of_directedOn hne hS]
 
 /-- Subcoalgebras have arbitrary suprema, computed on underlying submodules. -/
 instance instCompleteSemilatticeSup : CompleteSemilatticeSup (Subcoalgebra R C) where

@@ -69,8 +69,7 @@ part is this real integral (`realWindingIntegrand_eq_div`), while its real part 
 increment of `log ‖γ − w‖` —
 vanishes by closedness. -/
 theorem windingNumber_eq_real_integral_of_closed {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} {P : Set ℝ}
-    (hclosed : γ a = γ b) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Set.uIcc a b))
+    (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Set.uIcc a b))
     (hγ_diff : ∀ t ∈ Set.Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
     (h_avoid : ∀ t ∈ Set.uIcc a b, γ t ≠ w)
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) MeasureTheory.volume a b) :

@@ -153,8 +153,7 @@ private theorem candidateGenusField_apply_prodRoot {d : ℤ} (hd : Squarefree d)
   simp_rw [candidateGenusField_apply_gen]
   rw [Finset.prod_mul_distrib, Finset.prod_pow_eq_pow_sum]
 
-private theorem sum_zmod_eq_zero_iff_even_sum_val
-    {ι : Type*} [Fintype ι] (v : ι → ZMod 2) :
+private theorem sum_zmod_eq_zero_iff_even_sum_val {ι : Type*} [Fintype ι] (v : ι → ZMod 2) :
     (∑ i, v i) = 0 ↔ Even (∑ i, (v i).val) := by
   have hcast : ((∑ i, (v i).val : ℕ) : ZMod 2) = ∑ i, v i := by
     rw [Nat.cast_sum]
@@ -241,8 +240,7 @@ noncomputable local instance candidateGenusFieldAdjoinAlgebra {d : ℤ} (hd : Sq
     Algebra ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
   (adjoin ℚ (Set.range (genusFieldRoot hd))).algebra'
 
-private noncomputable def candidateGenusFieldEquivAdjoinRelative {d : ℤ}
-    (hd : Squarefree d) :
+private noncomputable def candidateGenusFieldEquivAdjoinRelative {d : ℤ} (hd : Squarefree d) :
     candidateGenusField hd ≃ₐ[ℚ]
       @adjoin ℚ _ ℂ _ _ (Set.range (genusFieldRoot hd)) :=
   AlgEquiv.ofRingEquiv
@@ -324,8 +322,7 @@ private noncomputable def candidateGenusFieldRelativeAutCongr {d : ℤ} (hd : Sq
         ((MulEquiv.subgroupCongr (candidateGenusField_map_fixingSubgroup hd)).trans
           (IntermediateField.fixingSubgroupEquiv (candidateGenusFieldBaseAdjoin hd))))
 
-@[simp] private theorem candidateGenusFieldRelativeAutCongr_apply {d : ℤ}
-    (hd : Squarefree d)
+@[simp] private theorem candidateGenusFieldRelativeAutCongr_apply {d : ℤ} (hd : Squarefree d)
     (σ : candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd)
     (x : candidateGenusField hd) :
     candidateGenusFieldRelativeAutCongr hd σ
@@ -427,8 +424,7 @@ noncomputable def galoisGroupEquivCandidateGenusFieldRelative {d : ℤ} (hd : Sq
 
 /-- The relative Galois equivalence sends an automorphism to the sign pattern of its restriction
 to an absolute `ℚ`-automorphism. -/
-@[simp] theorem galoisGroupEquivCandidateGenusFieldRelative_apply {d : ℤ}
-    (hd : Squarefree d)
+@[simp] theorem galoisGroupEquivCandidateGenusFieldRelative_apply {d : ℤ} (hd : Squarefree d)
     (σ : candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) :
     galoisGroupEquivCandidateGenusFieldRelative hd σ =
       Multiplicative.ofAdd

@@ -127,8 +127,7 @@ lemma normalizerSubgroupFiberOrbitPermHom_eq_one_of_mem
     (X := p ⁻¹' {b}) H φ hφ
 
 /-- The action of the normalizer on subgroup fibre quotients descends to `N(H) / H`. -/
-noncomputable def normalizerQuotientSubgroupFiberOrbitPermHom
-    (H : Subgroup (Deck p)) :
+noncomputable def normalizerQuotientSubgroupFiberOrbitPermHom (H : Subgroup (Deck p)) :
     Subgroup.normalizerQuotient H →*
       Equiv.Perm (SubgroupFiberOrbitQuotient H b) :=
   TauCeti.MulAction.normalizerQuotientOrbitRelQuotientPermHom H
@@ -147,8 +146,7 @@ lemma normalizerQuotientSubgroupFiberOrbitPermHom_mk_apply (H : Subgroup (Deck p
         (X := p ⁻¹' {b}) H φ e
 
 /-- The normalizer quotient `N(H) / H` acts on the quotient of a fibre by `H`-orbits. -/
-noncomputable instance instNormalizerQuotientSubgroupFiberOrbitMulAction
-    (H : Subgroup (Deck p)) :
+noncomputable instance instNormalizerQuotientSubgroupFiberOrbitMulAction (H : Subgroup (Deck p)) :
     MulAction (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) :=
   TauCeti.MulAction.normalizerQuotientOrbitRelQuotientMulAction H
 
@@ -165,8 +163,7 @@ lemma normalizerQuotient_smul_subgroupFiberOrbitClass (H : Subgroup (Deck p))
           (X := p ⁻¹' {b}) H φ e
 
 /-- The identity class in `N(H) / H` fixes every subgroup fibre-orbit class. -/
-lemma normalizerQuotient_one_smul_subgroupFiberOrbitClass (H : Subgroup (Deck p))
-    (e : p ⁻¹' {b}) :
+lemma normalizerQuotient_one_smul_subgroupFiberOrbitClass (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) :
     (1 : Subgroup.normalizerQuotient H) • subgroupFiberOrbitClass H e =
       subgroupFiberOrbitClass H e := by
   simp
@@ -184,8 +181,7 @@ lemma normalizerQuotient_mk_of_mem_smul_subgroupFiberOrbitClass
 
 /-- If the normalizer of `H` acts transitively on the chosen fibre, then the descended
 `N(H) / H` action on the quotient of that fibre by `H`-orbits is transitive. -/
-theorem normalizerQuotientSubgroupFiberOrbitIsPretransitive
-    (H : Subgroup (Deck p))
+theorem normalizerQuotientSubgroupFiberOrbitIsPretransitive (H : Subgroup (Deck p))
     [MulAction.IsPretransitive (_root_.Subgroup.normalizer (H : Set (Deck p))) (p ⁻¹' {b})] :
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) :=
@@ -195,8 +191,7 @@ theorem normalizerQuotientSubgroupFiberOrbitIsPretransitive
 /-- If `H` is normal and the deck action on the chosen fibre is transitive, then the
 descended `N(H) / H` action on the quotient of that fibre by `H`-orbits is transitive. -/
 theorem normalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal
-    [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})]
-    (H : Subgroup (Deck p)) [H.Normal] :
+    [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] (H : Subgroup (Deck p)) [H.Normal] :
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) :=
   TauCeti.MulAction.normalizerQuotientOrbitRelQuotientIsPretransitiveOfNormal
@@ -205,8 +200,7 @@ theorem normalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal
 /-- The normalizer quotient acts transitively on a normal subgroup fibre quotient whenever the
 deck action on the fibre is transitive. -/
 noncomputable instance instNormalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal
-    [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})]
-    (H : Subgroup (Deck p)) [H.Normal] :
+    [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] (H : Subgroup (Deck p)) [H.Normal] :
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) :=
   normalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal H
@@ -239,8 +233,7 @@ noncomputable instance instNormalizerQuotientSubgroupFiberOrbitIsCancelSMul
 /-- For a preconnected covering map, the descended `N(H) / H` action on every `H`-fibre
 quotient is free. -/
 theorem normalizerQuotientSubgroupFiberOrbitIsCancelSMulOfIsCoveringMap
-    [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p)
-    (H : Subgroup (Deck p)) :
+    [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p) (H : Subgroup (Deck p)) :
     IsCancelSMul (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) := by
   letI := fiber_isCancelSMul (b := b) hp
   exact instNormalizerQuotientSubgroupFiberOrbitIsCancelSMul H

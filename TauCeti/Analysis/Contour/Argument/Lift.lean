@@ -61,8 +61,7 @@ exists `δ > 0` such that on any sub-interval of length `< δ`, `γ` varies by l
 half the minimum distance to `w`. This gives a partition where each segment of
 `γ - w` lies in a ball avoiding `0`. -/
 private theorem exists_uniform_modulus_avoiding {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hγ : ContinuousOn γ (Icc a b))
-    (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w) :
+    (hγ : ContinuousOn γ (Icc a b)) (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w) :
     ∃ δ' > 0, ∃ ρ > 0, (∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖) ∧
       ∀ t s, t ∈ Icc a b → s ∈ Icc a b → |t - s| < δ' →
         ‖γ t - γ s‖ < ρ / 2 := by
@@ -145,10 +144,8 @@ theorem segRatio_eq_endpoint_div_of_le {γ : ℝ → ℂ} {w : ℂ} {s_j s_jp1 t
 
 /-- For partition with mesh < δ' and segments [s_j, s_{j+1}] of length ≤ mesh,
 on the j-th segment, `γ(clamp t) - γ s_j` is small, so `segRatio j t ∈ ball(1, 1/2)`. -/
-private theorem segRatio_mem_ball_one
-    {γ : ℝ → ℂ} {w : ℂ} {a b δ' ρ : ℝ} (hρ_pos : 0 < ρ)
-    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖)
-    (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
+private theorem segRatio_mem_ball_one {γ : ℝ → ℂ} {w : ℂ} {a b δ' ρ : ℝ} (hρ_pos : 0 < ρ)
+    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖) (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
       |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
     {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc a b) (hsjp1 : s_jp1 ∈ Icc a b)
     (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') (t : ℝ) :
@@ -175,8 +172,7 @@ private theorem segRatio_mem_ball_one
 
 /-- Continuity of `t ↦ segRatio γ w s_j s_jp1 t` on `Icc a b`. -/
 private theorem continuousOn_segRatio {γ : ℝ → ℂ} {a b : ℝ} (hγ : ContinuousOn γ (Icc a b))
-    {w : ℂ} {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc a b)
-    (hsjp1 : s_jp1 ∈ Icc a b) (h_le : s_j ≤ s_jp1) :
+    {w : ℂ} {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc a b) (hsjp1 : s_jp1 ∈ Icc a b) (h_le : s_j ≤ s_jp1) :
     ContinuousOn (fun t ↦ segRatio γ w s_j s_jp1 t) (Icc a b) := by
   unfold segRatio
   refine ContinuousOn.div_const ?_ _
@@ -187,10 +183,8 @@ private theorem continuousOn_segRatio {γ : ℝ → ℂ} {a b : ℝ} (hγ : Cont
     (segClamp_mem_Icc s_j s_jp1 t h_le).2.trans hsjp1.2⟩
 
 /-- Combined: for partition with mesh < δ', `segRatio j t ∈ slitPlane`. -/
-private theorem segRatio_mem_slitPlane
-    {γ : ℝ → ℂ} {w : ℂ} {a b δ' ρ : ℝ} (hρ_pos : 0 < ρ)
-    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖)
-    (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
+private theorem segRatio_mem_slitPlane {γ : ℝ → ℂ} {w : ℂ} {a b δ' ρ : ℝ} (hρ_pos : 0 < ρ)
+    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖) (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
       |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
     {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc a b) (hsjp1 : s_jp1 ∈ Icc a b)
     (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') (t : ℝ) :
@@ -205,8 +199,7 @@ private theorem segRatio_mem_slitPlane
 /-- Telescoping product in `ℂ` over `Finset.range`. For `a : ℕ → ℂ` nonzero on indices `0..k`,
 `∏ j ∈ range k, a (j+1)/a j = a k / a 0`. The nonzero-field analogue of the group telescoping lemma
 `Finset.prod_range_div`, obtained from it by lifting the nonzero values into `ℂˣ`. -/
-private lemma prod_range_div_complex (a : ℕ → ℂ) (k : ℕ)
-    (ha : ∀ j ≤ k, a j ≠ 0) :
+private lemma prod_range_div_complex (a : ℕ → ℂ) (k : ℕ) (ha : ∀ j ≤ k, a j ≠ 0) :
     ∏ j ∈ Finset.range k, (a (j + 1) / a j) = a k / a 0 := by
   classical
   set u : ℕ → ℂˣ := fun j ↦ if h : a j = 0 then 1 else Units.mk0 (a j) h with hu_def
@@ -227,10 +220,8 @@ private lemma prod_range_div_complex (a : ℕ → ℂ) (k : ℕ)
 
 This is the key identity making `Im(log)` of each `segRatio` add up to a
 continuous argument lift of `t ↦ γ t - w`. -/
-private theorem prod_segRatio_telescope
-    {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {s : ℕ → ℝ}
-    (hs_mono : Monotone s)
-    (h_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0)
+private theorem prod_segRatio_telescope {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {s : ℕ → ℝ}
+    (hs_mono : Monotone s) (h_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0)
     {t : ℝ} {k : ℕ} (hk : k < N) (hk_lo : s k ≤ t) (hk_hi : t ≤ s (k + 1)) :
     ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = (γ t - w) / (γ (s 0) - w) := by
   -- Split range N = range (k+1) ∪ Ico (k+1) N
@@ -268,8 +259,7 @@ private theorem prod_segRatio_telescope
 /-- Each summand in the telescoping arg-lift sum is continuous. -/
 private theorem continuousOn_im_log_segRatio {γ : ℝ → ℂ} {a b : ℝ}
     (hγ : ContinuousOn γ (Icc a b)) {w : ℂ} {δ' ρ : ℝ} (hρ_pos : 0 < ρ)
-    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖)
-    (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
+    (h_dist_lb : ∀ t ∈ Icc a b, ρ ≤ ‖γ t - w‖) (h_unif : ∀ t s : ℝ, t ∈ Icc a b → s ∈ Icc a b →
       |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
     {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc a b) (hsjp1 : s_jp1 ∈ Icc a b)
     (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') :
@@ -384,10 +374,8 @@ avoiding `w`, there is a monotone partition `a = s 0 ≤ ⋯ ≤ s N = b` and a 
 `θ t = arg (γ a - w) + ∑_{j < N} (log (segRatio γ w (s j) (s (j+1)) t)).im`, continuous on `[a, b]`,
 satisfying `γ t - w = ‖γ t - w‖ · exp (I · θ t)` there. Each node has `γ (s j) ≠ w`, and on each
 segment `j` the ratio `(γ t - w) / (γ (s j) - w)` lies in `Complex.slitPlane`. -/
-theorem exists_continuousOn_arg_lift_with_partition
-    {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hγ : ContinuousOn γ (Icc a b))
-    (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w) :
+theorem exists_continuousOn_arg_lift_with_partition {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} (hab : a ≤ b)
+    (hγ : ContinuousOn γ (Icc a b)) (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w) :
     ∃ (N : ℕ) (s : ℕ → ℝ),
       0 < N ∧ s 0 = a ∧ s N = b ∧ Monotone s ∧
       (∀ j ≤ N, s j ∈ Icc a b) ∧

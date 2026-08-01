@@ -263,8 +263,7 @@ lemma coeff_principalDivisor_eq_neg_log_valuation (u : Additive Kˣ) (v : Height
 
 /-- The coefficient of a Dedekind-domain principal divisor agrees with Mathlib's exponent of the
 corresponding principal fractional ideal. -/
-lemma coeff_principalDivisor_eq_fractionalIdeal_count (u : Additive Kˣ)
-    (v : HeightOneSpectrum R) :
+lemma coeff_principalDivisor_eq_fractionalIdeal_count (u : Additive Kˣ) (v : HeightOneSpectrum R) :
     coeff ((OrderSystem.ofDedekindDomain R K).principalDivisor u) v =
       FractionalIdeal.count K v
         (toPrincipalIdeal R K (Additive.toMul u) : FractionalIdeal R⁰ K) := by
@@ -287,8 +286,7 @@ variable {R K}
 
 /-- A coefficient of a principal divisor is positive exactly when the corresponding valuation is
 strictly less than one. -/
-lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ)
-    (v : HeightOneSpectrum R) :
+lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ) (v : HeightOneSpectrum R) :
     0 < coeff ((OrderSystem.ofDedekindDomain R K).principalDivisor u) v ↔
       v.valuation K ((Additive.toMul u : Kˣ) : K) < 1 := by
   have hu : v.valuation K ((Additive.toMul u : Kˣ) : K) ≠ 0 :=
@@ -300,8 +298,7 @@ lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ)
 no poles, only zeros. The element is presented as any unit `u : Kˣ` whose value is
 `algebraMap R K r`. This is the divisor-of-functions sanity check that rules out a vacuous
 order system. -/
-lemma isEffective_principalDivisor_of_integral {r : R} {u : Kˣ}
-    (hu : (u : K) = algebraMap R K r) :
+lemma isEffective_principalDivisor_of_integral {r : R} {u : Kˣ} (hu : (u : K) = algebraMap R K r) :
     IsEffective ((OrderSystem.ofDedekindDomain R K).principalDivisor (Additive.ofMul u)) := by
   rw [isEffective_iff]
   intro v

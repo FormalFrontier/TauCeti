@@ -95,8 +95,7 @@ private theorem lintegral_prod_pow_eq_of_bind_eq
 /-- The `ℝ≥0∞`-valued mixed monomial is `ENNReal.ofReal` of its real-valued counterpart; a
 probability measure's values are finite, so `toReal` passes through the product. -/
 private theorem toReal_prod_pow (P : ProbabilityMeasure α) {k : ℕ} (B : Fin k → Set α)
-    (m : Fin k → ℕ) :
-    (∏ j, ((P : Measure α) (B j)) ^ m j).toReal = ∏ j, (P (B j) : ℝ) ^ m j := by
+    (m : Fin k → ℕ) : (∏ j, ((P : Measure α) (B j)) ^ m j).toReal = ∏ j, (P (B j) : ℝ) ^ m j := by
   rw [ENNReal.toReal_prod]
   refine Finset.prod_congr rfl fun j _ => ?_
   rw [← ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, ← ENNReal.coe_pow,

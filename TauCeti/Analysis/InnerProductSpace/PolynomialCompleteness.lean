@@ -49,8 +49,7 @@ variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-- Every polynomial lies in `L²` of a measure carrying one finite exponential moment. -/
 theorem memLp_two_algebraMap_eval {ν : Measure ℝ}
-    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
-    (q : Polynomial ℝ) :
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (q : Polynomial ℝ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x)) 2 ν :=
   memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜)
     (integrable_pow_of_exp_moment hexp) q

@@ -162,8 +162,7 @@ variable {K L : AbstractSimplicialComplex α}
 /-- Forgetting the singleton-face witness from an abstract cone recovers the cone of the
 underlying pre-abstract simplicial complex. -/
 @[simp]
-theorem cone_toPreAbstractSimplicialComplex :
-    (cone K).toPreAbstractSimplicialComplex =
+theorem cone_toPreAbstractSimplicialComplex : (cone K).toPreAbstractSimplicialComplex =
       PreAbstractSimplicialComplex.cone K.toPreAbstractSimplicialComplex := by
   rw [cone, join_toPreAbstractSimplicialComplex, PreAbstractSimplicialComplex.cone]
   congr 1

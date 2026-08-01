@@ -179,8 +179,7 @@ theorem dimVector_indecInjRep_eq_dimVector_indecProjRep (i j : Q) :
 
 /-- The morphism `M ⟶ Iᵢ` determined by a linear functional `φ` on `M` at the vertex `i`: at the
 vertex `j` it sends `x` to the function reading off `φ` of the action of a path `j → i` on `x`. -/
-def indecInjRepHom (i : Q) (M : QuiverRep k Q)
-    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
+def indecInjRepHom (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
     M ⟶ indecInjRep k Q i where
   app j := ModuleCat.ofHom (LinearMap.pi fun q : Quiver.Path (V := Q) j i ↦ φ ∘ₗ (M.map q).hom)
   naturality {a b} p := by

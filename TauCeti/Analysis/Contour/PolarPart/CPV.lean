@@ -60,8 +60,7 @@ variable {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
 `coeff · cauchyPVAt` of the winding kernel, and every higher-order term carries zero around a
 closed curve. -/
 private theorem hasCauchyPVAt_polarPart_term (decomp : PolarPartDecomposition f S U) (s : S)
-    {γ : ℝ → ℂ} {a b : ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (hclosed : γ a = γ b)
+    {γ : ℝ → ℂ} {a b : ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b)
     (h_flat : ∀ k : Fin (decomp.order s), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
       ∀ t ∈ Icc a b, γ t = (s : ℂ) → FlatOfOrder γ t (k.val + 1))
@@ -94,8 +93,7 @@ principal value of `decomp.polarPart s` at `s` is `2πi · n_s(γ) · Res_s f`. 
 coefficients contribute nothing — this is the term the Hungerbühler–Wasem sum attributes to
 `s`. -/
 theorem hasCauchyPVAt_polarPart (decomp : PolarPartDecomposition f S U) (s : S)
-    {γ : ℝ → ℂ} {a b : ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (hclosed : γ a = γ b)
+    {γ : ℝ → ℂ} {a b : ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b)
     (h_flat : ∀ k : Fin (decomp.order s), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
       ∀ t ∈ Icc a b, γ t = (s : ℂ) → FlatOfOrder γ t (k.val + 1))

@@ -114,8 +114,7 @@ private theorem integrable_toReal_ofReal_smul_pow (ha : 0 < a)
 private theorem integrable_exp_withDensity_ofReal
     (hexp : Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν)
     (hfm : AEMeasurable (fun x : ℝ => ENNReal.ofReal (f x)) ν)
-    (hlt : ∀ᵐ x ∂ν, ENNReal.ofReal (f x) < ⊤)
-    (hle : ∀ x, |max (f x) 0| ≤ |g x|) :
+    (hlt : ∀ᵐ x ∂ν, ENNReal.ofReal (f x) < ⊤) (hle : ∀ x, |max (f x) 0| ≤ |g x|) :
     Integrable (fun x : ℝ => Real.exp (a * |x|))
       (ν.withDensity fun x => ENNReal.ofReal (f x)) := by
   rw [integrable_withDensity_iff_integrable_smul₀' hfm hlt]
@@ -303,8 +302,7 @@ rate with `e^{a|x|}` integrable — and matches the adjacent determinacy API
 Finiteness of `ν` is not a separate hypothesis: `e^{a|x|} ≥ 1`. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
-    {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
-    (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
+    {g : ℝ → 𝕜} (hg : MemLp g 2 ν) (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
     g =ᵐ[ν] 0 := by
   obtain ⟨a, ha, hexpa⟩ := hexp
   set b := a / 2 with hb
@@ -349,8 +347,7 @@ the primary `_of_exists_integrable_exp`, and follows from it immediately by usin
 single positive rate. -/
 theorem ae_eq_zero_of_forall_moment_eq_zero_of_finite_expMoments
     (hexp : ∀ a : ℝ, 0 ≤ a → Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
-    {g : ℝ → 𝕜} (hg : MemLp g 2 ν)
-    (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
+    {g : ℝ → 𝕜} (hg : MemLp g 2 ν) (hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * g x ∂ν = 0) :
     g =ᵐ[ν] 0 :=
   ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp
     ⟨1, one_pos, hexp 1 zero_le_one⟩ hg hmom

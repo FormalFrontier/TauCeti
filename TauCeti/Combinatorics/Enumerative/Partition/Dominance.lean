@@ -26,16 +26,14 @@ namespace TauCeti
 private abbrev sortedParts {n : ℕ} (μ : n.Partition) : List ℕ :=
   μ.parts.sort (· ≥ ·)
 
-private theorem sortedParts_sum {n : ℕ} (μ : n.Partition) :
-    (sortedParts μ).sum = n := by
+private theorem sortedParts_sum {n : ℕ} (μ : n.Partition) : (sortedParts μ).sum = n := by
   calc
     (sortedParts μ).sum = (↑(sortedParts μ) : Multiset ℕ).sum :=
       (Multiset.sum_coe _).symm
     _ = μ.parts.sum := congrArg Multiset.sum (Multiset.sort_eq μ.parts (· ≥ ·))
     _ = n := μ.parts_sum
 
-private theorem sortedParts_length_le {n : ℕ} (μ : n.Partition) :
-    (sortedParts μ).length ≤ n := by
+private theorem sortedParts_length_le {n : ℕ} (μ : n.Partition) : (sortedParts μ).length ≤ n := by
   calc
     (sortedParts μ).length ≤ (sortedParts μ).sum :=
       List.length_le_sum_of_one_le _ fun i hi =>
@@ -121,11 +119,9 @@ theorem Dominates.trans {n : ℕ} {μ ν ξ : n.Partition}
     (hμν : Dominates μ ν) (hνξ : Dominates ν ξ) : Dominates μ ξ :=
   dominates_iff.mpr fun k => (dominates_iff.mp hνξ k).trans (dominates_iff.mp hμν k)
 
-private theorem lex_lt_of_prefix_sum_le {l₁ l₂ : List ℕ}
-    (hsum : l₁.sum = l₂.sum)
+private theorem lex_lt_of_prefix_sum_le {l₁ l₂ : List ℕ} (hsum : l₁.sum = l₂.sum)
     (hpos₁ : ∀ i ∈ l₁, 0 < i) (hpos₂ : ∀ i ∈ l₂, 0 < i)
-    (hle : ∀ k : ℕ, (l₂.take k).sum ≤ (l₁.take k).sum)
-    (hne : l₁ ≠ l₂) : l₂ < l₁ := by
+    (hle : ∀ k : ℕ, (l₂.take k).sum ≤ (l₁.take k).sum) (hne : l₁ ≠ l₂) : l₂ < l₁ := by
   induction l₁ generalizing l₂ with
   | nil =>
       cases l₂ with

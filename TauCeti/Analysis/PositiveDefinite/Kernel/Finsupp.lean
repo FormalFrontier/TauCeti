@@ -59,8 +59,7 @@ For positive-definite `K`, the diagonal value
 `positiveDefiniteKernelFinsuppForm K x x` is nonnegative, and the form is Hermitian. This is the
 pre-inner-product expression used before quotienting by its null space in the GNS/Kolmogorov
 construction. -/
-noncomputable def positiveDefiniteKernelFinsuppForm (K : α → α → 𝕜)
-    (x y : α →₀ 𝕜) : 𝕜 :=
+noncomputable def positiveDefiniteKernelFinsuppForm (K : α → α → 𝕜) (x y : α →₀ 𝕜) : 𝕜 :=
   x.sum fun a xa => y.sum fun b yb => conj xa * yb * K a b
 
 variable {K : α → α → 𝕜}
@@ -165,8 +164,7 @@ theorem positiveDefiniteKernelFinsuppForm_zero_kernel (x y : α →₀ 𝕜) :
   simp [positiveDefiniteKernelFinsuppForm]
 
 /-- The finitely supported Gram form is additive in the kernel. -/
-theorem positiveDefiniteKernelFinsuppForm_add_kernel
-    (K L : α → α → 𝕜) (x y : α →₀ 𝕜) :
+theorem positiveDefiniteKernelFinsuppForm_add_kernel (K L : α → α → 𝕜) (x y : α →₀ 𝕜) :
     positiveDefiniteKernelFinsuppForm (fun a b => K a b + L a b) x y =
       positiveDefiniteKernelFinsuppForm K x y + positiveDefiniteKernelFinsuppForm L x y := by
   classical
@@ -178,8 +176,7 @@ theorem positiveDefiniteKernelFinsuppForm_add_kernel
   ring
 
 /-- The finitely supported Gram form is homogeneous in the kernel. -/
-theorem positiveDefiniteKernelFinsuppForm_smul_kernel
-    (c : 𝕜) (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
+theorem positiveDefiniteKernelFinsuppForm_smul_kernel (c : 𝕜) (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
     positiveDefiniteKernelFinsuppForm (fun a b => c • K a b) x y =
       c * positiveDefiniteKernelFinsuppForm K x y := by
   classical
@@ -191,8 +188,7 @@ theorem positiveDefiniteKernelFinsuppForm_smul_kernel
   ring
 
 /-- The finitely supported Gram form is homogeneous in a real scalar on the kernel. -/
-theorem positiveDefiniteKernelFinsuppForm_real_smul_kernel
-    (r : ℝ) (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
+theorem positiveDefiniteKernelFinsuppForm_real_smul_kernel (r : ℝ) (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
     positiveDefiniteKernelFinsuppForm (fun a b => r • K a b) x y =
       r • positiveDefiniteKernelFinsuppForm K x y := by
   simpa [Algebra.smul_def] using
@@ -224,8 +220,7 @@ noncomputable def positiveDefiniteKernelFinsuppSesqForm (K : α → α → 𝕜)
 
 /-- Applying the bundled sesquilinear form gives the finitely supported Gram expression. -/
 @[simp]
-theorem positiveDefiniteKernelFinsuppSesqForm_apply
-    (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
+theorem positiveDefiniteKernelFinsuppSesqForm_apply (K : α → α → 𝕜) (x y : α →₀ 𝕜) :
     positiveDefiniteKernelFinsuppSesqForm K x y =
       positiveDefiniteKernelFinsuppForm K x y := by
   rfl
@@ -255,8 +250,7 @@ theorem positiveDefiniteKernelFinsuppForm_conj_symm
     (isPositiveDefiniteKernel_conj_symm hK) x y
 
 /-- Positive-definite kernels give positive-semidefinite finitely supported sesquilinear forms. -/
-theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef
-    (hK : IsPositiveDefiniteKernel K) :
+theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : IsPositiveDefiniteKernel K) :
     (positiveDefiniteKernelFinsuppSesqForm K).IsPosSemidef where
   isSymm := ⟨fun x y => positiveDefiniteKernelFinsuppForm_conj_symm hK x y⟩
   isNonneg := ⟨fun x => by

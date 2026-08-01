@@ -70,8 +70,7 @@ The nonnegativity of `m` cannot be dropped once `c ≠ 0`; it encodes the `sup u
 of the estimate. -/
 theorem le_of_mul_le_laplacian_le_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ} {m : ℝ}
     (hm : 0 ≤ m) (hcont : ContinuousOn f K) (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
+    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x) (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
   intro x hxK
@@ -110,8 +109,7 @@ the two-function form of `le_of_mul_le_laplacian_le_frontier`. -/
 theorem le_of_mul_le_laplacian_le_of_le_frontier {K : Set E} (hK : IsCompact K) {c f g : E → ℝ}
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
     (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
     (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ g x ≤ c x * g x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
@@ -138,8 +136,7 @@ The dual of `le_of_mul_le_laplacian_le_frontier`: a continuous, `C²`, supersolu
 lower bound it respects on `frontier K`. -/
 theorem ge_of_laplacian_le_mul_ge_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ} {m : ℝ}
     (hm : m ≤ 0) (hcont : ContinuousOn f K) (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ c x * f x)
+    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x) (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ c x * f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → m ≤ f x) :
     ∀ ⦃x⦄, x ∈ K → m ≤ f x := by
   intro x hxK
@@ -158,10 +155,8 @@ theorem ge_of_laplacian_le_mul_ge_frontier {K : Set E} (hK : IsCompact K) {c f :
 `frontier K`. -/
 theorem abs_le_of_laplacian_eq_mul_abs_le_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ}
     {M : ℝ} (hM : 0 ≤ M) (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsol : ∀ ⦃x⦄, x ∈ interior K → Δ f x = c x * f x)
-    (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hsol : ∀ ⦃x⦄, x ∈ interior K → Δ f x = c x * f x) (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
     ∀ ⦃x⦄, x ∈ K → |f x| ≤ M := by
   intro x hxK
   rw [abs_le]
@@ -179,8 +174,7 @@ they agree on all of `K`. -/
 theorem eqOn_of_laplacian_sub_mul_eq_of_eqOn_frontier {K : Set E} (hK : IsCompact K)
     {c f g : E → ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x - c x * f x = Δ g x - c x * g x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x = g x) :
     Set.EqOn f g K := by

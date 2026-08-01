@@ -58,8 +58,7 @@ private lemma affine_apply_preimage (hc : c ≠ 0) (z d : ℂ) :
 `z ↦ c * z + d` to both the curve and the distinguished point transports the single-point Cauchy
 principal value of the winding kernel without changing its value. This is the composed
 translation/scaling form of `hasCauchyPVAt_inv_sub_const_mul`. -/
-theorem hasCauchyPVAt_inv_sub_affine
-    (h : HasCauchyPVAt γ a b κ[z₀] z₀ L) (hc : c ≠ 0) :
+theorem hasCauchyPVAt_inv_sub_affine (h : HasCauchyPVAt γ a b κ[z₀] z₀ L) (hc : c ≠ 0) :
     HasCauchyPVAt (fun t => c * γ t + d) a b κ[c * z₀ + d] (c * z₀ + d) L := by
   refine ((hasCauchyPVAt_inv_sub_const_mul (c := c) h hc).translate d).congr_along_curve ?_
   intro t _ht
@@ -68,8 +67,7 @@ theorem hasCauchyPVAt_inv_sub_affine
 
 /-- Existence form of `hasCauchyPVAt_inv_sub_affine`: affine coordinate changes with nonzero
 linear coefficient preserve existence of the index principal value. -/
-theorem cauchyPVExistsAt_inv_sub_affine
-    (h : CauchyPVExistsAt γ a b κ[z₀] z₀) (hc : c ≠ 0) :
+theorem cauchyPVExistsAt_inv_sub_affine (h : CauchyPVExistsAt γ a b κ[z₀] z₀) (hc : c ≠ 0) :
     CauchyPVExistsAt (fun t => c * γ t + d) a b κ[c * z₀ + d] (c * z₀ + d) :=
   let ⟨_, hL⟩ := cauchyPVExistsAt_iff.mp h
   CauchyPVExistsAt.intro (hasCauchyPVAt_inv_sub_affine (d := d) hL hc)
@@ -108,8 +106,7 @@ theorem IsNullHomologous.affine (h : IsNullHomologous γ a b Ω) (hc : c ≠ 0) 
 /-- If the affine image of a curve is null-homologous in the affine image of a set, then the
 original curve is null-homologous in the original set. -/
 theorem IsNullHomologous.of_affine
-    (h : IsNullHomologous (fun t => c * γ t + d) a b ((fun z => c * z + d) '' Ω))
-    (hc : c ≠ 0) :
+    (h : IsNullHomologous (fun t => c * γ t + d) a b ((fun z => c * z + d) '' Ω)) (hc : c ≠ 0) :
     IsNullHomologous γ a b Ω := by
   rw [isNullHomologous_iff] at h ⊢
   intro z hz

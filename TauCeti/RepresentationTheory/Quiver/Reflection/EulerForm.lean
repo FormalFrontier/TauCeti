@@ -66,12 +66,10 @@ the arrow-count matrix of the quiver, whose `i`-th row vanishes because `i` is a
 that of the quiver reflected at `i`; `d'` and `e'` are the reflections of `d` and `e`. -/
 private theorem sub_sum_sum_eq_of_reflect_data {W : Type*} [Fintype W] (i : W)
     (N N' : W → W → ℤ) (d e d' e' : W → ℤ)
-    (hN : ∀ b : W, N i b = 0) (hN'row : ∀ b : W, N' i b = N b i)
-    (hN'col : ∀ a : W, N' a i = 0)
+    (hN : ∀ b : W, N i b = 0) (hN'row : ∀ b : W, N' i b = N b i) (hN'col : ∀ a : W, N' a i = 0)
     (hN' : ∀ a b : W, a ≠ i → b ≠ i → N' a b = N a b)
     (hd : ∀ w : W, w ≠ i → d' w = d w) (he : ∀ w : W, w ≠ i → e' w = e w)
-    (hdi : d' i = (∑ w : W, N w i * d w) - d i)
-    (hei : e' i = (∑ w : W, N w i * e w) - e i) :
+    (hdi : d' i = (∑ w : W, N w i * d w) - d i) (hei : e' i = (∑ w : W, N w i * e w) - e i) :
     (∑ w : W, d' w * e' w) - ∑ a : W, ∑ b : W, N' a b * (d' a * e' b)
       = (∑ w : W, d w * e w) - ∑ a : W, ∑ b : W, N a b * (d a * e b) := by
   classical
@@ -128,12 +126,10 @@ private theorem sum_sum_transpose {W : Type*} [Fintype W] (N : W → W → ℤ) 
 two arrow-count matrices and exchanging the arguments of the Euler form. -/
 private theorem sub_sum_sum_eq_of_reflect_data_of_source {W : Type*} [Fintype W] (i : W)
     (N N' : W → W → ℤ) (d e d' e' : W → ℤ)
-    (hN : ∀ a : W, N a i = 0) (hN'col : ∀ a : W, N' a i = N i a)
-    (hN'row : ∀ b : W, N' i b = 0)
+    (hN : ∀ a : W, N a i = 0) (hN'col : ∀ a : W, N' a i = N i a) (hN'row : ∀ b : W, N' i b = 0)
     (hN' : ∀ a b : W, a ≠ i → b ≠ i → N' a b = N a b)
     (hd : ∀ w : W, w ≠ i → d' w = d w) (he : ∀ w : W, w ≠ i → e' w = e w)
-    (hdi : d' i = (∑ w : W, N i w * d w) - d i)
-    (hei : e' i = (∑ w : W, N i w * e w) - e i) :
+    (hdi : d' i = (∑ w : W, N i w * d w) - d i) (hei : e' i = (∑ w : W, N i w * e w) - e i) :
     (∑ w : W, d' w * e' w) - ∑ a : W, ∑ b : W, N' a b * (d' a * e' b)
       = (∑ w : W, d w * e w) - ∑ a : W, ∑ b : W, N a b * (d a * e b) := by
   have key := sub_sum_sum_eq_of_reflect_data i (fun a b ↦ N b a) (fun a b ↦ N' b a)

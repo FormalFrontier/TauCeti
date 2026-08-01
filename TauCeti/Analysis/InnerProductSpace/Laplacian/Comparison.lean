@@ -62,8 +62,7 @@ theorem le_of_laplacian_le_of_le_frontier (hK : IsCompact K)
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
     (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ g x ≤ Δ f x)
-    (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
+    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ g x ≤ Δ f x) (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ g x := by
   intro x hxK
   -- Bound the difference `f - g` above by `0` via the weak maximum principle.
@@ -89,8 +88,7 @@ theorem eqOn_of_laplacian_eqOn_of_eqOn_frontier (hK : IsCompact K)
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
     (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x = Δ g x)
-    (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x = g x) :
+    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x = Δ g x) (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x = g x) :
     Set.EqOn f g K := by
   intro x hxK
   refine le_antisymm ?_ ?_

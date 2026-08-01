@@ -177,8 +177,7 @@ private theorem toMatrixAlgHom_ofMatrixLinear {M : Matrix (Fin 2) (Fin 2) k}
   ext i j
   fin_cases i <;> fin_cases j <;> simp [h₁₀]
 
-private theorem range_toMatrixAlgHom :
-    (toMatrixAlgHom (A := A) k).range
+private theorem range_toMatrixAlgHom : (toMatrixAlgHom (A := A) k).range
       = Matrix.blockTriangularSubalgebra k k (id : Fin 2 → Fin 2) := by
   refine le_antisymm ?_ fun M hM => ⟨ofMatrixLinear k M, toMatrixAlgHom_ofMatrixLinear k hM⟩
   rintro _ ⟨f, rfl⟩

@@ -56,8 +56,7 @@ lemma mapsTo_add_sub_completeLinearSystem_of_le {D D' : WeilDivisor X} (hDD' : D
 
 /-- Nonemptiness of complete linear systems is monotone for the divisor order. -/
 lemma nonempty_completeLinearSystem_of_le {D D' : WeilDivisor X} (hDD' : D ≤ D')
-    (hD : (S.completeLinearSystem D).Nonempty) :
-    (S.completeLinearSystem D').Nonempty := by
+    (hD : (S.completeLinearSystem D).Nonempty) : (S.completeLinearSystem D').Nonempty := by
   have hdiff : IsEffective (D' - D) := le_iff_isEffective_sub.mp hDD'
   have hnonempty : (S.completeLinearSystem (D + (D' - D))).Nonempty :=
     S.nonempty_completeLinearSystem_add_effective hdiff hD

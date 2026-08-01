@@ -104,8 +104,7 @@ theorem homeomorphMulEquivOfEq_apply [DecidableEq N] [Nonempty N] (e : X ≃ₜ 
 
 @[simp]
 theorem homeomorphMulEquivOfEq_symm_apply [DecidableEq N] [Nonempty N] (e : X ≃ₜ Y) (h : e x = y)
-    (b : HomotopyGroup N Y y) :
-    (homeomorphMulEquivOfEq e h).symm b =
+    (b : HomotopyGroup N Y y) : (homeomorphMulEquivOfEq e h).symm b =
       map ⟨e.symm, e.symm.continuous⟩ (e.symm_apply_eq.mpr h.symm) b :=
   rfl
 
@@ -123,8 +122,7 @@ theorem homeomorphMulEquiv_apply [DecidableEq N] [Nonempty N] (e : X ≃ₜ Y) (
 
 @[simp]
 theorem homeomorphMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (e : X ≃ₜ Y) (x : X)
-    (b : HomotopyGroup N Y (e x)) :
-    (homeomorphMulEquiv e x).symm b =
+    (b : HomotopyGroup N Y (e x)) : (homeomorphMulEquiv e x).symm b =
       map ⟨e.symm, e.symm.continuous⟩ (e.symm_apply_apply x) b :=
   rfl
 

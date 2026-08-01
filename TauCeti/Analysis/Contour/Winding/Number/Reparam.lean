@@ -69,10 +69,8 @@ The hypotheses on `γ` are stated on the swept image `φ '' [[a, b]]`, which con
 by the intermediate value theorem, so `φ` need not be monotone. Off-curve is essential: on the
 curve the winding number is a principal value, whose excision windows are themselves
 reparametrized. -/
-theorem windingNumber_comp_reparam
-    (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
-    (hφ' : ContinuousOn φ' (Set.uIcc a b))
-    (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
+theorem windingNumber_comp_reparam (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
+    (hφ' : ContinuousOn φ' (Set.uIcc a b)) (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
     (hγ' : ContinuousOn (deriv γ) (φ '' Set.uIcc a b))
     (havoid : ∀ u ∈ φ '' Set.uIcc a b, γ u ≠ z₀) :
     windingNumber (γ ∘ φ) a b z₀ = windingNumber γ (φ a) (φ b) z₀ := by
@@ -131,13 +129,10 @@ theorem windingNumber_comp_mul_add {r s : ℝ}
 /-- **Null-homology transports along a reparametrization.** If a curve lies in `Ω` and is
 null-homologous there, then so is its precomposition with any change of parameter `φ` that has an
 ambient derivative `φ' t` at each `t ∈ [[a, b]]`, with `φ'` continuous. -/
-theorem IsNullHomologous.comp_reparam
-    (h : IsNullHomologous γ (φ a) (φ b) Ω)
-    (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
-    (hφ' : ContinuousOn φ' (Set.uIcc a b))
+theorem IsNullHomologous.comp_reparam (h : IsNullHomologous γ (φ a) (φ b) Ω)
+    (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t) (hφ' : ContinuousOn φ' (Set.uIcc a b))
     (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
-    (hγ' : ContinuousOn (deriv γ) (φ '' Set.uIcc a b))
-    (hγΩ : ∀ u ∈ φ '' Set.uIcc a b, γ u ∈ Ω) :
+    (hγ' : ContinuousOn (deriv γ) (φ '' Set.uIcc a b)) (hγΩ : ∀ u ∈ φ '' Set.uIcc a b, γ u ∈ Ω) :
     IsNullHomologous (γ ∘ φ) a b Ω := by
   rw [isNullHomologous_iff] at h ⊢
   intro z hz

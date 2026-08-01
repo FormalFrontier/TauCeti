@@ -51,8 +51,7 @@ def integralFractionalIdealSubmonoid :
 /-- Membership in `integralFractionalIdealSubmonoid` means that the fractional ideal is contained
 in the base ring. -/
 @[simp]
-lemma mem_integralFractionalIdealSubmonoid
-    (I : Additive (FractionalIdeal R⁰ K)ˣ) :
+lemma mem_integralFractionalIdealSubmonoid (I : Additive (FractionalIdeal R⁰ K)ˣ) :
     I ∈ integralFractionalIdealSubmonoid R K ↔
       Units.val (Additive.toMul I) ≤ 1 :=
   Iff.rfl
@@ -79,8 +78,7 @@ lemma isEffective_fractionalIdealDivisor_of_le_one (I : Additive (FractionalIdea
 
 /-- If the divisor of an invertible fractional ideal is effective, then the fractional ideal is
 integral. This is the converse of `isEffective_fractionalIdealDivisor_of_le_one`. -/
-lemma le_one_of_isEffective_fractionalIdealDivisor
-    (I : Additive (FractionalIdeal R⁰ K)ˣ)
+lemma le_one_of_isEffective_fractionalIdealDivisor (I : Additive (FractionalIdeal R⁰ K)ˣ)
     (hI : IsEffective (fractionalIdealDivisor R K I)) :
     Units.val (Additive.toMul I) ≤ 1 := by
   have hcount :
@@ -98,8 +96,7 @@ lemma le_one_of_isEffective_fractionalIdealDivisor
 /-- An invertible fractional ideal is integral exactly when its associated Weil divisor is
 effective. -/
 @[simp]
-lemma isEffective_fractionalIdealDivisor_iff
-    (I : Additive (FractionalIdeal R⁰ K)ˣ) :
+lemma isEffective_fractionalIdealDivisor_iff (I : Additive (FractionalIdeal R⁰ K)ˣ) :
     IsEffective (fractionalIdealDivisor R K I) ↔
       Units.val (Additive.toMul I) ≤ 1 :=
   ⟨le_one_of_isEffective_fractionalIdealDivisor I,
@@ -107,8 +104,7 @@ lemma isEffective_fractionalIdealDivisor_iff
 
 /-- The divisor of an invertible fractional ideal is effective exactly when that ideal belongs to
 the integral fractional-ideal submonoid. -/
-lemma isEffective_fractionalIdealDivisor_iff_mem
-    (I : Additive (FractionalIdeal R⁰ K)ˣ) :
+lemma isEffective_fractionalIdealDivisor_iff_mem (I : Additive (FractionalIdeal R⁰ K)ˣ) :
     IsEffective (fractionalIdealDivisor R K I) ↔
       I ∈ integralFractionalIdealSubmonoid R K := by
   rw [mem_integralFractionalIdealSubmonoid, isEffective_fractionalIdealDivisor_iff]
@@ -143,8 +139,7 @@ noncomputable def integralFractionalIdealDivisorAddEquiv :
 /-- The restricted equivalence agrees with `fractionalIdealDivisor` after forgetting
 effectivity. -/
 @[simp]
-lemma coe_integralFractionalIdealDivisorAddEquiv
-    (I : integralFractionalIdealSubmonoid R K) :
+lemma coe_integralFractionalIdealDivisorAddEquiv (I : integralFractionalIdealSubmonoid R K) :
     ((integralFractionalIdealDivisorAddEquiv R K I :
         effectiveSubmonoid (HeightOneSpectrum R)) :
       WeilDivisor (HeightOneSpectrum R)) =

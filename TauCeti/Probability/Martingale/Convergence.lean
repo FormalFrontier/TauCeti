@@ -65,10 +65,8 @@ The proof uses the a.e. convergence to make `Xlim` measurable for `⨅ n, 𝔽 n
 convergence to transport the tower property `μ[μ[f | 𝔽 n] | ⨅ n, 𝔽 n] =ᵐ μ[f | ⨅ n, 𝔽 n]` to the
 limit. -/
 private lemma condExp_iInf_ae_eq_of_tendsto_ae_of_tendsto_eLpNorm
-    [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω} {f Xlim : Ω → ℝ}
-    (h_filtration : Antitone 𝔽)
-    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
-    (hXlimint : Integrable Xlim μ)
+    [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω} {f Xlim : Ω → ℝ} (h_filtration : Antitone 𝔽)
+    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω)) (hXlimint : Integrable Xlim μ)
     (h_tendsto : ∀ᵐ ω ∂μ, Tendsto (fun n => μ[f | 𝔽 n] ω) atTop (𝓝 (Xlim ω)))
     (hL1_conv : Tendsto (fun n => eLpNorm (μ[f | 𝔽 n] - Xlim) 1 μ) atTop (𝓝 0)) :
     μ[f | ⨅ n, 𝔽 n] =ᵐ[μ] Xlim := by
@@ -103,14 +101,9 @@ a.e. convergence of the uniformly integrable family `μ[f | 𝔽ₙ]` to `L¹` c
 identifies the a.e. limit as `μ[f | ⨅ₙ 𝔽ₙ]` in the first place. Proving the two conclusions in one
 pass avoids running that step twice; the public `tendsto_ae_condExp_iInf` and
 `tendsto_eLpNorm_condExp_iInf` are its two projections. -/
-private theorem tendsto_ae_and_eLpNorm_condExp_iInf
-    [IsFiniteMeasure μ]
-    {𝔽 : ℕ → MeasurableSpace Ω}
-    (h_filtration : Antitone 𝔽)
-    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
-    (f : Ω → ℝ) :
-    (∀ᵐ ω ∂μ, Tendsto
-        (fun n => μ[f | 𝔽 n] ω)
+private theorem tendsto_ae_and_eLpNorm_condExp_iInf [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω}
+    (h_filtration : Antitone 𝔽) (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω)) (f : Ω → ℝ) :
+    (∀ᵐ ω ∂μ, Tendsto (fun n => μ[f | 𝔽 n] ω)
         atTop
         (𝓝 (μ[f | ⨅ n, 𝔽 n] ω))) ∧
       Tendsto (fun n => eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ) atTop (𝓝 0) := by
@@ -158,12 +151,8 @@ For a decreasing filtration `𝔽ₙ`, the sequence `μ[f | 𝔽ₙ]` converges 
 `μ[f | ⨅ₙ 𝔽ₙ]` — the reverse-martingale (Lévy downward) limit. As in Mathlib's upward
 `MeasureTheory.tendsto_ae_condExp`, no integrability hypothesis is needed: `condExp` vanishes on
 non-integrable arguments, so the statement is trivial there. -/
-theorem tendsto_ae_condExp_iInf
-    [IsFiniteMeasure μ]
-    {𝔽 : ℕ → MeasurableSpace Ω}
-    (h_filtration : Antitone 𝔽)
-    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
-    (f : Ω → ℝ) :
+theorem tendsto_ae_condExp_iInf [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω}
+    (h_filtration : Antitone 𝔽) (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω)) (f : Ω → ℝ) :
     ∀ᵐ ω ∂μ, Tendsto
       (fun n => μ[f | 𝔽 n] ω)
       atTop
@@ -180,12 +169,8 @@ their a.e. convergence is convergence in `L¹` by Vitali's theorem. As in Mathli
 `MeasureTheory.tendsto_eLpNorm_condExp`, which this is the downward analogue of, no integrability
 hypothesis is needed: `condExp` vanishes on non-integrable arguments, so the statement is trivial
 there. -/
-theorem tendsto_eLpNorm_condExp_iInf
-    [IsFiniteMeasure μ]
-    {𝔽 : ℕ → MeasurableSpace Ω}
-    (h_filtration : Antitone 𝔽)
-    (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
-    (f : Ω → ℝ) :
+theorem tendsto_eLpNorm_condExp_iInf [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω}
+    (h_filtration : Antitone 𝔽) (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω)) (f : Ω → ℝ) :
     Tendsto (fun n => eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ) atTop (𝓝 0) :=
   (tendsto_ae_and_eLpNorm_condExp_iInf h_filtration h_le0 f).2
 

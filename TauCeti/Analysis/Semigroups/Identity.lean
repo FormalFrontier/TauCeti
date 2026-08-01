@@ -45,15 +45,13 @@ variable {X}
 
 /-- The identity C₀-semigroup is constantly the identity operator. -/
 @[simp]
-theorem id_apply (t : ℝ≥0) :
-    (StronglyContinuousSemigroup.id X) t = ContinuousLinearMap.id ℝ X :=
+theorem id_apply (t : ℝ≥0) : (StronglyContinuousSemigroup.id X) t = ContinuousLinearMap.id ℝ X :=
   by
     rw [StronglyContinuousSemigroup.id]
     rfl
 
 /-- Pointwise form of `StronglyContinuousSemigroup.id_apply`. -/
-theorem id_apply_apply (t : ℝ≥0) (x : X) :
-    (StronglyContinuousSemigroup.id X) t x = x := by
+theorem id_apply_apply (t : ℝ≥0) (x : X) : (StronglyContinuousSemigroup.id X) t x = x := by
   rw [id_apply]
   exact ContinuousLinearMap.id_apply x
 
@@ -75,15 +73,13 @@ variable {X}
 
 /-- The identity contraction semigroup is constantly the identity operator. -/
 @[simp]
-theorem id_apply (t : ℝ≥0) :
-    (ContractionSemigroup.id X) t = ContinuousLinearMap.id ℝ X :=
+theorem id_apply (t : ℝ≥0) : (ContractionSemigroup.id X) t = ContinuousLinearMap.id ℝ X :=
   by
     rw [ContractionSemigroup.id]
     rfl
 
 /-- Pointwise form of `ContractionSemigroup.id_apply`. -/
-theorem id_apply_apply (t : ℝ≥0) (x : X) :
-    (ContractionSemigroup.id X) t x = x := by
+theorem id_apply_apply (t : ℝ≥0) (x : X) : (ContractionSemigroup.id X) t x = x := by
   rw [id_apply]
   exact ContinuousLinearMap.id_apply x
 
@@ -102,8 +98,7 @@ namespace StronglyContinuousSemigroup
 variable {X}
 
 /-- The identity semigroup has the contraction growth bound `(0, 1)`. -/
-theorem id_hasGrowthBound :
-    (StronglyContinuousSemigroup.id X).HasGrowthBound 0 1 := by
+theorem id_hasGrowthBound : (StronglyContinuousSemigroup.id X).HasGrowthBound 0 1 := by
   rw [← ContractionSemigroup.id_toStronglyContinuousSemigroup]
   exact (ContractionSemigroup.id X).hasGrowthBound
 
@@ -127,15 +122,13 @@ theorem mem_id_domain (x : X) :
 
 /-- The generator domain of the identity semigroup is all of the space. -/
 @[simp]
-theorem id_domain_eq_top :
-    (StronglyContinuousSemigroup.id X).domain = ⊤ :=
+theorem id_domain_eq_top : (StronglyContinuousSemigroup.id X).domain = ⊤ :=
   ((StronglyContinuousSemigroup.id X).generator_eq_toPMap_top_of_forall_tendsto 0
     (by simpa using id_genQuot_tendsto (X := X))).1
 
 /-- The generator of the identity semigroup is the zero operator. -/
 @[simp]
-theorem id_generator_eq_zero :
-    (StronglyContinuousSemigroup.id X).generator = 0 := by
+theorem id_generator_eq_zero : (StronglyContinuousSemigroup.id X).generator = 0 := by
   rw [((StronglyContinuousSemigroup.id X).generator_eq_toPMap_top_of_forall_tendsto 0
     (by simpa using id_genQuot_tendsto (X := X))).2]
   rfl

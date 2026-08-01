@@ -89,8 +89,7 @@ private theorem exists_integrable_exp_map_expNeg (μ : Measure ℝ≥0) [IsFinit
 Substituting `y = e^{-x}` turns the value at `n` into the `n`-th moment of the pushforward, which is
 carried by `(0, 1]` and so is moment-determinate. -/
 theorem Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq {μ ν : Measure ℝ≥0}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ n : ℕ, ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂μ
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (h : ∀ n : ℕ, ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂μ
       = ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂ν) :
     μ = ν := by
   refine measurableEmbedding_expNeg.map_injective ?_
@@ -112,8 +111,7 @@ theorem Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq {μ ν : Measure �
 taking the hypothesis at every nonnegative real; the proof needs only the natural numbers, so
 `Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq` is the sharper statement. -/
 theorem Measure.ext_of_forall_integral_exp_neg_mul_eq {μ ν : Measure ℝ≥0}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ t : ℝ, 0 ≤ t →
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (h : ∀ t : ℝ, 0 ≤ t →
       ∫ x, Real.exp (-t * (x : ℝ)) ∂μ = ∫ x, Real.exp (-t * (x : ℝ)) ∂ν) :
     μ = ν :=
   Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq fun n => h n (Nat.cast_nonneg n)
