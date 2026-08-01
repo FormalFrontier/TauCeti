@@ -242,22 +242,12 @@ theorem kolmogorovIsometry_unique {E : Type w} [NormedAddCommGroup E]
     [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b) (T : hK.KolmogorovSpace →ₗᵢ[𝕜] E)
     (hT : ∀ a, T (hK.kolmogorovFeature a) = φ a) : T = hK.kolmogorovIsometry φ hφ := by
-  apply LinearIsometry.ext
-  intro x
   have hdense : Dense (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature) :
       Set hK.KolmogorovSpace) :=
     Submodule.dense_iff_topologicalClosure_eq_top.2 hK.kolmogorovFeature_dense
-  refine hdense.induction ?_ (isClosed_eq T.continuous
-    (hK.kolmogorovIsometry φ hφ).continuous) x
-  intro y hy
-  refine Submodule.span_induction ?_ ?_ ?_ ?_ hy
-  · rintro _ ⟨a, rfl⟩
-    rw [hT, hK.kolmogorovIsometry_apply]
-  · simp
-  · intro p q _ _ hp hq
-    simpa using congrArg₂ (· + ·) hp hq
-  · intro c p _ hp
-    simpa using congrArg (c • ·) hp
+  refine LinearIsometry.toContinuousLinearMap_injective (ContinuousLinearMap.ext_on hdense ?_)
+  rintro _ ⟨a, rfl⟩
+  simp [hT a]
 
 /-- If the vectors in a realization of `K` have dense linear span, the universal comparison
 isometry is surjective. -/
