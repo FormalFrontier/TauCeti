@@ -44,14 +44,16 @@ def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDeriva
     Derivation.mk'
       { toFun := fun f => mvfderiv I f x v
         map_add' := fun f g => by
-          -- Unfold the smooth-map addition wrapper to apply the `mvfderiv_add` API.
+          -- Unfold the pointed smooth-map addition wrapper: `ContMDiffMap.coe_add` does not match
+          -- this type synonym directly.
           change mvfderiv I (⇑f + ⇑g) x v = _
           exact congr($(mvfderiv_add
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
             (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt) v)
         map_smul' := fun c f => by
           have hc : MDiffAt (fun _ : M => c) x := mdifferentiableAt_const
-          -- Unfold the pointed scalar action into pointwise multiplication for `mvfderiv_smul`.
+          -- Unfold the pointed smooth-map scalar wrapper: `ContMDiffMap.coe_smul` does not match
+          -- this type synonym directly.
           change mvfderiv I ((fun _ : M => c) • ⇑f) x v = c • mvfderiv I f x v
           have h := congr($(mvfderiv_smul hc
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt) v)
@@ -60,7 +62,9 @@ def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDeriva
                 (mvfderiv I (fun _ : M => c) x).smulRight (f x)) v := h
             _ = _ := by simp [mvfderiv_const] }
       fun f g => by
-        -- Unfold derivation application and smooth-map multiplication to use `mvfderiv_mul`.
+        -- Unfold the pointed smooth-map multiplication wrapper and the evaluation scalar action
+        -- (`PointedContMDiffMap.smul_def`): the corresponding `ContMDiffMap.coe_mul` theorem does
+        -- not match this type synonym directly.
         change mvfderiv I (⇑f * ⇑g) x v =
           f x * mvfderiv I g x v + g x * mvfderiv I f x v
         exact congr($(mvfderiv_mul
