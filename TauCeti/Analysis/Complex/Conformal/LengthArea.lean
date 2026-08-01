@@ -10,7 +10,6 @@ public import TauCeti.Analysis.Complex.Conformal.Area
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
-import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Periodic
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 import TauCeti.Analysis.Contour.ArcFTC
@@ -22,9 +21,9 @@ The **length–area method** converts the finiteness of the Dirichlet integral
 `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2` — which `TauCeti/Analysis/Complex/Conformal/Area.lean` identifies
 with the area of `f '' s` — into a statement about *lengths*: among the circles `‖z - ζ‖ = ρ`
 with `r < ρ < R`, at least one has a short image. Quantitatively, writing `ℓ ρ` for the
-derivative-weighted angular integral `TauCeti.circleImageLength f s ζ ρ` — the arc length of the
-parametrised curve `f ∘ circleMap ζ ρ` over the angles landing in `s`, whenever `f` is holomorphic
-there — Cauchy–Schwarz in the angular variable gives `ℓ ρ ^ 2 ≤ 2 π ρ ∫ ‖f'‖ ^ 2 ρ dθ`, and
+derivative-weighted angular integral `TauCeti.circleImageLength f s ζ ρ` — for measurable `s` and
+holomorphic `f`, the arc length of the parametrised curve `f ∘ circleMap ζ ρ` over the angles
+landing in `s` — Cauchy–Schwarz in the angular variable gives `ℓ ρ ^ 2 ≤ 2 π ρ ∫ ‖f'‖ ^ 2 ρ dθ`, and
 integrating `ℓ ρ ^ 2 / ρ` in `ρ` reassembles the right-hand side, in polar coordinates centred at
 `ζ`, into the whole Dirichlet integral:
 
@@ -33,22 +32,24 @@ integrating `ℓ ρ ^ 2 / ρ` in `ρ` reassembles the right-hand side, in polar 
 Since `∫⁻ ρ in Ioo r R, ρ⁻¹ = log (R / r)` diverges as `r → 0`, a finite Dirichlet integral cannot
 keep `ℓ` away from `0`: on every annulus there is a radius with
 `ℓ ρ < (2 π A / log (R / r)) ^ (1 / 2)`, an estimate that improves without bound as the annulus is
-made longer — and for a holomorphic `f` that bounds the length swept out by the image arc. That is
-Wolff's lemma, and it is the analytic engine of layer **L5** of the
-conformal-mapping roadmap (`ConformalMapping/README.md`), Carathéodory's boundary correspondence:
+made longer — and for a holomorphic `f` that bounds the chords of the image arc, by
+`TauCeti.ofReal_dist_le_circleImageLength`. That is Wolff's lemma, and it is the analytic engine of
+layer **L5** of the conformal-mapping roadmap (`ConformalMapping/README.md`), Carathéodory's
+boundary correspondence:
 applied to a Riemann map at a boundary point `ζ` it produces crosscuts of arbitrarily small
 diameter, which is what forces the boundary cluster set at `ζ` to degenerate to a point.
 
 ## Main results
 
 * `TauCeti.circleImageLength` — the derivative-weighted angular integral
-  `∫⁻ θ in Ioo (-π) π, ρ * ‖deriv f (circleMap ζ ρ θ)‖ₑ` cut off outside `s`; where `f` is
-  holomorphic this is the arc length of `f ∘ circleMap ζ ρ` over the angles landing in `s`, the
-  parametrised length, counted with multiplicity, of the image of the part inside `s` of the circle
-  of centre `ζ` and radius `ρ`.
-* `TauCeti.ofReal_dist_le_circleImageLength` — the chord bound justifying the name: a sub-arc of
-  angular width at most `2 * π` that stays in `s`, for `s` inside the domain of holomorphy, has the
-  distance between the images of its endpoints bounded by that quantity.
+  `∫⁻ θ in Ioo (-π) π, ρ * ‖deriv f (circleMap ζ ρ θ)‖ₑ` cut off outside `s`; for measurable `s`
+  and holomorphic `f` this is the arc length of `f ∘ circleMap ζ ρ` over the angles landing in `s`,
+  a length along the parametrisation, counted with multiplicity, rather than a measure of the image
+  set.
+* `TauCeti.ofReal_dist_le_circleImageLength` — the chord bound justifying the name, and the only
+  claim made here about lengths that is actually proved: a sub-arc of angular width at most `2 * π`
+  that stays in `s`, for `s` inside the domain of holomorphy, has the distance between the images
+  of its endpoints bounded by that quantity.
 * `TauCeti.circleImageLength_eq_lintegral_Ioc` — the angular integral may be taken over any period
   `Ioc t (t + 2 * π)`, so the branch cut chosen in the definition is immaterial.
 * `TauCeti.lintegral_circleImageLength_sq_div_le_lintegral_enorm_deriv_sq` — the **length–area
@@ -97,20 +98,24 @@ open scoped ENNReal Real
 
 variable {U s t : Set ℂ} {f : ℂ → ℂ} {ζ : ℂ}
 
-/-- The **arc length of the image of a circle**: the integral over the circle of centre `ζ` and
-radius `ρ` of the area distortion `‖deriv f‖`, with the part of the circle outside `s` discarded by
-an indicator.
+/-- The **derivative-weighted angular integral** over a circle: the lower integral over the circle
+of centre `ζ` and radius `ρ` of the area distortion `‖deriv f‖`, with the part of the circle outside
+`s` discarded by an indicator.
 
-Where `f` is holomorphic this is the arc-length integral of the parametrised curve
-`f ∘ circleMap ζ ρ` restricted to the angles whose points lie in `s`, whose speed at angle `θ` is
-`ρ * ‖deriv f (circleMap ζ ρ θ)‖`. It is length along the parametrisation, so points covered
-several times are counted with multiplicity: it dominates the one-dimensional measure of the image
-set, with equality when `f` is injective on that part of the circle. Nothing is assumed of `s`, so
-the angles it selects need not form a single arc, or any arc at all. The name is justified by
-`TauCeti.ofReal_dist_le_circleImageLength`, which bounds the chord across an arc of angles lying in
-`s` by this quantity. For a map with no complex derivative the geometric reading fails, since
-`deriv` is then the junk value `0`: for `f = conj` the quantity is `0` while the image circle still
-has length `2 π ρ`.
+Nothing is assumed of `s`, so this is a lower integral of a possibly non-measurable integrand, and
+the angles `s` selects need not form a single arc, or any arc at all; for such an `s` the quantity
+carries no geometric meaning. What is proved of it here is
+`TauCeti.ofReal_dist_le_circleImageLength`, which for `f` holomorphic bounds the chord across an
+arc of angles lying in `s` by this quantity, and that is what justifies the name.
+
+For measurable `s` and holomorphic `f` the informal reading is the arc length of the parametrised
+curve `f ∘ circleMap ζ ρ` restricted to the angles whose points lie in `s`, whose speed at angle
+`θ` is `ρ * ‖deriv f (circleMap ζ ρ θ)‖`. Even then it is length along the *parametrisation*, so
+points covered several times are counted with multiplicity, and it is a length of the image *set*
+only when `f` is in addition injective on that part of the circle; neither reading is formalised
+here. For a map with no complex derivative the reading fails outright, since `deriv` is then the
+junk value `0`: for `f = conj` the quantity is `0` while the image circle still has length
+`2 π ρ`.
 
 The angle runs over `Ioo (-π) π`, one full period of `circleMap ζ ρ`; by
 `TauCeti.circleImageLength_eq_lintegral_Ioc` any other period gives the same value. A negative
@@ -255,9 +260,9 @@ private theorem sq_lintegral_angle_le (f : ℂ → ℂ) (hs : MeasurableSet s) (
   simpa [hvol] using sq_lintegral_le_measure_univ_mul (volume.restrict (Ioo (-π) π)) hum
 
 /-- **The length–area inequality.** The integral of `ℓ ρ ^ 2 / ρ` over all radii, where `ℓ ρ` is
-`TauCeti.circleImageLength f s ζ ρ` — the arc length, counted with multiplicity, of the image of
-the part inside `s` of the circle of radius `ρ` about `ζ`, when `f` is holomorphic there — is at
-most `2 π` times the Dirichlet integral of `f` over `s`.
+`TauCeti.circleImageLength f s ζ ρ` — the derivative-weighted angular integral over the part inside
+`s` of the circle of radius `ρ` about `ζ`, an arc length counted with multiplicity when `f` is
+holomorphic there — is at most `2 π` times the Dirichlet integral of `f` over `s`.
 
 This is Cauchy–Schwarz in the angular variable — the source of the factor `2 π`, the length of the
 angular interval — followed by the polar-coordinate change of variables, which reassembles the
