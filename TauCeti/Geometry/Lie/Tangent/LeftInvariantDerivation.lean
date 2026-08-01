@@ -15,6 +15,7 @@ the Lie algebra of left-invariant derivations and the tangent Lie algebra at the
 
 ## Main results
 
+* `LeftInvariantDerivation.evalAt_one_injective`: identity evaluation is injective for monoids.
 * `LeftInvariantDerivation.evalAt_injective`: evaluation at any point is injective.
 
 ## References
@@ -32,18 +33,12 @@ namespace LeftInvariantDerivation
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
-  {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [ContMDiffMul I ∞ G]
+  {G : Type*} [TopologicalSpace G] [ChartedSpace H G]
 
-/-- A left-invariant derivation is determined by its value at any point. -/
-theorem evalAt_injective (g₀ : G) :
-    Function.Injective (evalAt (I := I) g₀) := by
+/-- A left-invariant derivation on a monoid is determined by its value at the identity. -/
+theorem evalAt_one_injective [Monoid G] [ContMDiffMul I ∞ G] :
+    Function.Injective (evalAt (I := I) (1 : G)) := by
   intro X Y hXY
-  have hOne : evalAt (I := I) (1 : G) X = evalAt (I := I) (1 : G) Y := by
-    have hInv : evalAt (I := I) (g₀⁻¹ * g₀) X = evalAt (I := I) (g₀⁻¹ * g₀) Y := by
-      rw [evalAt_mul, evalAt_mul, hXY]
-    rw [inv_mul_cancel] at hInv
-    exact hInv
   ext f g
   have hEval : evalAt (I := I) g X = evalAt (I := I) g Y := by
     calc
@@ -51,10 +46,21 @@ theorem evalAt_injective (g₀ : G) :
           𝒅ₕ (smoothLeftMul_one I g) (evalAt (I := I) (1 : G) X) :=
         (left_invariant (I := I) (g := g) (X := X)).symm
       _ = 𝒅ₕ (smoothLeftMul_one I g) (evalAt (I := I) (1 : G) Y) :=
-        congrArg (𝒅ₕ (smoothLeftMul_one I g)) hOne
+        congrArg (𝒅ₕ (smoothLeftMul_one I g)) hXY
       _ = evalAt (I := I) g Y := left_invariant (I := I) (g := g) (X := Y)
   rw [← evalAt_apply (I := I) (g := g) (X := X) (f := f),
     ← evalAt_apply (I := I) (g := g) (X := Y) (f := f)]
   exact congrArg (fun D => D f) hEval
+
+/-- A left-invariant derivation is determined by its value at any point. -/
+theorem evalAt_injective [Group G] [ContMDiffMul I ∞ G] (g₀ : G) :
+    Function.Injective (evalAt (I := I) g₀) := by
+  intro X Y hXY
+  have hOne : evalAt (I := I) (1 : G) X = evalAt (I := I) (1 : G) Y := by
+    have hInv : evalAt (I := I) (g₀⁻¹ * g₀) X = evalAt (I := I) (g₀⁻¹ * g₀) Y := by
+      rw [evalAt_mul, evalAt_mul, hXY]
+    rw [inv_mul_cancel] at hInv
+    exact hInv
+  exact evalAt_one_injective hOne
 
 end LeftInvariantDerivation
