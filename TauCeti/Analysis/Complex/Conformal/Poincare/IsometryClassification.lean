@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Poincare.MetricSpace
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
-public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
+public import TauCeti.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-!
@@ -338,7 +338,8 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHy
       intro z hz
       have hz1 : (g z - g 0) / (1 - conj (g 0) * g z) = u * z := hcase hz
       have hinv := leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha (hmaps hz)
-      simp only at hinv
+      -- Beta-reduce the scalar Moebius formulas so that `hz1` rewrites `hinv`.
+      dsimp only at hinv
       rw [hz1] at hinv
       simp only [map_neg, neg_mul, sub_neg_eq_add] at hinv
       rw [← hinv]
@@ -347,7 +348,8 @@ theorem exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHy
       intro z hz
       have hz1 : (g z - g 0) / (1 - conj (g 0) * g z) = u * conj z := hcase hz
       have hinv := leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha (hmaps hz)
-      simp only at hinv
+      -- Beta-reduce the scalar Moebius formulas so that `hz1` rewrites `hinv`.
+      dsimp only at hinv
       rw [hz1] at hinv
       simp only [map_neg, neg_mul, sub_neg_eq_add] at hinv
       rw [← hinv]
