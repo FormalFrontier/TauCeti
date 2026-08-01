@@ -25,10 +25,10 @@ there extends to the full joint-law identity in `ConditionallyIIDWith`.
 ## Main results
 
 * `conditionallyIID_of_jointRectangles` — the Layer 1 common ending, at a named directing measure;
-* `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — the form each proof route
-  actually reaches: a set-integral factorization of the mass of a directing-measure event met with a
-  block cylinder, converted here into the joint-rectangle identity above. This is the neutral seam
-  between the routes, and it assumes no standard-Borel structure on either space;
+* `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — a set-integral
+  factorization of the mass of a directing-measure event met with a block cylinder, converted here
+  into the joint-rectangle identity above. A reusable seam, consumed by the martingale route and
+  available to any other, assuming no standard-Borel structure on either space;
 * `ConditionallyIIDWith.jointLaw_prod_univ_pi` — the converse rectangle identity;
 * `conditionallyIIDWith_iff_forall_jointRectangles` and
   `conditionallyIID_iff_exists_forall_jointRectangles` — characteristic forms for the named and
@@ -103,15 +103,17 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
 
-/-- **Set-integral common de Finetti ending.** The form each proof route actually reaches: if for
-every injective block the mass of a directing-measure event met with a block cylinder is the
-set-integral of the product of the witness's evaluations, then the witness directs the process.
+/-- **Set-integral common de Finetti ending.** If for every injective block the mass of a
+directing-measure event met with a block cylinder is the set-integral of the product of the
+witness's evaluations, then the witness directs the process.
 
-This is the neutral seam between the routes. A route has to supply only its own factorization
-identity — the martingale route from tail conditional laws, the Koopman route from invariant ones —
-and nothing here mentions how `ν` was built. In particular there is **no** standard-Borel or
-non-empty hypothesis on either space: those are needed to *construct* a directing measure, not to
-recognise one. -/
+This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
+factorization identity. The martingale route reaches it from tail conditional laws and consumes it
+in `conditionallyIIDWith_of_contractable_pathSpace`; a route conditioning on invariant σ-algebras
+instead could consume the same statement, though none currently does.
+
+In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
+needed to *construct* a directing measure, not to recognise one. -/
 theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
     {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
@@ -131,8 +133,7 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
   have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) := hS.prod (MeasurableSet.univ_pi hB)
   have hpre : (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) ⁻¹' (S ×ˢ Set.univ.pi B)
       = (ν ⁻¹' S) ∩ blockCylinder X k B := by
-    ext ω
-    simp [Set.mem_prod, mem_blockCylinder, Set.mem_pi]
+    rw [Set.mk_preimage_prod, ← blockCylinder_eq_preimage_univ_pi X k B]
   rw [Measure.map_apply hjoint hrect, hpre, hcore r k hk S hS B hB,
     Measure.bind_apply hrect hker.aemeasurable, ← lintegral_indicator (hν hS)]
   refine lintegral_congr fun ω => ?_
