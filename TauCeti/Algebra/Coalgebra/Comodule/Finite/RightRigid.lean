@@ -136,6 +136,7 @@ theorem dualEvaluation_apply (M : FGComoduleCat.{u, v, u} k H)
     dualEvaluation k H M (φ ⊗ₜ[k] m) = φ m :=
   rfl
 
+/-- The underlying linear map of evaluation is ordinary contraction. -/
 @[simp]
 theorem dualEvaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualEvaluation k H M).hom.toLinearMap = contractLeft k M :=
@@ -147,6 +148,8 @@ private theorem tensorCoact_coevaluation_apply_one
         (coevaluation k M 1) =
       coevaluation k M 1 ⊗ₜ[k] (1 : H) := by
   classical
+  -- Expand coevaluation and both coactions in a basis, then compare tensor coordinates.
+  -- The remaining matrix-coefficient sum collapses by the left antipode/counit identity.
   let b := Module.Basis.ofVectorSpace k M
   rw [coevaluation_apply_one]
   dsimp only [b]
@@ -222,6 +225,7 @@ theorem dualCoevaluation_apply_one (M : FGComoduleCat.{u, v, u} k H) :
           (Module.Basis.ofVectorSpace k M).coord i :=
   coevaluation_apply_one k M
 
+/-- The underlying linear map of coevaluation is ordinary finite-dimensional coevaluation. -/
 @[simp]
 theorem dualCoevaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualCoevaluation k H M).hom.toLinearMap = coevaluation k M :=
