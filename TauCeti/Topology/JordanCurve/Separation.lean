@@ -50,8 +50,8 @@ The corollaries for a circle `Metric.sphere c r` of `ℂ` are the case the confo
 ## Main results
 
 * `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton` — a Jordan curve minus a point is path
-  connected; it is an *open* arc — homeomorphic to a punctured circle, not to a closed interval —
-  and in particular one point never separates the curve.
+  connected; for a point of the curve it is an *open* arc — homeomorphic to a punctured circle, not
+  to a closed interval — and in particular one point never separates the curve.
 * `TauCeti.exists_isOpen_isPathConnected_union_eq_compl_pair_circle` — two distinct points cut the
   circle into two disjoint nonempty open path-connected arcs.
 * `TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair` — the same for an arbitrary
@@ -157,15 +157,19 @@ private lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
 
 /-- **A Jordan curve minus a point is path connected**, being homeomorphic to the circle minus a
 point (`Circle.isPathConnected_compl_singleton`). So a Jordan curve is *not* separated by any one of
-its points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_sdiff_pair`. -/
-theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (hp : p ∈ C) :
+its points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_sdiff_pair`. The point need
+not lie on the curve: removing one that does not leaves the curve itself. -/
+theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (p : X) :
     IsPathConnected (C \ {p}) := by
-  obtain ⟨e⟩ := isJordanCurve_iff.mp h
-  have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
-    rw [compl_eq_univ_sdiff, image_sdiff (injective_jordanParam e), image_univ, image_singleton,
-      range_jordanParam, jordanParam_apply]
-  exact himg ▸ (Circle.isPathConnected_compl_singleton _).image'
-    (continuous_jordanParam e).continuousOn
+  by_cases hp : p ∈ C
+  · obtain ⟨e⟩ := isJordanCurve_iff.mp h
+    have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
+      rw [compl_eq_univ_sdiff, image_sdiff (injective_jordanParam e), image_univ, image_singleton,
+        range_jordanParam, jordanParam_apply]
+    exact himg ▸ (Circle.isPathConnected_compl_singleton _).image'
+      (continuous_jordanParam e).continuousOn
+  · rw [sdiff_singleton_eq_self hp]
+    exact h.isPathConnected
 
 /-- **Two distinct points cut a Jordan curve into two arcs.** For `p ≠ q` on a Jordan curve `C`
 there are two disjoint path-connected sets `A` and `B` with `A ∪ B = C \ {p, q}`, and they are the
@@ -232,10 +236,11 @@ private lemma radius_pos_of_mem_sphere_of_ne {γ : Type*} [MetricSpace γ] {x y 
 
 /-- **A circle of `ℂ` minus a point is path connected**, being a Jordan curve
 (`TauCeti.isJordanCurve_sphere`). This is the boundary circle of a disc with one boundary point
-removed, the set the Carathéodory boundary argument works on. -/
-theorem isPathConnected_sphere_sdiff_singleton (c : ℂ) (hr : 0 < r) {z : ℂ} (hz : z ∈ sphere c r) :
+removed, the set the Carathéodory boundary argument works on; the removed point need not lie on the
+circle. -/
+theorem isPathConnected_sphere_sdiff_singleton (c : ℂ) (hr : 0 < r) (z : ℂ) :
     IsPathConnected (sphere c r \ {z}) :=
-  (isJordanCurve_sphere c hr).isPathConnected_sdiff_singleton hz
+  (isJordanCurve_sphere c hr).isPathConnected_sdiff_singleton z
 
 /-- **Two points cut a circle of `ℂ` into two arcs.** This is
 `TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair` for the bounding circle of a
