@@ -69,6 +69,15 @@ lemma pseudoHyperbolicExpr_comm (z w : ℂ) :
   unfold pseudoHyperbolicExpr
   rw [norm_div, norm_div, norm_sub_rev, norm_one_sub_conj_mul_comm]
 
+/-- **Conjugation invariance.** Conjugating both arguments leaves the pseudo-hyperbolic
+expression unchanged: conjugation is the orientation-reversing symmetry of the disc. -/
+@[simp]
+lemma pseudoHyperbolicExpr_conj (z w : ℂ) :
+    pseudoHyperbolicExpr ((starRingEnd ℂ) z) ((starRingEnd ℂ) w) = pseudoHyperbolicExpr z w := by
+  rw [pseudoHyperbolicExpr_def, pseudoHyperbolicExpr_def,
+    ← norm_conj ((z - w) / (1 - (starRingEnd ℂ) w * z)), map_div₀]
+  simp
+
 /-- If the two points are equal, their pseudo-hyperbolic expression is zero. -/
 lemma pseudoHyperbolicExpr_eq_zero_of_eq {z w : ℂ} (h : z = w) :
     pseudoHyperbolicExpr z w = 0 := by

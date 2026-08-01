@@ -20,7 +20,9 @@ The main constructions are:
   hyperbolic-distance-preserving equivalence of `Complex.UnitDisc`;
 * `PoincareDisc.unitDiscMoebiusIsometryEquiv`, for the automorphism sending `a` to zero;
 * `PoincareDisc.unitDiscStandardAutomorphismIsometryEquiv`, for
-  `z ↦ u * (z - a) / (1 - conj a * z)`.
+  `z ↦ u * (z - a) / (1 - conj a * z)`;
+* `PoincareDisc.starIsometryEquiv`, for the conjugation `z ↦ conj z`, which is a Poincaré
+  isometry without being a disc automorphism: it is the orientation-reversing symmetry.
 
 This advances the conformal-mapping roadmap's L2 targets for the Poincaré metric and the disc
 automorphism group. It reuses Tau Ceti's disc-automorphism and hyperbolic-distance invariance
@@ -99,6 +101,28 @@ lemma unitDiscStandardAutomorphismIsometryEquiv_symm_apply
   change Complex.UnitDisc.toPoincare
       ((unitDiscStandardAutomorphismEquiv u a).symm (toUnitDisc z)) = _
   rw [unitDiscStandardAutomorphismEquiv_symm]
+  rfl
+
+/-- Complex conjugation as an isometric equivalence of the Poincaré disc. It is not a disc
+automorphism, being orientation-reversing rather than holomorphic, but it does preserve the
+hyperbolic distance (`TauCeti.hyperbolicDist_conj`); together with the standard automorphisms it
+exhausts the Poincaré isometries. -/
+noncomputable def starIsometryEquiv : PoincareDisc ≃ᵢ PoincareDisc :=
+  isometryEquivOfHyperbolicDistEq (star_involutive.toPerm star) fun z w => by
+    -- `Complex.UnitDisc.coe_star` turns the coerced `star` into `conj`, and conjugation is a
+    -- hyperbolic isometry by `TauCeti.hyperbolicDist_conj`.
+    simp
+
+/-- The conjugation isometry of the Poincaré disc acts by `star` on the underlying disc. -/
+@[simp]
+lemma starIsometryEquiv_apply (z : PoincareDisc) :
+    starIsometryEquiv z = Complex.UnitDisc.toPoincare (star (toUnitDisc z)) :=
+  (rfl)
+
+/-- Conjugation is an involution of the Poincaré disc, so it is its own inverse. -/
+@[simp]
+lemma starIsometryEquiv_symm : starIsometryEquiv.symm = starIsometryEquiv := by
+  ext z
   rfl
 
 /-- The disc Moebius automorphism centred at `a` as an isometric equivalence of the Poincaré

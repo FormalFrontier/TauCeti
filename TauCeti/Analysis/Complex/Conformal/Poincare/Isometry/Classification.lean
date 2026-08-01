@@ -73,7 +73,10 @@ per point. Undoing the Moebius factor turns `e₁` into the rotation `u` and `g 
   and its pseudo-hyperbolic companion — **the classification**.
 * `TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star` — the
   same statement for the bundled metric space `PoincareDisc` and the bundled automorphisms
-  `PoincareDisc.unitDiscStandardAutomorphismIsometryEquiv`.
+  `PoincareDisc.unitDiscStandardAutomorphismIsometryEquiv`; its `Isometry`-iff form
+  `PoincareDisc.isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star`
+  describes the isometry group itself, the conjugation entering its second alternative being
+  bundled as `PoincareDisc.starIsometryEquiv` in `Isometry/Equiv.lean`.
 * `TauCeti.bijOn_ball_of_forall_pseudoHyperbolicExpr_map_eq`,
   `TauCeti.bijOn_ball_of_hyperbolicDist_map_eq` and
   `TauCeti.PoincareDisc.bijective_of_isometry` — an isometric self-embedding of the Poincaré disc
@@ -410,14 +413,14 @@ namespace PoincareDisc
 
 /-- **The isometries of the Poincaré disc, bundled form.** Every isometry of the metric space
 `PoincareDisc` is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a`,
-or that automorphism precomposed with the conjugation `star` of the disc: the isometry group of
-`PoincareDisc` is `Aut(𝔻)` together with its orientation-reversing coset. -/
+or that automorphism precomposed with the conjugation `starIsometryEquiv`: the isometry group of
+`PoincareDisc` is `Aut(𝔻)` together with its orientation-reversing coset. The converse is
+`PoincareDisc.isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star`. -/
 theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
     {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
     ∃ (u : Circle) (a : Complex.UnitDisc),
       (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a z) ∨
-        (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a
-          (Complex.UnitDisc.toPoincare (star (toUnitDisc z)))) := by
+        (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a (starIsometryEquiv z)) := by
   classical
   set F : ℂ → ℂ := fun z =>
     if h : ‖z‖ < 1 then
@@ -456,24 +459,37 @@ theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
       coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc, ← hFz z]
     exact hcase (coe_mem_ball z)
   · refine Or.inr fun z => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)
-    rw [unitDiscStandardAutomorphismIsometryEquiv_apply, toUnitDisc_toPoincare,
-      coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc,
-      toUnitDisc_toPoincare, Complex.UnitDisc.coe_star, ← hFz z]
+    rw [starIsometryEquiv_apply, unitDiscStandardAutomorphismIsometryEquiv_apply,
+      toUnitDisc_toPoincare, coe_unitDiscStandardAutomorphismEquiv_apply,
+      Complex.UnitDisc.coe_mk, hc, toUnitDisc_toPoincare, Complex.UnitDisc.coe_star, ← hFz z]
     exact hcase (coe_mem_ball z)
+
+/-- **The isometry group of the Poincaré disc.** A self-map of `PoincareDisc` is an isometry if
+and only if it is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a` or
+that automorphism precomposed with the conjugation `starIsometryEquiv`. The forward direction is
+the classification `exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star`; the
+converse holds because both factors are isometric equivalences. -/
+theorem isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
+    {f : PoincareDisc → PoincareDisc} :
+    Isometry f ↔ ∃ (u : Circle) (a : Complex.UnitDisc),
+      (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a z) ∨
+        (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a (starIsometryEquiv z)) := by
+  refine ⟨exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star, ?_⟩
+  rintro ⟨u, a, hcase | hcase⟩
+  · exact funext hcase ▸ (unitDiscStandardAutomorphismIsometryEquiv u a).isometry
+  · exact funext hcase ▸
+      (unitDiscStandardAutomorphismIsometryEquiv u a).isometry.comp starIsometryEquiv.isometry
 
 /-- **Every isometry of the Poincaré disc is a bijection.** Injectivity comes with any `Isometry`;
 surjectivity is the content, and it is read off the classification: both a standard automorphism
 and the conjugation are bijections. -/
 theorem bijective_of_isometry {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
     Function.Bijective f := by
-  have hstar : Function.Involutive
-      fun z : PoincareDisc => Complex.UnitDisc.toPoincare (star (toUnitDisc z)) := fun z => by
-    simp
   obtain ⟨u, a, hcase | hcase⟩ :=
     exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star hf
   · exact funext hcase ▸ (unitDiscStandardAutomorphismIsometryEquiv u a).bijective
   · exact funext hcase ▸
-      (unitDiscStandardAutomorphismIsometryEquiv u a).bijective.comp hstar.bijective
+      (unitDiscStandardAutomorphismIsometryEquiv u a).bijective.comp starIsometryEquiv.bijective
 
 end PoincareDisc
 

@@ -76,6 +76,13 @@ lemma hyperbolicDist_def (z w : ℂ) :
 lemma hyperbolicDist_comm (z w : ℂ) : hyperbolicDist z w = hyperbolicDist w z := by
   rw [hyperbolicDist_def, hyperbolicDist_def, pseudoHyperbolicExpr_comm]
 
+/-- **Conjugation invariance.** Conjugating both points leaves the hyperbolic distance
+unchanged, so conjugation is a hyperbolic isometry of the disc. -/
+@[simp]
+lemma hyperbolicDist_conj (z w : ℂ) :
+    hyperbolicDist ((starRingEnd ℂ) z) ((starRingEnd ℂ) w) = hyperbolicDist z w := by
+  rw [hyperbolicDist_def, hyperbolicDist_def, pseudoHyperbolicExpr_conj]
+
 /-- The hyperbolic distance from a point to itself is zero. -/
 @[simp]
 lemma hyperbolicDist_self (z : ℂ) : hyperbolicDist z z = 0 := by
