@@ -34,11 +34,11 @@ in the same universe, which is reflected in all scheme-level declarations in thi
 * `TauCeti.CommHopfAlgCat.quotientSpec`: the group scheme represented by `H ⧸ I`.
 * `TauCeti.CommHopfAlgCat.quotientSpecι`: its group-object morphism to the group scheme
   represented by `H`.
-* `TauCeti.CommHopfAlgCat.quotientSpecι_isClosedImmersion`: the underlying scheme morphism of
+* `TauCeti.CommHopfAlgCat.isClosedImmersion_quotientSpecι`: the underlying scheme morphism of
   `quotientSpecι` is a closed immersion.
 * `TauCeti.CommHopfAlgCat.quotientSpecMapOfLe`: the closed subgroup morphism induced by
   `I ≤ J`.
-* `TauCeti.FiniteTypeCommHopfAlgCat.quotientSpec_locallyOfFiniteType`: a finite-type Hopf
+* `TauCeti.FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec`: a finite-type Hopf
   algebra has quotient group schemes locally of finite type over `Spec R`.
 
 ## References
@@ -85,7 +85,7 @@ noncomputable abbrev quotientSpec (H : _root_.CommHopfAlgCat.{u} R)
 
 /-- The group-object morphism `Spec(H ⧸ I) ⟶ Spec(H)` induced contravariantly by the quotient
 Hopf-algebra morphism `H ⟶ H ⧸ I`. -/
-@[expose] noncomputable def quotientSpecι (H : _root_.CommHopfAlgCat.{u} R)
+noncomputable def quotientSpecι (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) :
     quotientSpec H I ⟶
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H) :=
@@ -95,20 +95,21 @@ Hopf-algebra morphism `H ⟶ H ⧸ I`. -/
 lemma quotientSpecι_def (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
     quotientSpecι H I =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (mkQuotient H I).op :=
-  rfl
+  (rfl)
 
 /-- The underlying scheme morphism of `quotientSpecι` is a closed immersion. Thus the quotient
 Hopf algebra defines a closed subgroup scheme of the affine group scheme represented by `H`. -/
-instance quotientSpecι_isClosedImmersion (H : _root_.CommHopfAlgCat.{u} R)
+instance isClosedImmersion_quotientSpecι (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) : IsClosedImmersion (quotientSpecι H I).hom.hom.left := by
   rw [quotientSpecι_def]
   apply hopfSpec_map_isClosedImmersion_of_surjective
-  change Function.Surjective (Ideal.Quotient.mkₐ R I.toIdeal)
-  exact Ideal.Quotient.mkₐ_surjective R I.toIdeal
+  intro q
+  obtain ⟨h, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
+  exact ⟨h, mkQuotient_apply H I h⟩
 
 /-- If `I ≤ J`, the quotient coordinate map `H ⧸ I ⟶ H ⧸ J` induces the group-object morphism
 `Spec(H ⧸ J) ⟶ Spec(H ⧸ I)`. -/
-@[expose] noncomputable def quotientSpecMapOfLe (H : _root_.CommHopfAlgCat.{u} R)
+noncomputable def quotientSpecMapOfLe (H : _root_.CommHopfAlgCat.{u} R)
     {I J : HopfIdeal R H} (hIJ : I ≤ J) : quotientSpec H J ⟶ quotientSpec H I :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (quotientMapOfLe H hIJ).op
 
@@ -118,11 +119,11 @@ lemma quotientSpecMapOfLe_def (H : _root_.CommHopfAlgCat.{u} R)
     {I J : HopfIdeal R H} (hIJ : I ≤ J) :
     quotientSpecMapOfLe H hIJ =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (quotientMapOfLe H hIJ).op :=
-  rfl
+  (rfl)
 
 /-- The scheme morphism underlying `quotientSpecMapOfLe` is a closed immersion. In particular,
 a larger Hopf ideal defines a closed subgroup scheme of the subgroup defined by a smaller one. -/
-instance quotientSpecMapOfLe_isClosedImmersion (H : _root_.CommHopfAlgCat.{u} R)
+instance isClosedImmersion_quotientSpecMapOfLe (H : _root_.CommHopfAlgCat.{u} R)
     {I J : HopfIdeal R H} (hIJ : I ≤ J) :
     IsClosedImmersion (quotientSpecMapOfLe H hIJ).hom.hom.left := by
   rw [quotientSpecMapOfLe_def]
@@ -169,11 +170,14 @@ variable {R : Type u} [CommRing R]
 /-- If `H` is a finite-type commutative Hopf algebra, then the group scheme represented by
 `H ⧸ I` is locally of finite type over `Spec R`. No finite-generation hypothesis on `I` is
 needed. -/
-instance quotientSpec_locallyOfFiniteType (H : FiniteTypeCommHopfAlgCat.{u, u} R)
+instance locallyOfFiniteType_quotientSpec (H : FiniteTypeCommHopfAlgCat.{u, u} R)
     (I : HopfIdeal R H) :
     LocallyOfFiniteType (CommHopfAlgCat.quotientSpec H.obj I).X.hom := by
   let Q := quotient H I
   letI : Algebra.FiniteType R (H ⧸ I.toIdeal) := Q.property
+  -- Mathlib's `specOverSpec` has a documented `OverClass` instance diamond. A standalone
+  -- rewrite lemma for this structural morphism selects the other instance path, after which
+  -- typeclass search cannot use `Q.property`; `change` preserves the local finite-type instance.
   change LocallyOfFiniteType
     (Spec (CommRingCat.of (H ⧸ I.toIdeal)) ↘ Spec (CommRingCat.of R))
   infer_instance
