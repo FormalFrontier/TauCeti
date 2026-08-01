@@ -12,17 +12,19 @@ public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 # How faithfully the symmetric group acts on a tensor power
 
 The symmetric group `S_d` acts on `(Rⁿ)^{⊗d}` by permuting tensor factors, and that action
-extends to an algebra map `R[S_d] → End((Rⁿ)^{⊗d})`.  This file measures how much of `R[S_d]`
-survives: the algebra map is injective **exactly** when `d ≤ n`.
+extends to an algebra map `R[S_d] → End((Rⁿ)^{⊗d})`.  Over a nontrivial commutative ring, this
+file measures how much of `R[S_d]` survives: the algebra map is injective **exactly** when `d ≤ n`.
 
 Above the threshold the tensor power is too small to separate permutations linearly.  For `n < d`
 every monomial basis vector of `(Rⁿ)^{⊗d}` repeats one of its factors, so the full antisymmetrizer
-`∑_σ sgn(σ) σ` is a nonzero element of `R[S_d]` acting as `0`.  This is why Schur--Weyl duality is
-stated for the *image* of `R[S_d]` in `End((Rⁿ)^{⊗d})` rather than for `R[S_d]` itself.
+`∑_σ sgn(σ) σ` acts as `0` over every commutative ring, and is nonzero when the ring is nontrivial.
+This is why Schur--Weyl duality is stated for the *image* of `R[S_d]` in
+`End((Rⁿ)^{⊗d})` rather than for `R[S_d]` itself.
 
-The group-level question has a different, coarser answer, recorded here as well: the permutation
-representation itself is faithful as soon as `Rⁿ` has two independent coordinate directions with
-which to tell tensor slots apart, that is, exactly when `2 ≤ n` or `d ≤ 1`.
+Over a nontrivial commutative semiring, the group-level question has a different, coarser answer,
+recorded here as well: the permutation representation itself is faithful as soon as `Rⁿ` has two
+independent coordinate directions with which to tell tensor slots apart, that is, exactly when
+`2 ≤ n` or `d ≤ 1`.
 
 Both answers are read off the monomial basis `tensorPowerBasis` of `(Rⁿ)^{⊗d}`, indexed by the
 functions `Fin d → Fin n`, on which a permutation acts by precomposition with its inverse.
@@ -56,7 +58,9 @@ universe u
 
 namespace TauCeti
 
-variable (R : Type u) (n d : ℕ) [CommRing R]
+section CommSemiring
+
+variable (R : Type u) (n d : ℕ) [CommSemiring R]
 
 /-- The monomial basis of `(Rⁿ)^{⊗d}`: the basis vector at `f : Fin d → Fin n` is the pure tensor
 whose `i`-th factor is the `f i`-th standard basis vector of `Rⁿ`. -/
@@ -73,6 +77,7 @@ theorem tensorPowerBasis_apply (f : Fin d → Fin n) :
 
 /-- A permutation acts on the monomial basis of `(Rⁿ)^{⊗d}` by precomposing the index function
 with its inverse. -/
+@[simp]
 theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d → Fin n) :
     permTensorAction R n d σ (tensorPowerBasis R n d f) =
       tensorPowerBasis R n d fun i => f (σ.symm i) := by
@@ -80,6 +85,7 @@ theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d �
 
 /-- A group-algebra basis element acts on a monomial basis vector by precomposition and
 scaling. -/
+@[simp]
 theorem permTensorActionAlgHom_single_tensorPowerBasis (ρ : Equiv.Perm (Fin d)) (r : R)
     (f : Fin d → Fin n) :
     permTensorActionAlgHom R n d (MonoidAlgebra.single ρ r) (tensorPowerBasis R n d f) =
@@ -94,16 +100,14 @@ theorem permTensorActionAlgHom_apply_tensorPowerBasis
     permTensorActionAlgHom R n d a (tensorPowerBasis R n d f) =
       ∑ σ ∈ a.coeff.support,
         a.coeff σ • tensorPowerBasis R n d fun i => f (σ.symm i) := by
-  conv_lhs => rw [← MonoidAlgebra.sum_coeff_single a]
-  rw [Finsupp.sum, map_sum, LinearMap.sum_apply]
-  exact Finset.sum_congr rfl fun σ _ =>
-    permTensorActionAlgHom_single_tensorPowerBasis R n d σ (a.coeff σ) f
+  rw [tensorPowerBasis_apply, permTensorActionAlgHom_apply_tprod, Finsupp.sum]
+  exact Finset.sum_congr rfl fun σ _ => by rw [tensorPowerBasis_apply]
 
 variable {R n d}
 
 /-- Precomposing an injective function with the inverses of the permutations of its domain
 separates those permutations. -/
-theorem injective_comp_perm_symm {ι κ : Type*} {f : ι → κ} (hf : Function.Injective f) :
+private theorem comp_perm_symm_injective {ι κ : Type*} {f : ι → κ} (hf : Function.Injective f) :
     Function.Injective fun σ : Equiv.Perm ι => fun i => f (σ.symm i) := by
   intro σ τ h
   have hsymm : σ.symm = τ.symm := Equiv.ext fun i => hf (congrFun h i)
@@ -111,7 +115,7 @@ theorem injective_comp_perm_symm {ι κ : Type*} {f : ι → κ} (hf : Function.
 
 /-- An injective index function makes the monomial basis read the coefficients of a group-algebra
 element off the image of its basis vector: this is the mechanism behind faithfulness. -/
-theorem repr_permTensorActionAlgHom_apply_tensorPowerBasis
+private theorem repr_permTensorActionAlgHom_apply_tensorPowerBasis
     (a : MonoidAlgebra R (Equiv.Perm (Fin d))) {f : Fin d → Fin n} (hf : Function.Injective f)
     (ρ : Equiv.Perm (Fin d)) :
     (tensorPowerBasis R n d).repr
@@ -126,7 +130,7 @@ theorem repr_permTensorActionAlgHom_apply_tensorPowerBasis
     intro σ _
     rw [map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
       Finsupp.single_apply]
-    exact if_congr ⟨fun hc => injective_comp_perm_symm hf hc, fun hc => by rw [hc]⟩ rfl rfl
+    exact if_congr ⟨fun hc => comp_perm_symm_injective hf hc, fun hc => by rw [hc]⟩ rfl rfl
   rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq' a.coeff.support ρ]
   by_cases hρ : ρ ∈ a.coeff.support
   · rw [if_pos hρ]
@@ -136,11 +140,19 @@ theorem repr_permTensorActionAlgHom_apply_tensorPowerBasis
 dimension, the algebra map `R[S_d] → End((Rⁿ)^{⊗d})` is injective. -/
 theorem permTensorActionAlgHom_injective_of_le (h : d ≤ n) :
     Function.Injective (permTensorActionAlgHom R n d) := by
-  refine (injective_iff_map_eq_zero _).mpr fun a ha => ?_
-  rw [← MonoidAlgebra.coeff_inj, MonoidAlgebra.coeff_zero]
+  intro a b hab
+  rw [← MonoidAlgebra.coeff_inj]
   ext ρ
-  rw [← repr_permTensorActionAlgHom_apply_tensorPowerBasis a (Fin.castLE_injective h) ρ, ha]
-  simp
+  rw [← repr_permTensorActionAlgHom_apply_tensorPowerBasis a (Fin.castLE_injective h) ρ,
+    ← repr_permTensorActionAlgHom_apply_tensorPowerBasis b (Fin.castLE_injective h) ρ, hab]
+
+end CommSemiring
+
+section CommRing
+
+variable (R : Type u) (n d : ℕ) [CommRing R]
+
+variable {R n d}
 
 /-- **The antisymmetrizer dies below the threshold.**  If the dimension is smaller than the tensor
 degree, then every monomial basis vector of `(Rⁿ)^{⊗d}` repeats a factor, and the full
@@ -170,7 +182,9 @@ theorem permTensorActionAlgHom_sum_sign_eq_zero (h : n < d) :
     (fun _ => Finset.mem_univ _) (fun σ => by rw [mul_assoc, hτ_sq, mul_one])
   · have hcomp : (fun x => f ((σ * τ).symm x)) = fun x => f (σ.symm x) := by
       funext x
-      have hmul : (σ * τ).symm x = τ.symm (σ.symm x) := rfl
+      have hmul : (σ * τ).symm x = τ.symm (σ.symm x) := by
+        simpa only [Equiv.Perm.coe_inv, Equiv.Perm.mul_apply] using
+          congrArg (fun ρ : Equiv.Perm (Fin d) => ρ x) (mul_inv_rev σ τ)
       rw [hmul, hτ, Equiv.symm_swap, ← hτ, hfτ]
     have hscalar : (((Equiv.Perm.sign (σ * τ) : ℤ)) : R) = -(((Equiv.Perm.sign σ : ℤ)) : R) := by
       rw [Equiv.Perm.sign_mul, hsign]
@@ -200,6 +214,14 @@ theorem permTensorActionAlgHom_injective_iff [Nontrivial R] :
     Function.Injective (permTensorActionAlgHom R n d) ↔ d ≤ n :=
   ⟨fun hinj => not_lt.mp fun h => permTensorActionAlgHom_not_injective_of_lt h hinj,
     permTensorActionAlgHom_injective_of_le⟩
+
+end CommRing
+
+section CommSemiring
+
+variable (R : Type u) (n d : ℕ) [CommSemiring R]
+
+variable {R n d}
 
 /-- With at most one coordinate direction the tensor slots cannot be told apart, and the
 permutation action on `(Rⁿ)^{⊗d}` is trivial. -/
@@ -253,5 +275,7 @@ theorem permTensorAction_injective_iff [Nontrivial R] :
     · exact permTensorAction_injective_of_two_le h
     · haveI : Subsingleton (Fin d) := Fin.subsingleton_iff_le_one.mpr h
       exact fun σ τ _ => Equiv.ext fun x => Subsingleton.elim _ _
+
+end CommSemiring
 
 end TauCeti
