@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Analysis.Normed.Module.Trace
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.Analysis.InnerProductSpace.Trace
@@ -46,8 +47,13 @@ elements — are restatements of `Representation.char_one`, `Representation.char
 
 Continuity of the trace is not automatic from continuity of `π` alone: it is continuity of the
 functional `T ↦ trace T` on `V →L[𝕜] V`, which holds because that space is finite-dimensional over
-the complete field `𝕜`. This is the same route that
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean` takes to average a trace.
+the complete field `𝕜`. That functional is `TauCeti.traceCLM` of
+`TauCeti/Analysis/Normed/Module/Trace.lean`, shared with
+`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`, which uses it to average a trace.
+
+Only the trace is at stake in the sections without an inner product, so they ask no more of the
+scalars than that functional does: `𝕜` is a complete nontrivially normed field there, and becomes
+`RCLike` only where an orthonormal basis or unitarity enters.
 
 This is the character definition of Layer 6 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
@@ -67,39 +73,23 @@ namespace ContRepresentation
 
 section Monoid
 
-variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
-  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
-
-/-- Completeness of `V` is not an extra hypothesis below: a finite-dimensional normed space over an
-`RCLike` field is already complete. Mathlib keeps `FiniteDimensional.complete` out of the global
-instance set, so it is installed here as a local instance instead. -/
-local instance completeSpace_of_finiteDimensional : CompleteSpace V :=
-  FiniteDimensional.complete 𝕜 V
-
-/-- The trace of a continuous endomorphism of a finite-dimensional space, as a continuous linear
-functional. Continuity is automatic: `V →L[𝕜] V` is finite-dimensional over the complete field
-`𝕜`, and every linear map out of such a space is continuous. -/
-private noncomputable def traceCLM : (V →L[𝕜] V) →L[𝕜] 𝕜 :=
-  LinearMap.toContinuousLinearMap ((LinearMap.trace 𝕜 V).comp (ContinuousLinearMap.coeLM 𝕜))
-
-private theorem traceCLM_apply (T : V →L[𝕜] V) :
-    traceCLM T = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-  rw [traceCLM, LinearMap.coe_toContinuousLinearMap']
-  rfl
+variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Monoid G]
+  [TopologicalSpace G] [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
 
 /-- **The character** `g ↦ trace (π g)` of a finite-dimensional representation with continuous
 operator-valued action, as an element of `C(G, 𝕜)`.
 
-The underlying function is Mathlib's `Representation.character`; only the continuity is new. -/
+The underlying function is Mathlib's `Representation.character`; only the continuity is new, and it
+comes from `TauCeti.traceCLM`, the trace as a continuous linear functional. -/
 noncomputable def character (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) : C(G, 𝕜) where
   toFun := π.toRepresentation.character
   continuous_toFun := by
-    have h : π.toRepresentation.character = fun g ↦ traceCLM (π g) := by
+    have h : π.toRepresentation.character = fun g ↦ traceCLM 𝕜 V (π g) := by
       funext g
       rw [traceCLM_apply]
       rfl
     rw [h]
-    exact (traceCLM (𝕜 := 𝕜) (V := V)).continuous.comp hπ
+    exact (traceCLM 𝕜 V).continuous.comp hπ
 
 variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
@@ -187,8 +177,8 @@ end MonoidInner
 
 section Group
 
-variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G]
-  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Group G]
+  [TopologicalSpace G] [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
 variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 /-- **The character is a class function.** This is `Representation.char_conj` transported to the

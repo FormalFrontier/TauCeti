@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Analysis.Normed.Module.Trace
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import TauCeti.RepresentationTheory.Compact.MatrixCoefficient
 public import Mathlib.LinearAlgebra.Trace
@@ -322,20 +323,14 @@ factor `(dim V)⁻¹` in the first Schur orthogonality relation. -/
 theorem trace_averageOperator (T : V →L[𝕜] V) :
     LinearMap.trace 𝕜 V (averageOperator π hπ π hπ T : V →ₗ[𝕜] V)
       = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-  set tr : (V →L[𝕜] V) →L[𝕜] 𝕜 :=
-    LinearMap.toContinuousLinearMap ((LinearMap.trace 𝕜 V).comp (ContinuousLinearMap.coeLM 𝕜))
-    with htr
-  have htr_apply : ∀ S : V →L[𝕜] V, tr S = LinearMap.trace 𝕜 V (S : V →ₗ[𝕜] V) := fun S ↦ by
-    rw [htr, LinearMap.coe_toContinuousLinearMap']
-    rfl
-  have hconst : (tr : C(V →L[𝕜] V, 𝕜)).comp (conjFamily π hπ π hπ T)
+  have hconst : (traceCLM 𝕜 V : C(V →L[𝕜] V, 𝕜)).comp (conjFamily π hπ π hπ T)
       = ContinuousMap.const G (LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) :=
     ContinuousMap.ext fun g ↦ by
       rw [ContinuousMap.comp_apply]
-      exact (htr_apply _).trans (trace_conjFamily π hπ T g)
-  have h := tr.haarAverage_comp_comm (G := G) (conjFamily π hπ π hπ T)
+      exact (traceCLM_apply _).trans (trace_conjFamily π hπ T g)
+  have h := (traceCLM 𝕜 V).haarAverage_comp_comm (G := G) (conjFamily π hπ π hπ T)
   rw [hconst, haarAverage_const] at h
-  rw [← htr_apply, averageOperator, ← h]
+  rw [← traceCLM_apply, averageOperator, ← h]
 
 end Trace
 
