@@ -19,8 +19,12 @@ this file relates them to exchangeable families.
 
 * `exchangeableFamily_iff_exchangeable` identifies the family predicate over `ℕ` with the existing
   sequence predicate.
-* `ConditionallyIIDWith.exchangeableFamily` and `ConditionallyIID.exchangeableFamily` give the
-  easy implication from conditional i.i.d.-ness to exchangeability.
+* `MixedIIDWith.exchangeableFamily` and `MixedIID.exchangeableFamily` give the easy implication
+  from the mixture identity to exchangeability: along any two injective selections the block law is
+  the same mixture of product measures.
+* `ConditionallyIIDWith.exchangeableFamily` and `ConditionallyIID.exchangeableFamily` give the same
+  implication for the conditional predicate, factored through the mixture one rather than proved
+  again from the joint disintegration.
 * `ExchangeableFamily.comp_injective` reindexes a family along an injection; the corresponding
   conditional i.i.d. lemmas are in `ConditionallyIID.Basic`.
 
@@ -70,24 +74,26 @@ theorem ExchangeableFamily.blockLaw_eq {μ : Measure Ω} {X : ι → Ω → α}
     blockLaw μ X k = blockLaw μ X l :=
   h m k l hk hl
 
-/-- A conditionally i.i.d. family with a named directing measure is exchangeable. -/
+/-- **A mixed i.i.d. family is exchangeable.** Along any two injective selections the block law is
+the same `ν`-mixture of product measures, so the two block laws agree. -/
+theorem MixedIIDWith.exchangeableFamily
+    {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (h : MixedIIDWith μ X ν) : ExchangeableFamily μ X :=
+  ExchangeableFamily.intro fun _ k l hk hl =>
+    (h.blockLaw_eq_mixture k hk).trans (h.blockLaw_eq_mixture l hl).symm
+
+/-- **A mixed i.i.d. family is exchangeable**, existential form. -/
+theorem MixedIID.exchangeableFamily {μ : Measure Ω} {X : ι → Ω → α} (h : MixedIID μ X) :
+    ExchangeableFamily μ X :=
+  let ⟨_, hν⟩ := h.exists_mixingRepresentative
+  hν.exchangeableFamily
+
+/-- A conditionally i.i.d. family with a named directing measure is exchangeable: project to the
+mixture identity, which already forces the block laws to agree. -/
 theorem ConditionallyIIDWith.exchangeableFamily
     {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
-    (h : ConditionallyIIDWith μ X ν) : ExchangeableFamily μ X := by
-  refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  rw [blockLaw_def, blockLaw_def]
-  calc
-    μ.map (fun ω i => X (k i) ω) =
-        (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
-      rw [Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
-    _ = (μ.bind fun ω =>
-          (Measure.dirac (ν ω)).prod
-            (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
-      rw [h.jointLaw_eq_disintegration k hk]
-    _ = (μ.map fun ω => (ν ω, fun i : Fin m => X (l i) ω)).snd := by
-      rw [h.jointLaw_eq_disintegration l hl]
-    _ = μ.map fun ω i => X (l i) ω := by
-      rw [Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
+    (h : ConditionallyIIDWith μ X ν) : ExchangeableFamily μ X :=
+  (mixedIIDWith_of_conditionallyIIDWith h).exchangeableFamily
 
 /-- A conditionally i.i.d. family is exchangeable. -/
 theorem ConditionallyIID.exchangeableFamily

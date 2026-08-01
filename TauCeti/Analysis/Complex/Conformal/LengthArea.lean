@@ -377,6 +377,31 @@ theorem exists_circleImageLength_sq_lt_of_volume_image (hUo : IsOpen U)
   refine exists_circleImageLength_sq_lt f hs ζ hr hrR ?_
   rwa [volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs.nullMeasurableSet hsU hinj] at hc
 
+/-- **The fundamental theorem of calculus along a circular arc.** Integrating `deriv f` against the
+velocity of the parametrisation recovers the increment of `f` between the endpoints.
+
+Arc-local, like the theorem below: only holomorphy on `U` and containment of the arc in `U` are
+used. The radius may have either sign, and the set `s` plays no part. Continuity of `deriv f` along
+the arc, needed for interval integrability, is derived here rather than assumed. -/
+private lemma integral_deriv_circleMap_mul_eq_sub (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (ζ : ℂ) {ρ a b : ℝ} (hab : a ≤ b) (hmemU : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ U) :
+    ∫ θ in a..b, deriv f (circleMap ζ ρ θ) * (circleMap 0 ρ θ * I) =
+      f (circleMap ζ ρ b) - f (circleMap ζ ρ a) := by
+  have hcompCont : ContinuousOn (fun θ => deriv f (circleMap ζ ρ θ)) (Icc a b) :=
+    ((hf.analyticOnNhd hUo).deriv).continuousOn.comp
+      (continuous_circleMap ζ ρ).continuousOn hmemU
+  refine Contour.integral_comp_mul_eq_sub_of_hasDerivAt ?_
+    (fun θ _ => hasDerivAt_circleMap ζ ρ θ) (fun θ hθ => ?_) ?_
+  · rw [Set.uIcc_of_le hab]
+    exact hf.continuousOn.comp (continuous_circleMap ζ ρ).continuousOn hmemU
+  · have hθ' : θ ∈ Icc a b := by
+      rw [min_eq_left hab, max_eq_right hab] at hθ
+      exact Set.Ioo_subset_Icc_self hθ
+    exact ((hf _ (hmemU θ hθ')).differentiableAt (hUo.mem_nhds (hmemU θ hθ'))).hasDerivAt
+  · rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hab]
+    refine (ContinuousOn.integrableOn_compact isCompact_Icc ?_).mono_set Set.Ioc_subset_Icc_self
+    exact hcompCont.mul ((continuous_circleMap 0 ρ).continuousOn.mul continuousOn_const)
+
 /-- **The chord bound.** If the closed arc of angles `Icc a b` has angular width at most `2 * π`
 and the corresponding piece of the circle of radius `ρ` lies both in `s` and in an open set `U` on
 which `f` is holomorphic, then the distance between the images of its endpoints is at most
@@ -406,30 +431,13 @@ theorem ofReal_dist_le_circleImageLength (hUo : IsOpen U) (hf : DifferentiableOn
   have hderivCont : ContinuousOn (deriv f) U := ((hf.analyticOnNhd hUo).deriv).continuousOn
   have hcompCont : ContinuousOn (fun θ => deriv f (circleMap ζ ρ θ)) (Icc a b) :=
     hderivCont.comp (continuous_circleMap ζ ρ).continuousOn hmemU
-  -- the fundamental theorem of calculus along the arc
-  have hFTC : ∫ θ in a..b, deriv f (circleMap ζ ρ θ) * (circleMap 0 ρ θ * I) =
-      f (circleMap ζ ρ b) - f (circleMap ζ ρ a) := by
-    refine Contour.integral_comp_mul_eq_sub_of_hasDerivAt ?_
-      (fun θ _ => hasDerivAt_circleMap ζ ρ θ) (fun θ hθ => ?_) ?_
-    · rw [Set.uIcc_of_le hab]
-      exact hf.continuousOn.comp (continuous_circleMap ζ ρ).continuousOn hmemU
-    · have hθ' : θ ∈ Icc a b := by
-        rw [min_eq_left hab, max_eq_right hab] at hθ
-        exact Set.Ioo_subset_Icc_self hθ
-      exact ((hf _ (hmemU θ hθ')).differentiableAt (hUo.mem_nhds (hmemU θ hθ'))).hasDerivAt
-    · rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hab]
-      refine (ContinuousOn.integrableOn_compact isCompact_Icc ?_).mono_set Set.Ioc_subset_Icc_self
-      exact hcompCont.mul ((continuous_circleMap 0 ρ).continuousOn.mul continuousOn_const)
-  -- the speed of the parametrisation is `ρ * ‖deriv f‖`
-  have hspeed : ∀ θ : ℝ, ‖deriv f (circleMap ζ ρ θ) * (circleMap 0 ρ θ * I)‖ =
-      ρ * ‖deriv f (circleMap ζ ρ θ)‖ := by
-    intro θ
-    rw [norm_mul, norm_mul, norm_circleMap_zero, Complex.norm_I, mul_one, abs_of_pos hρ, mul_comm]
+  have hFTC := integral_deriv_circleMap_mul_eq_sub hUo hf ζ hab hmemU
   have hnorm : ‖f (circleMap ζ ρ b) - f (circleMap ζ ρ a)‖ ≤
       ∫ θ in a..b, ρ * ‖deriv f (circleMap ζ ρ θ)‖ := by
     rw [← hFTC]
     refine (intervalIntegral.norm_integral_le_integral_norm hab).trans_eq ?_
-    exact intervalIntegral.integral_congr fun θ _ => hspeed θ
+    refine intervalIntegral.integral_congr fun θ _ => ?_
+    rw [norm_mul, norm_mul, norm_circleMap_zero, Complex.norm_I, mul_one, abs_of_pos hρ, mul_comm]
   have hintOn : IntegrableOn (fun θ => ρ * ‖deriv f (circleMap ζ ρ θ)‖) (Ioc a b) :=
     (ContinuousOn.integrableOn_compact isCompact_Icc
       (continuousOn_const.mul hcompCont.norm)).mono_set Set.Ioc_subset_Icc_self
