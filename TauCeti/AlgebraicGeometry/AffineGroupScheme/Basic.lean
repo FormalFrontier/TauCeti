@@ -41,20 +41,17 @@ universe u
 underlying scheme is affine. Over the affine base `Spec S` this is equivalent to the
 structure morphism being an affine morphism; over a general base scheme only the
 relative notion is correct, so this property must not be transplanted verbatim there. -/
-def affineGroupSchemeProperty (S : CommRingCat.{u}) :
-    ObjectProperty (Grp (Over (Spec S))) :=
+def affineGroupSchemeProperty (S : CommRingCat.{u}) : ObjectProperty (Grp (Over (Spec S))) :=
   fun G => IsAffine G.X.left
 
 /-- Membership in the affine-group-scheme object property. -/
 @[simp]
 lemma affineGroupSchemeProperty_iff {S : CommRingCat.{u}} (G : Grp (Over (Spec S))) :
-    affineGroupSchemeProperty S G ↔ IsAffine G.X.left :=
-  Iff.rfl
+    affineGroupSchemeProperty S G ↔ IsAffine G.X.left := Iff.rfl
 
 /-- The category of affine group schemes over `Spec S`: the full subcategory of group
 objects in schemes over `Spec S` whose underlying scheme is affine. -/
-abbrev AffineGroupSchemeCat (S : CommRingCat.{u}) :=
-  (affineGroupSchemeProperty S).FullSubcategory
+abbrev AffineGroupSchemeCat (S : CommRingCat.{u}) := (affineGroupSchemeProperty S).FullSubcategory
 
 /-- Being an affine group scheme is invariant under isomorphism of group objects: an
 isomorphism induces an isomorphism of underlying schemes, and affineness transfers
@@ -65,8 +62,7 @@ instance (S : CommRingCat.{u}) : (affineGroupSchemeProperty S).IsClosedUnderIsom
 
 /-- Membership in `AffineGroupSchemeCat` supplies affineness of the underlying scheme
 automatically, so downstream instance searches need not invoke `property` by hand. -/
-instance {S : CommRingCat.{u}} (G : AffineGroupSchemeCat S) : IsAffine G.obj.X.left :=
-  G.property
+instance {S : CommRingCat.{u}} (G : AffineGroupSchemeCat S) : IsAffine G.obj.X.left := G.property
 
 variable {R : Type u} [CommRing R]
 
@@ -79,8 +75,7 @@ this application there fails to elaborate; only the explicitly applied bundled-`
 form survives, with definitional unfolding closing the gap on application. -/
 @[instance_reducible] private noncomputable def hopfAlgebraGammaAux
     (S : CommRingCat.{u}) (G : Scheme.{u})
-    [G.Over (Spec S)] [GrpObj (G.asOver (Spec S))] [IsAffine G] :
-    HopfAlgebra S (Γ.obj (op G)) :=
+    [G.Over (Spec S)] [GrpObj (G.asOver (Spec S))] [IsAffine G] : HopfAlgebra S (Γ.obj (op G)) :=
   inferInstanceAs (HopfAlgebra S Γ(G, ⊤))
 
 /-- The global sections of an affine group scheme `φ : G ⟶ Spec R` are a commutative

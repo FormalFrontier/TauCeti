@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Combinatorics.Quiver.Path.Vertices
 public import Mathlib.Data.List.Nodup
+public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Acyclic quivers
@@ -158,6 +159,12 @@ theorem isEmpty_hom_of_hom (h : Quiver.IsAcyclic V) {a b : V}
 theorem subsingleton_path_self (h : Quiver.IsAcyclic V) (a : V) :
     Subsingleton (Path a a) :=
   ⟨fun p q ↦ (h.eq_nil p).trans (h.eq_nil q).symm⟩
+
+/-- An acyclic quiver has exactly one closed path at each vertex, the trivial one. -/
+theorem card_path_self (h : Quiver.IsAcyclic V) (a : V) : Nat.card (Path a a) = 1 := by
+  haveI : Nonempty (Path a a) := ⟨Path.nil⟩
+  letI : Subsingleton (Path a a) := h.subsingleton_path_self a
+  exact Nat.card_unique
 
 /-- A quiver with no arrows is acyclic. -/
 theorem of_isEmpty_hom [∀ a b : V, IsEmpty (a ⟶ b)] :

@@ -106,8 +106,7 @@ lemma chafaiDensity_of_ne_zero {n : ℕ} (hn : n ≠ 0) (f : ℝ → ℝ) (t : �
 
 /-- `chafaiDensity f n` is continuous on `[0, ∞)` when `f` has `n` continuous derivatives
 there. -/
-lemma continuousOn_chafaiDensity {n : ℕ}
-    (hf : ContDiffOn ℝ (n : WithTop ℕ∞) f (Ici 0)) :
+lemma continuousOn_chafaiDensity {n : ℕ} (hf : ContDiffOn ℝ (n : WithTop ℕ∞) f (Ici 0)) :
     ContinuousOn (chafaiDensity f n) (Ici 0) := by
   by_cases hn : n = 0
   · subst n
@@ -384,8 +383,7 @@ lemma chafaiRescaled_integral (f : ℝ → ℝ) (n : ℕ) {g : ℝ≥0 → ℝ}
 
 /-- On positive source points, pulling the Bernstein kernel back along the Chafaï rescaling
 gives the classical finite-order kernel `(max (1 - x / t) 0) ^ (n - 1)`. -/
-lemma bernsteinKernel_chafaiRescaling_of_pos {n : ℕ} (hn : 2 ≤ n) (x : ℝ) {t : ℝ}
-    (ht : 0 < t) :
+lemma bernsteinKernel_chafaiRescaling_of_pos {n : ℕ} (hn : 2 ≤ n) (x : ℝ) {t : ℝ} (ht : 0 < t) :
     bernsteinKernel n x (chafaiRescaling n t : ℝ) = (max (1 - x / t) 0) ^ (n - 1) := by
   rw [bernsteinKernel_of_two_le hn]
   rw [chafaiRescaling_coe_of_pos (by omega : 1 ≤ n) ht]
@@ -434,8 +432,7 @@ lemma chafaiRescaled_integral_bernsteinKernelBoundedContinuous
   simp
 
 /-- `chafaiMeasure f n` lives on `(0, ∞)`: its complement has zero mass. -/
-lemma chafaiMeasure_compl_Ioi (f : ℝ → ℝ) (n : ℕ) :
-    (chafaiMeasure f n) (Ioi 0)ᶜ = 0 := by
+lemma chafaiMeasure_compl_Ioi (f : ℝ → ℝ) (n : ℕ) : (chafaiMeasure f n) (Ioi 0)ᶜ = 0 := by
   unfold chafaiMeasure
   rw [withDensity_apply _ (measurableSet_Ioi.compl)]
   apply setLIntegral_measure_zero
@@ -449,8 +446,7 @@ lemma chafaiRescaled_mass_eq (f : ℝ → ℝ) (n : ℕ) :
   unfold chafaiRescaled
   rw [Measure.map_apply (measurable_chafaiRescaling n) MeasurableSet.univ, Set.preimage_univ]
 
-private lemma aemeasurable_chafaiDensity_ofReal (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) :
+private lemma aemeasurable_chafaiDensity_ofReal (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f) (n : ℕ) :
     AEMeasurable (fun t => ENNReal.ofReal (chafaiDensity f n t))
       (volume.restrict (Ioi 0)) := by
   have hcont : ContinuousOn (chafaiDensity f n) (Ici 0) :=
@@ -588,8 +584,7 @@ private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
 for `2 ≤ k` and `0 ≤ T`, the integral of the `k`-th density on `[0,T]` is bounded above by the
 integral of the preceding density, assuming the endpoint has the required alternating sign. -/
 lemma integral_chafaiDensity_le_pred (f : ℝ → ℝ) {k : ℕ} (hk : 2 ≤ k)
-    (hf : ContDiffOn ℝ (k : WithTop ℕ∞) f (Ici 0))
-    (T : ℝ) (hT : 0 ≤ T)
+    (hf : ContDiffOn ℝ (k : WithTop ℕ∞) f (Ici 0)) (T : ℝ) (hT : 0 ≤ T)
     (hsign : 0 ≤ (-1 : ℝ) ^ (k - 1) * iteratedDerivWithin (k - 1) f (Ici 0) T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f k t ≤ ∫ t in (0 : ℝ)..T, chafaiDensity f (k - 1) t := by
   -- The degenerate interval is immediate; otherwise reindex `k` as `m + 2` for the IBP lemma.
@@ -665,8 +660,7 @@ private lemma integral_chafaiDensity_le_tendsto_sub (f : ℝ → ℝ)
     hcm.le_of_tendsto_atTop hL hT.le]
 
 private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ)
-    (hL : Tendsto f atTop (nhds L)) :
+    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     IntegrableOn (chafaiDensity f n) (Ioi 0) := by
   have hcont : ContinuousOn (chafaiDensity f n) (Ici 0) :=
     continuousOn_chafaiDensity (n := n) ((hcm.contDiffOn).of_le (nat_le_top n))
@@ -695,8 +689,7 @@ private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
       _ ≤ f 0 - L := integral_chafaiDensity_le_tendsto_sub f hcm n hn L hL T hT
 
 private lemma chafaiMeasure_mass_le_of_tendsto (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ)
-    (hL : Tendsto f atTop (nhds L))
+    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L))
     (hint : IntegrableOn (chafaiDensity f n) (Ioi 0)) :
     (chafaiMeasure f n) univ ≤ ENNReal.ofReal (f 0 - L) := by
   rw [chafaiMeasure_eq_withDensity]
@@ -807,8 +800,7 @@ lemma chafaiRescaled_prokhorov_mass_bound (f : ℝ → ℝ) (hcm : IsCompletelyM
 
 /-! ## Chafaï reconstruction and Bernstein-to-Laplace replacement -/
 
-private lemma chafai_kernel_density_eq (f : ℝ → ℝ)
-    (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) :
+private lemma chafai_kernel_density_eq (f : ℝ → ℝ) (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) :
     ∫ t in Ioi 0, bernsteinKernel n x (((n : ℝ) - 1) / t) *
       chafaiDensity f n t =
     ∫ t in Ioi x, (-1 : ℝ) ^ n / ↑(n - 1).factorial *
@@ -980,8 +972,7 @@ private lemma chafaiDensity_ge_const_on_Icc (f : ℝ → ℝ) (k : ℕ) (h : ℝ
 `chafaiDensity_ge_const_on_Icc` over `[T/2, T]` gives
 `(1/(k-1)!)·(T/2)^k·h T ≤ ∫ t in T/2..T, chafaiDensity f k t`. -/
 private lemma const_le_intervalIntegral_chafaiDensity (f : ℝ → ℝ) (k : ℕ) (hk : k ≠ 0)
-    (h : ℝ → ℝ) (h_antitone : AntitoneOn h (Ici 0)) (T : ℝ) (hT_nonneg : 0 ≤ T)
-    (h_density_eq :
+    (h : ℝ → ℝ) (h_antitone : AntitoneOn h (Ici 0)) (T : ℝ) (hT_nonneg : 0 ≤ T) (h_density_eq :
       ∀ t ∈ Icc (T / 2) T,
         chafaiDensity f k t = (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
     (hdens_int : IntervalIntegrable (chafaiDensity f k) volume (T / 2) T)
@@ -1013,10 +1004,8 @@ private lemma const_le_intervalIntegral_chafaiDensity (f : ℝ → ℝ) (k : ℕ
 eventually squeezed by a multiple of the vanishing density tail `∫_{Ioi (T/2)}`. -/
 private lemma density_tail_lower_bound_eventually (f : ℝ → ℝ)
     (hcm : IsCompletelyMonotone f) (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x)
-    (h : ℝ → ℝ) (h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T)
-    (h_antitone : AntitoneOn h (Ici 0))
-    (h_density_eq : ∀ t, chafaiDensity f k t =
-      (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
+    (h : ℝ → ℝ) (h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T) (h_antitone : AntitoneOn h (Ici 0))
+    (h_density_eq : ∀ t, chafaiDensity f k t = (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
     (hint_density : IntegrableOn (chafaiDensity f k) (Ioi 0)) :
     ∀ᶠ T in atTop,
       (T - x) ^ k * h T ≤
@@ -1059,8 +1048,7 @@ private lemma density_tail_lower_bound_eventually (f : ℝ → ℝ)
           ∫ t in Ioi (T / 2), chafaiDensity f k t := by ring
 
 private lemma boundary_term_decay (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
+    (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     Tendsto (fun T => (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
       iteratedDerivWithin k f (Ici 0) T) atTop (nhds 0) := by
   set h := fun T => (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) T
@@ -1141,8 +1129,7 @@ private lemma norm_ibp_kernel_le_chafaiDensity (f : ℝ → ℝ)
         iteratedDerivWithin k f (Ici 0) t := by field_simp
 
 private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
+    (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     IntegrableOn (fun t => (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
       iteratedDerivWithin k f (Ici 0) t) (Ioi x) := by
   have hk0 : k ≠ 0 := by omega
@@ -1212,8 +1199,7 @@ and `f` tending to `L` at infinity, integrating the order-`n` kernel
 recovers `f x - L`. This is the analytic identity behind the Chafaï reconstruction of `f` from
 its derivatives. -/
 private lemma chafai_repeated_ibp (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (n : ℕ) (hn : 1 ≤ n) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
+    (n : ℕ) (hn : 1 ≤ n) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     ∫ t in Ioi x, (-1 : ℝ) ^ n / ↑(n - 1).factorial *
       (t - x) ^ (n - 1) *
       iteratedDerivWithin n f (Ici 0) t = f x - L := by
@@ -1229,8 +1215,7 @@ private lemma chafai_repeated_ibp (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
 
 /-- **Chafaï reconstruction identity** for the nonconstant part. -/
 lemma chafaiRescaled_integral_bernsteinKernel_eq_sub_tendsto_atTop
-    (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x)
+    (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x)
     (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     ∫ p, bernsteinKernel n x (p : ℝ) ∂(chafaiRescaled f n) = f x - L := by
   have h_integral_pullback :
@@ -1264,8 +1249,7 @@ lemma chafaiRescaled_integral_bernsteinKernel_eq_sub_tendsto_atTop
   rw [h_integral_pullback, h_integral_density, hkernel]
   exact hibp
 
-private lemma bernsteinKernel_le_exp {n : ℕ} (hn : 2 ≤ n) {x p : ℝ} (_hx : 0 ≤ x)
-    (_hp : 0 ≤ p) :
+private lemma bernsteinKernel_le_exp {n : ℕ} (hn : 2 ≤ n) {x p : ℝ} (_hx : 0 ≤ x) (_hp : 0 ≤ p) :
     bernsteinKernel n x p ≤ Real.exp (-(x * p)) := by
   rw [bernsteinKernel_of_two_le hn]
   by_cases h : 1 - x * p / ↑(n - 1) ≤ 0
@@ -1340,8 +1324,7 @@ private lemma sq_div_sub_lt_div_two (xp C ε M : ℝ) (hxp_nn : 0 ≤ xp) (hxp_l
     linarith
   linarith
 
-private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < R)
-    (hε : 0 < ε) :
+private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < R) (hε : 0 < ε) :
     ∃ N : ℕ, ∀ n, N ≤ n → ∀ p, 0 ≤ p → p ≤ R →
       |bernsteinKernel n x p - Real.exp (-(x * p))| < ε := by
   set C := x * R
@@ -1409,10 +1392,8 @@ private lemma kernel_uniform_conv (x : ℝ) (hx : 0 < x) (ε : ℝ) (hε : 0 < �
     linarith [bernsteinKernel_nonneg n x p]
 
 /-- Bernstein-to-Laplace replacement against a uniformly finite sequence of measures. -/
-lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound
-    (σ : ℕ → Measure ℝ≥0)
-    (hmass : ∀ᶠ n in atTop, (σ n) univ ≤ ENNReal.ofReal C)
-    (x : ℝ) (hx : 0 ≤ x) :
+lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound (σ : ℕ → Measure ℝ≥0)
+    (hmass : ∀ᶠ n in atTop, (σ n) univ ≤ ENNReal.ofReal C) (x : ℝ) (hx : 0 ≤ x) :
     Tendsto (fun n => ∫ p : ℝ≥0,
         (bernsteinKernel n x (p : ℝ) - Real.exp (-(x * (p : ℝ)))) ∂(σ n))
       atTop (nhds 0) := by
@@ -1461,8 +1442,7 @@ lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound
 /-- Weak convergence of the rescaled Chafaï measures specializes to the Laplace kernel:
 if all bounded-continuous test integrals for `chafaiRescaled f n` converge to those for `μ₀`,
 then the integrals of `p ↦ exp (-x * p)` converge for every `x ≥ 0`. -/
-lemma chafaiRescaled_tendsto_laplace_integral_of_weak
-    {μ₀ : Measure ℝ≥0} {l : Filter ℕ}
+lemma chafaiRescaled_tendsto_laplace_integral_of_weak {μ₀ : Measure ℝ≥0} {l : Filter ℕ}
     (hweak : ∀ g : BoundedContinuousFunction ℝ≥0 ℝ,
         Tendsto (fun n => ∫ p, g p ∂(chafaiRescaled f n)) l
           (nhds (∫ p, g p ∂μ₀)))
