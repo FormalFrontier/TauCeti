@@ -107,66 +107,15 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
   rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
-/-- The unique index of a group-like element in a monoid algebra over a base with
-connected prime spectrum. -/
-private noncomputable def groupLikeIndex [ConnectedSpace (PrimeSpectrum R)]
-    {H : Type v} [Monoid H]
-    (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x) : H :=
-  Classical.choose ((TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single R x).mp hx)
-
-private theorem eq_single_groupLikeIndex [ConnectedSpace (PrimeSpectrum R)]
-    {H : Type v} [Monoid H]
-    (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x) :
-    x = MonoidAlgebra.single (groupLikeIndex R x hx) 1 :=
-  Classical.choose_spec
-    ((TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single R x).mp hx) |>.1
-
-private theorem groupLikeIndex_eq_iff [ConnectedSpace (PrimeSpectrum R)]
-    {H : Type v} [Monoid H] (x : MonoidAlgebra R H) (hx : IsGroupLikeElem R x)
-    (h : H) :
-    groupLikeIndex R x hx = h ↔ x = MonoidAlgebra.single h 1 := by
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  constructor
-  · rintro rfl
-    exact eq_single_groupLikeIndex R x hx
-  · intro hx_single
-    apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-    exact (eq_single_groupLikeIndex R x hx).symm.trans hx_single
-
 /-- Recover the character-group homomorphism that induces a morphism between coordinate
 Hopf algebras of finite-type diagonalizable groups over a base with connected prime
 spectrum. -/
 noncomputable def coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
     {G H : FGCommGrpCat.{v}}
     (F : coordinateRing R G ⟶ coordinateRing R H) : G ⟶ H :=
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  let f := FiniteTypeCommHopfAlgCat.toBialgHom F
-  let φ : G → H := fun g ↦
-    groupLikeIndex R (f (MonoidAlgebra.single g 1))
-      ((TauCeti.MonoidAlgebra.isGroupLikeElem_single_one R g).map f)
-  have hφ (g : G) :
-      f (MonoidAlgebra.single g 1) = MonoidAlgebra.single (φ g) 1 :=
-    eq_single_groupLikeIndex R _ _
-  FGCommGrpCat.ofHom
-    { toFun := φ
-      map_one' := by
-        apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-        calc
-          MonoidAlgebra.single (φ 1) 1 = f (MonoidAlgebra.single 1 1) := (hφ 1).symm
-          _ = f 1 := rfl
-          _ = 1 := map_one f
-          _ = MonoidAlgebra.single 1 1 := rfl
-      map_mul' := by
-        intro g g'
-        apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-        calc
-          MonoidAlgebra.single (φ (g * g')) 1 =
-              f (MonoidAlgebra.single (g * g') 1) := (hφ (g * g')).symm
-          _ = f (MonoidAlgebra.single g 1 * MonoidAlgebra.single g' 1) := by simp
-          _ = f (MonoidAlgebra.single g 1) * f (MonoidAlgebra.single g' 1) := map_mul f _ _
-          _ = MonoidAlgebra.single (φ g) 1 * MonoidAlgebra.single (φ g') 1 := by
-            rw [hφ g, hφ g']
-          _ = MonoidAlgebra.single (φ g * φ g') 1 := by simp }
+  FGCommGrpCat.ofHom <|
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F)
 
 /-- The recovered character-group homomorphism takes `g` to `h` exactly when the
 coordinate Hopf-algebra morphism takes the corresponding standard basis element to
@@ -177,12 +126,9 @@ theorem coordinateMapPreimage_apply_eq_iff [ConnectedSpace (PrimeSpectrum R)]
     FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g = h ↔
       FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
         MonoidAlgebra.single h 1 := by
-  let f := FiniteTypeCommHopfAlgCat.toBialgHom F
-  let hx : IsGroupLikeElem R (f (MonoidAlgebra.single g 1)) :=
-    (TauCeti.MonoidAlgebra.isGroupLikeElem_single_one R g).map f
-  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom,
-    MonoidHom.coe_mk, OneHom.coe_mk] using
-    groupLikeIndex_eq_iff R (f (MonoidAlgebra.single g 1)) hx h
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_apply_eq_iff R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F) g h
 
 /-- The recovered character-group homomorphism is characterized by the image of each
 standard basis element under the coordinate Hopf-algebra morphism. -/
@@ -192,7 +138,9 @@ theorem coordinateMapPreimage_single [ConnectedSpace (PrimeSpectrum R)]
     FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
       MonoidAlgebra.single
         (FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g) 1 := by
-  exact (coordinateMapPreimage_apply_eq_iff R F g _).mp rfl
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_single R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F) g
 
 /-- Applying the coordinate-map construction to the recovered character-group
 homomorphism gives the original coordinate Hopf-algebra morphism. -/
@@ -202,12 +150,10 @@ theorem coordinateMap_coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
     (F : coordinateRing R G ⟶ coordinateRing R H) :
     coordinateMap R (coordinateMapPreimage R F) = F := by
   apply FiniteTypeCommHopfAlgCat.hom_ext
-  apply BialgHom.coe_toAlgHom_injective
-  apply MonoidAlgebra.algHom_ext
-  · intro g
-    exact (coordinateMap_single R (coordinateMapPreimage R F) g 1).trans
-      (coordinateMapPreimage_single R F g).symm
-  · ext
+  rw [toBialgHom_coordinateMap]
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHom_mapDomainBialgHomPreimage R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F)
 
 /-- Every morphism between coordinate Hopf algebras of finite-type diagonalizable
 groups over a base with connected prime spectrum is induced by a character-group
@@ -226,16 +172,9 @@ theorem coordinateMap_injective [Nontrivial R] {G H : FGCommGrpCat.{v}} :
       (G ⟶ H) → (coordinateRing R G ⟶ coordinateRing R H)) := by
   intro φ ψ h
   apply FGCommGrpCat.hom_ext
-  ext g
-  apply MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-  calc
-    MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) 1 =
-        FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)
-          (MonoidAlgebra.single g 1) := (coordinateMap_single R φ g 1).symm
-    _ = FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R ψ)
-          (MonoidAlgebra.single g 1) := by rw [h]
-    _ = MonoidAlgebra.single (FGCommGrpCat.toMonoidHom ψ g) 1 :=
-      coordinateMap_single R ψ g 1
+  apply TauCeti.MonoidAlgebra.mapDomainBialgHom_injective R
+  simpa only [← toBialgHom_coordinateMap] using
+    congrArg FiniteTypeCommHopfAlgCat.toBialgHom h
 
 /-- Recovering a character-group homomorphism from its coordinate map returns the
 original homomorphism. -/
@@ -243,9 +182,11 @@ original homomorphism. -/
 theorem coordinateMapPreimage_coordinateMap [ConnectedSpace (PrimeSpectrum R)]
     {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
     coordinateMapPreimage R (coordinateMap R φ) = φ := by
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  apply coordinateMap_injective R
-  rw [coordinateMap_coordinateMapPreimage]
+  apply FGCommGrpCat.hom_ext
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom,
+    toBialgHom_coordinateMap] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_mapDomainBialgHom R
+      (FGCommGrpCat.toMonoidHom φ)
 
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
 
