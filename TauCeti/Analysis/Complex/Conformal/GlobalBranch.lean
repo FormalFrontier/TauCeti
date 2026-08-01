@@ -101,19 +101,18 @@ namespace ContinuesInside
 
 /-- **Path independence of continuation on a simply connected domain.** Two continuations of one
 germ, along two paths in `U` that start at `z₀` and share their endpoint, carry the same germ at
-the endpoint.
-
-The proof lifts the two paths to the subspace `↥U`, where simple connectivity makes them homotopic
-rel endpoints, pushes the homotopy back to `ℂ` — every intermediate path still lies in `U`, so the
-hypothesis continues the germ along it — and applies `TauCeti.monodromy_theorem` to the resulting
-family. The two given continuations are then matched with the extreme members of that family by
-uniqueness along a fixed path. -/
+the endpoint. -/
 theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U z₀)
     (hγ : Continuous γ) (hγU : ∀ x, γ x ∈ U) (hγ0 : γ 0 = z₀)
     (hδ : Continuous δ) (hδU : ∀ x, δ x ∈ U) (hδ0 : δ 0 = z₀) (hend : δ 1 = γ 1)
     (hf : IsAnalyticContinuationAlong f γ univ) (hf0 : f 0 =ᶠ[𝓝 z₀] f₀)
     (hg : IsAnalyticContinuationAlong g δ univ) (hg0 : g 0 =ᶠ[𝓝 z₀] f₀) :
     f 1 =ᶠ[𝓝 (γ 1)] g 1 := by
+  -- Lift the two paths to the subspace `↥U`, where simple connectivity makes them homotopic rel
+  -- endpoints; push the homotopy back to `ℂ` — every intermediate path still lies in `U`, so the
+  -- hypothesis continues the germ along it — and apply `TauCeti.monodromy_theorem` to the
+  -- resulting family. The two given continuations are then matched with the extreme members of
+  -- that family by uniqueness along a fixed path.
   haveI := hUc.simplyConnectedSpace
   have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
   -- The two paths, read in the subspace `↥U`, where simple connectivity lives.
