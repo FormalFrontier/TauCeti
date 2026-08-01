@@ -147,8 +147,7 @@ variable {ω : SymplecticForm V}
 
 /-- Under tameness, the pointwise symplectic area of a complex-linear image of `(v, J₀ v)` is
 nonnegative. -/
-lemma symplecticForm_apply_apply_nonneg (hF : IsComplexLinearMap J₀ J F₀)
-    (hω : ω.Tames J) (v : U) :
+lemma symplecticForm_apply_apply_nonneg (hF : IsComplexLinearMap J₀ J F₀) (hω : ω.Tames J) (v : U) :
     0 ≤ ω (F₀ v) (F₀ (J₀ v)) := by
   rw [(isComplexLinearMap_iff_apply J₀ J F₀).mp hF v]
   rcases eq_or_ne (F₀ v) 0 with hzero | hne
@@ -167,21 +166,18 @@ variable {F : (ℝ × ℝ) →ₗ[ℝ] V}
 
 /-- A real-linear map out of the standard complex line is complex-linear when it satisfies the
 coordinate Cauchy--Riemann equation `F(0,1) = J(F(1,0))`. -/
-lemma of_apply_stdComplexLineImag
-    (hF : F stdComplexLineImag = J (F stdComplexLineReal)) :
+lemma of_apply_stdComplexLineImag (hF : F stdComplexLineImag = J (F stdComplexLineReal)) :
     IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F :=
   (isComplexLinearMap_stdComplexLine_iff F).mpr hF
 
 /-- For a complex-linear map from the standard complex line, the imaginary coordinate derivative
 is `J` applied to the real coordinate derivative. -/
-lemma apply_stdComplexLineImag
-    (hF : IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F) :
+lemma apply_stdComplexLineImag (hF : IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F) :
     F stdComplexLineImag = J (F stdComplexLineReal) :=
   (isComplexLinearMap_stdComplexLine_iff F).mp hF
 
 /-- The real coordinate derivative is `-J` applied to the imaginary coordinate derivative. -/
-lemma apply_stdComplexLineReal
-    (hF : IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F) :
+lemma apply_stdComplexLineReal (hF : IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F) :
     F stdComplexLineReal = -J (F stdComplexLineImag) := by
   rw [hF.apply_stdComplexLineImag]
   simp

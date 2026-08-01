@@ -55,14 +55,12 @@ abbrev negPart (D : WeilDivisor X) :
 
 /-- The underlying Weil divisor of the packaged positive part is `D⁺`. -/
 @[simp]
-lemma coe_posPart (D : WeilDivisor X) :
-    (posPart D : WeilDivisor X) = D⁺ :=
+lemma coe_posPart (D : WeilDivisor X) : (posPart D : WeilDivisor X) = D⁺ :=
   rfl
 
 /-- The underlying Weil divisor of the packaged negative part is `D⁻`. -/
 @[simp]
-lemma coe_negPart (D : WeilDivisor X) :
-    (negPart D : WeilDivisor X) = D⁻ :=
+lemma coe_negPart (D : WeilDivisor X) : (negPart D : WeilDivisor X) = D⁻ :=
   rfl
 
 /-- If a divisor is already effective, its packaged positive part is the divisor itself, up to

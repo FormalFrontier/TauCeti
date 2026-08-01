@@ -73,8 +73,7 @@ def subgroupQuotientMap (H : Subgroup (FundamentalGroup X x₀)) :
 
 /-- The subgroup quotient map sends a representative to its quotient class. -/
 @[simp]
-theorem subgroupQuotientMap_apply (H : Subgroup (FundamentalGroup X x₀))
-    (e : UniversalCover x₀) :
+theorem subgroupQuotientMap_apply (H : Subgroup (FundamentalGroup X x₀)) (e : UniversalCover x₀) :
     subgroupQuotientMap x₀ H e = Quotient.mk'' e :=
   (rfl)
 
@@ -107,8 +106,7 @@ private theorem fundamentalGroup_disjoint [LocallyPathConnectedSpace X]
     exact IsCancelSMul.right_cancel g 1 u (hgu.trans (one_smul _ u).symm)
 
 /-- The quotient map by any subgroup of the fundamental group is a quotient covering map. -/
-theorem isQuotientCoveringMap_subgroupQuotientMap
-    [LocallyPathConnectedSpace X]
+theorem isQuotientCoveringMap_subgroupQuotientMap [LocallyPathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] (H : Subgroup (FundamentalGroup X x₀)) :
     IsQuotientCoveringMap (subgroupQuotientMap x₀ H) H where
   __ := isQuotientMap_quotient_mk'
@@ -133,14 +131,12 @@ def subgroupQuotientProj (H : Subgroup (FundamentalGroup X x₀)) :
 
 /-- The descended endpoint projection evaluates on an orbit representative as `proj`. -/
 @[simp]
-theorem subgroupQuotientProj_mk (H : Subgroup (FundamentalGroup X x₀))
-    (e : UniversalCover x₀) :
+theorem subgroupQuotientProj_mk (H : Subgroup (FundamentalGroup X x₀)) (e : UniversalCover x₀) :
     subgroupQuotientProj x₀ H (Quotient.mk'' e) = proj e :=
   (rfl)
 
 /-- The endpoint projection factors through the quotient by every subgroup. -/
-theorem subgroupQuotientProj_comp_subgroupQuotientMap
-    (H : Subgroup (FundamentalGroup X x₀)) :
+theorem subgroupQuotientProj_comp_subgroupQuotientMap (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupQuotientProj x₀ H ∘ subgroupQuotientMap x₀ H = proj := by
   ext e
   exact subgroupQuotientProj_mk x₀ H e
@@ -151,8 +147,7 @@ theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) 
   subgroupQuotientProj_mk x₀ H _
 
 /-- The descended endpoint projection is continuous. -/
-theorem continuous_subgroupQuotientProj
-    (H : Subgroup (FundamentalGroup X x₀)) :
+theorem continuous_subgroupQuotientProj (H : Subgroup (FundamentalGroup X x₀)) :
     Continuous (subgroupQuotientProj x₀ H) := by
   rw [isQuotientMap_quotient_mk'.continuous_iff]
   have h := subgroupQuotientProj_comp_subgroupQuotientMap x₀ H

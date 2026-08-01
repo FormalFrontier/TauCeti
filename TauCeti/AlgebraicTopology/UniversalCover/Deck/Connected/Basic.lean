@@ -151,8 +151,7 @@ lemma deckEquivFiberOfSurjective_apply_coe [PreconnectedSpace E] (hp : IsCoverin
 returns: it sends the chosen fibre point to the requested fibre point. -/
 @[simp]
 lemma deckEquivFiberOfSurjective_symm_smul [PreconnectedSpace E] (hp : IsCoveringMap p)
-    (e : p ⁻¹' {b}) (hsurj : Function.Surjective fun φ : Deck p => φ • e)
-    (e' : p ⁻¹' {b}) :
+    (e : p ⁻¹' {b}) (hsurj : Function.Surjective fun φ : Deck p => φ • e) (e' : p ⁻¹' {b}) :
     (deckEquivFiberOfSurjective hp e hsurj).symm e' • e = e' :=
   (deckEquivFiberOfSurjective hp e hsurj).apply_symm_apply e'
 

@@ -1,0 +1,77 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.LinearAlgebra.RootSystem.Chamber
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.Basic
+
+/-!
+# Inversions of a Weyl-group element that preserves dominance
+
+A Weyl-group element carrying a weight interior to the dominant chamber back into the closed
+dominant chamber sends no positive root to a negative root, so its inversion set is empty. This is
+the geometric half of the uniqueness of the dominant representative of a Weyl orbit; the remaining
+step, that an element with an empty inversion set is the identity, belongs to the exchange
+condition and is not attempted here.
+
+## Main results
+
+* `TauCeti.mapsTo_posRoots_of_smul_mem_dominantChamber`: such an element maps positive roots to
+  positive roots.
+* `TauCeti.inversions_eq_empty_of_smul_mem_dominantChamber` and
+  `TauCeti.inversions_eq_empty_of_smul_eq_self`: its inversion set is empty.
+
+## References
+
+This file supplies the geometric half of the fundamental-domain item of Layer 4 in
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, on top of the chamber definitions in
+`TauCeti/LinearAlgebra/RootSystem/Chamber.lean` and the inversion sets of
+`TauCeti/LinearAlgebra/RootSystem/Inversions/Basic.lean`. The argument is the one in J. E.
+Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.
+-/
+
+public section
+
+open Set
+
+namespace TauCeti
+
+universe u v w x
+
+variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
+  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  (P : _root_.RootPairing ι R M N) [LinearOrder R] [IsStrictOrderedRing R] (b : P.Base)
+
+variable [Finite ι] [P.IsCrystallographic] [P.IsReduced] [P.flip.IsReduced] {x : M}
+
+/-- A Weyl-group element carrying a weight interior to the dominant chamber back into the closed
+dominant chamber keeps every positive root positive. -/
+theorem mapsTo_posRoots_of_smul_mem_dominantChamber (w : P.weylGroup)
+    (hx : x ∈ openDominantChamber P b) (hw : w • x ∈ dominantChamber P b) :
+    MapsTo (P.weylGroupToPerm w) (posRoots P b) (posRoots P b) := by
+  intro i hi
+  by_contra hneg
+  rw [not_mem_posRoots_iff_mem_negRoots] at hneg
+  -- The coroot functional of the image at the moved weight is the coroot functional of the root
+  -- at the original weight, hence positive.
+  have h := coroot'_nonpos_of_mem_negRoots P b hw hneg
+  rw [RootPairing.coroot'_weylGroupToPerm_smul] at h
+  exact absurd h (not_le.mpr (coroot'_pos_of_mem_posRoots P b hx hi))
+
+/-- **A Weyl-group element carrying a weight interior to the dominant chamber back into the closed
+dominant chamber has no inversions.** -/
+theorem inversions_eq_empty_of_smul_mem_dominantChamber (w : P.weylGroup)
+    (hx : x ∈ openDominantChamber P b) (hw : w • x ∈ dominantChamber P b) :
+    inversions P b w = ∅ :=
+  (inversions_eq_empty_iff P b w).mpr (mapsTo_posRoots_of_smul_mem_dominantChamber P b w hx hw)
+
+/-- A Weyl-group element fixing a weight interior to the dominant chamber has no inversions. -/
+theorem inversions_eq_empty_of_smul_eq_self (w : P.weylGroup)
+    (hx : x ∈ openDominantChamber P b) (hw : w • x = x) :
+    inversions P b w = ∅ :=
+  inversions_eq_empty_of_smul_mem_dominantChamber P b w hx
+    (by rw [hw]; exact openDominantChamber_subset_dominantChamber P b hx)
+
+end TauCeti

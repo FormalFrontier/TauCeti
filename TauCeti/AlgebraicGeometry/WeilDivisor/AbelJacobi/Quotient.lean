@@ -76,8 +76,7 @@ private lemma weightedAbelJacobiQuotientClass_mk_def (w : X → ℤ) {x₀ : X} 
   rfl
 
 @[simp]
-lemma weightedAbelJacobiQuotientClass_mk (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1)
-    (D : WeilDivisor X) :
+lemma weightedAbelJacobiQuotientClass_mk (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1) (D : WeilDivisor X) :
     S.weightedAbelJacobiQuotientClass w hx₀ D =
       QuotientAddGroup.mk (weightedAbelJacobiDegreeZeroDivisor w hx₀ D) :=
   S.weightedAbelJacobiQuotientClass_mk_def w hx₀ D
@@ -102,8 +101,7 @@ lemma weightedAbelJacobiQuotientClass_zsmul (w : X → ℤ) {x₀ : X} (hx₀ : 
 /-- The quotient representative maps to the weighted Abel-Jacobi divisor class under the
 degree-zero quotient equivalence. -/
 lemma weightedDegreeZeroQuotientEquivPicZero_weightedAbelJacobiQuotientClass
-    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1)
-    (D : WeilDivisor X) :
+    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) (D : WeilDivisor X) :
     S.weightedDegreeZeroQuotientEquivPicZero w h
         (S.weightedAbelJacobiQuotientClass w hx₀ D) =
       S.weightedAbelJacobiDivisorClass w h hx₀ D := by
@@ -163,8 +161,7 @@ lemma weightedAbelJacobiQuotientClass_principalDivisor (w : X → ℤ)
 
 /-- Equality of weighted quotient Abel-Jacobi representatives is equality of the corresponding
 degree-corrected divisor classes. -/
-lemma weightedAbelJacobiQuotientClass_eq_iff_divisorClass
-    (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1)
+lemma weightedAbelJacobiQuotientClass_eq_iff_divisorClass (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1)
     {D E : WeilDivisor X} :
     S.weightedAbelJacobiQuotientClass w hx₀ D =
         S.weightedAbelJacobiQuotientClass w hx₀ E ↔
@@ -178,8 +175,7 @@ lemma weightedAbelJacobiQuotientClass_eq_iff_divisorClass
 /-- Equality of weighted quotient Abel-Jacobi representatives is linear equivalence of the
 corresponding degree-corrected divisors. -/
 lemma weightedAbelJacobiQuotientClass_eq_iff_linearlyEquivalent
-    (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1)
-    {D E : WeilDivisor X} :
+    (w : X → ℤ) {x₀ : X} (hx₀ : w x₀ = 1) {D E : WeilDivisor X} :
     S.weightedAbelJacobiQuotientClass w hx₀ D =
         S.weightedAbelJacobiQuotientClass w hx₀ E ↔
       S.LinearlyEquivalent (D - weightedDegree w D • ofPoint x₀)

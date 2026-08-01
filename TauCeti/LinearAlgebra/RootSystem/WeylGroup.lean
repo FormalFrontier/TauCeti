@@ -16,7 +16,8 @@ faithful.  Consequently, every subgroup of that automorphism group, and in parti
 group, is finite when the root index type is finite.  It also records how that action evaluates on
 simple reflections, how it interacts with root negation, and the sign change a reflection induces
 on its own coroot functional.  Alongside it, the weight-space action of the Weyl group is faithful,
-with no spanning hypothesis needed.
+with no spanning hypothesis needed.  More generally, an automorphism transports coroot functionals
+along its action on weights, matching the coroot functional of a root with that of its image.
 
 ## Main results
 
@@ -24,6 +25,9 @@ with no spanning hypothesis needed.
   determined by its permutation of the roots.
 * `TauCeti.RootPairing.coroot'_reflection_self` says a reflection reverses the sign of its own
   coroot functional.
+* `TauCeti.RootPairing.coroot'_smul` and `TauCeti.RootPairing.coroot'_weylGroupToPerm_smul` say an
+  automorphism, and in particular a Weyl-group element, carries the coroot functional of a root to
+  the coroot functional of its image.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
@@ -91,6 +95,25 @@ lemma coroot'_reflection_self (i : ι) (x : M) :
     P.coroot' i (P.reflection i x) = -P.coroot' i x := by
   rw [P.coroot'_reflection, coroot'_reflectionPerm_self]
   simp
+
+/-- An automorphism of a root pairing transports coroot functionals along its action on weights. -/
+@[grind =]
+lemma coroot'_smul (g : P.Aut) (i : ι) (x : M) :
+    P.coroot' i (g • x) = P.coroot' (g.indexEquiv.symm i) x := by
+  -- This is the transpose condition packaged in `RootPairing.Hom.weight_coweight_transpose`.
+  have h := congrFun (congrArg DFunLike.coe
+    (_root_.RootPairing.Hom.weight_coweight_transpose_apply P P (P.coroot i) g.toHom)) x
+  simp only [LinearMap.dualMap_apply, _root_.RootPairing.Hom.coroot_coweightMap_apply] at h
+  exact h
+
+/-- **A Weyl-group element matches the coroot functional of a root with the coroot functional of
+its image.** -/
+@[grind =]
+lemma coroot'_weylGroupToPerm_smul (w : P.weylGroup) (i : ι) (x : M) :
+    P.coroot' (P.weylGroupToPerm w i) (w • x) = P.coroot' i x := by
+  have h := coroot'_smul P (w : P.Aut) ((w : P.Aut).indexEquiv i) x
+  rw [_root_.Equiv.symm_apply_apply] at h
+  exact h
 
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
