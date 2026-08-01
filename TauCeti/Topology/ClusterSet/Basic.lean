@@ -208,7 +208,9 @@ singleton `{F w}`.
 
 This is the extension form of
 `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`: the point `w` need not belong to `U`.
-The agreement on `U` turns the within-`U` limit of `F` into the corresponding limit of `f`. -/
+The agreement on `U` turns the within-`U` limit of `F` into the corresponding limit of `f`.
+This lemma is deliberately not tagged `@[simp]`, since `F` does not occur in the left-hand side
+and therefore cannot be inferred by the simplifier. -/
 lemma clusterSetOn_eq_singleton_of_continuousOn_extension [T2Space Y] {F : X → Y}
     (hw : w ∈ closure U) (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) :
     clusterSetOn f U w = {F w} := by
