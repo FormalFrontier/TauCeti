@@ -78,7 +78,9 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
   along a path that stays inside its domain gives that function back.
 * `TauCeti.ContinuesAlong`, `TauCeti.ContinuesInside` — continuability of a germ along one path,
-  and along every path inside a domain.
+  and along every path inside a domain. Neither body is exposed; downstream files use them through
+  `TauCeti.continuesAlong_iff_exists`, `TauCeti.ContinuesInside.continuesAlong` and
+  `TauCeti.ContinuesInside.of_forall`.
 
 ## References
 
@@ -282,8 +284,16 @@ along `c` whose germ at the initial time is that of `f₀`.
 
 Only the germ of `f₀` at `c 0` enters, so this is a property of that germ rather than of `f₀`
 (`TauCeti.continuesAlong_congr`). -/
-@[expose] def ContinuesAlong (f₀ : ℂ → ℂ) (c : I → ℂ) : Prop :=
+def ContinuesAlong (f₀ : ℂ → ℂ) (c : I → ℂ) : Prop :=
   ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀
+
+/-- **The defining property of `TauCeti.ContinuesAlong`**: a germ continues along `c` exactly when
+some analytic continuation along `c` starts at it. This is the introduction and elimination rule
+for the predicate, whose body is not exposed. -/
+theorem continuesAlong_iff_exists :
+    ContinuesAlong f₀ c ↔
+      ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀ :=
+  Iff.rfl
 
 namespace ContinuesAlong
 
@@ -324,25 +334,38 @@ This is the hypothesis of the monodromy theorem. It is a condition on the germ
 (`TauCeti.continuesInside_congr`) and on the domain jointly: the germ of `Complex.log` at `1`
 continues inside `ℂ \ {0}`, and continues inside the slit plane, but is single-valued only on the
 latter. -/
-@[expose] def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
+def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
   ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c
 
 namespace ContinuesInside
 
+/-- **Elimination for `TauCeti.ContinuesInside`**: a germ that continues inside `U` continues
+along each individual path that starts at `z₀` and stays in `U`. -/
+theorem continuesAlong (H : ContinuesInside f₀ U z₀) (hc : Continuous c) (hcU : ∀ x, c x ∈ U)
+    (hc0 : c 0 = z₀) : ContinuesAlong f₀ c :=
+  H c hc hcU hc0
+
+/-- **Introduction for `TauCeti.ContinuesInside`**: a germ that continues along every path
+starting at `z₀` and staying in `U` continues inside `U`. -/
+theorem of_forall
+    (h : ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c) :
+    ContinuesInside f₀ U z₀ :=
+  h
+
 /-- A germ that continues inside `U` is analytic at the base point, as witnessed by the constant
 path. -/
 theorem analyticAt (H : ContinuesInside f₀ U z₀) (hz₀ : z₀ ∈ U) : AnalyticAt ℂ f₀ z₀ :=
-  (H (fun _ => z₀) continuous_const (fun _ => hz₀) rfl).analyticAt
+  (H.continuesAlong (c := fun _ => z₀) continuous_const (fun _ => hz₀) rfl).analyticAt
 
 /-- **Continuability inside a domain depends only on the germ at the base point.** -/
 protected theorem congr (H : ContinuesInside f₀ U z₀) (hfg : f₀ =ᶠ[𝓝 z₀] g₀) :
     ContinuesInside g₀ U z₀ :=
-  fun c hc hcU hc0 => (H c hc hcU hc0).congr (hc0 ▸ hfg)
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).congr (hc0 ▸ hfg)
 
 /-- A function holomorphic on an open set continues inside that set from each of its points. -/
 theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
     ContinuesInside f₀ U z₀ :=
-  fun _ hc hcU _ => .of_differentiableOn hUo hf₀ hc hcU
+  of_forall fun _ hc hcU _ => .of_differentiableOn hUo hf₀ hc hcU
 
 end ContinuesInside
 

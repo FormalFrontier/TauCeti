@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Monodromy
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
-import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.MetricSpace.Thickening
 
 /-!
@@ -30,8 +29,6 @@ two-way form below it is supplied by nothing else once `U` is simply connected.
 * `TauCeti.ContinuesInside.eventuallyEq_at_one` — **path independence**: on a simply connected `U`,
   two continuations of one germ along two paths in `U` with the same endpoints end at the same
   germ.
-* `TauCeti.ContinuesInside.eventuallyEq_of_loop` — the loop form: continuing a germ around a loop
-  in a simply connected `U` returns it unchanged.
 * `TauCeti.ContinuesInside.exists_analyticOnNhd` — **the monodromy theorem for a simply connected
   domain**: a germ that continues along every path of a simply connected open `U` is the germ of
   a function analytic on all of `U`.
@@ -139,8 +136,8 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
   have hKq : (fun x => K (1, x)) = δ := funext fun x => by simp [hK, q]
   -- A continuation along every intermediate path, all starting from the germ of `f₀`.
   have hcont : ∀ t : I, ContinuesAlong f₀ fun x => K (t, x) := fun t =>
-    H _ (by fun_prop) (hKmem t) (hKzero t)
-  choose F hF hF₀ using hcont
+    H.continuesAlong (by fun_prop) (hKmem t) (hKzero t)
+  choose F hF hF₀ using fun t => continuesAlong_iff_exists.1 (hcont t)
   have hF₀' : ∀ t : I, F t 0 =ᶠ[𝓝 z₀] f₀ := fun t => by
     rw [← hKzero t]; exact hF₀ t
   have hmono := monodromy_theorem K hF (fun t => (hF₀' t).trans (hF₀' 0).symm) 1
@@ -153,18 +150,6 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
       (by rw [hδ0]; exact hg0.trans (hF₀' 1).symm)
   rw [hend] at e₁
   exact (e₀.trans hmono.symm).trans e₁.symm
-
-/-- **A germ continued around a loop in a simply connected domain returns to itself.** This is the
-loop form of path independence, the constant path being the second path. -/
-theorem eventuallyEq_of_loop (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U z₀)
-    (hγ : Continuous γ) (hγU : ∀ x, γ x ∈ U) (hγ0 : γ 0 = z₀) (hγ1 : γ 1 = z₀)
-    (hf : IsAnalyticContinuationAlong f γ univ) (hf0 : f 0 =ᶠ[𝓝 z₀] f₀) :
-    f 1 =ᶠ[𝓝 z₀] f₀ := by
-  have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
-  have han : AnalyticAt ℂ f₀ z₀ := H.analyticAt hz₀U
-  have := H.eventuallyEq_at_one hUc hγ hγU hγ0 continuous_const (fun _ => hz₀U) rfl (by rw [hγ1]) hf
-    hf0 (.const continuousOn_const fun _ _ => han) .rfl
-  rwa [hγ1] at this
 
 /-- **The monodromy theorem for a simply connected domain.** A germ that continues along every
 path of a simply connected open set `U` issuing from `z₀` is the germ at `z₀` of a single function
@@ -182,7 +167,8 @@ theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀
     obtain ⟨c, hc⟩ := hUc.isPathConnected.joinedIn z₀ hz₀ w hw
     exact ⟨c, c.continuous, hc, c.source, c.target⟩
   choose! γ hγc hγU hγ0 hγ1 using hpath
-  choose! f hf hf₀ using fun w (hw : w ∈ U) => H _ (hγc w hw) (hγU w hw) (hγ0 w hw)
+  choose! f hf hf₀ using fun w (hw : w ∈ U) =>
+    continuesAlong_iff_exists.1 (H.continuesAlong (hγc w hw) (hγU w hw) (hγ0 w hw))
   have hf₀' : ∀ w ∈ U, f w 0 =ᶠ[𝓝 z₀] f₀ := fun w hw => by
     have := hf₀ w hw; rwa [hγ0 w hw] at this
   -- The candidate branch: the value at `w` of the terminal germ of the chosen continuation.
@@ -252,8 +238,8 @@ theorem continuesInside_iff_exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimpl
     (hz₀ : z₀ ∈ U) :
     ContinuesInside f₀ U z₀ ↔ ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
   refine ⟨fun H => H.exists_analyticOnNhd hUo hUc hz₀, ?_⟩
-  rintro ⟨F, hF, hFeq⟩ c hc hcU hc0
-  obtain ⟨f, hf, hf0⟩ := ContinuesAlong.of_analyticAt hc fun x => hF _ (hcU x)
-  exact ⟨f, hf, by rw [hc0] at hf0 ⊢; exact hf0.trans hFeq⟩
+  rintro ⟨F, hF, hFeq⟩
+  exact .of_forall fun c hc hcU hc0 =>
+    (ContinuesAlong.of_analyticAt hc fun x => hF _ (hcU x)).congr (hc0 ▸ hFeq)
 
 end TauCeti
