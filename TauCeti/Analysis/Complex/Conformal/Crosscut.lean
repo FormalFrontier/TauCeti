@@ -50,19 +50,30 @@ The frontier of the crosscut neighbourhood consists of two pieces of circle
 (`TauCeti.frontier_ball_inter_ball_subset`): the arc `closedBall c r ∩ sphere ζ ρ`, and the cap
 `sphere c r ∩ closedBall ζ ρ` cut off on the boundary of the disc. Since the crosscut neighbourhood
 is bounded and open, the maximum modulus principle bounds `f` inside it by its values on those two
-pieces. Letting `ρ` run over a sequence tending to `0` and feeding the resulting oscillation bound
-to `TauCeti.clusterSetOn_subsingleton_of_forall_exists`, one gets:
+pieces (`TauCeti.norm_sub_le_of_mem_ball_inter_ball`).
 
-> a holomorphic function on a disc, continuous up to the closed disc, has a limit at a boundary
-> point `ζ` as soon as it is *nearly constant on the crosscut arc and on the boundary cap* at
-> arbitrarily small radii `ρ`.
+That frontier form is not what a boundary criterion can be built on, because reading `f` on the cap
+presupposes that `f` is continuous up to the boundary — and continuity up to the boundary *is* the
+conclusion one is after, at `ζ` and everywhere else. So the estimate is re-run on the concentric
+subdiscs `ball c s` with `s < r`, on whose closures a function holomorphic on `ball c r` is
+automatically continuous, and their crosscut neighbourhoods exhaust `ball c r ∩ ball ζ ρ`. This
+gives `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn`: only holomorphy on the open
+disc is assumed, the arc bound is asked for on `ball c r ∩ sphere ζ ρ`, and the cap bound is
+replaced by a bound on a *collar* `r₀ ≤ dist w c` of the boundary inside the crosscut
+neighbourhood — all of it data about `f` inside the disc. Letting `ρ` shrink and feeding the
+resulting oscillation bound to `TauCeti.clusterSetOn_subsingleton_of_forall_exists`, one gets:
+
+> a bounded holomorphic function on a disc has a limit at a boundary point `ζ` as soon as it is
+> *nearly constant on the crosscut arc and on a collar of the boundary* at arbitrarily small radii
+> `ρ`.
 
 This is `TauCeti.exists_tendsto_nhdsWithin_ball`, and `TauCeti.exists_continuousOn_closedBall_eqOn`
-is its global form, a continuous extension to the closed disc. Neither injectivity of `f` nor any
-hypothesis on the image is used — the estimate on the two boundary pieces is the whole input, and
-supplying it for a Riemann map of a Jordan domain is precisely what the remaining L5 work consists
-of. The length–area method delivers the bound on the arc; the bound on the cap is where local
-connectedness of the image boundary enters.
+is its global form, a continuous extension to the closed disc. Boundedness alone is far from
+sufficient — a bounded holomorphic function need not have a limit at a given boundary point — so
+the estimate is what carries the content. Neither injectivity of `f` nor any hypothesis on the
+image is used, and supplying that estimate for a Riemann map of a Jordan domain is precisely what
+the remaining L5 work consists of. The length–area method delivers the bound on the arc; the bound
+on the collar is where local connectedness of the image boundary enters.
 
 ## Generality
 
@@ -82,8 +93,11 @@ half is the maximum modulus principle for holomorphic functions.
   `TauCeti.subset_ball_inter_ball_or_subset_ball_diff_closedBall` and
   `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` — a circular crosscut
   separates the disc into exactly two connected components.
-* `TauCeti.norm_sub_le_of_mem_ball_inter_ball` — the maximum modulus principle on a crosscut
-  neighbourhood: a bound on the arc and on the cap is a bound inside.
+* `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
+  `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
+  on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
+  boundary-free form, where only holomorphy on the open disc is assumed and the cap is replaced by
+  a collar of the boundary.
 * `TauCeti.exists_tendsto_nhdsWithin_ball` and `TauCeti.exists_continuousOn_closedBall_eqOn` — the
   crosscut criterion for a boundary limit, and for a continuous extension to the closed disc.
 
@@ -345,7 +359,7 @@ theorem frontier_ball_inter_ball_subset :
   · exact Or.inr ⟨Metric.mem_closedBall.mpr hy₁,
       Metric.mem_sphere.mpr (le_antisymm hy₂ (hynot h))⟩
 
-variable {f : ℂ → ℂ} {a : ℂ} {C : ℝ}
+variable {f : ℂ → ℂ} {a : ℂ} {C r₀ : ℝ}
 
 /-- **The maximum modulus principle on a crosscut neighbourhood.** A function holomorphic on
 `ball c r` and continuous up to the closed disc that stays within `C` of a value `a` on the closed
@@ -366,17 +380,53 @@ theorem norm_sub_le_of_mem_ball_inter_ball (hf : DiffContOnCl ℂ f (ball c r))
   · exact hcap w h
   · exact harc w h
 
+/-- **The maximum modulus principle on a crosscut neighbourhood, from interior values alone.** A
+function holomorphic on `ball c r`, with *no* regularity assumed at the boundary circle, that stays
+within `C` of a value `a` on the part `ball c r ∩ sphere ζ ρ` of the crosscut circle inside the disc
+and on the collar `r₀ ≤ dist w c` of the crosscut neighbourhood, stays within `C` of `a` throughout
+that neighbourhood.
+
+This is `TauCeti.norm_sub_le_of_mem_ball_inter_ball` applied on a slightly smaller concentric disc
+`ball c s`, on whose closure `f` is continuous for free: choosing `max r₀ (dist z c) < s < r` puts
+the given point `z` inside `ball c s` and the whole cap `sphere c s ∩ closedBall ζ ρ` inside the
+collar, and letting `s` exhaust `r` covers the crosscut neighbourhood.
+
+It is this form, not the frontier form, that the boundary criteria below consume. Their hypotheses
+then constrain only the values `f` takes *inside* the disc, so that a boundary limit is a
+conclusion rather than a restatement of an assumed continuity up to the boundary: a hypothesis
+of the shape `DiffContOnCl ℂ f (ball c r)` already contains `ContinuousOn f (closedBall c r)` and
+so would make the criteria vacuous. Assuming continuity only on the closure of each crosscut
+neighbourhood would not help, since that closure contains `ζ` itself; hence the exhaustion. -/
+theorem norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn
+    (hd : DifferentiableOn ℂ f (ball c r)) (hr₀ : r₀ < r)
+    (harc : ∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ C)
+    (hcap : ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ C)
+    (hz : z ∈ ball c r ∩ ball ζ ρ) : ‖f z - a‖ ≤ C := by
+  have hzr : dist z c < r := mem_ball.mp hz.1
+  obtain ⟨s, hzs, hr₀s, hsr⟩ : ∃ s, dist z c < s ∧ r₀ ≤ s ∧ s < r :=
+    ⟨(max r₀ (dist z c) + r) / 2, by
+      have h₁ := le_max_left r₀ (dist z c)
+      have h₂ := le_max_right r₀ (dist z c)
+      have h₃ := max_lt hr₀ hzr
+      exact ⟨by linarith, by linarith, by linarith⟩⟩
+  have hsub : closedBall c s ⊆ ball c r := closedBall_subset_ball hsr
+  refine norm_sub_le_of_mem_ball_inter_ball (r := s) (hd.diffContOnCl_ball hsub)
+    (fun w hw => harc w ⟨hsub hw.1, hw.2⟩) (fun w hw => ?_) ⟨mem_ball.mpr hzs, hz.2⟩
+  have hwc : dist w c = s := mem_sphere.mp hw.1
+  exact hcap w ⟨hsub (mem_closedBall.mpr hwc.le), hw.2⟩ (hwc ▸ hr₀s)
+
 /-- **The oscillation of a holomorphic function on a crosscut neighbourhood** is at most twice a
-bound holding on the crosscut arc and on the boundary cap. This is the form
-`TauCeti.norm_sub_le_of_mem_ball_inter_ball` is consumed in: what a Cauchy criterion needs is a
-bound on distances between *pairs* of values, and the intermediate value `a` disappears. -/
-theorem dist_le_of_mem_ball_inter_ball (hf : DiffContOnCl ℂ f (ball c r))
-    (harc : ∀ w ∈ closedBall c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ C)
-    (hcap : ∀ w ∈ sphere c r ∩ closedBall ζ ρ, ‖f w - a‖ ≤ C)
+bound holding on the crosscut arc and on the collar of the boundary. This is the form
+`TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` is consumed in: what a Cauchy
+criterion needs is a bound on distances between *pairs* of values, and the intermediate value `a`
+disappears. -/
+theorem dist_le_of_mem_ball_inter_ball (hd : DifferentiableOn ℂ f (ball c r)) (hr₀ : r₀ < r)
+    (harc : ∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ C)
+    (hcap : ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ C)
     {x y : ℂ} (hx : x ∈ ball c r ∩ ball ζ ρ) (hy : y ∈ ball c r ∩ ball ζ ρ) :
     dist (f x) (f y) ≤ 2 * C := by
-  have hx' := norm_sub_le_of_mem_ball_inter_ball hf harc hcap hx
-  have hy' := norm_sub_le_of_mem_ball_inter_ball hf harc hcap hy
+  have hx' := norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn hd hr₀ harc hcap hx
+  have hy' := norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn hd hr₀ harc hcap hy
   have : dist (f x) (f y) = ‖f x - a - (f y - a)‖ := by rw [dist_eq_norm]; ring_nf
   rw [this]
   calc ‖f x - a - (f y - a)‖ ≤ ‖f x - a‖ + ‖f y - a‖ := norm_sub_le _ _
@@ -385,64 +435,69 @@ theorem dist_le_of_mem_ball_inter_ball (hf : DiffContOnCl ℂ f (ball c r))
 /-! ## The crosscut criterion for boundary behaviour -/
 
 /-- **The crosscut criterion, cluster-set form.** If, at arbitrarily small crosscut radii `ρ`, the
-function `f` is within `ε` of some value on the closed crosscut arc and on the boundary cap at `ζ`,
-then `f` has at most one cluster value at `ζ` along the disc.
+function `f` is within `ε` of some value on the part of the crosscut circle inside the disc and on
+a collar of the boundary, then `f` has at most one cluster value at `ζ` along the disc.
 
-The maximum modulus principle turns each such boundary estimate into an oscillation bound on the
-crosscut neighbourhood `ball c r ∩ ball ζ ρ`, and those neighbourhoods are exactly the traces on
-the disc of the balls around `ζ`, so `TauCeti.clusterSetOn_subsingleton_of_forall_exists` applies
-verbatim. Note that `ζ` need not be on the boundary circle for this statement, and that the value
-`a` may depend on `ε`. -/
-theorem clusterSetOn_ball_subsingleton (hf : DiffContOnCl ℂ f (ball c r))
-    (h : ∀ ε > 0, ∃ ρ > 0, ∃ a : ℂ, (∀ w ∈ closedBall c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
-      ∀ w ∈ sphere c r ∩ closedBall ζ ρ, ‖f w - a‖ ≤ ε) :
+The maximum modulus principle turns each such estimate into an oscillation bound on the crosscut
+neighbourhood `ball c r ∩ ball ζ ρ`
+(`TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn`), and those neighbourhoods are
+exactly the traces on the disc of the balls around `ζ`, so
+`TauCeti.clusterSetOn_subsingleton_of_forall_exists` applies verbatim. Only the values of `f` on
+the *open* disc are constrained, and only holomorphy there is assumed; note that `ζ` need not be
+on the boundary circle for this statement, and that `ρ`, `r₀` and `a` may all depend on `ε`. -/
+theorem clusterSetOn_ball_subsingleton (hd : DifferentiableOn ℂ f (ball c r))
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ, (∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
+      ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
     (clusterSetOn f (ball c r) ζ).Subsingleton := by
   refine clusterSetOn_subsingleton_of_forall_exists fun ε hε => ?_
-  obtain ⟨ρ, hρ, a, harc, hcap⟩ := h (ε / 2) (by positivity)
+  obtain ⟨ρ, hρ, r₀, hr₀, a, harc, hcap⟩ := h (ε / 2) (by positivity)
   refine ⟨ρ, hρ, fun x hx y hy => ?_⟩
-  have := dist_le_of_mem_ball_inter_ball hf harc hcap hx hy
+  have := dist_le_of_mem_ball_inter_ball hd hr₀ harc hcap hx hy
   linarith
 
-/-- **The crosscut criterion for a boundary limit.** A function holomorphic on a disc and
-continuous up to the closed disc has a limit at a boundary point `ζ`, along the disc, as soon as at
-arbitrarily small crosscut radii it is nearly constant on the crosscut arc and on the boundary cap.
+/-- **The crosscut criterion for a boundary limit.** A bounded holomorphic function on a disc has a
+limit at a boundary point `ζ`, along the disc, as soon as at arbitrarily small crosscut radii it is
+nearly constant on the crosscut arc and on a collar of the boundary.
+
+Nothing is assumed at the boundary circle itself: the input is the behaviour of `f` inside the
+disc, and the limit is a conclusion. Boundedness alone is far from enough — a bounded holomorphic
+function on a disc need not have any limit at a given boundary point — so the estimate `h` is what
+carries the content; it is exactly the estimate the length–area method produces on the arc and
+local connectedness of the image boundary produces on the collar.
 
 The cluster set is a subsingleton by `TauCeti.clusterSetOn_ball_subsingleton`, and it is nonempty
-because `f` maps the disc into the compact image of the closed disc; that is exactly what
+because `f` maps the disc into the compact closure of its bounded image; that is exactly what
 `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` needs. -/
-theorem exists_tendsto_nhdsWithin_ball (hr : 0 < r) (hf : DiffContOnCl ℂ f (ball c r))
-    (hζ : dist ζ c = r)
-    (h : ∀ ε > 0, ∃ ρ > 0, ∃ a : ℂ, (∀ w ∈ closedBall c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
-      ∀ w ∈ sphere c r ∩ closedBall ζ ρ, ‖f w - a‖ ≤ ε) :
+theorem exists_tendsto_nhdsWithin_ball (hr : 0 < r) (hd : DifferentiableOn ℂ f (ball c r))
+    (hb : IsBounded (f '' ball c r)) (hζ : dist ζ c = r)
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ, (∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
+      ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
     ∃ v, Tendsto f (𝓝[ball c r] ζ) (𝓝 v) := by
-  have hcl : closure (ball c r) = closedBall c r := closure_ball c hr.ne'
-  refine exists_tendsto_of_clusterSetOn_subsingleton
-    ((isCompact_closedBall c r).image_of_continuousOn (hcl ▸ hf.continuousOn))
-    (fun w hw => ⟨w, ball_subset_closedBall hw, rfl⟩) ?_ (clusterSetOn_ball_subsingleton hf h)
-  rw [hcl]
+  refine exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
+    (fun w hw => subset_closure ⟨w, hw, rfl⟩) ?_ (clusterSetOn_ball_subsingleton hd h)
+  rw [closure_ball c hr.ne']
   exact mem_closedBall.mpr hζ.le
 
 /-- **The crosscut criterion for a continuous extension to the closed disc.** If the hypothesis of
-`TauCeti.exists_tendsto_nhdsWithin_ball` holds at *every* point of the boundary circle, the function
-extends continuously to `closedBall c r`.
+`TauCeti.exists_tendsto_nhdsWithin_ball` holds at *every* point of the boundary circle, the bounded
+holomorphic function `f` extends continuously to `closedBall c r`.
 
 This is the shape in which the Carathéodory boundary correspondence is proved: whatever geometric
 hypothesis is placed on the image, it is used only to produce, at each boundary point and each
-`ε`, a crosscut radius along which `f` varies by at most `ε` on the arc and on the cap. Nothing
-here asserts that the extension is injective, which is an independent matter. -/
-theorem exists_continuousOn_closedBall_eqOn (hr : 0 < r) (hf : DiffContOnCl ℂ f (ball c r))
-    (h : ∀ ζ ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ a : ℂ,
-      (∀ w ∈ closedBall c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
-        ∀ w ∈ sphere c r ∩ closedBall ζ ρ, ‖f w - a‖ ≤ ε) :
+`ε`, a crosscut radius along which `f` varies by at most `ε` on the arc and on the collar. The
+extension is genuinely produced here rather than assumed, since only holomorphy and boundedness on
+the *open* disc are hypotheses. Nothing here asserts that the extension is injective, which is an
+independent matter. -/
+theorem exists_continuousOn_closedBall_eqOn (hr : 0 < r) (hd : DifferentiableOn ℂ f (ball c r))
+    (hb : IsBounded (f '' ball c r))
+    (h : ∀ ζ ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ,
+      (∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
+        ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
     ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
-  have hcl : closure (ball c r) = closedBall c r := closure_ball c hr.ne'
-  have hbdd : IsBounded (f '' ball c r) :=
-    (((isCompact_closedBall c r).image_of_continuousOn (hcl ▸ hf.continuousOn)).isBounded).subset
-      (image_mono ball_subset_closedBall)
   obtain ⟨F, hFc, hFe⟩ := exists_continuousOn_closure_eqOn_of_isBounded isOpen_ball
-    hf.differentiableOn.continuousOn hbdd fun ζ hζ => by
-      refine clusterSetOn_ball_subsingleton hf (h ζ ?_)
+    hd.continuousOn hb fun ζ hζ => by
+      refine clusterSetOn_ball_subsingleton hd (h ζ ?_)
       rwa [frontier_ball c hr.ne'] at hζ
-  exact ⟨F, hcl ▸ hFc, hFe⟩
+  exact ⟨F, closure_ball c hr.ne' ▸ hFc, hFe⟩
 
 end TauCeti
