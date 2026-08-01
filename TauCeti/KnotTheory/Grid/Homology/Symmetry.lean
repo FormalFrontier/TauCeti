@@ -99,6 +99,16 @@ theorem fullyBlockedCycleSubquotientTransposeEquiv_mk (c : G.fullyBlockedCycles)
   simp [fullyBlockedCycleSubquotientTransposeEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
+/-- The inverse diagonal-reflection subquotient equivalence sends a class to the class of its
+inverse-transposed representative. -/
+@[simp]
+theorem fullyBlockedCycleSubquotientTransposeEquiv_symm_mk
+    (c : G.transpose.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientTransposeEquiv.symm (Submodule.Quotient.mk c) =
+      Submodule.Quotient.mk (G.fullyBlockedCyclesTransposeEquiv.symm c) := by
+  simp [fullyBlockedCycleSubquotientTransposeEquiv, Submodule.Quotient.equiv_apply,
+    Submodule.mapQ_apply]
+
 end Transpose
 
 section Rotate
@@ -143,6 +153,16 @@ theorem fullyBlockedCycleSubquotientRotateEquiv_mk (c : G.fullyBlockedCycles) :
   simp [fullyBlockedCycleSubquotientRotateEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
+/-- The inverse half-turn subquotient equivalence sends a class to the class of its
+inverse-rotated representative. -/
+@[simp]
+theorem fullyBlockedCycleSubquotientRotateEquiv_symm_mk
+    (c : G.rotate.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientRotateEquiv.symm (Submodule.Quotient.mk c) =
+      Submodule.Quotient.mk (G.fullyBlockedCyclesRotateEquiv.symm c) := by
+  simp [fullyBlockedCycleSubquotientRotateEquiv, Submodule.Quotient.equiv_apply,
+    Submodule.mapQ_apply]
+
 end Rotate
 
 section SwapMarkings
@@ -179,6 +199,16 @@ transported representative. -/
 theorem fullyBlockedCycleSubquotientSwapMarkingsEquiv_mk (c : G.fullyBlockedCycles) :
     G.fullyBlockedCycleSubquotientSwapMarkingsEquiv (Submodule.Quotient.mk c) =
       Submodule.Quotient.mk (G.fullyBlockedCyclesSwapMarkingsEquiv c) := by
+  simp [fullyBlockedCycleSubquotientSwapMarkingsEquiv, Submodule.Quotient.equiv_apply,
+    Submodule.mapQ_apply]
+
+/-- The inverse marking-swap subquotient equivalence sends a class to the class of its
+inverse-transported representative. -/
+@[simp]
+theorem fullyBlockedCycleSubquotientSwapMarkingsEquiv_symm_mk
+    (c : G.swapMarkings.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientSwapMarkingsEquiv.symm (Submodule.Quotient.mk c) =
+      Submodule.Quotient.mk (G.fullyBlockedCyclesSwapMarkingsEquiv.symm c) := by
   simp [fullyBlockedCycleSubquotientSwapMarkingsEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
