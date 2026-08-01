@@ -96,7 +96,6 @@ private theorem lid_map_contractLeft_tensorCombine
 
 /-- Evaluation of the antipode-twisted dual against a finite-dimensional comodule, as a
 finite-comodule morphism. -/
-@[expose]
 noncomputable def dualEvaluation (M : FGComoduleCat.{u, v, u} k H) :
     dual k H M ⊗ M ⟶ 𝟙_ (FGComoduleCat.{u, v, u} k H) :=
   letI : Comodule k H k := Comodule.trivial (R := k) (C := H) (M := k)
@@ -129,18 +128,27 @@ noncomputable def dualEvaluation (M : FGComoduleCat.{u, v, u} k H) :
           simp [Algebra.smul_def]
   }
 
+private theorem dualEvaluation_apply_aux (M : FGComoduleCat.{u, v, u} k H)
+    (φ : dual k H M) (m : M) :
+    dualEvaluation k H M (φ ⊗ₜ[k] m) = φ m :=
+  rfl
+
+private theorem dualEvaluation_toLinearMap_aux (M : FGComoduleCat.{u, v, u} k H) :
+    (dualEvaluation k H M).hom.toLinearMap = contractLeft k M :=
+  rfl
+
 /-- Evaluation applies the underlying functional to the vector. -/
 @[simp]
 theorem dualEvaluation_apply (M : FGComoduleCat.{u, v, u} k H)
     (φ : dual k H M) (m : M) :
     dualEvaluation k H M (φ ⊗ₜ[k] m) = φ m :=
-  rfl
+  dualEvaluation_apply_aux k H M φ m
 
 /-- The underlying linear map of evaluation is ordinary contraction. -/
 @[simp]
 theorem dualEvaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualEvaluation k H M).hom.toLinearMap = contractLeft k M :=
-  rfl
+  dualEvaluation_toLinearMap_aux k H M
 
 private theorem tensorCoact_coevaluation_apply_one
     (M : FGComoduleCat.{u, v, u} k H) :
@@ -204,7 +212,6 @@ private theorem tensorCoact_coevaluation_apply_one
 
 /-- The ordinary finite-dimensional coevaluation, as a finite-comodule morphism into the
 tensor product with the antipode-twisted dual. -/
-@[expose]
 noncomputable def dualCoevaluation (M : FGComoduleCat.{u, v, u} k H) :
     𝟙_ (FGComoduleCat.{u, v, u} k H) ⟶ M ⊗ dual k H M :=
   letI : Comodule k H k := Comodule.trivial (R := k) (C := H) (M := k)
@@ -216,6 +223,10 @@ noncomputable def dualCoevaluation (M : FGComoduleCat.{u, v, u} k H) :
         TensorProduct.map_tmul, LinearMap.id_apply, Comodule.tensor_coact]
       exact (tensorCoact_coevaluation_apply_one k H M).symm
   }
+
+private theorem dualCoevaluation_toLinearMap_aux (M : FGComoduleCat.{u, v, u} k H) :
+    (dualCoevaluation k H M).hom.toLinearMap = coevaluation k M :=
+  rfl
 
 /-- Coevaluation at one is the canonical basis-independent tensor. -/
 theorem dualCoevaluation_apply_one (M : FGComoduleCat.{u, v, u} k H) :
@@ -229,7 +240,7 @@ theorem dualCoevaluation_apply_one (M : FGComoduleCat.{u, v, u} k H) :
 @[simp]
 theorem dualCoevaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualCoevaluation k H M).hom.toLinearMap = coevaluation k M :=
-  rfl
+  dualCoevaluation_toLinearMap_aux k H M
 
 /-- The antipode-twisted linear dual is an exact right dual of a finite-dimensional
 comodule. -/
