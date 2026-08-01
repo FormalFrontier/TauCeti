@@ -52,23 +52,20 @@ namespace Sphere
 
 variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- The two integer units, embedded as the two points of the real unit sphere. -/
-def intUnitsToRealUnitSphere : ℤˣ →* sphere (0 : ℝ) 1 where
-  toFun u := ⟨(u : ℤ), by
-    obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
-  map_one' := Subtype.ext (by simp)
-  map_mul' u v := Subtype.ext (by simp)
-
-/-- The underlying real number of an integer unit regarded as a point of the real unit sphere. -/
-@[simp]
-theorem coe_intUnitsToRealUnitSphere (u : ℤˣ) :
-    (intUnitsToRealUnitSphere u : ℝ) = (u : ℤ) :=
+/-- The coercion of Mathlib's sphere action is scalar multiplication in the ambient space. -/
+private theorem coe_sphere_smul {r : ℝ} (c : sphere (0 : ℝ) 1)
+    (x : sphere (0 : E) r) :
+    ((c • x : sphere (0 : E) r) : E) = (c : ℝ) • (x : E) :=
   (rfl)
 
 /-- The two integer units act on every sphere centred at zero by the identity and the antipodal
 map. -/
 instance instMulActionIntUnitsSphere {r : ℝ} : MulAction ℤˣ (sphere (0 : E) r) where
-  __ := MulAction.compHom _ intUnitsToRealUnitSphere
+  __ := MulAction.compHom _ ({
+    toFun u := ⟨(u : ℤ), by
+      obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
+    map_one' := Subtype.ext (by simp)
+    map_mul' u v := Subtype.ext (by simp) } : ℤˣ →* sphere (0 : ℝ) 1)
 
 /-- The underlying vector of the integer-unit action is multiplication by the corresponding
 integer. -/
@@ -76,10 +73,8 @@ integer. -/
 theorem coe_intUnits_smul {r : ℝ} (u : ℤˣ) (x : sphere (0 : E) r) :
     ((u • x : sphere (0 : E) r) : E) = ((u : ℤ) : ℝ) • (x : E) :=
   by
-    -- Unfold only the pulled-back sphere action; its scalar is then exposed to the public
-    -- coercion lemma above.
-    change (intUnitsToRealUnitSphere u : ℝ) • (x : E) = _
-    rw [coe_intUnitsToRealUnitSphere]
+    rw [MulAction.compHom_smul_def, coe_sphere_smul]
+    rfl
 
 /-- The nontrivial integer unit acts on a sphere as the antipodal map. -/
 @[simp]
@@ -90,7 +85,11 @@ theorem negOne_smul (x : sphere (0 : E) r) : (-1 : ℤˣ) • x = -x := by
 /-- The integer-unit action on a sphere is continuous in the sphere variable. -/
 instance instContinuousConstSMulIntUnitsSphere {r : ℝ} :
     ContinuousConstSMul ℤˣ (sphere (0 : E) r) where
-  continuous_const_smul u := continuous_const_smul (intUnitsToRealUnitSphere u)
+  continuous_const_smul u := by
+    let c : sphere (0 : ℝ) 1 := ⟨(u : ℤ), by
+      obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
+    have hc : Continuous fun x : sphere (0 : E) r => c • x := continuous_const_smul c
+    exact hc
 
 /-- The antipodal integer-unit action on the unit sphere is free. -/
 instance instIsCancelSMulIntUnitsUnitSphere :
@@ -149,7 +148,7 @@ theorem mk_eq_mk_iff (x y : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
 /-- Antipodal unit vectors have the same image in real projective space. -/
 @[simp]
 theorem mk_neg (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
-    Quotient.mk'' (-x) = mk n x :=
+    mk n (-x) = mk n x :=
   (mk_eq_mk_iff n (-x) x).2 (Or.inr rfl)
 
 /-- The unit sphere modulo the antipodal action is a quotient covering map.  Its fibres are the
