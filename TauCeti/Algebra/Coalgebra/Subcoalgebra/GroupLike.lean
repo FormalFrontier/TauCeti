@@ -80,8 +80,7 @@ theorem mem_groupLikeSetSpan {s : Set (GroupLike R C)} {c : C} :
   Iff.rfl
 
 /-- A group-like element in the generating set belongs to the subcoalgebra it spans. -/
-theorem groupLike_mem_groupLikeSetSpan {s : Set (GroupLike R C)} {g : GroupLike R C}
-    (hg : g ∈ s) :
+theorem groupLike_mem_groupLikeSetSpan {s : Set (GroupLike R C)} {g : GroupLike R C} (hg : g ∈ s) :
     (g : C) ∈ groupLikeSetSpan (R := R) (C := C) s := by
   rw [mem_groupLikeSetSpan]
   exact Submodule.subset_span ⟨g, hg, rfl⟩

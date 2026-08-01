@@ -81,8 +81,7 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 omit [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
   [BorelSpace G] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace W] in
 /-- An action operator composed with the action of the inverse group element is the identity. -/
-private theorem comp_inv_self (g : G) :
-    (ρ g).comp (ρ g⁻¹) = ContinuousLinearMap.id 𝕜 W := by
+private theorem comp_inv_self (g : G) : (ρ g).comp (ρ g⁻¹) = ContinuousLinearMap.id 𝕜 W := by
   rw [← ContinuousLinearMap.mul_def, ← map_mul, mul_inv_cancel, map_one]
   rfl
 
@@ -202,8 +201,7 @@ private theorem conjAction_averageOperator (T : V →L[𝕜] W) (g : G) :
     conjAction_comp_conjFamily π hπ ρ hρ T g, haarAverage_comp_mulRight]
 
 /-- **The Haar average of an operator intertwines the two representations.** -/
-theorem averageOperator_comp (T : V →L[𝕜] W) (g : G) :
-    (averageOperator π hπ ρ hρ T).comp (π g)
+theorem averageOperator_comp (T : V →L[𝕜] W) (g : G) : (averageOperator π hπ ρ hρ T).comp (π g)
       = (ρ g).comp (averageOperator π hπ ρ hρ T) := by
   have h := conjAction_averageOperator π hπ ρ hρ T g
   rw [conjAction_apply] at h
@@ -242,8 +240,7 @@ theorem averageIntertwiner_apply (T : V →L[𝕜] W) (v : V) :
 
 /-- **Averaging fixes an operator that already intertwines.** The integrand is then constant, and
 normalized Haar measure has total mass one. -/
-theorem averageOperator_eq_self (T : V →L[𝕜] W)
-    (hT : ∀ g : G, T.comp (π g) = (ρ g).comp T) :
+theorem averageOperator_eq_self (T : V →L[𝕜] W) (hT : ∀ g : G, T.comp (π g) = (ρ g).comp T) :
     averageOperator π hπ ρ hρ T = T := by
   have hT_apply (g : G) (v : V) : T (π g v) = ρ g (T v) :=
     congrArg (fun S : V →L[𝕜] W ↦ S v) (hT g)
@@ -404,8 +401,7 @@ Schur's lemma is not invoked here; it is what supplies the hypothesis for a pair
 irreducibles. Only `ρ` is required to be unitary: unitarity of `ρ` is what lets the inverse action
 be moved across the inner product, and nothing in the argument constrains `π`. -/
 theorem schur_orthogonality_distinct (hunitary : IsUnitary ρ)
-    (hdistinct : ∀ f : ContIntertwiningMap π ρ, f.toContinuousLinearMap = 0)
-    (v w : V) (v' w' : W) :
+    (hdistinct : ∀ f : ContIntertwiningMap π ρ, f.toContinuousLinearMap = 0) (v w : V) (v' w' : W) :
     ⟪matrixCoeffLp π hπ v w, matrixCoeffLp ρ hρ v' w'⟫_𝕜 = 0 := by
   have hzero : averageOperator π hπ ρ hρ (InnerProductSpace.rankOne 𝕜 w' w) = 0 := by
     simpa using hdistinct (averageIntertwiner π hπ ρ hρ (InnerProductSpace.rankOne 𝕜 w' w))

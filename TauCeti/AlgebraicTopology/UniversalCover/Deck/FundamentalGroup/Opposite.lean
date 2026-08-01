@@ -81,8 +81,7 @@ lemma deckFundamentalGroupEquiv_apply [SimplyConnectedSpace E]
 transformation corresponding to `γ` under `fundamentalGroupEquiv`. -/
 @[simp]
 lemma deckFundamentalGroupEquiv_symm_op [SimplyConnectedSpace E]
-    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
-    (γ : FundamentalGroup X x) :
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x}) (γ : FundamentalGroup X x) :
     (hreg.deckFundamentalGroupEquiv hp e).symm (MulOpposite.op γ) =
       (hreg.fundamentalGroupEquiv hp e γ).unop :=
   rfl
@@ -150,8 +149,7 @@ lemma deckFundamentalGroupEquiv_eq_one_iff [SimplyConnectedSpace E]
 /-- Under the deck-to-fundamental-group comparison, the deck-to-fibre equivalence for a
 regular cover agrees with the monodromy equivalence from `π₁` to the same fibre. -/
 lemma deckEquivFiber_eq_fundamentalGroupEquivFiber [SimplyConnectedSpace E]
-    (hreg : IsRegular p) (hp : IsCoveringMap p)
-    (e : p ⁻¹' {x}) (φ : Deck p) :
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x}) (φ : Deck p) :
     deckEquivFiber hp hreg e φ =
       TauCeti.IsCoveringMap.fundamentalGroupEquivFiber hp e
         ((hreg.deckFundamentalGroupEquiv hp e φ).unop) := by

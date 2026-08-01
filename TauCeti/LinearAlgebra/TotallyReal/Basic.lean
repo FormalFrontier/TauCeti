@@ -77,8 +77,7 @@ theorem mono (hL : IsTotallyReal J L) {L' : Submodule R E} (h : L' ≤ L) :
   hL.disjoint.mono h (Submodule.map_mono h)
 
 /-- Products of totally real submodules are totally real for `LinearMap.prodMap`. -/
-theorem prod {K : F →ₗ[R] F} {M : Submodule R F} (hL : IsTotallyReal J L)
-    (hM : IsTotallyReal K M) :
+theorem prod {K : F →ₗ[R] F} {M : Submodule R F} (hL : IsTotallyReal J L) (hM : IsTotallyReal K M) :
     IsTotallyReal (LinearMap.prodMap J K) (L.prod M) := by
   rw [isTotallyReal_iff, LinearMap.prodMap_map_prod, disjoint_iff, Submodule.prod_inf_prod,
     hL.inf_eq_bot, hM.inf_eq_bot, Submodule.prod_bot]
@@ -150,8 +149,7 @@ namespace Submodule
 /-- The image of the first coordinate factor under the standard doubled-module complex
 structure is the second coordinate factor. -/
 @[simp]
-theorem map_prod_top_bot_skewSwap :
-    ((⊤ : Submodule R E).prod (⊥ : Submodule R E)).map
+theorem map_prod_top_bot_skewSwap : ((⊤ : Submodule R E).prod (⊥ : Submodule R E)).map
         (LinearEquiv.skewSwap R E E).toLinearMap =
       (⊥ : Submodule R E).prod (⊤ : Submodule R E) := by
   ext x
@@ -167,8 +165,7 @@ theorem map_prod_top_bot_skewSwap :
 /-- The image of the second coordinate factor under the standard doubled-module complex
 structure is the first coordinate factor. -/
 @[simp]
-theorem map_prod_bot_top_skewSwap :
-    ((⊥ : Submodule R E).prod (⊤ : Submodule R E)).map
+theorem map_prod_bot_top_skewSwap : ((⊥ : Submodule R E).prod (⊤ : Submodule R E)).map
         (LinearEquiv.skewSwap R E E).toLinearMap =
       (⊤ : Submodule R E).prod (⊥ : Submodule R E) := by
   ext x

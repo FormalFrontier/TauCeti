@@ -88,8 +88,7 @@ theorem legendreSym_oddPrimeDiscriminant_eq_one_iff [Fact p.Prime] [Fact q.Prime
 `p i`, the conditions that all odd prime discriminants `p i*` are quadratic residues modulo
 an odd prime `q` are exactly the reciprocal conditions `(q / p i) = 1`. -/
 theorem forall_legendreSym_oddPrimeDiscriminant_eq_one_iff {ι : Type*} (p : ι → ℕ)
-    {q : ℕ} [Fact q.Prime] (hpprime : ∀ i, (p i).Prime) (hpodd : ∀ i, p i ≠ 2)
-    (hq : q ≠ 2) :
+    {q : ℕ} [Fact q.Prime] (hpprime : ∀ i, (p i).Prime) (hpodd : ∀ i, p i ≠ 2) (hq : q ≠ 2) :
     (∀ i, legendreSym q (oddPrimeDiscriminant (p i)) = 1) ↔
       ∀ i, @legendreSym (p i) ⟨hpprime i⟩ (q : ℤ) = 1 := by
   refine forall_congr' fun i => ?_

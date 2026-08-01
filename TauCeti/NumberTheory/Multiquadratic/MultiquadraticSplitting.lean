@@ -128,10 +128,8 @@ private theorem two_mul_mem_of_mul_mem_of_map_eq_neg {S : Type*} [Ring S] {Q : I
 
 /-- If `d` is a quadratic residue mod the odd prime `p` (with `p ∤ d`), no element `σ` of the
 decomposition group of a prime `Q` above `p` sends the generator `r` to its negation. -/
-private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K)
-    (hr : r ^ 2 = algebraMap ℤ K d)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : legendreSym p d = 1)
+private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K) (hr : r ^ 2 = algebraMap ℤ K d)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : legendreSym p d = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : σ ∈ stabilizer (K ≃ₐ[ℚ] K) Q) : σ r ≠ - r := by
   intro hflip
@@ -175,10 +173,8 @@ private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K)
 
 /-- Backward core (pointwise): if `p` is odd and `d` is a quadratic residue mod `p`, then every
 `σ` in the decomposition group of `Q` fixes the generator `r`. -/
-private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K)
-    (hr : r ^ 2 = algebraMap ℤ K d)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : legendreSym p d = 1)
+private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K) (hr : r ^ 2 = algebraMap ℤ K d)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : legendreSym p d = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : σ ∈ stabilizer (K ≃ₐ[ℚ] K) Q) : σ r = r := by
   -- From `σ r² = r²`, `σ r = ± r`; the `+` case is immediate and the `-` case is
@@ -192,10 +188,8 @@ private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K)
 /-- Backward wrapper: for `K` generated over `ℚ` by the `r i` (`ℚ(rᵢ) = K`), if `p` is odd and
 every `d i` is a quadratic residue mod `p`, then the decomposition group of `Q` is trivial. -/
 private theorem stabilizer_eq_bot_of_forall_legendreSym_eq_one {ι : Type*} (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : ∀ i, legendreSym p (d i) = 1)
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : ∀ i, legendreSym p (d i) = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     stabilizer (K ≃ₐ[ℚ] K) Q = ⊥ := by
   rw [eq_bot_iff]
@@ -220,8 +214,7 @@ private theorem stabilizer_eq_bot_of_forall_legendreSym_eq_one {ι : Type*} (d :
 roots `r i` of integers `d i`, and an odd prime `p` dividing none of the `d i`, `p` splits
 completely in `K` iff every `d i` is a quadratic residue mod `p`. -/
 theorem ncard_primesOver_multiquadratic_iff {ι : Type*} [Finite ι] (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i) :
     (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔
       ∀ i, legendreSym p (d i) = 1 := by

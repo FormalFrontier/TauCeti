@@ -67,8 +67,7 @@ variable {lam Lam beta gamma mu : ℝ}
 /-- Pointwise boundedness of the energy integrand from uniform ellipticity of the principal
 coefficient and pointwise bounds on the drift and mass coefficients. -/
 lemma norm_energyIntegrand_apply_le (h : UniformlyEllipticOn Ω a lam Lam)
-    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
-    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma)
+    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ} (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma)
     (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand (a x) b₀ c₀ U V‖ ≤ (Lam + beta + gamma) * ‖U‖ * ‖V‖ :=
   norm_energyIntegrand_apply_le_of_bounds h.upper_nonneg (h.upper_bound hx) hb hc U V
@@ -80,8 +79,7 @@ grind_pattern norm_energyIntegrand_apply_le =>
 /-- Operator-norm boundedness of the energy integrand from uniform ellipticity of the
 principal coefficient and pointwise bounds on the drift and mass coefficients. -/
 lemma opNorm_energyIntegrand_le (h : UniformlyEllipticOn Ω a lam Lam)
-    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
-    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma) :
+    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ} (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma) :
     ‖energyIntegrand (a x) b₀ c₀‖ ≤ Lam + beta + gamma :=
   opNorm_energyIntegrand_le_of_bounds h.upper_nonneg (h.upper_bound hx) hb hc
 
@@ -94,8 +92,7 @@ grind_pattern opNorm_energyIntegrand_le =>
 With nonnegative mass coefficient and drift bound `β`, the diagonal energy density is bounded
 below by `(λ/2)‖∇u‖² - (β²/2λ)|u|²`. -/
 lemma garding_energyIntegrand_self (h : UniformlyEllipticOn Ω a lam Lam)
-    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
-    (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀)
+    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ} (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀)
     (U : ℝ × EuclideanSpace ℝ n) :
     lam / 2 * ‖U.2‖ ^ 2 - beta ^ 2 / (2 * lam) * U.1 ^ 2
       ≤ energyIntegrand (a x) b₀ c₀ U U :=
@@ -124,8 +121,7 @@ grind_pattern garding_energyIntegrand_self_of_mass_lower_bound =>
 /-- The lower-bound estimate implies the explicit diagonal estimate with constant
 `min (λ / 2) (μ - β² / (2λ))`, assuming this second coefficient is nonnegative. -/
 lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self
-    (h : UniformlyEllipticOn Ω a lam Lam)
-    {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
+    (h : UniformlyEllipticOn Ω a lam Lam) {x : X} (hx : x ∈ Ω) {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
     (hb : ‖b₀‖ ≤ beta) (hc : mu ≤ c₀) (hmu : beta ^ 2 / (2 * lam) ≤ mu)
     (U : ℝ × EuclideanSpace ℝ n) :
     min (lam / 2) (mu - beta ^ 2 / (2 * lam)) * ‖U‖ ^ 2
@@ -140,8 +136,7 @@ grind_pattern min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self =>
 /-- Zero-drift diagonal lower bound for a uniformly elliptic principal coefficient and a
 nonnegative mass coefficient. -/
 lemma min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self
-    (h : UniformlyEllipticOn Ω a lam Lam)
-    {x : X} (hx : x ∈ Ω) {c₀ : ℝ} (hc : 0 ≤ c₀)
+    (h : UniformlyEllipticOn Ω a lam Lam) {x : X} (hx : x ∈ Ω) {c₀ : ℝ} (hc : 0 ≤ c₀)
     (U : ℝ × EuclideanSpace ℝ n) :
     min lam c₀ * ‖U‖ ^ 2 ≤ energyIntegrand (a x) 0 c₀ U U :=
   PDE.min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self h.pos.le

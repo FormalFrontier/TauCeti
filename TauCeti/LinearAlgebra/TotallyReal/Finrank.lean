@@ -51,8 +51,7 @@ variable {J : E →ₗ[R] E} {L : Submodule R E}
 namespace IsTotallyReal
 
 /-- A totally real subspace has at most half the dimension of the ambient space. -/
-theorem two_mul_finrank_le (hL : IsTotallyReal J L)
-    (hJ : Function.Injective (J.domRestrict L)) :
+theorem two_mul_finrank_le (hL : IsTotallyReal J L) (hJ : Function.Injective (J.domRestrict L)) :
     2 * finrank R L ≤ finrank R E := by
   have h := Submodule.finrank_add_finrank_le_of_disjoint hL.disjoint
   rw [← LinearMap.range_domRestrict, LinearMap.finrank_range_of_inj hJ] at h
@@ -60,8 +59,7 @@ theorem two_mul_finrank_le (hL : IsTotallyReal J L)
 
 /-- A totally real subspace of exactly half the ambient dimension is maximal totally real: the
 dimension count forces the sum `L ⊔ J(L)` to be everything. -/
-theorem isMaximalTotallyReal (hL : IsTotallyReal J L)
-    (hJ : Function.Injective (J.domRestrict L))
+theorem isMaximalTotallyReal (hL : IsTotallyReal J L) (hJ : Function.Injective (J.domRestrict L))
     (hdim : 2 * finrank R L = finrank R E) : IsMaximalTotallyReal J L := by
   rw [isMaximalTotallyReal_iff]
   refine (Submodule.isCompl_iff_disjoint L (L.map J) ?_).2 hL.disjoint
@@ -82,8 +80,7 @@ theorem two_mul_finrank_eq (hL : IsMaximalTotallyReal J L)
   omega
 
 /-- The ambient space of a maximal totally real subspace is even-dimensional. -/
-theorem even_finrank (hL : IsMaximalTotallyReal J L)
-    (hJ : Function.Injective (J.domRestrict L)) :
+theorem even_finrank (hL : IsMaximalTotallyReal J L) (hJ : Function.Injective (J.domRestrict L)) :
     Even (finrank R E) := by
   rw [← hL.two_mul_finrank_eq hJ]
   exact even_two_mul _

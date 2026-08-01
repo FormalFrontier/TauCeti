@@ -57,14 +57,12 @@ instance : SMul (FundamentalGroup X x₀) (UniversalCover x₀) where
 
 /-- The fundamental-group action prepends the inverse loop class to a representative path. -/
 @[simp]
-theorem smul_mk (g : FundamentalGroup X x₀) (x : X)
-    (q : Path.Homotopic.Quotient x₀ x) :
+theorem smul_mk (g : FundamentalGroup X x₀) (x : X) (q : Path.Homotopic.Quotient x₀ x) :
     g • mk x q = mk x (g⁻¹.toPath.trans q) :=
   rfl
 
 /-- Acting by an inverse prepends the corresponding loop class without an inverse. -/
-theorem inv_smul_mk (g : FundamentalGroup X x₀) (x : X)
-    (q : Path.Homotopic.Quotient x₀ x) :
+theorem inv_smul_mk (g : FundamentalGroup X x₀) (x : X) (q : Path.Homotopic.Quotient x₀ x) :
     g⁻¹ • mk x q = mk x (g.toPath.trans q) := by
   rw [smul_mk, inv_inv]
 
@@ -153,8 +151,7 @@ theorem proj_surjective [PathConnectedSpace X] :
   ⟨mk x (Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath x₀ x)), rfl⟩
 
 /-- The endpoint projection is a quotient covering map for the fundamental-group action. -/
-theorem isQuotientCoveringMap
-    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+theorem isQuotientCoveringMap [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] :
     IsQuotientCoveringMap (proj : UniversalCover x₀ → X) (FundamentalGroup X x₀) := by
   rw [isQuotientCoveringMap_iff_isCoveringMap_and]

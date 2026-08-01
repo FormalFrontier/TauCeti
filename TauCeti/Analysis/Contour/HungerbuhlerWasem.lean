@@ -71,13 +71,10 @@ open Filter Set Topology
 polar decomposition, discharge conditions (A′) and (B) into the per-pole hypotheses, and
 assemble the residue sum. -/
 private theorem hungerbuhlerWasem_residueTheorem_of_le {f : ℂ → ℂ} {U : Set ℂ}
-    (hU : IsOpen U) (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ)
-    (hγ_imm : IsPwC1ImmersionOn γ a b)
+    (hU : IsOpen U) (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hSU : (S : Set ℂ) ⊆ U) (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
-    (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
-    (hmero : ∀ s ∈ S, MeromorphicAt f s)
-    (hnull : IsNullHomologous γ a b U)
+    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U) (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
+    (hmero : ∀ s ∈ S, MeromorphicAt f s) (hnull : IsNullHomologous γ a b U)
     (hA : ConditionAprime γ a b f S) (hB : ConditionB γ a b f) (hab : a ≤ b) :
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) := by
@@ -101,13 +98,10 @@ set-level Cauchy principal value of `f` along `γ` is
 `2πi · Σ_{s ∈ S} n_s(γ) · Res_s f`, with the generalized (non-integer) winding numbers as
 weights — valid when singularities of `f` lie **on** the curve. -/
 theorem hungerbuhlerWasem_residueTheorem {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
-    (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ)
-    (hγ_imm : IsPwC1ImmersionOn γ a b)
+    (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hSU : (S : Set ℂ) ⊆ U) (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
-    (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
-    (hmero : ∀ s ∈ S, MeromorphicAt f s)
-    (hnull : IsNullHomologous γ a b U)
+    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U) (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
+    (hmero : ∀ s ∈ S, MeromorphicAt f s) (hnull : IsNullHomologous γ a b U)
     (hA : ConditionAprime γ a b f S) (hB : ConditionB γ a b f) :
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) := by
@@ -199,8 +193,7 @@ forced to `1` and `IsPwC1ImmersionOn.flatOfOrder_one` supplies the first-order f
 curve with no interior crossing the clause holds because there is nothing to discharge. -/
 theorem conditionAprime_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U) (hγ_imm : IsPwC1ImmersionOn γ a b)
-    (hymin : γ (min a b) ∉ (S : Set ℂ))
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
+    (hymin : γ (min a b) ∉ (S : Set ℂ)) (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
     (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
     (h_simple : ∀ s ∈ S, ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s) :
     ConditionAprime γ a b f S := by
@@ -222,8 +215,7 @@ The companion instantiation lemma to `conditionAprime_of_simple_poles`: together
 discharge both regularity hypotheses of HW Thm 3.3 from the same simple-pole hypothesis, which
 is what makes `hungerbuhlerWasem_residueTheorem_of_simple_poles` unconditional. -/
 theorem conditionB_of_simple_poles {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
-    {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U)
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
+    {U : Set ℂ} {S : Finset ℂ} (hU : IsOpen U) (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
     (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
     (h_simple : ∀ s ∈ S, ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s) :
     ConditionB γ a b f := by
@@ -239,13 +231,10 @@ when every prescribed singularity is at worst a simple pole
 principal value is the winding-weighted residue sum with no regularity hypotheses beyond the
 immersion. The form the argument principle and the valence formula consume. -/
 theorem hungerbuhlerWasem_residueTheorem_of_simple_poles {f : ℂ → ℂ} {U : Set ℂ}
-    (hU : IsOpen U) (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ)
-    (hγ_imm : IsPwC1ImmersionOn γ a b)
+    (hU : IsOpen U) (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hSU : (S : Set ℂ) ⊆ U) (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
-    (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
-    (hmero : ∀ s ∈ S, MeromorphicAt f s)
-    (hnull : IsNullHomologous γ a b U)
+    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U) (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
+    (hmero : ∀ s ∈ S, MeromorphicAt f s) (hnull : IsNullHomologous γ a b U)
     (h_simple : ∀ s ∈ S, ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s) :
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) :=

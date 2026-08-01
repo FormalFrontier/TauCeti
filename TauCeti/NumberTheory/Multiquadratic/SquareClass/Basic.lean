@@ -144,8 +144,7 @@ private theorem sqrtTower_sup_adjoin_eq_of_mem (root : ℕ → L) {n : ℕ}
 /-- Square-class reconstruction across one tower level: from `r * dₙ = s² * ∏_T dⱼ` with
 `dₙ ≠ 0` and `n ∉ T`, the radicand `r` equals `(s / dₙ)²` times the product over `insert n T`. -/
 private theorem eq_sq_mul_prod_insert_of_mul_radicand {d : ℕ → K} {n : ℕ} {r s : K}
-    {T : Finset ℕ} (hnT : n ∉ T) (hdn : d n ≠ 0)
-    (hmul : r * d n = s ^ 2 * ∏ j ∈ T, d j) :
+    {T : Finset ℕ} (hnT : n ∉ T) (hdn : d n ≠ 0) (hmul : r * d n = s ^ 2 * ∏ j ∈ T, d j) :
     r = (s / d n) ^ 2 * ∏ j ∈ insert n T, d j := by
   rw [Finset.prod_insert hnT]
   -- `r = (r * dₙ) / dₙ = (s² * ∏_T) / dₙ = (s / dₙ)² * (dₙ * ∏_T)`.
@@ -172,8 +171,7 @@ private theorem radicand_ne_zero_of_root_notMem (d : ℕ → K) (root : ℕ → 
 `n`-th tower and squares to `r · dₙ`, so the level-`n` descent hypothesis produces a
 representation of `r` over `Set.Iio (n + 1)` with `n` adjoined to the subset. -/
 private theorem exists_sq_mul_prod_of_eq_mul_root (d : ℕ → K) (root : ℕ → L)
-    {n : ℕ} {r : K} {y b : L}
-    (hroot : root n ^ 2 = algebraMap K L (d n)) (hdn0 : d n ≠ 0)
+    {n : ℕ} {r : K} {y b : L} (hroot : root n ^ 2 = algebraMap K L (d n)) (hdn0 : d n ≠ 0)
     (hb : b ∈ sqrtTower (K := K) root n) (heq : y = b * root n)
     (hy : y ^ 2 = algebraMap K L r)
     (ih : ∀ r : K, ∀ y : L, y ^ 2 = algebraMap K L r → y ∈ sqrtTower (K := K) root n →
@@ -345,8 +343,7 @@ theorem squareClass_of_sqrt_mem (c : ℕ → ℚ) (hc : ∀ j, 0 ≤ c j) :
 `(√n)² = algebraMap ℚ ℝ n`. This supplies the `hroot` hypothesis of the degree theorem for the real
 square roots of integer radicands. The natural-number form `sq_sqrt_natCast` is the special case
 `0 ≤ n`. -/
-theorem sq_sqrt_intCast {n : ℤ} (hn : 0 ≤ n) :
-    (Real.sqrt n) ^ 2 = algebraMap ℚ ℝ (n : ℚ) := by
+theorem sq_sqrt_intCast {n : ℤ} (hn : 0 ≤ n) : (Real.sqrt n) ^ 2 = algebraMap ℚ ℝ (n : ℚ) := by
   rw [Real.sq_sqrt (by exact_mod_cast hn), map_intCast]
 
 end TauCeti.Multiquadratic

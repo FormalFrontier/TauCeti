@@ -49,10 +49,8 @@ namespace TauCeti.Contour
 /-- A loop smoothly homotopic to its constant path through points avoiding `w` has winding number
 zero about `w`. -/
 theorem windingNumber_eq_zero_of_pathHomotopy_refl {x w : ℂ} {p : Path x x}
-    (φ : p.Homotopy (Path.refl x))
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
+    (φ : p.Homotopy (Path.refl x)) (hφsmooth : ContDiffOn ℝ 2
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
     (havoid : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ≠ w) :
     windingNumber p.extend 0 1 w = 0 := by
   rw [windingNumber_eq_of_pathHomotopy φ hφsmooth havoid]
@@ -65,10 +63,8 @@ outside `Ω`. Thus the loop is null-homologous in `Ω`.
 
 This is one direction only: a null-homologous loop need not be null-homotopic. -/
 theorem isNullHomologous_of_pathHomotopy_refl {x : ℂ} {p : Path x x} {Ω : Set ℂ}
-    (φ : p.Homotopy (Path.refl x))
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
+    (φ : p.Homotopy (Path.refl x)) (hφsmooth : ContDiffOn ℝ 2
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
     (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω) :
     IsNullHomologous p.extend 0 1 Ω :=
   (isNullHomologous_iff_of_pathHomotopy φ hφsmooth hφΩ).2
@@ -84,13 +80,9 @@ The smooth homotopy supplies the piecewise-`C¹` regularity expected by
 `homologyCauchyTheorem`, as well as containment of the source path in `Ω` and its null-homology
 there. -/
 theorem cauchyTheorem_of_pathHomotopy_refl {f : ℂ → ℂ} {Ω : Set ℂ} (hΩ : IsOpen Ω)
-    {x : ℂ} (p : Path x x)
-    (φ : p.Homotopy (Path.refl x))
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
-    (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω)
-    (hf : DifferentiableOn ℂ f Ω) :
+    {x : ℂ} (p : Path x x) (φ : p.Homotopy (Path.refl x)) (hφsmooth : ContDiffOn ℝ 2
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
+    (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω) (hf : DifferentiableOn ℂ f Ω) :
     ∫ t in (0 : ℝ)..1, deriv p.extend t • f (p.extend t) = 0 := by
   have hp : IsPiecewiseC1On p.extend 0 1 := by
     simpa using isPiecewiseC1On_eval_of_smoothPathHomotopy φ hφsmooth (0 : I)

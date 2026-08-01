@@ -303,8 +303,7 @@ private theorem StronglyContinuousSemigroup.pointwiseBoundedOnUnitInterval
 
 One direction of [EN] Prop. I.5.3: strong continuity implies uniform boundedness
 on compact intervals. -/
-theorem StronglyContinuousSemigroup.normBoundedOnUnitInterval
-    (S : StronglyContinuousSemigroup X) :
+theorem StronglyContinuousSemigroup.normBoundedOnUnitInterval (S : StronglyContinuousSemigroup X) :
     ∃ (M : ℝ), 1 ≤ M ∧
       ∀ (t : ℝ), 0 ≤ t → t ≤ 1 → ‖S.realOperator t‖ ≤ M := by
   obtain ⟨C, hC⟩ := banach_steinhaus S.pointwiseBoundedOnUnitInterval

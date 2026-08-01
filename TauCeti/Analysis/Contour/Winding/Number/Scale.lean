@@ -62,16 +62,14 @@ nonzero complex number `c` transports the single-point Cauchy principal value of
 general `HasCauchyPVAt.const_mul_curve` to the winding kernel, where the rescaled integrand
 `z ↦ c⁻¹ * κ[z₀] (c⁻¹ * z)` agrees with `κ[c * z₀]` along the scaled curve. Exposed so downstream
 normalization steps can chain further principal-value APIs from the scaled fact. -/
-theorem hasCauchyPVAt_inv_sub_const_mul
-    (h : HasCauchyPVAt γ a b κ[z₀] z₀ L) (hc : c ≠ 0) :
+theorem hasCauchyPVAt_inv_sub_const_mul (h : HasCauchyPVAt γ a b κ[z₀] z₀ L) (hc : c ≠ 0) :
     HasCauchyPVAt (fun t => c * γ t) a b κ[c * z₀] (c * z₀) L := by
   refine (h.const_mul_curve hc).congr_along_curve fun t _ => ?_
   exact inv_sub_const_mul_eq (z₀ := z₀) hc (γ t)
 
 /-- Existence form of `hasCauchyPVAt_inv_sub_const_mul`: nonzero scaling of the curve and base
 point preserves existence of the index principal value, exposed for the same downstream chaining. -/
-theorem cauchyPVExistsAt_inv_sub_const_mul
-    (h : CauchyPVExistsAt γ a b κ[z₀] z₀) (hc : c ≠ 0) :
+theorem cauchyPVExistsAt_inv_sub_const_mul (h : CauchyPVExistsAt γ a b κ[z₀] z₀) (hc : c ≠ 0) :
     CauchyPVExistsAt (fun t => c * γ t) a b κ[c * z₀] (c * z₀) :=
   let ⟨_, hL⟩ := cauchyPVExistsAt_iff.mp h
   CauchyPVExistsAt.intro (hasCauchyPVAt_inv_sub_const_mul hL hc)

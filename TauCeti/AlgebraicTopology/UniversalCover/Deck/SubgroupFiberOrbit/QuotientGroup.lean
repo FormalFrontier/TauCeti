@@ -81,8 +81,7 @@ noncomputable def regularSubgroupFiberOrbitQuotientEquivQuotientGroup
 lemma subgroupFiberOrbitQuotientEquivQuotientGroup_symm_mk
     [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] [IsCancelSMul (Deck p) (p ⁻¹' {b})]
     (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) (φ : Deck p) :
-    (subgroupFiberOrbitQuotientEquivQuotientGroup H e).symm
-        (QuotientGroup.mk (s := H) φ) =
+    (subgroupFiberOrbitQuotientEquivQuotientGroup H e).symm (QuotientGroup.mk (s := H) φ) =
       subgroupFiberOrbitClass H (φ⁻¹ • e) := by
   simp [subgroupFiberOrbitQuotientEquivQuotientGroup, subgroupFiberOrbitClass_eq_mk,
     MulAction.equivSubgroupOrbitsQuotientGroup_symm_mk H e φ]
@@ -106,8 +105,7 @@ class of the value of `φ⁻¹` on the chosen fibre point. -/
 lemma subgroupFiberOrbitQuotientEquivQuotientGroup_symm_mk_coe
     [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] [IsCancelSMul (Deck p) (p ⁻¹' {b})]
     (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) (φ : Deck p) :
-    (subgroupFiberOrbitQuotientEquivQuotientGroup H e).symm
-        (QuotientGroup.mk φ) =
+    (subgroupFiberOrbitQuotientEquivQuotientGroup H e).symm (QuotientGroup.mk φ) =
       subgroupFiberOrbitClass H
         ⟨φ.1.symm e.1, by
           rw [Set.mem_preimage, Set.mem_singleton_iff]
@@ -261,8 +259,7 @@ the class of its inverse acting on the chosen fibre point. -/
 @[simp]
 lemma subgroupFiberOrbitQuotientBotEquivDeck_symm_apply
     [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] [IsCancelSMul (Deck p) (p ⁻¹' {b})]
-    (e : p ⁻¹' {b}) (φ : Deck p) :
-    (subgroupFiberOrbitQuotientBotEquivDeck e).symm φ =
+    (e : p ⁻¹' {b}) (φ : Deck p) : (subgroupFiberOrbitQuotientBotEquivDeck e).symm φ =
       subgroupFiberOrbitClass (⊥ : Subgroup (Deck p)) (φ⁻¹ • e) := by
   apply (subgroupFiberOrbitQuotientBotEquivDeck e).injective
   rw [Equiv.apply_symm_apply, subgroupFiberOrbitQuotientBotEquivDeck_apply_smul]
@@ -308,8 +305,7 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_top
 @[simp]
 lemma subgroupFiberOrbitQuotientEquivQuotientGroup_mapOfLE
     [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] [IsCancelSMul (Deck p) (p ⁻¹' {b})]
-    {H K : Subgroup (Deck p)} (hHK : H ≤ K) (e : p ⁻¹' {b})
-    (x : SubgroupFiberOrbitQuotient H b) :
+    {H K : Subgroup (Deck p)} (hHK : H ≤ K) (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     Subgroup.quotientMapOfLE hHK
         (subgroupFiberOrbitQuotientEquivQuotientGroup H e x) =
       subgroupFiberOrbitQuotientEquivQuotientGroup K e
@@ -323,8 +319,7 @@ inclusions. -/
 @[simp]
 lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_mapOfLE
     [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p) (hreg : IsRegular p)
-    {H K : Subgroup (Deck p)} (hHK : H ≤ K) (e : p ⁻¹' {b})
-    (x : SubgroupFiberOrbitQuotient H b) :
+    {H K : Subgroup (Deck p)} (hHK : H ≤ K) (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     Subgroup.quotientMapOfLE hHK
         (regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e x) =
       regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg K e

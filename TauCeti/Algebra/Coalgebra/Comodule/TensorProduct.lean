@@ -86,8 +86,7 @@ variable [AddCommMonoid N] [Module R N]
 the two `C`-components.
 
 On pure tensors it sends `(m ⊗ c) ⊗ (n ⊗ d)` to `(m ⊗ n) ⊗ cd`. -/
-noncomputable def tensorCombine :
-    (M ⊗[R] C) ⊗[R] (N ⊗[R] C) →ₗ[R] (M ⊗[R] N) ⊗[R] C :=
+noncomputable def tensorCombine : (M ⊗[R] C) ⊗[R] (N ⊗[R] C) →ₗ[R] (M ⊗[R] N) ⊗[R] C :=
   TensorProduct.map (LinearMap.id : M ⊗[R] N →ₗ[R] M ⊗[R] N) (LinearMap.mul' R C) ∘ₗ
     (TensorProduct.tensorTensorTensorComm R M C N C).toLinearMap
 
@@ -317,11 +316,9 @@ variable {M' : Type y} {N' : Type z}
 
 /-- The diagonal tensor coaction is natural under tensor products of comodule morphisms. -/
 theorem tensorCoact_natural [Semiring C] [Bialgebra R C]
-    [AddCommMonoid M] [Module R M] [Comodule R C M]
-    [AddCommMonoid N] [Module R N] [Comodule R C N]
+    [AddCommMonoid M] [Module R M] [Comodule R C M] [AddCommMonoid N] [Module R N] [Comodule R C N]
     [AddCommMonoid M'] [Module R M'] [Comodule R C M']
-    [AddCommMonoid N'] [Module R N'] [Comodule R C N']
-    (f : Hom R C M M') (g : Hom R C N N') :
+    [AddCommMonoid N'] [Module R N'] [Comodule R C N'] (f : Hom R C M M') (g : Hom R C N N') :
     TensorProduct.map (TensorProduct.map f.toLinearMap g.toLinearMap)
         (LinearMap.id : C →ₗ[R] C) ∘ₗ
         tensorCoact (R := R) (C := C) (M := M) (N := N) =

@@ -98,8 +98,7 @@ theorem metProjection_eq_condExpL2 (T : Ω → Ω) (hT : MeasurePreserving T μ 
 its conditional expectation given the invariant σ-algebra. -/
 theorem metProjection_ae_eq_condExp (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
     [SigmaFinite (μ.trim (MeasurableSpace.invariants_le T))] (g : Lp ℝ 2 μ)
-    (hg : Integrable (g : Ω → ℝ) μ) :
-    (metProjection (𝕜 := ℝ) T hT g : Ω → ℝ) =ᵐ[μ]
+    (hg : Integrable (g : Ω → ℝ) μ) : (metProjection (𝕜 := ℝ) T hT g : Ω → ℝ) =ᵐ[μ]
       μ[(g : Ω → ℝ) | MeasurableSpace.invariants T] := by
   have h :=
     (Lp.memLp g).condExpL2_ae_eq_condExp' (𝕜 := ℝ) (MeasurableSpace.invariants_le T) hg
@@ -110,8 +109,7 @@ theorem metProjection_ae_eq_condExp (T : Ω → Ω) (hT : MeasurePreserving T μ
 /-- Conditional expectation for the invariant σ-algebra fixes exactly the almost everywhere
 invariant `L²` observables. -/
 @[simp]
-theorem condExpL2_invariants_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Lp ℝ 2 μ) :
+theorem condExpL2_invariants_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp ℝ 2 μ) :
     (condExpL2 ℝ ℝ (MeasurableSpace.invariants_le T) g : Lp ℝ 2 μ) = g ↔
       (g : Ω → ℝ) ∘ T =ᵐ[μ] g := by
   rw [← metProjection_eq_condExpL2 T hT g, metProjection_eq_self_iff, mem_fixedSpace_iff hT,

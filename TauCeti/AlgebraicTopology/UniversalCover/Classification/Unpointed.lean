@@ -65,8 +65,7 @@ source basepoint to a conjugate of the subgroup recovered from the target basepo
 
 The homeomorphism need not carry `e₀` to `f₀`: its image of `e₀` is another point of the
 target fibre, and changing from that point to `f₀` accounts for the conjugation. -/
-theorem exists_range_eq_map_conj_of_homeomorph_comp_eq
-    [PathConnectedSpace F]
+theorem exists_range_eq_map_conj_of_homeomorph_comp_eq [PathConnectedSpace F]
     (hp : Continuous p) (hq : _root_.IsCoveringMap q)
     (hpe : p e₀ = x) (hqf : q f₀ = x) (h : E ≃ₜ F) (hcomp : q ∘ h = p) :
     ∃ γ : FundamentalGroup X x,
@@ -135,8 +134,7 @@ map one chosen lift to the other. -/
 theorem exists_homeomorph_comp_eq_iff_exists_range_eq_map_conj
     [PathConnectedSpace E] [LocallyPathConnectedSpace E]
     [PathConnectedSpace F] [LocallyPathConnectedSpace F]
-    (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
-    (hpe : p e₀ = x) (hqf : q f₀ = x) :
+    (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q) (hpe : p e₀ = x) (hqf : q f₀ = x) :
     (∃ h : E ≃ₜ F, q ∘ h = p) ↔
       ∃ γ : FundamentalGroup X x,
         (mapOfEq ⟨q, hq.continuous⟩ hqf).range =

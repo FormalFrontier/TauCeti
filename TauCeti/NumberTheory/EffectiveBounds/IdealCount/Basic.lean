@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Data.Pi.Interval
 public import Mathlib.NumberTheory.NumberField.Basic
-public import Mathlib.NumberTheory.RamificationInertia.Basic
 public import Mathlib.NumberTheory.ZetaValues
 public import Mathlib.RingTheory.Ideal.Int
+public import Mathlib.RingTheory.RamificationInertia.Basic
 import Mathlib.Data.Set.Card.Arithmetic
 
 /-!
@@ -104,8 +104,7 @@ private theorem prodLeTuples_succ_eq_iUnion (n : ℕ) (X : ℝ) :
 
 /-- The number of `(n+1)`-tuples with product at most `X` is at most the sum, over the last
 coordinate `j ∈ {1, …, ⌊X⌋}`, of the counts of `n`-tuples with product at most `X / j`. -/
-private theorem prodLeTuples_succ_ncard_le (n : ℕ) (X : ℝ) :
-    (prodLeTuples (n + 1) X).ncard ≤
+private theorem prodLeTuples_succ_ncard_le (n : ℕ) (X : ℝ) : (prodLeTuples (n + 1) X).ncard ≤
       ∑ j ∈ Finset.Icc 1 ⌊X⌋₊, (prodLeTuples n (X / j)).ncard := by
   rw [prodLeTuples_succ_eq_iUnion]
   exact (Finset.set_ncard_biUnion_le _ _).trans
@@ -183,20 +182,37 @@ private theorem mem_primesOverFinset_under {P : Ideal (𝓞 F)} (hP : P.IsPrime)
   · exact Ideal.under_ne_bot (A := ℤ) hP0
 
 /-
+[foundational] At most `[F:ℚ]` primes of `𝓞 F` lie over a given nonzero prime of `ℤ`, since
+each contributes a positive `ramificationIdx * inertiaDeg` to the sum `[F:ℚ]`.
+-/
+private theorem card_primesOverFinset_le_finrank {p : Ideal ℤ} [p.IsMaximal] (hp0 : p ≠ ⊥) :
+    (IsDedekindDomain.primesOverFinset p (𝓞 F)).card ≤ Module.finrank ℚ F :=
+  calc (IsDedekindDomain.primesOverFinset p (𝓞 F)).card
+      = ∑ _q : p.primesOver (𝓞 F), 1 := by
+        rw [Finset.sum_const, smul_eq_mul, mul_one, Finset.card_univ,
+          ← Nat.card_eq_fintype_card, Nat.card_coe_set_eq,
+          ← IsDedekindDomain.coe_primesOverFinset hp0 (𝓞 F), Set.ncard_coe_finset]
+    _ ≤ ∑ q : p.primesOver (𝓞 F), q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ :=
+        Finset.sum_le_sum fun q _ => Nat.one_le_iff_ne_zero.mpr
+          (Nat.mul_ne_zero (Ideal.ramificationIdx_pos q.1 ℤ).ne'
+            (Ideal.inertiaDeg_pos q.1 ℤ).ne')
+    _ = Module.finrank ℤ (𝓞 F) := Ideal.sum_ramification_inertia_eq_finrank p (𝓞 F)
+    _ = Module.finrank ℚ F := NumberField.RingOfIntegers.rank F
+
+/-
 [foundational] The coordinate of a nonzero prime ideal is `< [F:ℚ]`.
 -/
 private theorem primeCoord_lt {P : Ideal (𝓞 F)} (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
     primeCoord F P < Module.finrank ℚ F := by
-  have hmax : (Ideal.under ℤ P).IsMaximal :=
-    Ideal.IsPrime.isMaximal (IsPrime.under ℤ P) (Ideal.under_ne_bot (A := ℤ) hP0)
+  have hp0 : Ideal.under ℤ P ≠ ⊥ := Ideal.under_ne_bot (A := ℤ) hP0
+  have hmax : (Ideal.under ℤ P).IsMaximal := Ideal.IsPrime.isMaximal (IsPrime.under ℤ P) hp0
   calc primeCoord F P
       < (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).toList.length := by
         rw [primeCoord]
         exact List.idxOf_lt_length_iff.mpr
           (Finset.mem_toList.mpr (mem_primesOverFinset_under F hP hP0))
     _ = (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).card := Finset.length_toList _
-    _ ≤ Module.finrank ℚ F :=
-        Ideal.card_primesOverFinset_le_finrank (𝓞 F) ℚ F (Ideal.under_ne_bot (A := ℤ) hP0)
+    _ ≤ Module.finrank ℚ F := card_primesOverFinset_le_finrank F hp0
 
 /-
 [foundational] `absNormUnder` injectivity: equal `absNormUnder` means the primes lie
@@ -216,8 +232,7 @@ coordinate are equal.
 -/
 private theorem prime_eq_of_absNormUnder_eq_of_primeCoord_eq {P Q : Ideal (𝓞 F)}
     (hP : P.IsPrime) (hP0 : P ≠ ⊥) (hQ : Q.IsPrime) (hQ0 : Q ≠ ⊥)
-    (hr : absNormUnder F P = absNormUnder F Q)
-    (hc : primeCoord F P = primeCoord F Q) : P = Q := by
+    (hr : absNormUnder F P = absNormUnder F Q) (hc : primeCoord F P = primeCoord F Q) : P = Q := by
   have hUeq : Ideal.under ℤ P = Ideal.under ℤ Q := under_eq_of_absNormUnder_eq F hr
   set l := (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).toList with hl
   have hPl : P ∈ l := Finset.mem_toList.mpr (mem_primesOverFinset_under F hP hP0)
@@ -300,8 +315,7 @@ Recovery: the multiplicity of a prime `P` in `I` is the `absNormUnder P`-adic
 valuation of the `primeCoord P` coordinate of the encoding.
 -/
 private theorem count_eq_padicValNat {I : Ideal (𝓞 F)} {P : Ideal (𝓞 F)}
-    (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
-    (normalizedFactors I).count P =
+    (hP : P.IsPrime) (hP0 : P ≠ ⊥) : (normalizedFactors I).count P =
       padicValNat (absNormUnder F P)
         (encodeIdeal F I ⟨primeCoord F P, primeCoord_lt F hP hP0⟩) := by
   classical
@@ -380,8 +394,7 @@ open _root_.NumberField in
 one coordinate and contributes `absNorm (Ideal.under ℤ P) ^ count` there; the coordinate
 product is bounded by `Ideal.absNorm I`, and injectivity follows by recovering each count
 from a `padicValNat`. -/
-private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberField F]
-    {X : ℝ} :
+private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberField F] {X : ℝ} :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard ≤
       (prodLeTuples (Module.finrank ℚ F) X).ncard := by
   classical
@@ -398,8 +411,7 @@ private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberF
 open _root_.NumberField in
 /-- In any number field `F`, the set of nonzero integral ideals with norm at most `X` is
 finite, and for `X ≥ 1` its cardinality is at most `X² * 2^[F:ℚ]`. -/
-theorem card_ideal_absNorm_le (F : Type*) [Field F] [NumberField F]
-    {X : ℝ} (hX : 1 ≤ X) :
+theorem card_ideal_absNorm_le (F : Type*) [Field F] [NumberField F] {X : ℝ} (hX : 1 ≤ X) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.Finite ∧
       (({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard : ℝ)) ≤
         X ^ 2 * 2 ^ Module.finrank ℚ F := by
@@ -459,8 +471,7 @@ private theorem ncard_idealsWithAbsNormNatLe_real_le (F : Type*) [Field F] [Numb
 
 /-- **Natural-number ideal count.** The number of nonzero integral ideals of `𝓞 F` with norm at
 most `N` is at most `N² * 2^[F:ℚ]`. -/
-theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F]
-    (N : ℕ) :
+theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F] (N : ℕ) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤
       N ^ 2 * 2 ^ finrank ℚ F := by
   suffices (idealsWithAbsNormNatLe F N).ncard ≤ N ^ 2 * 2 ^ finrank ℚ F by
@@ -490,8 +501,7 @@ theorem ncard_ideal_absNorm_le_of_finrank_le (F : Type*) [Field F] [NumberField 
 /-- Monotone natural-number ideal count: if all ideals under consideration have norm at most
 `N`, and `N ≤ B`, and `[F : ℚ] ≤ n`, then there are at most `B² * 2^n` of them. -/
 theorem ncard_ideal_absNorm_le_of_nat_le_of_finrank_le
-    (F : Type*) [Field F] [NumberField F] {N B n : ℕ}
-    (hN : N ≤ B) (hn : finrank ℚ F ≤ n) :
+    (F : Type*) [Field F] [NumberField F] {N B n : ℕ} (hN : N ≤ B) (hn : finrank ℚ F ≤ n) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤ B ^ 2 * 2 ^ n := by
   calc
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard
@@ -505,8 +515,7 @@ theorem ncard_ideal_absNorm_le_of_nat_le_of_finrank_le
 
 /-- If `[F : ℚ] ≤ n`, then the number of nonzero integral ideals of norm at most `N` is at most
 `N² * 2^n`. -/
-theorem ncard_ideal_absNorm_le_nat_of_finrank_le
-    (F : Type*) [Field F] [NumberField F] {N n : ℕ}
+theorem ncard_ideal_absNorm_le_nat_of_finrank_le (F : Type*) [Field F] [NumberField F] {N n : ℕ}
     (hn : finrank ℚ F ≤ n) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤ N ^ 2 * 2 ^ n :=
   ncard_ideal_absNorm_le_of_nat_le_of_finrank_le F le_rfl hn

@@ -47,8 +47,7 @@ variable (K L : Type*) [Field K] [Field L] [NumberField K] [NumberField L] [Alge
 
 private theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRing A]
     [IsDedekindDomain A] [Algebra A (𝓞 L)] [Module.Finite A (𝓞 L)]
-    [IsTorsionFree A (𝓞 L)] [IsGaloisGroup Gal(L/K) A (𝓞 L)] (P : Ideal A)
-    [P.IsMaximal] :
+    [IsTorsionFree A (𝓞 L)] [IsGaloisGroup Gal(L/K) A (𝓞 L)] (P : Ideal A) [P.IsMaximal] :
     (primesOver P (𝓞 L)).ncard = finrank K L ↔
       P.ramificationIdxIn (𝓞 L) = 1 ∧ P.inertiaDegIn (𝓞 L) = 1 := by
   have h := TauCeti.RamificationInertia.ncard_primesOver_eq_natCard_iff_of_isGaloisGroup
@@ -59,10 +58,8 @@ private theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRin
 /-- In a Galois number field, a rational prime `p` splits completely (there are `[K : ℚ]` primes
 of `𝓞 K` above `p`) iff its ramification index and inertia degree are both `1`. -/
 theorem ncard_primesOver_eq_finrank_iff (K : Type*) [Field K] [NumberField K] [IsGalois ℚ K]
-    (p : ℕ) [Fact p.Prime] :
-    (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔
-      (span {(p : ℤ)}).ramificationIdxIn (𝓞 K) = 1 ∧
-        (span {(p : ℤ)}).inertiaDegIn (𝓞 K) = 1 := by
+    (p : ℕ) [Fact p.Prime] : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔
+      (span {(p : ℤ)}).ramificationIdxIn (𝓞 K) = 1 ∧ (span {(p : ℤ)}).inertiaDegIn (𝓞 K) = 1 := by
   have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
   have hp0 : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := by
     simpa [Ideal.span_singleton_eq_bot] using hpne
@@ -78,8 +75,7 @@ prime `Q` of `𝓞 L` above the rational prime `p`, the prime `p` splits complet
 is trivial. -/
 theorem ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot (L : Type*) [Field L]
     [NumberField L] [IsGalois ℚ L] {p : ℕ} [Fact p.Prime] (Q : Ideal (𝓞 L)) [Q.IsPrime]
-    [Q.LiesOver (span {(p : ℤ)})] :
-    (primesOver (span {(p : ℤ)}) (𝓞 L)).ncard = finrank ℚ L ↔
+    [Q.LiesOver (span {(p : ℤ)})] : (primesOver (span {(p : ℤ)}) (𝓞 L)).ncard = finrank ℚ L ↔
       stabilizer (L ≃ₐ[ℚ] L) Q = ⊥ := by
   -- The orbit of `Q` under `Gal(L/ℚ)` is all of the primes above `p`, so orbit–stabilizer gives
   -- `#{primes above p} · |stabilizer Q| = |Gal(L/ℚ)| = [L : ℚ]`.

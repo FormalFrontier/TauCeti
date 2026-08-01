@@ -140,8 +140,7 @@ left: pre-composition by a homomorphism is multiplicative. -/
   simp only [Hom.toOverHom_comp, Hom.toOverHom_mul, MonObj.comp_mul]
 
 /-- Post-composition sends the identity element of a homomorphism group to the identity element. -/
-@[simp] lemma one_comp {A B C : AbelianVariety K} (h : B ⟶ C) :
-    (1 : A ⟶ B) ≫ h = 1 := by
+@[simp] lemma one_comp {A B C : AbelianVariety K} (h : B ⟶ C) : (1 : A ⟶ B) ≫ h = 1 := by
   apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_one, MonObj.one_comp]
 
@@ -178,8 +177,7 @@ left: pre-composition by a homomorphism is multiplicative. -/
 /-- Pre-composition by a fixed homomorphism, bundled as a homomorphism of the pointwise
 homomorphism groups. This is `Hom.comp_mul` in bundled form; the name follows Mathlib's
 `CategoryTheory.Preadditive.leftComp`. -/
-def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) :
-    (B ⟶ C) →* (A ⟶ C) where
+def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) : (B ⟶ C) →* (A ⟶ C) where
   toFun g := f ≫ g
   map_one' := comp_one f
   map_mul' g h := comp_mul f g h
@@ -187,8 +185,7 @@ def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) :
 /-- Post-composition by a fixed homomorphism, bundled as a homomorphism of the pointwise
 homomorphism groups. This is `Hom.mul_comp` in bundled form; the name follows Mathlib's
 `CategoryTheory.Preadditive.rightComp`. -/
-def rightComp (A : AbelianVariety K) {B C : AbelianVariety K} (g : B ⟶ C) :
-    (A ⟶ B) →* (A ⟶ C) where
+def rightComp (A : AbelianVariety K) {B C : AbelianVariety K} (g : B ⟶ C) : (A ⟶ B) →* (A ⟶ C) where
   toFun f := f ≫ g
   map_one' := one_comp g
   map_mul' f f' := mul_comp f f' g

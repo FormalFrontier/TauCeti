@@ -55,8 +55,7 @@ under the power identity `(L₊ / ‖L₊‖)^(k-1) = (-L₋ / ‖L₋‖)^(k-1)
 Hungerbühler–Wasem. When the curve is `C¹` at the crossing (`L₋ = L₊`), condition (B) holds
 automatically for `k` odd, since `(-1)^(k-1) = 1`. -/
 theorem smul_pow_eq_of_div_norm_pow_eq (L_minus L_plus : ℂ) (k : ℕ)
-    (h_B : (L_plus / (‖L_plus‖ : ℂ)) ^ (k - 1) =
-      ((-L_minus) / (‖L_minus‖ : ℂ)) ^ (k - 1)) (ε : ℝ) :
+    (h_B : (L_plus / (‖L_plus‖ : ℂ)) ^ (k - 1) = ((-L_minus) / (‖L_minus‖ : ℂ)) ^ (k - 1)) (ε : ℝ) :
     (((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ)) ^ (k - 1) =
     (((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ)) ^ (k - 1) := by
   have h_smul : ∀ (r : ℝ) (v : ℂ), ((ε / r : ℝ) • v : ℂ) = (ε : ℂ) * (v / (r : ℂ)) := by
@@ -73,15 +72,12 @@ reaching radius `ε` on each side: the difference of `F(z) = -1/((k-1)(z-s)^(k-1
 curve between the two exits tends to `0` as `ε → 0⁺` (`2 ≤ k ≤ n`). This is the cancellation
 half of the Hungerbühler–Wasem principal-value mechanism at a condition-(B) crossing. -/
 theorem antiderivative_diff_across_crossing_tendsto_zero
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L_minus L_plus : ℂ} {n k : ℕ}
-    (h_flat : FlatOfOrder γ t₀ n)
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L_minus L_plus : ℂ} {n k : ℕ} (h_flat : FlatOfOrder γ t₀ n)
     (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
     (h_deriv_right : HasDerivWithinAt γ L_plus (Ioi t₀) t₀)
     (h_deriv_left : HasDerivWithinAt γ L_minus (Iio t₀) t₀)
-    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n)
-    (h_B : (L_plus / (‖L_plus‖ : ℂ)) ^ (k - 1) =
-      ((-L_minus) / (‖L_minus‖ : ℂ)) ^ (k - 1))
-    {t_eps_plus t_eps_minus : ℝ → ℝ}
+    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n) (h_B : (L_plus / (‖L_plus‖ : ℂ)) ^ (k - 1) =
+      ((-L_minus) / (‖L_minus‖ : ℂ)) ^ (k - 1)) {t_eps_plus t_eps_minus : ℝ → ℝ}
     (h_plus_to : Tendsto t_eps_plus (𝓝[>] (0 : ℝ)) (𝓝[>] t₀))
     (h_plus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (t_eps_plus ε) - s‖ = ε)
     (h_minus_to : Tendsto t_eps_minus (𝓝[>] (0 : ℝ)) (𝓝[<] t₀))

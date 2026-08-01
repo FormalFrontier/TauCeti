@@ -129,8 +129,7 @@ lemma orbitQuotientEquiv_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (e : E
 inverse homeomorphism. -/
 @[simp]
 lemma orbitQuotientEquiv_symm_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (f : F) :
-    (orbitQuotientEquiv h hpq).symm
-      (Quotient.mk'' f : MulAction.orbitRel.Quotient (Deck q) F) =
+    (orbitQuotientEquiv h hpq).symm (Quotient.mk'' f : MulAction.orbitRel.Quotient (Deck q) F) =
         (Quotient.mk'' (h.symm f) : MulAction.orbitRel.Quotient (Deck p) E) :=
   rfl
 
@@ -216,8 +215,7 @@ lemma orbitQuotientEquivBase_conj (hreg : IsRegular p) (h : E ≃ₜ F)
 /-- Representative form of compatibility between over-base homeomorphisms and the regular
 orbit-quotient equivalences. -/
 lemma orbitQuotientEquivBase_conj_mk (hreg : IsRegular p) (h : E ≃ₜ F)
-    (hpq : ∀ e, q (h e) = p e) (f : F) :
-    (hreg.conj h hpq).orbitQuotientEquivBase
+    (hpq : ∀ e, q (h e) = p e) (f : F) : (hreg.conj h hpq).orbitQuotientEquivBase
       (Quotient.mk'' f : MulAction.orbitRel.Quotient (Deck q) F) =
         hreg.orbitQuotientEquivBase
           (Quotient.mk'' (h.symm f) : MulAction.orbitRel.Quotient (Deck p) E) := by

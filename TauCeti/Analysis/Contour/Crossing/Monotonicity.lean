@@ -58,8 +58,7 @@ derivative of `‖γ t - s‖²` (up to the factor `2`) deviates from its leadin
 `(t - t₀)‖L‖²` by at most `|t - t₀|‖L‖²/2`. Both one-sided strict-monotonicity statements read
 off their sign from this single bound. -/
 private theorem abs_inner_chord_deriv_sub_le {γ : ℝ → F} {t₀ : ℝ} {s : F} (h_at : γ t₀ = s)
-    {L : F} (hL : L ≠ 0) {u : Set ℝ}
-    (h_deriv : HasDerivWithinAt γ L u t₀)
+    {L : F} (hL : L ≠ 0) {u : Set ℝ} (h_deriv : HasDerivWithinAt γ L u t₀)
     (hL_tendsto : Tendsto (deriv γ) (𝓝[u] t₀) (𝓝 L)) :
     ∀ᶠ t in 𝓝[u] t₀,
       |inner ℝ (γ t - s) (deriv γ t) - (t - t₀) * ‖L‖ ^ 2| ≤ |t - t₀| * ‖L‖ ^ 2 / 2 := by
@@ -109,10 +108,8 @@ for a curve through `s = γ t₀` with non-zero right derivative limit `L`, cont
 and eventual differentiability on the right, `‖γ t - s‖` is strictly monotone on `[t₀, t₀ + r]`
 for some `r > 0` — the curve exits each small disc around `s` exactly once. -/
 theorem exists_strictMonoOn_norm_sub_right {γ : ℝ → F} {t₀ : ℝ} {s : F} (h_at : γ t₀ = s)
-    {L : F} (hL : L ≠ 0)
-    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
-    (hγ_cont : ContinuousAt γ t₀)
-    (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
+    {L : F} (hL : L ≠ 0) (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
+    (hγ_cont : ContinuousAt γ t₀) (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + r)) := by
   have h_combined : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t ∧
       (t - t₀) * ‖L‖ ^ 2 / 2 ≤ inner ℝ (γ t - s) (deriv γ t) := by
@@ -162,9 +159,7 @@ counterpart of `exists_strictMonoOn_norm_sub_right`, derived from it by the refl
 `t ↦ 2t₀ - t` (which carries the left data of `γ` to right data of the reflected curve with
 derivative limit `-L`). -/
 theorem exists_strictAntiOn_norm_sub_left {γ : ℝ → F} {t₀ : ℝ} {s : F} (h_at : γ t₀ = s)
-    {L : F} (hL : L ≠ 0)
-    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
-    (hγ_cont : ContinuousAt γ t₀)
+    {L : F} (hL : L ≠ 0) (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L)) (hγ_cont : ContinuousAt γ t₀)
     (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - r) t₀) := by
   have ht₀ : 2 * t₀ - t₀ = t₀ := by ring

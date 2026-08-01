@@ -52,8 +52,7 @@ semicircle (`[0, π]`) specialization of `indexIntegral_arc` (`π / 2π = ½`): 
 *smooth* boundary point of the fundamental domain, so the valence contour indents around it by a
 **semicircle** (opening angle `α = π`). The statement is the generic arc computation; the point `i`
 names its downstream valence-formula role. -/
-theorem windingNumber_at_i {z₀ : ℂ} {r : ℝ} (hr : r ≠ 0) :
-    (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
+theorem windingNumber_at_i {z₀ : ℂ} {r : ℝ} (hr : r ≠ 0) : (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         ∫ θ in (0 : ℝ)..Real.pi, deriv (circleMap z₀ r) θ / (circleMap z₀ r θ - z₀)
       = 1 / 2 := by
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
@@ -65,8 +64,7 @@ theorem windingNumber_at_i {z₀ : ℂ} {r : ℝ} (hr : r ≠ 0) :
 of the fundamental domain, so the contour indents around it by a `π/3` arc, and the two such corners
 (`ρ` and `ρ+1`) each contribute `1/6`, summing to the `1/3` coefficient of `ord_ρ(f)`. The statement
 is the generic arc computation; the point `ρ` names its downstream valence-formula role. -/
-theorem windingNumber_at_rho {z₀ : ℂ} {r : ℝ} (hr : r ≠ 0) :
-    (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
+theorem windingNumber_at_rho {z₀ : ℂ} {r : ℝ} (hr : r ≠ 0) : (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         ∫ θ in (0 : ℝ)..(Real.pi / 3), deriv (circleMap z₀ r) θ / (circleMap z₀ r θ - z₀)
       = 1 / 6 := by
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero

@@ -137,16 +137,14 @@ def conjMulEquiv (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) : Deck p ≃* Dec
 
 /-- The deck transformation produced by `conjMulEquiv` evaluates by conjugation. -/
 @[simp]
-lemma conjMulEquiv_apply_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (φ : Deck p) (f : F) :
+lemma conjMulEquiv_apply_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (φ : Deck p) (f : F) :
     ((conjMulEquiv h hpq φ).1 f) = h (φ.1 (h.symm f)) := by
   rfl
 
 /-- The inverse equivalence of `conjMulEquiv` is conjugation by the inverse
 homeomorphism. -/
 @[simp]
-lemma conjMulEquiv_symm_apply_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (ψ : Deck q) (e : E) :
+lemma conjMulEquiv_symm_apply_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (ψ : Deck q) (e : E) :
     (((conjMulEquiv h hpq).symm ψ).1 e) = h.symm (ψ.1 (h e)) := by
   rfl
 
