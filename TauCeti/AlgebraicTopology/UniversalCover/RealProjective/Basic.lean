@@ -152,7 +152,7 @@ theorem mk_eq_mk_iff (x y : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
 /-- Antipodal unit vectors have the same image in real projective space. -/
 @[simp]
 theorem mk_neg (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
-    mk n (-x) = mk n x :=
+    Quotient.mk'' (-x) = mk n x :=
   (mk_eq_mk_iff n (-x) x).2 (Or.inr rfl)
 
 /-- The unit sphere modulo the antipodal action is a quotient covering map.  Its fibres are the
