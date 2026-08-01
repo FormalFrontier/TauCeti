@@ -175,7 +175,7 @@ theorem mem_ball_iff_one_lt_two_mul_re_mul_inv (hζ : dist ζ c = r) (hz : z ≠
 /-- **The crosscut neighbourhood is nonempty.** For `ζ` on the circle `sphere c r` and any positive
 `ρ`, the intersection `ball c r ∩ ball ζ ρ` contains points of the radius from `ζ` to `c` close
 enough to `ζ`. -/
-theorem ball_inter_ball_nonempty (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ) :
+theorem nonempty_ball_inter_ball (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ) :
     (ball c r ∩ ball ζ ρ).Nonempty := by
   have hnc : ‖ζ - c‖ = r := by rw [← dist_eq_norm, hζ]
   set t : ℝ := min (1 / 2) (ρ / (2 * r))
@@ -194,10 +194,10 @@ theorem ball_inter_ball_nonempty (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < �
       _ < ρ := by linarith
 
 /-- **The crosscut neighbourhood is connected**, being an intersection of two balls, hence convex.
-Its nonemptiness is `TauCeti.ball_inter_ball_nonempty`. -/
+Its nonemptiness is `TauCeti.nonempty_ball_inter_ball`. -/
 theorem isConnected_ball_inter_ball (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ) :
     IsConnected (ball c r ∩ ball ζ ρ) :=
-  ((convex_ball c r).inter (convex_ball ζ ρ)).isConnected (ball_inter_ball_nonempty hr hζ hρ)
+  ((convex_ball c r).inter (convex_ball ζ ρ)).isConnected (nonempty_ball_inter_ball hr hζ hρ)
 
 /-- **The part of a disc outside a circular crosscut is connected.** For `ζ` on the circle
 `sphere c r` and `0 < ρ < 2 * r`, the set `ball c r \ closedBall ζ ρ` is connected — and nonempty,
