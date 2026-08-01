@@ -87,21 +87,21 @@ theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
 `ω ↦ μ.map (X 0)`. This is the sharp form of the roadmap's first worked example: the constant
 random measure is a genuine *directing measure*, not merely a mixing representative.
 `MixedIIDWith.of_iIndepFun_identDistrib` is the mixture form it projects down to. -/
-theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ℕ → Ω → α}
-    (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ι → Ω → α}
+    (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     haveI := hindep.isProbabilityMeasure
     ConditionallyIIDWith μ X
-      (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) := by
+      (fun _ => ⟨μ.map (X i₀), Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩) := by
   haveI := hindep.isProbabilityMeasure
   exact conditionallyIIDWith_const_of_mixedIIDWith
-    (MixedIIDWith.of_iIndepFun_identDistrib hindep hident)
+    (MixedIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
 
 /-- **An i.i.d. sequence is conditionally i.i.d.** (existential directing-measure form). -/
-theorem ConditionallyIID.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ℕ → Ω → α}
-    (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+theorem ConditionallyIID.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ι → Ω → α}
+    (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     ConditionallyIID μ X :=
   haveI := hindep.isProbabilityMeasure
-  ConditionallyIID.of_directing (ConditionallyIIDWith.of_iIndepFun_identDistrib hindep hident)
+  ConditionallyIID.of_directing (ConditionallyIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
 
 end Probability
 

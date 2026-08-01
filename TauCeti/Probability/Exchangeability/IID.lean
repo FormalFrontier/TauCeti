@@ -77,37 +77,39 @@ theorem MixedIIDWith.of_iIndepFun_map_eq {μ : Measure Ω} {X : ι → Ω → α
 distributed coordinates, the law of an injective finite block is the product of
 that common law, which is precisely the mixture against the constant mixing representative. -/
 theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
-    {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
-    (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    {X : ι → Ω → α} (i₀ : ι) (hindep : iIndepFun X μ)
+    (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     haveI := hindep.isProbabilityMeasure
     MixedIIDWith μ X
-      (fun _ => (⟨μ.map (X 0),
-        Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩ :
+      (fun _ => (⟨μ.map (X i₀),
+        Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩ :
           ProbabilityMeasure α)) := by
   haveI := hindep.isProbabilityMeasure
   exact MixedIIDWith.of_iIndepFun_map_eq hindep fun i => (hident i).map_eq
 
 /-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/
 theorem MixedIID.of_iIndepFun_identDistrib {μ : Measure Ω}
-    {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
-    (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    {X : ι → Ω → α} (i₀ : ι) (hindep : iIndepFun X μ)
+    (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     MixedIID μ X :=
   MixedIID.of_mixingRepresentative
-    (MixedIIDWith.of_iIndepFun_identDistrib hindep hident)
+    (MixedIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
 
-/-- **An i.i.d. sequence is exchangeable.** -/
+/-- **An i.i.d. sequence is exchangeable.** Sequence-level, and necessarily so: `Exchangeable` is
+defined for `X : ℕ → Ω → α`, so no reference-index parameter would generalize it. The family-level
+statement is `MixedIIDWith.exchangeableFamily`. -/
 theorem Exchangeable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Exchangeable μ X :=
-  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).exchangeable
+  (MixedIIDWith.of_iIndepFun_identDistrib 0 hindep hident).exchangeable
 
 /-- **An i.i.d. sequence is contractable.** -/
 theorem Contractable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Contractable μ X :=
-  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).contractable
+  (MixedIIDWith.of_iIndepFun_identDistrib 0 hindep hident).contractable
 
 end Probability
 
