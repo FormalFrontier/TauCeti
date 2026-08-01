@@ -20,7 +20,7 @@ abstract Lie-group exponential map.
 
 ## Main results
 
-* `TauCeti.contDiff_exp_smul`: the algebra-valued exponential curve is smooth.
+* `TauCeti.contDiff_exp_smul`: the algebra-valued exponential curve is real analytic.
 * `TauCeti.contMDiff_expUnit_smul`: the corresponding units-valued curve is smooth.
 * `TauCeti.contMDiff_expUnitHom`: the bundled subgroup's underlying curve is smooth.
 * `TauCeti.hasDerivAt_expUnitHom_val_zero`: its initial velocity is `x`.
@@ -43,13 +43,14 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
 attribute [local instance] normedAlgebraRatOfReal
 
-/-- The algebra-valued exponential curve `t ↦ exp (t • x)` is smooth. -/
+/-- The algebra-valued exponential curve `t ↦ exp (t • x)` is real analytic. -/
+@[fun_prop]
 theorem contDiff_exp_smul (x : R) :
-    ContDiff ℝ ∞ (fun t : ℝ => NormedSpace.exp (t • x)) := by
+    ContDiff ℝ ω (fun t : ℝ => NormedSpace.exp (t • x)) := by
   rw [contDiff_iff_contDiffAt]
   intro t
   have h : AnalyticAt ℝ (fun s : ℝ => s • x) t := by fun_prop
-  change ContDiffAt ℝ ∞ (NormedSpace.exp ∘ fun s : ℝ => s • x) t
+  change ContDiffAt ℝ ω (NormedSpace.exp ∘ fun s : ℝ => s • x) t
   exact (AnalyticAt.comp (f := fun s : ℝ => s • x)
     (NormedSpace.exp_analytic (𝕂 := ℝ) (t • x)) h).contDiffAt
 
@@ -61,7 +62,7 @@ theorem contMDiff_expUnit_smul (x : R) :
       fun t : ℝ => NormedSpace.exp (t • x) by
     funext t
     exact expUnit_coe (t • x)]
-  exact (contDiff_exp_smul x).contMDiff
+  exact ((contDiff_exp_smul x).of_le le_top).contMDiff
 
 /-- The curve underlying `expUnitHom x` is smooth. -/
 theorem contMDiff_expUnitHom (x : R) :
@@ -78,11 +79,7 @@ theorem hasDerivAt_expUnitHom_val_zero (x : R) :
   simpa only [expUnitHom_apply, expUnit_coe, zero_smul, NormedSpace.exp_zero, one_mul] using
     hasDerivAt_exp_smul_const x (0 : ℝ)
 
-/-- A continuous one-parameter subgroup of `Rˣ` is determined by its initial velocity in `R`.
-
-The homomorphism law transports the derivative at zero to the autonomous ODE `f' = f * x` at
-every time. Global uniqueness for that Lipschitz ODE then identifies the subgroup with
-`expUnitHom x`. -/
+/-- A continuous one-parameter subgroup of `Rˣ` is determined by its initial velocity in `R`. -/
 theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
     (φ : ContinuousMonoidHom (Multiplicative ℝ) Rˣ) (x : R)
     (hφ : HasDerivAt (fun t : ℝ => (φ (Multiplicative.ofAdd t) : R)) x 0) :
@@ -104,21 +101,17 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
     have hderiv : HasDerivAt (fun s => f t * f (s - t)) (f t * x) t := by
       simpa only [Function.comp_apply, id_eq, one_smul] using hcomp.const_mul (f t)
     convert hderiv using 1
-  have hg (t : ℝ) : HasDerivAt g (g t * x) t := by
-    exact hasDerivAt_exp_smul_const x t
-  have hv : ∀ _ : ℝ, LipschitzOnWith ‖x‖₊ (fun y : R => y * x) Set.univ := by
-    intro _
-    apply LipschitzOnWith.of_dist_le_mul
-    intro a _ b _
-    simpa only [dist_eq_norm, ← sub_mul, coe_nnnorm, mul_comm] using
-      norm_mul_le (a - b) x
-  have hfg : f = g := ODE_solution_unique_univ (K := ‖x‖₊)
-    (v := fun (_ : ℝ) (y : R) => y * x) (s := fun _ => Set.univ) (t₀ := 0) hv
-    (fun t => ⟨hf t, Set.mem_univ _⟩) (fun t => ⟨hg t, Set.mem_univ _⟩) (by
-      simp [f, g])
+  have hg (t : ℝ) : HasDerivAt g (g t * x) t := hasDerivAt_exp_smul_const x t
+  let rightMul : R →L[ℝ] R := ContinuousLinearMap.mulLeftRight ℝ R 1 x
+  have hv : ∀ _ : ℝ, LipschitzOnWith ‖rightMul‖₊ rightMul Set.univ :=
+    fun _ => rightMul.lipschitz.lipschitzOnWith
+  have hfg : f = g := ODE_solution_unique_univ (K := ‖rightMul‖₊)
+    (v := fun _ => rightMul) (s := fun _ => Set.univ) (t₀ := 0) hv
+    (fun t => ⟨by simpa [rightMul] using hf t, Set.mem_univ _⟩)
+    (fun t => ⟨by simpa [rightMul] using hg t, Set.mem_univ _⟩) (by simp [f, g])
   apply ContinuousMonoidHom.ext
   intro t
-  rw [show t = Multiplicative.ofAdd (Multiplicative.toAdd t) by rfl, expUnitHom_apply]
+  rw [← ofAdd_toAdd t, expUnitHom_apply]
   apply Units.ext
   rw [expUnit_coe]
   exact congrFun hfg (Multiplicative.toAdd t)
