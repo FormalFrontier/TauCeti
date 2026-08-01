@@ -122,7 +122,7 @@ theorem tendsto_sub_mul_nhds_residue_of_order_eq_neg_one (hord : meromorphicOrde
   have h := hf.tendsto_nhds_meromorphicTrailingCoeffAt
   rw [huntop, ← residue_eq_meromorphicTrailingCoeffAt_of_order_eq_neg_one hord] at h
   refine h.congr fun z => ?_
-  simp [Pi.smul_apply', neg_neg, zpow_one, smul_eq_mul]
+  simp [Pi.smul_apply', neg_neg, smul_eq_mul]
 
 /-- **The residue as a limit, at most a simple pole.** If `f` has at most a simple pole at `z₀`
 (`−1 ≤ meromorphicOrderAt f z₀`), then `(z − z₀) · f z → residue f z₀` as `z → z₀`. In the analytic
@@ -163,10 +163,12 @@ theorem residue_sub_inv (z₀ : ℂ) : residue (fun z => (z - z₀)⁻¹) z₀ =
 
 /-- The residue of `c · (· − z₀)⁻¹` at `z₀` is `c`: scaling the elementary simple pole scales its
 residue. -/
-@[simp]
+-- Deliberately not `@[simp]`: `simp` already derives this from the unconditional
+-- `residue_const_mul` together with `residue_sub_inv`, so simpNF rejects the attribute as
+-- redundant. Kept as named API because several proofs rewrite with it directly.
 theorem residue_const_mul_sub_inv (c z₀ : ℂ) :
     residue (fun z => c * (z - z₀)⁻¹) z₀ = c := by
-  rw [residue_const_mul c (meromorphicAt_sub_inv z₀), residue_sub_inv, mul_one]
+  rw [residue_const_mul c, residue_sub_inv, mul_one]
 
 end TauCeti.Contour
 

@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PDE.SymmetricEnergy
-public import TauCeti.MeasureTheory.Function.LpBilinearForm
+public import TauCeti.MeasureTheory.Function.Lp.BilinearForm
 
 /-!
 # Variable-coefficient energy forms on `L²` jets

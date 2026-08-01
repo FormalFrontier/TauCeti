@@ -1,16 +1,20 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.CategoryTheory.Adjunction.CompositionIso
 public import Mathlib.RepresentationTheory.Coinduced
 public import Mathlib.RepresentationTheory.Induced
-public import TauCeti.RepresentationTheory.Restriction
+public import TauCeti.RepresentationTheory.Induction.Restriction
 
 /-!
 # Transitivity of induction and coinduction
 
-This file records coinduction in stages for representations along composable monoid homomorphisms,
-and induction in stages along composable group homomorphisms. It obtains the natural isomorphisms
-from the functoriality of restriction in `TauCeti.RepresentationTheory.Restriction` and
+This file records restriction and coinduction in stages for representations along composable monoid
+homomorphisms, and induction in stages along composable group homomorphisms. It obtains the natural
+isomorphisms from the equality of restriction functors `TauCeti.resFunctor_comp` and
 Mathlib's induction--restriction and restriction--coinduction adjunctions. This is the categorical
 core used by the subgroup form of induction in the induction and Mackey-theory roadmap.
 -/
@@ -26,6 +30,37 @@ universe u v w x
 variable {k : Type u} {G : Type v} {H : Type w} {K : Type x}
 
 namespace Rep
+
+section Restriction
+
+variable [Semiring k] [Monoid G] [Monoid H] [Monoid K]
+
+/-- Restriction along two composable group homomorphisms is naturally isomorphic to restriction
+along their composite.  The two functors are in fact equal (`TauCeti.resFunctor_comp`), so this is
+that equality read as an isomorphism. -/
+def resFunctorCompIso (φ : G →* H) (ψ : H →* K) :
+    _root_.Rep.resFunctor.{max u v w x} (k := k) ψ ⋙
+      _root_.Rep.resFunctor.{max u v w x} (k := k) φ ≅
+        _root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ) :=
+  eqToIso (resFunctor_comp ψ φ).symm
+
+/-- The forward component of `resFunctorCompIso` acts as the identity on vectors. -/
+@[simp↓]
+lemma resFunctorCompIso_hom_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+    ((resFunctorCompIso φ ψ).hom.app A) x = x :=
+  by
+    unfold resFunctorCompIso
+    rfl
+
+/-- The inverse component of `resFunctorCompIso` acts as the identity on vectors. -/
+@[simp↓]
+lemma resFunctorCompIso_inv_app_apply (φ : G →* H) (ψ : H →* K) (A : _root_.Rep k K) (x : A.V) :
+    ((resFunctorCompIso φ ψ).inv.app A) x = x :=
+  by
+    unfold resFunctorCompIso
+    rfl
+
+end Restriction
 
 section Induction
 

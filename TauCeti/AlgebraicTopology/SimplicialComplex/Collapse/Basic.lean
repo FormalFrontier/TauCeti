@@ -162,6 +162,12 @@ end CollapsesTo
 def Collapsible (K : _root_.PreAbstractSimplicialComplex ι) : Prop :=
   ∃ v : ι, CollapsesTo K (point v)
 
+/-- A complex is collapsible exactly when it admits a collapse sequence to some one-vertex
+complex. -/
+theorem collapsible_iff {K : _root_.PreAbstractSimplicialComplex ι} :
+    Collapsible K ↔ ∃ v : ι, CollapsesTo K (point v) :=
+  (Iff.rfl)
+
 namespace Collapsible
 
 variable {K L : _root_.PreAbstractSimplicialComplex ι}

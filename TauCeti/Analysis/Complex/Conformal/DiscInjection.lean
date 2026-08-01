@@ -1,13 +1,13 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import TauCeti.Analysis.Complex.BranchLogRoot
+import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Complex.Conformal.Moebius
-import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Convex.Contractible
 
 /-!
@@ -70,15 +70,14 @@ namespace TauCeti
 
 open Complex Set Metric
 
-/-- **A simply connected proper domain injects into the unit disc.** The Riemann mapping theorem's
-competing family — injective holomorphic maps `U → 𝔻` — is nonempty. -/
-theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSimplyConnected U)
-    (hUo : IsOpen U) (hUne : U ≠ univ) :
-    ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) := by
-  obtain ⟨a, ha⟩ : ∃ a, a ∉ U := by
-    by_contra hcon
-    exact hUne (eq_univ_of_forall (by simpa using hcon))
-  -- `z - a` is nonvanishing on `U`, so it has a holomorphic square root there.
+/-- **A holomorphic square root of `z - a`.** On a simply connected open `U` avoiding `a` the
+function `z - a` is nonvanishing, so it has a holomorphic square root. Squaring such a root
+recovers `z - a`, which pins down `z` because `a` is fixed, so `z ↦ h z ^ 2` is injective on `U`;
+and `h` is nonvanishing, because its square is. -/
+private lemma exists_sq_eq_sub_injOn_ne_zero {U : Set ℂ} (hUc : IsSimplyConnected U)
+    (hUo : IsOpen U) {a : ℂ} (ha : a ∉ U) :
+    ∃ h : ℂ → ℂ, DifferentiableOn ℂ h U ∧ (∀ z ∈ U, h z ^ 2 = z - a) ∧
+      InjOn (fun z => h z ^ 2) U ∧ ∀ z ∈ U, h z ≠ 0 := by
   have hsub : DifferentiableOn ℂ (fun z : ℂ => z - a) U :=
     (differentiable_id.sub_const a).differentiableOn
   have hzero : (0 : ℂ) ∉ (fun z : ℂ => z - a) '' U := by
@@ -88,58 +87,52 @@ theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSim
   obtain ⟨h, hhd, hheq⟩ :=
     exists_differentiableOn_pow_eq hUc hUo hsub hzero (n := 2) two_ne_zero
   have hsq : ∀ z ∈ U, h z ^ 2 = z - a := fun z hz => hheq hz
-  -- `h` never vanishes on `U`, since its square is `z - a ≠ 0`.
-  have hne : ∀ z ∈ U, h z ≠ 0 := by
-    intro z hz hz0
-    have hza : z - a = 0 := by rw [← hsq z hz, hz0]; ring
-    exact ha (by rwa [sub_eq_zero.mp hza] at hz)
-  -- Squaring makes `h` injective.
-  have hinj : InjOn h U := by
-    intro z₁ hz₁ z₂ hz₂ hEq
-    have hdiff : z₁ - a = z₂ - a := by rw [← hsq z₁ hz₁, ← hsq z₂ hz₂, hEq]
+  refine ⟨h, hhd, hsq, fun z₁ hz₁ z₂ hz₂ hEq => ?_, fun z hz hz0 => ?_⟩
+  · have hdiff : z₁ - a = z₂ - a := by rw [← hsq z₁ hz₁, ← hsq z₂ hz₂]; exact hEq
     linear_combination hdiff
-  -- `h '' U` is open: `h` is injective, hence nonconstant, on the connected `U`.
-  have hconn : IsPreconnected U := hUc.isPathConnected.isConnected.isPreconnected
-  have hanal : AnalyticOnNhd ℂ h U := hhd.analyticOnNhd hUo
+  · have hza : z - a = 0 := by rw [← hsq z hz, hz0]; ring
+    exact ha (by rwa [sub_eq_zero.mp hza] at hz)
+
+/-- **A square-injective function avoids its own negation, quantitatively.** If squaring `h` is
+injective on `U` and `h` is nonvanishing there, and a ball of radius `r` about `w₀` lies inside
+`h '' U`, then `-h z` stays outside that ball for every `z ∈ U`: otherwise `-h z = h z'` for some
+`z' ∈ U`, and equal squares force `z' = z`, hence `h z = 0`. -/
+private lemma le_norm_add_of_ball_subset_image {U : Set ℂ} {h : ℂ → ℂ} {w₀ : ℂ} {r : ℝ}
+    (hsq_inj : Set.InjOn (fun z => h z ^ 2) U) (hne : ∀ z ∈ U, h z ≠ 0)
+    (hball : ball w₀ r ⊆ h '' U) :
+    ∀ z ∈ U, r ≤ ‖h z + w₀‖ := by
+  intro z hz
+  by_contra hcon
+  have hmem : -h z ∈ ball w₀ r := by
+    rw [mem_ball, dist_eq_norm]
+    have hrw : -h z - w₀ = -(h z + w₀) := by ring
+    rw [hrw, norm_neg]
+    exact lt_of_not_ge hcon
+  obtain ⟨z', hz', hz'eq⟩ := hball hmem
+  have hzz : z' = z := hsq_inj hz' hz (by simp only; rw [hz'eq]; ring)
+  rw [hzz] at hz'eq
+  exact hne z hz (by linear_combination hz'eq / 2)
+
+/-- **A simply connected proper domain injects into the unit disc.** The Riemann mapping theorem's
+competing family — injective holomorphic maps `U → 𝔻` — is nonempty. -/
+theorem exists_differentiableOn_injOn_mapsTo_unitBall {U : Set ℂ} (hUc : IsSimplyConnected U)
+    (hUo : IsOpen U) (hUne : U ≠ univ) :
+    ∃ f : ℂ → ℂ, DifferentiableOn ℂ f U ∧ InjOn f U ∧ MapsTo f U (ball (0 : ℂ) 1) := by
+  obtain ⟨a, ha⟩ : ∃ a, a ∉ U := by
+    by_contra hcon
+    exact hUne (eq_univ_of_forall (by simpa using hcon))
+  -- `z - a` is nonvanishing on `U`, so it has a holomorphic square root there, injective and
+  -- itself nonvanishing.
+  obtain ⟨h, hhd, hsq, hsq_inj, hne⟩ := exists_sq_eq_sub_injOn_ne_zero hUc hUo ha
+  have hinj : InjOn h U := fun z₁ hz₁ z₂ hz₂ he => hsq_inj hz₁ hz₂ (by simp only; rw [he])
+  -- `h '' U` is open, `h` being injective and holomorphic on the open `U`.
   obtain ⟨z₀, hz₀⟩ := hUc.nonempty
-  have hopen : IsOpen (h '' U) := by
-    rcases hanal.is_constant_or_isOpen hconn with hconst | hopenmap
-    · exfalso
-      obtain ⟨w, hw⟩ := hconst
-      obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hUo z₀ hz₀
-      have hhalf : (0 : ℝ) < ε / 2 := by linarith
-      have hz₁ : z₀ + ((ε / 2 : ℝ) : ℂ) ∈ U := by
-        refine hball ?_
-        have hnorm : ‖z₀ + ((ε / 2 : ℝ) : ℂ) - z₀‖ = ε / 2 := by
-          have hcancel : z₀ + ((ε / 2 : ℝ) : ℂ) - z₀ = ((ε / 2 : ℝ) : ℂ) := by ring
-          rw [hcancel, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hhalf]
-        rw [mem_ball, dist_eq_norm, hnorm]
-        linarith
-      have heq : z₀ + ((ε / 2 : ℝ) : ℂ) = z₀ :=
-        hinj hz₁ hz₀ (by rw [hw _ hz₁, hw _ hz₀])
-      have : ((ε / 2 : ℝ) : ℂ) = 0 := by linear_combination heq
-      exact absurd (by exact_mod_cast this) (ne_of_gt hhalf)
-    · exact hopenmap U (subset_refl U) hUo
+  have hopen : IsOpen (h '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hhd hinj
   -- The image contains a ball around `h z₀`, and `-h` avoids it.
   obtain ⟨r, hr, hball⟩ := Metric.isOpen_iff.mp hopen (h z₀) ⟨z₀, hz₀, rfl⟩
   set w₀ : ℂ := h z₀ with hw₀
-  have havoid : ∀ z ∈ U, r ≤ ‖h z + w₀‖ := by
-    intro z hz
-    by_contra hcon
-    have hlt : ‖h z + w₀‖ < r := lt_of_not_ge hcon
-    have hmem : -h z ∈ ball w₀ r := by
-      rw [mem_ball, dist_eq_norm]
-      have hrw : -h z - w₀ = -(h z + w₀) := by ring
-      rw [hrw, norm_neg]
-      exact hlt
-    obtain ⟨z', hz', hz'eq⟩ := hball hmem
-    -- Squaring `h z' = -h z` gives `z' = z`, forcing `h z = 0`.
-    have hsq' : z' - a = z - a := by
-      rw [← hsq z' hz', ← hsq z hz, hz'eq]
-      ring
-    have hzz : z' = z := by linear_combination hsq'
-    rw [hzz] at hz'eq
-    exact hne z hz (by linear_combination hz'eq / 2)
+  have havoid : ∀ z ∈ U, r ≤ ‖h z + w₀‖ :=
+    le_norm_add_of_ball_subset_image hsq_inj hne hball
   -- Every denominator is nonzero, `r` being positive.
   have hden : ∀ z ∈ U, h z + w₀ ≠ 0 := by
     intro z hz hzero'

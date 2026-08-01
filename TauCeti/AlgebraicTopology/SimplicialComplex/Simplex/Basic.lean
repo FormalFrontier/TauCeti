@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
+public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
 # Abstract simplices and their boundaries
@@ -75,6 +76,16 @@ theorem self_notMem_simplexBoundary : V ∉ simplexBoundary V := by
 theorem singleton_mem_simplex {v : ι} : {v} ∈ simplex V ↔ v ∈ V := by
   simp
 
+/-- An abstract simplex has finitely many faces: they are subsets of the spanning set. -/
+theorem finite_faces_simplex (V : Finset ι) : (simplex V).faces.Finite :=
+  V.powerset.finite_toSet.subset fun _ hσ => Finset.mem_powerset.mpr (mem_simplex.mp hσ).2
+
+/-- An abstract simplex is a cone with apex any of its vertices. -/
+theorem isCone_simplex [DecidableEq ι] {v : ι} (hv : v ∈ V) : IsCone (simplex V) v where
+  apex_mem := mem_simplex.mpr ⟨Finset.singleton_nonempty v, Finset.singleton_subset_iff.mpr hv⟩
+  insert_mem σ hσ :=
+    mem_simplex.mpr ⟨Finset.insert_nonempty v σ, Finset.insert_subset hv (mem_simplex.mp hσ).2⟩
+
 /-- A singleton is a boundary face exactly when its vertex belongs to a spanning set containing
 at least one other vertex. -/
 theorem singleton_mem_simplexBoundary {v : ι} :
@@ -122,6 +133,37 @@ theorem simplexBoundary_singleton (v : ι) : simplexBoundary {v} = ⊥ := by
   · intro hσ
     exact hσ.1.ne_empty (Finset.ssubset_singleton_iff.mp hσ.2)
   · exact False.elim
+
+/-- The simplex on all vertices is the top pre-abstract simplicial complex. -/
+@[simp]
+theorem simplex_univ [Fintype ι] : simplex (Finset.univ : Finset ι) = ⊤ := by
+  apply le_antisymm
+  · exact fun _ hσ => hσ.1
+  · exact fun _ hσ => ⟨hσ, Finset.subset_univ _⟩
+
+/-- The boundary of the standard one-simplex consists of its two vertices. Equivalently, it is
+the underlying precomplex of the bottom abstract simplicial complex on `Fin 2`. -/
+@[simp]
+theorem simplexBoundary_univ_fin_two :
+    simplexBoundary (Finset.univ : Finset (Fin 2)) =
+      (⊥ : AbstractSimplicialComplex (Fin 2)).toPreAbstractSimplicialComplex := by
+  ext σ
+  constructor
+  · rintro ⟨hσ, hproper⟩
+    have hcard : σ.card = 1 := by
+      have hpos : 0 < σ.card := Finset.card_pos.mpr hσ
+      have hlt : σ.card < (Finset.univ : Finset (Fin 2)).card :=
+        Finset.card_lt_card hproper
+      simp only [Finset.card_fin] at hlt
+      omega
+    have hsingleton : ∃ v, σ = {v} := Finset.card_eq_one.mp hcard
+    exact hsingleton
+  · rintro ⟨v, rfl⟩
+    refine ⟨Finset.singleton_nonempty v, Finset.ssubset_iff_subset_ne.mpr
+      ⟨Finset.subset_univ _, ?_⟩⟩
+    intro h
+    have := congrArg Finset.card h
+    simp at this
 
 /-- The simplex on `V` is contained in a complex exactly when `V` is a face of the complex
 whenever `V` is nonempty.  For `V = ∅` the simplex is `⊥`, so it is contained in every complex. -/

@@ -1,33 +1,27 @@
 #!/usr/bin/env python3
-"""Assign each PR the roadmap it advances, as a `roadmap/<Area>` label.
+"""Assign each PR's declared roadmap association as a `roadmap/<Area>` label.
 
-The label is derived, not asked for: a submitter already has to name the roadmap
-their new mathematics advances (the scope rubric in TauCetiReview requires it),
-so we read that citation back out of the PR body rather than burden them with a
-second, structured field.
+Every PR should carry one standalone ``Roadmap: <Area>`` or ``Roadmap: none``
+line. This is attribution, not scope authorization: new mathematics must still
+cite the exact roadmap target that it advances, while a refactor may associate
+itself with the roadmap that chiefly motivates the cleanup.
 
 ## The classifier (see `classify`)
 
 A PR gets exactly one label, decided in this order:
 
 1. `roadmap/none` -- the diff touches an infrastructure path (anything outside
-   `TauCeti/`, the root `TauCeti.lean`, and the two ordinary Lake pins). This also
-   covers the review bot's narrowly validated first-known-bad lakefile exception:
-   either way it is infrastructure, not roadmap work.
-2. `roadmap/<Area>` -- the body cites exactly one canonical roadmap, e.g.
-   `TauCetiRoadmap/OneParameterSemigroups/README.md` or `ContourIntegration/README.md`.
-   `<Area>` is the roadmap directory name, the same source of truth
-   `check_roadmap_areas.py` uses in the roadmap repo.
-3. `roadmap/none` -- no single citation, but the title is a refactor/fix/chore/...
-   (or a Mathlib bump). Reworking already-merged material needs no roadmap claim,
-   so absence of a citation is correct here, not a defect.
-4. `roadmap/Unknown` -- a new-mathematics PR (a `feat:` touching only `TauCeti/`)
-   that cites no parseable roadmap file. The live workflow leaves a one-time nudge
-   asking the author to cite the roadmap file, exactly as the scope rubric wants.
+   `TauCeti/`, the root `TauCeti.lean`, and the two ordinary Lake pins).
+2. `roadmap/none` -- the diff is a pin-only dependency bump.
+3. The one valid explicit ``Roadmap:`` declaration.
+4. One validated canonical ``focus`` in a ``tauceti-target:v1`` marker.
+5. One canonical roadmap-file citation, for compatibility with older PR bodies.
+6. `roadmap/Unknown` -- attribution is absent, invalid, or conflicting.
 
-The area set is read at runtime from a checkout of the roadmap repo, so a roadmap
-added there becomes labelable with no change here; the label itself is created on
-first use (`ensure_label`).
+Evidence from steps 3--5 must agree. Area names are read at runtime from active
+and completed roadmaps, and labels are created on first use (`ensure_label`).
+File paths and conventional-commit titles are deliberately not used as roadmap
+evidence.
 
 ## Usage
 
@@ -36,8 +30,11 @@ first use (`ensure_label`).
     # ... and apply it (create the label if missing, drop any stale roadmap/* label),
     # leaving a nudge if it lands in roadmap/Unknown:
     roadmap_label.py --pr 781 --repo ... --roadmap-dir roadmap --apply --nudge
-    # backfill every PR (never nudges):
-    roadmap_label.py --backfill --repo ... --roadmap-dir roadmap --apply
+    # inspect every PR (never nudges):
+    roadmap_label.py --backfill --repo ... --roadmap-dir roadmap
+    # changing an existing roadmap label is deliberately opt-in:
+    roadmap_label.py --backfill --repo ... --roadmap-dir roadmap \
+        --apply --allow-relabel
 
 `--apply`/`--nudge` shell out to `gh`, which must be authenticated (GH_TOKEN).
 `classify` and the parsing helpers are pure and are what the tests exercise.
@@ -72,17 +69,10 @@ UNKNOWN_COLOR = "fbca04"   # yellow: needs a citation
 
 # A PR whose files all match this is one an AI author may land without a human
 # override: `TauCeti/`, the root aggregator, and the two bump-guarded Lake pins.
-# The build workflow has one author-aware extension to this set: a PR opened by the
-# trusted review bot may pin Mathlib's lakefile rev to an exactly validated SHA. It
-# remains an infrastructure PR and therefore still belongs under roadmap/none here.
 _ALLOWED_PATH = re.compile(r"^(?:TauCeti/|TauCeti\.lean$|lake-manifest\.json$|lean-toolchain$)")
 
-# Titles that, by convention, rework existing material rather than add new
-# mathematics; per the scope rubric these need no roadmap claim.
-_NONROADMAP_TITLE = re.compile(
-    r"^(?:refactor|fix|chore|style|test|perf|docs?|ci|build|revert|harden)(?:[(!:/]| )",
-    re.IGNORECASE,
-)
+_PINS = {"lake-manifest.json", "lean-toolchain"}
+_TARGET_MARKER = re.compile(r"<!--tauceti-target:v1 (\{[^}]*\})-->")
 
 
 def is_infra(files: list[str]) -> bool:
@@ -94,6 +84,68 @@ def is_infra(files: list[str]) -> bool:
     if not files:
         return True
     return any(not _ALLOWED_PATH.match(f) for f in files)
+
+
+def is_pin_only(files: list[str]) -> bool:
+    """True exactly when a nonempty diff changes only the two validated pins."""
+    return bool(files) and set(files) <= _PINS
+
+
+def _body_lines_outside_quotes_and_fences(body: str):
+    """Yield body lines that are not inside Markdown fences or blockquotes."""
+    fence = None
+    for line in (body or "").splitlines():
+        stripped = line.lstrip()
+        marker = stripped[:3]
+        if marker in {"```", "~~~"}:
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+            continue
+        if fence is None and not stripped.startswith(">"):
+            yield line
+
+
+def parse_declared_area(body: str, areas: set[str]) -> tuple[bool, str | None]:
+    """Return ``(present, value)`` for standalone ``Roadmap:`` lines.
+
+    ``value`` is an area name or ``none`` when every declaration is valid and
+    identical. It is ``None`` for invalid or conflicting declarations. Examples
+    in fenced code and blockquotes are ignored.
+    """
+    present = False
+    values = set()
+    invalid = False
+    for line in _body_lines_outside_quotes_and_fences(body):
+        if not re.match(r"^Roadmap\s*:", line):
+            continue
+        present = True
+        match = re.fullmatch(r"Roadmap:\s*(\S+)\s*", line)
+        if match is None:
+            invalid = True
+            continue
+        value = match.group(1)
+        if value != "none" and value not in areas:
+            invalid = True
+        else:
+            values.add(value)
+    if invalid or len(values) != 1:
+        return present, None
+    return present, next(iter(values))
+
+
+def parse_target_areas(body: str, areas: set[str]) -> set[str]:
+    """Canonical roadmap focuses from valid ``tauceti-target:v1`` markers."""
+    found = set()
+    for match in _TARGET_MARKER.finditer(body or ""):
+        try:
+            focus = json.loads(match.group(1)).get("focus")
+        except (json.JSONDecodeError, AttributeError):
+            continue
+        if focus in areas:
+            found.add(focus)
+    return found
 
 
 def parse_cited_areas(body: str, areas: set[str]) -> set[str]:
@@ -120,27 +172,51 @@ def classify(title: str, body: str, files: list[str], areas: set[str]) -> str:
     """Return the single roadmap label for a PR. Pure; see module docstring."""
     if is_infra(files):
         return NONE_LABEL
-    cited = parse_cited_areas(body, areas)
-    if len(cited) == 1:
-        return area_label(next(iter(cited)))
-    # Zero citations, or several (no single roadmap to name): fall through.
-    if _NONROADMAP_TITLE.match(title or ""):
+    if is_pin_only(files):
         return NONE_LABEL
-    return UNKNOWN_LABEL
+
+    declared_present, declared = parse_declared_area(body, areas)
+    if declared_present and declared is None:
+        return UNKNOWN_LABEL
+
+    targets = parse_target_areas(body, areas)
+    cited = parse_cited_areas(body, areas)
+    indirect = targets | cited
+
+    if declared is not None:
+        if declared == "none":
+            return NONE_LABEL if not indirect else UNKNOWN_LABEL
+        return area_label(declared) if indirect <= {declared} else UNKNOWN_LABEL
+
+    return area_label(next(iter(indirect))) if len(indirect) == 1 else UNKNOWN_LABEL
 
 
 # --- roadmap area discovery ------------------------------------------------
 
 
 def canonical_areas(roadmap_dir: pathlib.Path) -> set[str]:
-    """Roadmap directory names (those containing a README.md) under a checkout.
+    """Active and completed roadmap directory names under a checkout.
 
-    Accepts either the roadmap repo root (areas live under its inner
-    `TauCetiRoadmap/` package dir) or the package dir itself.
+    At the repository root, active areas live under the inner
+    `TauCetiRoadmap/` package and archived areas live under the sibling
+    `Completed/` directory. Accepting the package directory itself remains
+    useful for local one-area tests and older callers.
     """
     inner = roadmap_dir / "TauCetiRoadmap"
-    base = inner if inner.is_dir() else roadmap_dir
-    return {p.name for p in base.iterdir() if p.is_dir() and (p / "README.md").is_file()}
+    if not inner.is_dir():
+        return {
+            p.name for p in roadmap_dir.iterdir()
+            if p.is_dir() and (p / "README.md").is_file()
+        }
+
+    bases = [inner]
+    completed = roadmap_dir / "Completed"
+    if completed.is_dir():
+        bases.append(completed)
+    return {
+        p.name for base in bases for p in base.iterdir()
+        if p.is_dir() and (p / "README.md").is_file()
+    }
 
 
 # --- gh plumbing (only reached in --apply/--nudge/--pr/--backfill IO paths) --
@@ -176,23 +252,25 @@ def ensure_label(repo: str, name: str, color: str, desc: str) -> None:
 
 def _label_meta(name: str, areas: set[str]) -> tuple[str, str]:
     if name == NONE_LABEL:
-        return NONE_COLOR, "PR advances no roadmap (infra, refactor, or a Mathlib bump)"
+        return NONE_COLOR, "No roadmap association (declared, infrastructure, or pin-only bump)"
     if name == UNKNOWN_LABEL:
-        return UNKNOWN_COLOR, "New mathematics PR with no parseable roadmap citation"
-    return AREA_COLOR, "PR advances the {} roadmap".format(name[len("roadmap/"):])
+        return UNKNOWN_COLOR, "Missing, invalid, or conflicting roadmap association"
+    return AREA_COLOR, "PR declares the {} roadmap as its primary association".format(
+        name[len("roadmap/"):])
 
 
 NUDGE_MARKER = "<!--roadmap-label:nudge-->"
 NUDGE_BODY = (
     NUDGE_MARKER + "\n"
-    "This PR adds new mathematics but I could not find the roadmap it advances "
-    "in its description, so I have labelled it `roadmap/Unknown`.\n\n"
-    "Per the [scope rubric](https://github.com/TauCetiProject/TauCetiReview/blob/main/rubrics/scope.md), "
-    "new material should identify the roadmap file and node it advances. Please add "
-    "a reference to the roadmap file, for example "
-    "`TauCetiRoadmap/OneParameterSemigroups/README.md`, and the label will update "
-    "automatically. If this PR only reworks already-merged material, no roadmap is "
-    "needed and you can ignore this."
+    "I could not determine this PR's roadmap association, so I labelled it "
+    "`roadmap/Unknown`. Please add one standalone line to the description:\n\n"
+    "```text\nRoadmap: CanonicalAreaName\n```\n\n"
+    "Use `Roadmap: none` for genuinely general, cross-cutting, infrastructure, "
+    "or dependency work. Refactors need no fresh roadmap authorization, but should "
+    "name the one roadmap chiefly motivating them. For new mathematics, this "
+    "attribution line does not replace the [scope rubric's]"
+    "(https://github.com/TauCetiProject/TauCetiReview/blob/main/rubrics/scope.md) "
+    "requirement to cite the exact roadmap file and target."
 )
 
 
@@ -242,6 +320,12 @@ def _run_one(args, areas) -> int:
     title, body, files = _pr_fields(args.repo, args.pr)
     label = classify(title, body, files, areas)
     print(f"#{args.pr}\t{label}\t{title}")
+    declared_present, declared = parse_declared_area(body, areas)
+    if (is_infra(files) or is_pin_only(files)) and declared_present and declared not in {None, "none"}:
+        reason = "infrastructure/empty diff" if is_infra(files) else "pin-only bump"
+        print(
+            f"::notice::Roadmap: {declared} is overridden by the {reason} classification"
+        )
     if args.apply:
         apply_label(args.repo, args.pr, label, areas)
         if args.nudge and label == UNKNOWN_LABEL:
@@ -252,7 +336,8 @@ def _run_one(args, areas) -> int:
 def _run_backfill(args, areas) -> int:
     prs = json.loads(_gh([
         "pr", "list", "--repo", args.repo, "--state", "all",
-        "--limit", str(args.limit), "--json", "number,title,body,files,state",
+        "--limit", str(args.limit),
+        "--json", "number,title,body,files,state,labels",
     ]))
     from collections import Counter
     tally: Counter[str] = Counter()
@@ -261,21 +346,34 @@ def _run_backfill(args, areas) -> int:
         files = [f["path"] for f in p.get("files") or []]
         label = classify(p.get("title") or "", p.get("body") or "", files, areas)
         tally[label] += 1
-        plan.append((p["number"], label))
+        current = {
+            item["name"] for item in p.get("labels") or []
+            if item["name"].startswith("roadmap/")
+        }
+        plan.append((p["number"], label, current))
         print(f"#{p['number']}\t{p['state']}\t{label}\t{p.get('title','')}")
 
     failed: list[int] = []
     if args.apply:
         # A per-PR failure must not abandon the rest of the backfill; collect and
         # retry once at the end (transient API errors are already retried in _gh).
-        for num, label in plan:
+        for num, label, current in plan:
+            if current == {label}:
+                continue
+            if current and current != {label} and not args.allow_relabel:
+                print(
+                    f"  - #{num}: preserving {', '.join(sorted(current))}; "
+                    "pass --allow-relabel to change it",
+                    file=sys.stderr,
+                )
+                continue
             try:
                 apply_label(args.repo, num, label, areas)  # never nudges
             except Exception as e:  # noqa: BLE001 -- keep going, report at the end
                 print(f"  ! #{num}: {e}", file=sys.stderr)
                 failed.append(num)
         for num in list(failed):
-            label = dict(plan)[num]
+            label = next(label for plan_num, label, _ in plan if plan_num == num)
             try:
                 apply_label(args.repo, num, label, areas)
                 failed.remove(num)
@@ -300,6 +398,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--backfill", action="store_true", help="classify every PR")
     ap.add_argument("--limit", type=int, default=5000, help="max PRs for --backfill")
     ap.add_argument("--apply", action="store_true", help="write the label to the PR(s)")
+    ap.add_argument(
+        "--allow-relabel", action="store_true",
+        help="with --backfill --apply, permit changing an existing roadmap/* label",
+    )
     ap.add_argument("--nudge", action="store_true",
                     help="with --pr --apply: comment once when the label is roadmap/Unknown")
     a = ap.parse_args(argv)

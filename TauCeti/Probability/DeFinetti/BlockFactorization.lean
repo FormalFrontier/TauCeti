@@ -9,9 +9,10 @@ public import TauCeti.Probability.Exchangeability.Cylinder
 public import TauCeti.Probability.Exchangeability.Contractability
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
+public import TauCeti.Probability.DeFinetti.DirectingMeasure.Integral
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
--- Non-public: used only inside proofs — the merged tail factorization
+-- Non-public: used only inside proofs — the tail factorization
 -- `condExp_blockIndicatorProd_tailProcess_ae_eq_prod`, the path-law transfer and contractability
 -- bridges, and `Tuple.sort` (the injective-selection reduction).
 import TauCeti.Probability.DeFinetti.TailFactorization
@@ -34,25 +35,31 @@ directing measure on the coordinate sets:
 This chains Mathlib's `iCondIndepFun_iff_condExp_inter_preimage_eq_mul` (conditional independence ⟺
 product of indicator conditional expectations) with
 `Contractable.directingMeasure_ae_eq_condExp_coord` (each coordinate's conditional law is the
-directing measure). The merged tail factorization
+directing measure). The tail factorization
 `condExp_blockIndicatorProd_tailProcess_ae_eq_prod` (from `TailFactorization`) then discharges the
 finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly what
 `mixedIIDWith_of_forall_rectangles` consumes — so the whole chain assembles here.
 
 ## Main results
 
+* `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
+  at the directing measure, the base case rectangle identities over a contractable process reduce
+  to.
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
   is mixed i.i.d., with `directingProbabilityMeasure μ X` (the tail conditional law) as the
   witness. That witness is the canonical *directing measure*, not merely a mixing representative;
-  what this file proves about it is the mixture identity, and the sharper conditional statement
-  awaits the `ConditionallyIID` predicate.
+  what this file proves about that witness is the mixture identity. The sharp *existential*
+  theorem on an arbitrary sample space is `conditionallyIID_of_contractable`; on path space,
+  `conditionallyIIDWith_of_contractable_pathSpace` exposes its canonical tail-law witness
+  explicitly.
 * `mixedIID_of_contractable` — the existential form, for a contractable process on an
   arbitrary measurable sample space (state space still standard Borel).
 * `mixedIID_of_exchangeable` — the exchangeable form (via `contractable_of_exchangeable`).
 
 The `..._of_iCondIndepFun_tailProcess` theorems expose the intermediate reduction (de Finetti given
 tail conditional independence of the coordinates). All of the rectangle-mixture staging lemmas and
-the standard-Borel-`Ω` existential are `private` (proof staging).
+the standard-Borel-`Ω` existential are `private` (proof staging); the integrability and real/`ℝ≥0∞`
+conversion facts this file runs on are `DirectingMeasure/Integral.lean`.
 
 The reverse-martingale ("third") proof follows Kallenberg, *Probabilistic Symmetries and Invariance
 Principles*, Theorem 1.1 (pp. 26–28). Adapted from `cameronfreer/exchangeability`
@@ -126,18 +133,7 @@ private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
   haveI : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
   set g : Ω → ℝ := fun ω => ∏ i, (directingMeasure μ X ω).real (C i) with hg
-  have hg_meas : Measurable g :=
-    Finset.measurable_prod _ fun i _ =>
-      (measurable_directingMeasure_coe hTail (hC i)).ennreal_toReal
-  have hg_bound : ∀ ω, ‖g ω‖ ≤ 1 := fun ω => by
-    have hval : g ω = ∏ i, ((directingMeasure μ X ω) (C i)).toReal := by
-      simp only [hg, measureReal_def]
-    rw [hval, Real.norm_of_nonneg (Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-    refine Finset.prod_le_one (fun i _ => ENNReal.toReal_nonneg) fun i _ => ?_
-    exact ENNReal.toReal_le_of_le_ofReal zero_le_one
-      (by rw [ENNReal.ofReal_one]; exact (measure_mono (Set.subset_univ _)).trans_eq measure_univ)
-  have hg_int : Integrable g μ :=
-    (integrable_const (1 : ℝ)).mono' hg_meas.aestronglyMeasurable (ae_of_all _ hg_bound)
+  have hg_int : Integrable g μ := integrable_prod_directingMeasure_real hTail hC
   have hbl : (blockLaw μ X k (Set.univ.pi C)).toReal = ∫ ω, g ω ∂μ := by
     rw [← integral_blockIndicatorProd (fun i => (hX_meas (k i)).aemeasurable) hC,
       ← integral_condExp hTail]
@@ -145,13 +141,8 @@ private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
   have hbl_ne : blockLaw μ X k (Set.univ.pi C) ≠ ⊤ := by
     rw [blockLaw_blockCylinder X (fun i => (hX_meas (k i)).aemeasurable) hC]
     exact measure_ne_top μ _
-  rw [← ENNReal.ofReal_toReal hbl_ne, hbl,
-    ofReal_integral_eq_lintegral_ofReal hg_int (ae_of_all _ fun ω =>
-      Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-  refine lintegral_congr fun ω => ?_
-  simp only [hg, measureReal_def]
-  rw [ENNReal.ofReal_prod_of_nonneg fun i _ => ENNReal.toReal_nonneg]
-  exact Finset.prod_congr rfl fun i _ => ENNReal.ofReal_toReal (measure_ne_top _ _)
+  rw [← ENNReal.ofReal_toReal hbl_ne, hbl, hg,
+    ofReal_integral_eq_lintegral_prod_directingMeasure hg_int]
 
 /-- **Block law of a rectangle as a directing-measure mixture** (given tail conditional
 independence). The block law of the rectangle `∏ᵢ C i` is the `μ`-average of the directing-measure
@@ -199,10 +190,15 @@ theorem mixedIID_of_iCondIndepFun_tailProcess
   MixedIID.of_mixingRepresentative
     (mixedIIDWith_of_iCondIndepFun_tailProcess hX hX_meas hCI)
 
-/-- For a contractable process, the conditional expectation of the length-`r` prefix indicator
-product given the tail σ-algebra `tailProcess X` is a.e. the product of directing-measure
-evaluations `∏ i, (directingMeasure μ X ω).real (C i)` on the coordinate sets. -/
-private theorem condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure
+/-- **Prefix block factorization at the directing measure.** For a contractable process, the
+conditional expectation of the length-`r` prefix indicator product given the tail σ-algebra
+`tailProcess X` is a.e. the product of directing-measure evaluations
+`∏ i, (directingMeasure μ X ω).real (C i)` on the coordinate sets.
+
+This is the base case for rectangle identities over a contractable process: a finite block of
+coordinates is replaced by the directing measure under the tail σ-algebra, and identities for
+arbitrary selections reduce to it. -/
+theorem condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure
     [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     {r : ℕ} {C : Fin r → Set α} (hC : ∀ i, MeasurableSet (C i)) :
@@ -292,21 +288,17 @@ private theorem mixedIID_of_contractable_standardBorelOmega
 
 /-- **de Finetti's theorem, mixture form: contractable ⇒ mixed i.i.d.** A contractable process
 valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. This is
-the roadmap's `mixedIID_of_contractable`; the sharp summit `conditionallyIID_of_contractable`
-awaits the conditional predicate. -/
+the roadmap's `mixedIID_of_contractable`; the sharp summit `conditionallyIID_of_contractable`,
+which concludes the joint-law disintegration rather than only the mixture identity, is in
+`TauCeti.Probability.DeFinetti.Theorem`. -/
 theorem mixedIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     MixedIID μ X := by
   refine mixedIID_of_mixedIID_pathLaw hX_meas ?_
   haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
-  have hcontract : Contractable (pathLaw μ X) (fun n p => p n) := by
-    rw [contractable_iff_contractableLaw_pathLaw fun i => (measurable_pi_apply i).aemeasurable]
-    have hpl : pathLaw (pathLaw μ X) (fun n p => p n) = pathLaw μ X := by
-      rw [pathLaw_def]; exact Measure.map_id
-    rw [hpl]
-    exact hX.contractableLaw_pathLaw fun i => (hX_meas i).aemeasurable
-  exact mixedIID_of_contractable_standardBorelOmega hcontract measurable_pi_apply
+  exact mixedIID_of_contractable_standardBorelOmega
+    (hX.coordinate_pathLaw fun i => (hX_meas i).aemeasurable) measurable_pi_apply
 
 /-- **de Finetti's theorem, mixture form: exchangeable ⇒ mixed i.i.d.** An exchangeable process
 valued in a standard Borel space, on an arbitrary measurable sample space, is mixed i.i.d. -/

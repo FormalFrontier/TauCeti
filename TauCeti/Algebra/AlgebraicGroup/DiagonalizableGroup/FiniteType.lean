@@ -7,6 +7,7 @@ module
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
 # Finite-type diagonalizable groups
@@ -21,13 +22,15 @@ On affine schemes the variance reverses once more under `Spec`, so this covarian
 ring functor is the algebraic side of the contravariant assignment `G ↦ D(G)`. Its morphism
 part is `MonoidAlgebra.mapDomainBialgHom`; the `DiagonalizableGroup.Functoriality` module
 separately shows that the resulting map of represented groups acts by precomposition on
-characters.
+characters. When the base ring has connected prime spectrum, every coordinate Hopf-algebra
+morphism arises uniquely from a character-group homomorphism, so the coordinate-ring functor
+is fully faithful.
 
 This advances the reductive-groups roadmap Layer 4 target constructing the anti-equivalence
 between finitely generated abelian groups and diagonalizable groups. It supplies the
-finite-type source and coordinate-algebra functor needed before essential surjectivity and
-full faithfulness can be formulated; it does not construct the scheme-side functor or depend
-on the general Hopf-algebra/affine-group-scheme anti-equivalence.
+finite-type source and the coordinate-algebra functor, which is full and faithful over a base
+with connected prime spectrum. It does not prove essential surjectivity, construct the
+scheme-side functor, or depend on the general Hopf-algebra/affine-group-scheme anti-equivalence.
 
 ## Main declarations
 
@@ -38,6 +41,18 @@ on the general Hopf-algebra/affine-group-scheme anti-equivalence.
   homomorphism.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor`: the group-algebra functor from
   finitely generated commutative groups to finite-type commutative Hopf algebras.
+* `TauCeti.DiagonalizableGroup.coordinateMap_injective`: coordinate maps remember their
+  underlying group homomorphisms over a nontrivial base.
+* `TauCeti.DiagonalizableGroup.coordinateMapPreimage`: recover the character-group homomorphism
+  inducing a coordinate Hopf-algebra morphism over a base with connected prime spectrum.
+* `TauCeti.DiagonalizableGroup.coordinateMapPreimage_apply_eq_iff`: characterize the recovered
+  homomorphism without exposing its choice-based construction.
+* `TauCeti.DiagonalizableGroup.coordinateMap_surjective`: every coordinate Hopf-algebra
+  morphism over a base with connected prime spectrum comes from a character-group homomorphism.
+* `TauCeti.DiagonalizableGroup.coordinateRingFunctor_faithful`: the coordinate-ring
+  functor is faithful over a nontrivial base.
+* `TauCeti.DiagonalizableGroup.coordinateRingFunctor_full`: the coordinate-ring functor is
+  full over a base with connected prime spectrum.
 
 ## References
 
@@ -92,6 +107,88 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
   rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
 
+/-- Recover the character-group homomorphism that induces a morphism between coordinate
+Hopf algebras of finite-type diagonalizable groups over a base with connected prime
+spectrum. -/
+noncomputable def coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
+    (F : coordinateRing R G ⟶ coordinateRing R H) : G ⟶ H :=
+  FGCommGrpCat.ofHom <|
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F)
+
+/-- The recovered character-group homomorphism takes `g` to `h` exactly when the
+coordinate Hopf-algebra morphism takes the corresponding standard basis element to
+the standard basis element indexed by `h`. -/
+theorem coordinateMapPreimage_apply_eq_iff [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} (F : coordinateRing R G ⟶ coordinateRing R H)
+    (g : G) (h : H) :
+    FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g = h ↔
+      FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
+        MonoidAlgebra.single h 1 := by
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_apply_eq_iff R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F) g h
+
+/-- The recovered character-group homomorphism is characterized by the image of each
+standard basis element under the coordinate Hopf-algebra morphism. -/
+@[simp↓]
+theorem coordinateMapPreimage_single [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
+    (F : coordinateRing R G ⟶ coordinateRing R H) (g : G) :
+    FiniteTypeCommHopfAlgCat.toBialgHom F (MonoidAlgebra.single g 1) =
+      MonoidAlgebra.single
+        (FGCommGrpCat.toMonoidHom (coordinateMapPreimage R F) g) 1 := by
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_single R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F) g
+
+/-- Applying the coordinate-map construction to the recovered character-group
+homomorphism gives the original coordinate Hopf-algebra morphism. -/
+@[simp]
+theorem coordinateMap_coordinateMapPreimage [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}}
+    (F : coordinateRing R G ⟶ coordinateRing R H) :
+    coordinateMap R (coordinateMapPreimage R F) = F := by
+  apply FiniteTypeCommHopfAlgCat.hom_ext
+  rw [toBialgHom_coordinateMap]
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHom_mapDomainBialgHomPreimage R
+      (FiniteTypeCommHopfAlgCat.toBialgHom F)
+
+/-- Every morphism between coordinate Hopf algebras of finite-type diagonalizable
+groups over a base with connected prime spectrum is induced by a character-group
+homomorphism. -/
+theorem coordinateMap_surjective [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} :
+    Function.Surjective (coordinateMap R :
+      (G ⟶ H) → (coordinateRing R G ⟶ coordinateRing R H)) := by
+  intro F
+  exact ⟨coordinateMapPreimage R F, coordinateMap_coordinateMapPreimage R F⟩
+
+/-- Over a nontrivial base ring, the coordinate morphism remembers the group homomorphism
+that induced it. -/
+theorem coordinateMap_injective [Nontrivial R] {G H : FGCommGrpCat.{v}} :
+    Function.Injective (coordinateMap R :
+      (G ⟶ H) → (coordinateRing R G ⟶ coordinateRing R H)) := by
+  intro φ ψ h
+  apply FGCommGrpCat.hom_ext
+  apply TauCeti.MonoidAlgebra.mapDomainBialgHom_injective R
+  simpa only [← toBialgHom_coordinateMap] using
+    congrArg FiniteTypeCommHopfAlgCat.toBialgHom h
+
+/-- Recovering a character-group homomorphism from its coordinate map returns the
+original homomorphism. -/
+@[simp]
+theorem coordinateMapPreimage_coordinateMap [ConnectedSpace (PrimeSpectrum R)]
+    {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+    coordinateMapPreimage R (coordinateMap R φ) = φ := by
+  apply FGCommGrpCat.hom_ext
+  simpa only [coordinateMapPreimage, FGCommGrpCat.toMonoidHom_ofHom,
+    toBialgHom_coordinateMap] using
+    TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage_mapDomainBialgHom R
+      (FGCommGrpCat.toMonoidHom φ)
+
 /-- The coordinate-ring construction for finite-type diagonalizable groups.
 
 It is covariant on coordinate Hopf algebras. After applying the contravariant spectrum
@@ -125,6 +222,18 @@ Hopf-algebra morphism. -/
 theorem coordinateRingFunctor_map {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
     (coordinateRingFunctor R).map φ = coordinateMap R φ :=
   rfl
+
+/-- The coordinate-ring functor of finite-type diagonalizable groups is faithful over a
+nontrivial base ring. -/
+noncomputable instance coordinateRingFunctor_faithful [Nontrivial R] :
+    (coordinateRingFunctor R).Faithful where
+  map_injective h := coordinateMap_injective R h
+
+/-- The coordinate-ring functor of finite-type diagonalizable groups is full over a
+base with connected prime spectrum. -/
+noncomputable instance coordinateRingFunctor_full [ConnectedSpace (PrimeSpectrum R)] :
+    (coordinateRingFunctor R).Full where
+  map_surjective := coordinateMap_surjective R
 
 end DiagonalizableGroup
 

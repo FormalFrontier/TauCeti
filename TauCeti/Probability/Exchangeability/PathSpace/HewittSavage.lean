@@ -203,8 +203,7 @@ section ZeroOne
 
 variable {α : Type*} [MeasurableSpace α]
 
-omit [MeasurableSpace α] in
-private theorem symmDiff_inter_subset {t t' s : Set (ℕ → α)} :
+private theorem symmDiff_inter_subset {Ω : Type*} {t t' s : Set Ω} :
     symmDiff (t ∩ t') s ⊆ symmDiff t s ∪ symmDiff t' s := by
   intro x hx
   simp only [Set.mem_union, symmDiff, Set.sup_eq_union, Set.mem_union, Set.mem_sdiff,
@@ -236,8 +235,8 @@ private lemma abs_mul_sub_mul_self_lt {x y q e : ℝ} (hx : |x - q| < e) (hy : |
 
 /-- **Two close sets have a close intersection**, since `(A ∩ B) ∆ s` sits inside the union of
 the two symmetric differences. -/
-private lemma abs_measureReal_inter_sub_lt {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ]
-    {A B s : Set (ℕ → α)} (hA : NullMeasurableSet A ρ) (hB : NullMeasurableSet B ρ)
+private lemma abs_measureReal_inter_sub_lt {Ω : Type*} [MeasurableSpace Ω] {ρ : Measure Ω}
+    [IsFiniteMeasure ρ] {A B s : Set Ω} (hA : NullMeasurableSet A ρ) (hB : NullMeasurableSet B ρ)
     (hs : NullMeasurableSet s ρ)
     {e : ℝ} (h1 : ρ.real (symmDiff A s) < e) (h2 : ρ.real (symmDiff B s) < e) :
     |ρ.real (A ∩ B) - ρ.real s| < 2 * e := by
@@ -256,6 +255,32 @@ private lemma abs_sub_mul_self_lt_of_close {q z e : ℝ} (h1 : |q - z| < e) (h2 
   have hsplit : q - q * q = (q - z) + (z - q * q) := by ring
   calc |q - q * q| ≤ |q - z| + |z - q * q| := by rw [hsplit]; exact abs_add_le _ _
     _ < 2 * e := by linarith
+
+/-- **The approximation squeeze.** Suppose `t` and `t'` each approximate `s` to within `e` in
+symmetric difference, and the measure of their intersection factors as the product of their
+measures. Then `ρ.real s` lies within `4e` of its own square.
+
+Two estimates meet at the factorization: `t ∩ t'` is within `2e` of `s`, while the product
+`ρ.real t * ρ.real t'` is within `2e` of `(ρ.real s)²`. Nothing here concerns exchangeability or
+cylinders — it is the arithmetic half of `measureReal_sq_of_exchangeableSigma`, and holds on any
+probability space. -/
+private lemma abs_measureReal_sub_mul_self_lt_of_symmDiff_lt {Ω : Type*} [MeasurableSpace Ω]
+    {ρ : Measure Ω} [IsProbabilityMeasure ρ] {t t' s : Set Ω}
+    (ht : NullMeasurableSet t ρ) (ht' : NullMeasurableSet t' ρ) (hs : NullMeasurableSet s ρ)
+    {e : ℝ} (h1 : ρ.real (symmDiff t s) < e) (h2 : ρ.real (symmDiff t' s) < e)
+    (hinter : ρ.real (t ∩ t') = ρ.real t * ρ.real t') :
+    |ρ.real s - ρ.real s * ρ.real s| < 4 * e := by
+  have hbt : |ρ.real t - ρ.real s| < e :=
+    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff ht hs) h1
+  have hbt' : |ρ.real t' - ρ.real s| < e :=
+    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff ht' hs) h2
+  have hbi : |ρ.real (t ∩ t') - ρ.real s| < 2 * e :=
+    abs_measureReal_inter_sub_lt ht ht' hs h1 h2
+  have hprodclose : |ρ.real t * ρ.real t' - ρ.real s * ρ.real s| < 2 * e :=
+    abs_mul_sub_mul_self_lt hbt hbt' (by simp) measureReal_nonneg measureReal_nonneg (by simp)
+  have hgap := abs_sub_mul_self_lt_of_close (q := ρ.real s) (z := ρ.real (t ∩ t')) (e := 2 * e)
+    (by rwa [abs_sub_comm]) (hinter ▸ hprodclose)
+  linarith
 
 /-- **The squaring identity.** Under an exchangeable path law in which cylinders over disjoint
 index blocks are independent, an exchangeable event has measure equal to its own square.
@@ -299,25 +324,14 @@ private theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} 
   -- pass to real-valued measures
   have h1 : ρ.real (symmDiff t s) < d / 5 := ENNReal.toReal_lt_of_lt_ofReal hFS
   have h2 : ρ.real (symmDiff t' s) < d / 5 := ENNReal.toReal_lt_of_lt_ofReal (ht'_symm ▸ hFS)
-  have hbt : |ρ.real t - q| < d / 5 :=
-    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff htN hsN) h1
-  have hbt' : |ρ.real t' - q| < d / 5 :=
-    lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff ht'N hsN) h2
   -- independence factors the intersection
   have hinter : ρ.real (t ∩ t') = ρ.real t * ρ.real t' := by
     rw [Measure.real, Measure.real, Measure.real, ht'_cyl, ht,
       hprod (disjoint_map_blockSwap hN) hS (hS.preimage (measurable_pullMoved π F)),
       ENNReal.toReal_mul]
-  -- and the intersection still approximates the event
-  have hbi : |ρ.real (t ∩ t') - q| < 2 * (d / 5) :=
-    abs_measureReal_inter_sub_lt htN ht'N hsN h1 h2
-  -- both factors lie in `[0, 1]`, so the product is close to `q * q`
-  have hprodclose : |ρ.real t * ρ.real t' - q * q| < 2 * (d / 5) :=
-    abs_mul_sub_mul_self_lt hbt hbt' (by simp) measureReal_nonneg measureReal_nonneg
-      (by rw [hq]; simp)
-  have hfinal : |q - q * q| < 2 * (2 * (d / 5)) :=
-    abs_sub_mul_self_lt_of_close (by rwa [abs_sub_comm]) (hinter ▸ hprodclose)
-  rw [← hd] at hfinal
+  -- two copies within `d / 5` of `s` and a factoring intersection force `d < 4 * (d / 5)`
+  have hfinal := abs_measureReal_sub_mul_self_lt_of_symmDiff_lt htN ht'N hsN h1 h2 hinter
+  rw [← hq, ← hd] at hfinal
   linarith
 
 /-- **Zero-one law for exchangeable events**, abstract form: an exchangeable path law in which

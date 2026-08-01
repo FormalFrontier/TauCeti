@@ -88,7 +88,7 @@ lemma finite_measure_cluster_limit
   let S : Set (FiniteMeasure α) := {μ | μ.mass ≤ C ∧ ∀ j, μ (K j)ᶜ ≤ u j}
   have hcompact : IsCompact S := by
     simpa [S] using
-      isCompact_setOf_finiteMeasure_mass_le_compl_isCompact_le
+      isCompact_setOfPred_finiteMeasure_mass_le_compl_isCompact_le
         (E := α) (C := C) (u := u) (K := K) hu_lim hK_comp (Or.inr hKmono)
   -- The finite-measure sequence lies in the compact Prokhorov set.
   have hσ_mem : ∀ n, σf n ∈ S := by
@@ -145,6 +145,9 @@ lemma finite_measure_subseq_limit
   refine ⟨μ₀, φ, hμ₀_fin, hφ, hmass_μ₀, fun g => ?_⟩
   have hweak :=
     (FiniteMeasure.tendsto_iff_forall_integral_tendsto.mp hφ_tendsto) g
-  simpa [σf, μf, Function.comp_def] using hweak
+  -- `hweak` is stated through the `FiniteMeasure` integral coercion; `change` reads it back as
+  -- the plain Bochner integral against the underlying measures, which is the statement wanted.
+  change Tendsto (fun k => ∫ x, g x ∂σ (φ k)) atTop (𝓝 (∫ x, g x ∂μ₀)) at hweak
+  exact hweak
 
 end TauCeti

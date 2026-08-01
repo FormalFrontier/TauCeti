@@ -68,6 +68,21 @@ private lemma le_harnack_factor_mul_of_mul_le {R d a b : ℝ} (hd : 0 ≤ d) (hd
 
 variable {f : ℂ → ℝ} {c w : ℂ} {R : ℝ}
 
+/-- **A pointwise kernel bound on the boundary circle transfers to the circle averages.** If `f`
+is nonnegative on `sphere c |R|` and `g₁ ≤ g₂` there, then multiplying by `f` preserves the
+inequality under `circleAverage`.
+
+The hypotheses are stated on `sphere c |R|`, the circle `circleAverage` integrates over, so no
+sign condition on `R` is needed. -/
+private theorem circleAverage_smul_le_circleAverage_smul_of_le_on_sphere {g₁ g₂ : ℂ → ℝ}
+    (hnonneg : ∀ z ∈ sphere c |R|, 0 ≤ f z)
+    (h₁ : CircleIntegrable (g₁ • f) c R) (h₂ : CircleIntegrable (g₂ • f) c R)
+    (hle : ∀ z ∈ sphere c |R|, g₁ z ≤ g₂ z) :
+    circleAverage (g₁ • f) c R ≤ circleAverage (g₂ • f) c R := by
+  refine circleAverage_mono h₁ h₂ fun z hz => ?_
+  simp only [smul_eq_mul]
+  exact mul_le_mul_of_nonneg_right (hle z hz) (hnonneg z hz)
+
 /-- **The centered Harnack inequality on a planar disk.**
 
 If `f` is harmonic on a neighborhood of the closed disk of radius `R` about `c` and is
@@ -92,6 +107,8 @@ theorem harnack_inequality_center_of_nonneg_on_sphere
     simpa [abs_of_pos hR] using continuousOn_re_herglotzRieszKernel hw
   have hkernelint : CircleIntegrable ((re ∘ herglotzRieszKernel c w) • f) c R :=
     hfint.smul_of_continuousOn hkernelcont
+  have hnonneg' : ∀ z ∈ sphere c |R|, 0 ≤ f z := fun z hz =>
+    hnonneg z (by simpa [abs_of_pos hR] using hz)
   have hmean : circleAverage f c R = f c := by
     apply HarmonicOnNhd.circleAverage_eq
     simpa [abs_of_pos hR] using hf
@@ -103,30 +120,20 @@ theorem harnack_inequality_center_of_nonneg_on_sphere
               rw [circleAverage_smul, hmean]
               simp [smul_eq_mul]
       _ ≤ circleAverage ((re ∘ herglotzRieszKernel c w) • f) c R := by
-        apply circleAverage_mono hfint.const_smul hkernelint
-        intro z hz
-        have hz' : z ∈ sphere c R := by simpa [abs_of_pos hR] using hz
-        simp only [Pi.smul_apply, smul_eq_mul]
-        exact mul_le_mul_of_nonneg_right
-          (by
-            simpa [herglotzRieszKernel_def] using
-              le_re_herglotzRieszKernel hz' hw)
-          (hnonneg z hz')
+        refine circleAverage_smul_le_circleAverage_smul_of_le_on_sphere hnonneg'
+          hfint.const_smul hkernelint fun z hz => ?_
+        simpa [herglotzRieszKernel_def] using
+          le_re_herglotzRieszKernel (by simpa [abs_of_pos hR] using hz) hw
       _ = f w := hf.circleAverage_re_herglotzRieszKernel_smul hw
   · calc
       f w = circleAverage ((re ∘ herglotzRieszKernel c w) • f) c R :=
         (hf.circleAverage_re_herglotzRieszKernel_smul hw).symm
       _ ≤ circleAverage
           (((R + ‖w - c‖) / (R - ‖w - c‖)) • f) c R := by
-        apply circleAverage_mono hkernelint hfint.const_smul
-        intro z hz
-        have hz' : z ∈ sphere c R := by simpa [abs_of_pos hR] using hz
-        simp only [Pi.smul_apply, smul_eq_mul]
-        exact mul_le_mul_of_nonneg_right
-          (by
-            simpa [herglotzRieszKernel_def] using
-              re_herglotzRieszKernel_le hz' hw)
-          (hnonneg z hz')
+        refine circleAverage_smul_le_circleAverage_smul_of_le_on_sphere hnonneg'
+          hkernelint hfint.const_smul fun z hz => ?_
+        simpa [herglotzRieszKernel_def] using
+          re_herglotzRieszKernel_le (by simpa [abs_of_pos hR] using hz) hw
       _ = (R + ‖w - c‖) / (R - ‖w - c‖) * f c := by
         rw [circleAverage_smul, hmean]
         simp [smul_eq_mul]

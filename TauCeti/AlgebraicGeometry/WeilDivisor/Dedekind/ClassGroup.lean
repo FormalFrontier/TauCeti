@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor
+public import TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor.Basic
 
 /-!
 # The divisor class group of a Dedekind domain is its ideal class group
@@ -14,7 +14,7 @@ For a Dedekind domain `R` with fraction field `K`,
 the points of an affine curve and the order of vanishing of a rational function as the order system
 `OrderSystem.ofDedekindDomain R K`; its class group `(OrderSystem.ofDedekindDomain R K).ClassGroup`
 is the free Weil-divisor group on the height-one primes modulo principal divisors.
-`TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor` adds the Cartier side, the
+`TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor.Basic` adds the Cartier side, the
 isomorphism `fractionalIdealDivisorAddEquiv` between invertible fractional ideals and Weil divisors,
 and records that it carries principal fractional ideals to principal divisors. Both files explicitly
 leave the **quotient-level** comparison open. This file supplies it.
@@ -93,7 +93,8 @@ lemma classGroupAddEquiv_divisorClass_fractionalIdealDivisor (I : (FractionalIde
         ((OrderSystem.ofDedekindDomain R K).divisorClass
           (fractionalIdealDivisor R K (Additive.ofMul I)))
       = Additive.ofMul (ClassGroup.mk K I) := by
-  rw [classGroupAddEquiv, AddEquiv.trans_apply, ← fractionalIdealDivisorAddEquiv_apply,
+  erw [classGroupAddEquiv, AddEquiv.trans_apply,
+    ← fractionalIdealDivisorAddEquiv_apply,
     OrderSystem.divisorClass_eq_mk']
   -- `QuotientAddGroup.congr` carries `mk' G' x` to `mk' H' (e x)` definitionally, but Mathlib's
   -- `QuotientGroup.congr_mk'` is not tagged `@[to_additive]`, so there is no additive lemma to

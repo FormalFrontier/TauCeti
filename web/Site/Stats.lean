@@ -33,6 +33,19 @@ def roadmapGraph : Html := {{
   </figure>
 }}
 
+/-- A current snapshot of participation across the four project repositories: the GitHub
+accounts that remain once recognised automation is excluded, which is not the same as a
+verified count of people. Regenerated daily by the `pages` workflow
+(`scripts/participant_graph.py`) from GitHub PR/issue participant connections and
+default-branch commit contributors. -/
+private def participationGraph : Html := {{
+  <figure class="loc-figure loc-figure-wide">
+    <img class="loc-graph" src="static/participation.svg"
+         alt="Participation across the four Tau Ceti repositories, by repository"/>
+    <figcaption>"Participating accounts by repository, once recognised automation is excluded; an account active in several repositories appears in several bars."</figcaption>
+  </figure>
+}}
+
 #doc (Page) "Statistics" =>
 
 How much mathematics has Tau Ceti formalized, and how fast is the roadmap that
@@ -57,4 +70,17 @@ both PRs, so this measures work landed per roadmap, not a snapshot line count.
 Infrastructure and refactor PRs, which advance no roadmap, are left out.
 
 :::blob roadmapGraph
+:::
+
+Who has taken part? The snapshot below counts GitHub accounts that have
+opened a pull request or issue, participated in those conversations (including
+reviews), or authored a commit on the default branch of TauCeti, TauCetiRoadmap,
+TauCetiWorker, or TauCetiReview. Accounts recognised as automation are dropped:
+logins carrying GitHub's `[bot]` suffix, together with the project's own automation
+aliases. Nothing verifies that the accounts left over belong to people, so any
+automation the filter does not recognise is still counted. The headline
+deduplicates accounts across all four repositories; the repository bars
+deliberately overlap.
+
+:::blob participationGraph
 :::

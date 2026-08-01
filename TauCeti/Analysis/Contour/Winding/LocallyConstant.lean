@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import Mathlib.Topology.LocallyConstant.Basic
+public import TauCeti.Analysis.Contour.PiecewiseC1On
 import TauCeti.Analysis.Contour.Curve.Distance
 import TauCeti.Analysis.Contour.Winding.Continuity
 import TauCeti.Analysis.Contour.Winding.Integer
@@ -19,6 +20,7 @@ countable set, with interval-integrable derivative, the generalized winding numb
 `fun w ↦ windingNumber γ a b w`, viewed as a function on the points off the curve, is locally
 constant (`isLocallyConstant_windingNumber_of_closed`). It is the ingredient Dixon's argument uses
 for the homology form of Cauchy's theorem (roadmap `homologyCauchyTheorem`). As a corollary,
+the winding number is constant on every connected component of the curve complement. Also,
 `exists_ball_windingNumber_zero` packages the local matching data Dixon needs: around an off-curve
 point where the winding number vanishes, it vanishes on a whole ball that stays off the curve.
 
@@ -26,6 +28,10 @@ point where the winding number vanishes, it vanishes on a whole ball that stays 
 
 * `TauCeti.Contour.isLocallyConstant_windingNumber_of_closed` — the winding number is locally
   constant on the complement of a closed curve.
+* `TauCeti.Contour.windingNumber_eq_of_mem_connectedComponentIn` — the winding number is constant
+  on each connected component of the curve complement.
+* `TauCeti.Contour.IsPiecewiseC1On.windingNumber_eq_of_mem_connectedComponentIn` — the direct
+  piecewise-`C¹` form.
 * `TauCeti.Contour.exists_ball_windingNumber_zero` — around an off-curve point where the winding
   number vanishes, it vanishes on a whole ball that stays off the curve.
 
@@ -98,6 +104,47 @@ theorem isLocallyConstant_windingNumber_of_closed {γ : ℝ → ℂ} {a b : ℝ}
       (𝓝 ⟨w₀, hw₀⟩) (𝓝 w₀) := continuous_subtype_val.continuousAt
   exact hval.eventually hball
 
+/-- The points avoided by `γ` on `[[a, b]]` are exactly the complement of its image there. -/
+private theorem setOf_forall_ne_eq_compl_image {γ : ℝ → ℂ} {a b : ℝ} :
+    {w : ℂ | ∀ t ∈ uIcc a b, γ t ≠ w} = (γ '' uIcc a b)ᶜ := by
+  ext w
+  simp only [mem_ofPred_eq, mem_compl_iff, mem_image, not_exists, not_and]
+
+/-- **The winding number is constant on a connected component of the curve complement.**
+For a closed curve that is continuous on `[[a, b]]`, differentiable away from a countable set,
+and has interval-integrable derivative, two points in the same connected component of
+`ℂ \ γ '' [[a, b]]` have the same winding number.
+
+This is the connected-component form of homotopy invariance in the point: it follows from local
+constancy of the integer-valued winding number off the curve. -/
+theorem windingNumber_eq_of_mem_connectedComponentIn {γ : ℝ → ℂ} {a b : ℝ} {P : Set ℝ}
+    (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
+    (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
+    (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
+    {w₀ w₁ : ℂ} (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
+    windingNumber γ a b w₁ = windingNumber γ a b w₀ := by
+  have hw₀ : w₀ ∈ (γ '' uIcc a b)ᶜ := by
+    by_contra hw₀
+    rw [connectedComponentIn_eq_empty hw₀] at hw₁
+    exact hw₁
+  rw [← setOf_forall_ne_eq_compl_image] at hw₀ hw₁
+  rw [connectedComponentIn_eq_image hw₀] at hw₁
+  obtain ⟨w₁, hw₁, rfl⟩ := hw₁
+  exact
+    (isLocallyConstant_windingNumber_of_closed hclosed hP hγ_cont hγ_diff
+      hderiv_int).apply_eq_of_isPreconnected isPreconnected_connectedComponent hw₁
+        mem_connectedComponent
+
+/-- **Piecewise-`C¹` form of componentwise constancy.** For a closed piecewise-`C¹` curve, two
+points in the same connected component of the curve complement have the same winding number. -/
+theorem IsPiecewiseC1On.windingNumber_eq_of_mem_connectedComponentIn
+    {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    {w₀ w₁ : ℂ} (hw₁ : w₁ ∈ connectedComponentIn ((γ '' uIcc a b)ᶜ) w₀) :
+    windingNumber γ a b w₁ = windingNumber γ a b w₀ := by
+  obtain ⟨P, hP, hγ_diff⟩ := hγ.exists_countable_differentiableAt
+  exact TauCeti.Contour.windingNumber_eq_of_mem_connectedComponentIn hclosed hP
+    hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hw₁
+
 /-- **The winding number vanishes on a ball around an off-curve null point.** For a closed curve
 `γ` (differentiable off a countable set, continuous on `uIcc a b`, with interval-integrable
 derivative), if the winding number about an off-curve point `w` is `0`, then it is `0` throughout a
@@ -116,7 +163,7 @@ theorem exists_ball_windingNumber_zero {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} 
   have hSopen : IsOpen {z : ℂ | ∀ t ∈ uIcc a b, γ t ≠ z} := by
     have hset : {z : ℂ | ∀ t ∈ uIcc a b, γ t ≠ z} = (γ '' uIcc a b)ᶜ := by
       ext z
-      simp only [Set.mem_setOf_eq, Set.mem_compl_iff, Set.mem_image, not_exists, not_and, ne_eq]
+      simp only [Set.mem_ofPred_eq, Set.mem_compl_iff, Set.mem_image, not_exists, not_and, ne_eq]
     rw [hset]
     exact (isCompact_uIcc.image_of_continuousOn hγ_cont).isClosed.isOpen_compl
   -- The winding number is locally constant off the curve, so it is `0` on a subtype-open set

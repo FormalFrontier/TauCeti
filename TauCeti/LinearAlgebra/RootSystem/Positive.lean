@@ -12,12 +12,19 @@ public section
 # Positive and negative roots
 
 This file packages Mathlib's positivity predicate for a root-pairing base as the sets of positive
-and negative root indices. It records their partition and their exchange under root negation.
+and negative root indices. It records their partition, their exchange under root negation, and the
+fact that a simple reflection permutes the positive roots other than its own simple root.
 
 ## Main definitions
 
 * `TauCeti.posRoots` is the set of positive roots relative to a base.
 * `TauCeti.negRoots` is its complementary set of negative roots.
+
+## Main results
+
+* `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
+* `TauCeti.bijOn_reflectionPerm_posRoots_diff_singleton` says a simple reflection permutes the
+  positive roots other than its own simple root.
 
 ## References
 
@@ -171,5 +178,43 @@ theorem image_reflectionPerm_self_negRoots :
       ext i
       simp only [Set.mem_compl_iff, mem_negRoots, mem_posRoots]
       tauto
+
+/-- Reflecting a positive root in a simple root never produces that simple root: the only root
+sent to a simple root `αᵢ` by `sᵢ` is `-αᵢ`, which is negative. -/
+lemma reflectionPerm_ne_of_mem_posRoots {i j : ι} (hi : i ∈ b.support)
+    (hj : j ∈ posRoots P b) :
+    P.reflectionPerm i j ≠ i := by
+  intro h
+  have hji : j = P.reflectionPerm i i := by
+    rw [← P.reflectionPerm_self i j, h]
+  rw [mem_posRoots, hji, isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots] at hj
+  exact hj (b.isPos_of_mem_support hi)
+
+variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
+
+/-- A simple reflection preserves the set of positive roots other than its own simple root. Both
+directions follow from the forward implication because `P.reflectionPerm i` is an involution. -/
+lemma reflectionPerm_mem_posRoots_diff_singleton_iff {i : ι} (hi : i ∈ b.support) (j : ι) :
+    P.reflectionPerm i j ∈ posRoots P b \ {i} ↔ j ∈ posRoots P b \ {i} := by
+  have key : ∀ k : ι, k ∈ posRoots P b \ {i} → P.reflectionPerm i k ∈ posRoots P b \ {i} := by
+    rintro k ⟨hkpos, hkne⟩
+    have hkne' : k ≠ i := by simpa using hkne
+    exact ⟨(mem_posRoots P b _).mpr (((mem_posRoots P b k).mp hkpos).reflectionPerm hi hkne'),
+      by simpa using reflectionPerm_ne_of_mem_posRoots P b hi hkpos⟩
+  refine ⟨fun h ↦ ?_, key j⟩
+  simpa only [P.reflectionPerm_self i j] using key _ h
+
+/-- A simple reflection permutes the positive roots other than its own simple root. -/
+theorem bijOn_reflectionPerm_posRoots_diff_singleton {i : ι} (hi : i ∈ b.support) :
+    Set.BijOn (P.reflectionPerm i) (posRoots P b \ {i}) (posRoots P b \ {i}) :=
+  Set.InvOn.bijOn ⟨fun j _ ↦ P.reflectionPerm_self i j, fun j _ ↦ P.reflectionPerm_self i j⟩
+    (fun _ hj ↦ (reflectionPerm_mem_posRoots_diff_singleton_iff P b hi _).mpr hj)
+    (fun _ hj ↦ (reflectionPerm_mem_posRoots_diff_singleton_iff P b hi _).mpr hj)
+
+/-- The image form of `bijOn_reflectionPerm_posRoots_diff_singleton`: a simple reflection maps the
+positive roots other than its own simple root onto themselves. -/
+theorem image_reflectionPerm_posRoots_diff_singleton {i : ι} (hi : i ∈ b.support) :
+    P.reflectionPerm i '' (posRoots P b \ {i}) = posRoots P b \ {i} :=
+  (bijOn_reflectionPerm_posRoots_diff_singleton P b hi).image_eq
 
 end TauCeti

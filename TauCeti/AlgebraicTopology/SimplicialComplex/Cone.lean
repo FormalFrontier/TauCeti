@@ -4,7 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Join
+import Mathlib.Data.Finite.Prod
+import Mathlib.Data.Set.Finite.Basic
 
 /-!
 # Cones of simplicial complexes
@@ -18,6 +21,10 @@ Cones are elementary infrastructure for layer 11 of the geometric-topology roadm
 combinatorial balls are obtained by coning combinatorial spheres, and suspensions are formed by
 iterated coning/gluing.  This file supplies the combinatorial operation and its face API, building
 entirely on the join construction already available in Tau Ceti.
+
+The file also records that the construction satisfies the internal cone condition
+`TauCeti.PreAbstractSimplicialComplex.IsCone` at its apex (`isCone_cone`), which is what
+identifies the two accounts of a cone.
 
 The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter
 2.  No result from that source is used beyond the standard definition of a cone as a join with a
@@ -36,6 +43,8 @@ point.
 * `apex_mem_cone`: the apex is a face.
 * `disjSum_singleton_mem_cone`: adjoining the apex to an original face gives a face.
 * `cone_mono`: coning is monotone.
+* `finite_faces_cone`: the cone on a finite complex is finite.
+* `isCone_cone`: the cone construction is a cone with apex the adjoined vertex.
 -/
 
 public section
@@ -116,6 +125,25 @@ theorem disjSum_singleton_mem_cone {s : Finset α} (hs : s ∈ K) :
 /-- Coning is monotone in the base complex. -/
 theorem cone_mono (h : K ≤ L) : cone K ≤ cone L :=
   join_mono h le_rfl
+
+/-- The cone on a finite complex is finite: a face of the cone is determined by its two
+projections (`Finset.sumEquiv`), the left one is empty or a face of the base, and the apex type
+is finite. -/
+theorem finite_faces_cone (hfin : K.faces.Finite) : (cone K).faces.Finite := by
+  refine Set.Finite.of_finite_image (f := Finset.sumEquiv)
+    (Set.Finite.subset ((hfin.insert ∅).prod (Set.finite_univ (α := Finset PUnit))) ?_)
+    Finset.sumEquiv.injective.injOn
+  rintro _ ⟨σ, hσ, rfl⟩
+  exact Set.mem_prod.mpr ⟨Set.mem_insert_iff.mpr (mem_cone_iff.mp hσ).2, Set.mem_univ _⟩
+
+/-- The cone construction produces a cone in the internal sense, with apex the adjoined
+vertex.  This is what identifies the two accounts of a cone. -/
+theorem isCone_cone [DecidableEq α] (K : PreAbstractSimplicialComplex α) :
+    IsCone (cone K) (Sum.inr PUnit.unit) where
+  apex_mem := apex_mem_cone
+  insert_mem σ hσ := by
+    rw [mem_cone_iff] at hσ ⊢
+    exact ⟨Finset.insert_nonempty _ _, by rw [Finset.toLeft_insert_inr]; exact hσ.2⟩
 
 end PreAbstractSimplicialComplex
 

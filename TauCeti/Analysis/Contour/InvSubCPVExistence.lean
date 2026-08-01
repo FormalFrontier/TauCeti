@@ -123,9 +123,8 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
   rcases hab.eq_or_lt with rfl | hab
   · exact CauchyPVExistsAt.of_eq γ rfl _ s
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
-  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {t} => by
-    rw [hT_def, Set.Finite.mem_toFinset, Set.mem_inter_iff, Set.mem_preimage,
-      Set.mem_singleton_iff, uIcc_of_le hab.le]
+  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
+    rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
   have h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ T := fun t ht h_eq => hT_mem.mpr ⟨ht, h_eq⟩
   have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht =>
     h_interior t (hT_mem.mp ht).1 (hT_mem.mp ht).2
@@ -135,36 +134,25 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       MeasureTheory.volume a b :=
     fun _ hε => intervalIntegrable_inv_sub_truncated h_imm.continuousOn
       h_imm.isPiecewiseC1On.intervalIntegrable_deriv hε
-  rcases T.eq_empty_or_nonempty with hT_empty | hT_ne
+  rcases T.eq_empty_or_nonempty with hT_empty | -
   · refine cauchyPVExistsAt_of_perWindow_tendsto one_pos hab.le T ?_ ?_ ?_ h_int_tr ?_
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
   · choose! R hR_pos h_spec using fun t₀ (ht₀ : t₀ ∈ T) =>
       exists_radius_perWindow_tendsto h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
-    obtain ⟨r₀, hr₀_pos, h_endpts, h_pair₀, -⟩ := exists_common_window_radius (P := ∅)
-      hT_ne h_Ioo fun t _ => Finset.notMem_empty t
-    set ρ : ℝ := min r₀ (T.inf' hT_ne R) / 2 with hρ_def
-    have hRmin_pos : 0 < T.inf' hT_ne R := (Finset.lt_inf'_iff hT_ne).mpr hR_pos
-    have hρ_pos : 0 < ρ := half_pos (lt_min hr₀_pos hRmin_pos)
-    have hρ_lt : ρ < r₀ := by
-      have := min_le_left r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
-    have hρ_le_R : ∀ t ∈ T, ρ ≤ R t := fun t ht => by
-      have h1 := Finset.inf'_le R ht
-      have h2 := min_le_right r₀ (T.inf' hT_ne R)
-      rw [hρ_def]; linarith
+    -- one radius serving every crossing at once, below each per-crossing radius `R t`
+    obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
+      exists_common_window_radius_le h_Ioo R hR_pos
     refine cauchyPVExistsAt_of_perWindow_tendsto hρ_pos hab.le T
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
-      (fun t ht t' ht' hne => by linarith [h_pair₀ t ht t' ht' hne])
+      h_pair
       h_int_tr
       (fun t₀ ht₀ => h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq
-          (fun u hu => ⟨by linarith [(h_endpts u hu).1], by linarith [(h_endpts u hu).2]⟩)
-          (fun u hu u' hu' hne => by linarith [h_pair₀ u hu u' hu' hne, hr₀_pos])
-          h_complete ht₀ ht h_eq)
+        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+          (h_pair t₀ ht₀) h_complete ht h_eq)
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
         fun t _ => hρ_pos)
 

@@ -132,7 +132,7 @@ private lemma adicOrd_ne_zero_mem_support_union (v : HeightOneSpectrum R) (u : A
   have hne_one : v.valuation K k ≠ 1 := fun h => hlog ((log_eq_zero_iff_eq_one hval).2 h)
   rcases lt_or_gt_of_ne hne_one with hlt | hgt
   · refine Or.inr ?_
-    rw [HeightOneSpectrum.Support, Set.mem_setOf_eq, map_inv₀]
+    rw [HeightOneSpectrum.Support, Set.mem_ofPred_eq, map_inv₀]
     exact (one_lt_inv₀ (WithZero.pos_iff_ne_zero.mpr hval)).mpr hlt
   · exact Or.inl hgt
 

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.RingTheory.Coalgebra.CoassocSimps
 public import TauCeti.Algebra.Coalgebra.Comodule.Hom
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 
@@ -27,6 +28,8 @@ coefficients.
   functional `φ : M →ₗ[R] R`.
 * `TauCeti.Comodule.matrixCoefficient`: the coefficient element attached to `φ` and `m`.
 * `TauCeti.Comodule.matrixCoefficientBilinear`: bilinearity in the functional and vector.
+* `TauCeti.Comodule.matrixCoefficientTensor`: the induced linear map
+  `Module.Dual R M ⊗[R] M →ₗ[R] C`.
 
 ## Implementation notes
 
@@ -129,6 +132,19 @@ theorem matrixCoefficientBilinear_apply_apply (φ : M →ₗ[R] R) (m : M) :
       matrixCoefficient (R := R) (C := C) φ m :=
   rfl
 
+/-- The linear map from the tensor product of the dual and a right comodule to the ambient
+coalgebra, whose pure tensors give the matrix coefficients. -/
+def matrixCoefficientTensor : Module.Dual R M ⊗[R] M →ₗ[R] C :=
+  TensorProduct.lift
+    (matrixCoefficientBilinear (R := R) (C := C) (M := M))
+
+/-- On a pure tensor, `matrixCoefficientTensor` is the corresponding matrix coefficient. -/
+@[simp]
+theorem matrixCoefficientTensor_tmul (φ : Module.Dual R M) (m : M) :
+    matrixCoefficientTensor (R := R) (C := C) (M := M) (φ ⊗ₜ[R] m) =
+      matrixCoefficient (R := R) (C := C) φ m := by
+  simp [matrixCoefficientTensor]
+
 @[simp]
 theorem matrixCoefficient_zero_functional (m : M) :
     matrixCoefficient (R := R) (C := C) (0 : M →ₗ[R] R) m = 0 := by
@@ -146,6 +162,28 @@ theorem matrixCoefficient_smul_functional (r : R) (φ : M →ₗ[R] R) (m : M) :
     matrixCoefficient (R := R) (C := C) (r • φ) m =
       r • matrixCoefficient (R := R) (C := C) φ m := by
   simp [matrixCoefficient_def, TensorProduct.map_smul_left]
+
+/-- Applying the coalgebra counit to a matrix coefficient recovers evaluation of the
+functional on the vector. -/
+@[simp]
+theorem counit_matrixCoefficient (φ : Module.Dual R M) (m : M) :
+    Coalgebra.counit (R := R) (A := C)
+        (matrixCoefficient (R := R) (C := C) φ m) = φ m := by
+  have hnat (x : M ⊗[R] C) :
+      Coalgebra.counit (R := R) (A := C)
+          (TensorProduct.lid R C (TensorProduct.map φ LinearMap.id x)) =
+        TensorProduct.lid R R
+          (TensorProduct.map φ (Coalgebra.counit (R := R) (A := C)) x) := by
+    exact (LinearMap.congr_fun
+      (CoassocSimps.lid_comp_map φ (Coalgebra.counit (R := R) (A := C))) x).symm
+  have h := congrArg
+    (fun x : M ⊗[R] R =>
+      TensorProduct.lid R R (TensorProduct.map φ LinearMap.id x))
+    (lTensor_counit_coact (R := R) (C := C) (M := M) m)
+  rw [matrixCoefficient_def, hnat]
+  simpa only [LinearMap.lTensor, TensorProduct.map_map, LinearMap.id_comp,
+    LinearMap.comp_id, TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.lid_tmul,
+    smul_eq_mul, mul_one] using h
 
 /-- Matrix coefficients are natural in comodule morphisms: pushing the vector forward is
 the same as pulling the functional back. -/

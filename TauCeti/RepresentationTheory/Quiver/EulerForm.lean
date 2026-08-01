@@ -1,8 +1,13 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.Combinatorics.Quiver.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.RepresentationTheory.Quiver.LastArrow
 import Mathlib.Tactic.Ring
 
 /-!
@@ -10,6 +15,14 @@ import Mathlib.Tactic.Ring
 
 The Euler form records the oriented incidence data of a finite quiver. Its diagonal,
 the Tits form, is the numerical form used by reflection functors and Gabriel's theorem.
+
+`TauCeti.eulerForm_card_path_left` evaluates the Euler form against the vector counting the paths
+out of a vertex `i`: it is evaluation at `i`, the last-arrow recursion for path counts cancelling
+the arrow sum.
+
+The last section evaluates both forms on the simple dimension vectors `αᵢ = Pi.single i 1`;
+in particular `TauCeti.titsPolarForm_single_single` computes the Gram matrix of the polarized
+Tits form as `2·I - (A + Aᵀ)`, for `A` the matrix of arrow counts.
 
 The definitions follow the Layer 4 signatures in
 `TauCetiRoadmap/TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/Suggested.lean`.
@@ -56,6 +69,16 @@ public theorem eulerForm_def (d e : Q → ℤ) :
       (∑ v : Q, d v * e v) - ∑ a : Q, ∑ b : Q, ∑ _ : a ⟶ b, d a * e b :=
   by apply LinearMap.mk₂_apply
 
+/-- The Euler form with the arrows between each pair of vertices counted by cardinality. -/
+public theorem eulerForm_eq_sum_card (d e : Q → ℤ) :
+    eulerForm Q d e =
+      (∑ v : Q, d v * e v)
+        - ∑ a : Q, ∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * (d a * e b) := by
+  rw [eulerForm_def]
+  congr 1
+  refine Finset.sum_congr rfl fun a _ ↦ Finset.sum_congr rfl fun b _ ↦ ?_
+  rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+
 /-- The Tits form of a finite quiver, the diagonal of its Euler form. -/
 public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
   (eulerForm Q).toQuadraticMap
@@ -94,5 +117,125 @@ public theorem titsPolarForm_comm (d e : Q → ℤ) :
     titsPolarForm Q d e = titsPolarForm Q e d := by
   simpa only [titsPolarForm, QuadraticMap.polarBilin_apply_apply] using
     QuadraticMap.polar_comm (titsForm Q) d e
+
+/-! ### The Euler form against a path-count vector -/
+
+/-- **The Euler form against a path-count vector is evaluation.** Pairing the vector counting the
+paths out of `i` against any `e : Q → ℤ` returns `eᵢ`: at each vertex `b` the path count `#(i → b)`
+cancels the arrow-weighted sum `∑ₐ #(a ⟶ b) · #(i → a)` up to the trivial path, by the last-arrow
+recursion `TauCeti.card_path_eq_ite_add_sum`. -/
+public theorem eulerForm_card_path_left (i : Q) [∀ a : Q, Finite (Quiver.Path i a)] (e : Q → ℤ) :
+    eulerForm Q (fun v ↦ (Nat.card (Quiver.Path i v) : ℤ)) e = e i := by
+  classical
+  have key : ∀ b : Q,
+      (Nat.card (Quiver.Path i b) : ℤ)
+          - ∑ a : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path i a) : ℤ)
+        = if i = b then 1 else 0 := by
+    intro b
+    have h := congrArg (fun n : ℕ ↦ (n : ℤ)) (card_path_eq_ite_add_sum (V := Q) i b)
+    push_cast [Nat.card_eq_fintype_card] at h
+    rw [h, Finset.sum_congr rfl fun a _ ↦
+      mul_comm ((Fintype.card (a ⟶ b) : ℤ)) ((Nat.card (Quiver.Path i a) : ℤ))]
+    ring
+  have hswap : ∑ a : Q, ∑ b : Q,
+        (Fintype.card (a ⟶ b) : ℤ) * ((Nat.card (Quiver.Path i a) : ℤ) * e b)
+      = ∑ b : Q,
+          (∑ a : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path i a) : ℤ)) * e b := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun b _ ↦ ?_
+    rw [Finset.sum_mul]
+    exact Finset.sum_congr rfl fun a _ ↦ by ring
+  rw [eulerForm_eq_sum_card, hswap, ← Finset.sum_sub_distrib,
+    Finset.sum_congr rfl fun b _ ↦ by rw [← sub_mul, key b]]
+  simp
+
+/-! ### The Euler and Tits forms in the simple dimension vectors -/
+
+variable [DecidableEq Q]
+
+/-- The Euler form with a simple dimension vector on the left counts the arrows out of `i`. -/
+public theorem eulerForm_single_left (i : Q) (e : Q → ℤ) :
+    eulerForm Q (Pi.single i 1) e = e i - ∑ b : Q, (Fintype.card (i ⟶ b) : ℤ) * e b := by
+  have h₁ : ∑ v : Q, (Pi.single i 1 : Q → ℤ) v * e v = e i := by
+    simp [Pi.single_apply, ite_mul, Finset.sum_ite_eq']
+  have h₂ : ∀ a : Q, (∑ b : Q, ∑ _f : a ⟶ b, (Pi.single i 1 : Q → ℤ) a * e b)
+      = (Pi.single i 1 : Q → ℤ) a * ∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * e b := by
+    intro a
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun b _ ↦ ?_
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    ring
+  rw [eulerForm_def, h₁, Finset.sum_congr rfl fun a _ ↦ h₂ a]
+  simp [Pi.single_apply, ite_mul, Finset.sum_ite_eq']
+
+/-- The Euler form with a simple dimension vector on the right counts the arrows into `j`. -/
+public theorem eulerForm_single_right (d : Q → ℤ) (j : Q) :
+    eulerForm Q d (Pi.single j 1) = d j - ∑ a : Q, (Fintype.card (a ⟶ j) : ℤ) * d a := by
+  have h₁ : ∑ v : Q, d v * (Pi.single j 1 : Q → ℤ) v = d j := by
+    simp [Pi.single_apply, mul_ite, Finset.sum_ite_eq']
+  have h₂ : ∀ a : Q, (∑ b : Q, ∑ _f : a ⟶ b, d a * (Pi.single j 1 : Q → ℤ) b)
+      = (Fintype.card (a ⟶ j) : ℤ) * d a := by
+    intro a
+    have h₃ : ∀ b : Q, (∑ _f : a ⟶ b, d a * (Pi.single j 1 : Q → ℤ) b)
+        = if b = j then (Fintype.card (a ⟶ b) : ℤ) * d a else 0 := by
+      intro b
+      rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, Pi.single_apply]
+      split <;> simp
+    rw [Finset.sum_congr rfl fun b _ ↦ h₃ b, Finset.sum_ite_eq' Finset.univ j]
+    simp
+  rw [eulerForm_def, h₁, Finset.sum_congr rfl fun a _ ↦ h₂ a]
+
+/-- The Euler form in the simple dimension vectors: `⟨αᵢ, αⱼ⟩ = δᵢⱼ - #(i ⟶ j)`. -/
+public theorem eulerForm_single_single (i j : Q) :
+    eulerForm Q (Pi.single i 1) (Pi.single j 1)
+      = (if i = j then 1 else 0) - (Fintype.card (i ⟶ j) : ℤ) := by
+  rw [eulerForm_single_left]
+  simp [Pi.single_apply, mul_ite, eq_comm]
+
+/-- The Tits form of a simple dimension vector is one minus the number of loops at that vertex. -/
+public theorem titsForm_single (i : Q) :
+    titsForm Q (Pi.single i 1) = 1 - (Fintype.card (i ⟶ i) : ℤ) := by
+  rw [titsForm_def, eulerForm_single_single]
+  simp
+
+/-- A loopless vertex has a simple dimension vector of Tits norm one, that is, `αᵢ` is a root. -/
+public theorem titsForm_single_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)) :
+    titsForm Q (Pi.single i 1) = 1 := by
+  rw [titsForm_single, Fintype.card_eq_zero_iff.mpr h]
+  simp
+
+/-- The polarized Tits form against a simple dimension vector, in coordinates. -/
+public theorem titsPolarForm_single_left (i : Q) (d : Q → ℤ) :
+    titsPolarForm Q (Pi.single i 1) d
+      = 2 * d i - ∑ v : Q, ((Fintype.card (i ⟶ v) : ℤ) + (Fintype.card (v ⟶ i) : ℤ)) * d v := by
+  rw [titsPolarForm_def, eulerForm_single_left, eulerForm_single_right]
+  simp only [add_mul, Finset.sum_add_distrib]
+  ring
+
+/-- The polarized Tits form against a simple dimension vector on the right, in coordinates. -/
+public theorem titsPolarForm_single_right (d : Q → ℤ) (i : Q) :
+    titsPolarForm Q d (Pi.single i 1)
+      = 2 * d i - ∑ v : Q, ((Fintype.card (i ⟶ v) : ℤ) + (Fintype.card (v ⟶ i) : ℤ)) * d v := by
+  rw [titsPolarForm_comm, titsPolarForm_single_left]
+
+/-- The Gram matrix of the polarized Tits form in the simple dimension vectors is
+`2·I - (A + Aᵀ)`, for `A` the matrix of arrow counts: the symmetrized Cartan matrix of `Q`. -/
+public theorem titsPolarForm_single_single (i j : Q) :
+    titsPolarForm Q (Pi.single i 1) (Pi.single j 1)
+      = 2 * (if i = j then 1 else 0)
+        - ((Fintype.card (i ⟶ j) : ℤ) + (Fintype.card (j ⟶ i) : ℤ)) := by
+  rw [titsPolarForm_def, eulerForm_single_single, eulerForm_single_single]
+  rcases eq_or_ne i j with rfl | hij
+  · rw [if_pos (rfl : i = i)]
+    ring
+  · rw [if_neg hij, if_neg hij.symm]
+    ring
+
+/-- A loopless vertex has `⟨αᵢ, αᵢ⟩ = 2` for the polarized Tits form: the normalization that
+makes the simple reflection at `i` an involution. -/
+public theorem titsPolarForm_single_self_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)) :
+    titsPolarForm Q (Pi.single i 1) (Pi.single i 1) = 2 := by
+  rw [titsPolarForm_single_single, Fintype.card_eq_zero_iff.mpr h]
+  simp
 
 end TauCeti

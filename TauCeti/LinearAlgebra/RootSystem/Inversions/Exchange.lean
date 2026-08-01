@@ -41,20 +41,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 variable [CharZero R] (b : P.Base)
 
-private lemma reflectionPerm_ne_of_isPos {i j : ι} (hi : i ∈ b.support)
-    (hj : b.IsPos j) :
-    P.reflectionPerm i j ≠ i := by
-  intro h
-  have hji : j = P.reflectionPerm i i := by
-    calc
-      j = P.reflectionPerm i (P.reflectionPerm i j) :=
-        (P.reflectionPerm_self i j).symm
-      _ = P.reflectionPerm i i := congrArg (P.reflectionPerm i) h
-  have hneg : ¬ b.IsPos (P.reflectionPerm i i) := by
-    rw [isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots]
-    exact not_not_intro (b.isPos_of_mem_support hi)
-  exact hneg (hji ▸ hj)
-
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
 /-- Membership criterion for the punctured inversion sets: a positive root other than the
@@ -64,7 +50,7 @@ private lemma reflectionPerm_mem_inversions_sdiff (v : P.weylGroup) {i j : ι}
     (hneg : ¬ b.IsPos (P.weylGroupToPerm v (P.reflectionPerm i j))) :
     P.reflectionPerm i j ∈ inversions P b v \ {i} :=
   ⟨(mem_inversions P b _ _).mpr ⟨hj.reflectionPerm hi hji, hneg⟩, by
-    simpa using reflectionPerm_ne_of_isPos P b hi hj⟩
+    simpa using reflectionPerm_ne_of_mem_posRoots P b hi ((mem_posRoots P b j).mpr hj)⟩
 
 /-- Away from the distinguished simple root, reflection bijects the inversion sets before and
 after right multiplication by that simple reflection. -/

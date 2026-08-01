@@ -14,14 +14,23 @@ public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 This file proves that the action of the automorphism group of a root system on its root indices is
 faithful.  Consequently, every subgroup of that automorphism group, and in particular the Weyl
 group, is finite when the root index type is finite.  It also records how that action evaluates on
-simple reflections and how it interacts with root negation.
+simple reflections, how it interacts with root negation, and the sign change a reflection induces
+on its own coroot functional.  Alongside it, the weight-space action of the Weyl group is faithful,
+with no spanning hypothesis needed.
 
 ## Main results
 
 * `TauCeti.RootPairing.Equiv.indexHom_injective` says that an automorphism of a root system is
   determined by its permutation of the roots.
+* `TauCeti.RootPairing.coroot'_reflection_self` says a reflection reverses the sign of its own
+  coroot functional.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
+* `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
+* `TauCeti.RootPairing.weylGroup.eq_one_of_smul_eq_self` says a Weyl-group element acting trivially
+  on the weight space is the identity.
+* `TauCeti.RootPairing.weylGroup.commute_ofIdx_of_isOrthogonal` says orthogonal roots have
+  commuting reflections.
 * `TauCeti.RootPairing.finite_subgroup_aut` proves that every subgroup of the automorphism group of
   a finite root system is finite.
 * `TauCeti.RootPairing.finite_weylGroup` is the resulting finiteness theorem for the Weyl group.
@@ -70,6 +79,19 @@ end RootPairing.Equiv
 
 namespace RootPairing
 
+/-- Reflecting a root in itself negates its coroot functional. -/
+@[simp]
+lemma coroot'_reflectionPerm_self (i : ι) : P.coroot' (P.reflectionPerm i i) = -P.coroot' i := by
+  rw [_root_.RootPairing.coroot', P.coroot_reflectionPerm, P.coreflection_apply_self]
+  simp
+
+/-- A reflection reverses the sign of its own coroot functional. -/
+@[grind =]
+lemma coroot'_reflection_self (i : ι) (x : M) :
+    P.coroot' i (P.reflection i x) = -P.coroot' i x := by
+  rw [P.coroot'_reflection, coroot'_reflectionPerm_self]
+  simp
+
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
     (hspan : Submodule.span R (range P.root) = ⊤) :
@@ -115,13 +137,56 @@ lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
     _ = P.root (-(P.weylGroupToPerm w j)) := by
       rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
 
+namespace weylGroup
+
+/-- A simple reflection of the Weyl group is the corresponding reflection of the root pairing. -/
+@[simp]
+lemma coe_ofIdx (i : ι) :
+    ((_root_.RootPairing.weylGroup.ofIdx P i : P.weylGroup) : P.Aut) =
+      _root_.RootPairing.Equiv.reflection P i :=
+  rfl
+
+/-- A simple reflection of the Weyl group is its own inverse. -/
+@[simp]
+lemma ofIdx_inv_eq (i : ι) :
+    (_root_.RootPairing.weylGroup.ofIdx P i)⁻¹ = _root_.RootPairing.weylGroup.ofIdx P i :=
+  Subtype.ext (_root_.RootPairing.Equiv.reflection_inv P i)
+
+/-- A simple reflection of the Weyl group is an involution. -/
+@[simp]
+lemma ofIdx_mul_self (i : ι) :
+    _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P i = 1 := by
+  rw [mul_eq_one_iff_eq_inv, ofIdx_inv_eq]
+
+variable {P} in
+/-- A Weyl-group element acting trivially on the weight space is the identity: the weight-space
+representation of the automorphism group of a root pairing is faithful. -/
+theorem eq_one_of_smul_eq_self {w : P.weylGroup} (h : ∀ x : M, w • x = x) : w = 1 := by
+  have hw : (w : P.Aut) = 1 := by
+    refine _root_.RootPairing.Equiv.weightHom_injective P ?_
+    rw [map_one]
+    exact LinearEquiv.ext fun x ↦ h x
+  exact Subtype.ext (by simpa using hw)
+
+/-- **Orthogonal roots have commuting reflections** in the Weyl group. -/
+theorem commute_ofIdx_of_isOrthogonal {i j : ι} (h : P.IsOrthogonal i j) :
+    Commute (_root_.RootPairing.weylGroup.ofIdx P i) (_root_.RootPairing.weylGroup.ofIdx P j) := by
+  refine Subtype.ext ?_
+  simp only [Subgroup.coe_mul]
+  apply _root_.RootPairing.Equiv.weightHom_injective P
+  simpa only [coe_ofIdx, map_mul, _root_.RootPairing.Equiv.weightHom_apply,
+    _root_.RootPairing.Equiv.reflection_weightEquiv] using
+    (_root_.RootPairing.isOrthogonal_comm P i j h).eq
+
+end weylGroup
+
 variable [Finite ι]
 
 /-- If the roots span, every subgroup of the automorphism group is finite when the root index type
 is finite. -/
 theorem finite_subgroup_aut_of_span_eq_top (hspan : Submodule.span R (range P.root) = ⊤)
     (G : Subgroup P.Aut) : Finite G :=
-  Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).restrict G)
+  Finite.of_injective ((_root_.RootPairing.Equiv.indexHom P).domRestrict G)
     ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp Subtype.val_injective)
 
 /-- Every subgroup of the automorphism group of a finite root system is finite. -/
@@ -147,7 +212,7 @@ theorem card_subgroup_aut_le_factorial_of_span_eq_top
     (G : Subgroup P.Aut) : Nat.card G ≤ Nat.factorial (Nat.card ι) := by
   calc
     Nat.card G ≤ Nat.card (ι ≃ ι) := Nat.card_le_card_of_injective
-      ((_root_.RootPairing.Equiv.indexHom P).restrict G)
+      ((_root_.RootPairing.Equiv.indexHom P).domRestrict G)
         ((Equiv.indexHom_injective_of_span_eq_top P hspan).comp
           Subtype.val_injective)
     _ = Nat.factorial (Nat.card ι) := Nat.card_perm

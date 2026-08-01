@@ -125,6 +125,15 @@ noncomputable def fullyBlockedHomologyEquivChainOfLeTwo (hn : n ≤ 2) :
   (Submodule.quotEquivOfEqBot _ hp).trans
     ((LinearEquiv.ofEq _ _ (G.fullyBlockedCycles_eq_top_of_le_two hn)).trans Submodule.topEquiv)
 
+/-- The small-grid equivalence sends the homology class of a cycle to its underlying chain. -/
+@[simp]
+theorem fullyBlockedHomologyEquivChainOfLeTwo_apply_mk (hn : n ≤ 2)
+    (c : G.fullyBlockedCycles) :
+    G.fullyBlockedHomologyEquivChainOfLeTwo hn (Submodule.Quotient.mk c) =
+      (c : GridChain (ZMod 2) n) := by
+  rw [fullyBlockedHomologyEquivChainOfLeTwo]
+  rfl
+
 /-- In grid size at most two the fully blocked homology has `2 ^ n!` elements: the size of the
 whole chain module, since the differential vanishes. -/
 theorem natCard_fullyBlockedHomology_of_le_two (hn : n ≤ 2) :

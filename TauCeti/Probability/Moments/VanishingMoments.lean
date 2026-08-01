@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import TauCeti.MeasureTheory.Function.PolynomialMemLp
 public import TauCeti.Probability.Moments.Determinacy
 public import Mathlib.Analysis.RCLike.Basic
@@ -34,6 +34,11 @@ constant `1` fails to be integrable.  In the measure-level form finiteness of `�
 hypothesis: there `hexp` integrates the weight `e^{a|x|} ≥ 1` itself, which dominates the constant
 `1`.  The function-level form carries no such implication -- its `hexp` integrates the *product*
 `e^{a|x|} · g`, which `g = 0` satisfies over any measure, finite or infinite.
+
+The same exponential-moment hypothesis also makes every polynomial moment finite, so the result
+that records this -- `TauCeti.integrable_pow_of_exp_moment`, a symmetric-moment adaptation of
+`ProbabilityTheory.integrable_pow_of_integrable_exp_mul` -- lives here with it rather than with
+any one consumer.
 -/
 
 public section
@@ -45,6 +50,34 @@ open MeasureTheory ProbabilityTheory Complex Filter
 open scoped Topology
 
 variable {ν : Measure ℝ}
+
+/-! ## Exponential moments control polynomial moments -/
+
+/-- **One finite exponential moment makes every polynomial moment finite.**
+
+The two-sided moment hypothesis of `ProbabilityTheory.integrable_pow_of_integrable_exp_mul` is
+what a *single* symmetric moment `e^{a|x|} ∈ L¹(ν)` supplies: `±x ≤ |x|` makes `e^{a|x|}`
+dominate both `e^{ax}` and `e^{-ax}`.
+
+This is the bridge to the family-agnostic polynomial interface of
+`TauCeti.MeasureTheory.Function.PolynomialMemLp`, whose hypothesis is exactly "every polynomial
+moment is finite"; the `MemLp` statements of
+`TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness` are that interface applied through
+this. -/
+theorem integrable_pow_of_exp_moment
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (k : ℕ) :
+    Integrable (fun x : ℝ => x ^ k) ν := by
+  obtain ⟨a, ha, hexpa⟩ := hexp
+  have hdom : ∀ c : ℝ, (∀ x : ℝ, c * x ≤ a * |x|) →
+      Integrable (fun x : ℝ => Real.exp (c * x)) ν := fun c hc =>
+    hexpa.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => by
+      rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+      exact Real.exp_le_exp.2 (hc x))
+  exact integrable_pow_of_integrable_exp_mul ha.ne'
+    (hdom a fun x => mul_le_mul_of_nonneg_left (le_abs_self x) ha.le)
+    (hdom (-a) fun x => by
+      rw [neg_mul, ← mul_neg]
+      exact mul_le_mul_of_nonneg_left (neg_le_abs x) ha.le) k
 
 /-! ## Vanishing moments at the level of functions -/
 

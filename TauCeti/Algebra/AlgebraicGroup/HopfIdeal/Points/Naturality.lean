@@ -59,7 +59,7 @@ lemma mapPoints_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) {A B : CommAlgCat.{w} R}
     (χ : A ⟶ B) :
     quotientPointsSubgroup H I A →* quotientPointsSubgroup H I B :=
-  (((HopfAlgebra.mapPoints (H := H) χ).hom.restrict (quotientPointsSubgroup H I A)).codRestrict
+  (((HopfAlgebra.mapPoints (H := H) χ).hom.domRestrict (quotientPointsSubgroup H I A)).codRestrict
     (quotientPointsSubgroup H I B)
     fun g => mapPoints_mem_quotientPointsSubgroup H I χ g.property)
 
@@ -167,12 +167,18 @@ private lemma liftQuotientPointHom_apply (H : _root_.CommHopfAlgCat.{v} R)
     liftQuotientPointHom H I A g =
       liftQuotientPoint H I A g ((mem_quotientPointsSubgroup_iff H I A g).mp g.property) := by
   apply quotientPointsHom_injective H I A
+  have hg : g.1 ∈ (quotientPointsHom H I A).hom.range := by
+    have hgp := g.property
+    -- `g.property` is stated through the `Subtype` predicate of the subgroup coercion; `change`
+    -- puts it back in the `∈ quotientPointsSubgroup …` form the membership lemmas expect.
+    change g.1 ∈ quotientPointsSubgroup H I A at hgp
+    exact hgp
   -- `liftQuotientPointHom` is the `toMonoidHom` of the inverse equivalence returned by
   -- `MonoidHom.ofInjective`; this coercion exposes the underlying inverse application so the
   -- standard `apply_ofInjective_symm` lemma can rewrite it.
   change (quotientPointsHom H I A).hom
       (((MonoidHom.ofInjective (f := (quotientPointsHom H I A).hom)
-        (quotientPointsHom_injective H I A)).symm) g) =
+        (quotientPointsHom_injective H I A)).symm) ⟨g.1, hg⟩) =
     (quotientPointsHom H I A).hom
       (liftQuotientPoint H I A g
         ((mem_quotientPointsSubgroup_iff H I A g).mp g.property))

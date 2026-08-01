@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Line
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Circle.Principle
+public import TauCeti.Analysis.Complex.Conformal.Reflection.Arc
+public import TauCeti.Analysis.Complex.Conformal.Reflection.Injective
 
 /-!
 # Schwarz reflection

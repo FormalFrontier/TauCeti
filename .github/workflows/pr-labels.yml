@@ -97,10 +97,19 @@ jobs:
             workflow_run)
               pr="$WF_PR"
               if [ -z "$pr" ]; then
-                # Fork PRs leave pull_requests[] empty. Resolve by head, and accept it only when
-                # EXACTLY ONE open PR is at that commit, so an ambiguous match never labels the wrong PR.
-                pr=$(gh api "repos/$REPO/commits/$WF_HEAD/pulls" \
-                       --jq '[.[] | select(.state=="open")] | if length==1 then .[0].number else empty end')
+                # Fork PRs leave pull_requests[] empty, and GitHub's
+                # commits/<sha>/pulls endpoint need not associate their head
+                # commit with the base repository. Scan every open PR instead
+                # and accept EXACTLY ONE head-SHA match, so an ambiguous match
+                # can never label the wrong PR.
+                matches=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+                  --jq ".[] | select(.head.sha == \"$WF_HEAD\") | .number")
+                mapfile -t prs <<< "$matches"
+                if [ -n "$matches" ] && [ "${#prs[@]}" -eq 1 ]; then
+                  pr="${prs[0]}"
+                else
+                  pr=""
+                fi
               fi
               ;;
           esac

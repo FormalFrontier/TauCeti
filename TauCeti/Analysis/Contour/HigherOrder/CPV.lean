@@ -143,9 +143,8 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
   rcases hab.eq_or_lt with rfl | hab
   · simpa using HasCauchyPVAt.of_eq γ rfl (fun z => c / (z - s) ^ k) s
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
-  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {t} => by
-    rw [hT_def, Set.Finite.mem_toFinset, Set.mem_inter_iff, Set.mem_preimage,
-      Set.mem_singleton_iff, uIcc_of_le hab.le]
+  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
+    rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
   have h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ T := fun t ht h_eq => hT_mem.mpr ⟨ht, h_eq⟩
   have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht =>
     h_interior t (hT_mem.mp ht).1 (hT_mem.mp ht).2
@@ -158,32 +157,31 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
       h_imm.isPiecewiseC1On.intervalIntegrable_deriv hε
   have h_plain := fun l u =>
     plain_piece_integral_eq (s := s) h_imm hab hk c (l := l) (u := u)
-  rcases T.eq_empty_or_nonempty with hT_empty | hT_ne
+  rcases T.eq_empty_or_nonempty with hT_empty | -
   · refine hasCauchyPVAt_of_perWindow_boundary_tendsto
       (Φ := fun z => c * (-(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹))
       one_pos hab.le T ?_ ?_ ?_ h_int_tr h_plain ?_
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
-  · obtain ⟨r₀, hr₀_pos, h_endpts, h_pair₀, -⟩ := exists_common_window_radius (P := ∅)
-      hT_ne h_Ioo fun t _ => Finset.notMem_empty t
-    have hρ_pos : 0 < r₀ / 2 := half_pos hr₀_pos
+  · -- The same uniform radius as in `InvSubCPVExistence`; the constant bound `1` is inert here,
+    -- and the strict margins it returns are what removes the halving this used to need.
+    obtain ⟨ρ, hρ_pos, h_endpts, h_pair, -⟩ :=
+      exists_common_window_radius_le h_Ioo (fun _ => 1) fun _ _ => one_pos
     refine hasCauchyPVAt_of_perWindow_boundary_tendsto
       (Φ := fun z => c * (-(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹))
       hρ_pos hab.le T
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
-      (fun t ht t' ht' hne => by linarith [h_pair₀ t ht t' ht' hne])
+      h_pair
       h_int_tr h_plain
       (fun t₀ ht₀ => perWindow_boundary_tendsto_of_interior h_imm hab (h_Ioo t₀ ht₀)
         (hT_mem.mp ht₀).2 hk hkn (h_flat t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
         (h_B t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2) c p.countable_toSet hp hρ_pos
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq
-          (fun u hu => ⟨by linarith [(h_endpts u hu).1], by linarith [(h_endpts u hu).2]⟩)
-          (fun u hu u' hu' hne => by linarith [h_pair₀ u hu u' hu' hne, hr₀_pos])
-          h_complete ht₀ ht h_eq)
-      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => r₀ / 2)
+        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+          (h_pair t₀ ht₀) h_complete ht h_eq)
+      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
         fun t _ => hρ_pos)
 
 end TauCeti.Contour

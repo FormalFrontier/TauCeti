@@ -33,7 +33,7 @@ public section
 
 namespace TauCeti
 
-open Complex
+open _root_.Complex
 
 namespace PoincareDisc
 

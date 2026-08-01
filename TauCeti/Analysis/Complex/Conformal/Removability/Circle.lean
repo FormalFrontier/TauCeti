@@ -71,12 +71,7 @@ private lemma differentiableOn_circleLineMapInv {c a : ℂ} {S : Set ℂ}
 private lemma circleLineMap_circleLineMapInv {c a z : ℂ}
     (ha : a ≠ 0) (hz : z ≠ c + a) :
     circleLineMap c a (circleLineMapInv c a z) = z := by
-  have hden : a - (z - c) ≠ 0 := by
-    rw [sub_ne_zero]
-    intro h
-    apply hz
-    rw [h]
-    ring
+  have hden : a - (z - c) ≠ 0 := sub_ne_zero.mpr fun h => hz (by linear_combination -h)
   have hsum : I * ((a + (z - c)) / (a - (z - c))) + I ≠ 0 := by
     intro h
     have hzero : (2 * I) * a = 0 := by
@@ -91,12 +86,7 @@ private lemma circleLineMap_circleLineMapInv {c a z : ℂ}
 private lemma circleLineMap_ne_neg_I {c a z : ℂ} (ha : a ≠ 0)
     (hz : z ≠ c + a) :
     circleLineMapInv c a z ≠ -I := by
-  have hden : a - (z - c) ≠ 0 := by
-    rw [sub_ne_zero]
-    intro h
-    apply hz
-    rw [h]
-    ring
+  have hden : a - (z - c) ≠ 0 := sub_ne_zero.mpr fun h => hz (by linear_combination -h)
   intro h
   have hzero : 2 * a = 0 := by
     rw [circleLineMapInv] at h

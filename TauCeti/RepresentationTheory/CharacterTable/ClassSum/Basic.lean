@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import Mathlib.Algebra.Group.ConjFinite
@@ -89,16 +93,25 @@ theorem classSum_commutes {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
 
 end
 
+/-- The class sum of the conjugacy class of `1` is the unit of the group algebra: that class is the
+singleton `{1}`. -/
+@[simp]
+theorem classSum_mk_one (k : Type*) [Semiring k] :
+    classSum k (ConjClasses.mk (1 : G)) = 1 := by
+  ext g
+  simp [MonoidAlgebra.one_def, MonoidAlgebra.coeff_single, Finsupp.single_apply,
+    ConjClasses.mk_eq_mk_iff_isConj, eq_comm]
+
 /-- Every class sum lies in the center of the group algebra. -/
 theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :
     classSum k C ∈ Subalgebra.center k (MonoidAlgebra k G) := by
   rw [Subalgebra.mem_center_iff]
   intro a
   induction a using MonoidAlgebra.induction_on with
-  | hM g => exact (classSum_commutes C g).symm
-  | hadd x y hx hy =>
+  | of g => exact (classSum_commutes C g).symm
+  | add x y hx hy =>
     rw [mul_add, add_mul, hx, hy]
-  | hsmul r x hx =>
+  | smul r x hx =>
     rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, hx]
 
 end TauCeti
