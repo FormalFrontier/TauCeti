@@ -50,8 +50,10 @@ missing the crosscut lies entirely in one of them.
 The same inversion, read in polar coordinates around `ζ`, says which *angles* the crosscut
 occupies. Writing `α = arg (c - ζ)` for the direction from `ζ` to the centre, the point of
 `sphere ζ ρ` at angle `θ` lies in the disc exactly when `ρ < 2 * r * cos (θ - α)`
-(`TauCeti.circleMap_mem_ball_iff`): the crosscut consists of the angles within
-`arccos (ρ / (2 * r))` of `α`, and is empty once `2 * r ≤ ρ`. Rather than name that half-width,
+(`TauCeti.circleMap_mem_ball_iff`, with the `simp`-normal form
+`TauCeti.dist_circleMap_lt_iff` beside it): for `0 < ρ < 2 * r` the crosscut consists of the angles
+*strictly* within `arccos (ρ / (2 * r))` of `α`, while for `2 * r ≤ ρ` no angle satisfies the
+condition and `sphere ζ ρ` misses the disc altogether. Rather than name that half-width,
 the file records only
 that `cos` has no interior minimum on a period centred at `α`, so the condition holds throughout an
 interval of angles as soon as it holds at both ends
@@ -205,7 +207,8 @@ Nothing is assumed of `r` beyond what `dist ζ c = r` forces; for `r = 0` both s
 
 This is deliberately not a `simp` lemma: `Metric.mem_ball` already rewrites the left-hand side to
 `dist (circleMap ζ ρ θ) c < r`, so the statement is not in `simp` normal form and the `simpNF`
-linter rejects the attribute. -/
+linter rejects the attribute. The `simp`-normal companion is
+`TauCeti.dist_circleMap_lt_iff`. -/
 theorem circleMap_mem_ball_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     circleMap ζ ρ θ ∈ ball c r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) := by
   have hnorm : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
@@ -237,6 +240,14 @@ theorem circleMap_mem_ball_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
       eq_div_iff hρ.ne']
     field_simp
   rw [mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hne, hre, lt_div_iff₀ hρ, one_mul]
+
+/-- **A circular crosscut is an arc of angles around the direction of the centre**, stated in
+`simp` normal form. This is `TauCeti.circleMap_mem_ball_iff` with the membership in `ball c r`
+already unfolded by `Metric.mem_ball`, which is the form a `simp` call leaves the goal in. -/
+@[simp]
+theorem dist_circleMap_lt_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
+    dist (circleMap ζ ρ θ) c < r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) :=
+  circleMap_mem_ball_iff hζ hρ θ
 
 /-- **The cosine has no interior minimum on `[-π, π]`.** If `k < cos a` and `k < cos b`, with
 `-π ≤ a` and `b ≤ π`, then `k < cos θ` for every `θ ∈ [a, b]`: `cos` increases on `[-π, 0]` and

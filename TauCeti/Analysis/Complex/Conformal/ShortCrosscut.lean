@@ -208,11 +208,15 @@ theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top (hζ : dist �
   exact ⟨ρ, ⟨hr'pos.trans hρmem.1, hρmem.2⟩,
     diam_image_ball_inter_sphere_le hζ (hr'pos.trans hρmem.1) hf hε.le hlen⟩
 
-/-- **A conformal map of a disc has crosscuts with arbitrarily small image at every boundary
-point.** This is the case of
+/-- **A conformal map of a disc has arbitrarily small images of the circle intersections
+`ball c r ∩ sphere ζ ρ` at every boundary point.** This is the case of
 `TauCeti.exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top` that a Riemann map falls under:
 for `f` injective on `ball c r` with bounded image the Dirichlet integral is the area of that image,
-hence finite by `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded`. -/
+hence finite by `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded`.
+
+As there, the intersection bounded is a genuine circular crosscut only when `ρ < 2 * r`, being
+empty otherwise — in particular when `r = 0`, which the hypotheses allow; a caller wanting a
+crosscut applies the theorem with `R ≤ 2 * r`. -/
 theorem exists_diam_image_ball_inter_sphere_le (hζ : dist ζ c = r)
     (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
