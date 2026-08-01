@@ -77,18 +77,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N) (i j : ι)
 
-/-! ## Faithfulness of the weight-space action -/
-
-variable {P} in
-/-- A Weyl-group element acting trivially on the weight space is the identity: the weight-space
-representation of the automorphism group of a root pairing is faithful. -/
-theorem eq_one_of_smul_eq_self {w : P.weylGroup} (h : ∀ x : M, w • x = x) : w = 1 := by
-  have hw : (w : P.Aut) = 1 := by
-    refine _root_.RootPairing.Equiv.weightHom_injective P ?_
-    rw [map_one]
-    exact LinearEquiv.ext fun x ↦ h x
-  exact Subtype.ext (by simpa using hw)
-
 /-! ## The rank-two computation -/
 
 /-- **The product of two reflections on the weight space.** The two reflections move `x` inside the
