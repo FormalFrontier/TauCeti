@@ -112,7 +112,7 @@ theorem directingMeasure_ae_eq_condExp {μ : Measure Ω} [IsFiniteMeasure μ] {X
 `MixedIIDWith` consumes as its witness `ν`. -/
 def directingProbabilityMeasure (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → α) (ω : Ω) :
     ProbabilityMeasure α :=
-  @condDistribProbabilityMeasure Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _ ω
+  condDistribProbabilityMeasure (mβ := tailProcess X) (X 0) id μ ω
 
 /-- The underlying measure of the bundled directing measure is `directingMeasure μ X ω`. -/
 @[simp]
