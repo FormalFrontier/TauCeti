@@ -128,8 +128,12 @@ of the degree of `A` (`TauCeti.Algebra.deg_sq`), and it is the degree-level shad
 rather than `TauCeti.Algebra.deg K A`.
 
 As with the dimension count it rests on, no hypothesis on `A` is needed: the dimension of
-`A ⊗[K] Aᵐᵒᵖ` is a square for every `K`-algebra, and that alone pins the degree. -/
-@[simp]
+`A ⊗[K] Aᵐᵒᵖ` is a square for every `K`-algebra, and that alone pins the degree.
+
+Not a `simp` lemma: as soon as `A` is central simple and finite-dimensional, so is `Aᵐᵒᵖ`, and then
+`TauCeti.Algebra.deg_tensorProduct` already rewrites the left-hand side, to
+`TauCeti.Algebra.deg K A * TauCeti.Algebra.deg K Aᵐᵒᵖ`. Marking this one `simp` too would leave
+`simp` with two different normal forms for the same term. -/
 theorem deg_tensorProduct_mulOpposite : deg K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A :=
   deg_eq_of_finrank_eq_sq (finrank_tensorProduct_mulOpposite K A)
 

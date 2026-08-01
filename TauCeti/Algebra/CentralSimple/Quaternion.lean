@@ -47,7 +47,7 @@ the tensor product with the opposite algebra does, and
 
 ## Main results
 
-* `TauCeti.Quaternion.tensorMulOppositeAlgEquivMatrix`:
+* `TauCeti.Quaternion.tensorOpAlgEquivMatrix`:
   `ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]ᵐᵒᵖ ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`.
 * `TauCeti.Quaternion.tensorSelfAlgEquivMatrix`: `ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`,
   the roadmap's worked example.
@@ -75,20 +75,20 @@ quaternions. All three hypotheses of `TauCeti.Algebra.tensorOpAlgEquivMatrix` ar
 search -- `Algebra.IsCentral ℝ ℍ[ℝ]` from `TauCeti.Quaternion.instIsCentral`, `IsSimpleRing ℍ[ℝ]`
 because a division ring is simple, and `FiniteDimensional ℝ ℍ[ℝ]` -- so only the dimension
 `Quaternion.finrank_eq_four` has to be supplied. -/
-noncomputable def tensorMulOppositeAlgEquivMatrix :
+noncomputable def tensorOpAlgEquivMatrix :
     ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]ᵐᵒᵖ ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ :=
   Algebra.tensorOpAlgEquivMatrix ℝ ℍ[ℝ] _root_.Quaternion.finrank_eq_four
 
 /-- **`ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`.** Quaternion conjugation is an `ℝ`-algebra
 isomorphism `ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (`Quaternion.starAe`), so the tensor square of `ℍ[ℝ]` is its tensor
-product with its own opposite, which `TauCeti.Quaternion.tensorMulOppositeAlgEquivMatrix` splits.
+product with its own opposite, which `TauCeti.Quaternion.tensorOpAlgEquivMatrix` splits.
 
 In Brauer-group language: the class of `ℍ[ℝ]` is its own inverse. It is not the identity class, by
 `TauCeti.Quaternion.isEmpty_algEquiv_matrix`, so it has order exactly two. -/
 noncomputable def tensorSelfAlgEquivMatrix :
     ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ :=
   (Algebra.TensorProduct.congr (AlgEquiv.refl (A₁ := ℍ[ℝ])) _root_.Quaternion.starAe).trans
-    tensorMulOppositeAlgEquivMatrix
+    tensorOpAlgEquivMatrix
 
 /-- The tensor square of the real quaternions has degree `4`: tensoring a central simple algebra
 with its opposite squares the degree, and `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`.
