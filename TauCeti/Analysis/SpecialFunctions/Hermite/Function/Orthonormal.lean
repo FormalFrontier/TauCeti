@@ -118,6 +118,7 @@ theorem orthonormal_hermiteFunctionLp : Orthonormal 𝕜 (hermiteFunctionLp 𝕜
 
 /-- **Target A2 (unit norm).** Every Hermite function has `L²` norm one, over any `RCLike`
 scalar field. -/
+@[simp]
 theorem norm_hermiteFunctionLp (n : ℕ) : ‖hermiteFunctionLp 𝕜 n‖ = 1 :=
   orthonormal_hermiteFunctionLp.norm_eq_one n
 
