@@ -187,7 +187,7 @@ theorem hurwitz_eventually_exists_eq_zero [l.NeBot] (hΩ : IsOpen Ω) (hconn : I
   -- `g` vanishes at the centre but not on the bounding circle, so its count is nonzero
   have hcount : (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt g z) ≠ 0 := fun h =>
     (finsum_analyticOrderNatAt_ball_eq_zero_iff (hgA.mono hball)
-        (exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero hr hsphne)).mp h z₀
+        (exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero hr.le hsphne)).mp h z₀
       (mem_ball_self hr) hgz₀
   filter_upwards [eventually_finsum_analyticOrderNatAt_ball_eq hr (hgA.mono hball) hFA hconvS
     hsphne, hF] with i hi hFi
