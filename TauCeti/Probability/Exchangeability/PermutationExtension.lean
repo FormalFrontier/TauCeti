@@ -30,13 +30,19 @@ namespace TauCeti
 namespace Probability
 
 /-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing
-self-map of `ℕ` that agrees with `k` on the first `m` inputs. -/
+self-map of `ℕ` that agrees with `k` on the first `m` inputs and is **eventually a translation**:
+beyond the selection it adds a fixed constant.
+
+The eventual-translation clause matters for invariant events. Composing with `φ` changes only the
+first `m` coordinates and then acts as a fixed iterate of the shift, so any event that is unchanged
+by dropping a finite prefix — a shift-invariant or tail event — is preserved by the reindexing. -/
 theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
-    ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ i : Fin m, φ i.val = k i := by
+    ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
+      ∀ n, m ≤ n → φ n = n + C := by
   classical
   let C := Finset.univ.sup k + 1
   let φ : ℕ → ℕ := fun n => if h : n < m then k ⟨n, h⟩ else n + C
-  refine ⟨φ, ?_, ?_⟩
+  refine ⟨φ, C, ?_, ?_, ?_⟩
   · intro a b hab
     dsimp only [φ]
     by_cases ha : a < m
@@ -53,6 +59,8 @@ theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : 
         exact Nat.add_lt_add_right hab C
   · intro i
     simp [φ, i.isLt]
+  · intro n hn
+    simp [φ, Nat.not_lt.mpr hn]
 
 end Probability
 

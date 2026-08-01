@@ -86,7 +86,7 @@ theorem ContractableLaw.map_prefixProj_of_strictMono {ρ : Measure (ℕ → α)}
     (hρ : ContractableLaw ρ) {n : ℕ} {k : Fin n → ℕ} (hk : StrictMono k) :
     ρ.map (fun x : ℕ → α => fun i : Fin n => x (k i)) =
       ρ.map (prefixProj α n) := by
-  obtain ⟨φ, hφ, hφ_eq⟩ := exists_strictMono_nat_extending_fin hk
+  obtain ⟨φ, -, hφ, hφ_eq, -⟩ := exists_strictMono_nat_extending_fin hk
   have hmap := congrArg (fun ν : Measure (ℕ → α) => ν.map (prefixProj α n))
     (hρ.map_reindex hφ)
   rw [map_reindex_prefixProj] at hmap
