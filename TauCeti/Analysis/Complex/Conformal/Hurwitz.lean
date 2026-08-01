@@ -172,18 +172,18 @@ theorem hurwitz_eventually_exists_eq_zero [l.NeBot] (hΩ : IsOpen Ω) (hconn : I
     (_root_.TendstoLocallyUniformlyOn.differentiableOn hconv hF hΩ).analyticOnNhd hΩ
   obtain ⟨r, hr, hrε, hball, hzf⟩ :=
     exists_radius_forall_ne hΩ hz₀ (eventually_ne_of_not_forall_eq hconn hgA hnc hz₀) hε
-  -- `g` has a zero of positive, finite order at `z₀`, so its count on `ball z₀ r` is nonzero
-  have htop : analyticOrderAt g z₀ ≠ ⊤ := analyticOrderAt_ne_top_of_forall_ne_zero hr
-    fun z hz hzne => hzf z (ball_subset_closedBall hz) hzne
-  have hord : analyticOrderNatAt g z₀ ≠ 0 := by
-    have h0 : analyticOrderAt g z₀ ≠ 0 := fun h =>
-      ((hgA z₀ hz₀).analyticOrderAt_eq_zero.mp h) hgz₀
-    simpa [analyticOrderNatAt] using fun h => h0 ((ENat.toNat_eq_zero.mp h).resolve_right htop)
+  have hsphne : ∀ z ∈ sphere z₀ r, g z ≠ 0 := fun z hz =>
+    hzf z (sphere_subset_closedBall hz) (Metric.ne_of_mem_sphere hz hr.ne')
+  -- `g` vanishes at the centre but not at the boundary point `z₀ + r`, so its count is nonzero
+  have hwit : ∃ z ∈ closedBall z₀ r, g z ≠ 0 := by
+    have hmem : z₀ + (r : ℂ) ∈ sphere z₀ r := by
+      rw [mem_sphere_iff_norm]
+      simp [Complex.norm_real, abs_of_pos hr]
+    exact ⟨_, sphere_subset_closedBall hmem, hsphne _ hmem⟩
   have hcount : (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt g z) ≠ 0 := fun h =>
-    hord (Nat.le_zero.mp (h ▸ analyticOrderNatAt_le_finsum_ball (hgA.mono hball)
-      (mem_ball_self hr)))
-  filter_upwards [eventually_finsum_analyticOrderNatAt_ball_eq hΩ hF hconv hr hball
-    (fun z hz => hzf z (sphere_subset_closedBall hz) (Metric.ne_of_mem_sphere hz hr.ne')), hF]
+    (finsum_analyticOrderNatAt_ball_eq_zero_iff (hgA.mono hball) hwit).mp h z₀
+      (mem_ball_self hr) hgz₀
+  filter_upwards [eventually_finsum_analyticOrderNatAt_ball_eq hΩ hF hconv hr hball hsphne, hF]
     with i hi hFi
   by_contra hcon
   push Not at hcon
