@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Probability.Kernel.CondDistrib
 public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.Probability.Kernel.CondDistrib
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
@@ -111,20 +112,18 @@ theorem directingMeasure_ae_eq_condExp {μ : Measure Ω} [IsFiniteMeasure μ] {X
 `MixedIIDWith` consumes as its witness `ν`. -/
 def directingProbabilityMeasure (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → α) (ω : Ω) :
     ProbabilityMeasure α :=
-  ⟨directingMeasure μ X ω, inferInstance⟩
+  @condDistribProbabilityMeasure Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _ ω
 
 /-- The underlying measure of the bundled directing measure is `directingMeasure μ X ω`. -/
 @[simp]
 theorem directingProbabilityMeasure_toMeasure {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (ω : Ω) : (directingProbabilityMeasure μ X ω : Measure α) = directingMeasure μ X ω := by
-  simp only [directingProbabilityMeasure, ProbabilityMeasure.coe_mk]
+  simp only [directingProbabilityMeasure, condDistribProbabilityMeasure_toMeasure, directingMeasure]
 
 /-- The bundled directing measure is **`tailProcess X`-measurable** into `ProbabilityMeasure α`. -/
 theorem measurable_tailProcess_directingProbabilityMeasure {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} : Measurable[tailProcess X] (directingProbabilityMeasure μ X) := by
-  refine Measurable.subtype_mk ?_
-  exact Measure.measurable_of_measurable_coe _ fun B hB =>
-    measurable_tailProcess_directingMeasure_coe hB
+    {X : ℕ → Ω → α} : Measurable[tailProcess X] (directingProbabilityMeasure μ X) :=
+  measurable_condDistribProbabilityMeasure (mβ := tailProcess X)
 
 /-- The bundled directing measure is measurable into `ProbabilityMeasure α` — the ambient corollary
 of the `tailProcess X`-measurable form, the measurability that `MixedIIDWith` requires. -/
