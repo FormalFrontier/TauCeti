@@ -23,8 +23,10 @@ enumerates finite subsets by *some* bijection with `Fin s.card` rather than by a
 reverse direction takes the common law as a parameter instead of reconstructing it from a reference
 coordinate.
 
-The `of_iIndepFun_identDistrib` forms, both here and in `Exchangeability/IID.lean`, stay
-sequence-level: they are stated through `IdentDistrib (X i) (X 0)`, which names the coordinate `0`.
+The `of_iIndepFun_identDistrib` forms come in two shapes. The `_at` versions take a caller-supplied
+reference coordinate `i₀` and hold at an arbitrary index type; the unsuffixed ones are their
+`ℕ`-indexed specializations at `0`, kept because that is the ergonomic form for sequences and
+because existing callers use it.
 -/
 
 public section
@@ -83,25 +85,40 @@ theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
     (ConditionallyIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   conditionallyIIDWith_const_iff_mixedIIDWith.trans mixedIIDWith_const_iff_iIndepFun_and_map_eq
 
-/-- **An i.i.d. sequence is conditionally i.i.d.**, with the constant directing measure
-`ω ↦ μ.map (X 0)`. This is the sharp form of the roadmap's first worked example: the constant
-random measure is a genuine *directing measure*, not merely a mixing representative.
-`MixedIIDWith.of_iIndepFun_identDistrib` is the mixture form it projects down to. -/
-theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ι → Ω → α}
+/-- **Independent, identically distributed coordinates are conditionally i.i.d.**, at an arbitrary
+index type, with the common law `μ.map (X i₀)` as constant directing measure. Conditional rather
+than merely mixture-level: at a constant witness the two identities coincide. -/
+theorem ConditionallyIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω} {X : ι → Ω → α}
     (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     haveI := hindep.isProbabilityMeasure
     ConditionallyIIDWith μ X
       (fun _ => ⟨μ.map (X i₀), Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩) := by
   haveI := hindep.isProbabilityMeasure
   exact conditionallyIIDWith_const_of_mixedIIDWith
-    (MixedIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
+    (MixedIIDWith.of_iIndepFun_identDistrib_at i₀ hindep hident)
+
+/-- **An i.i.d. sequence is conditionally i.i.d.**, with its common law as constant directing
+measure. The `ℕ`-indexed specialization at the reference coordinate `0`. -/
+theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    haveI := hindep.isProbabilityMeasure
+    ConditionallyIIDWith μ X
+      (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) :=
+  ConditionallyIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
 
 /-- **An i.i.d. sequence is conditionally i.i.d.** (existential directing-measure form). -/
-theorem ConditionallyIID.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ι → Ω → α}
+theorem ConditionallyIID.of_iIndepFun_identDistrib_at {μ : Measure Ω} {X : ι → Ω → α}
     (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     ConditionallyIID μ X :=
   haveI := hindep.isProbabilityMeasure
-  ConditionallyIID.of_directing (ConditionallyIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
+  ConditionallyIID.of_directing (ConditionallyIIDWith.of_iIndepFun_identDistrib_at i₀ hindep hident)
+
+/-- **An i.i.d. sequence is conditionally i.i.d.** (existential form), the `ℕ`-indexed
+specialization at the reference coordinate `0`. -/
+theorem ConditionallyIID.of_iIndepFun_identDistrib {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    ConditionallyIID μ X :=
+  ConditionallyIID.of_iIndepFun_identDistrib_at 0 hindep hident
 
 end Probability
 

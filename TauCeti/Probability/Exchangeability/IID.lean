@@ -72,11 +72,13 @@ theorem MixedIIDWith.of_iIndepFun_map_eq {μ : Measure Ω} {X : ι → Ω → α
     exact congrArg Measure.pi (funext fun i => hlaw (k i))
   rw [hblock, Measure.bind_const, measure_univ, one_smul, ProbabilityMeasure.toMeasure_pi]
 
-/-- **An i.i.d. sequence is mixed i.i.d.**, with the constant mixing representative
-`ω ↦ μ.map (X 0)` (the common law of the coordinates). For independent, identically
-distributed coordinates, the law of an injective finite block is the product of
-that common law, which is precisely the mixture against the constant mixing representative. -/
-theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
+/-- **Independent, identically distributed coordinates are mixed i.i.d.**, at an arbitrary index
+type, with the common law `μ.map (X i₀)` as constant mixing representative.
+
+`i₀` is a caller-supplied reference coordinate: an abstract index type provides none, and
+`IdentDistrib` needs one to compare against. `MixedIIDWith.of_iIndepFun_map_eq` avoids it entirely
+by naming the law instead, and is the better entry point when the law is already known. -/
+theorem MixedIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω}
     {X : ι → Ω → α} (i₀ : ι) (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     haveI := hindep.isProbabilityMeasure
@@ -87,13 +89,34 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
   haveI := hindep.isProbabilityMeasure
   exact MixedIIDWith.of_iIndepFun_map_eq hindep fun i => (hident i).map_eq
 
+/-- **An i.i.d. sequence is mixed i.i.d.**, with the common law `μ.map (X 0)` as constant mixing
+representative. The `ℕ`-indexed specialization of `MixedIIDWith.of_iIndepFun_identDistrib_at` at
+the reference coordinate `0`. -/
+theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
+    {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
+    (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    haveI := hindep.isProbabilityMeasure
+    MixedIIDWith μ X
+      (fun _ => (⟨μ.map (X 0),
+        Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩ :
+          ProbabilityMeasure α)) :=
+  MixedIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
+
 /-- **An i.i.d. sequence is mixed i.i.d.** (existential mixing-representative form). -/
-theorem MixedIID.of_iIndepFun_identDistrib {μ : Measure Ω}
+theorem MixedIID.of_iIndepFun_identDistrib_at {μ : Measure Ω}
     {X : ι → Ω → α} (i₀ : ι) (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     MixedIID μ X :=
   MixedIID.of_mixingRepresentative
-    (MixedIIDWith.of_iIndepFun_identDistrib i₀ hindep hident)
+    (MixedIIDWith.of_iIndepFun_identDistrib_at i₀ hindep hident)
+
+/-- **An i.i.d. sequence is mixed i.i.d.** (existential form), the `ℕ`-indexed specialization at
+the reference coordinate `0`. -/
+theorem MixedIID.of_iIndepFun_identDistrib {μ : Measure Ω}
+    {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
+    (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    MixedIID μ X :=
+  MixedIID.of_iIndepFun_identDistrib_at 0 hindep hident
 
 /-- **An i.i.d. sequence is exchangeable.** Sequence-level, and necessarily so: `Exchangeable` is
 defined for `X : ℕ → Ω → α`, so no reference-index parameter would generalize it. The family-level
@@ -102,14 +125,14 @@ theorem Exchangeable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Exchangeable μ X :=
-  (MixedIIDWith.of_iIndepFun_identDistrib 0 hindep hident).exchangeable
+  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).exchangeable
 
 /-- **An i.i.d. sequence is contractable.** -/
 theorem Contractable.of_iIndepFun_identDistrib {μ : Measure Ω}
     {X : ℕ → Ω → α} (hindep : iIndepFun X μ)
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     Contractable μ X :=
-  (MixedIIDWith.of_iIndepFun_identDistrib 0 hindep hident).contractable
+  (MixedIIDWith.of_iIndepFun_identDistrib hindep hident).contractable
 
 end Probability
 

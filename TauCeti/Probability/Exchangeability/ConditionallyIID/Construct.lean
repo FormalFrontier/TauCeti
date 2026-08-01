@@ -226,7 +226,7 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
   -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,
     mixedIID_mixingLaw_unique hX (mixedIIDWith_iidMixtureLaw hP)
-      (MixedIIDWith.of_iIndepFun_identDistrib 0 h hident)]
+      (MixedIIDWith.of_iIndepFun_identDistrib h hident)]
   change Measure.map (fun _ : T × (ℕ → α) => Q) (iidMixtureLaw π P) = Measure.dirac Q
   rw [Measure.map_const, measure_univ, one_smul]
 
