@@ -11,9 +11,23 @@ public import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 
 Let `gl n R = Matrix n n R` carry the commutator bracket and let `diagonalCartan R n` be its
 diagonal Cartan subalgebra. This file computes the weight spaces of `gl n R` for that Cartan
-subalgebra, and assembles them into the root space decomposition
-`gl n R = ⨁_{a, b} R · Eₐ_b`, in which the matrix unit `Eₐ_b` spans the root space of the weight
-`εₐ - ε_b`.
+subalgebra: a matrix lies in the root space of a functional `χ` exactly when it is supported on the
+pairs `(a, b)` with `εₐ - ε_b = χ`. Since the matrix unit `Eₐ_b` lies in the root space of
+`εₐ - ε_b` and every matrix is a sum of matrix units, those root spaces span `gl n R`
+(`TauCeti.iSup_rootSpace_glRoot_eq_top`), and hence so do all the root spaces
+(`TauCeti.iSup_rootSpace_eq_top`); over a domain Mathlib's `LieModule.iSupIndep_genWeightSpace`
+makes the latter supremum direct, exhibiting `gl n R` as the direct sum of its root spaces.
+
+The pairs `(a, b)` do *not* index those root spaces injectively, so the finer decomposition of
+`gl n R` into the matrix-unit lines `R · Eₐ_b` is not the root space decomposition. Every
+`εₐ - ε_a` is the zero functional, and the zero root space contains every diagonal matrix rather
+than just the line `R · Eₐ_a` — that is `TauCeti.glRoot_self` together with
+`TauCeti.single_mem_rootSpace`, and over a Noetherian base Mathlib's
+`LieAlgebra.rootSpace_zero_eq` identifies the zero root space with the whole diagonal Cartan
+subalgebra, as it does for any Cartan subalgebra. In characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`, so the
+pairs `(i, j)` and `(j, i)` share a root space as well. Only for `i ≠ j`, and away from
+characteristic two, is a root space the line spanned by a single matrix unit
+(`TauCeti.rootSpace_glRoot`).
 
 Everything rests on one computation, `TauCeti.lie_apply_of_mem_diagonalCartan`: the adjoint action
 of a diagonal matrix scales the `(a, b)` entry by `A a a - A b b`. Consequently `ad A` is already
@@ -29,8 +43,9 @@ records.
   exactly when its `(a, b)` entry vanishes for every pair with `εₐ - ε_b ≠ χ`.
 * `TauCeti.rootSpace_diagonalCartan_eq_weightSpace`: these generalized weight spaces are honest
   simultaneous eigenspaces.
-* `TauCeti.iSup_rootSpace_glRoot_eq_top`: the root space decomposition, `gl n R` is spanned by the
-  root spaces of the weights `εₐ - ε_b`.
+* `TauCeti.iSup_rootSpace_glRoot_eq_top`: `gl n R` is spanned by the root spaces of the weights
+  `εₐ - ε_b`; `TauCeti.iSup_rootSpace_eq_top` is the same spanning statement indexed by the weights
+  themselves, where each root space occurs once and the supremum is the root space decomposition.
 * `TauCeti.instIsTriangularizableMatrixDiagonalCartan`: `gl n R` is triangularizable over its
   diagonal Cartan subalgebra, so Mathlib's weight space machinery applies over any field, not only
   an algebraically closed one.
@@ -190,15 +205,33 @@ theorem rootSpace_diagonalCartan_eq_weightSpace [IsDomain R]
 
 /-! ### The root space decomposition -/
 
-/-- **The root space decomposition of `gl n R`**: the root spaces of the weights `εₐ - ε_b` span
-`gl n R`. Together with Mathlib's `LieModule.iSupIndep_genWeightSpace` this exhibits `gl n R` as
-the direct sum of its weight spaces. -/
+/-- The root spaces of the weights `εₐ - ε_b` span `gl n R`, because the matrix unit `Eₐ_b` lies in
+the root space of `εₐ - ε_b`.
+
+This is a spanning statement only. The pairs `(a, b)` repeat root spaces — every `εₐ - ε_a` is the
+zero functional, whose root space contains the whole diagonal Cartan subalgebra, and in
+characteristic two `εᵢ - εⱼ = εⱼ - εᵢ` — so this supremum is not direct. For the supremum over the
+weights themselves, which over a domain is, see `TauCeti.iSup_rootSpace_eq_top`. -/
 theorem iSup_rootSpace_glRoot_eq_top :
     ⨆ p : n × n, LieAlgebra.rootSpace (diagonalCartan R n) (glRoot R n p.1 p.2) = ⊤ := by
   refine top_le_iff.mp fun B _ => ?_
   rw [← LieSubmodule.mem_toSubmodule, LieSubmodule.iSup_toSubmodule, matrix_eq_sum_single B]
   refine Submodule.sum_mem _ fun a _ => Submodule.sum_mem _ fun b _ => ?_
   exact Submodule.mem_iSup_of_mem (a, b) (single_mem_rootSpace a b (B a b))
+
+/-- **The root space decomposition of `gl n R`**: the root spaces span `gl n R`. Over a domain
+Mathlib's `LieModule.iSupIndep_genWeightSpace` says the root spaces are independent, so this
+supremum is direct and `gl n R` is the direct sum of its root spaces.
+
+Mathlib's `LieModule.iSup_genWeightSpace_eq_top` proves the same spanning statement for a
+triangularizable module, but only in finite dimensions over a field; here the diagonal Cartan
+subalgebra is split, so no hypothesis on `R` is needed. -/
+theorem iSup_rootSpace_eq_top :
+    ⨆ χ : Module.Dual R (diagonalCartan R n), LieAlgebra.rootSpace (diagonalCartan R n) χ = ⊤ := by
+  rw [eq_top_iff, ← iSup_rootSpace_glRoot_eq_top]
+  exact iSup_le fun p =>
+    le_iSup (fun χ : Module.Dual R (diagonalCartan R n) =>
+      LieAlgebra.rootSpace (diagonalCartan R n) χ) (glRoot R n p.1 p.2)
 
 /-! ### The roots of `gl n R`, and the root spaces as lines -/
 
