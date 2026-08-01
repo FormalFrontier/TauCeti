@@ -70,7 +70,7 @@ private noncomputable def spinConjRange (x : spinGroup Q) :
 
 private theorem coe_spinConjRange_apply (x : spinGroup Q) (a : LinearMap.range (ι Q)) :
     (spinConjRange Q x a : CliffordAlgebra Q) = spinConj Q x (a : CliffordAlgebra Q) :=
-  rfl
+  by rw [spinConjRange, LinearEquiv.ofSubmodules_apply]
 
 private noncomputable def spinConjRangeHom :
     spinGroup Q →* LinearMap.range (ι Q) ≃ₗ[R] LinearMap.range (ι Q) where
