@@ -113,7 +113,14 @@ end Defs
 
 variable {p : ℕ} {G H : Type*} [Group G] [Group H]
 
-/-! ### Restating the definitions -/
+/-! ### Restating the definitions
+
+The four definitions above are `public` but not `@[expose]`, so downstream modules see their
+statements and not their bodies: neither `unfold IsPElementary` nor `simp only [IsPElementary]`
+is available there. The `Iff.rfl` lemmas in this section are therefore the only way to eliminate
+the predicates outside this file, as `Subgroup.isComplement'_def` is for `Subgroup.IsComplement'`
+and `isPrimePow_def` is for `IsPrimePow`.
+-/
 
 /-- `TauCeti.IsPElementary p G` unfolded: a decomposition of `G` into a cyclic subgroup of order
 prime to `p` and a complementary `p`-subgroup commuting with it elementwise. -/
