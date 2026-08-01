@@ -168,6 +168,12 @@ theorem rowLens_diagramOf {n : ℕ} (μ : n.Partition) :
     (diagramOf μ).rowLens = μ.parts.sort (· ≥ ·) :=
   partitionEquivYoungDiagram_apply_rowLens n μ
 
+/-- The row lengths of the Young diagram of a partition are its decreasingly sorted parts, padded
+by zeros. -/
+theorem rowLen_diagramOf {n : ℕ} (ν : n.Partition) (i : ℕ) :
+    (diagramOf ν).rowLen i = (ν.parts.sort (· ≥ ·)).getD i 0 := by
+  rw [← YoungDiagram.getD_rowLens, rowLens_diagramOf]
+
 /-- The conjugate of a partition is obtained by transposing its Young diagram. -/
 noncomputable def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=
   (partitionEquivYoungDiagram n).symm

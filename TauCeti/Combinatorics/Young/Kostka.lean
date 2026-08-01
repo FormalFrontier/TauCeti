@@ -27,26 +27,27 @@ rows.
 
 Mathlib's `SemistandardYoungTableau` fills the cells with natural numbers starting at `0`, so the
 alphabet here is `0, 1, 2, …` rather than the classical `1, 2, 3, …` and the content of the
-maximal tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen` on the nose.
+highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen` on the nose.
 
 ## Main definitions
 
 * `TauCeti.SemistandardYoungTableau.content`: the content (or weight) of a semistandard Young
   tableau, `content T i` being the number of cells filled with `i`.
-* `TauCeti.kostkaNumber`: the number of semistandard Young tableaux of a given shape and content.
-* `TauCeti.partitionKostkaNumber`: the Kostka number of two partitions of the same natural number,
-  the shape and the content being read off their Young diagrams.
+* `TauCeti.diagramKostkaNumber`: the number of semistandard Young tableaux of a given shape and
+  content.
+* `TauCeti.kostkaNumber`: the Kostka number of two partitions of the same natural number, the
+  shape and the content being read off their Young diagrams.
 
 ## Main results
 
 * `TauCeti.SemistandardYoungTableau.sum_content_le_sum_take_rowLens`: the partial sums of the
   content of a tableau of shape `μ` are bounded by those of the row lengths of `μ`.
 * `TauCeti.SemistandardYoungTableau.eq_highestWeight_of_content_eq_rowLen`: a tableau of shape `μ`
-  and content `μ.rowLen` is the maximal tableau.
+  and content `μ.rowLen` is the highest-weight tableau.
 * `TauCeti.SemistandardYoungTableau.finite_content_eq`: the tableaux of a fixed shape and content
   are finite, so the Kostka number counts them faithfully.
-* `TauCeti.kostkaNumber_rowLen`: `K_{μ μ} = 1`.
-* `TauCeti.partitionKostkaNumber_eq_zero_of_not_dominates`: `K_{μ ν} = 0` unless `μ` dominates `ν`.
+* `TauCeti.kostkaNumber_self`: `K_{μ μ} = 1`.
+* `TauCeti.kostkaNumber_eq_zero_of_not_dominates`: `K_{μ ν} = 0` unless `μ` dominates `ν`.
 
 ## References
 
@@ -143,8 +144,8 @@ theorem sum_content_le_sum_take_rowLens (T : _root_.SemistandardYoungTableau μ)
   rw [sum_content_eq_card_filter, YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
   exact Finset.card_le_card (filter_entry_lt_subset_filter_fst_lt T k)
 
-/-- The maximal tableau, whose `i`-th row consists of `i`s, has content the row lengths of its
-shape. -/
+/-- The highest-weight tableau, whose `i`-th row consists of `i`s, has content the row lengths of
+its shape. -/
 @[simp]
 theorem content_highestWeight (μ : YoungDiagram) :
     content (_root_.SemistandardYoungTableau.highestWeight μ) = μ.rowLen := by
@@ -155,13 +156,9 @@ theorem content_highestWeight (μ : YoungDiagram) :
     _root_.SemistandardYoungTableau.highestWeight_apply]
   aesop
 
-/-- **Uniqueness of the maximal tableau**: a semistandard tableau of shape `μ` whose content is the
-row lengths of `μ` has an `i` in every cell of row `i`, so it is
-`SemistandardYoungTableau.highestWeight μ`.
-
-Indeed the cells with entry smaller than `k` lie in the first `k` rows, and the two sets are
-counted by the same partial sums, so they agree; taking `k = i + 1` at a cell of row `i` bounds its
-entry by `i`, and `TauCeti.SemistandardYoungTableau.le_entry` bounds it below. -/
+/-- **Uniqueness of the highest-weight tableau**: a semistandard tableau of shape `μ` whose content
+is the row lengths of `μ` has an `i` in every cell of row `i`, so it is
+`SemistandardYoungTableau.highestWeight μ`. -/
 theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTableau μ}
     (h : content T = μ.rowLen) : T = _root_.SemistandardYoungTableau.highestWeight μ := by
   have key : ∀ i j : ℕ, (i, j) ∈ μ → T i j = i := by
@@ -181,8 +178,7 @@ theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTable
   · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_pos hij]
   · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_neg hij]
 
-/-- The semistandard tableaux of a fixed shape and content are finite: their entries all occur in
-any one of them, so there are only finitely many values to fill the finitely many cells with. -/
+/-- The semistandard tableaux of a fixed shape and content are finite. -/
 instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
     Finite {T : _root_.SemistandardYoungTableau μ // content T = w} := by
   by_cases hne : Nonempty {T : _root_.SemistandardYoungTableau μ // content T = w}
@@ -207,16 +203,32 @@ instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
 
 end SemistandardYoungTableau
 
-/-- The **Kostka number** `K_{μ w}`: the number of semistandard Young tableaux of shape `μ` whose
-content is `w`. -/
-noncomputable def kostkaNumber (μ : YoungDiagram) (w : ℕ → ℕ) : ℕ :=
+/-- The **Kostka number** `K_{μ w}` of a shape and a weight function: the number of semistandard
+Young tableaux of shape `μ` whose content is `w`. -/
+@[expose]
+noncomputable def diagramKostkaNumber (μ : YoungDiagram) (w : ℕ → ℕ) : ℕ :=
   Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w}
 
-/-- **The diagonal Kostka number is `1`**: the maximal tableau is the only semistandard tableau of
-shape `μ` whose content is the row lengths of `μ`. -/
+/-- The Kostka number of a shape and a weight function counts the tableaux of that shape and
+content. -/
+theorem diagramKostkaNumber_def (μ : YoungDiagram) (w : ℕ → ℕ) :
+    diagramKostkaNumber μ w =
+      Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w} :=
+  rfl
+
+/-- A Kostka number is nonzero exactly when a tableau of the prescribed shape and content
+exists. -/
+theorem diagramKostkaNumber_ne_zero_iff {μ : YoungDiagram} {w : ℕ → ℕ} :
+    diagramKostkaNumber μ w ≠ 0 ↔
+      ∃ T : _root_.SemistandardYoungTableau μ, SemistandardYoungTableau.content T = w := by
+  rw [diagramKostkaNumber_def, Nat.card_ne_zero]
+  exact ⟨fun h => h.1.elim fun T => ⟨T.1, T.2⟩, fun ⟨T, hT⟩ => ⟨⟨⟨T, hT⟩⟩, inferInstance⟩⟩
+
+/-- **The diagonal Kostka number is `1`**: the highest-weight tableau is the only semistandard
+tableau of shape `μ` whose content is the row lengths of `μ`. -/
 @[simp]
-theorem kostkaNumber_rowLen (μ : YoungDiagram) : kostkaNumber μ μ.rowLen = 1 := by
-  rw [kostkaNumber, Nat.card_eq_one_iff_unique]
+theorem diagramKostkaNumber_rowLen (μ : YoungDiagram) : diagramKostkaNumber μ μ.rowLen = 1 := by
+  rw [diagramKostkaNumber_def, Nat.card_eq_one_iff_unique]
   refine ⟨⟨fun T T' => Subtype.ext ?_⟩,
     ⟨⟨_root_.SemistandardYoungTableau.highestWeight μ,
       SemistandardYoungTableau.content_highestWeight μ⟩⟩⟩
@@ -226,47 +238,54 @@ theorem kostkaNumber_rowLen (μ : YoungDiagram) : kostkaNumber μ μ.rowLen = 1 
 /-- **The Kostka numbers are supported on the dominance order**: a nonzero Kostka number
 `K_{μ w}` forces every partial sum of `w` to be bounded by the corresponding partial sum of the
 row lengths of `μ`. -/
-theorem sum_le_sum_take_rowLens_of_kostkaNumber_ne_zero {μ : YoungDiagram} {w : ℕ → ℕ}
-    (h : kostkaNumber μ w ≠ 0) (k : ℕ) :
+theorem sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero {μ : YoungDiagram} {w : ℕ → ℕ}
+    (h : diagramKostkaNumber μ w ≠ 0) (k : ℕ) :
     ∑ i ∈ Finset.range k, w i ≤ (μ.rowLens.take k).sum := by
-  obtain ⟨T, hT⟩ := (Nat.card_ne_zero.mp h).1
+  obtain ⟨T, hT⟩ := diagramKostkaNumber_ne_zero_iff.mp h
   calc
     ∑ i ∈ Finset.range k, w i = ∑ i ∈ Finset.range k, SemistandardYoungTableau.content T i :=
       Finset.sum_congr rfl fun i _ => (congrFun hT i).symm
     _ ≤ (μ.rowLens.take k).sum := SemistandardYoungTableau.sum_content_le_sum_take_rowLens T k
 
-/-- The row lengths of the Young diagram of a partition are its decreasingly sorted parts, padded
-by zeros. -/
-theorem rowLen_diagramOf {n : ℕ} (ν : n.Partition) (i : ℕ) :
-    (diagramOf ν).rowLen i = (ν.parts.sort (· ≥ ·)).getD i 0 := by
-  rw [← YoungDiagram.getD_rowLens, rowLens_diagramOf]
+/-- The **Kostka number** `K_{μ ν}` of two partitions of the same natural number: the number of
+semistandard tableaux of the shape of `μ` whose content is the row lengths of the diagram of `ν`,
+that is (by `TauCeti.rowLen_diagramOf`), the tableaux using the entry `i` exactly as often as the
+`i`-th largest part of `ν` prescribes. -/
+@[expose]
+noncomputable def kostkaNumber {n : ℕ} (μ ν : n.Partition) : ℕ :=
+  diagramKostkaNumber (diagramOf μ) (diagramOf ν).rowLen
 
-/-- The **Kostka number of two partitions** of the same natural number: the number of semistandard
-tableaux of the shape of `μ` whose content is the row lengths of the diagram of `ν`, that is (by
-`TauCeti.rowLen_diagramOf`), the tableaux using the entry `i` exactly as often as the `i`-th
-largest part of `ν` prescribes. -/
-noncomputable def partitionKostkaNumber {n : ℕ} (μ ν : n.Partition) : ℕ :=
-  kostkaNumber (diagramOf μ) (diagramOf ν).rowLen
+/-- The Kostka number of two partitions is the Kostka number of their diagrams. -/
+theorem kostkaNumber_def {n : ℕ} (μ ν : n.Partition) :
+    kostkaNumber μ ν = diagramKostkaNumber (diagramOf μ) (diagramOf ν).rowLen :=
+  rfl
+
+/-- A Kostka number of two partitions is nonzero exactly when a tableau of shape `μ` and content
+`ν` exists. -/
+theorem kostkaNumber_ne_zero_iff {n : ℕ} {μ ν : n.Partition} :
+    kostkaNumber μ ν ≠ 0 ↔ ∃ T : _root_.SemistandardYoungTableau (diagramOf μ),
+      SemistandardYoungTableau.content T = (diagramOf ν).rowLen := by
+  rw [kostkaNumber_def, diagramKostkaNumber_ne_zero_iff]
 
 /-- A partition contributes exactly one tableau to its own Kostka number. -/
 @[simp]
-theorem partitionKostkaNumber_self {n : ℕ} (μ : n.Partition) : partitionKostkaNumber μ μ = 1 :=
-  kostkaNumber_rowLen _
+theorem kostkaNumber_self {n : ℕ} (μ : n.Partition) : kostkaNumber μ μ = 1 :=
+  diagramKostkaNumber_rowLen _
 
 /-- **The Kostka numbers are triangular for the dominance order**: `K_{μ ν} ≠ 0` forces `μ` to
 dominate `ν`. -/
-theorem dominates_of_partitionKostkaNumber_ne_zero {n : ℕ} {μ ν : n.Partition}
-    (h : partitionKostkaNumber μ ν ≠ 0) : Dominates μ ν := by
+theorem dominates_of_kostkaNumber_ne_zero {n : ℕ} {μ ν : n.Partition}
+    (h : kostkaNumber μ ν ≠ 0) : Dominates μ ν := by
   refine dominates_iff.mpr fun k => ?_
-  have hk := sum_le_sum_take_rowLens_of_kostkaNumber_ne_zero h k
+  have hk := sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero h k
   rwa [YoungDiagram.sum_range_rowLen_eq_card_filter_fst,
     ← YoungDiagram.sum_take_rowLens_eq_card_filter_fst, rowLens_diagramOf,
     rowLens_diagramOf] at hk
 
 /-- **The Kostka numbers vanish off the dominance order**: there is no semistandard tableau of
 shape `μ` and content `ν` unless `μ` dominates `ν`. -/
-theorem partitionKostkaNumber_eq_zero_of_not_dominates {n : ℕ} {μ ν : n.Partition}
-    (h : ¬ Dominates μ ν) : partitionKostkaNumber μ ν = 0 :=
-  not_not.mp fun h' => h (dominates_of_partitionKostkaNumber_ne_zero h')
+theorem kostkaNumber_eq_zero_of_not_dominates {n : ℕ} {μ ν : n.Partition}
+    (h : ¬ Dominates μ ν) : kostkaNumber μ ν = 0 :=
+  not_not.mp fun h' => h (dominates_of_kostkaNumber_ne_zero h')
 
 end TauCeti
