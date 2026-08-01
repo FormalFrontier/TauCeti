@@ -189,10 +189,21 @@ the two are related by `TauCeti.Algebra.deg_sq`, and the resulting degree count 
 caller who already knows it as a numeral, as in
 `TauCeti.Quaternion.tensorSelfAlgEquivMatrix`, gets that numeral back with no reindexing.
 
-This is `TauCeti.Algebra.tensorOpAlgEquivEnd` followed by `TauCeti.Algebra.endAlgEquivMatrix`. -/
+This is `TauCeti.Algebra.tensorOpAlgEquivEnd` followed by `TauCeti.Algebra.endAlgEquivMatrix`, as
+recorded by `TauCeti.Algebra.tensorOpAlgEquivMatrix_apply`. -/
 noncomputable def tensorOpAlgEquivMatrix {n : ℕ} (hn : Module.finrank K A = n) :
     A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
   (tensorOpAlgEquivEnd K A).trans (endAlgEquivMatrix K A hn)
+
+/-- The opposite isomorphism is the Azumaya isomorphism `TauCeti.Algebra.tensorOpAlgEquivEnd`
+followed by `TauCeti.Algebra.endAlgEquivMatrix`. This is the only handle on it: which basis
+`TauCeti.Algebra.endAlgEquivMatrix` chooses is deliberately opaque, so there is no lemma computing
+matrix entries. Together with `TauCeti.Algebra.tensorOpAlgEquivEnd_tmul_apply` it identifies the
+image of a pure tensor as the matrix of `x ↦ a * x * b.unop`. -/
+@[simp]
+theorem tensorOpAlgEquivMatrix_apply {n : ℕ} (hn : Module.finrank K A = n) (x : A ⊗[K] Aᵐᵒᵖ) :
+    tensorOpAlgEquivMatrix K A hn x = endAlgEquivMatrix K A hn (tensorOpAlgEquivEnd K A x) :=
+  AlgEquiv.trans_apply _ _ x
 
 end Algebra
 
