@@ -70,11 +70,17 @@ makes `𝔫⁺` the right object here regardless is that it is the span of the r
 (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup`), which over a domain away from characteristic
 two is the sum of the positive root spaces
 (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`), and which is what the highest
-weight theory downstream uses.
+weight theory downstream uses. Nilpotency is the standard name of `𝔫⁺` rather than a result
+established below: nothing here, and nothing in the highest weight targets this file serves, uses
+it.
 
 The index type carries both `[DecidableEq n]`, for the matrix units, and `[LinearOrder n]`, which
-is what "upper triangular" refers to; the two decidability structures are not identified, exactly as
-in Mathlib's `Mathlib/LinearAlgebra/Matrix/Block.lean`. Upper triangularity is Mathlib's
+is what "upper triangular" refers to. The decidable equality stays a hypothesis of its own rather
+than being read off `LinearOrder.toDecidableEq`, exactly as in Mathlib's
+`Matrix.BlockTriangular.det`: the ring structure on `Matrix n n R` and the matrix units depend on it
+as data, so pinning it to the one the order carries would leave everything here inapplicable in the
+ambient `[DecidableEq n]` contexts of `TauCeti.Algebra.Lie.GeneralLinear.Basic`, `.DiagonalCartan`
+and `.RootSpace`, which this file continues and consumes. Upper triangularity is Mathlib's
 `Matrix.BlockTriangular _ id`, and `TauCeti.upperTriangular` is literally Mathlib's associative
 subalgebra `Matrix.blockTriangularSubalgebra` read as a Lie subalgebra along
 `lieSubalgebraOfSubalgebra`. Strict upper triangularity is not a `Matrix.BlockTriangular` condition
