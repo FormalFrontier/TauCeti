@@ -49,31 +49,6 @@ variable (H : Type v) [Semiring H] [HopfAlgebra k H]
 
 attribute [local instance] Comodule.dual Comodule.tensor
 
-private theorem coact_eq_sum_basis_matrixCoefficient
-    {M : FGComoduleCat.{u, v, u} k H}
-    (b : Module.Basis (Module.Basis.ofVectorSpaceIndex k M) k M) (m : M) :
-    Comodule.coact (R := k) (C := H) (M := M) m =
-      ∑ i, b i ⊗ₜ[k]
-        Comodule.matrixCoefficient (R := k) (C := H) (b.coord i) m := by
-  classical
-  let e := TensorProduct.equivFinsuppOfBasisLeft (N := H) b
-  calc
-    Comodule.coact (R := k) (C := H) (M := M) m =
-        e.symm (e (Comodule.coact (R := k) (C := H) (M := M) m)) :=
-      ((e.symm_apply_apply _).symm)
-    _ = (e (Comodule.coact (R := k) (C := H) (M := M) m)).sum
-        fun i h ↦ b i ⊗ₜ[k] h :=
-      TensorProduct.equivFinsuppOfBasisLeft_symm_apply b _
-    _ = ∑ i, b i ⊗ₜ[k]
-        (e (Comodule.coact (R := k) (C := H) (M := M) m)) i :=
-      Finsupp.sum_fintype _ _ (by simp)
-    _ = ∑ i, b i ⊗ₜ[k]
-        Comodule.matrixCoefficient (R := k) (C := H) (b.coord i) m := by
-      congr 1
-      funext i
-      rw [TensorProduct.equivFinsuppOfBasisLeft_apply]
-      rfl
-
 private theorem dualCoact_coord_eq_sum
     {M : FGComoduleCat.{u, v, u} k H}
     (b : Module.Basis (Module.Basis.ofVectorSpaceIndex k M) k M)
@@ -173,7 +148,7 @@ private theorem tensorCoact_coevaluation_apply_one
   rw [coevaluation_apply_one]
   dsimp only [b]
   simp only [map_sum, Comodule.tensorCoact_tmul,
-    coact_eq_sum_basis_matrixCoefficient k H (Module.Basis.ofVectorSpace k M),
+    Comodule.coact_eq_sum_basis_matrixCoefficient (C := H) (Module.Basis.ofVectorSpace k M),
     Comodule.dual_coact,
     dualCoact_coord_eq_sum k H (Module.Basis.ofVectorSpace k M),
     TensorProduct.sum_tmul, TensorProduct.tmul_sum,
@@ -246,50 +221,6 @@ theorem dualCoevaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualCoevaluation k H M).hom.toLinearMap = coevaluation k M :=
   rfl
 
-private theorem associator_hom_toLinearMap
-    (M N P : FGComoduleCat.{u, v, u} k H) :
-    ((α_ M N P).hom).hom.toLinearMap =
-      (TensorProduct.assoc k M N P).toLinearMap := by
-  apply TensorProduct.ext_threefold
-  intro m n p
-  exact associator_hom_apply m n p
-
-private theorem associator_inv_toLinearMap
-    (M N P : FGComoduleCat.{u, v, u} k H) :
-    ((α_ M N P).inv).hom.toLinearMap =
-      (TensorProduct.assoc k M N P).symm.toLinearMap := by
-  apply TensorProduct.ext_threefold'
-  intro m n p
-  exact associator_inv_apply m n p
-
-private theorem leftUnitor_hom_toLinearMap
-    (M : FGComoduleCat.{u, v, u} k H) :
-    ((λ_ M).hom).hom.toLinearMap = (TensorProduct.lid k M).toLinearMap := by
-  apply TensorProduct.ext'
-  intro r m
-  exact leftUnitor_hom_apply r m
-
-private theorem leftUnitor_inv_toLinearMap
-    (M : FGComoduleCat.{u, v, u} k H) :
-    ((λ_ M).inv).hom.toLinearMap = (TensorProduct.lid k M).symm.toLinearMap := by
-  apply LinearMap.ext
-  intro m
-  exact leftUnitor_inv_apply m
-
-private theorem rightUnitor_hom_toLinearMap
-    (M : FGComoduleCat.{u, v, u} k H) :
-    ((ρ_ M).hom).hom.toLinearMap = (TensorProduct.rid k M).toLinearMap := by
-  apply TensorProduct.ext'
-  intro m r
-  exact rightUnitor_hom_apply m r
-
-private theorem rightUnitor_inv_toLinearMap
-    (M : FGComoduleCat.{u, v, u} k H) :
-    ((ρ_ M).inv).hom.toLinearMap = (TensorProduct.rid k M).symm.toLinearMap := by
-  apply LinearMap.ext
-  intro m
-  exact rightUnitor_inv_apply m
-
 /-- The first triangle identity for the antipode-twisted dual: coevaluation followed by
 evaluation is the identity on the dual, up to the unitors. -/
 theorem dualCoevaluation_dualEvaluation
@@ -298,36 +229,22 @@ theorem dualCoevaluation_dualEvaluation
     M' ◁ dualCoevaluation k H M ≫ (α_ M' M M').inv ≫
         dualEvaluation k H M ▷ M' =
       (ρ_ M').hom ≫ (λ_ M').inv := by
-  have hleft :
+  have h :
       ((dual k H M ◁ dualCoevaluation k H M ≫
           (α_ (dual k H M) M (dual k H M)).inv ≫
             dualEvaluation k H M ▷ dual k H M).hom).toLinearMap =
-        (contractLeft k M).rTensor (Module.Dual k M) ∘ₗ
-          (TensorProduct.assoc k (Module.Dual k M) M (Module.Dual k M)).symm.toLinearMap ∘ₗ
-            (coevaluation k M).lTensor (Module.Dual k M) := by
+        (((ρ_ (dual k H M)).hom ≫ (λ_ (dual k H M)).inv).hom).toLinearMap := by
     rw [← id_tensorHom, ← tensorHom_id]
     simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
       tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
       ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
       dualEvaluation_toLinearMap, associator_inv_toLinearMap,
-      dual_coe, LinearMap.lTensor_def, LinearMap.rTensor_def,
-      LinearMap.comp_assoc]
-  have hright :
-      (((ρ_ (dual k H M)).hom ≫ (λ_ (dual k H M)).inv).hom).toLinearMap =
-        (TensorProduct.lid k (Module.Dual k M)).symm.toLinearMap ∘ₗ
-          (TensorProduct.rid k (Module.Dual k M)).toLinearMap := by
-    simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
-      rightUnitor_hom_toLinearMap, leftUnitor_inv_toLinearMap]
+      rightUnitor_hom_toLinearMap, leftUnitor_inv_toLinearMap,
+      dual_coe, LinearMap.comp_assoc]
+    exact contractLeft_assoc_coevaluation k M
   apply ObjectProperty.hom_ext
   apply ComoduleCat.hom_ext
-  intro x
-  change
-    ((dual k H M ◁ dualCoevaluation k H M ≫
-        (α_ (dual k H M) M (dual k H M)).inv ≫
-          dualEvaluation k H M ▷ dual k H M).hom).toLinearMap x =
-      (((ρ_ (dual k H M)).hom ≫ (λ_ (dual k H M)).inv).hom).toLinearMap x
-  rw [hleft, hright]
-  exact LinearMap.congr_fun (contractLeft_assoc_coevaluation k M) x
+  exact fun x => LinearMap.congr_fun h x
 
 /-- The second triangle identity for the antipode-twisted dual: coevaluation followed by
 evaluation is the identity on the comodule, up to the unitors. -/
@@ -336,36 +253,22 @@ theorem dualEvaluation_dualCoevaluation
     dualCoevaluation k H M ▷ M ≫
         (α_ M (dual k H M) M).hom ≫ M ◁ dualEvaluation k H M =
       (λ_ M).hom ≫ (ρ_ M).inv := by
-  have hleft :
+  have h :
       ((dualCoevaluation k H M ▷ M ≫
           (α_ M (dual k H M) M).hom ≫
             M ◁ dualEvaluation k H M).hom).toLinearMap =
-        (contractLeft k M).lTensor M ∘ₗ
-          (TensorProduct.assoc k M (Module.Dual k M) M).toLinearMap ∘ₗ
-            (coevaluation k M).rTensor M := by
+        (((λ_ M).hom ≫ (ρ_ M).inv).hom).toLinearMap := by
     rw [← tensorHom_id, ← id_tensorHom]
     simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
       tensorHom_toLinearMap, ObjectProperty.FullSubcategory.id_hom,
       ComoduleCat.toLinearMap_id, dualCoevaluation_toLinearMap,
       dualEvaluation_toLinearMap, associator_hom_toLinearMap,
-      dual_coe, LinearMap.lTensor_def, LinearMap.rTensor_def,
-      LinearMap.comp_assoc]
-  have hright :
-      (((λ_ M).hom ≫ (ρ_ M).inv).hom).toLinearMap =
-        (TensorProduct.rid k M).symm.toLinearMap ∘ₗ
-          (TensorProduct.lid k M).toLinearMap := by
-    simp only [ObjectProperty.FullSubcategory.comp_hom, ComoduleCat.toLinearMap_comp,
-      leftUnitor_hom_toLinearMap, rightUnitor_inv_toLinearMap]
+      leftUnitor_hom_toLinearMap, rightUnitor_inv_toLinearMap,
+      dual_coe, LinearMap.comp_assoc]
+    exact contractLeft_assoc_coevaluation' k M
   apply ObjectProperty.hom_ext
   apply ComoduleCat.hom_ext
-  intro x
-  change
-    ((dualCoevaluation k H M ▷ M ≫
-        (α_ M (dual k H M) M).hom ≫
-          M ◁ dualEvaluation k H M).hom).toLinearMap x =
-      (((λ_ M).hom ≫ (ρ_ M).inv).hom).toLinearMap x
-  rw [hleft, hright]
-  exact LinearMap.congr_fun (contractLeft_assoc_coevaluation' k M) x
+  exact fun x => LinearMap.congr_fun h x
 
 /-- The antipode-twisted linear dual is an exact right dual of a finite-dimensional
 comodule. -/
