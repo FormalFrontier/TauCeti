@@ -20,8 +20,9 @@ forced: the commutator of the unnormalized expression acts by twice the desired 
 rotation.
 
 This is a shared generic prerequisite for the roadmap's Layer 3 standard-form normalization and
-the later Layer 9 arbitrary-form realization. It does not construct `soEquivBivector`, a
-transported Lie bracket, a Spin action, or the Layer 9 CAR worked instance.
+the later Layer 9 arbitrary-form realization. It constructs neither `soEquivBivector` nor
+`soEquivQuadratic`, and it does not construct a transported Lie bracket, a Spin action, or the
+Layer 9 CAR worked instance.
 
 ## Main definitions
 
