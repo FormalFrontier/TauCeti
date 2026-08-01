@@ -15,9 +15,9 @@ public import Mathlib.RepresentationTheory.Rep.Res
 This file collects restriction infrastructure shared by the induction files: how the restriction
 functors `Rep.resFunctor` and `Action.res` behave under composing and inverting the homomorphism
 restricted along, and, for a subgroup `S` of a group `G`, the restriction of a finite-dimensional
-representation of `G` to `S` together with its character.  Restricting along an *isomorphism*
-changes nothing essential: it identifies the lattices of invariant subspaces, and hence preserves
-irreducibility.
+representation of `G` to `S` together with its character.  Restricting along a surjective
+homomorphism changes nothing essential: it identifies the lattices of invariant subspaces, and
+hence preserves irreducibility.
 
 `FDRep k G` is by definition `Action (FGModuleCat k) G`, so Mathlib's `Action.res` along
 `S.subtype` *is* the restriction functor `FDRep k G ⥤ FDRep k S`; nothing has to be built.
@@ -31,16 +31,16 @@ restriction of an intertwiner, the functor laws, naturality — is used straight
 
 * `TauCeti.resFunctorEquiv`: restriction along a monoid isomorphism, as an equivalence of
   categories.
-* `TauCeti.resSubrepresentationOrderIso`: restriction along a monoid isomorphism identifies the
-  lattices of invariant subspaces.
+* `TauCeti.resSubrepresentationOrderIso`: restriction along a surjective monoid homomorphism
+  identifies the lattices of invariant subspaces.
 * `TauCeti.resFDRep`: restriction of a finite-dimensional representation to a subgroup.
 
 ## Main statements
 
 * `TauCeti.resFunctor_comp`, `TauCeti.actionRes_comp`: restriction along a composite is
   restriction twice over.
-* `TauCeti.isIrreducible_comp_equiv_iff`: restriction along a monoid isomorphism preserves
-  irreducibility.
+* `TauCeti.isIrreducible_comp_surjective_iff`: restriction along a surjective monoid homomorphism
+  preserves irreducibility, with `TauCeti.isIrreducible_comp_equiv_iff` as the isomorphism case.
 
 ## Implementation notes
 
@@ -119,34 +119,36 @@ section Subrepresentation
 
 variable [Semiring k] {H K : Type*} [Monoid H] [Monoid K] {V : Type*} [AddCommMonoid V] [Module k V]
 
-/-- Restriction along a monoid isomorphism identifies invariant subspaces: a subspace invariant
-under `ρ ∘ e` is invariant under `ρ`, because `e` is onto.  Both directions keep the underlying
-submodule, so this is the order isomorphism `resFunctorEquiv` induces on subobjects. -/
-def resSubrepresentationOrderIso (e : H ≃* K) (ρ : Representation k K V) :
-    Subrepresentation (ρ.comp (e : H →* K)) ≃o Subrepresentation ρ where
+/-- Restriction along a surjective monoid homomorphism identifies invariant subspaces: a subspace
+invariant under `ρ ∘ f` is invariant under `ρ`, because `f` is onto.  Both directions keep the
+underlying submodule. -/
+def resSubrepresentationOrderIso (f : H →* K) (hf : Function.Surjective f)
+    (ρ : Representation k K V) :
+    Subrepresentation (ρ.comp f) ≃o Subrepresentation ρ where
   toFun S :=
     { toSubmodule := S.toSubmodule
       apply_mem_toSubmodule := fun h v hv ↦ by
-        simpa using S.apply_mem_toSubmodule (e.symm h) hv }
+        obtain ⟨g, rfl⟩ := hf h
+        exact S.apply_mem_toSubmodule g hv }
   invFun S :=
     { toSubmodule := S.toSubmodule
-      apply_mem_toSubmodule := fun h v hv ↦ S.apply_mem_toSubmodule (e h) hv }
+      apply_mem_toSubmodule := fun h v hv ↦ S.apply_mem_toSubmodule (f h) hv }
   left_inv S := by ext; rfl
   right_inv S := by ext; rfl
   map_rel_iff' := by rfl
 
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
-theorem resSubrepresentationOrderIso_apply_toSubmodule (e : H ≃* K) (ρ : Representation k K V)
-    (S : Subrepresentation (ρ.comp (e : H →* K))) :
-    (resSubrepresentationOrderIso e ρ S).toSubmodule = S.toSubmodule :=
+theorem resSubrepresentationOrderIso_apply_toSubmodule (f : H →* K) (hf : Function.Surjective f)
+    (ρ : Representation k K V) (S : Subrepresentation (ρ.comp f)) :
+    (resSubrepresentationOrderIso f hf ρ S).toSubmodule = S.toSubmodule :=
   (rfl)
 
 /-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
-theorem resSubrepresentationOrderIso_symm_apply_toSubmodule (e : H ≃* K)
-    (ρ : Representation k K V) (S : Subrepresentation ρ) :
-    ((resSubrepresentationOrderIso e ρ).symm S).toSubmodule = S.toSubmodule :=
+theorem resSubrepresentationOrderIso_symm_apply_toSubmodule (f : H →* K)
+    (hf : Function.Surjective f) (ρ : Representation k K V) (S : Subrepresentation ρ) :
+    ((resSubrepresentationOrderIso f hf ρ).symm S).toSubmodule = S.toSubmodule :=
   (rfl)
 
 end Subrepresentation
@@ -155,14 +157,21 @@ section Irreducible
 
 variable [Field k] {H K : Type*} [Monoid H] [Monoid K]
 
-/-- Restriction along a monoid isomorphism preserves irreducibility: irreducibility is simplicity
-of the lattice of invariant subspaces, and `resSubrepresentationOrderIso` identifies the two
-lattices. -/
+/-- Restriction along a surjective monoid homomorphism preserves irreducibility: irreducibility is
+simplicity of the lattice of invariant subspaces, and `resSubrepresentationOrderIso` identifies
+the two lattices. -/
+@[simp]
+theorem isIrreducible_comp_surjective_iff {V : Type*} [AddCommGroup V] [Module k V]
+    (f : H →* K) (hf : Function.Surjective f) (ρ : Representation k K V) :
+    Representation.IsIrreducible (ρ.comp f) ↔ Representation.IsIrreducible ρ :=
+  (resSubrepresentationOrderIso f hf ρ).isSimpleOrder_iff
+
+/-- Restriction along a monoid isomorphism preserves irreducibility. -/
 @[simp]
 theorem isIrreducible_comp_equiv_iff {V : Type*} [AddCommGroup V] [Module k V] (e : H ≃* K)
     (ρ : Representation k K V) :
     Representation.IsIrreducible (ρ.comp (e : H →* K)) ↔ Representation.IsIrreducible ρ :=
-  (resSubrepresentationOrderIso e ρ).isSimpleOrder_iff
+  isIrreducible_comp_surjective_iff e.toMonoidHom e.surjective ρ
 
 end Irreducible
 

@@ -178,7 +178,8 @@ def conjRepSubrepresentationOrderIso [Semiring k] (s : G) {H : Subgroup G} (A : 
   -- Unfold `conjRep` and `conjRepFunctor` to expose Mathlib's definition of the restricted action.
   change Subrepresentation (A.ρ.comp (conjSubgroupEquiv s H).toMonoidHom) ≃o
     Subrepresentation A.ρ
-  exact resSubrepresentationOrderIso (conjSubgroupEquiv s H) A.ρ
+  exact resSubrepresentationOrderIso (conjSubgroupEquiv s H).toMonoidHom
+    (conjSubgroupEquiv s H).surjective A.ρ
 
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
@@ -187,7 +188,7 @@ theorem conjRepSubrepresentationOrderIso_apply_toSubmodule [Semiring k] (s : G)
     HEq (conjRepSubrepresentationOrderIso s A S).toSubmodule S.toSubmodule := by
   unfold conjRepSubrepresentationOrderIso
   exact heq_of_eq (resSubrepresentationOrderIso_apply_toSubmodule
-    (conjSubgroupEquiv s H) A.ρ S)
+    (conjSubgroupEquiv s H).toMonoidHom (conjSubgroupEquiv s H).surjective A.ρ S)
 
 /-- The inverse invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
@@ -196,7 +197,7 @@ theorem conjRepSubrepresentationOrderIso_symm_apply_toSubmodule [Semiring k] (s 
     HEq ((conjRepSubrepresentationOrderIso s A).symm S).toSubmodule S.toSubmodule := by
   unfold conjRepSubrepresentationOrderIso
   exact heq_of_eq (resSubrepresentationOrderIso_symm_apply_toSubmodule
-    (conjSubgroupEquiv s H) A.ρ S)
+    (conjSubgroupEquiv s H).toMonoidHom (conjSubgroupEquiv s H).surjective A.ρ S)
 
 /-- A conjugate representation is irreducible exactly when the original representation is. -/
 @[simp]
