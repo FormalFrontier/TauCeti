@@ -80,8 +80,9 @@ subalgebra `Matrix.blockTriangularSubalgebra` read as a Lie subalgebra along
 `lieSubalgebraOfSubalgebra`. Strict upper triangularity is not a `Matrix.BlockTriangular` condition
 for any block map, so `TauCeti.strictUpperTriangular` is spelled out. It is closed under the
 associative product as well as under the bracket (that closure is the `key` step of its `lie_mem'`
-field), and so is a nonunital associative subalgebra; but it does not contain `1` unless `n` is
-empty, so it is not a Mathlib `Subalgebra`, which is unital, and it cannot be read off one along
+field), and so is a nonunital associative subalgebra; but over a nontrivial `R` it does not contain
+`1` unless `n` is empty (over the trivial ring `1 = 0` lies in it for every `n`), so it is not a
+Mathlib `Subalgebra`, which is unital, and it cannot be read off one along
 `lieSubalgebraOfSubalgebra` the way `TauCeti.upperTriangular` is.
 
 Everything here holds over an arbitrary commutative ring. The single exception is
