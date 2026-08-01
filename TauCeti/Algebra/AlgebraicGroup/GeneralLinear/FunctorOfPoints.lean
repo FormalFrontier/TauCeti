@@ -61,22 +61,6 @@ section Pointwise
 
 variable {A : Type w} [CommRing A] [Algebra R A]
 
-private theorem coordinateRing_algHom_ext
-    {f g : CoordinateRing R n →ₐ[R] A}
-    (h : f.comp (coordinateRingMap R n) = g.comp (coordinateRingMap R n)) : f = g := by
-  apply AlgHom.ext
-  have h' : f.toRingHom = g.toRingHom := by
-    apply IsLocalization.ringHom_ext
-      (Submonoid.powers
-        (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)))
-    apply RingHom.ext
-    intro x
-    change f (algebraMap (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n) x) =
-      g (algebraMap (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n) x)
-    have hx := DFunLike.congr_fun h x
-    simpa only [AlgHom.comp_apply, coordinateRingMap_apply] using hx
-  exact RingHom.congr_fun h'
-
 /-- The matrix of values of a point on the localized generic matrix. -/
 @[expose] noncomputable def matrixOfPoint
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) : Matrix (Fin n) (Fin n) A :=
@@ -139,7 +123,7 @@ private theorem localizedEvaluationOfGeneralLinear_coordinateRingMap
     (g : Matrix.GeneralLinearGroup (Fin n) A) (x : MatrixMonoid.CoordinateRing R n) :
     localizedEvaluationOfGeneralLinear (R := R) n g (coordinateRingMap R n x) =
       evaluationOfGeneralLinear (R := R) n g x := by
-  simp [localizedEvaluationOfGeneralLinear, coordinateRingMap_apply]
+  simp [localizedEvaluationOfGeneralLinear, coordinateRingMap]
 
 /-- The point of the bundled general linear coordinate Hopf algebra obtained by evaluating the
 generic matrix at an invertible matrix. -/
@@ -199,7 +183,7 @@ theorem generalLinearToPoint_pointToGeneralLinear
   have hraw :
       localizedEvaluationOfGeneralLinear (R := R) n (pointToGeneralLinear n f) =
         f.ofConv.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom := by
-    apply coordinateRing_algHom_ext n
+    apply algHom_ext_away R n
     apply MvPolynomial.algHom_ext
     rintro ⟨i, j⟩
     simp only [AlgHom.comp_apply]
@@ -289,19 +273,33 @@ end Naturality
 
 section Functor
 
+/-- The group-valued functor sending a commutative `R`-algebra to its general linear group, before
+the universe lift used by `generalLinearFunctor`. -/
+noncomputable abbrev generalLinearFunctorUnlifted :
+    CommAlgCat.{w} R ⥤ GrpCat.{w} where
+  obj A := GrpCat.of (Matrix.GeneralLinearGroup (Fin n) (A : Type w))
+  map phi := GrpCat.ofHom (Matrix.GeneralLinearGroup.map phi.hom.toRingHom)
+  map_id _ := rfl
+  map_comp _ _ := rfl
+
+/-- The object part of `generalLinearFunctorUnlifted` is the ordinary general linear group. -/
+theorem generalLinearFunctorUnlifted_obj (A : CommAlgCat.{w} R) :
+    (generalLinearFunctorUnlifted (R := R) n).obj A =
+      GrpCat.of (Matrix.GeneralLinearGroup (Fin n) A) :=
+  rfl
+
+/-- The morphism part of `generalLinearFunctorUnlifted` applies the value-algebra map entrywise. -/
+theorem generalLinearFunctorUnlifted_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
+    (generalLinearFunctorUnlifted (R := R) n).map phi =
+      GrpCat.ofHom (Matrix.GeneralLinearGroup.map phi.hom.toRingHom) :=
+  rfl
+
 /-- The group-valued functor sending a commutative `R`-algebra to its general linear group and
 a value-algebra morphism to entrywise application. Its values are universe-lifted so that its
 codomain agrees with the generic Hopf-algebra points functor. -/
 @[expose] noncomputable def generalLinearFunctor :
-    CommAlgCat.{w} R ⥤ GrpCat.{max u w} where
-  obj A := GrpCat.of
-    (ULift.{u, w} (Matrix.GeneralLinearGroup (Fin n) (A : Type w)))
-  map phi := GrpCat.ofHom
-    (MulEquiv.ulift.symm.toMonoidHom.comp
-      ((Matrix.GeneralLinearGroup.map phi.hom.toRingHom).comp
-        MulEquiv.ulift.toMonoidHom))
-  map_id _ := rfl
-  map_comp _ _ := rfl
+    CommAlgCat.{w} R ⥤ GrpCat.{max u w} :=
+  generalLinearFunctorUnlifted (R := R) n ⋙ GrpCat.uliftFunctor.{u, w}
 
 /-- The object part of `generalLinearFunctor` is the universe lift of the ordinary general
 linear group. -/
