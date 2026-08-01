@@ -55,18 +55,25 @@ unit disc: `‖c‖ + s < 1` because
 `1 - ‖c‖ - s = (1 - ‖a‖) * (1 - t) * (1 - t * ‖a‖) / D`
 (`TauCeti.norm_pseudoHyperbolicCenter_add_pseudoHyperbolicRadius_lt_one`). So the restriction to
 the disc in the set equalities is a genuine description of a subset of `𝔻`, not an artefact.
-Third, both ends of the range `-1 ≤ t ≤ 1` are allowed wherever they are true. The endpoint
-`t = 1` is admitted by the *open* ball (`TauCeti.pseudoHyperbolicExpr_lt_iff_mem_ball`,
-`TauCeti.sep_ball_pseudoHyperbolicExpr_lt_eq_ball`): the denominator `D` stays positive, and
-`c = 0`, `s = 1`, so the description degenerates to the statement that `p (·, a) < 1` cuts out all
-of `𝔻`. Only the closed disc and the circle need `t < 1`: at `t = 1` they would contain the unit
-circle, which the pseudo-hyperbolic conditions never reach. At the other end a negative `t` is
-admitted throughout and is vacuous on both sides: `p` is nonnegative, so the pseudo-hyperbolic
-condition is unsatisfiable, and the Euclidean radius `s` is then negative
-(`TauCeti.pseudoHyperbolicRadius_neg`), so the Euclidean disc is empty as well. The lower bound
-`-1 ≤ t` is needed: for `t < -1` the denominator `D` can be negative and `s` positive again, and
-the Euclidean disc is no longer empty. It is exactly this range that makes the statements about
-the hyperbolic metric unconditional in `R`, since `Real.tanh R` always lies in `(-1, 1)`.
+Third, each statement asks of the radius only what it uses. The *pointwise* comparisons
+(`TauCeti.pseudoHyperbolicExpr_lt_iff_mem_ball` and its `≤`/`=` companions) place no bound on `t`
+at all: they assume `0 < D`, which is what turns the identity into a comparison of discs. That is
+strictly weaker than `-1 ≤ t ≤ 1`, which implies it (`TauCeti.one_sub_sq_mul_sq_norm_pos`) and is
+how every application below discharges it; for `a = 0`, where `D = 1`, every real `t` is allowed.
+Positivity of `D` cannot be dropped: for `t < -1` it can fail, and then `s` is positive while the
+pseudo-hyperbolic condition is still unsatisfiable. A negative `t` is admitted and is vacuous on
+both sides: `p` is nonnegative, so the pseudo-hyperbolic condition is unsatisfiable, and the
+Euclidean radius `s` is then negative (`TauCeti.pseudoHyperbolicRadius_neg`), so the Euclidean
+disc is empty as well.
+
+The *set-level* statements do restrict `t`, because they describe the intersection with `𝔻` and
+so need the Euclidean disc to lie inside it. The endpoint `t = 1` is admitted by the open ball
+(`TauCeti.sep_ball_pseudoHyperbolicExpr_lt_eq_ball`, on `-1 ≤ t ≤ 1`), where `c = 0` and `s = 1`
+and the description degenerates to the statement that `p (·, a) < 1` cuts out all of `𝔻`; the
+closed disc and the circle need `t < 1`, since at `t = 1` they would contain the unit circle,
+which the pseudo-hyperbolic conditions never reach. It is exactly this range that makes the
+statements about the hyperbolic metric unconditional in `R`, since `Real.tanh R` always lies in
+`(-1, 1)`.
 
 The Euclidean centre `c` is *not* `a` unless `a = 0` or `t = 0`: a hyperbolic ball is a Euclidean
 disc, but an off-centre one, its Euclidean centre pulled towards the origin by the factor
@@ -178,73 +185,60 @@ noncomputable def pseudoHyperbolicCenter (a : ℂ) (t : ℝ) : ℂ :=
 noncomputable def pseudoHyperbolicRadius (a : ℂ) (t : ℝ) : ℝ :=
   t * (1 - ‖a‖ ^ 2) / (1 - t ^ 2 * ‖a‖ ^ 2)
 
-/-- The defining formula for `TauCeti.pseudoHyperbolicCenter`. -/
-lemma pseudoHyperbolicCenter_def (a : ℂ) (t : ℝ) :
-    pseudoHyperbolicCenter a t = ((1 - t ^ 2) / (1 - t ^ 2 * ‖a‖ ^ 2)) • a := (rfl)
-
-/-- The defining formula for `TauCeti.pseudoHyperbolicRadius`. -/
-lemma pseudoHyperbolicRadius_def (a : ℂ) (t : ℝ) :
-    pseudoHyperbolicRadius a t = t * (1 - ‖a‖ ^ 2) / (1 - t ^ 2 * ‖a‖ ^ 2) := (rfl)
-
 /-- Balls centred at the origin are unmoved: the Euclidean centre of a pseudo-hyperbolic ball
 about `0` is `0`. -/
 @[simp]
 lemma pseudoHyperbolicCenter_zero_left (t : ℝ) : pseudoHyperbolicCenter 0 t = 0 := by
-  simp [pseudoHyperbolicCenter_def]
+  simp [pseudoHyperbolicCenter]
 
 /-- Balls centred at the origin have their Euclidean radius equal to the pseudo-hyperbolic one,
 so that at the origin the two descriptions of a ball coincide. -/
 @[simp]
 lemma pseudoHyperbolicRadius_zero_left (t : ℝ) : pseudoHyperbolicRadius 0 t = t := by
-  simp [pseudoHyperbolicRadius_def]
+  simp [pseudoHyperbolicRadius]
 
 /-- A ball of radius `0` is centred at its hyperbolic centre. -/
 @[simp]
 lemma pseudoHyperbolicCenter_zero_right (a : ℂ) : pseudoHyperbolicCenter a 0 = a := by
-  simp [pseudoHyperbolicCenter_def]
+  simp [pseudoHyperbolicCenter]
 
 /-- A ball of radius `0` has Euclidean radius `0`. -/
 @[simp]
 lemma pseudoHyperbolicRadius_zero_right (a : ℂ) : pseudoHyperbolicRadius a 0 = 0 := by
-  simp [pseudoHyperbolicRadius_def]
+  simp [pseudoHyperbolicRadius]
 
-/-- The denominator `1 - t ^ 2 * ‖a‖ ^ 2` is positive for a disc centre and a radius in `[0, 1]`.
-This is what makes the Apollonius identity a genuine comparison of discs rather than a degenerate
-one. -/
-lemma one_sub_sq_mul_sq_norm_pos (ha : ‖a‖ < 1) (ht₀ : 0 ≤ t) (ht₁ : t ≤ 1) :
+/-- The denominator `1 - t ^ 2 * ‖a‖ ^ 2` is positive for a disc centre and a radius in
+`[-1, 1]`. Its positivity — the hypothesis the pointwise results below actually run on — is what
+makes the Apollonius identity a genuine comparison of discs rather than a degenerate one. -/
+lemma one_sub_sq_mul_sq_norm_pos (ha : ‖a‖ < 1) (ht₀ : -1 ≤ t) (ht₁ : t ≤ 1) :
     0 < 1 - t ^ 2 * ‖a‖ ^ 2 := by
-  have hn : 0 ≤ ‖a‖ := norm_nonneg a
-  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
-  nlinarith [mul_nonneg (by nlinarith : (0 : ℝ) ≤ 1 - t ^ 2) (sq_nonneg ‖a‖)]
-
-/-- The Euclidean radius of a pseudo-hyperbolic ball is nonnegative. -/
-lemma pseudoHyperbolicRadius_nonneg (ha : ‖a‖ < 1) (ht₀ : 0 ≤ t) (ht₁ : t ≤ 1) :
-    0 ≤ pseudoHyperbolicRadius a t := by
-  have hn : 0 ≤ ‖a‖ := norm_nonneg a
-  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
-  exact div_nonneg (mul_nonneg ht₀ (by linarith))
-    (one_sub_sq_mul_sq_norm_pos ha ht₀ ht₁).le
-
-/-- The Euclidean radius of a pseudo-hyperbolic ball of positive radius is positive. -/
-lemma pseudoHyperbolicRadius_pos (ha : ‖a‖ < 1) (ht₀ : 0 < t) (ht₁ : t ≤ 1) :
-    0 < pseudoHyperbolicRadius a t := by
-  have hn : 0 ≤ ‖a‖ := norm_nonneg a
-  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
-  exact div_pos (mul_pos ht₀ (by linarith))
-    (one_sub_sq_mul_sq_norm_pos ha ht₀.le ht₁)
-
-/-- A negative pseudo-hyperbolic radius `t ∈ [-1, 0)` gives a negative Euclidean radius, so that
-the Euclidean disc it describes is empty — as is the pseudo-hyperbolic ball of radius `t`. -/
-lemma pseudoHyperbolicRadius_neg (ha : ‖a‖ < 1) (ht₀ : -1 ≤ t) (ht₁ : t < 0) :
-    pseudoHyperbolicRadius a t < 0 := by
   have hn : 0 ≤ ‖a‖ := norm_nonneg a
   have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
   have ht2 : t ^ 2 ≤ 1 := by
     nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + t) (by linarith : (0 : ℝ) ≤ 1 - t)]
-  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := by
-    nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 1 - t ^ 2) (sq_nonneg ‖a‖)]
-  rw [pseudoHyperbolicRadius_def]
-  exact div_neg_of_neg_of_pos (mul_neg_of_neg_of_pos ht₁ (by linarith)) hD
+  nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 1 - t ^ 2) (sq_nonneg ‖a‖)]
+
+/-- The Euclidean radius of a pseudo-hyperbolic ball of nonnegative radius is nonnegative. -/
+lemma pseudoHyperbolicRadius_nonneg (ha : ‖a‖ < 1) (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) (ht : 0 ≤ t) :
+    0 ≤ pseudoHyperbolicRadius a t := by
+  have hn : 0 ≤ ‖a‖ := norm_nonneg a
+  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
+  exact div_nonneg (mul_nonneg ht (by linarith)) hD.le
+
+/-- The Euclidean radius of a pseudo-hyperbolic ball of positive radius is positive. -/
+lemma pseudoHyperbolicRadius_pos (ha : ‖a‖ < 1) (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) (ht : 0 < t) :
+    0 < pseudoHyperbolicRadius a t := by
+  have hn : 0 ≤ ‖a‖ := norm_nonneg a
+  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
+  exact div_pos (mul_pos ht (by linarith)) hD
+
+/-- A negative pseudo-hyperbolic radius gives a negative Euclidean radius, so that the Euclidean
+disc it describes is empty — as is the pseudo-hyperbolic ball of radius `t`. -/
+lemma pseudoHyperbolicRadius_neg (ha : ‖a‖ < 1) (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) (ht : t < 0) :
+    pseudoHyperbolicRadius a t < 0 := by
+  have hn : 0 ≤ ‖a‖ := norm_nonneg a
+  have hn2 : ‖a‖ ^ 2 < 1 := by nlinarith
+  exact div_neg_of_neg_of_pos (mul_neg_of_neg_of_pos ht (by linarith)) hD
 
 /-! ### The Euclidean disc lies inside the unit disc -/
 
@@ -256,16 +250,16 @@ lemma norm_pseudoHyperbolicCenter_add_pseudoHyperbolicRadius_lt_one
     (ha : ‖a‖ < 1) (ht₀ : 0 ≤ t) (ht₁ : t < 1) :
     ‖pseudoHyperbolicCenter a t‖ + pseudoHyperbolicRadius a t < 1 := by
   have hn : 0 ≤ ‖a‖ := norm_nonneg a
-  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht₀ ht₁.le
+  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha (by linarith) ht₁.le
   have hnum : 0 ≤ (1 - t ^ 2) / (1 - t ^ 2 * ‖a‖ ^ 2) := by
     apply div_nonneg _ hD.le
     nlinarith
   have hcnorm : ‖pseudoHyperbolicCenter a t‖ = (1 - t ^ 2) / (1 - t ^ 2 * ‖a‖ ^ 2) * ‖a‖ := by
-    rw [pseudoHyperbolicCenter_def, norm_smul, Real.norm_eq_abs, abs_of_nonneg hnum]
+    rw [pseudoHyperbolicCenter, norm_smul, Real.norm_eq_abs, abs_of_nonneg hnum]
   have hkey : 0 < (1 - ‖a‖) * (1 - t) * (1 - t * ‖a‖) := by
     refine mul_pos (mul_pos (by linarith) (by linarith)) ?_
     nlinarith
-  rw [hcnorm, pseudoHyperbolicRadius_def, div_mul_eq_mul_div, ← add_div, div_lt_one hD]
+  rw [hcnorm, pseudoHyperbolicRadius, div_mul_eq_mul_div, ← add_div, div_lt_one hD]
   nlinarith [hkey]
 
 /-- The closed Euclidean disc describing a pseudo-hyperbolic ball is contained in the open unit
@@ -286,9 +280,9 @@ lemma ball_pseudoHyperbolicCenter_subset_ball (ha : ‖a‖ < 1) (ht₀ : 0 ≤ 
   · exact ball_subset_closedBall.trans (closedBall_pseudoHyperbolicCenter_subset_ball ha ht₀ ht)
   · subst ht
     have hne : 1 - ‖a‖ ^ 2 ≠ 0 := by nlinarith [norm_nonneg a]
-    have hc : pseudoHyperbolicCenter a 1 = 0 := by simp [pseudoHyperbolicCenter_def]
+    have hc : pseudoHyperbolicCenter a 1 = 0 := by simp [pseudoHyperbolicCenter]
     have hs : pseudoHyperbolicRadius a 1 = 1 := by
-      rw [pseudoHyperbolicRadius_def, one_pow, one_mul, one_mul, div_self hne]
+      rw [pseudoHyperbolicRadius, one_pow, one_mul, one_mul, div_self hne]
     intro w hw
     rwa [hc, hs] at hw
 
@@ -326,7 +320,7 @@ theorem sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul (a z : ℂ) (t : ℝ)
       = 1 + ‖a‖ ^ 2 * ‖z‖ ^ 2 - 2 * (z * conj a).re := by
     simp only [← Complex.normSq_eq_norm_sq, Complex.normSq_sub, Complex.normSq_one,
       Complex.normSq_conj, map_mul, Complex.conj_conj, one_mul, hre]
-  rw [pseudoHyperbolicCenter_def, pseudoHyperbolicRadius_def, hshift, hsub, hmoebius]
+  rw [pseudoHyperbolicCenter, pseudoHyperbolicRadius, hshift, hsub, hmoebius]
   obtain ⟨D, hDdef⟩ : ∃ D : ℝ, D = 1 - t ^ 2 * ‖a‖ ^ 2 := ⟨_, rfl⟩
   rw [← hDdef] at hD ⊢
   field_simp
@@ -342,88 +336,90 @@ theorem sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul (a z : ℂ) (t : ℝ)
 Clearing the Moebius denominator — legitimate because `z` and `a` lie in the disc — turns the
 left-hand condition into `‖z - a‖ < t * ‖1 - conj a * z‖`, and squaring both sides makes
 `TauCeti.sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul` applicable; the factor
-`1 - t ^ 2 * ‖a‖ ^ 2` it produces is positive, so it does not affect the sign.
+`1 - t ^ 2 * ‖a‖ ^ 2` it produces is positive by hypothesis, so it does not affect the sign.
 
-Both endpoints are allowed: at `t = 1` the two sides say that `z` lies in the unit disc, and for
-`t < 0` both are empty, the Euclidean radius being negative. -/
+Positivity of that factor is all that is asked of `t`; it holds in particular for every
+`t ∈ [-1, 1]` (`TauCeti.one_sub_sq_mul_sq_norm_pos`), and for every real `t` when `a = 0`. A
+negative `t` is allowed and makes both sides empty, the Euclidean radius being negative. -/
 theorem pseudoHyperbolicExpr_lt_iff_mem_ball (ha : ‖a‖ < 1) (hz : ‖z‖ < 1)
-    (ht₀ : -1 ≤ t) (ht₁ : t ≤ 1) :
+    (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) :
     pseudoHyperbolicExpr z a < t ↔
       z ∈ ball (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
   rcases lt_or_ge t 0 with ht | ht
   · rw [mem_ball]
     exact iff_of_false (not_lt.2 (ht.le.trans (pseudoHyperbolicExpr_nonneg z a)))
-      (not_lt.2 ((pseudoHyperbolicRadius_neg ha ht₀ ht).le.trans dist_nonneg))
-  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht ht₁
+      (not_lt.2 ((pseudoHyperbolicRadius_neg ha hD ht).le.trans dist_nonneg))
   have hdenpos : 0 < ‖(1 : ℂ) - conj a * z‖ :=
     norm_pos_iff.2 (one_sub_conj_mul_ne_zero_of_norm_lt_one hz ha)
   have hid := sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul a z t hD.ne'
   rw [pseudoHyperbolicExpr_def, norm_div, div_lt_iff₀ hdenpos, mem_ball, dist_eq_norm,
     ← sq_lt_sq₀ (norm_nonneg _) (by positivity),
-    ← sq_lt_sq₀ (norm_nonneg _) (pseudoHyperbolicRadius_nonneg ha ht ht₁), mul_pow]
+    ← sq_lt_sq₀ (norm_nonneg _) (pseudoHyperbolicRadius_nonneg ha hD ht), mul_pow]
   constructor <;> intro h <;> nlinarith
 
 /-- **The closed pseudo-hyperbolic ball is a closed Euclidean disc**, the `≤` companion of
-`TauCeti.pseudoHyperbolicExpr_lt_iff_mem_ball` with the same proof, and like it valid on the whole
-range `-1 ≤ t ≤ 1`: at `t = 1` the closed Euclidean disc is the closed unit disc, and for `t < 0`
-both sides are empty. -/
+`TauCeti.pseudoHyperbolicExpr_lt_iff_mem_ball` with the same proof, and under the same hypothesis:
+at `t = 1` the closed Euclidean disc is the closed unit disc, and for `t < 0` both sides are
+empty. -/
 theorem pseudoHyperbolicExpr_le_iff_mem_closedBall (ha : ‖a‖ < 1) (hz : ‖z‖ < 1)
-    (ht₀ : -1 ≤ t) (ht₁ : t ≤ 1) :
+    (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) :
     pseudoHyperbolicExpr z a ≤ t ↔
       z ∈ closedBall (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
   rcases lt_or_ge t 0 with ht | ht
   · rw [mem_closedBall]
     exact iff_of_false (not_le.2 (ht.trans_le (pseudoHyperbolicExpr_nonneg z a)))
-      (not_le.2 ((pseudoHyperbolicRadius_neg ha ht₀ ht).trans_le dist_nonneg))
-  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht ht₁
+      (not_le.2 ((pseudoHyperbolicRadius_neg ha hD ht).trans_le dist_nonneg))
   have hdenpos : 0 < ‖(1 : ℂ) - conj a * z‖ :=
     norm_pos_iff.2 (one_sub_conj_mul_ne_zero_of_norm_lt_one hz ha)
   have hid := sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul a z t hD.ne'
   rw [pseudoHyperbolicExpr_def, norm_div, div_le_iff₀ hdenpos, mem_closedBall, dist_eq_norm,
     ← sq_le_sq₀ (norm_nonneg _) (by positivity),
-    ← sq_le_sq₀ (norm_nonneg _) (pseudoHyperbolicRadius_nonneg ha ht ht₁), mul_pow]
+    ← sq_le_sq₀ (norm_nonneg _) (pseudoHyperbolicRadius_nonneg ha hD ht), mul_pow]
   constructor <;> intro h <;> nlinarith
 
 /-- **The pseudo-hyperbolic circle is a Euclidean circle.** A point `z` of the unit disc satisfies
 `pseudoHyperbolicExpr z a = t` exactly when it lies on the Euclidean circle of centre
 `TauCeti.pseudoHyperbolicCenter a t` and radius `TauCeti.pseudoHyperbolicRadius a t`: the level
 set is what the closed disc has and the open one has not. The endpoint `t = 1` is allowed, and
-there — as for `t < 0` — both sides are empty. -/
+there — as for `t < 0` — both sides are empty.
+
+Both directions are the antisymmetry of `≤` (`le_antisymm_iff`), with the missing inequality
+supplied by the `<` statement through `not_lt`. -/
 theorem pseudoHyperbolicExpr_eq_iff_mem_sphere (ha : ‖a‖ < 1) (hz : ‖z‖ < 1)
-    (ht₀ : -1 ≤ t) (ht₁ : t ≤ 1) :
+    (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2) :
     pseudoHyperbolicExpr z a = t ↔
       z ∈ sphere (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
-  have hle := pseudoHyperbolicExpr_le_iff_mem_closedBall ha hz ht₀ ht₁
-  have hlt := pseudoHyperbolicExpr_lt_iff_mem_ball ha hz ht₀ ht₁
+  have hle := pseudoHyperbolicExpr_le_iff_mem_closedBall ha hz hD
+  have hlt := pseudoHyperbolicExpr_lt_iff_mem_ball ha hz hD
   rw [mem_closedBall] at hle
   rw [mem_ball] at hlt
   rw [mem_sphere]
-  refine ⟨fun h => le_antisymm (hle.1 h.le) (not_lt.1 fun hd => ?_),
-    fun h => le_antisymm (hle.2 h.le) (not_lt.1 fun hp => ?_)⟩
-  · exact absurd (hlt.2 hd) (by rw [h]; exact lt_irrefl t)
-  · exact absurd (hlt.1 hp) (by rw [h]; exact lt_irrefl _)
+  exact le_antisymm_iff.trans
+    ((and_congr hle (not_lt.symm.trans ((not_congr hlt).trans not_lt))).trans le_antisymm_iff.symm)
 
 /-- The hyperbolic centre of a ball of positive radius lies in the Euclidean disc describing it —
 off centre, but inside. -/
-theorem mem_ball_pseudoHyperbolicCenter (ha : ‖a‖ < 1) (ht₀ : 0 < t) (ht₁ : t ≤ 1) :
+theorem mem_ball_pseudoHyperbolicCenter (ha : ‖a‖ < 1) (hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2)
+    (ht : 0 < t) :
     a ∈ ball (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) :=
-  (pseudoHyperbolicExpr_lt_iff_mem_ball ha ha (by linarith) ht₁).1 (by simpa using ht₀)
+  (pseudoHyperbolicExpr_lt_iff_mem_ball ha ha hD).1 (by simpa using ht)
 
 /-- **A pseudo-hyperbolic ball of the unit disc is a Euclidean disc**, in set form. The endpoint
 `t = 1` is allowed, and there both sides are the unit disc; for `t < 0` both sides are empty. -/
 theorem sep_ball_pseudoHyperbolicExpr_lt_eq_ball (ha : ‖a‖ < 1) (ht₀ : -1 ≤ t) (ht₁ : t ≤ 1) :
     {z ∈ ball (0 : ℂ) 1 | pseudoHyperbolicExpr z a < t}
       = ball (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
+  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht₀ ht₁
   rcases lt_or_ge t 0 with ht | ht
-  · rw [ball_eq_empty.2 (pseudoHyperbolicRadius_neg ha ht₀ ht).le]
+  · rw [ball_eq_empty.2 (pseudoHyperbolicRadius_neg ha hD ht).le]
     exact eq_empty_of_forall_notMem fun w hw =>
       absurd hw.2 (not_lt.2 (ht.le.trans (pseudoHyperbolicExpr_nonneg w a)))
   ext w
   simp only [mem_ball_zero_iff]
-  refine ⟨fun h => (pseudoHyperbolicExpr_lt_iff_mem_ball ha h.1 ht₀ ht₁).1 h.2, fun h => ?_⟩
+  refine ⟨fun h => (pseudoHyperbolicExpr_lt_iff_mem_ball ha h.1 hD).1 h.2, fun h => ?_⟩
   have hw : ‖w‖ < 1 :=
     mem_ball_zero_iff.1 <| ball_pseudoHyperbolicCenter_subset_ball ha ht ht₁ h
-  exact ⟨hw, (pseudoHyperbolicExpr_lt_iff_mem_ball ha hw ht₀ ht₁).2 h⟩
+  exact ⟨hw, (pseudoHyperbolicExpr_lt_iff_mem_ball ha hw hD).2 h⟩
 
 /-- **A closed pseudo-hyperbolic ball of the unit disc is a closed Euclidean disc**, in set
 form. For `t < 0` both sides are empty. -/
@@ -431,33 +427,34 @@ theorem sep_ball_pseudoHyperbolicExpr_le_eq_closedBall (ha : ‖a‖ < 1) (ht₀
     (ht₁ : t < 1) :
     {z ∈ ball (0 : ℂ) 1 | pseudoHyperbolicExpr z a ≤ t}
       = closedBall (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
+  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht₀ ht₁.le
   rcases lt_or_ge t 0 with ht | ht
-  · rw [closedBall_eq_empty.2 (pseudoHyperbolicRadius_neg ha ht₀ ht)]
+  · rw [closedBall_eq_empty.2 (pseudoHyperbolicRadius_neg ha hD ht)]
     exact eq_empty_of_forall_notMem fun w hw =>
       absurd hw.2 (not_le.2 (ht.trans_le (pseudoHyperbolicExpr_nonneg w a)))
   ext w
   simp only [mem_ball_zero_iff]
-  refine ⟨fun h => (pseudoHyperbolicExpr_le_iff_mem_closedBall ha h.1 ht₀ ht₁.le).1 h.2,
-    fun h => ?_⟩
+  refine ⟨fun h => (pseudoHyperbolicExpr_le_iff_mem_closedBall ha h.1 hD).1 h.2, fun h => ?_⟩
   have hw : ‖w‖ < 1 :=
     mem_ball_zero_iff.1 <| closedBall_pseudoHyperbolicCenter_subset_ball ha ht ht₁ h
-  exact ⟨hw, (pseudoHyperbolicExpr_le_iff_mem_closedBall ha hw ht₀ ht₁.le).2 h⟩
+  exact ⟨hw, (pseudoHyperbolicExpr_le_iff_mem_closedBall ha hw hD).2 h⟩
 
 /-- **A pseudo-hyperbolic circle of the unit disc is a Euclidean circle**: the level set is the
 difference of the closed and the open disc. For `t < 0` both sides are empty. -/
 theorem sep_ball_pseudoHyperbolicExpr_eq_eq_sphere (ha : ‖a‖ < 1) (ht₀ : -1 ≤ t) (ht₁ : t < 1) :
     {z ∈ ball (0 : ℂ) 1 | pseudoHyperbolicExpr z a = t}
       = sphere (pseudoHyperbolicCenter a t) (pseudoHyperbolicRadius a t) := by
+  have hD : 0 < 1 - t ^ 2 * ‖a‖ ^ 2 := one_sub_sq_mul_sq_norm_pos ha ht₀ ht₁.le
   rcases lt_or_ge t 0 with ht | ht
-  · rw [sphere_eq_empty_of_neg (pseudoHyperbolicRadius_neg ha ht₀ ht)]
+  · rw [sphere_eq_empty_of_neg (pseudoHyperbolicRadius_neg ha hD ht)]
     exact eq_empty_of_forall_notMem fun w hw =>
       absurd (hw.2 ▸ pseudoHyperbolicExpr_nonneg w a) (not_le.2 ht)
   ext w
   simp only [mem_ball_zero_iff]
-  refine ⟨fun h => (pseudoHyperbolicExpr_eq_iff_mem_sphere ha h.1 ht₀ ht₁.le).1 h.2, fun h => ?_⟩
+  refine ⟨fun h => (pseudoHyperbolicExpr_eq_iff_mem_sphere ha h.1 hD).1 h.2, fun h => ?_⟩
   have hw : ‖w‖ < 1 := mem_ball_zero_iff.1 <| closedBall_pseudoHyperbolicCenter_subset_ball
     ha ht ht₁ (sphere_subset_closedBall h)
-  exact ⟨hw, (pseudoHyperbolicExpr_eq_iff_mem_sphere ha hw ht₀ ht₁.le).2 h⟩
+  exact ⟨hw, (pseudoHyperbolicExpr_eq_iff_mem_sphere ha hw hD).2 h⟩
 
 /-! ### Hyperbolic balls -/
 
@@ -553,6 +550,13 @@ theorem convex_sep_ball_hyperbolicDist_lt (ha : ‖a‖ < 1) :
 
 namespace PoincareDisc
 
+/-- The denominator of the Apollonius identity is positive at any point of the Poincaré disc and
+any hyperbolic radius, since `Real.tanh` takes values in `(-1, 1)`. -/
+private lemma one_sub_sq_tanh_mul_sq_norm_pos (x : PoincareDisc) (R : ℝ) :
+    0 < 1 - Real.tanh R ^ 2 * ‖(toUnitDisc x : ℂ)‖ ^ 2 :=
+  one_sub_sq_mul_sq_norm_pos (toUnitDisc x).norm_lt_one (Real.neg_one_lt_tanh R).le
+    (Real.tanh_lt_one R).le
+
 /-- **The balls of the Poincaré metric space, read on the Euclidean disc.** A point of
 `TauCeti.PoincareDisc` lies in the hyperbolic ball of centre `x` and radius `R` exactly when its
 Euclidean coordinate lies in the corresponding Euclidean disc; for `R < 0` both sides are
@@ -565,7 +569,7 @@ theorem mem_ball_iff (x w : PoincareDisc) :
   exact (hyperbolicDist_lt_iff_pseudoHyperbolicExpr_lt_tanh (toUnitDisc x).norm_lt_one
     (toUnitDisc w).norm_lt_one).trans
     (pseudoHyperbolicExpr_lt_iff_mem_ball (toUnitDisc x).norm_lt_one (toUnitDisc w).norm_lt_one
-      (Real.neg_one_lt_tanh R).le (Real.tanh_lt_one R).le)
+      (one_sub_sq_tanh_mul_sq_norm_pos x R))
 
 /-- **The closed balls of the Poincaré metric space, read on the Euclidean disc**, the `≤`
 companion of `TauCeti.PoincareDisc.mem_ball_iff`. -/
@@ -577,7 +581,7 @@ theorem mem_closedBall_iff (x w : PoincareDisc) :
   exact (hyperbolicDist_le_iff_pseudoHyperbolicExpr_le_tanh (toUnitDisc x).norm_lt_one
     (toUnitDisc w).norm_lt_one).trans
     (pseudoHyperbolicExpr_le_iff_mem_closedBall (toUnitDisc x).norm_lt_one
-      (toUnitDisc w).norm_lt_one (Real.neg_one_lt_tanh R).le (Real.tanh_lt_one R).le)
+      (toUnitDisc w).norm_lt_one (one_sub_sq_tanh_mul_sq_norm_pos x R))
 
 /-- **The spheres of the Poincaré metric space, read on the Euclidean disc**, the `=` companion of
 `TauCeti.PoincareDisc.mem_ball_iff`. -/
@@ -589,7 +593,7 @@ theorem mem_sphere_iff (x w : PoincareDisc) :
   exact (hyperbolicDist_eq_iff_pseudoHyperbolicExpr_eq_tanh (toUnitDisc x).norm_lt_one
     (toUnitDisc w).norm_lt_one).trans
     (pseudoHyperbolicExpr_eq_iff_mem_sphere (toUnitDisc x).norm_lt_one
-      (toUnitDisc w).norm_lt_one (Real.neg_one_lt_tanh R).le (Real.tanh_lt_one R).le)
+      (toUnitDisc w).norm_lt_one (one_sub_sq_tanh_mul_sq_norm_pos x R))
 
 end PoincareDisc
 
