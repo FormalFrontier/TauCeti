@@ -13,9 +13,11 @@ public import TauCeti.Combinatorics.Enumerative.PerfectMatching
 
 A **Brauer diagram** on `k` strands is a perfect matching of the `2 * k` boundary points
 `Fin k ⊕ Fin k`, where `Sum.inl i` is the `i`-th bottom point and `Sum.inr j` the `j`-th top
-point; the matched pairs are the arcs of the diagram. Brauer diagrams index the basis of the
-Brauer algebra `B_k(δ)`, the centralizer of the orthogonal and symplectic groups acting on a
-tensor power.
+point; the matched pairs are the arcs of the diagram. Brauer diagrams index a basis of the
+Brauer algebra `B_k(δ)`, which acts on the `k`-th tensor power of the defining representation
+of an orthogonal or symplectic group. The image of that action is the centralizer of the
+group, but the action is faithful, so that `B_k(δ)` is itself that centralizer, only when the
+defining representation is large enough relative to `k`.
 
 Every boundary point lies on exactly one of three kinds of arc: a **through strand**, joining
 a bottom point to a top point; a **cap**, joining two bottom points; or a **cup**, joining two
@@ -35,7 +37,8 @@ diagrams in all.
 * `TauCeti.card_brauerDiagram`: there are `(2 * k - 1)‼` Brauer diagrams on `k` strands.
 * `TauCeti.BrauerDiagram.isThrough_or_isCap_or_isCup`, together with the three exclusivity
   lemmas: every boundary point lies on an arc of exactly one of the three kinds.
-* `TauCeti.card_isThrough`: there are `k !` diagrams all of whose arcs go through.
+* `TauCeti.card_brauerDiagram_forall_isThrough`: there are `k !` diagrams all of whose arcs go
+  through.
 
 ## References
 
@@ -61,9 +64,8 @@ abbrev BrauerDiagram (k : ℕ) := PerfectMatching (Fin k ⊕ Fin k)
 theorem card_brauerDiagram (k : ℕ) : Fintype.card (BrauerDiagram k) = (2 * k - 1)‼ :=
   card_perfectMatching (Fin k ⊕ Fin k) (by simp [Fintype.card_sum, two_mul])
 
-/-- On two strands there are three Brauer diagrams: the identity, the crossing, and the
-cap-cup. -/
-theorem card_brauerDiagram_two : Fintype.card (BrauerDiagram 2) = 3 := by
+-- On two strands there are three Brauer diagrams: the identity, the crossing, and the cap-cup.
+example : Fintype.card (BrauerDiagram 2) = 3 := by
   rw [card_brauerDiagram]
   decide
 
@@ -73,17 +75,14 @@ variable {k : ℕ} (D : BrauerDiagram k) (x : Fin k ⊕ Fin k)
 
 /-- The boundary point `x` lies on a **through strand**: it is matched with a point on the
 opposite boundary. -/
-@[expose]
 def IsThrough : Prop := (D.val x).isLeft ≠ x.isLeft
 
 /-- The boundary point `x` lies on a **cap**: it is a bottom point matched with another bottom
 point. -/
-@[expose]
 def IsCap : Prop := x.isLeft ∧ (D.val x).isLeft
 
 /-- The boundary point `x` lies on a **cup**: it is a top point matched with another top
 point. -/
-@[expose]
 def IsCup : Prop := x.isRight ∧ (D.val x).isRight
 
 instance : Decidable (D.IsThrough x) :=
@@ -92,6 +91,15 @@ instance : Decidable (D.IsThrough x) :=
 instance : Decidable (D.IsCap x) := inferInstanceAs (Decidable (x.isLeft ∧ (D.val x).isLeft))
 
 instance : Decidable (D.IsCup x) := inferInstanceAs (Decidable (x.isRight ∧ (D.val x).isRight))
+
+/-- Lying on a through strand means being matched across the two boundaries. -/
+theorem isThrough_def : D.IsThrough x ↔ (D.val x).isLeft ≠ x.isLeft := Iff.rfl
+
+/-- Lying on a cap means being a bottom point matched with a bottom point. -/
+theorem isCap_def : D.IsCap x ↔ x.isLeft ∧ (D.val x).isLeft := Iff.rfl
+
+/-- Lying on a cup means being a top point matched with a top point. -/
+theorem isCup_def : D.IsCup x ↔ x.isRight ∧ (D.val x).isRight := Iff.rfl
 
 /-- Every boundary point lies on a through strand, on a cap, or on a cup. -/
 theorem isThrough_or_isCap_or_isCup : D.IsThrough x ∨ D.IsCap x ∨ D.IsCup x := by
@@ -118,16 +126,19 @@ theorem not_isCup_of_isCap (h : D.IsCap x) : ¬D.IsCup x := by
   · simp [IsCap] at h
 
 /-- Lying on a through strand is a property of the arc, not of the endpoint chosen. -/
+@[simp]
 theorem isThrough_val : D.IsThrough (D.val x) ↔ D.IsThrough x := by
   simp only [IsThrough, D.apply_apply]
   exact ne_comm
 
 /-- Lying on a cap is a property of the arc, not of the endpoint chosen. -/
+@[simp]
 theorem isCap_val : D.IsCap (D.val x) ↔ D.IsCap x := by
   simp only [IsCap, D.apply_apply]
   exact and_comm
 
 /-- Lying on a cup is a property of the arc, not of the endpoint chosen. -/
+@[simp]
 theorem isCup_val : D.IsCup (D.val x) ↔ D.IsCup x := by
   simp only [IsCup, D.apply_apply]
   exact and_comm
@@ -221,8 +232,16 @@ noncomputable def permToBrauerEquiv (k : ℕ) :
   left_inv σ := BrauerDiagram.throughPerm_permToBrauer σ
   right_inv D := Subtype.ext (BrauerDiagram.permToBrauer_throughPerm D.2)
 
+@[simp]
+theorem permToBrauerEquiv_apply {k : ℕ} (σ : Equiv.Perm (Fin k)) :
+    (permToBrauerEquiv k σ : BrauerDiagram k) = permToBrauer σ := rfl
+
+@[simp]
+theorem permToBrauerEquiv_symm_apply {k : ℕ} (D : {D : BrauerDiagram k // ∀ x, D.IsThrough x}) :
+    (permToBrauerEquiv k).symm D = BrauerDiagram.throughPerm D.1 D.2 := rfl
+
 /-- The Brauer diagrams with no cap and no cup are `k !` in number. -/
-theorem card_isThrough (k : ℕ) :
+theorem card_brauerDiagram_forall_isThrough (k : ℕ) :
     Fintype.card {D : BrauerDiagram k // ∀ x, D.IsThrough x} = k ! := by
   rw [← Fintype.card_congr (permToBrauerEquiv k), Fintype.card_perm, Fintype.card_fin]
 

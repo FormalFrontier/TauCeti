@@ -6,10 +6,8 @@ Authors: Claude
 module
 
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Data.Nat.Factorial.DoubleFactorial
-public import Mathlib.GroupTheory.Perm.Support
 
 /-!
 # Perfect matchings of a finite type
@@ -80,9 +78,11 @@ instance [DecidableEq α] [Fintype α] : DecidableEq (PerfectMatching α) :=
 variable {a b : α} {D : PerfectMatching α}
 
 /-- A perfect matching is an involution. -/
+@[simp]
 theorem apply_apply (D : PerfectMatching α) (x : α) : D.val (D.val x) = x := D.prop.1 x
 
 /-- A perfect matching moves every point. -/
+@[simp]
 theorem apply_ne (D : PerfectMatching α) (x : α) : D.val x ≠ x := D.prop.2 x
 
 /-- The two ends of an arc determine each other. -/
@@ -90,7 +90,7 @@ theorem apply_eq_of_apply_eq (D : PerfectMatching α) {x y : α} (h : D.val x = 
     D.val y = x := by rw [← h, D.apply_apply]
 
 /-- A perfect matching that joins `a` to `b` preserves the complement of `{a, b}`. -/
-theorem apply_mem_iff (hab : D.val a = b) (x : α) :
+theorem apply_ne_and_ne_iff (hab : D.val a = b) (x : α) :
     (D.val x ≠ a ∧ D.val x ≠ b) ↔ (x ≠ a ∧ x ≠ b) := by
   have hba : D.val b = a := D.apply_eq_of_apply_eq hab
   constructor
@@ -105,7 +105,7 @@ theorem apply_mem_iff (hab : D.val a = b) (x : α) :
 @[expose]
 def restrict (D : PerfectMatching α) (hab : D.val a = b) :
     PerfectMatching {x : α // x ≠ a ∧ x ≠ b} :=
-  ⟨D.val.subtypePerm (apply_mem_iff hab), fun x => Subtype.ext (D.apply_apply x.val),
+  ⟨D.val.subtypePerm (apply_ne_and_ne_iff hab), fun x => Subtype.ext (D.apply_apply x.val),
     fun x h => D.apply_ne x.val (congrArg Subtype.val h)⟩
 
 @[simp]
@@ -118,12 +118,11 @@ variable [DecidableEq α]
 
 /-- The permutation of `α` that acts as `E` away from `{a, b}` and swaps `a` with `b`; it
 underlies `PerfectMatching.extend`. -/
-@[expose]
-def extendPerm (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) : Equiv.Perm α :=
+private def extendPerm (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) : Equiv.Perm α :=
   Equiv.swap a b * Equiv.Perm.ofSubtype E.val
 
 /-- Away from `{a, b}`, the extended permutation acts through `E`. -/
-theorem extendPerm_apply_of_mem (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) {x : α}
+private theorem extendPerm_apply_of_mem (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) {x : α}
     (hx : x ≠ a ∧ x ≠ b) : extendPerm E x = (E.val ⟨x, hx⟩ : α) := by
   have hmem : Equiv.Perm.ofSubtype E.val x = (E.val ⟨x, hx⟩ : α) :=
     Equiv.Perm.ofSubtype_apply_of_mem E.val hx
@@ -131,22 +130,19 @@ theorem extendPerm_apply_of_mem (E : PerfectMatching {x : α // x ≠ a ∧ x �
   rw [extendPerm, Equiv.Perm.mul_apply, hmem, Equiv.swap_apply_of_ne_of_ne hne.1 hne.2]
 
 /-- The extended permutation sends `a` to `b`. -/
-@[simp]
-theorem extendPerm_apply_left (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
+private theorem extendPerm_apply_left (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     extendPerm E a = b := by
   rw [extendPerm, Equiv.Perm.mul_apply,
     Equiv.Perm.ofSubtype_apply_of_not_mem E.val (by simp), Equiv.swap_apply_left]
 
 /-- The extended permutation sends `b` to `a`. -/
-@[simp]
-theorem extendPerm_apply_right (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
+private theorem extendPerm_apply_right (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     extendPerm E b = a := by
   rw [extendPerm, Equiv.Perm.mul_apply,
     Equiv.Perm.ofSubtype_apply_of_not_mem E.val (by simp), Equiv.swap_apply_right]
 
 /-- The perfect matching of `α` obtained from a perfect matching of the complement of
 `{a, b}` by adjoining the arc joining `a` to `b`. -/
-@[expose]
 def extend (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) : PerfectMatching α := by
   refine ⟨extendPerm E, fun x => ?_, fun x => ?_⟩
   · by_cases hx : x ≠ a ∧ x ≠ b
@@ -162,30 +158,36 @@ def extend (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b})
       · rw [not_ne_iff.mp hx, extendPerm_apply_left]; exact hab.symm
       · rw [not_ne_iff.mp hx, extendPerm_apply_right]; exact hab
 
-@[simp]
-theorem extend_apply (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) (x : α) :
-    (extend hab E).val x = extendPerm E x := rfl
+/-- Away from `{a, b}`, the extended matching acts through `E`. -/
+theorem extend_apply_of_mem (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) {x : α}
+    (hx : x ≠ a ∧ x ≠ b) : (extend hab E).val x = (E.val ⟨x, hx⟩ : α) :=
+  extendPerm_apply_of_mem E hx
 
 /-- Adjoining the arc `{a, b}` sends `a` to `b`. -/
+@[simp]
 theorem extend_apply_left (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     (extend hab E).val a = b := extendPerm_apply_left E
+
+/-- Adjoining the arc `{a, b}` sends `b` to `a`. -/
+@[simp]
+theorem extend_apply_right (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
+    (extend hab E).val b = a := extendPerm_apply_right E
 
 /-- Adjoining an arc and then restricting it away recovers the smaller matching. -/
 theorem restrict_extend (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     (extend hab E).restrict (extend_apply_left hab E) = E := by
   refine Subtype.ext (Equiv.ext fun x => Subtype.ext ?_)
-  rw [restrict_apply_coe, extend_apply, extendPerm_apply_of_mem E x.2]
+  rw [restrict_apply_coe, extend_apply_of_mem hab E x.2]
 
 /-- Restricting away an arc and then adjoining it back recovers the original matching. -/
 theorem extend_restrict (hab : a ≠ b) (D : PerfectMatching α) (h : D.val a = b) :
     extend hab (D.restrict h) = D := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
-  rw [extend_apply]
   by_cases hx : x ≠ a ∧ x ≠ b
-  · rw [extendPerm_apply_of_mem (D.restrict h) hx, restrict_apply_coe]
+  · rw [extend_apply_of_mem hab _ hx, restrict_apply_coe]
   · rcases not_and_or.mp hx with hx | hx
-    · rw [not_ne_iff.mp hx, extendPerm_apply_left]; exact h.symm
-    · rw [not_ne_iff.mp hx, extendPerm_apply_right]
+    · rw [not_ne_iff.mp hx, extend_apply_left]; exact h.symm
+    · rw [not_ne_iff.mp hx, extend_apply_right]
       exact (D.apply_eq_of_apply_eq h).symm
 
 /-- Restricting away an arc and adjoining it back are mutually inverse: the perfect matchings
@@ -200,6 +202,19 @@ def fiberEquiv (hab : a ≠ b) :
 end Extend
 
 end PerfectMatching
+
+/-- Deleting two distinct points from a finite type drops its cardinality by two. -/
+private theorem card_subtype_ne_ne {α : Type u} [Fintype α] [DecidableEq α] {a b : α}
+    (hab : a ≠ b) : Fintype.card {x : α // x ≠ a ∧ x ≠ b} = Fintype.card α - 2 := by
+  have hfilter : (Finset.univ.filter fun x : α => x ≠ a ∧ x ≠ b)
+      = (Finset.univ.erase a).erase b := by
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_erase]
+    tauto
+  rw [Fintype.card_subtype, hfilter,
+    Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hab.symm, Finset.mem_univ _⟩),
+    Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ]
+  omega
 
 private theorem even_card_aux :
     ∀ (n : ℕ) {α : Type u} [Fintype α], Fintype.card α = n →
@@ -216,15 +231,7 @@ private theorem even_card_aux :
     have hab : a ≠ D.val a := (D.apply_ne a).symm
     have hlt : 1 < Fintype.card α := Fintype.one_lt_card_iff_nontrivial.mpr ⟨a, D.val a, hab⟩
     have hsub : Fintype.card {x : α // x ≠ a ∧ x ≠ D.val a} = n - 2 := by
-      rw [Fintype.card_subtype,
-        show (Finset.univ.filter fun x : α => x ≠ a ∧ x ≠ D.val a)
-            = (Finset.univ.erase a).erase (D.val a) by
-          ext x
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_erase]
-          tauto,
-        Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hab.symm, Finset.mem_univ _⟩),
-        Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]
-      omega
+      rw [card_subtype_ne_ne hab, hcard]
     obtain ⟨r, hr⟩ := ih (n - 2) (by omega) hsub ⟨D.restrict rfl⟩
     exact ⟨r + 1, by omega⟩
 
@@ -260,14 +267,7 @@ private theorem card_perfectMatching_aux :
       intro b hb
       have hba : b ≠ a := (Finset.mem_erase.mp hb).1
       have hsub : Fintype.card {x : α // x ≠ a ∧ x ≠ b} = 2 * m := by
-        rw [Fintype.card_subtype,
-          show (Finset.univ.filter fun x : α => x ≠ a ∧ x ≠ b)
-              = (Finset.univ.erase a).erase b by
-            ext x
-            simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_erase]
-            tauto,
-          Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hba, Finset.mem_univ _⟩),
-          Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]
+        rw [card_subtype_ne_ne hba.symm, hcard]
         omega
       calc (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card
           = Fintype.card {D : PerfectMatching α // D.val a = b} := (Fintype.card_subtype _).symm
@@ -277,9 +277,10 @@ private theorem card_perfectMatching_aux :
     have hmem : ∀ D ∈ (Finset.univ : Finset (PerfectMatching α)),
         D.val a ∈ Finset.univ.erase a :=
       fun D _ => Finset.mem_erase.mpr ⟨D.apply_ne a, Finset.mem_univ _⟩
+    have hodd : 2 * (m + 1) - 1 = 2 * m + 1 := by omega
     rw [← Finset.card_univ, Finset.card_eq_sum_card_fiberwise hmem, Finset.sum_const_nat key,
-      Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard,
-      show 2 * (m + 1) - 1 = 2 * m + 1 from by omega, Nat.doubleFactorial_add_one]
+      Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard, hodd,
+      Nat.doubleFactorial_add_one]
 
 /-- **The number of perfect matchings of a finite type.** A type with `2 * m` elements has
 exactly `(2 * m - 1)‼ = 1 · 3 · 5 ⋯ (2 * m - 1)` perfect matchings. -/
