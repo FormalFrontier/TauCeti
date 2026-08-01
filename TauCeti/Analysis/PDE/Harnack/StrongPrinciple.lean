@@ -10,19 +10,18 @@ public import TauCeti.Analysis.PDE.Harnack.Planar
 # The strong maximum principle for planar harmonic functions
 
 This file globalizes the zero case of the planar Harnack inequality from a disk to an arbitrary
-open preconnected domain.  For a nonnegative harmonic function, the zero set is open by the local
-disk result and its complement is open by continuity.  Preconnectedness therefore propagates one
-zero throughout the domain.
+open preconnected domain.  The local disk result gives vanishing on a neighborhood, and Mathlib's
+`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq` propagates that equality throughout the
+preconnected domain.
 
 Applying this zero-propagation result to differences gives the strong comparison principle and
 the strong maximum and minimum principles: two ordered harmonic functions that meet at an
 interior point agree everywhere, and a harmonic function with a local extremum in the domain is
-constant there.  For the latter, the comparison principle gives constancy on a disk and Mathlib's
-real-analytic identity principle propagates it throughout the domain.
+constant there.  For the latter, the comparison principle first gives constancy on a disk.
 
-This is the planar harmonic case of Lane C, item 13 in the PDE roadmap.  The argument is the
-standard Harnack proof of the strong principle; see Evans, *Partial Differential Equations*,
-Chapter 2, Section 2.2.
+This is the planar harmonic case of Lane C, item 13 in the PDE roadmap.  The local vanishing input
+is the zero case of Harnack's inequality; see Evans, *Partial Differential Equations*, Chapter 2,
+Section 2.2.
 
 ## Main declarations
 
@@ -56,27 +55,14 @@ theorem eq_zero_on_of_harmonicOnNhd_of_nonneg_of_eq_zero
     (hΩ : IsOpen Ω) (hΩconn : IsPreconnected Ω) (hf : HarmonicOnNhd f Ω)
     (hnonneg : ∀ z ∈ Ω, 0 ≤ f z) (ha : a ∈ Ω) (hfa : f a = 0) :
     EqOn f 0 Ω := by
-  let V := Ω ∩ {z | f z = 0}
-  have hVopen : IsOpen V := by
-    refine Metric.isOpen_iff.mpr fun z hz ↦ ?_
-    obtain ⟨hzΩ, hfz⟩ := hz
-    obtain ⟨r, hr, hball⟩ := Metric.isOpen_iff.mp hΩ z hzΩ
-    have hzero : EqOn f 0 (ball z r) :=
-      eq_zero_on_ball_of_harmonicOnNhd_of_nonneg_of_eq_zero
-        (hf.mono hball) (fun y hy ↦ hnonneg y (hball hy)) (mem_ball_self hr) hfz
-    exact ⟨r, hr, fun y hy ↦ ⟨hball hy, hzero hy⟩⟩
-  let W := Ω ∩ {z | f z = 0}ᶜ
-  have hWopen : IsOpen W := by
-    exact hf.continuousOn.isOpen_inter_preimage hΩ isOpen_ne
-  have hVW : Disjoint V W := disjoint_compl_right.mono inf_le_right inf_le_right
-  have hcover : Ω ⊆ V ∪ W := fun z hz ↦
-    (eq_or_ne (f z) 0).imp (.intro hz) (.intro hz)
-  have hVnonempty : (Ω ∩ V).Nonempty :=
-    ⟨a, ha, ha, hfa⟩
-  have hsub : Ω ⊆ V :=
-    hΩconn.subset_left_of_subset_union hVopen hWopen hVW hcover hVnonempty
-  intro z hz
-  exact (hsub hz).2
+  obtain ⟨r, hr, hball⟩ := Metric.isOpen_iff.mp hΩ a ha
+  have hzero : EqOn f 0 (ball a r) :=
+    eq_zero_on_ball_of_harmonicOnNhd_of_nonneg_of_eq_zero
+      (hf.mono hball) (fun z hz ↦ hnonneg z (hball hz)) (mem_ball_self hr) hfa
+  have hfanalytic : AnalyticOnNhd ℝ f Ω := fun z hz ↦ HarmonicAt.analyticAt (hf z hz)
+  apply hfanalytic.eqOn_of_preconnected_of_eventuallyEq analyticOnNhd_const hΩconn ha
+  filter_upwards [ball_mem_nhds a hr] with z hz
+  exact hzero hz
 
 /-- **Strong comparison principle for planar harmonic functions.**
 
