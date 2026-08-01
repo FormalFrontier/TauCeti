@@ -55,7 +55,7 @@ namespace GeneralLinear
 universe u v w
 
 variable {R : Type u} [CommRing R]
-variable {V : Type v} [AddCommGroup V] [Module R V]
+variable {V : Type v} [AddCommMonoid V] [Module R V]
 
 /-- The group of linear automorphisms of the scalar extension `A ⊗[R] V`. -/
 abbrev scalarExtensionAutomorphisms (A : CommAlgCat.{w} R) :
@@ -83,6 +83,7 @@ lemma scalarExtensionMap_id (A : CommAlgCat.{w} R) :
     (LinearMap.rTensor_id (R := R) V A)
 
 /-- Canonical maps between scalar extensions compose covariantly. -/
+@[simp]
 lemma scalarExtensionMap_comp {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) :
     scalarExtensionMap (V := V) (φ ≫ ψ) =
       (scalarExtensionMap (V := V) ψ).comp (scalarExtensionMap (V := V) φ) := by
@@ -148,7 +149,7 @@ lemma mapScalarExtensionAutomorphisms_tmul
   | zero => simp
   | tmul a v =>
       rw [TensorProduct.AlgebraTensorModule.cancelBaseChange_tmul]
-      change (φ.hom a * b) ⊗ₜ[R] v = _
+      rw [Algebra.smul_def, RingHom.algebraMap_toAlgebra]
       exact hom_mul_tmul_eq_smul_scalarExtensionMap (V := V) φ a b v
   | add x y hx hy =>
       rw [TensorProduct.tmul_add, map_add, map_add, hx, hy, smul_add]
@@ -200,6 +201,7 @@ lemma mapScalarExtensionAutomorphisms_id (A : CommAlgCat.{w} R) :
 
 /-- Extension of scalar-extension automorphisms preserves composition of value-algebra
 morphisms. -/
+@[simp]
 lemma mapScalarExtensionAutomorphisms_comp
     {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) :
     mapScalarExtensionAutomorphisms (V := V) (φ ≫ ψ) =
