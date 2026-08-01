@@ -26,7 +26,7 @@ extra hypothesis and is not needed by any consumer here.
 
 ## Main results
 
-* `TauCeti.indecomposable_of_forall_idempotent`: a nonzero object whose only idempotent
+* `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`: a nonzero object whose only idempotent
   endomorphisms are `0` and the identity is indecomposable.
 * `TauCeti.exists_eq_smul_id_of_finrank_end_eq_one`: in a `k`-linear category, an object with a
   one-dimensional endomorphism space has every endomorphism a scalar multiple of the identity.
@@ -38,9 +38,9 @@ The idempotent hypothesis is phrased with composition, `e ≫ e = e`, rather tha
 `CategoryTheory.End X`, whose multiplication is composition in the opposite order; for an
 idempotent the two agree, but the hypothesis is easier to discharge as stated.
 
-`indecomposable_of_forall_idempotent` extracts, from an isomorphism `X ≅ Y ⊞ Z`, the idempotent
-`biprod.fst ≫ biprod.inl` transported to `X`. It is `0` exactly when `Y` is zero and the identity
-exactly when `Z` is zero, so the hypothesis splits the decomposition; the proof reads off
+`indecomposable_of_idempotent_eq_zero_or_id` extracts, from an isomorphism `X ≅ Y ⊞ Z`, the
+idempotent `biprod.fst ≫ biprod.inl` transported to `X`. It is `0` exactly when `Y` is zero and the
+identity exactly when `Z` is zero, so the hypothesis splits the decomposition; the proof reads off
 `𝟙 Y` and `𝟙 Z` from it using only the biproduct equations `biprod.inl_fst`, `biprod.inr_snd` and
 `biprod.inr_fst`.
 
@@ -62,7 +62,7 @@ variable {C : Type u} [Category.{v} C] [Preadditive C]
 /-- **An object with no nontrivial idempotent endomorphism is indecomposable.** A decomposition
 `X ≅ Y ⊞ Z` produces the idempotent `biprod.fst ≫ biprod.inl` on `X`; it is `0` only if `Y` is
 zero, and the identity only if `Z` is zero. -/
-theorem indecomposable_of_forall_idempotent [HasBinaryBiproducts C] {X : C} (hX : ¬ IsZero X)
+theorem indecomposable_of_idempotent_eq_zero_or_id [HasBinaryBiproducts C] {X : C} (hX : ¬ IsZero X)
     (h : ∀ e : X ⟶ X, e ≫ e = e → e = 0 ∨ e = 𝟙 X) : Indecomposable X := by
   refine ⟨hX, fun Y Z i ↦ ?_⟩
   have hidem : (i.hom ≫ biprod.fst ≫ biprod.inl ≫ i.inv) ≫
@@ -104,11 +104,12 @@ theorem exists_eq_smul_id_of_finrank_end_eq_one {X : C} (h : Module.finrank k (X
 
 /-- **A brick is indecomposable.** If the endomorphism space of `X` is one-dimensional over the
 base field then every endomorphism is a scalar, so the only idempotents are `0` and the identity
-and `TauCeti.indecomposable_of_forall_idempotent` applies. -/
+and `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` applies. -/
 theorem indecomposable_of_finrank_end_eq_one [HasBinaryBiproducts C] {X : C}
     (h : Module.finrank k (X ⟶ X) = 1) :
     Indecomposable X := by
-  refine indecomposable_of_forall_idempotent (not_isZero_of_finrank_end_eq_one h) fun e he ↦ ?_
+  refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_of_finrank_end_eq_one h)
+    fun e he ↦ ?_
   obtain ⟨c, rfl⟩ := exists_eq_smul_id_of_finrank_end_eq_one h e
   rw [Linear.smul_comp, Linear.comp_smul, Category.comp_id, smul_smul] at he
   rcases eq_or_ne c 0 with rfl | hc

@@ -70,11 +70,10 @@ The non-isomorphism results are stated as `¬ Nonempty (… ≅ …)` rather tha
 objects, matching `TauCeti.not_nonempty_simpleRep_iso`: representations are compared up to
 isomorphism, never by equality.
 
-Two private helpers carry the shared combinatorics — that an acyclic quiver has exactly one closed
-path at each vertex, and that a path count of `1` in each direction between two vertices forces
-them equal. They are private because they are `Nat.card` repackagings of
-`Quiver.IsAcyclic.subsingleton_path_self` and `Quiver.IsAcyclic.eq_of_paths`, which are the public
-statements of those facts.
+The count of closed paths in an acyclic quiver is `Quiver.IsAcyclic.card_path_self`, stated with
+the rest of the acyclic path API. A private helper turns a path count of `1` in each direction
+between two vertices into their equality; it is private because it is a `Nat.card` repackaging of
+`Quiver.IsAcyclic.eq_of_paths`, which is the public statement of that fact.
 
 ## References
 
@@ -99,13 +98,6 @@ representations. No hypothesis on the quiver is needed. -/
 theorem indecomposable_simpleRep (i : Q) : Indecomposable (simpleRep k Q i) :=
   indecomposable_of_simple _
 
-/-- Over an acyclic quiver there is exactly one closed path at every vertex, the trivial one. -/
-private theorem card_path_self_of_isAcyclic (h : Quiver.IsAcyclic Q) (a : Q) :
-    Nat.card (Quiver.Path a a) = 1 := by
-  letI : Subsingleton (Quiver.Path a a) := h.subsingleton_path_self a
-  letI : Unique (Quiver.Path a a) := uniqueOfSubsingleton Quiver.Path.nil
-  exact Nat.card_unique
-
 /-- Two vertices of an acyclic quiver joined by a path in each direction coincide, in the form the
 path counts below produce. -/
 private theorem eq_of_card_path_eq_one (h : Quiver.IsAcyclic Q) {i j : Q}
@@ -119,7 +111,7 @@ private theorem eq_of_card_path_eq_one (h : Quiver.IsAcyclic Q) {i j : Q}
 of `TauCeti.finrank_end_indecProjRep_of_isAcyclic`. -/
 theorem finrank_end_indecInjRep_of_isAcyclic (h : Quiver.IsAcyclic Q) (i : Q) :
     Module.finrank k (indecInjRep k Q i ⟶ indecInjRep k Q i) = 1 := by
-  rw [finrank_hom_indecInjRep_indecInjRep, card_path_self_of_isAcyclic h]
+  rw [finrank_hom_indecInjRep_indecInjRep, h.card_path_self]
 
 /-- **The vertex projective `Pᵢ` of an acyclic quiver is indecomposable.** Its endomorphism space
 is spanned by the identity, so it admits no nontrivial idempotent and hence no nontrivial
@@ -144,11 +136,10 @@ theorem not_nonempty_indecProjRep_iso_of_isAcyclic (h : Quiver.IsAcyclic Q) {i j
   have hd := congrFun (dimVector_eq_of_iso e)
   have hji : Nat.card (Quiver.Path j i) = 1 := by
     have h' := hd i
-    rwa [dimVector_indecProjRep, dimVector_indecProjRep, card_path_self_of_isAcyclic h i,
-      eq_comm] at h'
+    rwa [dimVector_indecProjRep, dimVector_indecProjRep, h.card_path_self i, eq_comm] at h'
   have hij' : Nat.card (Quiver.Path i j) = 1 := by
     have h' := hd j
-    rwa [dimVector_indecProjRep, dimVector_indecProjRep, card_path_self_of_isAcyclic h j] at h'
+    rwa [dimVector_indecProjRep, dimVector_indecProjRep, h.card_path_self j] at h'
   exact hij (eq_of_card_path_eq_one h hij' hji)
 
 /-- **The vertex injectives of an acyclic quiver at distinct vertices are not isomorphic**, by the
@@ -159,11 +150,10 @@ theorem not_nonempty_indecInjRep_iso_of_isAcyclic (h : Quiver.IsAcyclic Q) {i j 
   have hd := congrFun (dimVector_eq_of_iso e)
   have hij' : Nat.card (Quiver.Path i j) = 1 := by
     have h' := hd i
-    rwa [dimVector_indecInjRep, dimVector_indecInjRep, card_path_self_of_isAcyclic h i,
-      eq_comm] at h'
+    rwa [dimVector_indecInjRep, dimVector_indecInjRep, h.card_path_self i, eq_comm] at h'
   have hji : Nat.card (Quiver.Path j i) = 1 := by
     have h' := hd j
-    rwa [dimVector_indecInjRep, dimVector_indecInjRep, card_path_self_of_isAcyclic h j] at h'
+    rwa [dimVector_indecInjRep, dimVector_indecInjRep, h.card_path_self j] at h'
   exact hij (eq_of_card_path_eq_one h hij' hji)
 
 end TauCeti
