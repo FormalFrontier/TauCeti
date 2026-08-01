@@ -69,8 +69,8 @@ are.
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
 `Conformal/BoundaryCorrespondence.lean`; the Jordan-curve vocabulary they are phrased in, together
-with the circle that models it, is in `TauCeti/Topology/JordanCurve.lean`, where the predicate and
-its transfer lemmas are stated for an arbitrary topological space.
+with the circle that models it, is in `TauCeti/Topology/JordanCurve/Basic.lean`, where the
+predicate and its transfer lemmas are stated for an arbitrary topological space.
 
 ## Coordination with upstream Mathlib
 

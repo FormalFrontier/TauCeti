@@ -49,18 +49,19 @@ The corollaries for a circle `Metric.sphere c r` of `ℂ` are the case the confo
 
 ## Main results
 
-* `TauCeti.IsJordanCurve.isPathConnected_diff_singleton` — a Jordan curve minus a point is path
-  connected; it is an *arc*, and in particular one point never separates the curve.
+* `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton` — a Jordan curve minus a point is path
+  connected; it is an *open* arc — homeomorphic to a punctured circle, not to a closed interval —
+  and in particular one point never separates the curve.
 * `TauCeti.exists_isOpen_isPathConnected_union_eq_compl_pair_circle` — two distinct points cut the
   circle into two disjoint nonempty open path-connected arcs.
-* `TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_diff_pair` — the same for an arbitrary
+* `TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair` — the same for an arbitrary
   Jordan curve, together with the statement that the two arcs are its connected components: every
   preconnected subset of the cut curve lies in one of them.
-* `TauCeti.IsJordanCurve.not_isPreconnected_diff_pair` — consequently two points always separate a
+* `TauCeti.IsJordanCurve.not_isPreconnected_sdiff_pair` — consequently two points always separate a
   Jordan curve.
-* `TauCeti.isPathConnected_sphere_diff_singleton`,
-  `TauCeti.exists_isPathConnected_union_eq_sphere_diff_pair` and
-  `TauCeti.not_isPreconnected_sphere_diff_pair` — the three statements for a circle of `ℂ`, the
+* `TauCeti.isPathConnected_sphere_sdiff_singleton`,
+  `TauCeti.exists_isPathConnected_union_eq_sphere_sdiff_pair` and
+  `TauCeti.not_isPreconnected_sphere_sdiff_pair` — the three statements for a circle of `ℂ`, the
   form in which the bounding circle of a disc is cut.
 
 ## References
@@ -156,8 +157,8 @@ private lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
 
 /-- **A Jordan curve minus a point is path connected**, being homeomorphic to the circle minus a
 point (`Circle.isPathConnected_compl_singleton`). So a Jordan curve is *not* separated by any one of
-its points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_diff_pair`. -/
-theorem IsJordanCurve.isPathConnected_diff_singleton (h : IsJordanCurve C) (hp : p ∈ C) :
+its points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_sdiff_pair`. -/
+theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (hp : p ∈ C) :
     IsPathConnected (C \ {p}) := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
   have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
@@ -176,7 +177,7 @@ argument uses: a connected set that avoids `p` and `q` cannot get from one arc t
 comes from openness of the two arcs of the circle in
 `TauCeti.exists_isOpen_isPathConnected_union_eq_compl_pair_circle`, transported along the
 parametrization, which is an inducing map, so preconnectedness may be tested upstairs. -/
-theorem IsJordanCurve.exists_isPathConnected_union_eq_diff_pair (h : IsJordanCurve C) (hp : p ∈ C)
+theorem IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair (h : IsJordanCurve C) (hp : p ∈ C)
     (hq : q ∈ C) (hpq : p ≠ q) :
     ∃ A B : Set X, IsPathConnected A ∧ IsPathConnected B ∧ Disjoint A B ∧ A ∪ B = C \ {p, q} ∧
       ∀ ⦃S : Set X⦄, S ⊆ C \ {p, q} → IsPreconnected S → S ⊆ A ∨ S ⊆ B := by
@@ -208,12 +209,12 @@ theorem IsJordanCurve.exists_isPathConnected_union_eq_diff_pair (h : IsJordanCur
 
 /-- **Two points separate a Jordan curve.** Removing two distinct points from a Jordan curve leaves
 a set that is not preconnected: it splits into the two arcs of
-`TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_diff_pair`, each of which is nonempty, and a
+`TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair`, each of which is nonempty, and a
 preconnected set lying in one of them cannot contain the other. -/
-theorem IsJordanCurve.not_isPreconnected_diff_pair (h : IsJordanCurve C) (hp : p ∈ C) (hq : q ∈ C)
+theorem IsJordanCurve.not_isPreconnected_sdiff_pair (h : IsJordanCurve C) (hp : p ∈ C) (hq : q ∈ C)
     (hpq : p ≠ q) : ¬ IsPreconnected (C \ {p, q}) := by
   obtain ⟨A, B, hAc, hBc, hdisj, hunion, hdich⟩ :=
-    h.exists_isPathConnected_union_eq_diff_pair hp hq hpq
+    h.exists_isPathConnected_union_eq_sdiff_pair hp hq hpq
   intro hcon
   obtain ⟨x, hx⟩ := hAc.nonempty
   obtain ⟨y, hy⟩ := hBc.nonempty
@@ -223,28 +224,40 @@ theorem IsJordanCurve.not_isPreconnected_diff_pair (h : IsJordanCurve C) (hp : p
 
 /-! ## The circles of `ℂ` -/
 
+/-- Two distinct points on a sphere force the radius to be positive: a sphere of nonpositive radius
+has at most one point, by `Metric.subsingleton_sphere`. -/
+private lemma radius_pos_of_mem_sphere_of_ne {γ : Type*} [MetricSpace γ] {x y c : γ}
+    (hx : x ∈ sphere c r) (hy : y ∈ sphere c r) (hxy : x ≠ y) : 0 < r :=
+  not_le.mp fun hr => hxy (subsingleton_sphere c hr hx hy)
+
 /-- **A circle of `ℂ` minus a point is path connected**, being a Jordan curve
 (`TauCeti.isJordanCurve_sphere`). This is the boundary circle of a disc with one boundary point
 removed, the set the Carathéodory boundary argument works on. -/
-theorem isPathConnected_sphere_diff_singleton (c : ℂ) (hr : 0 < r) {z : ℂ} (hz : z ∈ sphere c r) :
+theorem isPathConnected_sphere_sdiff_singleton (c : ℂ) (hr : 0 < r) {z : ℂ} (hz : z ∈ sphere c r) :
     IsPathConnected (sphere c r \ {z}) :=
-  (isJordanCurve_sphere c hr).isPathConnected_diff_singleton hz
+  (isJordanCurve_sphere c hr).isPathConnected_sdiff_singleton hz
 
 /-- **Two points cut a circle of `ℂ` into two arcs.** This is
-`TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_diff_pair` for the bounding circle of a disc,
-which is the curve the Carathéodory boundary argument cuts: a connected set of boundary points
-avoiding `z` and `w` lies in one of the two arcs they determine. -/
-theorem exists_isPathConnected_union_eq_sphere_diff_pair (c : ℂ) (hr : 0 < r) {z w : ℂ}
+`TauCeti.IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair` for the bounding circle of a
+disc, which is the curve the Carathéodory boundary argument cuts: a connected set of boundary
+points avoiding `z` and `w` lies in one of the two arcs they determine.
+
+No positivity hypothesis on `r` is needed: two distinct points of `Metric.sphere c r` already force
+`0 < r`. -/
+theorem exists_isPathConnected_union_eq_sphere_sdiff_pair (c : ℂ) {z w : ℂ}
     (hz : z ∈ sphere c r) (hw : w ∈ sphere c r) (hzw : z ≠ w) :
     ∃ A B : Set ℂ, IsPathConnected A ∧ IsPathConnected B ∧ Disjoint A B ∧
       A ∪ B = sphere c r \ {z, w} ∧
       ∀ ⦃S : Set ℂ⦄, S ⊆ sphere c r \ {z, w} → IsPreconnected S → S ⊆ A ∨ S ⊆ B :=
-  (isJordanCurve_sphere c hr).exists_isPathConnected_union_eq_diff_pair hz hw hzw
+  have hr : 0 < r := radius_pos_of_mem_sphere_of_ne hz hw hzw
+  (isJordanCurve_sphere c hr).exists_isPathConnected_union_eq_sdiff_pair hz hw hzw
 
 /-- **Two points separate a circle of `ℂ`**: removing two distinct points of `Metric.sphere c r`
-leaves a set that is not preconnected. -/
-theorem not_isPreconnected_sphere_diff_pair (c : ℂ) (hr : 0 < r) {z w : ℂ} (hz : z ∈ sphere c r)
+leaves a set that is not preconnected. As above, `0 < r` follows from the two points being
+distinct. -/
+theorem not_isPreconnected_sphere_sdiff_pair (c : ℂ) {z w : ℂ} (hz : z ∈ sphere c r)
     (hw : w ∈ sphere c r) (hzw : z ≠ w) : ¬ IsPreconnected (sphere c r \ {z, w}) :=
-  (isJordanCurve_sphere c hr).not_isPreconnected_diff_pair hz hw hzw
+  have hr : 0 < r := radius_pos_of_mem_sphere_of_ne hz hw hzw
+  (isJordanCurve_sphere c hr).not_isPreconnected_sdiff_pair hz hw hzw
 
 end TauCeti
