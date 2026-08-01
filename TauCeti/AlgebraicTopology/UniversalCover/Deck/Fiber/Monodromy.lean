@@ -18,9 +18,10 @@ Deck transformations commute with transport between fibres by covering-space mon
 
 ## References
 
-The proof uses Junyan Xu's path-lifting and monodromy API in
-`Mathlib.Topology.Homotopy.Lifting`. It supplies the fibre-transport step needed for the regular
-cover criterion in `TauCetiRoadmap/UniversalCovers/README.md`, Stage 2, item 8.
+The proof adapts Junyan Xu's proof of Mathlib's
+`IsQuotientCoveringMap.monodromy_toPermFiber`, replacing the quotient-cover group action with the
+deck-transformation action. It supplies the fibre-transport step needed for the regular-cover
+criterion in `TauCetiRoadmap/UniversalCovers/README.md`, Stage 2, item 8.
 -/
 
 public section
@@ -48,6 +49,8 @@ theorem monodromy_smul (hp : IsCoveringMap p)
     ext z
     exact map_proj φ z
   apply hp.monodromy_eq_of_map_eq (Γ.map g)
+  -- The displayed goal hides the mapped lifted path behind its endpoint transports; expose that
+  -- path-map wrapper before rewriting the composition of maps.
   change (Γ.map g).map p' = _
   rw [← Path.Homotopic.Quotient.map_comp]
   convert hp.map_liftPathQuotient γ e using 2
