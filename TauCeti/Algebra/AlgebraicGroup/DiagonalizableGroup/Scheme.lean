@@ -34,6 +34,10 @@ ring in `Type u`.
 ## Main declarations
 
 * `TauCeti.DiagonalizableGroup.groupScheme`: the affine group scheme `D(G) = Spec R[G]`.
+* `TauCeti.DiagonalizableGroup.groupScheme_one_left`,
+  `TauCeti.DiagonalizableGroup.groupScheme_mul_left`, and
+  `TauCeti.DiagonalizableGroup.groupScheme_inv_left`: the underlying scheme maps of its
+  group operations.
 * `TauCeti.DiagonalizableGroup.groupSchemeMap`: the contravariant group-scheme morphism
   induced by a homomorphism of finitely generated commutative groups.
 * `TauCeti.DiagonalizableGroup.schemeFunctor`: the functor `FGCommGrpCatᵒᵖ ⟶
@@ -66,7 +70,7 @@ universe u
 
 namespace DiagonalizableGroup
 
-open AlgebraicGeometry
+open AlgebraicGeometry MonObj MonoidalCategory
 
 variable (R : Type u) [CommRing R]
 
@@ -93,9 +97,99 @@ lemma groupScheme_X_hom (G : FGCommGrpCat.{u}) :
     (groupScheme R G).X.hom =
       eqToHom (groupScheme_X_left R G) ≫
         Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))) := by
-  unfold groupScheme
-  rw [show groupScheme_X_left R G = rfl from Subsingleton.elim _ _]
+  simpa only [eqToHom_refl, Category.comp_id] using
+    (conj_eqToHom_iff_heq
+      (groupScheme R G).X.hom
+      (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))))
+      (groupScheme_X_left R G) rfl).2 (by
+        unfold groupScheme
+        exact heq_of_eq (AlgebraicGeometry.algSpec_obj_hom
+          (R := CommRingCat.of R)
+          (Opposite.op (CommAlgCat.of R (MonoidAlgebra R G)))))
+
+/-- The source scheme of multiplication on `D(G)` is the fibre product of two copies of
+`Spec R[G]` over `Spec R`. -/
+lemma groupScheme_tensor_X_left (G : FGCommGrpCat.{u}) :
+    ((groupScheme R G).X ⊗ (groupScheme R G).X).left =
+      Limits.pullback
+        (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))))
+        (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G)))) := by
+  rw [Over.tensorObj_left]
+  have h : (groupScheme R G).X.hom ≍
+      Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))) := by
+    rw [groupScheme_X_hom]
+    exact eqToHom_comp_heq _ _
+  cases groupScheme_X_left R G
+  exact congrArg (fun k ↦ Limits.pullback k k) (eq_of_heq h)
+
+/-- Specialize Mathlib's `algSpec_map_left` computation to an explicit algebra morphism.
+
+This is the sole boundary where the `CommAlgCat`/under-category wrapper left in that public
+computation lemma is reduced. Keeping it here avoids proof-sensitive reductions at the public
+projection lemmas below. -/
+private lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
+    [Algebra R A] [Algebra R B] (f : A →ₐ[R] B) :
+    ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
+      (CommAlgCat.ofHom f).op).left =
+        Spec.map (CommRingCat.ofHom f.toRingHom) := by
+  rw [AlgebraicGeometry.algSpec_map_left]
   rfl
+
+/-- The unit of `D(G)` is induced by the counit of the group algebra. -/
+@[simp]
+lemma groupScheme_one_left (G : FGCommGrpCat.{u}) :
+    η[(groupScheme R G).X].left =
+      Spec.map (CommRingCat.ofHom
+        (Bialgebra.counitAlgHom R (MonoidAlgebra R G))) ≫
+      eqToHom (groupScheme_X_left R G).symm := by
+  simpa only [eqToHom_refl, Category.id_comp] using
+    (conj_eqToHom_iff_heq
+      η[(groupScheme R G).X].left
+      (Spec.map (CommRingCat.ofHom
+        (Bialgebra.counitAlgHom R (MonoidAlgebra R G))))
+      rfl (groupScheme_X_left R G)).2 (by
+        unfold groupScheme
+        exact heq_of_eq (AlgebraicGeometry.one_spec_asOver_spec_left
+          (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
+
+/-- Multiplication on `D(G)` is induced by the comultiplication of the group algebra. The
+first transport identifies its opaque product source with the standard affine fibre product. -/
+@[simp]
+lemma groupScheme_mul_left (G : FGCommGrpCat.{u}) :
+    μ[(groupScheme R G).X].left =
+      eqToHom (groupScheme_tensor_X_left R G) ≫
+        (pullbackSpecIso R (MonoidAlgebra R G) (MonoidAlgebra R G)).hom ≫
+        Spec.map (CommRingCat.ofHom
+          (Bialgebra.comulAlgHom R (MonoidAlgebra R G))) ≫
+        eqToHom (groupScheme_X_left R G).symm := by
+  simpa only [Category.assoc] using
+    (conj_eqToHom_iff_heq
+      μ[(groupScheme R G).X].left
+      ((pullbackSpecIso R (MonoidAlgebra R G) (MonoidAlgebra R G)).hom ≫
+        Spec.map (CommRingCat.ofHom
+          (Bialgebra.comulAlgHom R (MonoidAlgebra R G))))
+      (groupScheme_tensor_X_left R G) (groupScheme_X_left R G)).2 (by
+        change μ[((Spec (CommRingCat.of (MonoidAlgebra R G))).asOver
+          (Spec (CommRingCat.of R)))].left ≍ _
+        exact heq_of_eq (AlgebraicGeometry.mul_spec_asOver_spec_left
+          (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
+
+/-- Inversion on `D(G)` is induced by the antipode of the group algebra. -/
+@[simp]
+lemma groupScheme_inv_left (G : FGCommGrpCat.{u}) :
+    ι[(groupScheme R G).X].left =
+      eqToHom (groupScheme_X_left R G) ≫
+      Spec.map (CommRingCat.ofHom
+        (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G)).toRingHom) ≫
+      eqToHom (groupScheme_X_left R G).symm := by
+  apply (conj_eqToHom_iff_heq _ _
+    (groupScheme_X_left R G) (groupScheme_X_left R G)).2
+  unfold groupScheme
+  change ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
+    (CommAlgCat.ofHom
+      (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G))).op).left ≍ _
+  exact heq_of_eq (algSpec_map_left_ofAlgHom R
+    (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G)))
 
 /-- A homomorphism `G ⟶ H` induces the contravariant group-scheme morphism
 `D(H) ⟶ D(G)`. -/
@@ -113,8 +207,14 @@ lemma groupSchemeMap_hom_left {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
         Spec.map (CommRingCat.ofHom
           (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R f)).toAlgHom.toRingHom) ≫
         eqToHom (groupScheme_X_left R G).symm := by
+  apply (conj_eqToHom_iff_heq _ _
+    (groupScheme_X_left R H) (groupScheme_X_left R G)).2
   unfold groupSchemeMap
-  rfl
+  change ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
+    (CommAlgCat.ofHom
+      (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R f)).toAlgHom).op).left ≍ _
+  exact heq_of_eq (algSpec_map_left_ofAlgHom R
+    (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R f)).toAlgHom)
 
 /-- The group-scheme morphism induced by the identity homomorphism is the identity. -/
 @[simp]
