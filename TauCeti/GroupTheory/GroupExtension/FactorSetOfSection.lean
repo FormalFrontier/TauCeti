@@ -38,9 +38,12 @@ its preimage. Changing the section changes the factor set by a coboundary
 (`TauCeti.GroupExtension.isMulCoboundary₂_div`), so the class in `H²(G, M)` is an invariant of the
 extension.
 
+Only the descent of the conjugation action and the factor set itself need `M` abelian; the section
+bookkeeping (`TauCeti.GroupExtension.factorSetFun`, `TauCeti.GroupExtension.normalizeSection`,
+`TauCeti.GroupExtension.sectionDiff`) is stated for an arbitrary kernel.
+
 ## Main definitions
 
-* `TauCeti.GroupExtension.inlInv`: the partial inverse of the inclusion `M →* E`.
 * `TauCeti.GroupExtension.conjActOfSection`: the action of `G` on an abelian kernel by conjugation.
 * `TauCeti.GroupExtension.InducesAction`: the extension conjugates the kernel by the given action.
 * `TauCeti.GroupExtension.factorSet`: the factor set of a normalized section.
@@ -50,9 +53,9 @@ extension.
 
 * `TauCeti.GroupExtension.section_mul`: `σ g * σ h = inl (α (g, h)) * σ (g * h)`, the defining
   property of the factor set.
-* `TauCeti.GroupExtension.groupExtensionEquiv`: the extension is equivalent to the twisted product
-  built from its factor set, and `TauCeti.GroupExtension.exists_factorSet` is the resulting
-  existence statement for an arbitrary extension with abelian kernel.
+* `TauCeti.GroupExtension.factorSetToGroupExtensionEquiv`: the extension is equivalent to the
+  twisted product built from its factor set, and `TauCeti.GroupExtension.exists_factorSet` is the
+  resulting existence statement for an arbitrary extension with abelian kernel.
 * `TauCeti.GroupExtension.factorSet_canonicalSection`: reading the factor set off the twisted
   product built from `α`, using its canonical section, returns `α`.
 * `TauCeti.GroupExtension.isMulCoboundary₂_div`: two normalized sections give factor sets that
@@ -75,35 +78,65 @@ open groupCohomology
 
 universe u v w
 
-variable {G : Type u} {M : Type v} {E : Type w} [Group G] [CommGroup M] [Group E]
+variable {G : Type u} {M : Type v} {E : Type w} [Group G] [Group E]
 
 section InlInv
 
-variable (S : GroupExtension M E G)
+variable [Group M] (S : GroupExtension M E G)
 
 /-- The partial inverse of the inclusion `S.inl : M →* E` of a group extension. It is a genuine
-inverse on the range of `S.inl` (`TauCeti.GroupExtension.inl_inlInv`), which is all this file uses
-it for; off the range it is junk. -/
-noncomputable def inlInv (e : E) : M := Function.invFun S.inl e
+inverse on the range of `S.inl` and junk off it, so it stays file-local: the public API records
+its values through `S.inl` instead, in `TauCeti.GroupExtension.inl_factorSetFun` and
+`TauCeti.GroupExtension.inl_sectionDiff`. -/
+private noncomputable def inlInv (e : E) : M := Function.invFun S.inl e
 
 variable {S}
 
 @[simp]
-theorem inlInv_inl (m : M) : inlInv S (S.inl m) = m :=
+private theorem inlInv_inl (m : M) : inlInv S (S.inl m) = m :=
   Function.leftInverse_invFun S.inl_injective m
 
-theorem inl_inlInv {e : E} (he : e ∈ S.inl.range) : S.inl (inlInv S e) = e :=
+private theorem inl_inlInv {e : E} (he : e ∈ S.inl.range) : S.inl (inlInv S e) = e :=
   Function.invFun_eq (MonoidHom.mem_range.1 he)
 
 @[simp]
-theorem inlInv_one : inlInv S (1 : E) = 1 := by
+private theorem inlInv_one : inlInv S (1 : E) = 1 := by
   simpa using inlInv_inl (S := S) (1 : M)
 
 end InlInv
 
+section Conj
+
+variable [Group M] {S : GroupExtension M E G}
+
+/-- **A central extension acts trivially on its kernel.** -/
+theorem conjAct_eq_one_of_le_center (h : S.inl.range ≤ Subgroup.center E) (e : E) :
+    S.conjAct e = 1 := by
+  ext m
+  refine S.inl_injective ?_
+  rw [GroupExtension.inl_conjAct_comm, Subgroup.mem_center_iff.1 (h ⟨m, rfl⟩) e,
+    mul_inv_cancel_right]
+  simp
+
+variable (S) in
+/-- The extension `S` conjugates its kernel by the ambient action of `G` on `M`. This is the
+compatibility that makes `TauCeti.GroupExtension.factorSet` a `TauCeti.FactorSet` for that action;
+for a central extension it says the ambient action is trivial. -/
+def InducesAction [MulDistribMulAction G M] : Prop :=
+  ∀ (e : E) (m : M), S.conjAct e m = S.rightHom e • m
+
+/-- The image of the kernel is conjugated by a section according to the ambient action. -/
+theorem inl_smul [MulDistribMulAction G M] (σ : S.Section) (hact : InducesAction S) (g : G)
+    (m : M) : S.inl (g • m) = σ g * S.inl m * (σ g)⁻¹ := by
+  have h := hact (σ g) m
+  rw [GroupExtension.Section.rightHom_section] at h
+  rw [← h, GroupExtension.inl_conjAct_comm]
+
+end Conj
+
 section ConjAct
 
-variable {S : GroupExtension M E G}
+variable [CommGroup M] {S : GroupExtension M E G}
 
 /-- Conjugating an abelian kernel by an element of the kernel does nothing. -/
 theorem conjAct_inl (m : M) : S.conjAct (S.inl m) = 1 := by
@@ -127,7 +160,6 @@ to `G` because it is trivial on the kernel, so any section presents it as a homo
 `G →* MulAut M`; `TauCeti.GroupExtension.conjActOfSection_eq` says the presentation does not depend
 on the section. Mathlib's `GroupExtension.Splitting.conjAct` is the special case of a section that
 is a homomorphism, which exists only for a split extension. -/
-@[expose]
 noncomputable def conjActOfSection (σ : S.Section) : G →* MulAut M where
   toFun g := S.conjAct (σ g)
   map_one' := by
@@ -137,52 +169,29 @@ noncomputable def conjActOfSection (σ : S.Section) : G →* MulAut M where
 
 @[simp]
 theorem conjActOfSection_apply (σ : S.Section) (g : G) : conjActOfSection σ g = S.conjAct (σ g) :=
-  rfl
+  (rfl)
 
 theorem conjActOfSection_eq (σ σ' : S.Section) :
     conjActOfSection σ = conjActOfSection (S := S) σ' := by
   ext g m
   exact DFunLike.congr_fun (conjAct_eq_of_rightHom_eq (S := S) (e := σ g) (e' := σ' g) (by simp)) m
 
-/-- **A central extension acts trivially on its kernel.** -/
-theorem conjAct_eq_one_of_le_center (h : S.inl.range ≤ Subgroup.center E) (e : E) :
-    S.conjAct e = 1 := by
-  ext m
-  refine S.inl_injective ?_
-  rw [GroupExtension.inl_conjAct_comm, Subgroup.mem_center_iff.1 (h ⟨m, rfl⟩) e,
-    mul_inv_cancel_right]
-  simp
-
-variable (S) in
-/-- The extension `S` conjugates its kernel by the ambient action of `G` on `M`. This is the
-compatibility that makes `TauCeti.GroupExtension.factorSet` a `TauCeti.FactorSet` for that action;
-for a central extension it says the ambient action is trivial. -/
-def InducesAction [MulDistribMulAction G M] : Prop :=
-  ∀ (e : E) (m : M), S.conjAct e m = S.rightHom e • m
-
-variable [MulDistribMulAction G M]
-
-theorem InducesAction.conjActOfSection_eq_toMulAut (hact : InducesAction S) (σ : S.Section) :
+theorem InducesAction.conjActOfSection_eq_toMulAut [MulDistribMulAction G M]
+    (hact : InducesAction S) (σ : S.Section) :
     conjActOfSection σ = MulDistribMulAction.toMulAut G M := by
   ext g m
   simpa using hact (σ g) m
 
-/-- The image of the kernel is conjugated by a section according to the ambient action. -/
-theorem inl_smul (σ : S.Section) (hact : InducesAction S) (g : G) (m : M) :
-    S.inl (g • m) = σ g * S.inl m * (σ g)⁻¹ := by
-  have h := hact (σ g) m
-  rw [GroupExtension.Section.rightHom_section] at h
-  rw [← h, GroupExtension.inl_conjAct_comm]
-
 end ConjAct
 
-section FactorSet
+section FactorSetFun
 
-variable {S : GroupExtension M E G}
+variable [Group M] {S : GroupExtension M E G}
 
 /-- **The factor set of a section**, as a bare function: `σ g * σ h * (σ (g * h))⁻¹` lies in the
-kernel, and this is its preimage there. It is a genuine factor set once the section is normalized
-and the ambient action is the conjugation action; see `TauCeti.GroupExtension.factorSet`. -/
+kernel, and this is its preimage there. It is a genuine factor set once the kernel is abelian, the
+section is normalized and the ambient action is the conjugation action; see
+`TauCeti.GroupExtension.factorSet`. -/
 noncomputable def factorSetFun (σ : S.Section) (p : G × G) : M :=
   inlInv S (σ p.1 * σ p.2 * (σ (p.1 * p.2))⁻¹)
 
@@ -201,7 +210,11 @@ theorem factorSetFun_one_one (σ : S.Section) (hσ : σ 1 = 1) : factorSetFun σ
   refine S.inl_injective ?_
   simp [hσ]
 
-variable [MulDistribMulAction G M]
+end FactorSetFun
+
+section FactorSet
+
+variable [CommGroup M] {S : GroupExtension M E G} [MulDistribMulAction G M]
 
 theorem isMulCocycle₂_factorSetFun (σ : S.Section) (hact : InducesAction S) :
     IsMulCocycle₂ (factorSetFun σ) := by
@@ -214,7 +227,6 @@ theorem isMulCocycle₂_factorSetFun (σ : S.Section) (hact : InducesAction S) :
 
 /-- **The factor set of a normalized section** of an extension whose conjugation action on its
 abelian kernel is the ambient one. -/
-@[expose]
 noncomputable def factorSet (σ : S.Section) (hσ : σ 1 = 1) (hact : InducesAction S) :
     FactorSet G M where
   toFun := factorSetFun σ
@@ -235,13 +247,12 @@ end FactorSet
 
 section Equiv
 
-variable {S : GroupExtension M E G} [MulDistribMulAction G M]
+variable [CommGroup M] {S : GroupExtension M E G} [MulDistribMulAction G M]
   (σ : S.Section) (hσ : σ 1 = 1) (hact : InducesAction S)
 
 /-- The comparison homomorphism `⟨a, g⟩ ↦ inl a * σ g` from the twisted product built from the
 factor set of `σ` back to the extension. It is an isomorphism; see
-`TauCeti.GroupExtension.groupExtensionEquiv`. -/
-@[expose]
+`TauCeti.GroupExtension.factorSetToGroupExtensionEquiv`. -/
 noncomputable def ofFactorSetHom : (factorSet σ hσ hact).Extension →* E where
   toFun x := S.inl x.left * σ x.right
   map_one' := by simp [hσ]
@@ -253,49 +264,66 @@ noncomputable def ofFactorSetHom : (factorSet σ hσ hact).Extension →* E wher
 @[simp]
 theorem ofFactorSetHom_apply (x : (factorSet σ hσ hact).Extension) :
     ofFactorSetHom σ hσ hact x = S.inl x.left * σ x.right :=
-  rfl
+  (rfl)
 
 /-- **An extension with abelian kernel is the twisted product built from its factor set.** -/
-@[expose]
-noncomputable def groupExtensionEquiv : (factorSet σ hσ hact).groupExtension.Equiv S :=
+noncomputable def factorSetToGroupExtensionEquiv :
+    (factorSet σ hσ hact).groupExtension.Equiv S :=
   GroupExtension.Equiv.ofMonoidHom (ofFactorSetHom σ hσ hact)
     (by ext a; simp [hσ])
     (by ext x; simp)
 
 @[simp]
-theorem groupExtensionEquiv_apply (x : (factorSet σ hσ hact).Extension) :
-    groupExtensionEquiv σ hσ hact x = S.inl x.left * σ x.right :=
-  rfl
+theorem factorSetToGroupExtensionEquiv_apply (x : (factorSet σ hσ hact).Extension) :
+    factorSetToGroupExtensionEquiv σ hσ hact x = S.inl x.left * σ x.right :=
+  (rfl)
 
 end Equiv
 
 section Normalize
 
+variable [Group M] {S : GroupExtension M E G}
+
 open scoped Classical in
 /-- Any section can be corrected at the identity to a normalized one; see
-`TauCeti.GroupExtension.normalizeSection_one`. -/
-noncomputable def normalizeSection {S : GroupExtension M E G} (σ : S.Section) : S.Section where
+`TauCeti.GroupExtension.normalizeSection_one` and
+`TauCeti.GroupExtension.normalizeSection_apply`. -/
+noncomputable def normalizeSection (σ : S.Section) : S.Section where
   toFun g := if g = 1 then 1 else σ g
   rightInverse_rightHom g := by by_cases hg : g = 1 <;> simp [hg]
-
-variable {S : GroupExtension M E G}
 
 @[simp]
 theorem normalizeSection_one (σ : S.Section) : normalizeSection σ 1 = 1 := by
   simp [normalizeSection]
 
-/-- **Every group extension with abelian kernel arises from a factor set**, provided the ambient
-action of `G` on the kernel is the one the extension conjugates by. -/
-theorem exists_factorSet [MulDistribMulAction G M] (hact : InducesAction S) :
-    ∃ α : FactorSet G M, Nonempty (α.groupExtension.Equiv S) :=
-  ⟨_, ⟨groupExtensionEquiv (normalizeSection S.surjInvRightHom)
-    (normalizeSection_one _) hact⟩⟩
+@[simp]
+theorem normalizeSection_apply (σ : S.Section) (g : G) [Decidable (g = 1)] :
+    normalizeSection σ g = if g = 1 then 1 else σ g := by
+  by_cases hg : g = 1 <;> simp [normalizeSection, hg]
+
+@[simp]
+theorem normalizeSection_apply_of_ne (σ : S.Section) {g : G} (hg : g ≠ 1) :
+    normalizeSection σ g = σ g := by
+  simp [normalizeSection, hg]
 
 end Normalize
 
+section Exists
+
+variable [CommGroup M] {S : GroupExtension M E G} [MulDistribMulAction G M]
+
+/-- **Every group extension with abelian kernel arises from a factor set**, provided the ambient
+action of `G` on the kernel is the one the extension conjugates by. -/
+theorem exists_factorSet (hact : InducesAction S) :
+    ∃ α : FactorSet G M, Nonempty (α.groupExtension.Equiv S) :=
+  ⟨_, ⟨factorSetToGroupExtensionEquiv (normalizeSection S.surjInvRightHom)
+    (normalizeSection_one _) hact⟩⟩
+
+end Exists
+
 section RoundTrip
 
-variable [MulDistribMulAction G M] (α : FactorSet G M)
+variable [CommGroup M] [MulDistribMulAction G M] (α : FactorSet G M)
 
 /-- The twisted product built from a factor set conjugates its kernel by the given action of `G`. -/
 theorem inducesAction_groupExtension : InducesAction α.groupExtension := by
@@ -319,9 +347,9 @@ theorem factorSet_canonicalSection :
 
 end RoundTrip
 
-section Coboundary
+section SectionDiff
 
-variable {S : GroupExtension M E G} (σ σ' : S.Section)
+variable [Group M] {S : GroupExtension M E G} (σ σ' : S.Section)
 
 /-- The difference of two sections, as a function `G → M`: `σ g * (σ' g)⁻¹` lies in the kernel, and
 this is its preimage there. It is the rescaling relating the two factor sets; see
@@ -332,7 +360,12 @@ noncomputable def sectionDiff (g : G) : M := inlInv S (σ g * (σ' g)⁻¹)
 theorem inl_sectionDiff (g : G) : S.inl (sectionDiff σ σ' g) = σ g * (σ' g)⁻¹ :=
   inl_inlInv (GroupExtension.Section.mul_inv_mem_range_inl σ σ' g)
 
-variable [MulDistribMulAction G M] (hσ : σ 1 = 1) (hσ' : σ' 1 = 1) (hact : InducesAction S)
+end SectionDiff
+
+section Coboundary
+
+variable [CommGroup M] {S : GroupExtension M E G} (σ σ' : S.Section) [MulDistribMulAction G M]
+  (hσ : σ 1 = 1) (hσ' : σ' 1 = 1) (hact : InducesAction S)
 
 /-- **Two normalized sections give cohomologous factor sets.** Combined with
 `TauCeti.FactorSet.nonempty_groupExtensionEquiv`, which turns a coboundary back into an equivalence
