@@ -23,7 +23,7 @@ pseudo-hyperbolic reading — a boundary point is at pseudo-hyperbolic distance 
 every other point — are generic facts about `TauCeti.pseudoHyperbolicExpr` and live in
 `TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean`, as
 `TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` and
-`TauCeti.pseudoHyperbolicExpr_eq_one_of_norm_eq_one`.
+`TauCeti.pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one`.
 
 ## Main statements
 
@@ -78,7 +78,7 @@ theorem mapsTo_sphere_unitDiscMoebiusFormula_of_norm_lt_one (ha : ‖a‖ < 1) :
   intro z hz
   rw [mem_sphere_zero_iff_norm] at hz ⊢
   rw [← pseudoHyperbolicExpr_def]
-  exact pseudoHyperbolicExpr_eq_one_of_norm_eq_one hz ha
+  exact pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one hz ha
 
 /-- The scalar unit-disc Moebius formula maps the closed unit disc to itself, being the union of the
 open disc and the unit circle. -/
@@ -286,9 +286,22 @@ it is recorded once here instead of being reproved at each use below. -/
 private lemma conj_mul_eq_one_of_norm_eq_one (hu : ‖u‖ = 1) : (starRingEnd ℂ) u * u = 1 := by
   rw [Complex.conj_mul', hu, Complex.ofReal_one, one_pow]
 
+/-- Multiplication by a unit-modulus scalar is a bijection of any norm-invariant set of `ℂ` onto
+itself.  The underlying permutation of `ℂ` is Mathlib's `Equiv.mulLeft₀`, and `‖u‖ = 1` makes it
+norm-preserving, so it preserves membership in `s` both ways.  Below this supplies the rotation
+factor of a standard automorphism on `closedBall 0 1` and on `sphere 0 1` alike. -/
+private lemma bijOn_mul_left_of_norm_eq_one (hu : ‖u‖ = 1) {s : Set ℂ}
+    (hs : ∀ z w : ℂ, ‖z‖ = ‖w‖ → (z ∈ s ↔ w ∈ s)) :
+    BijOn (fun w : ℂ => u * w) s s := by
+  have hu0 : u ≠ 0 := by
+    intro h
+    rw [h, norm_zero] at hu
+    exact zero_ne_one hu
+  exact (Equiv.mulLeft₀ u hu0).bijOn fun w => hs (u * w) w (by rw [norm_mul, hu, one_mul])
+
 /-- The rotation factor of a standard disc automorphism preserves the unit circle. -/
-theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : ‖u‖ = 1)
-    (ha : ‖a‖ < 1) :
+theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
     MapsTo (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
   intro z hz
@@ -297,8 +310,8 @@ theorem mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : �
   rw [norm_mul, hu, one_mul, h]
 
 /-- The rotation factor of a standard disc automorphism preserves the closed unit disc. -/
-theorem mapsTo_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : ‖u‖ = 1)
-    (ha : ‖a‖ < 1) :
+theorem mapsTo_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
     MapsTo (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (closedBall (0 : ℂ) 1) (closedBall (0 : ℂ) 1) := by
   intro z hz
@@ -314,51 +327,28 @@ theorem continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_o
       (closedBall (0 : ℂ) 1) :=
   continuousOn_const.mul (continuousOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha)
 
-/-- **A standard disc automorphism is a bijection of the closed unit disc onto itself.** The
-rotation by `u` is undone by the rotation by `conj u`, which is its inverse because
-`‖u‖ = 1`. -/
-theorem bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : ‖u‖ = 1)
-    (ha : ‖a‖ < 1) :
+/-- **A standard disc automorphism is a bijection of the closed unit disc onto itself.** It is the
+Moebius factor followed by the rotation by `u`, each a bijection of the closed disc. -/
+theorem bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
     BijOn (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (closedBall (0 : ℂ) 1) (closedBall (0 : ℂ) 1) := by
-  have hu0 : u ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hu
-    exact zero_ne_one hu
-  have hrot : BijOn (fun w : ℂ => u * w) (closedBall (0 : ℂ) 1) (closedBall (0 : ℂ) 1) := by
-    refine InvOn.bijOn (f' := fun w : ℂ => u⁻¹ * w) ⟨fun w _ => ?_, fun w _ => ?_⟩ ?_ ?_
-    · simp [inv_mul_cancel_left₀ hu0]
-    · simp [mul_inv_cancel_left₀ hu0]
-    · intro w hw
-      rw [mem_closedBall_zero_iff] at hw ⊢
-      rwa [norm_mul, hu, one_mul]
-    · intro w hw
-      rw [mem_closedBall_zero_iff] at hw ⊢
-      rwa [norm_mul, norm_inv, hu, inv_one, one_mul]
+  have hrot := bijOn_mul_left_of_norm_eq_one (s := closedBall (0 : ℂ) 1) hu fun z w h => by
+    rw [mem_closedBall_zero_iff, mem_closedBall_zero_iff, h]
   simpa only [Function.comp_def] using
     hrot.comp (bijOn_closedBall_unitDiscMoebiusFormula_of_norm_lt_one ha)
 
 /-- **A standard disc automorphism is a bijection of the unit circle onto itself**: the boundary
-action of `Aut(𝔻)`. -/
-theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one (hu : ‖u‖ = 1)
-    (ha : ‖a‖ < 1) :
+action of `Aut(𝔻)`.  Again the Moebius factor followed by the rotation by `u`, now on the
+circle. -/
+theorem bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+    (hu : ‖u‖ = 1) (ha : ‖a‖ < 1) :
     BijOn (fun z : ℂ => u * ((z - a) / (1 - (starRingEnd ℂ) a * z)))
       (sphere (0 : ℂ) 1) (sphere (0 : ℂ) 1) := by
-  refine BijOn.mk (mapsTo_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one hu ha)
-    (((bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one hu ha).injOn).mono
-      sphere_subset_closedBall) ?_
-  intro w hw
-  -- Undoing the rotation keeps the point on the circle, so it is hit by the Moebius factor.
-  have hrot : (starRingEnd ℂ) u * w ∈ sphere (0 : ℂ) 1 := by
-    rw [mem_sphere_zero_iff_norm] at hw ⊢
-    rw [norm_mul, norm_conj, hu, one_mul, hw]
-  obtain ⟨z, hz, hzw⟩ := (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha).surjOn hrot
-  refine ⟨z, hz, ?_⟩
-  have hzw' : (z - a) / (1 - (starRingEnd ℂ) a * z) = (starRingEnd ℂ) u * w := hzw
-  calc
-    u * ((z - a) / (1 - (starRingEnd ℂ) a * z)) = u * ((starRingEnd ℂ) u * w) := by rw [hzw']
-    _ = ((starRingEnd ℂ) u * u) * w := by ring
-    _ = w := by rw [conj_mul_eq_one_of_norm_eq_one hu, one_mul]
+  have hrot := bijOn_mul_left_of_norm_eq_one (s := sphere (0 : ℂ) 1) hu fun z w h => by
+    rw [mem_sphere_zero_iff_norm, mem_sphere_zero_iff_norm, h]
+  simpa only [Function.comp_def] using
+    hrot.comp (bijOn_sphere_unitDiscMoebiusFormula_of_norm_lt_one ha)
 
 /-- **A standard disc automorphism, as a homeomorphism of the closed disc.** The definition is not
 exposed; `TauCeti.coe_unitDiscStandardAutomorphismClosedBallHomeomorph_apply` characterizes it. -/
@@ -367,12 +357,12 @@ noncomputable def unitDiscStandardAutomorphismClosedBallHomeomorph (u : Circle)
   haveI : CompactSpace (closedBall (0 : ℂ) 1) :=
     isCompact_iff_compactSpace.mp (isCompact_closedBall _ _)
   Continuous.homeoOfEquivCompactToT2
-    (f := (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
-      a.norm_lt_one).equiv _)
+    (f := (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+      u.norm_coe a.norm_lt_one).equiv _)
     ((continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_one (u : ℂ)
       a.norm_lt_one).mapsToRestrict
-        (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
-          a.norm_lt_one).mapsTo)
+        (bijOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+          u.norm_coe a.norm_lt_one).mapsTo)
 
 /-- The closed-disc automorphism homeomorphism is given by the standard automorphism formula. -/
 @[simp, norm_cast]
@@ -427,12 +417,12 @@ noncomputable def unitDiscStandardAutomorphismSphereHomeomorph (u : Circle)
   haveI : CompactSpace (sphere (0 : ℂ) 1) :=
     isCompact_iff_compactSpace.mp (isCompact_sphere _ _)
   Continuous.homeoOfEquivCompactToT2
-    (f := (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
-      a.norm_lt_one).equiv _)
+    (f := (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+      u.norm_coe a.norm_lt_one).equiv _)
     (((continuousOn_closedBall_unitDiscStandardAutomorphismFormula_of_norm_lt_one (u : ℂ)
       a.norm_lt_one).mono sphere_subset_closedBall).mapsToRestrict
-        (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one u.norm_coe
-          a.norm_lt_one).mapsTo)
+        (bijOn_sphere_unitDiscStandardAutomorphismFormula_of_norm_eq_one_of_norm_lt_one
+          u.norm_coe a.norm_lt_one).mapsTo)
 
 /-- The circle automorphism homeomorphism is given by the standard automorphism formula. -/
 @[simp, norm_cast]

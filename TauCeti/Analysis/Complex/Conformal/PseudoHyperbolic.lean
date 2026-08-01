@@ -282,8 +282,8 @@ theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne {z w : ℂ} (hz : ‖z�
 
 /-- **A point of the unit circle is at pseudo-hyperbolic distance one from any interior point.**
 The boundary counterpart of `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
-theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one {z w : ℂ} (hz : ‖z‖ = 1) (hw : ‖w‖ < 1) :
-    pseudoHyperbolicExpr z w = 1 :=
+theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one {z w : ℂ} (hz : ‖z‖ = 1)
+    (hw : ‖w‖ < 1) : pseudoHyperbolicExpr z w = 1 :=
   pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne hz fun h => by
     rw [← h, hz] at hw
     exact lt_irrefl 1 hw
