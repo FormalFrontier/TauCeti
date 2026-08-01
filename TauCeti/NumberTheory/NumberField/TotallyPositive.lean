@@ -32,6 +32,9 @@ units; the signs *not* realized by units measure the difference between `Cl⁺(K
   positive.
 * `TauCeti.NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
   kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`.
+* `TauCeti.NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
+  units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
+  `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
 -/
 
 public section
@@ -96,5 +99,36 @@ theorem mem_totallyPositiveUnits {u : Kˣ} :
 theorem sq_mem_totallyPositiveUnits (u : Kˣ) : u ^ 2 ∈ totallyPositiveUnits := by
   rw [mem_totallyPositiveUnits, Units.val_pow_eq_pow_val]
   exact isTotallyPositive_sq (Units.ne_zero u)
+
+variable [NumberField K]
+
+/-- The subgroup of **totally positive integer units** of `(𝓞 K)ˣ`: the preimage of
+`totallyPositiveUnits` under the inclusion `(𝓞 K)ˣ → Kˣ`, i.e. the integer units whose image in `K`
+is totally positive. This is the subgroup by which the narrow class group refines the ordinary
+one. -/
+noncomputable def totallyPositiveIntegerUnits : Subgroup (𝓞 K)ˣ :=
+  totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
+
+omit [NumberField K] in
+/-- `totallyPositiveIntegerUnits` as the preimage of `totallyPositiveUnits`, usable across modules
+where the definition is opaque. -/
+theorem totallyPositiveIntegerUnits_eq :
+    totallyPositiveIntegerUnits =
+      totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom) := by
+  simp only [totallyPositiveIntegerUnits]
+
+omit [NumberField K] in
+/-- Membership in `totallyPositiveIntegerUnits` is total positivity of the image in `K`. -/
+@[simp] theorem mem_totallyPositiveIntegerUnits {u : (𝓞 K)ˣ} :
+    u ∈ totallyPositiveIntegerUnits ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by
+  simp only [totallyPositiveIntegerUnits, Subgroup.mem_comap, mem_totallyPositiveUnits,
+    Units.coe_map, RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe]
+
+omit [NumberField K] in
+/-- Every square of an integer unit is a totally positive integer unit. -/
+theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
+    u ^ 2 ∈ totallyPositiveIntegerUnits := by
+  rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
+  exact sq_mem_totallyPositiveUnits _
 
 end TauCeti.NumberField

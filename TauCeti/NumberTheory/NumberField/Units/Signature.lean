@@ -17,20 +17,19 @@ We build it first on the full multiplicative group `Kˣ` — `fieldUnitSignature
 totally positive units `totallyPositiveUnits` — and then restrict along `(𝓞 K)ˣ → Kˣ` to the
 arithmetic unit group to obtain `unitSignature`, whose kernel is the totally positive integer units.
 
-The integer-unit signature is the archimedean half of the narrow class group `Cl⁺(K)` (Layer 3 of
-the multiquadratic roadmap): the image of the signature on the integer units, inside the full sign
-group, measures the difference `Cl⁺(K) → Cl(K)` between the narrow and ordinary class groups, and
-the `2`-rank of `Cl⁺(K)` is what the `t - 1` genus-theory formula computes for a real quadratic
-field.
+The integer-unit signature is the archimedean input to the narrow class group `Cl⁺(K)` (Layer 3 of
+the multiquadratic roadmap): the *cokernel* of the signature — the full sign group modulo the
+signatures realized by units — is what contributes the kernel of the surjection `Cl⁺(K) → Cl(K)`
+between the narrow and ordinary class groups, and the `2`-rank of `Cl⁺(K)` is what the `t - 1`
+genus-theory formula computes for a real quadratic field.
 
 ## Main definitions and results
 
 * `TauCeti.NumberField.fieldUnitSignature`: the signature homomorphism on `Kˣ`, with
   `ker_fieldUnitSignature` computing its kernel as `totallyPositiveUnits`.
-* `TauCeti.NumberField.totallyPositiveIntegerUnits`: the subgroup of totally positive integer units
-  of `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`.
 * `TauCeti.NumberField.unitSignature`: the signature homomorphism on `(𝓞 K)ˣ`, the restriction of
-  `fieldUnitSignature`, with `ker_unitSignature` its kernel `totallyPositiveIntegerUnits`.
+  `fieldUnitSignature`, with `ker_unitSignature` its kernel `totallyPositiveIntegerUnits` (defined
+  in `TotallyPositive.lean`).
 -/
 
 public section
@@ -72,26 +71,6 @@ theorem ker_fieldUnitSignature :
 
 variable [NumberField K]
 
-/-- The subgroup of **totally positive integer units** of `(𝓞 K)ˣ`: the preimage of
-`totallyPositiveUnits` under the inclusion `(𝓞 K)ˣ → Kˣ`, i.e. the integer units whose image in `K`
-is totally positive. -/
-noncomputable def totallyPositiveIntegerUnits : Subgroup (𝓞 K)ˣ :=
-  totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
-
-omit [NumberField K] in
-/-- Membership in `totallyPositiveIntegerUnits` is total positivity of the image in `K`. -/
-@[simp] theorem mem_totallyPositiveIntegerUnits {u : (𝓞 K)ˣ} :
-    u ∈ totallyPositiveIntegerUnits ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by
-  simp only [totallyPositiveIntegerUnits, Subgroup.mem_comap, mem_totallyPositiveUnits,
-    Units.coe_map, RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe]
-
-omit [NumberField K] in
-/-- Every square of an integer unit is a totally positive integer unit. -/
-theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
-    u ^ 2 ∈ totallyPositiveIntegerUnits := by
-  rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
-  exact sq_mem_totallyPositiveUnits _
-
 /-- The **signature homomorphism** on the integer units `(𝓞 K)ˣ`, the restriction of
 `fieldUnitSignature` along the inclusion `(𝓞 K)ˣ → Kˣ`. -/
 noncomputable def unitSignature :
@@ -110,7 +89,7 @@ omit [NumberField K] in
 /-- The kernel of the integer-unit signature is exactly the totally positive integer units. -/
 theorem ker_unitSignature :
     MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
-  rw [unitSignature, ← MonoidHom.comap_ker, ker_fieldUnitSignature, totallyPositiveIntegerUnits]
+  rw [unitSignature, ← MonoidHom.comap_ker, ker_fieldUnitSignature, totallyPositiveIntegerUnits_eq]
 
 omit [NumberField K] in
 /-- An integer unit has trivial signature exactly when its image in `K` is totally positive. -/
