@@ -27,10 +27,12 @@ the copy of `M`, and because `M` is abelian this conjugation is trivial on the c
 (`TauCeti.GroupExtension.conjAct_eq_of_rightHom_eq`); packaged as a homomorphism it is
 `TauCeti.GroupExtension.conjActOfSection`, independent of the section used to write it down.
 `TauCeti.GroupExtension.InducesAction S` says that this conjugation is the ambient
-`MulDistribMulAction` of `G` on `M`. For a central extension the conjugation is trivial
-(`TauCeti.GroupExtension.conjAct_eq_one_of_le_center`), so there `InducesAction` holds exactly for
-the trivial action, the case in which a projective representation of `G` becomes a linear
-representation of `E`.
+`MulDistribMulAction` of `G` on `M`, equivalently that `conjActOfSection` *is* that action
+(`TauCeti.GroupExtension.inducesAction_iff_conjActOfSection_eq`). For a central extension the
+conjugation is trivial (`TauCeti.GroupExtension.conjAct_eq_one_of_le_center`), so there
+`InducesAction` holds exactly for the trivial action
+(`TauCeti.GroupExtension.inducesAction_iff_smul_eq_self`), the case in which a projective
+representation of `G` becomes a linear representation of `E`.
 
 The factor set itself measures the failure of the section to be a homomorphism:
 `σ g * σ h * (σ (g * h))⁻¹` lies in the copy of `M`, and `TauCeti.GroupExtension.factorSetFun` is
@@ -51,6 +53,10 @@ bookkeeping (`TauCeti.GroupExtension.factorSetFun`, `TauCeti.GroupExtension.norm
 
 ## Main results
 
+* `TauCeti.GroupExtension.inducesAction_iff_conjActOfSection_eq` and
+  `TauCeti.GroupExtension.inducesAction_iff_smul_eq_self`: `InducesAction` holds exactly when the
+  descended conjugation action is the ambient one, and, for a central extension, exactly when the
+  ambient action is trivial.
 * `TauCeti.GroupExtension.section_mul`: `σ g * σ h = inl (α (g, h)) * σ (g * h)`, the defining
   property of the factor set.
 * `TauCeti.GroupExtension.factorSetToGroupExtensionEquiv`: the extension is equivalent to the
@@ -125,6 +131,19 @@ for a central extension it says the ambient action is trivial. -/
 def InducesAction [MulDistribMulAction G M] : Prop :=
   ∀ (e : E) (m : M), S.conjAct e m = S.rightHom e • m
 
+/-- **A central extension induces exactly the trivial action.** This is the constructor for
+`TauCeti.GroupExtension.InducesAction` in the central case: the hypothesis holds if and only if the
+ambient action of `G` on `M` is trivial. -/
+theorem inducesAction_iff_smul_eq_self [MulDistribMulAction G M]
+    (h : S.inl.range ≤ Subgroup.center E) :
+    InducesAction S ↔ ∀ (g : G) (m : M), g • m = m := by
+  constructor
+  · intro hact g m
+    obtain ⟨e, rfl⟩ := S.rightHom_surjective g
+    rw [← hact e, conjAct_eq_one_of_le_center h e, MulAut.one_apply]
+  · intro htriv e m
+    rw [conjAct_eq_one_of_le_center h e, MulAut.one_apply, htriv]
+
 /-- The image of the kernel is conjugated by a section according to the ambient action. -/
 theorem inl_smul [MulDistribMulAction G M] (σ : S.Section) (hact : InducesAction S) (g : G)
     (m : M) : S.inl (g • m) = σ g * S.inl m * (σ g)⁻¹ := by
@@ -181,6 +200,15 @@ theorem InducesAction.conjActOfSection_eq_toMulAut [MulDistribMulAction G M]
     conjActOfSection σ = MulDistribMulAction.toMulAut G M := by
   ext g m
   simpa using hact (σ g) m
+
+/-- **`InducesAction` says exactly that the descended conjugation action is the ambient one.** The
+reverse implication is the constructor: it suffices to check the two actions agree after presenting
+conjugation through a single section. -/
+theorem inducesAction_iff_conjActOfSection_eq [MulDistribMulAction G M] (σ : S.Section) :
+    InducesAction S ↔ conjActOfSection σ = MulDistribMulAction.toMulAut G M := by
+  refine ⟨fun hact => hact.conjActOfSection_eq_toMulAut σ, fun h e m => ?_⟩
+  rw [conjAct_eq_of_rightHom_eq (S := S) (e' := σ (S.rightHom e)) (by simp)]
+  simpa using DFunLike.congr_fun (DFunLike.congr_fun h (S.rightHom e)) m
 
 end ConjAct
 
