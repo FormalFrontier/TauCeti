@@ -17,8 +17,8 @@ entry, and the *Kostka number* `K_{μ w}` counts the semistandard tableaux of sh
 establishes the two facts that make the Kostka numbers a triangular array for the dominance order:
 the tableau of shape `μ` whose `i`-th row consists of `i`s is the only one of content
 `μ.rowLen` (so `K_{μ μ} = 1`), and a tableau of shape `μ` and content `w` forces every partial sum
-`∑_{i < k} w i` to be at most the corresponding partial sum of the row lengths of `μ` (so
-`K_{μ w} = 0` unless `μ` dominates `w`).
+`∑_{i < k} w i` to be at most the corresponding partial sum of the row lengths of `μ` (so, for
+partitions, `K_{μ ν} = 0` unless `μ` dominates `ν`).
 
 The mechanism behind both is a single observation, `TauCeti.SemistandardYoungTableau.le_entry`: the
 entries of a semistandard tableau strictly increase down each column, so the entry in row `i` is at
@@ -66,14 +66,14 @@ variable {μ : YoungDiagram}
 
 /-- The content, or weight, of a semistandard Young tableau: `content T i` is the number of cells
 of the shape whose entry is `i`. -/
-@[expose]
 def content (T : _root_.SemistandardYoungTableau μ) (i : ℕ) : ℕ :=
   (μ.cells.filter fun c => T c.1 c.2 = i).card
 
-/-- The content of a tableau counts the cells carrying a given entry. -/
+/-- The content of a tableau counts the cells carrying a given entry.  This is the whole interface
+importers get: the body of `content` is not exposed, so the parentheses in `(rfl)` keep the
+definitional step inside this module. -/
 theorem content_def (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
-    content T i = (μ.cells.filter fun c => T c.1 c.2 = i).card :=
-  rfl
+    content T i = (μ.cells.filter fun c => T c.1 c.2 = i).card := (rfl)
 
 /-- The entries of a tableau are exactly the values on which its content is nonzero. -/
 theorem mem_image_iff_content_ne_zero (T : _root_.SemistandardYoungTableau μ) (i : ℕ) :
@@ -205,16 +205,16 @@ end SemistandardYoungTableau
 
 /-- The **Kostka number** `K_{μ w}` of a shape and a weight function: the number of semistandard
 Young tableaux of shape `μ` whose content is `w`. -/
-@[expose]
 noncomputable def diagramKostkaNumber (μ : YoungDiagram) (w : ℕ → ℕ) : ℕ :=
   Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w}
 
 /-- The Kostka number of a shape and a weight function counts the tableaux of that shape and
-content. -/
+content.  As for `TauCeti.SemistandardYoungTableau.content_def`, this is the whole interface
+importers get. -/
 theorem diagramKostkaNumber_def (μ : YoungDiagram) (w : ℕ → ℕ) :
     diagramKostkaNumber μ w =
       Nat.card {T : _root_.SemistandardYoungTableau μ // SemistandardYoungTableau.content T = w} :=
-  rfl
+  (rfl)
 
 /-- A Kostka number is nonzero exactly when a tableau of the prescribed shape and content
 exists. -/
@@ -251,14 +251,13 @@ theorem sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero {μ : YoungDiagra
 semistandard tableaux of the shape of `μ` whose content is the row lengths of the diagram of `ν`,
 that is (by `TauCeti.rowLen_diagramOf`), the tableaux using the entry `i` exactly as often as the
 `i`-th largest part of `ν` prescribes. -/
-@[expose]
 noncomputable def kostkaNumber {n : ℕ} (μ ν : n.Partition) : ℕ :=
   diagramKostkaNumber (diagramOf μ) (diagramOf ν).rowLen
 
-/-- The Kostka number of two partitions is the Kostka number of their diagrams. -/
+/-- The Kostka number of two partitions is the Kostka number of their diagrams.  As for
+`TauCeti.SemistandardYoungTableau.content_def`, this is the whole interface importers get. -/
 theorem kostkaNumber_def {n : ℕ} (μ ν : n.Partition) :
-    kostkaNumber μ ν = diagramKostkaNumber (diagramOf μ) (diagramOf ν).rowLen :=
-  rfl
+    kostkaNumber μ ν = diagramKostkaNumber (diagramOf μ) (diagramOf ν).rowLen := (rfl)
 
 /-- A Kostka number of two partitions is nonzero exactly when a tableau of shape `μ` and content
 `ν` exists. -/
@@ -270,13 +269,14 @@ theorem kostkaNumber_ne_zero_iff {n : ℕ} {μ ν : n.Partition} :
 /-- A partition contributes exactly one tableau to its own Kostka number. -/
 @[simp]
 theorem kostkaNumber_self {n : ℕ} (μ : n.Partition) : kostkaNumber μ μ = 1 :=
-  diagramKostkaNumber_rowLen _
+  (kostkaNumber_def μ μ).trans (diagramKostkaNumber_rowLen _)
 
 /-- **The Kostka numbers are triangular for the dominance order**: `K_{μ ν} ≠ 0` forces `μ` to
 dominate `ν`. -/
 theorem dominates_of_kostkaNumber_ne_zero {n : ℕ} {μ ν : n.Partition}
     (h : kostkaNumber μ ν ≠ 0) : Dominates μ ν := by
   refine dominates_iff.mpr fun k => ?_
+  rw [kostkaNumber_def] at h
   have hk := sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero h k
   rwa [YoungDiagram.sum_range_rowLen_eq_card_filter_fst,
     ← YoungDiagram.sum_take_rowLens_eq_card_filter_fst, rowLens_diagramOf,
