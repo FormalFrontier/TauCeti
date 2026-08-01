@@ -117,30 +117,6 @@ The automorphism is first extended from `A` to `B`, on the iterated tensor produ
       (TensorProduct.AlgebraTensorModule.cancelBaseChange R A B B V)).toMonoidHom.comp
         (Units.map (Module.End.baseChangeHom A B (A ⊗[R] V)).toMonoidHom)
 
-/-- Extension of automorphisms sends the identity automorphism to the identity automorphism. -/
-lemma mapScalarExtensionAutomorphisms_one
-    {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
-    mapScalarExtensionAutomorphisms (V := V) φ
-        (1 : scalarExtensionAutomorphisms (V := V) A) = 1 :=
-  (mapScalarExtensionAutomorphisms (V := V) φ).hom.map_one
-
-/-- Extension of automorphisms preserves multiplication in composition order. -/
-lemma mapScalarExtensionAutomorphisms_mul
-    {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
-    (g h : scalarExtensionAutomorphisms (V := V) A) :
-    mapScalarExtensionAutomorphisms (V := V) φ (g * h) =
-      mapScalarExtensionAutomorphisms (V := V) φ g *
-        mapScalarExtensionAutomorphisms (V := V) φ h :=
-  (mapScalarExtensionAutomorphisms (V := V) φ).hom.map_mul g h
-
-/-- Extension of automorphisms preserves inverses. -/
-lemma mapScalarExtensionAutomorphisms_inv
-    {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
-    (g : scalarExtensionAutomorphisms (V := V) A) :
-    mapScalarExtensionAutomorphisms (V := V) φ g⁻¹ =
-      (mapScalarExtensionAutomorphisms (V := V) φ g)⁻¹ :=
-  (mapScalarExtensionAutomorphisms (V := V) φ).hom.map_inv g
-
 /-- Scalar extension of an automorphism is characterized on pure tensors by its value on the
 canonical copy of the original module. -/
 @[simp]
@@ -244,19 +220,6 @@ lemma mapScalarExtensionAutomorphisms_comp
   map φ := mapScalarExtensionAutomorphisms (V := V) φ
   map_id A := mapScalarExtensionAutomorphisms_id (V := V) A
   map_comp φ ψ := mapScalarExtensionAutomorphisms_comp (V := V) φ ψ
-
-/-- The object part of `scalarExtensionAutomorphismsFunctor` is the general linear group of the
-scalar extension. -/
-lemma scalarExtensionAutomorphismsFunctor_obj (A : CommAlgCat.{w} R) :
-    (scalarExtensionAutomorphismsFunctor (V := V)).obj A =
-      GrpCat.of (LinearMap.GeneralLinearGroup A (A ⊗[R] V)) :=
-  rfl
-
-/-- The morphism part of `scalarExtensionAutomorphismsFunctor` is extension of automorphisms. -/
-lemma scalarExtensionAutomorphismsFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
-    (scalarExtensionAutomorphismsFunctor (V := V)).map φ =
-      mapScalarExtensionAutomorphisms (V := V) φ :=
-  rfl
 
 end GeneralLinear
 
