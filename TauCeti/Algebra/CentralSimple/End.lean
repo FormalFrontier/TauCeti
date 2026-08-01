@@ -77,9 +77,6 @@ variable [Nontrivial V]
 
 /-- **The endomorphism algebra of a nonzero finite-dimensional vector space is a simple ring.**
 
-The proof is the transport of `IsSimpleRing.matrix` along the matrix presentation
-`algEquivMatrix (Module.finBasis K V)`; nothing downstream depends on that choice of basis.
-
 Finite-dimensionality cannot be dropped: on an infinite-dimensional `V` the finite-rank
 endomorphisms are a proper nonzero two-sided ideal. -/
 instance IsSimpleRing.moduleEnd : IsSimpleRing (Module.End K V) :=

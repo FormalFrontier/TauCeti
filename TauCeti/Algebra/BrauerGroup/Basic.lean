@@ -156,8 +156,7 @@ def CSA.tensorProduct (A B : CSA.{u, v} K) : CSA.{u, v} K :=
 
 /-! ### Brauer equivalence -/
 
-/-- Isomorphic central simple algebras are Brauer equivalent: take `1 × 1` matrices on both
-sides. -/
+/-- Isomorphic central simple algebras are Brauer equivalent. -/
 theorem isBrauerEquivalent_of_nonempty_algEquiv {A B : CSA.{u, v} K}
     (e : Nonempty (A ≃ₐ[K] B)) : IsBrauerEquivalent A B :=
   ⟨1, 1, one_ne_zero, one_ne_zero, e.map AlgEquiv.mapMatrix⟩
@@ -179,12 +178,9 @@ theorem isBrauerEquivalent_matrix_congr {A B : CSA.{u, v} K} (h : IsBrauerEquiva
 /-- **Matrix absorption**: `Mₘ(A) ⊗[R] Mₙ(B) ≃ₐ[R] M_{mn}(A ⊗[R] B)`, over any commutative
 semiring `R` and any two `R`-algebras, in any two sizes.
 
-This is Mathlib's Kronecker product of matrix algebras, `Matrix.kroneckerTMulAlgEquiv`, whose
-target is indexed by `Fin m × Fin n`, reindexed along `finProdFinEquiv` to the `Fin (m * n)`
-indexing that `IsBrauerEquivalent` uses. Only that reindexing is done here; the algebra structure
-on the Kronecker product is entirely Mathlib's. Neither central simplicity nor positivity of the
-sizes plays any part, so neither is assumed; `TauCeti.CSA.tensorProductMatrixAlgEquiv` is the
-bundled reading that Brauer equivalence consumes. -/
+Neither central simplicity nor positivity of the sizes plays any part, so neither is assumed;
+`TauCeti.CSA.tensorProductMatrixAlgEquiv` is the bundled reading that Brauer equivalence
+consumes. -/
 def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A : Type*) [Semiring A]
     [Algebra R A] (B : Type*) [Semiring B] [Algebra R B] :
     Matrix (Fin m) (Fin m) A ⊗[R] Matrix (Fin n) (Fin n) B ≃ₐ[R]
@@ -202,10 +198,7 @@ def CSA.tensorProductMatrixAlgEquiv (A B : CSA.{u, v} K) (m n : ℕ) [NeZero m] 
   Matrix.kroneckerTMulFinAlgEquiv m n K A B
 
 /-- **The tensor product respects Brauer equivalence**, so it descends to a binary operation on
-`BrauerGroup K`.
-
-The proof is matrix absorption twice over: `Mₘₙ(A ⊗ B) ≃ Mₘ(A) ⊗ Mₙ(B)`, which the hypotheses turn
-into `Mₘ'(A') ⊗ Mₙ'(B') ≃ Mₘ'ₙ'(A' ⊗ B')`. -/
+`BrauerGroup K`. -/
 theorem isBrauerEquivalent_tensorProduct_congr {A A' B B' : CSA.{u, v} K}
     (hA : IsBrauerEquivalent A A') (hB : IsBrauerEquivalent B B') :
     IsBrauerEquivalent (CSA.tensorProduct A B) (CSA.tensorProduct A' B') := by
