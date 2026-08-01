@@ -33,13 +33,18 @@ namespace Probability
 of `ℕ` that agrees with `k` on the first `m` inputs and is **eventually a translation**: beyond the
 selection it adds a fixed constant `C`.
 
-The eventual-translation clause matters for invariant events. Composing with `φ` changes only the
-first `m` coordinates and then acts as a fixed iterate of the shift, so any event that is unchanged
-by dropping a finite prefix — a shift-invariant or tail event — is preserved by the reindexing.
+The eventual-translation clause matters for **shift-invariant** events. Beyond the first `m`
+coordinates, reindexing by `φ` agrees with the fixed iterate `shift^[C]`, so for a set `S` with
+`shift ⁻¹' S = S` membership is unchanged: exact shift invariance gives both
+`x ∈ S ↔ shift^[C] x ∈ S` and insensitivity to the altered finite prefix.
 
-This concerns **exact** invariance: sets measurable in `MeasurableSpace.invariants (shift α)`, or in
-the path tail, which are literally unchanged by the shift. It says nothing about the a.e.-invariant
-formulation Mathlib's `ErgodicSMul` uses; relating the two is a separate matter. -/
+**Tail measurability alone does not suffice.** A tail event is insensitive to finitely many
+coordinates, but need not satisfy `shift ⁻¹' S = S`, and it is the shift invariance — not the
+prefix insensitivity — that supplies the `shift^[C]` step. So this clause serves
+`MeasurableSpace.invariants (shift α)`, not the path tail.
+
+This concerns **exact** invariance, sets literally unchanged by the shift. It says nothing about the
+a.e.-invariant formulation Mathlib's `ErgodicSMul` uses; relating the two is a separate matter. -/
 theorem exists_strictMono_nat_extending_fin_eventually_add {m : ℕ} {k : Fin m → ℕ}
     (hk : StrictMono k) :
     ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
