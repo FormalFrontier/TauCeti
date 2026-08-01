@@ -16,18 +16,15 @@ curve by transport along the homeomorphism that `TauCeti.IsJordanCurve` provides
 
 ## The argument on the circle
 
-Everything rests on one fact about the exponential parametrization: each half-open period of
-angles is a fundamental domain, `TauCeti.bijOn_circleExp_Ioc`. Injectivity there is Mathlib's
-`Circle.exp_injOn_Ioc`; surjectivity is `Circle.exp_surjective` followed by the reduction
-`toIocMod` of the angle modulo `2 * π`, which does not change the value of `Circle.exp` because
-that map is periodic.
-
-Given two distinct points `z` and `w`, choose an angle `a` with `Circle.exp a = z`. Then `z` is the
-value at the *right* endpoint `a + 2 * π` of the period `Ioc a (a + 2 * π)` as well, and `w` is the
-value at a unique interior angle `b`. The two open arcs are the images of `Ioo a b` and of
-`Ioo b (a + 2 * π)`; they are connected because intervals are, and *open* because `Circle.exp` is a
-covering map (`Circle.isCoveringMap_exp`) and hence an open map, which is what makes the pair a
-genuine separation rather than merely a partition.
+Both circle statements come straight out of Mathlib's arc API. For one point,
+`Circle.isPathConnected_compl_singleton` already gives more than connectedness of the complement,
+and is used directly. For two distinct points `z` and `w`,
+Mathlib parametrizes the two arcs they determine by the paths `Circle.path z w` and
+`Circle.path w z`, and records that the two ranges meet exactly in `{z, w}`
+(`Circle.range_path_inter_range_path`) and that each open arc is the complement of the opposite
+closed one (`Circle.compl_range_path`). So the two open arcs are complements of compact sets, hence
+*open*, and they are connected as continuous images of `Set.Ioo 0 1`; openness is what makes the
+pair a genuine separation rather than merely a partition.
 
 ## Why this is a layer-L5 prerequisite
 
@@ -39,10 +36,9 @@ would force the extension to be constant on one of them — which
 `TauCeti.not_eqOn_const_inter_sphere_of_injOn` in
 `TauCeti/Analysis/Complex/Conformal/ArcConstancy.lean` rules out. That file records the missing
 input explicitly: "two identified boundary points cut the circle into two arcs" is a statement about
-the curve, not about the map, and it was available neither in this repository nor in the pinned
-Mathlib. It is what this file supplies, at the generality of an arbitrary Jordan curve, since the
-same cutting is applied to `frontier Ω` — a Jordan curve, not a circle — on the image side of that
-argument.
+the curve, not about the map. Mathlib cuts the *circle*; what this file adds is the same cutting for
+an arbitrary Jordan curve, which is the generality the argument needs, since it applies the cutting
+to `frontier Ω` — a Jordan curve, not a circle — on the image side.
 
 ## Generality
 
@@ -53,10 +49,7 @@ The corollaries for a circle `Metric.sphere c r` of `ℂ` are the case the confo
 
 ## Main results
 
-* `TauCeti.bijOn_circleExp_Ioc` — a half-open period of angles is a fundamental domain for the
-  exponential parametrization of the circle.
-* `TauCeti.isConnected_compl_singleton_circle` and
-  `TauCeti.IsJordanCurve.isConnected_diff_singleton` — a Jordan curve minus a point is connected;
+* `TauCeti.IsJordanCurve.isConnected_diff_singleton` — a Jordan curve minus a point is connected;
   it is an *arc*, and in particular one point never separates the curve.
 * `TauCeti.exists_isOpen_isConnected_union_eq_compl_pair_circle` — two distinct points cut the
   circle into two disjoint nonempty open connected arcs.
@@ -81,97 +74,35 @@ public section
 
 namespace TauCeti
 
-open Metric Real Set Topology
+open Metric Set Topology
 
 variable {X : Type*} [TopologicalSpace X] {C : Set X} {p q : X} {r : ℝ}
 
-/-! ## The exponential parametrization of the circle -/
-
-/-- **A half-open period of angles is a fundamental domain for the circle.** The exponential
-parametrization `Circle.exp` is a bijection of `Set.Ioc a (a + 2 * π)` onto the whole circle,
-whatever the base angle `a`.
-
-Injectivity is Mathlib's `Circle.exp_injOn_Ioc`, the interval being exactly one period long.
-Surjectivity reduces an arbitrary angle into the period with `toIocMod`, which changes it by an
-integer multiple of `2 * π` and so leaves `Circle.exp` unchanged. Taking the period *half-open on
-the right* is what puts the base point `Circle.exp a` at an endpoint of the interval rather than
-inside it, which is what the arguments below need. -/
-theorem bijOn_circleExp_Ioc (a : ℝ) : BijOn Circle.exp (Ioc a (a + 2 * π)) univ := by
-  refine ⟨fun _ _ => mem_univ _, Circle.exp_injOn_Ioc (le_of_eq (by ring)), fun z _ => ?_⟩
-  obtain ⟨t, rfl⟩ := Circle.exp_surjective z
-  refine ⟨toIocMod two_pi_pos a t, toIocMod_mem_Ioc two_pi_pos a t, ?_⟩
-  have hm : toIocMod two_pi_pos a t = t - toIocDiv two_pi_pos a t • (2 * π) := by
-    rw [← self_sub_toIocMod two_pi_pos a t]; ring
-  rw [hm, Circle.periodic_exp.sub_zsmul_eq]
-
-/-- `Circle.exp` is an open map: it is a covering map (`Circle.isCoveringMap_exp`), hence a local
-homeomorphism. This is what makes the arcs cut out below *open*. -/
-private lemma isOpenMap_circleExp : IsOpenMap Circle.exp :=
-  isLocalHomeomorph_circleExp.isOpenMap
-
 /-! ## Cutting the circle -/
 
-/-- **The circle minus a point is connected.** The complement of `z` is the image of the open
-period `Set.Ioo a (a + 2 * π)` of angles based at an angle `a` of `z`, and an open interval is
-connected. So a single point never separates the circle; two do, by
-`TauCeti.exists_isOpen_isConnected_union_eq_compl_pair_circle`. -/
-theorem isConnected_compl_singleton_circle (z : Circle) : IsConnected ({z}ᶜ : Set Circle) := by
-  obtain ⟨a, ha⟩ := Circle.exp_surjective z
-  have ha2 : a < a + 2 * π := by linarith [two_pi_pos]
-  have hbij := bijOn_circleExp_Ioc a
-  have hz2 : Circle.exp (a + 2 * π) = z := by rw [Circle.exp_add_two_pi, ha]
-  have himg : Circle.exp '' Ioo a (a + 2 * π) = ({z}ᶜ : Set Circle) := by
-    ext u
-    simp only [mem_image, mem_compl_iff, mem_singleton_iff]
-    constructor
-    · rintro ⟨x, hx, rfl⟩ hu
-      exact absurd (hbij.injOn (Ioo_subset_Ioc_self hx) (right_mem_Ioc.mpr ha2) (hu.trans hz2.symm))
-        hx.2.ne
-    · intro hu
-      obtain ⟨x, hx, rfl⟩ := hbij.surjOn (mem_univ u)
-      exact ⟨x, ⟨hx.1, lt_of_le_of_ne hx.2 fun h => hu (by rw [h, hz2])⟩, rfl⟩
-  exact himg ▸ (isConnected_Ioo ha2).image _ Circle.exp.continuous.continuousOn
-
 /-- **Two distinct points cut the circle into two arcs.** The complement of `{z, w}` is the union
-of two disjoint nonempty open connected sets.
+of two disjoint nonempty open connected sets, namely the two open arcs `Circle.path z w '' Ioo 0 1`
+and `Circle.path w z '' Ioo 0 1` that Mathlib cuts the circle into.
 
 Openness is the substantive part: it says the two arcs are a *separation* of `{z, w}ᶜ`, so that no
-connected subset of the cut circle can meet both, which is how the pair is used. -/
+connected subset of the cut circle can meet both, which is how the pair is used. Each open arc is
+the complement of the opposite closed arc by `Circle.compl_range_path`, hence open because a range
+of a path is compact; and the two closed arcs meet in `{z, w}` by
+`Circle.range_path_inter_range_path`, which is the union statement. -/
 theorem exists_isOpen_isConnected_union_eq_compl_pair_circle {z w : Circle} (hzw : z ≠ w) :
     ∃ A B : Set Circle, IsOpen A ∧ IsOpen B ∧ IsConnected A ∧ IsConnected B ∧ Disjoint A B ∧
       A ∪ B = ({z, w} : Set Circle)ᶜ := by
-  obtain ⟨a, ha⟩ := Circle.exp_surjective z
-  have ha2 : a < a + 2 * π := by linarith [two_pi_pos]
-  have hbij := bijOn_circleExp_Ioc a
-  have hz2 : Circle.exp (a + 2 * π) = z := by rw [Circle.exp_add_two_pi, ha]
-  have hR : a + 2 * π ∈ Ioc a (a + 2 * π) := right_mem_Ioc.mpr ha2
-  obtain ⟨b, hb, hbw⟩ := hbij.surjOn (mem_univ w)
-  have hb' : b ∈ Ioo a (a + 2 * π) :=
-    ⟨hb.1, lt_of_le_of_ne hb.2 fun h => hzw (by rw [← hz2, ← h, hbw])⟩
-  have hAsub : Ioo a b ⊆ Ioc a (a + 2 * π) := fun x hx => ⟨hx.1, (hx.2.trans hb'.2).le⟩
-  have hBsub : Ioo b (a + 2 * π) ⊆ Ioc a (a + 2 * π) := fun x hx => ⟨hb'.1.trans hx.1, hx.2.le⟩
-  refine ⟨Circle.exp '' Ioo a b, Circle.exp '' Ioo b (a + 2 * π),
-    isOpenMap_circleExp _ isOpen_Ioo, isOpenMap_circleExp _ isOpen_Ioo,
-    (isConnected_Ioo hb'.1).image _ Circle.exp.continuous.continuousOn,
-    (isConnected_Ioo hb'.2).image _ Circle.exp.continuous.continuousOn, ?_, ?_⟩
-  · rw [Set.disjoint_left]
-    rintro _ ⟨x, hx, rfl⟩ ⟨y, hy, hxy⟩
-    exact absurd (hbij.injOn (hBsub hy) (hAsub hx) hxy) (hx.2.trans hy.1).ne'
-  · ext u
-    simp only [mem_union, mem_image, mem_compl_iff, mem_insert_iff, mem_singleton_iff, not_or]
-    constructor
-    · rintro (⟨x, hx, rfl⟩ | ⟨x, hx, rfl⟩)
-      · exact ⟨fun h => (hx.2.trans hb'.2).ne (hbij.injOn (hAsub hx) hR (h.trans hz2.symm)),
-          fun h => hx.2.ne (hbij.injOn (hAsub hx) hb (h.trans hbw.symm))⟩
-      · exact ⟨fun h => hx.2.ne (hbij.injOn (hBsub hx) hR (h.trans hz2.symm)),
-          fun h => hx.1.ne' (hbij.injOn (hBsub hx) hb (h.trans hbw.symm))⟩
-    · rintro ⟨huz, huw⟩
-      obtain ⟨x, hx, rfl⟩ := hbij.surjOn (mem_univ u)
-      have hxR : x ≠ a + 2 * π := fun h => huz (by rw [h, hz2])
-      have hxb : x ≠ b := fun h => huw (by rw [h, hbw])
-      rcases lt_or_gt_of_ne hxb with h | h
-      · exact Or.inl ⟨x, ⟨hx.1, h⟩, rfl⟩
-      · exact Or.inr ⟨x, ⟨h, lt_of_le_of_ne hx.2 hxR⟩, rfl⟩
+  have hcon : ∀ u v : Circle, IsConnected (Circle.path u v '' Ioo 0 1) := fun u v =>
+    (isConnected_Ioo (by norm_num)).image _ (Circle.path u v).continuous.continuousOn
+  have hA : Circle.path z w '' Ioo 0 1 = (range (Circle.path w z))ᶜ :=
+    (Circle.compl_range_path hzw.symm).symm
+  have hB : Circle.path w z '' Ioo 0 1 = (range (Circle.path z w))ᶜ :=
+    (Circle.compl_range_path hzw).symm
+  refine ⟨_, _, ?_, ?_, hcon z w, hcon w z, ?_, ?_⟩
+  · rw [hA]; exact (isCompact_range (Circle.path w z).continuous).isClosed.isOpen_compl
+  · rw [hB]; exact (isCompact_range (Circle.path z w).continuous).isClosed.isOpen_compl
+  · rw [hA]; exact disjoint_compl_left_iff_subset.mpr (image_subset_range _ _)
+  · rw [hA, hB, ← compl_inter, Circle.range_path_inter_range_path hzw.symm, pair_comm w z]
 
 /-! ## Cutting a Jordan curve
 
@@ -203,15 +134,15 @@ private lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
   simp [jordanParam]
 
 /-- **A Jordan curve minus a point is connected**, being homeomorphic to the circle minus a point
-(`TauCeti.isConnected_compl_singleton_circle`). So a Jordan curve is *not* separated by any one of
-its points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_diff_pair`. -/
+(`Circle.isPathConnected_compl_singleton`). So a Jordan curve is *not* separated by any one of its
+points; it takes two, by `TauCeti.IsJordanCurve.not_isPreconnected_diff_pair`. -/
 theorem IsJordanCurve.isConnected_diff_singleton (h : IsJordanCurve C) (hp : p ∈ C) :
     IsConnected (C \ {p}) := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
   have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
     rw [compl_eq_univ_sdiff, image_sdiff (injective_jordanParam e), image_univ, image_singleton,
       range_jordanParam, jordanParam_apply]
-  exact himg ▸ (isConnected_compl_singleton_circle _).image _
+  exact himg ▸ (Circle.isPathConnected_compl_singleton _).isConnected.image _
     (continuous_jordanParam e).continuousOn
 
 /-- **Two distinct points cut a Jordan curve into two arcs.** For `p ≠ q` on a Jordan curve `C`
