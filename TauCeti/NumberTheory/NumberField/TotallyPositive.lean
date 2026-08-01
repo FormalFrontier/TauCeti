@@ -54,8 +54,8 @@ positivity at every real infinite place. -/
     IsTotallyPositive x ↔ ∀ (w : InfinitePlace K) (hw : w.IsReal), 0 < embedding_of_isReal hw x :=
   Iff.rfl
 
-/-- The element `1` is totally positive: every real embedding sends it to `1 > 0`. -/
-@[simp]
+/-- The element `1` is totally positive: every real embedding sends it to `1 > 0`. (Not a `simp`
+lemma: with `isTotallyPositive_iff` as `simp`, this is already discharged automatically.) -/
 theorem isTotallyPositive_one : IsTotallyPositive (1 : K) :=
   isTotallyPositive_iff.mpr fun _ _ => by rw [map_one]; exact one_pos
 
