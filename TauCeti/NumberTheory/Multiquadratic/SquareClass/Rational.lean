@@ -95,9 +95,12 @@ rationals with square roots `root i` in a field `L` over `ℚ`, then there are s
 `ℚ(√d₁, …, √dₙ) = ℚ(√a₁, …, √aₙ)`. The new roots are the old ones rescaled by base scalars, so no
 enlargement or shrinking of the field can occur.
 
-Consequently every statement about multiquadratic fields with squarefree integer radicands — the
-degree, the Galois group, the splitting law — applies verbatim to arbitrary nonzero rational
-radicands. -/
+The conclusion is an equality of intermediate fields, so a property of the field itself — its
+degree over `ℚ`, its Galois group, its subfields, the splitting behaviour of a prime in it —
+transports along that equality from the squarefree integer radicands to the rational ones. It does
+not transport the hypotheses: a theorem about squarefree integer radicands still has to be applied
+to the particular `a i` produced here, with its own hypotheses (independence, coprimality, …)
+established for them. -/
 theorem exists_squarefree_root_adjoin_eq {ι : Type*} {d : ι → ℚ} (hd : ∀ i, d i ≠ 0)
     {root : ι → L} (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L (d i)) :
     ∃ (a : ι → ℤ) (root' : ι → L), (∀ i, Squarefree (a i)) ∧
@@ -108,7 +111,8 @@ theorem exists_squarefree_root_adjoin_eq {ι : Type*} {d : ι → ℚ} (hd : ∀
     TauCeti.IntermediateField.adjoin_range_algebraMap_mul (fun i => inv_ne_zero (hc i)) root⟩
   rw [mul_pow, ← map_pow, hroot i, ← map_mul]
   congr 1
-  rw [hac i, inv_pow, inv_mul_eq_div, mul_div_assoc, div_self (pow_ne_zero 2 (hc i)), mul_one]
+  rw [hac i]
+  field_simp [hc i]
 
 /-- The real square root of a nonnegative rational squares back to it, in the shape the degree
 theorem consumes. This is the rational counterpart of `sq_sqrt_intCast`. -/

@@ -37,8 +37,10 @@ theorem adjoin_range_algebraMap_mul {ι : Type*} {u : ι → K} (hu : ∀ i, u i
   · rintro _ ⟨i, rfl⟩
     exact mul_mem (_root_.algebraMap_mem _ _) (subset_adjoin K _ ⟨i, rfl⟩)
   · rintro _ ⟨i, rfl⟩
+    have hne : algebraMap K L (u i) ≠ 0 :=
+      (map_ne_zero_iff _ (algebraMap K L).injective).mpr (hu i)
     have hx : x i = algebraMap K L (u i)⁻¹ * (algebraMap K L (u i) * x i) := by
-      rw [← mul_assoc, ← map_mul, inv_mul_cancel₀ (hu i), map_one, one_mul]
+      rw [map_inv₀, inv_mul_cancel_left₀ hne]
     rw [hx]
     exact mul_mem (_root_.algebraMap_mem _ _) (subset_adjoin K _ ⟨i, rfl⟩)
 

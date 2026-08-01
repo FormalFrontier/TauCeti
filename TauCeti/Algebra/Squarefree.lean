@@ -23,8 +23,8 @@ that Mathlib does not provide directly, used across the multiquadratic developme
 * `Squarefree.neg`: negation preserves squarefreeness in any ring with distributive negation.
 * `not_isSquare_intCast_of_squarefree_of_ne_one`: a squarefree integer other than `1` is not a
   rational square.
-* `isSquare_mul_sq_iff`: in a field, multiplying by a nonzero square does not change squareness —
-  the statement that squareness depends only on the square class.
+* `isSquare_mul_sq_iff`: in a commutative group with zero, multiplying by a nonzero square does
+  not change squareness — the statement that squareness depends only on the square class.
 * `Int.exists_squarefree_mul_sq` and `Rat.exists_squarefree_int_mul_sq`: the **squarefree part**.
   Every nonzero integer, and every nonzero rational, is a squarefree *integer* times a nonzero
   square. Mathlib has this for the natural numbers only (`Nat.sq_mul_squarefree`); these are the
@@ -52,17 +52,13 @@ theorem not_isSquare_intCast_of_squarefree_of_ne_one {n : ℤ}
   have hu : IsUnit a := hsf a (ha ▸ dvd_rfl)
   rcases Int.isUnit_iff.mp hu with rfl | rfl <;> simp_all
 
-/-- **Squareness depends only on the square class.** In a field, multiplying by the square of a
-nonzero element does not change whether an element is a square. -/
-theorem isSquare_mul_sq_iff {F : Type*} [Field F] {x y : F} (hy : y ≠ 0) :
+/-- **Squareness depends only on the square class.** Multiplying by the square of a nonzero
+element does not change whether an element is a square. -/
+theorem isSquare_mul_sq_iff {G₀ : Type*} [CommGroupWithZero G₀] {x y : G₀} (hy : y ≠ 0) :
     IsSquare (x * y ^ 2) ↔ IsSquare x := by
-  constructor
-  · rintro ⟨z, hz⟩
-    refine ⟨z / y, ?_⟩
-    field_simp
-    linear_combination hz
-  · rintro ⟨z, rfl⟩
-    exact ⟨z * y, by ring⟩
+  refine ⟨fun h => ?_, fun h => h.mul (IsSquare.sq y)⟩
+  have h' := h.mul (IsSquare.sq y⁻¹)
+  rwa [mul_assoc, ← mul_pow, mul_inv_cancel₀ hy, one_pow, mul_one] at h'
 
 /-- **The squarefree part of an integer.** Every nonzero integer is a squarefree integer times the
 square of a nonzero integer. This is the integer form of Mathlib's `Nat.sq_mul_squarefree`; the
@@ -95,5 +91,5 @@ theorem Rat.exists_squarefree_int_mul_sq {q : ℚ} (hq : q ≠ 0) :
   have habQ : (q.num : ℚ) * (q.den : ℚ) = (a : ℚ) * (b : ℚ) ^ 2 := by exact_mod_cast hab
   have hnum : (q.num : ℚ) = q * (q.den : ℚ) := (div_eq_iff hden).mp (Rat.num_div_den q)
   rw [hnum] at habQ
-  rw [div_pow, ← mul_div_assoc, eq_div_iff (pow_ne_zero 2 hden)]
+  field_simp
   linear_combination habQ
