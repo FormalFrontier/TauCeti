@@ -1,0 +1,122 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Analysis.Contour.Winding.Number.Concat
+
+/-!
+# Finite partitions of contour winding numbers
+
+This file upgrades the two-interval additivity of `Contour.windingNumber` to a finite partition
+`t 0, ..., t n` of the parameter interval.  No monotonicity of `t` is needed: oriented interval
+integrals, and hence their Cauchy principal values, telescope over arbitrary adjacent endpoints.
+
+The finite form is the bookkeeping prerequisite for the winding decomposition in
+Hungerbühler--Wasem Proposition 2.2.  There a closed immersed curve is replaced by a part avoiding
+the distinguished point and finitely many model sectors, one for each crossing.  Once those pieces
+are assembled on adjacent parameter intervals, the results here identify the winding number of the
+whole curve with the sum of their winding numbers.  The geometric construction of those pieces is
+separate; this file only proves the finite additivity it consumes.
+
+As in `Winding.Number.Concat`, every statement carries principal-value existence.  Without it the
+`limUnder`-based `windingNumber` is a junk value, so unconditional finite additivity would be false
+as an API statement even though it looked formally convenient.
+
+## Main results
+
+* `Contour.hasCauchyPVAt_inv_sub_sum_range` concatenates explicit Cauchy-kernel principal values
+  over a finite partition.
+* `Contour.windingNumber_eq_sum_range` writes the winding number on the whole interval as the sum
+  over its adjacent pieces.
+* `Contour.windingNumber_eq_sum_range_of_eqOn` allows each piece to be computed using a different
+  curve that agrees with the assembled curve on that open subinterval.  This is the form used by
+  an avoiding-part plus model-sector decomposition.
+
+## Provenance
+
+This is routine finite-partition infrastructure around the generalized winding number; no formal
+source is vendored.  Its role is prescribed by N. Hungerbühler and M. Wasem, *Non-integer valued
+winding numbers and a generalized Residue Theorem*, arXiv:1808.00997, Proposition 2.2.
+-/
+
+public section
+
+noncomputable section
+
+namespace TauCeti.Contour
+
+variable {γ : ℝ → ℂ} {z₀ : ℂ}
+
+/-- The Cauchy kernel about `z₀`, used throughout the winding-number API. -/
+local notation "κ[" z "]" => (fun w : ℂ => (w - z)⁻¹)
+
+/-- **Finite concatenation of explicit Cauchy-kernel principal values.**  If the principal value
+on every adjacent interval `[t k, t (k + 1)]` is `L k`, then the principal value on
+`[t 0, t n]` is their sum.  The endpoints need not be ordered. -/
+theorem hasCauchyPVAt_inv_sub_sum_range {n : ℕ} {t : ℕ → ℝ} {L : ℕ → ℂ}
+    (h : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k)) :
+    HasCauchyPVAt γ (t 0) (t n) κ[z₀] z₀ (∑ k ∈ Finset.range n, L k) := by
+  induction n with
+  | zero =>
+      simpa using HasCauchyPVAt.refl γ (t 0) κ[z₀] z₀
+  | succ n ih =>
+      have hprefix : HasCauchyPVAt γ (t 0) (t n) κ[z₀] z₀
+          (∑ k ∈ Finset.range n, L k) :=
+        ih fun k hk => h k (hk.trans n.lt_succ_self)
+      simpa only [Finset.sum_range_succ] using hprefix.concat (h n n.lt_succ_self)
+
+/-- Existence of the Cauchy-kernel principal value on every adjacent interval of a finite
+partition gives existence on the whole interval. -/
+theorem cauchyPVExistsAt_inv_sub_of_forall_lt {n : ℕ} {t : ℕ → ℝ}
+    (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀) :
+    CauchyPVExistsAt γ (t 0) (t n) κ[z₀] z₀ := by
+  refine CauchyPVExistsAt.intro (hasCauchyPVAt_inv_sub_sum_range (L := fun k =>
+    cauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀) ?_)
+  exact fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
+
+/-- **Finite-partition additivity of the generalized winding number.**  If the Cauchy-kernel
+principal value exists on every adjacent interval, the winding number from `t 0` to `t n` is the
+sum of the winding numbers of those pieces. -/
+theorem windingNumber_eq_sum_range {n : ℕ} {t : ℕ → ℝ}
+    (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀) :
+    windingNumber γ (t 0) (t n) z₀ =
+      ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ := by
+  let L : ℕ → ℂ := fun k => cauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀
+  have hpiece : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k) :=
+    fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
+  rw [windingNumber_eq_of_hasCauchyPVAt (hasCauchyPVAt_inv_sub_sum_range hpiece),
+    Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [windingNumber_eq_of_hasCauchyPVAt (h k (Finset.mem_range.mp hk)).hasCauchyPVAt_cauchyPVAt]
+
+/-- **Finite winding decomposition using separately computed pieces.**  Suppose that on the open
+subinterval between `t k` and `t (k + 1)`, the assembled curve `γ` agrees with a model curve
+`piece k`, and the Cauchy-kernel principal value exists along that model curve.  Then the winding
+number of `γ` over the whole partition is the sum of the winding numbers of the model curves.
+
+Agreement only on `uIoo` is sharp for this purpose: interval integrals ignore endpoints, and local
+agreement on the open interval also identifies derivatives there.  In Proposition 2.2 the model
+curves are the point-avoiding remainder and the finitely many model sectors. -/
+theorem windingNumber_eq_sum_range_of_eqOn {n : ℕ} {t : ℕ → ℝ} (piece : ℕ → ℝ → ℂ)
+    (heq : ∀ k < n, Set.EqOn (piece k) γ (Set.uIoo (t k) (t (k + 1))))
+    (hpv : ∀ k < n, CauchyPVExistsAt (piece k) (t k) (t (k + 1)) κ[z₀] z₀) :
+    windingNumber γ (t 0) (t n) z₀ =
+      ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
+  have hpvγ : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀ :=
+    fun k hk => (hpv k hk).congr_curve (heq k hk)
+  calc
+    windingNumber γ (t 0) (t n) z₀ =
+        ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ :=
+      windingNumber_eq_sum_range hpvγ
+    _ = ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      exact (windingNumber_congr_curve (heq k (Finset.mem_range.mp hk))).symm
+
+end TauCeti.Contour
+
+end
