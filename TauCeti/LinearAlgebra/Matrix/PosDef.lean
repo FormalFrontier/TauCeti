@@ -16,8 +16,8 @@ public section
 that the associated quadratic form is positive on nonzero *integer* vectors. That is formally
 weaker than positivity on nonzero *rational* vectors, and it is the rational statement that later
 arguments want, since a rational vector may be built from a construction that does not respect
-denominators. This file records that the two agree: an integer matrix that is positive definite
-over `ℤ` stays positive definite after casting its entries into `ℚ`.
+denominators. This file records one implication: an integer matrix that is positive definite over
+`ℤ` stays positive definite after casting its entries into `ℚ`.
 
 The proof is the obvious one. A nonzero rational vector becomes a nonzero integer vector after
 multiplying by a common denominator, and the quadratic form scales by the square of that

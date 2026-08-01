@@ -19,11 +19,12 @@ of such a matrix exist. This file introduces the matrix-level condition, `TauCet
 develops the tools that eliminate diagrams from the list, and proves that the Cartan matrix of a
 base of a finite crystallographic root system satisfies it.
 
-Positive definiteness is asked for over `ℚ`, not over `ℤ`. The two agree for an integer matrix
-(`TauCeti.Matrix.posDef_map_intCast`), but the rational form is the one downstream arguments use,
-since a test vector produced by a diagram computation need not have integer entries. The
-symmetrizer `d` is likewise rational: it is the vector of inverse root lengths, which is integral
-only after clearing denominators.
+Positive definiteness is asked for over `ℚ`, not over `ℤ`.
+`TauCeti.Matrix.posDef_map_intCast` shows that positive definiteness over `ℤ` implies positive
+definiteness over `ℚ`, and the rational form is the one downstream arguments use, since a test
+vector produced by a diagram computation need not have integer entries. The symmetrizer `d` is
+likewise rational: it is the vector of inverse root lengths, which is integral only after clearing
+denominators.
 
 ## Main definitions
 
@@ -59,17 +60,6 @@ Theory*, Chapter 11, for the classification of the finite-type case.
 namespace TauCeti
 
 variable {B : Type*} {A : Matrix B B ℤ}
-
-namespace Matrix
-
-/-- The symmetrization `fun i j ↦ d i * A i j` of an integer matrix by a rational vector `d`,
-written as a matrix product. -/
-lemma of_mul_intCast_eq_diagonal_mul [Fintype B] [DecidableEq B] (d : B → ℚ) (A : Matrix B B ℤ) :
-    (Matrix.of fun i j ↦ d i * (A i j : ℚ)) = Matrix.diagonal d * A.map (Int.cast : ℤ → ℚ) := by
-  ext i j
-  simp [Matrix.diagonal_mul]
-
-end Matrix
 
 /-- A finite square integer matrix is **of finite type** when it is a generalized Cartan matrix -
 diagonal entries `2`, nonpositive off-diagonal entries, and a symmetric vanishing pattern - which
@@ -110,6 +100,10 @@ lemma apply_le_zero_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j) : A i j
 /-- The vanishing pattern of a finite-type matrix is symmetric. -/
 lemma apply_eq_zero_symm (h : IsFiniteType A) {i j : B} (hij : A i j = 0) : A j i = 0 :=
   h.2.2.1 i j hij
+
+/-- An entry of a finite-type matrix vanishes exactly when its transpose does. -/
+lemma apply_eq_zero_iff (h : IsFiniteType A) {i j : B} : A i j = 0 ↔ A j i = 0 :=
+  ⟨h.apply_eq_zero_symm, h.apply_eq_zero_symm⟩
 
 /-- The symmetrizer of a finite-type matrix, together with its defining properties. -/
 lemma exists_symmetrizer (h : IsFiniteType A) :
@@ -175,8 +169,11 @@ a field, hence invertible, and the symmetrizer contributes only a nonzero diagon
 the elimination tool for the extended Dynkin diagrams, whose Cartan matrices are singular. -/
 theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
   obtain ⟨d, -, hpd⟩ := h.exists_symmetrizer
-  rw [Matrix.of_mul_intCast_eq_diagonal_mul] at hpd
-  have hu := hpd.isUnit
+  have hu : IsUnit (Matrix.diagonal d * A.map (Int.cast : ℤ → ℚ)) := by
+    apply Matrix.PosDef.isUnit
+    convert hpd using 1
+    ext i j
+    simp [Matrix.diagonal_mul]
   rw [Matrix.isUnit_iff_isUnit_det, Matrix.det_mul, Matrix.det_diagonal] at hu
   intro hdet
   have hzero : (A.map (Int.cast : ℤ → ℚ)).det = 0 := by
@@ -215,15 +212,12 @@ theorem isFiniteType_cartanMatrix [Finite ι] [CharZero R] [IsDomain R]
     IsFiniteType b.cartanMatrix := by
   classical
   obtain ⟨d, hd, hpd⟩ := b.exists_cartanMatrix_diagaonal_mul_posDef
-  have hfac : (Matrix.of fun i j ↦ ((d i : ℚ)) * ((b.cartanMatrix i j : ℤ) : ℚ)) =
-      (Matrix.diagonal d * b.cartanMatrix).map (Int.cast : ℤ → ℚ) := by
-    ext i j
-    simp [Matrix.diagonal_mul]
   refine isFiniteType_of (fun i ↦ b.cartanMatrix_apply_same i)
     (fun i j hij ↦ b.cartanMatrix_le_zero_of_ne i j hij)
-    (d := fun i ↦ (d i : ℚ)) (fun i ↦ show (0 : ℚ) < (d i : ℚ) by exact_mod_cast hd i) ?_
-  rw [hfac]
-  exact Matrix.posDef_map_intCast hpd
+    (d := fun i ↦ (d i : ℚ)) (fun i ↦ by exact_mod_cast hd i) ?_
+  convert Matrix.posDef_map_intCast hpd using 1
+  ext i j
+  simp [Matrix.diagonal_mul]
 
 /-- **The standard Cartan matrix of a Dynkin type realized by a base is of finite type.**
 Relabelling by the inverse of the matching turns the standard matrix into a principal submatrix -
