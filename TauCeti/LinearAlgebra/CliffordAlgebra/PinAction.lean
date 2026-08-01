@@ -34,8 +34,6 @@ Twisted conjugation is the one that extends to the odd part.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.twistedConj Q x`: twisted conjugation by a unit `x` of the Clifford
-  algebra, as a linear endomorphism of the Clifford algebra.
 * `TauCeti.CliffordAlgebra.unitι Q v`: a vector of invertible norm, as a unit of the Clifford
   algebra and hence a generator of the Lipschitz group.
 * `TauCeti.CliffordAlgebra.lipschitzVectorAction Q x`: the automorphism of the quadratic space
@@ -92,22 +90,22 @@ The twist by the grade involution `CliffordAlgebra.involute` is what makes a vec
 reflection in its orthogonal hyperplane (`lipschitzVectorAction_unitι`) rather than by the negative
 of it. On the even part `involute` is the identity, so there twisted conjugation agrees with plain
 conjugation. -/
-def twistedConj (x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q →ₗ[R] CliffordAlgebra Q :=
+private def twistedConj (x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q →ₗ[R] CliffordAlgebra Q :=
   (LinearMap.mulRight R ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)).comp
     (LinearMap.mulLeft R (involute (Q := Q) (x : CliffordAlgebra Q)))
 
 @[simp]
-theorem twistedConj_apply (x : (CliffordAlgebra Q)ˣ) (a : CliffordAlgebra Q) :
+private theorem twistedConj_apply (x : (CliffordAlgebra Q)ˣ) (a : CliffordAlgebra Q) :
     twistedConj Q x a =
       involute (Q := Q) (x : CliffordAlgebra Q) * a *
         ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
   rw [twistedConj]
   rfl
 
-theorem twistedConj_one (a : CliffordAlgebra Q) : twistedConj Q 1 a = a := by
+private theorem twistedConj_one (a : CliffordAlgebra Q) : twistedConj Q 1 a = a := by
   simp
 
-theorem twistedConj_mul (x y : (CliffordAlgebra Q)ˣ) (a : CliffordAlgebra Q) :
+private theorem twistedConj_mul (x y : (CliffordAlgebra Q)ˣ) (a : CliffordAlgebra Q) :
     twistedConj Q (x * y) a = twistedConj Q x (twistedConj Q y a) := by
   simp only [twistedConj_apply, Units.val_mul, mul_inv_rev, map_mul]
   noncomm_ring
@@ -286,6 +284,7 @@ theorem coe_lipschitzToOrthogonal_apply (x : lipschitzGroup Q) (m : M) :
 
 /-! ### The Pin and spin groups -/
 
+omit [Invertible (2 : R)] in
 /-- The Pin group sits inside the Lipschitz group. -/
 def pinToLipschitz : pinGroup Q →* lipschitzGroup Q where
   toFun x := ⟨pinGroup.toUnits x, pinGroup.units_mem_lipschitzGroup x.2⟩
@@ -314,9 +313,13 @@ element is unitary, the inverse appearing there is `star`. -/
 theorem ι_pinToOrthogonal_apply (x : pinGroup Q) (m : M) :
     ι Q (((pinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m) =
       involute (Q := Q) (x : CliffordAlgebra Q) * ι Q m * star (x : CliffordAlgebra Q) := by
+  have hinv : (((pinToLipschitz Q x : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) = star (x : CliffordAlgebra Q) :=
+    Units.inv_eq_of_mul_eq_one_right (by
+      rw [coe_pinToLipschitz_apply]
+      exact pinGroup.mul_star_self_of_mem x.2)
   rw [pinToOrthogonal, MonoidHom.comp_apply, coe_lipschitzToOrthogonal_apply,
-    ι_lipschitzVectorAction_apply, coe_pinToLipschitz_apply]
-  rfl
+    ι_lipschitzVectorAction_apply, coe_pinToLipschitz_apply, hinv]
 
 /-- The reflection cut out by a Pin group vector, computed explicitly. With `Q v = -1` the
 normalizing scalar `⅟(Q v)` of `TauCeti.QuadraticMap.reflection` is `-1`, so the reflection reads
@@ -330,11 +333,12 @@ theorem pinToOrthogonal_ι_apply {v : M} (hv : Q v = -1) (m : M) :
       CliffordAlgebra Q) = ι Q v := coe_pinToLipschitz_apply Q _
   rw [pinToOrthogonal, MonoidHom.comp_apply, coe_lipschitzToOrthogonal_apply,
     lipschitzVectorAction_apply, vectorMap_eq_reflection Q v hcoe]
-  change QuadraticMap.reflection Q v m = _
-  rw [QuadraticMap.reflection_apply, hinvOf, neg_mul, one_mul, neg_smul, sub_neg_eq_add]
+  rw [LinearEquiv.coe_coe, QuadraticMap.reflection_apply, hinvOf, neg_mul, one_mul, neg_smul,
+    sub_neg_eq_add]
 
 variable (Q)
 
+omit [Invertible (2 : R)] in
 /-- The spin group sits inside the Pin group. -/
 def spinToPin : spinGroup Q →* pinGroup Q :=
   Submonoid.inclusion fun _ hx => spinGroup.mem_pin hx
