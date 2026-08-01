@@ -55,7 +55,10 @@ criterion adds is the production of the pointwise limits that theorem asks for.
 * `TauCeti.isClosed_clusterSetOn`, `TauCeti.clusterSetOn_subset_closure_image`,
   `TauCeti.isCompact_clusterSetOn` and `TauCeti.clusterSetOn_nonempty` — the cluster set is a closed
   subset of `closure (f '' U)`, and is compact and nonempty at every point of `closure U` once `f`
-  maps `U` into a compact set.
+  maps `U` into a compact set; `TauCeti.isBounded_biUnion_clusterSetOn` is the metric consequence
+  that a union of cluster sets is bounded whenever the image is.
+* `TauCeti.clusterSetOn_mono` and `TauCeti.clusterSetOn_inter_of_mem_nhdsWithin` — the cluster set
+  is monotone in the approach region and depends only on its germ at `w`.
 * `TauCeti.clusterSetOn_eq_singleton_of_tendsto`,
   `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt` and
   `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` — a limit along `𝓝[U] w` makes the cluster
@@ -143,7 +146,11 @@ any `V ∈ 𝓝 w`, through `nhdsWithin_le_nhds`.
 
 Together with `TauCeti.clusterSetOn_mono` this says that the cluster set depends only on the germ of
 `U` at `w`. It is what lets a cluster value at a boundary point be recognised as a cluster value of
-the restriction of `f` to a small piece of `U` around that point. -/
+the restriction of `f` to a small piece of `U` around that point.
+
+This is the normal form of a cluster set over an intersection, and is tagged `@[simp]`: with the
+neighbourhood hypothesis to hand, `simp [*]` discards the intersected factor. -/
+@[simp]
 lemma clusterSetOn_inter_of_mem_nhdsWithin {V : Set X} (hV : V ∈ 𝓝[U] w) :
     clusterSetOn f (U ∩ V) w = clusterSetOn f U w := by
   simp only [clusterSetOn, nhdsWithin_inter_of_mem' hV]
@@ -331,6 +338,25 @@ lemma mem_clusterSetOn_iff_forall_exists :
     exact ⟨z, ⟨mem_ball.mpr hzd, hzU⟩, hball (mem_ball.mpr hfz)⟩
 
 end PseudoMetricSpace
+
+/-! ## Boundedness of the cluster sets -/
+
+section BoundedImage
+
+variable {X Y : Type*} [TopologicalSpace X] [PseudoMetricSpace Y] {U : Set X} {f : X → Y}
+
+/-- **The cluster sets over any set of points are bounded when the image is.** Each of them lies in
+`closure (f '' U)` by `TauCeti.clusterSetOn_subset_closure_image`, so this is boundedness of the
+closure of a bounded set.
+
+Recorded because any statement measuring such a union of cluster sets by its diameter needs it:
+`Metric.diam` vanishes on unbounded sets, so a diameter bound on a set not known to be bounded is no
+bound at all. -/
+lemma isBounded_biUnion_clusterSetOn (hb : Bornology.IsBounded (f '' U)) (s : Set X) :
+    Bornology.IsBounded (⋃ w ∈ s, clusterSetOn f U w) :=
+  hb.closure.subset (iUnion₂_subset fun _ _ => clusterSetOn_subset_closure_image)
+
+end BoundedImage
 
 /-! ## The Cauchy criterion for a subsingleton cluster set -/
 

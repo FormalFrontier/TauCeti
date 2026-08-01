@@ -67,8 +67,11 @@ is stated with the open ball.
 
 `Conformal/CutDiameter.lean` reduces a boundary limit for `f` to a family of bounded sets `E`, one
 per tolerance, enclosing the cut-off piece and small together with the image crosscut. The two
-inclusions say what such an `E` has to enclose, in terms of the boundary cluster sets of `f`: at
-least those over the open cut-off arc, at most those over the closed one.
+inclusions bracket that requirement in terms of the boundary cluster sets of `f`: the lower one
+makes containing the cluster sets over the *open* cut-off arc **necessary** for such an `E`, and the
+upper one makes containing those over the *closed* arc **sufficient**. Neither pins `E` down: an
+enclosing `E` is only required to contain the cut-off piece and may be far larger than either union
+— what the upper inclusion bounds is the cut-off piece, not `E`.
 
 They do **not** let `E` be *taken* to be those cluster sets. The lower inclusion at `w = ζ` —
 `TauCeti.clusterSetOn_subset_frontier_image_inter_frontier_image` — says the cut-off piece always
@@ -119,7 +122,7 @@ public section
 
 namespace TauCeti
 
-open Bornology Complex Filter Metric Set Topology
+open Complex Filter Metric Set Topology
 
 variable {f : ℂ → ℂ} {c ζ v : ℂ} {r ρ : ℝ}
 
@@ -192,17 +195,6 @@ theorem frontier_image_inter_frontier_image_subset_biUnion_clusterSetOn
   (inter_subset_inter_right _ frontier_subset_closure).trans
     (frontier_image_inter_closure_image_subset_biUnion_clusterSetOn hd hinj)
 
-/-- **The cluster sets over any set of points are bounded when the image is.** Each of them lies in
-`closure (f '' ball c r)` by `TauCeti.clusterSetOn_subset_closure_image`, so this is boundedness of
-the closure of a bounded set.
-
-Recorded because any statement measuring the covering above by its diameter needs it: `Metric.diam`
-vanishes on unbounded sets, so a diameter bound on a set not known to be bounded is no bound at
-all. -/
-theorem isBounded_biUnion_clusterSetOn (hb : IsBounded (f '' ball c r)) (s : Set ℂ) :
-    IsBounded (⋃ w ∈ s, clusterSetOn f (ball c r) w) :=
-  hb.closure.subset (iUnion₂_subset fun _ _ => clusterSetOn_subset_closure_image)
-
 /-! ## The reverse inclusion -/
 
 /-- **Every cluster value over the open cut-off arc lies on the cut-off piece.** For `f`
@@ -223,10 +215,17 @@ are in the crosscut configuration `ζ ∈ sphere c r`, `0 < ρ < 2 * r`, which t
 does not assume. The open ball is essential here: at a point of `sphere c r ∩ sphere ζ ρ` the
 approach region cannot be cut down, since points of the disc near it need not lie in
 `ball ζ ρ`. -/
-theorem biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image (hr : 0 < r)
+theorem biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image
     (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) :
     (⋃ w ∈ sphere c r ∩ ball ζ ρ, clusterSetOn f (ball c r) w)
       ⊆ frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) := by
+  rcases le_or_gt r 0 with hr | hr
+  · -- For `r ≤ 0` the disc is empty, and with it every cluster set over it.
+    refine iUnion₂_subset fun w _ => ?_
+    rw [ball_eq_empty.mpr hr]
+    have hemp : clusterSetOn f (∅ : Set ℂ) w ⊆ ∅ := by
+      simpa using clusterSetOn_subset_closure_image (f := f) (U := (∅ : Set ℂ)) (w := w)
+    exact hemp.trans (empty_subset _)
   refine iUnion₂_subset fun w hw v hv => ?_
   have hwf : w ∈ frontier (ball c r) := by rw [frontier_ball c hr.ne']; exact hw.1
   have hvfr : v ∈ frontier (f '' ball c r) :=
@@ -248,11 +247,11 @@ already contains the whole cluster set of `f` at `ζ`. So the enclosing set `E` 
 `Conformal/CutDiameter.lean` cannot be taken to be the cluster sets over the cut-off arc — that
 would put the conclusion of those criteria into their hypothesis — and has to come from geometry of
 `∂Ω`, which is what local connectedness supplies. -/
-theorem clusterSetOn_subset_frontier_image_inter_frontier_image (hr : 0 < r) (hρ : 0 < ρ)
+theorem clusterSetOn_subset_frontier_image_inter_frontier_image (hρ : 0 < ρ)
     (hζ : ζ ∈ sphere c r) (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) :
     clusterSetOn f (ball c r) ζ
       ⊆ frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) :=
-  fun _ hv => biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image hr hd hinj
+  fun _ hv => biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image hd hinj
     (mem_biUnion ⟨hζ, mem_ball_self hρ⟩ hv)
 
 end TauCeti
