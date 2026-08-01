@@ -79,7 +79,7 @@ theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
 /-- **A constant directing measure means plain i.i.d.**: `fun _ => p` witnesses
 `ConditionallyIIDWith` exactly when the coordinates are independent and each has law `p`. -/
 theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
-    [IsProbabilityMeasure μ] {X : ℕ → Ω → α} {p : ProbabilityMeasure α} :
+    [IsProbabilityMeasure μ] {X : ι → Ω → α} {p : ProbabilityMeasure α} :
     (ConditionallyIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   conditionallyIIDWith_const_iff_mixedIIDWith.trans mixedIIDWith_const_iff_iIndepFun_and_map_eq
 
