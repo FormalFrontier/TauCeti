@@ -24,17 +24,23 @@ Cut the disc `ball c r` at a point `ζ` of its boundary circle by the sphere `sp
 the crosscut neighbourhood `ball c r ∩ ball ζ ρ`, and write `Ω = f '' ball c r` for the image
 domain and `A = f '' (ball c r ∩ ball ζ ρ)` for the image of that neighbourhood. The *piece of
 `∂Ω` cut off* is `frontier Ω ∩ frontier A`, the set `Conformal/CutDiameter.lean` asks to be
-enclosed in a small set `E`. The two inclusions below identify it, up to the two endpoints of the
-crosscut, with the union of the boundary cluster sets over the arc of the boundary circle that the
-crosscut cuts off:
+enclosed in a small set `E`. The two inclusions below pin it between the boundary cluster sets over
+the open and over the closed arc of the boundary circle that the crosscut cuts off:
 
 > `⋃ w ∈ sphere c r ∩ ball ζ ρ, clusterSetOn f (ball c r) w ⊆ frontier Ω ∩ frontier A ⊆`
 > `⋃ w ∈ sphere c r ∩ closedBall ζ ρ, clusterSetOn f (ball c r) w`
 
 (`TauCeti.biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image` and
 `TauCeti.frontier_image_inter_frontier_image_subset_biUnion_clusterSetOn`). The gap between the two
-is exactly the pair of points `sphere c r ∩ sphere ζ ρ` where the crosscut meets the boundary
-circle, and closing it is not attempted.
+is the cluster sets over `sphere c r ∩ sphere ζ ρ`, and closing it is not attempted.
+
+The crosscut picture is how these statements are meant to be read, not a hypothesis they impose:
+both theorems hold for an arbitrary cutting centre `ζ` and radius `ρ`. It is only in the
+configuration the picture describes — `ζ ∈ sphere c r` and `0 < ρ < 2 * r`, so that the two circles
+genuinely cross — that `sphere c r ∩ sphere ζ ρ` is the pair of points where the crosscut meets the
+boundary circle, and that the arc `sphere c r ∩ ball ζ ρ` is a proper arc. For other `ζ` and `ρ`
+that intersection can be empty, a single point of tangency, or the whole of `sphere c r` (take
+`ζ = c` and `ρ = r`); the inclusions stay true, they just stop being a statement about a crosscut.
 
 ## The two arguments
 
@@ -212,9 +218,11 @@ being a frontier point of the larger open set `f '' ball c r`.
 
 Together with `TauCeti.frontier_image_inter_frontier_image_subset_biUnion_clusterSetOn` this pins
 the cut-off piece down between the cluster sets over the open arc and those over the closed arc;
-the two differ only over `sphere c r ∩ sphere ζ ρ`, the endpoints of the crosscut. The open ball is
-essential here: at an endpoint the approach region cannot be cut down, since points of the disc
-near it need not lie in `ball ζ ρ`. -/
+the two differ only over `sphere c r ∩ sphere ζ ρ` — the endpoints of the crosscut when `ζ` and `ρ`
+are in the crosscut configuration `ζ ∈ sphere c r`, `0 < ρ < 2 * r`, which the statement itself
+does not assume. The open ball is essential here: at a point of `sphere c r ∩ sphere ζ ρ` the
+approach region cannot be cut down, since points of the disc near it need not lie in
+`ball ζ ρ`. -/
 theorem biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image (hr : 0 < r)
     (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) :
     (⋃ w ∈ sphere c r ∩ ball ζ ρ, clusterSetOn f (ball c r) w)
