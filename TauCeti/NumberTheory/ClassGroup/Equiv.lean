@@ -35,7 +35,7 @@ compute it on ideal classes.
   group.
 * `ClassGroup.mulEquiv_mk0`: the induced class-group equivalence sends the class `ClassGroup.mk0 I`
   of a nonzero ideal to the class of its pushforward ideal `Ideal.map f I`.
-* `ClassGroup.mulEquiv_apply_eq_inv_of_forall_isPrincipal`: if `I · (Ideal.map f I)` is principal
+* `ClassGroup.mulEquiv_apply_eq_inv_of_isPrincipal_mul_map`: if `I · (Ideal.map f I)` is principal
   for every nonzero ideal, the induced class-group map is inversion `C ↦ C⁻¹`.
 -/
 
@@ -250,7 +250,7 @@ private theorem ringEquivOfRingEquiv_coeIdeal [IsDomain R] [IsDomain R'] (K L : 
 `f : R ≃+* R'` of Dedekind domains, `ClassGroup.mulEquiv f` sends the class of a nonzero ideal `I`
 to the class of its pushforward `Ideal.map f I`. This is the bridge between the abstract functorial
 action `ClassGroup.mulEquiv` and the concrete pushforward of ideals. -/
-theorem mulEquiv_mk0 [IsDedekindDomain R] [IsDedekindDomain R'] (f : R ≃+* R')
+@[simp high] theorem mulEquiv_mk0 [IsDedekindDomain R] [IsDedekindDomain R'] (f : R ≃+* R')
     (I : (Ideal R)⁰) :
     ClassGroup.mulEquiv f (ClassGroup.mk0 I) =
       ClassGroup.mk0 ⟨Ideal.map (f : R →+* R') (I : Ideal R), mem_nonZeroDivisors_iff_ne_zero.mpr
@@ -268,7 +268,7 @@ theorem mulEquiv_mk0 [IsDedekindDomain R] [IsDedekindDomain R'] (f : R ≃+* R')
 /-- **Inversion criterion for the class-group action.** If a ring automorphism `f : R ≃+* R` of a
 Dedekind domain makes `I · (Ideal.map f I)` principal for every nonzero ideal `I`, then the induced
 map on the class group is inversion: `ClassGroup.mulEquiv f C = C⁻¹`. -/
-theorem mulEquiv_apply_eq_inv_of_forall_isPrincipal [IsDedekindDomain R] {f : R ≃+* R}
+theorem mulEquiv_apply_eq_inv_of_isPrincipal_mul_map [IsDedekindDomain R] {f : R ≃+* R}
     (hf : ∀ I : (Ideal R)⁰, ((I : Ideal R) * Ideal.map (f : R →+* R) (I : Ideal R)).IsPrincipal)
     (C : ClassGroup R) : ClassGroup.mulEquiv f C = C⁻¹ := by
   obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective C

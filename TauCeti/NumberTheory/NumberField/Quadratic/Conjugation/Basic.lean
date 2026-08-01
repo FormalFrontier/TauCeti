@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.PowerBasis
-public import TauCeti.NumberTheory.ClassGroup.Equiv
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 
 /-!
@@ -16,12 +15,11 @@ over `ℚ` whose minimal polynomial over `ℤ` is `X² - d` — this file constr
 `ℚ`-algebra automorphism of `K`, characterised by `θ ↦ -θ`, and restricts it to a ring
 automorphism of `𝓞 K`. This is the field-theoretic conjugation of `ℚ(√d)`.
 
-It is the automorphism whose induced action on the class group `Cl(𝓞 K)` is by **inversion** — the
-genus-theoretic fact that `I · σI` is principal — which is the mechanism behind the summit
-isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` of the multiquadratic roadmap (Layer 3: the genus field
-and the 2-rank theorem). Here we build the automorphism and record that it is an involution on `K`,
-on `𝓞 K`, and on `Cl(𝓞 K)`; the refinement of that involution to inversion (which needs `I · σI`
-principal) is developed downstream.
+It is the field-theoretic conjugation underlying the genus theory of the multiquadratic roadmap
+(Layer 3): downstream (`Conjugation/ClassGroup.lean`), its induced action on the class group
+`Cl(𝓞 K)` is shown to be by **inversion** — the fact that `I · σI` is principal — the mechanism
+behind the summit isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`. Here we build the automorphism and
+record that it is an involution on `K` and on `𝓞 K`.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory this supports.
@@ -33,8 +31,6 @@ classical genus theory this supports.
 * `TauCeti.NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
   `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
   `ringOfIntegersQuadraticConj_involutive`.
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_involutive`: the induced action on
-  `ClassGroup (𝓞 K)` is an involution.
 -/
 
 public section
@@ -144,13 +140,5 @@ noncomputable def ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C
     rw [coe_ringOfIntegersQuadraticConj, coe_ringOfIntegersQuadraticConj]
     exact quadraticConj_involutive hmin hgen (x : K)
   exact RingOfIntegers.coe_injective h
-
-/-- Quadratic conjugation acts as an **involution on the class group** `Cl(𝓞 K)`. This is the
-group-action shadow of `ringOfIntegersQuadraticConj_involutive`, and the first step towards the
-genus-theoretic fact that the induced action is inversion (hence trivial on `Cl/Cl²`). -/
-@[simp] theorem mulEquiv_ringOfIntegersQuadraticConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    Function.Involutive (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen)) :=
-  ClassGroup.mulEquiv_involutive (ringOfIntegersQuadraticConj_involutive hmin hgen)
 
 end TauCeti.NumberField
