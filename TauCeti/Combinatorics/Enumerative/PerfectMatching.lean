@@ -173,12 +173,14 @@ theorem extend_apply_right (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠
     (extend hab E).val b = a := extendPerm_apply_right E
 
 /-- Adjoining an arc and then restricting it away recovers the smaller matching. -/
+@[simp]
 theorem restrict_extend (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     (extend hab E).restrict (extend_apply_left hab E) = E := by
   refine Subtype.ext (Equiv.ext fun x => Subtype.ext ?_)
   rw [restrict_apply_coe, extend_apply_of_mem hab E x.2]
 
 /-- Restricting away an arc and then adjoining it back recovers the original matching. -/
+@[simp]
 theorem extend_restrict (hab : a ≠ b) (D : PerfectMatching α) (h : D.val a = b) :
     extend hab (D.restrict h) = D := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
