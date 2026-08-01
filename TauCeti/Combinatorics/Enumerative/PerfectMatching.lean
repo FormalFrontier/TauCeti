@@ -54,9 +54,13 @@ variable {α : Type u}
 
 /-- A permutation of `α` is a **perfect matching** when it is an involution with no fixed
 point, so that it pairs off the elements of `α`. -/
-@[expose]
 def IsPerfectMatching (f : Equiv.Perm α) : Prop :=
   (∀ a, f (f a) = a) ∧ ∀ a, f a ≠ a
+
+/-- A permutation is a perfect matching exactly when it is an involution with no fixed
+point. -/
+theorem isPerfectMatching_iff {f : Equiv.Perm α} :
+    IsPerfectMatching f ↔ (∀ a, f (f a) = a) ∧ ∀ a, f a ≠ a := Iff.rfl
 
 instance instDecidableIsPerfectMatching [DecidableEq α] [Fintype α] (f : Equiv.Perm α) :
     Decidable (IsPerfectMatching f) :=
@@ -74,6 +78,14 @@ instance [DecidableEq α] [Fintype α] : Fintype (PerfectMatching α) :=
 
 instance [DecidableEq α] [Fintype α] : DecidableEq (PerfectMatching α) :=
   inferInstanceAs (DecidableEq {f : Equiv.Perm α // IsPerfectMatching f})
+
+/-- Bundle a permutation that is an involution with no fixed point as a perfect matching. -/
+def mk (f : Equiv.Perm α) (hinv : ∀ a, f (f a) = a) (hne : ∀ a, f a ≠ a) : PerfectMatching α :=
+  ⟨f, hinv, hne⟩
+
+@[simp]
+theorem val_mk (f : Equiv.Perm α) (hinv : ∀ a, f (f a) = a) (hne : ∀ a, f a ≠ a) :
+    (mk f hinv hne).val = f := (rfl)
 
 variable {a b : α} {D : PerfectMatching α}
 

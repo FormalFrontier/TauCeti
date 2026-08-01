@@ -147,8 +147,8 @@ end BrauerDiagram
 
 /-- The **permutation diagram** of `σ`, joining the bottom point `i` to the top point `σ i`. -/
 def permToBrauer {k : ℕ} (σ : Equiv.Perm (Fin k)) : BrauerDiagram k :=
-  ⟨(Equiv.sumComm (Fin k) (Fin k)).trans (Equiv.sumCongr σ.symm σ),
-    fun x => by rcases x with i | i <;> simp, fun x => by rcases x with i | i <;> simp⟩
+  .mk ((Equiv.sumComm (Fin k) (Fin k)).trans (Equiv.sumCongr σ.symm σ))
+    (fun x => by rcases x with i | i <;> simp) fun x => by rcases x with i | i <;> simp
 
 namespace BrauerDiagram
 
@@ -156,11 +156,11 @@ variable {k : ℕ}
 
 @[simp]
 theorem permToBrauer_val_inl (σ : Equiv.Perm (Fin k)) (i : Fin k) :
-    (permToBrauer σ).val (Sum.inl i) = Sum.inr (σ i) := (rfl)
+    (permToBrauer σ).val (Sum.inl i) = Sum.inr (σ i) := by simp [permToBrauer]
 
 @[simp]
 theorem permToBrauer_val_inr (σ : Equiv.Perm (Fin k)) (j : Fin k) :
-    (permToBrauer σ).val (Sum.inr j) = Sum.inl (σ.symm j) := (rfl)
+    (permToBrauer σ).val (Sum.inr j) = Sum.inl (σ.symm j) := by simp [permToBrauer]
 
 /-- A permutation diagram has no cap and no cup: every arc goes through. -/
 @[simp]
@@ -182,12 +182,6 @@ theorem isLeft_val_inr {j : Fin k} (hj : D.IsThrough (Sum.inr j)) :
   rcases h : D.val (Sum.inr j) with i | i
   · simp
   · rw [IsThrough, h] at hj; simp at hj
-
-/-- Reading off the top endpoint of a through strand. -/
-theorem getRight_val_inl {i j : Fin k} (hi : D.IsThrough (Sum.inl i))
-    (h : D.val (Sum.inl i) = Sum.inr j) :
-    (D.val (Sum.inl i)).getRight (isRight_val_inl hi) = j :=
-  (Sum.eq_right_iff_getRight_eq.mp h).2
 
 /-- The permutation read off a Brauer diagram all of whose arcs go through: it sends the
 bottom point `i` to the top point matched with it. -/
@@ -214,14 +208,13 @@ theorem permToBrauer_throughPerm (hD : ∀ x, D.IsThrough x) :
   · obtain ⟨m, hm⟩ : ∃ m, D.val (Sum.inr j) = Sum.inl m :=
       ⟨_, (Sum.inl_getLeft _ (isLeft_val_inr (hD (Sum.inr j)))).symm⟩
     rw [permToBrauer_val_inr, hm, Sum.inl.injEq, Equiv.symm_apply_eq, throughPerm_apply]
-    exact (getRight_val_inl (hD (Sum.inl m)) (by rw [← hm, D.apply_apply])).symm
+    exact ((Sum.getRight_eq_iff _).mpr (by rw [← hm, D.apply_apply])).symm
 
 /-- The permutation read off the diagram of `σ` is `σ`. -/
 @[simp]
 theorem throughPerm_permToBrauer (σ : Equiv.Perm (Fin k)) :
     throughPerm (permToBrauer σ) (isThrough_permToBrauer σ) = σ :=
-  Equiv.ext fun i =>
-    getRight_val_inl (isThrough_permToBrauer σ (Sum.inl i)) (permToBrauer_val_inl σ i)
+  Equiv.ext fun i => (Sum.getRight_eq_iff _).mpr (permToBrauer_val_inl σ i)
 
 end BrauerDiagram
 
