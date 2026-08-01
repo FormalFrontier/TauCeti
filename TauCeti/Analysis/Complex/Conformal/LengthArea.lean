@@ -35,9 +35,10 @@ keep `ℓ` away from `0`: on every annulus there is a radius with
 made longer — and for a holomorphic `f` that bounds the chords of the image arc, by
 `TauCeti.ofReal_dist_le_circleImageLength`. That is Wolff's lemma, and it is the analytic engine of
 layer **L5** of the conformal-mapping roadmap (`ConformalMapping/README.md`), Carathéodory's
-boundary correspondence:
-applied to a Riemann map at a boundary point `ζ` it produces crosscuts of arbitrarily small
-diameter, which is what forces the boundary cluster set at `ζ` to degenerate to a point.
+boundary correspondence. Only that quantitative input is proved here: a radius whose circle has
+short image, and a bound on the chords of its arcs. The crosscuts of a Riemann map at a boundary
+point `ζ` are not constructed here, nor is the bound on their diameter that a later file is to
+draw from these estimates in order to force the cluster set at `ζ` to degenerate to a point.
 
 ## Main results
 
@@ -99,8 +100,9 @@ open scoped ENNReal Real
 variable {U s t : Set ℂ} {f : ℂ → ℂ} {ζ : ℂ}
 
 /-- The **derivative-weighted angular integral** over a circle: the lower integral over the circle
-of centre `ζ` and radius `ρ` of the area distortion `‖deriv f‖`, with the part of the circle outside
-`s` discarded by an indicator.
+of centre `ζ` and radius `ρ` of the length density `‖deriv f‖` — the factor by which `f` stretches
+lengths, whose *square* is the area distortion — with the part of the circle outside `s` discarded
+by an indicator.
 
 Nothing is assumed of `s`, so this is a lower integral of a possibly non-measurable integrand, and
 the angles `s` selects need not form a single arc, or any arc at all; for such an `s` the quantity
@@ -123,17 +125,32 @@ radius, for which `circleMap` traverses the same circle backwards, gives the val
 noncomputable def circleImageLength (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ)
 
+/-- The defining angular integral. The body of `TauCeti.circleImageLength` is not `@[expose]`d, so
+this is the form in which downstream files — and the lemmas below — reach the definition; unfolding
+it directly fails outside this module with `Expected a definition with an exposed body`. -/
+theorem circleImageLength_def (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
+    circleImageLength f s ζ ρ =
+      ENNReal.ofReal ρ *
+        ∫⁻ θ in Ioo (-π) π, s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ) := by
+  rw [circleImageLength]
+
 /-- Enlarging the set can only increase the arc length measured inside it. -/
 theorem circleImageLength_mono (f : ℂ → ℂ) (ζ : ℂ) (ρ : ℝ) (hst : s ⊆ t) :
     circleImageLength f s ζ ρ ≤ circleImageLength f t ζ ρ := by
-  rw [circleImageLength, circleImageLength]
+  rw [circleImageLength_def, circleImageLength_def]
   gcongr with θ
 
 /-- A circle of nonpositive radius contributes no length. -/
 @[simp]
 theorem circleImageLength_of_nonpos (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) {ρ : ℝ} (hρ : ρ ≤ 0) :
     circleImageLength f s ζ ρ = 0 := by
-  rw [circleImageLength, ENNReal.ofReal_of_nonpos hρ, zero_mul]
+  rw [circleImageLength_def, ENNReal.ofReal_of_nonpos hρ, zero_mul]
+
+/-- Measuring inside the empty set gives no length: the indicator kills the whole integrand. -/
+@[simp]
+theorem circleImageLength_empty (f : ℂ → ℂ) (ζ : ℂ) (ρ : ℝ) :
+    circleImageLength f ∅ ζ ρ = 0 := by
+  simp [circleImageLength_def]
 
 /-- The angular integrand has period `2 * π`, because `circleMap ζ ρ` does. -/
 private theorem periodic_indicator_circleMap (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
@@ -160,12 +177,12 @@ theorem circleImageLength_eq_lintegral_Ioc (f : ℂ → ℂ) (s : Set ℂ) (ζ :
       ENNReal.ofReal ρ *
         ∫⁻ θ in Ioc t (t + 2 * π), s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ) := by
   have hπ : -π + 2 * π = π := by ring
-  rw [circleImageLength, ← lintegral_Ioc_indicator_circleMap f s ζ ρ (-π) t, hπ]
+  rw [circleImageLength_def, ← lintegral_Ioc_indicator_circleMap f s ζ ρ (-π) t, hπ]
   exact congrArg _ (setLIntegral_congr Ioo_ae_eq_Ioc)
 
-/-- The area distortion of `f`, cut off outside `s`. This is the integrand on both sides of the
-length–area inequality: of the Dirichlet integral directly, and of the length after the change to
-polar coordinates. -/
+/-- The length density `‖deriv f‖ₑ` of `f`, cut off outside `s`; its square is the area distortion.
+This is the integrand on both sides of the length–area inequality: of the length directly, and,
+after squaring, of the Dirichlet integral. -/
 private noncomputable def enormDerivIndicator (f : ℂ → ℂ) (s : Set ℂ) : ℂ → ℝ≥0∞ :=
   s.indicator fun z => ‖deriv f z‖ₑ
 
@@ -177,7 +194,7 @@ private theorem measurable_enormDerivIndicator (f : ℂ → ℂ) (hs : Measurabl
 private theorem circleImageLength_eq (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
     circleImageLength f s ζ ρ =
       ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, enormDerivIndicator f s (circleMap ζ ρ θ) := by
-  rw [circleImageLength, enormDerivIndicator]
+  rw [circleImageLength_def, enormDerivIndicator]
 
 private theorem enormDerivIndicator_sq (f : ℂ → ℂ) (s : Set ℂ) (z : ℂ) :
     enormDerivIndicator f s z ^ 2 = s.indicator (fun z => ‖deriv f z‖ₑ ^ 2) z := by
@@ -238,8 +255,8 @@ private theorem sq_lintegral_le_measure_univ_mul {α : Type*} [MeasurableSpace �
         rw [mul_comm]
         exact congrArg _ (lintegral_congr fun x => ENNReal.rpow_natCast (u x) 2)
 
-/-- Cauchy–Schwarz in the angular variable: the square of the angular integral of the area
-distortion is at most `2 π` times the angular integral of its square. -/
+/-- Cauchy–Schwarz in the angular variable: the square of the angular integral of the length
+density is at most `2 π` times the angular integral of its square. -/
 private theorem sq_lintegral_angle_le (f : ℂ → ℂ) (hs : MeasurableSet s) (ζ : ℂ) (ρ : ℝ) :
     (∫⁻ θ in Ioo (-π) π, enormDerivIndicator f s (circleMap ζ ρ θ)) ^ 2 ≤
       ENNReal.ofReal (2 * π) *
@@ -374,8 +391,9 @@ The arc is unrestricted apart from its width: it may start anywhere and cross th
 integration can be moved to `Ioc a (a + 2 * π)`.
 
 This is what makes `TauCeti.circleImageLength` a length rather than an abstract integral, and it is
-the form in which Wolff's lemma is used: a short image arc has small chords, and hence — applied to
-the crosscut of a domain at a boundary point — a small diameter. -/
+the form in which Wolff's lemma is used: a short image arc has small chords. Turning that into a
+crosscut of small diameter at a boundary point is left to the later file that constructs the
+crosscuts. -/
 theorem ofReal_dist_le_circleImageLength (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (hsU : s ⊆ U) (ζ : ℂ) {ρ : ℝ} (hρ : 0 < ρ) {a b : ℝ} (hab : a ≤ b) (hb : b ≤ a + 2 * π)
     (hmem : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ s) :
