@@ -14,9 +14,10 @@ Order the index type `n` linearly. The upper triangular matrices form a Lie suba
 `TauCeti.upperTriangular R n` of `gl n R = Matrix n n R`, and the strictly upper triangular
 matrices form a Lie subalgebra `TauCeti.strictUpperTriangular R n` inside it. This is the *matrix
 unit positive system* of `gl n R`: the raising operators are the matrix units `Eᵢⱼ` with `i < j`,
-and `strictUpperTriangular R n` is the span of those, that is, the sum of the root spaces of the
-positive roots `εᵢ - εⱼ`, `i < j`, for the diagonal Cartan subalgebra
-`TauCeti.diagonalCartan R n`.
+and `strictUpperTriangular R n` is the span of those. Over a domain away from characteristic two,
+that span is the sum of the root spaces of the positive roots `εᵢ - εⱼ`, `i < j`, for the diagonal
+Cartan subalgebra `TauCeti.diagonalCartan R n`; over a general commutative ring the root spaces are
+larger, as explained in the implementation notes below.
 
 The two subalgebras fit together in the usual way. The upper triangular matrices are the direct sum
 of the diagonal ones and the strictly upper triangular ones
@@ -61,9 +62,11 @@ further nilpotent ideal of `upperTriangular R n` outside `strictUpperTriangular 
 singleton index type this is the whole story: `upperTriangular R n` is then all of `gl n R`, which
 is abelian and hence its own nilradical, while `strictUpperTriangular R n` is zero. It is in
 `sl n R`, where the scalars have been removed, that the strict upper triangle is the nilradical of
-the Borel; what makes `𝔫⁺` the right object here regardless is that it is the sum of the positive
-root spaces (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`), which is what the
-highest weight theory downstream uses.
+the Borel; what makes `𝔫⁺` the right object here regardless is that it is the span of the raising
+matrix units (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup`), which over a domain away from
+characteristic two is the sum of the positive root spaces
+(`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`), and which is what the highest
+weight theory downstream uses.
 
 The index type carries both `[DecidableEq n]`, for the matrix units, and `[LinearOrder n]`, which
 is what "upper triangular" refers to; the two decidability structures are not identified, exactly as
@@ -108,17 +111,19 @@ variable (R n)
 /-- The upper triangular matrices, as a Lie subalgebra of `gl n R = Matrix n n R`.
 
 This is the standard Borel subalgebra of `gl n R` attached to the matrix unit positive system: it
-is the sum of the diagonal Cartan subalgebra and the root spaces of the roots `εᵢ - εⱼ` with
-`i < j`. -/
+is the sum of the diagonal Cartan subalgebra and the span of the raising matrix units `Eᵢⱼ` with
+`i < j`, which over a domain away from characteristic two is the sum of the root spaces of the
+roots `εᵢ - εⱼ` with `i < j`. -/
 def upperTriangular : LieSubalgebra R (Matrix n n R) :=
   lieSubalgebraOfSubalgebra R (Matrix n n R) (blockTriangularSubalgebra R R (id : n → n))
 
 /-- The strictly upper triangular matrices, as a Lie subalgebra of `gl n R = Matrix n n R`.
 
 This is the positive nilpotent ideal `𝔫⁺` of the standard Borel subalgebra
-`TauCeti.upperTriangular R n`: it is the sum of the root spaces of the roots `εᵢ - εⱼ` with
-`i < j`, with no Cartan part. It is not the nilradical of `TauCeti.upperTriangular R n`, which is
-larger; see the implementation notes of this file. -/
+`TauCeti.upperTriangular R n`: it is the span of the raising matrix units `Eᵢⱼ` with `i < j`, with
+no Cartan part, and over a domain away from characteristic two that is the sum of the root spaces
+of the roots `εᵢ - εⱼ` with `i < j`. It is not the nilradical of `TauCeti.upperTriangular R n`,
+which is larger; see the implementation notes of this file. -/
 def strictUpperTriangular : LieSubalgebra R (Matrix n n R) where
   carrier := {A | ∀ i j, j ≤ i → A i j = 0}
   add_mem' hA hB := fun i j hij => by simp [hA i j hij, hB i j hij]
