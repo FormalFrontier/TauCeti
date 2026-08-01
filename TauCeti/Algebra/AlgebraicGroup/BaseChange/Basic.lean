@@ -5,8 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
-public import TauCeti.Algebra.HopfAlgebra.Basic
-public import Mathlib.RingTheory.Bialgebra.TensorProduct
+public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 
 /-!
 # Base change of bialgebra points
@@ -136,8 +135,8 @@ The `≃*` `AlgHom.baseChangePointsMulEquiv` is automatically a group isomorphis
 lemma baseChangePointsMulEquiv_inv_apply_tmul (f : WithConv (A →ₐ[k] R)) (s : K) (a : A) :
     (baseChangePointsMulEquiv (k := k) (K := K) (A := A) (R := R) f)⁻¹ (s ⊗ₜ[k] a) =
       s • f.ofConv (antipode k a) := by
-  rw [convInv_apply, HopfAlgebra.baseChange_antipode_tmul,
-    baseChangePointsMulEquiv_apply_tmul]
+  rw [convInv_apply]
+  simp
 
 /-- Pointwise inverse formula after restricting a base-changed point along `a ↦ 1 ⊗ a`:
 the inverse of `(e.symm f)` has value `f (1 ⊗ S a)` at `a`. -/

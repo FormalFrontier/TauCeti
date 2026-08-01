@@ -54,8 +54,7 @@ theorem coe_intUnitsToUnitSphere (u : ℤˣ) :
     obtain rfl | rfl := Int.units_eq_one_or u <;> simp [intUnitsToUnitSphere]
 
 /-- The coercion of Mathlib's sphere action is scalar multiplication in the ambient space. -/
-private theorem coe_sphere_smul {r : ℝ} (c : sphere (0 : ℝ) 1)
-    (x : sphere (0 : E) r) :
+private theorem coe_sphere_smul {r : ℝ} (c : sphere (0 : ℝ) 1) (x : sphere (0 : E) r) :
     ((c • x : sphere (0 : E) r) : E) = (c : ℝ) • (x : E) :=
   (rfl)
 

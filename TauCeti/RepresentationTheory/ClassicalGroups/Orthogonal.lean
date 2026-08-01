@@ -112,8 +112,7 @@ theorem stdOrthogonalRep_dotProduct_stdOrthogonalRep
       rw [(Matrix.mem_orthogonalGroup_iff' (Fin n) k).mp g.prop, Matrix.one_mulVec]
 
 /-- The coordinate dot product identifies the standard module with its dual. -/
-noncomputable def stdOrthogonalRepToDual :
-    (Fin n → k) ≃ₗ[k] Module.Dual k (Fin n → k) :=
+noncomputable def stdOrthogonalRepToDual : (Fin n → k) ≃ₗ[k] Module.Dual k (Fin n → k) :=
   (Pi.basisFun k (Fin n)).toDualEquiv
 
 /-- `stdOrthogonalRepToDual` evaluates as the coordinate dot product. -/

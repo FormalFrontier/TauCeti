@@ -71,8 +71,7 @@ theorem charFun_star_kernel_isPositiveDefiniteKernel_of_star_eq_neg [StarAddMono
 involution that is explicitly negation. This is the generic-predicate form of
 `charFun_fintype_sum_mul_conj_nonneg`, using
 `F (vᵢ + star vⱼ) = charFun μ (vᵢ - vⱼ)`. -/
-theorem charFun_isPositiveDefinite_of_star_eq_neg [StarAddMonoid E]
-    (hstar : ∀ x : E, star x = -x) :
+theorem charFun_isPositiveDefinite_of_star_eq_neg [StarAddMonoid E] (hstar : ∀ x : E, star x = -x) :
     IsPositiveDefinite (MeasureTheory.charFun μ) := by
   intro n c v
   have h := charFun_fintype_sum_mul_conj_nonneg (μ := μ) c v

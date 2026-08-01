@@ -323,8 +323,7 @@ variable [CompleteSpace X]
 This is the Hille--Yosida resolvent bound `‖R(lambda)‖ ≤ M / (lambda - ω)` read backwards
 through the left-inverse identity `R(lambda) (lambda x - A x) = x`. -/
 theorem norm_le_norm_smul_sub_generator (S : StronglyContinuousSemigroup X) {ω M : ℝ}
-    (hb : S.HasGrowthBound ω M) {lambda : ℝ} (hlambda : ω < lambda)
-    (x : S.generator.domain) :
+    (hb : S.HasGrowthBound ω M) {lambda : ℝ} (hlambda : ω < lambda) (x : S.generator.domain) :
     ‖(x : X)‖ ≤ M / (lambda - ω) * ‖lambda • (x : X) - S.generator x‖ := by
   have hx : (x : X) ∈ S.domain := by
     rw [← S.generator_domain]
