@@ -21,7 +21,7 @@ makes the latter supremum direct, exhibiting `gl n R` as the direct sum of its r
 The pairs `(a, b)` do *not* index those root spaces injectively, so the finer decomposition of
 `gl n R` into the matrix-unit lines `R · Eₐ_b` is not the root space decomposition. Every
 `εₐ - ε_a` is the zero functional, and the zero root space contains every diagonal matrix rather
-than just the line `R · Eₐ_a` — that is `TauCeti.glRoot_self` together with
+than just the line `R · Eₐ_a`: that is `TauCeti.glRoot_self` together with
 `TauCeti.single_mem_rootSpace`, and over a Noetherian base Mathlib's
 `LieAlgebra.rootSpace_zero_eq` identifies the zero root space with the whole diagonal Cartan
 subalgebra, as it does for any Cartan subalgebra. In characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`, so the
@@ -208,9 +208,9 @@ theorem rootSpace_diagonalCartan_eq_weightSpace [IsDomain R]
 /-- The root spaces of the weights `εₐ - ε_b` span `gl n R`, because the matrix unit `Eₐ_b` lies in
 the root space of `εₐ - ε_b`.
 
-This is a spanning statement only. The pairs `(a, b)` repeat root spaces — every `εₐ - ε_a` is the
+This is a spanning statement only. The pairs `(a, b)` repeat root spaces: every `εₐ - ε_a` is the
 zero functional, whose root space contains the whole diagonal Cartan subalgebra, and in
-characteristic two `εᵢ - εⱼ = εⱼ - εᵢ` — so this supremum is not direct. For the supremum over the
+characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`. So this supremum is not direct; for the supremum over the
 weights themselves, which over a domain is, see `TauCeti.iSup_rootSpace_eq_top`. -/
 theorem iSup_rootSpace_glRoot_eq_top :
     ⨆ p : n × n, LieAlgebra.rootSpace (diagonalCartan R n) (glRoot R n p.1 p.2) = ⊤ := by
