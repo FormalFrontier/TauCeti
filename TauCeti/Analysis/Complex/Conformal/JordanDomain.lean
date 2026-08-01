@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
-public import TauCeti.Topology.JordanCurve
+public import TauCeti.Topology.JordanCurve.Basic
 public import TauCeti.Topology.UniformlyLocallyConnected
 import Mathlib.Analysis.Normed.Module.Connected
 import TauCeti.Analysis.Complex.Conformal.Biholomorph
