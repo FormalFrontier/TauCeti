@@ -138,6 +138,8 @@ theorem existsUnique_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
   rw [hδ.1, hγ0]
 
 /-- The unique global integral curve of a left-invariant vector field through a given point. -/
+-- Exposure is required for the exported characteristic theorems below to unfold the choice under
+-- the module system. Callers should use those theorems rather than unfold the definition.
 @[expose]
 noncomputable def mulInvariantIntegralCurve [CompleteSpace E]
     [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
