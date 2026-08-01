@@ -59,8 +59,20 @@ which is why they ask for an ordered field rather than for a finite group. In pa
 below reproves Maschke's theorem: the content is that the complement can be taken orthogonal, so
 that a submodule and its complement are separated by an explicit pairing.
 
+The orthogonal-complement half of this file is the bilinear-form transcription of an existing
+TauCeti development: `ofMulAction_mem_orthogonal`, `orthogonal_mem_invtSubmodule`,
+`orthogonalSubrepresentation`, `toSubmodule_orthogonalSubrepresentation` and
+`isCompl_orthogonalSubrepresentation` follow, statement for statement and proof for proof, their
+namesakes in `TauCeti.RepresentationTheory.Continuous.InvariantComplement`, with
+`IsUnitary.inner_map_right` replaced by `permutationForm_ofMulAction_left` and
+`Submodule.isCompl_orthogonal` by
+`LinearMap.BilinForm.isCompl_orthogonal_of_restrict_nondegenerate`.  The two cannot be unified:
+that file works over an inner-product space, which is unavailable over `ℚ`.
+
 ## References
 
+* `TauCeti.RepresentationTheory.Continuous.InvariantComplement`, the unitary orthogonal-complement
+  API this file adapts to a bilinear form, as described in the implementation notes above.
 * G. D. James, *The Representation Theory of the Symmetric Groups*, Chapter 1, where this form is
   introduced on the permutation module of a Young subgroup and used for the submodule theorem.
 * [Schur-Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
