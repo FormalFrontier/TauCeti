@@ -120,15 +120,13 @@ theorem mapOfEq_mapOfEq_of_comp_eq_id (g : C(Y, X)) (f : C(X, Y)) (hf : f x = y)
   map_mul' := (_root_.FundamentalGroup.mapOfEq ⟨e, e.continuous⟩ h).map_mul
 
 @[simp]
-theorem homeomorphMulEquivOfEq_apply (e : X ≃ₜ Y) (h : e x = y)
-    (p : _root_.FundamentalGroup X x) :
+theorem homeomorphMulEquivOfEq_apply (e : X ≃ₜ Y) (h : e x = y) (p : _root_.FundamentalGroup X x) :
     homeomorphMulEquivOfEq e h p = _root_.FundamentalGroup.mapOfEq ⟨e, e.continuous⟩ h p :=
   rfl
 
 @[simp]
 theorem homeomorphMulEquivOfEq_symm_apply (e : X ≃ₜ Y) (h : e x = y)
-    (q : _root_.FundamentalGroup Y y) :
-    (homeomorphMulEquivOfEq e h).symm q =
+    (q : _root_.FundamentalGroup Y y) : (homeomorphMulEquivOfEq e h).symm q =
       _root_.FundamentalGroup.mapOfEq ⟨e.symm, e.symm.continuous⟩
         (show e.symm y = x by rw [← h, e.symm_apply_apply]) q :=
   rfl
@@ -146,8 +144,7 @@ theorem homeomorphMulEquiv_apply (e : X ≃ₜ Y) (x : X) (p : _root_.Fundamenta
   rfl
 
 @[simp]
-theorem homeomorphMulEquiv_symm_apply (e : X ≃ₜ Y) (x : X)
-    (q : _root_.FundamentalGroup Y (e x)) :
+theorem homeomorphMulEquiv_symm_apply (e : X ≃ₜ Y) (x : X) (q : _root_.FundamentalGroup Y (e x)) :
     (homeomorphMulEquiv e x).symm q =
       _root_.FundamentalGroup.mapOfEq ⟨e.symm, e.symm.continuous⟩ (e.symm_apply_apply x) q :=
   rfl

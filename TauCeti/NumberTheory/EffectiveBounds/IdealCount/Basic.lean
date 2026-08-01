@@ -104,8 +104,7 @@ private theorem prodLeTuples_succ_eq_iUnion (n : ℕ) (X : ℝ) :
 
 /-- The number of `(n+1)`-tuples with product at most `X` is at most the sum, over the last
 coordinate `j ∈ {1, …, ⌊X⌋}`, of the counts of `n`-tuples with product at most `X / j`. -/
-private theorem prodLeTuples_succ_ncard_le (n : ℕ) (X : ℝ) :
-    (prodLeTuples (n + 1) X).ncard ≤
+private theorem prodLeTuples_succ_ncard_le (n : ℕ) (X : ℝ) : (prodLeTuples (n + 1) X).ncard ≤
       ∑ j ∈ Finset.Icc 1 ⌊X⌋₊, (prodLeTuples n (X / j)).ncard := by
   rw [prodLeTuples_succ_eq_iUnion]
   exact (Finset.set_ncard_biUnion_le _ _).trans
@@ -216,8 +215,7 @@ coordinate are equal.
 -/
 private theorem prime_eq_of_absNormUnder_eq_of_primeCoord_eq {P Q : Ideal (𝓞 F)}
     (hP : P.IsPrime) (hP0 : P ≠ ⊥) (hQ : Q.IsPrime) (hQ0 : Q ≠ ⊥)
-    (hr : absNormUnder F P = absNormUnder F Q)
-    (hc : primeCoord F P = primeCoord F Q) : P = Q := by
+    (hr : absNormUnder F P = absNormUnder F Q) (hc : primeCoord F P = primeCoord F Q) : P = Q := by
   have hUeq : Ideal.under ℤ P = Ideal.under ℤ Q := under_eq_of_absNormUnder_eq F hr
   set l := (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).toList with hl
   have hPl : P ∈ l := Finset.mem_toList.mpr (mem_primesOverFinset_under F hP hP0)
@@ -300,8 +298,7 @@ Recovery: the multiplicity of a prime `P` in `I` is the `absNormUnder P`-adic
 valuation of the `primeCoord P` coordinate of the encoding.
 -/
 private theorem count_eq_padicValNat {I : Ideal (𝓞 F)} {P : Ideal (𝓞 F)}
-    (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
-    (normalizedFactors I).count P =
+    (hP : P.IsPrime) (hP0 : P ≠ ⊥) : (normalizedFactors I).count P =
       padicValNat (absNormUnder F P)
         (encodeIdeal F I ⟨primeCoord F P, primeCoord_lt F hP hP0⟩) := by
   classical
@@ -380,8 +377,7 @@ open _root_.NumberField in
 one coordinate and contributes `absNorm (Ideal.under ℤ P) ^ count` there; the coordinate
 product is bounded by `Ideal.absNorm I`, and injectivity follows by recovering each count
 from a `padicValNat`. -/
-private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberField F]
-    {X : ℝ} :
+private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberField F] {X : ℝ} :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard ≤
       (prodLeTuples (Module.finrank ℚ F) X).ncard := by
   classical
@@ -398,8 +394,7 @@ private theorem ideal_ncard_le_prodLeTuples_ncard (F : Type*) [Field F] [NumberF
 open _root_.NumberField in
 /-- In any number field `F`, the set of nonzero integral ideals with norm at most `X` is
 finite, and for `X ≥ 1` its cardinality is at most `X² * 2^[F:ℚ]`. -/
-theorem card_ideal_absNorm_le (F : Type*) [Field F] [NumberField F]
-    {X : ℝ} (hX : 1 ≤ X) :
+theorem card_ideal_absNorm_le (F : Type*) [Field F] [NumberField F] {X : ℝ} (hX : 1 ≤ X) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.Finite ∧
       (({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard : ℝ)) ≤
         X ^ 2 * 2 ^ Module.finrank ℚ F := by
@@ -459,8 +454,7 @@ private theorem ncard_idealsWithAbsNormNatLe_real_le (F : Type*) [Field F] [Numb
 
 /-- **Natural-number ideal count.** The number of nonzero integral ideals of `𝓞 F` with norm at
 most `N` is at most `N² * 2^[F:ℚ]`. -/
-theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F]
-    (N : ℕ) :
+theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F] (N : ℕ) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤
       N ^ 2 * 2 ^ finrank ℚ F := by
   suffices (idealsWithAbsNormNatLe F N).ncard ≤ N ^ 2 * 2 ^ finrank ℚ F by
@@ -490,8 +484,7 @@ theorem ncard_ideal_absNorm_le_of_finrank_le (F : Type*) [Field F] [NumberField 
 /-- Monotone natural-number ideal count: if all ideals under consideration have norm at most
 `N`, and `N ≤ B`, and `[F : ℚ] ≤ n`, then there are at most `B² * 2^n` of them. -/
 theorem ncard_ideal_absNorm_le_of_nat_le_of_finrank_le
-    (F : Type*) [Field F] [NumberField F] {N B n : ℕ}
-    (hN : N ≤ B) (hn : finrank ℚ F ≤ n) :
+    (F : Type*) [Field F] [NumberField F] {N B n : ℕ} (hN : N ≤ B) (hn : finrank ℚ F ≤ n) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤ B ^ 2 * 2 ^ n := by
   calc
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard
@@ -505,8 +498,7 @@ theorem ncard_ideal_absNorm_le_of_nat_le_of_finrank_le
 
 /-- If `[F : ℚ] ≤ n`, then the number of nonzero integral ideals of norm at most `N` is at most
 `N² * 2^n`. -/
-theorem ncard_ideal_absNorm_le_nat_of_finrank_le
-    (F : Type*) [Field F] [NumberField F] {N n : ℕ}
+theorem ncard_ideal_absNorm_le_nat_of_finrank_le (F : Type*) [Field F] [NumberField F] {N n : ℕ}
     (hn : finrank ℚ F ≤ n) :
     {I : Ideal (𝓞 F) | I ≠ ⊥ ∧ Ideal.absNorm I ≤ N}.ncard ≤ N ^ 2 * 2 ^ n :=
   ncard_ideal_absNorm_le_of_nat_le_of_finrank_le F le_rfl hn

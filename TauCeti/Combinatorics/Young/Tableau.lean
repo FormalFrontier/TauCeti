@@ -161,8 +161,7 @@ theorem relabel_apply (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (c :
   (rfl)
 
 @[simp]
-theorem relabel_symm_apply (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ)
-    (k : Fin μ.card) :
+theorem relabel_symm_apply (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) (k : Fin μ.card) :
     (relabel σ t).symm k = t.symm (σ⁻¹ k) := by
   rw [relabel, Equiv.symm_trans_apply, Equiv.Perm.inv_def]
 

@@ -139,8 +139,7 @@ variable {G : Type u} {H : Type v} [Group G] [Group H]
 
 /-- Construct the `K(G, 1)` property from asphericity and an isomorphism between the
 fundamental group and `G`. -/
-protected theorem mk (hX : IsAspherical X x)
-    (hπ : Nonempty (FundamentalGroup X x ≃* G)) :
+protected theorem mk (hX : IsAspherical X x) (hπ : Nonempty (FundamentalGroup X x ≃* G)) :
     IsEilenbergMacLaneSpaceOne G X x :=
   ⟨hX, hπ⟩
 
@@ -150,8 +149,7 @@ protected theorem isAspherical (h : IsEilenbergMacLaneSpaceOne G X x) :
   h.1
 
 /-- The fundamental group of a `K(G, 1)` space is isomorphic to `G`. -/
-protected theorem nonempty_fundamentalGroupMulEquiv
-    (h : IsEilenbergMacLaneSpaceOne G X x) :
+protected theorem nonempty_fundamentalGroupMulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) :
     Nonempty (FundamentalGroup X x ≃* G) :=
   h.2
 
@@ -161,8 +159,7 @@ theorem of_mulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) (e : G ≃* H) :
   ⟨h.isAspherical, h.nonempty_fundamentalGroupMulEquiv.map fun f ↦ f.trans e⟩
 
 /-- The `K(G, 1)` property is preserved by a pointed homeomorphism. -/
-theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x)
-    (e : X ≃ₜ Y) (he : e x = y) :
+theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsEilenbergMacLaneSpaceOne G Y y :=
   ⟨h.isAspherical.of_homeomorph e he,
     h.nonempty_fundamentalGroupMulEquiv.map fun f ↦
@@ -174,8 +171,7 @@ variable {G₁ : Type u} {G₂ : Type v} [Group G₁] [Group G₂]
 
 /-- The product of a `K(G₁, 1)` space and a `K(G₂, 1)` space is a
 `K(G₁ × G₂, 1)` space. -/
-theorem prod (h₁ : IsEilenbergMacLaneSpaceOne G₁ X₁ x₁)
-    (h₂ : IsEilenbergMacLaneSpaceOne G₂ X₂ x₂) :
+theorem prod (h₁ : IsEilenbergMacLaneSpaceOne G₁ X₁ x₁) (h₂ : IsEilenbergMacLaneSpaceOne G₂ X₂ x₂) :
     IsEilenbergMacLaneSpaceOne (G₁ × G₂) (X₁ × X₂) (x₁, x₂) := by
   refine ⟨h₁.isAspherical.prod h₂.isAspherical, ?_⟩
   obtain ⟨e₁⟩ := h₁.nonempty_fundamentalGroupMulEquiv
