@@ -242,12 +242,14 @@ lemma isPos_reflectionPerm_iff {i j : ι} (hj : j ∈ b.support) (hij : i ≠ j)
   simpa [P.reflectionPerm_self] using h.reflectionPerm hj hne
 
 /-- **A root is positive for a base exactly when its coroot is positive for that base.** -/
+@[simp]
 theorem isPos_flip_iff [P.flip.IsReduced] (i : ι) : b.flip.IsPos i ↔ b.IsPos i := by
   -- Both sides hold for a simple root, both are exchanged by root negation, and away from a
   -- simple root and its negative both are preserved by the corresponding simple reflection, so
   -- the positive-root induction propagates the equivalence over the whole index type.
   -- The flipped pairing reflects root indices by the very same permutations.
-  have hflip : ∀ k l : ι, P.flip.reflectionPerm k l = P.reflectionPerm k l := fun _ _ ↦ rfl
+  have hflip : ∀ k l : ι, P.flip.reflectionPerm k l = P.reflectionPerm k l := fun k l ↦ by
+    rw [P.flip_reflectionPerm k]
   have hsimple : ∀ k ∈ b.support, (b.flip.IsPos k ↔ b.IsPos k) := fun k hk ↦ by
     simp only [b.isPos_of_mem_support hk, iff_true]
     exact b.flip.isPos_of_mem_support (by simpa using hk)
@@ -271,11 +273,13 @@ end RootPairing.Base
 variable [P.flip.IsReduced]
 
 /-- A base and its flip have the same positive roots. -/
+@[simp]
 theorem posRoots_flip : posRoots P.flip b.flip = posRoots P b := by
   ext i
   simpa only [mem_posRoots] using RootPairing.Base.isPos_flip_iff P b i
 
 /-- A base and its flip have the same negative roots. -/
+@[simp]
 theorem negRoots_flip : negRoots P.flip b.flip = negRoots P b := by
   ext i
   simpa only [mem_negRoots] using not_congr (RootPairing.Base.isPos_flip_iff P b i)
