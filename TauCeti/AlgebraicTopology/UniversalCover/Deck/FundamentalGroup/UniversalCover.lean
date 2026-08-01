@@ -125,6 +125,47 @@ noncomputable def deckFundamentalGroupEquiv
   (isRegular_proj x₀).deckFundamentalGroupEquiv (isCoveringMap x₀)
     (reflFiberPoint x₀)
 
+private lemma monodromy_reflFiberPoint
+    [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X]
+    (g : FundamentalGroup X x₀) :
+    ((isCoveringMap x₀).monodromy g.toPath (reflFiberPoint x₀) :
+      UniversalCover x₀) =
+      g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
+  obtain ⟨γ, hγ⟩ := Quotient.exists_rep g.toPath
+  rw [← hγ]
+  -- `monodromy` is defined by quotient-lifting the endpoint of `liftPath`; unfolding it
+  -- after choosing the representative `γ` exposes exactly that defining computation.
+  change (isCoveringMap x₀).liftPath γ
+      (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 = _
+  let δ : Path (BasedPath.endpoint (BasedPath.ofPath (Path.refl x₀))) x₀ :=
+    γ.cast (BasedPath.endpoint_ofPath _) rfl
+  calc
+    _ = (isCoveringMap x₀).liftPath δ
+        (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 := by
+      congr 1
+    _ = ofBasedPath x₀ (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ) :=
+      liftPath_apply_one_eq_ofBasedPath_append δ
+    _ = g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
+      rw [ofBasedPath_ofPath, Path.Homotopic.Quotient.mk_refl, inv_smul_mk]
+      rw [ofBasedPath_def]
+      let hend := BasedPath.endpoint_append (BasedPath.ofPath (Path.refl x₀)) δ
+      apply UniversalCover.ext hend
+      have hcast : HEq
+          (Path.Homotopic.Quotient.mk
+            (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ).toPath)
+          (Path.Homotopic.Quotient.mk
+            ((Path.refl x₀).trans γ)) :=
+        Path.Homotopic.hpath_hext (fun _ ↦ rfl)
+      refine hcast.trans (heq_of_eq ?_)
+      -- The preceding `HEq` has aligned the dependent path endpoints.  What remains is
+      -- its underlying quotient equality, whose displayed types differ only by those casts.
+      change Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ) =
+        g.toPath.trans (Path.Homotopic.Quotient.refl x₀)
+      rw [← hγ, Path.Homotopic.Quotient.mk_trans, Path.Homotopic.Quotient.mk_refl,
+        Path.Homotopic.Quotient.refl_trans]
+      exact (Path.Homotopic.Quotient.trans_refl _).symm
+
 /-- The inverse deck-to-fundamental-group equivalence recovers the explicit loop deck
 transformation, with the inverse forced by the left-action convention. -/
 @[simp]
@@ -133,43 +174,6 @@ lemma deckFundamentalGroupEquiv_symm_op
     [SemilocallySimplyConnectedSpace X]
     (g : FundamentalGroup X x₀) :
     (deckFundamentalGroupEquiv x₀).symm (MulOpposite.op g) = loopDeck x₀ g⁻¹ := by
-  have hmonodromy : ((isCoveringMap x₀).monodromy g.toPath
-      (reflFiberPoint x₀) :
-        UniversalCover x₀) =
-      g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
-    obtain ⟨γ, hγ⟩ := Quotient.exists_rep g.toPath
-    rw [← hγ]
-    -- `monodromy` is defined by quotient-lifting the endpoint of `liftPath`; unfolding it
-    -- after choosing the representative `γ` exposes exactly that defining computation.
-    change (isCoveringMap x₀).liftPath γ
-        (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 = _
-    let δ : Path (BasedPath.endpoint (BasedPath.ofPath (Path.refl x₀))) x₀ :=
-      γ.cast (BasedPath.endpoint_ofPath _) rfl
-    calc
-      _ = (isCoveringMap x₀).liftPath δ
-          (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 := by
-        congr 1
-      _ = ofBasedPath x₀ (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ) :=
-        liftPath_apply_one_eq_ofBasedPath_append δ
-      _ = g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
-        rw [ofBasedPath_ofPath, Path.Homotopic.Quotient.mk_refl, inv_smul_mk]
-        rw [ofBasedPath_def]
-        let hend := BasedPath.endpoint_append (BasedPath.ofPath (Path.refl x₀)) δ
-        apply UniversalCover.ext hend
-        have hcast : HEq
-            (Path.Homotopic.Quotient.mk
-              (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ).toPath)
-            (Path.Homotopic.Quotient.mk
-              ((Path.refl x₀).trans γ)) :=
-          Path.Homotopic.hpath_hext (fun _ ↦ rfl)
-        refine hcast.trans (heq_of_eq ?_)
-        -- The preceding `HEq` has aligned the dependent path endpoints.  What remains is
-        -- its underlying quotient equality, whose displayed types differ only by those casts.
-        change Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ) =
-          g.toPath.trans (Path.Homotopic.Quotient.refl x₀)
-        rw [← hγ, Path.Homotopic.Quotient.mk_trans, Path.Homotopic.Quotient.mk_refl,
-          Path.Homotopic.Quotient.refl_trans]
-        exact (Path.Homotopic.Quotient.trans_refl _).symm
   apply (Deck.IsRegular.deckFundamentalGroupEquiv_symm_op_eq_iff
     (isRegular_proj x₀) (isCoveringMap x₀)
       (reflFiberPoint x₀)
@@ -178,6 +182,7 @@ lemma deckFundamentalGroupEquiv_symm_op
   -- named monodromy calculation above applies without unfolding either wrapper.
   change ((isCoveringMap x₀).monodromy g.toPath (reflFiberPoint x₀) :
     UniversalCover x₀) = (loopDeck x₀ g⁻¹).1 (reflFiberPoint x₀)
-  simpa only [Deck.smul_eq_apply, loopDeck_apply, reflFiberPoint_val] using hmonodromy
+  simpa only [Deck.smul_eq_apply, loopDeck_apply, reflFiberPoint_val] using
+    monodromy_reflFiberPoint x₀ g
 
 end TauCeti.UniversalCover
