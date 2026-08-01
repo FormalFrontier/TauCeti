@@ -122,7 +122,7 @@ def mk : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → RealProjectiveSpace
     (MulAction.orbitRel ℤˣ (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
 /-- The quotient map evaluates to the class of its representative. -/
-theorem mk_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
+private theorem mk_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     mk n x = Quotient.mk'' x :=
   (rfl)
 
