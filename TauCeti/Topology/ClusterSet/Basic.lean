@@ -58,8 +58,8 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   maps `U` into a compact set.
 * `TauCeti.clusterSetOn_eq_singleton_of_tendsto`,
   `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`,
-  `TauCeti.mem_clusterSetOn_of_continuousOn_extension`,
-  `TauCeti.clusterSetOn_eq_singleton_of_continuousOn_extension` and
+  `TauCeti.mem_clusterSetOn_of_continuousWithinAt_extension`,
+  `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt_extension` and
   `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` — a limit along `𝓝[U] w` makes the cluster
   set a singleton, in particular at a point of `U` where `f` is continuous; conversely a
   subsingleton cluster set at a point of `closure U` produces a limit, provided `f` maps `U` into a
@@ -188,35 +188,36 @@ lemma clusterSetOn_eq_singleton_of_continuousWithinAt [T2Space Y] (hw : w ∈ U)
     (hfc : ContinuousWithinAt f U w) : clusterSetOn f U w = {f w} :=
   clusterSetOn_eq_singleton_of_tendsto (subset_closure hw) hfc
 
-/-- **The value of a continuous extension is a cluster value.** If `F` is continuous on
-`closure U`, agrees with `f` on `U`, and `w ∈ closure U`, then `F w` belongs to the cluster set of
-`f` at `w`.
+/-- **The value of a continuous extension is a cluster value.** If `F` is continuous within
+`closure U` at `w`, agrees with `f` on `U`, and `w ∈ closure U`, then `F w` belongs to the cluster
+set of `f` at `w`.
 
 Unlike the singleton equality below, this direction needs no separation hypothesis on the
 codomain. -/
-lemma mem_clusterSetOn_of_continuousOn_extension {F : X → Y} (hw : w ∈ closure U)
-    (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) : F w ∈ clusterSetOn f U w := by
+lemma mem_clusterSetOn_of_continuousWithinAt_extension {F : X → Y} (hw : w ∈ closure U)
+    (hFc : ContinuousWithinAt F (closure U) w) (hFf : EqOn F f U) :
+    F w ∈ clusterSetOn f U w := by
   haveI : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
   have heq : F =ᶠ[𝓝[U] w] f := hFf.eventuallyEq_of_mem self_mem_nhdsWithin
   have hlim : Tendsto F (𝓝[U] w) (𝓝 (F w)) :=
-    (hFc w hw).mono_left (nhdsWithin_mono w subset_closure)
+    hFc.mono_left (nhdsWithin_mono w subset_closure)
   exact mem_clusterSetOn_iff.mpr (Tendsto.congr' heq hlim).mapClusterPt
 
-/-- **A continuous extension determines the boundary cluster set.** If `F` is continuous on
-`closure U`, agrees with `f` on `U`, and `w ∈ closure U`, then the cluster set of `f` at `w` is the
-singleton `{F w}`.
+/-- **A continuous extension determines the boundary cluster set.** If `F` is continuous within
+`closure U` at `w`, agrees with `f` on `U`, and `w ∈ closure U`, then the cluster set of `f` at `w`
+is the singleton `{F w}`.
 
 This is the extension form of
 `TauCeti.clusterSetOn_eq_singleton_of_continuousWithinAt`: the point `w` need not belong to `U`.
 The agreement on `U` turns the within-`U` limit of `F` into the corresponding limit of `f`.
 This lemma is deliberately not tagged `@[simp]`, since `F` does not occur in the left-hand side
 and therefore cannot be inferred by the simplifier. -/
-lemma clusterSetOn_eq_singleton_of_continuousOn_extension [T2Space Y] {F : X → Y}
-    (hw : w ∈ closure U) (hFc : ContinuousOn F (closure U)) (hFf : EqOn F f U) :
+lemma clusterSetOn_eq_singleton_of_continuousWithinAt_extension [T2Space Y] {F : X → Y}
+    (hw : w ∈ closure U) (hFc : ContinuousWithinAt F (closure U) w) (hFf : EqOn F f U) :
     clusterSetOn f U w = {F w} := by
   have heq : F =ᶠ[𝓝[U] w] f := hFf.eventuallyEq_of_mem self_mem_nhdsWithin
   have hlim : Tendsto F (𝓝[U] w) (𝓝 (F w)) :=
-    (hFc w hw).mono_left (nhdsWithin_mono w subset_closure)
+    hFc.mono_left (nhdsWithin_mono w subset_closure)
   exact clusterSetOn_eq_singleton_of_tendsto hw (Tendsto.congr' heq hlim)
 
 /-- **A subsingleton cluster set is an honest limit.** If `f` maps `U` into a compact set and the
