@@ -20,6 +20,8 @@ every point, after which Mathlib's uniform-time theorem produces global integral
   integral curves.
 * `exists_isMIntegralCurve_mulInvariantVectorField`: every left-invariant vector field has a global
   integral curve through every point.
+* `existsUnique_isMIntegralCurve_mulInvariantVectorField`: that global curve is unique.
+* `mulInvariantIntegralCurve`: the resulting canonical global integral curve.
 
 ## References
 
@@ -106,3 +108,48 @@ theorem exists_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
   intro y
   refine ⟨fun t ↦ y * γ t, by simp [hγ0], ?_⟩
   exact hγ.const_mul_mulInvariantVectorField y
+
+/-- Every left-invariant vector field on a real Lie group modeled on a complete space has a unique
+global integral curve through every point. -/
+theorem existsUnique_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) :
+    ∃! γ : ℝ → G, γ 0 = x ∧ IsMIntegralCurve γ (mulInvariantVectorField v) := by
+  obtain ⟨γ, hγ0, hγ⟩ := exists_isMIntegralCurve_mulInvariantVectorField v x
+  refine ⟨γ, ⟨hγ0, hγ⟩, ?_⟩
+  intro δ hδ
+  apply isMIntegralCurve_Ioo_eq_of_contMDiff_boundaryless (t₀ := 0)
+    ((contMDiff_mulInvariantVectorField v).of_le (by simp)) hδ.2 hγ
+  rw [hδ.1, hγ0]
+
+/-- The unique global integral curve of a left-invariant vector field through a given point. -/
+@[expose]
+noncomputable def mulInvariantIntegralCurve [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) : ℝ → G :=
+  (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).choose
+
+/-- The canonical invariant integral curve starts at its specified point. -/
+@[simp]
+theorem mulInvariantIntegralCurve_zero [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) :
+    mulInvariantIntegralCurve v x 0 = x :=
+  (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).choose_spec.1.1
+
+/-- The canonical invariant curve is a global integral curve of its left-invariant vector field. -/
+theorem isMIntegralCurve_mulInvariantIntegralCurve [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) :
+    IsMIntegralCurve (mulInvariantIntegralCurve v x) (mulInvariantVectorField v) :=
+  (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).choose_spec.1.2
+
+/-- Any global integral curve of a left-invariant vector field is the canonical one determined by
+its value at zero. -/
+theorem eq_mulInvariantIntegralCurve [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) {γ : ℝ → G}
+    (hγ0 : γ 0 = x) (hγ : IsMIntegralCurve γ (mulInvariantVectorField v)) :
+    γ = mulInvariantIntegralCurve v x :=
+  (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).unique ⟨hγ0, hγ⟩
+    (existsUnique_isMIntegralCurve_mulInvariantVectorField v x).choose_spec.1
