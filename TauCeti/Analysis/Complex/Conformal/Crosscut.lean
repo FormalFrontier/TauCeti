@@ -62,12 +62,15 @@ automatically continuous, and their crosscut neighbourhoods exhaust `ball c r �
 gives `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn`: only holomorphy on the open
 disc is assumed, the arc bound is asked for on `ball c r ∩ sphere ζ ρ`, and the cap bound is
 replaced by a bound on a *collar* `r₀ ≤ dist w c` of the boundary inside the crosscut
-neighbourhood — all of it data about `f` inside the disc. Letting `ρ` shrink and feeding the
-resulting oscillation bound to `TauCeti.subsingleton_clusterSetOn_of_forall_exists`, one gets:
+neighbourhood — all of it data about `f` inside the disc. Feeding those oscillation bounds, one for
+each tolerance `ε`, to `TauCeti.subsingleton_clusterSetOn_of_forall_exists`, one gets:
 
-> a bounded holomorphic function on a disc has a limit at a boundary point `ζ` as soon as it is
-> *nearly constant on the crosscut arc and on a collar of the boundary* at arbitrarily small radii
-> `ρ`.
+> a bounded holomorphic function on a disc has a limit at a boundary point `ζ` as soon as, for
+> every `ε > 0`, there is *some* crosscut radius `ρ > 0` at which `f` is within `ε` of a single
+> value on the crosscut arc and on a collar of the boundary.
+
+The radius is quantified per `ε`, and need not tend to zero: it is `ε` that shrinks, while `ρ`
+(along with the collar and the value approximated) is merely allowed to depend on it.
 
 This is `TauCeti.exists_tendsto_nhdsWithin_ball`, and `TauCeti.exists_continuousOn_closedBall_eqOn`
 is its global form, a continuous extension to the closed disc. Boundedness alone is far from
@@ -434,9 +437,10 @@ theorem dist_le_of_mem_ball_inter_ball (hd : DifferentiableOn ℂ f (ball c r)) 
 
 /-! ## The crosscut criterion for boundary behaviour -/
 
-/-- **The crosscut criterion, cluster-set form.** If, at arbitrarily small crosscut radii `ρ`, the
-function `f` is within `ε` of some value on the part of the crosscut circle inside the disc and on
-a collar of the boundary, then `f` has at most one cluster value at `ζ` along the disc.
+/-- **The crosscut criterion, cluster-set form.** If for every `ε > 0` there is *some* crosscut
+radius `ρ > 0` at which the function `f` is within `ε` of a single value on the part of the crosscut
+circle inside the disc and on a collar of the boundary, then `f` has at most one cluster value at
+`ζ` along the disc.
 
 The maximum modulus principle turns each such estimate into an oscillation bound on the crosscut
 neighbourhood `ball c r ∩ ball ζ ρ`
@@ -456,8 +460,9 @@ theorem subsingleton_clusterSetOn_ball (hd : DifferentiableOn ℂ f (ball c r))
   linarith
 
 /-- **The crosscut criterion for a boundary limit.** A bounded holomorphic function on a disc has a
-limit at a boundary point `ζ`, along the disc, as soon as at arbitrarily small crosscut radii it is
-nearly constant on the crosscut arc and on a collar of the boundary.
+limit at a boundary point `ζ`, along the disc, as soon as for every `ε > 0` there is some crosscut
+radius at which it is within `ε` of a single value on the crosscut arc and on a collar of the
+boundary.
 
 Nothing is assumed at the boundary circle itself: the input is the behaviour of `f` inside the
 disc, and the limit is a conclusion. Boundedness alone is far from enough — a bounded holomorphic
