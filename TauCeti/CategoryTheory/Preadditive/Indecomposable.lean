@@ -28,9 +28,8 @@ extra hypothesis and is not needed by any consumer here.
 
 * `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`: a nonzero object whose only idempotent
   endomorphisms are `0` and the identity is indecomposable.
-* `TauCeti.exists_eq_smul_id_of_finrank_end_eq_one`: in a `k`-linear category, an object with a
-  one-dimensional endomorphism space has every endomorphism a scalar multiple of the identity.
-* `TauCeti.indecomposable_of_finrank_end_eq_one`: **a brick is indecomposable**.
+* `TauCeti.indecomposable_of_finrank_end_eq_one`: in a `k`-linear category over a field,
+  **a brick is indecomposable**.
 
 ## Implementation notes
 
@@ -43,6 +42,9 @@ idempotent `biprod.fst ≫ biprod.inl` transported to `X`. It is `0` exactly whe
 identity exactly when `Z` is zero, so the hypothesis splits the decomposition; the proof reads off
 `𝟙 Y` and `𝟙 Z` from it using only the biproduct equations `biprod.inl_fst`, `biprod.inr_snd` and
 `biprod.inr_fst`.
+
+That every endomorphism of a brick is a scalar is Mathlib's `finrank_eq_one_iff_of_nonzero'`
+applied to the identity, which spans the endomorphism space because it is nonzero.
 
 The brick criterion is stated for a field. The argument itself only inverts one scalar, so it
 would run over a division ring, but `CategoryTheory.Linear` takes a commutative base and
@@ -94,23 +96,16 @@ theorem not_isZero_of_finrank_end_eq_one {X : C} (h : Module.finrank k (X ⟶ X)
     ¬ IsZero X := fun hX ↦
   id_ne_zero_of_finrank_end_eq_one h ((IsZero.iff_id_eq_zero X).mp hX)
 
-/-- **Every endomorphism of a brick is a scalar.** If the endomorphism space of `X` is
-one-dimensional then the identity spans it, so each endomorphism is `c • 𝟙 X`. -/
-theorem exists_eq_smul_id_of_finrank_end_eq_one {X : C} (h : Module.finrank k (X ⟶ X) = 1)
-    (f : X ⟶ X) : ∃ c : k, f = c • 𝟙 X := by
-  obtain ⟨c, hc⟩ :=
-    (finrank_eq_one_iff_of_nonzero' (𝟙 X) (id_ne_zero_of_finrank_end_eq_one h)).mp h f
-  exact ⟨c, hc.symm⟩
-
 /-- **A brick is indecomposable.** If the endomorphism space of `X` is one-dimensional over the
-base field then every endomorphism is a scalar, so the only idempotents are `0` and the identity
-and `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` applies. -/
+base field then the identity spans it, so every endomorphism is a scalar, the only idempotents are
+`0` and the identity and `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` applies. -/
 theorem indecomposable_of_finrank_end_eq_one [HasBinaryBiproducts C] {X : C}
     (h : Module.finrank k (X ⟶ X) = 1) :
     Indecomposable X := by
   refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_of_finrank_end_eq_one h)
     fun e he ↦ ?_
-  obtain ⟨c, rfl⟩ := exists_eq_smul_id_of_finrank_end_eq_one h e
+  obtain ⟨c, rfl⟩ :=
+    (finrank_eq_one_iff_of_nonzero' (𝟙 X) (id_ne_zero_of_finrank_end_eq_one h)).mp h e
   rw [Linear.smul_comp, Linear.comp_smul, Category.comp_id, smul_smul] at he
   rcases eq_or_ne c 0 with rfl | hc
   · exact Or.inl (zero_smul k (𝟙 X))

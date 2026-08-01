@@ -8,7 +8,6 @@ public import Mathlib.CategoryTheory.Abelian.FunctorCategory
 public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.Representation.Injective
 public import TauCeti.RepresentationTheory.Quiver.Representation.Projective.Acyclic
-public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
 /-!
 # The vertex representations of an acyclic quiver: indecomposability and distinctness
@@ -32,7 +31,6 @@ assumption on `Q`, nor an algebraically closed base field.
 
 ## Main results
 
-* `TauCeti.indecomposable_simpleRep`: `Sᵢ` is indecomposable, over any quiver.
 * `TauCeti.finrank_end_indecInjRep_of_isAcyclic`: `dim End(Iᵢ) = 1` over an acyclic quiver, the
   injective counterpart of `TauCeti.finrank_end_indecProjRep_of_isAcyclic`.
 * `TauCeti.indecomposable_indecProjRep_of_isAcyclic` and
@@ -45,18 +43,11 @@ assumption on `Q`, nor an algebraically closed base field.
 
 ## Implementation notes
 
-`Sᵢ` is a simple object of the category of representations
-(`TauCeti.simpleRep_simple`), so its indecomposability is Mathlib's
-`CategoryTheory.indecomposable_of_simple`; it is recorded here so that the three vertex
-representations carry the property under a uniform name. `Pᵢ` and `Iᵢ` are almost never simple —
-`Pᵢ` surjects onto `Sᵢ` with a kernel spanned by the nontrivial paths out of `i` — so that route
-is unavailable for them, and the brick criterion is what replaces it.
-
-The three statements are proved separately rather than for a common universe of vertex spaces:
-`Sᵢ` is built on `k` itself while `Pᵢ` and `Iᵢ` are built on the paths at `i`, so the three objects
-live in a common category only after the universe alignment made in
-`TauCeti.RepresentationTheory.Quiver.Representation.Comparison`. Indecomposability is a property of
-one object at a time and needs no such alignment.
+`Sᵢ` needs nothing from this file: it is a simple object of the category of representations by the
+instance `TauCeti.simpleRep_simple`, so `CategoryTheory.indecomposable_of_simple (simpleRep k Q i)`
+already proves it indecomposable, over any quiver. `Pᵢ` and `Iᵢ` are almost never simple — `Pᵢ`
+surjects onto `Sᵢ` with a kernel spanned by the nontrivial paths out of `i` — so that route is
+unavailable for them, and the brick criterion is what replaces it.
 
 `finrank_end_indecInjRep_of_isAcyclic` is stated here, next to its single consumer, rather than
 beside `TauCeti.finrank_hom_indecInjRep_indecInjRep`, which it specializes: the file holding that
@@ -92,11 +83,6 @@ open CategoryTheory
 universe u v w
 
 variable {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q]
-
-/-- **The vertex simple `Sᵢ` is indecomposable**, being a simple object of the category of
-representations. No hypothesis on the quiver is needed. -/
-theorem indecomposable_simpleRep (i : Q) : Indecomposable (simpleRep k Q i) :=
-  indecomposable_of_simple _
 
 /-- Two vertices of an acyclic quiver joined by a path in each direction coincide, in the form the
 path counts below produce. -/
