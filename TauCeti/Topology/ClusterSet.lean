@@ -321,6 +321,42 @@ lemma mem_clusterSetOn_iff_forall_exists :
 
 end PseudoMetricSpace
 
+/-! ## The Cauchy criterion for a subsingleton cluster set -/
+
+section MetricSpace
+
+variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] {U : Set X} {f : X → Y} {w : X}
+
+/-- **A uniformly small oscillation on the approach regions makes the cluster set a
+subsingleton.** If, for every `ε > 0`, the values of `f` on `U ∩ ball w δ` are within `ε` of one
+another for some `δ > 0`, then `f` has at most one cluster value at `w` along `U`.
+
+This is the Cauchy criterion in cluster-set form, and it is how a *quantitative* boundary estimate
+is turned into the hypothesis of `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` and of
+`TauCeti.exists_continuousOn_closure_eqOn`: two cluster values are approached at points of
+`U` arbitrarily close to `w`, hence at two points of a single approach region, where the
+hypothesis holds them within `ε` of each other.
+
+Nothing is claimed about *existence* of a cluster value, which is a compactness matter; the
+codomain is a genuine metric space rather than a pseudometric one because the conclusion is an
+equality of points. -/
+theorem clusterSetOn_subsingleton_of_forall_exists
+    (h : ∀ ε > 0, ∃ δ > 0, ∀ x ∈ U ∩ Metric.ball w δ, ∀ y ∈ U ∩ Metric.ball w δ,
+      dist (f x) (f y) ≤ ε) :
+    (clusterSetOn f U w).Subsingleton := by
+  intro v₁ h₁ v₂ h₂
+  refine eq_of_forall_dist_le fun ε hε => ?_
+  obtain ⟨δ, hδ, hosc⟩ := h (ε / 3) (by positivity)
+  obtain ⟨x, hxU, hxd, hx⟩ := mem_clusterSetOn_iff_forall_exists.mp h₁ (ε / 3) (by positivity) δ hδ
+  obtain ⟨y, hyU, hyd, hy⟩ := mem_clusterSetOn_iff_forall_exists.mp h₂ (ε / 3) (by positivity) δ hδ
+  have hxy := hosc x ⟨hxU, Metric.mem_ball.mpr hxd⟩ y ⟨hyU, Metric.mem_ball.mpr hyd⟩
+  have h₁' : dist v₁ (f x) < ε / 3 := by rwa [dist_comm]
+  calc dist v₁ v₂ ≤ dist v₁ (f x) + dist (f x) (f y) + dist (f y) v₂ := dist_triangle4 _ _ _ _
+    _ ≤ ε / 3 + ε / 3 + ε / 3 := add_le_add (add_le_add h₁'.le hxy) hy.le
+    _ = ε := by ring
+
+end MetricSpace
+
 /-! ## The extension criterion -/
 
 section Extension
