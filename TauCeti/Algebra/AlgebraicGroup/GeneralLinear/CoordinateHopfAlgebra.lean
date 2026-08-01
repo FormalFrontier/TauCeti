@@ -172,10 +172,6 @@ private theorem antipodeBase_determinant_isUnit :
     IsUnit (antipodeBase R n
       (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R))) := by
   rw [antipodeBase, AlgHom.map_det]
-  change IsUnit (Matrix.det
-    ((MvPolynomial.aeval fun ij : Fin n × Fin n =>
-      ((localizedGenericMatrix R n)⁻¹) ij.1 ij.2).mapMatrix
-        (Matrix.mvPolynomialX (Fin n) (Fin n) R)))
   rw [Matrix.mvPolynomialX_mapMatrix_aeval]
   exact Matrix.isUnit_nonsing_inv_det _ (isUnit_det_localizedGenericMatrix R n)
 
@@ -203,9 +199,8 @@ private theorem algHom_ext_away {T : Type*} [Semiring T] [Algebra R T]
     apply IsLocalization.ringHom_ext
       (Submonoid.powers
         (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)))
-    change (f.comp (coordinateRingMap R n)).toRingHom =
-      (g.comp (coordinateRingMap R n)).toRingHom
-    exact congrArg AlgHom.toRingHom h
+    simpa only [AlgHom.toRingHom_eq_coe, AlgHom.comp_toRingHom, coordinateRingMap,
+      IsScalarTower.coe_toAlgHom] using congrArg AlgHom.toRingHom h
   exact RingHom.congr_fun h'
 
 /-- Comultiplication sends a localized generic entry to the matrix-multiplication sum. -/
@@ -423,6 +418,11 @@ noncomputable def coordinateHopfAlgebraAlgEquiv :
   letI : HopfAlgebra R (CoordinateRing R n) := hopfAlgebra R n
   exact AlgEquiv.refl
 
+/-- Mathlib has no `CommHopfAlgCat.of_comul` lemma exposing the comultiplication stored by
+`CommHopfAlgCat.of`. This bridge locally crosses the two definitional wrappers:
+`coordinateHopfAlgebra` stores `(hopfAlgebra R n).toCoalgebra` on the raw coordinate ring, and
+`coordinateHopfAlgebraAlgEquiv` is the identity algebra equivalence on that carrier. After those
+reductions, transporting the stored comultiplication is `Algebra.TensorProduct.map_id`. -/
 private theorem coordinateHopfAlgebra_comul_transport (x : CoordinateRing R n) :
     Coalgebra.comul (R := R) (A := coordinateHopfAlgebra R n)
         (coordinateHopfAlgebraAlgEquiv R n x) =
@@ -442,6 +442,19 @@ private theorem coordinateHopfAlgebra_counit_transport (x : CoordinateRing R n) 
       (hopfAlgebra R n).toCoalgebra.toCoalgebraStruct.counit x := by
   rfl
 
+/-- Mathlib has no lemma exposing the antipode stored by `CommHopfAlgCat.of`. This bridge locally
+crosses the bundled carrier and its identity algebra equivalence, while selecting exactly the
+module and Hopf-algebra dictionaries stored by `coordinateHopfAlgebra`. -/
+private theorem coordinateHopfAlgebra_antipode_transport (x : CoordinateRing R n) :
+    HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
+        (coordinateHopfAlgebraAlgEquiv R n x) =
+      coordinateHopfAlgebraAlgEquiv R n
+        (letI : Module R (CoordinateRing R n) :=
+            (hopfAlgebra R n).toAlgebra.toModule;
+          letI : HopfAlgebra R (CoordinateRing R n) := hopfAlgebra R n;
+          HopfAlgebra.antipode R (A := CoordinateRing R n) x) := by
+  rfl
+
 /-- Comultiplication on the bundled coordinate Hopf algebra agrees with the explicit localized
 comultiplication after transport through `coordinateHopfAlgebraAlgEquiv`. -/
 @[simp low]
@@ -455,7 +468,7 @@ theorem coordinateHopfAlgebra_comul_apply (x : CoordinateRing R n) :
 
 /-- The counit on the bundled coordinate Hopf algebra agrees with the explicit localized
 counit after transport through `coordinateHopfAlgebraAlgEquiv`. -/
-@[simp]
+@[simp low]
 theorem coordinateHopfAlgebra_counit_apply (x : CoordinateRing R n) :
     Coalgebra.counit (R := R) (A := coordinateHopfAlgebra R n)
         (coordinateHopfAlgebraAlgEquiv R n x) = counit R n x := by
@@ -464,16 +477,13 @@ theorem coordinateHopfAlgebra_counit_apply (x : CoordinateRing R n) :
 
 /-- The antipode on the bundled coordinate Hopf algebra agrees with inverse-matrix evaluation
 after transport through `coordinateHopfAlgebraAlgEquiv`. -/
-@[simp]
+@[simp low]
 theorem coordinateHopfAlgebra_antipode_apply (x : CoordinateRing R n) :
     HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
         (coordinateHopfAlgebraAlgEquiv R n x) =
       coordinateHopfAlgebraAlgEquiv R n (antipode R n x) := by
-  change (letI : Module R (CoordinateRing R n) :=
-      (hopfAlgebra R n).toAlgebra.toModule
-    letI : HopfAlgebra R (CoordinateRing R n) := hopfAlgebra R n
-    HopfAlgebra.antipode R (A := CoordinateRing R n) x) = antipode R n x
-  rw [eq_of_heq (hopfAlgebra_antipode R n), AlgHom.toLinearMap_apply]
+  rw [coordinateHopfAlgebra_antipode_transport,
+    eq_of_heq (hopfAlgebra_antipode R n), AlgHom.toLinearMap_apply]
 
 /-- The bundled coordinate Hopf algebra retains the matrix-multiplication comultiplication on
 localized generic entries. -/
@@ -493,6 +503,7 @@ theorem coordinateHopfAlgebra_comul_X (i j : Fin n) :
 
 /-- The bundled coordinate Hopf algebra retains the identity-matrix counit on localized generic
 entries. -/
+@[simp]
 theorem coordinateHopfAlgebra_counit_X (i j : Fin n) :
     Coalgebra.counit (R := R) (A := coordinateHopfAlgebra R n)
         (coordinateHopfAlgebraAlgEquiv R n
@@ -503,6 +514,7 @@ theorem coordinateHopfAlgebra_counit_X (i j : Fin n) :
 
 /-- The bundled coordinate Hopf algebra sends a localized generic entry under the antipode to
 the corresponding inverse-matrix entry. -/
+@[simp]
 theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
     HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
         (coordinateHopfAlgebraAlgEquiv R n
@@ -511,18 +523,17 @@ theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
 
 /-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
-@[expose]
 noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
-  ⟨coordinateHopfAlgebra R n, by
-    change Algebra.FiniteType R (CoordinateRing R n)
-    infer_instance⟩
+  ⟨coordinateHopfAlgebra R n,
+    Algebra.FiniteType.equiv (inferInstance : Algebra.FiniteType R (CoordinateRing R n))
+      (coordinateHopfAlgebraAlgEquiv R n)⟩
 
 /-- The underlying commutative Hopf algebra of `finiteTypeCoordinateHopfAlgebra` is
 `coordinateHopfAlgebra`. -/
 @[simp]
 theorem finiteTypeCoordinateHopfAlgebra_obj :
     (finiteTypeCoordinateHopfAlgebra R n).obj = coordinateHopfAlgebra R n :=
-  rfl
+  (rfl)
 
 end GeneralLinear
 
