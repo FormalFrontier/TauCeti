@@ -29,32 +29,6 @@ namespace TauCeti
 
 open scoped BigOperators
 
-private theorem sum_take_rowLens_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
-    (μ.rowLens.take k).sum = (μ.cells.filter fun c => c.1 < k).card := by
-  rw [YoungDiagram.rowLens, ← List.map_take, List.take_range,
-    ← List.sum_toFinset _ List.nodup_range, List.toFinset_range]
-  symm
-  calc
-    (μ.cells.filter fun c => c.1 < k).card =
-        ∑ i ∈ Finset.range (min k (μ.colLen 0)),
-          ((μ.cells.filter fun c => c.1 < k).filter fun c => c.1 = i).card := by
-      apply Finset.card_eq_sum_card_fiberwise
-      intro c hc
-      simp only [Finset.mem_coe, Finset.mem_filter] at hc ⊢
-      rw [Finset.mem_range]
-      refine lt_min hc.2 ?_
-      rw [← YoungDiagram.mem_iff_lt_colLen]
-      exact μ.up_left_mem (by rfl) c.2.zero_le hc.1
-    _ = ∑ i ∈ Finset.range (min k (μ.colLen 0)), μ.rowLen i := by
-      apply Finset.sum_congr rfl
-      intro i hi
-      rw [μ.rowLen_eq_card]
-      congr 1
-      ext c
-      have hik : i < k := (Finset.mem_range.mp hi).trans_le (min_le_left _ _)
-      simp only [Finset.mem_filter, YoungDiagram.mem_cells, YoungDiagram.mem_row_iff]
-      aesop
-
 private theorem sum_map_min_rowLens_eq_card_filter_snd (μ : YoungDiagram) (k : ℕ) :
     (μ.rowLens.map (min k)).sum = (μ.cells.filter fun c => c.2 < k).card := by
   rw [YoungDiagram.rowLens, List.map_map,
@@ -92,7 +66,7 @@ private theorem card_filter_fst_transpose (μ : YoungDiagram) (k : ℕ) :
 
 private theorem sum_take_transpose_rowLens (μ : YoungDiagram) (k : ℕ) :
     (μ.transpose.rowLens.take k).sum = (μ.rowLens.map (min k)).sum := by
-  rw [sum_take_rowLens_eq_card_filter_fst, card_filter_fst_transpose,
+  rw [YoungDiagram.sum_take_rowLens_eq_card_filter_fst, card_filter_fst_transpose,
     sum_map_min_rowLens_eq_card_filter_snd]
 
 private theorem sum_sub_add_mul_length_takeWhile {l : List ℕ} (hl : l.SortedGE) (k : ℕ) :
