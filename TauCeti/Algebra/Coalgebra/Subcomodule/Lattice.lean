@@ -26,7 +26,7 @@ subcomodules: finite sums of finite subcomodules remain finite.
 * `Subcomodule.iSup_toSubmodule`, `Subcomodule.mem_iSup`, `Subcomodule.mem_sSup`:
   characteristic API for arbitrary joins.
 * `Subcomodule.coe_iSup_of_directed`, `Subcomodule.mem_iSup_of_directed`:
-  a directed join has carrier equal to the union of the carriers.
+  a nonempty directed join has carrier equal to the union of the carriers.
 * `Subcomodule.sup_toSubmodule`, `Subcomodule.mem_sup`: characteristic API for binary joins.
 * `Subcomodule.iSup_finite`, `Subcomodule.sup_finite`, `Subcomodule.finset_sup_finite`:
   finite generation is preserved by finite joins.
@@ -193,7 +193,7 @@ instance instCompleteSemilatticeSup : CompleteSemilatticeSup (Subcomodule R C M)
         exact toSubmodule_le_toSubmodule.2 (hN P.2)
       exact hle hm⟩
 
-/-- The carrier of a directed supremum of subcomodules is the union of their carriers. -/
+/-- The carrier of a nonempty directed supremum of subcomodules is the union of their carriers. -/
 @[simp]
 theorem coe_iSup_of_directed {iota : Type*} [Nonempty iota]
     (N : iota → Subcomodule R C M) (hN : Directed (· ≤ ·) N) :
@@ -206,8 +206,8 @@ theorem coe_iSup_of_directed {iota : Type*} [Nonempty iota]
     Submodule.coe_iSup_of_directed _ hN']
   simp only [Set.mem_iUnion, SetLike.mem_coe, mem_toSubmodule]
 
-/-- An element belongs to a directed supremum of subcomodules exactly when it belongs to one
-member of the family. -/
+/-- An element belongs to a nonempty directed supremum of subcomodules exactly when it belongs to
+one member of the family. -/
 @[simp]
 theorem mem_iSup_of_directed {iota : Type*} [Nonempty iota]
     (N : iota → Subcomodule R C M) (hN : Directed (· ≤ ·) N) {m : M} :
@@ -218,7 +218,7 @@ theorem mem_iSup_of_directed {iota : Type*} [Nonempty iota]
 /-- The carrier of the supremum of a nonempty directed set of subcomodules is the union of its
 carriers. -/
 @[simp]
-theorem coe_sSup_of_directed {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
+theorem coe_sSup_of_directedOn {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
     (hdir : DirectedOn (· ≤ ·) S) :
     ((sSup S : Subcomodule R C M) : Set M) = ⋃ N : S, (N.1 : Set M) := by
   letI : Nonempty S := hS.to_subtype
@@ -228,7 +228,7 @@ theorem coe_sSup_of_directed {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
 /-- Membership in the supremum of a nonempty directed set of subcomodules reduces to membership
 in one member of the set. -/
 @[simp]
-theorem mem_sSup_of_directed {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
+theorem mem_sSup_of_directedOn {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
     (hdir : DirectedOn (· ≤ ·) S) {m : M} :
     m ∈ sSup S ↔ ∃ N ∈ S, m ∈ N := by
   letI : Nonempty S := hS.to_subtype

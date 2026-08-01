@@ -212,7 +212,7 @@ theorem coe_sSup_finiteSubcomodules :
     ((sSup (finiteSubcomodules (R := R) (C := C) (M := M)) :
         Subcomodule R C M) : Set M) =
       ⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M) :=
-  coe_sSup_of_directed finiteSubcomodules_nonempty directedOn_finiteSubcomodules
+  coe_sSup_of_directedOn finiteSubcomodules_nonempty directedOn_finiteSubcomodules
 
 /-- Membership in the supremum of all finite subcomodules means membership in one finite
 subcomodule. -/
@@ -221,7 +221,7 @@ theorem mem_sSup_finiteSubcomodules {m : M} :
     m ∈ sSup (finiteSubcomodules (R := R) (C := C) (M := M)) ↔
       ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N := by
   simpa only [mem_finiteSubcomodules] using
-    (mem_sSup_of_directed finiteSubcomodules_nonempty directedOn_finiteSubcomodules (m := m))
+    (mem_sSup_of_directedOn finiteSubcomodules_nonempty directedOn_finiteSubcomodules (m := m))
 
 /-- If every element lies in a finite subcomodule, then every finite set lies in one finite
 subcomodule. -/
@@ -287,16 +287,19 @@ theorem exists_finite_subcomodule_of_fg [Module.Free R C]
   exists_finite_subcomodule_of_fg_of_exists_mem exists_finite_subcomodule_mem P hP
 
 /-- If the coefficient coalgebra is free, the finite subcomodules have supremum `⊤`. -/
+@[simp]
 theorem sSup_finiteSubcomodules_eq_top [Module.Free R C] :
     sSup (finiteSubcomodules (R := R) (C := C) (M := M)) = ⊤ :=
   sSup_finiteSubcomodules_eq_top_of_exists_mem exists_finite_subcomodule_mem
 
 /-- If the coefficient coalgebra is free, the union of the finite subcomodules is the whole
 carrier. -/
+@[simp]
 theorem iUnion_finiteSubcomodules_eq_univ [Module.Free R C] :
-    (⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M)) =
-      Set.univ :=
-  iUnion_finiteSubcomodules_eq_univ_of_exists_mem exists_finite_subcomodule_mem
+    (⋃ (N : Subcomodule R C M) (_ : Module.Finite R N.toSubmodule), (N : Set M)) =
+      Set.univ := by
+  simpa only [Set.iUnion_coe_set, mem_finiteSubcomodules] using
+    iUnion_finiteSubcomodules_eq_univ_of_exists_mem exists_finite_subcomodule_mem
 
 end General
 
