@@ -6,6 +6,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RelativeDegree
+public import TauCeti.NumberTheory.Multiquadratic.Galois.Relative
 import Mathlib.Algebra.Module.ZMod
 
 /-!
@@ -31,6 +32,13 @@ predicted `2 ^ (t - 1)`, where `t` is the number of chosen prime discriminants.
 
 The prime-discriminant description of the genus field is classical; see D. A. Cox,
 *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
+
+## Provenance
+
+The relative Galois equivalence and its action on generators specialize
+`TauCeti.NumberTheory.Multiquadratic.Galois.Relative`, whose Layer-0 multiquadratic machinery is
+migrated from [kim-em/erdos-unit-distance](https://github.com/kim-em/erdos-unit-distance), the
+formalization of L. Alpöge's disproof of the uniform-constant Erdős unit-distance conjecture.
 
 ## Main definitions
 
@@ -219,6 +227,151 @@ private theorem candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_ze
   (candidateGenusField_mem_fixingSubgroup_iff_fix_prodRoot hd σ).trans
     (candidateGenusField_fix_prodRoot_iff_sum_signPattern_eq_zero hd σ)
 
+private theorem candidateGenusFieldRoot_sq_algebraMap {d : ℤ} (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    genusFieldRoot hd P ^ 2 =
+      algebraMap ℚ ℂ (((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
+  simp
+
+private theorem candidateGenusFieldRoot_independent {d : ℤ} (hd : Squarefree d) :
+    ∀ S : Finset {P // P ∈ genusPrimeDiscriminants hd}, S.Nonempty →
+      ¬ IsSquare (∏ P ∈ S, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
+  obtain ⟨hprime, heven_unique, _⟩ := genusPrimeDiscriminants_spec hd
+  exact not_isSquare_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
+    (fun P : {P // P ∈ genusPrimeDiscriminants hd} ↦ P.val)
+    (fun P ↦ hprime P.val P.property) Subtype.val_injective
+    (fun P Q hP hQ ↦ heven_unique P.val P.property Q.val Q.property hP hQ)
+
+noncomputable local instance candidateGenusFieldAdjoinAlgebra {d : ℤ} (hd : Squarefree d) :
+    Algebra ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+  (adjoin ℚ (Set.range (genusFieldRoot hd))).algebra'
+
+private noncomputable def candidateGenusFieldEquivAdjoinRelative {d : ℤ}
+    (hd : Squarefree d) :
+    candidateGenusField hd ≃ₐ[ℚ]
+      @adjoin ℚ _ ℂ _ _ (Set.range (genusFieldRoot hd)) :=
+  AlgEquiv.ofRingEquiv (f := (candidateGenusFieldEquivAdjoin hd).toRingEquiv) fun q ↦ by
+    apply Subtype.ext
+    exact congrArg Subtype.val ((candidateGenusFieldEquivAdjoin hd).commutes q)
+
+@[simp] private theorem candidateGenusFieldEquivAdjoinRelative_apply_gen {d : ℤ}
+    (hd : Squarefree d) (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    candidateGenusFieldEquivAdjoinRelative hd (candidateGenusFieldGen hd P) =
+      gen (genusFieldRoot hd) P := by
+  exact candidateGenusFieldEquivAdjoin_apply_gen hd P
+
+private theorem candidateGenusFieldSignPattern_eq_relativePresentation {d : ℤ}
+    (hd : Squarefree d) (σ : candidateGenusField hd ≃ₐ[ℚ] candidateGenusField hd) :
+    candidateGenusFieldSignPattern hd σ =
+      signPattern (genusFieldRoot hd)
+        (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd) σ) := by
+  funext P
+  rw [candidateGenusFieldSignPattern_apply]
+  simp only [signPattern]
+  congr 1
+  rw [← candidateGenusFieldEquivAdjoinRelative_apply_gen]
+  simp only [AlgEquiv.autCongr_apply, AlgEquiv.trans_apply, AlgEquiv.symm_apply_apply,
+    (candidateGenusFieldEquivAdjoinRelative hd).injective.eq_iff]
+
+private noncomputable def candidateGenusFieldBaseAdjoin {d : ℤ} (hd : Squarefree d) :
+    @IntermediateField ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) _ _
+      (adjoin ℚ (Set.range (genusFieldRoot hd))).algebra' :=
+  (candidateGenusFieldBase hd).map (candidateGenusFieldEquivAdjoinRelative hd).toAlgHom
+
+private theorem candidateGenusField_map_fixingSubgroup {d : ℤ} (hd : Squarefree d) :
+    (candidateGenusFieldBase hd).fixingSubgroup.map
+        (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).toMonoidHom =
+      (candidateGenusFieldBaseAdjoin hd).fixingSubgroup := by
+  ext τ
+  simp only [Subgroup.mem_map]
+  constructor
+  · rintro ⟨σ, hσ, rfl⟩
+    rw [IntermediateField.mem_fixingSubgroup_iff] at hσ ⊢
+    intro x hx
+    rw [candidateGenusFieldBaseAdjoin, IntermediateField.mem_map] at hx
+    obtain ⟨y, hy, rfl⟩ := hx
+    change (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd) σ)
+      (candidateGenusFieldEquivAdjoinRelative hd y) =
+        candidateGenusFieldEquivAdjoinRelative hd y
+    rw [AlgEquiv.autCongr_apply]
+    simp only [AlgEquiv.trans_apply, AlgEquiv.symm_apply_apply]
+    rw [hσ y hy]
+  · intro hτ
+    rw [IntermediateField.mem_fixingSubgroup_iff] at hτ
+    let σ := (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).symm τ
+    refine ⟨σ, ?_,
+      (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).apply_symm_apply τ⟩
+    rw [IntermediateField.mem_fixingSubgroup_iff]
+    intro x hx
+    apply (candidateGenusFieldEquivAdjoinRelative hd).injective
+    have hmap : candidateGenusFieldEquivAdjoinRelative hd x ∈
+        candidateGenusFieldBaseAdjoin hd := by
+      rw [candidateGenusFieldBaseAdjoin, IntermediateField.mem_map]
+      exact ⟨x, hx, rfl⟩
+    change candidateGenusFieldEquivAdjoinRelative hd
+      ((candidateGenusFieldEquivAdjoinRelative hd).symm
+        (τ (candidateGenusFieldEquivAdjoinRelative hd x))) =
+          candidateGenusFieldEquivAdjoinRelative hd x
+    rw [(candidateGenusFieldEquivAdjoinRelative hd).apply_symm_apply, hτ _ hmap]
+
+private noncomputable def candidateGenusFieldRelativeAutCongr {d : ℤ} (hd : Squarefree d) :
+    (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) ≃*
+      (adjoin ℚ (Set.range (genusFieldRoot hd))
+        ≃ₐ[candidateGenusFieldBaseAdjoin hd] adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+  (IntermediateField.fixingSubgroupEquiv (candidateGenusFieldBase hd)).symm.trans
+    (((AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).subgroupMap
+      (candidateGenusFieldBase hd).fixingSubgroup).trans
+        ((MulEquiv.subgroupCongr (candidateGenusField_map_fixingSubgroup hd)).trans
+          (IntermediateField.fixingSubgroupEquiv (candidateGenusFieldBaseAdjoin hd))))
+
+@[simp] private theorem candidateGenusFieldRelativeAutCongr_apply {d : ℤ}
+    (hd : Squarefree d)
+    (σ : candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd)
+    (x : candidateGenusField hd) :
+    candidateGenusFieldRelativeAutCongr hd σ
+        (candidateGenusFieldEquivAdjoinRelative hd x) =
+      candidateGenusFieldEquivAdjoinRelative hd (σ x) := by
+  change (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)
+    (σ.restrictScalars ℚ)) (candidateGenusFieldEquivAdjoinRelative hd x) = _
+  simp only [AlgEquiv.autCongr_apply, AlgEquiv.trans_apply, AlgEquiv.symm_apply_apply]
+  rfl
+
+private theorem candidateGenusFieldRelativeSignSubmodule_eq_intermediateFieldSubmodule
+    {d : ℤ} (hd : Squarefree d) :
+    candidateGenusFieldRelativeSignSubmodule hd =
+      (intermediateFieldEquivSubmodule (candidateGenusFieldRoot_sq_algebraMap hd)
+        (candidateGenusFieldRoot_independent hd) (candidateGenusFieldBaseAdjoin hd)).ofDual := by
+  ext v
+  rw [mem_candidateGenusFieldRelativeSignSubmodule_iff,
+    mem_intermediateFieldEquivSubmodule_apply_ofDual_iff]
+  constructor
+  · intro hv
+    let σ := (galoisGroupEquiv (candidateGenusFieldRoot_sq_algebraMap hd)
+      (candidateGenusFieldRoot_independent hd)).symm (Multiplicative.ofAdd v)
+    let τ := (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).symm σ
+    have hsign : signPattern (genusFieldRoot hd) σ = v := by
+      have h := (galoisGroupEquiv (candidateGenusFieldRoot_sq_algebraMap hd)
+        (candidateGenusFieldRoot_independent hd)).apply_symm_apply (Multiplicative.ofAdd v)
+      rw [galoisGroupEquiv_apply] at h
+      exact Multiplicative.ofAdd.injective h
+    refine ⟨σ, ?_, hsign⟩
+    rw [← candidateGenusField_map_fixingSubgroup hd]
+    refine ⟨τ, ?_, ?_⟩
+    · apply (candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_zero hd τ).mpr
+      rw [candidateGenusFieldSignPattern_eq_relativePresentation]
+      dsimp only [τ]
+      rw [(AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).apply_symm_apply,
+        hsign]
+      exact hv
+    · exact
+        (AlgEquiv.autCongr (candidateGenusFieldEquivAdjoinRelative hd)).apply_symm_apply σ
+  · rintro ⟨σ, hσ, rfl⟩
+    rw [← candidateGenusField_map_fixingSubgroup hd] at hσ
+    obtain ⟨τ, hτ, rfl⟩ := hσ
+    have hsum :=
+      (candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_zero hd τ).mp hτ
+    rwa [candidateGenusFieldSignPattern_eq_relativePresentation] at hsum
+
 /-- The sign pattern of a relative automorphism, obtained by restricting it to an absolute
 `ℚ`-automorphism of the candidate genus field. -/
 noncomputable def candidateGenusFieldRelativeSignPattern {d : ℤ} (hd : Squarefree d)
@@ -226,43 +379,25 @@ noncomputable def candidateGenusFieldRelativeSignPattern {d : ℤ} (hd : Squaref
     {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2 :=
   candidateGenusFieldSignPattern hd (σ.restrictScalars ℚ)
 
+private theorem candidateGenusFieldRelativeSignPattern_eq {d : ℤ} (hd : Squarefree d)
+    (σ : candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) :
+    candidateGenusFieldRelativeSignPattern hd σ =
+      signPattern (genusFieldRoot hd)
+        ((candidateGenusFieldRelativeAutCongr hd σ).restrictScalars ℚ) := by
+  rw [candidateGenusFieldRelativeSignPattern,
+    candidateGenusFieldSignPattern_eq_relativePresentation]
+  congr 1
+
 /-- The sign pattern of a relative automorphism lies in the relative sign subspace. -/
 theorem candidateGenusFieldRelativeSignPattern_mem {d : ℤ} (hd : Squarefree d)
     (σ : candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) :
     candidateGenusFieldRelativeSignPattern hd σ ∈
-      candidateGenusFieldRelativeSignSubmodule hd :=
-  (mem_candidateGenusFieldRelativeSignSubmodule_iff hd _).mpr
-    ((candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_zero hd _).mp (by
-      rw [IntermediateField.mem_fixingSubgroup_iff]
-      intro x hx
-      exact σ.commutes ⟨x, hx⟩))
-
-private theorem candidateGenusField_fixingSubgroup_map_galoisGroupEquiv {d : ℤ}
-    (hd : Squarefree d) :
-    (candidateGenusFieldBase hd).fixingSubgroup.map
-        (galoisGroupEquivCandidateGenusField hd : _ →* _) =
-      Subgroup.toAddSubgroup'.symm
-        (candidateGenusFieldRelativeSignSubmodule hd).toAddSubgroup := by
-  ext v
-  constructor
-  · rintro ⟨σ, hσ, rfl⟩
-    change Multiplicative.toAdd (galoisGroupEquivCandidateGenusField hd σ) ∈
-      candidateGenusFieldRelativeSignSubmodule hd
-    rw [galoisGroupEquivCandidateGenusField_apply]
-    change candidateGenusFieldSignPattern hd σ ∈ candidateGenusFieldRelativeSignSubmodule hd
-    rw [mem_candidateGenusFieldRelativeSignSubmodule_iff]
-    exact (candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_zero hd σ).mp hσ
-  · intro hv
-    let σ := (galoisGroupEquivCandidateGenusField hd).symm v
-    have hsign : candidateGenusFieldSignPattern hd σ = Multiplicative.toAdd v := by
-      have h := (galoisGroupEquivCandidateGenusField hd).apply_symm_apply v
-      rw [galoisGroupEquivCandidateGenusField_apply] at h
-      exact congrArg Multiplicative.toAdd h
-    refine ⟨σ, ?_, (galoisGroupEquivCandidateGenusField hd).apply_symm_apply v⟩
-    change Multiplicative.toAdd v ∈ candidateGenusFieldRelativeSignSubmodule hd at hv
-    apply (candidateGenusField_mem_fixingSubgroup_iff_sum_signPattern_eq_zero hd σ).mpr
-    rw [hsign]
-    exact (mem_candidateGenusFieldRelativeSignSubmodule_iff hd _).mp hv
+    candidateGenusFieldRelativeSignSubmodule hd := by
+  rw [candidateGenusFieldRelativeSignSubmodule_eq_intermediateFieldSubmodule,
+    candidateGenusFieldRelativeSignPattern_eq]
+  exact signPattern_restrictScalars_mem (candidateGenusFieldRoot_sq_algebraMap hd)
+    (candidateGenusFieldRoot_independent hd) (candidateGenusFieldBaseAdjoin hd)
+      (candidateGenusFieldRelativeAutCongr hd σ)
 
 /-- **The relative Galois group of the candidate genus field is its base-fixing sign subspace.**
 Restriction of a relative automorphism to `ℚ`, followed by the absolute sign-pattern equivalence,
@@ -271,11 +406,13 @@ of `candidateGenusFieldRelativeSignSubmodule hd`. -/
 noncomputable def galoisGroupEquivCandidateGenusFieldRelative {d : ℤ} (hd : Squarefree d) :
     (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) ≃*
       Multiplicative ↥(candidateGenusFieldRelativeSignSubmodule hd) :=
-  (IntermediateField.fixingSubgroupEquiv (candidateGenusFieldBase hd)).symm.trans
-    (((galoisGroupEquivCandidateGenusField hd).subgroupMap
-      (candidateGenusFieldBase hd).fixingSubgroup).trans
-        (MulEquiv.subgroupCongr
-          (candidateGenusField_fixingSubgroup_map_galoisGroupEquiv hd)))
+  (candidateGenusFieldRelativeAutCongr hd).trans
+    ((galoisGroupEquivIntermediateFieldSubmodule
+      (candidateGenusFieldRoot_sq_algebraMap hd)
+      (candidateGenusFieldRoot_independent hd) (candidateGenusFieldBaseAdjoin hd)).trans
+      ((LinearEquiv.ofEq _ _
+        (candidateGenusFieldRelativeSignSubmodule_eq_intermediateFieldSubmodule hd).symm).toAddEquiv
+          |>.toMultiplicative))
 
 /-- The relative Galois equivalence sends an automorphism to the sign pattern of its restriction
 to an absolute `ℚ`-automorphism. -/
@@ -285,12 +422,11 @@ to an absolute `ℚ`-automorphism. -/
     galoisGroupEquivCandidateGenusFieldRelative hd σ =
       Multiplicative.ofAdd
         ⟨candidateGenusFieldRelativeSignPattern hd σ,
-          candidateGenusFieldRelativeSignPattern_mem hd σ⟩ :=
-  Subtype.ext
-    ((MulEquiv.coe_subgroupMap_apply (galoisGroupEquivCandidateGenusField hd)
-      (candidateGenusFieldBase hd).fixingSubgroup
-      ((IntermediateField.fixingSubgroupEquiv (candidateGenusFieldBase hd)).symm σ)).trans
-        (galoisGroupEquivCandidateGenusField_apply hd (σ.restrictScalars ℚ)))
+          candidateGenusFieldRelativeSignPattern_mem hd σ⟩ := by
+  rw [galoisGroupEquivCandidateGenusFieldRelative, MulEquiv.trans_apply,
+    MulEquiv.trans_apply, galoisGroupEquivIntermediateFieldSubmodule_apply]
+  apply Subtype.ext
+  exact (candidateGenusFieldRelativeSignPattern_eq hd σ).symm
 
 /-- The inverse relative Galois equivalence realizes a base-fixing sign vector by its prescribed
 sign changes on the chosen prime-discriminant generators. -/
@@ -301,22 +437,23 @@ sign changes on the chosen prime-discriminant generators. -/
         (candidateGenusFieldGen hd P) =
       (-1) ^ ((v : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2) P).val *
         candidateGenusFieldGen hd P := by
-  set σ := (galoisGroupEquivCandidateGenusFieldRelative hd).symm (Multiplicative.ofAdd v)
-  have hsign : candidateGenusFieldRelativeSignPattern hd σ =
-      (v : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2) := by
-    have happ := (galoisGroupEquivCandidateGenusFieldRelative hd).apply_symm_apply
-      (Multiplicative.ofAdd v)
-    rw [galoisGroupEquivCandidateGenusFieldRelative_apply] at happ
-    exact congrArg Subtype.val (Multiplicative.ofAdd.injective happ)
-  have hrestrict : σ.restrictScalars ℚ =
-      (galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd (v : _)) := by
-    apply (galoisGroupEquivCandidateGenusField hd).injective
-    simp only [candidateGenusFieldRelativeSignPattern] at hsign
-    rw [galoisGroupEquivCandidateGenusField_apply, hsign, MulEquiv.apply_symm_apply]
-  -- A relative automorphism and its restriction to `ℚ` have the same underlying function.
-  change (σ.restrictScalars ℚ) (candidateGenusFieldGen hd P) = _
-  rw [hrestrict]
-  exact galoisGroupEquivCandidateGenusField_symm_apply_gen hd _ P
+  let v' : (intermediateFieldEquivSubmodule (candidateGenusFieldRoot_sq_algebraMap hd)
+      (candidateGenusFieldRoot_independent hd) (candidateGenusFieldBaseAdjoin hd)).ofDual :=
+    ⟨v, by
+      rw [← candidateGenusFieldRelativeSignSubmodule_eq_intermediateFieldSubmodule hd]
+      exact v.property⟩
+  let τ := (galoisGroupEquivIntermediateFieldSubmodule
+    (candidateGenusFieldRoot_sq_algebraMap hd) (candidateGenusFieldRoot_independent hd)
+      (candidateGenusFieldBaseAdjoin hd)).symm (Multiplicative.ofAdd v')
+  let σ := (candidateGenusFieldRelativeAutCongr hd).symm τ
+  change σ (candidateGenusFieldGen hd P) = _
+  apply (candidateGenusFieldEquivAdjoinRelative hd).injective
+  rw [← candidateGenusFieldRelativeAutCongr_apply hd σ,
+    (candidateGenusFieldRelativeAutCongr hd).apply_symm_apply τ]
+  simp only [candidateGenusFieldEquivAdjoinRelative_apply_gen, map_mul, map_pow, map_neg, map_one]
+  exact galoisGroupEquivIntermediateFieldSubmodule_symm_apply_gen
+    (candidateGenusFieldRoot_sq_algebraMap hd) (candidateGenusFieldRoot_independent hd)
+      (candidateGenusFieldBaseAdjoin hd) v' P
 
 /-- **Order of the relative candidate-genus-field Galois group.** If the squarefree integer `d`
 is not a rational square, the relative group over its embedded quadratic base has order
