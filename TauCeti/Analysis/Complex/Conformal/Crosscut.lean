@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Complex.AbsMax
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import TauCeti.Topology.ClusterSet
 import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Normed.Module.RCLike.Real
@@ -43,6 +44,20 @@ The two pieces are open, disjoint and cover `ball c r \ sphere ζ ρ`, so they *
 components (`TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion):
 a circular crosscut separates the disc into exactly two parts, and a connected subset of the disc
 missing the crosscut lies entirely in one of them.
+
+## The angular description
+
+The same inversion, read in polar coordinates around `ζ`, says which *angles* the crosscut
+occupies. Writing `α = arg (c - ζ)` for the direction from `ζ` to the centre, the point of
+`sphere ζ ρ` at angle `θ` lies in the disc exactly when `ρ < 2 * r * cos (θ - α)`
+(`TauCeti.circleMap_mem_ball_iff`, with the `simp`-normal form
+`TauCeti.dist_circleMap_lt_iff` beside it): for `0 < ρ < 2 * r` the crosscut consists of the angles
+*strictly* within `arccos (ρ / (2 * r))` of `α`, while for `2 * r ≤ ρ` no angle satisfies the
+condition and `sphere ζ ρ` misses the disc altogether. Rather than name that half-width,
+the file records only
+that `cos` has no interior minimum on a period centred at `α`, so the condition holds throughout an
+interval of angles as soon as it holds at both ends
+(`TauCeti.circleMap_mem_ball_of_mem_Icc`): the crosscut is an arc.
 
 ## The boundary criterion
 
@@ -96,6 +111,8 @@ half is the maximum modulus principle for holomorphic functions.
 
 * `TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv` — the inversion at a boundary point carries a
   disc to a half-plane.
+* `TauCeti.circleMap_mem_ball_iff` and `TauCeti.circleMap_mem_ball_of_mem_Icc` — the angular
+  description of a circular crosscut, and the fact that it is an arc of angles.
 * `TauCeti.isConnected_ball_diff_closedBall` — the part of a disc outside a circular crosscut is
   connected.
 * `TauCeti.ball_diff_sphere_eq_union`,
@@ -131,6 +148,7 @@ public section
 namespace TauCeti
 
 open Bornology Complex Filter Metric Set Topology
+open scoped Real
 
 variable {c ζ z : ℂ} {r ρ : ℝ}
 
@@ -174,6 +192,96 @@ theorem mem_ball_iff_one_lt_two_mul_re_mul_inv (hζ : dist ζ c = r) (hz : z ≠
   · intro h; nlinarith
   · intro h; nlinarith
 
+/-! ## The angular description of a circular crosscut -/
+
+/-- **A circular crosscut is an arc of angles around the direction of the centre.** For `ζ` on the
+circle `sphere c r` and `ρ > 0`, the point of `sphere ζ ρ` at angle `θ` lies in `ball c r` exactly
+when `ρ < 2 * r * cos (θ - arg (c - ζ))`.
+
+This is the inversion identity `TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv` written in polar
+form: with `c - ζ = r * exp (arg (c - ζ) * I)`, the inverted point
+`(c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹` is `(r / ρ) * exp ((arg (c - ζ) - θ) * I)`, whose real part is
+`(r / ρ) * cos (θ - arg (c - ζ))`.
+
+Nothing is assumed of `r` beyond what `dist ζ c = r` forces; for `r = 0` both sides are false.
+
+This is deliberately not a `simp` lemma: `Metric.mem_ball` already rewrites the left-hand side to
+`dist (circleMap ζ ρ θ) c < r`, so the statement is not in `simp` normal form and the `simpNF`
+linter rejects the attribute. The `simp`-normal companion is
+`TauCeti.dist_circleMap_lt_iff`. -/
+theorem circleMap_mem_ball_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
+    circleMap ζ ρ θ ∈ ball c r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) := by
+  have hnorm : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
+  have hpolar : c - ζ = (r : ℂ) * exp (((c - ζ).arg : ℂ) * I) := by
+    conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (c - ζ)]
+    rw [hnorm]
+  have hsphere : circleMap ζ ρ θ ∈ sphere ζ ρ := circleMap_mem_sphere ζ hρ.le θ
+  have hne : circleMap ζ ρ θ ≠ ζ := by
+    intro h
+    rw [mem_sphere, h, dist_self] at hsphere
+    exact hρ.ne hsphere
+  have hsub : circleMap ζ ρ θ - ζ = (ρ : ℂ) * exp ((θ : ℂ) * I) := by
+    rw [circleMap_sub_center, circleMap_zero]
+  have hexp : exp (((c - ζ).arg : ℂ) * I) * (exp ((θ : ℂ) * I))⁻¹
+      = exp ((((c - ζ).arg - θ : ℝ) : ℂ) * I) := by
+    rw [← Complex.exp_neg, ← Complex.exp_add]
+    push_cast
+    ring_nf
+  have hprod : (c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹
+      = ((r * ρ⁻¹ : ℝ) : ℂ) * exp ((((c - ζ).arg - θ : ℝ) : ℂ) * I) := by
+    rw [hsub, mul_inv, ← hexp]
+    conv_lhs => rw [hpolar]
+    push_cast
+    ring
+  -- the half-plane condition, cleared of the inversion
+  have hre : 2 * ((c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹).re
+      = 2 * r * Real.cos (θ - (c - ζ).arg) / ρ := by
+    rw [hprod, Complex.re_ofReal_mul, Complex.exp_ofReal_mul_I_re, ← Real.cos_neg, neg_sub,
+      eq_div_iff hρ.ne']
+    field_simp
+  rw [mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hne, hre, lt_div_iff₀ hρ, one_mul]
+
+/-- **A circular crosscut is an arc of angles around the direction of the centre**, stated in
+`simp` normal form. This is `TauCeti.circleMap_mem_ball_iff` with the membership in `ball c r`
+already unfolded by `Metric.mem_ball`, which is the form a `simp` call leaves the goal in. -/
+@[simp]
+theorem dist_circleMap_lt_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
+    dist (circleMap ζ ρ θ) c < r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) :=
+  circleMap_mem_ball_iff hζ hρ θ
+
+/-- **The cosine has no interior minimum on `[-π, π]`.** If `k < cos a` and `k < cos b`, with
+`-π ≤ a` and `b ≤ π`, then `k < cos θ` for every `θ ∈ [a, b]`: `cos` increases on `[-π, 0]` and
+decreases on `[0, π]`, so on `[a, b]` its minimum is attained at an endpoint. -/
+private theorem lt_cos_of_mem_Icc {k a b θ : ℝ} (ha : -π ≤ a) (hb : b ≤ π) (hθ : θ ∈ Icc a b)
+    (hka : k < Real.cos a) (hkb : k < Real.cos b) : k < Real.cos θ := by
+  rcases le_total θ 0 with hθ0 | hθ0
+  · refine hka.trans_le ?_
+    rw [← Real.cos_neg θ, ← Real.cos_neg a]
+    exact Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) (by linarith [hθ.1])
+  · exact hkb.trans_le (Real.cos_le_cos_of_nonneg_of_le_pi hθ0 hb hθ.2)
+
+/-- **A circular crosscut is connected as a set of angles.** If the angles `a` and `b` both lie
+within `π` of the direction `arg (c - ζ)` of the centre and both put the point of `sphere ζ ρ` they
+name inside `ball c r`, then so does every angle in `[a, b]`.
+
+This is `TauCeti.circleMap_mem_ball_iff` read through the unimodality of `cos` on a period centred
+at `arg (c - ζ)`; positivity of `r` is not assumed, being forced by the hypotheses. -/
+theorem circleMap_mem_ball_of_mem_Icc (hζ : dist ζ c = r) (hρ : 0 < ρ) {a b θ : ℝ}
+    (ha : -π ≤ a - (c - ζ).arg) (hb : b - (c - ζ).arg ≤ π) (hθ : θ ∈ Icc a b)
+    (hain : circleMap ζ ρ a ∈ ball c r) (hbin : circleMap ζ ρ b ∈ ball c r) :
+    circleMap ζ ρ θ ∈ ball c r := by
+  rw [circleMap_mem_ball_iff hζ hρ] at hain hbin ⊢
+  have hr : 0 < r := by
+    rcases (hζ ▸ dist_nonneg : (0 : ℝ) ≤ r).eq_or_lt with h | h
+    · rw [← h, mul_zero, zero_mul] at hain
+      linarith
+    · exact h
+  have hkey : ∀ x : ℝ, (ρ < 2 * r * Real.cos (x - (c - ζ).arg))
+      ↔ ρ / (2 * r) < Real.cos (x - (c - ζ).arg) := fun x => by
+    rw [div_lt_iff₀ (by linarith), mul_comm]
+  rw [hkey] at hain hbin ⊢
+  exact lt_cos_of_mem_Icc ha hb ⟨by linarith [hθ.1], by linarith [hθ.2]⟩ hain hbin
+
 /-! ## The two sides of a circular crosscut -/
 
 /-- **The crosscut neighbourhood is nonempty.** For `ζ` on the circle `sphere c r` and any positive
@@ -203,6 +311,82 @@ theorem isConnected_ball_inter_ball (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 
     IsConnected (ball c r ∩ ball ζ ρ) :=
   ((convex_ball c r).inter (convex_ball ζ ρ)).isConnected (nonempty_ball_inter_ball hr hζ hρ)
 
+/-- The inversion model of a disc punctured by a crosscut: the intersection of the open half-plane
+`{w | 1 < 2 * (a * w).re}` with `ball 0 R`. It is convex for every `a` and every `R`, being an
+intersection of a half-space with a ball.
+
+No nonemptiness is claimed, and none holds in general: the intersection is empty for `R ≤ 0`, and
+the half-plane itself is empty for `a = 0`. Nonemptiness in the case at hand is
+`TauCeti.nonempty_halfPlane_inter_ball`, which is where `ρ < 2 * r` is used. -/
+private lemma convex_halfPlane_inter_ball (a : ℂ) (R : ℝ) :
+    Convex ℝ ({w : ℂ | 1 < 2 * (a * w).re} ∩ ball 0 R) := by
+  have hlin : IsLinearMap ℝ fun w : ℂ => 2 * (a * w).re :=
+    { map_add := by intro x y; simp [mul_add, Complex.mul_re]
+      map_smul := by intro s x; simp [Complex.real_smul, Complex.mul_re]; ring }
+  exact (convex_halfSpace_gt hlin 1).inter (convex_ball _ _)
+
+/-- A point of the half-plane `{w | 1 < 2 * (a * w).re}` is nonzero, since at `w = 0` the defining
+quantity is `0`. The ball factor plays no part. -/
+private lemma ne_zero_of_one_lt_two_mul_re_mul {a w : ℂ} (hw : 1 < 2 * (a * w).re) : w ≠ 0 := by
+  rintro rfl
+  rw [mul_zero, Complex.zero_re] at hw
+  linarith
+
+/-- **This is where `ρ < 2 * ‖a‖` is used.** The model region is nonempty exactly because the
+crosscut radius is less than the diameter; a larger `ρ` would swallow the disc. The witness is a
+real multiple `s / a` with `1 / 2 < s < ‖a‖ / ρ`, which is a nonempty range precisely under that
+hypothesis. Neither `0 < ‖a‖` nor `a ≠ 0` is assumed: `0 < ρ < 2 * ‖a‖` forces both. -/
+private lemma nonempty_halfPlane_inter_ball {a : ℂ} (hρ : 0 < ρ) (hρ' : ρ < 2 * ‖a‖) :
+    ({w : ℂ | 1 < 2 * (a * w).re} ∩ ball 0 ρ⁻¹).Nonempty := by
+  have hr : 0 < ‖a‖ := by linarith
+  have ha0 : a ≠ 0 := norm_pos_iff.mp hr
+  have hhalf : (1 : ℝ) / 2 < ‖a‖ / ρ := by rw [lt_div_iff₀ hρ]; linarith
+  obtain ⟨s, hs1, hs2⟩ : ∃ s : ℝ, 1 / 2 < s ∧ s < ‖a‖ / ρ :=
+    ⟨(1 / 2 + ‖a‖ / ρ) / 2, by linarith, by linarith⟩
+  have hs0 : 0 < s := by linarith
+  refine ⟨(s : ℂ) / a, ?_, ?_⟩
+  · have ha : a * ((s : ℂ) / a) = (s : ℂ) := by field_simp
+    rw [mem_ofPred_eq, ha, Complex.ofReal_re]
+    linarith
+  · rw [mem_ball, dist_zero_right, norm_div, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos hs0, div_lt_iff₀ hr, inv_mul_eq_div]
+    rw [lt_div_iff₀ hρ] at hs2 ⊢
+    linarith
+
+/-- The inversion `w ↦ ζ + w⁻¹` carries the model region onto the disc-minus-crosscut region. This
+is the transport half of the Möbius reduction: the half-plane factor becomes `ball c r` by
+`TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv`, and the ball factor becomes the complement of
+`closedBall ζ ρ`. -/
+private lemma image_add_inv_halfPlane_inter_ball (hζ : dist ζ c = r) (hρ : 0 < ρ) :
+    (fun w : ℂ => ζ + w⁻¹) '' ({w : ℂ | 1 < 2 * ((c - ζ) * w).re} ∩ ball 0 ρ⁻¹)
+      = ball c r \ closedBall ζ ρ := by
+  ext y
+  constructor
+  · rintro ⟨w, hwT, rfl⟩
+    have hw0 : w ≠ 0 := ne_zero_of_one_lt_two_mul_re_mul hwT.1
+    have hyζ : ζ + w⁻¹ - ζ = w⁻¹ := by ring
+    have hne : ζ + w⁻¹ ≠ ζ := by
+      simpa [hyζ, sub_eq_zero] using inv_ne_zero hw0
+    have hwnorm : 0 < ‖w‖ := norm_pos_iff.mpr hw0
+    refine ⟨?_, ?_⟩
+    · rw [mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hne, hyζ, inv_inv]
+      exact hwT.1
+    · rw [mem_closedBall, dist_eq_norm, hyζ, norm_inv, not_le]
+      have hball := hwT.2
+      rw [mem_ball, dist_zero_right] at hball
+      rw [lt_inv_comm₀ hρ hwnorm]
+      exact hball
+  · rintro ⟨hy1, hy2⟩
+    rw [mem_closedBall, dist_eq_norm, not_le] at hy2
+    have hyne : y ≠ ζ := by
+      intro h
+      rw [h, sub_self, norm_zero] at hy2
+      linarith
+    refine ⟨(y - ζ)⁻¹, ⟨?_, ?_⟩, by simp⟩
+    · exact (mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hyne).mp hy1
+    · rw [mem_ball, dist_zero_right, norm_inv, inv_lt_inv₀ (by linarith) hρ]
+      exact hy2
+
 /-- **The part of a disc outside a circular crosscut is connected.** For `ζ` on the circle
 `sphere c r` and `0 < ρ < 2 * r`, the set `ball c r \ closedBall ζ ρ` is connected — and nonempty,
 which is where `ρ < 2 * r` is used: a larger `ρ` would swallow the disc.
@@ -216,69 +400,12 @@ continuously, `0` not being in it.
 Positivity of `r` is not a separate hypothesis: `0 < ρ < 2 * r` already forces it. -/
 theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρ' : ρ < 2 * r) : IsConnected (ball c r \ closedBall ζ ρ) := by
-  have hr : 0 < r := by linarith
   have hac : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
-  have ha0 : c - ζ ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hac
-    exact hr.ne hac
-  set T : Set ℂ := {w : ℂ | 1 < 2 * ((c - ζ) * w).re} ∩ ball 0 ρ⁻¹
-  -- `T` is convex: a half-plane meets a ball
-  have hlin : IsLinearMap ℝ fun w : ℂ => 2 * ((c - ζ) * w).re :=
-    { map_add := by intro x y; simp [mul_add, Complex.mul_re]
-      map_smul := by intro s x; simp [Complex.real_smul, Complex.mul_re]; ring }
-  have hTconv : Convex ℝ T := (convex_halfSpace_gt hlin 1).inter (convex_ball _ _)
-  -- points of `T` are nonzero
-  have hTne0 : ∀ w ∈ T, w ≠ 0 := by
-    rintro w ⟨hw, -⟩ rfl
-    rw [mem_ofPred_eq, mul_zero, Complex.zero_re] at hw
-    linarith
-  -- `T` is nonempty, and this is where `ρ < 2 * r` enters
-  have hTne : T.Nonempty := by
-    have hhalf : (1 : ℝ) / 2 < r / ρ := by rw [lt_div_iff₀ hρ]; linarith
-    obtain ⟨s, hs1, hs2⟩ : ∃ s : ℝ, 1 / 2 < s ∧ s < r / ρ :=
-      ⟨(1 / 2 + r / ρ) / 2, by linarith, by linarith⟩
-    have hs0 : 0 < s := by linarith
-    refine ⟨(s : ℂ) / (c - ζ), ?_, ?_⟩
-    · have : (c - ζ) * ((s : ℂ) / (c - ζ)) = (s : ℂ) := by field_simp
-      rw [mem_ofPred_eq, this, Complex.ofReal_re]
-      linarith
-    · rw [mem_ball, dist_zero_right, norm_div, Complex.norm_real, Real.norm_eq_abs,
-        abs_of_pos hs0, hac, div_lt_iff₀ hr, inv_mul_eq_div]
-      rw [lt_div_iff₀ hρ] at hs2 ⊢
-      linarith
-  -- the inversion carries `T` onto the region in question
-  have himg : (fun w : ℂ => ζ + w⁻¹) '' T = ball c r \ closedBall ζ ρ := by
-    ext y
-    constructor
-    · rintro ⟨w, hwT, rfl⟩
-      have hw0 : w ≠ 0 := hTne0 w hwT
-      have hyζ : ζ + w⁻¹ - ζ = w⁻¹ := by ring
-      have hne : ζ + w⁻¹ ≠ ζ := by
-        simpa [hyζ, sub_eq_zero] using inv_ne_zero hw0
-      have hwnorm : 0 < ‖w‖ := norm_pos_iff.mpr hw0
-      refine ⟨?_, ?_⟩
-      · rw [mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hne, hyζ, inv_inv]
-        exact hwT.1
-      · rw [mem_closedBall, dist_eq_norm, hyζ, norm_inv, not_le]
-        have := hwT.2
-        rw [mem_ball, dist_zero_right] at this
-        rw [lt_inv_comm₀ hρ hwnorm]
-        exact this
-    · rintro ⟨hy1, hy2⟩
-      rw [mem_closedBall, dist_eq_norm, not_le] at hy2
-      have hyne : y ≠ ζ := by
-        intro h
-        rw [h, sub_self, norm_zero] at hy2
-        linarith
-      have hu : y - ζ ≠ 0 := sub_ne_zero.mpr hyne
-      refine ⟨(y - ζ)⁻¹, ⟨?_, ?_⟩, by simp⟩
-      · exact (mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hyne).mp hy1
-      · rw [mem_ball, dist_zero_right, norm_inv, inv_lt_inv₀ (by linarith) hρ]
-        exact hy2
-  rw [← himg]
-  refine (hTconv.isConnected hTne).image _ fun w hw => ?_
-  exact (continuousAt_const.add (continuousAt_inv₀ (hTne0 w hw))).continuousWithinAt
+  rw [← image_add_inv_halfPlane_inter_ball hζ hρ]
+  refine ((convex_halfPlane_inter_ball _ _).isConnected
+    (nonempty_halfPlane_inter_ball hρ (by rw [hac]; exact hρ'))).image _ fun w hw => ?_
+  exact (continuousAt_const.add
+    (continuousAt_inv₀ (ne_zero_of_one_lt_two_mul_re_mul hw.1))).continuousWithinAt
 
 /-- **A circular crosscut splits the disc into the crosscut neighbourhood and the rest.** The
 underlying set identity: removing the crosscut `sphere ζ ρ` from `ball c r` leaves the points at

@@ -69,6 +69,60 @@ private theorem coeff_assoc_symm_tmul
   | add x y hx hy =>
       simp only [TensorProduct.tmul_add, map_add, Finsupp.add_apply, hx, hy]
 
+/-- **Coassociativity, read off in a basis.** The coaction of a single coefficient of `coact m`
+again lands in `N ⊗[R] C`, provided `N` contains every coefficient.
+
+The submodule is otherwise arbitrary: containing the coefficients is the only property used, so
+nothing here is special to their span. -/
+private theorem coact_coeff_mem_range_map_subtype
+    {ι : Type*} [DecidableEq ι] (b : Module.Basis ι R C) (m : M) {N : Submodule R M}
+    (hN : ∀ j, TensorProduct.equivFinsuppOfBasisRight b
+      (Comodule.coact (R := R) (C := C) (M := M) m) j ∈ N) (i : ι) :
+    Comodule.coact (R := R) (C := C) (M := M)
+        (TensorProduct.equivFinsuppOfBasisRight b
+          (Comodule.coact (R := R) (C := C) (M := M) m) i) ∈
+      LinearMap.range (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C)) := by
+  have hcoassoc :
+      (Comodule.coact (R := R) (C := C) (M := M)).rTensor C
+          (Comodule.coact (R := R) (C := C) (M := M) m) =
+        (TensorProduct.assoc R M C C).symm
+          (Coalgebra.comul.lTensor M
+            (Comodule.coact (R := R) (C := C) (M := M) m)) := by
+    apply (TensorProduct.assoc R M C C).injective
+    simp
+  have hcoeff := congrArg
+    (fun x : (M ⊗[R] C) ⊗[R] C =>
+      TensorProduct.equivFinsuppOfBasisRight b x i) hcoassoc
+  rw [coeff_rTensor_coact] at hcoeff
+  rw [hcoeff]
+  rw [← (TensorProduct.equivFinsuppOfBasisRight b).symm_apply_apply
+    (Comodule.coact (R := R) (C := C) (M := M) m)]
+  rw [TensorProduct.equivFinsuppOfBasisRight_symm_apply]
+  simp only [Finsupp.sum, map_sum]
+  rw [Finsupp.finsetSum_apply]
+  apply Submodule.sum_mem
+  intro j _
+  refine ⟨(⟨_, hN j⟩ : N) ⊗ₜ[R]
+    TensorProduct.rid R C
+      ((b.coord i).lTensor C (Coalgebra.comul (b j))), ?_⟩
+  simp [coeff_assoc_symm_tmul]
+
+/-- **The counit identity, read off in a basis.** Applying the counit to `coact m` recovers `m` as
+a combination of its coefficients, so `m` lies in any submodule containing them all. -/
+private theorem mem_of_forall_coeff_mem
+    {ι : Type*} [DecidableEq ι] (b : Module.Basis ι R C) (m : M) {N : Submodule R M}
+    (hN : ∀ j, TensorProduct.equivFinsuppOfBasisRight b
+      (Comodule.coact (R := R) (C := C) (M := M) m) j ∈ N) : m ∈ N := by
+  have hcounit := Comodule.lTensor_counit_coact (R := R) (C := C) (M := M) m
+  rw [← (TensorProduct.equivFinsuppOfBasisRight b).symm_apply_apply
+    (Comodule.coact (R := R) (C := C) (M := M) m)] at hcounit
+  rw [TensorProduct.equivFinsuppOfBasisRight_symm_apply] at hcounit
+  apply_fun TensorProduct.rid R M at hcounit
+  simp only [Finsupp.sum, map_sum, LinearMap.lTensor_tmul, TensorProduct.rid_tmul,
+    one_smul] at hcounit
+  rw [← hcounit]
+  exact Submodule.sum_mem N fun i _ => N.smul_mem _ (hN i)
+
 /-- If a coalgebra is free as a module over a commutative semiring, every element
 of a right comodule belongs to a subcomodule that is finitely generated as a
 module. -/
@@ -89,53 +143,20 @@ theorem exists_finite_subcomodule_mem [Module.Free R C] (m : M) :
     intro n hn
     refine Submodule.span_induction ?_ (by simp) ?_ ?_ hn
     · rintro _ ⟨i, rfl⟩
-      have hcoassoc :
-          (Comodule.coact (R := R) (C := C) (M := M)).rTensor C
-              (Comodule.coact (R := R) (C := C) (M := M) m) =
-            (TensorProduct.assoc R M C C).symm
-              (Coalgebra.comul.lTensor M
-                (Comodule.coact (R := R) (C := C) (M := M) m)) := by
-        apply (TensorProduct.assoc R M C C).injective
-        simp
-      have hcoeff := congrArg
-        (fun x : (M ⊗[R] C) ⊗[R] C =>
-          TensorProduct.equivFinsuppOfBasisRight b x i) hcoassoc
-      rw [coeff_rTensor_coact] at hcoeff
-      rw [hcoeff]
-      rw [← (TensorProduct.equivFinsuppOfBasisRight b).symm_apply_apply
-        (Comodule.coact (R := R) (C := C) (M := M) m)]
-      rw [TensorProduct.equivFinsuppOfBasisRight_symm_apply]
-      simp only [Finsupp.sum, map_sum]
-      rw [Finsupp.finsetSum_apply]
-      apply Submodule.sum_mem
-      intro j _
-      refine ⟨(⟨a j, ha_mem j⟩ : N) ⊗ₜ[R]
-        TensorProduct.rid R C
-          ((b.coord i).lTensor C (Coalgebra.comul (b j))), ?_⟩
-      simp [a, coeff_assoc_symm_tmul]
+      exact coact_coeff_mem_range_map_subtype b m ha_mem i
     · intro x y _ _ hx hy
       simpa only [map_add] using (LinearMap.range
         (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))).add_mem hx hy
     · intro r x _ hx
       simpa only [map_smul] using (LinearMap.range
         (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))).smul_mem r hx
-  let S := ofSubmodule (R := R) (C := C) (M := M) N hstable
-  refine ⟨S, ?_, ?_⟩
-  · have hSN : S.toSubmodule = N := by
+  refine ⟨ofSubmodule (R := R) (C := C) (M := M) N hstable, ?_, ?_⟩
+  · have hSN : (ofSubmodule (R := R) (C := C) (M := M) N hstable).toSubmodule = N := by
       rw [toSubmodule_carrier]
       exact ofSubmodule_carrier N hstable
     rw [hSN]
     exact Module.Finite.span_of_finite R a.finite_range
-  · apply mem_ofSubmodule.mpr
-    have hcounit := Comodule.lTensor_counit_coact (R := R) (C := C) (M := M) m
-    rw [← (TensorProduct.equivFinsuppOfBasisRight b).symm_apply_apply
-      (Comodule.coact (R := R) (C := C) (M := M) m)] at hcounit
-    rw [TensorProduct.equivFinsuppOfBasisRight_symm_apply] at hcounit
-    apply_fun TensorProduct.rid R M at hcounit
-    simp only [Finsupp.sum, map_sum, LinearMap.lTensor_tmul, TensorProduct.rid_tmul,
-      one_smul] at hcounit
-    rw [← hcounit]
-    exact Submodule.sum_mem N fun i _ => N.smul_mem _ (ha_mem i)
+  · exact mem_ofSubmodule.mpr (mem_of_forall_coeff_mem b m ha_mem)
 
 end Subcomodule
 
