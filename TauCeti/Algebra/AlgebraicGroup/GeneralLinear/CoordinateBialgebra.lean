@@ -230,6 +230,34 @@ noncomputable def coordinateBialgebraAlgEquiv :
   letI : Bialgebra R (CoordinateRing R n) := bialgebra R n
   exact AlgEquiv.refl
 
+/-- Mathlib has no `CommBialgCat.of_comul` lemma exposing the comultiplication stored by
+`CommBialgCat.of`. This bridge isolates the two definitional equalities needed here:
+`coordinateBialgebra` stores `(bialgebra R n).toCoalgebra` on the raw coordinate ring, and
+`coordinateBialgebraAlgEquiv` is the identity algebra equivalence on that carrier. After those
+reductions, transporting the stored comultiplication is `Algebra.TensorProduct.map_id`. -/
+private theorem coordinateBialgebra_comul_transport (x : CoordinateRing R n) :
+    Coalgebra.comul (R := R) (A := coordinateBialgebra R n)
+        (coordinateBialgebraAlgEquiv R n x) =
+      Algebra.TensorProduct.map (coordinateBialgebraAlgEquiv R n).toAlgHom
+          (coordinateBialgebraAlgEquiv R n).toAlgHom
+          ((bialgebra R n).toCoalgebra.toCoalgebraStruct.comul x) := by
+  change (bialgebra R n).toCoalgebra.toCoalgebraStruct.comul x =
+    Algebra.TensorProduct.map (AlgHom.id R (CoordinateRing R n))
+      (AlgHom.id R (CoordinateRing R n))
+      ((bialgebra R n).toCoalgebra.toCoalgebraStruct.comul x)
+  rw [Algebra.TensorProduct.map_id]
+  rfl
+
+/-- Mathlib has no `CommBialgCat.of_counit` lemma exposing the counit stored by
+`CommBialgCat.of`. This bridge isolates the definitional equalities that `coordinateBialgebra`
+stores `(bialgebra R n).toCoalgebra` on the raw coordinate ring and that
+`coordinateBialgebraAlgEquiv` is the identity algebra equivalence on that carrier. -/
+private theorem coordinateBialgebra_counit_transport (x : CoordinateRing R n) :
+    Coalgebra.counit (R := R) (A := coordinateBialgebra R n)
+        (coordinateBialgebraAlgEquiv R n x) =
+      (bialgebra R n).toCoalgebra.toCoalgebraStruct.counit x := by
+  rfl
+
 /-- Comultiplication on the bundled coordinate bialgebra agrees with the explicit
 matrix-multiplication comultiplication after transport through `coordinateBialgebraAlgEquiv`. -/
 @[simp low]
@@ -238,13 +266,8 @@ theorem coordinateBialgebra_comul_apply (x : CoordinateRing R n) :
         (coordinateBialgebraAlgEquiv R n x) =
       Algebra.TensorProduct.map (coordinateBialgebraAlgEquiv R n).toAlgHom
           (coordinateBialgebraAlgEquiv R n).toAlgHom (comul R n x) := by
-  change (bialgebra R n).toCoalgebra.toCoalgebraStruct.comul x = _
-  rw [eq_of_heq (bialgebra_comul R n)]
-  change comul R n x =
-    Algebra.TensorProduct.map (AlgHom.id R (CoordinateRing R n))
-      (AlgHom.id R (CoordinateRing R n)) (comul R n x)
-  rw [Algebra.TensorProduct.map_id]
-  rfl
+  rw [coordinateBialgebra_comul_transport, eq_of_heq (bialgebra_comul R n),
+    AlgHom.toLinearMap_apply]
 
 /-- The counit on the bundled coordinate bialgebra agrees with the explicit identity-matrix
 counit after transport through `coordinateBialgebraAlgEquiv`. -/
@@ -252,7 +275,8 @@ counit after transport through `coordinateBialgebraAlgEquiv`. -/
 theorem coordinateBialgebra_counit_apply (x : CoordinateRing R n) :
     Coalgebra.counit (R := R) (A := coordinateBialgebra R n)
         (coordinateBialgebraAlgEquiv R n x) = counit R n x := by
-  rfl
+  rw [coordinateBialgebra_counit_transport, eq_of_heq (bialgebra_counit R n),
+    AlgHom.toLinearMap_apply]
 
 /-- The bundled coordinate bialgebra retains the matrix-multiplication comultiplication on its
 generic entries. -/
