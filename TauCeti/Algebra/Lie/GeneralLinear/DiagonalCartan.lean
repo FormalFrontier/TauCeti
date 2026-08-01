@@ -266,13 +266,6 @@ theorem glRoot_apply (i j : n) (A : diagonalCartan R n) :
   simp only [glRoot, glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul, one_mul,
     zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
 
-/-- `glRoot` is the weight attached to the tuple `εᵢ - εⱼ` under `glWeightEquiv`. -/
-theorem glRoot_def (i j : n) :
-    glRoot R n i j = glWeightEquiv R n (Pi.single i 1 - Pi.single j 1) := by
-  ext A
-  rw [glRoot_apply, glWeightEquiv_apply]
-  simp [Pi.single_apply, sub_mul, Finset.sum_sub_distrib]
-
 /-- The functionals `εᵢ - εᵢ` vanish. -/
 @[simp]
 theorem glRoot_self (i : n) : glRoot R n i i = 0 := by

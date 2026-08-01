@@ -13,12 +13,13 @@ public import Mathlib.LinearAlgebra.Matrix.StdBasis
 
 Let `gl n R = Matrix n n R` carry the commutator bracket and let `diagonalCartan R n` be its
 diagonal Cartan subalgebra. This file computes the weight spaces of `gl n R` for that Cartan
-subalgebra: a matrix lies in the root space of a functional `χ` exactly when it is supported on the
-pairs `(a, b)` with `εₐ - ε_b = χ`. Since the matrix unit `Eₐ_b` lies in the root space of
-`εₐ - ε_b` and every matrix is a sum of matrix units, those root spaces span `gl n R`
+subalgebra: *over a domain*, a matrix lies in the root space of a functional `χ` exactly when it is
+supported on the pairs `(a, b)` with `εₐ - ε_b = χ`. Since the matrix unit `Eₐ_b` lies in the root
+space of `εₐ - ε_b` and every matrix is a sum of matrix units, those root spaces span `gl n R`
 (`TauCeti.iSup_rootSpace_glRoot_eq_top`), and hence so do all the root spaces
-(`TauCeti.iSup_rootSpace_eq_top`); over a domain Mathlib's `LieModule.iSupIndep_genWeightSpace`
-makes the latter supremum direct, exhibiting `gl n R` as the direct sum of its root spaces.
+(`TauCeti.iSup_rootSpace_eq_top`); those two spanning statements need no hypothesis on `R` beyond
+commutativity. Over a domain Mathlib's `LieModule.iSupIndep_genWeightSpace` makes the latter
+supremum direct, exhibiting `gl n R` as the direct sum of its root spaces.
 
 The pairs `(a, b)` do *not* index those root spaces injectively, so the finer decomposition of
 `gl n R` into the matrix-unit lines `R · Eₐ_b` is not the root space decomposition. Every
@@ -27,41 +28,49 @@ than just the line `R · Eₐ_a`: that is `TauCeti.glRoot_self` together with
 `TauCeti.single_mem_rootSpace`, and over a Noetherian base Mathlib's
 `LieAlgebra.rootSpace_zero_eq` identifies the zero root space with the whole diagonal Cartan
 subalgebra, as it does for any Cartan subalgebra. In characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`, so the
-pairs `(i, j)` and `(j, i)` share a root space as well. Only for `i ≠ j`, and away from
-characteristic two, is a root space the line spanned by a single matrix unit
+pairs `(i, j)` and `(j, i)` share a root space as well. Only for `i ≠ j`, over a domain, and away
+from characteristic two, is a root space the line spanned by a single matrix unit
 (`TauCeti.rootSpace_glRoot_eq_span`).
 
 Everything rests on one computation, `TauCeti.lie_apply_of_mem_diagonalCartan`: the adjoint action
 of a diagonal matrix scales the `(a, b)` entry by `A a a - A b b`. Equivalently `ad A` is the
 diagonal operator on the matrix-unit basis with entries `A a a - A b b`
 (`TauCeti.toEnd_diagonalCartan_eq_toLin_diagonal`), which is what puts Mathlib's theory of diagonal
-operators at our disposal: the generalized weight spaces are honest simultaneous eigenspaces
-(`TauCeti.rootSpace_diagonalCartan_eq_weightSpace`), and the diagonal Cartan is *split*, so
-triangularizability holds over an arbitrary commutative ring with no algebraic closure hypothesis
+operators at our disposal: over a domain the generalized weight spaces are honest simultaneous
+eigenspaces (`TauCeti.rootSpace_diagonalCartan_eq_weightSpace`), and the diagonal Cartan is *split*,
+so triangularizability holds over an arbitrary commutative ring with no algebraic closure hypothesis
 (`TauCeti.instIsTriangularizableMatrixDiagonalCartan`).
 
 ## Main results
 
 * `TauCeti.toEnd_diagonalCartan_eq_toLin_diagonal`: `ad A` is a diagonal operator in the matrix-unit
   basis, for `A` in the diagonal Cartan subalgebra.
-* `TauCeti.rootSpace_diagonalCartan_eq_weightSpace`: the generalized weight spaces are honest
-  simultaneous eigenspaces.
+* `TauCeti.rootSpace_diagonalCartan_eq_weightSpace`: over a domain, the generalized weight spaces
+  are honest simultaneous eigenspaces.
 * `TauCeti.mem_rootSpace_diagonalCartan_iff`: over a domain, a matrix lies in the root space of `χ`
   exactly when its `(a, b)` entry vanishes for every pair with `εₐ - ε_b ≠ χ`.
-* `TauCeti.iSup_rootSpace_glRoot_eq_top`: `gl n R` is spanned by the root spaces of the weights
-  `εₐ - ε_b`; `TauCeti.iSup_rootSpace_eq_top` is the same spanning statement indexed by the weights
-  themselves, where each root space occurs once and the supremum is the root space decomposition.
-* `TauCeti.instIsTriangularizableMatrixDiagonalCartan`: `gl n R` is triangularizable over its
-  diagonal Cartan subalgebra, so Mathlib's weight space machinery applies over any field, not only
-  an algebraically closed one.
-* `TauCeti.rootSpace_glRoot_eq_span`: away from characteristic two the root space of `εᵢ - εⱼ`, for
-  `i ≠ j`, is the line spanned by the matrix unit `Eᵢⱼ`, and
-  `TauCeti.finrank_rootSpace_glRoot_eq_one` records the resulting dimension.
-* `TauCeti.rootSpace_diagonalCartan_eq_bot`: a functional that is not one of the `εₐ - ε_b` has
-  trivial root space, so the roots of `gl n R` are exactly the `εᵢ - εⱼ` with `i ≠ j`
+* `TauCeti.iSup_rootSpace_glRoot_eq_top`: over any commutative ring, `gl n R` is spanned by the root
+  spaces of the weights `εₐ - ε_b`; `TauCeti.iSup_rootSpace_eq_top` is the same spanning statement
+  indexed by the weights themselves, where each root space occurs once and the supremum is the root
+  space decomposition.
+* `TauCeti.instIsTriangularizableMatrixDiagonalCartan`: over any commutative ring, `gl n R` is
+  triangularizable over its diagonal Cartan subalgebra, so Mathlib's weight space machinery applies
+  over any field, not only an algebraically closed one.
+* `TauCeti.rootSpace_glRoot_eq_span`: over a domain and away from characteristic two the root space
+  of `εᵢ - εⱼ`, for `i ≠ j`, is the line spanned by the matrix unit `Eᵢⱼ`, and
+  `TauCeti.finrank_rootSpace_glRoot_eq_one` records the resulting dimension over a field.
+* `TauCeti.rootSpace_diagonalCartan_eq_bot`: over a domain, a functional that is not one of the
+  `εₐ - ε_b` has trivial root space, so the roots of `gl n R` are exactly the `εᵢ - εⱼ` with `i ≠ j`
   (`TauCeti.exists_glRoot_eq_of_rootSpace_ne_bot`).
 
 ## Implementation notes
+
+The spanning statements `TauCeti.iSup_rootSpace_glRoot_eq_top` and `TauCeti.iSup_rootSpace_eq_top`,
+the diagonal-operator identification `TauCeti.toEnd_diagonalCartan_eq_toLin_diagonal` and
+triangularizability hold over an arbitrary commutative ring. Everything that computes a root space
+rather than merely placing an element in one assumes `[IsDomain R]`, since that is the hypothesis
+under which Mathlib's `Matrix.maxGenEigenspace_toLin_diagonal_eq_eigenspace` collapses a generalized
+eigenspace of a diagonal operator to the eigenspace.
 
 The hypothesis `(2 : R) ≠ 0` in `TauCeti.rootSpace_glRoot_eq_span` is not an artefact. In
 characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`, so `Eᵢⱼ` and `Eⱼᵢ` share a root space and that root space
@@ -161,6 +170,7 @@ theorem mem_rootSpace_diagonalCartan_of_forall {χ : Module.Dual R (diagonalCart
 /-- **The weight spaces of `gl n R`**: a matrix lies in the root space of a functional `χ` on the
 diagonal Cartan subalgebra exactly when its `(a, b)` entry vanishes for every pair with
 `εₐ - ε_b ≠ χ`. -/
+@[simp]
 theorem mem_rootSpace_diagonalCartan_iff [IsDomain R] (χ : Module.Dual R (diagonalCartan R n))
     (B : Matrix n n R) :
     B ∈ LieAlgebra.rootSpace (diagonalCartan R n) χ ↔ ∀ a b, glRoot R n a b ≠ χ → B a b = 0 := by
@@ -211,12 +221,16 @@ theorem iSup_rootSpace_eq_top :
 
 /-- Away from characteristic two the weights `εᵢ - εⱼ`, for `i ≠ j`, are pairwise distinct. In
 characteristic two `εᵢ - εⱼ = εⱼ - εᵢ`, and the statement fails. -/
+@[simp]
 theorem glRoot_eq_glRoot_iff (h2 : (2 : R) ≠ 0) {i j : n} (hij : i ≠ j) (a b : n) :
     glRoot R n a b = glRoot R n i j ↔ a = i ∧ b = j := by
   have : Nontrivial R := nontrivial_of_ne 2 0 h2
   refine ⟨fun h => ?_, by rintro ⟨rfl, rfl⟩; rfl⟩
-  rw [glRoot_def, glRoot_def] at h
-  replace h := (glWeightEquiv R n).injective h
+  replace h : (Pi.single a 1 - Pi.single b 1 : n → R) = Pi.single i 1 - Pi.single j 1 := by
+    funext k
+    have hk := congrArg
+      (fun χ : Module.Dual R (diagonalCartan R n) => χ (diagonalCartanBasis R n k)) h
+    simpa [single_apply, Pi.single_apply] using hk
   have hi := congrFun h i
   have hj := congrFun h j
   rw [Pi.sub_apply, Pi.sub_apply, Pi.single_eq_same, Pi.single_eq_of_ne hij] at hi
@@ -228,14 +242,16 @@ theorem glRoot_eq_glRoot_iff (h2 : (2 : R) ≠ 0) {i j : n} (hij : i ≠ j) (a b
     · rw [hib, Pi.single_eq_same] at hi
       exact absurd (by linear_combination -hi) h2
     · rw [Pi.single_eq_of_ne (Ne.symm hib)] at hi
-      exact absurd (show (1 : R) = 0 by linear_combination -hi) one_ne_zero
+      have h10 : (1 : R) = 0 := by linear_combination -hi
+      exact one_ne_zero h10
   · by_contra hjb
     rw [Pi.single_eq_of_ne (Ne.symm hjb)] at hj
     by_cases hja : a = j
     · rw [hja, Pi.single_eq_same] at hj
       exact absurd (by linear_combination hj) h2
     · rw [Pi.single_eq_of_ne (Ne.symm hja)] at hj
-      exact absurd (show (1 : R) = 0 by linear_combination hj) one_ne_zero
+      have h10 : (1 : R) = 0 := by linear_combination hj
+      exact one_ne_zero h10
 
 /-- **The root spaces of `gl n R` are lines**: for `i ≠ j`, and away from characteristic two, the
 root space of `εᵢ - εⱼ` is spanned by the matrix unit `Eᵢⱼ`. This is the `gl n` analogue of
