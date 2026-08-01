@@ -185,7 +185,7 @@ theorem contractable_iff_forall_map_reindex_pathLaw {μ : Measure Ω} {X : ℕ �
   · intro hX φ hφ
     exact (hX.measurePreserving_reindex hX_meas hφ).map_eq
   · intro hX m k hk
-    obtain ⟨φ, -, hφ, hφ_eq, -⟩ := exists_strictMono_nat_extending_fin hk
+    obtain ⟨φ, hφ, hφ_eq⟩ := exists_strictMono_nat_extending_fin hk
     have hmap := congrArg (fun ν : Measure (ℕ → α) => ν.map (prefixProj α m)) (hX φ hφ)
     rw [map_reindex_prefixProj_pathLaw μ hX_meas φ m,
       map_prefixProj_pathLaw μ (aemeasurable_pi_lambda _ hX_meas) m] at hmap

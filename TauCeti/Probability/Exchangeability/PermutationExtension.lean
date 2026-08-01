@@ -29,9 +29,9 @@ namespace TauCeti
 
 namespace Probability
 
-/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing
-self-map of `ℕ` that agrees with `k` on the first `m` inputs and is **eventually a translation**:
-beyond the selection it adds a fixed constant.
+/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing self-map
+of `ℕ` that agrees with `k` on the first `m` inputs and is **eventually a translation**: beyond the
+selection it adds a fixed constant `C`.
 
 The eventual-translation clause matters for invariant events. Composing with `φ` changes only the
 first `m` coordinates and then acts as a fixed iterate of the shift, so any event that is unchanged
@@ -40,7 +40,8 @@ by dropping a finite prefix — a shift-invariant or tail event — is preserved
 This concerns **exact** invariance: sets measurable in `MeasurableSpace.invariants (shift α)`, or in
 the path tail, which are literally unchanged by the shift. It says nothing about the a.e.-invariant
 formulation Mathlib's `ErgodicSMul` uses; relating the two is a separate matter. -/
-theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
+theorem exists_strictMono_nat_extending_fin_eventually_add {m : ℕ} {k : Fin m → ℕ}
+    (hk : StrictMono k) :
     ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
       ∀ n, m ≤ n → φ n = n + C := by
   classical
@@ -65,6 +66,17 @@ theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : 
     simp [φ, i.isLt]
   · intro n hn
     simp [φ, Nat.not_lt.mpr hn]
+
+/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing
+self-map of `ℕ` that agrees with `k` on the first `m` inputs.
+
+The form most callers want. `exists_strictMono_nat_extending_fin_eventually_add` additionally
+records that the extension is eventually a translation, which is what a reindexing needs in order
+to preserve invariant events. -/
+theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
+    ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ i : Fin m, φ i.val = k i :=
+  let ⟨φ, _, hφ, hφ_eq, _⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
+  ⟨φ, hφ, hφ_eq⟩
 
 end Probability
 
