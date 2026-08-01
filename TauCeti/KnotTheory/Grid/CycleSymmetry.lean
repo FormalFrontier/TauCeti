@@ -21,9 +21,8 @@ symmetry carries cycles to cycles and boundaries to boundaries.
 
 Because these are equalities of submodules under a linear automorphism, they package as linear
 equivalences between the cycle (resp. boundary) submodules of a diagram and its reflected,
-rotated, or marking-swapped counterpart. These are the specified isomorphisms that the roadmap's
-"state invariance naturality-ready" convention asks for, at the chain level and needing
-no square-zero input.
+rotated, or marking-swapped counterpart. These chain-level symmetry equivalences need no
+square-zero input.
 
 ## Main results
 
@@ -163,61 +162,53 @@ theorem fullyBlockedBoundaries_swapMarkings :
 those of `G.transpose`. -/
 noncomputable def fullyBlockedCyclesTransposeEquiv :
     G.fullyBlockedCycles ≃ₗ[ZMod 2] G.transpose.fullyBlockedCycles :=
-  ((GridChain.transposeEquiv (ZMod 2) n).submoduleMap G.fullyBlockedCycles).trans
-    (LinearEquiv.ofEq _ _ G.fullyBlockedCycles_transpose)
+  (GridChain.transposeEquiv (ZMod 2) n).ofSubmodules _ _ G.fullyBlockedCycles_transpose
 
 /-- The diagonal reflection as a linear equivalence between the fully blocked boundaries of `G`
 and those of `G.transpose`. -/
 noncomputable def fullyBlockedBoundariesTransposeEquiv :
     G.fullyBlockedBoundaries ≃ₗ[ZMod 2] G.transpose.fullyBlockedBoundaries :=
-  ((GridChain.transposeEquiv (ZMod 2) n).submoduleMap G.fullyBlockedBoundaries).trans
-    (LinearEquiv.ofEq _ _ G.fullyBlockedBoundaries_transpose)
+  (GridChain.transposeEquiv (ZMod 2) n).ofSubmodules _ _ G.fullyBlockedBoundaries_transpose
 
 /-- The half-turn rotation as a linear equivalence between the fully blocked cycles of `G` and
 those of `G.rotate`. -/
 noncomputable def fullyBlockedCyclesRotateEquiv :
     G.fullyBlockedCycles ≃ₗ[ZMod 2] G.rotate.fullyBlockedCycles :=
-  ((GridChain.rotateEquiv (ZMod 2) n).submoduleMap G.fullyBlockedCycles).trans
-    (LinearEquiv.ofEq _ _ G.fullyBlockedCycles_rotate)
+  (GridChain.rotateEquiv (ZMod 2) n).ofSubmodules _ _ G.fullyBlockedCycles_rotate
 
 /-- The half-turn rotation as a linear equivalence between the fully blocked boundaries of `G`
 and those of `G.rotate`. -/
 noncomputable def fullyBlockedBoundariesRotateEquiv :
     G.fullyBlockedBoundaries ≃ₗ[ZMod 2] G.rotate.fullyBlockedBoundaries :=
-  ((GridChain.rotateEquiv (ZMod 2) n).submoduleMap G.fullyBlockedBoundaries).trans
-    (LinearEquiv.ofEq _ _ G.fullyBlockedBoundaries_rotate)
+  (GridChain.rotateEquiv (ZMod 2) n).ofSubmodules _ _ G.fullyBlockedBoundaries_rotate
 
 /-- The transpose cycle equivalence acts by the underlying transpose chain relabeling. -/
 @[simp]
 theorem fullyBlockedCyclesTransposeEquiv_apply (c : G.fullyBlockedCycles) :
     (G.fullyBlockedCyclesTransposeEquiv c : GridChain (ZMod 2) n) =
       GridChain.transposeEquiv (ZMod 2) n c := by
-  simp only [fullyBlockedCyclesTransposeEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.coe_ofEq_apply, LinearEquiv.submoduleMap_apply]
+  rfl
 
 /-- The transpose boundary equivalence acts by the underlying transpose chain relabeling. -/
 @[simp]
 theorem fullyBlockedBoundariesTransposeEquiv_apply (c : G.fullyBlockedBoundaries) :
     (G.fullyBlockedBoundariesTransposeEquiv c : GridChain (ZMod 2) n) =
       GridChain.transposeEquiv (ZMod 2) n c := by
-  simp only [fullyBlockedBoundariesTransposeEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.coe_ofEq_apply, LinearEquiv.submoduleMap_apply]
+  rfl
 
 /-- The rotation cycle equivalence acts by the underlying rotation chain relabeling. -/
 @[simp]
 theorem fullyBlockedCyclesRotateEquiv_apply (c : G.fullyBlockedCycles) :
     (G.fullyBlockedCyclesRotateEquiv c : GridChain (ZMod 2) n) =
       GridChain.rotateEquiv (ZMod 2) n c := by
-  simp only [fullyBlockedCyclesRotateEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.coe_ofEq_apply, LinearEquiv.submoduleMap_apply]
+  rfl
 
 /-- The rotation boundary equivalence acts by the underlying rotation chain relabeling. -/
 @[simp]
 theorem fullyBlockedBoundariesRotateEquiv_apply (c : G.fullyBlockedBoundaries) :
     (G.fullyBlockedBoundariesRotateEquiv c : GridChain (ZMod 2) n) =
       GridChain.rotateEquiv (ZMod 2) n c := by
-  simp only [fullyBlockedBoundariesRotateEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.coe_ofEq_apply, LinearEquiv.submoduleMap_apply]
+  rfl
 
 /-- The inverse of the diagonal-reflection cycle equivalence acts on underlying chains by the
 inverse transpose chain relabeling: the transpose equivalence swaps rows and columns of the
@@ -227,12 +218,7 @@ theorem fullyBlockedCyclesTransposeEquiv_symm_apply (c : G.transpose.fullyBlocke
     ((G.fullyBlockedCyclesTransposeEquiv.symm c : G.fullyBlockedCycles) :
         GridChain (ZMod 2) n) =
       (GridChain.transposeEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
-  have hstep := congrArg
-    (fun z : G.transpose.fullyBlockedCycles => (z : GridChain (ZMod 2) n))
-    (G.fullyBlockedCyclesTransposeEquiv.apply_symm_apply c)
-  rw [fullyBlockedCyclesTransposeEquiv_apply] at hstep
-  have hsymm := congrArg (GridChain.transposeEquiv (ZMod 2) n).symm hstep
-  rwa [LinearEquiv.symm_apply_apply] at hsymm
+  rfl
 
 /-- The inverse of the half-turn rotation cycle equivalence acts on underlying chains by the
 inverse rotation chain relabeling: the rotation equivalence half-turns the underlying chain and
@@ -242,12 +228,7 @@ theorem fullyBlockedCyclesRotateEquiv_symm_apply (c : G.rotate.fullyBlockedCycle
     ((G.fullyBlockedCyclesRotateEquiv.symm c : G.fullyBlockedCycles) :
         GridChain (ZMod 2) n) =
       (GridChain.rotateEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
-  have hstep := congrArg
-    (fun z : G.rotate.fullyBlockedCycles => (z : GridChain (ZMod 2) n))
-    (G.fullyBlockedCyclesRotateEquiv.apply_symm_apply c)
-  rw [fullyBlockedCyclesRotateEquiv_apply] at hstep
-  have hsymm := congrArg (GridChain.rotateEquiv (ZMod 2) n).symm hstep
-  rwa [LinearEquiv.symm_apply_apply] at hsymm
+  rfl
 
 /-- The marking swap as a linear equivalence between the fully blocked cycles of `G` and those of
 `G.swapMarkings`. The two cycle submodules of `GridChain` coincide, since the marking swap fixes

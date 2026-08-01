@@ -8,25 +8,26 @@ public import TauCeti.KnotTheory.Grid.CycleSymmetry
 public import TauCeti.KnotTheory.Grid.Homology.Basic
 
 /-!
-# Symmetries of the fully blocked grid complex act on the homology
+# Symmetries of the fully blocked grid complex act on the cycle subquotient
 
 `CycleSymmetry.lean` lifts the chain symmetries of the fully blocked grid complex — the diagonal
 reflection, the half-turn rotation, and the `O`/`X` marking swap — from the differential to the
 cycle and boundary submodules. This file records the immediate consequence one level up: each
-chain symmetry induces a linear equivalence between the fully blocked homology of `G` and the
-fully blocked homology of the symmetric diagram.
+chain symmetry induces a linear equivalence between the cycle subquotient `Z / (B ⊓ Z)` of `G`
+and that of the symmetric diagram.
 
-These are the homology-level "specified isomorphisms attached to elementary moves" the roadmap's
-"state invariance naturality-ready" convention asks for. They need no square-zero input: the
-subquotient form of `fullyBlockedHomology` cooperates with the cycle-level equivalences from
+These equivalences need no square-zero input. They are not yet homology symmetry isomorphisms:
+that interpretation requires the later theorem that every boundary is a cycle. The subquotient
+form of `fullyBlockedHomology` cooperates with the cycle-level equivalences from
 `CycleSymmetry.lean`, and each induced quotient equivalence sends a class to the class of its
 transported representative.
 
 ## Main definitions
 
-* `TauCeti.GridDiagram.fullyBlockedHomologyTransposeEquiv`,
-  `TauCeti.GridDiagram.fullyBlockedHomologyRotateEquiv`,
-  `TauCeti.GridDiagram.fullyBlockedHomologySwapMarkingsEquiv`: the induced homology equivalences.
+* `TauCeti.GridDiagram.fullyBlockedCycleSubquotientTransposeEquiv`,
+  `TauCeti.GridDiagram.fullyBlockedCycleSubquotientRotateEquiv`,
+  `TauCeti.GridDiagram.fullyBlockedCycleSubquotientSwapMarkingsEquiv`: the induced cycle
+  subquotient equivalences.
 
 ## Main results
 
@@ -35,17 +36,17 @@ transported representative.
   `TauCeti.GridDiagram.fullyBlockedBoundariesInCycles_swapMarkings`:
   each cycle-level equivalence carries the boundaries-in-cycles submodule onto the target
   diagram's boundaries-in-cycles.
-* `TauCeti.GridDiagram.fullyBlockedHomologyTransposeEquiv_mk`,
-  `TauCeti.GridDiagram.fullyBlockedHomologyRotateEquiv_mk`,
-  `TauCeti.GridDiagram.fullyBlockedHomologySwapMarkingsEquiv_mk`:
-  each homology equivalence sends a class to the class of its cycle-equivalence image.
+* `TauCeti.GridDiagram.fullyBlockedCycleSubquotientTransposeEquiv_mk`,
+  `TauCeti.GridDiagram.fullyBlockedCycleSubquotientRotateEquiv_mk`,
+  `TauCeti.GridDiagram.fullyBlockedCycleSubquotientSwapMarkingsEquiv_mk`:
+  each subquotient equivalence sends a class to the class of its cycle-equivalence image.
 
 ## References
 
-This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G item 8
-("Symmetries and the genus bound"), together with that roadmap's standing convention to
-"state invariance naturality-ready". The underlying chain symmetries follow
-Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
+This supplies symmetry infrastructure for
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`. The underlying chain symmetries follow
+Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3. The homology-level
+interpretation remains downstream of Lane G.3's square-zero theorem.
 -/
 
 public section
@@ -60,7 +61,7 @@ section Transpose
 
 /-- The diagonal reflection carries the fully blocked boundaries-in-cycles submodule of `G` onto
 the boundaries-in-cycles of `G.transpose`. This is `fullyBlockedBoundaries_transpose` transported
-to the cycle submodule and is the input to the homology-level equivalence below. -/
+to the cycle submodule and is the input to the cycle-subquotient equivalence below. -/
 theorem fullyBlockedBoundariesInCycles_transpose :
     G.fullyBlockedBoundariesInCycles.map
         (G.fullyBlockedCyclesTransposeEquiv :
@@ -82,20 +83,20 @@ theorem fullyBlockedBoundariesInCycles_transpose :
     rw [← hsymm]
     exact Submodule.mem_map_of_mem hxB
 
-/-- The diagonal reflection as a linear equivalence between the fully blocked homology of `G` and
-that of `G.transpose`, transporting a class along the transpose cycle equivalence. -/
-noncomputable def fullyBlockedHomologyTransposeEquiv :
+/-- The diagonal reflection as a linear equivalence between the cycle subquotients of `G` and
+`G.transpose`, transporting a class along the transpose cycle equivalence. -/
+noncomputable def fullyBlockedCycleSubquotientTransposeEquiv :
     G.fullyBlockedHomology ≃ₗ[ZMod 2] G.transpose.fullyBlockedHomology :=
   Submodule.Quotient.equiv _ _ G.fullyBlockedCyclesTransposeEquiv
     G.fullyBlockedBoundariesInCycles_transpose
 
-/-- The diagonal-reflection homology equivalence sends a class to the class of its transposed
+/-- The diagonal-reflection subquotient equivalence sends a class to the class of its transposed
 representative. -/
 @[simp]
-theorem fullyBlockedHomologyTransposeEquiv_mk (c : G.fullyBlockedCycles) :
-    G.fullyBlockedHomologyTransposeEquiv (Submodule.Quotient.mk c) =
+theorem fullyBlockedCycleSubquotientTransposeEquiv_mk (c : G.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientTransposeEquiv (Submodule.Quotient.mk c) =
       Submodule.Quotient.mk (G.fullyBlockedCyclesTransposeEquiv c) := by
-  simp [fullyBlockedHomologyTransposeEquiv, Submodule.Quotient.equiv_apply,
+  simp [fullyBlockedCycleSubquotientTransposeEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
 end Transpose
@@ -126,20 +127,20 @@ theorem fullyBlockedBoundariesInCycles_rotate :
     rw [← hsymm]
     exact Submodule.mem_map_of_mem hxB
 
-/-- The half-turn rotation as a linear equivalence between the fully blocked homology of `G` and
-that of `G.rotate`, transporting a class along the rotation cycle equivalence. -/
-noncomputable def fullyBlockedHomologyRotateEquiv :
+/-- The half-turn rotation as a linear equivalence between the cycle subquotients of `G` and
+`G.rotate`, transporting a class along the rotation cycle equivalence. -/
+noncomputable def fullyBlockedCycleSubquotientRotateEquiv :
     G.fullyBlockedHomology ≃ₗ[ZMod 2] G.rotate.fullyBlockedHomology :=
   Submodule.Quotient.equiv _ _ G.fullyBlockedCyclesRotateEquiv
     G.fullyBlockedBoundariesInCycles_rotate
 
-/-- The half-turn rotation homology equivalence sends a class to the class of its rotated
+/-- The half-turn rotation subquotient equivalence sends a class to the class of its rotated
 representative. -/
 @[simp]
-theorem fullyBlockedHomologyRotateEquiv_mk (c : G.fullyBlockedCycles) :
-    G.fullyBlockedHomologyRotateEquiv (Submodule.Quotient.mk c) =
+theorem fullyBlockedCycleSubquotientRotateEquiv_mk (c : G.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientRotateEquiv (Submodule.Quotient.mk c) =
       Submodule.Quotient.mk (G.fullyBlockedCyclesRotateEquiv c) := by
-  simp [fullyBlockedHomologyRotateEquiv, Submodule.Quotient.equiv_apply,
+  simp [fullyBlockedCycleSubquotientRotateEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
 end Rotate
@@ -165,20 +166,20 @@ theorem fullyBlockedBoundariesInCycles_swapMarkings :
       G.fullyBlockedCyclesSwapMarkingsEquiv.apply_symm_apply x⟩
     simpa using hxB
 
-/-- The marking swap as a linear equivalence between the fully blocked homology of `G` and that
-of `G.swapMarkings`, transporting a class along the marking-swap cycle equivalence. -/
-noncomputable def fullyBlockedHomologySwapMarkingsEquiv :
+/-- The marking swap as a linear equivalence between the cycle subquotients of `G` and
+`G.swapMarkings`, transporting a class along the marking-swap cycle equivalence. -/
+noncomputable def fullyBlockedCycleSubquotientSwapMarkingsEquiv :
     G.fullyBlockedHomology ≃ₗ[ZMod 2] G.swapMarkings.fullyBlockedHomology :=
   Submodule.Quotient.equiv _ _ G.fullyBlockedCyclesSwapMarkingsEquiv
     G.fullyBlockedBoundariesInCycles_swapMarkings
 
-/-- The marking-swap homology equivalence sends a class to the class of its marking-swap
+/-- The marking-swap subquotient equivalence sends a class to the class of its marking-swap
 transported representative. -/
 @[simp]
-theorem fullyBlockedHomologySwapMarkingsEquiv_mk (c : G.fullyBlockedCycles) :
-    G.fullyBlockedHomologySwapMarkingsEquiv (Submodule.Quotient.mk c) =
+theorem fullyBlockedCycleSubquotientSwapMarkingsEquiv_mk (c : G.fullyBlockedCycles) :
+    G.fullyBlockedCycleSubquotientSwapMarkingsEquiv (Submodule.Quotient.mk c) =
       Submodule.Quotient.mk (G.fullyBlockedCyclesSwapMarkingsEquiv c) := by
-  simp [fullyBlockedHomologySwapMarkingsEquiv, Submodule.Quotient.equiv_apply,
+  simp [fullyBlockedCycleSubquotientSwapMarkingsEquiv, Submodule.Quotient.equiv_apply,
     Submodule.mapQ_apply]
 
 end SwapMarkings
