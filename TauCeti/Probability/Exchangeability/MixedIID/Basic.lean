@@ -41,8 +41,12 @@ representation, and mixing-law uniqueness — remain sequence-level, because tho
 prefixes, shifts, or `ℕ`-indexed products.
 
 This file adds the Layer 0 mixed-i.i.d. definitions and destructors, together with the Layer 1
-rectangle-factorization characterization used by the common de Finetti ending. The
-exchangeability implications live in `MixedIID/Implications.lean`.
+rectangle-factorization characterization used by the common de Finetti ending. The exchangeability
+implications live in two places, along the same line as above: the sequence-level
+`MixedIIDWith.exchangeable` and `.exchangeableAt`, which conclude the `ℕ`-indexed `Exchangeable`,
+are in `MixedIID/Implications.lean`; the index-generic `MixedIIDWith.exchangeableFamily` and
+`MixedIID.exchangeableFamily`, which conclude `ExchangeableFamily`, are in
+`Exchangeability/Family.lean` beside the conditional analogue they mirror.
 
 These declarations follow the roadmap signatures in
 `TauCetiRoadmap/Exchangeability/README.md` and
