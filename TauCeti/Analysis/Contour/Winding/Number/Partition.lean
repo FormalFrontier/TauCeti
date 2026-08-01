@@ -29,9 +29,10 @@ as an API statement even though it looked formally convenient.
 
 * `Contour.windingNumber_eq_sum_range` uses the generic finite principal-value concatenation API
   to write a winding number as a sum over a finite partition.
+* `Contour.windingNumber_eq_sum_range_of_ae` allows each piece to be computed using a different
+  curve under the principal-value API's almost-everywhere curve and derivative hypotheses.
 * `Contour.windingNumber_eq_sum_range_of_eqOn` allows each piece to be computed using a different
-  curve that agrees with the assembled curve on that open subinterval.  This is the form used by
-  an avoiding-part plus model-sector decomposition.
+  curve that agrees with the assembled curve on that open subinterval.
 
 ## Provenance
 
@@ -58,30 +59,25 @@ theorem windingNumber_eq_sum_range {n : ℕ} {t : ℕ → ℝ}
     (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀) :
     windingNumber γ (t 0) (t n) z₀ =
       ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ := by
-  let L : ℕ → ℂ := fun k => cauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀
-  have hpiece : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k) :=
-    fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
-  rw [windingNumber_eq_of_hasCauchyPVAt (HasCauchyPVAt.concat_range hpiece),
-    Finset.mul_sum]
+  rw [windingNumber_eq_cauchyPVAt, cauchyPVAt_concat_range h, Finset.mul_sum]
   apply Finset.sum_congr rfl
-  intro k hk
-  rw [windingNumber_eq_of_hasCauchyPVAt (h k (Finset.mem_range.mp hk)).hasCauchyPVAt_cauchyPVAt]
+  intro k _
+  rw [windingNumber_eq_cauchyPVAt]
 
-/-- **Finite winding decomposition using separately computed pieces.**  Suppose that on the open
-subinterval between `t k` and `t (k + 1)`, the assembled curve `γ` agrees with a model curve
-`piece k`, and the Cauchy-kernel principal value exists along that model curve.  Then the winding
-number of `γ` over the whole partition is the sum of the winding numbers of the model curves.
-
-Agreement only on `uIoo` is sharp for this purpose: interval integrals ignore endpoints, and local
-agreement on the open interval also identifies derivatives there.  In Proposition 2.2 the model
-curves are the point-avoiding remainder and the finitely many model sectors. -/
-theorem windingNumber_eq_sum_range_of_eqOn {n : ℕ} {t : ℕ → ℝ} (piece : ℕ → ℝ → ℂ)
-    (heq : ∀ k < n, Set.EqOn (piece k) γ (Set.uIoo (t k) (t (k + 1))))
+/-- **Finite winding decomposition using a.e.-equal, separately computed pieces.** Suppose that
+on each adjacent interval the model curve and assembled curve, and their derivatives off `z₀`,
+agree almost everywhere. If the Cauchy-kernel principal value exists along every model curve, the
+winding number of the assembled curve is the sum of the model-curve winding numbers. -/
+theorem windingNumber_eq_sum_range_of_ae {n : ℕ} {t : ℕ → ℝ} (piece : ℕ → ℝ → ℂ)
+    (heq : ∀ k < n, piece k =ᵐ[MeasureTheory.volume.restrict
+      (Set.uIoc (t k) (t (k + 1)))] γ)
+    (hderiv : ∀ k < n, ∀ᵐ s ∂MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))),
+      piece k s ≠ z₀ → deriv (piece k) s = deriv γ s)
     (hpv : ∀ k < n, CauchyPVExistsAt (piece k) (t k) (t (k + 1)) κ[z₀] z₀) :
     windingNumber γ (t 0) (t n) z₀ =
       ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
   have hpvγ : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀ :=
-    fun k hk => (hpv k hk).congr_curve (heq k hk)
+    fun k hk => (hpv k hk).congr_curve_ae (heq k hk) (hderiv k hk)
   calc
     windingNumber γ (t 0) (t n) z₀ =
         ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ :=
@@ -89,7 +85,37 @@ theorem windingNumber_eq_sum_range_of_eqOn {n : ℕ} {t : ℕ → ℝ} (piece : 
     _ = ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
       apply Finset.sum_congr rfl
       intro k hk
-      exact (windingNumber_congr_curve (heq k (Finset.mem_range.mp hk))).symm
+      exact (windingNumber_congr_curve_ae (heq k (Finset.mem_range.mp hk))
+        (hderiv k (Finset.mem_range.mp hk))).symm
+
+/-- **Finite winding decomposition using separately computed pieces.**  Suppose that on the open
+subinterval between `t k` and `t (k + 1)`, the assembled curve `γ` agrees with a model curve
+`piece k`, and the Cauchy-kernel principal value exists along that model curve.  Then the winding
+number of `γ` over the whole partition is the sum of the winding numbers of the model curves.
+
+This convenient pointwise form follows from `windingNumber_eq_sum_range_of_ae`: interval integrals
+ignore endpoints, and local equality on an open interval also identifies derivatives there. In
+Proposition 2.2 the model curves are the point-avoiding remainder and the finitely many model
+sectors. -/
+theorem windingNumber_eq_sum_range_of_eqOn {n : ℕ} {t : ℕ → ℝ} (piece : ℕ → ℝ → ℂ)
+    (heq : ∀ k < n, Set.EqOn (piece k) γ (Set.uIoo (t k) (t (k + 1))))
+    (hpv : ∀ k < n, CauchyPVExistsAt (piece k) (t k) (t (k + 1)) κ[z₀] z₀) :
+    windingNumber γ (t 0) (t n) z₀ =
+      ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
+  apply windingNumber_eq_sum_range_of_ae piece (hpv := hpv)
+  · intro k hk
+    have hrestrict : MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))) =
+        MeasureTheory.volume.restrict (Set.uIoo (t k) (t (k + 1))) :=
+      MeasureTheory.restrict_Ioo_eq_restrict_Ioc.symm
+    rw [hrestrict]
+    exact (heq k hk).aeEq_restrict measurableSet_Ioo
+  · intro k hk
+    have hrestrict : MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))) =
+        MeasureTheory.volume.restrict (Set.uIoo (t k) (t (k + 1))) :=
+      MeasureTheory.restrict_Ioo_eq_restrict_Ioc.symm
+    rw [hrestrict]
+    exact ((heq k hk).deriv isOpen_Ioo).aeEq_restrict measurableSet_Ioo |>.mono
+      fun _ hs _ => hs
 
 end TauCeti.Contour
 

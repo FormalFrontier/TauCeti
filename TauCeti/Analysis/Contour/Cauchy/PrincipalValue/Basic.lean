@@ -78,8 +78,9 @@ versus `MeromorphicOn` (on a set).
   needs no existence hypothesis.
 * `HasCauchyPVAt.symm`, `CauchyPVExistsAt.symm`, `cauchyPVAt_symm` — reversing the interval
   orientation negates the single-point principal value.
-* `HasCauchyPVAt.concat` — the principal values on `[a, b]` and `[b, c]` add
-  (`CauchyPVExistsAt.concat` is the existence form).
+* `HasCauchyPVAt.concat`, `HasCauchyPVAt.concat_range` — principal values add over two adjacent
+  intervals or a finite partition (`CauchyPVExistsAt.concat` and `CauchyPVExistsAt.concat_range`
+  are the existence forms, and `cauchyPVAt_concat_range` computes the canonical finite value).
 
 ## Provenance
 
@@ -721,6 +722,14 @@ theorem CauchyPVExistsAt.concat_range {γ : ℝ → ℂ} {f : ℂ → ℂ} {z₀
   refine CauchyPVExistsAt.intro (HasCauchyPVAt.concat_range (L := fun k =>
     cauchyPVAt γ (t k) (t (k + 1)) f z₀) ?_)
   exact fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
+
+/-- Value form of `HasCauchyPVAt.concat_range`: the canonical principal value on a finite
+partition is the sum of its canonical values on the adjacent intervals. -/
+theorem cauchyPVAt_concat_range {γ : ℝ → ℂ} {f : ℂ → ℂ} {z₀ : ℂ} {n : ℕ}
+    {t : ℕ → ℝ} (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) f z₀) :
+    cauchyPVAt γ (t 0) (t n) f z₀ =
+      ∑ k ∈ Finset.range n, cauchyPVAt γ (t k) (t (k + 1)) f z₀ :=
+  (HasCauchyPVAt.concat_range fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt).cauchyPVAt_eq
 
 end TauCeti.Contour
 
