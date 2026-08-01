@@ -63,7 +63,7 @@ abbrev scalarExtensionAutomorphisms (A : CommAlgCat.{w} R) :
   GrpCat.of (LinearMap.GeneralLinearGroup A (A ⊗[R] V))
 
 /-- The canonical map between scalar extensions induced by a morphism of value algebras. -/
-@[expose] def scalarExtensionMap {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+def scalarExtensionMap {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     A ⊗[R] V →ₗ[R] B ⊗[R] V :=
   φ.hom.toLinearMap.rTensor V
 
@@ -106,7 +106,7 @@ lemma scalarExtensionMap_smul {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
 
 The automorphism is first extended from `A` to `B`, on the iterated tensor product
 `B ⊗[A] (A ⊗[R] V)`, and then conjugated through the canonical equivalence with `B ⊗[R] V`. -/
-@[expose] def mapScalarExtensionAutomorphisms
+def mapScalarExtensionAutomorphisms
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     scalarExtensionAutomorphisms (V := V) A ⟶
       scalarExtensionAutomorphisms (V := V) B := by
@@ -141,11 +141,8 @@ lemma mapScalarExtensionAutomorphisms_tmul
   | tmul a v =>
       rw [TensorProduct.AlgebraTensorModule.cancelBaseChange_tmul]
       simp only [scalarExtensionMap_tmul]
-      rw [TensorProduct.smul_tmul']
-      change ((algebraMap A B a) * b) ⊗ₜ[R] v = (b * φ.hom a) ⊗ₜ[R] v
-      rw [mul_comm]
-      rw [RingHom.algebraMap_toAlgebra φ.hom.toRingHom]
-      rfl
+      rw [TensorProduct.smul_tmul', Algebra.smul_def, RingHom.algebraMap_toAlgebra,
+        AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom, smul_eq_mul, mul_comm]
   | add x y hx hy =>
       rw [TensorProduct.tmul_add, map_add, map_add, hx, hy, smul_add]
 
@@ -166,17 +163,6 @@ lemma mapScalarExtensionAutomorphisms_apply_scalarExtensionMap
       rw [hg, scalarExtensionMap_smul]
   | add x y hx hy => simp [hx, hy]
 
-/-- Two linear maps on a scalar extension agree if they agree after the canonical scalar-extension
-map. Equivalently, the vectors `1 ⊗ₜ v` generate the scalar extension as a module. -/
-lemma linearMap_ext_of_comp_scalarExtensionMap
-    {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
-    {f g : B ⊗[R] V →ₗ[B] B ⊗[R] V}
-    (h : ∀ x, f (scalarExtensionMap (V := V) φ x) =
-      g (scalarExtensionMap (V := V) φ x)) :
-    f = g := by
-  ext v
-  simpa using h (1 ⊗ₜ[R] v)
-
 /-- Extension of scalar-extension automorphisms preserves identity morphisms of value algebras. -/
 @[simp]
 lemma mapScalarExtensionAutomorphisms_id (A : CommAlgCat.{w} R) :
@@ -185,9 +171,8 @@ lemma mapScalarExtensionAutomorphisms_id (A : CommAlgCat.{w} R) :
   apply GrpCat.ext
   intro g
   apply Units.ext
-  apply linearMap_ext_of_comp_scalarExtensionMap (V := V) (𝟙 A)
-  intro x
-  rw [mapScalarExtensionAutomorphisms_apply_scalarExtensionMap]
+  refine TensorProduct.AlgebraTensorModule.ext fun a v => ?_
+  rw [mapScalarExtensionAutomorphisms_tmul, TensorProduct.tmul_eq_smul_one_tmul (M := V) a v]
   simp
 
 /-- Extension of scalar-extension automorphisms preserves composition of value-algebra
@@ -200,18 +185,11 @@ lemma mapScalarExtensionAutomorphisms_comp
   apply GrpCat.ext
   intro g
   apply Units.ext
-  apply linearMap_ext_of_comp_scalarExtensionMap (V := V) (φ ≫ ψ)
-  intro x
-  rw [mapScalarExtensionAutomorphisms_apply_scalarExtensionMap]
-  -- Composition in `GrpCat` reduces pointwise only after exposing the underlying unit-valued
-  -- maps.
-  change scalarExtensionMap (V := V) (φ ≫ ψ) (g.val x) =
-    (mapScalarExtensionAutomorphisms (V := V) ψ
-      (mapScalarExtensionAutomorphisms (V := V) φ g)).val
-        (scalarExtensionMap (V := V) (φ ≫ ψ) x)
-  simp only [scalarExtensionMap_comp, LinearMap.comp_apply]
-  rw [mapScalarExtensionAutomorphisms_apply_scalarExtensionMap,
-    mapScalarExtensionAutomorphisms_apply_scalarExtensionMap]
+  refine TensorProduct.AlgebraTensorModule.ext fun a v => ?_
+  rw [mapScalarExtensionAutomorphisms_tmul, CategoryTheory.comp_apply,
+    mapScalarExtensionAutomorphisms_tmul, mapScalarExtensionAutomorphisms_tmul,
+    scalarExtensionMap_comp]
+  simp
 
 /-- The group-valued functor of linear automorphisms of scalar extensions of `V`. -/
 @[expose] def scalarExtensionAutomorphismsFunctor :
@@ -220,6 +198,22 @@ lemma mapScalarExtensionAutomorphisms_comp
   map φ := mapScalarExtensionAutomorphisms (V := V) φ
   map_id A := mapScalarExtensionAutomorphisms_id (V := V) A
   map_comp φ ψ := mapScalarExtensionAutomorphisms_comp (V := V) φ ψ
+
+/-- The functor takes a value algebra to the automorphism group of the corresponding scalar
+extension. -/
+@[simp]
+lemma scalarExtensionAutomorphismsFunctor_obj (A : CommAlgCat.{w} R) :
+    (scalarExtensionAutomorphismsFunctor (V := V)).obj A =
+      scalarExtensionAutomorphisms (V := V) A :=
+  rfl
+
+/-- The functor takes a morphism of value algebras to the corresponding extension of
+automorphisms. -/
+@[simp]
+lemma scalarExtensionAutomorphismsFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    (scalarExtensionAutomorphismsFunctor (V := V)).map φ =
+      mapScalarExtensionAutomorphisms (V := V) φ :=
+  rfl
 
 end GeneralLinear
 
