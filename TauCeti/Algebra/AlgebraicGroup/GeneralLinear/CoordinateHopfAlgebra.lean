@@ -68,9 +68,15 @@ abbrev CoordinateRing :=
 
 /-- The canonical algebra map from the matrix-monoid coordinate ring into its determinant
 localization. -/
-@[expose] noncomputable def coordinateRingMap :
+noncomputable def coordinateRingMap :
     MatrixMonoid.CoordinateRing R n →ₐ[R] CoordinateRing R n :=
   IsScalarTower.toAlgHom R (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n)
+
+/-- The canonical map into the determinant localization agrees with its algebra map. -/
+theorem coordinateRingMap_apply (x : MatrixMonoid.CoordinateRing R n) :
+    coordinateRingMap R n x =
+      algebraMap (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n) x :=
+  (rfl)
 
 /-- Mathlib's generic matrix after applying the canonical map into the determinant localization. -/
 noncomputable def localizedGenericMatrix :
