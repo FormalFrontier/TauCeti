@@ -24,7 +24,9 @@ Positive definiteness is asked for over `ℚ`, not over `ℤ`.
 definiteness over `ℚ`, and the rational form is the one downstream arguments use, since a test
 vector produced by a diagram computation need not have integer entries. The symmetrizer `d` is
 likewise rational: it is the vector of inverse root lengths, which is integral only after clearing
-denominators.
+denominators. The symmetrization itself is not redone here: Mathlib packages it over `ℤ` as
+`RootPairing.Base.exists_cartanMatrix_diagaonal_mul_posDef`, resting on
+`RootPairing.posRootForm_rootFormIn_posDef`.
 
 ## Main definitions
 
@@ -109,13 +111,13 @@ lemma apply_eq_zero_iff (h : IsFiniteType A) {i j : B} : A i j = 0 ↔ A j i = 0
 lemma exists_symmetrizer (h : IsFiniteType A) :
     ∃ d : B → ℚ, (∀ i, 0 < d i) ∧ (Matrix.of fun i j ↦ d i * (A i j : ℚ)).PosDef := h.2.2.2
 
-/-- **A principal submatrix of a finite-type matrix is of finite type.** Restricting the
-symmetrizer along the same injection restricts the symmetrization, and positive definiteness passes
-to principal submatrices. This is the form in which a forbidden subdiagram excludes every diagram
-containing it. -/
+/-- **A principal submatrix of a finite-type matrix is of finite type.** This is the form in which
+a forbidden subdiagram excludes every diagram containing it. -/
 theorem submatrix {C : Type*} [Fintype C] (h : IsFiniteType A) {e : C → B}
     (he : Function.Injective e) :
     IsFiniteType (A.submatrix e e) := by
+  -- Restricting the symmetrizer along the same injection restricts the symmetrization, and
+  -- positive definiteness passes to principal submatrices.
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
   refine ⟨fun i ↦ h.apply_self _, fun i j hij ↦ h.apply_le_zero_of_ne fun hc ↦ hij (he hc),
     fun i j hij ↦ h.apply_eq_zero_symm hij, d ∘ e, fun i ↦ hd _, ?_⟩
@@ -142,11 +144,12 @@ private lemma apply_mul_apply_lt_four_fin_two {A : Matrix (Fin 2) (Fin 2) ℤ} (
   exact_mod_cast hlt
 
 /-- **The Cartan product of two distinct indices of a finite-type matrix is `0`, `1`, `2` or `3`.**
-Nonnegativity is the product of two nonpositive entries; the upper bound is the rank-two
-computation, applied to the principal submatrix on `{i, j}`. These are exactly the values that name
-the orders `2, 3, 4, 6` of a product of two simple reflections. -/
+These are exactly the values that name the orders `2, 3, 4, 6` of a product of two simple
+reflections. -/
 theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j) :
     A i j * A j i ∈ ({0, 1, 2, 3} : Set ℤ) := by
+  -- Nonnegativity is the product of two nonpositive entries; the upper bound is the rank-two
+  -- computation, applied to the principal submatrix on `{i, j}`.
   have hinj : Function.Injective (![i, j] : Fin 2 → B) := by
     intro a c hac
     fin_cases a <;> fin_cases c <;> simp_all
@@ -157,17 +160,11 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
-/-- The Cartan product of two distinct indices of a finite-type matrix is at most `3`. -/
-theorem apply_mul_apply_le_three_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j) :
-    A i j * A j i ≤ 3 := by
-  have := h.apply_mul_apply_mem_of_ne hij
-  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at this
-  omega
-
-/-- **A finite-type matrix is nonsingular.** Its symmetrization is a positive definite matrix over
-a field, hence invertible, and the symmetrizer contributes only a nonzero diagonal factor. This is
-the elimination tool for the extended Dynkin diagrams, whose Cartan matrices are singular. -/
+/-- **A finite-type matrix is nonsingular.** This is the elimination tool for the extended Dynkin
+diagrams, whose Cartan matrices are singular. -/
 theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
+  -- The symmetrization is a positive definite matrix over a field, hence invertible, and the
+  -- symmetrizer contributes only a nonzero diagonal factor.
   obtain ⟨d, -, hpd⟩ := h.exists_symmetrizer
   have hu : IsUnit (Matrix.diagonal d * A.map (Int.cast : ℤ → ℚ)) := by
     apply Matrix.PosDef.isUnit
@@ -200,17 +197,15 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
   {P : RootPairing ι R M N}
 
 /-- **The Cartan matrix of a base of a finite crystallographic root system is of finite type.** The
-symmetrizer is the vector of inverse root lengths for the canonical form; Mathlib packages the
-resulting positive definite symmetrization over `ℤ`
-(`RootPairing.Base.exists_cartanMatrix_diagaonal_mul_posDef`, which rests on
-`RootPairing.posRootForm_rootFormIn_posDef`), and `TauCeti.Matrix.posDef_map_intCast` carries it
-over `ℚ`.
+symmetrizer is the vector of inverse root lengths for the canonical form.
 
 Reducedness is not assumed: positive definiteness of the canonical form does not need it. -/
 theorem isFiniteType_cartanMatrix [Finite ι] [CharZero R] [IsDomain R]
     [P.IsRootSystem] [P.IsCrystallographic] (b : P.Base) :
     IsFiniteType b.cartanMatrix := by
   classical
+  -- Mathlib packages the positive definite symmetrization over `ℤ`, and
+  -- `TauCeti.Matrix.posDef_map_intCast` carries it over `ℚ`.
   obtain ⟨d, hd, hpd⟩ := b.exists_cartanMatrix_diagaonal_mul_posDef
   refine isFiniteType_of (fun i ↦ b.cartanMatrix_apply_same i)
     (fun i j hij ↦ b.cartanMatrix_le_zero_of_ne i j hij)
@@ -219,13 +214,13 @@ theorem isFiniteType_cartanMatrix [Finite ι] [CharZero R] [IsDomain R]
   ext i j
   simp [Matrix.diagonal_mul]
 
-/-- **The standard Cartan matrix of a Dynkin type realized by a base is of finite type.**
-Relabelling by the inverse of the matching turns the standard matrix into a principal submatrix -
-indeed a reindexing - of the Cartan matrix of the base. This is the shape in which the finite-type
-condition eliminates candidate Dynkin types. -/
+/-- **The standard Cartan matrix of a Dynkin type realized by a base is of finite type.** This is
+the shape in which the finite-type condition eliminates candidate Dynkin types. -/
 theorem HasCartanType.isFiniteType [Finite ι] [CharZero R] [IsDomain R]
     [P.IsRootSystem] [P.IsCrystallographic] {b : P.Base} {t : DynkinType}
     (h : HasCartanType P b t) : IsFiniteType t.cartanMatrix := by
+  -- Relabelling by the inverse of the matching turns the standard matrix into a principal
+  -- submatrix - indeed a reindexing - of the Cartan matrix of the base.
   obtain ⟨e, he⟩ := (hasCartanType_iff_reindex b t).mp h
   rw [← he]
   exact (isFiniteType_cartanMatrix b).submatrix e.symm.injective
