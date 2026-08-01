@@ -15,6 +15,12 @@ This file packages Mathlib's positivity predicate for a root-pairing base as the
 and negative root indices. It records their partition, their exchange under root negation, and the
 fact that a simple reflection permutes the positive roots other than its own simple root.
 
+A base `b` of a root pairing `P` is simultaneously a base `b.flip` of the flipped pairing `P.flip`,
+so the same positivity predicate measures both a root against the simple roots and the
+corresponding coroot against the simple coroots. The last part of the file proves that the two
+measurements agree, so that a base and its flip have the same positive roots and the coroot of a
+positive root is a nonnegative integer combination of the simple coroots.
+
 ## Main definitions
 
 * `TauCeti.posRoots` is the set of positive roots relative to a base.
@@ -25,12 +31,19 @@ fact that a simple reflection permutes the positive roots other than its own sim
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
 * `TauCeti.bijOn_reflectionPerm_posRoots_diff_singleton` says a simple reflection permutes the
   positive roots other than its own simple root.
+* `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
+  coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
+* `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
+  nonnegative integer combination of the simple coroots.
 
 ## References
 
 This file implements the “Positive and negative roots” item in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, following the target signatures in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`. The coroot-side positivity at the
+end of the file is the prerequisite that the fundamental-domain item of Layer 4 consumes; that
+argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
+GTM 9, Ch. III, §10.
 -/
 
 namespace TauCeti
@@ -216,5 +229,63 @@ positive roots other than its own simple root onto themselves. -/
 theorem image_reflectionPerm_posRoots_diff_singleton {i : ι} (hi : i ∈ b.support) :
     P.reflectionPerm i '' (posRoots P b \ {i}) = posRoots P b \ {i} :=
   (bijOn_reflectionPerm_posRoots_diff_singleton P b hi).image_eq
+
+namespace RootPairing.Base
+
+/-- A simple reflection preserves and reflects positivity of every root other than its own simple
+root and the negative of that simple root. -/
+lemma isPos_reflectionPerm_iff {i j : ι} (hj : j ∈ b.support) (hij : i ≠ j)
+    (hij' : i ≠ P.reflectionPerm j j) :
+    b.IsPos (P.reflectionPerm j i) ↔ b.IsPos i := by
+  refine ⟨fun h ↦ ?_, fun h ↦ h.reflectionPerm hj hij⟩
+  have hne : P.reflectionPerm j i ≠ j := fun hc ↦ hij' (by rw [← P.reflectionPerm_self j i, hc])
+  simpa [P.reflectionPerm_self] using h.reflectionPerm hj hne
+
+/-- **A root is positive for a base exactly when its coroot is positive for that base.** -/
+theorem isPos_flip_iff [P.flip.IsReduced] (i : ι) : b.flip.IsPos i ↔ b.IsPos i := by
+  -- Both sides hold for a simple root, both are exchanged by root negation, and away from a
+  -- simple root and its negative both are preserved by the corresponding simple reflection, so
+  -- the positive-root induction propagates the equivalence over the whole index type.
+  -- The flipped pairing reflects root indices by the very same permutations.
+  have hflip : ∀ k l : ι, P.flip.reflectionPerm k l = P.reflectionPerm k l := fun _ _ ↦ rfl
+  have hsimple : ∀ k ∈ b.support, (b.flip.IsPos k ↔ b.IsPos k) := fun k hk ↦ by
+    simp only [b.isPos_of_mem_support hk, iff_true]
+    exact b.flip.isPos_of_mem_support (by simpa using hk)
+  have hneg : ∀ k : ι, (b.flip.IsPos k ↔ b.IsPos k) →
+      (b.flip.IsPos (P.reflectionPerm k k) ↔ b.IsPos (P.reflectionPerm k k)) := fun k hk ↦ by
+    rw [isPos_reflectionPerm_self_iff_mem_negRoots P b k, mem_negRoots P b k, ← hflip k k,
+      isPos_reflectionPerm_self_iff_mem_negRoots P.flip b.flip k, mem_negRoots P.flip b.flip k, hk]
+  refine b.induction_reflect (p := fun k ↦ b.flip.IsPos k ↔ b.IsPos k) i hneg hsimple
+    fun j k hj hk ↦ ?_
+  rcases eq_or_ne j k with rfl | hjk
+  · exact hneg j hj
+  rcases eq_or_ne j (P.reflectionPerm k k) with rfl | hjk'
+  · rw [P.reflectionPerm_self k k]
+    exact hsimple k hk
+  · rw [isPos_reflectionPerm_iff P b hk hjk hjk', ← hflip k j,
+      isPos_reflectionPerm_iff P.flip b.flip (by simpa using hk) hjk (by rwa [hflip k k])]
+    exact hj
+
+end RootPairing.Base
+
+variable [P.flip.IsReduced]
+
+/-- A base and its flip have the same positive roots. -/
+theorem posRoots_flip : posRoots P.flip b.flip = posRoots P b := by
+  ext i
+  simpa only [mem_posRoots] using RootPairing.Base.isPos_flip_iff P b i
+
+/-- A base and its flip have the same negative roots. -/
+theorem negRoots_flip : negRoots P.flip b.flip = negRoots P b := by
+  ext i
+  simpa only [mem_negRoots] using not_congr (RootPairing.Base.isPos_flip_iff P b i)
+
+/-- The coroot of a positive root is a nonnegative integer combination of the simple coroots. -/
+theorem exists_coroot_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    ∃ f : ι → ℕ, f.support ⊆ b.support ∧
+      P.coroot i = ∑ j ∈ b.support, f j • P.coroot j := by
+  obtain ⟨f, hf, hsum⟩ := exists_root_eq_sum_nat_of_mem_posRoots P.flip b.flip
+    (by rw [posRoots_flip]; exact hi)
+  exact ⟨f, by simpa using hf, by simpa using hsum⟩
 
 end TauCeti
