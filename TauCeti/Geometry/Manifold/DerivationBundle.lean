@@ -35,22 +35,23 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
-/-- A tangent vector acts on smooth functions by directional differentiation.
-
-This definition is exposed because the exported characteristic equation
-`tangentToPointDerivation_apply` must unfold it under the module system. -/
+/-- A tangent vector acts on smooth functions by directional differentiation. -/
+-- Exposure is required for the exported characteristic equation below to unfold this definition
+-- under the module system.
 @[expose]
 def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDerivation I x where
   toFun v :=
     Derivation.mk'
       { toFun := fun f => mvfderiv I f x v
         map_add' := fun f g => by
+          -- Unfold the smooth-map addition wrapper to apply the `mvfderiv_add` API.
           change mvfderiv I (⇑f + ⇑g) x v = _
           exact congr($(mvfderiv_add
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
             (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt) v)
         map_smul' := fun c f => by
           have hc : MDiffAt (fun _ : M => c) x := mdifferentiableAt_const
+          -- Unfold the pointed scalar action into pointwise multiplication for `mvfderiv_smul`.
           change mvfderiv I ((fun _ : M => c) • ⇑f) x v = c • mvfderiv I f x v
           have h := congr($(mvfderiv_smul hc
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt) v)
@@ -59,6 +60,7 @@ def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDeriva
                 (mvfderiv I (fun _ : M => c) x).smulRight (f x)) v := h
             _ = _ := by simp [mvfderiv_const] }
       fun f g => by
+        -- Unfold derivation application and smooth-map multiplication to use `mvfderiv_mul`.
         change mvfderiv I (⇑f * ⇑g) x v =
           f x * mvfderiv I g x v + g x * mvfderiv I f x v
         exact congr($(mvfderiv_mul
@@ -66,10 +68,12 @@ def tangentToPointDerivation (x : M) : TangentSpace I x →ₗ[𝕜] PointDeriva
           (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt) v)
   map_add' v w := by
     ext f
+    -- Unfold the two bundled linear maps to expose linearity of `mvfderiv` in its tangent vector.
     change mvfderiv I f x (v + w) = _
     exact (mvfderiv I f x).map_add v w
   map_smul' c v := by
     ext f
+    -- Unfold the two bundled linear maps to expose scalar linearity of `mvfderiv`.
     change mvfderiv I f x (c • v) = _
     exact (mvfderiv I f x).map_smul c v
 
@@ -90,6 +94,8 @@ theorem tangentToPointDerivation_mfderiv (f : C^∞⟮I, M; I', M'⟯) (x : M)
     tangentToPointDerivation (f x) (mfderiv I I' f x v) =
       𝒅 f x (tangentToPointDerivation x v) := by
   ext g
+  -- Unfold the derivation differential and both comparison-map applications before using the
+  -- manifold chain rule; their bundled coercions have no separate rewriting lemma.
   change mvfderiv I' g (f x) (mfderiv I I' f x v) =
     tangentToPointDerivation x v (g.comp f)
   rw [tangentToPointDerivation_apply]
