@@ -18,8 +18,9 @@ is a homeomorphism of `closedBall (0 : ℂ) 1` onto itself which carries `sphere
 The computational heart is a one-line identity: for `‖z‖ = 1`,
 `conj z * (1 - conj a * z) = conj (z - a)`, so numerator and denominator of the Moebius factor have
 the *same* modulus on the unit circle and the quotient has modulus one.  That identity and its
-pseudo-hyperbolic reading — a boundary point is at pseudo-hyperbolic distance exactly `1` from
-every other point — are generic facts about `TauCeti.pseudoHyperbolicExpr` and live in
+reading through `TauCeti.pseudoHyperbolicExpr` — that expression takes the value `1` at a boundary
+point and any other point, the pseudo-hyperbolic metric itself being defined only on the open
+disc — are generic facts about that formula and live in
 `TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean`, as
 `TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` and
 `TauCeti.pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one`.

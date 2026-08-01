@@ -281,10 +281,13 @@ lemma pseudoHyperbolicExpr_lt_one_unitDisc (z w : Complex.UnitDisc) :
     pseudoHyperbolicExpr (z : ℂ) (w : ℂ) < 1 :=
   pseudoHyperbolicExpr_lt_one_of_norm_lt_one z.norm_lt_one w.norm_lt_one
 
-/-- **A point of the unit circle is at pseudo-hyperbolic distance one from every other point.**
+/-- **The pseudo-hyperbolic expression takes the value one at a point of the unit circle and any
+point distinct from it.**
 By `TauCeti.norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one` numerator and denominator have the
 same modulus, so the quotient is `1` exactly when that common modulus is nonzero, that is when
-`z ≠ w`.  No hypothesis on `w` beyond `z ≠ w` is needed. -/
+`z ≠ w`.  No hypothesis on `w` beyond `z ≠ w` is needed.  This is a statement about the value of
+the extended formula `TauCeti.pseudoHyperbolicExpr`, not about the pseudo-hyperbolic metric, which
+is defined only on the open disc. -/
 theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne {z w : ℂ} (hz : ‖z‖ = 1) (hne : z ≠ w) :
     pseudoHyperbolicExpr z w = 1 := by
   have hden : ‖1 - (starRingEnd ℂ) w * z‖ ≠ 0 := by
@@ -293,8 +296,11 @@ theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne {z w : ℂ} (hz : ‖z�
   rw [pseudoHyperbolicExpr_def, norm_div, norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one hz w,
     div_self hden]
 
-/-- **A point of the unit circle is at pseudo-hyperbolic distance one from any interior point.**
-The boundary counterpart of `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
+/-- **The pseudo-hyperbolic expression takes the value one at a point of the unit circle and a
+point of the open disc.**
+The boundary counterpart of `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`; as there, the
+value is that of the extended formula, since the pseudo-hyperbolic metric itself is defined only
+on the open disc. -/
 theorem pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_norm_lt_one {z w : ℂ} (hz : ‖z‖ = 1)
     (hw : ‖w‖ < 1) : pseudoHyperbolicExpr z w = 1 :=
   pseudoHyperbolicExpr_eq_one_of_norm_eq_one_of_ne hz fun h => by
