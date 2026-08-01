@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.RepresentationTheory.AlgebraRepresentation.Basic
 public import Mathlib.RingTheory.SimpleModule.IsAlgClosed
 
 /-!
@@ -17,9 +18,12 @@ two modules are not linearly equivalent. When an equivalence does exist, Mathlib
 `LinearEquiv.arrowCongrAddEquiv` identifies the hom group with either endomorphism ring by
 composition; no separate construction is needed here.
 
-Over an algebraically closed field, a finite-dimensional division algebra is the base field. The
-proof uses Mathlib's stronger theorem that the algebra map from an algebraically closed field into
-an integral algebra is bijective. Finite dimensionality supplies integrality.
+Over an algebraically closed field, an integral domain algebra is the base field. The proof uses
+Mathlib's theorem that the algebra map from an algebraically closed field into an integral domain
+algebra is bijective; a finite-dimensional division algebra is the special case that the roadmap
+names. The same collapse for the endomorphism ring of a finite-dimensional simple module is
+Mathlib's `IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed`, packaged here as an algebra
+equivalence.
 
 ## Main results
 
@@ -29,8 +33,12 @@ an integral algebra is bijective. Finite dimensionality supplies integrality.
   the whole hom group.
 * `TauCeti.nontrivial_linearMap_iff_nonempty_linearEquiv`: two simple modules are equivalent exactly
   when their hom group is nontrivial.
-* `TauCeti.algEquiv_self_of_finiteDimensional_divisionRing`: a finite-dimensional division algebra
-  over an algebraically closed field is isomorphic to that field as an algebra.
+* `TauCeti.algEquiv_self_of_isIntegral`: an integral domain algebra over an algebraically closed
+  field is isomorphic to that field as an algebra, with
+  `TauCeti.algEquiv_self_of_finiteDimensional_divisionRing` the finite-dimensional division algebra
+  special case.
+* `TauCeti.end_algEquiv_self_of_isSimpleModule`: the endomorphism ring of a finite-dimensional
+  simple module over an algebraically closed field collapses to that field.
 
 ## References
 
@@ -92,28 +100,60 @@ theorem nontrivial_linearMap_iff_nonempty_linearEquiv :
 
 end SimpleModules
 
-/-! ### Division algebras over algebraically closed fields -/
+/-! ### Domain algebras over algebraically closed fields -/
 
 section IsAlgClosed
 
-variable {k : Type u} {D : Type v} [Field k] [IsAlgClosed k] [DivisionRing D] [Algebra k D]
-variable [FiniteDimensional k D]
+variable {k : Type u} {D : Type v} [Field k] [IsAlgClosed k]
 
-/-- A finite-dimensional division algebra over an algebraically closed field is the field itself,
-as an isomorphism of algebras.
+section Domain
 
-Finite dimensionality makes `D` integral over `k`; Mathlib proves that the algebra map from an
-algebraically closed field to any integral division algebra is bijective. -/
-theorem algEquiv_self_of_finiteDimensional_divisionRing : Nonempty (D ≃ₐ[k] k) :=
+variable [Ring D] [IsDomain D] [Algebra k D]
+
+/-- An integral domain algebra over an algebraically closed field is the field itself, as an
+isomorphism of algebras.
+
+Mathlib proves that the algebra map from an algebraically closed field to such an algebra is
+bijective; this packages that bijection as an algebra equivalence. -/
+theorem algEquiv_self_of_isIntegral [Algebra.IsIntegral k D] : Nonempty (D ≃ₐ[k] k) :=
   ⟨(AlgEquiv.ofBijective (Algebra.ofId k D)
     IsAlgClosed.algebraMap_bijective_of_isIntegral).symm⟩
 
-/-- A finite-dimensional division algebra over an algebraically closed field has dimension one. -/
+/-- A finite-dimensional domain algebra over an algebraically closed field has dimension one. -/
 @[simp]
-theorem finrank_divisionRing_eq_one : Module.finrank k D = 1 := by
-  obtain ⟨e⟩ := algEquiv_self_of_finiteDimensional_divisionRing (k := k) (D := D)
-  rw [e.toLinearEquiv.finrank_eq, Module.finrank_self]
+theorem finrank_eq_one_of_isAlgClosed [FiniteDimensional k D] : Module.finrank k D = 1 :=
+  Module.finrank_of_bijective_algebraMap IsAlgClosed.algebraMap_bijective_of_isIntegral
+
+end Domain
+
+/-- A finite-dimensional division algebra over an algebraically closed field is the field itself,
+as an isomorphism of algebras. Finite dimensionality supplies integrality, so this is the
+special case of `algEquiv_self_of_isIntegral` that the semisimple-algebra development uses. -/
+theorem algEquiv_self_of_finiteDimensional_divisionRing [DivisionRing D] [Algebra k D]
+    [FiniteDimensional k D] : Nonempty (D ≃ₐ[k] k) :=
+  algEquiv_self_of_isIntegral
 
 end IsAlgClosed
+
+/-! ### Endomorphisms of a simple module over an algebraically closed field -/
+
+section SimpleEnd
+
+variable {k : Type u} {A : Type v} {S : Type w} [Field k] [IsAlgClosed k] [Ring A] [Algebra k A]
+variable [AddCommGroup S] [Module k S] [Module A S] [IsScalarTower k A S] [IsSimpleModule A S]
+variable [FiniteDimensional k S]
+
+/-- **Schur's lemma over an algebraically closed field.** The endomorphism ring of a
+finite-dimensional simple module over a `k`-algebra is the field `k` itself.
+
+Mathlib's `IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed` proves that every such
+endomorphism is a scalar; this packages that bijection as an algebra equivalence. Finite
+dimensionality is needed: an infinite-dimensional simple module can have a larger division
+endomorphism ring. -/
+theorem end_algEquiv_self_of_isSimpleModule : Nonempty (Module.End A S ≃ₐ[k] k) :=
+  ⟨(AlgEquiv.ofBijective (Algebra.ofId k (Module.End A S))
+    (IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed k)).symm⟩
+
+end SimpleEnd
 
 end TauCeti
