@@ -77,7 +77,6 @@ theorem tensorPowerBasis_apply (f : Fin d → Fin n) :
 
 /-- A permutation acts on the monomial basis of `(Rⁿ)^{⊗d}` by precomposing the index function
 with its inverse. -/
-@[simp]
 theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d → Fin n) :
     permTensorAction R n d σ (tensorPowerBasis R n d f) =
       tensorPowerBasis R n d fun i => f (σ.symm i) := by
@@ -85,7 +84,6 @@ theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d �
 
 /-- A group-algebra basis element acts on a monomial basis vector by precomposition and
 scaling. -/
-@[simp]
 theorem permTensorActionAlgHom_single_tensorPowerBasis (ρ : Equiv.Perm (Fin d)) (r : R)
     (f : Fin d → Fin n) :
     permTensorActionAlgHom R n d (MonoidAlgebra.single ρ r) (tensorPowerBasis R n d f) =
