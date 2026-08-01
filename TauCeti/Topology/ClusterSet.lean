@@ -137,6 +137,17 @@ lemma isClosed_clusterSetOn : IsClosed (clusterSetOn f U w) := isClosed_setOfPre
 lemma clusterSetOn_mono {V : Set X} (h : U ⊆ V) : clusterSetOn f U w ⊆ clusterSetOn f V w :=
   fun _ hv => hv.mono (nhdsWithin_mono w h)
 
+/-- **The cluster set is local.** Shrinking `U` by a set that is a neighbourhood of `w` inside `U`
+does not change the cluster set, the filter `𝓝[U] w` being unchanged. In particular this applies to
+any `V ∈ 𝓝 w`, through `nhdsWithin_le_nhds`.
+
+Together with `TauCeti.clusterSetOn_mono` this says that the cluster set depends only on the germ of
+`U` at `w`. It is what lets a cluster value at a boundary point be recognised as a cluster value of
+the restriction of `f` to a small piece of `U` around that point. -/
+lemma clusterSetOn_inter_of_mem_nhdsWithin {V : Set X} (hV : V ∈ 𝓝[U] w) :
+    clusterSetOn f (U ∩ V) w = clusterSetOn f U w := by
+  simp only [clusterSetOn, nhdsWithin_inter_of_mem' hV]
+
 /-- Every cluster value is a limit of image points: the cluster set sits inside
 `closure (f '' U)`. -/
 lemma clusterSetOn_subset_closure_image : clusterSetOn f U w ⊆ closure (f '' U) :=
