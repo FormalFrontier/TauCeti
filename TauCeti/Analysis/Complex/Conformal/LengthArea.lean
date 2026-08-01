@@ -49,8 +49,8 @@ draw from these estimates in order to force the cluster set at `ζ` to degenerat
   set.
 * `TauCeti.ofReal_dist_le_circleImageLength` — the chord bound justifying the name, and the only
   claim made here about lengths that is actually proved: a sub-arc of angular width at most `2 * π`
-  that stays in `s`, for `s` inside the domain of holomorphy, has the distance between the images
-  of its endpoints bounded by that quantity.
+  that stays in `s` and in a set on which `f` is holomorphic has the distance between the images of
+  its endpoints bounded by that quantity.
 * `TauCeti.circleImageLength_eq_lintegral_Ioc` — the angular integral may be taken over any period
   `Ioc t (t + 2 * π)`, so the branch cut chosen in the definition is immaterial.
 * `TauCeti.lintegral_circleImageLength_sq_div_le_lintegral_enorm_deriv_sq` — the **length–area
@@ -378,13 +378,16 @@ theorem exists_circleImageLength_sq_lt_of_volume_image (hUo : IsOpen U)
   rwa [volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs.nullMeasurableSet hsU hinj] at hc
 
 /-- **The chord bound.** If the closed arc of angles `Icc a b` has angular width at most `2 * π`
-and the corresponding piece of the circle of radius `ρ` lies in a set `s` contained in the open set
-`U` on which `f` is holomorphic, then the distance between the images of its endpoints is at most
+and the corresponding piece of the circle of radius `ρ` lies both in `s` and in an open set `U` on
+which `f` is holomorphic, then the distance between the images of its endpoints is at most
 `TauCeti.circleImageLength f s ζ ρ`.
 
-Taking `s = U` recovers the bound by the arc length of the whole circle inside the domain of
-holomorphy, but the subset form is what chains with `TauCeti.exists_circleImageLength_sq_lt`, whose
-conclusion is a bound on `TauCeti.circleImageLength f s ζ ρ` for the same `s`.
+Both hypotheses are arc-local: `s` is constrained only along the arc, so the rest of it — the rest
+of the circle included — may lie outside the domain of holomorphy, and `U` need only be a
+neighbourhood of the arc rather than of `s`. That is what chains with
+`TauCeti.exists_circleImageLength_sq_lt`, whose conclusion is a bound on
+`TauCeti.circleImageLength f s ζ ρ` for a `s` chosen for the area estimate rather than for this
+arc; when `s ⊆ U` the containment along the arc is immediate from membership in `s`.
 
 The arc is unrestricted apart from its width: it may start anywhere and cross the branch cut at
 `±π` fixed in the definition, since by `TauCeti.circleImageLength_eq_lintegral_Ioc` the period of
@@ -394,12 +397,12 @@ This is what makes `TauCeti.circleImageLength` a length rather than an abstract 
 the form in which Wolff's lemma is used: a short image arc has small chords. Turning that into a
 crosscut of small diameter at a boundary point is left to the later file that constructs the
 crosscuts. -/
-theorem ofReal_dist_le_circleImageLength (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hsU : s ⊆ U) (ζ : ℂ) {ρ : ℝ} (hρ : 0 < ρ) {a b : ℝ} (hab : a ≤ b) (hb : b ≤ a + 2 * π)
-    (hmem : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ s) :
+theorem ofReal_dist_le_circleImageLength (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U) (ζ : ℂ)
+    {ρ : ℝ} (hρ : 0 < ρ) {a b : ℝ} (hab : a ≤ b) (hb : b ≤ a + 2 * π)
+    (hmem : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ s)
+    (hmemU : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ U) :
     ENNReal.ofReal (dist (f (circleMap ζ ρ a)) (f (circleMap ζ ρ b))) ≤
       circleImageLength f s ζ ρ := by
-  have hmemU : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ U := fun θ hθ => hsU (hmem θ hθ)
   have hderivCont : ContinuousOn (deriv f) U := ((hf.analyticOnNhd hUo).deriv).continuousOn
   have hcompCont : ContinuousOn (fun θ => deriv f (circleMap ζ ρ θ)) (Icc a b) :=
     hderivCont.comp (continuous_circleMap ζ ρ).continuousOn hmemU
