@@ -34,7 +34,7 @@ subcoalgebra. The counit matrix coefficient recovers the original element.
 * `TauCeti.Subcoalgebra.exists_finite_subcoalgebra_mem`: the PID result for a coalgebra that is
   free as a module.
 * `TauCeti.Subcoalgebra.exists_finiteDimensional_subcoalgebra_mem`: the field specialization.
-* `TauCeti.Subcoalgebra.finiteSubcoalgebras_directedOn`: module-finite subcoalgebras are directed.
+* `TauCeti.Subcoalgebra.directedOn_finiteSubcoalgebras`: module-finite subcoalgebras are directed.
 * `TauCeti.Subcoalgebra.exists_finite_subcoalgebra_of_setFinite`: every finite subset is contained
   in a module-finite subcoalgebra under the PID hypotheses.
 * `TauCeti.Subcoalgebra.sSup_finiteSubcoalgebras_eq_top`: a PID/free coalgebra is the supremum of
@@ -75,7 +75,7 @@ theorem mem_finiteSubcoalgebras {D : Subcoalgebra R C} :
   Iff.rfl
 
 /-- The family of module-finite subcoalgebras is nonempty. -/
-theorem finiteSubcoalgebras_nonempty : (finiteSubcoalgebras R C).Nonempty := by
+theorem nonempty_finiteSubcoalgebras : (finiteSubcoalgebras R C).Nonempty := by
   refine ⟨⊥, ?_⟩
   rw [mem_finiteSubcoalgebras, bot_toSubmodule]
   infer_instance
@@ -90,24 +90,26 @@ theorem sup_mem_finiteSubcoalgebras {D E : Subcoalgebra R C}
   exact sup_finite D E
 
 /-- The family of module-finite subcoalgebras is directed under inclusion. -/
-theorem finiteSubcoalgebras_directedOn :
+theorem directedOn_finiteSubcoalgebras :
     DirectedOn (· ≤ ·) (finiteSubcoalgebras R C) := by
+  apply SupClosed.directedOn
   intro D hD E hE
-  exact ⟨D ⊔ E, sup_mem_finiteSubcoalgebras hD hE, le_sup_left, le_sup_right⟩
+  exact sup_mem_finiteSubcoalgebras hD hE
 
 /-- Membership in the supremum of the module-finite subcoalgebras is membership in one such
 subcoalgebra. -/
+@[simp]
 theorem mem_sSup_finiteSubcoalgebras {c : C} :
     c ∈ sSup (finiteSubcoalgebras R C) ↔
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D := by
   simpa only [mem_finiteSubcoalgebras] using
-    mem_sSup_of_directedOn finiteSubcoalgebras_nonempty finiteSubcoalgebras_directedOn
+    mem_sSup_of_directedOn nonempty_finiteSubcoalgebras directedOn_finiteSubcoalgebras
 
 /-- The carrier of the supremum of the module-finite subcoalgebras is their literal union. -/
 theorem coe_sSup_finiteSubcoalgebras :
     (↑(sSup (finiteSubcoalgebras R C)) : Set C) =
       ⋃ D ∈ finiteSubcoalgebras R C, (D : Set C) :=
-  coe_sSup_of_directedOn finiteSubcoalgebras_nonempty finiteSubcoalgebras_directedOn
+  coe_sSup_of_directedOn nonempty_finiteSubcoalgebras directedOn_finiteSubcoalgebras
 
 /-- If every element is contained in a module-finite subcoalgebra, then every finite subset is
 contained in one module-finite subcoalgebra. -/
@@ -121,7 +123,7 @@ theorem exists_finite_subcoalgebra_of_setFinite_of_exists_mem
   choose D hDfinite hcD using fun c : s => hcover (c : C)
   refine ⟨⨆ c : s, D c, iSup_finite D hDfinite, ?_⟩
   intro c hc
-  change c ∈ (⨆ x : s, D x).toSubmodule
+  apply mem_toSubmodule.mp
   rw [iSup_toSubmodule]
   exact Submodule.mem_iSup_of_mem ⟨c, hc⟩ (hcD ⟨c, hc⟩)
 
@@ -156,10 +158,10 @@ theorem iUnion_finiteSubcoalgebras_eq_univ_of_exists_mem
     (hcover : ∀ c : C,
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D) :
     (⋃ D ∈ finiteSubcoalgebras R C, (D : Set C)) = Set.univ := by
-  apply Set.eq_univ_of_forall
-  intro c
-  obtain ⟨D, hDfinite, hcD⟩ := hcover c
-  exact Set.mem_iUnion_of_mem D (Set.mem_iUnion_of_mem hDfinite hcD)
+  rw [← coe_sSup_finiteSubcoalgebras,
+    sSup_finiteSubcoalgebras_eq_top_of_exists_mem hcover]
+  ext c
+  simp
 
 end DirectedUnions
 
@@ -263,8 +265,8 @@ theorem exists_finiteDimensional_subcoalgebra_of_finiteDimensional_submodule
 theorem sSup_finiteDimensional_subcoalgebras_eq_top {k : Type u} [Field k]
     [AddCommGroup C] [Module k C] [Coalgebra k C] :
     sSup {D : Subcoalgebra k C | FiniteDimensional k D.toSubmodule} = ⊤ := by
-  change sSup (finiteSubcoalgebras k C) = ⊤
-  exact sSup_finiteSubcoalgebras_eq_top (R := k) (C := C)
+  simpa only [finiteSubcoalgebras, FiniteDimensional] using
+    sSup_finiteSubcoalgebras_eq_top (R := k) (C := C)
 
 /-- Every coalgebra over a field is the literal union of its finite-dimensional
 subcoalgebras. -/
@@ -272,8 +274,8 @@ theorem iUnion_finiteDimensional_subcoalgebras_eq_univ {k : Type u} [Field k]
     [AddCommGroup C] [Module k C] [Coalgebra k C] :
     (⋃ (D : Subcoalgebra k C) (_ : FiniteDimensional k D.toSubmodule), (D : Set C)) =
       Set.univ := by
-  change (⋃ D ∈ finiteSubcoalgebras k C, (D : Set C)) = Set.univ
-  exact iUnion_finiteSubcoalgebras_eq_univ (R := k) (C := C)
+  simpa only [finiteSubcoalgebras, FiniteDimensional, Set.mem_ofPred_eq] using
+    iUnion_finiteSubcoalgebras_eq_univ (R := k) (C := C)
 
 end Subcoalgebra
 
