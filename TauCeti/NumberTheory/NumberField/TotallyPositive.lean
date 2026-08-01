@@ -110,14 +110,6 @@ noncomputable def totallyPositiveIntegerUnits : Subgroup (𝓞 K)ˣ :=
   totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
 
 omit [NumberField K] in
-/-- `totallyPositiveIntegerUnits` as the preimage of `totallyPositiveUnits`, usable across modules
-where the definition is opaque. -/
-theorem totallyPositiveIntegerUnits_eq :
-    totallyPositiveIntegerUnits =
-      totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom) := by
-  simp only [totallyPositiveIntegerUnits]
-
-omit [NumberField K] in
 /-- Membership in `totallyPositiveIntegerUnits` is total positivity of the image in `K`. -/
 @[simp] theorem mem_totallyPositiveIntegerUnits {u : (𝓞 K)ˣ} :
     u ∈ totallyPositiveIntegerUnits ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by

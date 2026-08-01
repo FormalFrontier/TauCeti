@@ -86,15 +86,17 @@ image of `u` under the real embedding `w` composed with `(𝓞 K) → K`. -/
   simp only [unitSignature, MonoidHom.comp_apply, fieldUnitSignature_apply]
 
 omit [NumberField K] in
-/-- The kernel of the integer-unit signature is exactly the totally positive integer units. -/
-theorem ker_unitSignature :
-    MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
-  rw [unitSignature, ← MonoidHom.comap_ker, ker_fieldUnitSignature, totallyPositiveIntegerUnits_eq]
-
-omit [NumberField K] in
 /-- An integer unit has trivial signature exactly when its image in `K` is totally positive. -/
 @[simp] theorem unitSignature_eq_one_iff {u : (𝓞 K)ˣ} :
     unitSignature u = 1 ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by
-  rw [← MonoidHom.mem_ker, ker_unitSignature, mem_totallyPositiveIntegerUnits]
+  simp only [unitSignature, MonoidHom.comp_apply, fieldUnitSignature_eq_one_iff, Units.coe_map,
+    RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe]
+
+omit [NumberField K] in
+/-- The kernel of the integer-unit signature is exactly the totally positive integer units. -/
+theorem ker_unitSignature :
+    MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
+  ext u
+  rw [MonoidHom.mem_ker, unitSignature_eq_one_iff, mem_totallyPositiveIntegerUnits]
 
 end TauCeti.NumberField
