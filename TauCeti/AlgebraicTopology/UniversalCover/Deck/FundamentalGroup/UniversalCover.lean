@@ -109,20 +109,62 @@ noncomputable def deckFundamentalGroupEquiv
     [SemilocallySimplyConnectedSpace X] :
     Deck (proj : UniversalCover x₀ → X) ≃* (FundamentalGroup X x₀)ᵐᵒᵖ :=
   (isRegular_proj x₀).deckFundamentalGroupEquiv (isCoveringMap x₀)
-    ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩
+    ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
+      change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
+      rw [Set.mem_singleton_iff, proj_ofBasedPath]
+      exact BasedPath.endpoint_ofPath _⟩
 
-/-- A deck transformation corresponds to a loop class exactly when the loop's monodromy moves
-the canonical lift by that deck transformation. -/
-lemma deckFundamentalGroupEquiv_apply_eq_op_iff
+/-- The inverse deck-to-fundamental-group equivalence recovers the explicit loop deck
+transformation, with the inverse forced by the left-action convention. -/
+@[simp]
+lemma deckFundamentalGroupEquiv_symm_op
     [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X]
-    (φ : Deck (proj : UniversalCover x₀ → X)) (g : FundamentalGroup X x₀) :
-    deckFundamentalGroupEquiv x₀ φ = MulOpposite.op g ↔
-      ((isCoveringMap x₀).monodromy g
-        ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩ : UniversalCover x₀) =
-        φ • mk x₀ (Path.Homotopic.Quotient.refl x₀) := by
-  exact Deck.IsRegular.deckFundamentalGroupEquiv_apply_eq_op_iff
+    (g : FundamentalGroup X x₀) :
+    (deckFundamentalGroupEquiv x₀).symm (MulOpposite.op g) = loopDeck x₀ g⁻¹ := by
+  have hmonodromy : ((isCoveringMap x₀).monodromy g.toPath
+      ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
+        change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
+        rw [Set.mem_singleton_iff, proj_ofBasedPath]
+        exact BasedPath.endpoint_ofPath _⟩ :
+        UniversalCover x₀) =
+      g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
+    obtain ⟨γ, hγ⟩ := Quotient.exists_rep g.toPath
+    rw [← hγ]
+    change (isCoveringMap x₀).liftPath γ
+        (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 = _
+    let δ : Path (BasedPath.endpoint (BasedPath.ofPath (Path.refl x₀))) x₀ :=
+      γ.cast (BasedPath.endpoint_ofPath _) rfl
+    calc
+      _ = (isCoveringMap x₀).liftPath δ
+          (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 := by
+        congr 1
+      _ = ofBasedPath x₀ (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ) :=
+        liftPath_apply_one_eq_ofBasedPath_append δ
+      _ = g⁻¹ • ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)) := by
+        rw [ofBasedPath_ofPath, Path.Homotopic.Quotient.mk_refl, inv_smul_mk]
+        rw [ofBasedPath_def]
+        let hend := BasedPath.endpoint_append (BasedPath.ofPath (Path.refl x₀)) δ
+        apply UniversalCover.ext hend
+        have hcast : HEq
+            (Path.Homotopic.Quotient.mk
+              (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ).toPath)
+            (Path.Homotopic.Quotient.mk
+              ((Path.refl x₀).trans γ)) :=
+          Path.Homotopic.hpath_hext (fun _ ↦ rfl)
+        refine hcast.trans (heq_of_eq ?_)
+        change Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ) =
+          g.toPath.trans (Path.Homotopic.Quotient.refl x₀)
+        rw [← hγ, Path.Homotopic.Quotient.mk_trans, Path.Homotopic.Quotient.mk_refl,
+          Path.Homotopic.Quotient.refl_trans]
+        exact (Path.Homotopic.Quotient.trans_refl _).symm
+  apply (Deck.IsRegular.deckFundamentalGroupEquiv_symm_op_eq_iff
     (isRegular_proj x₀) (isCoveringMap x₀)
-      ⟨mk x₀ (Path.Homotopic.Quotient.refl x₀), rfl⟩ φ g
+      ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)), by
+        change proj (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) ∈ ({x₀} : Set X)
+        rw [Set.mem_singleton_iff, proj_ofBasedPath]
+        exact BasedPath.endpoint_ofPath _⟩
+      g (loopDeck x₀ g⁻¹)).2
+  simpa only [Deck.smul_eq_apply, loopDeck_apply] using hmonodromy
 
 end TauCeti.UniversalCover
