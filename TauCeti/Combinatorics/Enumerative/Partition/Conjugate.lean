@@ -170,6 +170,7 @@ theorem rowLens_diagramOf {n : ℕ} (μ : n.Partition) :
 
 /-- The row lengths of the Young diagram of a partition are its decreasingly sorted parts, padded
 by zeros. -/
+@[simp]
 theorem rowLen_diagramOf {n : ℕ} (ν : n.Partition) (i : ℕ) :
     (diagramOf ν).rowLen i = (ν.parts.sort (· ≥ ·)).getD i 0 := by
   rw [← YoungDiagram.getD_rowLens, rowLens_diagramOf]
