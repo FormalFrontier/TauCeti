@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Normed.Module.Convex
 public import Mathlib.Topology.Connected.LocallyConnected
 public import Mathlib.Topology.MetricSpace.Bounded
 public import Mathlib.Topology.MetricSpace.Pseudo.Lemmas
+import TauCeti.Topology.LocallyConnected
 
 /-!
 # Uniform local connectedness
@@ -65,6 +66,8 @@ it, and no Lebesgue-number consequence of this shape.
 * `TauCeti.IsCompact.isUniformlyLocallyConnected_iff` — on a compact set the two notions agree.
 * `TauCeti.Convex.isUniformlyLocallyConnected` — a convex set in a real normed space is uniformly
   locally connected, with the joining segment as the connected set.
+* `TauCeti.isUniformlyLocallyConnected_image_of_isCompact` — a continuous image of a compact,
+  locally connected set is uniformly locally connected.
 
 ## References
 
@@ -96,13 +99,28 @@ def IsUniformlyLocallyConnected (s : Set X) : Prop :=
   ∀ ε > 0, ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
     ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ ∀ x ∈ C, ∀ y ∈ C, dist x y ≤ ε
 
+/-- `TauCeti.IsUniformlyLocallyConnected` restated as an `Iff`, so that it can be established and
+consumed in its native pairwise-distance form without unfolding the definition — which downstream
+modules cannot do, the definition being public but not exposed. -/
+theorem isUniformlyLocallyConnected_def :
+    IsUniformlyLocallyConnected s ↔ ∀ ε > 0, ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
+      ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ ∀ x ∈ C, ∀ y ∈ C, dist x y ≤ ε := Iff.rfl
+
+/-- The elimination form of `TauCeti.IsUniformlyLocallyConnected`: each `ε > 0` comes with a `δ > 0`
+serving every pair of points of `s` at distance less than `δ` at once. -/
+theorem IsUniformlyLocallyConnected.exists_isConnected (h : IsUniformlyLocallyConnected s) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
+      ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ ∀ x ∈ C, ∀ y ∈ C, dist x y ≤ ε :=
+  isUniformlyLocallyConnected_def.mp h ε hε
+
 /-- The diameter phrasing of `TauCeti.IsUniformlyLocallyConnected`: the joining set is bounded and
 has diameter at most `ε`. -/
 theorem IsUniformlyLocallyConnected.exists_isConnected_diam_le (h : IsUniformlyLocallyConnected s)
     {ε : ℝ} (hε : 0 < ε) :
     ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
       ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ Bornology.IsBounded C ∧ diam C ≤ ε := by
-  obtain ⟨δ, hδ, hjoin⟩ := h ε hε
+  obtain ⟨δ, hδ, hjoin⟩ := h.exists_isConnected hε
   refine ⟨δ, hδ, fun a ha b hb hab => ?_⟩
   obtain ⟨C, hCs, hCconn, hCa, hCb, hCsmall⟩ := hjoin a ha b hb hab
   exact ⟨C, hCs, hCconn, hCa, hCb, isBounded_iff.mpr ⟨ε, hCsmall⟩,
@@ -113,7 +131,8 @@ established, and not just used, from joining sets that are bounded and of diamet
 theorem isUniformlyLocallyConnected_iff_exists_isConnected_diam_le :
     IsUniformlyLocallyConnected s ↔ ∀ ε > 0, ∃ δ > 0, ∀ a ∈ s, ∀ b ∈ s, dist a b < δ →
       ∃ C ⊆ s, IsConnected C ∧ a ∈ C ∧ b ∈ C ∧ Bornology.IsBounded C ∧ diam C ≤ ε := by
-  refine ⟨fun h ε hε => h.exists_isConnected_diam_le hε, fun h ε hε => ?_⟩
+  refine ⟨fun h ε hε => h.exists_isConnected_diam_le hε,
+    fun h => isUniformlyLocallyConnected_def.mpr fun ε hε => ?_⟩
   obtain ⟨δ, hδ, hjoin⟩ := h ε hε
   refine ⟨δ, hδ, fun a ha b hb hab => ?_⟩
   obtain ⟨C, hCs, hCconn, hCa, hCb, hCbdd, hCdiam⟩ := hjoin a ha b hb hab
@@ -123,7 +142,7 @@ theorem isUniformlyLocallyConnected_iff_exists_isConnected_diam_le :
 /-- The empty set is uniformly locally connected, vacuously. -/
 @[simp]
 theorem isUniformlyLocallyConnected_empty : IsUniformlyLocallyConnected (∅ : Set X) :=
-  fun ε hε => ⟨ε, hε, by simp⟩
+  isUniformlyLocallyConnected_def.mpr fun ε hε => ⟨ε, hε, by simp⟩
 
 /-- **A convex set is uniformly locally connected**: two points at distance less than `ε / 2` are
 joined by the segment between them, which stays in the set by convexity and, by
@@ -133,7 +152,8 @@ first endpoint, so its points are pairwise within `ε`.
 This is the basic example, and the one the closed disc supplies in the conformal application. -/
 protected theorem Convex.isUniformlyLocallyConnected {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] {t : Set E} (ht : Convex ℝ t) : IsUniformlyLocallyConnected t := by
-  refine fun ε hε => ⟨ε / 2, by linarith, fun a ha b hb hab => ⟨segment ℝ a b,
+  refine isUniformlyLocallyConnected_def.mpr fun ε hε => ⟨ε / 2, by linarith,
+    fun a ha b hb hab => ⟨segment ℝ a b,
     ht.segment_subset ha hb, (convex_segment a b).isConnected ⟨a, left_mem_segment ℝ a b⟩,
     left_mem_segment ℝ a b, right_mem_segment ℝ a b, fun x hx y hy => ?_⟩⟩
   have hx' := mem_closedBall.mp (segment_subset_closedBall_left a b hx)
@@ -152,6 +172,7 @@ in a common member of the cover, whose points are pairwise within `ε` of one an
 protected theorem IsCompact.isUniformlyLocallyConnected [LocallyConnectedSpace s]
     (hs : IsCompact s) : IsUniformlyLocallyConnected s := by
   haveI : CompactSpace s := isCompact_iff_compactSpace.mp hs
+  rw [isUniformlyLocallyConnected_def]
   intro ε hε
   have hε2 : (0 : ℝ) < ε / 2 := by linarith
   -- The cover of the subspace by the connected components of the small balls.
@@ -196,7 +217,7 @@ theorem IsUniformlyLocallyConnected.locallyConnectedSpace (h : IsUniformlyLocall
   intro x U hU
   obtain ⟨ε, hε, hball⟩ := Metric.mem_nhds_iff.mp hU
   have hε2 : (0 : ℝ) < ε / 2 := by linarith
-  obtain ⟨δ, hδ, hjoin⟩ := h (ε / 2) hε2
+  obtain ⟨δ, hδ, hjoin⟩ := h.exists_isConnected hε2
   refine ⟨⋃₀ {C : Set s | IsPreconnected C ∧ x ∈ C ∧ C ⊆ closedBall x (ε / 2)}, ?_,
     isPreconnected_sUnion x _ (fun C hC => hC.2.1) fun C hC => hC.1, ?_⟩
   · -- The union contains the ball of radius `δ` about `x`, hence is a neighbourhood of `x`.
@@ -220,5 +241,16 @@ compactness; the backward one is `TauCeti.IsCompact.isUniformlyLocallyConnected`
 protected theorem IsCompact.isUniformlyLocallyConnected_iff (hs : IsCompact s) :
     IsUniformlyLocallyConnected s ↔ LocallyConnectedSpace s :=
   ⟨fun h => h.locallyConnectedSpace, fun h => haveI := h; IsCompact.isUniformlyLocallyConnected hs⟩
+
+/-! ## Continuous images -/
+
+/-- **A continuous image of a compact, locally connected set is uniformly locally connected.** The
+uniform companion of `TauCeti.locallyConnectedSpace_image_of_isCompact`: that lemma makes the image
+locally connected, the image is compact, and on a compact set the two notions agree. -/
+theorem isUniformlyLocallyConnected_image_of_isCompact {Z : Type*} [TopologicalSpace Z] [T2Space X]
+    {t : Set Z} {g : Z → X} [LocallyConnectedSpace t] (ht : IsCompact t) (hg : ContinuousOn g t) :
+    IsUniformlyLocallyConnected (g '' t) :=
+  haveI := locallyConnectedSpace_image_of_isCompact ht hg
+  IsCompact.isUniformlyLocallyConnected (ht.image_of_continuousOn hg)
 
 end TauCeti
