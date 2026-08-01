@@ -123,7 +123,7 @@ variable [Semiring k] {H K : Type*} [Monoid H] [Monoid K] {V : Type*} [AddCommMo
 under `ρ ∘ e` is invariant under `ρ`, because `e` is onto.  Both directions keep the underlying
 submodule, so this is the order isomorphism `resFunctorEquiv` induces on subobjects. -/
 def resSubrepresentationOrderIso (e : H ≃* K) (ρ : Representation k K V) :
-    Subrepresentation (ρ.comp e.toMonoidHom) ≃o Subrepresentation ρ where
+    Subrepresentation (ρ.comp (e : H →* K)) ≃o Subrepresentation ρ where
   toFun S :=
     { toSubmodule := S.toSubmodule
       apply_mem_toSubmodule := fun h v hv ↦ by
@@ -138,7 +138,7 @@ def resSubrepresentationOrderIso (e : H ≃* K) (ρ : Representation k K V) :
 /-- The forward invariant-subspace correspondence preserves the underlying submodule. -/
 @[simp]
 theorem resSubrepresentationOrderIso_apply_toSubmodule (e : H ≃* K) (ρ : Representation k K V)
-    (S : Subrepresentation (ρ.comp e.toMonoidHom)) :
+    (S : Subrepresentation (ρ.comp (e : H →* K))) :
     (resSubrepresentationOrderIso e ρ S).toSubmodule = S.toSubmodule :=
   (rfl)
 
@@ -161,7 +161,7 @@ lattices. -/
 @[simp]
 theorem isIrreducible_comp_equiv_iff {V : Type*} [AddCommGroup V] [Module k V] (e : H ≃* K)
     (ρ : Representation k K V) :
-    Representation.IsIrreducible (ρ.comp e.toMonoidHom) ↔ Representation.IsIrreducible ρ :=
+    Representation.IsIrreducible (ρ.comp (e : H →* K)) ↔ Representation.IsIrreducible ρ :=
   (resSubrepresentationOrderIso e ρ).isSimpleOrder_iff
 
 end Irreducible
