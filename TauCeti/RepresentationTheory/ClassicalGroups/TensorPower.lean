@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
-public import TauCeti.RepresentationTheory.Symmetric.TensorAction
+public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
