@@ -242,6 +242,8 @@ private theorem candidateGenusFieldRoot_independent {d : ℤ} (hd : Squarefree d
     (fun P ↦ hprime P.val P.property) Subtype.val_injective
     (fun P Q hP hQ ↦ heven_unique P.val P.property Q.val Q.property hP hQ)
 
+/-- The rational algebra structure inherited by the adjoin presentation of the candidate genus
+field. -/
 noncomputable local instance candidateGenusFieldAdjoinAlgebra {d : ℤ} (hd : Squarefree d) :
     Algebra ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
   (adjoin ℚ (Set.range (genusFieldRoot hd))).algebra'
