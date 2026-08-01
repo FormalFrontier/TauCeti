@@ -29,8 +29,12 @@ the inner product is conjugate-linear in its first argument.
 * `TauCeti.ContRepresentation.schur_orthogonality_basis`: the corresponding Kronecker-delta
   formula in an orthonormal basis.
 
-This completes the first-orthogonality item of Layer 4 of the
-[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
+This supplies the two formulas pinned by the first-orthogonality item of Layer 4 of the
+[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
+that item's remaining request, checking the convention against `fourierBasis` on `AddCircle`, waits
+on the `AddCircle` material and is not done here. The roadmap sketches the basis identity as the
+primitive one; here the coordinate-free statement is the primitive and the basis identity is read
+off from it, which is the shorter route and fixes the same convention.
 The mathematical argument follows Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 -/
 
