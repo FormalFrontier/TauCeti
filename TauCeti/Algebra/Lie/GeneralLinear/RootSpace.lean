@@ -91,15 +91,7 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {R : Type*} [CommRing R] {n : Type*} [DecidableEq n] [Fintype n]
 
-/-! ### The adjoint action of the diagonal Cartan, entrywise -/
-
-/-- The adjoint action of an element of the diagonal Cartan subalgebra scales the `(a, b)` entry of
-a matrix by `A a a - A b b`. -/
-theorem toEnd_diagonalCartan_apply (A : diagonalCartan R n) (B : Matrix n n R) (a b : n) :
-    LieModule.toEnd R (diagonalCartan R n) (Matrix n n R) A B a b
-      = ((A : Matrix n n R) a a - (A : Matrix n n R) b b) * B a b := by
-  rw [LieModule.toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module,
-    lie_apply_of_mem_diagonalCartan A.2]
+/-! ### The adjoint action of the diagonal Cartan as a diagonal operator -/
 
 /-- **`ad A` is a diagonal operator** for `A` in the diagonal Cartan subalgebra: in the matrix-unit
 basis it is the diagonal matrix whose `(a, b)` entry is `A a a - A b b`. This identification is what
