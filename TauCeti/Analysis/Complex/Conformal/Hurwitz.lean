@@ -45,9 +45,12 @@ Everything is stated for an arbitrary value `v`, not only for `v = 0`: applying 
 recovers the classical phrasing `TauCeti.hurwitz`.
 
 Throughout, every hypothesis on the family — holomorphy, omitting a value, injectivity — is
-assumed only *eventually along `l`*, that is for all sufficiently large `i` rather than for every
-`i`. That is the form limit arguments produce and consume, and it costs nothing: finitely many
-badly behaved approximants cannot affect a locally uniform limit.
+assumed only *eventually along `l`*: it holds on some index set belonging to `l`, not on every
+index. Along a sequence that reads "for all sufficiently large `i`", the phrasing the docstrings
+below use; for a general filter it says only that the indices where the hypothesis fails are
+excluded by a member of `l`, whose complement need not be finite. That is the form limit arguments
+produce and consume, and it costs nothing: the conclusions are eventual along `l` as well, so
+indices outside a set of `l` never enter.
 
 The corollary usually quoted alongside is the injectivity form: a locally uniform limit of
 *injective* holomorphic functions is injective or constant. That is the version the Riemann mapping
