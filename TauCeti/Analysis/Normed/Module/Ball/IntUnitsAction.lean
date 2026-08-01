@@ -40,7 +40,7 @@ namespace Sphere
 variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- The homomorphism that regards an integer unit as a real scalar of norm one. -/
-private def intUnitsToUnitSphere : ℤˣ →* sphere (0 : ℝ) 1 where
+def intUnitsToUnitSphere : ℤˣ →* sphere (0 : ℝ) 1 where
   toFun u := ⟨(u : ℤ), by
     obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
   map_one' := Subtype.ext (by simp)
@@ -55,11 +55,7 @@ private theorem coe_sphere_smul {r : ℝ} (c : sphere (0 : ℝ) 1)
 /-- The two integer units act on every sphere centred at zero by the identity and the antipodal
 map. -/
 instance instMulActionIntUnitsSphere {r : ℝ} : MulAction ℤˣ (sphere (0 : E) r) where
-  __ := MulAction.compHom _ ({
-    toFun u := ⟨(u : ℤ), by
-      obtain rfl | rfl := Int.units_eq_one_or u <;> simp⟩
-    map_one' := Subtype.ext (by simp)
-    map_mul' u v := Subtype.ext (by simp) } : ℤˣ →* sphere (0 : ℝ) 1)
+  __ := MulAction.compHom _ intUnitsToUnitSphere
 
 /-- The underlying vector of the integer-unit action is multiplication by the corresponding
 integer. -/
