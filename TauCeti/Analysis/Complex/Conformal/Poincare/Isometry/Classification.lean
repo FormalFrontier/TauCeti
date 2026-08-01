@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Poincare.MetricSpace
+public import TauCeti.Analysis.Complex.Conformal.Poincare.Isometry.Equiv
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
 public import TauCeti.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Analysis.InnerProductSpace.Basic
@@ -71,7 +71,11 @@ per point. Undoing the Moebius factor turns `e₁` into the rotation `u` and `g 
   isometry fixing the origin: it is a rotation or a rotated conjugation.
 * `TauCeti.exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbolicDist_map_eq`
   and its pseudo-hyperbolic companion — **the classification**.
-* `TauCeti.bijOn_ball_of_hyperbolicDist_map_eq` and
+* `TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star` — the
+  same statement for the bundled metric space `PoincareDisc` and the bundled automorphisms
+  `PoincareDisc.unitDiscStandardAutomorphismIsometryEquiv`.
+* `TauCeti.bijOn_ball_of_forall_pseudoHyperbolicExpr_map_eq`,
+  `TauCeti.bijOn_ball_of_hyperbolicDist_map_eq` and
   `TauCeti.PoincareDisc.bijective_of_isometry` — an isometric self-embedding of the Poincaré disc
   is a bijection.
 
@@ -104,17 +108,12 @@ variable {g : ℂ → ℂ}
 
 `ℂ` is a real inner product space in Mathlib (`InnerProductSpace ℝ ℂ`, with
 `Complex.inner : ⟪w, z⟫_ℝ = (z * conj w).re`), and that is the inner product used throughout. The
-three lemmas here only translate between it and the coordinates `Complex.re`, `Complex.im` in which
+two lemmas here only translate between it and the coordinates `Complex.re`, `Complex.im` in which
 the frame argument below reads off a point.
 -/
 
 /-- The real inner product of `ℂ`, viewed as the Euclidean plane, in coordinates. -/
 private lemma real_inner_eq (z w : ℂ) : ⟪z, w⟫_ℝ = z.re * w.re + z.im * w.im := by
-  simp only [Complex.inner, Complex.mul_re, Complex.conj_re, Complex.conj_im]
-  ring
-
-/-- The real part of `conj z * w` is the real inner product of `z` and `w`. -/
-private lemma re_conj_mul (z w : ℂ) : (conj z * w).re = ⟪z, w⟫_ℝ := by
   simp only [Complex.inner, Complex.mul_re, Complex.conj_re, Complex.conj_im]
   ring
 
@@ -174,7 +173,7 @@ private lemma eq_mul_I_or_eq_neg_mul_I {e₁ e₂ : ℂ} (h₁ : ‖e₁‖ = 1)
     (h : ⟪e₁, e₂⟫_ℝ = 0) : e₂ = e₁ * I ∨ e₂ = e₁ * (-I) := by
   have hmul : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', h₁]; norm_num
   have hrecover : e₁ * (conj e₁ * e₂) = e₂ := by rw [← mul_assoc, hmul, one_mul]
-  have hre : (conj e₁ * e₂).re = 0 := by rw [re_conj_mul, h]
+  have hre : (conj e₁ * e₂).re = 0 := by rw [mul_comm, ← Complex.inner e₁ e₂, h]
   have hnorm : ‖conj e₁ * e₂‖ = 1 := by rw [norm_mul, Complex.norm_conj, h₁, h₂, one_mul]
   have hsq : (conj e₁ * e₂).im ^ 2 = 1 := by
     have hns : Complex.normSq (conj e₁ * e₂) = 1 := by
@@ -243,7 +242,7 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
       Complex.ofReal_re, Complex.ofReal_im]
     ring
   have hre : ∀ z ∈ ball (0 : ℂ) 1, (conj e₁ * g z).re = z.re := fun z hz => by
-    rw [re_conj_mul]; exact hcoord₁ z hz
+    rw [mul_comm, ← Complex.inner e₁ (g z)]; exact hcoord₁ z hz
   refine ⟨e₁, hn₁, ?_⟩
   rcases eq_mul_I_or_eq_neg_mul_I hn₁ hn₂ horth with hcase | hcase
   · left
@@ -365,21 +364,24 @@ private lemma surjOn_ball_unitDiscStandardAutomorphismFormula {u b : ℂ} (hu : 
     (unitDiscStandardAutomorphismEquiv c (Complex.UnitDisc.mk b hb)) fun z => ?_).surjOn
   rw [coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc]
 
-/-- **An isometric self-embedding of the Poincaré disc is onto.** A self-map of the open unit disc
-preserving the hyperbolic distance is a bijection of the disc onto itself: the hyperbolic plane
-contains no proper isometric copy of itself. -/
-theorem bijOn_ball_of_hyperbolicDist_map_eq
+/-- **An isometric self-embedding of the Poincaré disc is onto, pseudo-hyperbolic form.** A
+self-map of the open unit disc preserving the pseudo-hyperbolic expression is a bijection of the
+disc onto itself: the hyperbolic plane contains no proper isometric copy of itself. The
+holomorphic map preserving it at a single pair of points is
+`TauCeti.bijOn_ball_of_pseudoHyperbolicExpr_map_eq`, from Schwarz--Pick rigidity. -/
+theorem bijOn_ball_of_forall_pseudoHyperbolicExpr_map_eq
     (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
-      hyperbolicDist (g z) (g w) = hyperbolicDist z w) :
+      pseudoHyperbolicExpr (g z) (g w) = pseudoHyperbolicExpr z w) :
     BijOn g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
   have hinj : InjOn g (ball (0 : ℂ) 1) := by
     intro z hz w hw hzw
     have hd := hg z hz w hw
-    rw [hzw, hyperbolicDist_self] at hd
-    exact (hyperbolicDist_eq_zero_iff_of_mem_ball hz hw).mp hd.symm
+    rw [hzw, pseudoHyperbolicExpr_eq_zero_of_eq rfl] at hd
+    exact (pseudoHyperbolicExpr_eq_zero_iff_of_mem_ball hz hw).mp hd.symm
   obtain ⟨u, b, hu, hb, hcase⟩ :=
-    exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbolicDist_map_eq hmaps hg
+    exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_pseudoHyperbolicExpr_map_eq
+      hmaps hg
   refine ⟨hmaps, hinj, ?_⟩
   rcases hcase with hcase | hcase
   · intro y hy
@@ -393,12 +395,29 @@ theorem bijOn_ball_of_hyperbolicDist_map_eq
     rw [hcase hcz]
     simpa only [Complex.conj_conj] using hzy
 
+/-- **An isometric self-embedding of the Poincaré disc is onto.** A self-map of the open unit disc
+preserving the hyperbolic distance is a bijection of the disc onto itself. -/
+theorem bijOn_ball_of_hyperbolicDist_map_eq
+    (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
+      hyperbolicDist (g z) (g w) = hyperbolicDist z w) :
+    BijOn g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+  bijOn_ball_of_forall_pseudoHyperbolicExpr_map_eq hmaps fun z hz w hw =>
+    (pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq (hmaps hz) (hmaps hw) hz hw).mpr
+      (hg z hz w hw)
+
 namespace PoincareDisc
 
-/-- **Every isometry of the Poincaré disc is a bijection.** Injectivity comes with any `Isometry`;
-surjectivity is the content. -/
-theorem bijective_of_isometry {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
-    Function.Bijective f := by
+/-- **The isometries of the Poincaré disc, bundled form.** Every isometry of the metric space
+`PoincareDisc` is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a`,
+or that automorphism precomposed with the conjugation `star` of the disc: the isometry group of
+`PoincareDisc` is `Aut(𝔻)` together with its orientation-reversing coset. -/
+theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
+    {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
+    ∃ (u : Circle) (a : Complex.UnitDisc),
+      (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a z) ∨
+        (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a
+          (Complex.UnitDisc.toPoincare (star (toUnitDisc z)))) := by
   classical
   set F : ℂ → ℂ := fun z =>
     if h : ‖z‖ < 1 then
@@ -422,12 +441,39 @@ theorem bijective_of_isometry {f : PoincareDisc → PoincareDisc} (hf : Isometry
       (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
     rw [hFval z hz', hFval w hw']
     simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
-  have hbij := bijOn_ball_of_hyperbolicDist_map_eq hFmaps hFiso
-  refine ⟨hf.injective, fun y => ?_⟩
-  obtain ⟨z, hz, hzy⟩ := hbij.surjOn (coe_mem_ball y)
-  refine ⟨Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z (mem_ball_zero_iff.mp hz)), ?_⟩
-  rw [hFval z (mem_ball_zero_iff.mp hz)] at hzy
-  exact toUnitDisc.injective (Complex.UnitDisc.coe_injective hzy)
+  -- `F` is the scalar representative of `f`, so the scalar classification applies to it.
+  have hFz : ∀ z : PoincareDisc, F (toUnitDisc z : ℂ) = (toUnitDisc (f z) : ℂ) := fun z => by
+    rw [hFval _ (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+  obtain ⟨u, b, hu, hb, hcase⟩ :=
+    exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbolicDist_map_eq
+      hFmaps hFiso
+  -- Name the rotation as an element of `Circle` and the centre as a point of the bundled disc.
+  obtain ⟨c, hc⟩ : ∃ c : Circle, (c : ℂ) = u := ⟨⟨u, mem_sphere_zero_iff_norm.2 hu⟩, rfl⟩
+  refine ⟨c, Complex.UnitDisc.mk b hb, ?_⟩
+  rcases hcase with hcase | hcase
+  · refine Or.inl fun z => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)
+    rw [unitDiscStandardAutomorphismIsometryEquiv_apply, toUnitDisc_toPoincare,
+      coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc, ← hFz z]
+    exact hcase (coe_mem_ball z)
+  · refine Or.inr fun z => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)
+    rw [unitDiscStandardAutomorphismIsometryEquiv_apply, toUnitDisc_toPoincare,
+      coe_unitDiscStandardAutomorphismEquiv_apply, Complex.UnitDisc.coe_mk, hc,
+      toUnitDisc_toPoincare, Complex.UnitDisc.coe_star, ← hFz z]
+    exact hcase (coe_mem_ball z)
+
+/-- **Every isometry of the Poincaré disc is a bijection.** Injectivity comes with any `Isometry`;
+surjectivity is the content, and it is read off the classification: both a standard automorphism
+and the conjugation are bijections. -/
+theorem bijective_of_isometry {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
+    Function.Bijective f := by
+  have hstar : Function.Involutive
+      fun z : PoincareDisc => Complex.UnitDisc.toPoincare (star (toUnitDisc z)) := fun z => by
+    simp
+  obtain ⟨u, a, hcase | hcase⟩ :=
+    exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star hf
+  · exact funext hcase ▸ (unitDiscStandardAutomorphismIsometryEquiv u a).bijective
+  · exact funext hcase ▸
+      (unitDiscStandardAutomorphismIsometryEquiv u a).bijective.comp hstar.bijective
 
 end PoincareDisc
 
