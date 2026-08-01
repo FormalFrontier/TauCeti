@@ -71,16 +71,18 @@ lemma of_mul_intCast_eq_diagonal_mul [Fintype B] [DecidableEq B] (d : B → ℚ)
 
 end Matrix
 
-/-- A square integer matrix is **of finite type** when it is a generalized Cartan matrix - diagonal
-entries `2`, nonpositive off-diagonal entries, and a symmetric vanishing pattern - which is
-symmetrizable with positive definite symmetrization: there is a positive rational vector `d` making
-`fun i j ↦ d i * A i j` positive definite (in particular symmetric).
+/-- A finite square integer matrix is **of finite type** when it is a generalized Cartan matrix -
+diagonal entries `2`, nonpositive off-diagonal entries, and a symmetric vanishing pattern - which
+is symmetrizable with positive definite symmetrization: there is a positive rational vector `d`
+making `fun i j ↦ d i * A i j` positive definite (in particular symmetric).
 
 The Cartan matrices of finite root systems are exactly the matrices of this kind, up to
 irreducibility; `TauCeti.isFiniteType_cartanMatrix` proves one direction. -/
-def IsFiniteType (A : Matrix B B ℤ) : Prop :=
+def IsFiniteType [Fintype B] (A : Matrix B B ℤ) : Prop :=
   (∀ i, A i i = 2) ∧ (∀ i j, i ≠ j → A i j ≤ 0) ∧ (∀ i j, A i j = 0 → A j i = 0) ∧
     ∃ d : B → ℚ, (∀ i, 0 < d i) ∧ (Matrix.of fun i j ↦ d i * (A i j : ℚ)).PosDef
+
+variable [Fintype B]
 
 /-- **Building a finite-type matrix.** The symmetric vanishing pattern demanded by
 `TauCeti.IsFiniteType` need not be checked: a positive symmetrizer already forces
@@ -117,7 +119,8 @@ lemma exists_symmetrizer (h : IsFiniteType A) :
 symmetrizer along the same injection restricts the symmetrization, and positive definiteness passes
 to principal submatrices. This is the form in which a forbidden subdiagram excludes every diagram
 containing it. -/
-theorem submatrix {C : Type*} (h : IsFiniteType A) {e : C → B} (he : Function.Injective e) :
+theorem submatrix {C : Type*} [Fintype C] (h : IsFiniteType A) {e : C → B}
+    (he : Function.Injective e) :
     IsFiniteType (A.submatrix e e) := by
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
   refine ⟨fun i ↦ h.apply_self _, fun i j hij ↦ h.apply_le_zero_of_ne fun hc ↦ hij (he hc),
@@ -170,7 +173,7 @@ theorem apply_mul_apply_le_three_of_ne (h : IsFiniteType A) {i j : B} (hij : i �
 /-- **A finite-type matrix is nonsingular.** Its symmetrization is a positive definite matrix over
 a field, hence invertible, and the symmetrizer contributes only a nonzero diagonal factor. This is
 the elimination tool for the extended Dynkin diagrams, whose Cartan matrices are singular. -/
-theorem det_ne_zero [Fintype B] [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
+theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
   obtain ⟨d, -, hpd⟩ := h.exists_symmetrizer
   rw [Matrix.of_mul_intCast_eq_diagonal_mul] at hpd
   have hu := hpd.isUnit
