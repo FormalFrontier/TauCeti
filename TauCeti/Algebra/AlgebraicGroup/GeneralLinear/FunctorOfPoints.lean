@@ -62,14 +62,14 @@ section Pointwise
 variable {A : Type w} [CommRing A] [Algebra R A]
 
 /-- The matrix of values of a point on the localized generic matrix. -/
-noncomputable def matrixOfPoint
+private noncomputable def matrixOfPoint
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) : Matrix (Fin n) (Fin n) A :=
   (localizedGenericMatrix R n).map
     (f.ofConv.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom)
 
 /-- An entry of `matrixOfPoint f` is the value of `f` on the corresponding bundled coordinate. -/
 @[simp]
-theorem matrixOfPoint_apply
+private theorem matrixOfPoint_apply
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) (i j : Fin n) :
     matrixOfPoint n f i j =
       f.ofConv (coordinateHopfAlgebraAlgEquiv R n
@@ -275,24 +275,12 @@ section Functor
 
 /-- The group-valued functor sending a commutative `R`-algebra to its general linear group, before
 the universe lift used by `generalLinearFunctor`. -/
-noncomputable abbrev generalLinearFunctorUnlifted :
+private noncomputable abbrev generalLinearFunctorUnlifted :
     CommAlgCat.{w} R ⥤ GrpCat.{w} where
   obj A := GrpCat.of (Matrix.GeneralLinearGroup (Fin n) (A : Type w))
   map phi := GrpCat.ofHom (Matrix.GeneralLinearGroup.map phi.hom.toRingHom)
   map_id _ := rfl
   map_comp _ _ := rfl
-
-/-- The object part of `generalLinearFunctorUnlifted` is the ordinary general linear group. -/
-theorem generalLinearFunctorUnlifted_obj (A : CommAlgCat.{w} R) :
-    (generalLinearFunctorUnlifted (R := R) n).obj A =
-      GrpCat.of (Matrix.GeneralLinearGroup (Fin n) A) :=
-  rfl
-
-/-- The morphism part of `generalLinearFunctorUnlifted` applies the value-algebra map entrywise. -/
-theorem generalLinearFunctorUnlifted_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
-    (generalLinearFunctorUnlifted (R := R) n).map phi =
-      GrpCat.ofHom (Matrix.GeneralLinearGroup.map phi.hom.toRingHom) :=
-  rfl
 
 /-- The group-valued functor sending a commutative `R`-algebra to its general linear group and
 a value-algebra morphism to entrywise application. Its values are universe-lifted so that its
