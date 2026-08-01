@@ -30,20 +30,21 @@ central simple `ℝ`-algebra of degree `2`. This file runs the opposite isomorph
 `ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`.
 
 The second follows from the first because quaternion conjugation is an `ℝ`-algebra isomorphism
-`ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (Mathlib's `Quaternion.starAe`): the quaternions are their own opposite. So
-the Brauer class of `ℍ[ℝ]` is its own inverse.
+`ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (Mathlib's `Quaternion.starAe`): the quaternions are their own opposite.
 
-That class is not the identity: `TauCeti.Quaternion.isEmpty_algEquiv_matrix` says `ℍ[ℝ]` is not
-isomorphic to any matrix algebra of size at least two, and the only such candidate in dimension `4`
-is `Matrix (Fin 2) (Fin 2) ℝ`. The two facts together say that the class of `ℍ[ℝ]` has order exactly
-two, which is the content of `BrauerGroup ℝ ≃ ℤ/2` that does not need the classification of real
-division algebras. That classification, and with it the statement that the class of `ℍ[ℝ]`
-generates, is a separate long-term target and is not proved here.
+Everything here is an isomorphism of `ℝ`-algebras; `BrauerGroup ℝ` is not yet a group in this
+library, so nothing below is a statement about it. Informally, the isomorphisms exhibit the Brauer
+class of `ℍ[ℝ]` as **self-inverse**. Two further steps, neither taken here, would turn that into the
+order of the class. Saying the class is nontrivial needs the passage from nonsplitting to Brauer
+nontriviality applied to `TauCeti.Quaternion.isEmpty_algEquiv_matrix`, which says `ℍ[ℝ]` is
+isomorphic to no matrix algebra of size at least two -- the only candidate in dimension `4` being
+`Matrix (Fin 2) (Fin 2) ℝ`. Saying that `BrauerGroup ℝ ≃ ℤ/2` needs, beyond that, the classification
+of real division algebras, to know the class generates. Both are separate long-term targets.
 
 The matrix size is `4` and not `2`: it is the **dimension** `Module.finrank ℝ ℍ[ℝ] = 4` of the
 algebra, not its degree `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`. Squaring the degree is exactly what taking
-the tensor product with the opposite algebra does, and
-`TauCeti.Quaternion.deg_tensorProduct_self` records it.
+the tensor product with the opposite algebra does, and the degree example at the end of the file
+checks it.
 
 ## Main results
 
@@ -51,7 +52,6 @@ the tensor product with the opposite algebra does, and
   `ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]ᵐᵒᵖ ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`.
 * `TauCeti.Quaternion.tensorSelfAlgEquivMatrix`: `ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`,
   the roadmap's worked example.
-* `TauCeti.Quaternion.deg_tensorProduct_self`: the tensor square has degree `4`.
 
 ## References
 
@@ -83,28 +83,27 @@ noncomputable def tensorOpAlgEquivMatrix :
 isomorphism `ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (`Quaternion.starAe`), so the tensor square of `ℍ[ℝ]` is its tensor
 product with its own opposite, which `TauCeti.Quaternion.tensorOpAlgEquivMatrix` splits.
 
-In Brauer-group language: the class of `ℍ[ℝ]` is its own inverse. It is not the identity class, by
-`TauCeti.Quaternion.isEmpty_algEquiv_matrix`, so it has order exactly two. -/
+In Brauer-group language this exhibits the class of `ℍ[ℝ]` as its own inverse. Whether that class is
+the identity is a separate question, not settled by this isomorphism; see the module docstring. -/
 noncomputable def tensorSelfAlgEquivMatrix :
     ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ :=
   (Algebra.TensorProduct.congr (AlgEquiv.refl (A₁ := ℍ[ℝ])) _root_.Quaternion.starAe).trans
     tensorOpAlgEquivMatrix
 
-/-- The tensor square of the real quaternions has degree `4`: tensoring a central simple algebra
-with its opposite squares the degree, and `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`.
-
-The proof is the multiplicativity of the degree, so this is an independent check on the matrix size
-in `TauCeti.Quaternion.tensorSelfAlgEquivMatrix`: `4` really is `2 · 2`, and not the degree `2` of
-either factor. Not a `simp` lemma, because `TauCeti.Algebra.deg_tensorProduct` already rewrites the
-left-hand side to `TauCeti.Algebra.deg ℝ ℍ[ℝ] * TauCeti.Algebra.deg ℝ ℍ[ℝ]`. -/
-theorem deg_tensorProduct_self : Algebra.deg ℝ (ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]) = 4 := by
+/-- The tensor square of the real quaternions has degree `4`, by the multiplicativity of the degree
+and `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`. This is an independent check on the matrix size in
+`TauCeti.Quaternion.tensorSelfAlgEquivMatrix`: `4` really is `2 · 2`, and not the degree `2` of
+either factor. A caller wanting the numeral gets it the same way, from
+`TauCeti.Algebra.deg_tensorProduct`, so this is an example rather than a lemma. -/
+example : Algebra.deg ℝ (ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]) = 4 := by
   have h : Algebra.deg ℝ ℍ[ℝ] = 2 :=
     Algebra.deg_eq_of_finrank_eq_sq (by rw [_root_.Quaternion.finrank_eq_four]; norm_num)
   rw [Algebra.deg_tensorProduct, h]
 
 /-- The tensor square is split, but `ℍ[ℝ]` itself is not: the only matrix algebra over `ℝ` of
 dimension `4` is `Matrix (Fin 2) (Fin 2) ℝ`, and `ℍ[ℝ]` is a division algebra, so no isomorphism
-exists. This is the second half of "the Brauer class of `ℍ[ℝ]` has order exactly two". -/
+exists. This is what a passage from nonsplitting to Brauer nontriviality would consume, to say that
+the self-inverse class of `ℍ[ℝ]` is not the identity. -/
 example : IsEmpty (ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 2) (Fin 2) ℝ) :=
   isEmpty_algEquiv_matrix ℝ (Fin 2)
 

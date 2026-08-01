@@ -4,13 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `TauCeti.Algebra.CentralSimple.Degree` is imported publicly: `TauCeti.Algebra.deg` appears in the
--- statement of `TauCeti.Algebra.deg_tensorProduct_mulOpposite` below. It also re-exports
--- `TauCeti.Algebra.CentralSimple.TensorProduct`, and with it the simplicity instance
--- `TauCeti.IsSimpleRing.tensorProduct` that makes `A ⊗[K] Aᵐᵒᵖ` simple -- the fact the whole file
--- rests on -- as well as `Mathlib.RingTheory.TensorProduct.Basic` (the `⊗[K]` notation and the
--- algebra structure on `A ⊗[K] Aᵐᵒᵖ`) and `Mathlib.Algebra.Central.Basic`, which is why none of
--- those is imported again here.
+-- `TauCeti.Algebra.CentralSimple.Degree` is imported publicly: it supplies the dimension count
+-- `TauCeti.Algebra.finrank_tensorProduct_mulOpposite` that the surjectivity proof below runs on,
+-- and it re-exports `TauCeti.Algebra.CentralSimple.TensorProduct`, and with it the simplicity
+-- instance `TauCeti.IsSimpleRing.tensorProduct` that makes `A ⊗[K] Aᵐᵒᵖ` simple -- the fact the
+-- whole file rests on -- as well as `Mathlib.RingTheory.TensorProduct.Basic` (the `⊗[K]` notation
+-- and the algebra structure on `A ⊗[K] Aᵐᵒᵖ`, both of which occur in the statements below) and
+-- `Mathlib.Algebra.Central.Basic`, which is why none of those is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
 -- `AlgHom.mulLeftRight` and `IsAzumaya` appear in the statements below, and `Matrix` together with
 -- `algEquivMatrix` and `Module.finBasisOfFinrankEq` in the type and the body of the opposite
@@ -40,7 +40,9 @@ the tensor product of `A` with its opposite is a full matrix algebra, hence Brau
 
 The matrix size is `n = Module.finrank K A`, **not** the degree: for a central simple algebra of
 degree `d` one has `Module.finrank K A = d ^ 2`, so this is `Matrix (Fin (d ^ 2)) (Fin (d ^ 2)) K`.
-That is recorded as `TauCeti.Algebra.deg_tensorProduct_mulOpposite`.
+The dimension and degree counts this rests on are general facts about `A ⊗[K] Aᵐᵒᵖ` and live with
+the rest of the degree API, as `TauCeti.Algebra.finrank_tensorProduct_mulOpposite` and
+`TauCeti.Algebra.deg_tensorProduct_mulOpposite`.
 
 ## The proof
 
@@ -50,7 +52,8 @@ computation with the map.
 *Injectivity* is simplicity: `Aᵐᵒᵖ` is simple because `A` is, so `A ⊗[K] Aᵐᵒᵖ` is simple by
 `TauCeti.IsSimpleRing.tensorProduct` (this is where centrality of `A` enters), and a ring
 homomorphism out of a simple ring into a nontrivial ring is injective (`RingHom.injective`).
-No finite-dimensionality is used here.
+No finite-dimensionality is used here, and the half is stated on its own as
+`TauCeti.IsSimpleRing.mulLeftRight_injective`.
 
 *Surjectivity* is a dimension count: `A ⊗[K] Aᵐᵒᵖ` and `Module.End K A` both have dimension `n ^ 2`
 over `K`, so an injective `K`-linear map between them is surjective. This is the only place
@@ -66,11 +69,15 @@ subalgebra of the `4`-dimensional `Module.End ℝ ℂ`.
 
 ## Main results
 
-* `TauCeti.IsSimpleRing.mulLeftRight_bijective`: **the Azumaya map of a finite-dimensional central
-  simple algebra is bijective**, and its packaging `TauCeti.IsSimpleRing.isAzumaya`: such an algebra
-  is an Azumaya algebra over its base field.
+* `TauCeti.IsSimpleRing.mulLeftRight_injective`: **the Azumaya map of a central simple algebra is
+  injective**, with no finiteness hypothesis, and
+  `TauCeti.IsSimpleRing.mulLeftRight_bijective`: **for a finite-dimensional one it is bijective**,
+  with its packaging `TauCeti.IsSimpleRing.isAzumaya`: such an algebra is an Azumaya algebra over
+  its base field.
 * `TauCeti.Algebra.tensorOpAlgEquivEnd`: the resulting isomorphism
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A`.
+* `TauCeti.Algebra.endAlgEquivMatrix`: the matrix half of the composite,
+  `Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `K`-algebra of dimension `n`.
 * `TauCeti.Algebra.tensorOpAlgEquivMatrix`: **the opposite isomorphism**
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `n` with `Module.finrank K A = n`.
 
@@ -88,8 +95,9 @@ the two. Apply it with `haveI` where an `IsAzumaya` hypothesis is wanted.
 proof `Module.finrank K A = n`, rather than using `Module.finrank K A` itself. Instantiating `n` at
 `Module.finrank K A` and `hn` at `rfl` recovers the unparametrized form, while the parametrized one
 is what makes the quaternion example (where the dimension is `4` on the nose) come out without
-reindexing. Its second half is Mathlib's `algEquivMatrix` at the basis `Module.finBasisOfFinrankEq`;
-only the choice of basis is ours, and nothing downstream should depend on which basis that is.
+reindexing. Its second half `TauCeti.Algebra.endAlgEquivMatrix` is Mathlib's `algEquivMatrix` at the
+basis `Module.finBasisOfFinrankEq`; only the choice of basis is ours, and nothing downstream should
+depend on which basis that is.
 
 ## References
 
@@ -106,45 +114,24 @@ namespace TauCeti
 
 open scoped TensorProduct
 
-/-! ### The dimension and the degree of `A ⊗[K] Aᵐᵒᵖ` -/
-
-namespace Algebra
-
-variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A]
-
-/-- Passing to the opposite algebra does not change the dimension, so `A ⊗[K] Aᵐᵒᵖ` has dimension
-`(Module.finrank K A) ^ 2`. This is the count that turns injectivity of the Azumaya map into
-surjectivity, `Module.End K A` having the same dimension, and it is where the matrix size in
-`TauCeti.Algebra.tensorOpAlgEquivMatrix` comes from: a dimension, not a degree.
-
-No finiteness hypothesis is needed: if `A` is infinite-dimensional both sides are `0`. -/
-theorem finrank_tensorProduct_mulOpposite :
-    Module.finrank K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A ^ 2 := by
-  rw [Module.finrank_tensorProduct, ← (MulOpposite.opLinearEquiv K (M := A)).finrank_eq, sq]
-
-/-- The degree of `A ⊗[K] Aᵐᵒᵖ` is the dimension of `A`. For `A` central simple this is the square
-of the degree of `A` (`TauCeti.Algebra.deg_sq`), and it is the degree-level shadow of
-`TauCeti.Algebra.tensorOpAlgEquivMatrix`: the reason the matrix size there is `Module.finrank K A`
-rather than `TauCeti.Algebra.deg K A`.
-
-As with the dimension count it rests on, no hypothesis on `A` is needed: the dimension of
-`A ⊗[K] Aᵐᵒᵖ` is a square for every `K`-algebra, and that alone pins the degree.
-
-Not a `simp` lemma: as soon as `A` is central simple and finite-dimensional, so is `Aᵐᵒᵖ`, and then
-`TauCeti.Algebra.deg_tensorProduct` already rewrites the left-hand side, to
-`TauCeti.Algebra.deg K A * TauCeti.Algebra.deg K Aᵐᵒᵖ`. Marking this one `simp` too would leave
-`simp` with two different normal forms for the same term. -/
-theorem deg_tensorProduct_mulOpposite : deg K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A :=
-  deg_eq_of_finrank_eq_sq (finrank_tensorProduct_mulOpposite K A)
-
-end Algebra
-
 /-! ### The Azumaya map is bijective -/
 
 namespace IsSimpleRing
 
 variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [Algebra.IsCentral K A]
-  [IsSimpleRing A] [FiniteDimensional K A]
+  [IsSimpleRing A]
+
+/-- **The Azumaya map of a central simple algebra is injective**: `A ⊗[K] Aᵐᵒᵖ` is a simple ring
+(`TauCeti.IsSimpleRing.tensorProduct`, which is where centrality of `A` enters), and a ring
+homomorphism out of a simple ring into a nontrivial ring is injective.
+
+No finite-dimensionality is used, and none should be added: this half of
+`TauCeti.IsSimpleRing.mulLeftRight_bijective` holds for an infinite-dimensional central simple
+algebra too, where the Azumaya map is injective but need not be surjective. -/
+theorem mulLeftRight_injective : Function.Injective (AlgHom.mulLeftRight K A) :=
+  RingHom.injective (AlgHom.mulLeftRight K A : (A ⊗[K] Aᵐᵒᵖ) →+* Module.End K A)
+
+variable [FiniteDimensional K A]
 
 /-- **The Azumaya map of a finite-dimensional central simple algebra is bijective**: for `A` central
 simple and finite-dimensional over a field `K`, the map
@@ -153,17 +140,14 @@ simple and finite-dimensional over a field `K`, the map
 
 is a bijection.
 
-Injectivity holds for any central simple `A`, finite-dimensional or not: `A ⊗[K] Aᵐᵒᵖ` is a simple
-ring, and a ring homomorphism out of a simple ring into a nontrivial ring is injective.
-Finite-dimensionality is used only for surjectivity, where it makes the two sides equidimensional
-`K`-vector spaces. -/
+Injectivity is `TauCeti.IsSimpleRing.mulLeftRight_injective`, which holds for any central simple
+`A`, finite-dimensional or not. Finite-dimensionality is used only for surjectivity, where it makes
+the two sides equidimensional `K`-vector spaces. -/
 theorem mulLeftRight_bijective : Function.Bijective (AlgHom.mulLeftRight K A) := by
-  have hinj : Function.Injective (AlgHom.mulLeftRight K A) :=
-    RingHom.injective (AlgHom.mulLeftRight K A : (A ⊗[K] Aᵐᵒᵖ) →+* Module.End K A)
   have hdim : Module.finrank K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K (Module.End K A) := by
     rw [Algebra.finrank_tensorProduct_mulOpposite, Module.finrank_linearMap, sq]
-  exact ⟨hinj, (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hdim
-    (f := (AlgHom.mulLeftRight K A).toLinearMap)).mp hinj⟩
+  exact ⟨mulLeftRight_injective K A, (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hdim
+    (f := (AlgHom.mulLeftRight K A).toLinearMap)).mp (mulLeftRight_injective K A)⟩
 
 /-- **A finite-dimensional central simple algebra is an Azumaya algebra** over its base field.
 
@@ -179,6 +163,26 @@ end IsSimpleRing
 /-! ### The opposite isomorphism -/
 
 namespace Algebra
+
+section Basis
+
+variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [FiniteDimensional K A]
+
+/-- A `K`-algebra `A` of dimension `n` has `Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K`: the
+matrix half of the opposite isomorphism, read off a chosen `K`-basis of `A`.
+
+This is Mathlib's `algEquivMatrix` at the basis `Module.finBasisOfFinrankEq`, named here because it
+is a step of the opposite isomorphism that the roadmap asks for separately, to be reused where a
+finite-dimensional endomorphism algebra has to be turned into matrices of a known size. Central
+simplicity plays no part: only the dimension does.
+
+The basis is a choice, and nothing downstream should depend on which one it is; there is
+deliberately no lemma computing the matrix entries. -/
+noncomputable def endAlgEquivMatrix {n : ℕ} (hn : Module.finrank K A = n) :
+    Module.End K A ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
+  algEquivMatrix (Module.finBasisOfFinrankEq K A hn)
+
+end Basis
 
 variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [Algebra.IsCentral K A]
   [IsSimpleRing A] [FiniteDimensional K A]
@@ -203,10 +207,12 @@ The size is the **dimension** `n = Module.finrank K A`, not the degree `TauCeti.
 the two are related by `TauCeti.Algebra.deg_sq`, and the resulting degree count is
 `TauCeti.Algebra.deg_tensorProduct_mulOpposite`. The dimension is taken as a parameter so that a
 caller who already knows it as a numeral, as in
-`TauCeti.Quaternion.tensorSelfAlgEquivMatrix`, gets that numeral back with no reindexing. -/
+`TauCeti.Quaternion.tensorSelfAlgEquivMatrix`, gets that numeral back with no reindexing.
+
+This is `TauCeti.Algebra.tensorOpAlgEquivEnd` followed by `TauCeti.Algebra.endAlgEquivMatrix`. -/
 noncomputable def tensorOpAlgEquivMatrix {n : ℕ} (hn : Module.finrank K A = n) :
     A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
-  (tensorOpAlgEquivEnd K A).trans (algEquivMatrix (Module.finBasisOfFinrankEq K A hn))
+  (tensorOpAlgEquivEnd K A).trans (endAlgEquivMatrix K A hn)
 
 end Algebra
 

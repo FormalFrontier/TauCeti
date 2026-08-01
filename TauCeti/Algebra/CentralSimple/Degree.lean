@@ -59,6 +59,10 @@ columns; that is recorded as
   `TauCeti.Algebra.deg_eq_mul_deg_of_algEquiv_matrix` off a Wedderburn presentation, and the
   splitting `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed` restated with
   matrix size `deg K A`.
+* `TauCeti.Algebra.finrank_tensorProduct_mulOpposite` and
+  `TauCeti.Algebra.deg_tensorProduct_mulOpposite`: the dimension `(Module.finrank K A) ^ 2` and the
+  degree `Module.finrank K A` of `A ⊗[K] Aᵐᵒᵖ`, for an arbitrary `K`-algebra `A`. These are the
+  counts behind `TauCeti/Algebra/CentralSimple/Opposite.lean`.
 
 ## Implementation notes
 
@@ -176,6 +180,32 @@ variable (K A)
 @[simp]
 theorem deg_self : deg K K = 1 :=
   deg_eq_of_finrank_eq_sq (by simp)
+
+/-- Passing to the opposite algebra does not change the dimension, so `A ⊗[K] Aᵐᵒᵖ` has dimension
+`(Module.finrank K A) ^ 2`. This is the count that turns injectivity of the Azumaya map into
+surjectivity in `TauCeti/Algebra/CentralSimple/Opposite.lean`, `Module.End K A` having the same
+dimension, and it is where the matrix size in `TauCeti.Algebra.tensorOpAlgEquivMatrix` comes from: a
+dimension, not a degree.
+
+No finiteness hypothesis is needed: if `A` is infinite-dimensional both sides are `0`. -/
+theorem finrank_tensorProduct_mulOpposite :
+    Module.finrank K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A ^ 2 := by
+  rw [Module.finrank_tensorProduct, ← (MulOpposite.opLinearEquiv K (M := A)).finrank_eq, sq]
+
+/-- The degree of `A ⊗[K] Aᵐᵒᵖ` is the dimension of `A`. For `A` central simple this is the square
+of the degree of `A` (`TauCeti.Algebra.deg_sq`), and it is the degree-level shadow of
+`TauCeti.Algebra.tensorOpAlgEquivMatrix`: the reason the matrix size there is `Module.finrank K A`
+rather than `TauCeti.Algebra.deg K A`.
+
+As with the dimension count it rests on, no hypothesis on `A` is needed: the dimension of
+`A ⊗[K] Aᵐᵒᵖ` is a square for every `K`-algebra, and that alone pins the degree.
+
+Not a `simp` lemma: as soon as `A` is central simple and finite-dimensional, so is `Aᵐᵒᵖ`, and then
+`TauCeti.Algebra.deg_tensorProduct` already rewrites the left-hand side, to
+`TauCeti.Algebra.deg K A * TauCeti.Algebra.deg K Aᵐᵒᵖ`. Marking this one `simp` too would leave
+`simp` with two different normal forms for the same term. -/
+theorem deg_tensorProduct_mulOpposite : deg K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A :=
+  deg_eq_of_finrank_eq_sq (finrank_tensorProduct_mulOpposite K A)
 
 section Nontrivial
 
