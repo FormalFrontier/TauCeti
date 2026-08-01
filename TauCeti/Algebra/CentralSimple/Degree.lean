@@ -11,13 +11,15 @@ module
 -- notation and the algebra structure on `L ⊗[K] A`) and `Mathlib.Algebra.Central.Basic`, which is
 -- why neither is imported again here.
 public import TauCeti.Algebra.CentralSimple.TensorProduct
-public import Mathlib.Data.Nat.Sqrt
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
-public import Mathlib.LinearAlgebra.Dimension.Constructions
--- Non-public: `AlgebraicClosure` and Mathlib's algebraically closed Wedderburn-Artin theorem are
--- used only inside proofs, and the complex numbers and the real quaternions only by the worked
--- examples at the end of the file (`TauCeti.Algebra.Central.Quaternion` re-exports
--- `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation there).
+-- Non-public: `Nat.sqrt` occurs only in the body of `TauCeti.Algebra.deg`, the dimension
+-- calculations of `Mathlib.LinearAlgebra.Dimension.Constructions` only inside proofs,
+-- `AlgebraicClosure` and Mathlib's algebraically closed Wedderburn-Artin theorem likewise, and the
+-- complex numbers and the real quaternions only in the worked examples at the end of the file
+-- (`TauCeti.Algebra.Central.Quaternion` re-exports `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]`
+-- notation there).
+import Mathlib.Data.Nat.Sqrt
+import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.RingTheory.SimpleModule.IsAlgClosed
@@ -66,16 +68,18 @@ columns; that is recorded as
 dimension it is handed: the value is therefore pinned down for every square-dimensional algebra,
 central simple or not, and `Nat.sqrt` rounds down elsewhere. What central simplicity buys is that
 the dimension *is* a square (`TauCeti.Algebra.deg_sq`), and with it the reading of `deg K A` as the
-size of the matrix algebra `A` becomes over an algebraically closed extension. Every other lemma
-about `deg` here is derived from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`, so the definition is
-never unfolded downstream.
+size of the matrix algebra `A` becomes over an algebraically closed extension. Every lemma here that
+computes a degree is derived from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`, so a downstream proof
+need never unfold the definition. The two exceptions do not compute a degree and go through
+`Nat.sqrt` directly, because there is no square dimension to feed the characteristic property:
+`TauCeti.Algebra.deg_eq_of_algEquiv`, which only transports it along a linear equivalence, and
+`TauCeti.Algebra.deg_pos`, which only needs `Module.finrank_pos`.
 
-`TauCeti.IsSimpleRing.isSquare_finrank` subsumes the finite-base-field
-`TauCeti.IsSimpleRing.isSquare_finrank_of_finite` of
-`TauCeti/Algebra/CentralSimple/Wedderburn.lean`, which is left in place: its elementary proof runs
-through little Wedderburn rather than an algebraic closure, and it sits with the finite-field
-structure theorem
-`TauCeti.IsSimpleRing.exists_algEquiv_matrix_of_finite` that it is read off.
+`TauCeti.IsSimpleRing.isSquare_finrank` covers every base field, so the finite-base-field
+square-dimension statement that used to sit in `TauCeti/Algebra/CentralSimple/Wedderburn.lean` is
+gone, in favour of this one; that file keeps the matrix presentation
+`TauCeti.IsSimpleRing.exists_algEquiv_matrix_of_finite`, which is genuinely special to a finite base
+field and from which the square dimension used to be read off.
 
 ## References
 
@@ -157,7 +161,8 @@ noncomputable def deg : ℕ := Nat.sqrt (Module.finrank K A)
 variable {K A}
 
 /-- The characteristic property of the degree: a `K`-algebra of dimension `n ^ 2` has degree `n`.
-Every other lemma about `TauCeti.Algebra.deg` is derived from this one. -/
+Every lemma below that computes a degree is derived from this one, rather than by unfolding
+`TauCeti.Algebra.deg`. -/
 theorem deg_eq_of_finrank_eq_sq {n : ℕ} (h : Module.finrank K A = n ^ 2) : deg K A = n := by
   rw [deg, h, Nat.sqrt_eq']
 
@@ -172,6 +177,22 @@ variable (K A)
 theorem deg_self : deg K K = 1 :=
   deg_eq_of_finrank_eq_sq (by simp)
 
+section Nontrivial
+
+variable [Nontrivial A] [FiniteDimensional K A]
+
+/-- A nonzero finite-dimensional algebra has positive degree. Central simplicity is not needed:
+positive dimension already forces a positive integer square root. -/
+theorem deg_pos : 0 < deg K A :=
+  Nat.sqrt_pos.mpr Module.finrank_pos
+
+/-- A nonzero finite-dimensional algebra has nonzero degree. -/
+@[simp]
+theorem deg_ne_zero : deg K A ≠ 0 :=
+  (deg_pos K A).ne'
+
+end Nontrivial
+
 section CentralSimple
 
 variable [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A]
@@ -181,15 +202,6 @@ variable [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A]
 theorem deg_sq : deg K A ^ 2 = Module.finrank K A := by
   obtain ⟨n, hn⟩ := IsSimpleRing.isSquare_finrank K A
   rw [deg_eq_of_finrank_eq_sq (n := n) (by rw [hn, sq]), hn, sq]
-
-/-- A central simple algebra is nonzero, so its degree is. -/
-@[simp]
-theorem deg_ne_zero : deg K A ≠ 0 := fun h =>
-  Module.finrank_pos.ne' (by rw [← deg_sq K A, h, zero_pow two_ne_zero])
-
-/-- A central simple algebra has positive degree. -/
-theorem deg_pos : 0 < deg K A :=
-  Nat.pos_of_ne_zero (deg_ne_zero K A)
 
 /-- The degree is multiplicative under tensor product: this is the degree-level shadow of the fact
 that central simple `K`-algebras are closed under `⊗[K]`. -/
