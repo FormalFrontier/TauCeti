@@ -16,8 +16,8 @@ public import TauCeti.Algebra.CentralSimple.Degree
 public import Mathlib.Algebra.Central.End
 -- Non-public: the matrix presentation `algEquivMatrix (Module.finBasis K V)` and the matrix fact it
 -- transports, `IsSimpleRing.matrix`, are used only inside a proof, as is the transport
--- `IsSimpleRing.of_ringEquiv` itself and the dimension count `Module.finrank_linearMap`.
-import Mathlib.LinearAlgebra.Dimension.Constructions
+-- `IsSimpleRing.of_ringEquiv` itself. The dimension count `Module.finrank_linearMap` needs no
+-- import of its own: it arrives with `TauCeti.Algebra.CentralSimple.Degree`.
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.RingTheory.SimpleRing.Congr
 import Mathlib.RingTheory.SimpleRing.Matrix

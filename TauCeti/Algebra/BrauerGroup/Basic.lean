@@ -19,14 +19,14 @@ public import Mathlib.Algebra.BrauerGroup.Defs
 -- through `CSA.of K (Matrix (Fin n) (Fin n) K)`.
 public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.RingTheory.SimpleRing.Matrix
--- Non-public: the four algebra isomorphisms doing the work occur only in proofs and in the bodies
--- of `TauCeti.Matrix.kroneckerTMulFinAlgEquiv` and `TauCeti.CSA.tensorProductMatrixAlgEquiv` --
--- Mathlib's Kronecker product of matrix algebras, the composition and reindexing equivalences of
--- matrix algebras, and the matrix presentation `algEquivMatrix` of an endomorphism algebra.
--- `Mathlib.RingTheory.MatrixAlgebra` re-exports `Mathlib.Data.Matrix.Composition`, hence
--- `Matrix.compAlgEquiv`, which is why that is not imported again here.
+-- Non-public: the algebra isomorphisms doing the work occur only in proofs and in the bodies of
+-- `TauCeti.Matrix.kroneckerTMulFinAlgEquiv` and `TauCeti.CSA.tensorProductMatrixAlgEquiv` --
+-- Mathlib's Kronecker product of matrix algebras, and the composition and reindexing equivalences
+-- of matrix algebras. Two more are not imported again here: `Matrix.compAlgEquiv`, which
+-- `Mathlib.RingTheory.MatrixAlgebra` re-exports from `Mathlib.Data.Matrix.Composition`, and the
+-- matrix presentation `algEquivMatrix` of an endomorphism algebra, which arrives with
+-- `TauCeti.Algebra.CentralSimple.End`, where the simplicity proof runs on it.
 import Mathlib.LinearAlgebra.Matrix.Reindex
-import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.RingTheory.MatrixAlgebra
 
 /-!
@@ -36,8 +36,9 @@ Two finite-dimensional central simple `K`-algebras are **Brauer equivalent** whe
 isomorphic after passing to matrix algebras over them: `IsBrauerEquivalent A B` is Mathlib's
 `∃ n m ≠ 0, Mₙ(A) ≃ₐ[K] Mₘ(B)`. Mathlib defines this relation, checks that it is an equivalence
 relation, and forms the quotient `BrauerGroup K` -- but the quotient carries no algebraic structure
-yet, and there is no way to feed the relation an algebra: `CSA K` is a bundled structure with no
-constructor exported, so even `Mₙ(A)` is not available as a `CSA K`.
+yet, and nothing is on record for the relation to be fed: `CSA K` is a structure over `AlgCat K`,
+so its constructor takes a bundled object rather than an algebra, and Mathlib names no member of
+it -- not even `Mₙ(A)`.
 
 This file supplies the working API. It builds the three constructors that the theory needs
 (`TauCeti.CSA.of`, `TauCeti.CSA.matrix`, `TauCeti.CSA.tensorProduct`, and the base field itself as
@@ -122,10 +123,10 @@ variable (K : Type u) [Field K]
 
 /-- A finite-dimensional central simple `K`-algebra, packaged as an element of Mathlib's `CSA K`.
 
-Mathlib's `CSA K` bundles the carrier together with its three properties and exports no
-constructor, so this is the way in. The underlying type of `CSA.of K A` is `A` by definition, and
-the algebra structure on it is the given one, so an `A`-level isomorphism is a `CSA.of K A`-level
-isomorphism with no glue. -/
+Mathlib's `CSA K` bundles the carrier as an `AlgCat K` together with its three properties; this is
+the convenient constructor, taking the algebra itself and reading the properties off instance
+search. The underlying type of `CSA.of K A` is `A` by definition, and the algebra structure on it
+is the given one, so an `A`-level isomorphism is a `CSA.of K A`-level isomorphism with no glue. -/
 @[expose]
 def CSA.of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
     [FiniteDimensional K A] : CSA.{u, v} K where
