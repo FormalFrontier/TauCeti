@@ -71,8 +71,7 @@ theorem discr_eq_of_integralBasis (c : Basis ι ℤ (𝓞 K)) :
 /-- **The discriminant bound is an equality for a spanning integral basis.** If `b` is a
 `ℚ`-basis of `K` consisting of algebraic integers whose `ℤ`-span inside `𝒪_K` is all of `𝒪_K`,
 then `disc b = d_K` exactly (over `ℚ`). -/
-theorem discr_eq_of_basis_isIntegral_of_span_eq_top
-    (b : Basis ι ℚ K) (hb : ∀ i, IsIntegral ℤ (b i))
+theorem discr_eq_of_basis_isIntegral_of_span_eq_top (b : Basis ι ℚ K) (hb : ∀ i, IsIntegral ℤ (b i))
     (hspan : Submodule.span ℤ (Set.range fun i => (⟨b i, hb i⟩ : 𝓞 K)) = ⊤) :
     Algebra.discr ℚ (b : ι → K) = (NumberField.discr K : ℚ) := by
   set v : ι → 𝓞 K := fun i => ⟨b i, hb i⟩ with hv

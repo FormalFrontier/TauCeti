@@ -32,8 +32,7 @@ variable {X : Type*} [TopologicalSpace X]
 /-- Restrict a path whose image lies in a subset to a path in the corresponding subtype.
 The source and target are the given subtype endpoints, and coercing the restricted path back to
 `X` recovers the original path pointwise. -/
-def codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val)
-    (hmem : ∀ t, γ t ∈ s) :
+def codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val) (hmem : ∀ t, γ t ∈ s) :
     Path x y where
   toFun := s.codRestrict γ hmem
   continuous_toFun := γ.continuous.codRestrict hmem
@@ -42,15 +41,13 @@ def codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val)
 
 /-- The underlying point of `γ.codRestrict hmem` at time `t` is just `γ t`, viewed in `X`. -/
 @[simp]
-theorem codRestrict_coe {s : Set X} {x y : s} (γ : Path x.val y.val)
-    (hmem : ∀ t, γ t ∈ s) (t : I) :
+theorem codRestrict_coe {s : Set X} {x y : s} (γ : Path x.val y.val) (hmem : ∀ t, γ t ∈ s) (t : I) :
     (γ.codRestrict hmem t : X) = γ t := by
   rfl
 
 /-- Mapping `γ.codRestrict hmem` back along the subtype inclusion recovers `γ`. -/
 @[simp]
-theorem map_codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val)
-    (hmem : ∀ t, γ t ∈ s) :
+theorem map_codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val) (hmem : ∀ t, γ t ∈ s) :
     (γ.codRestrict hmem).map continuous_subtype_val = γ := by
   ext t
   simp

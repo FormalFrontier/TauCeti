@@ -12,7 +12,9 @@ public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 
 This file proves that the Laplace-transform resolvent is also a left inverse of
 `lambda • I - A` on the generator domain. It then derives the resolvent identity
-`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)` and commutativity of resolvents.
+`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)` and commutativity of resolvents. The
+identity is recorded both for `resolvent` and for `resolventFun`, the resolvent seen as a
+function of the spectral parameter alone.
 
 ## References
 
@@ -180,6 +182,15 @@ theorem resolvent_sub_resolvent (S : StronglyContinuousSemigroup X)
         (S.resolvent hbLambda lambda hlambda ∘L S.resolvent hbMu mu hmu) := by
   ext x
   exact S.resolvent_sub_resolvent_apply hbLambda hbMu lambda mu hlambda hmu x
+
+/-- The resolvent identity for `resolventFun`, written in the ring `X →L[ℝ] X`. -/
+theorem resolventFun_sub_resolventFun (S : StronglyContinuousSemigroup X) {omega M : ℝ}
+    [CompleteSpace X] (hb : S.HasGrowthBound omega M) {lambda mu : ℝ}
+    (hl : omega < lambda) (hm : omega < mu) :
+    S.resolventFun hb lambda - S.resolventFun hb mu
+      = (mu - lambda) • (S.resolventFun hb lambda * S.resolventFun hb mu) := by
+  rw [S.resolventFun_of_lt hb hl, S.resolventFun_of_lt hb hm]
+  exact S.resolvent_sub_resolvent hb hb lambda mu hl hm
 
 /-- Resolvents at two admissible parameters commute. -/
 theorem resolvent_comm (S : StronglyContinuousSemigroup X) {omegaLambda MLambda omegaMu MMu : ℝ}

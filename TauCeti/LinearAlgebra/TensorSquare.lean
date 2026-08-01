@@ -69,12 +69,10 @@ theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
         exact one_ne_zero (e.injective (h1'.trans h0'.symm))
       simpa using h1
 
-private noncomputable def tensorSwap :
-    (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
+private noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
   PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
 
-private noncomputable def symmetricProjection :
-    (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
+private noncomputable def symmetricProjection : (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (⅟ (2 : R)) • (LinearMap.id + (tensorSwap R M).toLinearMap)
 
 private theorem symmetricProjection_rel :
@@ -168,8 +166,7 @@ end TauCeti
 namespace SymmetricPower
 
 /-- The symmetric quotient composed with the symmetric-square embedding is the identity. -/
-theorem mk_comp_toTensorSquare :
-    (SymmetricPower.mk R (Fin 2) M).comp
+theorem mk_comp_toTensorSquare : (SymmetricPower.mk R (Fin 2) M).comp
         (SymmetricPower.toTensorSquare R M) = LinearMap.id := by
   apply LinearMap.ext_on
     (SymmetricPower.span_tprod_eq_top (R := R) (ι := Fin 2) (M := M))
@@ -198,8 +195,7 @@ end SymmetricPower
 namespace exteriorPower
 
 /-- The exterior projection vanishes on the symmetric-square embedding. -/
-theorem lift_ιMulti_comp_symmetricPower_toTensorSquare :
-    (PiTensorProduct.lift
+theorem lift_ιMulti_comp_symmetricPower_toTensorSquare : (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (SymmetricPower.toTensorSquare R M) = 0 := by
   apply LinearMap.ext_on
@@ -226,8 +222,7 @@ end exteriorPower
 namespace SymmetricPower
 
 /-- The symmetric projection vanishes on the exterior-square embedding. -/
-theorem mk_comp_exteriorPower_toTensorSquare :
-    (SymmetricPower.mk R (Fin 2) M).comp
+theorem mk_comp_exteriorPower_toTensorSquare : (SymmetricPower.mk R (Fin 2) M).comp
         (exteriorPower.toTensorSquare R M) = 0 := by
   apply exteriorPower.linearMap_ext
   apply AlternatingMap.ext
@@ -251,8 +246,7 @@ end SymmetricPower
 namespace exteriorPower
 
 /-- The exterior projection composed with the exterior-square embedding is the identity. -/
-theorem lift_ιMulti_comp_toTensorSquare :
-    (PiTensorProduct.lift
+theorem lift_ιMulti_comp_toTensorSquare : (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (exteriorPower.toTensorSquare R M) = LinearMap.id := by
   apply exteriorPower.linearMap_ext
@@ -288,8 +282,7 @@ end exteriorPower
 
 namespace TauCeti
 
-private theorem symmetricExteriorToTensorSquare_comp :
-    (symmetricExteriorToTensorSquare R M).comp
+private theorem symmetricExteriorToTensorSquare_comp : (symmetricExteriorToTensorSquare R M).comp
         (tensorSquareToSymmetricExterior R M) = LinearMap.id := by
   rw [symmetricExteriorToTensorSquare, tensorSquareToSymmetricExterior,
     LinearMap.coprod_comp_prod]
@@ -306,8 +299,7 @@ private theorem symmetricExteriorToTensorSquare_comp :
   abel_nf
   rw [two_smul, ← add_smul, invOf_two_add_invOf_two, one_smul]
 
-private theorem tensorSquareToSymmetricExterior_comp :
-    (tensorSquareToSymmetricExterior R M).comp
+private theorem tensorSquareToSymmetricExterior_comp : (tensorSquareToSymmetricExterior R M).comp
         (symmetricExteriorToTensorSquare R M) = LinearMap.id := by
   rw [tensorSquareToSymmetricExterior, symmetricExteriorToTensorSquare,
     LinearMap.prod_comp, LinearMap.comp_coprod, LinearMap.comp_coprod,
@@ -321,8 +313,7 @@ private theorem tensorSquareToSymmetricExterior_comp :
 /-- The tensor square is naturally the direct sum of its symmetric and exterior squares when
 `2` is invertible. The forward map sends a tensor to its symmetric quotient and exterior
 product. -/
-noncomputable def tensorSquareEquivSymmetricExterior :
-    (⨂[R]^2 M) ≃ₗ[R] (Sym[R]^2 M) × (⋀[R]^2 M) :=
+noncomputable def tensorSquareEquivSymmetricExterior : (⨂[R]^2 M) ≃ₗ[R] (Sym[R]^2 M) × (⋀[R]^2 M) :=
   LinearEquiv.mk
     (tensorSquareToSymmetricExterior R M)
     (symmetricExteriorToTensorSquare R M)
@@ -341,8 +332,7 @@ theorem tensorSquareEquivSymmetricExterior_tprod (f : Fin 2 → M) :
 /-- The inverse tensor-square decomposition is the sum of the symmetric and exterior
 embeddings. -/
 @[simp]
-theorem tensorSquareEquivSymmetricExterior_symm_apply
-    (x : (Sym[R]^2M) × (⋀[R]^2 M)) :
+theorem tensorSquareEquivSymmetricExterior_symm_apply (x : (Sym[R]^2M) × (⋀[R]^2 M)) :
     (tensorSquareEquivSymmetricExterior R M).symm x =
       SymmetricPower.toTensorSquare R M x.1 + exteriorPower.toTensorSquare R M x.2 := by
   rfl

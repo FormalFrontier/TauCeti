@@ -206,60 +206,6 @@ private theorem measure_inter_blockCylinder_eq_setLIntegral_of_injective
         hmp.measure_preimage hmeas.nullMeasurableSet
     _ = _ := measure_inter_blockCylinder_eq_setLIntegral hX hY_meas hB hS
 
-/-- **Joint-rectangle reduction.** Given the core set-integral identity for a selection `k`, the
-joint law of the directing measure with that block agrees with the disintegration on rectangles
-`S ×ˢ ∏ i, B i`.
-
-The reduction is independent of `k`: the disintegration side never mentions it. -/
-private theorem jointRectangle_of_measure_inter
-    [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
-    {r : ℕ} {k : Fin r → ℕ} {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i))
-    {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S)
-    (hcore : μ ((directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B)
-      = ∫⁻ ω in directingProbabilityMeasure μ X ⁻¹' S,
-          ∏ i, directingMeasure μ X ω (B i) ∂μ) :
-    (μ.map fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω))
-        (S ×ˢ Set.univ.pi B)
-      = (μ.bind fun ω =>
-          (Measure.dirac (directingProbabilityMeasure μ X ω)).prod
-            (ProbabilityMeasure.pi fun _ : Fin r =>
-              directingProbabilityMeasure μ X ω).toMeasure)
-        (S ×ˢ Set.univ.pi B) := by
-  classical
-  have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
-    tailProcess_le_ambient 0 fun j _ => hX_meas j
-  have hν : Measurable (directingProbabilityMeasure μ X) :=
-    measurable_directingProbabilityMeasure hTail
-  have hjoint : Measurable fun ω =>
-      (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω) :=
-    hν.prodMk (measurable_pi_lambda _ fun i => hX_meas _)
-  have hker : Measurable fun ω =>
-      (Measure.dirac (directingProbabilityMeasure μ X ω)).prod
-        (ProbabilityMeasure.pi fun _ : Fin r => directingProbabilityMeasure μ X ω).toMeasure :=
-    TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν
-  have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) :=
-    hS.prod (MeasurableSet.univ_pi hB)
-  -- the joint law's mass is the mass of the tail event meeting the block cylinder
-  have hpre : (fun ω => (directingProbabilityMeasure μ X ω, fun i : Fin r => X (k i) ω))
-        ⁻¹' (S ×ˢ Set.univ.pi B)
-      = (directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B := by
-    ext ω
-    simp [Set.mem_prod, mem_blockCylinder, Set.mem_pi]
-  rw [Measure.map_apply hjoint hrect, hpre, hcore,
-    Measure.bind_apply hrect hker.aemeasurable]
-  -- the mixture side splits as a Dirac indicator times the product measure
-  rw [← lintegral_indicator (hν hS)]
-  refine lintegral_congr fun ω => ?_
-  have hprod : (ProbabilityMeasure.pi fun _ : Fin r => directingProbabilityMeasure μ X ω).toMeasure
-      (Set.univ.pi B) = ∏ i, directingMeasure μ X ω (B i) := by
-    rw [ProbabilityMeasure.toMeasure_pi, Measure.pi_pi]
-    exact Finset.prod_congr rfl fun i _ => by rw [directingProbabilityMeasure_toMeasure]
-  rw [Measure.prod_prod, Measure.dirac_apply' _ hS, hprod]
-  by_cases hω : directingProbabilityMeasure μ X ω ∈ S
-  · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
-  · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
-
 /-- **The conditional summit on path space, at the canonical directing measure.** A contractable
 coordinate process on a standard Borel state space is conditionally i.i.d. **with** witness the tail
 conditional law `directingProbabilityMeasure`.
@@ -272,12 +218,13 @@ theorem conditionallyIIDWith_of_contractable_pathSpace
     ConditionallyIIDWith μ (fun j (x : ℕ → α) => x j)
       (directingProbabilityMeasure μ fun j (x : ℕ → α) => x j) := by
   have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
-  refine conditionallyIID_of_jointRectangles
+  refine conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral
+    (fun j => (hY_meas j).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ)
       (tailProcess_le_ambient 0 fun j _ => hY_meas j))
     fun m sel hsel S hS B hB => ?_
-  exact jointRectangle_of_measure_inter hY_meas hB hS
-    (measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel hB hS)
+  simpa only [directingProbabilityMeasure_toMeasure] using
+    measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel hB hS
 
 end Probability
 

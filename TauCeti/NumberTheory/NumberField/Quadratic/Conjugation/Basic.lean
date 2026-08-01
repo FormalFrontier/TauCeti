@@ -42,8 +42,7 @@ namespace TauCeti.NumberField
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
 /-- `X² - C a` is invariant under negating the variable: it is an even polynomial. -/
-private theorem X_pow_two_sub_C_comp_neg (a : ℚ) :
-    (X ^ 2 - C a).comp (-X) = X ^ 2 - C a := by
+private theorem X_pow_two_sub_C_comp_neg (a : ℚ) : (X ^ 2 - C a).comp (-X) = X ^ 2 - C a := by
   rw [sub_comp, pow_comp, X_comp, C_comp]; ring
 
 /-- `θ` and `-θ` have the same minimal polynomial over `ℚ` (both `X² - d`, an even polynomial). -/

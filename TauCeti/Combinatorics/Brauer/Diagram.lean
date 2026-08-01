@@ -177,8 +177,7 @@ theorem isRight_val_inl {i : Fin k} (hi : D.IsThrough (Sum.inl i)) :
   · simp
 
 /-- A top point on a through strand is matched with a bottom point. -/
-theorem isLeft_val_inr {j : Fin k} (hj : D.IsThrough (Sum.inr j)) :
-    (D.val (Sum.inr j)).isLeft := by
+theorem isLeft_val_inr {j : Fin k} (hj : D.IsThrough (Sum.inr j)) : (D.val (Sum.inr j)).isLeft := by
   rcases h : D.val (Sum.inr j) with i | i
   · simp
   · rw [IsThrough, h] at hj; simp at hj

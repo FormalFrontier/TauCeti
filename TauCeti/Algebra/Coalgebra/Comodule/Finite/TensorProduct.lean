@@ -72,8 +72,7 @@ theorem tensor_obj (M N : FGComoduleCat.{u, v, w} R C) :
 /-- The underlying type of the finite tensor product is the tensor product of the underlying
 modules. -/
 @[simp]
-theorem tensor_coe (M N : FGComoduleCat.{u, v, w} R C) :
-    (tensor R C M N : Type w) = M ⊗[R] N :=
+theorem tensor_coe (M N : FGComoduleCat.{u, v, w} R C) : (tensor R C M N : Type w) = M ⊗[R] N :=
   rfl
 
 /-- The coaction on the finite tensor product is the diagonal tensor coaction. -/
@@ -110,8 +109,7 @@ noncomputable abbrev tensorMap (f : M ⟶ M') (g : N ⟶ N') :
 /-- The underlying linear map of `tensorMap f g` is the tensor product of the underlying
 linear maps. -/
 @[simp]
-theorem tensorMap_toLinearMap (f : M ⟶ M') (g : N ⟶ N') :
-    (tensorMap f g).hom.toLinearMap =
+theorem tensorMap_toLinearMap (f : M ⟶ M') (g : N ⟶ N') : (tensorMap f g).hom.toLinearMap =
       TensorProduct.map f.hom.toLinearMap g.hom.toLinearMap :=
   rfl
 

@@ -62,8 +62,7 @@ def sectionRange (F : X.Presheaf C) (U : Opens X) (s : ToType (F.obj (Opposite.o
 /-- Membership in the range of a germ section means being the germ of that section at the
 underlying base point. -/
 @[simp]
-theorem mem_sectionRange_iff {U : Opens X} {s : ToType (F.obj (Opposite.op U))}
-    {g : F.EtaleSpace} :
+theorem mem_sectionRange_iff {U : Opens X} {s : ToType (F.obj (Opposite.op U))} {g : F.EtaleSpace} :
     g ∈ sectionRange F U s ↔ ∃ h : g.base ∈ U, g.germ = F.germ U g.base h s := by
   constructor
   · rintro ⟨x, rfl⟩
@@ -137,8 +136,7 @@ private noncomputable def sectionOpenPartialHomeomorph (F : X.Presheaf C) (U : O
 
 /-- On its source, the chart determined by a section agrees with the étalé projection. -/
 private theorem sectionOpenPartialHomeomorph_apply (F : X.Presheaf C) (U : Opens X)
-    (s : ToType (F.obj (Opposite.op U))) (x₀ : U) {g : F.EtaleSpace}
-    (hg : g ∈ sectionRange F U s) :
+    (s : ToType (F.obj (Opposite.op U))) (x₀ : U) {g : F.EtaleSpace} (hg : g ∈ sectionRange F U s) :
     sectionOpenPartialHomeomorph F U s x₀ g = g.base := by
   classical
   letI : Nonempty U := ⟨x₀⟩
