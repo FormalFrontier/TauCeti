@@ -340,7 +340,7 @@ hypothesis holds them within `ε` of each other.
 Nothing is claimed about *existence* of a cluster value, which is a compactness matter; the
 codomain is a genuine metric space rather than a pseudometric one because the conclusion is an
 equality of points. -/
-theorem clusterSetOn_subsingleton_of_forall_exists
+theorem subsingleton_clusterSetOn_of_forall_exists
     (h : ∀ ε > 0, ∃ δ > 0, ∀ x ∈ U ∩ Metric.ball w δ, ∀ y ∈ U ∩ Metric.ball w δ,
       dist (f x) (f y) ≤ ε) :
     (clusterSetOn f U w).Subsingleton := by

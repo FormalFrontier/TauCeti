@@ -46,9 +46,11 @@ missing the crosscut lies entirely in one of them.
 
 ## The boundary criterion
 
-The frontier of the crosscut neighbourhood consists of two pieces of circle
+The frontier of the crosscut neighbourhood is contained in the union of two pieces of circle
 (`TauCeti.frontier_ball_inter_ball_subset`): the arc `closedBall c r ∩ sphere ζ ρ`, and the cap
-`sphere c r ∩ closedBall ζ ρ` cut off on the boundary of the disc. Since the crosscut neighbourhood
+`sphere c r ∩ closedBall ζ ρ` cut off on the boundary of the disc. Equality can fail — for
+`2 * r ≤ ρ` the crosscut neighbourhood is the whole disc, and its frontier misses the arc — but
+containment is all a frontier bound needs. Since the crosscut neighbourhood
 is bounded and open, the maximum modulus principle bounds `f` inside it by its values on those two
 pieces (`TauCeti.norm_sub_le_of_mem_ball_inter_ball`).
 
@@ -61,7 +63,7 @@ gives `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn`: only hol
 disc is assumed, the arc bound is asked for on `ball c r ∩ sphere ζ ρ`, and the cap bound is
 replaced by a bound on a *collar* `r₀ ≤ dist w c` of the boundary inside the crosscut
 neighbourhood — all of it data about `f` inside the disc. Letting `ρ` shrink and feeding the
-resulting oscillation bound to `TauCeti.clusterSetOn_subsingleton_of_forall_exists`, one gets:
+resulting oscillation bound to `TauCeti.subsingleton_clusterSetOn_of_forall_exists`, one gets:
 
 > a bounded holomorphic function on a disc has a limit at a boundary point `ζ` as soon as it is
 > *nearly constant on the crosscut arc and on a collar of the boundary* at arbitrarily small radii
@@ -202,9 +204,12 @@ The set is *not* convex, and the proof is the Möbius reduction of the module do
 inversion `z ↦ (z - ζ)⁻¹` carries `ball c r` to the half-plane `{w | 1 < 2 * ((c - ζ) * w).re}` by
 `TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv`, and the complement of `closedBall ζ ρ` to
 `ball 0 ρ⁻¹`; the intersection of those two is convex, and `w ↦ ζ + w⁻¹` carries it back
-continuously, `0` not being in it. -/
-theorem isConnected_ball_diff_closedBall (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ)
+continuously, `0` not being in it.
+
+Positivity of `r` is not a separate hypothesis: `0 < ρ < 2 * r` already forces it. -/
+theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρ' : ρ < 2 * r) : IsConnected (ball c r \ closedBall ζ ρ) := by
+  have hr : 0 < r := by linarith
   have hac : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
   have ha0 : c - ζ ≠ 0 := by
     intro h
@@ -284,12 +289,11 @@ theorem ball_diff_sphere_eq_union :
     · exact ⟨hy, fun hc => (Metric.mem_ball.mp h).ne (Metric.mem_sphere.mp hc)⟩
     · exact ⟨hy, fun hc => h (Metric.sphere_subset_closedBall hc)⟩
 
-/-- The two sides of a circular crosscut are disjoint. -/
+/-- The two sides of a circular crosscut are disjoint, the near side lying inside `closedBall ζ ρ`
+and the far side outside it. -/
 theorem disjoint_ball_inter_ball_ball_diff_closedBall :
-    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) := by
-  rw [Set.disjoint_left]
-  rintro y ⟨-, hy⟩ ⟨-, hy'⟩
-  exact hy' (closedBall_subset_closedBall le_rfl (ball_subset_closedBall hy))
+    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
+  Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
 
 /-- **A connected set in the disc missing a circular crosscut lies on one side of it.** This is the
 separation statement the decomposition exists for: the two sides are open and disjoint, so a
@@ -319,12 +323,12 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball
 /-- **The far side of a circular crosscut is a connected component of the cut disc.** The companion
 of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball`; here the connectedness of the
 piece is the substantial `TauCeti.isConnected_ball_diff_closedBall`. -/
-theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall (hr : 0 < r)
+theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρ' : ρ < 2 * r) (hz : z ∈ ball c r \ closedBall ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r \ closedBall ζ ρ := by
   have hsub : ball c r \ closedBall ζ ρ ⊆ ball c r \ sphere ζ ρ :=
     ball_diff_sphere_eq_union ▸ subset_union_right
-  refine Subset.antisymm ?_ ((isConnected_ball_diff_closedBall hr hζ hρ hρ').isPreconnected
+  refine Subset.antisymm ?_ ((isConnected_ball_diff_closedBall hζ hρ hρ').isPreconnected
     |>.subset_connectedComponentIn hz hsub)
   rcases subset_ball_inter_ball_or_subset_ball_diff_closedBall isPreconnected_connectedComponentIn
     (connectedComponentIn_subset _ _) with h | h
@@ -340,41 +344,36 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall (hr : 0 < 
 has to be controlled for the maximum principle to control it inside. Only the inclusion is claimed,
 which is all a frontier bound needs, and it is what holds without further hypotheses — for
 `2 * r ≤ ρ` the crosscut neighbourhood is the whole disc and its frontier misses the arc
-entirely. -/
+entirely.
+
+This is Mathlib's `frontier_inter_subset` for the two balls, whose two summands are pinned down by
+`frontier_ball_subset_sphere` and `closure_ball_subset_closedBall`. -/
 theorem frontier_ball_inter_ball_subset :
     frontier (ball c r ∩ ball ζ ρ)
-      ⊆ sphere c r ∩ closedBall ζ ρ ∪ closedBall c r ∩ sphere ζ ρ := by
-  intro y hy
-  rw [(isOpen_ball.inter isOpen_ball).frontier_eq, Set.mem_sdiff] at hy
-  obtain ⟨hycl, hynot⟩ := hy
-  have hy₁ : dist y c ≤ r := by
-    have := closure_mono (inter_subset_left (t := ball ζ ρ)) hycl
-    exact Metric.mem_closedBall.mp (closure_ball_subset_closedBall this)
-  have hy₂ : dist y ζ ≤ ρ := by
-    have := closure_mono (inter_subset_right (s := ball c r)) hycl
-    exact Metric.mem_closedBall.mp (closure_ball_subset_closedBall this)
-  simp only [Set.mem_inter_iff, Metric.mem_ball, not_and, not_lt] at hynot
-  rcases eq_or_lt_of_le hy₁ with h | h
-  · exact Or.inl ⟨Metric.mem_sphere.mpr h, Metric.mem_closedBall.mpr hy₂⟩
-  · exact Or.inr ⟨Metric.mem_closedBall.mpr hy₁,
-      Metric.mem_sphere.mpr (le_antisymm hy₂ (hynot h))⟩
+      ⊆ sphere c r ∩ closedBall ζ ρ ∪ closedBall c r ∩ sphere ζ ρ :=
+  (frontier_inter_subset _ _).trans <| union_subset_union
+    (inter_subset_inter frontier_ball_subset_sphere closure_ball_subset_closedBall)
+    (inter_subset_inter closure_ball_subset_closedBall frontier_ball_subset_sphere)
 
 variable {f : ℂ → ℂ} {a : ℂ} {C r₀ : ℝ}
 
-/-- **The maximum modulus principle on a crosscut neighbourhood.** A function holomorphic on
-`ball c r` and continuous up to the closed disc that stays within `C` of a value `a` on the closed
-crosscut arc and on the boundary cap stays within `C` of `a` on the whole crosscut neighbourhood.
+/-- **The maximum modulus principle on a crosscut neighbourhood.** A function holomorphic on the
+crosscut neighbourhood and continuous up to its closure that stays within `C` of a value `a` on the
+closed crosscut arc and on the boundary cap stays within `C` of `a` on the whole crosscut
+neighbourhood.
 
 The crosscut neighbourhood is a bounded open set whose frontier is covered by those two pieces
 (`TauCeti.frontier_ball_inter_ball_subset`), so this is Mathlib's
 `Complex.norm_le_of_forall_mem_frontier_norm_le` applied to `f - a` on it. Neither injectivity of
-`f` nor connectivity of anything is used. -/
-theorem norm_sub_le_of_mem_ball_inter_ball (hf : DiffContOnCl ℂ f (ball c r))
+`f` nor connectivity of anything is used. Regularity is asked for on the crosscut neighbourhood
+alone rather than on the disc, which is all the maximum principle consumes; a caller holding
+`DiffContOnCl ℂ f (ball c r)` supplies it by `DiffContOnCl.mono inter_subset_left`. -/
+theorem norm_sub_le_of_mem_ball_inter_ball (hf : DiffContOnCl ℂ f (ball c r ∩ ball ζ ρ))
     (harc : ∀ w ∈ closedBall c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ C)
     (hcap : ∀ w ∈ sphere c r ∩ closedBall ζ ρ, ‖f w - a‖ ≤ C)
     (hz : z ∈ ball c r ∩ ball ζ ρ) : ‖f z - a‖ ≤ C := by
   refine Complex.norm_le_of_forall_mem_frontier_norm_le
-    (isBounded_ball.subset inter_subset_left) ((hf.mono inter_subset_left).sub_const a)
+    (isBounded_ball.subset inter_subset_left) (hf.sub_const a)
     (fun w hw => ?_) (subset_closure hz)
   rcases frontier_ball_inter_ball_subset hw with h | h
   · exact hcap w h
@@ -410,7 +409,8 @@ theorem norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn
       have h₃ := max_lt hr₀ hzr
       exact ⟨by linarith, by linarith, by linarith⟩⟩
   have hsub : closedBall c s ⊆ ball c r := closedBall_subset_ball hsr
-  refine norm_sub_le_of_mem_ball_inter_ball (r := s) (hd.diffContOnCl_ball hsub)
+  refine norm_sub_le_of_mem_ball_inter_ball (r := s)
+    ((hd.diffContOnCl_ball hsub).mono inter_subset_left)
     (fun w hw => harc w ⟨hsub hw.1, hw.2⟩) (fun w hw => ?_) ⟨mem_ball.mpr hzs, hz.2⟩
   have hwc : dist w c = s := mem_sphere.mp hw.1
   exact hcap w ⟨hsub (mem_closedBall.mpr hwc.le), hw.2⟩ (hwc ▸ hr₀s)
@@ -442,14 +442,14 @@ The maximum modulus principle turns each such estimate into an oscillation bound
 neighbourhood `ball c r ∩ ball ζ ρ`
 (`TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn`), and those neighbourhoods are
 exactly the traces on the disc of the balls around `ζ`, so
-`TauCeti.clusterSetOn_subsingleton_of_forall_exists` applies verbatim. Only the values of `f` on
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists` applies verbatim. Only the values of `f` on
 the *open* disc are constrained, and only holomorphy there is assumed; note that `ζ` need not be
 on the boundary circle for this statement, and that `ρ`, `r₀` and `a` may all depend on `ε`. -/
-theorem clusterSetOn_ball_subsingleton (hd : DifferentiableOn ℂ f (ball c r))
+theorem subsingleton_clusterSetOn_ball (hd : DifferentiableOn ℂ f (ball c r))
     (h : ∀ ε > 0, ∃ ρ > 0, ∃ r₀ < r, ∃ a : ℂ, (∀ w ∈ ball c r ∩ sphere ζ ρ, ‖f w - a‖ ≤ ε) ∧
       ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
     (clusterSetOn f (ball c r) ζ).Subsingleton := by
-  refine clusterSetOn_subsingleton_of_forall_exists fun ε hε => ?_
+  refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
   obtain ⟨ρ, hρ, r₀, hr₀, a, harc, hcap⟩ := h (ε / 2) (by positivity)
   refine ⟨ρ, hρ, fun x hx y hy => ?_⟩
   have := dist_le_of_mem_ball_inter_ball hd hr₀ harc hcap hx hy
@@ -465,7 +465,7 @@ function on a disc need not have any limit at a given boundary point — so the 
 carries the content; it is exactly the estimate the length–area method produces on the arc and
 local connectedness of the image boundary produces on the collar.
 
-The cluster set is a subsingleton by `TauCeti.clusterSetOn_ball_subsingleton`, and it is nonempty
+The cluster set is a subsingleton by `TauCeti.subsingleton_clusterSetOn_ball`, and it is nonempty
 because `f` maps the disc into the compact closure of its bounded image; that is exactly what
 `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` needs. -/
 theorem exists_tendsto_nhdsWithin_ball (hr : 0 < r) (hd : DifferentiableOn ℂ f (ball c r))
@@ -474,7 +474,7 @@ theorem exists_tendsto_nhdsWithin_ball (hr : 0 < r) (hd : DifferentiableOn ℂ f
       ∀ w ∈ ball c r ∩ closedBall ζ ρ, r₀ ≤ dist w c → ‖f w - a‖ ≤ ε) :
     ∃ v, Tendsto f (𝓝[ball c r] ζ) (𝓝 v) := by
   refine exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
-    (fun w hw => subset_closure ⟨w, hw, rfl⟩) ?_ (clusterSetOn_ball_subsingleton hd h)
+    (fun w hw => subset_closure ⟨w, hw, rfl⟩) ?_ (subsingleton_clusterSetOn_ball hd h)
   rw [closure_ball c hr.ne']
   exact mem_closedBall.mpr hζ.le
 
@@ -496,7 +496,7 @@ theorem exists_continuousOn_closedBall_eqOn (hr : 0 < r) (hd : DifferentiableOn 
     ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
   obtain ⟨F, hFc, hFe⟩ := exists_continuousOn_closure_eqOn_of_isBounded isOpen_ball
     hd.continuousOn hb fun ζ hζ => by
-      refine clusterSetOn_ball_subsingleton hd (h ζ ?_)
+      refine subsingleton_clusterSetOn_ball hd (h ζ ?_)
       rwa [frontier_ball c hr.ne'] at hζ
   exact ⟨F, closure_ball c hr.ne' ▸ hFc, hFe⟩
 
