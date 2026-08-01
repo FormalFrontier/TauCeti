@@ -183,8 +183,7 @@ noncomputable def cofreeMap (f : M →ₗ[R] N) :
 
 /-- The underlying linear map of `cofreeMap f` is `f ⊗ id`. -/
 @[simp]
-theorem cofreeMap_toLinearMap (f : M →ₗ[R] N) :
-    (cofreeMap (C := C) f).toLinearMap = f.rTensor C :=
+theorem cofreeMap_toLinearMap (f : M →ₗ[R] N) : (cofreeMap (C := C) f).toLinearMap = f.rTensor C :=
   rfl
 
 /-- `cofreeMap f` acts as `f ⊗ id`. -/
@@ -275,8 +274,7 @@ private theorem counit_rTensor_assoc_symm (m : M) (y : C ⊗[R] C) :
 /-- The cofree coaction is split by `(ε ∘ -) ∘ counit`: applying the counit to the right factor
 and then the right unitor retracts the cofree coaction. This is the right-counit law of `C`
 transported to `M ⊗[R] C`, and underlies the cofree adjunction. -/
-private theorem cofree_retract (z : M ⊗[R] C) :
-    (TensorProduct.rid R M).toLinearMap.rTensor C
+private theorem cofree_retract (z : M ⊗[R] C) : (TensorProduct.rid R M).toLinearMap.rTensor C
         (((Coalgebra.counit (R := R) (A := C)).lTensor M).rTensor C (cofreeCoact R C M z)) = z := by
   induction z using TensorProduct.induction_on with
   | zero => simp
@@ -343,8 +341,7 @@ noncomputable abbrev cofree (M : Type w) [AddCommMonoid M] [Module R M] :
 
 /-- The underlying semimodule of the bundled cofree comodule is `M ⊗[R] C`. -/
 @[simp]
-theorem cofree_toSemimoduleCat :
-    (cofree R C M).toSemimoduleCat = SemimoduleCat.of R (M ⊗[R] C) :=
+theorem cofree_toSemimoduleCat : (cofree R C M).toSemimoduleCat = SemimoduleCat.of R (M ⊗[R] C) :=
   rfl
 
 /-- The coaction on the bundled cofree comodule is `id ⊗ Δ` followed by reassociation. -/

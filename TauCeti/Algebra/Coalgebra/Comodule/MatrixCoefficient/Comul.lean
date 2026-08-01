@@ -103,8 +103,7 @@ theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
       simp only [coassoc_simps]
 
 omit [Coalgebra R C] [Comodule R C M] in
-private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
-    (b : Basis ι R M) (x : M ⊗[R] C) :
+private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι] (b : Basis ι R M) (x : M ⊗[R] C) :
     x =
       ∑ i, b i ⊗ₜ[R]
         TensorProduct.lid R C
@@ -126,8 +125,7 @@ private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
 
 /-- The coaction of a comodule with a finite basis `(eᵢ)` expands as
 `ρ(m) = ∑ i, eᵢ ⊗ c(eⁱ, m)` in matrix coefficients. -/
-theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι]
-    (b : Basis ι R M) (m : M) :
+theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι] (b : Basis ι R M) (m : M) :
     coact (R := R) (C := C) (M := M) m =
       ∑ i, b i ⊗ₜ[R]
         matrixCoefficient (R := R) (C := C) (b.coord i) m := by

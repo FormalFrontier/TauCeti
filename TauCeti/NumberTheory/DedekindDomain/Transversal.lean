@@ -83,8 +83,7 @@ private theorem notMem_pair_of_apply_involutive {α : Type*} [DecidableEq α] {f
 omit [IsDedekindDomain R] in
 /-- Transporting a height-one prime along a ring equivalence `σ` maps its ideal to the image
 ideal: `(equivOfRingEquiv σ p).asIdeal = Ideal.map σ p.asIdeal`. -/
-private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R)
-    (p : IsDedekindDomain.HeightOneSpectrum R) :
+private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R) (p : IsDedekindDomain.HeightOneSpectrum R) :
     (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p).asIdeal =
       Ideal.map σ p.asIdeal := by
   ext x
@@ -126,8 +125,7 @@ given the conjugate-pair relations `Q = Ideal.map σ P` and `Ideal.map σ Q = P`
 homomorphism `σ`, valid over any commutative semiring (no Dedekind structure needed). -/
 private theorem mul_map_eq_prod_of_mem_image_union {R : Type*} [CommSemiring R] {σ : R →+* R}
     {prodS prodS' P Q : Ideal R} {G' : Finset (Ideal R)}
-    (hqIdeal : Q = Ideal.map σ P) (hmapq : Ideal.map σ Q = P)
-    (hprodS : prodS = prodS' * P * Q)
+    (hqIdeal : Q = Ideal.map σ P) (hmapq : Ideal.map σ Q = P) (hprodS : prodS = prodS' * P * Q)
     (hprod' : ∀ a ∈ G', a * Ideal.map σ a = prodS') {A : Ideal R}
     (hA : A ∈ G'.image (· * P) ∪ G'.image (· * Q)) :
     A * Ideal.map σ A = prodS := by
@@ -161,13 +159,11 @@ omit [IsDedekindDomain R] in
 from `S` leaves a set the involution still maps to itself: an element outside the pair cannot be
 sent into it, since applying the involution twice returns it. -/
 private lemma mem_sdiff_pair_of_invariant {σ : R ≃+* R}
-    {S : Finset (IsDedekindDomain.HeightOneSpectrum R)}
-    {p q : IsDedekindDomain.HeightOneSpectrum R}
+    {S : Finset (IsDedekindDomain.HeightOneSpectrum R)} {p q : IsDedekindDomain.HeightOneSpectrum R}
     (hqdef : q = IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p)
     (hinv : ∀ x ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x ∈ S)
     (hinvol : ∀ x ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ
-      (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x) = x)
-    (hpS : p ∈ S) :
+      (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x) = x) (hpS : p ∈ S) :
     ∀ x ∈ S \ {p, q}, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x ∈ S \ {p, q} := by
   intro x hx
   have hxS := (Finset.mem_sdiff.mp hx).1
@@ -179,10 +175,8 @@ private lemma mem_sdiff_pair_of_invariant {σ : R ≃+* R}
 /-- **Conjugate-transversal ideal family.** For a fixed-point-free involution `σ` of a finite set
 `S` of height-one primes of a Dedekind domain, there are at least `2 ^ (S.card / 2)` ideals `A`
 with `A * σ A = ∏ p ∈ S, p.asIdeal`. -/
-theorem exists_transversal_family (σ : R ≃+* R)
-    (S : Finset (IsDedekindDomain.HeightOneSpectrum R))
-    (hinv : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ∈ S)
-    (hinvol : ∀ p ∈ S,
+theorem exists_transversal_family (σ : R ≃+* R) (S : Finset (IsDedekindDomain.HeightOneSpectrum R))
+    (hinv : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ∈ S) (hinvol : ∀ p ∈ S,
       IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ
         (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p) = p)
     (hfree : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ≠ p) :

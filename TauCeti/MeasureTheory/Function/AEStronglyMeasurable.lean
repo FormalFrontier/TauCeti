@@ -59,9 +59,7 @@ sequence, then `f` is `AEStronglyMeasurable` with respect to their infimum. -/
 -- The common representative is built as the `liminf` of the per-σ-algebra witnesses.
 lemma aestronglyMeasurable_iInf_of_antitone
     {α : Type*} {m₀ : MeasurableSpace α} {μ : @MeasureTheory.Measure α m₀}
-    {m : ℕ → MeasurableSpace α}
-    (h_anti : Antitone m)
-    (f : α → β)
+    {m : ℕ → MeasurableSpace α} (h_anti : Antitone m) (f : α → β)
     (hf : ∀ N, @MeasureTheory.AEStronglyMeasurable α β _ (m N) m₀ f μ) :
     @MeasureTheory.AEStronglyMeasurable α β _ (⨅ N, m N) m₀ f μ := by
   -- Step 1: Extract strongly measurable representatives for each N
@@ -112,10 +110,8 @@ Mathlib's `aestronglyMeasurable_of_tendsto_ae` covers only the `m = m₀` case. 
 -- so the `limsup` witness is the only route. This lemma and the two below are consumed by the
 -- reverse-martingale Lévy-downward theorem `MeasureTheory.tendsto_ae_condExp_iInf`.
 lemma aestronglyMeasurable_of_tendsto_ae'
-    {α : Type*} {m₀ : MeasurableSpace α} {μ : @MeasureTheory.Measure α m₀}
-    {m : MeasurableSpace α}
-    {f : ℕ → α → β} {g : α → β}
-    (hf : ∀ n, @MeasureTheory.AEStronglyMeasurable α β _ m m₀ (f n) μ)
+    {α : Type*} {m₀ : MeasurableSpace α} {μ : @MeasureTheory.Measure α m₀} {m : MeasurableSpace α}
+    {f : ℕ → α → β} {g : α → β} (hf : ∀ n, @MeasureTheory.AEStronglyMeasurable α β _ m m₀ (f n) μ)
     (hlim : ∀ᵐ x ∂μ, Filter.Tendsto (fun n => f n x) Filter.atTop (nhds (g x))) :
     @MeasureTheory.AEStronglyMeasurable α β _ m m₀ g μ := by
   -- Strongly measurable representatives of the `f n`.
@@ -148,8 +144,7 @@ is `AEStronglyMeasurable[⨅ n, 𝔽 n]`. Codomain `β` at the same order level 
 section (`ℝ` qualifies). -/
 lemma aestronglyMeasurable_iInf_of_tendsto_ae_antitone
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {𝔽 : ℕ → MeasurableSpace Ω} (h_antitone : Antitone 𝔽)
-    {g : ℕ → Ω → β} {Xlim : Ω → β}
+    {𝔽 : ℕ → MeasurableSpace Ω} (h_antitone : Antitone 𝔽) {g : ℕ → Ω → β} {Xlim : Ω → β}
     (hg_meas : ∀ n, AEStronglyMeasurable[𝔽 n] (g n) μ)
     (h_tendsto : ∀ᵐ ω ∂μ, Tendsto (fun n => g n ω) atTop (𝓝 (Xlim ω))) :
     AEStronglyMeasurable[⨅ n, 𝔽 n] Xlim μ := by

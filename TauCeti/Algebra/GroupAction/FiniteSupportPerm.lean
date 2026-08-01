@@ -51,8 +51,7 @@ theorem finite_compl_fixedBy_iff_eventually_eq_self {π : Equiv.Perm ℕ} :
 /-- Conjugating a group element preserves Mathlib's finite-support predicate
 `(MulAction.fixedBy α ·)ᶜ.Finite`; in particular this applies to conjugation of permutations. -/
 theorem finite_compl_fixedBy_conj {G α : Type*} [Group G] [MulAction G α] {g h : G}
-    (hh : (MulAction.fixedBy α h)ᶜ.Finite) :
-    (MulAction.fixedBy α (g⁻¹ * h * g))ᶜ.Finite := by
+    (hh : (MulAction.fixedBy α h)ᶜ.Finite) : (MulAction.fixedBy α (g⁻¹ * h * g))ᶜ.Finite := by
   simpa [Set.smul_set_compl, MulAction.smul_fixedBy] using hh.smul_set (a := g⁻¹)
 
 end TauCeti

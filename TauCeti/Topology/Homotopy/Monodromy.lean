@@ -203,8 +203,7 @@ theorem card_fiber_eq_index [PathConnectedSpace E] (hp : IsCoveringMap p) (e : p
 /-! ### Dependence on the chosen lift -/
 
 /-- Moving the chosen lift by monodromy conjugates the recovered subgroup. -/
-theorem range_mapOfEq_monodromy (hp : IsCoveringMap p) (e : p ⁻¹' {x})
-    (γ : FundamentalGroup X x) :
+theorem range_mapOfEq_monodromy (hp : IsCoveringMap p) (e : p ⁻¹' {x}) (γ : FundamentalGroup X x) :
     (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ (hp.monodromy γ e).2).range =
       ((FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range).map
         (MulAut.conj γ).toMonoidHom := by
@@ -224,8 +223,7 @@ theorem exists_range_eq_map_conj_of_joined (hp : IsCoveringMap p) {e e' : p ⁻�
 
 /-- On a path-connected cover, any two lifts of the basepoint recover conjugate subgroups: an
 unpointed connected cover determines only the conjugacy class of the subgroup. -/
-theorem exists_range_eq_map_conj [PathConnectedSpace E] (hp : IsCoveringMap p)
-    (e e' : p ⁻¹' {x}) :
+theorem exists_range_eq_map_conj [PathConnectedSpace E] (hp : IsCoveringMap p) (e e' : p ⁻¹' {x}) :
     ∃ γ : FundamentalGroup X x,
       (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e'.2).range =
         ((FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range).map

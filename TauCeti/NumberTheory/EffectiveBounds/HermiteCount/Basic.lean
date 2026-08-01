@@ -264,8 +264,7 @@ private theorem setOf_finiteDimensional_abs_discr_le_subset_of_le {N M : ℕ} (h
 /-- **Threshold-monotone effective Hermite--Minkowski.** If `N ≤ M`, then the number of
 finite-dimensional subfields of an ambient extension `A / ℚ` with absolute discriminant at most `N`
 is bounded by the explicit Hermite-count expression attached to the larger threshold `M`. -/
-theorem ncard_setOf_finiteDimensional_abs_discr_le_le_of_threshold_le {N M : ℕ}
-    (hNM : N ≤ M) :
+theorem ncard_setOf_finiteDimensional_abs_discr_le_le_of_threshold_le {N M : ℕ} (hNM : N ≤ M) :
     {K : {F : IntermediateField ℚ A // FiniteDimensional ℚ F} |
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         |discr K| ≤ (N : ℤ)}.ncard ≤
@@ -307,8 +306,7 @@ private theorem setOf_finiteDimensional_natAbs_discr_le_subset_abs_discr_le (N :
 then the number of finite-dimensional subfields of an ambient extension `A / ℚ` whose
 discriminant has natural absolute value at most `N` is bounded by the explicit Hermite-count
 expression attached to the larger threshold `M`. -/
-theorem ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_threshold_le {N M : ℕ}
-    (hNM : N ≤ M) :
+theorem ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_threshold_le {N M : ℕ} (hNM : N ≤ M) :
     {K : {F : IntermediateField ℚ A // FiniteDimensional ℚ F} |
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         (discr K).natAbs ≤ N}.ncard ≤

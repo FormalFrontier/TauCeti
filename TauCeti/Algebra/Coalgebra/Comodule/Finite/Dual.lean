@@ -66,16 +66,14 @@ theorem dual_coact (M : FGComoduleCat.{u, v, w} k H) :
 
 /-- The inclusion into all comodules sends the finite dual to the ambient dual comodule. -/
 @[simp]
-theorem incl_dual (M : FGComoduleCat.{u, v, w} k H) :
-    (incl (R := k) (C := H)).obj (dual k H M) =
+theorem incl_dual (M : FGComoduleCat.{u, v, w} k H) : (incl (R := k) (C := H)).obj (dual k H M) =
       ComoduleCat.of k H (Module.Dual k M) :=
   rfl
 
 /-- Forgetting the finite dual to semimodules gives the ordinary linear-dual module. -/
 @[simp]
 theorem forget₂_semimoduleCat_dual_obj (M : FGComoduleCat.{u, v, w} k H) :
-    (forget₂ (FGComoduleCat.{u, v, max u w} k H)
-      (SemimoduleCat.{max u w} k)).obj (dual k H M) =
+    (forget₂ (FGComoduleCat.{u, v, max u w} k H) (SemimoduleCat.{max u w} k)).obj (dual k H M) =
       SemimoduleCat.of k (Module.Dual k M) :=
   rfl
 

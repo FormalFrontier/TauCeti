@@ -245,8 +245,7 @@ namespace Hom
 
 /-- The underlying linear map of `Hom.ofTrivial f` is `f`. -/
 @[simp]
-theorem ofTrivial_toLinearMap (f : M →ₗ[R] N) :
-    (ofTrivial (R := R) (C := C) f).toLinearMap = f :=
+theorem ofTrivial_toLinearMap (f : M →ₗ[R] N) : (ofTrivial (R := R) (C := C) f).toLinearMap = f :=
   ofGroupLike_toLinearMap (R := R) (C := C) (1 : GroupLike R C) f
 
 /-- The comodule morphism induced by a linear map between trivial comodules applies as that
@@ -266,8 +265,7 @@ theorem ofTrivial_id :
 /-- The comodule morphism induced by a composite linear map between trivial comodules is the
 composite of the induced comodule morphisms. -/
 @[simp]
-theorem ofTrivial_comp {P : Type*} [AddCommMonoid P] [Module R P]
-    (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
+theorem ofTrivial_comp {P : Type*} [AddCommMonoid P] [Module R P] (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
     ofTrivial (R := R) (C := C) (g.comp f) =
       comp (ofTrivial (R := R) (C := C) g) (ofTrivial (R := R) (C := C) f) :=
   ofGroupLike_comp (R := R) (C := C) (1 : GroupLike R C) g f

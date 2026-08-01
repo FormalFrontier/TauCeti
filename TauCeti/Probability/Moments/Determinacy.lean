@@ -87,10 +87,8 @@ private lemma iteratedDeriv_complexMGF_id_zero
 finite exponential moments near `0` (so their complex moment-generating functions are analytic on a
 strip about the imaginary axis) and agree on every polynomial moment `∫ xⁿ`, then their
 characteristic functions coincide. -/
-theorem charFun_eq_of_forall_integral_pow_eq
-    (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
-    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν))
-    (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
+theorem charFun_eq_of_forall_integral_pow_eq (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
+    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν)) (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
     charFun μ = charFun ν := by
   have hμ0 : (0 : ℂ).re ∈ interior (integrableExpSet id μ) := by simpa using hμ
   have hν0 : (0 : ℂ).re ∈ interior (integrableExpSet id ν) := by simpa using hν
@@ -138,8 +136,7 @@ exponential moments near `0` is determined by its polynomial moments `∫ xⁿ`.
 `charFun_eq_of_forall_integral_pow_eq` with `MeasureTheory.Measure.ext_of_charFun`. -/
 theorem Measure.ext_of_forall_integral_pow_eq [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
-    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν))
-    (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
+    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν)) (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
     μ = ν :=
   Measure.ext_of_charFun (charFun_eq_of_forall_integral_pow_eq hμ hν hmom)
 

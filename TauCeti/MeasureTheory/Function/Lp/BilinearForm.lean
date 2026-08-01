@@ -33,8 +33,7 @@ variable [NormedAddCommGroup J] [NormedSpace ℝ J]
 
 /-- The continuous bilinear form obtained by integrating an essentially bounded field of
 continuous bilinear forms against two square-integrable functions. -/
-noncomputable def lpBilinearForm (μ : Measure X)
-    (B : Lp (J →L[ℝ] J →L[ℝ] ℝ) ⊤ μ) :
+noncomputable def lpBilinearForm (μ : Measure X) (B : Lp (J →L[ℝ] J →L[ℝ] ℝ) ⊤ μ) :
     Lp J 2 μ →L[ℝ] Lp J 2 μ →L[ℝ] ℝ :=
   ((ContinuousLinearMap.apply ℝ ℝ (E := J)).flip.lpPairing μ 2 2).comp
     (((ContinuousLinearMap.apply ℝ (J →L[ℝ] ℝ) (E := J)).flip.holderL
@@ -42,8 +41,7 @@ noncomputable def lpBilinearForm (μ : Measure X)
 
 /-- The `L∞`-coefficient bilinear form is the integral of its pointwise action. -/
 @[simp]
-theorem lpBilinearForm_apply (μ : Measure X) (B : Lp (J →L[ℝ] J →L[ℝ] ℝ) ⊤ μ)
-    (U V : Lp J 2 μ) :
+theorem lpBilinearForm_apply (μ : Measure X) (B : Lp (J →L[ℝ] J →L[ℝ] ℝ) ⊤ μ) (U V : Lp J 2 μ) :
     lpBilinearForm μ B U V = ∫ x, B x (U x) (V x) ∂μ := by
   rw [lpBilinearForm, ContinuousLinearMap.comp_apply,
     ContinuousLinearMap.lpPairing_eq_integral]

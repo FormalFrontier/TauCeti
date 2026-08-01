@@ -23,8 +23,6 @@ inverse to `MonoidAlgebra.mapDomainBialgHom` on the corresponding hom-sets.
 
 ## Main declarations
 
-* `TauCeti.MonoidAlgebra.isGroupLikeElem_single_one`: standard basis elements are
-  group-like.
 * `TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single`: classification of group-like
   elements in a monoid algebra over a connected base.
 * `TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage`: recover the monoid homomorphism
@@ -58,15 +56,6 @@ private theorem eq_zero_or_eq_one_of_isIdempotentElem
     apply PrimeSpectrum.basicOpen_injOn_isIdempotentElem he .one
     apply SetLike.ext'
     simpa only [PrimeSpectrum.basicOpen_one, TopologicalSpace.Opens.coe_top] using huniv
-
-/-- A standard basis element of a monoid algebra with coefficient one is group-like. -/
-@[simp]
-theorem isGroupLikeElem_single_one [CommSemiring R] {H : Type v} [Monoid H] (h : H) :
-    IsGroupLikeElem R (_root_.MonoidAlgebra.single h (1 : R)) := by
-  constructor
-  · simp
-  · rw [_root_.MonoidAlgebra.comul_single, CommSemiring.comul_apply]
-    simp
 
 private theorem tensorEquiv_comul_apply [CommSemiring R]
     {H : Type v} [Monoid H] [DecidableEq H]
@@ -128,7 +117,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
     exact _root_.MonoidAlgebra.single_left_injective
       (R := R) (M := H) one_ne_zero (hx_single'.symm.trans hx_single)
   · rintro ⟨h, rfl, -⟩
-    exact isGroupLikeElem_single_one R h
+    exact _root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) h
 
 /-- The unique index of a group-like element in a monoid algebra over a base with
 connected prime spectrum. -/
@@ -164,7 +153,7 @@ noncomputable def mapDomainBialgHomPreimage [CommRing R]
   letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   let φ : G → H := fun g ↦
     groupLikeIndex R (F (_root_.MonoidAlgebra.single g 1))
-      ((isGroupLikeElem_single_one R g).map F)
+      ((_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F)
   have hφ (g : G) :
       F (_root_.MonoidAlgebra.single g 1) =
         _root_.MonoidAlgebra.single (φ g) 1 :=
@@ -203,7 +192,7 @@ theorem mapDomainBialgHomPreimage_apply_eq_iff [CommRing R]
     mapDomainBialgHomPreimage R F g = h ↔
       F (_root_.MonoidAlgebra.single g 1) = _root_.MonoidAlgebra.single h 1 := by
   let hx : IsGroupLikeElem R (F (_root_.MonoidAlgebra.single g 1)) :=
-    (isGroupLikeElem_single_one R g).map F
+    (_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F
   simpa only [mapDomainBialgHomPreimage, MonoidHom.coe_mk, OneHom.coe_mk] using
     groupLikeIndex_eq_iff R (F (_root_.MonoidAlgebra.single g 1)) hx h
 

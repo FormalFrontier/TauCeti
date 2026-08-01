@@ -128,16 +128,14 @@ private theorem mem_range_lsmul_two_iff (a : Additive G) :
 
 /-- The universal property of `G/G²` for additive homomorphisms: maps out of the quotient are
 additive homomorphisms from `Additive G` whose values are killed by `2`. -/
-protected def elementaryTwoQuotientLiftEquiv [AddMonoid M] :
-    (ElementaryTwoQuotient G →+ M) ≃
+protected def elementaryTwoQuotientLiftEquiv [AddMonoid M] : (ElementaryTwoQuotient G →+ M) ≃
       {φ : Additive G →+ M // ∀ g, 2 • φ g = 0} :=
   ModN.liftEquiv
 
 /-- The universal property of `G/G²` for `ZMod 2`-linear maps: linear maps out of the quotient are
 additive homomorphisms from `Additive G` whose values are killed by `2`. -/
 protected def elementaryTwoQuotientLinearLiftEquiv [AddCommGroup H] [Module (ZMod 2) H] :
-    (ElementaryTwoQuotient G →ₗ[ZMod 2] H) ≃
-      {φ : Additive G →+ H // ∀ g, 2 • φ g = 0} :=
+    (ElementaryTwoQuotient G →ₗ[ZMod 2] H) ≃ {φ : Additive G →+ H // ∀ g, 2 • φ g = 0} :=
   ModN.liftEquiv'
 
 /-- The class map to `G / G²` sends a product to the sum of the classes. -/
@@ -327,8 +325,7 @@ theorem card_elementaryTwoQuotient_eq_index_square :
 `|G/G²| = |{g | g² = 1}|`. The squaring endomorphism `g ↦ g²` has range `G²` and kernel the
 2-torsion; when its kernel has finite index, the index of the range equals the cardinality of the
 kernel. -/
-theorem card_elementaryTwoQuotient_eq_card_twoTorsion
-    [(powMonoidHom 2 : G →* G).ker.FiniteIndex] :
+theorem card_elementaryTwoQuotient_eq_card_twoTorsion [(powMonoidHom 2 : G →* G).ker.FiniteIndex] :
     Nat.card (ElementaryTwoQuotient G) = Nat.card {g : G // g ^ 2 = 1} := by
   rw [card_elementaryTwoQuotient_eq_index_square, square_eq_powMonoidHom_two_range,
     Subgroup.index_range]

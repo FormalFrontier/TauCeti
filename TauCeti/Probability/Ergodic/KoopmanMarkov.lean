@@ -36,8 +36,7 @@ variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 /-- The deterministic Koopman Markov operator associated to a measure-preserving endomorphism.
 
 It acts on measurable-function germs by precomposition and is bundled as a real-linear operator. -/
-def koopmanMarkov (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
-    (Ω →ₘ[μ] ℝ) →ₗ[ℝ] (Ω →ₘ[μ] ℝ) where
+def koopmanMarkov (T : Ω → Ω) (hT : MeasurePreserving T μ μ) : (Ω →ₘ[μ] ℝ) →ₗ[ℝ] (Ω →ₘ[μ] ℝ) where
   toFun := fun g => g.compMeasurePreserving T hT
   map_add' := by
     intro g h
@@ -49,8 +48,7 @@ def koopmanMarkov (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
       simp only [RingHom.id_apply, AEEqFun.compMeasurePreserving_mk, AEEqFun.smul_mk]; rfl
 
 /-- A representative of `koopmanMarkov T hT g` is almost everywhere `g ∘ T`. -/
-theorem coeFn_koopmanMarkov (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Ω →ₘ[μ] ℝ) :
+theorem coeFn_koopmanMarkov (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Ω →ₘ[μ] ℝ) :
     koopmanMarkov T hT g =ᵐ[μ] g ∘ T :=
   AEEqFun.coeFn_compMeasurePreserving g hT
 
@@ -64,8 +62,7 @@ theorem koopmanMarkov_one (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
 
 /-- The Koopman Markov operator preserves products. -/
 @[simp]
-theorem koopmanMarkov_mul (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g h : Ω →ₘ[μ] ℝ) :
+theorem koopmanMarkov_mul (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g h : Ω →ₘ[μ] ℝ) :
     koopmanMarkov T hT (g * h) = koopmanMarkov T hT g * koopmanMarkov T hT h := by
   exact AEEqFun.induction_on₂ g h fun _ _ _ _ => by
     simp only [koopmanMarkov, LinearMap.coe_mk, AddHom.coe_mk, AEEqFun.mk_mul_mk,
@@ -106,8 +103,7 @@ theorem koopmanMarkov_comp {T S : Ω → Ω} (hT : MeasurePreserving T μ μ)
   exact AEEqFun.compMeasurePreserving_comp g hT hS
 
 /-- The `n`th power of a Koopman Markov operator is composition with the `n`th iterate. -/
-theorem koopmanMarkov_iterate (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (n : ℕ) :
+theorem koopmanMarkov_iterate (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (n : ℕ) :
     (koopmanMarkov T hT : (Ω →ₘ[μ] ℝ) → (Ω →ₘ[μ] ℝ))^[n] =
       koopmanMarkov (T^[n]) (hT.iterate n) := by
   funext g
@@ -115,8 +111,7 @@ theorem koopmanMarkov_iterate (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
 
 /-- A measurable-function germ is fixed by the Koopman Markov operator exactly when its chosen
 representative is almost everywhere invariant under the transformation. -/
-theorem koopmanMarkov_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Ω →ₘ[μ] ℝ) :
+theorem koopmanMarkov_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Ω →ₘ[μ] ℝ) :
     koopmanMarkov T hT g = g ↔ g ∘ T =ᵐ[μ] g := by
   constructor
   · intro h
