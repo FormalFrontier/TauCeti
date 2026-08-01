@@ -34,8 +34,9 @@ central simple `ℝ`-algebra of degree `2`. This file runs the opposite isomorph
 The second follows from the first because quaternion conjugation is an `ℝ`-algebra isomorphism
 `ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (Mathlib's `Quaternion.starAe`): the quaternions are their own opposite.
 
-Everything here is an isomorphism of `ℝ`-algebras; `BrauerGroup ℝ` is not yet a group in this
-library, so nothing below is a statement about it. Informally, the isomorphisms exhibit the Brauer
+`BrauerGroup ℝ` is not yet a group in this library, so nothing below is a statement about it: the
+two main results are isomorphisms of `ℝ`-algebras, and the two examples closing the file are a
+degree computation and a nonexistence statement. Informally, the isomorphisms exhibit the Brauer
 class of `ℍ[ℝ]` as **self-inverse**. One further step, not taken here, would turn that into the
 order of the class: the passage from nonsplitting to Brauer nontriviality, applied to
 `TauCeti.Quaternion.isEmpty_algEquiv_matrix` -- which says `ℍ[ℝ]` is isomorphic to no matrix algebra
@@ -74,12 +75,15 @@ namespace TauCeti
 namespace Quaternion
 
 /-- **`ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]ᵐᵒᵖ ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`**: the opposite isomorphism at the real
-quaternions. All three hypotheses of `TauCeti.Algebra.tensorOpAlgEquivMatrix` are found by instance
-search -- `Algebra.IsCentral ℝ ℍ[ℝ]` from `TauCeti.Quaternion.instIsCentral`, `IsSimpleRing ℍ[ℝ]`
-because a division ring is simple, and `FiniteDimensional ℝ ℍ[ℝ]` -- so only the dimension
-`Quaternion.finrank_eq_four` has to be supplied. -/
+quaternions. `TauCeti.Algebra.tensorOpAlgEquivMatrix` asks for `IsAzumaya ℝ ℍ[ℝ]`, which
+`TauCeti.IsSimpleRing.isAzumaya` supplies and which is not an instance, so it is installed by hand;
+its own three hypotheses are found by instance search -- `Algebra.IsCentral ℝ ℍ[ℝ]` from
+`TauCeti.Quaternion.instIsCentral`, `IsSimpleRing ℍ[ℝ]` because a division ring is simple, and
+`FiniteDimensional ℝ ℍ[ℝ]` -- so beyond it only the dimension `Quaternion.finrank_eq_four` has to be
+supplied. -/
 noncomputable def tensorOpAlgEquivMatrix :
     ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]ᵐᵒᵖ ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ :=
+  haveI := IsSimpleRing.isAzumaya ℝ ℍ[ℝ]
   Algebra.tensorOpAlgEquivMatrix ℝ ℍ[ℝ] _root_.Quaternion.finrank_eq_four
 
 /-- **`ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℝ`.** Quaternion conjugation is an `ℝ`-algebra

@@ -80,6 +80,14 @@ subalgebra of the `4`-dimensional `Module.End ℝ ℂ`.
 * `TauCeti.Algebra.tensorOpAlgEquivMatrix`: **the opposite isomorphism**
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `n` with `Module.finrank K A = n`.
 
+The last two are stated for `[IsAzumaya K A]`, which is all their construction uses: bijectivity of
+the Azumaya map is the field `IsAzumaya.bij`, and the finiteness the matrix half needs is the
+`Module.Finite K A` that `IsAzumaya` extends. Over a field this is not a wider class -- an Azumaya
+`K`-algebra is exactly a finite-dimensional central simple one -- but it is the hypothesis the
+construction actually reads, and the one already carried by an algebra known to be Azumaya for some
+other reason (Mathlib's `IsAzumaya.matrix`, `IsAzumaya.of_AlgEquiv`). For a central simple `A` the
+way in is `TauCeti.IsSimpleRing.isAzumaya`, installed with `haveI`.
+
 The real quaternions run all of this concretely in
 `TauCeti/Algebra/CentralSimple/Quaternion.lean`.
 
@@ -88,7 +96,13 @@ The real quaternions run all of this concretely in
 `TauCeti.IsSimpleRing.isAzumaya` is deliberately **not** an instance. Mathlib's
 `Algebra.IsCentral.instIsAzumaya` goes the other way, deducing `Algebra.IsCentral K A` from
 `IsAzumaya K A`; registering the converse as an instance would let typeclass search cycle between
-the two. Apply it with `haveI` where an `IsAzumaya` hypothesis is wanted.
+the two. Apply it with `haveI` where an `IsAzumaya` hypothesis is wanted, as the worked example at
+the end of this file does:
+
+```lean
+haveI := TauCeti.IsSimpleRing.isAzumaya K A
+TauCeti.Algebra.tensorOpAlgEquivMatrix K A hn
+```
 
 `TauCeti.Algebra.tensorOpAlgEquivMatrix` takes the matrix size as a parameter `n` together with a
 proof `Module.finrank K A = n`, rather than using `Module.finrank K A` itself. Instantiating `n` at
@@ -164,24 +178,30 @@ end IsSimpleRing
 
 namespace Algebra
 
-variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [Algebra.IsCentral K A]
-  [IsSimpleRing A] [FiniteDimensional K A]
+variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [IsAzumaya K A]
 
-/-- The Azumaya map of a finite-dimensional central simple algebra, promoted to an isomorphism
+/-- The Azumaya map of an Azumaya algebra, promoted to an isomorphism
 `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A`. Its value on a pure tensor is
-`TauCeti.Algebra.tensorOpAlgEquivEnd_tmul_apply`. -/
+`TauCeti.Algebra.tensorOpAlgEquivEnd_tmul_apply`.
+
+Bijectivity is the field `IsAzumaya.bij`, so this needs no hypothesis beyond `IsAzumaya K A`. For a
+finite-dimensional central simple `A` that hypothesis is
+`TauCeti.IsSimpleRing.isAzumaya K A`, which is not an instance and has to be installed by hand:
+`haveI := TauCeti.IsSimpleRing.isAzumaya K A`. -/
 noncomputable def tensorOpAlgEquivEnd : A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A :=
-  AlgEquiv.ofBijective (AlgHom.mulLeftRight K A) (IsSimpleRing.mulLeftRight_bijective K A)
+  AlgEquiv.ofBijective (AlgHom.mulLeftRight K A) IsAzumaya.bij
 
 @[simp]
 theorem tensorOpAlgEquivEnd_tmul_apply (a : A) (b : Aᵐᵒᵖ) (x : A) :
     tensorOpAlgEquivEnd K A (a ⊗ₜ[K] b) x = a * x * b.unop :=
   AlgHom.mulLeftRight_apply K A a b x
 
-/-- **The opposite isomorphism.** A finite-dimensional central simple `K`-algebra `A` of dimension
-`n` satisfies `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K`: the tensor product of a central simple
-algebra with its opposite is a full matrix algebra, which is what makes the Brauer class of `Aᵐᵒᵖ`
-the inverse of that of `A`.
+/-- **The opposite isomorphism.** An Azumaya `K`-algebra `A` of dimension `n` -- over a field, a
+finite-dimensional central simple algebra -- satisfies `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K`:
+the tensor product of a central simple algebra with its opposite is a full matrix algebra, which is
+what makes the Brauer class of `Aᵐᵒᵖ` the inverse of that of `A`. The finiteness needed to read a
+matrix off is the `Module.Finite K A` that `IsAzumaya` extends; for a central simple `A`, install
+the hypothesis with `haveI := TauCeti.IsSimpleRing.isAzumaya K A`.
 
 The size is the **dimension** `n = Module.finrank K A`, not the degree `TauCeti.Algebra.deg K A`;
 the two are related by `TauCeti.Algebra.deg_sq`, and the resulting degree count is
@@ -213,8 +233,11 @@ section Examples
 
 variable (K : Type*) [Field K]
 
-/-- The base field itself: `K ⊗[K] Kᵐᵒᵖ` is `1 × 1` matrices over `K`. -/
+/-- The base field itself: `K ⊗[K] Kᵐᵒᵖ` is `1 × 1` matrices over `K`. This is also how a central
+simple algebra reaches `TauCeti.Algebra.tensorOpAlgEquivMatrix` in general -- by installing
+`TauCeti.IsSimpleRing.isAzumaya`, which is not an instance. -/
 noncomputable example : K ⊗[K] Kᵐᵒᵖ ≃ₐ[K] Matrix (Fin 1) (Fin 1) K :=
+  haveI := IsSimpleRing.isAzumaya K K
   Algebra.tensorOpAlgEquivMatrix K K (Module.finrank_self K)
 
 end Examples
