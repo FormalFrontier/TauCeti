@@ -101,9 +101,8 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
     have hcomp := hφ'.scomp_of_eq t ((hasDerivAt_id t).sub_const t) (by simp)
     have hderiv : HasDerivAt (fun s => f t * f (s - t)) (f t * x) t := by
       simpa only [Function.comp_apply, id_eq, one_smul] using hcomp.const_mul (f t)
-    rw [hshift]
-    convert hderiv using 1
-    rw [← hshift]
+    rw [← hshift] at hderiv
+    exact hderiv
   have hg (t : ℝ) : HasDerivAt g (g t * x) t := hasDerivAt_exp_smul_const x t
   let rightMul : R →L[ℝ] R := ContinuousLinearMap.mulLeftRight ℝ R 1 x
   have hv : ∀ _ : ℝ, LipschitzOnWith ‖rightMul‖₊ rightMul Set.univ :=
