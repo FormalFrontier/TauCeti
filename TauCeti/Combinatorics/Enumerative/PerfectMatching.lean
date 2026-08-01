@@ -131,12 +131,14 @@ theorem extendPerm_apply_of_mem (E : PerfectMatching {x : α // x ≠ a ∧ x �
   rw [extendPerm, Equiv.Perm.mul_apply, hmem, Equiv.swap_apply_of_ne_of_ne hne.1 hne.2]
 
 /-- The extended permutation sends `a` to `b`. -/
+@[simp]
 theorem extendPerm_apply_left (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     extendPerm E a = b := by
   rw [extendPerm, Equiv.Perm.mul_apply,
     Equiv.Perm.ofSubtype_apply_of_not_mem E.val (by simp), Equiv.swap_apply_left]
 
 /-- The extended permutation sends `b` to `a`. -/
+@[simp]
 theorem extendPerm_apply_right (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     extendPerm E b = a := by
   rw [extendPerm, Equiv.Perm.mul_apply,
@@ -165,7 +167,6 @@ theorem extend_apply (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧
     (extend hab E).val x = extendPerm E x := rfl
 
 /-- Adjoining the arc `{a, b}` sends `a` to `b`. -/
-@[simp]
 theorem extend_apply_left (hab : a ≠ b) (E : PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :
     (extend hab E).val a = b := extendPerm_apply_left E
 
