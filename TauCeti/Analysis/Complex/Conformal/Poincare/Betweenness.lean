@@ -149,67 +149,76 @@ private lemma mem_segment_zero_left_iff_re_mul_conj :
         ring
       exact sub_eq_zero.mp (norm_eq_zero.mp (sq_eq_zero_iff.mp hzero))
 
+-- Forward direction. Write `0 = a • z + b • w` with `a + b = 1`. If `a = 0` the point `w` is the
+-- origin and both sides vanish; otherwise multiply by `conj w`, which turns each side into a real
+-- scalar times a single complex number, and cancel `a`.
+private lemma re_mul_conj_of_zero_mem_segment (h : (0 : ℂ) ∈ segment ℝ z w) :
+    (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
+  obtain ⟨a, b, ha, hb, hab, h⟩ := h
+  rcases eq_or_lt_of_le ha with rfl | hapos
+  · have hb1 : b = 1 := by linarith
+    rw [hb1, one_smul, zero_smul, zero_add] at h
+    simp [h]
+  · have h' : (a : ℂ) * z = -((b : ℂ) * w) := by
+      rw [eq_neg_iff_add_eq_zero, ← Complex.real_smul, ← Complex.real_smul]
+      exact h
+    have hnormeq : a * ‖z‖ = b * ‖w‖ := by
+      have hn := congrArg norm h'
+      rwa [norm_mul, norm_neg, norm_mul, Complex.norm_real, Complex.norm_real,
+        Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg ha, abs_of_nonneg hb] at hn
+    -- Multiplying `h'` by `conj w` makes each side a real scalar times a single complex number:
+    -- `z * conj w` on the left, `w * conj w = ‖w‖ ^ 2` on the right.
+    have hright : -((b : ℂ) * w) * (starRingEnd ℂ) w
+        = -((b : ℂ) * (w * (starRingEnd ℂ) w)) := by ring
+    have hre : a * (z * (starRingEnd ℂ) w).re = -(b * ‖w‖ ^ 2) := by
+      have hc := congrArg (fun x : ℂ => (x * (starRingEnd ℂ) w).re) h'
+      rwa [mul_assoc, hright, Complex.re_ofReal_mul, Complex.neg_re, Complex.re_ofReal_mul,
+        Complex.mul_conj, Complex.ofReal_re, Complex.normSq_eq_norm_sq] at hc
+    refine mul_left_cancel₀ hapos.ne' ?_
+    linear_combination hre + ‖w‖ * hnormeq
+
+-- Reverse direction. The degenerate cases `z = 0` and `w = 0` are endpoints of the segment; when
+-- both are nonzero, `‖w‖ • z + ‖z‖ • w` has vanishing norm by `normSq_add`, which places the
+-- origin at the barycentre with weights proportional to the two norms.
+private lemma zero_mem_segment_of_re_mul_conj (h : (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖)) :
+    (0 : ℂ) ∈ segment ℝ z w := by
+  rcases eq_or_ne z 0 with rfl | hz
+  · exact ⟨1, 0, zero_le_one, le_refl 0, by ring, by simp⟩
+  rcases eq_or_ne w 0 with rfl | hw
+  · exact ⟨0, 1, le_refl 0, zero_le_one, by ring, by simp⟩
+  have hzpos : 0 < ‖z‖ := norm_pos_iff.mpr hz
+  have hwpos : 0 < ‖w‖ := norm_pos_iff.mpr hw
+  have hsum : 0 < ‖z‖ + ‖w‖ := by linarith
+  refine ⟨‖w‖ / (‖z‖ + ‖w‖), ‖z‖ / (‖z‖ + ‖w‖), by positivity, by positivity,
+    by field_simp; ring, ?_⟩
+  -- Conjugation fixes the two real scalars, so the cross term of `normSq_add` is a real
+  -- multiple of `z * conj w`, which is the shape the hypothesis `h` is about.
+  have hcross : (‖w‖ : ℂ) * z * (starRingEnd ℂ) ((‖z‖ : ℂ) * w)
+      = ((‖w‖ * ‖z‖ : ℝ) : ℂ) * (z * (starRingEnd ℂ) w) := by
+    rw [map_mul, Complex.conj_ofReal]; push_cast; ring
+  have hzero : ‖(‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w‖ ^ 2 = 0 := by
+    have h3 := Complex.normSq_add ((‖w‖ : ℂ) * z) ((‖z‖ : ℂ) * w)
+    rw [Complex.normSq_eq_norm_sq, Complex.normSq_eq_norm_sq,
+      Complex.normSq_eq_norm_sq] at h3
+    rw [h3, norm_mul, norm_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
+      Real.norm_eq_abs, abs_of_nonneg hwpos.le, abs_of_nonneg hzpos.le, hcross,
+      Complex.re_ofReal_mul, h]
+    ring
+  have hcancel : (‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w = 0 :=
+    norm_eq_zero.mp (sq_eq_zero_iff.mp hzero)
+  rw [Complex.real_smul, Complex.real_smul]
+  push_cast
+  have hsumC : ((‖z‖ : ℂ) + (‖w‖ : ℂ)) ≠ 0 := by
+    simpa using Complex.ofReal_ne_zero.mpr hsum.ne'
+  field_simp
+  linear_combination hcancel
+
 /-- **The origin lies between two points exactly when their Hermitian product is negative real.**
 This is the mirror of `TauCeti.mem_segment_zero_left_iff_re_mul_conj`, for the origin at the
 middle of a Euclidean segment rather than at one of its ends. -/
 private lemma zero_mem_segment_iff_re_mul_conj :
-    (0 : ℂ) ∈ segment ℝ z w ↔ (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
-  constructor
-  · rintro ⟨a, b, ha, hb, hab, h⟩
-    rcases eq_or_lt_of_le ha with rfl | hapos
-    · have hb1 : b = 1 := by linarith
-      rw [hb1, one_smul, zero_smul, zero_add] at h
-      simp [h]
-    · have h' : (a : ℂ) * z = -((b : ℂ) * w) := by
-        rw [eq_neg_iff_add_eq_zero, ← Complex.real_smul, ← Complex.real_smul]
-        exact h
-      have hnormeq : a * ‖z‖ = b * ‖w‖ := by
-        have hn := congrArg norm h'
-        rwa [norm_mul, norm_neg, norm_mul, Complex.norm_real, Complex.norm_real,
-          Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg ha, abs_of_nonneg hb] at hn
-      -- Multiplying `h'` by `conj w` makes each side a real scalar times a single complex
-      -- number: `z * conj w` on the left, `w * conj w = ‖w‖ ^ 2` on the right.
-      have hleft : (a : ℂ) * z * (starRingEnd ℂ) w = (a : ℂ) * (z * (starRingEnd ℂ) w) :=
-        mul_assoc _ _ _
-      have hright : -((b : ℂ) * w) * (starRingEnd ℂ) w
-          = -((b : ℂ) * (w * (starRingEnd ℂ) w)) := by ring
-      have hre : a * (z * (starRingEnd ℂ) w).re = -(b * ‖w‖ ^ 2) := by
-        have hc := congrArg (fun x : ℂ => (x * (starRingEnd ℂ) w).re) h'
-        rwa [hleft, hright, Complex.re_ofReal_mul, Complex.neg_re, Complex.re_ofReal_mul,
-          Complex.mul_conj, Complex.ofReal_re, Complex.normSq_eq_norm_sq] at hc
-      refine mul_left_cancel₀ hapos.ne' ?_
-      linear_combination hre + ‖w‖ * hnormeq
-  · intro h
-    rcases eq_or_ne z 0 with rfl | hz
-    · exact ⟨1, 0, zero_le_one, le_refl 0, by ring, by simp⟩
-    rcases eq_or_ne w 0 with rfl | hw
-    · exact ⟨0, 1, le_refl 0, zero_le_one, by ring, by simp⟩
-    have hzpos : 0 < ‖z‖ := norm_pos_iff.mpr hz
-    have hwpos : 0 < ‖w‖ := norm_pos_iff.mpr hw
-    have hsum : 0 < ‖z‖ + ‖w‖ := by linarith
-    refine ⟨‖w‖ / (‖z‖ + ‖w‖), ‖z‖ / (‖z‖ + ‖w‖), by positivity, by positivity,
-      by field_simp; ring, ?_⟩
-    -- Conjugation fixes the two real scalars, so the cross term of `normSq_add` is a real
-    -- multiple of `z * conj w`, which is the shape the hypothesis `h` is about.
-    have hcross : (‖w‖ : ℂ) * z * (starRingEnd ℂ) ((‖z‖ : ℂ) * w)
-        = ((‖w‖ * ‖z‖ : ℝ) : ℂ) * (z * (starRingEnd ℂ) w) := by
-      rw [map_mul, Complex.conj_ofReal]; push_cast; ring
-    have hzero : ‖(‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w‖ ^ 2 = 0 := by
-      have h3 := Complex.normSq_add ((‖w‖ : ℂ) * z) ((‖z‖ : ℂ) * w)
-      rw [Complex.normSq_eq_norm_sq, Complex.normSq_eq_norm_sq,
-        Complex.normSq_eq_norm_sq] at h3
-      rw [h3, norm_mul, norm_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
-        Real.norm_eq_abs, abs_of_nonneg hwpos.le, abs_of_nonneg hzpos.le, hcross,
-        Complex.re_ofReal_mul, h]
-      ring
-    have hcancel : (‖w‖ : ℂ) * z + (‖z‖ : ℂ) * w = 0 :=
-      norm_eq_zero.mp (sq_eq_zero_iff.mp hzero)
-    rw [Complex.real_smul, Complex.real_smul]
-    push_cast
-    have hsumC : ((‖z‖ : ℂ) + (‖w‖ : ℂ)) ≠ 0 := by
-      simpa using Complex.ofReal_ne_zero.mpr hsum.ne'
-    field_simp
-    linear_combination hcancel
+    (0 : ℂ) ∈ segment ℝ z w ↔ (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) :=
+  ⟨re_mul_conj_of_zero_mem_segment, zero_mem_segment_of_re_mul_conj⟩
 
 /-! ### Hyperbolic betweenness -/
 
