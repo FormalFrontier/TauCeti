@@ -31,8 +31,8 @@ is automatic when the carrier of `H` is torsion-free.
   spanned by all group-like elements.
 * `TauCeti.GroupLike.evaluationBialgHom_injective_iff_linearIndependent`: injectivity is equivalent
   to linear independence of the group-like elements.
-* `TauCeti.GroupLike.evaluationBialgEquivOfLinearIndependent`: the equivalence obtained from linear
-  independence and spanning.
+* `TauCeti.GroupLike.evaluationBialgEquivOfLinearIndependentOfSpanEqTop`: the equivalence obtained
+  from linear independence and spanning.
 * `TauCeti.GroupLike.evaluationBialgHom_injective`: injectivity over a domain for a torsion-free
   carrier.
 * `TauCeti.GroupLike.evaluationBialgEquiv`: the specialized equivalence over a domain when the
@@ -270,7 +270,7 @@ theorem evaluationBialgHom_injective_iff_linearIndependent :
 
 /-- If the underlying group-like elements are linearly independent and span the bialgebra,
 evaluation is a bialgebra equivalence. -/
-noncomputable def evaluationBialgEquivOfLinearIndependent
+noncomputable def evaluationBialgEquivOfLinearIndependentOfSpanEqTop
     (hlinear : LinearIndependent R
       (_root_.GroupLike.val (R := R) (A := H)))
     (hspan : Submodule.span R
@@ -283,29 +283,29 @@ noncomputable def evaluationBialgEquivOfLinearIndependent
 /-- The general bialgebra equivalence obtained from linear independence and spanning applies as
 evaluation. -/
 @[simp]
-theorem evaluationBialgEquivOfLinearIndependent_apply
+theorem evaluationBialgEquivOfLinearIndependentOfSpanEqTop_apply
     (hlinear : LinearIndependent R
       (_root_.GroupLike.val (R := R) (A := H)))
     (hspan : Submodule.span R
       (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤)
     (x : MonoidAlgebra R (_root_.GroupLike R H)) :
-    evaluationBialgEquivOfLinearIndependent R H hlinear hspan x =
+    evaluationBialgEquivOfLinearIndependentOfSpanEqTop R H hlinear hspan x =
       evaluationBialgHom R H x := by
-  rw [evaluationBialgEquivOfLinearIndependent]
+  rw [evaluationBialgEquivOfLinearIndependentOfSpanEqTop]
   exact congrFun (BialgEquiv.coe_ofBijective (evaluationBialgHom R H) _) x
 
 /-- The bialgebra morphism underlying the general equivalence from linear independence and
 spanning is evaluation. -/
 @[simp]
-theorem evaluationBialgEquivOfLinearIndependent_toBialgHom
+theorem evaluationBialgEquivOfLinearIndependentOfSpanEqTop_toBialgHom
     (hlinear : LinearIndependent R
       (_root_.GroupLike.val (R := R) (A := H)))
     (hspan : Submodule.span R
       (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤) :
-    (evaluationBialgEquivOfLinearIndependent R H hlinear hspan :
+    (evaluationBialgEquivOfLinearIndependentOfSpanEqTop R H hlinear hspan :
       MonoidAlgebra R (_root_.GroupLike R H) →ₐc[R] H) = evaluationBialgHom R H := by
   apply BialgHom.ext
-  exact evaluationBialgEquivOfLinearIndependent_apply R H hlinear hspan
+  exact evaluationBialgEquivOfLinearIndependentOfSpanEqTop_apply R H hlinear hspan
 
 end Semiring
 
@@ -327,7 +327,7 @@ noncomputable def evaluationBialgEquiv
     (hspan : Submodule.span R
       (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤) :
     MonoidAlgebra R (_root_.GroupLike R H) ≃ₐc[R] H :=
-  evaluationBialgEquivOfLinearIndependent R H
+  evaluationBialgEquivOfLinearIndependentOfSpanEqTop R H
     (linearIndep_groupLikeVal (R := R) (A := H)) hspan
 
 /-- The bialgebra equivalence obtained from spanning applies as evaluation. -/
@@ -337,7 +337,7 @@ theorem evaluationBialgEquiv_apply
       (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤)
     (x : MonoidAlgebra R (_root_.GroupLike R H)) :
     evaluationBialgEquiv R H hspan x = evaluationBialgHom R H x :=
-  evaluationBialgEquivOfLinearIndependent_apply R H
+  evaluationBialgEquivOfLinearIndependentOfSpanEqTop_apply R H
     (linearIndep_groupLikeVal (R := R) (A := H)) hspan x
 
 /-- The bialgebra morphism underlying the spanning equivalence is evaluation. -/
@@ -347,7 +347,7 @@ theorem evaluationBialgEquiv_toBialgHom
       (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤) :
     (evaluationBialgEquiv R H hspan :
       MonoidAlgebra R (_root_.GroupLike R H) →ₐc[R] H) = evaluationBialgHom R H :=
-  evaluationBialgEquivOfLinearIndependent_toBialgHom R H
+  evaluationBialgEquivOfLinearIndependentOfSpanEqTop_toBialgHom R H
     (linearIndep_groupLikeVal (R := R) (A := H)) hspan
 
 end Domain
