@@ -60,6 +60,7 @@ private theorem eq_zero_or_eq_one_of_isIdempotentElem
     simpa only [PrimeSpectrum.basicOpen_one, TopologicalSpace.Opens.coe_top] using huniv
 
 /-- A standard basis element of a monoid algebra with coefficient one is group-like. -/
+@[simp]
 theorem isGroupLikeElem_single_one [CommSemiring R] {H : Type v} [Monoid H] (h : H) :
     IsGroupLikeElem R (_root_.MonoidAlgebra.single h (1 : R)) := by
   constructor
@@ -75,7 +76,7 @@ private theorem tensorEquiv_comul_apply [CommSemiring R]
   induction x using _root_.MonoidAlgebra.induction_on with
   | of k =>
       by_cases hgh : g = h <;>
-        simp_all [_root_.MonoidAlgebra.comul_single, Finsupp.single_apply]
+        simp_all [Finsupp.single_apply]
   | add x y hx hy =>
       by_cases hgh : g = h <;> simp_all
   | smul r x hx =>
