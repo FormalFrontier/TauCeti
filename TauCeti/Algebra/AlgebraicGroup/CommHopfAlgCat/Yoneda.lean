@@ -275,7 +275,8 @@ private theorem groupYonedaPointsEquiv_apply
 
 /-- Under a map of value algebras, the algebra morphism underlying a group-Yoneda element
 is postcomposed with that map. -/
-private theorem groupYonedaPointsHomEquiv_map
+@[simp]
+theorem groupYonedaPointsHomEquiv_map
     (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) {A B : CommAlgCat.{u} R}
     (g : A ⟶ B) (f : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
     groupYonedaPointsHomEquiv H B
@@ -284,22 +285,10 @@ private theorem groupYonedaPointsHomEquiv_map
   unfold groupYonedaPointsHomEquiv groupYonedaPointsFunctor
   rfl
 
-/-- A map of value algebras acts on the point functor at `H` by postcomposition. This form
-keeps the outer coordinate-algebra functor visible for the naturality calculation below. -/
-private theorem pointsFunctor_obj_map_apply_apply
-    (H : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ) {A B : CommAlgCat.{u} R}
-    (g : A ⟶ B)
-    (p : ((pointsFunctor (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).obj A)
-    (h : H.unop) :
-    ((((pointsFunctor (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).map g p).ofConv) h =
-      g.hom (p.ofConv h) :=
-  HopfAlgebra.pointsFunctor_map_apply_apply g p h
-
 /-- Under a map of coordinate Hopf algebras, the algebra morphism underlying a
 group-Yoneda element is precomposed with that map. -/
-private theorem groupYonedaPointsHomEquiv_map_app
+@[simp]
+theorem groupYonedaPointsHomEquiv_map_app
     {H K : (_root_.CommHopfAlgCat.{u} R)ᵒᵖ} (f : H ⟶ K) (A : CommAlgCat.{u} R)
     (p : ((groupYonedaPointsFunctor (R := R)).obj H).obj A) :
     groupYonedaPointsHomEquiv K A
@@ -327,8 +316,7 @@ private noncomputable def groupYonedaPointsMulEquiv
     change (CartesianMonoidalCategory.lift f g ≫ μ).unop.hom =
       (toConv f.unop.hom * toConv g.unop.hom).ofConv
     apply AlgHom.ext
-    intro h
-    change H.unop at h
+    intro (h : H.unop)
     simp only [unop_comp, CommAlgCat.hom_comp, CommAlgCat.lift_unop_hom,
       CommAlgCat.mul_op_of_unop_hom, AlgHom.comp_apply, AlgHom.convMul_apply]
     exact congrArg _ (Bialgebra.comulAlgHom_apply R H.unop h)
@@ -358,10 +346,11 @@ private noncomputable def groupYonedaPointsObjIso
       apply AlgHom.ext
       intro h
       rw [GrpCat.comp_apply, GrpCat.comp_apply,
-        pointsFunctor_obj_map_apply_apply,
         groupYonedaPointsMulEquiv_apply, groupYonedaPointsMulEquiv_apply,
-        groupYonedaPointsHomEquiv_map]
-      simp only [CommAlgCat.hom_comp, AlgHom.comp_apply])
+        WithConv.ofConv_toConv, groupYonedaPointsHomEquiv_map,
+        CommAlgCat.hom_comp, AlgHom.comp_apply]
+      exact (HopfAlgebra.pointsFunctor_map_apply_apply ψ
+        (toConv ((groupYonedaPointsHomEquiv H A) f).hom) h).symm)
 
 /-- The objectwise natural isomorphism has the same carrier-level computation as its
 pointwise group equivalence. -/
@@ -407,7 +396,21 @@ theorem groupYonedaPointsFunctorIso_inv_app_app_apply
     (p : HopfAlgebra.points (R := R) (H := H.unop) A) :
     ((groupYonedaPointsFunctorIso (R := R)).inv.app H).app A p =
       (groupYonedaPointsHomEquiv H A).symm (CommAlgCat.ofHom p.ofConv) := by
-  rfl
+  apply (groupYonedaPointsHomEquiv H A).injective
+  rw [Equiv.apply_symm_apply]
+  apply CommAlgCat.hom_ext
+  rw [CommAlgCat.hom_ofHom]
+  -- State the triangle identity at the opaque outer functor's value; its object is
+  -- definitionally the displayed convolution-point type of `p`.
+  let p' : ((pointsFunctor (R := R) :
+      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).obj A := p
+  have hp :
+      ((groupYonedaPointsFunctorIso (R := R)).hom.app H).app A
+          (((groupYonedaPointsFunctorIso (R := R)).inv.app H).app A p') = p' := by
+    rw [← GrpCat.comp_apply, Iso.inv_hom_id_app_app, GrpCat.id_apply]
+  simpa only [p'] using congrArg WithConv.ofConv
+    ((groupYonedaPointsFunctorIso_hom_app_app_apply H A
+      (((groupYonedaPointsFunctorIso (R := R)).inv.app H).app A p')).symm.trans hp)
 
 /-- The same-universe group-valued functor of points is full: every natural group
 homomorphism between point functors is induced by a coordinate Hopf-algebra morphism. -/
@@ -418,22 +421,6 @@ instance pointsFunctor_full :
     dsimp [groupYonedaPointsFunctor]
     infer_instance
   exact Functor.Full.of_iso (groupYonedaPointsFunctorIso (R := R))
-
-/-- Mapping an opposite morphism through `unopUnop ⋙ F` is the same as mapping its
-unop through `F`. -/
-private theorem unopUnop_comp_map_op
-    (F : CommAlgCat.{u} R ⥤ Type u)
-    {A B : (CommAlgCat.{u} R)ᵒᵖ} (f : A ⟶ B) :
-    (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op = F.map f.unop := by
-  simp only [Functor.comp_map, unopUnop_map, Quiver.Hom.unop_op]
-  rfl
-
-/-- The double-opposite form of `unopUnop_comp_map_op`. -/
-private theorem unopUnop_comp_map_op_op
-    (F : CommAlgCat.{u} R ⥤ Type u)
-    {A B : CommAlgCat.{u} R} (f : A ⟶ B) :
-    (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op.op = F.map f := by
-  simpa only [Quiver.Hom.unop_op] using unopUnop_comp_map_op (R := R) F f.op
 
 /-- Precomposition by `unopUnop` turns representability on a double opposite into
 corepresentability. This is the type-valued variance correction underlying the essential-image
@@ -447,10 +434,11 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
       { homEquiv {Y} := (opEquiv (op Y) X).symm.trans e.homEquiv
         homEquiv_comp {Y Y'} g f := by
           -- The structure field is a composite equivalence. This conversion unfolds only
-          -- `Equiv.trans` and the inverse application of `opEquiv`; `op_comp` and the named
-          -- `unopUnop ⋙ F` map rule below record the actual variance calculation.
+          -- `Equiv.trans` and the inverse application of `opEquiv`; `op_comp` and the
+          -- `unopUnop ⋙ F` map rules below record the actual variance calculation.
           change e.homEquiv ((f ≫ g).op) = F.map g (e.homEquiv f.op)
-          rw [op_comp, e.homEquiv_comp, unopUnop_comp_map_op_op]
+          rw [op_comp, e.homEquiv_comp, Functor.comp_map, unopUnop_map,
+            Quiver.Hom.unop_op, Quiver.Hom.unop_op]
           rfl }
     exact c.isCorepresentable
   · rintro ⟨X, ⟨e⟩⟩
@@ -462,7 +450,8 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
           -- rewrite rather than being discharged by definitional equality.
           change e.homEquiv ((f ≫ g).unop) =
             (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op (e.homEquiv g.unop)
-          rw [unop_comp, e.homEquiv_comp, unopUnop_comp_map_op]
+          rw [unop_comp, e.homEquiv_comp, Functor.comp_map, unopUnop_map,
+            Quiver.Hom.unop_op]
           rfl }
     exact r.isRepresentable
 
