@@ -5,31 +5,38 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Tactic.NoncommRing
+public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
-# Half-normalized Clifford bivectors
+# Clifford bivectors and exterior squares
 
-The Layer 3 bivector realization of the orthogonal Lie algebra is normalized by its action on
-vectors. This module records the generic Clifford-algebra calculation that fixes that normalization
-before choosing a standard basis: the half commutator of two generators acts on a third generator
+This module packages the generic half-normalized Clifford commutator into an alternating map and
+the induced linear map from the second exterior power. Its action on a Clifford generator is given
 by the polarization of the quadratic form.
 
 The formula is valid over every commutative ring in which `2` is invertible. The factor `⅟2` is
 forced: the commutator of the unnormalized expression acts by twice the desired infinitesimal
-rotation. This gives the local algebraic input for the roadmap's standard-form
-`soEquivBivector_wedge_mulVec` theorem without constructing the transported Lie bracket, the
-Lie-algebra equivalence, or a group action.
+rotation.
+
+This is a shared generic prerequisite for the roadmap's Layer 3 standard-form normalization and
+the later Layer 9 arbitrary-form realization. It does not construct `soEquivBivector`, a
+transported Lie bracket, a Spin action, or the Layer 9 CAR worked instance.
 
 ## Main definitions
 
 * `TauCeti.CliffordAlgebra.cliffordBivector`: the half-normalized commutator of two Clifford
   generators.
+* `TauCeti.CliffordAlgebra.cliffordBivectorAlternating`: the corresponding alternating map.
+* `TauCeti.CliffordAlgebra.cliffordBivectorExterior`: the induced linear map from the second
+  exterior power.
 
 ## Main results
 
 * `TauCeti.CliffordAlgebra.cliffordBivector_lie_ι`: its commutator action on a generator is the
   infinitesimal rotation determined by `QuadraticMap.polar`.
+* `TauCeti.CliffordAlgebra.cliffordBivectorExterior_apply_ιMulti`: the exterior-square map on a
+  decomposable bivector.
 * `TauCeti.CliffordAlgebra.cliffordBivector_mem_evenOdd_zero` and
   `TauCeti.CliffordAlgebra.cliffordBivector_mem_filtration_two`: it is even and has filtration
   degree at most two.
@@ -60,6 +67,37 @@ the infinitesimal rotation in `cliffordBivector_lie_ι`; that action, rather tha
 fixes the normalization. -/
 noncomputable def cliffordBivector (a b : M) : CliffordAlgebra Q :=
   (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a)
+
+/-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
+@[expose] noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
+  { toFun := fun v => cliffordBivector Q (v 0) (v 1)
+    map_update_add' := by
+      intro _ v i x y
+      fin_cases i <;>
+        simp [cliffordBivector, add_mul, mul_add, smul_sub] <;>
+        module
+    map_update_smul' := by
+      intro _ v i c x
+      fin_cases i <;>
+        simp [cliffordBivector, smul_sub, smul_smul, mul_comm]
+    map_eq_zero_of_eq' := by
+      intro v i j h hij
+      fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector] }
+
+/-- The alternating map agrees with the half-normalized Clifford bivector on a pair of vectors. -/
+@[simp]
+theorem cliffordBivectorAlternating_apply (a b : M) :
+    cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
+
+/-- The linear map from the second exterior power induced by the Clifford bivector. -/
+@[expose] noncomputable def cliffordBivectorExterior : ⋀[R]^2 M →ₗ[R] CliffordAlgebra Q :=
+  exteriorPower.alternatingMapLinearEquiv (cliffordBivectorAlternating Q)
+
+/-- The exterior-square Clifford bivector map on a decomposable bivector. -/
+@[simp]
+theorem cliffordBivectorExterior_apply_ιMulti (a b : M) :
+    cliffordBivectorExterior Q (exteriorPower.ιMulti R 2 ![a, b]) = cliffordBivector Q a b := by
+  simp [cliffordBivectorExterior]
 
 /-- Interchanging the two vectors negates their Clifford bivector. -/
 theorem cliffordBivector_swap (a b : M) :
