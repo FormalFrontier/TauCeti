@@ -14,8 +14,9 @@ every real embedding `K →+* ℝ` — equivalently, at every real infinite plac
 positivity condition underlying the *narrow* class group of the multiquadratic roadmap (Layer 3):
 the narrow class group `Cl⁺(K)` is the quotient of the fractional ideals by the principal ideals
 admitting a totally positive generator. It surjects onto the ordinary class group `Cl(K)`
-(forgetting the positivity condition), and the `2`-rank of `Cl⁺(K)` is what the `t - 1` formula
-computes in the real case.
+(forgetting the positivity condition), and the `2`-rank of `Cl⁺(K)` is what the genus-theory
+`t - 1` formula (with `t` the number of ramified primes) computes for a **real quadratic** field
+in the multiquadratic roadmap.
 
 This file introduces the predicate and its multiplicative structure. The totally positive elements
 are closed under multiplication and inversion and contain every nonzero square, so the totally
@@ -49,7 +50,7 @@ def IsTotallyPositive (x : K) : Prop :=
 
 /-- Introduction and elimination form of `IsTotallyPositive`: total positivity is exactly strict
 positivity at every real infinite place. -/
-theorem isTotallyPositive_iff {x : K} :
+@[simp, grind =] theorem isTotallyPositive_iff {x : K} :
     IsTotallyPositive x ↔ ∀ (w : InfinitePlace K) (hw : w.IsReal), 0 < embedding_of_isReal hw x :=
   Iff.rfl
 
@@ -94,6 +95,8 @@ def totallyPositiveUnits : Subgroup Kˣ where
     change IsTotallyPositive ((x⁻¹ : Kˣ) : K)
     rw [Units.val_inv_eq_inv_val]; exact hx.inv
 
+/-- A unit lies in `totallyPositiveUnits` exactly when its underlying field element is totally
+positive. -/
 @[simp]
 theorem mem_totallyPositiveUnits {u : Kˣ} :
     u ∈ totallyPositiveUnits ↔ IsTotallyPositive (u : K) := Iff.rfl
