@@ -70,7 +70,7 @@ noncomputable def cliffordBivector (a b : M) : CliffordAlgebra Q :=
   (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a)
 
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
-@[expose] noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
+noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
   { toFun := fun v => cliffordBivector Q (v 0) (v 1)
     map_update_add' := by
       intro _ v i x y
@@ -85,10 +85,14 @@ noncomputable def cliffordBivector (a b : M) : CliffordAlgebra Q :=
       intro v i j h hij
       fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector] }
 
+private theorem cliffordBivectorAlternating_apply_internal (a b : M) :
+    cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
+
 /-- The alternating map agrees with the half-normalized Clifford bivector on a pair of vectors. -/
 @[simp]
 theorem cliffordBivectorAlternating_apply (a b : M) :
-    cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
+    cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b :=
+  cliffordBivectorAlternating_apply_internal Q a b
 
 /-- The linear map from the second exterior power induced by the Clifford bivector. -/
 noncomputable def cliffordBivectorExterior : ⋀[R]^2 M →ₗ[R] CliffordAlgebra Q :=
@@ -103,14 +107,19 @@ theorem cliffordBivectorExterior_apply_ιMulti (a b : M) :
 /-- Interchanging the two vectors negates their Clifford bivector. -/
 theorem cliffordBivector_swap (a b : M) :
     cliffordBivector Q b a = -cliffordBivector Q a b := by
-  rw [cliffordBivector, cliffordBivector, ← smul_neg]
+  rw [← cliffordBivectorAlternating_apply, ← cliffordBivectorAlternating_apply]
+  convert (cliffordBivectorAlternating Q).map_swap (v := ![a, b])
+    (by decide : (0 : Fin 2) ≠ 1) using 1
   congr 1
-  noncomm_ring
+  funext i
+  fin_cases i <;> rfl
 
 /-- The Clifford bivector of a repeated vector is zero. -/
 @[simp]
 theorem cliffordBivector_self (a : M) : cliffordBivector Q a a = 0 := by
-  rw [cliffordBivector, sub_self, smul_zero]
+  simpa only [cliffordBivectorAlternating_apply] using
+    (cliffordBivectorAlternating Q).map_eq_zero_of_eq ![a, a] (by simp)
+      (by decide : (0 : Fin 2) ≠ 1)
 
 /-- Clifford bivectors are even. -/
 theorem cliffordBivector_mem_evenOdd_zero (a b : M) :
