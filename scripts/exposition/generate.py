@@ -38,6 +38,7 @@ import html
 import json
 import logging
 import math
+import re
 import shutil
 import string
 from collections import Counter
@@ -250,8 +251,69 @@ def _cross_reference(model: SiteModel, target: tuple[int, int]) -> list:
 
 
 HIGHLIGHT_LIMIT = 12
+HIGHLIGHT_DEF_LIMIT = 8
 HIGHLIGHT_KINDS = frozenset({"theorem", "lemma"})
+HIGHLIGHT_DEF_KINDS = frozenset({"def", "structure", "class", "inductive",
+                                 "abbrev"})
 HIGHLIGHT_MODULE_CAP = 2
+
+# This repo's docstring convention opens notable declarations with a bold
+# title: `**De Finetti's theorem.** An exchangeable process …`. That title
+# is the human name a card should lead with.
+_BOLD_LEAD = re.compile(r"^\*\*(.+?)\*\*")
+
+# A title reads as a *named* result (Hurwitz's theorem, Gårding's
+# inequality) when it pairs a result keyword with an eponym: a capitalized
+# word that is not merely a generic sentence opener.
+_NAMED_KEYWORDS = frozenset(
+    {"correspondence", "criterion", "decomposition", "formula", "identity",
+     "inequality", "law", "lemma", "principle", "rule", "theorem"}
+)
+_GENERIC_TITLE_OPENERS = frozenset(
+    {"a", "all", "an", "any", "both", "bounded", "characterization",
+     "classical", "classification", "comparison", "complete", "completely",
+     "composing", "conditional", "convergence", "counting", "each",
+     "equivalence", "every", "exchangeable", "existence", "factoring",
+     "for", "generalized", "global", "half", "identification", "if",
+     "improper", "integral", "local", "maximal", "membership", "minimal",
+     "monotone", "motivating", "packaged", "pointwise", "rewriting",
+     "rigidity", "strict", "that", "the", "this", "uniqueness", "weighted",
+     "when", "where", "winding"}
+)
+
+
+def display_title(doc: str) -> str | None:
+    """The docstring's leading bold span, trimmed — or ``None``."""
+    match = _BOLD_LEAD.match(doc.strip())
+    if not match:
+        return None
+    title = match.group(1).strip().rstrip(".:—–-").strip()
+    return title or None
+
+
+def _title_key(title: str) -> str:
+    """Collapse a title to a dedup key: variants of one named result
+    (`De Finetti's theorem`, `de Finetti's theorem, mixture form`) share
+    the first few normalized words."""
+    words = re.sub(r"[^a-z0-9 ]", " ", title.lower()).split()
+    while words and words[0] in ("the", "a", "an"):
+        words.pop(0)
+    return " ".join(words[:3])
+
+
+def _is_named_result(title: str) -> bool:
+    """True when the title names a result after someone or something."""
+    words = re.sub(r"[^0-9A-Za-zÀ-ÖØ-öø-ÿ' ]", " ", title).split()
+    if not any(word.lower() in _NAMED_KEYWORDS for word in words):
+        return False
+    for index, word in enumerate(words):
+        if not word[0].isupper():
+            continue
+        if index > 0:
+            return True
+        if word.lower().removesuffix("'s") not in _GENERIC_TITLE_OPENERS:
+            return True
+    return False
 
 # Naming-convention API lemmas (`…NatIso_hom_app_apply`, `…Inclusion_comp`)
 # score high on depth but are never an area's headline. A name is technical
@@ -284,6 +346,87 @@ def _is_technical_name(name: str) -> bool:
     )
 
 
+def _use_counts(
+    nodes: list[dict],
+    dependency_lists: list[list[int]],
+    cross_dependent_counts: list[int],
+) -> list[int]:
+    """Per-node dependent counts, intra- and cross-area combined."""
+    counts = [0] * len(nodes)
+    for dependencies in dependency_lists:
+        for target in dependencies:
+            counts[target] += 1
+    return [
+        counts[local_id] + cross_dependent_counts[local_id]
+        for local_id in range(len(nodes))
+    ]
+
+
+# A scored candidate: (negated score, title length — huge when untitled, so
+# key collapsing prefers the plainly-titled variant —, name, local id,
+# title-dedup key or None, module index).
+_Candidate = tuple[float, int, str, int, str | None, int]
+
+
+def _candidate(score: float, node: dict, local_id: int) -> _Candidate:
+    title = node.get("title")
+    return (
+        -score,
+        len(title) if title else 10**6,
+        node["name"],
+        local_id,
+        _title_key(title) if title else None,
+        node.get("module", 0),
+    )
+
+
+def _pick_diverse(scored: list[_Candidate], limit: int) -> list[int]:
+    """Rank candidates into the final card list.
+
+    Titled candidates sharing a dedup key collapse first — the variant
+    with the shortest title survives (`De Finetti's theorem`, not its
+    `…, mixture form` restatement), score breaking ties. Then a greedy
+    score-ordered pass takes at most ``HIGHLIGHT_MODULE_CAP`` per module
+    while other candidates remain, so one development cannot monopolize
+    the cards; best-scored spillovers refill unused slots at the end.
+    The final list leads with the titled picks (human-named results read
+    first; Lean-named ones trail). Ordering is deterministic: ties break
+    by title length then name.
+    """
+    best_for_key: dict[str, _Candidate] = {}
+    pool: list[_Candidate] = []
+    for row in scored:
+        key = row[4]
+        if key is None:
+            pool.append(row)
+            continue
+        current = best_for_key.get(key)
+        if current is None or (row[1], row[0], row[2]) < (
+            current[1],
+            current[0],
+            current[2],
+        ):
+            best_for_key[key] = row
+    pool.extend(best_for_key.values())
+    pool.sort()
+    picked: list[int] = []
+    per_module: dict[int, int] = {}
+    spillover: list[int] = []
+    for row in pool:
+        if len(picked) == limit:
+            break
+        module = row[5]
+        if per_module.get(module, 0) >= HIGHLIGHT_MODULE_CAP:
+            spillover.append(row[3])
+            continue
+        per_module[module] = per_module.get(module, 0) + 1
+        picked.append(row[3])
+    picked.extend(spillover[: limit - len(picked)])
+    untitled = {row[3] for row in pool if row[4] is None}
+    picked.sort(key=lambda local_id: local_id in untitled)  # stable
+    return picked
+
+
 def select_highlights(
     nodes: list[dict],
     dependency_lists: list[list[int]],
@@ -294,27 +437,20 @@ def select_highlights(
 
     There is no human-curated registry to draw on, so notability is scored
     from the data: only documented, non-private theorems qualify (API-named
-    lemmas excluded, see ``_is_technical_name``), and the score favors
-    depth in the whole-library graph (headline results sit at the end of
-    long chains), with smaller nudges for a substantial docstring, for
-    being widely built upon, and for being a capstone nothing depends on
-    yet. So that a single development cannot monopolize the cards, at most
-    ``HIGHLIGHT_MODULE_CAP`` picks come from any one module while other
-    candidates remain (best-scored spillovers refill unused slots at the
-    end). Ties break by name so the selection is deterministic.
+    lemmas excluded, see ``_is_technical_name``). The score favors depth
+    in the whole-library graph (headline results sit at the end of long
+    chains), with nudges for a substantial docstring, for being widely
+    built upon, and for being a capstone nothing depends on yet — and
+    boosts declarations whose docstring opens with a bold title,
+    especially one naming the result (`**Hurwitz's theorem.**`): those are
+    the human-recognizable statements a visitor scans for, even when they
+    sit at moderate depth. Title variants collapse and modules are capped
+    via ``_pick_diverse``.
     """
-    total = len(nodes)
-    reverse_counts = [0] * total
-    for dependencies in dependency_lists:
-        for target in dependencies:
-            reverse_counts[target] += 1
-    use_counts = [
-        reverse_counts[local_id] + cross_dependent_counts[local_id]
-        for local_id in range(total)
-    ]
+    use_counts = _use_counts(nodes, dependency_lists, cross_dependent_counts)
     max_global_depth = max((node["gdepth"] for node in nodes), default=0)
     max_uses = max(use_counts, default=0)
-    scored: list[tuple[float, str, int]] = []
+    scored: list[_Candidate] = []
     for local_id, node in enumerate(nodes):
         if node["kind"] not in HIGHLIGHT_KINDS or node.get("private"):
             continue
@@ -329,22 +465,48 @@ def select_highlights(
             score += 1.5 * math.log1p(use_counts[local_id]) / math.log1p(max_uses)
         if use_counts[local_id] == 0:
             score += 0.75  # capstone: nothing builds on it (yet)
-        scored.append((-score, node["name"], local_id))
-    scored.sort()
-    picked: list[int] = []
-    per_module: dict[int, int] = {}
-    spillover: list[int] = []
-    for _, _, local_id in scored:
-        if len(picked) == limit:
-            break
-        module = nodes[local_id].get("module", 0)
-        if per_module.get(module, 0) >= HIGHLIGHT_MODULE_CAP:
-            spillover.append(local_id)
+        title = node.get("title")
+        if title:
+            score += 0.6
+            if _is_named_result(title):
+                score += 1.5
+        scored.append(_candidate(score, node, local_id))
+    return _pick_diverse(scored, limit)
+
+
+def select_notable_definitions(
+    nodes: list[dict],
+    dependency_lists: list[list[int]],
+    cross_dependent_counts: list[int],
+    limit: int = HIGHLIGHT_DEF_LIMIT,
+) -> list[int]:
+    """Pick the definitions the area is built around.
+
+    Complements ``select_highlights``: documented, non-private definition
+    kinds, ranked mainly by how widely they are built upon (a definition
+    matters through its uses, unlike a capstone theorem), with small
+    nudges for depth, docstring substance, and a bold title. Same title
+    dedup and module cap.
+    """
+    use_counts = _use_counts(nodes, dependency_lists, cross_dependent_counts)
+    max_global_depth = max((node["gdepth"] for node in nodes), default=0)
+    max_uses = max(use_counts, default=0)
+    scored: list[_Candidate] = []
+    for local_id, node in enumerate(nodes):
+        if node["kind"] not in HIGHLIGHT_DEF_KINDS or node.get("private"):
             continue
-        per_module[module] = per_module.get(module, 0) + 1
-        picked.append(local_id)
-    picked.extend(spillover[: limit - len(picked)])
-    return picked
+        doc = node.get("doc", "")
+        if not doc or _is_technical_name(node["name"]):
+            continue
+        score = 0.0
+        if max_uses:
+            score += 2.0 * math.log1p(use_counts[local_id]) / math.log1p(max_uses)
+        score += 0.75 * node["gdepth"] / max(max_global_depth, 1)
+        score += 0.25 * min(len(doc), 400) / 400.0
+        if node.get("title"):
+            score += 0.6
+        scored.append(_candidate(score, node, local_id))
+    return _pick_diverse(scored, limit)
 
 
 def build_area_shard(
@@ -372,6 +534,9 @@ def build_area_shard(
         node["endLine"] = record["r"][2]
         if "d" in record:
             node["doc"] = record["d"]
+            title = display_title(record["d"])
+            if title:
+                node["title"] = title
         node["statement"] = statement
         if record.get("p"):
             node["private"] = True
@@ -411,6 +576,9 @@ def build_area_shard(
         "modules": modules,
         "layers": layout.layer_sizes,
         "hl": select_highlights(nodes, dependency_lists, cross_dependent_counts),
+        "hldef": select_notable_definitions(
+            nodes, dependency_lists, cross_dependent_counts
+        ),
         "decls": nodes,
     }
 

@@ -18,9 +18,11 @@ from generate import (
     build_declaration_index,
     build_index,
     build_site_model,
+    display_title,
     generate_site,
     read_dump,
     select_highlights,
+    select_notable_definitions,
 )
 
 
@@ -57,7 +59,7 @@ FIXTURE = [
            deps=["TauCeti.Alg.base"]),
     record("TauCeti.Ana.main", "TauCeti.Analysis.B", line=5,
            deps=["TauCeti.Ana.base", "TauCeti.Alg.mid"],
-           d="The headline result."),
+           d="**The headline result.** Its prose."),
 ]
 
 
@@ -128,13 +130,32 @@ def hl_node(
     private: bool = False,
     module: int = 0,
 ) -> dict:
-    """A shard node with just the fields the highlight scorer reads."""
+    """A shard node with just the fields the highlight scorers read."""
     node = {"name": name, "kind": kind, "gdepth": gdepth, "module": module}
     if doc is not None:
         node["doc"] = doc
+        title = display_title(doc)
+        if title:
+            node["title"] = title
     if private:
         node["private"] = True
     return node
+
+
+class DisplayTitleTest(unittest.TestCase):
+    def test_leading_bold_span_is_the_title(self):
+        self.assertEqual(
+            display_title("**Hurwitz's theorem.** If a sequence…"),
+            "Hurwitz's theorem",
+        )
+
+    def test_trailing_punctuation_is_trimmed(self):
+        self.assertEqual(display_title("**The half-residue theorem:** x"),
+                         "The half-residue theorem")
+
+    def test_plain_docstrings_have_no_title(self):
+        self.assertIsNone(display_title("A lemma about groups."))
+        self.assertIsNone(display_title("Uses **bold** midway only."))
 
 
 class SelectHighlightsTest(unittest.TestCase):
@@ -233,6 +254,78 @@ class SelectHighlightsTest(unittest.TestCase):
         )
         self.assertEqual(picked, [0, 1, 2])
 
+    def test_named_results_outrank_deeper_plumbing(self):
+        nodes = [
+            hl_node("Foo.deep_plumbing", doc="Some technical fact.", gdepth=6),
+            hl_node("Foo.hurwitz", doc="**Hurwitz's theorem.** If…", gdepth=2),
+            hl_node("Foo.scale", gdepth=10),  # sets the depth scale, no doc
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [1, 0])
+
+    def test_generic_titles_get_no_named_bonus(self):
+        # Equally deep and both titled, but only one title *names* a
+        # result — the generic one takes just the smaller titled boost.
+        nodes = [
+            hl_node("Foo.pv", doc="**The improper principal value.** As…",
+                    gdepth=2),
+            hl_node("Foo.rouche", doc="**Rouché's theorem.** x", gdepth=2),
+            hl_node("Foo.scale", gdepth=10),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [1, 0])
+
+    def test_title_variants_collapse_to_the_plain_one(self):
+        # The mixture form is deeper (better-scored), but the family
+        # collapses to the shortest title; the dropped variant does not
+        # come back through spillover.
+        nodes = [
+            hl_node("Foo.deFinetti_mixture",
+                    doc="**De Finetti's theorem, unique mixture form.** x",
+                    gdepth=9),
+            hl_node("Foo.deFinetti", doc="**De Finetti's theorem.** x",
+                    gdepth=5),
+            hl_node("Foo.hewittSavage",
+                    doc="**The Hewitt–Savage zero-one law.** x", gdepth=1),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [1, 2])
+
+    def test_titled_picks_lead_untitled_ones(self):
+        nodes = [
+            hl_node("Foo.plumbing_high", doc="Deep but unnamed.", gdepth=9),
+            hl_node("Foo.named", doc="**Rouché's theorem.** x", gdepth=8),
+        ]
+        picked = select_highlights(nodes, [[] for _ in nodes], [0] * len(nodes))
+        self.assertEqual(picked, [1, 0])
+
+
+class SelectNotableDefinitionsTest(unittest.TestCase):
+    def test_only_documented_definition_kinds_qualify(self):
+        nodes = [
+            hl_node("Foo.gadget", kind="def", doc="d"),
+            hl_node("Foo.thm", doc="d"),
+            hl_node("Foo.undoc", kind="structure"),
+        ]
+        picked = select_notable_definitions(
+            nodes, [[] for _ in nodes], [0] * len(nodes)
+        )
+        self.assertEqual(picked, [0])
+
+    def test_widely_used_definitions_rank_first(self):
+        nodes = [
+            hl_node("Foo.deep_unused", kind="def", doc="d", gdepth=9),
+            hl_node("Foo.workhorse", kind="structure", doc="d", gdepth=0),
+        ]
+        dependency_lists: list[list[int]] = [[], []]
+        for _ in range(5):
+            nodes.append(hl_node("Foo.user", doc="d", private=True))
+            dependency_lists.append([1])
+        picked = select_notable_definitions(
+            nodes, dependency_lists, [0] * len(nodes)
+        )
+        self.assertEqual(picked, [1, 0])
+
 
 class BuildAreaShardTest(unittest.TestCase):
     def setUp(self):
@@ -298,6 +391,11 @@ class BuildAreaShardTest(unittest.TestCase):
     def test_highlights_pick_documented_theorems(self):
         # Only Ana.main carries a docstring, so it alone is featured.
         self.assertEqual(self.shard["hl"], [1])
+        self.assertEqual(self.shard["hldef"], [])
+
+    def test_title_is_extracted_onto_the_node(self):
+        self.assertEqual(self.shard["decls"][1]["title"], "The headline result")
+        self.assertNotIn("title", self.shard["decls"][0])
 
     def test_highlights_empty_without_documented_theorems(self):
         shard = build_area_shard(
@@ -391,6 +489,7 @@ class GenerateSiteTest(unittest.TestCase):
                 self.assertTrue(shard_path.is_file())
                 shard = json.loads(shard_path.read_text("utf-8"))
                 self.assertIn("hl", shard)
+                self.assertIn("hldef", shard)
                 page = (out / "a" / slug / "index.html").read_text("utf-8")
                 self.assertIn(f'data-slug="{slug}"', page)
                 self.assertIn(f"<title>{slug}</title>", page)

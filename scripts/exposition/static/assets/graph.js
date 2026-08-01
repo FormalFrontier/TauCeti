@@ -57,6 +57,8 @@
   const statsEl = byId('info-stats');
   const legendEl = byId('kind-legend');
   const hlGridEl = byId('hl-grid');
+  const hlDefGridEl = byId('hl-def-grid');
+  const hlDefsHeadEl = byId('hl-defs-head');
   const hlSubEl = byId('hl-sub');
   const hlExploreEl = byId('hl-explore');
   const hlBackEl = byId('hl-back');
@@ -1002,7 +1004,8 @@
 
   // ----- main-results cards / mode switching ----------------------------------
 
-  let highlights = []; // shard-local ids, best first; [] => graph-only page
+  let highlights = []; // shard-local ids, best first
+  let highlightDefs = []; // notable definitions; both empty => graph-only page
 
   // graphMode=false shows the card view, true the graph. The canvas sizes
   // itself when revealed: the ResizeObserver fires and refits (or re-pans to
@@ -1056,37 +1059,43 @@
     }
   }
 
+  // One concise card: a human title (the docstring's bold lead when there
+  // is one, the Lean name otherwise), a clamped one-liner, and a small
+  // footer linking the declaration into the graph, GitHub, and doc-gen.
   function buildHighlightCard(id) {
     const d = decls[id];
     const card = elWith('article', 'hl-card', null);
-    const name = elWith('a', 'hl-name', labels[id]);
-    name.href = '#d' + id;
-    card.appendChild(name);
 
-    const meta = elWith('div', 'hl-meta', null);
-    const kindChip = elWith('span', 'kind-chip', null);
-    kindChip.appendChild(kindDotEl(d.kind));
-    kindChip.appendChild(document.createTextNode(d.kind || ''));
-    meta.appendChild(kindChip);
-    meta.appendChild(elWith('span', null,
-      'depth ' + (d.gdepth || 0) + ' in the library'));
-    const uses = rev[id].length + (Array.isArray(d.xrev) ? d.xrev.length : 0);
-    meta.appendChild(elWith('span', null,
-      uses === 0 ? 'nothing builds on it yet'
-        : 'used by ' + uses + ' declaration' + (uses === 1 ? '' : 's')));
-    card.appendChild(meta);
+    const titleLink = elWith('a', 'hl-title-link', null);
+    titleLink.href = '#d' + id;
+    if (d.title) {
+      const heading = elWith('h3', 'hl-card-title', null);
+      appendCode(heading, d.title);
+      titleLink.appendChild(heading);
+    } else {
+      titleLink.appendChild(
+        elWith('h3', 'hl-card-title hl-card-title-mono', labels[id]));
+    }
+    card.appendChild(titleLink);
 
-    if (d.doc) {
+    const paragraph = firstParagraph(d.doc || '');
+    // With the bold lead promoted to the title, the body is what follows it.
+    const body = d.title
+      ? paragraph.replace(/^\*\*.+?\*\*[\s:.—–-]*/, '')
+      : paragraph;
+    if (body) {
       const doc = elWith('p', 'hl-doc', null);
-      appendRich(doc, firstParagraph(d.doc));
+      appendRich(doc, body);
       card.appendChild(doc);
     }
-    if (d.statement) card.appendChild(elWith('pre', 'statement', d.statement));
 
     const links = elWith('div', 'hl-links', null);
-    const graphLink = elWith('a', null, 'view in graph');
-    graphLink.href = '#d' + id;
-    links.appendChild(graphLink);
+    const declLink = elWith('a', 'hl-decl-link', null);
+    declLink.href = '#d' + id;
+    declLink.title = 'view in the dependency graph';
+    declLink.appendChild(kindDotEl(d.kind));
+    declLink.appendChild(document.createTextNode(labels[id]));
+    links.appendChild(declLink);
     const moduleName = modules[d.module] || '';
     const src = elWith('a', null, 'source');
     src.href = GITHUB_BLOB + encodeURIComponent(commit) + '/'
@@ -1096,7 +1105,7 @@
     src.rel = 'noopener';
     links.appendChild(src);
     if (!d.full) {
-      const docsLink = elWith('a', null, 'API docs');
+      const docsLink = elWith('a', null, 'docs');
       docsLink.href = '../../../docs/' + moduleDocsPath(moduleName)
         + '#' + d.name;
       docsLink.target = '_blank';
@@ -1112,14 +1121,23 @@
     hlGridEl.textContent = '';
     if (hlSubEl) {
       hlSubEl.textContent = 'the ' + highlights.length + ' most notable of '
-        + N + ' declarations — picked by depth, documentation, and use';
+        + N + ' declarations — picked by depth, naming, and use';
     }
     if (highlights.length === 0) {
       hlGridEl.appendChild(elWith('div', 'hl-empty',
         'No documented theorems to feature in this area yet.'));
-      return;
+    } else {
+      for (const id of highlights) {
+        hlGridEl.appendChild(buildHighlightCard(id));
+      }
     }
-    for (const id of highlights) hlGridEl.appendChild(buildHighlightCard(id));
+    if (hlDefsHeadEl) hlDefsHeadEl.hidden = highlightDefs.length === 0;
+    if (hlDefGridEl) {
+      hlDefGridEl.textContent = '';
+      for (const id of highlightDefs) {
+        hlDefGridEl.appendChild(buildHighlightCard(id));
+      }
+    }
   }
 
   // ----- search ---------------------------------------------------------------
@@ -1196,7 +1214,7 @@
     // Only real navigation lands here (in-app hash clearing uses pushState,
     // which fires no hashchange): browser-back to an empty hash returns to
     // the cards when the area has any.
-    if (highlights.length > 0) setMode(false);
+    if (highlights.length > 0 || highlightDefs.length > 0) setMode(false);
   }
 
   // ----- pointer / wheel / keyboard interaction ---------------------------------
@@ -1486,16 +1504,23 @@
     updateDerivedColors();
     messageEl.hidden = true;
     fitCamera();
-    const rawHighlights = Array.isArray(json.hl) ? json.hl : [];
-    highlights = [];
-    for (const value of rawHighlights) {
-      if (typeof value === 'number' && value >= 0 && value < N) {
-        highlights.push(value);
+    const validIds = (raw) => {
+      const ids = [];
+      if (Array.isArray(raw)) {
+        for (const value of raw) {
+          if (typeof value === 'number' && value >= 0 && value < N) {
+            ids.push(value);
+          }
+        }
       }
-    }
+      return ids;
+    };
+    highlights = validIds(json.hl);
+    highlightDefs = validIds(json.hldef);
     buildHighlights();
-    if (hlBackEl) hlBackEl.hidden = highlights.length === 0;
-    if (highlights.length === 0) setMode(true);
+    const noCards = highlights.length === 0 && highlightDefs.length === 0;
+    if (hlBackEl) hlBackEl.hidden = noCards;
+    if (noCards) setMode(true);
     applyHash();
     dirty = true;
   }

@@ -91,19 +91,29 @@ source links pin the shard's `commit`:
            "kinds": {"theorem": 1027, ...}},
  "modules": ["TauCeti.Algebra.Group.Basic", ...],
  "layers": [40, 31, ...],      // node count per area-local layer
- "hl": [812, 64, ...],         // main results: node ids, best first (≤ 12)
+ "hl": [812, 64, ...],         // main results: node ids (≤ 12)
+ "hldef": [3, 209, ...],       // notable definitions: node ids (≤ 8)
  "decls": [ ... ]}
 ```
 
-`hl` drives the area page's default "Main results" card view. With no
-human-curated registry to draw on, the ids are score-picked: documented,
-non-private `theorem`/`lemma` nodes ranked by whole-library depth, with
-smaller nudges for docstring length, for being widely built upon, and for
-being an as-yet-undepended-on capstone. Naming-convention API lemmas
-(`…_hom_app_apply`) are excluded, and at most two picks come from any one
-module so a single development cannot monopolize the cards
-(`select_highlights` in `generate.py`). May be empty (pseudo-areas with
-no documented theorems); the page then opens straight in the graph view.
+`hl` and `hldef` drive the area page's default "Main results" card view.
+With no human-curated registry to draw on, both lists are score-picked
+(`select_highlights` / `select_notable_definitions` in `generate.py`):
+
+* eligible nodes are documented, non-private, and not API-convention
+  named (`…_hom_app_apply`); `hl` takes `theorem`/`lemma` kinds, `hldef`
+  the definition kinds;
+* theorems are ranked by whole-library depth with nudges for docstring
+  substance, wide use, and capstones — plus a boost when the docstring
+  opens with a bold title, especially one naming the result
+  (`**Hurwitz's theorem.**`), so human-recognizable statements beat
+  deeper plumbing; definitions rank mainly by how widely they are used;
+* title variants collapse to the plainest one (`De Finetti's theorem`,
+  not `…, mixture form`), at most two picks come from any one module,
+  and titled picks are listed before Lean-named ones.
+
+Either list may be empty; with no `hl` the page opens straight in the
+graph view.
 
 `decls[i]` — the node with id `i` (ids are shard-local array indices):
 
@@ -114,6 +124,7 @@ no documented theorems); the page then opens straight in the graph view.
  "module": 0,                  // index into modules
  "line": 435, "endLine": 446,
  "doc": "…",                   // optional
+ "title": "Hurwitz's theorem", // optional: the doc's leading **bold** span
  "statement": "lemma bar (h : …) : …",  // ≤ 1200 chars, trimmed
  "private": true,              // optional
  "deps": [3, 17],              // intra-area dependencies (node ids)
