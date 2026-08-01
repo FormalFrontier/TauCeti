@@ -36,8 +36,9 @@ relative to Maschke's theorem is finiteness of `G` and invertibility of `|G|`.
 * `TauCeti.permutationForm_single_single`: the standard basis is orthonormal.
 * `TauCeti.permutationForm_isSymm` and `TauCeti.permutationForm_nondegenerate`: the form is
   symmetric and nondegenerate over any commutative ring.
-* `TauCeti.permutationForm_ofMulAction`: the action of a group element preserves the form, and
-  `TauCeti.permutationForm_ofMulAction_left` moves that action across the form by inverting it.
+* `TauCeti.permutationForm_ofMulAction_invariant`: the action of a group element preserves the
+  form, and `TauCeti.permutationForm_ofMulAction_left` moves that action across the form by
+  inverting it.
 * `TauCeti.orthogonal_mem_invtSubmodule`: the orthogonal complement of an invariant submodule of a
   permutation representation is invariant.
 * `TauCeti.permutationForm_self_pos` and `TauCeti.permutationForm_restrict_nondegenerate`: over an
@@ -141,9 +142,10 @@ theorem permutationForm_single_right (v : MonoidAlgebra k X) (x : X) (a : k) :
   rw [permutationForm_comm, permutationForm_single_left, mul_comm]
 
 /-- The standard basis of `k[X]` is orthonormal for the permutation form. -/
-theorem permutationForm_single_single [DecidableEq X] (x y : X) (a b : k) :
+theorem permutationForm_single_single (x y : X) [Decidable (x = y)] (a b : k) :
     permutationForm k X (MonoidAlgebra.single x a) (MonoidAlgebra.single y b) =
       if x = y then a * b else 0 := by
+  classical
   rw [permutationForm_single_left, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases h : x = y
   · subst h; simp
@@ -179,6 +181,7 @@ theorem permutationForm_self_pos {v : MonoidAlgebra k X} (hv : v ≠ 0) :
   exact Finsupp.support_nonempty_iff.mpr (by simpa using hv)
 
 /-- Over an ordered ring an element is isotropic for the permutation form only if it is zero. -/
+@[simp]
 theorem permutationForm_self_eq_zero_iff {v : MonoidAlgebra k X} :
     permutationForm k X v v = 0 ↔ v = 0 := by
   refine ⟨fun h => by_contra fun hv => ?_, fun h => by simp [h]⟩
@@ -203,7 +206,7 @@ variable {k : Type*} [CommSemiring k] {G X : Type*} [Group G] [MulAction G X]
 /-- The action of a group element permutes the standard basis of `k[X]`, so it preserves the
 permutation form. -/
 @[simp]
-theorem permutationForm_ofMulAction (g : G) (v w : MonoidAlgebra k X) :
+theorem permutationForm_ofMulAction_invariant (g : G) (v w : MonoidAlgebra k X) :
     permutationForm k X (Representation.ofMulAction k G X g v)
         (Representation.ofMulAction k G X g w) = permutationForm k X v w := by
   have hcoeff : (Representation.ofMulAction k G X g v).coeff =
@@ -221,7 +224,7 @@ theorem permutationForm_ofMulAction_left (g : G) (v w : MonoidAlgebra k X) :
     permutationForm k X (Representation.ofMulAction k G X g v) w =
       permutationForm k X v (Representation.ofMulAction k G X g⁻¹ w) := by
   conv_lhs => rw [← Representation.self_inv_apply (Representation.ofMulAction k G X) g w]
-  exact permutationForm_ofMulAction g v _
+  exact permutationForm_ofMulAction_invariant g v _
 
 /-- The action carries the orthogonal complement of an invariant submodule into itself. -/
 theorem ofMulAction_mem_orthogonal {W : Submodule k (MonoidAlgebra k X)}

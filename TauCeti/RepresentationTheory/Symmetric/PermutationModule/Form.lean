@@ -32,7 +32,8 @@ which compares a submodule of `M^μ` with the orthogonal complement of the Spech
 * `TauCeti.tabloidForm_single_coe_single_coe_of_mem` and
   `TauCeti.tabloidForm_single_coe_single_coe_of_notMem`: two tabloids given by permutations pair to
   `1` or to `0` according to whether the permutations differ by an element of the Young subgroup.
-* `TauCeti.tabloidForm_rho`: the symmetric group acts on `M^μ` by isometries of the tabloid form.
+* `TauCeti.tabloidForm_invariant`: the symmetric group acts on `M^μ` by isometries of the tabloid
+  form.
 * `TauCeti.isCompl_orthogonalSubrepresentation_permutationModule`: a subrepresentation of `M^μ` is
   complemented by its orthogonal complement.
 
@@ -60,8 +61,7 @@ noncomputable abbrev tabloidForm :
   permutationForm ℚ (Equiv.Perm (Fin n) ⧸ youngSubgroup μ)
 
 /-- The tabloid basis of `M^μ` is orthonormal for the tabloid form. -/
-theorem tabloidForm_basis_basis [DecidableEq (Equiv.Perm (Fin n) ⧸ youngSubgroup μ)]
-    (i j : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) :
+theorem tabloidForm_basis_basis (i j : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) [Decidable (i = j)] :
     tabloidForm μ (permutationModuleBasis μ i) (permutationModuleBasis μ j) =
       if i = j then 1 else 0 := by
   simpa using permutationForm_single_single i j (1 : ℚ) 1
@@ -86,11 +86,11 @@ theorem tabloidForm_single_coe_single_coe_of_notMem {g h : Equiv.Perm (Fin n)}
 
 /-- The symmetric group acts on `M^μ` by isometries of the tabloid form: it permutes the tabloid
 basis. -/
-theorem tabloidForm_rho (σ : Equiv.Perm (Fin n))
+theorem tabloidForm_invariant (σ : Equiv.Perm (Fin n))
     (v w : MonoidAlgebra ℚ (Equiv.Perm (Fin n) ⧸ youngSubgroup μ)) :
     tabloidForm μ ((permutationModule μ).ρ σ v) ((permutationModule μ).ρ σ w) =
       tabloidForm μ v w :=
-  permutationForm_ofMulAction σ v w
+  permutationForm_ofMulAction_invariant σ v w
 
 /-- **Invariant orthogonal complements in `M^μ`.**  A subrepresentation of the Young permutation
 module is complemented by its orthogonal complement for the tabloid form.  Unlike the complement
