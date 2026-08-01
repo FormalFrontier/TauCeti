@@ -187,28 +187,32 @@ noncomputable def fullyBlockedBoundariesRotateEquiv :
 theorem fullyBlockedCyclesTransposeEquiv_apply (c : G.fullyBlockedCycles) :
     (G.fullyBlockedCyclesTransposeEquiv c : GridChain (ZMod 2) n) =
       GridChain.transposeEquiv (ZMod 2) n c := by
-  rfl
+  exact (GridChain.transposeEquiv (ZMod 2) n).ofSubmodules_apply
+    G.fullyBlockedCycles_transpose c
 
 /-- The transpose boundary equivalence acts by the underlying transpose chain relabeling. -/
 @[simp]
 theorem fullyBlockedBoundariesTransposeEquiv_apply (c : G.fullyBlockedBoundaries) :
     (G.fullyBlockedBoundariesTransposeEquiv c : GridChain (ZMod 2) n) =
       GridChain.transposeEquiv (ZMod 2) n c := by
-  rfl
+  exact (GridChain.transposeEquiv (ZMod 2) n).ofSubmodules_apply
+    G.fullyBlockedBoundaries_transpose c
 
 /-- The rotation cycle equivalence acts by the underlying rotation chain relabeling. -/
 @[simp]
 theorem fullyBlockedCyclesRotateEquiv_apply (c : G.fullyBlockedCycles) :
     (G.fullyBlockedCyclesRotateEquiv c : GridChain (ZMod 2) n) =
       GridChain.rotateEquiv (ZMod 2) n c := by
-  rfl
+  exact (GridChain.rotateEquiv (ZMod 2) n).ofSubmodules_apply
+    G.fullyBlockedCycles_rotate c
 
 /-- The rotation boundary equivalence acts by the underlying rotation chain relabeling. -/
 @[simp]
 theorem fullyBlockedBoundariesRotateEquiv_apply (c : G.fullyBlockedBoundaries) :
     (G.fullyBlockedBoundariesRotateEquiv c : GridChain (ZMod 2) n) =
       GridChain.rotateEquiv (ZMod 2) n c := by
-  rfl
+  exact (GridChain.rotateEquiv (ZMod 2) n).ofSubmodules_apply
+    G.fullyBlockedBoundaries_rotate c
 
 /-- The inverse of the diagonal-reflection cycle equivalence acts on underlying chains by the
 inverse transpose chain relabeling: the transpose equivalence swaps rows and columns of the
@@ -218,7 +222,8 @@ theorem fullyBlockedCyclesTransposeEquiv_symm_apply (c : G.transpose.fullyBlocke
     ((G.fullyBlockedCyclesTransposeEquiv.symm c : G.fullyBlockedCycles) :
         GridChain (ZMod 2) n) =
       (GridChain.transposeEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
-  rfl
+  exact (GridChain.transposeEquiv (ZMod 2) n).ofSubmodules_symm_apply
+    G.fullyBlockedCycles_transpose c
 
 /-- The inverse of the half-turn rotation cycle equivalence acts on underlying chains by the
 inverse rotation chain relabeling: the rotation equivalence half-turns the underlying chain and
@@ -228,7 +233,8 @@ theorem fullyBlockedCyclesRotateEquiv_symm_apply (c : G.rotate.fullyBlockedCycle
     ((G.fullyBlockedCyclesRotateEquiv.symm c : G.fullyBlockedCycles) :
         GridChain (ZMod 2) n) =
       (GridChain.rotateEquiv (ZMod 2) n).symm (c : GridChain (ZMod 2) n) := by
-  rfl
+  exact (GridChain.rotateEquiv (ZMod 2) n).ofSubmodules_symm_apply
+    G.fullyBlockedCycles_rotate c
 
 /-- The marking swap as a linear equivalence between the fully blocked cycles of `G` and those of
 `G.swapMarkings`. The two cycle submodules of `GridChain` coincide, since the marking swap fixes
