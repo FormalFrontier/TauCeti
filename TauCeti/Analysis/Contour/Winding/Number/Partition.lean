@@ -5,7 +5,7 @@ Authors: Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Contour.Winding.Number.Concat
+public import TauCeti.Analysis.Contour.Winding.Number.Basic
 
 /-!
 # Finite partitions of contour winding numbers
@@ -102,20 +102,16 @@ theorem windingNumber_eq_sum_range_of_eqOn {n : ℕ} {t : ℕ → ℝ} (piece : 
     (hpv : ∀ k < n, CauchyPVExistsAt (piece k) (t k) (t (k + 1)) κ[z₀] z₀) :
     windingNumber γ (t 0) (t n) z₀ =
       ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
-  apply windingNumber_eq_sum_range_of_ae piece (hpv := hpv)
-  · intro k hk
-    have hrestrict : MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))) =
-        MeasureTheory.volume.restrict (Set.uIoo (t k) (t (k + 1))) :=
-      MeasureTheory.restrict_Ioo_eq_restrict_Ioc.symm
-    rw [hrestrict]
-    exact (heq k hk).aeEq_restrict measurableSet_Ioo
-  · intro k hk
-    have hrestrict : MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))) =
-        MeasureTheory.volume.restrict (Set.uIoo (t k) (t (k + 1))) :=
-      MeasureTheory.restrict_Ioo_eq_restrict_Ioc.symm
-    rw [hrestrict]
-    exact ((heq k hk).deriv isOpen_Ioo).aeEq_restrict measurableSet_Ioo |>.mono
-      fun _ hs _ => hs
+  have hpvγ : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀ :=
+    fun k hk => (hpv k hk).congr_curve (heq k hk)
+  calc
+    windingNumber γ (t 0) (t n) z₀ =
+        ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ :=
+      windingNumber_eq_sum_range hpvγ
+    _ = ∑ k ∈ Finset.range n, windingNumber (piece k) (t k) (t (k + 1)) z₀ := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      exact (windingNumber_congr_curve (heq k (Finset.mem_range.mp hk))).symm
 
 end TauCeti.Contour
 
