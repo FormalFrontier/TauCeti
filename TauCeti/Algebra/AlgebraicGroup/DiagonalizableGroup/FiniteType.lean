@@ -7,7 +7,7 @@ module
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
-public import TauCeti.Algebra.Coalgebra.MonoidAlgebraGroupLike
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
 # Finite-type diagonalizable groups
