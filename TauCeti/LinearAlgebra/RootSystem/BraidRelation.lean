@@ -19,19 +19,22 @@ proves that, and — for two simple roots of a base of a finite crystallographic
 `TauCeti.coxeterMatrixOfBase` really are the orders they are named for, so that the braid relations
 of the Coxeter presentation of a Weyl group hold in the Weyl group.
 
-The route is elementary and diagonalises nothing. Writing `g` for the product of the two
-reflections, `g` fixes the common kernel of the two coroots pointwise, and on the two coroot
-coordinates it acts with determinant `1` and trace `c - 2`. So `g` is annihilated by the cubic
-`(X - 1)(X² - (c - 2)X + 1)`, which
-`TauCeti.RootPairing.weylGroup.pow_add_three_ofIdx_mul_ofIdx_smul` states as a three-term
-recursion for the iterates of `g`. Substituting `c = 1, 2, 3` and chasing the recursion a few steps
-gives `g³ = 1`, `g⁴ = 1`, `g⁶ = 1`; the remaining value `c = 0` is the orthogonal case, already
-settled in `TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix`, where the two reflections commute, and
-where the order is pinned to `2` only for two distinct simple roots of a base.
+The iterates of the product are supplied by Mathlib's
+`Module.reflection_mul_reflection_pow_apply` and `Module.reflection_mul_reflection_pow_apply_self`,
+which express `(r₁r₂)ⁿ` over an arbitrary commutative ring through the Chebyshev `S`-polynomials
+(`Polynomial.Chebyshev.S`) evaluated at `t = c - 2`;
+`TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul` and
+`TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul_root` are those formulas for a product of
+two reflections of a root pairing, read as elements of the Weyl group. Substituting `c = 1, 2, 3`,
+that is `t = -1, 0, 1`, makes the two Chebyshev coefficients of the general formula vanish at the
+exponents `3`, `4`, `6`, which gives `g³ = 1`, `g⁴ = 1`, `g⁶ = 1`; the remaining value `c = 0` is
+the orthogonal case, already settled in `TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix`, where the
+two reflections commute, and where the order is pinned to `2` only for two distinct simple roots of
+a base.
 
 That the order is no smaller is checked on the single vector `αᵢ`: its `αᵢ^∨`-coordinate along the
-orbit of `g` is a polynomial in `c`, and for the relevant powers that polynomial avoids the value
-`⟨αᵢ, αᵢ^∨⟩ = 2`.
+orbit of `g` is again a Chebyshev expression in `c`, and for the relevant powers that expression
+avoids the value `⟨αᵢ, αᵢ^∨⟩ = 2`.
 
 Everything before the last section is stated for an arbitrary pair of roots of an arbitrary root
 pairing, the Cartan product entering only as a hypothesis on `RootPairing.pairing`; no finiteness,
@@ -41,8 +44,9 @@ product to `{0, 1, 2, 3}` and the case analysis closes.
 
 ## Main results
 
-* `TauCeti.RootPairing.weylGroup.pow_add_three_ofIdx_mul_ofIdx_smul`: the three-term recursion
-  satisfied by the iterates of a product of two reflections.
+* `TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul` and
+  `TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul_root`: the iterates of a product of two
+  reflections, acting on a weight and on the first of the two roots.
 * `TauCeti.RootPairing.weylGroup.pow_three_ofIdx_mul_ofIdx_eq_one`,
   `TauCeti.RootPairing.weylGroup.pow_four_ofIdx_mul_ofIdx_eq_one`,
   `TauCeti.RootPairing.weylGroup.pow_six_ofIdx_mul_ofIdx_eq_one`: the braid relations at Cartan
@@ -67,7 +71,7 @@ Representation Theory*, §9.
 
 namespace TauCeti
 
-open Set
+open Set Polynomial.Chebyshev
 
 universe u v w x
 
@@ -105,7 +109,9 @@ theorem coroot'_left_ofIdx_mul_ofIdx_smul (x : M) :
 
 /-- The `αⱼ^∨`-coordinate of the product of the reflections in `αᵢ` and `αⱼ`. Together with
 `TauCeti.RootPairing.weylGroup.coroot'_left_ofIdx_mul_ofIdx_smul` this is the matrix of the action
-on the two coroot coordinates: determinant `1` and trace `⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`. -/
+on the two coroot coordinates: determinant `1` and trace `⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`, the value at
+which `TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul` evaluates its Chebyshev
+polynomials. -/
 @[grind =]
 theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
     P.coroot' j ((_root_.RootPairing.weylGroup.ofIdx P i *
@@ -116,112 +122,95 @@ theorem coroot'_right_ofIdx_mul_ofIdx_smul (x : M) :
     _root_.RootPairing.pairing_same]
   ring
 
-/-- **The cubic annihilating a product of two reflections.** The product fixes the common kernel of
-the two coroots and acts on the two coroot coordinates with determinant `1` and trace `c - 2`, so
-it is annihilated by `(X - 1)(X² - (c - 2)X + 1)`. -/
-theorem pow_three_ofIdx_mul_ofIdx_smul (x : M) :
+/-- The action of an iterate of the product of the two reflections is the action of the
+corresponding iterate of the product of the two linear reflections. -/
+private lemma pow_ofIdx_mul_ofIdx_smul_eq (n : ℕ) (x : M) :
     ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) ^ 3) • x =
-      (P.pairing i j * P.pairing j i - 1) •
-          (((_root_.RootPairing.weylGroup.ofIdx P i *
-            _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • x) -
-        (P.pairing i j * P.pairing j i - 1) •
-          ((_root_.RootPairing.weylGroup.ofIdx P i *
-            _root_.RootPairing.weylGroup.ofIdx P j) • x) + x := by
-  have hA := ofIdx_mul_ofIdx_smul P i j
-  set g := _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j
-  have h2 : ∀ y : M, (g ^ 2) • y = g • (g • y) := fun y ↦ by rw [sq, mul_smul]
-  have h3 : (g ^ 3) • x = g • (g • (g • x)) := by rw [pow_succ', mul_smul, h2]
-  -- Unfold the three applications of `g`, expand the coroot functionals of the results, and
-  -- compare the coefficients of `x`, `αᵢ` and `αⱼ` on the two sides.
-  rw [h3, h2]
-  simp only [hA, map_sub, map_smul, smul_eq_mul, _root_.RootPairing.root_coroot'_eq_pairing,
-    _root_.RootPairing.pairing_same]
-  module
+        _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • x =
+      ((P.reflection i * P.reflection j) ^ n) x := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ', mul_smul, ih, pow_succ', LinearEquiv.mul_apply, mul_smul]
+    simp [_root_.RootPairing.reflection_apply]
 
-/-- **The three-term recursion for the iterates of a product of two reflections**, obtained by
-applying the annihilating cubic to `gⁿ • x`. This is the engine of every braid relation below. -/
-theorem pow_add_three_ofIdx_mul_ofIdx_smul (n : ℕ) (x : M) :
+/-- **The iterates of a product of two reflections.** This is Mathlib's
+`Module.reflection_mul_reflection_pow_apply` for the reflections in two roots `αᵢ`, `αⱼ` of a root
+pairing, read in the Weyl group; its Chebyshev polynomials are evaluated at the Cartan product
+shifted by `2`, that is at `t = ⟨αᵢ, αⱼ^∨⟩⟨αⱼ, αᵢ^∨⟩ - 2`. -/
+theorem pow_ofIdx_mul_ofIdx_smul (n : ℕ) (x : M)
+    (t : R := P.pairing i j * P.pairing j i - 2)
+    (ht : t = P.pairing i j * P.pairing j i - 2 := by rfl) :
     ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) ^ (n + 3)) • x =
-      (P.pairing i j * P.pairing j i - 1) •
-          (((_root_.RootPairing.weylGroup.ofIdx P i *
-            _root_.RootPairing.weylGroup.ofIdx P j) ^ (n + 2)) • x) -
-        (P.pairing i j * P.pairing j i - 1) •
-          (((_root_.RootPairing.weylGroup.ofIdx P i *
-            _root_.RootPairing.weylGroup.ofIdx P j) ^ (n + 1)) • x) +
-        ((_root_.RootPairing.weylGroup.ofIdx P i *
-          _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • x := by
-  set g := _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P j
-  have key : ∀ m : ℕ, (g ^ (n + m)) • x = (g ^ m) • ((g ^ n) • x) := fun m ↦ by
-    rw [add_comm n m, pow_add, mul_smul]
-  rw [key 3, key 2, key 1, pow_one]
-  exact pow_three_ofIdx_mul_ofIdx_smul P i j ((g ^ n) • x)
+        _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • x =
+      x +
+        ((S R ((n - 2) / 2)).eval t * ((S R ((n - 1) / 2)).eval t + (S R ((n - 3) / 2)).eval t)) •
+          ((P.pairing i j * P.coroot' i x - P.coroot' j x) • P.root j - P.coroot' i x • P.root i) +
+        ((S R ((n - 1) / 2)).eval t * ((S R (n / 2)).eval t + (S R ((n - 2) / 2)).eval t)) •
+          ((P.pairing j i * P.coroot' j x - P.coroot' i x) • P.root i -
+            P.coroot' j x • P.root j) := by
+  rw [pow_ofIdx_mul_ofIdx_smul_eq]
+  exact Module.reflection_mul_reflection_pow_apply (P.coroot_root_two i) (P.coroot_root_two j) n x t
+    (by rw [ht, _root_.RootPairing.root_coroot'_eq_pairing,
+      _root_.RootPairing.root_coroot'_eq_pairing]; ring)
+
+/-- **The iterates of a product of two reflections on the first of the two roots.** This is
+Mathlib's `Module.reflection_mul_reflection_pow_apply_self` read in the Weyl group; it is the case
+`x = αᵢ` of `TauCeti.RootPairing.weylGroup.pow_ofIdx_mul_ofIdx_smul`, in a form where the two
+coefficients are single Chebyshev values. -/
+theorem pow_ofIdx_mul_ofIdx_smul_root (n : ℕ)
+    (t : R := P.pairing i j * P.pairing j i - 2)
+    (ht : t = P.pairing i j * P.pairing j i - 2 := by rfl) :
+    ((_root_.RootPairing.weylGroup.ofIdx P i *
+        _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • P.root i =
+      ((S R n).eval t + (S R (n - 1)).eval t) • P.root i +
+        ((S R (n - 1)).eval t * -P.pairing i j) • P.root j := by
+  rw [pow_ofIdx_mul_ofIdx_smul_eq]
+  exact Module.reflection_mul_reflection_pow_apply_self (P.coroot_root_two i)
+    (P.coroot_root_two j) n t
+    (by rw [ht, _root_.RootPairing.root_coroot'_eq_pairing,
+      _root_.RootPairing.root_coroot'_eq_pairing]; ring)
 
 /-! ## The braid relations -/
 
 /-- **The braid relation at Cartan product `1`**: the product of the two reflections has order
 dividing `3`, the `A₂` configuration. -/
+@[simp, grind =]
 theorem pow_three_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 1) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 3 = 1 := by
   refine eq_one_of_smul_eq_self fun x ↦ ?_
-  have h₀ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 0 x
-  rw [h] at h₀
-  simp only [Nat.reduceAdd, pow_zero, one_smul, pow_one] at h₀
-  rw [h₀]
-  -- The remaining identity is linear over `R` in the two surviving iterates, which are generalised
-  -- away because the weight space carries a second scalar action, by the Weyl group itself.
-  generalize ((_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • x = y
-  generalize (_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) • x = z
-  module
+  -- At `t = -1` the coefficients of the two displacement terms are `S₀(t)(S₁(t) + S₀(t)) = 0`
+  -- and `S₁(t)(S₁(t) + S₀(t)) = 0`.
+  rw [pow_ofIdx_mul_ofIdx_smul P i j 3 x (-1) (by rw [h]; ring)]
+  norm_num [S_zero, S_one]
 
 /-- **The braid relation at Cartan product `2`**: the product of the two reflections has order
 dividing `4`, the `B₂` configuration. -/
+@[simp, grind =]
 theorem pow_four_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 2) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 4 = 1 := by
   refine eq_one_of_smul_eq_self fun x ↦ ?_
-  have h₀ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 0 x
-  have h₁ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 1 x
-  rw [h] at h₀ h₁
-  simp only [Nat.reduceAdd, pow_zero, one_smul, pow_one] at h₀ h₁
-  rw [h₁, h₀]
-  -- The remaining identity is linear over `R` in the two surviving iterates, which are generalised
-  -- away because the weight space carries a second scalar action, by the Weyl group itself.
-  generalize ((_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • x = y
-  generalize (_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) • x = z
-  module
+  -- At `t = 0` both coefficients carry the factor `S₁(t) = t = 0`.
+  rw [pow_ofIdx_mul_ofIdx_smul P i j 4 x 0 (by rw [h]; ring)]
+  norm_num [S_zero, S_one]
 
 /-- **The braid relation at Cartan product `3`**: the product of the two reflections has order
 dividing `6`, the `G₂` configuration. -/
+@[simp, grind =]
 theorem pow_six_ofIdx_mul_ofIdx_eq_one (h : P.pairing i j * P.pairing j i = 3) :
     (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 6 = 1 := by
   refine eq_one_of_smul_eq_self fun x ↦ ?_
-  have h₀ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 0 x
-  have h₁ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 1 x
-  have h₂ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 2 x
-  have h₃ := pow_add_three_ofIdx_mul_ofIdx_smul P i j 3 x
-  rw [h] at h₀ h₁ h₂ h₃
-  simp only [Nat.reduceAdd, pow_zero, one_smul, pow_one] at h₀ h₁ h₂ h₃
-  rw [h₃, h₂, h₁, h₀]
-  -- The remaining identity is linear over `R` in the two surviving iterates, which are generalised
-  -- away because the weight space carries a second scalar action, by the Weyl group itself.
-  generalize ((_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • x = y
-  generalize (_root_.RootPairing.weylGroup.ofIdx P i *
-    _root_.RootPairing.weylGroup.ofIdx P j) • x = z
-  module
+  -- At `t = 1` both coefficients carry the factor `S₂(t) = t² - 1 = 0`.
+  rw [pow_ofIdx_mul_ofIdx_smul P i j 6 x 1 (by rw [h]; ring)]
+  norm_num [S_two]
 
 /-! ## The order is no smaller
 
-The lower bounds are read off a single vector: the `αᵢ^∨`-coordinate of `gⁿ • αᵢ` is a polynomial
-in the Cartan product `c`, and comparing it with `⟨αᵢ, αᵢ^∨⟩ = 2` rules out `gⁿ = 1`. -/
+The lower bounds are read off a single vector: the `αᵢ^∨`-coordinate of `gⁿ • αᵢ` is a Chebyshev
+expression in the Cartan product `c`, and comparing it with `⟨αᵢ, αᵢ^∨⟩ = 2` rules out `gⁿ = 1`. -/
 
 section LowerBound
 
@@ -235,59 +224,29 @@ private lemma pow_ne_one_of_coroot'_left_ne (n : ℕ)
     _root_.RootPairing.pairing_same] at h
   exact h rfl
 
-private lemma coroot'_left_smul_root :
-    P.coroot' i ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) • P.root i) =
-      P.pairing i j * P.pairing j i - 2 := by
-  rw [coroot'_left_ofIdx_mul_ofIdx_smul]
-  simp only [_root_.RootPairing.root_coroot'_eq_pairing, _root_.RootPairing.pairing_same]
-  ring
-
-private lemma coroot'_right_smul_root :
-    P.coroot' j ((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) • P.root i) =
-      (P.pairing i j * P.pairing j i - 3) * P.pairing i j := by
-  rw [coroot'_right_ofIdx_mul_ofIdx_smul]
-  simp only [_root_.RootPairing.root_coroot'_eq_pairing, _root_.RootPairing.pairing_same]
-  ring
-
-private lemma coroot'_left_pow_two_smul_root :
+private lemma coroot'_left_pow_smul_root (n : ℕ) (t : R)
+    (ht : t = P.pairing i j * P.pairing j i - 2) :
     P.coroot' i (((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • P.root i) =
-      (P.pairing i j * P.pairing j i) ^ 2 - 4 * (P.pairing i j * P.pairing j i) + 2 := by
-  rw [sq, mul_smul, coroot'_left_ofIdx_mul_ofIdx_smul, coroot'_left_smul_root,
-    coroot'_right_smul_root]
-  ring
-
-private lemma coroot'_right_pow_two_smul_root :
-    P.coroot' j (((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) ^ 2) • P.root i) =
-      ((P.pairing i j * P.pairing j i) ^ 2 - 5 * (P.pairing i j * P.pairing j i) + 5) *
-        P.pairing i j := by
-  rw [sq, mul_smul, coroot'_right_ofIdx_mul_ofIdx_smul, coroot'_left_smul_root,
-    coroot'_right_smul_root]
-  ring
-
-private lemma coroot'_left_pow_three_smul_root :
-    P.coroot' i (((_root_.RootPairing.weylGroup.ofIdx P i *
-        _root_.RootPairing.weylGroup.ofIdx P j) ^ 3) • P.root i) =
-      (P.pairing i j * P.pairing j i) ^ 3 - 6 * (P.pairing i j * P.pairing j i) ^ 2 +
-        9 * (P.pairing i j * P.pairing j i) - 2 := by
-  rw [pow_succ', mul_smul, coroot'_left_ofIdx_mul_ofIdx_smul,
-    coroot'_left_pow_two_smul_root, coroot'_right_pow_two_smul_root]
+        _root_.RootPairing.weylGroup.ofIdx P j) ^ n) • P.root i) =
+      2 * ((S R n).eval t + (S R (n - 1)).eval t) -
+        (S R (n - 1)).eval t * (P.pairing i j * P.pairing j i) := by
+  rw [pow_ofIdx_mul_ofIdx_smul_root P i j n t ht]
+  simp only [map_add, map_smul, smul_eq_mul, _root_.RootPairing.root_coroot'_eq_pairing,
+    _root_.RootPairing.pairing_same]
   ring
 
 variable [CharZero R]
 
 /-- **At Cartan product `1` the product of the two reflections has order exactly `3`.** -/
+@[simp, grind =]
 theorem orderOf_ofIdx_mul_ofIdx_eq_three (h : P.pairing i j * P.pairing j i = 1) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) = 3 := by
   have hne : (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 1 ≠ 1 := by
     refine pow_ne_one_of_coroot'_left_ne P i j 1 ?_
-    rw [pow_one, coroot'_left_smul_root, h]
-    norm_num
+    rw [coroot'_left_pow_smul_root P i j 1 (-1) (by rw [h]; ring), h]
+    norm_num [S_zero, S_one]
   refine orderOf_eq_of_pow_and_pow_div_prime (by norm_num)
     (pow_three_ofIdx_mul_ofIdx_eq_one P i j h) fun p hp hpd ↦ ?_
   have hp' : p = 3 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).mp hpd
@@ -295,14 +254,15 @@ theorem orderOf_ofIdx_mul_ofIdx_eq_three (h : P.pairing i j * P.pairing j i = 1)
   exact hne
 
 /-- **At Cartan product `2` the product of the two reflections has order exactly `4`.** -/
+@[simp, grind =]
 theorem orderOf_ofIdx_mul_ofIdx_eq_four (h : P.pairing i j * P.pairing j i = 2) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) = 4 := by
   have hne : (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 2 ≠ 1 := by
     refine pow_ne_one_of_coroot'_left_ne P i j 2 ?_
-    rw [coroot'_left_pow_two_smul_root, h]
-    norm_num
+    rw [coroot'_left_pow_smul_root P i j 2 0 (by rw [h]; ring), h]
+    norm_num [S_one, S_two]
   refine orderOf_eq_of_pow_and_pow_div_prime (by norm_num)
     (pow_four_ofIdx_mul_ofIdx_eq_one P i j h) fun p hp hpd ↦ ?_
   have hp' : p = 2 := by
@@ -312,19 +272,23 @@ theorem orderOf_ofIdx_mul_ofIdx_eq_four (h : P.pairing i j * P.pairing j i = 2) 
   exact hne
 
 /-- **At Cartan product `3` the product of the two reflections has order exactly `6`.** -/
+@[simp, grind =]
 theorem orderOf_ofIdx_mul_ofIdx_eq_six (h : P.pairing i j * P.pairing j i = 3) :
     orderOf (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) = 6 := by
   have hne₂ : (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 2 ≠ 1 := by
     refine pow_ne_one_of_coroot'_left_ne P i j 2 ?_
-    rw [coroot'_left_pow_two_smul_root, h]
-    norm_num
+    rw [coroot'_left_pow_smul_root P i j 2 1 (by rw [h]; ring), h]
+    norm_num [S_one, S_two]
   have hne₃ : (_root_.RootPairing.weylGroup.ofIdx P i *
       _root_.RootPairing.weylGroup.ofIdx P j) ^ 3 ≠ 1 := by
     refine pow_ne_one_of_coroot'_left_ne P i j 3 ?_
-    rw [coroot'_left_pow_three_smul_root, h]
-    norm_num
+    rw [coroot'_left_pow_smul_root P i j 3 1 (by rw [h]; ring), h]
+    have h₃ : (S R 3).eval (1 : R) = -1 := by
+      have h₃' : S R (3 : ℤ) = Polynomial.X * S R 2 - S R 1 := by simpa using S_add_two R (1 : ℤ)
+      simp [h₃', S_one, S_two]
+    norm_num [h₃, S_two]
   refine orderOf_eq_of_pow_and_pow_div_prime (by norm_num)
     (pow_six_ofIdx_mul_ofIdx_eq_one P i j h) fun p hp hpd ↦ ?_
   have hp' : p = 2 ∨ p = 3 := by
