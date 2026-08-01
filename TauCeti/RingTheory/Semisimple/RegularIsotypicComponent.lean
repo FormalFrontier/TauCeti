@@ -38,15 +38,27 @@ values are exactly `isotypicComponents R R`.
   simple module is one of the isotypic components of the regular module, so the map above is
   well defined into `isotypicComponents R R`. Surjectivity needs no lemma: by definition every
   element of `isotypicComponents R R` is `isotypicComponent R R I` for a simple left ideal `I`.
+* `TauCeti.simpleSubmoduleClassesEquiv`: **the bijection.** The isomorphism classes of simple
+  submodules of `M`, as the quotient type `TauCeti.SimpleSubmoduleClasses R M`, correspond to the
+  isotypic components of `M`, the class of `N` going to the `N`-isotypic component. This needs no
+  hypothesis on the ring; for `M = R` it is the bijection with the Artin-Wedderburn blocks.
+* `TauCeti.simpleModuleClass`: over a semisimple ring, the class in `SimpleSubmoduleClasses R R`
+  of the simple left ideals realizing an abstract simple module. Its fibres are the isomorphism
+  classes (`TauCeti.simpleModuleClass_eq_iff`) and it hits every class
+  (`TauCeti.simpleModuleClass_coe`), so `SimpleSubmoduleClasses R R` is a universe-safe type of
+  isomorphism classes of simple `R`-modules.
 * `TauCeti.finite_of_pairwise_not_linearEquiv`: a semisimple ring has only finitely many
   isomorphism classes of simple modules.
 
 ## Implementation notes
 
-Isomorphism classes are handled without a quotient type: "the map is injective" is
-`TauCeti.isotypicComponent_eq_iff`, and "the map is well defined" is
-`LinearEquiv.isotypicComponent_eq` together with
-`TauCeti.isotypicComponent_mem_isotypicComponents`.
+Isomorphism classes of *abstract* simple modules cannot be a type: they range over every universe.
+They are therefore handled in two ways here. The relational lemmas
+`TauCeti.isotypicComponent_eq_iff` and `TauCeti.isotypicComponent_mem_isotypicComponents` state
+injectivity and well-definedness of `M ↦ isotypicComponent R R M` without naming a type of classes
+at all. The bundled bijection instead uses `TauCeti.SimpleSubmoduleClasses R R`, the classes of
+simple *left ideals*, which is a type in `Type u`; over a semisimple ring
+`TauCeti.simpleModuleClass` identifies it with the classes of abstract simple modules.
 
 Each proof over a semisimple ring realizes the abstract module as a left ideal and transports along
 that realization; nothing here redoes the isotypic theory.
@@ -78,6 +90,64 @@ theorem le_isotypicComponent_iff {S : Type w} [AddCommGroup S] [Module R S] [IsS
   ⟨fun h ↦ ⟨(isIsotypicOfType_submodule_iff.mp (.isotypicComponent R M S) N h).some.symm⟩,
     fun ⟨e⟩ ↦ le_sSup ⟨e.symm⟩⟩
 
+variable (R M) in
+/-- Linear isomorphism, as an equivalence relation on the simple submodules of `M`. -/
+@[expose, instance_reducible]
+def simpleSubmoduleSetoid : Setoid {N : Submodule R M // IsSimpleModule R N} where
+  r N N' := Nonempty (N.1 ≃ₗ[R] N'.1)
+  iseqv := ⟨fun _ ↦ ⟨.refl R _⟩, fun ⟨e⟩ ↦ ⟨e.symm⟩, fun ⟨e⟩ ⟨f⟩ ↦ ⟨e.trans f⟩⟩
+
+attribute [local instance] simpleSubmoduleSetoid
+
+variable (R M) in
+/-- The isomorphism classes of simple submodules of `M`. Unlike the isomorphism classes of abstract
+simple modules, which range over every universe, this is a type; over a semisimple ring the two
+agree for `M = R`, by `TauCeti.simpleModuleClass`. -/
+@[expose]
+def SimpleSubmoduleClasses := Quotient (simpleSubmoduleSetoid R M)
+
+namespace SimpleSubmoduleClasses
+
+/-- The isomorphism class of a simple submodule of `M`. -/
+@[expose]
+def mk (N : Submodule R M) [IsSimpleModule R N] : SimpleSubmoduleClasses R M := ⟦⟨N, ‹_›⟩⟧
+
+theorem mk_eq_mk_iff {N N' : Submodule R M} [IsSimpleModule R N] [IsSimpleModule R N'] :
+    mk N = mk N' ↔ Nonempty (N ≃ₗ[R] N') := Quotient.eq
+
+/-- Every isomorphism class is the class of a simple submodule. -/
+@[elab_as_elim]
+theorem ind {motive : SimpleSubmoduleClasses R M → Prop}
+    (mk : ∀ (N : Submodule R M) (_ : IsSimpleModule R N), motive (.mk N))
+    (c : SimpleSubmoduleClasses R M) : motive c :=
+  Quotient.ind (fun N ↦ mk N.1 N.2) c
+
+end SimpleSubmoduleClasses
+
+variable (R M) in
+/-- **Isomorphism classes of simple submodules biject with isotypic components.** The class of a
+simple submodule `N` of `M` corresponds to the `N`-isotypic component of `M`.
+
+Injectivity is `TauCeti.le_isotypicComponent_iff`: a simple submodule of an isotypic component is a
+copy of the module cutting it out. Surjectivity is the definition of `isotypicComponents`. -/
+@[expose]
+noncomputable def simpleSubmoduleClassesEquiv :
+    SimpleSubmoduleClasses R M ≃ isotypicComponents R M :=
+  Equiv.ofBijective
+    (Quotient.lift (fun N ↦ (⟨isotypicComponent R M N.1, N.1, N.2, rfl⟩ : isotypicComponents R M))
+      fun _ _ ⟨e⟩ ↦ Subtype.ext e.isotypicComponent_eq)
+    ⟨by
+      refine Quotient.ind₂ fun N N' h ↦ Quotient.sound ?_
+      have := N.2
+      have := N'.2
+      have h' : isotypicComponent R M N.1 = isotypicComponent R M N'.1 := congrArg Subtype.val h
+      exact ⟨((le_isotypicComponent_iff N.1).mp (h' ▸ N.1.le_isotypicComponent)).some.symm⟩,
+     by rintro ⟨_, N, _, rfl⟩; exact ⟨.mk N, rfl⟩⟩
+
+@[simp]
+theorem coe_simpleSubmoduleClassesEquiv_mk (N : Submodule R M) [IsSimpleModule R N] :
+    (simpleSubmoduleClassesEquiv R M (.mk N) : Submodule R M) = isotypicComponent R M N := rfl
+
 variable (R M)
 
 /-- Over a semisimple ring, the isotypic component of the regular module cut out by an abstract
@@ -107,6 +177,50 @@ theorem isotypicComponent_eq_iff [IsSemisimpleRing R] {N : Type w} [AddCommGroup
   have hle : (I : Submodule R R) ≤ isotypicComponent R R M :=
     h ▸ (le_isotypicComponent_iff I).mpr ⟨f⟩
   exact ⟨((le_isotypicComponent_iff I).mp hle).some.trans f.symm⟩
+
+variable (R M) in
+/-- Over a semisimple ring, the isomorphism class of the simple left ideals realizing an abstract
+simple module `M`; see `TauCeti.simpleModuleClass_eq_mk_iff`. -/
+noncomputable def simpleModuleClass [IsSemisimpleRing R] [IsSimpleModule R M] :
+    SimpleSubmoduleClasses R R :=
+  (simpleSubmoduleClassesEquiv R R).symm
+    ⟨isotypicComponent R R M, isotypicComponent_mem_isotypicComponents R M⟩
+
+@[simp]
+theorem coe_simpleSubmoduleClassesEquiv_simpleModuleClass [IsSemisimpleRing R]
+    [IsSimpleModule R M] :
+    (simpleSubmoduleClassesEquiv R R (simpleModuleClass R M) : Submodule R R) =
+      isotypicComponent R R M :=
+  congrArg Subtype.val ((simpleSubmoduleClassesEquiv R R).apply_symm_apply _)
+
+/-- The class of an abstract simple module is the class of a simple left ideal exactly when the two
+are isomorphic, which is what makes `TauCeti.simpleModuleClass` a realization of `M`. -/
+theorem simpleModuleClass_eq_mk_iff [IsSemisimpleRing R] [IsSimpleModule R M]
+    (I : Submodule R R) [IsSimpleModule R I] :
+    simpleModuleClass R M = .mk I ↔ Nonempty (M ≃ₗ[R] I) := by
+  rw [← (simpleSubmoduleClassesEquiv R R).apply_eq_iff_eq, ← Subtype.coe_inj,
+    coe_simpleSubmoduleClassesEquiv_simpleModuleClass, coe_simpleSubmoduleClassesEquiv_mk]
+  exact isotypicComponent_eq_iff
+
+/-- Every isomorphism class of simple left ideals is the class of an abstract simple module, namely
+of the ideal itself: `TauCeti.simpleModuleClass` is surjective. -/
+theorem simpleModuleClass_coe [IsSemisimpleRing R] (I : Submodule R R) [IsSimpleModule R I] :
+    simpleModuleClass R I = .mk I :=
+  (simpleModuleClass_eq_mk_iff I).mpr ⟨.refl R I⟩
+
+/-- **The dictionary as a map to a type of classes.** Over a semisimple ring, two simple modules
+have the same class of realizing left ideals if and only if they are isomorphic.
+
+With `TauCeti.simpleModuleClass_coe` this says that `SimpleSubmoduleClasses R R`, which
+`TauCeti.simpleSubmoduleClassesEquiv` identifies with the isotypic components of `R`, is a type of
+isomorphism classes of simple `R`-modules. -/
+theorem simpleModuleClass_eq_iff [IsSemisimpleRing R] {N : Type w} [AddCommGroup N] [Module R N]
+    [IsSimpleModule R M] [IsSimpleModule R N] :
+    simpleModuleClass R M = simpleModuleClass R N ↔ Nonempty (M ≃ₗ[R] N) := by
+  rw [← (simpleSubmoduleClassesEquiv R R).apply_eq_iff_eq, ← Subtype.coe_inj,
+    coe_simpleSubmoduleClassesEquiv_simpleModuleClass,
+    coe_simpleSubmoduleClassesEquiv_simpleModuleClass]
+  exact isotypicComponent_eq_iff
 
 /-- A semisimple ring has only finitely many isomorphism classes of simple modules: a family of
 pairwise non-isomorphic simple `R`-modules is indexed by a finite type, because
