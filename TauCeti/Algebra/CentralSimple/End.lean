@@ -9,10 +9,10 @@ module
 -- and `Mathlib.RingTheory.SimpleRing.Basic`, hence `Algebra.IsCentral` and `IsSimpleRing`, which is
 -- why neither is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
-public import Mathlib.Algebra.Module.LinearMap.End
 -- Public: Mathlib's `Algebra.IsCentral` instance for the endomorphisms of a free module is the
 -- centrality half of "central simple", so it has to reach everywhere `Module.End K V` is asked for
--- as a central simple algebra.
+-- as a central simple algebra. It also re-exports `Mathlib.Algebra.Module.LinearMap.End`, hence
+-- `Module.End` itself, which is why that is not imported again here.
 public import Mathlib.Algebra.Central.End
 -- Non-public: the matrix presentation `algEquivMatrix (Module.finBasis K V)` and the matrix fact it
 -- transports, `IsSimpleRing.matrix`, are used only inside a proof, as is the transport
@@ -47,7 +47,9 @@ hypothesis.
 
 * `TauCeti.IsSimpleRing.moduleEnd`: `Module.End K V` is a simple ring, for `V` a nonzero
   finite-dimensional `K`-vector space.
-* `TauCeti.Algebra.deg_moduleEnd`: its degree is `Module.finrank K V`. Equivalently
+* `TauCeti.Algebra.deg_moduleEnd`: the degree of `Module.End K V` is `Module.finrank K V`, for any
+  finite-dimensional `V` -- nonzero or not, since the degree is defined for every algebra whose
+  dimension is a square. Equivalently
   `Module.finrank K (Module.End K V) = (Module.finrank K V) ^ 2`, which is Mathlib's
   `Module.finrank_linearMap`; the point of stating it degree-side is that
   `TauCeti.Algebra.deg` is the invariant that composes, so a split algebra of degree `d` can be
@@ -86,10 +88,13 @@ instance IsSimpleRing.moduleEnd : IsSimpleRing (Module.End K V) :=
 
 end Nontrivial
 
-/-- The degree of the split central simple algebra `Module.End K V` is the dimension of `V`. This
-is the degree-side reading of `Module.finrank_linearMap`, and it needs no hypothesis beyond
+/-- The degree of the endomorphism algebra `Module.End K V` is the dimension of `V`. This is the
+degree-side reading of `Module.finrank_linearMap`, and it needs no hypothesis beyond
 finite-dimensionality: `TauCeti.Algebra.deg` is `Nat.sqrt` of the dimension, and the dimension of
-`Module.End K V` is a square whether or not `V` is nonzero. -/
+`Module.End K V` is a square whether or not `V` is nonzero. It is the degree of a *split central
+simple* algebra exactly when `V` is nonzero, which is the extra hypothesis
+`TauCeti.IsSimpleRing.moduleEnd` carries; for `V = 0` the ring `Module.End K V` is trivial, hence
+not simple, and both sides read `0`. -/
 @[simp]
 theorem Algebra.deg_moduleEnd : deg K (Module.End K V) = Module.finrank K V :=
   deg_eq_of_finrank_eq_sq (by rw [Module.finrank_linearMap, sq])
