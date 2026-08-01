@@ -6,9 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Topology.ClusterSet.Basic
+public import TauCeti.Topology.ClusterSet.Inverse
 
 /-!
 # Cluster sets
 
-This compatibility module preserves the original import path for the basic cluster-set API.
+This module re-exports the cluster-set API while preserving its original import path.
 -/
