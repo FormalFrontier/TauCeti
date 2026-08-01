@@ -14,8 +14,8 @@ At a constant random measure `ω ↦ p`, the conditional and mixture identities 
 i.i.d. sequence is conditionally i.i.d. with its common law as a constant directing measure.
 
 The equivalence itself holds at an arbitrary index type
-(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`). The
-The *named-law* constant-witness API is index-generic:
+(`conditionallyIIDWith_const_of_mixedIIDWith`, `conditionallyIIDWith_const_iff_mixedIIDWith`).
+The *named-law* constant-witness API is likewise index-generic:
 `MixedIIDWith.iIndepFun_of_const`, `mixedIIDWith_const_iff_iIndepFun_and_map_eq`, and
 `MixedIIDWith.of_iIndepFun_map_eq` all take an arbitrary index type. Independence itself never
 needed `ℕ` — Mathlib's `ProbabilityTheory.iIndepFun` is stated generically — the forward direction
