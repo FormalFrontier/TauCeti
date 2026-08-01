@@ -119,13 +119,17 @@ theorem exists_finite_subcoalgebra_of_setFinite_of_exists_mem
     (s : Set C) (hs : s.Finite) :
     ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ s ⊆ D := by
   classical
-  letI : Fintype s := hs.fintype
-  choose D hDfinite hcD using fun c : s => hcover (c : C)
-  refine ⟨⨆ c : s, D c, iSup_finite D hDfinite, ?_⟩
-  intro c hc
-  apply mem_toSubmodule.mp
-  rw [iSup_toSubmodule]
-  exact Submodule.mem_iSup_of_mem ⟨c, hc⟩ (hcD ⟨c, hc⟩)
+  obtain ⟨D, hDfinite, hsD⟩ :=
+    DirectedOn.exists_mem_subset_of_finset_subset_biUnion
+      (f := fun D : Subcoalgebra R C => (D : Set C))
+      nonempty_finiteSubcoalgebras directedOn_finiteSubcoalgebras
+      (s := hs.toFinset) (by
+        intro c _
+        obtain ⟨D, hDfinite, hcD⟩ := hcover c
+        exact Set.mem_iUnion₂_of_mem
+          (mem_finiteSubcoalgebras.mpr hDfinite) hcD)
+  exact ⟨D, mem_finiteSubcoalgebras.mp hDfinite, by
+    simpa only [hs.coe_toFinset] using hsD⟩
 
 /-- If every element is contained in a module-finite subcoalgebra, then every module-finite
 submodule is contained in one module-finite subcoalgebra. -/
@@ -211,16 +215,6 @@ theorem exists_finite_subcoalgebra_of_finite_submodule [CommRing R] [IsDomain R]
     ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ M ≤ D.toSubmodule :=
   exists_finite_subcoalgebra_of_finite_submodule_of_exists_mem
     (fun c => exists_finite_subcoalgebra_mem (R := R) (C := C) c) M
-
-/-- A module-finite subcoalgebra of a torsion-free coalgebra over a commutative principal ideal
-domain is free as an `R`-module. -/
-theorem free_of_finite [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
-    [AddCommGroup C] [Module R C] [Coalgebra R C] [Module.IsTorsionFree R C]
-    (D : Subcoalgebra R C) [Module.Finite R D.toSubmodule] :
-    Module.Free R D.toSubmodule := by
-  letI : AddCommGroup D.toSubmodule := Module.addCommMonoidToAddCommGroup R
-  letI : Module.IsTorsionFree R D.toSubmodule := D.toSubmodule.instIsTorsionFree
-  exact Module.free_of_finite_type_torsion_free'
 
 /-- A coalgebra that is free over a commutative principal ideal domain is the supremum of its
 module-finite subcoalgebras. -/
