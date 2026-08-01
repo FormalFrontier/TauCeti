@@ -78,8 +78,11 @@ in Mathlib's `Mathlib/LinearAlgebra/Matrix/Block.lean`. Upper triangularity is M
 `Matrix.BlockTriangular _ id`, and `TauCeti.upperTriangular` is literally Mathlib's associative
 subalgebra `Matrix.blockTriangularSubalgebra` read as a Lie subalgebra along
 `lieSubalgebraOfSubalgebra`. Strict upper triangularity is not a `Matrix.BlockTriangular` condition
-for any block map, so `TauCeti.strictUpperTriangular` is spelled out; it is not a subalgebra for the
-associative product either, only for the bracket.
+for any block map, so `TauCeti.strictUpperTriangular` is spelled out. It is closed under the
+associative product as well as under the bracket (that closure is the `key` step of its `lie_mem'`
+field), and so is a nonunital associative subalgebra; but it does not contain `1` unless `n` is
+empty, so it is not a Mathlib `Subalgebra`, which is unital, and it cannot be read off one along
+`lieSubalgebraOfSubalgebra` the way `TauCeti.upperTriangular` is.
 
 Everything here holds over an arbitrary commutative ring. The single exception is
 `TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`, which identifies the individual
