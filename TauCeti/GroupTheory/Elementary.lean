@@ -24,9 +24,9 @@ properties they are used through.
 The definitions are the ones Brauer's induction theorem is stated against: Artin's theorem writes a
 character as a rational combination of characters induced from *cyclic* subgroups, and Brauer's
 sharpens this to an integral combination of characters induced from *elementary* subgroups. That
-elementary is genuinely weaker than cyclic is the content of `TauCeti.isPElementary_of_isCyclic`
-below: a finite cyclic group is `p`-elementary for **every** prime `p`, by splitting it as the
-product of its `p`-part and its `p'`-part.
+the elementary groups include the cyclic ones is the content of
+`TauCeti.isPElementary_of_isCyclic` below: a finite cyclic group is `p`-elementary for **every**
+prime `p`, by splitting it as the product of its `p`-part and its `p'`-part.
 
 ## Main definitions
 
@@ -35,6 +35,9 @@ product of its `p`-part and its `p'`-part.
 * `TauCeti.IsPHyperelementary p G`: `G` has a cyclic normal subgroup of order prime to `p` with
   `p`-group quotient.
 * `TauCeti.IsElementary G`, `TauCeti.IsHyperelementary G`: the same, for some prime `p`.
+
+Each of the four predicates is restated as an `Iff` by `TauCeti.isPElementary_def`,
+`TauCeti.isPHyperelementary_def`, `TauCeti.isElementary_def` and `TauCeti.isHyperelementary_def`.
 
 ## Main results
 
@@ -51,7 +54,8 @@ product of its `p`-part and its `p'`-part.
 
 The `p`-group condition on the quotient in `TauCeti.IsPHyperelementary` is spelled out elementwise,
 as `∀ g, ∃ k, g ^ p ^ k ∈ C`, rather than as `IsPGroup p (G ⧸ C)`. The two are equivalent
-(`TauCeti.isPGroup_quotient_of_forall_exists_pow_mem` and
+(`TauCeti.isPHyperelementary_iff_isPGroup_quotient`, and the two implications it is assembled from,
+`TauCeti.isPGroup_quotient_of_forall_exists_pow_mem` and
 `TauCeti.isPHyperelementary_of_isPGroup_quotient`), but the quotient `G ⧸ C` is a group only once
 the normality of `C` is available as an instance, which an existential quantifier inside the
 definition cannot supply. The elementwise form keeps the definition free of that bookkeeping and is
@@ -60,7 +64,7 @@ also the form the closure proofs use directly.
 `TauCeti.IsPElementary` records the internal direct product decomposition as
 `Subgroup.IsComplement'` together with elementwise commutation, rather than as normality of both
 factors: this is the form the proofs consume, and normality of the cyclic factor is derived from it
-in `TauCeti.normal_of_commute_of_isComplement`.
+in `TauCeti.normal_of_commute_of_isComplement'`.
 
 ## References
 
@@ -109,6 +113,31 @@ end Defs
 
 variable {p : ℕ} {G H : Type*} [Group G] [Group H]
 
+/-! ### Restating the definitions -/
+
+/-- `TauCeti.IsPElementary p G` unfolded: a decomposition of `G` into a cyclic subgroup of order
+prime to `p` and a complementary `p`-subgroup commuting with it elementwise. -/
+theorem isPElementary_def : IsPElementary p G ↔
+    ∃ C P : Subgroup G, IsCyclic C ∧ ¬ p ∣ Nat.card C ∧ IsPGroup p P ∧
+      (∀ c ∈ C, ∀ x ∈ P, Commute c x) ∧ C.IsComplement' P :=
+  Iff.rfl
+
+/-- `TauCeti.IsPHyperelementary p G` unfolded: a cyclic normal subgroup of order prime to `p` such
+that every element of `G` has a `p`-power inside it. See
+`TauCeti.isPHyperelementary_iff_isPGroup_quotient` for the quotient reading of the last clause. -/
+theorem isPHyperelementary_def : IsPHyperelementary p G ↔
+    ∃ C : Subgroup G, C.Normal ∧ IsCyclic C ∧ ¬ p ∣ Nat.card C ∧
+      ∀ g : G, ∃ k : ℕ, g ^ p ^ k ∈ C :=
+  Iff.rfl
+
+/-- `TauCeti.IsElementary G` unfolded: `p`-elementarity for some prime `p`. -/
+theorem isElementary_def : IsElementary G ↔ ∃ q : ℕ, q.Prime ∧ IsPElementary q G :=
+  Iff.rfl
+
+/-- `TauCeti.IsHyperelementary G` unfolded: `p`-hyperelementarity for some prime `p`. -/
+theorem isHyperelementary_def : IsHyperelementary G ↔ ∃ q : ℕ, q.Prime ∧ IsPHyperelementary q G :=
+  Iff.rfl
+
 /-! ### The quotient form of hyperelementarity -/
 
 /-- If every element of `G` has a `p`-power lying in a normal subgroup `C`, the quotient `G ⧸ C` is
@@ -130,13 +159,27 @@ theorem isPHyperelementary_of_isPGroup_quotient (C : Subgroup G) [hC : C.Normal]
   rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hk
   exact ⟨k, hk⟩
 
+/-- `G` is `p`-hyperelementary exactly when it has a cyclic normal subgroup `C` of order prime to
+`p` with `IsPGroup p (G ⧸ C)`. This is the quotient form of the definition, with the normality
+witness packaged so that it supplies the group structure on `G ⧸ C`. -/
+theorem isPHyperelementary_iff_isPGroup_quotient : IsPHyperelementary p G ↔
+    ∃ (C : Subgroup G) (hC : C.Normal),
+      IsCyclic C ∧ ¬ p ∣ Nat.card C ∧ (letI := hC; IsPGroup p (G ⧸ C)) := by
+  constructor
+  · rintro ⟨C, hC, h₁, h₂, h₃⟩
+    letI := hC
+    exact ⟨C, hC, h₁, h₂, isPGroup_quotient_of_forall_exists_pow_mem h₃⟩
+  · rintro ⟨C, hC, h₁, h₂, h₃⟩
+    letI := hC
+    exact isPHyperelementary_of_isPGroup_quotient C h₁ h₂ h₃
+
 /-! ### Elementary groups are hyperelementary -/
 
 /-- In a `p`-elementary decomposition the cyclic factor is normal: every element of `G` is a
 product of an element of `C` with an element of `P`, and conjugation by the latter is trivial on
 `C` because the two factors commute. -/
-theorem normal_of_commute_of_isComplement {C P : Subgroup G} (hcomm : ∀ c ∈ C, ∀ x ∈ P, Commute c x)
-    (hcompl : C.IsComplement' P) : C.Normal := by
+theorem normal_of_commute_of_isComplement' {C P : Subgroup G}
+    (hcomm : ∀ c ∈ C, ∀ x ∈ P, Commute c x) (hcompl : C.IsComplement' P) : C.Normal := by
   constructor
   intro c hc g
   obtain ⟨⟨a, b⟩, rfl⟩ := hcompl.2 g
@@ -153,7 +196,7 @@ theorem normal_of_commute_of_isComplement {C P : Subgroup G} (hcomm : ∀ c ∈ 
 it is the `p`-group factor. -/
 theorem IsPElementary.isPHyperelementary (h : IsPElementary p G) : IsPHyperelementary p G := by
   obtain ⟨C, P, hC, hCp, hP, hcomm, hcompl⟩ := h
-  refine ⟨C, normal_of_commute_of_isComplement hcomm hcompl, hC, hCp, fun g => ?_⟩
+  refine ⟨C, normal_of_commute_of_isComplement' hcomm hcompl, hC, hCp, fun g => ?_⟩
   obtain ⟨⟨a, b⟩, rfl⟩ := hcompl.2 g
   obtain ⟨k, hk⟩ := hP b
   refine ⟨k, ?_⟩
@@ -220,9 +263,10 @@ theorem isHyperelementary_of_isCyclic [Finite G] [IsCyclic G] : IsHyperelementar
 /-! ### Closure under subgroups -/
 
 /-- The comparison map from the preimage of a subgroup to that subgroup is injective as soon as the
-underlying homomorphism is. -/
-theorem subgroupComap_injective {f : H →* G} (hf : Function.Injective f) (K : Subgroup G) :
-    Function.Injective (f.subgroupComap K) :=
+underlying homomorphism is. Companion to Mathlib's
+`MonoidHom.subgroupComap_surjective_of_surjective`. -/
+theorem MonoidHom.subgroupComap_injective_of_injective {f : H →* G} (hf : Function.Injective f)
+    (K : Subgroup G) : Function.Injective (f.subgroupComap K) :=
   fun _ _ hxy => Subtype.ext (hf (congrArg Subtype.val hxy))
 
 /-- `p`-hyperelementarity passes to subgroups, in the form of an injective homomorphism into the
@@ -231,7 +275,8 @@ theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →*
     (hf : Function.Injective f) : IsPHyperelementary p H := by
   obtain ⟨C, hCnormal, hCcyclic, hCp, hquot⟩ := h
   haveI := hCcyclic
-  refine ⟨C.comap f, hCnormal.comap f, isCyclic_of_injective _ (subgroupComap_injective hf C),
+  refine ⟨C.comap f, hCnormal.comap f,
+    isCyclic_of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf C),
     fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)), fun y => ?_⟩
   obtain ⟨k, hk⟩ := hquot (f y)
   exact ⟨k, mem_comap.mpr (by rwa [map_pow])⟩
@@ -241,24 +286,23 @@ theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →*
 The decomposition of a subgroup is inherited factor by factor: the crux is that the subgroup is
 still the product of the two intersections, which follows from a Bézout identity between the orders
 of the two factors, coprime because one is prime to `p` and the other is a power of `p`. -/
-theorem IsPElementary.of_injective [Finite G] [Fact p.Prime] (h : IsPElementary p G) (f : H →* G)
+theorem IsPElementary.of_injective [Fact p.Prime] (h : IsPElementary p G) (f : H →* G)
     (hf : Function.Injective f) : IsPElementary p H := by
   obtain ⟨C, P, hC, hCp, hP, hcomm, hcompl⟩ := h
   haveI := hC
   set m := Nat.card C
-  set n := Nat.card P with hn
-  obtain ⟨k, hk⟩ := hP.exists_card_eq
-  have hcop : Nat.Coprime n m := by
-    rw [hn, hk]
-    exact Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd Fact.out).mpr hCp)
-  -- the two factors of a preimage, and the Bézout identity between their orders
+  -- the two factors of a preimage, and the Bézout identity between their orders; the exponent
+  -- killing the `p`-part is the one `hP` supplies for that element, so `P` need not be finite
   have key : ∀ y : H, ∃ c ∈ C.comap f, ∃ x ∈ P.comap f, c * x = y := by
     intro y
     obtain ⟨⟨a, b⟩, hab⟩ := hcompl.2 (f y)
+    obtain ⟨k, hk⟩ := hP b
+    set n := p ^ k
+    have hcop : Nat.Coprime n m :=
+      Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd Fact.out).mpr hCp)
     have ha : (a : G) ^ m = 1 :=
       orderOf_dvd_iff_pow_eq_one.mp (by simpa using orderOf_dvd_natCard a)
-    have hb : (b : G) ^ n = 1 :=
-      orderOf_dvd_iff_pow_eq_one.mp (by simpa using orderOf_dvd_natCard b)
+    have hb : (b : G) ^ n = 1 := by exact_mod_cast congrArg Subtype.val hk
     have hyn : f (y ^ n) ∈ C := by
       rw [map_pow, ← hab, (hcomm a a.2 b b.2).mul_pow, hb, mul_one]
       exact pow_mem a.2 _
@@ -271,9 +315,10 @@ theorem IsPElementary.of_injective [Finite G] [Fact p.Prime] (h : IsPElementary 
       (y ^ m) ^ Nat.gcdB n m, zpow_mem (mem_comap.mpr hym) _, ?_⟩
     rw [← zpow_natCast y n, ← zpow_natCast y m, ← zpow_mul, ← zpow_mul, ← zpow_add,
       ← hbez, Nat.cast_one, zpow_one]
-  refine ⟨C.comap f, P.comap f, isCyclic_of_injective _ (subgroupComap_injective hf C),
+  refine ⟨C.comap f, P.comap f,
+    isCyclic_of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf C),
     fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)),
-    hP.of_injective _ (subgroupComap_injective hf P), ?_, ?_⟩
+    hP.of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf P), ?_, ?_⟩
   · intro c hc x hx
     refine hf ?_
     rw [map_mul, map_mul]
@@ -294,7 +339,7 @@ theorem IsPHyperelementary.subgroup (h : IsPHyperelementary p G) (K : Subgroup G
   h.of_injective K.subtype K.subtype_injective
 
 /-- `p`-elementarity passes to subgroups. -/
-theorem IsPElementary.subgroup [Finite G] [Fact p.Prime] (h : IsPElementary p G)
+theorem IsPElementary.subgroup [Fact p.Prime] (h : IsPElementary p G)
     (K : Subgroup G) : IsPElementary p K :=
   h.of_injective K.subtype K.subtype_injective
 
@@ -304,7 +349,7 @@ theorem IsHyperelementary.subgroup (h : IsHyperelementary G) (K : Subgroup G) :
   h.imp fun _ hq => ⟨hq.1, hq.2.subgroup K⟩
 
 /-- Elementarity passes to subgroups. -/
-theorem IsElementary.subgroup [Finite G] (h : IsElementary G) (K : Subgroup G) :
+theorem IsElementary.subgroup (h : IsElementary G) (K : Subgroup G) :
     IsElementary K := by
   obtain ⟨q, hq, hqG⟩ := h
   haveI : Fact q.Prime := ⟨hq⟩
@@ -312,8 +357,9 @@ theorem IsElementary.subgroup [Finite G] (h : IsElementary G) (K : Subgroup G) :
 
 /-! ### Solvability -/
 
-/-- A finite `p`-hyperelementary group is solvable: it is an extension of a `p`-group, which is
-nilpotent, by a cyclic hence abelian group. -/
+/-- A finite `p`-hyperelementary group is solvable: the cyclic normal subgroup `C` supplied by the
+definition is abelian, hence solvable, and the quotient `G ⧸ C` is a `p`-group, hence nilpotent and
+so solvable too. -/
 theorem IsPHyperelementary.isSolvable [Finite G] [Fact p.Prime] (h : IsPHyperelementary p G) :
     Group.IsSolvable G := by
   obtain ⟨C, hCnormal, hCcyclic, -, hquot⟩ := h
