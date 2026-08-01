@@ -233,8 +233,9 @@ lemma norm_sub_lt_norm_one_sub_conj_mul_of_norm_lt_one {z w : ℂ}
   nlinarith
 
 /-- **Numerator and denominator of a Moebius factor have equal modulus on the unit circle.**
-For `‖z‖ = 1` the conjugate of `z` turns the denominator into the conjugate of the numerator:
-`conj z * (1 - conj w * z) = conj z - conj w * (conj z * z) = conj (z - w)`.  No hypothesis on the
+This is the degenerate case of the defect identity
+`TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub`: for `‖z‖ = 1` the defect `1 - ‖z‖ ^ 2`
+vanishes, so the two squared norms agree, and both norms are nonnegative.  No hypothesis on the
 centre `w` is needed.
 
 Mathlib's `Complex.norm_canonicalFactor_eval_circle_eq_one`, in
@@ -243,17 +244,10 @@ Mathlib's `Complex.norm_canonicalFactor_eval_circle_eq_one`, in
 holds for every centre `w`. -/
 theorem norm_sub_eq_norm_one_sub_conj_mul_of_norm_eq_one {z : ℂ} (hz : ‖z‖ = 1) (w : ℂ) :
     ‖z - w‖ = ‖1 - (starRingEnd ℂ) w * z‖ := by
-  have hzz : (starRingEnd ℂ) z * z = 1 := by
-    rw [mul_comm, Complex.mul_conj, Complex.normSq_eq_norm_sq, hz]
-    norm_num
-  have key : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z) = (starRingEnd ℂ) (z - w) := by
-    have hexpand : (starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z) =
-        (starRingEnd ℂ) z - (starRingEnd ℂ) w * ((starRingEnd ℂ) z * z) := by ring
-    rw [hexpand, hzz, mul_one, map_sub]
-  calc
-    ‖z - w‖ = ‖(starRingEnd ℂ) (z - w)‖ := (norm_conj _).symm
-    _ = ‖(starRingEnd ℂ) z * (1 - (starRingEnd ℂ) w * z)‖ := by rw [key]
-    _ = ‖1 - (starRingEnd ℂ) w * z‖ := by rw [norm_mul, norm_conj, hz, one_mul]
+  refine (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp ?_
+  have hdefect := norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w
+  rw [hz] at hdefect
+  linarith
 
 /-- The pseudo-hyperbolic expression of two points of norm less than one is strictly less
 than one. -/
