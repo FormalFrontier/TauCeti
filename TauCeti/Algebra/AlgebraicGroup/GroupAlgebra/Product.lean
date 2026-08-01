@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.TensorProduct.Maps
-public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.Product
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebraProduct
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.Product
