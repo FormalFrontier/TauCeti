@@ -28,9 +28,10 @@ values are exactly `isotypicComponents R R`.
 
 ## Main results
 
-* `TauCeti.le_isotypicComponent_iff`: a simple submodule lies in the `S`-isotypic component exactly
-  when it is a copy of the simple module `S`. The isotypic component therefore sees no simple
-  module other than `S`; this holds in any ambient module, with no hypothesis on the ring.
+* `TauCeti.le_isotypicComponent_iff_nonempty_linearEquiv`: a simple submodule lies in the
+  `S`-isotypic component exactly when it is a copy of the simple module `S`. The isotypic component
+  therefore sees no simple module other than `S`; this holds in any ambient module, with no
+  hypothesis on the ring.
 * `TauCeti.isotypicComponent_eq_iff`: **the block ⇆ simple-module dictionary.** Two simple modules
   over a semisimple ring cut out the same isotypic component of `R` if and only if they are
   isomorphic — the injectivity half.
@@ -88,8 +89,8 @@ variable {M : Type v} [AddCommGroup M] [Module R M]
 /-- A simple submodule lies in the `S`-isotypic component of `M` exactly when it is a copy of the
 simple module `S`. Unlike Mathlib's `Submodule.le_isotypicComponent`, the module `S` cutting out
 the component is an arbitrary simple `R`-module rather than a submodule of `M`. -/
-theorem le_isotypicComponent_iff {S : Type w} [AddCommGroup S] [Module R S] [IsSimpleModule R S]
-    (N : Submodule R M) [IsSimpleModule R N] :
+theorem le_isotypicComponent_iff_nonempty_linearEquiv {S : Type w} [AddCommGroup S] [Module R S]
+    [IsSimpleModule R S] (N : Submodule R M) [IsSimpleModule R N] :
     N ≤ isotypicComponent R M S ↔ Nonempty (S ≃ₗ[R] N) :=
   ⟨fun h ↦ ⟨(isIsotypicOfType_submodule_iff.mp (.isotypicComponent R M S) N h).some.symm⟩,
     fun ⟨e⟩ ↦ le_sSup ⟨e.symm⟩⟩
@@ -103,18 +104,16 @@ That this is a quotient of the simple submodules by linear isomorphism is an imp
 detail: build a class with `TauCeti.SimpleSubmoduleClasses.mk`, compare classes with
 `TauCeti.SimpleSubmoduleClasses.mk_eq_mk_iff`, and eliminate with
 `TauCeti.SimpleSubmoduleClasses.lift` into `Sort` or `TauCeti.SimpleSubmoduleClasses.ind` into
-`Prop`. The `@[expose]` annotations here and on those declarations are forced by the module
-system, which refuses the defining equations `TauCeti.SimpleSubmoduleClasses.lift_mk` and
-`TauCeti.coe_simpleSubmoduleClassesEquiv_mk` over a definition it cannot unfold; Mathlib exposes
-its own quotient constructions wholesale for the same reason. -/
-@[expose]
+`Prop`. The bodies stay unexposed: the defining equations
+`TauCeti.SimpleSubmoduleClasses.lift_mk` and `TauCeti.coe_simpleSubmoduleClassesEquiv_mk` are
+stated as ordinary theorems, so nothing downstream depends on the quotient by definitional
+unfolding. -/
 def SimpleSubmoduleClasses :=
   Quot fun N N' : {N : Submodule R M // IsSimpleModule R N} ↦ Nonempty (N.1 ≃ₗ[R] N'.1)
 
 namespace SimpleSubmoduleClasses
 
 /-- The isomorphism class of a simple submodule of `M`. -/
-@[expose]
 def mk (N : Submodule R M) [IsSimpleModule R N] : SimpleSubmoduleClasses R M := Quot.mk _ ⟨N, ‹_›⟩
 
 theorem mk_eq_mk_iff {N N' : Submodule R M} [IsSimpleModule R N] [IsSimpleModule R N'] :
@@ -133,7 +132,6 @@ theorem ind {motive : SimpleSubmoduleClasses R M → Prop}
 of `M` it suffices to give a value on each simple submodule and to check that isomorphic simple
 submodules get the same value; the value on a class is then read off by
 `TauCeti.SimpleSubmoduleClasses.lift_mk`. -/
-@[expose]
 def lift {α : Sort*} (f : ∀ (N : Submodule R M) [IsSimpleModule R N], α)
     (hf : ∀ (N N' : Submodule R M) [IsSimpleModule R N] [IsSimpleModule R N'],
       Nonempty (N ≃ₗ[R] N') → f N = f N')
@@ -143,7 +141,7 @@ def lift {α : Sort*} (f : ∀ (N : Submodule R M) [IsSimpleModule R N], α)
 /-- The defining equation of `TauCeti.SimpleSubmoduleClasses.lift`. -/
 @[simp]
 theorem lift_mk {α : Sort*} {f : ∀ (N : Submodule R M) [IsSimpleModule R N], α} {hf}
-    (N : Submodule R M) [IsSimpleModule R N] : lift f hf (mk N) = f N := rfl
+    (N : Submodule R M) [IsSimpleModule R N] : lift f hf (mk N) = f N := (rfl)
 
 end SimpleSubmoduleClasses
 
@@ -151,9 +149,9 @@ variable (R M) in
 /-- **Isomorphism classes of simple submodules biject with isotypic components.** The class of a
 simple submodule `N` of `M` corresponds to the `N`-isotypic component of `M`.
 
-Injectivity is `TauCeti.le_isotypicComponent_iff`: a simple submodule of an isotypic component is a
-copy of the module cutting it out. Surjectivity is the definition of `isotypicComponents`. -/
-@[expose]
+Injectivity is `TauCeti.le_isotypicComponent_iff_nonempty_linearEquiv`: a simple submodule of an
+isotypic component is a copy of the module cutting it out. Surjectivity is the definition of
+`isotypicComponents`. -/
 noncomputable def simpleSubmoduleClassesEquiv :
     SimpleSubmoduleClasses R M ≃ isotypicComponents R M :=
   Equiv.ofBijective
@@ -164,12 +162,13 @@ noncomputable def simpleSubmoduleClassesEquiv :
       refine SimpleSubmoduleClasses.ind fun N _ ↦ SimpleSubmoduleClasses.ind fun N' _ ↦ fun h ↦ ?_
       rw [SimpleSubmoduleClasses.mk_eq_mk_iff]
       have h' : isotypicComponent R M N = isotypicComponent R M N' := congrArg Subtype.val h
-      exact ⟨((le_isotypicComponent_iff N).mp (h' ▸ N.le_isotypicComponent)).some.symm⟩,
+      exact ⟨((le_isotypicComponent_iff_nonempty_linearEquiv N).mp
+        (h' ▸ N.le_isotypicComponent)).some.symm⟩,
      by rintro ⟨_, N, _, rfl⟩; exact ⟨.mk N, rfl⟩⟩
 
 @[simp]
 theorem coe_simpleSubmoduleClassesEquiv_mk (N : Submodule R M) [IsSimpleModule R N] :
-    (simpleSubmoduleClassesEquiv R M (.mk N) : Submodule R M) = isotypicComponent R M N := rfl
+    (simpleSubmoduleClassesEquiv R M (.mk N) : Submodule R M) = isotypicComponent R M N := (rfl)
 
 variable (R M)
 
@@ -198,8 +197,8 @@ theorem isotypicComponent_eq_iff [IsSemisimpleRing R] {N : Type w} [AddCommGroup
   obtain ⟨I, ⟨f⟩⟩ := IsSemisimpleRing.exists_linearEquiv_ideal_of_isSimpleModule R N
   have : IsSimpleModule R I := .congr f.symm
   have hle : (I : Submodule R R) ≤ isotypicComponent R R M :=
-    h ▸ (le_isotypicComponent_iff I).mpr ⟨f⟩
-  exact ⟨((le_isotypicComponent_iff I).mp hle).some.trans f.symm⟩
+    h ▸ (le_isotypicComponent_iff_nonempty_linearEquiv I).mpr ⟨f⟩
+  exact ⟨((le_isotypicComponent_iff_nonempty_linearEquiv I).mp hle).some.trans f.symm⟩
 
 variable (R M) in
 /-- Over a semisimple ring, the isomorphism class of the simple left ideals realizing an abstract
