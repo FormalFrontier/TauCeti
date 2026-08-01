@@ -125,36 +125,32 @@ private theorem eventually_ne_of_not_forall_eq (hconn : IsPreconnected Ω)
       hgA.eqOn_of_preconnected_of_eventuallyEq analyticOnNhd_const hconn hx h hz) hnc
   · exact h
 
-/-- **Hurwitz's theorem, counting form.** Let `F i → g` locally uniformly on an open set `Ω`, with
-`F i` holomorphic on `Ω` for all sufficiently large `i`, and let `closedBall c r ⊆ Ω` be a disc of
-positive radius on whose bounding circle `g` does not vanish. Then for all sufficiently large `i`,
-`F i` has exactly as many zeros in `ball c r` as `g` does, counted with multiplicity.
+/-- **Hurwitz's theorem, counting form.** Let `g` and — for all sufficiently large `i` — the `F i`
+be analytic on a closed disc `closedBall c r` of positive radius, let `F i → g` uniformly on the
+bounding circle `sphere c r`, and let `g` not vanish on that circle. Then for all sufficiently
+large `i`, `F i` has exactly as many zeros in `ball c r` as `g` does, counted with multiplicity.
 
 This is Rouché's theorem `TauCeti.rouche` applied along the filter: the bound `δ ≤ ‖g‖` on the
 compact circle, from `TauCeti.exists_pos_le_norm_of_mem_sphere`, is eventually beaten by the
-uniform error `‖g - F i‖` there.
+uniform error `‖g - F i‖` there. Nothing about an ambient domain enters, so a locally uniform
+limit on an open `Ω` feeds this lemma through
+`tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact` on any disc with
+`closedBall c r ⊆ Ω`, which is how both halves of Hurwitz's theorem below use it.
 
-Both halves of Hurwitz's theorem below are readings of this one equality, so the hypothesis on the
-circle is the only genuine constraint: some circle must separate the zero being tracked from the
-rest of the zero set, and that is exactly what the identity theorem provides when `g` is not
-locally constant. -/
-theorem eventually_finsum_analyticOrderNatAt_ball_eq [l.NeBot] (hΩ : IsOpen Ω)
-    (hF : ∀ᶠ i in l, DifferentiableOn ℂ (F i) Ω)
-    (hconv : TendstoLocallyUniformlyOn F g l Ω)
-    {c : ℂ} {r : ℝ} (hr : 0 < r) (hball : closedBall c r ⊆ Ω)
+Those two halves are readings of this one equality, so the hypothesis on the circle is the only
+genuine constraint: some circle must separate the zero being tracked from the rest of the zero
+set, and that is exactly what the identity theorem provides when `g` is not locally constant. -/
+theorem eventually_finsum_analyticOrderNatAt_ball_eq {c : ℂ} {r : ℝ} (hr : 0 < r)
+    (hg : AnalyticOnNhd ℂ g (closedBall c r))
+    (hF : ∀ᶠ i in l, AnalyticOnNhd ℂ (F i) (closedBall c r))
+    (hconv : TendstoUniformlyOn F g l (sphere c r))
     (hne : ∀ z ∈ sphere c r, g z ≠ 0) :
     ∀ᶠ i in l, (∑ᶠ z ∈ ball c r, analyticOrderNatAt (F i) z)
       = ∑ᶠ z ∈ ball c r, analyticOrderNatAt g z := by
-  have hgA : AnalyticOnNhd ℂ g Ω :=
-    (_root_.TendstoLocallyUniformlyOn.differentiableOn hconv hF hΩ).analyticOnNhd hΩ
-  have hsph : sphere c r ⊆ closedBall c r := sphere_subset_closedBall
   obtain ⟨δ, hδ, hδle⟩ := exists_pos_le_norm_of_mem_sphere
-    (hgA.continuousOn.mono (hsph.trans hball)) hne
-  have hconvS : TendstoUniformlyOn F g l (sphere c r) :=
-    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact (isCompact_sphere c r)).mp
-      (hconv.mono (hsph.trans hball))
-  filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconvS _ hδ, hF] with i hi hFi
-  exact (rouche hr (hgA.mono hball) ((hFi.analyticOnNhd hΩ).mono hball) fun z hz =>
+    (hg.continuousOn.mono sphere_subset_closedBall) hne
+  filter_upwards [Metric.tendstoUniformlyOn_iff.mp hconv _ hδ, hF] with i hi hFi
+  exact (rouche hr hg hFi fun z hz =>
     lt_of_lt_of_le (by simpa [dist_eq_norm] using hi z hz) (hδle z hz)).symm
 
 /-- **Hurwitz's theorem: zeros of the limit are limits of zeros.** If `g` is the locally uniform
@@ -180,12 +176,18 @@ theorem hurwitz_eventually_exists_eq_zero [l.NeBot] (hΩ : IsOpen Ω) (hconn : I
     exists_radius_forall_ne hΩ hz₀ (eventually_ne_of_not_forall_eq hconn hgA hnc hz₀) hε
   have hsphne : ∀ z ∈ sphere z₀ r, g z ≠ 0 := fun z hz =>
     hzf z (sphere_subset_closedBall hz) (Metric.ne_of_mem_sphere hz hr.ne')
+  have hFA : ∀ᶠ i in l, AnalyticOnNhd ℂ (F i) (closedBall z₀ r) :=
+    hF.mono fun i hi => (hi.analyticOnNhd hΩ).mono hball
+  have hconvS : TendstoUniformlyOn F g l (sphere z₀ r) :=
+    (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact (isCompact_sphere z₀ r)).mp
+      (hconv.mono (sphere_subset_closedBall.trans hball))
   -- `g` vanishes at the centre but not on the bounding circle, so its count is nonzero
   have hcount : (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt g z) ≠ 0 := fun h =>
     (finsum_analyticOrderNatAt_ball_eq_zero_iff (hgA.mono hball)
-      (exists_mem_closedBall_ne_zero_of_mem_sphere hr hsphne)).mp h z₀ (mem_ball_self hr) hgz₀
-  filter_upwards [eventually_finsum_analyticOrderNatAt_ball_eq hΩ hF hconv hr hball hsphne, hF]
-    with i hi hFi
+        (exists_mem_closedBall_ne_zero_of_forall_mem_sphere_ne_zero hr hsphne)).mp h z₀
+      (mem_ball_self hr) hgz₀
+  filter_upwards [eventually_finsum_analyticOrderNatAt_ball_eq hr (hgA.mono hball) hFA hconvS
+    hsphne, hF] with i hi hFi
   by_contra hcon
   push Not at hcon
   refine hcount (hi ▸ finsum_analyticOrderNatAt_ball_eq_zero_of_forall_ne_zero
