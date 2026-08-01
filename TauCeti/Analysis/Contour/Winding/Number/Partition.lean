@@ -27,6 +27,8 @@ as an API statement even though it looked formally convenient.
 
 ## Main results
 
+* `Contour.windingNumber_eq_sum_range_of_hasCauchyPVAt` proves finite additivity from explicit
+  principal-value witnesses on every adjacent interval.
 * `Contour.windingNumber_eq_sum_range` uses the generic finite principal-value concatenation API
   to write a winding number as a sum over a finite partition.
 * `Contour.windingNumber_eq_sum_range_of_ae` allows each piece to be computed using a different
@@ -52,6 +54,18 @@ variable {γ : ℝ → ℂ} {z₀ : ℂ}
 /-- The Cauchy kernel about `z₀`, used throughout the winding-number API. -/
 local notation "κ[" z "]" => (fun w : ℂ => (w - z)⁻¹)
 
+/-- **Finite-partition additivity from explicit principal-value witnesses.** If the Cauchy-kernel
+principal value on every adjacent interval is `L k`, the winding number from `t 0` to `t n` is the
+sum of the winding numbers of those pieces. -/
+theorem windingNumber_eq_sum_range_of_hasCauchyPVAt {n : ℕ} {t : ℕ → ℝ} {L : ℕ → ℂ}
+    (h : ∀ k < n, HasCauchyPVAt γ (t k) (t (k + 1)) κ[z₀] z₀ (L k)) :
+    windingNumber γ (t 0) (t n) z₀ =
+      ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ := by
+  rw [windingNumber_eq_of_hasCauchyPVAt (HasCauchyPVAt.concat_range h), Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [windingNumber_eq_of_hasCauchyPVAt (h k (Finset.mem_range.mp hk))]
+
 /-- **Finite-partition additivity of the generalized winding number.**  If the Cauchy-kernel
 principal value exists on every adjacent interval, the winding number from `t 0` to `t n` is the
 sum of the winding numbers of those pieces. -/
@@ -59,10 +73,8 @@ theorem windingNumber_eq_sum_range {n : ℕ} {t : ℕ → ℝ}
     (h : ∀ k < n, CauchyPVExistsAt γ (t k) (t (k + 1)) κ[z₀] z₀) :
     windingNumber γ (t 0) (t n) z₀ =
       ∑ k ∈ Finset.range n, windingNumber γ (t k) (t (k + 1)) z₀ := by
-  rw [windingNumber_eq_cauchyPVAt, cauchyPVAt_concat_range h, Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro k _
-  rw [windingNumber_eq_cauchyPVAt]
+  exact windingNumber_eq_sum_range_of_hasCauchyPVAt
+    fun k hk => (h k hk).hasCauchyPVAt_cauchyPVAt
 
 /-- **Finite winding decomposition using a.e.-equal, separately computed pieces.** Suppose that
 on each adjacent interval the model curve and assembled curve, and their derivatives off `z₀`,
