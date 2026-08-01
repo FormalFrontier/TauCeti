@@ -50,6 +50,7 @@ theorem contDiff_exp_smul (x : R) :
   rw [contDiff_iff_contDiffAt]
   intro t
   have h : AnalyticAt ℝ (fun s : ℝ => s • x) t := by fun_prop
+  -- Expose the composition so `AnalyticAt.comp` applies to the scalar-line map.
   change ContDiffAt ℝ ω (NormedSpace.exp ∘ fun s : ℝ => s • x) t
   exact (AnalyticAt.comp (f := fun s : ℝ => s • x)
     (NormedSpace.exp_analytic (𝕂 := ℝ) (t • x)) h).contDiffAt
@@ -100,7 +101,9 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
     have hcomp := hφ'.scomp_of_eq t ((hasDerivAt_id t).sub_const t) (by simp)
     have hderiv : HasDerivAt (fun s => f t * f (s - t)) (f t * x) t := by
       simpa only [Function.comp_apply, id_eq, one_smul] using hcomp.const_mul (f t)
+    rw [hshift]
     convert hderiv using 1
+    rw [← hshift]
   have hg (t : ℝ) : HasDerivAt g (g t * x) t := hasDerivAt_exp_smul_const x t
   let rightMul : R →L[ℝ] R := ContinuousLinearMap.mulLeftRight ℝ R 1 x
   have hv : ∀ _ : ℝ, LipschitzOnWith ‖rightMul‖₊ rightMul Set.univ :=
