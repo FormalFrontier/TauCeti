@@ -102,6 +102,7 @@ theorem map_counit_genericMatrix :
 /-- Applying the comultiplication entrywise to the generic matrix gives the product of its
 left-tensor and right-tensor copies. The order represents ordinary matrix multiplication, not
 the opposite monoid. -/
+@[simp]
 theorem map_comul_genericMatrix :
     (Matrix.mvPolynomialX (Fin n) (Fin n) R).map (comul R n) =
       (Matrix.mvPolynomialX (Fin n) (Fin n) R).map
@@ -231,6 +232,7 @@ noncomputable def coordinateBialgebraAlgEquiv :
 
 /-- Comultiplication on the bundled coordinate bialgebra agrees with the explicit
 matrix-multiplication comultiplication after transport through `coordinateBialgebraAlgEquiv`. -/
+@[simp low]
 theorem coordinateBialgebra_comul_apply (x : CoordinateRing R n) :
     Coalgebra.comul (R := R) (A := coordinateBialgebra R n)
         (coordinateBialgebraAlgEquiv R n x) =
@@ -267,6 +269,7 @@ theorem coordinateBialgebra_comul_X (i j : Fin n) :
 
 /-- The bundled coordinate bialgebra retains the identity-matrix counit on its generic
 entries. -/
+@[simp high]
 theorem coordinateBialgebra_counit_X (i j : Fin n) :
     Coalgebra.counit (R := R) (A := coordinateBialgebra R n)
         (coordinateBialgebraAlgEquiv R n (MvPolynomial.X (i, j))) =
