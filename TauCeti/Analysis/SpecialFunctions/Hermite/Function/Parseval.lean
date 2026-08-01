@@ -29,7 +29,7 @@ never has to unfold `hermiteHilbertBasis` to expand a function in Hermite functi
 Every statement holds for an arbitrary `RCLike` scalar field, so `𝕜 = ℝ` and `𝕜 = ℂ` are the same
 theorem. The roadmap `OrthogonalL2Bases` Part A3 acceptance criteria on the coordinates and norm
 of `ψ₀` follow by instantiating `hermiteHilbertBasis_repr_self` and
-`tsum_norm_sq_inner_hermiteFunctionLp` at `f = ψ₀`, together with `norm_hermiteFunctionLp_zero`;
+`tsum_norm_sq_inner_hermiteFunctionLp` at `f = ψ₀`, together with `norm_hermiteFunctionLp 0`;
 no separate declaration is needed for that specialization.
 -/
 
