@@ -63,11 +63,7 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 /-! ### The scalar selected by Haar averaging -/
 
 /-- On an irreducible finite-dimensional representation, the Haar average of a self-map is its
-normalized trace times the identity.
-
-Schur's lemma first gives an unspecified scalar. Since averaging preserves the trace, that scalar
-times `finrank 𝕜 V` equals the trace of the original map; irreducibility ensures that the dimension
-is nonzero. -/
+normalized trace times the identity. -/
 theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     (hirr : Representation.IsIrreducible π.toRepresentation) (T : V →L[𝕜] V) :
     averageOperator π hπ π hπ T =

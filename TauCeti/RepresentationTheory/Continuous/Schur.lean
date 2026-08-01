@@ -40,11 +40,7 @@ variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [IsAlgClosed 𝕜] [M
 variable (π : ContRepresentation 𝕜 G V)
 
 /-- Every continuous self-intertwiner of an irreducible finite-dimensional representation over an
-algebraically closed normed field is a scalar multiple of the identity.
-
-This is Mathlib's algebraic Schur lemma
-`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`, applied after
-forgetting the continuity of the intertwiner. -/
+algebraically closed normed field is a scalar multiple of the identity. -/
 theorem exists_eq_smul_one_of_irreducible
     (hirr : Representation.IsIrreducible π.toRepresentation)
     (f : ContIntertwiningMap π π) :
@@ -53,11 +49,15 @@ theorem exists_eq_smul_one_of_irreducible
   obtain ⟨c, hc⟩ :=
     (Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed
       (ρ := π.toRepresentation)).2 f.toIntertwiningMap
-  refine ⟨c, ?_⟩
-  apply ContIntertwiningMap.ext
-  ext v
-  simpa using (congrArg
-    (fun T : Representation.IntertwiningMap π.toRepresentation π.toRepresentation ↦ T v) hc).symm
+  refine ⟨c, ContIntertwiningMap.toIntertwiningMap_injective ?_⟩
+  -- Forgetting continuity is compatible with scalar multiplication and with the identity, so it
+  -- sends the scalar continuous intertwiner `c • 1` to the algebra map's value at `c`.
+  have hsmul : (c • (1 : ContIntertwiningMap π π)).toIntertwiningMap
+      = c • (1 : ContIntertwiningMap π π).toIntertwiningMap := rfl
+  have hone : (1 : ContIntertwiningMap π π).toIntertwiningMap
+      = (1 : Representation.IntertwiningMap π.toRepresentation π.toRepresentation) := rfl
+  simp only [hsmul, hone]
+  rw [← Algebra.algebraMap_eq_smul_one, hc]
 
 end ContRepresentation
 
