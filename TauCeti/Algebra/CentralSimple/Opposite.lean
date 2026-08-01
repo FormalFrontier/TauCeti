@@ -12,11 +12,12 @@ module
 -- and the algebra structure on `A ⊗[K] Aᵐᵒᵖ`, both of which occur in the statements below) and
 -- `Mathlib.Algebra.Central.Basic`, which is why none of those is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
--- `AlgHom.mulLeftRight` and `IsAzumaya` appear in the statements below, and `Matrix` together with
--- `algEquivMatrix` and `Module.finBasisOfFinrankEq` in the type and the body of the opposite
--- isomorphism.
+-- `AlgHom.mulLeftRight` and `IsAzumaya` appear in the statements below.
 public import Mathlib.Algebra.Azumaya.Defs
-public import Mathlib.LinearAlgebra.Matrix.ToLin
+-- `TauCeti.LinearAlgebra.Matrix.ToLin` is imported publicly for the matrix half of the opposite
+-- isomorphism, `TauCeti.Algebra.endAlgEquivMatrix`; it re-exports
+-- `Mathlib.LinearAlgebra.Matrix.ToLin` and with it the `Matrix` occurring in the statements below.
+public import TauCeti.LinearAlgebra.Matrix.ToLin
 -- Non-public: the dimension count for a space of linear maps and the rank-nullity consequence that
 -- an injective linear map between equidimensional spaces is surjective are used only inside proofs,
 -- so downstream importers do not pay for them.
@@ -76,8 +77,6 @@ subalgebra of the `4`-dimensional `Module.End ℝ ℂ`.
   its base field.
 * `TauCeti.Algebra.tensorOpAlgEquivEnd`: the resulting isomorphism
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Module.End K A`.
-* `TauCeti.Algebra.endAlgEquivMatrix`: the matrix half of the composite,
-  `Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `K`-vector space of dimension `n`.
 * `TauCeti.Algebra.tensorOpAlgEquivMatrix`: **the opposite isomorphism**
   `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] Matrix (Fin n) (Fin n) K` for any `n` with `Module.finrank K A = n`.
 
@@ -95,9 +94,10 @@ the two. Apply it with `haveI` where an `IsAzumaya` hypothesis is wanted.
 proof `Module.finrank K A = n`, rather than using `Module.finrank K A` itself. Instantiating `n` at
 `Module.finrank K A` and `hn` at `rfl` recovers the unparametrized form, while the parametrized one
 is what makes the quaternion example (where the dimension is `4` on the nose) come out without
-reindexing. Its second half `TauCeti.Algebra.endAlgEquivMatrix` is Mathlib's `algEquivMatrix` at the
-basis `Module.finBasisOfFinrankEq`; only the choice of basis is ours, and nothing downstream should
-depend on which basis that is.
+reindexing. Its second half is `TauCeti.Algebra.endAlgEquivMatrix`, which involves neither an
+algebra structure nor central simplicity and so lives with the linear algebra, in
+`TauCeti/LinearAlgebra/Matrix/ToLin.lean`; nothing downstream should depend on which basis it
+chooses.
 
 ## References
 
@@ -163,26 +163,6 @@ end IsSimpleRing
 /-! ### The opposite isomorphism -/
 
 namespace Algebra
-
-section Basis
-
-variable (K : Type*) [Field K] (M : Type*) [AddCommGroup M] [Module K M] [FiniteDimensional K M]
-
-/-- A `K`-vector space `M` of dimension `n` has `Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K`: the
-matrix half of the opposite isomorphism, read off a chosen `K`-basis of `M`.
-
-This is Mathlib's `algEquivMatrix` at the basis `Module.finBasisOfFinrankEq`, named here because it
-is a step of the opposite isomorphism that the roadmap asks for separately, to be reused where a
-finite-dimensional endomorphism algebra has to be turned into matrices of a known size. Neither an
-algebra structure on `M` nor central simplicity plays any part: only the dimension does.
-
-The basis is a choice, and nothing downstream should depend on which one it is; there is
-deliberately no lemma computing the matrix entries. -/
-noncomputable def endAlgEquivMatrix {n : ℕ} (hn : Module.finrank K M = n) :
-    Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K :=
-  algEquivMatrix (Module.finBasisOfFinrankEq K M hn)
-
-end Basis
 
 variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A] [Algebra.IsCentral K A]
   [IsSimpleRing A] [FiniteDimensional K A]
