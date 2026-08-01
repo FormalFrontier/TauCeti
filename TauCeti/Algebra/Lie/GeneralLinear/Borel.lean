@@ -16,8 +16,9 @@ matrices form a Lie subalgebra `TauCeti.strictUpperTriangular R n` inside it. Th
 unit positive system* of `gl n R`: the raising operators are the matrix units `Eᵢⱼ` with `i < j`,
 and `strictUpperTriangular R n` is the span of those. Over a domain away from characteristic two,
 that span is the sum of the root spaces of the positive roots `εᵢ - εⱼ`, `i < j`, for the diagonal
-Cartan subalgebra `TauCeti.diagonalCartan R n`; over a general commutative ring the root spaces are
-larger, as explained in the implementation notes below.
+Cartan subalgebra `TauCeti.diagonalCartan R n`; without those hypotheses the root spaces can be
+larger (in characteristic two the root space of `εᵢ - εⱼ` also contains the lowering matrix unit
+`Eⱼᵢ`), as explained in the implementation notes below.
 
 The two subalgebras fit together in the usual way. The upper triangular matrices are the direct sum
 of the diagonal ones and the strictly upper triangular ones
@@ -61,10 +62,13 @@ for `gl n R` the two differ, because the scalar matrices are central in `gl n R`
 further nilpotent ideal of `upperTriangular R n` outside `strictUpperTriangular R n`. For a
 singleton index type this is the whole story: `upperTriangular R n` is then all of `gl n R`, which
 is abelian and hence its own nilradical, while `strictUpperTriangular R n` is zero. It is in
-`sl n R`, where the scalars have been removed, that the strict upper triangle is the nilradical of
-the Borel; what makes `𝔫⁺` the right object here regardless is that it is the span of the raising
-matrix units (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup`), which over a domain away from
-characteristic two is the sum of the positive root spaces
+`sl n R`, over a field whose characteristic does not divide the cardinality of `n`, that the strict
+upper triangle is the nilradical of the Borel: only under such a hypothesis are the scalar matrices
+really gone, since the trace of `r • 1` is `n • r`, so when the characteristic divides the
+cardinality of `n` the nonzero scalar matrices are traceless and remain central in `sl n R`. What
+makes `𝔫⁺` the right object here regardless is that it is the span of the raising matrix units
+(`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup`), which over a domain away from characteristic
+two is the sum of the positive root spaces
 (`TauCeti.strictUpperTriangular_toSubmodule_eq_iSup_rootSpace`), and which is what the highest
 weight theory downstream uses.
 
@@ -123,7 +127,7 @@ This is the positive nilpotent ideal `𝔫⁺` of the standard Borel subalgebra
 `TauCeti.upperTriangular R n`: it is the span of the raising matrix units `Eᵢⱼ` with `i < j`, with
 no Cartan part, and over a domain away from characteristic two that is the sum of the root spaces
 of the roots `εᵢ - εⱼ` with `i < j`. It is not the nilradical of `TauCeti.upperTriangular R n`,
-which is larger; see the implementation notes of this file. -/
+which is in general larger; see the implementation notes of this file. -/
 def strictUpperTriangular : LieSubalgebra R (Matrix n n R) where
   carrier := {A | ∀ i j, j ≤ i → A i j = 0}
   add_mem' hA hB := fun i j hij => by simp [hA i j hij, hB i j hij]
