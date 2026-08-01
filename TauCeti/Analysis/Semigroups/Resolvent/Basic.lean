@@ -267,8 +267,7 @@ private theorem StronglyContinuousSemigroup.resolvent_generator_tendsto
 ([EN] Thm. II.1.10(i), [Linares] eq. 0.15). -/
 theorem StronglyContinuousSemigroup.resolvent_mem_domain
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
-    (lambda : ℝ) (hlam : ω < lambda) (x : X) :
-    (S.resolvent hb lambda hlam x) ∈ S.domain :=
+    (lambda : ℝ) (hlam : ω < lambda) (x : X) : (S.resolvent hb lambda hlam x) ∈ S.domain :=
   (S.mem_domain_iff_tendsto _).mpr ⟨_, S.resolvent_generator_tendsto hb lambda hlam x⟩
 
 /-- The fundamental resolvent identity: `(λI - A) R(λ) x = x`. -/

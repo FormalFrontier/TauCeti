@@ -188,8 +188,7 @@ theorem dimVector_indecProjRep (i j : Q) :
 
 /-- The morphism `Pᵢ ⟶ M` determined by an element `x` of `M` at the vertex `i`: it sends the basis
 element of a path `p : i → j` to the image of `x` under the action of `p`. -/
-noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q)
-    (x : M.obj ((Paths.of Q).obj i)) :
+noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q) (x : M.obj ((Paths.of Q).obj i)) :
     indecProjRep k Q i ⟶ M where
   app j := ModuleCat.ofHom (Finsupp.linearCombination k fun p : Quiver.Path i j ↦ M.map p x)
   naturality {a b} p := by
@@ -205,8 +204,7 @@ noncomputable def indecProjRepHom (i : Q) (M : QuiverRep k Q)
 on `x`. -/
 @[simp]
 theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q)
-    (x : M.obj ((Paths.of Q).obj i)) (j : Q)
-    (p : Quiver.Path i j) :
+    (x : M.obj ((Paths.of Q).obj i)) (j : Q) (p : Quiver.Path i j) :
     (indecProjRepHom i M x).app ((Paths.of Q).obj j) (indecProjRepBasis k i j p) = M.map p x := by
   have h : (indecProjRepHom i M x).app ((Paths.of Q).obj j)
       (indecProjRepBasis k i j p) = (1 : k) • M.map p x :=
@@ -218,8 +216,7 @@ theorem indecProjRepHom_app_basis (i : Q) (M : QuiverRep k Q)
 -- is therefore a simp-normal-form violation (`simpNF`). It remains named because it is one half of
 -- the universal property below.
 /-- The morphism attached to `x : Mᵢ` sends the basis vector of the trivial path back to `x`. -/
-theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q)
-    (x : M.obj ((Paths.of Q).obj i)) :
+theorem indecProjRepHom_app_nil (i : Q) (M : QuiverRep k Q) (x : M.obj ((Paths.of Q).obj i)) :
     (indecProjRepHom i M x).app ((Paths.of Q).obj i)
       (indecProjRepBasis k i i Quiver.Path.nil) = x := by
   simp
@@ -270,8 +267,7 @@ theorem indecProjRepHomEquiv_apply (i : Q) (M : QuiverRep k Q) (f : indecProjRep
 
 @[simp]
 theorem indecProjRepHomEquiv_symm_apply (i : Q) (M : QuiverRep k Q)
-    (x : M.obj ((Paths.of Q).obj i)) :
-    (indecProjRepHomEquiv i M).symm x = indecProjRepHom i M x :=
+    (x : M.obj ((Paths.of Q).obj i)) : (indecProjRepHomEquiv i M).symm x = indecProjRepHom i M x :=
   (rfl)
 
 -- Not `@[simp]`: `simp` already proves this from `indecProjRepHomEquiv_apply` and

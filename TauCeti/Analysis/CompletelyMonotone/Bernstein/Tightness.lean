@@ -52,8 +52,7 @@ variable {f : ℝ → ℝ}
 
 for every positive `R`. The derivative is taken within `[0, ∞)`, as in the definition of
 complete monotonicity. -/
-lemma chafaiRescaled_measure_Ioi_le (hcm : IsCompletelyMonotone f) (n : ℕ)
-    {R : ℝ≥0} (hR : R ≠ 0) :
+lemma chafaiRescaled_measure_Ioi_le (hcm : IsCompletelyMonotone f) (n : ℕ) {R : ℝ≥0} (hR : R ≠ 0) :
     chafaiRescaled f n (Ioi R) ≤
       ENNReal.ofReal (-derivWithin f (Ici 0) 0) / (R : ℝ≥0∞) := by
   let μ := chafaiRescaled f n

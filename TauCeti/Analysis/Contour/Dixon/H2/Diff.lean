@@ -63,8 +63,7 @@ private theorem h2_kernel_continuousOn (hγ_cont : ContinuousOn γ (uIcc a b)) {
   (hγ_cont.sub continuousOn_const).inv₀ fun t ht ↦ sub_ne_zero.mpr (hoff t ht)
 
 /-- A continuous factor times the a.e. strongly measurable numerator is a.e. strongly measurable. -/
-private theorem h2_factor_mul_num_aestronglyMeasurable {g : ℝ → ℂ}
-    (hg : ContinuousOn g (uIcc a b))
+private theorem h2_factor_mul_num_aestronglyMeasurable {g : ℝ → ℂ} (hg : ContinuousOn g (uIcc a b))
     (hnum : AEStronglyMeasurable (fun t ↦ f (γ t) * deriv γ t) (volume.restrict (Ι a b))) :
     AEStronglyMeasurable (fun t ↦ g t * (f (γ t) * deriv γ t)) (volume.restrict (Ι a b)) :=
   ((hg.mono Set.uIoc_subset_uIcc).aestronglyMeasurable measurableSet_uIoc).mul hnum

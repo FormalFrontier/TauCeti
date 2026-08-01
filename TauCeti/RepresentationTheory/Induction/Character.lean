@@ -100,8 +100,7 @@ private theorem inducedCharacterTerm_eq_of_mk_eq {V : Type u} [AddCommGroup V] [
 open scoped Classical in
 /-- The trace of the induced action, computed on the right-coset model. -/
 private theorem trace_ind_eq_sum_rightCosets [S.FiniteIndex] [Fintype (RightCosets S)]
-    (A : Rep.{u} k S)
-    [FiniteDimensional k A] (g : G) :
+    (A : Rep.{u} k S) [FiniteDimensional k A] (g : G) :
     LinearMap.trace k (Rep.ind S.subtype A) ((Rep.ind S.subtype A).ρ g) =
       ∑ q : RightCosets S,
         if Quotient.mk'' (q.out * g) = q then

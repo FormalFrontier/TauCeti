@@ -81,8 +81,7 @@ one-sided windows the distance profile is strictly monotone and the curve leaves
 point. -/
 private theorem exists_monotone_leave_radius {γ : ℝ → ℂ} {s : ℂ} {t₀ r : ℝ}
     {L_R L_L : ℂ} (hr_pos : 0 < r) (h_at : γ t₀ = s)
-    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
-    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
+    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r))) (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
     (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (h_diff_R : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
@@ -122,8 +121,7 @@ private theorem exists_monotone_leave_radius {γ : ℝ → ℂ} {s : ℂ} {t₀ 
 monotone half-windows and both exit radii equal to `ε`, the curve stays within the closed `ε`-ball
 on `[cₗ, cᵣ]`, so the `ε`-truncation annihilates the integrand there. -/
 private theorem integral_truncated_eq_zero_between_exits {γ : ℝ → ℂ} {g : ℂ → ℂ} {s : ℂ}
-    {t₀ ρ ε cₗ cᵣ : ℝ}
-    (hmono : MonotoneOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + ρ)))
+    {t₀ ρ ε cₗ cᵣ : ℝ} (hmono : MonotoneOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + ρ)))
     (hanti : AntitoneOn (fun t => ‖γ t - s‖) (Icc (t₀ - ρ) t₀))
     (hcₗ : cₗ ∈ Ioo (t₀ - ρ) t₀) (hcᵣ : cᵣ ∈ Ioo t₀ (t₀ + ρ))
     (hεₗ : ‖γ cₗ - s‖ = ε) (hεᵣ : ‖γ cᵣ - s‖ = ε) :
@@ -188,14 +186,12 @@ truncated integral over the window eventually equals the sum of the two plain si
 up to the exit times. -/
 theorem exists_exit_times_truncated_integral_split {γ : ℝ → ℂ} {s : ℂ} {t₀ r : ℝ}
     {L_R L_L : ℂ} (hr_pos : 0 < r) (h_at : γ t₀ = s)
-    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
-    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
+    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r))) (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
     (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (h_diff_R : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
     (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
-    (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
-    (g : ℂ → ℂ)
+    (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀) (g : ℂ → ℂ)
     (h_int : ∀ ε : ℝ, 0 < ε → ∀ a b : ℝ, t₀ - r ≤ a → a ≤ b → b ≤ t₀ + r →
       IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
         MeasureTheory.volume a b) :

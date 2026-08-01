@@ -37,8 +37,7 @@ namespace StronglyContinuousSemigroup
 /-- The exponentially weighted orbit of a generator-domain vector tends to zero when the
 exponential rate is larger than the semigroup growth exponent. -/
 private theorem tendsto_exp_neg_smul_realOperator_atTop (S : StronglyContinuousSemigroup X)
-    {omega M lambda : ℝ} (hb : S.HasGrowthBound omega M) (hlambda : omega < lambda)
-    (x : S.domain) :
+    {omega M lambda : ℝ} (hb : S.HasGrowthBound omega M) (hlambda : omega < lambda) (x : S.domain) :
     Filter.Tendsto (fun t : ℝ => Real.exp (-(lambda * t)) • S.realOperator t (x : X))
       Filter.atTop (nhds 0) := by
   apply tendsto_zero_iff_norm_tendsto_zero.mpr
@@ -93,10 +92,8 @@ private theorem hasDerivAt_exp_neg_smul_realOperator
 
 /-- The Laplace-transform resolvent is a left inverse to `lambda • I - A` on the generator
 domain: `R(lambda) (lambda x - A x) = x`. -/
-@[simp] theorem resolventLeftInv (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    [CompleteSpace X]
-    (hb : S.HasGrowthBound omega M) (lambda : ℝ) (hlambda : omega < lambda)
-    (x : S.domain) :
+@[simp] theorem resolventLeftInv (S : StronglyContinuousSemigroup X) {omega M : ℝ} [CompleteSpace X]
+    (hb : S.HasGrowthBound omega M) (lambda : ℝ) (hlambda : omega < lambda) (x : S.domain) :
     S.resolvent hb lambda hlambda
         (lambda • (x : X) - S.generator
           ⟨x, by rw [S.generator_domain]; exact x.property⟩) = x := by
@@ -133,8 +130,7 @@ domain: `R(lambda) (lambda x - A x) = x`. -/
 /-- Pointwise form of the resolvent identity
 `R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)`. -/
 theorem resolvent_sub_resolvent_apply (S : StronglyContinuousSemigroup X)
-    {omegaLambda MLambda omegaMu MMu : ℝ}
-    [CompleteSpace X]
+    {omegaLambda MLambda omegaMu MMu : ℝ} [CompleteSpace X]
     (hbLambda : S.HasGrowthBound omegaLambda MLambda)
     (hbMu : S.HasGrowthBound omegaMu MMu) (lambda mu : ℝ)
     (hlambda : omegaLambda < lambda) (hmu : omegaMu < mu) (x : X) :
@@ -186,10 +182,8 @@ theorem resolvent_sub_resolvent (S : StronglyContinuousSemigroup X)
   exact S.resolvent_sub_resolvent_apply hbLambda hbMu lambda mu hlambda hmu x
 
 /-- Resolvents at two admissible parameters commute. -/
-theorem resolvent_comm (S : StronglyContinuousSemigroup X)
-    {omegaLambda MLambda omegaMu MMu : ℝ}
-    [CompleteSpace X]
-    (hbLambda : S.HasGrowthBound omegaLambda MLambda)
+theorem resolvent_comm (S : StronglyContinuousSemigroup X) {omegaLambda MLambda omegaMu MMu : ℝ}
+    [CompleteSpace X] (hbLambda : S.HasGrowthBound omegaLambda MLambda)
     (hbMu : S.HasGrowthBound omegaMu MMu) (lambda mu : ℝ)
     (hlambda : omegaLambda < lambda) (hmu : omegaMu < mu) :
     S.resolvent hbLambda lambda hlambda ∘L S.resolvent hbMu mu hmu =

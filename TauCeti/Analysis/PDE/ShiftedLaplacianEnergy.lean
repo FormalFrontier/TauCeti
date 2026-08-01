@@ -58,10 +58,8 @@ Pointwise, `energyIntegrand 1 0 (m x) (U x) (U x)` is
 `‖(U x).2‖² + m x * (U x).1²`, so for `m x ≥ 0` it controls the full product jet norm
 with coefficient `min 1 (m x)`. -/
 lemma integral_min_one_mass_mul_norm_sq_le_energyFormIntegral_one_zero_mass_self
-    (hm : ∀ᵐ x ∂μ, 0 ≤ m x)
-    (hlower : Integrable (fun x => min 1 (m x) * ‖U x‖ ^ 2) μ)
-    (henergy : Integrable
-      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (m x) (U x) (U x)) μ) :
+    (hm : ∀ᵐ x ∂μ, 0 ≤ m x) (hlower : Integrable (fun x => min 1 (m x) * ‖U x‖ ^ 2) μ)
+    (henergy : Integrable (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 (m x) (U x) (U x)) μ) :
     ∫ x, (min 1 (m x) * ‖U x‖ ^ 2) ∂μ
       ≤ energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) m U U := by
   refine integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self
@@ -73,8 +71,7 @@ lemma integral_min_one_mass_mul_norm_sq_le_energyFormIntegral_one_zero_mass_self
   simp
 
 /-- The shifted-Laplacian diagonal form is nonnegative when the mass is a.e. nonnegative. -/
-lemma energyFormIntegral_one_zero_mass_self_nonneg
-    (hm : ∀ᵐ x ∂μ, 0 ≤ m x) :
+lemma energyFormIntegral_one_zero_mass_self_nonneg (hm : ∀ᵐ x ∂μ, 0 ≤ m x) :
     0 ≤ energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) m U U := by
   refine energyFormIntegral_zero_drift_self_nonneg
     (μ := μ) (a := fun _ => (1 : Matrix n n ℝ)) (c := m) (U := U) ?_ hm
@@ -91,10 +88,8 @@ lemma energyFormIntegral_one_zero_zero_self_nonneg :
 
 /-- Constant-mass specialization of the integrated shifted-Laplacian lower bound. -/
 lemma integral_min_one_const_mass_mul_norm_sq_le_energyFormIntegral_one_zero_mass_self
-    {c : ℝ} (hc : 0 ≤ c)
-    (hlower : Integrable (fun x => min 1 c * ‖U x‖ ^ 2) μ)
-    (henergy : Integrable
-      (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 c (U x) (U x)) μ) :
+    {c : ℝ} (hc : 0 ≤ c) (hlower : Integrable (fun x => min 1 c * ‖U x‖ ^ 2) μ)
+    (henergy : Integrable (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 c (U x) (U x)) μ) :
     ∫ x, (min 1 c * ‖U x‖ ^ 2) ∂μ
       ≤ energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) (fun _ => c) U U :=
   integral_min_one_mass_mul_norm_sq_le_energyFormIntegral_one_zero_mass_self
@@ -108,10 +103,8 @@ lemma energyFormIntegral_one_zero_const_mass_self_nonneg {c : ℝ} (hc : 0 ≤ c
 
 /-- If the constant mass is at least `1`, the shifted-Laplacian diagonal form controls the
 full raw jet `L²` density with constant `1`. -/
-lemma integral_norm_sq_le_energyFormIntegral_one_zero_mass_self_of_one_le
-    {c : ℝ} (hc : 1 ≤ c)
-    (hlower : Integrable (fun x => ‖U x‖ ^ 2) μ)
-    (henergy : Integrable
+lemma integral_norm_sq_le_energyFormIntegral_one_zero_mass_self_of_one_le {c : ℝ} (hc : 1 ≤ c)
+    (hlower : Integrable (fun x => ‖U x‖ ^ 2) μ) (henergy : Integrable
       (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 c (U x) (U x)) μ) :
     ∫ x, (‖U x‖ ^ 2) ∂μ
       ≤ energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) (fun _ => c) U U := by
@@ -123,8 +116,7 @@ lemma integral_norm_sq_le_energyFormIntegral_one_zero_mass_self_of_one_le
 /-- For constant mass `1`, the shifted-Laplacian diagonal form controls the full raw jet
 `L²` density with constant `1`. -/
 lemma integral_norm_sq_le_energyFormIntegral_one_zero_one_self
-    (hlower : Integrable (fun x => ‖U x‖ ^ 2) μ)
-    (henergy : Integrable
+    (hlower : Integrable (fun x => ‖U x‖ ^ 2) μ) (henergy : Integrable
       (fun x => energyIntegrand (1 : Matrix n n ℝ) 0 1 (U x) (U x)) μ) :
     ∫ x, (‖U x‖ ^ 2) ∂μ
       ≤ energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) (fun _ => 1) U U :=

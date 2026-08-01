@@ -269,8 +269,7 @@ bounded there (`‖b x‖ ≤ β`), and `0 ≤ Δ f x + fderiv ℝ f x (b x)` (a
 `Δ + b·∇`), then any bound `m` that `f` respects on `frontier K` bounds `f` on all of `K`. -/
 theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompact K)
     {f : E → ℝ} {b : E → E} {β m : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x + fderiv ℝ f x (b x))
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
@@ -294,8 +293,7 @@ theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompac
 (`Δ f x + fderiv ℝ f x (b x) ≤ 0`). -/
 theorem ge_of_laplacian_add_fderiv_nonpos_ge_frontier {K : Set E} (hK : IsCompact K)
     {f : E → ℝ} {b : E → E} {β m : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x + fderiv ℝ f x (b x) ≤ 0)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → m ≤ f x) :
     ∀ ⦃x⦄, x ∈ K → m ≤ f x := by
@@ -317,8 +315,7 @@ theorem le_of_laplacian_add_fderiv_le_laplacian_add_fderiv_of_le_frontier {K : S
     (hK : IsCompact K) {f g : E → ℝ} {b : E → E} {β : ℝ}
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ g x + fderiv ℝ g x (b x) ≤ Δ f x + fderiv ℝ f x (b x))
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
@@ -338,11 +335,9 @@ theorem le_of_laplacian_add_fderiv_le_laplacian_add_fderiv_of_le_frontier {K : S
 /-- **Uniqueness principle for `Δ + b·∇`.** Functions with equal operator values for the same
 bounded drift and equal frontier data agree throughout the compact set. -/
 theorem eqOn_of_laplacian_add_fderiv_eq_of_eqOn_frontier {K : Set E} (hK : IsCompact K)
-    {f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K)
-    (hgcont : ContinuousOn g K)
+    {f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ f x + fderiv ℝ f x (b x) = Δ g x + fderiv ℝ g x (b x))
     (hbdry : Set.EqOn f g (frontier K)) :
@@ -358,8 +353,7 @@ theorem eqOn_of_laplacian_add_fderiv_eq_of_eqOn_frontier {K : Set E} (hK : IsCom
 on a nonempty compact set attains a maximum on the frontier. -/
 theorem exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} {b : E → E} {β : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x + fderiv ℝ f x (b x)) :
     ∃ x ∈ frontier K, IsMaxOn f K x := by
   exact exists_mem_frontier_isMaxOn_of_le_frontier hK hne hcont fun hbdry =>
@@ -369,8 +363,7 @@ theorem exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg {K : Set E} (
 drift on a nonempty compact set attains a minimum on the frontier. -/
 theorem exists_mem_frontier_isMinOn_of_laplacian_add_fderiv_nonpos {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} {b : E → E} {β : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x + fderiv ℝ f x (b x) ≤ 0) :
     ∃ x ∈ frontier K, IsMinOn f K x := by
   obtain ⟨z, hzfr, hzmax⟩ := exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg

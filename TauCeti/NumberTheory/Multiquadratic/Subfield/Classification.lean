@@ -68,8 +68,7 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
 /-- **A nonempty subset-product subfield of `M` is quadratic.** Computed inside `M`, the simple
 extension `K(∏_{i ∈ S} root i)` has the same degree as its `L`-level counterpart, which is `2`
 when the radicand product `∏_{i ∈ S} d i` is not a square. -/
-theorem finrank_adjoin_prodRootMem [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+theorem finrank_adjoin_prodRootMem [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     {S : Finset ι} (hSsq : ¬ IsSquare (∏ i ∈ S, d i)) :
     Module.finrank K (adjoin K {prodRootMem (K := K) root S}) = 2 := by
   -- Transport the degree across the `M`-into-`L` lift algebra equivalence.
@@ -83,8 +82,7 @@ variable (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
 /-- **The subset-product quadratic subfield of `M` attached to a nonempty subset.** Under
 square-class independence, each nonempty subset `S` of the index type names the quadratic subfield
 `K(∏_{i ∈ S} root i)` of `M = K(rootᵢ : i)`. -/
-@[expose] def quadraticSubfieldOfFinset [NeZero (2 : K)]
-    (S : {S : Finset ι // S.Nonempty}) :
+@[expose] def quadraticSubfieldOfFinset [NeZero (2 : K)] (S : {S : Finset ι // S.Nonempty}) :
     {F : IntermediateField K (adjoin K (Set.range root)) // Module.finrank K F = 2} :=
   ⟨adjoin K {prodRootMem (K := K) root S.1}, finrank_adjoin_prodRootMem hroot (hindep S.1 S.2)⟩
 

@@ -42,8 +42,7 @@ def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
 
 /-- The matrix underlying `diagGL t` is the diagonal matrix with entries `t i`. -/
 @[simp]
-theorem diagGL_coe (t : Fin n → kˣ) :
-    (diagGL t : Matrix (Fin n) (Fin n) k) =
+theorem diagGL_coe (t : Fin n → kˣ) : (diagGL t : Matrix (Fin n) (Fin n) k) =
       Matrix.diagonal fun i => (t i : k) := by
   rfl
 

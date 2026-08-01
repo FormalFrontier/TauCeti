@@ -81,8 +81,7 @@ private theorem prod_root_notMem_bot (hroot : ∀ i, root i ^ 2 = algebraMap K L
 /-- **A nonempty subset-product root generates a quadratic subfield.** When the subset product
 `∏_{i ∈ S} d i` of the radicands is not a square, the subset-product root of `S` lies outside `K`
 yet squares into `K`, so `[K(∏_{i ∈ S} root i) : K] = 2`. -/
-theorem finrank_adjoin_prod_root [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+theorem finrank_adjoin_prod_root [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     {S : Finset ι} (hSsq : ¬ IsSquare (∏ i ∈ S, d i)) :
     Module.finrank K (IntermediateField.adjoin K {∏ i ∈ S, root i}) = 2 := by
   have hx2 : (∏ i ∈ S, root i) ^ 2 ∈ (⊥ : IntermediateField K L) := by
@@ -101,11 +100,9 @@ theorem adjoin_prod_root_le (S : Finset ι) :
 /-- **Distinct subsets give distinct quadratic subfields.** Under square-class independence the map
 `S ↦ K(∏_{i ∈ S} root i)` from the nonempty subsets of the index type to the quadratic subfields of
 `M` is injective: if two nonempty subsets generate the same subfield, they are equal. -/
-theorem eq_of_adjoin_prod_root_eq [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+theorem eq_of_adjoin_prod_root_eq [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    {S T : Finset ι} (hS : S.Nonempty)
-    (hST : IntermediateField.adjoin K {∏ i ∈ S, root i}
+    {S T : Finset ι} (hS : S.Nonempty) (hST : IntermediateField.adjoin K {∏ i ∈ S, root i}
         = IntermediateField.adjoin K {∏ i ∈ T, root i}) :
     S = T := by
   classical

@@ -86,8 +86,7 @@ def ofBounded (A : X →L[ℝ] X) : StronglyContinuousSemigroup X where
 
 /-- The operator of `ofBounded A` at nonnegative time `t` is `exp (t • A)`. -/
 @[simp]
-theorem ofBounded_apply (A : X →L[ℝ] X) (t : ℝ≥0) :
-    (ofBounded A) t = exp ((t : ℝ) • A) := by
+theorem ofBounded_apply (A : X →L[ℝ] X) (t : ℝ≥0) : (ofBounded A) t = exp ((t : ℝ) • A) := by
   rw [ofBounded]; rfl
 
 /-- The operator of `ofBounded A` at nonnegative time `t`, applied to `x`, is `exp (t • A) x`. -/
@@ -119,8 +118,7 @@ theorem ofBounded_realOperator_continuousOn_Ici (A : X →L[ℝ] X) :
   exact fun t ht => ofBounded_realOperator_of_nonneg A ht
 
 /-- The semigroup `ofBounded A` has the growth bound `(‖A‖, 1)`: `‖exp (t • A)‖ ≤ e^{‖A‖ t}`. -/
-theorem ofBounded_hasGrowthBound (A : X →L[ℝ] X) :
-    (ofBounded A).HasGrowthBound ‖A‖ 1 := by
+theorem ofBounded_hasGrowthBound (A : X →L[ℝ] X) : (ofBounded A).HasGrowthBound ‖A‖ 1 := by
   refine hasGrowthBound_of_bound le_rfl (fun t ht => ?_)
   rw [one_mul, ofBounded_realOperator_of_nonneg A ht]
   calc ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ := norm_exp_le_exp_norm _
@@ -159,15 +157,13 @@ theorem mem_ofBounded_domain (A : X →L[ℝ] X) (x : X) :
 
 /-- The generator domain of `ofBounded A` is the whole space. -/
 @[simp]
-theorem ofBounded_domain_eq_top (A : X →L[ℝ] X) :
-    (ofBounded A).domain = ⊤ :=
+theorem ofBounded_domain_eq_top (A : X →L[ℝ] X) : (ofBounded A).domain = ⊤ :=
   ((ofBounded A).generator_eq_toPMap_top_of_forall_tendsto (A : X →ₗ[ℝ] X)
     (ofBounded_genQuot_tendsto A)).1
 
 /-- The generator of `ofBounded A` is `A` itself, viewed as a total unbounded operator. -/
 @[simp]
-theorem ofBounded_generator (A : X →L[ℝ] X) :
-    (ofBounded A).generator = (A : X →ₗ[ℝ] X).toPMap ⊤ :=
+theorem ofBounded_generator (A : X →L[ℝ] X) : (ofBounded A).generator = (A : X →ₗ[ℝ] X).toPMap ⊤ :=
   ((ofBounded A).generator_eq_toPMap_top_of_forall_tendsto (A : X →ₗ[ℝ] X)
     (ofBounded_genQuot_tendsto A)).2
 
