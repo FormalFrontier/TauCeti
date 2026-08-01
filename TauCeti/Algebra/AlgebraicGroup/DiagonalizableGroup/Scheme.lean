@@ -95,9 +95,37 @@ lemma groupSchemeMap_hom_left {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
   rw [groupSchemeMap]
   rfl
 
+/-- The group-scheme morphism induced by the identity homomorphism is the identity. -/
+@[simp]
+theorem groupSchemeMap_id (G : FGCommGrpCat.{u}) :
+    groupSchemeMap R (𝟙 G) = 𝟙 (groupScheme R G) := by
+  have h := congrArg
+    (fun k : coordinateRing R G ⟶ coordinateRing R G ↦ k.hom.op)
+    ((coordinateRingFunctor R).map_id G)
+  simp only [coordinateRingFunctor_obj, coordinateRingFunctor_map,
+    ObjectProperty.FullSubcategory.id_hom, op_id] at h
+  unfold groupSchemeMap
+  rw [h]
+  simpa only [groupScheme] using
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map_id
+      (Opposite.op (coordinateRing R G).obj)
+
+/-- Composition of group homomorphisms becomes composition in the reverse order on their
+diagonalizable group schemes. -/
+@[simp]
+theorem groupSchemeMap_comp {G H K : FGCommGrpCat.{u}} (f : G ⟶ H) (g : H ⟶ K) :
+    groupSchemeMap R (f ≫ g) = groupSchemeMap R g ≫ groupSchemeMap R f := by
+  have h := congrArg
+    (fun k : coordinateRing R G ⟶ coordinateRing R K ↦ k.hom.op)
+    ((coordinateRingFunctor R).map_comp f g)
+  simp only [coordinateRingFunctor_obj, coordinateRingFunctor_map,
+    ObjectProperty.FullSubcategory.comp_hom, op_comp] at h
+  unfold groupSchemeMap
+  rw [h, Functor.map_comp]
+
 /-- The diagonalizable group-scheme functor. It is contravariant in finitely generated
 commutative groups and covariant on their opposite category. -/
-@[expose] noncomputable def schemeFunctor :
+noncomputable def schemeFunctor :
     (FGCommGrpCat.{u})ᵒᵖ ⥤ Grp (Over (Spec (CommRingCat.of R))) :=
   (coordinateRingFunctor R).op ⋙
     (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
@@ -108,22 +136,28 @@ commutative groups and covariant on their opposite category. -/
 @[simp]
 theorem schemeFunctor_obj (G : (FGCommGrpCat.{u})ᵒᵖ) :
     (schemeFunctor R).obj G = groupScheme R G.unop :=
-  rfl
+  -- Parentheses keep this defining reduction local, so `schemeFunctor` stays opaque to importers.
+  (rfl)
 
 /-- On morphisms, the diagonalizable group-scheme functor applies relative spectrum to the
-coordinate map, reversing its direction. -/
+coordinate map, reversing its direction. The object equalities transport the map between the
+public descriptions of its source and target. -/
 @[simp]
 theorem schemeFunctor_map {G H : (FGCommGrpCat.{u})ᵒᵖ} (f : G ⟶ H) :
-    (schemeFunctor R).map f = groupSchemeMap R f.unop := by
-  change (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-    (coordinateMap R f.unop).hom.op = groupSchemeMap R f.unop
-  rw [groupSchemeMap]
+    (schemeFunctor R).map f =
+      eqToHom (schemeFunctor_obj R G) ≫ groupSchemeMap R f.unop ≫
+        eqToHom (schemeFunctor_obj R H).symm :=
+  (by
+    apply (conj_eqToHom_iff_heq _ _ (schemeFunctor_obj R G) (schemeFunctor_obj R H)).2
+    unfold schemeFunctor groupSchemeMap
+    simp only [Functor.comp_obj, Functor.comp_map, Functor.op_obj, Functor.op_map,
+      coordinateRingFunctor_obj, coordinateRingFunctor_map]
+    rw [Quiver.Hom.unop_op, FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_map])
 
 /-- Every diagonalizable group scheme `D(G)` constructed here is affine. -/
 instance isAffine_groupScheme (G : FGCommGrpCat.{u}) :
     IsAffine (groupScheme R G).X.left := by
-  change IsAffine (Spec (CommRingCat.of (MonoidAlgebra R G)))
-  infer_instance
+  exact AlgebraicGeometry.isAffine_Spec _
 
 /-- The structural morphism `D(G) ⟶ Spec R` is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme (G : FGCommGrpCat.{u}) :
@@ -156,10 +190,7 @@ noncomputable instance schemeFunctor_faithful [Nontrivial R] :
     (finiteTypeCommHopfAlgProperty (R := R)).fullyFaithfulι.op.faithful
   letI : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Faithful :=
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).faithful
-  change ((coordinateRingFunctor R).op ⋙
-    (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
-      (_root_.CommHopfAlgCat.{u} R)).op ⋙
-    AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Faithful
+  unfold schemeFunctor
   infer_instance
 
 /-- The diagonalizable group-scheme functor is full when the prime spectrum of the base is
@@ -171,10 +202,7 @@ noncomputable instance schemeFunctor_full [ConnectedSpace (PrimeSpectrum R)] :
     (finiteTypeCommHopfAlgProperty (R := R)).fullyFaithfulι.op.full
   letI : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Full :=
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).full
-  change ((coordinateRingFunctor R).op ⋙
-    (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
-      (_root_.CommHopfAlgCat.{u} R)).op ⋙
-    AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Full
+  unfold schemeFunctor
   infer_instance
 
 /-- Over a base with connected prime spectrum, the diagonalizable group-scheme functor is
