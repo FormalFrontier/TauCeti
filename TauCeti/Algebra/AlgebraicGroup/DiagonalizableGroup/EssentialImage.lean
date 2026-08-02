@@ -23,7 +23,7 @@ The canonical evaluation map `k[GroupLike k H] → H` is a bialgebra equivalence
 surjectivity, while linear independence of group-like elements over a field gives injectivity.
 Finite type then implies that `GroupLike k H` is finitely generated. Conversely, the standard
 basis elements of every group algebra are group-like and span, and this property is invariant
-under bialgebra equivalence.
+under coalgebra equivalence.
 
 All categories and carriers in the equivalence lie in the universe of `k`. Applying `Spec`, and
 the resulting scheme-side anti-equivalence, are outside the scope of this file.
@@ -82,8 +82,8 @@ theorem essImage_coordinateRingFunctor :
     let e' : ((coordinateRingFunctor k).obj G).obj ≅ H.obj :=
       (finiteTypeCommHopfAlgProperty k).ι.mapIso e
     apply (groupLikeSpannedProperty_iff k H).2
-    exact (TauCeti.GroupLike.groupLikeSetSpan_eq_top_iff_of_bialgEquiv k
-      ((coordinateRingFunctor k).obj G) H (_root_.CommHopfAlgCat.ofIso e')).mp
+    exact (Subcoalgebra.groupLikeSetSpan_eq_top_iff_of_coalgEquiv
+      (_root_.CommHopfAlgCat.ofIso e').toCoalgEquiv).mp
         (TauCeti.MonoidAlgebra.groupLikeSetSpan_eq_top k G)
   · intro hH
     have hH' := (groupLikeSpannedProperty_iff k H).1 hH
@@ -94,7 +94,7 @@ theorem essImage_coordinateRingFunctor :
     have hspan :
         Submodule.span k
             (Set.range (_root_.GroupLike.val (R := k) (A := H))) = ⊤ :=
-      (TauCeti.GroupLike.groupLikeSetSpan_eq_top_iff_span_eq_top k H).1 hH'
+      (Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top (R := k) (C := H)).1 hH'
     let e : _root_.CommHopfAlgCat.of k (_root_.MonoidAlgebra k (_root_.GroupLike k H)) ≅
         H.obj :=
       _root_.CommHopfAlgCat.isoMk

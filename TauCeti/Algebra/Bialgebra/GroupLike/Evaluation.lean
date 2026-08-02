@@ -10,8 +10,6 @@ public import Mathlib.RingTheory.Bialgebra.GroupLike
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.Map
 
-import Mathlib.LinearAlgebra.Span.Basic
-
 /-!
 # Evaluation of the group-like monoid algebra
 
@@ -21,8 +19,7 @@ underlying group-like element. Its linear range is exactly the span of the group
 and its subcoalgebra image is the subcoalgebra spanned by all group-like elements. The morphism is
 injective exactly when the underlying group-like elements are linearly independent, and it is a
 bialgebra equivalence when they are also spanning. Over a commutative domain, linear independence
-is automatic when the carrier of `H` is torsion-free. The spanning condition is invariant under
-bialgebra equivalence.
+is automatic when the carrier of `H` is torsion-free.
 
 ## Main declarations
 
@@ -32,10 +29,6 @@ bialgebra equivalence.
   elements.
 * `TauCeti.GroupLike.map_top_evaluationBialgHom`: its subcoalgebra image is the subcoalgebra
   spanned by all group-like elements.
-* `TauCeti.GroupLike.groupLikeSetSpan_eq_top_iff_span_eq_top`: the subcoalgebra and linear-span
-  formulations of spanning are equivalent.
-* `TauCeti.GroupLike.groupLikeSetSpan_eq_top_iff_of_bialgEquiv`: group-like spanning is invariant
-  under bialgebra equivalence.
 * `TauCeti.GroupLike.evaluationBialgHom_injective_iff_linearIndependent`: injectivity is equivalent
   to linear independence of the group-like elements.
 * `TauCeti.GroupLike.evaluationBialgEquivOfLinearIndependentOfSpanEqTop`: the equivalence obtained
@@ -57,7 +50,7 @@ public section
 
 namespace TauCeti
 
-universe u v w
+universe u v
 
 namespace GroupLike
 
@@ -250,54 +243,6 @@ theorem evaluationBialgHom_surjective_iff_groupLikeSetSpan_eq_top :
     have hsubmodule := congrArg Subcoalgebra.toSubmodule h
     simpa only [Subcoalgebra.groupLikeSetSpan_toSubmodule,
       Subcoalgebra.top_toSubmodule, Set.image_univ] using hsubmodule
-
-/-- The group-like-set subcoalgebra is top exactly when the underlying group-like elements span
-the carrier as a module. -/
-theorem groupLikeSetSpan_eq_top_iff_span_eq_top :
-    Subcoalgebra.groupLikeSetSpan (R := R) (C := H) Set.univ = ⊤ ↔
-      Submodule.span R
-        (Set.range (_root_.GroupLike.val (R := R) (A := H))) = ⊤ :=
-  (evaluationBialgHom_surjective_iff_groupLikeSetSpan_eq_top R H).symm.trans
-    (evaluationBialgHom_surjective_iff_span_eq_top R H)
-
-/-- A bialgebra equivalence preserves the property that the group-like elements span the whole
-carrier. -/
-theorem groupLikeSetSpan_eq_top_iff_of_bialgEquiv
-    (A : Type v) (B : Type w) [Semiring A] [Semiring B] [Bialgebra R A] [Bialgebra R B]
-    (e : A ≃ₐc[R] B) :
-    Subcoalgebra.groupLikeSetSpan (R := R) (C := A) Set.univ = ⊤ ↔
-      Subcoalgebra.groupLikeSetSpan (R := R) (C := B) Set.univ = ⊤ := by
-  rw [groupLikeSetSpan_eq_top_iff_span_eq_top R A,
-    groupLikeSetSpan_eq_top_iff_span_eq_top R B]
-  let f : A ≃ₗ[R] B := e.toCoalgEquiv.toLinearEquiv
-  have hgroupLike :
-      f '' Set.range (_root_.GroupLike.val (R := R) (A := A)) =
-        Set.range (_root_.GroupLike.val (R := R) (A := B)) := by
-    ext b
-    constructor
-    · rintro ⟨_, ⟨g, rfl⟩, rfl⟩
-      exact ⟨⟨e g, g.isGroupLikeElem_val.map e⟩, rfl⟩
-    · rintro ⟨g, rfl⟩
-      refine ⟨e.symm (g : B), ⟨⟨e.symm (g : B), ?_⟩, rfl⟩, ?_⟩
-      · exact g.isGroupLikeElem_val.map e.symm
-      · exact e.apply_symm_apply (g : B)
-  constructor
-  · intro hA
-    rw [← hgroupLike, Submodule.span_image_linearEquiv, hA, Submodule.map_top,
-      LinearEquiv.range]
-  · intro hB
-    apply Submodule.map_injective_of_injective (f := f.toLinearMap) f.injective
-    calc
-      (Submodule.span R
-          (Set.range (_root_.GroupLike.val (R := R) (A := A)))).map f.toLinearMap =
-          Submodule.span R
-            (f '' Set.range (_root_.GroupLike.val (R := R) (A := A))) :=
-        Submodule.map_span f.toLinearMap _
-      _ = Submodule.span R
-            (Set.range (_root_.GroupLike.val (R := R) (A := B))) := by rw [hgroupLike]
-      _ = ⊤ := hB
-      _ = (⊤ : Submodule R A).map f.toLinearMap := by
-        rw [Submodule.map_top, LinearEquiv.range]
 
 /-- Evaluation is injective exactly when the underlying group-like elements are linearly
 independent. -/

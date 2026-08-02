@@ -78,11 +78,9 @@ theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) [Monoid G] :
         Submodule.span R
             (Set.range (fun g : G ↦ _root_.MonoidAlgebra.single g (1 : R))) = ⊤ := by
       rw [← Set.image_univ,
-        ← _root_.MonoidAlgebra.supported_eq_span_single R (Set.univ : Set G)]
-      apply top_unique
-      intro y _
-      rw [_root_.MonoidAlgebra.mem_supported]
-      exact Set.subset_univ _
+        ← _root_.MonoidAlgebra.supported_eq_span_single R (Set.univ : Set G),
+        _root_.MonoidAlgebra.supported_eq_map, Finsupp.supported_univ, Submodule.map_top,
+        LinearEquiv.range]
     have hx : x ∈ Submodule.span R
         (Set.range (fun g : G ↦ _root_.MonoidAlgebra.single g (1 : R))) := by
       rw [hbasis]
