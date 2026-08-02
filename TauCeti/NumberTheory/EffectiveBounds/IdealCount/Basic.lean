@@ -254,8 +254,8 @@ private theorem encodeIdeal_pos {I : Ideal (𝓞 F)}
   rw [Finset.mem_filter, Multiset.mem_toFinset] at hP
   have hPp : P.IsPrime := isPrime_of_prime (prime_of_normalized_factor P hP.1)
   have hP0 : P ≠ ⊥ := ne_zero_of_mem_normalizedFactors hP.1
-  haveI := hPp
-  haveI : NeZero P := ⟨hP0⟩
+  have := hPp
+  have : NeZero P := ⟨hP0⟩
   exact pow_pos (by simpa [absNormUnder] using (Nat.absNorm_under_prime P).pos) _
 
 /-
@@ -319,8 +319,8 @@ private theorem count_eq_padicValNat {I : Ideal (𝓞 F)} {P : Ideal (𝓞 F)}
       padicValNat (absNormUnder F P)
         (encodeIdeal F I ⟨primeCoord F P, primeCoord_lt F hP hP0⟩) := by
   classical
-  haveI := hP
-  haveI : NeZero P := ⟨hP0⟩
+  have := hP
+  have : NeZero P := ⟨hP0⟩
   have hpp : (absNormUnder F P).Prime := by simpa [absNormUnder] using Nat.absNorm_under_prime P
   have hfact : ∀ Q ∈ (normalizedFactors I).toFinset.filter
       (fun Q => primeCoord F Q = primeCoord F P),
@@ -329,8 +329,8 @@ private theorem count_eq_padicValNat {I : Ideal (𝓞 F)} {P : Ideal (𝓞 F)}
     rw [Finset.mem_filter, Multiset.mem_toFinset] at hQ
     have hQp : Q.IsPrime := isPrime_of_prime (prime_of_normalized_factor Q hQ.1)
     have hQ0 : Q ≠ ⊥ := ne_zero_of_mem_normalizedFactors hQ.1
-    haveI := hQp
-    haveI : NeZero Q := ⟨hQ0⟩
+    have := hQp
+    have : NeZero Q := ⟨hQ0⟩
     exact pow_ne_zero _ (by simpa [absNormUnder] using (Nat.absNorm_under_prime Q).pos.ne')
   rw [eq_comm, ← Nat.factorization_def _ hpp]
   simp only [encodeIdeal]
@@ -345,8 +345,8 @@ private theorem count_eq_padicValNat {I : Ideal (𝓞 F)} {P : Ideal (𝓞 F)}
     have hQ0 : Q ≠ ⊥ := ne_zero_of_mem_normalizedFactors hQ.1
     have hrb : absNormUnder F Q ≠ absNormUnder F P := fun h =>
       hQP (prime_eq_of_absNormUnder_eq_of_primeCoord_eq F hQp hQ0 hP hP0 h hQ.2)
-    haveI := hQp
-    haveI : NeZero Q := ⟨hQ0⟩
+    have := hQp
+    have : NeZero Q := ⟨hQ0⟩
     have hQbelow : (absNormUnder F Q).Prime := by
       simpa [absNormUnder] using Nat.absNorm_under_prime Q
     rw [hQbelow.factorization_pow, Finsupp.single_apply]

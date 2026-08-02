@@ -173,7 +173,7 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
 rational elements, so the field-generic multiquadratic abelian-Galois theorem applies. -/
 noncomputable instance isAbelianGalois_candidateGenusField {d : ℤ} {hd : Squarefree d} :
     IsAbelianGalois ℚ (candidateGenusField hd) := by
-  letI : IsAbelianGalois ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+  let : IsAbelianGalois ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
     isAbelianGalois
       (d := fun P : {P // P ∈ genusPrimeDiscriminants hd} =>
         ((primeDiscriminantRadicand P.val : ℤ) : ℚ))

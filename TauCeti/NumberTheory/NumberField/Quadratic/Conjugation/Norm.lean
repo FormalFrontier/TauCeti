@@ -92,7 +92,7 @@ private theorem prod_aut_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
 private theorem norm_eq_mul_conj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (y : K) :
     algebraMap ℚ K (Algebra.norm ℚ y) = y * quadraticConj hmin hgen y := by
-  haveI := isGalois_rat hmin hgen
+  have := isGalois_rat hmin hgen
   rw [Algebra.norm_eq_prod_automorphisms, prod_aut_eq hmin hgen]
 
 /-- **Key norm identity.** For `x : 𝓞 K`, the extension of its integral norm equals `x · σx`, the

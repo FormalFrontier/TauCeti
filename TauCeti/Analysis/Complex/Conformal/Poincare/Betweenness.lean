@@ -49,7 +49,10 @@ Three geometric consequences follow, in increasing strength:
 The general case of a geodesic through an arbitrary point needs no separate argument: the disc
 automorphisms act transitively by isometries (`TauCeti.PoincareDisc.unitDiscMoebiusIsometryEquiv`),
 which is exactly how the betweenness criterion is transported off the origin in
-`TauCeti.PoincareDisc.eq_of_dist_add_dist_eq`.
+`TauCeti.PoincareDisc.eq_of_dist_add_dist_eq`. `TauCeti.PoincareDisc.existsUnique_eq_geodesicLine`
+records that transport for the classification itself, dropping the hypothesis that the line starts
+at the origin: it is the origin statement applied to
+`fun t => unitDiscMoebiusIsometryEquiv (toUnitDisc (γ 0)) (γ t)`.
 
 ## Main results
 
@@ -64,6 +67,9 @@ which is exactly how the betweenness criterion is transported off the origin in
 * `TauCeti.PoincareDisc.eqOn_Icc_of_isometry` — **the Poincaré disc is uniquely geodesic**.
 * `TauCeti.PoincareDisc.existsUnique_eq_radialGeodesic` — **every geodesic line through the
   origin is a Euclidean diameter**, for a unique direction.
+* `TauCeti.PoincareDisc.existsUnique_eq_geodesicLine` — the same statement with no restriction on
+  the base point: every geodesic line is `TauCeti.PoincareDisc.geodesicLine (γ 0) u` for a unique
+  direction.
 
 This advances the conformal-mapping roadmap's L2 target "the hyperbolic / Poincaré metric on `𝔻`"
 (see `ConformalMapping/README.md`), completing the geodesic description that
@@ -528,6 +534,27 @@ theorem existsUnique_eq_radialGeodesic {γ : ℝ → PoincareDisc} (hγ : Isomet
         ring
   -- The direction is pinned by the value at time `1`, where `Real.tanh` does not vanish.
   exact ⟨u, heq, fun v hv => radialGeodesic_injective (hv.symm.trans heq)⟩
+
+/-- **Every geodesic line of the Poincaré disc is a `TauCeti.PoincareDisc.geodesicLine`.** This
+removes the restriction to the origin from `TauCeti.PoincareDisc.existsUnique_eq_radialGeodesic`:
+an isometric embedding `γ` of the real line is `geodesicLine (γ 0) u` for one and only one
+direction `u : Circle`, with no hypothesis on where it starts.
+
+As the introduction says, the general case needs no separate argument. The composite
+`fun t => unitDiscMoebiusIsometryEquiv (toUnitDisc (γ 0)) (γ t)` is again an isometric embedding
+and now sends `0` to the origin, so the origin case applies to it; undoing that Moebius isometry
+turns its conclusion into the statement here. -/
+theorem existsUnique_eq_geodesicLine {γ : ℝ → PoincareDisc} (hγ : Isometry γ) :
+    ∃! u : Circle, γ = geodesicLine (γ 0) u := by
+  have hcomp : Isometry fun t => unitDiscMoebiusIsometryEquiv (toUnitDisc (γ 0)) (γ t) :=
+    (unitDiscMoebiusIsometryEquiv (toUnitDisc (γ 0))).isometry.comp hγ
+  have h0 : unitDiscMoebiusIsometryEquiv (toUnitDisc (γ 0)) (γ 0) =
+      Complex.UnitDisc.toPoincare 0 := by
+    rw [unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
+  obtain ⟨u, hu, huniq⟩ := existsUnique_eq_radialGeodesic hcomp h0
+  refine ⟨u, funext fun t => ?_, fun v hv => huniq v (funext fun t => ?_)⟩
+  · rw [geodesicLine_def, ← congrFun hu t, IsometryEquiv.symm_apply_apply]
+  · rw [congrFun hv t, unitDiscMoebiusIsometryEquiv_geodesicLine]
 
 end PoincareDisc
 

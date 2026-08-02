@@ -240,7 +240,7 @@ private theorem ae_eq_of_forall_apply_ae_eq [CountablyGenerated α]
     rw [ae_ball_iff hcount]
     exact fun s hs => h s (hmeas s hs)
   filter_upwards [hall] with ω hω
-  haveI := (ν ω).2
+  have := (ν ω).2
   refine Subtype.ext (ext_of_generate_finite 𝒜 hgen (fun s hs t ht _ => halg.inter_mem hs ht)
     (fun s hs => hω s hs) (hω _ halg.univ_mem))
 

@@ -48,7 +48,7 @@ theorem isRegular_iff_fiber_isPretransitive [PathConnectedSpace X]
   · intro hreg
     exact hreg.fiber_isPretransitive x
   · intro htrans
-    letI := htrans
+    let := htrans
     refine ⟨?_, fun y ↦ MulAction.IsPretransitive.mk ?_⟩
     · intro y
       let γ : Path.Homotopic.Quotient x y :=

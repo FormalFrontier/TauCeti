@@ -79,8 +79,8 @@ lemma quotientKernelHopfIdealAlgEquiv_mk (f : H ⟶ K) (k : ↥K) :
     letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
     quotientKernelHopfIdealAlgEquiv f (Ideal.Quotient.mk (kernelHopfIdeal f).toIdeal k) =
       k ⊗ₜ[↥H] (1 : R) := by
-  letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
-  letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+  let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+  let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
   -- Apply the component equivalences' computation lemmas explicitly: the quotient
   -- transport fixes representatives, right exactness sends `mk k` to `k ⊗ₜ 1`, and the
   -- counit equivalence fixes `1`.
@@ -96,8 +96,8 @@ lemma quotientKernelHopfIdealAlgEquiv_symm_tmul (f : H ⟶ K) (k : ↥K) (r : R)
     letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
     (quotientKernelHopfIdealAlgEquiv f).symm (k ⊗ₜ[↥H] r) =
       Ideal.Quotient.mk (kernelHopfIdeal f).toIdeal (algebraMap R ↥K r * k) := by
-  letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
-  letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+  let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+  let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
   -- The counit/algebra-map bridges needed to normalize `r` (retained per review): the
   -- two algebra maps of the `letI` structures are `f.hom` and the counit.
   have hr : (Algebra.ofId ↥H R) (algebraMap R ↥H r) = r := Bialgebra.counit_algebraMap r

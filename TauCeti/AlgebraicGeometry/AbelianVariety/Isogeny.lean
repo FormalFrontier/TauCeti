@@ -66,7 +66,7 @@ surjective. -/
 lemma isIsogeny_iff {A B : AbelianVariety K} (f : A ⟶ B) :
     IsIsogeny f ↔ IsFinite (Hom.toSchemeHom f) ∧ Surjective (Hom.toSchemeHom f) :=
   by
-    letI : MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme) :=
+    let : MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme) :=
       MorphismProperty.respectsIso_of_isStableUnderComposition
         (fun _ _ g (_ : IsIso g) ↦ inferInstance)
     have hcancel (P : MorphismProperty Scheme) [P.RespectsIso] :
@@ -84,7 +84,7 @@ lemma isIsogeny_iff {A B : AbelianVariety K} (f : A ⟶ B) :
 /-- Isogenies contain identities and are stable under composition. -/
 instance : (isogenies K).IsMultiplicative := by
   unfold isogenies
-  letI : (@IsFinite ⊓ @Surjective : MorphismProperty Scheme).IsMultiplicative :=
+  let : (@IsFinite ⊓ @Surjective : MorphismProperty Scheme).IsMultiplicative :=
     MorphismProperty.IsMultiplicative.inf
   infer_instance
 
@@ -149,7 +149,7 @@ end IsIsogeny
 lemma isIsogeny_mulBy_neg_one (A : AbelianVariety K) : IsIsogeny (mulBy A (-1)) := by
   have hsq : mulBy A (-1) ≫ mulBy A (-1) = 𝟙 A := by
     simpa using (mulBy_mul A (-1) (-1)).symm
-  letI : IsIso (mulBy A (-1)) := IsIso.mk ⟨mulBy A (-1), hsq, hsq⟩
+  let : IsIso (mulBy A (-1)) := IsIso.mk ⟨mulBy A (-1), hsq, hsq⟩
   exact isIsogeny_of_isIso _
 
 end

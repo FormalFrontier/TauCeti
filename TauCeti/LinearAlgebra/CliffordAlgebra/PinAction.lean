@@ -133,7 +133,7 @@ theorem unitι_mem_lipschitzGroup (v : M) [Invertible (Q v)] : unitι Q v ∈ li
 reversal composed with the grade involution, so `star (ι Q v) = -ι Q v`, and the unitarity
 condition `star x * x = 1` defining `pinGroup Q` reads `-Q v = 1` on a vector. -/
 theorem ι_mem_pinGroup {v : M} (hv : Q v = -1) : ι Q v ∈ pinGroup Q := by
-  letI : Invertible (Q v) := ⟨-1, by rw [hv]; ring, by rw [hv]; ring⟩
+  let : Invertible (Q v) := ⟨-1, by rw [hv]; ring, by rw [hv]; ring⟩
   have hsq : ι Q v * ι Q v = -1 := by rw [ι_sq_scalar, hv, map_neg, map_one]
   refine ⟨⟨unitι Q v, unitι_mem_lipschitzGroup v, coe_unitι v⟩, ?_, ?_⟩
   · rw [star_ι, neg_mul, hsq, neg_neg]
@@ -181,7 +181,7 @@ is `ι Q v`. -/
 private theorem vectorMap_eq_reflection (v : M) [Invertible (Q v)] {x : (CliffordAlgebra Q)ˣ}
     (hx : (x : CliffordAlgebra Q) = ι Q v) :
     vectorMap Q x = (QuadraticMap.reflection Q v : M →ₗ[R] M) := by
-  letI := invertibleιOfInvertible Q v
+  let := invertibleιOfInvertible Q v
   have hinv : ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = ⅟(ι Q v) :=
     Units.inv_eq_of_mul_eq_one_right (by rw [hx, mul_invOf_self])
   ext m
@@ -197,9 +197,9 @@ private theorem vectorMap_map_app {x : (CliffordAlgebra Q)ˣ} (hx : x ∈ lipsch
   induction hx using Subgroup.closure_induction generalizing m with
   | mem u hu =>
     obtain ⟨a, ha⟩ := hu
-    letI := u.invertible
-    letI : Invertible (ι Q a) := by rwa [ha]
-    letI := invertibleOfInvertibleι Q a
+    let := u.invertible
+    let : Invertible (ι Q a) := by rwa [ha]
+    let := invertibleOfInvertibleι Q a
     rw [vectorMap_eq_reflection Q a ha.symm]
     exact QuadraticMap.map_app_of_mem_orthogonalGroup
       (QuadraticMap.reflection_mem_orthogonalGroup Q a) m
@@ -336,7 +336,7 @@ normalizing scalar `⅟(Q v)` of `TauCeti.QuadraticMap.reflection` is `-1`, so t
 theorem pinToOrthogonal_ι_apply {v : M} (hv : Q v = -1) (m : M) :
     ((pinToOrthogonal Q ⟨ι Q v, ι_mem_pinGroup hv⟩ : QuadraticMap.orthogonalGroup Q) :
         M ≃ₗ[R] M) m = m + polar Q v m • v := by
-  letI : Invertible (Q v) := ⟨-1, by rw [hv]; ring, by rw [hv]; ring⟩
+  let : Invertible (Q v) := ⟨-1, by rw [hv]; ring, by rw [hv]; ring⟩
   have hinvOf : ⅟(Q v) = -1 := invOf_eq_right_inv (by rw [hv]; ring)
   have hpin : pinToLipschitz Q ⟨ι Q v, ι_mem_pinGroup hv⟩ =
       ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ :=

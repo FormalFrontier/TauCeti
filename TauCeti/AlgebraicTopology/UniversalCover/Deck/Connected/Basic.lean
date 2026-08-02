@@ -63,7 +63,7 @@ theorem isCancelSMul [PreconnectedSpace E] (hp : IsCoveringMap p) : IsCancelSMul
 @[simp]
 theorem stabilizer_eq_bot [PreconnectedSpace E] (hp : IsCoveringMap p) (e : E) :
     MulAction.stabilizer (Deck p) e = ⊥ := by
-  haveI := isCancelSMul hp
+  have := isCancelSMul hp
   exact IsCancelSMul.stabilizer_eq_bot e
 
 section Fiber
@@ -95,7 +95,7 @@ covering is trivial. -/
 @[simp]
 theorem fiber_stabilizer_eq_bot [PreconnectedSpace E] (hp : IsCoveringMap p) (e : p ⁻¹' {b}) :
     MulAction.stabilizer (Deck p) e = ⊥ := by
-  haveI := fiber_isCancelSMul (b := b) hp
+  have := fiber_isCancelSMul (b := b) hp
   exact IsCancelSMul.stabilizer_eq_bot e
 
 /-- For a nonempty fibre of a preconnected covering, restricting deck transformations to that

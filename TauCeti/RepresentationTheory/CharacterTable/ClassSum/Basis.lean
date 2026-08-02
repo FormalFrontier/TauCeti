@@ -166,8 +166,8 @@ variable (k G : Type*) [CommSemiring k] [Group G] [Finite G]
 /-- The center of a finite group algebra is finite as a module, with its class-sum basis. -/
 noncomputable instance instModuleFiniteCenterMonoidAlgebra :
     Module.Finite k (Subalgebra.center k (MonoidAlgebra k G)) := by
-  letI := Fintype.ofFinite G
-  letI := Classical.decEq G
+  let := Fintype.ofFinite G
+  let := Classical.decEq G
   exact Module.Finite.of_basis classSumBasis
 
 variable [StrongRankCondition k]
@@ -176,8 +176,8 @@ variable [StrongRankCondition k]
 theorem finrank_center_monoidAlgebra :
     Module.finrank k (Subalgebra.center k (MonoidAlgebra k G)) =
       Nat.card (ConjClasses G) := by
-  letI := Fintype.ofFinite G
-  letI := Classical.decEq G
+  let := Fintype.ofFinite G
+  let := Classical.decEq G
   rw [Module.finrank_eq_card_basis (classSumBasis (G := G) (k := k))]
   exact Fintype.card_eq_nat_card
 

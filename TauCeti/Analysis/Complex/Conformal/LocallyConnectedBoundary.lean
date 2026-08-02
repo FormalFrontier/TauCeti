@@ -156,9 +156,9 @@ hence locally connected, so no hypothesis on the source boundary is left. As the
 theorem locallyConnectedSpace_closure_image_ball (hFc : ContinuousOn F (closedBall 0 1))
     (hFf : EqOn F f (ball 0 1)) :
     LocallyConnectedSpace (closure (f '' ball (0 : ℂ) 1)) := by
-  haveI : LocallyConnectedSpace (closure (ball (0 : ℂ) 1)) := by
+  have : LocallyConnectedSpace (closure (ball (0 : ℂ) 1)) := by
     rw [closure_ball (0 : ℂ) one_ne_zero]
-    haveI := (convex_closedBall (0 : ℂ) 1).locallyPathConnectedSpace
+    have := (convex_closedBall (0 : ℂ) 1).locallyPathConnectedSpace
     infer_instance
   refine locallyConnectedSpace_closure_image (isBounded_ball) ?_ hFf
   rwa [closure_ball (0 : ℂ) one_ne_zero]
@@ -222,9 +222,9 @@ left. -/
 theorem isUniformlyLocallyConnected_closure_image_ball (hFc : ContinuousOn F (closedBall 0 1))
     (hFf : EqOn F f (ball 0 1)) :
     IsUniformlyLocallyConnected (closure (f '' ball (0 : ℂ) 1)) := by
-  haveI : LocallyConnectedSpace (closure (ball (0 : ℂ) 1)) := by
+  have : LocallyConnectedSpace (closure (ball (0 : ℂ) 1)) := by
     rw [closure_ball (0 : ℂ) one_ne_zero]
-    haveI := (convex_closedBall (0 : ℂ) 1).locallyPathConnectedSpace
+    have := (convex_closedBall (0 : ℂ) 1).locallyPathConnectedSpace
     infer_instance
   refine isUniformlyLocallyConnected_closure_image (isBounded_ball) ?_ hFf
   rwa [closure_ball (0 : ℂ) one_ne_zero]

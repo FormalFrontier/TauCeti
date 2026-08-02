@@ -94,7 +94,7 @@ lemma subgroupFiberOrbitClass_smul_eq_base_iff_of_isCoveringMap
     [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p)
     (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) (φ : Deck p) :
     subgroupFiberOrbitClass H (φ • e) = subgroupFiberOrbitClass H e ↔ φ ∈ H := by
-  letI := fiber_isCancelSMul (b := b) hp
+  let := fiber_isCancelSMul (b := b) hp
   exact subgroupFiberOrbitClass_smul_eq_base_iff H e φ
 
 /-- If `H ≤ K`, the quotient of a fibre by `H` maps naturally to the quotient by `K`. -/
@@ -153,7 +153,7 @@ lemma subsingleton_subgroupFiberOrbitQuotient_top [MulAction.IsPretransitive (De
 subsingleton. -/
 lemma subsingleton_regularSubgroupFiberOrbitQuotient_top (hreg : IsRegular p) :
     Subsingleton (SubgroupFiberOrbitQuotient (⊤ : Subgroup (Deck p)) b) := by
-  letI := hreg.fiber_isPretransitive b
+  let := hreg.fiber_isPretransitive b
   exact subsingleton_subgroupFiberOrbitQuotient_top
 
 /-- Transporting a point in an `H`-orbit along an over-base homeomorphism puts the transported
@@ -574,7 +574,7 @@ as any chosen point of the fibre. -/
 lemma subgroupFiberOrbitMapToFiberOrbit_eq (hreg : IsRegular p) (H : Subgroup (Deck p))
     (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     subgroupFiberOrbitMapToFiberOrbit H x = fiberOrbitClass e := by
-  letI : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
+  let : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
   exact Deck.subgroupFiberOrbitMapToFiberOrbit_eq H e x
 
 /-- For a regular deck action, forgetting any two subgroup fibre-orbit classes to full deck
@@ -583,7 +583,7 @@ lemma subgroupFiberOrbitMapToFiberOrbit_eq_subgroupFiberOrbitMapToFiberOrbit
     (hreg : IsRegular p) (H K : Subgroup (Deck p))
     (x : SubgroupFiberOrbitQuotient H b) (y : SubgroupFiberOrbitQuotient K b) :
     subgroupFiberOrbitMapToFiberOrbit H x = subgroupFiberOrbitMapToFiberOrbit K y := by
-  letI : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
+  let : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
   exact Deck.subgroupFiberOrbitMapToFiberOrbit_eq_subgroupFiberOrbitMapToFiberOrbit H K x y
 
 end IsRegular

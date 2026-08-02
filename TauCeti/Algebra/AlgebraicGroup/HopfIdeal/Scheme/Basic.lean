@@ -174,7 +174,7 @@ instance locallyOfFiniteType_quotientSpec (H : FiniteTypeCommHopfAlgCat.{u, u} R
     (I : HopfIdeal R H) :
     LocallyOfFiniteType (CommHopfAlgCat.quotientSpec H.obj I).X.hom := by
   let Q := quotient H I
-  letI : Algebra.FiniteType R (H ⧸ I.toIdeal) := Q.property
+  let : Algebra.FiniteType R (H ⧸ I.toIdeal) := Q.property
   -- Mathlib's `specOverSpec` has a documented `OverClass` instance diamond. A standalone
   -- rewrite lemma for this structural morphism selects the other instance path, after which
   -- typeclass search cannot use `Q.property`; `change` preserves the local finite-type instance.

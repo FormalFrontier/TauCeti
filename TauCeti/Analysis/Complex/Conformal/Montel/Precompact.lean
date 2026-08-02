@@ -130,7 +130,7 @@ theorem isCompact_closure_range_of_isLocallyBoundedOn (hΩ : IsOpen Ω)
     (hF : ∀ i, DifferentiableOn ℂ (F i) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hf : ∀ i, ⇑(f i) = Ω.domRestrict (F i)) :
     IsCompact (closure (Set.range f)) := by
-  haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
+  have : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
   have heq : Equicontinuous fun i => (f i : Ω → ℂ) := by
     rw [funext hf]
     exact (equicontinuous_restrict_iff F).mpr (hb.equicontinuousOn hΩ hF)

@@ -96,8 +96,8 @@ private theorem isFredholm_and_index_eq_of_blocks {K X Y C : Type*}
     (hA : ∀ (k : K) (x : X), A (k, x) = (a k + e x, c k + d x)) :
     ContinuousLinearMap.IsFredholm A ∧
       ContinuousLinearMap.index A = (finrank 𝕜 K : ℤ) - finrank 𝕜 C := by
-  letI : CompleteSpace K := FiniteDimensional.complete 𝕜 K
-  letI : CompleteSpace C := FiniteDimensional.complete 𝕜 C
+  let : CompleteSpace K := FiniteDimensional.complete 𝕜 K
+  let : CompleteSpace C := FiniteDimensional.complete 𝕜 C
   obtain ⟨f, P, Q, hfac⟩ := exists_factorization_of_blocks A a c d e hA
   have hf : ContinuousLinearMap.IsFredholm f := isFredholm_of_finiteDimensional f
   have he : ContinuousLinearMap.IsFredholm (e : X →L[𝕜] Y) :=
@@ -202,9 +202,9 @@ theorem _root_.ContinuousLinearMap.IsFredholm.eventually_isFredholm_and_index_eq
       ContinuousLinearMap.IsFredholm S ∧
         ContinuousLinearMap.index S = ContinuousLinearMap.index T := by
   obtain ⟨pkg⟩ := hT.nonempty_fredholmPackage
-  letI := pkg.decDom.finite_X₀
-  letI := pkg.decCodom.finite_X₀
-  letI : CompleteSpace pkg.decDom.X₁ :=
+  let := pkg.decDom.finite_X₀
+  let := pkg.decCodom.finite_X₀
+  let : CompleteSpace pkg.decDom.X₁ :=
     pkg.decDom.isTopCompl.isClosed.completeSpace_coe
   let domainEquiv : (pkg.decDom.X₀ × pkg.decDom.X₁) ≃L[𝕜] E :=
     Submodule.prodEquivOfIsTopCompl _ _ pkg.decDom.isTopCompl.symm

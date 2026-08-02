@@ -66,7 +66,7 @@ private theorem measure_eq_of_forall_prod_univ_pi
       ∀ B : ∀ i, Set (β i), (∀ i, MeasurableSet (B i)) →
         μ (S ×ˢ Set.univ.pi B) = ν (S ×ˢ Set.univ.pi B)) :
     μ = ν := by
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   refine ext_of_generate_finite
     (Set.image2 (· ×ˢ ·) {S : Set γ | MeasurableSet S}
       (Set.pi Set.univ '' Set.pi Set.univ fun i => {B : Set (β i) | MeasurableSet B}))
@@ -99,7 +99,7 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
               (S ×ˢ Set.univ.pi B)) :
     ConditionallyIIDWith μ X ν := by
   refine ConditionallyIIDWith.intro hν fun m k hk => ?_
-  haveI : IsFiniteMeasure (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
+  have : IsFiniteMeasure (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
 

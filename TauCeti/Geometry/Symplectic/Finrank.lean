@@ -72,8 +72,8 @@ dimension: `finrank ℝ V = 2 * J.complexFinrank`. This is the tower law `finran
 finrank ℝ ℂ * finrank ℂ V` together with `finrank ℝ ℂ = 2`. -/
 theorem finrank_real_eq_two_mul_complexFinrank (J : AlmostComplexStructure V) :
     Module.finrank ℝ V = 2 * J.complexFinrank := by
-  letI := J.complexModule
-  letI := J.complexModule_isScalarTower
+  let := J.complexModule
+  let := J.complexModule_isScalarTower
   rw [J.complexFinrank_def]
   exact finrank_real_eq_two_mul_finrank_complex
 

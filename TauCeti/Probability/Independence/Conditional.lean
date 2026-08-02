@@ -466,9 +466,9 @@ theorem condExp_indicator_eq_of_law_eq_of_comap_le [IsFiniteMeasure μ] (X : Ω 
   let mW' : MeasurableSpace Ω := MeasurableSpace.comap W' inferInstance
   have hmW_le : mW ≤ _ := measurable_iff_comap_le.mp hW
   have hmW'_le : mW' ≤ _ := measurable_iff_comap_le.mp hW'
-  haveI hσW : SigmaFinite (μ.trim hmW_le) :=
+  have hσW : SigmaFinite (μ.trim hmW_le) :=
     (inferInstance : IsFiniteMeasure (μ.trim hmW_le)).toSigmaFinite
-  haveI hσW' : SigmaFinite (μ.trim hmW'_le) :=
+  have hσW' : SigmaFinite (μ.trim hmW'_le) :=
     (inferInstance : IsFiniteMeasure (μ.trim hmW'_le)).toSigmaFinite
   have hφ_int : Integrable φ μ := Integrable.indicator (integrable_const 1) (hX hA)
   set μ₁ := μ[φ | mW] with hμ₁_def

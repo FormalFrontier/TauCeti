@@ -65,8 +65,8 @@ def prod (A B : AbelianVariety K) : AbelianVariety K :=
 /-- The group scheme underlying a product is the fibre product group scheme. -/
 @[simp]
 lemma prod_toOver (A B : AbelianVariety K) : (prod A B).toOver = A.toOver ⊗ B.toOver := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   exact ofGeometricallyIntegral_toOver _
 
 /-- The scheme underlying a product is the fibre product of the two underlying schemes over
@@ -81,8 +81,8 @@ lemma prod_toScheme (A B : AbelianVariety K) :
 lemma prod_one (A B : AbelianVariety K) :
     η[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       η[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_one _
 
@@ -92,8 +92,8 @@ lemma prod_mul (A B : AbelianVariety K) :
     μ[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       (eqToHom (prod_toOver A B) ⊗ₘ eqToHom (prod_toOver A B)) ≫
         μ[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_mul _
 
@@ -102,8 +102,8 @@ lemma prod_mul (A B : AbelianVariety K) :
 lemma prod_inv (A B : AbelianVariety K) :
     ι[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       eqToHom (prod_toOver A B) ≫ ι[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_inv _
 

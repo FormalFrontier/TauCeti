@@ -318,7 +318,7 @@ theorem finrank_hom_indecInjRep_indecInjRep (i j : Q) :
 of `(Iᵢ)_i`, since the trivial path is one of them. -/
 theorem not_isZero_indecInjRep (i : Q) : ¬ IsZero (indecInjRep k Q i) := by
   intro h
-  letI : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
+  let : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
   have h1 : (fun _ : Quiver.Path i i ↦ (1 : k)) = (fun _ : Quiver.Path i i ↦ (0 : k)) :=
     Subsingleton.elim (α := ((indecInjRep k Q i).obj i : Type _)) _ _
   exact one_ne_zero (congrFun h1 Quiver.Path.nil)

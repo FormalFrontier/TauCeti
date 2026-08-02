@@ -78,7 +78,7 @@ def toDeckHom : G →* Deck f :=
 element. -/
 @[simp]
 lemma toDeckHom_apply (g : G) (e : E) : (toDeckHom hf g).1 e = g • e := by
-  letI := hf.toContinuousConstSMul
+  let := hf.toContinuousConstSMul
   rw [toDeckHom, MonoidHom.coe_mk, OneHom.coe_mk, Homeomorph.smul_apply]
 
 /-- On points, the inverse of the deck transformation attached to a group element is
