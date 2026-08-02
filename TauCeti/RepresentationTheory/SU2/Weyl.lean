@@ -147,37 +147,27 @@ theorem weylElement_mem_normalizer :
 
 /-! ### The normalizer of the maximal torus -/
 
-/-- The imaginary unit as a point of the unit circle. The torus element it names, `diag (i, -i)`,
-is the one the normalizer computation is run at: it is the simplest `z` with `z² ≠ 1`, which is
-exactly what `TauCeti.SU2.mem_torus_of_commute_torusHom` asks for. It is a proof witness, not
-`SU(2)` API, so it stays local to this file. -/
-private def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
-
-private theorem coe_circleI : (circleI : ℂ) = Complex.I := (rfl)
-
-private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
-  rw [coe_circleI, Complex.I_sq]
-  norm_num
-
 /-- **The normalizer of the maximal torus, elementwise.** An element of `SU(2)` normalizes the
 diagonal torus exactly when it is diagonal, or is the quarter turn times a diagonal element. -/
 theorem mem_normalizer_torus_iff {g : SU2} :
     g ∈ Subgroup.normalizer (torus : Set SU2) ↔ g ∈ torus ∨ weylElement⁻¹ * g ∈ torus := by
+  -- The computation is run at a torus element `diag (z, z⁻¹)` rigid enough to detect `T`.
+  obtain ⟨z, hz⟩ := exists_sq_ne_one
   constructor
   · intro hg
     obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp
-      ((Subgroup.mem_normalizer_iff.mp hg (torusHom circleI)).mp (torusHom_mem_torus circleI))
+      ((Subgroup.mem_normalizer_iff.mp hg (torusHom z)).mp (torusHom_mem_torus z))
     rcases eq_or_eq_inv_of_conj_torusHom hu.symm with rfl | rfl
-    · refine Or.inl (mem_torus_of_commute_torusHom circleI_sq_ne_one ?_)
+    · refine Or.inl (mem_torus_of_commute_torusHom hz ?_)
       conv_lhs => rw [hu]
       group
-    · refine Or.inr (mem_torus_of_commute_torusHom circleI_sq_ne_one ?_)
-      have hconj : weylElement * torusHom circleI * weylElement⁻¹
-          = g * torusHom circleI * g⁻¹ := by rw [weylElement_conj_torusHom, hu]
-      calc torusHom circleI * (weylElement⁻¹ * g)
-          = weylElement⁻¹ * (weylElement * torusHom circleI * weylElement⁻¹) * g := by group
-        _ = weylElement⁻¹ * (g * torusHom circleI * g⁻¹) * g := by rw [hconj]
-        _ = weylElement⁻¹ * g * torusHom circleI := by group
+    · refine Or.inr (mem_torus_of_commute_torusHom hz ?_)
+      have hconj : weylElement * torusHom z * weylElement⁻¹
+          = g * torusHom z * g⁻¹ := by rw [weylElement_conj_torusHom, hu]
+      calc torusHom z * (weylElement⁻¹ * g)
+          = weylElement⁻¹ * (weylElement * torusHom z * weylElement⁻¹) * g := by group
+        _ = weylElement⁻¹ * (g * torusHom z * g⁻¹) * g := by rw [hconj]
+        _ = weylElement⁻¹ * g * torusHom z := by group
   · rintro (hg | hg)
     · exact Subgroup.le_normalizer hg
     · have hgeq : g = weylElement * (weylElement⁻¹ * g) := by group
