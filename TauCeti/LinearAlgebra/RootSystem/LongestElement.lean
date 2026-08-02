@@ -39,14 +39,15 @@ available here, so length is spelled throughout as `(inversions P b w).ncard`.
 * `TauCeti.exists_inversions_eq_posRoots_of_finite_weylGroup` and
   `TauCeti.eq_of_inversions_eq_posRoots`: exactly one Weyl-group element inverts every positive
   root.
-* `TauCeti.inversions_longestElement` and `TauCeti.image_posRoots_longestElement`: `w₀` exchanges
-  the positive and the negative roots.
+* `TauCeti.inversions_longestElement` and `TauCeti.image_weylGroupToPerm_longestElement_posRoots`:
+  `w₀` exchanges the positive and the negative roots.
 * `TauCeti.ncard_inversions_le_ncard_inversions_longestElement` and
   `TauCeti.eq_longestElement_iff_ncard_inversions`: `w₀` is the unique element of maximal length,
   and that length is the number of positive roots.
 * `TauCeti.longestElement_inv` and `TauCeti.longestElement_sq`: `w₀` is an involution.
-* `TauCeti.smul_dominantChamber_longestElement`: `w₀` carries the dominant chamber onto its
-  negative, the antidominant chamber.
+* `TauCeti.longestElement_smul_dominantChamber` and
+  `TauCeti.longestElement_smul_openDominantChamber`: `w₀` carries the dominant chamber, and its
+  interior, onto its negative, the antidominant chamber.
 
 ## Implementation notes
 
@@ -243,14 +244,14 @@ theorem weylGroupToPerm_longestElement_involutive :
   rfl
 
 /-- **The longest element exchanges the positive and the negative roots.** -/
-theorem image_posRoots_longestElement :
+theorem image_weylGroupToPerm_longestElement_posRoots :
     P.weylGroupToPerm (longestElement P b) '' posRoots P b = negRoots P b :=
   Subset.antisymm (image_subset_iff.mpr (mapsTo_posRoots_negRoots_longestElement P b))
     fun i hi ↦ ⟨_, mapsTo_negRoots_posRoots_longestElement P b hi,
       weylGroupToPerm_longestElement_involutive P b i⟩
 
 /-- **The longest element exchanges the negative and the positive roots.** -/
-theorem image_negRoots_longestElement :
+theorem image_weylGroupToPerm_longestElement_negRoots :
     P.weylGroupToPerm (longestElement P b) '' negRoots P b = posRoots P b :=
   Subset.antisymm (image_subset_iff.mpr (mapsTo_negRoots_posRoots_longestElement P b))
     fun i hi ↦ ⟨_, mapsTo_posRoots_negRoots_longestElement P b hi,
@@ -283,8 +284,9 @@ theorem longestElement_ne_one [Nonempty ι] : longestElement P b ≠ 1 := by
   rw [← inversions_longestElement P b, h, inversions_one] at hpos
   exact hpos.ne_empty rfl
 
-/-- The longest element matches the simple coroot functionals at a weight with the coroot
-functionals of the reversed roots at the moved weight. -/
+/-- Evaluating the coroot functional indexed by `i` on the longest-element translate of a weight
+`x` is the same as evaluating the coroot functional indexed by the longest-element image of `i` on
+`x` itself; no inverse appears because the longest element is an involution. -/
 theorem coroot'_smul_longestElement (i : ι) (x : M) :
     P.coroot' i (longestElement P b • x) =
       P.coroot' (P.weylGroupToPerm (longestElement P b) i) x := by
@@ -324,13 +326,23 @@ theorem neg_smul_mem_openDominantChamber_longestElement {x : M}
 /-- **The longest element carries the dominant chamber onto its negative**, the antidominant
 chamber. This is the weight-space form of the statement that `w₀` reverses the sign of every
 root. -/
-theorem smul_dominantChamber_longestElement :
+theorem longestElement_smul_dominantChamber :
     longestElement P b • dominantChamber P b = -dominantChamber P b := by
   ext y
   rw [Set.mem_smul_set_iff_inv_smul_mem, longestElement_inv, Set.mem_neg]
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · simpa [smul_smul_longestElement] using neg_smul_mem_dominantChamber_longestElement h
   · simpa [smul_neg] using neg_smul_mem_dominantChamber_longestElement h
+
+/-- **The longest element carries the interior of the dominant chamber onto its negative**, the
+interior of the antidominant chamber. -/
+theorem longestElement_smul_openDominantChamber :
+    longestElement P b • openDominantChamber P b = -openDominantChamber P b := by
+  ext y
+  rw [Set.mem_smul_set_iff_inv_smul_mem, longestElement_inv, Set.mem_neg]
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · simpa [smul_smul_longestElement] using neg_smul_mem_openDominantChamber_longestElement h
+  · simpa [smul_neg] using neg_smul_mem_openDominantChamber_longestElement h
 
 end Chamber
 
