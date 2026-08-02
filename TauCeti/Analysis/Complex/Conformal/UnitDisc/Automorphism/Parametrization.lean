@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
-public import Mathlib.Algebra.Group.Subgroup.Map
 public import Mathlib.Dynamics.FixedPoints.Basic
 public import Mathlib.GroupTheory.Perm.Subgroup
 
@@ -217,24 +216,13 @@ theorem unitDiscAutEquivProd_eq_iff {e : unitDiscAut} {p : Circle × Complex.Uni
 /-- **The rotation subgroup of `Aut(𝔻)` is the circle group.** Mathlib's Cayley-theorem
 construction `Equiv.Perm.subgroupOfMulAction` turns the faithfulness of the circle action into an
 isomorphism onto the image of `Circle` in the permutations of the disc, and
-`TauCeti.unitDiscRotation` is that image.
+`TauCeti.unitDiscRotation` is by definition that image, so it is that construction verbatim.
 
 Together with `TauCeti.stabilizer_zero_eq_unitDiscRotation_subgroupOf`, this says the stabiliser of
 the origin in `Aut(𝔻)` is a circle: the standard "rotations are the only automorphisms fixing the
 centre, and distinct rotations are distinct automorphisms". -/
 @[expose] noncomputable def circleMulEquivUnitDiscRotation : Circle ≃* unitDiscRotation :=
-  MulEquiv.ofBijective
-    ((MulAction.toPermHom Circle Complex.UnitDisc).codRestrict unitDiscRotation fun u => by
-      rw [MulAction.toPermHom_apply, ← unitDiscStandardAutomorphismEquiv_zero]
-      exact unitDiscStandardAutomorphismEquiv_zero_mem_unitDiscRotation u)
-    ⟨fun _ _ h => MulAction.toPerm_injective (congrArg Subtype.val h), fun e => by
-      obtain ⟨he, h0⟩ := mem_unitDiscRotation_iff.1 e.2
-      obtain ⟨u, a, hua⟩ := mem_unitDiscAut_iff.1 he
-      have ha : a = 0 := by
-        have h0' : unitDiscStandardAutomorphismEquiv u a 0 = 0 := by rw [← hua]; exact h0
-        exact ((unitDiscStandardAutomorphismEquiv_eq_zero_iff u a 0).1 h0').symm
-      subst ha
-      exact ⟨u, Subtype.ext (by rw [hua, unitDiscStandardAutomorphismEquiv_zero]; rfl)⟩⟩
+  Equiv.Perm.subgroupOfMulAction Circle Complex.UnitDisc
 
 @[simp]
 theorem coe_circleMulEquivUnitDiscRotation (u : Circle) :
