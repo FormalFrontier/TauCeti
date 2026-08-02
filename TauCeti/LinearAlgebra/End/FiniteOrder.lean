@@ -18,12 +18,14 @@ consequences are recorded here: every root of its characteristic polynomial is a
 unity, and if `n` is invertible in the coefficient field then `f` is semisimple, because `X ^ n - 1`
 is then squarefree.
 
+Both are stated of `Module.End`, so both sit in the `End` namespace under `open Module`.
+
 ## Main results
 
-* `TauCeti.pow_eq_one_of_isRoot_charpoly`: the roots of the characteristic polynomial of an
-  endomorphism of finite order `n` are `n`-th roots of unity.
-* `TauCeti.isSemisimple_of_pow_eq_one`: an endomorphism of finite order `n`, with `n` invertible in
-  the field, is semisimple.
+* `TauCeti.End.pow_eq_one_of_isRoot_charpoly`: the roots of the characteristic polynomial of
+  an endomorphism of finite order `n` are `n`-th roots of unity.
+* `TauCeti.End.isSemisimple_of_pow_eq_one`: an endomorphism of finite order `n`, with `n`
+  invertible in the field, is semisimple.
 -/
 
 public section
@@ -35,6 +37,8 @@ open Module Polynomial
 universe u w
 
 variable {k : Type u} {V : Type w} [Field k] [AddCommGroup V] [Module k V] [FiniteDimensional k V]
+
+namespace End
 
 /-- Every root of the characteristic polynomial of an endomorphism `f` with `f ^ n = 1` is an
 `n`-th root of unity. -/
@@ -55,5 +59,7 @@ theorem isSemisimple_of_pow_eq_one {f : End k V} {n : ℕ} (hn : (n : k) ≠ 0) 
   refine End.isSemisimple_of_squarefree_aeval_eq_zero (p := X ^ n - 1) ?_ ?_
   · simpa using (Polynomial.separable_X_pow_sub_C (1 : k) hn one_ne_zero).squarefree
   · simp [hf]
+
+end End
 
 end TauCeti

@@ -29,19 +29,21 @@ The two facts about `ρ g` as a bare endomorphism live in `TauCeti.LinearAlgebra
 
 ## Main results
 
-* `TauCeti.Representation.exists_multiset_char_eq_sum_of_splits`: whenever `(ρ g).charpoly`
-  splits, a character value is a sum of `finrank` many `n`-th roots of unity. The variant
-  `TauCeti.Representation.exists_multiset_char_eq_sum` specializes it to an algebraically
-  closed field.
+* `TauCeti.Representation.exists_multiset_rootsOfUnity_char_eq_sum_of_splits`: whenever
+  `(ρ g).charpoly` splits, a character value is a sum of `finrank` many `n`-th roots of unity. The
+  variant `TauCeti.Representation.exists_multiset_rootsOfUnity_char_eq_sum` specializes it to an
+  algebraically closed field.
 * `TauCeti.FDRep.isIntegral_char`: **character values are algebraic integers**.
 * `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
 * `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
-* `TauCeti.FDRep.isSemisimple_apply`: over `ℂ`, `V.ρ g` is a semisimple endomorphism.
+* `TauCeti.FDRep.isSemisimple_apply`: if the characteristic of `k` does not divide `|G|`, then
+  `V.ρ g` is a semisimple endomorphism; over `ℂ` the hypothesis is found by instance search.
 
 The eigenvalues are taken with algebraic multiplicity, as the root multiset of the characteristic
-polynomial: the roots of the *minimal* polynomial would be the distinct eigenvalues only, and their
-sum is not the trace.
+polynomial. The *set* of roots of the minimal polynomial is the same, namely the distinct
+eigenvalues, but its root multiplicities record maximal Jordan block sizes rather than algebraic
+multiplicities, so they do not sum to the trace.
 
 Cyclotomic integrality is stated over `ℂ` only, as the roadmap prescribes.
 
@@ -71,13 +73,13 @@ variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G] [AddCommGro
 /-- If `g ^ n = 1` then every eigenvalue of `ρ g` is an `n`-th root of unity. -/
 theorem pow_eq_one_of_mem_roots_charpoly (ρ : Representation k G V) {g : G} {n : ℕ}
     (hg : g ^ n = 1) {μ : k} (hμ : μ ∈ (ρ g).charpoly.roots) : μ ^ n = 1 :=
-  pow_eq_one_of_isRoot_charpoly (by rw [← map_pow, hg, map_one]) (isRoot_of_mem_roots hμ)
+  End.pow_eq_one_of_isRoot_charpoly (by rw [← map_pow, hg, map_one]) (isRoot_of_mem_roots hμ)
 
 /-- **A character value is a sum of roots of unity.** If `g ^ n = 1` and the characteristic
 polynomial of `ρ g` splits, then `ρ.character g` is the sum of a multiset of `finrank k V` many
 `n`-th roots of unity, namely the eigenvalues of `ρ g` with algebraic multiplicity. -/
-theorem exists_multiset_char_eq_sum_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
-    (hsplits : (ρ g).charpoly.Splits) (hg : g ^ n = 1) :
+theorem exists_multiset_rootsOfUnity_char_eq_sum_of_splits (ρ : Representation k G V) {g : G}
+    {n : ℕ} (hsplits : (ρ g).charpoly.Splits) (hg : g ^ n = 1) :
     ∃ s : Multiset k, Multiset.card s = finrank k V ∧ (∀ μ ∈ s, μ ^ n = 1) ∧
       ρ.character g = s.sum := by
   refine ⟨(ρ g).charpoly.roots, ?_, fun _ hμ => pow_eq_one_of_mem_roots_charpoly ρ hg hμ, ?_⟩
@@ -88,11 +90,11 @@ theorem exists_multiset_char_eq_sum_of_splits (ρ : Representation k G V) {g : G
 /-- **A character value is a sum of roots of unity.** Over an algebraically closed field, if
 `g ^ n = 1` then `ρ.character g` is the sum of a multiset of `finrank k V` many `n`-th roots of
 unity, namely the eigenvalues of `ρ g` with algebraic multiplicity. -/
-theorem exists_multiset_char_eq_sum [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n : ℕ}
-    (hg : g ^ n = 1) :
+theorem exists_multiset_rootsOfUnity_char_eq_sum [IsAlgClosed k] (ρ : Representation k G V) {g : G}
+    {n : ℕ} (hg : g ^ n = 1) :
     ∃ s : Multiset k, Multiset.card s = finrank k V ∧ (∀ μ ∈ s, μ ^ n = 1) ∧
       ρ.character g = s.sum :=
-  exists_multiset_char_eq_sum_of_splits ρ (IsAlgClosed.splits _) hg
+  exists_multiset_rootsOfUnity_char_eq_sum_of_splits ρ (IsAlgClosed.splits _) hg
 
 omit [FiniteDimensional k V] in
 /-- If `g ^ n = 1` with `n` invertible in `k`, then `ρ g` is a semisimple endomorphism. This needs
@@ -101,7 +103,7 @@ algebraically closed one for instance, semisimplicity of `ρ g` is its diagonali
 in which it underlies the eigenvalue description of character values. -/
 theorem isSemisimple_apply (ρ : Representation k G V) {g : G} {n : ℕ} (hn : (n : k) ≠ 0)
     (hg : g ^ n = 1) : End.IsSemisimple (ρ g) :=
-  isSemisimple_of_pow_eq_one hn (by rw [← map_pow, hg, map_one])
+  End.isSemisimple_of_pow_eq_one hn (by rw [← map_pow, hg, map_one])
 
 /-- **Character values are algebraic integers**: if the characteristic polynomial of `ρ g` splits,
 the value of a character at an element `g` of finite order is integral over `ℤ`, being a sum of
@@ -109,7 +111,7 @@ roots of unity. -/
 theorem isIntegral_char_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
     (hsplits : (ρ g).charpoly.Splits) (hn : n ≠ 0) (hg : g ^ n = 1) :
     IsIntegral ℤ (ρ.character g) := by
-  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_char_eq_sum_of_splits ρ hsplits hg
+  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_rootsOfUnity_char_eq_sum_of_splits ρ hsplits hg
   rw [hsum]
   refine IsIntegral.multiset_sum fun μ hμ => IsIntegral.of_pow (Nat.pos_of_ne_zero hn) ?_
   rw [hroot μ hμ]
@@ -132,7 +134,7 @@ unity and `g ^ n = 1`, then `ρ.character g` lies in the subring `ℤ[ζ]` of `�
 theorem char_mem_adjoin_of_isPrimitiveRoot (ρ : Representation ℂ G V) {g : G} {ζ : ℂ} {n : ℕ}
     [NeZero n] (hζ : IsPrimitiveRoot ζ n) (hg : g ^ n = 1) :
     ρ.character g ∈ Algebra.adjoin ℤ ({ζ} : Set ℂ) := by
-  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_char_eq_sum ρ hg
+  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_rootsOfUnity_char_eq_sum ρ hg
   have hmem : ζ ∈ Algebra.adjoin ℤ ({ζ} : Set ℂ) := Algebra.subset_adjoin rfl
   rw [hsum]
   refine Subalgebra.multiset_sum_mem (Algebra.adjoin ℤ ({ζ} : Set ℂ)) fun μ hμ => ?_
@@ -143,7 +145,7 @@ theorem char_mem_adjoin_of_isPrimitiveRoot (ρ : Representation ℂ G V) {g : G}
 degree of the representation, since it is a sum of `finrank ℂ V` many roots of unity. -/
 theorem norm_char_le_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ} (hn : n ≠ 0)
     (hg : g ^ n = 1) : ‖ρ.character g‖ ≤ finrank ℂ V := by
-  obtain ⟨s, hcard, hroot, hsum⟩ := exists_multiset_char_eq_sum ρ hg
+  obtain ⟨s, hcard, hroot, hsum⟩ := exists_multiset_rootsOfUnity_char_eq_sum ρ hg
   have hmap : s.map (fun μ => ‖μ‖) = s.map (fun _ => (1 : ℝ)) :=
     Multiset.map_congr rfl fun μ hμ => Complex.norm_eq_one_of_pow_eq_one (hroot μ hμ) hn
   calc ‖ρ.character g‖ = ‖s.sum‖ := by rw [hsum]
@@ -178,11 +180,17 @@ theorem norm_char_le_finrank (V : FDRep ℂ G) (g : G) : ‖V.character g‖ ≤
   Representation.norm_char_le_finrank V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
 
-/-- **Diagonalizability.** For a finite group, `V.ρ g` is a semisimple endomorphism of a complex
-representation; as `ℂ` is algebraically closed, this is its diagonalizability. -/
-theorem isSemisimple_apply (V : FDRep ℂ G) (g : G) : End.IsSemisimple (V.ρ g) :=
-  Representation.isSemisimple_apply V.ρ
-    (Nat.cast_ne_zero.2 (isOfFinOrder_of_finite g).orderOf_pos.ne') (pow_orderOf_eq_one g)
+omit [Finite G] in
+/-- **Diagonalizability.** If the order of `G` is invertible in `k`, which forces `G` to be finite
+and which every finite group satisfies in characteristic zero, then `V.ρ g` is a semisimple
+endomorphism. Over an algebraically closed field, `ℂ` for instance, this is its
+diagonalizability. -/
+theorem isSemisimple_apply {k : Type u} [Field k] [NeZero (Nat.card G : k)] (V : FDRep k G)
+    (g : G) : End.IsSemisimple (V.ρ g) := by
+  refine Representation.isSemisimple_apply V.ρ ?_ (pow_orderOf_eq_one g)
+  obtain ⟨m, hm⟩ := orderOf_dvd_natCard g
+  intro h
+  exact NeZero.ne (Nat.card G : k) (by rw [hm, Nat.cast_mul, h, zero_mul])
 
 end FDRep
 
