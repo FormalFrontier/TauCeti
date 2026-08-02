@@ -128,32 +128,10 @@ theorem exists_isOpen_isPathConnected_union_eq_compl_pair_circle {z w : Circle} 
 
 /-! ## Cutting a Jordan curve
 
-Both statements below are the circle statement carried across the parametrization `jordanParam e`
-of a Jordan curve by the circle, so its properties — continuity, injectivity, range, and that it is
-inducing — are collected first. -/
-
-/-- The parametrization of a Jordan curve by the circle underlying a homeomorphism `e`: the
-composite of `e.symm` with the inclusion of the curve into the ambient space. -/
-private noncomputable def jordanParam (e : C ≃ₜ Circle) : Circle → X :=
-  fun u => ((e.symm u : C) : X)
-
-private lemma continuous_jordanParam (e : C ≃ₜ Circle) : Continuous (jordanParam e) :=
-  continuous_subtype_val.comp e.symm.continuous
-
-private lemma injective_jordanParam (e : C ≃ₜ Circle) : Function.Injective (jordanParam e) :=
-  Subtype.val_injective.comp e.symm.injective
-
-private lemma isInducing_jordanParam (e : C ≃ₜ Circle) : Topology.IsInducing (jordanParam e) :=
-  Topology.IsInducing.subtypeVal.comp e.symm.isInducing
-
-private lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
-  refine subset_antisymm ?_ fun x hx => ⟨e ⟨x, hx⟩, by simp [jordanParam]⟩
-  rintro _ ⟨u, rfl⟩
-  exact (e.symm u).2
-
-private lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
-    jordanParam e (e ⟨p, hp⟩) = p := by
-  simp [jordanParam]
+Both statements below are the circle statement carried across the parametrization
+`TauCeti.jordanParam e` of a Jordan curve by the circle, whose properties — continuity,
+injectivity, range, and that it is inducing — are in
+`TauCeti/Topology/JordanCurve/Basic.lean`. -/
 
 /-- **A Jordan curve minus a point is path connected**, being homeomorphic to the circle minus a
 point (`Circle.isPathConnected_compl_singleton`). So a Jordan curve is *not* separated by any one of
@@ -164,8 +142,8 @@ theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (p :
   by_cases hp : p ∈ C
   · obtain ⟨e⟩ := isJordanCurve_iff.mp h
     have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
-      rw [compl_eq_univ_sdiff, image_sdiff (injective_jordanParam e), image_univ, image_singleton,
-        range_jordanParam, jordanParam_apply]
+      rw [compl_eq_univ_sdiff, image_sdiff (jordanParam_injective e), image_univ, image_singleton,
+        range_jordanParam, jordanParam_apply_apply]
     exact himg ▸ (Circle.isPathConnected_compl_singleton _).image'
       (continuous_jordanParam e).continuousOn
   · rw [sdiff_singleton_eq_self hp]
@@ -187,7 +165,7 @@ theorem IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair (h : IsJordanCu
       ∀ ⦃S : Set X⦄, S ⊆ C \ {p, q} → IsPreconnected S → S ⊆ A ∨ S ⊆ B := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
   set g := jordanParam e with hg
-  have hinj : Function.Injective g := injective_jordanParam e
+  have hinj : Function.Injective g := jordanParam_injective e
   have hrange : range g = C := range_jordanParam e
   have hzw : e ⟨p, hp⟩ ≠ e ⟨q, hq⟩ := fun hh => hpq (congrArg Subtype.val (e.injective hh))
   obtain ⟨A₀, B₀, hA₀o, hB₀o, hA₀c, hB₀c, hdisj, hunion⟩ :=
@@ -195,7 +173,7 @@ theorem IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair (h : IsJordanCu
   have himg : g '' (A₀ ∪ B₀) = C \ {p, q} := by
     rw [hunion, compl_eq_univ_sdiff, image_sdiff hinj, image_univ, hrange]
     congr 1
-    rw [image_insert_eq, image_singleton, hg, jordanParam_apply, jordanParam_apply]
+    rw [image_insert_eq, image_singleton, hg, jordanParam_apply_apply, jordanParam_apply_apply]
   refine ⟨g '' A₀, g '' B₀, hA₀c.image' (continuous_jordanParam e).continuousOn,
     hB₀c.image' (continuous_jordanParam e).continuousOn,
     Set.disjoint_image_of_injective hinj hdisj, by rwa [← image_union], fun S hS hSc => ?_⟩

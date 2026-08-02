@@ -131,8 +131,7 @@ theorem coact_mem (N : Subcomodule R C M) {m : M} (hm : m ∈ N) :
   N.coact_mem' hm
 
 /-- Constructor from a submodule and the tensor-product stability condition. -/
-@[expose] def ofSubmodule (N : Submodule R M)
-    (hN :
+@[expose] def ofSubmodule (N : Submodule R M) (hN :
       ∀ ⦃m : M⦄, m ∈ N →
         Comodule.coact (R := R) (C := C) (M := M) m ∈
           LinearMap.range (TensorProduct.map N.subtype (LinearMap.id : C →ₗ[R] C))) :
@@ -265,8 +264,7 @@ theorem mem_map_of_mem (f : Comodule.Hom R C M N) {A : Subcomodule R C M} {m : M
 
 /-- The image subcomodule is contained in `B` exactly when each image of an element of the
 source subcomodule belongs to `B`. -/
-theorem map_le_iff {A : Subcomodule R C M} {f : Comodule.Hom R C M N}
-    {B : Subcomodule R C N} :
+theorem map_le_iff {A : Subcomodule R C M} {f : Comodule.Hom R C M N} {B : Subcomodule R C N} :
     A.map f ≤ B ↔ ∀ ⦃m⦄, m ∈ A → f m ∈ B := by
   constructor
   · intro h m hm

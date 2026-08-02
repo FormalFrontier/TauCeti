@@ -112,8 +112,7 @@ theorem comul_mem (D : Subcoalgebra R C) {c : C} (hc : c ∈ D) :
   D.comul_mem' hc
 
 /-- Constructor from a submodule and the tensor-square stability condition. -/
-@[expose] def ofSubmodule (D : Submodule R C)
-    (hD :
+@[expose] def ofSubmodule (D : Submodule R C) (hD :
       ∀ ⦃c : C⦄, c ∈ D →
         Coalgebra.comul (R := R) (A := C) c ∈
           LinearMap.range (TensorProduct.map D.subtype D.subtype)) :

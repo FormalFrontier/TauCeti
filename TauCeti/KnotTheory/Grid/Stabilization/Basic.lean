@@ -69,8 +69,7 @@ theorem insertPoint_apply_newColumn (x : GridState n) (newColumn newRow : Fin (n
 
 /-- An old column contains the embedded image of its old row after inserting a point. -/
 @[simp]
-theorem insertPoint_apply_succAbove (x : GridState n) (newColumn newRow : Fin (n + 1))
-    (c : Fin n) :
+theorem insertPoint_apply_succAbove (x : GridState n) (newColumn newRow : Fin (n + 1)) (c : Fin n) :
     x.insertPoint newColumn newRow (newColumn.succAbove c) =
       newRow.succAbove (x c) := by
   simp [insertPoint]
@@ -226,8 +225,7 @@ def IsOStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
     G' = G.stabilizeO newColumn newRow splitColumn
 
 /-- A local `O`-stabilization construction is an elementary `O`-stabilization. -/
-theorem isOStabilization_stabilizeO (newColumn newRow : Fin (n + 1))
-    (splitColumn : Fin n)
+theorem isOStabilization_stabilizeO (newColumn newRow : Fin (n + 1)) (splitColumn : Fin n)
     (hColumn : finRotate (n + 1) newColumn = newColumn.succAbove splitColumn ∨
       finRotate (n + 1) (newColumn.succAbove splitColumn) = newColumn)
     (hRow : finRotate (n + 1) newRow = newRow.succAbove (G.O splitColumn) ∨
@@ -260,8 +258,7 @@ def IsXStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
     G' = G.stabilizeX newColumn newRow splitColumn
 
 /-- A local `X`-stabilization construction is an elementary `X`-stabilization. -/
-theorem isXStabilization_stabilizeX (newColumn newRow : Fin (n + 1))
-    (splitColumn : Fin n)
+theorem isXStabilization_stabilizeX (newColumn newRow : Fin (n + 1)) (splitColumn : Fin n)
     (hColumn : finRotate (n + 1) newColumn = newColumn.succAbove splitColumn ∨
       finRotate (n + 1) (newColumn.succAbove splitColumn) = newColumn)
     (hRow : finRotate (n + 1) newRow = newRow.succAbove (G.X splitColumn) ∨
@@ -283,8 +280,7 @@ theorem isXStabilization_stabilizeX_castSucc (splitColumn : Fin n) :
 /-- Exchanging the marking types turns an `O`-stabilization relation into an
 `X`-stabilization relation. -/
 @[simp]
-theorem isOStabilization_swapMarkings (G : GridDiagram n)
-    (G' : GridDiagram (n + 1)) :
+theorem isOStabilization_swapMarkings (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
     IsOStabilization G.swapMarkings G'.swapMarkings ↔ IsXStabilization G G' := by
   constructor
   · rintro ⟨newColumn, newRow, splitColumn, hColumn, hRow, hG'⟩
@@ -299,8 +295,7 @@ theorem isOStabilization_swapMarkings (G : GridDiagram n)
 /-- Exchanging the marking types turns an `X`-stabilization relation into an
 `O`-stabilization relation. -/
 @[simp]
-theorem isXStabilization_swapMarkings (G : GridDiagram n)
-    (G' : GridDiagram (n + 1)) :
+theorem isXStabilization_swapMarkings (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
     IsXStabilization G.swapMarkings G'.swapMarkings ↔ IsOStabilization G G' := by
   simpa only [swapMarkings_swapMarkings] using
     (isOStabilization_swapMarkings G.swapMarkings G'.swapMarkings).symm
@@ -311,8 +306,7 @@ def IsStabilization (G : GridDiagram n) (G' : GridDiagram (n + 1)) : Prop :=
 
 /-- Exchanging the marking types preserves the elementary stabilization relation. -/
 @[simp]
-theorem isStabilization_swapMarkings (G : GridDiagram n)
-    (G' : GridDiagram (n + 1)) :
+theorem isStabilization_swapMarkings (G : GridDiagram n) (G' : GridDiagram (n + 1)) :
     IsStabilization G.swapMarkings G'.swapMarkings ↔ IsStabilization G G' := by
   simp only [IsStabilization, isOStabilization_swapMarkings,
     isXStabilization_swapMarkings, or_comm]
@@ -323,15 +317,13 @@ def IsDestabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) : Prop :=
 
 /-- A destabilization from the larger diagram to the smaller one is the reverse orientation of
 the corresponding stabilization. -/
-theorem isDestabilization_iff_isStabilization (G' : GridDiagram (n + 1))
-    (G : GridDiagram n) :
+theorem isDestabilization_iff_isStabilization (G' : GridDiagram (n + 1)) (G : GridDiagram n) :
     IsDestabilization G' G ↔ IsStabilization G G' :=
   Iff.rfl
 
 /-- Exchanging the marking types preserves the elementary destabilization relation. -/
 @[simp]
-theorem isDestabilization_swapMarkings (G' : GridDiagram (n + 1))
-    (G : GridDiagram n) :
+theorem isDestabilization_swapMarkings (G' : GridDiagram (n + 1)) (G : GridDiagram n) :
     IsDestabilization G'.swapMarkings G.swapMarkings ↔ IsDestabilization G' G := by
   simpa only [IsDestabilization] using isStabilization_swapMarkings G G'
 

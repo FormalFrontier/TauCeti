@@ -87,8 +87,7 @@ theorem prodCoact_inr (n : N) :
   simp [prodCoact]
 
 private theorem prodCoact_coassoc_map {P : Type*} [AddCommMonoid P] [Module R P]
-    [Comodule R C P] (f : P →ₗ[R] M × N)
-    (hcomp :
+    [Comodule R C P] (f : P →ₗ[R] M × N) (hcomp :
       prodCoact (R := R) (C := C) (M := M) (N := N) ∘ₗ f =
         TensorProduct.map f LinearMap.id ∘ₗ coact (R := R) (C := C) (M := P))
     (p : P) :
@@ -164,8 +163,7 @@ private theorem counit_lTensor_prod_map {P : Type*} [AddCommMonoid P] [Module R 
   | add x y hx hy => simp [hx, hy]
 
 private theorem prodCoact_counit_map {P : Type*} [AddCommMonoid P] [Module R P]
-    [Comodule R C P] (f : P →ₗ[R] M × N)
-    (hcomp :
+    [Comodule R C P] (f : P →ₗ[R] M × N) (hcomp :
       prodCoact (R := R) (C := C) (M := M) (N := N) ∘ₗ f =
         TensorProduct.map f LinearMap.id ∘ₗ coact (R := R) (C := C) (M := P))
     (p : P) :
@@ -257,8 +255,7 @@ theorem Prod_coact :
 
 /-- The underlying linear map of the first projection from the product comodule. -/
 @[simp]
-theorem prodFst_toLinearMap :
-    (prodFst (R := R) (C := C) (M := M) (N := N)).toLinearMap =
+theorem prodFst_toLinearMap : (prodFst (R := R) (C := C) (M := M) (N := N)).toLinearMap =
       LinearMap.fst R M N :=
   rfl
 
@@ -282,8 +279,7 @@ theorem prodFst_apply (x : M × N) :
 
 /-- The underlying linear map of the second projection from the product comodule. -/
 @[simp]
-theorem prodSnd_toLinearMap :
-    (prodSnd (R := R) (C := C) (M := M) (N := N)).toLinearMap =
+theorem prodSnd_toLinearMap : (prodSnd (R := R) (C := C) (M := M) (N := N)).toLinearMap =
       LinearMap.snd R M N :=
   rfl
 
@@ -304,8 +300,7 @@ theorem prodSnd_apply (x : M × N) :
 
 /-- The underlying linear map of the left inclusion into the product comodule. -/
 @[simp]
-theorem prodInl_toLinearMap :
-    (prodInl (R := R) (C := C) (M := M) (N := N)).toLinearMap =
+theorem prodInl_toLinearMap : (prodInl (R := R) (C := C) (M := M) (N := N)).toLinearMap =
       LinearMap.inl R M N :=
   rfl
 
@@ -327,8 +322,7 @@ theorem prodInl_apply (m : M) :
 
 /-- The underlying linear map of the right inclusion into the product comodule. -/
 @[simp]
-theorem prodInr_toLinearMap :
-    (prodInr (R := R) (C := C) (M := M) (N := N)).toLinearMap =
+theorem prodInr_toLinearMap : (prodInr (R := R) (C := C) (M := M) (N := N)).toLinearMap =
       LinearMap.inr R M N :=
   rfl
 
@@ -461,8 +455,7 @@ theorem prodSnd_apply (M N : ComoduleCat.{u, v, w} R C) (x : prod R C M N) :
 
 /-- Evaluating the bundled product lift gives the pair of evaluations. -/
 @[simp]
-theorem prodLift_apply {P M N : ComoduleCat.{u, v, w} R C} (f : P ⟶ M) (g : P ⟶ N)
-    (p : P) :
+theorem prodLift_apply {P M N : ComoduleCat.{u, v, w} R C} (f : P ⟶ M) (g : P ⟶ N) (p : P) :
     prodLift f g p = (f p, g p) :=
   rfl
 

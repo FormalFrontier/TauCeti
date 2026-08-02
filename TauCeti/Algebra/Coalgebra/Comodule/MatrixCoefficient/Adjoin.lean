@@ -151,8 +151,7 @@ theorem matrixCoefficient_mem_set_of_map (f : Hom R C M N) (φ : N →ₗ[R] R) 
 
 /-- If `f : M → N` is a surjective comodule morphism, every matrix coefficient of `N` is a
 matrix coefficient of `M`. -/
-theorem matrixCoefficientSet_subset_of_surjective (f : Hom R C M N)
-    (hf : Function.Surjective f) :
+theorem matrixCoefficientSet_subset_of_surjective (f : Hom R C M N) (hf : Function.Surjective f) :
     matrixCoefficientSet (R := R) (C := C) (M := N) ⊆
       matrixCoefficientSet (R := R) (C := C) (M := M) := by
   intro c hc
@@ -163,8 +162,7 @@ theorem matrixCoefficientSet_subset_of_surjective (f : Hom R C M N)
 
 /-- A surjective comodule morphism makes the coefficient submodule of the target contained in
 the coefficient submodule of the source. -/
-theorem matrixCoefficientSubmodule_le_of_surjective (f : Hom R C M N)
-    (hf : Function.Surjective f) :
+theorem matrixCoefficientSubmodule_le_of_surjective (f : Hom R C M N) (hf : Function.Surjective f) :
     matrixCoefficientSubmodule (R := R) (C := C) (M := N) ≤
       matrixCoefficientSubmodule (R := R) (C := C) (M := M) := by
   rw [matrixCoefficientSubmodule, Submodule.span_le]

@@ -229,8 +229,7 @@ theorem transportHom_toLinearMap (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f 
 
 /-- Pointwise form of `transportHom_toLinearMap`. -/
 @[simp]
-theorem transportHom_apply (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f : Hom R C M M')
-    (n : N) :
+theorem transportHom_apply (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f : Hom R C M M') (n : N) :
     letI : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) eM
     letI : Comodule R C N' := Transport (R := R) (C := C) (M := M') (N := N') eN
     transportHom (R := R) (C := C) (M := M) (M' := M') (N := N) (N' := N') eM eN f n =
