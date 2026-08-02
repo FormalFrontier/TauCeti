@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Order.Ring.Units
+public import Mathlib.GroupTheory.Index
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.Basic
 
 /-!
@@ -123,5 +125,27 @@ theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
     u ^ 2 ∈ totallyPositiveIntegerUnits := by
   rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
   exact sq_mem_totallyPositiveUnits _
+
+instance : (Units.posSubgroup ℝ).FiniteIndex :=
+  ⟨by rw [Units.index_posSubgroup]; norm_num⟩
+
+/-- The preimage of the positive units of `ℝ` under any homomorphism `Kˣ →* ℝˣ` has finite index:
+it is the kernel of the composite into the two-element group `ℝˣ ⧸ Units.posSubgroup ℝ`. -/
+instance instFiniteIndexComapPosSubgroup (f : Kˣ →* ℝˣ) :
+    ((Units.posSubgroup ℝ).comap f).FiniteIndex := by
+  rw [← QuotientGroup.ker_mk' (Units.posSubgroup ℝ), MonoidHom.comap_ker]
+  infer_instance
+
+/-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
+infinite places, of the finite-index preimages of the positive units of `ℝ`. -/
+theorem finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
+  rw [totallyPositiveUnits, iInf_subtype']
+  exact Subgroup.finiteIndex_iInf fun _ => inferInstance
+
+/-- The quotient `Kˣ ⧸ totallyPositiveUnits` is finite. -/
+theorem finite_quotient_totallyPositiveUnits :
+    Finite (Kˣ ⧸ totallyPositiveUnits (K := K)) := by
+  haveI := finiteIndex_totallyPositiveUnits (K := K)
+  infer_instance
 
 end TauCeti.NumberField
