@@ -45,12 +45,16 @@ of its labels carry the same basis index, so their transposition lies in the col
 fixes that pure tensor while negating `c_t`; the value is its own negative, hence zero because
 `2` is invertible.
 
-The Young symmetrizer is built over `ℚ`, so the coefficients are transported into the base ring
-along `algebraMap ℚ k`; the base ring is therefore a `ℚ`-algebra throughout.  That alone makes
-`2` invertible, which is all the vanishing statement needs.  Nonvanishing needs characteristic
-zero, and a `ℚ`-algebra has characteristic zero as soon as it is nontrivial, so the nonvanishing
-statements carry a `Nontrivial` hypothesis instead.  This is the characteristic-zero setting the
-roadmap works in.
+The Young symmetrizer available here is the one built over `ℚ` in
+`TauCeti.YoungTableau.youngSymmetrizer`, so its coefficients reach the base ring along
+`algebraMap ℚ k`; the base ring is therefore a `ℚ`-algebra throughout.  That is a consequence of
+how `c_t` is currently defined, not of `c_t` itself, whose coefficients are integral: an integral
+Young symmetrizer would let the construction run over any commutative ring, and building one is a
+separate topic.  What the two halves of the criterion actually use of the hypothesis is much
+less.  Vanishing needs only that `2` is invertible, which a `ℚ`-algebra gives.  Nonvanishing needs
+characteristic zero, and a `ℚ`-algebra has characteristic zero as soon as it is nontrivial, so the
+nonvanishing statements carry a `Nontrivial` hypothesis instead.  This is the characteristic-zero
+setting the roadmap works in.
 
 ## Main definitions
 
@@ -58,7 +62,7 @@ roadmap works in.
   `(kⁿ)^{⊗|μ|}`, with `weylRep` the action of `GL n k` on it.
 * `TauCeti.weylModuleOfShape`: the Weyl module of a shape, namely that of its row-superstandard
   tableau, with `weylRepOfShape` the action of `GL n k` on it and `weylFDRepOfShape` its bundled
-  finite-dimensional form over a field.
+  form in `FDRep`, over a Noetherian base ring.
 * `TauCeti.schurFunctor`: the roadmap-pinned name, `weylFDRepOfShape` at `k = ℂ`.
 
 ## Main results
@@ -122,8 +126,15 @@ noncomputable def weylModule (t : YoungTableau μ) :
     Subrepresentation (tensorPowerRep k n μ.card) :=
   tensorPowerRange (stdRep k n) μ.card (youngSymmetrizerOver k t)
 
+/-- The Weyl module is the image of the Young symmetrizer of `t` acting on the tensor power, so
+the general lemmas about `TauCeti.tensorPowerRange` apply to it. -/
+theorem weylModule_def (t : YoungTableau μ) :
+    weylModule k n t = tensorPowerRange (stdRep k n) μ.card (youngSymmetrizerOver k t) :=
+  (rfl)
+
 /-- The submodule underlying the Weyl module is the range of the Young symmetrizer acting on the
 tensor power. -/
+@[simp]
 theorem weylModule_toSubmodule (t : YoungTableau μ) :
     (weylModule k n t).toSubmodule =
       LinearMap.range (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)) := by
@@ -200,7 +211,7 @@ same pure tensor, where `r ℓ` is the row of the label `ℓ`, leaves exactly th
 the row group of `t`, each with coefficient `1`; the value is therefore the order of the row
 group, which is nonzero because the base ring has characteristic zero. -/
 theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0 ≤ n) :
-    (weylModule k n t).toSubmodule ≠ ⊥ := by
+    weylModule k n t ≠ ⊥ := by
   classical
   haveI : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
   -- the row of each label, as an index of the standard basis of `kⁿ`
@@ -252,7 +263,8 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
     rw [Finsupp.sum]
     have hcoeff : ∀ σ ∈ rowSubgroup t, (youngSymmetrizerOver k t).coeff σ = 1 := by
       intro σ hσ
-      rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_of_mem_rowSubgroup t hσ, map_one]
+      rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup t hσ,
+        map_one]
     have hsub : S ⊆ (youngSymmetrizerOver k t).coeff.support := by
       intro σ hσ
       rw [Finsupp.mem_support_iff, hcoeff σ ((hmemS σ).mp hσ)]
@@ -265,11 +277,13 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
     rw [hfilter, Finset.sum_congr rfl fun σ hσ => hcoeff σ ((hmemS σ).mp hσ), Finset.sum_const,
       nsmul_eq_mul, mul_one]
   intro hbot
+  -- the submodule underlying the zero subrepresentation is `⊥`
+  have hbot' : (weylModule k n t).toSubmodule = ⊥ := by rw [hbot]; rfl
   have hmem : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) v ∈
       (weylModule k n t).toSubmodule := by
     rw [weylModule_toSubmodule]
     exact LinearMap.mem_range_self _ v
-  rw [hbot, Submodule.mem_bot k] at hmem
+  rw [hbot', Submodule.mem_bot k] at hmem
   rw [hmem, map_zero] at key
   have hne : (S.card : k) ≠ 0 := by
     refine Nat.cast_ne_zero.mpr (Finset.card_ne_zero_of_mem (a := 1) ?_)
@@ -285,8 +299,10 @@ that pure tensor while multiplying `c_t` on the right by it negates `c_t`.  The 
 the pure tensor is therefore its own negative, hence zero because `2` is invertible in a
 `ℚ`-algebra. -/
 theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
-    (weylModule k n t).toSubmodule = ⊥ := by
+    weylModule k n t = ⊥ := by
   classical
+  -- subrepresentations are equal when their underlying submodules are
+  refine Subrepresentation.toSubmodule_injective ?_
   haveI : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
   haveI : Invertible (2 : k) := by
     have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
@@ -352,11 +368,13 @@ theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
     have := congrArg (fun w => (⅟(2 : k)) • w) htwo
     simpa [smul_smul] using this
   rw [weylModule_toSubmodule, hzero, LinearMap.range_zero]
+  -- the submodule underlying the zero subrepresentation is `⊥`
+  rfl
 
 /-- **The vanishing criterion for the Weyl module**: it vanishes exactly when the shape has more
 rows than the dimension of the standard representation. -/
 theorem weylModule_eq_bot_iff [Nontrivial k] (t : YoungTableau μ) :
-    (weylModule k n t).toSubmodule = ⊥ ↔ n < μ.colLen 0 := by
+    weylModule k n t = ⊥ ↔ n < μ.colLen 0 := by
   refine ⟨fun h => ?_, weylModule_eq_bot t⟩
   by_contra hle
   exact weylModule_ne_bot t (not_lt.mp hle) h
@@ -372,8 +390,10 @@ theorem finrank_weylModule_eq (t t' : YoungTableau μ) :
 
 /-- The Weyl module of a shape with at most `n` rows is nontrivial. -/
 theorem nontrivial_weylModule [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0 ≤ n) :
-    Nontrivial (weylModule k n t).toSubmodule :=
-  Submodule.nontrivial_iff_ne_bot.mpr (weylModule_ne_bot t hn)
+    Nontrivial (weylModule k n t).toSubmodule := by
+  refine Submodule.nontrivial_iff_ne_bot.mpr ?_
+  intro h
+  exact weylModule_ne_bot t hn (Subrepresentation.toSubmodule_injective h)
 
 end YoungTableau
 
@@ -393,6 +413,13 @@ noncomputable def weylModuleOfShape (μ : YoungDiagram) :
     Subrepresentation (tensorPowerRep k n μ.card) :=
   YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv
 
+/-- The Weyl module of a shape is the Weyl module of its row-superstandard tableau, so the
+tableau-indexed lemmas apply to it. -/
+theorem weylModuleOfShape_def (μ : YoungDiagram) :
+    weylModuleOfShape k n μ =
+      YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv :=
+  (rfl)
+
 /-- The action of `GL n k` on the Weyl module of a shape. -/
 noncomputable abbrev weylRepOfShape (μ : YoungDiagram) :
     Representation k (GL (Fin n) k) (weylModuleOfShape k n μ).toSubmodule :=
@@ -400,6 +427,7 @@ noncomputable abbrev weylRepOfShape (μ : YoungDiagram) :
 
 /-- The submodule underlying the Weyl module of a shape is the range of the Young symmetrizer of
 its row-superstandard tableau acting on the tensor power. -/
+@[simp]
 theorem weylModuleOfShape_toSubmodule (μ : YoungDiagram) :
     (weylModuleOfShape k n μ).toSubmodule =
       LinearMap.range (permTensorActionAlgHom k n μ.card
@@ -425,7 +453,7 @@ noncomputable def YoungTableau.weylRepEquivOfShape {μ : YoungDiagram} (t : Youn
 /-- **The vanishing criterion for the Weyl module of a shape**: it vanishes exactly when the
 shape has more rows than the dimension of the standard representation. -/
 theorem weylModuleOfShape_eq_bot_iff [Nontrivial k] (μ : YoungDiagram) :
-    (weylModuleOfShape k n μ).toSubmodule = ⊥ ↔ n < μ.colLen 0 :=
+    weylModuleOfShape k n μ = ⊥ ↔ n < μ.colLen 0 :=
   YoungTableau.weylModule_eq_bot_iff _
 
 /-- The Weyl module of a shape with at most `n` rows is nontrivial. -/
@@ -435,25 +463,27 @@ theorem nontrivial_weylModuleOfShape [Nontrivial k] (μ : YoungDiagram) (hn : μ
 
 end Shape
 
-section Field
+section Bundled
 
-variable (k : Type u) [Field k] [Algebra ℚ k] (n : ℕ)
+variable (k : Type u) [CommRing k] [Algebra ℚ k] [IsNoetherianRing k] (n : ℕ)
 
 /-- The Weyl module of a shape, bundled as an object of `FDRep`.
 
-A submodule of the tensor power is finitely generated only once the base ring is well behaved
-enough, so this bundled form asks for a field, whereas `weylModuleOfShape` itself does not. -/
+`FDRep` is the category of finitely generated representations over any ring, and a submodule of
+the tensor power is finitely generated as soon as the base ring is Noetherian, which is all this
+bundled form asks; a field is the case of interest, and is Noetherian. -/
 noncomputable abbrev weylFDRepOfShape (μ : YoungDiagram) : FDRep k (GL (Fin n) k) :=
   FDRep.of (V := (weylModuleOfShape k n μ).toSubmodule) (weylRepOfShape k n μ)
 
-end Field
+end Bundled
 
 /-- **The Schur functor** `𝕊^μ(ℂⁿ)` in the roadmap's pinned form: the Weyl module of the shape
 `μ` over `ℂ`, bundled as an object of `FDRep ℂ (GL (Fin n) ℂ)`.
 
 This is a definitional re-export of `TauCeti.weylFDRepOfShape` at `k = ℂ`, under the name later
-roadmap layers are written against; the general form, over any field that is a `ℚ`-algebra, is
-`TauCeti.weylFDRepOfShape`, and the unbundled construction is `TauCeti.weylModuleOfShape`. -/
+roadmap layers are written against; the general form, over any Noetherian commutative ring that
+is a `ℚ`-algebra, is `TauCeti.weylFDRepOfShape`, and the unbundled construction is
+`TauCeti.weylModuleOfShape`. -/
 noncomputable abbrev schurFunctor (n : ℕ) (μ : YoungDiagram) : FDRep ℂ (GL (Fin n) ℂ) :=
   weylFDRepOfShape ℂ n μ
 

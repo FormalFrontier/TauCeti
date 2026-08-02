@@ -22,9 +22,14 @@ sign character.  In particular, each factor squares to its subgroup order times 
 These are the elementary inputs to the essential-idempotence theorem for `c_t` and the
 construction of Specht modules.
 
-The symmetrizers are built over `ℚ`.  Constructions that let `c_t` act on a module over some
-other ring need its coefficients transported there, which is `youngSymmetrizerOver`; the target
-ring is a `ℚ`-algebra, since the coefficients of `c_t` are genuinely rational.
+The symmetrizers are built over `ℚ`, which is what the essential-idempotence theorem and the
+Specht-module constructions downstream of this file work over.  The coefficients of `c_t` are in
+fact integral -- each is a sum of signs -- so nothing about `c_t` itself demands rational
+coefficients; it is *this* definition, over `ℚ`, whose coefficients are transported when `c_t` is
+made to act on a module over another ring, which is `youngSymmetrizerOver`.  That transport goes
+along `algebraMap ℚ k`, so it asks the target ring to be a `ℚ`-algebra.  The restriction is one
+of the present implementation, not of the mathematics: an integral `c_t`, over `ℤ` or over an
+arbitrary commutative ring, would remove it, and is a separate construction.
 
 ## References
 
@@ -263,7 +268,7 @@ theorem youngSymmetrizer_coeff_one (t : YoungTableau μ) :
 /-- The coefficient of a row-group permutation in a Young symmetrizer is one: the row group
 translates `c_t` to itself, so all of its coefficients on the row group agree with the
 coefficient at the identity. -/
-theorem youngSymmetrizer_coeff_of_mem_rowSubgroup (t : YoungTableau μ)
+theorem youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup (t : YoungTableau μ)
     {p : Equiv.Perm (Fin μ.card)} (hp : p ∈ rowSubgroup t) :
     (youngSymmetrizer t).coeff p = 1 := by
   have h := congrArg (fun x => MonoidAlgebra.coeff x p) (mul_youngSymmetrizer_left t ⟨p, hp⟩)
@@ -282,8 +287,11 @@ section Transport
 
 variable (k : Type*) [CommSemiring k] [Algebra ℚ k]
 
-/-- The Young symmetrizer `c_t` with its rational coefficients transported into a `ℚ`-algebra
-`k`, so that it can act on a `k`-module. -/
+/-- The Young symmetrizer `c_t` with the coefficients of its rational form transported into a
+`ℚ`-algebra `k`, so that it can act on a `k`-module.
+
+The `ℚ`-algebra hypothesis comes from `youngSymmetrizer` being defined over `ℚ` here, not from
+`c_t`, whose coefficients are integral. -/
 noncomputable def youngSymmetrizerOver (t : YoungTableau μ) :
     MonoidAlgebra k (Equiv.Perm (Fin μ.card)) :=
   MonoidAlgebra.mapAlgHom _ (Algebra.ofId ℚ k) (youngSymmetrizer t)

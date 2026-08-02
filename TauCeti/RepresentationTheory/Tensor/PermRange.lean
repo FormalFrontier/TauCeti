@@ -67,6 +67,7 @@ noncomputable def tensorPowerRange : Subrepresentation (ρ.tensorPower d) :=
   (tensorPowerPermMap ρ d a).range
 
 /-- The submodule underlying `tensorPowerRange` is the range of the group-algebra action. -/
+@[simp]
 theorem tensorPowerRange_toSubmodule :
     (tensorPowerRange ρ d a).toSubmodule =
       LinearMap.range ((PiTensorProduct.reindexRepresentation R M (Fin d)).asAlgebraHom a) :=
@@ -74,20 +75,26 @@ theorem tensorPowerRange_toSubmodule :
 
 /-- The identity of the group algebra cuts out the whole tensor power. -/
 @[simp]
-theorem tensorPowerRange_one : (tensorPowerRange ρ d 1).toSubmodule = ⊤ := by
-  rw [tensorPowerRange_toSubmodule, map_one]
-  exact LinearMap.range_eq_top.mpr fun x => ⟨x, rfl⟩
+theorem tensorPowerRange_one : tensorPowerRange ρ d 1 = ⊤ :=
+  Subrepresentation.toSubmodule_injective <| by
+    rw [tensorPowerRange_toSubmodule, map_one]
+    exact LinearMap.range_eq_top.mpr fun x => ⟨x, rfl⟩
 
 /-- The zero of the group algebra cuts out the zero subrepresentation. -/
 @[simp]
-theorem tensorPowerRange_zero : (tensorPowerRange ρ d 0).toSubmodule = ⊥ := by
-  rw [tensorPowerRange_toSubmodule, map_zero, LinearMap.range_zero]
+theorem tensorPowerRange_zero : tensorPowerRange ρ d 0 = ⊥ :=
+  Subrepresentation.toSubmodule_injective <| by
+    rw [tensorPowerRange_toSubmodule, map_zero, LinearMap.range_zero]
+    -- the submodule underlying the zero subrepresentation is `⊥`
+    rfl
 
 /-- Multiplying on the right shrinks the image: `⨂^d M · a b ⊆ ⨂^d M · a`. -/
-theorem tensorPowerRange_mul_le :
-    (tensorPowerRange ρ d (a * b)).toSubmodule ≤ (tensorPowerRange ρ d a).toSubmodule := by
-  rw [tensorPowerRange_toSubmodule, tensorPowerRange_toSubmodule, map_mul]
-  exact LinearMap.range_comp_le_range _ _
+theorem tensorPowerRange_mul_le : tensorPowerRange ρ d (a * b) ≤ tensorPowerRange ρ d a := by
+  have h : (tensorPowerRange ρ d (a * b)).toSubmodule ≤ (tensorPowerRange ρ d a).toSubmodule := by
+    rw [tensorPowerRange_toSubmodule, tensorPowerRange_toSubmodule, map_mul]
+    exact LinearMap.range_comp_le_range _ _
+  -- the order on subrepresentations is inclusion of the underlying submodules
+  exact fun x hx => h hx
 
 /-- Conjugating the group-algebra element by a permutation moves the image by the corresponding
 permutation of the tensor factors. -/
