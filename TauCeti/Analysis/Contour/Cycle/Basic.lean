@@ -183,6 +183,7 @@ def trace (C : Cycle) : Set ℂ :=
 
 /-- Membership in the trace means membership in the image of a generator with nonzero
 coefficient. -/
+@[simp]
 theorem mem_trace_iff {C : Cycle} {z : ℂ} :
     z ∈ trace C ↔ ∃ γ ∈ FreeAbelianGroup.support C, z ∈ γ '' uIcc γ.a γ.b := by
   simp only [trace, mem_iUnion, exists_prop]
