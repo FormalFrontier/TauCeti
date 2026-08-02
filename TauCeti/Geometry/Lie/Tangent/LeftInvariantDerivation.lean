@@ -14,9 +14,9 @@ public import TauCeti.Geometry.Manifold.DerivationBundle
 /-!
 # Evaluation of left-invariant derivations
 
-A left-invariant derivation on a Lie group is determined by its value at any point. In particular,
-evaluation at the identity is injective. This is the injective half of the identification between
-the Lie algebra of left-invariant derivations and the tangent Lie algebra at the identity.
+A left-invariant derivation on a Lie group is determined by its value at any point. For a
+finite-dimensional smooth real Lie group without boundary, evaluation at the identity gives a
+canonical linear equivalence between left-invariant derivations and the tangent Lie algebra.
 
 ## Main results
 
@@ -115,8 +115,6 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
     (f : C^∞⟮I, G; ℝ⟯) :
     ContMDiff I (modelWithCornersSelf ℝ ℝ) ∞
       (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) := by
-  let V : G → TangentBundle I G :=
-    fun g ↦ (mulInvariantVectorField v g : TangentBundle I G)
   let df : TangentBundle I G → TangentBundle (modelWithCornersSelf ℝ ℝ) ℝ :=
     tangentMap% (f : G → ℝ)
   have hdf : ContMDiff I.tangent (modelWithCornersSelf ℝ ℝ).tangent ∞ df :=
@@ -141,7 +139,7 @@ theorem mulInvariantVectorField_one [LieGroup I ∞ G] (v : GroupLieAlgebra I G)
 /-- The derivation associated to a tangent vector at the identity. At every point it acts by
 differentiating along Mathlib's corresponding left-invariant vector field. -/
 @[expose]
-noncomputable def tangentToDerivation
+noncomputable def mulInvariantVectorFieldDerivation
     [LieGroup I ∞ G] (v : GroupLieAlgebra I G) :
     Derivation ℝ C^∞⟮I, G; ℝ⟯ C^∞⟮I, G; ℝ⟯ :=
   Derivation.mk'
@@ -181,10 +179,11 @@ noncomputable def tangentToDerivation
 
 /-- The derivation built from a tangent vector acts pointwise along its invariant vector field. -/
 @[simp]
-theorem tangentToDerivation_apply
+theorem mulInvariantVectorFieldDerivation_apply
     [LieGroup I ∞ G] (v : GroupLieAlgebra I G)
     (f : C^∞⟮I, G; ℝ⟯) (g : G) :
-    tangentToDerivation v f g = mvfderiv I f g (mulInvariantVectorField v g) :=
+    mulInvariantVectorFieldDerivation v f g =
+      mvfderiv I f g (mulInvariantVectorField v g) :=
   rfl
 
 /-- The left-invariant derivation associated to a tangent vector at the identity. At every point it
@@ -193,12 +192,12 @@ acts by differentiating along Mathlib's corresponding left-invariant vector fiel
 noncomputable def tangentToLeftInvariantDerivation
     [LieGroup I ∞ G] (v : GroupLieAlgebra I G) :
     LeftInvariantDerivation I G where
-  toDerivation := tangentToDerivation v
+  toDerivation := mulInvariantVectorFieldDerivation v
   left_invariant'' := fun g ↦ by
     ext f
     calc
       ((𝒅ₕ (smoothLeftMul_one I g))
-          (Derivation.evalAt 1 (tangentToDerivation v))) f =
+          (Derivation.evalAt 1 (mulInvariantVectorFieldDerivation v))) f =
           mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1
             (mulInvariantVectorField v 1) := rfl
       _ = mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1 v := by
@@ -216,7 +215,7 @@ noncomputable def tangentToLeftInvariantDerivation
         change ((mfderiv I (modelWithCornersSelf ℝ ℝ)
           ((show G → ℝ from f) ∘ fun x ↦ g * x) 1) v) = _
         exact h
-      _ = (Derivation.evalAt g (tangentToDerivation v)) f := rfl
+      _ = (Derivation.evalAt g (mulInvariantVectorFieldDerivation v)) f := rfl
 
 /-- The derivation built from a tangent vector acts pointwise along its invariant vector field. -/
 @[simp]
