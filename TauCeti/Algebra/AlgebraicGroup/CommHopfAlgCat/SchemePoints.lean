@@ -48,6 +48,19 @@ open AlgebraicGeometry
 
 variable {R : Type u} [CommRing R]
 
+private lemma mapMulEquiv_left
+    {S T : Type u} [CommRing S] [CommRing T] [Bialgebra R S] [Algebra R T]
+    (f : WithConv (S →ₐ[R] T)) :
+    (AlgebraicGeometry.Spec.mapMulEquiv f).left =
+      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) :=
+  rfl
+
+private lemma hopfSpec_map_left
+    {H K : _root_.CommHopfAlgCat.{u} R} (φ : H ⟶ K) :
+    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom.left =
+      Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) :=
+  rfl
+
 /-- Mathlib's spectrum-points equivalence is natural in the value algebra. Postcomposing
 an `A`-valued algebra point by `φ : A ⟶ B` corresponds on spectra to precomposing by
 `Spec B ⟶ Spec A`. -/
@@ -58,13 +71,11 @@ theorem mapMulEquiv_mapValue
       (Spec.map (CommRingCat.ofHom φ.hom.toRingHom)).asOver
           (Spec (CommRingCat.of R)) ≫
         AlgebraicGeometry.Spec.mapMulEquiv p := by
+  rw [HopfAlgebra.mapPoints_apply]
   apply Over.OverMorphism.ext
-  -- On underlying affine schemes this is contravariance of `Spec` applied to the
-  -- composite coordinate map `H → A → B`.
-  change Spec.map (CommRingCat.ofHom (φ.hom.comp p.ofConv).toRingHom) =
-    Spec.map (CommRingCat.ofHom φ.hom.toRingHom) ≫
-      Spec.map (CommRingCat.ofHom p.ofConv.toRingHom)
-  rw [← Spec.map_comp]
+  erw [Over.comp_left]
+  simp only [mapMulEquiv_left, OverClass.asOverHom_left]
+  erw [← Spec.map_comp]
   rfl
 
 /-- Mathlib's spectrum-points equivalence is contravariantly natural in the coordinate
@@ -76,13 +87,11 @@ theorem mapMulEquiv_mapDomain
     AlgebraicGeometry.Spec.mapMulEquiv ((mapPointsFunctor φ).app A p) =
       AlgebraicGeometry.Spec.mapMulEquiv p ≫
         ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom := by
+  rw [mapPointsFunctor_app_apply]
   apply Over.OverMorphism.ext
-  -- The underlying map of `hopfSpec.map φ.op` is definitionally `Spec.map φ`; the
-  -- square is therefore contravariance of `Spec` for `H → K → A`.
-  change Spec.map (CommRingCat.ofHom (p.ofConv.comp φ.hom).toRingHom) =
-    Spec.map (CommRingCat.ofHom p.ofConv.toRingHom) ≫
-      Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom)
-  rw [← Spec.map_comp]
+  erw [Over.comp_left]
+  simp only [mapMulEquiv_left, hopfSpec_map_left]
+  erw [← Spec.map_comp]
   rfl
 
 end CommHopfAlgCat
