@@ -196,8 +196,9 @@ private theorem intervalIntegrable_norm_div_one_sub_norm_sq (hab : a ≤ b)
     IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b := by
   refine ContinuousOn.intervalIntegrable ?_
   rw [uIcc_of_le hab]
-  exact hγ'.norm.div (continuousOn_const.sub (hγ.norm.pow 2)) fun t ht =>
-    (show (0 : ℝ) < 1 - ‖γ t‖ ^ 2 by nlinarith [norm_nonneg (γ t), hmem t ht]).ne'
+  refine hγ'.norm.div (continuousOn_const.sub (hγ.norm.pow 2)) fun t ht => ?_
+  have hpos : (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := by nlinarith [norm_nonneg (γ t), hmem t ht]
+  exact hpos.ne'
 
 /-- **Hyperbolic length is additive along the parameter interval**: the lengths of the two halves
 of a path add up to the length of the whole. -/
