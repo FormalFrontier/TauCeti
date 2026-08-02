@@ -25,7 +25,7 @@ Euclidean distance tends to `(1 - ‖z‖ ^ 2)⁻¹`
 
 for `p = pseudoHyperbolicExpr z w`, which is legitimate off the diagonal because `p` is
 exactly `‖w - z‖ / ‖1 - conj w * z‖`. As
-`w → z` the first factor tends to `1` — this is `Real.tendsto_artanh_div_nhdsWithin_ne_zero`,
+`w → z` the first factor tends to `1` — this is `Real.tendsto_artanh_div_nhdsNE_zero`,
 the derivative of `Real.artanh` at the origin read as a limit of slopes — while the Moebius
 denominator tends to `1 - ‖z‖ ^ 2`, which is where the density comes from.
 
@@ -105,22 +105,25 @@ theorem norm_sub_div_norm_one_sub_conj_mul_le_hyperbolicDist {z w : ℂ} (hz : �
 /-! ### The infinitesimal density -/
 
 /-- The pseudo-hyperbolic expression `pseudoHyperbolicExpr z w`, viewed as a function of its
-second argument, is continuous at any point `w` of the disc. -/
+second argument, is continuous at any point `w` of the disc: the joint continuity
+`TauCeti.continuousOn_pseudoHyperbolicExpr` restricted to a slice of the open product. -/
 private lemma continuousAt_pseudoHyperbolicExpr_right {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     ContinuousAt (fun v : ℂ => pseudoHyperbolicExpr z v) w := by
-  simp only [pseudoHyperbolicExpr_def]
-  refine ContinuousAt.norm (ContinuousAt.div ?_ ?_ ?_)
-  · exact (continuous_const.sub continuous_id).continuousAt
-  · exact (continuous_const.sub (Complex.continuous_conj.mul continuous_const)).continuousAt
-  · exact one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw
+  have hjoint : ContinuousAt (fun p : ℂ × ℂ => pseudoHyperbolicExpr p.1 p.2) (z, w) :=
+    continuousOn_pseudoHyperbolicExpr.continuousAt
+      ((isOpen_ball.prod isOpen_ball).mem_nhds
+        ⟨mem_ball_zero_iff.2 hz, mem_ball_zero_iff.2 hw⟩)
+  exact hjoint.comp (continuousAt_const.prodMk continuousAt_id)
 
 /-- **The infinitesimal Poincaré density.** At a point `z` of the open unit disc the ratio of
 the hyperbolic distance to the Euclidean distance tends to `(1 - ‖z‖ ^ 2)⁻¹`.
 
-This is the precise sense in which `TauCeti.hyperbolicDist` is the distance of the conformal
-metric `|dz| / (1 - |z| ^ 2)`: the closed form `Real.artanh` of the pseudo-hyperbolic
-expression is only a reparametrisation, and the density it produces at `z` is read off from the
-Moebius denominator `1 - conj z * z`. -/
+This is the precise sense in which `TauCeti.hyperbolicDist` has infinitesimal density
+`|dz| / (1 - |z| ^ 2)`: the closed form `Real.artanh` of the pseudo-hyperbolic expression is
+only a reparametrisation, and the density it produces at `z` is read off from the Moebius
+denominator `1 - conj z * z`. It is a statement about the first order behaviour at `z` alone;
+calling `hyperbolicDist` the distance *induced* by that density would need the density-weighted
+length of a curve, which is defined nowhere in the tree (see the module docstring). -/
 theorem tendsto_hyperbolicDist_div_norm_sub {z : ℂ} (hz : ‖z‖ < 1) :
     Tendsto (fun w => hyperbolicDist z w / ‖w - z‖) (𝓝[≠] z) (𝓝 (1 - ‖z‖ ^ 2)⁻¹) := by
   have hzB : z ∈ ball (0 : ℂ) 1 := mem_ball_zero_iff.2 hz
@@ -143,7 +146,7 @@ theorem tendsto_hyperbolicDist_div_norm_sub {z : ℂ} (hz : ‖z‖ < 1) :
   have hquot : Tendsto
       (fun w => Real.artanh (pseudoHyperbolicExpr z w) / pseudoHyperbolicExpr z w)
       (𝓝[{z}ᶜ ∩ ball (0 : ℂ) 1] z) (𝓝 1) :=
-    Real.tendsto_artanh_div_nhdsWithin_ne_zero.comp hP
+    Real.tendsto_artanh_div_nhdsNE_zero.comp hP
   -- the second factor of the product decomposition
   have hinv : Tendsto (fun w : ℂ => ‖1 - (starRingEnd ℂ) w * z‖⁻¹)
       (𝓝[{z}ᶜ ∩ ball (0 : ℂ) 1] z) (𝓝 (1 - ‖z‖ ^ 2)⁻¹) := by
@@ -153,18 +156,19 @@ theorem tendsto_hyperbolicDist_div_norm_sub {z : ℂ} (hz : ‖z‖ < 1) :
     exact (hden.inv₀ hdenpos.ne').mono_left nhdsWithin_le_nhds
   have hmul := hquot.mul hinv
   rw [one_mul] at hmul
+  -- the product decomposition itself, at a point of the disc
+  have hpt : ∀ w ∈ ball (0 : ℂ) 1,
+      Real.artanh (pseudoHyperbolicExpr z w) / pseudoHyperbolicExpr z w *
+        ‖1 - (starRingEnd ℂ) w * z‖⁻¹ = hyperbolicDist z w / ‖w - z‖ := by
+    intro w hwB
+    have hdne : ‖1 - (starRingEnd ℂ) w * z‖ ≠ 0 :=
+      norm_ne_zero_iff.2 (one_sub_conj_mul_ne_zero_of_mem_ball hzB hwB)
+    have hfac : pseudoHyperbolicExpr z w * ‖1 - (starRingEnd ℂ) w * z‖ = ‖w - z‖ := by
+      rw [pseudoHyperbolicExpr_eq_norm_div_norm, div_mul_cancel₀ _ hdne, norm_sub_rev]
+    rw [hyperbolicDist_def, ← hfac, ← div_div]
+    exact (div_eq_mul_inv _ _).symm
   rw [hfilter]
-  refine Tendsto.congr' ?_ hmul
-  refine eventually_nhdsWithin_of_forall fun w hw => ?_
-  have hwB : w ∈ ball (0 : ℂ) 1 := hw.2
-  have hdne : ‖1 - (starRingEnd ℂ) w * z‖ ≠ 0 :=
-    norm_ne_zero_iff.2 (one_sub_conj_mul_ne_zero_of_mem_ball hzB hwB)
-  have hfac : pseudoHyperbolicExpr z w * ‖1 - (starRingEnd ℂ) w * z‖ = ‖w - z‖ := by
-    rw [pseudoHyperbolicExpr_eq_norm_div_norm, div_mul_cancel₀ _ hdne, norm_sub_rev]
-  change Real.artanh (pseudoHyperbolicExpr z w) / pseudoHyperbolicExpr z w *
-      ‖1 - (starRingEnd ℂ) w * z‖⁻¹ = hyperbolicDist z w / ‖w - z‖
-  rw [hyperbolicDist_def, ← hfac, ← div_div]
-  exact (div_eq_mul_inv _ _).symm
+  exact Tendsto.congr' (eventually_nhdsWithin_of_forall fun w hw => hpt w hw.2) hmul
 
 /-- **The Poincaré density at the origin is `1`.** The hyperbolic and Euclidean metrics of the
 disc agree to first order at the centre. -/

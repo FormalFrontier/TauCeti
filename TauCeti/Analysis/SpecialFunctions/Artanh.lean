@@ -27,7 +27,7 @@ each of its points and the result transported back to `Real.artanh` itself.
   `(-1, 1)`, with `Real.deriv_artanh`, `Real.differentiableAt_artanh`,
   `Real.differentiableOn_artanh`, `Real.continuousAt_artanh` and `Real.continuousOn_artanh` as
   companions, and `HasDerivAt.artanh` as the chain-rule form.
-* `Real.tendsto_artanh_div_nhdsWithin_ne_zero` — `artanh t / t` tends to `1` as `t` tends to
+* `Real.tendsto_artanh_div_nhdsNE_zero` — `artanh t / t` tends to `1` as `t` tends to
   `0` through nonzero values: the derivative at the origin, read as a limit of slopes. This is
   what turns a closed-form hyperbolic distance into an infinitesimal one.
 * `Real.integral_one_sub_sq_inv_eq_artanh` — `artanh` is the primitive of the density
@@ -63,7 +63,8 @@ logarithmic formula `Real.artanh_eq_half_log`, which holds on all of `(-1, 1)` a
 neighbourhood of each of its points. -/
 theorem _root_.Real.hasDerivAt_artanh {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
     HasDerivAt Real.artanh (1 - x ^ 2)⁻¹ x := by
-  obtain ⟨hx₁, hx₂⟩ := hx
+  have hx₁ : (-1 : ℝ) < x := hx.1
+  have hx₂ : x < 1 := hx.2
   have hsub : (1 : ℝ) - x ≠ 0 := by intro h; linarith [sub_eq_zero.mp h]
   have hadd : (1 : ℝ) + x ≠ 0 := by intro h; linarith [add_eq_zero_iff_eq_neg.mp h]
   have hpos : (0 : ℝ) < (1 + x) / (1 - x) := div_pos (by linarith) (by linarith)
@@ -75,15 +76,16 @@ theorem _root_.Real.hasDerivAt_artanh {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
   have hlog : HasDerivAt (fun y : ℝ => Real.log ((1 + y) / (1 - y)))
       ((1 * (1 - x) - (1 + x) * -1) / (1 - x) ^ 2 / ((1 + x) / (1 - x))) x :=
     hquot.log hpos.ne'
+  have hfactor : (1 : ℝ) - x ^ 2 = (1 - x) * (1 + x) := by ring
   have hval : 1 / 2 * ((1 * (1 - x) - (1 + x) * -1) / (1 - x) ^ 2 / ((1 + x) / (1 - x)))
       = (1 - x ^ 2)⁻¹ := by
-    rw [show (1 : ℝ) - x ^ 2 = (1 - x) * (1 + x) by ring]
+    rw [hfactor]
     field_simp
     ring
   have hhalf : HasDerivAt (fun y : ℝ => 1 / 2 * Real.log ((1 + y) / (1 - y)))
       (1 - x ^ 2)⁻¹ x := hval ▸ hlog.const_mul (1 / 2 : ℝ)
   refine hhalf.congr_of_eventuallyEq ?_
-  filter_upwards [isOpen_Ioo.mem_nhds (show x ∈ Ioo (-1 : ℝ) 1 from ⟨hx₁, hx₂⟩)] with y hy
+  filter_upwards [isOpen_Ioo.mem_nhds hx] with y hy
   exact Real.artanh_eq_half_log (Ioo_subset_Icc_self hy)
 
 /-- `Real.artanh` is differentiable at each point of `(-1, 1)`. -/
@@ -126,7 +128,7 @@ tends to `0` through nonzero values.
 This is the one-variable input to the infinitesimal Poincaré density: on the unit disc the
 hyperbolic distance is `Real.artanh` of the pseudo-hyperbolic expression, and near the diagonal
 the latter is small, so this limit converts the closed form into a density. -/
-theorem _root_.Real.tendsto_artanh_div_nhdsWithin_ne_zero :
+theorem _root_.Real.tendsto_artanh_div_nhdsNE_zero :
     Filter.Tendsto (fun t : ℝ => Real.artanh t / t) (𝓝[≠] (0 : ℝ)) (𝓝 1) := by
   have h : Filter.Tendsto (slope Real.artanh 0) (𝓝[≠] (0 : ℝ)) (𝓝 1) := by
     simpa using (Real.hasDerivAt_artanh (x := (0 : ℝ)) (by norm_num)).tendsto_slope

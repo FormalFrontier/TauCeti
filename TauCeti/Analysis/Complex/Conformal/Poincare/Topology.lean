@@ -24,7 +24,9 @@ is the reparametrisation `Real.artanh p`:
 * the Moebius denominator has norm at most `2` on the disc, so `‖z - w‖ ≤ 2 * p`, which makes
   the identity map from the Poincaré disc to the Euclidean disc Lipschitz-like near the
   diagonal;
-* `p` depends continuously on `(z, w)` and `Real.artanh` is continuous on `(-1, 1)` — that is
+* `p` depends continuously on `(z, w)` — that is `TauCeti.continuousOn_pseudoHyperbolicExpr`,
+  from `TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean` — and `Real.artanh` is
+  continuous on `(-1, 1)` — that is
   `Real.continuousOn_artanh`, from `TauCeti/Analysis/SpecialFunctions/Artanh.lean` — so the
   hyperbolic distance is jointly continuous for the Euclidean topology.
 
@@ -87,20 +89,6 @@ lemma norm_sub_le_two_mul_pseudoHyperbolicExpr {z w : ℂ} (hz : ‖z‖ < 1) (h
   nlinarith [pseudoHyperbolicExpr_nonneg z w]
 
 /-! ### Joint continuity of the hyperbolic distance -/
-
-/-- The pseudo-hyperbolic expression is continuous on the product of two copies of the open
-unit disc, where its Moebius denominator does not vanish. -/
-lemma continuousOn_pseudoHyperbolicExpr :
-    ContinuousOn (fun p : ℂ × ℂ => pseudoHyperbolicExpr p.1 p.2)
-      (ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1) := by
-  have hnum : Continuous fun p : ℂ × ℂ => p.1 - p.2 := continuous_fst.sub continuous_snd
-  have hden : Continuous fun p : ℂ × ℂ => (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 :=
-    continuous_const.sub ((Complex.continuous_conj.comp continuous_snd).mul continuous_fst)
-  have hne : ∀ p ∈ ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1,
-      (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 ≠ 0 := fun _ hp =>
-    one_sub_conj_mul_ne_zero_of_mem_ball hp.1 hp.2
-  exact ((hnum.continuousOn.div hden.continuousOn hne).norm).congr fun p _ =>
-    pseudoHyperbolicExpr_def p.1 p.2
 
 /-- The hyperbolic distance is jointly continuous on the product of two copies of the open unit
 disc, for the Euclidean topology of `ℂ`. -/
