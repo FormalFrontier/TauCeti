@@ -121,7 +121,7 @@ namespace WeilDivisor.OrderSystem
 
 /-- The orders of vanishing of nonzero rational functions at codimension-one points, assembled
 into the order system whose principal divisors are scheme-theoretic Weil divisors. -/
-@[expose] noncomputable def ofScheme (X : Scheme.{u}) [IsIntegral X] [IsNoetherian X] :
+noncomputable def ofScheme (X : Scheme.{u}) [IsIntegral X] [IsNoetherian X] :
     OrderSystem (CodimensionOnePoint X) (Additive X.functionFieldˣ) where
   ord := SchemeWeilDivisor.orderAt
   finite_support := SchemeWeilDivisor.finite_support_orderAt
@@ -131,7 +131,7 @@ into the order system whose principal divisors are scheme-theoretic Weil divisor
 lemma ofScheme_ord {X : Scheme.{u}} [IsIntegral X] [IsNoetherian X]
     (x : CodimensionOnePoint X) :
     (ofScheme X).ord x = SchemeWeilDivisor.orderAt x :=
-  rfl
+  (rfl)
 
 end WeilDivisor.OrderSystem
 
