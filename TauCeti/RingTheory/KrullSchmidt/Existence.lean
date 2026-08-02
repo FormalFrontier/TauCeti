@@ -44,7 +44,7 @@ isomorphism `Submodule.mapIic`.
 * `TauCeti.exists_indecomposable_decomposition`: the same for a module of finite length, the form
   the Krull-Schmidt statement uses, and
   `TauCeti.exists_isInternal_isIndecomposableModule_of_finiteDimensional` for a module that is
-  finite-dimensional over a field acting through a scalar tower.
+  finite-dimensional over a division ring acting through a scalar tower.
 * `TauCeti.exists_isCompl_isIndecomposableModule`: a nonzero Artinian module has an indecomposable
   direct summand.
 
@@ -197,10 +197,10 @@ theorem exists_indecomposable_decomposition (hM : IsFiniteLength A M) :
   have : IsArtinian A M := (isFiniteLength_iff_isNoetherian_isArtinian.mp hM).2
   exists_isInternal_isIndecomposableModule
 
-/-- A module that is finite-dimensional over a field acting through a scalar tower — in particular
-a finite-dimensional module over a finite-dimensional algebra — is the internal direct sum of a
-finite set of indecomposable submodules. -/
-theorem exists_isInternal_isIndecomposableModule_of_finiteDimensional (k : Type*) [Field k]
+/-- A module that is finite-dimensional over a division ring acting through a scalar tower — in
+particular a finite-dimensional module over a finite-dimensional algebra — is the internal direct
+sum of a finite set of indecomposable submodules. -/
+theorem exists_isInternal_isIndecomposableModule_of_finiteDimensional (k : Type*) [DivisionRing k]
     [SMul k A] [Module k M] [IsScalarTower k A M] [FiniteDimensional k M] :
     ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
       DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
