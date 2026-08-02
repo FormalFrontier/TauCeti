@@ -84,6 +84,17 @@ roadmap works in.
   and only its value at `kⁿ` is built.  The pinned name is supplied as `TauCeti.schurFunctor`,
   the definitional re-export at `k = ℂ` of the bundled form, so that later roadmap layers can
   consume it under the name they are written against.
+
+  Of that bullet, the `GLₙ`-subrepresentation, the fixed choice of tableau, the canonical
+  isomorphism between the images for different tableaux, and the vanishing criterion are built
+  here.  The bullet's two remaining deliverables, the extreme cases `S^{(d)} V ≅ Symᵈ V` and
+  `S^{(1ᵈ)} V ≅ ⋀ᵈ V`, are deliberately left to a follow-up, because each first needs
+  infrastructure that exists neither in Mathlib nor here: a linear map `Sym[k]^d M →ₗ[k] ⨂[k]^d M`
+  descending the symmetrizer through `SymmetricPower.mk`, injectivity and naturality for
+  `exteriorPower.toTensorPower`, and the value of `c_t` at a one-row and at a one-column shape.
+  The follow-up can state and prove both against `TauCeti.weylModuleOfShape`,
+  `TauCeti.weylModuleOfShape_toSubmodule` and `TauCeti.weylRepOfShape` without unfolding anything
+  built here.
 -/
 
 public section
