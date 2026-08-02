@@ -9,7 +9,6 @@ public import Mathlib.RingTheory.HopfAlgebra.GroupLike
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
-public import TauCeti.Algebra.Bialgebra.GroupLike.Evaluation
 
 /-!
 # The determinant morphism of the general linear group
@@ -56,7 +55,7 @@ variable (R : Type u) [CommRing R] (n : ℕ)
 
 /-- The determinant of the localized generic matrix, transported to the bundled coordinate
 Hopf algebra of `GLₙ`, as a group-like element. -/
-@[expose] noncomputable def determinantGroupLike :
+noncomputable def determinantGroupLike :
     _root_.GroupLike R (coordinateHopfAlgebra R n) where
   val := coordinateHopfAlgebraAlgEquiv R n
     (Matrix.det (localizedGenericMatrix R n))
@@ -74,19 +73,20 @@ theorem determinantGroupLike_val :
     (determinantGroupLike R n : coordinateHopfAlgebra R n) =
       coordinateHopfAlgebraAlgEquiv R n
         (Matrix.det (localizedGenericMatrix R n)) :=
-  rfl
+  by rw [determinantGroupLike]
 
 /-- The determinant coordinate morphism
 `O(𝔾ₘ) = R[Multiplicative ℤ] ⟶ O(GLₙ)`, packaged between the underlying commutative
 Hopf algebras of the existing finite-type coordinate objects. Relative spectrum reverses this
 arrow to the represented morphism `det : GLₙ ⟶ 𝔾ₘ`. -/
-@[expose] noncomputable def determinantCoordinateMap :
+noncomputable def determinantCoordinateMap :
     _root_.CommHopfAlgCat.of R (MonoidAlgebra R (Multiplicative ℤ)) ⟶
       coordinateHopfAlgebra R n :=
-  ⟨(TauCeti.GroupLike.evaluationBialgHom R (coordinateHopfAlgebra R n)).comp
+  _root_.CommHopfAlgCat.ofHom ((MonoidAlgebra.liftGroupLikeBialgHom
+      (R := R) (A := coordinateHopfAlgebra R n)).comp
     (MonoidAlgebra.mapDomainBialgHom R
       (zpowersHom (_root_.GroupLike R (coordinateHopfAlgebra R n))
-        (determinantGroupLike R n)))⟩
+        (determinantGroupLike R n))))
 
 /-- The determinant coordinate morphism sends the basis element indexed by `m` to the scalar
 multiple of the `m`-th integral power of the group-like generic determinant. -/
@@ -94,16 +94,12 @@ theorem determinantCoordinateMap_single (m : ℤ) (r : R) :
     (determinantCoordinateMap R n).hom
         (MonoidAlgebra.single (Multiplicative.ofAdd m) r) =
       r • (↑((determinantGroupLike R n) ^ m) : coordinateHopfAlgebra R n) := by
-  change ((TauCeti.GroupLike.evaluationBialgHom R
-      (coordinateHopfAlgebra R n)).comp
-        (MonoidAlgebra.mapDomainBialgHom R
-          (zpowersHom (_root_.GroupLike R (coordinateHopfAlgebra R n))
-            (determinantGroupLike R n))))
-      (MonoidAlgebra.single (Multiplicative.ofAdd m) r) = _
-  rw [BialgHom.comp_apply,
+  rw [determinantCoordinateMap, _root_.CommHopfAlgCat.hom_ofHom,
+    BialgHom.comp_apply,
     MonoidAlgebra.mapDomainBialgHom_single,
-    TauCeti.GroupLike.evaluationBialgHom_single, zpowersHom_apply,
-    toAdd_ofAdd]
+    MonoidAlgebra.liftGroupLikeBialgHom_apply,
+    MonoidAlgebra.lift_single, MonoidHom.coe_mk, OneHom.coe_mk,
+    zpowersHom_apply, toAdd_ofAdd]
 
 /-- The standard group-algebra generator maps to the localized generic determinant. -/
 @[simp]
@@ -116,11 +112,11 @@ theorem determinantCoordinateMap_ofAdd_one :
 
 section Points
 
-variable {A : Type w} [CommRing A] [Algebra R A]
+variable {A : Type w} [CommSemiring A] [Algebra R A]
 
 /-- Precomposition with the determinant coordinate morphism, as a homomorphism from `GLₙ`
 convolution points to points of the group-algebra presentation of `𝔾ₘ`. -/
-@[expose] noncomputable def determinantPoints :
+noncomputable def determinantPoints :
     WithConv (coordinateHopfAlgebra R n →ₐ[R] A) →*
       WithConv (MonoidAlgebra R (Multiplicative ℤ) →ₐ[R] A) :=
   AlgHom.mapDomain
@@ -133,7 +129,24 @@ theorem determinantPoints_apply_apply
     (determinantPoints R n f).ofConv x =
       f.ofConv
         ((determinantCoordinateMap R n).hom x) :=
-  rfl
+  by rw [determinantPoints, AlgHom.mapDomain_apply_apply]
+
+variable {B : Type*} [CommSemiring B] [Algebra R B]
+
+/-- The determinant homomorphism on convolution points is natural in the value algebra. -/
+theorem mapValue_determinantPoints (phi : A →ₐ[R] B) :
+    (determinantPoints (A := B) R n).comp
+        (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi) =
+      (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) phi).comp
+        (determinantPoints (A := A) R n) := by
+  exact AlgHom.mapValue_mapDomain
+    (determinantCoordinateMap R n).hom phi
+
+end Points
+
+section MatrixComparison
+
+variable {A : Type w} [CommRing A] [Algebra R A]
 
 /-- Evaluation of the group-like generic determinant at a general-linear point is the
 determinant of the associated invertible matrix. -/
@@ -143,8 +156,13 @@ theorem point_apply_determinantGroupLike
       Matrix.det (pointToGeneralLinear n f).val := by
   calc
     f.ofConv (determinantGroupLike R n : coordinateHopfAlgebra R n) =
+        f.ofConv (coordinateHopfAlgebraAlgEquiv R n
+          (Matrix.det (localizedGenericMatrix R n))) := by
+      rw [determinantGroupLike_val]
+    _ =
         (f.ofConv.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom)
-          (Matrix.det (localizedGenericMatrix R n)) := rfl
+          (Matrix.det (localizedGenericMatrix R n)) := by
+      rw [AlgHom.comp_apply, AlgEquiv.toAlgHom_apply]
     _ = Matrix.det ((localizedGenericMatrix R n).map
         (f.ofConv.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom)) := by
       rw [← AlgHom.mapMatrix_apply, ← AlgHom.map_det]
@@ -197,18 +215,7 @@ theorem multiplicativeGroup_pointEquiv_determinantPoints
       simpa only [DiagonalizableGroup.pointsMulEquiv_apply] using
         pointsMulEquiv_determinantPoints R n f
 
-variable {B : Type*} [CommRing B] [Algebra R B]
-
-/-- The determinant homomorphism on convolution points is natural in the value algebra. -/
-theorem mapValue_determinantPoints (phi : A →ₐ[R] B) :
-    (determinantPoints (A := B) R n).comp
-        (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi) =
-      (AlgHom.mapValue (H := MonoidAlgebra R (Multiplicative ℤ)) phi).comp
-        (determinantPoints (A := A) R n) := by
-  exact AlgHom.mapValue_mapDomain
-    (determinantCoordinateMap R n).hom phi
-
-end Points
+end MatrixComparison
 
 end GeneralLinear
 
