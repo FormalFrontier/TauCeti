@@ -15,10 +15,12 @@ A contour cycle is a finite formal `ℤ`-linear combination of closed piecewise-
 file packages that definition as the free abelian group on parametrized closed curves and extends
 the contour integral and winding number additively from curves to cycles.
 
-Individual curves remain raw functions on real intervals, as elsewhere in the contour library. The
+Individual curves remain functions on real intervals, as elsewhere in the contour library. The
 small `PiecewiseC1ClosedCurve` bundle exists only because `FreeAbelianGroup` needs a type of
-generators; it records exactly a function, its oriented parameter interval, its regularity, and its
-closedness. In particular, it does not introduce a second notion of contour integral.
+generators; it records exactly an interval-restricted function, its oriented parameter interval,
+its regularity, and its closedness. Its canonical extension to `ℝ` lets existing raw-function
+contour results apply directly. In particular, it does not introduce a second notion of contour
+integral.
 
 The geometric trace of a cycle is the union of the images of the generators with nonzero
 coefficient. Thus cancellation removes a curve from the trace, just as it removes that curve's
@@ -49,26 +51,27 @@ open MeasureTheory Set intervalIntegral
 
 namespace TauCeti.Contour
 
-/-- A parametrized closed piecewise-`C¹` curve on an oriented real interval. The function is kept
-on `ℝ`, rather than restricted to the interval, so all existing raw-function contour results apply
-directly. -/
+/-- A parametrized closed piecewise-`C¹` curve on an oriented real interval. The parametrization
+is stored only on its interval, so curves cannot differ merely in irrelevant values outside it. -/
 @[ext]
 structure PiecewiseC1ClosedCurve where
-  /-- The parametrization of the curve. -/
-  toFun : ℝ → ℂ
   /-- The initial parameter. -/
   a : ℝ
   /-- The terminal parameter. -/
   b : ℝ
+  /-- The interval-restricted parametrization of the curve. -/
+  toFun : uIcc a b → ℂ
   /-- Piecewise-`C¹` regularity on the parameter interval. -/
-  isPiecewiseC1On : IsPiecewiseC1On toFun a b
+  isPiecewiseC1On : IsPiecewiseC1On (Function.extend Subtype.val toFun 0) a b
   /-- The parametrization has equal endpoints. -/
-  source_eq_target : toFun a = toFun b
+  source_eq_target :
+    Function.extend Subtype.val toFun 0 a = Function.extend Subtype.val toFun 0 b
 
 namespace PiecewiseC1ClosedCurve
 
+/-- A closed curve coerces to the canonical extension of its parametrization to `ℝ`. -/
 instance : CoeFun PiecewiseC1ClosedCurve fun _ ↦ ℝ → ℂ :=
-  ⟨PiecewiseC1ClosedCurve.toFun⟩
+  ⟨fun γ ↦ Function.extend Subtype.val γ.toFun 0⟩
 
 /-- The underlying parametrization is continuous on its parameter interval. -/
 theorem continuousOn (γ : PiecewiseC1ClosedCurve) : ContinuousOn γ (uIcc γ.a γ.b) :=
@@ -173,42 +176,49 @@ theorem IsIn.zsmul {C : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (n : ℤ) : IsIn 
 
 /-- The integral of `f` over a cycle, obtained by additively extending the raw contour integral
 `∫ t in γ.a..γ.b, deriv γ t • f (γ t)` from generators. -/
-def integral (C : Cycle) (f : ℂ → ℂ) : ℂ :=
+def integral {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (C : Cycle) (f : ℂ → E) : E :=
   FreeAbelianGroup.lift
     (fun γ : PiecewiseC1ClosedCurve ↦ ∫ t in γ.a..γ.b, deriv γ t • f (γ t)) C
 
 /-- Integrating over a one-generator cycle gives the raw contour integral over that curve. -/
 @[simp]
-theorem integral_of (γ : PiecewiseC1ClosedCurve) (f : ℂ → ℂ) :
+theorem integral_of {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (γ : PiecewiseC1ClosedCurve) (f : ℂ → E) :
     integral (FreeAbelianGroup.of γ) f =
       ∫ t in γ.a..γ.b, deriv γ t • f (γ t) := by
   rw [integral, FreeAbelianGroup.lift_apply_of]
 
 /-- The integral over the zero cycle vanishes. -/
 @[simp]
-theorem integral_zero (f : ℂ → ℂ) : integral 0 f = 0 :=
+theorem integral_zero {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : ℂ → E) : integral 0 f = 0 :=
   by rw [integral, map_zero]
 
 /-- The integral is additive in the cycle. -/
 @[simp]
-theorem integral_add (C D : Cycle) (f : ℂ → ℂ) :
+theorem integral_add {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (C D : Cycle) (f : ℂ → E) :
     integral (C + D) f = integral C f + integral D f := by
   simp only [integral, map_add]
 
 /-- Reversing every coefficient negates the integral. -/
 @[simp]
-theorem integral_neg (C : Cycle) (f : ℂ → ℂ) : integral (-C) f = -integral C f := by
+theorem integral_neg {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (C : Cycle) (f : ℂ → E) : integral (-C) f = -integral C f := by
   simp only [integral, map_neg]
 
 /-- The integral respects subtraction of cycles. -/
 @[simp]
-theorem integral_sub (C D : Cycle) (f : ℂ → ℂ) :
+theorem integral_sub {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (C D : Cycle) (f : ℂ → E) :
     integral (C - D) f = integral C f - integral D f := by
   simp only [sub_eq_add_neg, integral_add, integral_neg]
 
 /-- The integral respects integer multiplicities. -/
 @[simp]
-theorem integral_zsmul (n : ℤ) (C : Cycle) (f : ℂ → ℂ) :
+theorem integral_zsmul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (n : ℤ) (C : Cycle) (f : ℂ → E) :
     integral (n • C) f = n • integral C f := by
   simp only [integral, map_zsmul]
 
