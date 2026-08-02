@@ -20,7 +20,9 @@ The defining coefficient formulas are accompanied by the translation laws that c
 the two factors: the row group fixes `a_t`, while the column group acts on `b_t` through the
 sign character.  In particular, each factor squares to its subgroup order times itself.
 These are the elementary inputs to the essential-idempotence theorem for `c_t` and the
-construction of Specht modules.
+construction of Specht modules.  The two extreme shapes are also evaluated here: a trivial row or
+column group collapses the corresponding factor to `1`, so on a shape with at most one row the
+whole group fixes `c_t`, and on a shape with at most one column it scales `c_t` by the sign.
 
 The symmetrizers are built over `ℚ`, which is what the essential-idempotence theorem and the
 Specht-module constructions downstream of this file work over.  The coefficients of `c_t` are in
@@ -282,6 +284,50 @@ theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
   have := congrArg (fun x =>
     x.coeff (1 : Equiv.Perm (Fin μ.card))) h
   simp at this
+
+/-! ### The symmetrizers of an extreme shape -/
+
+/-- A trivial row group leaves the row symmetrizer as the empty symmetrization, `1`. -/
+theorem rowSymmetrizer_eq_one (t : YoungTableau μ) (h : rowSubgroup t = ⊥) :
+    rowSymmetrizer t = 1 := by
+  ext σ
+  by_cases hσ : σ = 1
+  · simp [rowSymmetrizer_coeff, h, MonoidAlgebra.one_def, hσ]
+  · simp [rowSymmetrizer_coeff, h, MonoidAlgebra.one_def, Subgroup.mem_bot, hσ]
+
+/-- A trivial column group leaves the column antisymmetrizer as the empty antisymmetrization,
+`1`. -/
+theorem columnAntisymmetrizer_eq_one (t : YoungTableau μ) (h : colSubgroup t = ⊥) :
+    columnAntisymmetrizer t = 1 := by
+  ext σ
+  by_cases hσ : σ = 1
+  · simp [columnAntisymmetrizer_coeff, h, MonoidAlgebra.one_def, hσ]
+  · simp [columnAntisymmetrizer_coeff, h, MonoidAlgebra.one_def, Subgroup.mem_bot, hσ]
+
+/-- With a trivial column group the Young symmetrizer is the row symmetrizer. -/
+theorem youngSymmetrizer_eq_rowSymmetrizer (t : YoungTableau μ) (h : colSubgroup t = ⊥) :
+    youngSymmetrizer t = rowSymmetrizer t := by
+  rw [youngSymmetrizer_def, columnAntisymmetrizer_eq_one t h, mul_one]
+
+/-- With a trivial row group the Young symmetrizer is the column antisymmetrizer. -/
+theorem youngSymmetrizer_eq_columnAntisymmetrizer (t : YoungTableau μ) (h : rowSubgroup t = ⊥) :
+    youngSymmetrizer t = columnAntisymmetrizer t := by
+  rw [youngSymmetrizer_def, rowSymmetrizer_eq_one t h, one_mul]
+
+/-- On a shape with at most one row every group element fixes the Young symmetrizer. -/
+theorem single_mul_youngSymmetrizer_of_rowSubgroup_eq_top (t : YoungTableau μ)
+    (h : rowSubgroup t = ⊤) (g : Equiv.Perm (Fin μ.card)) :
+    MonoidAlgebra.single g (1 : ℚ) * youngSymmetrizer t = youngSymmetrizer t :=
+  mul_youngSymmetrizer_left t ⟨g, by rw [h]; exact Subgroup.mem_top g⟩
+
+/-- On a shape with at most one column every group element scales the Young symmetrizer by its
+sign. -/
+theorem single_mul_youngSymmetrizer_of_colSubgroup_eq_top (t : YoungTableau μ)
+    (h : colSubgroup t = ⊤) (g : Equiv.Perm (Fin μ.card)) :
+    MonoidAlgebra.single g (1 : ℚ) * youngSymmetrizer t =
+      ((Equiv.Perm.sign g : ℤ) : ℚ) • youngSymmetrizer t := by
+  rw [youngSymmetrizer_eq_columnAntisymmetrizer t (rowSubgroup_eq_bot_of_colSubgroup_eq_top t h)]
+  exact mul_columnAntisymmetrizer_left t ⟨g, by rw [h]; exact Subgroup.mem_top g⟩
 
 section Transport
 

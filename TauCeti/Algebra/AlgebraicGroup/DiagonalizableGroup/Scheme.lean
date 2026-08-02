@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.Group.Affine
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Diagonalizable group schemes
@@ -87,8 +87,8 @@ noncomputable def groupScheme (G : FGCommGrpCat.{u}) :
 @[simp]
 lemma groupScheme_X_left (G : FGCommGrpCat.{u}) :
     (groupScheme R G).X.left = Spec (CommRingCat.of (MonoidAlgebra R G)) := by
-  unfold groupScheme
-  rfl
+  simpa only [groupScheme] using
+    hopfSpec_obj_X_left R (coordinateRing R G).obj
 
 /-- After identifying its source with `Spec R[G]`, the structural morphism of `D(G)` is
 induced by the group-algebra structure map. -/
@@ -97,15 +97,8 @@ lemma groupScheme_X_hom (G : FGCommGrpCat.{u}) :
     (groupScheme R G).X.hom =
       eqToHom (groupScheme_X_left R G) ≫
         Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))) := by
-  simpa only [eqToHom_refl, Category.comp_id] using
-    (conj_eqToHom_iff_heq
-      (groupScheme R G).X.hom
-      (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))))
-      (groupScheme_X_left R G) rfl).2 (by
-        unfold groupScheme
-        exact heq_of_eq (AlgebraicGeometry.algSpec_obj_hom
-          (R := CommRingCat.of R)
-          (Opposite.op (CommAlgCat.of R (MonoidAlgebra R G)))))
+  simpa only [groupScheme] using
+    hopfSpec_obj_X_hom R (coordinateRing R G).obj
 
 /-- The source scheme of multiplication on `D(G)` is the fibre product of two copies of
 `Spec R[G]` over `Spec R`. -/
@@ -115,43 +108,8 @@ lemma groupScheme_tensor_X_left (G : FGCommGrpCat.{u}) :
       Limits.pullback
         (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))))
         (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G)))) := by
-  rw [Over.tensorObj_left]
-  have h : (groupScheme R G).X.hom ≍
-      Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G))) := by
-    rw [groupScheme_X_hom]
-    exact eqToHom_comp_heq _ _
-  cases groupScheme_X_left R G
-  exact congrArg (fun k ↦ Limits.pullback k k) (eq_of_heq h)
-
-/-- Specialize Mathlib's `algSpec_map_left` computation to an explicit algebra morphism.
-
-This is the sole boundary where the `CommAlgCat`/under-category wrapper left in that public
-computation lemma is reduced: `algSpec_map_left` phrases its answer through
-`(commAlgCatEquivUnder R).functor.map`, and Mathlib provides no computation lemma for the
-`Under.Hom.right` of that morphism, so the last step is definitional. Keeping it here avoids
-proof-sensitive reductions at the public projection lemmas below. -/
-private lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
-    [Algebra R A] [Algebra R B] (f : A →ₐ[R] B) :
-    ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
-      (CommAlgCat.ofHom f).op).left =
-        Spec.map (CommRingCat.ofHom f.toRingHom) := by
-  rw [AlgebraicGeometry.algSpec_map_left]
-  rfl
-
-/-- `D(G)` is Mathlib's group object `(Spec R[G]).asOver (Spec R)`.
-
-`hopfSpec` builds `D(G)` as the `algSpec`-image of the cogroup algebra `R[G]`, and Mathlib's
-`AlgebraicGeometry.instGrpObjSpecAsOverSpec` is defined to be exactly that image, so the two
-group objects are equal by definition. Mathlib has no lemma identifying the two instance paths:
-its computation lemmas for the operations of a functor image (`Functor.mapGrp_obj_grp_mul`,
-`Functor.obj.ι_def`) are keyed on the `Functor.grpObjObj` instance, which `rw` cannot see
-through the bundled `Grp` object here. This lemma is therefore the single place where that
-identification is made, and the operation computations below rewrite with it instead of
-reducing `hopfSpec` themselves. -/
-private lemma groupScheme_eq_asOver (G : FGCommGrpCat.{u}) :
-    groupScheme R G =
-      Grp.mk ((Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R))) :=
-  rfl
+  simpa only [groupScheme] using
+    hopfSpec_obj_tensor_X_left R (coordinateRing R G).obj
 
 /-- The unit of `D(G)` is induced by the counit of the group algebra. -/
 @[simp]
@@ -160,15 +118,8 @@ lemma groupScheme_one_left (G : FGCommGrpCat.{u}) :
       Spec.map (CommRingCat.ofHom
         (Bialgebra.counitAlgHom R (MonoidAlgebra R G))) ≫
       eqToHom (groupScheme_X_left R G).symm := by
-  simpa only [eqToHom_refl, Category.id_comp] using
-    (conj_eqToHom_iff_heq
-      η[(groupScheme R G).X].left
-      (Spec.map (CommRingCat.ofHom
-        (Bialgebra.counitAlgHom R (MonoidAlgebra R G))))
-      rfl (groupScheme_X_left R G)).2 (by
-        rw [groupScheme_eq_asOver]
-        exact heq_of_eq (AlgebraicGeometry.one_spec_asOver_spec_left
-          (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
+  unfold groupScheme
+  convert hopfSpec_obj_one_left R (coordinateRing R G).obj using 1
 
 /-- Multiplication on `D(G)` is induced by the comultiplication of the group algebra. The
 first transport identifies its opaque product source with the standard affine fibre product. -/
@@ -180,16 +131,8 @@ lemma groupScheme_mul_left (G : FGCommGrpCat.{u}) :
         Spec.map (CommRingCat.ofHom
           (Bialgebra.comulAlgHom R (MonoidAlgebra R G))) ≫
         eqToHom (groupScheme_X_left R G).symm := by
-  simpa only [Category.assoc] using
-    (conj_eqToHom_iff_heq
-      μ[(groupScheme R G).X].left
-      ((pullbackSpecIso R (MonoidAlgebra R G) (MonoidAlgebra R G)).hom ≫
-        Spec.map (CommRingCat.ofHom
-          (Bialgebra.comulAlgHom R (MonoidAlgebra R G))))
-      (groupScheme_tensor_X_left R G) (groupScheme_X_left R G)).2 (by
-        rw [groupScheme_eq_asOver]
-        exact heq_of_eq (AlgebraicGeometry.mul_spec_asOver_spec_left
-          (R := CommRingCat.of R) (A := CommRingCat.of (MonoidAlgebra R G))))
+  unfold groupScheme
+  convert hopfSpec_obj_mul_left R (coordinateRing R G).obj using 1
 
 /-- Inversion on `D(G)` is induced by the antipode of the group algebra. -/
 @[simp]
@@ -199,14 +142,8 @@ lemma groupScheme_inv_left (G : FGCommGrpCat.{u}) :
       Spec.map (CommRingCat.ofHom
         (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G)).toRingHom) ≫
       eqToHom (groupScheme_X_left R G).symm := by
-  apply (conj_eqToHom_iff_heq _ _
-    (groupScheme_X_left R G) (groupScheme_X_left R G)).2
-  -- Mathlib computes the unit and the multiplication of `(Spec A).asOver (Spec R)` but not its
-  -- inverse, which is the `algSpec`-image of the antipode; `algSpec_map_left_ofAlgHom` turns
-  -- that image into the expected `Spec.map`.
-  rw [groupScheme_eq_asOver]
-  exact heq_of_eq (algSpec_map_left_ofAlgHom R
-    (HopfAlgebra.antipodeAlgHom R (MonoidAlgebra R G)))
+  unfold groupScheme
+  convert hopfSpec_obj_inv_left R (coordinateRing R G).obj using 1
 
 /-- A homomorphism `G ⟶ H` induces the contravariant group-scheme morphism
 `D(H) ⟶ D(G)`. -/
@@ -313,10 +250,7 @@ instance locallyOfFiniteType_groupScheme (G : FGCommGrpCat.{u}) :
     locallyOfFiniteType_of_isOpenImmersion _
   let : LocallyOfFiniteType
       (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G)))) := by
-    -- `change` selects the `specOverSpec` instance path compatible with the finite-type
-    -- coordinate algebra.
-    change LocallyOfFiniteType
-      (Spec (CommRingCat.of (MonoidAlgebra R G)) ↘ Spec (CommRingCat.of R))
+    rw [← AlgebraicGeometry.specOverSpec_over]
     infer_instance
   exact locallyOfFiniteType_comp _ _
 
