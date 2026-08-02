@@ -102,7 +102,7 @@ noncomputable def toClassGroup : NarrowClassGroup K →* ClassGroup (𝓞 K) :=
   QuotientGroup.lift (narrowPrincipalSubgroup K) (ClassGroup.mk (R := 𝓞 K) K)
     narrowPrincipalSubgroup_le_ker
 
-@[simp] theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
+theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
     toClassGroup (mk I) = ClassGroup.mk K I :=
   QuotientGroup.lift_mk' _ narrowPrincipalSubgroup_le_ker I
 
