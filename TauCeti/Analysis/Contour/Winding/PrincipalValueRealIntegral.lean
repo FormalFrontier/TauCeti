@@ -33,8 +33,6 @@ identity here to the full real winding formula.
   Cauchy-kernel principal value with the ordinary integral of `realWindingIntegrand`.
 * `windingNumber_re_eq_real_integral` gives the corresponding formula for the real part of the
   generalized winding number.
-* `windingNumber_eq_real_integral_of_im_eq_zero` gives the full real formula when the winding
-  number is known to be real.
 
 ## References
 
@@ -133,30 +131,16 @@ interval-integrable, then
 
 No avoidance hypothesis is imposed, so the curve may pass through `w`. -/
 theorem windingNumber_re_eq_real_integral
-    (h : HasCauchyPVAt γ a b (fun z => (z - w)⁻¹) w L)
+    (h : CauchyPVExistsAt γ a b (fun z => (z - w)⁻¹) w)
     (h_int : IntervalIntegrable
       (fun t => realWindingIntegrand (γ t - w) (deriv γ t)) volume a b) :
     (windingNumber γ a b w).re =
       1 / (2 * Real.pi) *
         ∫ t in a..b, realWindingIntegrand (γ t - w) (deriv γ t) := by
-  rw [windingNumber_eq_of_hasCauchyPVAt h, mul_re,
-    h.im_eq_integral_realWindingIntegrand h_int]
+  have h' := h.hasCauchyPVAt_cauchyPVAt
+  rw [windingNumber_eq_of_hasCauchyPVAt h', mul_re,
+    h'.im_eq_integral_realWindingIntegrand h_int]
   simp [Complex.inv_re, Complex.inv_im, Complex.normSq]
-
-/-- The full on-curve real-integral formula when the generalized winding number is real.  This
-separates the measure-theoretic content proved here from the geometric fact that the relevant
-closed immersed-curve principal value is purely imaginary before normalization. -/
-theorem windingNumber_eq_real_integral_of_im_eq_zero
-    (h : HasCauchyPVAt γ a b (fun z => (z - w)⁻¹) w L)
-    (h_int : IntervalIntegrable
-      (fun t => realWindingIntegrand (γ t - w) (deriv γ t)) volume a b)
-    (h_im : (windingNumber γ a b w).im = 0) :
-    windingNumber γ a b w =
-      ((1 / (2 * Real.pi) *
-        ∫ t in a..b, realWindingIntegrand (γ t - w) (deriv γ t) : ℝ) : ℂ) := by
-  apply Complex.ext
-  · simpa using windingNumber_re_eq_real_integral h h_int
-  · simpa using h_im
 
 end TauCeti.Contour
 
