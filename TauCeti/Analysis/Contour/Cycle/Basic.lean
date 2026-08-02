@@ -91,10 +91,15 @@ def of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b) (hclosed : 
       refine ⟨p, hp, fun c d hcd hdis ↦ (hpieces c d hcd hdis).congr fun t ht ↦ ?_⟩
       exact Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0 ⟨t, hcd ht⟩
   source_eq_target := by
-    rw [← show (⟨a, left_mem_uIcc⟩ : uIcc a b).1 = a from rfl,
-      ← show (⟨b, right_mem_uIcc⟩ : uIcc a b).1 = b from rfl,
-      Subtype.val_injective.extend_apply, Subtype.val_injective.extend_apply]
-    exact hclosed
+    calc
+      Function.extend Subtype.val (fun t : uIcc a b ↦ γ t) 0 a =
+          γ (⟨a, left_mem_uIcc⟩ : uIcc a b) :=
+        Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0
+          ⟨a, left_mem_uIcc⟩
+      _ = γ (⟨b, right_mem_uIcc⟩ : uIcc a b) := hclosed
+      _ = Function.extend Subtype.val (fun t : uIcc a b ↦ γ t) 0 b :=
+        (Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0
+          ⟨b, right_mem_uIcc⟩).symm
 
 /-- Bundling a raw curve preserves its values on the parameter interval. -/
 @[simp]
