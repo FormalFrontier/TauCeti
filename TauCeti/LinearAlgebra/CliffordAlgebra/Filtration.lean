@@ -61,10 +61,13 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.reverse_mem_filtration` and
   `TauCeti.CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
   involution, by reversal, and by an isometry of quadratic forms.
-* `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
+* `TauCeti.CliffordAlgebra.contractLeft_mem_filtration_succ` and
+  `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
   `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
-  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration`: contraction and change of quadratic
-  form preserve the filtration, and the change-form equivalence transports it exactly.
+  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
+  `TauCeti.CliffordAlgebra.changeFormEquiv_mem_filtration_iff`: contraction and change of
+  quadratic form respect the filtration, contraction lowers every positive step by one, and the
+  change-form equivalence transports every step exactly.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
@@ -493,28 +496,36 @@ section ChangeForm
 
 variable {Q' : QuadraticForm R M} {B : LinearMap.BilinForm R M}
 
-private theorem contractLeft_prod_map_ι_mem_filtration (d : Module.Dual R M) :
-    ∀ l : List M, contractLeft d (l.map (ι Q)).prod ∈ filtration Q l.length
+private theorem contractLeft_prod_map_ι_mem_filtration_pred (d : Module.Dual R M) :
+    ∀ l : List M, contractLeft d (l.map (ι Q)).prod ∈ filtration Q (l.length - 1)
   | [] => by simp
-  | m :: l => by
+  | [m] => by simp
+  | m :: n :: l => by
     rw [List.map_cons, List.prod_cons, contractLeft_ι_mul]
     refine Submodule.sub_mem _ ?_ ?_
-    · exact Submodule.smul_mem _ _ (prod_map_ι_mem_filtration Q (Nat.le_succ _))
+    · exact Submodule.smul_mem _ _ (by
+        simpa using prod_map_ι_mem_filtration Q (l := n :: l) le_rfl)
     · have hmul :=
         Submodule.mul_mem_mul (ι_mem_filtration_one Q m)
-          (contractLeft_prod_map_ι_mem_filtration d l)
-      rw [filtration_mul Q 1 l.length] at hmul
+          (contractLeft_prod_map_ι_mem_filtration_pred d (n :: l))
+      rw [filtration_mul Q 1 ((n :: l).length - 1)] at hmul
       simpa [Nat.add_comm] using hmul
 
-/-- Left contraction preserves each filtration step: contracting a word of generators produces a
-linear combination of shorter words. -/
-theorem contractLeft_mem_filtration (d : Module.Dual R M) {k : ℕ} {x : CliffordAlgebra Q}
-    (hx : x ∈ filtration Q k) : contractLeft d x ∈ filtration Q k := by
-  have h : filtration Q k ≤ (filtration Q k).comap (contractLeft d) :=
+/-- Left contraction lowers every positive filtration step by one. -/
+theorem contractLeft_mem_filtration_succ (d : Module.Dual R M) {k : ℕ}
+    {x : CliffordAlgebra Q} (hx : x ∈ filtration Q (k + 1)) :
+    contractLeft d x ∈ filtration Q k := by
+  have h : filtration Q (k + 1) ≤ (filtration Q k).comap (contractLeft d) :=
     (filtration_le_iff Q).2 fun l hl => by
       rw [Submodule.mem_comap]
-      exact filtration_mono Q hl (contractLeft_prod_map_ι_mem_filtration Q d l)
+      exact filtration_mono Q (by omega)
+        (contractLeft_prod_map_ι_mem_filtration_pred Q d l)
   exact h hx
+
+/-- Left contraction preserves each filtration step. -/
+theorem contractLeft_mem_filtration (d : Module.Dual R M) {k : ℕ} {x : CliffordAlgebra Q}
+    (hx : x ∈ filtration Q k) : contractLeft d x ∈ filtration Q k :=
+  contractLeft_mem_filtration_succ Q d (filtration_mono Q (Nat.le_succ k) hx)
 
 private theorem changeForm_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q) :
     ∀ l : List M, changeForm h (l.map (ι Q)).prod ∈ filtration Q' l.length
@@ -540,6 +551,7 @@ theorem changeForm_mem_filtration (h : B.toQuadraticMap = Q' - Q) {k : ℕ}
   exact hmap hx
 
 /-- The change-form equivalence transports every Clifford filtration step exactly. -/
+@[simp]
 theorem changeFormEquiv_map_filtration (h : B.toQuadraticMap = Q' - Q) (k : ℕ) :
     (filtration Q k).map (changeFormEquiv h).toLinearMap = filtration Q' k := by
   refine le_antisymm ?_ ?_
@@ -549,6 +561,19 @@ theorem changeFormEquiv_map_filtration (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
     refine ⟨(changeFormEquiv h).symm x, ?_, (changeFormEquiv h).apply_symm_apply x⟩
     rw [changeFormEquiv_symm]
     exact changeForm_mem_filtration Q' (changeForm.neg_proof h) hx
+
+private theorem changeFormEquiv_mem_filtration_iff_aux
+    (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+    (x : CliffordAlgebra Q) : (changeFormEquiv h) x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
+  rw [← changeFormEquiv_map_filtration Q h k, Submodule.mem_map_equiv]
+  rw [(changeFormEquiv h).symm_apply_apply]
+
+/-- Membership in the filtration is invariant under the change-form equivalence. The statement
+uses `changeForm`, the simplifier's normal form for applying `changeFormEquiv`. -/
+@[simp]
+theorem changeFormEquiv_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+    (x : CliffordAlgebra Q) : changeForm h x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
+  simpa only [changeFormEquiv_apply] using changeFormEquiv_mem_filtration_iff_aux Q h k x
 
 end ChangeForm
 
