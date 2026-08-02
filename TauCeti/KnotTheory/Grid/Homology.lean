@@ -127,8 +127,7 @@ noncomputable def fullyBlockedHomologyEquivChainOfLeTwo (hn : n ≤ 2) :
 
 /-- The small-grid equivalence sends the homology class of a cycle to its underlying chain. -/
 @[simp]
-theorem fullyBlockedHomologyEquivChainOfLeTwo_apply_mk (hn : n ≤ 2)
-    (c : G.fullyBlockedCycles) :
+theorem fullyBlockedHomologyEquivChainOfLeTwo_apply_mk (hn : n ≤ 2) (c : G.fullyBlockedCycles) :
     G.fullyBlockedHomologyEquivChainOfLeTwo hn (Submodule.Quotient.mk c) =
       (c : GridChain (ZMod 2) n) := by
   rw [fullyBlockedHomologyEquivChainOfLeTwo]

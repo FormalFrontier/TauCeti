@@ -74,22 +74,19 @@ theorem fullyBlockedRectangleCount_eq_zero_of_le_two (hn : n ≤ 2) (x y : GridS
 
 /-- Every fully blocked rectangle coefficient vanishes on every `2 × 2` grid. -/
 @[simp]
-theorem fullyBlockedRectangleCount_eq_zero_of_two
-    (G : GridDiagram 2) (x y : GridState 2) :
+theorem fullyBlockedRectangleCount_eq_zero_of_two (G : GridDiagram 2) (x y : GridState 2) :
     G.fullyBlockedRectangleCount x y = 0 :=
   G.fullyBlockedRectangleCount_eq_zero_of_le_two le_rfl x y
 
 /-- The fully blocked differential of one generator vanishes in grid size at most two. -/
-theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_le_two
-    (hn : n ≤ 2) (x : GridState n) :
+theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_le_two (hn : n ≤ 2) (x : GridState n) :
     G.fullyBlockedDifferentialOnGenerator x = 0 := by
   ext y
   simp [fullyBlockedRectangleCount_eq_zero_of_le_two G hn x y]
 
 /-- The fully blocked differential of one generator vanishes on every `2 × 2` grid. -/
 @[simp]
-theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_two
-    (G : GridDiagram 2) (x : GridState 2) :
+theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_two (G : GridDiagram 2) (x : GridState 2) :
     G.fullyBlockedDifferentialOnGenerator x = 0 :=
   G.fullyBlockedDifferentialOnGenerator_eq_zero_of_le_two le_rfl x
 
