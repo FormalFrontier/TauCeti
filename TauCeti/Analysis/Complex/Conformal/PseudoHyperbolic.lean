@@ -45,6 +45,12 @@ lemma pseudoHyperbolicExpr_def (z w : ℂ) :
     pseudoHyperbolicExpr z w = ‖(z - w) / (1 - (starRingEnd ℂ) w * z)‖ :=
   by rfl
 
+/-- The pseudo-hyperbolic expression as a quotient of two real norms, the form in which it is
+compared with the Euclidean distance `‖z - w‖`. -/
+lemma pseudoHyperbolicExpr_eq_norm_div_norm (z w : ℂ) :
+    pseudoHyperbolicExpr z w = ‖z - w‖ / ‖1 - (starRingEnd ℂ) w * z‖ := by
+  rw [pseudoHyperbolicExpr_def, norm_div]
+
 @[simp]
 lemma pseudoHyperbolicExpr_nonneg (z w : ℂ) : 0 ≤ pseudoHyperbolicExpr z w :=
   norm_nonneg _
