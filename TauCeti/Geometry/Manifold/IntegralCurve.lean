@@ -61,11 +61,16 @@ namespace IsMIntegralCurve
 variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [BoundarylessManifold I M]
 
 /-- An integral curve of a `C^n` vector field on a boundaryless smooth manifold is `C^(n + 1)`. -/
-theorem contMDiff_succ (n : ℕ) [IsManifold I 1 M] [IsManifold I (n + 1 : ℕ) M]
+theorem contMDiff_succ (n : ℕ) [IsManifold I (n + 1 : ℕ) M]
     {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
     (hγ : IsMIntegralCurve γ v)
-    (hv : CMDiff n (fun x => (⟨x, v x⟩ : TangentBundle I M))) :
+    (hv : let _ : IsManifold I 1 M := IsManifold.of_le (n := (n + 1 : ℕ)) (by
+      exact_mod_cast Nat.succ_le_succ (Nat.zero_le n));
+      CMDiff n (fun x => (⟨x, v x⟩ : TangentBundle I M))) :
     ContMDiff 𝓘(ℝ, ℝ) I (n + 1 : ℕ) γ := by
+  let _ : IsManifold I 1 M := IsManifold.of_le (n := (n + 1 : ℕ)) (by
+    exact_mod_cast Nat.succ_le_succ (Nat.zero_le n))
+  change CMDiff n (fun x => (⟨x, v x⟩ : TangentBundle I M)) at hv
   intro t₀
   rw [contMDiffAt_iff_target]
   refine ⟨hγ.continuous.continuousAt, ?_⟩
