@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.GroupTheory.GroupAction.ConjAct
+public import Mathlib.GroupTheory.Subgroup.Centralizer
 public import Mathlib.LinearAlgebra.Matrix.Notation
+public import TauCeti.Algebra.Group.NormalizerQuotient.Basic
 public import TauCeti.RepresentationTheory.SU2.Basic
 
 /-!
@@ -53,6 +54,8 @@ evenness of characters that this yields is proved in
 * `TauCeti.SU2.conj_torusHom_of_mem_normalizer`: the Weyl group acts on `T` by `z ↦ z^{±1}`,
   refined by `TauCeti.SU2.weylAut_weylClass` and `TauCeti.SU2.weylAut_injective`: the action of the
   Weyl group is faithful and its nontrivial element is inversion.
+* `TauCeti.SU2.normalizerAut_ker`: conjugation by `N(T)` has kernel exactly `T`, which is what
+  makes the descended action of the Weyl group faithful.
 
 ## References
 
@@ -195,12 +198,10 @@ theorem normalizer_torus :
 
 /-! ### The Weyl group -/
 
-/-- **The Weyl group of `SU(2)`**, `N(T) / T` for the diagonal maximal torus `T`. The group
-structure is the quotient one: `T.subgroupOf (normalizer T)` is normal in `normalizer T` by
-`Subgroup.normal_in_normalizer`. -/
-abbrev weylGroup : Type :=
-  ↥(Subgroup.normalizer (torus : Set SU2)) ⧸
-    torus.subgroupOf (Subgroup.normalizer (torus : Set SU2))
+/-- **The Weyl group of `SU(2)`**, `N(T) / T` for the diagonal maximal torus `T`. This is
+`TauCeti.Subgroup.normalizerQuotient`, the general normalizer quotient of
+`TauCeti/Algebra/Group/NormalizerQuotient/Basic.lean`, at the maximal torus. -/
+abbrev weylGroup : Type := Subgroup.normalizerQuotient torus
 
 /-- The quarter turn, as an element of the normalizer of the maximal torus. -/
 noncomputable def weylNormalizerElement : ↥(Subgroup.normalizer (torus : Set SU2)) :=
@@ -211,29 +212,27 @@ noncomputable def weylNormalizerElement : ↥(Subgroup.normalizer (torus : Set S
 theorem coe_weylNormalizerElement : (weylNormalizerElement : SU2) = weylElement := (rfl)
 
 /-- The class of the quarter turn in the Weyl group of `SU(2)`; it is the nontrivial element. -/
-noncomputable def weylClass : weylGroup := QuotientGroup.mk weylNormalizerElement
+noncomputable def weylClass : weylGroup :=
+  Subgroup.normalizerQuotientMk torus weylNormalizerElement
 
-/-- `TauCeti.SU2.weylClass` is the class of the quarter turn. -/
+/-- `TauCeti.SU2.weylClass` is the class of the quarter turn, written in the quotient-map normal
+form that `TauCeti.Subgroup.normalizerQuotientMk_apply` rewrites to. -/
 theorem weylClass_eq_mk : weylClass = QuotientGroup.mk weylNormalizerElement := (rfl)
 
 /-- The class of the quarter turn is nontrivial, because the quarter turn is not diagonal. -/
-theorem weylClass_ne_one : weylClass ≠ 1 := by
-  rw [weylClass_eq_mk, Ne, QuotientGroup.eq_one_iff, Subgroup.mem_subgroupOf,
-    coe_weylNormalizerElement]
-  exact weylElement_notMem_torus
+theorem weylClass_ne_one : weylClass ≠ 1 := fun h =>
+  weylElement_notMem_torus
+    ((Subgroup.normalizerQuotientMk_eq_one_iff torus weylNormalizerElement).mp h)
 
 /-- Every element of the Weyl group of `SU(2)` is trivial or the class of the quarter turn. -/
 theorem eq_one_or_eq_weylClass (q : weylGroup) : q = 1 ∨ q = weylClass := by
-  obtain ⟨n, rfl⟩ := QuotientGroup.mk_surjective q
+  obtain ⟨n, rfl⟩ := Subgroup.normalizerQuotientMk_surjective torus q
   rcases mem_normalizer_torus_iff.mp n.2 with h | h
-  · exact Or.inl ((QuotientGroup.eq_one_iff _).mpr (Subgroup.mem_subgroupOf.mpr h))
+  · exact Or.inl ((Subgroup.normalizerQuotientMk_eq_one_iff torus n).mpr h)
   · refine Or.inr ?_
-    have hkey : weylNormalizerElement⁻¹ * n
-        ∈ torus.subgroupOf (Subgroup.normalizer (torus : Set SU2)) :=
-      Subgroup.mem_subgroupOf.mpr h
-    have hq := (QuotientGroup.eq_one_iff _).mpr hkey
-    rw [QuotientGroup.mk_mul, QuotientGroup.mk_inv, inv_mul_eq_one] at hq
-    rw [weylClass_eq_mk]
+    have hq : Subgroup.normalizerQuotientMk torus (weylNormalizerElement⁻¹ * n) = 1 :=
+      (Subgroup.normalizerQuotientMk_eq_one_iff torus _).mpr (by simpa using h)
+    rw [map_mul, map_inv, inv_mul_eq_one] at hq
     exact hq.symm
 
 /-- **The Weyl group of `SU(2)` has order two.** -/
@@ -270,61 +269,51 @@ theorem conj_torusHom_of_mem_normalizer {n : SU2} (hn : n ∈ Subgroup.normalize
 
 /-! ### The action of the Weyl group on the maximal torus -/
 
-/-- The maximal torus, seen inside its own normalizer, *is* the circle group: this is
-`TauCeti.SU2.torusContinuousMulEquiv` read through `Subgroup.subgroupOfEquivOfLe`. It is the
-identification along which conjugation by `N(T)` becomes an action on `Circle`. -/
-noncomputable def torusSubgroupOfMulEquiv :
-    ↥(torus.subgroupOf (Subgroup.normalizer (torus : Set SU2))) ≃* Circle :=
-  (Subgroup.subgroupOfEquivOfLe Subgroup.le_normalizer).trans
-    torusContinuousMulEquiv.symm.toMulEquiv
-
-@[simp]
-theorem torusHom_torusSubgroupOfMulEquiv
-    (t : ↥(torus.subgroupOf (Subgroup.normalizer (torus : Set SU2)))) :
-    torusHom (torusSubgroupOfMulEquiv t)
-      = ((t : ↥(Subgroup.normalizer (torus : Set SU2))) : SU2) :=
-  torusHom_torusContinuousMulEquiv_symm _
-
 /-- **Conjugation of the maximal torus by an element of its normalizer**, read through the circle
-parametrisation `z ↦ diag (z, z⁻¹)`: `normalizerAut n` is the automorphism of `Circle` with
+parametrisation `z ↦ diag (z, z⁻¹)`: this is Mathlib's `Subgroup.normalizerMonoidHom` at the
+maximal torus, transported along `TauCeti.SU2.torusContinuousMulEquiv`. So `normalizerAut n` is the
+automorphism of `Circle` with
 `diag (normalizerAut n z, (normalizerAut n z)⁻¹) = n diag (z, z⁻¹) n⁻¹`, which is
 `TauCeti.SU2.torusHom_normalizerAut`. -/
 noncomputable def normalizerAut :
     ↥(Subgroup.normalizer (torus : Set SU2)) →* MulAut Circle :=
-  (MulAut.congr torusSubgroupOfMulEquiv).toMonoidHom.comp MulAut.conjNormal
+  (MulAut.congr torusContinuousMulEquiv.symm.toMulEquiv).toMonoidHom.comp
+    (Subgroup.normalizerMonoidHom torus)
 
 /-- `TauCeti.SU2.normalizerAut` is conjugation in `SU(2)`, read on the circle parameter. -/
 theorem torusHom_normalizerAut (n : ↥(Subgroup.normalizer (torus : Set SU2))) (z : Circle) :
     torusHom (normalizerAut n z) = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
-  have hx : ((torusSubgroupOfMulEquiv.symm z : ↥(Subgroup.normalizer (torus : Set SU2))) : SU2)
-      = torusHom z := by
-    rw [← torusHom_torusSubgroupOfMulEquiv, MulEquiv.apply_symm_apply]
-  have hval : normalizerAut n z
-      = torusSubgroupOfMulEquiv (MulAut.conjNormal n (torusSubgroupOfMulEquiv.symm z)) := rfl
-  rw [hval, torusHom_torusSubgroupOfMulEquiv, MulAut.conjNormal_apply]
-  simp [hx]
+  have hval : normalizerAut n z = torusContinuousMulEquiv.symm
+      (Subgroup.normalizerMonoidHom torus n (torusContinuousMulEquiv z)) := rfl
+  rw [hval, torusHom_torusContinuousMulEquiv_symm,
+    Subgroup.normalizerMonoidHom_apply_apply_coe, torusContinuousMulEquiv_apply]
 
-/-- The maximal torus acts trivially on itself by conjugation, because it is commutative. This is
-what lets `TauCeti.SU2.normalizerAut` descend to the Weyl group. -/
-theorem normalizerAut_eq_one_of_mem_subgroupOf
-    (t : ↥(Subgroup.normalizer (torus : Set SU2)))
-    (ht : t ∈ torus.subgroupOf (Subgroup.normalizer (torus : Set SU2))) :
-    normalizerAut t = 1 := by
-  obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp (Subgroup.mem_subgroupOf.mp ht)
-  refine MulEquiv.ext fun z => torusHom_injective ?_
-  rw [torusHom_normalizerAut, MulAut.one_apply, ← hu, ← map_inv, ← map_mul, ← map_mul]
-  congr 1
-  rw [mul_comm u z, mul_assoc, mul_inv_cancel, mul_one]
+/-- **The conjugation action of `N(T)` on the maximal torus has kernel exactly `T`.** This is
+Mathlib's `Subgroup.normalizerMonoidHom_ker`, whose kernel is the centralizer of `T`, together
+with `TauCeti.SU2.centralizer_torus`, which says that the centralizer of `T` is `T`. It supplies
+both halves of the Weyl-group action: `T` acts trivially, so conjugation descends to `N(T) / T`,
+and nothing else does, so the descended action is faithful. -/
+theorem normalizerAut_ker :
+    normalizerAut.ker = torus.subgroupOf (Subgroup.normalizer (torus : Set SU2)) := by
+  rw [normalizerAut, MonoidHom.ker_comp_of_injective _ _ (MulEquiv.injective _),
+    Subgroup.normalizerMonoidHom_ker, centralizer_torus]
+
+/-- An element of `N(T)` acts trivially on the maximal torus exactly when it lies in `T`. -/
+theorem normalizerAut_eq_one_iff (n : ↥(Subgroup.normalizer (torus : Set SU2))) :
+    normalizerAut n = 1 ↔ (n : SU2) ∈ torus := by
+  rw [← MonoidHom.mem_ker, normalizerAut_ker, Subgroup.mem_subgroupOf]
 
 /-- **The action of the Weyl group of `SU(2)` on the maximal torus.** Conjugation by `N(T)`
 descends to the quotient `N(T) / T`, because `T` is commutative and so acts trivially on itself;
 the automorphism of `Circle` produced here is the automorphism of `T` it names under
 `TauCeti.SU2.torusContinuousMulEquiv`. -/
 noncomputable def weylAut : weylGroup →* MulAut Circle :=
-  QuotientGroup.lift _ normalizerAut normalizerAut_eq_one_of_mem_subgroupOf
+  Subgroup.normalizerQuotientLift torus normalizerAut fun _ hn =>
+    (normalizerAut_eq_one_iff _).mpr hn
 
 /-- The Weyl-group action is the conjugation action of any representative: it is independent of
-the choice of representative by construction. -/
+the choice of representative by construction. The representative is written as a bare quotient
+class, the normal form `TauCeti.Subgroup.normalizerQuotientMk_apply` produces. -/
 @[simp]
 theorem weylAut_mk (n : ↥(Subgroup.normalizer (torus : Set SU2))) :
     weylAut (QuotientGroup.mk n) = normalizerAut n := (rfl)
@@ -343,19 +332,11 @@ theorem weylAut_weylClass : weylAut weylClass = MulEquiv.inv Circle := by
     weylElement_conj_torusHom]
   rfl
 
-/-- **The Weyl group of `SU(2)` acts faithfully on the maximal torus.** -/
-theorem weylAut_injective : Function.Injective weylAut := by
-  rw [injective_iff_map_eq_one]
-  intro q hq
-  rcases eq_one_or_eq_weylClass q with rfl | rfl
-  · rfl
-  · refine absurd ?_ circleI_sq_ne_one
-    rw [weylAut_weylClass] at hq
-    have hz : circleI⁻¹ = circleI := by simpa using DFunLike.congr_fun hq circleI
-    have hsq : circleI ^ 2 = 1 := by
-      have hmul : circleI * circleI⁻¹ = 1 := mul_inv_cancel circleI
-      rwa [hz, ← sq] at hmul
-    simpa using congrArg (fun c : Circle => (c : ℂ)) hsq
+/-- **The Weyl group of `SU(2)` acts faithfully on the maximal torus**, because the kernel of the
+conjugation action of `N(T)` is exactly `T`. -/
+theorem weylAut_injective : Function.Injective weylAut :=
+  (Subgroup.normalizerQuotientLift_injective_iff torus normalizerAut
+    (fun _ hn => (normalizerAut_eq_one_iff _).mpr hn)).mpr normalizerAut_eq_one_iff
 
 /-- Every element of the maximal torus is conjugate to its inverse in `SU(2)`, by the quarter
 turn. -/
