@@ -65,7 +65,7 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
   `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
   `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
-  `TauCeti.CliffordAlgebra.changeFormEquiv_mem_filtration_iff`: contraction and change of
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
@@ -571,7 +571,7 @@ private theorem changeFormEquiv_mem_filtration_iff_aux
 /-- Membership in the filtration is invariant under the change-form equivalence. The statement
 uses `changeForm`, the simplifier's normal form for applying `changeFormEquiv`. -/
 @[simp]
-theorem changeFormEquiv_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+theorem changeForm_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
     (x : CliffordAlgebra Q) : changeForm h x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
   simpa only [changeFormEquiv_apply] using changeFormEquiv_mem_filtration_iff_aux Q h k x
 
