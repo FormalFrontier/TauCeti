@@ -89,6 +89,23 @@ noncomputable def action (Theta : PointRepresentation (R := R) (H := H) (V := V)
   Theta.app A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A)
 
+/-- Point representations are equal when their concrete actions agree at every value algebra and
+point. -/
+@[ext]
+theorem ext
+    {Theta Psi : PointRepresentation (R := R) (H := H) (V := V)}
+    (h : ∀ (A : CommAlgCat.{max u v w} R) (x : points (H := H) A),
+      Theta.action A x = Psi.action A x) :
+    Theta = Psi := by
+  apply NatTrans.ext
+  funext A
+  apply (cancel_mono
+    (eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A))).1
+  change Theta.action A = Psi.action A
+  apply GrpCat.ext
+  intro x
+  exact h A x
+
 /-- Naturality of a point representation, expressed using the concrete point and scalar-extension
 groups. -/
 theorem action_naturality (Theta : PointRepresentation (R := R) (H := H) (V := V))
@@ -891,16 +908,7 @@ theorem ofComodule_toComodule
     rw [mapPoints_universal_ofConv, huniversal] at hforward
     rw [mapPoints_universal_ofConv] at hTheta
     exact hforward.symm.trans hTheta
-  apply NatTrans.ext
-  funext A
-  apply (cancel_mono
-    (eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A))).1
-  -- `pointsFunctor_obj` is an opaque categorical equality, so expose the concrete action source
-  -- after cancelling the scalar-extension object transport.
-  change (ofComodule (toComodule Theta)).action A = Theta.action A
-  apply GrpCat.ext
-  intro x
-  exact haction A x
+  exact ext haction
 
 end PointRepresentation
 
