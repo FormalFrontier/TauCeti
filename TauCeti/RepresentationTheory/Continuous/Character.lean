@@ -130,8 +130,8 @@ theorem character_restrict {H : Type*} [Monoid H] [TopologicalSpace H] (φ : H �
     (hφ : Continuous φ) :
     character (π.restrict φ) (hπ.comp hφ) = (character π hπ).comp ⟨φ, hφ⟩ := by
   ext h
-  rw [character_apply, ContinuousMap.comp_apply, character_apply]
-  rfl
+  rw [character_apply, ContinuousMap.comp_apply, character_apply, ContinuousMap.coe_mk,
+    ContRepresentation.restrict_apply]
 
 end Monoid
 

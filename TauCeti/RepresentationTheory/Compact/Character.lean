@@ -219,7 +219,7 @@ theorem character_orthonormal_distinct (ρ : ContRepresentation 𝕜 G W) (hρ :
 /-- The character of a finite-dimensional irreducible unitary representation is a **unit vector**
 of `L²(G)`. This is `character_orthonormal_self` in norm form; it is the normalization that makes
 the irreducible characters an orthonormal system rather than merely an orthogonal one. -/
-theorem norm_characterLp [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
+theorem norm_characterLp_eq_one [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     ‖characterLp π hπ‖ = 1 := by
   have h := character_orthonormal_self π hπ hunitary hirr
