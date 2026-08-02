@@ -47,8 +47,8 @@ the normalized chord `‖exp (I * θ) - 1‖` read off the factorization `exp a 
 * the **chord formula** `TauCeti.dist_circleExp_eq_two_mul_abs_sin`, `dist (exp a) (exp b) =
   2 * |sin ((a - b) / 2)|`, which is Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one`;
 * the fact that the chord is at most the arc, `TauCeti.lipschitzWith_one_circleExp`, which is
-  Mathlib's `Real.norm_exp_I_mul_ofReal_sub_one_le`, whence `TauCeti.dist_circleExp_le` pointwise
-  and `TauCeti.diam_circleExp_image_Icc_le` by `LipschitzWith.diam_image_le` and `Real.diam_Icc`.
+  Mathlib's `Real.norm_exp_I_mul_ofReal_sub_one_le`, whence `TauCeti.diam_circleExp_image_Icc_le`
+  by `LipschitzWith.diam_image_le` and `Real.diam_Icc`.
 
 In the converse direction, the *shorter* of the two arc lengths `Circle.angleDiff` separating two
 points is at most `π / 2` times their chord (`TauCeti.min_angleDiff_le_dist`). That bound is
@@ -101,9 +101,8 @@ consumer has it.
 
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
-* `TauCeti.lipschitzWith_one_circleExp`, `TauCeti.dist_circleExp_le` and
-  `TauCeti.diam_circleExp_image_Icc_le` — the chord is at most the arc, so an arc of angles of
-  length `b - a` has image of diameter at most `b - a`.
+* `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
+  most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_dist` — the shorter of the two arcs joining two points of the circle has
   length at most `π / 2` times their distance.
 * `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le` — two distinct points cut the
@@ -173,12 +172,6 @@ theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
   LipschitzWith.mk_one fun a b => by
     rw [Real.dist_eq, dist_circleExp_eq_norm_exp_sub_one, ← Real.norm_eq_abs]
     exact Real.norm_exp_I_mul_ofReal_sub_one_le
-
-/-- The chord between the angles `a` and `b` is at most the arc `|a - b|`: the pointwise form of
-`TauCeti.lipschitzWith_one_circleExp`. -/
-theorem dist_circleExp_le (a b : ℝ) : dist (Circle.exp a) (Circle.exp b) ≤ |a - b| := by
-  simpa only [NNReal.coe_one, one_mul, Real.dist_eq] using
-    lipschitzWith_one_circleExp.dist_le_mul a b
 
 /-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`: the
 `1`-Lipschitz map `TauCeti.lipschitzWith_one_circleExp` does not increase the diameter
