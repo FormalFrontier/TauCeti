@@ -29,14 +29,15 @@ The two facts about `ρ g` as a bare endomorphism live in `TauCeti.LinearAlgebra
 
 ## Main results
 
-* `TauCeti.Representation.exists_multiset_character_eq_sum_of_splits`: whenever `(ρ g).charpoly`
+* `TauCeti.Representation.exists_multiset_char_eq_sum_of_splits`: whenever `(ρ g).charpoly`
   splits, a character value is a sum of `finrank` many `n`-th roots of unity. The variant
-  `TauCeti.Representation.exists_multiset_character_eq_sum` specializes it to an algebraically
+  `TauCeti.Representation.exists_multiset_char_eq_sum` specializes it to an algebraically
   closed field.
-* `TauCeti.FDRep.isIntegral_character`: **character values are algebraic integers**.
-* `TauCeti.FDRep.character_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
+* `TauCeti.FDRep.isIntegral_char`: **character values are algebraic integers**.
+* `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
-* `TauCeti.FDRep.norm_character_apply_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
+* `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
+* `TauCeti.FDRep.isSemisimple_apply`: over `ℂ`, `V.ρ g` is a semisimple endomorphism.
 
 The eigenvalues are taken with algebraic multiplicity, as the root multiset of the characteristic
 polynomial: the roots of the *minimal* polynomial would be the distinct eigenvalues only, and their
@@ -75,22 +76,23 @@ theorem pow_eq_one_of_mem_roots_charpoly (ρ : Representation k G V) {g : G} {n 
 /-- **A character value is a sum of roots of unity.** If `g ^ n = 1` and the characteristic
 polynomial of `ρ g` splits, then `ρ.character g` is the sum of a multiset of `finrank k V` many
 `n`-th roots of unity, namely the eigenvalues of `ρ g` with algebraic multiplicity. -/
-theorem exists_multiset_character_eq_sum_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
+theorem exists_multiset_char_eq_sum_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
     (hsplits : (ρ g).charpoly.Splits) (hg : g ^ n = 1) :
     ∃ s : Multiset k, Multiset.card s = finrank k V ∧ (∀ μ ∈ s, μ ^ n = 1) ∧
       ρ.character g = s.sum := by
-  refine ⟨(ρ g).charpoly.roots, ?_, fun _ hμ => pow_eq_one_of_mem_roots_charpoly ρ hg hμ,
-    End.trace_eq_sum_roots_charpoly_of_splits hsplits⟩
-  rw [← hsplits.natDegree_eq_card_roots, LinearMap.charpoly_natDegree]
+  refine ⟨(ρ g).charpoly.roots, ?_, fun _ hμ => pow_eq_one_of_mem_roots_charpoly ρ hg hμ, ?_⟩
+  · rw [← hsplits.natDegree_eq_card_roots, LinearMap.charpoly_natDegree]
+  · simp only [Representation.character]
+    exact End.trace_eq_sum_roots_charpoly_of_splits hsplits
 
 /-- **A character value is a sum of roots of unity.** Over an algebraically closed field, if
 `g ^ n = 1` then `ρ.character g` is the sum of a multiset of `finrank k V` many `n`-th roots of
 unity, namely the eigenvalues of `ρ g` with algebraic multiplicity. -/
-theorem exists_multiset_character_eq_sum [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n : ℕ}
+theorem exists_multiset_char_eq_sum [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n : ℕ}
     (hg : g ^ n = 1) :
     ∃ s : Multiset k, Multiset.card s = finrank k V ∧ (∀ μ ∈ s, μ ^ n = 1) ∧
       ρ.character g = s.sum :=
-  exists_multiset_character_eq_sum_of_splits ρ (IsAlgClosed.splits _) hg
+  exists_multiset_char_eq_sum_of_splits ρ (IsAlgClosed.splits _) hg
 
 omit [FiniteDimensional k V] in
 /-- If `g ^ n = 1` with `n` invertible in `k`, then `ρ g` is a semisimple endomorphism. This needs
@@ -104,10 +106,10 @@ theorem isSemisimple_apply (ρ : Representation k G V) {g : G} {n : ℕ} (hn : (
 /-- **Character values are algebraic integers**: if the characteristic polynomial of `ρ g` splits,
 the value of a character at an element `g` of finite order is integral over `ℤ`, being a sum of
 roots of unity. -/
-theorem isIntegral_character_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
+theorem isIntegral_char_of_splits (ρ : Representation k G V) {g : G} {n : ℕ}
     (hsplits : (ρ g).charpoly.Splits) (hn : n ≠ 0) (hg : g ^ n = 1) :
     IsIntegral ℤ (ρ.character g) := by
-  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_character_eq_sum_of_splits ρ hsplits hg
+  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_char_eq_sum_of_splits ρ hsplits hg
   rw [hsum]
   refine IsIntegral.multiset_sum fun μ hμ => IsIntegral.of_pow (Nat.pos_of_ne_zero hn) ?_
   rw [hroot μ hμ]
@@ -115,9 +117,9 @@ theorem isIntegral_character_of_splits (ρ : Representation k G V) {g : G} {n : 
 
 /-- **Character values are algebraic integers**: over an algebraically closed field, the value of a
 character at an element of finite order is integral over `ℤ`, being a sum of roots of unity. -/
-theorem isIntegral_character [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n : ℕ}
+theorem isIntegral_char [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n : ℕ}
     (hn : n ≠ 0) (hg : g ^ n = 1) : IsIntegral ℤ (ρ.character g) :=
-  isIntegral_character_of_splits ρ (IsAlgClosed.splits _) hn hg
+  isIntegral_char_of_splits ρ (IsAlgClosed.splits _) hn hg
 
 end Field
 
@@ -127,10 +129,10 @@ variable {G : Type v} {V : Type w} [Monoid G] [AddCommGroup V] [Module ℂ V] [F
 
 /-- **Character values are cyclotomic integers**: over `ℂ`, if `ζ` is a primitive `n`-th root of
 unity and `g ^ n = 1`, then `ρ.character g` lies in the subring `ℤ[ζ]` of `ℂ`. -/
-theorem character_mem_adjoin_of_isPrimitiveRoot (ρ : Representation ℂ G V) {g : G} {ζ : ℂ} {n : ℕ}
+theorem char_mem_adjoin_of_isPrimitiveRoot (ρ : Representation ℂ G V) {g : G} {ζ : ℂ} {n : ℕ}
     [NeZero n] (hζ : IsPrimitiveRoot ζ n) (hg : g ^ n = 1) :
     ρ.character g ∈ Algebra.adjoin ℤ ({ζ} : Set ℂ) := by
-  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_character_eq_sum ρ hg
+  obtain ⟨s, -, hroot, hsum⟩ := exists_multiset_char_eq_sum ρ hg
   have hmem : ζ ∈ Algebra.adjoin ℤ ({ζ} : Set ℂ) := Algebra.subset_adjoin rfl
   rw [hsum]
   refine Subalgebra.multiset_sum_mem (Algebra.adjoin ℤ ({ζ} : Set ℂ)) fun μ hμ => ?_
@@ -139,9 +141,9 @@ theorem character_mem_adjoin_of_isPrimitiveRoot (ρ : Representation ℂ G V) {g
 
 /-- Over `ℂ` a character value at an element of finite order is bounded in absolute value by the
 degree of the representation, since it is a sum of `finrank ℂ V` many roots of unity. -/
-theorem norm_character_apply_le_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ} (hn : n ≠ 0)
+theorem norm_char_le_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ} (hn : n ≠ 0)
     (hg : g ^ n = 1) : ‖ρ.character g‖ ≤ finrank ℂ V := by
-  obtain ⟨s, hcard, hroot, hsum⟩ := exists_multiset_character_eq_sum ρ hg
+  obtain ⟨s, hcard, hroot, hsum⟩ := exists_multiset_char_eq_sum ρ hg
   have hmap : s.map (fun μ => ‖μ‖) = s.map (fun _ => (1 : ℝ)) :=
     Multiset.map_congr rfl fun μ hμ => Complex.norm_eq_one_of_pow_eq_one (hroot μ hμ) hn
   calc ‖ρ.character g‖ = ‖s.sum‖ := by rw [hsum]
@@ -158,23 +160,29 @@ variable {G : Type v} [Group G] [Finite G]
 
 /-- **Character values are algebraic integers.** For a finite group, every value of the character
 of a finite-dimensional complex representation is integral over `ℤ`. -/
-theorem isIntegral_character (V : FDRep ℂ G) (g : G) : IsIntegral ℤ (V.character g) :=
-  Representation.isIntegral_character V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
+theorem isIntegral_char (V : FDRep ℂ G) (g : G) : IsIntegral ℤ (V.character g) :=
+  Representation.isIntegral_char V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
 
 /-- **Character values are cyclotomic integers.** For a finite group of exponent `e` and a
 primitive `e`-th root of unity `ζ`, every value of a complex character lies in `ℤ[ζ]`. -/
-theorem character_mem_adjoin_of_isPrimitiveRoot (V : FDRep ℂ G) {ζ : ℂ}
+theorem char_mem_adjoin_of_isPrimitiveRoot (V : FDRep ℂ G) {ζ : ℂ}
     (hζ : IsPrimitiveRoot ζ (Monoid.exponent G)) (g : G) :
     V.character g ∈ Algebra.adjoin ℤ ({ζ} : Set ℂ) :=
   haveI : NeZero (Monoid.exponent G) := ⟨Monoid.exponent_ne_zero_of_finite⟩
-  Representation.character_mem_adjoin_of_isPrimitiveRoot V.ρ hζ (Monoid.pow_exponent_eq_one g)
+  Representation.char_mem_adjoin_of_isPrimitiveRoot V.ρ hζ (Monoid.pow_exponent_eq_one g)
 
 /-- Over `ℂ`, a character of a finite group is bounded in absolute value by its degree,
 `‖χ(g)‖ ≤ χ(1)`. -/
-theorem norm_character_apply_le_finrank (V : FDRep ℂ G) (g : G) : ‖V.character g‖ ≤ finrank ℂ V :=
-  Representation.norm_character_apply_le_finrank V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
+theorem norm_char_le_finrank (V : FDRep ℂ G) (g : G) : ‖V.character g‖ ≤ finrank ℂ V :=
+  Representation.norm_char_le_finrank V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
+
+/-- **Diagonalizability.** For a finite group, `V.ρ g` is a semisimple endomorphism of a complex
+representation; as `ℂ` is algebraically closed, this is its diagonalizability. -/
+theorem isSemisimple_apply (V : FDRep ℂ G) (g : G) : End.IsSemisimple (V.ρ g) :=
+  Representation.isSemisimple_apply V.ρ
+    (Nat.cast_ne_zero.2 (isOfFinOrder_of_finite g).orderOf_pos.ne') (pow_orderOf_eq_one g)
 
 end FDRep
 
