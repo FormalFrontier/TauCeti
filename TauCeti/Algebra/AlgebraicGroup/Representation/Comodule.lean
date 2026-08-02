@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 
 import TauCeti.Algebra.Bialgebra.TensorProduct
+import TauCeti.Algebra.HopfAlgebra.Antipode
 
 /-!
 # Point representations and comodules
@@ -143,13 +144,20 @@ private noncomputable def rawPointAction (rho : Comodule R H V)
       (Comodule.pointsAction V)
 
 @[simp]
+private theorem rawPointAction_apply (rho : Comodule R H V)
+    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
+    rawPointAction rho A x =
+      let _ : Comodule R H V := rho
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[R] V)).symm
+        (Comodule.pointsAction V x) := by
+  rfl
+
+@[simp]
 private theorem rawPointAction_val (rho : Comodule R H V)
     (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
     (rawPointAction rho A x).val = Comodule.endOfPoint V x.ofConv := by
   let : Comodule R H V := rho
-  change
-    (Comodule.pointsAction V x : A ⊗[R] V →ₗ[A] A ⊗[R] V) =
-      Comodule.endOfPoint V x.ofConv
+  rw [rawPointAction_apply]
   exact Comodule.pointsAction_toLinearMap V x
 
 private theorem rawPointAction_naturality (rho : Comodule R H V)
@@ -418,13 +426,13 @@ private theorem comulPoint_eq_include_mul :
       toConv (includeLeftAlgHom (R := R) (H := H)) *
         toConv (includeRightAlgHom (R := R) (H := H)) := by
   apply WithConv.ofConv_injective
-  ext h
-  rw [AlgHom.convMul_apply, Bialgebra.comulAlgHom_apply]
-  unfold includeLeftAlgHom includeRightAlgHom
-  rw [Bialgebra.TensorProduct.includeLeft_toAlgHom,
-    Bialgebra.TensorProduct.includeRight_toAlgHom,
-    Algebra.TensorProduct.lift_includeLeft_includeRight]
-  rfl
+  apply AlgHom.toLinearMap_injective
+  apply WithConv.toConv_injective
+  rw [AlgHom.toLinearMap_convMul]
+  simpa only [Bialgebra.toLinearMap_comulAlgHom,
+    Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    Bialgebra.TensorProduct.includeRight_toAlgHom] using
+      (comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
 
 omit [AddCommMonoid V] [Module R V] in
 private theorem liftedComulPoint_eq_include_mul :

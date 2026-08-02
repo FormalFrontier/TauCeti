@@ -17,6 +17,8 @@ factors, and applying the antipode to each factor.
 
 ## Main declarations
 
+* `TauCeti.HopfAlgebra.comul_eq_convMul_includeLeft_includeRight`: comultiplication as the
+  convolution product of the two tensor inclusions.
 * `TauCeti.HopfAlgebra.antipode_comul_antidistrib`: the identity as an equality of linear maps.
 * `TauCeti.HopfAlgebra.antipode_comul_antidistrib_apply`: the pointwise form.
 
@@ -85,7 +87,7 @@ multiplies the two legs of `Δ c` back together in order, which is `Δ` itself.
 
 Only the comultiplication *data* is used, so this needs `CoalgebraStruct` rather than
 `Coalgebra`: no coalgebra law, bialgebra compatibility or antipode axiom enters. -/
-private lemma comul_eq_convMul_includeLeft_includeRight :
+theorem comul_eq_convMul_includeLeft_includeRight :
     (toConv (Coalgebra.comul : C →ₗ[R] C ⊗[R] C) : WithConv (C →ₗ[R] C ⊗[R] C)) =
       toConv (Algebra.TensorProduct.includeLeft (R := R) (A := C) (B := C)).toLinearMap *
         toConv (Algebra.TensorProduct.includeRight (R := R) (A := C) (B := C)).toLinearMap := by
