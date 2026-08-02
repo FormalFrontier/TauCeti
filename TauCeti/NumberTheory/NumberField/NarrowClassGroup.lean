@@ -63,34 +63,46 @@ variable (K)
 
 /-- The **narrow class group** `Cl⁺(K)`: invertible fractional ideals of `𝓞 K` modulo the principal
 ones with a totally positive generator. -/
-abbrev NarrowClassGroup : Type _ :=
+def NarrowClassGroup : Type _ :=
   (FractionalIdeal (𝓞 K)⁰ K)ˣ ⧸ narrowPrincipalSubgroup K
+
+noncomputable instance : CommGroup (NarrowClassGroup K) :=
+  inferInstanceAs (CommGroup ((FractionalIdeal (𝓞 K)⁰ K)ˣ ⧸ narrowPrincipalSubgroup K))
+
+noncomputable instance : Inhabited (NarrowClassGroup K) := ⟨1⟩
 
 namespace NarrowClassGroup
 
 variable {K}
 
 /-- The class of an invertible fractional ideal in the narrow class group. -/
-noncomputable abbrev mk : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* NarrowClassGroup K :=
+noncomputable def mk : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* NarrowClassGroup K :=
   QuotientGroup.mk' (narrowPrincipalSubgroup K)
 
+/-- Induction on the narrow class group: to prove a property of every class it suffices to prove it
+for the class `mk I` of every invertible fractional ideal. -/
+@[elab_as_elim] theorem induction {P : NarrowClassGroup K → Prop}
+    (h : ∀ I, P (mk I)) (x : NarrowClassGroup K) : P x :=
+  QuotientGroup.induction_on x h
+
+/-- Every narrow ideal class is represented by an invertible fractional ideal. -/
 theorem mk_surjective : Function.Surjective (mk : _ → NarrowClassGroup K) :=
   QuotientGroup.mk'_surjective _
 
 /-- A fractional ideal has trivial narrow class exactly when it has a totally positive generator. -/
-theorem mk_eq_one_iff {I : (FractionalIdeal (𝓞 K)⁰ K)ˣ} :
+@[simp] theorem mk_eq_one_iff {I : (FractionalIdeal (𝓞 K)⁰ K)ˣ} :
     mk I = 1 ↔ I ∈ narrowPrincipalSubgroup K :=
   QuotientGroup.eq_one_iff I
 
 /-- Two fractional ideals have the same narrow class exactly when they differ by a principal ideal
 with a totally positive generator. -/
-theorem mk_eq_mk_iff {I J : (FractionalIdeal (𝓞 K)⁰ K)ˣ} :
+@[simp] theorem mk_eq_mk_iff {I J : (FractionalIdeal (𝓞 K)⁰ K)ˣ} :
     mk I = mk J ↔ ∃ z ∈ narrowPrincipalSubgroup K, I * z = J :=
   QuotientGroup.mk'_eq_mk' (narrowPrincipalSubgroup K)
 
 /-- Principal fractional ideals with a totally positive generator have the same class as the whole
 ring: they map to `1` in the ordinary class group. -/
-theorem narrowPrincipalSubgroup_le_ker :
+private theorem narrowPrincipalSubgroup_le_ker :
     narrowPrincipalSubgroup K ≤ MonoidHom.ker (ClassGroup.mk (R := 𝓞 K) K) := by
   rintro _ ⟨x, -, rfl⟩
   rw [MonoidHom.mem_ker, ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal]
@@ -102,7 +114,7 @@ noncomputable def toClassGroup : NarrowClassGroup K →* ClassGroup (𝓞 K) :=
   QuotientGroup.lift (narrowPrincipalSubgroup K) (ClassGroup.mk (R := 𝓞 K) K)
     narrowPrincipalSubgroup_le_ker
 
-theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
+@[simp] theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
     toClassGroup (mk I) = ClassGroup.mk K I :=
   QuotientGroup.lift_mk' _ narrowPrincipalSubgroup_le_ker I
 
