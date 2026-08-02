@@ -402,43 +402,46 @@ private lemma norm_toUnitDisc_eq_tanh_abs {γ : ℝ → PoincareDisc} (hγ : Iso
   exact (Real.tanh_artanh ⟨by linarith [norm_nonneg (toUnitDisc (γ t) : ℂ)],
     (toUnitDisc (γ t)).norm_lt_one⟩).symm
 
--- The forward ray is a Euclidean radius: for `0 ≤ s ≤ t` the origin, `γ s` and `γ t` are collinear,
--- so every `γ t` with `t ≥ 0` is a nonnegative multiple of `γ 1`; normalising `γ 1` names the
--- direction `u`, and the norm formula pins the multiple to `tanh t`.
+-- The forward orbit is a Euclidean radius: for `0 ≤ r ≤ s` the origin, `γ r` and `γ s` are
+-- collinear, so `γ t` with `t ≥ 0` is a nonnegative multiple of `γ 1`. Beyond `t = 1` the
+-- betweenness runs the other way, and the multiple is recovered by inverting it.
+private lemma exists_nonneg_mul_toUnitDisc_one {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
+    (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) {t : ℝ} (ht : 0 ≤ t) :
+    ∃ κ : ℝ, 0 ≤ κ ∧ (toUnitDisc (γ t) : ℂ) = (κ : ℂ) * (toUnitDisc (γ 1) : ℂ) := by
+  have hmem : ∀ p : PoincareDisc, ‖(toUnitDisc p : ℂ)‖ < 1 := fun p => (toUnitDisc p).norm_lt_one
+  have hdist0 : ∀ r : ℝ, hyperbolicDist 0 (toUnitDisc (γ r) : ℂ) = |r| :=
+    hyperbolicDist_zero_toUnitDisc_eq_abs hγ h0
+  have hne : ∀ r : ℝ, r ≠ 0 → (toUnitDisc (γ r) : ℂ) ≠ 0 := by
+    intro r hr hzero
+    have hi := hdist0 r
+    rw [hzero, hyperbolicDist_self, eq_comm, abs_eq_zero] at hi
+    exact hr hi
+  have hbetween : ∀ r s : ℝ, 0 ≤ r → r ≤ s →
+      (toUnitDisc (γ r) : ℂ) ∈ segment ℝ 0 (toUnitDisc (γ s) : ℂ) := by
+    intro r s hr hrs
+    refine (hyperbolicDist_zero_add_eq_iff_of_norm_lt_one (hmem _) (hmem _)).mp ?_
+    rw [hdist0, hyperbolicDist_toUnitDisc_eq_abs_sub hγ, hdist0, abs_of_nonneg hr,
+      abs_of_nonneg (by linarith : (0 : ℝ) ≤ s), abs_of_nonpos (by linarith : r - s ≤ 0)]
+    ring
+  rcases le_total t 1 with hle | hle
+  · obtain ⟨κ, hκ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween t 1 ht hle)
+    exact ⟨κ, hκ.1, heq⟩
+  · obtain ⟨θ, hθ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween 1 t zero_le_one hle)
+    have hθ0 : θ ≠ 0 := by
+      rintro rfl
+      rw [Complex.ofReal_zero, zero_mul] at heq
+      exact hne 1 one_ne_zero heq
+    refine ⟨θ⁻¹, inv_nonneg.mpr hθ.1, ?_⟩
+    rw [heq, Complex.ofReal_inv, inv_mul_cancel_left₀ (Complex.ofReal_ne_zero.mpr hθ0)]
+
+-- Normalising `γ 1` names the direction `u`, and the norm formula pins the nonnegative multiple
+-- supplied by `exists_nonneg_mul_toUnitDisc_one` to `tanh t`.
 private lemma exists_circle_toUnitDisc_eq_of_nonneg {γ : ℝ → PoincareDisc} (hγ : Isometry γ)
     (h0 : γ 0 = Complex.UnitDisc.toPoincare 0) :
     ∃ u : Circle, ∀ t : ℝ, 0 ≤ t →
       (toUnitDisc (γ t) : ℂ) = (u : ℂ) * ((Real.tanh t : ℝ) : ℂ) := by
-  have hmem : ∀ p : PoincareDisc, ‖(toUnitDisc p : ℂ)‖ < 1 := fun p => (toUnitDisc p).norm_lt_one
   have hnorm : ∀ t : ℝ, ‖(toUnitDisc (γ t) : ℂ)‖ = Real.tanh |t| :=
     norm_toUnitDisc_eq_tanh_abs hγ h0
-  have hdist0 : ∀ t : ℝ, hyperbolicDist 0 (toUnitDisc (γ t) : ℂ) = |t| :=
-    hyperbolicDist_zero_toUnitDisc_eq_abs hγ h0
-  have hne : ∀ s : ℝ, s ≠ 0 → (toUnitDisc (γ s) : ℂ) ≠ 0 := by
-    intro s hs hzero
-    have hi := hdist0 s
-    rw [hzero, hyperbolicDist_self, eq_comm, abs_eq_zero] at hi
-    exact hs hi
-  have hbetween : ∀ s t : ℝ, 0 ≤ s → s ≤ t →
-      (toUnitDisc (γ s) : ℂ) ∈ segment ℝ 0 (toUnitDisc (γ t) : ℂ) := by
-    intro s t hs hst
-    refine (hyperbolicDist_zero_add_eq_iff_of_norm_lt_one (hmem _) (hmem _)).mp ?_
-    rw [hdist0, hyperbolicDist_toUnitDisc_eq_abs_sub hγ, hdist0, abs_of_nonneg hs,
-      abs_of_nonneg (by linarith : (0 : ℝ) ≤ t), abs_of_nonpos (by linarith : s - t ≤ 0)]
-    ring
-  have hray : ∀ t : ℝ, 0 ≤ t → ∃ κ : ℝ, 0 ≤ κ ∧
-      (toUnitDisc (γ t) : ℂ) = (κ : ℂ) * (toUnitDisc (γ 1) : ℂ) := by
-    intro t ht
-    rcases le_total t 1 with hle | hle
-    · obtain ⟨κ, hκ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween t 1 ht hle)
-      exact ⟨κ, hκ.1, heq⟩
-    · obtain ⟨θ, hθ, heq⟩ := mem_segment_zero_left_iff.mp (hbetween 1 t zero_le_one hle)
-      have hθ0 : θ ≠ 0 := by
-        rintro rfl
-        rw [Complex.ofReal_zero, zero_mul] at heq
-        exact hne 1 one_ne_zero heq
-      refine ⟨θ⁻¹, inv_nonneg.mpr hθ.1, ?_⟩
-      rw [heq, Complex.ofReal_inv, inv_mul_cancel_left₀ (Complex.ofReal_ne_zero.mpr hθ0)]
   -- The direction is already named by `exists_radialGeodesic_eq` at the point `γ 1`, whose
   -- distance to the origin is `1` because `γ` is an isometry fixing it.
   have hd1 : dist (γ 1) (Complex.UnitDisc.toPoincare 0) = 1 := by
@@ -448,7 +451,7 @@ private lemma exists_circle_toUnitDisc_eq_of_nonneg {γ : ℝ → PoincareDisc} 
   have hu : (toUnitDisc (γ 1) : ℂ) = (u : ℂ) * ((Real.tanh 1 : ℝ) : ℂ) := by
     rw [← hu1, coe_radialGeodesic]
   refine ⟨u, fun t ht => ?_⟩
-  obtain ⟨κ, hκ, heq⟩ := hray t ht
+  obtain ⟨κ, hκ, heq⟩ := exists_nonneg_mul_toUnitDisc_one hγ h0 ht
   have hn : ‖(toUnitDisc (γ t) : ℂ)‖ = κ * ‖(toUnitDisc (γ 1) : ℂ)‖ := by
     rw [heq, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hκ]
   have hnorm1 : ‖(toUnitDisc (γ 1) : ℂ)‖ = Real.tanh 1 := by

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
+public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RingTheory.Finiteness.Subalgebra
 
 /-!
@@ -50,6 +51,9 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
 * `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
+* `TauCeti.CliffordAlgebra.filtrationLeadingTerm` and
+  `TauCeti.CliffordAlgebra.filtrationLeadingTerm_surjective`: the exterior-power leading-term map
+  onto each successive filtration quotient, the surjectivity half of the associated-graded bridge.
 * `TauCeti.CliffordAlgebra.iSup_filtration_eq_top` and
   `TauCeti.CliffordAlgebra.exists_mem_filtration`: the filtration is exhaustive.
 * `TauCeti.CliffordAlgebra.involute_mem_filtration`,
@@ -241,6 +245,204 @@ theorem ι_mul_ι_add_swap_mem_filtration_zero (a b : M) :
     ι Q a * ι Q b + ι Q b * ι Q a ∈ filtration Q 0 := by
   rw [ι_mul_ι_add_swap]
   exact algebraMap_mem_filtration Q _ 0
+
+private theorem repeat_product_mem_filtration (a : M) :
+    ∀ middle : List M,
+      ((a :: (middle ++ [a])).map (ι Q)).prod ∈ filtration Q (middle.length + 1) := by
+  intro middle
+  induction middle with
+  | nil =>
+      -- Expose the singleton word so the Clifford square relation sees its adjacent generators.
+      change ι Q a * (ι Q a * 1) ∈ filtration Q 1
+      rw [mul_one]
+      rw [ι_sq_scalar]
+      exact filtration_mono Q (Nat.zero_le _) (algebraMap_mem_filtration Q _ 0)
+  | cons b middle ih =>
+      -- Expose the list product so `ι_mul_ι_comm` can rewrite the first adjacent pair.
+      change ι Q a * (ι Q b * ((middle ++ [a]).map (ι Q)).prod) ∈
+        filtration Q (middle.length + 1 + 1)
+      rw [← mul_assoc, ι_mul_ι_comm, sub_mul, mul_assoc]
+      refine Submodule.sub_mem _ ?_ ?_
+      · have htail : ((middle ++ [a]).map (ι Q)).prod ∈ filtration Q (middle.length + 1) :=
+          prod_map_ι_mem_filtration Q (l := middle ++ [a]) (by simp)
+        have hscalar :
+            algebraMap R (CliffordAlgebra Q) (QuadraticMap.polar Q a b) *
+                ((middle ++ [a]).map (ι Q)).prod ∈
+              filtration Q (middle.length + 1) := by
+          rw [← Algebra.smul_def]
+          exact Submodule.smul_mem _ _ htail
+        exact filtration_mono Q (by omega) hscalar
+      · have hinner : ι Q a * ((middle ++ [a]).map (ι Q)).prod ∈
+            filtration Q (middle.length + 1) := by
+          simpa only [List.map_cons, List.prod_cons] using ih
+        have hmul := Submodule.mul_mem_mul (ι_mem_filtration_one Q b) hinner
+        rw [filtration_mul] at hmul
+        simpa only [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hmul
+
+private theorem prod_map_ι_mem_filtration_pred_of_not_nodup :
+    ∀ l : List M, ¬l.Nodup →
+      (l.map (ι Q)).prod ∈ filtration Q (l.length - 1) := by
+  intro l hl
+  induction l with
+  | nil => simp at hl
+  | cons a tail ih =>
+      by_cases ha : a ∈ tail
+      · obtain ⟨pre, suf, rfl⟩ := List.mem_iff_append.1 ha
+        have hcore := repeat_product_mem_filtration Q a pre
+        have hsuffix : (suf.map (ι Q)).prod ∈ filtration Q suf.length :=
+          prod_map_ι_mem_filtration Q le_rfl
+        have hmul := Submodule.mul_mem_mul hcore hsuffix
+        rw [filtration_mul] at hmul
+        -- Restore the expanded repeated word to match the filtered product above.
+        change ((a :: (pre ++ a :: suf)).map (ι Q)).prod ∈
+          filtration Q ((a :: (pre ++ a :: suf)).length - 1)
+        have hindex : (a :: (pre ++ a :: suf)).length - 1 = pre.length + 1 + suf.length := by
+          simp
+          omega
+        rw [hindex]
+        simpa [List.map_append, List.prod_append, mul_assoc] using hmul
+      · have htail : ¬tail.Nodup := by
+          intro htail
+          exact hl (List.nodup_cons.2 ⟨ha, htail⟩)
+        have hpositive : 0 < tail.length := by
+          by_contra hnot
+          have hzero : tail.length = 0 := Nat.eq_zero_of_not_pos hnot
+          have hempty : tail = [] := List.eq_nil_of_length_eq_zero hzero
+          subst tail
+          simp at htail
+        have hmul := Submodule.mul_mem_mul (ι_mem_filtration_one Q a) (ih htail)
+        rw [filtration_mul] at hmul
+        have hindex : 1 + (tail.length - 1) = tail.length := by omega
+        rw [hindex] at hmul
+        -- Expose the cons product after normalizing the filtration degree.
+        change ι Q a * (tail.map (ι Q)).prod ∈ filtration Q tail.length
+        exact hmul
+
+private noncomputable def filtrationLeadingTermRaw (k : ℕ) :
+    MultilinearMap R (fun _ : Fin (k + 1) => M) (CliffordAlgebra Q) :=
+  (MultilinearMap.mkPiAlgebraFin R (k + 1) (CliffordAlgebra Q)).compLinearMap fun _ => ι Q
+
+private theorem filtrationLeadingTermRaw_mem (k : ℕ) (v : Fin (k + 1) → M) :
+    filtrationLeadingTermRaw Q k v ∈ filtration Q (k + 1) := by
+  -- Expose the multilinear product as a list word, then as `map` for the filtration lemma.
+  change (List.ofFn fun i => ι Q (v i)).prod ∈ filtration Q (k + 1)
+  change (List.ofFn ((ι Q) ∘ v)).prod ∈ filtration Q (k + 1)
+  rw [← List.map_ofFn]
+  exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
+
+private theorem filtrationLeadingTermRaw_mem_previous (k : ℕ) (v : Fin (k + 1) → M)
+    {i j : Fin (k + 1)} (hij : v i = v j) (hijne : i ≠ j) :
+    filtrationLeadingTermRaw Q k v ∈ filtration Q k := by
+  -- Expose the raw multilinear product as the list word used by the repeated-word lemma.
+  change (List.ofFn ((ι Q) ∘ v)).prod ∈ filtration Q k
+  rw [← List.map_ofFn]
+  have hnot : ¬(List.ofFn v).Nodup := by
+    rw [List.nodup_ofFn]
+    exact fun hinj => hijne (hinj hij)
+  simpa only [List.length_ofFn, Nat.add_sub_cancel] using
+    prod_map_ι_mem_filtration_pred_of_not_nodup Q (List.ofFn v) hnot
+
+private noncomputable def filtrationLeadingTermAlternating (k : ℕ) : M [⋀^Fin (k + 1)]→ₗ[R]
+    (filtration Q (k + 1) ⧸ (filtration Q k).comap (filtration Q (k + 1)).subtype) :=
+  let P : Submodule R (filtration Q (k + 1)) :=
+    (filtration Q k).comap (filtration Q (k + 1)).subtype
+  { toMultilinearMap :=
+      P.mkQ.compMultilinearMap
+        ((filtrationLeadingTermRaw Q k).codRestrict (filtration Q (k + 1))
+          (filtrationLeadingTermRaw_mem Q k))
+    map_eq_zero_of_eq' := by
+      intro v i j hij hijne
+      -- Expose the quotient/subtype wrapper so zero is membership in the lower filtration.
+      change P.mkQ ⟨filtrationLeadingTermRaw Q k v, filtrationLeadingTermRaw_mem Q k v⟩ = 0
+      rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
+      exact filtrationLeadingTermRaw_mem_previous Q k v hij hijne }
+
+/-- The degree-`k + 1` leading-term map from the exterior power to the corresponding Clifford
+filtration quotient. A repeated generator becomes a lower-filtration term under the Clifford
+relation, so the product descends to an alternating map.
+
+This is the surjectivity half of the Layer 0 `filtrationGradedEquiv` target in the
+[spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L62-L68). -/
+noncomputable def filtrationLeadingTerm (k : ℕ) : ExteriorAlgebra.exteriorPower R (k + 1) M →ₗ[R]
+    (filtration Q (k + 1) ⧸ (filtration Q k).comap (filtration Q (k + 1)).subtype) :=
+  exteriorPower.alternatingMapLinearEquiv (filtrationLeadingTermAlternating Q k)
+
+/-- The leading-term map sends an exterior product to the class of the corresponding product of
+Clifford generators. -/
+@[simp]
+theorem filtrationLeadingTerm_apply_ιMulti (k : ℕ) (v : Fin (k + 1) → M) :
+    filtrationLeadingTerm Q k (exteriorPower.ιMulti R (k + 1) v) =
+      Submodule.Quotient.mk ⟨(List.ofFn ((ι Q) ∘ v)).prod,
+        by
+          rw [← List.map_ofFn]
+          exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)⟩ := by
+  simp only [filtrationLeadingTerm, exteriorPower.alternatingMapLinearEquiv_apply_ιMulti,
+    filtrationLeadingTermAlternating]
+  rfl
+
+/-- Every element of the degree-`k + 1` Clifford filtration quotient is the leading term of an
+element of the degree-`k + 1` exterior power. -/
+theorem filtrationLeadingTerm_surjective (k : ℕ) :
+    Function.Surjective (filtrationLeadingTerm Q k) := by
+  -- Pull the leading-term range back along the quotient, then use the successor filtration split.
+  let P : Submodule R (filtration Q (k + 1)) :=
+    (filtration Q k).comap (filtration Q (k + 1)).subtype
+  let q : filtration Q (k + 1) →ₗ[R] (filtration Q (k + 1) ⧸ P) := P.mkQ
+  let T : Submodule R (filtration Q (k + 1)) :=
+    (LinearMap.range (filtrationLeadingTerm Q k)).comap q
+  have hle : filtration Q (k + 1) ≤ T.map (filtration Q (k + 1)).subtype := by
+    calc
+      filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
+        filtration_succ_eq_sup Q k
+      _ ≤ T.map (filtration Q (k + 1)).subtype := sup_le (by
+        intro z hz
+        have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
+        let z' : filtration Q (k + 1) := ⟨z, hz'⟩
+        refine Submodule.mem_map.2 ⟨z', ?_, rfl⟩
+        -- Unfold the range comap and quotient map before proving a lower-filtration class is zero.
+        change q z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
+        change P.mkQ z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
+        have hzP : z' ∈ P := by
+          -- Membership in the comap is exactly the original lower-filtration membership.
+          change z ∈ filtration Q k
+          exact hz
+        have hzero : P.mkQ z' = 0 := by
+          rw [Submodule.mkQ_apply]
+          exact (Submodule.Quotient.mk_eq_zero P).mpr hzP
+        rw [hzero]
+        exact LinearMap.mem_range.2 ⟨0, map_zero _⟩) (by
+        rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
+        rintro x hx
+        obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
+        choose v hv using fun i => LinearMap.mem_range.1 (f i).property
+        have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
+            (List.ofFn ((ι Q) ∘ v)).prod := by
+          apply congrArg List.prod
+          apply congrArg List.ofFn
+          funext i
+          exact (hv i).symm
+        rw [hprod]
+        refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
+        · rw [← List.map_ofFn]
+          exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
+        · change q ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
+            LinearMap.range (filtrationLeadingTerm Q k)
+          -- Expose the quotient map after the subtype witness is constructed.
+          change P.mkQ ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
+            LinearMap.range (filtrationLeadingTerm Q k)
+          rw [Submodule.mkQ_apply]
+          exact LinearMap.mem_range.2 ⟨exteriorPower.ιMulti R (k + 1) v,
+            filtrationLeadingTerm_apply_ιMulti Q k v⟩)
+  intro z
+  obtain ⟨x, rfl⟩ := Submodule.Quotient.mk_surjective P z
+  have hx : (x : CliffordAlgebra Q) ∈ T.map (filtration Q (k + 1)).subtype := hle x.property
+  rcases Submodule.mem_map.1 hx with ⟨y, hy, hxy⟩
+  have hxy' : y = x := Subtype.ext hxy
+  subst x
+  -- Unfold the range comap one final time to extract an exterior-power preimage.
+  change q y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
+  change P.mkQ y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
+  exact LinearMap.mem_range.1 hy
 
 section Conjugation
 
