@@ -31,6 +31,14 @@ Every point of the disc lies on such a line through the origin, and the disc aut
 transitively by isometries, so transporting a radial line gives a geodesic through any two
 prescribed points.
 
+Transporting is also what names the geodesic line through an *arbitrary* point: carrying the
+radial geodesic in direction `u` back by `(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the
+inverse of the Moebius isometry that sends `a` to the origin — gives
+`TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and repeats the radial API
+(`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`, `geodesicLine_injective`)
+at that base point. No hyperbolic computation is redone: each of those statements is its radial
+counterpart read through an isometry.
+
 ## Main declarations
 
 * `TauCeti.hyperbolicDist_mul_ofReal_of_norm_eq_one` — the hyperbolic distance along a Euclidean
@@ -40,6 +48,9 @@ prescribed points.
   `TauCeti.PoincareDisc.isometry_radialGeodesic` saying it is an isometric embedding of `ℝ`.
 * `TauCeti.PoincareDisc.exists_radialGeodesic_eq` — every point of the disc is reached by the
   radial geodesic in its own direction, at time its distance to the origin.
+* `TauCeti.PoincareDisc.geodesicLine` — the same line based at an arbitrary point `a` instead of
+  the origin, with `TauCeti.PoincareDisc.isometry_geodesicLine`,
+  `TauCeti.PoincareDisc.geodesicLine_zero` and `TauCeti.PoincareDisc.geodesicLine_injective`.
 * `TauCeti.PoincareDisc.exists_isometry_apply_zero_apply_dist` — **the Poincaré disc is a
   geodesic space**: through any two points there is a unit-speed geodesic line `γ : ℝ → 𝔻`, with
   `γ 0` the first point and `γ (dist z w)` the second.
@@ -280,6 +291,79 @@ theorem exists_dist_eq_half_dist (z w : PoincareDisc) :
       ⟨by linarith [dist_nonneg (x := z) (y := w)],
         by linarith [dist_nonneg (x := z) (y := w)]⟩
   exact ⟨m, hm₁, by rw [hm₂]; ring⟩
+
+/-! ### Geodesic lines through an arbitrary point -/
+
+/-- The unit-speed geodesic line of the Poincaré disc through `a` in the direction `u : Circle`:
+the radial geodesic `TauCeti.PoincareDisc.radialGeodesic u` carried back to `a` by
+`(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm`, the *inverse* of the Moebius isometry that
+sends `a` to the origin. Based at the origin it is `radialGeodesic u` itself
+(`TauCeti.PoincareDisc.geodesicLine_toPoincare_zero`). -/
+noncomputable def geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) : PoincareDisc :=
+  (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm (radialGeodesic u t)
+
+/-- The defining formula for `TauCeti.PoincareDisc.geodesicLine`; its body is not `@[expose]`d, so
+this is how the definition is unfolded downstream. -/
+lemma geodesicLine_def (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    geodesicLine a u t =
+      (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm (radialGeodesic u t) := by
+  rw [geodesicLine]
+
+/-- The Moebius isometry that sends `a` to the origin straightens the geodesic line through `a`
+into the radial geodesic in the same direction. This is `TauCeti.PoincareDisc.geodesicLine_def`
+read forwards, and it is how a statement about `geodesicLine` is transported to the origin.
+
+Not a `simp` lemma: `unitDiscMoebiusIsometryEquiv_apply` is itself `simp`, so the left-hand side
+here is not in simp-normal form — it rewrites to
+`Complex.UnitDisc.toPoincare (unitDiscMoebius (toUnitDisc a) (toUnitDisc (geodesicLine a u t)))`,
+which the `simpNF` linter rejects. -/
+lemma unitDiscMoebiusIsometryEquiv_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    unitDiscMoebiusIsometryEquiv (toUnitDisc a) (geodesicLine a u t) = radialGeodesic u t := by
+  rw [geodesicLine_def, IsometryEquiv.apply_symm_apply]
+
+/-- Every geodesic line through `a` starts at `a`: the generalisation of
+`TauCeti.PoincareDisc.radialGeodesic_zero` off the origin. -/
+@[simp]
+lemma geodesicLine_zero (a : PoincareDisc) (u : Circle) : geodesicLine a u 0 = a := by
+  have ha : unitDiscMoebiusIsometryEquiv (toUnitDisc a) a = Complex.UnitDisc.toPoincare 0 := by
+    rw [unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
+  rw [geodesicLine_def, radialGeodesic_zero, ← ha, IsometryEquiv.symm_apply_apply]
+
+/-- Based at the origin, the geodesic lines are exactly the radial ones: the Moebius isometry
+centred at the origin is the identity. -/
+@[simp]
+lemma geodesicLine_toPoincare_zero (u : Circle) :
+    geodesicLine (Complex.UnitDisc.toPoincare 0) u = radialGeodesic u := by
+  funext t
+  rw [geodesicLine_def, toUnitDisc_toPoincare, IsometryEquiv.symm_apply_eq]
+  simp
+
+/-- **The geodesic lines are unit-speed geodesic lines**: `geodesicLine a u` is an isometric
+embedding of the real line into the Poincaré disc, being `TauCeti.PoincareDisc.radialGeodesic u`
+composed with an isometry. -/
+theorem isometry_geodesicLine (a : PoincareDisc) (u : Circle) : Isometry (geodesicLine a u) := by
+  have h : geodesicLine a u =
+      (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm ∘ radialGeodesic u :=
+    funext (geodesicLine_def a u)
+  rw [h]
+  exact (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm.isometry.comp
+    (isometry_radialGeodesic u)
+
+/-- The geodesic line through `a` is at hyperbolic distance `|t|` from `a` at time `t`: the
+generalisation of `TauCeti.PoincareDisc.dist_radialGeodesic_zero` off the origin. -/
+lemma dist_geodesicLine_self (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    dist (geodesicLine a u t) a = |t| := by
+  have h := (isometry_geodesicLine a u).dist_eq t 0
+  rwa [geodesicLine_zero, Real.dist_eq, sub_zero] at h
+
+/-- Distinct directions give distinct geodesic lines through a common point: the generalisation of
+`TauCeti.PoincareDisc.radialGeodesic_injective` off the origin. -/
+theorem geodesicLine_injective (a : PoincareDisc) : Function.Injective (geodesicLine a) := by
+  intro u v huv
+  refine radialGeodesic_injective (funext fun t => ?_)
+  have h := congrArg (unitDiscMoebiusIsometryEquiv (toUnitDisc a)) (congrFun huv t)
+  rwa [unitDiscMoebiusIsometryEquiv_geodesicLine,
+    unitDiscMoebiusIsometryEquiv_geodesicLine] at h
 
 end PoincareDisc
 
