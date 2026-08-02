@@ -254,34 +254,12 @@ theorem cliffordBivectorExterior_range_lie_mem {x y : CliffordAlgebra Q}
       ∀ y ∈ LinearMap.range (cliffordBivectorExterior Q),
         ⁅cliffordBivector Q a b, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q) := by
     intro y hy
-    let P : Submodule R (CliffordAlgebra Q) :=
-      { carrier := {z | ⁅cliffordBivector Q a b, z⁆ ∈
-          LinearMap.range (cliffordBivectorExterior Q)}
-        zero_mem' := by
-          -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-          change ⁅cliffordBivector Q a b, 0⁆ ∈ LinearMap.range (cliffordBivectorExterior Q)
-          rw [lie_zero]
-          exact Submodule.zero_mem _
-        add_mem' := by
-          intro z w hz hw
-          -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-          change ⁅cliffordBivector Q a b, z + w⁆ ∈
-            LinearMap.range (cliffordBivectorExterior Q)
-          rw [lie_add]
-          exact Submodule.add_mem _ hz hw
-        smul_mem' := by
-          intro r z hz
-          -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-          change ⁅cliffordBivector Q a b, r • z⁆ ∈
-            LinearMap.range (cliffordBivectorExterior Q)
-          rw [lie_smul]
-          exact Submodule.smul_mem _ r hz }
+    let P := (LinearMap.range (cliffordBivectorExterior Q)).comap
+      (LieModule.toEnd R (CliffordAlgebra Q) (CliffordAlgebra Q) (cliffordBivector Q a b))
     have hP : LinearMap.range (cliffordBivectorExterior Q) ≤ P :=
       cliffordBivectorExterior_range_le Q P (fun c d => by
-        -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-        change ⁅cliffordBivector Q a b, cliffordBivector Q c d⁆ ∈
-          LinearMap.range (cliffordBivectorExterior Q)
-        rw [cliffordBivector_lie_cliffordBivector]
+        rw [Submodule.mem_comap, LieModule.toEnd_apply_apply,
+          cliffordBivector_lie_cliffordBivector]
         apply Submodule.sub_mem
         · apply Submodule.add_mem
           · exact Submodule.sub_mem _
@@ -290,27 +268,12 @@ theorem cliffordBivectorExterior_range_lie_mem {x y : CliffordAlgebra Q}
           · exact Submodule.smul_mem _ _ (h_bivector_mem _ _)
         · exact Submodule.smul_mem _ _ (h_bivector_mem _ _))
     exact hP hy
-  let P : Submodule R (CliffordAlgebra Q) :=
-    { carrier := {z | ⁅z, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q)}
-      zero_mem' := by
-        -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-        change ⁅(0 : CliffordAlgebra Q), y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q)
-        rw [zero_lie]
-        exact Submodule.zero_mem _
-      add_mem' := by
-        intro z w hz hw
-        -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-        change ⁅z + w, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q)
-        rw [add_lie]
-        exact Submodule.add_mem _ hz hw
-      smul_mem' := by
-        intro r z hz
-        -- `change` unfolds the local carrier; rewriting does not expose its bracket predicate.
-        change ⁅r • z, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q)
-        rw [smul_lie]
-        exact Submodule.smul_mem _ r hz }
+  let P := (LinearMap.range (cliffordBivectorExterior Q)).comap
+    ((LieModule.toEnd R (CliffordAlgebra Q) (CliffordAlgebra Q)).flip y)
   have hP : LinearMap.range (cliffordBivectorExterior Q) ≤ P :=
-    cliffordBivectorExterior_range_le Q P (fun a b => h_decomp a b y hy)
+    cliffordBivectorExterior_range_le Q P (fun a b => by
+      rw [Submodule.mem_comap]
+      exact h_decomp a b y hy)
   exact hP hx
 
 /-- Clifford bivectors as an ambient Lie subalgebra of the Clifford algebra. This does not put a
