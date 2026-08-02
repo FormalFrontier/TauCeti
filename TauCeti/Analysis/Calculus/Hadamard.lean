@@ -29,9 +29,9 @@ noncomputable section
 open MeasureTheory
 open scoped ContDiff
 
-universe u
+universe u v
 
-variable {E F : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
 
 /-- The averaged derivative along the segment from `x` to `y`. -/
@@ -80,17 +80,20 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
       ((fderiv ℝ h.uncurry (x, t)).comp ((ContinuousLinearMap.id ℝ E).prod 0)) x at hd
     simpa only [h', ContinuousLinearMap.inl] using hd
 
-private theorem contDiff_integral_Icc_of_contDiff [FiniteDimensional ℝ E] (n : ℕ)
-    (h : E → ℝ → F) (hh : ContDiff ℝ n h.uncurry) :
+private theorem contDiff_integral_Icc_of_contDiff
+    {V W : Type u} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
+    [FiniteDimensional ℝ V] (n : ℕ)
+    (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
     ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
-  induction n generalizing F with
+  induction n generalizing W with
   | zero =>
       have hc : ContDiff ℝ (0 : ℕ∞ω) (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) :=
         contDiff_zero.2 (continuous_parametric_integral_of_continuous hh.continuous isCompact_Icc)
       simpa using hc
   | succ n ih =>
-      let h' : E → ℝ → E →L[ℝ] F := fun x t ↦
-        (fderiv ℝ h.uncurry (x, t)).comp (ContinuousLinearMap.inl ℝ E ℝ)
+      let h' : V → ℝ → V →L[ℝ] W := fun x t ↦
+        (fderiv ℝ h.uncurry (x, t)).comp (ContinuousLinearMap.inl ℝ V ℝ)
       have hh' : ContDiff ℝ n h'.uncurry := by
         have hd : ContDiff ℝ n (fderiv ℝ h.uncurry) :=
           hh.fderiv_right (m := n) (by norm_num)
@@ -128,8 +131,10 @@ theorem ContDiff.continuous_hadamardFactor [FiniteDimensional ℝ E] (f : E → 
   · exact (hf.fderiv_right (m := 0) (by norm_num)).continuous.comp (by fun_prop)
   · exact isCompact_Icc
 
-/-- The averaged derivative in Hadamard's factorization depends smoothly on the endpoint. -/
-theorem ContDiff.contDiff_hadamardFactor [FiniteDimensional ℝ E] (f : E → F)
+omit [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F] in
+/-- For a smooth real-valued function, the averaged derivative in Hadamard's factorization depends
+smoothly on the endpoint. -/
+theorem ContDiff.contDiff_hadamardFactor [FiniteDimensional ℝ E] (f : E → ℝ)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
   rw [show hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
