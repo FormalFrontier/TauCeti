@@ -76,9 +76,9 @@ theorem _root_.ContinuousLinearMap.IsFredholm.of_restrict (hE₁ : IsClosed (E�
     (Submodule.ClosedComplemented.of_finiteDimensional_quotient hE₁).exists_isTopCompl
   obtain ⟨F₀, hF⟩ :=
     (Submodule.ClosedComplemented.of_finiteDimensional_quotient hF₁).exists_isTopCompl
-  letI : FiniteDimensional K E₀ :=
+  let : FiniteDimensional K E₀ :=
     .of_fg <| (inferInstance : E₁.CoFG).fg_of_isCompl hE.isCompl
-  letI : FiniteDimensional K F₀ :=
+  let : FiniteDimensional K F₀ :=
     .of_fg <| (inferInstance : F₁.CoFG).fg_of_isCompl hF.isCompl
   let P : E →L[K] E₁ := E₁.projectionOntoL E₀ hE
   let ι : F₁ →L[K] F := F₁.subtypeL
