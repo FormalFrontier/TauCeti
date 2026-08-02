@@ -10,7 +10,9 @@ public import Mathlib.Topology.Algebra.ConstMulAction
 /-!
 # Basic API for the complex unit disc
 
-This file collects small API lemmas for Mathlib's `Complex.UnitDisc`.
+This file collects small API lemmas for Mathlib's `Complex.UnitDisc`, together with the basic
+properties of the `Circle` action on it: the disc is nontrivial, a rotation is determined by its
+value at any one nonzero point, and hence the circle acts faithfully.
 -/
 
 public section
@@ -65,5 +67,30 @@ lemma continuous_circle_smul_unitDisc (u : Circle) :
 instance instContinuousConstSMulCircleUnitDisc :
     ContinuousConstSMul Circle Complex.UnitDisc where
   continuous_const_smul := continuous_circle_smul_unitDisc
+
+/-- The open unit disc has more than one point: `0` and `1 / 2` are both in it. -/
+instance instNontrivialUnitDisc : Nontrivial Complex.UnitDisc := by
+  have h : ‖(2⁻¹ : ℂ)‖ < 1 := by
+    rw [norm_inv, Complex.norm_ofNat]
+    norm_num
+  exact ⟨⟨Complex.UnitDisc.mk (2⁻¹ : ℂ) h, 0, by simp⟩⟩
+
+/-- **A rotation is determined by its value at a single nonzero point of the disc.** Multiplication
+by a nonzero complex number is injective, and the disc inherits that from `ℂ`. -/
+theorem circle_smul_left_injective {z : Complex.UnitDisc} (hz : z ≠ 0) :
+    Function.Injective fun u : Circle => u • z := by
+  intro u v h
+  have hz' : (z : ℂ) ≠ 0 := fun hc => hz (Complex.UnitDisc.coe_eq_zero.1 hc)
+  have h' : (u : ℂ) * (z : ℂ) = (v : ℂ) * (z : ℂ) := by
+    simpa only [Complex.UnitDisc.coe_circle_smul] using
+      congrArg (fun w : Complex.UnitDisc => (w : ℂ)) h
+  exact Circle.ext (mul_right_cancel₀ hz' h')
+
+/-- **The circle acts faithfully on the unit disc.** Only the trivial rotation fixes the whole
+disc, because the disc contains a nonzero point. -/
+instance instFaithfulSMulCircleUnitDisc : FaithfulSMul Circle Complex.UnitDisc where
+  eq_of_smul_eq_smul h := by
+    obtain ⟨z, hz⟩ := exists_ne (0 : Complex.UnitDisc)
+    exact circle_smul_left_injective hz (h z)
 
 end TauCeti
