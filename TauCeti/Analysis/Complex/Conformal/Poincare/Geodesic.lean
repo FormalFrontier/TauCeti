@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Poincare.IsometryEquiv
+public import TauCeti.Analysis.Complex.Conformal.Poincare.Isometry.Equiv
 
 /-!
 # The Poincaré disc is a geodesic metric space
