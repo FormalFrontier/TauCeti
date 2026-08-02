@@ -83,9 +83,7 @@ theorem Contractable.condExp_comp_tailProcess_eq {μ : Measure Ω} [IsFiniteMeas
 private theorem integrable_indicator_comp {μ : Measure Ω} [IsFiniteMeasure μ] {W : Ω → α}
     (hW : Measurable W) {B : Set α} (hB : MeasurableSet B) :
     Integrable (fun ω => Set.indicator B (fun _ => (1 : ℝ)) (W ω)) μ := by
-  have hrw : (fun ω => Set.indicator B (fun _ => (1 : ℝ)) (W ω))
-      = (W ⁻¹' B).indicator (fun _ => (1 : ℝ)) := rfl
-  rw [hrw]
+  simp_rw [← Set.indicator_comp_right (g := fun _ => (1 : ℝ)) W, Function.comp_def]
   exact Integrable.indicator (integrable_const (1 : ℝ)) (hW hB)
 
 /-- Indicator form of `Contractable.condExp_comp_future_eq`, the shape the finite-block

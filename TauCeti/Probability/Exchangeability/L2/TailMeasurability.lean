@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.L2.CesaroConvergence
+public import TauCeti.Probability.Exchangeability.L2.Cesaro.Convergence
 public import TauCeti.Probability.Process.Tail.Basic
 import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.AEStronglyMeasurable

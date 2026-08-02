@@ -143,8 +143,7 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
         rw [eLpNorm_one_eq_lintegral_enorm,
           ← ofReal_integral_norm_eq_lintegral_enorm (ha_int.sub (hA_int m))]
         refine congrArg ENNReal.ofReal (integral_congr_ae (Eventually.of_forall fun ω => ?_))
-        change ‖a ω - _‖ = |_ - a ω|
-        rw [Real.norm_eq_abs, abs_sub_comm]
+        simp only [Pi.sub_apply, Real.norm_eq_abs, abs_sub_comm]
       simp_rw [heq]
       have hcomp := (ENNReal.continuous_ofReal.tendsto 0).comp (ha_lim 0)
       rw [ENNReal.ofReal_zero] at hcomp
