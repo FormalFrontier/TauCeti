@@ -124,6 +124,7 @@ theorem unitDiscStandardAutomorphismEquiv_injective :
   rfl
 
 /-- A standard automorphism is the identity exactly at the trivial parameters. -/
+@[simp]
 theorem unitDiscStandardAutomorphismEquiv_eq_one_iff :
     unitDiscStandardAutomorphismEquiv u a = 1 ↔ u = 1 ∧ a = 0 := by
   have h1 : unitDiscStandardAutomorphismEquiv (1 : Circle) (0 : Complex.UnitDisc) = 1 := by
