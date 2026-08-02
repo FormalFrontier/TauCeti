@@ -21,8 +21,6 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.zero_form_filtration_eq_iSup_exteriorPower`: the zero-form filtration
-  is the sum of exterior degrees at most `k`.
 * `TauCeti.CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
   disjoint from the lower zero-form filtration.
 * `TauCeti.CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
@@ -47,16 +45,10 @@ namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
-/-- The zero-form Clifford filtration is the sum of exterior degrees at most `k`. -/
-theorem zero_form_filtration_eq_iSup_exteriorPower (k : ℕ) :
-    filtration (0 : QuadraticForm R M) k =
-      ⨆ i : {i : ℕ // i ≤ k}, ⋀[R]^(i : ℕ) M :=
-  filtration_eq_iSup_pow (0 : QuadraticForm R M) k
-
 /-- The degree `k + 1` exterior power is disjoint from the lower zero-form filtration. -/
 theorem exteriorPower_succ_disjoint_zero_form_filtration (k : ℕ) :
     Disjoint (⋀[R]^(k + 1) M) (filtration (0 : QuadraticForm R M) k) := by
-  rw [zero_form_filtration_eq_iSup_exteriorPower]
+  rw [filtration_eq_iSup_pow (0 : QuadraticForm R M) k]
   rw [iSup_subtype]
   have hind : iSupIndep (fun i : ℕ => ⋀[R]^i M) :=
     (DirectSum.Decomposition.isInternal (fun i : ℕ => ⋀[R]^i M)).submodule_iSupIndep
