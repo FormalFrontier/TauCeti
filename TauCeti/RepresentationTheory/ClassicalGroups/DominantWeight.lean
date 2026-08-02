@@ -102,7 +102,7 @@ def detShift : {n : ℕ} → DominantWeight n → ℤ
   | _ + 1, l => l.1 (Fin.last _)
 
 @[simp]
-theorem detShift_of_isEmpty (l : DominantWeight 0) : l.detShift = 0 := rfl
+theorem detShift_eq_zero_of_isEmpty (l : DominantWeight 0) : l.detShift = 0 := rfl
 
 @[simp]
 theorem detShift_succ (l : DominantWeight (n + 1)) : l.detShift = l.1 (Fin.last n) := rfl
@@ -123,10 +123,12 @@ theorem detShift_shift (l : DominantWeight (n + 1)) (m : ℤ) :
 /-- A dominant weight is **polynomial** when all its entries are nonnegative.  These are the
 weights of the representations occurring in tensor powers of the standard representation, as
 opposed to the general rational ones, which need a negative power of the determinant. -/
-@[expose]
 def IsPolynomial (l : DominantWeight n) : Prop := ∀ i, 0 ≤ l.1 i
 
-/-- Since a dominant weight decreases, only its last entry has to be tested for polynomiality. -/
+/-- Since a dominant weight decreases, only its last entry has to be tested for polynomiality.
+This is not a `simp` lemma: rewriting `IsPolynomial` away would put the `simp` lemmas whose
+statement or hypothesis mentions it — `TauCeti.isPolynomial_weightOfShape` and
+`TauCeti.weightOfShape_shape` — out of `simp` normal form. -/
 theorem isPolynomial_iff_zero_le_detShift (l : DominantWeight n) :
     l.IsPolynomial ↔ 0 ≤ l.detShift := by
   refine ⟨fun h => ?_, fun h i => h.trans (l.detShift_le i)⟩
@@ -148,7 +150,6 @@ theorem antitone_toNat (l : DominantWeight n) : Antitone fun i => (l.1 i).toNat 
 /-- The Young diagram of a dominant weight: its `i`-th row has length `λᵢ`.  Negative entries are
 truncated to `0`, so this reads off the intended diagram exactly on the polynomial weights, where
 `TauCeti.DominantWeight.natCast_rowLen_shape` recovers the entries. -/
-@[expose]
 def shape (l : DominantWeight n) : YoungDiagram :=
   YoungDiagram.ofRowLensFin (fun i => (l.1 i).toNat) l.antitone_toNat
 
@@ -156,8 +157,9 @@ def shape (l : DominantWeight n) : YoungDiagram :=
 theorem rowLen_shape (l : DominantWeight n) (i : Fin n) : l.shape.rowLen i = (l.1 i).toNat :=
   YoungDiagram.rowLen_ofRowLensFin _ _ i
 
-theorem rowLen_shape_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) : l.shape.rowLen i = 0 :=
-  YoungDiagram.rowLen_ofRowLensFin_of_le _ _ hi
+theorem rowLen_shape_eq_zero_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) :
+    l.shape.rowLen i = 0 :=
+  YoungDiagram.rowLen_ofRowLensFin_eq_zero_of_le _ _ hi
 
 @[simp]
 theorem colLen_zero_shape_le (l : DominantWeight n) : l.shape.colLen 0 ≤ n :=
@@ -182,23 +184,24 @@ end DominantWeight
 intended by `μ` exactly when `μ` has at most `n` rows; a taller diagram is silently truncated. -/
 @[expose]
 def weightOfShape (n : ℕ) (μ : YoungDiagram) : DominantWeight n :=
-  ⟨fun i => (μ.rowLen i : ℤ), fun _ _ h => Int.ofNat_le.mpr (YoungDiagram.antitone_rowLen μ n h)⟩
+  ⟨fun i => (μ.rowLen i : ℤ), fun _ _ h => Int.ofNat_le.mpr (μ.rowLen_anti _ _ h)⟩
 
 @[simp]
 theorem weightOfShape_apply (n : ℕ) (μ : YoungDiagram) (i : Fin n) :
     (weightOfShape n μ).1 i = (μ.rowLen i : ℤ) :=
   rfl
 
+@[simp]
 theorem isPolynomial_weightOfShape (n : ℕ) (μ : YoungDiagram) :
     (weightOfShape n μ).IsPolynomial := fun _ => Int.natCast_nonneg _
 
 @[simp]
 theorem shape_weightOfShape {n : ℕ} {μ : YoungDiagram} (hμ : μ.colLen 0 ≤ n) :
     (weightOfShape n μ).shape = μ := by
-  refine YoungDiagram.eq_of_rowLen_eq fun i => ?_
+  refine YoungDiagram.rowLen_injective (funext fun i => ?_)
   by_cases hi : i < n
   · simpa using DominantWeight.rowLen_shape (weightOfShape n μ) ⟨i, hi⟩
-  · rw [DominantWeight.rowLen_shape_of_le _ (Nat.le_of_not_lt hi),
+  · rw [DominantWeight.rowLen_shape_eq_zero_of_le _ (Nat.le_of_not_lt hi),
       YoungDiagram.rowLen_eq_zero_of_colLen_le (hμ.trans (Nat.le_of_not_lt hi))]
 
 @[simp]
@@ -235,7 +238,6 @@ variable {n : ℕ}
 /-- The Young diagram of the **polynomial part** `λ - λₙ` of a dominant weight: its `i`-th row has
 length `λᵢ - λₙ`.  Together with `TauCeti.DominantWeight.detShift` it presents `λ` as a
 determinant twist of a polynomial weight. -/
-@[expose]
 def detShiftShape (l : DominantWeight n) : YoungDiagram := (l.shift (-l.detShift)).shape
 
 @[simp]
@@ -243,9 +245,9 @@ theorem rowLen_detShiftShape (l : DominantWeight n) (i : Fin n) :
     l.detShiftShape.rowLen i = (l.1 i - l.detShift).toNat := by
   rw [detShiftShape, rowLen_shape, shift_apply, ← sub_eq_add_neg]
 
-theorem rowLen_detShiftShape_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) :
+theorem rowLen_detShiftShape_eq_zero_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) :
     l.detShiftShape.rowLen i = 0 :=
-  rowLen_shape_of_le _ hi
+  rowLen_shape_eq_zero_of_le _ hi
 
 /-- The polynomial part of a dominant weight recovers it after shifting back by `λₙ`. -/
 theorem natCast_rowLen_detShiftShape_add_detShift (l : DominantWeight n) (i : Fin n) :
@@ -292,7 +294,7 @@ theorem eq_detShift_and_eq_detShiftShape (l : DominantWeight (n + 1)) {μ : Youn
       YoungDiagram.rowLen_eq_zero_of_colLen_le hμ
     rw [hlast, Nat.cast_zero, zero_add] at h
     rw [detShift_succ, ← h]
-  refine ⟨hm', YoungDiagram.eq_of_rowLen_eq fun i => ?_⟩
+  refine ⟨hm', YoungDiagram.rowLen_injective (funext fun i => ?_)⟩
   by_cases hi : i < n + 1
   · have h : (μ.rowLen i : ℤ) + m = l.1 ⟨i, hi⟩ := hm ⟨i, hi⟩
     have h' : l.detShiftShape.rowLen i = (l.1 ⟨i, hi⟩ - l.detShift).toNat :=
@@ -300,7 +302,7 @@ theorem eq_detShift_and_eq_detShiftShape (l : DominantWeight (n + 1)) {μ : Youn
     rw [hm'] at h
     omega
   · have hni : n ≤ i := Nat.le_of_succ_le (Nat.le_of_not_lt hi)
-    rw [rowLen_detShiftShape_of_le _ (Nat.le_of_not_lt hi),
+    rw [rowLen_detShiftShape_eq_zero_of_le _ (Nat.le_of_not_lt hi),
       YoungDiagram.rowLen_eq_zero_of_colLen_le (hμ.trans hni)]
 
 end DominantWeight
