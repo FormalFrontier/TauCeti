@@ -13,8 +13,8 @@ public import TauCeti.RepresentationTheory.SU2.Basic
 The maximal torus `T` of `SU(2)` built in `TauCeti/RepresentationTheory/SU2/Basic.lean` meets
 every conjugacy class: for every `g : SU(2)` there is `u : SU(2)` with `u g u⁻¹ ∈ T`. This is the
 torus-conjugacy input the compact-group roadmap asks for before the classification of the
-irreducible representations of `SU(2)`, and it is what makes a class function on `SU(2)` the same
-thing as a Weyl-invariant function on the circle.
+irreducible representations of `SU(2)`, and it is what makes a class function on `SU(2)`
+determined by its restriction to the circle.
 
 The proof is unitary diagonalisation, arranged so that it only needs Mathlib's spectral theorem
 for *Hermitian* matrices. Mathlib has no spectral theorem for normal or unitary matrices, but in
@@ -44,7 +44,9 @@ change the conjugation it induces.
   `diag (e^{iθ}, e^{-iθ})`.
 * `TauCeti.SU2.isConj_inv_of_mem_torus` and `TauCeti.SU2.isConj_torusExp_neg`: the Weyl reflection,
   every element of the torus is conjugate in `SU(2)` to its inverse. With torus conjugacy this
-  says the conjugacy classes of `SU(2)` are the Weyl orbits on `T`.
+  says every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
+  converse, that conjugate elements of `T` are equal or inverse, is not proved here, so the
+  classes are not yet identified with the Weyl orbits.
 * `TauCeti.SU2.eq_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)` that agree on the
   maximal torus are equal; a class function on `SU(2)` is determined by its restriction to `T`.
 -/
@@ -193,8 +195,8 @@ theorem exists_isConj_torusExp (g : SU2) : ∃ θ : ℝ, IsConj g (torusExp θ) 
 
 /-- The Weyl group of `SU(2)` acts on the maximal torus by inversion: every element of the torus
 is conjugate in `SU(2)` to its inverse, by the matrix `!![0, 1; -1, 0]` that swaps the two
-coordinate axes. Together with `TauCeti.SU2.exists_conj_mem_torus` this says that the conjugacy
-classes of `SU(2)` are the orbits of the Weyl group on the torus. -/
+coordinate axes. Together with `TauCeti.SU2.exists_conj_mem_torus` this says that every conjugacy
+class of `SU(2)` meets the torus in a nonempty set closed under inversion. -/
 theorem isConj_inv_of_mem_torus {g : SU2} (hg : g ∈ torus) : IsConj g g⁻¹ := by
   have hdiag := mem_torus_iff.mp hg
   have h01 : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := hdiag (by decide)
