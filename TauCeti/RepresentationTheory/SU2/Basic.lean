@@ -139,6 +139,12 @@ noncomputable def torus : Subgroup SU2 := torusHom.range
 
 theorem torusHom_mem_torus (z : Circle) : torusHom z ∈ torus := ⟨z, rfl⟩
 
+/-- An element of `SU(2)` lies in the maximal torus exactly when it is `diag (z, z⁻¹)` for a point
+`z` of the unit circle. This is the definition of `TauCeti.SU2.torus` as a range, restated as the
+membership lemma that puts a hand on the circle parameter of a torus element. -/
+theorem mem_torus_iff_exists_torusHom {g : SU2} : g ∈ torus ↔ ∃ z : Circle, torusHom z = g :=
+  torusHom.mem_range
+
 /-- An element of `SU(2)` lies in the maximal torus exactly when it is a diagonal matrix: unitarity
 makes the `(0, 0)` entry a point of the unit circle, and the determinant condition then forces the
 `(1, 1)` entry to be its inverse. -/
