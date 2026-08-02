@@ -90,6 +90,15 @@ theorem Contractable.identDistrib_coord {μ : Measure Ω} {X : ℕ → Ω → α
   have hcomp := hblock.comp (measurable_pi_apply (0 : Fin 1))
   convert hcomp using 1 <;> funext ω <;> simp [Function.comp]
 
+/-- **Integrability of an observable is a coordinate-free property.** For a contractable process,
+integrability of `f ∘ X i` for one coordinate `i` gives it for every coordinate `j`. -/
+theorem Contractable.integrable_comp {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E]
+    [BorelSpace E] {μ : Measure Ω} {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_ae : ∀ n, AEMeasurable (X n) μ) {f : α → E} (hf : Measurable f) {i : ℕ}
+    (hf_int : Integrable (fun ω => f (X i ω)) μ) (j : ℕ) :
+    Integrable (fun ω => f (X j ω)) μ :=
+  ((hX.identDistrib_coord (hX_ae i) (hX_ae j)).comp hf).integrable_snd hf_int
+
 /-- **Increasing pairs of a contractable process are identically distributed.** For a
 contractable process `X`, if the four selected coordinates are a.e. measurable and `i < j`,
 `k < l`, then `(X i, X j)` has the same joint law as `(X k, X l)`. -/
