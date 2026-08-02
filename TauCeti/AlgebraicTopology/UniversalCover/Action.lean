@@ -178,6 +178,7 @@ theorem basepointLift_coe (x₀ : X) :
 
 /-- Monodromy of the universal covering projection at its constant-path basepoint is the
 fundamental-group action by the inverse loop class. -/
+@[simp]
 theorem monodromy_basepointLift [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] (x₀ : X) (g : FundamentalGroup X x₀) :
     ((isCoveringMap x₀).monodromy g.toPath (basepointLift x₀) : UniversalCover x₀) =
