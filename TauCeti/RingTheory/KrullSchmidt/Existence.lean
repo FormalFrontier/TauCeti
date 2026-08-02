@@ -34,8 +34,6 @@ isomorphism `Submodule.mapIic`.
 
 * `TauCeti.isIndecomposableModule_coe_iff`: a submodule `P` is indecomposable exactly when it is
   nonzero and admits no splitting `P = N ⊕ Q` into two nonzero submodules of the ambient module.
-* `TauCeti.IsIndecomposableModule.ne_bot`: an indecomposable submodule is nonzero, so the summands
-  produced below are all nonzero.
 * `TauCeti.exists_finset_isIndecomposableModule_supIndep_sup_eq`: every submodule of an Artinian
   module is the internal direct sum of a finite set of indecomposable submodules. This is the
   induction, and the statement the recursion is strong enough to carry.
@@ -78,10 +76,6 @@ section Semiring
 variable {A : Type u} {M : Type v} [Semiring A] [AddCommMonoid M] [Module A M] {P : Submodule A M}
 
 /-! ### Reading a submodule's decompositions in the ambient lattice -/
-
-/-- An indecomposable submodule is nonzero. -/
-theorem IsIndecomposableModule.ne_bot (h : IsIndecomposableModule A P) : P ≠ ⊥ :=
-  Submodule.nontrivial_iff_ne_bot.mp h.nontrivial
 
 /-- **Indecomposability of a submodule, read in the ambient lattice.** The module `↥P` is
 indecomposable exactly when `P` is nonzero and every splitting of `P` as an internal direct sum of
