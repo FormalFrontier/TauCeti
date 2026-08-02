@@ -369,9 +369,9 @@ private lemma surjOn_ball_unitDiscStandardAutomorphismFormula {u b : ℂ} (hu : 
 
 /-- **An isometric self-embedding of the Poincaré disc is onto, pseudo-hyperbolic form.** A
 self-map of the open unit disc preserving the pseudo-hyperbolic expression is a bijection of the
-disc onto itself: the hyperbolic plane contains no proper isometric copy of itself. The
-holomorphic map preserving it at a single pair of points is
-`TauCeti.bijOn_ball_of_pseudoHyperbolicExpr_map_eq`, from Schwarz--Pick rigidity. -/
+disc onto itself: the hyperbolic plane contains no proper isometric copy of itself. The companion
+statement for a holomorphic self-map of the disc preserving it at a single pair of *distinct*
+points is `TauCeti.bijOn_ball_of_pseudoHyperbolicExpr_map_eq`, from Schwarz--Pick rigidity. -/
 theorem bijOn_ball_of_forall_pseudoHyperbolicExpr_map_eq
     (hmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,

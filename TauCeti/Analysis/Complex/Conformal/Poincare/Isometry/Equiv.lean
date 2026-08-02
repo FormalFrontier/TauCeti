@@ -123,7 +123,11 @@ lemma starIsometryEquiv_apply (z : PoincareDisc) :
 @[simp]
 lemma starIsometryEquiv_symm : starIsometryEquiv.symm = starIsometryEquiv := by
   ext z
-  rfl
+  -- Both sides become `z` after applying the injective map `starIsometryEquiv`: on the left by
+  -- `IsometryEquiv.apply_symm_apply`, on the right because `star` is an involution.
+  refine starIsometryEquiv.injective ?_
+  rw [starIsometryEquiv.apply_symm_apply, starIsometryEquiv_apply, starIsometryEquiv_apply,
+    toUnitDisc_toPoincare, star_star, toPoincare_toUnitDisc]
 
 /-- The disc Moebius automorphism centred at `a` as an isometric equivalence of the Poincaré
 disc. -/
