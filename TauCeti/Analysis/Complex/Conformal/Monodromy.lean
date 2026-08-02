@@ -8,8 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Continuation
 public import Mathlib.Topology.Homotopy.Path
 import Mathlib.Analysis.Analytic.Uniqueness
-import Mathlib.Topology.ContinuousMap.Compact
-import Mathlib.Topology.LocallyConstant.Basic
+import Mathlib.Topology.UniformSpace.Compact
 
 /-!
 # The monodromy theorem
@@ -20,6 +19,17 @@ path up to homotopy: if a germ continues along every path of a homotopy rel endp
 continuations end at the same germ. This is the L4 milestone of the conformal-mapping roadmap
 that `Continuation.lean` left as a follow-up.
 
+The theorem is proved here in the form that does **not** hold the endpoints fixed. A homotopy of
+paths whose endpoints move carries the initial germs along the path `t ↦ h (t, 0)` swept out by
+the starting point, and what `TauCeti.monodromy_theorem_of_free_homotopy` asserts is that the
+terminal germs are then carried along the path `t ↦ h (t, 1)` swept out by the finishing point:
+the conclusion is again a continuation, not an equality of germs. Fixing the endpoints degenerates
+both edges to constant paths, where "continues along a constant path" means "is one germ", and
+recovers the classical statement `TauCeti.monodromy_theorem`. The extra generality is not
+decorative — it is what makes monodromy an invariant of the *free* homotopy class of a loop
+(`TauCeti.monodromy_theorem_of_free_homotopy_loop`), a statement about a homotopy that moves the
+base point and so out of reach of the rel-endpoints form.
+
 ## The engine: stability under uniform perturbation of the path
 
 Homotopy invariance is a consequence of a purely metric statement, proved here first and useful
@@ -28,9 +38,16 @@ perturbations of the path**. Concretely, `IsAnalyticContinuationAlong.exists_rep
 turns the germs carried by a continuation into honest analytic functions on discs of one common
 radius `ρ > 0`, matched on overlaps; the very same family of functions is then a continuation
 along *any* path staying within `ρ` of the original
-(`IsAnalyticContinuationAlong.exists_isAnalyticContinuationAlong_of_dist_lt`), so by
-uniqueness the terminal germ is unchanged
-(`IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt`).
+(`IsAnalyticContinuationAlong.exists_isAnalyticContinuationAlong_of_dist_lt`), so by uniqueness a
+continuation along a nearby path that meets it at one parameter time meets it at all of them
+(`IsAnalyticContinuationAlong.exists_forall_eventuallyEq_of_dist_lt`).
+
+That comparison is made against the representative family `F`, not against `f` itself, and the
+distinction is what the moving endpoints cost: the germ of the perturbed continuation lives at
+`γ' a`, a point at which `f a` need not even be analytic, whereas `F a` is analytic on a whole
+disc of radius `ρ` about `γ a`. When the perturbation fixes the endpoints the representative can
+be traded back for `f`, and that is the classical statement
+`IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt`.
 
 The passage from germs to a uniform radius is where compactness of the parameter set enters: for
 each parameter time one picks a disc on which the carried germ has an analytic representative and
@@ -42,15 +59,21 @@ equality on the whole overlap.
 
 ## Monodromy
 
-With the engine in place, `TauCeti.monodromy_theorem` is a second connectedness argument, this
-time in the homotopy parameter: the terminal germ of the continuation along `h (t, ·)` is a
-locally constant function of `t`, because the paths `h (t, ·)` and `h (t₀, ·)` are uniformly close
-for `t` near `t₀` — that uniformity is the continuity of the curried homotopy `I → C(I, ℂ)` into
-the sup metric. A locally constant function on the connected parameter interval is constant.
+With the engine in place, `TauCeti.monodromy_theorem_of_free_homotopy` is the statement that the
+terminal germs form a continuation along the terminal edge. Its three clauses are read off in
+turn: continuity of that edge and analyticity of each terminal germ are immediate, and the
+remaining clause — nearby parameters carry the same terminal germ — is the engine applied to the
+row at `t₀`. Rows `h (t, ·)` and `h (t₀, ·)` are uniformly close for `t` near `t₀` because `h` is
+uniformly continuous on the compact square, and the two rows meet at the initial parameter because
+`hstart` is a continuation. The one point needing care is that the engine compares germs at the
+*moved* endpoints `h (t, 0)` and `h (t, 1)`, while the representative family is matched to `f t₀`
+only at `h (t₀, 0)` and `h (t₀, 1)`. Transporting that match is what
+`TauCeti.eventually_eventuallyEq_iff_of_analyticAt` is for: two analytic functions with a common
+germ at a point have a common germ at every point near it, so the match survives the move.
 
-`TauCeti.monodromy_theorem_of_homotopy_refl` records the loop form: continuing a germ around a
-null-homotopic loop returns the germ one started with, since the continuation along the constant
-loop is constant.
+`TauCeti.monodromy_theorem_of_homotopy_refl` records the loop form of the rel-endpoints statement:
+continuing a germ around a null-homotopic loop returns the germ one started with, since the
+continuation along the constant loop is constant.
 
 ## Main results
 
@@ -58,11 +81,19 @@ loop is constant.
   a continuation over a compact parameter set.
 * `TauCeti.IsAnalyticContinuationAlong.exists_isAnalyticContinuationAlong_of_dist_lt` —
   those representatives continue along every uniformly nearby path.
+* `TauCeti.IsAnalyticContinuationAlong.exists_forall_eventuallyEq_of_dist_lt` — **stability with
+  moving endpoints**: a continuation along a nearby path that matches the representative family at
+  one parameter time matches it at every parameter time.
 * `TauCeti.IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt` — **stability**: a
   continuation along a nearby path with the same endpoints and the same initial germ has the same
   terminal germ.
+* `TauCeti.monodromy_theorem_of_free_homotopy` — **the monodromy theorem for a free homotopy**:
+  germs continued across a homotopy whose endpoints move form a continuation along the path the
+  far endpoint sweeps out.
 * `TauCeti.monodromy_theorem` — **the monodromy theorem**: continuations along the paths of a
   homotopy rel endpoints, all starting from one germ, all end at one germ.
+* `TauCeti.monodromy_theorem_of_free_homotopy_loop` — the monodromy of a loop is unchanged by a
+  free homotopy through loops, base point included.
 * `TauCeti.monodromy_theorem_of_homotopy_refl` — a germ continued around a null-homotopic loop
   comes back to itself.
 
@@ -78,7 +109,9 @@ area already has — germ-level uniqueness of continuation along a fixed path
 (`IsAnalyticContinuationAlong.eventuallyEq`) — and adds only the metric stability engine, which
 is the concrete content that the abstract theorem's separatedness hypothesis packages. Building
 the étale space and rederiving `monodromy_theorem` from Mathlib's abstract theorem remains
-worthwhile follow-up work.
+worthwhile follow-up work; `TauCeti.monodromy_theorem_of_free_homotopy` is stated in the shape
+that comparison will want, a lift of one edge of the square being produced from a lift of the
+other rather than an equality of two germs over a fixed point.
 
 This advances the conformal-mapping roadmap's L4 target "the monodromy theorem (continuations
 along homotopic paths agree)" (see `ConformalMapping/README.md`). L4 is not covered by the
@@ -233,24 +266,49 @@ theorem exists_isAnalyticContinuationAlong_of_dist_lt (hf : IsAnalyticContinuati
   filter_upwards [hF₃ t ht, hmem] with u hEq hu
   exact eventuallyEq_of_mem (isOpen_ball.mem_nhds hu) hEq
 
+/-- **Stability of the carried germ under uniform perturbation of the path, measured against a
+fixed comparison family.** For a continuation `f` along `γ` over a compact preconnected parameter
+set there are a radius `ρ > 0` and a family `F` carrying the same germs as `f` such that any
+continuation `g` along a path `γ'` staying within `ρ` of `γ` and agreeing with `F` at *one*
+parameter time agrees with `F` at *every* parameter time.
+
+No relation between the endpoints of `γ'` and those of `γ` is required, which is what makes this
+the form a homotopy with moving endpoints consumes. The price is that the comparison has to be
+made against `F` rather than against `f`: the germ of `g a` lives at `γ' a`, where `f a` need not
+even be analytic, while `F a` is analytic on a whole disc of radius `ρ` about `γ a`. When the
+endpoints do not move, `TauCeti.IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt`
+eliminates `F` again. -/
+theorem exists_forall_eventuallyEq_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
+    (hs : IsCompact s) (hsc : IsPreconnected s) :
+    ∃ ρ > 0, ∃ F : X → ℂ → ℂ, (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
+      ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ), (∀ t ∈ s, dist (γ' t) (γ t) < ρ) →
+        IsAnalyticContinuationAlong g γ' s →
+        ∀ ⦃a : X⦄, a ∈ s → ∀ ⦃b : X⦄, b ∈ s →
+          g a =ᶠ[𝓝 (γ' a)] F a → g b =ᶠ[𝓝 (γ' b)] F b := by
+  obtain ⟨ρ, hρ, F, hF, hcont⟩ := hf.exists_isAnalyticContinuationAlong_of_dist_lt hs
+  exact ⟨ρ, hρ, F, hF, fun γ' g hd hg _ ha _ hb h₀ =>
+    hg.eventuallyEq (hcont γ' hg.continuousOn hd) hsc ha hb h₀⟩
+
 /-- **Stability of the terminal germ under uniform perturbation of the path.** For a continuation
 `f` along `γ` over a compact preconnected parameter set there is a radius `ρ > 0` with the
 following property: any continuation `g` along a path `γ'` that stays within `ρ` of `γ`, shares
 the endpoints `γ' a = γ a` and `γ' b = γ b` of `γ`, and starts from the same germ as `f`, also
 ends at the same germ as `f`.
 
-This is the metric heart of the monodromy theorem: nearby paths with common endpoints continue a
-germ to the same place. -/
+This is the metric heart of the monodromy theorem for a homotopy rel endpoints: nearby paths with
+common endpoints continue a germ to the same place. It is the fixed-endpoint specialization of
+`TauCeti.IsAnalyticContinuationAlong.exists_forall_eventuallyEq_of_dist_lt`, the endpoint
+equalities being exactly what lets the comparison family be traded back for `f`. -/
 theorem exists_eventuallyEq_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsCompact s) (hsc : IsPreconnected s) {a b : X} (ha : a ∈ s) (hb : b ∈ s) :
     ∃ ρ > 0, ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ),
       (∀ t ∈ s, dist (γ' t) (γ t) < ρ) → γ' a = γ a → γ' b = γ b →
       IsAnalyticContinuationAlong g γ' s → g a =ᶠ[𝓝 (γ a)] f a → g b =ᶠ[𝓝 (γ b)] f b := by
-  obtain ⟨ρ, hρ, F, hF, hcont⟩ := hf.exists_isAnalyticContinuationAlong_of_dist_lt hs
+  obtain ⟨ρ, hρ, F, hF, hkey⟩ := hf.exists_forall_eventuallyEq_of_dist_lt hs hsc
   refine ⟨ρ, hρ, fun γ' g hd hga hgb hg hstart => ?_⟩
   have h₀ : g a =ᶠ[𝓝 (γ' a)] F a := by
     rw [hga]; exact hstart.trans (hF a ha).symm
-  have h₁ := hg.eventuallyEq (hcont γ' hg.continuousOn hd) hsc ha hb h₀
+  have h₁ := hkey γ' g hd hg ha hb h₀
   rw [hgb] at h₁
   exact h₁.trans (hF b hb)
 
@@ -258,47 +316,103 @@ end IsAnalyticContinuationAlong
 
 /-! ### The monodromy theorem -/
 
+/-- Germ agreement at a point spreads to the points a moving base point reaches nearby: if `F` and
+`G` are analytic at `c t₀` and have the same germ there, then they have the same germ at `c t` for
+every `t` near `t₀`.
+
+This is the transport that lets a germ comparison made at the base point `c t₀` be re-used at the
+moving endpoint `c t` of a free homotopy, and it is why the two edges of such a homotopy may be
+compared against one fixed representative family. -/
+private lemma eventually_eventuallyEq_of_continuousAt {Z : Type*} [TopologicalSpace Z] {c : Z → ℂ}
+    {t₀ : Z} {F G : ℂ → ℂ} (hc : ContinuousAt c t₀) (hF : AnalyticAt ℂ F (c t₀))
+    (hG : AnalyticAt ℂ G (c t₀)) (h : F =ᶠ[𝓝 (c t₀)] G) :
+    ∀ᶠ t in 𝓝 t₀, F =ᶠ[𝓝 (c t)] G :=
+  hc.eventually ((eventually_eventuallyEq_iff_of_analyticAt hF hG).mono fun _ hiff => hiff.mpr h)
+
+/-- **The monodromy theorem for a free homotopy of paths.** Let `h` be a continuous map of the
+square, read as a family of paths `h (t, ·)` whose *endpoints are allowed to move*, and suppose a
+family of germs continues along each of those paths. If the initial germs — the germ of `f t 0` at
+`h (t, 0)` — themselves continue along the initial edge `t ↦ h (t, 0)`, then the terminal germs
+continue along the terminal edge `t ↦ h (t, 1)`.
+
+This is the monodromy theorem in the form the deck-group and covering-space consumers need: the
+continuation of a germ across a homotopy is itself a continuation, along the path the far endpoint
+sweeps out. Nothing is assumed rel endpoints; `TauCeti.monodromy_theorem` is the special case in
+which both edges are constant, where "continues along a constant path" degenerates to "carries one
+germ throughout". -/
+theorem monodromy_theorem_of_free_homotopy {h : I × I → ℂ} (hh : Continuous h)
+    {f : I → I → ℂ → ℂ}
+    (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
+    (hstart : IsAnalyticContinuationAlong (fun t => f t 0) (fun t => h (t, 0)) univ) :
+    IsAnalyticContinuationAlong (fun t => f t 1) (fun t => h (t, 1)) univ := by
+  have hedge : ∀ y : I, Continuous fun t : I => h (t, y) := fun y => by fun_prop
+  refine ⟨(hedge 1).continuousOn, fun t _ => (hf t).analyticAt 1 (mem_univ 1), ?_⟩
+  intro t₀ _
+  rw [nhdsWithin_univ]
+  obtain ⟨ρ, hρ, F, hF, hkey⟩ :=
+    (hf t₀).exists_forall_eventuallyEq_of_dist_lt isCompact_univ isPreconnected_univ
+  -- The representative of the row at `t₀` still matches `f t₀` at the points a moving edge reaches.
+  have hedgeEq : ∀ y : I, ∀ᶠ t in 𝓝 t₀, F y =ᶠ[𝓝 (h (t, y))] f t₀ y := fun y =>
+    eventually_eventuallyEq_of_continuousAt (hedge y).continuousAt
+      (((hf t₀).analyticAt y (mem_univ y)).congr (hF y (mem_univ y)).symm)
+      ((hf t₀).analyticAt y (mem_univ y)) (hF y (mem_univ y))
+  -- Uniform closeness of nearby rows, from uniform continuity of `h` on the compact square.
+  obtain ⟨δ, hδ, hδρ⟩ := Metric.uniformContinuous_iff.1
+    (CompactSpace.uniformContinuous_of_continuous hh) ρ hρ
+  have hclose : ∀ᶠ t in 𝓝 t₀, ∀ x : I, dist (h (t, x)) (h (t₀, x)) < ρ := by
+    filter_upwards [Metric.ball_mem_nhds t₀ hδ] with t ht x
+    have hdist : dist ((t, x) : I × I) (t₀, x) = dist t t₀ := by simp [Prod.dist_eq]
+    exact hδρ (hdist ▸ mem_ball.1 ht)
+  -- The initial germs of nearby rows agree, because `hstart` is itself a continuation.
+  have hstart₀ : ∀ᶠ t in 𝓝 t₀, f t 0 =ᶠ[𝓝 (h (t, 0))] f t₀ 0 := by
+    simpa using hstart.locallyEq t₀ (mem_univ t₀)
+  filter_upwards [hclose, hedgeEq 0, hedgeEq 1, hstart₀] with t hct hz₀ hz₁ hs₀
+  exact (hkey (fun x => h (t, x)) (f t) (fun x _ => hct x) (hf t) (mem_univ 0) (mem_univ 1)
+    (hs₀.trans hz₀.symm)).trans hz₁
+
 /-- **The monodromy theorem.** Let `h` be a homotopy rel endpoints between two paths from `z₀` to
 `z₁` in `ℂ`, and suppose a germ at `z₀` continues along every path `h (t, ·)` of the homotopy,
 all the continuations starting from that one germ. Then they all end at one and the same germ at
 `z₁`: the result of the continuation depends on the path only through its homotopy class.
 
-The proof is a connectedness argument in the homotopy parameter. For `t` near `t₀` the paths
-`h (t, ·)` and `h (t₀, ·)` are uniformly close, since currying the homotopy gives a continuous
-map into `C(I, ℂ)` with its sup metric; so
-`IsAnalyticContinuationAlong.exists_eventuallyEq_of_dist_lt` applies and the terminal germ
-is a locally constant function of `t` on the connected interval. -/
+This is the rel-endpoints case of `TauCeti.monodromy_theorem_of_free_homotopy`, whose homotopy is
+allowed to move the endpoints and whose conclusion is correspondingly a continuation along the
+path the terminal point sweeps out rather than a single germ at `z₁`. -/
 theorem monodromy_theorem {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homotopy p₁)
     {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : ∀ t, f t 0 =ᶠ[𝓝 z₀] f 0 0) (t : I) :
     f t 1 =ᶠ[𝓝 z₁] f 0 1 := by
-  have hloc : IsLocallyConstant fun t : I => f t 1 =ᶠ[𝓝 z₁] f 0 1 := by
-    rw [IsLocallyConstant.iff_eventually_eq]
-    intro t₀
-    obtain ⟨ρ, hρ, hkey⟩ := (hf t₀).exists_eventuallyEq_of_dist_lt isCompact_univ
-      isPreconnected_univ (mem_univ 0) (mem_univ 1)
-    -- Uniform closeness of the paths near `t₀`, from continuity of the curried homotopy.
-    have hclose : ∀ᶠ t in 𝓝 t₀, ∀ x : I, dist (h (t, x)) (h (t₀, x)) < ρ := by
-      have hd : ∀ᶠ t in 𝓝 t₀,
-          dist (h.toHomotopy.curry t) (h.toHomotopy.curry t₀) < ρ :=
-        Metric.tendsto_nhds.1 (h.toHomotopy.curry.continuous.tendsto t₀) ρ hρ
-      filter_upwards [hd] with t ht x
-      calc dist (h (t, x)) (h (t₀, x))
-          = dist (h.toHomotopy.curry t x) (h.toHomotopy.curry t₀ x) := by
-            simp [ContinuousMap.Homotopy.curry_apply]
-        _ ≤ dist (h.toHomotopy.curry t) (h.toHomotopy.curry t₀) :=
-            ContinuousMap.dist_apply_le_dist x
-        _ < ρ := ht
-    filter_upwards [hclose] with t ht
-    have hstep : f t 1 =ᶠ[𝓝 z₁] f t₀ 1 := by
-      have h₀ : f t 0 =ᶠ[𝓝 (h (t₀, 0))] f t₀ 0 := by
-        simpa using (hstart t).trans (hstart t₀).symm
-      have := hkey (fun x => h (t, x)) (f t) (fun x _ => ht x) (by simp) (by simp) (hf t) h₀
-      simpa using this
-    exact propext ⟨fun hp => hstep.symm.trans hp, fun hp => hstep.trans hp⟩
-  have := hloc.apply_eq_of_preconnectedSpace t 0
-  rw [this]
+  have hsrc : ∀ u : I, h (u, 0) = z₀ := fun u => by simp
+  have htgt : ∀ u : I, h (u, 1) = z₁ := fun u => by simp
+  have hstart' : IsAnalyticContinuationAlong (fun u => f u 0) (fun u => h (u, 0)) univ := by
+    refine ⟨by simp only [hsrc]; exact continuousOn_const, fun u _ => ?_,
+      fun u _ => .of_forall fun v => ?_⟩
+    · simpa [hsrc] using (hf u).analyticAt 0 (mem_univ 0)
+    · rw [hsrc]; exact (hstart v).trans (hstart u).symm
+  have hend := monodromy_theorem_of_free_homotopy (map_continuous h) hf hstart'
+  have hconst : IsAnalyticContinuationAlong (fun _ : I => f 0 1) (fun u => h (u, 1)) univ :=
+    .const (by simp only [htgt]; exact continuousOn_const)
+      fun u _ => by simpa [htgt] using (hf 0).analyticAt 1 (mem_univ 1)
+  simpa [htgt] using
+    hend.eventuallyEq hconst isPreconnected_univ (mem_univ 0) (mem_univ t) .rfl
+
+/-- **The monodromy of a loop depends only on its free homotopy class.** If `h` is a homotopy
+through *loops* — each row `h (t, ·)` closes up, `h (t, 1) = h (t, 0)` — and the initial germs
+continue along the path `t ↦ h (t, 0)` swept out by the base point, then the germ is preserved by
+continuation around every loop of the homotopy as soon as it is preserved around one of them.
+
+This is the statement that makes monodromy an invariant of the free homotopy class of a loop, and
+it is out of reach of `TauCeti.monodromy_theorem`, whose homotopies must fix the base point. -/
+theorem monodromy_theorem_of_free_homotopy_loop {h : I × I → ℂ} (hh : Continuous h)
+    (hloop : ∀ t : I, h (t, 1) = h (t, 0)) {f : I → I → ℂ → ℂ}
+    (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
+    (hstart : IsAnalyticContinuationAlong (fun t => f t 0) (fun t => h (t, 0)) univ)
+    (hbase : f 0 1 =ᶠ[𝓝 (h (0, 0))] f 0 0) (t : I) :
+    f t 1 =ᶠ[𝓝 (h (t, 0))] f t 0 := by
+  have hend := monodromy_theorem_of_free_homotopy hh hf hstart
+  rw [funext hloop] at hend
+  exact hend.eventuallyEq hstart isPreconnected_univ (mem_univ 0) (mem_univ t) hbase
 
 /-- **A germ continued around a null-homotopic loop returns to itself.** If the loop `p` at `z₀`
 is homotopic rel endpoints to the constant loop and a germ at `z₀` continues along every path of
