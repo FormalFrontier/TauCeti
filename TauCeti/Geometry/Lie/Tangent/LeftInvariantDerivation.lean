@@ -7,7 +7,6 @@ module
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
 public import Mathlib.Geometry.Manifold.GroupLieAlgebra
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
-import Mathlib.Geometry.Manifold.VectorBundle.Basic
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 public import TauCeti.Geometry.Manifold.DerivationBundle
 
@@ -15,8 +14,8 @@ public import TauCeti.Geometry.Manifold.DerivationBundle
 # Evaluation of left-invariant derivations
 
 A left-invariant derivation on a Lie group is determined by its value at any point. For a
-finite-dimensional smooth real Lie group without boundary, evaluation at the identity gives a
-canonical linear equivalence between left-invariant derivations and the tangent Lie algebra.
+finite-dimensional smooth real Lie group whose identity is an interior point, evaluation there
+gives a canonical linear equivalence between left-invariant derivations and the tangent Lie algebra.
 
 ## Main results
 
@@ -83,10 +82,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-/-- A left-invariant vector field on a smooth real Lie group is smooth.
-
-The proof follows Sébastien Gouëzel's proof of Mathlib's
-`contMDiff_mulInvariantVectorField`, specialized to infinite smoothness. -/
+/-- A left-invariant vector field on a smooth real Lie group is smooth. -/
 theorem contMDiff_mulInvariantVectorField_infty
     [LieGroup I ∞ G] (v : GroupLieAlgebra I G) :
     ContMDiff I I.tangent ∞
@@ -128,6 +124,7 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
       (modelWithCornersSelf ℝ ℝ) ∞
       (fun p : TangentBundle (modelWithCornersSelf ℝ ℝ) ℝ ↦ p.2) :=
     contMDiff_snd_tangentBundle_modelSpace ℝ (modelWithCornersSelf ℝ ℝ)
+  -- `mvfderiv` is the second component of the tangent map, hidden by bundle coercions.
   change ContMDiff I (modelWithCornersSelf ℝ ℝ) ∞
     (fun g ↦ mfderiv I (modelWithCornersSelf ℝ ℝ) f g (mulInvariantVectorField v g))
   have h := hsnd.comp (hdf.comp (contMDiff_mulInvariantVectorField_infty v))
@@ -137,75 +134,96 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
 @[simp]
 theorem mulInvariantVectorField_one [LieGroup I ∞ G] (v : GroupLieAlgebra I G) :
     mulInvariantVectorField v (1 : G) = v := by
+  -- Unfold the invariant field to expose the derivative of the identity map.
   change mfderiv I I (fun x : G ↦ 1 * x) 1 v = v
   rw [show (fun x : G ↦ 1 * x) = id by funext x; simp, mfderiv_id]
   rfl
 
 /-- The left-invariant derivation associated to a tangent vector at the identity. At every point it
 acts by differentiating along Mathlib's corresponding left-invariant vector field. -/
-@[expose]
 noncomputable def tangentToLeftInvariantDerivation
-    [LieGroup I ∞ G] (v : GroupLieAlgebra I G) :
-    LeftInvariantDerivation I G := by
-  let D : Derivation ℝ C^∞⟮I, G; ℝ⟯ C^∞⟮I, G; ℝ⟯ :=
-    Derivation.mk'
-        { toFun := fun f ↦
-            ⟨fun g ↦ mvfderiv I f g (mulInvariantVectorField v g),
-              contMDiff_mvfderiv_mulInvariantVectorField v f⟩
-          map_add' := fun f g ↦ by
+    [LieGroup I ∞ G] :
+    GroupLieAlgebra I G →ₗ[ℝ] LeftInvariantDerivation I G where
+  toFun v := by
+    let D : Derivation ℝ C^∞⟮I, G; ℝ⟯ C^∞⟮I, G; ℝ⟯ :=
+      Derivation.mk'
+          { toFun := fun f ↦
+              ⟨fun g ↦ mvfderiv I f g (mulInvariantVectorField v g),
+                contMDiff_mvfderiv_mulInvariantVectorField v f⟩
+            map_add' := fun f g ↦ by
+              ext x
+              -- Unfold the smooth-function wrappers to use linearity of `mvfderiv`.
+              change mvfderiv I (⇑f + ⇑g) x (mulInvariantVectorField v x) =
+                mvfderiv I f x (mulInvariantVectorField v x) +
+                  mvfderiv I g x (mulInvariantVectorField v x)
+              exact congr($(mvfderiv_add
+                (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
+                (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
+                (mulInvariantVectorField v x))
+            map_smul' := fun c f ↦ by
+              ext x
+              have hc : MDiffAt (fun _ : G ↦ c) x := mdifferentiableAt_const
+              -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
+              change mvfderiv I ((fun _ : G ↦ c) • ⇑f) x (mulInvariantVectorField v x) =
+                c • mvfderiv I f x (mulInvariantVectorField v x)
+              have h := congr($(mvfderiv_smul hc
+                (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
+                (mulInvariantVectorField v x))
+              calc
+                _ = (c • mvfderiv I f x +
+                    (mvfderiv I (fun _ : G ↦ c) x).smulRight (f x))
+                    (mulInvariantVectorField v x) := h
+                _ = _ := by simp [mvfderiv_const] }
+          fun f g ↦ by
             ext x
-            change mvfderiv I (⇑f + ⇑g) x (mulInvariantVectorField v x) =
-              mvfderiv I f x (mulInvariantVectorField v x) +
-                mvfderiv I g x (mulInvariantVectorField v x)
-            exact congr($(mvfderiv_add
+            -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
+            change mvfderiv I (⇑f * ⇑g) x (mulInvariantVectorField v x) =
+              f x * mvfderiv I g x (mulInvariantVectorField v x) +
+                g x * mvfderiv I f x (mulInvariantVectorField v x)
+            exact congr($(mvfderiv_mul
               (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
               (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
               (mulInvariantVectorField v x))
-          map_smul' := fun c f ↦ by
-            ext x
-            have hc : MDiffAt (fun _ : G ↦ c) x := mdifferentiableAt_const
-            change mvfderiv I ((fun _ : G ↦ c) • ⇑f) x (mulInvariantVectorField v x) =
-              c • mvfderiv I f x (mulInvariantVectorField v x)
-            have h := congr($(mvfderiv_smul hc
-              (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
-              (mulInvariantVectorField v x))
-            calc
-              _ = (c • mvfderiv I f x +
-                  (mvfderiv I (fun _ : G ↦ c) x).smulRight (f x))
-                  (mulInvariantVectorField v x) := h
-              _ = _ := by simp [mvfderiv_const] }
-        fun f g ↦ by
-          ext x
-          change mvfderiv I (⇑f * ⇑g) x (mulInvariantVectorField v x) =
-            f x * mvfderiv I g x (mulInvariantVectorField v x) +
-              g x * mvfderiv I f x (mulInvariantVectorField v x)
-          exact congr($(mvfderiv_mul
+    refine { toDerivation := D, left_invariant'' := fun g ↦ ?_ }
+    · ext f
+      -- The calculation endpoints unfold `hfdifferential`, `evalAt`, and the local derivation `D`.
+      calc
+        ((𝒅ₕ (smoothLeftMul_one I g))
+            (Derivation.evalAt 1 D)) f =
+            mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1
+              (mulInvariantVectorField v 1) := rfl
+        _ = mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1 v := by
+          rw [mulInvariantVectorField_one]
+        _ = mvfderiv I (show C^∞⟮I, G; ℝ⟯ from f) g
+            (mulInvariantVectorField v g) := by
+          rw [mulInvariantVectorField]
+          -- Expose the function composition hidden by `ContMDiffMap.comp`.
+          change (mfderiv I (modelWithCornersSelf ℝ ℝ) (fun x ↦ f (g * x)) 1) v =
+            (mfderiv I (modelWithCornersSelf ℝ ℝ) f g)
+              ((mfderiv I I (fun x ↦ g * x) 1) v)
+          have h := mfderiv_comp_apply 1
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
-            (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
-            (mulInvariantVectorField v x))
-  refine { toDerivation := D, left_invariant'' := fun g ↦ ?_ }
-  · ext f
-    calc
-      ((𝒅ₕ (smoothLeftMul_one I g))
-          (Derivation.evalAt 1 D)) f =
-          mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1
-            (mulInvariantVectorField v 1) := rfl
-      _ = mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1 v := by
-        rw [mulInvariantVectorField_one]
-      _ = mvfderiv I (show C^∞⟮I, G; ℝ⟯ from f) g
-          (mulInvariantVectorField v g) := by
-        rw [mulInvariantVectorField]
-        change (mfderiv I (modelWithCornersSelf ℝ ℝ) (fun x ↦ f (g * x)) 1) v =
-          (mfderiv I (modelWithCornersSelf ℝ ℝ) f g)
-            ((mfderiv I I (fun x ↦ g * x) 1) v)
-        have h := mfderiv_comp_apply 1
-          (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
-          ((contMDiff_mul_left (n := ∞) (a := g)).mdifferentiable (by simp)).mdifferentiableAt v
-        rw [mul_one] at h
-        change ((mfderiv I (modelWithCornersSelf ℝ ℝ)
-          ((show G → ℝ from f) ∘ fun x ↦ g * x) 1) v) = _
-        exact h
-      _ = (Derivation.evalAt g D) f := rfl
+            ((contMDiff_mul_left (n := ∞) (a := g)).mdifferentiable (by simp)).mdifferentiableAt v
+          rw [mul_one] at h
+          change ((mfderiv I (modelWithCornersSelf ℝ ℝ)
+            ((show G → ℝ from f) ∘ fun x ↦ g * x) 1) v) = _
+          exact h
+        _ = (Derivation.evalAt g D) f := rfl
+  map_add' v w := by
+    apply LeftInvariantDerivation.evalAt_one_injective
+    ext f
+    -- Evaluation unfolds both constructed derivations to directional derivatives.
+    change mvfderiv I f 1 (mulInvariantVectorField (v + w) 1) =
+      mvfderiv I f 1 (mulInvariantVectorField v 1) +
+        mvfderiv I f 1 (mulInvariantVectorField w 1)
+    simp
+  map_smul' c v := by
+    apply LeftInvariantDerivation.evalAt_one_injective
+    ext f
+    -- Evaluation unfolds both constructed derivations to directional derivatives.
+    change mvfderiv I f 1 (mulInvariantVectorField (c • v) 1) =
+      c • mvfderiv I f 1 (mulInvariantVectorField v 1)
+    simp
 
 /-- The derivation built from a tangent vector acts pointwise along its invariant vector field. -/
 @[simp]
@@ -214,7 +232,7 @@ theorem tangentToLeftInvariantDerivation_apply
     (f : C^∞⟮I, G; ℝ⟯) (g : G) :
     tangentToLeftInvariantDerivation v f g =
       mvfderiv I f g (mulInvariantVectorField v g) :=
-  rfl
+  by rfl
 
 /-- Evaluating the derivation associated to `v` at the identity gives directional differentiation
 along `v`. -/
@@ -224,29 +242,17 @@ theorem LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation
     LeftInvariantDerivation.evalAt (I := I) (1 : G) (tangentToLeftInvariantDerivation v) =
       tangentToPointDerivation (1 : G) v := by
   ext f
+  -- Unfold evaluation and the two directional-derivative constructors.
   change mvfderiv I f 1 (mulInvariantVectorField v 1) = mvfderiv I f 1 v
   rw [mulInvariantVectorField_one]
-
-/-- Constructing invariant derivations from tangent vectors is linear. -/
-noncomputable def tangentToLeftInvariantDerivationLinear
-    [LieGroup I ∞ G] :
-    GroupLieAlgebra I G →ₗ[ℝ] LeftInvariantDerivation I G where
-  toFun := tangentToLeftInvariantDerivation
-  map_add' v w := by
-    apply LeftInvariantDerivation.evalAt_one_injective
-    simp
-  map_smul' c v := by
-    apply LeftInvariantDerivation.evalAt_one_injective
-    simp
 
 /-- Evaluation at the identity is onto point derivations on a finite-dimensional smooth real Lie
 group. -/
 theorem LeftInvariantDerivation.evalAt_one_surjective
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
-    [BoundarylessManifold I G] :
+    (h₁ : I.IsInteriorPoint (1 : G)) :
     Function.Surjective (LeftInvariantDerivation.evalAt (I := I) (1 : G)) := by
   intro D
-  have h₁ : I.IsInteriorPoint (1 : G) := BoundarylessManifold.isInteriorPoint
   refine ⟨tangentToLeftInvariantDerivation (I := I) (G := G)
     (pointDerivationEquivTangentSpace (I := I) 1 h₁ D), ?_⟩
   rw [evalAt_one_tangentToLeftInvariantDerivation,
@@ -256,23 +262,31 @@ theorem LeftInvariantDerivation.evalAt_one_surjective
 the identity. -/
 noncomputable def leftInvariantDerivationEquivGroupLieAlgebra
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
-    [BoundarylessManifold I G] :
+    (h₁ : I.IsInteriorPoint (1 : G)) :
     LeftInvariantDerivation I G ≃ₗ[ℝ] GroupLieAlgebra I G :=
   (LinearEquiv.ofBijective (LeftInvariantDerivation.evalAt (I := I) (1 : G))
     ⟨LeftInvariantDerivation.evalAt_one_injective,
-      LeftInvariantDerivation.evalAt_one_surjective⟩).trans
-    (pointDerivationEquivTangentSpace 1 BoundarylessManifold.isInteriorPoint)
+      LeftInvariantDerivation.evalAt_one_surjective h₁⟩).trans
+    (pointDerivationEquivTangentSpace 1 h₁)
+
+/-- The derivation–tangent equivalence is evaluation at the identity followed by the
+point-derivation–tangent equivalence. -/
+@[simp]
+theorem leftInvariantDerivationEquivGroupLieAlgebra_apply
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) (D : LeftInvariantDerivation I G) :
+    leftInvariantDerivationEquivGroupLieAlgebra h₁ D =
+      pointDerivationEquivTangentSpace 1 h₁ (LeftInvariantDerivation.evalAt 1 D) :=
+  by rfl
 
 /-- The inverse derivation–tangent equivalence is the explicit invariant-derivation construction. -/
 @[simp]
 theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
-    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) :
-    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)).symm v =
+    (h₁ : I.IsInteriorPoint (1 : G)) (v : GroupLieAlgebra I G) :
+    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).symm v =
       tangentToLeftInvariantDerivation v := by
-  apply (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)).injective
-  rw [LinearEquiv.apply_symm_apply]
-  change v = pointDerivationEquivTangentSpace 1 BoundarylessManifold.isInteriorPoint
-    (LeftInvariantDerivation.evalAt 1 (tangentToLeftInvariantDerivation v))
+  apply (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).injective
+  rw [LinearEquiv.apply_symm_apply, leftInvariantDerivationEquivGroupLieAlgebra_apply]
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
