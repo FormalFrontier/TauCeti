@@ -23,8 +23,8 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 * `tangentToPointDerivation`: the point derivation associated to a tangent vector.
 * `tangentToPointDerivation_injective`: distinct tangent vectors induce distinct point derivations
   on finite-dimensional Hausdorff real manifolds.
-* `tangentToPointDerivation_surjective`: every point derivation on a finite-dimensional Hausdorff
-  boundaryless real manifold comes from a tangent vector.
+* `tangentToPointDerivation_surjective`: at an interior point of a finite-dimensional Hausdorff
+  real manifold, every point derivation comes from a tangent vector.
 * `pointDerivationEquivTangentSpace`: the resulting canonical linear equivalence.
 * `PointDerivation.congr_of_eventuallyEq`: on a finite-dimensional Hausdorff real manifold, a point
   derivation depends only on the germ of a smooth function at its basepoint.
@@ -287,13 +287,13 @@ theorem tangentToPointDerivation_mfderiv (f : C^∞⟮I, M; I', M'⟯) (x : M)
     (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
     (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt v).symm
 
-/-- Every point derivation on a finite-dimensional Hausdorff boundaryless real manifold is
+/-- Every point derivation at an interior point of a finite-dimensional Hausdorff real manifold is
 directional differentiation along a tangent vector. -/
 theorem tangentToPointDerivation_surjective
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] [BoundarylessManifold I M] (x : M) :
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) :
     Function.Surjective (tangentToPointDerivation (I := I) x) := by
   intro D
   let b : SmoothBumpFunction I x := Classical.choice inferInstance
@@ -311,21 +311,10 @@ theorem tangentToPointDerivation_surjective
     rfl
   refine ⟨v, ?_⟩
   ext f
-  have htarget_at (y : E) (hy : y ∈ (extChartAt I x).target) :
-      (extChartAt I x).target ∈ nhds y := by
-    let m := (extChartAt I x).symm y
-    have hm : m ∈ (extChartAt I x).source := (extChartAt I x).map_target hy
-    have hmInterior : I.IsInteriorPoint m := BoundarylessManifold.isInteriorPoint
-    have hi : extChartAt I x m ∈ interior (extChartAt I x).target := by
-      have hi' := (ModelWithCorners.isInteriorPoint_iff_of_mem_atlas (n := ∞) (by simp)
-        (chart_mem_atlas H x) (by simpa [extChartAt_source] using hm)).1 hmInterior
-      simpa [extChartAt] using hi'
-    have hey : extChartAt I x m = y := (extChartAt I x).right_inv hy
-    rw [hey] at hi
-    exact Filter.mem_of_superset (isOpen_interior.mem_nhds hi) interior_subset
-  have htarget : (extChartAt I x).target ∈ nhds (F x) := by
+  have htarget : interior (extChartAt I x).target ∈ nhds (F x) := by
     rw [hFx]
-    exact htarget_at _ (mem_extChartAt_target x)
+    exact isOpen_interior.mem_nhds
+      ((ModelWithCorners.isInteriorPoint_iff (I := I)).mp hx)
   obtain ⟨β, hβ, -⟩ :=
     (SmoothBumpFunction.nhds_basis_support
       (I := modelWithCornersSelf ℝ E) htarget).mem_iff.mp htarget
@@ -333,10 +322,12 @@ theorem tangentToPointDerivation_surjective
   have hg : ContDiff ℝ ∞ g := by
     apply ContMDiff.contDiff
     refine contMDiff_of_tsupport fun y hy ↦ ?_
-    have hytarget : y ∈ (extChartAt I x).target :=
+    have hytarget : y ∈ interior (extChartAt I x).target :=
       hβ (tsupport_mul_subset_left hy)
-    have hsymmWithin := contMDiffWithinAt_extChartAt_symm_target (n := ∞) x hytarget
-    have hsymm := hsymmWithin.contMDiffAt (htarget_at y hytarget)
+    have hsymmWithin :=
+      contMDiffWithinAt_extChartAt_symm_target (n := ∞) x (interior_subset hytarget)
+    have hsymm := hsymmWithin.contMDiffAt
+      (Filter.mem_of_superset (isOpen_interior.mem_nhds hytarget) interior_subset)
     exact β.contMDiffAt.mul (f.contMDiff.contMDiffAt.comp y hsymm)
   let g' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨g, hg.contMDiff⟩
   have hβF : Filter.EventuallyEq (nhds x) (β ∘ F) (fun _ ↦ 1) :=
@@ -356,16 +347,16 @@ theorem tangentToPointDerivation_surjective
   exact congrArg (fun d : PointDerivation (modelWithCornersSelf ℝ E) (F x) ↦ d g')
     (hpush.trans hw)
 
-/-- Point derivations and tangent vectors are canonically linearly equivalent on a
-finite-dimensional Hausdorff boundaryless real manifold. -/
+/-- Point derivations and tangent vectors are canonically linearly equivalent at an interior point
+of a finite-dimensional Hausdorff real manifold. -/
 noncomputable def pointDerivationEquivTangentSpace
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] [BoundarylessManifold I M] (x : M) :
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) :
     PointDerivation I x ≃ₗ[ℝ] TangentSpace I x :=
   (LinearEquiv.ofBijective (tangentToPointDerivation x)
-    ⟨tangentToPointDerivation_injective x, tangentToPointDerivation_surjective x⟩).symm
+    ⟨tangentToPointDerivation_injective x, tangentToPointDerivation_surjective x hx⟩).symm
 
 /-- The inverse of the point-derivation equivalence is directional differentiation. -/
 @[simp]
@@ -373,13 +364,13 @@ theorem pointDerivationEquivTangentSpace_symm_apply
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] [BoundarylessManifold I M] (x : M) (v : TangentSpace I x) :
-    (pointDerivationEquivTangentSpace x).symm v = tangentToPointDerivation x v := by
-  apply (pointDerivationEquivTangentSpace x).injective
-  rw [(pointDerivationEquivTangentSpace x).apply_symm_apply]
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) (v : TangentSpace I x) :
+    (pointDerivationEquivTangentSpace x hx).symm v = tangentToPointDerivation x v := by
+  apply (pointDerivationEquivTangentSpace x hx).injective
+  rw [(pointDerivationEquivTangentSpace x hx).apply_symm_apply]
   exact ((LinearEquiv.ofBijective (tangentToPointDerivation x)
     ⟨tangentToPointDerivation_injective x,
-      tangentToPointDerivation_surjective x⟩).symm_apply_apply v).symm
+      tangentToPointDerivation_surjective x hx⟩).symm_apply_apply v).symm
 
 /-- Converting a point derivation to a tangent vector and back recovers the derivation. -/
 @[simp]
@@ -387,10 +378,10 @@ theorem tangentToPointDerivation_pointDerivationEquivTangentSpace
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] [BoundarylessManifold I M] (x : M) (D : PointDerivation I x) :
-    tangentToPointDerivation x (pointDerivationEquivTangentSpace x D) = D := by
-  rw [← pointDerivationEquivTangentSpace_symm_apply]
-  exact (pointDerivationEquivTangentSpace x).symm_apply_apply D
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) (D : PointDerivation I x) :
+    tangentToPointDerivation x (pointDerivationEquivTangentSpace x hx D) = D := by
+  rw [← pointDerivationEquivTangentSpace_symm_apply x hx]
+  exact (pointDerivationEquivTangentSpace x hx).symm_apply_apply D
 
 /-- Converting a tangent vector to a point derivation and back recovers the vector. -/
 @[simp]
@@ -398,7 +389,7 @@ theorem pointDerivationEquivTangentSpace_tangentToPointDerivation
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] [BoundarylessManifold I M] (x : M) (v : TangentSpace I x) :
-    pointDerivationEquivTangentSpace x (tangentToPointDerivation x v) = v := by
-  rw [← pointDerivationEquivTangentSpace_symm_apply]
-  exact (pointDerivationEquivTangentSpace x).apply_symm_apply v
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) (v : TangentSpace I x) :
+    pointDerivationEquivTangentSpace x hx (tangentToPointDerivation x v) = v := by
+  rw [← pointDerivationEquivTangentSpace_symm_apply x hx]
+  exact (pointDerivationEquivTangentSpace x hx).apply_symm_apply v
