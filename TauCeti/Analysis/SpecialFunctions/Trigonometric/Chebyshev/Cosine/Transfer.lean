@@ -50,13 +50,13 @@ theorem integral_chebyshevAngleMeasure {E : Type*} [NormedAddCommGroup E] [Norme
 /-- The pushforward of angular Lebesgue measure under `cos` is the Chebyshev measure. -/
 theorem map_cos_chebyshevAngleMeasure :
     Measure.map Real.cos chebyshevAngleMeasure = measureT := by
-  letI : IsFiniteMeasure chebyshevAngleMeasure := by
+  let : IsFiniteMeasure chebyshevAngleMeasure := by
     rw [chebyshevAngleMeasure_def]
     infer_instance
-  letI : Measure.InnerRegular chebyshevAngleMeasure := by
+  let : Measure.InnerRegular chebyshevAngleMeasure := by
     rw [chebyshevAngleMeasure_def]
     infer_instance
-  letI : Measure.InnerRegular (Measure.map Real.cos chebyshevAngleMeasure) :=
+  let : Measure.InnerRegular (Measure.map Real.cos chebyshevAngleMeasure) :=
     Measure.InnerRegular.map_of_continuous Real.continuous_cos
   apply Measure.ext_of_integral_eq_on_compactlySupported
   intro f

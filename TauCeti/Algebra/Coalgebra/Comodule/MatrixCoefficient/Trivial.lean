@@ -67,7 +67,7 @@ element. -/
 theorem groupLike_matrixCoefficient_mem_span_singleton (g : GroupLike R C) (φ : M →ₗ[R] R) (m : M) :
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     matrixCoefficient (R := R) (C := C) φ m ∈ Submodule.span R ({(g : C)} : Set C) := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
   rw [matrixCoefficient_groupLike]
   exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_singleton (g : C)))
 
@@ -77,7 +77,7 @@ theorem groupLike_matrixCoefficientSubmodule_le_span_singleton (g : GroupLike R 
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     matrixCoefficientSubmodule (R := R) (C := C) (M := M) ≤
       Submodule.span R ({(g : C)} : Set C) := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
   exact matrixCoefficientSubmodule_le (R := R) (C := C) (M := M)
     (groupLike_matrixCoefficient_mem_span_singleton (R := R) (C := C) g)
 
@@ -85,7 +85,7 @@ theorem groupLike_matrixCoefficientSubmodule_le_span_singleton (g : GroupLike R 
 theorem groupLike_mem_rankOne_matrixCoefficientSet (g : GroupLike R C) :
     letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
     (g : C) ∈ matrixCoefficientSet (R := R) (C := C) (M := R) := by
-  letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
+  let : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
   rw [mem_matrixCoefficientSet_iff]
   exact ⟨LinearMap.id, 1, by simp⟩
 
@@ -96,7 +96,7 @@ theorem groupLike_rankOne_matrixCoefficientSubmodule_eq_span_singleton (g : Grou
     letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
     matrixCoefficientSubmodule (R := R) (C := C) (M := R) =
       Submodule.span R ({(g : C)} : Set C) := by
-  letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
+  let : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
   apply le_antisymm
   · exact groupLike_matrixCoefficientSubmodule_le_span_singleton (R := R) (C := C)
       (M := R) g
@@ -119,7 +119,7 @@ theorem groupLike_matrixCoefficient_mem_adjoin_singleton (g : GroupLike R C) (φ
     (m : M) :
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     matrixCoefficient (R := R) (C := C) φ m ∈ Algebra.adjoin R ({(g : C)} : Set C) := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
   rw [matrixCoefficient_groupLike]
   exact (Algebra.adjoin R ({(g : C)} : Set C)).smul_mem
     (Algebra.self_mem_adjoin_singleton R (g : C)) (φ m)
@@ -130,7 +130,7 @@ theorem groupLike_matrixCoefficientSubalgebra_le_adjoin_singleton (g : GroupLike
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     matrixCoefficientSubalgebra (R := R) (C := C) (M := M) ≤
       Algebra.adjoin R ({(g : C)} : Set C) := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
   exact matrixCoefficientSubalgebra_le (R := R) (C := C) (M := M)
     (groupLike_matrixCoefficient_mem_adjoin_singleton (R := R) (C := C) g)
 
@@ -141,7 +141,7 @@ theorem groupLike_rankOne_matrixCoefficientSubalgebra_eq_adjoin_singleton (g : G
     letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
     matrixCoefficientSubalgebra (R := R) (C := C) (M := R) =
       Algebra.adjoin R ({(g : C)} : Set C) := by
-  letI : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
+  let : Comodule R C R := groupLike (R := R) (C := C) (M := R) g
   apply le_antisymm
   · exact groupLike_matrixCoefficientSubalgebra_le_adjoin_singleton (R := R) (C := C)
       (M := R) g

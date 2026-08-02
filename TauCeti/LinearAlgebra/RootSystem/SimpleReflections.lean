@@ -100,7 +100,7 @@ private lemma ofIdx_mem_closure_simple (i : ι) :
     RootPairing.weylGroup.ofIdx P i ∈
       Subgroup.closure (range fun j : b.support =>
         RootPairing.weylGroup.ofIdx P (j : ι)) := by
-  letI := P.indexNeg
+  let := P.indexNeg
   apply b.induction_reflect i
   · intro j hj
     rwa [ofIdx_reflectionPerm_self_eq P j]

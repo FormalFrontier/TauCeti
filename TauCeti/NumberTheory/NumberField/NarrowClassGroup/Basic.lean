@@ -38,6 +38,8 @@ is totally positive (there are no real places), `Cl⁺(K)` and `Cl(K)` coincide.
 * `TauCeti.NumberField.NarrowClassGroup.mkPrincipal` and `toClassGroup_ker`: the principal-class map
   `Kˣ → Cl⁺(K)` and exactness at `Cl⁺(K)` of `Kˣ → Cl⁺(K) → Cl(K) → 1`
   (`ker toClassGroup = mkPrincipal.range`).
+* `TauCeti.NumberField.NarrowClassGroup.mkPrincipal_sq` and `sq_eq_one_of_mem_ker_toClassGroup`:
+  `mkPrincipal` is `2`-torsion, so `ker(Cl⁺ → Cl)` is an elementary abelian `2`-group.
 -/
 
 public section
@@ -187,6 +189,21 @@ theorem toClassGroup_ker :
   have hdef : mkPrincipal (K := K) = mk.comp (toPrincipalIdeal (𝓞 K) K) :=
     MonoidHom.ext fun x => by rw [mkPrincipal_apply, MonoidHom.comp_apply]
   rw [hker, hcg, hdef, MonoidHom.range_comp]
+
+/-- The principal-class map is `2`-torsion: `mkPrincipal x ^ 2 = 1`, since `x ^ 2` is totally
+positive and so `(x ^ 2)` is a principal ideal with a totally positive generator. -/
+@[simp] theorem mkPrincipal_sq (x : Kˣ) : mkPrincipal x ^ 2 = 1 := by
+  rw [← map_pow, mkPrincipal_apply, mk_eq_one_iff, mem_narrowPrincipalSubgroup]
+  exact ⟨x ^ 2, mem_totallyPositiveUnits.mp (sq_mem_totallyPositiveUnits x), rfl⟩
+
+/-- The kernel of the forgetful map `Cl⁺(K) → Cl(K)` is killed by `2`: by exactness it is the image
+of `mkPrincipal`, which is `2`-torsion. So the narrow-vs-ordinary defect is an elementary abelian
+`2`-group. -/
+@[grind →] theorem sq_eq_one_of_mem_ker_toClassGroup {C : NarrowClassGroup K}
+    (hC : C ∈ MonoidHom.ker (toClassGroup (K := K))) : C ^ 2 = 1 := by
+  rw [toClassGroup_ker] at hC
+  obtain ⟨x, rfl⟩ := hC
+  exact mkPrincipal_sq x
 
 end NarrowClassGroup
 

@@ -87,7 +87,7 @@ lemma mem_inversions_mul_ofIdx_iff_not_mem {i : ι} (hi : i ∈ b.support) :
     i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) ↔
       i ∉ inversions P b w := by
   classical
-  letI := P.indexNeg
+  let := P.indexNeg
   simp only [mem_inversions, b.isPos_of_mem_support hi, true_and,
     RootPairing.weylGroupToPerm_mul_ofIdx_apply, ← RootPairing.indexNeg_neg,
     RootPairing.weylGroupToPerm_neg, RootPairing.Base.IsPos.neg_iff_not]

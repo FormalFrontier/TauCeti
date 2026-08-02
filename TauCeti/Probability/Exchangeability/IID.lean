@@ -65,7 +65,7 @@ theorem MixedIIDWith.of_iIndepFun_map_eq {μ : Measure Ω} {X : ι → Ω → α
     {p : ProbabilityMeasure α} (hindep : iIndepFun X μ)
     (hlaw : ∀ i, μ.map (X i) = (p : Measure α)) :
     MixedIIDWith μ X fun _ => p := by
-  haveI := hindep.isProbabilityMeasure
+  have := hindep.isProbabilityMeasure
   have hX : ∀ i, AEMeasurable (X i) μ := fun i =>
     AEMeasurable.of_map_ne_zero (by rw [hlaw i]; exact IsProbabilityMeasure.ne_zero _)
   refine MixedIIDWith.intro measurable_const fun m k hk => ?_
@@ -92,7 +92,7 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω}
       (fun _ => (⟨μ.map (X i₀),
         Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩ :
           ProbabilityMeasure α)) := by
-  haveI := hindep.isProbabilityMeasure
+  have := hindep.isProbabilityMeasure
   exact MixedIIDWith.of_iIndepFun_map_eq hindep fun i => (hident i).map_eq
 
 /-- **An i.i.d. sequence is mixed i.i.d.**, with the common law `μ.map (X 0)` as constant mixing

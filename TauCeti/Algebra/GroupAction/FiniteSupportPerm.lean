@@ -69,7 +69,7 @@ theorem exists_compl_fixedBy_subset_apply_eq {ι β : Type*} [Finite ι] (f g : 
       (MulAction.fixedBy β σ)ᶜ ⊆ Set.range f ∪ Set.range g ∧ ∀ i, σ (f i) = g i := by
   classical
   set T : Set β := Set.range f ∪ Set.range g with hT
-  haveI : Fintype ↥T := ((Set.finite_range f).union (Set.finite_range g)).fintype
+  have : Fintype ↥T := ((Set.finite_range f).union (Set.finite_range g)).fintype
   have hfT : ∀ i, f i ∈ T := fun i => Or.inl ⟨i, rfl⟩
   have hgT : ∀ i, g i ∈ T := fun i => Or.inr ⟨i, rfl⟩
   obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair (f.codRestrict T hfT) (g.codRestrict T hgT)

@@ -32,14 +32,14 @@ variable {K : Type*} [Field K] [NumberField K]
 
 /-- The narrow class group is **finite**. -/
 instance instFinite : Finite (NarrowClassGroup K) := by
-  haveI : Finite (ClassGroup (𝓞 K)) := Finite.of_fintype _
+  have : Finite (ClassGroup (𝓞 K)) := Finite.of_fintype _
   refine (MonoidHom.finite_iff_finite_ker_range (toClassGroup (K := K))).mpr ⟨?_, inferInstance⟩
   -- By exactness `ker toClassGroup = mkPrincipal.range`, a quotient of `Kˣ ⧸ totallyPositiveUnits`.
   rw [toClassGroup_ker]
   have htp : totallyPositiveUnits (K := K) ≤ (mkPrincipal (K := K)).ker := fun x hx => by
     rw [MonoidHom.mem_ker, mkPrincipal_apply, mk_eq_one_iff, mem_narrowPrincipalSubgroup]
     exact ⟨x, mem_totallyPositiveUnits.mp hx, rfl⟩
-  haveI : (mkPrincipal (K := K)).ker.FiniteIndex := Subgroup.finiteIndex_of_le htp
+  have : (mkPrincipal (K := K)).ker.FiniteIndex := Subgroup.finiteIndex_of_le htp
   exact (QuotientGroup.quotientKerEquivRange (mkPrincipal (K := K))).finite_iff.mp inferInstance
 
 end TauCeti.NumberField.NarrowClassGroup

@@ -74,7 +74,7 @@ theorem aut_exponent_eq_two [Finite ι] [NeZero (2 : K)] [Nonempty ι]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Monoid.exponent (adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) = 2 := by
-  letI := aut_nontrivial hroot hindep
+  let := aut_nontrivial hroot hindep
   exact aut_exponent_eq_two_of_nontrivial hroot
 
 end TauCeti.Multiquadratic

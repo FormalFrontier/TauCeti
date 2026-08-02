@@ -244,11 +244,11 @@ instance isAffine_groupScheme (G : FGCommGrpCat.{u}) :
 /-- The structural morphism `D(G) ⟶ Spec R` is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme (G : FGCommGrpCat.{u}) :
     LocallyOfFiniteType (groupScheme R G).X.hom := by
-  letI : Algebra.FiniteType R (MonoidAlgebra R G) := (coordinateRing R G).property
+  let : Algebra.FiniteType R (MonoidAlgebra R G) := (coordinateRing R G).property
   rw [groupScheme_X_hom]
-  letI : LocallyOfFiniteType (eqToHom (groupScheme_X_left R G)) :=
+  let : LocallyOfFiniteType (eqToHom (groupScheme_X_left R G)) :=
     locallyOfFiniteType_of_isOpenImmersion _
-  letI : LocallyOfFiniteType
+  let : LocallyOfFiniteType
       (Spec.map (CommRingCat.ofHom (algebraMap R (MonoidAlgebra R G)))) := by
     rw [← AlgebraicGeometry.specOverSpec_over]
     infer_instance
@@ -270,7 +270,7 @@ instance locallyOfFiniteType_schemeFunctor_obj (G : (FGCommGrpCat.{u})ᵒᵖ) :
 /-- The diagonalizable group-scheme functor is faithful over a nontrivial base ring. -/
 noncomputable instance schemeFunctor_faithful [Nontrivial R] :
     (schemeFunctor R).Faithful := by
-  letI : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Faithful :=
+  let : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Faithful :=
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).faithful
   unfold schemeFunctor
   infer_instance
@@ -279,10 +279,10 @@ noncomputable instance schemeFunctor_faithful [Nontrivial R] :
 connected. -/
 noncomputable instance schemeFunctor_full [ConnectedSpace (PrimeSpectrum R)] :
     (schemeFunctor R).Full := by
-  letI : (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+  let : (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
       (_root_.CommHopfAlgCat.{u} R)).op.Full :=
     (finiteTypeCommHopfAlgProperty (R := R)).fullyFaithfulι.op.full
-  letI : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Full :=
+  let : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).Full :=
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).full
   unfold schemeFunctor
   infer_instance

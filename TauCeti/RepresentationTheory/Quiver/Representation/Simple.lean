@@ -202,7 +202,7 @@ instance simpleRep_simple (i : Q) : Simple (simpleRep k Q i) where
       change Q at a
       change IsIso (f.app ((Paths.of Q).obj a))
       rcases eq_or_ne a i with rfl | ha
-      · letI : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
+      · let : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
           change Simple ((simpleRep k Q a).obj a)
           exact simple_simpleRep_obj_self a
         exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)

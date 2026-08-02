@@ -182,7 +182,7 @@ theorem isSquare_mul_of_adjoin_simple_eq [NeZero (2 : K)] {a c : K} {x y : L}
     (hxb : x ∉ (⊥ : IntermediateField K L))
     (hxy : IntermediateField.adjoin K {x} = IntermediateField.adjoin K {y}) :
     IsSquare (a * c) := by
-  haveI : NeZero (2 : L) :=
+  have : NeZero (2 : L) :=
     NeZero.nat_of_injective (n := 2) (f := algebraMap K L) (algebraMap K L).injective
   -- Write `y` in the base-field normal form `algebraMap p₀ + algebraMap q₀ * x`.
   have hx2 : x ^ 2 ∈ (⊥ : IntermediateField K L) := by

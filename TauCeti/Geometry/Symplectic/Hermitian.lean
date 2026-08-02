@@ -137,7 +137,7 @@ lemma complexAssociatedForm_smul_right (ω : SymplecticForm V) (J : AlmostComple
     (z : ℂ) (v w : V) :
     letI := J.complexModule
     ω.complexAssociatedForm J v (z • w) = z * ω.complexAssociatedForm J v w := by
-  letI := J.complexModule
+  let := J.complexModule
   rw [J.complexModule_smul_def]
   exact ω.complexAssociatedForm_smul_right_aux J z v w
 
@@ -211,7 +211,7 @@ lemma complexAssociatedForm_smul_left (hinv : ω.Invariant J) (z : ℂ) (v w : V
     letI := J.complexModule
     ω.complexAssociatedForm J (z • v) w =
       (starRingEnd ℂ) z * ω.complexAssociatedForm J v w := by
-  letI := J.complexModule
+  let := J.complexModule
   rw [J.complexModule_smul_def]
   exact hinv.complexAssociatedForm_smul_left_aux z v w
 

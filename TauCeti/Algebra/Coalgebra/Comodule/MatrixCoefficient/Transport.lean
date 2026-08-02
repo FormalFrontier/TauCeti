@@ -61,7 +61,7 @@ theorem matrixCoefficientSet_transport (e : M ≃ₗ[R] N₀) :
     letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
     matrixCoefficientSet (R := R) (C := C) (M := N₀) =
       matrixCoefficientSet (R := R) (C := C) (M := M) := by
-  letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
+  let : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
   exact (matrixCoefficientSet_eq_of_inverse_hom
     (R := R) (C := C) (M := M) (N := N₀)
     (transportToHom (R := R) (C := C) (M := M) (N := N₀) e)
@@ -75,7 +75,7 @@ theorem matrixCoefficientSubmodule_transport (e : M ≃ₗ[R] N₀) :
     letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
     matrixCoefficientSubmodule (R := R) (C := C) (M := N₀) =
       matrixCoefficientSubmodule (R := R) (C := C) (M := M) := by
-  letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
+  let : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
   rw [matrixCoefficientSubmodule, matrixCoefficientSubmodule, matrixCoefficientSet_transport]
 
 end Transport
@@ -93,7 +93,7 @@ theorem matrixCoefficientSubalgebra_transport (e : M ≃ₗ[R] N₀) :
     letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
     matrixCoefficientSubalgebra (R := R) (C := C) (M := N₀) =
       matrixCoefficientSubalgebra (R := R) (C := C) (M := M) := by
-  letI : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
+  let : Comodule R C N₀ := Transport (R := R) (C := C) (M := M) (N := N₀) e
   rw [matrixCoefficientSubalgebra, matrixCoefficientSubalgebra, matrixCoefficientSet_transport]
 
 end AlgebraTransport

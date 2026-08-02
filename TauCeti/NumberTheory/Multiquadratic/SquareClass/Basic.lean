@@ -206,7 +206,7 @@ theorem squareClass_of_sq_mem (d : ℕ → K) (root : ℕ → L)
       ∃ (T : Finset ℕ) (s : K), ↑T ⊆ Set.Iio n ∧
         r = s ^ 2 * ∏ j ∈ T, d j := by
   classical
-  haveI : NeZero (2 : L) :=
+  have : NeZero (2 : L) :=
     NeZero.nat_of_injective (n := 2) (f := algebraMap K L) (algebraMap K L).injective
   intro n
   induction n with
@@ -298,7 +298,7 @@ theorem squareClass_of_sq_mem_fintype {ι : Type*} [Finite ι] (d : ι → K) (r
     (hmem : y ∈ IntermediateField.adjoin K (Set.range root)) :
     ∃ (T : Finset ι) (s : K), r = s ^ 2 * ∏ j ∈ T, d j := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   let e : ι ≃ Fin (Fintype.card ι) := Fintype.equivFin ι
   let dFin : Fin (Fintype.card ι) → K := fun j => d (e.symm j)
   let rootFin : Fin (Fintype.card ι) → L := fun j => root (e.symm j)

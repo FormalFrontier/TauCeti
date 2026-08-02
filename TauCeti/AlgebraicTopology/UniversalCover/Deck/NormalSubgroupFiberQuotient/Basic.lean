@@ -102,8 +102,8 @@ lemma normalizerQuotientEquivQuotientOfNormal_regularSubgroupFiberOrbitQuotientE
     Subgroup.normalizerQuotientEquivQuotientOfNormal H
         (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e x) =
       regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e x := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   refine Quotient.inductionOn' x ?_
   intro e'
   obtain ⟨φ, hφ⟩ := MulAction.exists_smul_eq (Deck p) e e'
@@ -227,7 +227,7 @@ lemma subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq_of_isCoveringMa
           ⟨φ⁻¹, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩ =
         Subgroup.normalizerQuotientMk H
           ⟨ψ⁻¹, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩ := by
-  letI := fiber_isCancelSMul (b := b) hp
+  let := fiber_isCancelSMul (b := b) hp
   exact subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq H e φ ψ
 
 /-- The inverse equivalence sends a normalizer representative to the fibre-orbit class of its

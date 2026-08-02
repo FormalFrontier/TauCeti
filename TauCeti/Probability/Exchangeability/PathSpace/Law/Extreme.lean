@@ -82,7 +82,7 @@ private theorem exchangeableLaw_bind_infinitePi
     {π : Measure (ProbabilityMeasure α)} [IsProbabilityMeasure π] :
     ExchangeableLaw
       (π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  haveI := isProbabilityMeasure_iidMixtureLaw (π := π) (P := id) measurable_id
+  have := isProbabilityMeasure_iidMixtureLaw (π := π) (P := id) measurable_id
   have hX := exchangeable_iidMixtureLaw (π := π) (P := id) measurable_id
   have hcoord : ∀ n, AEMeasurable
       (fun ω : ProbabilityMeasure α × (ℕ → α) => ω.2 n) (iidMixtureLaw π id) :=
@@ -134,8 +134,8 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
     (hsc0 : p sᶜ ≠ 0) : p[|s] = p := by
   let ps : Measure (ProbabilityMeasure α) := p[|s]
   let psc : Measure (ProbabilityMeasure α) := p[|sᶜ]
-  haveI : IsProbabilityMeasure ps := cond_isProbabilityMeasure hs0
-  haveI : IsProbabilityMeasure psc := cond_isProbabilityMeasure hsc0
+  have : IsProbabilityMeasure ps := cond_isProbabilityMeasure hs0
+  have : IsProbabilityMeasure psc := cond_isProbabilityMeasure hsc0
   let μs : Measure (ℕ → α) :=
     ps.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
   let μsc : Measure (ℕ → α) :=
@@ -143,9 +143,9 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
   have hpow : Measurable fun P : ProbabilityMeasure α =>
       Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
     TauCeti.MeasureTheory.measurable_infinitePi_const
-  haveI : IsProbabilityMeasure μs := isProbabilityMeasure_bind hpow.aemeasurable
+  have : IsProbabilityMeasure μs := isProbabilityMeasure_bind hpow.aemeasurable
     (ae_of_all _ fun _ => inferInstance)
-  haveI : IsProbabilityMeasure μsc := isProbabilityMeasure_bind hpow.aemeasurable
+  have : IsProbabilityMeasure μsc := isProbabilityMeasure_bind hpow.aemeasurable
     (ae_of_all _ fun _ => inferInstance)
   have hs_mem : μs ∈
       {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} :=
@@ -188,7 +188,7 @@ theorem exchangeable_extreme_iff_iid [StandardBorelSpace α]
         {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} ↔
       ∃ P : ProbabilityMeasure α,
         ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-  letI : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
+  let : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
   constructor
   · intro hρ
     have hcoord : ∀ n, Measurable (fun x : ℕ → α => x n) := fun n => measurable_pi_apply n
@@ -200,7 +200,7 @@ theorem exchangeable_extreme_iff_iid [StandardBorelSpace α]
         fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
       simpa [pathLaw_def] using hrepr
     let p : Measure (ProbabilityMeasure α) := π
-    haveI : IsProbabilityMeasure p := π.2
+    have : IsProbabilityMeasure p := π.2
     have hp_zeroOne : IsZeroOneMeasure p := {
       zero_one₀ := fun s hs => by
         by_cases hs0 : p s = 0
@@ -215,7 +215,7 @@ theorem exchangeable_extreme_iff_iid [StandardBorelSpace α]
         rw [← hps]
         exact cond_apply_self hs0 (measure_ne_top p s)
       }
-    letI : IsZeroOneMeasure p := hp_zeroOne
+    let : IsZeroOneMeasure p := hp_zeroOne
     obtain ⟨P, hp⟩ :=
       TauCeti.MeasureTheory.IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure (π := p)
     refine ⟨P, ?_⟩
@@ -236,7 +236,7 @@ theorem exchangeable_extreme_iff_iid [StandardBorelSpace α]
           {ν : Measure (ℕ → α) |
             MeasurePreserving (shift α) ν ν ∧ IsProbabilityMeasure ν} := by
       rintro ν ⟨hν, hνprob⟩
-      letI : IsProbabilityMeasure ν := hνprob
+      let : IsProbabilityMeasure ν := hνprob
       exact ⟨hν.contractableLaw.measurePreserving_shift, hνprob⟩
     have hρPexch : ExchangeableLaw ρP := by
       have hdirac : ρP = (Measure.dirac P).bind
