@@ -92,7 +92,7 @@ theorem forall_legendreSym_oddPrimeDiscriminant_eq_one_iff {ι : Type*} (p : ι 
     (∀ i, legendreSym q (oddPrimeDiscriminant (p i)) = 1) ↔
       ∀ i, @legendreSym (p i) ⟨hpprime i⟩ (q : ℤ) = 1 := by
   refine forall_congr' fun i => ?_
-  haveI : Fact (p i).Prime := ⟨hpprime i⟩
+  have : Fact (p i).Prime := ⟨hpprime i⟩
   exact legendreSym_oddPrimeDiscriminant_eq_one_iff (p := p i) (q := q) (hpodd i) hq
 
 end TauCeti.Multiquadratic

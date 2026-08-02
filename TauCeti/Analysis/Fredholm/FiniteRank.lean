@@ -60,7 +60,7 @@ restriction. -/
 theorem index_add_of_finiteDimensional_range (hT : ContinuousLinearMap.IsFredholm T)
     (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
     index (T + K) = index T := by
-  haveI := hK
+  have := hK
   set ι := (LinearMap.ker (K : E →ₗ[𝕜] F)).subtypeL with hι
   have hιF : ContinuousLinearMap.IsFredholm ι := isFredholm_ker_subtypeL hK
   have hcomp : (T + K).comp ι = T.comp ι := by

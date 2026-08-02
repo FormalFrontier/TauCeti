@@ -64,7 +64,7 @@ theorem sum_sq_eq_card_of_algEquiv_pi_matrix [Monoid G] [Finite G] [Fintype ι]
       = Module.finrank k (Π i, Matrix (Fin (d i)) (Fin (d i)) k) := (finrank_pi_matrix k d).symm
     _ = Module.finrank k (MonoidAlgebra k G) := e.toLinearEquiv.finrank_eq.symm
     _ = Nat.card G := by
-        letI := Fintype.ofFinite G
+        let := Fintype.ofFinite G
         rw [Module.finrank_eq_card_basis (MonoidAlgebra.basis G k), Fintype.card_eq_nat_card]
 
 /-- **The center of the group algebra splits**: a Wedderburn presentation of `k[G]` with blocks
@@ -131,7 +131,7 @@ theorem exists_algEquiv_pi_matrix_conjClasses :
     ∃ d : ConjClasses G → ℕ, (∀ i, NeZero (d i)) ∧ ∑ᶠ i, d i ^ 2 = Nat.card G ∧
       Nonempty (MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ := exists_algEquiv_pi_matrix k G
-  haveI := hd
+  have := hd
   obtain rfl : n = Nat.card (ConjClasses G) := by
     simpa using card_eq_card_conjClasses_of_algEquiv_pi_matrix e
   set σ := Finite.equivFin (ConjClasses G)

@@ -87,7 +87,7 @@ theorem legendreSym_primeDiscriminant_eq_one_iff {D : ℤ} (hD : IsPrimeDiscrimi
     · rintro (⟨_hD, h⟩ | ⟨p, _hp, hpodd, hDp, _hleg⟩)
       · exact h
       · exact False.elim <| not_isEvenPrimeDiscriminant_oddPrimeDiscriminant hpodd (hDp ▸ hD)
-  · haveI : Fact p.Prime := ⟨hp⟩
+  · have : Fact p.Prime := ⟨hp⟩
     rw [legendreSym_oddPrimeDiscriminant_eq_one_iff
       (p := p) (q := q) (by
         intro hp2

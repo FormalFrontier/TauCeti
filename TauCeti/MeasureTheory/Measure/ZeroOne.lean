@@ -46,12 +46,12 @@ theorem IsZeroOneMeasure.exists_ae_eq_const {Ω β : Type*} [MeasurableSpace Ω]
     [StandardBorelSpace β] {π : Measure Ω} [NeZero π] [_root_.MeasureTheory.IsZeroOneMeasure π]
     {f : Ω → β} (hf : AEMeasurable f π) :
     ∃ q : β, ∀ᵐ ω ∂π, f ω = q := by
-  haveI : IsProbabilityMeasure π := by
+  have : IsProbabilityMeasure π := by
     rcases IsZeroOrProbabilityMeasure.measure_univ (μ := π) with (h | h)
     · simp_all
     · exact ⟨h⟩
-  haveI : IsProbabilityMeasure (π.map f) := Measure.isProbabilityMeasure_map hf
-  haveI : _root_.MeasureTheory.IsZeroOneMeasure (π.map f) := {
+  have : IsProbabilityMeasure (π.map f) := Measure.isProbabilityMeasure_map hf
+  have : _root_.MeasureTheory.IsZeroOneMeasure (π.map f) := {
     zero_one₀ := fun s hs => by
       rw [Measure.map_apply_of_aemeasurable hf hs]
       exact _root_.MeasureTheory.Measure.zero_one π (f ⁻¹' s) }

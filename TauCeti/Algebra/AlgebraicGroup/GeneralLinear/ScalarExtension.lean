@@ -134,8 +134,8 @@ lemma mapScalarExtensionAutomorphisms_tmul
     (g : scalarExtensionAutomorphisms (V := V) A) (b : B) (v : V) :
     (mapScalarExtensionAutomorphisms (V := V) φ g).val (b ⊗ₜ[R] v) =
       b • scalarExtensionMap (V := V) φ (g.val (1 ⊗ₜ[R] v)) := by
-  letI : Algebra A B := φ.hom.toRingHom.toAlgebra
-  letI : IsScalarTower R A B := IsScalarTower.of_algHom φ.hom
+  let : Algebra A B := φ.hom.toRingHom.toAlgebra
+  let : IsScalarTower R A B := IsScalarTower.of_algHom φ.hom
   -- The group-hom wrappers have no pointwise reduction lemma, so expose their underlying
   -- base-change-and-conjugation formula before computing on the tensor generator.
   change

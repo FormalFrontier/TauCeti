@@ -194,7 +194,7 @@ theorem IsJordanCurve.exists_pos_forall_diam_le (h : IsJordanCurve C) (hε : 0 <
         (∀ ⦃S : Set X⦄, S ⊆ C \ {p, q} → IsPreconnected S → S ⊆ A ∨ S ⊆ B) →
         Metric.diam (A ∪ {p, q}) ≤ ε ∨ Metric.diam (B ∪ {p, q}) ≤ ε := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
-  haveI : CompactSpace C := isCompact_iff_compactSpace.mp h.isCompact
+  have : CompactSpace C := isCompact_iff_compactSpace.mp h.isCompact
   set g := jordanParam e with hg
   have hgc : Continuous g := continuous_jordanParam e
   have hginj : Function.Injective g := jordanParam_injective e

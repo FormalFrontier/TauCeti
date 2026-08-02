@@ -213,7 +213,7 @@ group, which is nonzero because the base ring has characteristic zero. -/
 theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0 ≤ n) :
     weylModule k n t ≠ ⊥ := by
   classical
-  haveI : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
+  have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
   -- the row of each label, as an index of the standard basis of `kⁿ`
   have hr : ∀ ℓ : Fin μ.card, rowIndex t ℓ < n := by
     intro ℓ
@@ -303,8 +303,8 @@ theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
   classical
   -- subrepresentations are equal when their underlying submodules are
   refine Subrepresentation.toSubmodule_injective ?_
-  haveI : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
-  haveI : Invertible (2 : k) := by
+  have : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
+  have : Invertible (2 : k) := by
     have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
     rwa [map_ofNat] at h
   -- the labels of the first column outnumber the basis indices

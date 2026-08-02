@@ -109,7 +109,7 @@ def deckMulEquiv (hn : 1 ≤ n) : ℤˣ ≃* Deck (mk n) :=
 theorem deckMulEquiv_apply (hn : 1 ≤ n) (u : ℤˣ)
     (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     (deckMulEquiv n hn u).1 x = u • x := by
-  letI := connectedSpace_sphere n hn
+  let := connectedSpace_sphere n hn
   rw [deckMulEquiv, IsQuotientCoveringMap.deckMulEquiv_apply]
 
 /-- On points, the inverse of the deck-group isomorphism recovers the given deck
@@ -118,7 +118,7 @@ transformation. -/
 theorem deckMulEquiv_symm_apply (hn : 1 ≤ n) (φ : Deck (mk n))
     (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     (deckMulEquiv n hn).symm φ • x = φ.1 x := by
-  letI := connectedSpace_sphere n hn
+  let := connectedSpace_sphere n hn
   rw [deckMulEquiv, IsQuotientCoveringMap.deckMulEquiv_symm_apply]
 
 /-- The deck-group isomorphism sends the nontrivial integer unit to the antipodal map. -/

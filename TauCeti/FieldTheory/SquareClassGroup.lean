@@ -84,7 +84,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
     LinearIndependent (ZMod 2) (fun i => squareClass (d i)) ↔
       ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   rw [Fintype.linearIndependent_iff]
   constructor
   · -- A nonempty square subset product would give a nontrivial linear dependence.

@@ -125,7 +125,7 @@ theorem spechtIdealRep_ρ_apply_coe (t : YoungTableau μ)
 /-- A Young-symmetrizer left ideal is finite-dimensional over `ℚ`. -/
 noncomputable instance instModuleFiniteSpechtIdeal (t : YoungTableau μ) :
     Module.Finite ℚ (spechtIdeal t) := by
-  letI : Module.Finite
+  let : Module.Finite
       (MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) (spechtIdeal t) :=
     Module.Finite.of_fg <| by
       rw [spechtIdeal]

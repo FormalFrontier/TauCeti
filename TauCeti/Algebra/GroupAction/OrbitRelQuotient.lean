@@ -450,7 +450,7 @@ lemma orbitRelQuotientEquivNormalizerQuotientOfNormal_map_smul_eq_mul_inv
     letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
     orbitRelQuotientEquivNormalizerQuotientOfNormal H x₀ (a • x) =
       orbitRelQuotientEquivNormalizerQuotientOfNormal H x₀ x * a⁻¹ := by
-  letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
+  let := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
   obtain ⟨g, rfl⟩ := Subgroup.normalizerQuotientMk_surjective H a
   refine Quotient.inductionOn' x ?_
   intro x
@@ -470,7 +470,7 @@ lemma orbitRelQuotientEquivNormalizerQuotientOfNormal_symm_mul_inv
     letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
     (orbitRelQuotientEquivNormalizerQuotientOfNormal H x₀).symm (y * a⁻¹) =
       a • (orbitRelQuotientEquivNormalizerQuotientOfNormal H x₀).symm y := by
-  letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
+  let := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
   apply (orbitRelQuotientEquivNormalizerQuotientOfNormal H x₀).injective
   rw [Equiv.apply_symm_apply,
     orbitRelQuotientEquivNormalizerQuotientOfNormal_map_smul_eq_mul_inv,
@@ -483,7 +483,7 @@ theorem normalizerQuotientOrbitRelQuotientIsPretransitive (H : Subgroup G)
     letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (_root_.MulAction.orbitRel.Quotient H X) := by
-  letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
+  let := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
   let φ : _root_.Subgroup.normalizer (H : Set G) → Subgroup.normalizerQuotient H :=
     Subgroup.normalizerQuotientMk H
   let f : X →ₑ[φ] _root_.MulAction.orbitRel.Quotient H X := {
@@ -500,7 +500,7 @@ theorem normalizerQuotientOrbitRelQuotientIsPretransitiveOfNormal
     letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (_root_.MulAction.orbitRel.Quotient H X) := by
-  letI : MulAction.IsPretransitive (_root_.Subgroup.normalizer (H : Set G)) X :=
+  let : MulAction.IsPretransitive (_root_.Subgroup.normalizer (H : Set G)) X :=
     MulAction.IsPretransitive.mk fun x y => by
       obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G x y
       refine ⟨⟨g, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩, ?_⟩
@@ -515,7 +515,7 @@ lemma normalizerQuotientOrbitRelQuotient_smul_eq_smul_iff [IsCancelSMul G X]
     (x : _root_.MulAction.orbitRel.Quotient H X) :
     letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
     a • x = c • x ↔ a = c := by
-  letI := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
+  let := normalizerQuotientOrbitRelQuotientMulAction (X := X) H
   constructor
   · intro h
     obtain ⟨g, rfl⟩ := Subgroup.normalizerQuotientMk_surjective H a

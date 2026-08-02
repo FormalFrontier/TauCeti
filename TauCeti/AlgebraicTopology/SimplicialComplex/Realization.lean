@@ -339,7 +339,7 @@ instance realizationBotDiscreteTopology :
   intro σ
   rw [isOpen_coinduced]
   obtain ⟨v, hv⟩ := σ.2
-  haveI : Subsingleton (StandardSimplex σ.1) := by
+  have : Subsingleton (StandardSimplex σ.1) := by
     constructor
     intro x y
     apply Subtype.ext

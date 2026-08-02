@@ -157,8 +157,8 @@ theorem subsingleton_path_self (h : Quiver.IsAcyclic V) (a : V) :
 
 /-- An acyclic quiver has exactly one closed path at each vertex, the trivial one. -/
 theorem card_path_self (h : Quiver.IsAcyclic V) (a : V) : Nat.card (Path a a) = 1 := by
-  haveI : Nonempty (Path a a) := ⟨Path.nil⟩
-  letI : Subsingleton (Path a a) := h.subsingleton_path_self a
+  have : Nonempty (Path a a) := ⟨Path.nil⟩
+  let : Subsingleton (Path a a) := h.subsingleton_path_self a
   exact Nat.card_unique
 
 /-- A quiver with no arrows is acyclic. -/
