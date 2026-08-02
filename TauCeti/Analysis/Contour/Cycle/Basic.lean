@@ -224,13 +224,17 @@ theorem trace_zsmul (C : Cycle) {n : ℤ} (hn : n ≠ 0) : trace (n • C) = tra
 def IsIn (C : Cycle) (Ω : Set ℂ) : Prop :=
   trace C ⊆ Ω
 
+/-- Restatement of cycle containment in terms of its trace. -/
+theorem isIn_iff {C : Cycle} {Ω : Set ℂ} : IsIn C Ω ↔ trace C ⊆ Ω :=
+  Iff.rfl
+
 /-- A raw curve bundled as a one-generator cycle lies in `Ω` exactly when it maps its interval
 into `Ω`. -/
 theorem isIn_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
     (hclosed : γ a = γ b) (Ω : Set ℂ) :
     IsIn (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) Ω ↔
       MapsTo γ (uIcc a b) Ω := by
-  rw [IsIn, trace_of, ← Set.mapsTo_iff_image_subset,
+  rw [isIn_iff, trace_of, ← Set.mapsTo_iff_image_subset,
     PiecewiseC1ClosedCurve.mapsTo_of_iff]
 
 /-- A one-generator cycle lies in `Ω` exactly when its parametrization maps its interval into
@@ -238,30 +242,32 @@ theorem isIn_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ
 @[simp]
 theorem isIn_of_iff {γ : PiecewiseC1ClosedCurve} {Ω : Set ℂ} :
     IsIn (FreeAbelianGroup.of γ) Ω ↔ MapsTo γ (uIcc γ.a γ.b) Ω := by
-  simpa [IsIn] using
+  simpa [isIn_iff] using
     (Set.mapsTo_iff_image_subset (f := γ) (s := uIcc γ.a γ.b) (t := Ω)).symm
 
 /-- The zero cycle lies in every set. -/
 @[simp]
 theorem IsIn.zero (Ω : Set ℂ) : IsIn (0 : Cycle) Ω := by
-  simp [IsIn]
+  simp [isIn_iff]
 
 /-- A sum of two cycles in `Ω` is in `Ω`. -/
 theorem IsIn.add {C D : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (hD : IsIn D Ω) :
-    IsIn (C + D) Ω :=
-  (trace_add_subset C D).trans (union_subset hC hD)
+    IsIn (C + D) Ω := by
+  rw [isIn_iff] at hC hD ⊢
+  exact (trace_add_subset C D).trans (union_subset hC hD)
 
 /-- Negation preserves containment in a set. -/
 @[simp]
 theorem isIn_neg_iff {C : Cycle} {Ω : Set ℂ} : IsIn (-C) Ω ↔ IsIn C Ω := by
-  simp [IsIn]
+  simp [isIn_iff]
 
 /-- Every integer multiple of a cycle in `Ω` is in `Ω`. -/
 theorem IsIn.zsmul {C : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (n : ℤ) : IsIn (n • C) Ω := by
+  rw [isIn_iff] at hC
   by_cases hn : n = 0
   · subst n
     simpa only [zero_zsmul] using IsIn.zero Ω
-  · rw [IsIn, trace_zsmul C hn]
+  · rw [isIn_iff, trace_zsmul C hn]
     exact hC
 
 /-- The integral of `f` over a cycle, obtained by additively extending the raw contour integral
@@ -313,12 +319,17 @@ theorem windingNumber_of (γ : PiecewiseC1ClosedCurve) (z₀ : ℂ) :
 def IsNullHomologous (C : Cycle) (Ω : Set ℂ) : Prop :=
   ∀ z ∉ Ω, windingNumber z C = 0
 
+/-- Restatement of null-homology as vanishing of the cycle winding number outside the domain. -/
+theorem isNullHomologous_iff {C : Cycle} {Ω : Set ℂ} :
+    IsNullHomologous C Ω ↔ ∀ z ∉ Ω, windingNumber z C = 0 :=
+  Iff.rfl
+
 /-- Null-homology of a raw curve bundled as a one-generator cycle is the raw-curve predicate. -/
 theorem isNullHomologous_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ)
     (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) (Ω : Set ℂ) :
     IsNullHomologous (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) Ω ↔
       TauCeti.Contour.IsNullHomologous γ a b Ω := by
-  simp only [IsNullHomologous, windingNumber, FreeAbelianGroup.lift_apply_of,
+  simp only [isNullHomologous_iff, windingNumber, FreeAbelianGroup.lift_apply_of,
     PiecewiseC1ClosedCurve.windingNumber_of, TauCeti.Contour.isNullHomologous_iff]
 
 /-- Cycle null-homology specializes on a generator to the raw-curve predicate. -/
@@ -326,18 +337,20 @@ theorem isNullHomologous_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ)
 theorem isNullHomologous_of_iff {γ : PiecewiseC1ClosedCurve} {Ω : Set ℂ} :
     IsNullHomologous (FreeAbelianGroup.of γ) Ω ↔
       TauCeti.Contour.IsNullHomologous γ γ.a γ.b Ω := by
-  simp only [IsNullHomologous, windingNumber_of,
+  simp only [isNullHomologous_iff, windingNumber_of,
     TauCeti.Contour.isNullHomologous_iff]
 
 /-- The zero cycle is null-homologous in every set. -/
 @[simp]
 theorem IsNullHomologous.zero (Ω : Set ℂ) : IsNullHomologous (0 : Cycle) Ω := by
+  rw [isNullHomologous_iff]
   intro z hz
   simp
 
 /-- A sum of null-homologous cycles is null-homologous. -/
 theorem IsNullHomologous.add {C D : Cycle} {Ω : Set ℂ} (hC : IsNullHomologous C Ω)
     (hD : IsNullHomologous D Ω) : IsNullHomologous (C + D) Ω := by
+  rw [isNullHomologous_iff] at hC hD ⊢
   intro z hz
   rw [map_add, hC z hz, hD z hz, add_zero]
 
@@ -345,6 +358,7 @@ theorem IsNullHomologous.add {C D : Cycle} {Ω : Set ℂ} (hC : IsNullHomologous
 @[simp]
 theorem isNullHomologous_neg_iff {C : Cycle} {Ω : Set ℂ} :
     IsNullHomologous (-C) Ω ↔ IsNullHomologous C Ω := by
+  rw [isNullHomologous_iff, isNullHomologous_iff]
   constructor <;> intro h z hz
   · simpa only [map_neg, neg_eq_zero] using h z hz
   · simpa only [map_neg, neg_eq_zero] using h z hz
@@ -352,6 +366,7 @@ theorem isNullHomologous_neg_iff {C : Cycle} {Ω : Set ℂ} :
 /-- Every integer multiple of a null-homologous cycle is null-homologous. -/
 theorem IsNullHomologous.zsmul {C : Cycle} {Ω : Set ℂ} (hC : IsNullHomologous C Ω) (n : ℤ) :
     IsNullHomologous (n • C) Ω := by
+  rw [isNullHomologous_iff] at hC ⊢
   intro z hz
   rw [map_zsmul, hC z hz, smul_zero]
 
