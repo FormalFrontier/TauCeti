@@ -307,8 +307,9 @@ def pinToOrthogonal : pinGroup Q →* QuadraticMap.orthogonalGroup Q :=
 
 variable {Q}
 
-/-- A Pin element acts through its image in the Lipschitz group. -/
-@[simp]
+/-- A Pin element acts through its image in the Lipschitz group. This is not `@[simp]`: it would
+rewrite away the `pinToOrthogonal` head of `ι_pinToOrthogonal_apply` and `pinToOrthogonal_ι_apply`,
+which are the intended normal forms for the Pin action. -/
 theorem coe_pinToOrthogonal_apply (x : pinGroup Q) (m : M) :
     ((pinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m =
       lipschitzVectorAction Q (pinToLipschitz Q x) m := by
