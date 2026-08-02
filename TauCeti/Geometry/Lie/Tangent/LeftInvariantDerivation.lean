@@ -78,11 +78,14 @@ end LeftInvariantDerivation
 open Bundle Function Manifold VectorField
 open scoped LieGroup
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+section Construction
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-/-- A left-invariant vector field on a smooth real Lie group is smooth. -/
+/-- A left-invariant vector field on a smooth Lie group is smooth. -/
 theorem contMDiff_mulInvariantVectorField_infty
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G) :
     ContMDiff I I.tangent ∞
@@ -113,20 +116,20 @@ theorem contMDiff_mulInvariantVectorField_infty
 scalar function. -/
 theorem contMDiff_mvfderiv_mulInvariantVectorField
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
-    (f : C^∞⟮I, G; ℝ⟯) :
-    ContMDiff I (modelWithCornersSelf ℝ ℝ) ∞
+    (f : C^∞⟮I, G; 𝕜⟯) :
+    ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
       (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) := by
-  let df : TangentBundle I G → TangentBundle (modelWithCornersSelf ℝ ℝ) ℝ :=
-    tangentMap% (f : G → ℝ)
-  have hdf : ContMDiff I.tangent (modelWithCornersSelf ℝ ℝ).tangent ∞ df :=
+  let df : TangentBundle I G → TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 :=
+    tangentMap% (f : G → 𝕜)
+  have hdf : ContMDiff I.tangent (modelWithCornersSelf 𝕜 𝕜).tangent ∞ df :=
     f.contMDiff.contMDiff_tangentMap (by simp)
-  have hsnd : ContMDiff (modelWithCornersSelf ℝ ℝ).tangent
-      (modelWithCornersSelf ℝ ℝ) ∞
-      (fun p : TangentBundle (modelWithCornersSelf ℝ ℝ) ℝ ↦ p.2) :=
-    contMDiff_snd_tangentBundle_modelSpace ℝ (modelWithCornersSelf ℝ ℝ)
+  have hsnd : ContMDiff (modelWithCornersSelf 𝕜 𝕜).tangent
+      (modelWithCornersSelf 𝕜 𝕜) ∞
+      (fun p : TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 ↦ p.2) :=
+    contMDiff_snd_tangentBundle_modelSpace 𝕜 (modelWithCornersSelf 𝕜 𝕜)
   -- `mvfderiv` is the second component of the tangent map, hidden by bundle coercions.
-  change ContMDiff I (modelWithCornersSelf ℝ ℝ) ∞
-    (fun g ↦ mfderiv I (modelWithCornersSelf ℝ ℝ) f g (mulInvariantVectorField v g))
+  change ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
+    (fun g ↦ mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g (mulInvariantVectorField v g))
   have h := hsnd.comp (hdf.comp (contMDiff_mulInvariantVectorField_infty v))
   exact h.congr fun g ↦ rfl
 
@@ -143,9 +146,9 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
 acts by differentiating along Mathlib's corresponding left-invariant vector field. -/
 noncomputable def tangentToLeftInvariantDerivation
     [ContMDiffMul I ∞ G] :
-    GroupLieAlgebra I G →ₗ[ℝ] LeftInvariantDerivation I G where
+    GroupLieAlgebra I G →ₗ[𝕜] LeftInvariantDerivation I G where
   toFun v := by
-    let D : Derivation ℝ C^∞⟮I, G; ℝ⟯ C^∞⟮I, G; ℝ⟯ :=
+    let D : Derivation 𝕜 C^∞⟮I, G; 𝕜⟯ C^∞⟮I, G; 𝕜⟯ :=
       Derivation.mk'
           { toFun := fun f ↦
               ⟨fun g ↦ mvfderiv I f g (mulInvariantVectorField v g),
@@ -190,23 +193,23 @@ noncomputable def tangentToLeftInvariantDerivation
       calc
         ((𝒅ₕ (smoothLeftMul_one I g))
             (Derivation.evalAt 1 D)) f =
-            mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1
+            mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1
               (mulInvariantVectorField v 1) := rfl
-        _ = mvfderiv I ((show C^∞⟮I, G; ℝ⟯ from f).comp (smoothLeftMul I g)) 1 v := by
+        _ = mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1 v := by
           rw [mulInvariantVectorField_one]
-        _ = mvfderiv I (show C^∞⟮I, G; ℝ⟯ from f) g
+        _ = mvfderiv I (show C^∞⟮I, G; 𝕜⟯ from f) g
             (mulInvariantVectorField v g) := by
           rw [mulInvariantVectorField]
           -- Expose the function composition hidden by `ContMDiffMap.comp`.
-          change (mfderiv I (modelWithCornersSelf ℝ ℝ) (fun x ↦ f (g * x)) 1) v =
-            (mfderiv I (modelWithCornersSelf ℝ ℝ) f g)
+          change (mfderiv I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f (g * x)) 1) v =
+            (mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g)
               ((mfderiv I I (fun x ↦ g * x) 1) v)
           have h := mfderiv_comp_apply 1
             (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
             ((contMDiff_mul_left (n := ∞) (a := g)).mdifferentiable (by simp)).mdifferentiableAt v
           rw [mul_one] at h
-          change ((mfderiv I (modelWithCornersSelf ℝ ℝ)
-            ((show G → ℝ from f) ∘ fun x ↦ g * x) 1) v) = _
+          change ((mfderiv I (modelWithCornersSelf 𝕜 𝕜)
+            ((show G → 𝕜 from f) ∘ fun x ↦ g * x) 1) v) = _
           exact h
         _ = (Derivation.evalAt g D) f := rfl
   map_add' v w := by
@@ -229,7 +232,7 @@ noncomputable def tangentToLeftInvariantDerivation
 @[simp]
 theorem tangentToLeftInvariantDerivation_apply
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
-    (f : C^∞⟮I, G; ℝ⟯) (g : G) :
+    (f : C^∞⟮I, G; 𝕜⟯) (g : G) :
     tangentToLeftInvariantDerivation v f g =
       mvfderiv I f g (mulInvariantVectorField v g) :=
   by rfl
@@ -245,6 +248,12 @@ theorem LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation
   -- Unfold evaluation and the two directional-derivative constructors.
   change mvfderiv I f 1 (mulInvariantVectorField v 1) = mvfderiv I f 1 v
   rw [mulInvariantVectorField_one]
+
+end Construction
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
 /-- Evaluation at the identity is onto point derivations on a finite-dimensional smooth real Lie
 group. -/
