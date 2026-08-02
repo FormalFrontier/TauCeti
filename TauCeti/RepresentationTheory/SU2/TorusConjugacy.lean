@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Matrix.Spectrum
+public import TauCeti.Analysis.Matrix.UnitaryGroup
 public import TauCeti.RepresentationTheory.SU2.Basic
 
 /-!
@@ -28,13 +29,11 @@ and a `2 × 2` matrix and its adjugate add up to the trace. So `G` differs from 
 matrix `H = i (G - G*)` by a scalar matrix, and any unitary that diagonalises `H` diagonalises
 `G`. The eigenvector unitary supplied by the spectral theorem need not have determinant one, but
 it can be rescaled by a scalar of modulus one until it does
-(`TauCeti.SU2.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
+(`TauCeti.Matrix.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
 change the conjugation it induces.
 
 ## Main results
 
-* `TauCeti.SU2.exists_circle_smul_mem_specialUnitaryGroup`: `U(2) = Circle · SU(2)`; every
-  `2 × 2` unitary matrix becomes special unitary after multiplication by a scalar of modulus one.
 * `TauCeti.SU2.exists_conj_mem_torus`: **torus conjugacy**, every element of `SU(2)` is conjugate
   into the maximal torus.
 * `TauCeti.SU2.exists_isConj_torusExp`: the angle form, every element of `SU(2)` is conjugate to
@@ -54,35 +53,6 @@ public section
 namespace TauCeti
 
 namespace SU2
-
-/-! ### Rescaling a unitary matrix into `SU(2)` -/
-
-/-- `U(2) = Circle · SU(2)`: every `2 × 2` unitary matrix becomes special unitary after
-multiplication by a suitable scalar of modulus one. The scalar is a square root of the inverse of
-the determinant, which has modulus one; a square root exists because the circle is divisible. -/
-theorem exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup (Fin 2) ℂ) :
-    ∃ c : Circle, ((c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ)) ∈
-      Matrix.specialUnitaryGroup (Fin 2) ℂ := by
-  have hUU : star (U : Matrix (Fin 2) (Fin 2) ℂ) * (U : Matrix (Fin 2) (Fin 2) ℂ) = 1 :=
-    Matrix.UnitaryGroup.star_mul_self U
-  have hnorm : ‖(U : Matrix (Fin 2) (Fin 2) ℂ).det‖ = 1 :=
-    CStarRing.norm_of_mem_unitary (Matrix.det_of_mem_unitary U.2)
-  obtain ⟨θ, hθ⟩ := Circle.exp_surjective
-    (⟨(U : Matrix (Fin 2) (Fin 2) ℂ).det, mem_sphere_zero_iff_norm.mpr hnorm⟩ : Circle)
-  have hdetU : (U : Matrix (Fin 2) (Fin 2) ℂ).det = Complex.exp ((θ : ℂ) * Complex.I) := by
-    have := congrArg (fun z : Circle => (z : ℂ)) hθ
-    rw [Circle.coe_exp] at this
-    exact this.symm
-  have hcc : ∀ z : Circle, star (z : ℂ) * (z : ℂ) = 1 := fun z => by
-    rw [Complex.star_def, ← Complex.normSq_eq_conj_mul_self, Circle.normSq_coe, Complex.ofReal_one]
-  refine ⟨Circle.exp (-(θ / 2)), Matrix.mem_specialUnitaryGroup_iff.mpr ⟨?_, ?_⟩⟩
-  · rw [Matrix.mem_unitaryGroup_iff', star_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hUU,
-      hcc, one_smul]
-  · rw [Matrix.det_smul, Fintype.card_fin, Circle.coe_exp, hdetU, sq, mul_assoc, ← Complex.exp_add,
-      ← Complex.exp_add, ← Complex.exp_zero]
-    congr 1
-    push_cast
-    ring
 
 /-! ### Torus conjugacy -/
 
@@ -131,19 +101,18 @@ theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus 
     rw [hexpand]
     exact (Matrix.isDiag_one.smul _).add (hdiagH.smul _)
   -- Rescale `U` into `SU(2)`; the rescaling does not change the conjugation.
-  obtain ⟨c, hc⟩ := exists_circle_smul_mem_specialUnitaryGroup U
-  refine ⟨(⟨(c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ), hc⟩ : SU2)⁻¹, ?_⟩
-  rw [mem_torus_iff]
-  have hcoe : (((⟨(c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ), hc⟩ : SU2)⁻¹ * g *
-        ((⟨(c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ), hc⟩ : SU2)⁻¹)⁻¹ :
-          SU2) : Matrix (Fin 2) (Fin 2) ℂ)
-      = star ((c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ)) * G *
-          ((c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ)) := by
-    rw [inv_inv]
-    rfl
+  obtain ⟨c, hc⟩ := Matrix.exists_circle_smul_mem_specialUnitaryGroup U
+  obtain ⟨u, hu⟩ : ∃ u : SU2,
+      (u : Matrix (Fin 2) (Fin 2) ℂ) = (c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ) := ⟨⟨_, hc⟩, rfl⟩
+  refine ⟨u⁻¹, mem_torus_iff.mpr ?_⟩
+  -- Inversion in `SU(2)` is `star`, which commutes with the coercion to matrices.
+  have hcoe : ((u⁻¹ * g * (u⁻¹)⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
+      = star (u : Matrix (Fin 2) (Fin 2) ℂ) * G * (u : Matrix (Fin 2) (Fin 2) ℂ) := by
+    rw [inv_inv, Submonoid.coe_mul, Submonoid.coe_mul, ← Matrix.star_eq_inv,
+      Matrix.specialUnitaryGroup.coe_star]
   have hcmul : (c : ℂ) * star (c : ℂ) = 1 := by
     rw [Complex.star_def, Complex.mul_conj, Circle.normSq_coe, Complex.ofReal_one]
-  rw [hcoe]
+  rw [hcoe, hu]
   simp only [star_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hcmul, one_smul]
   exact hdiagG
 
