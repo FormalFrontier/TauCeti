@@ -61,6 +61,16 @@ totally positive unit. -/
       ∃ x : Kˣ, IsTotallyPositive (x : K) ∧ toPrincipalIdeal (𝓞 K) K x = I := by
   simp only [narrowPrincipalSubgroup, Subgroup.mem_map, mem_totallyPositiveUnits]
 
+/-- An invertible fractional ideal whose underlying submodule is principal is `toPrincipalIdeal` of
+some `x : Kˣ` — i.e. principal invertible ideals are exactly the range of `toPrincipalIdeal`. This
+packages the `ClassGroup.mk_eq_one_iff`/`mem_principal_ideals_iff` bridge used throughout the narrow
+class group development. -/
+theorem mem_range_toPrincipalIdeal_of_isPrincipal {I : (FractionalIdeal (𝓞 K)⁰ K)ˣ}
+    (h : (I : Submodule (𝓞 K) K).IsPrincipal) : I ∈ (toPrincipalIdeal (𝓞 K) K).range := by
+  obtain ⟨a, ha⟩ := (isPrincipal_iff _).1 h
+  rw [mem_principal_ideals_iff]
+  exact ⟨a, ha.symm⟩
+
 variable (K)
 
 /-- The **narrow class group** `Cl⁺(K)`: invertible fractional ideals of `𝓞 K` modulo the principal

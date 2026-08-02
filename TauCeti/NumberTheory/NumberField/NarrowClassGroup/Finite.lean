@@ -46,12 +46,7 @@ instance instFinite : Finite (NarrowClassGroup K) := by
     intro z hz
     obtain ⟨I, rfl⟩ := mk_surjective z
     rw [MonoidHom.mem_ker, toClassGroup_mk] at hz
-    have hmem : I ∈ (toPrincipalIdeal (𝓞 K) K).range := by
-      rw [mem_principal_ideals_iff]
-      obtain ⟨a, ha⟩ := (ClassGroup.mk_eq_one_iff.mp hz).principal
-      exact ⟨a, FractionalIdeal.coeToSubmodule_injective
-        (by simp only [FractionalIdeal.coe_spanSingleton]; exact ha.symm)⟩
-    obtain ⟨x, hx⟩ := hmem
+    obtain ⟨x, hx⟩ := mem_range_toPrincipalIdeal_of_isPrincipal (ClassGroup.mk_eq_one_iff.mp hz)
     exact ⟨x, by rw [hg, MonoidHom.comp_apply, hx]⟩
   exact Finite.of_injective (Subgroup.inclusion hle) (Subgroup.inclusion_injective hle)
 
