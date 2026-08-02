@@ -37,7 +37,7 @@ The two facts about `ρ g` as a bare endomorphism live in `TauCeti.LinearAlgebra
 * `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
 * `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
-* `TauCeti.FDRep.isSemisimple_apply`: if the characteristic of `k` does not divide `|G|`, then
+* `TauCeti.FDRep.isSemisimple_ρ`: if the characteristic of `k` does not divide `|G|`, then
   `V.ρ g` is a semisimple endomorphism; over `ℂ` the hypothesis is found by instance search.
 
 The eigenvalues are taken with algebraic multiplicity, as the root multiset of the characteristic
@@ -101,7 +101,7 @@ omit [FiniteDimensional k V] in
 no hypothesis on the field beyond invertibility of `n`. Over a field splitting `X ^ n - 1`, an
 algebraically closed one for instance, semisimplicity of `ρ g` is its diagonalizability, the form
 in which it underlies the eigenvalue description of character values. -/
-theorem isSemisimple_apply (ρ : Representation k G V) {g : G} {n : ℕ} (hn : (n : k) ≠ 0)
+theorem isSemisimple_of_pow_eq_one (ρ : Representation k G V) {g : G} {n : ℕ} (hn : (n : k) ≠ 0)
     (hg : g ^ n = 1) : End.IsSemisimple (ρ g) :=
   End.isSemisimple_of_pow_eq_one hn (by rw [← map_pow, hg, map_one])
 
@@ -185,9 +185,9 @@ omit [Finite G] in
 and which every finite group satisfies in characteristic zero, then `V.ρ g` is a semisimple
 endomorphism. Over an algebraically closed field, `ℂ` for instance, this is its
 diagonalizability. -/
-theorem isSemisimple_apply {k : Type u} [Field k] [NeZero (Nat.card G : k)] (V : FDRep k G)
+theorem isSemisimple_ρ {k : Type u} [Field k] [NeZero (Nat.card G : k)] (V : FDRep k G)
     (g : G) : End.IsSemisimple (V.ρ g) := by
-  refine Representation.isSemisimple_apply V.ρ ?_ (pow_orderOf_eq_one g)
+  refine Representation.isSemisimple_of_pow_eq_one V.ρ ?_ (pow_orderOf_eq_one g)
   obtain ⟨m, hm⟩ := orderOf_dvd_natCard g
   intro h
   exact NeZero.ne (Nat.card G : k) (by rw [hm, Nat.cast_mul, h, zero_mul])
