@@ -63,6 +63,7 @@ theorem rowLen_ofRowLensFin (f : Fin n → ℕ) (hf : Antitone f) (i : Fin n) :
     _root_.YoungDiagram.rowLen_ofRowLens (w := List.ofFn f) (hw := hf.sortedGE_ofFn) ⟨i, h⟩
 
 /-- The rows of `ofRowLensFin f hf` past the `n` prescribed ones are empty. -/
+@[simp]
 theorem rowLen_ofRowLensFin_eq_zero_of_le (f : Fin n → ℕ) (hf : Antitone f) {i : ℕ} (hi : n ≤ i) :
     (ofRowLensFin f hf).rowLen i = 0 := by
   by_contra h

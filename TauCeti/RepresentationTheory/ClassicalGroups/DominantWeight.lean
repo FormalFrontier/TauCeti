@@ -144,19 +144,20 @@ theorem isPolynomial_shift_neg_detShift (l : DominantWeight n) :
   omega
 
 /-- The entries of a dominant weight, truncated to `ℕ`, are still weakly decreasing. -/
-theorem antitone_toNat (l : DominantWeight n) : Antitone fun i => (l.1 i).toNat :=
+theorem toNat_antitone (l : DominantWeight n) : Antitone fun i => (l.1 i).toNat :=
   fun _ _ h => Int.toNat_le_toNat (l.antitone h)
 
 /-- The Young diagram of a dominant weight: its `i`-th row has length `λᵢ`.  Negative entries are
 truncated to `0`, so this reads off the intended diagram exactly on the polynomial weights, where
 `TauCeti.DominantWeight.natCast_rowLen_shape` recovers the entries. -/
 def shape (l : DominantWeight n) : YoungDiagram :=
-  YoungDiagram.ofRowLensFin (fun i => (l.1 i).toNat) l.antitone_toNat
+  YoungDiagram.ofRowLensFin (fun i => (l.1 i).toNat) l.toNat_antitone
 
 @[simp]
 theorem rowLen_shape (l : DominantWeight n) (i : Fin n) : l.shape.rowLen i = (l.1 i).toNat :=
   YoungDiagram.rowLen_ofRowLensFin _ _ i
 
+@[simp]
 theorem rowLen_shape_eq_zero_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) :
     l.shape.rowLen i = 0 :=
   YoungDiagram.rowLen_ofRowLensFin_eq_zero_of_le _ _ hi
@@ -245,6 +246,7 @@ theorem rowLen_detShiftShape (l : DominantWeight n) (i : Fin n) :
     l.detShiftShape.rowLen i = (l.1 i - l.detShift).toNat := by
   rw [detShiftShape, rowLen_shape, shift_apply, ← sub_eq_add_neg]
 
+@[simp]
 theorem rowLen_detShiftShape_eq_zero_of_le (l : DominantWeight n) {i : ℕ} (hi : n ≤ i) :
     l.detShiftShape.rowLen i = 0 :=
   rowLen_shape_eq_zero_of_le _ hi
