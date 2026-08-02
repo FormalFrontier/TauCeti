@@ -153,10 +153,7 @@ theorem exists_isInternal_isIndecomposableModule [IsArtinian A M] :
   simpa only [Finset.sup_eq_iSup, iSup_subtype, id_eq] using hss
 
 /-- A nonzero Artinian module has an indecomposable direct summand: some indecomposable submodule
-`N` admits a complement.
-
-This is the decomposition of `⊤` with one summand singled out; it is the shape in which an
-induction over the summands of a module usually consumes the decomposition. -/
+`N` admits a complement. -/
 theorem exists_isCompl_isIndecomposableModule [IsArtinian A M] [Nontrivial M] :
     ∃ N Q : Submodule A M, IsCompl N Q ∧ IsIndecomposableModule A N := by
   classical
