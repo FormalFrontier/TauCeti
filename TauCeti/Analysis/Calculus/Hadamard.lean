@@ -78,6 +78,7 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     intro x hx
     have hxt : (x, t) ∈ Metric.closedBall x₀ 1 ×ˢ Set.Icc (0 : ℝ) 1 := ⟨hx, ht⟩
     have hbound := hC (Set.mem_image_of_mem (fun z : E × ℝ ↦ ‖h'.uncurry z‖) hxt)
+    -- Uncurry the parameterized derivative so the compact bound has the form required below.
     change ‖h' x t‖ ≤ C at hbound
     exact hbound
   · exact continuous_const.integrableOn_Icc
@@ -85,6 +86,7 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     intro x _hx
     have hd := hh.differentiable_one.differentiableAt.hasFDerivAt.comp x
         (hasFDerivAt_id x |>.prodMk (hasFDerivAt_const t x))
+    -- Expose the derivative of the fixed-`t` slice; `inl` is definitionally `id.prod 0`.
     change HasFDerivAt (fun y ↦ h y t)
       ((fderiv ℝ h.uncurry (x, t)).comp ((ContinuousLinearMap.id ℝ E).prod 0)) x at hd
     simpa only [h', ContinuousLinearMap.inl] using hd
