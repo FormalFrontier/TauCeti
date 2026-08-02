@@ -48,7 +48,7 @@ isomorphism `Submodule.mapIic`.
 
 ## Implementation notes
 
-The three lattice lemmas read indecomposability off the submodule lattice and need no subtraction,
+The two lattice lemmas read indecomposability off the submodule lattice and need no subtraction,
 so they are stated for a semimodule over a semiring, matching the generality of
 `IsIndecomposableModule` itself. The decomposition statements are over a ring: assembling the two
 halves of the induction is `Finset.SupIndep.union`, which needs `IsModularLattice (Submodule A M)`,
@@ -82,8 +82,7 @@ indecomposable exactly when `P` is nonzero and every splitting of `P` as an inte
 two submodules of `M` has a zero summand.
 
 This is the form the decomposition induction consumes: it never has to leave the lattice
-`Submodule A M`. Both directions are Mathlib's order isomorphism `Submodule.mapIic` between
-`Submodule A P` and the interval below `P`, read through `OrderIso.isCompl_iff`. -/
+`Submodule A M`. -/
 theorem isIndecomposableModule_coe_iff (P : Submodule A M) :
     IsIndecomposableModule A P ↔
       P ≠ ⊥ ∧ ∀ N Q : Submodule A M, N ≤ P → Q ≤ P → Disjoint N Q → N ⊔ Q = P →
@@ -124,10 +123,8 @@ variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 indecomposable submodules, recorded as a `Finset` of submodules that is `Finset.SupIndep` with
 supremum the given submodule.
 
-The proof is well-founded induction on the submodule lattice: the zero submodule takes the empty
-set, an indecomposable one takes a singleton, and a decomposable one is split by
-`TauCeti.exists_lt_lt_of_not_isIndecomposableModule` into two strictly smaller pieces whose sets of
-summands are unioned. -/
+This is the statement the decomposition induction carries; the decomposition of the module itself
+is `TauCeti.exists_isInternal_isIndecomposableModule`. -/
 theorem exists_finset_isIndecomposableModule_supIndep_sup_eq [IsArtinian A M]
     (P : Submodule A M) :
     ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
@@ -183,8 +180,8 @@ theorem exists_isCompl_isIndecomposableModule [IsArtinian A M] [Nontrivial M] :
 internal direct sum of a finite set of indecomposable submodules.
 
 This is the existence half of the Krull-Schmidt theorem, in the hypotheses that theorem is usually
-stated with. It is a corollary of the Artinian statement
-`TauCeti.exists_isInternal_isIndecomposableModule`, since a module of finite length is Artinian. -/
+stated with; `TauCeti.exists_isInternal_isIndecomposableModule` is the same statement under the
+weaker Artinian hypothesis. -/
 theorem exists_indecomposable_decomposition (hM : IsFiniteLength A M) :
     ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
       DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
