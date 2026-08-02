@@ -13,9 +13,11 @@ import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
 The character of a finite-dimensional continuous representation of a compact group is a continuous
 function, hence square integrable for normalized Haar measure. This file records its image in
-`L²(G)` and proves that the characters of the irreducible unitary representations form an
-orthonormal system: `∫ |χ_π|² = 1` for an irreducible `π`, and `∫ χ_π · conj χ_ρ = 0` for
-inequivalent irreducibles.
+`L²(G)` and proves the two orthogonality relations that make the irreducible unitary characters an
+orthonormal system: the normalization `∫ |χ_π|² = 1` for an irreducible unitary `π`, and the
+orthogonality `∫ conj χ_π · χ_ρ = 0` for a pair `π`, `ρ` admitting no nonzero continuous
+intertwiner `ρ → π`. Schur's lemma is what supplies that hypothesis for a pair of inequivalent
+irreducibles; deriving it is not done here.
 
 Both statements are read off the Schur orthogonality relations of
 `TauCeti/RepresentationTheory/Compact/SchurOrthogonality.lean` and

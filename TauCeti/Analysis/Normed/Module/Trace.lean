@@ -39,6 +39,7 @@ noncomputable def traceCLM : (V →L[𝕜] V) →L[𝕜] 𝕜 :=
 variable {𝕜 V}
 
 /-- `TauCeti.traceCLM` evaluates to the trace of the underlying linear map. -/
+@[simp]
 theorem traceCLM_apply (T : V →L[𝕜] V) :
     traceCLM 𝕜 V T = LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
   rw [traceCLM, LinearMap.coe_toContinuousLinearMap']
