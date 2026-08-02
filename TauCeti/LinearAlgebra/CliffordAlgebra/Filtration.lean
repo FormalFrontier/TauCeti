@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
+public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RingTheory.Finiteness.Subalgebra
 
 /-!
@@ -50,6 +51,8 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
 * `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
+* `TauCeti.CliffordAlgebra.filtrationTwoLeadingTerm`: the degree-two leading-term map from the
+  second exterior power to the second graded piece.
 * `TauCeti.CliffordAlgebra.iSup_filtration_eq_top` and
   `TauCeti.CliffordAlgebra.exists_mem_filtration`: the filtration is exhaustive.
 * `TauCeti.CliffordAlgebra.involute_mem_filtration`,
@@ -241,6 +244,114 @@ theorem ι_mul_ι_add_swap_mem_filtration_zero (a b : M) :
     ι Q a * ι Q b + ι Q b * ι Q a ∈ filtration Q 0 := by
   rw [ι_mul_ι_add_swap]
   exact algebraMap_mem_filtration Q _ 0
+
+private noncomputable def filtrationTwoLeadingTermAlternating : M [⋀^Fin 2]→ₗ[R]
+    (filtration Q 2 ⧸ (filtration Q 1).comap (filtration Q 2).subtype) :=
+  { toFun := fun v =>
+      Submodule.Quotient.mk ⟨ι Q (v 0) * ι Q (v 1), ι_mul_ι_mem_filtration_two Q _ _⟩
+    map_update_add' := by
+      intro _ v i x y
+      fin_cases i
+      · simp only [Fin.zero_eta, Fin.isValue, Function.update_self, map_add, ne_eq, one_ne_zero,
+          not_false_eq_true, Function.update_of_ne, add_mul]
+        rw [← Submodule.Quotient.mk_add]
+        rfl
+      · simp only [Fin.mk_one, Fin.isValue, ne_eq, zero_ne_one, not_false_eq_true,
+          Function.update_of_ne, Function.update_self, map_add, mul_add]
+        rw [← Submodule.Quotient.mk_add]
+        rfl
+    map_update_smul' := by
+      intro _ v i c x
+      fin_cases i
+      · simp only [Fin.zero_eta, Fin.isValue, Function.update_self, map_smul, ne_eq, one_ne_zero,
+          not_false_eq_true, Function.update_of_ne, Algebra.smul_mul_assoc]
+        rw [← Submodule.Quotient.mk_smul]
+        rfl
+      · simp only [Fin.mk_one, Fin.isValue, ne_eq, zero_ne_one, not_false_eq_true,
+          Function.update_of_ne, Function.update_self, map_smul, Algebra.mul_smul_comm]
+        rw [← Submodule.Quotient.mk_smul]
+        rfl
+    map_eq_zero_of_eq' := by
+      intro v i j h hij
+      fin_cases i <;> fin_cases j
+      · simp at hij
+      · rw [Submodule.Quotient.mk_eq_zero]
+        change ι Q (v 0) * ι Q (v 1) ∈ filtration Q 1
+        have h' : v 0 = v 1 := by simpa only [id_eq, Fin.zero_eta, Fin.mk_one] using h
+        rw [h', ι_sq_scalar]
+        exact algebraMap_mem_filtration Q _ 1
+      · rw [Submodule.Quotient.mk_eq_zero]
+        change ι Q (v 0) * ι Q (v 1) ∈ filtration Q 1
+        have h' : v 1 = v 0 := by simpa only [id_eq, Fin.zero_eta, Fin.mk_one] using h
+        rw [h', ι_sq_scalar]
+        exact algebraMap_mem_filtration Q _ 1
+      · simp at hij }
+
+/-- The degree-two leading-term map from the exterior square to the second graded piece of the
+Clifford filtration. Its source is alternating because a repeated Clifford generator is scalar,
+which vanishes modulo the first filtration step. Swapping two generators negates their quotient
+class modulo that step.
+
+This is the degree-two component required on the way to the Layer 0 associated-graded equivalence
+in the [spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L65-L73). -/
+noncomputable def filtrationTwoLeadingTerm : ⋀[R]^2 M →ₗ[R]
+    (filtration Q 2 ⧸ (filtration Q 1).comap (filtration Q 2).subtype) :=
+  exteriorPower.alternatingMapLinearEquiv (filtrationTwoLeadingTermAlternating Q)
+
+/-- The degree-two leading-term map sends a decomposable exterior product to the class of the
+corresponding product of Clifford generators. -/
+@[simp]
+theorem filtrationTwoLeadingTerm_apply_ιMulti (a b : M) :
+    filtrationTwoLeadingTerm Q (exteriorPower.ιMulti R 2 ![a, b]) =
+      Submodule.Quotient.mk ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ := by
+  simp [filtrationTwoLeadingTerm, filtrationTwoLeadingTermAlternating]
+
+/-- Every element of the second graded piece is the leading term of a degree-two exterior
+product. -/
+theorem filtrationTwoLeadingTerm_surjective : Function.Surjective (filtrationTwoLeadingTerm Q) := by
+  let P : Submodule R (filtration Q 2) :=
+    (filtration Q 1).comap (filtration Q 2).subtype
+  let q : filtration Q 2 →ₗ[R] (filtration Q 2 ⧸ P) := P.mkQ
+  let T : Submodule R (filtration Q 2) :=
+    (LinearMap.range (filtrationTwoLeadingTerm Q)).comap q
+  have hle : filtration Q 2 ≤ T.map (filtration Q 2).subtype := by
+    calc
+      filtration Q 2 = filtration Q 1 ⊔ LinearMap.range (ι Q) ^ (1 + 1) :=
+        filtration_succ_eq_sup Q 1
+      _ ≤ T.map (filtration Q 2).subtype := sup_le (by
+        intro z hz
+        have hz₂ : z ∈ filtration Q 2 := filtration_mono Q (by omega) hz
+        let z₂ : filtration Q 2 := ⟨z, hz₂⟩
+        refine Submodule.mem_map.2 ⟨z₂, ?_, rfl⟩
+        change q z₂ ∈ LinearMap.range (filtrationTwoLeadingTerm Q)
+        change P.mkQ z₂ ∈ LinearMap.range (filtrationTwoLeadingTerm Q)
+        have hzP : z₂ ∈ P := by
+          change z ∈ filtration Q 1
+          exact hz
+        have hzero : P.mkQ z₂ = 0 := by
+          rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
+          exact hzP
+        rw [hzero]
+        exact Submodule.zero_mem _) (by
+        rw [pow_two, Submodule.mul_le]
+        rintro z ⟨a, rfl⟩ w ⟨b, rfl⟩
+        refine Submodule.mem_map.2 ⟨⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩, ?_, rfl⟩
+        change q ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ ∈
+          LinearMap.range (filtrationTwoLeadingTerm Q)
+        change P.mkQ ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ ∈
+          LinearMap.range (filtrationTwoLeadingTerm Q)
+        rw [Submodule.mkQ_apply]
+        exact LinearMap.mem_range.2 ⟨exteriorPower.ιMulti R 2 ![a, b],
+          filtrationTwoLeadingTerm_apply_ιMulti Q a b⟩)
+  intro z
+  obtain ⟨x, rfl⟩ := Submodule.Quotient.mk_surjective P z
+  have hx : (x : CliffordAlgebra Q) ∈ T.map (filtration Q 2).subtype := hle x.property
+  rcases Submodule.mem_map.1 hx with ⟨y, hy, hxy⟩
+  have hxy' : y = x := Subtype.ext hxy
+  subst x
+  change q y ∈ LinearMap.range (filtrationTwoLeadingTerm Q) at hy
+  change P.mkQ y ∈ LinearMap.range (filtrationTwoLeadingTerm Q) at hy
+  exact LinearMap.mem_range.1 hy
 
 section Conjugation
 
