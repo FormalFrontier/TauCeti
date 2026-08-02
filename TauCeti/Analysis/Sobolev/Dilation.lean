@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.FDeriv.Add
-public import Mathlib.Analysis.Calculus.FDeriv.Comp
+public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
 public import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 
@@ -22,8 +21,9 @@ For `0 < p < ∞` the two scaling laws are
 
 `‖u (r⁻¹ • ·)‖_p = r ^ (n / p) * ‖u‖_p` and `‖D(u (r⁻¹ • ·))‖_p = r ^ (n / p - 1) * ‖Du‖_p`,
 
-the extra `r⁻¹` in the second coming from the chain rule. The mismatch of the two exponents is
-the scaling obstruction behind `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`: a
+the extra `r⁻¹` in the second coming from the chain rule, in the shape of Mathlib's
+`fderiv_comp_smul`. The mismatch of the two exponents is the scaling obstruction behind
+`TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`: a
 Poincaré-type inequality cannot hold with one constant for all compactly supported functions on
 the whole space.
 
@@ -36,8 +36,6 @@ from `MeasureTheory.Measure.map_addHaar_smul`, and is what the `eLpNorm` stateme
 * `TauCeti.lintegral_comp_smul`: `∫⁻ x, g (r • x) ∂μ = |(r ^ n)⁻¹| * ∫⁻ x, g x ∂μ`.
 * `TauCeti.lintegral_comp_inv_smul`: the same law written for `r⁻¹` and `0 < r`.
 * `TauCeti.eLpNorm_comp_inv_smul`: `‖u (r⁻¹ • ·)‖_p = r ^ (n / p) * ‖u‖_p`.
-* `TauCeti.hasFDerivAt_comp_inv_smul`, `TauCeti.fderiv_comp_inv_smul`: the chain rule for a
-  dilation, `D(u (r⁻¹ • ·)) x = r⁻¹ • Du (r⁻¹ • x)`.
 * `TauCeti.eLpNorm_fderiv_comp_inv_smul`: `‖D(u (r⁻¹ • ·))‖_p = r ^ (n / p - 1) * ‖Du‖_p`.
 -/
 
@@ -50,26 +48,6 @@ open scoped ENNReal
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-
-section Calculus
-
-/-- **Chain rule for a dilation.** If `u` has derivative `u'` at `r⁻¹ • x`, then the dilate
-`y ↦ u (r⁻¹ • y)` has derivative `r⁻¹ • u'` at `x`. -/
-theorem hasFDerivAt_comp_inv_smul {u : E → F} {u' : E →L[ℝ] F} {x : E} (r : ℝ)
-    (h : HasFDerivAt u u' (r⁻¹ • x)) :
-    HasFDerivAt (fun y => u (r⁻¹ • y)) (r⁻¹ • u') x := by
-  have hid : HasFDerivAt (fun y : E => r⁻¹ • y) (r⁻¹ • ContinuousLinearMap.id ℝ E) x :=
-    (hasFDerivAt_id x).const_smul r⁻¹
-  have key : u' ∘L (r⁻¹ • ContinuousLinearMap.id ℝ E) = r⁻¹ • u' := by ext v; simp
-  exact key ▸ h.comp x hid
-
-/-- The derivative of a dilate is the dilate of the derivative, scaled by `r⁻¹`. -/
-theorem fderiv_comp_inv_smul {u : E → F} (hu : Differentiable ℝ u) (r : ℝ) :
-    (fderiv ℝ fun y => u (r⁻¹ • y)) = r⁻¹ • fun x => fderiv ℝ u (r⁻¹ • x) := by
-  funext x
-  exact (hasFDerivAt_comp_inv_smul r (hu (r⁻¹ • x)).hasFDerivAt).fderiv
-
-end Calculus
 
 section Measure
 
@@ -114,11 +92,13 @@ theorem eLpNorm_comp_inv_smul (f : E → G) {r : ℝ} (hr : 0 < r) {p : ℝ≥0�
 /-- **Dilation scaling of the `Lᵖ` seminorm of the derivative:**
 `‖D(u (r⁻¹ • ·))‖_p = r ^ (n / p - 1) * ‖Du‖_p`. The exponent drops by one relative to
 `TauCeti.eLpNorm_comp_inv_smul` because the chain rule contributes a factor `r⁻¹`. -/
-theorem eLpNorm_fderiv_comp_inv_smul {u : E → F} (hu : Differentiable ℝ u) {r : ℝ} (hr : 0 < r)
+theorem eLpNorm_fderiv_comp_inv_smul (u : E → F) {r : ℝ} (hr : 0 < r)
     {p : ℝ≥0∞} (hp₀ : p ≠ 0) (hp : p ≠ ∞) :
     eLpNorm (fderiv ℝ fun y => u (r⁻¹ • y)) p μ =
       ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal - 1)) * eLpNorm (fderiv ℝ u) p μ := by
-  rw [fderiv_comp_inv_smul hu r, eLpNorm_const_smul r⁻¹ (fun x => fderiv ℝ u (r⁻¹ • x)) p μ,
+  have hfderiv : (fderiv ℝ fun y => u (r⁻¹ • y)) = r⁻¹ • fun x => fderiv ℝ u (r⁻¹ • x) :=
+    funext fun x => fderiv_comp_smul (f := u) (x := x) r⁻¹
+  rw [hfderiv, eLpNorm_const_smul r⁻¹ (fun x => fderiv ℝ u (r⁻¹ • x)) p μ,
     eLpNorm_comp_inv_smul μ (fderiv ℝ u) hr hp₀ hp, ← mul_assoc]
   congr 1
   rw [Real.enorm_eq_ofReal_abs, abs_of_pos (by positivity : (0 : ℝ) < r⁻¹),

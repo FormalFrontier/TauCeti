@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Sobolev.Dilation
 public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
-public import Mathlib.Analysis.FunctionalSpaces.SobolevInequality
 public import Mathlib.MeasureTheory.Function.LpSpace.Indicator
 public import Mathlib.MeasureTheory.Measure.OpenPos
 
@@ -16,7 +15,8 @@ public import Mathlib.MeasureTheory.Measure.OpenPos
 A Poincaré inequality bounds the `Lᵖ` seminorm of a function by the `Lᵖ` seminorm of its
 derivative, `‖u‖_p ≤ C ‖Du‖_p`. Mathlib proves such an estimate in
 `MeasureTheory.eLpNorm_le_eLpNorm_fderiv`, for `1 ≤ p < n` and functions supported in a *fixed
-bounded* set `s`, with a constant that depends on `s`. The PDE roadmap asks for the companion
+bounded* set `s`, with the explicit `s`-dependent constant
+`MeasureTheory.eLpNormLESNormFDerivOfLeConst ℝ μ s p p`. The PDE roadmap asks for the companion
 fact that pins the role of that hypothesis: on the whole of a finite-dimensional space no single
 constant works for *all* compactly supported functions, so the boundedness of the support is
 load-bearing rather than an artefact of the proof.
@@ -29,18 +29,11 @@ bump's own seminorm vanish. Note that the two hypotheses `p ≠ 0` and `p ≠ �
 needed: the failure is not confined to the subcritical range `p < n` in which the positive
 result lives.
 
-The two statements are recorded side by side, over the same space and in the same shape
-(`∃ C, ∀ u, …` against `¬ ∃ C, ∀ u, …`), so that the difference between them is exactly the
-hypothesis on the supports.
-
 ## Main declarations
 
 * `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`: no constant `C` satisfies
   `‖u‖_p ≤ C ‖Du‖_p` for all compactly supported `C¹` functions on a finite-dimensional real
   normed space with an additive Haar measure.
-* `TauCeti.exists_eLpNorm_le_const_mul_eLpNorm_fderiv_of_isBounded`: for `1 ≤ p < n` such a
-  constant does exist once all the functions are supported in one fixed bounded set (a
-  restatement of Mathlib's `MeasureTheory.eLpNorm_le_eLpNorm_fderiv` in that shape).
 * `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv_euclideanSpace`: the roadmap's
   `ℝⁿ` form, for Lebesgue measure on `EuclideanSpace ℝ (Fin n)`.
 -/
@@ -49,7 +42,7 @@ public section
 
 namespace TauCeti
 
-open Bornology Filter MeasureTheory Module Topology
+open Filter MeasureTheory Module Topology
 open scoped ENNReal NNReal
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
@@ -70,7 +63,6 @@ theorem not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv {p : ℝ≥0∞} (hp₀ :
   have hφ2 : ContDiff ℝ 2 (φ : E → ℝ) := φ.contDiff
   have hφ1 : ContDiff ℝ 1 (φ : E → ℝ) := φ.contDiff
   have hφcs : HasCompactSupport (φ : E → ℝ) := φ.hasCompactSupport
-  have hφdiff : Differentiable ℝ (φ : E → ℝ) := hφ1.differentiable (by norm_num)
   set A := eLpNorm (φ : E → ℝ) p μ
   set D := eLpNorm (fderiv ℝ (φ : E → ℝ)) p μ
   -- The bump has positive seminorm: it is continuous and equal to `1` at the origin.
@@ -93,7 +85,7 @@ theorem not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv {p : ℝ≥0∞} (hp₀ :
     have h1 := hC (fun x => φ (r⁻¹ • x))
       (hφ1.comp (ContDiff.const_smul r⁻¹ (contDiff_id (𝕜 := ℝ) (E := E))))
       (hφcs.comp_homeomorph (Homeomorph.smul (Units.mk0 r⁻¹ (inv_ne_zero hr.ne'))))
-    rw [eLpNorm_comp_inv_smul μ _ hr hp₀ hp, eLpNorm_fderiv_comp_inv_smul μ hφdiff hr hp₀ hp] at h1
+    rw [eLpNorm_comp_inv_smul μ _ hr hp₀ hp, eLpNorm_fderiv_comp_inv_smul μ _ hr hp₀ hp] at h1
     set s := ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal)) with hs_def
     have hs0 : s ≠ 0 := by
       rw [hs_def, Ne, ENNReal.ofReal_eq_zero, not_le]
@@ -115,18 +107,6 @@ theorem not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv {p : ℝ≥0∞} (hp₀ :
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with r hr using key r hr
   rw [zero_mul, le_zero_iff] at hle
   exact hA hle
-
-/-- **A Poincaré inequality does hold on a fixed bounded set.** For `1 ≤ p < n` there is a
-constant `C` with `‖u‖_p ≤ C ‖Du‖_p` for every `C¹` function `u` supported in a fixed bounded
-set `s`. This is `MeasureTheory.eLpNorm_le_eLpNorm_fderiv`, stated in the same
-constant-then-function order as `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv` so that
-the two can be compared directly. -/
-theorem exists_eLpNorm_le_const_mul_eLpNorm_fderiv_of_isBounded {s : Set E} (hs : IsBounded s)
-    {p : ℝ≥0} (hp : 1 ≤ p) (hpn : p < finrank ℝ E) :
-    ∃ C : ℝ≥0, ∀ u : E → ℝ, ContDiff ℝ 1 u → Function.support u ⊆ s →
-      eLpNorm u p μ ≤ C * eLpNorm (fderiv ℝ u) p μ :=
-  ⟨eLpNormLESNormFDerivOfLeConst ℝ μ s p p,
-    fun _ hu hsupp => eLpNorm_le_eLpNorm_fderiv μ hu hsupp hp hpn hs⟩
 
 /-- The Poincaré inequality fails on `ℝⁿ` with Lebesgue measure: the roadmap's form of
 `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`. -/
