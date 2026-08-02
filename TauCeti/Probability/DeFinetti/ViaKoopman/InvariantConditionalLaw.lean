@@ -58,7 +58,7 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α] [StandardBorelSpace α] [Nonempty α]
 
-/-- The **invariant directing measure**: the conditional law of the initial coordinate `x 0` given
+/-- The **invariant conditional law**: the conditional law of the initial coordinate `x 0` given
 the shift-invariant σ-algebra, bundled as a `ProbabilityMeasure`.
 
 The invariant σ-algebra is a *non-ambient* `MeasurableSpace` on `ℕ → α`, so it must be pinned at
@@ -97,7 +97,7 @@ theorem measurable_invariantConditionalProbabilityMeasure {ρ : Measure (ℕ →
   measurable_invariants_invariantConditionalProbabilityMeasure.mono
     (MeasurableSpace.invariants_le _) le_rfl
 
-/-- **Characteristic property.** Evaluated on a measurable set `B`, the invariant directing measure
+/-- **Characteristic property.** Evaluated on a measurable set `B`, the invariant conditional law
 is a version of the conditional expectation of `𝟙_B ∘ (· 0)` given the shift-invariant σ-algebra.
 
 This is what identifies the witness: everything the Koopman route needs to know about it is that
@@ -118,9 +118,7 @@ theorem invariantConditionalProbabilityMeasure_ae_eq_condExp {ρ : Measure (ℕ 
     funext y
     exact Set.indicator_comp_right (g := fun _ => (1 : ℝ)) (fun x : ℕ → α => x 0)
   rw [hpre] at h
-  refine h.symm.trans ?_ |>.symm
-  filter_upwards with x
-  simp only [invariantConditionalProbabilityMeasure, Kernel.probabilityMeasure_toMeasure, id_eq]
+  simpa only [invariantConditionalProbabilityMeasure_toMeasure, id_eq] using h
 
 end Probability
 
