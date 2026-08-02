@@ -52,7 +52,7 @@ fixing `0`, and there the hyperbolic metric collapses to the Euclidean one:
   preserves, equality of the quotients `A / B` forces equality of the numerators.
 
 A Euclidean isometry of the disc fixing `0` preserves the real inner product by polarisation
-(`TauCeti.real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq`, proved from Mathlib's
+(`TauCeti.real_inner_map_map_of_pseudoHyperbolicExpr_map_eq`, proved from Mathlib's
 `norm_sub_sq_real`) — the inner product in question is
 Mathlib's own, `ℂ` carrying the `InnerProductSpace ℝ ℂ` instance with `⟪w, z⟫_ℝ = (z * conj w).re`
 (`Complex.inner`), so nothing about the Euclidean plane is re-encoded here. Two evaluations then
@@ -65,7 +65,7 @@ per point. Undoing the Moebius factor turns `e₁` into the rotation `u` and `g 
 
 ## Main results
 
-* `TauCeti.real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq` — an isometry fixing the origin
+* `TauCeti.real_inner_map_map_of_pseudoHyperbolicExpr_map_eq` — an isometry fixing the origin
   preserves the real inner product.
 * `TauCeti.exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj` — the classification for an
   isometry fixing the origin: it is a rotation or a rotated conjugation.
@@ -138,7 +138,7 @@ include hg
 
 /-- **An isometry fixing the origin preserves norms.** A self-map of the open unit disc that
 preserves the pseudo-hyperbolic expression and fixes `0` preserves the norm. -/
-theorem norm_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
+theorem norm_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z : ℂ} (hz : z ∈ ball (0 : ℂ) 1) :
     ‖g z‖ = ‖z‖ := by
   -- The pseudo-hyperbolic expression against the origin is the norm.
@@ -147,23 +147,23 @@ theorem norm_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
 
 /-- **An isometry fixing the origin is a Euclidean isometry.** It preserves the Euclidean
 distance between any two points of the open unit disc. -/
-theorem norm_sub_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
+theorem norm_sub_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
     ‖g z - g w‖ = ‖z - w‖ :=
   -- Norms are preserved, so the correction term in the Poincaré defect identity is the same on
   -- both sides.
   norm_sub_eq_of_pseudoHyperbolicExpr_eq (mem_ball_zero_iff.mp hz) (mem_ball_zero_iff.mp hw)
-    (norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz)
-    (norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hw) (hg z hz w hw)
+    (norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz)
+    (norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hw) (hg z hz w hw)
 
 /-- **An isometry fixing the origin preserves the real inner product.** -/
-theorem real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
+theorem real_inner_map_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
     ⟪g z, g w⟫_ℝ = ⟪z, w⟫_ℝ := by
   -- Polarisation: the inner product is determined by the three norms `‖z‖`, `‖w‖`, `‖z - w‖`.
-  have hnz := norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz
-  have hnw := norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hw
-  have hsub := norm_sub_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hz hw
+  have hnz := norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz
+  have hnw := norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hw
+  have hsub := norm_sub_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz hw
   have h1 := norm_sub_sq_real (g z) (g w)
   have h2 := norm_sub_sq_real z w
   rw [hsub, hnz, hnw] at h1
@@ -217,16 +217,16 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   set e₁ : ℂ := (2 : ℝ) • g p with he₁_def
   set e₂ : ℂ := (2 : ℝ) • g q with he₂_def
   have hn₁ : ‖e₁‖ = 1 := by
-    rw [he₁_def, norm_smul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]
+    rw [he₁_def, norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]
     norm_num
   have hn₂ : ‖e₂‖ = 1 := by
-    rw [he₂_def, norm_smul, norm_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]
+    rw [he₂_def, norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]
     norm_num
   have hmul₁ : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', hn₁]; norm_num
   -- The frame is orthonormal.
   have horth : ⟪e₁, e₂⟫_ℝ = 0 := by
     rw [he₁_def, he₂_def, real_inner_smul_left, real_inner_smul_right,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
     simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
     ring
@@ -234,13 +234,13 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
   have hcoord₁ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re := by
     intro z hz
     rw [he₁_def, real_inner_smul_left,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
     simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
     ring
   have hcoord₂ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im := by
     intro z hz
     rw [he₂_def, real_inner_smul_left,
-      real_inner_map_eq_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
     simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
       Complex.ofReal_re, Complex.ofReal_im]
     ring
