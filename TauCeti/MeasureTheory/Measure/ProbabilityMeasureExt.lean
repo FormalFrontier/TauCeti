@@ -9,6 +9,7 @@ public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.MeasureTheory.Measure.Typeclasses.ZeroOne
 import Mathlib.MeasureTheory.Constructions.Projective
 import Mathlib.MeasureTheory.SetAlgebra
+import TauCeti.MeasureTheory.Measure.ZeroOne
 
 /-!
 # Finite evaluation laws determine a measure on `ProbabilityMeasure α`
@@ -243,26 +244,7 @@ theorem IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure [CountablyGenerated 
     simp
   letI : ∀ _ : {s : Set α // s ∈ 𝒜}, StandardBorelSpace ℝ≥0∞ :=
     fun _ => standardBorel_of_polish
-  let πe : Measure ({s : Set α // s ∈ 𝒜} → ℝ≥0∞) := π.map e
-  haveI : IsProbabilityMeasure πe := Measure.isProbabilityMeasure_map he.aemeasurable
-  haveI : IsZeroOneMeasure πe := {
-    zero_one₀ := fun s hs => by
-      rw [Measure.map_apply he hs]
-      exact _root_.MeasureTheory.Measure.zero_one π (e ⁻¹' s) }
-  obtain ⟨q, hq⟩ := IsZeroOneMeasure.exists_eq_dirac (μ := πe)
-  have hsingleton : MeasurableSet ({q} : Set ({s : Set α // s ∈ 𝒜} → ℝ≥0∞)) :=
-    MeasurableSet.singleton q
-  have hmass : π (e ⁻¹' {q}) = 1 := by
-    rw [← Measure.map_apply he hsingleton]
-    -- Fold the local name so the Dirac equality `hq`, which is stated for `πe`, can rewrite.
-    change πe {q} = 1
-    rw [hq]
-    simp
-  have heq : ∀ᵐ P ∂π, e P = q := by
-    have hmem : e ⁻¹' {q} ∈ ae π :=
-      (_root_.MeasureTheory.mem_ae_iff_prob_eq_one (hsingleton.preimage he)).2 hmass
-    filter_upwards [hmem] with P hP
-    exact hP
+  obtain ⟨q, heq⟩ := IsZeroOneMeasure.exists_ae_eq_const (π := π) he.aemeasurable
   obtain ⟨P, hP⟩ := heq.exists
   have hid : (id : ProbabilityMeasure α → ProbabilityMeasure α) =ᵐ[π] fun _ => P :=
     heq.mono fun Q hQ => he_inj (hQ.trans hP.symm)
