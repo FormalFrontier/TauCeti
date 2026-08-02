@@ -243,8 +243,7 @@ theorem relabelRows_rotate (ρ : Equiv.Perm (Fin n)) :
 /-- Column relabeling before rotation becomes column relabeling by the conjugate permutation
 after rotation. -/
 @[simp]
-theorem relabelColumns_rotate (κ : Equiv.Perm (Fin n)) :
-    (G.relabelColumns κ).rotate =
+theorem relabelColumns_rotate (κ : Equiv.Perm (Fin n)) : (G.relabelColumns κ).rotate =
       G.rotate.relabelColumns (Fin.revPerm.trans (κ.trans Fin.revPerm)) := by
   ext c <;> simp
 

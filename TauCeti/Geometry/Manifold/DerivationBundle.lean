@@ -4,7 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.Analysis.LocallyConvex.SeparatingDual
 public import Mathlib.Geometry.Manifold.DerivationBundle
+import Mathlib.Geometry.Manifold.BumpFunction
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
 public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 
 /-!
@@ -16,6 +19,10 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 ## Main results
 
 * `tangentToPointDerivation`: the point derivation associated to a tangent vector.
+* `tangentToPointDerivation_injective`: distinct tangent vectors induce distinct point derivations
+  on finite-dimensional Hausdorff real manifolds.
+* `PointDerivation.congr_of_eventuallyEq`: on a finite-dimensional Hausdorff real manifold, a point
+  derivation depends only on the germ of a smooth function at its basepoint.
 * `tangentToPointDerivation_mfderiv`: this association commutes with differentials.
 
 ## References
@@ -26,7 +33,7 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 
 public section
 
-open scoped ContDiff Derivation Manifold
+open scoped ContDiff Derivation Manifold Topology
 
 noncomputable section
 
@@ -87,6 +94,91 @@ directional derivative. -/
 theorem tangentToPointDerivation_apply (x : M) (v : TangentSpace I x)
     (f : C^∞⟮I, M; 𝕜⟯) : tangentToPointDerivation x v f = mvfderiv I f x v :=
   rfl
+
+/-- On a finite-dimensional Hausdorff real manifold, smooth scalar-valued functions distinguish
+tangent vectors. -/
+theorem tangentToPointDerivation_injective
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] [T2Space M]
+    (x : M) :
+    Function.Injective (tangentToPointDerivation (I := I) x) := by
+  intro v w hvw
+  -- The tangent-space type synonym carries no normed-space instance of its own, so expose the
+  -- model space before applying the separating-dual theorem.
+  change E at v w
+  change v = w
+  rw [SeparatingDual.eq_iff_forall_dual_eq (R := ℝ)]
+  intro φ
+  let b : SmoothBumpFunction I x := Classical.choice inferInstance
+  let f : C^∞⟮I, M; ℝ⟯ :=
+    ⟨fun y ↦ φ (b y • extChartAt I x y),
+      φ.contMDiff.comp (b.contMDiff_smul contMDiffOn_extChartAt)⟩
+  have hlocal : (f : M → ℝ) =ᶠ[𝓝 x] φ ∘ extChartAt I x := by
+    filter_upwards [b.eventuallyEq_one] with y hy
+    simp [f, hy]
+  have hfv : mvfderiv I f x v = mvfderiv I f x w := by
+    have h := congrArg (fun D ↦ D f) hvw
+    -- Unbundle the comparison map after evaluating the two point derivations at `f`.
+    change mvfderiv I f x v = mvfderiv I f x w at h
+    exact h
+  have hderiv (u : TangentSpace I x) : mvfderiv I f x u = φ u := by
+    have hφ : mfderiv 𝓘(ℝ, E) 𝓘(ℝ, ℝ) φ (extChartAt I x x) = φ :=
+      φ.hasFDerivAt.hasMFDerivAt.mfderiv
+    rw [mvfderiv, hlocal.mfderiv_eq,
+      mfderiv_comp x φ.mdifferentiableAt
+        (mdifferentiableAt_extChartAt (I := I) (mem_chart_source H x)),
+      hφ, mfderiv_extChartAt_self]
+    -- Unwrap the tangent-space synonym and apply the resulting identity linear map; there is no
+    -- separate simplification lemma for this final coercion boundary.
+    change φ u = φ u
+    rfl
+  -- The separating-dual goal is stated on the model space after the tangent-space synonym was
+  -- exposed above, so return to the corresponding scalar equality before using `hderiv`.
+  change φ v = φ w
+  rw [← hderiv v, ← hderiv w]
+  exact hfv
+
+namespace PointDerivation
+
+/-- A point derivation on a finite-dimensional Hausdorff real manifold depends only on the germ of
+a smooth function at its basepoint. -/
+theorem congr_of_eventuallyEq
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] [T2Space M]
+    {x : M} (v : PointDerivation I x) (f g : C^∞⟮I, M; ℝ⟯)
+    (hfg : (f : M → ℝ) =ᶠ[𝓝 x] g) :
+    v f = v g := by
+  have hs : {y | f y = g y} ∈ 𝓝 x := hfg
+  obtain ⟨b, -, hb⟩ :=
+    (SmoothBumpFunction.nhds_basis_support (I := I) hs).mem_iff.mp hs
+  let b' : C^∞⟮I, M; ℝ⟯ := ⟨b, b.contMDiff⟩
+  have hprod : b' * (f - g) = 0 := by
+    ext y
+    -- Unbundle pointwise multiplication and subtraction of smooth maps.
+    change b y * (f y - g y) = 0
+    by_cases hy : b y = 0
+    · simp [hy]
+    · have hyb : y ∈ Function.support b := hy
+      have hyeq : f y = g y := hb hyb
+      simp [hyeq]
+  have hx : f x = g x := hfg.eq_of_nhds
+  have hleibniz := v.leibniz b' (f - g)
+  -- Reinterpret the global smooth-map equality in the pointed type synonym used by `v`.
+  have hprodAt : (b' * (f - g) : C^∞⟮I, M; ℝ⟯⟨x⟩) = 0 := hprod
+  have hzero : v (b' * (f - g) : C^∞⟮I, M; ℝ⟯⟨x⟩) = 0 := by
+    calc
+      _ = v 0 := congrArg v hprodAt
+      _ = 0 := v.map_zero
+  have heq := hzero.symm.trans hleibniz
+  -- Unfold the pointed scalar action as evaluation at `x` before simplifying the Leibniz rule.
+  change 0 = b x * v (f - g) + (f x - g x) * v b' at heq
+  simp [hx] at heq
+  have hsub : v (f - g : C^∞⟮I, M; ℝ⟯⟨x⟩) = v f - v g := v.map_sub f g
+  exact sub_eq_zero.mp (heq.trans hsub).symm
+
+end PointDerivation
 
 variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
   {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners 𝕜 E' H'}
