@@ -75,15 +75,24 @@ private theorem exists_one_sided_tangents {γ : ℝ → ℂ} {a b t₀ : ℝ}
     hasDerivWithinAt_Ioi_of_tendsto_deriv h_cont h_diff_R h_tend_R,
     hasDerivWithinAt_Iio_of_tendsto_deriv h_cont h_diff_L h_tend_L⟩
 
-/-- Around each interior crossing there is a radius `R > 0` such that at every window radius
-`ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated window
-integral of the Cauchy kernel converges. -/
-private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
+/-- **Value-exposing form of the per-crossing window radius.** Around each interior crossing
+there is a radius `R > 0` and nonzero one-sided tangents `L_R`, `L_L` such that at every window
+radius `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated
+window integral of the Cauchy kernel converges to the explicit log-norm-plus-argument value of
+`perWindow_truncated_integral_tendsto`, rather than to a merely existentially-bound limit. This is
+what a consumer that needs the real or imaginary part of the limit (not just its existence) calls;
+`exists_radius_perWindow_tendsto` below forgets `L_R`, `L_L` and the explicit value to recover the
+existence-only form. -/
+theorem exists_radius_perWindow_tendsto_value {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
-    ∃ R > 0, ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
+    ∃ R > 0, ∃ L_R L_L : ℂ, L_R ≠ 0 ∧ L_L ≠ 0 ∧
+      ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
       (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
-      ∃ v : ℂ, Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
-        if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 v) := by
+      Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
+        if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ))
+        (𝓝 (((Real.log ‖γ (t₀ + ρ) - s‖ - Real.log ‖γ (t₀ - ρ) - s‖ : ℝ) : ℂ) +
+          ((((-L_L) / (γ (t₀ - ρ) - s)).arg + ((γ (t₀ + ρ) - s) / L_R).arg : ℝ) : ℂ) *
+            Complex.I)) := by
   obtain ⟨L_R, L_L, hL_R, hL_L, h_tend_R, h_tend_L, h_dR, h_dL⟩ :=
     exists_one_sided_tangents h_imm hab ht₀
   obtain ⟨R, hR_pos, hc_R, hc_L, hc_plus, hc_minus⟩ :=
@@ -91,7 +100,7 @@ private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : �
   obtain ⟨p, hp⟩ := h_imm.isPiecewiseC1On.exists_finset_differentiableAt
   have ht₀' : t₀ ∈ Ioo (min a b) (max a b) := by
     rwa [min_eq_left hab.le, max_eq_right hab.le]
-  refine ⟨R, hR_pos, fun ρ hρ_pos hρ_le h_lo h_hi h_unique => ⟨_,
+  refine ⟨R, hR_pos, L_R, L_L, hL_R, hL_L, fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
     perWindow_truncated_integral_tendsto hρ_pos h_at
       (h_imm.continuousOn.mono (by
         rw [uIcc_of_le hab.le]
@@ -109,7 +118,22 @@ private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : �
       h_unique
       (fun a' b' h1 h2 h3 => hc_R a' b' h1 h2 (h3.trans (by linarith)))
       (fun b' h1 h2 => hc_L (t₀ - ρ) b' (by linarith) h1 h2)
-      (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩⟩
+      (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩
+
+/-- Around each interior crossing there is a radius `R > 0` such that at every window radius
+`ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated window
+integral of the Cauchy kernel converges. Existence-only forgetful form of
+`exists_radius_perWindow_tendsto_value`. -/
+theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
+    (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
+    ∃ R > 0, ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
+      (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
+      ∃ v : ℂ, Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
+        if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 v) := by
+  obtain ⟨R, hR_pos, L_R, L_L, -, -, h_spec⟩ :=
+    exists_radius_perWindow_tendsto_value h_imm hab ht₀ h_at
+  exact ⟨R, hR_pos, fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
+    ⟨_, h_spec ρ hρ_pos hρ_le h_lo h_hi h_unique⟩⟩
 
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
