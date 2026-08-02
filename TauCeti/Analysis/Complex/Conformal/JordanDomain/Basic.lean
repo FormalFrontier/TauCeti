@@ -51,7 +51,7 @@ are.
 * `TauCeti.isJordanDomain_ball` — a disc of positive radius is a Jordan domain, the basic example
   and the one Carathéodory's theorem compares every other Jordan domain to. Its frontier is a
   circle, which `TauCeti.isJordanCurve_sphere` already knows to be a Jordan curve. A larger supply
-  of examples — the bounded convex domains, polygons among them — is in
+  of examples — the bounded convex domains, the interiors of convex polygons among them — is in
   `Conformal/JordanDomain/Convex.lean`.
 * `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` — the boundary of a Jordan domain is
   locally connected, which is the hypothesis the *hard* direction of the L5 milestone runs on:
