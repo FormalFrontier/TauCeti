@@ -85,10 +85,13 @@ theorem SubgroupQuotient.fundamentalGroupEquiv_unop_smul
     (g : FundamentalGroup (SubgroupQuotient x₀ H)
       (SubgroupQuotient.basepoint x₀ H)) :
     (SubgroupQuotient.fundamentalGroupEquiv x₀ H g).unop •
-        (SubgroupQuotient.basepointLift x₀ H : UniversalCover x₀) =
+        mk x₀ (Path.Homotopic.Quotient.refl x₀) =
       (isQuotientCoveringMap_subgroupQuotientMap x₀ H).isCoveringMap.monodromy g
-        (SubgroupQuotient.basepointLift x₀ H) :=
-  (isQuotientCoveringMap_subgroupQuotientMap x₀ H).unop_fundamentalGroupToMulOpposite_smul
+        (SubgroupQuotient.basepointLift x₀ H) := by
+  rw [← TauCeti.UniversalCover.basepointLift_coe,
+    ← SubgroupQuotient.basepointLift_coe]
+  exact
+    (isQuotientCoveringMap_subgroupQuotientMap x₀ H).unop_fundamentalGroupToMulOpposite_smul
 
 variable [LocallyPathConnectedSpace X] [PathConnectedSpace X]
   [SemilocallySimplyConnectedSpace X]
@@ -193,10 +196,10 @@ theorem mapOfEq_subgroupQuotientProj_apply
     _ = ((isQuotientCoveringMap_subgroupQuotientMap x₀ H).isCoveringMap.monodromy g
         (SubgroupQuotient.basepointLift x₀ H) : UniversalCover x₀) :=
       monodromy_mapOfEq_subgroupQuotientProj x₀ H g
-    _ = h • (SubgroupQuotient.basepointLift x₀ H : UniversalCover x₀) := by
+    _ = h • mk x₀ (Path.Homotopic.Quotient.refl x₀) := by
       exact (SubgroupQuotient.fundamentalGroupEquiv_unop_smul x₀ H g).symm
     _ = h.1 • (TauCeti.UniversalCover.basepointLift x₀ : UniversalCover x₀) := by
-      simp only [SubgroupQuotient.basepointLift_coe, Subgroup.smul_def]
+      simp only [TauCeti.UniversalCover.basepointLift_coe, Subgroup.smul_def]
 
 /-- The subgroup induced by the descended endpoint map is exactly the subgroup used to form
 the orbit quotient. -/
