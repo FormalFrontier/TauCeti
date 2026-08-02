@@ -75,16 +75,6 @@ hypotheses of `exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv`. -/
 def IsHolomorphicUnitDiscPerm (e : Equiv.Perm Complex.UnitDisc) : Prop :=
   ∃ f : ℂ → ℂ, DifferentiableOn ℂ f (ball (0 : ℂ) 1) ∧ ∀ z : Complex.UnitDisc, (e z : ℂ) = f z
 
-/-- A scalar representative of a self-map of the disc maps the open unit ball into itself. -/
-lemma mapsTo_ball_of_forall_unitDisc_coe_eq {e : Complex.UnitDisc → Complex.UnitDisc} {f : ℂ → ℂ}
-    (hf : ∀ z : Complex.UnitDisc, (e z : ℂ) = f z) :
-    MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-  intro w hw
-  have hw' : ‖w‖ < 1 := by simpa [mem_ball_zero_iff] using hw
-  have := (e (Complex.UnitDisc.mk w hw')).norm_lt_one
-  rw [hf (Complex.UnitDisc.mk w hw')] at this
-  simpa [mem_ball_zero_iff] using this
-
 /-- **The automorphism group of the unit disc.** A permutation of `Complex.UnitDisc` is a
 holomorphic automorphism when both it and its inverse extend to functions that are holomorphic
 on the open unit ball. -/
