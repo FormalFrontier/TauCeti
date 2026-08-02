@@ -65,44 +65,6 @@ private theorem exists_eventually_norm_le_on_Icc
   have hbound : ‖h x t‖ < C + 1 := by simpa [n] using hxt
   exact hbound.le
 
-/-- Integration over the compact unit interval preserves continuity in a topological parameter. -/
-theorem continuous_integral_Icc_of_continuous [CompleteSpace F]
-    {X : Type*} [TopologicalSpace X]
-    (h : X → ℝ → F) (hh : Continuous h.uncurry) :
-    Continuous (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
-  rw [continuous_iff_continuousAt]
-  intro x₀
-  rw [Metric.continuousAt_iff']
-  intro ε hε
-  let n : Set (X × ℝ) := {z | ‖h z.1 z.2 - h x₀ z.2‖ < ε / 2}
-  have hn : IsOpen n := isOpen_lt (hh.sub (hh.comp (continuous_const.prodMk continuous_snd))).norm
-    continuous_const
-  have hfiber_subset : {x₀} ×ˢ Set.Icc (0 : ℝ) 1 ⊆ n := by
-    rintro ⟨x, t⟩ ⟨hx, _ht⟩
-    have hxx₀ : x = x₀ := by simpa only [Set.mem_singleton_iff] using hx
-    subst x
-    simpa [n] using half_pos hε
-  obtain ⟨u, v, hu, -, hxu, hIv, huv⟩ :=
-    generalized_tube_lemma isCompact_singleton isCompact_Icc hn hfiber_subset
-  have hx₀u : x₀ ∈ u := hxu (Set.mem_singleton x₀)
-  filter_upwards [hu.mem_nhds hx₀u] with x hx
-  have hxi : Integrable (fun t ↦ h x t) (volume.restrict (Set.Icc (0 : ℝ) 1)) :=
-    (hh.comp (continuous_const.prodMk continuous_id)).integrableOn_Icc
-  have hx₀i : Integrable (fun t ↦ h x₀ t) (volume.restrict (Set.Icc (0 : ℝ) 1)) :=
-    (hh.comp (continuous_const.prodMk continuous_id)).integrableOn_Icc
-  rw [dist_eq_norm, ← integral_sub hxi hx₀i]
-  calc
-    ‖∫ t in Set.Icc (0 : ℝ) 1, h x t - h x₀ t‖
-        ≤ ε / 2 * (volume.restrict (Set.Icc (0 : ℝ) 1)).real Set.univ :=
-      norm_integral_le_of_norm_le_const <| by
-        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
-        have hmem : (x, t) ∈ u ×ˢ v := ⟨hx, hIv ht⟩
-        have hxt := huv hmem
-        have hbound : ‖h x t - h x₀ t‖ < ε / 2 := by simpa [n] using hxt
-        exact hbound.le
-    _ = ε / 2 := by simp
-    _ < ε := half_lt_self hε
-
 /-- Differentiation under an integral over the compact unit interval for a continuously
 differentiable parameterized function. -/
 theorem hasFDerivAt_integral_Icc_of_contDiff
@@ -146,9 +108,12 @@ private theorem contDiff_integral_Icc_of_contDiff_nat
     ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
   induction n generalizing W with
   | zero =>
-      have hc : ContDiff ℝ (0 : ℕ∞ω) (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) :=
-        contDiff_zero.2 (continuous_integral_Icc_of_continuous h hh.continuous)
-      simpa using hc
+      have hc : Continuous (fun x ↦ ∫ t in (0 : ℝ)..1, h x t) :=
+        intervalIntegral.continuous_parametric_intervalIntegral_of_continuous'
+          hh.continuous 0 1
+      apply contDiff_zero.2
+      simpa only [intervalIntegral.integral_of_le zero_le_one, integral_Icc_eq_integral_Ioc]
+        using hc
   | succ n ih =>
       let h' : V → ℝ → V →L[ℝ] W := fun x t ↦
         (fderiv ℝ h.uncurry (x, t)).comp (ContinuousLinearMap.inl ℝ V ℝ)
