@@ -175,7 +175,7 @@ theorem schur_orthogonality (π : ContRepresentation 𝕜 G V)
     (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (v w : V) (v' w' : W) :
     ⟪matrixCoeffLp π hπ v w, matrixCoeffLp ρ hρ v' w'⟫_𝕜 = 0 :=
   schur_orthogonality_distinct π hπ ρ hρ hunitary
-    (fun f ↦ toContinuousLinearMap_eq_zero_of_isEmpty_equiv hirrπ hirrρ hne f) v w v' w'
+    (fun f ↦ by simp [eq_zero_of_isEmpty_equiv hirrπ hirrρ hne f]) v w v' w'
 
 end Inequivalent
 

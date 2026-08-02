@@ -18,8 +18,10 @@ of `TauCeti/RepresentationTheory/Compact/SchurOrthogonality.lean` and
   `Σ i, Fin (dim V_i) × Fin (dim V_i)`;
 * the **characters** `χ_(π i)`, indexed by `i`.
 
-The first is the system that the Peter-Weyl theorem proves complete; the second is the system that
-lies in the central subspace of `L²(G)`.
+The family is arbitrary apart from being pairwise inequivalent, so the first is a subsystem of the
+system that the Peter-Weyl theorem proves complete: it is the whole of it only when the family runs
+over one representative of every irreducible equivalence class. The second lies in the central
+subspace of `L²(G)`.
 
 ## Main statements
 
@@ -86,7 +88,9 @@ Within a single `i` this is the first Schur orthogonality relation, whose value 
 diagonal is exactly what the normalization `√(n i)` cancels; across distinct `i` it is the second
 relation, whose hypothesis Schur's lemma supplies from inequivalence.
 
-This is the system that the Peter-Weyl theorem completes to a Hilbert basis of `L²(G)`. -/
+The family is not asked to be exhaustive, so this is in general a subsystem of the system that the
+Peter-Weyl theorem completes to a Hilbert basis of `L²(G)`; it is that whole system exactly when `π`
+contains a representative of every irreducible equivalence class. -/
 theorem orthonormal_matrixCoeffLp {n : ι → ℕ} (hunitary : ∀ i, IsUnitary (π i))
     (hirr : ∀ i, Representation.IsIrreducible (π i).toRepresentation)
     (hne : Pairwise fun i j ↦ IsEmpty (_root_.ContRepresentation.Equiv (π i) (π j)))
@@ -132,7 +136,7 @@ theorem orthonormal_characterLp (hunitary : ∀ i, IsUnitary (π i))
   · -- The second character orthogonality asks for the intertwiners `π j → π i`, not `π i → π j`,
     -- so it is the pair `(j, i)` that Schur's lemma is applied to.
     rw [character_orthonormal_distinct (π i) (hπ i) (π j) (hπ j) (hunitary i)
-      fun f ↦ toContinuousLinearMap_eq_zero_of_isEmpty_equiv (hirr j) (hirr i) (hne hij.symm) f]
+      fun f ↦ by simp [eq_zero_of_isEmpty_equiv (hirr j) (hirr i) (hne hij.symm) f]]
     simp [hij]
 
 end OrthonormalSystem

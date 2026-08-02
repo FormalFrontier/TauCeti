@@ -94,17 +94,6 @@ theorem eq_zero_of_isEmpty_equiv (hπ : Representation.IsIrreducible π.toRepres
     ⟨fun φ ↦ hne.false (nonempty_equiv_iff.2 ⟨φ⟩).some⟩
   exact ContIntertwiningMap.toIntertwiningMap_injective (Subsingleton.elim _ _)
 
-/-- The underlying continuous linear map of a continuous intertwiner between inequivalent
-irreducibles vanishes. This is the form in which the Schur orthogonality relations consume
-`eq_zero_of_isEmpty_equiv`. -/
-theorem toContinuousLinearMap_eq_zero_of_isEmpty_equiv
-    (hπ : Representation.IsIrreducible π.toRepresentation)
-    (hρ : Representation.IsIrreducible ρ.toRepresentation)
-    (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (f : ContIntertwiningMap π ρ) :
-    f.toContinuousLinearMap = 0 := by
-  rw [eq_zero_of_isEmpty_equiv hπ hρ hne f]
-  rfl
-
 end Vanishing
 
 section Scalar
