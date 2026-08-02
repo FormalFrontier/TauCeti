@@ -52,8 +52,54 @@ theorem hadamardFactor_self [CompleteSpace F] (f : E → F) (x : E) :
     hadamardFactor f x x = fderiv ℝ f x := by
   simp [hadamardFactor]
 
-private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
-    (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
+omit [NormedSpace ℝ E] [NormedSpace ℝ F] in
+private theorem exists_eventually_norm_le_on_Icc
+    (h : E → ℝ → F) (hh : Continuous h.uncurry) (x₀ : E) :
+    ∃ C : ℝ, ∀ᶠ x in nhds x₀, ∀ t ∈ Set.Icc (0 : ℝ) 1, ‖h x t‖ ≤ C := by
+  have hfiber : Continuous (fun t : ℝ ↦ ‖h x₀ t‖) :=
+    hh.norm.comp (continuous_const.prodMk continuous_id)
+  obtain ⟨C, hC⟩ := (isCompact_Icc : IsCompact (Set.Icc (0 : ℝ) 1)).bddAbove_image
+    hfiber.continuousOn
+  let n : Set (E × ℝ) := {z | ‖h.uncurry z‖ < C + 1}
+  have hn : IsOpen n := isOpen_lt hh.norm continuous_const
+  have hfiber_subset : {x₀} ×ˢ Set.Icc (0 : ℝ) 1 ⊆ n := by
+    rintro ⟨x, t⟩ ⟨hx, ht⟩
+    have hxx₀ : x = x₀ := by simpa only [Set.mem_singleton_iff] using hx
+    subst x
+    exact lt_of_le_of_lt (hC (Set.mem_image_of_mem (fun t : ℝ ↦ ‖h x₀ t‖) ht))
+      (lt_add_of_pos_right C zero_lt_one)
+  obtain ⟨u, v, hu, -, hxu, hIv, huv⟩ :=
+    generalized_tube_lemma isCompact_singleton isCompact_Icc hn hfiber_subset
+  have hx₀u : x₀ ∈ u := hxu (Set.mem_singleton x₀)
+  refine ⟨C + 1, ?_⟩
+  filter_upwards [hu.mem_nhds hx₀u] with x hx
+  intro t ht
+  have hxt := huv (show (x, t) ∈ u ×ˢ v from ⟨hx, hIv ht⟩)
+  change ‖h x t‖ < C + 1 at hxt
+  exact hxt.le
+
+omit [NormedSpace ℝ E] in
+/-- Integration over the compact unit interval preserves continuity in a normed parameter. -/
+theorem continuous_integral_Icc_of_continuous [CompleteSpace F]
+    (h : E → ℝ → F) (hh : Continuous h.uncurry) :
+    Continuous (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
+  rw [continuous_iff_continuousAt]
+  intro x₀
+  obtain ⟨C, hC⟩ := exists_eventually_norm_le_on_Icc h hh x₀
+  apply continuousAt_of_dominated
+  · filter_upwards with x using Continuous.aestronglyMeasurable (by fun_prop)
+  · filter_upwards [hC] with x hx
+    rw [ae_restrict_iff]
+    · filter_upwards with t ht
+      exact hx t ht
+    · exact (isClosed_le (by fun_prop) (by fun_prop)).measurableSet
+  · exact (show Continuous (fun _ : ℝ ↦ C) from continuous_const).integrableOn_Icc
+  · filter_upwards using (by fun_prop)
+
+/-- Differentiation under an integral over the compact unit interval for a continuously
+differentiable parameterized function. -/
+theorem hasFDerivAt_integral_Icc_of_contDiff
+    [CompleteSpace F] (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
     HasFDerivAt (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t)
       (∫ t in Set.Icc (0 : ℝ) 1,
         (fderiv ℝ h.uncurry (x₀, t)).comp (ContinuousLinearMap.inl ℝ E ℝ)) x₀ := by
@@ -63,23 +109,19 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     have hd : Continuous (fderiv ℝ h.uncurry) :=
       (hh.fderiv_right (m := 0) (by norm_num)).continuous
     fun_prop
-  obtain ⟨C, hC⟩ :=
-    ((isCompact_closedBall x₀ 1).prod isCompact_Icc).bddAbove_image hh'.norm.continuousOn
+  obtain ⟨C, hC⟩ := exists_eventually_norm_le_on_Icc h' hh' x₀
+  let s : Set E := {x | ∀ t ∈ Set.Icc (0 : ℝ) 1, ‖h' x t‖ ≤ C}
   apply hasFDerivAt_integral_of_dominated_of_fderiv_le
-    (μ := volume.restrict (Set.Icc (0 : ℝ) 1))
-    (F := h) (F' := h') (bound := fun _ ↦ C) (s := Metric.closedBall x₀ 1)
-  · exact Metric.closedBall_mem_nhds x₀ zero_lt_one
+    (μ := volume.restrict (Set.Icc (0 : ℝ) 1)) (F := h) (F' := h')
+    (bound := fun _ ↦ C) (s := s)
+  · exact hC
   · exact Filter.Eventually.of_forall fun x ↦
       (hh.continuous.comp (continuous_const.prodMk continuous_id)).aestronglyMeasurable
   · exact (hh.continuous.comp (continuous_const.prodMk continuous_id)).integrableOn_Icc
   · exact (hh'.comp (continuous_const.prodMk continuous_id)).aestronglyMeasurable
   · filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
     intro x hx
-    have hxt : (x, t) ∈ Metric.closedBall x₀ 1 ×ˢ Set.Icc (0 : ℝ) 1 := ⟨hx, ht⟩
-    have hbound := hC (Set.mem_image_of_mem (fun z : E × ℝ ↦ ‖h'.uncurry z‖) hxt)
-    -- Uncurry the parameterized derivative so the compact bound has the form required below.
-    change ‖h' x t‖ ≤ C at hbound
-    exact hbound
+    exact hx t ht
   · exact continuous_const.integrableOn_Icc
   · filter_upwards with t
     intro x _hx
@@ -90,16 +132,17 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
       ((fderiv ℝ h.uncurry (x, t)).comp ((ContinuousLinearMap.id ℝ E).prod 0)) x at hd
     simpa only [h', ContinuousLinearMap.inl] using hd
 
-private theorem contDiff_integral_Icc_of_contDiff
+/-- Integration over the compact unit interval preserves any finite order of continuous
+differentiability in a parameter. -/
+theorem contDiff_integral_Icc_of_contDiff
     {V : Type u} {W : Type max u v} [NormedAddCommGroup V] [NormedSpace ℝ V]
     [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
-    [FiniteDimensional ℝ V] (n : ℕ)
-    (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
+    (n : ℕ) (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
     ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
   induction n generalizing W with
   | zero =>
       have hc : ContDiff ℝ (0 : ℕ∞ω) (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) :=
-        contDiff_zero.2 (continuous_parametric_integral_of_continuous hh.continuous isCompact_Icc)
+        contDiff_zero.2 (continuous_integral_Icc_of_continuous h hh.continuous)
       simpa using hc
   | succ n ih =>
       let h' : V → ℝ → V →L[ℝ] W := fun x t ↦
@@ -119,7 +162,7 @@ private theorem contDiff_integral_Icc_of_contDiff
 continuously differentiable in the endpoint. -/
 theorem ContDiff.contDiff_hadamardFactor_of_succ
     {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
-    [FiniteDimensional ℝ E] (n : ℕ) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
+    (n : ℕ) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
     ContDiff ℝ n (hadamardFactor f x) := by
   rw [hadamardFactor_eq_integral_Icc]
   apply contDiff_integral_Icc_of_contDiff n
@@ -141,16 +184,13 @@ theorem ContDiff.sub_eq_hadamardFactor_apply [CompleteSpace F]
   simpa [sub_eq_iff_eq_add, add_comm] using hTaylor
 
 /-- The averaged derivative in Hadamard's factorization depends continuously on the endpoint. -/
-theorem ContDiff.continuous_hadamardFactor [CompleteSpace F] [FiniteDimensional ℝ E] (f : E → F)
+theorem ContDiff.continuous_hadamardFactor [CompleteSpace F] (f : E → F)
     (hf : ContDiff ℝ 1 f) (x : E) : Continuous (hadamardFactor f x) := by
-  rw [hadamardFactor_eq_integral_Icc]
-  apply continuous_parametric_integral_of_continuous
-  · exact (hf.fderiv_right (m := 0) (by norm_num)).continuous.comp (by fun_prop)
-  · exact isCompact_Icc
+  exact (ContDiff.contDiff_hadamardFactor_of_succ 0 f hf x).continuous
 
 /-- For a smooth function, the averaged derivative in Hadamard's factorization depends smoothly on
 the endpoint. -/
-theorem ContDiff.contDiff_hadamardFactor [CompleteSpace F] [FiniteDimensional ℝ E] (f : E → F)
+theorem ContDiff.contDiff_hadamardFactor [CompleteSpace F] (f : E → F)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
   rw [contDiff_infty]
