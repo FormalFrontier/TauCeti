@@ -7,8 +7,10 @@ module
 import Mathlib.Analysis.LocallyConvex.SeparatingDual
 public import Mathlib.Geometry.Manifold.DerivationBundle
 import Mathlib.Geometry.Manifold.BumpFunction
+public import Mathlib.Geometry.Manifold.IsManifold.InteriorBoundary
 import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
 public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
+import TauCeti.Analysis.Calculus.Hadamard
 
 /-!
 # Tangent vectors as point derivations
@@ -21,6 +23,9 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 * `tangentToPointDerivation`: the point derivation associated to a tangent vector.
 * `tangentToPointDerivation_injective`: distinct tangent vectors induce distinct point derivations
   on finite-dimensional Hausdorff real manifolds.
+* `tangentToPointDerivation_surjective`: every point derivation on a finite-dimensional Hausdorff
+  boundaryless real manifold comes from a tangent vector.
+* `pointDerivationEquivTangentSpace`: the resulting canonical linear equivalence.
 * `PointDerivation.congr_of_eventuallyEq`: on a finite-dimensional Hausdorff real manifold, a point
   derivation depends only on the germ of a smooth function at its basepoint.
 * `tangentToPointDerivation_mfderiv`: this association commutes with differentials.
@@ -139,6 +144,89 @@ theorem tangentToPointDerivation_injective
   rw [← hderiv v, ← hderiv w]
   exact hfv
 
+private theorem tangentToPointDerivation_surjective_model
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (x : E) :
+    Function.Surjective
+      (tangentToPointDerivation (I := modelWithCornersSelf ℝ E) x) := by
+  intro D
+  let b := Module.finBasis ℝ E
+  let c (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
+    ⟨b.coord i, (b.coord i).toContinuousLinearMap.contDiff.contMDiff⟩
+  let pointed (q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯⟨x⟩ := ⟨q, q.contMDiff⟩
+  let δ (q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) : ℝ := D (pointed q)
+  let v : TangentSpace (modelWithCornersSelf ℝ E) x := ∑ i, δ (c i) • b i
+  refine ⟨v, ?_⟩
+  ext f
+  let f' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨f, f.contMDiff⟩
+  change mvfderiv (modelWithCornersSelf ℝ E) f' x v = δ f'
+  rw [mvfderiv, mfderiv_eq_fderiv]
+  let a (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
+    ⟨fun y ↦ hadamardFactor f' x y (b i), by
+      have hfac : ContDiff ℝ ∞ (hadamardFactor f' x) :=
+        f'.contMDiff.contDiff.contDiff_hadamardFactor f' x
+      exact (hfac.clm_apply (show ContDiff ℝ ∞ (fun _ : E ↦ b i) from
+        contDiff_const)).contMDiff⟩
+  let k : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
+    ⟨fun _ ↦ f' x, contDiff_const.contMDiff⟩
+  let kcoord (i : Fin (Module.finrank ℝ E)) :
+      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
+    ⟨fun _ ↦ c i x, contDiff_const.contMDiff⟩
+  have hfactor : f' - k = ∑ i, a i * (c i - kcoord i) := by
+    ext y
+    calc
+      (f' - k) y = f' y - f' x := rfl
+      _ = hadamardFactor f' x y (y - x) :=
+        (f'.contMDiff.contDiff.of_le (by norm_num)).sub_eq_hadamardFactor_apply f' x y
+      _ = ∑ i, hadamardFactor f' x y (b i) * (b.coord i y - b.coord i x) := by
+        rw [← b.sum_repr (y - x), map_sum]
+        apply Finset.sum_congr rfl
+        intro i _
+        rw [map_smul]
+        simp [b, mul_comm]
+      _ = (∑ i, a i * (c i - kcoord i)) y := by
+        change _ = ContMDiffMap.evalRingHom y (∑ i, a i * (c i - kcoord i))
+        rw [map_sum]
+        apply Finset.sum_congr rfl
+        intro i _
+        rfl
+  have hδconst (r : ℝ) :
+      δ (⟨fun _ : E ↦ r, contDiff_const.contMDiff⟩ :
+        C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) = 0 := by
+    change D (algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯⟨x⟩ r) = 0
+    exact D.map_algebraMap r
+  have hδsub (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+      δ (p - q) = δ p - δ q := by
+    change D (pointed (p - q)) = D (pointed p) - D (pointed q)
+    change D (pointed p - pointed q) = D (pointed p) - D (pointed q)
+    exact D.map_sub _ _
+  have hterm (i : Fin (Module.finrank ℝ E)) :
+      δ (a i * (c i - kcoord i)) = fderiv ℝ f' x (b i) * δ (c i) := by
+    have hleibniz := D.leibniz (pointed (a i)) (pointed (c i - kcoord i))
+    change δ (a i * (c i - kcoord i)) =
+      a i x * δ (c i - kcoord i) + (c i x - kcoord i x) * δ (a i) at hleibniz
+    rw [hleibniz, hδsub, hδconst]
+    simp [a, kcoord]
+  have hδsum (q : Fin (Module.finrank ℝ E) →
+      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+      δ (∑ i, q i) = ∑ i, δ (q i) := by
+    change D (pointed (∑ i, q i)) = ∑ i, D (pointed (q i))
+    change D (∑ i, pointed (q i)) = ∑ i, D (pointed (q i))
+    exact map_sum D _ _
+  calc
+    fderiv ℝ f' x v = ∑ i, fderiv ℝ f' x (b i) * δ (c i) := by
+      change fderiv ℝ f' x (∑ i, δ (c i) • b i) = _
+      rw [map_sum]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [map_smul]
+      simp [smul_eq_mul, mul_comm]
+    _ = δ (∑ i, a i * (c i - kcoord i)) := by
+      rw [hδsum]
+      exact Finset.sum_congr rfl fun i _ ↦ (hterm i).symm
+    _ = δ (f' - k) := congrArg δ hfactor.symm
+    _ = δ f' := by rw [hδsub, hδconst, sub_zero]
+
 namespace PointDerivation
 
 /-- A point derivation on a finite-dimensional Hausdorff real manifold depends only on the germ of
@@ -198,3 +286,119 @@ theorem tangentToPointDerivation_mfderiv (f : C^∞⟮I, M; I', M'⟯) (x : M)
   exact (mfderiv_comp_apply x
     (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
     (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt v).symm
+
+/-- Every point derivation on a finite-dimensional Hausdorff boundaryless real manifold is
+directional differentiation along a tangent vector. -/
+theorem tangentToPointDerivation_surjective
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] [BoundarylessManifold I M] (x : M) :
+    Function.Surjective (tangentToPointDerivation (I := I) x) := by
+  intro D
+  let b : SmoothBumpFunction I x := Classical.choice inferInstance
+  let F : C^∞⟮I, M; modelWithCornersSelf ℝ E, E⟯ :=
+    ⟨fun y ↦ b y • extChartAt I x y,
+      b.contMDiff_smul contMDiffOn_extChartAt⟩
+  have hF : Filter.EventuallyEq (nhds x) (F : M → E) (extChartAt I x) := by
+    filter_upwards [b.eventuallyEq_one] with y hy
+    simp [F, hy]
+  have hFx : F x = extChartAt I x x := hF.eq_of_nhds
+  obtain ⟨w, hw⟩ := tangentToPointDerivation_surjective_model (F x) (fdifferential F x D)
+  let v : TangentSpace I x := w
+  have hv : mfderiv I (modelWithCornersSelf ℝ E) F x v = w := by
+    rw [hF.mfderiv_eq, mfderiv_extChartAt_self]
+    rfl
+  refine ⟨v, ?_⟩
+  ext f
+  have htarget_at (y : E) (hy : y ∈ (extChartAt I x).target) :
+      (extChartAt I x).target ∈ nhds y := by
+    let m := (extChartAt I x).symm y
+    have hm : m ∈ (extChartAt I x).source := (extChartAt I x).map_target hy
+    have hmInterior : I.IsInteriorPoint m := BoundarylessManifold.isInteriorPoint
+    have hi : extChartAt I x m ∈ interior (extChartAt I x).target := by
+      have hi' := (ModelWithCorners.isInteriorPoint_iff_of_mem_atlas (n := ∞) (by simp)
+        (chart_mem_atlas H x) (by simpa [extChartAt_source] using hm)).1 hmInterior
+      simpa [extChartAt] using hi'
+    have hey : extChartAt I x m = y := (extChartAt I x).right_inv hy
+    rw [hey] at hi
+    exact Filter.mem_of_superset (isOpen_interior.mem_nhds hi) interior_subset
+  have htarget : (extChartAt I x).target ∈ nhds (F x) := by
+    rw [hFx]
+    exact htarget_at _ (mem_extChartAt_target x)
+  obtain ⟨β, hβ, -⟩ :=
+    (SmoothBumpFunction.nhds_basis_support
+      (I := modelWithCornersSelf ℝ E) htarget).mem_iff.mp htarget
+  let g : E → ℝ := fun y ↦ β y * f ((extChartAt I x).symm y)
+  have hg : ContDiff ℝ ∞ g := by
+    apply ContMDiff.contDiff
+    refine contMDiff_of_tsupport fun y hy ↦ ?_
+    have hytarget : y ∈ (extChartAt I x).target :=
+      hβ (tsupport_mul_subset_left hy)
+    have hsymmWithin := contMDiffWithinAt_extChartAt_symm_target (n := ∞) x hytarget
+    have hsymm := hsymmWithin.contMDiffAt (htarget_at y hytarget)
+    exact β.contMDiffAt.mul (f.contMDiff.contMDiffAt.comp y hsymm)
+  let g' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨g, hg.contMDiff⟩
+  have hβF : Filter.EventuallyEq (nhds x) (β ∘ F) (fun _ ↦ 1) :=
+    β.eventuallyEq_one.comp_tendsto F.contMDiff.continuous.continuousAt
+  have hsource : ∀ᶠ y in nhds x, y ∈ (extChartAt I x).source :=
+    (isOpen_extChartAt_source x).mem_nhds (mem_extChartAt_source x)
+  have hlocal : Filter.EventuallyEq (nhds x) (f : M → ℝ) (g' ∘ F) := by
+    filter_upwards [hF, hβF, hsource] with y hFy hβy hy
+    change f y = β (F y) * f ((extChartAt I x).symm (F y))
+    change β (F y) = 1 at hβy
+    rw [hβy, one_mul, hFy, (extChartAt I x).left_inv hy]
+  rw [(tangentToPointDerivation x v).congr_of_eventuallyEq f (g'.comp F) hlocal,
+    D.congr_of_eventuallyEq f (g'.comp F) hlocal]
+  have hpush : fdifferential F x (tangentToPointDerivation x v) =
+      tangentToPointDerivation (F x) w := by
+    rw [← tangentToPointDerivation_mfderiv F x v, hv]
+  exact congrArg (fun d : PointDerivation (modelWithCornersSelf ℝ E) (F x) ↦ d g')
+    (hpush.trans hw)
+
+/-- Point derivations and tangent vectors are canonically linearly equivalent on a
+finite-dimensional Hausdorff boundaryless real manifold. -/
+noncomputable def pointDerivationEquivTangentSpace
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] [BoundarylessManifold I M] (x : M) :
+    PointDerivation I x ≃ₗ[ℝ] TangentSpace I x :=
+  (LinearEquiv.ofBijective (tangentToPointDerivation x)
+    ⟨tangentToPointDerivation_injective x, tangentToPointDerivation_surjective x⟩).symm
+
+/-- The inverse of the point-derivation equivalence is directional differentiation. -/
+@[simp]
+theorem pointDerivationEquivTangentSpace_symm_apply
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] [BoundarylessManifold I M] (x : M) (v : TangentSpace I x) :
+    (pointDerivationEquivTangentSpace x).symm v = tangentToPointDerivation x v := by
+  apply (pointDerivationEquivTangentSpace x).injective
+  rw [(pointDerivationEquivTangentSpace x).apply_symm_apply]
+  exact ((LinearEquiv.ofBijective (tangentToPointDerivation x)
+    ⟨tangentToPointDerivation_injective x,
+      tangentToPointDerivation_surjective x⟩).symm_apply_apply v).symm
+
+/-- Converting a point derivation to a tangent vector and back recovers the derivation. -/
+@[simp]
+theorem tangentToPointDerivation_pointDerivationEquivTangentSpace
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] [BoundarylessManifold I M] (x : M) (D : PointDerivation I x) :
+    tangentToPointDerivation x (pointDerivationEquivTangentSpace x D) = D := by
+  rw [← pointDerivationEquivTangentSpace_symm_apply]
+  exact (pointDerivationEquivTangentSpace x).symm_apply_apply D
+
+/-- Converting a tangent vector to a point derivation and back recovers the vector. -/
+@[simp]
+theorem pointDerivationEquivTangentSpace_tangentToPointDerivation
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] [BoundarylessManifold I M] (x : M) (v : TangentSpace I x) :
+    pointDerivationEquivTangentSpace x (tangentToPointDerivation x v) = v := by
+  rw [← pointDerivationEquivTangentSpace_symm_apply]
+  exact (pointDerivationEquivTangentSpace x).apply_symm_apply v
