@@ -22,6 +22,9 @@ The latter is the manifold model vector space, so this also determines the Lie a
 
 * `LeftInvariantDerivation.evalAt_one_injective`: identity evaluation is injective for monoids.
 * `LeftInvariantDerivation.evalAt_injective`: evaluation at any point is injective.
+* `groupLieAlgebraEquivModelSpace`: the tangent Lie algebra is canonically the manifold model space.
+* `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly smooth in
+  its model-space generator and group argument.
 * `tangentToLeftInvariantDerivation`: the left-invariant derivation associated to a tangent vector
   at the identity.
 * `leftInvariantDerivationEquivGroupLieAlgebra`: the canonical linear equivalence between
@@ -86,6 +89,79 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+
+/-- The tangent Lie algebra of a Lie group is canonically linearly equivalent to the manifold
+model space. This makes explicit the identification implemented by Mathlib's `TangentSpace` type
+synonym. -/
+@[expose]
+noncomputable def groupLieAlgebraEquivModelSpace : GroupLieAlgebra I G ≃ₗ[𝕜] E :=
+  LinearEquiv.refl 𝕜 E
+
+/-- The tangent-to-model equivalence is the identity on underlying vectors. -/
+@[simp]
+theorem groupLieAlgebraEquivModelSpace_apply (v : GroupLieAlgebra I G) :
+    groupLieAlgebraEquivModelSpace v = v :=
+  rfl
+
+/-- The model-to-tangent equivalence is the identity on underlying vectors. -/
+@[simp]
+theorem groupLieAlgebraEquivModelSpace_symm_apply (v : E) :
+    (groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v = v :=
+  rfl
+
+/-- In model coordinates, the invariant vector field is jointly `C^n` in its generating tangent
+vector and the group point when multiplication is `C^(n + 1)`.
+
+The separate `IsManifold I 2 G` hypothesis supplies the smooth tangent-bundle structure; it is
+independent of the regularity lost by differentiating multiplication. -/
+theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
+    [IsManifold I 2 G] [ContMDiffMul I (n + 1) G] :
+    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
+      (fun p : E × G =>
+        (mulInvariantVectorField
+          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1) p.2 :
+            TangentBundle I G)) := by
+  let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
+  have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fg :=
+    (contMDiff_zeroSection 𝕜 (TangentSpace I : G → Type _)).comp contMDiff_snd
+  let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
+  have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fv := by
+    intro p
+    rw [Bundle.contMDiffAt_totalSpace]
+    constructor
+    · simpa only [fv] using
+        (contMDiffAt_const : ContMDiffAt (𝓘(𝕜, E).prod I) I n
+          (fun _ : E × G => (1 : G)) p)
+    · have hone : (1 : G) ∈ (extChartAt I (1 : G)).source := mem_extChartAt_source _
+      have hfun :
+          (fun q : E × G =>
+            (trivializationAt E (TangentSpace I) ((fv p).proj) (fv q)).2) = fun q => q.1 := by
+        funext q
+        rw [TangentBundle.trivializationAt_apply]
+        -- Both fibers are over `1`, so their coordinate change is the identity on the model space.
+        change tangentCoordChange I (1 : G) (1 : G) (1 : G) q.1 = q.1
+        rw [tangentCoordChange_self hone]
+      rw [hfun]
+      exact contMDiffAt_fst
+  let F₁ : E × G → TangentBundle I G × TangentBundle I G := fun p => (fg p, fv p)
+  have S₁ : ContMDiff (𝓘(𝕜, E).prod I) (I.tangent.prod I.tangent) n F₁ :=
+    sfg.prodMk sfv
+  let F₂ : TangentBundle I G × TangentBundle I G → TangentBundle (I.prod I) (G × G) :=
+    (equivTangentBundleProd I G I G).symm
+  have S₂ : ContMDiff (I.tangent.prod I.tangent) (I.prod I).tangent n F₂ :=
+    contMDiff_equivTangentBundleProd_symm
+  let F₃ : TangentBundle (I.prod I) (G × G) → TangentBundle I G :=
+    tangentMap% (fun p : G × G => p.1 * p.2)
+  have S₃ : ContMDiff (I.prod I).tangent I.tangent n F₃ :=
+    (contMDiff_mul I (n + 1)).contMDiff_tangentMap le_rfl
+  let S := (S₃.comp S₂).comp S₁
+  convert! S with p
+  · simp [F₁, F₂, F₃, fg, fv]
+  · simp only [comp_apply, tangentMap, F₃, F₂, F₁, fg, fv]
+    rw [mfderiv_prod_eq_add_apply
+      ((contMDiff_mul I (n + 1)).mdifferentiableAt (by simp))]
+    simp +instances [mulInvariantVectorField, equivTangentBundleProd]
+    rfl
 
 /-- Differentiating a smooth scalar function along a left-invariant vector field gives a smooth
 scalar function. -/
