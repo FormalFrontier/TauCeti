@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Contour.Winding.RealIntegral
+public import TauCeti.Analysis.Contour.Winding.Number.Basic
+public import TauCeti.Analysis.Contour.Winding.Integrand
 import Mathlib.MeasureTheory.Function.StronglyMeasurable.Inner
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
