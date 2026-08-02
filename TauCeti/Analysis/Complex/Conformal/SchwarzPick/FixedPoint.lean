@@ -13,8 +13,8 @@ import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Parametrization
 # Fixed points of holomorphic self-maps of the unit disc
 
 A holomorphic self-map of the open unit disc that fixes **two** distinct points of the disc is
-the identity (`TauCeti.eqOn_id_of_isFixedPt_of_isFixedPt`); equivalently, the fixed-point set of
-any self-map other than the identity is a subsingleton
+the identity (`TauCeti.eqOn_id_of_isFixedPt_of_isFixedPt`); equivalently, the fixed-point set in
+the open unit disc of any self-map other than the identity is a subsingleton
 (`TauCeti.subsingleton_inter_fixedPoints_of_not_eqOn_id`), which read hypothesis-free is the
 dichotomy that a self-map is either the identity or fixes at most one point of the disc
 (`TauCeti.eqOn_id_or_subsingleton_inter_fixedPoints`).
@@ -103,7 +103,10 @@ theorem eqOn_id_of_isFixedPt_of_isFixedPt (hf : DifferentiableOn ℂ f (ball (0 
   rw [hone] at h
   simpa using h
 
-/-- **The fixed-point set of a self-map other than the identity is a subsingleton.** -/
+/-- **The fixed-point set in the disc of a self-map other than the identity is a subsingleton.**
+
+The hypotheses constrain `f` only on `ball (0 : ℂ) 1`, so only the fixed points lying in that
+ball are controlled: fixed points of `f` outside the disc are arbitrary. -/
 theorem subsingleton_inter_fixedPoints_of_not_eqOn_id
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
