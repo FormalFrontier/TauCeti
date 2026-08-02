@@ -34,6 +34,8 @@ transporting the property back to a compact set from an image already known to b
 ## Main definitions
 
 * `TauCeti.IsJordanCurve` — a set homeomorphic to the circle.
+* `TauCeti.jordanParam` — the parametrization of a Jordan curve by the circle underlying a
+  homeomorphism of the curve with `Circle`.
 
 ## Main results
 
@@ -47,6 +49,11 @@ transporting the property back to a compact set from an image already known to b
 * `TauCeti.IsJordanCurve.image_homeomorph` and `TauCeti.isJordanCurve_image_homeomorph_iff` — being
   a Jordan curve is invariant under a homeomorphism of the ambient spaces; no separation axiom is
   needed.
+* `TauCeti.continuous_jordanParam`, `TauCeti.jordanParam_injective`,
+  `TauCeti.isInducing_jordanParam`, `TauCeti.range_jordanParam` and `TauCeti.jordanParam_apply` —
+  the parametrization of a Jordan curve by the circle is a continuous injection, is inducing, and
+  traces out exactly the curve; this is what carries a statement about the circle to one about an
+  arbitrary Jordan curve.
 * `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
   in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
 * `TauCeti.locallyConnectedSpace_sphere` and `TauCeti.IsJordanCurve.locallyConnectedSpace` — a
@@ -82,7 +89,7 @@ namespace TauCeti
 
 open Metric Set Topology
 
-variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X} {r : ℝ}
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X} {p : X} {r : ℝ}
 
 /-- A **Jordan curve**, or simple closed curve, in a topological space: a subset homeomorphic to
 the circle.
@@ -171,6 +178,49 @@ lemma applied to `e.symm`, which no consumer then has to spell out. -/
 theorem isJordanCurve_image_homeomorph_iff (e : X ≃ₜ Y) :
     IsJordanCurve (e '' C) ↔ IsJordanCurve C :=
   ⟨fun h => e.symm_image_image C ▸ h.image_homeomorph e.symm, fun h => h.image_homeomorph e⟩
+
+/-! ## The parametrization by the circle
+
+Every transport of a statement about `Circle` to a Jordan curve goes through the parametrization
+`jordanParam e` attached to a homeomorphism `e`, so its properties — continuity, injectivity,
+range, and that it is inducing — are collected here rather than rebuilt at each use, both by the
+cutting of a curve at one or two of its points
+(`TauCeti/Topology/JordanCurve/Separation.lean`) and by the quantitative form of that cutting
+(`TauCeti/Topology/JordanCurve/SmallArc.lean`). -/
+
+/-- The parametrization of a Jordan curve by the circle underlying a homeomorphism `e`: the
+composite of `e.symm` with the inclusion of the curve into the ambient space. -/
+noncomputable def jordanParam (e : C ≃ₜ Circle) : Circle → X :=
+  fun u => ((e.symm u : C) : X)
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is continuous. -/
+lemma continuous_jordanParam (e : C ≃ₜ Circle) : Continuous (jordanParam e) :=
+  continuous_subtype_val.comp e.symm.continuous
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is injective: this is
+the simplicity of the curve. -/
+lemma jordanParam_injective (e : C ≃ₜ Circle) : Function.Injective (jordanParam e) :=
+  Subtype.val_injective.comp e.symm.injective
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is inducing, so
+preconnectedness of a subset of the curve may be tested on its preimage of parameters. -/
+lemma isInducing_jordanParam (e : C ≃ₜ Circle) : Topology.IsInducing (jordanParam e) :=
+  Topology.IsInducing.subtypeVal.comp e.symm.isInducing
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle traces out exactly the
+curve. -/
+@[simp]
+lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
+  refine subset_antisymm ?_ fun x hx => ⟨e ⟨x, hx⟩, by simp [jordanParam]⟩
+  rintro _ ⟨u, rfl⟩
+  exact (e.symm u).2
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle undoes `e`: it sends
+the parameter `e ⟨p, hp⟩` of a point `p` of the curve back to `p`. -/
+@[simp]
+lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
+    jordanParam e (e ⟨p, hp⟩) = p := by
+  simp [jordanParam]
 
 /-! ## The model curve: a circle in `ℂ` -/
 

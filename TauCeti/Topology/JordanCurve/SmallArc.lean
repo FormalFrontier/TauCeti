@@ -58,7 +58,7 @@ of `TauCeti.exists_isOpen_isPathConnected_union_eq_compl_pair_circle`; that is a
 below consumes.
 
 The transport then runs both uniform continuities of the parametrization `TauCeti.jordanParam` of
-`TauCeti/Topology/JordanCurve/Separation.lean` at once: one converts "the two points are close in
+`TauCeti/Topology/JordanCurve/Basic.lean` at once: one converts "the two points are close in
 `X`" into "their parameters are close on the circle", the other converts "the parameter arc is
 short" into "its image has small diameter".
 
