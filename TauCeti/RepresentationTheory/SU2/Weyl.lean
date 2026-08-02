@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.LinearAlgebra.Matrix.Notation
-public import TauCeti.RepresentationTheory.Continuous.Character
 public import TauCeti.RepresentationTheory.SU2.Basic
 
 /-!
@@ -20,20 +20,19 @@ the class of the quarter turn
 
 whose nontrivial element acts on `T` by inversion, `diag (z, z⁻¹) ↦ diag (z⁻¹, z)`.
 
-The computation runs through two facts about `SU(2)` proved here and of independent use. First, a
-*single* torus element `diag (z, z⁻¹)` with `z² ≠ 1` already has centralizer exactly `T`
-(`TauCeti.SU2.mem_torus_of_commute_torusHom`), which sharpens `TauCeti.SU2.centralizer_torus` from
-the whole torus to one well-chosen element of it. Second, conjugating a torus element back into the
-torus can only return it or its inverse (`TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom`), because
-conjugation preserves the trace `z + z⁻¹` and `z`, `z⁻¹` are the two roots of
-`X² - (z + z⁻¹) X + 1`. Together they say that an element normalizing `T` either centralizes it, and
-so lies in `T`, or acts on it as `w` does, and so lies in `w T`.
+The computation runs through the two rigidity facts about the maximal torus proved in
+`TauCeti/RepresentationTheory/SU2/Basic.lean`. First, a *single* torus element `diag (z, z⁻¹)` with
+`z² ≠ 1` already has centralizer `T` (`TauCeti.SU2.centralizer_torusHom`). Second, conjugating a
+torus element back into the torus can only return it or its inverse
+(`TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom`). Together they say that an element normalizing `T`
+either centralizes it, and so lies in `T`, or acts on it as `w` does, and so lies in `w T`.
 
-The payoff is the last section: a **class function on `SU(2)` is even on the maximal torus**. For
-the character of a finite-dimensional continuous representation this reads
-`χ (diag (e^{-iθ}, e^{iθ})) = χ (diag (e^{iθ}, e^{-iθ}))`, which is what makes the characters of
-`SU(2)` functions of `cos θ` and places them in the even -- equivalently `W`-invariant -- part of
-the functions on `T`.
+Conjugation by `N(T)` therefore descends to an action of the Weyl group on `T`, read here through
+the circle parametrisation `z ↦ diag (z, z⁻¹)` as a homomorphism
+`TauCeti.SU2.weylAut : W → MulAut Circle`. It is faithful, and its nontrivial element is inversion.
+That is the sense in which the characters of `SU(2)` are `W`-invariant functions on `T`; the
+evenness of characters that this yields is proved in
+`TauCeti/RepresentationTheory/SU2/Character.lean`.
 
 ## Main definitions
 
@@ -42,6 +41,8 @@ the functions on `T`.
 * `TauCeti.SU2.weylGroup`: the Weyl group `N(T) / T` of `SU(2)`.
 * `TauCeti.SU2.weylNormalizerElement`, `TauCeti.SU2.weylClass`: the quarter turn as an element of
   `N(T)`, and its class in the Weyl group.
+* `TauCeti.SU2.normalizerAut`, `TauCeti.SU2.weylAut`: conjugation of the maximal torus by its
+  normalizer, and the action of the Weyl group on the torus it descends to.
 
 ## Main results
 
@@ -49,8 +50,9 @@ the functions on `T`.
 * `TauCeti.SU2.mem_normalizer_torus_iff`: an element of `SU(2)` normalizes `T` exactly when it lies
   in `T` or in `w T`; equivalently `TauCeti.SU2.normalizer_torus`, `N(T) = T ⊔ ⟨w⟩`.
 * `TauCeti.SU2.card_weylGroup`: the Weyl group of `SU(2)` has order `2`.
-* `TauCeti.SU2.conj_torusHom_of_mem_normalizer`: the Weyl group acts on `T` by `z ↦ z^{±1}`.
-* `TauCeti.SU2.character_torusExp_neg`: characters of `SU(2)` are even on the maximal torus.
+* `TauCeti.SU2.conj_torusHom_of_mem_normalizer`: the Weyl group acts on `T` by `z ↦ z^{±1}`,
+  refined by `TauCeti.SU2.weylAut_weylClass` and `TauCeti.SU2.weylAut_injective`: the action of the
+  Weyl group is faithful and its nontrivial element is inversion.
 
 ## References
 
@@ -96,7 +98,7 @@ theorem coe_weylElement : (weylElement : Matrix (Fin 2) (Fin 2) ℂ) = weylMatri
 /-- The quarter turn is not diagonal, so it does not lie in the maximal torus. -/
 theorem weylElement_notMem_torus : weylElement ∉ torus := by
   intro hmem
-  have h01 := mem_torus_iff.mp hmem (show (0 : Fin 2) ≠ 1 by decide)
+  have h01 : (weylElement : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := mem_torus_iff.mp hmem (by decide)
   rw [coe_weylElement] at h01
   simp [weylMatrix] at h01
 
@@ -140,82 +142,7 @@ theorem weylElement_mem_normalizer :
     rw [← mul_left_cancel (mul_right_cancel hcancel)]
     exact torusHom_mem_torus u⁻¹
 
-/-! ### Two rigidity lemmas for the torus -/
-
-/-- **A single torus element with `z² ≠ 1` already has centralizer the whole torus.** Reading off
-the off-diagonal entries of `diag (z, z⁻¹) g = g diag (z, z⁻¹)` gives `g₀₁ (z - z⁻¹) = 0` and
-`g₁₀ (z⁻¹ - z) = 0`, and `z ≠ z⁻¹` is exactly `z² ≠ 1`.
-
-This sharpens `TauCeti.SU2.centralizer_torus`, which assumes commutation with every element of the
-torus. -/
-theorem mem_torus_of_commute_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) {g : SU2}
-    (h : torusHom z * g = g * torusHom z) : g ∈ torus := by
-  have hz0 : (z : ℂ) ≠ 0 := z.coe_ne_zero
-  have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := by
-    intro hc
-    refine hz ?_
-    have h2 : (z : ℂ) * ((z : ℂ) - ((z : ℂ))⁻¹) = (z : ℂ) ^ 2 - 1 := by
-      rw [mul_sub, mul_inv_cancel₀ hz0, sq]
-    rw [hc, mul_zero] at h2
-    exact sub_eq_zero.mp h2.symm
-  have hmat : torusMatrix z * (g : Matrix (Fin 2) (Fin 2) ℂ)
-      = (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z := by
-    have hval := congrArg Subtype.val h
-    simpa only [Submonoid.coe_mul, coe_torusHom] using hval
-  have h01 : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := by
-    have hentry := congrFun (congrFun hmat 0) 1
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
-      torusMatrix_apply_zero_one, torusMatrix_apply_one_one, zero_mul, mul_zero, add_zero,
-      zero_add] at hentry
-    have hmul : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 * ((z : ℂ) - ((z : ℂ))⁻¹) = 0 := by
-      linear_combination hentry
-    exact (mul_eq_zero.mp hmul).resolve_right hsub
-  have h10 : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 = 0 := by
-    have hentry := congrFun (congrFun hmat 1) 0
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
-      torusMatrix_apply_one_one, torusMatrix_apply_one_zero, zero_mul, mul_zero, add_zero,
-      zero_add] at hentry
-    have hmul : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 * ((z : ℂ) - ((z : ℂ))⁻¹) = 0 := by
-      linear_combination -hentry
-    exact (mul_eq_zero.mp hmul).resolve_right hsub
-  refine mem_torus_iff.mpr fun i j hij => ?_
-  fin_cases i <;> fin_cases j <;> simp_all
-
-/-- **Conjugating a torus element back into the torus returns it or its inverse.** Conjugation
-preserves the trace, and `z` and `z⁻¹` are the only two solutions of `X + X⁻¹ = z + z⁻¹`, being the
-two roots of `X² - (z + z⁻¹) X + 1`. -/
-theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
-    (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ := by
-  have hBA : ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
-    have hval := congrArg Subtype.val (inv_mul_cancel g)
-    simpa only [Submonoid.coe_mul, OneMemClass.coe_one] using hval
-  have hmat : (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z
-      * ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix w := by
-    have hval := congrArg Subtype.val h
-    simpa only [Submonoid.coe_mul, coe_torusHom] using hval
-  have htrace : (torusMatrix w).trace = (torusMatrix z).trace := by
-    rw [← hmat, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hBA, Matrix.one_mul]
-  rw [Matrix.trace_fin_two, Matrix.trace_fin_two] at htrace
-  simp only [torusMatrix_apply_zero_zero, torusMatrix_apply_one_one] at htrace
-  have hfac : ((w : ℂ) - (z : ℂ)) * ((w : ℂ) - ((z : ℂ))⁻¹) = 0 := by
-    have hw : (w : ℂ) * ((w : ℂ))⁻¹ = 1 := mul_inv_cancel₀ w.coe_ne_zero
-    have hzz : (z : ℂ) * ((z : ℂ))⁻¹ = 1 := mul_inv_cancel₀ z.coe_ne_zero
-    linear_combination (w : ℂ) * htrace - hw + hzz
-  rcases mul_eq_zero.mp hfac with hc | hc
-  · exact Or.inl (Circle.ext (sub_eq_zero.mp hc))
-  · exact Or.inr (Circle.ext (by rw [Circle.coe_inv]; exact sub_eq_zero.mp hc))
-
 /-! ### The normalizer of the maximal torus -/
-
-/-- The quarter turn of the circle: the point whose square is `-1`. It is the torus parameter at
-which `TauCeti.SU2.mem_torus_of_commute_torusHom` is applied below. -/
-private def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
-
-private theorem coe_circleI : (circleI : ℂ) = Complex.I := rfl
-
-private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
-  rw [coe_circleI, Complex.I_sq]
-  norm_num
 
 /-- **The normalizer of the maximal torus, elementwise.** An element of `SU(2)` normalizes the
 diagonal torus exactly when it is diagonal, or is the quarter turn times a diagonal element. -/
@@ -305,6 +232,10 @@ theorem card_weylGroup : Nat.card weylGroup = 2 := by
   · exact Set.mem_insert _ _
   · exact Set.mem_insert_of_mem _ rfl
 
+/-- The Weyl group of `SU(2)` is finite, having order two. -/
+instance instFiniteWeylGroup : Finite weylGroup :=
+  Nat.finite_of_card_ne_zero (by rw [card_weylGroup]; norm_num)
+
 /-- **The Weyl group acts on the maximal torus by `z ↦ z^{±1}`.** An element normalizing `T` either
 centralizes it or inverts it, according to which of the two classes of `N(T) / T` it lies in. -/
 theorem conj_torusHom_of_mem_normalizer {n : SU2} (hn : n ∈ Subgroup.normalizer (torus : Set SU2))
@@ -325,39 +256,100 @@ theorem conj_torusHom_of_mem_normalizer {n : SU2} (hn : n ∈ Subgroup.normalize
       _ = weylElement * torusHom z * weylElement⁻¹ := by rw [hcomm u]
       _ = torusHom z⁻¹ := weylElement_conj_torusHom z
 
-/-! ### Class functions on `SU(2)` are even on the torus -/
+/-! ### The action of the Weyl group on the maximal torus -/
+
+/-- The maximal torus, seen inside its own normalizer, *is* the circle group: this is
+`TauCeti.SU2.torusContinuousMulEquiv` read through `Subgroup.subgroupOfEquivOfLe`. It is the
+identification along which conjugation by `N(T)` becomes an action on `Circle`. -/
+noncomputable def torusSubgroupOfMulEquiv :
+    ↥(torus.subgroupOf (Subgroup.normalizer (torus : Set SU2))) ≃* Circle :=
+  (Subgroup.subgroupOfEquivOfLe Subgroup.le_normalizer).trans
+    torusContinuousMulEquiv.symm.toMulEquiv
+
+@[simp]
+theorem torusHom_torusSubgroupOfMulEquiv
+    (t : ↥(torus.subgroupOf (Subgroup.normalizer (torus : Set SU2)))) :
+    torusHom (torusSubgroupOfMulEquiv t)
+      = ((t : ↥(Subgroup.normalizer (torus : Set SU2))) : SU2) :=
+  torusHom_torusContinuousMulEquiv_symm _
+
+/-- **Conjugation of the maximal torus by an element of its normalizer**, read through the circle
+parametrisation `z ↦ diag (z, z⁻¹)`: `normalizerAut n` is the automorphism of `Circle` with
+`diag (normalizerAut n z, (normalizerAut n z)⁻¹) = n diag (z, z⁻¹) n⁻¹`, which is
+`TauCeti.SU2.torusHom_normalizerAut`. -/
+noncomputable def normalizerAut :
+    ↥(Subgroup.normalizer (torus : Set SU2)) →* MulAut Circle :=
+  (MulAut.congr torusSubgroupOfMulEquiv).toMonoidHom.comp MulAut.conjNormal
+
+/-- `TauCeti.SU2.normalizerAut` is conjugation in `SU(2)`, read on the circle parameter. -/
+theorem torusHom_normalizerAut (n : ↥(Subgroup.normalizer (torus : Set SU2))) (z : Circle) :
+    torusHom (normalizerAut n z) = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
+  have hx : ((torusSubgroupOfMulEquiv.symm z : ↥(Subgroup.normalizer (torus : Set SU2))) : SU2)
+      = torusHom z := by
+    rw [← torusHom_torusSubgroupOfMulEquiv, MulEquiv.apply_symm_apply]
+  have hval : normalizerAut n z
+      = torusSubgroupOfMulEquiv (MulAut.conjNormal n (torusSubgroupOfMulEquiv.symm z)) := rfl
+  rw [hval, torusHom_torusSubgroupOfMulEquiv, MulAut.conjNormal_apply]
+  simp [hx]
+
+/-- The maximal torus acts trivially on itself by conjugation, because it is commutative. This is
+what lets `TauCeti.SU2.normalizerAut` descend to the Weyl group. -/
+theorem normalizerAut_eq_one_of_mem_subgroupOf
+    (t : ↥(Subgroup.normalizer (torus : Set SU2)))
+    (ht : t ∈ torus.subgroupOf (Subgroup.normalizer (torus : Set SU2))) :
+    normalizerAut t = 1 := by
+  obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp (Subgroup.mem_subgroupOf.mp ht)
+  refine MulEquiv.ext fun z => torusHom_injective ?_
+  rw [torusHom_normalizerAut, MulAut.one_apply, ← hu, ← map_inv, ← map_mul, ← map_mul]
+  congr 1
+  rw [mul_comm u z, mul_assoc, mul_inv_cancel, mul_one]
+
+/-- **The action of the Weyl group of `SU(2)` on the maximal torus.** Conjugation by `N(T)`
+descends to the quotient `N(T) / T`, because `T` is commutative and so acts trivially on itself;
+the automorphism of `Circle` produced here is the automorphism of `T` it names under
+`TauCeti.SU2.torusContinuousMulEquiv`. -/
+noncomputable def weylAut : weylGroup →* MulAut Circle :=
+  QuotientGroup.lift _ normalizerAut normalizerAut_eq_one_of_mem_subgroupOf
+
+/-- The Weyl-group action is the conjugation action of any representative: it is independent of
+the choice of representative by construction. -/
+@[simp]
+theorem weylAut_mk (n : ↥(Subgroup.normalizer (torus : Set SU2))) :
+    weylAut (QuotientGroup.mk n) = normalizerAut n := (rfl)
+
+/-- The Weyl-group action of the class of `n ∈ N(T)`, unfolded to conjugation by `n` in `SU(2)`. -/
+theorem torusHom_weylAut_mk (n : ↥(Subgroup.normalizer (torus : Set SU2))) (z : Circle) :
+    torusHom (weylAut (QuotientGroup.mk n) z) = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
+  rw [weylAut_mk, torusHom_normalizerAut]
+
+/-- **The nontrivial element of the Weyl group of `SU(2)` acts on the maximal torus by
+inversion.** -/
+@[simp]
+theorem weylAut_weylClass : weylAut weylClass = MulEquiv.inv Circle := by
+  refine MulEquiv.ext fun z => torusHom_injective ?_
+  rw [weylClass_eq_mk, torusHom_weylAut_mk, coe_weylNormalizerElement,
+    weylElement_conj_torusHom]
+  rfl
+
+/-- **The Weyl group of `SU(2)` acts faithfully on the maximal torus.** -/
+theorem weylAut_injective : Function.Injective weylAut := by
+  rw [injective_iff_map_eq_one]
+  intro q hq
+  rcases eq_one_or_eq_weylClass q with rfl | rfl
+  · rfl
+  · refine absurd ?_ circleI_sq_ne_one
+    rw [weylAut_weylClass] at hq
+    have hz : circleI⁻¹ = circleI := by simpa using DFunLike.congr_fun hq circleI
+    have hsq : circleI ^ 2 = 1 := by
+      have hmul : circleI * circleI⁻¹ = 1 := mul_inv_cancel circleI
+      rwa [hz, ← sq] at hmul
+    simpa using congrArg (fun c : Circle => (c : ℂ)) hsq
 
 /-- Every element of the maximal torus is conjugate to its inverse in `SU(2)`, by the quarter
 turn. -/
 theorem isConj_inv_of_mem_torus {g : SU2} (hg : g ∈ torus) : IsConj g g⁻¹ := by
   obtain ⟨z, rfl⟩ := mem_torus_iff_exists_torusHom.mp hg
   exact isConj_iff.mpr ⟨weylElement, by rw [weylElement_conj_torusHom, map_inv]⟩
-
-section Character
-
-variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℂ V] [FiniteDimensional ℂ V]
-  (π : ContRepresentation ℂ SU2 V) (hπ : Continuous π)
-
-/-- **The character of a continuous representation of `SU(2)` is even on the maximal torus:** its
-values at `diag (z, z⁻¹)` and at `diag (z⁻¹, z)` agree, the two being conjugate by the quarter
-turn. -/
-theorem character_torusHom_inv (z : Circle) :
-    ContRepresentation.character π hπ (torusHom z⁻¹)
-      = ContRepresentation.character π hπ (torusHom z) := by
-  rw [← weylElement_conj_torusHom z]
-  exact ContRepresentation.character_conj π hπ _ _
-
-/-- The character of a continuous representation of `SU(2)`, read in the angle parametrisation
-`θ ↦ diag (e^{iθ}, e^{-iθ})` of the maximal torus, is an even function of `θ`. This is the sense in
-which the characters of `SU(2)` are `W`-invariant functions on the torus. -/
-theorem character_torusExp_neg (θ : ℝ) :
-    ContRepresentation.character π hπ (torusExp (-θ))
-      = ContRepresentation.character π hπ (torusExp θ) := by
-  obtain ⟨z, hz⟩ := mem_torus_iff_exists_torusHom.mp (torusExp_mem_torus θ)
-  rw [torusExp_neg, ← hz, ← map_inv]
-  exact character_torusHom_inv π hπ z
-
-end Character
 
 end SU2
 
