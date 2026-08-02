@@ -9,15 +9,17 @@ public import TauCeti.Geometry.Lie.IntegralCurve
 /-!
 # The exponential map of a Lie group
 
-This file defines the tangent-space exponential of a finite-dimensional real Lie group by
-evaluating the canonical invariant one-parameter subgroup at time one.
+This file defines the tangent-space exponential of a real Lie group modeled on a complete normed
+space by evaluating the canonical invariant one-parameter subgroup at time one.
 
 ## Main results
 
 * `mulInvariantExp`: the time-one value of the invariant curve attached to a tangent vector.
 * `mulInvariantExp_smul`: scaling a tangent vector is evaluation at the corresponding time.
+* `mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul`: the bundled subgroup is the
+  exponential along a line.
 * `mulInvariantExp_add_smul`: the exponential along a fixed line is a one-parameter subgroup.
-* `mulInvariantExp_zero`: the exponential sends zero to the group identity.
+* `mulInvariantExp_zero`, `mulInvariantExp_neg`: the identity and inverse laws.
 
 ## References
 
@@ -43,22 +45,29 @@ noncomputable def mulInvariantExp [CompleteSpace E]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) : G :=
   mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd 1)
 
+/-- The tangent-space exponential is the canonical invariant integral curve evaluated at time
+one. -/
+theorem mulInvariantExp_eq_mulInvariantIntegralCurve [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) :
+    mulInvariantExp v = mulInvariantIntegralCurve v 1 1 := by
+  rw [mulInvariantExp, mulInvariantOneParameterSubgroup_apply]
+
 /-- Scaling a tangent vector corresponds to evaluating its invariant integral curve at the scale
 factor. -/
 theorem mulInvariantExp_smul [CompleteSpace E]
     [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
     mulInvariantExp (t • v) = mulInvariantIntegralCurve v 1 t := by
-  let γ := mulInvariantIntegralCurve v 1
-  have hscaled : IsMIntegralCurve (γ ∘ (· * t)) (mulInvariantVectorField (t • v)) := by
-    rw [mulInvariantVectorField_smul]
-    exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).comp_mul t
-  have heq : γ ∘ (· * t) = mulInvariantIntegralCurve (t • v) 1 := by
-    apply eq_mulInvariantIntegralCurve (t • v) 1
-    · simp [γ]
-    · exact hscaled
-  rw [mulInvariantExp, mulInvariantOneParameterSubgroup_apply]
-  simpa [γ] using (congrFun heq 1).symm
+  rw [mulInvariantExp_eq_mulInvariantIntegralCurve, mulInvariantIntegralCurve_smul, one_mul]
+
+/-- The canonical one-parameter subgroup is the tangent-space exponential along its generating
+line. -/
+theorem mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
+    mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd t) = mulInvariantExp (t • v) := by
+  rw [mulInvariantOneParameterSubgroup_apply, mulInvariantExp_smul]
 
 /-- The exponential along a line satisfies the one-parameter subgroup law. -/
 @[simp]
@@ -75,3 +84,20 @@ theorem mulInvariantExp_zero [CompleteSpace E]
     [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
     [BoundarylessManifold I G] : mulInvariantExp (0 : GroupLieAlgebra I G) = 1 := by
   simpa using mulInvariantExp_smul (0 : GroupLieAlgebra I G) 0
+
+/-- The tangent-space exponential sends negation to inversion. -/
+@[simp]
+theorem mulInvariantExp_neg [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) :
+    mulInvariantExp (-v) = (mulInvariantExp v)⁻¹ := by
+  calc
+    mulInvariantExp (-v) =
+        mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd (-1)) := by
+      rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul]
+      simp
+    _ = mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd 1)⁻¹ := by simp
+    _ = (mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd 1))⁻¹ := by
+      rw [map_inv]
+    _ = (mulInvariantExp v)⁻¹ := by
+      rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul, one_smul]
