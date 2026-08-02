@@ -9,7 +9,7 @@ public import TauCeti.RepresentationTheory.Continuous.Schur
 public import Mathlib.Analysis.InnerProductSpace.Trace
 
 /-!
-# Schur orthogonality for one irreducible compact-group representation
+# Schur orthogonality for irreducible compact-group representations
 
 This file proves the first Schur orthogonality relation for matrix coefficients of a
 finite-dimensional irreducible unitary representation of a compact group. Haar-averaging a
@@ -20,6 +20,11 @@ The coordinate-free result is accompanied by its orthonormal-basis form. The lat
 order of the Kronecker deltas and the placement of complex conjugation in Mathlib's convention that
 the inner product is conjugate-linear in its first argument.
 
+The second relation, for a pair of representations, is proved in
+`TauCeti/RepresentationTheory/Compact/Intertwiner.lean` from the vanishing of the intertwiners
+between them; the last section here packages it with the hypothesis Schur's lemma actually
+discharges, namely that the two irreducibles are inequivalent.
+
 ## Main statements
 
 * `TauCeti.ContRepresentation.averageOperator_eq_finrank_inv_mul_trace_smul_id`: the average of a
@@ -28,8 +33,10 @@ the inner product is conjugate-linear in its first argument.
   orthogonality relation.
 * `TauCeti.ContRepresentation.schur_orthogonality_basis`: the corresponding Kronecker-delta
   formula in an orthonormal basis.
+* `TauCeti.ContRepresentation.schur_orthogonality`: the second Schur orthogonality relation, for
+  a pair of inequivalent irreducible unitary representations.
 
-This supplies the two formulas pinned by the first-orthogonality item of Layer 4 of the
+This supplies the three formulas pinned by the orthogonality items of Layer 4 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
 that item's remaining request, checking the convention against `fourierBasis` on `AddCircle`, waits
 on the `AddCircle` material and is not done here. The roadmap sketches the basis identity as the
@@ -144,6 +151,33 @@ theorem schur_orthogonality_basis (hunitary : IsUnitary π)
   split_ifs <;> simp_all
 
 end Orthogonality
+
+section Inequivalent
+
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
+  [CompleteSpace W]
+
+/-- **The second Schur orthogonality relation.** Matrix coefficients of inequivalent
+finite-dimensional irreducible representations of a compact group are `L²`-orthogonal, provided the
+second one is unitary.
+
+This is `TauCeti.ContRepresentation.schur_orthogonality_distinct` with its hypothesis discharged:
+the vanishing half of Schur's lemma turns inequivalence into the vanishing of every continuous
+intertwiner `π → ρ`. Algebraic closedness is not needed, since only the vanishing half of Schur's
+lemma is used. -/
+theorem schur_orthogonality (π : ContRepresentation 𝕜 G V)
+    (hπ : Continuous π) (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ) (hunitary : IsUnitary ρ)
+    (hirrπ : Representation.IsIrreducible π.toRepresentation)
+    (hirrρ : Representation.IsIrreducible ρ.toRepresentation)
+    (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (v w : V) (v' w' : W) :
+    ⟪matrixCoeffLp π hπ v w, matrixCoeffLp ρ hρ v' w'⟫_𝕜 = 0 :=
+  schur_orthogonality_distinct π hπ ρ hρ hunitary
+    (fun f ↦ toContinuousLinearMap_eq_zero_of_isEmpty_equiv hirrπ hirrρ hne f) v w v' w'
+
+end Inequivalent
 
 end ContRepresentation
 
