@@ -65,7 +65,19 @@ surjective. -/
 @[simp]
 lemma isIsogeny_iff {A B : AbelianVariety K} (f : A ⟶ B) :
     IsIsogeny f ↔ IsFinite (Hom.toSchemeHom f) ∧ Surjective (Hom.toSchemeHom f) :=
-  Iff.rfl
+  by
+    letI : MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme) :=
+      MorphismProperty.respectsIso_of_isStableUnderComposition
+        (fun _ _ g (_ : IsIso g) ↦ inferInstance)
+    have hcancel (P : MorphismProperty Scheme) [P.RespectsIso] :
+        P (eqToHom (Hom.toSchemeFunctor_obj A) ≫ Hom.toSchemeHom f ≫
+          eqToHom (Hom.toSchemeFunctor_obj B).symm) ↔ P (Hom.toSchemeHom f) := by
+      rw [P.cancel_left_of_respectsIso, P.cancel_right_of_respectsIso]
+    change
+      (IsFinite ((Hom.toSchemeFunctor (K := K)).map f) ∧
+        Surjective ((Hom.toSchemeFunctor (K := K)).map f)) ↔ _
+    rw [Hom.toSchemeFunctor_map]
+    exact and_congr (hcancel @IsFinite) (hcancel @Surjective)
 
 /-- Isogenies contain identities and are stable under composition. -/
 instance : (isogenies K).IsMultiplicative := by
@@ -124,19 +136,14 @@ private lemma baseChange_property (P : MorphismProperty Scheme)
 /-- Extending the ground field preserves isogenies. -/
 lemma baseChange (hf : IsIsogeny f) (L : Type u) [Field L] [Algebra K L] :
     IsIsogeny (Hom.baseChange f L) := by
-  -- Expose both conjuncts of the inverse-image property to apply their base-change instances.
-  change IsFinite (Hom.toSchemeHom f) ∧ Surjective (Hom.toSchemeHom f) at hf
-  change IsFinite (Hom.toSchemeHom (Hom.baseChange f L)) ∧
-    Surjective (Hom.toSchemeHom (Hom.baseChange f L))
+  rw [isIsogeny_iff] at hf ⊢
   exact ⟨baseChange_property @IsFinite hf.1 L, baseChange_property @Surjective hf.2 L⟩
 
 end IsIsogeny
 
 /-! ### A multiplication isogeny -/
 
-/-- Multiplication by negative one is an isogeny.
-
-Its inverse is itself. This argument does not use any separability or characteristic assumption. -/
+/-- Multiplication by negative one is an isogeny. -/
 lemma isIsogeny_mulBy_neg_one (A : AbelianVariety K) : IsIsogeny (mulBy A (-1)) := by
   have hsq : mulBy A (-1) ≫ mulBy A (-1) = 𝟙 A := by
     simpa using (mulBy_mul A (-1) (-1)).symm

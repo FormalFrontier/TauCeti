@@ -119,12 +119,27 @@ lemma Hom.inv_hom {A B : AbelianVariety K} (f : A ⟶ B) :
   exact GrpObj.inv_hom _
 
 /-- The forgetful functor from abelian varieties to their underlying schemes. -/
-@[expose] noncomputable def Hom.toSchemeFunctor : AbelianVariety K ⥤ Scheme :=
+noncomputable def Hom.toSchemeFunctor : AbelianVariety K ⥤ Scheme :=
   Hom.toOverFunctor ⋙ Over.forget (Spec (.of K))
+
+/-- The object map of `Hom.toSchemeFunctor` returns the underlying scheme. -/
+@[simp]
+lemma Hom.toSchemeFunctor_obj (A : AbelianVariety K) :
+    (Hom.toSchemeFunctor (K := K)).obj A = A.toScheme :=
+  (rfl)
 
 /-- The underlying morphism between the schemes of two abelian varieties. -/
 abbrev Hom.toSchemeHom {A B : AbelianVariety K} (f : A ⟶ B) : A.toScheme ⟶ B.toScheme :=
   (Hom.toOverHom f).left
+
+/-- The morphism map of `Hom.toSchemeFunctor` returns the underlying scheme morphism, transported
+along its object-map equalities. -/
+@[simp]
+lemma Hom.toSchemeFunctor_map {A B : AbelianVariety K} (f : A ⟶ B) :
+    (Hom.toSchemeFunctor (K := K)).map f =
+      eqToHom (Hom.toSchemeFunctor_obj A) ≫ Hom.toSchemeHom f ≫
+        eqToHom (Hom.toSchemeFunctor_obj B).symm :=
+  (rfl)
 
 /-- The underlying scheme morphism of a homomorphism built by `Hom.mk'` is the supplied morphism's
 left component. -/
