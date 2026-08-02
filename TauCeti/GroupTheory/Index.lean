@@ -17,7 +17,9 @@ public section
 
 namespace Subgroup
 
-/-- The preimage of a finite-index subgroup under a group homomorphism has finite index. -/
+/-- The preimage of a finite-index (additive) subgroup under a group homomorphism has finite
+index. -/
+@[to_additive]
 instance instFiniteIndexComap {G G' : Type*} [Group G] [Group G'] (H : Subgroup G) [H.FiniteIndex]
     (f : G' →* G) : (H.comap f).FiniteIndex :=
   ⟨by rw [index_comap]; exact FiniteIndex.index_ne_zero⟩
