@@ -251,41 +251,22 @@ private noncomputable def filtrationTwoLeadingTermAlternating : M [⋀^Fin 2]→
       Submodule.Quotient.mk ⟨ι Q (v 0) * ι Q (v 1), ι_mul_ι_mem_filtration_two Q _ _⟩
     map_update_add' := by
       intro _ v i x y
-      fin_cases i
-      · simp only [Fin.zero_eta, Fin.isValue, Function.update_self, map_add, ne_eq, one_ne_zero,
-          not_false_eq_true, Function.update_of_ne, add_mul]
-        rw [← Submodule.Quotient.mk_add]
-        rfl
-      · simp only [Fin.mk_one, Fin.isValue, ne_eq, zero_ne_one, not_false_eq_true,
-          Function.update_of_ne, Function.update_self, map_add, mul_add]
-        rw [← Submodule.Quotient.mk_add]
-        rfl
+      fin_cases i <;>
+        simp [add_mul, mul_add, ← Submodule.Quotient.mk_add]
     map_update_smul' := by
       intro _ v i c x
-      fin_cases i
-      · simp only [Fin.zero_eta, Fin.isValue, Function.update_self, map_smul, ne_eq, one_ne_zero,
-          not_false_eq_true, Function.update_of_ne, Algebra.smul_mul_assoc]
-        rw [← Submodule.Quotient.mk_smul]
-        rfl
-      · simp only [Fin.mk_one, Fin.isValue, ne_eq, zero_ne_one, not_false_eq_true,
-          Function.update_of_ne, Function.update_self, map_smul, Algebra.mul_smul_comm]
-        rw [← Submodule.Quotient.mk_smul]
-        rfl
+      fin_cases i <;>
+        simp [Algebra.smul_mul_assoc, Algebra.mul_smul_comm, ← Submodule.Quotient.mk_smul]
     map_eq_zero_of_eq' := by
       intro v i j h hij
       fin_cases i <;> fin_cases j
       · simp at hij
-      · rw [Submodule.Quotient.mk_eq_zero]
-        change ι Q (v 0) * ι Q (v 1) ∈ filtration Q 1
-        have h' : v 0 = v 1 := by simpa only [id_eq, Fin.zero_eta, Fin.mk_one] using h
-        rw [h', ι_sq_scalar]
-        exact algebraMap_mem_filtration Q _ 1
-      · rw [Submodule.Quotient.mk_eq_zero]
-        change ι Q (v 0) * ι Q (v 1) ∈ filtration Q 1
-        have h' : v 1 = v 0 := by simpa only [id_eq, Fin.zero_eta, Fin.mk_one] using h
-        rw [h', ι_sq_scalar]
-        exact algebraMap_mem_filtration Q _ 1
-      · simp at hij }
+      all_goals rw [Submodule.Quotient.mk_eq_zero]
+      -- The quotient equality leaves membership in the embedded first step; expose its comap
+      -- carrier to use the scalar Clifford relation in `filtration Q 1`.
+      all_goals change ι Q (v 0) * ι Q (v 1) ∈ filtration Q 1
+      all_goals simp_all [ι_sq_scalar]
+      all_goals simpa only [filtration_one] using algebraMap_mem_filtration Q _ 1 }
 
 /-- The degree-two leading-term map from the exterior square to the second graded piece of the
 Clifford filtration. Its source is alternating because a repeated Clifford generator is scalar,
@@ -323,9 +304,12 @@ theorem filtrationTwoLeadingTerm_surjective : Function.Surjective (filtrationTwo
         have hz₂ : z ∈ filtration Q 2 := filtration_mono Q (by omega) hz
         let z₂ : filtration Q 2 := ⟨z, hz₂⟩
         refine Submodule.mem_map.2 ⟨z₂, ?_, rfl⟩
+        -- `T` is a comap, so expose its carrier before using the quotient map.
         change q z₂ ∈ LinearMap.range (filtrationTwoLeadingTerm Q)
+        -- The named map `q` is the quotient map for the embedded first step.
         change P.mkQ z₂ ∈ LinearMap.range (filtrationTwoLeadingTerm Q)
         have hzP : z₂ ∈ P := by
+          -- Membership in `P` is comap membership of the ambient element in the first step.
           change z ∈ filtration Q 1
           exact hz
         have hzero : P.mkQ z₂ = 0 := by
@@ -336,6 +320,7 @@ theorem filtrationTwoLeadingTerm_surjective : Function.Surjective (filtrationTwo
         rw [pow_two, Submodule.mul_le]
         rintro z ⟨a, rfl⟩ w ⟨b, rfl⟩
         refine Submodule.mem_map.2 ⟨⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩, ?_, rfl⟩
+        -- Again expose `T`'s comap carrier, then its named quotient map.
         change q ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ ∈
           LinearMap.range (filtrationTwoLeadingTerm Q)
         change P.mkQ ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ ∈
@@ -349,6 +334,7 @@ theorem filtrationTwoLeadingTerm_surjective : Function.Surjective (filtrationTwo
   rcases Submodule.mem_map.1 hx with ⟨y, hy, hxy⟩
   have hxy' : y = x := Subtype.ext hxy
   subst x
+  -- The final range witness is carried through `T`'s comap and the named quotient map.
   change q y ∈ LinearMap.range (filtrationTwoLeadingTerm Q) at hy
   change P.mkQ y ∈ LinearMap.range (filtrationTwoLeadingTerm Q) at hy
   exact LinearMap.mem_range.1 hy
