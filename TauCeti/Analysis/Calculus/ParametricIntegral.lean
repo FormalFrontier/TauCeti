@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Analysis.Calculus.ParametricIntegral
 public import Mathlib.Analysis.Calculus.ContDiff.Operations
-public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
 /-!
 # Compact-parameter integration
@@ -46,24 +45,16 @@ private theorem exists_eventually_norm_le_on_Icc
     hh.norm.comp (continuous_const.prodMk continuous_id)
   obtain ⟨C, hC⟩ := (isCompact_Icc : IsCompact (Set.Icc (0 : ℝ) 1)).bddAbove_image
     hfiber.continuousOn
-  let n : Set (X × ℝ) := {z | ‖h.uncurry z‖ < C + 1}
-  have hn : IsOpen n := isOpen_lt hh.norm continuous_const
-  have hfiber_subset : {x₀} ×ˢ Set.Icc (0 : ℝ) 1 ⊆ n := by
-    rintro ⟨x, t⟩ ⟨hx, ht⟩
-    have hxx₀ : x = x₀ := by simpa only [Set.mem_singleton_iff] using hx
-    subst x
-    exact lt_of_le_of_lt (hC (Set.mem_image_of_mem (fun t : ℝ ↦ ‖h x₀ t‖) ht))
-      (lt_add_of_pos_right C zero_lt_one)
-  obtain ⟨u, v, hu, -, hxu, hIv, huv⟩ :=
-    generalized_tube_lemma isCompact_singleton isCompact_Icc hn hfiber_subset
-  have hx₀u : x₀ ∈ u := hxu (Set.mem_singleton x₀)
   refine ⟨C + 1, ?_⟩
-  filter_upwards [hu.mem_nhds hx₀u] with x hx
+  apply isCompact_Icc.eventually_forall_of_forall_eventually
   intro t ht
-  have hmem : (x, t) ∈ u ×ˢ v := ⟨hx, hIv ht⟩
-  have hxt := huv hmem
-  have hbound : ‖h x t‖ < C + 1 := by simpa [n] using hxt
-  exact hbound.le
+  have hlt : ‖h x₀ t‖ < C + 1 :=
+    lt_of_le_of_lt (hC (Set.mem_image_of_mem (fun t : ℝ ↦ ‖h x₀ t‖) ht))
+      (lt_add_of_pos_right C zero_lt_one)
+  have hn : {z : X × ℝ | ‖h.uncurry z‖ < C + 1} ∈ nhds (x₀, t) :=
+    (isOpen_lt hh.norm continuous_const).mem_nhds hlt
+  filter_upwards [hn] with z hz
+  exact hz.le
 
 /-- Differentiation under an integral over the compact unit interval for a continuously
 differentiable parameterized function. -/
