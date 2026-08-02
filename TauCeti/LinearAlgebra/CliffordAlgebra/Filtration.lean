@@ -287,8 +287,7 @@ theorem filtrationTwoLeadingTerm_apply_ιMulti (a b : M) :
       Submodule.Quotient.mk ⟨ι Q a * ι Q b, ι_mul_ι_mem_filtration_two Q a b⟩ := by
   simp [filtrationTwoLeadingTerm, filtrationTwoLeadingTermAlternating]
 
-/-- Every element of the second graded piece is the leading term of a degree-two exterior
-product. -/
+/-- Every element of the second graded piece is the image of an element of the exterior square. -/
 theorem filtrationTwoLeadingTerm_surjective : Function.Surjective (filtrationTwoLeadingTerm Q) := by
   let P : Submodule R (filtration Q 2) :=
     (filtration Q 1).comap (filtration Q 2).subtype
