@@ -23,6 +23,8 @@ vectors.
   zero vector and the identity.
 * `exists_continuousOn_local_mulInvariantCoordinateFlow`: a continuous local flow on a uniform
   closed neighborhood of the zero vector and the identity coordinate.
+* `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local flow
+  whose values remain inside the identity chart.
 
 ## References
 
@@ -141,3 +143,52 @@ theorem exists_continuousOn_local_mulInvariantCoordinateFlow
     change β t = x.1
     exact (hconst t ht).trans ((hconst 0 hzero).symm.trans
       (congrArg Prod.fst (hα' x hx').1))
+
+/-- There is a coordinate flow near the zero tangent vector and time zero which is continuous at
+the center, solves the parameterized invariant ODE with an ordinary derivative, freezes the
+tangent-vector parameter, and remains in the target of the identity chart. -/
+theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    ∃ α : (E × E) × ℝ → E × E,
+      ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
+      α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) =
+        ((0 : E), extChartAt I (1 : G) (1 : G)) ∧
+      ∀ᶠ xt in 𝓝 (((0 : E), extChartAt I (1 : G) (1 : G)), 0),
+        HasDerivAt (fun t => α (xt.1, t))
+          ((0 : E),
+            mulInvariantCoordinateVectorField (I := I) (G := G) (α xt)) xt.2 ∧
+        α (xt.1, 0) = xt.1 ∧
+        (α xt).1 = xt.1.1 ∧
+        (α xt).2 ∈ interior (extChartAt I (1 : G)).target := by
+  obtain ⟨α, δ, r, hδ, hr, hcont, hα⟩ :=
+    exists_continuousOn_local_mulInvariantCoordinateFlow
+      (I := I) (G := G)
+  let center : E × E := (0, extChartAt I (1 : G) (1 : G))
+  have hdomain :
+      Metric.closedBall center r ×ˢ Set.Icc (-δ) δ ∈ 𝓝 (center, 0) := by
+    exact prod_mem_nhds (Metric.closedBall_mem_nhds center hr)
+      (Icc_mem_nhds (by linarith) (by linarith))
+  have hdomainOpen :
+      Metric.closedBall center r ×ˢ Set.Ioo (-δ) δ ∈ 𝓝 (center, 0) := by
+    exact prod_mem_nhds (Metric.closedBall_mem_nhds center hr)
+      (Ioo_mem_nhds (by linarith) (by linarith))
+  have hcontAt : ContinuousAt α (center, 0) :=
+    hcont.continuousAt hdomain
+  have hcenter : α (center, 0) = center := by
+    exact (hα center (Metric.mem_closedBall_self hr.le)).1
+  have htargetCenter : center.2 ∈ interior (extChartAt I (1 : G)).target := by
+    exact (I.isInteriorPoint_iff.mp BoundarylessManifold.isInteriorPoint)
+  have htarget :
+      α ⁻¹' (Set.univ ×ˢ interior (extChartAt I (1 : G)).target) ∈ 𝓝 (center, 0) := by
+    apply hcontAt.preimage_mem_nhds
+    apply (isOpen_univ.prod isOpen_interior).mem_nhds
+    rw [hcenter]
+    exact ⟨Set.mem_univ _, htargetCenter⟩
+  refine ⟨α, by simpa only [center] using hcontAt, by simpa only [center] using hcenter, ?_⟩
+  filter_upwards [hdomainOpen, htarget] with xt hxt hxtTarget
+  have hx := hxt.1
+  have ht : xt.2 ∈ Set.Icc (-δ) δ := Set.Ioo_subset_Icc_self hxt.2
+  have hderiv := (hα xt.1 hx).2.1 xt.2 ht
+  refine ⟨hderiv.hasDerivAt (Icc_mem_nhds hxt.2.1 hxt.2.2),
+    (hα xt.1 hx).1, (hα xt.1 hx).2.2 xt.2 ht, ?_⟩
+  exact (Set.mem_preimage.mp hxtTarget).2
