@@ -38,6 +38,15 @@ variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
 noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
   ∫ t in (0 : ℝ)..1, fderiv ℝ f (x + t • (y - x))
 
+omit [CompleteSpace F] in
+/-- The averaged derivative written as an integral over the compact unit interval. -/
+theorem hadamardFactor_eq_integral_Icc (f : E → F) (x : E) :
+    hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
+      fderiv ℝ f (x + t • (y - x)) := by
+  funext y
+  rw [hadamardFactor, intervalIntegral.integral_of_le zero_le_one,
+    ← integral_Icc_eq_integral_Ioc]
+
 /-- At the basepoint, the averaged derivative is the ordinary derivative. -/
 @[simp]
 theorem hadamardFactor_self (f : E → F) (x : E) : hadamardFactor f x x = fderiv ℝ f x := by
@@ -81,7 +90,7 @@ private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     simpa only [h', ContinuousLinearMap.inl] using hd
 
 private theorem contDiff_integral_Icc_of_contDiff
-    {V W : Type u} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    {V : Type u} {W : Type max u v} [NormedAddCommGroup V] [NormedSpace ℝ V]
     [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
     [FiniteDimensional ℝ V] (n : ℕ)
     (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
@@ -105,6 +114,17 @@ private theorem contDiff_integral_Icc_of_contDiff
           hasFDerivAt_integral_Icc_of_contDiff h (hh.of_le (by norm_num))⟩
       simpa only [Nat.cast_add, Nat.cast_one] using hsmooth
 
+/-- If `f` is `n + 1` times continuously differentiable, its Hadamard factor is `n` times
+continuously differentiable in the endpoint. -/
+theorem ContDiff.contDiff_hadamardFactor_of_succ
+    {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+    [FiniteDimensional ℝ E] (n : ℕ) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
+    ContDiff ℝ n (hadamardFactor f x) := by
+  rw [hadamardFactor_eq_integral_Icc]
+  apply contDiff_integral_Icc_of_contDiff n
+  have hd : ContDiff ℝ n (fderiv ℝ f) := hf.fderiv_right (m := n) (by norm_num)
+  exact hd.comp <| by fun_prop
+
 /-- First-order Taylor expansion along a segment, with its coefficient bundled as a continuous
 linear map. -/
 theorem ContDiff.sub_eq_hadamardFactor_apply (f : E → F) (hf : ContDiff ℝ 1 f) (x y : E) :
@@ -122,33 +142,17 @@ omit [CompleteSpace F] in
 /-- The averaged derivative in Hadamard's factorization depends continuously on the endpoint. -/
 theorem ContDiff.continuous_hadamardFactor [FiniteDimensional ℝ E] (f : E → F)
     (hf : ContDiff ℝ 1 f) (x : E) : Continuous (hadamardFactor f x) := by
-  rw [show hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
-      fderiv ℝ f (x + t • (y - x)) by
-    funext y
-    rw [hadamardFactor, intervalIntegral.integral_of_le zero_le_one,
-      ← integral_Icc_eq_integral_Ioc]]
+  rw [hadamardFactor_eq_integral_Icc]
   apply continuous_parametric_integral_of_continuous
   · exact (hf.fderiv_right (m := 0) (by norm_num)).continuous.comp (by fun_prop)
   · exact isCompact_Icc
 
-omit [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F] in
-/-- For a smooth real-valued function, the averaged derivative in Hadamard's factorization depends
-smoothly on the endpoint. -/
-theorem ContDiff.contDiff_hadamardFactor [FiniteDimensional ℝ E] (f : E → ℝ)
+/-- For a smooth function, the averaged derivative in Hadamard's factorization depends smoothly on
+the endpoint. -/
+theorem ContDiff.contDiff_hadamardFactor [FiniteDimensional ℝ E] (f : E → F)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
-  rw [show hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
-      fderiv ℝ f (x + t • (y - x)) by
-    funext y
-    rw [hadamardFactor, intervalIntegral.integral_of_le zero_le_one,
-      ← integral_Icc_eq_integral_Ioc]]
   rw [contDiff_infty]
   intro n
-  apply contDiff_integral_Icc_of_contDiff n
-  have hd : ContDiff ℝ ∞ (fderiv ℝ f) := hf.fderiv_right (m := ∞) (by simp)
-  have hc : ContDiff ℝ ∞ (fun _ : E × ℝ ↦ x) := contDiff_const
-  have hfst : ContDiff ℝ ∞ (Prod.fst : E × ℝ → E) := contDiff_fst
-  have hsnd : ContDiff ℝ ∞ (Prod.snd : E × ℝ → ℝ) := contDiff_snd
-  have hi : ContDiff ℝ ∞ (fun p : E × ℝ ↦ x + p.2 • (p.1 - x)) :=
-    ContDiff.add hc (ContDiff.smul hsnd (ContDiff.sub hfst hc))
-  exact (hd.comp hi).of_le (WithTop.coe_le_coe.2 le_top)
+  exact ContDiff.contDiff_hadamardFactor_of_succ n f
+    (hf.of_le (WithTop.coe_le_coe.2 le_top)) x
