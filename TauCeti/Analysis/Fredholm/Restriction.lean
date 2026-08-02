@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.Comp
-public import TauCeti.Analysis.Fredholm.Criteria
+public import TauCeti.Analysis.Fredholm.FiniteRank
 
 /-!
 # Fredholm operators from finite-codimension restrictions
@@ -105,12 +104,11 @@ theorem _root_.ContinuousLinearMap.IsFredholm.of_restrict (hE₁ : IsClosed (E�
     (Submodule.fg_iff_finiteDimensional _).mp
       (LinearMap.ker_coFG_iff_hasFiniteRange.mp
         (Submodule.CoFG.of_le hker inferInstance)).fg_range
-  open scoped LinearMap.FiniteRangeSetoid in
-    obtain ⟨Q', hQ'⟩ := hS.exists_isQuasiInverse
-    apply ContinuousLinearMap.IsFredholm.of_isQuasiInverse (v := Q')
-    apply hQ'.congr (Setoid.refl _)
-    rw [LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange]
-    exact (Submodule.fg_iff_finiteDimensional _).mpr hfinite
+  have hTS : S + (T - S) = T := by
+    rw [add_comm]
+    exact sub_add_cancel T S
+  rw [← hTS]
+  exact hS.add_of_finiteDimensional_range hfinite
 
 end Topological
 
@@ -124,6 +122,7 @@ namespace ContinuousLinearMap
 /-- The index of the restriction of a continuous linear map from `E` to `F` to closed
 finite-codimensional subspaces `E₁` and `F₁` is the index of the full operator minus `codim E₁`
 plus `codim F₁`. -/
+@[simp]
 theorem index_restrict (hE₁ : IsClosed (E₁ : Set E)) [E₁.CoFG]
     (hF₁ : IsClosed (F₁ : Set F)) [F₁.CoFG] (hT : Set.MapsTo T E₁ F₁)
     (hT₁ : ContinuousLinearMap.IsFredholm (T.restrict hT)) :
