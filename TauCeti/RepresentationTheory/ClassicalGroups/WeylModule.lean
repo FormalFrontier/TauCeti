@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Algebra.CharP.Algebra
+public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import TauCeti.Combinatorics.Young.StandardTableau.Reading
 public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower
@@ -57,6 +59,7 @@ roadmap works in.
 * `TauCeti.weylModuleOfShape`: the Weyl module of a shape, namely that of its row-superstandard
   tableau, with `weylRepOfShape` the action of `GL n k` on it and `weylFDRepOfShape` its bundled
   finite-dimensional form over a field.
+* `TauCeti.schurFunctor`: the roadmap-pinned name, `weylFDRepOfShape` at `k = ℂ`.
 
 ## Main results
 
@@ -76,9 +79,11 @@ roadmap works in.
   Lecture 6, "Weyl's construction".
 * [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
   Layer 2, "Young symmetrizers and the Schur functor", where this object is pinned as
-  `schurFunctor`.  It is named `weylModule` here because what is constructed is the module, not
-  a functor: the Schur functor of `μ` is a functor in the underlying module, and only its value
-  at `kⁿ` is built.
+  `schurFunctor`.  The construction itself is named `weylModule` here because what is constructed
+  is the module, not a functor: the Schur functor of `μ` is a functor in the underlying module,
+  and only its value at `kⁿ` is built.  The pinned name is supplied as `TauCeti.schurFunctor`,
+  the definitional re-export at `k = ℂ` of the bundled form, so that later roadmap layers can
+  consume it under the name they are written against.
 -/
 
 public section
@@ -431,5 +436,14 @@ noncomputable abbrev weylFDRepOfShape (μ : YoungDiagram) : FDRep k (GL (Fin n) 
   FDRep.of (V := (weylModuleOfShape k n μ).toSubmodule) (weylRepOfShape k n μ)
 
 end Field
+
+/-- **The Schur functor** `𝕊^μ(ℂⁿ)` in the roadmap's pinned form: the Weyl module of the shape
+`μ` over `ℂ`, bundled as an object of `FDRep ℂ (GL (Fin n) ℂ)`.
+
+This is a definitional re-export of `TauCeti.weylFDRepOfShape` at `k = ℂ`, under the name later
+roadmap layers are written against; the general form, over any field that is a `ℚ`-algebra, is
+`TauCeti.weylFDRepOfShape`, and the unbundled construction is `TauCeti.weylModuleOfShape`. -/
+noncomputable abbrev schurFunctor (n : ℕ) (μ : YoungDiagram) : FDRep ℂ (GL (Fin n) ℂ) :=
+  weylFDRepOfShape ℂ n μ
 
 end TauCeti
