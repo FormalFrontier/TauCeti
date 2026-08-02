@@ -47,6 +47,7 @@ private lemma hopfSpec_map_left {S : CommRingCat.{u}}
 
 /-- The scheme morphism underlying the contravariant `hopfSpec` image of `f` is a closed
 immersion if and only if the coordinate Hopf-algebra morphism `f` is surjective. -/
+@[simp↓]
 lemma isClosedImmersion_hopfSpec_map_iff {S : CommRingCat.{u}}
     {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B) :
     IsClosedImmersion ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left ↔
