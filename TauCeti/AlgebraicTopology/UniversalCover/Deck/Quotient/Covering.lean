@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Topology.Covering.Quotient
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.ActingGroup
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.Basic
 
@@ -68,7 +67,8 @@ theorem IsQuotientCoveringMap.isRegular {G : Type*} [Group G] [MulAction G E]
     (h : IsQuotientCoveringMap p G) : IsRegular p := by
   refine isRegular_iff_exists_apply_eq.mpr ⟨h.surjective, fun {e e'} hee => ?_⟩
   obtain ⟨g, hg⟩ := h.apply_eq_iff_mem_orbit.mp hee.symm
-  exact ⟨IsQuotientCoveringMap.toDeckHom h g, hg⟩
+  exact ⟨IsQuotientCoveringMap.toDeckHom h g, by
+    rw [IsQuotientCoveringMap.toDeckHom_apply]; exact hg⟩
 
 /-- For a covering map with preconnected total space, being a quotient covering map for the
 deck transformation group is equivalent to regularity of the deck action. -/

@@ -75,7 +75,7 @@ theorem connectedSpace_sphere (hn : 1 ≤ n) :
 
 /-- The antipodal map, as a deck transformation of the cover `Sⁿ → RPⁿ`. It is translation by
 the nontrivial integer unit. -/
-@[expose] def antipode : Deck (mk n) :=
+def antipode : Deck (mk n) :=
   IsQuotientCoveringMap.toDeckHom (isQuotientCoveringMap_mk n) (-1)
 
 /-- On points, the antipodal deck transformation negates. -/
@@ -90,18 +90,18 @@ theorem antipode_mul_self : antipode n * antipode n = 1 := by
   rw [antipode, ← map_mul]
   simp
 
-/-- The antipodal deck transformation is not the identity: no unit vector is its own
-negative. -/
+/-- The antipodal deck transformation is not the identity: the nontrivial integer unit is not
+trivial, and translation is injective because the antipodal action is free. -/
+@[simp]
 theorem antipode_ne_one : antipode n ≠ 1 := by
   intro hone
-  obtain ⟨x⟩ := instNonemptySphere n
-  have hx : -x = x := by
-    simpa using congrArg (fun φ : Deck (mk n) => φ.1 x) hone
-  exact ne_neg_of_mem_sphere ℝ one_ne_zero x hx.symm
+  rw [antipode, ← map_one (IsQuotientCoveringMap.toDeckHom (isQuotientCoveringMap_mk n))]
+    at hone
+  exact absurd (IsQuotientCoveringMap.toDeckHom_injective _ hone) (by decide)
 
 /-- **The deck group of the antipodal cover `Sⁿ → RPⁿ` is the two-element group `ℤˣ`**, for
 `1 ≤ n`. The isomorphism sends an integer unit to the corresponding antipodal translation. -/
-@[expose] def deckMulEquiv (hn : 1 ≤ n) : ℤˣ ≃* Deck (mk n) :=
+def deckMulEquiv (hn : 1 ≤ n) : ℤˣ ≃* Deck (mk n) :=
   letI := connectedSpace_sphere n hn
   IsQuotientCoveringMap.deckMulEquiv (isQuotientCoveringMap_mk n)
 
@@ -109,12 +109,23 @@ theorem antipode_ne_one : antipode n ≠ 1 := by
 @[simp]
 theorem deckMulEquiv_apply (hn : 1 ≤ n) (u : ℤˣ)
     (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
-    (deckMulEquiv n hn u).1 x = u • x :=
-  rfl
+    (deckMulEquiv n hn u).1 x = u • x := by
+  letI := connectedSpace_sphere n hn
+  rw [deckMulEquiv, IsQuotientCoveringMap.deckMulEquiv_apply]
+
+/-- On points, the inverse of the deck-group isomorphism recovers the given deck
+transformation. -/
+@[simp]
+theorem deckMulEquiv_symm_apply (hn : 1 ≤ n) (φ : Deck (mk n))
+    (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
+    (deckMulEquiv n hn).symm φ • x = φ.1 x := by
+  letI := connectedSpace_sphere n hn
+  rw [deckMulEquiv, IsQuotientCoveringMap.deckMulEquiv_symm_apply]
 
 /-- The deck-group isomorphism sends the nontrivial integer unit to the antipodal map. -/
+@[simp]
 theorem deckMulEquiv_neg_one (hn : 1 ≤ n) : deckMulEquiv n hn (-1) = antipode n :=
-  rfl
+  Subtype.ext (Homeomorph.ext fun x => by simp)
 
 /-- For `1 ≤ n`, a deck transformation of the antipodal cover is either the identity or the
 antipodal map. -/
