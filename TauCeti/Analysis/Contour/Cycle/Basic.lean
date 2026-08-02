@@ -73,6 +73,36 @@ namespace PiecewiseC1ClosedCurve
 instance : CoeFun PiecewiseC1ClosedCurve fun _ ↦ ℝ → ℂ :=
   ⟨fun γ ↦ Function.extend Subtype.val γ.toFun 0⟩
 
+/-- On its parameter interval, a closed curve's coercion agrees with its stored function. -/
+theorem coe_apply (γ : PiecewiseC1ClosedCurve) (t : uIcc γ.a γ.b) : γ t = γ.toFun t :=
+  Subtype.val_injective.extend_apply γ.toFun 0 t
+
+/-- Bundle a raw closed piecewise-`C¹` curve by restricting it to its parameter interval. -/
+def of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) :
+    PiecewiseC1ClosedCurve where
+  a := a
+  b := b
+  toFun t := γ t
+  isPiecewiseC1On := by
+    rw [isPiecewiseC1On_iff] at hγ ⊢
+    refine ⟨hγ.1.congr (fun t ht ↦ ?_), ?_⟩
+    · exact Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0 ⟨t, ht⟩
+    · obtain ⟨p, hp, hpieces⟩ := hγ.2
+      refine ⟨p, hp, fun c d hcd hdis ↦ (hpieces c d hcd hdis).congr fun t ht ↦ ?_⟩
+      exact Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0 ⟨t, hcd ht⟩
+  source_eq_target := by
+    rw [← show (⟨a, left_mem_uIcc⟩ : uIcc a b).1 = a from rfl,
+      ← show (⟨b, right_mem_uIcc⟩ : uIcc a b).1 = b from rfl,
+      Subtype.val_injective.extend_apply, Subtype.val_injective.extend_apply]
+    exact hclosed
+
+/-- Bundling a raw curve preserves its values on the parameter interval. -/
+@[simp]
+theorem of_apply {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) {t : ℝ} (ht : t ∈ uIcc a b) :
+    of γ hγ hclosed t = γ t := by
+  exact coe_apply (of γ hγ hclosed) ⟨t, ht⟩
+
 /-- The underlying parametrization is continuous on its parameter interval. -/
 theorem continuousOn (γ : PiecewiseC1ClosedCurve) : ContinuousOn γ (uIcc γ.a γ.b) :=
   γ.isPiecewiseC1On.continuousOn
