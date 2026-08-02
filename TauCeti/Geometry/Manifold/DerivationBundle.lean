@@ -366,11 +366,8 @@ theorem pointDerivationEquivTangentSpace_symm_apply
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
     [T2Space M] (x : M) (hx : I.IsInteriorPoint x) (v : TangentSpace I x) :
     (pointDerivationEquivTangentSpace x hx).symm v = tangentToPointDerivation x v := by
-  apply (pointDerivationEquivTangentSpace x hx).injective
-  rw [(pointDerivationEquivTangentSpace x hx).apply_symm_apply]
-  exact ((LinearEquiv.ofBijective (tangentToPointDerivation x)
-    ⟨tangentToPointDerivation_injective x,
-      tangentToPointDerivation_surjective x hx⟩).symm_apply_apply v).symm
+  simpa only [pointDerivationEquivTangentSpace, LinearEquiv.symm_symm] using
+    (LinearEquiv.ofBijective_apply (tangentToPointDerivation x) v)
 
 /-- Converting a point derivation to a tangent vector and back recovers the derivation. -/
 @[simp]
@@ -393,3 +390,21 @@ theorem pointDerivationEquivTangentSpace_tangentToPointDerivation
     pointDerivationEquivTangentSpace x hx (tangentToPointDerivation x v) = v := by
   rw [← pointDerivationEquivTangentSpace_symm_apply x hx]
   exact (pointDerivationEquivTangentSpace x hx).apply_symm_apply v
+
+/-- The equivalence between point derivations and tangent vectors is natural under smooth maps. -/
+@[simp]
+theorem pointDerivationEquivTangentSpace_fdifferential
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] [T2Space M]
+    {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E'] [FiniteDimensional ℝ E']
+    {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
+    {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M'] [IsManifold I' ∞ M'] [T2Space M']
+    (f : C^∞⟮I, M; I', M'⟯) (x : M) (hx : I.IsInteriorPoint x)
+    (hfx : I'.IsInteriorPoint (f x)) (D : PointDerivation I x) :
+    pointDerivationEquivTangentSpace (f x) hfx (𝒅 f x D) =
+      mfderiv I I' f x (pointDerivationEquivTangentSpace x hx D) := by
+  apply tangentToPointDerivation_injective (I := I') (f x)
+  rw [tangentToPointDerivation_pointDerivationEquivTangentSpace (f x) hfx,
+    tangentToPointDerivation_mfderiv,
+    tangentToPointDerivation_pointDerivationEquivTangentSpace x hx]
