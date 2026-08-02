@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Crosscut
+public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 
@@ -18,7 +18,7 @@ import Mathlib.MeasureTheory.Integral.CircleIntegral
 two endpoints of an *arc of angles*. It leaves open, in its own words, the step of "turning that
 into a crosscut of small diameter at a boundary point". This file takes that step: it reads the
 intersection `ball c r ∩ sphere ζ ρ` of the circle `sphere ζ ρ` with the disc — the **circular
-crosscut** of `Conformal/Crosscut.lean` when `ρ < 2 * r`, and empty otherwise — as an arc of
+crosscut** of `Conformal/Crosscut/Basic.lean` when `ρ < 2 * r`, and empty otherwise — as an arc of
 angles, and concludes that its image under a conformal map has small diameter at suitable radii
 `ρ`.
 
@@ -32,8 +32,8 @@ crosscut cuts off — is a matter of local connectedness of that boundary and is
 ## The intersection is an arc
 
 Everything rests on the angular description of the intersection proved in
-`Conformal/Crosscut.lean`. Writing `α = arg (c - ζ)` for the direction from the boundary point `ζ`
-to the centre, `TauCeti.circleMap_mem_ball_iff` says that
+`Conformal/Crosscut/Basic.lean`. Writing `α = arg (c - ζ)` for the direction from the boundary
+point `ζ` to the centre, `TauCeti.circleMap_mem_ball_iff` says that
 
 > `circleMap ζ ρ θ ∈ ball c r ↔ ρ < 2 * r * cos (θ - α)`,
 
@@ -89,17 +89,6 @@ open scoped ENNReal Real
 
 variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 
-/-- Every point of the circle `sphere ζ ρ` is reached at an angle within `π` of any prescribed
-direction `α`, since `circleMap ζ ρ` is `2 * π`-periodic with range `sphere ζ ρ`. -/
-private theorem exists_mem_Icc_circleMap_eq (α : ℝ) (hρ : 0 < ρ) {z : ℂ} (hz : z ∈ sphere ζ ρ) :
-    ∃ t ∈ Icc (-π) π, circleMap ζ ρ (α + t) = z := by
-  have hmem : z ∈ circleMap ζ ρ '' Icc (α - π) (α - π + 2 * π) := by
-    rw [(periodic_circleMap ζ ρ).image_Icc Real.two_pi_pos, range_circleMap, abs_of_pos hρ]
-    exact hz
-  obtain ⟨θ, hθ, hθz⟩ := hmem
-  refine ⟨θ - α, ⟨by linarith [hθ.1], by linarith [hθ.2]⟩, ?_⟩
-  rwa [add_sub_cancel]
-
 /-! ## The chord bound on a circular crosscut -/
 
 /-- **The chord bound for a circular crosscut.** For `f` holomorphic on `ball c r` and `ζ` on the
@@ -120,8 +109,8 @@ theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere (hζ : dist ζ
       ∀ t₁ ∈ Icc (-π) π, ∀ t₂ ∈ Icc (-π) π, t₁ ≤ t₂ →
       circleMap ζ ρ ((c - ζ).arg + t₁) = z' → circleMap ζ ρ ((c - ζ).arg + t₂) = w' →
       ENNReal.ofReal (dist (f z') (f w')) ≤ circleImageLength f (ball c r) ζ ρ by
-    obtain ⟨t₁, ht₁, hz'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hz.2
-    obtain ⟨t₂, ht₂, hw'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hw.2
+    obtain ⟨t₁, ht₁, hz'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hz.2
+    obtain ⟨t₂, ht₂, hw'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hw.2
     rcases le_total t₁ t₂ with hle | hle
     · exact h z w hz hw t₁ ht₁ t₂ ht₂ hle hz' hw'
     · rw [dist_comm]

@@ -17,7 +17,8 @@ Mathlib's category of commutative group objects.
 The category morphism type `A ⟶ B` is the type required by the Jacobian's universal property: the
 factorization from the Jacobian to another abelian variety must preserve the group law, rather than
 being only a morphism of the underlying schemes. The characteristic lemmas expose preservation of
-the unit, multiplication, and inverse, as well as the underlying morphism of schemes.
+the unit, multiplication, and inverse, as well as the forgetful functors to schemes over `Spec K`
+and to schemes.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, "Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API", and prepares Layer F's unique
@@ -117,9 +118,28 @@ lemma Hom.inv_hom {A B : AbelianVariety K} (f : A ⟶ B) :
   rw [Hom.toOverHom_def]
   exact GrpObj.inv_hom _
 
+/-- The forgetful functor from abelian varieties to their underlying schemes. -/
+noncomputable def Hom.toSchemeFunctor : AbelianVariety K ⥤ Scheme :=
+  Hom.toOverFunctor ⋙ Over.forget (Spec (.of K))
+
+/-- The object map of `Hom.toSchemeFunctor` returns the underlying scheme. -/
+@[simp]
+lemma Hom.toSchemeFunctor_obj (A : AbelianVariety K) :
+    (Hom.toSchemeFunctor (K := K)).obj A = A.toScheme :=
+  (rfl)
+
 /-- The underlying morphism between the schemes of two abelian varieties. -/
 abbrev Hom.toSchemeHom {A B : AbelianVariety K} (f : A ⟶ B) : A.toScheme ⟶ B.toScheme :=
   (Hom.toOverHom f).left
+
+/-- The morphism map of `Hom.toSchemeFunctor` returns the underlying scheme morphism, transported
+along its object-map equalities. -/
+@[simp]
+lemma Hom.toSchemeFunctor_map {A B : AbelianVariety K} (f : A ⟶ B) :
+    (Hom.toSchemeFunctor (K := K)).map f =
+      eqToHom (Hom.toSchemeFunctor_obj A) ≫ Hom.toSchemeHom f ≫
+        eqToHom (Hom.toSchemeFunctor_obj B).symm :=
+  (rfl)
 
 /-- The underlying scheme morphism of a homomorphism built by `Hom.mk'` is the supplied morphism's
 left component. -/
