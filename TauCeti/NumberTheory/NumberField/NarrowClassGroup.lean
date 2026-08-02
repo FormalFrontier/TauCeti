@@ -11,7 +11,6 @@ public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Finite
 
 This module preserves the import path `TauCeti.NumberTheory.NumberField.NarrowClassGroup` after the
 development was split into `NarrowClassGroup/Basic.lean` (the definition, `mk`/`lift`/`toClassGroup`
-API), `NarrowClassGroup/ExactSequence.lean` (the exact sequence `Kˣ → Cl⁺ → Cl → 1`), and
-`NarrowClassGroup/Finite.lean` (finiteness). These form the import chain `Basic ← ExactSequence ←
-Finite`, so `public import`ing `Finite` transitively re-exports all three.
+API and the exact sequence `Kˣ → Cl⁺ → Cl → 1`) and `NarrowClassGroup/Finite.lean` (finiteness).
+Since `Finite` imports `Basic`, `public import`ing `Finite` transitively re-exports both.
 -/

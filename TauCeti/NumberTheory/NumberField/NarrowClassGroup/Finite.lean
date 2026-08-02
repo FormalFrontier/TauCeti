@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.ExactSequence
+public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Basic
 
 /-!
 # The narrow class group of a number field is finite
