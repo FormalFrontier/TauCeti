@@ -200,54 +200,6 @@ theorem invariants_shift_lt_exchangeableSigma :
     MeasurableSpace.invariants (shift Bool) < exchangeableSigma Bool :=
   invariants_shift_lt_pathTail.trans_le pathTail_le_exchangeableSigma
 
-omit [MeasurableSpace α] in
-/-- Iterates of the shift fix every exactly shift-invariant set. -/
-theorem preimage_shift_iterate_eq_of_preimage_shift_eq {A : Set (ℕ → α)}
-    (hA : shift α ⁻¹' A = A) (k : ℕ) : (shift α)^[k] ⁻¹' A = A := by
-  induction k with
-  | zero => simp
-  | succ k ih => rw [Function.iterate_succ, Set.preimage_comp, ih, hA]
-
-/-- **Invariant events are fixed by an eventually-translating reindexing.** If `φ` is eventually
-`n ↦ n + C`, then reindexing by `φ` leaves every set measurable in
-`MeasurableSpace.invariants (shift α)` unchanged.
-
-Beyond the first `m` coordinates the reindexing agrees with `(shift α)^[C]`, so the identity
-`(shift α)^[m] (reindex φ x) = (shift α)^[m + C] x` holds, and exact shift invariance of `A` under
-both iterates transfers membership.
-
-Strict monotonicity of `φ` is **not** needed for this set identity; it enters separately, when
-`ContractableLaw.measurePreserving_reindex` turns the reindexing into a measure-preserving map. The
-two facts are the pair of inputs the Koopman block factorization needs. -/
-theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    (hφ : ∀ n, m ≤ n → φ n = n + C) :
-    (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A := by
-  have hshift : shift α ⁻¹' A = A := (MeasurableSpace.measurableSet_invariants.1 hA).2
-  have hkey : ∀ x : ℕ → α,
-      (shift α)^[m] (fun k => x (φ k)) = (shift α)^[m + C] x := by
-    intro x
-    funext n
-    rw [shift_iterate_apply, shift_iterate_apply, hφ (n + m) (Nat.le_add_left m n)]
-    congr 1
-    omega
-  ext x
-  constructor
-  · intro hx
-    have h1 : (shift α)^[m] (fun k => x (φ k)) ∈ A := by
-      rw [← Set.mem_preimage, preimage_shift_iterate_eq_of_preimage_shift_eq hshift m]
-      exact hx
-    rw [hkey x, ← Set.mem_preimage,
-      preimage_shift_iterate_eq_of_preimage_shift_eq hshift (m + C)] at h1
-    exact h1
-  · intro hx
-    have h1 : (shift α)^[m + C] x ∈ A := by
-      rw [← Set.mem_preimage, preimage_shift_iterate_eq_of_preimage_shift_eq hshift (m + C)]
-      exact hx
-    rw [← hkey x, ← Set.mem_preimage,
-      preimage_shift_iterate_eq_of_preimage_shift_eq hshift m] at h1
-    exact h1
-
 end Probability
 
 end TauCeti
