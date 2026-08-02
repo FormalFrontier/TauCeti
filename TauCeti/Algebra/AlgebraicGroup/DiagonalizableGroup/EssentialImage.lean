@@ -87,7 +87,7 @@ theorem essImage_coordinateRingFunctor :
         (TauCeti.MonoidAlgebra.groupLikeSetSpan_eq_top k G)
   · intro hH
     have hH' := (groupLikeSpannedProperty_iff k H).1 hH
-    letI : Group.FG (_root_.GroupLike k H) :=
+    let : Group.FG (_root_.GroupLike k H) :=
       TauCeti.GroupLike.fg_of_finiteType_of_groupLikeSetSpan_eq_top k H
         (inferInstanceAs (Algebra.FiniteType k H)) hH'
     let G : FGCommGrpCat.{u} := FGCommGrpCat.of (_root_.GroupLike k H)

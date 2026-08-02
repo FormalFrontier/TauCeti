@@ -170,7 +170,7 @@ theorem Measure.ext_of_forall_map_probabilityMeasure_eval_eq
         = π₂.map (fun P => fun i => (P (B i) : ℝ))) :
     π₁ = π₂ := by
   have key : π₁.map (evalReal (α := α)) = π₂.map (evalReal (α := α)) := by
-    haveI : ∀ I : Finset (MeasIdx α),
+    have : ∀ I : Finset (MeasIdx α),
         IsFiniteMeasure ((π₁.map (evalReal (α := α))).map I.restrict) :=
       fun I => Measure.isFiniteMeasure_map _ _
     -- Each finite restriction of the two pushforwards agrees, so both are projective limits of
@@ -217,7 +217,7 @@ of the evaluation map then pulls that conclusion back. -/
 theorem IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure [CountablyGenerated α]
     {π : Measure (ProbabilityMeasure α)} [NeZero π] [IsZeroOneMeasure π] :
     ∃ P : ProbabilityMeasure α, π = Measure.dirac P := by
-  letI : IsProbabilityMeasure π := by
+  let : IsProbabilityMeasure π := by
     rcases IsZeroOrProbabilityMeasure.measure_univ (μ := π) with (h | h)
     · simp_all
     · exact ⟨h⟩
@@ -228,7 +228,7 @@ theorem IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure [CountablyGenerated 
   have hmeas : ∀ s ∈ 𝒜, MeasurableSet s := by
     intro s hs
     simpa only [MeasurableSet, hgen] using measurableSet_generateFrom hs
-  letI : Countable {s : Set α // s ∈ 𝒜} := hcount.to_subtype
+  let : Countable {s : Set α // s ∈ 𝒜} := hcount.to_subtype
   let e : ProbabilityMeasure α → ({s : Set α // s ∈ 𝒜} → ℝ≥0∞) :=
     fun P s => (P : Measure α) s.1
   have he : Measurable e :=
@@ -237,12 +237,12 @@ theorem IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure [CountablyGenerated 
   have he_inj : Function.Injective e := by
     intro P Q hPQ
     apply ProbabilityMeasure.toMeasure_injective
-    haveI := P.2
+    have := P.2
     refine ext_of_generate_finite 𝒜 hgen
       isSetAlgebra_generateSetAlgebra.isSetRing.isSetSemiring.isPiSystem
       (fun s hs => congrFun hPQ ⟨s, hs⟩) ?_
     simp
-  letI : ∀ _ : {s : Set α // s ∈ 𝒜}, StandardBorelSpace ℝ≥0∞ :=
+  let : ∀ _ : {s : Set α // s ∈ 𝒜}, StandardBorelSpace ℝ≥0∞ :=
     fun _ => standardBorel_of_polish
   obtain ⟨q, heq⟩ := IsZeroOneMeasure.exists_ae_eq_const (π := π) he.aemeasurable
   obtain ⟨P, hP⟩ := heq.exists

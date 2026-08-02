@@ -138,7 +138,7 @@ theorem ofGroupLike_id (g : GroupLike R C) :
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     ofGroupLike (R := R) (C := C) (M := M) g LinearMap.id = Comodule.Hom.id R C M :=
   by
-    letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+    let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     ext m
     rfl
 
@@ -153,9 +153,9 @@ theorem ofGroupLike_comp {P : Type*} [AddCommMonoid P] [Module R P]
     ofGroupLike (R := R) (C := C) g (h.comp f) =
       comp (ofGroupLike (R := R) (C := C) g h) (ofGroupLike (R := R) (C := C) g f) :=
   by
-    letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
-    letI : Comodule R C N := groupLike (R := R) (C := C) (M := N) g
-    letI : Comodule R C P := groupLike (R := R) (C := C) (M := P) g
+    let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+    let : Comodule R C N := groupLike (R := R) (C := C) (M := N) g
+    let : Comodule R C P := groupLike (R := R) (C := C) (M := P) g
     ext m
     simp
 
@@ -182,8 +182,8 @@ theorem groupLikeEquiv_apply (g : GroupLike R C) :
     letI : Comodule R C N := groupLike (R := R) (C := C) (M := N) g
     ∀ f : Hom R C M N,
       groupLikeEquiv (R := R) (C := C) (M := M) (N := N) g f = f.toLinearMap := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
-  letI : Comodule R C N := groupLike (R := R) (C := C) (M := N) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C N := groupLike (R := R) (C := C) (M := N) g
   intro f
   rfl
 

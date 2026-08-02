@@ -66,7 +66,7 @@ theorem ContinuousOn.index_eq_of_isPreconnected {A : X → E →L[K] F} {s : Set
     (hA : ContinuousOn A s) (hFredholm : ∀ x ∈ s, ContinuousLinearMap.IsFredholm (A x))
     (hs : IsPreconnected s) {x y : X} (hx : x ∈ s) (hy : y ∈ s) :
     ContinuousLinearMap.index (A x) = ContinuousLinearMap.index (A y) := by
-  letI := Subtype.preconnectedSpace hs
+  let := Subtype.preconnectedSpace hs
   exact (Continuous.isLocallyConstant_index hA.domRestrict
     (fun x ↦ hFredholm x x.2)).apply_eq_of_preconnectedSpace ⟨x, hx⟩ ⟨y, hy⟩
 
@@ -97,7 +97,7 @@ segment between them is Fredholm. -/
 theorem index_eq_of_segment (T S : E' →L[K'] F') : (∀ t : unitInterval,
       ContinuousLinearMap.IsFredholm ((1 - (t : ℝ)) • T + (t : ℝ) • S)) →
       ContinuousLinearMap.index T = ContinuousLinearMap.index S := by
-  letI := IsRCLikeNormedField.rclike K'
+  let := IsRCLikeNormedField.rclike K'
   intro hFredholm
   apply Path.index_eq (Path.segment T S)
   simpa only [Path.segment_apply, AffineMap.lineMap_apply_module] using hFredholm

@@ -131,7 +131,7 @@ private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
     blockLaw μ X k (Set.univ.pi C) = ∫⁻ ω, ∏ i, directingMeasure μ X ω (C i) ∂μ := by
   classical
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  haveI : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
+  have : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
   set g : Ω → ℝ := fun ω => ∏ i, (directingMeasure μ X ω).real (C i) with hg
   have hg_int : Integrable g μ := integrable_prod_directingMeasure_real hTail hC
   have hbl : (blockLaw μ X k (Set.univ.pi C)).toReal = ∫ ω, g ω ∂μ := by
@@ -296,7 +296,7 @@ theorem mixedIID_of_contractable {Ω α : Type*} [MeasurableSpace Ω] [Measurabl
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     MixedIID μ X := by
   refine mixedIID_of_mixedIID_pathLaw hX_meas ?_
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   exact mixedIID_of_contractable_standardBorelOmega
     (hX.coordinate_pathLaw fun i => (hX_meas i).aemeasurable) measurable_pi_apply
 

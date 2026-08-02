@@ -76,7 +76,7 @@ theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     ∃ (φ : ℕ → ℕ) (g : ℂ → ℂ), StrictMono φ ∧ DifferentiableOn ℂ g Ω ∧
       TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω := by
   classical
-  haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
+  have : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
   set f : ℕ → C(Ω, ℂ) := fun n => ⟨Ω.domRestrict (F n), ((hF n).continuousOn).domRestrict⟩
   -- The relative compactness of the restricted family, from `Conformal/Montel/Precompact.lean`.
   have hcpt : IsCompact (closure (Set.range f)) :=

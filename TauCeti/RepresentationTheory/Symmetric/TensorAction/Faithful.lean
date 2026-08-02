@@ -227,7 +227,7 @@ variable {R n d}
 permutation action on `(Rⁿ)^{⊗d}` is trivial. -/
 theorem permTensorAction_eq_one_of_le_one (h : n ≤ 1) (σ : Equiv.Perm (Fin d)) :
     permTensorAction R n d σ = 1 := by
-  haveI : Subsingleton (Fin n) := Fin.subsingleton_iff_le_one.mpr h
+  have : Subsingleton (Fin n) := Fin.subsingleton_iff_le_one.mpr h
   refine (tensorPowerBasis R n d).ext fun f => ?_
   rw [permTensorAction_tensorPowerBasis, Module.End.one_apply]
   exact congrArg _ (funext fun i => Subsingleton.elim _ _)
@@ -237,7 +237,7 @@ the monomial basis vector marking a single tensor slot already detects the permu
 theorem permTensorAction_injective_of_two_le [Nontrivial R] (h : 2 ≤ n) :
     Function.Injective (permTensorAction R n d) := by
   classical
-  haveI : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.mpr h
+  have : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.mpr h
   obtain ⟨a, b, hab⟩ := exists_pair_ne (Fin n)
   intro σ τ hστ
   have hsymm : σ.symm = τ.symm := by
@@ -265,7 +265,7 @@ theorem permTensorAction_injective_iff [Nontrivial R] :
     · exact Or.inl h2
     refine Or.inr ?_
     by_contra hd
-    haveI : Nontrivial (Fin d) := Fin.nontrivial_iff_two_le.mpr (by omega)
+    have : Nontrivial (Fin d) := Fin.nontrivial_iff_two_le.mpr (by omega)
     obtain ⟨a, b, hab⟩ := exists_pair_ne (Fin d)
     have hswap : Equiv.swap a b = 1 :=
       hinj (by rw [permTensorAction_eq_one_of_le_one (by omega), map_one])
@@ -273,7 +273,7 @@ theorem permTensorAction_injective_iff [Nontrivial R] :
     exact hab hswap
   · rintro (h | h)
     · exact permTensorAction_injective_of_two_le h
-    · haveI : Subsingleton (Fin d) := Fin.subsingleton_iff_le_one.mpr h
+    · have : Subsingleton (Fin d) := Fin.subsingleton_iff_le_one.mpr h
       exact fun σ τ _ => Equiv.ext fun x => Subsingleton.elim _ _
 
 end CommSemiring

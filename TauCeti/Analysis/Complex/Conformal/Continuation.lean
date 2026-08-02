@@ -150,7 +150,7 @@ private theorem eq_of_isPreconnected_of_eventually_iff (hs : IsPreconnected s) {
     rintro ⟨t, ht⟩
     rw [nhds_subtype_eq_comap_nhdsWithin]
     exact Filter.Eventually.comap ((hP t ht).mono fun _ hu => propext hu) _
-  haveI : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
+  have : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
   rw [hlc.apply_eq_of_preconnectedSpace ⟨b, hb⟩ ⟨a, ha⟩]
   exact hPa
 

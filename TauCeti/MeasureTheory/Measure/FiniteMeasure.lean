@@ -68,7 +68,7 @@ instance FiniteMeasure.instMeasurableSingletonClass [CountablyGenerated α] :
       ext ν
       simp only [Set.mem_singleton_iff, Set.mem_iInter, Set.mem_ofPred_eq]
       refine ⟨fun h s _ => by rw [h], fun h => ?_⟩
-      haveI := ν.2
+      have := ν.2
       refine Subtype.ext ?_
       exact ext_of_generate_finite 𝒜 hgen
         (fun s hs t ht _ => halg.inter_mem hs ht) (fun s hs => h s hs) (h _ halg.univ_mem)

@@ -267,7 +267,7 @@ theorem corestrictHom_id (f : C →ₗc[R] D) :
     corestrictHom (R := R) (C := C) (D := D) (M := M) (N := M) f (Hom.id R C M) =
       Hom.id R D M :=
   by
-    letI : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
+    let : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
     exact Hom.ext fun _ => rfl
 
 /-- Corestriction preserves composition of comodule morphisms. -/
@@ -282,9 +282,9 @@ theorem corestrictHom_comp {P : Type*} [AddCommMonoid P] [Module R P] [Comodule 
         (corestrictHom (R := R) (C := C) (D := D) (M := N) (N := P) f h)
         (corestrictHom (R := R) (C := C) (D := D) (M := M) (N := N) f g) :=
   by
-    letI : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
-    letI : Comodule R D N := Corestrict (R := R) (C := C) (D := D) (M := N) f
-    letI : Comodule R D P := Corestrict (R := R) (C := C) (D := D) (M := P) f
+    let : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
+    let : Comodule R D N := Corestrict (R := R) (C := C) (D := D) (M := N) f
+    let : Comodule R D P := Corestrict (R := R) (C := C) (D := D) (M := P) f
     exact Hom.ext fun _ => rfl
 
 end Comodule

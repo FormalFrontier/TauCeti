@@ -156,7 +156,7 @@ theorem notMem_image_of_mem_frontier (hUo : IsOpen U) (hfd : DifferentiableOn �
   obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp hVo _ hmem
   have hwc : w ∈ closure U := frontier_subset_closure hw
   have hwU : w ∉ U := (hUo.frontier_eq.subset hw).2
-  haveI : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hwc
+  have : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hwc
   have hδ2 : (0 : ℝ) < δ / 2 := by linarith
   have hlim : Tendsto (fun x : ℂ => x) (𝓝[U] w) (𝓝 w) := tendsto_id.mono_left nhdsWithin_le_nhds
   have hesc : ∀ᶠ x in 𝓝[U] w, f x ∉ closedBall (F w) (δ / 2) :=

@@ -163,7 +163,7 @@ private theorem discr_eq_neg_four_of_isCyclotomicExtension {K : Type*} [Field K]
 bound turns the trace-form value `disc ℚ {1, i} = 4·(-1) = -4` into the field discriminant. -/
 @[simp]
 theorem discr_cyclotomicField_four : NumberField.discr (CyclotomicField 4 ℚ) = -4 := by
-  haveI : IsCyclotomicExtension {4} ℚ (CyclotomicField 4 ℚ) :=
+  have : IsCyclotomicExtension {4} ℚ (CyclotomicField 4 ℚ) :=
     CyclotomicField.isCyclotomicExtension 4 ℚ
   exact discr_eq_neg_four_of_isCyclotomicExtension
 

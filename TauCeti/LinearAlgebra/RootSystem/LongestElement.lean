@@ -89,7 +89,7 @@ root negation intertwines the two halves. -/
 theorem mapsTo_negRoots_posRoots_of_inversions_eq_posRoots {w : P.weylGroup}
     (h : inversions P b w = posRoots P b) :
     MapsTo (P.weylGroupToPerm w) (negRoots P b) (posRoots P b) := by
-  letI := P.indexNeg
+  let := P.indexNeg
   intro i hi
   have hpos : -i ∈ posRoots P b := by
     rwa [mem_posRoots, RootPairing.Base.IsPos.neg_iff_not, ← mem_negRoots]

@@ -66,7 +66,7 @@ theorem Contractable.condExp_indicator_tailProcess_eq {μ : Measure Ω} [IsFinit
   have htail_le : tailProcess X ≤ tailFamily X (max j k + 1) := tailProcess_le_tailFamily X _
   have hfam_le : tailFamily X (max j k + 1) ≤ (inferInstance : MeasurableSpace Ω) :=
     tailFamily_le_ambient (max j k + 1) fun i _ => hX_meas i
-  haveI : IsFiniteMeasure (μ.trim hfam_le) := isFiniteMeasure_trim hfam_le
+  have : IsFiniteMeasure (μ.trim hfam_le) := isFiniteMeasure_trim hfam_le
   have hfut := hX.condExp_indicator_future_eq (r := max j k + 1) (j := j) (k := k) hX_meas
     (by omega) (by omega) hB
   -- The tower over `tailProcess X ≤ tailFamily X (max j k + 1)` replaces the reverse martingale.

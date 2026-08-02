@@ -95,7 +95,7 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e))
   classical
   -- Read `f` as a homotopy in the `i`-th cube coordinate; it starts at the constant map `p e`.
   let i := Classical.arbitrary N
-  letI : Nonempty { j // j ≠ i } := ⟨⟨(exists_ne i).choose, (exists_ne i).choose_spec⟩⟩
+  let : Nonempty { j // j ≠ i } := ⟨⟨(exists_ne i).choose, (exists_ne i).choose_spec⟩⟩
   let q : C(I × I^{ j // j ≠ i }, X) := (f : C(I^N, X)).comp (Cube.insertAt i)
   let cX : C(I^{ j // j ≠ i }, X) := .const _ (p e)
   let cE : C(I^{ j // j ≠ i }, E) := .const _ e

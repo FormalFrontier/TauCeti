@@ -319,7 +319,7 @@ instance locallyConnectedSpace_sphere (c : ℂ) (r : ℝ) : LocallyConnectedSpac
         ring
       · rintro ⟨θ, -, rfl⟩
         simp [abs_of_nonneg hr]
-    haveI := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
+    have := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
     rw [hparam]
     exact locallyConnectedSpace_image_of_isCompact isCompact_Icc
       (Continuous.continuousOn (by fun_prop))

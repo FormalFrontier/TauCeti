@@ -169,7 +169,7 @@ cover does the rest: two points at distance less than `δ` lie in a common ball 
 in a common member of the cover, whose points are pairwise within `ε` of one another. -/
 protected theorem IsCompact.isUniformlyLocallyConnected [LocallyConnectedSpace s]
     (hs : IsCompact s) : IsUniformlyLocallyConnected s := by
-  haveI : CompactSpace s := isCompact_iff_compactSpace.mp hs
+  have : CompactSpace s := isCompact_iff_compactSpace.mp hs
   rw [isUniformlyLocallyConnected_def]
   intro ε hε
   have hε2 : (0 : ℝ) < ε / 2 := by linarith

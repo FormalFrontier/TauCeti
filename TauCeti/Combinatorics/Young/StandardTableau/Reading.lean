@@ -258,7 +258,7 @@ theorem standardCount_ne_zero (μ : YoungDiagram) : standardCount μ ≠ 0 :=
 /-- A Young diagram with at most one row has exactly one standard Young tableau. -/
 theorem standardCount_eq_one_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
     standardCount μ = 1 := by
-  haveI := StandardYoungTableau.subsingleton_of_colLen_le_one h
+  have := StandardYoungTableau.subsingleton_of_colLen_le_one h
   rw [standardCount_def]
   exact Fintype.card_eq_one_iff.mpr
     ⟨StandardYoungTableau.rowSuperstandard μ, fun T => Subsingleton.elim _ _⟩

@@ -111,7 +111,7 @@ theorem contractableLaw_iff_forall_map_prefixProj_of_strictMono {ρ : Measure (�
   · intro hρ
     refine ContractableLaw.intro ?_
     intro φ hφ
-    haveI : IsFiniteMeasure (ρ.map (fun x : ℕ → α => fun k => x (φ k))) := by
+    have : IsFiniteMeasure (ρ.map (fun x : ℕ → α => fun k => x (φ k))) := by
       infer_instance
     refine measure_eq_of_prefixProj_map_eq ?_
     intro n

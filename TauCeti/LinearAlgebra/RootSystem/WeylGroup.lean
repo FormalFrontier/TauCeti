@@ -158,7 +158,7 @@ lemma weylGroupToPerm_ofIdx_mul_apply (w : P.weylGroup) (i j : ι) :
 lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
     letI := P.indexNeg
     P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) := by
-  letI := P.indexNeg
+  let := P.indexNeg
   apply P.root.injective
   calc
     P.root (P.weylGroupToPerm w (-j)) = w • P.root (-j) :=
