@@ -43,9 +43,10 @@ Everything is transported from the model curve, and the transport is quantitativ
 comes first with two elementary metric facts about `Circle.exp`:
 
 * the **chord formula** `TauCeti.dist_circleExp_eq_two_mul_abs_sin`, `dist (exp a) (exp b) =
-  2 * |sin ((a - b) / 2)|`, obtained by factoring out the unimodular `exp b` and halving the angle;
+  2 * |sin ((a - b) / 2)|`, obtained by factoring the unimodular `exp b` out of the difference and
+  applying Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one`;
 * its two consequences, that the chord is at most the arc
-  (`TauCeti.dist_circleExp_le`, whence `TauCeti.diam_circleExp_image_Ioo_le`) and, in the converse
+  (`TauCeti.dist_circleExp_le`, whence `TauCeti.diam_circleExp_image_Icc_le`) and, in the converse
   direction, that the *shorter* of the two arc lengths `Circle.angleDiff` separating two points is
   at most `π / 2` times their chord (`TauCeti.min_angleDiff_le_dist`). The converse bound is
   Jordan's inequality `Real.mul_le_sin`, and it is the direction that matters here: it is what turns
@@ -53,10 +54,13 @@ comes first with two elementary metric facts about `Circle.exp`:
 
 Together these give `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le`: two
 distinct points of the circle cut it into two preconnected pieces, the first of diameter at most
-`π / 2` times their distance. Only preconnectedness of the pieces is recorded, not the openness and
+`π / 2` times their distance. The two pieces are Mathlib's open arcs
+`Circle.path z w '' Set.Ioo 0 1` and `Circle.path w z '' Set.Ioo 0 1`, whose covering of the cut
+circle is `Circle.compl_range_path` together with `Circle.range_path_inter_range_path`, and whose
+closed counterparts `Circle.range_path` are `Circle.exp` images of intervals of angles, on which the
+diameter bound is immediate. Only preconnectedness of the pieces is recorded, not the openness and
 path-connectedness of `TauCeti.exists_isOpen_isPathConnected_union_eq_compl_pair_circle`; that is
-all the transport below consumes, and it lets the two arcs be written as `Circle.exp` images of
-open intervals of angles, on which the diameter bound is immediate.
+all the transport below consumes.
 
 The transport then runs both uniform continuities of the parametrization `Circle ≃ₜ C` at once:
 one converts "the two points are close in `X`" into "their parameters are close on the circle",
@@ -86,7 +90,7 @@ consumer has it.
 
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
-* `TauCeti.dist_circleExp_le` and `TauCeti.diam_circleExp_image_Ioo_le` — the chord is at most the
+* `TauCeti.dist_circleExp_le` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at most the
   arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_dist` — the shorter of the two arcs joining two points of the circle has
   length at most `π / 2` times their distance.
@@ -115,30 +119,11 @@ open scoped Real
 
 /-! ## The chord and the arc -/
 
-/-- The chord subtended by an arc of angle `θ` starting at `1` has length `2 * |sin (θ / 2)|`.
-
-Squaring both sides turns the claim into `2 - 2 * cos θ = 4 * sin (θ / 2) ^ 2`, which is the
-half-angle formula `Real.cos_two_mul_eq_one_sub`. -/
-private lemma norm_circleExp_sub_one (θ : ℝ) :
-    ‖(Circle.exp θ : ℂ) - 1‖ = 2 * |Real.sin (θ / 2)| := by
-  have hsplit : ((Circle.exp θ : ℂ) - 1) =
-      ((Real.cos θ - 1 : ℝ) : ℂ) + ((Real.sin θ : ℝ) : ℂ) * Complex.I := by
-    rw [Circle.coe_exp, Complex.exp_mul_I]
-    push_cast
-    ring
-  have hcos : Real.cos θ = 1 - 2 * Real.sin (θ / 2) ^ 2 := by
-    have h := Real.cos_two_mul_eq_one_sub (θ / 2)
-    rwa [show 2 * (θ / 2) = θ by ring] at h
-  have hsq : (Real.cos θ - 1) ^ 2 + Real.sin θ ^ 2 = (2 * |Real.sin (θ / 2)|) ^ 2 := by
-    rw [Real.sin_sq θ, mul_pow, sq_abs, hcos]
-    ring
-  rw [hsplit, Complex.norm_add_mul_I, hsq, Real.sqrt_sq (by positivity)]
-
 /-- **The chord formula for the unit circle**: two points of the circle at angles `a` and `b` are at
 distance `2 * |sin ((a - b) / 2)|`.
 
-The proof factors the unimodular `Circle.exp b` out of the difference, reducing to
-`TauCeti.norm_circleExp_sub_one` at the angle `a - b`. -/
+The proof factors the unimodular `Circle.exp b` out of the difference, reducing to Mathlib's
+`Complex.norm_exp_I_mul_ofReal_sub_one` at the angle `a - b`. -/
 theorem dist_circleExp_eq_two_mul_abs_sin (a b : ℝ) :
     dist (Circle.exp a) (Circle.exp b) = 2 * |Real.sin ((a - b) / 2)| := by
   have hfactor : ((Circle.exp a : ℂ) - (Circle.exp b : ℂ)) =
@@ -150,7 +135,10 @@ theorem dist_circleExp_eq_two_mul_abs_sin (a b : ℝ) :
       = ‖(Circle.exp a : ℂ) - (Circle.exp b : ℂ)‖ := by
     rw [← Complex.dist_eq]
     rfl
-  rw [hdist, hfactor, norm_mul, Circle.norm_coe, mul_one, norm_circleExp_sub_one]
+  rw [hdist, hfactor, norm_mul, Circle.norm_coe, mul_one, Circle.coe_exp,
+    mul_comm ((a - b : ℝ) : ℂ) Complex.I, Complex.norm_exp_I_mul_ofReal_sub_one,
+    Real.norm_eq_abs, abs_mul]
+  norm_num
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz, by `|sin| ≤ |·|` applied to the
 chord formula `TauCeti.dist_circleExp_eq_two_mul_abs_sin`. -/
@@ -160,10 +148,10 @@ theorem dist_circleExp_le (a b : ℝ) : dist (Circle.exp a) (Circle.exp b) ≤ |
   rw [dist_circleExp_eq_two_mul_abs_sin]
   linarith
 
-/-- An arc of the circle spanning the angles `Set.Ioo a b` has diameter at most `b - a`, by the
+/-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`, by the
 `1`-Lipschitz bound `TauCeti.dist_circleExp_le`. -/
-theorem diam_circleExp_image_Ioo_le {a b : ℝ} (hab : a ≤ b) :
-    Metric.diam (Circle.exp '' Ioo a b) ≤ b - a := by
+theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
+    Metric.diam (Circle.exp '' Icc a b) ≤ b - a := by
   refine Metric.diam_le_of_forall_dist_le (by linarith) ?_
   rintro _ ⟨x, hx, rfl⟩ _ ⟨y, hy, rfl⟩
   exact (dist_circleExp_le x y).trans
@@ -216,78 +204,39 @@ theorem min_angleDiff_le_dist (x y : Circle) :
 
 /-! ## Cutting the circle into a short arc and a long one -/
 
-/-- The two open arcs of angles cut out by `a` and `t + a`, for `0 < t < 2 * π`, cover the circle
-minus the two points `Circle.exp a` and `Circle.exp (t + a)`.
-
-Both inclusions come from injectivity of `Circle.exp` on a half-open period
-(`Circle.exp_injOn_Ioc`), together with the fact that such a period exhausts the circle
-(`Function.Periodic.image_Ioc`). -/
-private lemma circleExp_image_Ioo_union_eq_compl_pair {a t : ℝ} (ht₀ : 0 < t) (ht₁ : t < 2 * π) :
-    Circle.exp '' Ioo a (t + a) ∪ Circle.exp '' Ioo (t + a) (a + 2 * π) =
-      ({Circle.exp a, Circle.exp (t + a)} : Set Circle)ᶜ := by
-  have hinj : InjOn Circle.exp (Ioc a (a + 2 * π)) := Circle.exp_injOn_Ioc (by linarith)
-  have hper : Circle.exp '' Ioc a (a + 2 * π) = univ := by
-    rw [Circle.periodic_exp.image_Ioc Real.two_pi_pos, Circle.exp_surjective.range_eq]
-  have hmem : ∀ s : ℝ, s ∈ Ioo a (a + 2 * π) → s ≠ t + a →
-      Circle.exp s ∉ ({Circle.exp a, Circle.exp (t + a)} : Set Circle) := by
-    rintro s ⟨hs₀, hs₁⟩ hst (h | h)
-    · rw [show Circle.exp a = Circle.exp (a + 2 * π) by simp] at h
-      exact absurd (hinj ⟨hs₀, hs₁.le⟩ ⟨by linarith, le_rfl⟩ h) (by linarith)
-    · exact hst (hinj ⟨hs₀, hs₁.le⟩ ⟨by linarith, by linarith⟩ h)
-  refine subset_antisymm ?_ fun u hu => ?_
-  · rintro _ (⟨s, hs, rfl⟩ | ⟨s, hs, rfl⟩)
-    · exact hmem s ⟨hs.1, by linarith [hs.2]⟩ (by linarith [hs.2])
-    · exact hmem s ⟨by linarith [hs.1], hs.2⟩ (by linarith [hs.1])
-  · obtain ⟨s, hs, rfl⟩ : u ∈ Circle.exp '' Ioc a (a + 2 * π) := hper ▸ mem_univ u
-    have hne : s ≠ a + 2 * π := by
-      rintro rfl
-      exact hu (Or.inl (by simp))
-    have hne' : s ≠ t + a := by
-      rintro rfl
-      exact hu (Or.inr rfl)
-    rcases lt_trichotomy s (t + a) with h | h | h
-    · exact Or.inl ⟨s, ⟨hs.1, h⟩, rfl⟩
-    · exact absurd h hne'
-    · exact Or.inr ⟨s, ⟨h, lt_of_le_of_ne hs.2 hne⟩, rfl⟩
-
 /-- **Two distinct points cut the circle into a short arc and a long one.** The complement of
 `{z, w}` is the union of two preconnected sets, the first of diameter at most `π / 2 * dist z w`.
 
-The two sets are the two arcs between `z` and `w`, presented as `Circle.exp` images of intervals of
-angles so that `TauCeti.diam_circleExp_image_Ioo_le` bounds their diameters by the corresponding arc
-lengths; which of the two is named first depends on which of `Circle.angleDiff z w` and
+The two sets are Mathlib's two open arcs `Circle.path z w '' Set.Ioo 0 1` and
+`Circle.path w z '' Set.Ioo 0 1`, which cover the complement of `{z, w}` by
+`Circle.compl_range_path` and `Circle.range_path_inter_range_path`. Each is contained in the
+corresponding closed arc `Circle.range_path`, an image of an interval of angles of length
+`Circle.angleDiff`, so `TauCeti.diam_circleExp_image_Icc_le` bounds its diameter by that arc
+length; which of the two is named first depends on which of `Circle.angleDiff z w` and
 `Circle.angleDiff w z` is the smaller, and `TauCeti.min_angleDiff_le_dist` bounds that one by the
 chord. -/
 theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} (hzw : z ≠ w) :
     ∃ P Q : Set Circle, IsPreconnected P ∧ IsPreconnected Q ∧
       P ∪ Q = ({z, w} : Set Circle)ᶜ ∧ Metric.diam P ≤ π / 2 * dist z w := by
-  set a := Complex.arg (z : ℂ) with ha
-  set t := Circle.angleDiff z w with ht
-  have ht₀ : 0 < t := Circle.angleDiff_pos hzw
-  have ht₁ : t < 2 * π := Circle.angleDiff_lt_two_pi z w
-  have hsum : t + Circle.angleDiff w z = 2 * π := Circle.angleDiff_add_angleDiff hzw
-  have hz : Circle.exp a = z := Circle.exp_arg z
-  have hw : Circle.exp (t + a) = w := by
-    rw [Circle.exp_add, ha, Circle.exp_arg, ht, Circle.exp_angleDiff_mul]
-  have hunion := circleExp_image_Ioo_union_eq_compl_pair (a := a) ht₀ ht₁
-  rw [hz, hw] at hunion
-  have hPc : IsPreconnected (Circle.exp '' Ioo a (t + a)) :=
-    isPreconnected_Ioo.image _ Circle.exp.continuous.continuousOn
-  have hQc : IsPreconnected (Circle.exp '' Ioo (t + a) (a + 2 * π)) :=
-    isPreconnected_Ioo.image _ Circle.exp.continuous.continuousOn
-  have hP : Metric.diam (Circle.exp '' Ioo a (t + a)) ≤ t := by
-    simpa using diam_circleExp_image_Ioo_le (a := a) (b := t + a) (by linarith)
-  have hQ : Metric.diam (Circle.exp '' Ioo (t + a) (a + 2 * π)) ≤ Circle.angleDiff w z := by
-    have := diam_circleExp_image_Ioo_le (a := t + a) (b := a + 2 * π) (by linarith)
-    linarith
+  have hunion : Circle.path z w '' Ioo 0 1 ∪ Circle.path w z '' Ioo 0 1 =
+      ({z, w} : Set Circle)ᶜ := by
+    rw [← Circle.compl_range_path hzw.symm, ← Circle.compl_range_path hzw, ← compl_inter,
+      Circle.range_path_inter_range_path hzw.symm, pair_comm]
+  have hpre : ∀ x y : Circle, IsPreconnected (Circle.path x y '' Ioo 0 1) := fun x y =>
+    isPreconnected_Ioo.image _ (Circle.path x y).continuous.continuousOn
+  have hdiam : ∀ x y : Circle,
+      Metric.diam (Circle.path x y '' Ioo 0 1) ≤ Circle.angleDiff x y := fun x y => by
+    refine (Metric.diam_mono (image_subset_range _ _)
+      (isCompact_range (Circle.path x y).continuous).isBounded).trans ?_
+    rw [Circle.range_path]
+    simpa using diam_circleExp_image_Icc_le (a := Complex.arg (x : ℂ))
+      (b := Circle.angleDiff x y + Complex.arg (x : ℂ)) (by simp [Circle.angleDiff_nonneg])
   have hmin := min_angleDiff_le_dist z w
-  rcases le_total t (Circle.angleDiff w z) with hle | hle
-  · refine ⟨_, _, hPc, hQc, hunion, hP.trans ?_⟩
-    rw [← ht] at hmin
-    exact (le_min_iff.mpr ⟨le_rfl, hle⟩).trans hmin
-  · refine ⟨_, _, hQc, hPc, by rw [union_comm]; exact hunion, hQ.trans ?_⟩
-    rw [← ht] at hmin
-    exact (le_min_iff.mpr ⟨hle, le_rfl⟩).trans hmin
+  rcases le_total (Circle.angleDiff z w) (Circle.angleDiff w z) with hle | hle
+  · exact ⟨_, _, hpre z w, hpre w z, hunion,
+      (hdiam z w).trans ((le_min_iff.mpr ⟨le_rfl, hle⟩).trans hmin)⟩
+  · exact ⟨_, _, hpre w z, hpre z w, by rw [union_comm]; exact hunion,
+      (hdiam w z).trans ((le_min_iff.mpr ⟨hle, le_rfl⟩).trans hmin)⟩
 
 /-! ## Cutting a Jordan curve -/
 
