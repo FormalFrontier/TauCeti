@@ -16,10 +16,10 @@ import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 `Conformal/Crosscut/Basic.lean` cuts a disc `ball c r` at a boundary point `ζ` by the circle
 `sphere ζ ρ` and proves that the two sides `ball c r ∩ ball ζ ρ` and `ball c r \ closedBall ζ ρ`
 are the two connected components of what is left. `Conformal/CutDiameter.lean` transports the
-*near* side to a conformal image and bounds its width by the width of the image crosscut together
+two sides to a conformal image and bounds their width by the width of the image crosscut together
 with the boundary piece cut off. This file completes that picture on the image side: it splits
-`frontier (f '' ball c r)`, and it supplies — from local connectedness of that frontier — the small
-connected set joining the two ends of the image crosscut.
+`frontier (f '' ball c r)`, and it supplies — from local connectedness of that frontier — a small
+connected boundary set enclosing the part of that frontier which clings to the image crosscut.
 
 ## The decomposition
 
@@ -38,35 +38,30 @@ cover `frontier Ω` apart from a middle piece no wider than the image crosscut i
 (`TauCeti.diam_frontier_inter_closure_image_ball_inter_sphere_le`), which by the length–area
 estimate of `Conformal/ShortCrosscut.lean` can be made as small as desired.
 
-The far side is bounded by its own boundary piece exactly as the near side is: the frontier of `B`
-lies on the image crosscut and on `frontier Ω`
-(`TauCeti.frontier_image_ball_diff_closedBall_subset`), so an enclosing set for
-`frontier Ω ∩ frontier B` bounds the width of `B`
-(`TauCeti.diam_image_ball_diff_closedBall_le`), mirroring
-`TauCeti.diam_image_ball_inter_ball_le`. Either side may therefore be the one that is shown small.
-
-## The ends of the image crosscut, and the set joining them
+## The middle piece, and the connected boundary set enclosing it
 
 The middle piece is not merely small, it is *nonempty*
-(`TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere`): the crosscut runs from one
-endpoint on `sphere c r` to the other, and along such an endpoint `f` has a cluster value, which is
-adherent to `γ` and — a conformal map being proper — is not attained, hence lies on `frontier Ω`.
-So the ends of the image crosscut really do land on the boundary of the image.
+(`TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere`): the crosscut has an endpoint on
+`sphere c r`, and along that endpoint `f` has a cluster value, which is adherent to `γ` and — a
+conformal map being proper — is not attained, hence lies on `frontier Ω`. That is a statement about
+the *one* endpoint the proof selects, and all that is claimed: nothing below says where the other
+end goes, nor that the two ends are joined.
 
-That is what the last theorem consumes. If `frontier Ω` is uniformly locally connected — which by
-`TauCeti.IsCompact.isUniformlyLocallyConnected` is exactly local connectedness, `frontier Ω` being
-compact — then for every `ε > 0` there is a single `δ > 0`, independent of the boundary point `ζ`
-and of the crosscut radius `ρ`, such that an image crosscut of diameter less than `δ` has its whole
-middle piece enclosed in a *connected* subset of `frontier Ω` of diameter at most `ε`
-(`TauCeti.exists_isConnected_subset_frontier_image_ball_of_diam_lt`). This is the second of the two
-geometric inputs that `Conformal/CutDiameter.lean` names — "local connectedness of `∂Ω` supplies
-the small connected `E` joining its two ends" — the first being the length–area estimate.
+That nonemptiness is what the last theorem consumes. If `frontier Ω` is uniformly locally connected
+— which by `TauCeti.IsCompact.isUniformlyLocallyConnected` is exactly local connectedness,
+`frontier Ω` being compact — then for every `ε > 0` there is a single `δ > 0`, independent of the
+boundary point `ζ` and of the crosscut radius `ρ`, such that an image crosscut of diameter less than
+`δ` has its whole middle piece enclosed in a *connected* subset of `frontier Ω` of diameter at most
+`ε` (`TauCeti.exists_isConnected_subset_frontier_image_ball_of_diam_lt`), the general enclosure
+statement `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset` applied to the middle
+piece. This is where the local connectedness of `∂Ω` that `Conformal/CutDiameter.lean` names as one
+of its two geometric inputs enters, the other being the length–area estimate.
 
 What is **not** proved here, and is what still separates layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md` from its milestone, is that the resulting `E` encloses
-the boundary piece: that `frontier Ω ∩ frontier A` is contained in the small connected set together
-with the image crosscut. Classically that is a separation argument about the closed curve formed by
-the image crosscut and the joining boundary set, and no part of it is claimed below.
+`TauCetiRoadmap/ConformalMapping/README.md` from its milestone, is that the resulting connected set
+encloses the boundary piece: that `frontier Ω ∩ frontier A` is contained in it together with the
+image crosscut. Classically that is a separation argument about the closed curve formed by the image
+crosscut and the boundary set, and no part of it is claimed below.
 
 ## Generality
 
@@ -80,9 +75,6 @@ pseudometric space.
 
 * `TauCeti.image_ball_eq_union_image_crosscut` — the image of the disc is the union of the images
   of the two sides of a crosscut and of the crosscut itself.
-* `TauCeti.frontier_image_ball_diff_closedBall_subset` and
-  `TauCeti.diam_image_ball_diff_closedBall_le` — the far-side companions of
-  `TauCeti.frontier_image_ball_inter_ball_subset` and `TauCeti.diam_image_ball_inter_ball_le`.
 * `TauCeti.frontier_image_ball_subset_union` and `TauCeti.frontier_image_ball_eq_union` — a
   crosscut cuts the boundary of the image into two pieces and a middle piece adherent to the image
   crosscut.
@@ -130,63 +122,7 @@ theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ 
         f '' (ball c r \ closedBall ζ ρ) := by
   rw [← image_union, ← image_union]
   congr 1
-  refine Subset.antisymm (fun y hy => ?_) fun y hy => ?_
-  · rcases lt_trichotomy (dist y ζ) ρ with h | h | h
-    · exact Or.inl (Or.inl ⟨hy, mem_ball.mpr h⟩)
-    · exact Or.inl (Or.inr ⟨hy, mem_sphere.mpr h⟩)
-    · exact Or.inr ⟨hy, fun hc => absurd (mem_closedBall.mp hc) (not_le.mpr h)⟩
-  · rcases hy with (⟨hy, -⟩ | ⟨hy, -⟩) | ⟨hy, -⟩ <;> exact hy
-
-/-! ## The far side of the crosscut -/
-
-/-- **The boundary of the image of the far side of a crosscut lies on the image crosscut and on the
-boundary of the image domain.** The mirror of `TauCeti.frontier_image_ball_inter_ball_subset`, with
-the same proof read across the crosscut: a frontier point of `f '' (ball c r \ closedBall ζ ρ)`
-that is not a frontier point of `f '' ball c r` is a value `f w` with `dist w ζ = ρ`, the case
-`dist w ζ > ρ` placing it inside an open set disjoint from its own frontier and the case
-`dist w ζ < ρ` placing it inside an open set that injectivity makes disjoint from a set it is in
-the closure of. -/
-theorem frontier_image_ball_diff_closedBall_subset (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) :
-    frontier (f '' (ball c r \ closedBall ζ ρ))
-      ⊆ f '' (ball c r ∩ sphere ζ ρ) ∪ frontier (f '' ball c r) := by
-  have hBopen : IsOpen (f '' (ball c r \ closedBall ζ ρ)) :=
-    isOpen_image_of_differentiableOn_of_injOn (isOpen_ball.sdiff isClosed_closedBall)
-      (hd.mono sdiff_subset) (hinj.mono sdiff_subset)
-  intro p hp
-  have hpΩ : p ∈ closure (f '' ball c r) := closure_mono (image_mono sdiff_subset) hp.1
-  rw [closure_eq_self_union_frontier] at hpΩ
-  rcases hpΩ with hpin | hpfr
-  · obtain ⟨w, hw, rfl⟩ := hpin
-    rcases lt_trichotomy (dist w ζ) ρ with hlt | heq | hgt
-    · exfalso
-      have hAopen : IsOpen (f '' (ball c r ∩ ball ζ ρ)) :=
-        isOpen_image_of_differentiableOn_of_injOn (isOpen_ball.inter isOpen_ball)
-          (hd.mono inter_subset_left) (hinj.mono inter_subset_left)
-      have hwA : f w ∈ f '' (ball c r ∩ ball ζ ρ) := ⟨w, ⟨hw, mem_ball.mpr hlt⟩, rfl⟩
-      obtain ⟨q, ⟨u, hu, hfu⟩, ⟨v, hv, hfv⟩⟩ := mem_closure_iff.mp hp.1 _ hAopen hwA
-      have huv : u = v := hinj hu.1 hv.1 (hfu.trans hfv.symm)
-      subst huv
-      exact hv.2 (ball_subset_closedBall hu.2)
-    · exact Or.inl ⟨w, ⟨hw, mem_sphere.mpr heq⟩, rfl⟩
-    · exact absurd
-        ⟨⟨w, ⟨hw, fun hc => absurd (mem_closedBall.mp hc) (not_le.mpr hgt)⟩, rfl⟩, hp⟩
-        (eq_empty_iff_forall_notMem.mp hBopen.inter_frontier_eq (f w))
-  · exact Or.inr hpfr
-
-/-- **The image of the far side of a crosscut is no wider than the image crosscut together with the
-boundary piece it cuts off.** The mirror of `TauCeti.diam_image_ball_inter_ball_le`: whichever of
-the two sides a boundary piece is supplied for, that side is the one bounded. -/
-theorem diam_image_ball_diff_closedBall_le (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {E : Set ℂ} (hE : IsBounded E)
-    (hEsub : frontier (f '' ball c r) ∩ frontier (f '' (ball c r \ closedBall ζ ρ)) ⊆ E) :
-    diam (f '' (ball c r \ closedBall ζ ρ)) ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) := by
-  have harc : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := hb.subset (image_mono inter_subset_left)
-  rw [← diam_frontier (hb.subset (image_mono sdiff_subset))]
-  refine diam_mono (fun p hp => ?_) (harc.union hE)
-  rcases frontier_image_ball_diff_closedBall_subset hd hinj hp with h | h
-  · exact Or.inl h
-  · exact Or.inr (hEsub ⟨h, hp⟩)
+  rw [union_right_comm, ← ball_diff_sphere_eq_union, sdiff_union_inter]
 
 /-! ## The crosscut cuts the boundary of the image in two -/
 
@@ -253,9 +189,11 @@ theorem diam_frontier_inter_closure_image_ball_inter_sphere_le (hb : IsBounded (
       ≤ diam (closure (f '' (ball c r ∩ sphere ζ ρ))) := diam_mono inter_subset_right harc.closure
     _ = diam (f '' (ball c r ∩ sphere ζ ρ)) := diam_closure _
 
-/-- **The ends of the image crosscut land on the boundary of the image.** For `f` holomorphic and
-injective on `ball c r` with bounded image, and a genuine circular crosscut at a boundary point `ζ`,
-the middle piece `frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))` is nonempty.
+/-- **The middle piece is nonempty**: for `f` holomorphic and injective on `ball c r` with bounded
+image, and a genuine circular crosscut at a boundary point `ζ`, the set
+`frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))` has a point. So the image
+crosscut does cling to the boundary of the image — at the one endpoint the proof selects; where the
+other end of the crosscut goes is not asserted.
 
 The crosscut has an endpoint `e` on `sphere c r`, adherent to it by
 `TauCeti.closure_ball_inter_sphere`. Along `e` the map has a cluster value, the image being confined
@@ -285,7 +223,7 @@ theorem nonempty_frontier_inter_closure_image_ball_inter_sphere
   exact ⟨v, clusterSetOn_subset_frontier_image isOpen_ball hd hinj hefr
     (clusterSetOn_mono inter_subset_left hv), clusterSetOn_subset_closure_image hv⟩
 
-/-! ## The small connected set joining the ends -/
+/-! ## The small connected set enclosing the middle piece -/
 
 /-- **A uniformly locally connected image boundary encloses the middle piece of every short image
 crosscut in a small connected boundary set.** For `f` holomorphic and injective on `ball c r` with
@@ -294,19 +232,19 @@ single `δ > 0` — independent of the boundary point `ζ` and of the crosscut r
 an image crosscut of diameter less than `δ` has its middle piece contained in a connected subset of
 `frontier (f '' ball c r)` of diameter at most `ε`.
 
-This is the second of the two geometric inputs of
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le`, the first being the
-length–area estimate `TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself
-discharge that criterion, whose enclosing set has to contain the whole boundary piece
+This is where the local connectedness of `∂Ω` that
+`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` needs enters, the other
+of its two geometric inputs being the length–area estimate
+`TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
+whose enclosing set has to contain the whole boundary piece
 `frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ))` and not only the middle piece.
 
-The joining set is built by taking every candidate at once, as in
-`TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace`: fix a point `a` of the middle piece,
-which is nonempty by `TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere`, and unite
-all preconnected subsets of the boundary that contain `a` and stay within `ε / 2` of it. The union
-is preconnected because its members share `a`, has diameter at most `ε` by the triangle inequality,
-and swallows the middle piece because the middle piece has diameter less than `δ`, so uniform local
-connectedness joins each of its points to `a` by such a set. -/
+Everything topological is in `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset`, the
+statement that a uniformly locally connected set encloses each of its small subsets in a small
+connected subset. What remains is that the middle piece is a subset of `frontier (f '' ball c r)`
+that is bounded, nonempty by
+`TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere`, and of diameter less than `δ` by
+`TauCeti.diam_frontier_inter_closure_image_ball_inter_sphere_le`. -/
 theorem exists_isConnected_subset_frontier_image_ball_of_diam_lt
     (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r))
@@ -315,34 +253,11 @@ theorem exists_isConnected_subset_frontier_image_ball_of_diam_lt
       diam (f '' (ball c r ∩ sphere ζ ρ)) < δ →
         ∃ S ⊆ frontier (f '' ball c r), IsConnected S ∧
           frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ S ∧ diam S ≤ ε := by
-  obtain ⟨δ, hδ, hjoin⟩ := hulc.exists_isConnected (by linarith : (0 : ℝ) < ε / 2)
+  obtain ⟨δ, hδ, hencl⟩ := hulc.exists_isConnected_superset hε
   refine ⟨δ, hδ, fun ζ hζ ρ hρ hρr hdiam => ?_⟩
-  obtain ⟨a, ha⟩ :=
-    nonempty_frontier_inter_closure_image_ball_inter_sphere hd hinj hb hζ hρ hρr
-  have hPb : IsBounded (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))) :=
-    ((hb.subset (image_mono inter_subset_left)).closure).subset inter_subset_right
-  have hPdiam : diam (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))) < δ :=
-    lt_of_le_of_lt (diam_frontier_inter_closure_image_ball_inter_sphere_le hb ζ ρ) hdiam
-  -- every preconnected boundary set through `a` that stays within `ε / 2` of it
-  set 𝒞 : Set (Set ℂ) := {T : Set ℂ | T ⊆ frontier (f '' ball c r) ∧ IsPreconnected T ∧ a ∈ T ∧
-    ∀ x ∈ T, dist x a ≤ ε / 2} with h𝒞
-  have haS : a ∈ ⋃₀ 𝒞 :=
-    ⟨{a}, ⟨singleton_subset_iff.mpr ha.1, isPreconnected_singleton, rfl,
-      fun x hx => by rw [mem_singleton_iff.mp hx, dist_self]; linarith⟩, rfl⟩
-  refine ⟨⋃₀ 𝒞, ?_, ⟨⟨a, haS⟩, isPreconnected_sUnion a 𝒞 (fun T hT => hT.2.2.1)
-    fun T hT => hT.2.1⟩, ?_, ?_⟩
-  · rintro x ⟨T, hT, hxT⟩
-    exact hT.1 hxT
-  · intro b hbP
-    obtain ⟨C, hCs, hCconn, hCa, hCb, hCsmall⟩ := hjoin a ha.1 b hbP.1
-      (lt_of_le_of_lt (dist_le_diam_of_mem hPb ha hbP) hPdiam)
-    exact ⟨C, ⟨hCs, hCconn.isPreconnected, hCa, fun x hx => hCsmall x hx a hCa⟩, hCb⟩
-  · refine diam_le_of_forall_dist_le hε.le ?_
-    rintro x ⟨T, hT, hxT⟩ y ⟨T', hT', hyT'⟩
-    have hx : dist x a ≤ ε / 2 := hT.2.2.2 x hxT
-    have hy : dist y a ≤ ε / 2 := hT'.2.2.2 y hyT'
-    calc dist x y ≤ dist x a + dist a y := dist_triangle x a y
-      _ ≤ ε / 2 + ε / 2 := by rw [dist_comm a y]; linarith
-      _ = ε := by ring
+  refine hencl _ inter_subset_left
+    (((hb.subset (image_mono inter_subset_left)).closure).subset inter_subset_right)
+    (nonempty_frontier_inter_closure_image_ball_inter_sphere hd hinj hb hζ hρ hρr) ?_
+  exact lt_of_le_of_lt (diam_frontier_inter_closure_image_ball_inter_sphere_le hb ζ ρ) hdiam
 
 end TauCeti
