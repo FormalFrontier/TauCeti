@@ -165,7 +165,7 @@ private theorem pointActionEnd_tmul (rho : Comodule R H V)
 private theorem evaluatedCoaction_one (rho : Comodule R H V)
     (A : CommAlgCat.{max u v w} R) (v : V) :
     evaluatedCoaction rho A (1 : points (H := H) A) v = 1 ⊗ₜ[R] v := by
-  letI : Comodule R H V := rho
+  let : Comodule R H V := rho
   have hmap :
       (TensorProduct.comm R V A).toLinearMap ∘ₗ
           TensorProduct.map LinearMap.id
@@ -259,7 +259,7 @@ private theorem pointActionEnd_evaluatedCoaction (rho : Comodule R H V)
 private theorem pointActionEnd_mul (rho : Comodule R H V)
     (A : CommAlgCat.{max u v w} R) (x y : points (H := H) A) :
     pointActionEnd rho A (x * y) = pointActionEnd rho A x * pointActionEnd rho A y := by
-  letI : Comodule R H V := rho
+  let : Comodule R H V := rho
   refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
   rw [Module.End.mul_apply, pointActionEnd_tmul, pointActionEnd_tmul, map_smul,
     pointActionEnd_evaluatedCoaction, Comodule.coassoc_apply,
