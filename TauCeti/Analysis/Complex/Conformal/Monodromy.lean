@@ -339,18 +339,7 @@ This is the monodromy theorem in the form the deck-group and covering-space cons
 continuation of a germ across a homotopy is itself a continuation, along the path the far endpoint
 sweeps out. Nothing is assumed rel endpoints; `TauCeti.monodromy_theorem` is the special case in
 which both edges are constant, where "continues along a constant path" degenerates to "carries one
-germ throughout".
-
-The proof is the metric stability engine run in the homotopy parameter. Fix `t₀`. Uniform
-continuity of `h` on the compact square makes the rows `h (t, ·)` and `h (t₀, ·)` uniformly close
-for `t` near `t₀`, so `IsAnalyticContinuationAlong.exists_forall_eventuallyEq_of_dist_lt` compares
-the whole row `f t` with one representative family `F` of the row `f t₀`, provided the two agree at
-the initial parameter. They do: the initial germs of `f t` and `f t₀` agree at `h (t, 0)` because
-`hstart` is a continuation, and `F 0` and `f t₀ 0` still agree at `h (t, 0)` — rather than only at
-`h (t₀, 0)` — because germ agreement between two analytic functions survives a small move of the
-base point (`TauCeti.eventually_eventuallyEq_iff_of_analyticAt`). The same transport at the far
-edge turns the conclusion back into a statement about `f t₀ 1`, which is exactly the local
-constancy of germs that `IsAnalyticContinuationAlong` asks for. -/
+germ throughout". -/
 theorem monodromy_theorem_of_free_homotopy {h : I × I → ℂ} (hh : Continuous h)
     {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
@@ -386,11 +375,9 @@ theorem monodromy_theorem_of_free_homotopy {h : I × I → ℂ} (hh : Continuous
 all the continuations starting from that one germ. Then they all end at one and the same germ at
 `z₁`: the result of the continuation depends on the path only through its homotopy class.
 
-This is `TauCeti.monodromy_theorem_of_free_homotopy` for a homotopy whose two edges are the
-constant paths at `z₀` and at `z₁`. Along a constant path the hypothesis "the initial germs
-continue" says exactly that they are all one germ, which is what is assumed, and the conclusion
-"the terminal germs continue" says by uniqueness of continuation that they are all one germ, which
-is what is asserted. -/
+This is the rel-endpoints case of `TauCeti.monodromy_theorem_of_free_homotopy`, whose homotopy is
+allowed to move the endpoints and whose conclusion is correspondingly a continuation along the
+path the terminal point sweeps out rather than a single germ at `z₁`. -/
 theorem monodromy_theorem {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homotopy p₁)
     {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
@@ -416,11 +403,7 @@ continue along the path `t ↦ h (t, 0)` swept out by the base point, then the g
 continuation around every loop of the homotopy as soon as it is preserved around one of them.
 
 This is the statement that makes monodromy an invariant of the free homotopy class of a loop, and
-it is out of reach of `TauCeti.monodromy_theorem`, whose homotopies must fix the base point. It
-follows by comparing the two continuations `t ↦ f t 0` and `t ↦ f t 1` along the one path
-`t ↦ h (t, 0)`: they are continuations along the same path — the second by
-`TauCeti.monodromy_theorem_of_free_homotopy` — so uniqueness propagates their agreement at `0` to
-every parameter. -/
+it is out of reach of `TauCeti.monodromy_theorem`, whose homotopies must fix the base point. -/
 theorem monodromy_theorem_of_free_homotopy_loop {h : I × I → ℂ} (hh : Continuous h)
     (hloop : ∀ t : I, h (t, 1) = h (t, 0)) {f : I → I → ℂ → ℂ}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
