@@ -199,11 +199,7 @@ theorem mulInvariantIntegralCurve_add [CompleteSpace E]
     _ = γ s * γ t := congrFun (mulInvariantIntegralCurve_eq_const_mul v (γ s)) t
 
 /-- The canonical invariant curve through the identity, bundled as a continuous one-parameter
-subgroup.
-
-This definition is exposed so its exported evaluation theorem can unfold the bundled homomorphism
-under the module system. -/
-@[expose]
+subgroup. -/
 noncomputable def mulInvariantOneParameterSubgroup [CompleteSpace E]
     [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) :
@@ -223,4 +219,4 @@ theorem mulInvariantOneParameterSubgroup_apply [CompleteSpace E]
     [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
     mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd t) =
       mulInvariantIntegralCurve v 1 t :=
-  rfl
+  (rfl)
