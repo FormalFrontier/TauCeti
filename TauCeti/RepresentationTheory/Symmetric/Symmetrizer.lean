@@ -256,6 +256,15 @@ theorem youngSymmetrizer_coeff_one (t : YoungTableau μ) :
   · exact fun p _ hp => by simp [hp]
   · simp
 
+/-- The coefficient of a row-group permutation in a Young symmetrizer is one: the row group
+translates `c_t` to itself, so all of its coefficients on the row group agree with the
+coefficient at the identity. -/
+theorem youngSymmetrizer_coeff_of_mem_rowSubgroup (t : YoungTableau μ)
+    {p : Equiv.Perm (Fin μ.card)} (hp : p ∈ rowSubgroup t) :
+    (youngSymmetrizer t).coeff p = 1 := by
+  have h := congrArg (fun x => MonoidAlgebra.coeff x p) (mul_youngSymmetrizer_left t ⟨p, hp⟩)
+  simpa using h.symm
+
 /-- A Young symmetrizer is nonzero. -/
 @[simp]
 theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
