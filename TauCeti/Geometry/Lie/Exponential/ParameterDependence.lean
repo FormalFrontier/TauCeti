@@ -25,6 +25,8 @@ vectors.
   closed neighborhood of the zero vector and the identity coordinate.
 * `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local flow
   whose values remain inside the identity chart.
+* `exists_local_coordinate_representation_mulInvariantIntegralCurve`: the local flow represents the
+  canonical invariant integral curves uniformly for all sufficiently small generating vectors.
 
 ## References
 
@@ -43,6 +45,51 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [IsManifold I 1 G] [IsManifold I 2 G]
+
+omit [Group G] [IsManifold I 2 G] in
+private theorem isMIntegralCurveAt_extChartAt_symm_of_eventually
+    [ContinuousSMul ℝ E]
+    {x₀ : G} {f : ℝ → E} {t₀ : ℝ} {v : (x : G) → TangentSpace I x}
+    (htarget : ∀ᶠ t in 𝓝 t₀, f t ∈ interior (extChartAt I x₀).target)
+    (hderiv : ∀ᶠ t in 𝓝 t₀,
+      HasDerivAt f
+        (tangentCoordChange I ((extChartAt I x₀).symm (f t)) x₀
+          ((extChartAt I x₀).symm (f t)) (v ((extChartAt I x₀).symm (f t)))) t) :
+    IsMIntegralCurveAt ((extChartAt I x₀).symm ∘ f) v t₀ := by
+  obtain ⟨s, hs, haux⟩ := (hderiv.and htarget).exists_mem
+  rw [isMIntegralCurveAt_iff]
+  refine ⟨s, hs, ?_⟩
+  intro t ht
+  let xₜ : G := (extChartAt I x₀).symm (f t)
+  have h : HasDerivAt f
+      (tangentCoordChange I xₜ x₀ xₜ (v xₜ)) t := (haux t ht).1
+  have hf3 := Set.mem_of_mem_of_subset (haux t ht).2 interior_subset
+  have hft1 := Set.mem_preimage.mp <|
+    Set.mem_of_mem_of_subset hf3 (extChartAt I x₀).target_subset_preimage_source
+  have hft2 := mem_extChartAt_source (I := I) xₜ
+  have hft1' : xₜ ∈ (extChartAt I x₀).source := by simpa only [xₜ] using hft1
+  have hcharts :
+      xₜ ∈ (extChartAt I xₜ).source ∩ (extChartAt I x₀).source ∩
+        (extChartAt I xₜ).source := ⟨⟨hft2, hft1'⟩, hft2⟩
+  apply HasMFDerivAt.hasMFDerivWithinAt
+  refine ⟨(continuousAt_extChartAt_symm'' hf3).comp h.continuousAt, ?_⟩
+  have hcomp : HasDerivAt ((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f)
+      (tangentCoordChange I x₀ xₜ xₜ (tangentCoordChange I xₜ x₀ xₜ (v xₜ))) t := by
+    apply HasFDerivAt.comp_hasDerivAt _ _ h
+    apply HasFDerivWithinAt.hasFDerivAt (s := Set.range I) _ <|
+      mem_nhds_iff.mpr ⟨interior (extChartAt I x₀).target,
+        subset_trans interior_subset (extChartAt_target_subset_range ..),
+        isOpen_interior, (haux t ht).2⟩
+    rw [← (extChartAt I x₀).right_inv hf3]
+    exact hasFDerivWithinAt_tangentCoordChange ⟨hft1, hft2⟩
+  have hd := hcomp.congr_deriv (tangentCoordChange_comp hcharts)
+  have hd' := hd.congr_deriv (tangentCoordChange_self hft2)
+  simp only [writtenInExtChartAt, extChartAt_model_space_eq_id, PartialEquiv.refl_coe,
+    PartialEquiv.refl_symm, modelWithCornersSelf_coe, Function.comp_def, id_eq, Set.range_id]
+  rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
+  rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
+  with_unfolding_all
+    exact hd'.hasFDerivAt.hasFDerivWithinAt
 
 /-- The left-invariant vector field, expressed in the identity chart and parameterized by its
 generating tangent vector in the model space. -/
@@ -192,3 +239,98 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
   refine ⟨hderiv.hasDerivAt (Icc_mem_nhds hxt.2.1 hxt.2.2),
     (hα xt.1 hx).1, (hα xt.1 hx).2.2 xt.2 ht, ?_⟩
   exact (Set.mem_preimage.mp hxtTarget).2
+
+local instance lieGroupMinSmoothnessParameterDependence [LieGroup I ∞ G] :
+    LieGroup I (minSmoothness ℝ 3) G := by
+  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+
+/-- A single coordinate flow represents the canonical invariant integral curves for every
+sufficiently small generating vector and every sufficiently small time. This is the bridge from
+Picard--Lindelöf's parameterized model-space flow to the canonical manifold-valued curves used to
+define `lieExp`. -/
+theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    ∃ (α : (E × E) × ℝ → E × E) (U : Set E) (δ : ℝ),
+      U ∈ 𝓝 (0 : E) ∧ 0 < δ ∧
+      ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
+      ∀ v ∈ U,
+        Set.EqOn
+          (fun t => (extChartAt I (1 : G)).symm
+            (α (((v, extChartAt I (1 : G) (1 : G)), t))).2)
+          (mulInvariantIntegralCurve
+            ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1)
+          (Set.Ioo (-δ) δ) := by
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
+  obtain ⟨α, hαcont, hαcenter, hα⟩ :=
+    exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
+  let embed : E × ℝ → (E × E) × ℝ := fun vt =>
+    ((vt.1, extChartAt I (1 : G) (1 : G)), vt.2)
+  have hembed : ContinuousAt embed ((0 : E), 0) := by fun_prop
+  have hpull : ∀ᶠ vt in 𝓝 ((0 : E), 0),
+      HasDerivAt (fun t => α ((embed vt).1, t))
+          ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G) (α (embed vt))) vt.2 ∧
+        α ((embed vt).1, 0) = (embed vt).1 ∧
+        (α (embed vt)).1 = (embed vt).1.1 ∧
+        (α (embed vt)).2 ∈ interior (extChartAt I (1 : G)).target := by
+    exact hembed.eventually hα
+  rw [nhds_prod_eq] at hpull
+  obtain ⟨U, hU, T, hT, hsub⟩ := Filter.mem_prod_iff.mp hpull
+  obtain ⟨δ, hδ, hδT⟩ := Metric.mem_nhds_iff.mp hT
+  rw [Real.ball_eq_Ioo, zero_sub, zero_add] at hδT
+  refine ⟨α, U, δ, hU, hδ, hαcont, ?_⟩
+  intro v hv
+  let f : ℝ → E := fun t =>
+    (α (((v, extChartAt I (1 : G) (1 : G)), t))).2
+  let γ : ℝ → G := (extChartAt I (1 : G)).symm ∘ f
+  have hlocal (t : ℝ) (ht : t ∈ Set.Ioo (-δ) δ) :
+      HasDerivAt (fun s => α (((v, extChartAt I (1 : G) (1 : G)), s)))
+          ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G)
+            (α (((v, extChartAt I (1 : G) (1 : G)), t)))) t ∧
+        α (((v, extChartAt I (1 : G) (1 : G)), 0)) =
+          (v, extChartAt I (1 : G) (1 : G)) ∧
+        (α (((v, extChartAt I (1 : G) (1 : G)), t))).1 = v ∧
+        (α (((v, extChartAt I (1 : G) (1 : G)), t))).2 ∈
+          interior (extChartAt I (1 : G)).target := by
+    have hmem : (v, t) ∈ U ×ˢ T := ⟨hv, hδT ht⟩
+    simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using hsub hmem
+  have hγAt : ∀ t ∈ Set.Ioo (-δ) δ,
+      IsMIntegralCurveAt γ
+        (mulInvariantVectorField
+          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)) t := by
+    intro t ht
+    apply isMIntegralCurveAt_extChartAt_symm_of_eventually
+    · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      exact (hlocal s hs).2.2.2
+    · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      have hsnd : HasDerivAt f
+          (mulInvariantCoordinateVectorField (I := I) (G := G)
+            (α (((v, extChartAt I (1 : G) (1 : G)), s)))) s := by
+        change HasDerivAt
+          ((ContinuousLinearMap.snd ℝ E E) ∘ fun u =>
+            α (((v, extChartAt I (1 : G) (1 : G)), u))) _ s
+        simpa using (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt s
+          (hlocal s hs).1
+      have hpair : α (((v, extChartAt I (1 : G) (1 : G)), s)) = (v, f s) := by
+        apply Prod.ext
+        · exact (hlocal s hs).2.2.1
+        · rfl
+      rw [hpair] at hsnd
+      simpa only [mulInvariantCoordinateVectorField, f] using hsnd
+  have hγOn : IsMIntegralCurveOn γ
+      (mulInvariantVectorField
+        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v))
+      (Set.Ioo (-δ) δ) := IsMIntegralCurveAt.isMIntegralCurveOn hγAt
+  have hzero : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨by linarith, by linarith⟩
+  have hγzero : γ 0 = 1 := by
+    have hinit := (hlocal 0 hzero).2.1
+    change (extChartAt I (1 : G)).symm
+      (α (((v, extChartAt I (1 : G) (1 : G)), 0))).2 = 1
+    rw [congrArg Prod.snd hinit]
+    exact (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
+  exact isMIntegralCurveOn_Ioo_eqOn_of_contMDiff_boundaryless hzero
+    ((contMDiff_mulInvariantVectorField
+      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)).of_le (by simp))
+    hγOn
+    ((isMIntegralCurve_mulInvariantIntegralCurve
+      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1).isMIntegralCurveOn _)
+    (by simpa only [γ, f, Function.comp_apply, mulInvariantIntegralCurve_zero] using hγzero)
