@@ -144,6 +144,18 @@ theorem weylElement_mem_normalizer :
 
 /-! ### The normalizer of the maximal torus -/
 
+/-- The imaginary unit as a point of the unit circle. The torus element it names, `diag (i, -i)`,
+is the one the normalizer computation is run at: it is the simplest `z` with `z² ≠ 1`, which is
+exactly what `TauCeti.SU2.mem_torus_of_commute_torusHom` asks for. It is a proof witness, not
+`SU(2)` API, so it stays local to this file. -/
+private def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
+
+private theorem coe_circleI : (circleI : ℂ) = Complex.I := (rfl)
+
+private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
+  rw [coe_circleI, Complex.I_sq]
+  norm_num
+
 /-- **The normalizer of the maximal torus, elementwise.** An element of `SU(2)` normalizes the
 diagonal torus exactly when it is diagonal, or is the quarter turn times a diagonal element. -/
 theorem mem_normalizer_torus_iff {g : SU2} :

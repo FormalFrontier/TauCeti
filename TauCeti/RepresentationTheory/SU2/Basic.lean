@@ -46,8 +46,6 @@ of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
 * `TauCeti.SU2.torus`: the maximal torus of `SU(2)`, the range of `torusHom`.
 * `TauCeti.SU2.torusContinuousMulEquiv`: the isomorphism of topological groups `Circle ≃ₜ* T`.
 * `TauCeti.SU2.torusExp`: the torus element `diag (e^{iθ}, e^{-iθ})`.
-* `TauCeti.SU2.circleI`: the imaginary unit as a point of the circle, the torus parameter the
-  centralizer computation is run at.
 -/
 
 public section
@@ -225,13 +223,13 @@ instance : IsMulCommutative torus :=
 
 /-- The imaginary unit as a point of the unit circle. The torus element it names,
 `diag (i, -i)`, is the one the centralizer of the maximal torus is computed at: it is the
-simplest `z` with `z² ≠ 1`, which is exactly what `TauCeti.SU2.centralizer_torusHom` asks for. -/
-def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
+simplest `z` with `z² ≠ 1`, which is exactly what `TauCeti.SU2.centralizer_torusHom` asks for. It
+is a proof witness, not `SU(2)` API, so it stays local to this file. -/
+private def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
 
-@[simp]
-theorem coe_circleI : (circleI : ℂ) = Complex.I := (rfl)
+private theorem coe_circleI : (circleI : ℂ) = Complex.I := (rfl)
 
-theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
+private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
   rw [coe_circleI, Complex.I_sq]
   norm_num
 
