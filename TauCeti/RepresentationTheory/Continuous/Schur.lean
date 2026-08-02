@@ -88,9 +88,9 @@ theorem eq_zero_of_isEmpty_equiv (hπ : Representation.IsIrreducible π.toRepres
     (hρ : Representation.IsIrreducible ρ.toRepresentation)
     (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (f : ContIntertwiningMap π ρ) :
     f = 0 := by
-  letI : Representation.IsIrreducible π.toRepresentation := hπ
-  letI : Representation.IsIrreducible ρ.toRepresentation := hρ
-  haveI : IsEmpty (Representation.Equiv π.toRepresentation ρ.toRepresentation) :=
+  let : Representation.IsIrreducible π.toRepresentation := hπ
+  let : Representation.IsIrreducible ρ.toRepresentation := hρ
+  have : IsEmpty (Representation.Equiv π.toRepresentation ρ.toRepresentation) :=
     ⟨fun φ ↦ hne.false (nonempty_equiv_iff.2 ⟨φ⟩).some⟩
   exact ContIntertwiningMap.toIntertwiningMap_injective (Subsingleton.elim _ _)
 
