@@ -58,11 +58,11 @@ private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGro
 
 namespace IsMIntegralCurve
 
-variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-  [BoundarylessManifold I M]
+variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [BoundarylessManifold I M]
 
 /-- An integral curve of a `C^n` vector field on a boundaryless smooth manifold is `C^(n + 1)`. -/
-theorem contMDiff_succ (n : ℕ) {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
+theorem contMDiff_succ (n : ℕ) [IsManifold I 1 M] [IsManifold I (n + 1 : ℕ) M]
+    {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
     (hγ : IsMIntegralCurve γ v)
     (hv : CMDiff n (fun x => (⟨x, v x⟩ : TangentBundle I M))) :
     ContMDiff 𝓘(ℝ, ℝ) I (n + 1 : ℕ) γ := by
@@ -100,12 +100,14 @@ theorem contMDiff_succ (n : ℕ) {γ : ℝ → M} {v : (x : M) → TangentSpace 
 
 /-- An integral curve of an infinitely smooth vector field on a boundaryless smooth manifold is
 infinitely smooth. -/
-theorem contMDiff {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
+theorem contMDiff [IsManifold I ∞ M] {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
     (hγ : IsMIntegralCurve γ v)
     (hv : CMDiff ∞ (fun x => (⟨x, v x⟩ : TangentBundle I M))) :
     ContMDiff 𝓘(ℝ, ℝ) I ∞ γ := by
   rw [contMDiff_infty]
   intro n
+  letI : IsManifold I (n + 1 : ℕ) M := IsManifold.of_le (n := ∞)
+    (show ((n + 1 : ℕ) : ℕ∞ω) ≤ ∞ from mod_cast le_top)
   exact (hγ.contMDiff_succ n (hv.of_le (mod_cast le_top))).of_le
     (by exact_mod_cast Nat.le_succ n)
 
