@@ -102,7 +102,7 @@ with a totally positive generator. -/
     mk I = mk J ↔ ∃ z ∈ narrowPrincipalSubgroup K, I * z = J :=
   QuotientGroup.mk'_eq_mk' (narrowPrincipalSubgroup K)
 
-variable {M : Type*} [CommGroup M]
+variable {M : Type*} [Monoid M]
 
 /-- **Universal property of the narrow class group.** A homomorphism `φ` out of the invertible
 fractional ideals whose kernel contains `narrowPrincipalSubgroup` (i.e. `φ` is trivial on principal
@@ -111,6 +111,7 @@ noncomputable def lift (φ : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* M)
     (h : narrowPrincipalSubgroup K ≤ MonoidHom.ker φ) : NarrowClassGroup K →* M :=
   QuotientGroup.lift (narrowPrincipalSubgroup K) φ h
 
+/-- The descended homomorphism `lift φ h` agrees with `φ` on the class of each representative. -/
 @[simp] theorem lift_mk (φ : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* M)
     (h : narrowPrincipalSubgroup K ≤ MonoidHom.ker φ) (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
     lift φ h (mk I) = φ I :=
@@ -135,6 +136,7 @@ condition on generators. -/
 noncomputable def toClassGroup : NarrowClassGroup K →* ClassGroup (𝓞 K) :=
   lift (ClassGroup.mk (R := 𝓞 K) K) narrowPrincipalSubgroup_le_ker
 
+/-- Forgetting positivity sends the narrow class of `I` to its ordinary ideal class. -/
 @[simp] theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
     toClassGroup (mk I) = ClassGroup.mk K I :=
   lift_mk _ _ I
