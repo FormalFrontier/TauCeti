@@ -17,7 +17,8 @@ Mathlib's category of commutative group objects.
 The category morphism type `A ⟶ B` is the type required by the Jacobian's universal property: the
 factorization from the Jacobian to another abelian variety must preserve the group law, rather than
 being only a morphism of the underlying schemes. The characteristic lemmas expose preservation of
-the unit, multiplication, and inverse, as well as the underlying morphism of schemes.
+the unit, multiplication, and inverse, as well as the forgetful functors to schemes over `Spec K`
+and to schemes.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, "Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API", and prepares Layer F's unique
@@ -116,6 +117,10 @@ lemma Hom.inv_hom {A B : AbelianVariety K} (f : A ⟶ B) :
     ι[A.toOver] ≫ Hom.toOverHom f = Hom.toOverHom f ≫ ι[B.toOver] := by
   rw [Hom.toOverHom_def]
   exact GrpObj.inv_hom _
+
+/-- The forgetful functor from abelian varieties to their underlying schemes. -/
+@[expose] noncomputable def Hom.toSchemeFunctor : AbelianVariety K ⥤ Scheme :=
+  Hom.toOverFunctor ⋙ Over.forget (Spec (.of K))
 
 /-- The underlying morphism between the schemes of two abelian varieties. -/
 abbrev Hom.toSchemeHom {A B : AbelianVariety K} (f : A ⟶ B) : A.toScheme ⟶ B.toScheme :=
