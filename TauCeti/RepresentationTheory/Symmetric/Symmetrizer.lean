@@ -22,6 +22,10 @@ sign character.  In particular, each factor squares to its subgroup order times 
 These are the elementary inputs to the essential-idempotence theorem for `c_t` and the
 construction of Specht modules.
 
+The symmetrizers are built over `ℚ`.  Constructions that let `c_t` act on a module over some
+other ring need its coefficients transported there, which is `youngSymmetrizerOver`; the target
+ring is a `ℚ`-algebra, since the coefficients of `c_t` are genuinely rational.
+
 ## References
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 2.
@@ -273,6 +277,32 @@ theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
   have := congrArg (fun x =>
     x.coeff (1 : Equiv.Perm (Fin μ.card))) h
   simp at this
+
+section Transport
+
+variable (k : Type*) [CommSemiring k] [Algebra ℚ k]
+
+/-- The Young symmetrizer `c_t` with its rational coefficients transported into a `ℚ`-algebra
+`k`, so that it can act on a `k`-module. -/
+noncomputable def youngSymmetrizerOver (t : YoungTableau μ) :
+    MonoidAlgebra k (Equiv.Perm (Fin μ.card)) :=
+  MonoidAlgebra.mapAlgHom _ (Algebra.ofId ℚ k) (youngSymmetrizer t)
+
+/-- The transport of a Young symmetrizer applies the structure map of the algebra to every
+coefficient. -/
+theorem youngSymmetrizerOver_def (t : YoungTableau μ) :
+    youngSymmetrizerOver k t =
+      MonoidAlgebra.mapAlgHom _ (Algebra.ofId ℚ k) (youngSymmetrizer t) :=
+  (rfl)
+
+/-- The coefficients of the transported Young symmetrizer are the images of the rational
+coefficients. -/
+@[simp]
+theorem youngSymmetrizerOver_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin μ.card)) :
+    (youngSymmetrizerOver k t).coeff σ = algebraMap ℚ k ((youngSymmetrizer t).coeff σ) := by
+  rw [youngSymmetrizerOver_def, MonoidAlgebra.coeff_mapAlgHom, Algebra.ofId_apply]
+
+end Transport
 
 end
 
