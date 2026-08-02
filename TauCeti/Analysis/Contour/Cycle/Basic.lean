@@ -103,6 +103,58 @@ theorem of_apply {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
     of γ hγ hclosed t = γ t := by
   exact coe_apply (of γ hγ hclosed) ⟨t, ht⟩
 
+/-- Bundling a raw curve preserves its interval image. -/
+@[simp]
+theorem image_of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) :
+    of γ hγ hclosed '' uIcc (of γ hγ hclosed).a (of γ hγ hclosed).b =
+      γ '' uIcc a b := by
+  ext z
+  constructor
+  · rintro ⟨t, ht, rfl⟩
+    exact ⟨t, ht, (of_apply γ hγ hclosed ht).symm⟩
+  · rintro ⟨t, ht, rfl⟩
+    exact ⟨t, ht, of_apply γ hγ hclosed ht⟩
+
+/-- Bundling a raw curve preserves the set into which it maps its parameter interval. -/
+@[simp]
+theorem mapsTo_of_iff {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) (Ω : Set ℂ) :
+    MapsTo (of γ hγ hclosed) (uIcc (of γ hγ hclosed).a (of γ hγ hclosed).b) Ω ↔
+      MapsTo γ (uIcc a b) Ω := by
+  rw [Set.mapsTo_iff_image_subset, Set.mapsTo_iff_image_subset, image_of]
+
+/-- Bundling a raw curve preserves its contour integral. -/
+@[simp]
+theorem integral_of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : ℂ → E) :
+    (∫ t in (of γ hγ hclosed).a..(of γ hγ hclosed).b,
+        deriv (of γ hγ hclosed) t • f (of γ hγ hclosed t)) =
+      ∫ t in a..b, deriv γ t • f (γ t) := by
+  have heq : EqOn (of γ hγ hclosed) γ (uIoo a b) :=
+    fun _ ht ↦ of_apply γ hγ hclosed (uIoo_subset_uIcc_self ht)
+  exact intervalIntegral.integral_congr_uIoo fun t ht ↦ by
+    rw [heq ht, heq.deriv isOpen_Ioo ht]
+
+/-- Bundling a raw curve preserves its winding number. -/
+@[simp]
+theorem windingNumber_of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) (z₀ : ℂ) :
+    TauCeti.Contour.windingNumber (of γ hγ hclosed) (of γ hγ hclosed).a
+        (of γ hγ hclosed).b z₀ = TauCeti.Contour.windingNumber γ a b z₀ := by
+  apply TauCeti.Contour.windingNumber_congr_curve
+  intro t ht
+  exact of_apply γ hγ hclosed (uIoo_subset_uIcc_self ht)
+
+/-- Bundling a raw curve preserves null-homology. -/
+@[simp]
+theorem isNullHomologous_of_iff {a b : ℝ} (γ : ℝ → ℂ)
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) (Ω : Set ℂ) :
+    TauCeti.Contour.IsNullHomologous (of γ hγ hclosed) (of γ hγ hclosed).a
+        (of γ hγ hclosed).b Ω ↔ TauCeti.Contour.IsNullHomologous γ a b Ω := by
+  simp only [TauCeti.Contour.isNullHomologous_iff, windingNumber_of]
+
 /-- The underlying parametrization is continuous on its parameter interval. -/
 theorem continuousOn (γ : PiecewiseC1ClosedCurve) : ContinuousOn γ (uIcc γ.a γ.b) :=
   γ.isPiecewiseC1On.continuousOn
@@ -135,27 +187,18 @@ theorem mem_trace_iff {C : Cycle} {z : ℂ} :
 theorem trace_zero : trace (0 : Cycle) = ∅ := by
   simp [trace]
 
-/-- The trace of a raw curve bundled as a generator is its raw interval image. -/
-@[simp]
-theorem trace_of_raw {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
-    (hclosed : γ a = γ b) :
-    PiecewiseC1ClosedCurve.of γ hγ hclosed ''
-        uIcc (PiecewiseC1ClosedCurve.of γ hγ hclosed).a
-          (PiecewiseC1ClosedCurve.of γ hγ hclosed).b =
-      γ '' uIcc a b := by
-  change PiecewiseC1ClosedCurve.of γ hγ hclosed '' uIcc a b = γ '' uIcc a b
-  ext z
-  constructor
-  · rintro ⟨t, ht, rfl⟩
-    exact ⟨t, ht, (PiecewiseC1ClosedCurve.of_apply γ hγ hclosed ht).symm⟩
-  · rintro ⟨t, ht, rfl⟩
-    exact ⟨t, ht, PiecewiseC1ClosedCurve.of_apply γ hγ hclosed ht⟩
-
 /-- The trace of a single generator is its image on its parameter interval. -/
 @[simp]
 theorem trace_of (γ : PiecewiseC1ClosedCurve) :
     trace (FreeAbelianGroup.of γ) = γ '' uIcc γ.a γ.b := by
   simp [trace]
+
+/-- The trace of a raw curve bundled as a one-generator cycle is its raw interval image. -/
+theorem trace_of_raw {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
+    (hclosed : γ a = γ b) :
+    trace (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) =
+      γ '' uIcc a b := by
+  rw [trace_of, PiecewiseC1ClosedCurve.image_of]
 
 /-- Negating every coefficient does not change the trace. -/
 @[simp]
@@ -181,19 +224,14 @@ theorem trace_zsmul (C : Cycle) {n : ℤ} (hn : n ≠ 0) : trace (n • C) = tra
 def IsIn (C : Cycle) (Ω : Set ℂ) : Prop :=
   trace C ⊆ Ω
 
-/-- Restatement of cycle containment in terms of its trace. -/
-theorem isIn_iff {C : Cycle} {Ω : Set ℂ} : IsIn C Ω ↔ trace C ⊆ Ω :=
-  Iff.rfl
-
-/-- A raw curve bundled as a generator lies in `Ω` exactly when it maps its interval into `Ω`. -/
-@[simp]
+/-- A raw curve bundled as a one-generator cycle lies in `Ω` exactly when it maps its interval
+into `Ω`. -/
 theorem isIn_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
     (hclosed : γ a = γ b) (Ω : Set ℂ) :
-    MapsTo (PiecewiseC1ClosedCurve.of γ hγ hclosed)
-        (uIcc (PiecewiseC1ClosedCurve.of γ hγ hclosed).a
-          (PiecewiseC1ClosedCurve.of γ hγ hclosed).b) Ω ↔
+    IsIn (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) Ω ↔
       MapsTo γ (uIcc a b) Ω := by
-  rw [Set.mapsTo_iff_image_subset, Set.mapsTo_iff_image_subset, trace_of_raw]
+  rw [IsIn, trace_of, ← Set.mapsTo_iff_image_subset,
+    PiecewiseC1ClosedCurve.mapsTo_of_iff]
 
 /-- A one-generator cycle lies in `Ω` exactly when its parametrization maps its interval into
 `Ω`. -/
@@ -206,7 +244,7 @@ theorem isIn_of_iff {γ : PiecewiseC1ClosedCurve} {Ω : Set ℂ} :
 /-- The zero cycle lies in every set. -/
 @[simp]
 theorem IsIn.zero (Ω : Set ℂ) : IsIn (0 : Cycle) Ω := by
-  simp [isIn_iff]
+  simp [IsIn]
 
 /-- A sum of two cycles in `Ω` is in `Ω`. -/
 theorem IsIn.add {C D : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (hD : IsIn D Ω) :
@@ -216,162 +254,79 @@ theorem IsIn.add {C D : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (hD : IsIn D Ω) 
 /-- Negation preserves containment in a set. -/
 @[simp]
 theorem isIn_neg_iff {C : Cycle} {Ω : Set ℂ} : IsIn (-C) Ω ↔ IsIn C Ω := by
-  simp [isIn_iff]
+  simp [IsIn]
 
 /-- Every integer multiple of a cycle in `Ω` is in `Ω`. -/
 theorem IsIn.zsmul {C : Cycle} {Ω : Set ℂ} (hC : IsIn C Ω) (n : ℤ) : IsIn (n • C) Ω := by
   by_cases hn : n = 0
   · subst n
     simpa only [zero_zsmul] using IsIn.zero Ω
-  · rw [isIn_iff, trace_zsmul C hn]
+  · rw [IsIn, trace_zsmul C hn]
     exact hC
 
 /-- The integral of `f` over a cycle, obtained by additively extending the raw contour integral
 `∫ t in γ.a..γ.b, deriv γ t • f (γ t)` from generators. -/
 def integral {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (C : Cycle) (f : ℂ → E) : E :=
+    (f : ℂ → E) : Cycle →+ E :=
   FreeAbelianGroup.lift
-    (fun γ : PiecewiseC1ClosedCurve ↦ ∫ t in γ.a..γ.b, deriv γ t • f (γ t)) C
+    fun γ : PiecewiseC1ClosedCurve ↦ ∫ t in γ.a..γ.b, deriv γ t • f (γ t)
 
-/-- Integrating over a raw curve bundled as a generator gives its raw contour integral. -/
-@[simp]
+/-- Integrating over a raw curve bundled as a one-generator cycle gives its raw contour integral. -/
 theorem integral_of_raw {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
     (hclosed : γ a = γ b) {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
     (f : ℂ → E) :
-    (∫ t in (PiecewiseC1ClosedCurve.of γ hγ hclosed).a..
-        (PiecewiseC1ClosedCurve.of γ hγ hclosed).b,
-        deriv (PiecewiseC1ClosedCurve.of γ hγ hclosed) t •
-          f (PiecewiseC1ClosedCurve.of γ hγ hclosed t)) =
+    integral f (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) =
       ∫ t in a..b, deriv γ t • f (γ t) := by
-  change (∫ t in a..b, deriv (PiecewiseC1ClosedCurve.of γ hγ hclosed) t •
-    f (PiecewiseC1ClosedCurve.of γ hγ hclosed t)) = _
-  have heq : EqOn (PiecewiseC1ClosedCurve.of γ hγ hclosed) γ (uIoo a b) :=
-    fun _ ht ↦ PiecewiseC1ClosedCurve.of_apply γ hγ hclosed (uIoo_subset_uIcc_self ht)
-  exact intervalIntegral.integral_congr_uIoo fun t ht ↦ by
-    rw [heq ht, heq.deriv isOpen_Ioo ht]
+  rw [integral, FreeAbelianGroup.lift_apply_of, PiecewiseC1ClosedCurve.integral_of]
 
 /-- Integrating over a one-generator cycle gives the raw contour integral over that curve. -/
 @[simp]
 theorem integral_of {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
     (γ : PiecewiseC1ClosedCurve) (f : ℂ → E) :
-    integral (FreeAbelianGroup.of γ) f =
+    integral f (FreeAbelianGroup.of γ) =
       ∫ t in γ.a..γ.b, deriv γ t • f (γ t) := by
   rw [integral, FreeAbelianGroup.lift_apply_of]
 
-/-- The integral over the zero cycle vanishes. -/
-@[simp]
-theorem integral_zero {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f : ℂ → E) : integral 0 f = 0 :=
-  by rw [integral, map_zero]
-
-/-- The integral is additive in the cycle. -/
-@[simp]
-theorem integral_add {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (C D : Cycle) (f : ℂ → E) :
-    integral (C + D) f = integral C f + integral D f := by
-  simp only [integral, map_add]
-
-/-- Reversing every coefficient negates the integral. -/
-@[simp]
-theorem integral_neg {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (C : Cycle) (f : ℂ → E) : integral (-C) f = -integral C f := by
-  simp only [integral, map_neg]
-
-/-- The integral respects subtraction of cycles. -/
-@[simp]
-theorem integral_sub {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (C D : Cycle) (f : ℂ → E) :
-    integral (C - D) f = integral C f - integral D f := by
-  simp only [sub_eq_add_neg, integral_add, integral_neg]
-
-/-- The integral respects integer multiplicities. -/
-@[simp]
-theorem integral_zsmul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (n : ℤ) (C : Cycle) (f : ℂ → E) :
-    integral (n • C) f = n • integral C f := by
-  simp only [integral, map_zsmul]
-
 /-- The winding number of a cycle, obtained by additively extending the generalized winding number
 of its generators. -/
-def windingNumber (C : Cycle) (z₀ : ℂ) : ℂ :=
+def windingNumber (z₀ : ℂ) : Cycle →+ ℂ :=
   FreeAbelianGroup.lift
-    (fun γ : PiecewiseC1ClosedCurve ↦ TauCeti.Contour.windingNumber γ γ.a γ.b z₀) C
+    fun γ : PiecewiseC1ClosedCurve ↦ TauCeti.Contour.windingNumber γ γ.a γ.b z₀
 
-/-- The winding number of a raw curve bundled as a generator is its raw winding number. -/
-@[simp]
+/-- The winding number of a raw curve bundled as a one-generator cycle is its raw winding number. -/
 theorem windingNumber_of_raw {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)
     (hclosed : γ a = γ b) (z₀ : ℂ) :
-    TauCeti.Contour.windingNumber (PiecewiseC1ClosedCurve.of γ hγ hclosed)
-        (PiecewiseC1ClosedCurve.of γ hγ hclosed).a
-        (PiecewiseC1ClosedCurve.of γ hγ hclosed).b z₀ =
+    windingNumber z₀ (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) =
       TauCeti.Contour.windingNumber γ a b z₀ := by
-  change TauCeti.Contour.windingNumber (PiecewiseC1ClosedCurve.of γ hγ hclosed) a b z₀ = _
-  apply TauCeti.Contour.windingNumber_congr_curve
-  intro t ht
-  exact PiecewiseC1ClosedCurve.of_apply γ hγ hclosed (uIoo_subset_uIcc_self ht)
+  rw [windingNumber, FreeAbelianGroup.lift_apply_of,
+    PiecewiseC1ClosedCurve.windingNumber_of]
 
 /-- The winding number of a one-generator cycle is the winding number of that curve. -/
 @[simp]
 theorem windingNumber_of (γ : PiecewiseC1ClosedCurve) (z₀ : ℂ) :
-    windingNumber (FreeAbelianGroup.of γ) z₀ =
+    windingNumber z₀ (FreeAbelianGroup.of γ) =
       TauCeti.Contour.windingNumber γ γ.a γ.b z₀ := by
   rw [windingNumber, FreeAbelianGroup.lift_apply_of]
-
-/-- The zero cycle has winding number zero. -/
-@[simp]
-theorem windingNumber_zero (z₀ : ℂ) : windingNumber 0 z₀ = 0 :=
-  by rw [windingNumber, map_zero]
-
-/-- The winding number is additive in the cycle. -/
-@[simp]
-theorem windingNumber_add (C D : Cycle) (z₀ : ℂ) :
-    windingNumber (C + D) z₀ = windingNumber C z₀ + windingNumber D z₀ := by
-  simp only [windingNumber, map_add]
-
-/-- Negating every coefficient negates the winding number. -/
-@[simp]
-theorem windingNumber_neg (C : Cycle) (z₀ : ℂ) :
-    windingNumber (-C) z₀ = -windingNumber C z₀ := by
-  simp only [windingNumber, map_neg]
-
-/-- The winding number respects subtraction of cycles. -/
-@[simp]
-theorem windingNumber_sub (C D : Cycle) (z₀ : ℂ) :
-    windingNumber (C - D) z₀ = windingNumber C z₀ - windingNumber D z₀ := by
-  simp only [sub_eq_add_neg, windingNumber_add, windingNumber_neg]
-
-/-- The winding number respects integer multiplicities. -/
-@[simp]
-theorem windingNumber_zsmul (n : ℤ) (C : Cycle) (z₀ : ℂ) :
-    windingNumber (n • C) z₀ = n • windingNumber C z₀ := by
-  simp only [windingNumber, map_zsmul]
 
 /-- A cycle is null-homologous in `Ω` when its winding number vanishes at every point outside
 `Ω`. -/
 def IsNullHomologous (C : Cycle) (Ω : Set ℂ) : Prop :=
-  ∀ z ∉ Ω, windingNumber C z = 0
+  ∀ z ∉ Ω, windingNumber z C = 0
 
-/-- Restatement of null-homology as vanishing of the cycle winding number outside the domain. -/
-theorem isNullHomologous_iff {C : Cycle} {Ω : Set ℂ} :
-    IsNullHomologous C Ω ↔ ∀ z ∉ Ω, windingNumber C z = 0 :=
-  Iff.rfl
-
-/-- Null-homology of a raw curve bundled as a generator is the raw-curve predicate. -/
-@[simp]
+/-- Null-homology of a raw curve bundled as a one-generator cycle is the raw-curve predicate. -/
 theorem isNullHomologous_of_raw_iff {a b : ℝ} (γ : ℝ → ℂ)
     (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) (Ω : Set ℂ) :
-    TauCeti.Contour.IsNullHomologous (PiecewiseC1ClosedCurve.of γ hγ hclosed)
-        (PiecewiseC1ClosedCurve.of γ hγ hclosed).a
-        (PiecewiseC1ClosedCurve.of γ hγ hclosed).b Ω ↔
+    IsNullHomologous (FreeAbelianGroup.of (PiecewiseC1ClosedCurve.of γ hγ hclosed)) Ω ↔
       TauCeti.Contour.IsNullHomologous γ a b Ω := by
-  simp only [TauCeti.Contour.isNullHomologous_iff, windingNumber_of_raw]
+  simp only [IsNullHomologous, windingNumber, FreeAbelianGroup.lift_apply_of,
+    PiecewiseC1ClosedCurve.windingNumber_of, TauCeti.Contour.isNullHomologous_iff]
 
 /-- Cycle null-homology specializes on a generator to the raw-curve predicate. -/
 @[simp]
 theorem isNullHomologous_of_iff {γ : PiecewiseC1ClosedCurve} {Ω : Set ℂ} :
     IsNullHomologous (FreeAbelianGroup.of γ) Ω ↔
       TauCeti.Contour.IsNullHomologous γ γ.a γ.b Ω := by
-  simp only [isNullHomologous_iff, windingNumber_of,
+  simp only [IsNullHomologous, windingNumber_of,
     TauCeti.Contour.isNullHomologous_iff]
 
 /-- The zero cycle is null-homologous in every set. -/
@@ -384,21 +339,21 @@ theorem IsNullHomologous.zero (Ω : Set ℂ) : IsNullHomologous (0 : Cycle) Ω :
 theorem IsNullHomologous.add {C D : Cycle} {Ω : Set ℂ} (hC : IsNullHomologous C Ω)
     (hD : IsNullHomologous D Ω) : IsNullHomologous (C + D) Ω := by
   intro z hz
-  rw [windingNumber_add, hC z hz, hD z hz, add_zero]
+  rw [map_add, hC z hz, hD z hz, add_zero]
 
 /-- Negation preserves null-homology. -/
 @[simp]
 theorem isNullHomologous_neg_iff {C : Cycle} {Ω : Set ℂ} :
     IsNullHomologous (-C) Ω ↔ IsNullHomologous C Ω := by
   constructor <;> intro h z hz
-  · simpa only [windingNumber_neg, neg_eq_zero] using h z hz
-  · simpa only [windingNumber_neg, neg_eq_zero] using h z hz
+  · simpa only [map_neg, neg_eq_zero] using h z hz
+  · simpa only [map_neg, neg_eq_zero] using h z hz
 
 /-- Every integer multiple of a null-homologous cycle is null-homologous. -/
 theorem IsNullHomologous.zsmul {C : Cycle} {Ω : Set ℂ} (hC : IsNullHomologous C Ω) (n : ℤ) :
     IsNullHomologous (n • C) Ω := by
   intro z hz
-  rw [windingNumber_zsmul, hC z hz, smul_zero]
+  rw [map_zsmul, hC z hz, smul_zero]
 
 end Cycle
 
