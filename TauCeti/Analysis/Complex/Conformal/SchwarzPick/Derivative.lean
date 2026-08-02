@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
-public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
+import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 
 /-!
 # The infinitesimal Schwarz--Pick inequality
@@ -20,11 +20,6 @@ it into itself, then at every point `z` of the disc
 `‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2)`, i.e. `f` contracts the Poincaré
 (hyperbolic) metric `|dz| / (1 - |z| ^ 2)`.  The bundled `Complex.UnitDisc` form is
 `norm_deriv_div_one_sub_norm_sq_le_unitDisc`.
-
-The chain-rule step `norm_deriv_schwarzPickConjugate_at_zero`, which computes the derivative of
-the Schwarz--Pick conjugate at the origin, is part of the scaffold shared with the other files of
-this directory: the equality case at a fixed point (`SchwarzPick/FixedPoint.lean`) reads the
-hypothesis `‖deriv f a‖ = 1` off it.
 
 This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 (`TauCetiRoadmap/ConformalMapping/README.md`, the L2 hyperbolic/Poincaré-metric contraction),
@@ -50,7 +45,7 @@ and at `f z`, whose derivatives are `1 - conj z * z` (the source factor at `0`, 
 the value `z`) and `1 / (1 - conj (f z) * f z)` (the target factor at `f z`).  So the norm of
 the derivative of the conjugate at the origin is the Poincaré distortion
 `‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2)` of `f` at `z`. -/
-lemma norm_deriv_schwarzPickConjugate_at_zero {f : ℂ → ℂ} {df z : ℂ}
+private lemma norm_deriv_schwarzPickConjugate_at_zero {f : ℂ → ℂ} {df z : ℂ}
     (hz : ‖z‖ < 1) (hfz : ‖f z‖ < 1) (hf : HasDerivAt f df z) :
     ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
   have hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0 :=
