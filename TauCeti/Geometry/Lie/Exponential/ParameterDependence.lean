@@ -21,6 +21,8 @@ vectors.
   generating tangent vector included as a parameter.
 * `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth near the
   zero vector and the identity.
+* `exists_continuousOn_local_mulInvariantCoordinateFlow`: a continuous local flow on a uniform
+  closed neighborhood of the zero vector and the identity coordinate.
 
 ## References
 
@@ -80,3 +82,62 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
   rw [← hw]
   simpa only [w, extChartAt_prod, extChartAt_self_apply, modelWithCornersSelf_coe,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id_eq] using h.snd
+
+/-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
+a single flow that is continuous jointly in its initial condition and time. The tangent-vector
+coordinate is frozen by the ODE; the second coordinate follows the invariant vector field. -/
+theorem exists_continuousOn_local_mulInvariantCoordinateFlow
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r : NNReal), 0 < δ ∧ 0 < r ∧
+      ContinuousOn α
+        (Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r ×ˢ
+          Set.Icc (-δ) δ) ∧
+      ∀ x ∈ Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r,
+        α (x, 0) = x ∧
+          (∀ t ∈ Set.Icc (-δ) δ,
+            HasDerivWithinAt (fun s => α (x, s))
+              ((0 : E),
+                mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
+              (Set.Icc (-δ) δ) t) ∧
+          ∀ t ∈ Set.Icc (-δ) δ, (α (x, t)).1 = x.1 := by
+  letI : CompleteSpace E := FiniteDimensional.complete ℝ E
+  let center : E × E := (0, extChartAt I (1 : G) (1 : G))
+  let F : E × E → E × E := fun p =>
+    (0, mulInvariantCoordinateVectorField (I := I) (G := G) p)
+  have hF : ContDiffAt ℝ 1 F center := by
+    exact contDiffAt_const.prodMk
+      (contDiffAt_mulInvariantCoordinateVectorField.of_le (by norm_num))
+  obtain ⟨δ, hδ, a, r, L, K, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
+  obtain ⟨α, hα, hαcont⟩ :=
+    (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_continuousOn
+  have hα' : ∀ x ∈ Metric.closedBall center r,
+      α (x, 0) = x ∧ ∀ t ∈ Set.Icc (-δ) δ,
+        HasDerivWithinAt (fun s => α (x, s))
+          ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
+          (Set.Icc (-δ) δ) t := by
+    intro x hx
+    simpa only [F, zero_sub, zero_add] using hα x hx
+  refine ⟨α, δ, r, hδ, hr, ?_, ?_⟩
+  · simpa only [center, zero_sub, zero_add] using hαcont
+  · intro x hx
+    have hx' : x ∈ Metric.closedBall center r := by simpa only [center] using hx
+    refine ⟨(hα' x hx').1, (hα' x hx').2, ?_⟩
+    let β : ℝ → E := fun t => (α (x, t)).1
+    have hβ : ∀ t ∈ Set.Icc (-δ) δ,
+        HasDerivWithinAt β 0 (Set.Icc (-δ) δ) t := by
+      intro t ht
+      change HasDerivWithinAt
+        ((ContinuousLinearMap.fst ℝ E E) ∘ fun s => α (x, s)) 0
+          (Set.Icc (-δ) δ) t
+      simpa using (ContinuousLinearMap.fst ℝ E E).hasFDerivAt.comp_hasDerivWithinAt t
+        ((hα' x hx').2 t ht)
+    have hconst := constant_of_derivWithin_zero
+      (fun t ht => (hβ t ht).differentiableWithinAt)
+      (fun t ht => (hβ t (Set.Ico_subset_Icc_self ht)).derivWithin
+        ((uniqueDiffOn_Icc (by linarith)).uniqueDiffWithinAt
+          (Set.Ico_subset_Icc_self ht)))
+    intro t ht
+    have hzero : (0 : ℝ) ∈ Set.Icc (-δ) δ := by constructor <;> linarith
+    change β t = x.1
+    exact (hconst t ht).trans ((hconst 0 hzero).symm.trans
+      (congrArg Prod.fst (hα' x hx').1))
