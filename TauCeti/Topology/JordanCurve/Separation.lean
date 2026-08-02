@@ -158,6 +158,7 @@ lemma isInducing_jordanParam (e : C ≃ₜ Circle) : Topology.IsInducing (jordan
 
 /-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle traces out exactly the
 curve. -/
+@[simp]
 lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
   refine subset_antisymm ?_ fun x hx => ⟨e ⟨x, hx⟩, by simp [jordanParam]⟩
   rintro _ ⟨u, rfl⟩
@@ -165,6 +166,7 @@ lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
 
 /-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle undoes `e`: it sends
 the parameter `e ⟨p, hp⟩` of a point `p` of the curve back to `p`. -/
+@[simp]
 lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
     jordanParam e (e ⟨p, hp⟩) = p := by
   simp [jordanParam]

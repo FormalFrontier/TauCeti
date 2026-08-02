@@ -46,8 +46,9 @@ the normalized chord `‖exp (I * θ) - 1‖` read off the factorization `exp a 
 
 * the **chord formula** `TauCeti.dist_circleExp_eq_two_mul_abs_sin`, `dist (exp a) (exp b) =
   2 * |sin ((a - b) / 2)|`, which is Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one`;
-* the fact that the chord is at most the arc, `TauCeti.dist_circleExp_le`, which is Mathlib's
-  `Real.norm_exp_I_mul_ofReal_sub_one_le`, whence `TauCeti.diam_circleExp_image_Icc_le`.
+* the fact that the chord is at most the arc, `TauCeti.lipschitzWith_one_circleExp`, which is
+  Mathlib's `Real.norm_exp_I_mul_ofReal_sub_one_le`, whence `TauCeti.dist_circleExp_le` pointwise
+  and `TauCeti.diam_circleExp_image_Icc_le` by `LipschitzWith.diam_image_le` and `Real.diam_Icc`.
 
 In the converse direction, the *shorter* of the two arc lengths `Circle.angleDiff` separating two
 points is at most `π / 2` times their chord (`TauCeti.min_angleDiff_le_dist`). That bound is
@@ -100,8 +101,9 @@ consumer has it.
 
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
-* `TauCeti.dist_circleExp_le` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at most the
-  arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
+* `TauCeti.lipschitzWith_one_circleExp`, `TauCeti.dist_circleExp_le` and
+  `TauCeti.diam_circleExp_image_Icc_le` — the chord is at most the arc, so an arc of angles of
+  length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_dist` — the shorter of the two arcs joining two points of the circle has
   length at most `π / 2` times their distance.
 * `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le` — two distinct points cut the
@@ -134,8 +136,9 @@ open scoped Real
 `Circle.exp b` out of the difference reduces it to the chord from angle `a - b` to angle `0`, which
 is the quantity Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one` and
 `Real.norm_exp_I_mul_ofReal_sub_one_le` describe. Both the chord formula
-`TauCeti.dist_circleExp_eq_two_mul_abs_sin` and the Lipschitz bound `TauCeti.dist_circleExp_le` are
-those two Mathlib facts read through this identity, so neither is derived from the other. -/
+`TauCeti.dist_circleExp_eq_two_mul_abs_sin` and the Lipschitz bound
+`TauCeti.lipschitzWith_one_circleExp` are those two Mathlib facts read through this identity, so
+neither is derived from the other. -/
 private lemma dist_circleExp_eq_norm_exp_sub_one (a b : ℝ) :
     dist (Circle.exp a) (Circle.exp b) = ‖Complex.exp (Complex.I * (a - b : ℝ)) - 1‖ := by
   have hsplit : Circle.exp a = Circle.exp (a - b) * Circle.exp b := by
@@ -166,18 +169,24 @@ theorem dist_circleExp_eq_two_mul_abs_sin (a b : ℝ) :
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. This is Mathlib's
 `Real.norm_exp_I_mul_ofReal_sub_one_le` read through the normalized chord
 `TauCeti.dist_circleExp_eq_norm_exp_sub_one`. -/
-theorem dist_circleExp_le (a b : ℝ) : dist (Circle.exp a) (Circle.exp b) ≤ |a - b| := by
-  rw [dist_circleExp_eq_norm_exp_sub_one, ← Real.norm_eq_abs]
-  exact Real.norm_exp_I_mul_ofReal_sub_one_le
+theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
+  LipschitzWith.mk_one fun a b => by
+    rw [Real.dist_eq, dist_circleExp_eq_norm_exp_sub_one, ← Real.norm_eq_abs]
+    exact Real.norm_exp_I_mul_ofReal_sub_one_le
 
-/-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`, by the
-`1`-Lipschitz bound `TauCeti.dist_circleExp_le`. -/
+/-- The chord between the angles `a` and `b` is at most the arc `|a - b|`: the pointwise form of
+`TauCeti.lipschitzWith_one_circleExp`. -/
+theorem dist_circleExp_le (a b : ℝ) : dist (Circle.exp a) (Circle.exp b) ≤ |a - b| := by
+  simpa only [NNReal.coe_one, one_mul, Real.dist_eq] using
+    lipschitzWith_one_circleExp.dist_le_mul a b
+
+/-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`: the
+`1`-Lipschitz map `TauCeti.lipschitzWith_one_circleExp` does not increase the diameter
+`Real.diam_Icc` of the interval of angles. -/
 theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
     Metric.diam (Circle.exp '' Icc a b) ≤ b - a := by
-  refine Metric.diam_le_of_forall_dist_le (by linarith) ?_
-  rintro _ ⟨x, hx, rfl⟩ _ ⟨y, hy, rfl⟩
-  exact (dist_circleExp_le x y).trans
-    (abs_le.2 ⟨by linarith [hx.1, hx.2, hy.1, hy.2], by linarith [hx.1, hx.2, hy.1, hy.2]⟩)
+  simpa only [NNReal.coe_one, one_mul, Real.diam_Icc hab] using
+    lipschitzWith_one_circleExp.diam_image_le (Icc a b) (isBounded_Icc a b)
 
 /-- **The shorter arc is controlled by the chord**: of the two arcs joining `x` to `y` on the
 circle, the shorter has length at most `π / 2` times the distance from `x` to `y`.
@@ -273,6 +282,21 @@ theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} 
 
 variable {X : Type*} [PseudoMetricSpace X] {C : Set X} {ε : ℝ}
 
+/-- The set-theoretic content of locating the two transported arcs, applied symmetrically to the
+two sides of the cut in `TauCeti.IsJordanCurve.exists_pos_forall_diam_le`: if the disjoint sets `A`
+and `B` are covered by `U` and `V` with `U ⊆ A`, then either `V ⊆ B`, and then `A` is no larger
+than `U`, or `V ⊆ A` as well, and then `B` is empty. -/
+private lemma subset_or_eq_empty_of_union_eq_union {α : Type*} {A B U V : Set α}
+    (hcover : U ∪ V = A ∪ B) (hdisj : Disjoint A B) (hU : U ⊆ A) (hV : V ⊆ A ∨ V ⊆ B) :
+    A ⊆ U ∨ B = ∅ := by
+  rcases hV with hVA | hVB
+  · refine Or.inr (eq_empty_of_subset_empty fun x hx => ?_)
+    have hmem : x ∈ U ∪ V := by rw [hcover]; exact mem_union_right A hx
+    exact hdisj.le_bot ⟨hmem.elim (fun h => hU h) fun h => hVA h, hx⟩
+  · refine Or.inl fun x hx => ?_
+    have hmem : x ∈ U ∪ V := by rw [hcover]; exact mem_union_left B hx
+    exact hmem.elim id fun h => absurd (hdisj.le_bot ⟨hx, hVB h⟩) id
+
 /-- **Two nearby points cut a small arc off a Jordan curve.** For every `ε > 0` there is a `δ > 0`
 with the following property: if `p` and `q` are two distinct points of a Jordan curve `C` at
 distance less than `δ`, then in any splitting of `C \ {p, q}` into two disjoint pieces `A` and `B`
@@ -354,40 +378,21 @@ theorem IsJordanCurve.exists_pos_forall_diam_le (h : IsJordanCurve C) (hε : 0 <
   have hPbdd : Bornology.IsBounded (g '' P₀ ∪ {p, q}) :=
     h.isCompact.isBounded.subset (union_subset (hPsub.trans sdiff_subset)
       (insert_subset hp (singleton_subset_iff.2 hq)))
-  -- Locate each transported arc inside `A` or inside `B`.
+  -- The side containing the short arc either is contained in it, and so is small, or leaves the
+  -- other side empty, and then only the two cut points are left.
+  have hside : ∀ A' B' : Set X, A' ∪ B' = C \ {p, q} → Disjoint A' B' → g '' P₀ ⊆ A' →
+      (g '' Q₀ ⊆ A' ∨ g '' Q₀ ⊆ B') →
+      Metric.diam (A' ∪ {p, q}) ≤ ε ∨ Metric.diam (B' ∪ {p, q}) ≤ ε := by
+    intro A' B' hcover hd hP hQ
+    rcases subset_or_eq_empty_of_union_eq_union (himg.trans hcover.symm) hd hP hQ with hsub | hemp
+    · exact Or.inl ((Metric.diam_mono (union_subset_union_left _ hsub) hPbdd).trans hPdiam)
+    · rw [hemp, empty_union, Metric.diam_pair]
+      exact Or.inr hpqε
+  -- Locate each transported arc inside `A` or inside `B`, and apply that symmetrically.
+  have hQ := hsep hQsub (hQ₀c.image _ hgc.continuousOn)
   rcases hsep hPsub (hP₀c.image _ hgc.continuousOn) with hPA | hPB
-  · rcases hsep hQsub (hQ₀c.image _ hgc.continuousOn) with hQA | hQB
-    · refine Or.inr ?_
-      have hBempty : B = ∅ := by
-        refine eq_empty_of_subset_empty fun x hx => ?_
-        have : x ∈ A := by
-          rcases (himg ▸ hAB ▸ mem_union_right A hx : x ∈ g '' P₀ ∪ g '' Q₀) with hxP | hxQ
-          · exact hPA hxP
-          · exact hQA hxQ
-        exact hdisj.le_bot ⟨this, hx⟩
-      rw [hBempty, empty_union, Metric.diam_pair]
-      exact hpqε
-    · refine Or.inl ((Metric.diam_mono (union_subset_union_left _ ?_) hPbdd).trans hPdiam)
-      intro x hx
-      rcases (himg ▸ hAB ▸ mem_union_left B hx : x ∈ g '' P₀ ∪ g '' Q₀) with hxP | hxQ
-      · exact hxP
-      · exact absurd (hdisj.le_bot ⟨hx, hQB hxQ⟩) id
-  · rcases hsep hQsub (hQ₀c.image _ hgc.continuousOn) with hQA | hQB
-    · refine Or.inr ((Metric.diam_mono (union_subset_union_left _ ?_) hPbdd).trans hPdiam)
-      intro x hx
-      rcases (himg ▸ hAB ▸ mem_union_right A hx : x ∈ g '' P₀ ∪ g '' Q₀) with hxP | hxQ
-      · exact hxP
-      · exact absurd (hdisj.le_bot ⟨hQA hxQ, hx⟩) id
-    · refine Or.inl ?_
-      have hAempty : A = ∅ := by
-        refine eq_empty_of_subset_empty fun x hx => ?_
-        have : x ∈ B := by
-          rcases (himg ▸ hAB ▸ mem_union_left B hx : x ∈ g '' P₀ ∪ g '' Q₀) with hxP | hxQ
-          · exact hPB hxP
-          · exact hQB hxQ
-        exact hdisj.le_bot ⟨hx, this⟩
-      rw [hAempty, empty_union, Metric.diam_pair]
-      exact hpqε
+  · exact hside A B hAB hdisj hPA hQ
+  · exact (hside B A (by rw [union_comm]; exact hAB) hdisj.symm hPB hQ.symm).symm
 
 /-- **Two nearby points cut a small arc off a Jordan curve**, in packaged form: for every `ε > 0`
 there is a `δ > 0` such that two distinct points of a Jordan curve at distance less than `δ` cut it
