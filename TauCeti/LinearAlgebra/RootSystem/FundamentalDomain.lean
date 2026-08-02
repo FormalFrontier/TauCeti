@@ -30,8 +30,8 @@ has one inversion fewer, which is the inductive step.
 
 ## Main definitions
 
-* `TauCeti.wallReflections`: the simple reflections of a base that fix a given weight, namely those
-  whose simple coroot vanishes on it.
+* `TauCeti.wallReflections`: the simple reflections of a base whose simple coroot vanishes on a
+  given weight, that is, the reflections in the walls through it. Each of them fixes the weight.
 
 ## Main results
 
@@ -79,8 +79,10 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 /-! ### The walls through a weight -/
 
-/-- The simple reflections of the base `b` that fix the weight `x`: those whose simple coroot
-vanishes on `x`, that is, the reflections in the walls of the dominant chamber through `x`. -/
+/-- The reflections in the walls of the dominant chamber of the base `b` through the weight `x`:
+the simple reflections of `b` whose simple coroot vanishes on `x`. Each of them fixes `x`
+(`TauCeti.smul_eq_self_of_mem_wallReflections`), but this is cut out by the vanishing rather than
+by the fixed-point condition, which is weaker in general; see the implementation notes. -/
 def wallReflections (x : M) : Set P.weylGroup :=
   {w | ∃ i ∈ b.support, P.coroot' i x = 0 ∧ w = _root_.RootPairing.weylGroup.ofIdx P i}
 
