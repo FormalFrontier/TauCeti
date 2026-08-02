@@ -41,6 +41,11 @@ All categories and carriers lie in the universe of `k`, as required by the curre
 ## References
 
 See Milne, *Algebraic Groups*, Definition 12.7 and Theorems 12.8--12.9.
+
+The equivalence packaging follows
+`TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence`, specifically
+`commHopfAlgCatOpEquivAffineGroupSchemeCat` and
+`commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso`.
 -/
 
 public section
@@ -136,18 +141,26 @@ noncomputable def schemeEquivalence :
   (schemeFunctor k).toEssImage.asEquivalence.trans
     (ObjectProperty.fullSubcategoryCongr (essImage_schemeFunctor k))
 
+/-- The forward functor of `schemeEquivalence` is definitionally the composite of the lift to
+the essential image and the property-change functor. This private isomorphism isolates that
+representation boundary from the public compatibility proof. -/
+private noncomputable def schemeEquivalenceFunctorIso :
+    (schemeEquivalence k).functor ≅
+      (schemeFunctor k).toEssImage ⋙
+        ObjectProperty.ιOfLE (essImage_schemeFunctor k).le :=
+  Iso.refl _
+
 /-- The forward functor of `schemeEquivalence`, followed by the inclusion into all group schemes,
 is the existing diagonalizable group-scheme functor. -/
 noncomputable def schemeEquivalence.functorCompιIso :
     (schemeEquivalence k).functor ⋙ (diagonalizableGroupSchemeProperty k).ι ≅
       schemeFunctor k := by
-  change ((schemeFunctor k).toEssImage ⋙
-      ObjectProperty.ιOfLE (essImage_schemeFunctor k).le) ⋙
-      (diagonalizableGroupSchemeProperty k).ι ≅ schemeFunctor k
-  exact (Functor.associator _ _ _).trans
-    ((Functor.isoWhiskerLeft (schemeFunctor k).toEssImage
-      (ObjectProperty.ιOfLECompιIso _)).trans
-        (schemeFunctor k).toEssImageCompι)
+  exact Functor.isoWhiskerRight (schemeEquivalenceFunctorIso k)
+      (diagonalizableGroupSchemeProperty k).ι ≪≫
+    Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft (schemeFunctor k).toEssImage
+      (ObjectProperty.ιOfLECompιIso _) ≪≫
+    (schemeFunctor k).toEssImageCompι
 
 end DiagonalizableGroup
 
