@@ -104,8 +104,9 @@ variable [NumberField K]
 
 /-- The subgroup of **totally positive integer units** of `(𝓞 K)ˣ`: the preimage of
 `totallyPositiveUnits` under the inclusion `(𝓞 K)ˣ → Kˣ`, i.e. the integer units whose image in `K`
-is totally positive. This is the subgroup by which the narrow class group refines the ordinary
-one. -/
+is totally positive. It is the kernel of the integer-unit signature map; the signatures realized by
+units — the quotient of `(𝓞 K)ˣ` by this subgroup — are the archimedean input to the comparison
+between the narrow and ordinary class groups. -/
 noncomputable def totallyPositiveIntegerUnits : Subgroup (𝓞 K)ˣ :=
   totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
 

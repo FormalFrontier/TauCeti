@@ -26,9 +26,9 @@ genus-theory formula computes for a real quadratic field.
 ## Main definitions and results
 
 * `TauCeti.NumberField.fieldUnitSignature`: the signature homomorphism on `Kˣ`, with
-  `ker_fieldUnitSignature` computing its kernel as `totallyPositiveUnits`.
+  `fieldUnitSignature_ker` computing its kernel as `totallyPositiveUnits`.
 * `TauCeti.NumberField.unitSignature`: the signature homomorphism on `(𝓞 K)ˣ`, the restriction of
-  `fieldUnitSignature`, with `ker_unitSignature` its kernel `totallyPositiveIntegerUnits` (defined
+  `fieldUnitSignature`, with `unitSignature_ker` its kernel `totallyPositiveIntegerUnits` (defined
   in `TotallyPositive.lean`).
 -/
 
@@ -56,7 +56,7 @@ noncomputable def fieldUnitSignature :
   simp only [fieldUnitSignature, MonoidHom.pi_apply, MonoidHom.comp_apply, QuotientGroup.mk'_apply]
 
 /-- The kernel of the field-unit signature is exactly the subgroup of totally positive units. -/
-theorem ker_fieldUnitSignature :
+theorem fieldUnitSignature_ker :
     MonoidHom.ker (fieldUnitSignature (K := K)) = totallyPositiveUnits := by
   ext u
   simp only [MonoidHom.mem_ker, funext_iff, Pi.one_apply, fieldUnitSignature_apply,
@@ -67,7 +67,7 @@ theorem ker_fieldUnitSignature :
 /-- A unit has trivial field signature exactly when it is totally positive. -/
 @[simp] theorem fieldUnitSignature_eq_one_iff {u : Kˣ} :
     fieldUnitSignature u = 1 ↔ IsTotallyPositive (u : K) := by
-  rw [← MonoidHom.mem_ker, ker_fieldUnitSignature, mem_totallyPositiveUnits]
+  rw [← MonoidHom.mem_ker, fieldUnitSignature_ker, mem_totallyPositiveUnits]
 
 variable [NumberField K]
 
@@ -94,7 +94,7 @@ omit [NumberField K] in
 
 omit [NumberField K] in
 /-- The kernel of the integer-unit signature is exactly the totally positive integer units. -/
-theorem ker_unitSignature :
+theorem unitSignature_ker :
     MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
   ext u
   rw [MonoidHom.mem_ker, unitSignature_eq_one_iff, mem_totallyPositiveIntegerUnits]
