@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Geometry.Manifold.GroupLieAlgebra
 public import Mathlib.Geometry.Manifold.IntegralCurve.UniformTime
+import Mathlib.Analysis.Calculus.ContDiff.Deriv
 
 /-!
 # Integral curves of invariant vector fields
@@ -19,6 +20,7 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 * `IsMIntegralCurveOn.const_mul_mulInvariantVectorField`: left translation preserves invariant
   integral curves.
 * `IsMIntegralCurve.const_mul_mulInvariantVectorField`: the global version of that translation law.
+* `IsMIntegralCurve.contMDiff`: integral curves of smooth vector fields are smooth.
 * `exists_isMIntegralCurve_mulInvariantVectorField`: every left-invariant vector field has a global
   integral curve through every point.
 * `existsUnique_isMIntegralCurve_mulInvariantVectorField`: that global curve is unique.
@@ -38,13 +40,80 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 public section
 
 open Function Manifold Set VectorField
-open scoped Manifold
+open scoped ContDiff Manifold Topology
 
 noncomputable section
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+
+private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace ℝ F] {n : ℕ} {f : ℝ → F} {v : F → F} {s : Set ℝ} {u : Set F}
+    (hs : IsOpen s) (hv : ContDiffOn ℝ n v u) (hfu : MapsTo f s u)
+    (hf : ∀ t ∈ s, HasDerivAt f (v (f t)) t) :
+    ContDiffOn ℝ (n + 1 : ℕ) f s := by
+  induction n generalizing f with
+  | zero =>
+      rw [show ((0 + 1 : ℕ) : ℕ∞ω) = 0 + 1 by simp,
+        contDiffOn_succ_iff_deriv_of_isOpen hs]
+      refine ⟨fun t ht => (hf t ht).differentiableAt.differentiableWithinAt, by simp, ?_⟩
+      apply (hv.comp (contDiffOn_zero.mpr ?_) hfu).congr
+      · exact fun t ht => (hf t ht).deriv
+      · exact fun t ht => (hf t ht).continuousAt.continuousWithinAt
+  | succ n ih =>
+      have hfn : ContDiffOn ℝ (n + 1 : ℕ) f s :=
+        ih (hv.of_le (by exact_mod_cast Nat.le_succ n)) hfu hf
+      rw [show ((n + 1 + 1 : ℕ) : ℕ∞ω) = (n + 1 : ℕ∞ω) + 1 by norm_num,
+        contDiffOn_succ_iff_deriv_of_isOpen hs]
+      refine ⟨fun t ht => (hf t ht).differentiableAt.differentiableWithinAt, by simp, ?_⟩
+      exact (hv.comp hfn hfu).congr fun t ht => (hf t ht).deriv
+
+namespace IsMIntegralCurve
+
+variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+  [BoundarylessManifold I M]
+
+/-- An integral curve of an infinitely smooth vector field on a boundaryless manifold is
+infinitely smooth. -/
+theorem contMDiff {γ : ℝ → M} {v : (x : M) → TangentSpace I x}
+    (hγ : IsMIntegralCurve γ v)
+    (hv : CMDiff ∞ (fun x => (⟨x, v x⟩ : TangentBundle I M))) :
+    ContMDiff 𝓘(ℝ, ℝ) I ∞ γ := by
+  rw [contMDiff_infty]
+  intro n t₀
+  rw [contMDiffAt_iff_target]
+  refine ⟨hγ.continuous.continuousAt, ?_⟩
+  apply ContDiffAt.contMDiffAt
+  let c : ℝ → E := (extChartAt I (γ t₀)) ∘ γ
+  change ContDiffAt ℝ n c t₀
+  let v' : E → E := fun x =>
+    tangentCoordChange I ((extChartAt I (γ t₀)).symm x) (γ t₀)
+      ((extChartAt I (γ t₀)).symm x) (v ((extChartAt I (γ t₀)).symm x))
+  have hv' : ContDiffAt ℝ ∞ v' (extChartAt I (γ t₀) (γ t₀)) := by
+    have hv₀ := hv.contMDiffAt (x := γ t₀)
+    rw [contMDiffAt_iff] at hv₀
+    exact (hv₀.2.contDiffAt
+      (range_mem_nhds_isInteriorPoint BoundarylessManifold.isInteriorPoint)).snd
+  obtain ⟨u, hxu, hvu⟩ := hv'.contDiffOn
+    (mod_cast le_top : (n : ℕ∞ω) ≤ ∞) (by simp)
+  have hcsrc : ∀ᶠ t in 𝓝 t₀, γ t ∈ (extChartAt I (γ t₀)).source :=
+    hγ.continuous.continuousAt.preimage_mem_nhds (extChartAt_source_mem_nhds (I := I) _)
+  have hderiv : ∀ᶠ t in 𝓝 t₀, HasDerivAt c (v' (c t)) t :=
+    (hγ.isMIntegralCurveAt t₀).eventually_hasDerivAt.and hcsrc |>.mono fun t ht => by
+      apply ht.1.congr_deriv
+      simp only [v', c, Function.comp_apply]
+      rw [PartialEquiv.left_inv _ ht.2]
+  have hcu : ∀ᶠ t in 𝓝 t₀, c t ∈ u :=
+    ((continuousAt_extChartAt (γ t₀)).comp hγ.continuous.continuousAt).eventually hxu
+  have hall : {t | HasDerivAt c (v' (c t)) t ∧ c t ∈ u} ∈ 𝓝 t₀ :=
+    hderiv.and hcu
+  obtain ⟨s, hsP, hsopen, hst₀⟩ := mem_nhds_iff.mp hall
+  exact ((contDiffOn_succ_of_hasDerivAt_comp hsopen hvu (fun t ht => (hsP ht).2)
+    (fun t ht => (hsP ht).1)).of_le (by exact_mod_cast Nat.le_succ n)).contDiffAt
+      (hsopen.mem_nhds hst₀)
+
+end IsMIntegralCurve
 
 namespace IsMIntegralCurveOn
 
