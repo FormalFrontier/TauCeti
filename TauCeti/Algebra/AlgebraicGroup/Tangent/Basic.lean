@@ -143,6 +143,17 @@ noncomputable def dualNumberReduction :
   AlgHom.mapValue (TrivSqZeroExt.fstHom R (Bialgebra.CounitAlgebra R A B)
     (Bialgebra.CounitAlgebra R A B))
 
+/-- `dualNumberReduction` is postcomposition with the classical-part projection. -/
+theorem dualNumberReduction_def :
+    dualNumberReduction R A B =
+      AlgHom.mapValue (TrivSqZeroExt.fstHom R (Bialgebra.CounitAlgebra R A B)
+        (Bialgebra.CounitAlgebra R A B)) := by
+  -- `dualNumberReduction` has no equation lemma to rewrite with; `change` spells out its
+  -- definitional unfolding once, explicitly.
+  change AlgHom.mapValue (TrivSqZeroExt.fstHom R (Bialgebra.CounitAlgebra R A B)
+    (Bialgebra.CounitAlgebra R A B)) = _
+  rfl
+
 @[simp]
 lemma dualNumberReduction_apply
     (ψ : WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B))) (x : A) :
@@ -198,6 +209,18 @@ subgroup. -/
 noncomputable def tangentKer :
     Subgroup (WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B))) :=
   (dualNumberReduction R A B).ker
+
+variable (R A B) in
+/-- `tangentKer` is the kernel of the dual-number reduction. -/
+theorem tangentKer_def :
+    tangentKer R A B =
+      ((dualNumberReduction R A B).ker :
+        Subgroup (WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B)))) := by
+  -- `tangentKer` has no equation lemma to rewrite with; `change` spells out its
+  -- definitional unfolding once, explicitly.
+  change ((dualNumberReduction R A B).ker :
+    Subgroup (WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B)))) = _
+  rfl
 
 private lemma fst_apply_of_mem_ker
     {ψ : WithConv (A →ₐ[R] DualNumber (CounitAlgebra R A B))}
