@@ -11,10 +11,10 @@ public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 /-!
 # Compact-parameter integration
 
-This file proves that integration over the compact unit interval preserves joint continuity and
-continuous differentiability in a parameter. Continuity holds for an arbitrary topological
-parameter space, while differentiability is preserved at every finite or infinite order and with
-independent domain and codomain universes.
+This file uses Mathlib's continuity theorem for parameterized interval integrals and proves that
+integration over the compact unit interval preserves differentiation and continuous
+differentiability in a normed-space parameter. Continuous differentiability is preserved at every
+finite or infinite order and with independent domain and codomain universes.
 
 These results supply the analytic regularity used by smooth Hadamard factorization, a prerequisite
 for the point-derivation/tangent-space equivalence in the Lie groups roadmap.
