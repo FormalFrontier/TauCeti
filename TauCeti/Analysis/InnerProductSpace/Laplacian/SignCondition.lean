@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
-public import TauCeti.Analysis.InnerProductSpace.Laplacian.ZerothOrderMaximumPrinciple
+public import Mathlib.Analysis.InnerProductSpace.Laplacian
 
 /-!
 # Necessity of the zeroth-order sign condition in the maximum principle
