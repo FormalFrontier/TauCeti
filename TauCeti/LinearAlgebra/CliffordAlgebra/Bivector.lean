@@ -242,7 +242,7 @@ theorem cliffordBivector_lie_cliffordBivector (a b c d : M) :
 
 /-- The range of the exterior-square Clifford bivector map is closed under the ambient Clifford
 commutator. -/
-theorem cliffordBivectorExterior_range_lie_mem {x y : CliffordAlgebra Q}
+theorem lie_mem_cliffordBivectorExterior_range {x y : CliffordAlgebra Q}
     (hx : x ∈ LinearMap.range (cliffordBivectorExterior Q))
     (hy : y ∈ LinearMap.range (cliffordBivectorExterior Q)) :
     ⁅x, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q) := by
@@ -280,21 +280,23 @@ theorem cliffordBivectorExterior_range_lie_mem {x y : CliffordAlgebra Q}
 Lie bracket on the exterior square itself. -/
 noncomputable def cliffordBivectorLieSubalgebra : LieSubalgebra R (CliffordAlgebra Q) :=
   { LinearMap.range (cliffordBivectorExterior Q) with
-    lie_mem' := cliffordBivectorExterior_range_lie_mem Q }
+    lie_mem' := lie_mem_cliffordBivectorExterior_range Q }
 
 /-- Membership in the Clifford bivector Lie subalgebra means being the image of an exterior
 bivector. -/
 @[simp]
 theorem mem_cliffordBivectorLieSubalgebra_iff {x : CliffordAlgebra Q} :
     x ∈ cliffordBivectorLieSubalgebra Q ↔
-      ∃ y : ⋀[R]^2 M, cliffordBivectorExterior Q y = x :=
-  LinearMap.mem_range
+      ∃ y : ⋀[R]^2 M, cliffordBivectorExterior Q y = x := by
+  simpa only [cliffordBivectorLieSubalgebra, LieSubalgebra.mem_mk_iff'] using
+    (LinearMap.mem_range (f := cliffordBivectorExterior Q))
 
 /-- The exterior-square Clifford bivector map takes values in the Clifford bivector Lie
 subalgebra. -/
 theorem cliffordBivectorExterior_mem_cliffordBivectorLieSubalgebra (x : ⋀[R]^2 M) :
-    cliffordBivectorExterior Q x ∈ cliffordBivectorLieSubalgebra Q :=
-  LinearMap.mem_range_self _ _
+    cliffordBivectorExterior Q x ∈ cliffordBivectorLieSubalgebra Q := by
+  simpa only [cliffordBivectorLieSubalgebra, LieSubalgebra.mem_mk_iff'] using
+    (LinearMap.mem_range_self (cliffordBivectorExterior Q) x)
 
 end CommRing
 
