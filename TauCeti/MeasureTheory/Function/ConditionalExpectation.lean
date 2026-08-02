@@ -12,8 +12,8 @@ import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
 /-!
 # Generic conditional-expectation facts
 
-- `condExp_comp_eq_of_pair_law_eq`: if `(Y, Z)` and `(Y', Z)` have the same law, then for an
-  integrable real observable `f` the conditional expectations of `f ∘ Y` and `f ∘ Y'` given `σ(Z)`
+- `condExp_comp_ae_eq_of_pair_law_eq`: if `(Y, Z)` and `(Y', Z)` have the same law, then for a
+  measurable real observable `f` the conditional expectations of `f ∘ Y` and `f ∘ Y'` given `σ(Z)`
   agree a.e.
 - `condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm`: L¹-continuity of conditional
   expectation — if `Xn → Xlim` in L¹ (in `eLpNorm`) and each `μ[Xn n | F]` agrees a.e. with a fixed
@@ -38,17 +38,18 @@ namespace TauCeti
 
 namespace MeasureTheory
 
-/-- If the pairs `(Y, Z)` and `(Y', Z)` have the same law, then for an integrable real observable
+/-- If the pairs `(Y, Z)` and `(Y', Z)` have the same law, then for a measurable real observable
 `f` the conditional expectations of `f ∘ Y` and `f ∘ Y'` given `σ(Z)` agree almost everywhere.
 
 Both conditional expectations are pinned down by their integrals over the sets `Z ⁻¹' E`, and each
 such integral is an integral of `fun p => f p.1` over the slab `univ ×ˢ E` against the joint law,
-which is where the hypothesis applies. -/
-theorem condExp_comp_eq_of_pair_law_eq {Ω α β : Type*} [mΩ : MeasurableSpace Ω]
+which is where the hypothesis applies. Equal laws make `f ∘ Y` integrable exactly when `f ∘ Y'` is,
+so no integrability hypothesis is needed: when it fails both sides are `0`. -/
+theorem condExp_comp_ae_eq_of_pair_law_eq {Ω α β : Type*} [mΩ : MeasurableSpace Ω]
     [MeasurableSpace α] [mβ : MeasurableSpace β] {μ : Measure Ω} [IsFiniteMeasure μ]
     (Y Y' : Ω → α) (Z : Ω → β) (hY : Measurable Y) (hY' : Measurable Y') (hZ : Measurable Z)
     (hpair : μ.map (fun ω => (Y ω, Z ω)) = μ.map (fun ω => (Y' ω, Z ω)))
-    {f : α → ℝ} (hf : Measurable f) (hf_int : Integrable (fun ω => f (Y ω)) μ) :
+    {f : α → ℝ} (hf : Measurable f) :
     μ[fun ω => f (Y ω) | MeasurableSpace.comap Z mβ]
       =ᵐ[μ] μ[fun ω => f (Y' ω) | MeasurableSpace.comap Z mβ] := by
   have hmZ_le : MeasurableSpace.comap Z mβ ≤ mΩ := by
@@ -59,10 +60,18 @@ theorem condExp_comp_eq_of_pair_law_eq {Ω α β : Type*} [mΩ : MeasurableSpace
     have h := congrArg (Measure.map Prod.fst) hpair
     rwa [Measure.map_map measurable_fst (hY.prodMk hZ),
       Measure.map_map measurable_fst (hY'.prodMk hZ)] at h
-  have hf'_int : Integrable (fun ω => f (Y' ω)) μ := by
-    have h := (integrable_map_measure hf.aestronglyMeasurable hY.aemeasurable).2 hf_int
+  have hiff : Integrable (fun ω => f (Y ω)) μ ↔ Integrable (fun ω => f (Y' ω)) μ := by
+    have h : Integrable f (μ.map Y) ↔ Integrable (fun ω => f (Y ω)) μ :=
+      integrable_map_measure hf.aestronglyMeasurable hY.aemeasurable
+    have h' : Integrable f (μ.map Y') ↔ Integrable (fun ω => f (Y' ω)) μ :=
+      integrable_map_measure hf.aestronglyMeasurable hY'.aemeasurable
     rw [hmap] at h
-    exact (integrable_map_measure hf.aestronglyMeasurable hY'.aemeasurable).1 h
+    exact h.symm.trans h'
+  by_cases hf_int : Integrable (fun ω => f (Y ω)) μ
+  case neg =>
+    -- Neither composite is integrable, so both conditional expectations are `0`.
+    rw [condExp_of_not_integrable hf_int, condExp_of_not_integrable (mt hiff.2 hf_int)]
+  have hf'_int : Integrable (fun ω => f (Y' ω)) μ := hiff.1 hf_int
   have hslice : ∀ W : Ω → α, Measurable W → ∀ {E : Set β}, MeasurableSet E →
       ∫ p in Set.univ ×ˢ E, f p.1 ∂(μ.map fun ω => (W ω, Z ω))
         = ∫ ω in Z ⁻¹' E, f (W ω) ∂μ := by

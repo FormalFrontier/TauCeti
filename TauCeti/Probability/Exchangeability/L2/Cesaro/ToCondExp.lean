@@ -7,6 +7,7 @@ module
 public import TauCeti.Probability.Exchangeability.CondExp
 public import TauCeti.Probability.Exchangeability.L2.TailMeasurability
 import TauCeti.MeasureTheory.Function.BoundedMemLp
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 
 /-!
@@ -19,8 +20,8 @@ process twice over: `weighted_sums_converge_L1_of_memLp` gives it as an abstract
 
 This file identifies it:
 
-* `Contractable.condExp_blockAverage_tailProcess_eq` — every block average of `f ∘ X` has the same
-  conditional expectation given `tailProcess X` as the single coordinate `f ∘ X 0`;
+* `Contractable.condExp_blockAverage_tailProcess_ae_eq` — every block average of `f ∘ X` has the
+  same conditional expectation given `tailProcess X` as the single coordinate `f ∘ X 0`;
 * `Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp` — the fixed-start Cesàro
   windows converge in `L¹` to `μ[f ∘ X 0 | tailProcess X]`, with
   `Contractable.tendsto_integral_abs_blockAverage_sub_condExp` the bounded-observable form;
@@ -28,8 +29,8 @@ This file identifies it:
   of those windows is a.e. that conditional expectation.
 
 Both ingredients are already in place, and the argument is short. Contractability makes all
-coordinates share a conditional law given the tail (`Contractable.condExp_comp_tailProcess_eq`), so
-the conditional expectation of every window is `μ[f ∘ X 0 | tailProcess X]`; the limit is
+coordinates share a conditional law given the tail (`Contractable.condExp_comp_tailProcess_ae_eq`),
+so the conditional expectation of every window is `μ[f ∘ X 0 | tailProcess X]`; the limit is
 tail-measurable, hence its own conditional expectation; and conditional expectation is
 `L¹`-continuous (`TauCeti.MeasureTheory.condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm`).
 No reverse-martingale convergence theorem is used, which is what keeps this on the `L²` route
@@ -55,25 +56,11 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- The `∫ |· - ·|` form in which the Cesàro convergence results phrase `L¹` convergence, restated
-as convergence of `eLpNorm _ 1 μ`. -/
-private theorem tendsto_eLpNorm_one_of_tendsto_integral_abs_sub {μ : Measure Ω} {A : ℕ → Ω → ℝ}
-    {a : Ω → ℝ} (hA : ∀ m, Integrable (A m) μ) (ha : Integrable a μ)
-    (h : Tendsto (fun m => ∫ ω, |A m ω - a ω| ∂μ) atTop (𝓝 0)) :
-    Tendsto (fun m => eLpNorm (A m - a) 1 μ) atTop (𝓝 0) := by
-  have heq : ∀ m, eLpNorm (A m - a) 1 μ = ENNReal.ofReal (∫ ω, |A m ω - a ω| ∂μ) := by
-    intro m
-    rw [eLpNorm_one_eq_lintegral_enorm,
-      ← ofReal_integral_norm_eq_lintegral_enorm ((hA m).sub ha)]
-    simp [Real.norm_eq_abs]
-  simp_rw [heq]
-  simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp h
-
 /-- **Block averages do not move the conditional expectation given the tail.** For a contractable
 process all coordinates share a conditional law given `tailProcess X`, so the conditional
 expectation of the average of any nonempty finite block of `f ∘ X` is the conditional expectation of
 a single coordinate. -/
-theorem Contractable.condExp_blockAverage_tailProcess_eq {μ : Measure Ω} [IsFiniteMeasure μ]
+theorem Contractable.condExp_blockAverage_tailProcess_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i)) {f : α → ℝ}
     (hf : Measurable f) (hf_int : Integrable (fun ω => f (X 0 ω)) μ) {n : ℕ} (k : Fin (n + 1) → ℕ) :
     μ[blockAverage (fun i ω => f (X i ω)) k | tailProcess X]
@@ -88,7 +75,7 @@ theorem Contractable.condExp_blockAverage_tailProcess_eq {μ : Measure Ω} [IsFi
   have hterm : ∀ᵐ ω ∂μ, ∀ j : Fin (n + 1),
       (μ[fun ω => f (X (k j) ω) | tailProcess X]) ω
         = (μ[fun ω => f (X 0 ω) | tailProcess X]) ω :=
-    ae_all_iff.2 fun j => hX.condExp_comp_tailProcess_eq hX_meas hf hf_int
+    ae_all_iff.2 fun j => hX.condExp_comp_tailProcess_ae_eq hX_meas hf
   -- The block has `n + 1` terms, all with the same conditional expectation, so the average is that
   -- common value; the normalisation cancels because `n + 1 ≠ 0`.
   have hne : ((n + 1 : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.2 n.succ_ne_zero
@@ -126,7 +113,8 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
         (a - blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => 0 + (j : ℕ)) 1 μ)
         atTop (𝓝 0) := by
       simp_rw [eLpNorm_sub_comm a]
-      exact tendsto_eLpNorm_one_of_tendsto_integral_abs_sub hA_int ha_int (ha_lim 0)
+      exact TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int ha_int
+        (by simpa [Real.norm_eq_abs] using ha_lim 0)
     -- The limit is tail-measurable, so it is its own conditional expectation.
     have htail_le : tailProcess X ≤ (inferInstance : MeasurableSpace Ω) :=
       tailProcess_le_ambient 0 fun k _ => hX_meas k
@@ -135,7 +123,7 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
       condExp_of_stronglyMeasurable htail_le ha_meas.stronglyMeasurable ha_int
     exact ha_condExp ▸
       TauCeti.MeasureTheory.condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm ha_int hA_int
-        (fun m => hX.condExp_blockAverage_tailProcess_eq hX_meas hf
+        (fun m => hX.condExp_blockAverage_tailProcess_ae_eq hX_meas hf
           (MemLp.integrable one_le_two (hY_L2 0)) _) hL1
   refine (ha_lim r).congr fun m => integral_congr_ae ?_
   filter_upwards [ha_eq] with ω hω
@@ -177,11 +165,14 @@ theorem Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs {μ : Mea
       blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => r + (j : ℕ))
     (tendstoInMeasure_of_tendsto_eLpNorm one_ne_zero
       (fun m => (hA_int m).aestronglyMeasurable) ha_int.aestronglyMeasurable
-      (tendsto_eLpNorm_one_of_tendsto_integral_abs_sub hA_int ha_int ha_lim))
+      (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int ha_int
+        (by simpa [Real.norm_eq_abs] using ha_lim)))
     (tendstoInMeasure_of_tendsto_eLpNorm one_ne_zero
       (fun m => (hA_int m).aestronglyMeasurable) integrable_condExp.aestronglyMeasurable
-      (tendsto_eLpNorm_one_of_tendsto_integral_abs_sub hA_int integrable_condExp
-        (hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2 r)))
+      (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int
+        integrable_condExp (by
+          simpa [Real.norm_eq_abs] using
+            hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2 r)))
 
 end Probability
 
