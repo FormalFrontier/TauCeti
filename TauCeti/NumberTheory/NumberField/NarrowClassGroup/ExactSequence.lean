@@ -40,25 +40,31 @@ noncomputable def mkPrincipal : Kˣ →* NarrowClassGroup K :=
     mkPrincipal x = mk (toPrincipalIdeal (𝓞 K) K x) := by
   simp only [mkPrincipal, MonoidHom.comp_apply]
 
-theorem toClassGroup_mkPrincipal (x : Kˣ) :
-    toClassGroup (mkPrincipal (K := K) x) = 1 := by
-  rw [mkPrincipal_apply, toClassGroup_mk, ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal,
-    coe_spanSingleton]
+/-- The composition `Cl⁺(K) → Cl(K)` after `mkPrincipal` is trivial: forgetting positivity kills the
+class of a principal ideal. This is the "composition is zero" half of exactness at `Cl⁺(K)`. -/
+@[simp] theorem toClassGroup_comp_mkPrincipal :
+    (toClassGroup (K := K)).comp mkPrincipal = 1 := by
+  ext x
+  rw [MonoidHom.comp_apply, MonoidHom.one_apply, mkPrincipal_apply, toClassGroup_mk,
+    ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal, coe_spanSingleton]
   exact ⟨⟨(x : K), rfl⟩⟩
 
 /-- **Exactness at `Cl⁺(K)`** of `Kˣ → Cl⁺(K) → Cl(K) → 1`: the kernel of the forgetful map to the
 ordinary class group is exactly the image of the principal-class map. -/
 theorem toClassGroup_ker :
     MonoidHom.ker (toClassGroup (K := K)) = (mkPrincipal (K := K)).range := by
-  refine le_antisymm (fun z hz => ?_) ?_
-  · obtain ⟨I, rfl⟩ := mk_surjective z
-    rw [MonoidHom.mem_ker, toClassGroup_mk, ClassGroup.mk_eq_one_iff] at hz
-    obtain ⟨x, hx⟩ : I ∈ (toPrincipalIdeal (𝓞 K) K).range := by
-      rw [mem_principal_ideals_iff]
-      obtain ⟨a, ha⟩ := (isPrincipal_iff _).1 hz
-      exact ⟨a, ha.symm⟩
-    exact ⟨x, by rw [mkPrincipal_apply, hx]⟩
-  · rintro _ ⟨x, rfl⟩
-    exact MonoidHom.mem_ker.mpr (toClassGroup_mkPrincipal x)
+  -- `mkPrincipal = mk ∘ toPrincipalIdeal` and `toClassGroup ∘ mk = ClassGroup.mk`; the ordinary
+  -- class-group map kills exactly the principal ideals. The kernel equality is then generic
+  -- image/preimage bookkeeping along the surjection `mk`.
+  have hdef : mkPrincipal (K := K) = mk.comp (toPrincipalIdeal (𝓞 K) K) :=
+    MonoidHom.ext fun x => by rw [mkPrincipal_apply, MonoidHom.comp_apply]
+  have hmk : (toClassGroup (K := K)).comp mk = ClassGroup.mk (R := 𝓞 K) K :=
+    MonoidHom.ext fun I => toClassGroup_mk I
+  have hcg : MonoidHom.ker (ClassGroup.mk (R := 𝓞 K) K) = (toPrincipalIdeal (𝓞 K) K).range := by
+    ext I
+    rw [MonoidHom.mem_ker, ClassGroup.mk_eq_one_iff, mem_principal_ideals_iff, isPrincipal_iff]
+    exact ⟨fun ⟨a, ha⟩ => ⟨a, ha.symm⟩, fun ⟨a, ha⟩ => ⟨a, ha.symm⟩⟩
+  rw [hdef, MonoidHom.range_comp, ← hcg, ← hmk, ← MonoidHom.comap_ker,
+    Subgroup.map_comap_eq_self_of_surjective mk_surjective]
 
 end TauCeti.NumberField.NarrowClassGroup
