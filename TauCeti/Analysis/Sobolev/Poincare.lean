@@ -4,10 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+-- The two dilation laws and `Mathlib.Analysis.Calculus.ContDiff.Defs` are imported publicly:
+-- between them they supply every notion appearing in the statements below (`eLpNorm`, `fderiv`,
+-- the Haar measure and `EuclideanSpace` API, and `ContDiff`).
 public import TauCeti.Analysis.Sobolev.Dilation
-public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
-public import Mathlib.MeasureTheory.Function.LpSpace.Indicator
-public import Mathlib.MeasureTheory.Measure.OpenPos
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+-- The remaining three imports are private: the bump function, the compact-support `MemLp`
+-- criterion and the open-positivity of Haar measure are used only to build the counterexample,
+-- so downstream importers do not pay for them.
+import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
+import Mathlib.MeasureTheory.Function.LpSpace.Indicator
+import Mathlib.MeasureTheory.Measure.OpenPos
 
 /-!
 # The Poincaré inequality fails on the whole space

@@ -4,18 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.FDeriv.Equiv
-public import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
-public import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
+-- `TauCeti.MeasureTheory.Function.Lp.Dilation` is imported publicly:
+-- `TauCeti.eLpNorm_comp_inv_smul` is the companion of the statement below, and supplies the
+-- `eLpNorm` and Haar measure API appearing in its signature.
+public import TauCeti.MeasureTheory.Function.Lp.Dilation
+public import Mathlib.Analysis.Calculus.FDeriv.Basic
+-- `Mathlib.Analysis.Calculus.FDeriv.Equiv` is imported privately: its `fderiv_comp_smul` is used
+-- only inside the proof, so downstream importers do not pay for the equivalence machinery.
+import Mathlib.Analysis.Calculus.FDeriv.Equiv
 
 /-!
 # Dilation scaling of the Sobolev seminorms
 
 Fix a finite-dimensional real normed space `E` of dimension `n` carrying an additive Haar
 measure `μ`, and dilate the variable of a function by `r > 0`, i.e. replace `u` by
-`x ↦ u (r⁻¹ • x)`. This file records how that operation rescales the two quantities a
-first-order Sobolev estimate compares: the `Lᵖ` seminorm of the function, and the `Lᵖ`
-seminorm of its derivative.
+`x ↦ u (r⁻¹ • x)`. This file records how that operation rescales the `Lᵖ` seminorm of the
+derivative, the second of the two quantities a first-order Sobolev estimate compares; the first,
+the `Lᵖ` seminorm of the function itself, is `TauCeti.eLpNorm_comp_inv_smul`.
 
 For `0 < p < ∞` the two scaling laws are
 
@@ -27,15 +32,8 @@ the extra `r⁻¹` in the second coming from the chain rule, in the shape of Mat
 Poincaré-type inequality cannot hold with one constant for all compactly supported functions on
 the whole space.
 
-Mathlib has the Bochner-integral scaling law `MeasureTheory.Measure.integral_comp_inv_smul`;
-`TauCeti.lintegral_comp_smul` is its lower-Lebesgue-integral counterpart, proved the same way
-from `MeasureTheory.Measure.map_addHaar_smul`, and is what the `eLpNorm` statements consume.
-
 ## Main declarations
 
-* `TauCeti.lintegral_comp_smul`: `∫⁻ x, g (r • x) ∂μ = |(r ^ n)⁻¹| * ∫⁻ x, g x ∂μ`.
-* `TauCeti.lintegral_comp_inv_smul`: the same law written for `r⁻¹` and `0 < r`.
-* `TauCeti.eLpNorm_comp_inv_smul`: `‖u (r⁻¹ • ·)‖_p = r ^ (n / p) * ‖u‖_p`.
 * `TauCeti.eLpNorm_fderiv_comp_inv_smul`: `‖D(u (r⁻¹ • ·))‖_p = r ^ (n / p - 1) * ‖Du‖_p`.
 -/
 
@@ -46,48 +44,9 @@ namespace TauCeti
 open MeasureTheory Module
 open scoped ENNReal
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
+  [FiniteDimensional ℝ E] (μ : Measure E) [μ.IsAddHaarMeasure]
   {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-
-section Measure
-
-variable [MeasurableSpace E] [BorelSpace E] [FiniteDimensional ℝ E] (μ : Measure E)
-  [μ.IsAddHaarMeasure] {G : Type*} [NormedAddCommGroup G]
-
-/-- **Dilation scaling of the lower Lebesgue integral.** This is the counterpart, for `∫⁻`, of
-Mathlib's `MeasureTheory.Measure.integral_comp_smul`; as there, no integrability of `g` is
-needed. -/
-theorem lintegral_comp_smul (g : E → ℝ≥0∞) {r : ℝ} (hr : r ≠ 0) :
-    ∫⁻ x, g (r • x) ∂μ = ENNReal.ofReal |(r ^ finrank ℝ E)⁻¹| * ∫⁻ x, g x ∂μ := by
-  calc ∫⁻ x, g (r • x) ∂μ = ∫⁻ y, g y ∂Measure.map (fun x => r • x) μ :=
-        (lintegral_map_equiv g
-          (Homeomorph.smul (isUnit_iff_ne_zero.2 hr).unit).toMeasurableEquiv).symm
-    _ = ENNReal.ofReal |(r ^ finrank ℝ E)⁻¹| * ∫⁻ x, g x ∂μ := by
-        rw [Measure.map_addHaar_smul μ hr, lintegral_smul_measure, smul_eq_mul]
-
-/-- Dilating the variable by `r⁻¹`, for `0 < r`, multiplies a lower Lebesgue integral by
-`r ^ n`, where `n` is the dimension of the ambient space. -/
-theorem lintegral_comp_inv_smul (g : E → ℝ≥0∞) {r : ℝ} (hr : 0 < r) :
-    ∫⁻ x, g (r⁻¹ • x) ∂μ = ENNReal.ofReal (r ^ finrank ℝ E) * ∫⁻ x, g x ∂μ := by
-  rw [lintegral_comp_smul μ g (inv_ne_zero hr.ne'), inv_pow, inv_inv,
-    abs_of_nonneg (by positivity)]
-
-/-- **Dilation scaling of the `Lᵖ` seminorm:** `‖u (r⁻¹ • ·)‖_p = r ^ (n / p) * ‖u‖_p`, where
-`n` is the dimension of the ambient space. -/
-theorem eLpNorm_comp_inv_smul (f : E → G) {r : ℝ} (hr : 0 < r) {p : ℝ≥0∞} (hp₀ : p ≠ 0)
-    (hp : p ≠ ∞) :
-    eLpNorm (fun x => f (r⁻¹ • x)) p μ =
-      ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal)) * eLpNorm f p μ := by
-  have ht : 0 < p.toReal := ENNReal.toReal_pos hp₀ hp
-  have key := lintegral_comp_inv_smul μ (fun y => ‖f y‖ₑ ^ p.toReal) hr
-  rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hp₀ hp, eLpNorm_eq_lintegral_rpow_enorm_toReal hp₀ hp,
-    key, ENNReal.mul_rpow_of_nonneg _ _ (by positivity)]
-  have hpow : ((r ^ finrank ℝ E : ℝ)) ^ (1 / p.toReal) = r ^ ((finrank ℝ E : ℝ) / p.toReal) := by
-    rw [← Real.rpow_natCast r (finrank ℝ E), ← Real.rpow_mul hr.le]
-    ring_nf
-  congr 1
-  rw [← hpow]
-  exact ENNReal.ofReal_rpow_of_pos (by positivity : (0 : ℝ) < r ^ finrank ℝ E)
 
 /-- **Dilation scaling of the `Lᵖ` seminorm of the derivative:**
 `‖D(u (r⁻¹ • ·))‖_p = r ^ (n / p - 1) * ‖Du‖_p`. The exponent drops by one relative to
@@ -105,7 +64,5 @@ theorem eLpNorm_fderiv_comp_inv_smul (u : E → F) {r : ℝ} (hr : 0 < r)
     ← ENNReal.ofReal_mul (by positivity), Real.rpow_sub hr, Real.rpow_one]
   congr 1
   field_simp
-
-end Measure
 
 end TauCeti
