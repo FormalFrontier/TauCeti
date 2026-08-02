@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Order.Ring.Units
+public import TauCeti.GroupTheory.Index
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.Basic
 
 /-!
@@ -41,7 +42,7 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
   units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
   `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
 * `TauCeti.NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
-  (using the general ordered-ring finite-index instances from `TauCeti.Algebra.Order.Ring.Units`).
+  (via `Units.instFiniteIndexPosSubgroup` and the general `Subgroup.instFiniteIndexComap`).
 -/
 
 public section
@@ -132,9 +133,8 @@ theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
   exact sq_mem_totallyPositiveUnits _
 
 /-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
-infinite places, of the finite-index preimages of the positive units of `ℝ` (the general
-finite-index facts `instFiniteIndexPosSubgroup`/`instFiniteIndexComapPosSubgroup` live in
-`TauCeti.Algebra.Order.Ring.Units`). -/
+infinite places, of the finite-index preimages of the positive units of `ℝ` (via the general
+`Units.instFiniteIndexPosSubgroup` and `Subgroup.instFiniteIndexComap`). -/
 instance finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
   rw [totallyPositiveUnits, iInf_subtype']
   exact Subgroup.finiteIndex_iInf fun _ => inferInstance
