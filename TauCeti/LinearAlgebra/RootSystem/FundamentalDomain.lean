@@ -94,6 +94,7 @@ lemma ofIdx_smul_eq_self_of_coroot'_eq_zero {i : ι} {x : M} (h : P.coroot' i x 
 
 /-- A Weyl-group element is a wall reflection through `x` exactly when it is the simple reflection
 at some simple root whose simple coroot kills `x`. -/
+@[simp]
 lemma mem_wallReflections {x : M} {w : P.weylGroup} :
     w ∈ wallReflections P b x ↔
       ∃ i ∈ b.support, P.coroot' i x = 0 ∧ w = _root_.RootPairing.weylGroup.ofIdx P i :=
