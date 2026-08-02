@@ -4,9 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.Group.Affine
-public import Mathlib.AlgebraicGeometry.Morphisms.ClosedImmersion
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
 
 /-!
 # Closed subgroup schemes from Hopf ideals
@@ -21,11 +20,6 @@ over `Spec R`. Its underlying morphism of schemes is a closed immersion because 
 map is surjective. Thus the construction retains the scheme structure cut out by `I`, rather
 than only the induced inclusion on ordinary points.
 
-More generally, the scheme morphism underlying the contravariant `hopfSpec` image of a morphism
-of commutative Hopf algebras is a closed immersion exactly when the coordinate morphism is
-surjective. This criterion requires no hypotheses beyond commutativity of the base and coordinate
-rings.
-
 If `I ≤ J`, the quotient-to-quotient coordinate map `H ⧸ I ⟶ H ⧸ J` gives a closed immersion
 `Spec(H ⧸ J) ⟶ Spec(H ⧸ I)`. The ambient triangle, identity, and composition laws below record
 that these closed subgroup schemes depend contravariantly on the Hopf ideal. For a finite-type
@@ -36,8 +30,6 @@ in the same universe, which is reflected in all scheme-level declarations in thi
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff`: the coordinate criterion for a
-  morphism of Hopf spectra to be a closed immersion.
 * `TauCeti.CommHopfAlgCat.quotientSpec`: the group scheme represented by `H ⧸ I`.
 * `TauCeti.CommHopfAlgCat.quotientSpecι`: its group-object morphism to the group scheme
   represented by `H`.
@@ -69,22 +61,6 @@ namespace CommHopfAlgCat
 open AlgebraicGeometry
 
 variable {R : Type u} [CommRing R]
-
-private lemma hopfSpec_map_left {S : CommRingCat.{u}}
-    {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B) :
-    ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left =
-      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) :=
-  rfl
-
-/-- The scheme morphism underlying the contravariant `hopfSpec` image of `f` is a closed
-immersion if and only if the coordinate Hopf-algebra morphism `f` is surjective. -/
-lemma isClosedImmersion_hopfSpec_map_iff {S : CommRingCat.{u}}
-    {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B) :
-    IsClosedImmersion ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left ↔
-      Function.Surjective f.hom := by
-  rw [hopfSpec_map_left]
-  exact IsClosedImmersion.hasAffineProperty.SpecMap_iff_of_affineAnd
-    RingHom.surjective_respectsIso _
 
 /-- The affine group scheme represented by the quotient Hopf algebra `H ⧸ I`.
 
