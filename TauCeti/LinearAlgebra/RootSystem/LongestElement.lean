@@ -60,11 +60,13 @@ finitely many roots whose Weyl group happens to be finite; that is the shape use
 ## References
 
 This file implements the "longest element" item of Layer 4 in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The roadmap's `Suggested.lean` states
-the length clause with the Coxeter length of the Weyl Coxeter system, which is the Layer 2 summit
-and is not yet available; the inversion count that replaces it here is what that layer's "length
-equals inversions" item identifies with Coxeter length. The argument is the one in J. E. Humphreys,
-*Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. That item spells its length clauses
+with the Coxeter length of the Weyl Coxeter system, whose construction is the Layer 2 summit and is
+not yet available. The roadmap pins the two spellings of length to be equal, in its "length equals
+inversions" item `(weylCoxeterSystem P b).length w = (inversions P b w).ncard`, so the length
+statements proved here in the inversion spelling become that item's clauses by rewriting along that
+identity once it lands. The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras
+and Representation Theory*, GTM 9, Ch. III, §10.3.
 -/
 
 namespace TauCeti
