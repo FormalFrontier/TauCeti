@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.ClosedForm
 public import TauCeti.Analysis.Complex.Conformal.Moebius
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
 public import TauCeti.Analysis.SpecialFunctions.Artanh
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
@@ -33,19 +34,16 @@ the Euclidean speed integrated against the Poincaré density. The theorem is tha
 
 ## The proof
 
-Both halves rest on one algebraic fact, the **conformal invariance of the density**
-(`TauCeti.norm_deriv_unitDiscMoebiusFormula_div_one_sub_sq`): for the disc Moebius factor
-`M z = (z - c) / (1 - conj c * z)`,
+Both halves rest on one algebraic fact, which `Conformal/SchwarzPick/AutomorphismIsometry.lean`
+already supplies as the equality case of the infinitesimal Schwarz--Pick lemma
+(`TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one`): the disc
+Moebius factor `M z = (z - c) / (1 - conj c * z)` preserves the Poincaré density,
 
-`‖M ′ z‖ / (1 - ‖M z‖ ^ 2) = (1 - ‖z‖ ^ 2)⁻¹`.
+`‖M ′ z‖ / (1 - ‖M z‖ ^ 2) = 1 / (1 - ‖z‖ ^ 2)`.
 
-Indeed `‖M ′ z‖ = (1 - ‖c‖ ^ 2) / ‖1 - conj c * z‖ ^ 2`, while the defect identity
-`TauCeti.one_sub_pseudoHyperbolicExpr_sq` evaluates the denominator as
-`(1 - ‖z‖ ^ 2) (1 - ‖c‖ ^ 2) / ‖1 - conj c * z‖ ^ 2`; the Moebius denominator and the factor
-`1 - ‖c‖ ^ 2` both cancel. Integrating this along a path gives
-`TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp`: hyperbolic length is unchanged by
-post-composition with a disc Moebius factor. That is what moves an arbitrary path to one starting
-at the origin.
+Integrating it along a path gives `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp`:
+hyperbolic length is unchanged by post-composition with a disc Moebius factor. That is what moves
+an arbitrary path to one starting at the origin.
 
 *The lower bound.* For a path with `γ a = 0` the estimate is a one-variable calculus argument.
 Choosing the unit vector `v = conj (γ b) / ‖γ b‖`, the real function `ψ t = (v * γ t).re` runs
@@ -85,9 +83,9 @@ that API at that point.
 * `TauCeti.hyperbolicLength` — the density-weighted length of a path in the disc, with
   `TauCeti.hyperbolicLength_eq_integral` rewriting it against an explicit derivative and
   `TauCeti.hyperbolicLength_nonneg`, `TauCeti.hyperbolicLength_const` the basic evaluations.
-* `TauCeti.norm_deriv_unitDiscMoebiusFormula_div_one_sub_sq` — the conformal invariance of the
-  Poincaré density, and `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` its integrated
-  form: hyperbolic length is a Moebius invariant.
+* `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` — hyperbolic length is a Moebius
+  invariant, the integrated form of the infinitesimal isometry
+  `TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one`.
 * `TauCeti.hyperbolicLength_ray` — the hyperbolic length of a Euclidean radius is `Real.artanh`
   of its Euclidean length.
 * `TauCeti.hyperbolicDist_le_hyperbolicLength` — **no `C¹` path in the disc is hyperbolically
@@ -181,35 +179,11 @@ theorem hyperbolicLength_ray {u : ℂ} (hu : ‖u‖ = 1) {r : ℝ} (hr : 0 ≤ 
 
 /-! ## Conformal invariance of the density -/
 
-/-- **The Poincaré density is invariant under the disc Moebius factors.** For `‖c‖ < 1` the
-derivative of `z ↦ (z - c) / (1 - conj c * z)` computed in
-`TauCeti.hasDerivAt_unitDiscMoebiusFormula`, weighted by the density at the image point, is the
-density at the source point.
-
-The two ingredients cancel each other exactly: the derivative has norm
-`(1 - ‖c‖ ^ 2) / ‖1 - conj c * z‖ ^ 2`, and the defect identity
-`TauCeti.one_sub_pseudoHyperbolicExpr_sq` evaluates `1 - ‖(z - c) / (1 - conj c * z)‖ ^ 2` as
-`(1 - ‖z‖ ^ 2) * (1 - ‖c‖ ^ 2) / ‖1 - conj c * z‖ ^ 2`. -/
-theorem norm_deriv_unitDiscMoebiusFormula_div_one_sub_sq (hc : ‖c‖ < 1) (hz : ‖z‖ < 1) :
-    ‖(1 - (starRingEnd ℂ) c * c) / (1 - (starRingEnd ℂ) c * z) ^ 2‖ /
-        (1 - ‖(z - c) / (1 - (starRingEnd ℂ) c * z)‖ ^ 2) = (1 - ‖z‖ ^ 2)⁻¹ := by
-  have hden : (1 : ℂ) - (starRingEnd ℂ) c * z ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one hz hc
-  have hN : (0 : ℝ) < ‖1 - (starRingEnd ℂ) c * z‖ := norm_pos_iff.mpr hden
-  have hA : (0 : ℝ) < 1 - ‖c‖ ^ 2 := by nlinarith [norm_nonneg c]
-  have hB : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-  have hcc : (1 : ℂ) - (starRingEnd ℂ) c * c = ((1 - ‖c‖ ^ 2 : ℝ) : ℂ) := by
-    rw [← Complex.normSq_eq_conj_mul_self, Complex.normSq_eq_norm_sq]
-    push_cast
-    ring
-  rw [← pseudoHyperbolicExpr_def z c, one_sub_pseudoHyperbolicExpr_sq hz hc, hcc, norm_div,
-    norm_pow, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hA]
-  field_simp
-
 /-- **Hyperbolic length is a Moebius invariant.** Post-composing a `C¹` path in the disc with the
 Moebius factor `z ↦ (z - c) / (1 - conj c * z)` leaves its hyperbolic length unchanged: this is
-`TauCeti.norm_deriv_unitDiscMoebiusFormula_div_one_sub_sq` integrated along the path. It is the
-tool that moves the starting point of a path to the origin. -/
+the infinitesimal Poincaré isometry
+`TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one` integrated along
+the path. It is the tool that moves the starting point of a path to the origin. -/
 theorem hyperbolicLength_unitDiscMoebiusFormula_comp (hc : ‖c‖ < 1)
     (hderiv : ∀ t ∈ uIcc a b, HasDerivAt γ (γ' t) t) (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
     hyperbolicLength (fun t => (γ t - c) / (1 - (starRingEnd ℂ) c * γ t)) a b
@@ -224,8 +198,11 @@ theorem hyperbolicLength_unitDiscMoebiusFormula_comp (hc : ‖c‖ < 1)
       (hasDerivAt_unitDiscMoebiusFormula c (γ t) hden).scomp t (hderiv t ht)
   rw [hyperbolicLength_eq_integral key, hyperbolicLength_eq_integral hderiv]
   refine intervalIntegral.integral_congr fun t ht => ?_
-  rw [norm_mul, mul_div_assoc,
-    norm_deriv_unitDiscMoebiusFormula_div_one_sub_sq hc (hmem t ht), ← div_eq_mul_inv]
+  have hden : (1 : ℂ) - (starRingEnd ℂ) c * γ t ≠ 0 :=
+    one_sub_conj_mul_ne_zero_of_norm_lt_one (hmem t ht) hc
+  rw [norm_mul, mul_div_assoc, ← (hasDerivAt_unitDiscMoebiusFormula c (γ t) hden).deriv,
+    norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one hc (hmem t ht),
+    mul_one_div]
 
 /-! ## The distance is a lower bound for the length -/
 
