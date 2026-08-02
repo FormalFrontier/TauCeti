@@ -52,15 +52,16 @@ theorem hadamardFactor_self [CompleteSpace F] (f : E → F) (x : E) :
     hadamardFactor f x x = fderiv ℝ f x := by
   simp [hadamardFactor]
 
-omit [NormedSpace ℝ E] [NormedSpace ℝ F] in
+omit [NormedSpace ℝ F] in
 private theorem exists_eventually_norm_le_on_Icc
-    (h : E → ℝ → F) (hh : Continuous h.uncurry) (x₀ : E) :
+    {X : Type*} [TopologicalSpace X]
+    (h : X → ℝ → F) (hh : Continuous h.uncurry) (x₀ : X) :
     ∃ C : ℝ, ∀ᶠ x in nhds x₀, ∀ t ∈ Set.Icc (0 : ℝ) 1, ‖h x t‖ ≤ C := by
   have hfiber : Continuous (fun t : ℝ ↦ ‖h x₀ t‖) :=
     hh.norm.comp (continuous_const.prodMk continuous_id)
   obtain ⟨C, hC⟩ := (isCompact_Icc : IsCompact (Set.Icc (0 : ℝ) 1)).bddAbove_image
     hfiber.continuousOn
-  let n : Set (E × ℝ) := {z | ‖h.uncurry z‖ < C + 1}
+  let n : Set (X × ℝ) := {z | ‖h.uncurry z‖ < C + 1}
   have hn : IsOpen n := isOpen_lt hh.norm continuous_const
   have hfiber_subset : {x₀} ×ˢ Set.Icc (0 : ℝ) 1 ⊆ n := by
     rintro ⟨x, t⟩ ⟨hx, ht⟩
@@ -78,10 +79,11 @@ private theorem exists_eventually_norm_le_on_Icc
   change ‖h x t‖ < C + 1 at hxt
   exact hxt.le
 
-omit [NormedSpace ℝ E] in
-/-- Integration over the compact unit interval preserves continuity in a normed parameter. -/
+/-- Integration over the compact unit interval preserves continuity in a first-countable
+topological parameter. -/
 theorem continuous_integral_Icc_of_continuous [CompleteSpace F]
-    (h : E → ℝ → F) (hh : Continuous h.uncurry) :
+    {X : Type*} [TopologicalSpace X] [FirstCountableTopology X]
+    (h : X → ℝ → F) (hh : Continuous h.uncurry) :
     Continuous (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
   rw [continuous_iff_continuousAt]
   intro x₀
@@ -182,11 +184,6 @@ theorem ContDiff.sub_eq_hadamardFactor_apply [CompleteSpace F]
     exact (hf.fderiv_right (m := 0) (by norm_num)).continuous.comp (by fun_prop)
   rw [hadamardFactor, ContinuousLinearMap.intervalIntegral_apply hIntegrable (y - x)]
   simpa [sub_eq_iff_eq_add, add_comm] using hTaylor
-
-/-- The averaged derivative in Hadamard's factorization depends continuously on the endpoint. -/
-theorem ContDiff.continuous_hadamardFactor [CompleteSpace F] (f : E → F)
-    (hf : ContDiff ℝ 1 f) (x : E) : Continuous (hadamardFactor f x) := by
-  exact (ContDiff.contDiff_hadamardFactor_of_succ 0 f hf x).continuous
 
 /-- For a smooth function, the averaged derivative in Hadamard's factorization depends smoothly on
 the endpoint. -/
