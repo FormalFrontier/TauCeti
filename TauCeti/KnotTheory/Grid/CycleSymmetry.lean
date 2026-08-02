@@ -252,8 +252,7 @@ theorem fullyBlockedCyclesSwapMarkingsEquiv_apply (c : G.fullyBlockedCycles) :
 
 /-- The inverse of the marking-swap cycle equivalence preserves underlying chains. -/
 @[simp]
-theorem fullyBlockedCyclesSwapMarkingsEquiv_symm_apply
-    (c : G.swapMarkings.fullyBlockedCycles) :
+theorem fullyBlockedCyclesSwapMarkingsEquiv_symm_apply (c : G.swapMarkings.fullyBlockedCycles) :
     ((G.fullyBlockedCyclesSwapMarkingsEquiv.symm c : G.fullyBlockedCycles) :
         GridChain (ZMod 2) n) = (c : GridChain (ZMod 2) n) := by
   simp [fullyBlockedCyclesSwapMarkingsEquiv]

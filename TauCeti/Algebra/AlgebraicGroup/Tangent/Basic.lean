@@ -222,7 +222,10 @@ theorem tangentKer_def :
     Subgroup (WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B)))) = _
   rfl
 
-private lemma fst_apply_of_mem_ker
+/-- The classical part of any tangent-kernel point is the identity point: pointwise, the
+first component of its value at `x` is `algebraMap R _ (counit x)`. -/
+@[simp]
+lemma fst_apply_of_mem_tangentKer
     {ψ : WithConv (A →ₐ[R] DualNumber (CounitAlgebra R A B))}
     (h : ψ ∈ tangentKer R A B) (x : A) :
     fst (R := CounitAlgebra R A B) (ψ.ofConv x) =
@@ -253,7 +256,7 @@ private lemma snd_convMul_apply
           counit (R := R) ((ℛ R a).right i) • snd (R := CounitAlgebra R A B)
             (ψ₁.ofConv ((ℛ R a).left i)) := by
     intro i _
-    rw [snd_mul, fst_apply_of_mem_ker h₁, fst_apply_of_mem_ker h₂, op_smul_eq_smul,
+    rw [snd_mul, fst_apply_of_mem_tangentKer h₁, fst_apply_of_mem_tangentKer h₂, op_smul_eq_smul,
       algebraMap_smul, algebraMap_smul]
   rw [Finset.sum_congr rfl expand, Finset.sum_add_distrib, add_comm]
   congr 1
@@ -308,8 +311,8 @@ noncomputable def derivationMulEquivTangentKer :
     have hprod := toConv_mem_ker_iff.mpr
       (derivationToDualNumberEquivLift R A (Bialgebra.CounitAlgebra R A B) (d₁.toAdd + d₂.toAdd)).2
     refine Subtype.ext (ofConv_injective (AlgHom.ext fun a => TrivSqZeroExt.ext ?_ ?_))
-    · exact (fst_apply_of_mem_ker hprod a).trans
-        (fst_apply_of_mem_ker (mul_mem h₁ h₂) a).symm
+    · exact (fst_apply_of_mem_tangentKer hprod a).trans
+        (fst_apply_of_mem_tangentKer (mul_mem h₁ h₂) a).symm
     · simp only [MulMemClass.mk_mul_mk]
       rw [snd_convMul_apply h₁ h₂ a]
       simp
@@ -324,7 +327,8 @@ lemma mem_tangentKer_iff {ψ : WithConv (A →ₐ[R] DualNumber (CounitAlgebra R
         IsScalarTower.toAlgHom R A (Bialgebra.CounitAlgebra R A B) := by
   simpa using toConv_mem_ker_iff (ψ₀ := ψ.ofConv)
 
-@[simp]
+/- Not a `simp` lemma: the general `fst_apply_of_mem_tangentKer` (with `SetLike.coe_mem`)
+already rewrites this left-hand side. -/
 lemma derivationMulEquivTangentKer_apply_fst
     (d : Multiplicative (Derivation R A (Bialgebra.CounitAlgebra R A B))) (a : A) :
     fst (R := CounitAlgebra R A B)

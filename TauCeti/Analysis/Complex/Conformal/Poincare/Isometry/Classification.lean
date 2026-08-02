@@ -169,6 +169,39 @@ theorem real_inner_map_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
   rw [hsub, hnz, hnw] at h1
   linarith
 
+/-- **An isometry fixing the origin admits a coordinate frame.** There is an orthonormal pair whose
+real inner products with `g z` recover the real and imaginary parts of `z`. -/
+private theorem exists_orthonormal_pair_real_inner_map_eq (h0 : g 0 = 0) :
+    ∃ e₁ e₂ : ℂ, ‖e₁‖ = 1 ∧ ‖e₂‖ = 1 ∧ ⟪e₁, e₂⟫_ℝ = 0 ∧
+      (∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re) ∧
+      (∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im) := by
+  -- Take the doubled images of the probe points `1 / 2` and `I / 2`.
+  set p : ℂ := ((1 / 2 : ℝ) : ℂ) with hp_def
+  set q : ℂ := I * ((1 / 2 : ℝ) : ℂ) with hq_def
+  have hnp : ‖p‖ = 1 / 2 := by rw [hp_def, Complex.norm_real]; norm_num
+  have hnq : ‖q‖ = 1 / 2 := by
+    rw [hq_def, norm_mul, Complex.norm_I, one_mul, Complex.norm_real]
+    norm_num
+  have hp : p ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnp]; norm_num
+  have hq : q ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnq]; norm_num
+  refine ⟨(2 : ℝ) • g p, (2 : ℝ) • g q, ?_, ?_, ?_, fun z hz => ?_, fun z hz => ?_⟩
+  · rw [norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]; norm_num
+  · rw [norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]; norm_num
+  · rw [real_inner_smul_left, real_inner_smul_right,
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
+    simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
+      Complex.ofReal_re, Complex.ofReal_im]
+    ring
+  · rw [real_inner_smul_left,
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
+    simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
+    ring
+  · rw [real_inner_smul_left,
+      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
+    simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
+      Complex.ofReal_re, Complex.ofReal_im]
+    ring
+
 end FixZero
 
 /-- Two unit complex numbers with vanishing real inner product differ by a quarter turn. -/
@@ -206,44 +239,10 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
     ∃ u : ℂ, ‖u‖ = 1 ∧
       (EqOn g (fun z => u * z) (ball (0 : ℂ) 1) ∨
         EqOn g (fun z => u * conj z) (ball (0 : ℂ) 1)) := by
-  set p : ℂ := ((1 / 2 : ℝ) : ℂ) with hp_def
-  set q : ℂ := I * ((1 / 2 : ℝ) : ℂ) with hq_def
-  have hnp : ‖p‖ = 1 / 2 := by rw [hp_def, Complex.norm_real]; norm_num
-  have hnq : ‖q‖ = 1 / 2 := by
-    rw [hq_def, norm_mul, Complex.norm_I, one_mul, Complex.norm_real]
-    norm_num
-  have hp : p ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnp]; norm_num
-  have hq : q ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnq]; norm_num
-  set e₁ : ℂ := (2 : ℝ) • g p with he₁_def
-  set e₂ : ℂ := (2 : ℝ) • g q with he₂_def
-  have hn₁ : ‖e₁‖ = 1 := by
-    rw [he₁_def, norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]
-    norm_num
-  have hn₂ : ‖e₂‖ = 1 := by
-    rw [he₂_def, norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]
-    norm_num
+  -- The orthonormal frame reading off the coordinates of `g z`.
+  obtain ⟨e₁, e₂, hn₁, hn₂, horth, hcoord₁, hcoord₂⟩ :=
+    exists_orthonormal_pair_real_inner_map_eq hg h0
   have hmul₁ : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', hn₁]; norm_num
-  -- The frame is orthonormal.
-  have horth : ⟪e₁, e₂⟫_ℝ = 0 := by
-    rw [he₁_def, he₂_def, real_inner_smul_left, real_inner_smul_right,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
-    simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.ofReal_re, Complex.ofReal_im]
-    ring
-  -- The frame reads off the coordinates of `g z`.
-  have hcoord₁ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re := by
-    intro z hz
-    rw [he₁_def, real_inner_smul_left,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
-    simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
-    ring
-  have hcoord₂ : ∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im := by
-    intro z hz
-    rw [he₂_def, real_inner_smul_left,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
-    simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.ofReal_re, Complex.ofReal_im]
-    ring
   have hre : ∀ z ∈ ball (0 : ℂ) 1, (conj e₁ * g z).re = z.re := fun z hz => by
     rw [mul_comm, ← Complex.inner e₁ (g z)]; exact hcoord₁ z hz
   refine ⟨e₁, hn₁, ?_⟩

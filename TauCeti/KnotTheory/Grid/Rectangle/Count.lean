@@ -136,8 +136,7 @@ theorem card_le_two (s : Finset (GridRectangleBetween x y)) : s.card ≤ 2 :=
   (Finset.card_le_card (by intro R _; exact mem_all R)).trans (card_all_le_two x y)
 
 /-- There are at most two empty oriented rectangles between two grid states. -/
-theorem card_emptyRectangles_le_two (x y : GridState n) :
-    (emptyRectangles x y).card ≤ 2 :=
+theorem card_emptyRectangles_le_two (x y : GridState n) : (emptyRectangles x y).card ≤ 2 :=
   card_le_two (emptyRectangles x y)
 
 end GridRectangleBetween
