@@ -36,6 +36,9 @@ The inverse-free computation rule is `inv_smul_mk`.
 
 * The `MulAction`, `FaithfulSMul`, `ContinuousConstSMul`, and `IsCancelSMul` instances for
   `FundamentalGroup X x₀` acting on `UniversalCover x₀`.
+* `TauCeti.UniversalCover.basepointLift`: the constant-path point over `x₀`.
+* `TauCeti.UniversalCover.monodromy_basepointLift`: monodromy at that point is the
+  fundamental-group action by the inverse loop class.
 * `TauCeti.UniversalCover.proj_eq_iff_mem_orbit`: the fibres of `proj` are precisely the
   action orbits.
 * `TauCeti.UniversalCover.isQuotientCoveringMap`: `proj` is the quotient covering map for
@@ -157,5 +160,57 @@ theorem isQuotientCoveringMap [LocallyPathConnectedSpace X] [PathConnectedSpace 
   rw [isQuotientCoveringMap_iff_isCoveringMap_and]
   exact
     ⟨isCoveringMap x₀, proj_surjective, inferInstance, inferInstance, proj_eq_iff_mem_orbit⟩
+
+/-- The constant-path point in the fibre of the universal covering projection over `x₀`. -/
+def basepointLift (x₀ : X) : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} :=
+  ⟨ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀)),
+    Set.mem_singleton_iff.mpr (by
+      rw [proj_ofBasedPath]
+      exact BasedPath.endpoint_ofPath _)⟩
+
+/-- The underlying point of `basepointLift` is represented by the constant path. -/
+@[simp]
+theorem basepointLift_coe (x₀ : X) :
+    (basepointLift x₀ : UniversalCover x₀) =
+      mk x₀ (Path.Homotopic.Quotient.refl x₀) := by
+  simp only [basepointLift]
+  rw [ofBasedPath_ofPath, Path.Homotopic.Quotient.mk_refl]
+
+/-- Monodromy of the universal covering projection at its constant-path basepoint is the
+fundamental-group action by the inverse loop class. -/
+theorem monodromy_basepointLift [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X] (x₀ : X) (g : FundamentalGroup X x₀) :
+    ((isCoveringMap x₀).monodromy g.toPath (basepointLift x₀) : UniversalCover x₀) =
+      g⁻¹ • (basepointLift x₀ : UniversalCover x₀) := by
+  obtain ⟨γ, hγ⟩ := Quotient.exists_rep g.toPath
+  rw [← hγ]
+  -- Unfolding monodromy after choosing `γ` exposes the endpoint of its lifted path.
+  change (isCoveringMap x₀).liftPath γ
+      (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 = _
+  let δ : Path (BasedPath.endpoint (BasedPath.ofPath (Path.refl x₀))) x₀ :=
+    γ.cast (BasedPath.endpoint_ofPath _) rfl
+  calc
+    _ = (isCoveringMap x₀).liftPath δ
+        (ofBasedPath x₀ (BasedPath.ofPath (Path.refl x₀))) _ 1 := by
+      congr 1
+    _ = ofBasedPath x₀ (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ) :=
+      liftPath_apply_one_eq_ofBasedPath_append δ
+    _ = g⁻¹ • (basepointLift x₀ : UniversalCover x₀) := by
+      rw [basepointLift_coe, inv_smul_mk]
+      rw [ofBasedPath_def]
+      let hend := BasedPath.endpoint_append (BasedPath.ofPath (Path.refl x₀)) δ
+      apply UniversalCover.ext hend
+      have hcast : HEq
+          (Path.Homotopic.Quotient.mk
+            (BasedPath.append (BasedPath.ofPath (Path.refl x₀)) δ).toPath)
+          (Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ)) :=
+        Path.Homotopic.hpath_hext (fun _ ↦ rfl)
+      refine hcast.trans (heq_of_eq ?_)
+      -- The `HEq` has aligned the dependent endpoints; only quotient concatenation remains.
+      change Path.Homotopic.Quotient.mk ((Path.refl x₀).trans γ) =
+        g.toPath.trans (Path.Homotopic.Quotient.refl x₀)
+      rw [← hγ, Path.Homotopic.Quotient.mk_trans, Path.Homotopic.Quotient.mk_refl,
+        Path.Homotopic.Quotient.refl_trans]
+      exact (Path.Homotopic.Quotient.trans_refl _).symm
 
 end TauCeti.UniversalCover
