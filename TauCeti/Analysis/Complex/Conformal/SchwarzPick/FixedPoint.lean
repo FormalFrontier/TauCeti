@@ -66,11 +66,10 @@ variable {f : ℂ → ℂ} {z w : ℂ}
 
 /-- **A holomorphic self-map of the disc with two distinct fixed points is the identity.**
 
-Two fixed points make the Schwarz--Pick estimate an equality at that pair for a trivial reason, so
-the classification form of Schwarz--Pick rigidity turns `f` into a disc automorphism; an
-automorphism with two distinct fixed points is the identity by
-`TauCeti.eq_one_of_mem_unitDiscAut_of_isFixedPt`.  This generalises that statement from `Aut(𝔻)`
-to arbitrary holomorphic self-maps. -/
+If `f` is differentiable on the open unit ball `ball (0 : ℂ) 1`, maps that ball into itself and
+fixes two distinct points `z ≠ w` of it, then `f` agrees with the identity on the whole ball.
+This is `TauCeti.eq_one_of_mem_unitDiscAut_of_isFixedPt` with its hypothesis weakened from
+membership in `Aut(𝔻)` to an arbitrary holomorphic self-map. -/
 theorem eqOn_id_of_isFixedPt_of_isFixedPt (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (hz : z ∈ ball (0 : ℂ) 1)
     (hw : w ∈ ball (0 : ℂ) 1) (hne : z ≠ w) (hfz : Function.IsFixedPt f z)
