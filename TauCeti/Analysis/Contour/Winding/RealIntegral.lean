@@ -28,7 +28,6 @@ real formula — the computational workhorse of Layer 1; the on-curve bounded-in
 
 ## Main results
 
-* `TauCeti.Contour.realWindingIntegrand` — the real coordinate winding integrand.
 * `TauCeti.Contour.windingNumber_eq_real_integral_of_closed` — the winding number of a closed curve
   off `w` equals the real bounded integral `(1 / 2π) ∫ (x ẏ − y ẋ) / (x² + y²)`.
 

@@ -249,6 +249,20 @@ theorem dist_circleMap_lt_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     dist (circleMap ζ ρ θ) c < r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) :=
   circleMap_mem_ball_iff hζ hρ θ
 
+/-- Every point of a circle has an angular representative in the period of length `2 * π` centred
+at any prescribed angle. This also covers radius zero; a negative-radius sphere is empty. -/
+theorem exists_mem_Icc_circleMap_eq (α : ℝ) {z : ℂ} (hz : z ∈ sphere ζ ρ) :
+    ∃ t ∈ Icc (-π) π, circleMap ζ ρ (α + t) = z := by
+  have hρ : 0 ≤ ρ := Metric.nonneg_of_mem_sphere hz
+  have hmem : z ∈ circleMap ζ ρ '' Icc (α - π) (α - π + 2 * π) := by
+    rw [(periodic_circleMap ζ ρ).image_Icc Real.two_pi_pos, range_circleMap, abs_of_nonneg hρ]
+    exact hz
+  obtain ⟨θ, hθ, rfl⟩ := hmem
+  refine ⟨θ - α, ?_, by congr 1; ring⟩
+  constructor
+  · linarith [hθ.1]
+  · linarith [hθ.2]
+
 /-- **The cosine has no interior minimum on `[-π, π]`.** If `k < cos a` and `k < cos b`, with
 `-π ≤ a` and `b ≤ π`, then `k < cos θ` for every `θ ∈ [a, b]`: `cos` increases on `[-π, 0]` and
 decreases on `[0, π]`, so on `[a, b]` its minimum is attained at an endpoint. -/
