@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.DirectSum.Module
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
-public import Mathlib.RingTheory.Artinian.Module
 public import TauCeti.RingTheory.KrullSchmidt.Indecomposable
 
 /-!
@@ -29,7 +27,8 @@ keeps the argument short: the recursive calls land on submodules of `M` again, s
 of summands produced by the two halves live in one type and are combined by `Finset.union`, with no
 transport along `Submodule.map` anywhere in the induction. The price is one translation lemma,
 `TauCeti.isIndecomposableModule_coe_iff`, which reads indecomposability of `↥P` off the interval
-below `P` in the ambient lattice; it is proved once, at the start.
+below `P` in the ambient lattice; it is proved once, at the start, out of Mathlib's order
+isomorphism `Submodule.mapIic`.
 
 ## Main results
 
@@ -42,12 +41,21 @@ below `P` in the ambient lattice; it is proved once, at the start.
   induction, and the statement the recursion is strong enough to carry.
 * `TauCeti.exists_isInternal_isIndecomposableModule`: **existence of an indecomposable
   decomposition** for an Artinian module, packaged as `DirectSum.IsInternal`.
-* `TauCeti.exists_isInternal_isIndecomposableModule_of_isFiniteLength`: the same for a module of
-  finite length, the form the Krull-Schmidt statement uses, and
+* `TauCeti.exists_indecomposable_decomposition`: the same for a module of finite length, the form
+  the Krull-Schmidt statement uses, and
   `TauCeti.exists_isInternal_isIndecomposableModule_of_finiteDimensional` for a module that is
   finite-dimensional over a field acting through a scalar tower.
 * `TauCeti.exists_isCompl_isIndecomposableModule`: a nonzero Artinian module has an indecomposable
   direct summand.
+
+## Implementation notes
+
+The three lattice lemmas read indecomposability off the submodule lattice and need no subtraction,
+so they are stated for a semimodule over a semiring, matching the generality of
+`IsIndecomposableModule` itself. The decomposition statements are over a ring: assembling the two
+halves of the induction is `Finset.SupIndep.union`, which needs `IsModularLattice (Submodule A M)`,
+and Mathlib establishes that instance only for `[Ring A] [AddCommGroup M]`, its proof going through
+`Submodule.sup_inf_assoc_of_le_of_neg_le`.
 
 ## References
 
@@ -65,31 +73,11 @@ namespace TauCeti
 
 universe u v
 
-variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
+section Semiring
+
+variable {A : Type u} {M : Type v} [Semiring A] [AddCommMonoid M] [Module A M] {P : Submodule A M}
 
 /-! ### Reading a submodule's decompositions in the ambient lattice -/
-
-section Lattice
-
-variable {P N Q : Submodule A M}
-
-/-- A splitting `P = N ⊕ Q` by submodules of the ambient module `M` pulls back to a splitting of
-the module `↥P`. -/
-theorem isCompl_comap_subtype (hN : N ≤ P) (hQ : Q ≤ P) (hd : Disjoint N Q) (hs : N ⊔ Q = P) :
-    IsCompl (N.comap P.subtype) (Q.comap P.subtype) := by
-  constructor
-  · rw [disjoint_iff, ← Submodule.comap_inf, disjoint_iff.mp hd, Submodule.comap_bot,
-      Submodule.ker_subtype]
-  · rw [codisjoint_iff]
-    have h := Submodule.submoduleOf_sup_of_le hN hQ
-    rw [hs, Submodule.submoduleOf_self] at h
-    exact h.symm
-
-/-- A codisjoint pair of submodules of `↥P` spans `P` once pushed forward into the ambient module.
-Together with `Submodule.disjoint_map` this is the converse of `TauCeti.isCompl_comap_subtype`. -/
-theorem sup_map_subtype_eq_of_codisjoint {N' Q' : Submodule A P} (h : Codisjoint N' Q') :
-    N'.map P.subtype ⊔ Q'.map P.subtype = P := by
-  rw [← Submodule.map_sup, codisjoint_iff.mp h, Submodule.map_subtype_top]
 
 /-- An indecomposable submodule is nonzero. -/
 theorem IsIndecomposableModule.ne_bot (h : IsIndecomposableModule A P) : P ≠ ⊥ :=
@@ -100,7 +88,8 @@ indecomposable exactly when `P` is nonzero and every splitting of `P` as an inte
 two submodules of `M` has a zero summand.
 
 This is the form the decomposition induction consumes: it never has to leave the lattice
-`Submodule A M`. -/
+`Submodule A M`. Both directions are Mathlib's order isomorphism `Submodule.mapIic` between
+`Submodule A P` and the interval below `P`, read through `OrderIso.isCompl_iff`. -/
 theorem isIndecomposableModule_coe_iff (P : Submodule A M) :
     IsIndecomposableModule A P ↔
       P ≠ ⊥ ∧ ∀ N Q : Submodule A M, N ≤ P → Q ≤ P → Disjoint N Q → N ⊔ Q = P →
@@ -108,18 +97,14 @@ theorem isIndecomposableModule_coe_iff (P : Submodule A M) :
   rw [isIndecomposableModule_iff_nontrivial_and_forall_isCompl,
     Submodule.nontrivial_iff_ne_bot]
   refine and_congr_right fun _ ↦ ⟨fun h N Q hN hQ hd hs ↦ ?_, fun h N' Q' hNQ ↦ ?_⟩
-  · have := h _ _ (isCompl_comap_subtype hN hQ hd hs)
-    have hmap : ∀ {X : Submodule A M}, X ≤ P → X.comap P.subtype = ⊥ → X = ⊥ := by
-      intro X hX hbot
-      rw [← Submodule.map_subtype_range_inclusion hX, Submodule.range_inclusion, hbot,
-        Submodule.map_bot]
-    exact this.imp (hmap hN) (hmap hQ)
-  · have hmap : ∀ {X : Submodule A P}, X.map P.subtype = ⊥ → X = ⊥ := fun {X} hX ↦
-      Submodule.map_injective_of_injective P.subtype_injective
-        (hX.trans (Submodule.map_bot _).symm)
-    exact (h _ _ (Submodule.map_subtype_le _ _) (Submodule.map_subtype_le _ _)
-      (Submodule.disjoint_map P.subtype_injective hNQ.disjoint)
-      (sup_map_subtype_eq_of_codisjoint hNQ.codisjoint)).imp hmap hmap
+  · have h' := h (P.mapIic.symm ⟨N, hN⟩) (P.mapIic.symm ⟨Q, hQ⟩) (P.mapIic.isCompl_iff.mpr ?_)
+    · simpa [P.mapIic.symm.injective.eq_iff' P.mapIic.symm.map_bot, Subtype.ext_iff] using h'
+    · simpa only [OrderIso.apply_symm_apply, Set.Iic.isCompl_iff] using ⟨hd, hs⟩
+  · have h' := Set.Iic.isCompl_iff.mp (P.mapIic.isCompl_iff.mp hNQ)
+    simp only [Submodule.coe_mapIic_apply] at h'
+    refine (h _ _ (Submodule.map_subtype_le _ _) (Submodule.map_subtype_le _ _) h'.1 h'.2).imp
+      (fun hX ↦ ?_) (fun hX ↦ ?_) <;>
+      exact P.mapIic.injective (Subtype.ext (by simpa using hX))
 
 /-- A nonzero submodule that is not indecomposable splits into two nonzero submodules of the
 ambient module, each of them strictly smaller. This is the step of the decomposition induction. -/
@@ -133,9 +118,13 @@ theorem exists_lt_lt_of_not_isIndecomposableModule (hP : P ≠ ⊥)
   · exact hd.symm.eq_bot_of_le (hNP ▸ hQ)
   · exact hd.eq_bot_of_le (hQP ▸ hN)
 
-end Lattice
+end Semiring
 
 /-! ### Existence of the decomposition -/
+
+section Ring
+
+variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 
 /-- Every submodule of an Artinian module is the internal direct sum of a finite set of
 indecomposable submodules, recorded as a `Finset` of submodules that is `Finset.SupIndep` with
@@ -174,30 +163,7 @@ theorem exists_isInternal_isIndecomposableModule [IsArtinian A M] :
     exists_finset_isIndecomposableModule_supIndep_sup_eq (⊤ : Submodule A M)
   refine ⟨s, hs, (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
     ⟨hsi.independent, ?_⟩⟩
-  rw [← hss, Finset.sup_eq_iSup, iSup_subtype]
-  rfl
-
-/-- **Existence of an indecomposable decomposition** for a module of finite length: it is the
-internal direct sum of a finite set of indecomposable submodules.
-
-This is the existence half of the Krull-Schmidt theorem, in the hypotheses that theorem is usually
-stated with. It is a corollary of the Artinian statement
-`TauCeti.exists_isInternal_isIndecomposableModule`, since a module of finite length is Artinian. -/
-theorem exists_isInternal_isIndecomposableModule_of_isFiniteLength (hM : IsFiniteLength A M) :
-    ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
-      DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
-  have : IsArtinian A M := (isFiniteLength_iff_isNoetherian_isArtinian.mp hM).2
-  exists_isInternal_isIndecomposableModule
-
-/-- A module that is finite-dimensional over a field acting through a scalar tower — in particular
-a finite-dimensional module over a finite-dimensional algebra — is the internal direct sum of a
-finite set of indecomposable submodules. -/
-theorem exists_isInternal_isIndecomposableModule_of_finiteDimensional (k : Type*) [Field k]
-    [SMul k A] [Module k M] [IsScalarTower k A M] [FiniteDimensional k M] :
-    ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
-      DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
-  have : IsArtinian A M := isArtinian_of_tower k inferInstance
-  exists_isInternal_isIndecomposableModule
+  simpa only [Finset.sup_eq_iSup, iSup_subtype, id_eq] using hss
 
 /-- A nonzero Artinian module has an indecomposable direct summand: some indecomposable submodule
 `N` admits a complement.
@@ -217,6 +183,30 @@ theorem exists_isCompl_isIndecomposableModule [IsArtinian A M] [Nontrivial M] :
   · simpa using Finset.supIndep_iff_disjoint_erase.mp hsi N hN
   · rw [codisjoint_iff, ← hss]
     conv_rhs => rw [← Finset.insert_erase hN, Finset.sup_insert]
-    rfl
+    rw [id_eq]
+
+/-- **Existence of an indecomposable decomposition** for a module of finite length: it is the
+internal direct sum of a finite set of indecomposable submodules.
+
+This is the existence half of the Krull-Schmidt theorem, in the hypotheses that theorem is usually
+stated with. It is a corollary of the Artinian statement
+`TauCeti.exists_isInternal_isIndecomposableModule`, since a module of finite length is Artinian. -/
+theorem exists_indecomposable_decomposition (hM : IsFiniteLength A M) :
+    ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
+      DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
+  have : IsArtinian A M := (isFiniteLength_iff_isNoetherian_isArtinian.mp hM).2
+  exists_isInternal_isIndecomposableModule
+
+/-- A module that is finite-dimensional over a field acting through a scalar tower — in particular
+a finite-dimensional module over a finite-dimensional algebra — is the internal direct sum of a
+finite set of indecomposable submodules. -/
+theorem exists_isInternal_isIndecomposableModule_of_finiteDimensional (k : Type*) [Field k]
+    [SMul k A] [Module k M] [IsScalarTower k A M] [FiniteDimensional k M] :
+    ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
+      DirectSum.IsInternal fun N : s ↦ (N : Submodule A M) :=
+  have : IsArtinian A M := isArtinian_of_tower k inferInstance
+  exists_isInternal_isIndecomposableModule
+
+end Ring
 
 end TauCeti
