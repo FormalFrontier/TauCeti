@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Dynamics.FixedPoints.Basic
+public import Mathlib.Dynamics.FixedPoints.Defs
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Rigidity
 import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Parametrization
 
