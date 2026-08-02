@@ -7,8 +7,6 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.EssentialImage
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme
 
-import Mathlib.CategoryTheory.MorphismProperty.Limits
-
 /-!
 # The anti-equivalence for diagonalizable group schemes
 
