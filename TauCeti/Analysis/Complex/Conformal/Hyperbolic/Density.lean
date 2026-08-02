@@ -78,29 +78,33 @@ open scoped ComplexConjugate Topology
 /-! ### Comparison with the pseudo-hyperbolic expression -/
 
 /-- The hyperbolic distance dominates the pseudo-hyperbolic expression: `Real.artanh` moves
-`[0, 1)` upwards because the Poincaré density is at least `1`. -/
-theorem pseudoHyperbolicExpr_le_hyperbolicDist {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+`[0, 1)` upwards because the Poincaré density is at least `1`.
+
+All that is needed is that the pseudo-hyperbolic expression lies below `1`; for two points of
+the open unit disc that is `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
+theorem pseudoHyperbolicExpr_le_hyperbolicDist {z w : ℂ} (h : pseudoHyperbolicExpr z w < 1) :
     pseudoHyperbolicExpr z w ≤ hyperbolicDist z w := by
   rw [hyperbolicDist_def]
-  exact Real.self_le_artanh (pseudoHyperbolicExpr_nonneg z w)
-    (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw)
+  exact Real.self_le_artanh (pseudoHyperbolicExpr_nonneg z w) h
 
 /-- The hyperbolic distance is bounded above by `p / (1 - p ^ 2)`, where `p` is the
-pseudo-hyperbolic expression: the Poincaré density on `[0, p]` is at most its value at `p`. -/
-theorem hyperbolicDist_le_pseudoHyperbolicExpr_div_one_sub_sq {z w : ℂ} (hz : ‖z‖ < 1)
-    (hw : ‖w‖ < 1) :
+pseudo-hyperbolic expression: the Poincaré density on `[0, p]` is at most its value at `p`.
+
+As for the lower bound, only `p < 1` is needed, which holds for two points of the open unit
+disc by `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`. -/
+theorem hyperbolicDist_le_pseudoHyperbolicExpr_div_one_sub_sq {z w : ℂ}
+    (h : pseudoHyperbolicExpr z w < 1) :
     hyperbolicDist z w ≤ pseudoHyperbolicExpr z w / (1 - pseudoHyperbolicExpr z w ^ 2) := by
   rw [hyperbolicDist_def]
-  exact Real.artanh_le_self_div_one_sub_sq (pseudoHyperbolicExpr_nonneg z w)
-    (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw)
+  exact Real.artanh_le_self_div_one_sub_sq (pseudoHyperbolicExpr_nonneg z w) h
 
 /-- The Euclidean distance divided by the Moebius denominator is a lower bound for the
 hyperbolic distance, sharpening the crude estimate `‖z - w‖ ≤ 2 * pseudoHyperbolicExpr z w`. -/
-theorem norm_sub_div_norm_one_sub_conj_mul_le_hyperbolicDist {z w : ℂ} (hz : ‖z‖ < 1)
-    (hw : ‖w‖ < 1) :
+theorem norm_sub_div_norm_one_sub_conj_mul_le_hyperbolicDist {z w : ℂ}
+    (h : pseudoHyperbolicExpr z w < 1) :
     ‖z - w‖ / ‖1 - (starRingEnd ℂ) w * z‖ ≤ hyperbolicDist z w := by
   rw [← pseudoHyperbolicExpr_eq_norm_div_norm]
-  exact pseudoHyperbolicExpr_le_hyperbolicDist hz hw
+  exact pseudoHyperbolicExpr_le_hyperbolicDist h
 
 /-! ### The infinitesimal density -/
 
