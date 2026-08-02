@@ -149,6 +149,8 @@ private theorem tangentToPointDerivation_surjective_model
     Function.Surjective
       (tangentToPointDerivation (I := modelWithCornersSelf ℝ E) x) := by
   intro D
+  -- Read `D` on a finite coordinate system and use those values as the coordinates of the
+  -- candidate tangent vector.
   let b := Module.finBasis ℝ E
   let c (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
     ⟨b.coord i, (b.coord i).toContinuousLinearMap.contDiff.contMDiff⟩
@@ -159,12 +161,18 @@ private theorem tangentToPointDerivation_surjective_model
   refine ⟨v, ?_⟩
   ext f
   let f' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨f, f.contMDiff⟩
+  -- The domain of `D` and `TangentSpace` are pointed-map and model-space type synonyms. Unfold
+  -- their evaluation here so the rest of the argument can stay in the ordinary smooth-map API.
   change mvfderiv (modelWithCornersSelf ℝ E) f' x v = δ f'
   rw [mvfderiv, mfderiv_eq_fderiv]
+  -- Hadamard's lemma factors `f - f(x)` through the coordinate functions. The factors are smooth,
+  -- so this identity lives in the algebra on which the derivation acts.
   let a (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
     ⟨fun y ↦ hadamardFactor f' x y (b i), by
       have hfac : ContDiff ℝ ∞ (hadamardFactor f' x) :=
         f'.contMDiff.contDiff.contDiff_hadamardFactor f' x
+      -- Applying a smooth continuous-linear-map-valued function to the constant vector `b i`
+      -- is the available API for smoothness of each scalar Hadamard factor.
       exact (hfac.clm_apply (show ContDiff ℝ ∞ (fun _ : E ↦ b i) from
         contDiff_const)).contMDiff⟩
   let k : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
@@ -185,6 +193,8 @@ private theorem tangentToPointDerivation_surjective_model
         rw [map_smul]
         simp [b, mul_comm]
       _ = (∑ i, a i * (c i - kcoord i)) y := by
+        -- Evaluation of bundled smooth maps is a ring homomorphism, but the pointwise coercion on
+        -- the left does not expose that homomorphism to `rw` automatically.
         change _ = ContMDiffMap.evalRingHom y (∑ i, a i * (c i - kcoord i))
         rw [map_sum]
         apply Finset.sum_congr rfl
@@ -193,16 +203,22 @@ private theorem tangentToPointDerivation_surjective_model
   have hδconst (r : ℝ) :
       δ (⟨fun _ : E ↦ r, contDiff_const.contMDiff⟩ :
         C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) = 0 := by
+    -- A constant ordinary smooth map becomes `algebraMap r` after passing to the pointed-map
+    -- synonym; exposing that boundary lets us use the derivation's algebra-map law.
     change D (algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯⟨x⟩ r) = 0
     exact D.map_algebraMap r
   have hδsub (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
       δ (p - q) = δ p - δ q := by
+    -- First unfold `δ`, then expose that the pointed-map constructor preserves subtraction.
+    -- There is no coercion lemma for this type synonym, so both equalities are definitional.
     change D (pointed (p - q)) = D (pointed p) - D (pointed q)
     change D (pointed p - pointed q) = D (pointed p) - D (pointed q)
     exact D.map_sub _ _
   have hterm (i : Fin (Module.finrank ℝ E)) :
       δ (a i * (c i - kcoord i)) = fderiv ℝ f' x (b i) * δ (c i) := by
     have hleibniz := D.leibniz (pointed (a i)) (pointed (c i - kcoord i))
+    -- Unfold `δ` and pointed-map evaluation in the Leibniz identity. The scalar action there is
+    -- evaluation at `x`, which is definitionally the displayed multiplication.
     change δ (a i * (c i - kcoord i)) =
       a i x * δ (c i - kcoord i) + (c i x - kcoord i x) * δ (a i) at hleibniz
     rw [hleibniz, hδsub, hδconst]
@@ -210,11 +226,14 @@ private theorem tangentToPointDerivation_surjective_model
   have hδsum (q : Fin (Module.finrank ℝ E) →
       C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
       δ (∑ i, q i) = ∑ i, δ (q i) := by
+    -- As for subtraction, unfold `δ` and then expose that the pointed-map constructor preserves
+    -- finite sums; both steps cross only the pointed-map type synonym.
     change D (pointed (∑ i, q i)) = ∑ i, D (pointed (q i))
     change D (∑ i, pointed (q i)) = ∑ i, D (pointed (q i))
     exact map_sum D _ _
   calc
     fderiv ℝ f' x v = ∑ i, fderiv ℝ f' x (b i) * δ (c i) := by
+      -- Unfold the chosen vector `v` across the tangent-space synonym before using linearity.
       change fderiv ℝ f' x (∑ i, δ (c i) • b i) = _
       rw [map_sum]
       apply Finset.sum_congr rfl
@@ -296,6 +315,8 @@ theorem tangentToPointDerivation_surjective
     [T2Space M] (x : M) (hx : I.IsInteriorPoint x) :
     Function.Surjective (tangentToPointDerivation (I := I) x) := by
   intro D
+  -- A bump-localized extended chart is globally smooth and agrees with the chart germ at `x`.
+  -- Push `D` through it and apply the model-space theorem to obtain the candidate vector `v`.
   let b : SmoothBumpFunction I x := Classical.choice inferInstance
   let F : C^∞⟮I, M; modelWithCornersSelf ℝ E, E⟯ :=
     ⟨fun y ↦ b y • extChartAt I x y,
@@ -308,9 +329,13 @@ theorem tangentToPointDerivation_surjective
   let v : TangentSpace I x := w
   have hv : mfderiv I (modelWithCornersSelf ℝ E) F x v = w := by
     rw [hF.mfderiv_eq, mfderiv_extChartAt_self]
+    -- `TangentSpace I x` is the model space as a type synonym, so the identity derivative applies
+    -- to `v` definitionally as the model-space vector `w`.
     rfl
   refine ⟨v, ?_⟩
   ext f
+  -- To compare the two derivations on an arbitrary global `f`, cut its chart expression off inside
+  -- the interior of the chart target. This produces a globally smooth model-space function `g'`.
   have htarget : interior (extChartAt I x).target ∈ nhds (F x) := by
     rw [hFx]
     exact isOpen_interior.mem_nhds
@@ -336,9 +361,14 @@ theorem tangentToPointDerivation_surjective
     (isOpen_extChartAt_source x).mem_nhds (mem_extChartAt_source x)
   have hlocal : Filter.EventuallyEq (nhds x) (f : M → ℝ) (g' ∘ F) := by
     filter_upwards [hF, hβF, hsource] with y hFy hβy hy
+    -- Unfold composition and the bundled chart-local function `g'`; no theorem rewrites through
+    -- both bundled-map coercions at once.
     change f y = β (F y) * f ((extChartAt I x).symm (F y))
+    -- Likewise expose the constant function in the eventual equality supplied by the bump.
     change β (F y) = 1 at hβy
     rw [hβy, one_mul, hFy, (extChartAt I x).left_inv hy]
+  -- Germ invariance replaces `f` by `g' ∘ F` on both sides. Naturality of the tangent comparison
+  -- then reduces the result exactly to the model-space equality `hw`.
   rw [(tangentToPointDerivation x v).congr_of_eventuallyEq f (g'.comp F) hlocal,
     D.congr_of_eventuallyEq f (g'.comp F) hlocal]
   have hpush : fdifferential F x (tangentToPointDerivation x v) =
