@@ -153,9 +153,7 @@ theorem hasFDerivAt_integral_Icc_of_contDiff
       ((fderiv ℝ h.uncurry (x, t)).comp ((ContinuousLinearMap.id ℝ E).prod 0)) x at hd
     simpa only [h', ContinuousLinearMap.inl] using hd
 
-/-- Integration over the compact unit interval preserves any finite order of continuous
-differentiability in a parameter. -/
-theorem contDiff_integral_Icc_of_contDiff
+private theorem contDiff_integral_Icc_of_contDiff_nat
     {V : Type u} {W : Type max u v} [NormedAddCommGroup V] [NormedSpace ℝ V]
     [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
     (n : ℕ) (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
@@ -179,6 +177,17 @@ theorem contDiff_integral_Icc_of_contDiff
           hasFDerivAt_integral_Icc_of_contDiff h (hh.of_le (by norm_num))⟩
       simpa only [Nat.cast_add, Nat.cast_one] using hsmooth
 
+/-- Integration over the compact unit interval preserves continuous differentiability of any
+possibly infinite order in a parameter. -/
+theorem contDiff_integral_Icc_of_contDiff
+    {V : Type u} {W : Type max u v} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
+    (n : ℕ∞) (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
+    ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
+  rw [contDiff_iff_forall_nat_le]
+  intro m hm
+  exact contDiff_integral_Icc_of_contDiff_nat m h (hh.of_le (by exact_mod_cast hm))
+
 /-- If `f` is `n + 1` times continuously differentiable, its Hadamard factor is `n` times
 continuously differentiable in the endpoint. -/
 theorem ContDiff.contDiff_hadamardFactor_of_succ
@@ -186,7 +195,7 @@ theorem ContDiff.contDiff_hadamardFactor_of_succ
     (n : ℕ) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
     ContDiff ℝ n (hadamardFactor f x) := by
   rw [hadamardFactor_eq_integral_Icc]
-  apply contDiff_integral_Icc_of_contDiff n
+  apply contDiff_integral_Icc_of_contDiff (n : ℕ∞)
   have hd : ContDiff ℝ n (fderiv ℝ f) := hf.fderiv_right (m := n) (by norm_num)
   exact hd.comp <| by fun_prop
 
@@ -209,7 +218,7 @@ the endpoint. -/
 theorem ContDiff.contDiff_hadamardFactor [CompleteSpace F] (f : E → F)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
-  rw [contDiff_infty]
-  intro n
-  exact ContDiff.contDiff_hadamardFactor_of_succ n f
-    (hf.of_le (WithTop.coe_le_coe.2 le_top)) x
+  rw [hadamardFactor_eq_integral_Icc]
+  apply contDiff_integral_Icc_of_contDiff (⊤ : ℕ∞)
+  have hd : ContDiff ℝ ∞ (fderiv ℝ f) := hf.fderiv_right (m := ∞) (by simp)
+  exact hd.comp <| by fun_prop
