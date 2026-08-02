@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.NormalFamilies
-import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.UniformSpace.Ascoli
 
 /-!
@@ -29,8 +28,9 @@ shows that local boundedness is not merely sufficient for it but equivalent to i
 A family `F : ι → ℂ → ℂ` of functions holomorphic on an open `Ω` restricts to a family
 `f : ι → C(↥Ω, ℂ)`; the theorems below take that restriction as a hypothesis
 `⇑(f i) = Ω.domRestrict (F i)` rather than fixing one bundling, so that a caller which already
-carries such an `f` may use them directly. `TauCeti.exists_continuousMap_domRestrict` produces one,
-so the hypothesis constrains nothing.
+carries such an `f` may use them directly. The hypothesis constrains nothing: a caller holding
+`hF : ∀ i, ContinuousOn (F i) Ω` and no `f` of its own takes
+`fun i => ⟨Ω.domRestrict (F i), (hF i).domRestrict⟩`, for which it holds by `rfl`.
 
 *Locally bounded ⇒ relatively compact* is Mathlib's compact-open Arzelà–Ascoli framework. The
 family sits inside the uniform-on-compacts function space as a closed subspace
@@ -41,29 +41,24 @@ family sits inside the uniform-on-compacts function space as a closed subspace
 compactness is local boundedness at a single point. This is the direction with analytic content —
 holomorphy enters only through the Cauchy estimate behind the equicontinuity.
 
-*Relatively compact ⇒ locally bounded* is a soft argument and needs no holomorphy at all. On a
-compact `K ⊆ Ω` the product `closure (range f) ×ˢ (Subtype.val ⁻¹' K)` is compact, an open subset
-of `ℂ` being locally compact makes evaluation `C(↥Ω, ℂ) × ↥Ω → ℂ` continuous in both variables at
-once, and a continuous real function on a compact set is bounded. The bound obtained is uniform in
-the index, which is exactly `TauCeti.IsLocallyBoundedOn`.
+*Relatively compact ⇒ locally bounded* is a soft argument and needs no holomorphy at all, nor even
+openness of `Ω`: local compactness of the subtype `↥Ω` is all it uses. On a compact `K ⊆ Ω` the
+product `closure (range f) ×ˢ (Subtype.val ⁻¹' K)` is compact, local compactness of `↥Ω` makes
+evaluation `C(↥Ω, ℂ) × ↥Ω → ℂ` continuous in both variables at once, and a continuous real function
+on a compact set is bounded. The bound obtained is uniform in the index, which is exactly
+`TauCeti.IsLocallyBoundedOn`.
 
 Together they give `TauCeti.isCompact_closure_range_iff_isLocallyBoundedOn`: for a family of
 holomorphic functions on an open set, relative compactness in `C(↥Ω, ℂ)` and local boundedness are
-the same condition. Since `TauCeti.IsLocallyBoundedOn.deriv` carries local boundedness to the
-derivative family, relative compactness is inherited by the derivatives
-(`TauCeti.isCompact_closure_range_deriv_of_isLocallyBoundedOn`).
+the same condition.
 
 ## Main results
 
 * `TauCeti.isCompact_closure_range_of_isLocallyBoundedOn` — a locally bounded family of
   holomorphic functions on an open set is relatively compact in `C(↥Ω, ℂ)`.
 * `TauCeti.isLocallyBoundedOn_of_isCompact_closure_range` — the converse, for any family of
-  functions continuous on `Ω`.
+  maps on a set whose subtype is locally compact.
 * `TauCeti.isCompact_closure_range_iff_isLocallyBoundedOn` — the two are equivalent.
-* `TauCeti.isCompact_closure_range_deriv_of_isLocallyBoundedOn` — the derivative family is
-  relatively compact as well.
-* `TauCeti.exists_continuousMap_domRestrict` — the restriction hypothesis the above are stated
-  against is always satisfiable.
 
 ## Coordination with upstream Mathlib
 
@@ -123,12 +118,6 @@ private theorem equicontinuous_subtype_val_range {X Y : Type*} [TopologicalSpace
   rw [heq]
   exact h.comp σ
 
-/-- The restriction hypothesis of the theorems below is always satisfiable: a family of functions
-continuous on `Ω` restricts to a family of continuous maps on the subtype `↥Ω`. -/
-theorem exists_continuousMap_domRestrict (hF : ∀ i, ContinuousOn (F i) Ω) :
-    ∃ f : ι → C(Ω, ℂ), ∀ i, ⇑(f i) = Ω.domRestrict (F i) :=
-  ⟨fun i => ⟨Ω.domRestrict (F i), (hF i).domRestrict⟩, fun _ => rfl⟩
-
 /-- **Montel's theorem, relative-compactness form.** A locally bounded family of holomorphic
 functions on an open set `Ω ⊆ ℂ` restricts to a relatively compact family in the space
 `C(↥Ω, ℂ)` of continuous maps with the compact-open topology.
@@ -156,17 +145,17 @@ theorem isCompact_closure_range_of_isLocallyBoundedOn (hΩ : IsOpen Ω)
   obtain ⟨i, rfl⟩ := hg
   simpa [hf i, mem_closedBall, dist_zero_right] using hC i
 
-/-- **The converse of Montel's theorem.** A family of functions continuous on an open set
-`Ω ⊆ ℂ` whose restrictions are relatively compact in `C(↥Ω, ℂ)` is locally bounded on `Ω`.
+/-- **The converse of Montel's theorem.** A family of functions on a set `Ω ⊆ ℂ` with locally
+compact subtype whose restrictions are relatively compact in `C(↥Ω, ℂ)` is locally bounded on `Ω`.
 
-No holomorphy is needed: evaluation is continuous in the map and the point together, because an
-open subset of `ℂ` is locally compact, so a continuous real function on the compact product
-`closure (Set.range f) ×ˢ (Subtype.val ⁻¹' K)` is bounded — and its bound is uniform in the
-index, which is what local boundedness asserts. -/
-theorem isLocallyBoundedOn_of_isCompact_closure_range (hΩ : IsOpen Ω)
+No holomorphy is needed, nor even continuity beyond what the restrictions already carry:
+evaluation is continuous in the map and the point together as soon as `↥Ω` is locally compact
+(for an open `Ω` the instance is `IsOpen.locallyCompactSpace`), so a continuous real function on
+the compact product `closure (Set.range f) ×ˢ (Subtype.val ⁻¹' K)` is bounded — and its bound is
+uniform in the index, which is what local boundedness asserts. -/
+theorem isLocallyBoundedOn_of_isCompact_closure_range [LocallyCompactSpace Ω]
     (hf : ∀ i, ⇑(f i) = Ω.domRestrict (F i)) (hcpt : IsCompact (closure (Set.range f))) :
     IsLocallyBoundedOn F Ω := by
-  haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
   refine isLocallyBoundedOn_def.mpr fun K hKΩ hK => ?_
   have hK' : IsCompact (Subtype.val ⁻¹' K : Set Ω) := by
     refine Topology.IsEmbedding.subtypeVal.isCompact_iff.2 ?_
@@ -186,18 +175,8 @@ condition. -/
 theorem isCompact_closure_range_iff_isLocallyBoundedOn (hΩ : IsOpen Ω)
     (hF : ∀ i, DifferentiableOn ℂ (F i) Ω) (hf : ∀ i, ⇑(f i) = Ω.domRestrict (F i)) :
     IsCompact (closure (Set.range f)) ↔ IsLocallyBoundedOn F Ω :=
-  ⟨isLocallyBoundedOn_of_isCompact_closure_range hΩ hf,
+  haveI : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
+  ⟨isLocallyBoundedOn_of_isCompact_closure_range hf,
     fun hb => isCompact_closure_range_of_isLocallyBoundedOn hΩ hF hb hf⟩
-
-/-- **The derivatives of a locally bounded holomorphic family are relatively compact too.**
-
-The derivative family is again holomorphic and, by Cauchy's estimate
-(`TauCeti.IsLocallyBoundedOn.deriv`), again locally bounded, so the relative-compactness form of
-Montel's theorem applies to it. -/
-theorem isCompact_closure_range_deriv_of_isLocallyBoundedOn (hΩ : IsOpen Ω)
-    (hF : ∀ i, DifferentiableOn ℂ (F i) Ω) (hb : IsLocallyBoundedOn F Ω)
-    {g : ι → C(Ω, ℂ)} (hg : ∀ i, ⇑(g i) = Ω.domRestrict (deriv (F i))) :
-    IsCompact (closure (Set.range g)) :=
-  isCompact_closure_range_of_isLocallyBoundedOn hΩ (fun i => (hF i).deriv hΩ) (hb.deriv hΩ hF) hg
 
 end TauCeti
