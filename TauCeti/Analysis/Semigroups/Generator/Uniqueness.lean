@@ -6,8 +6,6 @@ module
 
 public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 public import TauCeti.Analysis.Semigroups.GrowthBound
-public import TauCeti.Analysis.Semigroups.Identity
-public import TauCeti.Analysis.Semigroups.BoundedGenerator.Basic
 import Mathlib.Analysis.Calculus.MeanValue
 
 /-!
@@ -26,24 +24,23 @@ its right derivative vanishes: the derivative of the inner factor contributes th
 Differentiating the outer factor requires a two-sided derivative of a generator-domain orbit,
 which is available at positive times through
 `TauCeti.Semigroups.StronglyContinuousSemigroup.realOperator_hasDerivWithinAt_Ici`; both
-contributions are recombined using the joint strong continuity recorded first in this file.
+contributions are recombined using the joint strong continuity
+`TauCeti.Semigroups.StronglyContinuousSemigroup.tendsto_realOperator_apply` from
+`TauCeti/Analysis/Semigroups/GrowthBound.lean`.
+
+The concrete identifications this makes available are recorded with the semigroups they
+identify: a semigroup with vanishing generator is the identity semigroup
+(`TauCeti/Analysis/Semigroups/Identity.lean`), and a semigroup whose generator is a bounded
+operator `A` is `t ↦ exp (t • A)` (`TauCeti/Analysis/Semigroups/BoundedGenerator/Basic.lean`).
 
 ## Main results
 
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.tendsto_realOperator_apply`: strong continuity
-  of `(u, x) ↦ S u x` in both arguments simultaneously, phrased along an arbitrary filter.
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.continuousOn_realOperator_apply`: the
-  `ContinuousOn` form of the previous result.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.realOperator_eq_of_generator_eq`: two
   semigroups with the same generator agree on the generator domain.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.eq_of_generator_eq` and
   `TauCeti.Semigroups.StronglyContinuousSemigroup.generator_injective`: the generator determines
   the semigroup.
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.eq_id_of_generator_eq_zero` and
-  `TauCeti.Semigroups.StronglyContinuousSemigroup.eq_ofBounded_of_generator_eq`: the two
-  concrete identifications this makes available, namely that a semigroup with vanishing
-  generator is the identity semigroup and that a semigroup whose generator is a bounded operator
-  `A` is `t ↦ exp (t • A)`.
+* `TauCeti.Semigroups.ContractionSemigroup.eq_of_generator_eq`: the contraction-semigroup form.
 
 ## References
 
@@ -66,54 +63,6 @@ namespace TauCeti.Semigroups
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 
 namespace StronglyContinuousSemigroup
-
-/-! ## Joint strong continuity -/
-
-/-- **Joint strong continuity**: if `f i → r` through nonnegative values and `g i → z`, then
-`S (f i) (g i) → S r z`.
-
-A C₀-semigroup is strongly, not uniformly, continuous, so this does not follow from continuity
-of `u ↦ S.realOperator u` alone; the proof combines strong continuity at `r` with the uniform
-operator bound supplied by a growth bound. -/
-theorem tendsto_realOperator_apply {ι : Type*} {l : Filter ι} (S : StronglyContinuousSemigroup X)
-    {f : ι → ℝ} {g : ι → X} {r : ℝ} {z : X} (hf : Tendsto f l (𝓝 r))
-    (hf0 : ∀ᶠ i in l, 0 ≤ f i) (hr : 0 ≤ r) (hg : Tendsto g l (𝓝 z)) :
-    Tendsto (fun i => S.realOperator (f i) (g i)) l (𝓝 (S.realOperator r z)) := by
-  obtain ⟨omega, M, hb⟩ := S.existsGrowthBound
-  have hM : (0 : ℝ) < M := lt_of_lt_of_le zero_lt_one hb.one_le
-  -- A single operator-norm bound valid for all times eventually visited by `f`.
-  have hbound : ∀ᶠ i in l, ‖S.realOperator (f i)‖ ≤ M * Real.exp (|omega| * (r + 1)) := by
-    filter_upwards [hf0, hf.eventually_lt_const (lt_add_one r)] with i hi0 hi1
-    refine (hb.bound (f i) hi0).trans ?_
-    refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) hM.le
-    calc omega * f i ≤ |omega| * f i := mul_le_mul_of_nonneg_right (le_abs_self omega) hi0
-      _ ≤ |omega| * (r + 1) := mul_le_mul_of_nonneg_left hi1.le (abs_nonneg omega)
-  -- The argument moves: the operator norms are uniformly bounded, so this contribution vanishes.
-  have h1 : Tendsto (fun i => S.realOperator (f i) (g i - z)) l (𝓝 0) := by
-    refine squeeze_zero_norm' (a := fun i => M * Real.exp (|omega| * (r + 1)) * ‖g i - z‖) ?_ ?_
-    · filter_upwards [hbound] with i hi
-      exact (ContinuousLinearMap.le_opNorm _ _).trans
-        (mul_le_mul_of_nonneg_right hi (norm_nonneg _))
-    · simpa using
-        (tendsto_iff_norm_sub_tendsto_zero.mp hg).const_mul (M * Real.exp (|omega| * (r + 1)))
-  -- The time moves: this is strong continuity of the orbit of the fixed vector `z`.
-  have h2 : Tendsto (fun i => S.realOperator (f i) z) l (𝓝 (S.realOperator r z)) := by
-    have hfw : Tendsto f l (𝓝[Set.Ici 0] r) :=
-      tendsto_nhdsWithin_iff.mpr ⟨hf, hf0⟩
-    simpa [Function.comp_def] using (S.realOperator_continuousWithinAt z r hr).tendsto.comp hfw
-  have hsplit : ∀ i, S.realOperator (f i) (g i)
-      = S.realOperator (f i) (g i - z) + S.realOperator (f i) z := by
-    intro i
-    rw [← ContinuousLinearMap.map_add, sub_add_cancel]
-  simpa using (h1.add h2).congr fun i => (hsplit i).symm
-
-/-- The `ContinuousOn` form of joint strong continuity: a continuous nonnegative time
-reparametrization applied to a continuous vector-valued map gives a continuous orbit. -/
-theorem continuousOn_realOperator_apply (S : StronglyContinuousSemigroup X) {s : Set ℝ}
-    {f : ℝ → ℝ} {g : ℝ → X} (hf : ContinuousOn f s) (hf0 : ∀ u ∈ s, 0 ≤ f u)
-    (hg : ContinuousOn g s) :
-    ContinuousOn (fun u => S.realOperator (f u) (g u)) s := fun u hu =>
-  S.tendsto_realOperator_apply (hf u hu) (eventually_nhdsWithin_of_forall hf0) (hf0 u hu) (hg u hu)
 
 /-! ## Uniqueness of the semigroup generated by an operator -/
 
@@ -223,17 +172,6 @@ theorem eq_of_generator_eq {S T : StronglyContinuousSemigroup X}
 theorem generator_injective :
     Function.Injective (StronglyContinuousSemigroup.generator (X := X)) :=
   fun _ _ h => eq_of_generator_eq h
-
-/-- A strongly continuous semigroup whose generator vanishes is the identity semigroup. -/
-theorem eq_id_of_generator_eq_zero {S : StronglyContinuousSemigroup X} (h : S.generator = 0) :
-    S = StronglyContinuousSemigroup.id X :=
-  eq_of_generator_eq (h.trans id_generator_eq_zero.symm)
-
-/-- A strongly continuous semigroup whose generator is the bounded operator `A`, defined on all
-of `X`, is the operator exponential `t ↦ exp (t • A)`. -/
-theorem eq_ofBounded_of_generator_eq {S : StronglyContinuousSemigroup X} (A : X →L[ℝ] X)
-    (h : S.generator = (A : X →ₗ[ℝ] X).toPMap ⊤) : S = ofBounded A :=
-  eq_of_generator_eq (h.trans (ofBounded_generator A).symm)
 
 end StronglyContinuousSemigroup
 
