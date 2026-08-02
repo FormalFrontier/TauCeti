@@ -68,7 +68,7 @@ roadmap works in.
 * `TauCeti.YoungTableau.weylModule_eq_bot`: the Weyl module vanishes when the shape has more
   than `n` rows.
 * `TauCeti.YoungTableau.weylModule_eq_bot_iff`: the two directions combined, the vanishing
-  criterion.
+  criterion, with `TauCeti.weylModuleOfShape_eq_bot_iff` its shape-indexed form.
 
 ## References
 
@@ -382,11 +382,40 @@ noncomputable abbrev weylRepOfShape (μ : YoungDiagram) :
     Representation k (GL (Fin n) k) (weylModuleOfShape k n μ).toSubmodule :=
   (weylModuleOfShape k n μ).toRepresentation
 
+/-- The submodule underlying the Weyl module of a shape is the range of the Young symmetrizer of
+its row-superstandard tableau acting on the tensor power. -/
+theorem weylModuleOfShape_toSubmodule (μ : YoungDiagram) :
+    (weylModuleOfShape k n μ).toSubmodule =
+      LinearMap.range (permTensorActionAlgHom k n μ.card
+        (YoungTableau.youngSymmetrizerOver k
+          (StandardYoungTableau.rowSuperstandard μ).toEquiv)) :=
+  YoungTableau.weylModule_toSubmodule k n _
+
+/-- The action on the Weyl module of a shape is the restriction of the action on the tensor
+power. -/
+@[simp]
+theorem weylRepOfShape_apply_coe (μ : YoungDiagram) (g : GL (Fin n) k)
+    (x : (weylModuleOfShape k n μ).toSubmodule) :
+    ((weylRepOfShape k n μ g x : (weylModuleOfShape k n μ).toSubmodule) :
+        ⨂[k]^μ.card (Fin n → k)) = tensorPowerRep k n μ.card g x :=
+  (rfl)
+
 /-- The Weyl module of any `μ`-tableau is isomorphic, as a representation of `GL n k`, to the
 Weyl module of the shape `μ`. -/
 noncomputable def YoungTableau.weylRepEquivOfShape {μ : YoungDiagram} (t : YoungTableau μ) :
     (YoungTableau.weylRep k n t).Equiv (weylRepOfShape k n μ) :=
   YoungTableau.weylRepEquiv t _
+
+/-- **The vanishing criterion for the Weyl module of a shape**: it vanishes exactly when the
+shape has more rows than the dimension of the standard representation. -/
+theorem weylModuleOfShape_eq_bot_iff [Nontrivial k] (μ : YoungDiagram) :
+    (weylModuleOfShape k n μ).toSubmodule = ⊥ ↔ n < μ.colLen 0 :=
+  YoungTableau.weylModule_eq_bot_iff _
+
+/-- The Weyl module of a shape with at most `n` rows is nontrivial. -/
+theorem nontrivial_weylModuleOfShape [Nontrivial k] (μ : YoungDiagram) (hn : μ.colLen 0 ≤ n) :
+    Nontrivial (weylModuleOfShape k n μ).toSubmodule :=
+  YoungTableau.nontrivial_weylModule _ hn
 
 end Shape
 
