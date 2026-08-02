@@ -80,7 +80,7 @@ fixed by composition with `T` are exactly those almost everywhere strongly measu
 theorem metProjection_eq_condExpL2 (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp ℝ 2 μ) :
     metProjection (𝕜 := ℝ) T hT g =
       (condExpL2 ℝ ℝ (MeasurableSpace.invariants_le T) g : Lp ℝ 2 μ) := by
-  haveI : Fact (MeasurableSpace.invariants T ≤ (inferInstance : MeasurableSpace Ω)) :=
+  have : Fact (MeasurableSpace.invariants T ≤ (inferInstance : MeasurableSpace Ω)) :=
     ⟨MeasurableSpace.invariants_le T⟩
   have hcoe :
       ((condExpL2 ℝ ℝ (MeasurableSpace.invariants_le T) g :

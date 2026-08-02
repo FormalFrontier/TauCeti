@@ -59,7 +59,7 @@ private theorem le_ker_tensorProduct_mkQ_comp_coact :
   rw [LinearMap.mem_ker, LinearMap.comp_apply]
   rcases N.coact_mem hm with ⟨t, ht⟩
   rw [← ht]
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   -- The goal is written with `TensorProduct.map`, while Mathlib's quotient-tensor exactness
   -- lemma is stated for `rTensor`; this is only the wrapper conversion between those forms.
   change LinearMap.rTensor C N.carrier.mkQ
@@ -265,7 +265,7 @@ theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
     (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) : (N.liftQ f hf).toLinearMap =
       letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
       N.toSubmodule.liftQ f.toLinearMap hf := by
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
   apply Submodule.linearMap_qext
   ext m
   rw [LinearMap.comp_apply, LinearMap.comp_apply, Submodule.mkQ_apply]

@@ -108,7 +108,7 @@ algebraically closed normed field is a scalar multiple of the identity. -/
 theorem exists_eq_smul_one_of_irreducible (hirr : Representation.IsIrreducible π.toRepresentation)
     (f : ContIntertwiningMap π π) :
     ∃ c : 𝕜, f = c • 1 := by
-  letI : Representation.IsIrreducible π.toRepresentation := hirr
+  let : Representation.IsIrreducible π.toRepresentation := hirr
   obtain ⟨c, hc⟩ :=
     (Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed
       (ρ := π.toRepresentation)).2 f.toIntertwiningMap

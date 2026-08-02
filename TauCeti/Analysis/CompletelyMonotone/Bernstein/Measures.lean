@@ -1419,7 +1419,7 @@ lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound (σ 
     refine eventually_atTop.1 <| ((eventually_ge_atTop N).and hmass).mono fun n hn => ?_
     rcases hn with ⟨hn, hmass_n⟩
     rw [dist_zero_right]
-    haveI : IsFiniteMeasure (σ n) := ⟨hmass_n.trans_lt ENNReal.ofReal_lt_top⟩
+    have : IsFiniteMeasure (σ n) := ⟨hmass_n.trans_lt ENNReal.ofReal_lt_top⟩
     calc
       ‖∫ p : ℝ≥0, (bernsteinKernel n x (p : ℝ) - Real.exp (-(x * (p : ℝ)))) ∂(σ n)‖
           ≤ ∫ p : ℝ≥0,

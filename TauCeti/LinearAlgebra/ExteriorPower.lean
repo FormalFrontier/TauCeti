@@ -67,7 +67,7 @@ theorem trace_map_of_apply_basis (b : Module.Basis I R M) (f : M →ₗ[R] M)
     LinearMap.trace R (⋀[R]^d M) (map d f) =
       ∑ s : Set.powersetCard I d, ∏ i ∈ (s : Finset I), a i := by
   classical
-  letI : LinearOrder I := linearOrderOfSTO WellOrderingRel
+  let : LinearOrder I := linearOrderOfSTO WellOrderingRel
   let B := b.exteriorPower d
   rw [LinearMap.trace_eq_matrix_trace R B, Matrix.trace]
   apply Finset.sum_congr rfl
@@ -189,8 +189,8 @@ lemma topEquiv_symm_apply (b : Module.Basis (Fin n) R M) (r : R) :
 /-- The trace of the induced endomorphism of the top exterior power is the determinant. -/
 theorem trace_map_top [Nontrivial R] (b : Module.Basis (Fin n) R M) (f : M →ₗ[R] M) :
     LinearMap.trace R (⋀[R]^n M) (map n f) = LinearMap.det f := by
-  haveI := Module.Free.of_basis b
-  haveI := Module.Finite.of_basis b
+  have := Module.Free.of_basis b
+  have := Module.Finite.of_basis b
   -- The top exterior power is one-dimensional, the diagonal case `Nat.choose n n = 1`.
   rw [map_top_eq_det_smul b f, map_smul, LinearMap.trace_id, finrank_eq,
     Module.finrank_eq_card_basis b, Fintype.card_fin, Nat.choose_self]

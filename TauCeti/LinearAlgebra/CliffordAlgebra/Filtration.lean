@@ -388,69 +388,62 @@ theorem filtrationLeadingTerm_apply_ιMulti (k : ℕ) (v : Fin (k + 1) → M) :
     filtrationLeadingTermAlternating]
   rfl
 
+/-- The pullback along the filtration quotient of the range of the degree-`k + 1` leading-term map.
+An element of `filtration Q (k + 1)` lies in its image under the inclusion exactly when its class
+modulo `filtration Q k` is a leading term. -/
+private noncomputable def leadingTermPreimage (k : ℕ) : Submodule R (filtration Q (k + 1)) :=
+  (LinearMap.range (filtrationLeadingTerm Q k)).comap
+    ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ
+
+/-- **The lower filtration consists of leading terms, trivially.** An element of `filtration Q k`
+has zero class modulo `filtration Q k`, and zero is a leading term. -/
+private theorem filtration_le_map_leadingTermPreimage (k : ℕ) :
+    filtration Q k ≤ (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype := by
+  intro z hz
+  have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
+  refine Submodule.mem_map.2 ⟨⟨z, hz'⟩, ?_, rfl⟩
+  have hzero : ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ ⟨z, hz'⟩ = 0 :=
+    (Submodule.Quotient.mk_eq_zero _).mpr hz
+  simp [leadingTermPreimage, hzero]
+
+/-- **A product of `k + 1` generators is a leading term**, namely of the corresponding exterior
+product, so the top piece of the successor filtration also consists of leading terms. -/
+private theorem ι_range_pow_le_map_leadingTermPreimage (k : ℕ) :
+    LinearMap.range (ι Q) ^ (k + 1) ≤
+      (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype := by
+  rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
+  rintro x hx
+  obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
+  choose v hv using fun i => LinearMap.mem_range.1 (f i).property
+  have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
+      (List.ofFn ((ι Q) ∘ v)).prod := by
+    apply congrArg List.prod
+    apply congrArg List.ofFn
+    funext i
+    exact (hv i).symm
+  rw [hprod]
+  refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
+  · rw [← List.map_ofFn]
+    exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
+  · simpa [leadingTermPreimage] using LinearMap.mem_range.2
+      ⟨exteriorPower.ιMulti R (k + 1) v, filtrationLeadingTerm_apply_ιMulti Q k v⟩
+
 /-- Every element of the degree-`k + 1` Clifford filtration quotient is the leading term of an
 element of the degree-`k + 1` exterior power. -/
 theorem filtrationLeadingTerm_surjective (k : ℕ) :
     Function.Surjective (filtrationLeadingTerm Q k) := by
-  -- Pull the leading-term range back along the quotient, then use the successor filtration split.
-  let P : Submodule R (filtration Q (k + 1)) :=
-    (filtration Q k).comap (filtration Q (k + 1)).subtype
-  let q : filtration Q (k + 1) →ₗ[R] (filtration Q (k + 1) ⧸ P) := P.mkQ
-  let T : Submodule R (filtration Q (k + 1)) :=
-    (LinearMap.range (filtrationLeadingTerm Q k)).comap q
-  have hle : filtration Q (k + 1) ≤ T.map (filtration Q (k + 1)).subtype := by
-    calc
-      filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
-        filtration_succ_eq_sup Q k
-      _ ≤ T.map (filtration Q (k + 1)).subtype := sup_le (by
-        intro z hz
-        have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
-        let z' : filtration Q (k + 1) := ⟨z, hz'⟩
-        refine Submodule.mem_map.2 ⟨z', ?_, rfl⟩
-        -- Unfold the range comap and quotient map before proving a lower-filtration class is zero.
-        change q z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
-        change P.mkQ z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
-        have hzP : z' ∈ P := by
-          -- Membership in the comap is exactly the original lower-filtration membership.
-          change z ∈ filtration Q k
-          exact hz
-        have hzero : P.mkQ z' = 0 := by
-          rw [Submodule.mkQ_apply]
-          exact (Submodule.Quotient.mk_eq_zero P).mpr hzP
-        rw [hzero]
-        exact LinearMap.mem_range.2 ⟨0, map_zero _⟩) (by
-        rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
-        rintro x hx
-        obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
-        choose v hv using fun i => LinearMap.mem_range.1 (f i).property
-        have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
-            (List.ofFn ((ι Q) ∘ v)).prod := by
-          apply congrArg List.prod
-          apply congrArg List.ofFn
-          funext i
-          exact (hv i).symm
-        rw [hprod]
-        refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
-        · rw [← List.map_ofFn]
-          exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
-        · change q ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
-            LinearMap.range (filtrationLeadingTerm Q k)
-          -- Expose the quotient map after the subtype witness is constructed.
-          change P.mkQ ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
-            LinearMap.range (filtrationLeadingTerm Q k)
-          rw [Submodule.mkQ_apply]
-          exact LinearMap.mem_range.2 ⟨exteriorPower.ιMulti R (k + 1) v,
-            filtrationLeadingTerm_apply_ιMulti Q k v⟩)
+  -- Both pieces of the successor filtration split consist of leading terms.
+  have hle : filtration Q (k + 1) ≤
+      (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype :=
+    (filtration_succ_eq_sup Q k).le.trans
+      (sup_le (filtration_le_map_leadingTermPreimage Q k)
+        (ι_range_pow_le_map_leadingTermPreimage Q k))
   intro z
-  obtain ⟨x, rfl⟩ := Submodule.Quotient.mk_surjective P z
-  have hx : (x : CliffordAlgebra Q) ∈ T.map (filtration Q (k + 1)).subtype := hle x.property
-  rcases Submodule.mem_map.1 hx with ⟨y, hy, hxy⟩
-  have hxy' : y = x := Subtype.ext hxy
-  subst x
-  -- Unfold the range comap one final time to extract an exterior-power preimage.
-  change q y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
-  change P.mkQ y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
-  exact LinearMap.mem_range.1 hy
+  obtain ⟨x, rfl⟩ :=
+    Submodule.Quotient.mk_surjective ((filtration Q k).comap (filtration Q (k + 1)).subtype) z
+  obtain ⟨y, hy, hxy⟩ := Submodule.mem_map.1 (hle x.property)
+  obtain rfl : y = x := Subtype.ext hxy
+  simpa [leadingTermPreimage] using hy
 
 section Conjugation
 

@@ -210,11 +210,11 @@ private theorem signHom_bijective [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Function.Bijective (signHom (K := K) root hroot) := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     IsSplittingField.finiteDimensional _ (definingPolynomial d)
-  haveI := isGalois hroot
-  letI := Fintype.ofFinite ι
+  have := isGalois hroot
+  let := Fintype.ofFinite ι
   rw [Fintype.bijective_iff_injective_and_card]
   refine ⟨signHom_injective hroot, ?_⟩
   rw [← Nat.card_eq_fintype_card (α := adjoin K (Set.range root) ≃ₐ[K] _),
@@ -270,7 +270,7 @@ theorem card_aut_adjoin_range [Finite ι] [NeZero (2 : K)]
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) = 2 ^ Nat.card ι := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   rw [Nat.card_congr (galoisGroupEquiv hroot hindep).toEquiv,
     Nat.card_congr (Multiplicative.ofAdd (α := ι → ZMod 2)).symm,
     Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, Fintype.card_pi]

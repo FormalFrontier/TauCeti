@@ -139,7 +139,7 @@ private theorem sectionOpenPartialHomeomorph_apply (F : X.Presheaf C) (U : Opens
     (s : ToType (F.obj (Opposite.op U))) (x₀ : U) {g : F.EtaleSpace} (hg : g ∈ sectionRange F U s) :
     sectionOpenPartialHomeomorph F U s x₀ g = g.base := by
   classical
-  letI : Nonempty U := ⟨x₀⟩
+  let : Nonempty U := ⟨x₀⟩
   rw [sectionOpenPartialHomeomorph, OpenPartialHomeomorph.trans_apply,
     U.openPartialHomeomorphSubtypeCoe_coe inferInstance]
   simpa only [base_germSection] using congr_arg TopCat.Presheaf.EtaleSpace.base
@@ -152,7 +152,7 @@ theorem isLocalHomeomorph_base (F : X.Presheaf C) :
   apply IsLocalHomeomorph.mk
   intro g
   obtain ⟨U, hgU, s, hs⟩ := F.exists_germ_eq g.germ
-  letI : Nonempty U := ⟨⟨g.base, hgU⟩⟩
+  let : Nonempty U := ⟨⟨g.base, hgU⟩⟩
   let e := sectionOpenPartialHomeomorph F U s ⟨g.base, hgU⟩
   have he_source : e.source = sectionRange F U s := by
     simp [e, sectionOpenPartialHomeomorph, sectionRange]

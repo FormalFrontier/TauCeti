@@ -66,10 +66,10 @@ omit [CompleteSpace 𝕜] in
 theorem index_comp (S : F →L[𝕜] G) (T : E →L[𝕜] F)
     (hS : ContinuousLinearMap.IsFredholm S) (hT : ContinuousLinearMap.IsFredholm T) :
     index (S.comp T) = index S + index T := by
-  letI := hT.finite_ker
-  letI := hT.finite_coker
-  letI := hS.finite_ker
-  letI := hS.finite_coker
+  let := hT.finite_ker
+  let := hT.finite_coker
+  let := hS.finite_ker
+  let := hS.finite_coker
   simp only [index_eq_finrank_sub]
   rw [ContinuousLinearMap.toLinearMap_comp]
   have h := LinearMap.index_comp (f := (T : E →ₗ[𝕜] F)) (S : F →ₗ[𝕜] G)

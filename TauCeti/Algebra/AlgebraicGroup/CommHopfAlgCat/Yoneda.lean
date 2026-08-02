@@ -417,7 +417,7 @@ homomorphism between point functors is induced by a coordinate Hopf-algebra morp
 instance pointsFunctor_full :
     (pointsFunctor (R := R) :
       (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).Full := by
-  letI : (groupYonedaPointsFunctor (R := R)).Full := by
+  let : (groupYonedaPointsFunctor (R := R)).Full := by
     dsimp [groupYonedaPointsFunctor]
     infer_instance
   exact Functor.Full.of_iso (groupYonedaPointsFunctorIso (R := R))

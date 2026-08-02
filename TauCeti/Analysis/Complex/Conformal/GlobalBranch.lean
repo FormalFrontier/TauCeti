@@ -113,7 +113,7 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
   -- hypothesis continues the germ along it — and apply `TauCeti.monodromy_theorem` to the
   -- resulting family. The two given continuations are then matched with the extreme members of
   -- that family by uniqueness along a fixed path.
-  haveI := hUc.simplyConnectedSpace
+  have := hUc.simplyConnectedSpace
   have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
   -- The two paths, read in the subspace `↥U`, where simple connectivity lives.
   let p : Path (⟨z₀, hz₀U⟩ : U) (⟨γ 1, hγU 1⟩ : U) :=

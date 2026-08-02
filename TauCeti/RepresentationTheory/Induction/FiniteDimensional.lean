@@ -186,7 +186,7 @@ theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
     indSubtypeEquivPi A x q =
       ((letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
         Rep.indCoindIso.{max u v w, u, v} A).hom.hom x).1 q.out := by
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
 
@@ -200,7 +200,7 @@ theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
       (letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
        Rep.indCoindIso.{max u v w, u, v} A).inv.hom
         ((coindSubtypeEquivPi A).symm x) := by
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
 
@@ -227,11 +227,11 @@ variable [Field k]
 /-- Induction from a finite-index subgroup preserves finite-dimensionality. -/
 noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max u v w} k S)
     [FiniteDimensional k A] : FiniteDimensional k (Rep.ind S.subtype A) := by
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-  letI := S.fintypeQuotientOfFiniteIndex
-  letI : Fintype (Quotient (QuotientGroup.rightRel S)) :=
+  let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  let := S.fintypeQuotientOfFiniteIndex
+  let : Fintype (Quotient (QuotientGroup.rightRel S)) :=
     QuotientGroup.fintypeQuotientRightRel
-  letI : FiniteDimensional k
+  let : FiniteDimensional k
       (Quotient (QuotientGroup.rightRel S) → A) := inferInstance
   exact (indSubtypeEquivPi A).symm.finiteDimensional
 
@@ -240,9 +240,9 @@ dimension. -/
 @[simp]
 theorem finrank_ind [S.FiniteIndex] (A : Rep.{max u v w} k S) [FiniteDimensional k A] :
     Module.finrank k (Rep.ind S.subtype A) = S.index * Module.finrank k A := by
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-  letI := S.fintypeQuotientOfFiniteIndex
-  letI : Fintype (Quotient (QuotientGroup.rightRel S)) :=
+  let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  let := S.fintypeQuotientOfFiniteIndex
+  let : Fintype (Quotient (QuotientGroup.rightRel S)) :=
     QuotientGroup.fintypeQuotientRightRel
   -- Transfer the computation to the explicit finite product supplied by the coset model.
   rw [LinearEquiv.finrank_eq (indSubtypeEquivPi A), Module.finrank_pi_fintype]
@@ -347,7 +347,7 @@ theorem finrank_indFDRep {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     Module.finrank k (indFDRep A) = S.index * Module.finrank k A := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
   -- Register the finite-dimensional structure hidden behind the forgetful object's wrapper.
-  letI : FiniteDimensional k A' := by
+  let : FiniteDimensional k A' := by
     change FiniteDimensional k A
     infer_instance
   exact Rep.finrank_ind A'

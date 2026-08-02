@@ -92,8 +92,8 @@ count. -/
 theorem char_permutationModule_indiscrete (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     (permutationModule (Nat.Partition.indiscrete n)).ρ.character σ = 1 := by
   rw [char_permutationModule, youngSubgroup_indiscrete]
-  haveI := QuotientGroup.subsingleton_quotient_top (G := Equiv.Perm (Fin n))
-  haveI : Unique {q : Equiv.Perm (Fin n) ⧸ (⊤ : Subgroup (Equiv.Perm (Fin n))) // σ • q = q} :=
+  have := QuotientGroup.subsingleton_quotient_top (G := Equiv.Perm (Fin n))
+  have : Unique {q : Equiv.Perm (Fin n) ⧸ (⊤ : Subgroup (Equiv.Perm (Fin n))) // σ • q = q} :=
     ⟨⟨⟨1, Subsingleton.elim _ _⟩⟩, fun _ => Subtype.ext (Subsingleton.elim _ _)⟩
   rw [Nat.card_unique, Nat.cast_one]
 
@@ -160,7 +160,7 @@ theorem char_permutationModule_ones (n : ℕ) (σ : Equiv.Perm (Fin n)) :
       rw [Nat.card_congr (Equiv.subtypeUnivEquiv fun q => one_smul _ q),
         ← Subgroup.index_eq_card, Subgroup.index_bot, Nat.card_perm, Nat.card_fin]
     rw [hcard, if_pos rfl]
-  · haveI : IsEmpty {q : Equiv.Perm (Fin n) ⧸ (⊥ : Subgroup (Equiv.Perm (Fin n))) //
+  · have : IsEmpty {q : Equiv.Perm (Fin n) ⧸ (⊥ : Subgroup (Equiv.Perm (Fin n))) //
         σ • q = q} :=
       ⟨fun q => hσ ((quotientBot_smul_eq_self_iff σ q.1).mp q.2)⟩
     rw [Nat.card_of_isEmpty, if_neg hσ, Nat.cast_zero]

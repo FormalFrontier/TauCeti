@@ -209,10 +209,10 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
         (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
     (character_forget₂ (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
       (Representation.char_iso (Representation.equivOfIso (indFDRepForgetIso A))) g)
-  letI := Fintype.ofFinite (G ⧸ S)
+  let := Fintype.ofFinite (G ⧸ S)
   let A' : Rep.{u} k S := (forget₂ (FDRep k S) (Rep k S)).obj A
-  letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-  letI : Fintype (Rep.RightCosets S) := QuotientGroup.fintypeQuotientRightRel
+  let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
+  let : Fintype (Rep.RightCosets S) := QuotientGroup.fintypeQuotientRightRel
   have hforgetCharacter (s : S) : A'.ρ.character s = A.character s := character_forget₂ A s
   have hcharacter :
       (indFDRep (k := k) (G := G) A).character g =
@@ -250,7 +250,7 @@ theorem character_ind {k G : Type u} [Field k] [Group G] {S : Subgroup G}
     (indFDRep (k := k) (G := G) A).character g =
       (Nat.card S : k)⁻¹ * ∑ x : G,
         if h : x⁻¹ * g * x ∈ S then A.character ⟨x⁻¹ * g * x, h⟩ else 0 := by
-  letI : Fintype (G ⧸ S) := Fintype.ofFinite _
+  let : Fintype (G ⧸ S) := Fintype.ofFinite _
   let e : G ≃ (G ⧸ S) × S := Subgroup.groupEquivQuotientProdSubgroup
   let A' : Rep k S := (forget₂ (FDRep k S) (Rep k S)).obj A
   let term : G → k := fun x ↦ Rep.inducedCharacterTerm A'.ρ g x

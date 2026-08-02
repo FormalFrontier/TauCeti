@@ -49,8 +49,8 @@ private lemma regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_a
     regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e x =
       @subgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal E B _ p b
         (hreg.fiber_isPretransitive b) (fiber_isCancelSMul (b := b) hp) H _ e x := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   apply (Subgroup.normalizerQuotientEquivQuotientOfNormal H).injective
   refine Quotient.inductionOn' x ?_
   intro e'
@@ -67,8 +67,8 @@ private lemma regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_s
     (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e).symm y =
       (@subgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal E B _ p b
         (hreg.fiber_isPretransitive b) (fiber_isCancelSMul (b := b) hp) H _ e).symm y := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   apply (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e).injective
   rw [Equiv.apply_symm_apply,
     regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_apply_eq,
@@ -112,8 +112,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_map_smul_
     (a : Subgroup.normalizerQuotient H) (x : SubgroupFiberOrbitQuotient H b) :
     regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e (a • x) =
       regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e x * a⁻¹ := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   rw [regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_apply_eq,
     regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_apply_eq]
   exact subgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_map_smul_eq_mul_inv H e a x
@@ -138,8 +138,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_symm_mul_
     (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e).symm (y * a⁻¹) =
       a • (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e).symm
         y := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   rw [regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_symm_apply_eq,
     regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_symm_apply_eq]
   exact subgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_symm_mul_inv H e a y
