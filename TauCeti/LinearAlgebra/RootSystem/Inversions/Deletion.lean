@@ -34,6 +34,9 @@ because a simple reflection permutes the remaining positive roots, and then conj
   root positive is the identity.
 * `TauCeti.inversions_nonempty_of_ne_one` and `TauCeti.ncard_inversions_pos_of_ne_one` are the
   contrapositive forms used to detect nontrivial Weyl-group elements.
+* `TauCeti.exists_mem_support_mem_inversions_of_ne_one` sharpens the first of those to a *simple*
+  inversion, which is what makes induction along right multiplication by simple reflections
+  available.
 
 ## References
 
@@ -131,5 +134,50 @@ theorem inversions_nonempty_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
 theorem ncard_inversions_pos_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
     0 < (inversions P b w).ncard :=
   (Set.ncard_pos (Set.toFinite _)).mpr (inversions_nonempty_of_ne_one hw)
+
+variable (P b)
+
+omit [P.IsReduced] in
+/-- **A Weyl-group element sending every simple root to a positive root sends every positive root
+to a positive root.** A positive root is built up from simple roots by addition, and the height of
+a sum of two roots is the sum of their heights, so the image again has nonnegative height. This is
+the mirror image of `TauCeti.mapsTo_posRoots_negRoots_of_forall_mem_support`. -/
+theorem mapsTo_posRoots_of_forall_mem_support {w : P.weylGroup}
+    (h : ∀ i ∈ b.support, P.weylGroupToPerm w i ∈ posRoots P b) :
+    MapsTo (P.weylGroupToPerm w) (posRoots P b) (posRoots P b) := by
+  -- Positivity of the image is nonnegativity of its height, which is what the induction adds up.
+  have hpos : ∀ j : ι, P.weylGroupToPerm w j ∈ posRoots P b ↔
+      0 ≤ b.height (P.weylGroupToPerm w j) := fun j ↦ by
+    rw [mem_posRoots, RootPairing.Base.isPos_iff']
+  intro i hi
+  refine (hpos i).mpr ?_
+  refine RootPairing.Base.IsPos.induction_on_add ((mem_posRoots P b i).mp hi)
+    (p := fun j ↦ 0 ≤ b.height (P.weylGroupToPerm w j)) (fun j hj ↦ (hpos j).mp (h j hj))
+    fun j k l hl hj hk ↦ ?_
+  -- The Weyl-group element carries the decomposition `root l = root j + root k` to the images.
+  have himage : P.root (P.weylGroupToPerm w l) =
+      P.root (P.weylGroupToPerm w j) + P.root (P.weylGroupToPerm w k) := by
+    rw [← P.weylGroup_apply_root w l, ← P.weylGroup_apply_root w j, ← P.weylGroup_apply_root w k,
+      hl, smul_add]
+  have hk' := (hpos k).mp (h k hk)
+  rw [b.height_add himage]
+  omega
+
+/-- A Weyl-group element keeping every simple root positive is the identity. -/
+theorem eq_one_of_forall_mem_support_mem_posRoots {w : P.weylGroup}
+    (h : ∀ i ∈ b.support, P.weylGroupToPerm w i ∈ posRoots P b) : w = 1 :=
+  eq_one_of_mapsTo_posRoots (b := b) (mapsTo_posRoots_of_forall_mem_support P b h)
+
+/-- **A Weyl-group element other than the identity inverts some simple root.** Sharpening
+`TauCeti.inversions_nonempty_of_ne_one` to a simple inversion is what makes induction along right
+multiplication by simple reflections available, since only a simple inversion is removed by
+`TauCeti.ncard_inversions_mul_ofIdx_of_mem`. -/
+theorem exists_mem_support_mem_inversions_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
+    ∃ i ∈ b.support, i ∈ inversions P b w := by
+  by_contra hcon
+  refine hw (eq_one_of_forall_mem_support_mem_posRoots P b fun i hi ↦ ?_)
+  by_contra hneg
+  exact hcon ⟨i, hi, (mem_inversions P b w i).mpr
+    ⟨b.isPos_of_mem_support hi, fun hp ↦ hneg ((mem_posRoots P b _).mpr hp)⟩⟩
 
 end TauCeti
