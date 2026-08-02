@@ -5,12 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.IntegralCurve
+public import TauCeti.Geometry.Lie.Tangent.LeftInvariantDerivation
 
 /-!
 # The exponential map of a Lie group
 
 This file defines the tangent-space exponential of a real Lie group modeled on a complete normed
-space by evaluating the canonical invariant one-parameter subgroup at time one.
+space by evaluating the canonical invariant one-parameter subgroup at time one. For a
+finite-dimensional smooth Lie group, it transports this construction across the canonical
+equivalence between left-invariant derivations and tangent vectors at the identity to obtain the
+roadmap-facing Lie-group exponential.
 
 ## Main results
 
@@ -20,6 +24,7 @@ space by evaluating the canonical invariant one-parameter subgroup at time one.
   exponential along a line.
 * `mulInvariantExp_add_smul`: the exponential along a fixed line is a one-parameter subgroup.
 * `mulInvariantExp_zero`, `mulInvariantExp_neg`: the identity and inverse laws.
+* `lieExp`: the exponential map on Mathlib's Lie algebra of left-invariant derivations.
 
 ## References
 
@@ -30,7 +35,7 @@ space by evaluating the canonical invariant one-parameter subgroup at time one.
 public section
 
 open Function Manifold VectorField
-open scoped Manifold
+open scoped ContDiff Manifold
 
 noncomputable section
 
@@ -101,3 +106,30 @@ theorem mulInvariantExp_neg [CompleteSpace E]
       rw [map_inv]
     _ = (mulInvariantExp v)⁻¹ := by
       rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul, one_smul]
+
+section LieAlgebra
+
+variable [FiniteDimensional ℝ E] [LieGroup I ∞ G] [IsManifold I 1 G] [T2Space G]
+  [BoundarylessManifold I G]
+
+local instance lieGroupMinSmoothness : LieGroup I (minSmoothness ℝ 3) G := by
+  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+
+/-- The exponential map of a finite-dimensional smooth real Lie group, obtained by evaluating at
+time one the invariant integral curve whose tangent vector corresponds to a left-invariant
+derivation. -/
+noncomputable def lieExp (X : LeftInvariantDerivation I G) : G :=
+  mulInvariantExp
+    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint X)
+
+/-- The derivation-based exponential is the tangent-space exponential transported through the
+canonical equivalence at the identity. -/
+theorem lieExp_eq_mulInvariantExp (X : LeftInvariantDerivation I G) :
+    lieExp X =
+      mulInvariantExp
+        (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+          BoundarylessManifold.isInteriorPoint X) :=
+  by rw [lieExp]
+
+end LieAlgebra
