@@ -178,16 +178,17 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
   have hμs : μs = ρ := hρ.2 hs_mem hsc_mem hopen
   exact TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq (hμs.trans hrepr)
 
-/-- **The extreme exchangeable laws are exactly the i.i.d. laws.** For a nonempty standard Borel
+/-- **The extreme exchangeable laws are exactly the i.i.d. laws.** For a standard Borel
 state space, a probability measure on `ℕ → α` is an extreme point of the set of exchangeable
 probability measures if and only if it is an infinite product `P^{⊗ℕ}` for some probability
 measure `P` on `α`. -/
-theorem exchangeable_extreme_iff_iid [StandardBorelSpace α] [Nonempty α]
+theorem exchangeable_extreme_iff_iid [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] :
     ρ ∈ extremePoints ℝ≥0∞
         {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} ↔
       ∃ P : ProbabilityMeasure α,
         ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
+  letI : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
   constructor
   · intro hρ
     have hcoord : ∀ n, Measurable (fun x : ℕ → α => x n) := fun n => measurable_pi_apply n
