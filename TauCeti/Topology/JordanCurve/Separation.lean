@@ -148,7 +148,7 @@ lemma continuous_jordanParam (e : C ≃ₜ Circle) : Continuous (jordanParam e) 
 
 /-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is injective: this is
 the simplicity of the curve. -/
-lemma injective_jordanParam (e : C ≃ₜ Circle) : Function.Injective (jordanParam e) :=
+lemma jordanParam_injective (e : C ≃ₜ Circle) : Function.Injective (jordanParam e) :=
   Subtype.val_injective.comp e.symm.injective
 
 /-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is inducing, so
@@ -180,7 +180,7 @@ theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (p :
   by_cases hp : p ∈ C
   · obtain ⟨e⟩ := isJordanCurve_iff.mp h
     have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
-      rw [compl_eq_univ_sdiff, image_sdiff (injective_jordanParam e), image_univ, image_singleton,
+      rw [compl_eq_univ_sdiff, image_sdiff (jordanParam_injective e), image_univ, image_singleton,
         range_jordanParam, jordanParam_apply]
     exact himg ▸ (Circle.isPathConnected_compl_singleton _).image'
       (continuous_jordanParam e).continuousOn
@@ -203,7 +203,7 @@ theorem IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair (h : IsJordanCu
       ∀ ⦃S : Set X⦄, S ⊆ C \ {p, q} → IsPreconnected S → S ⊆ A ∨ S ⊆ B := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
   set g := jordanParam e with hg
-  have hinj : Function.Injective g := injective_jordanParam e
+  have hinj : Function.Injective g := jordanParam_injective e
   have hrange : range g = C := range_jordanParam e
   have hzw : e ⟨p, hp⟩ ≠ e ⟨q, hq⟩ := fun hh => hpq (congrArg Subtype.val (e.injective hh))
   obtain ⟨A₀, B₀, hA₀o, hB₀o, hA₀c, hB₀c, hdisj, hunion⟩ :=
