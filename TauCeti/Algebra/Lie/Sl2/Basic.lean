@@ -12,8 +12,8 @@ public import TauCeti.Algebra.Lie.GeneralLinear.Basic
 
 Mathlib defines an abstract `sl₂` triple (`IsSl2Triple h e f`: the relations `⁅e, f⁆ = h`,
 `⁅h, e⁆ = 2e`, `⁅h, f⁆ = -2f`, with `h ≠ 0`) and the whole primitive-vector calculus that rests on
-it, but it exhibits no triple in a concrete Lie algebra. This file supplies the standard ones: for
-every pair `i ≠ j` of indices, the matrix units
+it, but exhibits no triple in the special linear Lie algebra. This file supplies the standard ones:
+for every pair `i ≠ j` of indices, the matrix units
 
 `e = Eᵢⱼ`, `f = Eⱼᵢ`, `h = Eᵢᵢ - Eⱼⱼ`
 
