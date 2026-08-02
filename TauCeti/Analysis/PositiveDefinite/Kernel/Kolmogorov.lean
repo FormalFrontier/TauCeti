@@ -128,7 +128,7 @@ original kernel. -/
 @[simp]
 theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+  let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
@@ -155,7 +155,7 @@ theorem norm_kolmogorovFeature_sub_sq (hK : IsPositiveDefiniteKernel K) (a b : �
 construction is minimal: it contains no orthogonal summand invisible to the kernel. -/
 theorem kolmogorovFeature_dense (hK : IsPositiveDefiniteKernel K) :
     (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature)).topologicalClosure = ⊤ := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
+  let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   have hspan :
       Submodule.span 𝕜

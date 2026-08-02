@@ -57,7 +57,7 @@ lemma finite_setOfPred_not_mem [IrreducibleSpace X] [NoetherianSpace X]
     NoetherianSpace.exists_finite_set_isClosed_irreducible U.isOpen.isClosed_compl
   let g : S → X := fun T ↦ (hSirreducible T T.property).genericPoint
   have hfiniteRange : (Set.range g).Finite := by
-    letI : Finite S := hSfinite.to_subtype
+    let : Finite S := hSfinite.to_subtype
     exact Set.finite_range g
   apply Set.Finite.of_finite_image
   · refine hfiniteRange.subset ?_
@@ -105,7 +105,7 @@ lemma finite_support_orderAt (f : Additive X.functionFieldˣ) :
   obtain ⟨U, _, a, hU, ha, haUnit⟩ :=
     exists_isUnit_germ_eq X ((Additive.toMul f : X.functionFieldˣ) : X.functionField)
       (Units.ne_zero _)
-  letI : Nonempty U := hU
+  let : Nonempty U := hU
   refine (finite_setOfPred_not_mem U).subset ?_
   intro x hx
   simp only [Set.mem_ofPred_eq]

@@ -195,7 +195,7 @@ theorem latticeDifferentialDegree_eq_zero_of_card_le
     P.latticeDifferentialDegree k q = 0 := by
   have hsource :=
     (PlumbingChain.degreePart_eq_bot_iff_card_lt V (q + 1)).mpr (Nat.lt_succ_of_le hq)
-  haveI : Subsingleton (PlumbingChain.degreePart V (q + 1)) := by
+  have : Subsingleton (PlumbingChain.degreePart V (q + 1)) := by
     rw [hsource]
     infer_instance
   exact Subsingleton.elim _ _

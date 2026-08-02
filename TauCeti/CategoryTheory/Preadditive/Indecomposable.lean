@@ -86,7 +86,7 @@ variable {k : Type*} [Field k] [Linear k C]
 zero object. -/
 theorem id_ne_zero_of_finrank_end_eq_one {X : C} (h : Module.finrank k (X ⟶ X) = 1) :
     𝟙 X ≠ 0 := by
-  haveI : Nontrivial (X ⟶ X) := Module.nontrivial_of_finrank_pos (R := k) (by rw [h]; exact one_pos)
+  have : Nontrivial (X ⟶ X) := Module.nontrivial_of_finrank_pos (R := k) (by rw [h]; exact one_pos)
   obtain ⟨f, g, hfg⟩ := exists_pair_ne (X ⟶ X)
   intro hid
   exact hfg (by rw [← Category.comp_id f, ← Category.comp_id g, hid, comp_zero, comp_zero])

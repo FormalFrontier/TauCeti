@@ -122,10 +122,10 @@ omit [Fintype G] in
 private theorem card_conjClass_dvd_card [Finite G] (x : G) :
     Nat.card (ConjClasses.mk x).carrier ∣ Nat.card G := by
   classical
-  letI : Fintype G := Fintype.ofFinite G
-  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
-  letI : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
-  letI : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
+  let : Fintype G := Fintype.ofFinite G
+  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  let : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
+  let : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
   rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
   rw [ConjClasses.card_carrier]
   apply Nat.div_dvd_of_dvd
@@ -149,7 +149,7 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
   apply Subtype.ext
   funext x
   by_contra hfx
-  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
   have hcarrier : (ConjClasses.mk x).carrier = {g | IsConj g x} := by
     ext g
     simp only [ConjClasses.mem_carrier_iff_mk_eq, Set.mem_ofPred_eq]

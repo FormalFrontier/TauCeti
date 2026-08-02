@@ -12,7 +12,8 @@ public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.TotallyComplex
 
 This module preserves the import path `TauCeti.NumberTheory.NumberField.NarrowClassGroup` after the
 development was split into `NarrowClassGroup/Basic.lean` (the definition, `mk`/`lift`/`toClassGroup`
-API and the exact sequence `Kˣ → Cl⁺ → Cl → 1`), `NarrowClassGroup/Finite.lean` (finiteness), and
-`NarrowClassGroup/TotallyComplex.lean` (`Cl⁺ ≃ Cl` for totally complex fields). Both `Finite` and
-`TotallyComplex` import `Basic`, so these two `public import`s re-export the whole development.
+API, the exact sequence `Kˣ → Cl⁺ → Cl → 1`, and its `2`-torsion kernel),
+`NarrowClassGroup/Finite.lean` (finiteness), and `NarrowClassGroup/TotallyComplex.lean`
+(`Cl⁺ ≃ Cl` for totally complex fields). Both import `Basic`, so these `public import`s re-export
+the whole development.
 -/

@@ -86,7 +86,7 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
       Tendsto (fun n => ∫ x, g x ∂(chafaiRescaled f n)) (U : Filter ℕ) (nhds (∫ x, g x ∂μ₀)))
     {t : ℝ} (ht : 0 ≤ t) :
     f t - L = ∫ p : ℝ≥0, Real.exp (-(t * (p : ℝ))) ∂μ₀ := by
-  haveI : (U : Filter ℕ).NeBot := U.neBot'
+  have : (U : Filter ℕ).NeBot := U.neBot'
   have hlap : Tendsto (fun n => ∫ p, Real.exp (-(t * (p : ℝ))) ∂(chafaiRescaled f n))
       (U : Filter ℕ) (nhds (∫ p, Real.exp (-(t * (p : ℝ))) ∂μ₀)) :=
     chafaiRescaled_tendsto_laplace_integral_of_weak hweak ht
@@ -104,7 +104,7 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
           - ∫ p, Real.exp (-(t * (p : ℝ))) ∂(chafaiRescaled f n) := by
     filter_upwards [hU hmass'] with n hn
     -- Finiteness on the tail comes from the mass bound itself.
-    haveI : IsFiniteMeasure (chafaiRescaled f n) := ⟨hn.trans_lt ENNReal.coe_lt_top⟩
+    have : IsFiniteMeasure (chafaiRescaled f n) := ⟨hn.trans_lt ENNReal.coe_lt_top⟩
     have hb : Integrable (fun p : ℝ≥0 => bernsteinKernel n t (p : ℝ))
         (chafaiRescaled f n) := by
       have h := (bernsteinKernelBoundedContinuous n ht).integrable (chafaiRescaled f n)
@@ -143,7 +143,7 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
   have key : ∀ t : ℝ, 0 ≤ t → f t - L = ∫ p, Real.exp (-(t * (p : ℝ))) ∂μ₀ :=
     fun t ht => sub_eq_integral_exp_neg_mul_of_weak_limit hcm hL (.of_forall hmass') hU hweak ht
   -- Add the atom `L · δ₀` to recover `f` itself.
-  haveI := hμ₀fin
+  have := hμ₀fin
   refine ⟨μ₀ + L.toNNReal • Measure.dirac 0, inferInstance, fun t ht => ?_⟩
   simp only [neg_mul]
   rw [integral_exp_neg_mul_add_smul_dirac_zero μ₀ _ ht, Real.coe_toNNReal L hL_nn]

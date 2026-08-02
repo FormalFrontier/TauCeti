@@ -88,7 +88,7 @@ theorem card_aut_adjoin_I_sqrt_primes :
             IntermediateField ℚ ℂ))
       = 2 ^ (Nat.card ι + 1) := by
   have hcard : Nat.card (Option ι) = Nat.card ι + 1 := by
-    letI := Fintype.ofFinite ι
+    let := Fintype.ofFinite ι
     simp [Nat.card_eq_fintype_card, Fintype.card_option]
   have hkey := card_aut_adjoin_range (cmRoot_sq p) (not_isSquare_prod_cmRadicand p hp hinj)
   rw [range_cmRoot p, hcard] at hkey

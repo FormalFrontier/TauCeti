@@ -87,9 +87,9 @@ protected theorem subsingleton_homotopyGroup (h : IsAspherical X x) (n : ℕ) :
 /-- Asphericity is preserved by a pointed homeomorphism. -/
 theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsAspherical Y y := by
-  letI : PathConnectedSpace X := hX.pathConnectedSpace
+  let : PathConnectedSpace X := hX.pathConnectedSpace
   refine ⟨e.surjective.pathConnectedSpace e.continuous, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.homeomorphMulEquivOfEq (N := Fin (n + 2)) e he).toEquiv
       |>.subsingleton_congr.mp inferInstance
@@ -97,11 +97,11 @@ theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
 /-- The product of two aspherical spaces is aspherical. -/
 theorem prod (hX : IsAspherical X x) (hY : IsAspherical Y y) :
     IsAspherical (X × Y) (x, y) := by
-  letI : PathConnectedSpace X := hX.pathConnectedSpace
-  letI : PathConnectedSpace Y := hY.pathConnectedSpace
+  let : PathConnectedSpace X := hX.pathConnectedSpace
+  let : PathConnectedSpace Y := hY.pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
-  letI : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.prodEquiv (N := Fin (n + 2)) x y).subsingleton_congr.mpr inferInstance
 
@@ -110,9 +110,9 @@ variable {ι : Type w} {Z : ι → Type u} [∀ i, TopologicalSpace (Z i)] {z : 
 /-- An indexed product of aspherical spaces is aspherical. -/
 theorem pi (h : ∀ i, IsAspherical (Z i) (z i)) :
     IsAspherical (∀ i, Z i) z := by
-  letI : ∀ i, PathConnectedSpace (Z i) := fun i ↦ (h i).pathConnectedSpace
+  let : ∀ i, PathConnectedSpace (Z i) := fun i ↦ (h i).pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
-  letI : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
+  let : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
     fun i ↦ (h i).subsingleton_homotopyGroup n
   exact inferInstance
 

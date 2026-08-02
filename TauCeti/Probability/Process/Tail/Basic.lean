@@ -111,7 +111,7 @@ theorem tailFamily_eq_comap_shift (X : (k : ℕ) → Ω → β k) (r : ℕ) :
         (fun ω n => X (r + n) ω) := measurable_iff_comap_le.mpr le_rfl
     exact (measurable_pi_apply d).comp hshift
   · have hmeas : Measurable[tailFamily X r] (fun ω n => X (r + n) ω) := by
-      letI : MeasurableSpace Ω := tailFamily X r
+      let : MeasurableSpace Ω := tailFamily X r
       exact measurable_pi_lambda (fun ω n => X (r + n) ω)
         fun n => measurable_tailFamily_of_le (Nat.le_add_right r n)
     exact hmeas.comap_le

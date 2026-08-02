@@ -114,11 +114,11 @@ quadratic subfields) both have cardinality `2ⁿ - 1`, so the injection is a bij
 theorem quadraticSubfieldOfFinset_bijective [Finite ι] [NeZero (2 : K)] :
     Function.Bijective (quadraticSubfieldOfFinset hroot hindep) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   -- The quadratic subfields form a finite type: they inject into the finite subspace lattice.
-  haveI : Finite (Submodule (ZMod 2) (ι → ZMod 2)) :=
+  have : Finite (Submodule (ZMod 2) (ι → ZMod 2)) :=
     Finite.of_injective _ (SetLike.coe_injective (A := Submodule (ZMod 2) (ι → ZMod 2)))
-  haveI : Finite (IntermediateField K (adjoin K (Set.range root))) :=
+  have : Finite (IntermediateField K (adjoin K (Set.range root))) :=
     Finite.of_equiv _
       ((intermediateFieldEquivSubmodule hroot hindep).toEquiv.trans OrderDual.ofDual).symm
   rw [Nat.bijective_iff_injective_and_card]

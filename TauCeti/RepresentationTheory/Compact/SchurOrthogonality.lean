@@ -69,13 +69,13 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     averageOperator π hπ π hπ T =
       ((Module.finrank 𝕜 V : 𝕜)⁻¹ * LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) •
         ContinuousLinearMap.id 𝕜 V := by
-  letI : Representation.IsIrreducible π.toRepresentation := hirr
-  haveI : IsSimpleModule 𝕜[G] π.toRepresentation.asModule := inferInstance
-  haveI : Nontrivial π.toRepresentation.asModule :=
+  let : Representation.IsIrreducible π.toRepresentation := hirr
+  have : IsSimpleModule 𝕜[G] π.toRepresentation.asModule := inferInstance
+  have : Nontrivial π.toRepresentation.asModule :=
     IsSimpleModule.nontrivial 𝕜[G] π.toRepresentation.asModule
   -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
   -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  haveI : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
   obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
     (averageIntertwiner π hπ π hπ T)
   have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
