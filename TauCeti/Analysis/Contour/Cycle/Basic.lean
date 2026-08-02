@@ -144,12 +144,8 @@ theorem isIn_iff {C : Cycle} {Ω : Set ℂ} : IsIn C Ω ↔ trace C ⊆ Ω :=
 @[simp]
 theorem isIn_of_iff {γ : PiecewiseC1ClosedCurve} {Ω : Set ℂ} :
     IsIn (FreeAbelianGroup.of γ) Ω ↔ MapsTo γ (uIcc γ.a γ.b) Ω := by
-  rw [isIn_iff, trace_of]
-  constructor
-  · intro h x hx
-    exact h ⟨x, hx, rfl⟩
-  · rintro h z ⟨x, hx, rfl⟩
-    exact h hx
+  simpa [IsIn] using
+    (Set.mapsTo_iff_image_subset (f := γ) (s := uIcc γ.a γ.b) (t := Ω)).symm
 
 /-- The zero cycle lies in every set. -/
 @[simp]
