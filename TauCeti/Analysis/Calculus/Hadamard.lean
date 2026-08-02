@@ -32,15 +32,14 @@ open scoped ContDiff
 universe u v
 
 variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
 
 /-- The averaged derivative along the segment from `x` to `y`. -/
-noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
+noncomputable def hadamardFactor [CompleteSpace F] (f : E → F) (x y : E) : E →L[ℝ] F :=
   ∫ t in (0 : ℝ)..1, fderiv ℝ f (x + t • (y - x))
 
-omit [CompleteSpace F] in
 /-- The averaged derivative written as an integral over the compact unit interval. -/
-theorem hadamardFactor_eq_integral_Icc (f : E → F) (x : E) :
+theorem hadamardFactor_eq_integral_Icc [CompleteSpace F] (f : E → F) (x : E) :
     hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
       fderiv ℝ f (x + t • (y - x)) := by
   funext y
@@ -49,10 +48,10 @@ theorem hadamardFactor_eq_integral_Icc (f : E → F) (x : E) :
 
 /-- At the basepoint, the averaged derivative is the ordinary derivative. -/
 @[simp]
-theorem hadamardFactor_self (f : E → F) (x : E) : hadamardFactor f x x = fderiv ℝ f x := by
+theorem hadamardFactor_self [CompleteSpace F] (f : E → F) (x : E) :
+    hadamardFactor f x x = fderiv ℝ f x := by
   simp [hadamardFactor]
 
-omit [CompleteSpace F] in
 private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
     HasFDerivAt (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t)
@@ -129,7 +128,8 @@ theorem ContDiff.contDiff_hadamardFactor_of_succ
 
 /-- First-order Taylor expansion along a segment, with its coefficient bundled as a continuous
 linear map. -/
-theorem ContDiff.sub_eq_hadamardFactor_apply (f : E → F) (hf : ContDiff ℝ 1 f) (x y : E) :
+theorem ContDiff.sub_eq_hadamardFactor_apply [CompleteSpace F]
+    (f : E → F) (hf : ContDiff ℝ 1 f) (x y : E) :
     f y - f x = hadamardFactor f x y (y - x) := by
   have hTaylor := map_add_eq_sum_add_integral_iteratedFDeriv (n := 0) (x := x) (y := y - x)
     (fun _ _ ↦ hf.contDiffAt)
@@ -140,9 +140,8 @@ theorem ContDiff.sub_eq_hadamardFactor_apply (f : E → F) (hf : ContDiff ℝ 1 
   rw [hadamardFactor, ContinuousLinearMap.intervalIntegral_apply hIntegrable (y - x)]
   simpa [sub_eq_iff_eq_add, add_comm] using hTaylor
 
-omit [CompleteSpace F] in
 /-- The averaged derivative in Hadamard's factorization depends continuously on the endpoint. -/
-theorem ContDiff.continuous_hadamardFactor [FiniteDimensional ℝ E] (f : E → F)
+theorem ContDiff.continuous_hadamardFactor [CompleteSpace F] [FiniteDimensional ℝ E] (f : E → F)
     (hf : ContDiff ℝ 1 f) (x : E) : Continuous (hadamardFactor f x) := by
   rw [hadamardFactor_eq_integral_Icc]
   apply continuous_parametric_integral_of_continuous
@@ -151,7 +150,7 @@ theorem ContDiff.continuous_hadamardFactor [FiniteDimensional ℝ E] (f : E → 
 
 /-- For a smooth function, the averaged derivative in Hadamard's factorization depends smoothly on
 the endpoint. -/
-theorem ContDiff.contDiff_hadamardFactor [FiniteDimensional ℝ E] (f : E → F)
+theorem ContDiff.contDiff_hadamardFactor [CompleteSpace F] [FiniteDimensional ℝ E] (f : E → F)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
   rw [contDiff_infty]
