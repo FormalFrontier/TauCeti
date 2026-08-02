@@ -125,7 +125,7 @@ instance (G : DiagonalizableGroupSchemeCat k) : LocallyOfFiniteType G.obj.X.hom 
   obtain ⟨M, ⟨e⟩⟩ := hG
   -- Local finite type is stable under base change, hence invariant under isomorphisms. Install
   -- that consequence at the schemes' universe for the over-category transport lemma.
-  letI : MorphismProperty.RespectsIso
+  let : MorphismProperty.RespectsIso
       (@LocallyOfFiniteType : MorphismProperty Scheme.{u}) :=
     MorphismProperty.IsStableUnderBaseChange.respectsIso
   apply (MorphismProperty.over_iso_iff
