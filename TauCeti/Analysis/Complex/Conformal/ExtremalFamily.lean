@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.DiscInjection
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 import TauCeti.Analysis.Complex.Conformal.Hurwitz
 import TauCeti.Analysis.Complex.Conformal.LocalDegree
-import TauCeti.Analysis.Complex.Conformal.Montel
+import TauCeti.Analysis.Complex.Conformal.Montel.Basic
 import Mathlib.Analysis.Complex.AbsMax
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 import Mathlib.Topology.Order.IsLUB
