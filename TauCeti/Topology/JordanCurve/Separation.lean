@@ -143,7 +143,7 @@ theorem IsJordanCurve.isPathConnected_sdiff_singleton (h : IsJordanCurve C) (p :
   · obtain ⟨e⟩ := isJordanCurve_iff.mp h
     have himg : jordanParam e '' ({e ⟨p, hp⟩}ᶜ) = C \ {p} := by
       rw [compl_eq_univ_sdiff, image_sdiff (jordanParam_injective e), image_univ, image_singleton,
-        range_jordanParam, jordanParam_apply]
+        range_jordanParam, jordanParam_apply_apply]
     exact himg ▸ (Circle.isPathConnected_compl_singleton _).image'
       (continuous_jordanParam e).continuousOn
   · rw [sdiff_singleton_eq_self hp]
@@ -173,7 +173,7 @@ theorem IsJordanCurve.exists_isPathConnected_union_eq_sdiff_pair (h : IsJordanCu
   have himg : g '' (A₀ ∪ B₀) = C \ {p, q} := by
     rw [hunion, compl_eq_univ_sdiff, image_sdiff hinj, image_univ, hrange]
     congr 1
-    rw [image_insert_eq, image_singleton, hg, jordanParam_apply, jordanParam_apply]
+    rw [image_insert_eq, image_singleton, hg, jordanParam_apply_apply, jordanParam_apply_apply]
   refine ⟨g '' A₀, g '' B₀, hA₀c.image' (continuous_jordanParam e).continuousOn,
     hB₀c.image' (continuous_jordanParam e).continuousOn,
     Set.disjoint_image_of_injective hinj hdisj, by rwa [← image_union], fun S hS hSc => ?_⟩

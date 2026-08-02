@@ -22,8 +22,8 @@ the *arc* separating `x` from `y` in both directions.
   unit circle has length `2 * |sin (θ / 2)|`.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
   most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
-* `TauCeti.min_angleDiff_le_dist` — the shorter of the two arcs joining two points of the circle has
-  length at most `π / 2` times their distance.
+* `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
+  the circle has length at most `π / 2` times their distance.
 
 ## The argument
 
@@ -31,9 +31,9 @@ The first two are Mathlib's estimates for the normalized chord `‖exp (I * θ) 
 factorization `exp a - exp b = (exp (a - b) - 1) * exp b`: the chord formula is
 `Complex.norm_exp_I_mul_ofReal_sub_one` and the Lipschitz bound is
 `Real.norm_exp_I_mul_ofReal_sub_one_le`, so neither is derived from the other. The converse
-comparison `TauCeti.min_angleDiff_le_dist` is Jordan's inequality `Real.mul_le_sin` applied to the
-chord formula; it is the direction that turns a hypothesis about the ambient metric into a bound on
-an arc, and so the one a transport argument such as
+comparison `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` is Jordan's inequality `Real.mul_le_sin`
+applied to the chord formula; it is the direction that turns a hypothesis about the ambient metric
+into a bound on an arc, and so the one a transport argument such as
 `TauCeti/Topology/JordanCurve/SmallArc.lean` consumes.
 -/
 
@@ -89,7 +89,7 @@ circle, the shorter has length at most `π / 2` times the distance from `x` to `
 
 This is the direction of the comparison that converts a hypothesis about the ambient metric into a
 bound on an arc, and so the one a transport argument consumes. -/
-theorem min_angleDiff_le_dist (x y : Circle) :
+theorem min_angleDiff_le_pi_div_two_mul_dist (x y : Circle) :
     min (Circle.angleDiff x y) (Circle.angleDiff y x) ≤ π / 2 * dist x y := by
   rcases eq_or_ne x y with rfl | hxy
   · simp [Circle.angleDiff]

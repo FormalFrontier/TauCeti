@@ -43,8 +43,8 @@ of the chord with the arc on the circle comes first. It is not specific to Jorda
 in `TauCeti/Topology/Circle/Metric.lean`: the chord is at most the arc
 (`TauCeti.diam_circleExp_image_Icc_le`), and conversely the *shorter* of the two arc lengths
 `Circle.angleDiff` separating two points is at most `π / 2` times their chord
-(`TauCeti.min_angleDiff_le_dist`). The converse bound is the one that matters here: it is what turns
-a hypothesis about the ambient distance into a bound on an arc.
+(`TauCeti.min_angleDiff_le_pi_div_two_mul_dist`). The converse bound is the one that matters here:
+it is what turns a hypothesis about the ambient distance into a bound on an arc.
 
 Together these give `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le`: two
 distinct points of the circle cut it into two preconnected pieces, the first of which stays of
@@ -143,7 +143,7 @@ theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} 
     rw [Circle.range_path]
     simpa using diam_circleExp_image_Icc_le (a := Complex.arg (x : ℂ))
       (b := Circle.angleDiff x y + Complex.arg (x : ℂ)) (by simp [Circle.angleDiff_nonneg])
-  have hmin := min_angleDiff_le_dist z w
+  have hmin := min_angleDiff_le_pi_div_two_mul_dist z w
   -- Name first whichever of the two arcs is the shorter; its length is bounded by the chord.
   rcases le_total (Circle.angleDiff z w) (Circle.angleDiff w z) with hle | hle
   · exact ⟨_, _, hpre z w, hpre w z, hunion,
@@ -210,8 +210,8 @@ theorem IsJordanCurve.exists_pos_forall_diam_le (h : IsJordanCurve C) (hε : 0 <
   have hpqε : dist p q ≤ ε := (hpqδ.trans_le (min_le_right _ _)).le
   set z := e ⟨p, hp⟩ with hzdef
   set w := e ⟨q, hq⟩ with hwdef
-  have hgz : g z = p := jordanParam_apply e hp
-  have hgw : g w = q := jordanParam_apply e hq
+  have hgz : g z = p := jordanParam_apply_apply e hp
+  have hgw : g w = q := jordanParam_apply_apply e hq
   have hzw : z ≠ w := fun hh => hpq (congrArg Subtype.val (e.injective hh))
   have hchord : π / 2 * dist z w < η := by
     have hd : dist z w < 2 / π * η :=

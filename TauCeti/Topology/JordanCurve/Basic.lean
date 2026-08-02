@@ -50,10 +50,10 @@ transporting the property back to a compact set from an image already known to b
   a Jordan curve is invariant under a homeomorphism of the ambient spaces; no separation axiom is
   needed.
 * `TauCeti.continuous_jordanParam`, `TauCeti.jordanParam_injective`,
-  `TauCeti.isInducing_jordanParam`, `TauCeti.range_jordanParam` and `TauCeti.jordanParam_apply` —
-  the parametrization of a Jordan curve by the circle is a continuous injection, is inducing, and
-  traces out exactly the curve; this is what carries a statement about the circle to one about an
-  arbitrary Jordan curve.
+  `TauCeti.isInducing_jordanParam`, `TauCeti.range_jordanParam`, `TauCeti.jordanParam_apply` and
+  `TauCeti.jordanParam_apply_apply` — the parametrization of a Jordan curve by the circle is a
+  continuous injection, is inducing, traces out exactly the curve, and undoes `e`; this is what
+  carries a statement about the circle to one about an arbitrary Jordan curve.
 * `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
   in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
 * `TauCeti.locallyConnectedSpace_sphere` and `TauCeti.IsJordanCurve.locallyConnectedSpace` — a
@@ -215,12 +215,21 @@ lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
   rintro _ ⟨u, rfl⟩
   exact (e.symm u).2
 
-/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle undoes `e`: it sends
-the parameter `e ⟨p, hp⟩` of a point `p` of the curve back to `p`. -/
+/-- The defining equation of `TauCeti.jordanParam`: the parameter `u` names the point `e.symm u` of
+the curve, read in the ambient space. This is the general application lemma, so a consumer never has
+to unfold the definition. -/
 @[simp]
-lemma jordanParam_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
-    jordanParam e (e ⟨p, hp⟩) = p := by
+lemma jordanParam_apply (e : C ≃ₜ Circle) (u : Circle) :
+    jordanParam e u = ((e.symm u : C) : X) := by
   simp [jordanParam]
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle undoes `e`: it sends
+the parameter `e ⟨p, hp⟩` of a point `p` of the curve back to `p`. Simp proves this from
+`TauCeti.jordanParam_apply`; it is stated for the `rw` steps that produce the point `p` itself
+rather than a coerced parameter. -/
+lemma jordanParam_apply_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
+    jordanParam e (e ⟨p, hp⟩) = p := by
+  simp
 
 /-! ## The model curve: a circle in `ℂ` -/
 
