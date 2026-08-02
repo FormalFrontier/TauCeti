@@ -20,11 +20,11 @@ the circle. This file introduces the predicate `TauCeti.IsJordanCurve` and its b
 
 The circle is Mathlib's `Circle`, the unit circle of `ℂ` as a topological group; the notion itself
 is purely topological, so `TauCeti.IsJordanCurve` is stated for a subset of an arbitrary
-topological space. Only the model curve — a circle `Metric.sphere c r` of positive radius in `ℂ`,
-towards the end of the file — mentions `ℂ`, and it is built from the complex affine change of
-coordinates `w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric. The
-one curve beyond that model, the frontier of a convex body, is obtained from it by transport and
-mentions `ℂ` for the same reason.
+topological space. `ℂ` is mentioned only by the two concrete curves towards the end of the file:
+the model curve, a circle `Metric.sphere c r` of positive radius, and the frontier of a bounded
+convex set with nonempty interior. The model is built from the complex affine change of coordinates
+`w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric, and the convex
+frontier is obtained from the model by transport.
 
 Phrasing the predicate as *the set is homeomorphic to the circle*, rather than *the set is the
 range of a continuous map on `[0, 1]` that is injective except for matching endpoints*, is what
