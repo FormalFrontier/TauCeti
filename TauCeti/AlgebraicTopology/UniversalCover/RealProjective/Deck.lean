@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Normed.Module.Connected
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.Covering
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Basic
 
@@ -16,15 +15,18 @@ action of `ℤˣ`; `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk` record
 file identifies the deck transformation group of that cover.
 
 The antipodal map is always a deck transformation, and it is never the identity because no
-unit vector is its own negative. For `1 ≤ n` the sphere is connected, so a deck
-transformation is determined by its value at a single point; the deck group is then exactly
-the two-element acting group:
+unit vector is its own negative. Both facts are unconditional, and come from
+`TauCeti.Deck.IsQuotientCoveringMap.toDeckHom`, which turns an element of the acting group of
+a quotient covering map into a deck transformation, together with its injectivity
+`TauCeti.Deck.IsQuotientCoveringMap.toDeckHom_injective`.
+
+For `1 ≤ n` the sphere is connected, so a deck transformation is determined by its value at a
+single point, and `TauCeti.Deck.IsQuotientCoveringMap.deckMulEquiv` identifies the whole deck
+group with the two-element acting group:
 
   `Deck (mk n) ≃* ℤˣ`.
 
-Both facts come from `TauCeti.Deck.IsQuotientCoveringMap.deckMulEquiv`, which identifies the
-acting group of a quotient covering map with connected total space as its deck group. The
-regularity of the antipodal cover needs no connectedness hypothesis.
+The regularity of the antipodal cover needs no connectedness hypothesis.
 
 For `n = 0` the sphere is the two-point space `S⁰`, which is disconnected, so the argument
 does not apply; the statements that need it carry the hypothesis `1 ≤ n` explicitly.
@@ -58,20 +60,6 @@ open Metric Deck
 noncomputable section
 
 variable (n : ℕ)
-
-/-- The unit sphere of `EuclideanSpace ℝ (Fin (n + 1))` is nonempty. -/
-instance instNonemptySphere :
-    Nonempty (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :=
-  (NormedSpace.sphere_nonempty.mpr zero_le_one).to_subtype
-
-/-- The unit sphere of `EuclideanSpace ℝ (Fin (n + 1))` is connected once `1 ≤ n`, that is,
-from the circle `S¹` on. This is the standing hypothesis behind the identification of the
-deck group of the antipodal cover. -/
-theorem connectedSpace_sphere (hn : 1 ≤ n) :
-    ConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
-  refine Subtype.connectedSpace (isConnected_sphere ?_ 0 zero_le_one)
-  rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
-  omega
 
 /-- The antipodal map, as a deck transformation of the cover `Sⁿ → RPⁿ`. It is translation by
 the nontrivial integer unit. -/
