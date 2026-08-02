@@ -64,7 +64,7 @@ variable {c ζ : ℂ} {r ρ : ℝ}
 
 /-- The squared distance from a point on `sphere ζ ρ` to `c`, in angular coordinates based at the
 direction from `ζ` to `c`. This is the cosine rule in the form underlying circular crosscuts. -/
-private theorem dist_circleMap_sq (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
+private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
     dist (circleMap ζ ρ θ) c ^ 2 =
       ρ ^ 2 + r ^ 2 - 2 * ρ * r * Real.cos (θ - (c - ζ).arg) := by
   have hnorm : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
@@ -77,7 +77,7 @@ private theorem dist_circleMap_sq (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ
     ring
   have hu : normSq ((ρ : ℂ) * exp ((θ : ℂ) * I)) = ρ ^ 2 := by
     rw [Complex.normSq_eq_norm_sq, Complex.norm_mul, Complex.norm_exp_ofReal_mul_I, mul_one,
-      norm_real, Real.norm_of_nonneg hρ.le]
+      norm_real, Real.norm_eq_abs, sq_abs]
   have ha : normSq (c - ζ) = r ^ 2 := by
     rw [Complex.normSq_eq_norm_sq, hnorm]
   have hare : (c - ζ).re = r * Real.cos (c - ζ).arg := by
@@ -112,7 +112,7 @@ theorem circleMap_mem_closedBall_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : 
       ρ ≤ 2 * r * Real.cos (θ - (c - ζ).arg) := by
   rw [mem_closedBall]
   have hr : 0 ≤ r := hζ ▸ dist_nonneg
-  have hd := dist_circleMap_sq hζ hρ θ
+  have hd := dist_circleMap_sq (ρ := ρ) hζ θ
   constructor
   · intro h
     have hsq : dist (circleMap ζ ρ θ) c ^ 2 ≤ r ^ 2 := by
@@ -139,14 +139,8 @@ satisfies the corresponding cosine equality. -/
 theorem circleMap_mem_sphere_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     circleMap ζ ρ θ ∈ sphere c r ↔
       ρ = 2 * r * Real.cos (θ - (c - ζ).arg) := by
-  rw [mem_sphere]
-  have hr : 0 ≤ r := hζ ▸ dist_nonneg
-  have hd := dist_circleMap_sq hζ hρ θ
-  constructor
-  · intro h
-    nlinarith
-  · intro h
-    nlinarith [dist_nonneg (x := circleMap ζ ρ θ) (y := c)]
+  rw [mem_sphere, eq_iff_le_not_lt, dist_circleMap_le_iff hζ hρ,
+    dist_circleMap_lt_iff hζ hρ, eq_iff_le_not_lt]
 
 /-- The `simp`-normal form of `TauCeti.circleMap_mem_sphere_iff`. -/
 @[simp]
@@ -192,20 +186,6 @@ private theorem div_le_cos_iff_mem_Icc {x t : ℝ} (hx0 : 0 < x) (hx1 : x < 1)
     have h' := (Real.strictAntiOn_cos.le_iff_ge hφ hat).mpr (abs_le.mpr h)
     simpa [hcos, Real.cos_abs] using h'
 
-/-- Every point of a positive-radius circle has an angular representative in the period of length
-`2 * π` centred at any prescribed angle. -/
-theorem exists_mem_Icc_circleMap_eq (α : ℝ) (hρ : 0 < ρ) {z : ℂ}
-    (hz : z ∈ sphere ζ ρ) :
-    ∃ t ∈ Icc (-π) π, circleMap ζ ρ (α + t) = z := by
-  have hmem : z ∈ circleMap ζ ρ '' Icc (α - π) (α - π + 2 * π) := by
-    rw [(periodic_circleMap ζ ρ).image_Icc Real.two_pi_pos, range_circleMap, abs_of_pos hρ]
-    exact hz
-  obtain ⟨θ, hθ, rfl⟩ := hmem
-  refine ⟨θ - α, ?_, by congr 1; ring⟩
-  constructor
-  · linarith [hθ.1]
-  · linarith [hθ.2]
-
 /-- A genuine circular crosscut is exactly one open angular arc. -/
 theorem ball_inter_sphere_eq_circleMap_image_Ioo (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρr : ρ < 2 * r) :
@@ -219,7 +199,7 @@ theorem ball_inter_sphere_eq_circleMap_image_Ioo (hζ : dist ζ c = r) (hρ : 0 
   ext z
   constructor
   · rintro ⟨hzball, hzsphere⟩
-    obtain ⟨t, ht, rfl⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hzsphere
+    obtain ⟨t, ht, rfl⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hzsphere
     rw [circleMap_mem_ball_iff hζ hρ] at hzball
     have hcos : ρ / (2 * r) < Real.cos t := by
       rw [div_lt_iff₀ (by positivity)]
@@ -251,7 +231,7 @@ theorem closedBall_inter_sphere_eq_circleMap_image_Icc (hζ : dist ζ c = r) (h�
   ext z
   constructor
   · rintro ⟨hzball, hzsphere⟩
-    obtain ⟨t, ht, rfl⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hzsphere
+    obtain ⟨t, ht, rfl⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hzsphere
     rw [circleMap_mem_closedBall_iff hζ hρ] at hzball
     have hcos : ρ / (2 * r) ≤ Real.cos t := by
       rw [div_le_iff₀ (by positivity)]
