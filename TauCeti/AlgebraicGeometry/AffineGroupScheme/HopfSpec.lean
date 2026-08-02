@@ -41,12 +41,14 @@ universe u
 variable (R : Type u) [CommRing R]
 
 /-- The scheme underlying the Hopf spectrum of `H` is its ordinary spectrum. -/
+@[simp↓]
 lemma hopfSpec_obj_X_left (H : CommHopfAlgCat.{u} R) :
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
       (Opposite.op H)).X.left = Spec (CommRingCat.of H) :=
   rfl
 
 /-- The structural morphism of a Hopf spectrum is induced by its algebra structure map. -/
+@[simp↓]
 lemma hopfSpec_obj_X_hom (H : CommHopfAlgCat.{u} R) :
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
       (Opposite.op H)).X.hom =
@@ -81,12 +83,9 @@ lemma hopfSpec_obj_tensor_X_left (H : CommHopfAlgCat.{u} R) :
   cases hopfSpec_obj_X_left R H
   exact congrArg (fun k ↦ Limits.pullback k k) (eq_of_heq h)
 
-/-- Specialize Mathlib's `algSpec_map_left` computation to an explicit algebra morphism.
-
-This is the sole boundary where the `CommAlgCat`/under-category wrapper left in that public
-computation lemma is reduced: `algSpec_map_left` phrases its answer through
-`(commAlgCatEquivUnder R).functor.map`, and Mathlib provides no computation lemma for the
-`Under.Hom.right` of that morphism, so the last step is definitional. -/
+/-- Applying `algSpec` to an algebra homomorphism has underlying scheme map `Spec.map` of its
+underlying ring homomorphism. -/
+@[simp↓]
 lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
     [Algebra R A] [Algebra R B] (f : A →ₐ[R] B) :
     ((AlgebraicGeometry.algSpec (CommRingCat.of R)).map
