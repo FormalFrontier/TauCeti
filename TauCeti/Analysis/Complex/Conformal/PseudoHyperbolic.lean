@@ -12,7 +12,8 @@ public import Mathlib.Analysis.Complex.UnitDisc.Basic
 This file records the scalar pseudo-hyperbolic expression
 `‖(z - w) / (1 - conj w * z)‖` used in the Schwarz--Pick layer of the conformal-mapping
 roadmap.  The main API proves that the denominator is nonzero on the open unit disc, the
-expression is symmetric, and it is strictly less than one for two points of the unit disc.
+expression is symmetric, it is strictly less than one for two points of the unit disc, and it
+is jointly continuous there (`TauCeti.continuousOn_pseudoHyperbolicExpr`).
 The Poincaré defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub` compares the
 numerator and the denominator, and yields
 `TauCeti.norm_sub_eq_of_pseudoHyperbolicExpr_eq`: between points of prescribed norms, the
@@ -44,6 +45,12 @@ noncomputable def pseudoHyperbolicExpr (z w : ℂ) : ℝ :=
 lemma pseudoHyperbolicExpr_def (z w : ℂ) :
     pseudoHyperbolicExpr z w = ‖(z - w) / (1 - (starRingEnd ℂ) w * z)‖ :=
   by rfl
+
+/-- The pseudo-hyperbolic expression as a quotient of two real norms, the form in which it is
+compared with the Euclidean distance `‖z - w‖`. -/
+lemma pseudoHyperbolicExpr_eq_norm_div_norm (z w : ℂ) :
+    pseudoHyperbolicExpr z w = ‖z - w‖ / ‖1 - (starRingEnd ℂ) w * z‖ := by
+  rw [pseudoHyperbolicExpr_def, norm_div]
 
 @[simp]
 lemma pseudoHyperbolicExpr_nonneg (z w : ℂ) : 0 ≤ pseudoHyperbolicExpr z w :=
@@ -279,5 +286,19 @@ than one. -/
 lemma pseudoHyperbolicExpr_lt_one_unitDisc (z w : Complex.UnitDisc) :
     pseudoHyperbolicExpr (z : ℂ) (w : ℂ) < 1 :=
   pseudoHyperbolicExpr_lt_one_of_norm_lt_one z.norm_lt_one w.norm_lt_one
+
+/-- The pseudo-hyperbolic expression is continuous on the product of two copies of the open
+unit disc, where its Moebius denominator does not vanish. -/
+lemma continuousOn_pseudoHyperbolicExpr :
+    ContinuousOn (fun p : ℂ × ℂ => pseudoHyperbolicExpr p.1 p.2)
+      (ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1) := by
+  have hnum : Continuous fun p : ℂ × ℂ => p.1 - p.2 := continuous_fst.sub continuous_snd
+  have hden : Continuous fun p : ℂ × ℂ => (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 :=
+    continuous_const.sub ((Complex.continuous_conj.comp continuous_snd).mul continuous_fst)
+  have hne : ∀ p ∈ ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1,
+      (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 ≠ 0 := fun _ hp =>
+    one_sub_conj_mul_ne_zero_of_mem_ball hp.1 hp.2
+  exact ((hnum.continuousOn.div hden.continuousOn hne).norm).congr fun p _ =>
+    pseudoHyperbolicExpr_def p.1 p.2
 
 end TauCeti

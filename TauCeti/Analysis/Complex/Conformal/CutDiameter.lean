@@ -12,7 +12,7 @@ public import TauCeti.Topology.ClusterSet
 /-!
 # The piece a crosscut cuts off, measured by its boundary
 
-`Conformal/Crosscut.lean` cuts a disc `ball c r` at a boundary point `ζ` by the circle
+`Conformal/Crosscut/Basic.lean` cuts a disc `ball c r` at a boundary point `ζ` by the circle
 `sphere ζ ρ`, leaving the *crosscut neighbourhood* `ball c r ∩ ball ζ ρ` of `ζ`, and turns an
 oscillation bound on that neighbourhood into a boundary limit. This file supplies such a bound for a
 *conformal* map, in the geometric form that layer **L5** of
@@ -53,12 +53,13 @@ available at every point of the boundary circle, the continuous extension to the
 `TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le`.
 
 This is the **geometric** counterpart of the analytic criterion
-`TauCeti.exists_continuousOn_closedBall_eqOn` of `Conformal/Crosscut.lean`. That one asks for a
-bound on the values of `f` along the crosscut arc *and along a collar* of the boundary circle, and
-runs on the maximum modulus principle; this one replaces the collar bound by a hypothesis about the
-*image*, namely that the boundary points of `Ω` clinging to the cut-off piece can be enclosed in a
-small set `E`. That is the shape in which the two remaining L5 inputs arrive: the length–area method
-makes the image crosscut short, and local connectedness of `∂Ω` supplies the small connected `E`
+`TauCeti.exists_continuousOn_closedBall_eqOn` of `Conformal/Crosscut/Basic.lean`. That one asks for
+a bound on the values of `f` along the crosscut arc *and along a collar* of the boundary circle, and
+runs on the maximum modulus principle; this one replaces the collar bound by a hypothesis about
+the *image*, namely that the boundary points of `Ω` clinging to the cut-off piece can be enclosed in
+a small set `E`. That is the shape in which the two remaining L5 inputs arrive: the length–area
+method makes the image crosscut short, and local connectedness of `∂Ω` supplies the small
+connected `E`
 joining its two ends. Neither is proved here; what is proved here is that those two data suffice,
 with no maximum principle and no estimate on `f` inside the disc.
 

@@ -45,11 +45,11 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe u w
+universe u v w
 
 namespace CommHopfAlgCat
 
-variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{u} R}
+variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{v} R}
 
 /-- The kernel Hopf ideal of a morphism of commutative Hopf algebras: the image of the
 augmentation ideal of the source. It is an ideal of the *codomain* `K`, the coordinate
@@ -84,7 +84,7 @@ theorem mem_kernelHopfIdeal_of_mem_augmentation (f : H ⟶ K) {x : H}
 
 -- Mathlib has no application lemma for `Bialgebra.unitBialgHom`; this contains its
 -- definitional unfolding to `algebraMap` in one place (upstream candidate).
-private lemma unitBialgHom_apply {A : Type u} [Semiring A] [Bialgebra R A] (r : R) :
+private lemma unitBialgHom_apply {A : Type*} [Semiring A] [Bialgebra R A] (r : R) :
     Bialgebra.unitBialgHom R A r = algebraMap R A r :=
   rfl
 
@@ -128,7 +128,7 @@ theorem kernelHopfIdeal_toIdeal_le_ker_iff (f : H ⟶ K) {A : Type w} [Ring A]
 /-- The trivialization criterion for Hopf-algebra morphisms: a morphism out of `K` kills
 the kernel Hopf ideal of `f` exactly when its composite with `f` is the trivial
 (counit-unit) morphism. -/
-theorem comp_eq_unit_comp_counit_iff (f : H ⟶ K) {L : _root_.CommHopfAlgCat.{u} R}
+theorem comp_eq_unit_comp_counit_iff (f : H ⟶ K) {L : _root_.CommHopfAlgCat.{v} R}
     (g : K ⟶ L) :
     f ≫ g =
         _root_.CommHopfAlgCat.ofHom

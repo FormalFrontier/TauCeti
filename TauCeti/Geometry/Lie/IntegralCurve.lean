@@ -26,6 +26,7 @@ every point, after which Mathlib's uniform-time theorem produces global integral
 * `mulInvariantIntegralCurve_eq_const_mul`: curves through arbitrary points are left translates of
   the curve through the identity.
 * `mulInvariantIntegralCurve_add`: the identity curve satisfies the one-parameter subgroup law.
+* `mulInvariantIntegralCurve_smul`: scaling the vector field rescales time along its curves.
 * `mulInvariantOneParameterSubgroup`: the identity curve bundled as a continuous homomorphism.
 
 ## References
@@ -197,6 +198,21 @@ theorem mulInvariantIntegralCurve_add [CompleteSpace E]
     γ (s + t) = (γ ∘ (· + s)) t := by simp [add_comm]
     _ = mulInvariantIntegralCurve v (γ s) t := congrFun hshift t
     _ = γ s * γ t := congrFun (mulInvariantIntegralCurve_eq_const_mul v (γ s)) t
+
+/-- Scaling an invariant vector field rescales time along its canonical integral curves. -/
+theorem mulInvariantIntegralCurve_smul [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (x : G) (t s : ℝ) :
+    mulInvariantIntegralCurve (t • v) x s = mulInvariantIntegralCurve v x (s * t) := by
+  let γ := mulInvariantIntegralCurve v x
+  have hscaled : IsMIntegralCurve (γ ∘ (· * t)) (mulInvariantVectorField (t • v)) := by
+    rw [mulInvariantVectorField_smul]
+    exact (isMIntegralCurve_mulInvariantIntegralCurve v x).comp_mul t
+  have heq : γ ∘ (· * t) = mulInvariantIntegralCurve (t • v) x := by
+    apply eq_mulInvariantIntegralCurve (t • v) x
+    · simp [γ]
+    · exact hscaled
+  exact (congrFun heq s).symm
 
 /-- The canonical invariant curve through the identity, bundled as a continuous one-parameter
 subgroup. -/

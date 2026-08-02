@@ -23,8 +23,6 @@ count defining the fully blocked grid complex.
 
 ## Main results
 
-* `TauCeti.Grid.cIoo_eq_empty_of_le_two`: open cyclic intervals in grids of size at most two
-  are empty.
 * `TauCeti.GridDiagram.fullyBlockedRectangleCount_eq_zero_of_le_two`: every fully blocked
   rectangle coefficient vanishes in grid size at most two.
 * `TauCeti.GridDiagram.fullyBlockedDifferential_eq_zero_of_le_two`: the fully blocked
