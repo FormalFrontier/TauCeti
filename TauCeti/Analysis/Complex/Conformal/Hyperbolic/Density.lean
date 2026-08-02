@@ -31,9 +31,13 @@ denominator tends to `1 - ‖z‖ ^ 2`, which is where the density comes from.
 
 *Integrally.* The hyperbolic distance from the origin along a radius is the integral of the
 density over that radius, `∫ t in (0)..r, (1 - t ^ 2)⁻¹ = hyperbolicDist 0 (r * u)` for a unit
-vector `u` (`TauCeti.integral_one_sub_sq_inv_eq_hyperbolicDist_zero`). Combined with
-`Poincare/Geodesic.lean`, where the radii are shown to be the geodesics through the origin,
-this identifies `hyperbolicDist` as the length metric of the density.
+vector `u` (`TauCeti.integral_one_sub_sq_inv_eq_hyperbolicDist_zero`): the hyperbolic distance
+to a point is the length, in the density, of the radius joining it to the origin — and
+`Poincare/Geodesic.lean` shows those radii to be the geodesics through the origin. Only radii
+are treated here. Neither the density-weighted length of a general curve nor the infimum of
+such lengths between two arbitrary points is defined anywhere in the tree, so nothing below
+identifies `hyperbolicDist` as the length metric induced by the density; that identification
+would need those definitions first.
 
 Bounding the density between its values at the endpoints of a radius also gives the two-sided
 comparison of the hyperbolic distance with the pseudo-hyperbolic expression,
@@ -174,9 +178,11 @@ theorem tendsto_hyperbolicDist_zero_div_norm :
 vector `u` and a radius `r` in `[0, 1)`, the hyperbolic distance from the origin to `r * u` is
 `∫ t in (0)..r, (1 - t ^ 2)⁻¹`.
 
-Together with `TauCeti.isometry_radialGeodesic`, which exhibits the radii through the origin
-as geodesics of the Poincaré disc, this presents `TauCeti.hyperbolicDist` as the length
-metric of the conformal density `|dz| / (1 - |z| ^ 2)`. -/
+This is the radial case of the agreement between `TauCeti.hyperbolicDist` and the density
+`|dz| / (1 - |z| ^ 2)`, and only that case: the radii through the origin are geodesics of the
+Poincaré disc (`TauCeti.PoincareDisc.isometry_radialGeodesic`), but the density-weighted length
+of a general curve is not defined here, so this does not identify `hyperbolicDist` with the
+length metric of the density between arbitrary points. -/
 theorem integral_one_sub_sq_inv_eq_hyperbolicDist_zero {u : ℂ} (hu : ‖u‖ = 1) {r : ℝ}
     (hr : 0 ≤ r) (hr₁ : r < 1) :
     (∫ t in (0 : ℝ)..r, (1 - t ^ 2)⁻¹) = hyperbolicDist ((r : ℂ) * u) 0 := by
