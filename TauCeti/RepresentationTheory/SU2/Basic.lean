@@ -121,19 +121,21 @@ theorem continuous_torusMatrix : Continuous torusMatrix := by
 /-! ### The maximal torus -/
 
 /-- The circle parametrisation `z ↦ diag (z, z⁻¹)` of the maximal torus of `SU(2)`. -/
-@[expose] noncomputable def torusHom : Circle →* SU2 where
+noncomputable def torusHom : Circle →* SU2 where
   toFun z := ⟨torusMatrix z, torusMatrix_mem z⟩
   map_one' := Subtype.ext torusMatrix_one
   map_mul' z w := Subtype.ext (torusMatrix_mul z w)
 
+-- `(rfl)`, not `rfl`: the parenthesised form proves the accessor without requiring `torusHom` to
+-- be `@[expose]`d, so the definition stays opaque downstream. Likewise below.
 @[simp]
-theorem coe_torusHom (z : Circle) : (torusHom z : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix z := rfl
+theorem coe_torusHom (z : Circle) : (torusHom z : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix z := (rfl)
 
 theorem continuous_torusHom : Continuous torusHom :=
   continuous_induced_rng.mpr continuous_torusMatrix
 
 /-- The **maximal torus** of `SU(2)`: the diagonal circle subgroup. -/
-@[expose] noncomputable def torus : Subgroup SU2 := torusHom.range
+noncomputable def torus : Subgroup SU2 := torusHom.range
 
 theorem torusHom_mem_torus (z : Circle) : torusHom z ∈ torus := ⟨z, rfl⟩
 
@@ -180,7 +182,7 @@ theorem torusHom_injective : Function.Injective torusHom := fun z w h => by
   exact Circle.ext (by simpa using h00)
 
 /-- The maximal torus of `SU(2)` *is* the circle group, as a topological group. -/
-@[expose] noncomputable def torusContinuousMulEquiv : Circle ≃ₜ* torus where
+noncomputable def torusContinuousMulEquiv : Circle ≃ₜ* torus where
   __ := MonoidHom.ofInjective torusHom_injective
   continuous_toFun := continuous_torusHom.subtype_mk _
   continuous_invFun :=
@@ -190,7 +192,7 @@ theorem torusHom_injective : Function.Injective torusHom := fun z w h => by
 
 @[simp]
 theorem torusContinuousMulEquiv_apply (z : Circle) :
-    (torusContinuousMulEquiv z : SU2) = torusHom z := rfl
+    (torusContinuousMulEquiv z : SU2) = torusHom z := (rfl)
 
 instance : IsMulCommutative torus :=
   .of_setLike_mul_comm <| by

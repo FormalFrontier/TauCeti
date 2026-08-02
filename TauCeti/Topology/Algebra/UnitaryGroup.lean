@@ -25,9 +25,10 @@ Mathlib already supplies the topological group structure on `unitary R` for a to
 monoid `R` (`isClosed_unitary` and the `IsTopologicalGroup (unitary R)` instance), so for the
 unitary group only compactness is new. The special unitary group is a different submonoid, carrying
 its own `Group` instance in `Mathlib/LinearAlgebra/UnitaryGroup.lean`, so its `ContinuousInv` and
-`IsTopologicalGroup` instances are recorded here too. Those instances, and the description of the
-special unitary group as the unitary group cut out by `det A = 1`, need no `RCLike` hypothesis, and
-are stated over a topological commutative star ring instead. Hausdorffness is not proved here: it
+`IsTopologicalGroup` instances are recorded here too. Those instances, the description of the
+special unitary group as the unitary group cut out by `det A = 1`, and its closedness need no
+`RCLike` hypothesis, and are stated over a topological commutative star ring instead; only
+compactness is `RCLike`-specific. Hausdorffness is not proved here: it
 is inherited from the ambient matrix topology whenever `𝕜` is Hausdorff.
 
 This is the setup the compact-group representation theory of `SU(2)` runs on; see
@@ -63,6 +64,14 @@ instance : ContinuousInv (Matrix.specialUnitaryGroup n 𝕜) where
 
 instance : IsTopologicalGroup (Matrix.specialUnitaryGroup n 𝕜) where
 
+/-- The special unitary group of `n × n` matrices is a closed subset of `Matrix n n 𝕜`: it is cut
+out of the closed unitary group by the closed condition `det A = 1`. -/
+theorem isClosed_specialUnitaryGroup [T1Space 𝕜] :
+    IsClosed (Matrix.specialUnitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) := by
+  rw [coe_specialUnitaryGroup]
+  exact isClosed_unitary.inter
+    (isClosed_singleton.preimage (Continuous.matrix_det continuous_id))
+
 end CommRing
 
 section RCLike
@@ -78,14 +87,6 @@ theorem isCompact_unitaryGroup :
 
 instance : CompactSpace (Matrix.unitaryGroup n 𝕜) :=
   isCompact_iff_compactSpace.mp isCompact_unitaryGroup
-
-/-- The special unitary group of `n × n` matrices over `ℝ` or `ℂ` is a closed subset of
-`Matrix n n 𝕜`: it is cut out of the closed unitary group by the closed condition `det A = 1`. -/
-theorem isClosed_specialUnitaryGroup :
-    IsClosed (Matrix.specialUnitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) := by
-  rw [coe_specialUnitaryGroup]
-  exact isClosed_unitary.inter
-    (isClosed_eq (Continuous.matrix_det continuous_id) continuous_const)
 
 /-- The special unitary group of `n × n` matrices over `ℝ` or `ℂ` is a compact subset of
 `Matrix n n 𝕜`. -/
