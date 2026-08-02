@@ -69,8 +69,7 @@ theorem sym2_mk_eq_of_swapColumns_swapColumns_eq_self (x : GridState n) {a b c d
 /-- Two nontrivial column swaps form a diagonal two-step witness exactly when they use the same
 unordered pair of columns. -/
 theorem swapColumns_swapColumns_eq_self_iff_sym2_mk_eq (x : GridState n) {a b c d : Fin n}
-    (hab : a ≠ b) (hcd : c ≠ d) :
-    (x.swapColumns a b).swapColumns c d = x ↔ s(a, b) = s(c, d) := by
+    (hab : a ≠ b) (hcd : c ≠ d) : (x.swapColumns a b).swapColumns c d = x ↔ s(a, b) = s(c, d) := by
   constructor
   · exact x.sym2_mk_eq_of_swapColumns_swapColumns_eq_self hab hcd
   · intro hsym

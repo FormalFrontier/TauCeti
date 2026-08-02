@@ -196,8 +196,7 @@ theorem componentPerm_relabelRows (ρ : Equiv.Perm (Fin n)) :
   simp [componentPerm_apply]
 
 /-- Relabeling columns conjugates the component permutation by the column relabeling. -/
-theorem componentPerm_relabelColumns (κ : Equiv.Perm (Fin n)) :
-    (G.relabelColumns κ).componentPerm =
+theorem componentPerm_relabelColumns (κ : Equiv.Perm (Fin n)) : (G.relabelColumns κ).componentPerm =
       κ * G.componentPerm * κ⁻¹ := by
   ext c
   simp [componentPerm_apply]
@@ -330,8 +329,7 @@ theorem componentCount_swapMarkings :
 
 /-- Row relabeling preserves whether a grid diagram represents a knot. -/
 @[simp]
-theorem isKnot_relabelRows (ρ : Equiv.Perm (Fin n)) :
-    (G.relabelRows ρ).IsKnot ↔ G.IsKnot := by
+theorem isKnot_relabelRows (ρ : Equiv.Perm (Fin n)) : (G.relabelRows ρ).IsKnot ↔ G.IsKnot := by
   simp [IsKnot]
 
 /-- Column relabeling preserves whether a grid diagram represents a knot. -/
