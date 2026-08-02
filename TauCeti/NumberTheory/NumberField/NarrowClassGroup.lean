@@ -30,7 +30,9 @@ is totally positive (there are no real places), `Cl⁺(K)` and `Cl(K)` coincide.
   totally positive generator, with `mem_narrowPrincipalSubgroup`.
 * `TauCeti.NumberField.NarrowClassGroup`: the quotient `Cl⁺(K)`, a `CommGroup`.
 * `TauCeti.NumberField.NarrowClassGroup.mk`: the class of an invertible fractional ideal, with
-  `mk_surjective`, `mk_eq_one_iff`, and `mk_eq_mk_iff`.
+  `mk_surjective`, `mk_eq_one_iff`, `mk_eq_mk_iff`, and the eliminator `induction`.
+* `TauCeti.NumberField.NarrowClassGroup.lift`: the universal property — a homomorphism trivial on
+  `narrowPrincipalSubgroup` descends to `Cl⁺(K)`, with `lift_mk` and `lift_unique`.
 * `TauCeti.NumberField.NarrowClassGroup.toClassGroup`: the surjection `Cl⁺(K) → Cl(K)` forgetting
   positivity, with `toClassGroup_surjective`.
 -/
@@ -100,6 +102,26 @@ with a totally positive generator. -/
     mk I = mk J ↔ ∃ z ∈ narrowPrincipalSubgroup K, I * z = J :=
   QuotientGroup.mk'_eq_mk' (narrowPrincipalSubgroup K)
 
+variable {M : Type*} [CommGroup M]
+
+/-- **Universal property of the narrow class group.** A homomorphism `φ` out of the invertible
+fractional ideals whose kernel contains `narrowPrincipalSubgroup` (i.e. `φ` is trivial on principal
+ideals with a totally positive generator) descends to a homomorphism `Cl⁺(K) → M`. -/
+noncomputable def lift (φ : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* M)
+    (h : narrowPrincipalSubgroup K ≤ MonoidHom.ker φ) : NarrowClassGroup K →* M :=
+  QuotientGroup.lift (narrowPrincipalSubgroup K) φ h
+
+@[simp] theorem lift_mk (φ : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* M)
+    (h : narrowPrincipalSubgroup K ≤ MonoidHom.ker φ) (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
+    lift φ h (mk I) = φ I :=
+  QuotientGroup.lift_mk' _ h I
+
+/-- The lift is the unique homomorphism `Cl⁺(K) → M` factoring `φ` through `mk`. -/
+theorem lift_unique (φ : (FractionalIdeal (𝓞 K)⁰ K)ˣ →* M)
+    (h : narrowPrincipalSubgroup K ≤ MonoidHom.ker φ) (ψ : NarrowClassGroup K →* M)
+    (hψ : ∀ I, ψ (mk I) = φ I) : ψ = lift φ h :=
+  MonoidHom.ext fun x => induction (fun I => (hψ I).trans (lift_mk φ h I).symm) x
+
 /-- Principal fractional ideals with a totally positive generator have the same class as the whole
 ring: they map to `1` in the ordinary class group. -/
 private theorem narrowPrincipalSubgroup_le_ker :
@@ -111,12 +133,11 @@ private theorem narrowPrincipalSubgroup_le_ker :
 /-- The **surjection `Cl⁺(K) → Cl(K)`** onto the ordinary class group, forgetting the positivity
 condition on generators. -/
 noncomputable def toClassGroup : NarrowClassGroup K →* ClassGroup (𝓞 K) :=
-  QuotientGroup.lift (narrowPrincipalSubgroup K) (ClassGroup.mk (R := 𝓞 K) K)
-    narrowPrincipalSubgroup_le_ker
+  lift (ClassGroup.mk (R := 𝓞 K) K) narrowPrincipalSubgroup_le_ker
 
 @[simp] theorem toClassGroup_mk (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :
     toClassGroup (mk I) = ClassGroup.mk K I :=
-  QuotientGroup.lift_mk' _ narrowPrincipalSubgroup_le_ker I
+  lift_mk _ _ I
 
 /-- The forgetful homomorphism `Cl⁺(K) → Cl(K)` onto the ordinary class group is surjective. -/
 theorem toClassGroup_surjective : Function.Surjective (toClassGroup (K := K)) :=
