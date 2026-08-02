@@ -146,6 +146,14 @@ theorem toClassGroup_surjective : Function.Surjective (toClassGroup (K := K)) :=
   fun C => ClassGroup.induction (K := K)
     (P := fun C => ∃ D, toClassGroup D = C) (fun I => ⟨mk I, toClassGroup_mk I⟩) C
 
+/-- The kernel of `toClassGroup` is the image under `mk` of the kernel of the ordinary class-group
+map `ClassGroup.mk`. This is `QuotientGroup.ker_lift` specialised to the defining quotient. -/
+theorem toClassGroup_ker_eq_map :
+    MonoidHom.ker (toClassGroup (K := K)) =
+      Subgroup.map mk (MonoidHom.ker (ClassGroup.mk (R := 𝓞 K) K)) :=
+  QuotientGroup.ker_lift (narrowPrincipalSubgroup K) (ClassGroup.mk (R := 𝓞 K) K)
+    narrowPrincipalSubgroup_le_ker
+
 end NarrowClassGroup
 
 end TauCeti.NumberField

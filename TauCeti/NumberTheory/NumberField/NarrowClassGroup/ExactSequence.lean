@@ -53,18 +53,14 @@ class of a principal ideal. This is the "composition is zero" half of exactness 
 ordinary class group is exactly the image of the principal-class map. -/
 theorem toClassGroup_ker :
     MonoidHom.ker (toClassGroup (K := K)) = (mkPrincipal (K := K)).range := by
-  -- `mkPrincipal = mk ∘ toPrincipalIdeal` and `toClassGroup ∘ mk = ClassGroup.mk`; the ordinary
-  -- class-group map kills exactly the principal ideals. The kernel equality is then generic
-  -- image/preimage bookkeeping along the surjection `mk`.
-  have hdef : mkPrincipal (K := K) = mk.comp (toPrincipalIdeal (𝓞 K) K) :=
-    MonoidHom.ext fun x => by rw [mkPrincipal_apply, MonoidHom.comp_apply]
-  have hmk : (toClassGroup (K := K)).comp mk = ClassGroup.mk (R := 𝓞 K) K :=
-    MonoidHom.ext fun I => toClassGroup_mk I
+  -- `toClassGroup_ker_eq_map` (from `QuotientGroup.ker_lift`) computes the kernel as the image
+  -- under `mk` of `ker (ClassGroup.mk)`, which is the principal ideals `toPrincipalIdeal.range`.
   have hcg : MonoidHom.ker (ClassGroup.mk (R := 𝓞 K) K) = (toPrincipalIdeal (𝓞 K) K).range := by
     ext I
     rw [MonoidHom.mem_ker, ClassGroup.mk_eq_one_iff, mem_principal_ideals_iff, isPrincipal_iff]
     exact ⟨fun ⟨a, ha⟩ => ⟨a, ha.symm⟩, fun ⟨a, ha⟩ => ⟨a, ha.symm⟩⟩
-  rw [hdef, MonoidHom.range_comp, ← hcg, ← hmk, ← MonoidHom.comap_ker,
-    Subgroup.map_comap_eq_self_of_surjective mk_surjective]
+  have hdef : mkPrincipal (K := K) = mk.comp (toPrincipalIdeal (𝓞 K) K) :=
+    MonoidHom.ext fun x => by rw [mkPrincipal_apply, MonoidHom.comp_apply]
+  rw [toClassGroup_ker_eq_map, hcg, hdef, MonoidHom.range_comp]
 
 end TauCeti.NumberField.NarrowClassGroup
