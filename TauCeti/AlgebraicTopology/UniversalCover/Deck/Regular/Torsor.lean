@@ -56,8 +56,8 @@ lemma fiber_sdiv_eq_deckEquivFiber_symm [PreconnectedSpace E] (hp : IsCoveringMa
     letI := fiberTorsor hp hreg b
     e₁ /ₛ e₂ = (deckEquivFiber hp hreg e₂).symm e₁ :=
 by
-  letI := hreg.nonempty_fiber b
-  letI := hreg.fiber_isPretransitive b
+  let := hreg.nonempty_fiber b
+  let := hreg.fiber_isPretransitive b
   exact fiber_sdiv_eq_deckEquivFiberOfSurjective_symm hp e₁ e₂
 
 /-- In the regular-cover fibre torsor, the inverse of `deckEquivFiber` computes the quotient

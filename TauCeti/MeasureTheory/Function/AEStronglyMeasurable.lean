@@ -82,7 +82,7 @@ lemma aestronglyMeasurable_iInf_of_antitone
     rw [h_shift]
     have hg_meas_shifted : ∀ n, @Measurable α β (m N) _ (g (n + N)) :=
       fun n => (hg_meas (n + N)).mono (h_anti (Nat.le_add_left N n)) le_rfl
-    haveI : MeasurableSpace α := m N
+    have : MeasurableSpace α := m N
     exact Measurable.liminf hg_meas_shifted
   -- Conclude Measurable[⨅ N, m N] h
   have h_meas : @Measurable α β (⨅ N, m N) _ h := by
@@ -96,7 +96,7 @@ lemma aestronglyMeasurable_iInf_of_antitone
     simp [h, fun N => (hx N).symm, Filter.liminf_const]
   -- Step 5: Convert Measurable to StronglyMeasurable
   have h_sm : @MeasureTheory.StronglyMeasurable α β _ (⨅ N, m N) h := by
-    haveI : MeasurableSpace α := ⨅ N, m N
+    have : MeasurableSpace α := ⨅ N, m N
     exact h_meas.stronglyMeasurable
   -- Step 6: Conclude AEStronglyMeasurable
   exact ⟨h, h_sm, h_ae_eq⟩
@@ -123,7 +123,7 @@ lemma aestronglyMeasurable_of_tendsto_ae'
   -- Use the `limsup` of the representatives as the witness.
   let h := fun x => Filter.atTop.limsup (fun n => f' n x)
   have h_meas : @Measurable α β m _ h := by
-    haveI : MeasurableSpace α := m
+    have : MeasurableSpace α := m
     exact Measurable.limsup hf'_meas
   -- `h = g` a.e.: on the set where `f n = f' n` for all `n` and `f n → g`, `limsup (f' ·) = g`.
   have h_ae_eq : h =ᵐ[μ] g := by
@@ -133,7 +133,7 @@ lemma aestronglyMeasurable_of_tendsto_ae'
       simpa only [fun n => (hx n)] using hxlim
     exact Filter.Tendsto.limsup_eq hlim'
   have h_sm : @MeasureTheory.StronglyMeasurable α β _ m h := by
-    haveI : MeasurableSpace α := m
+    have : MeasurableSpace α := m
     exact h_meas.stronglyMeasurable
   exact ⟨h, h_sm, h_ae_eq.symm⟩
 

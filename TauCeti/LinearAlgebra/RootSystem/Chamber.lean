@@ -257,7 +257,7 @@ private lemma exists_coroot'_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ pos
   refine ⟨f, ?_, fun x ↦ ?_⟩
   · by_contra hcon
     push Not at hcon
-    haveI : NeZero (2 : R) := ⟨by exact_mod_cast (by norm_num : (2 : ℕ) ≠ 0)⟩
+    have : NeZero (2 : R) := ⟨by exact_mod_cast (by norm_num : (2 : ℕ) ≠ 0)⟩
     refine P.ne_zero' i ?_
     rw [hsum]
     exact Finset.sum_eq_zero fun j hj ↦ by simp [hcon j hj]

@@ -111,7 +111,7 @@ theorem trivialToRegular_apply (r : R) :
     letI : Comodule R C R := trivial (R := R) (C := C) (M := R)
     trivialToRegular (R := R) (C := C) r = algebraMap R C r :=
   by
-    letI : Comodule R C R := trivial (R := R) (C := C) (M := R)
+    let : Comodule R C R := trivial (R := R) (C := C) (M := R)
     rw [← Algebra.linearMap_apply R C r]
     exact LinearMap.congr_fun (trivialToRegular_toLinearMap (R := R) (C := C)) r
 

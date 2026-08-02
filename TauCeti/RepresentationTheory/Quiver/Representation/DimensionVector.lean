@@ -67,7 +67,7 @@ theorem dimVector_zero :
   simp only [dimVector_apply, Pi.zero_apply]
   have hi : IsZero ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i)) :=
     Functor.zero_obj ((Paths.of Q).obj i)
-  letI : Subsingleton ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i)) :=
+  let : Subsingleton ((0 : QuiverRep k Q).obj ((Paths.of Q).obj i)) :=
     ModuleCat.subsingleton_of_isZero hi
   exact Module.finrank_zero_of_subsingleton (R := k)
 
@@ -79,11 +79,11 @@ theorem dimVector_biprod (M N : QuiverRep k Q)
     (hN : ∀ i : Q, FiniteDimensional k (N.obj ((Paths.of Q).obj i))) :
     dimVector (M ⊞ N) = dimVector M + dimVector N := by
   funext i
-  letI := hM i
-  letI := hN i
+  let := hM i
+  let := hN i
   simp only [Pi.add_apply, dimVector_apply]
   let E := (evaluation (Paths Q) (ModuleCat k)).obj ((Paths.of Q).obj i)
-  letI : PreservesBinaryBiproduct M N E :=
+  let : PreservesBinaryBiproduct M N E :=
     preservesBinaryBiproduct_of_preservesBiproduct E M N
   let e : (M ⊞ N).obj ((Paths.of Q).obj i) ≅
       ModuleCat.of k (M.obj ((Paths.of Q).obj i) × N.obj ((Paths.of Q).obj i)) :=
@@ -100,8 +100,8 @@ theorem dimVector_add_of_shortExact {S : ShortComplex (QuiverRep k Q)} (hS : S.S
     dimVector S.X₂ = dimVector S.X₁ + dimVector S.X₃ := by
   funext i
   let E := (evaluation (Paths Q) (ModuleCat k)).obj ((Paths.of Q).obj i)
-  letI : FiniteDimensional k (S.map E).X₁ := h₁ i
-  letI : FiniteDimensional k (S.map E).X₃ := h₃ i
+  let : FiniteDimensional k (S.map E).X₁ := h₁ i
+  let : FiniteDimensional k (S.map E).X₃ := h₃ i
   have hSi : (S.map E).ShortExact := hS.map_of_exact E
   simp only [Pi.add_apply, dimVector_apply]
   have hfin₁ : Module.finrank k (S.map E).X₁ =

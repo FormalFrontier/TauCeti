@@ -63,9 +63,9 @@ theorem ncard_primesOver_eq_finrank_iff (K : Type*) [Field K] [NumberField K] [I
   have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
   have hp0 : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := by
     simpa [Ideal.span_singleton_eq_bot] using hpne
-  haveI : (span {(p : ℤ)}).IsPrime :=
+  have : (span {(p : ℤ)}).IsPrime :=
     (Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp (Fact.out : p.Prime))
-  haveI : (span {(p : ℤ)}).IsMaximal := Ideal.IsPrime.isMaximal ‹_› hp0
+  have : (span {(p : ℤ)}).IsMaximal := Ideal.IsPrime.isMaximal ‹_› hp0
   have h := ncard_primesOver_eq_finrank_iff_of_isGalois ℚ K (A := ℤ) (span {(p : ℤ)})
   exact h
 

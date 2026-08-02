@@ -113,7 +113,7 @@ variable {P : Type*} [AddCommMonoid P] [Module R P] [Comodule R C P]
 @[simp]
 theorem neg_comp (g : Hom R C N P) (f : Hom R C M N) :
     comp (-g) f = -comp g f := by
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
   ext m
   simp [comp]
 
@@ -121,8 +121,8 @@ theorem neg_comp (g : Hom R C N P) (f : Hom R C M N) :
 @[simp]
 theorem comp_neg (g : Hom R C N P) (f : Hom R C M N) :
     comp g (-f) = -comp g f := by
-  letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
   ext m
   exact map_neg g.toLinearMap (f m)
 
@@ -130,7 +130,7 @@ theorem comp_neg (g : Hom R C N P) (f : Hom R C M N) :
 @[simp]
 theorem sub_comp (g h : Hom R C N P) (f : Hom R C M N) :
     comp (g - h) f = comp g f - comp h f := by
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
   ext m
   simp [comp, sub_eq_add_neg]
 
@@ -138,8 +138,8 @@ theorem sub_comp (g h : Hom R C N P) (f : Hom R C M N) :
 @[simp]
 theorem comp_sub (g : Hom R C N P) (f h : Hom R C M N) :
     comp g (f - h) = comp g f - comp g h := by
-  letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
   ext m
   exact map_sub g.toLinearMap (f m) (h m)
 
@@ -212,16 +212,16 @@ instance preadditive : Preadditive (ComoduleCat.{u, v, w} R C) where
     letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
     exact inferInstanceAs (AddCommGroup (Comodule.Hom R C M N))
   add_comp M N P f g h := by
-    letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup M := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup M := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
     exact Comodule.Hom.comp_add (R := R) (C := C) h f g
   comp_add M N P f g h := by
-    letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup M := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
-    letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup M := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
+    let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R
     exact Comodule.Hom.add_comp (R := R) (C := C) g h f
 
 end ComoduleCat

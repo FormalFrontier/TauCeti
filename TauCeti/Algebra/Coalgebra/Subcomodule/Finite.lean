@@ -195,8 +195,8 @@ theorem supClosed_finiteSubcomodules :
     SupClosed (finiteSubcomodules (R := R) (C := C) (M := M)) := by
   intro N hN P hP
   rw [mem_finiteSubcomodules] at hN hP ⊢
-  letI : Module.Finite R N.toSubmodule := hN
-  letI : Module.Finite R P.toSubmodule := hP
+  let : Module.Finite R N.toSubmodule := hN
+  let : Module.Finite R P.toSubmodule := hP
   exact sup_finite N P
 
 /-- Finite subcomodules form a directed family under inclusion. -/

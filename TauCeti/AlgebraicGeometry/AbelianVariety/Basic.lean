@@ -111,7 +111,7 @@ lemma dim_def (A : AbelianVariety K) :
 
 /-- An abelian variety is smooth over the base field. -/
 instance smooth (A : AbelianVariety K) : Smooth A.toOver.hom := by
-  haveI : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
+  have : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
   exact smooth_of_grpObj A.toOver.hom
 
 /-- An abelian variety is geometrically connected over the base field. -/

@@ -210,9 +210,9 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     simpa using abs_max_sub_max_le_abs (g x) 0 0
   have hlen : ∀ x, |max (-g x) 0| ≤ |g x| := fun x => by
     simpa using abs_max_sub_max_le_abs (-g x) 0 0
-  haveI hmpfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (g x)) :=
+  have hmpfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (g x)) :=
     isFiniteMeasure_withDensity_ofReal hg.2
-  haveI hmnfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (-g x)) :=
+  have hmnfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (-g x)) :=
     isFiniteMeasure_withDensity_ofReal hg.neg.2
   have hintp := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasp hlep n
   have hintn := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasn hlen n

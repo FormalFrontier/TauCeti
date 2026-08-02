@@ -113,7 +113,7 @@ lemma support_subset_posRoots : ↑b.support ⊆ posRoots P b := by
 
 /-- A nonempty root index type has a positive root. -/
 lemma posRoots_nonempty [Nonempty ι] : (posRoots P b).Nonempty := by
-  letI := P.indexNeg
+  let := P.indexNeg
   obtain ⟨i⟩ := ‹Nonempty ι›
   rcases RootPairing.Base.IsPos.or_neg b i with hi | hi
   · exact ⟨i, hi⟩
@@ -122,7 +122,7 @@ lemma posRoots_nonempty [Nonempty ι] : (posRoots P b).Nonempty := by
 /-- The negative of a positive root is negative. -/
 lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
     P.reflectionPerm i i ∈ negRoots P b ↔ i ∈ posRoots P b := by
-  letI := P.indexNeg
+  let := P.indexNeg
   rw [← RootPairing.indexNeg_neg, mem_negRoots, mem_posRoots,
     RootPairing.Base.IsPos.neg_iff_not]
   exact not_not
@@ -131,7 +131,7 @@ lemma reflectionPerm_self_mem_negRoots_iff_mem_posRoots (i : ι) :
 @[simp]
 lemma isPos_reflectionPerm_self_iff_mem_negRoots (i : ι) :
     b.IsPos (P.reflectionPerm i i) ↔ i ∈ negRoots P b := by
-  letI := P.indexNeg
+  let := P.indexNeg
   rw [← RootPairing.indexNeg_neg, mem_negRoots]
   exact RootPairing.Base.IsPos.neg_iff_not b i
 
@@ -161,7 +161,7 @@ lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
 /-- Root negation exchanges positive and negative roots. -/
 theorem image_reflectionPerm_self_posRoots :
     (fun i ↦ P.reflectionPerm i i) '' posRoots P b = negRoots P b := by
-  letI := P.indexNeg
+  let := P.indexNeg
   simp_rw [← RootPairing.indexNeg_neg]
   ext i
   constructor
@@ -177,7 +177,7 @@ theorem image_reflectionPerm_self_posRoots :
 /-- Root negation exchanges negative and positive roots. -/
 theorem image_reflectionPerm_self_negRoots :
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b = posRoots P b := by
-  letI := P.indexNeg
+  let := P.indexNeg
   have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
     intro i
     simp only [← RootPairing.indexNeg_neg, neg_neg]

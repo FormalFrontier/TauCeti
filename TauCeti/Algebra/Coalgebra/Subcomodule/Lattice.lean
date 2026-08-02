@@ -221,7 +221,7 @@ carriers. -/
 theorem coe_sSup_of_directedOn {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
     (hdir : DirectedOn (· ≤ ·) S) :
     ((sSup S : Subcomodule R C M) : Set M) = ⋃ N : S, (N.1 : Set M) := by
-  letI : Nonempty S := hS.to_subtype
+  let : Nonempty S := hS.to_subtype
   rw [sSup_eq_iSup']
   exact coe_iSup_of_directed (fun N : S ↦ N.1) hdir.directed_val
 
@@ -231,7 +231,7 @@ in one member of the set. -/
 theorem mem_sSup_of_directedOn {S : Set (Subcomodule R C M)} (hS : S.Nonempty)
     (hdir : DirectedOn (· ≤ ·) S) {m : M} :
     m ∈ sSup S ↔ ∃ N ∈ S, m ∈ N := by
-  letI : Nonempty S := hS.to_subtype
+  let : Nonempty S := hS.to_subtype
   simp only [sSup_eq_iSup', mem_iSup_of_directed (fun N : S ↦ N.1) hdir.directed_val,
     SetCoe.exists, exists_prop]
 

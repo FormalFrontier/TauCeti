@@ -95,8 +95,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_symm_mk
     (regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e).symm
         (QuotientGroup.mk (s := H) φ) =
       subgroupFiberOrbitClass H (φ⁻¹ • e) := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp [regularSubgroupFiberOrbitQuotientEquivQuotientGroup,
     subgroupFiberOrbitQuotientEquivQuotientGroup_symm_mk H e φ]
 
@@ -144,8 +144,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_apply_inv_smul
     regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e
         (subgroupFiberOrbitClass H (φ⁻¹ • e)) =
       QuotientGroup.mk (s := H) φ := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp only [regularSubgroupFiberOrbitQuotientEquivQuotientGroup]
   exact subgroupFiberOrbitQuotientEquivQuotientGroup_apply_inv_smul H e φ
 
@@ -180,8 +180,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_apply_smul
     regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e
         (subgroupFiberOrbitClass H (φ • e)) =
       QuotientGroup.mk (s := H) φ⁻¹ := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp [regularSubgroupFiberOrbitQuotientEquivQuotientGroup]
 
 /-- For a free transitive deck action on a fibre, quotienting the fibre by the trivial
@@ -227,8 +227,8 @@ lemma regularSubgroupFiberOrbitQuotientBotEquivDeck_apply_smul
     regularSubgroupFiberOrbitQuotientBotEquivDeck hp hreg e
         (subgroupFiberOrbitClass (⊥ : Subgroup (Deck p)) (φ • e)) =
       φ⁻¹ := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   exact subgroupFiberOrbitQuotientBotEquivDeck_apply_smul e φ
 
 /-- The chosen fibre point maps to the identity deck transformation under the
@@ -273,8 +273,8 @@ lemma regularSubgroupFiberOrbitQuotientBotEquivDeck_symm_apply
     (e : p ⁻¹' {b}) (φ : Deck p) :
     (regularSubgroupFiberOrbitQuotientBotEquivDeck hp hreg e).symm φ =
       subgroupFiberOrbitClass (⊥ : Subgroup (Deck p)) (φ⁻¹ • e) := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp [regularSubgroupFiberOrbitQuotientBotEquivDeck]
 
 /-- Under the quotient-group equivalence, the full-subgroup fibre quotient lands in the
@@ -285,7 +285,7 @@ lemma subgroupFiberOrbitQuotientEquivQuotientGroup_top
     (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient (⊤ : Subgroup (Deck p)) b) :
     subgroupFiberOrbitQuotientEquivQuotientGroup (⊤ : Subgroup (Deck p)) e x =
       QuotientGroup.mk (s := (⊤ : Subgroup (Deck p))) (1 : Deck p) := by
-  haveI := QuotientGroup.subsingleton_quotient_top (G := Deck p)
+  have := QuotientGroup.subsingleton_quotient_top (G := Deck p)
   exact Subsingleton.elim _ _
 
 /-- For a regular cover, the full-subgroup fibre quotient lands in the unique coset of
@@ -296,8 +296,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_top
     (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient (⊤ : Subgroup (Deck p)) b) :
     regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg (⊤ : Subgroup (Deck p)) e x =
       QuotientGroup.mk (s := (⊤ : Subgroup (Deck p))) (1 : Deck p) := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp [regularSubgroupFiberOrbitQuotientEquivQuotientGroup,
     subgroupFiberOrbitQuotientEquivQuotientGroup_top e x]
 
@@ -324,8 +324,8 @@ lemma regularSubgroupFiberOrbitQuotientEquivQuotientGroup_mapOfLE
         (regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e x) =
       regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg K e
         (subgroupFiberOrbitMapOfLE (b := b) hHK x) := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   simp [regularSubgroupFiberOrbitQuotientEquivQuotientGroup,
     subgroupFiberOrbitQuotientEquivQuotientGroup_mapOfLE hHK e x]
 

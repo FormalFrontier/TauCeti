@@ -228,7 +228,7 @@ theorem derivedSeries_one_eq_slIdeal :
     exact hspan
   -- With no indices at all the only matrix is `0`, which lies in every ideal.
   rcases isEmpty_or_nonempty n with hn | hne
-  · haveI := hn
+  · have := hn
     rw [Subsingleton.elim A 0]
     exact zero_mem _
   obtain ⟨i₀⟩ := hne
@@ -309,7 +309,7 @@ decomposition instead. -/
 theorem not_hasTrivialRadical_matrix [Nonempty n] [Nontrivial R] :
     ¬ LieAlgebra.HasTrivialRadical R (Matrix n n R) := by
   intro h
-  letI := h
+  let := h
   exact center_matrix_ne_bot R n (LieAlgebra.center_eq_bot R (Matrix n n R))
 
 end TauCeti

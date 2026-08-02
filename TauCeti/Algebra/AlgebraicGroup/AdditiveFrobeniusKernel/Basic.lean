@@ -186,7 +186,7 @@ additive companion of the non-reduced `μ_p` example. -/
 theorem coordinateRing_not_isReduced [Nontrivial R] :
     ¬ IsReduced (CoordinateRing (R := R) p) := by
   intro hred
-  haveI := hred
+  have := hred
   exact mk_ι_ne_zero p
     (IsNilpotent.eq_zero (x := Ideal.Quotient.mk _ (ι R R 1)) ⟨p, mk_ι_pow_eq_zero p⟩)
 

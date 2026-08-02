@@ -96,7 +96,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
     IsGroupLikeElem R x ↔
       ∃! h : H, x = _root_.MonoidAlgebra.single h 1 := by
   classical
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  let : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   constructor
   · intro hx
     have hcoeff (g h : H) :
@@ -152,7 +152,7 @@ private theorem groupLikeIndex_eq_iff [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
     (x : _root_.MonoidAlgebra R H) (hx : IsGroupLikeElem R x) (h : H) :
     groupLikeIndex R x hx = h ↔ x = _root_.MonoidAlgebra.single h 1 := by
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  let : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   constructor
   · rintro rfl
     exact eq_single_groupLikeIndex R x hx

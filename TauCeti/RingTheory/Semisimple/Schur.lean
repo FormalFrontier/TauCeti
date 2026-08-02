@@ -85,10 +85,10 @@ theorem subsingleton_linearMap_iff_isEmpty_linearEquiv :
     Subsingleton (M →ₗ[R] N) ↔ IsEmpty (M ≃ₗ[R] N) := by
   constructor
   · intro h
-    letI := h
+    let := h
     exact ⟨fun e ↦ by
       have hzero : e.toLinearMap = 0 := Subsingleton.elim _ _
-      haveI := IsSimpleModule.nontrivial R M
+      have := IsSimpleModule.nontrivial R M
       exact e.toLinearMap.ne_zero_of_injective e.injective hzero⟩
   · exact subsingleton_linearMap_of_isEmpty_linearEquiv
 

@@ -5,9 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Convex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Topology.Homeomorph.Lemmas
 public import TauCeti.Topology.LocallyConnected
+import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 
 /-!
@@ -18,9 +20,11 @@ the circle. This file introduces the predicate `TauCeti.IsJordanCurve` and its b
 
 The circle is Mathlib's `Circle`, the unit circle of `ℂ` as a topological group; the notion itself
 is purely topological, so `TauCeti.IsJordanCurve` is stated for a subset of an arbitrary
-topological space. Only the model curve — a circle `Metric.sphere c r` of positive radius in `ℂ`,
-at the end of the file — mentions `ℂ`, and it is built from the complex affine change of
-coordinates `w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric.
+topological space. `ℂ` is mentioned only by the two concrete curves towards the end of the file:
+the model curve, a circle `Metric.sphere c r` of positive radius, and the frontier of a bounded
+convex set with nonempty interior. The model is built from the complex affine change of coordinates
+`w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric, and the convex
+frontier is obtained from the model by transport.
 
 Phrasing the predicate as *the set is homeomorphic to the circle*, rather than *the set is the
 range of a continuous map on `[0, 1]` that is injective except for matching endpoints*, is what
@@ -56,6 +60,10 @@ transporting the property back to a compact set from an image already known to b
   carries a statement about the circle to one about an arbitrary Jordan curve.
 * `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
   in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
+* `TauCeti.isJordanCurve_frontier_of_convex` — the frontier of a bounded convex subset of `ℂ` with
+  nonempty interior is a Jordan curve. This is `TauCeti.isJordanCurve_sphere` with the disc
+  weakened to an arbitrary convex body, the affine change of coordinates being replaced by Mathlib's
+  gauge rescaling.
 * `TauCeti.locallyConnectedSpace_sphere` and `TauCeti.IsJordanCurve.locallyConnectedSpace` — a
   circle in `ℂ`, and hence every Jordan curve, is locally connected.
 
@@ -291,6 +299,24 @@ lemma coe_sphereCircleHomeomorph_symm_apply (c : ℂ) (hr : 0 < r) (z : Circle) 
 theorem isJordanCurve_sphere (c : ℂ) (hr : 0 < r) : IsJordanCurve (sphere c r) :=
   isJordanCurve_iff.mpr ⟨sphereCircleHomeomorph c hr⟩
 
+/-- **The frontier of a bounded convex subset of `ℂ` with nonempty interior is a Jordan curve.**
+
+This is `TauCeti.isJordanCurve_sphere` with the disc weakened to an arbitrary convex body, which it
+recovers at `s = Metric.ball c r`. The model curve transports because Mathlib's gauge rescaling
+supplies an *ambient* homeomorphism `e : ℂ ≃ₜ ℂ` carrying `frontier s` onto the unit circle
+(`exists_homeomorph_image_interior_closure_frontier_eq_unitBall`), so the affine change of
+coordinates above is simply replaced by a nonlinear one and no further topology is needed.
+
+The set is asked neither to be open nor to be nonempty: what a convex set needs in order to have a
+one-dimensional frontier is that it be *solid*, and that is `(interior s).Nonempty`. Without it the
+statement fails — a segment is convex and bounded, and is its own frontier. -/
+theorem isJordanCurve_frontier_of_convex {s : Set ℂ} (hs : Convex ℝ s)
+    (hne : (interior s).Nonempty) (hb : Bornology.IsBounded s) : IsJordanCurve (frontier s) := by
+  obtain ⟨e, -, -, hfr⟩ := exists_homeomorph_image_interior_closure_frontier_eq_unitBall hs hne hb
+  refine (isJordanCurve_image_homeomorph_iff e).mp ?_
+  rw [hfr]
+  exact isJordanCurve_sphere 0 one_pos
+
 /-! ## Local connectedness -/
 
 open Complex in
@@ -319,7 +345,7 @@ instance locallyConnectedSpace_sphere (c : ℂ) (r : ℝ) : LocallyConnectedSpac
         ring
       · rintro ⟨θ, -, rfl⟩
         simp [abs_of_nonneg hr]
-    haveI := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
+    have := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
     rw [hparam]
     exact locallyConnectedSpace_image_of_isCompact isCompact_Icc
       (Continuous.continuousOn (by fun_prop))

@@ -113,7 +113,7 @@ Both modules are direct sums of copies of one and the same simple module `S`
 `n * finrank K S = m * finrank K S`, and `finrank K S ≠ 0`, so `n = m`. -/
 theorem nonempty_linearEquiv_of_finrank_eq (h : finrank K M = finrank K N) :
     Nonempty (M ≃ₗ[R] N) := by
-  haveI : IsArtinianRing R := IsArtinianRing.of_finite K R
+  have : IsArtinianRing R := IsArtinianRing.of_finite K R
   obtain ⟨S, hS⟩ := IsAtomic.exists_atom (Submodule R R)
   rw [← isSimpleModule_iff_isAtom] at hS
   have : Module.Finite R M := Module.Finite.of_restrictScalars_finite K R M

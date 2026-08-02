@@ -202,7 +202,7 @@ direction. -/
 @[simp]
 theorem partition_lt_iff {n : ℕ} {μ ν : n.Partition} :
     @LT.lt n.Partition partitionPartialOrder.toLT μ ν ↔ Dominates ν μ ∧ μ ≠ ν := by
-  letI := partitionPartialOrder (n := n)
+  let := partitionPartialOrder (n := n)
   exact lt_iff_le_and_ne.trans (and_congr partition_le_iff Iff.rfl)
 
 end DominanceOrder

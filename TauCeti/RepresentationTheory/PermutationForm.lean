@@ -278,7 +278,7 @@ of characteristic zero, so this is not a statement about positive characteristic
 theorem isCompl_orthogonalSubrepresentation
     (σ : Subrepresentation (Representation.ofMulAction k G X)) :
     IsCompl σ (orthogonalSubrepresentation σ) := by
-  haveI : Module.Finite k (MonoidAlgebra k X) := Module.Finite.of_basis (MonoidAlgebra.basis X k)
+  have : Module.Finite k (MonoidAlgebra k X) := Module.Finite.of_basis (MonoidAlgebra.basis X k)
   have h : IsCompl σ.toSubmodule ((permutationForm k X).orthogonal σ.toSubmodule) :=
     LinearMap.BilinForm.isCompl_orthogonal_of_restrict_nondegenerate permutationForm_isRefl
       (permutationForm_restrict_nondegenerate σ.toSubmodule)

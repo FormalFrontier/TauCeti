@@ -95,7 +95,7 @@ theorem comul_ι_pow :
     Coalgebra.comul (R := R) ((ι R R 1 : SymmetricAlgebra R R) ^ p) =
       ((ι R R 1 : SymmetricAlgebra R R) ^ p) ⊗ₜ[R] 1 +
         1 ⊗ₜ[R] ((ι R R 1 : SymmetricAlgebra R R) ^ p) := by
-  haveI := expChar_tensorSquare R p
+  have := expChar_tensorSquare R p
   rw [Bialgebra.comul_pow, comul_ι, add_pow_expChar, Algebra.TensorProduct.tmul_pow,
     Algebra.TensorProduct.tmul_pow, one_pow]
 
