@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Order.Ring.Units
+public import TauCeti.Algebra.Order.Ring.Units
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.Basic
 
 /-!
@@ -40,9 +40,8 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
 * `TauCeti.NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
   units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
   `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
-* `TauCeti.NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index,
-  via the general finite-index instances `instFiniteIndexPosSubgroup` (positive units of an ordered
-  ring) and `instFiniteIndexComapPosSubgroup` (their preimages).
+* `TauCeti.NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
+  (using the general ordered-ring finite-index instances from `TauCeti.Algebra.Order.Ring.Units`).
 -/
 
 public section
@@ -132,22 +131,10 @@ theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
   rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
   exact sq_mem_totallyPositiveUnits _
 
-/-- The positive units of a linearly ordered ring form an index-`2`, hence finite-index, subgroup;
-this supports the finite-index results for totally positive units. -/
-instance instFiniteIndexPosSubgroup (R : Type*) [Ring R] [LinearOrder R] [IsStrictOrderedRing R] :
-    (Units.posSubgroup R).FiniteIndex :=
-  ⟨by rw [Units.index_posSubgroup]; norm_num⟩
-
-/-- The preimage of the positive units under any homomorphism into `Rˣ` (for a linearly ordered
-commutative ring `R`) has finite index: it is the kernel of the composite into the two-element sign
-group `Rˣ ⧸ Units.posSubgroup R`. -/
-instance instFiniteIndexComapPosSubgroup {G R : Type*} [Group G] [CommRing R] [LinearOrder R]
-    [IsStrictOrderedRing R] (f : G →* Rˣ) : ((Units.posSubgroup R).comap f).FiniteIndex := by
-  rw [← QuotientGroup.ker_mk' (Units.posSubgroup R), MonoidHom.comap_ker]
-  infer_instance
-
 /-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
-infinite places, of the finite-index preimages of the positive units of `ℝ`. -/
+infinite places, of the finite-index preimages of the positive units of `ℝ` (the general
+finite-index facts `instFiniteIndexPosSubgroup`/`instFiniteIndexComapPosSubgroup` live in
+`TauCeti.Algebra.Order.Ring.Units`). -/
 theorem finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
   rw [totallyPositiveUnits, iInf_subtype']
   exact Subgroup.finiteIndex_iInf fun _ => inferInstance
