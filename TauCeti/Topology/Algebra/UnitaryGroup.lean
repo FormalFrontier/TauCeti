@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Analysis.CStarAlgebra.Matrix
 public import Mathlib.Analysis.RCLike.Lemmas
 public import Mathlib.LinearAlgebra.UnitaryGroup
 public import Mathlib.Topology.Algebra.Star.Unitary
@@ -16,10 +17,11 @@ For a finite index type `n` and `𝕜 = ℝ` or `ℂ` (any `RCLike` field), the 
 `Matrix.unitaryGroup n 𝕜` and the special unitary group `Matrix.specialUnitaryGroup n 𝕜` are
 compact Hausdorff topological groups in the entrywise topology of `Matrix n n 𝕜`.
 
-The argument is the classical one. A unitary matrix has unit columns, so all its entries lie in the
-closed unit ball; the unitary group is therefore contained in the compact set of matrices with
-entries in that ball, and it is closed because it is cut out by the equations `star A * A = 1` and
-`A * star A = 1`. The special unitary group adds the closed condition `det A = 1`.
+The argument is the classical one. A unitary matrix has unit rows, so all its entries lie in the
+closed unit ball (Mathlib's `entry_norm_bound_of_unitary`); the unitary group is therefore contained
+in the compact set of matrices with entries in that ball, and it is closed because it is cut out by
+the equations `star A * A = 1` and `A * star A = 1`. The special unitary group adds the closed
+condition `det A = 1`.
 
 Mathlib already supplies the topological group structure on `unitary R` for a topological star
 monoid `R` (`isClosed_unitary` and the `IsTopologicalGroup (unitary R)` instance), so for the
@@ -41,29 +43,12 @@ namespace Matrix
 
 variable {n 𝕜 : Type*} [Fintype n] [DecidableEq n] [RCLike 𝕜]
 
-/-- The columns of a unitary matrix are unit vectors, so each of its entries has norm at most
-one. -/
-theorem norm_le_one_of_mem_unitaryGroup {A : Matrix n n 𝕜} (hA : A ∈ Matrix.unitaryGroup n 𝕜)
-    (i j : n) : ‖A i j‖ ≤ 1 := by
-  have hcol : ∑ k, ‖A k j‖ ^ 2 = 1 := by
-    have h := congrFun (congrFun (Matrix.mem_unitaryGroup_iff'.mp hA) j) j
-    rw [Matrix.mul_apply] at h
-    have h' : ((∑ k, ‖A k j‖ ^ 2 : ℝ) : 𝕜) = ((1 : ℝ) : 𝕜) := by
-      push_cast
-      simpa [Matrix.star_eq_conjTranspose, Matrix.conjTranspose_apply, RCLike.conj_mul,
-        Matrix.one_apply] using h
-    exact_mod_cast h'
-  have hle : ‖A i j‖ ^ 2 ≤ 1 :=
-    hcol ▸ Finset.single_le_sum (f := fun k => ‖A k j‖ ^ 2)
-      (fun k _ => sq_nonneg _) (Finset.mem_univ i)
-  nlinarith [norm_nonneg (A i j)]
-
 /-- The unitary group of `n × n` matrices over `ℝ` or `ℂ` is a compact subset of `Matrix n n 𝕜`. -/
 theorem isCompact_unitaryGroup :
     IsCompact (Matrix.unitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) := by
   have : ProperSpace 𝕜 := FiniteDimensional.proper_rclike 𝕜 𝕜
   exact ((isCompact_closedBall (0 : 𝕜) 1).matrix).of_isClosed_subset isClosed_unitary
-    fun _ hA _ _ => mem_closedBall_zero_iff.mpr (norm_le_one_of_mem_unitaryGroup hA _ _)
+    fun _ hA _ _ => mem_closedBall_zero_iff.mpr (entry_norm_bound_of_unitary hA _ _)
 
 instance : CompactSpace (Matrix.unitaryGroup n 𝕜) :=
   isCompact_iff_compactSpace.mp isCompact_unitaryGroup
