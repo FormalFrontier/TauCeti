@@ -14,9 +14,10 @@ public import TauCeti.Topology.Algebra.UnitaryGroup
 
 `SU(2)` is `Matrix.specialUnitaryGroup (Fin 2) ℂ`, the compact group that grounds the compact-group
 representation theory of the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
-Its compactness, Hausdorffness and topological group structure come from
+Its compactness and topological group structure come from
 `TauCeti/Topology/Algebra/UnitaryGroup.lean`, where they are proved for every special unitary
-matrix group.
+matrix group; Hausdorffness is inherited from the ambient matrix topology, `SU(2)` carrying the
+subtype topology.
 
 This file builds the **maximal torus** `T ⊂ SU(2)`, the diagonal circle subgroup
 
@@ -46,7 +47,9 @@ public section
 namespace TauCeti
 
 /-- `SU(2)`, the special unitary group of `2 × 2` complex matrices. It is a compact Hausdorff
-topological group; the instances come from `TauCeti/Topology/Algebra/UnitaryGroup.lean`. -/
+topological group: the compactness and topological group instances come from
+`TauCeti/Topology/Algebra/UnitaryGroup.lean`, and Hausdorffness from the ambient matrix
+topology. -/
 abbrev SU2 : Type := Matrix.specialUnitaryGroup (Fin 2) ℂ
 
 namespace SU2
@@ -54,7 +57,7 @@ namespace SU2
 /-! ### The diagonal matrices `diag (z, z⁻¹)` -/
 
 /-- The diagonal matrix `diag (z, z⁻¹)` attached to a point `z` of the unit circle. -/
-@[expose] noncomputable def torusMatrix (z : Circle) : Matrix (Fin 2) (Fin 2) ℂ :=
+noncomputable def torusMatrix (z : Circle) : Matrix (Fin 2) (Fin 2) ℂ :=
   Matrix.diagonal ![(z : ℂ), ((z : ℂ))⁻¹]
 
 @[simp]
@@ -80,6 +83,7 @@ theorem torusMatrix_one : torusMatrix 1 = 1 := by
   ext i
   fin_cases i <;> simp
 
+@[simp]
 theorem torusMatrix_mul (z w : Circle) :
     torusMatrix (z * w) = torusMatrix z * torusMatrix w := by
   rw [torusMatrix, torusMatrix, torusMatrix, Matrix.diagonal_mul_diagonal]
@@ -87,6 +91,7 @@ theorem torusMatrix_mul (z w : Circle) :
   ext i
   fin_cases i <;> simp [mul_comm]
 
+@[simp]
 theorem star_torusMatrix (z : Circle) : star (torusMatrix z) = torusMatrix z⁻¹ := by
   have hz : star (z : ℂ) = ((z : ℂ))⁻¹ := by simpa using (Circle.coe_inv_eq_conj z).symm
   rw [Matrix.star_eq_conjTranspose, torusMatrix, torusMatrix, Matrix.diagonal_conjTranspose]
@@ -135,6 +140,7 @@ theorem torusHom_mem_torus (z : Circle) : torusHom z ∈ torus := ⟨z, rfl⟩
 /-- An element of `SU(2)` lies in the maximal torus exactly when it is a diagonal matrix: unitarity
 makes the `(0, 0)` entry a point of the unit circle, and the determinant condition then forces the
 `(1, 1)` entry to be its inverse. -/
+@[simp]
 theorem mem_torus_iff {g : SU2} :
     g ∈ torus ↔ Matrix.IsDiag (g : Matrix (Fin 2) (Fin 2) ℂ) := by
   constructor
@@ -249,6 +255,7 @@ theorem coe_torusExp (θ : ℝ) :
 
 theorem torusExp_mem_torus (θ : ℝ) : torusExp θ ∈ torus := torusHom_mem_torus _
 
+@[simp]
 theorem torusExp_add (θ φ : ℝ) : torusExp (θ + φ) = torusExp θ * torusExp φ := by
   rw [torusExp, torusExp, torusExp, Circle.exp_add, map_mul]
 
