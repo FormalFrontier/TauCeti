@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.L2.Cesaro.Convergence
 public import TauCeti.Probability.Process.Tail.Basic
-import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.AEStronglyMeasurable
 import TauCeti.MeasureTheory.Function.BoundedMemLp
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
@@ -74,11 +73,7 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
     weighted_sums_converge_L1_of_memLp hX hX_ae hf hf_L2
   have ha₀_int : Integrable a₀ μ := MemLp.integrable le_rfl ha₀_L1
   -- Contractability carries square-integrability from coordinate `0` to every coordinate.
-  have hY : Contractable μ fun i ω => f (X i ω) :=
-    Contractable.map_values hX hf hX_ae
-  have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := fun i =>
-    (hY.identDistrib_coord (hf.comp_aemeasurable (hX_ae 0))
-      (hf.comp_aemeasurable (hX_ae i))).memLp_snd hf_L2
+  have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := hX.memLp_comp hX_ae hf hf_L2
   have hg_meas : ∀ r m : ℕ, Measurable[tailFamily X r]
       (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j)) := by
     intro r m
