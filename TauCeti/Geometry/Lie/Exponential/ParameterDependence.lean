@@ -58,7 +58,7 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
     [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ContDiffAt ℝ ∞ (mulInvariantCoordinateVectorField (I := I) (G := G))
       (0, extChartAt I (1 : G) (1 : G)) := by
-  letI : ContMDiffMul I (∞ + 1) G := by
+  let _ : ContMDiffMul I (∞ + 1) G := by
     simpa using (inferInstance : ContMDiffMul I ∞ G)
   let V : E × G → TangentBundle I G := fun p =>
     ⟨p.2, mulInvariantVectorField
@@ -102,7 +102,7 @@ theorem exists_continuousOn_local_mulInvariantCoordinateFlow
                 mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
               (Set.Icc (-δ) δ) t) ∧
           ∀ t ∈ Set.Icc (-δ) δ, (α (x, t)).1 = x.1 := by
-  letI : CompleteSpace E := FiniteDimensional.complete ℝ E
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let center : E × E := (0, extChartAt I (1 : G) (1 : G))
   let F : E × E → E × E := fun p =>
     (0, mulInvariantCoordinateVectorField (I := I) (G := G) p)
