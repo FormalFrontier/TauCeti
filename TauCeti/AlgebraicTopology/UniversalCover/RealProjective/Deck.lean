@@ -84,11 +84,22 @@ theorem antipode_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     (antipode n).1 x = -x := by
   simp [antipode]
 
+/-- On points, the inverse of the antipodal deck transformation also negates. -/
+@[simp]
+theorem antipode_symm_apply (x : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
+    (antipode n).1.symm x = -x := by
+  simp [antipode]
+
 /-- The antipodal deck transformation is an involution. -/
 @[simp]
 theorem antipode_mul_self : antipode n * antipode n = 1 := by
   rw [antipode, ← map_mul]
   simp
+
+/-- The antipodal deck transformation is its own inverse. -/
+@[simp]
+theorem inv_antipode : (antipode n)⁻¹ = antipode n :=
+  inv_eq_of_mul_eq_one_right (antipode_mul_self n)
 
 /-- The antipodal deck transformation is not the identity: the nontrivial integer unit is not
 trivial, and translation is injective because the antipodal action is free. -/
