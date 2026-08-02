@@ -35,15 +35,17 @@ on `Complex.UnitDisc`, which is recorded here as an instance and which Mathlib d
 
 * `TauCeti.instFaithfulSMulCircleUnitDisc` — the circle acts faithfully on the disc (with
   `TauCeti.circle_smul_left_injective` the pointwise form: a rotation is determined by its value at
-  any one nonzero point), together with the `Nontrivial` instance the disc was missing.
+  any one nonzero point), together with the `Nontrivial` instance the disc was missing.  With this
+  instance Mathlib's Cayley-theorem construction `Equiv.Perm.subgroupOfMulAction Circle
+  Complex.UnitDisc` already *is* an isomorphism `Circle ≃* TauCeti.unitDiscRotation`, so the
+  group-level half — the rotation subgroup of `Aut(𝔻)` is the circle group, not just a quotient of
+  it — needs no declaration here.
 * `TauCeti.unitDiscStandardAutomorphismEquiv_eq_iff` and
   `TauCeti.unitDiscStandardAutomorphismEquiv_injective` — the parameters of a standard automorphism
   are unique, and `TauCeti.existsUnique_eq_unitDiscStandardAutomorphismEquiv` records the
   classification and this uniqueness together as an `∃!`.
 * `TauCeti.unitDiscAutEquivProd` — the resulting bijection `Aut(𝔻) ≃ Circle × 𝔻`, with
   `TauCeti.unitDiscAutEquivProd_apply_snd` naming the centre coordinate as `e⁻¹ 0`.
-* `TauCeti.circleMulEquivUnitDiscRotation` — the group-level half: the rotation subgroup of
-  `Aut(𝔻)` *is* the circle group, an isomorphism rather than just a surjection.
 * `TauCeti.eq_one_of_mem_unitDiscAut_of_isFixedPt` — a holomorphic automorphism of the disc with
   two distinct fixed points is the identity.  This is the rigidity statement uniqueness is usually
   wanted for: it is what forces a normalisation at two points to determine a conformal map, and it
@@ -104,6 +106,13 @@ instance instFaithfulSMulCircleUnitDisc : FaithfulSMul Circle Complex.UnitDisc w
   eq_of_smul_eq_smul h := by
     obtain ⟨z, hz⟩ := exists_ne (0 : Complex.UnitDisc)
     exact circle_smul_left_injective hz (h z)
+
+/- Faithfulness is exactly what Mathlib's Cayley-theorem construction wants, and
+`TauCeti.unitDiscRotation` is by definition the image of `Circle` in the permutations of the disc,
+so the group-level statement — the rotation subgroup of `Aut(𝔻)` *is* the circle group — is that
+construction verbatim and needs no declaration of its own: -/
+noncomputable example : Circle ≃* unitDiscRotation :=
+  Equiv.Perm.subgroupOfMulAction Circle Complex.UnitDisc
 
 /-! ### Uniqueness of the parameters -/
 
@@ -210,24 +219,6 @@ theorem unitDiscAutEquivProd_eq_iff {e : unitDiscAut} {p : Circle × Complex.Uni
     unitDiscAutEquivProd e = p ↔
       (e : Equiv.Perm Complex.UnitDisc) = unitDiscStandardAutomorphismEquiv p.1 p.2 := by
   rw [Equiv.apply_eq_iff_eq_symm_apply, Subtype.ext_iff, coe_unitDiscAutEquivProd_symm]
-
-/-! ### The rotation subgroup is the circle group -/
-
-/-- **The rotation subgroup of `Aut(𝔻)` is the circle group.** Mathlib's Cayley-theorem
-construction `Equiv.Perm.subgroupOfMulAction` turns the faithfulness of the circle action into an
-isomorphism onto the image of `Circle` in the permutations of the disc, and
-`TauCeti.unitDiscRotation` is by definition that image, so it is that construction verbatim.
-
-Together with `TauCeti.stabilizer_zero_eq_unitDiscRotation_subgroupOf`, this says the stabiliser of
-the origin in `Aut(𝔻)` is a circle: the standard "rotations are the only automorphisms fixing the
-centre, and distinct rotations are distinct automorphisms". -/
-@[expose] noncomputable def circleMulEquivUnitDiscRotation : Circle ≃* unitDiscRotation :=
-  Equiv.Perm.subgroupOfMulAction Circle Complex.UnitDisc
-
-@[simp]
-theorem coe_circleMulEquivUnitDiscRotation (u : Circle) :
-    (circleMulEquivUnitDiscRotation u : Equiv.Perm Complex.UnitDisc) = MulAction.toPerm u :=
-  rfl
 
 /-! ### Rigidity: two fixed points force the identity -/
 
