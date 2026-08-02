@@ -27,7 +27,6 @@ every point, after which Mathlib's uniform-time theorem produces global integral
   the curve through the identity.
 * `mulInvariantIntegralCurve_add`: the identity curve satisfies the one-parameter subgroup law.
 * `mulInvariantOneParameterSubgroup`: the identity curve bundled as a continuous homomorphism.
-* `mulInvariantExp`: the time-one value of the invariant curve attached to a tangent vector.
 
 ## References
 
@@ -221,34 +220,3 @@ theorem mulInvariantOneParameterSubgroup_apply [CompleteSpace E]
     mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd t) =
       mulInvariantIntegralCurve v 1 t :=
   (rfl)
-
-/-- The tangent-space exponential obtained by evaluating the canonical invariant curve at time
-one. This is the tangent-vector precursor of the roadmap's derivation-based `lieExp`. -/
-noncomputable def mulInvariantExp [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
-    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) : G :=
-  mulInvariantOneParameterSubgroup v (Multiplicative.ofAdd 1)
-
-/-- Scaling a tangent vector corresponds to evaluating its invariant integral curve at the scale
-factor. -/
-theorem mulInvariantExp_smul [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
-    [BoundarylessManifold I G] (v : GroupLieAlgebra I G) (t : ℝ) :
-    mulInvariantExp (t • v) = mulInvariantIntegralCurve v 1 t := by
-  let γ := mulInvariantIntegralCurve v 1
-  have hscaled : IsMIntegralCurve (γ ∘ (· * t)) (mulInvariantVectorField (t • v)) := by
-    rw [mulInvariantVectorField_smul]
-    exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).comp_mul t
-  have heq : γ ∘ (· * t) = mulInvariantIntegralCurve (t • v) 1 := by
-    apply eq_mulInvariantIntegralCurve (t • v) 1
-    · simp [γ]
-    · exact hscaled
-  rw [mulInvariantExp, mulInvariantOneParameterSubgroup_apply]
-  simpa [γ] using (congrFun heq 1).symm
-
-/-- The tangent-space exponential sends zero to the group identity. -/
-@[simp]
-theorem mulInvariantExp_zero [CompleteSpace E]
-    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
-    [BoundarylessManifold I G] : mulInvariantExp (0 : GroupLieAlgebra I G) = 1 := by
-  simpa using mulInvariantExp_smul (0 : GroupLieAlgebra I G) 0
