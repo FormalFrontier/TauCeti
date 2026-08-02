@@ -16,6 +16,10 @@ This file develops the first-order factorization of a smooth map through displac
 basepoint. It is the analytic input for identifying point derivations on a finite-dimensional
 smooth manifold with tangent vectors.
 
+It also provides reusable compact-interval integration results: joint continuity gives continuous
+dependence on an arbitrary topological parameter, while continuous differentiability is preserved
+at every finite or infinite order.
+
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
