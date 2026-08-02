@@ -73,6 +73,8 @@ lemma isIsogeny_iff {A B : AbelianVariety K} (f : A ⟶ B) :
         P (eqToHom (Hom.toSchemeFunctor_obj A) ≫ Hom.toSchemeHom f ≫
           eqToHom (Hom.toSchemeFunctor_obj B).symm) ↔ P (Hom.toSchemeHom f) := by
       rw [P.cancel_left_of_respectsIso, P.cancel_right_of_respectsIso]
+    -- Unfold through `IsIsogeny`, `inverseImage`, and `⊓` to expose the functor-mapped arrow,
+    -- which `Hom.toSchemeFunctor_map` can then rewrite.
     change
       (IsFinite ((Hom.toSchemeFunctor (K := K)).map f) ∧
         Surjective ((Hom.toSchemeFunctor (K := K)).map f)) ↔ _
