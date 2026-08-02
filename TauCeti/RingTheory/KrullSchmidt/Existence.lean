@@ -79,10 +79,7 @@ variable {A : Type u} {M : Type v} [Semiring A] [AddCommMonoid M] [Module A M] {
 
 /-- **Indecomposability of a submodule, read in the ambient lattice.** The module `↥P` is
 indecomposable exactly when `P` is nonzero and every splitting of `P` as an internal direct sum of
-two submodules of `M` has a zero summand.
-
-This is the form the decomposition induction consumes: it never has to leave the lattice
-`Submodule A M`. -/
+two submodules of `M` has a zero summand. -/
 theorem isIndecomposableModule_coe_iff (P : Submodule A M) :
     IsIndecomposableModule A P ↔
       P ≠ ⊥ ∧ ∀ N Q : Submodule A M, N ≤ P → Q ≤ P → Disjoint N Q → N ⊔ Q = P →
@@ -100,7 +97,7 @@ theorem isIndecomposableModule_coe_iff (P : Submodule A M) :
       exact P.mapIic.injective (Subtype.ext (by simpa using hX))
 
 /-- A nonzero submodule that is not indecomposable splits into two nonzero submodules of the
-ambient module, each of them strictly smaller. This is the step of the decomposition induction. -/
+ambient module, each of them strictly smaller. -/
 theorem exists_lt_lt_of_not_isIndecomposableModule (hP : P ≠ ⊥)
     (h : ¬IsIndecomposableModule A P) :
     ∃ N Q : Submodule A M, N < P ∧ Q < P ∧ Disjoint N Q ∧ N ⊔ Q = P := by
@@ -123,8 +120,7 @@ variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 indecomposable submodules, recorded as a `Finset` of submodules that is `Finset.SupIndep` with
 supremum the given submodule.
 
-This is the statement the decomposition induction carries; the decomposition of the module itself
-is `TauCeti.exists_isInternal_isIndecomposableModule`. -/
+For the module itself, see `TauCeti.exists_isInternal_isIndecomposableModule`. -/
 theorem exists_finset_isIndecomposableModule_supIndep_sup_eq [IsArtinian A M]
     (P : Submodule A M) :
     ∃ s : Finset (Submodule A M), (∀ N ∈ s, IsIndecomposableModule A N) ∧
