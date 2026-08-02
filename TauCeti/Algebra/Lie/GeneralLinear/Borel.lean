@@ -58,10 +58,12 @@ triangular matrices are a Lie ideal of the Borel subalgebra,
 ## Implementation notes
 
 `𝔫⁺` is called here the *positive nilpotent ideal* of the Borel subalgebra, never its nilradical:
-for `gl n R` the two differ, because the scalar matrices are central in `gl n R` and so span a
-further nilpotent ideal of `upperTriangular R n` outside `strictUpperTriangular R n`. For a
-singleton index type this is the whole story: `upperTriangular R n` is then all of `gl n R`, which
-is abelian and hence its own nilradical, while `strictUpperTriangular R n` is zero. It is in
+for `gl n R` the two differ as soon as `n` is nonempty and `R` is nontrivial, because the nonzero
+scalar matrices are then central in `gl n R` and so span a further nilpotent ideal of
+`upperTriangular R n` outside `strictUpperTriangular R n`; for an empty index type, or over the
+trivial ring, `gl n R` is zero and the two agree. For a singleton index type this is the whole
+story: `upperTriangular R n` is then all of `gl n R`, which is abelian and hence its own
+nilradical, while `strictUpperTriangular R n` is zero. It is in
 `sl n R`, over a field whose characteristic does not divide the cardinality of `n`, that the strict
 upper triangle is the nilradical of the Borel: only under such a hypothesis are the scalar matrices
 really gone, since the trace of `r • 1` is `n • r`, so when the characteristic divides the
