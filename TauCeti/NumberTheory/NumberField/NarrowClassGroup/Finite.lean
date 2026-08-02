@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import TauCeti.NumberTheory.NumberField.NarrowClassGroup
+public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Basic
 
 /-!
 # The narrow class group of a number field is finite
@@ -41,11 +41,8 @@ instance instFinite : Finite (NarrowClassGroup K) := by
     rw [MonoidHom.mem_ker, hg, MonoidHom.comp_apply, mk_eq_one_iff, mem_narrowPrincipalSubgroup]
     exact ⟨x, mem_totallyPositiveUnits.mp hx, rfl⟩
   have hgfin : Finite g.range := by
-    have hsurj : Function.Surjective
-        (QuotientGroup.map totallyPositiveUnits g.ker (MonoidHom.id Kˣ)
-          (by rw [Subgroup.comap_id]; exact htp)) := fun q =>
-      QuotientGroup.induction_on q fun y => ⟨QuotientGroup.mk y, by simp⟩
-    exact (QuotientGroup.quotientKerEquivRange g).finite_iff.mp (Finite.of_surjective _ hsurj)
+    haveI : g.ker.FiniteIndex := Subgroup.finiteIndex_of_le htp
+    exact (QuotientGroup.quotientKerEquivRange g).finite_iff.mp inferInstance
   have hle : (toClassGroup (K := K)).ker ≤ g.range := by
     intro z hz
     obtain ⟨I, rfl⟩ := mk_surjective z
