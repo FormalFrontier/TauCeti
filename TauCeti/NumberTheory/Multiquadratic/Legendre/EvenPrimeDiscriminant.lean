@@ -79,8 +79,7 @@ every odd prime `q`: they differ by the square factor `4`, which contributes a t
 symbol. This is the form used by the genus-field splitting law, where the prime discriminant
 `D` itself is the splitting character. -/
 theorem legendreSym_evenPrimeDiscriminant_eq_legendreSym_radicand {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D)
-    (hq : q ≠ 2) :
+    (hD : IsEvenPrimeDiscriminant D) (hq : q ≠ 2) :
     legendreSym q D = legendreSym q (evenPrimeDiscriminantRadicand D) := by
   have hsq : D = evenPrimeDiscriminantRadicand D * 2 ^ 2 := by
     calc

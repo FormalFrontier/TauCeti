@@ -61,8 +61,7 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
   {d : ι → K} {root : ι → L}
 
 /-- The cardinality of an `𝔽₂`-subspace `U` of `ι → ℤ/2` is `2` to its dimension. -/
-private theorem card_submodule_eq_pow_finrank [Finite ι]
-    (U : Submodule (ZMod 2) (ι → ZMod 2)) :
+private theorem card_submodule_eq_pow_finrank [Finite ι] (U : Submodule (ZMod 2) (ι → ZMod 2)) :
     Nat.card U = 2 ^ Module.finrank (ZMod 2) U := by
   classical
   haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩

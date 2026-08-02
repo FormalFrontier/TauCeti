@@ -76,14 +76,12 @@ noncomputable def matrixCoeff (π : ContRepresentation 𝕜 G V) (hπ : Continuo
 
 /-- Evaluation of a matrix coefficient. -/
 @[simp]
-theorem matrixCoeff_apply (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
-    (v w : V) (g : G) :
+theorem matrixCoeff_apply (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) (v w : V) (g : G) :
     matrixCoeff π hπ v w g = ⟪π g v, w⟫_𝕜 :=
   (rfl)
 
 /-- A matrix coefficient at the identity is the inner product of its defining vectors. -/
-theorem matrixCoeff_apply_one (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
-    (v w : V) :
+theorem matrixCoeff_apply_one (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) (v w : V) :
     matrixCoeff π hπ v w 1 = ⟪v, w⟫_𝕜 := by
   simp
 
@@ -190,8 +188,7 @@ representation at the underlying vectors, so passing to a subrepresentation crea
 matrix coefficients; `continuous_subrepresentation hπ` is the continuity witness of the restricted
 action. -/
 @[simp]
-theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v ∈ W, π g v ∈ W)
-    (v w : W) :
+theorem matrixCoeff_subrepresentation {W : Submodule 𝕜 V} (hW : ∀ g, ∀ v ∈ W, π g v ∈ W) (v w : W) :
     matrixCoeff (subrepresentation π W hW) (continuous_subrepresentation hπ) v w =
       matrixCoeff π hπ (v : V) (w : V) := by
   ext g
@@ -257,8 +254,7 @@ with its vectors swapped, precomposed with inversion. So the span of the matrix 
 unitary representation is stable under the star operation of `C(G, 𝕜)` followed by inversion of the
 argument. -/
 @[simp]
-theorem star_matrixCoeff [ContinuousInv G] (hπ : Continuous π) (hunitary : IsUnitary π)
-    (v w : V) :
+theorem star_matrixCoeff [ContinuousInv G] (hπ : Continuous π) (hunitary : IsUnitary π) (v w : V) :
     star (matrixCoeff π hπ v w) =
       (matrixCoeff π hπ w v).comp ⟨Inv.inv, continuous_inv⟩ :=
   ContinuousMap.ext fun g ↦ (matrixCoeff_apply_inv hπ hunitary w v g).symm

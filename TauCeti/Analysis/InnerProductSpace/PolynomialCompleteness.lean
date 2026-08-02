@@ -49,8 +49,7 @@ variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-- Every polynomial lies in `L²` of a measure carrying one finite exponential moment. -/
 theorem memLp_two_algebraMap_eval {ν : Measure ℝ}
-    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
-    (q : Polynomial ℝ) :
+    (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν) (q : Polynomial ℝ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x)) 2 ν :=
   memLp_two_algebraMap_eval_of_forall_integrable_pow (𝕜 := 𝕜)
     (integrable_pow_of_exp_moment hexp) q
@@ -61,12 +60,8 @@ theorem memLp_two_algebraMap_eval_div {ν : Measure ℝ}
     (hexp : ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|)) ν)
     (q : Polynomial ℝ) (r : ℝ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x / r)) 2 ν := by
-  have hrw : (fun x : ℝ => (algebraMap ℝ 𝕜) (q.eval x / r))
-      = fun x : ℝ => (algebraMap ℝ 𝕜) ((Polynomial.C r⁻¹ * q).eval x) := by
-    funext x
-    simp [div_eq_mul_inv, mul_comm]
-  rw [hrw]
-  exact memLp_two_algebraMap_eval (𝕜 := 𝕜) hexp _
+  simpa [div_eq_mul_inv, mul_comm] using
+    memLp_two_algebraMap_eval (𝕜 := 𝕜) hexp (Polynomial.C r⁻¹ * q)
 
 /-- The `MemLp` obligation of `TauCeti.bareNormalizedLp` for a polynomial family, discharged from
 the one exponential moment that the completeness theorem already assumes. Supplied as the default
@@ -134,11 +129,7 @@ theorem orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top {μ : Measu
   -- `G` is orthogonal to each member of the family, hence to each `p n` after clearing `√cₙ`.
   have hfam : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜) ((p n).eval x) * G x ∂ν = 0 := by
     intro n
-    have hmemspan : bareNormalizedLp (𝕜 := 𝕜) (fun n x => (p n).eval x) w c hmem n
-        ∈ Submodule.span 𝕜 (Set.range
-          (bareNormalizedLp (𝕜 := 𝕜) (fun n x => (p n).eval x) w c hmem)) :=
-      Submodule.subset_span ⟨n, rfl⟩
-    have h0 := (Submodule.mem_orthogonal _ _).mp hG _ hmemspan
+    have h0 := (Submodule.mem_orthogonal _ _).mp hG _ (Submodule.subset_span ⟨n, rfl⟩)
     rw [MeasureTheory.L2.inner_def] at h0
     -- The `Lp` representative is a real cast, so the conjugation in `⟪·,·⟫` is the identity.
     have h1 : ∫ x, (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n)) * G x ∂ν = 0 := by
@@ -151,8 +142,7 @@ theorem orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top {μ : Measu
     have hs : Real.sqrt (c n) ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr (hc n))
     have h2 : ∀ x : ℝ, (algebraMap ℝ 𝕜) ((p n).eval x) * G x
         = (algebraMap ℝ 𝕜 (Real.sqrt (c n)))
-          * ((algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n)) * G x) := by
-      intro x
+          * ((algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n)) * G x) := fun x => by
       rw [← mul_assoc, ← map_mul]
       congr 2
       field_simp
@@ -161,10 +151,8 @@ theorem orthogonal_span_range_bareNormalizedLp_eq_bot_of_span_eq_top {μ : Measu
   -- Transfer to every polynomial through the spanning hypothesis.
   have hpoly := integral_algebraMap_eval_mul_eq_zero_of_span_eq_top hspan hint hfam
   -- In particular every monomial moment vanishes, so moment determinacy applies.
-  have hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * G x ∂ν = 0 := by
-    intro n
-    have h := hpoly (Polynomial.X ^ n)
-    simpa [eval_pow, eval_X, map_pow] using h
+  have hmom : ∀ n : ℕ, ∫ x, (algebraMap ℝ 𝕜 x) ^ n * G x ∂ν = 0 := fun n => by
+    simpa [eval_pow, eval_X, map_pow] using hpoly (Polynomial.X ^ n)
   have := ae_eq_zero_of_forall_moment_eq_zero_of_exists_integrable_exp hexp hGmem hmom
   exact (Lp.eq_zero_iff_ae_eq_zero).mpr this
 

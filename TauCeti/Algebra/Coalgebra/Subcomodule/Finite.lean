@@ -73,8 +73,7 @@ private theorem coeff_rTensor_coact
   | add x y hx hy => simp [hx, hy]
 
 omit [Coalgebra R C] [Comodule R C M] in
-private theorem coeff_assoc_symm_tmul
-    {ι : Type*} [DecidableEq ι] (b : Module.Basis ι R C)
+private theorem coeff_assoc_symm_tmul {ι : Type*} [DecidableEq ι] (b : Module.Basis ι R C)
     (m : M) (x : C ⊗[R] C) (i : ι) :
     TensorProduct.equivFinsuppOfBasisRight b
         ((TensorProduct.assoc R M C C).symm (m ⊗ₜ[R] x)) i =
@@ -186,8 +185,7 @@ theorem mem_finiteSubcomodules {N : Subcomodule R C M} :
   Iff.rfl
 
 /-- The zero subcomodule makes the family of finite subcomodules nonempty. -/
-theorem nonempty_finiteSubcomodules :
-    (finiteSubcomodules (R := R) (C := C) (M := M)).Nonempty := by
+theorem nonempty_finiteSubcomodules : (finiteSubcomodules (R := R) (C := C) (M := M)).Nonempty := by
   refine ⟨⊥, ?_⟩
   rw [mem_finiteSubcomodules]
   exact Module.Finite.bot R M
@@ -208,8 +206,7 @@ theorem directedOn_finiteSubcomodules :
 
 /-- The carrier of the supremum of all finite subcomodules is their literal union. -/
 @[simp]
-theorem coe_sSup_finiteSubcomodules :
-    ((sSup (finiteSubcomodules (R := R) (C := C) (M := M)) :
+theorem coe_sSup_finiteSubcomodules : ((sSup (finiteSubcomodules (R := R) (C := C) (M := M)) :
         Subcomodule R C M) : Set M) =
       ⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M) :=
   coe_sSup_of_directedOn nonempty_finiteSubcomodules directedOn_finiteSubcomodules
@@ -274,15 +271,13 @@ theorem iUnion_finiteSubcomodules_eq_univ_of_exists_mem
   rfl
 
 /-- If the coefficient coalgebra is free, every finite set lies in a finite subcomodule. -/
-theorem exists_finite_subcomodule_of_setFinite [Module.Free R C]
-    {s : Set M} (hs : s.Finite) :
+theorem exists_finite_subcomodule_of_setFinite [Module.Free R C] {s : Set M} (hs : s.Finite) :
     ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ s ⊆ N :=
   exists_finite_subcomodule_of_setFinite_of_exists_mem exists_finite_subcomodule_mem hs
 
 /-- If the coefficient coalgebra is free, every finitely generated submodule lies in a finite
 subcomodule. -/
-theorem exists_finite_subcomodule_of_fg [Module.Free R C]
-    (P : Submodule R M) (hP : P.FG) :
+theorem exists_finite_subcomodule_of_fg [Module.Free R C] (P : Submodule R M) (hP : P.FG) :
     ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ P ≤ N.toSubmodule :=
   exists_finite_subcomodule_of_fg_of_exists_mem exists_finite_subcomodule_mem P hP
 

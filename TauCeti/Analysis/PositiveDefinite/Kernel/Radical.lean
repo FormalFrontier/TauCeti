@@ -56,15 +56,13 @@ variable {𝕜 : Type u} [RCLike 𝕜] {α : Type v} {K : α → α → 𝕜}
 This is the submodule by which the free space `α →₀ 𝕜` is quotiented in the algebraic
 GNS/Kolmogorov construction. It is defined as the kernel of the bundled sesquilinear form, so
 membership means pairing to zero with every finitely supported vector. -/
-noncomputable def positiveDefiniteKernelFinsuppSesqFormKer
-    (K : α → α → 𝕜) : Submodule 𝕜 (α →₀ 𝕜) :=
+noncomputable def positiveDefiniteKernelFinsuppSesqFormKer (K : α → α → 𝕜) : Submodule 𝕜 (α →₀ 𝕜) :=
   LinearMap.ker (positiveDefiniteKernelFinsuppSesqForm K)
 
 /-- Membership in the null submodule means that the finitely supported vector pairs to zero with
 every vector. -/
 @[simp]
-theorem mem_positiveDefiniteKernelFinsuppSesqFormKer
-    (x : α →₀ 𝕜) :
+theorem mem_positiveDefiniteKernelFinsuppSesqFormKer (x : α →₀ 𝕜) :
     x ∈ positiveDefiniteKernelFinsuppSesqFormKer K ↔
       ∀ y : α →₀ 𝕜, positiveDefiniteKernelFinsuppForm K x y = 0 := by
   rw [positiveDefiniteKernelFinsuppSesqFormKer, LinearMap.mem_ker]

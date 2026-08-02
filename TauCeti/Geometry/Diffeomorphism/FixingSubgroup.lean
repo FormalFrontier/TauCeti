@@ -140,8 +140,7 @@ def toRelativeHomeomorphHom (s : Set M) :
 /-- Applying the forgetful homomorphism to a relative diffeomorphism is its underlying
 homeomorphism. -/
 @[simp]
-theorem toRelativeHomeomorphHom_apply (s : Set M)
-    (f : fixingSubgroup (I := I) (n := n) s) :
+theorem toRelativeHomeomorphHom_apply (s : Set M) (f : fixingSubgroup (I := I) (n := n) s) :
     (toRelativeHomeomorphHom (M := M) s f : M ≃ₜ M) =
       (f : M ≃ₘ^n⟮I, I⟯ M).toHomeomorph := by
   ext x

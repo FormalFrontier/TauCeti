@@ -40,8 +40,7 @@ namespace AlgebraicGeometry
 /-- The closure of the image of an irreducible component under an open
 embedding is an irreducible component. -/
 private lemma closure_image_mem_irreducibleComponents {α β : Type*}
-    [TopologicalSpace α] [TopologicalSpace β]
-    {f : α → β} (hf : IsOpenEmbedding f) {c : Set α}
+    [TopologicalSpace α] [TopologicalSpace β] {f : α → β} (hf : IsOpenEmbedding f) {c : Set α}
     (hc : c ∈ irreducibleComponents α) :
     closure (f '' c) ∈ irreducibleComponents β := by
   obtain ⟨C, hC, hsub⟩ := exists_mem_irreducibleComponents_subset_of_isIrreducible
@@ -159,8 +158,7 @@ private lemma val_mpr_orderIso {α : Type u} [LE α] {Y : Type u} [LE Y] {P Q : 
 
 /-- Evaluating the `equivIrreducibleComponents` bijection on a minimal prime
 yields its `zeroLocus`. -/
-private theorem val_equivIrreducibleComponents (R : Type*) [CommRing R]
-    (q : minimalPrimes R) :
+private theorem val_equivIrreducibleComponents (R : Type*) [CommRing R] (q : minimalPrimes R) :
     (OrderDual.ofDual ((minimalPrimes.equivIrreducibleComponents R).toEquiv q)).val =
       zeroLocus q.val := by
   unfold minimalPrimes.equivIrreducibleComponents
@@ -252,8 +250,7 @@ private lemma
 
 /-- If the stalk at `x` has a unique minimal prime, then
 `x` belongs to a unique irreducible component. -/
-private lemma existsUnique_irreducibleComponent_of_unique_minimalPrime
-    {X : Scheme} (x : X.carrier)
+private lemma existsUnique_irreducibleComponent_of_unique_minimalPrime {X : Scheme} (x : X.carrier)
     [Unique (minimalPrimes (X.presheaf.stalk x))] :
     ∃! c : irreducibleComponents X.carrier,
       x ∈ (c : Set X.carrier) := by
@@ -330,8 +327,7 @@ private theorem isOpen_irreducibleComponents_of_affine_unique_minimalPrime {X : 
 /-- In a locally noetherian scheme whose stalks have unique minimal primes,
 every irreducible component is open. -/
 private theorem isOpen_irreducibleComponents_of_unique_minimalPrime {Z : Scheme.{u}}
-    [IsLocallyNoetherian Z]
-    (hStalks : ∀ x : Z.carrier, Unique (minimalPrimes (Z.presheaf.stalk x)))
+    [IsLocallyNoetherian Z] (hStalks : ∀ x : Z.carrier, Unique (minimalPrimes (Z.presheaf.stalk x)))
     (c : irreducibleComponents Z.carrier) :
     IsOpen (c : Set Z.carrier) := by
   rw [isOpen_iff_of_cover (fun j ↦ (Z.affineCover.f j).isOpenEmbedding.isOpen_range)

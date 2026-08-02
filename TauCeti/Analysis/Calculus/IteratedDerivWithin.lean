@@ -33,8 +33,7 @@ the derivative of the `k`-th iterated derivative-within-`s` of a `C^(k+1)` funct
 `(k+1)`-th iterated derivative-within-`s`. -/
 theorem ContDiffOn.hasDerivAt_iteratedDerivWithin
     {𝕜 E : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    {g : 𝕜 → E} {s : Set 𝕜} {k : ℕ}
-    (hf : ContDiffOn 𝕜 ((k + 1 : ℕ) : WithTop ℕ∞) g s)
+    {g : 𝕜 → E} {s : Set 𝕜} {k : ℕ} (hf : ContDiffOn 𝕜 ((k + 1 : ℕ) : WithTop ℕ∞) g s)
     (hs : UniqueDiffOn 𝕜 s) {x : 𝕜} (hx : s ∈ nhds x) :
     HasDerivAt (iteratedDerivWithin k g s) (iteratedDerivWithin (k + 1) g s x) x := by
   rw [iteratedDerivWithin_succ, derivWithin_of_mem_nhds hx]

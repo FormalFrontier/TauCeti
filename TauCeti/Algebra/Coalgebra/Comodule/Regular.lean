@@ -134,8 +134,7 @@ abbrev regular : ComoduleCat.{u, v, v} R C :=
 
 /-- The underlying type of the bundled regular comodule is the coalgebra itself. -/
 @[simp]
-theorem regular_toSemimoduleCat :
-    (regular R C).toSemimoduleCat = SemimoduleCat.of R C :=
+theorem regular_toSemimoduleCat : (regular R C).toSemimoduleCat = SemimoduleCat.of R C :=
   rfl
 
 /-- The coaction on the bundled regular comodule is the coalgebra comultiplication. -/
@@ -195,8 +194,7 @@ abbrev regular : FGComoduleCat.{u, v, v} R C :=
 /-- The ambient comodule underlying the finitely generated regular comodule is the regular
 comodule. -/
 @[simp]
-theorem regular_obj :
-    (regular R C : FGComoduleCat.{u, v, v} R C).obj = ComoduleCat.regular R C :=
+theorem regular_obj : (regular R C : FGComoduleCat.{u, v, v} R C).obj = ComoduleCat.regular R C :=
   rfl
 
 /-- The coaction on the finitely generated regular comodule is the coalgebra comultiplication. -/

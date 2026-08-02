@@ -110,8 +110,7 @@ theorem intervalIntegrable_inv_sub_truncated {γ : ℝ → ℂ} {s : ℂ} {a b :
 with the chord quotients anchored at the left endpoint in the slit plane: the `Icc`-hypothesis
 form of `integral_inv_sub_mul_deriv_eq_log`, with the integrability discharged. -/
 private theorem integral_inv_sub_mul_deriv_eq_log_window {γ : ℝ → ℂ} {s : ℂ} {P : Set ℝ}
-    {l u : ℝ} (hlu : l ≤ u) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Icc l u))
+    {l u : ℝ} (hlu : l ≤ u) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc l u))
     (hγ_diffP : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t)
     (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume l u)
     (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
@@ -215,20 +214,15 @@ the anchored slit-plane chord quotients on each side, and the window-split ident
 `ε`-truncated simple-pole integrand, the truncated window integral equals the log-norm difference
 of the window endpoints plus the two boundary chord arguments times `I`. -/
 private theorem perWindow_truncated_integral_eq_log_form {γ : ℝ → ℂ} {s : ℂ} {t₀ r ε : ℝ}
-    {P : Set ℝ} {τl τr : ℝ} (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
+    {P : Set ℝ} {τl τr : ℝ} (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
     (hγ_diffP : ∀ t ∈ Ioo (t₀ - r) (t₀ + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t₀ - r) (t₀ + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t₀ - r) (t₀ + r))
     (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
-    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
-    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ →
-      (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r → (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
+    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ → (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
     (hτL : τl ∈ Ioo (t₀ - r) t₀) (hτR : τr ∈ Ioo t₀ (t₀ + r))
     (hradL : ‖γ τl - s‖ = ε) (hradR : ‖γ τr - s‖ = ε) (hε : 0 < ε)
-    (hsplit : ∫ u in (t₀ - r)..(t₀ + r),
-        (if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) =
+    (hsplit : ∫ u in (t₀ - r)..(t₀ + r), (if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) =
       (∫ u in (t₀ - r)..τl, (γ u - s)⁻¹ * deriv γ u) +
       (∫ u in τr..(t₀ + r), (γ u - s)⁻¹ * deriv γ u)) :
     ∫ t in (t₀ - r)..(t₀ + r),
@@ -282,16 +276,12 @@ theorem perWindow_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {t₀ 
     (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (h_diff_R : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
-    (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
-    (hP : P.Countable)
+    (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) (hP : P.Countable)
     (hγ_diffP : ∀ t ∈ Ioo (t₀ - r) (t₀ + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t₀ - r) (t₀ + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t₀ - r) (t₀ + r))
     (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
-    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
-    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ →
-      (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r → (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
+    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ → (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
     (h_slit_plus : (γ (t₀ + r) - s) / L_R ∈ Complex.slitPlane)
     (h_slit_minus : (-L_L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane) :
     Tendsto (fun ε : ℝ => ∫ t in (t₀ - r)..(t₀ + r),

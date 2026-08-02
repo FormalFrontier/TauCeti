@@ -50,8 +50,7 @@ If `c` is nonnegative, `b` has norm at most `β` on the interior of a compact se
 bound on the whole set. -/
 theorem le_of_mul_le_laplacian_add_fderiv_le_frontier {K : Set E} (hK : IsCompact K)
     {c f : E → ℝ} {b : E → E} {β m : ℝ} (hm : 0 ≤ m) (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
     (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x + fderiv ℝ f x (b x))
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
@@ -106,10 +105,8 @@ theorem le_of_mul_le_laplacian_add_fderiv_le_frontier {K : Set E} (hK : IsCompac
 `le_of_mul_le_laplacian_add_fderiv_le_frontier`. -/
 theorem ge_of_laplacian_add_fderiv_le_mul_ge_frontier {K : Set E} (hK : IsCompact K)
     {c f : E → ℝ} {b : E → E} {β m : ℝ} (hm : m ≤ 0) (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
-    (hsuper : ∀ ⦃x⦄, x ∈ interior K →
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β) (hsuper : ∀ ⦃x⦄, x ∈ interior K →
       Δ f x + fderiv ℝ f x (b x) ≤ c x * f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → m ≤ f x) :
     ∀ ⦃x⦄, x ∈ K → m ≤ f x := by
@@ -128,20 +125,16 @@ theorem ge_of_laplacian_add_fderiv_le_mul_ge_frontier {K : Set E} (hK : IsCompac
 nonnegative bound for its absolute value on the frontier. -/
 theorem abs_le_of_laplacian_add_fderiv_eq_mul_abs_le_frontier {K : Set E} (hK : IsCompact K)
     {c f : E → ℝ} {b : E → E} {β M : ℝ} (hM : 0 ≤ M) (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
-    (hsol : ∀ ⦃x⦄, x ∈ interior K →
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β) (hsol : ∀ ⦃x⦄, x ∈ interior K →
       Δ f x + fderiv ℝ f x (b x) = c x * f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
     ∀ ⦃x⦄, x ∈ K → |f x| ≤ M := by
   intro x hx
-  rw [abs_le]
-  constructor
-  · exact ge_of_laplacian_add_fderiv_le_mul_ge_frontier hK (neg_nonpos.mpr hM) hcont hcd hc hb
-      (fun y hy => (hsol hy).le) (fun y hy => (abs_le.mp (hbdry hy)).1) hx
-  · exact le_of_mul_le_laplacian_add_fderiv_le_frontier hK hM hcont hcd hc hb
-      (fun y hy => (hsol hy).ge) (fun y hy => (abs_le.mp (hbdry hy)).2) hx
+  refine abs_le.mpr ⟨ge_of_laplacian_add_fderiv_le_mul_ge_frontier hK (neg_nonpos.mpr hM) hcont
+      hcd hc hb (fun y hy => (hsol hy).le) (fun y hy => (abs_le.mp (hbdry hy)).1) hx,
+    le_of_mul_le_laplacian_add_fderiv_le_frontier hK hM hcont hcd hc hb
+      (fun y hy => (hsol hy).ge) (fun y hy => (abs_le.mp (hbdry hy)).2) hx⟩
 
 /-- **Comparison principle for `-Δ - b·∇ + c`.** Functions acted on by the same lower-order
 coefficients are ordered on a compact set when their operator values and frontier values are
@@ -150,10 +143,8 @@ theorem le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le
     {K : Set E} (hK : IsCompact K) {c f g : E → ℝ}
     {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
-    (hL : ∀ ⦃x⦄, x ∈ interior K →
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β) (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ g x + fderiv ℝ g x (b x) - c x * g x ≤
         Δ f x + fderiv ℝ f x (b x) - c x * f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
@@ -171,24 +162,19 @@ theorem le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le
 /-- **Dirichlet uniqueness for `-Δ - b·∇ + c`.** Equal operator values and equal frontier data
 force two functions to agree throughout the compact set. -/
 theorem eqOn_of_laplacian_add_fderiv_sub_mul_eq_of_eqOn_frontier {K : Set E} (hK : IsCompact K)
-    {c f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K)
-    (hgcont : ContinuousOn g K)
+    {c f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
-    (hL : ∀ ⦃x⦄, x ∈ interior K →
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β) (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ f x + fderiv ℝ f x (b x) - c x * f x =
         Δ g x + fderiv ℝ g x (b x) - c x * g x)
     (hbdry : Set.EqOn f g (frontier K)) : Set.EqOn f g K := by
   intro x hx
-  apply le_antisymm
-  · exact le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
-      hK hfcont hgcont hfcd hgcd hc hb
-      (fun y hy => (hL hy).ge) (fun y hy => (hbdry hy).le) hx
-  · exact le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
-      hK hgcont hfcont hgcd hfcd hc hb
-      (fun y hy => (hL hy).le) (fun y hy => (hbdry hy).ge) hx
+  exact le_antisymm
+    (le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
+      hK hfcont hgcont hfcd hgcd hc hb (fun y hy => (hL hy).ge) (fun y hy => (hbdry hy).le) hx)
+    (le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
+      hK hgcont hfcont hgcd hfcd hc hb (fun y hy => (hL hy).le) (fun y hy => (hbdry hy).ge) hx)
 
 end TauCeti
 

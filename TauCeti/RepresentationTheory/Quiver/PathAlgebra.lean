@@ -137,8 +137,7 @@ private theorem length_toList {a b : OneLoop}
   | nil => rfl
   | cons p e ih => simp [ih]
 
-private theorem path_eq_pathOfLength
-    (p : _root_.Quiver.Path (vertex : OneLoop) vertex) :
+private theorem path_eq_pathOfLength (p : _root_.Quiver.Path (vertex : OneLoop) vertex) :
     p = pathOfLength p.length := by
   apply (_root_.Quiver.Path.toList_injective vertex vertex)
   apply List.length_injective
@@ -774,8 +773,7 @@ private theorem oneLoopLinearEquiv_map_one :
   simp [vertexIdempotent_eq_single, oneLoopLinearEquiv_single,
     Quiver.OneLoop.totalPathEquivNat, ← AddMonoidAlgebra.one_def]
 
-private theorem oneLoopLinearEquiv_map_mul
-    (f g : pathAlgebra k Quiver.OneLoop) :
+private theorem oneLoopLinearEquiv_map_mul (f g : pathAlgebra k Quiver.OneLoop) :
     oneLoopLinearEquiv k (f * g) = oneLoopLinearEquiv k f * oneLoopLinearEquiv k g := by
   induction f using induction_linear with
   | zero => simp
@@ -807,8 +805,7 @@ end OneLoop
 end PathAlgebra
 
 /-- Over a division ring, the path algebra of the one-loop quiver is infinite-dimensional. -/
-theorem not_finiteDimensional_pathAlgebra_oneLoop
-    (k : Type w) [DivisionRing k] :
+theorem not_finiteDimensional_pathAlgebra_oneLoop (k : Type w) [DivisionRing k] :
     ¬ FiniteDimensional k (pathAlgebra k Quiver.OneLoop) := by
   letI : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
     Quiver.OneLoop.totalPathEquivNat.infinite_iff.mpr inferInstance

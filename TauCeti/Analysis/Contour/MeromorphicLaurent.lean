@@ -78,8 +78,7 @@ theorem meromorphicPolarOrderAt_eq_of_order_eq {f : ℂ → ℂ} {s : ℂ}
 /-- **At a simple pole the canonical polar order is `1`.** With flatness of order one
 (`IsPwC1ImmersionOn.flatOfOrder_one`), this discharges condition (A′) of the generalized residue
 theorem at simple poles. -/
-theorem meromorphicPolarOrderAt_eq_one {f : ℂ → ℂ} {s : ℂ}
-    (h : meromorphicOrderAt f s = -1) :
+theorem meromorphicPolarOrderAt_eq_one {f : ℂ → ℂ} {s : ℂ} (h : meromorphicOrderAt f s = -1) :
     meromorphicPolarOrderAt f s = 1 := by
   rw [meromorphicPolarOrderAt_eq_of_order_eq h]
   rfl
@@ -139,8 +138,7 @@ theorem meromorphicPolarOrderAt_le_one_iff {f : ℂ → ℂ} {s : ℂ} :
 /-- Taylor decomposition of an analytic function to order `k`:
 `g z = ∑ j < k, c j * (z - s)^j + (z - s)^k * R z` with `R` analytic at `s`. Mathlib's
 `AnalyticAt.exists_eventuallyEq_sum_add_pow_mul` at the translate `g (· + s)`. -/
-private theorem analyticAt_taylor_decomp {g : ℂ → ℂ} {s : ℂ}
-    (hg : AnalyticAt ℂ g s) (k : ℕ) :
+private theorem analyticAt_taylor_decomp {g : ℂ → ℂ} {s : ℂ} (hg : AnalyticAt ℂ g s) (k : ℕ) :
     ∃ (c : Fin k → ℂ) (R : ℂ → ℂ), AnalyticAt ℂ R s ∧
       ∀ᶠ z in 𝓝 s, g z = (∑ j : Fin k, c j * (z - s) ^ j.val) + (z - s) ^ k * R z := by
   have h1 : AnalyticAt ℂ (fun w : ℂ => w + s) 0 := analyticAt_id.add analyticAt_const
@@ -197,8 +195,7 @@ private theorem reindex_sum_fin_neg {k : ℕ} (c : Fin k → ℂ) (w : ℂ) :
 /-- Laurent data of length exactly `k` from a `(z - s)^(-k)`-factorisation with analytic
 cofactor: Taylor-expand the cofactor to order `k` and divide. -/
 private theorem laurent_data_of_zpow_factor {f g₀ : ℂ → ℂ} {s : ℂ} (k : ℕ)
-    (hg₀_an : AnalyticAt ℂ g₀ s)
-    (hg₀_eq : ∀ᶠ z in 𝓝[≠] s, f z = (z - s) ^ (-(k : ℤ)) • g₀ z) :
+    (hg₀_an : AnalyticAt ℂ g₀ s) (hg₀_eq : ∀ᶠ z in 𝓝[≠] s, f z = (z - s) ^ (-(k : ℤ)) • g₀ z) :
     ∃ (a : Fin k → ℂ) (g : ℂ → ℂ),
       AnalyticAt ℂ g s ∧
       ∀ᶠ z in 𝓝[≠] s, f z = g z + ∑ i : Fin k, a i / (z - s) ^ (i.val + 1) := by
@@ -260,8 +257,7 @@ theorem eventuallyEq_meromorphicAnalyticPartAt_add_meromorphicPolarPartAt {f : �
 
 /-- The polar part as its explicit Laurent sum — the characteristic unfolding of
 `meromorphicPolarPartAt`. -/
-theorem meromorphicPolarPartAt_eq_sum {f : ℂ → ℂ} {s : ℂ}
-    (hMero : MeromorphicAt f s) (z : ℂ) :
+theorem meromorphicPolarPartAt_eq_sum {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s) (z : ℂ) :
     meromorphicPolarPartAt hMero z =
       ∑ k : Fin (meromorphicPolarOrderAt f s),
         meromorphicPolarCoeffAt hMero k / (z - s) ^ (k.val + 1) := by
@@ -298,8 +294,7 @@ canonical polar data. Internally the coefficients are total functions `ℕ → �
 /-- The top coefficient of a finite principal part that agrees with a function continuous at
 `s` vanishes. -/
 private theorem coeff_top_eq_zero_of_eventuallyEq {s : ℂ} {N : ℕ} {c : ℕ → ℂ}
-    {g : ℂ → ℂ} (hg : ContinuousAt g s)
-    (h_eq : ∀ᶠ z in 𝓝[≠] s,
+    {g : ℂ → ℂ} (hg : ContinuousAt g s) (h_eq : ∀ᶠ z in 𝓝[≠] s,
       ∑ k ∈ Finset.range (N + 1), c k / (z - s) ^ (k + 1) = g z) :
     c N = 0 := by
   have h_mul : ∀ᶠ z in 𝓝[≠] s,
@@ -339,8 +334,7 @@ private theorem coeff_top_eq_zero_of_eventuallyEq {s : ℂ} {N : ℕ} {c : ℕ �
 
 /-- A finite principal part agreeing with a function continuous at `s` is zero: all its
 coefficients vanish. -/
-private theorem laurent_coeff_eq_zero_of_eventuallyEq {s : ℂ} {g : ℂ → ℂ}
-    (hg : ContinuousAt g s) :
+private theorem laurent_coeff_eq_zero_of_eventuallyEq {s : ℂ} {g : ℂ → ℂ} (hg : ContinuousAt g s) :
     ∀ {N : ℕ} {c : ℕ → ℂ},
       (∀ᶠ z in 𝓝[≠] s, ∑ k ∈ Finset.range N, c k / (z - s) ^ (k + 1) = g z) →
       ∀ k < N, c k = 0 := by
@@ -380,8 +374,7 @@ private theorem sum_fin_div_pow_eq_sum_range {s : ℂ} {N L : ℕ} (hNL : N ≤ 
 near `s` with remainders continuous at `s` have the same coefficients, compared through
 their zero-paddings. -/
 theorem laurent_coeff_unique {s : ℂ} {N M : ℕ} {a : Fin N → ℂ} {b : Fin M → ℂ}
-    {g h : ℂ → ℂ} (hg : ContinuousAt g s) (hh : ContinuousAt h s)
-    (h_eq : ∀ᶠ z in 𝓝[≠] s,
+    {g h : ℂ → ℂ} (hg : ContinuousAt g s) (hh : ContinuousAt h s) (h_eq : ∀ᶠ z in 𝓝[≠] s,
       g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)
         = h z + ∑ k : Fin M, b k / (z - s) ^ (k.val + 1)) (k : ℕ) :
     (if hk : k < N then a ⟨k, hk⟩ else 0) = (if hk : k < M then b ⟨k, hk⟩ else 0) := by
@@ -409,8 +402,7 @@ coefficient through zero-padding, with the canonical polar data. This is what tr
 sector condition (B)'s resonance constraints from its own Laurent witness to
 `meromorphicPolarCoeffAt`. -/
 theorem laurent_coeff_eq_meromorphicPolarCoeffAt {f : ℂ → ℂ} {s : ℂ}
-    (hMero : MeromorphicAt f s) {N : ℕ} {a : Fin N → ℂ} {g : ℂ → ℂ}
-    (hg : ContinuousAt g s)
+    (hMero : MeromorphicAt f s) {N : ℕ} {a : Fin N → ℂ} {g : ℂ → ℂ} (hg : ContinuousAt g s)
     (h_eq : ∀ᶠ z in 𝓝[≠] s, f z = g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) (k : ℕ) :
     (if hk : k < N then a ⟨k, hk⟩ else 0)
       = (if hk : k < meromorphicPolarOrderAt f s then

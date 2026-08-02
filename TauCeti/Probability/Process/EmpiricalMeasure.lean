@@ -43,25 +43,21 @@ def empiricalMeasure (x : ℕ → α) (n : ℕ) : ProbabilityMeasure α :=
 
 /-- The measure underlying an empirical measure is the uniform finite sum of Dirac measures. -/
 @[simp]
-theorem empiricalMeasure_toMeasure (x : ℕ → α) (n : ℕ) :
-    (empiricalMeasure x n : Measure α) =
+theorem empiricalMeasure_toMeasure (x : ℕ → α) (n : ℕ) : (empiricalMeasure x n : Measure α) =
       ∑ i ∈ Finset.range (n + 1), (((n + 1 : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i)) :=
   (rfl)
 
 /-- Evaluation of an empirical measure on a measurable set is its empirical frequency. -/
 theorem empiricalMeasure_apply {x : ℕ → α} {n : ℕ} {s : Set α} (hs : MeasurableSet s) :
-    (empiricalMeasure x n : Measure α) s =
-      ((n + 1 : ℕ) : ℝ≥0∞)⁻¹ *
+    (empiricalMeasure x n : Measure α) s = ((n + 1 : ℕ) : ℝ≥0∞)⁻¹ *
         ∑ i ∈ Finset.range (n + 1), s.indicator (1 : α → ℝ≥0∞) (x i) := by
   rw [empiricalMeasure_toMeasure]
   simp only [Measure.coe_finsetSum, Measure.coe_smul, Finset.sum_apply, Pi.smul_apply,
     smul_eq_mul, Measure.dirac_apply' _ hs, Finset.mul_sum]
 
 /-- The real-valued form of `empiricalMeasure_apply`. -/
-theorem empiricalMeasure_apply_toReal {x : ℕ → α} {n : ℕ} {s : Set α}
-    (hs : MeasurableSet s) :
-    ((empiricalMeasure x n : Measure α) s).toReal =
-      ((n + 1 : ℕ) : ℝ)⁻¹ *
+theorem empiricalMeasure_apply_toReal {x : ℕ → α} {n : ℕ} {s : Set α} (hs : MeasurableSet s) :
+    ((empiricalMeasure x n : Measure α) s).toReal = ((n + 1 : ℕ) : ℝ)⁻¹ *
         ∑ i ∈ Finset.range (n + 1), s.indicator (1 : α → ℝ) (x i) := by
   rw [empiricalMeasure_apply hs, ENNReal.toReal_mul, ENNReal.toReal_inv]
   · rw [ENNReal.toReal_natCast, ENNReal.toReal_sum]
@@ -76,8 +72,7 @@ omit [MeasurableSpace Ω] in
 /-- Evaluation of a path's empirical measure, written as indicators on the sample space. -/
 theorem empiricalMeasure_process_apply_toReal {X : ℕ → Ω → α} {ω : Ω} {n : ℕ}
     {s : Set α} (hs : MeasurableSet s) :
-    ((empiricalMeasure (fun i => X i ω) n : Measure α) s).toReal =
-      ((n + 1 : ℕ) : ℝ)⁻¹ *
+    ((empiricalMeasure (fun i => X i ω) n : Measure α) s).toReal = ((n + 1 : ℕ) : ℝ)⁻¹ *
         ∑ i ∈ Finset.range (n + 1), (X i ⁻¹' s).indicator (1 : Ω → ℝ) ω := by
   rw [empiricalMeasure_apply_toReal hs]
   refine congrArg (fun z : ℝ => ((n + 1 : ℕ) : ℝ)⁻¹ * z) ?_

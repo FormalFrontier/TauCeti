@@ -85,16 +85,14 @@ theorem fullyBlockedBoundaries_le_cycles
 
 /-- The fully blocked cycle submodule is top when the differential is the zero map. -/
 theorem fullyBlockedCycles_eq_top_of_fullyBlockedDifferential_eq_zero
-    (h : G.fullyBlockedDifferential =
-      (0 : GridChain (ZMod 2) n →ₗ[ZMod 2] GridChain (ZMod 2) n)) :
+    (h : G.fullyBlockedDifferential = (0 : GridChain (ZMod 2) n →ₗ[ZMod 2] GridChain (ZMod 2) n)) :
     G.fullyBlockedCycles = ⊤ := by
   rw [fullyBlockedCycles]
   exact LinearMap.ker_eq_top.mpr h
 
 /-- The fully blocked boundary submodule is bottom when the differential is the zero map. -/
 theorem fullyBlockedBoundaries_eq_bot_of_fullyBlockedDifferential_eq_zero
-    (h : G.fullyBlockedDifferential =
-      (0 : GridChain (ZMod 2) n →ₗ[ZMod 2] GridChain (ZMod 2) n)) :
+    (h : G.fullyBlockedDifferential = (0 : GridChain (ZMod 2) n →ₗ[ZMod 2] GridChain (ZMod 2) n)) :
     G.fullyBlockedBoundaries = ⊥ := by
   rw [fullyBlockedBoundaries]
   exact LinearMap.range_eq_bot.mpr h

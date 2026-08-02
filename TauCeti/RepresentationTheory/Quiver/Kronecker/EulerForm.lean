@@ -104,8 +104,7 @@ theorem titsForm_nonneg (h : Fintype.card A ≤ 2) (d : Kronecker A → ℤ) :
 /-- The Tits form of the generalized Kronecker quiver is positive semidefinite exactly when there
 are at most two arrows. Two arrows is the Kronecker quiver `• ⇉ •`, of affine type `Ã₁`, the
 boundary case of Gabriel's theorem; three or more arrows makes the form indefinite. -/
-theorem titsForm_nonneg_iff :
-    (∀ d, 0 ≤ titsForm (Kronecker A) d) ↔ Fintype.card A ≤ 2 := by
+theorem titsForm_nonneg_iff : (∀ d, 0 ≤ titsForm (Kronecker A) d) ↔ Fintype.card A ≤ 2 := by
   refine ⟨fun h => ?_, fun h => titsForm_nonneg h⟩
   have h1 := h 1
   rw [titsForm_one] at h1
@@ -135,8 +134,7 @@ theorem titsForm_posDef (h : Fintype.card A ≤ 1) : (titsForm (Kronecker A)).Po
 /-- The Tits form of the generalized Kronecker quiver is positive definite exactly when there is at
 most one arrow: no arrow gives the disconnected Dynkin quiver `A₁ ⊔ A₁`, and one arrow gives `A₂`.
 Every other generalized Kronecker quiver falls outside the Dynkin classification. -/
-theorem titsForm_posDef_iff :
-    (titsForm (Kronecker A)).PosDef ↔ Fintype.card A ≤ 1 := by
+theorem titsForm_posDef_iff : (titsForm (Kronecker A)).PosDef ↔ Fintype.card A ≤ 1 := by
   refine ⟨fun h => ?_, titsForm_posDef⟩
   have h1 : (0 : ℤ) < titsForm (Kronecker A) 1 :=
     h 1 fun hc => one_ne_zero (congrFun hc src)

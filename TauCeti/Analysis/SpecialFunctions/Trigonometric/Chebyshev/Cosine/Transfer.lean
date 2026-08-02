@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Measure
+public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Basic
 import Mathlib.MeasureTheory.Integral.RieszMarkovKakutani.Real
 
@@ -106,97 +107,26 @@ section L2
 
 variable (𝕜 : Type*) [NormedRing 𝕜]
 
-private noncomputable def chebyshevCosineL2Isometry :
-    Lp 𝕜 2 measureT →ₗᵢ[𝕜] Lp 𝕜 2 chebyshevAngleMeasure :=
-  Lp.compMeasurePreservingₗᵢ 𝕜 Real.cos measurePreserving_cos_chebyshev
-
-private noncomputable def chebyshevArccosL2LinearMap :
-    Lp 𝕜 2 chebyshevAngleMeasure →ₗ[𝕜] Lp 𝕜 2 measureT :=
-  Lp.compMeasurePreservingₗ 𝕜 Real.arccos measurePreserving_arccos_chebyshev
-
-private theorem chebyshevCosineL2Isometry_toLinearMap_apply (f : Lp 𝕜 2 measureT) :
-    (chebyshevCosineL2Isometry 𝕜).toLinearMap f =
-      Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev f := by
-  -- Mathlib has no application lemma for `compMeasurePreservingₗᵢ`; its stored linear map is
-  -- definitionally `compMeasurePreservingₗ`, whose generated application lemma is stable.
-  change Lp.compMeasurePreservingₗ 𝕜 Real.cos measurePreserving_cos_chebyshev f =
-    Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev f
-  rw [Lp.compMeasurePreservingₗ_apply]
-  exact congrFun
-    (AddHom.toFun_eq_coe
-      (Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev).toAddHom) f
-
-private theorem chebyshevCosineL2Isometry_apply (f : Lp 𝕜 2 measureT) :
-    chebyshevCosineL2Isometry 𝕜 f =
-      Lp.compMeasurePreserving Real.cos measurePreserving_cos_chebyshev f :=
-  chebyshevCosineL2Isometry_toLinearMap_apply 𝕜 f
-
-private theorem chebyshevArccosL2LinearMap_apply (f : Lp 𝕜 2 chebyshevAngleMeasure) :
-    chebyshevArccosL2LinearMap 𝕜 f =
-      Lp.compMeasurePreserving Real.arccos measurePreserving_arccos_chebyshev f := by
-  rw [chebyshevArccosL2LinearMap, Lp.compMeasurePreservingₗ_apply]
-  exact congrFun
-    (AddHom.toFun_eq_coe
-      (Lp.compMeasurePreserving Real.arccos measurePreserving_arccos_chebyshev).toAddHom) f
-
-private theorem chebyshevCosineL2Isometry_comp_arccos :
-    (chebyshevCosineL2Isometry 𝕜).toLinearMap.comp (chebyshevArccosL2LinearMap 𝕜) =
-      LinearMap.id := by
-  apply LinearMap.ext
-  intro f
-  simp only [LinearMap.comp_apply, LinearMap.id_apply]
-  rw [chebyshevCosineL2Isometry_toLinearMap_apply, chebyshevArccosL2LinearMap_apply]
-  rw [← Lp.compMeasurePreserving_comp_apply f measurePreserving_arccos_chebyshev
-    measurePreserving_cos_chebyshev]
-  apply Lp.ext
-  filter_upwards [
-    Lp.coeFn_compMeasurePreserving f
-      (measurePreserving_arccos_chebyshev.comp measurePreserving_cos_chebyshev),
-    arccos_comp_cos_ae] with θ hcomp hinv
-  exact hcomp.trans (by
-    simpa only [Function.comp_apply, id_eq] using congrArg (fun x => f x) hinv)
-
-private theorem chebyshevArccosL2LinearMap_comp_cosine :
-    (chebyshevArccosL2LinearMap 𝕜).comp (chebyshevCosineL2Isometry 𝕜).toLinearMap =
-      LinearMap.id := by
-  apply LinearMap.ext
-  intro f
-  simp only [LinearMap.comp_apply, LinearMap.id_apply]
-  rw [chebyshevArccosL2LinearMap_apply, chebyshevCosineL2Isometry_toLinearMap_apply]
-  rw [← Lp.compMeasurePreserving_comp_apply f measurePreserving_cos_chebyshev
-    measurePreserving_arccos_chebyshev]
-  apply Lp.ext
-  filter_upwards [
-    Lp.coeFn_compMeasurePreserving f
-      (measurePreserving_cos_chebyshev.comp measurePreserving_arccos_chebyshev),
-    cos_comp_arccos_ae] with x hcomp hinv
-  exact hcomp.trans (by
-    simpa only [Function.comp_apply, id_eq] using congrArg (fun y => f y) hinv)
-
 /-- **The Chebyshev-to-cosine `L²` equivalence.** It pulls a function on `[-1,1]` back along
 `x = cos θ`; its inverse pulls an angular function back along `θ = arccos x`. -/
 noncomputable def chebyshevCosineL2Equiv :
     Lp 𝕜 2 measureT ≃ₗᵢ[𝕜] Lp 𝕜 2 chebyshevAngleMeasure :=
-  LinearIsometryEquiv.ofLinearIsometry (chebyshevCosineL2Isometry 𝕜)
-    (chebyshevArccosL2LinearMap 𝕜)
-    (chebyshevCosineL2Isometry_comp_arccos 𝕜)
-    (chebyshevArccosL2LinearMap_comp_cosine 𝕜)
+  Lp.compMeasurePreservingₗᵢEquiv 𝕜 measurePreserving_cos_chebyshev
+    measurePreserving_arccos_chebyshev cos_comp_arccos_ae
 
 /-- The forward Chebyshev-to-cosine equivalence is composition with `Real.cos`. -/
 theorem chebyshevCosineL2Equiv_apply (f : Lp 𝕜 2 measureT) :
-    ⇑(chebyshevCosineL2Equiv 𝕜 f) =ᵐ[chebyshevAngleMeasure] fun θ => f (Real.cos θ) :=
-  by
-    rw [chebyshevCosineL2Equiv, LinearIsometryEquiv.coe_ofLinearIsometry,
-      chebyshevCosineL2Isometry_apply]
-    exact Lp.coeFn_compMeasurePreserving f measurePreserving_cos_chebyshev
+    ⇑(chebyshevCosineL2Equiv 𝕜 f) =ᵐ[chebyshevAngleMeasure] fun θ => f (Real.cos θ) := by
+  rw [chebyshevCosineL2Equiv]
+  simpa [Function.comp_def] using Lp.coeFn_compMeasurePreservingₗᵢEquiv 𝕜
+    measurePreserving_cos_chebyshev measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
 
 /-- The inverse Chebyshev-to-cosine equivalence is composition with `Real.arccos`. -/
 theorem chebyshevCosineL2Equiv_symm_apply (f : Lp 𝕜 2 chebyshevAngleMeasure) :
-    ⇑((chebyshevCosineL2Equiv 𝕜).symm f) =ᵐ[measureT] fun x => f (Real.arccos x) :=
-  by
-    rw [chebyshevCosineL2Equiv, LinearIsometryEquiv.coe_ofLinearIsometry_symm,
-      chebyshevArccosL2LinearMap_apply]
-    exact Lp.coeFn_compMeasurePreserving f measurePreserving_arccos_chebyshev
+    ⇑((chebyshevCosineL2Equiv 𝕜).symm f) =ᵐ[measureT] fun x => f (Real.arccos x) := by
+  rw [chebyshevCosineL2Equiv]
+  simpa [Function.comp_def] using Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm 𝕜
+    measurePreserving_cos_chebyshev measurePreserving_arccos_chebyshev cos_comp_arccos_ae f
 
 end L2
 
@@ -237,8 +167,7 @@ lemma integral_eval_T_real_measureT_eq_integral_chebyshevCosine (n : ℕ) :
 
 /-- Transfer a product of two Chebyshev `T` polynomials from `measureT` to the
 angular cosine-side integral. -/
-lemma integral_eval_T_real_mul_eval_T_real_measureT_eq_integral_chebyshevCosine_mul
-    (m n : ℕ) :
+lemma integral_eval_T_real_mul_eval_T_real_measureT_eq_integral_chebyshevCosine_mul (m n : ℕ) :
     ∫ x, (T ℝ m).eval x * (T ℝ n).eval x ∂Polynomial.Chebyshev.measureT =
       ∫ θ in (0)..Real.pi, chebyshevCosine m θ * chebyshevCosine n θ := by
   rw [integral_measureT_eq_integral_cos]

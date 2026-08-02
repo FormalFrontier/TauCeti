@@ -310,8 +310,7 @@ theorem map_iSup {ι : Sort*} (f : Comodule.Hom R C M M') (N : ι → Subcomodul
 
 /-- The image of a finite join is the finite join of the images. -/
 @[simp]
-theorem map_finset_sup (s : Finset ι) (f : Comodule.Hom R C M M')
-    (N : ι → Subcomodule R C M) :
+theorem map_finset_sup (s : Finset ι) (f : Comodule.Hom R C M M') (N : ι → Subcomodule R C M) :
     (s.sup N).map f = s.sup fun i => (N i).map f := by
   induction s using Finset.cons_induction with
   | empty => rw [Finset.sup_empty, Finset.sup_empty, map_bot]

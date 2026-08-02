@@ -204,8 +204,7 @@ normalization, so no `ℝ`-valued form is available without pinning a branch. -/
 theorem coe_crossingAngle_eq_arg_neg_div_add_arg_div_sub_arg_div {γ : ℝ → ℂ} {t₀ : ℝ}
     {L_R L_L w_L w_R : ℂ} (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0) (hw_L : w_L ≠ 0) (hw_R : w_R ≠ 0)
     (h_R : Filter.Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
-    (h_L : Filter.Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) :
-    (crossingAngle γ t₀ : Real.Angle)
+    (h_L : Filter.Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) : (crossingAngle γ t₀ : Real.Angle)
       = ((((-L_L) / w_L).arg : ℝ) : Real.Angle) + (((w_R / L_R).arg : ℝ) : Real.Angle)
         - (((w_R / w_L).arg : ℝ) : Real.Angle) := by
   rw [crossingAngle_eq_of_tendsto h_R h_L, Real.Angle.coe_toIcoMod,
@@ -495,8 +494,7 @@ one-sided derivative limits at `t₀` are `L_R` and `L_L`, both non-zero, then t
 of the unit tangent directions agree — the raw sector equation the higher-order
 principal-value theorems consume. -/
 theorem pow_unit_tangent_eq_of_resonance {γ : ℝ → ℂ} {t₀ : ℝ} {L_R L_L : ℂ} {k : ℕ}
-    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
-    (h_R : Filter.Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
+    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0) (h_R : Filter.Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_L : Filter.Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (h_res : ∃ m : ℤ, (k : ℝ) * crossingAngle γ t₀ = (m : ℝ) * (2 * Real.pi)) :
     (L_R / (‖L_R‖ : ℂ)) ^ k = ((-L_L) / (‖L_L‖ : ℂ)) ^ k := by
@@ -509,8 +507,7 @@ theorem pow_unit_tangent_eq_of_resonance {γ : ℝ → ℂ} {t₀ : ℝ} {L_R L_
 `pow_unit_tangent_eq_of_resonance`, with the outgoing tangent limit at `a` and the incoming
 tangent limit at `b` — the raw sector equation at the basepoint of a closed curve. -/
 theorem pow_unit_tangent_eq_of_basepoint_resonance {γ : ℝ → ℂ} {a b : ℝ} {L_R L_L : ℂ}
-    {k : ℕ} (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
-    (h_R : Filter.Tendsto (deriv γ) (𝓝[>] a) (𝓝 L_R))
+    {k : ℕ} (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0) (h_R : Filter.Tendsto (deriv γ) (𝓝[>] a) (𝓝 L_R))
     (h_L : Filter.Tendsto (deriv γ) (𝓝[<] b) (𝓝 L_L))
     (h_res : ∃ m : ℤ, (k : ℝ) * basepointAngle γ a b = (m : ℝ) * (2 * Real.pi)) :
     (L_R / (‖L_R‖ : ℂ)) ^ k = ((-L_L) / (‖L_L‖ : ℂ)) ^ k := by

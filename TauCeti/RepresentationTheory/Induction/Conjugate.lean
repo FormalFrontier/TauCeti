@@ -99,14 +99,12 @@ theorem mem_conj_smul (s : G) (H : Subgroup G) (x : G) :
   simp
 
 /-- The canonical multiplicative equivalence `sHs⁻¹ ≃* H`, given by `x ↦ s⁻¹xs`. -/
-def conjSubgroupEquiv (s : G) (H : Subgroup G) :
-    (MulAut.conj s • H : Subgroup G) ≃* H :=
+def conjSubgroupEquiv (s : G) (H : Subgroup G) : (MulAut.conj s • H : Subgroup G) ≃* H :=
   (Subgroup.equivSMul (MulAut.conj s) H).symm
 
 @[simp]
 theorem coe_conjSubgroupEquiv_apply (s : G) (H : Subgroup G)
-    (x : (MulAut.conj s • H : Subgroup G)) :
-    (conjSubgroupEquiv s H x : G) = s⁻¹ * (x : G) * s := by
+    (x : (MulAut.conj s • H : Subgroup G)) : (conjSubgroupEquiv s H x : G) = s⁻¹ * (x : G) * s := by
   simp [conjSubgroupEquiv]
   -- `Subgroup.equivSMul (MulAut.conj s) H` acts by `x ↦ s * x * s⁻¹`, so its inverse returns
   -- `s⁻¹ * x * s` as the underlying element by definition.
@@ -130,8 +128,7 @@ def conjRep [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
 
 /-- Conjugation preserves the underlying module of a representation. -/
 @[simp]
-theorem conjRep_V [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) :
-    (conjRep s A).V = A.V := by
+theorem conjRep_V [Semiring k] (s : G) {H : Subgroup G} (A : Rep k H) : (conjRep s A).V = A.V := by
   -- Unfold the local wrappers to expose Mathlib's restriction carrier.
   change (Rep.res (conjSubgroupEquiv s H).toMonoidHom A).V = A.V
   exact Rep.res_obj_V _ _
@@ -224,8 +221,7 @@ theorem conj_inv_smul_smul (s : G) (H : Subgroup G) :
 
 /-- The transported form of `conjSubgroupEquiv 1`: conjugating by `1` is the identification of
 `1 · H · 1⁻¹` with `H`. -/
-private theorem conjSubgroupEquiv_one (H : Subgroup G) :
-    (conjSubgroupEquiv (1 : G) H).toMonoidHom =
+private theorem conjSubgroupEquiv_one (H : Subgroup G) : (conjSubgroupEquiv (1 : G) H).toMonoidHom =
       (MulEquiv.subgroupCongr (conj_one_smul H)).toMonoidHom :=
   MonoidHom.ext fun x => Subtype.ext (by simp)
 
@@ -243,8 +239,7 @@ composed with the one underlying `{}^s`, after identifying `(st)H(st)⁻¹` with
 This is the sole computation behind the coherence statements below: `(st)⁻¹ x (st) = t⁻¹(s⁻¹ x s)t`.
 -/
 private theorem conjSubgroupEquiv_mul (s t : G) (H : Subgroup G) :
-    (conjSubgroupEquiv (s * t) H).toMonoidHom =
-      ((conjSubgroupEquiv t H).toMonoidHom.comp
+    (conjSubgroupEquiv (s * t) H).toMonoidHom = ((conjSubgroupEquiv t H).toMonoidHom.comp
           (conjSubgroupEquiv s (MulAut.conj t • H)).toMonoidHom).comp
         (MulEquiv.subgroupCongr (conj_mul_smul s t H)).toMonoidHom :=
   MonoidHom.ext fun x => Subtype.ext (by
@@ -314,8 +309,7 @@ theorem conjRepEquiv_functor (s : G) (H : Subgroup G) :
   rw [resFunctorEquiv_functor]
 
 @[simp]
-theorem conjRepEquiv_inverse (s : G) (H : Subgroup G) :
-    (conjRepEquiv (k := k) s H).inverse =
+theorem conjRepEquiv_inverse (s : G) (H : Subgroup G) : (conjRepEquiv (k := k) s H).inverse =
       Rep.resFunctor (conjSubgroupEquiv s H).symm.toMonoidHom := by
   -- Unfold the `conjRepEquiv` wrapper to expose `resFunctorEquiv`.
   change (resFunctorEquiv (conjSubgroupEquiv s H)).inverse = _
@@ -360,8 +354,7 @@ theorem res_obj_eq_conjFDRep (s : G) (H : Subgroup G) (A : FDRep k H) :
 
 /-- Conjugation preserves the underlying module of a finite-dimensional representation. -/
 @[simp]
-theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) :
-    (conjFDRep s A).V = A.V := by
+theorem conjFDRep_V (s : G) {H : Subgroup G} (A : FDRep k H) : (conjFDRep s A).V = A.V := by
   -- Unfold the local wrappers to expose Mathlib's restriction carrier.
   change ((Action.res (FGModuleCat k) (conjSubgroupEquiv s H).toMonoidHom).obj A).V = A.V
   exact Action.res_obj_V _ _ _
@@ -423,8 +416,7 @@ theorem conjFDRepEquiv_functor (s : G) (H : Subgroup G) :
   rfl
 
 @[simp]
-theorem conjFDRepEquiv_inverse (s : G) (H : Subgroup G) :
-    (conjFDRepEquiv (k := k) s H).inverse =
+theorem conjFDRepEquiv_inverse (s : G) (H : Subgroup G) : (conjFDRepEquiv (k := k) s H).inverse =
       Action.res (FGModuleCat k) (conjSubgroupEquiv s H).symm.toMonoidHom := by
   -- Unfold the `conjFDRepEquiv` wrapper to expose Mathlib's `Action.resEquiv`.
   change (Action.resEquiv (FGModuleCat k) (conjSubgroupEquiv s H)).inverse = _
@@ -518,8 +510,7 @@ theorem char_conjFDRep (s : G) {H : Subgroup G} (A : FDRep k H)
 
 /-- The conjugate-character formula `({}^s χ)(x) = χ(s⁻¹xs)`. -/
 theorem char_conjFDRep_mk (s : G) {H : Subgroup G} (A : FDRep k H)
-    (x : (MulAut.conj s • H : Subgroup G)) :
-    (conjFDRep s A).character x =
+    (x : (MulAut.conj s • H : Subgroup G)) : (conjFDRep s A).character x =
       A.character ⟨s⁻¹ * (x : G) * s, (mem_conj_smul s H x).mp x.2⟩ := by
   rw [char_conjFDRep]
   congr 1
@@ -740,8 +731,7 @@ theorem res_conjFDRepFunctor (g : G) :
   rfl
 
 /-- On a normal subgroup, `conjNormalFDRep` is `conjFDRep` read through `gNg⁻¹ = N`. -/
-theorem res_conjFDRep (g : G) (A : FDRep k N) :
-    (Action.res (FGModuleCat k)
+theorem res_conjFDRep (g : G) (A : FDRep k N) : (Action.res (FGModuleCat k)
         (MulEquiv.subgroupCongr (Subgroup.Normal.conj_smul_eq_self g N).symm).toMonoidHom).obj
       (conjFDRep g A) = conjNormalFDRep g A :=
   Functor.congr_obj (res_conjFDRepFunctor g) A

@@ -106,15 +106,13 @@ theorem mem_sSup_finiteSubcoalgebras {c : C} :
     mem_sSup_of_directedOn nonempty_finiteSubcoalgebras directedOn_finiteSubcoalgebras
 
 /-- The carrier of the supremum of the module-finite subcoalgebras is their literal union. -/
-theorem coe_sSup_finiteSubcoalgebras :
-    (↑(sSup (finiteSubcoalgebras R C)) : Set C) =
+theorem coe_sSup_finiteSubcoalgebras : (↑(sSup (finiteSubcoalgebras R C)) : Set C) =
       ⋃ D ∈ finiteSubcoalgebras R C, (D : Set C) :=
   coe_sSup_of_directedOn nonempty_finiteSubcoalgebras directedOn_finiteSubcoalgebras
 
 /-- If every element is contained in a module-finite subcoalgebra, then every finite subset is
 contained in one module-finite subcoalgebra. -/
-theorem exists_finite_subcoalgebra_of_setFinite_of_exists_mem
-    (hcover : ∀ c : C,
+theorem exists_finite_subcoalgebra_of_setFinite_of_exists_mem (hcover : ∀ c : C,
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D)
     (s : Set C) (hs : s.Finite) :
     ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ s ⊆ D := by
@@ -133,8 +131,7 @@ theorem exists_finite_subcoalgebra_of_setFinite_of_exists_mem
 
 /-- If every element is contained in a module-finite subcoalgebra, then every module-finite
 submodule is contained in one module-finite subcoalgebra. -/
-theorem exists_finite_subcoalgebra_of_finite_submodule_of_exists_mem
-    (hcover : ∀ c : C,
+theorem exists_finite_subcoalgebra_of_finite_submodule_of_exists_mem (hcover : ∀ c : C,
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D)
     (M : Submodule R C) [Module.Finite R M] :
     ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ M ≤ D.toSubmodule := by
@@ -148,8 +145,7 @@ theorem exists_finite_subcoalgebra_of_finite_submodule_of_exists_mem
 
 /-- If every element is contained in a module-finite subcoalgebra, then the supremum of all
 module-finite subcoalgebras is the whole coalgebra. -/
-theorem sSup_finiteSubcoalgebras_eq_top_of_exists_mem
-    (hcover : ∀ c : C,
+theorem sSup_finiteSubcoalgebras_eq_top_of_exists_mem (hcover : ∀ c : C,
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D) :
     sSup (finiteSubcoalgebras R C) = ⊤ := by
   apply top_unique
@@ -158,8 +154,7 @@ theorem sSup_finiteSubcoalgebras_eq_top_of_exists_mem
 
 /-- If every element is contained in a module-finite subcoalgebra, then the literal union of
 all module-finite subcoalgebras is the whole carrier. -/
-theorem iUnion_finiteSubcoalgebras_eq_univ_of_exists_mem
-    (hcover : ∀ c : C,
+theorem iUnion_finiteSubcoalgebras_eq_univ_of_exists_mem (hcover : ∀ c : C,
       ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D) :
     (⋃ D ∈ finiteSubcoalgebras R C, (D : Set C)) = Set.univ := by
   rw [← coe_sSup_finiteSubcoalgebras,

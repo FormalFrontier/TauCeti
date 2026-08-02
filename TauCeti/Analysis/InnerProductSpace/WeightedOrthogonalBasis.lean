@@ -96,8 +96,7 @@ private theorem integral_mul_withDensity {μ : Measure α}
 /-- The `w·μ`-integral of the product of two normalized real functions is the Kronecker delta. -/
 private theorem integral_bareNormalized_real {μ : Measure α}
     (hwnn : ∀ᵐ x ∂μ, 0 ≤ w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
-    (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
-    (m n : ℕ) :
+    (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0) (m n : ℕ) :
     (∫ x, (f m x / Real.sqrt (c m)) * (f n x / Real.sqrt (c n))
         ∂(μ.withDensity (fun x => ENNReal.ofReal (w x))))
       = if m = n then 1 else 0 := by
@@ -168,8 +167,7 @@ noncomputable def hilbertBasisOfWeightedMeasure {μ : Measure α}
     (hwnn : ∀ᵐ x ∂μ, 0 ≤ w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) (f n x / Real.sqrt (c n))) 2
-      (μ.withDensity (fun x => ENNReal.ofReal (w x))))
-    (hcomplete :
+      (μ.withDensity (fun x => ENNReal.ofReal (w x)))) (hcomplete :
       (Submodule.span 𝕜 (Set.range (bareNormalizedLp (𝕜 := 𝕜) f w c hmem)))ᗮ = ⊥) :
     HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (μ.withDensity (fun x => ENNReal.ofReal (w x)))) :=
   HilbertBasis.mkOfOrthogonalEqBot
@@ -180,8 +178,7 @@ theorem coe_hilbertBasisOfWeightedMeasure {μ : Measure α}
     (hwnn : ∀ᵐ x ∂μ, 0 ≤ w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) (f n x / Real.sqrt (c n))) 2
-      (μ.withDensity (fun x => ENNReal.ofReal (w x))))
-    (hcomplete :
+      (μ.withDensity (fun x => ENNReal.ofReal (w x)))) (hcomplete :
       (Submodule.span 𝕜 (Set.range (bareNormalizedLp (𝕜 := 𝕜) f w c hmem)))ᗮ = ⊥) :
     ⇑(hilbertBasisOfWeightedMeasure f w c hwnn hwm hc horth hmem hcomplete)
       = bareNormalizedLp (𝕜 := 𝕜) f w c hmem :=
@@ -194,8 +191,7 @@ noncomputable def hilbertBasisOfOrthogonalSystem {μ : Measure α}
     (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) (f n x / Real.sqrt (c n))) 2
-      (μ.withDensity (fun x => ENNReal.ofReal (w x))))
-    (hcomplete :
+      (μ.withDensity (fun x => ENNReal.ofReal (w x)))) (hcomplete :
       (Submodule.span 𝕜 (Set.range (bareNormalizedLp (𝕜 := 𝕜) f w c hmem)))ᗮ = ⊥) :
     HilbertBasis ℕ 𝕜 (Lp 𝕜 2 μ) :=
   (hilbertBasisOfWeightedMeasure f w c (hwpos.mono fun _ hx => hx.le) hwm hc horth hmem
@@ -207,8 +203,7 @@ theorem coe_hilbertBasisOfOrthogonalSystem {μ : Measure α}
     (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) (f n x / Real.sqrt (c n))) 2
-      (μ.withDensity (fun x => ENNReal.ofReal (w x))))
-    (hcomplete :
+      (μ.withDensity (fun x => ENNReal.ofReal (w x)))) (hcomplete :
       (Submodule.span 𝕜 (Set.range (bareNormalizedLp (𝕜 := 𝕜) f w c hmem)))ᗮ = ⊥) (n : ℕ) :
     hilbertBasisOfOrthogonalSystem f w c hwpos hwm hc horth hmem hcomplete n
       = weightL2Isometry μ w hwpos hwm (bareNormalizedLp (𝕜 := 𝕜) f w c hmem n) := by
