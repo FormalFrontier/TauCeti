@@ -20,8 +20,10 @@ predicate whose whole point is to be a hypothesis: layer **L5** of
 homeomorphism of closures", and the disc is the *target* of that map rather than an interesting
 source. This file adds the first substantial family: **every bounded convex domain of `ℂ` is a
 Jordan domain**, and more generally the interior of any bounded convex set with nonempty interior
-is one. An elliptical disc, the interior of a convex polygon, and any bounded intersection of open
-half-planes all fall under it.
+is one. An elliptical disc, the interior of a convex polygon with nonempty interior, and any
+nonempty bounded intersection of *finitely many* open half-planes all fall under it. Finiteness is
+not decoration: an infinite intersection of open half-planes is convex but need not be open, so
+only its interior is a domain.
 
 ## The Schoenflies question, in the convex case
 
@@ -50,12 +52,13 @@ A Jordan domain carries the geometric hypotheses that the unproved direction of 
 consumes: `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` and its uniform form
 `TauCeti.IsJordanDomain.isUniformlyLocallyConnected_frontier`, which is what
 `Conformal/CutDiameter.lean` names as the second of its two geometric inputs. A bounded convex
-domain also carries a Riemann map, since a nonempty convex set is contractible, hence simply
-connected; that specialization of the Riemann mapping theorem is
-`TauCeti.exists_bijOn_ball_differentiableOn_invFunOn_of_convex`, in
-`Conformal/RiemannMapping/Existence.lean`. So a bounded convex domain instantiates *both* halves of
-the L5 milestone's hypothesis at once — a Jordan domain together with the conformal map of it whose
-boundary behaviour the milestone is about — which no set other than the disc did before.
+domain also carries a Riemann map, and needs no lemma of its own for it: a nonempty convex set is
+contractible (`Convex.contractibleSpace`), hence simply connected, and
+`TauCeti.IsJordanDomain.ne_univ` makes it proper, so
+`TauCeti.exists_bijOn_ball_differentiableOn_invFunOn` applies as it stands. So a bounded convex
+domain instantiates *both* halves of the L5 milestone's hypothesis at once — a Jordan domain
+together with the conformal map of it whose boundary behaviour the milestone is about — which no
+set other than the disc did before.
 
 ## Main results
 
@@ -137,9 +140,12 @@ theorem isJordanDomain_interior_of_convex (hs : Convex ℝ s) (hne : (interior s
 
 This is `TauCeti.isJordanDomain_interior_of_convex` at an open set. It is the first family of
 Jordan domains beyond the disc, and the one the L5 milestone can be read against: an elliptical
-disc, the interior of a convex polygon, and any bounded intersection of open half-planes are Jordan
-domains, and each of them carries a Riemann map whose boundary behaviour the milestone predicts
-(`TauCeti.exists_bijOn_ball_differentiableOn_invFunOn_of_convex`). -/
+disc, the interior of a convex polygon with nonempty interior, and any nonempty bounded
+intersection of *finitely many* open half-planes are Jordan domains — finitely many, since an
+infinite intersection of open half-planes need not be open, and then it is its interior that
+`TauCeti.isJordanDomain_interior_of_convex` covers. Each of them carries a Riemann map, whose
+boundary behaviour the milestone predicts, by `TauCeti.exists_bijOn_ball_differentiableOn_invFunOn`
+at a convex set. -/
 theorem isJordanDomain_of_convex (hs : Convex ℝ s) (ho : IsOpen s) (hne : s.Nonempty)
     (hb : IsBounded s) : IsJordanDomain s := by
   have h := isJordanDomain_interior_of_convex hs (by rwa [ho.interior_eq]) hb

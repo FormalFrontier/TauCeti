@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Koebe
 public import Mathlib.Analysis.Calculus.Deriv.Basic
-import Mathlib.Analysis.Convex.Contractible
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 
 /-!
@@ -41,10 +40,6 @@ hypothesis, where this file constructs one.
 
 * `TauCeti.riemannMapping` — the theorem.
 * `TauCeti.exists_bijOn_ball_differentiableOn_invFunOn` — the same map with a holomorphic inverse.
-* `TauCeti.exists_bijOn_ball_differentiableOn_invFunOn_of_convex` — the convex case, where simple
-  connectivity is automatic. The bounded instances of it are the convex Jordan domains of
-  `Conformal/JordanDomain/Convex.lean`, which is what layer **L5** of
-  `TauCetiRoadmap/ConformalMapping/README.md` reads a Riemann map against.
 
 ## Coordination with upstream Mathlib
 
@@ -96,28 +91,5 @@ theorem exists_bijOn_ball_differentiableOn_invFunOn {Ω : Set ℂ} (hΩo : IsOpe
   -- Dot notation would resolve to `Function.invFunOn`; name the lemma explicitly.
   have hinv := TauCeti.DifferentiableOn.invFunOn hfd hΩo hbij.injOn
   rwa [hbij.image_eq] at hinv
-
-/-- **A nonempty convex proper open subset of `ℂ` is biholomorphic to the unit disc.**
-
-Simple connectivity, the one hypothesis of `TauCeti.exists_bijOn_ball_differentiableOn_invFunOn`
-that is not immediate for a convex set, comes for free: a nonempty convex set is contractible
-(`Convex.contractibleSpace`). Properness is left as the hypothesis it is, since it is the only
-restriction convexity does not remove — a half-plane and a strip are both admitted, and boundedness
-is not needed.
-
-The bounded instances are the convex Jordan domains (`TauCeti.isJordanDomain_of_convex`), which is
-where this is read together with layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`: they
-supply a Jordan domain together with the conformal map of it whose boundary behaviour the milestone
-predicts. -/
-theorem exists_bijOn_ball_differentiableOn_invFunOn_of_convex {Ω : Set ℂ} (hΩ : Convex ℝ Ω)
-    (hΩo : IsOpen Ω) (hne : Ω.Nonempty) (hproper : Ω ≠ univ) :
-    ∃ f : ℂ → ℂ, BijOn f Ω (ball 0 1) ∧ DifferentiableOn ℂ f Ω ∧
-      DifferentiableOn ℂ (Function.invFunOn f Ω) (ball 0 1) ∧
-      LeftInvOn (Function.invFunOn f Ω) f Ω ∧
-      RightInvOn (Function.invFunOn f Ω) f (ball 0 1) := by
-  have hΩc : IsSimplyConnected Ω :=
-    haveI : ContractibleSpace Ω := hΩ.contractibleSpace hne
-    SimplyConnectedSpace.ofContractible _
-  exact exists_bijOn_ball_differentiableOn_invFunOn hΩo hΩc hproper
 
 end TauCeti
