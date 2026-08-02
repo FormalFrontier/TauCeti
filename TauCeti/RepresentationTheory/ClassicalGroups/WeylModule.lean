@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.CharP.Algebra
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import Mathlib.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower
 public import TauCeti.RepresentationTheory.Symmetric.Relabel
@@ -29,12 +30,16 @@ Two facts make the construction usable.  Relabeling the tableau moves the Weyl m
 corresponding factor permutation, which is itself `GL n k`-equivariant, so the Weyl modules of
 two tableaux of the same shape are isomorphic representations
 (`TauCeti.YoungTableau.weylRepEquiv`): up to isomorphism the Weyl module depends only on the
-shape.  And the Weyl module is nonzero as soon as the shape has at most `n` rows
-(`TauCeti.YoungTableau.weylModule_ne_bot`), which is proved by evaluating a coordinate
-functional on `c_t · (e_{r(1)} ⊗ ⋯ ⊗ e_{r(d)})`, where `r` records the row of each label: the
-surviving terms are exactly the row group, each contributing `1`, so the value is the order of
-the row group, nonzero in characteristic zero.  The converse (the Weyl module vanishes when the
-shape has more than `n` rows) is not proved here.
+shape.  And the Weyl module is nonzero exactly when the shape has at most `n` rows
+(`TauCeti.YoungTableau.weylModule_eq_bot_iff`).  Nonvanishing
+(`TauCeti.YoungTableau.weylModule_ne_bot`) is proved by evaluating a coordinate functional on
+`c_t · (e_{r(1)} ⊗ ⋯ ⊗ e_{r(d)})`, where `r` records the row of each label: the surviving terms
+are exactly the row group, each contributing `1`, so the value is the order of the row group,
+nonzero in characteristic zero.  Vanishing (`TauCeti.YoungTableau.weylModule_eq_bot`) is the
+transposition trick: if the first column is longer than `n` then, on each basis pure tensor, two
+of its labels carry the same basis index, so their transposition lies in the column group and
+fixes that pure tensor while negating `c_t`; the value is its own negative, hence zero because
+`2` is invertible.
 
 The Young symmetrizer is built over `ℚ`, so the coefficients are transported into the base ring
 along `algebraMap ℚ k`; the base ring is therefore a `ℚ`-algebra throughout, which is the
@@ -55,6 +60,10 @@ characteristic-zero setting the roadmap works in.
   isomorphic representations of `GL n k`.
 * `TauCeti.YoungTableau.weylModule_ne_bot`: the Weyl module is nonzero when the shape has at
   most `n` rows.
+* `TauCeti.YoungTableau.weylModule_eq_bot`: the Weyl module vanishes when the shape has more
+  than `n` rows.
+* `TauCeti.YoungTableau.weylModule_eq_bot_iff`: the two directions combined, the vanishing
+  criterion.
 
 ## References
 
@@ -278,7 +287,7 @@ noncomputable def weylRepEquiv (t t' : YoungTableau μ) :
     (weylRep k n t).Equiv (weylRep k n t') :=
   relabel_relabelPerm t t' ▸ weylRelabelRepEquiv (relabelPerm t t') t
 
-/-! ### The Weyl module of a shape with at most `n` rows is nonzero -/
+/-! ### The vanishing criterion -/
 
 open Finset in
 /-- The Weyl module of a `μ`-tableau is nonzero as soon as `μ` has at most `n` rows.
@@ -360,6 +369,91 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
     refine Nat.cast_ne_zero.mpr (Finset.card_ne_zero_of_mem (a := 1) ?_)
     exact (hmemS 1).mpr (one_mem _)
   exact hne key.symm
+
+/-- The Weyl module of a `μ`-tableau vanishes as soon as `μ` has more than `n` rows.
+
+The `|μ|`-fold tensor power is spanned by the pure tensors `e_{p(1)} ⊗ ⋯ ⊗ e_{p(d)}` of standard
+basis vectors.  The first column of `μ` is longer than `n`, so two of its labels `x ≠ y` have
+`p x = p y`; the transposition of `x` and `y` then lies in the column group of `t`, so it fixes
+that pure tensor while multiplying `c_t` on the right by it negates `c_t`.  The value of `c_t` on
+the pure tensor is therefore its own negative, hence zero because `2` is invertible in a
+`ℚ`-algebra. -/
+theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
+    (weylModule k n t).toSubmodule = ⊥ := by
+  classical
+  haveI : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
+  haveI : Invertible (2 : k) := by
+    have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
+    rwa [map_ofNat] at h
+  -- the labels of the first column outnumber the basis indices
+  have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
+    rw [μ.colLen_eq_card, ← Fintype.card_coe]
+    exact Fintype.card_congr (colFiberEquiv t 0)
+  have hzero : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) = 0 := by
+    refine (Basis.piTensorProduct fun _ : Fin μ.card => Pi.basisFun k (Fin n)).ext fun p => ?_
+    rw [Basis.piTensorProduct_apply, LinearMap.zero_apply]
+    simp only [Pi.basisFun_apply]
+    -- two labels of the first column carry the same basis index
+    obtain ⟨a, b, hab, hpab⟩ :=
+      Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
+        (by rw [hcard, Fintype.card_fin]; exact hn)
+    have hxy : (a : Fin μ.card) ≠ (b : Fin μ.card) := fun h => hab (Subtype.ext h)
+    have hτ : Equiv.swap (a : Fin μ.card) (b : Fin μ.card) ∈ colSubgroup t :=
+      swap_mem_colSubgroup (by rw [a.2, b.2])
+    -- their transposition fixes the pure tensor
+    have hfix : (fun i => (Pi.single
+          (p ((Equiv.swap (a : Fin μ.card) (b : Fin μ.card)).symm i)) (1 : k) : Fin n → k)) =
+        fun i => (Pi.single (p i) (1 : k) : Fin n → k) := by
+      funext i
+      rw [Equiv.symm_swap]
+      rcases eq_or_ne i (a : Fin μ.card) with rfl | h1
+      · rw [Equiv.swap_apply_left, hpab]
+      · rcases eq_or_ne i (b : Fin μ.card) with rfl | h2
+        · rw [Equiv.swap_apply_right, hpab]
+        · rw [Equiv.swap_apply_of_ne_of_ne h1 h2]
+    -- and multiplying the symmetrizer on the right by it negates the symmetrizer
+    have hc : youngSymmetrizerOver k t *
+        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
+        -youngSymmetrizerOver k t := by
+      have h := mul_youngSymmetrizer_right t ⟨_, hτ⟩
+      rw [Equiv.Perm.sign_swap hxy] at h
+      have h' := congrArg (MonoidAlgebra.mapAlgHom (Equiv.Perm (Fin μ.card)) (Algebra.ofId ℚ k))
+        (by simpa using h :
+          youngSymmetrizer t *
+              MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
+            -youngSymmetrizer t)
+      rw [map_mul, map_neg, MonoidAlgebra.mapAlgHom_single, map_one] at h'
+      exact h'
+    -- so the value of the symmetrizer on the pure tensor is its own negative
+    have h : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t *
+          MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1)
+          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) =
+        permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) := by
+      rw [map_mul, Module.End.mul_apply, ← MonoidAlgebra.of_apply, permTensorActionAlgHom_of,
+        permTensorAction_apply, LinearEquiv.coe_toLinearMap, PiTensorProduct.reindex_tprod, hfix]
+    have hneg : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) =
+        -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) := by
+      conv_lhs => rw [← h]
+      rw [hc, map_neg, LinearMap.neg_apply]
+    have htwo : (2 : k) • permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) = 0 := by
+      rw [two_smul]
+      nth_rewrite 2 [hneg]
+      rw [add_neg_cancel]
+    have := congrArg (fun w => (⅟(2 : k)) • w) htwo
+    simpa [smul_smul] using this
+  rw [weylModule_toSubmodule, hzero, LinearMap.range_zero]
+
+/-- **The vanishing criterion for the Weyl module**: it vanishes exactly when the shape has more
+rows than the dimension of the standard representation. -/
+theorem weylModule_eq_bot_iff [Nontrivial k] (t : YoungTableau μ) :
+    (weylModule k n t).toSubmodule = ⊥ ↔ n < μ.colLen 0 := by
+  refine ⟨fun h => ?_, weylModule_eq_bot t⟩
+  by_contra hle
+  exact weylModule_ne_bot t (not_lt.mp hle) h
 
 /-! ### Invariants of the Weyl module -/
 
