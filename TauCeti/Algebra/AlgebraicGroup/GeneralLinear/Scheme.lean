@@ -282,9 +282,9 @@ instance isAffine_groupScheme : IsAffine (groupScheme R n).X.left := by
 instance locallyOfFiniteType_groupScheme :
     LocallyOfFiniteType (groupScheme R n).X.hom := by
   rw [groupScheme_X_hom]
-  letI : LocallyOfFiniteType (groupSchemeSpecIso R n).hom :=
+  let : LocallyOfFiniteType (groupSchemeSpecIso R n).hom :=
     locallyOfFiniteType_of_isOpenImmersion _
-  letI : LocallyOfFiniteType
+  let : LocallyOfFiniteType
       (Spec.map (CommRingCat.ofHom (algebraMap R (CoordinateRing R n)))) := by
     rw [← AlgebraicGeometry.specOverSpec_over]
     infer_instance
