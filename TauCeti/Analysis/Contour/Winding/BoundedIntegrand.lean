@@ -15,7 +15,7 @@ For a `C²` immersed plane curve `γ` and a point `w`, the real winding integran
 
 `realWindingIntegrand (γ t - w) (deriv γ t)`
 
-is bounded on every compact parameter interval, even when `γ` passes through `w`.  This is the
+is bounded on every compact parameter set, even when `γ` passes through `w`.  This is the
 smooth case of the bounded-integrand assertion in Hungerbühler--Wasem Proposition 2.3.  At a
 crossing the displayed function is defined to be zero, while its punctured limit is half the
 signed curvature times speed.  The proof fills in the crossing values by those finite limits,
@@ -31,7 +31,7 @@ because Mathlib has no signed-curvature API for plane curves.
 ## Main result
 
 * `TauCeti.Contour.isBounded_image_realWindingIntegrand` -- the real winding integrand of a `C²`
-  immersion has bounded image on a compact parameter interval, without an avoidance hypothesis.
+  immersion has bounded image on a compact parameter set, without an avoidance hypothesis.
 
 ## References
 
@@ -87,21 +87,19 @@ private theorem continuousAt_crossingValue {γ : ℝ → ℂ} {t : ℝ}
 private theorem continuousAt_realWindingIntegrand {γ : ℝ → ℂ} {w : ℂ} {t : ℝ}
     (hγ : ContDiffAt ℝ 2 γ t) (havoid : γ t ≠ w) :
     ContinuousAt (fun s ↦ realWindingIntegrand (γ s - w) (deriv γ s)) t := by
-  rw [show (fun s ↦ realWindingIntegrand (γ s - w) (deriv γ s)) =
-      fun s ↦ (((γ s - w)⁻¹ * deriv γ s).im) from
-    funext fun s ↦ realWindingIntegrand_def (γ s - w) (deriv γ s)]
+  simp_rw [realWindingIntegrand_def]
   exact Complex.continuous_im.continuousAt.comp
     (((hγ.continuousAt.sub continuousAt_const).inv₀ (sub_ne_zero.mpr havoid)).mul
       ((ContDiffAt.derivWithin (m := 0) hγ (by norm_num)).continuousAt))
 
 /-- Filling each crossing with its curvature-speed value makes the real winding integrand
-continuous on any open set where the curve is `C²` and immersed. -/
-private theorem continuousOn_realWindingIntegrandExtension {γ : ℝ → ℂ} {w : ℂ} {U K : Set ℝ}
-    (hU : IsOpen U) (hKU : K ⊆ U) (hγ : ContDiffOn ℝ 2 γ U)
+continuous on any set where the curve is pointwise `C²` and immersed. -/
+private theorem continuousOn_realWindingIntegrandExtension {γ : ℝ → ℂ} {w : ℂ} {K : Set ℝ}
+    (hγ : ∀ t ∈ K, ContDiffAt ℝ 2 γ t)
     (hvel : ∀ t ∈ K, deriv γ t ≠ 0) :
     ContinuousOn (realWindingIntegrandExtension γ w) K := by
   intro t ht
-  have hγt : ContDiffAt ℝ 2 γ t := hγ.contDiffAt (hU.mem_nhds (hKU ht))
+  have hγt : ContDiffAt ℝ 2 γ t := hγ t ht
   have hcurv := continuousAt_crossingValue hγt (hvel t ht)
   apply ContinuousAt.continuousWithinAt
   by_cases hcross : γ t = w
@@ -116,28 +114,25 @@ private theorem continuousOn_realWindingIntegrandExtension {γ : ℝ → ℂ} {w
     simp only [realWindingIntegrandExtension, if_neg hs]
 
 /-- **Hungerbühler--Wasem Proposition 2.3, bounded-integrand assertion in the `C²` case.**
-Let `γ` be `C²` on an open neighbourhood `U` of the compact parameter interval `[[a, b]]`, with
-nonzero velocity throughout that interval.  For every `w : ℂ`, the image of
+Let `γ` be pointwise `C²` with nonzero velocity on a compact parameter set `K`. For every `w : ℂ`,
+the image of
 
 `t ↦ realWindingIntegrand (γ t - w) (deriv γ t)`
 
-on `[[a, b]]` is bounded.  No avoidance hypothesis is imposed: at parameters where `γ t = w`,
+on `K` is bounded.  No avoidance hypothesis is imposed: at parameters where `γ t = w`,
 the real integrand is defined to be zero, and near each such parameter its finite punctured limit
 is the explicit half-curvature-times-speed value from
-`tendsto_realWindingIntegrand_at_crossing_of_contDiffAt`.
-
-The open-neighbourhood formulation ensures that the ordinary derivatives in the integrand are the
-derivatives controlled by the `C²` hypothesis, including at the interval endpoints. -/
-theorem isBounded_image_realWindingIntegrand {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} {U : Set ℝ}
-    (hU : IsOpen U) (hsub : uIcc a b ⊆ U) (hγ : ContDiffOn ℝ 2 γ U)
-    (hvel : ∀ t ∈ uIcc a b, deriv γ t ≠ 0) :
+`tendsto_realWindingIntegrand_at_crossing_of_contDiffAt`. -/
+theorem isBounded_image_realWindingIntegrand {γ : ℝ → ℂ} {w : ℂ} {K : Set ℝ}
+    (hK : IsCompact K) (hγ : ∀ t ∈ K, ContDiffAt ℝ 2 γ t)
+    (hvel : ∀ t ∈ K, deriv γ t ≠ 0) :
     Bornology.IsBounded
-      ((fun t ↦ realWindingIntegrand (γ t - w) (deriv γ t)) '' uIcc a b) := by
-  have hext_cont : ContinuousOn (realWindingIntegrandExtension γ w) (uIcc a b) :=
-    continuousOn_realWindingIntegrandExtension hU hsub hγ hvel
+      ((fun t ↦ realWindingIntegrand (γ t - w) (deriv γ t)) '' K) := by
+  have hext_cont : ContinuousOn (realWindingIntegrandExtension γ w) K :=
+    continuousOn_realWindingIntegrandExtension hγ hvel
   have hext_bdd : Bornology.IsBounded
-      (realWindingIntegrandExtension γ w '' uIcc a b) :=
-    (isCompact_uIcc.image_of_continuousOn hext_cont).isBounded
+      (realWindingIntegrandExtension γ w '' K) :=
+    (hK.image_of_continuousOn hext_cont).isBounded
   refine (hext_bdd.union (Set.finite_singleton (0 : ℝ)).isBounded).subset ?_
   rintro y ⟨t, ht, rfl⟩
   by_cases hcross : γ t = w
