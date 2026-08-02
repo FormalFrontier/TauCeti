@@ -192,10 +192,10 @@ theorem contDiff_integral_Icc_of_contDiff
 continuously differentiable in the endpoint. -/
 theorem ContDiff.contDiff_hadamardFactor_of_succ
     {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
-    (n : ℕ) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
+    (n : ℕ∞) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
     ContDiff ℝ n (hadamardFactor f x) := by
   rw [hadamardFactor_eq_integral_Icc]
-  apply contDiff_integral_Icc_of_contDiff (n : ℕ∞)
+  apply contDiff_integral_Icc_of_contDiff n
   have hd : ContDiff ℝ n (fderiv ℝ f) := hf.fderiv_right (m := n) (by norm_num)
   exact hd.comp <| by fun_prop
 
@@ -218,7 +218,4 @@ the endpoint. -/
 theorem ContDiff.contDiff_hadamardFactor [CompleteSpace F] (f : E → F)
     (hf : ContDiff ℝ ∞ f)
     (x : E) : ContDiff ℝ ∞ (hadamardFactor f x) := by
-  rw [hadamardFactor_eq_integral_Icc]
-  apply contDiff_integral_Icc_of_contDiff (⊤ : ℕ∞)
-  have hd : ContDiff ℝ ∞ (fderiv ℝ f) := hf.fderiv_right (m := ∞) (by simp)
-  exact hd.comp <| by fun_prop
+  simpa using ContDiff.contDiff_hadamardFactor_of_succ (⊤ : ℕ∞) f (by simpa using hf) x
