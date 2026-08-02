@@ -84,7 +84,11 @@ lemma hopfSpec_obj_tensor_X_left (H : CommHopfAlgCat.{u} R) :
   exact congrArg (fun k ↦ Limits.pullback k k) (eq_of_heq h)
 
 /-- Applying `algSpec` to an algebra homomorphism has underlying scheme map `Spec.map` of its
-underlying ring homomorphism. -/
+underlying ring homomorphism.
+
+Mathlib's `algSpec_map_left` leaves this map expressed through the `CommAlgCat`/under-category
+equivalence, and no public computation lemma exposes the resulting `Under.Hom.right`. The final
+reduction is therefore definitional and is localized here. -/
 @[simp↓]
 lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
     [Algebra R A] [Algebra R B] (f : A →ₐ[R] B) :
