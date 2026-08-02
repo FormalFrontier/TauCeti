@@ -184,13 +184,23 @@ private theorem contDiff_integral_Icc_of_contDiff_nat
 /-- Integration over the compact unit interval preserves continuous differentiability of any
 possibly infinite order in a parameter. -/
 theorem contDiff_integral_Icc_of_contDiff
-    {V : Type u} {W : Type max u v} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    {V : Type u} {W : Type v} [NormedAddCommGroup V] [NormedSpace ℝ V]
     [NormedAddCommGroup W] [NormedSpace ℝ W] [CompleteSpace W]
     (n : ℕ∞) (h : V → ℝ → W) (hh : ContDiff ℝ n h.uncurry) :
     ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t) := by
-  rw [contDiff_iff_forall_nat_le]
-  intro m hm
-  exact contDiff_integral_Icc_of_contDiff_nat m h (hh.of_le (by exact_mod_cast hm))
+  let eW : Type max u v := ULift.{u} W
+  let isoW : eW ≃L[ℝ] W := ContinuousLinearEquiv.ulift
+  let eh : V → ℝ → eW := fun x t ↦ isoW.symm (h x t)
+  have heh : ContDiff ℝ n eh.uncurry := by
+    apply isoW.symm.contDiff.comp hh
+  have he : ContDiff ℝ n (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, eh x t) := by
+    rw [contDiff_iff_forall_nat_le]
+    intro m hm
+    exact contDiff_integral_Icc_of_contDiff_nat m eh (heh.of_le (by exact_mod_cast hm))
+  convert isoW.contDiff.comp he using 1
+  funext x
+  simpa only [Function.comp_apply, eh, ContinuousLinearEquiv.apply_symm_apply] using
+    (isoW.integral_comp_comm (μ := volume.restrict (Set.Icc (0 : ℝ) 1)) (fun t ↦ eh x t))
 
 /-- If `f` is `n + 1` times continuously differentiable, its Hadamard factor is `n` times
 continuously differentiable in the endpoint. -/
