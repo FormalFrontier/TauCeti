@@ -7,6 +7,7 @@ module
 public import TauCeti.Algebra.Order.Ring.Units
 public import TauCeti.GroupTheory.Index
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.Basic
+public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
 
 /-!
 # Totally positive elements of a number field
@@ -37,7 +38,9 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
   `isTotallyPositive_sq`: the multiplicative structure, including that nonzero squares are totally
   positive.
 * `TauCeti.NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
-  kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`.
+  kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`. For a totally complex field
+  it is everything (`totallyPositiveUnits_eq_top`), since total positivity is then vacuous
+  (`not_isReal_of_isTotallyComplex` makes `IsTotallyPositive` `simp` to `True`).
 * `TauCeti.NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
   units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
   `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
@@ -108,6 +111,19 @@ theorem sq_mem_totallyPositiveUnits (u : Kˣ) : u ^ 2 ∈ totallyPositiveUnits :
   rw [mem_totallyPositiveUnits, Units.val_pow_eq_pow_val]
   exact isTotallyPositive_sq (Units.ne_zero u)
 
+/-- A **totally complex** field has no real infinite places. As a `simp` lemma this discharges the
+vacuous real-place hypotheses in totally-positive statements: `IsTotallyPositive x` then reduces to
+`True` (via `isTotallyPositive_iff`), so total positivity is automatic for every element. -/
+@[simp] theorem not_isReal_of_isTotallyComplex [IsTotallyComplex K] (w : InfinitePlace K) :
+    ¬ w.IsReal :=
+  not_isReal_iff_isComplex.mpr (IsTotallyComplex.isComplex w)
+
+/-- For a totally complex field every unit is (vacuously) totally positive:
+`totallyPositiveUnits = ⊤`. -/
+@[simp] theorem totallyPositiveUnits_eq_top [IsTotallyComplex K] :
+    totallyPositiveUnits (K := K) = ⊤ := by
+  ext u; simp
+
 variable [NumberField K]
 
 /-- The subgroup of **totally positive integer units** of `(𝓞 K)ˣ`: the preimage of
@@ -131,6 +147,13 @@ theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
     u ^ 2 ∈ totallyPositiveIntegerUnits := by
   rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
   exact sq_mem_totallyPositiveUnits _
+
+omit [NumberField K] in
+/-- For a totally complex field every integer unit is (vacuously) totally positive:
+`totallyPositiveIntegerUnits = ⊤`. -/
+@[simp] theorem totallyPositiveIntegerUnits_eq_top [IsTotallyComplex K] :
+    totallyPositiveIntegerUnits (K := K) = ⊤ := by
+  ext u; simp
 
 /-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
 infinite places, of the finite-index preimages of the positive units of `ℝ` (via the general
