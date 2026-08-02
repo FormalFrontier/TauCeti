@@ -21,6 +21,8 @@ a canonical linear map from the ordinary tangent space to the algebraic point de
 * `tangentToPointDerivation`: the point derivation associated to a tangent vector.
 * `tangentToPointDerivation_injective`: distinct tangent vectors induce distinct point derivations
   on finite-dimensional Hausdorff real manifolds.
+* `PointDerivation.congr_of_eventuallyEq`: on a finite-dimensional Hausdorff real manifold, a point
+  derivation depends only on the germ of a smooth function at its basepoint.
 * `tangentToPointDerivation_mfderiv`: this association commutes with differentials.
 
 ## References
@@ -136,6 +138,47 @@ theorem tangentToPointDerivation_injective
   change φ v = φ w
   rw [← hderiv v, ← hderiv w]
   exact hfv
+
+namespace PointDerivation
+
+/-- A point derivation on a finite-dimensional Hausdorff real manifold depends only on the germ of
+a smooth function at its basepoint. -/
+theorem congr_of_eventuallyEq
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] [T2Space M]
+    {x : M} (v : PointDerivation I x) (f g : C^∞⟮I, M; ℝ⟯)
+    (hfg : (f : M → ℝ) =ᶠ[𝓝 x] g) :
+    v f = v g := by
+  have hs : {y | f y = g y} ∈ 𝓝 x := hfg
+  obtain ⟨b, -, hb⟩ :=
+    (SmoothBumpFunction.nhds_basis_support (I := I) hs).mem_iff.mp hs
+  let b' : C^∞⟮I, M; ℝ⟯ := ⟨b, b.contMDiff⟩
+  have hprod : b' * (f - g) = 0 := by
+    ext y
+    -- Unbundle pointwise multiplication and subtraction of smooth maps.
+    change b y * (f y - g y) = 0
+    by_cases hy : b y = 0
+    · simp [hy]
+    · have hyb : y ∈ Function.support b := hy
+      have hyeq : f y = g y := hb hyb
+      simp [hyeq]
+  have hx : f x = g x := hfg.eq_of_nhds
+  have hleibniz := v.leibniz b' (f - g)
+  -- Reinterpret the global smooth-map equality in the pointed type synonym used by `v`.
+  have hprodAt : (b' * (f - g) : C^∞⟮I, M; ℝ⟯⟨x⟩) = 0 := hprod
+  have hzero : v (b' * (f - g) : C^∞⟮I, M; ℝ⟯⟨x⟩) = 0 := by
+    calc
+      _ = v 0 := congrArg v hprodAt
+      _ = 0 := v.map_zero
+  have heq := hzero.symm.trans hleibniz
+  -- Unfold the pointed scalar action as evaluation at `x` before simplifying the Leibniz rule.
+  change 0 = b x * v (f - g) + (f x - g x) * v b' at heq
+  simp [hx] at heq
+  have hsub : v (f - g : C^∞⟮I, M; ℝ⟯⟨x⟩) = v f - v g := v.map_sub f g
+  exact sub_eq_zero.mp (heq.trans hsub).symm
+
+end PointDerivation
 
 variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
   {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners 𝕜 E' H'}
