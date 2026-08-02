@@ -113,15 +113,19 @@ theorem character_mul_comm (g h : G) :
   Representation.char_mul_comm π.toRepresentation g h
 
 /-- The character of the trivial representation is the constant function at the dimension: every
-action operator is the identity, whose trace is the dimension. -/
+action operator is the identity, whose trace is the dimension. The trivial action is constant, so
+`continuous_const` is its continuity witness. -/
 @[simp]
-theorem character_trivial (htrivial : Continuous (ContRepresentation.trivial 𝕜 G V)) :
-    character (ContRepresentation.trivial 𝕜 G V) htrivial =
+theorem character_trivial :
+    character (ContRepresentation.trivial 𝕜 G V) continuous_const =
       ContinuousMap.const G (Module.finrank 𝕜 V : 𝕜) := by
   ext g
   have hid : ((ContRepresentation.trivial 𝕜 G V g : V →L[𝕜] V) : V →ₗ[𝕜] V) = LinearMap.id :=
     LinearMap.ext fun v ↦ ContRepresentation.trivial_apply (R := 𝕜) (G := G) (V := V) g v
-  rw [character_apply, hid, LinearMap.trace_id, ContinuousMap.const_apply]
+  -- `character_apply` gets its arguments explicitly: `continuous_const` has the required type only
+  -- after unfolding `trivial`, which the matching of `rw` does not do.
+  rw [character_apply (ContRepresentation.trivial 𝕜 G V) continuous_const, hid,
+    LinearMap.trace_id, ContinuousMap.const_apply]
 
 /-- Restricting a representation along a continuous homomorphism precomposes its character. -/
 @[simp]
