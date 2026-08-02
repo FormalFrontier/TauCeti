@@ -216,6 +216,13 @@ image of `Circle` under its multiplicative action on the disc. -/
 noncomputable def unitDiscRotation : Subgroup (Equiv.Perm Complex.UnitDisc) :=
   (MulAction.toPermHom Circle Complex.UnitDisc).range
 
+/-- The rotation subgroup is the range of the circle action, in the form that transfers general
+constructions about `MonoidHom.range` — such as Mathlib's Cayley-theorem construction
+`Equiv.Perm.subgroupOfMulAction` — to `TauCeti.unitDiscRotation`. -/
+theorem unitDiscRotation_eq_range :
+    unitDiscRotation = (MulAction.toPermHom Circle Complex.UnitDisc).range := by
+  rw [unitDiscRotation]
+
 lemma unitDiscStandardAutomorphismEquiv_zero_mem_unitDiscRotation (u : Circle) :
     unitDiscStandardAutomorphismEquiv u 0 ∈ unitDiscRotation :=
   MonoidHom.mem_range.2 ⟨u, (unitDiscStandardAutomorphismEquiv_zero u).symm⟩
