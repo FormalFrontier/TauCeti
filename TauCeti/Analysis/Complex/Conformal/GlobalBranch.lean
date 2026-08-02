@@ -7,8 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Monodromy
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
-import Mathlib.Analysis.Analytic.Uniqueness
-import Mathlib.Analysis.Calculus.FDeriv.Analytic
 import Mathlib.Topology.MetricSpace.Thickening
 
 /-!
@@ -34,23 +32,11 @@ two-way form below it is supplied by nothing else once `U` is simply connected.
 * `TauCeti.ContinuesInside.exists_analyticOnNhd` — **the monodromy theorem for a simply connected
   domain**: a germ that continues along every path of a simply connected open `U` is the germ of
   a function analytic on all of `U`.
-* `TauCeti.ContinuesInside.exists_analyticOnNhd_forall_eventuallyEq` — the branch **computes** the
-  continuation: every continuation of the germ inside `U` ends at the germ of the branch.
-* `TauCeti.ContinuesInside.exists_analyticOnNhd_forall_eqOn` — the branch is **unique**: any two
-  analytic functions on `U` carrying the germ agree on `U`.
-* `TauCeti.ContinuesInside.eventuallyEq_of_loop` — a germ continued around a **loop** of `U` comes
-  back to itself.
-* `TauCeti.ContinuesInside.exists_analyticOnNhd_forall_eqOn_deriv` — the branch of the derivative
-  germ is the derivative of the branch.
 * `TauCeti.continuesInside_iff_exists_analyticOnNhd` — the two-way form on a simply connected open
   set: continuable along every path inside `U` ⟺ the germ of a function analytic on `U`.
 
-Uniqueness is the identity principle
-(`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`) and needs only preconnectedness of `U`,
-which simple connectivity supplies; the computation clause is uniqueness of continuation along a
-fixed path (`TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo`), the branch being its own
-continuation along every path of `U`. It is existence of the branch that spends the monodromy
-theorem, and the loop form spends it too: no hypothesis makes the germ single-valued there.
+The branch produced is unique as soon as `U` is preconnected, by the identity principle
+(`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`); no uniqueness statement is added here.
 
 ## The construction
 
@@ -242,74 +228,6 @@ theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀
   · -- The prescribed germ at `z₀`: apply the key step to the constant path.
     exact key z₀ (fun _ => z₀) (fun _ => f₀) continuous_const (fun _ => hz₀) rfl rfl
       (.const continuousOn_const fun _ _ => H.analyticAt hz₀) .rfl
-
-/-- **The global branch computes every continuation.** The function produced by
-`TauCeti.ContinuesInside.exists_analyticOnNhd` does more than carry the germ of `f₀` at `z₀`: the
-germ that *any* continuation of that germ delivers at the far end of *any* path in `U` is the germ
-of `F` there. So on a simply connected domain a continuation is never a new function, only a fresh
-reading of the branch.
-
-Given the branch, this is uniqueness of continuation along a fixed path
-(`TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo`, applied over the preconnected
-parameter interval), since `F` continues itself along every path that stays in `U`; what simple
-connectivity buys is the branch, not this clause. -/
-theorem exists_analyticOnNhd_forall_eventuallyEq (hUo : IsOpen U) (hUc : IsSimplyConnected U)
-    (hz₀ : z₀ ∈ U) (H : ContinuesInside f₀ U z₀) :
-    ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ ∧
-      ∀ (c : I → ℂ) (g : I → ℂ → ℂ), (∀ x, c x ∈ U) → c 0 = z₀ →
-        IsAnalyticContinuationAlong g c univ → g 0 =ᶠ[𝓝 z₀] f₀ → g 1 =ᶠ[𝓝 (c 1)] F :=
-  let ⟨F, hF, hF₀⟩ := H.exists_analyticOnNhd hUo hUc hz₀
-  ⟨F, hF, hF₀, fun _ _ hcU hc0 hg hg0 => hg.eventuallyEq_of_mapsTo isPreconnected_univ hUo
-    (AnalyticOnNhd.differentiableOn hF) (fun t _ => hcU t) (mem_univ 0) (mem_univ 1)
-    (hc0 ▸ hg0.trans hF₀.symm)⟩
-
-/-- **Existence and uniqueness of the global branch.** On a simply connected open `U` a germ that
-continues inside `U` extends to a function analytic on `U`, and that function is determined by the
-germ: any two analytic functions on `U` carrying it agree on all of `U`.
-
-Uniqueness needs only preconnectedness of `U`, which simple connectivity supplies, and is the
-identity principle `AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`; it is existence that needs
-the full hypothesis. Note that the branches are only claimed to agree *on `U`* — their values
-outside `U`, where analyticity says nothing, are of course unconstrained. -/
-theorem exists_analyticOnNhd_forall_eqOn (hUo : IsOpen U) (hUc : IsSimplyConnected U)
-    (hz₀ : z₀ ∈ U) (H : ContinuesInside f₀ U z₀) :
-    ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ ∧
-      ∀ G : ℂ → ℂ, AnalyticOnNhd ℂ G U → G =ᶠ[𝓝 z₀] f₀ → EqOn G F U :=
-  let ⟨F, hF, hF₀⟩ := H.exists_analyticOnNhd hUo hUc hz₀
-  ⟨F, hF, hF₀, fun _ hG hG₀ => AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq hG hF
-    hUc.isPathConnected.isConnected.isPreconnected hz₀ (hG₀.trans hF₀.symm)⟩
-
-/-- **The branch of the derivative germ is the derivative of the branch.** The germ `deriv f₀`
-continues inside `U` whenever `f₀` does (`TauCeti.ContinuesInside.deriv`), so on a simply connected
-`U` it has a branch of its own; that branch is `deriv F`, for `F` the branch of `f₀`.
-
-Only uniqueness is at work once `F` is at hand: `deriv F` is analytic on the open `U` and carries
-the germ `deriv f₀` at `z₀`, which by the identity principle already pins it down. Iterating gives
-the branches of all the higher derivative germs. -/
-theorem exists_analyticOnNhd_forall_eqOn_deriv (hUo : IsOpen U) (hUc : IsSimplyConnected U)
-    (hz₀ : z₀ ∈ U) (H : ContinuesInside f₀ U z₀) :
-    ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ ∧
-      ∀ G : ℂ → ℂ, AnalyticOnNhd ℂ G U → G =ᶠ[𝓝 z₀] deriv f₀ → EqOn G (deriv F) U :=
-  let ⟨F, hF, hF₀⟩ := H.exists_analyticOnNhd hUo hUc hz₀
-  ⟨F, hF, hF₀, fun _ hG hG₀ => AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq hG
-    (hF.deriv_of_isOpen hUo) hUc.isPathConnected.isConnected.isPreconnected hz₀
-    (hG₀.trans hF₀.deriv.symm)⟩
-
-/-- **A germ continued around a loop of a simply connected domain returns to itself.** This is
-`TauCeti.monodromy_theorem_of_homotopy_refl` with the null-homotopy of the loop supplied by the
-topology of `U` rather than by hypothesis, and with the continuations along the intermediate paths
-supplied by `TauCeti.ContinuesInside`.
-
-It is the concrete reason a multi-valued analytic function needs a hole to be multi-valued: the
-germ of `Complex.log` at `1` returns to itself along every loop of the slit plane, and can come
-back changed only along a loop of `ℂ \ {0}` that winds around the puncture. -/
-theorem eventuallyEq_of_loop (hUc : IsSimplyConnected U) (H : ContinuesInside f₀ U z₀)
-    (hz₀ : z₀ ∈ U) (hδU : ∀ x, δ x ∈ U) (hδ0 : δ 0 = z₀) (hδ1 : δ 1 = z₀)
-    (hg : IsAnalyticContinuationAlong g δ univ) (hg0 : g 0 =ᶠ[𝓝 z₀] f₀) :
-    g 1 =ᶠ[𝓝 z₀] f₀ :=
-  (H.eventuallyEq_at_one (γ := fun _ => z₀) (f := fun _ => f₀) hUc continuous_const
-    (fun _ => hz₀) rfl (continuousOn_univ.mp hg.continuousOn) hδU hδ0 hδ1
-    (.const continuousOn_const fun _ _ => H.analyticAt hz₀) .rfl hg hg0).symm
 
 end ContinuesInside
 

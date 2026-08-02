@@ -476,8 +476,8 @@ protected theorem pow (H : ContinuesInside f₀ U z₀) (n : ℕ) : ContinuesIns
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).pow n
 
 /-- **The derivative of a germ that continues inside a domain continues inside it.** On a simply
-connected `U` the branch it produces is the derivative of the branch of `f₀`
-(`TauCeti.ContinuesInside.exists_analyticOnNhd_forall_eqOn_deriv`). -/
+connected `U` it therefore has a branch of its own
+(`TauCeti.ContinuesInside.exists_analyticOnNhd`). -/
 protected theorem deriv (H : ContinuesInside f₀ U z₀) : ContinuesInside (_root_.deriv f₀) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).deriv
 
