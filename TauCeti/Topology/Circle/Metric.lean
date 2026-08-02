@@ -45,13 +45,9 @@ open Metric Set
 
 open scoped Real
 
-/-- The chord of the circle between the angles `a` and `b`, normalized: factoring the unimodular
-`Circle.exp b` out of the difference reduces it to the chord from angle `a - b` to angle `0`, which
-is the quantity Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one` and
-`Real.norm_exp_I_mul_ofReal_sub_one_le` describe. Both the chord formula
-`TauCeti.dist_circleExp_eq_two_mul_abs_sin` and the Lipschitz bound
-`TauCeti.lipschitzWith_one_circleExp` are those two Mathlib facts read through this identity, so
-neither is derived from the other. -/
+/-- The chord of the circle between the angles `a` and `b`, normalized to the chord from angle
+`a - b` to angle `0`, which is the quantity Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one` and
+`Real.norm_exp_I_mul_ofReal_sub_one_le` describe. -/
 private lemma dist_circleExp_eq_norm_exp_sub_one (a b : ℝ) :
     dist (Circle.exp a) (Circle.exp b) = ‖Complex.exp (Complex.I * (a - b : ℝ)) - 1‖ := by
   have hsplit : Circle.exp a = Circle.exp (a - b) * Circle.exp b := by
@@ -69,27 +65,20 @@ private lemma dist_circleExp_eq_norm_exp_sub_one (a b : ℝ) :
     mul_comm ((a - b : ℝ) : ℂ) Complex.I]
 
 /-- **The chord formula for the unit circle**: two points of the circle at angles `a` and `b` are at
-distance `2 * |sin ((a - b) / 2)|`.
-
-This is Mathlib's `Complex.norm_exp_I_mul_ofReal_sub_one` at the angle `a - b`, read through the
-normalized chord `TauCeti.dist_circleExp_eq_norm_exp_sub_one`. -/
+distance `2 * |sin ((a - b) / 2)|`. -/
 theorem dist_circleExp_eq_two_mul_abs_sin (a b : ℝ) :
     dist (Circle.exp a) (Circle.exp b) = 2 * |Real.sin ((a - b) / 2)| := by
   rw [dist_circleExp_eq_norm_exp_sub_one, Complex.norm_exp_I_mul_ofReal_sub_one,
     Real.norm_eq_abs, abs_mul]
   norm_num
 
-/-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. This is Mathlib's
-`Real.norm_exp_I_mul_ofReal_sub_one_le` read through the normalized chord
-`TauCeti.dist_circleExp_eq_norm_exp_sub_one`. -/
+/-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
   LipschitzWith.mk_one fun a b => by
     rw [Real.dist_eq, dist_circleExp_eq_norm_exp_sub_one, ← Real.norm_eq_abs]
     exact Real.norm_exp_I_mul_ofReal_sub_one_le
 
-/-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`: the
-`1`-Lipschitz map `TauCeti.lipschitzWith_one_circleExp` does not increase the diameter
-`Real.diam_Icc` of the interval of angles. -/
+/-- An arc of the circle spanning the angles `Set.Icc a b` has diameter at most `b - a`. -/
 theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
     Metric.diam (Circle.exp '' Icc a b) ≤ b - a := by
   simpa only [NNReal.coe_one, one_mul, Real.diam_Icc hab] using
@@ -99,10 +88,7 @@ theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
 circle, the shorter has length at most `π / 2` times the distance from `x` to `y`.
 
 This is the direction of the comparison that converts a hypothesis about the ambient metric into a
-bound on an arc, and it is where Jordan's inequality `Real.mul_le_sin` enters: writing `t` for
-`Circle.angleDiff x y`, the chord formula gives `dist x y = 2 * sin (t / 2)`, and `sin (t / 2)` is
-unchanged when `t` is replaced by `2 * π - t`, so it may be computed from whichever of the two arc
-lengths is at most `π`. -/
+bound on an arc, and so the one a transport argument consumes. -/
 theorem min_angleDiff_le_dist (x y : Circle) :
     min (Circle.angleDiff x y) (Circle.angleDiff y x) ≤ π / 2 * dist x y := by
   rcases eq_or_ne x y with rfl | hxy
@@ -135,6 +121,8 @@ theorem min_angleDiff_le_dist (x y : Circle) :
     have hhalf : π / 2 * (2 * Real.sin (s / 2)) = π * Real.sin (s / 2) := by ring
     rw [hdist, ← hs, hhalf]
     exact hmul
+  -- `sin (t / 2)` is unchanged when `t` is replaced by `2 * π - t`, so the half-angle sine may be
+  -- computed from whichever of the two arc lengths is at most `π`.
   rcases le_total (Circle.angleDiff x y) π with hle | hle
   · exact (min_le_left _ _).trans (key _ hpos hle rfl)
   · refine (min_le_right _ _).trans (key _ (by linarith) (by linarith) ?_)
