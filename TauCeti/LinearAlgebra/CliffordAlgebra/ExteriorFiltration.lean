@@ -111,6 +111,18 @@ theorem zeroFormFiltrationQuotientEquivExteriorPower_symm_apply (k : ℕ)
   quotientEquivOfEqSup_symm_apply _ _ _ (zero_form_filtration_succ_eq_exteriorPower_sup k)
     (exteriorPower_succ_disjoint_zero_form_filtration k) x
 
+/-- The quotient equivalence sends the canonical class of a degree `k + 1` exterior element to
+that element. -/
+@[simp]
+theorem zeroFormFiltrationQuotientEquivExteriorPower_apply (k : ℕ)
+    (x : ⋀[R]^(k + 1) M) :
+    zeroFormFiltrationQuotientEquivExteriorPower k
+      (Submodule.Quotient.mk ⟨x, by
+        rw [zero_form_filtration_succ_eq_exteriorPower_sup]
+        exact Submodule.mem_sup_left x.property⟩) = x := by
+  rw [← zeroFormFiltrationQuotientEquivExteriorPower_symm_apply k x,
+    LinearEquiv.apply_symm_apply]
+
 end CliffordAlgebra
 
 end TauCeti
