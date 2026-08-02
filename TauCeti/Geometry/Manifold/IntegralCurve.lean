@@ -106,7 +106,7 @@ theorem contMDiff [IsManifold I ∞ M] {γ : ℝ → M} {v : (x : M) → Tangent
     ContMDiff 𝓘(ℝ, ℝ) I ∞ γ := by
   rw [contMDiff_infty]
   intro n
-  letI : IsManifold I (n + 1 : ℕ) M := IsManifold.of_le (n := ∞)
+  let _ : IsManifold I (n + 1 : ℕ) M := IsManifold.of_le (n := ∞)
     (show ((n + 1 : ℕ) : ℕ∞ω) ≤ ∞ from mod_cast le_top)
   exact (hγ.contMDiff_succ n (hv.of_le (mod_cast le_top))).of_le
     (by exact_mod_cast Nat.le_succ n)
