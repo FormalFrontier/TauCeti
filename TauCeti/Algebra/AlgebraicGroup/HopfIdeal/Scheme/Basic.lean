@@ -21,6 +21,11 @@ over `Spec R`. Its underlying morphism of schemes is a closed immersion because 
 map is surjective. Thus the construction retains the scheme structure cut out by `I`, rather
 than only the induced inclusion on ordinary points.
 
+More generally, the scheme morphism underlying the contravariant `hopfSpec` image of a morphism
+of commutative Hopf algebras is a closed immersion exactly when the coordinate morphism is
+surjective. This criterion requires no hypotheses beyond commutativity of the base and coordinate
+rings.
+
 If `I ≤ J`, the quotient-to-quotient coordinate map `H ⧸ I ⟶ H ⧸ J` gives a closed immersion
 `Spec(H ⧸ J) ⟶ Spec(H ⧸ I)`. The ambient triangle, identity, and composition laws below record
 that these closed subgroup schemes depend contravariantly on the Hopf ideal. For a finite-type
@@ -31,6 +36,8 @@ in the same universe, which is reflected in all scheme-level declarations in thi
 
 ## Main declarations
 
+* `TauCeti.CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff`: the coordinate criterion for a
+  morphism of Hopf spectra to be a closed immersion.
 * `TauCeti.CommHopfAlgCat.quotientSpec`: the group scheme represented by `H ⧸ I`.
 * `TauCeti.CommHopfAlgCat.quotientSpecι`: its group-object morphism to the group scheme
   represented by `H`.
@@ -69,12 +76,15 @@ private lemma hopfSpec_map_left {S : CommRingCat.{u}}
       Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) :=
   rfl
 
-private lemma hopfSpec_map_isClosedImmersion_of_surjective {S : CommRingCat.{u}}
-    {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B)
-    (hf : Function.Surjective f.hom) :
-    IsClosedImmersion ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left := by
+/-- The scheme morphism underlying the contravariant `hopfSpec` image of `f` is a closed
+immersion if and only if the coordinate Hopf-algebra morphism `f` is surjective. -/
+lemma isClosedImmersion_hopfSpec_map_iff {S : CommRingCat.{u}}
+    {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B) :
+    IsClosedImmersion ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left ↔
+      Function.Surjective f.hom := by
   rw [hopfSpec_map_left]
-  exact IsClosedImmersion.spec_of_surjective _ hf
+  exact IsClosedImmersion.hasAffineProperty.SpecMap_iff_of_affineAnd
+    RingHom.surjective_respectsIso _
 
 /-- The affine group scheme represented by the quotient Hopf algebra `H ⧸ I`.
 
@@ -101,8 +111,7 @@ lemma quotientSpecι_def (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
 Hopf algebra defines a closed subgroup scheme of the affine group scheme represented by `H`. -/
 instance isClosedImmersion_quotientSpecι (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) : IsClosedImmersion (quotientSpecι H I).hom.hom.left := by
-  rw [quotientSpecι_def]
-  apply hopfSpec_map_isClosedImmersion_of_surjective
+  rw [quotientSpecι_def, isClosedImmersion_hopfSpec_map_iff]
   intro q
   obtain ⟨h, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
   exact ⟨h, mkQuotient_apply H I h⟩
@@ -126,8 +135,7 @@ a larger Hopf ideal defines a closed subgroup scheme of the subgroup defined by 
 instance isClosedImmersion_quotientSpecMapOfLe (H : _root_.CommHopfAlgCat.{u} R)
     {I J : HopfIdeal R H} (hIJ : I ≤ J) :
     IsClosedImmersion (quotientSpecMapOfLe H hIJ).hom.hom.left := by
-  rw [quotientSpecMapOfLe_def]
-  apply hopfSpec_map_isClosedImmersion_of_surjective
+  rw [quotientSpecMapOfLe_def, isClosedImmersion_hopfSpec_map_iff]
   intro q
   obtain ⟨h, rfl⟩ := Ideal.Quotient.mkₐ_surjective R J.toIdeal q
   exact ⟨Ideal.Quotient.mkₐ R I.toIdeal h, quotientMapOfLe_mk H hIJ h⟩
