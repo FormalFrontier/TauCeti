@@ -10,8 +10,6 @@ public import Mathlib.RingTheory.Spectrum.Prime.Topology
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 
-import Mathlib.Algebra.MonoidAlgebra.Module
-
 /-!
 # Group-like elements of monoid algebras
 
@@ -67,29 +65,13 @@ private theorem eq_zero_or_eq_one_of_isIdempotentElem
 element is group-like, and the standard basis spans. -/
 theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) [Monoid G] :
     Subcoalgebra.groupLikeSetSpan (R := R) (C := _root_.MonoidAlgebra R G) Set.univ = ⊤ := by
-  apply Subcoalgebra.ext
-  intro x
-  rw [Subcoalgebra.mem_groupLikeSetSpan]
-  constructor
-  · intro
-    exact Subcoalgebra.mem_top x
-  · intro
-    have hbasis :
-        Submodule.span R
-            (Set.range (fun g : G ↦ _root_.MonoidAlgebra.single g (1 : R))) = ⊤ := by
-      rw [← Set.image_univ,
-        ← _root_.MonoidAlgebra.supported_eq_span_single R (Set.univ : Set G),
-        _root_.MonoidAlgebra.supported_eq_map, Finsupp.supported_univ, Submodule.map_top,
-        LinearEquiv.range]
-    have hx : x ∈ Submodule.span R
-        (Set.range (fun g : G ↦ _root_.MonoidAlgebra.single g (1 : R))) := by
-      rw [hbasis]
-      exact Submodule.mem_top
-    apply (Submodule.span_mono ?_) hx
-    rintro _ ⟨g, rfl⟩
-    exact ⟨⟨_root_.MonoidAlgebra.single g 1,
-      _root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g⟩,
-      Set.mem_univ _, rfl⟩
+  rw [Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top]
+  have hrange : Set.range (_root_.GroupLike.val (R := R) (A := _root_.MonoidAlgebra R G)) =
+      {x : _root_.MonoidAlgebra R G | IsGroupLikeElem R x} :=
+    Set.ext fun x ↦
+      ⟨fun ⟨g, hg⟩ ↦ hg ▸ g.isGroupLikeElem_val, fun hx ↦ ⟨⟨x, hx⟩, rfl⟩⟩
+  rw [hrange]
+  exact _root_.MonoidAlgebra.span_isGroupLikeElem
 
 private theorem tensorEquiv_comul_apply [CommSemiring R]
     {H : Type v} [Monoid H] [DecidableEq H]
