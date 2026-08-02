@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.ScalarExtension
 public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
-public import TauCeti.Algebra.Coalgebra.Comodule.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 
 import TauCeti.Algebra.Bialgebra.TensorProduct
 
@@ -101,6 +101,8 @@ theorem ext
   funext A
   apply (cancel_mono
     (eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A))).1
+  -- Once the opaque functor-object transport is cancelled, the concrete-action wrapper unfolds
+  -- definitionally to the remaining natural-transformation component.
   change Theta.action A = Psi.action A
   apply GrpCat.ext
   intro x
@@ -132,178 +134,23 @@ theorem action_mapPoints_one_tmul
     (GeneralLinear.mapScalarExtensionAutomorphisms_apply_scalarExtensionMap
       (V := V) phi (Theta.action A x) (1 ⊗ₜ[R] v))
 
-private noncomputable def evaluatedCoaction (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
-    V →ₗ[R] A ⊗[R] V :=
-  (TensorProduct.comm R V A).toLinearMap ∘ₗ
-    TensorProduct.map LinearMap.id x.ofConv.toLinearMap ∘ₗ rho.coact
-
-private noncomputable def pointActionEnd (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
-    Module.End A (A ⊗[R] V) := by
-  let u := evaluatedCoaction rho A x
-  exact TensorProduct.AlgebraTensorModule.lift
-    { toFun := fun a ↦
-        { toFun := fun v ↦ a • u v
-          map_add' := fun v w ↦ by simp
-          map_smul' := fun r v ↦ by
-            rw [u.map_smul]
-            exact smul_comm a r (u v) }
-      map_add' := fun a b ↦ LinearMap.ext fun v ↦ add_smul a b (u v)
-      map_smul' := fun a b ↦ LinearMap.ext fun v ↦ by
-        -- `AlgebraTensorModule.lift` stores this law through two bundled linear maps, and no
-        -- projection lemma normalizes their scalar actions to multiplication in `A`.
-        change (a * b) • u v = a • b • u v
-        exact (smul_smul a b (u v)).symm }
-
-@[simp]
-private theorem pointActionEnd_tmul (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) (a : A) (v : V) :
-    pointActionEnd rho A x (a ⊗ₜ[R] v) = a • evaluatedCoaction rho A x v :=
-  by simp [pointActionEnd]
-
-private theorem evaluatedCoaction_one (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (v : V) :
-    evaluatedCoaction rho A (1 : points (H := H) A) v = 1 ⊗ₜ[R] v := by
-  let : Comodule R H V := rho
-  have hmap :
-      (TensorProduct.comm R V A).toLinearMap ∘ₗ
-          TensorProduct.map LinearMap.id
-            ((1 : points (H := H) A).ofConv.toLinearMap) =
-        (Algebra.linearMap R A).rTensor V ∘ₗ
-          (TensorProduct.comm R V R).toLinearMap ∘ₗ
-            Coalgebra.counit.lTensor V := by
-    ext m h
-    rfl
-  rw [evaluatedCoaction, ← LinearMap.comp_assoc, hmap]
-  simp only [LinearMap.comp_apply]
-  rw [Comodule.lTensor_counit_coact]
-  simp
-
-private theorem pointActionEnd_one (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) :
-    pointActionEnd rho A (1 : points (H := H) A) = 1 := by
-  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
-  rw [pointActionEnd_tmul, evaluatedCoaction_one]
-  exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
-
-private noncomputable def pairedEvaluation (A : CommAlgCat.{max u v w} R)
-    (x y : points (H := H) A) :
-    V ⊗[R] (H ⊗[R] H) →ₗ[R] A ⊗[R] V :=
-  (TensorProduct.comm R V A).toLinearMap ∘ₗ
-    TensorProduct.map LinearMap.id
-      (Algebra.TensorProduct.lift x.ofConv y.ofConv (fun _ _ ↦ .all _ _)).toLinearMap
-
-private theorem pairedEvaluation_comul (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x y : points (H := H) A) (v : V) :
-    pairedEvaluation A x y
-        (Coalgebra.comul.lTensor V (rho.coact v)) =
-      evaluatedCoaction rho A (x * y) v := by
-  have hmap :
-      pairedEvaluation (V := V) A x y ∘ₗ Coalgebra.comul.lTensor V =
-        (TensorProduct.comm R V A).toLinearMap ∘ₗ
-          TensorProduct.map LinearMap.id (x * y).ofConv.toLinearMap := by
-    ext m h
-    -- `TensorProduct.ext'` presents the composite through `AlgebraTensorModule.curry`; there is
-    -- no curry computation lemma exposing the pure-tensor evaluation of these bundled maps.
-    change
-      (Algebra.TensorProduct.lift x.ofConv y.ofConv (fun _ _ ↦ .all _ _)
-          (Coalgebra.comul h)) ⊗ₜ[R] m =
-        (x * y).ofConv h ⊗ₜ[R] m
-    rw [AlgHom.convMul_apply]
-  rw [← LinearMap.comp_apply, hmap]
-  rfl
-
-private theorem pointActionEnd_evaluatedCoaction (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x y : points (H := H) A) (v : V) :
-    pointActionEnd rho A x (evaluatedCoaction rho A y v) =
-      pairedEvaluation A x y
-        (TensorProduct.assoc R V H H (rho.coact.rTensor H (rho.coact v))) := by
-  have hmap :
-      (pointActionEnd rho A x).restrictScalars R ∘ₗ
-          (TensorProduct.comm R V A).toLinearMap ∘ₗ
-            TensorProduct.map LinearMap.id y.ofConv.toLinearMap =
-        pairedEvaluation (V := V) A x y ∘ₗ
-          (TensorProduct.assoc R V H H).toLinearMap ∘ₗ rho.coact.rTensor H := by
-    ext m h
-    -- The tensor extensionality goal is again curried, while the available computation rules are
-    -- stated for uncurried `map`, `rTensor`, and associator applications.
-    change
-      pointActionEnd rho A x (y.ofConv h ⊗ₜ[R] m) =
-        pairedEvaluation A x y
-          (TensorProduct.assoc R V H H (rho.coact m ⊗ₜ[R] h))
-    rw [pointActionEnd_tmul]
-    have hz : ∀ z : V ⊗[R] H,
-        y.ofConv h •
-            (TensorProduct.comm R V A
-              (TensorProduct.map LinearMap.id x.ofConv.toLinearMap z)) =
-          pairedEvaluation A x y (TensorProduct.assoc R V H H (z ⊗ₜ[R] h)) := by
-      intro z
-      induction z using TensorProduct.induction_on with
-      | zero => simp [pairedEvaluation]
-      | tmul n k => simp [pairedEvaluation, TensorProduct.smul_tmul', mul_comm]
-      | add z w hz hw =>
-          simpa only [map_add, smul_add, TensorProduct.add_tmul] using
-            congrArg₂ (fun p q ↦ p + q) hz hw
-    exact hz (rho.coact m)
-  have hv := congrArg (fun f : V ⊗[R] H →ₗ[R] A ⊗[R] V ↦ f (rho.coact v)) hmap
-  simp only [LinearMap.comp_apply] at hv
-  -- `restrictScalars` and the tensor linear-equivalence coercion remain in `hv`; their public
-  -- application lemmas do not rewrite the bundled function coercions simultaneously.
-  change
-    pointActionEnd rho A x
-        (TensorProduct.comm R V A
-          (TensorProduct.map LinearMap.id y.ofConv.toLinearMap (rho.coact v))) = _ at hv
-  exact hv
-
-private theorem pointActionEnd_mul (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) (x y : points (H := H) A) :
-    pointActionEnd rho A (x * y) = pointActionEnd rho A x * pointActionEnd rho A y := by
-  let : Comodule R H V := rho
-  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
-  rw [Module.End.mul_apply, pointActionEnd_tmul, pointActionEnd_tmul, map_smul,
-    pointActionEnd_evaluatedCoaction, Comodule.coassoc_apply,
-    pairedEvaluation_comul]
-
-private noncomputable def pointActionMonoidHom (rho : Comodule R H V)
-    (A : CommAlgCat.{max u v w} R) :
-    points (H := H) A →* Module.End A (A ⊗[R] V) where
-  toFun := pointActionEnd rho A
-  map_one' := pointActionEnd_one rho A
-  map_mul' := pointActionEnd_mul rho A
-
 private noncomputable def rawPointAction (rho : Comodule R H V)
     (A : CommAlgCat.{max u v w} R) :
-    points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A :=
-  GrpCat.ofHom (pointActionMonoidHom rho A).toHomUnits
+    points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A := by
+  letI : Comodule R H V := rho
+  exact GrpCat.ofHom <|
+    (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[R] V)).symm.toMonoidHom.comp
+      (Comodule.pointsAction V)
 
 @[simp]
 private theorem rawPointAction_val (rho : Comodule R H V)
     (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
-    (rawPointAction rho A x).val = pointActionEnd rho A x :=
-  rfl
-
-private theorem evaluatedCoaction_naturality (rho : Comodule R H V)
-    {A B : CommAlgCat.{max u v w} R} (phi : A ⟶ B) (x : points (H := H) A) (v : V) :
-    GeneralLinear.scalarExtensionMap (V := V) phi (evaluatedCoaction rho A x v) =
-      evaluatedCoaction rho B (mapPoints (H := H) phi x) v := by
-  have hz : ∀ z : V ⊗[R] H,
-      GeneralLinear.scalarExtensionMap (V := V) phi
-          (TensorProduct.comm R V A
-            (TensorProduct.map LinearMap.id x.ofConv.toLinearMap z)) =
-        TensorProduct.comm R V B
-          (TensorProduct.map LinearMap.id
-            (mapPoints (H := H) phi x).ofConv.toLinearMap z) := by
-    intro z
-    induction z using TensorProduct.induction_on with
-    | zero => simp
-    | tmul m h =>
-        simp only [TensorProduct.map_tmul, LinearMap.id_apply,
-          TensorProduct.comm_tmul, GeneralLinear.scalarExtensionMap_tmul,
-          AlgHom.coe_toLinearMap]
-        rfl
-    | add z w hz hw => simpa only [map_add] using congrArg₂ (fun p q ↦ p + q) hz hw
-  exact hz (rho.coact v)
+    (rawPointAction rho A x).val = Comodule.endOfPoint V x.ofConv := by
+  let : Comodule R H V := rho
+  change
+    (Comodule.pointsAction V x : A ⊗[R] V →ₗ[A] A ⊗[R] V) =
+      Comodule.endOfPoint V x.ofConv
+  exact Comodule.pointsAction_toLinearMap V x
 
 private theorem rawPointAction_naturality (rho : Comodule R H V)
     {A B : CommAlgCat.{max u v w} R} (phi : A ⟶ B) (x : points (H := H) A) :
@@ -314,20 +161,21 @@ private theorem rawPointAction_naturality (rho : Comodule R H V)
     (V := V) phi (rawPointAction rho A x)
       (rawPointAction rho B (mapPoints (H := H) phi x))
   intro z
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a v =>
-      rw [GeneralLinear.scalarExtensionMap_tmul]
-      -- `rawPointAction` is wrapped successively as a unit and a `GrpCat` morphism; its value
-      -- theorem does not match until those function coercions are exposed.
-      change
-        pointActionEnd rho B (mapPoints (H := H) phi x)
-            (phi.hom a ⊗ₜ[R] v) =
-          GeneralLinear.scalarExtensionMap (V := V) phi
-            (pointActionEnd rho A x (a ⊗ₜ[R] v))
-      rw [pointActionEnd_tmul, pointActionEnd_tmul,
-        GeneralLinear.scalarExtensionMap_smul, evaluatedCoaction_naturality]
-  | add z w hz hw => simp [hz, hw]
+  rw [rawPointAction_val, rawPointAction_val]
+  let : Comodule R H V := rho
+  have hscalar :
+      GeneralLinear.scalarExtensionMap (V := V) phi =
+        LinearMap.rTensor V phi.hom.toLinearMap := by
+    refine TensorProduct.ext' fun a v ↦ ?_
+    rw [GeneralLinear.scalarExtensionMap_tmul, LinearMap.rTensor_tmul]
+    rfl
+  have hpoint :
+      (mapPoints (H := H) phi x).ofConv = phi.hom.comp x.ofConv := by
+    rfl
+  have h := DFunLike.congr_fun
+    (Comodule.rTensor_comp_endOfPoint V phi.hom x.ofConv) z
+  rw [hscalar, hpoint]
+  simpa only [LinearMap.comp_apply, LinearMap.restrictScalars_apply] using h.symm
 
 /-- The natural point representation induced by a right `H`-comodule structure. -/
 noncomputable def ofComodule (rho : Comodule R H V) :
@@ -379,7 +227,10 @@ theorem ofComodule_action_tmul (rho : Comodule R H V)
       a • TensorProduct.comm R V A
         (TensorProduct.map LinearMap.id x.ofConv.toLinearMap (rho.coact v)) := by
   rw [action_ofComodule]
-  exact pointActionEnd_tmul rho A x a v
+  rw [rawPointAction_val]
+  let : Comodule R H V := rho
+  simpa only [LinearMap.lTensor_def] using
+    (Comodule.endOfPoint_tmul (R := R) (H := H) V x.ofConv a v)
 
 /-- At the universal point, the action induced by a coaction is the flipped coaction. -/
 @[simp]
@@ -821,17 +672,6 @@ noncomputable def toComodule
   coassoc := recoveredCoaction_coassoc Theta
   lTensor_counit_comp_coact := recoveredCoaction_counit Theta
 
-private theorem toComodule_coact_apply_private
-    (Theta : PointRepresentation (R := R) (H := H) (V := V)) (v : V) :
-    (toComodule Theta).coact v =
-      TensorProduct.comm R H V
-        (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
-          ((Theta.action (CommAlgCat.of R (ULift.{max u v w} H))
-            (toConv ULift.algEquiv.symm.toAlgHom)).val (1 ⊗ₜ[R] v))) :=
-  by
-    unfold toComodule
-    rfl
-
 /-- The coaction recovered from a point representation is the flipped universal-point action. -/
 @[simp]
 theorem toComodule_coact_apply
@@ -841,7 +681,9 @@ theorem toComodule_coact_apply
         (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
           ((Theta.action (CommAlgCat.of R (ULift.{max u v w} H))
             (toConv ULift.algEquiv.symm.toAlgHom)).val (1 ⊗ₜ[R] v))) :=
-  toComodule_coact_apply_private Theta v
+  by
+    unfold toComodule
+    rfl
 
 /-- Recovering a comodule from its induced point representation returns the original comodule. -/
 @[simp]
@@ -921,29 +763,24 @@ noncomputable def pointRepresentationEquivComodule :
   left_inv := PointRepresentation.ofComodule_toComodule
   right_inv := PointRepresentation.toComodule_ofComodule
 
-private theorem pointRepresentationEquivComodule_apply_private
-    (Theta : PointRepresentation (R := R) (H := H) (V := V)) :
-    pointRepresentationEquivComodule Theta = PointRepresentation.toComodule Theta :=
-  rfl
-
-private theorem pointRepresentationEquivComodule_symm_apply_private (rho : Comodule R H V) :
-    pointRepresentationEquivComodule.symm rho = PointRepresentation.ofComodule rho :=
-  rfl
-
 /-- The forward map of the representation--comodule equivalence recovers the coaction at the
 universal point. -/
 @[simp]
 theorem pointRepresentationEquivComodule_apply
     (Theta : PointRepresentation (R := R) (H := H) (V := V)) :
     pointRepresentationEquivComodule Theta = PointRepresentation.toComodule Theta :=
-  pointRepresentationEquivComodule_apply_private Theta
+  by
+    unfold pointRepresentationEquivComodule
+    rfl
 
 /-- The inverse map of the representation--comodule equivalence is the point action induced by a
 coaction. -/
 @[simp]
 theorem pointRepresentationEquivComodule_symm_apply (rho : Comodule R H V) :
     pointRepresentationEquivComodule.symm rho = PointRepresentation.ofComodule rho :=
-  pointRepresentationEquivComodule_symm_apply_private rho
+  by
+    unfold pointRepresentationEquivComodule
+    rfl
 
 end HopfAlgebra
 
