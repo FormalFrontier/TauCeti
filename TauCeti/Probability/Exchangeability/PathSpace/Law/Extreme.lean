@@ -78,12 +78,6 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-private theorem bind_add (μ ν : Measure (ProbabilityMeasure α))
-    (f : ProbabilityMeasure α → Measure (ℕ → α)) (hf : Measurable f) :
-    (μ + ν).bind f = μ.bind f + ν.bind f := by
-  have h := Measure.bind_sum (fun b : Bool => if b then μ else ν) f hf.aemeasurable
-  simpa [Measure.sum_bool] using h
-
 private theorem exchangeableLaw_bind_infinitePi
     {π : Measure (ProbabilityMeasure α)} [IsProbabilityMeasure π] :
     ExchangeableLaw
@@ -178,7 +172,10 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
           (fun q : Measure (ProbabilityMeasure α) =>
             q.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) hp_split
       _ = p s • μs + p sᶜ • μsc := by
-        rw [bind_add _ _ _ hpow, Measure.bind_smul, Measure.bind_smul]
+        have h := Measure.bind_sum
+          (fun b : Bool => if b then p s • ps else p sᶜ • psc)
+          (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) hpow.aemeasurable
+        simpa [Measure.sum_bool, Measure.bind_smul, μs, μsc] using h
   have hopen : ρ ∈ openSegment ℝ≥0∞ μs μsc :=
     ⟨p s, p sᶜ, pos_iff_ne_zero.2 hs0, pos_iff_ne_zero.2 hsc0,
       prob_add_prob_compl hs, hmix_split.symm.trans hrepr.symm⟩
