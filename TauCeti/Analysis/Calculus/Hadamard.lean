@@ -38,6 +38,11 @@ variable {E F : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
 noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
   ∫ t in (0 : ℝ)..1, fderiv ℝ f (x + t • (y - x))
 
+/-- At the basepoint, the averaged derivative is the ordinary derivative. -/
+@[simp]
+theorem hadamardFactor_self (f : E → F) (x : E) : hadamardFactor f x x = fderiv ℝ f x := by
+  simp [hadamardFactor]
+
 omit [CompleteSpace F] in
 private theorem hasFDerivAt_integral_Icc_of_contDiff [FiniteDimensional ℝ E]
     (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
