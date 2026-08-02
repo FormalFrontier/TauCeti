@@ -28,16 +28,16 @@ turns that into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Re
 it a unit-speed line: `TauCeti.PoincareDisc.radialGeodesic u` is an isometric embedding of `ℝ`.
 
 Every point of the disc lies on such a line through the origin, and the disc automorphisms act
-transitively by isometries, so transporting a radial line gives a geodesic through any two
-prescribed points.
+transitively by isometries, so transporting a radial line names the geodesic line through an
+*arbitrary* point: carrying the radial geodesic in direction `u` back by
+`(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the inverse of the Moebius isometry that
+sends `a` to the origin — gives `TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and
+repeats the radial API (`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`,
+`geodesicLine_injective`) at that base point. No hyperbolic computation is redone: each of those
+statements is its radial counterpart read through an isometry.
 
-Transporting is also what names the geodesic line through an *arbitrary* point: carrying the
-radial geodesic in direction `u` back by `(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the
-inverse of the Moebius isometry that sends `a` to the origin — gives
-`TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and repeats the radial API
-(`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`, `geodesicLine_injective`)
-at that base point. No hyperbolic computation is redone: each of those statements is its radial
-counterpart read through an isometry.
+Those lines are what makes the disc a geodesic space: through any two prescribed points there
+passes one of them.
 
 ## Main declarations
 
@@ -248,50 +248,6 @@ theorem exists_radialGeodesic_eq (z : PoincareDisc) :
     rw [coe_radialGeodesic, htanh, hu]
     field_simp
 
-/-! ### The Poincaré disc is a geodesic space -/
-
-/-- **The Poincaré disc is a geodesic metric space.** Through any two of its points there is a
-unit-speed geodesic line `γ : ℝ → PoincareDisc` — an isometric embedding of the whole real line
-— that starts at `z` at time `0` and passes through `w` at time `dist z w`.
-
-The line is obtained by transporting a geodesic through the origin (`exists_radialGeodesic_eq`)
-by the disc automorphism that moves `z` to the origin, which is a hyperbolic isometry. -/
-theorem exists_isometry_apply_zero_apply_dist (z w : PoincareDisc) :
-    ∃ γ : ℝ → PoincareDisc, Isometry γ ∧ γ 0 = z ∧ γ (dist z w) = w := by
-  set g := unitDiscMoebiusIsometryEquiv (toUnitDisc z) with hg
-  have hgz : g z = Complex.UnitDisc.toPoincare 0 := by
-    rw [hg, unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
-  obtain ⟨u, hu⟩ := exists_radialGeodesic_eq (g w)
-  have hdist : dist (g w) (Complex.UnitDisc.toPoincare 0) = dist z w := by
-    rw [← hgz, g.dist_eq, dist_comm]
-  refine ⟨g.symm ∘ radialGeodesic u,
-    g.symm.isometry.comp (isometry_radialGeodesic u), ?_, ?_⟩
-  · rw [Function.comp_apply, radialGeodesic_zero, ← hgz, g.symm_apply_apply]
-  · rw [Function.comp_apply, ← hdist, hu, g.symm_apply_apply]
-
-/-- Every intermediate distance along a geodesic is realised: for `0 ≤ r ≤ dist z w` there is a
-point at hyperbolic distance `r` from `z` and `dist z w - r` from `w`. -/
-theorem exists_dist_eq_of_mem_Icc (z w : PoincareDisc) {r : ℝ} (hr : r ∈ Icc 0 (dist z w)) :
-    ∃ m : PoincareDisc, dist z m = r ∧ dist m w = dist z w - r := by
-  obtain ⟨γ, hγ, h0, hd⟩ := exists_isometry_apply_zero_apply_dist z w
-  refine ⟨γ r, ?_, ?_⟩
-  · have hzr : dist z (γ r) = dist (0 : ℝ) r := by rw [← h0, hγ.dist_eq]
-    rw [hzr, Real.dist_eq, zero_sub, abs_neg, abs_of_nonneg hr.1]
-  · have hrw : dist (γ r) w = dist r (dist z w) := by
-      conv_lhs => rw [← hd]
-      rw [hγ.dist_eq]
-    rw [hrw, Real.dist_eq, abs_of_nonpos (sub_nonpos.2 hr.2), neg_sub]
-
-/-- **Midpoints exist in the Poincaré disc**: any two points have a point halfway between them
-for the hyperbolic distance. -/
-theorem exists_dist_eq_half_dist (z w : PoincareDisc) :
-    ∃ m : PoincareDisc, dist z m = dist z w / 2 ∧ dist m w = dist z w / 2 := by
-  obtain ⟨m, hm₁, hm₂⟩ :=
-    exists_dist_eq_of_mem_Icc z w (r := dist z w / 2)
-      ⟨by linarith [dist_nonneg (x := z) (y := w)],
-        by linarith [dist_nonneg (x := z) (y := w)]⟩
-  exact ⟨m, hm₁, by rw [hm₂]; ring⟩
-
 /-! ### Geodesic lines through an arbitrary point -/
 
 /-- The unit-speed geodesic line of the Poincaré disc through `a` in the direction `u : Circle`:
@@ -364,6 +320,48 @@ theorem geodesicLine_injective (a : PoincareDisc) : Function.Injective (geodesic
   have h := congrArg (unitDiscMoebiusIsometryEquiv (toUnitDisc a)) (congrFun huv t)
   rwa [unitDiscMoebiusIsometryEquiv_geodesicLine,
     unitDiscMoebiusIsometryEquiv_geodesicLine] at h
+
+/-! ### The Poincaré disc is a geodesic space -/
+
+/-- **The Poincaré disc is a geodesic metric space.** Through any two of its points there is a
+unit-speed geodesic line `γ : ℝ → PoincareDisc` — an isometric embedding of the whole real line
+— that starts at `z` at time `0` and passes through `w` at time `dist z w`.
+
+The line is `TauCeti.PoincareDisc.geodesicLine z u`, for `u` the direction in which the Moebius
+isometry sending `z` to the origin sees `w` (`TauCeti.PoincareDisc.exists_radialGeodesic_eq`). -/
+theorem exists_isometry_apply_zero_apply_dist (z w : PoincareDisc) :
+    ∃ γ : ℝ → PoincareDisc, Isometry γ ∧ γ 0 = z ∧ γ (dist z w) = w := by
+  obtain ⟨u, hu⟩ := exists_radialGeodesic_eq (unitDiscMoebiusIsometryEquiv (toUnitDisc z) w)
+  refine ⟨geodesicLine z u, isometry_geodesicLine z u, geodesicLine_zero z u, ?_⟩
+  have hgz : unitDiscMoebiusIsometryEquiv (toUnitDisc z) z = Complex.UnitDisc.toPoincare 0 := by
+    rw [unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
+  have hdist : dist (unitDiscMoebiusIsometryEquiv (toUnitDisc z) w)
+      (Complex.UnitDisc.toPoincare 0) = dist z w := by
+    rw [← hgz, (unitDiscMoebiusIsometryEquiv (toUnitDisc z)).dist_eq, dist_comm]
+  rw [geodesicLine_def, ← hdist, hu, IsometryEquiv.symm_apply_apply]
+
+/-- Every intermediate distance along a geodesic is realised: for `0 ≤ r ≤ dist z w` there is a
+point at hyperbolic distance `r` from `z` and `dist z w - r` from `w`. -/
+theorem exists_dist_eq_of_mem_Icc (z w : PoincareDisc) {r : ℝ} (hr : r ∈ Icc 0 (dist z w)) :
+    ∃ m : PoincareDisc, dist z m = r ∧ dist m w = dist z w - r := by
+  obtain ⟨γ, hγ, h0, hd⟩ := exists_isometry_apply_zero_apply_dist z w
+  refine ⟨γ r, ?_, ?_⟩
+  · have hzr : dist z (γ r) = dist (0 : ℝ) r := by rw [← h0, hγ.dist_eq]
+    rw [hzr, Real.dist_eq, zero_sub, abs_neg, abs_of_nonneg hr.1]
+  · have hrw : dist (γ r) w = dist r (dist z w) := by
+      conv_lhs => rw [← hd]
+      rw [hγ.dist_eq]
+    rw [hrw, Real.dist_eq, abs_of_nonpos (sub_nonpos.2 hr.2), neg_sub]
+
+/-- **Midpoints exist in the Poincaré disc**: any two points have a point halfway between them
+for the hyperbolic distance. -/
+theorem exists_dist_eq_half_dist (z w : PoincareDisc) :
+    ∃ m : PoincareDisc, dist z m = dist z w / 2 ∧ dist m w = dist z w / 2 := by
+  obtain ⟨m, hm₁, hm₂⟩ :=
+    exists_dist_eq_of_mem_Icc z w (r := dist z w / 2)
+      ⟨by linarith [dist_nonneg (x := z) (y := w)],
+        by linarith [dist_nonneg (x := z) (y := w)]⟩
+  exact ⟨m, hm₁, by rw [hm₂]; ring⟩
 
 end PoincareDisc
 
