@@ -57,10 +57,12 @@ theorem coe_specialUnitaryGroup :
   ext A
   simpa using Matrix.mem_specialUnitaryGroup_iff
 
-variable [TopologicalSpace 𝕜] [IsTopologicalRing 𝕜] [ContinuousStar 𝕜]
+variable [TopologicalSpace 𝕜] [ContinuousStar 𝕜]
 
 instance : ContinuousInv (Matrix.specialUnitaryGroup n 𝕜) where
   continuous_inv := continuous_induced_rng.mpr continuous_subtype_val.star
+
+variable [IsTopologicalRing 𝕜]
 
 instance : IsTopologicalGroup (Matrix.specialUnitaryGroup n 𝕜) where
 
