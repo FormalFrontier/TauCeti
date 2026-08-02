@@ -38,8 +38,9 @@ two fixed points *is* an automorphism.
 
 ## The argument
 
-Every proof reduces to the origin by the Schwarz--Pick conjugate `TauCeti.schwarzPickConjugate`
-of `SchwarzPick/Basic.lean`, the self-map `g = M_{f a} ∘ f ∘ M_a⁻¹` of the disc that fixes `0`.
+The three statements take three different routes, and only the equality case reduces to the origin,
+by the Schwarz--Pick conjugate `TauCeti.schwarzPickConjugate` of `SchwarzPick/Basic.lean`, the
+self-map `g = M_{f a} ∘ f ∘ M_a⁻¹` of the disc that fixes `0`.
 
 The bound `‖deriv f a‖ ≤ 1` is the infinitesimal Schwarz--Pick inequality
 `TauCeti.norm_deriv_div_one_sub_norm_sq_le` read at `f a = a`, where the two Poincaré densities
