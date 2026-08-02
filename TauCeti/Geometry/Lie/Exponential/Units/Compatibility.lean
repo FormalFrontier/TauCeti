@@ -43,7 +43,6 @@ noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ R :=
   NormedAlgebra.restrictScalars ℚ ℝ R
 
 /-- The preferred chart of the units manifold at one is the inclusion into the ambient algebra. -/
-@[simp]
 theorem extChartAt_units_one_apply (u : Rˣ) :
     extChartAt 𝓘(ℝ, R) (1 : Rˣ) u = (u : R) :=
   rfl
