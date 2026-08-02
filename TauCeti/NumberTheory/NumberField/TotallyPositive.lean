@@ -142,10 +142,4 @@ theorem finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).Finit
   rw [totallyPositiveUnits, iInf_subtype']
   exact Subgroup.finiteIndex_iInf fun _ => inferInstance
 
-/-- The quotient `Kˣ ⧸ totallyPositiveUnits` is finite. -/
-theorem finite_quotient_totallyPositiveUnits :
-    Finite (Kˣ ⧸ totallyPositiveUnits (K := K)) := by
-  haveI := finiteIndex_totallyPositiveUnits (K := K)
-  infer_instance
-
 end TauCeti.NumberField

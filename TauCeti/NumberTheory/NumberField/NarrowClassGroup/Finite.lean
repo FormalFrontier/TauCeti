@@ -12,8 +12,8 @@ public import TauCeti.NumberTheory.NumberField.NarrowClassGroup
 
 The narrow class group `Cl⁺(K)` is finite. It surjects onto the finite ordinary class group `Cl(K)`
 (`NarrowClassGroup.toClassGroup`), and the kernel of that surjection is covered by the classes of
-principal ideals, which factor through the finite quotient `Kˣ ⧸ totallyPositiveUnits`
-(`finite_quotient_totallyPositiveUnits`).
+principal ideals, which factor through `Kˣ ⧸ totallyPositiveUnits` — finite because
+`totallyPositiveUnits` has finite index (`finiteIndex_totallyPositiveUnits`).
 
 ## Main results
 
@@ -31,7 +31,7 @@ variable {K : Type*} [Field K] [NumberField K]
 
 /-- The narrow class group is **finite**. -/
 instance instFinite : Finite (NarrowClassGroup K) := by
-  haveI := finite_quotient_totallyPositiveUnits (K := K)
+  haveI := finiteIndex_totallyPositiveUnits (K := K)
   haveI : Finite (ClassGroup (𝓞 K)) := Finite.of_fintype _
   refine (MonoidHom.finite_iff_finite_ker_range (toClassGroup (K := K))).mpr ⟨?_, inferInstance⟩
   -- `ker toClassGroup` is covered by the classes of principal ideals, i.e. the range of
