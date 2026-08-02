@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability
 public import TauCeti.Probability.DeFinetti.Representation
 public import TauCeti.Probability.DeFinetti.CountableIndex
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Unique
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 
 /-!
 # De Finetti's theorem
@@ -26,7 +27,8 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `deFinetti_mixture` — the unique mixture representation;
 * `mixedIID_mixingLaw_unique` — uniqueness of the mixing *law*;
 * `conditionallyIID_ae_unique` — a.e. uniqueness of the directing *measure*;
-* `conditionallyIID_of_exchangeableFamily` — the countable-index extension.
+* `conditionallyIID_of_exchangeableFamily` — the countable-index extension;
+* `exchangeable_extreme_iff_iid` — the extreme exchangeable laws are exactly the i.i.d. laws.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
@@ -35,8 +37,8 @@ directing measure is pinned down almost everywhere.
 ## What is deliberately not here
 
 Route-specific endpoints. The `L²` and Koopman developments are not complete, so no `viaL2` or
-`viaKoopman` names exist to export; this facade grows when they land. Likewise the empirical and
-extreme-point work beyond what has already merged.
+`viaKoopman` names exist to export; this facade grows when they land. Likewise the empirical work
+beyond what has already merged.
 
 The worked examples are excluded, and are reachable from their own modules.
 ## References
