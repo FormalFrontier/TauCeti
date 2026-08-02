@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+public import TauCeti.Probability.Exchangeability.Cylinder
 
 /-!
 # The conditional rectangle common ending for de Finetti
@@ -24,6 +25,10 @@ there extends to the full joint-law identity in `ConditionallyIIDWith`.
 ## Main results
 
 * `conditionallyIID_of_jointRectangles` — the Layer 1 common ending, at a named directing measure;
+* `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — a set-integral
+  factorization of the mass of a directing-measure event met with a block cylinder, converted here
+  into the joint-rectangle identity above. A reusable seam, consumed by the martingale route and
+  available to any other, assuming no standard-Borel structure on either space;
 * `ConditionallyIIDWith.jointLaw_prod_univ_pi` — the converse rectangle identity;
 * `conditionallyIIDWith_iff_forall_jointRectangles` and
   `conditionallyIID_iff_exists_forall_jointRectangles` — characteristic forms for the named and
@@ -97,6 +102,48 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
   haveI : IsFiniteMeasure (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
+
+/-- **Set-integral common de Finetti ending.** If for every injective block the mass of a
+directing-measure event met with a block cylinder is the set-integral of the product of the
+witness's evaluations, then the witness directs the process.
+
+This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
+factorization identity. The martingale route reaches it from tail conditional laws and consumes it
+in `conditionallyIIDWith_of_contractable_pathSpace`; a route conditioning on invariant σ-algebras
+instead could consume the same statement, though none currently does.
+
+In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
+needed to *construct* a directing measure, not to recognise one. -/
+theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ : Measure Ω}
+    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ)
+    {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
+      ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
+        ∀ B : Fin r → Set α, (∀ i, MeasurableSet (B i)) →
+          μ ((ν ⁻¹' S) ∩ blockCylinder X k B)
+            = ∫⁻ ω in ν ⁻¹' S, ∏ i, (ν ω : Measure α) (B i) ∂μ) :
+    ConditionallyIIDWith μ X ν := by
+  classical
+  refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
+  have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
+    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
+  have hker : Measurable fun ω =>
+      (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν
+  have hrect : MeasurableSet (S ×ˢ Set.univ.pi B) := hS.prod (MeasurableSet.univ_pi hB)
+  have hpre : (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) ⁻¹' (S ×ˢ Set.univ.pi B)
+      = (ν ⁻¹' S) ∩ blockCylinder X k B := by
+    rw [Set.mk_preimage_prod, ← blockCylinder_eq_preimage_univ_pi X k B]
+  rw [Measure.map_apply_of_aemeasurable hjoint hrect, hpre, hcore r k hk S hS B hB,
+    Measure.bind_apply hrect hker.aemeasurable, ← lintegral_indicator (hν hS)]
+  refine lintegral_congr fun ω => ?_
+  have hprod : (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure (Set.univ.pi B)
+      = ∏ i, (ν ω : Measure α) (B i) := by
+    rw [ProbabilityMeasure.toMeasure_pi, Measure.pi_pi]
+  rw [Measure.prod_prod, Measure.dirac_apply' _ hS, hprod]
+  by_cases hω : ν ω ∈ S
+  · simp [Set.indicator_of_mem, hω, Set.mem_preimage]
+  · simp [Set.indicator_of_notMem, hω, Set.mem_preimage]
 
 /-- A `ConditionallyIIDWith` witness gives the joint disintegration on a product of an arbitrary
 set in the directing-measure coordinate and an arbitrary finite block rectangle. -/

@@ -80,8 +80,7 @@ theorem dualTensorHom_dualCoact_apply (φ : Module.Dual R M) (m : M) :
 
 /-- Applying the counit to the coefficient leg of the dual coaction recovers the original
 functional. -/
-theorem dualCoact_counit :
-    (Coalgebra.counit (R := R) (A := H)).lTensor (Module.Dual R M) ∘ₗ
+theorem dualCoact_counit : (Coalgebra.counit (R := R) (A := H)).lTensor (Module.Dual R M) ∘ₗ
         dualCoact (R := R) (H := H) (M := M) =
       (TensorProduct.mk R (Module.Dual R M) R).flip 1 := by
   ext φ

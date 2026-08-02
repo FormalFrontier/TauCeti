@@ -262,8 +262,7 @@ theorem liftQ_apply (f : Comodule.Hom R C M P)
 /-- The underlying linear map of the descended quotient morphism is the quotient-module lift. -/
 @[simp]
 theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
-    (N.liftQ f hf).toLinearMap =
+    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) : (N.liftQ f hf).toLinearMap =
       letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
       N.toSubmodule.liftQ f.toLinearMap hf := by
   letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
@@ -281,8 +280,7 @@ theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
 /-- Precomposing the descended quotient morphism with the quotient map recovers the original
 morphism. -/
 @[simp]
-theorem liftQ_mkQ (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
+theorem liftQ_mkQ (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
     (N.liftQ f hf).comp N.mkQ = f := by
   ext m
   simp
@@ -296,8 +294,7 @@ theorem hom_ext {f g : Comodule.Hom R C (M ⧸ N.toSubmodule) P}
   exact congr_fun (congrArg DFunLike.coe h) m
 
 /-- Uniqueness of the morphism descended to a quotient. -/
-theorem liftQ_unique (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
+theorem liftQ_unique (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
     (g : Comodule.Hom R C (M ⧸ N.toSubmodule) P) (hg : g.comp N.mkQ = f) :
     g = N.liftQ f hf := by
   apply N.hom_ext
