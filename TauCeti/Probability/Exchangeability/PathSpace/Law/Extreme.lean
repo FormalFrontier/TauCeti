@@ -40,7 +40,7 @@ unique mixture representation writes an exchangeable law as
 If a measurable set has mixing mass strictly between zero and one, conditioning `π` on the set and
 its complement gives a nontrivial convex decomposition into exchangeable laws. Extremality rules
 this out, mixture injectivity identifies the conditional mixing law with `π`, and therefore `π` is
-zero-one. `Measure.exists_eq_dirac_probabilityMeasure` turns this into `π = δ_P`.
+zero-one. `IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure` turns this into `π = δ_P`.
 
 This proves the Layer 6 extreme-point corollary and the public
 `exchangeable_extreme_iff_iid` target in Layer 7 of
@@ -119,14 +119,10 @@ theorem ergodic_shift_infinitePi_const (P : ProbabilityMeasure α) :
     invariants_shift_le_exchangeableSigma (α := α) s hs_inv
   have hzeroOne := hewittSavage_trivial_of_iIndep hindep hident hs_exch
   rw [hpath] at hzeroOne
-  change EventuallyConst s (ae ρ)
-  rw [eventuallyConst_set]
+  refine eventuallyConst_set.2 ?_
   rcases hzeroOne with hzero | hone
   · exact Or.inr (ae_iff.mpr (by simpa using hzero))
-  · apply Or.inl
-    rw [ae_iff]
-    change ρ sᶜ = 0
-    exact (prob_compl_eq_zero_iff hs).2 hone
+  · exact Or.inl ((_root_.MeasureTheory.mem_ae_iff_prob_eq_one hs).2 hone)
 
 private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
     {p : Measure (ProbabilityMeasure α)} [IsProbabilityMeasure p]
@@ -219,7 +215,8 @@ theorem exchangeable_extreme_iff_iid [StandardBorelSpace α] [Nonempty α]
         exact cond_apply_self hs0 (measure_ne_top p s)
       }
     letI : IsZeroOneMeasure p := hp_zeroOne
-    obtain ⟨P, hp⟩ := TauCeti.MeasureTheory.Measure.exists_eq_dirac_probabilityMeasure (π := p)
+    obtain ⟨P, hp⟩ :=
+      TauCeti.MeasureTheory.IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure (π := p)
     refine ⟨P, ?_⟩
     calc
       ρ = p.bind (fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α)) := by
