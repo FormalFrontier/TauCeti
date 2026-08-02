@@ -123,10 +123,11 @@ recovers at `U = Metric.ball c r`. An elliptical disc, the interior of a convex 
 nonempty bounded intersection of *finitely many* open half-planes are Jordan domains — finitely
 many, since an infinite intersection of open half-planes is convex but need not be open.
 
-Of the four defining conditions, openness and boundedness are hypotheses here, taken over
-unchanged; convexity supplies the remaining two. A nonempty convex set is connected, and the
-frontier of a bounded convex set with nonempty interior is a Jordan curve by
-`TauCeti.isJordanCurve_frontier_of_convex` — the interior being `U` itself, since `U` is open. -/
+Of the four defining conditions, openness and boundedness are the hypotheses `ho` and `hb`, taken
+over unchanged. Connectedness is `hU` with `hne`: a nonempty convex set is connected. The Jordan
+frontier is `hU`, `hne` and `hb` together, by `TauCeti.isJordanCurve_frontier_of_convex`, whose
+solidity hypothesis `(interior U).Nonempty` is `hne` read through `ho`, the interior of an open set
+being the set itself. -/
 theorem isJordanDomain_of_convex (hU : Convex ℝ U) (ho : IsOpen U) (hne : U.Nonempty)
     (hb : Bornology.IsBounded U) : IsJordanDomain U where
   isOpen := ho
