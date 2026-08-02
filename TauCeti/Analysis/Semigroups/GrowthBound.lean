@@ -13,6 +13,11 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 This file contains exponential growth bounds for C₀-semigroups, including the
 contraction case and the existence of a finite exponential type.
 
+The uniform operator bound this provides also yields strong continuity of `(u, x) ↦ S u x` in
+both arguments at once (`StronglyContinuousSemigroup.tendsto_realOperator_apply` and its
+`ContinuousOn` form `StronglyContinuousSemigroup.continuousOn_realOperator_apply`), which does
+not follow from continuity of `u ↦ S u` alone.
+
 ## References
 Ported and adapted (Apache 2.0) from `mrdouglasny/hille-yosida`; references include
 Engel--Nagel, Linares, Pazy, Hille, and Yosida.
@@ -189,6 +194,56 @@ theorem StronglyContinuousSemigroup.existsGrowthBound_ge
   obtain ⟨ω, M, hb⟩ := S.existsGrowthBound
   refine ⟨max ω ω₀, max M M₀, le_max_right _ _, le_max_right _ _, ?_⟩
   exact hb.mono (le_max_left _ _) (le_max_left _ _)
+
+/-! ## Joint strong continuity -/
+
+/-- **Joint strong continuity**: if `f i → r` through nonnegative values and `g i → z`, then
+`S (f i) (g i) → S r z`.
+
+A C₀-semigroup is strongly, not uniformly, continuous, so this does not follow from continuity
+of `u ↦ S.realOperator u` alone; the proof combines strong continuity at `r` with the uniform
+operator bound supplied by a growth bound. -/
+theorem StronglyContinuousSemigroup.tendsto_realOperator_apply {ι : Type*} {l : Filter ι}
+    (S : StronglyContinuousSemigroup X) {f : ι → ℝ} {g : ι → X} {r : ℝ} {z : X}
+    (hf : Filter.Tendsto f l (𝓝 r)) (hf0 : ∀ᶠ i in l, 0 ≤ f i) (hr : 0 ≤ r)
+    (hg : Filter.Tendsto g l (𝓝 z)) :
+    Filter.Tendsto (fun i => S.realOperator (f i) (g i)) l (𝓝 (S.realOperator r z)) := by
+  obtain ⟨omega, M, hb⟩ := S.existsGrowthBound
+  have hM : (0 : ℝ) < M := lt_of_lt_of_le zero_lt_one hb.one_le
+  -- A single operator-norm bound valid for all times eventually visited by `f`.
+  have hbound : ∀ᶠ i in l, ‖S.realOperator (f i)‖ ≤ M * Real.exp (|omega| * (r + 1)) := by
+    filter_upwards [hf0, hf.eventually_lt_const (lt_add_one r)] with i hi0 hi1
+    refine (hb.bound (f i) hi0).trans ?_
+    refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) hM.le
+    calc omega * f i ≤ |omega| * f i := mul_le_mul_of_nonneg_right (le_abs_self omega) hi0
+      _ ≤ |omega| * (r + 1) := mul_le_mul_of_nonneg_left hi1.le (abs_nonneg omega)
+  -- The argument moves: the operator norms are uniformly bounded, so this contribution vanishes.
+  have h1 : Filter.Tendsto (fun i => S.realOperator (f i) (g i - z)) l (𝓝 0) := by
+    refine squeeze_zero_norm' (a := fun i => M * Real.exp (|omega| * (r + 1)) * ‖g i - z‖) ?_ ?_
+    · filter_upwards [hbound] with i hi
+      exact (ContinuousLinearMap.le_opNorm _ _).trans
+        (mul_le_mul_of_nonneg_right hi (norm_nonneg _))
+    · simpa using
+        (tendsto_iff_norm_sub_tendsto_zero.mp hg).const_mul (M * Real.exp (|omega| * (r + 1)))
+  -- The time moves: this is strong continuity of the orbit of the fixed vector `z`.
+  have h2 : Filter.Tendsto (fun i => S.realOperator (f i) z) l (𝓝 (S.realOperator r z)) := by
+    have hfw : Filter.Tendsto f l (𝓝[Set.Ici 0] r) :=
+      tendsto_nhdsWithin_iff.mpr ⟨hf, hf0⟩
+    simpa [Function.comp_def] using (S.realOperator_continuousWithinAt z r hr).tendsto.comp hfw
+  have hsplit : ∀ i, S.realOperator (f i) (g i)
+      = S.realOperator (f i) (g i - z) + S.realOperator (f i) z := by
+    intro i
+    rw [← ContinuousLinearMap.map_add, sub_add_cancel]
+  simpa using (h1.add h2).congr fun i => (hsplit i).symm
+
+/-- The `ContinuousOn` form of joint strong continuity: a continuous nonnegative time
+reparametrization applied to a continuous vector-valued map gives a continuous orbit. -/
+theorem StronglyContinuousSemigroup.continuousOn_realOperator_apply
+    (S : StronglyContinuousSemigroup X) {Y : Type*} [TopologicalSpace Y] {s : Set Y}
+    {f : Y → ℝ} {g : Y → X} (hf : ContinuousOn f s) (hf0 : ∀ u ∈ s, 0 ≤ f u)
+    (hg : ContinuousOn g s) :
+    ContinuousOn (fun u => S.realOperator (f u) (g u)) s := fun u hu =>
+  S.tendsto_realOperator_apply (hf u hu) (eventually_nhdsWithin_of_forall hf0) (hf0 u hu) (hg u hu)
 
 end TauCeti.Semigroups
 

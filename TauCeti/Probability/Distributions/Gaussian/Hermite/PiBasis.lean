@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import TauCeti.Analysis.InnerProductSpace.L2.Pi
 public import TauCeti.Probability.Distributions.Gaussian.Hermite.Basis
 

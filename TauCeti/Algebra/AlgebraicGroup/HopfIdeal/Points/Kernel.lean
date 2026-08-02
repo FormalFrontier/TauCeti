@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Kernel
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Kernel.Basic
 
 /-!
 # Points of the kernel of an affine group-scheme morphism
