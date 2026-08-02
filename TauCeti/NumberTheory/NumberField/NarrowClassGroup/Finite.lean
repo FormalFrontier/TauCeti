@@ -31,7 +31,6 @@ variable {K : Type*} [Field K] [NumberField K]
 
 /-- The narrow class group is **finite**. -/
 instance instFinite : Finite (NarrowClassGroup K) := by
-  haveI := finiteIndex_totallyPositiveUnits (K := K)
   haveI : Finite (ClassGroup (𝓞 K)) := Finite.of_fintype _
   refine (MonoidHom.finite_iff_finite_ker_range (toClassGroup (K := K))).mpr ⟨?_, inferInstance⟩
   -- `ker toClassGroup` is covered by the classes of principal ideals, i.e. the range of

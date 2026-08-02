@@ -135,7 +135,7 @@ theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
 infinite places, of the finite-index preimages of the positive units of `ℝ` (the general
 finite-index facts `instFiniteIndexPosSubgroup`/`instFiniteIndexComapPosSubgroup` live in
 `TauCeti.Algebra.Order.Ring.Units`). -/
-theorem finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
+instance finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
   rw [totallyPositiveUnits, iInf_subtype']
   exact Subgroup.finiteIndex_iInf fun _ => inferInstance
 
