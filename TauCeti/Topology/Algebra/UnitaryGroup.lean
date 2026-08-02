@@ -25,8 +25,7 @@ Mathlib already supplies the topological group structure on `unitary R` for a to
 monoid `R` (`isClosed_unitary` and the `IsTopologicalGroup (unitary R)` instance), so for the
 unitary group only compactness is new. The special unitary group is a different submonoid, carrying
 its own `Group` instance in `Mathlib/LinearAlgebra/UnitaryGroup.lean`, so its `ContinuousInv` and
-`IsTopologicalGroup` instances are recorded here too. Those instances, the description of the
-special unitary group as the unitary group cut out by `det A = 1`, and its closedness need no
+`IsTopologicalGroup` instances are recorded here too. Those instances and its closedness need no
 `RCLike` hypothesis, and are stated over a topological commutative star ring instead; only
 compactness is `RCLike`-specific. Hausdorffness is not proved here: it
 is inherited from the ambient matrix topology whenever `𝕜` is Hausdorff.
@@ -49,14 +48,6 @@ section CommRing
 
 variable [CommRing 𝕜] [StarRing 𝕜]
 
-/-- The special unitary group is the unitary group intersected with the set of matrices of
-determinant one. -/
-theorem coe_specialUnitaryGroup :
-    (Matrix.specialUnitaryGroup n 𝕜 : Set (Matrix n n 𝕜))
-      = (Matrix.unitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) ∩ {A | A.det = 1} := by
-  ext A
-  simpa using Matrix.mem_specialUnitaryGroup_iff
-
 variable [TopologicalSpace 𝕜] [ContinuousStar 𝕜]
 
 instance : ContinuousInv (Matrix.specialUnitaryGroup n 𝕜) where
@@ -70,7 +61,11 @@ instance : IsTopologicalGroup (Matrix.specialUnitaryGroup n 𝕜) where
 out of the closed unitary group by the closed condition `det A = 1`. -/
 theorem isClosed_specialUnitaryGroup [T1Space 𝕜] :
     IsClosed (Matrix.specialUnitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) := by
-  rw [coe_specialUnitaryGroup]
+  have hinter : (Matrix.specialUnitaryGroup n 𝕜 : Set (Matrix n n 𝕜))
+      = (Matrix.unitaryGroup n 𝕜 : Set (Matrix n n 𝕜)) ∩ {A | A.det = 1} := by
+    ext A
+    simpa using Matrix.mem_specialUnitaryGroup_iff
+  rw [hinter]
   exact isClosed_unitary.inter
     (isClosed_singleton.preimage (Continuous.matrix_det continuous_id))
 

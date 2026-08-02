@@ -194,6 +194,14 @@ noncomputable def torusContinuousMulEquiv : Circle ≃ₜ* torus where
 theorem torusContinuousMulEquiv_apply (z : Circle) :
     (torusContinuousMulEquiv z : SU2) = torusHom z := (rfl)
 
+/-- The inverse of `torusContinuousMulEquiv` reads off the circle parameter of an element of the
+maximal torus: it is the point of `Circle` that `torusHom` sends back to that element. -/
+@[simp]
+theorem torusHom_torusContinuousMulEquiv_symm (g : torus) :
+    torusHom (torusContinuousMulEquiv.symm g) = (g : SU2) :=
+  (torusContinuousMulEquiv_apply _).symm.trans
+    (congrArg Subtype.val (torusContinuousMulEquiv.apply_symm_apply g))
+
 instance : IsMulCommutative torus :=
   .of_setLike_mul_comm <| by
     rintro _ ⟨z, rfl⟩ _ ⟨w, rfl⟩
@@ -263,6 +271,14 @@ theorem torusExp_add (θ φ : ℝ) : torusExp (θ + φ) = torusExp θ * torusExp
 
 @[simp]
 theorem torusExp_zero : torusExp 0 = 1 := by rw [torusExp, Circle.exp_zero, map_one]
+
+@[simp]
+theorem torusExp_neg (θ : ℝ) : torusExp (-θ) = (torusExp θ)⁻¹ :=
+  eq_inv_of_mul_eq_one_left (by rw [← torusExp_add, neg_add_cancel, torusExp_zero])
+
+theorem continuous_torusExp : Continuous torusExp :=
+  (continuous_torusHom.comp Circle.exp.continuous).congr fun θ => by
+    rw [Function.comp_apply, torusExp]
 
 /-- Every element of the maximal torus is `diag (e^{iθ}, e^{-iθ})` for some angle `θ`. -/
 theorem mem_torus_iff_exists_torusExp {g : SU2} : g ∈ torus ↔ ∃ θ : ℝ, g = torusExp θ := by
