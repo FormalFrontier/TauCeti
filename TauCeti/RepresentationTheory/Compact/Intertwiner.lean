@@ -7,8 +7,6 @@ module
 public import TauCeti.Analysis.Normed.Module.Trace
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import TauCeti.RepresentationTheory.Compact.MatrixCoefficient
-public import Mathlib.LinearAlgebra.Trace
-public import Mathlib.Topology.Algebra.Module.FiniteDimension
 import Mathlib.Analysis.Normed.Operator.BoundedLinearMaps
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 

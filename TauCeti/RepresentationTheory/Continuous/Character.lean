@@ -8,7 +8,6 @@ public import TauCeti.Analysis.Normed.Module.Trace
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.Analysis.InnerProductSpace.Trace
-public import Mathlib.Topology.Algebra.Module.FiniteDimension
 
 /-!
 # Characters of continuous representations
