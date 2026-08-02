@@ -23,19 +23,16 @@ Hermitian part of `G` to be a scalar,
 
 `G + G* = (tr G) • 1`   (`TauCeti.SU2.coe_add_star`),
 
-because `G* = G⁻¹` is the adjugate of `G` and a `2 × 2` matrix and its adjugate add up to the
-trace. So `G` differs from the Hermitian matrix `H = i (G - G*)` by a scalar matrix, and any
-unitary that diagonalises `H` diagonalises `G`. The eigenvector unitary supplied by the spectral
-theorem need not have determinant one, but it can be rescaled by a scalar of modulus one until it
-does (`TauCeti.SU2.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
+because `G* = G⁻¹` is the adjugate of `G` (`TauCeti.Matrix.specialUnitaryGroup.star_eq_adjugate`)
+and a `2 × 2` matrix and its adjugate add up to the trace. So `G` differs from the Hermitian
+matrix `H = i (G - G*)` by a scalar matrix, and any unitary that diagonalises `H` diagonalises
+`G`. The eigenvector unitary supplied by the spectral theorem need not have determinant one, but
+it can be rescaled by a scalar of modulus one until it does
+(`TauCeti.SU2.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
 change the conjugation it induces.
 
 ## Main results
 
-* `TauCeti.SU2.star_coe_eq_adjugate`: the conjugate transpose of an element of `SU(2)` is its
-  adjugate.
-* `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its conjugate transpose add up to
-  `(tr g) • 1`; equivalently the Hermitian part of `g` is a scalar matrix.
 * `TauCeti.SU2.exists_circle_smul_mem_specialUnitaryGroup`: `U(2) = Circle · SU(2)`; every
   `2 × 2` unitary matrix becomes special unitary after multiplication by a scalar of modulus one.
 * `TauCeti.SU2.exists_conj_mem_torus`: **torus conjugacy**, every element of `SU(2)` is conjugate
@@ -47,8 +44,9 @@ change the conjugation it induces.
   says every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
   converse, that conjugate elements of `T` are equal or inverse, is not proved here, so the
   classes are not yet identified with the Weyl orbits.
-* `TauCeti.SU2.eq_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)` that agree on the
-  maximal torus are equal; a class function on `SU(2)` is determined by its restriction to `T`.
+* `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)`
+  that agree on the maximal torus are equal; a class function on `SU(2)` is determined by its
+  restriction to `T`.
 -/
 
 public section
@@ -56,34 +54,6 @@ public section
 namespace TauCeti
 
 namespace SU2
-
-/-! ### The Hermitian part of a special unitary `2 × 2` matrix -/
-
-/-- The conjugate transpose of an element of `SU(2)` is its adjugate: it is the inverse, and for
-determinant one the inverse is the adjugate. This is the explicit description of `star` that both
-the Hermitian-part identity below and the Weyl reflection run on. -/
-theorem star_coe_eq_adjugate (g : SU2) :
-    star (g : Matrix (Fin 2) (Fin 2) ℂ) = (g : Matrix (Fin 2) (Fin 2) ℂ).adjugate := by
-  have hmem := Matrix.mem_specialUnitaryGroup_iff.mp g.2
-  have hmul : (g : Matrix (Fin 2) (Fin 2) ℂ) * star (g : Matrix (Fin 2) (Fin 2) ℂ) = 1 :=
-    Matrix.mem_unitaryGroup_iff.mp hmem.1
-  calc star (g : Matrix (Fin 2) (Fin 2) ℂ)
-      = (g : Matrix (Fin 2) (Fin 2) ℂ).adjugate * (g : Matrix (Fin 2) (Fin 2) ℂ) *
-          star (g : Matrix (Fin 2) (Fin 2) ℂ) := by
-        rw [Matrix.adjugate_mul, hmem.2, one_smul, Matrix.one_mul]
-    _ = (g : Matrix (Fin 2) (Fin 2) ℂ).adjugate := by
-        rw [Matrix.mul_assoc, hmul, Matrix.mul_one]
-
-/-- An element of `SU(2)` and its conjugate transpose add up to `(tr g) • 1`: the conjugate
-transpose of `g` is its adjugate, and a `2 × 2` matrix plus its adjugate is the trace times the
-identity. Equivalently, the Hermitian part of `g` is a scalar matrix -- the fact that lets
-Hermitian diagonalisation diagonalise `g` itself. -/
-theorem coe_add_star (g : SU2) :
-    (g : Matrix (Fin 2) (Fin 2) ℂ) + star (g : Matrix (Fin 2) (Fin 2) ℂ)
-      = Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) • 1 := by
-  rw [star_coe_eq_adjugate, Matrix.adjugate_fin_two, Matrix.trace_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [add_comm]
 
 /-! ### Rescaling a unitary matrix into `SU(2)` -/
 
@@ -95,14 +65,8 @@ theorem exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup (Fin
       Matrix.specialUnitaryGroup (Fin 2) ℂ := by
   have hUU : star (U : Matrix (Fin 2) (Fin 2) ℂ) * (U : Matrix (Fin 2) (Fin 2) ℂ) = 1 :=
     Matrix.UnitaryGroup.star_mul_self U
-  have hnorm : ‖(U : Matrix (Fin 2) (Fin 2) ℂ).det‖ = 1 := by
-    have h : star ((U : Matrix (Fin 2) (Fin 2) ℂ).det) * (U : Matrix (Fin 2) (Fin 2) ℂ).det
-        = 1 := by
-      rw [← Matrix.det_conjTranspose, ← Matrix.det_mul, ← Matrix.star_eq_conjTranspose, hUU,
-        Matrix.det_one]
-    have h2 := congrArg norm h
-    rw [norm_mul, norm_star, norm_one] at h2
-    nlinarith [norm_nonneg ((U : Matrix (Fin 2) (Fin 2) ℂ).det)]
+  have hnorm : ‖(U : Matrix (Fin 2) (Fin 2) ℂ).det‖ = 1 :=
+    CStarRing.norm_of_mem_unitary (Matrix.det_of_mem_unitary U.2)
   obtain ⟨θ, hθ⟩ := Circle.exp_surjective
     (⟨(U : Matrix (Fin 2) (Fin 2) ℂ).det, mem_sphere_zero_iff_norm.mpr hnorm⟩ : Circle)
   have hdetU : (U : Matrix (Fin 2) (Fin 2) ℂ).det = Complex.exp ((θ : ℂ) * Complex.I) := by
@@ -129,9 +93,8 @@ theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus 
   set H : Matrix (Fin 2) (Fin 2) ℂ := Complex.I • (G - star G) with hHdef
   -- `H` is Hermitian: conjugating negates both `Complex.I` and `G - star G`.
   have hHerm : H.IsHermitian := by
-    change H.conjTranspose = H
-    rw [← Matrix.star_eq_conjTranspose, hHdef, star_smul, star_sub, star_star, Complex.star_def,
-      Complex.conj_I, neg_smul, ← smul_neg, neg_sub]
+    rw [Matrix.isHermitian_iff_isSelfAdjoint, isSelfAdjoint_iff, hHdef, star_smul, star_sub,
+      star_star, Complex.star_def, Complex.conj_I, neg_smul, ← smul_neg, neg_sub]
   -- `G` is a scalar matrix plus a multiple of `H`, so anything diagonalising `H` diagonalises `G`.
   have hdecomp : G = (Matrix.trace G / 2) • (1 : Matrix (Fin 2) (Fin 2) ℂ)
       + (-Complex.I / 2) • H := by
@@ -208,10 +171,12 @@ theorem isConj_inv_of_mem_torus {g : SU2} (hg : g ∈ torus) : IsConj g g⁻¹ :
       fin_cases i <;> fin_cases j <;>
         simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.star_eq_conjTranspose]
     · simp [Matrix.det_fin_two]
-  refine isConj_iff.mpr ⟨⟨_, hmem⟩, Subtype.ext ?_⟩
-  change (!![0, 1; -1, 0] : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ) *
-    star (!![0, 1; -1, 0] : Matrix (Fin 2) (Fin 2) ℂ) = star (g : Matrix (Fin 2) (Fin 2) ℂ)
-  rw [star_coe_eq_adjugate, Matrix.adjugate_fin_two]
+  refine isConj_iff.mpr ⟨⟨_, hmem⟩, ?_⟩
+  -- Inversion in `SU(2)` is `star`, which commutes with the coercion to matrices.
+  rw [← Matrix.star_eq_inv, ← Matrix.star_eq_inv]
+  refine Subtype.ext ?_
+  push_cast
+  rw [Matrix.specialUnitaryGroup.star_eq_adjugate, Matrix.adjugate_fin_two]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Matrix.vecMul, Matrix.vecHead, Matrix.vecTail, Fin.sum_univ_two,
@@ -227,7 +192,7 @@ theorem isConj_torusExp_neg (θ : ℝ) : IsConj (torusExp θ) (torusExp (-θ)) :
 
 /-- A class function on `SU(2)` is determined by its restriction to the maximal torus: two
 conjugation-invariant functions that agree on `T` agree everywhere. -/
-theorem eq_of_eqOn_torus {α : Type*} {f₁ f₂ : SU2 → α}
+theorem eq_of_conjInvariant_of_eqOn_torus {α : Type*} {f₁ f₂ : SU2 → α}
     (h₁ : ∀ u g : SU2, f₁ (u * g * u⁻¹) = f₁ g) (h₂ : ∀ u g : SU2, f₂ (u * g * u⁻¹) = f₂ g)
     (h : Set.EqOn f₁ f₂ (torus : Set SU2)) : f₁ = f₂ := by
   funext g
