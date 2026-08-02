@@ -199,11 +199,9 @@ theorem isPolynomial_weightOfShape (n : ℕ) (μ : YoungDiagram) :
 @[simp]
 theorem shape_weightOfShape {n : ℕ} {μ : YoungDiagram} (hμ : μ.colLen 0 ≤ n) :
     (weightOfShape n μ).shape = μ := by
-  refine YoungDiagram.rowLen_injective (funext fun i => ?_)
-  by_cases hi : i < n
-  · simpa using DominantWeight.rowLen_shape (weightOfShape n μ) ⟨i, hi⟩
-  · rw [DominantWeight.rowLen_shape_eq_zero_of_le _ (Nat.le_of_not_lt hi),
-      YoungDiagram.rowLen_eq_zero_of_colLen_le (hμ.trans (Nat.le_of_not_lt hi))]
+  rw [DominantWeight.shape]
+  simp only [weightOfShape_apply, Int.toNat_natCast]
+  exact YoungDiagram.ofRowLensFin_rowLen μ hμ
 
 @[simp]
 theorem weightOfShape_shape {n : ℕ} {l : DominantWeight n} (hl : l.IsPolynomial) :
