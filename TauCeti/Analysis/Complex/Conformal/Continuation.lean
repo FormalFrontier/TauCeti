@@ -386,8 +386,7 @@ protected theorem pow (h : ContinuesAlong f₀ c) (n : ℕ) : ContinuesAlong (f�
   let ⟨f, hf, hf0⟩ := h
   ⟨f ^ n, hf.pow n, hf0.pow_const n⟩
 
-/-- **The derivative of a germ that continues along a path continues along it**; the witness is
-the term-by-term derivative of a continuation of the germ itself. -/
+/-- The derivative of a germ that continues along a path continues along it. -/
 protected theorem deriv (h : ContinuesAlong f₀ c) : ContinuesAlong (_root_.deriv f₀) c :=
   let ⟨f, hf, hf0⟩ := h
   ⟨fun t => _root_.deriv (f t), hf.deriv, hf0.deriv⟩
