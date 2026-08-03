@@ -51,55 +51,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-omit [Group G] in
-private theorem isMIntegralCurveAt_extChartAt_symm_of_eventually
-    [IsManifold I 1 G] [ContinuousSMul ℝ E]
-    {x₀ : G} {f : ℝ → E} {t₀ : ℝ} {v : (x : G) → TangentSpace I x}
-    (htarget : ∀ᶠ t in 𝓝 t₀, f t ∈ interior (extChartAt I x₀).target)
-    (hderiv : ∀ᶠ t in 𝓝 t₀,
-      HasDerivAt f
-        (tangentCoordChange I ((extChartAt I x₀).symm (f t)) x₀
-          ((extChartAt I x₀).symm (f t)) (v ((extChartAt I x₀).symm (f t)))) t) :
-    IsMIntegralCurveAt ((extChartAt I x₀).symm ∘ f) v t₀ := by
-  obtain ⟨s, hs, haux⟩ := (hderiv.and htarget).exists_mem
-  rw [isMIntegralCurveAt_iff]
-  refine ⟨s, hs, ?_⟩
-  intro t ht
-  let xₜ : G := (extChartAt I x₀).symm (f t)
-  have h : HasDerivAt f
-      (tangentCoordChange I xₜ x₀ xₜ (v xₜ)) t := (haux t ht).1
-  have hf3 := Set.mem_of_mem_of_subset (haux t ht).2 interior_subset
-  have hft1 := Set.mem_preimage.mp <|
-    Set.mem_of_mem_of_subset hf3 (extChartAt I x₀).target_subset_preimage_source
-  have hft2 := mem_extChartAt_source (I := I) xₜ
-  have hft1' : xₜ ∈ (extChartAt I x₀).source := by simpa only [xₜ] using hft1
-  have hcharts :
-      xₜ ∈ (extChartAt I xₜ).source ∩ (extChartAt I x₀).source ∩
-        (extChartAt I xₜ).source := ⟨⟨hft2, hft1'⟩, hft2⟩
-  apply HasMFDerivAt.hasMFDerivWithinAt
-  refine ⟨(continuousAt_extChartAt_symm'' hf3).comp h.continuousAt, ?_⟩
-  have hcomp : HasDerivAt ((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f)
-      (tangentCoordChange I x₀ xₜ xₜ (tangentCoordChange I xₜ x₀ xₜ (v xₜ))) t := by
-    apply HasFDerivAt.comp_hasDerivAt _ _ h
-    apply HasFDerivWithinAt.hasFDerivAt (s := Set.range I) _ <|
-      mem_nhds_iff.mpr ⟨interior (extChartAt I x₀).target,
-        subset_trans interior_subset (extChartAt_target_subset_range ..),
-        isOpen_interior, (haux t ht).2⟩
-    rw [← (extChartAt I x₀).right_inv hf3]
-    exact hasFDerivWithinAt_tangentCoordChange ⟨hft1, hft2⟩
-  have hd := hcomp.congr_deriv (tangentCoordChange_comp hcharts)
-  have hd' := hd.congr_deriv (tangentCoordChange_self hft2)
-  simp only [writtenInExtChartAt, extChartAt_model_space_eq_id, PartialEquiv.refl_coe,
-    PartialEquiv.refl_symm, modelWithCornersSelf_coe, Function.comp_def, id_eq, Set.range_id]
-  -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
-  rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
-  rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
-  -- In these charts, the source and target tangent spaces are definitionally their model spaces.
-  change HasFDerivWithinAt
-    (((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f))
-      (ContinuousLinearMap.toSpanSingleton ℝ (v xₜ)) Set.univ t
-  exact hd'.hasFDerivAt.hasFDerivWithinAt
-
 /-- The left-invariant vector field, expressed in the identity chart and parameterized by its
 generating tangent vector in the model space. -/
 noncomputable def mulInvariantCoordinateVectorField [IsManifold I 1 G] (p : E × E) : E :=
@@ -374,7 +325,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       IsMIntegralCurveAt γ
         (mulInvariantVectorField (I := I) (G := G) (v : GroupLieAlgebra I G)) t := by
     intro t ht
-    apply isMIntegralCurveAt_extChartAt_symm_of_eventually
+    apply IsMIntegralCurveAt.of_extChartAt_symm
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
       exact (hlocal s hs).2.2.2
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
