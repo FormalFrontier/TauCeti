@@ -52,12 +52,12 @@ variable {𝕜 G E : Type*} [NormedRing 𝕜] [Group G] [TopologicalSpace G] [Is
   [NormedAddCommGroup E] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [SecondCountableTopologyEither G E]
 
 /-- **A continuous class function is a class function in `Lp`.**  A continuous function on a
-compact group is its own representative, so this is `TauCeti.mem_centralLp_of_ae_eq` applied to
-`ContinuousMap.coeFn_toLp`. -/
+compact group is its own representative, so this is
+`TauCeti.mem_centralLp_of_ae_eq_of_conj_invariant` applied to `ContinuousMap.coeFn_toLp`. -/
 theorem toLp_mem_centralLp (p : ℝ≥0∞) [Fact (1 ≤ p)] (F : C(G, E))
     (hF : ∀ g h : G, F (h * g * h⁻¹) = F g) :
     ContinuousMap.toLp p (haarProb G) 𝕜 F ∈ centralLp 𝕜 E p (haarProb G) :=
-  mem_centralLp_of_ae_eq 𝕜
+  mem_centralLp_of_ae_eq_of_conj_invariant 𝕜
     (ContinuousMap.coeFn_toLp (E := E) (𝕜 := 𝕜) (p := p) (haarProb G) F) hF
 
 end ClassFunction
