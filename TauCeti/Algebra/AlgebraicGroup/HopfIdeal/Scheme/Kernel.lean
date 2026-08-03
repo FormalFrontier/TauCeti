@@ -215,8 +215,8 @@ private lemma trivial_to_hopfSpec_underlying (H : _root_.CommHopfAlgCat.{u} R) :
   rfl
 
 /-- The Hopf spectrum of the kernel quotient is the scheme-theoretic fibre over the identity.
-The horizontal maps are the kernel inclusion and the unique map to the trivial group scheme;
-the vertical maps are the morphism induced by `f` and the identity section, respectively. -/
+The horizontal maps are the kernel inclusion and the identity section; the vertical maps are the
+unique map to the trivial group scheme and the morphism induced by `f`, respectively. -/
 theorem isPullback_kernelSpec (f : H ⟶ K) :
     IsPullback (kernelSpecι f)
       (0 : kernelSpec f ⟶ Grp.trivial (Over (Spec (CommRingCat.of R))))
