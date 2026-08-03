@@ -18,6 +18,8 @@ spaces of continuous functions over a compact domain.
 
 * `ContinuousMap.applyContinuousLinearMap`: pointwise application of a continuous family of
   continuous linear maps, as a bounded bilinear operator.
+* `ContinuousMap.hasStrictFDerivAt_comp_const`: strict differentiability of pointwise
+  postcomposition at a constant map.
 
 ## References
 
@@ -77,5 +79,33 @@ theorem applyContinuousLinearMap_apply (A : C(K, E →L[𝕜] F)) (f : C(K, E)) 
   by
     rw [applyContinuousLinearMap]
     rfl
+
+/-- Strict differentiability of a map lifts to strict differentiability of pointwise
+postcomposition at a constant continuous map. The derivative acts pointwise by the original
+derivative. -/
+theorem hasStrictFDerivAt_comp_const (f : C(E, F)) (f' : E →L[𝕜] F) (x : E)
+    (hf : HasStrictFDerivAt f f' x) :
+    HasStrictFDerivAt (fun g : C(K, E) ↦ f.comp g)
+      (applyContinuousLinearMap (ContinuousMap.const K f')) (ContinuousMap.const K x) := by
+  rw [hasStrictFDerivAt_iff_isLittleO, Asymptotics.isLittleO_iff] at hf ⊢
+  intro c hc
+  obtain ⟨r, hr, hbound⟩ := Metric.eventually_nhds_iff_ball.mp (hf hc)
+  rw [Metric.eventually_nhds_iff_ball]
+  refine ⟨r, hr, fun p hp ↦ ?_⟩
+  apply (ContinuousMap.norm_le _ (mul_nonneg hc.le (norm_nonneg _))).2
+  intro t
+  have hpt : (p.1 t, p.2 t) ∈ Metric.ball (x, x) r := by
+    rw [Metric.mem_ball, Prod.dist_eq, max_lt_iff]
+    rw [Metric.mem_ball, Prod.dist_eq, max_lt_iff] at hp
+    exact ⟨(ContinuousMap.dist_apply_le_dist t).trans_lt hp.1,
+      (ContinuousMap.dist_apply_le_dist t).trans_lt hp.2⟩
+  calc
+    ‖(f.comp p.1 - f.comp p.2 -
+        applyContinuousLinearMap (ContinuousMap.const K f') (p.1 - p.2)) t‖ ≤
+        c * ‖p.1 t - p.2 t‖ := by
+      simpa only [ContinuousMap.comp_apply, ContinuousMap.const_apply,
+        applyContinuousLinearMap_apply, ContinuousMap.sub_apply] using hbound _ hpt
+    _ ≤ c * ‖p.1 - p.2‖ :=
+      mul_le_mul_of_nonneg_left (ContinuousMap.norm_coe_le_norm (p.1 - p.2) t) hc.le
 
 end ContinuousMap
