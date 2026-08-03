@@ -90,19 +90,19 @@ private lemma units_zpow_sub_one_mem_span {A : Type*} [CommRing A]
         simpa only [zpow_negSucc, inv_pow, Units.val_mul,
           Units.val_inv_eq_inv_val, Units.val_pow_eq_pow_val]
           using (u ^ (k + 1)).inv_mul
-      rw [show (↑(u ^ Int.negSucc k) : A) - 1 =
-          -(↑(u ^ Int.negSucc k) : A) * ((↑u : A) ^ (k + 1) - 1) by
-        rw [neg_mul, mul_sub, hmul, mul_one, neg_sub, sub_eq_add_neg, add_comm]]
+      have hsub : (↑(u ^ Int.negSucc k) : A) - 1 =
+          -(↑(u ^ Int.negSucc k) : A) * ((↑u : A) ^ (k + 1) - 1) := by
+        rw [neg_mul, mul_sub, hmul, mul_one, neg_sub, sub_eq_add_neg, add_comm]
+      rw [hsub]
       exact (Ideal.span {(↑u : A) - 1}).mul_mem_left _ hpow
 
 /-- The unit calculation for an integral power of a group-like element. -/
 private lemma groupLike_zpow_sub_one_mem_span {A : Type*} [CommRing A] [HopfAlgebra R A]
     (g : _root_.GroupLike R A) (m : ℤ) :
     (↑(g ^ m) : A) - 1 ∈ Ideal.span {(↑g : A) - 1} := by
-  change (↑(_root_.GroupLike.toUnits R (g ^ m)) : A) - 1 ∈
-    Ideal.span {(↑(_root_.GroupLike.toUnits R g) : A) - 1}
-  rw [map_zpow]
-  exact units_zpow_sub_one_mem_span (_root_.GroupLike.toUnits R g) m
+  have h := units_zpow_sub_one_mem_span (_root_.GroupLike.toUnits R g) m
+  rw [← (_root_.GroupLike.toUnits R).map_zpow g m] at h
+  simpa only [_root_.GroupLike.val_toUnits_apply] using h
 
 /-- The Hopf ideal cutting out determinant one inside the general-linear coordinate Hopf
 algebra. It is the kernel Hopf ideal of the determinant coordinate morphism. -/
@@ -133,9 +133,7 @@ theorem definingHopfIdeal_toIdeal :
       | zero => simp
       | add x y hx hy => simpa [map_add, map_sub, add_sub_add_comm] using add_mem hx hy
       | single m r =>
-          rw [show MonoidAlgebra.single m r =
-              MonoidAlgebra.single (Multiplicative.ofAdd m.toAdd) r by rw [ofAdd_toAdd],
-            GeneralLinear.determinantCoordinateMap_single,
+          rw [← ofAdd_toAdd m, GeneralLinear.determinantCoordinateMap_single,
             MonoidAlgebra.counit_single, CommSemiring.counit_apply,
             Algebra.smul_def]
           simpa only [mul_sub, mul_one] using
@@ -185,6 +183,16 @@ theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R n) :
   CommHopfAlgCat.mkQuotient_apply
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n) h
 
+/-- The localized generic determinant is one in the special-linear coordinate Hopf algebra. -/
+@[simp↓]
+theorem coordinateMap_determinantGroupLike :
+    (coordinateMap R n).hom (GeneralLinear.determinantGroupLike R n) = 1 := by
+  rw [coordinateMap_apply]
+  apply sub_eq_zero.mp
+  rw [← map_one (Ideal.Quotient.mkₐ R (definingHopfIdeal R n).toIdeal), ← map_sub,
+    Ideal.Quotient.mkₐ_eq_mk, Ideal.Quotient.eq_zero_iff_mem, definingHopfIdeal_toIdeal]
+  exact Ideal.mem_span_singleton_self _
+
 /-- The kernel of the special-linear coordinate morphism is the principal determinant-one
 ideal. -/
 theorem coordinateMap_ker :
@@ -226,6 +234,8 @@ noncomputable abbrev groupSchemeι :=
 spectrum. -/
 instance isClosedImmersion_groupSchemeι :
     AlgebraicGeometry.IsClosedImmersion (groupSchemeι R n).hom.hom.left := by
+  -- `groupSchemeι` abbreviates the generic kernel inclusion; its public equation can rewrite
+  -- only after identifying these two representations of the morphism.
   change AlgebraicGeometry.IsClosedImmersion
     (CommHopfAlgCat.kernelSpecι
       (GeneralLinear.determinantCoordinateMap R n)).hom.hom.left
@@ -252,8 +262,6 @@ instance locallyOfFiniteType_groupScheme :
     ⟨GeneralLinear.coordinateHopfAlgebra R n, by
       rw [← GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj]
       exact (GeneralLinear.finiteTypeCoordinateHopfAlgebra R n).property⟩
-  change AlgebraicGeometry.LocallyOfFiniteType
-    (CommHopfAlgCat.quotientSpec H.obj (definingHopfIdeal R n)).X.hom
   exact FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
     H (definingHopfIdeal R n)
 
@@ -348,6 +356,15 @@ private noncomputable def slToPointsSubgroup
     apply (mem_definingPointsSubgroup_iff_det_eq_one R n _).mpr
     rw [MulEquiv.apply_symm_apply, Matrix.SpecialLinearGroup.coeToGL_det]⟩
 
+/-- The ambient point underlying `slToPointsSubgroup` is obtained from the general-linear point
+equivalence. -/
+private theorem slToPointsSubgroup_val
+    (s : Matrix.SpecialLinearGroup (Fin n) A) :
+    (slToPointsSubgroup R n s).1 =
+      (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm
+        (Matrix.SpecialLinearGroup.toGL s) :=
+  (rfl)
+
 /-- The subgroup of general-linear points cut out by the determinant kernel is the ordinary
 special linear group. -/
 private noncomputable def definingPointsSubgroupMulEquiv :
@@ -359,24 +376,16 @@ private noncomputable def definingPointsSubgroupMulEquiv :
   invFun := slToPointsSubgroup R n
   left_inv g := by
     apply Subtype.ext
-    change (GeneralLinear.pointsMulEquiv (R := R) n).symm
-        (Matrix.SpecialLinearGroup.toGL (pointsSubgroupToSL R n g)) = g.1
-    rw [toGL_pointsSubgroupToSL, MulEquiv.symm_apply_apply]
+    rw [slToPointsSubgroup_val, toGL_pointsSubgroupToSL, MulEquiv.symm_apply_apply]
   right_inv s := by
     apply Matrix.SpecialLinearGroup.toGL_injective
-    rw [toGL_pointsSubgroupToSL]
-    change (GeneralLinear.pointsMulEquiv (R := R) (A := A) n)
-      ((GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm
-        (Matrix.SpecialLinearGroup.toGL s)) = Matrix.SpecialLinearGroup.toGL s
-    rw [MulEquiv.apply_symm_apply]
+    rw [toGL_pointsSubgroupToSL, slToPointsSubgroup_val, MulEquiv.apply_symm_apply]
   map_mul' g h := by
     apply Matrix.SpecialLinearGroup.toGL_injective
     rw [toGL_pointsSubgroupToSL, map_mul, toGL_pointsSubgroupToSL,
       toGL_pointsSubgroupToSL]
-    change (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) (g.1 * h.1) =
-      (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) g.1 *
-        (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) h.1
-    exact map_mul (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) g.1 h.1
+    simpa only [Subgroup.coe_mul] using
+      map_mul (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) g.1 h.1
 
 /-- The group of algebra-valued points of the special-linear coordinate Hopf algebra is
 Mathlib's special linear group. The construction first applies the generic natural isomorphism
@@ -389,6 +398,18 @@ noncomputable def pointsMulEquiv :
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
     (CommAlgCat.of R A)).groupIsoToMulEquiv.trans
       (definingPointsSubgroupMulEquiv R n)
+
+/-- Internally, the special-linear point equivalence first forms the cut-out ambient subgroup
+point and then reads it as a determinant-one matrix. -/
+private theorem pointsMulEquiv_apply_eq
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
+      (CommAlgCat.of R A)) :
+    (pointsMulEquiv (R := R) (A := A) n) f =
+      pointsSubgroupToSL R n
+        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
+          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
+          (CommAlgCat.of R A)).hom f) :=
+  (rfl)
 
 /-- Under the special- and general-linear point equivalences, the quotient-point inclusion is
 Mathlib's canonical inclusion `Matrix.SpecialLinearGroup.toGL`. -/
@@ -404,15 +425,7 @@ theorem pointsMulEquiv_toGL
   have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
     (CommAlgCat.of R A) f
-  change GeneralLinear.pointsMulEquiv n
-      (CommHopfAlgCat.quotientPointsHom
-        (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-        (CommAlgCat.of R A) f) =
-    Matrix.SpecialLinearGroup.toGL
-      (pointsSubgroupToSL R n
-        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
-          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
-          (CommAlgCat.of R A)).hom f))
+  rw [pointsMulEquiv_apply_eq]
   calc
     _ = Matrix.SpecialLinearGroup.toGL
         (pointsSubgroupToSL R n
@@ -453,11 +466,7 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
         ((pointsMulEquiv (R := R) (A := A) n) f) := by
   apply Matrix.SpecialLinearGroup.toGL_injective
   rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapPoints_quotientPointsHom]
-  change GeneralLinear.pointsMulEquiv n
-      (AlgHom.mapValue (H := GeneralLinear.coordinateHopfAlgebra R n) phi
-        (CommHopfAlgCat.quotientPointsHom
-          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-          (CommAlgCat.of R A) f)) = _
+  rw [HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   rw [GeneralLinear.pointsMulEquiv_mapValue, pointsMulEquiv_toGL]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
@@ -472,7 +481,7 @@ section Functor
 /-- The group-valued functor sending an `R`-algebra to its special linear group and an algebra
 morphism to entrywise matrix mapping. Values are universe-lifted to match the Hopf-points
 functor. -/
-@[expose] noncomputable def specialLinearFunctor :
+noncomputable def specialLinearFunctor :
     CommAlgCat.{w} R ⥤ GrpCat.{max u w} :=
   ({
     obj A := GrpCat.of (Matrix.SpecialLinearGroup (Fin n) (A : Type w))
@@ -490,7 +499,7 @@ group. -/
 theorem specialLinearFunctor_obj (A : CommAlgCat.{w} R) :
     (specialLinearFunctor (R := R) n).obj A =
       GrpCat.of (ULift.{u, w} (Matrix.SpecialLinearGroup (Fin n) A)) :=
-  rfl
+  (rfl)
 
 /-- The morphism part of `specialLinearFunctor` applies the value-algebra morphism entrywise. -/
 theorem specialLinearFunctor_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
@@ -501,11 +510,21 @@ theorem specialLinearFunctor_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
             ((Matrix.SpecialLinearGroup.map phi.hom.toRingHom).comp
               MulEquiv.ulift.toMonoidHom)) ≫
         eqToHom (specialLinearFunctor_obj (R := R) n B).symm :=
-  rfl
+  (rfl)
+
+/-- Entrywise computation of the value-algebra map on the special linear functor. -/
+@[simp]
+theorem specialLinearFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (phi : A ⟶ B)
+    (g : ULift.{u, w} (Matrix.SpecialLinearGroup (Fin n) A)) (i j : Fin n) :
+    (eqToHom (specialLinearFunctor_obj (R := R) n B)
+      ((specialLinearFunctor (R := R) n).map phi
+        (eqToHom (specialLinearFunctor_obj (R := R) n A).symm g))).down i j =
+      phi.hom (g.down.val i j) :=
+  (rfl)
 
 /-- The functor of points of the special-linear coordinate Hopf algebra is naturally isomorphic
 to the ordinary special linear group functor. -/
-@[expose] noncomputable def pointsNatIso :
+noncomputable def pointsNatIso :
     HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R n) ≅
       specialLinearFunctor (R := R) n :=
   NatIso.ofComponents
@@ -525,7 +544,17 @@ theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
     (eqToHom (specialLinearFunctor_obj (R := R) n A)
       ((pointsNatIso (R := R) n).hom.app A f)).down =
       (pointsMulEquiv (R := R) (A := A) n) f :=
-  rfl
+  (rfl)
+
+/-- After transport back along `specialLinearFunctor_obj`, the inverse component of
+`pointsNatIso` is the inverse pointwise special-linear equivalence. -/
+@[simp]
+theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
+    (g : ULift.{u, w} (Matrix.SpecialLinearGroup (Fin n) A)) :
+    (pointsNatIso (R := R) n).inv.app A
+        (eqToHom (specialLinearFunctor_obj (R := R) n A).symm g) =
+      (pointsMulEquiv (R := R) (A := A) n).symm g.down :=
+  (rfl)
 
 end Functor
 
