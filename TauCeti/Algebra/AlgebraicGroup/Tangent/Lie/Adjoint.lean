@@ -31,9 +31,15 @@ computation appears; inverses come from the group of points.
 * `TauCeti.Derivation.adRepresentation`: the adjoint action, as a representation of
   the convolution group of points on the tangent space.
 
-The action stays on the Lie functor `B ↦ Derivation R A (CounitAlgebra R A B)`;
-presenting it as `G → GL(Lie G)` on a fixed module needs a finite-projectivity
-hypothesis on the conormal module and is not attempted here.
+The action stays on the Lie functor `B ↦ Derivation R A (CounitAlgebra R A B)`; at
+each `B` it is a genuine representation. Identifying the functor's value at `B` with
+`B ⊗ Lie(G)(R)` — the classical fixed-module `G → GL(Lie G)` — needs a
+finite-projectivity hypothesis on the conormal module and is not attempted here.
+
+## References
+
+* J. S. Milne, *Algebraic Groups* (2017), §14 (the adjoint representation).
+* J. C. Jantzen, *Representations of Algebraic Groups*, I.7.18.
 -/
 
 public section
@@ -44,8 +50,8 @@ namespace Derivation
 
 open Coalgebra WithConv TensorProduct
 
-variable {R A B : Type*} [CommRing R] [CommRing A] [HopfAlgebra R A]
-  [CommRing B] [Algebra R B]
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
+  [CommSemiring B] [Algebra R B]
 
 /-- An algebra-map point composed with multiplication is its own exterior square:
 the multiplicativity of the point, in convolution form. -/
@@ -53,7 +59,7 @@ lemma toConv_algHom_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
     toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
       mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp [mulTensor_ofConv_tmul]
+  simp [map_mul]
 
 /-- The linear images of a point and of its convolution inverse multiply to the
 convolution unit. -/
@@ -82,26 +88,18 @@ private lemma conj_comp_mul'
   have h2 := LinearMap.convMul_comp_coalgHom_distrib
     (toConv g.ofConv.toLinearMap) (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
     (_root_.Bialgebra.mulCoalgHom R A)
+  -- The `toLinearMap` field of `mulCoalgHom` is definitionally `mul'`; the library
+  -- states this only for the coercion, whose pattern does not match the field
+  -- projection, so the identification is by `rfl`.
   rw [show (_root_.Bialgebra.mulCoalgHom R A).toLinearMap = LinearMap.mul' R A from rfl] at h h2
   rw [h, toConv_ofConv]
-  rw [show (toConv g.ofConv.toLinearMap *
-      toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)).ofConv ∘ₗ
-      LinearMap.mul' R A = ((toConv g.ofConv.toLinearMap *
-        toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)).ofConv).comp
-        (LinearMap.mul' R A) from rfl, h2, toConv_ofConv]
-  rw [show g.ofConv.toLinearMap ∘ₗ LinearMap.mul' R A =
-      (g.ofConv.toLinearMap).comp (LinearMap.mul' R A) from rfl]
-  rw [show toConv (g.ofConv.toLinearMap.comp (LinearMap.mul' R A)) =
-      mulTensor (toConv g.ofConv.toLinearMap) (toConv g.ofConv.toLinearMap) from
-      toConv_algHom_comp_mul' g.ofConv,
-    toConv_coe_comp_mul' d,
-    show toConv (((g⁻¹).ofConv.toLinearMap).comp (LinearMap.mul' R A)) =
-      mulTensor (toConv (g⁻¹).ofConv.toLinearMap) (toConv (g⁻¹).ofConv.toLinearMap) from
-      toConv_algHom_comp_mul' (g⁻¹).ofConv]
+  rw [h2, toConv_ofConv]
+  rw [toConv_algHom_comp_mul' g.ofConv, toConv_coe_comp_mul' d,
+    toConv_algHom_comp_mul' (g⁻¹).ofConv]
   rw [mul_add, add_mul, mulTensor_convMul, mulTensor_convMul, mulTensor_convMul,
     mulTensor_convMul, mul_one, toConv_toLinearMap_mul_inv]
 
-omit [CommRing A] [HopfAlgebra R A] in
+omit [CommSemiring A] [HopfAlgebra R A] in
 /-- The base algebra maps of the coefficient synonym and of `B` agree. -/
 private lemma algebraMap_counitAlgebra (r : R) :
     algebraMap R (Bialgebra.CounitAlgebra R A B) r = algebraMap R B r := rfl
@@ -121,7 +119,7 @@ private lemma conj_ofConv_mul
           toConv ((g⁻¹).ofConv.toLinearMap)).ofConv a := by
   have h := congrArg (fun F => F.ofConv (a ⊗ₜ[R] b)) (conj_comp_mul' g d)
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mul'_apply,
-    ofConv_add, LinearMap.add_apply, mulTensor_ofConv_tmul,
+    ofConv_add, LinearMap.add_apply, mulTensor_apply_tmul,
     LinearMap.convOne_apply, algebraMap_counitAlgebra] at h
   rw [h, ← Bialgebra.CounitAlgebra.algebraMap_apply R A B a,
     ← Bialgebra.CounitAlgebra.algebraMap_apply R A B b, ← Algebra.commutes,
@@ -132,21 +130,42 @@ variable (B) in
 `Ad g d = g ⋆ d ⋆ g⁻¹`, the differential of conjugation on the group of points. -/
 noncomputable def adDerivation (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
-    Derivation R A (Bialgebra.CounitAlgebra R A B) :=
-  Derivation.mk'
-    ((toConv g.ofConv.toLinearMap *
+    Derivation R A (Bialgebra.CounitAlgebra R A B) where
+  toLinearMap :=
+    (toConv g.ofConv.toLinearMap *
         toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
-        toConv ((g⁻¹).ofConv.toLinearMap)).ofConv)
-    fun a b => conj_ofConv_mul g d a b
+        toConv ((g⁻¹).ofConv.toLinearMap)).ofConv
+  map_one_eq_zero' := by
+    -- The middle factor kills `1`: `d 1 = 0`, and both convolution products
+    -- evaluate at `1` factorwise since `comul 1 = 1 ⊗ 1`.
+    simp [Algebra.TensorProduct.one_def, Derivation.coeFn_coe]
+  leibniz' a b := conj_ofConv_mul g d a b
 
 /-- The adjoint action is the convolution conjugate, on underlying linear maps. -/
+@[simp]
 theorem coe_adDerivation (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
     ↑(adDerivation B g d) =
       (toConv g.ofConv.toLinearMap *
         toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
-        toConv ((g⁻¹).ofConv.toLinearMap)).ofConv :=
-  Derivation.coe_mk'_linearMap _ _
+        toConv ((g⁻¹).ofConv.toLinearMap)).ofConv := by
+  -- `adDerivation` has no equation lemma to rewrite with; `change` spells out its
+  -- definitional unfolding once, explicitly.
+  change (toConv g.ofConv.toLinearMap *
+      toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
+      toConv ((g⁻¹).ofConv.toLinearMap)).ofConv = _
+  rfl
+
+/-- The adjoint action, valuewise: the conjugate evaluated at a point of the
+bialgebra. -/
+theorem adDerivation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
+    adDerivation B g d a =
+      (toConv g.ofConv.toLinearMap *
+        toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
+        toConv ((g⁻¹).ofConv.toLinearMap)).ofConv a := by
+  have h := DFunLike.congr_fun (coe_adDerivation g d) a
+  simpa only [Derivation.coeFn_coe] using h
 
 private lemma toConv_coe_adDerivation
     (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
@@ -168,55 +187,35 @@ noncomputable def adRepresentation :
     { toFun := adDerivation B g
       map_add' := fun d₁ d₂ => Derivation.ext fun a => by
         simp only [Derivation.add_apply]
-        have h : ∀ e : Derivation R A (Bialgebra.CounitAlgebra R A B),
-            adDerivation B g e a = (toConv g.ofConv.toLinearMap *
-              toConv (↑e : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
-              toConv ((g⁻¹).ofConv.toLinearMap)).ofConv a := fun e => by
-          have := DFunLike.congr_fun (coe_adDerivation g e) a
-          simpa only [Derivation.coeFn_coe] using this
-        rw [h, h, h, Derivation.coe_add_linearMap, toConv_add, mul_add, add_mul,
+        rw [adDerivation_apply, adDerivation_apply, adDerivation_apply,
+          Derivation.coe_add_linearMap, toConv_add, mul_add, add_mul,
           ofConv_add, LinearMap.add_apply]
       map_smul' := fun r d => Derivation.ext fun a => by
         simp only [Derivation.smul_apply, RingHom.id_apply]
-        have h : ∀ e : Derivation R A (Bialgebra.CounitAlgebra R A B),
-            adDerivation B g e a = (toConv g.ofConv.toLinearMap *
-              toConv (↑e : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
-              toConv ((g⁻¹).ofConv.toLinearMap)).ofConv a := fun e => by
-          have := DFunLike.congr_fun (coe_adDerivation g e) a
-          simpa only [Derivation.coeFn_coe] using this
-        rw [h, h, Derivation.coe_smul_linearMap, toConv_smul, mul_smul_comm,
-          smul_mul_assoc, ofConv_smul, LinearMap.smul_apply] }
+        rw [adDerivation_apply, adDerivation_apply, Derivation.coe_smul_linearMap,
+          toConv_smul, mul_smul_comm, smul_mul_assoc, ofConv_smul,
+          LinearMap.smul_apply] }
   map_one' := by
     ext d a
     simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.one_apply]
-    have h := DFunLike.congr_fun (coe_adDerivation (B := B)
-      (1 : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) d) a
-    simp only [Derivation.coeFn_coe] at h
-    rw [h, show toConv ((1 : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)).ofConv.toLinearMap) =
-        (1 : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) from
-        AlgHom.toLinearMap_convOne, inv_one,
-      show toConv ((1 : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)).ofConv.toLinearMap) =
-        (1 : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) from
-        AlgHom.toLinearMap_convOne, one_mul, mul_one]
+    rw [adDerivation_apply, AlgHom.toLinearMap_convOne, inv_one,
+      AlgHom.toLinearMap_convOne, one_mul, mul_one]
     rfl
   map_mul' g h := by
     ext d a
     simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply]
-    have hc : ∀ (k : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
-        (e : Derivation R A (Bialgebra.CounitAlgebra R A B)),
-        adDerivation B k e a = (toConv k.ofConv.toLinearMap *
-          toConv (↑e : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
-          toConv ((k⁻¹).ofConv.toLinearMap)).ofConv a := fun k e => by
-      have := DFunLike.congr_fun (coe_adDerivation k e) a
-      simpa only [Derivation.coeFn_coe] using this
-    rw [hc, hc, toConv_coe_adDerivation, mul_inv_rev,
-      show toConv ((g * h).ofConv.toLinearMap) =
-        toConv (g.ofConv.toLinearMap) * toConv (h.ofConv.toLinearMap) from
-        AlgHom.toLinearMap_convMul g h,
-      show toConv ((h⁻¹ * g⁻¹).ofConv.toLinearMap) =
-        toConv ((h⁻¹).ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) from
-        AlgHom.toLinearMap_convMul h⁻¹ g⁻¹]
+    rw [adDerivation_apply, adDerivation_apply, toConv_coe_adDerivation, mul_inv_rev,
+      AlgHom.toLinearMap_convMul, AlgHom.toLinearMap_convMul]
     exact DFunLike.congr_fun (congrArg ofConv (by simp [mul_assoc])) a
+
+@[simp]
+lemma adRepresentation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    adRepresentation B g d = adDerivation B g d := by
+  -- `adRepresentation` has no equation lemma to rewrite with; `change` spells out its
+  -- definitional unfolding once, explicitly.
+  change adDerivation B g d = _
+  rfl
 
 end Derivation
 

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 
@@ -11,6 +12,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 # The Lie algebra of the tangent space
 
 Directory aggregator: the Lie algebra structure on counit-valued derivations
-(`Lie.Basic`) and the differential as a Lie algebra morphism (`Lie.Map`). Importing
-`TauCeti.Algebra.AlgebraicGroup.Tangent.Lie` continues to provide both.
+(`Lie.Basic`), the differential as a Lie algebra morphism (`Lie.Map`), and the
+adjoint action (`Lie.Adjoint`). Importing
+`TauCeti.Algebra.AlgebraicGroup.Tangent.Lie` provides all three.
 -/

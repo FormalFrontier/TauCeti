@@ -58,10 +58,10 @@ open Coalgebra WithConv TensorProduct
 
 namespace Derivation
 
-section Bracket
+section ExteriorProduct
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
-  [CommRing B] [Algebra R B]
+  [CommSemiring B] [Algebra R B]
 
 /-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
 leg and multiply the results in the coefficients. It underlies the Leibniz-rule
@@ -77,7 +77,10 @@ omit [CommSemiring A] [Bialgebra R A] in
 private lemma algebraMap_counitAlgebra (r : R) :
     algebraMap R (Bialgebra.CounitAlgebra R A B) r = algebraMap R B r := rfl
 
-lemma mulTensor_ofConv_tmul
+/-- The exterior product evaluates a pure tensor legwise and multiplies the results
+in the coefficients. -/
+@[simp]
+lemma mulTensor_apply_tmul
     (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) (x y : A) :
     (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
   simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
@@ -109,12 +112,19 @@ lemma toConv_coe_comp_mul'
         mulTensor (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) 1 := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp only [ofConv_add, LinearMap.add_apply, LinearMap.coe_comp,
-    Function.comp_apply, LinearMap.mul'_apply, mulTensor_ofConv_tmul,
+    Function.comp_apply, LinearMap.mul'_apply, mulTensor_apply_tmul,
     Derivation.coeFn_coe, LinearMap.convOne_apply, algebraMap_counitAlgebra]
   rw [← Bialgebra.CounitAlgebra.algebraMap_apply R A B x,
     ← Bialgebra.CounitAlgebra.algebraMap_apply R A B y, ← Algebra.commutes,
     ← Algebra.smul_def, ← Algebra.smul_def]
   exact d.leibniz x y
+
+end ExteriorProduct
+
+section Bracket
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommRing B] [Algebra R B]
 
 /-- The convolution square of the Leibniz rule: composing a convolution product of two
 derivations with the multiplication of `A` expands into exterior products, with the
@@ -160,7 +170,7 @@ private lemma convMul_ofConv_mul (d₁ d₂ : Derivation R A (Bialgebra.CounitAl
         (d₁ a * d₂ b + d₂ a * d₁ b) := by
   have h := congrArg (fun F => F.ofConv (a ⊗ₜ[R] b)) (convMul_comp_mul' d₁ d₂)
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mul'_apply,
-    ofConv_add, LinearMap.add_apply, mulTensor_ofConv_tmul, LinearMap.convOne_apply,
+    ofConv_add, LinearMap.add_apply, mulTensor_apply_tmul, LinearMap.convOne_apply,
     algebraMap_counitAlgebra, Derivation.coeFn_coe] at h
   rw [h, ← Bialgebra.CounitAlgebra.algebraMap_apply R A B a,
     ← Bialgebra.CounitAlgebra.algebraMap_apply R A B b, ← Algebra.commutes,
