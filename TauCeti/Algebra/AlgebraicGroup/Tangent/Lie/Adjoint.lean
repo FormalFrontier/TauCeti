@@ -163,10 +163,11 @@ private lemma toConv_coe_adDerivation
 
 variable (B) in
 /-- The adjoint action of the group of points on the tangent space, as a
-representation: conjugation is a semiring automorphism of the convolution semiring, and it
-restricts to the derivations. -/
+`B`-linear representation: conjugation is a semiring automorphism of the convolution
+semiring, it restricts to the derivations, and scalars of the coefficient algebra pass
+through the conjugation because `B` is commutative. -/
 noncomputable def adRepresentation :
-    Representation R (WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
+    Representation B (WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
       (Derivation R A (Bialgebra.CounitAlgebra R A B)) where
   toFun g :=
     { toFun := adDerivation B g
@@ -175,7 +176,7 @@ noncomputable def adRepresentation :
         rw [adDerivation_apply, adDerivation_apply, adDerivation_apply,
           Derivation.coe_add_linearMap, toConv_add, mul_add, add_mul,
           ofConv_add, LinearMap.add_apply]
-      map_smul' := fun r d => Derivation.ext fun a => by
+      map_smul' := fun b d => Derivation.ext fun a => by
         simp only [Derivation.smul_apply, RingHom.id_apply]
         rw [adDerivation_apply, adDerivation_apply, Derivation.coe_smul_linearMap,
           toConv_smul, mul_smul_comm, smul_mul_assoc, ofConv_smul,

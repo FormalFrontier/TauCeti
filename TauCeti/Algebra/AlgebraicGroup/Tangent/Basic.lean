@@ -130,6 +130,22 @@ noncomputable instance : IsScalarTower R A (CounitAlgebra R A B) :=
       ((Algebra.ofId R B).comp (counitAlgHom R A)) (algebraMap R A r)
     simp
 
+instance : Module B (CounitAlgebra R A B) := inferInstanceAs (Module B B)
+
+instance : SMulCommClass R B (CounitAlgebra R A B) := inferInstanceAs (SMulCommClass R B B)
+
+instance : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
+  inferInstanceAs (IsScalarTower B B B)
+
+/-- Scalars of the coefficient algebra commute with the bialgebra scalar action, because
+the latter multiplies by a central element — the image of the counit in `B`. -/
+instance : SMulCommClass B A (CounitAlgebra R A B) where
+  smul_comm b a x := by
+    -- The bialgebra scalar action multiplies by a central element, so it commutes
+    -- with the `B`-action: move the central factor across the product.
+    rw [Algebra.smul_def, Algebra.smul_def, Algebra.commutes a (b • x), smul_mul_assoc,
+      Algebra.commutes a x]
+
 @[simp]
 lemma algebraMap_apply (a : A) :
     algebraMap A (CounitAlgebra R A B) a = algebraMap R B (counit a) := by
@@ -141,6 +157,17 @@ lemma algebraMap_apply (a : A) :
 end Bialgebra.CounitAlgebra
 
 end BialgebraPointScalar
+
+section CommPointScalar
+
+variable (R A B : Type*) [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B]
+
+/-- Coefficient scalars commute with multiplication in the coefficient synonym. -/
+instance : SMulCommClass B (Bialgebra.CounitAlgebra R A B) (Bialgebra.CounitAlgebra R A B) :=
+  inferInstanceAs (SMulCommClass B B B)
+
+end CommPointScalar
 
 section BialgebraCommTarget
 
