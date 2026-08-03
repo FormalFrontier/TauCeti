@@ -15,9 +15,11 @@ vectors at the identity — by convolution conjugation: `Ad g d = g ⋆ d ⋆ g�
 convolution semiring of linear maps, the differential of the conjugation
 `c_g x = g ⋆ x ⋆ g⁻¹` of the group of points. Conjugation is a semiring automorphism of
 the whole convolution semiring; this file shows it restricts to the derivations, and
-packages the restriction as a representation of the group of points on the tangent
-space (`adRepresentation`). This is the adjoint action of the corresponding affine
-group scheme on its Lie functor, for commutative `A`.
+packages the restriction, one coefficient algebra `B` at a time, as a representation of
+the `B`-points on the `B`-valued tangent vectors (`adRepresentation`). For commutative
+`A` these are the coefficientwise layers of the adjoint action of the corresponding
+affine group scheme on its Lie functor; their compatibility as `B` varies
+(postcomposition naturality) is later infrastructure, not packaged here.
 
 Closure is composition-level, by the exterior-product calculus of `Lie.Basic`: an
 algebra-map point satisfies `g ∘ mul = g ⊠ g`, a derivation satisfies
