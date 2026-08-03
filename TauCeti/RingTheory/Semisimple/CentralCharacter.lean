@@ -15,8 +15,9 @@ a finite-dimensional simple module over an algebraically closed field `k`, Schur
 the endomorphism algebra to `k` itself, so the action of the centre is by honest scalars. The
 resulting `k`-algebra homomorphism `Z(A) → k` is the **central character** of `M`.
 
-For `A = k[G]` this is the character-theoretic `ωᵪ`, the homomorphism whose values on the class
-sums are the entries of a row of the character table, up to the normalization by the degree.
+For `A = k[G]` this is the character-theoretic `ωᵪ`. Its value on the class sum of a conjugacy
+class `C` with representative `g` is the entry `χ(g)` of the character table weighted by the class
+size and normalized by the degree: `ωᵪ(K_C) = |C| · χ(g) / χ(1)`, when `χ(1) ≠ 0` in `k`.
 
 ## Main definitions
 
@@ -31,7 +32,9 @@ sums are the entries of a row of the character table, up to the normalization by
 * `TauCeti.smul_eq_centralCharacter_smul`: the defining property, that a central element acts as
   multiplication by its central character.
 * `TauCeti.centralCharacter_eq_of_smul_eq`: the central character is the *only* scalar with that
-  property, so it can be computed from any single vector.
+  property, in the form asking for the equality at every vector.
+* `TauCeti.centralCharacter_eq_of_ne_zero_of_smul_eq`: the sharper form, computing the central
+  character from the action on a single nonzero vector.
 
 ## References
 
@@ -60,7 +63,7 @@ is a homomorphism of `k`-algebras from the centre of `A` to `End_A M`.
 
 Centrality is exactly what makes the action `A`-linear rather than merely additive; Mathlib's
 `Module.End.smulLeft` packages the individual endomorphism. -/
-@[expose] def centerToEnd : Subalgebra.center k A →ₐ[k] Module.End A M where
+def centerToEnd : Subalgebra.center k A →ₐ[k] Module.End A M where
   toFun z := Module.End.smulLeft (M := M) (z : A)
     (Semigroup.mem_center_iff.mpr (Subalgebra.mem_center_iff.mp z.2))
   map_one' := by ext m; simp
@@ -73,7 +76,7 @@ Centrality is exactly what makes the action `A`-linear rather than merely additi
 @[simp]
 theorem centerToEnd_apply (z : Subalgebra.center k A) (m : M) :
     centerToEnd k A M z m = (z : A) • m :=
-  rfl
+  (rfl)
 
 end CenterToEnd
 
@@ -109,7 +112,7 @@ variable {k A M}
 
 /-- The central character is determined by the action of a central element on a single nonzero
 vector: no other scalar can reproduce it there. -/
-theorem centralCharacter_eq_of_smul_eq_of_ne_zero {z : Subalgebra.center k A} {c : k} {m : M}
+theorem centralCharacter_eq_of_ne_zero_of_smul_eq {z : Subalgebra.center k A} {c : k} {m : M}
     (hm : m ≠ 0) (h : (z : A) • m = c • m) : centralCharacter k A M z = c := by
   have hsub : (centralCharacter k A M z - c) • m = 0 := by
     rw [sub_smul, ← smul_eq_centralCharacter_smul, h, sub_self]
@@ -123,7 +126,7 @@ theorem centralCharacter_eq_of_smul_eq {z : Subalgebra.center k A} {c : k}
     (h : ∀ m : M, (z : A) • m = c • m) : centralCharacter k A M z = c := by
   have : Nontrivial M := IsSimpleModule.nontrivial A M
   obtain ⟨m, hm⟩ := exists_ne (0 : M)
-  exact centralCharacter_eq_of_smul_eq_of_ne_zero hm (h m)
+  exact centralCharacter_eq_of_ne_zero_of_smul_eq hm (h m)
 
 end CentralCharacter
 

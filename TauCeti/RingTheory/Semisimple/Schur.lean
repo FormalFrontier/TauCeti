@@ -158,7 +158,7 @@ The equivalence involves no choices: it is the inverse of the structure map `k �
 Schur's lemma proves bijective. Its inverse is therefore `algebraMap` on the nose, and the scalar
 attached to an endomorphism is characterized by
 `TauCeti.endAlgEquivSelfOfIsSimpleModule_smul`. -/
-@[expose] noncomputable def endAlgEquivSelfOfIsSimpleModule : Module.End A S ≃ₐ[k] k :=
+noncomputable def endAlgEquivSelfOfIsSimpleModule : Module.End A S ≃ₐ[k] k :=
   (AlgEquiv.ofBijective (Algebra.ofId k (Module.End A S))
     (IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed k)).symm
 
@@ -167,7 +167,7 @@ attached to an endomorphism is characterized by
 theorem endAlgEquivSelfOfIsSimpleModule_symm_apply (c : k) :
     (endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := S)).symm c =
       algebraMap k (Module.End A S) c :=
-  rfl
+  (rfl)
 
 /-- The scalar attached to an endomorphism of a simple module is the scalar it acts by. -/
 @[simp]
