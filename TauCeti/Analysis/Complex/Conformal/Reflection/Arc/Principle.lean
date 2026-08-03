@@ -64,9 +64,9 @@ private theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
 
 /-- If both coordinate domains are conjugation-invariant, the reflected coordinate values stay
 in the target coordinate domain. This is the coordinate-level form of
-`TauCeti.mapsTo_chartedSchwarzReflection`, and it is what lets a consumer read the charted
-extension in target coordinates. -/
-theorem mapsTo_schwarzReflection_in_coordinates
+`TauCeti.mapsTo_chartedSchwarzReflection`, and it is what makes `d.symm` undo `d` in
+`TauCeti.chartedSchwarzReflection_in_coordinates`. -/
+private theorem mapsTo_schwarzReflection_in_coordinates
     (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
@@ -93,6 +93,23 @@ theorem mapsTo_chartedSchwarzReflection (he_symm : MapsTo (starRingEnd ℂ) e.ta
   rw [chartedSchwarzReflection_def]
   exact d.map_target
     (mapsTo_schwarzReflection_in_coordinates e d f he_symm hd_symm hf (e.map_source hz))
+
+/-- **Charted Schwarz reflection read in target coordinates.** Applying the target chart to the
+charted extension recovers real-axis Schwarz reflection of the coordinate map
+`w ↦ d (f (e.symm w))`. This is the characteristic equation of `chartedSchwarzReflection`: it lets
+a consumer transfer any real-axis statement about the coordinate map to the extension itself,
+without unfolding the definition and re-deriving that `d.symm` is undone by `d`. -/
+@[simp]
+theorem chartedSchwarzReflection_in_coordinates
+    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+    (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
+    (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source)
+    {z : ℂ} (hz : z ∈ e.source) :
+    d (chartedSchwarzReflection e d f z) =
+      schwarzReflection (fun w => d (f (e.symm w))) (e z) := by
+  rw [chartedSchwarzReflection_def,
+    d.right_inv
+      (mapsTo_schwarzReflection_in_coordinates e d f he_symm hd_symm hf (e.map_source hz))]
 
 /-- On the closed positive side of the source arc, charted Schwarz reflection agrees with the
 original function. -/

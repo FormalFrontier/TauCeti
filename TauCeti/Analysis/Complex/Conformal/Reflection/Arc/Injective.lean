@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Arc.Principle
 public import TauCeti.Analysis.Complex.Conformal.Biholomorph
-import Mathlib.Analysis.Complex.CauchyIntegral
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 import TauCeti.Analysis.Complex.Conformal.LocalDegree
 import TauCeti.Analysis.Complex.Conformal.Reflection.Injective
@@ -47,9 +46,9 @@ in the straightening coordinates, the three hypotheses of the real-axis theorem 
 turn, and the two half-plane conditions because `e (e.symm w) = w` on `e.target`. So
 `TauCeti.injOn_schwarzReflection_of_symmetric` makes `schwarzReflection g` injective on
 `e.target`, and `chartedSchwarzReflection e d f` is `d.symm ∘ schwarzReflection g ∘ e` on
-`e.source`, a composition of three maps injective on the relevant sets. The middle one lands in
-`d.target`, where `d.symm` is injective, by
-`TauCeti.mapsTo_schwarzReflection_in_coordinates`.
+`e.source`, a composition of three maps injective on the relevant sets; reading the middle step
+off in target coordinates is exactly
+`TauCeti.chartedSchwarzReflection_in_coordinates`.
 
 The image description is the only statement proved directly rather than by transport, because the
 two pieces it splits into are described by the *chart-induced* reflections rather than by
@@ -153,13 +152,11 @@ theorem injOn_chartedSchwarzReflection_of_symmetric
   have hginj : InjOn (schwarzReflection fun w => d (f (e.symm w))) e.target :=
     injOn_schwarzReflection_of_symmetric he_symm (mapsTo_im_pos_in_coordinates e d f hupper)
       (im_nonneg_axis_in_coordinates e d f haxis) (injOn_in_coordinates e d f hf_maps hf_inj)
-  have hmaps := mapsTo_schwarzReflection_in_coordinates e d f he_symm hd_symm hf_maps
   intro z hz w hw hzw
-  rw [chartedSchwarzReflection_def, chartedSchwarzReflection_def] at hzw
   have hcoord : schwarzReflection (fun w => d (f (e.symm w))) (e z) =
       schwarzReflection (fun w => d (f (e.symm w))) (e w) := by
-    simpa only [d.right_inv (hmaps (e.map_source hz)), d.right_inv (hmaps (e.map_source hw))]
-      using congrArg d hzw
+    rw [← chartedSchwarzReflection_in_coordinates e d f he_symm hd_symm hf_maps hz,
+      ← chartedSchwarzReflection_in_coordinates e d f he_symm hd_symm hf_maps hw, hzw]
   exact e.injOn hz hw (hginj (e.map_source hz) (e.map_source hw) hcoord)
 
 /-- The image of the charted reflection extension is the image of the closed positive side of the
@@ -199,13 +196,10 @@ theorem image_chartedSchwarzReflection_of_symmetric
         have hcoord : (e (e.symm ((starRingEnd ℂ) (e z)))).im < 0 := by
           rw [e.right_inv hconj, starRingEnd_apply, Complex.star_def, Complex.conj_im]
           exact neg_neg_of_pos hlt
-        change chartedSchwarzReflection e d f (e.symm ((starRingEnd ℂ) (e z))) =
-          d.symm ((starRingEnd ℂ) (d (f z)))
-        rw [chartedSchwarzReflection_of_coord_im_neg e d f hcoord, e.right_inv hconj,
+        simp only [chartedSchwarzReflection_of_coord_im_neg e d f hcoord, e.right_inv hconj,
           starRingEnd_self_apply, e.left_inv hz]
       · refine ⟨z, hz, ?_⟩
-        change chartedSchwarzReflection e d f z = d.symm ((starRingEnd ℂ) (d (f z)))
-        rw [chartedSchwarzReflection_of_coord_im_nonneg e d f hf_maps hz him,
+        simp only [chartedSchwarzReflection_of_coord_im_nonneg e d f hf_maps hz him,
           Complex.conj_eq_iff_im.mpr (hf_real z hz heq.symm), d.left_inv (hf_maps ⟨hz, him⟩)]
 
 /-- **The charted reflection has nonvanishing derivative on the boundary arc.** Under the
