@@ -64,17 +64,6 @@ namespace SplitTorus
 variable {R A B sigma : Type u} [CommRing R] [CommRing A] [CommRing B]
 variable [Algebra R A] [Algebra R B]
 
-/-- A finite-rank free character lattice, written multiplicatively, is finitely generated. -/
-instance instFGMultiplicativeFinsuppInt [Finite sigma] :
-    Group.FG (Multiplicative (sigma →₀ ℤ)) := by
-  exact AddGroup.fg_iff_mul_fg.mp
-    (Module.Finite.iff_addGroup_fg.mp
-      (inferInstance : Module.Finite ℤ (sigma →₀ ℤ)))
-
-/-- The finitely generated character group of the split torus indexed by `sigma`. -/
-noncomputable abbrev characterGroup (sigma : Type u) [Finite sigma] : FGCommGrpCat.{u} :=
-  FGCommGrpCat.of (Multiplicative (sigma →₀ ℤ))
-
 /-- The finite-rank split torus with character lattice `sigma →₀ ℤ`, as a group scheme
 over `Spec R`. -/
 noncomputable abbrev groupScheme (R sigma : Type u) [CommRing R] [Finite sigma] :
