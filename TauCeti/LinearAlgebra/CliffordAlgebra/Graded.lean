@@ -49,6 +49,21 @@ noncomputable def equivExteriorFiltration (Q : QuadraticForm R M) [Invertible (2
   (equivExterior Q).ofSubmodules _ _
     (changeFormEquiv_map_filtration Q changeForm.associated_neg_proof k)
 
+/-- Coercing the restricted exterior equivalence is the ambient `equivExterior` map. -/
+@[simp]
+theorem coe_equivExteriorFiltration_apply (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ)
+    (x : filtration Q k) :
+    (equivExteriorFiltration Q k x : CliffordAlgebra (0 : QuadraticForm R M)) =
+      equivExterior Q x := by
+  simp only [equivExteriorFiltration, equivExterior, LinearEquiv.ofSubmodules_apply]
+
+/-- Coercing the inverse restricted exterior equivalence is the ambient inverse map. -/
+@[simp]
+theorem coe_equivExteriorFiltration_symm_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
+    (k : ℕ) (x : filtration (0 : QuadraticForm R M) k) :
+    ((equivExteriorFiltration Q k).symm x : CliffordAlgebra Q) = (equivExterior Q).symm x := by
+  simp only [equivExteriorFiltration, equivExterior, LinearEquiv.ofSubmodules_symm_apply]
+
 private theorem equivExteriorFiltration_map_previous (Q : QuadraticForm R M) [Invertible (2 : R)]
     (k : ℕ) :
     (Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k)).map
@@ -86,9 +101,16 @@ theorem filtrationGradedEquiv_apply_mk (Q : QuadraticForm R M) [Invertible (2 : 
     (x : filtration Q (k + 1)) :
     filtrationGradedEquiv Q k (Submodule.Quotient.mk x) =
       zeroFormFiltrationQuotientEquivExteriorPower k
-        (Submodule.Quotient.mk (equivExteriorFiltration Q (k + 1) x)) := by
-  rw [filtrationGradedEquiv, equivExteriorFiltrationQuotient]
-  rfl
+        (Submodule.Quotient.mk
+          (⟨equivExterior Q x, by
+            simpa only [coe_equivExteriorFiltration_apply] using
+              (equivExteriorFiltration Q (k + 1) x).property⟩ :
+            filtration (0 : QuadraticForm R M) (k + 1))) := by
+  rw [filtrationGradedEquiv, LinearEquiv.trans_apply, equivExteriorFiltrationQuotient,
+    Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+  apply congrArg (fun y => zeroFormFiltrationQuotientEquivExteriorPower k
+    (Submodule.Quotient.mk y))
+  exact Subtype.ext (coe_equivExteriorFiltration_apply Q (k + 1) x)
 
 end CliffordAlgebra
 
