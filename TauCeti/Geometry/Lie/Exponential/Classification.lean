@@ -87,7 +87,7 @@ theorem tendsto_continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I 
   have hφ := tendsto_continuousMonoidHom_dyadicStep (I := I) (G := G) φ
   have hchart := (continuousAt_extChartAt (I := I) (1 : G)).tendsto.comp hφ
   have hlog :=
-    (hasStrictFDerivAt_mulInvariantLogModelSpace_identity (I := I) (G := G)).continuousAt.tendsto
+    (contDiffAt_mulInvariantLogModelSpace_identity (I := I) (G := G)).continuousAt.tendsto
       |>.comp hchart
   change Tendsto (continuousOneParameterLog (I := I) (G := G) φ) atTop
     (𝓝 (mulInvariantLogModelSpace (I := I) (G := G)
@@ -106,8 +106,6 @@ theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDimensional
     ∀ᶠ n in atTop, continuousOneParameterLog (I := I) (G := G) φ n =
       (2 : ℝ) • continuousOneParameterLog (I := I) (G := G) φ (n + 1) := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  let e : GroupLieAlgebra I G ≃ₗ[ℝ] E :=
-    groupLieAlgebraEquivModelSpace (I := I) (G := G)
   let v : ℕ → E := continuousOneParameterLog (I := I) (G := G) φ
   obtain ⟨U, hU, hinj⟩ := exists_injOn_mulInvariantExp_modelSpace (I := I) (G := G)
   have hv : Tendsto v atTop (𝓝 0) := by
@@ -119,21 +117,19 @@ theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDimensional
   have htwoU : ∀ᶠ n in atTop, (2 : ℝ) • v (n + 1) ∈ U := htwo.eventually hU
   have hφ := tendsto_continuousMonoidHom_dyadicStep (I := I) (G := G) φ
   have hexp : ∀ᶠ n in atTop,
-      mulInvariantExp (e.symm (v n)) = φ (Multiplicative.ofAdd (dyadicStep n)) := by
+      mulInvariantExp (I := I) (G := G) (v n : GroupLieAlgebra I G) =
+        φ (Multiplicative.ofAdd (dyadicStep n)) := by
     have h := hφ.eventually
       (eventually_mulInvariantExp_log (I := I) (G := G))
-    simpa only [v, continuousOneParameterLog, mulInvariantLog, e] using h
+    simpa only [v, continuousOneParameterLog, mulInvariantLog_eq_modelSpace] using h
   have hexpSucc : ∀ᶠ n in atTop,
-      mulInvariantExp (e.symm (v (n + 1))) =
+      mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) =
         φ (Multiplicative.ofAdd (dyadicStep (n + 1))) :=
     (tendsto_add_atTop_nat 1).eventually hexp
   filter_upwards [hvU, htwoU, hexp, hexpSucc] with n hvn htwon hexpn hexpSuccn
   apply hinj hvn htwon
-  change mulInvariantExp (e.symm (v n)) =
-    mulInvariantExp (e.symm ((2 : ℝ) • v (n + 1)))
-  rw [map_smul]
   calc
-    mulInvariantExp (e.symm (v n)) =
+    mulInvariantExp (I := I) (G := G) (v n : GroupLieAlgebra I G) =
         φ (Multiplicative.ofAdd (dyadicStep n)) := hexpn
     _ = φ (Multiplicative.ofAdd
         (dyadicStep (n + 1) + dyadicStep (n + 1))) := by
@@ -141,11 +137,24 @@ theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDimensional
     _ = φ (Multiplicative.ofAdd (dyadicStep (n + 1))) *
         φ (Multiplicative.ofAdd (dyadicStep (n + 1))) := by
       rw [ofAdd_add, map_mul]
-    _ = mulInvariantExp (e.symm (v (n + 1))) *
-        mulInvariantExp (e.symm (v (n + 1))) := by rw [hexpSuccn]
-    _ = mulInvariantExp (((1 : ℝ) + 1) • e.symm (v (n + 1))) := by
-      rw [mulInvariantExp_add_smul, one_smul]
-    _ = mulInvariantExp (e.symm ((2 : ℝ) • v (n + 1))) := by
+    _ = mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) *
+        mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) := by
+      rw [hexpSuccn]
+    _ = mulInvariantExp (I := I) (G := G)
+        (((1 : ℝ) + 1) • (v (n + 1) : GroupLieAlgebra I G)) := by
+      calc
+        mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) *
+              mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) =
+            mulInvariantExp (I := I) (G := G)
+                ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) *
+              mulInvariantExp (I := I) (G := G)
+                ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) := by rw [one_smul]
+        _ = mulInvariantExp (I := I) (G := G)
+            (((1 : ℝ) + 1) • (v (n + 1) : GroupLieAlgebra I G)) :=
+        (mulInvariantExp_add_smul (I := I) (G := G)
+          (v (n + 1) : GroupLieAlgebra I G) (1 : ℝ) (1 : ℝ)).symm
+    _ = mulInvariantExp (I := I) (G := G)
+        (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) := by
       norm_num
 
 /-- The rescaled dyadic logarithm whose eventual constancy determines the generator. -/
@@ -205,32 +214,38 @@ theorem exists_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ E] [Li
     (φ : ContinuousMonoidHom (Multiplicative ℝ) G) :
     ∃ v : GroupLieAlgebra I G, φ = mulInvariantOneParameterSubgroup v := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  let e : GroupLieAlgebra I G ≃ₗ[ℝ] E :=
-    groupLieAlgebraEquivModelSpace (I := I) (G := G)
   let log : ℕ → E := continuousOneParameterLog (I := I) (G := G) φ
   obtain ⟨X, hlogX⟩ :=
     exists_eventually_continuousOneParameterLog_eq_dyadicStep_smul (I := I) (G := G) φ
   have hφ := tendsto_continuousMonoidHom_dyadicStep (I := I) (G := G) φ
   have hexp : ∀ᶠ n in atTop,
-      mulInvariantExp (e.symm (log n)) = φ (Multiplicative.ofAdd (dyadicStep n)) := by
+      mulInvariantExp (I := I) (G := G) (log n : GroupLieAlgebra I G) =
+        φ (Multiplicative.ofAdd (dyadicStep n)) := by
     have h := hφ.eventually
       (eventually_mulInvariantExp_log (I := I) (G := G))
-    simpa only [log, continuousOneParameterLog, mulInvariantLog, e] using h
+    simpa only [log, continuousOneParameterLog, mulInvariantLog_eq_modelSpace] using h
   let ψ : ContinuousMonoidHom (Multiplicative ℝ) G :=
-    mulInvariantOneParameterSubgroup (e.symm X)
+    mulInvariantOneParameterSubgroup (I := I) (G := G) (X : GroupLieAlgebra I G)
   have hdyadic : ∀ᶠ n in atTop,
       φ (Multiplicative.ofAdd (dyadicStep n)) =
         ψ (Multiplicative.ofAdd (dyadicStep n)) := by
     filter_upwards [hexp, hlogX] with n hexpn hlogn
     change log n = dyadicStep n • X at hlogn
     calc
-      φ (Multiplicative.ofAdd (dyadicStep n)) = mulInvariantExp (e.symm (log n)) := hexpn.symm
-      _ = mulInvariantExp (dyadicStep n • e.symm X) := by rw [hlogn, map_smul]
+      φ (Multiplicative.ofAdd (dyadicStep n)) =
+          mulInvariantExp (I := I) (G := G) (log n : GroupLieAlgebra I G) := hexpn.symm
+      _ = mulInvariantExp (I := I) (G := G)
+          (dyadicStep n • (X : GroupLieAlgebra I G)) := by rw [hlogn]
       _ = ψ (Multiplicative.ofAdd (dyadicStep n)) := by
-        change mulInvariantExp (dyadicStep n • e.symm X) =
-          mulInvariantOneParameterSubgroup (e.symm X)
+        change mulInvariantExp (I := I) (G := G)
+            (((dyadicStep n • X : E) : GroupLieAlgebra I G)) =
+          mulInvariantOneParameterSubgroup (X : GroupLieAlgebra I G)
             (Multiplicative.ofAdd (dyadicStep n))
-        rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul]
+        have hsmul : ((dyadicStep n • X : E) : GroupLieAlgebra I G) =
+            dyadicStep n • (X : GroupLieAlgebra I G) := rfl
+        rw [hsmul]
+        exact (mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul
+          (I := I) (G := G) (X : GroupLieAlgebra I G) (dyadicStep n)).symm
   let S : Subgroup (Multiplicative ℝ) := φ.toMonoidHom.eqLocus ψ.toMonoidHom
   have hSdense : Dense (S : Set (Multiplicative ℝ)) := by
     let _ : OrderTopology (Multiplicative ℝ) := inferInstanceAs (OrderTopology ℝ)
@@ -243,7 +258,7 @@ theorem exists_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ E] [Li
     · exact hneq
     · exact dyadicStep_pos n
     · exact hnlt
-  refine ⟨e.symm X, ?_⟩
+  refine ⟨(X : GroupLieAlgebra I G), ?_⟩
   apply ContinuousMonoidHom.ext
   exact congrFun <| Continuous.ext_on hSdense φ.continuous ψ.continuous fun _ ht => ht
 
@@ -254,24 +269,26 @@ theorem mulInvariantOneParameterSubgroup_injective [FiniteDimensional ℝ E] [Li
       (mulInvariantOneParameterSubgroup (I := I) (G := G) :
         GroupLieAlgebra I G → ContinuousMonoidHom (Multiplicative ℝ) G) := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  let e : GroupLieAlgebra I G ≃ₗ[ℝ] E :=
-    groupLieAlgebraEquivModelSpace (I := I) (G := G)
   intro v w hvw
+  let vE : E := v
+  let wE : E := w
   obtain ⟨U, hU, hinj⟩ := exists_injOn_mulInvariantExp_modelSpace (I := I) (G := G)
-  have hv : Tendsto (fun n => dyadicStep n • e v) atTop (𝓝 0) := by
-    simpa only [zero_smul] using tendsto_dyadicStep.smul_const (e v)
-  have hw : Tendsto (fun n => dyadicStep n • e w) atTop (𝓝 0) := by
-    simpa only [zero_smul] using tendsto_dyadicStep.smul_const (e w)
+  have hv : Tendsto (fun n => dyadicStep n • vE) atTop (𝓝 0) := by
+    simpa only [zero_smul] using tendsto_dyadicStep.smul_const vE
+  have hw : Tendsto (fun n => dyadicStep n • wE) atTop (𝓝 0) := by
+    simpa only [zero_smul] using tendsto_dyadicStep.smul_const wE
   obtain ⟨n, hvn, hwn⟩ := ((hv.eventually hU).and (hw.eventually hU)).exists
   have hexp := DFunLike.congr_fun hvw (Multiplicative.ofAdd (dyadicStep n))
   rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul,
     mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] at hexp
-  have hmodel : dyadicStep n • e v = dyadicStep n • e w := by
+  have hmodel : dyadicStep n • vE = dyadicStep n • wE := by
     apply hinj hvn hwn
-    change mulInvariantExp (e.symm (dyadicStep n • e v)) =
-      mulInvariantExp (e.symm (dyadicStep n • e w))
-    simpa only [map_smul, e.symm_apply_apply] using hexp
-  apply e.injective
+    have hvsmul : ((dyadicStep n • vE : E) : GroupLieAlgebra I G) =
+        dyadicStep n • v := rfl
+    have hwsmul : ((dyadicStep n • wE : E) : GroupLieAlgebra I G) =
+        dyadicStep n • w := rfl
+    rw [hvsmul, hwsmul]
+    exact hexp
   exact (isUnit_iff_ne_zero.mpr (dyadicStep_pos n).ne').smul_left_cancel.mp hmodel
 
 /-- Every continuous one-parameter subgroup is generated by a unique tangent vector. -/
