@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.IntegralCurve
+public import TauCeti.Geometry.Lie.Tangent.LeftInvariantDerivation
 
 /-!
 # The exponential map of a Lie group
