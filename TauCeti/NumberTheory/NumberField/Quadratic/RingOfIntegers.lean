@@ -10,21 +10,25 @@ public import TauCeti.NumberTheory.NumberField.Discriminant.OfIntegralBasis
 public import Mathlib.NumberTheory.NumberField.Norm
 
 /-!
-# The ring of integers and discriminant of a quadratic field, non-`1 mod 4` case
+# The ring of integers of a quadratic field
 
 For a quadratic number field `K = ℚ(√d)` — presented by an algebraic integer `θ : 𝓞 K` with
-`minpoly ℤ θ = X² - d` and `Algebra.adjoin ℚ {θ} = ⊤` — with `d` squarefree and `d % 4 ≠ 1`, the
-ring of integers is `ℤ[θ]` (`Algebra.adjoin ℤ {θ} = ⊤`) and `NumberField.discr K = 4 * d`.
+`minpoly ℤ θ = X² - d` and `Algebra.adjoin ℚ {θ} = ⊤` — with `d` squarefree, the ring of integers
+depends on `d mod 4`:
+
+* `d ≢ 1 (mod 4)`: `𝓞 K = ℤ[θ]` and `NumberField.discr K = 4 * d`;
+* `d ≡ 1 (mod 4)`: `𝓞 K = ℤ[ω]` with `ω = (1+θ)/2 = TauCeti.NumberField.halfGen`.
 
 The content is the "no more integers" step: an algebraic integer `z` with `(z : K) = a + b·θ`
 (`a, b : ℚ`) has `2a ∈ ℤ` and `a² - d·b² ∈ ℤ` (its trace and norm), whence `2a, 2b ∈ ℤ` (using that
-`d` is squarefree), and the residue `a² ≡ d·b² (mod 4)` forces `2a, 2b` both even when `d % 4 ≠ 1`
-(equivalently `d ≡ 2, 3 (mod 4)`), i.e. `a, b ∈ ℤ`.
+`d` is squarefree), and the residue `a² ≡ d·b² (mod 4)` fixes the coordinates: `2a, 2b` are both
+even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `d ≡ 1 (mod 4)`.
 
 ## Main results
 
-* `TauCeti.NumberField.adjoin_gen_eq_top_of_emod_four_ne_one`: the ring of integers is `ℤ[θ]`.
-* `TauCeti.NumberField.discr_eq_four_mul_of_emod_four_ne_one`: `discr K = 4d`.
+* `TauCeti.NumberField.adjoin_gen_eq_top_of_emod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
+* `TauCeti.NumberField.discr_eq_four_mul_of_emod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
+* `TauCeti.NumberField.adjoin_half_gen_eq_top_of_emod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
 -/
 
 public section
@@ -139,7 +143,37 @@ private theorem two_dvd_of_sq_sub_mul_sq {A B N : ℤ} (hd4 : d % 4 = 2 ∨ d % 
     · have h0 : ((B - 2 : ℤ) : ZMod 4) = 0 := by push_cast; rw [h2]; ring
       have := (ZMod.intCast_zmod_eq_zero_iff_dvd (B - 2) 4).mp h0; omega
 
-/-- The generator `θ` is not rational (`minpoly` has degree `2`), so `{1, θ}` is a `ℚ`-basis. -/
+/-- **Parity from the norm residue, `d ≡ 1 (mod 4)`.** If `A² - d·B² = 4N` then `A ≡ B (mod 2)`:
+in `ZMod 4`, `A² = B²` forces `A - B ∈ {0, 2}`. -/
+private theorem two_dvd_sub_of_sq_sub_mul_sq {A B N : ℤ} (hd4 : d % 4 = 1)
+    (h : A ^ 2 - d * B ^ 2 = 4 * N) : 2 ∣ (A - B) := by
+  have key : ∀ x y : ZMod 4, x ^ 2 - (1 : ZMod 4) * y ^ 2 = 0 → x - y = 0 ∨ x - y = 2 := by decide
+  have hd1 : (d : ZMod 4) = 1 := by
+    have h0 := (ZMod.intCast_zmod_eq_zero_iff_dvd (d - 1) 4).mpr (by omega)
+    push_cast at h0; exact sub_eq_zero.mp h0
+  have heq0 : (A : ZMod 4) ^ 2 - (1 : ZMod 4) * (B : ZMod 4) ^ 2 = 0 := by
+    have hc : ((A ^ 2 - d * B ^ 2 : ℤ) : ZMod 4) = ((4 * N : ℤ) : ZMod 4) := by rw [h]
+    push_cast at hc
+    rw [← hd1, hc, (by decide : (4 : ZMod 4) = 0)]; ring
+  rcases key _ _ heq0 with h0 | h2
+  · have h0' : ((A - B : ℤ) : ZMod 4) = 0 := by push_cast; exact h0
+    have := (ZMod.intCast_zmod_eq_zero_iff_dvd (A - B) 4).mp h0'; omega
+  · have h0' : ((A - B - 2 : ℤ) : ZMod 4) = 0 := by push_cast; rw [h2]; ring
+    have := (ZMod.intCast_zmod_eq_zero_iff_dvd (A - B - 2) 4).mp h0'; omega
+
+/-- For `d ≡ 1 (mod 4)`, `ω = (1 + θ)/2` is an algebraic integer: it is a root of the monic
+integer polynomial `X² - X - (d-1)/4`. -/
+private theorem isIntegral_half_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+    IsIntegral ℤ ((1 + (θ : K)) / 2) := by
+  obtain ⟨e, he⟩ : ∃ e : ℤ, d = 4 * e + 1 := ⟨d / 4, by omega⟩
+  have ht : (θ : K) ^ 2 = algebraMap ℤ K d := coe_gen_sq hmin
+  have hde : algebraMap ℤ K d = 4 * algebraMap ℤ K e + 1 := by
+    rw [he]; simp only [map_add, map_mul, map_ofNat, map_one]
+  refine ⟨X ^ 2 - X - C e, ?_, ?_⟩
+  · monicity!
+  · simp only [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C]
+    field_simp
+    linear_combination ht + hde
 private theorem coe_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ∉ (algebraMap ℚ K).range := by
   rintro ⟨q, hq⟩
@@ -184,6 +218,58 @@ private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [hz, hak, hcl]
   push_cast [zsmul_eq_mul, map_intCast]
   ring
+
+/-- For `d ≡ 1 (mod 4)`, the half-integer generator `ω = (1 + θ)/2 ∈ 𝓞 K`. -/
+noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) : 𝓞 K :=
+  ⟨(1 + (θ : K)) / 2, isIntegral_half_gen hmin hd4⟩
+
+/-- **`𝓞 K = ℤ[ω]` for `d ≡ 1 (mod 4)`: coordinates.** Every algebraic integer is a `ℤ`-combination
+`k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the `{1, θ}`-coordinates `a = A/2, c = B/2` give
+`z = (A-B)/2 · 1 + B · ω`, and `A ≡ B (mod 2)` (`d ≡ 1`) makes `(A-B)/2` an integer. -/
+private theorem exists_int_repr_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) (z : 𝓞 K) :
+    ∃ k l : ℤ, z = k • (1 : 𝓞 K) + l • halfGen hmin hd4 := by
+  have hfr := finrank_rat_eq_two hmin hgen
+  obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
+    hfr (coe_notMem_range hmin) θ.isIntegral_coe
+  set a := bs.repr (z : K) 0 with ha
+  set c := bs.repr (z : K) 1 with hc
+  have hz : (z : K) = algebraMap ℚ K a + algebraMap ℚ K c * (θ : K) := by
+    have hsum := bs.sum_repr (z : K)
+    rw [Fin.sum_univ_two, hbs] at hsum
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one] at hsum
+    rw [← hsum, Algebra.smul_def, Algebra.smul_def, mul_one]
+  obtain ⟨⟨A, hA⟩, ⟨N, hN⟩⟩ := exists_intCast_coords hmin hgen hz
+  have h2c : (d : ℚ) * (2 * c) ^ 2 = ((A ^ 2 - 4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hN]; ring
+  have hcden : (2 * c).den = 1 := den_eq_one_of_squarefree_mul_sq_isInt hsf h2c
+  obtain ⟨B, hB⟩ : ∃ B : ℤ, (B : ℚ) = 2 * c :=
+    ⟨(2 * c).num, by rw [← Rat.num_div_den (2 * c), hcden]; simp⟩
+  have hABN : A ^ 2 - d * B ^ 2 = 4 * N := by
+    have : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hB, hN]; ring
+    exact_mod_cast this
+  obtain ⟨m, hm⟩ := two_dvd_sub_of_sq_sub_mul_sq hd4 hABN
+  refine ⟨m, B, RingOfIntegers.coe_injective ?_⟩
+  have hω : (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := rfl
+  have haA : a = (A : ℚ) / 2 := by rw [hA]; ring
+  have hcB : c = (B : ℚ) / 2 := by rw [hB]; ring
+  have hmABK : (A : K) - (B : K) = 2 * (m : K) := by exact_mod_cast hm
+  change (z : K) = ((m • (1 : 𝓞 K) + B • halfGen hmin hd4) : K)
+  rw [hz, haA, hcB]
+  push_cast [zsmul_eq_mul, map_intCast, map_div₀, map_ofNat, hω]
+  field_simp
+  linear_combination hmABK
+
+/-- **The ring of integers is `ℤ[(1+θ)/2]` when `d ≡ 1 (mod 4)`.** For squarefree `d` with
+`d % 4 = 1`, the ring of integers of `ℚ(√d)` is generated over `ℤ` by `ω = (1+θ)/2`. -/
+theorem adjoin_half_gen_eq_top_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) :
+    Algebra.adjoin ℤ {halfGen hmin hd4} = (⊤ : Subalgebra ℤ (𝓞 K)) := by
+  rw [eq_top_iff]
+  rintro z -
+  obtain ⟨k, l, hkl⟩ := exists_int_repr_one hmin hgen hsf hd4 z
+  rw [hkl]
+  exact add_mem (zsmul_mem (one_mem _) k)
+    (zsmul_mem (Algebra.subset_adjoin (Set.mem_singleton _)) l)
 
 variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
   (hsf : Squarefree d) (hd4 : d % 4 ≠ 1)
