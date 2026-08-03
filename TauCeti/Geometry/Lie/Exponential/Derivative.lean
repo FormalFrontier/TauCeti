@@ -19,6 +19,7 @@ inequality therefore show that its time-one endpoint differs from the straight l
 
 * `hasFDerivAt_mulInvariantExp_modelSpace_zero`: in model-space identity coordinates, the
   tangent-space exponential has derivative the identity at zero.
+* `contDiffAt_mulInvariantExp_modelSpace_zero`: the coordinate exponential is smooth at zero.
 * `hasStrictFDerivAt_mulInvariantExp_modelSpace_zero`: the same derivative is strict.
 
 ## References
@@ -186,6 +187,22 @@ theorem hasFDerivAt_mulInvariantExp_modelSpace_zero
       field_simp
 
 omit [IsManifold I 2 G] in
+/-- The tangent-space exponential is smooth at zero in model-space identity coordinates. -/
+theorem contDiffAt_mulInvariantExp_modelSpace_zero
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    ContDiffAt ℝ ∞
+      (fun v : E => extChartAt I (1 : G)
+        (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) 0 := by
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
+  have hsmooth := contMDiffAt_mulInvariantExp_zero (I := I) (G := G)
+  have hzero : mulInvariantExp (I := I) (G := G)
+      (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
+  rw [contMDiffAt_iff_target_of_mem_source (y := (1 : G)) (by
+    convert mem_chart_source H (1 : G) using 1
+    exact hzero)] at hsmooth
+  simpa only [Function.comp_def] using hsmooth.2.contDiffAt
+
+omit [IsManifold I 2 G] in
 /-- In model-space identity coordinates, the tangent-space exponential has strict derivative the
 identity at zero. -/
 theorem hasStrictFDerivAt_mulInvariantExp_modelSpace_zero
@@ -196,14 +213,5 @@ theorem hasStrictFDerivAt_mulInvariantExp_modelSpace_zero
       (ContinuousLinearMap.id ℝ E) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   have hderiv := hasFDerivAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
-  have hsmooth := contMDiffAt_mulInvariantExp_zero (I := I) (G := G)
-  have hzero : mulInvariantExp (I := I) (G := G)
-      (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
-  rw [contMDiffAt_iff_target_of_mem_source (y := (1 : G)) (by
-    convert mem_chart_source H (1 : G) using 1
-    exact hzero)] at hsmooth
-  have hcoord : ContDiffAt ℝ ∞
-      (fun v : E => extChartAt I (1 : G)
-        (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) 0 := by
-    simpa only [Function.comp_def] using hsmooth.2.contDiffAt
+  have hcoord := contDiffAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
   exact hcoord.hasStrictFDerivAt' hderiv (by simp)
