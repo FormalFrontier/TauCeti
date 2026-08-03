@@ -69,6 +69,23 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
           (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
+/-- The invariant coordinate field vanishes when its generating vector vanishes. -/
+@[simp]
+theorem mulInvariantCoordinateVectorField_zero [IsManifold I 1 G] (y : E) :
+    mulInvariantCoordinateVectorField (I := I) (G := G) (0, y) = 0 := by
+  unfold mulInvariantCoordinateVectorField
+  dsimp only [Prod.fst, Prod.snd]
+  change tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
+      ((extChartAt I (1 : G)).symm y)
+        (mulInvariantVectorField (I := I) (G := G) (0 : GroupLieAlgebra I G)
+          ((extChartAt I (1 : G)).symm y)) = 0
+  have hz : mulInvariantVectorField (I := I) (G := G)
+      (0 : GroupLieAlgebra I G) = 0 := by
+    simpa using mulInvariantVectorField_smul (I := I) (G := G) (0 : ℝ)
+      (0 : GroupLieAlgebra I G)
+  rw [congrFun hz]
+  exact map_zero _
+
 /-- The coordinate expression of the parameterized left-invariant vector field is `C^n` at the
 zero tangent vector and identity coordinate when multiplication is `C^(n + 1)`. -/
 theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
