@@ -88,8 +88,6 @@ noncomputable abbrev groupScheme (R sigma : Type u) [CommRing R] [Finite sigma] 
   (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := A)
     (characterGroup sigma)).trans freeAbelianCharEquiv
 
-set_option backward.defeqAttrib.useBackward true in
-set_option backward.isDefEq.respectTransparency false in
 /-- The `i`-th coordinate of a scheme-valued point is its value on the group-algebra
 monomial for the `i`-th standard character. -/
 @[simp]
@@ -155,8 +153,6 @@ the multiplicative group scheme. -/
   DiagonalizableGroup.characterGroupSchemeMap (R := R) (characterGroup sigma)
     (Multiplicative.ofAdd m)
 
-set_option backward.defeqAttrib.useBackward true in
-set_option backward.isDefEq.respectTransparency false in
 /-- On scheme-valued points, a split-torus character is the Laurent monomial with exponent
 vector `m`. -/
 theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite sigma]
@@ -166,15 +162,23 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
     DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
         (R := R) (A := A) (p ≫ (characterGroupSchemeMap (R := R) m).hom.hom) =
       m.prod fun i n => schemePointsMulEquiv (R := R) (A := A) p i ^ n := by
-  rw [characterGroupSchemeMap,
-    DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap]
-  let chi : Multiplicative (sigma →₀ ℤ) →* Aˣ := DiagonalizableGroup.schemePointsMulEquiv
-    (R := R) (A := A) (characterGroup sigma) p
-  change chi (Multiplicative.ofAdd m) =
-    m.prod fun i n => freeAbelianCharEquiv chi i ^ n
-  conv_lhs =>
-    rw [← freeAbelianCharEquiv.symm_apply_apply chi,
-      freeAbelianCharEquiv_symm_apply_ofAdd]
+  calc
+    _ = DiagonalizableGroup.schemePointsMulEquiv
+        (R := R) (A := A) (characterGroup sigma) p
+          (show characterGroup sigma from Multiplicative.ofAdd m) := by
+      exact
+        DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
+          (R := R) (A := A) (characterGroup sigma)
+            (show characterGroup sigma from Multiplicative.ofAdd m) p
+    _ = _ := by
+      let chi : Multiplicative (sigma →₀ ℤ) →* Aˣ :=
+        DiagonalizableGroup.schemePointsMulEquiv
+          (R := R) (A := A) (characterGroup sigma) p
+      change chi (Multiplicative.ofAdd m) =
+        m.prod fun i n => freeAbelianCharEquiv chi i ^ n
+      conv_lhs =>
+        rw [← freeAbelianCharEquiv.symm_apply_apply chi,
+          freeAbelianCharEquiv_symm_apply_ofAdd]
 
 /-- A split-torus cocharacter gives a group-scheme morphism from the multiplicative group
 scheme. -/
@@ -183,8 +187,6 @@ scheme. -/
     DiagonalizableGroup.multiplicativeGroupScheme R ⟶ groupScheme R sigma :=
   DiagonalizableGroup.cocharacterGroupSchemeMap (R := R) (characterGroup sigma) psi
 
-set_option backward.defeqAttrib.useBackward true in
-set_option backward.isDefEq.respectTransparency false in
 /-- On scheme-valued points, a split-torus cocharacter raises the input unit to the
 integer specified by each cocharacter coordinate. -/
 theorem schemePointsMulEquiv_cocharacterGroupSchemeMap [Finite sigma]
