@@ -44,9 +44,7 @@ open scoped NNReal
 
 /-- **The quadratic remainder of a Lipschitz derivative.** If `deriv γ` is `K`-Lipschitz on
 `[t₀ - ε, t₀ + ε]` and `γ` is differentiable there, the affine approximation at `t₀` is off by at
-most `K * (t - t₀) ^ 2`: the mean value inequality applied to `t ↦ γ t - γ t₀ - (t - t₀) • deriv γ
-t₀` on the segment between `t₀` and `t`, whose derivative is `deriv γ · - deriv γ t₀`, bounded by
-`K * |t - t₀|` there since every point of that segment is within `|t - t₀|` of `t₀`. -/
+most `K * (t - t₀) ^ 2`. -/
 private theorem norm_sub_sub_smul_deriv_le_of_lipschitzOnWith {γ : ℝ → ℂ} {t₀ ε : ℝ} {K : ℝ≥0}
     (hε_pos : 0 < ε) (hderiv : ∀ t ∈ Icc (t₀ - ε) (t₀ + ε), HasDerivAt γ (deriv γ t) t)
     (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε)))
@@ -94,12 +92,9 @@ private theorem norm_sub_sub_smul_deriv_le_of_lipschitzOnWith {γ : ℝ → ℂ}
     calc ‖g t‖ ≤ K * (t₀ - t) * (t₀ - t) := this
       _ = K * (t - t₀) ^ 2 := by ring
 
-/-- **Pointwise bound on the real winding integrand near a `C^{1,1}` crossing.** With `z := γ t -
-w` and `v₀ := deriv γ t₀`, both the numerator `z.re * v.im - z.im * v.re` of the real winding
-integrand and (a lower bound on) `normSq z` scale as `(t - t₀) ^ 2`, for `t` close enough to `t₀`
-that the affine approximation `z ≈ (t - t₀) • v₀` dominates the quadratic remainder -- the ratio
-is then bounded independent of `t`, with no need for the "ratio tends to 1" limiting argument the
-same computation could otherwise be phrased with. -/
+/-- **Pointwise bound on the real winding integrand near a `C^{1,1}` crossing.** For `t` close
+enough to `t₀` that `|t - t₀| * (4 * (K + 1)) ≤ ‖deriv γ t₀‖`, the real winding integrand at
+`γ t - w` is bounded independent of `t`. -/
 private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith {γ : ℝ → ℂ} {w : ℂ} {t₀ ε : ℝ}
     {K : ℝ≥0} (hε_pos : 0 < ε) (hderiv : ∀ t ∈ Icc (t₀ - ε) (t₀ + ε), HasDerivAt γ (deriv γ t) t)
     (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε)))
