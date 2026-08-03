@@ -7,9 +7,12 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.ClosedForm
 public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative
 public import TauCeti.Analysis.SpecialFunctions.Artanh
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
+import Mathlib.Analysis.Calculus.Deriv.Star
+import Mathlib.Analysis.Complex.CauchyIntegral
 
 /-!
 # The Poincaré metric is the length metric of its density
@@ -73,6 +76,35 @@ the radii through the origin and their Moebius images, the hyperbolic geodesics 
 `Conformal/Poincare/Betweenness.lean`; the converse — that a path of least length is a
 reparametrisation of one of them — is an equality case that this file does not prove.
 
+## Schwarz--Pick: hyperbolic length is contracted, and conformally invariant
+
+The Moebius invariance above is the equality case of a one-sided estimate, and the estimate holds
+for *every* holomorphic self-map of the disc, not only for the automorphisms. Integrating the
+infinitesimal Schwarz--Pick inequality
+`TauCeti.norm_deriv_div_one_sub_norm_sq_le` of `Conformal/SchwarzPick/Derivative.lean` along a
+path, exactly as the Moebius statement integrates its equality case, gives
+`TauCeti.hyperbolicLength_comp_le`: post-composing a path with a holomorphic self-map of the disc
+does not increase its hyperbolic length. The comparison is termwise, because the chain rule turns
+the density-weighted speed of `f ∘ γ` into
+
+`‖deriv f (γ t)‖ / (1 - ‖f (γ t)‖ ^ 2) * ‖γ' t‖`,
+
+the first factor of which Schwarz--Pick bounds by `(1 - ‖γ t‖ ^ 2)⁻¹`; both integrands are
+continuous, since the derivative of a holomorphic function is again holomorphic, so the estimate
+integrates.
+
+Applying the estimate to a biholomorphism and to its inverse in turn pins the two lengths together
+and makes hyperbolic length a **conformal invariant** of the disc
+(`TauCeti.hyperbolicLength_comp_eq_of_leftInvOn`): no explicit automorphism formula enters, only
+the existence of a holomorphic inverse. Read at the standard automorphism
+`z ↦ u * (z - c) / (1 - conj c * z)` it recovers
+`TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` with its rotation factor restored, the
+rotation costing nothing because multiplying a path by a unit scalar changes neither its Euclidean
+speed nor its distance from the origin (`TauCeti.hyperbolicLength_const_mul`). Reflection in the
+real axis is invariant too (`TauCeti.hyperbolicLength_conj`), which the conformal statement cannot
+see, conjugation being antiholomorphic; with it the invariance covers the whole isometry group of
+the Poincaré disc as `Conformal/Poincare/Isometry/Classification.lean` exhibits it.
+
 ## Relation to Mathlib's `Manifold.pathELength`
 
 Mathlib's `Mathlib/Geometry/Manifold/Riemannian/PathELength.lean` defines `Manifold.pathELength`
@@ -99,9 +131,18 @@ file should be refactored onto that API at that point.
   the parameter transports the parameter interval and leaves the length unchanged. For the affine
   reparametrisations `t ↦ s * t + d` this needs nothing of the path,
   `TauCeti.hyperbolicLength_comp_mul_add`.
+* `TauCeti.hyperbolicLength_congr` — the hyperbolic length of a path depends only on its values
+  along its own parameter interval.
 * `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` — hyperbolic length is a Moebius
   invariant, the integrated form of the infinitesimal isometry
-  `TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one`.
+  `TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one`;
+  `TauCeti.hyperbolicLength_const_mul` is the same statement for a rotation, and
+  `TauCeti.hyperbolicLength_conj` for the reflection in the real axis.
+* `TauCeti.hyperbolicLength_comp_le` — **Schwarz--Pick for the Poincaré length**: post-composing
+  a path in the disc with a holomorphic self-map of the disc does not increase its hyperbolic
+  length.
+* `TauCeti.hyperbolicLength_comp_eq_of_leftInvOn` — **hyperbolic length is a conformal
+  invariant**: a holomorphic self-map of the disc with a holomorphic left inverse preserves it.
 * `TauCeti.hyperbolicLength_ray` — the hyperbolic length of a Euclidean radius is `Real.artanh`
   of its Euclidean length.
 * `TauCeti.hyperbolicDist_le_hyperbolicLength` — **no `C¹` path in the disc is hyperbolically
@@ -224,6 +265,28 @@ density-weighted speed. -/
 private theorem hyperbolicLength_eq_intervalIntegral (γ : ℝ → ℂ) (hab : a ≤ b) :
     hyperbolicLength γ a b = ∫ t in a..b, ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2) :=
   hyperbolicLength_eq_intervalIntegral_of_eqOn hab fun _ _ => rfl
+
+/-- The congruence over an ordered parameter interval; the general case follows by symmetry. -/
+private theorem hyperbolicLength_congr_of_le {δ : ℝ → ℂ} (hab : a ≤ b)
+    (hδ : EqOn δ γ (Icc a b)) : hyperbolicLength δ a b = hyperbolicLength γ a b := by
+  rw [hyperbolicLength_eq_intervalIntegral γ hab]
+  refine hyperbolicLength_eq_intervalIntegral_of_eqOn hab fun t ht => ?_
+  have hnhds : δ =ᶠ[nhds t] γ :=
+    Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht) (hδ.mono Ioo_subset_Icc_self)
+  simp only [hnhds.deriv_eq, hδ (Ioo_subset_Icc_self ht)]
+
+/-- **The hyperbolic length of a path depends only on its parameter interval.** Two paths that
+agree on the interval with endpoints `a` and `b` have the same hyperbolic length over it: at an
+interior parameter they have the same germ, hence the same derivative, and the two endpoints form
+a null set. -/
+theorem hyperbolicLength_congr {δ : ℝ → ℂ} (hδ : EqOn δ γ (uIcc a b)) :
+    hyperbolicLength δ a b = hyperbolicLength γ a b := by
+  rcases le_total a b with hab | hab
+  · rw [uIcc_of_le hab] at hδ
+    exact hyperbolicLength_congr_of_le hab hδ
+  · rw [uIcc_comm, uIcc_of_le hab] at hδ
+    rw [hyperbolicLength_symm δ b a, hyperbolicLength_symm γ b a]
+    exact hyperbolicLength_congr_of_le hab hδ
 
 /-- **Hyperbolic length is additive along the parameter interval**: the lengths of the two halves
 of a path add up to the length of the whole, as soon as the density-weighted speed is integrable
@@ -406,6 +469,34 @@ theorem hyperbolicLength_ray {u : ℂ} (hu : ‖u‖ = 1) {r : ℝ} (hr : 0 ≤ 
 
 /-! ## Conformal invariance of the density -/
 
+/-- **Hyperbolic length is a rotation invariant.** Multiplying a path by a scalar of modulus one
+scales neither its Euclidean speed nor its distance from the origin, so it changes no term of the
+density-weighted integrand. Unlike the Moebius invariance below, this asks nothing of the path:
+where the path fails to be differentiable so does its rotation, and both sides read the same
+junk value of `deriv`. -/
+@[simp]
+theorem hyperbolicLength_const_mul {u : ℂ} (hu : ‖u‖ = 1) :
+    hyperbolicLength (fun t => u * γ t) a b = hyperbolicLength γ a b := by
+  rw [hyperbolicLength_def, hyperbolicLength_def]
+  refine MeasureTheory.setIntegral_congr_fun measurableSet_uIcc fun t _ => ?_
+  simp only [deriv_const_mul_field, norm_mul, hu, one_mul]
+
+/-- **Hyperbolic length is a conjugation invariant.** Reflecting a path in the real axis leaves its
+hyperbolic length unchanged. As for the rotation invariance this asks nothing of the path:
+conjugation is a real-linear isometry, so it changes neither term of the density-weighted
+integrand, and at a parameter where the path fails to be differentiable both sides read the same
+junk value of `deriv` (`deriv.star`). Conjugation is antiholomorphic, so this is not an instance of
+the conformal invariance `TauCeti.hyperbolicLength_comp_eq_of_leftInvOn` below; together the two
+cover the whole isometry group of the Poincaré disc, which
+`Conformal/Poincare/Isometry/Classification.lean` exhibits as the standard automorphisms and their
+conjugates. -/
+@[simp]
+theorem hyperbolicLength_conj (γ : ℝ → ℂ) (a b : ℝ) :
+    hyperbolicLength (fun t => (starRingEnd ℂ) (γ t)) a b = hyperbolicLength γ a b := by
+  rw [hyperbolicLength_def, hyperbolicLength_def]
+  refine MeasureTheory.setIntegral_congr_fun measurableSet_uIcc fun t _ => ?_
+  simp only [← Complex.star_def, deriv.star, norm_star]
+
 /-- The Moebius invariance of hyperbolic length over an ordered parameter interval; the general
 case follows by symmetry. -/
 private theorem hyperbolicLength_unitDiscMoebiusFormula_comp_of_le (hc : ‖c‖ < 1) (hab : a ≤ b)
@@ -446,6 +537,94 @@ theorem hyperbolicLength_unitDiscMoebiusFormula_comp (hc : ‖c‖ < 1)
     rw [uIcc_comm, uIcc_of_le hab] at hmem
     rw [hyperbolicLength_symm _ b a, hyperbolicLength_symm γ b a]
     exact hyperbolicLength_unitDiscMoebiusFormula_comp_of_le hc hab hderiv hmem
+
+/-! ## Schwarz--Pick: holomorphic self-maps of the disc contract hyperbolic length -/
+
+/-- The chain rule for a path in the disc post-composed with a function holomorphic on the disc:
+at a parameter where the path is differentiable and stays in the open disc, `f ∘ γ` has derivative
+`γ' t * deriv f (γ t)`. -/
+private theorem hasDerivAt_comp_of_norm_lt_one {f : ℂ → ℂ} {t : ℝ}
+    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1)) (hmem : ‖γ t‖ < 1)
+    (hderiv : HasDerivAt γ (γ' t) t) :
+    HasDerivAt (f ∘ γ) (γ' t * deriv f (γ t)) t := by
+  have hf' : HasDerivAt f (deriv f (γ t)) (γ t) :=
+    (hf.differentiableAt (isOpen_ball.mem_nhds (mem_ball_zero_iff.mpr hmem))).hasDerivAt
+  simpa [smul_eq_mul] using hf'.scomp t hderiv
+
+/-- The Schwarz--Pick length estimate over an ordered parameter interval; the general case follows
+by symmetry. -/
+private theorem hyperbolicLength_comp_le_of_le {f : ℂ → ℂ}
+    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (hab : a ≤ b)
+    (hγ : ContinuousOn γ (Icc a b)) (hderiv : ∀ t ∈ Ioo a b, HasDerivAt γ (γ' t) t)
+    (hγ' : ContinuousOn γ' (Icc a b)) (hmem : ∀ t ∈ Icc a b, ‖γ t‖ < 1) :
+    hyperbolicLength (f ∘ γ) a b ≤ hyperbolicLength γ a b := by
+  have hball : MapsTo γ (Icc a b) (ball (0 : ℂ) 1) := fun t ht => mem_ball_zero_iff.mpr (hmem t ht)
+  have hcomp : ∀ t ∈ Ioo a b, HasDerivAt (f ∘ γ) (γ' t * deriv f (γ t)) t := fun t ht =>
+    hasDerivAt_comp_of_norm_lt_one hf (hmem t (Ioo_subset_Icc_self ht)) (hderiv t ht)
+  have hfmem : ∀ t ∈ Icc a b, ‖(f ∘ γ) t‖ < 1 := fun t ht => mem_ball_zero_iff.mp (hmaps (hball ht))
+  -- the derivative of a holomorphic function is again holomorphic, hence continuous on the disc
+  have hdf : ContinuousOn (fun t => deriv f (γ t)) (Icc a b) :=
+    ((hf.analyticOnNhd isOpen_ball).deriv.continuousOn).comp hγ hball
+  rw [hyperbolicLength_eq_integral hab hcomp, hyperbolicLength_eq_integral hab hderiv]
+  refine intervalIntegral.integral_mono_on hab
+    (intervalIntegrable_norm_div_one_sub_norm_sq hab (hf.continuousOn.comp hγ hball)
+      (hγ'.mul hdf) hfmem)
+    (intervalIntegrable_norm_div_one_sub_norm_sq hab hγ hγ' hmem) fun t ht => ?_
+  calc ‖γ' t * deriv f (γ t)‖ / (1 - ‖(f ∘ γ) t‖ ^ 2)
+      = ‖γ' t‖ * (‖deriv f (γ t)‖ / (1 - ‖f (γ t)‖ ^ 2)) := by
+        simp only [Function.comp_apply, norm_mul, mul_div_assoc]
+    _ ≤ ‖γ' t‖ * (1 / (1 - ‖γ t‖ ^ 2)) :=
+        mul_le_mul_of_nonneg_left
+          (norm_deriv_div_one_sub_norm_sq_le hf hmaps (hball ht)) (norm_nonneg _)
+    _ = ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) := mul_one_div _ _
+
+/-- **Schwarz--Pick for the Poincaré length.** Post-composing a path in the open unit disc with a
+holomorphic self-map of the disc does not increase its hyperbolic length. This is the infinitesimal
+Schwarz--Pick inequality `TauCeti.norm_deriv_div_one_sub_norm_sq_le` integrated along the path, in
+the same way as `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` integrates its equality
+case; the path is asked to be `C¹` on its parameter interval, as in
+`TauCeti.hyperbolicDist_le_hyperbolicLength`, so that both density-weighted speeds are
+integrable. -/
+theorem hyperbolicLength_comp_le {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (hγ : ContinuousOn γ (uIcc a b))
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t) (hγ' : ContinuousOn γ' (uIcc a b))
+    (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
+    hyperbolicLength (f ∘ γ) a b ≤ hyperbolicLength γ a b := by
+  rcases le_total a b with hab | hab
+  · rw [uIcc_of_le hab] at hγ hγ' hmem
+    rw [uIoo_of_le hab] at hderiv
+    exact hyperbolicLength_comp_le_of_le hf hmaps hab hγ hderiv hγ' hmem
+  · rw [uIcc_comm, uIcc_of_le hab] at hγ hγ' hmem
+    rw [uIoo_comm, uIoo_of_le hab] at hderiv
+    rw [hyperbolicLength_symm (f ∘ γ) b a, hyperbolicLength_symm γ b a]
+    exact hyperbolicLength_comp_le_of_le hf hmaps hab hγ hderiv hγ' hmem
+
+/-- **Hyperbolic length is a conformal invariant of the disc.** A holomorphic self-map of the open
+unit disc that has a holomorphic left inverse there preserves the hyperbolic length of every `C¹`
+path in the disc: the Schwarz--Pick estimate `TauCeti.hyperbolicLength_comp_le` applied to the map
+and to its inverse in turn traps the two lengths at each other. No explicit automorphism formula
+enters, only the existence of the holomorphic inverse. -/
+theorem hyperbolicLength_comp_eq_of_leftInvOn {f g : ℂ → ℂ}
+    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hfmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hg : DifferentiableOn ℂ g (ball (0 : ℂ) 1))
+    (hgmaps : MapsTo g (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hgf : LeftInvOn g f (ball (0 : ℂ) 1)) (hγ : ContinuousOn γ (uIcc a b))
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t) (hγ' : ContinuousOn γ' (uIcc a b))
+    (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
+    hyperbolicLength (f ∘ γ) a b = hyperbolicLength γ a b := by
+  have hball : MapsTo γ (uIcc a b) (ball (0 : ℂ) 1) := fun t ht => mem_ball_zero_iff.mpr (hmem t ht)
+  refine le_antisymm (hyperbolicLength_comp_le hf hfmaps hγ hderiv hγ' hmem) ?_
+  have hcomp : ∀ t ∈ uIoo a b, HasDerivAt (f ∘ γ) (γ' t * deriv f (γ t)) t := fun t ht =>
+    hasDerivAt_comp_of_norm_lt_one hf (hmem t (uIoo_subset_uIcc_self ht)) (hderiv t ht)
+  have hfmem : ∀ t ∈ uIcc a b, ‖(f ∘ γ) t‖ < 1 := fun t ht =>
+    mem_ball_zero_iff.mp (hfmaps (hball ht))
+  have hdf : ContinuousOn (fun t => deriv f (γ t)) (uIcc a b) :=
+    ((hf.analyticOnNhd isOpen_ball).deriv.continuousOn).comp hγ hball
+  have key := hyperbolicLength_comp_le hg hgmaps (hf.continuousOn.comp hγ hball) hcomp
+    (hγ'.mul hdf) hfmem
+  rwa [hyperbolicLength_congr (δ := g ∘ (f ∘ γ)) fun t ht => hgf (hball ht)] at key
 
 /-! ## The distance is a lower bound for the length -/
 

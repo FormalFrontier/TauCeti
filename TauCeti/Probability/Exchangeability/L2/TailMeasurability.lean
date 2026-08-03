@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.L2.CesaroConvergence
+public import TauCeti.Probability.Exchangeability.L2.Cesaro.Convergence
 public import TauCeti.Probability.Process.Tail.Basic
-import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.AEStronglyMeasurable
 import TauCeti.MeasureTheory.Function.BoundedMemLp
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 
 /-!
@@ -93,11 +93,7 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
     weighted_sums_converge_L1_of_memLp hX hX_ae hf hf_L2
   have ha₀_int : Integrable a₀ μ := MemLp.integrable le_rfl ha₀_L1
   -- Contractability carries square-integrability from coordinate `0` to every coordinate.
-  have hY : Contractable μ fun i ω => f (X i ω) :=
-    Contractable.map_values hX hf hX_ae
-  have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := fun i =>
-    (hY.identDistrib_coord (hf.comp_aemeasurable (hX_ae 0))
-      (hf.comp_aemeasurable (hX_ae i))).memLp_snd hf_L2
+  have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := hX.memLp_comp hX_ae hf hf_L2
   have hg_int : ∀ r m : ℕ, Integrable
       (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j)) μ := fun r m =>
     MemLp.integrable one_le_two
@@ -107,17 +103,9 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
     intro r
     have hL1 : Tendsto (fun m => eLpNorm
         (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) - a₀) 1 μ)
-        atTop (𝓝 0) := by
-      have heq : ∀ m : ℕ, eLpNorm
-          (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) - a₀) 1 μ
-          = ENNReal.ofReal (∫ ω, |blockAverage (fun i ω => f (X i ω))
-              (fun j : Fin (m + 1) => r + j) ω - a₀ ω| ∂μ) := by
-        intro m
-        rw [eLpNorm_one_eq_lintegral_enorm,
-          ← ofReal_integral_norm_eq_lintegral_enorm ((hg_int r m).sub ha₀_int)]
-        simp [Real.norm_eq_abs]
-      simp_rw [heq]
-      simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp (ha₀_lim r)
+        atTop (𝓝 0) :=
+      TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub (hg_int r) ha₀_int
+        (by simpa [Real.norm_eq_abs] using ha₀_lim r)
     have hmeasure : TendstoInMeasure μ
         (fun m => blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j)) atTop a₀ :=
       tendstoInMeasure_of_tendsto_eLpNorm one_ne_zero
