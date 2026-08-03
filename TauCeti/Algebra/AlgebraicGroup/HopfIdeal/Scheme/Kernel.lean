@@ -104,6 +104,9 @@ private noncomputable def kernelSpecPullbackIso (f : H ⟶ K) :
       (quotientKernelHopfIdealAlgEquiv f).toRingEquiv.toCommRingCatIso.op).symm ≪≫
       (pullbackSpecIso H K R).symm
 
+-- The two structure maps of the tensor product, transported along the quotient--tensor
+-- equivalence: both are computed by its `simp` lemma
+-- `quotientKernelHopfIdealAlgEquiv_symm_tmul` at `k ⊗ₜ 1` resp. `1 ⊗ₜ r`.
 private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeLeft (f : H ⟶ K) :
     letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
     letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
@@ -112,24 +115,8 @@ private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeLeft (f : H ⟶ K
         (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom.toRingHom := by
   let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
   let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
-  rw [← AlgEquiv.symm_toRingEquiv]
   ext k
-  simp only [RingHom.comp_apply, Algebra.TensorProduct.includeLeftRingHom_apply]
-  calc
-    (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv.toRingHom (k ⊗ₜ[↥H] 1) =
-        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv (k ⊗ₜ[↥H] 1) :=
-      congrFun (RingEquiv.coe_toRingHom
-        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv) _
-    _ = (quotientKernelHopfIdealAlgEquiv f).symm (k ⊗ₜ[↥H] 1) :=
-      congrFun (AlgEquiv.coe_ringEquiv (quotientKernelHopfIdealAlgEquiv f).symm) _
-    _ = (mkQuotient K (kernelHopfIdeal f)).hom k := by
-      rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mkQuotient_apply, map_one,
-        one_mul, Ideal.Quotient.mkₐ_eq_mk]
-    _ = (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom k :=
-      (congrFun (BialgHom.coe_toAlgHom (mkQuotient K (kernelHopfIdeal f)).hom) k).symm
-    _ = (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom.toRingHom k :=
-      (congrFun (AlgHom.coe_toRingHom
-        (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom) k).symm
+  simp
 
 private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeRight (f : H ⟶ K) :
     letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
@@ -139,29 +126,8 @@ private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeRight (f : H ⟶ 
         algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal) := by
   let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
   let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
-  rw [← AlgEquiv.symm_toRingEquiv]
   ext r
-  simp only [RingHom.comp_apply]
-  calc
-    (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv.toRingHom
-        ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) =
-        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv
-          ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) :=
-      congrFun (RingEquiv.coe_toRingHom
-        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv) _
-    _ = (quotientKernelHopfIdealAlgEquiv f).symm
-          ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) :=
-      congrFun (AlgEquiv.coe_ringEquiv (quotientKernelHopfIdealAlgEquiv f).symm) _
-    _ = (quotientKernelHopfIdealAlgEquiv f).symm (1 ⊗ₜ[↥H] r) := by
-      rw [show
-        (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r =
-          (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)) r from
-            congrFun (AlgHom.coe_toRingHom
-              (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R))) r,
-        Algebra.TensorProduct.includeRight_apply]
-    _ = algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal) r := by
-      rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mul_one,
-        Ideal.Quotient.mk_algebraMap]
+  simp
 
 private lemma kernelSpecPullbackIso_hom_fst (f : H ⟶ K) :
     (kernelSpecPullbackIso f).hom ≫
