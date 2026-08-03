@@ -80,7 +80,7 @@ private lemma conj_comp_mul'
   rw [toConv_algHom_comp_mul' g.ofConv, toConv_coe_comp_mul' d,
     toConv_algHom_comp_mul' (g⁻¹).ofConv]
   rw [mul_add, add_mul, mulTensor_convMul, mulTensor_convMul, mulTensor_convMul,
-    mulTensor_convMul, mul_one, toConv_toLinearMap_mul_inv]
+    mulTensor_convMul, mul_one, AlgHom.toConv_toLinearMap_mul_inv]
 
 omit [CommSemiring A] [HopfAlgebra R A] in
 /-- The base algebra maps of the coefficient synonym and of `B` agree. -/

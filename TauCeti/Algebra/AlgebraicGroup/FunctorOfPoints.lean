@@ -124,6 +124,16 @@ noncomputable instance instGroup : Group (WithConv (H →ₐ[R] A)) where
     ext h
     exact f.ofConv.commutes (counit h)
 
+/-- The linear images of a point and of its convolution inverse multiply to the
+convolution unit: the group law of the points, transferred to the linear
+convolution monoid. -/
+lemma toConv_toLinearMap_mul_inv (g : WithConv (H →ₐ[R] A)) :
+    toConv (g.ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) =
+      (1 : WithConv (H →ₗ[R] A)) := by
+  have h := congrArg (fun ψ : WithConv (H →ₐ[R] A) =>
+    toConv ψ.ofConv.toLinearMap) (mul_inv_cancel g)
+  rwa [AlgHom.toLinearMap_convMul, AlgHom.toLinearMap_convOne] at h
+
 end Hopf
 
 section Bialgebra

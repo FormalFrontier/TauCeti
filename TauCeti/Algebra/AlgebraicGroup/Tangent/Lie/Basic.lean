@@ -129,22 +129,6 @@ lemma toConv_algHom_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
 
 end ExteriorProduct
 
-section HopfPoints
-
-variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
-  [CommSemiring B] [Algebra R B]
-
-/-- The linear images of a point and of its convolution inverse multiply to the
-convolution unit. -/
-lemma toConv_toLinearMap_mul_inv (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) :
-    toConv (g.ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) =
-      (1 : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) := by
-  have h := congrArg (fun ψ : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B) =>
-    toConv ψ.ofConv.toLinearMap) (mul_inv_cancel g)
-  rwa [AlgHom.toLinearMap_convMul, AlgHom.toLinearMap_convOne] at h
-
-end HopfPoints
-
 section Bracket
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
