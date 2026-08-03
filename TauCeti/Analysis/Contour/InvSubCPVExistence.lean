@@ -124,7 +124,7 @@ theorem exists_radius_perWindow_tendsto_value {γ : ℝ → ℂ} {a b t₀ : ℝ
 `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated window
 integral of the Cauchy kernel converges. Existence-only forgetful form of
 `exists_radius_perWindow_tendsto_value`. -/
-theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
+private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
     ∃ R > 0, ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
       (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
