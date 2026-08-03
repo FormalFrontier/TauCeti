@@ -5,7 +5,6 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.GroupTheory.GroupAction.FixedPoints
 public import Mathlib.GroupTheory.GroupAction.Quotient
 public import Mathlib.SetTheory.Cardinal.Finite
 
@@ -25,7 +24,8 @@ This is the shape in which Burnside's lemma computes the pairing of two permutat
 * `TauCeti.fixedBy_prod`: the fixed points of `g` on `X × Y` are the product of its fixed points
   on `X` and on `Y`.
 * `TauCeti.card_fixedBy_prod`: the corresponding count.
-* `TauCeti.sum_card_fixedBy_mul_card_fixedBy`: Burnside's lemma on `X × Y`.
+* `TauCeti.sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group`: Burnside's lemma
+  on `X × Y`.
 
 ## Implementation notes
 
@@ -40,7 +40,11 @@ open MulAction
 
 namespace TauCeti
 
-variable {G : Type*} [Group G] (X Y : Type*) [MulAction G X] [MulAction G Y]
+variable {G : Type*} (X Y : Type*)
+
+section Monoid
+
+variable [Monoid G] [MulAction G X] [MulAction G Y]
 
 /-- A point of a product `G`-set is fixed exactly when both of its components are. -/
 theorem fixedBy_prod (g : G) : fixedBy (X × Y) g = fixedBy X g ×ˢ fixedBy Y g := by
@@ -53,10 +57,15 @@ theorem card_fixedBy_prod (g : G) :
     Nat.card (fixedBy (X × Y) g) = Nat.card (fixedBy X g) * Nat.card (fixedBy Y g) := by
   rw [fixedBy_prod, Nat.card_congr (Equiv.Set.prod _ _), Nat.card_prod]
 
+end Monoid
+
+variable [Group G] [MulAction G X] [MulAction G Y]
+
 /-- **Burnside's lemma on a product.** For a finite group `G` acting on two finite sets `X` and
 `Y`, the sum over `g : G` of the product of the two fixed-point counts is the number of orbits of
 `G` on `X × Y`, times the order of `G`. -/
-theorem sum_card_fixedBy_mul_card_fixedBy [Fintype G] [Finite X] [Finite Y] :
+theorem sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group
+    [Fintype G] [Finite X] [Finite Y] :
     ∑ g : G, Nat.card (fixedBy X g) * Nat.card (fixedBy Y g) =
       Nat.card (orbitRel.Quotient G (X × Y)) * Nat.card G := by
   classical

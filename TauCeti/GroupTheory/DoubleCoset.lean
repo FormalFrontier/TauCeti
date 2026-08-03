@@ -8,7 +8,6 @@ module
 public import TauCeti.GroupTheory.GroupAction.Burnside
 public import Mathlib.GroupTheory.Coset.Card
 public import Mathlib.GroupTheory.DoubleCoset
-public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Double cosets as the orbits of a group on a product of coset spaces
@@ -19,7 +18,7 @@ double coset `H a⁻¹ b K`, and every orbit meets the slice `{(H, gK) | g : G}`
 
 Combining that bijection with Burnside's lemma counts double cosets by a sum of fixed-point
 numbers, which is the group-theoretic half of the statement that the permutation character of
-`G` on `G ⧸ H` pairs with itself to `#(H \ G / K)`.
+`G` on `G ⧸ H` pairs with the permutation character on `G ⧸ K` to `#(H \ G / K)`.
 
 ## Main definitions
 
@@ -28,9 +27,11 @@ numbers, which is the group-theoretic half of the statement that the permutation
 
 ## Main statements
 
-* `TauCeti.card_doubleCosetQuotient`: the two sides of that bijection have the same cardinality.
-* `TauCeti.sum_card_fixedBy_quotient_mul_card_fixedBy_quotient`: Burnside's lemma read through
-  that bijection, `∑ g, |(G ⧸ H)^g| * |(G ⧸ K)^g| = #(H \ G / K) * |G|`.
+* `TauCeti.card_doubleCosetQuotient_eq_card_orbitQuotient`: the two sides of that bijection have
+  the same cardinality.
+* `TauCeti.sum_card_fixedBy_mul_card_fixedBy_eq_card_doubleCosetQuotient_mul_card_group`:
+  Burnside's lemma read through that bijection,
+  `∑ g, |(G ⧸ H)^g| * |(G ⧸ K)^g| = #(H \ G / K) * |G|`.
 
 ## Implementation notes
 
@@ -63,7 +64,7 @@ variable (H K : Subgroup G)
 /-- The orbit of the pair of cosets `(H, gK)` under the diagonal action of `G` on
 `(G ⧸ H) × (G ⧸ K)`. Every orbit is of this form, and `doubleCosetOrbit_eq_iff` says that the
 double coset `HgK` is a complete invariant of it. -/
-@[expose] def doubleCosetOrbit (g : G) : orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K)) :=
+def doubleCosetOrbit (g : G) : orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K)) :=
   Quotient.mk'' (((1 : G) : G ⧸ H), ((g : G) : G ⧸ K))
 
 variable {H K}
@@ -92,7 +93,7 @@ variable (H K)
 /-- **Double cosets are orbits.** The double cosets `H \ G / K` are in bijection with the orbits
 of `G` acting diagonally on `(G ⧸ H) × (G ⧸ K)`, the double coset of `g` corresponding to the
 orbit of `(H, gK)`. -/
-@[expose] noncomputable def doubleCosetEquivOrbitQuotient :
+noncomputable def doubleCosetEquivOrbitQuotient :
     DoubleCoset.Quotient (H : Set G) K ≃ orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K)) :=
   Equiv.ofBijective
     (Quotient.lift (doubleCosetOrbit H K)
@@ -110,11 +111,13 @@ orbit of `(H, gK)`. -/
 @[simp]
 theorem doubleCosetEquivOrbitQuotient_mk (g : G) :
     doubleCosetEquivOrbitQuotient H K (DoubleCoset.mk H K g) = doubleCosetOrbit H K g :=
-  rfl
+  -- The parentheses keep this out of `@[defeq]` inference: the proof is `rfl`, but the two sides
+  -- are only definitionally equal after unfolding the (unexposed) definitions above.
+  (rfl)
 
 /-- The number of double cosets `H \ G / K` is the number of orbits of `G` on
 `(G ⧸ H) × (G ⧸ K)`. -/
-theorem card_doubleCosetQuotient :
+theorem card_doubleCosetQuotient_eq_card_orbitQuotient :
     Nat.card (DoubleCoset.Quotient (H : Set G) K) =
       Nat.card (orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K))) :=
   Nat.card_congr (doubleCosetEquivOrbitQuotient H K)
@@ -124,11 +127,12 @@ end Orbits
 /-- **Double cosets are counted by fixed cosets.** For a finite group `G` and subgroups `H` and
 `K`, the sum over `g : G` of the number of cosets of `H` fixed by `g` times the number of cosets
 of `K` fixed by `g` is the number of double cosets `H \ G / K`, times the order of `G`. -/
-theorem sum_card_fixedBy_quotient_mul_card_fixedBy_quotient [Fintype G] (H K : Subgroup G) :
+theorem sum_card_fixedBy_mul_card_fixedBy_eq_card_doubleCosetQuotient_mul_card_group
+    [Fintype G] (H K : Subgroup G) :
     ∑ g : G, Nat.card (fixedBy (G ⧸ H) g) * Nat.card (fixedBy (G ⧸ K) g) =
       Nat.card (DoubleCoset.Quotient (H : Set G) K) * Nat.card G := by
   have : Finite G := Finite.of_fintype G
-  rw [card_doubleCosetQuotient]
-  exact sum_card_fixedBy_mul_card_fixedBy (G ⧸ H) (G ⧸ K)
+  rw [card_doubleCosetQuotient_eq_card_orbitQuotient]
+  exact sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group (G ⧸ H) (G ⧸ K)
 
 end TauCeti
