@@ -69,7 +69,9 @@ noncomputable def applyContinuousLinearMap :
       map_smul' := fun _ _ => by ext f x; simp [app] }
   exact LinearMap.mkContinuous (𝕜₂ := 𝕜) L 1 fun
       (A : C(K, E →L[𝕜] F)) => by
-    change ‖app A‖ ≤ 1 * ‖A‖
+    have hL_apply : L A = app A := by
+      rfl
+    rw [hL_apply]
     rw [one_mul]
     apply ContinuousLinearMap.opNorm_le_bound (app A) (norm_nonneg A)
     intro f
@@ -124,7 +126,6 @@ variable {K : Type*} [TopologicalSpace K] [CompactSpace K]
   {F : Type u} [NormedAddCommGroup F] [NormedSpace ℝ F]
 
 /-- The continuous family of derivatives of a `C¹` map along a continuous map. -/
-@[expose]
 noncomputable def fderivComp (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
     C(K, E →L[ℝ] F) :=
   ⟨fun t ↦ fderiv ℝ f (g t), (hf.continuous_fderiv one_ne_zero).comp g.continuous⟩
@@ -164,8 +165,8 @@ theorem hasFDerivAt_comp (f : C(E, F)) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
       simpa only [dist_eq_norm] using
         (norm_sub_le_of_mem_segment hz).trans_lt (by simpa only [dist_eq_norm] using hpoint)
     have hd := hderiv hzg htg
-    change dist (fderiv ℝ f (g t)) (fderiv ℝ f z) < c at hd
-    simpa only [dist_eq_norm, norm_sub_rev] using hd.le
+    have hd' : dist (fderiv ℝ f (g t)) (fderiv ℝ f z) < c := hd
+    simpa only [dist_eq_norm, norm_sub_rev] using hd'.le
   calc
     ‖(f.comp h - f.comp g - applyContinuousLinearMap (fderivComp f hf g) (h - g)) t‖ ≤
         c * ‖h t - g t‖ := by
@@ -183,27 +184,29 @@ theorem contDiff_comp_nat (n : ℕ) (f : C(E, F)) (hf : ContDiff ℝ n f) :
     ContDiff ℝ n (fun g : C(K, E) ↦ f.comp g) := by
   induction n generalizing F with
   | zero =>
-      change ContDiff ℝ (0 : ℕ∞ω) (fun g : C(K, E) ↦ f.comp g)
-      rw [contDiff_zero]
-      exact f.continuous_postcomp
+      have hzero : ContDiff ℝ (0 : ℕ∞ω) (fun g : C(K, E) ↦ f.comp g) := by
+        rw [contDiff_zero]
+        exact f.continuous_postcomp
+      simpa using hzero
   | succ n ih =>
       have hf' : ContDiff ℝ ((n : ℕ∞ω) + 1) f := by simpa using hf
       let hf₁ : ContDiff ℝ 1 f := hf'.one_of_succ
       let df : C(E, E →L[ℝ] F) := ⟨fderiv ℝ f, hf₁.continuous_fderiv one_ne_zero⟩
       have hdf : ContDiff ℝ n df := (contDiff_succ_iff_fderiv.mp hf').2.2
       have hcomp : ContDiff ℝ n (fun g : C(K, E) ↦ df.comp g) := ih df hdf
-      change ContDiff ℝ ((n : ℕ∞ω) + 1) (fun g : C(K, E) ↦ f.comp g)
-      rw [contDiff_succ_iff_hasFDerivAt]
-      refine ⟨fun g ↦ applyContinuousLinearMap (df.comp g),
-        applyContinuousLinearMap.contDiff.fun_comp hcomp, fun g ↦ ?_⟩
-      have hderiv := hasFDerivAt_comp f hf₁ g
-      have hfamily : df.comp g = fderivComp f hf₁ g := by
-        ext t
-        rfl
-      change HasFDerivAt (fun h : C(K, E) ↦ f.comp h)
-        (applyContinuousLinearMap (df.comp g)) g
-      rw [hfamily]
-      exact hderiv
+      have hsucc : ContDiff ℝ ((n : ℕ∞ω) + 1) (fun g : C(K, E) ↦ f.comp g) := by
+        rw [contDiff_succ_iff_hasFDerivAt]
+        refine ⟨fun g ↦ applyContinuousLinearMap (df.comp g),
+          applyContinuousLinearMap.contDiff.fun_comp hcomp, fun g ↦ ?_⟩
+        have hderiv := hasFDerivAt_comp f hf₁ g
+        have hfamily : df.comp g = fderivComp f hf₁ g := by
+          apply ContinuousMap.ext
+          intro t
+          have hdf_apply : df (g t) = fderiv ℝ f (g t) := by
+            rfl
+          rw [ContinuousMap.comp_apply, hdf_apply, fderivComp_apply]
+        simpa only [hfamily] using hderiv
+      simpa using hsucc
 
 /-- Pointwise postcomposition by a smooth map is smooth on a compact-domain continuous-map
 space. -/
