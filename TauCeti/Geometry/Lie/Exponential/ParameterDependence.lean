@@ -19,8 +19,8 @@ tangent vectors.
 
 * `mulInvariantCoordinateVectorField`: the invariant vector field in the identity chart, with its
   generating tangent vector included as a parameter.
-* `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth at the
-  zero vector and identity coordinate.
+* `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is `C^n` at the
+  zero vector and identity coordinate when multiplication is `C^(n + 1)`.
 * `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local solution family on a uniform
   closed neighborhood of the zero vector and the identity coordinate, jointly continuous and
   uniformly Lipschitz in its initial state.
@@ -115,18 +115,19 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
           (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
-/-- The coordinate expression of the parameterized left-invariant vector field is smooth at the
-zero tangent vector and identity coordinate. -/
-theorem contDiffAt_mulInvariantCoordinateVectorField
-    [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
-    ContDiffAt ℝ ∞ (mulInvariantCoordinateVectorField (I := I) (G := G))
+/-- The coordinate expression of the parameterized left-invariant vector field is `C^n` at the
+zero tangent vector and identity coordinate when multiplication is `C^(n + 1)`. -/
+theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
+    [ContMDiffMul I (n + 1) G] [BoundarylessManifold I G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+    ContDiffAt ℝ n (mulInvariantCoordinateVectorField (I := I) (G := G))
       (0, extChartAt I (1 : G) (1 : G)) := by
-  let _ : ContMDiffMul I (∞ + 1) G := by
-    simpa using (inferInstance : ContMDiffMul I ∞ G)
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+  dsimp only
   let V : E × G → TangentBundle I G := fun p =>
     ⟨p.2, mulInvariantVectorField (I := I) (G := G) p.1 p.2⟩
-  have hV : ContMDiff (𝓘(ℝ, E).prod I) I.tangent ∞ V :=
-    contMDiff_mulInvariantVectorField_modelSpace (n := ∞)
+  have hV : ContMDiff (𝓘(ℝ, E).prod I) I.tangent n V :=
+    contMDiff_mulInvariantVectorField_modelSpace (n := n)
   have hV₀ := hV.contMDiffAt (x := ((0 : E), (1 : G)))
   rw [contMDiffAt_iff] at hV₀
   have h := hV₀.2.contDiffAt
@@ -158,7 +159,8 @@ a single solution family that is continuous jointly in its initial condition and
 uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
 second coordinate follows the invariant vector field. -/
 theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
-    [CompleteSpace E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] [BoundarylessManifold I G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r L : NNReal), 0 < δ ∧ 0 < r ∧
       ContinuousOn α
         (Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r ×ˢ
@@ -174,12 +176,14 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
                 mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
               (Set.Icc (-δ) δ) t) ∧
           ∀ t ∈ Set.Icc (-δ) δ, (α (x, t)).1 = x.1 := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
+  dsimp only
   let center : E × E := (0, extChartAt I (1 : G) (1 : G))
   let F : E × E → E × E := fun p =>
     (0, mulInvariantCoordinateVectorField (I := I) (G := G) p)
   have hF : ContDiffAt ℝ 1 F center := by
     exact contDiffAt_const.prodMk
-      (contDiffAt_mulInvariantCoordinateVectorField.of_le (by norm_num))
+      (contDiffAt_mulInvariantCoordinateVectorField (n := 1))
   obtain ⟨δ, hδ, _, r, _, _, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
   obtain ⟨α, hα, L', hαlip⟩ :=
     (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_lipschitzOnWith
@@ -237,7 +241,8 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
 continuous at the center, solves the parameterized invariant ODE with an ordinary derivative,
 freezes the tangent-vector parameter, and remains in the target of the identity chart. -/
 theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
-    [CompleteSpace E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] [BoundarylessManifold I G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     ∃ α : (E × E) × ℝ → E × E,
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
       α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) =
@@ -251,6 +256,8 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
         α (xt.1, 0) = xt.1 ∧
         (α xt).1 = xt.1.1 ∧
         (α xt).2 ∈ interior (extChartAt I (1 : G)).target := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
+  dsimp only
   obtain ⟨α, δ, r, _, hδ, hr, hcont, _, hα⟩ :=
     exists_lipschitzOn_local_mulInvariantCoordinateFlow
       (I := I) (G := G)
@@ -291,16 +298,13 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
     (hα xt.1 hx).1, (hα xt.1 hx).2.2 xt.2 ht, ?_⟩
   exact (Set.mem_preimage.mp hxtTarget).2
 
-local instance lieGroupMinSmoothnessParameterDependence [LieGroup I ∞ G] :
-    LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
-
 /-- A single coordinate solution family represents the canonical invariant integral curves for
 every sufficiently small generating vector and every sufficiently small time. This is the bridge
 from Picard--Lindelöf's parameterized model-space solutions to the canonical manifold-valued curves
 used to define `lieExp`. -/
 theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
-    [CompleteSpace E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [LieGroup I (minSmoothness ℝ 3) G]
+    [T2Space G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (U : Set E) (δ : ℝ),
       U ∈ 𝓝 (0 : E) ∧ 0 < δ ∧
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
@@ -315,6 +319,9 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
           (mulInvariantIntegralCurve (I := I) (G := G)
             (v : GroupLieAlgebra I G) 1)
           (Set.Ioo (-δ) δ) := by
+  let _ : ContMDiffMul I (1 + 1) G :=
+    ContMDiffMul.of_le (m := 1 + 1) (n := minSmoothness ℝ 3) (by norm_num)
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := minSmoothness ℝ 3) (by norm_num)
   obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
     exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
   let embed : E × ℝ → (E × E) × ℝ := fun vt =>
@@ -404,9 +411,13 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
 /-- The tangent-space exponential is continuous at zero when its domain uses the canonical
 model-space identification and its codomain remains the Lie group `G`. -/
 theorem continuousAt_mulInvariantExp_modelSpace_zero
-    [CompleteSpace E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [LieGroup I (minSmoothness ℝ 3) G]
+    [T2Space G] [BoundarylessManifold I G] :
     ContinuousAt
       (fun v : E => mulInvariantExp (I := I) (G := G) v) 0 := by
+  let _ : ContMDiffMul I (1 + 1) G :=
+    ContMDiffMul.of_le (m := 1 + 1) (n := minSmoothness ℝ 3) (by norm_num)
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := minSmoothness ℝ 3) (by norm_num)
   obtain ⟨α, U, δ, hU, hδ, _, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
   let c : ℝ := δ / 2

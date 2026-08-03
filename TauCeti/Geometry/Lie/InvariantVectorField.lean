@@ -19,8 +19,8 @@ left-invariant-derivation model of a Lie algebra.
 
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
-* `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly smooth in
-  its model-space generator and group argument.
+* `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly `C^n` in
+  its model-space generator and group argument when multiplication is `C^(n + 1)`.
 
 ## References
 
