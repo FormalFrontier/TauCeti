@@ -304,7 +304,8 @@ theorem finrank_leftInvariantDerivation_eq_modelVectorSpace
     (h₁ : I.IsInteriorPoint (1 : G)) :
     Module.finrank ℝ (LeftInvariantDerivation I G) = Module.finrank ℝ E := by
   -- Mathlib defines `GroupLieAlgebra I G` as the identity tangent space, whose underlying vector
-  -- space is definitionally `E`; the existing equivalence therefore has exactly the required
-  -- codomain without a parallel wrapper API.
+  -- space is definitionally `E`. Keep that boundary explicit inside the proof while avoiding a
+  -- parallel public wrapper for the existing derivation--Lie-algebra equivalence.
+  let modelEquiv : GroupLieAlgebra I G ≃ₗ[ℝ] E := LinearEquiv.refl ℝ E
   exact LinearEquiv.finrank_eq
-    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁)
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans modelEquiv)
