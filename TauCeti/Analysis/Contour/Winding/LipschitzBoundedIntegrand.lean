@@ -192,12 +192,9 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith {γ : ℝ → ℂ
           + (e * (starRingEnd ℂ) R).im|
         ≤ |(v₀ * (starRingEnd ℂ) R).im| + |(e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im|
           + |(e * (starRingEnd ℂ) R).im| := by
-          have habs_add : ∀ x y : ℝ, |x + y| ≤ |x| + |y| := fun x y => by
-            rw [← Real.norm_eq_abs, ← Real.norm_eq_abs, ← Real.norm_eq_abs]
-            exact norm_add_le x y
-          have e1 := habs_add ((v₀ * (starRingEnd ℂ) R).im
+          have e1 := abs_add_le ((v₀ * (starRingEnd ℂ) R).im
             + (e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im) (e * (starRingEnd ℂ) R).im
-          have e2 := habs_add (v₀ * (starRingEnd ℂ) R).im
+          have e2 := abs_add_le (v₀ * (starRingEnd ℂ) R).im
             (e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im
           linarith
       _ ≤ ‖v₀‖ * (K * (t - t₀) ^ 2) + (K * |t - t₀|) * (|t - t₀| * ‖v₀‖)
@@ -210,9 +207,7 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith {γ : ℝ → ℂ
             mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right habs_le hsq_nonneg)
               (sq_nonneg (K : ℝ))]
       _ = (2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2 := by ring
-  have hnormSq_eq : Complex.normSq z = ‖z‖ ^ 2 := by
-    rw [Complex.norm_def, Real.sq_sqrt (Complex.normSq_nonneg z)]
-  rw [realWindingIntegrand_eq_div, abs_div, hnormSq_eq,
+  rw [realWindingIntegrand_eq_div, abs_div, Complex.normSq_eq_norm_sq,
     abs_of_pos (by positivity : (0 : ℝ) < ‖z‖ ^ 2)]
   have hD_pos : 0 < (|t - t₀| * ‖v₀‖ / 2) ^ 2 := by positivity
   have step1 : |z.re * (deriv γ t).im - z.im * (deriv γ t).re| / ‖z‖ ^ 2
