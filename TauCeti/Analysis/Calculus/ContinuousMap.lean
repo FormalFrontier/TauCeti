@@ -92,6 +92,10 @@ noncomputable def unitIntervalIntegral :
       (intervalIntegral.continuous_primitive
         (fun a b ↦ (f.continuous.comp continuous_projIcc).intervalIntegrable a b) 0).comp
           continuous_subtype_val⟩
+  have primitive_apply (f : C(Set.Icc (0 : ℝ) 1, E)) (t : Set.Icc (0 : ℝ) 1) :
+      primitive f t =
+        ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s) :=
+    rfl
   let L : C(Set.Icc (0 : ℝ) 1, E) →ₗ[ℝ] C(Set.Icc (0 : ℝ) 1, E) :=
     { toFun := primitive
       map_add' := fun f g ↦ by
@@ -101,11 +105,8 @@ noncomputable def unitIntervalIntegral :
           ((g.continuous.comp continuous_projIcc).intervalIntegrable _ _)
       map_smul' := fun c f ↦ by
         ext t
-        change (∫ s in (0 : ℝ)..(t : ℝ),
-          c • f (Set.projIcc 0 1 zero_le_one s)) =
-            c • ∫ s in (0 : ℝ)..(t : ℝ),
-              f (Set.projIcc 0 1 zero_le_one s)
-        simpa only [ContinuousMap.smul_apply] using
+        rw [primitive_apply, ContinuousMap.smul_apply, primitive_apply]
+        simpa only [ContinuousMap.smul_apply, RingHom.id_apply] using
           intervalIntegral.integral_smul c
             (fun s ↦ f (Set.projIcc 0 1 zero_le_one s)) }
   exact LinearMap.mkContinuous L 1 fun f ↦ by
@@ -121,6 +122,15 @@ noncomputable def unitIntervalIntegral :
         exact mul_le_of_le_one_right (norm_nonneg f) t.2.2
 
 omit [CompleteSpace E] in
+/-- The Volterra integral operator on the unit interval has operator norm at most one. -/
+theorem norm_unitIntervalIntegral_le :
+    ‖unitIntervalIntegral (E := E)‖ ≤ 1 := by
+  rw [unitIntervalIntegral]
+  exact LinearMap.mkContinuous_norm_le _ zero_le_one _
+
+omit [CompleteSpace E] in
+/-- Evaluating the Volterra operator at `t` integrates the input's constant extension from zero
+to `t`. -/
 @[simp]
 theorem unitIntervalIntegral_apply (f : C(Set.Icc (0 : ℝ) 1, E))
     (t : Set.Icc (0 : ℝ) 1) :
