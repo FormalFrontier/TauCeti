@@ -50,9 +50,10 @@ turn, and the two half-plane conditions because `e (e.symm w) = w` on `e.target`
 off in target coordinates is exactly
 `TauCeti.chartedSchwarzReflection_in_coordinates`.
 
-The image description is the only statement proved directly rather than by transport, because the
-two pieces it splits into are described by the *chart-induced* reflections rather than by
-conjugation; it is a two-case reading of the branch formulas of `Arc/Principle.lean`.
+The image description is transported the same way: the real-axis description of
+`schwarzReflection g '' e.target` is pushed forward along `d.symm` and pulled back along `e`,
+which turns the conjugation of the real-axis statement into the chart-induced reflection
+`v ↦ d.symm (conj (d v))` of the target arc.
 
 ## Main results
 
@@ -94,12 +95,18 @@ open scoped ComplexConjugate
 
 variable (e d : OpenPartialHomeomorph ℂ ℂ) (f : ℂ → ℂ)
 
+/-- The inverse chart carries the closed upper half of `e.target` *onto* the closed positive side
+of the source arc. -/
+private theorem symm_image_closed_side :
+    e.symm '' (e.target ∩ {w : ℂ | 0 ≤ w.im}) = e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
+  rw [e.symm_image_target_inter_eq, e.source_inter_preimage_target_inter, Set.preimage_ofPred_eq]
+
 /-- The inverse chart carries the closed upper half of `e.target` into the closed positive side
 of the source arc. -/
 private theorem symm_mem_closed_side {w : ℂ} (hw : w ∈ e.target ∩ {w : ℂ | 0 ≤ w.im}) :
-    e.symm w ∈ e.source ∩ {z : ℂ | 0 ≤ (e z).im} :=
-  ⟨e.map_target hw.1, by
-    simpa only [Set.mem_ofPred_eq, e.right_inv hw.1] using hw.2⟩
+    e.symm w ∈ e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
+  rw [← symm_image_closed_side e]
+  exact Set.mem_image_of_mem _ hw
 
 /-- In the straightening coordinates, injectivity of the original branch on the closed positive
 side of the source arc becomes injectivity on the closed upper half-plane: `e.symm`, `f` and `d`
@@ -170,37 +177,27 @@ theorem image_chartedSchwarzReflection_of_symmetric
       f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) ∪
         (fun v => d.symm ((starRingEnd ℂ) (d v))) ''
           (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) := by
-  have hmirror : ∀ {z : ℂ}, z ∈ e.source → (e z).im < 0 →
-      e.symm ((starRingEnd ℂ) (e z)) ∈ e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
-    intro z hz him
-    have hconj : (starRingEnd ℂ) (e z) ∈ e.target := he_symm (e.map_source hz)
-    refine ⟨e.map_target hconj, ?_⟩
-    rw [Set.mem_ofPred_eq, e.right_inv hconj, starRingEnd_apply, Complex.star_def,
-      Complex.conj_im]
-    exact (neg_pos.mpr him).le
-  ext v
-  constructor
-  · rintro ⟨z, hz, rfl⟩
-    rcases le_or_gt 0 (e z).im with him | him
-    · exact Or.inl ⟨z, ⟨hz, him⟩,
-        (chartedSchwarzReflection_of_coord_im_nonneg e d f hf_maps hz him).symm⟩
-    · exact Or.inr ⟨f (e.symm ((starRingEnd ℂ) (e z))),
-        ⟨e.symm ((starRingEnd ℂ) (e z)), hmirror hz him, rfl⟩,
-        (chartedSchwarzReflection_of_coord_im_neg e d f him).symm⟩
-  · rintro (⟨z, ⟨hz, (him : 0 ≤ (e z).im)⟩, rfl⟩ |
-      ⟨u, ⟨z, ⟨hz, (him : 0 ≤ (e z).im)⟩, rfl⟩, rfl⟩)
-    · exact ⟨z, hz, chartedSchwarzReflection_of_coord_im_nonneg e d f hf_maps hz him⟩
-    · rcases him.lt_or_eq with hlt | heq
-      · have hconj : (starRingEnd ℂ) (e z) ∈ e.target := he_symm (e.map_source hz)
-        refine ⟨e.symm ((starRingEnd ℂ) (e z)), e.map_target hconj, ?_⟩
-        have hcoord : (e (e.symm ((starRingEnd ℂ) (e z)))).im < 0 := by
-          rw [e.right_inv hconj, starRingEnd_apply, Complex.star_def, Complex.conj_im]
-          exact neg_neg_of_pos hlt
-        simp only [chartedSchwarzReflection_of_coord_im_neg e d f hcoord, e.right_inv hconj,
-          starRingEnd_self_apply, e.left_inv hz]
-      · refine ⟨z, hz, ?_⟩
-        simp only [chartedSchwarzReflection_of_coord_im_nonneg e d f hf_maps hz him,
-          Complex.conj_eq_iff_im.mpr (hf_real z hz heq.symm), d.left_inv (hf_maps ⟨hz, him⟩)]
+  -- The inverse chart identifies the closed upper half of `e.target` with the closed positive
+  -- side of the source arc, so the coordinate map has image `d '' (f '' _)` there.
+  have hcoord : (fun w => d (f (e.symm w))) '' (e.target ∩ {w : ℂ | 0 ≤ w.im}) =
+      d '' (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) := by
+    rw [← symm_image_closed_side e, Set.image_image, Set.image_image]
+  have hleft : LeftInvOn (d.symm : ℂ → ℂ) d d.source := fun _ hv => d.left_inv hv
+  -- The real-axis image description for the coordinate map on `e.target`.
+  have himage := image_schwarzReflection_of_symmetric (f := fun w => d (f (e.symm w)))
+    (Ω := e.target) he_symm
+    (fun w hw him => hf_real _ (e.map_target hw) (by simpa only [e.right_inv hw] using him))
+  calc chartedSchwarzReflection e d f '' e.source
+      = (fun z => d.symm (schwarzReflection (fun w => d (f (e.symm w))) (e z))) '' e.source :=
+        Set.image_congr' (chartedSchwarzReflection_def e d f)
+    _ = d.symm '' (schwarzReflection (fun w => d (f (e.symm w))) '' (e '' e.source)) := by
+        rw [Set.image_image, Set.image_image]
+    _ = d.symm '' (d '' (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) ∪
+          (starRingEnd ℂ) '' (d '' (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})))) := by
+        rw [e.image_source_eq_target, himage, hcoord]
+    _ = _ := by
+        rw [Set.image_union, (hleft.mono hf_maps.image_subset).image_image]
+        simp only [Set.image_image]
 
 /-- **The charted reflection has nonvanishing derivative on the boundary arc.** Under the
 hypotheses of the analytic-arc reflection principle, together with injectivity of `f` on the
