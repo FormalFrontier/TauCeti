@@ -6,40 +6,32 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
-public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 
 /-!
-# Trivial and tensor point representations
+# Tensor products of point representations
 
-This file synchronizes the trivial and tensor-product operations across the fixed-object
-correspondence between point representations of an affine group and comodules over its
-commutative Hopf algebra.
+This file synchronizes tensor-product operations across the fixed-object correspondence between
+point representations of an affine group and comodules over its commutative Hopf algebra.
 
-Every module has a trivial point representation, in which every point acts by the identity on
-scalar extension. Two point representations on `V` and `W` have a tensor representation on
-`V ⊗ W`: at a value algebra `A`, its action is the tensor product of the two component
-automorphisms, transported across the canonical equivalence
+Two point representations on `V` and `W` have a tensor representation on `V ⊗ W`: at a value
+algebra `A`, its action is the tensor product of the two component automorphisms, transported
+across the canonical equivalence
 
 `A ⊗[R] (V ⊗[R] W) ≃ (A ⊗[R] V) ⊗[A] (A ⊗[R] W)`.
 
-The resulting constructions agree with the point representations induced by the trivial and
-diagonal tensor-product comodules. No finiteness, freeness, projectivity, flatness, or
-nontriviality hypothesis is used.
+This construction agrees with the point representation induced by the diagonal tensor-product
+comodule. No finiteness, freeness, projectivity, flatness, or nontriviality hypothesis is used.
 
 ## Main declarations
 
-* `HopfAlgebra.PointRepresentation.trivial`: the identity action on scalar extensions of an
-  arbitrary module.
 * `HopfAlgebra.PointRepresentation.tensor`: the diagonal action on the tensor product of two
   modules.
-* `HopfAlgebra.PointRepresentation.ofComodule_trivial`: compatibility with the trivial
-  comodule.
 * `HopfAlgebra.PointRepresentation.ofComodule_tensor`: compatibility with the tensor-product
   comodule.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Chapter 4(a), Remark 4.1, and Proposition 9.44.
+* J. S. Milne, *Algebraic Groups* (2017), Proposition 9.44.
 * J. S. Milne, *Reductive Groups*, §§5.1--5.4.
 -/
 
@@ -60,64 +52,6 @@ variable [AddCommMonoid V] [Module R V] [AddCommMonoid W] [Module R W]
 
 namespace PointRepresentation
 
-private noncomputable def rawTrivialAction
-    (A : CommAlgCat.{max u v w} R) :
-    points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A :=
-  GrpCat.ofHom (1 : points (H := H) A →* GeneralLinear.scalarExtensionAutomorphisms (V := V) A)
-
-private theorem rawTrivialAction_naturality
-    {A B : CommAlgCat.{max u v w} R} (phi : A ⟶ B) :
-    mapPoints (H := H) phi ≫ rawTrivialAction (H := H) (V := V) B =
-      rawTrivialAction (H := H) (V := V) A ≫
-        GeneralLinear.mapScalarExtensionAutomorphisms (V := V) phi := by
-  apply GrpCat.ext
-  intro x
-  simp [rawTrivialAction]
-
-/-- The trivial point representation on an arbitrary module. Every point acts by the identity
-linear automorphism after scalar extension. -/
-noncomputable def trivial : PointRepresentation (R := R) (H := H) (V := V) where
-  app A := rawTrivialAction (H := H) (V := V) A ≫
-    eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm
-  naturality A B phi := by
-    change
-      mapPoints (H := H) phi ≫ rawTrivialAction (H := H) (V := V) B ≫
-          eqToHom
-            (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) B).symm =
-        rawTrivialAction (H := H) (V := V) A ≫
-          eqToHom
-            (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm ≫
-          (GeneralLinear.scalarExtensionAutomorphismsFunctor (V := V)).map phi
-    rw [GeneralLinear.scalarExtensionAutomorphismsFunctor_map]
-    rw [← Category.assoc, rawTrivialAction_naturality (H := H) (V := V) phi]
-    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-
-@[simp]
-private theorem action_trivial (A : CommAlgCat.{max u v w} R) :
-    (trivial (H := H) (V := V)).action A = rawTrivialAction (H := H) (V := V) A := by
-  rw [HopfAlgebra.PointRepresentation.action, trivial]
-  change
-    (rawTrivialAction (H := H) (V := V) A ≫
-        eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm) ≫
-      eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A) =
-        rawTrivialAction (H := H) (V := V) A
-  rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
-
-/-- Every point acts as the identity in the trivial point representation. -/
-@[simp]
-theorem trivial_action (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
-    (trivial (H := H) (V := V)).action A x = 1 := by
-  rw [action_trivial]
-  simp [rawTrivialAction]
-
-/-- The trivial point representation fixes every vector after scalar extension. -/
-@[simp]
-theorem trivial_action_apply (A : CommAlgCat.{max u v w} R) (x : points (H := H) A)
-    (z : A ⊗[R] V) :
-    ((trivial (H := H) (V := V)).action A x).val z = z := by
-  rw [trivial_action]
-  rfl
-
 private noncomputable def tensorAutomorphism (_H : Type v)
     (A : CommAlgCat.{max u v w} R)
     (g : GeneralLinear.scalarExtensionAutomorphisms (V := V) A)
@@ -136,7 +70,12 @@ private theorem tensorAutomorphism_tmul (_H : Type v) (A : CommAlgCat.{max u v w
     (tensorAutomorphism (R := R) _H A g h).val (a ⊗ₜ[R] (v ⊗ₜ[R] w)) =
       (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm
         (g.val (a ⊗ₜ[R] v) ⊗ₜ[A] h.val (1 ⊗ₜ[R] w)) := by
-  rfl
+  -- This is the sole intentional unfolding of `tensorAutomorphism`; the named Mathlib lemmas
+  -- expose its general-linear conjugation, tensor congruence, and base-change computation.
+  simp only [tensorAutomorphism, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
+    LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
+    LinearEquiv.symm_symm, TensorProduct.AlgebraTensorModule.distribBaseChange_tmul,
+    TensorProduct.congr_tmul, LinearMap.GeneralLinearGroup.coe_toLinearEquiv]
 
 private theorem tensorAutomorphism_one (_H : Type v) (A : CommAlgCat.{max u v w} R) :
     tensorAutomorphism (R := R) (V := V) (W := W) _H A 1 1 = 1 := by
@@ -245,6 +184,8 @@ noncomputable def tensor
   app A := rawTensorAction Theta Psi A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V ⊗[R] W) A).symm
   naturality A B phi := by
+    -- `pointsFunctor_obj` and the scalar-extension object theorem are categorical equalities,
+    -- with no computation lemma that rewrites this structure-field goal before it is exposed.
     change
       mapPoints (H := H) phi ≫ rawTensorAction Theta Psi B ≫
           eqToHom
@@ -270,7 +211,9 @@ private theorem action_tensor
     (Psi : PointRepresentation (R := R) (H := H) (V := W))
     (A : CommAlgCat.{max u v w} R) :
     (tensor Theta Psi).action A = rawTensorAction Theta Psi A := by
-  rw [HopfAlgebra.PointRepresentation.action, tensor]
+  rw [action_def, tensor]
+  -- The natural-transformation component is stored with the inverse of the opaque object
+  -- equality; expose that categorical composite before cancelling the two transports.
   change
     (rawTensorAction Theta Psi A ≫
         eqToHom
@@ -291,10 +234,17 @@ theorem tensor_action_apply
         (TensorProduct.map (Theta.action A x).val (Psi.action A x).val
           (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W z)) := by
   rw [action_tensor]
-  change
-    (tensorAutomorphism (R := R) H A (Theta.action A x) (Psi.action A x)).val z = _
-  unfold tensorAutomorphism
-  rfl
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | add z t hz ht => simpa only [map_add] using congrArg₂ (fun p q ↦ p + q) hz ht
+  | tmul a z =>
+      induction z using TensorProduct.induction_on with
+      | zero => simp
+      | add z t hz ht =>
+          simpa only [tmul_add, map_add] using congrArg₂ (fun p q ↦ p + q) hz ht
+      | tmul v w =>
+          rw [rawTensorAction_tmul,
+            TensorProduct.AlgebraTensorModule.distribBaseChange_tmul, TensorProduct.map_tmul]
 
 /-- On a pure tensor, the tensor point action applies the two component actions diagonally and
 transports the result back through scalar-extension distributivity. -/
@@ -310,22 +260,6 @@ theorem tensor_action_tmul
           (Psi.action A x).val (1 ⊗ₜ[R] w)) := by
   rw [action_tensor]
   exact rawTensorAction_tmul Theta Psi A x a v w
-
-/-- The point representation induced by the trivial comodule is the trivial point
-representation. -/
-@[simp]
-theorem ofComodule_trivial :
-    ofComodule (Comodule.trivial (R := R) (C := H) (M := V)) =
-      trivial (H := H) (V := V) := by
-  apply ext
-  intro A x
-  apply Units.ext
-  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
-  rw [ofComodule_action_tmul, trivial_action_apply]
-  rw [Comodule.trivial_coact_apply]
-  simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
-    map_one, TensorProduct.comm_tmul]
-  exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
 
 private theorem comm_tensorCombine_eq_distribBaseChange_symm_tmul
     (_H : Type v) (A : CommAlgCat.{max u v w} R) (p : V ⊗[R] A) (q : W ⊗[R] A) :
