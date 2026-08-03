@@ -33,7 +33,44 @@ open Coalgebra TensorProduct WithConv
 section Bracket
 
 variable {R A A' B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
-  [CommSemiring A'] [Bialgebra R A'] [CommRing B] [Algebra R B]
+  [CommSemiring A'] [Bialgebra R A']
+
+section Transport
+
+-- The transport step needs no more of `B` than `derivationComp` itself does; only the bracket
+-- below, being a commutator, asks for a ring.
+variable [Semiring B] [Algebra R B]
+
+/-- **Precomposing both slots by `φ` is multiplication of the transported derivations.** The two
+sides differ only by which counit coefficient algebra they are read in, and those are the same
+`B`. -/
+private theorem mul'_comp_map_derivationComp (φ : A' →ₐc[R] A)
+    (e₁ e₂ : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    LinearMap.mul' R (Bialgebra.CounitAlgebra R A B) ∘ₗ
+        TensorProduct.map
+          ((↑e₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ
+            (φ : A' →ₐ[R] A).toLinearMap)
+          ((↑e₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ
+            (φ : A' →ₐ[R] A).toLinearMap) =
+      LinearMap.mul' R (Bialgebra.CounitAlgebra R A' B) ∘ₗ
+        TensorProduct.map
+          (↑(derivationComp (B := B) φ e₁) : A' →ₗ[R] Bialgebra.CounitAlgebra R A' B)
+          ↑(derivationComp (B := B) φ e₂) := by
+  -- An equality of linear maps on `A' ⊗ A'`, checked on pure tensors; `TensorProduct.ext'`
+  -- supplies the extensionality, so no induction is needed.
+  refine TensorProduct.ext' fun x y => ?_
+  -- Both composite applications unfold definitionally; restate them as values.
+  change (e₁ ((φ : A' →ₐ[R] A) x) * e₂ ((φ : A' →ₐ[R] A) y) :
+      Bialgebra.CounitAlgebra R A B) =
+    derivationComp (B := B) φ e₁ x * derivationComp (B := B) φ e₂ y
+  rw [derivationComp_apply, derivationComp_apply]
+  -- The residual is print-identical across the two coefficient synonyms; both multiplications
+  -- are definitionally `B`'s (the synonym is exposed), which is what this `rfl` uses.
+  rfl
+
+end Transport
+
+variable [CommRing B] [Algebra R B]
 
 /-- The differential preserves the convolution commutator: a bialgebra morphism
 intertwines comultiplications, hence convolution products of derivations termwise. -/
@@ -65,39 +102,13 @@ theorem derivationComp_bracket (φ : A' →ₐc[R] A)
         ((φ : A' →ₐc[R] A) : A' →ₗc[R] A)) a
     simp only [LinearMap.convMul_apply, LinearMap.coe_comp, Function.comp_apply] at h
     exact h
-  -- The two composites agree slotwise: an equality of linear maps on `A' ⊗ A'`
-  -- across the two coefficient synonyms (which are definitionally `B`), checked on
-  -- pure tensors by `derivationComp_apply`. `TensorProduct.ext'` supplies the
-  -- extensionality; no induction is needed.
-  have hslot : ∀ (e₁ e₂ : Derivation R A (Bialgebra.CounitAlgebra R A B)),
-      LinearMap.mul' R (Bialgebra.CounitAlgebra R A B) ∘ₗ
-        TensorProduct.map
-          ((↑e₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ
-            (φ : A' →ₐ[R] A).toLinearMap)
-          ((↑e₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ
-            (φ : A' →ₐ[R] A).toLinearMap) =
-      LinearMap.mul' R (Bialgebra.CounitAlgebra R A' B) ∘ₗ
-        TensorProduct.map
-          (↑(derivationComp (B := B) φ e₁) : A' →ₗ[R] Bialgebra.CounitAlgebra R A' B)
-          ↑(derivationComp (B := B) φ e₂) := by
-    intro e₁ e₂
-    refine TensorProduct.ext' fun x y => ?_
-    -- Both composite applications unfold definitionally; restate them as values.
-    change (e₁ ((φ : A' →ₐ[R] A) x) * e₂ ((φ : A' →ₐ[R] A) y) :
-        Bialgebra.CounitAlgebra R A B) =
-      derivationComp (B := B) φ e₁ x * derivationComp (B := B) φ e₂ y
-    rw [derivationComp_apply, derivationComp_apply]
-    -- The residual is print-identical across the two coefficient synonyms; both
-    -- multiplications are definitionally `B`'s (the synonym is exposed), which is
-    -- what this `rfl` uses.
-    rfl
-  have h1 := DFunLike.congr_fun (hslot d₁ d₂) (comul a)
-  have h2 := DFunLike.congr_fun (hslot d₂ d₁) (comul a)
+  have h1 := DFunLike.congr_fun (mul'_comp_map_derivationComp φ d₁ d₂) (comul a)
+  have h2 := DFunLike.congr_fun (mul'_comp_map_derivationComp φ d₂ d₁) (comul a)
   simp only [LinearMap.coe_comp, Function.comp_apply] at h1 h2
   rw [← AlgHom.toLinearMap_apply (φ : A' →ₐ[R] A) a, hconv, hconv, h1, h2]
   -- The closing `rfl` identifies the two sides through the exposed coefficient
-  -- synonyms once more: after the slotwise rewrites both are literally the same
-  -- `B`-valued expression.
+  -- synonyms: after the slotwise rewrites both are literally the same `B`-valued
+  -- expression.
   rfl
 
 end Bracket

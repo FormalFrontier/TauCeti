@@ -22,6 +22,8 @@ is needed.
 
 ## Main definitions
 
+* `TauCeti.tensorSwap` exchanges the two factors of a tensor square; it needs no hypothesis on
+  `2`, and is what the two orders on a tensor square are compared by.
 * `SymmetricPower.toTensorSquare` embeds a symmetric square by averaging the two orders.
 * `exteriorPower.toTensorSquare` embeds an exterior square by alternating the two orders.
 * `TauCeti.tensorSquareEquivSymmetricExterior` is the resulting direct-sum decomposition.
@@ -40,7 +42,6 @@ open scoped TensorProduct
 universe v
 
 variable (R : Type) (M : Type v)
-variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
 
 namespace TauCeti
 
@@ -69,8 +70,40 @@ theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
         exact one_ne_zero (e.injective (h1'.trans h0'.symm))
       simpa using h1
 
-private noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
+section Swap
+
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- The swap of the two factors of a tensor square, `x ⊗ₜ y ↦ y ⊗ₜ x`. -/
+noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
   PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
+
+/-- The swap reads a pure tensor in the other order. -/
+@[simp]
+theorem tensorSwap_tprod (f : Fin 2 → M) :
+    tensorSwap R M (PiTensorProduct.tprod R f) =
+      PiTensorProduct.tprod R fun i ↦ f (Equiv.swap 0 1 i) := by
+  rw [tensorSwap, PiTensorProduct.reindex_tprod, Equiv.symm_swap]
+
+/-- The swap is its own inverse. -/
+@[simp]
+theorem tensorSwap_symm : (tensorSwap R M).symm = tensorSwap R M := by
+  rw [tensorSwap, PiTensorProduct.reindex_symm, Equiv.symm_swap]
+
+/-- Swapping the two factors of an arbitrary tensor twice is the identity. -/
+@[simp]
+theorem tensorSwap_tensorSwap (x : ⨂[R]^2 M) :
+    tensorSwap R M (tensorSwap R M x) = x := by
+  have h := (tensorSwap R M).symm_apply_apply x
+  rwa [tensorSwap_symm] at h
+
+end Swap
+
+end TauCeti
+
+variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
+
+namespace TauCeti
 
 private noncomputable def symmetricProjection : (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (⅟ (2 : R)) • (LinearMap.id + (tensorSwap R M).toLinearMap)
