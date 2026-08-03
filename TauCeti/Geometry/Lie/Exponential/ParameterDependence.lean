@@ -19,8 +19,8 @@ vectors.
 
 * `mulInvariantCoordinateVectorField`: the invariant vector field in the identity chart, with its
   generating tangent vector included as a parameter.
-* `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth near the
-  zero vector and the identity.
+* `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth at the
+  zero vector and identity coordinate.
 * `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local flow on a uniform closed
   neighborhood of the zero vector and the identity coordinate, jointly continuous and uniformly
   Lipschitz in its initial state.
@@ -102,8 +102,8 @@ noncomputable def mulInvariantCoordinateVectorField (p : E × E) : E :=
     (mulInvariantVectorField
       ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1) g)
 
-/-- The coordinate expression of the parameterized left-invariant vector field is smooth near the
-zero tangent vector and the identity. -/
+/-- The coordinate expression of the parameterized left-invariant vector field is smooth at the
+zero tangent vector and identity coordinate. -/
 theorem contDiffAt_mulInvariantCoordinateVectorField
     [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ContDiffAt ℝ ∞ (mulInvariantCoordinateVectorField (I := I) (G := G))
@@ -164,7 +164,7 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
   have hF : ContDiffAt ℝ 1 F center := by
     exact contDiffAt_const.prodMk
       (contDiffAt_mulInvariantCoordinateVectorField.of_le (by norm_num))
-  obtain ⟨δ, hδ, a, r, L, K, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
+  obtain ⟨δ, hδ, _, r, _, _, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
   obtain ⟨α, hα, L', hαlip⟩ :=
     (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_lipschitzOnWith
   let α' : (E × E) × ℝ → E × E := fun xt => α xt.1 xt.2
@@ -300,7 +300,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
             ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1)
           (Set.Ioo (-δ) δ) := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  obtain ⟨α, hαcont, hαcenter, hαcontNear, hα⟩ :=
+  obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
     exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
   let embed : E × ℝ → (E × E) × ℝ := fun vt =>
     ((vt.1, extChartAt I (1 : G) (1 : G)), vt.2)
@@ -390,7 +390,7 @@ theorem continuousAt_mulInvariantExp_modelSpace_zero
       (fun v : E => mulInvariantExp
         ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  obtain ⟨α, U, δ, hU, hδ, hαcenter, hαlocal, hαeq⟩ :=
+  obtain ⟨α, U, δ, hU, hδ, _, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
   let c : ℝ := δ / 2
   have hc : c ∈ Set.Ioo (-δ) δ := by
