@@ -36,6 +36,8 @@ any finiteness, freeness, projectivity, flatness, or nontriviality hypothesis.
 
 * `HopfAlgebra.PointRepresentation`: a natural action on the scalar extensions of `V`.
 * `HopfAlgebra.PointRepresentation.ofComodule`: the point representation induced by a coaction.
+* `HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint`: identification of the
+  induced representation action with the underlying comodule point action.
 * `HopfAlgebra.PointRepresentation.toComodule`: recovery of a coaction from the universal point.
 * `HopfAlgebra.pointRepresentationEquivComodule`: the fixed-object representation--comodule
   correspondence.
@@ -89,6 +91,15 @@ noncomputable def action (Theta : PointRepresentation (R := R) (H := H) (V := V)
     points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A :=
   Theta.app A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A)
+
+/-- The concrete point action is the natural-transformation component followed by the canonical
+scalar-extension functor-object transport. -/
+theorem action_def (Theta : PointRepresentation (R := R) (H := H) (V := V))
+    (A : CommAlgCat.{max u v w} R) :
+    Theta.action A =
+      Theta.app A ≫
+        eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A) := by
+  rfl
 
 /-- Point representations are equal when their concrete actions agree at every value algebra and
 point. -/
@@ -239,6 +250,14 @@ theorem ofComodule_action_tmul (rho : Comodule R H V)
   let : Comodule R H V := rho
   simpa only [LinearMap.lTensor_def] using
     (Comodule.endOfPoint_tmul (R := R) (H := H) V x.ofConv a v)
+
+/-- The underlying linear map of the action induced by a coaction is the corresponding
+comodule point-action endomorphism. -/
+theorem ofComodule_action_val_eq_endOfPoint (rho : Comodule R H V)
+    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
+    ((ofComodule rho).action A x).val = Comodule.endOfPoint V x.ofConv := by
+  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
+  rw [ofComodule_action_tmul, Comodule.endOfPoint_tmul, LinearMap.lTensor_def]
 
 /-- At the universal point, the action induced by a coaction is the flipped coaction. -/
 @[simp]
@@ -422,19 +441,6 @@ private theorem ofHom_liftedComul_apply (a : ULift.{max u v w} H) :
       liftedComulAlgHom (R := R) (H := H) V a :=
   rfl
 
-private theorem comulPoint_eq_include_mul :
-    toConv (Bialgebra.comulAlgHom R H) =
-      toConv (includeLeftAlgHom (R := R) (H := H)) *
-        toConv (includeRightAlgHom (R := R) (H := H)) := by
-  apply WithConv.ofConv_injective
-  apply AlgHom.toLinearMap_injective
-  apply WithConv.toConv_injective
-  rw [AlgHom.toLinearMap_convMul]
-  simpa only [Bialgebra.toLinearMap_comulAlgHom,
-    Bialgebra.TensorProduct.includeLeft_toAlgHom,
-    Bialgebra.TensorProduct.includeRight_toAlgHom] using
-      (Coalgebra.comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
-
 omit [AddCommMonoid V] [Module R V] in
 private theorem liftedComulPoint_eq_include_mul :
     mapPoints (H := H)
@@ -473,7 +479,7 @@ private theorem liftedComulPoint_eq_include_mul :
     _ = (AlgHom.mapValue (H := H) up)
         (toConv (includeLeftAlgHom (R := R) (H := H)) *
           toConv (includeRightAlgHom (R := R) (H := H))) := by
-      rw [comulPoint_eq_include_mul]
+      rw [Bialgebra.comulPoint_eq_include_mul]
     _ = toConv (up.comp (includeLeftAlgHom (R := R) (H := H))) *
         toConv (up.comp (includeRightAlgHom (R := R) (H := H))) := by
       rw [map_mul]
