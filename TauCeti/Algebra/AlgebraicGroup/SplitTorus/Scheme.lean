@@ -82,7 +82,7 @@ noncomputable abbrev groupScheme (R sigma : Type u) [CommRing R] [Finite sigma] 
   DiagonalizableGroup.groupScheme R (characterGroup sigma)
 
 /-- Scheme-valued points of the finite-rank split torus are coordinate families of units. -/
-@[expose] noncomputable def schemePointsMulEquiv [Finite sigma] :
+noncomputable def schemePointsMulEquiv [Finite sigma] :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R sigma).X) ≃* (sigma → Aˣ) :=
   (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := A)
@@ -125,10 +125,15 @@ theorem schemePointsMulEquiv_mapValue [Finite sigma] (phi : A →ₐ[R] B)
           (Spec (CommRingCat.of R)) ≫ p) =
       fun i => Units.map phi.toMonoidHom
         (schemePointsMulEquiv (R := R) (A := A) p i) := by
-  rw [schemePointsMulEquiv, MulEquiv.trans_apply,
-    DiagonalizableGroup.schemePointsMulEquiv_mapValue]
-  ext i
-  rw [freeAbelianCharEquiv_comp, schemePointsMulEquiv, MulEquiv.trans_apply]
+  funext i
+  apply Units.ext
+  change (schemePointsMulEquiv (R := R) (A := B)
+      ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
+        (Spec (CommRingCat.of R)) ≫ p) i : B) =
+    phi (schemePointsMulEquiv (R := R) (A := A) p i : A)
+  rw [schemePointsMulEquiv_apply_coe, schemePointsMulEquiv_apply_coe,
+    DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue,
+    AlgHom.mapValue_apply, WithConv.ofConv_toConv, AlgHom.comp_apply]
 
 /-! ### Characters and cocharacters as group-scheme morphisms -/
 
@@ -158,7 +163,6 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
         (R := R) (A := A) (p ≫ (characterGroupSchemeMap (R := R) m).hom.hom) =
       m.prod fun i n => schemePointsMulEquiv (R := R) (A := A) p i ^ n := by
   rw [characterGroupSchemeMap_def]
-  simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   calc
     _ = DiagonalizableGroup.schemePointsMulEquiv
         (R := R) (A := A) (characterGroup sigma) p
@@ -171,13 +175,23 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
       let chi : Multiplicative (sigma →₀ ℤ) →* Aˣ :=
         DiagonalizableGroup.schemePointsMulEquiv
           (R := R) (A := A) (characterGroup sigma) p
+      have hcoord (i : sigma) :
+          freeAbelianCharEquiv chi i =
+            schemePointsMulEquiv (R := R) (A := A) p i := by
+        apply Units.ext
+        rw [freeAbelianCharEquiv_apply,
+          DiagonalizableGroup.schemePointsMulEquiv_apply_coe,
+          schemePointsMulEquiv_apply_coe]
+        rfl
       -- `characterGroup sigma` is the bundled abbreviation for the free multiplicative
       -- lattice; this aligns that representation with the unbundled character `chi`.
-      change chi (Multiplicative.ofAdd m) =
-        m.prod fun i n => freeAbelianCharEquiv chi i ^ n
-      conv_lhs =>
-        rw [← freeAbelianCharEquiv.symm_apply_apply chi,
-          freeAbelianCharEquiv_symm_apply_ofAdd]
+      calc
+        chi (Multiplicative.ofAdd m) =
+            m.prod fun i n => freeAbelianCharEquiv chi i ^ n := by
+          conv_lhs =>
+            rw [← freeAbelianCharEquiv.symm_apply_apply chi,
+              freeAbelianCharEquiv_symm_apply_ofAdd]
+        _ = _ := by simp_rw [hcoord]
 
 /-- A split-torus cocharacter gives a group-scheme morphism from the multiplicative group
 scheme. -/
@@ -206,10 +220,18 @@ theorem schemePointsMulEquiv_cocharacterGroupSchemeMap [Finite sigma]
         (p ≫ (cocharacterGroupSchemeMap (R := R) (sigma := sigma) psi).hom.hom) i =
       DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
         (R := R) (A := A) p ^ cocharEquiv psi i := by
-  rw [schemePointsMulEquiv, MulEquiv.trans_apply, freeAbelianCharEquiv_apply,
-    cocharacterGroupSchemeMap_def,
-    DiagonalizableGroup.schemePointsMulEquiv_cocharacterGroupSchemeMap,
-    cocharEquiv_apply]
+  rw [cocharacterGroupSchemeMap_def, cocharEquiv_apply]
+  let g : characterGroup sigma := Multiplicative.ofAdd (Finsupp.single i 1)
+  calc
+    _ = DiagonalizableGroup.schemePointsMulEquiv
+        (R := R) (A := A) (characterGroup sigma)
+          (p ≫ (DiagonalizableGroup.cocharacterGroupSchemeMap
+            (R := R) (characterGroup sigma) psi).hom.hom) g := by
+      apply Units.ext
+      rw [schemePointsMulEquiv_apply_coe,
+        DiagonalizableGroup.schemePointsMulEquiv_apply_coe]
+    _ = _ := DiagonalizableGroup.schemePointsMulEquiv_cocharacterGroupSchemeMap
+      (R := R) (A := A) (characterGroup sigma) psi p g
 
 /-- Composing a split-torus cocharacter with a character is the power map whose exponent
 is their perfect lattice pairing. -/

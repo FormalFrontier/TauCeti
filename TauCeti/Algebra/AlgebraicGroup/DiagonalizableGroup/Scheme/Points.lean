@@ -217,7 +217,7 @@ theorem groupSchemePointsMulEquiv_groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G
 
 The equivalence reverses the spectrum morphism into an algebra point through
 `groupSchemePointsMulEquiv`, then applies the diagonalizable-group points equivalence. -/
-@[expose] noncomputable def schemePointsMulEquiv (G : FGCommGrpCat.{u}) :
+noncomputable def schemePointsMulEquiv (G : FGCommGrpCat.{u}) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) ≃* (G →* Aˣ) :=
   (groupSchemePointsMulEquiv (R := R) (A := A) G).trans pointsMulEquiv
@@ -287,7 +287,7 @@ noncomputable abbrev multiplicativeGroupScheme (R : Type u) [CommRing R] :
 
 /-- Evaluation at the lifted standard generator identifies characters of
 `ULift (Multiplicative ℤ)` with elements of a commutative group. -/
-@[expose] noncomputable def uliftZPowersMulEquiv (M : Type u) [CommGroup M] :
+noncomputable def uliftZPowersMulEquiv (M : Type u) [CommGroup M] :
     M ≃* (ULift.{u} (Multiplicative ℤ) →* M) :=
   (zpowersMulHom M).trans MulEquiv.ulift.symm.monoidHomCongrLeft
 
@@ -295,19 +295,21 @@ noncomputable abbrev multiplicativeGroupScheme (R : Type u) [CommRing R] :
 @[simp]
 theorem uliftZPowersMulEquiv_apply (M : Type u) [CommGroup M]
     (m : M) (n : Multiplicative ℤ) :
-    uliftZPowersMulEquiv M m (ULift.up n) = m ^ n.toAdd :=
+    uliftZPowersMulEquiv M m (ULift.up n) = m ^ n.toAdd := by
+  rw [uliftZPowersMulEquiv]
   rfl
 
 /-- The inverse equivalence evaluates a lifted-integer character at the standard generator. -/
 @[simp]
 theorem uliftZPowersMulEquiv_symm_apply (M : Type u) [CommGroup M]
     (f : ULift.{u} (Multiplicative ℤ) →* M) :
-    (uliftZPowersMulEquiv M).symm f = f (ULift.up (Multiplicative.ofAdd 1)) :=
+    (uliftZPowersMulEquiv M).symm f = f (ULift.up (Multiplicative.ofAdd 1)) := by
+  rw [uliftZPowersMulEquiv]
   rfl
 
 /-- Scheme-valued points of the multiplicative group scheme are units of the value algebra,
 read off on the lifted standard generator. -/
-@[expose] noncomputable def multiplicativeGroupSchemePointsMulEquiv :
+noncomputable def multiplicativeGroupSchemePointsMulEquiv :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (multiplicativeGroupScheme R).X) ≃* Aˣ :=
   (schemePointsMulEquiv (R := R) (A := A) multiplicativeCharacterGroup).trans
