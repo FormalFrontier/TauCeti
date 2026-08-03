@@ -245,35 +245,28 @@ private theorem map_comp_toTensorPower {R : Type} {M : Type*}
   simp only [map_sub, PiTensorProduct.map_tprod, Function.comp_apply]
   congr 1
 
-/-- The swap of the two factors of a tensor square. -/
-private noncomputable def swapEquiv (R : Type) (M : Type*)
-    [CommRing R] [AddCommGroup M] [Module R M] : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
-  PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
-
 /-- The swap acts as `-1` on the alternating part: it exchanges the two pure tensors whose
 difference is the image of a wedge. -/
 private theorem swap_comp_toTensorPower {R : Type} {M : Type*}
     [CommRing R] [AddCommGroup M] [Module R M] :
-    (swapEquiv R M).toLinearMap.comp (exteriorPower.toTensorPower R M 2)
+    (tensorSwap R M).toLinearMap.comp (exteriorPower.toTensorPower R M 2)
       = -exteriorPower.toTensorPower R M 2 := by
   apply exteriorPower.linearMap_ext
   apply AlternatingMap.ext
   intro v
   simp only [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply, LinearMap.neg_apply,
     LinearEquiv.coe_coe]
-  rw [toTensorPower_ιMulti_two, map_sub, swapEquiv, PiTensorProduct.reindex_tprod,
-    PiTensorProduct.reindex_tprod]
-  simp only [Equiv.symm_swap, Equiv.swap_apply_self, neg_sub]
+  rw [toTensorPower_ιMulti_two, map_sub, tensorSwap_tprod, tensorSwap_tprod]
+  simp only [Equiv.swap_apply_self, neg_sub]
 
 /-- The swap acts as `+1` on the symmetric part: that is exactly the relation defining `Sym²`. -/
 private theorem mk_comp_swap {R : Type} {M : Type*}
     [CommRing R] [AddCommGroup M] [Module R M] :
-    (SymmetricPower.mk R (Fin 2) M).comp (swapEquiv R M).toLinearMap
+    (SymmetricPower.mk R (Fin 2) M).comp (tensorSwap R M).toLinearMap
       = SymmetricPower.mk R (Fin 2) M := by
   apply LinearMap.ext_on (PiTensorProduct.span_tprod_eq_top (R := R))
   rintro _ ⟨v, rfl⟩
-  rw [LinearMap.comp_apply, LinearEquiv.coe_coe, swapEquiv, PiTensorProduct.reindex_tprod,
-    Equiv.symm_swap]
+  rw [LinearMap.comp_apply, LinearEquiv.coe_coe, tensorSwap_tprod]
   simpa only [SymmetricPower.tprod, LinearMap.compMultilinearMap_apply] using
     SymmetricPower.tprod_equiv (Equiv.swap (0 : Fin 2) 1) v
 
@@ -283,7 +276,7 @@ square of the matrix of `f`. -/
 private theorem trace_map_comp_swap {R : Type} {M : Type*}
     [Field R] [AddCommGroup M] [Module R M] [FiniteDimensional R M] (f : M →ₗ[R] M) :
     LinearMap.trace R (⨂[R]^2 M)
-        ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (swapEquiv R M).toLinearMap)
+        ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (tensorSwap R M).toLinearMap)
       = LinearMap.trace R M (f.comp f) := by
   classical
   set b := Module.finBasis R M
@@ -292,12 +285,12 @@ private theorem trace_map_comp_swap {R : Type} {M : Type*}
   have hdiag : ∀ p : Fin 2 → Fin (Module.finrank R M),
       LinearMap.toMatrix B B
           ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp
-            (swapEquiv R M).toLinearMap) p p
+            (tensorSwap R M).toLinearMap) p p
         = LinearMap.toMatrix b b f (p 0) (p 1) * LinearMap.toMatrix b b f (p 1) (p 0) := by
     intro p
     rw [LinearMap.toMatrix_apply, hB, Basis.piTensorProduct_apply, LinearMap.comp_apply,
-      LinearEquiv.coe_coe, swapEquiv, PiTensorProduct.reindex_tprod, Equiv.symm_swap,
-      PiTensorProduct.map_tprod, Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
+      LinearEquiv.coe_coe, tensorSwap_tprod, PiTensorProduct.map_tprod,
+      Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
     simp [LinearMap.toMatrix_apply]
   rw [LinearMap.trace_eq_matrix_trace R B, LinearMap.trace_eq_matrix_trace R b,
     LinearMap.toMatrix_comp b b b f f, Matrix.trace, Matrix.trace]
@@ -318,13 +311,13 @@ private theorem trace_symmetricPower_sub_trace_exteriorPower {R : Type} {M : Typ
   -- `-⋀²f` on the alternating part and `Sym²f` on the symmetric quotient.
   have hfi :
       ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp
-            (swapEquiv R M).toLinearMap).comp (exteriorPower.toTensorPower R M 2)
+            (tensorSwap R M).toLinearMap).comp (exteriorPower.toTensorPower R M 2)
         = (exteriorPower.toTensorPower R M 2).comp (-exteriorPower.map 2 f) := by
     rw [LinearMap.comp_assoc, swap_comp_toTensorPower, LinearMap.comp_neg, LinearMap.comp_neg,
       map_comp_toTensorPower]
   have hfq :
       (SymmetricPower.mk R (Fin 2) M).comp
-          ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (swapEquiv R M).toLinearMap)
+          ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (tensorSwap R M).toLinearMap)
         = (SymmetricPower.map (ι := Fin 2) f).comp (SymmetricPower.mk R (Fin 2) M) := by
     refine LinearMap.ext fun x ↦ ?_
     rw [LinearMap.comp_apply, LinearMap.comp_apply, ← SymmetricPower.map_mk,
@@ -335,7 +328,7 @@ private theorem trace_symmetricPower_sub_trace_exteriorPower {R : Type} {M : Typ
     (exteriorPower.toTensorPower R M 2)
     (SymmetricPower.mk R (Fin 2) M)
     (-exteriorPower.map 2 f)
-    ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (swapEquiv R M).toLinearMap)
+    ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (tensorSwap R M).toLinearMap)
     (SymmetricPower.map (ι := Fin 2) f)
     toTensorPower_injective
     (LinearMap.range_eq_top.mp (SymmetricPower.range_mk R (Fin 2) M))

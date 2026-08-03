@@ -22,6 +22,8 @@ is needed.
 
 ## Main definitions
 
+* `TauCeti.tensorSwap` exchanges the two factors of a tensor square; it needs no hypothesis on
+  `2`, and is what the two orders on a tensor square are compared by.
 * `SymmetricPower.toTensorSquare` embeds a symmetric square by averaging the two orders.
 * `exteriorPower.toTensorSquare` embeds an exterior square by alternating the two orders.
 * `TauCeti.tensorSquareEquivSymmetricExterior` is the resulting direct-sum decomposition.
@@ -69,8 +71,18 @@ theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
         exact one_ne_zero (e.injective (h1'.trans h0'.symm))
       simpa using h1
 
-private noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
+omit [Invertible (2 : R)] in
+/-- The swap of the two factors of a tensor square, `x ⊗ₜ y ↦ y ⊗ₜ x`. -/
+noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
   PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
+
+omit [Invertible (2 : R)] in
+/-- The swap reads a pure tensor in the other order. -/
+@[simp]
+theorem tensorSwap_tprod (f : Fin 2 → M) :
+    tensorSwap R M (PiTensorProduct.tprod R f) =
+      PiTensorProduct.tprod R fun i ↦ f (Equiv.swap 0 1 i) := by
+  rw [tensorSwap, PiTensorProduct.reindex_tprod, Equiv.symm_swap]
 
 private noncomputable def symmetricProjection : (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (⅟ (2 : R)) • (LinearMap.id + (tensorSwap R M).toLinearMap)
