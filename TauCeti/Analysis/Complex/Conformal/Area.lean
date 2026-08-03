@@ -12,7 +12,7 @@ import Mathlib.RingTheory.Complex
 import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
-# The area of the image of a holomorphic map
+# Area and change of variables for a holomorphic map
 
 Where its derivative does not vanish a holomorphic map is conformal: at such a point `z` it acts on
 the plane as a rotation followed by a dilation of ratio `‖deriv f z‖`. At every point, critical or
@@ -32,6 +32,16 @@ half of that argument is already on `main`: `TauCeti.exists_continuousOn_closure
 subsingleton cluster set into a continuous extension. The analytic half, of which the area formula
 is the first component, is not; the degeneracy itself is not proved here.
 
+Weighting that same distortion by an arbitrary integrand generalises the area formula to the
+**change of variables formula** for a holomorphic injection,
+`∫⁻ w in f '' s, g w = ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 * g (f z)`,
+of which the area formula is the case `g = 1`. (The area formula is nevertheless kept separate: it
+holds for a merely null measurable `s`, while the weight forces the measurability that Mathlib's
+change of variables asks for.) The integrability and Bochner forms generalise
+`TauCeti.integrableOn_norm_deriv_sq` and `TauCeti.integral_norm_deriv_sq_eq_toReal_volume_image`
+the same way, and are stated for an integrand valued in an arbitrary real normed space, as
+Mathlib's are.
+
 The proof is Mathlib's change-of-variables formula
 `MeasureTheory.lintegral_abs_det_fderiv_eq_addHaar_image₀` for an injective differentiable map,
 applied to `f` viewed as a map of the real plane. The only complex-analytic input is the value of
@@ -49,8 +59,10 @@ made for an arbitrary `s ⊆ U` rather than for `U` itself, because the length�
 integrates over the sub-annuli `U ∩ {z | ρ₁ < ‖z - ζ‖ < ρ₂}`, not over `U`; take `s = U` with
 `hUo.measurableSet` and `subset_rfl` for the plain domain form. The area formula and the
 finiteness it gives ask only for `MeasureTheory.NullMeasurableSet s volume`, as Mathlib's
-change of variables does; the Bochner-integral forms ask for `MeasurableSet s`, which is what
-turns the continuity of `deriv f` into strong measurability on `s`.
+null-measurable change of variables does; every other statement below asks for
+`MeasurableSet s` — the Bochner-integral forms because that is what turns the continuity of
+`deriv f` into strong measurability on `s`, and all three weighted change-of-variables forms
+because that is what Mathlib's weighted change of variables asks for.
 
 ## Main results
 
@@ -67,6 +79,10 @@ turns the continuity of `deriv f` into strong measurability on `s`.
   everywhere nonzero carries null sets to null sets and back.
 * `TauCeti.lintegral_enorm_deriv_sq_eq_pi_of_image_eq_ball` — the Dirichlet integral of a Riemann
   map is exactly `π`.
+* `TauCeti.lintegral_image_eq_lintegral_enorm_deriv_sq_mul`,
+  `TauCeti.integrableOn_image_iff_integrableOn_norm_deriv_sq_smul` and
+  `TauCeti.integral_image_eq_integral_norm_deriv_sq_smul` — the change of variables formula for a
+  holomorphic injection, in Lebesgue, integrability and Bochner form.
 
 ## Coordination with upstream Mathlib
 
@@ -89,7 +105,9 @@ public section
 namespace TauCeti
 
 open Bornology Complex MeasureTheory Metric Set
+open scoped ENNReal
 
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 variable {U s : Set ℂ} {f : ℂ → ℂ}
 
 /-- **The Jacobian of a complex dilation-rotation.** Multiplication by `c : ℂ`, read as an
@@ -116,12 +134,18 @@ private theorem hasFDerivWithinAt_smulRight_deriv (hUo : IsOpen U) (hf : Differe
   (((hf z (hsU hz)).differentiableAt (hUo.mem_nhds (hsU hz))).hasDerivAt.hasFDerivAt.restrictScalars
     ℝ).hasFDerivWithinAt
 
-/-- The pointwise area distortion, in the form the change-of-variables formula produces it. -/
+/-- The pointwise area distortion, in the form the change-of-variables formula produces it for
+Bochner integrals. -/
+private theorem abs_det_restrictScalars_smulRight_one (c : ℂ) :
+    |((ContinuousLinearMap.smulRight (1 : ℂ →L[ℂ] ℂ) c).restrictScalars ℝ).det| = ‖c‖ ^ 2 := by
+  rw [det_restrictScalars_smulRight_one, abs_of_nonneg (by positivity)]
+
+/-- The pointwise area distortion, in the form the change-of-variables formula produces it for
+Lebesgue integrals. -/
 private theorem ofReal_abs_det_eq (c : ℂ) :
     ENNReal.ofReal
         |((ContinuousLinearMap.smulRight (1 : ℂ →L[ℂ] ℂ) c).restrictScalars ℝ).det| = ‖c‖ₑ ^ 2 := by
-  rw [det_restrictScalars_smulRight_one, abs_of_nonneg (by positivity), ← ofReal_norm,
-    ENNReal.ofReal_pow (norm_nonneg _)]
+  rw [abs_det_restrictScalars_smulRight_one, ← ofReal_norm, ENNReal.ofReal_pow (norm_nonneg _)]
 
 /-- **The area formula.** If `f` is holomorphic on an open set `U` and injective on a null
 measurable `s ⊆ U`, then the area of `f '' s` is the integral over `s` of the area distortion
@@ -245,5 +269,50 @@ theorem lintegral_enorm_deriv_sq_eq_pi_of_image_eq_ball (hUo : IsOpen U)
   rw [← volume_image_eq_lintegral_enorm_deriv_sq hUo hf hUo.measurableSet.nullMeasurableSet
     subset_rfl hinj, himg, Complex.volume_ball]
   simp [← NNReal.coe_real_pi, ENNReal.ofReal_coe_nnreal]
+
+/-! ### The change of variables formula -/
+
+/-- **The change of variables formula for a holomorphic injection.** Integrating over the image
+`f '' s` is the same as integrating the pulled-back integrand against the area distortion
+`‖deriv f z‖ ^ 2` over `s`.
+
+Taking `g = 1` recovers `TauCeti.volume_image_eq_lintegral_enorm_deriv_sq`; that statement is not
+deduced from this one, because it needs `s` only null measurable, while the weight forces the
+measurability that Mathlib's `MeasureTheory.lintegral_image_eq_lintegral_abs_det_fderiv_mul`
+asks for. -/
+theorem lintegral_image_eq_lintegral_enorm_deriv_sq_mul (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
+    (g : ℂ → ℝ≥0∞) :
+    ∫⁻ w in f '' s, g w = ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 * g (f z) := by
+  rw [MeasureTheory.lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs
+    (fun z hz => hasFDerivWithinAt_smulRight_deriv hUo hf hsU hz) hinj g]
+  exact lintegral_congr fun z => by rw [ofReal_abs_det_eq]
+
+/-- **Integrability under the change of variables formula.** A function is integrable on the image
+of a holomorphic injection exactly when its pullback, weighted by the area distortion, is
+integrable on the source.
+
+This is what makes `TauCeti.integral_image_eq_integral_norm_deriv_sq_smul` more than a statement
+about the junk value `0` that the Bochner integral takes on non-integrable functions. -/
+theorem integrableOn_image_iff_integrableOn_norm_deriv_sq_smul (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
+    (g : ℂ → E) :
+    IntegrableOn g (f '' s) ↔ IntegrableOn (fun z => ‖deriv f z‖ ^ 2 • g (f z)) s := by
+  rw [MeasureTheory.integrableOn_image_iff_integrableOn_abs_det_fderiv_smul volume hs
+    (fun z hz => hasFDerivWithinAt_smulRight_deriv hUo hf hsU hz) hinj g]
+  exact integrableOn_congr_fun (fun z _ => by rw [abs_det_restrictScalars_smulRight_one]) hs
+
+/-- **The change of variables formula, Bochner form.**
+
+No integrability hypothesis is needed: if either side fails to be integrable then so does the
+other, by `TauCeti.integrableOn_image_iff_integrableOn_norm_deriv_sq_smul`, and both Bochner
+integrals are `0`. -/
+theorem integral_image_eq_integral_norm_deriv_sq_smul (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
+    (g : ℂ → E) :
+    ∫ w in f '' s, g w = ∫ z in s, ‖deriv f z‖ ^ 2 • g (f z) := by
+  rw [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume hs
+    (fun z hz => hasFDerivWithinAt_smulRight_deriv hUo hf hsU hz) hinj g]
+  exact setIntegral_congr_fun hs fun z _ => by rw [abs_det_restrictScalars_smulRight_one]
 
 end TauCeti

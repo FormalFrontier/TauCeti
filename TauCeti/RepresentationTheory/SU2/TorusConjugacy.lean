@@ -56,6 +56,21 @@ namespace SU2
 
 /-! ### Torus conjugacy -/
 
+/-- **Conjugating by `U` carries `a • 1 + b • H` to `a • 1 + b • (star U * H * U)`.** So whenever
+`star U` is a left inverse of `U`, any `U` that diagonalises `H` also diagonalises every matrix of
+that form: conjugation is linear, and it fixes the identity precisely because `star U * U = 1`. -/
+private theorem isDiag_star_left_conjugate_of_eq_smul_one_add_smul {R n : Type*}
+    [CommSemiring R] [Star R] [Fintype n] [DecidableEq n] {G H U : Matrix n n R} {a b : R}
+    (hdecomp : G = a • (1 : Matrix n n R) + b • H)
+    (hUU : star U * U = 1) (hdiagH : (star U * H * U).IsDiag) :
+    (star U * G * U).IsDiag := by
+  have hexpand : star U * G * U = a • (1 : Matrix n n R) + b • (star U * H * U) := by
+    conv_lhs => rw [hdecomp]
+    simp only [Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_one]
+    rw [hUU]
+  rw [hexpand]
+  exact (Matrix.isDiag_one.smul _).add (hdiagH.smul _)
+
 /-- **Torus conjugacy for `SU(2)`**: every element of `SU(2)` is conjugate into the maximal torus.
 Equivalently, every special unitary `2 × 2` matrix is diagonalised by a special unitary matrix. -/
 theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus := by
@@ -90,16 +105,8 @@ theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus 
     Matrix.UnitaryGroup.star_mul_self U
   -- Conjugating by any unitary that diagonalises `H` diagonalises `G`.
   have hdiagG :
-      (star (U : Matrix (Fin 2) (Fin 2) ℂ) * G * (U : Matrix (Fin 2) (Fin 2) ℂ)).IsDiag := by
-    have hexpand : star (U : Matrix (Fin 2) (Fin 2) ℂ) * G * (U : Matrix (Fin 2) (Fin 2) ℂ)
-        = (Matrix.trace G / 2) • (1 : Matrix (Fin 2) (Fin 2) ℂ)
-          + (-Complex.I / 2) •
-            (star (U : Matrix (Fin 2) (Fin 2) ℂ) * H * (U : Matrix (Fin 2) (Fin 2) ℂ)) := by
-      conv_lhs => rw [hdecomp]
-      simp only [Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_one]
-      rw [hUU]
-    rw [hexpand]
-    exact (Matrix.isDiag_one.smul _).add (hdiagH.smul _)
+      (star (U : Matrix (Fin 2) (Fin 2) ℂ) * G * (U : Matrix (Fin 2) (Fin 2) ℂ)).IsDiag :=
+    isDiag_star_left_conjugate_of_eq_smul_one_add_smul hdecomp hUU hdiagH
   -- Rescale `U` into `SU(2)`; the rescaling does not change the conjugation.
   obtain ⟨c, hc⟩ := Matrix.exists_circle_smul_mem_specialUnitaryGroup U
   obtain ⟨u, hu⟩ : ∃ u : SU2,
