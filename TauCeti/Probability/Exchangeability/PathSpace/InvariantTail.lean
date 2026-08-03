@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
 public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
+import Mathlib.Dynamics.FixedPoints.Basic
 
 /-!
 # The shift-invariant σ-algebra sits strictly inside the path tail σ-algebra
@@ -200,14 +201,6 @@ theorem invariants_shift_lt_exchangeableSigma :
     MeasurableSpace.invariants (shift Bool) < exchangeableSigma Bool :=
   invariants_shift_lt_pathTail.trans_le pathTail_le_exchangeableSigma
 
-omit [MeasurableSpace α] in
-/-- Iterates of the shift fix every exactly shift-invariant set. -/
-theorem preimage_shift_iterate_eq_of_preimage_shift_eq {A : Set (ℕ → α)}
-    (hA : shift α ⁻¹' A = A) (k : ℕ) : (shift α)^[k] ⁻¹' A = A := by
-  induction k with
-  | zero => simp
-  | succ k ih => rw [Function.iterate_succ, Set.preimage_comp, ih, hA]
-
 /-- **Invariant events are fixed by an eventually-translating reindexing.** If `φ` is eventually
 `n ↦ n + C`, then reindexing by `φ` leaves every set measurable in
 `MeasurableSpace.invariants (shift α)` unchanged.
@@ -235,17 +228,17 @@ theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C :
   constructor
   · intro hx
     have h1 : (shift α)^[m] (fun k => x (φ k)) ∈ A := by
-      rw [← Set.mem_preimage, preimage_shift_iterate_eq_of_preimage_shift_eq hshift m]
+      rw [← Set.mem_preimage, Function.IsFixedPt.preimage_iterate hshift m]
       exact hx
     rw [hkey x, ← Set.mem_preimage,
-      preimage_shift_iterate_eq_of_preimage_shift_eq hshift (m + C)] at h1
+      Function.IsFixedPt.preimage_iterate hshift (m + C)] at h1
     exact h1
   · intro hx
     have h1 : (shift α)^[m + C] x ∈ A := by
-      rw [← Set.mem_preimage, preimage_shift_iterate_eq_of_preimage_shift_eq hshift (m + C)]
+      rw [← Set.mem_preimage, Function.IsFixedPt.preimage_iterate hshift (m + C)]
       exact hx
     rw [← hkey x, ← Set.mem_preimage,
-      preimage_shift_iterate_eq_of_preimage_shift_eq hshift m] at h1
+      Function.IsFixedPt.preimage_iterate hshift m] at h1
     exact h1
 
 end Probability
