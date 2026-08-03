@@ -118,7 +118,7 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
 /-- The coordinate expression of the parameterized left-invariant vector field is `C^n` at the
 zero tangent vector and identity coordinate when multiplication is `C^(n + 1)`. -/
 theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
-    [ContMDiffMul I (n + 1) G] [BoundarylessManifold I G] :
+    [ContMDiffMul I (n + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
     let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
     ContDiffAt ℝ n (mulInvariantCoordinateVectorField (I := I) (G := G))
       (0, extChartAt I (1 : G) (1 : G)) := by
@@ -130,8 +130,12 @@ theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
     contMDiff_mulInvariantVectorField_modelSpace (n := n)
   have hV₀ := hV.contMDiffAt (x := ((0 : E), (1 : G)))
   rw [contMDiffAt_iff] at hV₀
+  have h01 : (𝓘(ℝ, E).prod I).IsInteriorPoint ((0 : E), (1 : G)) := by
+    change ((0 : E), (1 : G)) ∈ (𝓘(ℝ, E).prod I).interior (E × G)
+    rw [ModelWithCorners.interior_prod]
+    exact ⟨BoundarylessManifold.isInteriorPoint, h1⟩
   have h := hV₀.2.contDiffAt
-    (range_mem_nhds_isInteriorPoint BoundarylessManifold.isInteriorPoint)
+    (range_mem_nhds_isInteriorPoint h01)
   let w : E × E → E := fun x =>
     ((extChartAt I.tangent (V (0, 1)) ∘ V ∘
       (extChartAt (𝓘(ℝ, E).prod I) (0, 1)).symm) x).2
@@ -159,7 +163,7 @@ a single solution family that is continuous jointly in its initial condition and
 uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
 second coordinate follows the invariant vector field. -/
 theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
-    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
     let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r L : NNReal), 0 < δ ∧ 0 < r ∧
       ContinuousOn α
@@ -183,7 +187,7 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
     (0, mulInvariantCoordinateVectorField (I := I) (G := G) p)
   have hF : ContDiffAt ℝ 1 F center := by
     exact contDiffAt_const.prodMk
-      (contDiffAt_mulInvariantCoordinateVectorField (n := 1))
+      (contDiffAt_mulInvariantCoordinateVectorField (n := 1) h1)
   obtain ⟨δ, hδ, _, r, _, _, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
   obtain ⟨α, hα, L', hαlip⟩ :=
     (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_lipschitzOnWith
@@ -241,7 +245,7 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
 continuous at the center, solves the parameterized invariant ODE with an ordinary derivative,
 freezes the tangent-vector parameter, and remains in the target of the identity chart. -/
 theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
-    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I (1 + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
     let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     ∃ α : (E × E) × ℝ → E × E,
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
@@ -260,7 +264,7 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
   dsimp only
   obtain ⟨α, δ, r, _, hδ, hr, hcont, _, hα⟩ :=
     exists_lipschitzOn_local_mulInvariantCoordinateFlow
-      (I := I) (G := G)
+      (I := I) (G := G) h1
   let center : E × E := (0, extChartAt I (1 : G) (1 : G))
   have hdomain :
       Metric.closedBall center r ×ˢ Set.Icc (-δ) δ ∈ 𝓝 (center, 0) := by
@@ -275,7 +279,7 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
   have hcenter : α (center, 0) = center := by
     exact (hα center (Metric.mem_closedBall_self hr.le)).1
   have htargetCenter : center.2 ∈ interior (extChartAt I (1 : G)).target := by
-    exact (I.isInteriorPoint_iff.mp BoundarylessManifold.isInteriorPoint)
+    exact I.isInteriorPoint_iff.mp h1
   have htarget :
       α ⁻¹' (Set.univ ×ˢ interior (extChartAt I (1 : G)).target) ∈ 𝓝 (center, 0) := by
     apply hcontAt.preimage_mem_nhds
@@ -324,6 +328,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
   let _ : IsManifold I 1 G := IsManifold.of_le (n := minSmoothness ℝ 3) (by norm_num)
   obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
     exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint
   let embed : E × ℝ → (E × E) × ℝ := fun vt =>
     ((vt.1, extChartAt I (1 : G) (1 : G)), vt.2)
   have hembed : ContinuousAt embed ((0 : E), 0) := by fun_prop
