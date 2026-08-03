@@ -5,9 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
-public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative.Basic
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Rigidity
-import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Complex.Schwarz
 
 /-!
@@ -70,9 +69,11 @@ points are assumed, here one fixed point and a derivative condition.
   preserves the pseudo-hyperbolic expression on the whole disc.
 * `TauCeti.bijOn_ball_of_norm_deriv_div_one_sub_norm_sq_eq` — `f` is a bijection of the disc.
 * `TauCeti.norm_deriv_div_one_sub_norm_sq_eq_iff` — **the equality case**: infinitesimal
-  equality at one point holds if and only if `f` is a standard disc automorphism.
+  equality at one point holds if and only if `f` is a standard disc automorphism, with the
+  bundled `Complex.UnitDisc` form `TauCeti.norm_deriv_div_one_sub_norm_sq_eq_iff_unitDisc`.
 * `TauCeti.forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq` —
-  equality at one point propagates to every point.
+  equality at one point propagates to every point, with the bundled `Complex.UnitDisc` form
+  `TauCeti.forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq_unitDisc`.
 * `TauCeti.norm_deriv_le_one_of_isFixedPt` — **the Schwarz lemma at an interior fixed point**.
 * `TauCeti.unitDiscMoebiusFormula_map_eq_mul_of_isFixedPt_of_norm_deriv_eq_one` — its equality
   case: `f` is the hyperbolic rotation about the fixed point.
@@ -81,7 +82,7 @@ points are assumed, here one fixed point and a derivative condition.
 
 This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 (`TauCetiRoadmap/ConformalMapping/README.md`), completing the equality case of the
-infinitesimal estimate that `SchwarzPick/Derivative.lean` proved and
+infinitesimal estimate that `SchwarzPick/Derivative/Basic.lean` proved and
 `SchwarzPick/AutomorphismIsometry.lean` proved sharp.  It reuses Mathlib's equality case of the
 Schwarz lemma and Tau Ceti's Schwarz--Pick conjugate, finite rigidity and disc-automorphism API
 rather than re-deriving any of them.  As with the rest of the L0--L3 conformal-mapping
@@ -250,6 +251,17 @@ theorem norm_deriv_div_one_sub_norm_sq_eq_iff
   exact norm_deriv_div_one_sub_norm_sq_unitDiscStandardAutomorphismFormula_of_norm_lt_one
     (Circle.norm_coe u) b.norm_lt_one ha1
 
+/-- Bundled unit-disc form of the equality case of the infinitesimal Schwarz--Pick inequality: a
+holomorphic self-map of the disc is an infinitesimal isometry of the Poincaré metric at a disc
+point `p` if and only if it is a standard disc automorphism. -/
+theorem norm_deriv_div_one_sub_norm_sq_eq_iff_unitDisc
+    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (p : Complex.UnitDisc) :
+    ‖deriv f (p : ℂ)‖ / (1 - ‖f (p : ℂ)‖ ^ 2) = 1 / (1 - ‖(p : ℂ)‖ ^ 2) ↔
+      ∃ (u : Circle) (b : Complex.UnitDisc),
+        ∀ ζ : Complex.UnitDisc, f ζ = (unitDiscStandardAutomorphismEquiv u b ζ : ℂ) :=
+  norm_deriv_div_one_sub_norm_sq_eq_iff hf hmaps p.property
+
 /-- **Infinitesimal Schwarz--Pick rigidity, propagation form.**  Equality in the infinitesimal
 Schwarz--Pick inequality at one point of the disc forces it at every point: a holomorphic
 self-map of the disc that is an infinitesimal isometry of the Poincaré metric somewhere is one
@@ -261,6 +273,18 @@ theorem forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_
     ∀ z ∈ ball (0 : ℂ) 1, ‖deriv f z‖ / (1 - ‖f z‖ ^ 2) = 1 / (1 - ‖z‖ ^ 2) := fun _ hz =>
   (norm_deriv_div_one_sub_norm_sq_eq_iff hf hmaps hz).mpr
     ((norm_deriv_div_one_sub_norm_sq_eq_iff hf hmaps ha).mp heq)
+
+/-- Bundled unit-disc form of the propagation of infinitesimal Schwarz--Pick equality: a
+holomorphic self-map of the disc attaining equality at one disc point attains it at every disc
+point. -/
+theorem forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq_unitDisc
+    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (p : Complex.UnitDisc)
+    (heq : ‖deriv f (p : ℂ)‖ / (1 - ‖f (p : ℂ)‖ ^ 2) = 1 / (1 - ‖(p : ℂ)‖ ^ 2))
+    (q : Complex.UnitDisc) :
+    ‖deriv f (q : ℂ)‖ / (1 - ‖f (q : ℂ)‖ ^ 2) = 1 / (1 - ‖(q : ℂ)‖ ^ 2) :=
+  forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq hf hmaps
+    p.property heq (q : ℂ) q.property
 
 /-! ### The Schwarz lemma at an interior fixed point -/
 
@@ -290,7 +314,8 @@ private lemma deriv_schwarzPickConjugate_zero_of_isFixedPt
   have hfa1 : ‖f a‖ < 1 := by rw [hfix.eq]; exact ha1
   have hne : (1 : ℂ) - (starRingEnd ℂ) a * a ≠ 0 :=
     one_sub_conj_mul_ne_zero_of_norm_lt_one ha1 ha1
-  rw [(hasDerivAt_schwarzPickConjugate_zero hfa1 hf_at).deriv, hfix.eq,
+  rw [(hasDerivAt_schwarzPickConjugate_zero
+      (one_sub_conj_mul_ne_zero_of_norm_lt_one hfa1 hfa1) hf_at).deriv, hfix.eq,
     mul_div_assoc, div_self hne, mul_one]
 
 /-- **Equality in the Schwarz lemma at an interior fixed point.**  A holomorphic self-map of the

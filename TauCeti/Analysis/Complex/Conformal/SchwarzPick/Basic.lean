@@ -24,8 +24,8 @@ It also sets up the Schwarz--Pick conjugate `schwarzPickConjugate f a`, the self
 obtained by conjugating `f` by the Moebius factors centred at `a` and at `f a`, together with
 the scaffold lemma saying it is a holomorphic self-map fixing the origin and the lemma computing
 its value at a Moebius image.  This is the construction Schwarz's lemma is applied to, shared by
-the contraction estimate here, the infinitesimal estimate in `SchwarzPick/Derivative.lean`, the
-equality case in `SchwarzPick/Rigidity.lean` and the automorphism classification.
+the contraction estimate here, the infinitesimal estimate in `SchwarzPick/Derivative/Basic.lean`,
+the equality case in `SchwarzPick/Rigidity.lean` and the automorphism classification.
 
 This advances the conformal-mapping roadmap's L2 Schwarz--Pick target.  It reuses Mathlib's
 Schwarz lemma and Tau Ceti's unit-disc Moebius API.  As with the rest of the L0--L3
