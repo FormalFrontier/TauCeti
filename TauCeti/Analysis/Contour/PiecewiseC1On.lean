@@ -48,6 +48,9 @@ prerequisite for the homology Cauchy theorem and the generalized residue theorem
   corollaries) — eventual differentiability near an interior parameter.
 * `Contour.IsPiecewiseC1On.intervalIntegrable_deriv` — the derivative is interval-integrable on
   `a..b`, glued across the breakpoints from the `C¹` pieces.
+* `Contour.piecewise_gluing_aux` — the shared breakpoint-gluing induction underlying it, generic in
+  the invariant being glued (interval-integrability, boundedness of the image, ...), reused by
+  other piecewise-`C¹` gluing arguments.
 
 ## Provenance
 
@@ -226,14 +229,17 @@ private theorem intervalIntegrable_deriv_of_contDiffOn {c d : ℝ} (hcd : c ≤ 
   filter_upwards [ae_restrict_mem measurableSet_Ioo] with x hx
   exact derivWithin_of_mem_nhds (Icc_mem_nhds hx.1 hx.2)
 
-/-- Gluing step for `IsPiecewiseC1On.intervalIntegrable_deriv`: interval-integrability of the
-derivative on any subinterval `[c, d] ⊆ [[a, b]]`, by induction on the number of breakpoints
-strictly inside `(c, d)`, splitting off the largest one. -/
-private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
-    (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
-      ContDiffOn ℝ 1 γ (Icc c d)) :
-    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
-      IntervalIntegrable (fun t ↦ deriv γ t) volume c d := by
+/-- **Generic breakpoint-gluing induction.** An invariant `Q` that holds on every closed,
+breakpoint-free subinterval of `[[a, b]]` (`hbase`) and is closed under concatenation at a shared
+endpoint (`hglue`) holds on every closed subinterval, by induction on the number of breakpoints
+strictly inside it, splitting off the largest one. Shared scaffolding for gluing any piecewise-`C¹`
+invariant across breakpoints — e.g. `IntervalIntegrable (deriv γ) volume` via `.trans`, or
+`Bornology.IsBounded (deriv γ '' ·)` via `.union` on `Icc c m ∪ Icc m d = Icc c d`
+(`Winding.RealIntegral.OnCurve`'s `isBounded_image_deriv_aux`). -/
+theorem piecewise_gluing_aux {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
+    (hbase : ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) → Q c d)
+    (hglue : ∀ c m d : ℝ, c ≤ m → m ≤ d → Q c m → Q m d → Q c d) :
+    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b → Q c d := by
   have hdisj : ∀ {c d : ℝ}, p.filter (· ∈ Ioo c d) = ∅ → Disjoint (↑p : Set ℝ) (Ioo c d) :=
     fun he => Set.disjoint_left.mpr fun x hxp hx =>
       Finset.notMem_empty x (he ▸ Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hx⟩)
@@ -241,12 +247,11 @@ private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
   induction n with
   | zero =>
     intro c d hcard hcd hsub
-    have he : p.filter (· ∈ Ioo c d) = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
-    exact intervalIntegrable_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
+    exact hbase c d hcd hsub (hdisj (Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)))
   | succ n ih =>
     intro c d hcard hcd hsub
     rcases (p.filter (· ∈ Ioo c d)).eq_empty_or_nonempty with he | hne
-    · exact intervalIntegrable_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
+    · exact hbase c d hcd hsub (hdisj he)
     set m := (p.filter (· ∈ Ioo c d)).max' hne with hm_def
     obtain ⟨hmp, hm⟩ := Finset.mem_filter.mp ((p.filter (· ∈ Ioo c d)).max'_mem hne)
     have hssub : p.filter (· ∈ Ioo c m) ⊂ p.filter (· ∈ Ioo c d) :=
@@ -254,17 +259,28 @@ private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
           ⟨hx.1, hx.2.trans hm.2⟩)).mpr
         ⟨m, Finset.mem_filter.mpr ⟨hmp, hm⟩, fun hmem =>
           (Finset.mem_filter.mp hmem).2.2.false⟩
-    have h₁ : IntervalIntegrable (fun t ↦ deriv γ t) volume c m :=
+    have h₁ : Q c m :=
       ih c m (Nat.le_of_lt_succ ((Finset.card_lt_card hssub).trans_le hcard)) hm.1.le
         ((Icc_subset_Icc le_rfl hm.2.le).trans hsub)
-    have h₂ : IntervalIntegrable (fun t ↦ deriv γ t) volume m d := by
-      refine intervalIntegrable_deriv_of_contDiffOn hm.2.le
-        (hC1 m d ((Icc_subset_Icc hm.1.le le_rfl).trans hsub) (Set.disjoint_left.mpr ?_))
+    have h₂ : Q m d := by
+      refine hbase m d hm.2.le ((Icc_subset_Icc hm.1.le le_rfl).trans hsub)
+        (Set.disjoint_left.mpr ?_)
       intro x hxp hx
       exact absurd ((p.filter (· ∈ Ioo c d)).le_max' x
           (Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hm.1.trans hx.1, hx.2⟩))
         (not_le.mpr hx.1)
-    exact h₁.trans h₂
+    exact hglue c m d hm.1.le hm.2.le h₁ h₂
+
+/-- Gluing step for `IsPiecewiseC1On.intervalIntegrable_deriv`: interval-integrability of the
+derivative on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_aux`. -/
+private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
+    (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
+      ContDiffOn ℝ 1 γ (Icc c d)) :
+    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+      IntervalIntegrable (fun t ↦ deriv γ t) volume c d :=
+  piecewise_gluing_aux
+    (fun c d hcd hsub hdisj => intervalIntegrable_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
+    (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
 
 /-- **Interval-integrability of the derivative.** The derivative of a piecewise-`C¹` curve is
 interval-integrable on `a..b`: on each piece the within-derivative is continuous on a compact
