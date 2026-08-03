@@ -20,6 +20,8 @@ smooth parameterized autonomous ODE depend smoothly on its parameter.
 * `ODE.exists_contDiffAt_picard_solution`: a finite-order smooth family of local solutions of the
   Picard integral equation.
 * `ODE.hasDerivAt_of_forall_eq_picard`: a Picard solution satisfies the ODE at interior times.
+* `ODE.hasDerivWithinAt_Ici_of_forall_eq_picard`: a Picard solution has the required right
+  derivative at its initial endpoint.
 
 ## References
 
@@ -163,9 +165,37 @@ theorem hasDerivAt_of_forall_eq_picard
   rw [Set.projIcc_of_mem zero_le_one ⟨hs.1.le, hs.2.le⟩]
   exact hq ⟨s, hs.1.le, hs.2.le⟩
 
+/-- A path satisfying the Picard integral equation has the corresponding right derivative at the
+initial endpoint as well as at every time before the terminal endpoint. -/
+theorem hasDerivWithinAt_Ici_of_forall_eq_picard
+    [CompleteSpace F] (v : ℝ → F) (hv : Continuous v)
+    (x₀ : F) (q : C(Set.Icc (0 : ℝ) 1, F))
+    (hq : ∀ t : Set.Icc (0 : ℝ) 1,
+      q t = x₀ + ∫ s in (0 : ℝ)..t, v s)
+    {t : ℝ} (ht : t ∈ Set.Ico (0 : ℝ) 1) :
+    HasDerivWithinAt (fun s ↦ q (Set.projIcc 0 1 zero_le_one s)) (v t)
+      (Set.Ici t) t := by
+  have hprimitive : HasDerivAt (fun s ↦ x₀ + ∫ u in (0 : ℝ)..s, v u) (v t) t := by
+    have h := (hasDerivAt_const (𝕜 := ℝ) t x₀).add
+      (hv.integral_hasStrictDerivAt 0 t).hasDerivAt
+    convert h using 1
+    · funext s
+      rfl
+    · simp
+  apply hprimitive.hasDerivWithinAt.congr_of_eventuallyEq
+  · have hIio : Set.Iio (1 : ℝ) ∈ nhdsWithin t (Set.Ici t) :=
+      (show nhdsWithin t (Set.Ici t) ≤ nhds t from inf_le_left) (Iio_mem_nhds ht.2)
+    filter_upwards [hIio, self_mem_nhdsWithin] with s hs hts
+    rw [Set.projIcc_of_mem zero_le_one ⟨ht.1.trans hts, hs.le⟩]
+    exact hq ⟨s, ht.1.trans hts, hs.le⟩
+  · rw [Set.projIcc_of_mem zero_le_one ⟨ht.1, ht.2.le⟩]
+    exact hq ⟨t, ht.1, ht.2.le⟩
+
 /-- A smooth parameterized autonomous vector field which vanishes at the base parameter admits a
 locally smooth family of solutions through a fixed initial state. The result is stated at every
-finite order; this is the form needed to assemble smoothness of a germ. -/
+finite order; this is the form needed to assemble smoothness of a germ. Each nearby path satisfies
+the Picard integral equation, the corresponding ODE at every interior time, and its right-hand
+version at the initial endpoint. -/
 theorem exists_contDiffAt_picard_solution
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ F]
     (n : ℕ) (f : E × F → F) (p₀ : E) (x₀ : F)
@@ -174,9 +204,16 @@ theorem exists_contDiffAt_picard_solution
     ∃ γ : E → C(Set.Icc (0 : ℝ) 1, F),
       ContDiffAt ℝ (n + 1) γ p₀ ∧
       γ p₀ = ContinuousMap.const _ x₀ ∧
-      ∀ᶠ p in nhds p₀, ∀ t : Set.Icc (0 : ℝ) 1,
-        γ p t = x₀ + ∫ s in (0 : ℝ)..t,
-          f (p, γ p (Set.projIcc 0 1 zero_le_one s)) := by
+      ∀ᶠ p in nhds p₀,
+        (∀ t : Set.Icc (0 : ℝ) 1,
+          γ p t = x₀ + ∫ s in (0 : ℝ)..t,
+            f (p, γ p (Set.projIcc 0 1 zero_le_one s))) ∧
+        (∀ t ∈ Set.Ioo (0 : ℝ) 1,
+          HasDerivAt (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s))
+            (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) t) ∧
+        ∀ t ∈ Set.Ico (0 : ℝ) 1,
+          HasDerivWithinAt (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s))
+            (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) (Set.Ici t) t := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let _ : CompleteSpace F := FiniteDimensional.complete ℝ F
   obtain ⟨g, hg, hgf⟩ :=
@@ -262,13 +299,35 @@ theorem exists_contDiffAt_picard_solution
         simp only [R, picardResidual]
         abel
       _ = 0 := hp
-  intro t
-  have ht := congrArg (fun q : C(Set.Icc (0 : ℝ) 1, F) ↦ q t) hpathEq
-  simp only [ContinuousMap.add_apply, ContinuousMap.const_apply,
-    ContinuousMap.unitIntervalIntegral_apply] at ht
-  refine ht.trans (congrArg (x₀ + ·) ?_)
-  apply intervalIntegral.integral_congr
-  intro s _
-  exact hpoint (Set.projIcc 0 1 zero_le_one s)
+  have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
+      γ p t = x₀ + ∫ s in (0 : ℝ)..t,
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) := by
+    intro t
+    have ht := congrArg (fun q : C(Set.Icc (0 : ℝ) 1, F) ↦ q t) hpathEq
+    simpa only [ContinuousMap.add_apply, ContinuousMap.const_apply,
+      ContinuousMap.unitIntervalIntegral_apply, ContinuousMap.comp_apply,
+      parameterizedPath_apply] using ht
+  refine ⟨fun t ↦ (hpicard t).trans (congrArg (x₀ + ·) ?_), ?_, ?_⟩
+  · apply intervalIntegral.integral_congr
+    intro s _
+    exact hpoint (Set.projIcc 0 1 zero_le_one s)
+  · intro t ht
+    have hcontinuous : Continuous (fun s : ℝ ↦
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s))) :=
+      gc.continuous.comp
+        (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
+    have hderiv := hasDerivAt_of_forall_eq_picard
+      (fun s : ℝ ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s)))
+      hcontinuous x₀ (γ p) hpicard ht
+    exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
+  · intro t ht
+    have hcontinuous : Continuous (fun s : ℝ ↦
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s))) :=
+      gc.continuous.comp
+        (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
+    have hderiv := hasDerivWithinAt_Ici_of_forall_eq_picard
+      (fun s : ℝ ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s)))
+      hcontinuous x₀ (γ p) hpicard ht
+    exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
 
 end ODE
