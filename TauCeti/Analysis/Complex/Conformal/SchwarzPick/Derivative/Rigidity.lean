@@ -49,20 +49,14 @@ is `(a + 1) / 2`, which lies in the disc because `‖a + 1‖ < 2` and differs f
 computation of `SchwarzPick/AutomorphismIsometry.lean`, transported along the equality of `f`
 with the automorphism formula on the disc — an open set, so the two derivatives agree.
 
-## The fixed-point form
-
-At a *fixed* point of `f` the two Poincaré defects in
-`TauCeti.hasDerivAt_schwarzPickConjugate_zero` cancel, so `deriv g 0` is `deriv f a` on the
-nose rather than merely in norm.  The classical Schwarz lemma at an interior fixed point falls
-out: `‖deriv f a‖ ≤ 1`, with equality forcing `f` to be the *hyperbolic rotation* about `a` by
-the argument of `deriv f a`, in the explicit Moebius-conjugate form
-`(f z - a) / (1 - conj a * f z) = deriv f a * ((z - a) / (1 - conj a * z))`.  Specialising the
-rotation factor to `1` recovers the identity, which is the one-fixed-point sharpening of
-`TauCeti.eqOn_id_of_isFixedPt_of_isFixedPt` of `SchwarzPick/FixedPoint.lean`: there two fixed
-points are assumed, here one fixed point and a derivative condition.
+The consequences at an *interior fixed point* of `f`, where the two Poincaré defects cancel and
+`deriv g 0` is `deriv f a` on the nose rather than merely in norm, are drawn in
+`SchwarzPick/FixedPoint.lean` alongside the rest of the fixed-point theory.
 
 ## Main results
 
+* `TauCeti.eqOn_schwarzPickConjugate_mul_of_norm_deriv_div_one_sub_norm_sq_eq` — the conjugate
+  form: infinitesimal equality at `a` makes the Schwarz--Pick conjugate a rotation.
 * `TauCeti.pseudoHyperbolicExpr_map_eq_of_norm_deriv_div_one_sub_norm_sq_eq` — infinitesimal
   equality at `a` gives finite Schwarz--Pick equality at every pair `(z, a)`.
 * `TauCeti.forall_pseudoHyperbolicExpr_map_eq_of_norm_deriv_div_one_sub_norm_sq_eq` — hence `f`
@@ -74,11 +68,6 @@ points are assumed, here one fixed point and a derivative condition.
 * `TauCeti.forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq` —
   equality at one point propagates to every point, with the bundled `Complex.UnitDisc` form
   `TauCeti.forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq_unitDisc`.
-* `TauCeti.norm_deriv_le_one_of_isFixedPt` — **the Schwarz lemma at an interior fixed point**.
-* `TauCeti.unitDiscMoebiusFormula_map_eq_mul_of_isFixedPt_of_norm_deriv_eq_one` — its equality
-  case: `f` is the hyperbolic rotation about the fixed point.
-* `TauCeti.eqOn_id_of_isFixedPt_of_deriv_eq_one` — a fixed point with derivative `1` forces the
-  identity.
 
 This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 (`TauCetiRoadmap/ConformalMapping/README.md`), completing the equality case of the
@@ -123,12 +112,16 @@ private lemma norm_deriv_schwarzPickConjugate_zero_eq_one
   have hf_at : HasDerivAt f (deriv f a) a :=
     (hf.differentiableAt (isOpen_ball.mem_nhds ha)).hasDerivAt
   rw [div_eq_div_iff hden_fa.ne' hden_a.ne', one_mul] at heq
-  rw [norm_deriv_schwarzPickConjugate_zero ha1 hfa1 hf_at, div_eq_one_iff_eq hden_fa.ne', heq]
+  rw [norm_deriv_schwarzPickConjugate_zero (one_sub_conj_mul_ne_zero_of_norm_lt_one hfa1 hfa1)
+      ha1.le hfa1.le hf_at, div_eq_one_iff_eq hden_fa.ne', heq]
 
-/-- Under the same hypothesis the Schwarz--Pick conjugate **is** the rotation
+/-- **Infinitesimal Schwarz--Pick rigidity, conjugate form.**  Under equality in the
+infinitesimal Schwarz--Pick inequality at `a`, the Schwarz--Pick conjugate **is** the rotation
 `ζ ↦ deriv (schwarzPickConjugate f a) 0 * ζ` on the whole disc: it fixes the origin and its
-derivative there has norm `1`, so Mathlib's equality case of the Schwarz lemma applies to it. -/
-private lemma eqOn_schwarzPickConjugate_mul
+derivative there has norm `1`, so Mathlib's equality case of the Schwarz lemma applies to it.
+This is the form of the rigidity that keeps the value of the rotation factor, which the
+pseudo-hyperbolic statements below discard by taking norms. -/
+lemma eqOn_schwarzPickConjugate_mul_of_norm_deriv_div_one_sub_norm_sq_eq
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (ha : a ∈ ball (0 : ℂ) 1)
     (heq : ‖deriv f a‖ / (1 - ‖f a‖ ^ 2) = 1 / (1 - ‖a‖ ^ 2)) :
@@ -167,7 +160,8 @@ theorem pseudoHyperbolicExpr_map_eq_of_norm_deriv_div_one_sub_norm_sq_eq
         = ‖schwarzPickConjugate f a ((z - a) / (1 - (starRingEnd ℂ) a * z))‖ := by
       rw [schwarzPickConjugate_apply_unitDiscMoebiusFormula ha1 hz1, pseudoHyperbolicExpr_def]
     _ = ‖deriv (schwarzPickConjugate f a) 0‖ * ‖(z - a) / (1 - (starRingEnd ℂ) a * z)‖ := by
-      rw [eqOn_schwarzPickConjugate_mul hf hmaps ha heq hξ, norm_mul]
+      rw [eqOn_schwarzPickConjugate_mul_of_norm_deriv_div_one_sub_norm_sq_eq hf hmaps ha heq hξ,
+        norm_mul]
     _ = pseudoHyperbolicExpr z a := by
       rw [norm_deriv_schwarzPickConjugate_zero_eq_one hf hmaps ha heq, one_mul,
         pseudoHyperbolicExpr_def]
@@ -285,76 +279,5 @@ theorem forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_
     ‖deriv f (q : ℂ)‖ / (1 - ‖f (q : ℂ)‖ ^ 2) = 1 / (1 - ‖(q : ℂ)‖ ^ 2) :=
   forall_norm_deriv_div_one_sub_norm_sq_eq_of_norm_deriv_div_one_sub_norm_sq_eq hf hmaps
     p.property heq (q : ℂ) q.property
-
-/-! ### The Schwarz lemma at an interior fixed point -/
-
-/-- **The Schwarz lemma at an interior fixed point.**  A holomorphic self-map of the open unit
-disc fixing a point `a` of the disc has `‖deriv f a‖ ≤ 1`.  This is the infinitesimal
-Schwarz--Pick inequality at `a`, where the two Poincaré defects coincide and cancel. -/
-theorem norm_deriv_le_one_of_isFixedPt
-    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (ha : a ∈ ball (0 : ℂ) 1)
-    (hfix : Function.IsFixedPt f a) :
-    ‖deriv f a‖ ≤ 1 := by
-  have ha1 : ‖a‖ < 1 := by simpa [mem_ball_zero_iff] using ha
-  have hden : (0 : ℝ) < 1 - ‖a‖ ^ 2 := by nlinarith [norm_nonneg a]
-  have hle := norm_deriv_div_one_sub_norm_sq_le hf hmaps ha
-  rw [hfix.eq, div_le_div_iff_of_pos_right hden] at hle
-  exact hle
-
-/-- At a fixed point the Schwarz--Pick conjugate's derivative at the origin is the derivative of
-`f` itself: the source and target Moebius defects are the same nonzero number and cancel. -/
-private lemma deriv_schwarzPickConjugate_zero_of_isFixedPt
-    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1)) (ha : a ∈ ball (0 : ℂ) 1)
-    (hfix : Function.IsFixedPt f a) :
-    deriv (schwarzPickConjugate f a) 0 = deriv f a := by
-  have ha1 : ‖a‖ < 1 := by simpa [mem_ball_zero_iff] using ha
-  have hf_at : HasDerivAt f (deriv f a) a :=
-    (hf.differentiableAt (isOpen_ball.mem_nhds ha)).hasDerivAt
-  have hfa1 : ‖f a‖ < 1 := by rw [hfix.eq]; exact ha1
-  have hne : (1 : ℂ) - (starRingEnd ℂ) a * a ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one ha1 ha1
-  rw [(hasDerivAt_schwarzPickConjugate_zero
-      (one_sub_conj_mul_ne_zero_of_norm_lt_one hfa1 hfa1) hf_at).deriv, hfix.eq,
-    mul_div_assoc, div_self hne, mul_one]
-
-/-- **Equality in the Schwarz lemma at an interior fixed point.**  A holomorphic self-map of the
-open unit disc that fixes `a` and has `‖deriv f a‖ = 1` is the *hyperbolic rotation* about `a`
-by the argument of `deriv f a`: conjugating by the Moebius factor centred at `a` turns `f` into
-multiplication by `deriv f a`. -/
-theorem unitDiscMoebiusFormula_map_eq_mul_of_isFixedPt_of_norm_deriv_eq_one
-    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (ha : a ∈ ball (0 : ℂ) 1)
-    (hfix : Function.IsFixedPt f a) (hderiv : ‖deriv f a‖ = 1) {z : ℂ} (hz : z ∈ ball (0 : ℂ) 1) :
-    (f z - a) / (1 - (starRingEnd ℂ) a * f z)
-      = deriv f a * ((z - a) / (1 - (starRingEnd ℂ) a * z)) := by
-  have ha1 : ‖a‖ < 1 := by simpa [mem_ball_zero_iff] using ha
-  have hz1 : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
-  have heq : ‖deriv f a‖ / (1 - ‖f a‖ ^ 2) = 1 / (1 - ‖a‖ ^ 2) := by rw [hfix.eq, hderiv]
-  have hξ : (z - a) / (1 - (starRingEnd ℂ) a * z) ∈ ball (0 : ℂ) 1 :=
-    mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha1 hz
-  have hg := eqOn_schwarzPickConjugate_mul hf hmaps ha heq hξ
-  rw [schwarzPickConjugate_apply_unitDiscMoebiusFormula ha1 hz1,
-    deriv_schwarzPickConjugate_zero_of_isFixedPt hf ha hfix, hfix.eq] at hg
-  exact hg
-
-/-- **A fixed point with derivative `1` forces the identity.**  A holomorphic self-map of the
-open unit disc fixing a disc point `a` with `deriv f a = 1` is the identity on the disc.  This
-sharpens `TauCeti.eqOn_id_of_isFixedPt_of_isFixedPt`, which assumes two fixed points, to one
-fixed point together with the derivative condition. -/
-theorem eqOn_id_of_isFixedPt_of_deriv_eq_one
-    (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) (ha : a ∈ ball (0 : ℂ) 1)
-    (hfix : Function.IsFixedPt f a) (hderiv : deriv f a = 1) :
-    EqOn f id (ball (0 : ℂ) 1) := by
-  have ha1 : ‖a‖ < 1 := by simpa [mem_ball_zero_iff] using ha
-  intro z hz
-  have hrot := unitDiscMoebiusFormula_map_eq_mul_of_isFixedPt_of_norm_deriv_eq_one hf hmaps ha hfix
-    (by rw [hderiv, norm_one]) hz
-  rw [hderiv, one_mul] at hrot
-  -- The Moebius factor centred at `a` is injective on the disc, so `f z = z`.
-  have hinj : InjOn (fun ζ : ℂ => (ζ - a) / (1 - (starRingEnd ℂ) a * ζ)) (ball (0 : ℂ) 1) :=
-    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha1).injOn
-  exact hinj (hmaps hz) hz hrot
 
 end TauCeti

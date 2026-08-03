@@ -95,14 +95,19 @@ lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
 conjugate at the origin.** Taking norms in `hasDerivAt_schwarzPickConjugate_zero` and using
 `‖1 - conj w * w‖ = 1 - ‖w‖ ^ 2` turns the two Moebius defects into the real factors of the
 Poincaré metric. Schwarz's lemma at `0` for the conjugate is therefore exactly the
-infinitesimal Schwarz--Pick estimate for `f` at `z`. -/
+infinitesimal Schwarz--Pick estimate for `f` at `z`.
+
+Only the closed-disc bounds `‖z‖ ≤ 1` and `‖f z‖ ≤ 1` are needed to identify the two Moebius
+defects with `1 - ‖z‖ ^ 2` and `1 - ‖f z‖ ^ 2`, on top of the nonvanishing
+`1 - conj (f z) * f z ≠ 0` that `hasDerivAt_schwarzPickConjugate_zero` itself asks for; for a
+disc point that nonvanishing is `one_sub_conj_mul_ne_zero_of_norm_lt_one`. -/
 lemma norm_deriv_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
-    (hz : ‖z‖ < 1) (hfz : ‖f z‖ < 1) (hf : HasDerivAt f df z) :
+    (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hz : ‖z‖ ≤ 1) (hfz : ‖f z‖ ≤ 1)
+    (hf : HasDerivAt f df z) :
     ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
-  rw [(hasDerivAt_schwarzPickConjugate_zero
-      (one_sub_conj_mul_ne_zero_of_norm_lt_one hfz hfz) hf).deriv, norm_div, norm_mul,
-    norm_one_sub_conj_mul_self_of_norm_le_one hz.le,
-    norm_one_sub_conj_mul_self_of_norm_le_one hfz.le]
+  rw [(hasDerivAt_schwarzPickConjugate_zero hp_outer hf).deriv, norm_div, norm_mul,
+    norm_one_sub_conj_mul_self_of_norm_le_one hz,
+    norm_one_sub_conj_mul_self_of_norm_le_one hfz]
 
 /-- **The infinitesimal Schwarz--Pick inequality.** A holomorphic self-map `f` of the open
 unit disc contracts the Poincaré metric: at every point `z` of the disc,
@@ -130,7 +135,8 @@ theorem norm_deriv_div_one_sub_norm_sq_le {f : ℂ → ℂ}
     (hf.differentiableAt (isOpen_ball.mem_nhds hz)).hasDerivAt
   have hnorm_dg : ‖deriv (schwarzPickConjugate f z) 0‖
       = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) :=
-    norm_deriv_schwarzPickConjugate_zero hz1 hfz1 hf_at
+    norm_deriv_schwarzPickConjugate_zero (one_sub_conj_mul_ne_zero_of_norm_lt_one hfz1 hfz1)
+      hz1.le hfz1.le hf_at
   have hkey : ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) ≤ 1 := hnorm_dg ▸ hschwarz
   rw [div_le_one hden_fz] at hkey
   rw [div_le_div_iff₀ hden_fz hden_z, one_mul]
