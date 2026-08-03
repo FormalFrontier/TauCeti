@@ -17,8 +17,6 @@ left-invariant-derivation model of a Lie algebra.
 
 ## Main results
 
-* `groupLieAlgebraEquivModelVectorSpace`: the tangent Lie algebra at the identity is explicitly
-  identified with the manifold model vector space.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
 
@@ -39,24 +37,6 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-
-/-- The tangent Lie algebra at the identity, explicitly identified with the manifold's model vector
-space. This packages the implementation-level fact that `TangentSpace I 1` is a type synonym for
-`E` behind a stable linear equivalence. -/
-@[expose]
-def groupLieAlgebraEquivModelVectorSpace : GroupLieAlgebra I G ≃ₗ[𝕜] E :=
-  LinearEquiv.refl 𝕜 E
-
-/-- The explicit model-vector-space equivalence acts as the identity on tangent vectors. -/
-@[simp]
-theorem groupLieAlgebraEquivModelVectorSpace_apply (v : GroupLieAlgebra I G) :
-    groupLieAlgebraEquivModelVectorSpace (I := I) (G := G) v = v := rfl
-
-/-- The inverse model-vector-space equivalence regards a model vector as a tangent vector at the
-identity. -/
-@[simp]
-theorem groupLieAlgebraEquivModelVectorSpace_symm_apply (v : E) :
-    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm v = v := rfl
 
 /-- A left-invariant vector field on a smooth Lie group is smooth. -/
 theorem contMDiff_mulInvariantVectorField_infty
