@@ -21,7 +21,7 @@ equivalence, coordinates, or a Spin action.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.filtrationLeadingTerm_apply_ιMulti_eq_cliffordBivector`: the
+* `TauCeti.CliffordAlgebra.filtrationLeadingTerm_apply_ιMulti_eq_mk_cliffordBivector`: the
   degree-two leading-term equation.
 * `TauCeti.CliffordAlgebra.cliffordBivectorExterior_injective`: injectivity of the exterior-square
   Clifford bivector map.
@@ -78,7 +78,7 @@ private theorem cliffordBivector_sub_ι_mul_ι_mem_filtration_one (Q : Quadratic
 
 /-- The degree-two leading term of a decomposable exterior bivector is its corresponding
 half-normalized Clifford bivector modulo the lower filtration. -/
-theorem filtrationLeadingTerm_apply_ιMulti_eq_cliffordBivector (Q : QuadraticForm R M)
+theorem filtrationLeadingTerm_apply_ιMulti_eq_mk_cliffordBivector (Q : QuadraticForm R M)
     [Invertible (2 : R)] (a b : M) :
     filtrationLeadingTerm Q 1 (exteriorPower.ιMulti R 2 ![a, b]) =
       Submodule.Quotient.mk
@@ -120,6 +120,23 @@ theorem cliffordBivectorExterior_injective (Q : QuadraticForm R M) [Invertible (
 noncomputable def cliffordBivectorExteriorEquivRange (Q : QuadraticForm R M) [Invertible (2 : R)] :
     ⋀[R]^2 M ≃ₗ[R] LinearMap.range (cliffordBivectorExterior Q) :=
   LinearEquiv.ofInjective (cliffordBivectorExterior Q) (cliffordBivectorExterior_injective Q)
+
+/-- The exterior-square range equivalence acts by the Clifford bivector map. -/
+@[simp]
+theorem coe_cliffordBivectorExteriorEquivRange_apply (Q : QuadraticForm R M)
+    [Invertible (2 : R)] (x : ⋀[R]^2 M) :
+    (cliffordBivectorExteriorEquivRange Q x : CliffordAlgebra Q) =
+      cliffordBivectorExterior Q x := by
+  rw [cliffordBivectorExteriorEquivRange, LinearEquiv.ofInjective_apply]
+
+/-- Applying the Clifford bivector map to the inverse range equivalence recovers the range
+element. -/
+@[simp]
+theorem cliffordBivectorExterior_cliffordBivectorExteriorEquivRange_symm_apply
+    (Q : QuadraticForm R M) [Invertible (2 : R)]
+    (x : LinearMap.range (cliffordBivectorExterior Q)) :
+    cliffordBivectorExterior Q ((cliffordBivectorExteriorEquivRange Q).symm x) = x := by
+  rw [← coe_cliffordBivectorExteriorEquivRange_apply, LinearEquiv.apply_symm_apply]
 
 end CliffordAlgebra
 
