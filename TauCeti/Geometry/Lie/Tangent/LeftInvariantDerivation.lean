@@ -287,13 +287,19 @@ theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
 
+/-- The private proof boundary identifying the identity tangent space with the model vector
+space. -/
+private noncomputable def groupLieAlgebraEquivModelVectorSpace :
+    GroupLieAlgebra I G ≃ₗ[ℝ] E :=
+  LinearEquiv.refl ℝ E
+
 /-- Left-invariant derivations on a finite-dimensional smooth real Lie group form a
 finite-dimensional vector space. -/
 theorem finiteDimensional_leftInvariantDerivation
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
     (h₁ : I.IsInteriorPoint (1 : G)) : FiniteDimensional ℝ (LeftInvariantDerivation I G) := by
-  let modelEquiv : GroupLieAlgebra I G ≃ₗ[ℝ] E := LinearEquiv.refl ℝ E
-  let _ : FiniteDimensional ℝ (GroupLieAlgebra I G) := modelEquiv.symm.finiteDimensional
+  let _ : FiniteDimensional ℝ (GroupLieAlgebra I G) :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.finiteDimensional
   exact (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
     h₁).symm.finiteDimensional
 
@@ -303,9 +309,6 @@ theorem finrank_leftInvariantDerivation_eq_modelVectorSpace
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
     (h₁ : I.IsInteriorPoint (1 : G)) :
     Module.finrank ℝ (LeftInvariantDerivation I G) = Module.finrank ℝ E := by
-  -- Mathlib defines `GroupLieAlgebra I G` as the identity tangent space, whose underlying vector
-  -- space is definitionally `E`. Keep that boundary explicit inside the proof while avoiding a
-  -- parallel public wrapper for the existing derivation--Lie-algebra equivalence.
-  let modelEquiv : GroupLieAlgebra I G ≃ₗ[ℝ] E := LinearEquiv.refl ℝ E
   exact LinearEquiv.finrank_eq
-    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans modelEquiv)
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+      (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)))
