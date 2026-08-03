@@ -133,7 +133,8 @@ theorem coe_cliffordBivectorExteriorEquivRange_apply (Q : QuadraticForm R M)
 
 /-- Applying the Clifford bivector map to the inverse equivalence recovers the range element. -/
 @[simp]
-theorem cliffordBivectorExteriorEquivRange_symm_apply (Q : QuadraticForm R M)
+theorem cliffordBivectorExterior_cliffordBivectorExteriorEquivRange_symm_apply
+    (Q : QuadraticForm R M)
     [Invertible (2 : R)] (x : LinearMap.range (cliffordBivectorExterior Q)) :
     cliffordBivectorExterior Q ((cliffordBivectorExteriorEquivRange Q).symm x) = x := by
   rw [← coe_cliffordBivectorExteriorEquivRange_apply, LinearEquiv.apply_symm_apply]
