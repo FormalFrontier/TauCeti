@@ -147,6 +147,7 @@ theorem hopfIdeal_toIdeal :
 /-- Mapping the augmentation Hopf ideal of the additive group along the Frobenius coordinate
 endomorphism `x ↦ xᵖ` gives the Hopf ideal `(xᵖ)` defining `αₚ`. This is the concrete ideal
 identification relating `αₚ` to the generic kernel construction for affine group schemes. -/
+@[simp]
 theorem map_augmentation_frobeniusBialgHom_eq_hopfIdeal :
     (HopfIdeal.augmentation R (SymmetricAlgebra R R)).map
         (AdditiveGroup.frobeniusBialgHom R p) =
