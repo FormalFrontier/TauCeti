@@ -238,10 +238,13 @@ theorem mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G] [FiniteDimen
   exact mulInvariantCoordinateVectorField_identity v
 
 /-- In finite dimensions, the coordinate-field linear map is smooth at the identity coordinate. -/
-theorem contDiffAt_mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G]
+theorem contDiffAt_mulInvariantCoordinateLinearMap_identity
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] (h1 : I.IsInteriorPoint (1 : G)) :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
     ContDiffAt ℝ ∞ (mulInvariantCoordinateLinearMap (I := I) (G := G))
       (extChartAt I (1 : G) (1 : G)) := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
+  dsimp only
   let _ : ContMDiffMul I (∞ + 1) G := by
     simpa using (inferInstance : ContMDiffMul I ∞ G)
   let d := Module.finrank ℝ E
@@ -265,11 +268,13 @@ theorem contDiffAt_mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G]
 /-- At the zero generating vector over the identity coordinate, the parameterized coordinate
 vector field has strict derivative equal to projection onto the generating-vector coordinate. -/
 theorem hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity
-    [IsManifold I 1 G] [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G]
-    [BoundarylessManifold I G] :
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
     HasStrictFDerivAt (mulInvariantCoordinateVectorField (I := I) (G := G))
       (ContinuousLinearMap.fst ℝ E E)
       ((0 : E), extChartAt I (1 : G) (1 : G)) := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
+  dsimp only
   let _ : ContMDiffMul I (∞ + 1) G := by
     simpa using (inferInstance : ContMDiffMul I ∞ G)
   let A : E → E →L[ℝ] E := mulInvariantCoordinateLinearMap (I := I) (G := G)
