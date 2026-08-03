@@ -282,11 +282,14 @@ theorem centralizer_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
     rintro h rfl
     rw [← map_mul, ← map_mul, mul_comm]
 
-/-- **The rigidity hypothesis of `TauCeti.SU2.centralizer_torusHom` is satisfiable**: some point of
-the circle has `z² ≠ 1`, so some single element of the maximal torus already has centralizer the
-whole of `T`. This is the only thing a downstream computation needs to know about the witness — the
-witness itself, `z = i`, is a proof detail of this file. -/
-theorem exists_circle_sq_ne_one : ∃ z : Circle, (z : ℂ) ^ 2 ≠ 1 := ⟨circleI, circleI_sq_ne_one⟩
+/-- **The maximal torus contains a regular element**: some single element `diag (z, z⁻¹)` of `T`
+has centralizer exactly `T`. This is `TauCeti.SU2.centralizer_torusHom` at a point of the circle
+satisfying its rigidity hypothesis `z² ≠ 1`; the particular witness, `z = i`, is a proof detail of
+this file, and a downstream computation that must detect `T` by a single element needs only the
+existence. -/
+theorem exists_centralizer_torusHom_eq_torus :
+    ∃ z : Circle, Subgroup.centralizer ({torusHom z} : Set SU2) = torus :=
+  ⟨circleI, centralizer_torusHom circleI_sq_ne_one⟩
 
 /-- The maximal torus is its own centralizer in `SU(2)`. -/
 theorem centralizer_torus : Subgroup.centralizer (torus : Set SU2) = torus := by

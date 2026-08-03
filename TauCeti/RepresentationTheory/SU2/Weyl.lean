@@ -151,17 +151,21 @@ theorem weylElement_mem_normalizer :
 diagonal torus exactly when it is diagonal, or is the quarter turn times a diagonal element. -/
 theorem mem_normalizer_torus_iff {g : SU2} :
     g ∈ Subgroup.normalizer (torus : Set SU2) ↔ g ∈ torus ∨ weylElement⁻¹ * g ∈ torus := by
-  -- The computation is run at a torus element `diag (z, z⁻¹)` rigid enough to detect `T`.
-  obtain ⟨z, hz⟩ := exists_circle_sq_ne_one
+  -- The computation is run at a regular torus element `diag (z, z⁻¹)`, whose centralizer is `T`.
+  obtain ⟨z, hz⟩ := exists_centralizer_torusHom_eq_torus
+  have hdetect : ∀ h : SU2, torusHom z * h = h * torusHom z → h ∈ torus := fun h hh => by
+    rw [← hz, Subgroup.mem_centralizer_iff]
+    rintro _ rfl
+    exact hh
   constructor
   · intro hg
     obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp
       ((Subgroup.mem_normalizer_iff.mp hg (torusHom z)).mp (torusHom_mem_torus z))
     rcases eq_or_eq_inv_of_conj_torusHom hu.symm with rfl | rfl
-    · refine Or.inl (mem_torus_of_commute_torusHom hz ?_)
+    · refine Or.inl (hdetect _ ?_)
       conv_lhs => rw [hu]
       group
-    · refine Or.inr (mem_torus_of_commute_torusHom hz ?_)
+    · refine Or.inr (hdetect _ ?_)
       have hconj : weylElement * torusHom z * weylElement⁻¹
           = g * torusHom z * g⁻¹ := by rw [weylElement_conj_torusHom, hu]
       calc torusHom z * (weylElement⁻¹ * g)
@@ -242,9 +246,9 @@ centralizes it or inverts it, according to which of the two classes of `N(T) / T
 theorem conj_torusHom_of_mem_normalizer {n : SU2} (hn : n ∈ Subgroup.normalizer (torus : Set SU2))
     (z : Circle) :
     n * torusHom z * n⁻¹ = torusHom z ∨ n * torusHom z * n⁻¹ = torusHom z⁻¹ := by
-  have hcomm : ∀ u : Circle, torusHom u * torusHom z * (torusHom u)⁻¹ = torusHom z := by
-    intro u
-    rw [← map_inv, ← map_mul, ← map_mul, mul_comm u z, mul_assoc, mul_inv_cancel, mul_one]
+  -- The torus is commutative, so conjugating one of its elements by another does nothing.
+  have hcomm : ∀ u : Circle, torusHom u * torusHom z * (torusHom u)⁻¹ = torusHom z := fun u => by
+    simp only [← map_inv, ← map_mul, mul_inv_cancel_comm]
   rcases mem_normalizer_torus_iff.mp hn with h | h
   · obtain ⟨u, rfl⟩ := mem_torus_iff_exists_torusHom.mp h
     exact Or.inl (hcomm u)
