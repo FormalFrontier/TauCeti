@@ -40,7 +40,8 @@ nothing about the opposite inclusion, which it satisfies vacuously.
 * `TauCeti.mul_mem_pathSpan`: the length filtration is multiplicative, and
   `TauCeti.ofPath_mem_pathSpan_iff`: a basis path lies in a step exactly when it is long enough.
 * `TauCeti.restrictScalars_arrowIdeal_pow`: **the steps of the length filtration are the powers of
-  the arrow ideal**, `TauCeti.mem_arrowIdeal_pow` in terms of membership.
+  the arrow ideal**, `TauCeti.mem_arrowIdeal_pow` in terms of membership, and
+  `TauCeti.ofPath_mem_arrowIdeal_pow_iff` on a basis path.
 * `TauCeti.mem_arrowIdeal_iff_repr_nil`: an element lies in the arrow ideal exactly when all its
   coordinates on the trivial paths vanish, `TauCeti.mem_arrowIdeal_iff` in terms of the lengths of
   the paths in its support, and `TauCeti.ofPath_mem_arrowIdeal_iff` on a basis path.
@@ -346,6 +347,13 @@ theorem mem_arrowIdeal_pow {n : ℕ} {f : pathAlgebra k Q} :
       obtain ⟨x, hx, rfl⟩ := hu
       simp only [coe_pathAlgebraBasis]
       exact Ideal.pow_le_pow_right hx (ofPath_mem_arrowIdeal_pow x)
+
+/-- **A basis path lies in the `n`-th power of the arrow ideal exactly when it has length at least
+`n`**: the powers of the arrow ideal meet the path basis in the long enough paths. -/
+@[simp]
+theorem ofPath_mem_arrowIdeal_pow_iff [Nontrivial k] {n : ℕ} {x : Quiver.TotalPath Q} :
+    (ofPath x : pathAlgebra k Q) ∈ arrowIdeal k Q ^ n ↔ n ≤ x.2.2.length :=
+  mem_arrowIdeal_pow.trans ofPath_mem_pathSpan_iff
 
 variable (k Q)
 
