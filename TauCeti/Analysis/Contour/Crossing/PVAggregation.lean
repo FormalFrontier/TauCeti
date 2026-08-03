@@ -75,7 +75,7 @@ open scoped Fin.NatCast
 
 /-- The truncated integrand is eventually interval-integrable on a crossing window lying in
 `[a, b]`, by restriction. -/
-theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : ℂ}
+private theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : ℂ}
     {g : ℂ → ℂ} {a b r t : ℝ} (hab : a ≤ b) (h_lo : a ≤ t - r) (h_hi : t + r ≤ b)
     (hr_nonneg : 0 ≤ r) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun u => if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0)
@@ -91,7 +91,7 @@ theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : �
 /-- The between-piece principal value on a subinterval of `[a, b]` keeping distance `≥ m` from
 `s`: the plain integral, with the truncated integrability restricted from `[a, b]`. Both public
 aggregations discharge their piece hypothesis through this. -/
-theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ} {a b m : ℝ}
+private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ} {a b m : ℝ}
     (hab : a ≤ b) (hm_pos : 0 < m) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
         MeasureTheory.volume a b)
