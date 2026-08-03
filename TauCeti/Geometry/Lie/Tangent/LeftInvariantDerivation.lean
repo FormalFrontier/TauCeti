@@ -283,11 +283,39 @@ theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
 
+/-- The tangent Lie algebra at the identity, explicitly identified with the manifold's model vector
+space. This packages the implementation-level fact that `TangentSpace I 1` is a type synonym for
+`E` behind a stable linear equivalence. -/
+def groupLieAlgebraEquivModelVectorSpace : GroupLieAlgebra I G ≃ₗ[ℝ] E where
+  toFun v := v
+  invFun v := v
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- The canonical linear equivalence from left-invariant derivations to the manifold's model vector
+space. -/
+noncomputable def leftInvariantDerivationEquivModelVectorSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) : LeftInvariantDerivation I G ≃ₗ[ℝ] E :=
+  (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G))
+
+/-- Left-invariant derivations on a finite-dimensional smooth real Lie group form a
+finite-dimensional vector space. -/
+theorem finiteDimensional_leftInvariantDerivation
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
+  FiniteDimensional.of_injective
+    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).toLinearMap
+    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).injective
+
 /-- The Lie algebra of a finite-dimensional smooth real Lie group has the dimension of the
-manifold model space. -/
-theorem finrank_leftInvariantDerivation_eq_modelSpace
+manifold model vector space. -/
+theorem finrank_leftInvariantDerivation_eq_modelVectorSpace
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
     (h₁ : I.IsInteriorPoint (1 : G)) :
     Module.finrank ℝ (LeftInvariantDerivation I G) = Module.finrank ℝ E := by
   exact LinearEquiv.finrank_eq
-    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁)
+    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁)
