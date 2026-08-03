@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 
 import TauCeti.Algebra.Bialgebra.TensorProduct
-import TauCeti.Algebra.HopfAlgebra.Antipode
+import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
 # Point representations and comodules
@@ -432,7 +432,7 @@ private theorem comulPoint_eq_include_mul :
   simpa only [Bialgebra.toLinearMap_comulAlgHom,
     Bialgebra.TensorProduct.includeLeft_toAlgHom,
     Bialgebra.TensorProduct.includeRight_toAlgHom] using
-      (comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
+      (Coalgebra.comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
 
 omit [AddCommMonoid V] [Module R V] in
 private theorem liftedComulPoint_eq_include_mul :
