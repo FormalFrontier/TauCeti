@@ -152,7 +152,7 @@ diagonal torus exactly when it is diagonal, or is the quarter turn times a diago
 theorem mem_normalizer_torus_iff {g : SU2} :
     g ∈ Subgroup.normalizer (torus : Set SU2) ↔ g ∈ torus ∨ weylElement⁻¹ * g ∈ torus := by
   -- The computation is run at a torus element `diag (z, z⁻¹)` rigid enough to detect `T`.
-  obtain ⟨z, hz⟩ := exists_sq_ne_one
+  obtain ⟨z, hz⟩ := exists_circle_sq_ne_one
   constructor
   · intro hg
     obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp

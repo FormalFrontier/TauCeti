@@ -286,7 +286,7 @@ theorem centralizer_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
 the circle has `z² ≠ 1`, so some single element of the maximal torus already has centralizer the
 whole of `T`. This is the only thing a downstream computation needs to know about the witness — the
 witness itself, `z = i`, is a proof detail of this file. -/
-theorem exists_sq_ne_one : ∃ z : Circle, (z : ℂ) ^ 2 ≠ 1 := ⟨circleI, circleI_sq_ne_one⟩
+theorem exists_circle_sq_ne_one : ∃ z : Circle, (z : ℂ) ^ 2 ≠ 1 := ⟨circleI, circleI_sq_ne_one⟩
 
 /-- The maximal torus is its own centralizer in `SU(2)`. -/
 theorem centralizer_torus : Subgroup.centralizer (torus : Set SU2) = torus := by
