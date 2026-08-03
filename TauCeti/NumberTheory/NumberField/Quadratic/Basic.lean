@@ -41,7 +41,6 @@ theorem minpoly_rat_quadratic (hmin : minpoly ℤ θ = X ^ 2 - C d) :
 
 /-- The quadratic field `K = ℚ(θ)` has degree `2` over `ℚ`: its power basis has dimension
 `natDegree (X² - d) = 2`. -/
-@[simp]
 theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : finrank ℚ K = 2 := by
   have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
@@ -51,7 +50,6 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
-@[simp]
 theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
   have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
@@ -64,7 +62,6 @@ theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
 /-- The trace of the generator vanishes: `Tr(θ) = 0` (the `X`-coefficient of `X² - d` is `0`). -/
-@[simp]
 theorem trace_coe_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Algebra.trace ℚ K (θ : K) = 0 := by
   have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
