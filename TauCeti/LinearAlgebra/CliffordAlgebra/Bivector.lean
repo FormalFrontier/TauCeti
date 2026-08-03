@@ -284,7 +284,6 @@ noncomputable def cliffordBivectorLieSubalgebra : LieSubalgebra R (CliffordAlgeb
 
 /-- Membership in the Clifford bivector Lie subalgebra means being the image of an exterior
 bivector. -/
-@[simp]
 theorem mem_cliffordBivectorLieSubalgebra_iff {x : CliffordAlgebra Q} :
     x ∈ cliffordBivectorLieSubalgebra Q ↔
       ∃ y : ⋀[R]^2 M, cliffordBivectorExterior Q y = x := by
@@ -293,6 +292,7 @@ theorem mem_cliffordBivectorLieSubalgebra_iff {x : CliffordAlgebra Q} :
 
 /-- The exterior-square Clifford bivector map takes values in the Clifford bivector Lie
 subalgebra. -/
+@[simp]
 theorem cliffordBivectorExterior_mem_cliffordBivectorLieSubalgebra (x : ⋀[R]^2 M) :
     cliffordBivectorExterior Q x ∈ cliffordBivectorLieSubalgebra Q := by
   simpa only [cliffordBivectorLieSubalgebra, LieSubalgebra.mem_mk_iff'] using
