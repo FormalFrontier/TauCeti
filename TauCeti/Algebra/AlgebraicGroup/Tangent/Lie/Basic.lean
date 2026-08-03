@@ -64,8 +64,10 @@ variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
   [CommRing B] [Algebra R B]
 
 /-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
-leg and multiply the results in the coefficients. -/
-private def mulTensor (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+leg and multiply the results in the coefficients. It underlies the Leibniz-rule
+manipulations for counit-valued derivations: composing with the multiplication of the
+bialgebra lands in this product's image. -/
+def mulTensor (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     WithConv (A ⊗[R] A →ₗ[R] Bialgebra.CounitAlgebra R A B) :=
   toConv ((Algebra.TensorProduct.lmul' R
     (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
@@ -75,7 +77,7 @@ omit [CommSemiring A] [Bialgebra R A] in
 private lemma algebraMap_counitAlgebra (r : R) :
     algebraMap R (Bialgebra.CounitAlgebra R A B) r = algebraMap R B r := rfl
 
-private lemma mulTensor_ofConv_tmul
+lemma mulTensor_ofConv_tmul
     (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) (x y : A) :
     (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
   simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
@@ -83,7 +85,7 @@ private lemma mulTensor_ofConv_tmul
 /-- The exterior product is multiplicative for convolution: products interleave
 legwise. Push `TensorProduct.map_convMul_map` through the multiplication of the
 commutative coefficient algebra. -/
-private lemma mulTensor_convMul
+lemma mulTensor_convMul
     (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
   have h := LinearMap.algHom_comp_convMul_distrib
@@ -100,7 +102,7 @@ private lemma mulTensor_convMul
 /-- The Leibniz rule in convolution form: composing a counit-valued derivation with
 the multiplication of `A` is the exterior product against the convolution unit, on
 either side. -/
-private lemma toConv_coe_comp_mul'
+lemma toConv_coe_comp_mul'
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
     toConv ((d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ LinearMap.mul' R A) =
       mulTensor 1 (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
