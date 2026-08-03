@@ -79,10 +79,14 @@ theorem IsMIntegralCurveAt.of_extChartAt_symm
   have hd' := hd.congr_deriv (tangentCoordChange_self hft2)
   simp only [writtenInExtChartAt, extChartAt_model_space_eq_id, PartialEquiv.refl_coe,
     PartialEquiv.refl_symm, modelWithCornersSelf_coe, Function.comp_def, id_eq, range_id]
+  -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
   rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
   rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
-  with_unfolding_all
-    exact hd'.hasFDerivAt.hasFDerivWithinAt
+  -- In these charts, the source and target tangent spaces are definitionally their model spaces.
+  change HasFDerivWithinAt
+    (((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f))
+      (ContinuousLinearMap.toSpanSingleton ℝ (v xₜ)) Set.univ t
+  exact hd'.hasFDerivAt.hasFDerivWithinAt
 
 private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] {n : ℕ} {f : ℝ → F} {v : F → F} {s : Set ℝ} {u : Set F}
