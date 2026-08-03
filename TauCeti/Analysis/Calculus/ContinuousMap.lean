@@ -153,6 +153,15 @@ theorem norm_intervalIntegralOperator_le (a b : ℝ) (hab : a ≤ b) :
   exact LinearMap.mkContinuous_norm_le _ (sub_nonneg.mpr hab) _
 
 omit [CompleteSpace E] in
+/-- The bundled operator evaluates to its primitive construction. -/
+private theorem intervalIntegralOperator_apply_intervalPrimitive (a b : ℝ) (hab : a ≤ b)
+    [Fact (a ≤ b)]
+    (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
+    intervalIntegralOperator a b hab f t = intervalPrimitive a b f t := by
+  rw [intervalIntegralOperator]
+  rfl
+
+omit [CompleteSpace E] in
 /-- Evaluating the Volterra operator at `t` integrates the input's constant extension from the left
 endpoint to `t`. -/
 @[simp]
@@ -161,9 +170,7 @@ theorem intervalIntegralOperator_apply (a b : ℝ) (hab : a ≤ b)
     intervalIntegralOperator a b hab f t =
       ∫ s in a..t, f (Set.projIcc a b hab s) := by
   let _ : Fact (a ≤ b) := ⟨hab⟩
-  rw [intervalIntegralOperator]
-  change intervalPrimitive a b f t = _
-  rw [intervalPrimitive_apply]
+  rw [intervalIntegralOperator_apply_intervalPrimitive, intervalPrimitive_apply]
   simp [intervalExtension_apply, IccExtendCM, projIccCM]
 
 /-- Volterra integration on the unit interval, obtained from the general compact-interval
