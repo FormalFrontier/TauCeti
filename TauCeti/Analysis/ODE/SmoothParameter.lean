@@ -85,7 +85,7 @@ theorem contDiff_picardResidual (n : ℕ) (f : C(E × F, F))
     ContDiff ℝ n (picardResidual f x₀) := by
   have hcomp : ContDiff ℝ n
       (fun p : E × C(Set.Icc (0 : ℝ) 1, F) ↦ f.comp (parameterizedPath p)) :=
-    (ContinuousMap.contDiff_comp_nat n f hf).comp
+    (ContinuousMap.contDiff_postcomp (n : ℕ∞) (f : E × F → F) (by simpa using hf)).comp
       (parameterizedPath (E := E) (F := F) (K := Set.Icc (0 : ℝ) 1)).contDiff
   exact (contDiff_snd.sub contDiff_const).sub
     ((ContinuousMap.unitIntervalIntegral (E := F)).contDiff.fun_comp hcomp)
