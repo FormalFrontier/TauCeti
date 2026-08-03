@@ -13,10 +13,7 @@ import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.Winding.LipschitzBoundedIntegrand
 import TauCeti.Analysis.Contour.Winding.PrincipalValueRealIntegral
-import Mathlib.Analysis.Calculus.Deriv.Comp
-import Mathlib.Analysis.Complex.RealDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.MeasureTheory.Function.StronglyMeasurable.Inner
 import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
 /-!
@@ -239,9 +236,8 @@ private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
 /-- **Gluing interval-integrability of the real winding integrand along the sorted crossing
-list.** Mirrors the geometry of `hasCauchyPVAt_along_sorted`/`re_windowPieceSum_along_sorted`, but
-only needs `IntervalIntegrable.trans` to concatenate plain pieces with windows — no limiting value
-to track. -/
+list.** An instance of `sorted_crossing_gluing_aux`: only needs `IntervalIntegrable.trans` to
+concatenate plain pieces with windows — no limiting value to track. -/
 private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A b r m : ℝ}
     (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) →
       IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume l u) :
@@ -251,43 +247,8 @@ private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A 
       (∀ t ∈ sorted, IntervalIntegrable
         (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume (t - r) (t + r)) →
       (∀ u ∈ Icc a b, (∀ t ∈ sorted, u ∉ Ioo (t - r) (t + r)) → m ≤ ‖γ u - s‖) →
-      IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b := by
-  intro sorted
-  induction sorted with
-  | nil =>
-    intro _ _ a hA hab _ _ _ _ h_far
-    exact h_piece a b hA hab le_rfl
-      fun u hu => h_far u hu fun t ht => absurd ht (List.not_mem_nil)
-  | cons t rest IH =>
-    intro h_sorted hr a hA hab h_lo h_hi h_pair h_win h_far
-    have hr_nonneg : 0 ≤ r := hr (List.cons_ne_nil t rest)
-    have h_head_lo : a ≤ t - r := h_lo t List.mem_cons_self
-    have h_head_hi : t + r ≤ b := h_hi t List.mem_cons_self
-    have h_rest_above : ∀ t' ∈ rest, t + r ≤ t' - r := fun t' ht' => by
-      have h_lt : t < t' := (List.pairwise_cons.mp h_sorted.pairwise).1 t' ht'
-      have h_sep := h_pair t List.mem_cons_self t' (List.mem_cons_of_mem t ht') (ne_of_gt h_lt)
-      rw [abs_sub_comm, abs_of_pos (by linarith)] at h_sep
-      linarith
-    have h_left : IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume
-        a (t - r) := by
-      refine h_piece a (t - r) hA h_head_lo (by linarith) fun u hu => ?_
-      refine h_far u ⟨hu.1, by linarith [hu.2]⟩ fun t' ht' h_in => ?_
-      rcases List.mem_cons.mp ht' with rfl | h_rest
-      · linarith [hu.2, h_in.1]
-      · linarith [hu.2, h_in.1, h_rest_above t' h_rest]
-    have h_rest : IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume
-        (t + r) b := IH
-      ((List.pairwise_cons.mp h_sorted.pairwise).2).sortedLT (fun _ => hr_nonneg) (t + r)
-      (by linarith) h_head_hi (fun t' ht' => h_rest_above t' ht')
-      (fun t' ht' => h_hi t' (List.mem_cons_of_mem t ht'))
-      (fun t' ht' t'' ht'' hne => h_pair t' (List.mem_cons_of_mem t ht')
-        t'' (List.mem_cons_of_mem t ht'') hne)
-      (fun t' ht' => h_win t' (List.mem_cons_of_mem t ht'))
-      (fun u hu h_avoid => h_far u ⟨by linarith [hu.1], hu.2⟩ fun t' ht' => by
-        rcases List.mem_cons.mp ht' with rfl | h_rest
-        · exact fun h_in => absurd hu.1 (not_le.mpr h_in.2)
-        · exact h_avoid t' h_rest)
-    exact (h_left.trans (h_win t List.mem_cons_self)).trans h_rest
+      IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b :=
+  sorted_crossing_gluing_aux h_piece (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
 
 /-! ### Boundedness of the derivative of a piecewise-`C¹` curve -/
 
@@ -317,46 +278,19 @@ private theorem isBounded_image_deriv_of_contDiffOn {γ : ℝ → ℂ} {c d : �
     (lt_of_le_of_ne ht.2 htd))⟩
 
 /-- Gluing step for `isBounded_image_deriv_Icc`: boundedness of the derivative's image on any
-subinterval `[c, d] ⊆ [[a, b]]`, by induction on the number of breakpoints strictly inside
-`(c, d)`, splitting off the largest one. Mirrors `intervalIntegrable_deriv_aux`. -/
+subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_aux`, shared with
+`IsPiecewiseC1On.intervalIntegrable_deriv`'s identical breakpoint-splitting induction. -/
 private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Finset ℝ}
     (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
       ContDiffOn ℝ 1 γ (Icc c d)) :
     ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
-      Bornology.IsBounded (deriv γ '' Icc c d) := by
-  have hdisj : ∀ {c d : ℝ}, p.filter (· ∈ Ioo c d) = ∅ → Disjoint (↑p : Set ℝ) (Ioo c d) :=
-    fun he => Set.disjoint_left.mpr fun x hxp hx =>
-      Finset.notMem_empty x (he ▸ Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hx⟩)
-  intro n
-  induction n with
-  | zero =>
-    intro c d hcard hcd hsub
-    have he : p.filter (· ∈ Ioo c d) = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
-    exact isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
-  | succ n ih =>
-    intro c d hcard hcd hsub
-    rcases (p.filter (· ∈ Ioo c d)).eq_empty_or_nonempty with he | hne
-    · exact isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
-    set m := (p.filter (· ∈ Ioo c d)).max' hne with hm_def
-    obtain ⟨hmp, hm⟩ := Finset.mem_filter.mp ((p.filter (· ∈ Ioo c d)).max'_mem hne)
-    have hssub : p.filter (· ∈ Ioo c m) ⊂ p.filter (· ∈ Ioo c d) :=
-      (Finset.ssubset_iff_of_subset (Finset.monotone_filter_right _ fun x _ hx =>
-          ⟨hx.1, hx.2.trans hm.2⟩)).mpr
-        ⟨m, Finset.mem_filter.mpr ⟨hmp, hm⟩, fun hmem =>
-          (Finset.mem_filter.mp hmem).2.2.false⟩
-    have h₁ : Bornology.IsBounded (deriv γ '' Icc c m) :=
-      ih c m (Nat.le_of_lt_succ ((Finset.card_lt_card hssub).trans_le hcard)) hm.1.le
-        ((Icc_subset_Icc le_rfl hm.2.le).trans hsub)
-    have h₂ : Bornology.IsBounded (deriv γ '' Icc m d) := by
-      refine isBounded_image_deriv_of_contDiffOn hm.2.le
-        (hC1 m d ((Icc_subset_Icc hm.1.le le_rfl).trans hsub) (Set.disjoint_left.mpr ?_))
-      intro x hxp hx
-      exact absurd ((p.filter (· ∈ Ioo c d)).le_max' x
-          (Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hm.1.trans hx.1, hx.2⟩))
-        (not_le.mpr hx.1)
-    have hunion : Icc c d = Icc c m ∪ Icc m d := (Set.Icc_union_Icc_eq_Icc hm.1.le hm.2.le).symm
-    rw [hunion, Set.image_union]
-    exact h₁.union h₂
+      Bornology.IsBounded (deriv γ '' Icc c d) :=
+  piecewise_gluing_aux
+    (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
+    (fun c m d hcm hmd h₁ h₂ => by
+      rw [show Icc c d = Icc c m ∪ Icc m d from (Set.Icc_union_Icc_eq_Icc hcm hmd).symm,
+        Set.image_union]
+      exact h₁.union h₂)
 
 /-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
 Mirrors `IsPiecewiseC1On.intervalIntegrable_deriv`'s gluing-across-breakpoints argument, but for
@@ -404,9 +338,9 @@ its ordinary (non-principal-value) integral:
 
 Unlike the off-curve case, `h`'s boundedness and interval-integrability are not assumed here: both
 are derived from the crossing regularity, via
-`isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`'s boundedness at each `C^{1,1}`
-crossing and the ordinary avoidance argument between crossings — the actual content of HW
-Prop 2.3. -/
+`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`'s boundedness at each
+`C^{1,1}` crossing and the ordinary avoidance argument between crossings — the actual content of
+HW Prop 2.3. -/
 theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
