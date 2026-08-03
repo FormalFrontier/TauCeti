@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Algebra.Category.Grp.ForgetCorepresentable
 public import TauCeti.Algebra.AlgebraicGroup.Cocharacter
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 
 /-!
@@ -32,6 +33,11 @@ using ordinary integers.
 
 ## Main declarations
 
+* `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv`: the typed comparison between
+  scheme-valued points of `D(G)` and algebra points of `R[G]`.
+* `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue` and
+  `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_groupSchemeMap`: its naturality in
+  the value algebra and the character group.
 * `TauCeti.DiagonalizableGroup.schemePointsMulEquiv`: scheme-valued points of `D(G)` are
   characters `G →* Aˣ`.
 * `TauCeti.DiagonalizableGroup.schemePointsMulEquiv_mapValue`: this identification is natural
@@ -72,6 +78,140 @@ open AlgebraicGeometry
 
 variable {R A B : Type u} [CommRing R] [CommRing A] [CommRing B]
 variable [Algebra R A] [Algebra R B]
+
+private noncomputable def groupSchemeIsoHopfSpec (G : FGCommGrpCat.{u}) :
+    (groupScheme R G).X ≅
+      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateRing R G).obj)).X :=
+  (Grp.forget _).mapIso (eqToIso (groupScheme_def R G))
+
+private noncomputable def hopfSpecIsoSpec (G : FGCommGrpCat.{u}) :
+    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+      (Opposite.op (coordinateRing R G).obj)).X ≅
+      (Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R)) :=
+  (Grp.forget _).mapIso
+    (eqToIso (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj))
+
+private noncomputable def groupSchemeIsoSpec (G : FGCommGrpCat.{u}) :
+    (groupScheme R G).X ≅
+      (Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R)) :=
+  groupSchemeIsoHopfSpec (R := R) G ≪≫ hopfSpecIsoSpec (R := R) G
+
+private instance groupSchemeIsoSpec_isMonHom (G : FGCommGrpCat.{u}) :
+    IsMonHom (groupSchemeIsoSpec (R := R) G).hom := by
+  change IsMonHom
+    ((eqToHom (groupScheme_def R G) ≫
+      eqToHom (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj)).hom.hom)
+  infer_instance
+
+/-- Scheme-valued points of `D(G)` are the convolution group of algebra maps out of its
+coordinate ring. This typed wrapper keeps the defining identification of `groupScheme`
+with `Spec R[G]` local to this module. -/
+noncomputable def groupSchemePointsMulEquiv (G : FGCommGrpCat.{u}) :
+    ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R G).X) ≃* WithConv (MonoidAlgebra R G →ₐ[R] A) :=
+  (Hom.mulEquivCongrRight (groupSchemeIsoSpec (R := R) G)
+    ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)))).trans
+      AlgebraicGeometry.Spec.mapMulEquiv.symm
+
+/-- The typed scheme-point comparison is natural in the value algebra. -/
+theorem groupSchemePointsMulEquiv_mapValue (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] B)
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R G).X) :
+    groupSchemePointsMulEquiv (R := R) (A := B) G
+        ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ p) =
+      AlgHom.mapValue (H := MonoidAlgebra R G) phi
+        (groupSchemePointsMulEquiv (R := R) (A := A) G p) := by
+  -- This crosses the local typed wrapper from the opaque `groupScheme` target to
+  -- the public spectrum presentation of `D(G)`.
+  change AlgebraicGeometry.Spec.mapMulEquiv.symm
+      (((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver (Spec (CommRingCat.of R)) ≫
+        p) ≫ (groupSchemeIsoSpec (R := R) G).hom) =
+    HopfAlgebra.mapPoints (H := (coordinateRing R G).obj)
+      (CommAlgCat.ofHom phi)
+        (AlgebraicGeometry.Spec.mapMulEquiv.symm
+          (p ≫ (groupSchemeIsoSpec (R := R) G).hom))
+  rw [Category.assoc]
+  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
+  have hcomp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
+    ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver (Spec (CommRingCat.of R)) ≫
+      p ≫ (groupSchemeIsoSpec (R := R) G).hom)
+  have hp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
+    (p ≫ (groupSchemeIsoSpec (R := R) G).hom)
+  have hpcomp := congrArg
+    (fun q => (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
+      (Spec (CommRingCat.of R)) ≫ q) hp.symm
+  have hnat := (CommHopfAlgCat.mapMulEquiv_mapValue (coordinateRing R G).obj
+    (CommAlgCat.ofHom phi)
+    (AlgebraicGeometry.Spec.mapMulEquiv.symm
+      (p ≫ (groupSchemeIsoSpec (R := R) G).hom))).symm
+  exact hcomp.trans (hpcomp.trans hnat)
+
+private noncomputable def hopfSpecMapAsOver {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
+    (Spec (CommRingCat.of (MonoidAlgebra R H))).asOver (Spec (CommRingCat.of R)) ⟶
+      (Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R)) :=
+  (hopfSpecIsoSpec (R := R) H).inv ≫
+    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+      (coordinateMap R f).hom.op).hom.hom ≫
+    (hopfSpecIsoSpec (R := R) G).hom
+
+private theorem groupSchemeIsoHopfSpec_naturality {G H : FGCommGrpCat.{u}}
+    (f : G ⟶ H) :
+    (groupSchemeMap R f).hom.hom ≫ (groupSchemeIsoHopfSpec (R := R) G).hom =
+      (groupSchemeIsoHopfSpec (R := R) H).hom ≫
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (coordinateMap R f).hom.op).hom.hom := by
+  have h :
+      groupSchemeMap R f ≫ eqToHom (groupScheme_def R G) =
+        eqToHom (groupScheme_def R H) ≫
+          (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+            (coordinateMap R f).hom.op := by
+    rw [groupSchemeMap_def]
+    simp [Category.assoc]
+  exact congrArg (fun k => k.hom.hom) h
+
+private theorem groupSchemeIsoSpec_naturality {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
+    (groupSchemeMap R f).hom.hom ≫ (groupSchemeIsoSpec (R := R) G).hom =
+      (groupSchemeIsoSpec (R := R) H).hom ≫
+        hopfSpecMapAsOver (R := R) f := by
+  unfold groupSchemeIsoSpec hopfSpecMapAsOver
+  rw [Iso.trans_hom, Iso.trans_hom, ← Category.assoc,
+    groupSchemeIsoHopfSpec_naturality]
+  simp [Category.assoc]
+
+/-- The typed scheme-point comparison sends postcomposition by `groupSchemeMap f` to the
+existing contravariant algebra-point map induced by the underlying homomorphism `f`. -/
+theorem groupSchemePointsMulEquiv_groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G ⟶ H)
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R H).X) :
+    groupSchemePointsMulEquiv (R := R) (A := A) G
+        (p ≫ (groupSchemeMap R f).hom.hom) =
+      pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f)
+        (groupSchemePointsMulEquiv (R := R) (A := A) H p) := by
+  -- This crosses the local `groupSchemeMap` and typed-point wrappers to the existing
+  -- coordinate-map action on convolution points; `coordinateMap` supplies the same map.
+  change AlgebraicGeometry.Spec.mapMulEquiv.symm
+      ((p ≫ (groupSchemeMap R f).hom.hom) ≫
+        (groupSchemeIsoSpec (R := R) G).hom) =
+    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R f).hom).app
+      (CommAlgCat.of R A)
+        (AlgebraicGeometry.Spec.mapMulEquiv.symm
+          (p ≫ (groupSchemeIsoSpec (R := R) H).hom))
+  rw [Category.assoc, groupSchemeIsoSpec_naturality, ← Category.assoc]
+  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
+  have hcomp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
+    ((p ≫ (groupSchemeIsoSpec (R := R) H).hom) ≫
+      hopfSpecMapAsOver (R := R) f)
+  have hp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
+    (p ≫ (groupSchemeIsoSpec (R := R) H).hom)
+  have hpcomp := congrArg
+    (fun q => q ≫ hopfSpecMapAsOver (R := R) f) hp.symm
+  have hnat := (CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
+    (coordinateMap R f).hom
+    (AlgebraicGeometry.Spec.mapMulEquiv.symm
+      (p ≫ (groupSchemeIsoSpec (R := R) H).hom))).symm
+  exact hcomp.trans (hpcomp.trans hnat)
 
 /-- Scheme-valued points of `D(G)` over `Spec R` are multiplicative characters `G →* Aˣ`.
 
@@ -223,12 +363,20 @@ theorem schemePointsMulEquiv_multiplicativeCharacterGroup_apply
 /-- A group element `g : G`, viewed as a character of `D(G)`, gives the group-scheme
 morphism `D(G) ⟶ 𝔾ₘ` induced contravariantly by the homomorphism from the lifted
 integer group that sends its standard generator to `g`. -/
-@[expose] noncomputable def characterGroupSchemeMap (G : FGCommGrpCat.{u}) (g : G) :
+noncomputable def characterGroupSchemeMap (G : FGCommGrpCat.{u}) (g : G) :
     groupScheme R G ⟶ multiplicativeGroupScheme R :=
   groupSchemeMap R (FGCommGrpCat.ofHom (uliftZPowersMulEquiv G g))
 
+/-- A scheme-level character is the contravariant diagonalizable-group morphism induced by
+the corresponding homomorphism from the lifted integer group. -/
+theorem characterGroupSchemeMap_def (G : FGCommGrpCat.{u}) (g : G) :
+    characterGroupSchemeMap (R := R) G g =
+      groupSchemeMap R (FGCommGrpCat.ofHom (uliftZPowersMulEquiv G g)) := by
+  rfl
+
 /-- On scheme-valued points, the group-scheme character associated to `g` evaluates the
 corresponding `G`-character at `g`. -/
+@[simp high]
 theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
     (G : FGCommGrpCat.{u}) (g : G)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -236,22 +384,33 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
     multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A)
         (p ≫ (characterGroupSchemeMap (R := R) G g).hom.hom) =
       schemePointsMulEquiv (R := R) (A := A) G p g := by
-  rw [multiplicativeGroupSchemePointsMulEquiv_apply, characterGroupSchemeMap,
+  rw [multiplicativeGroupSchemePointsMulEquiv_apply, characterGroupSchemeMap_def,
     schemePointsMulEquiv_groupSchemeMap, MonoidHom.comp_apply,
     FGCommGrpCat.toMonoidHom_ofHom, uliftZPowersMulEquiv_apply, toAdd_ofAdd, zpow_one]
 
 /-- A cocharacter `psi : G →* Multiplicative ℤ` gives a group-scheme morphism
 `𝔾ₘ ⟶ D(G)`. The target character lattice is universe-lifted only at this scheme
 boundary. -/
-@[expose] noncomputable def cocharacterGroupSchemeMap (G : FGCommGrpCat.{u})
+noncomputable def cocharacterGroupSchemeMap (G : FGCommGrpCat.{u})
     (psi : G →* Multiplicative ℤ) :
     multiplicativeGroupScheme R ⟶ groupScheme R G :=
   groupSchemeMap R <| FGCommGrpCat.ofHom <|
     (MulEquiv.ulift.symm : Multiplicative ℤ ≃*
       ULift.{u} (Multiplicative ℤ)).toMonoidHom.comp psi
 
+/-- A scheme-level cocharacter is the contravariant diagonalizable-group morphism induced by
+the universe-lifted cocharacter lattice homomorphism. -/
+theorem cocharacterGroupSchemeMap_def (G : FGCommGrpCat.{u})
+    (psi : G →* Multiplicative ℤ) :
+    cocharacterGroupSchemeMap (R := R) G psi =
+      groupSchemeMap R (FGCommGrpCat.ofHom
+        ((MulEquiv.ulift.symm : Multiplicative ℤ ≃*
+          ULift.{u} (Multiplicative ℤ)).toMonoidHom.comp psi)) := by
+  rfl
+
 /-- On scheme-valued points, a cocharacter raises the multiplicative-group unit to the
 ordinary integer obtained by evaluating the cocharacter. -/
+@[simp high]
 theorem schemePointsMulEquiv_cocharacterGroupSchemeMap
     (G : FGCommGrpCat.{u}) (psi : G →* Multiplicative ℤ)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -259,26 +418,35 @@ theorem schemePointsMulEquiv_cocharacterGroupSchemeMap
     schemePointsMulEquiv (R := R) (A := A) G
         (p ≫ (cocharacterGroupSchemeMap (R := R) G psi).hom.hom) g =
       multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A) p ^ (psi g).toAdd := by
-  rw [cocharacterGroupSchemeMap, schemePointsMulEquiv_groupSchemeMap,
+  rw [cocharacterGroupSchemeMap_def, schemePointsMulEquiv_groupSchemeMap,
     MonoidHom.comp_apply, FGCommGrpCat.toMonoidHom_ofHom]
   exact schemePointsMulEquiv_multiplicativeCharacterGroup_apply p (psi g)
 
 /-- The `n`-th power endomorphism of the multiplicative group scheme. Its character-lattice
 map sends the lifted standard generator to the lift of `Multiplicative.ofAdd n`. -/
-@[expose] noncomputable def powEndGroupSchemeMap (n : ℤ) :
+noncomputable def powEndGroupSchemeMap (n : ℤ) :
     multiplicativeGroupScheme R ⟶ multiplicativeGroupScheme R :=
   characterGroupSchemeMap (R := R) multiplicativeCharacterGroup
     (ULift.up (Multiplicative.ofAdd n))
 
+/-- The scheme-level power endomorphism is the character associated to the lifted integer
+exponent. -/
+theorem powEndGroupSchemeMap_def (n : ℤ) :
+    powEndGroupSchemeMap (R := R) n =
+      characterGroupSchemeMap (R := R) multiplicativeCharacterGroup
+        (ULift.up (Multiplicative.ofAdd n)) := by
+  rfl
+
 /-- The scheme-level `n`-th power endomorphism raises every scheme-valued point to the
 ordinary integer power `n`. -/
+@[simp high]
 theorem multiplicativeGroupSchemePointsMulEquiv_powEndGroupSchemeMap (n : ℤ)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (multiplicativeGroupScheme R).X) :
     multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A)
         (p ≫ (powEndGroupSchemeMap (R := R) n).hom.hom) =
       multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A) p ^ n := by
-  rw [powEndGroupSchemeMap,
+  rw [powEndGroupSchemeMap_def,
     multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap]
   simpa using schemePointsMulEquiv_multiplicativeCharacterGroup_apply
     (R := R) (A := A) p (Multiplicative.ofAdd n)
@@ -289,8 +457,8 @@ theorem cocharacterGroupSchemeMap_comp_characterGroupSchemeMap
     (G : FGCommGrpCat.{u}) (g : G) (psi : G →* Multiplicative ℤ) :
     cocharacterGroupSchemeMap (R := R) G psi ≫ characterGroupSchemeMap (R := R) G g =
       powEndGroupSchemeMap (R := R) (pairing g psi) := by
-  rw [cocharacterGroupSchemeMap, characterGroupSchemeMap, powEndGroupSchemeMap,
-    characterGroupSchemeMap, ← groupSchemeMap_comp]
+  rw [cocharacterGroupSchemeMap_def, characterGroupSchemeMap_def,
+    powEndGroupSchemeMap_def, characterGroupSchemeMap_def, ← groupSchemeMap_comp]
   congr 1
   apply FGCommGrpCat.hom_ext
   simp only [FGCommGrpCat.toMonoidHom_comp, FGCommGrpCat.toMonoidHom_ofHom]

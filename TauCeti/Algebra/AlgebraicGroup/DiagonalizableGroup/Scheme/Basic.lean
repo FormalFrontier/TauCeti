@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
@@ -36,8 +35,6 @@ ring in `Type u`.
 ## Main declarations
 
 * `TauCeti.DiagonalizableGroup.groupScheme`: the affine group scheme `D(G) = Spec R[G]`.
-* `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv`: the typed comparison between
-  scheme-valued points of `D(G)` and algebra points of `R[G]`.
 * `TauCeti.DiagonalizableGroup.groupScheme_one_left`,
   `TauCeti.DiagonalizableGroup.groupScheme_mul_left`, and
   `TauCeti.DiagonalizableGroup.groupScheme_inv_left`: the underlying scheme maps of its
@@ -89,15 +86,13 @@ noncomputable def groupScheme (G : FGCommGrpCat.{u}) :
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateRing R G).obj)
 
-/-- Scheme-valued points of `D(G)` are the convolution group of algebra maps out of its
-coordinate ring. This typed wrapper keeps the defining identification of `groupScheme`
-with `Spec R[G]` local to this module. -/
-noncomputable def groupSchemePointsMulEquiv {A : Type u} [CommRing A] [Algebra R A]
-    (G : FGCommGrpCat.{u}) :
-    ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) ≃* WithConv (MonoidAlgebra R G →ₐ[R] A) := by
-  unfold groupScheme
-  exact AlgebraicGeometry.Spec.mapMulEquiv.symm
+/-- The diagonalizable group scheme is obtained by applying relative spectrum to its
+coordinate Hopf algebra. -/
+theorem groupScheme_def (G : FGCommGrpCat.{u}) :
+    groupScheme R G =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateRing R G).obj) := by
+  rfl
 
 /-- The scheme underlying `D(G)` is the spectrum of the group algebra `R[G]`. -/
 @[simp]
@@ -167,68 +162,17 @@ noncomputable def groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
     groupScheme R H ⟶ groupScheme R G :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R f).hom.op
 
-/-- The typed scheme-point comparison is natural in the value algebra. -/
-theorem groupSchemePointsMulEquiv_mapValue {A B : Type u} [CommRing A] [CommRing B]
-    [Algebra R A] [Algebra R B] (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] B)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) :
-    groupSchemePointsMulEquiv (R := R) (A := B) G
-        ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) ≫ p) =
-      AlgHom.mapValue (H := MonoidAlgebra R G) phi
-        (groupSchemePointsMulEquiv (R := R) (A := A) G p) := by
-  unfold groupScheme at p
-  unfold groupSchemePointsMulEquiv groupScheme
-  -- This crosses the local typed wrapper from the opaque `groupScheme` target to
-  -- Mathlib's definitionally equal `Spec R[G]` point representation.
-  change AlgebraicGeometry.Spec.mapMulEquiv.symm
-      ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-        (Spec (CommRingCat.of R)) ≫ p) =
-    HopfAlgebra.mapPoints (H := (coordinateRing R G).obj)
-      (CommAlgCat.ofHom phi) (AlgebraicGeometry.Spec.mapMulEquiv.symm p)
-  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-  have hcomp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
-    ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-      (Spec (CommRingCat.of R)) ≫ p)
-  have hp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p
-  have hpcomp := congrArg
-    (fun q => (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-      (Spec (CommRingCat.of R)) ≫ q) hp.symm
-  have hnat := (CommHopfAlgCat.mapMulEquiv_mapValue (coordinateRing R G).obj
-    (CommAlgCat.ofHom phi) (AlgebraicGeometry.Spec.mapMulEquiv.symm p)).symm
-  exact hcomp.trans (hpcomp.trans hnat)
-
-/-- The typed scheme-point comparison sends postcomposition by `groupSchemeMap f` to the
-existing contravariant algebra-point map induced by the underlying homomorphism `f`. -/
-theorem groupSchemePointsMulEquiv_groupSchemeMap {A : Type u} [CommRing A] [Algebra R A]
-    {G H : FGCommGrpCat.{u}} (f : G ⟶ H)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R H).X) :
-    groupSchemePointsMulEquiv (R := R) (A := A) G
-        (p ≫ (groupSchemeMap R f).hom.hom) =
-      pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f)
-        (groupSchemePointsMulEquiv (R := R) (A := A) H p) := by
-  unfold groupScheme at p
-  unfold groupSchemePointsMulEquiv groupSchemeMap groupScheme
-  -- This crosses the local `groupSchemeMap` and typed-point wrappers to the existing
-  -- coordinate-map action on convolution points; `coordinateMap` supplies the same map.
-  change AlgebraicGeometry.Spec.mapMulEquiv.symm
-      (p ≫ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (coordinateMap R f).hom.op).hom.hom) =
-    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R f).hom).app
-      (CommAlgCat.of R A) (AlgebraicGeometry.Spec.mapMulEquiv.symm p)
-  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-  have hcomp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
-    (p ≫ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (coordinateMap R f).hom.op).hom.hom)
-  have hp := AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p
-  have hpcomp := congrArg
-    (fun q => q ≫ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (coordinateMap R f).hom.op).hom.hom) hp.symm
-  have hnat := (CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (coordinateMap R f).hom
-    (AlgebraicGeometry.Spec.mapMulEquiv.symm p)).symm
-  exact hcomp.trans (hpcomp.trans hnat)
+/-- The morphism of diagonalizable group schemes is obtained by applying relative spectrum to
+the coordinate Hopf-algebra morphism. -/
+theorem groupSchemeMap_def {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
+    groupSchemeMap R f =
+      eqToHom (groupScheme_def R H) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R f).hom.op ≫
+        eqToHom (groupScheme_def R G).symm := by
+  apply (conj_eqToHom_iff_heq _ _
+    (groupScheme_def R H) (groupScheme_def R G)).2
+  unfold groupSchemeMap
+  rfl
 
 /-- Under the identifications of its source and target with spectra, the scheme morphism
 underlying `groupSchemeMap f` is induced by the coordinate Hopf-algebra morphism

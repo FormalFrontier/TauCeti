@@ -134,13 +134,22 @@ theorem schemePointsMulEquiv_mapValue [Finite sigma] (phi : A →ₐ[R] B)
 
 /-- A character in the split torus character lattice gives a group-scheme morphism to
 the multiplicative group scheme. -/
-@[expose] noncomputable def characterGroupSchemeMap [Finite sigma] (m : sigma →₀ ℤ) :
+noncomputable def characterGroupSchemeMap [Finite sigma] (m : sigma →₀ ℤ) :
     groupScheme R sigma ⟶ DiagonalizableGroup.multiplicativeGroupScheme R :=
   DiagonalizableGroup.characterGroupSchemeMap (R := R) (characterGroup sigma)
     (Multiplicative.ofAdd m)
 
+/-- A split-torus scheme-level character is the diagonalizable-group character associated to
+its multiplicative character-lattice element. -/
+theorem characterGroupSchemeMap_def [Finite sigma] (m : sigma →₀ ℤ) :
+    characterGroupSchemeMap (R := R) m =
+      DiagonalizableGroup.characterGroupSchemeMap (R := R) (characterGroup sigma)
+        (Multiplicative.ofAdd m) := by
+  rfl
+
 /-- On scheme-valued points, a split-torus character is the Laurent monomial with exponent
 vector `m`. -/
+@[simp high]
 theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite sigma]
     (m : sigma →₀ ℤ)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -148,6 +157,7 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
     DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
         (R := R) (A := A) (p ≫ (characterGroupSchemeMap (R := R) m).hom.hom) =
       m.prod fun i n => schemePointsMulEquiv (R := R) (A := A) p i ^ n := by
+  rw [characterGroupSchemeMap_def]
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   calc
     _ = DiagonalizableGroup.schemePointsMulEquiv
@@ -171,13 +181,23 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
 
 /-- A split-torus cocharacter gives a group-scheme morphism from the multiplicative group
 scheme. -/
-@[expose] noncomputable def cocharacterGroupSchemeMap [Finite sigma]
+noncomputable def cocharacterGroupSchemeMap [Finite sigma]
     (psi : Multiplicative (sigma →₀ ℤ) →* Multiplicative ℤ) :
     DiagonalizableGroup.multiplicativeGroupScheme R ⟶ groupScheme R sigma :=
   DiagonalizableGroup.cocharacterGroupSchemeMap (R := R) (characterGroup sigma) psi
 
+/-- A split-torus scheme-level cocharacter is the corresponding diagonalizable-group
+cocharacter of its multiplicative character lattice. -/
+theorem cocharacterGroupSchemeMap_def [Finite sigma]
+    (psi : Multiplicative (sigma →₀ ℤ) →* Multiplicative ℤ) :
+    cocharacterGroupSchemeMap (R := R) (sigma := sigma) psi =
+      DiagonalizableGroup.cocharacterGroupSchemeMap
+        (R := R) (characterGroup sigma) psi := by
+  rfl
+
 /-- On scheme-valued points, a split-torus cocharacter raises the input unit to the
 integer specified by each cocharacter coordinate. -/
+@[simp high]
 theorem schemePointsMulEquiv_cocharacterGroupSchemeMap [Finite sigma]
     (psi : Multiplicative (sigma →₀ ℤ) →* Multiplicative ℤ)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -187,7 +207,7 @@ theorem schemePointsMulEquiv_cocharacterGroupSchemeMap [Finite sigma]
       DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
         (R := R) (A := A) p ^ cocharEquiv psi i := by
   rw [schemePointsMulEquiv, MulEquiv.trans_apply, freeAbelianCharEquiv_apply,
-    cocharacterGroupSchemeMap,
+    cocharacterGroupSchemeMap_def,
     DiagonalizableGroup.schemePointsMulEquiv_cocharacterGroupSchemeMap,
     cocharEquiv_apply]
 
@@ -200,7 +220,7 @@ theorem cocharacterGroupSchemeMap_comp_characterGroupSchemeMap [Finite sigma]
         characterGroupSchemeMap (R := R) m =
       DiagonalizableGroup.powEndGroupSchemeMap (R := R)
         (latticePairing m (Additive.ofMul psi)) := by
-  rw [cocharacterGroupSchemeMap, characterGroupSchemeMap, latticePairing_ofMul]
+  rw [cocharacterGroupSchemeMap_def, characterGroupSchemeMap_def, latticePairing_ofMul]
   exact DiagonalizableGroup.cocharacterGroupSchemeMap_comp_characterGroupSchemeMap
     (R := R) (characterGroup sigma) (Multiplicative.ofAdd m) psi
 
