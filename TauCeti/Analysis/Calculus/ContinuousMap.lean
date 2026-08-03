@@ -7,6 +7,8 @@ module
 public import Mathlib.Analysis.Calculus.ContDiff.Comp
 public import Mathlib.Analysis.Calculus.MeanValue
 public import Mathlib.Analysis.Normed.Operator.Bilinear
+public import Mathlib.MeasureTheory.Integral.DominatedConvergence
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.Topology.ContinuousMap.Compact
 public import Mathlib.Topology.UniformSpace.HeineCantor
 
@@ -22,6 +24,8 @@ spaces of continuous functions over a compact domain.
   continuous linear maps, as a bounded bilinear operator.
 * `ContinuousMap.hasFDerivAt_postcomp`: the derivative of pointwise postcomposition by a `C¹` map.
 * `ContinuousMap.contDiff_postcomp`: finite-order or smooth pointwise postcomposition.
+* `ContinuousMap.unitIntervalIntegral`: the Volterra integral operator on continuous paths over
+  the unit interval.
 
 ## References
 
@@ -70,6 +74,60 @@ noncomputable def applyContinuousLinearMap :
 theorem applyContinuousLinearMap_apply (A : C(K, E →L[𝕜] F)) (f : C(K, E)) (x : K) :
     applyContinuousLinearMap A f x = A x (f x) :=
   by simp [applyContinuousLinearMap]
+
+end ContinuousMap
+
+namespace ContinuousMap
+
+open MeasureTheory
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+
+/-- Volterra integration as a continuous linear operator on continuous paths over the unit
+interval. The input is extended constantly outside the interval before integration. -/
+noncomputable def unitIntervalIntegral :
+    C(Set.Icc (0 : ℝ) 1, E) →L[ℝ] C(Set.Icc (0 : ℝ) 1, E) := by
+  let primitive (f : C(Set.Icc (0 : ℝ) 1, E)) : C(Set.Icc (0 : ℝ) 1, E) :=
+    ⟨fun t ↦ ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s),
+      (intervalIntegral.continuous_primitive
+        (fun a b ↦ (f.continuous.comp continuous_projIcc).intervalIntegrable a b) 0).comp
+          continuous_subtype_val⟩
+  let L : C(Set.Icc (0 : ℝ) 1, E) →ₗ[ℝ] C(Set.Icc (0 : ℝ) 1, E) :=
+    { toFun := primitive
+      map_add' := fun f g ↦ by
+        ext t
+        exact intervalIntegral.integral_add
+          ((f.continuous.comp continuous_projIcc).intervalIntegrable _ _)
+          ((g.continuous.comp continuous_projIcc).intervalIntegrable _ _)
+      map_smul' := fun c f ↦ by
+        ext t
+        change (∫ s in (0 : ℝ)..(t : ℝ),
+          c • f (Set.projIcc 0 1 zero_le_one s)) =
+            c • ∫ s in (0 : ℝ)..(t : ℝ),
+              f (Set.projIcc 0 1 zero_le_one s)
+        simpa only [ContinuousMap.smul_apply] using
+          intervalIntegral.integral_smul c
+            (fun s ↦ f (Set.projIcc 0 1 zero_le_one s)) }
+  exact LinearMap.mkContinuous L 1 fun f ↦ by
+    rw [one_mul]
+    apply (ContinuousMap.norm_le _ (norm_nonneg f)).2
+    intro t
+    calc
+      ‖primitive f t‖ ≤ ‖f‖ * |(t : ℝ) - 0| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const fun s _ ↦
+          ContinuousMap.norm_coe_le_norm f (Set.projIcc 0 1 zero_le_one s)
+      _ ≤ ‖f‖ := by
+        rw [sub_zero, abs_of_nonneg t.2.1]
+        exact mul_le_of_le_one_right (norm_nonneg f) t.2.2
+
+omit [CompleteSpace E] in
+@[simp]
+theorem unitIntervalIntegral_apply (f : C(Set.Icc (0 : ℝ) 1, E))
+    (t : Set.Icc (0 : ℝ) 1) :
+    unitIntervalIntegral f t =
+      ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s) := by
+  rw [unitIntervalIntegral]
+  rfl
 
 end ContinuousMap
 
