@@ -46,6 +46,10 @@ theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
   · exact Subrepresentation.toSubmodule_injective (hσ.trans hbot.symm)
   · exact Subrepresentation.toSubmodule_injective (hσ.trans htop.symm)
 
+/-- The trivial representation of a monoid on the base field is irreducible, being a line. -/
+instance isIrreducible_trivial_self : (_root_.Representation.trivial k G k).IsIrreducible :=
+  isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+
 end Representation
 
 end TauCeti
