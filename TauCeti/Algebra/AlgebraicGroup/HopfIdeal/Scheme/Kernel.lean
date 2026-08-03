@@ -104,6 +104,65 @@ private noncomputable def kernelSpecPullbackIso (f : H ⟶ K) :
       (quotientKernelHopfIdealAlgEquiv f).toRingEquiv.toCommRingCatIso.op).symm ≪≫
       (pullbackSpecIso H K R).symm
 
+private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeLeft (f : H ⟶ K) :
+    letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+    letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+    (quotientKernelHopfIdealAlgEquiv f).toRingEquiv.symm.toRingHom.comp
+      (Algebra.TensorProduct.includeLeftRingHom (R := ↥H) (A := ↥K) (B := R)) =
+        (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom.toRingHom := by
+  let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+  let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+  rw [← AlgEquiv.symm_toRingEquiv]
+  ext k
+  simp only [RingHom.comp_apply, Algebra.TensorProduct.includeLeftRingHom_apply]
+  calc
+    (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv.toRingHom (k ⊗ₜ[↥H] 1) =
+        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv (k ⊗ₜ[↥H] 1) :=
+      congrFun (RingEquiv.coe_toRingHom
+        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv) _
+    _ = (quotientKernelHopfIdealAlgEquiv f).symm (k ⊗ₜ[↥H] 1) :=
+      congrFun (AlgEquiv.coe_ringEquiv (quotientKernelHopfIdealAlgEquiv f).symm) _
+    _ = (mkQuotient K (kernelHopfIdeal f)).hom k := by
+      rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mkQuotient_apply, map_one,
+        one_mul, Ideal.Quotient.mkₐ_eq_mk]
+    _ = (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom k :=
+      (congrFun (BialgHom.coe_toAlgHom (mkQuotient K (kernelHopfIdeal f)).hom) k).symm
+    _ = (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom.toRingHom k :=
+      (congrFun (AlgHom.coe_toRingHom
+        (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom) k).symm
+
+private lemma quotientKernelHopfIdealAlgEquiv_symm_comp_includeRight (f : H ⟶ K) :
+    letI : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+    letI : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+    (quotientKernelHopfIdealAlgEquiv f).toRingEquiv.symm.toRingHom.comp
+      (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom =
+        algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal) := by
+  let : Algebra ↥H ↥K := f.hom.toAlgHom.toAlgebra
+  let : Algebra ↥H R := (Bialgebra.counitAlgHom R ↥H).toAlgebra
+  rw [← AlgEquiv.symm_toRingEquiv]
+  ext r
+  simp only [RingHom.comp_apply]
+  calc
+    (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv.toRingHom
+        ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) =
+        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv
+          ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) :=
+      congrFun (RingEquiv.coe_toRingHom
+        (quotientKernelHopfIdealAlgEquiv f).symm.toRingEquiv) _
+    _ = (quotientKernelHopfIdealAlgEquiv f).symm
+          ((Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r) :=
+      congrFun (AlgEquiv.coe_ringEquiv (quotientKernelHopfIdealAlgEquiv f).symm) _
+    _ = (quotientKernelHopfIdealAlgEquiv f).symm (1 ⊗ₜ[↥H] r) := by
+      rw [show
+        (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)).toRingHom r =
+          (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R)) r from
+            congrFun (AlgHom.coe_toRingHom
+              (Algebra.TensorProduct.includeRight (R := ↥H) (A := ↥K) (B := R))) r,
+        Algebra.TensorProduct.includeRight_apply]
+    _ = algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal) r := by
+      rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mul_one,
+        Ideal.Quotient.mk_algebraMap]
+
 private lemma kernelSpecPullbackIso_hom_fst (f : H ⟶ K) :
     (kernelSpecPullbackIso f).hom ≫
         pullback.fst
@@ -120,11 +179,7 @@ private lemma kernelSpecPullbackIso_hom_fst (f : H ⟶ K) :
   rw [← Spec.map_comp, Spec.map_inj]
   rw [← CommRingCat.ofHom_comp]
   congr 1
-  ext k
-  change (quotientKernelHopfIdealAlgEquiv f).symm (k ⊗ₜ[↥H] 1) =
-    (mkQuotient K (kernelHopfIdeal f)).hom k
-  rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mkQuotient_apply, map_one,
-    one_mul, Ideal.Quotient.mkₐ_eq_mk]
+  exact quotientKernelHopfIdealAlgEquiv_symm_comp_includeLeft f
 
 private lemma kernelSpecPullbackIso_hom_snd (f : H ⟶ K) :
     (kernelSpecPullbackIso f).hom ≫
@@ -142,11 +197,7 @@ private lemma kernelSpecPullbackIso_hom_snd (f : H ⟶ K) :
   rw [← Spec.map_comp, Spec.map_inj]
   rw [← CommRingCat.ofHom_comp]
   congr 1
-  ext r
-  change (quotientKernelHopfIdealAlgEquiv f).symm (1 ⊗ₜ[↥H] r) =
-    algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal) r
-  rw [quotientKernelHopfIdealAlgEquiv_symm_tmul, mul_one,
-    Ideal.Quotient.mk_algebraMap]
+  exact quotientKernelHopfIdealAlgEquiv_symm_comp_includeRight f
 
 private lemma isPullback_kernelSpec_scheme (f : H ⟶ K) :
     IsPullback
@@ -162,6 +213,41 @@ private lemma isPullback_kernelSpec_scheme (f : H ⟶ K) :
   rw [← kernelSpecPullbackIso_hom_fst f, ← kernelSpecPullbackIso_hom_snd f,
     Category.assoc, Category.assoc, pullback.condition]
 
+-- The following four lemmas isolate the underlying scheme maps of the group-object square.
+-- In particular, the two zero morphisms become the structural map and the identity section,
+-- rather than being left to unfold inside the pullback proof.
+private lemma kernelSpecι_underlying (f : H ⟶ K) :
+    (Over.forget (Spec (CommRingCat.of R))).map
+        ((Grp.forget (Over (Spec (CommRingCat.of R)))).map (kernelSpecι f)) =
+      Spec.map (CommRingCat.ofHom
+        (mkQuotient K (kernelHopfIdeal f)).hom.toAlgHom.toRingHom) := by
+  rw [kernelSpecι_def, quotientSpecι_def]
+  rfl
+
+private lemma kernelSpec_to_trivial_underlying (f : H ⟶ K) :
+    (Over.forget (Spec (CommRingCat.of R))).map
+        ((Grp.forget (Over (Spec (CommRingCat.of R)))).map
+          (0 : kernelSpec f ⟶ Grp.trivial (Over (Spec (CommRingCat.of R))))) =
+      Spec.map (CommRingCat.ofHom
+        (algebraMap R (K ⧸ (kernelHopfIdeal f).toIdeal))) := by
+  rfl
+
+private lemma hopfSpec_map_underlying (f : H ⟶ K) :
+    (Over.forget (Spec (CommRingCat.of R))).map
+        ((Grp.forget (Over (Spec (CommRingCat.of R)))).map
+          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op)) =
+      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
+  rfl
+
+private lemma trivial_to_hopfSpec_underlying (H : _root_.CommHopfAlgCat.{u} R) :
+    (Over.forget (Spec (CommRingCat.of R))).map
+        ((Grp.forget (Over (Spec (CommRingCat.of R)))).map
+          (0 : Grp.trivial (Over (Spec (CommRingCat.of R))) ⟶
+            (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H))) =
+      Spec.map (CommRingCat.ofHom
+        (Bialgebra.counitAlgHom R H).toRingHom) := by
+  rfl
+
 /-- The Hopf spectrum of the kernel quotient is the scheme-theoretic fibre over the identity.
 The horizontal maps are the kernel inclusion and the unique map to the trivial group scheme;
 the vertical maps are the morphism induced by `f` and the identity section, respectively. -/
@@ -173,9 +259,9 @@ theorem isPullback_kernelSpec (f : H ⟶ K) :
         (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)) := by
   apply IsPullback.of_map_of_faithful (Grp.forget _)
   apply IsPullback.of_map_of_faithful (Over.forget _)
-  convert isPullback_kernelSpec_scheme f using 1 <;> try rfl
-  rw [kernelSpecι_def, quotientSpecι_def]
-  rfl
+  rw [kernelSpecι_underlying, kernelSpec_to_trivial_underlying,
+    hopfSpec_map_underlying, trivial_to_hopfSpec_underlying]
+  exact isPullback_kernelSpec_scheme f
 
 end CommHopfAlgCat
 
