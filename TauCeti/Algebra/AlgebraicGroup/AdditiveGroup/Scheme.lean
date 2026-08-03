@@ -326,7 +326,11 @@ lemma schemePointsMulEquiv_symm_apply (a : Multiplicative A) :
   rfl
 
 /-- The algebra map underlying the scheme point associated to `a` sends the additive coordinate
-`ι(1)` to `a`. -/
+`ι(1)` to `a`.
+
+This is intentionally not a simp lemma: its left-hand side already reduces to the right-hand side
+through the simp lemmas for the inverse scheme-points equivalence and the additive coordinate, so
+tagging this result would be rejected by the `simpNF` lint as redundant. -/
 lemma schemePointsMulEquiv_symm_apply_ι (a : Multiplicative A) :
     ((groupSchemePointMulEquiv A).symm
       ((schemePointsMulEquiv A).symm a)).ofConv
