@@ -21,7 +21,9 @@ theory rests on: the row and column groups meet trivially, because a cell is det
 together with its column; and each of them is the product of the symmetric groups of the rows,
 respectively columns, of `μ`.  It also records the transpositions that the two groups contain:
 swapping two labels of a common row lies in the row group, and swapping two labels of a common
-column lies in the column group.
+column lies in the column group.  Finally it recognises the two extreme shapes: the row group is
+everything exactly when the diagram has at most one row, the column group is everything exactly
+when it has at most one column, and either of those forces the other group to be trivial.
 
 ## References
 
@@ -155,6 +157,78 @@ theorem colSubgroupMulEquiv_symm_apply (t : YoungTableau μ) (σ : ∀ j, Equiv.
         (σ (colIndex t k) (colFiberEquiv t (colIndex t k) ⟨k, rfl⟩)) : Fin μ.card) := by
   rw [colSubgroupMulEquiv, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
     fiberSubgroupMulEquivPiPerm_trans_piCongrRight_symm_apply]
+
+/-! ### The extreme shapes -/
+
+/-- A diagram whose zeroth column has at most one cell has only one row, so every label of a
+tableau on it lies in row `0`. -/
+theorem rowIndex_eq_zero_of_colLen_le_one (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1)
+    (k : Fin μ.card) : rowIndex t k = 0 := by
+  have hmem : (t.symm k : ℕ × ℕ) ∈ μ := (YoungDiagram.mem_cells _).mp (t.symm k).2
+  have hlt : (t.symm k : ℕ × ℕ).1 < μ.colLen (t.symm k : ℕ × ℕ).2 :=
+    YoungDiagram.mem_iff_lt_colLen.mp hmem
+  have hle : μ.colLen (t.symm k : ℕ × ℕ).2 ≤ μ.colLen 0 := μ.colLen_anti 0 _ (Nat.zero_le _)
+  rw [rowIndex_def]
+  omega
+
+/-- A diagram whose zeroth row has at most one cell has only one column, so every label of a
+tableau on it lies in column `0`. -/
+theorem colIndex_eq_zero_of_rowLen_le_one (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1)
+    (k : Fin μ.card) : colIndex t k = 0 := by
+  have hmem : (t.symm k : ℕ × ℕ) ∈ μ := (YoungDiagram.mem_cells _).mp (t.symm k).2
+  have hlt : (t.symm k : ℕ × ℕ).2 < μ.rowLen (t.symm k : ℕ × ℕ).1 :=
+    YoungDiagram.mem_iff_lt_rowLen.mp hmem
+  have hle : μ.rowLen (t.symm k : ℕ × ℕ).1 ≤ μ.rowLen 0 := μ.rowLen_anti 0 _ (Nat.zero_le _)
+  rw [colIndex_def]
+  omega
+
+/-- The row group of a tableau is everything exactly when its shape has at most one row: with a
+single row every permutation of the labels preserves it, while two rows are separated by a
+transposition. -/
+@[simp]
+theorem rowSubgroup_eq_top_iff (t : YoungTableau μ) : rowSubgroup t = ⊤ ↔ μ.colLen 0 ≤ 1 := by
+  refine ⟨fun h => ?_, fun h => by ext σ; simp [rowIndex_eq_zero_of_colLen_le_one t h]⟩
+  by_contra hc
+  obtain ⟨k, hk⟩ : ∃ k : Fin μ.card, rowIndex t k = 0 :=
+    ⟨t ⟨(0, 0), (YoungDiagram.mem_cells _).mpr
+      (YoungDiagram.mem_iff_lt_colLen.mpr (by omega))⟩, rowIndex_apply t _⟩
+  obtain ⟨l, hl⟩ : ∃ l : Fin μ.card, rowIndex t l = 1 :=
+    ⟨t ⟨(1, 0), (YoungDiagram.mem_cells _).mpr
+      (YoungDiagram.mem_iff_lt_colLen.mpr (by omega))⟩, rowIndex_apply t _⟩
+  have hswap := mem_rowSubgroup.mp (by rw [h]; exact Subgroup.mem_top (Equiv.swap k l)) k
+  rw [Equiv.swap_apply_left, hk, hl] at hswap
+  omega
+
+/-- The column group of a tableau is everything exactly when its shape has at most one column:
+with a single column every permutation of the labels preserves it, while two columns are
+separated by a transposition. -/
+@[simp]
+theorem colSubgroup_eq_top_iff (t : YoungTableau μ) : colSubgroup t = ⊤ ↔ μ.rowLen 0 ≤ 1 := by
+  refine ⟨fun h => ?_, fun h => by ext σ; simp [colIndex_eq_zero_of_rowLen_le_one t h]⟩
+  by_contra hc
+  obtain ⟨k, hk⟩ : ∃ k : Fin μ.card, colIndex t k = 0 :=
+    ⟨t ⟨(0, 0), (YoungDiagram.mem_cells _).mpr
+      (YoungDiagram.mem_iff_lt_rowLen.mpr (by omega))⟩, colIndex_apply t _⟩
+  obtain ⟨l, hl⟩ : ∃ l : Fin μ.card, colIndex t l = 1 :=
+    ⟨t ⟨(0, 1), (YoungDiagram.mem_cells _).mpr
+      (YoungDiagram.mem_iff_lt_rowLen.mpr (by omega))⟩, colIndex_apply t _⟩
+  have hswap := mem_colSubgroup.mp (by rw [h]; exact Subgroup.mem_top (Equiv.swap k l)) k
+  rw [Equiv.swap_apply_left, hk, hl] at hswap
+  omega
+
+/-- The row and column groups meet trivially, so a full row group forces a trivial column
+group. -/
+theorem colSubgroup_eq_bot_of_rowSubgroup_eq_top (t : YoungTableau μ) (h : rowSubgroup t = ⊤) :
+    colSubgroup t = ⊥ := by
+  have hinf := rowSubgroup_inf_colSubgroup_eq_bot t
+  rwa [h, top_inf_eq] at hinf
+
+/-- The row and column groups meet trivially, so a full column group forces a trivial row
+group. -/
+theorem rowSubgroup_eq_bot_of_colSubgroup_eq_top (t : YoungTableau μ) (h : colSubgroup t = ⊤) :
+    rowSubgroup t = ⊥ := by
+  have hinf := rowSubgroup_inf_colSubgroup_eq_bot t
+  rwa [h, inf_top_eq] at hinf
 
 end YoungTableau
 

@@ -6,7 +6,9 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
+public import Mathlib.LinearAlgebra.Matrix.Trace
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
+public import TauCeti.LinearAlgebra.UnitaryGroup
 public import TauCeti.Topology.Algebra.UnitaryGroup
 
 /-!
@@ -33,6 +35,10 @@ and identifies it with Mathlib's `Circle` as a topological group. Three facts pi
 * `TauCeti.SU2.mem_torus_iff_exists_torusExp`: every element of `T` is `diag (e^{iθ}, e^{-iθ})`,
   the parametrisation the Weyl integration and character formulas for `SU(2)` are stated in.
 
+It also records the structural identity `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its
+conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an element of `SU(2)` is a
+scalar matrix.
+
 ## Main definitions
 
 * `TauCeti.SU2`: the group `SU(2)`.
@@ -53,6 +59,16 @@ topology. -/
 abbrev SU2 : Type := Matrix.specialUnitaryGroup (Fin 2) ℂ
 
 namespace SU2
+
+/-- An element of `SU(2)` and its conjugate transpose add up to `(tr g) • 1`: the conjugate
+transpose of `g` is its adjugate, and a `2 × 2` matrix plus its adjugate is the trace times the
+identity. Equivalently, the Hermitian part of `g` is a scalar matrix. -/
+theorem coe_add_star (g : SU2) :
+    (g : Matrix (Fin 2) (Fin 2) ℂ) + star (g : Matrix (Fin 2) (Fin 2) ℂ)
+      = Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) • 1 := by
+  rw [Matrix.specialUnitaryGroup.star_eq_adjugate, Matrix.adjugate_fin_two, Matrix.trace_fin_two]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [add_comm]
 
 /-! ### The diagonal matrices `diag (z, z⁻¹)` -/
 
