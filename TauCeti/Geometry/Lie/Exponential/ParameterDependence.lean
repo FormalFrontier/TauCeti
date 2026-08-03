@@ -24,6 +24,8 @@ tangent vectors.
 * `mulInvariantCoordinateLinearMap`: the coordinate field as an operator on its generating vector.
 * `contDiffAt_mulInvariantCoordinateLinearMap_identity`: this operator is smooth at the identity
   coordinate.
+* `hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity`: the linearization of the
+  parameterized coordinate field at zero and the identity is projection onto the parameter.
 * `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local solution family on a uniform
   closed neighborhood of the zero vector and the identity coordinate, jointly continuous and
   uniformly Lipschitz in its initial state.
@@ -260,6 +262,42 @@ theorem contDiffAt_mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G]
   simp [e₂, b, ContinuousLinearEquiv.piRing, mulInvariantCoordinateLinearMap_apply,
     ContinuousLinearEquiv.refl_apply]
 
+/-- At the zero generating vector over the identity coordinate, the parameterized coordinate
+vector field has strict derivative equal to projection onto the generating-vector coordinate. -/
+theorem hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity
+    [IsManifold I 1 G] [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G]
+    [BoundarylessManifold I G] :
+    HasStrictFDerivAt (mulInvariantCoordinateVectorField (I := I) (G := G))
+      (ContinuousLinearMap.fst ℝ E E)
+      ((0 : E), extChartAt I (1 : G) (1 : G)) := by
+  let _ : ContMDiffMul I (∞ + 1) G := by
+    simpa using (inferInstance : ContMDiffMul I ∞ G)
+  let A : E → E →L[ℝ] E := mulInvariantCoordinateLinearMap (I := I) (G := G)
+  let p : E × E := ((0 : E), extChartAt I (1 : G) (1 : G))
+  have hAcd : ContDiffAt ℝ ∞ (fun q : E × E => A q.2) p :=
+    ContDiffAt.fun_comp p
+      (contDiffAt_mulInvariantCoordinateLinearMap_identity (I := I) (G := G)
+        BoundarylessManifold.isInteriorPoint) contDiffAt_snd
+  have hA : DifferentiableAt ℝ (fun q : E × E => A q.2) p :=
+    hAcd.differentiableAt (by simp)
+  have h := hA.hasFDerivAt.clm_apply (hasFDerivAt_fst (p := p))
+  have hderiv : HasFDerivAt (mulInvariantCoordinateVectorField (I := I) (G := G))
+      (ContinuousLinearMap.fst ℝ E E) p := by
+    rw [show mulInvariantCoordinateVectorField (I := I) (G := G) =
+        fun q : E × E => (A q.2) q.1 by
+      funext q
+      exact (mulInvariantCoordinateLinearMap_apply (I := I) (G := G) q.2 q.1).symm]
+    apply h.congr_fderiv
+    apply ContinuousLinearMap.ext
+    rintro ⟨q₁, q₂⟩
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.coe_fst',
+      p, map_zero, A, add_zero]
+    change mulInvariantCoordinateLinearMap (I := I) (G := G)
+      (I (chartAt H (1 : G) (1 : G))) q₁ = q₁
+    rw [mulInvariantCoordinateLinearMap_identity]
+    rfl
+  exact (contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := ∞)
+    BoundarylessManifold.isInteriorPoint).hasStrictFDerivAt' hderiv (by simp)
 /-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
 a single solution family that is continuous jointly in its initial condition and time and
 uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
