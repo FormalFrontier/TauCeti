@@ -751,19 +751,12 @@ theorem exists_hyperbolicLength_eq_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w�
   set p : ℝ := pseudoHyperbolicExpr w z with hpdef
   set m : ℂ := (w - z) / (1 - (starRingEnd ℂ) z * w) with hmdef
   have hmnorm : ‖m‖ = p := by rw [hpdef, pseudoHyperbolicExpr_def, hmdef]
-  set u : ℂ := if p = 0 then 1 else m / (p : ℂ) with hudef
-  have hunorm : ‖u‖ = 1 := by
-    by_cases h : p = 0
-    · simp [hudef, h]
-    · rw [hudef, if_neg h, norm_div, hmnorm, Complex.norm_real, Real.norm_eq_abs,
-        abs_of_nonneg hp0, div_self h]
+  -- A unit vector pointing along `m`. `Complex.norm_mul_exp_arg_mul_I` supplies one for *every*
+  -- `m`, including `m = 0`, so the direction needs no case split on whether `p` vanishes.
+  set u : ℂ := Complex.exp ((m.arg : ℝ) * Complex.I) with hudef
+  have hunorm : ‖u‖ = 1 := Complex.norm_exp_ofReal_mul_I _
   have hup : u * (p : ℂ) = m := by
-    by_cases h : p = 0
-    · have hm0 : m = 0 := norm_eq_zero.mp (by rw [hmnorm, h])
-      rw [hudef, if_pos h, h, hm0]
-      simp
-    · rw [hudef, if_neg h, div_mul_cancel₀]
-      exact_mod_cast h
+    rw [hudef, ← hmnorm, mul_comm, Complex.norm_mul_exp_arg_mul_I]
   have hρderiv : ∀ t : ℝ, HasDerivAt (fun s : ℝ => u * (s : ℂ)) u t := fun t => by
     simpa using (Complex.ofRealCLM.hasDerivAt (x := t)).const_mul u
   have hρmem : ∀ t ∈ Icc (0 : ℝ) p, ‖u * (t : ℂ)‖ < 1 := fun t ht => by
