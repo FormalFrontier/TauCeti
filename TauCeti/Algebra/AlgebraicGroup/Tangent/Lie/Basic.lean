@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Basic
 public import Mathlib.Algebra.Lie.OfAssociative
-public import Mathlib.RingTheory.Bialgebra.TensorProduct
 
 /-!
 # The Lie algebra of the tangent space at the identity
