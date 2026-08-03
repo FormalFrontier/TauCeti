@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Coalgebra.Convolution
+public import Mathlib.RingTheory.Bialgebra.Convolution
+public import TauCeti.Algebra.Bialgebra.TensorProduct
 
 /-!
 # Comultiplication as a convolution product
@@ -17,6 +18,8 @@ canonical inclusions `c ↦ c ⊗ₜ 1` and `c ↦ 1 ⊗ₜ c` of `C` into its t
 
 * `TauCeti.Coalgebra.comul_eq_convMul_includeLeft_includeRight`: comultiplication as the
   convolution product of the two tensor inclusions.
+* `TauCeti.Bialgebra.comulPoint_eq_include_mul`: the corresponding identity for the
+  algebra-hom points of a commutative bialgebra.
 -/
 
 public section
@@ -57,5 +60,30 @@ theorem comul_eq_convMul_includeLeft_includeRight :
   simp
 
 end Coalgebra
+
+namespace Bialgebra
+
+variable {R : Type*} {H : Type*} [CommSemiring R] [CommSemiring H]
+  [_root_.Bialgebra R H]
+
+/-- The comultiplication point of a commutative bialgebra is the convolution product of the
+two canonical tensor-factor points. This is the algebra-hom form of
+`Coalgebra.comul_eq_convMul_includeLeft_includeRight`. -/
+theorem comulPoint_eq_include_mul :
+    toConv (Bialgebra.comulAlgHom R H) =
+      toConv (Bialgebra.TensorProduct.includeLeft
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom *
+      toConv (Bialgebra.TensorProduct.includeRight
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom := by
+  apply WithConv.ofConv_injective
+  apply AlgHom.toLinearMap_injective
+  apply WithConv.toConv_injective
+  rw [AlgHom.toLinearMap_convMul]
+  simpa only [Bialgebra.toLinearMap_comulAlgHom,
+    Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    Bialgebra.TensorProduct.includeRight_toAlgHom] using
+      (Coalgebra.comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
+
+end Bialgebra
 
 end TauCeti

@@ -92,6 +92,15 @@ noncomputable def action (Theta : PointRepresentation (R := R) (H := H) (V := V)
   Theta.app A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A)
 
+/-- The concrete point action is the natural-transformation component followed by the canonical
+scalar-extension functor-object transport. -/
+theorem action_def (Theta : PointRepresentation (R := R) (H := H) (V := V))
+    (A : CommAlgCat.{max u v w} R) :
+    Theta.action A =
+      Theta.app A ≫
+        eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A) := by
+  rfl
+
 /-- Point representations are equal when their concrete actions agree at every value algebra and
 point. -/
 @[ext]
@@ -432,19 +441,6 @@ private theorem ofHom_liftedComul_apply (a : ULift.{max u v w} H) :
       liftedComulAlgHom (R := R) (H := H) V a :=
   rfl
 
-private theorem comulPoint_eq_include_mul :
-    toConv (Bialgebra.comulAlgHom R H) =
-      toConv (includeLeftAlgHom (R := R) (H := H)) *
-        toConv (includeRightAlgHom (R := R) (H := H)) := by
-  apply WithConv.ofConv_injective
-  apply AlgHom.toLinearMap_injective
-  apply WithConv.toConv_injective
-  rw [AlgHom.toLinearMap_convMul]
-  simpa only [Bialgebra.toLinearMap_comulAlgHom,
-    Bialgebra.TensorProduct.includeLeft_toAlgHom,
-    Bialgebra.TensorProduct.includeRight_toAlgHom] using
-      (Coalgebra.comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
-
 omit [AddCommMonoid V] [Module R V] in
 private theorem liftedComulPoint_eq_include_mul :
     mapPoints (H := H)
@@ -483,7 +479,7 @@ private theorem liftedComulPoint_eq_include_mul :
     _ = (AlgHom.mapValue (H := H) up)
         (toConv (includeLeftAlgHom (R := R) (H := H)) *
           toConv (includeRightAlgHom (R := R) (H := H))) := by
-      rw [comulPoint_eq_include_mul]
+      rw [Bialgebra.comulPoint_eq_include_mul]
     _ = toConv (up.comp (includeLeftAlgHom (R := R) (H := H))) *
         toConv (up.comp (includeRightAlgHom (R := R) (H := H))) := by
       rw [map_mul]
