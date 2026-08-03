@@ -90,6 +90,7 @@ section Real
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
+omit [CompleteSpace R] in
 /-- A real normed algebra regarded as a rational normed algebra within this module. -/
 noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ R :=
   .restrictScalars ℚ ℝ R
