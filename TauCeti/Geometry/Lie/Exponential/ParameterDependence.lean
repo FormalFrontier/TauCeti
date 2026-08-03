@@ -49,6 +49,10 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
+/-- A tangent vector is represented by the model vector type `E`. This helper isolates the
+definitional identification used when a tangent-bundle value enters coordinate calculus. -/
+abbrev tangentVectorModelSpace {g : G} (v : TangentSpace I g) : E := v
+
 /-- The left-invariant vector field, expressed in the identity chart and parameterized by its
 generating tangent vector in the model space. -/
 noncomputable def mulInvariantCoordinateVectorField [IsManifold I 1 G] (p : E × E) : E :=
@@ -62,8 +66,9 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) =
       tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
         ((extChartAt I (1 : G)).symm y)
-        (show E from mulInvariantVectorField (I := I) (G := G)
-          (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
+        (tangentVectorModelSpace (I := I) <|
+          mulInvariantVectorField (I := I) (G := G)
+            (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
 /-- At the identity coordinate, the parameterized invariant field equals its generator. -/
@@ -79,9 +84,10 @@ theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
   have hsymm : (extChartAt I (1 : G)).symm (extChartAt I (1 : G) (1 : G)) = 1 :=
     (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
   rw [hsymm]
-  have hfieldOne : (show E from mulInvariantVectorField (I := I) (G := G)
-      (v : GroupLieAlgebra I G) 1) = v := by
-    exact congrArg (fun w : GroupLieAlgebra I G => (show E from w))
+  have hfieldOne : tangentVectorModelSpace (I := I)
+      (mulInvariantVectorField (I := I) (G := G)
+        (v : GroupLieAlgebra I G) 1) = v := by
+    exact congrArg (tangentVectorModelSpace (I := I))
       (mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G))
   rw [hfieldOne]
   exact tangentCoordChange_self (mem_extChartAt_source (I := I) (1 : G))
@@ -98,10 +104,11 @@ theorem mulInvariantCoordinateVectorField_zero [IsManifold I 1 G] (y : E) :
   let A := tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
     ((extChartAt I (1 : G)).symm y)
   calc
-    A (show E from mulInvariantVectorField (I := I) (G := G)
-        (0 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) = A 0 := by
+    A (tangentVectorModelSpace (I := I) <|
+        mulInvariantVectorField (I := I) (G := G)
+          (0 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) = A 0 := by
       apply congrArg A
-      exact congrArg (fun w : GroupLieAlgebra I G => (show E from w))
+      exact congrArg (tangentVectorModelSpace (I := I))
         (congrFun hz ((extChartAt I (1 : G)).symm y))
     _ = 0 := map_zero A
 
@@ -132,15 +139,17 @@ theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
   have hw_apply (p : E × E) :
       w p = tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
         ((extChartAt I (1 : G)).symm p.2)
-        (show E from mulInvariantVectorField (I := I) (G := G)
-          (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) := by
+        (tangentVectorModelSpace (I := I) <|
+          mulInvariantVectorField (I := I) (G := G)
+            (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) := by
     -- This is the defining second coordinate of the tangent-bundle extended chart. Keeping the
     -- implementation-level conversion here prevents its definitional equality from leaking into
     -- the regularity argument below.
     change tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
       ((extChartAt I (1 : G)).symm p.2)
-        (show E from mulInvariantVectorField (I := I) (G := G)
-          (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) = _
+        (tangentVectorModelSpace (I := I) <|
+          mulInvariantVectorField (I := I) (G := G)
+            (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) = _
     rfl
   have hw : w = mulInvariantCoordinateVectorField (I := I) (G := G) := by
     funext p
