@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.RingTheory.Derivation.DualNumber
+public import Mathlib.RingTheory.Bialgebra.TensorProduct
 
 /-!
 # The tangent space at the identity point
@@ -130,10 +131,14 @@ noncomputable instance : IsScalarTower R A (CounitAlgebra R A B) :=
       ((Algebra.ofId R B).comp (counitAlgHom R A)) (algebraMap R A r)
     simp
 
+/-- The coefficient synonym is a module over the coefficients, inherited from `B`. -/
 instance : Module B (CounitAlgebra R A B) := inferInstanceAs (Module B B)
 
+/-- Base and coefficient scalars commute on the synonym, inherited from `B`. -/
 instance : SMulCommClass R B (CounitAlgebra R A B) := inferInstanceAs (SMulCommClass R B B)
 
+/-- Coefficient scalars associate with the synonym's multiplication, inherited from
+`B`. -/
 instance : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
   inferInstanceAs (IsScalarTower B B B)
 
@@ -145,6 +150,13 @@ instance : SMulCommClass B A (CounitAlgebra R A B) where
     -- with the `B`-action: move the central factor across the product.
     rw [Algebra.smul_def, Algebra.smul_def, Algebra.commutes a (b • x), smul_mul_assoc,
       Algebra.commutes a x]
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- The base `R`-algebra map of the coefficient synonym agrees with that of `B` itself:
+the synonym changes only the `A`-algebra structure. -/
+@[simp]
+lemma algebraMap_base (r : R) :
+    algebraMap R (CounitAlgebra R A B) r = algebraMap R B r := rfl
 
 @[simp]
 lemma algebraMap_apply (a : A) :
@@ -405,5 +417,130 @@ noncomputable instance : CommGroup (tangentKer R A B) :=
       rw [map_mul, map_mul, mul_comm] }
 
 end Hopf
+
+
+section ExteriorProduct
+
+open WithConv TensorProduct
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B]
+
+namespace LinearMap
+
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B]
+
+/-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
+leg and multiply the results in the coefficients. It underlies the Leibniz-rule
+manipulations for counit-valued derivations: composing with the multiplication of the
+bialgebra lands in this product's image. -/
+def mulTensor (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    WithConv (A ⊗[R] A →ₗ[R] Bialgebra.CounitAlgebra R A B) :=
+  toConv ((Algebra.TensorProduct.lmul' R
+    (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
+
+/-- The exterior product evaluates a pure tensor legwise and multiplies the results
+in the coefficients. -/
+@[simp]
+lemma mulTensor_apply_tmul
+    (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) (x y : A) :
+    (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
+  simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
+
+/-- The exterior product is multiplicative for convolution: products interleave
+legwise. -/
+lemma mulTensor_convMul
+    (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
+  have h := LinearMap.algHom_comp_convMul_distrib
+    (Algebra.TensorProduct.lmul' R (S := Bialgebra.CounitAlgebra R A B))
+    (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
+  rw [map_convMul_map] at h
+  calc mulTensor s t * mulTensor u v
+      = toConv ((Algebra.TensorProduct.lmul' R
+            (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ
+          map (s * u).ofConv (t * v).ofConv) := by
+        rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
+    _ = mulTensor (s * u) (t * v) := rfl
+
+/-- The exterior product vanishes when the left factor is zero. -/
+@[simp]
+lemma mulTensor_zero_left (t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor 0 t = 0 := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp
+
+/-- The exterior product vanishes when the right factor is zero. -/
+@[simp]
+lemma mulTensor_zero_right (s : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor s 0 = 0 := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp
+
+/-- The exterior product is additive in the left factor. -/
+lemma mulTensor_add_left (s₁ s₂ t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor (s₁ + s₂) t = mulTensor s₁ t + mulTensor s₂ t := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp [add_mul]
+
+/-- The exterior product is additive in the right factor. -/
+lemma mulTensor_add_right (s t₁ t₂ : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor s (t₁ + t₂) = mulTensor s t₁ + mulTensor s t₂ := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp [mul_add]
+
+/-- Scalars pull out of the left factor of the exterior product. -/
+lemma mulTensor_smul_left (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor (r • s) t = r • mulTensor s t := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp
+
+/-- Scalars pull out of the right factor of the exterior product. -/
+lemma mulTensor_smul_right (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor s (r • t) = r • mulTensor s t := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp
+
+end LinearMap
+
+namespace AlgHom
+
+open TauCeti.LinearMap in
+/-- An algebra-map point composed with multiplication is its own exterior square:
+the multiplicativity of the point, in convolution form. -/
+lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
+    toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
+      mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp [map_mul]
+
+end AlgHom
+
+namespace Derivation
+
+open TauCeti.LinearMap
+
+/-- The Leibniz rule in convolution form: composing a counit-valued derivation with
+the multiplication of `A` is the exterior product against the convolution unit, on
+either side. -/
+lemma toConv_coe_comp_mul'
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    toConv ((d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ LinearMap.mul' R A) =
+      mulTensor 1 (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
+        mulTensor (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) 1 := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp only [ofConv_add, LinearMap.add_apply, LinearMap.coe_comp,
+    Function.comp_apply, LinearMap.mul'_apply, mulTensor_apply_tmul,
+    Derivation.coeFn_coe, LinearMap.convOne_apply, Bialgebra.CounitAlgebra.algebraMap_base]
+  rw [← Bialgebra.CounitAlgebra.algebraMap_apply R A B x,
+    ← Bialgebra.CounitAlgebra.algebraMap_apply R A B y, ← Algebra.commutes,
+    ← Algebra.smul_def, ← Algebra.smul_def]
+  exact d.leibniz x y
+
+end Derivation
+
+end ExteriorProduct
 
 end TauCeti

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Basic
 public import Mathlib.RepresentationTheory.Basic
 
 /-!
@@ -21,7 +21,7 @@ the `B`-points on the `B`-valued tangent vectors (`adRepresentation`). For commu
 affine group scheme on its Lie functor; their compatibility as `B` varies
 (postcomposition naturality) is later infrastructure, not packaged here.
 
-Closure is composition-level, by the exterior-product calculus of `Lie.Basic`: an
+Closure is composition-level, by the exterior-product calculus of `Tangent.Basic`: an
 algebra-map point satisfies `g ∘ mul = g ⊠ g`, a derivation satisfies
 `d ∘ mul = e ⊠ d + d ⊠ e` for the convolution unit `e`, and the conjugates collapse
 by `g ⋆ e ⋆ g⁻¹ = e`, leaving the Leibniz form for `g ⋆ d ⋆ g⁻¹`. No antipode
@@ -61,10 +61,10 @@ private lemma conj_comp_mul'
     toConv ((toConv g.ofConv.toLinearMap *
         toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
         toConv ((g⁻¹).ofConv.toLinearMap)).ofConv ∘ₗ LinearMap.mul' R A) =
-      mulTensor 1 (toConv g.ofConv.toLinearMap *
+      LinearMap.mulTensor 1 (toConv g.ofConv.toLinearMap *
           toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
           toConv ((g⁻¹).ofConv.toLinearMap)) +
-        mulTensor (toConv g.ofConv.toLinearMap *
+        LinearMap.mulTensor (toConv g.ofConv.toLinearMap *
           toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
           toConv ((g⁻¹).ofConv.toLinearMap)) 1 := by
   have h := LinearMap.convMul_comp_coalgHom_distrib
@@ -79,15 +79,11 @@ private lemma conj_comp_mul'
   rw [show (_root_.Bialgebra.mulCoalgHom R A).toLinearMap = LinearMap.mul' R A from rfl] at h h2
   rw [h, toConv_ofConv]
   rw [h2, toConv_ofConv]
-  rw [toConv_algHom_comp_mul' g.ofConv, toConv_coe_comp_mul' d,
-    toConv_algHom_comp_mul' (g⁻¹).ofConv]
-  rw [mul_add, add_mul, mulTensor_convMul, mulTensor_convMul, mulTensor_convMul,
-    mulTensor_convMul, mul_one, AlgHom.toConv_toLinearMap_mul_inv]
-
-omit [CommSemiring A] [HopfAlgebra R A] in
-/-- The base algebra maps of the coefficient synonym and of `B` agree. -/
-private lemma algebraMap_counitAlgebra (r : R) :
-    algebraMap R (Bialgebra.CounitAlgebra R A B) r = algebraMap R B r := rfl
+  rw [AlgHom.toConv_toLinearMap_comp_mul' g.ofConv, toConv_coe_comp_mul' d,
+    AlgHom.toConv_toLinearMap_comp_mul' (g⁻¹).ofConv]
+  rw [mul_add, add_mul, LinearMap.mulTensor_convMul, LinearMap.mulTensor_convMul,
+    LinearMap.mulTensor_convMul, LinearMap.mulTensor_convMul, mul_one,
+    AlgHom.toConv_toLinearMap_mul_inv]
 
 /-- The Leibniz rule for a conjugated derivation, in scalar-action form. -/
 private lemma conj_ofConv_mul
@@ -104,8 +100,8 @@ private lemma conj_ofConv_mul
           toConv ((g⁻¹).ofConv.toLinearMap)).ofConv a := by
   have h := congrArg (fun F => F.ofConv (a ⊗ₜ[R] b)) (conj_comp_mul' g d)
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mul'_apply,
-    ofConv_add, LinearMap.add_apply, mulTensor_apply_tmul,
-    LinearMap.convOne_apply, algebraMap_counitAlgebra] at h
+    ofConv_add, LinearMap.add_apply, LinearMap.mulTensor_apply_tmul,
+    LinearMap.convOne_apply, Bialgebra.CounitAlgebra.algebraMap_base] at h
   rw [h, ← Bialgebra.CounitAlgebra.algebraMap_apply R A B a,
     ← Bialgebra.CounitAlgebra.algebraMap_apply R A B b, ← Algebra.commutes,
     ← Algebra.smul_def, ← Algebra.smul_def]
