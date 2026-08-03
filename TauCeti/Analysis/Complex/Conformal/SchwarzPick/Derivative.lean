@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
-public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
+import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 
 /-!
 # The infinitesimal Schwarz--Pick inequality
@@ -20,11 +20,6 @@ it into itself, then at every point `z` of the disc
 `‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2)`, i.e. `f` contracts the Poincaré
 (hyperbolic) metric `|dz| / (1 - |z| ^ 2)`.  The bundled `Complex.UnitDisc` form is
 `norm_deriv_div_one_sub_norm_sq_le_unitDisc`.
-
-The chain rule that carries Schwarz's lemma from the Schwarz--Pick conjugate to `f` is exported
-alongside it, in a value form `hasDerivAt_schwarzPickConjugate_zero` and the norm form
-`norm_deriv_schwarzPickConjugate_zero` the estimate itself consumes, because the equality case
-in `SchwarzPick/Derivative/Rigidity.lean` needs the value and not only the norm.
 
 This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 (`TauCetiRoadmap/ConformalMapping/README.md`, the L2 hyperbolic/Poincaré-metric contraction),
@@ -51,16 +46,11 @@ the value `z`) and `1 / (1 - conj (f z) * f z)` (the target factor at `f z`).  S
 of the conjugate at the origin is the derivative of `f` at `z`, rescaled by the two Poincaré
 defects.
 
-Both the estimate below and its equality case in `SchwarzPick/Derivative/Rigidity.lean` run on
-this computation: the estimate needs only the norm
-(`norm_deriv_schwarzPickConjugate_zero`), while the equality case needs the value, which at a
-fixed point of `f` is `df` itself.
-
 All the target factor needs is that its denominator `1 - conj (f z) * f z` at `f z` — the
 Poincaré defect `1 - ‖f z‖ ^ 2` — does not vanish, which for `‖f z‖ < 1` is
 `one_sub_conj_mul_ne_zero_of_norm_lt_one`; the source factor is differentiated at the origin,
 where its denominator is `1`, so no bound on `z` is required. -/
-lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+private lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
     (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hf : HasDerivAt f df z) :
     HasDerivAt (schwarzPickConjugate f z)
       (df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z)) 0 := by
@@ -101,7 +91,7 @@ Only the closed-disc bounds `‖z‖ ≤ 1` and `‖f z‖ ≤ 1` are needed to 
 defects with `1 - ‖z‖ ^ 2` and `1 - ‖f z‖ ^ 2`, on top of the nonvanishing
 `1 - conj (f z) * f z ≠ 0` that `hasDerivAt_schwarzPickConjugate_zero` itself asks for; for a
 disc point that nonvanishing is `one_sub_conj_mul_ne_zero_of_norm_lt_one`. -/
-lemma norm_deriv_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+private lemma norm_deriv_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
     (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hz : ‖z‖ ≤ 1) (hfz : ‖f z‖ ≤ 1)
     (hf : HasDerivAt f df z) :
     ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by

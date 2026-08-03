@@ -7,7 +7,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.ClosedForm
 public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
-public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative.Basic
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative
 public import TauCeti.Analysis.SpecialFunctions.Artanh
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
@@ -81,7 +81,7 @@ reparametrisation of one of them — is an equality case that this file does not
 The Moebius invariance above is the equality case of a one-sided estimate, and the estimate holds
 for *every* holomorphic self-map of the disc, not only for the automorphisms. Integrating the
 infinitesimal Schwarz--Pick inequality
-`TauCeti.norm_deriv_div_one_sub_norm_sq_le` of `Conformal/SchwarzPick/Derivative/Basic.lean` along a
+`TauCeti.norm_deriv_div_one_sub_norm_sq_le` of `Conformal/SchwarzPick/Derivative.lean` along a
 path, exactly as the Moebius statement integrates its equality case, gives
 `TauCeti.hyperbolicLength_comp_le`: post-composing a path with a holomorphic self-map of the disc
 does not increase its hyperbolic length. The comparison is termwise, because the chain rule turns
