@@ -12,8 +12,8 @@ public import TauCeti.Geometry.Lie.Exponential.Basic
 This file begins the analytic parameter-dependence theory for the invariant integral curves that
 define the Lie-group exponential. In the identity chart, the tangent vector and group coordinate
 form an autonomous ODE on the product model space. Picard--Lindelöf then supplies a single local
-flow, continuous jointly in its initial condition and time, for all sufficiently small tangent
-vectors.
+solution family, continuous jointly in its initial condition and time, for all sufficiently small
+tangent vectors.
 
 ## Main results
 
@@ -21,13 +21,14 @@ vectors.
   generating tangent vector included as a parameter.
 * `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth at the
   zero vector and identity coordinate.
-* `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local flow on a uniform closed
-  neighborhood of the zero vector and the identity coordinate, jointly continuous and uniformly
-  Lipschitz in its initial state.
-* `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local flow
-  whose values remain inside the identity chart.
-* `exists_local_coordinate_representation_mulInvariantIntegralCurve`: the local flow represents the
-  canonical invariant integral curves uniformly for all sufficiently small generating vectors.
+* `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local solution family on a uniform
+  closed neighborhood of the zero vector and the identity coordinate, jointly continuous and
+  uniformly Lipschitz in its initial state.
+* `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local
+  solution family whose values remain inside the identity chart.
+* `exists_local_coordinate_representation_mulInvariantIntegralCurve`: the local solution family
+  represents the canonical invariant integral curves uniformly for all sufficiently small
+  generating vectors.
 * `continuousAt_mulInvariantExp_modelSpace_zero`: the tangent-space exponential is continuous at
   zero in model-space coordinates.
 
@@ -47,11 +48,10 @@ noncomputable section
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [IsManifold I 1 G] [IsManifold I 2 G]
 
-omit [Group G] [IsManifold I 2 G] in
+omit [Group G] in
 private theorem isMIntegralCurveAt_extChartAt_symm_of_eventually
-    [ContinuousSMul ℝ E]
+    [IsManifold I 1 G] [ContinuousSMul ℝ E]
     {x₀ : G} {f : ℝ → E} {t₀ : ℝ} {v : (x : G) → TangentSpace I x}
     (htarget : ∀ᶠ t in 𝓝 t₀, f t ∈ interior (extChartAt I x₀).target)
     (hderiv : ∀ᶠ t in 𝓝 t₀,
@@ -89,17 +89,31 @@ private theorem isMIntegralCurveAt_extChartAt_symm_of_eventually
   have hd' := hd.congr_deriv (tangentCoordChange_self hft2)
   simp only [writtenInExtChartAt, extChartAt_model_space_eq_id, PartialEquiv.refl_coe,
     PartialEquiv.refl_symm, modelWithCornersSelf_coe, Function.comp_def, id_eq, Set.range_id]
+  -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
   rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
   rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
-  with_unfolding_all
-    exact hd'.hasFDerivAt.hasFDerivWithinAt
+  -- In these charts, the source and target tangent spaces are definitionally their model spaces.
+  change HasFDerivWithinAt
+    (((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f))
+      (ContinuousLinearMap.toSpanSingleton ℝ (v xₜ)) Set.univ t
+  exact hd'.hasFDerivAt.hasFDerivWithinAt
 
 /-- The left-invariant vector field, expressed in the identity chart and parameterized by its
 generating tangent vector in the model space. -/
-noncomputable def mulInvariantCoordinateVectorField (p : E × E) : E :=
+noncomputable def mulInvariantCoordinateVectorField [IsManifold I 1 G] (p : E × E) : E :=
   let g := (extChartAt I (1 : G)).symm p.2
   tangentCoordChange I g (1 : G) g
     (mulInvariantVectorField (I := I) (G := G) p.1 g)
+
+/-- The parameterized coordinate field is the invariant vector field transported through the
+identity chart. -/
+theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
+    mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) =
+      tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
+        ((extChartAt I (1 : G)).symm y)
+        (show E from mulInvariantVectorField (I := I) (G := G)
+          (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
+  rfl
 
 /-- The coordinate expression of the parameterized left-invariant vector field is smooth at the
 zero tangent vector and identity coordinate. -/
@@ -120,24 +134,29 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
   let w : E × E → E := fun x =>
     ((extChartAt I.tangent (V (0, 1)) ∘ V ∘
       (extChartAt (𝓘(ℝ, E).prod I) (0, 1)).symm) x).2
-  have hw : w = mulInvariantCoordinateVectorField (I := I) (G := G) := by
-    funext p
+  have hw_apply (p : E × E) :
+      w p = tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
+        ((extChartAt I (1 : G)).symm p.2)
+        (show E from mulInvariantVectorField (I := I) (G := G)
+          (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) := by
+    -- This is the second coordinate of the tangent-bundle extended chart at `(0, 1)`.
     change tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
       ((extChartAt I (1 : G)).symm p.2)
-        (mulInvariantVectorField
-          p.1
-          ((extChartAt I (1 : G)).symm p.2)) =
-      mulInvariantCoordinateVectorField (I := I) (G := G) p
+        (show E from mulInvariantVectorField (I := I) (G := G)
+          (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) = _
     rfl
+  have hw : w = mulInvariantCoordinateVectorField (I := I) (G := G) := by
+    funext p
+    rw [mulInvariantCoordinateVectorField_apply]
+    exact hw_apply p
   rw [← hw]
   simpa only [w, extChartAt_prod, extChartAt_self_apply, modelWithCornersSelf_coe,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id_eq] using h.snd
 
-omit [IsManifold I 2 G] in
 /-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
-a single flow that is continuous jointly in its initial condition and time and uniformly Lipschitz
-in its initial state. The tangent-vector coordinate is frozen by the ODE; the second coordinate
-follows the invariant vector field. -/
+a single solution family that is continuous jointly in its initial condition and time and
+uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
+second coordinate follows the invariant vector field. -/
 theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r L : NNReal), 0 < δ ∧ 0 < r ∧
@@ -197,6 +216,7 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
     have hβ : ∀ t ∈ Set.Icc (-δ) δ,
         HasDerivWithinAt β 0 (Set.Icc (-δ) δ) t := by
       intro t ht
+      -- `β` is definitionally the first continuous-linear projection of the solution family.
       change HasDerivWithinAt
         ((ContinuousLinearMap.fst ℝ E E) ∘ fun s => α' (x, s)) 0
           (Set.Icc (-δ) δ) t
@@ -209,14 +229,14 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
           (Set.Ico_subset_Icc_self ht)))
     intro t ht
     have hzero : (0 : ℝ) ∈ Set.Icc (-δ) δ := by constructor <;> linarith
+    -- Unfold the named first-coordinate path before applying its constancy theorem.
     change β t = x.1
     exact (hconst t ht).trans ((hconst 0 hzero).symm.trans
       (congrArg Prod.fst (hα' x hx').1))
 
-omit [IsManifold I 2 G] in
-/-- There is a coordinate flow near the zero tangent vector and time zero which is continuous at
-the center, solves the parameterized invariant ODE with an ordinary derivative, freezes the
-tangent-vector parameter, and remains in the target of the identity chart. -/
+/-- There is a coordinate solution family near the zero tangent vector and time zero which is
+continuous at the center, solves the parameterized invariant ODE with an ordinary derivative,
+freezes the tangent-vector parameter, and remains in the target of the identity chart. -/
 theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ∃ α : (E × E) × ℝ → E × E,
@@ -276,11 +296,10 @@ local instance lieGroupMinSmoothnessParameterDependence [LieGroup I ∞ G] :
     LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
 
-omit [IsManifold I 2 G] in
-/-- A single coordinate flow represents the canonical invariant integral curves for every
-sufficiently small generating vector and every sufficiently small time. This is the bridge from
-Picard--Lindelöf's parameterized model-space flow to the canonical manifold-valued curves used to
-define `lieExp`. -/
+/-- A single coordinate solution family represents the canonical invariant integral curves for
+every sufficiently small generating vector and every sufficiently small time. This is the bridge
+from Picard--Lindelöf's parameterized model-space solutions to the canonical manifold-valued curves
+used to define `lieExp`. -/
 theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (U : Set E) (δ : ℝ),
@@ -347,6 +366,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       have hsnd : HasDerivAt f
           (mulInvariantCoordinateVectorField (I := I) (G := G)
             (α (((v, extChartAt I (1 : G) (1 : G)), s)))) s := by
+        -- `f` is definitionally the second continuous-linear projection of the solution family.
         change HasDerivAt
           ((ContinuousLinearMap.snd ℝ E E) ∘ fun u =>
             α (((v, extChartAt I (1 : G) (1 : G)), u))) _ s
@@ -357,13 +377,14 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
         · exact (hlocal s hs).2.2.1
         · rfl
       rw [hpair] at hsnd
-      simpa only [mulInvariantCoordinateVectorField, f] using hsnd
+      simpa only [mulInvariantCoordinateVectorField_apply, f] using hsnd
   have hγOn : IsMIntegralCurveOn γ
       (mulInvariantVectorField (I := I) (G := G) (v : GroupLieAlgebra I G))
       (Set.Ioo (-δ) δ) := IsMIntegralCurveAt.isMIntegralCurveOn hγAt
   have hzero : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨by linarith, by linarith⟩
   have hγzero : γ 0 = 1 := by
     have hinit := (hlocal 0 hzero).2.1
+    -- Expand the named chart-valued path so the initial-value equality rewrites its coordinate.
     change (extChartAt I (1 : G)).symm
       (α (((v, extChartAt I (1 : G) (1 : G)), 0))).2 = 1
     rw [congrArg Prod.snd hinit]
@@ -382,10 +403,8 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
           (mulInvariantIntegralCurve_zero (I := I) (G := G)
             (v : GroupLieAlgebra I G) 1).symm)
 
-omit [IsManifold I 2 G] in
-/-- In model-space coordinates, the tangent-space exponential is continuous at the zero vector.
-The local parameterized flow only covers a short time interval; the scaling law for invariant
-integral curves transports that interval to time one. -/
+/-- The tangent-space exponential is continuous at zero when its domain uses the canonical
+model-space identification and its codomain remains the Lie group `G`. -/
 theorem continuousAt_mulInvariantExp_modelSpace_zero
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ContinuousAt
