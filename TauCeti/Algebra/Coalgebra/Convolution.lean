@@ -46,8 +46,9 @@ theorem comul_eq_convMul_includeLeft_includeRight :
         (Algebra.TensorProduct.includeLeft (R := R) (A := C) (B := C)).toLinearMap
         (Algebra.TensorProduct.includeRight (R := R) (A := C) (B := C)).toLinearMap =
       LinearMap.id := by
-    -- Mathlib's `lmul'_comp_map` + `lift_includeLeft_includeRight` state this as an algebra-hom
-    -- identity, but bridging that to linear maps exceeds `maxHeartbeats`; see the PR discussion.
+    -- Mathlib's `lmul'_comp_map` requires a commutative target algebra, whereas `C ⊗[R] C`
+    -- is only a semiring here. `lift_includeLeft_includeRight` computes the same pure tensors,
+    -- but identifying this linear composite still requires tensor-product extensionality.
     apply TensorProduct.ext
     ext x y
     simp
