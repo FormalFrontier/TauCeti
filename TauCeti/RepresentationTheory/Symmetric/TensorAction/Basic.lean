@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.PiTensorProduct.Basic
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import Mathlib.RepresentationTheory.Basic
 
 /-!
@@ -27,6 +27,8 @@ It reuses `PiTensorProduct.reindex`; the convention is
   and module.
 * `permTensorAction` specializes it to `(Fin n → R)^{⊗d}`.
 * `permTensorActionAlgHom` is its `Representation.asAlgebraHom` extension to `R[S_d]`.
+* `TauCeti.tensorPowerBasis` is the monomial basis of `(Rⁿ)^{⊗d}`, on which the action is a
+  reindexing.
 -/
 
 public section
@@ -145,5 +147,46 @@ theorem permTensorActionAlgHom_apply_tprod (a : MonoidAlgebra R (Equiv.Perm (Fin
       a.coeff.sum fun σ r => r • PiTensorProduct.tprod R fun i => m (σ.symm i) := by
   rw [permTensorActionAlgHom_def, permTensorAction_def]
   exact PiTensorProduct.reindexRepresentation_asAlgebraHom_apply_tprod R (Fin n → R) (Fin d) a m
+
+/-- The monomial basis of `(Rⁿ)^{⊗d}`: the basis vector at `f : Fin d → Fin n` is the pure tensor
+whose `i`-th factor is the `f i`-th standard basis vector of `Rⁿ`. -/
+noncomputable def tensorPowerBasis :
+    Module.Basis (Fin d → Fin n) R (⨂[R] _ : Fin d, Fin n → R) :=
+  Basis.piTensorProduct fun _ => Pi.basisFun R (Fin n)
+
+@[simp]
+theorem tensorPowerBasis_apply (f : Fin d → Fin n) :
+    tensorPowerBasis R n d f = PiTensorProduct.tprod R fun i => Pi.single (f i) (1 : R) := by
+  classical
+  rw [tensorPowerBasis, Basis.piTensorProduct_apply]
+  simp
+
+-- These two derived normal forms remain explicit rewrite lemmas: `simpNF` detects each as already
+-- provable from the underlying tensor-action rules, so adding them to the simp set is redundant.
+/-- A permutation acts on the monomial basis of `(Rⁿ)^{⊗d}` by precomposing the index function
+with its inverse. -/
+theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d → Fin n) :
+    permTensorAction R n d σ (tensorPowerBasis R n d f) =
+      tensorPowerBasis R n d fun i => f (σ.symm i) := by
+  simp
+
+/-- A group-algebra basis element acts on a monomial basis vector by precomposition and
+scaling. -/
+theorem permTensorActionAlgHom_single_tensorPowerBasis (ρ : Equiv.Perm (Fin d)) (r : R)
+    (f : Fin d → Fin n) :
+    permTensorActionAlgHom R n d (MonoidAlgebra.single ρ r) (tensorPowerBasis R n d f) =
+      r • tensorPowerBasis R n d fun i => f (ρ.symm i) := by
+  rw [permTensorActionAlgHom_def, Representation.asAlgebraHom_single, LinearMap.smul_apply,
+    permTensorAction_tensorPowerBasis]
+
+/-- The group-algebra action on a monomial basis vector is the coefficient-weighted sum of the
+precomposed monomial basis vectors. -/
+theorem permTensorActionAlgHom_apply_tensorPowerBasis
+    (a : MonoidAlgebra R (Equiv.Perm (Fin d))) (f : Fin d → Fin n) :
+    permTensorActionAlgHom R n d a (tensorPowerBasis R n d f) =
+      ∑ σ ∈ a.coeff.support,
+        a.coeff σ • tensorPowerBasis R n d fun i => f (σ.symm i) := by
+  rw [tensorPowerBasis_apply, permTensorActionAlgHom_apply_tprod, Finsupp.sum]
+  exact Finset.sum_congr rfl fun σ _ => by rw [tensorPowerBasis_apply]
 
 end TauCeti
