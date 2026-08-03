@@ -69,8 +69,16 @@ lemma norm_exp_le_exp_norm (x : X →L[ℝ] X) : ‖exp x‖ ≤ Real.exp ‖x�
   | succ m => exact norm_pow_le' x m.succ_pos
 
 /-- The operator exponential is additive on commuting elements of `X →L[ℝ] X`, phrased over the
-scalar field `ℝ` (the `ℚ`-algebra instance required by `NormedSpace.exp_add_of_commute` is not
-available here).
+scalar field `ℝ`.
+
+This is *not* a restatement of `NormedSpace.exp_add_of_commute`, which does not apply here:
+that lemma lives in a `section Rat` with `variable [NormedAlgebra ℚ 𝔸]`, and for
+`𝔸 = X →L[ℝ] X` the instance is absent — applying it directly fails with
+`failed to synthesize instance of type class NormedAlgebra ℚ (X →L[ℝ] X)`. The general form
+`NormedSpace.exp_add_of_commute_of_mem_ball` is stated over an arbitrary `𝕂` and *is* available
+at `𝕂 = ℝ`; what this lemma adds is discharging its two ball-membership side conditions from
+`expSeries_radius_eq_top`, which the ℚ-algebra version does internally and no ℝ-algebra version
+in Mathlib does.
 
 Also used by the Yosida approximation
 (`TauCeti/Analysis/Semigroups/YosidaApproximation.lean`), which is why this is not private. -/
