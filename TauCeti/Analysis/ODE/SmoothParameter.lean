@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import Mathlib.Analysis.Calculus.ImplicitContDiff
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import TauCeti.Analysis.Calculus.ContinuousMap
 
 /-!
@@ -13,6 +14,12 @@ public import TauCeti.Analysis.Calculus.ContinuousMap
 
 This file develops the Banach-space implicit-equation argument that makes a local solution of a
 smooth parameterized autonomous ODE depend smoothly on its parameter.
+
+## Main results
+
+* `ODE.exists_contDiffAt_picard_solution`: a finite-order smooth family of local solutions of the
+  Picard integral equation.
+* `ODE.hasDerivAt_of_forall_eq_picard`: a Picard solution satisfies the ODE at interior times.
 
 ## References
 
@@ -134,6 +141,27 @@ theorem hasStrictFDerivAt_picardResidual_parameter
           (g := ContinuousMap.const _ x₀) t).trans_lt hγ
     simp only [picardResidual, hcomp, map_zero, sub_zero]
   exact (hasStrictFDerivAt_sub_const (ContinuousMap.const _ x₀)).congr_of_eventuallyEq heq
+
+/-- A path satisfying the Picard integral equation solves the corresponding ODE at every interior
+time. Projection to the unit interval makes the path a total function on `ℝ`. -/
+theorem hasDerivAt_of_forall_eq_picard
+    [CompleteSpace F] (v : ℝ → F) (hv : Continuous v)
+    (x₀ : F) (q : C(Set.Icc (0 : ℝ) 1, F))
+    (hq : ∀ t : Set.Icc (0 : ℝ) 1,
+      q t = x₀ + ∫ s in (0 : ℝ)..t, v s)
+    {t : ℝ} (ht : t ∈ Set.Ioo (0 : ℝ) 1) :
+    HasDerivAt (fun s ↦ q (Set.projIcc 0 1 zero_le_one s)) (v t) t := by
+  have hprimitive : HasDerivAt (fun s ↦ x₀ + ∫ u in (0 : ℝ)..s, v u) (v t) t := by
+    have h := (hasDerivAt_const (𝕜 := ℝ) t x₀).add
+      (hv.integral_hasStrictDerivAt 0 t).hasDerivAt
+    convert h using 1
+    · funext s
+      rfl
+    · simp
+  apply hprimitive.congr_of_eventuallyEq
+  filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+  rw [Set.projIcc_of_mem zero_le_one ⟨hs.1.le, hs.2.le⟩]
+  exact hq ⟨s, hs.1.le, hs.2.le⟩
 
 /-- A smooth parameterized autonomous vector field which vanishes at the base parameter admits a
 locally smooth family of solutions through a fixed initial state. The result is stated at every
