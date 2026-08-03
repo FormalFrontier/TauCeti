@@ -28,6 +28,8 @@ The main API mirrors the pseudo-hyperbolic layer:
 * `hyperbolicDist_comm`, `hyperbolicDist_self`, `hyperbolicDist_nonneg`,
   `hyperbolicDist_eq_zero_iff_of_mem_ball` — the basic pseudo-metric properties;
 * `hyperbolicDist_zero_right` — the closed form `artanh ‖z‖` from the origin;
+* `pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one` — the side condition `p ∈ (-1, 1)` under which
+  the `Real.artanh` API applies to the pseudo-hyperbolic expression;
 * `hyperbolicDist_map_le` — the **Schwarz--Pick theorem** in its classical
   distance-decreasing form: a holomorphic self-map of the disc does not increase the
   hyperbolic distance;
@@ -114,6 +116,14 @@ lemma hyperbolicDist_eq_zero_iff_of_mem_ball {z w : ℂ}
     · linarith
   · exact fun h => Or.inr (Or.inl h)
 
+/-- The pseudo-hyperbolic expression of two points of the open unit disc lies in the interval
+`Ioo (-1) 1` on which `Real.artanh` is a strictly monotone bijection onto `ℝ`. This is the side
+condition of the `Real.artanh` lemmas applied to it throughout the hyperbolic-distance API. -/
+lemma pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
+  ⟨by linarith [pseudoHyperbolicExpr_nonneg z w],
+    pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw⟩
+
 /-- On the open unit disc the hyperbolic distance and the pseudo-hyperbolic expression carry
 the same information: `Real.artanh` is injective on `(-1, 1)`, and the pseudo-hyperbolic
 expression of a pair of disc points lies in `[0, 1)`. -/
@@ -123,10 +133,11 @@ lemma pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq {z w z' w' : ℂ}
     pseudoHyperbolicExpr z w = pseudoHyperbolicExpr z' w' ↔
       hyperbolicDist z w = hyperbolicDist z' w' := by
   have hmem : pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z w], pseudoHyperbolicExpr_lt_one_of_mem_ball hz hw⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz)
+      (by simpa [mem_ball_zero_iff] using hw)
   have hmem' : pseudoHyperbolicExpr z' w' ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z' w'],
-      pseudoHyperbolicExpr_lt_one_of_mem_ball hz' hw'⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz')
+      (by simpa [mem_ball_zero_iff] using hw')
   rw [hyperbolicDist_def, hyperbolicDist_def]
   exact ⟨fun h => by rw [h], fun h => Real.artanh_injOn hmem hmem' h⟩
 

@@ -66,6 +66,9 @@ Main results:
   pseudo-hyperbolic expression is itself a metric on the disc and not merely a
   monotone reparametrisation of one.
 
+Each of those five carries a hypothesis-free `Complex.UnitDisc` form, named by the suffix
+`_unitDisc`.
+
 Together with the symmetry, nonnegativity and vanishing-on-the-diagonal lemmas already in
 `HyperbolicDistance.lean`, these give the metric-space axioms for `hyperbolicDist` on the open
 unit disc. A `MetricSpace` *instance* is deliberately not registered on `Complex.UnitDisc`,
@@ -357,14 +360,6 @@ theorem hyperbolicDist_triangle {z w u : ℂ}
 
 /-! ### The pseudo-hyperbolic inequalities at an arbitrary middle point -/
 
-/-- The pseudo-hyperbolic expression of two points of the open unit disc lies in the interval on
-which `Real.artanh` is a strictly monotone bijection onto `ℝ`. This is the side condition of
-every use of `artanh_add` and `Real.artanh_injOn` below. -/
-private lemma pseudoHyperbolicExpr_mem_Ioo {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
-    pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
-  ⟨by linarith [pseudoHyperbolicExpr_nonneg z w],
-    pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw⟩
-
 /-- The Moebius sum `(a + b) / (1 + a b)` of two elements of `[0, 1)` again lies in
 `Ioo (-1) 1`, so `artanh_add` may be applied to it. -/
 private lemma mem_Ioo_add_div_one_add_mul {a b : ℝ} (ha₀ : 0 ≤ a) (hb₀ : 0 ≤ b)
@@ -382,43 +377,63 @@ from the origin: taking `u = 0` and rewriting `ρ(z, 0) = ‖z‖`, `ρ(0, w) = 
 statement.
 
 The right-hand side is the Moebius sum of `ρ(z, u)` and `ρ(u, w)`, the operation under which
-`artanh` carries ordinary addition; the inequality is therefore the hyperbolic triangle
-inequality `TauCeti.hyperbolicDist_triangle` read through `artanh_add`. -/
+`artanh` carries ordinary addition. It is the sharp bound;
+`TauCeti.pseudoHyperbolicExpr_triangle` below is the weaker plain form. -/
 theorem pseudoHyperbolicExpr_le_add_div_one_add_mul {z w u : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) (hu : ‖u‖ < 1) :
     pseudoHyperbolicExpr z w ≤
       (pseudoHyperbolicExpr z u + pseudoHyperbolicExpr u w) /
         (1 + pseudoHyperbolicExpr z u * pseudoHyperbolicExpr u w) := by
+  have hzu := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hu
+  have huw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hu hw
+  have hzw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw
   have hd : hyperbolicDist z w ≤ hyperbolicDist z u + hyperbolicDist u w :=
     hyperbolicDist_triangle (by simpa [mem_ball_zero_iff] using hz)
       (by simpa [mem_ball_zero_iff] using hw) (by simpa [mem_ball_zero_iff] using hu)
   rw [hyperbolicDist_def z w, hyperbolicDist_def z u, hyperbolicDist_def u w,
-    artanh_add (pseudoHyperbolicExpr_mem_Ioo hz hu) (pseudoHyperbolicExpr_mem_Ioo hu hw)] at hd
-  exact (Real.artanh_le_artanh_iff (pseudoHyperbolicExpr_mem_Ioo hz hw)
+    artanh_add hzu huw] at hd
+  exact (Real.artanh_le_artanh_iff hzw
     (mem_Ioo_add_div_one_add_mul (pseudoHyperbolicExpr_nonneg z u)
-      (pseudoHyperbolicExpr_nonneg u w) (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hu)
-      (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hu hw))).mp hd
+      (pseudoHyperbolicExpr_nonneg u w) hzu.2 huw.2)).mp hd
+
+/-- **The strong pseudo-hyperbolic triangle inequality (bundled unit-disc form).** The
+hypothesis-free form of `TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul` for points of
+`Complex.UnitDisc`. -/
+theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_unitDisc (z w u : Complex.UnitDisc) :
+    pseudoHyperbolicExpr (z : ℂ) (w : ℂ) ≤
+      (pseudoHyperbolicExpr (z : ℂ) (u : ℂ) + pseudoHyperbolicExpr (u : ℂ) (w : ℂ)) /
+        (1 + pseudoHyperbolicExpr (z : ℂ) (u : ℂ) * pseudoHyperbolicExpr (u : ℂ) (w : ℂ)) :=
+  pseudoHyperbolicExpr_le_add_div_one_add_mul z.norm_lt_one w.norm_lt_one u.norm_lt_one
 
 /-- **Equality in the strong pseudo-hyperbolic triangle inequality.** The bound of
 `TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul` is attained exactly on the degenerate
 hyperbolic triangles, those with `hyperbolicDist z w = hyperbolicDist z u + hyperbolicDist u w`,
-that is exactly when `u` lies on the hyperbolic geodesic segment from `z` to `w`.
-
-Both statements are the image of the other under `Real.artanh`, which is injective on
-`Ioo (-1) 1`; the Moebius sum on the left corresponds to the ordinary sum on the right by
-`artanh_add`. -/
+that is exactly when `u` lies on the hyperbolic geodesic segment from `z` to `w`. -/
 theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff {z w u : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) (hu : ‖u‖ < 1) :
     pseudoHyperbolicExpr z w =
         (pseudoHyperbolicExpr z u + pseudoHyperbolicExpr u w) /
           (1 + pseudoHyperbolicExpr z u * pseudoHyperbolicExpr u w) ↔
       hyperbolicDist z w = hyperbolicDist z u + hyperbolicDist u w := by
+  have hzu := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hu
+  have huw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hu hw
+  have hzw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw
   rw [hyperbolicDist_def z w, hyperbolicDist_def z u, hyperbolicDist_def u w,
-    artanh_add (pseudoHyperbolicExpr_mem_Ioo hz hu) (pseudoHyperbolicExpr_mem_Ioo hu hw)]
-  refine ⟨fun h => by rw [h], fun h => Real.artanh_injOn (pseudoHyperbolicExpr_mem_Ioo hz hw)
+    artanh_add hzu huw]
+  refine ⟨fun h => by rw [h], fun h => Real.artanh_injOn hzw
     (mem_Ioo_add_div_one_add_mul (pseudoHyperbolicExpr_nonneg z u)
-      (pseudoHyperbolicExpr_nonneg u w) (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hu)
-      (pseudoHyperbolicExpr_lt_one_of_norm_lt_one hu hw)) h⟩
+      (pseudoHyperbolicExpr_nonneg u w) hzu.2 huw.2) h⟩
+
+/-- **Equality in the strong pseudo-hyperbolic triangle inequality (bundled unit-disc form).**
+The hypothesis-free form of `TauCeti.pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff` for points
+of `Complex.UnitDisc`. -/
+theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_unitDisc (z w u : Complex.UnitDisc) :
+    pseudoHyperbolicExpr (z : ℂ) (w : ℂ) =
+        (pseudoHyperbolicExpr (z : ℂ) (u : ℂ) + pseudoHyperbolicExpr (u : ℂ) (w : ℂ)) /
+          (1 + pseudoHyperbolicExpr (z : ℂ) (u : ℂ) * pseudoHyperbolicExpr (u : ℂ) (w : ℂ)) ↔
+      hyperbolicDist (z : ℂ) (w : ℂ)
+        = hyperbolicDist (z : ℂ) (u : ℂ) + hyperbolicDist (u : ℂ) (w : ℂ) :=
+  pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff z.norm_lt_one w.norm_lt_one u.norm_lt_one
 
 /-- **The pseudo-hyperbolic triangle inequality.** For three points of the open unit disc,
 `ρ(z, w) ≤ ρ(z, u) + ρ(u, w)`: the Moebius sum bounding `ρ(z, w)` in
@@ -438,16 +453,21 @@ theorem pseudoHyperbolicExpr_triangle {z w u : ℂ}
       (le_add_of_nonneg_right
         (mul_nonneg (pseudoHyperbolicExpr_nonneg z u) (pseudoHyperbolicExpr_nonneg u w)))
 
+/-- **The pseudo-hyperbolic triangle inequality (bundled unit-disc form).** The hypothesis-free
+form of `TauCeti.pseudoHyperbolicExpr_triangle` for points of `Complex.UnitDisc`, which together
+with `TauCeti.pseudoHyperbolicExpr_comm`, `TauCeti.pseudoHyperbolicExpr_self` and
+`TauCeti.pseudoHyperbolicExpr_eq_zero_iff_unitDisc` gives the metric axioms for
+`pseudoHyperbolicExpr` on that type. -/
+theorem pseudoHyperbolicExpr_triangle_unitDisc (z w u : Complex.UnitDisc) :
+    pseudoHyperbolicExpr (z : ℂ) (w : ℂ)
+      ≤ pseudoHyperbolicExpr (z : ℂ) (u : ℂ) + pseudoHyperbolicExpr (u : ℂ) (w : ℂ) :=
+  pseudoHyperbolicExpr_triangle z.norm_lt_one w.norm_lt_one u.norm_lt_one
+
 /-- **The reverse strong pseudo-hyperbolic triangle inequality.** For three points of the open
 unit disc, `|ρ(z, u) - ρ(u, w)| / (1 - ρ(z, u) ρ(u, w)) ≤ ρ(z, w)`. This is
 `TauCeti.abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr_of_norm_lt_one` with the middle point
 freed from the origin, in the same sense as
-`TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul`.
-
-No new analytic input is needed: writing `a = ρ(z, u)`, `b = ρ(u, w)`, `c = ρ(z, w)`, the strong
-triangle inequality applied twice — once with `w` as middle point, once with `z` — gives
-`a (1 + c b) ≤ c + b` and `b (1 + a c) ≤ a + c`, and each rearranges to a bound
-`± (a - b) ≤ c (1 - a b)` on the numerator. -/
+`TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul`. -/
 theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr {z w u : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) (hu : ‖u‖ < 1) :
     |pseudoHyperbolicExpr z u - pseudoHyperbolicExpr u w| /
@@ -463,7 +483,9 @@ theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr {z w u : ℂ}
     have := mul_nonneg hc₀ hb₀; linarith
   have hac : (0 : ℝ) < 1 + pseudoHyperbolicExpr z u * pseudoHyperbolicExpr z w := by
     have := mul_nonneg ha₀ hc₀; linarith
-  -- The strong inequality with `w` as the middle point, and with `z` as the middle point.
+  -- Writing `a = ρ(z, u)`, `b = ρ(u, w)`, `c = ρ(z, w)`, the strong inequality with `w` as the
+  -- middle point and with `z` as the middle point gives `a (1 + c b) ≤ c + b` and
+  -- `b (1 + a c) ≤ a + c`; each rearranges to a bound `± (a - b) ≤ c (1 - a b)` on the numerator.
   have h₁ := pseudoHyperbolicExpr_le_add_div_one_add_mul hz hu hw
   have h₂ := pseudoHyperbolicExpr_le_add_div_one_add_mul hu hw hz
   rw [pseudoHyperbolicExpr_comm w u] at h₁
@@ -473,15 +495,20 @@ theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr {z w u : ℂ}
   rw [div_le_iff₀ hden]
   exact abs_le.mpr ⟨by nlinarith, by nlinarith⟩
 
+/-- **The reverse strong pseudo-hyperbolic triangle inequality (bundled unit-disc form).** The
+hypothesis-free form of `TauCeti.abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr` for points of
+`Complex.UnitDisc`. -/
+theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr_unitDisc (z w u : Complex.UnitDisc) :
+    |pseudoHyperbolicExpr (z : ℂ) (u : ℂ) - pseudoHyperbolicExpr (u : ℂ) (w : ℂ)| /
+        (1 - pseudoHyperbolicExpr (z : ℂ) (u : ℂ) * pseudoHyperbolicExpr (u : ℂ) (w : ℂ))
+      ≤ pseudoHyperbolicExpr (z : ℂ) (w : ℂ) :=
+  abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr z.norm_lt_one w.norm_lt_one u.norm_lt_one
+
 /-- **Equality in the reverse strong pseudo-hyperbolic triangle inequality.** The bound of
 `TauCeti.abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr` is attained exactly when one of `z`,
 `w` lies on the hyperbolic geodesic segment joining `u` to the other — the two degenerate
 positions in which the triangle collapses with `u` outside, rather than inside, the segment
-`[z, w]`.
-
-Writing `a = ρ(z, u)`, `b = ρ(u, w)`, `c = ρ(z, w)`, the equation `|a - b| = c (1 - a b)` splits
-into `a - b = c (1 - a b)` and `b - a = c (1 - a b)`, and each of those rearranges to the
-equality case of the strong triangle inequality with `w`, respectively `z`, as middle point. -/
+`[z, w]`. -/
 theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff {z w u : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) (hu : ‖u‖ < 1) :
     pseudoHyperbolicExpr z w =
@@ -499,7 +526,9 @@ theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff {z w u : ℂ}
     have := mul_nonneg hc₀ hb₀; linarith
   have hac : (0 : ℝ) < 1 + pseudoHyperbolicExpr z u * pseudoHyperbolicExpr z w := by
     have := mul_nonneg ha₀ hc₀; linarith
-  -- The equality case of the strong inequality with `w`, respectively `z`, as middle point.
+  -- With `a = ρ(z, u)`, `b = ρ(u, w)`, `c = ρ(z, w)`, the equation `|a - b| = c (1 - a b)` splits
+  -- into `a - b = c (1 - a b)` and `b - a = c (1 - a b)`, and each of those rearranges to the
+  -- equality case of the strong inequality with `w`, respectively `z`, as middle point.
   have e₁ := pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff hz hu hw
   have e₂ := pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff hu hw hz
   rw [pseudoHyperbolicExpr_comm w u] at e₁
@@ -514,5 +543,19 @@ theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff {z w u : ℂ}
   · rintro (h | h)
     · exact Or.inl (by linear_combination h)
     · exact Or.inr (by linear_combination -h)
+
+/-- **Equality in the reverse strong pseudo-hyperbolic triangle inequality (bundled unit-disc
+form).** The hypothesis-free form of
+`TauCeti.pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff` for points of
+`Complex.UnitDisc`. -/
+theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff_unitDisc (z w u : Complex.UnitDisc) :
+    pseudoHyperbolicExpr (z : ℂ) (w : ℂ) =
+        |pseudoHyperbolicExpr (z : ℂ) (u : ℂ) - pseudoHyperbolicExpr (u : ℂ) (w : ℂ)| /
+          (1 - pseudoHyperbolicExpr (z : ℂ) (u : ℂ) * pseudoHyperbolicExpr (u : ℂ) (w : ℂ)) ↔
+      hyperbolicDist (z : ℂ) (u : ℂ)
+          = hyperbolicDist (z : ℂ) (w : ℂ) + hyperbolicDist (w : ℂ) (u : ℂ) ∨
+        hyperbolicDist (u : ℂ) (w : ℂ)
+          = hyperbolicDist (u : ℂ) (z : ℂ) + hyperbolicDist (z : ℂ) (w : ℂ) :=
+  pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff z.norm_lt_one w.norm_lt_one u.norm_lt_one
 
 end TauCeti
