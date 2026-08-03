@@ -127,6 +127,7 @@ noncomputable instance instGroup : Group (WithConv (H →ₐ[R] A)) where
 /-- The linear images of a point and of its convolution inverse multiply to the
 convolution unit: the group law of the points, transferred to the linear
 convolution monoid. -/
+@[simp]
 lemma toConv_toLinearMap_mul_inv (g : WithConv (H →ₐ[R] A)) :
     toConv (g.ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) =
       (1 : WithConv (H →ₗ[R] A)) := by

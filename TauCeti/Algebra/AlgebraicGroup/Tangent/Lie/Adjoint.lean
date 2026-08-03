@@ -143,6 +143,7 @@ theorem coe_adDerivation (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A 
 
 /-- The adjoint action, valuewise: the conjugate evaluated at an element of the
 bialgebra. -/
+@[simp]
 theorem adDerivation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
     adDerivation B g d a =
