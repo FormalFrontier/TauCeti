@@ -73,80 +73,14 @@ open AlgebraicGeometry
 variable {R A B : Type u} [CommRing R] [CommRing A] [CommRing B]
 variable [Algebra R A] [Algebra R B]
 
-/-- Transport scheme-valued points of the packaged `groupScheme` wrapper to the canonical
-generic `hopfSpec` presentation. The transport is multiplicative because the canonical
-presentation is an isomorphism of group objects. -/
-@[expose] noncomputable def schemePointPresentationMulEquiv (G : FGCommGrpCat.{u}) :
-    ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) ≃*
-    ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
-        (Opposite.op (coordinateRing R G).obj)).X) where
-  toFun p := p ≫ (groupSchemeIsoHopfSpec R G).hom.hom.hom
-  invFun p := p ≫ (groupSchemeIsoHopfSpec R G).inv.hom.hom
-  left_inv p := by
-    dsimp
-    rw [Category.assoc, ← Grp.comp_hom_hom, Iso.hom_inv_id,
-      Grp.id_hom_hom, Category.comp_id]
-  right_inv p := by
-    dsimp
-    rw [Category.assoc, ← Grp.comp_hom_hom, Iso.inv_hom_id,
-      Grp.id_hom_hom, Category.comp_id]
-  map_mul' p q := by
-    rw [MonObj.mul_comp]
-
-/-- The presentation equivalence postcomposes a point by the canonical group-scheme
-isomorphism to `hopfSpec`. -/
-theorem schemePointPresentationMulEquiv_apply (G : FGCommGrpCat.{u})
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) :
-    schemePointPresentationMulEquiv (R := R) (A := A) G p =
-      p ≫ (groupSchemeIsoHopfSpec R G).hom.hom.hom :=
-  rfl
-
 /-- Scheme-valued points of `D(G)` over `Spec R` are multiplicative characters `G →* Aˣ`.
 
-The equivalence transports the packaged group scheme to its generic Hopf spectrum, reverses
-the spectrum morphism into an algebra point through `Spec.mapMulEquiv`, then applies the
-diagonalizable-group points equivalence. -/
+The equivalence reverses the spectrum morphism into an algebra point through
+`Spec.mapMulEquiv`, then applies the diagonalizable-group points equivalence. -/
 @[expose] noncomputable def schemePointsMulEquiv (G : FGCommGrpCat.{u}) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) ≃* (G →* Aˣ) :=
-  (schemePointPresentationMulEquiv (R := R) (A := A) G).trans <|
-    AlgebraicGeometry.Spec.mapMulEquiv.symm.trans pointsMulEquiv
-
-private noncomputable def algebraPointOfSchemePoint (G : FGCommGrpCat.{u})
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) : WithConv (MonoidAlgebra R G →ₐ[R] A) :=
-  AlgebraicGeometry.Spec.mapMulEquiv.symm
-    (schemePointPresentationMulEquiv (R := R) (A := A) G p)
-
-private theorem schemePointsMulEquiv_apply_eq_pointsMulEquiv
-    (G : FGCommGrpCat.{u})
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) :
-    schemePointsMulEquiv (R := R) (A := A) G p =
-      pointsMulEquiv (algebraPointOfSchemePoint (R := R) (A := A) G p) :=
-  rfl
-
-private theorem mapMulEquiv_algebraPointOfSchemePoint
-    (G : FGCommGrpCat.{u})
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) :
-    AlgebraicGeometry.Spec.mapMulEquiv
-        (algebraPointOfSchemePoint (R := R) (A := A) G p) =
-      schemePointPresentationMulEquiv (R := R) (A := A) G p :=
-  AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply _
-
-private theorem mapMulEquiv_mapValue_monoidAlgebra (G : FGCommGrpCat.{u})
-    (phi : A →ₐ[R] B) (q : WithConv (MonoidAlgebra R G →ₐ[R] A)) :
-    AlgebraicGeometry.Spec.mapMulEquiv
-        (AlgHom.mapValue (H := MonoidAlgebra R G) phi q) =
-      (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) ≫
-        AlgebraicGeometry.Spec.mapMulEquiv q := by
-  exact CommHopfAlgCat.mapMulEquiv_mapValue
-    (coordinateRing R G).obj (CommAlgCat.ofHom phi) q
+  AlgebraicGeometry.Spec.mapMulEquiv.symm.trans pointsMulEquiv
 
 /-- A scheme-valued point, viewed as a character, evaluates a group element on the
 corresponding group-algebra basis monomial. -/
@@ -155,82 +89,20 @@ theorem schemePointsMulEquiv_apply_coe (G : FGCommGrpCat.{u})
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) (g : G) :
     (schemePointsMulEquiv (R := R) (A := A) G p g : A) =
-      (AlgebraicGeometry.Spec.mapMulEquiv.symm
-        (schemePointPresentationMulEquiv (R := R) (A := A) G p)).ofConv
-          (MonoidAlgebra.single g 1) := by
-  rw [schemePointsMulEquiv_apply_eq_pointsMulEquiv]
+      (AlgebraicGeometry.Spec.mapMulEquiv.symm p).ofConv
+        (MonoidAlgebra.single g 1) := by
+  change (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p) g : A) = _
   exact charOfPoint_apply_coe
-    (algebraPointOfSchemePoint (R := R) (A := A) G p).ofConv g
+    (AlgebraicGeometry.Spec.mapMulEquiv.symm p).ofConv g
 
 /-- The inverse scheme-points equivalence is the spectrum morphism associated to the algebra
-point extending a character, transported back to the packaged group scheme. -/
-theorem schemePointPresentationMulEquiv_symm_schemePointsMulEquiv_symm_apply
+point extending a character. -/
+theorem schemePointsMulEquiv_symm_apply
     (G : FGCommGrpCat.{u}) (chi : G →* Aˣ) :
-    schemePointPresentationMulEquiv (R := R) (A := A) G
-        ((schemePointsMulEquiv (R := R) (A := A) G).symm chi) =
+    (schemePointsMulEquiv (R := R) (A := A) G).symm chi =
       AlgebraicGeometry.Spec.mapMulEquiv
         ((pointsMulEquiv (R := R) (A := A) (G := G)).symm chi) := by
-  change schemePointPresentationMulEquiv (R := R) (A := A) G
-      ((schemePointPresentationMulEquiv (R := R) (A := A) G).symm
-        (AlgebraicGeometry.Spec.mapMulEquiv
-          ((pointsMulEquiv (R := R) (A := A) (G := G)).symm chi))) = _
-  exact (schemePointPresentationMulEquiv (R := R) (A := A) G).apply_symm_apply _
-
-private theorem pointsMap_eq_mapPointsFunctor_app
-    {G H : FGCommGrpCat.{u}} (f : G ⟶ H)
-    (p : WithConv (MonoidAlgebra R H →ₐ[R] A)) :
-    pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f) p =
-      (CommHopfAlgCat.mapPointsFunctor (coordinateMap R f).hom).app
-        (CommAlgCat.of R A) p := by
   rfl
-
-private theorem mapMulEquiv_pointsMap
-    {G H : FGCommGrpCat.{u}} (f : G ⟶ H)
-    (p : WithConv (MonoidAlgebra R H →ₐ[R] A)) :
-    AlgebraicGeometry.Spec.mapMulEquiv
-        (pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f) p) =
-      AlgebraicGeometry.Spec.mapMulEquiv p ≫
-        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (coordinateMap R f).hom.op).hom.hom := by
-  rw [pointsMap_eq_mapPointsFunctor_app]
-  exact CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (coordinateMap R f).hom p
-
-private theorem groupSchemeMap_presentation
-    {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
-    (groupSchemeMap R f).hom.hom ≫
-        (groupSchemeIsoHopfSpec R G).hom.hom.hom =
-      (groupSchemeIsoHopfSpec R H).hom.hom.hom ≫
-        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (coordinateMap R f).hom.op).hom.hom := by
-  exact congrArg (fun k => k.hom.hom)
-    (groupSchemeMap_comp_groupSchemeIsoHopfSpec_hom R f)
-
-private theorem schemePointPresentationMulEquiv_groupSchemeMap
-    {G H : FGCommGrpCat.{u}} (f : G ⟶ H)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R H).X) :
-    schemePointPresentationMulEquiv (R := R) (A := A) G
-        (p ≫ (groupSchemeMap R f).hom.hom) =
-      schemePointPresentationMulEquiv (R := R) (A := A) H p ≫
-        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (coordinateMap R f).hom.op).hom.hom := by
-  exact congrArg (fun k => p ≫ k) (groupSchemeMap_presentation (R := R) f)
-
-private theorem schemePointPresentationMulEquiv_mapValue
-    (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] B)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R G).X) :
-    schemePointPresentationMulEquiv (R := R) (A := B) G
-        ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) ≫ p) =
-      (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-        (Spec (CommRingCat.of R)) ≫
-          schemePointPresentationMulEquiv (R := R) (A := A) G p := by
-  exact Category.assoc
-    ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-      (Spec (CommRingCat.of R))) p
-    (groupSchemeIsoHopfSpec R G).hom.hom.hom
 
 /-- The scheme-points equivalence intertwines `groupSchemeMap f` with precomposition by the
 underlying homomorphism `f` on characters. -/
@@ -242,15 +114,27 @@ theorem schemePointsMulEquiv_groupSchemeMap
         (p ≫ (groupSchemeMap R f).hom.hom) =
       (schemePointsMulEquiv (R := R) (A := A) H p).comp
         (FGCommGrpCat.toMonoidHom f) := by
-  rw [schemePointsMulEquiv_apply_eq_pointsMulEquiv,
-    schemePointsMulEquiv_apply_eq_pointsMulEquiv]
-  rw [← pointsMulEquiv_pointsMap]
-  congr 1
-  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-  rw [mapMulEquiv_pointsMap (R := R) (A := A) f,
-    mapMulEquiv_algebraPointOfSchemePoint,
-    mapMulEquiv_algebraPointOfSchemePoint]
-  exact schemePointPresentationMulEquiv_groupSchemeMap (R := R) f p
+  change pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm
+      (p ≫ (groupSchemeMap R f).hom.hom)) =
+    (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p)).comp
+      (FGCommGrpCat.toMonoidHom f)
+  calc
+    _ = pointsMulEquiv
+        (pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f)
+          (AlgebraicGeometry.Spec.mapMulEquiv.symm p)) := by
+      congr 1
+      apply AlgebraicGeometry.Spec.mapMulEquiv.injective
+      rw [AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply]
+      change p ≫
+          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+            (coordinateMap R f).hom.op).hom.hom =
+        AlgebraicGeometry.Spec.mapMulEquiv
+          ((CommHopfAlgCat.mapPointsFunctor (coordinateMap R f).hom).app
+            (CommAlgCat.of R A) (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
+      rw [CommHopfAlgCat.mapMulEquiv_mapDomain]
+      congr 1
+      exact (AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p).symm
+    _ = _ := pointsMulEquiv_pointsMap _ _
 
 /-- The scheme-points equivalence is natural in the value algebra. For `phi : A →ₐ[R] B`,
 precomposing by `Spec B ⟶ Spec A` applies `phi` to the values of the corresponding
@@ -263,15 +147,27 @@ theorem schemePointsMulEquiv_mapValue (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] 
           (Spec (CommRingCat.of R)) ≫ p) =
       (Units.map phi.toMonoidHom).comp
         (schemePointsMulEquiv (R := R) (A := A) G p) := by
-  rw [schemePointsMulEquiv_apply_eq_pointsMulEquiv,
-    schemePointsMulEquiv_apply_eq_pointsMulEquiv]
-  rw [← pointsMulEquiv_mapValue]
-  congr 1
-  apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-  rw [mapMulEquiv_mapValue_monoidAlgebra,
-    mapMulEquiv_algebraPointOfSchemePoint,
-    mapMulEquiv_algebraPointOfSchemePoint]
-  exact schemePointPresentationMulEquiv_mapValue (R := R) G phi p
+  change pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm
+      ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
+        (Spec (CommRingCat.of R)) ≫ p)) =
+    (Units.map phi.toMonoidHom).comp
+      (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
+  calc
+    _ = pointsMulEquiv
+        (AlgHom.mapValue (H := MonoidAlgebra R G) phi
+          (AlgebraicGeometry.Spec.mapMulEquiv.symm p)) := by
+      congr 1
+      apply AlgebraicGeometry.Spec.mapMulEquiv.injective
+      rw [AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply]
+      change (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ p =
+        AlgebraicGeometry.Spec.mapMulEquiv
+          (HopfAlgebra.mapPoints (H := (coordinateRing R G).obj)
+            (CommAlgCat.ofHom phi) (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
+      rw [CommHopfAlgCat.mapMulEquiv_mapValue]
+      congr 1
+      exact (AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p).symm
+    _ = _ := pointsMulEquiv_mapValue _ _
 
 /-! ### The multiplicative group and scheme-level characters -/
 

@@ -95,11 +95,9 @@ theorem schemePointsMulEquiv_apply_coe [Finite sigma]
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R sigma).X) (i : sigma) :
     (schemePointsMulEquiv (R := R) (A := A) p i : A) =
-      (Spec.mapMulEquiv.symm
-        (DiagonalizableGroup.schemePointPresentationMulEquiv
-          (R := R) (A := A) (characterGroup sigma) p)).ofConv
-            (MonoidAlgebra.single
-              (Multiplicative.ofAdd (Finsupp.single i 1)) 1) := by
+      (Spec.mapMulEquiv.symm p).ofConv
+        (MonoidAlgebra.single
+          (Multiplicative.ofAdd (Finsupp.single i 1)) 1) := by
   change (freeAbelianCharEquiv (M := Aˣ)
     (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := A)
       (characterGroup sigma) p) i : A) = _
@@ -108,20 +106,16 @@ theorem schemePointsMulEquiv_apply_coe [Finite sigma]
   rfl
 
 /-- The inverse coordinate equivalence is the spectrum morphism extending the free-abelian
-character determined by the coordinate family, transported to the packaged split torus. -/
-theorem schemePointPresentationMulEquiv_symm_schemePointsMulEquiv_symm_apply [Finite sigma]
+character determined by the coordinate family. -/
+theorem schemePointsMulEquiv_symm_apply [Finite sigma]
     (c : sigma → Aˣ) :
-    DiagonalizableGroup.schemePointPresentationMulEquiv
-        (R := R) (A := A) (characterGroup sigma)
-        ((schemePointsMulEquiv (R := R) (A := A)).symm c) =
+    (schemePointsMulEquiv (R := R) (A := A)).symm c =
       Spec.mapMulEquiv
         ((pointsMulEquiv (R := R) (A := A)).symm c) := by
-  change DiagonalizableGroup.schemePointPresentationMulEquiv
-      (R := R) (A := A) (characterGroup sigma)
-      ((DiagonalizableGroup.schemePointsMulEquiv
-        (R := R) (A := A) (characterGroup sigma)).symm
-          (freeAbelianCharEquiv.symm c)) = _
-  rw [DiagonalizableGroup.schemePointPresentationMulEquiv_symm_schemePointsMulEquiv_symm_apply]
+  change (DiagonalizableGroup.schemePointsMulEquiv
+      (R := R) (A := A) (characterGroup sigma)).symm
+        (freeAbelianCharEquiv.symm c) = _
+  rw [DiagonalizableGroup.schemePointsMulEquiv_symm_apply]
   congr 1
   rw [DiagonalizableGroup.pointsMulEquiv_symm_apply, pointsMulEquiv_symm_apply]
 
