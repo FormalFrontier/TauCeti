@@ -21,8 +21,9 @@ vectors.
   generating tangent vector included as a parameter.
 * `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is smooth near the
   zero vector and the identity.
-* `exists_continuousOn_local_mulInvariantCoordinateFlow`: a continuous local flow on a uniform
-  closed neighborhood of the zero vector and the identity coordinate.
+* `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local flow on a uniform closed
+  neighborhood of the zero vector and the identity coordinate, jointly continuous and uniformly
+  Lipschitz in its initial state.
 * `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local flow
   whose values remain inside the identity chart.
 * `exists_local_coordinate_representation_mulInvariantIntegralCurve`: the local flow represents the
@@ -134,15 +135,20 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
   simpa only [w, extChartAt_prod, extChartAt_self_apply, modelWithCornersSelf_coe,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id_eq] using h.snd
 
+omit [IsManifold I 2 G] in
 /-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
-a single flow that is continuous jointly in its initial condition and time. The tangent-vector
-coordinate is frozen by the ODE; the second coordinate follows the invariant vector field. -/
-theorem exists_continuousOn_local_mulInvariantCoordinateFlow
+a single flow that is continuous jointly in its initial condition and time and uniformly Lipschitz
+in its initial state. The tangent-vector coordinate is frozen by the ODE; the second coordinate
+follows the invariant vector field. -/
+theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
-    ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r : NNReal), 0 < δ ∧ 0 < r ∧
+    ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r L : NNReal), 0 < δ ∧ 0 < r ∧
       ContinuousOn α
         (Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r ×ˢ
           Set.Icc (-δ) δ) ∧
+      (∀ t ∈ Set.Icc (-δ) δ,
+        LipschitzOnWith L (fun x => α (x, t))
+          (Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r)) ∧
       ∀ x ∈ Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r,
         α (x, 0) = x ∧
           (∀ t ∈ Set.Icc (-δ) δ,
@@ -159,26 +165,42 @@ theorem exists_continuousOn_local_mulInvariantCoordinateFlow
     exact contDiffAt_const.prodMk
       (contDiffAt_mulInvariantCoordinateVectorField.of_le (by norm_num))
   obtain ⟨δ, hδ, a, r, L, K, hr, hpl⟩ := IsPicardLindelof.of_contDiffAt_one hF
-  obtain ⟨α, hα, hαcont⟩ :=
-    (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_continuousOn
+  obtain ⟨α, hα, L', hαlip⟩ :=
+    (hpl (0 : ℝ)).exists_forall_mem_closedBall_eq_hasDerivWithinAt_lipschitzOnWith
+  let α' : (E × E) × ℝ → E × E := fun xt => α xt.1 xt.2
+  have hαbase : ∀ x ∈ Metric.closedBall center r,
+      α x 0 = x ∧ ∀ t ∈ Set.Icc (-δ) δ,
+        HasDerivWithinAt (α x) (F (α x t)) (Set.Icc (-δ) δ) t := by
+    simpa only [zero_sub, zero_add] using hα
+  have hαlip' : ∀ t ∈ Set.Icc (-δ) δ,
+      LipschitzOnWith L' (fun x => α x t) (Metric.closedBall center r) := by
+    simpa only [zero_sub, zero_add] using hαlip
+  have hαcont : ContinuousOn α'
+      (Metric.closedBall center r ×ˢ Set.Icc (-δ) δ) := by
+    apply continuousOn_prod_of_continuousOn_lipschitzOnWith _ L'
+    · intro x hx
+      exact HasDerivWithinAt.continuousOn (hαbase x hx).2
+    · exact hαlip'
   have hα' : ∀ x ∈ Metric.closedBall center r,
-      α (x, 0) = x ∧ ∀ t ∈ Set.Icc (-δ) δ,
-        HasDerivWithinAt (fun s => α (x, s))
-          ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
+      α' (x, 0) = x ∧ ∀ t ∈ Set.Icc (-δ) δ,
+        HasDerivWithinAt (fun s => α' (x, s))
+          ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G) (α' (x, t)))
           (Set.Icc (-δ) δ) t := by
     intro x hx
-    simpa only [F, zero_sub, zero_add] using hα x hx
-  refine ⟨α, δ, r, hδ, hr, ?_, ?_⟩
+    simpa only [α', F] using hαbase x hx
+  refine ⟨α', δ, r, L', hδ, hr, ?_, ?_, ?_⟩
   · simpa only [center, zero_sub, zero_add] using hαcont
+  · intro t ht
+    simpa only [α'] using hαlip' t ht
   · intro x hx
     have hx' : x ∈ Metric.closedBall center r := by simpa only [center] using hx
     refine ⟨(hα' x hx').1, (hα' x hx').2, ?_⟩
-    let β : ℝ → E := fun t => (α (x, t)).1
+    let β : ℝ → E := fun t => (α' (x, t)).1
     have hβ : ∀ t ∈ Set.Icc (-δ) δ,
         HasDerivWithinAt β 0 (Set.Icc (-δ) δ) t := by
       intro t ht
       change HasDerivWithinAt
-        ((ContinuousLinearMap.fst ℝ E E) ∘ fun s => α (x, s)) 0
+        ((ContinuousLinearMap.fst ℝ E E) ∘ fun s => α' (x, s)) 0
           (Set.Icc (-δ) δ) t
       simpa using (ContinuousLinearMap.fst ℝ E E).hasFDerivAt.comp_hasDerivWithinAt t
         ((hα' x hx').2 t ht)
@@ -193,6 +215,7 @@ theorem exists_continuousOn_local_mulInvariantCoordinateFlow
     exact (hconst t ht).trans ((hconst 0 hzero).symm.trans
       (congrArg Prod.fst (hα' x hx').1))
 
+omit [IsManifold I 2 G] in
 /-- There is a coordinate flow near the zero tangent vector and time zero which is continuous at
 the center, solves the parameterized invariant ODE with an ordinary derivative, freezes the
 tangent-vector parameter, and remains in the target of the identity chart. -/
@@ -211,8 +234,8 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
         α (xt.1, 0) = xt.1 ∧
         (α xt).1 = xt.1.1 ∧
         (α xt).2 ∈ interior (extChartAt I (1 : G)).target := by
-  obtain ⟨α, δ, r, hδ, hr, hcont, hα⟩ :=
-    exists_continuousOn_local_mulInvariantCoordinateFlow
+  obtain ⟨α, δ, r, _, hδ, hr, hcont, _, hα⟩ :=
+    exists_lipschitzOn_local_mulInvariantCoordinateFlow
       (I := I) (G := G)
   let center : E × E := (0, extChartAt I (1 : G) (1 : G))
   have hdomain :
@@ -255,6 +278,7 @@ local instance lieGroupMinSmoothnessParameterDependence [LieGroup I ∞ G] :
     LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
 
+omit [IsManifold I 2 G] in
 /-- A single coordinate flow represents the canonical invariant integral curves for every
 sufficiently small generating vector and every sufficiently small time. This is the bridge from
 Picard--Lindelöf's parameterized model-space flow to the canonical manifold-valued curves used to
@@ -356,6 +380,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1).isMIntegralCurveOn _)
     (by simpa only [γ, f, Function.comp_apply, mulInvariantIntegralCurve_zero] using hγzero)
 
+omit [IsManifold I 2 G] in
 /-- In model-space coordinates, the tangent-space exponential is continuous at the zero vector.
 The local parameterized flow only covers a short time interval; the scaling law for invariant
 integral curves transports that interval to time one. -/
