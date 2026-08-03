@@ -27,8 +27,8 @@ tangent vectors.
 * `exists_eventually_hasDerivAt_mulInvariantCoordinateFlow`: a neighborhood form of the local
   solution family whose values remain inside the identity chart.
 * `exists_local_coordinate_representation_mulInvariantIntegralCurve`: the local solution family
-  represents the canonical invariant integral curves uniformly for all sufficiently small
-  generating vectors.
+  solves the coordinate ODE and represents the canonical integral curves uniformly for all small
+  generators.
 * `continuousAt_mulInvariantExp_modelSpace_zero`: the tangent-space exponential is continuous at
   zero in model-space coordinates.
 
@@ -258,10 +258,10 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
     (hα xt.1 hx).1, (hα xt.1 hx).2.2 xt.2 ht, ?_⟩
   exact (Set.mem_preimage.mp hxtTarget).2
 
-/-- A single coordinate solution family represents the canonical invariant integral curves for
-every sufficiently small generating vector and every sufficiently small time. This is the bridge
-from Picard--Lindelöf's parameterized model-space solutions to the canonical manifold-valued curves
-used to define `lieExp`. -/
+/-- A single coordinate solution family solves the invariant coordinate ODE and represents the
+canonical invariant integral curves for every sufficiently small generating vector and every
+sufficiently small time. This bridges Picard--Lindelöf's parameterized model-space solutions to the
+canonical manifold-valued curves used to define `lieExp`. -/
 theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
     [CompleteSpace E] [LieGroup I (minSmoothness ℝ 3) G]
     [T2Space G] [BoundarylessManifold I G] :
@@ -270,6 +270,13 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
       (∀ v ∈ U, ∀ t ∈ Set.Ioo (-δ) δ,
         ContinuousAt α ((v, extChartAt I (1 : G) (1 : G)), t) ∧
+          HasDerivAt
+            (fun s => α (((v, extChartAt I (1 : G) (1 : G)), s)))
+            ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G)
+              (α (((v, extChartAt I (1 : G) (1 : G)), t)))) t ∧
+          α (((v, extChartAt I (1 : G) (1 : G)), 0)) =
+            (v, extChartAt I (1 : G) (1 : G)) ∧
+          (α (((v, extChartAt I (1 : G) (1 : G)), t))).1 = v ∧
           (α (((v, extChartAt I (1 : G) (1 : G)), t))).2 ∈
             interior (extChartAt I (1 : G)).target) ∧
       ∀ v ∈ U,
@@ -303,9 +310,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
   refine ⟨α, U, δ, hU, hδ, hαcont, ?_, ?_⟩
   · intro v hv t ht
     have hmem : (v, t) ∈ U ×ˢ T := ⟨hv, hδT ht⟩
-    refine ⟨by simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using (hsub hmem).1,
-      ?_⟩
-    simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using (hsub hmem).2.2.2.2
+    simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using hsub hmem
   intro v hv
   let f : ℝ → E := fun t =>
     (α (((v, extChartAt I (1 : G) (1 : G)), t))).2
@@ -320,7 +325,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
         (α (((v, extChartAt I (1 : G) (1 : G)), t))).2 ∈
           interior (extChartAt I (1 : G)).target := by
     have hmem : (v, t) ∈ U ×ˢ T := ⟨hv, hδT ht⟩
-    simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using (hsub hmem).2
+    exact (hsub hmem).2
   have hγAt : ∀ t ∈ Set.Ioo (-δ) δ,
       IsMIntegralCurveAt γ
         (mulInvariantVectorField (I := I) (G := G) (v : GroupLieAlgebra I G)) t := by
@@ -397,7 +402,7 @@ theorem continuousAt_mulInvariantExp_modelSpace_zero
       (hαlocal 0 hzeroU c hc).1.comp_of_eq hq hqzero
   have hsnd : ContinuousAt (fun v : E => (α (q v)).2) 0 :=
     continuousAt_snd.comp' hαq
-  have htarget := Set.mem_of_mem_of_subset (hαlocal 0 hzeroU c hc).2 interior_subset
+  have htarget := Set.mem_of_mem_of_subset (hαlocal 0 hzeroU c hc).2.2.2.2 interior_subset
   have hinv : ContinuousAt (extChartAt I (1 : G)).symm (α (q 0)).2 := by
     rw [hqzero]
     exact continuousAt_extChartAt_symm'' htarget
