@@ -69,22 +69,41 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
           (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
+/-- At the identity coordinate, the parameterized invariant field equals its generator. -/
+@[simp]
+theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
+    mulInvariantCoordinateVectorField (I := I) (G := G)
+      (v, I (chartAt H (1 : G) (1 : G))) = v := by
+  change mulInvariantCoordinateVectorField (I := I) (G := G)
+    (v, extChartAt I (1 : G) (1 : G)) = v
+  rw [mulInvariantCoordinateVectorField_apply]
+  have hsymm : (extChartAt I (1 : G)).symm (extChartAt I (1 : G) (1 : G)) = 1 :=
+    (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
+  rw [hsymm]
+  rw [show (show E from mulInvariantVectorField (I := I) (G := G)
+      (v : GroupLieAlgebra I G) 1) = v by
+    exact congrArg (fun w : GroupLieAlgebra I G => (show E from w))
+      (mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G))]
+  exact tangentCoordChange_self (mem_extChartAt_source (I := I) (1 : G))
+
 /-- The invariant coordinate field vanishes when its generating vector vanishes. -/
 @[simp]
 theorem mulInvariantCoordinateVectorField_zero [IsManifold I 1 G] (y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (0, y) = 0 := by
-  unfold mulInvariantCoordinateVectorField
-  dsimp only [Prod.fst, Prod.snd]
-  change tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
-      ((extChartAt I (1 : G)).symm y)
-        (mulInvariantVectorField (I := I) (G := G) (0 : GroupLieAlgebra I G)
-          ((extChartAt I (1 : G)).symm y)) = 0
+  rw [mulInvariantCoordinateVectorField_apply]
   have hz : mulInvariantVectorField (I := I) (G := G)
       (0 : GroupLieAlgebra I G) = 0 := by
     simpa using mulInvariantVectorField_smul (I := I) (G := G) (0 : ℝ)
       (0 : GroupLieAlgebra I G)
-  rw [congrFun hz]
-  exact map_zero _
+  let A := tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
+    ((extChartAt I (1 : G)).symm y)
+  calc
+    A (show E from mulInvariantVectorField (I := I) (G := G)
+        (0 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) = A 0 := by
+      apply congrArg A
+      exact congrArg (fun w : GroupLieAlgebra I G => (show E from w))
+        (congrFun hz ((extChartAt I (1 : G)).symm y))
+    _ = 0 := map_zero A
 
 /-- The coordinate expression of the parameterized left-invariant vector field is `C^n` at the
 zero tangent vector and identity coordinate when multiplication is `C^(n + 1)`. -/
@@ -117,7 +136,9 @@ theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
         ((extChartAt I (1 : G)).symm p.2)
         (mulInvariantVectorField (I := I) (G := G)
           (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) := by
-    -- This is the second coordinate of the tangent-bundle extended chart at `(0, 1)`.
+    -- This is the defining second coordinate of the tangent-bundle extended chart. Keeping the
+    -- implementation-level conversion here prevents its definitional equality from leaking into
+    -- the regularity argument below.
     change tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
       ((extChartAt I (1 : G)).symm p.2)
         (mulInvariantVectorField (I := I) (G := G)
@@ -221,9 +242,6 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
     [CompleteSpace E] [ContMDiffMul I (1 + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
     let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     ∃ α : (E × E) × ℝ → E × E,
-      ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
-      α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) =
-        ((0 : E), extChartAt I (1 : G) (1 : G)) ∧
       (∀ᶠ xt in 𝓝 (((0 : E), extChartAt I (1 : G) (1 : G)), 0),
         ContinuousAt α xt) ∧
       ∀ᶠ xt in 𝓝 (((0 : E), extChartAt I (1 : G) (1 : G)), 0),
@@ -265,8 +283,7 @@ theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
     exact prod_mem_nhds
       (Filter.mem_of_superset (Metric.isOpen_ball.mem_nhds hxt.1) Metric.ball_subset_closedBall)
       (Filter.mem_of_superset (isOpen_Ioo.mem_nhds hxt.2) Set.Ioo_subset_Icc_self)
-  refine ⟨α, by simpa only [center] using hcontAt, by simpa only [center] using hcenter,
-    by simpa only [center] using hcontNear, ?_⟩
+  refine ⟨α, by simpa only [center] using hcontNear, ?_⟩
   filter_upwards [hdomainOpen, htarget] with xt hxt hxtTarget
   have hx := Metric.ball_subset_closedBall hxt.1
   have ht : xt.2 ∈ Set.Icc (-δ) δ := Set.Ioo_subset_Icc_self hxt.2
@@ -284,7 +301,6 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
     [T2Space G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (U : Set E) (δ : ℝ),
       U ∈ 𝓝 (0 : E) ∧ 0 < δ ∧
-      ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
       (∀ v ∈ U, ∀ t ∈ Set.Ioo (-δ) δ,
         ContinuousAt α ((v, extChartAt I (1 : G) (1 : G)), t) ∧
           HasDerivAt
@@ -306,7 +322,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
   let _ : ContMDiffMul I (1 + 1) G :=
     ContMDiffMul.of_le (m := 1 + 1) (n := minSmoothness ℝ 3) (by norm_num)
   let _ : IsManifold I 1 G := IsManifold.of_le (n := minSmoothness ℝ 3) (by norm_num)
-  obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
+  obtain ⟨α, hαcontNear, hα⟩ :=
     exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
       BoundarylessManifold.isInteriorPoint
   let embed : E × ℝ → (E × E) × ℝ := fun vt =>
@@ -324,7 +340,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
   obtain ⟨U, hU, T, hT, hsub⟩ := Filter.mem_prod_iff.mp hpull
   obtain ⟨δ, hδ, hδT⟩ := Metric.mem_nhds_iff.mp hT
   rw [Real.ball_eq_Ioo, zero_sub, zero_add] at hδT
-  refine ⟨α, U, δ, hU, hδ, hαcont, ?_, ?_⟩
+  refine ⟨α, U, δ, hU, hδ, ?_, ?_⟩
   · intro v hv t ht
     have hmem : (v, t) ∈ U ×ˢ T := ⟨hv, hδT ht⟩
     simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using hsub hmem
@@ -401,7 +417,7 @@ theorem continuousAt_mulInvariantExp_modelSpace_zero
   let _ : ContMDiffMul I (1 + 1) G :=
     ContMDiffMul.of_le (m := 1 + 1) (n := minSmoothness ℝ 3) (by norm_num)
   let _ : IsManifold I 1 G := IsManifold.of_le (n := minSmoothness ℝ 3) (by norm_num)
-  obtain ⟨α, U, δ, hU, hδ, _, hαlocal, hαeq⟩ :=
+  obtain ⟨α, U, δ, hU, hδ, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
   let c : ℝ := δ / 2
   have hc : c ∈ Set.Ioo (-δ) δ := by
