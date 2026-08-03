@@ -111,7 +111,7 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) =
       tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
         ((extChartAt I (1 : G)).symm y)
-        (show E from mulInvariantVectorField (I := I) (G := G)
+        (mulInvariantVectorField (I := I) (G := G)
           (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
@@ -144,12 +144,12 @@ theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
   have hw_apply (p : E × E) :
       w p = tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
         ((extChartAt I (1 : G)).symm p.2)
-        (show E from mulInvariantVectorField (I := I) (G := G)
+        (mulInvariantVectorField (I := I) (G := G)
           (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) := by
     -- This is the second coordinate of the tangent-bundle extended chart at `(0, 1)`.
     change tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
       ((extChartAt I (1 : G)).symm p.2)
-        (show E from mulInvariantVectorField (I := I) (G := G)
+        (mulInvariantVectorField (I := I) (G := G)
           (p.1 : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm p.2)) = _
     rfl
   have hw : w = mulInvariantCoordinateVectorField (I := I) (G := G) := by
