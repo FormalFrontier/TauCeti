@@ -72,8 +72,10 @@ coordinate is long enough, which is how the two inclusions of the radical theore
 `TauCeti.ofPath_mem_pathSpan_iff` and `TauCeti.ofPath_mem_arrowIdeal_iff` recognize a basis path,
 which is how the ideal is recognized in practice. At the level of the arrow ideal the length
 condition collapses to the vanishing of the named coordinates on the trivial paths, which is
-`TauCeti.mem_arrowIdeal_iff_repr_nil`. `TauCeti.mem_arrowIdeal` is the bridge to the `pathSpan`
-implementation, which consumers should not need.
+`TauCeti.mem_arrowIdeal_iff_repr_nil`. The bridge from the arrow ideal to the `pathSpan` it is
+implemented by is private: these characterizations, together with
+`TauCeti.restrictScalars_arrowIdeal_pow` and `TauCeti.arrowIdeal_eq_span_arrows`, are what consumers
+need.
 
 Of these, the basis-path ones are `simp`: their right-hand sides are smaller than their left. The
 membership `iff`s whose left-hand side is the bare `f ∈ arrowIdeal k Q` are not, because tagging one
@@ -240,8 +242,10 @@ noncomputable def arrowIdeal : Ideal (pathAlgebra k Q) where
 
 variable {k Q}
 
-/-- The arrow ideal is the first step of the length filtration. -/
-theorem mem_arrowIdeal {f : pathAlgebra k Q} : f ∈ arrowIdeal k Q ↔ f ∈ pathSpan k Q 1 :=
+/-- The arrow ideal is the first step of the length filtration. This is the bridge to the
+implementation, kept private: consumers use the coordinate, basis-path, power and span-of-arrows
+characterizations instead. -/
+private theorem mem_arrowIdeal {f : pathAlgebra k Q} : f ∈ arrowIdeal k Q ↔ f ∈ pathSpan k Q 1 :=
   Iff.rfl
 
 /-- **Membership in the arrow ideal**, read off the path basis: an element lies in the arrow ideal
