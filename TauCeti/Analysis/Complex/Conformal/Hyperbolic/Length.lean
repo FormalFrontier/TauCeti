@@ -54,8 +54,9 @@ hyperbolic length is unchanged by post-composition with a disc Moebius factor. T
 an arbitrary path to one starting at the origin.
 
 *The lower bound.* For a path with `γ a = 0` the estimate is a one-variable calculus argument.
-Choosing the unit vector `v = conj (γ b) / ‖γ b‖`, the real function `ψ t = (v * γ t).re` runs
-from `0` to `‖γ b‖` and satisfies `|ψ| ≤ ‖γ‖` and `|ψ ′| ≤ ‖γ ′‖`. Hence, pointwise,
+Choosing a unit vector `v` with `v * γ b = ‖γ b‖` — one exists for every `γ b`, including
+`γ b = 0`, by Mathlib's `Complex.exists_norm_eq_mul_self` — the real function `ψ t = (v * γ t).re`
+runs from `0` to `‖γ b‖` and satisfies `|ψ| ≤ ‖γ‖` and `|ψ ′| ≤ ‖γ ′‖`. Hence, pointwise,
 
 `(Real.artanh ∘ ψ) ′ = ψ ′ / (1 - ψ ^ 2) ≤ ‖γ ′‖ / (1 - ‖γ‖ ^ 2)`,
 
@@ -640,58 +641,44 @@ private theorem artanh_norm_le_integral (hab : a ≤ b) (hγ : ContinuousOn γ (
     nlinarith [norm_nonneg (γ t), hmem t ht]
   have hint2 : IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b :=
     intervalIntegrable_norm_div_one_sub_norm_sq hab hγ hγ' hmem
-  rcases eq_or_ne (γ b) 0 with hb | hb
-  · rw [hb, norm_zero, Real.artanh_zero]
-    exact intervalIntegral.integral_nonneg hab fun t ht =>
-      div_nonneg (norm_nonneg _) (hpos t ht).le
-  · have hR0 : 0 < ‖γ b‖ := norm_pos_iff.mpr hb
-    set v : ℂ := (starRingEnd ℂ) (γ b) / ((‖γ b‖ : ℝ) : ℂ) with hvdef
-    have hvnorm : ‖v‖ = 1 := by
-      rw [hvdef, norm_div, Complex.norm_conj, Complex.norm_real, Real.norm_eq_abs,
-        abs_of_pos hR0, div_self hR0.ne']
-    set ψ : ℝ → ℝ := fun t => (v * γ t).re with hψdef
-    have hψa : ψ a = 0 := by simp [hψdef, h0]
-    have hψb : ψ b = ‖γ b‖ := by
-      have hmul : v * γ b = ((‖γ b‖ : ℝ) : ℂ) := by
-        rw [hvdef, div_mul_eq_mul_div, ← Complex.normSq_eq_conj_mul_self,
-          Complex.normSq_eq_norm_sq]
-        push_cast
-        field_simp
-      simp only [hψdef, hmul, Complex.ofReal_re]
-    have hψbound : ∀ t : ℝ, |ψ t| ≤ ‖γ t‖ := fun t =>
-      (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
-    have hψmem : ∀ t ∈ Icc a b, ψ t ∈ Ioo (-1 : ℝ) 1 := fun t ht =>
-      abs_lt.mp ((hψbound t).trans_lt (hmem t ht))
-    have hψderiv : ∀ t ∈ Ioo a b, HasDerivAt ψ ((v * γ' t).re) t := fun t ht => by
-      simpa [hψdef, Function.comp_def] using
-        Complex.reCLM.hasFDerivAt.comp_hasDerivAt t ((hderiv t ht).const_mul v)
-    have hψcont : ContinuousOn ψ (Icc a b) :=
-      Complex.reCLM.continuous.comp_continuousOn (continuousOn_const.mul hγ)
-    have hPpos : ∀ t ∈ Icc a b, (0 : ℝ) < 1 - ψ t ^ 2 := fun t ht => by
-      have := hψmem t ht
-      nlinarith [this.1, this.2]
-    -- `Real.artanh ∘ ψ` runs from `0` to `Real.artanh ‖γ b‖` with speed at most the
-    -- density-weighted speed of `γ`, so Mathlib's displacement bound applies to it.
-    have hcont : ContinuousOn (fun t => Real.artanh (ψ t)) (Icc a b) :=
-      Real.continuousOn_artanh.comp hψcont fun t ht => hψmem t ht
-    have hdiff : DifferentiableOn ℝ (fun t => Real.artanh (ψ t)) (Ioo a b) := fun t ht =>
-      ((hψderiv t ht).artanh
-        (hψmem t (Ioo_subset_Icc_self ht))).differentiableAt.differentiableWithinAt
-    have hbound : ∀ᵐ t, t ∈ Ioo a b →
-        ‖deriv (fun s => Real.artanh (ψ s)) t‖ ≤ ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) :=
-      .of_forall fun t ht => by
-        have htI : t ∈ Icc a b := Ioo_subset_Icc_self ht
-        have hnum : |(v * γ' t).re| ≤ ‖γ' t‖ :=
-          (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
-        have hPQ : 1 - ‖γ t‖ ^ 2 ≤ 1 - ψ t ^ 2 := by
-          nlinarith [hψbound t, abs_nonneg (ψ t), sq_abs (ψ t), norm_nonneg (γ t)]
-        rw [((hψderiv t ht).artanh (hψmem t htI)).deriv, Real.norm_eq_abs, abs_mul, abs_inv,
-          abs_of_pos (hPpos t htI), inv_mul_eq_div]
-        gcongr
-        exact hpos t htI
-    have key := norm_sub_le_integral_of_norm_deriv_le_of_le hab hcont hdiff hbound hint2
-    simp only [hψa, hψb, Real.artanh_zero, sub_zero, Real.norm_eq_abs] at key
-    exact (le_abs_self _).trans key
+  obtain ⟨v, hvnorm, hvb⟩ := Complex.exists_norm_eq_mul_self (γ b)
+  set ψ : ℝ → ℝ := fun t => (v * γ t).re with hψdef
+  have hψa : ψ a = 0 := by simp [hψdef, h0]
+  have hψb : ψ b = ‖γ b‖ := by simp only [hψdef, ← hvb, Complex.ofReal_re]
+  have hψbound : ∀ t : ℝ, |ψ t| ≤ ‖γ t‖ := fun t =>
+    (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
+  have hψmem : ∀ t ∈ Icc a b, ψ t ∈ Ioo (-1 : ℝ) 1 := fun t ht =>
+    abs_lt.mp ((hψbound t).trans_lt (hmem t ht))
+  have hψderiv : ∀ t ∈ Ioo a b, HasDerivAt ψ ((v * γ' t).re) t := fun t ht => by
+    simpa [hψdef, Function.comp_def] using
+      Complex.reCLM.hasFDerivAt.comp_hasDerivAt t ((hderiv t ht).const_mul v)
+  have hψcont : ContinuousOn ψ (Icc a b) :=
+    Complex.reCLM.continuous.comp_continuousOn (continuousOn_const.mul hγ)
+  have hPpos : ∀ t ∈ Icc a b, (0 : ℝ) < 1 - ψ t ^ 2 := fun t ht => by
+    have := hψmem t ht
+    nlinarith [this.1, this.2]
+  -- `Real.artanh ∘ ψ` runs from `0` to `Real.artanh ‖γ b‖` with speed at most the
+  -- density-weighted speed of `γ`, so Mathlib's displacement bound applies to it.
+  have hcont : ContinuousOn (fun t => Real.artanh (ψ t)) (Icc a b) :=
+    Real.continuousOn_artanh.comp hψcont fun t ht => hψmem t ht
+  have hdiff : DifferentiableOn ℝ (fun t => Real.artanh (ψ t)) (Ioo a b) := fun t ht =>
+    ((hψderiv t ht).artanh
+      (hψmem t (Ioo_subset_Icc_self ht))).differentiableAt.differentiableWithinAt
+  have hbound : ∀ᵐ t, t ∈ Ioo a b →
+      ‖deriv (fun s => Real.artanh (ψ s)) t‖ ≤ ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) :=
+    .of_forall fun t ht => by
+      have htI : t ∈ Icc a b := Ioo_subset_Icc_self ht
+      have hnum : |(v * γ' t).re| ≤ ‖γ' t‖ :=
+        (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
+      have hPQ : 1 - ‖γ t‖ ^ 2 ≤ 1 - ψ t ^ 2 := by
+        nlinarith [hψbound t, abs_nonneg (ψ t), sq_abs (ψ t), norm_nonneg (γ t)]
+      rw [((hψderiv t ht).artanh (hψmem t htI)).deriv, Real.norm_eq_abs, abs_mul, abs_inv,
+        abs_of_pos (hPpos t htI), inv_mul_eq_div]
+      gcongr
+      exact hpos t htI
+  have key := norm_sub_le_integral_of_norm_deriv_le_of_le hab hcont hdiff hbound hint2
+  simp only [hψa, hψb, Real.artanh_zero, sub_zero, Real.norm_eq_abs] at key
+  exact (le_abs_self _).trans key
 
 /-- The lower bound over an ordered parameter interval; the general case follows by symmetry. -/
 private theorem hyperbolicDist_le_hyperbolicLength_of_le (hab : a ≤ b)
