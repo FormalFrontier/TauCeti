@@ -49,16 +49,17 @@ theorem Contractable.tendsto_integral_abs_blockAverage_indicator_sub_directingMe
       atTop (𝓝 0) := by
   have hf : Measurable (Set.indicator B (fun _ => (1 : ℝ))) :=
     (measurable_const.indicator hB)
-  have hf_bdd : ∃ C, ∀ x, ‖Set.indicator B (fun _ => (1 : ℝ)) x‖ ≤ C := by
-    refine ⟨1, fun x => ?_⟩
-    by_cases hx : x ∈ B <;> simp [Set.indicator_of_mem, Set.indicator_of_notMem, hx]
+  have hf_bdd : ∃ C, ∀ x, ‖Set.indicator B (fun _ => (1 : ℝ)) x‖ ≤ C :=
+    ⟨1, fun x => by simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) x⟩
   have hlim := hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd r
-  have hdir := directingMeasure_ae_eq_condExp (μ := μ) (X := X)
-    (tailProcess_le_ambient 0 fun k _ => hX_meas k) (hX_meas 0) hB
+  -- Normalise the composition wrapper so the rewrite matches without relying on defeq.
+  have hdir : (fun ω => (directingMeasure μ X ω).real B)
+      =ᵐ[μ] μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X] := by
+    simpa only [Function.comp_def] using directingMeasure_ae_eq_condExp (μ := μ) (X := X)
+      (tailProcess_le_ambient 0 fun k _ => hX_meas k) (hX_meas 0) hB
   refine hlim.congr fun m => integral_congr_ae ?_
   filter_upwards [hdir] with ω hω
   rw [hω]
-  rfl
 
 end Probability
 
