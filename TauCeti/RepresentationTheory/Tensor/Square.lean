@@ -46,10 +46,10 @@ subtracting the two identities isolates each character, `2·χ_{Sym²}(g) = χ(g
 ## Implementation notes
 
 Both trace identities go through the same private helper, trace additivity along the exact
-sequence `⋀²M → M ⊗ M → Sym²M`, so the two intertwining squares that feed it are named once
-(`TauCeti.TensorSquare.map_comp_toTensorPower` and `TauCeti.TensorSquare.mk_comp_map`) and reused
-for both readings. The linear-algebra steps stay private, as the file's public interface is the
-character identities.
+sequence `⋀²M → M ⊗ M → Sym²M`, so its hypothesis on the alternating inclusion is named once
+(`TauCeti.TensorSquare.map_comp_toTensorPower`) and reused for both readings; the matching
+hypothesis on the symmetric quotient is `SymmetricPower.map_mk` read extensionally. The
+linear-algebra steps stay private, as the file's public interface is the character identities.
 
 ## References
 
@@ -243,28 +243,10 @@ private theorem map_comp_toTensorPower {R : Type} {M : Type*}
   simp only [map_sub, PiTensorProduct.map_tprod, Function.comp_apply]
   congr 1
 
-/-- The symmetric quotient `M ⊗ M → Sym²M` is natural in the endomorphism: it intertwines the
-diagonal action with the symmetric square. -/
-private theorem mk_comp_map {R : Type} {M : Type*}
-    [CommRing R] [AddCommGroup M] [Module R M] (f : M →ₗ[R] M) :
-    (SymmetricPower.mk R (Fin 2) M).comp (PiTensorProduct.map fun _ : Fin 2 ↦ f)
-      = (SymmetricPower.map (ι := Fin 2) f).comp (SymmetricPower.mk R (Fin 2) M) := by
-  apply LinearMap.ext_on (PiTensorProduct.span_tprod_eq_top (R := R))
-  rintro _ ⟨v, rfl⟩
-  simp
-
 /-- The swap of the two factors of a tensor square. -/
 private noncomputable def swapEquiv (R : Type) (M : Type*)
     [CommRing R] [AddCommGroup M] [Module R M] : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
   PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
-
-/-- The swap exchanges the two factors of a pure tensor. -/
-private theorem swapEquiv_tprod {R : Type} {M : Type*}
-    [CommRing R] [AddCommGroup M] [Module R M] (v : Fin 2 → M) :
-    swapEquiv R M (PiTensorProduct.tprod R v)
-      = PiTensorProduct.tprod R fun i ↦ v (Equiv.swap 0 1 i) := by
-  rw [swapEquiv, PiTensorProduct.reindex_tprod]
-  simp
 
 /-- The swap acts as `-1` on the alternating part: it exchanges the two pure tensors whose
 difference is the image of a wedge. -/
@@ -277,8 +259,9 @@ private theorem swap_comp_toTensorPower {R : Type} {M : Type*}
   intro v
   simp only [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply, LinearMap.neg_apply,
     LinearEquiv.coe_coe]
-  rw [toTensorPower_ιMulti_two, map_sub, swapEquiv_tprod, swapEquiv_tprod]
-  simp only [Equiv.swap_apply_self, neg_sub]
+  rw [toTensorPower_ιMulti_two, map_sub, swapEquiv, PiTensorProduct.reindex_tprod,
+    PiTensorProduct.reindex_tprod]
+  simp only [Equiv.symm_swap, Equiv.swap_apply_self, neg_sub]
 
 /-- The swap acts as `+1` on the symmetric part: that is exactly the relation defining `Sym²`. -/
 private theorem mk_comp_swap {R : Type} {M : Type*}
@@ -287,7 +270,8 @@ private theorem mk_comp_swap {R : Type} {M : Type*}
       = SymmetricPower.mk R (Fin 2) M := by
   apply LinearMap.ext_on (PiTensorProduct.span_tprod_eq_top (R := R))
   rintro _ ⟨v, rfl⟩
-  rw [LinearMap.comp_apply, LinearEquiv.coe_coe, swapEquiv_tprod]
+  rw [LinearMap.comp_apply, LinearEquiv.coe_coe, swapEquiv, PiTensorProduct.reindex_tprod,
+    Equiv.symm_swap]
   simpa only [SymmetricPower.tprod, LinearMap.compMultilinearMap_apply] using
     SymmetricPower.tprod_equiv (Equiv.swap (0 : Fin 2) 1) v
 
@@ -310,8 +294,8 @@ private theorem trace_map_comp_swap {R : Type} {M : Type*}
         = LinearMap.toMatrix b b f (p 0) (p 1) * LinearMap.toMatrix b b f (p 1) (p 0) := by
     intro p
     rw [LinearMap.toMatrix_apply, hB, Basis.piTensorProduct_apply, LinearMap.comp_apply,
-      LinearEquiv.coe_coe, swapEquiv_tprod, PiTensorProduct.map_tprod,
-      Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
+      LinearEquiv.coe_coe, swapEquiv, PiTensorProduct.reindex_tprod, Equiv.symm_swap,
+      PiTensorProduct.map_tprod, Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
     simp [LinearMap.toMatrix_apply]
   rw [LinearMap.trace_eq_matrix_trace R B, LinearMap.trace_eq_matrix_trace R b,
     LinearMap.toMatrix_comp b b b f f, Matrix.trace, Matrix.trace]
@@ -340,7 +324,11 @@ private theorem trace_symmetricPower_sub_trace_exteriorPower {R : Type} {M : Typ
       (SymmetricPower.mk R (Fin 2) M).comp
           ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (swapEquiv R M).toLinearMap)
         = (SymmetricPower.map (ι := Fin 2) f).comp (SymmetricPower.mk R (Fin 2) M) := by
-    rw [← LinearMap.comp_assoc, mk_comp_map, LinearMap.comp_assoc, mk_comp_swap]
+    refine LinearMap.ext fun x ↦ ?_
+    rw [LinearMap.comp_apply, LinearMap.comp_apply, ← SymmetricPower.map_mk,
+      LinearMap.comp_apply]
+    exact congrArg (SymmetricPower.map (ι := Fin 2) f)
+      (LinearMap.congr_fun mk_comp_swap x)
   have h := trace_eq_add_of_exact
     (exteriorPower.toTensorPower R M 2)
     (SymmetricPower.mk R (Fin 2) M)
@@ -423,7 +411,7 @@ theorem char_tensorSquare (ρ : Representation R G M) (g : G) : (ρ.character g)
     (LinearMap.range_eq_top.mp (SymmetricPower.range_mk R (Fin 2) M))
     TauCeti.TensorSquare.range_toTensorPower_eq_ker_mk
     (TauCeti.TensorSquare.map_comp_toTensorPower (ρ g))
-    (TauCeti.TensorSquare.mk_comp_map (ρ g))
+    (LinearMap.ext fun x ↦ (SymmetricPower.map_mk (ρ g) x).symm)
   simpa only [add_comm] using h
 
 /-- **The difference of the two square characters is the character at the square.** Over any
