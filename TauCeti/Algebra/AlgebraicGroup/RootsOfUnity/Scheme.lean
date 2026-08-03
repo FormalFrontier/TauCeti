@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Points
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.ClosedImmersion
 public import TauCeti.Algebra.AlgebraicGroup.RootsOfUnity.Inclusion
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
 
 /-!
 # The roots-of-unity group scheme
@@ -62,7 +62,7 @@ open scoped CategoryTheory.MonObj
 
 namespace TauCeti
 
-universe u
+universe u v
 
 namespace RootsOfUnityGroup
 
@@ -85,12 +85,26 @@ noncomputable abbrev groupScheme (R : Type u) [CommRing R] (n : ℕ) :
 variable {R A B : Type u} [CommRing R] [CommRing A] [CommRing B]
 variable [Algebra R A] [Algebra R B]
 
+/-- Transporting a character from an unlifted group back across `MulEquiv.ulift` preserves
+its value on lifted elements. This isolates the universe-transport computation used below. -/
+private theorem monoidHomCongrLeft_ulift_symm_apply_up {G : Type v} [CommGroup G]
+    (χ : G →* Aˣ) (g : G) :
+    (((MulEquiv.ulift : ULift.{u} G ≃* G).monoidHomCongrLeft).symm χ) (ULift.up g) = χ g :=
+  rfl
+
+/-- A group-algebra basis element with coefficient `r` is the scalar multiple by `r` of
+the corresponding basis element with coefficient one. -/
+private theorem monoidAlgebra_single_eq_smul_single_one {G : Type v} [Monoid G]
+    (g : G) (r : R) :
+    MonoidAlgebra.single g r = r • MonoidAlgebra.single g (1 : R) := by
+  apply MonoidAlgebra.coeff_injective
+  simp
+
 /-- Scheme-valued points of `mu_n` over `Spec R` are the `n`th roots of unity in the value
 algebra.
 
-The generic diagonalizable-group character is transported across `MulEquiv.ulift`, extended
-to an unlifted group-algebra point, and then read by the existing roots-of-unity points
-equivalence. -/
+The corresponding root of unity is obtained by evaluating the character at the lifted standard
+generator of `Multiplicative (ZMod n)`. -/
 noncomputable def schemePointsMulEquiv (n : ℕ) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R n).X) ≃* rootsOfUnity n A :=
@@ -174,13 +188,12 @@ theorem schemePointsMulEquiv_symm_apply_single_generator_smul (n : ℕ)
           (MonoidAlgebra.single (ULift.up (generator n)) r) =
         f.ofConv (MonoidAlgebra.single (generator n) r) := by
       rw [DiagonalizableGroup.pointsMulEquiv_symm_apply, ofConv_toConv,
-        DiagonalizableGroup.point_single]
-      dsimp [chi]
-      change r •
-          ((DiagonalizableGroup.charOfPoint f.ofConv (generator n) : Aˣ) : A) = _
-      rw [DiagonalizableGroup.charOfPoint_apply_coe]
-      rw [show MonoidAlgebra.single (generator n) r =
-        r • MonoidAlgebra.single (generator n) (1 : R) by simp, map_smul]
+        DiagonalizableGroup.point_single,
+        monoidHomCongrLeft_ulift_symm_apply_up]
+      simp only [chi, DiagonalizableGroup.pointsMulEquiv_apply]
+      rw [
+        DiagonalizableGroup.charOfPoint_apply_coe,
+        monoidAlgebra_single_eq_smul_single_one (r := r), map_smul]
     _ = _ := RootsOfUnityGroup.pointsMulEquiv_symm_apply_single_generator_smul
       (R := R) (A := A) n ζ r
 
@@ -193,11 +206,12 @@ theorem schemePointsMulEquiv_mapValue (n : ℕ) (phi : A →ₐ[R] B)
           (Spec (CommRingCat.of R)) ≫ p) =
       restrictRootsOfUnity phi.toMonoidHom n
         (schemePointsMulEquiv (R := R) (A := A) n p) := by
-  ext
-  rw [schemePointsMulEquiv_apply_coe]
-  change _ = phi (((schemePointsMulEquiv (R := R) (A := A) n p : Aˣ) : A))
-  rw [schemePointsMulEquiv_apply_coe,
+  apply Subtype.ext
+  apply Units.ext
+  rw [restrictRootsOfUnity_coe_apply, schemePointsMulEquiv_apply_coe,
     DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue]
+  rw [AlgHom.mapValue_apply, schemePointsMulEquiv_apply_coe]
+  rw [ofConv_toConv, AlgHom.comp_apply]
   rfl
 
 /-! ### The closed inclusion into the multiplicative group scheme -/
@@ -238,13 +252,6 @@ noncomputable def inclusionGroupSchemeMap (R : Type u) [CommRing R] (n : ℕ) :
     groupScheme R n ⟶ DiagonalizableGroup.multiplicativeGroupScheme R :=
   DiagonalizableGroup.groupSchemeMap R (characterQuotient n)
 
-/-- The roots-of-unity group-scheme inclusion is the contravariant diagonalizable image of
-`characterQuotient`. -/
-theorem inclusionGroupSchemeMap_def (n : ℕ) :
-    inclusionGroupSchemeMap R n =
-      DiagonalizableGroup.groupSchemeMap R (characterQuotient n) := by
-  rfl
-
 /-- On scheme-valued points, `mu_n -> G_m` is the established inclusion of roots of unity
 into units. -/
 @[simp high]
@@ -256,7 +263,7 @@ theorem multiplicativeGroupSchemePointsMulEquiv_inclusionGroupSchemeMap (n : ℕ
         (p ≫ (inclusionGroupSchemeMap R n).hom.hom) =
       (schemePointsMulEquiv (R := R) (A := A) n p : Aˣ) := by
   rw [DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_apply,
-    inclusionGroupSchemeMap_def,
+    inclusionGroupSchemeMap,
     DiagonalizableGroup.schemePointsMulEquiv_groupSchemeMap,
     MonoidHom.comp_apply, characterQuotient_apply_up,
     toMultiplicativeZMod_ofAdd_one]
@@ -301,50 +308,16 @@ theorem multiplicativeGroupSchemePointsMulEquiv_inclusionGroupSchemeMap_mapValue
 theorem coordinateMap_characterQuotient_surjective (n : ℕ) :
     Function.Surjective
       (FiniteTypeCommHopfAlgCat.toBialgHom
-        (DiagonalizableGroup.coordinateMap R (characterQuotient.{u} n))) := by
-  rw [DiagonalizableGroup.toBialgHom_coordinateMap]
-  intro y
-  change MonoidAlgebra R (characterGroup n) at y
-  obtain ⟨x, hx⟩ := Finsupp.mapDomain_surjective (M := R)
-    (f := FGCommGrpCat.toMonoidHom (characterQuotient.{u} n))
-    (characterQuotient_surjective n) y.coeff
-  refine ⟨MonoidAlgebra.ofCoeff x, ?_⟩
-  unfold MonoidAlgebra.mapDomainBialgHom
-  apply MonoidAlgebra.coeff_injective
-  exact hx
+        (DiagonalizableGroup.coordinateMap R (characterQuotient.{u} n))) :=
+  DiagonalizableGroup.coordinateMap_surjective_of_surjective R
+    (characterQuotient n) (characterQuotient_surjective n)
 
 /-- The group-scheme morphism `mu_n -> G_m` is a closed immersion. -/
 instance isClosedImmersion_inclusionGroupSchemeMap (n : ℕ) :
     IsClosedImmersion (inclusionGroupSchemeMap R n).hom.hom.left := by
-  let e₁ :=
-    (eqToHom (DiagonalizableGroup.groupScheme_def R (characterGroup n))).hom.hom.left
-  let e₂ :=
-    (eqToHom (DiagonalizableGroup.groupScheme_def R
-      DiagonalizableGroup.multiplicativeCharacterGroup).symm).hom.hom.left
-  let c := ((hopfSpec (CommRingCat.of R)).map
-    (DiagonalizableGroup.coordinateMap R
-      (characterQuotient.{u} n)).hom.op).hom.hom.left
-  have he₁ : IsIso e₁ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (DiagonalizableGroup.groupScheme_def R (characterGroup n))))).isIso_hom
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (DiagonalizableGroup.groupScheme_def R
-          DiagonalizableGroup.multiplicativeCharacterGroup).symm))).isIso_hom
-  have hc : IsClosedImmersion c :=
-    (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
-      (coordinateMap_characterQuotient_surjective (R := R) n)
-  have hc₂ : IsClosedImmersion (c ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
-  have he₁c₂ : IsClosedImmersion (e₁ ≫ (c ≫ e₂)) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ e₁ (c ≫ e₂) he₁).2 hc₂
-  rw [inclusionGroupSchemeMap_def, DiagonalizableGroup.groupSchemeMap_def]
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  exact he₁c₂
+  rw [inclusionGroupSchemeMap]
+  exact DiagonalizableGroup.isClosedImmersion_groupSchemeMap_of_surjective R
+    (characterQuotient n) (characterQuotient_surjective n)
 
 end RootsOfUnityGroup
 
