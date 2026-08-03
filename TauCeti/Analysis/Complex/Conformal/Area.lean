@@ -7,11 +7,9 @@ module
 
 public import Mathlib.MeasureTheory.Function.Jacobian
 public import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
-import Mathlib.Analysis.Calculus.Deriv.Comp
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.RingTheory.Complex
 import Mathlib.RingTheory.Norm.Transitivity
-import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!
 # Area and change of variables for a holomorphic map
@@ -34,18 +32,15 @@ half of that argument is already on `main`: `TauCeti.exists_continuousOn_closure
 subsingleton cluster set into a continuous extension. The analytic half, of which the area formula
 is the first component, is not; the degeneracy itself is not proved here.
 
-Weighting that same distortion by an arbitrary integrand gives the **change of variables formula**
-for a holomorphic injection,
+Weighting that same distortion by an arbitrary integrand generalises the area formula to the
+**change of variables formula** for a holomorphic injection,
 `∫⁻ w in f '' s, g w = ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 * g (f z)`,
 of which the area formula is the case `g = 1`. (The area formula is nevertheless kept separate: it
 holds for a merely null measurable `s`, while the weight forces the measurability that Mathlib's
-change of variables asks for.) Its geometric payoff is that the **Dirichlet integral is a conformal
-invariant**: substituting `g = ‖deriv u‖ₑ ^ 2` and using the chain rule
-`deriv (u ∘ f) z = deriv u (f z) * deriv f z` turns the weight into part of the integrand, so
-`∫⁻ z in s, ‖deriv (u ∘ f) z‖ₑ ^ 2 = ∫⁻ w in f '' s, ‖deriv u w‖ₑ ^ 2`
-for every `u` holomorphic on the image. Reading `u` as a Riemann map, this says the Dirichlet
-integral does not see which conformal chart a domain is described in, so the length–area method may
-be run on the disc and read off on the domain, or the other way round.
+change of variables asks for.) The integrability and Bochner forms generalise
+`TauCeti.integrableOn_norm_deriv_sq` and `TauCeti.integral_norm_deriv_sq_eq_toReal_volume_image`
+the same way, and are stated for an integrand valued in an arbitrary real normed space, as
+Mathlib's are.
 
 The proof is Mathlib's change-of-variables formula
 `MeasureTheory.lintegral_abs_det_fderiv_eq_addHaar_image₀` for an injective differentiable map,
@@ -64,8 +59,10 @@ made for an arbitrary `s ⊆ U` rather than for `U` itself, because the length�
 integrates over the sub-annuli `U ∩ {z | ρ₁ < ‖z - ζ‖ < ρ₂}`, not over `U`; take `s = U` with
 `hUo.measurableSet` and `subset_rfl` for the plain domain form. The area formula and the
 finiteness it gives ask only for `MeasureTheory.NullMeasurableSet s volume`, as Mathlib's
-change of variables does; the Bochner-integral forms ask for `MeasurableSet s`, which is what
-turns the continuity of `deriv f` into strong measurability on `s`.
+null-measurable change of variables does; every other statement below asks for
+`MeasurableSet s` — the Bochner-integral forms because that is what turns the continuity of
+`deriv f` into strong measurability on `s`, and all three weighted change-of-variables forms
+because that is what Mathlib's weighted change of variables asks for.
 
 ## Main results
 
@@ -82,21 +79,15 @@ turns the continuity of `deriv f` into strong measurability on `s`.
   everywhere nonzero carries null sets to null sets and back.
 * `TauCeti.lintegral_enorm_deriv_sq_eq_pi_of_image_eq_ball` — the Dirichlet integral of a Riemann
   map is exactly `π`.
-* `TauCeti.lintegral_image_eq_lintegral_mul_enorm_deriv_sq`,
-  `TauCeti.integral_image_eq_integral_smul_norm_deriv_sq` and
-  `TauCeti.integrableOn_image_iff_integrableOn_smul_norm_deriv_sq` — the change of variables
-  formula for a holomorphic injection, in Lebesgue, Bochner and integrability form.
-* `TauCeti.lintegral_enorm_deriv_comp_sq_eq`, `TauCeti.integral_norm_deriv_comp_sq_eq` and
-  `TauCeti.integrableOn_norm_deriv_comp_sq_iff` — the conformal invariance of the Dirichlet
-  integral.
+* `TauCeti.lintegral_image_eq_lintegral_enorm_deriv_sq_mul`,
+  `TauCeti.integrableOn_image_iff_integrableOn_norm_deriv_sq_smul` and
+  `TauCeti.integral_image_eq_integral_norm_deriv_sq_smul` — the change of variables formula for a
+  holomorphic injection, in Lebesgue, integrability and Bochner form.
 
 ## Coordination with upstream Mathlib
 
-Mathlib has the change-of-variables formula for a differentiable map of a finite-dimensional real
-normed space, and everything below specializes it rather than reproving it; what is missing there is
-the complex reading of the Jacobian, and with it the area formula and the conformal invariance of
-the Dirichlet integral. A grep of the pinned Mathlib for `lintegral_abs_det_fderiv` finds only the
-polar-coordinate and
+Mathlib has the change-of-variables formula but no area formula for holomorphic maps: a grep of
+the pinned Mathlib for `lintegral_abs_det_fderiv` finds only the polar-coordinate and
 upper-half-plane applications, neither of which computes the area of a conformal image. Layer L5 is
 absent from [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the
 in-progress human-curated Riemann-mapping-theorem effort, which stops at the mapping theorem
@@ -117,7 +108,7 @@ open Bornology Complex MeasureTheory Metric Set
 open scoped ENNReal
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-variable {U s : Set ℂ} {f u : ℂ → ℂ}
+variable {U s : Set ℂ} {f : ℂ → ℂ}
 
 /-- **The Jacobian of a complex dilation-rotation.** Multiplication by `c : ℂ`, read as an
 `ℝ`-linear map of the plane, has determinant `‖c‖ ^ 2`: it is the rotation by `arg c` scaled by
@@ -289,7 +280,7 @@ Taking `g = 1` recovers `TauCeti.volume_image_eq_lintegral_enorm_deriv_sq`; that
 deduced from this one, because it needs `s` only null measurable, while the weight forces the
 measurability that Mathlib's `MeasureTheory.lintegral_image_eq_lintegral_abs_det_fderiv_mul`
 asks for. -/
-theorem lintegral_image_eq_lintegral_mul_enorm_deriv_sq (hUo : IsOpen U)
+theorem lintegral_image_eq_lintegral_enorm_deriv_sq_mul (hUo : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
     (g : ℂ → ℝ≥0∞) :
     ∫⁻ w in f '' s, g w = ∫⁻ z in s, ‖deriv f z‖ₑ ^ 2 * g (f z) := by
@@ -301,9 +292,9 @@ theorem lintegral_image_eq_lintegral_mul_enorm_deriv_sq (hUo : IsOpen U)
 of a holomorphic injection exactly when its pullback, weighted by the area distortion, is
 integrable on the source.
 
-This is what makes `TauCeti.integral_image_eq_integral_smul_norm_deriv_sq` more than a statement
+This is what makes `TauCeti.integral_image_eq_integral_norm_deriv_sq_smul` more than a statement
 about the junk value `0` that the Bochner integral takes on non-integrable functions. -/
-theorem integrableOn_image_iff_integrableOn_smul_norm_deriv_sq (hUo : IsOpen U)
+theorem integrableOn_image_iff_integrableOn_norm_deriv_sq_smul (hUo : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
     (g : ℂ → E) :
     IntegrableOn g (f '' s) ↔ IntegrableOn (fun z => ‖deriv f z‖ ^ 2 • g (f z)) s := by
@@ -314,70 +305,14 @@ theorem integrableOn_image_iff_integrableOn_smul_norm_deriv_sq (hUo : IsOpen U)
 /-- **The change of variables formula, Bochner form.**
 
 No integrability hypothesis is needed: if either side fails to be integrable then so does the
-other, by `TauCeti.integrableOn_image_iff_integrableOn_smul_norm_deriv_sq`, and both Bochner
+other, by `TauCeti.integrableOn_image_iff_integrableOn_norm_deriv_sq_smul`, and both Bochner
 integrals are `0`. -/
-theorem integral_image_eq_integral_smul_norm_deriv_sq (hUo : IsOpen U)
+theorem integral_image_eq_integral_norm_deriv_sq_smul (hUo : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (hs : MeasurableSet s) (hsU : s ⊆ U) (hinj : InjOn f s)
     (g : ℂ → E) :
     ∫ w in f '' s, g w = ∫ z in s, ‖deriv f z‖ ^ 2 • g (f z) := by
   rw [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume hs
     (fun z hz => hasFDerivWithinAt_smulRight_deriv hUo hf hsU hz) hinj g]
   exact setIntegral_congr_fun hs fun z _ => by rw [abs_det_restrictScalars_smulRight_one]
-
-/-! ### Conformal invariance of the Dirichlet integral -/
-
-/-- The chain rule at a point of the domain of a holomorphic injection, in the form the invariance
-statements consume. The image `f '' U` is open by the open mapping theorem, which is what makes `u`
-differentiable *at* `f z` rather than merely within the image. -/
-private theorem deriv_comp_eq_of_mem (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) (hu : DifferentiableOn ℂ u (f '' U)) {z : ℂ} (hz : z ∈ U) :
-    deriv (u ∘ f) z = deriv u (f z) * deriv f z :=
-  have hmem : f z ∈ f '' U := mem_image_of_mem f hz
-  deriv_comp z
-    ((hu _ hmem).differentiableAt
-      ((isOpen_image_of_differentiableOn_of_injOn hUo hf hinj).mem_nhds hmem))
-    ((hf z hz).differentiableAt (hUo.mem_nhds hz))
-
-/-- **The Dirichlet integral is a conformal invariant.** Precomposing `u` with a holomorphic
-injection `f` of an open set `U` leaves the Dirichlet integral unchanged, once the domain of
-integration is transported along `f`: what is spent over `s ⊆ U` by `u ∘ f` is what is spent over
-`f '' s` by `u`.
-
-The two ingredients are the change of variables formula and the chain rule: the factor
-`‖deriv f z‖ ^ 2` that the substitution produces is exactly the factor by which the chain rule
-inflates `‖deriv (u ∘ f) z‖ ^ 2` over `‖deriv u (f z)‖ ^ 2`, so the area distortion cancels. This
-is the reason the length–area method may be run in whichever conformal chart is convenient.
-
-Injectivity of `f` on all of `U`, not merely on `s`, is what the chain rule needs: it opens
-`f '' U`, so `u` is differentiable *at* each `f z` and not merely within the image. -/
-theorem lintegral_enorm_deriv_comp_sq_eq (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) (hu : DifferentiableOn ℂ u (f '' U)) (hs : MeasurableSet s) (hsU : s ⊆ U) :
-    ∫⁻ z in s, ‖deriv (u ∘ f) z‖ₑ ^ 2 = ∫⁻ w in f '' s, ‖deriv u w‖ₑ ^ 2 := by
-  rw [lintegral_image_eq_lintegral_mul_enorm_deriv_sq hUo hf hs hsU (hinj.mono hsU)
-    fun w => ‖deriv u w‖ₑ ^ 2]
-  refine setLIntegral_congr_fun hs fun z hz => ?_
-  rw [deriv_comp_eq_of_mem hUo hf hinj hu (hsU hz), enorm_mul, mul_pow, mul_comm]
-
-/-- **The Dirichlet integral is a conformal invariant, integrability form.** The two Dirichlet
-integrands of `TauCeti.lintegral_enorm_deriv_comp_sq_eq` are integrable together. -/
-theorem integrableOn_norm_deriv_comp_sq_iff (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) (hu : DifferentiableOn ℂ u (f '' U)) (hs : MeasurableSet s) (hsU : s ⊆ U) :
-    IntegrableOn (fun z => ‖deriv (u ∘ f) z‖ ^ 2) s ↔
-      IntegrableOn (fun w => ‖deriv u w‖ ^ 2) (f '' s) := by
-  rw [integrableOn_image_iff_integrableOn_smul_norm_deriv_sq hUo hf hs hsU (hinj.mono hsU)
-    fun w => ‖deriv u w‖ ^ 2]
-  refine integrableOn_congr_fun (fun z hz => ?_) hs
-  rw [deriv_comp_eq_of_mem hUo hf hinj hu (hsU hz), norm_mul, mul_pow, smul_eq_mul, mul_comm]
-
-/-- **The Dirichlet integral is a conformal invariant, Bochner form.** The real-valued companion of
-`TauCeti.lintegral_enorm_deriv_comp_sq_eq`, meaningful for a bounded image by
-`TauCeti.integrableOn_norm_deriv_sq_of_isBounded`. -/
-theorem integral_norm_deriv_comp_sq_eq (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) (hu : DifferentiableOn ℂ u (f '' U)) (hs : MeasurableSet s) (hsU : s ⊆ U) :
-    ∫ z in s, ‖deriv (u ∘ f) z‖ ^ 2 = ∫ w in f '' s, ‖deriv u w‖ ^ 2 := by
-  rw [integral_image_eq_integral_smul_norm_deriv_sq hUo hf hs hsU (hinj.mono hsU)
-    fun w => ‖deriv u w‖ ^ 2]
-  refine (setIntegral_congr_fun hs fun z hz => ?_).symm
-  rw [deriv_comp_eq_of_mem hUo hf hinj hu (hsU hz), norm_mul, mul_pow, smul_eq_mul, mul_comm]
 
 end TauCeti
