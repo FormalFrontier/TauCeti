@@ -139,6 +139,110 @@ theorem IsDissipative.smul {A : X →ₗ.[ℝ] X} (hA : IsDissipative A) {c : �
           field_simp
       _ ≤ c * ‖(lambda / c) • (x : X) - A x‖ := by gcongr
 
+/-! ## The canonical inverse of `lambda • I - A`
+
+Two developments need the same object: the Neumann-series argument below, which inverts
+`lambda • I - A` at a single point of the range condition, and the resolvent of an m-dissipative
+operator, which inverts it at every `lambda > 0`. Both want `lambda • I - A` packaged as a linear
+map out of `D(A)`, inverted where it is bijective, and read back into `X` as a bounded operator of
+norm at most `1 / lambda`. It is constructed once here and consumed by both; the norm bound is
+dissipativity (`IsDissipative.norm_le_of_smul_sub_eq`), not the open mapping theorem, so
+completeness of `X` is not needed. -/
+
+/-- `lambda • I - A`, as a linear map out of `D(A)`. -/
+def smulSubLinear (A : X →ₗ.[ℝ] X) (lambda : ℝ) : A.domain →ₗ[ℝ] X :=
+  lambda • A.domain.subtype - A.toFun
+
+@[simp]
+theorem smulSubLinear_apply (A : X →ₗ.[ℝ] X) (lambda : ℝ) (x : A.domain) :
+    smulSubLinear A lambda x = lambda • (x : X) - A x := by
+  simp [smulSubLinear]
+
+theorem coe_smulSubLinear (A : X →ₗ.[ℝ] X) (lambda : ℝ) :
+    ⇑(smulSubLinear A lambda) = fun x : A.domain => lambda • (x : X) - A x :=
+  funext (smulSubLinear_apply A lambda)
+
+/-- `lambda • I - A` as a linear equivalence `D(A) ≃ₗ[ℝ] X`, at a `lambda` where it is
+bijective. -/
+noncomputable def smulSubEquiv (A : X →ₗ.[ℝ] X) {lambda : ℝ}
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) :
+    A.domain ≃ₗ[ℝ] X :=
+  LinearEquiv.ofBijective (smulSubLinear A lambda) (by rwa [coe_smulSubLinear])
+
+@[simp]
+theorem smulSubEquiv_apply (A : X →ₗ.[ℝ] X) {lambda : ℝ}
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (x : A.domain) :
+    smulSubEquiv A hbij x = lambda • (x : X) - A x :=
+  smulSubLinear_apply A lambda x
+
+/-- The inverse of `lambda • I - A` solves `lambda x - A x = y`. -/
+theorem smul_sub_symm_smulSubEquiv (A : X →ₗ.[ℝ] X) {lambda : ℝ}
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (y : X) :
+    lambda • (((smulSubEquiv A hbij).symm y : A.domain) : X)
+        - A ((smulSubEquiv A hbij).symm y) = y := by
+  rw [← smulSubEquiv_apply A hbij]
+  exact (smulSubEquiv A hbij).apply_symm_apply y
+
+/-- The a priori estimate, read on the inverse: `‖(lambda • I - A)⁻¹ y‖ ≤ ‖y‖ / lambda`. -/
+theorem IsDissipative.norm_symm_smulSubEquiv_le {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (y : X) :
+    ‖(((smulSubEquiv A hbij).symm y : A.domain) : X)‖ ≤ lambda⁻¹ * ‖y‖ := by
+  have h := hA.norm_le_of_smul_sub_eq hlambda (x := (smulSubEquiv A hbij).symm y) (y := y)
+    (smul_sub_symm_smulSubEquiv A hbij y)
+  rwa [← div_eq_inv_mul]
+
+/-- **The bounded inverse of `lambda • I - A`**, at a `lambda > 0` where it is bijective: a
+continuous linear operator on all of `X`, of norm at most `1 / lambda`. -/
+noncomputable def IsDissipative.resolventOfBijective {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) : X →L[ℝ] X :=
+  (A.domain.subtype ∘ₗ ((smulSubEquiv A hbij).symm : X →ₗ[ℝ] A.domain)).mkContinuous lambda⁻¹
+    fun y => by simpa using hA.norm_symm_smulSubEquiv_le hlambda hbij y
+
+theorem IsDissipative.resolventOfBijective_apply {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (y : X) :
+    hA.resolventOfBijective hlambda hbij y = (((smulSubEquiv A hbij).symm y : A.domain) : X) :=
+  LinearMap.mkContinuous_apply _ _ _ _
+
+/-- The bounded inverse lands in `D(A)`. -/
+theorem IsDissipative.resolventOfBijective_mem_domain {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (y : X) :
+    hA.resolventOfBijective hlambda hbij y ∈ A.domain := by
+  rw [hA.resolventOfBijective_apply hlambda hbij]
+  exact ((smulSubEquiv A hbij).symm y).property
+
+/-- The bounded inverse is a right inverse of `lambda • I - A`. -/
+theorem IsDissipative.resolventOfBijective_rightInv {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (y : X) :
+    lambda • hA.resolventOfBijective hlambda hbij y
+        - A ⟨hA.resolventOfBijective hlambda hbij y,
+          hA.resolventOfBijective_mem_domain hlambda hbij y⟩ = y := by
+  have hcoe : (⟨hA.resolventOfBijective hlambda hbij y,
+      hA.resolventOfBijective_mem_domain hlambda hbij y⟩ : A.domain)
+      = (smulSubEquiv A hbij).symm y :=
+    Subtype.ext (hA.resolventOfBijective_apply hlambda hbij y)
+  rw [hcoe, hA.resolventOfBijective_apply hlambda hbij]
+  exact smul_sub_symm_smulSubEquiv A hbij y
+
+/-- The bounded inverse is a left inverse of `lambda • I - A`. -/
+theorem IsDissipative.resolventOfBijective_leftInv {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) (x : A.domain) :
+    hA.resolventOfBijective hlambda hbij (lambda • (x : X) - A x) = (x : X) := by
+  rw [hA.resolventOfBijective_apply hlambda hbij, ← smulSubEquiv_apply A hbij,
+    (smulSubEquiv A hbij).symm_apply_apply]
+
+/-- The bound `‖(lambda • I - A)⁻¹‖ ≤ 1 / lambda`. -/
+theorem IsDissipative.norm_resolventOfBijective_le {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda)
+    (hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x) :
+    ‖hA.resolventOfBijective hlambda hbij‖ ≤ lambda⁻¹ :=
+  LinearMap.mkContinuous_norm_le _ (by positivity) _
+
 /-! ## Maximal dissipativity -/
 
 /-- An unbounded operator is **m-dissipative** (maximally dissipative) when it is dissipative
@@ -194,40 +298,19 @@ from `J` is what lets `A` be applied to the result, since `A` only accepts eleme
 Dissipativity makes `g` a genuine two-sided inverse (`IsDissipative.smul_sub_injective`), but only
 the right-inverse property is exposed, that being what the Neumann-series argument consumes.
 
-Completeness of `X` is not needed: the bound comes from dissipativity
-(`IsDissipative.norm_le_of_smul_sub_eq`) rather than from the open mapping theorem. -/
+This is the packaging the Neumann series wants; the inverse itself is
+`IsDissipative.resolventOfBijective`. Completeness of `X` is not needed. -/
 private theorem IsDissipative.exists_bounded_rightInverse {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda)
     (hrange : Function.Surjective fun x : A.domain => lambda • (x : X) - A x) :
     ∃ (g : X → A.domain) (J : X →L[ℝ] X), ‖J‖ ≤ lambda⁻¹ ∧ (∀ y : X, (g y : X) = J y) ∧
       ∀ y : X, lambda • (g y : X) - A (g y) = y := by
-  -- `lambda • I - A`, packaged as a linear equivalence `D(A) ≃ₗ X`
-  let S : A.domain →ₗ[ℝ] X := lambda • A.domain.subtype - A.toFun
-  have hSapp : ∀ x : A.domain, S x = lambda • (x : X) - A x := fun x => by simp [S]
-  have hbij : Function.Bijective S := by
-    constructor
-    · intro x y h
-      exact hA.smul_sub_injective hlambda (by simpa [hSapp] using h)
-    · intro y
-      obtain ⟨x, hx⟩ := hrange y
-      exact ⟨x, by simpa [hSapp] using hx⟩
-  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective S hbij
-  have he : ∀ y : X, lambda • ((e.symm y : A.domain) : X) - A (e.symm y) = y := by
-    intro y
-    rw [← hSapp]
-    exact e.apply_symm_apply y
-  -- its inverse, bounded by `1 / lambda` through dissipativity
-  set J : X →ₗ[ℝ] X := A.domain.subtype ∘ₗ (e.symm : X →ₗ[ℝ] A.domain) with hJ_def
-  have hJapp : ∀ y : X, J y = ((e.symm y : A.domain) : X) := fun y => by
-    rw [hJ_def, LinearMap.comp_apply, Submodule.subtype_apply, LinearEquiv.coe_coe]
-  have hJbound : ∀ y : X, ‖J y‖ ≤ lambda⁻¹ * ‖y‖ := by
-    intro y
-    rw [hJapp]
-    have := hA.norm_le_of_smul_sub_eq hlambda (x := e.symm y) (y := y) (he y)
-    rwa [div_eq_inv_mul] at this
-  refine ⟨fun y => e.symm y, J.mkContinuous lambda⁻¹ hJbound,
-    J.mkContinuous_norm_le (by positivity) hJbound, fun y => ?_, he⟩
-  rw [LinearMap.mkContinuous_apply, hJapp]
+  have hbij : Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
+    ⟨hA.smul_sub_injective hlambda, hrange⟩
+  exact ⟨fun y => (smulSubEquiv A hbij).symm y, hA.resolventOfBijective hlambda hbij,
+    hA.norm_resolventOfBijective_le hlambda hbij,
+    fun y => (hA.resolventOfBijective_apply hlambda hbij y).symm,
+    smul_sub_symm_smulSubEquiv A hbij⟩
 
 section CompleteSpace
 
@@ -308,6 +391,43 @@ theorem IsMDissipative.smul_sub_bijective {A : X →ₗ.[ℝ] X} (hA : IsMDissip
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
   ⟨hA.isDissipative.smul_sub_injective hlambda, hA.smul_sub_surjective hlambda⟩
+
+/-- **The resolvent of an m-dissipative operator.** `R(lambda) = (lambda • I - A)⁻¹`, a bounded
+operator on all of `X` with `‖R(lambda)‖ ≤ 1 / lambda`, available at *every* `lambda > 0`.
+
+No semigroup is presupposed: this is the resolvent the Hille--Yosida and Lumer--Phillips
+generation theorems start from, as opposed to `ContractionSemigroup.resolvent`, which is the
+Laplace transform of a semigroup already in hand. Completeness of `X` enters only through
+`IsMDissipative.smul_sub_bijective`, which propagates the range condition from the single
+`lambda` of the definition to all of them. -/
+noncomputable def IsMDissipative.resolvent {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) (lambda : ℝ)
+    (hlambda : 0 < lambda) : X →L[ℝ] X :=
+  hA.isDissipative.resolventOfBijective hlambda (hA.smul_sub_bijective hlambda)
+
+/-- The resolvent lands in the domain of `A`: `R(lambda) y ∈ D(A)`. -/
+theorem IsMDissipative.resolvent_mem_domain {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) {lambda : ℝ}
+    (hlambda : 0 < lambda) (y : X) : hA.resolvent lambda hlambda y ∈ A.domain :=
+  hA.isDissipative.resolventOfBijective_mem_domain hlambda (hA.smul_sub_bijective hlambda) y
+
+/-- **The resolvent is a right inverse of `lambda • I - A`.** -/
+theorem IsMDissipative.resolventRightInv {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) {lambda : ℝ}
+    (hlambda : 0 < lambda) (y : X) :
+    lambda • hA.resolvent lambda hlambda y
+        - A ⟨hA.resolvent lambda hlambda y, hA.resolvent_mem_domain hlambda y⟩ = y :=
+  hA.isDissipative.resolventOfBijective_rightInv hlambda (hA.smul_sub_bijective hlambda) y
+
+/-- **The resolvent is a left inverse of `lambda • I - A`.** -/
+theorem IsMDissipative.resolventLeftInv {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) {lambda : ℝ}
+    (hlambda : 0 < lambda) (x : A.domain) :
+    hA.resolvent lambda hlambda (lambda • (x : X) - A x) = (x : X) :=
+  hA.isDissipative.resolventOfBijective_leftInv hlambda (hA.smul_sub_bijective hlambda) x
+
+/-- The resolvent bound `‖R(lambda)‖ ≤ 1 / lambda`, the Hille--Yosida estimate at `M = 1`,
+`ω = 0`. -/
+theorem IsMDissipative.resolvent_norm_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) {lambda : ℝ}
+    (hlambda : 0 < lambda) : ‖hA.resolvent lambda hlambda‖ ≤ 1 / lambda := by
+  rw [one_div]
+  exact hA.isDissipative.norm_resolventOfBijective_le hlambda (hA.smul_sub_bijective hlambda)
 
 end CompleteSpace
 
