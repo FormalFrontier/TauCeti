@@ -165,16 +165,15 @@ private theorem tangentToPointDerivation_surjective_model
   let b := Module.finBasis ℝ E
   let c (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
     ⟨b.coord i, (b.coord i).toContinuousLinearMap.contDiff.contMDiff⟩
-  let pointed (q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
-      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯⟨x⟩ := ⟨q, q.contMDiff⟩
-  let δ (q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) : ℝ := D (pointed q)
-  let v : TangentSpace (modelWithCornersSelf ℝ E) x := ∑ i, δ (c i) • b i
+  -- `PointedContMDiffMap` is a type synonym for `C^∞⟮…⟯`, so `D` applies to an ordinary smooth
+  -- map directly and no pointed-map wrapper is needed.
+  let v : TangentSpace (modelWithCornersSelf ℝ E) x := ∑ i, D (c i) • b i
   refine ⟨v, ?_⟩
   ext f
   let f' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨f, f.contMDiff⟩
   -- The domain of `D` and `TangentSpace` are pointed-map and model-space type synonyms. Unfold
   -- their evaluation here so the rest of the argument can stay in the ordinary smooth-map API.
-  change mvfderiv (modelWithCornersSelf ℝ E) f' x v = δ f'
+  change mvfderiv (modelWithCornersSelf ℝ E) f' x v = D f'
   rw [mvfderiv, mfderiv_eq_fderiv]
   -- Hadamard's lemma factors `f - f(x)` through the coordinate functions. The factors are smooth,
   -- so this identity lives in the algebra on which the derivation acts.
@@ -211,51 +210,42 @@ private theorem tangentToPointDerivation_surjective_model
         apply Finset.sum_congr rfl
         intro i _
         rfl
-  have hδconst (r : ℝ) :
-      δ (⟨fun _ : E ↦ r, contDiff_const.contMDiff⟩ :
-        C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) = 0 := by
-    -- A constant ordinary smooth map becomes `algebraMap r` after passing to the pointed-map
-    -- synonym; exposing that boundary lets us use the derivation's algebra-map law.
-    change D (algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯⟨x⟩ r) = 0
-    exact D.map_algebraMap r
-  have hδsub (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
-      δ (p - q) = δ p - δ q := by
-    -- First unfold `δ`, then expose that the pointed-map constructor preserves subtraction.
-    -- There is no coercion lemma for this type synonym, so both equalities are definitional.
-    change D (pointed (p - q)) = D (pointed p) - D (pointed q)
-    change D (pointed p - pointed q) = D (pointed p) - D (pointed q)
-    exact D.map_sub _ _
+  -- `D`'s domain is a type synonym for `C^∞⟮…⟯`, so `D` applies to ordinary smooth maps directly.
+  -- The differences and sums below nevertheless live *syntactically* in the unpointed type, so
+  -- `rw` cannot use the derivation laws as stated; these restatements supply the matching form,
+  -- each holding by definitional unfolding alone.
+  have hconst (r : ℝ) :
+      D (⟨fun _ : E ↦ r, contDiff_const.contMDiff⟩ :
+        C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) = 0 :=
+    D.map_algebraMap r
+  have hsub (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) : D (p - q) = D p - D q :=
+    D.map_sub _ _
+  have hsum (q : Fin (Module.finrank ℝ E) → C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+      D (∑ i, q i) = ∑ i, D (q i) :=
+    map_sum D _ _
   have hterm (i : Fin (Module.finrank ℝ E)) :
-      δ (a i * (c i - kcoord i)) = fderiv ℝ f' x (b i) * δ (c i) := by
-    have hleibniz := D.leibniz (pointed (a i)) (pointed (c i - kcoord i))
-    -- Unfold `δ` and pointed-map evaluation in the Leibniz identity. The scalar action there is
+      D (a i * (c i - kcoord i)) = fderiv ℝ f' x (b i) * D (c i) := by
+    have hleibniz := D.leibniz (a i) (c i - kcoord i)
+    -- Unfold pointed-map evaluation in the Leibniz identity. The scalar action there is
     -- evaluation at `x`, which is definitionally the displayed multiplication.
-    change δ (a i * (c i - kcoord i)) =
-      a i x * δ (c i - kcoord i) + (c i x - kcoord i x) * δ (a i) at hleibniz
-    rw [hleibniz, hδsub, hδconst]
+    change D (a i * (c i - kcoord i)) =
+      a i x * D (c i - kcoord i) + (c i x - kcoord i x) * D (a i) at hleibniz
+    rw [hleibniz, hsub, hconst]
     simp [a, kcoord]
-  have hδsum (q : Fin (Module.finrank ℝ E) →
-      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
-      δ (∑ i, q i) = ∑ i, δ (q i) := by
-    -- As for subtraction, unfold `δ` and then expose that the pointed-map constructor preserves
-    -- finite sums; both steps cross only the pointed-map type synonym.
-    change D (pointed (∑ i, q i)) = ∑ i, D (pointed (q i))
-    change D (∑ i, pointed (q i)) = ∑ i, D (pointed (q i))
-    exact map_sum D _ _
   calc
-    fderiv ℝ f' x v = ∑ i, fderiv ℝ f' x (b i) * δ (c i) := by
+    fderiv ℝ f' x v = ∑ i, fderiv ℝ f' x (b i) * D (c i) := by
       -- Unfold the chosen vector `v` across the tangent-space synonym before using linearity.
-      change fderiv ℝ f' x (∑ i, δ (c i) • b i) = _
+      change fderiv ℝ f' x (∑ i, D (c i) • b i) = _
       rw [map_sum]
       apply Finset.sum_congr rfl
       intro i _
       rw [map_smul]
       simp [smul_eq_mul, mul_comm]
-    _ = δ (∑ i, a i * (c i - kcoord i)) := by
-      rw [hδsum]
+    _ = D (∑ i, a i * (c i - kcoord i)) := by
+      rw [hsum]
       exact Finset.sum_congr rfl fun i _ ↦ (hterm i).symm
-    _ = δ (f' - k) := congrArg δ hfactor.symm
-    _ = δ f' := by rw [hδsub, hδconst, sub_zero]
+    _ = D (f' - k) := congrArg D hfactor.symm
+    _ = D f' := by rw [hsub, hconst, sub_zero]
 
 namespace PointDerivation
 
