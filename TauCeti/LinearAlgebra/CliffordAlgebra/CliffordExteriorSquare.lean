@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
-public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
 # Clifford bivectors and the degree-two filtration
@@ -48,15 +47,21 @@ namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
+private theorem equivExterior_ι_mul_ι_sub_swap (Q : QuadraticForm R M)
+    [Invertible (2 : R)] (a b : M) :
+    equivExterior Q (ι Q a * ι Q b - ι Q b * ι Q a) =
+      ExteriorAlgebra.ι R a * ExteriorAlgebra.ι R b -
+        ExteriorAlgebra.ι R b * ExteriorAlgebra.ι R a := by
+  simp only [equivExterior, map_sub, changeFormEquiv_apply, changeForm_ι_mul_ι]
+  rw [QuadraticMap.associated_isSymm R (-Q) a b]
+  module
+
 /-- `equivExterior` sends a half-normalized Clifford bivector to its exterior product. -/
-theorem equivExterior_cliffordBivector_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
+theorem equivExterior_cliffordBivector (Q : QuadraticForm R M) [Invertible (2 : R)]
     (a b : M) :
     equivExterior Q (cliffordBivector Q a b) = ExteriorAlgebra.ι R a * ExteriorAlgebra.ι R b := by
-  rw [equivExterior, cliffordBivector_def, map_smul, map_sub,
-    changeFormEquiv_apply, changeForm_ι_mul_ι, changeFormEquiv_apply, changeForm_ι_mul_ι]
-  have hB := QuadraticMap.associated_isSymm R (-Q) a b
-  rw [hB]
-  rw [sub_sub_sub_cancel_right, eq_neg_of_add_eq_zero_right (ExteriorAlgebra.ι_add_mul_swap a b),
+  rw [cliffordBivector_def, map_smul, equivExterior_ι_mul_ι_sub_swap]
+  rw [eq_neg_of_add_eq_zero_right (ExteriorAlgebra.ι_add_mul_swap a b),
     sub_neg_eq_add, ← two_smul R, invOf_smul_smul]
 
 private theorem cliffordBivector_sub_ι_mul_ι_mem_filtration_one (Q : QuadraticForm R M)
@@ -99,7 +104,7 @@ theorem equivExterior_comp_cliffordBivectorExterior (Q : QuadraticForm R M)
     fin_cases i <;> rfl
   rw [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
     LinearMap.compAlternatingMap_apply, LinearEquiv.coe_coe]
-  rw [hv, cliffordBivectorExterior_apply_ιMulti, equivExterior_cliffordBivector_apply]
+  rw [hv, cliffordBivectorExterior_apply_ιMulti, equivExterior_cliffordBivector]
   simp
 
 /-- The exterior-square Clifford bivector map is injective. -/
@@ -118,6 +123,7 @@ noncomputable def cliffordBivectorExteriorEquivRange (Q : QuadraticForm R M) [In
     ⋀[R]^2 M ≃ₗ[R] LinearMap.range (cliffordBivectorExterior Q) :=
   LinearEquiv.ofInjective (cliffordBivectorExterior Q) (cliffordBivectorExterior_injective Q)
 
+/-- Coercing the range equivalence back to the Clifford algebra recovers the original map. -/
 @[simp]
 theorem coe_cliffordBivectorExteriorEquivRange_apply (Q : QuadraticForm R M)
     [Invertible (2 : R)] (x : ⋀[R]^2 M) :
@@ -125,6 +131,7 @@ theorem coe_cliffordBivectorExteriorEquivRange_apply (Q : QuadraticForm R M)
       cliffordBivectorExterior Q x := by
   rw [cliffordBivectorExteriorEquivRange, LinearEquiv.ofInjective_apply]
 
+/-- Applying the Clifford bivector map to the inverse equivalence recovers the range element. -/
 @[simp]
 theorem cliffordBivectorExteriorEquivRange_symm_apply (Q : QuadraticForm R M)
     [Invertible (2 : R)] (x : LinearMap.range (cliffordBivectorExterior Q)) :
