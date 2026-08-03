@@ -70,6 +70,8 @@ theorem contMDiff_succ (n : ℕ) [IsManifold I (n + 1 : ℕ) M]
     ContMDiff 𝓘(ℝ, ℝ) I (n + 1 : ℕ) γ := by
   let _ : IsManifold I 1 M := IsManifold.of_le (n := (n + 1 : ℕ)) (by
     exact_mod_cast Nat.succ_le_succ (Nat.zero_le n))
+  -- The hypothesis stages this same low-order manifold instance in a dependent `let`; unfold that
+  -- binder so its `TangentBundle` agrees with the explicitly installed instance above.
   change CMDiff n (fun x => (⟨x, v x⟩ : TangentBundle I M)) at hv
   intro t₀
   rw [contMDiffAt_iff_target]
@@ -112,8 +114,8 @@ theorem contMDiff [IsManifold I ∞ M] {γ : ℝ → M} {v : (x : M) → Tangent
   rw [contMDiff_infty]
   intro n
   let _ : IsManifold I (n + 1 : ℕ) M := IsManifold.of_le (n := ∞)
-    (show ((n + 1 : ℕ) : ℕ∞ω) ≤ ∞ from mod_cast le_top)
-  exact (hγ.contMDiff_succ n (hv.of_le (mod_cast le_top))).of_le
+    (by exact_mod_cast le_top)
+  exact (hγ.contMDiff_succ n (hv.of_le (by exact_mod_cast le_top))).of_le
     (by exact_mod_cast Nat.le_succ n)
 
 end IsMIntegralCurve
