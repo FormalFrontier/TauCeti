@@ -158,7 +158,7 @@ a single solution family that is continuous jointly in its initial condition and
 uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
 second coordinate follows the invariant vector field. -/
 theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
-    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (δ : ℝ) (r L : NNReal), 0 < δ ∧ 0 < r ∧
       ContinuousOn α
         (Metric.closedBall ((0 : E), extChartAt I (1 : G) (1 : G)) r ×ˢ
@@ -174,7 +174,6 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
                 mulInvariantCoordinateVectorField (I := I) (G := G) (α (x, t)))
               (Set.Icc (-δ) δ) t) ∧
           ∀ t ∈ Set.Icc (-δ) δ, (α (x, t)).1 = x.1 := by
-  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let center : E × E := (0, extChartAt I (1 : G) (1 : G))
   let F : E × E → E × E := fun p =>
     (0, mulInvariantCoordinateVectorField (I := I) (G := G) p)
@@ -238,7 +237,7 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
 continuous at the center, solves the parameterized invariant ODE with an ordinary derivative,
 freezes the tangent-vector parameter, and remains in the target of the identity chart. -/
 theorem exists_eventually_hasDerivAt_mulInvariantCoordinateFlow
-    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
     ∃ α : (E × E) × ℝ → E × E,
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
       α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) =
@@ -301,7 +300,7 @@ every sufficiently small generating vector and every sufficiently small time. Th
 from Picard--Lindelöf's parameterized model-space solutions to the canonical manifold-valued curves
 used to define `lieExp`. -/
 theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
-    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ∃ (α : (E × E) × ℝ → E × E) (U : Set E) (δ : ℝ),
       U ∈ 𝓝 (0 : E) ∧ 0 < δ ∧
       ContinuousAt α (((0 : E), extChartAt I (1 : G) (1 : G)), 0) ∧
@@ -316,7 +315,6 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
           (mulInvariantIntegralCurve (I := I) (G := G)
             (v : GroupLieAlgebra I G) 1)
           (Set.Ioo (-δ) δ) := by
-  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
     exists_eventually_hasDerivAt_mulInvariantCoordinateFlow (I := I) (G := G)
   let embed : E × ℝ → (E × E) × ℝ := fun vt =>
@@ -406,10 +404,9 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
 /-- The tangent-space exponential is continuous at zero when its domain uses the canonical
 model-space identification and its codomain remains the Lie group `G`. -/
 theorem continuousAt_mulInvariantExp_modelSpace_zero
-    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    [CompleteSpace E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ContinuousAt
       (fun v : E => mulInvariantExp (I := I) (G := G) v) 0 := by
-  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   obtain ⟨α, U, δ, hU, hδ, _, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
   let c : ℝ := δ / 2
