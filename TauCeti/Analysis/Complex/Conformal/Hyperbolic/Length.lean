@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
 public import TauCeti.Analysis.SpecialFunctions.Artanh
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 
 /-!
 # The Poincaré metric is the length metric of its density
@@ -87,11 +88,16 @@ file should be refactored onto that API at that point.
 ## Main declarations
 
 * `TauCeti.hyperbolicLength` — the density-weighted length of a path in the disc, with
-  `TauCeti.hyperbolicLength_eq_integral` rewriting it against an explicit derivative,
-  `TauCeti.hyperbolicLength_comp_mul_add` its invariance under affine reparametrisation of the
-  path, and `TauCeti.hyperbolicLength_symm`, `TauCeti.hyperbolicLength_nonneg`,
+  `TauCeti.hyperbolicLength_eq_integral` rewriting it against an explicit derivative, and
+  `TauCeti.hyperbolicLength_symm`, `TauCeti.hyperbolicLength_nonneg`,
   `TauCeti.hyperbolicLength_const`, `TauCeti.hyperbolicLength_add` the basic evaluations and
   operations.
+* `TauCeti.hyperbolicLength_comp_of_deriv_nonneg` and
+  `TauCeti.hyperbolicLength_comp_of_deriv_nonpos` — **hyperbolic length is a reparametrisation
+  invariant**: precomposing a path with a differentiable monotone, respectively antitone, map of
+  the parameter transports the parameter interval and leaves the length unchanged. For the affine
+  reparametrisations `t ↦ s * t + d` this needs nothing of the path,
+  `TauCeti.hyperbolicLength_comp_mul_add`.
 * `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` — hyperbolic length is a Moebius
   invariant, the integrated form of the infinitesimal isometry
   `TauCeti.norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one`.
@@ -137,8 +143,10 @@ the Poincaré density `(1 - ‖γ t‖ ^ 2)⁻¹` of `Conformal/Hyperbolic/Densi
 Taking the integral over the unordered interval, as Mathlib's `Manifold.pathELength` does, makes
 the length independent of the orientation of the parameter interval
 (`TauCeti.hyperbolicLength_symm`) and nonnegative for a path in the disc whichever way round its
-endpoints are (`TauCeti.hyperbolicLength_nonneg`); it is a reparametrisation invariant of the path,
-`TauCeti.hyperbolicLength_comp_mul_add` for the affine reparametrisations.
+endpoints are (`TauCeti.hyperbolicLength_nonneg`); it is a reparametrisation invariant of the path
+(`TauCeti.hyperbolicLength_comp_of_deriv_nonneg` and `TauCeti.hyperbolicLength_comp_of_deriv_nonpos`
+for the monotone and the antitone reparametrisations, `TauCeti.hyperbolicLength_comp_mul_add` for
+the affine ones).
 
 The definition is stated for an arbitrary `γ : ℝ → ℂ`, and only the derivative at the interior
 parameters enters (`TauCeti.hyperbolicLength_eq_integral`). It is the intended notion of length
@@ -171,19 +179,24 @@ theorem hyperbolicLength_const (c : ℂ) (a b : ℝ) :
   rw [hyperbolicLength_def]
   simp
 
+/-- The hyperbolic length over an ordered parameter interval as an interval integral of any
+function agreeing with the density-weighted speed at the interior parameters, the two endpoints
+forming a null set. -/
+private theorem hyperbolicLength_eq_intervalIntegral_of_eqOn {f : ℝ → ℝ} (hab : a ≤ b)
+    (hf : EqOn (fun t => ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2)) f (Ioo a b)) :
+    hyperbolicLength γ a b = ∫ t in a..b, f t := by
+  rw [hyperbolicLength_def, uIcc_of_le hab,
+    ← MeasureTheory.restrict_Ioo_eq_restrict_Icc,
+    MeasureTheory.setIntegral_congr_fun measurableSet_Ioo hf,
+    MeasureTheory.restrict_Ioo_eq_restrict_Icc,
+    MeasureTheory.integral_Icc_eq_integral_Ioc, intervalIntegral.integral_of_le hab]
+
 /-- The hyperbolic length computed from an explicit derivative rather than from `deriv`. The
 derivative is only asked for at the interior parameters, the two endpoints forming a null set. -/
 theorem hyperbolicLength_eq_integral (hab : a ≤ b)
     (hderiv : ∀ t ∈ Ioo a b, HasDerivAt γ (γ' t) t) :
-    hyperbolicLength γ a b = ∫ t in a..b, ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) := by
-  have hEq : EqOn (fun t => ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2))
-      (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) (Ioo a b) := fun t ht => by
-    simp only [(hderiv t ht).deriv]
-  rw [hyperbolicLength_def, uIcc_of_le hab,
-    ← MeasureTheory.restrict_Ioo_eq_restrict_Icc,
-    MeasureTheory.setIntegral_congr_fun measurableSet_Ioo hEq,
-    MeasureTheory.restrict_Ioo_eq_restrict_Icc,
-    MeasureTheory.integral_Icc_eq_integral_Ioc, intervalIntegral.integral_of_le hab]
+    hyperbolicLength γ a b = ∫ t in a..b, ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) :=
+  hyperbolicLength_eq_intervalIntegral_of_eqOn hab fun t ht => by simp only [(hderiv t ht).deriv]
 
 /-- A path running through the open unit disc has nonnegative hyperbolic length, whichever way
 round its endpoints are. -/
@@ -208,9 +221,8 @@ private theorem intervalIntegrable_norm_div_one_sub_norm_sq (hab : a ≤ b)
 /-- The hyperbolic length over an ordered parameter interval as an interval integral of the
 density-weighted speed. -/
 private theorem hyperbolicLength_eq_intervalIntegral (γ : ℝ → ℂ) (hab : a ≤ b) :
-    hyperbolicLength γ a b = ∫ t in a..b, ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2) := by
-  rw [hyperbolicLength_def, uIcc_of_le hab, MeasureTheory.integral_Icc_eq_integral_Ioc,
-    intervalIntegral.integral_of_le hab]
+    hyperbolicLength γ a b = ∫ t in a..b, ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2) :=
+  hyperbolicLength_eq_intervalIntegral_of_eqOn hab fun _ _ => rfl
 
 /-- **Hyperbolic length is additive along the parameter interval**: the lengths of the two halves
 of a path add up to the length of the whole, as soon as the density-weighted speed is integrable
@@ -261,7 +273,11 @@ orientation-reversing one for `s < 0`, transports the parameter interval and lea
 unchanged: two affinely reparametrised copies of one path have the same hyperbolic length. For
 instance `s = r`, `d = 0` reads the path of
 `TauCeti.exists_hyperbolicLength_eq_hyperbolicDist`, defined on `[0, r]`, on the parameter
-interval `[0, 1]` without changing its length. -/
+interval `[0, 1]` without changing its length. Being a change of variables in the parameter alone,
+it asks nothing of the path, unlike the reparametrisations by a general monotone or antitone map
+below (`TauCeti.hyperbolicLength_comp_of_deriv_nonneg`,
+`TauCeti.hyperbolicLength_comp_of_deriv_nonpos`), which need the path to be differentiable to
+differentiate the composite. -/
 theorem hyperbolicLength_comp_mul_add (γ : ℝ → ℂ) {s : ℝ} (hs : s ≠ 0) (d a b : ℝ) :
     hyperbolicLength (fun t => γ (s * t + d)) a b
       = hyperbolicLength γ (s * a + d) (s * b + d) := by
@@ -270,6 +286,106 @@ theorem hyperbolicLength_comp_mul_add (γ : ℝ → ℂ) {s : ℝ} (hs : s ≠ 0
   · rw [hyperbolicLength_symm (fun t => γ (s * t + d)) b a,
       hyperbolicLength_symm γ (s * b + d) (s * a + d)]
     exact hyperbolicLength_comp_mul_add_of_le γ hs d hab
+
+/-- The monotone reparametrisation invariance over an ordered parameter interval; the general case
+follows by symmetry. -/
+private theorem hyperbolicLength_comp_of_deriv_nonneg_of_le {φ φ' : ℝ → ℝ} (hab : a ≤ b)
+    (hφ : ContinuousOn φ (Icc a b)) (hderiv : ∀ t ∈ Ioo a b, HasDerivAt φ (φ' t) t)
+    (hsign : ∀ t ∈ Ioo a b, 0 ≤ φ' t) (hγ : ∀ t ∈ Ioo a b, DifferentiableAt ℝ γ (φ t)) :
+    hyperbolicLength (γ ∘ φ) a b = hyperbolicLength γ (φ a) (φ b) := by
+  have hIoo : Ioo (min a b) (max a b) = Ioo a b := by rw [min_eq_left hab, max_eq_right hab]
+  -- inside the parameter interval the density-weighted speed of `γ ∘ φ` is `φ'` times that of
+  -- `γ` read at `φ`, written as a composition to meet the change of variables below
+  have hEq : EqOn (fun t => ‖deriv (γ ∘ φ) t‖ / (1 - ‖(γ ∘ φ) t‖ ^ 2))
+      (fun t => φ' t • ((fun u => ‖deriv γ u‖ / (1 - ‖γ u‖ ^ 2)) ∘ φ) t) (Ioo a b) := by
+    intro t ht
+    have hchain : deriv (γ ∘ φ) t = φ' t • deriv γ (φ t) :=
+      ((hγ t ht).hasDerivAt.scomp t (hderiv t ht)).deriv
+    simp only [Function.comp_apply, hchain, norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (hsign t ht), smul_eq_mul]
+    ring
+  have hmono : MonotoneOn φ (Icc a b) := by
+    refine monotoneOn_of_deriv_nonneg (convex_Icc a b) hφ (fun t ht => ?_) fun t ht => ?_
+    · rw [interior_Icc] at ht
+      exact (hderiv t ht).differentiableAt.differentiableWithinAt
+    · rw [interior_Icc] at ht
+      rw [(hderiv t ht).deriv]
+      exact hsign t ht
+  have hφab : φ a ≤ φ b := hmono (left_mem_Icc.2 hab) (right_mem_Icc.2 hab) hab
+  rw [hyperbolicLength_eq_intervalIntegral_of_eqOn hab hEq,
+    intervalIntegral.integral_deriv_smul_comp_of_deriv_nonneg (by rwa [uIcc_of_le hab])
+      (by rwa [hIoo]) (by rwa [hIoo]),
+    ← hyperbolicLength_eq_intervalIntegral γ hφab]
+
+/-- **Hyperbolic length is invariant under monotone reparametrisation.** Precomposing a path with
+a map `φ` that is continuous on the parameter interval and has a nonnegative derivative inside it —
+so that `φ` is monotone there — reparametrises the path and transports the parameter interval,
+leaving the length unchanged. The path is asked to be differentiable at the reparametrised
+parameters, which is what makes the composite differentiable; no regularity beyond that is needed,
+because Mathlib's change of variables for a monotone substitution
+(`intervalIntegral.integral_deriv_smul_comp_of_deriv_nonneg`) asks nothing of the integrand. -/
+theorem hyperbolicLength_comp_of_deriv_nonneg {φ φ' : ℝ → ℝ} (hφ : ContinuousOn φ (uIcc a b))
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt φ (φ' t) t) (hsign : ∀ t ∈ uIoo a b, 0 ≤ φ' t)
+    (hγ : ∀ t ∈ uIoo a b, DifferentiableAt ℝ γ (φ t)) :
+    hyperbolicLength (γ ∘ φ) a b = hyperbolicLength γ (φ a) (φ b) := by
+  rcases le_total a b with hab | hab
+  · rw [uIcc_of_le hab] at hφ
+    rw [uIoo_of_le hab] at hderiv hsign hγ
+    exact hyperbolicLength_comp_of_deriv_nonneg_of_le hab hφ hderiv hsign hγ
+  · rw [uIcc_comm, uIcc_of_le hab] at hφ
+    rw [uIoo_comm, uIoo_of_le hab] at hderiv hsign hγ
+    rw [hyperbolicLength_symm (γ ∘ φ) b a, hyperbolicLength_symm γ (φ b) (φ a)]
+    exact hyperbolicLength_comp_of_deriv_nonneg_of_le hab hφ hderiv hsign hγ
+
+/-- The antitone reparametrisation invariance over an ordered parameter interval; the general case
+follows by symmetry. -/
+private theorem hyperbolicLength_comp_of_deriv_nonpos_of_le {φ φ' : ℝ → ℝ} (hab : a ≤ b)
+    (hφ : ContinuousOn φ (Icc a b)) (hderiv : ∀ t ∈ Ioo a b, HasDerivAt φ (φ' t) t)
+    (hsign : ∀ t ∈ Ioo a b, φ' t ≤ 0) (hγ : ∀ t ∈ Ioo a b, DifferentiableAt ℝ γ (φ t)) :
+    hyperbolicLength (γ ∘ φ) a b = hyperbolicLength γ (φ a) (φ b) := by
+  have hIoo : Ioo (min a b) (max a b) = Ioo a b := by rw [min_eq_left hab, max_eq_right hab]
+  -- as in the monotone case, save that `φ'` is now nonpositive, so that the speed of `γ ∘ φ`
+  -- is *minus* `φ'` times the speed of `γ` read at `φ`
+  have hEq : EqOn (fun t => ‖deriv (γ ∘ φ) t‖ / (1 - ‖(γ ∘ φ) t‖ ^ 2))
+      (fun t => -(φ' t • ((fun u => ‖deriv γ u‖ / (1 - ‖γ u‖ ^ 2)) ∘ φ) t)) (Ioo a b) := by
+    intro t ht
+    have hchain : deriv (γ ∘ φ) t = φ' t • deriv γ (φ t) :=
+      ((hγ t ht).hasDerivAt.scomp t (hderiv t ht)).deriv
+    simp only [Function.comp_apply, hchain, norm_smul, Real.norm_eq_abs,
+      abs_of_nonpos (hsign t ht), smul_eq_mul]
+    ring
+  have hanti : AntitoneOn φ (Icc a b) := by
+    refine antitoneOn_of_deriv_nonpos (convex_Icc a b) hφ (fun t ht => ?_) fun t ht => ?_
+    · rw [interior_Icc] at ht
+      exact (hderiv t ht).differentiableAt.differentiableWithinAt
+    · rw [interior_Icc] at ht
+      rw [(hderiv t ht).deriv]
+      exact hsign t ht
+  have hφab : φ b ≤ φ a := hanti (left_mem_Icc.2 hab) (right_mem_Icc.2 hab) hab
+  rw [hyperbolicLength_eq_intervalIntegral_of_eqOn hab hEq, intervalIntegral.integral_neg,
+    intervalIntegral.integral_deriv_smul_comp_of_deriv_nonpos (by rwa [uIcc_of_le hab])
+      (by rwa [hIoo]) (by rwa [hIoo]),
+    ← intervalIntegral.integral_symm, hyperbolicLength_symm γ (φ b) (φ a),
+    ← hyperbolicLength_eq_intervalIntegral γ hφab]
+
+/-- **Hyperbolic length is invariant under antitone reparametrisation.** The orientation-reversing
+counterpart of `TauCeti.hyperbolicLength_comp_of_deriv_nonneg`: precomposing a path with a map `φ`
+that is continuous on the parameter interval and has a nonpositive derivative inside it — so that
+`φ` is antitone there — leaves the length unchanged, the parameter interval being transported with
+its orientation reversed. Together the two lemmas say that hyperbolic length is a property of a
+path rather than of its parametrisation. -/
+theorem hyperbolicLength_comp_of_deriv_nonpos {φ φ' : ℝ → ℝ} (hφ : ContinuousOn φ (uIcc a b))
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt φ (φ' t) t) (hsign : ∀ t ∈ uIoo a b, φ' t ≤ 0)
+    (hγ : ∀ t ∈ uIoo a b, DifferentiableAt ℝ γ (φ t)) :
+    hyperbolicLength (γ ∘ φ) a b = hyperbolicLength γ (φ a) (φ b) := by
+  rcases le_total a b with hab | hab
+  · rw [uIcc_of_le hab] at hφ
+    rw [uIoo_of_le hab] at hderiv hsign hγ
+    exact hyperbolicLength_comp_of_deriv_nonpos_of_le hab hφ hderiv hsign hγ
+  · rw [uIcc_comm, uIcc_of_le hab] at hφ
+    rw [uIoo_comm, uIoo_of_le hab] at hderiv hsign hγ
+    rw [hyperbolicLength_symm (γ ∘ φ) b a, hyperbolicLength_symm γ (φ b) (φ a)]
+    exact hyperbolicLength_comp_of_deriv_nonpos_of_le hab hφ hderiv hsign hγ
 
 /-- **The hyperbolic length of a Euclidean radius.** For a unit vector `u` and `0 ≤ r < 1`, the
 path `t ↦ u * t` has hyperbolic length `Real.artanh r` over `[0, r]`, which by
