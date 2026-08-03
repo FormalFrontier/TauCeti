@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.SchemePoints
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Points
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Cocharacter
 
 /-!
@@ -23,11 +23,11 @@ the existing functor-of-points and character--cocharacter APIs:
 * their composite is the power map whose exponent is the existing perfect lattice pairing.
 
 The scheme-valued point comparison uses the same-universe diagonalizable-group bridge from
-`DiagonalizableGroup.SchemePoints`; this is why both the base ring and finite index type live
+`DiagonalizableGroup.Scheme.Points`; this is why both the base ring and finite index type live
 in the same universe. Ordinary character and cocharacter exponents remain in `ℤ`.
 
 This advances Layer 4 of the reductive-groups roadmap
-(`TauCetiRoadmap/roadmaps/ReductiveGroups/README.md`): the finite-rank split torus, its
+(`TauCetiRoadmap/ReductiveGroups/README.md`): the finite-rank split torus, its
 character and cocharacter lattices, and their perfect pairing now have a synchronized
 group-scheme realization.
 
@@ -95,13 +95,11 @@ theorem schemePointsMulEquiv_apply_coe [Finite sigma]
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R sigma).X) (i : sigma) :
     (schemePointsMulEquiv (R := R) (A := A) p i : A) =
-      (Spec.mapMulEquiv.symm p).ofConv
+      (DiagonalizableGroup.groupSchemePointsMulEquiv
+        (R := R) (A := A) (characterGroup sigma) p).ofConv
         (MonoidAlgebra.single
           (Multiplicative.ofAdd (Finsupp.single i 1)) 1) := by
-  change (freeAbelianCharEquiv (M := Aˣ)
-    (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := A)
-      (characterGroup sigma) p) i : A) = _
-  rw [freeAbelianCharEquiv_apply,
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply, freeAbelianCharEquiv_apply,
     DiagonalizableGroup.schemePointsMulEquiv_apply_coe]
   rfl
 
@@ -110,12 +108,11 @@ character determined by the coordinate family. -/
 theorem schemePointsMulEquiv_symm_apply [Finite sigma]
     (c : sigma → Aˣ) :
     (schemePointsMulEquiv (R := R) (A := A)).symm c =
-      Spec.mapMulEquiv
-        ((pointsMulEquiv (R := R) (A := A)).symm c) := by
-  change (DiagonalizableGroup.schemePointsMulEquiv
-      (R := R) (A := A) (characterGroup sigma)).symm
-        (freeAbelianCharEquiv.symm c) = _
-  rw [DiagonalizableGroup.schemePointsMulEquiv_symm_apply]
+      (DiagonalizableGroup.groupSchemePointsMulEquiv
+        (R := R) (A := A) (characterGroup sigma)).symm
+          ((pointsMulEquiv (R := R) (A := A)).symm c) := by
+  rw [schemePointsMulEquiv, MulEquiv.symm_trans_apply,
+    DiagonalizableGroup.schemePointsMulEquiv_symm_apply]
   congr 1
   rw [DiagonalizableGroup.pointsMulEquiv_symm_apply, pointsMulEquiv_symm_apply]
 
@@ -128,15 +125,10 @@ theorem schemePointsMulEquiv_mapValue [Finite sigma] (phi : A →ₐ[R] B)
           (Spec (CommRingCat.of R)) ≫ p) =
       fun i => Units.map phi.toMonoidHom
         (schemePointsMulEquiv (R := R) (A := A) p i) := by
-  change freeAbelianCharEquiv
-      (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := B)
-        (characterGroup sigma)
-          ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-            (Spec (CommRingCat.of R)) ≫ p)) = _
-  rw [DiagonalizableGroup.schemePointsMulEquiv_mapValue]
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply,
+    DiagonalizableGroup.schemePointsMulEquiv_mapValue]
   ext i
-  rw [freeAbelianCharEquiv_comp]
-  rfl
+  rw [freeAbelianCharEquiv_comp, schemePointsMulEquiv, MulEquiv.trans_apply]
 
 /-! ### Characters and cocharacters as group-scheme morphisms -/
 
@@ -156,18 +148,21 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
     DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
         (R := R) (A := A) (p ≫ (characterGroupSchemeMap (R := R) m).hom.hom) =
       m.prod fun i n => schemePointsMulEquiv (R := R) (A := A) p i ^ n := by
+  simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   calc
     _ = DiagonalizableGroup.schemePointsMulEquiv
         (R := R) (A := A) (characterGroup sigma) p
-          (show characterGroup sigma from Multiplicative.ofAdd m) := by
+          (Multiplicative.ofAdd m : characterGroup sigma) := by
       exact
         DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
           (R := R) (A := A) (characterGroup sigma)
-            (show characterGroup sigma from Multiplicative.ofAdd m) p
+            (Multiplicative.ofAdd m : characterGroup sigma) p
     _ = _ := by
       let chi : Multiplicative (sigma →₀ ℤ) →* Aˣ :=
         DiagonalizableGroup.schemePointsMulEquiv
           (R := R) (A := A) (characterGroup sigma) p
+      -- `characterGroup sigma` is the bundled abbreviation for the free multiplicative
+      -- lattice; this aligns that representation with the unbundled character `chi`.
       change chi (Multiplicative.ofAdd m) =
         m.prod fun i n => freeAbelianCharEquiv chi i ^ n
       conv_lhs =>

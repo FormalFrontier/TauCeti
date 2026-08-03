@@ -6,8 +6,7 @@ module
 
 public import Mathlib.Algebra.Category.Grp.ForgetCorepresentable
 public import TauCeti.Algebra.AlgebraicGroup.Cocharacter
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 
 /-!
 # Scheme-valued points and morphisms of diagonalizable group schemes
@@ -27,8 +26,9 @@ asserted; such a classification requires additional hypotheses on the base.
 The scheme-facing constructions are same-universe because Mathlib's current `hopfSpec` and
 `Spec.mapMulEquiv` interfaces are same-universe. Consequently the character group used for
 `𝔾ₘ` over `R : Type u` is the canonical same-universe copy
-`ULift.{u} (Multiplicative ℤ)`. Mathlib's `uliftZPowersHom` identifies its characters with
-units, while public exponents and cocharacters remain expressed using ordinary integers.
+`ULift.{u} (Multiplicative ℤ)`. The local character equivalence combines Mathlib's
+`zpowersMulHom` with `MulEquiv.ulift`; public exponents and cocharacters remain expressed
+using ordinary integers.
 
 ## Main declarations
 
@@ -76,11 +76,11 @@ variable [Algebra R A] [Algebra R B]
 /-- Scheme-valued points of `D(G)` over `Spec R` are multiplicative characters `G →* Aˣ`.
 
 The equivalence reverses the spectrum morphism into an algebra point through
-`Spec.mapMulEquiv`, then applies the diagonalizable-group points equivalence. -/
+`groupSchemePointsMulEquiv`, then applies the diagonalizable-group points equivalence. -/
 @[expose] noncomputable def schemePointsMulEquiv (G : FGCommGrpCat.{u}) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) ≃* (G →* Aˣ) :=
-  AlgebraicGeometry.Spec.mapMulEquiv.symm.trans pointsMulEquiv
+  (groupSchemePointsMulEquiv (R := R) (A := A) G).trans pointsMulEquiv
 
 /-- A scheme-valued point, viewed as a character, evaluates a group element on the
 corresponding group-algebra basis monomial. -/
@@ -89,20 +89,19 @@ theorem schemePointsMulEquiv_apply_coe (G : FGCommGrpCat.{u})
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) (g : G) :
     (schemePointsMulEquiv (R := R) (A := A) G p g : A) =
-      (AlgebraicGeometry.Spec.mapMulEquiv.symm p).ofConv
+      (groupSchemePointsMulEquiv (R := R) (A := A) G p).ofConv
         (MonoidAlgebra.single g 1) := by
-  change (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p) g : A) = _
-  exact charOfPoint_apply_coe
-    (AlgebraicGeometry.Spec.mapMulEquiv.symm p).ofConv g
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply, pointsMulEquiv_apply,
+    charOfPoint_apply_coe]
 
 /-- The inverse scheme-points equivalence is the spectrum morphism associated to the algebra
 point extending a character. -/
 theorem schemePointsMulEquiv_symm_apply
     (G : FGCommGrpCat.{u}) (chi : G →* Aˣ) :
     (schemePointsMulEquiv (R := R) (A := A) G).symm chi =
-      AlgebraicGeometry.Spec.mapMulEquiv
+      (groupSchemePointsMulEquiv (R := R) (A := A) G).symm
         ((pointsMulEquiv (R := R) (A := A) (G := G)).symm chi) := by
-  rfl
+  rw [schemePointsMulEquiv, MulEquiv.symm_trans_apply]
 
 /-- The scheme-points equivalence intertwines `groupSchemeMap f` with precomposition by the
 underlying homomorphism `f` on characters. -/
@@ -114,27 +113,9 @@ theorem schemePointsMulEquiv_groupSchemeMap
         (p ≫ (groupSchemeMap R f).hom.hom) =
       (schemePointsMulEquiv (R := R) (A := A) H p).comp
         (FGCommGrpCat.toMonoidHom f) := by
-  change pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm
-      (p ≫ (groupSchemeMap R f).hom.hom)) =
-    (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p)).comp
-      (FGCommGrpCat.toMonoidHom f)
-  calc
-    _ = pointsMulEquiv
-        (pointsMap (R := R) (A := A) (FGCommGrpCat.toMonoidHom f)
-          (AlgebraicGeometry.Spec.mapMulEquiv.symm p)) := by
-      congr 1
-      apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-      rw [AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply]
-      change p ≫
-          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-            (coordinateMap R f).hom.op).hom.hom =
-        AlgebraicGeometry.Spec.mapMulEquiv
-          ((CommHopfAlgCat.mapPointsFunctor (coordinateMap R f).hom).app
-            (CommAlgCat.of R A) (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
-      rw [CommHopfAlgCat.mapMulEquiv_mapDomain]
-      congr 1
-      exact (AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p).symm
-    _ = _ := pointsMulEquiv_pointsMap _ _
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply,
+    groupSchemePointsMulEquiv_groupSchemeMap, pointsMulEquiv_pointsMap,
+    schemePointsMulEquiv, MulEquiv.trans_apply]
 
 /-- The scheme-points equivalence is natural in the value algebra. For `phi : A →ₐ[R] B`,
 precomposing by `Spec B ⟶ Spec A` applies `phi` to the values of the corresponding
@@ -147,36 +128,11 @@ theorem schemePointsMulEquiv_mapValue (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] 
           (Spec (CommRingCat.of R)) ≫ p) =
       (Units.map phi.toMonoidHom).comp
         (schemePointsMulEquiv (R := R) (A := A) G p) := by
-  change pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm
-      ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-        (Spec (CommRingCat.of R)) ≫ p)) =
-    (Units.map phi.toMonoidHom).comp
-      (pointsMulEquiv (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
-  calc
-    _ = pointsMulEquiv
-        (AlgHom.mapValue (H := MonoidAlgebra R G) phi
-          (AlgebraicGeometry.Spec.mapMulEquiv.symm p)) := by
-      congr 1
-      apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-      rw [AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply]
-      change (Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) ≫ p =
-        AlgebraicGeometry.Spec.mapMulEquiv
-          (HopfAlgebra.mapPoints (H := (coordinateRing R G).obj)
-            (CommAlgCat.ofHom phi) (AlgebraicGeometry.Spec.mapMulEquiv.symm p))
-      rw [CommHopfAlgCat.mapMulEquiv_mapValue]
-      congr 1
-      exact (AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply p).symm
-    _ = _ := pointsMulEquiv_mapValue _ _
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply,
+    groupSchemePointsMulEquiv_mapValue, pointsMulEquiv_mapValue,
+    schemePointsMulEquiv, MulEquiv.trans_apply]
 
 /-! ### The multiplicative group and scheme-level characters -/
-
-/-- The same-universe copy of `Multiplicative ℤ` is finitely generated. -/
-instance instFGULiftMultiplicativeInt :
-    Group.FG (ULift.{u} (Multiplicative ℤ)) := by
-  exact Group.fg_of_surjective
-    (f := (MulEquiv.ulift.symm : Multiplicative ℤ ≃*
-      ULift.{u} (Multiplicative ℤ)).toMonoidHom) MulEquiv.ulift.symm.surjective
 
 /-- The character group of the multiplicative group scheme, in the universe of the base.
 It is the canonical universe lift of `Multiplicative ℤ`. -/
@@ -226,9 +182,8 @@ theorem multiplicativeGroupSchemePointsMulEquiv_apply
     multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A) p =
       schemePointsMulEquiv (R := R) (A := A) multiplicativeCharacterGroup p
         (ULift.up (Multiplicative.ofAdd 1)) := by
-  change (uliftZPowersMulEquiv Aˣ).symm
-      (schemePointsMulEquiv (R := R) (A := A) multiplicativeCharacterGroup p) = _
-  exact uliftZPowersMulEquiv_symm_apply Aˣ _
+  rw [multiplicativeGroupSchemePointsMulEquiv, MulEquiv.trans_apply,
+    uliftZPowersMulEquiv_symm_apply]
 
 /-- The multiplicative-group scheme-points equivalence is natural in the value algebra. -/
 theorem multiplicativeGroupSchemePointsMulEquiv_mapValue (phi : A →ₐ[R] B)
@@ -282,10 +237,8 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
         (p ≫ (characterGroupSchemeMap (R := R) G g).hom.hom) =
       schemePointsMulEquiv (R := R) (A := A) G p g := by
   rw [multiplicativeGroupSchemePointsMulEquiv_apply, characterGroupSchemeMap,
-    schemePointsMulEquiv_groupSchemeMap, MonoidHom.comp_apply]
-  change schemePointsMulEquiv (R := R) (A := A) G p
-      (uliftZPowersMulEquiv G g (ULift.up (Multiplicative.ofAdd 1))) = _
-  rw [uliftZPowersMulEquiv_apply, toAdd_ofAdd, zpow_one]
+    schemePointsMulEquiv_groupSchemeMap, MonoidHom.comp_apply,
+    FGCommGrpCat.toMonoidHom_ofHom, uliftZPowersMulEquiv_apply, toAdd_ofAdd, zpow_one]
 
 /-- A cocharacter `psi : G →* Multiplicative ℤ` gives a group-scheme morphism
 `𝔾ₘ ⟶ D(G)`. The target character lattice is universe-lifted only at this scheme
@@ -307,9 +260,7 @@ theorem schemePointsMulEquiv_cocharacterGroupSchemeMap
         (p ≫ (cocharacterGroupSchemeMap (R := R) G psi).hom.hom) g =
       multiplicativeGroupSchemePointsMulEquiv (R := R) (A := A) p ^ (psi g).toAdd := by
   rw [cocharacterGroupSchemeMap, schemePointsMulEquiv_groupSchemeMap,
-    MonoidHom.comp_apply]
-  change schemePointsMulEquiv (R := R) (A := A) multiplicativeCharacterGroup p
-      (ULift.up (psi g)) = _
+    MonoidHom.comp_apply, FGCommGrpCat.toMonoidHom_ofHom]
   exact schemePointsMulEquiv_multiplicativeCharacterGroup_apply p (psi g)
 
 /-- The `n`-th power endomorphism of the multiplicative group scheme. Its character-lattice
@@ -342,16 +293,12 @@ theorem cocharacterGroupSchemeMap_comp_characterGroupSchemeMap
     characterGroupSchemeMap, ← groupSchemeMap_comp]
   congr 1
   apply FGCommGrpCat.hom_ext
-  change ((MulEquiv.ulift.symm : Multiplicative ℤ ≃*
-      ULift.{u} (Multiplicative ℤ)).toMonoidHom.comp psi).comp
-        (uliftZPowersMulEquiv G g) =
-    uliftZPowersMulEquiv (ULift.{u} (Multiplicative ℤ))
-      (ULift.up (Multiplicative.ofAdd (pairing g psi)))
+  simp only [FGCommGrpCat.toMonoidHom_comp, FGCommGrpCat.toMonoidHom_ofHom]
   apply (uliftZPowersMulEquiv (ULift.{u} (Multiplicative ℤ))).symm.injective
   rw [uliftZPowersMulEquiv_symm_apply, uliftZPowersMulEquiv_symm_apply]
-  change ULift.up (psi (g ^ (1 : ℤ))) =
-    (ULift.up (Multiplicative.ofAdd (pairing g psi))) ^ (1 : ℤ)
-  simp only [zpow_one, pairing_def, ofAdd_toAdd]
+  simp only [MonoidHom.comp_apply, uliftZPowersMulEquiv_apply, toAdd_ofAdd,
+    zpow_one, pairing_def, ofAdd_toAdd]
+  rfl
 
 end DiagonalizableGroup
 
