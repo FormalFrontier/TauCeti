@@ -83,50 +83,84 @@ open MeasureTheory
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 
-/-- Volterra integration as a continuous linear operator on continuous paths over the unit
-interval. The input is extended constantly outside the interval before integration. -/
-noncomputable def unitIntervalIntegral :
-    C(Set.Icc (0 : ℝ) 1, E) →L[ℝ] C(Set.Icc (0 : ℝ) 1, E) := by
-  let primitive (f : C(Set.Icc (0 : ℝ) 1, E)) : C(Set.Icc (0 : ℝ) 1, E) :=
-    ⟨fun t ↦ ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s),
-      (intervalIntegral.continuous_primitive
-        (fun a b ↦ (f.continuous.comp continuous_projIcc).intervalIntegrable a b) 0).comp
-          continuous_subtype_val⟩
-  have primitive_apply (f : C(Set.Icc (0 : ℝ) 1, E)) (t : Set.Icc (0 : ℝ) 1) :
-      primitive f t =
-        ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s) :=
-    rfl
-  let L : C(Set.Icc (0 : ℝ) 1, E) →ₗ[ℝ] C(Set.Icc (0 : ℝ) 1, E) :=
-    { toFun := primitive
+/-- The primitive of a continuous path on a compact real interval, using constant extension before
+integration. -/
+private noncomputable def intervalPrimitive (a b : ℝ) (hab : a ≤ b)
+    (f : C(Set.Icc a b, E)) : C(Set.Icc a b, E) :=
+  ⟨fun t ↦ ∫ s in a..t, f (Set.projIcc a b hab s),
+    (intervalIntegral.continuous_primitive
+      (fun x y ↦ (f.continuous.comp continuous_projIcc).intervalIntegrable x y) a).comp
+        continuous_subtype_val⟩
+
+omit [CompleteSpace E] in
+private theorem intervalPrimitive_apply (a b : ℝ) (hab : a ≤ b)
+    (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
+    intervalPrimitive a b hab f t = ∫ s in a..t, f (Set.projIcc a b hab s) := rfl
+
+/-- Volterra integration as a continuous linear operator on continuous paths over an arbitrary
+compact real interval. The input is extended constantly outside the interval before integration. -/
+noncomputable def intervalIntegralOperator (a b : ℝ) (hab : a ≤ b) :
+    C(Set.Icc a b, E) →L[ℝ] C(Set.Icc a b, E) := by
+  let L : C(Set.Icc a b, E) →ₗ[ℝ] C(Set.Icc a b, E) :=
+    { toFun := intervalPrimitive a b hab
       map_add' := fun f g ↦ by
         ext t
+        rw [intervalPrimitive_apply, ContinuousMap.add_apply, intervalPrimitive_apply,
+          intervalPrimitive_apply]
         exact intervalIntegral.integral_add
           ((f.continuous.comp continuous_projIcc).intervalIntegrable _ _)
           ((g.continuous.comp continuous_projIcc).intervalIntegrable _ _)
       map_smul' := fun c f ↦ by
         ext t
-        rw [primitive_apply, ContinuousMap.smul_apply, primitive_apply]
+        rw [intervalPrimitive_apply, ContinuousMap.smul_apply, intervalPrimitive_apply]
         simpa only [ContinuousMap.smul_apply, RingHom.id_apply] using
           intervalIntegral.integral_smul c
-            (fun s ↦ f (Set.projIcc 0 1 zero_le_one s)) }
-  exact LinearMap.mkContinuous L 1 fun f ↦ by
-    rw [one_mul]
-    apply (ContinuousMap.norm_le _ (norm_nonneg f)).2
+            (fun s ↦ f (Set.projIcc a b hab s)) }
+  have L_apply (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
+      L f t = intervalPrimitive a b hab f t := rfl
+  exact LinearMap.mkContinuous L (b - a) fun f ↦ by
+    apply (ContinuousMap.norm_le _
+      (mul_nonneg (sub_nonneg.mpr hab) (norm_nonneg f))).2
     intro t
+    rw [L_apply, intervalPrimitive_apply]
     calc
-      ‖primitive f t‖ ≤ ‖f‖ * |(t : ℝ) - 0| :=
+      ‖∫ s in a..(t : ℝ), f (Set.projIcc a b hab s)‖ ≤ ‖f‖ * |(t : ℝ) - a| :=
         intervalIntegral.norm_integral_le_of_norm_le_const fun s _ ↦
-          ContinuousMap.norm_coe_le_norm f (Set.projIcc 0 1 zero_le_one s)
-      _ ≤ ‖f‖ := by
-        rw [sub_zero, abs_of_nonneg t.2.1]
-        exact mul_le_of_le_one_right (norm_nonneg f) t.2.2
+          ContinuousMap.norm_coe_le_norm f (Set.projIcc a b hab s)
+      _ ≤ (b - a) * ‖f‖ := by
+        rw [abs_of_nonneg (sub_nonneg.mpr t.2.1), mul_comm (b - a)]
+        exact mul_le_mul_of_nonneg_left (sub_le_sub_right t.2.2 a) (norm_nonneg f)
+
+omit [CompleteSpace E] in
+/-- The Volterra integral operator on `[a, b]` has operator norm at most the interval length. -/
+theorem norm_intervalIntegralOperator_le (a b : ℝ) (hab : a ≤ b) :
+    ‖intervalIntegralOperator (E := E) a b hab‖ ≤ b - a := by
+  rw [intervalIntegralOperator]
+  exact LinearMap.mkContinuous_norm_le _ (sub_nonneg.mpr hab) _
+
+omit [CompleteSpace E] in
+/-- Evaluating the Volterra operator at `t` integrates the input's constant extension from the left
+endpoint to `t`. -/
+@[simp]
+theorem intervalIntegralOperator_apply (a b : ℝ) (hab : a ≤ b)
+    (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
+    intervalIntegralOperator a b hab f t =
+      ∫ s in a..t, f (Set.projIcc a b hab s) := by
+  rw [intervalIntegralOperator]
+  exact intervalPrimitive_apply a b hab f t
+
+/-- Volterra integration on the unit interval, obtained from the general compact-interval
+operator. -/
+noncomputable def unitIntervalIntegral :
+    C(Set.Icc (0 : ℝ) 1, E) →L[ℝ] C(Set.Icc (0 : ℝ) 1, E) :=
+  intervalIntegralOperator 0 1 zero_le_one
 
 omit [CompleteSpace E] in
 /-- The Volterra integral operator on the unit interval has operator norm at most one. -/
 theorem norm_unitIntervalIntegral_le :
     ‖unitIntervalIntegral (E := E)‖ ≤ 1 := by
-  rw [unitIntervalIntegral]
-  exact LinearMap.mkContinuous_norm_le _ zero_le_one _
+  simpa only [unitIntervalIntegral, sub_zero] using
+    norm_intervalIntegralOperator_le (E := E) 0 1 zero_le_one
 
 omit [CompleteSpace E] in
 /-- Evaluating the Volterra operator at `t` integrates the input's constant extension from zero
@@ -136,8 +170,7 @@ theorem unitIntervalIntegral_apply (f : C(Set.Icc (0 : ℝ) 1, E))
     (t : Set.Icc (0 : ℝ) 1) :
     unitIntervalIntegral f t =
       ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s) := by
-  rw [unitIntervalIntegral]
-  rfl
+  exact intervalIntegralOperator_apply 0 1 zero_le_one f t
 
 end ContinuousMap
 
