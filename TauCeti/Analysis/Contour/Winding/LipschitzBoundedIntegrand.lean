@@ -44,10 +44,10 @@ open scoped NNReal
 
 /-- **The quadratic remainder of a Lipschitz derivative.** If `deriv γ` is `K`-Lipschitz on
 `[t₀ - ε, t₀ + ε]` and `γ` is differentiable there, the affine approximation at `t₀` is off by at
-most `K * (t - t₀) ^ 2`: the mean value inequality applied to `t ↦ γ t - γ t₀ - (t - t₀) * deriv γ
+most `K * (t - t₀) ^ 2`: the mean value inequality applied to `t ↦ γ t - γ t₀ - (t - t₀) • deriv γ
 t₀` on the segment between `t₀` and `t`, whose derivative is `deriv γ · - deriv γ t₀`, bounded by
 `K * |t - t₀|` there since every point of that segment is within `|t - t₀|` of `t₀`. -/
-private theorem norm_sub_sub_mul_deriv_le_of_lipschitzOnWith {γ : ℝ → ℂ} {t₀ ε : ℝ} {K : ℝ≥0}
+private theorem norm_sub_sub_smul_deriv_le_of_lipschitzOnWith {γ : ℝ → ℂ} {t₀ ε : ℝ} {K : ℝ≥0}
     (hε_pos : 0 < ε) (hderiv : ∀ t ∈ Icc (t₀ - ε) (t₀ + ε), HasDerivAt γ (deriv γ t) t)
     (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε)))
     {t : ℝ} (ht : t ∈ Icc (t₀ - ε) (t₀ + ε)) :
@@ -120,7 +120,7 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith {γ : ℝ → ℂ
   set z : ℂ := γ t - w with hz_def
   set R : ℂ := z - ((t - t₀ : ℝ) : ℂ) * v₀ with hR_def
   have hR_bound : ‖R‖ ≤ K * (t - t₀) ^ 2 := by
-    have hthis := norm_sub_sub_mul_deriv_le_of_lipschitzOnWith hε_pos hderiv hlip ht
+    have hthis := norm_sub_sub_smul_deriv_le_of_lipschitzOnWith hε_pos hderiv hlip ht
     rw [Complex.real_smul, h_eq] at hthis
     rw [hR_def, hz_def]
     exact hthis
