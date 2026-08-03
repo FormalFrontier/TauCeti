@@ -79,9 +79,8 @@ noncomputable def circleLieAlgebraEquivModel :
     LeftInvariantDerivation (𝓡 1) Circle ≃ₗ[ℝ] ℝ :=
   (leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓡 1) (G := Circle)
       BoundarylessManifold.isInteriorPoint).trans
-    ((groupLieAlgebraEquivModelSpace (I := 𝓡 1) (G := Circle)).trans
-      ((EuclideanSpace.equiv (Fin 1) ℝ).toLinearEquiv.trans
-        (LinearEquiv.funUnique (Fin 1) ℝ ℝ)))
+    ((EuclideanSpace.equiv (Fin 1) ℝ).toLinearEquiv.trans
+      (LinearEquiv.funUnique (Fin 1) ℝ ℝ))
 
 private theorem circleLieAlgebraEquivModel_generator_ne_zero :
     circleLieAlgebraEquivModel circleExpGenerator ≠ 0 := by
