@@ -26,8 +26,9 @@ left-invariant-derivation model of a Lie algebra.
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 0, "The Lie algebra and the tangent space at `1`".
-* The proof of `contMDiff_mulInvariantVectorField_infty` follows Sébastien Gouëzel's proof of
-  Mathlib's `contMDiff_mulInvariantVectorField`, specialized to infinite smoothness.
+* The proofs of `contMDiff_mulInvariantVectorField_modelSpace` and
+  `contMDiff_mulInvariantVectorField_infty` adapt Sébastien Gouëzel's proof of Mathlib's
+  `contMDiff_mulInvariantVectorField`.
 -/
 
 public section
@@ -69,10 +70,10 @@ theorem contMDiff_mulInvariantVectorField_infty
 /-- In model coordinates, the invariant vector field is jointly `C^n` in its generating tangent
 vector and the group point when multiplication is `C^(n + 1)`.
 
-The separate `IsManifold I 2 G` hypothesis supplies the smooth tangent-bundle structure; it is
-independent of the regularity lost by differentiating multiplication. -/
+The separate `IsManifold I 1 G` hypothesis supplies the differentiable tangent-bundle structure;
+it is independent of the regularity lost by differentiating multiplication. -/
 theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
-    [IsManifold I 2 G] [ContMDiffMul I (n + 1) G] :
+    [IsManifold I 1 G] [ContMDiffMul I (n + 1) G] :
     ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
       (fun p : E × G =>
         (mulInvariantVectorField (I := I) (G := G) p.1 p.2 : TangentBundle I G)) := by
