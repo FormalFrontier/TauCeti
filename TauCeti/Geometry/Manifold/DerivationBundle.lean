@@ -100,6 +100,21 @@ theorem tangentToPointDerivation_apply (x : M) (v : TangentSpace I x)
     (f : C^∞⟮I, M; 𝕜⟯) : tangentToPointDerivation x v f = mvfderiv I f x v :=
   rfl
 
+/-- **A globally smooth map with the germ of the extended chart.** There is a `C^∞` map `M → E`
+that agrees with `extChartAt I x` on a neighbourhood of `x`. -/
+private theorem exists_contMDiffMap_eventuallyEq_extChartAt
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] [T2Space M] (x : M) :
+    ∃ F : C^∞⟮I, M; modelWithCornersSelf ℝ E, E⟯,
+      Filter.EventuallyEq (nhds x) (F : M → E) (extChartAt I x) := by
+  -- Multiplying the chart by a bump function at `x` leaves its germ there and makes the product
+  -- smooth everywhere.
+  let b : SmoothBumpFunction I x := Classical.choice inferInstance
+  refine ⟨⟨fun y ↦ b y • extChartAt I x y, b.contMDiff_smul contMDiffOn_extChartAt⟩, ?_⟩
+  filter_upwards [b.eventuallyEq_one] with y hy
+  simp [hy]
+
 /-- On a finite-dimensional Hausdorff real manifold, smooth scalar-valued functions distinguish
 tangent vectors. -/
 theorem tangentToPointDerivation_injective
@@ -115,13 +130,9 @@ theorem tangentToPointDerivation_injective
   change v = w
   rw [SeparatingDual.eq_iff_forall_dual_eq (R := ℝ)]
   intro φ
-  let b : SmoothBumpFunction I x := Classical.choice inferInstance
-  let f : C^∞⟮I, M; ℝ⟯ :=
-    ⟨fun y ↦ φ (b y • extChartAt I x y),
-      φ.contMDiff.comp (b.contMDiff_smul contMDiffOn_extChartAt)⟩
-  have hlocal : (f : M → ℝ) =ᶠ[𝓝 x] φ ∘ extChartAt I x := by
-    filter_upwards [b.eventuallyEq_one] with y hy
-    simp [f, hy]
+  obtain ⟨F, hF⟩ := exists_contMDiffMap_eventuallyEq_extChartAt (I := I) x
+  let f : C^∞⟮I, M; ℝ⟯ := ⟨fun y ↦ φ (F y), φ.contMDiff.comp F.contMDiff⟩
+  have hlocal : (f : M → ℝ) =ᶠ[𝓝 x] φ ∘ extChartAt I x := hF.fun_comp φ
   have hfv : mvfderiv I f x v = mvfderiv I f x w := by
     have h := congrArg (fun D ↦ D f) hvw
     -- Unbundle the comparison map after evaluating the two point derivations at `f`.
@@ -306,36 +317,20 @@ theorem tangentToPointDerivation_mfderiv (f : C^∞⟮I, M; I', M'⟯) (x : M)
     (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
     (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt v).symm
 
-/-- Every point derivation at an interior point of a finite-dimensional Hausdorff real manifold is
-directional differentiation along a tangent vector. -/
-theorem tangentToPointDerivation_surjective
+/-- **A smooth function factors through the chart near an interior point.** If `F` has the germ of
+the extended chart at an interior point `x`, then every `f : C^∞⟮I, M; ℝ⟯` agrees near `x` with
+`g' ∘ F` for some `C^∞` function `g'` on the model space. -/
+private theorem exists_contMDiffMap_comp_eventuallyEq
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
     {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
-    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) :
-    Function.Surjective (tangentToPointDerivation (I := I) x) := by
-  intro D
-  -- A bump-localized extended chart is globally smooth and agrees with the chart germ at `x`.
-  -- Push `D` through it and apply the model-space theorem to obtain the candidate vector `v`.
-  let b : SmoothBumpFunction I x := Classical.choice inferInstance
-  let F : C^∞⟮I, M; modelWithCornersSelf ℝ E, E⟯ :=
-    ⟨fun y ↦ b y • extChartAt I x y,
-      b.contMDiff_smul contMDiffOn_extChartAt⟩
-  have hF : Filter.EventuallyEq (nhds x) (F : M → E) (extChartAt I x) := by
-    filter_upwards [b.eventuallyEq_one] with y hy
-    simp [F, hy]
+    {x : M} (hx : I.IsInteriorPoint x) (F : C^∞⟮I, M; modelWithCornersSelf ℝ E, E⟯)
+    (hF : Filter.EventuallyEq (nhds x) (F : M → E) (extChartAt I x))
+    (f : C^∞⟮I, M; ℝ⟯) :
+    ∃ g' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯,
+      Filter.EventuallyEq (nhds x) (f : M → ℝ) (g' ∘ F) := by
+  -- Cut the chart expression of `f` off inside the interior of the chart target.
   have hFx : F x = extChartAt I x x := hF.eq_of_nhds
-  obtain ⟨w, hw⟩ := tangentToPointDerivation_surjective_model (F x) (fdifferential F x D)
-  let v : TangentSpace I x := w
-  have hv : mfderiv I (modelWithCornersSelf ℝ E) F x v = w := by
-    rw [hF.mfderiv_eq, mfderiv_extChartAt_self]
-    -- `TangentSpace I x` is the model space as a type synonym, so the identity derivative applies
-    -- to `v` definitionally as the model-space vector `w`.
-    rfl
-  refine ⟨v, ?_⟩
-  ext f
-  -- To compare the two derivations on an arbitrary global `f`, cut its chart expression off inside
-  -- the interior of the chart target. This produces a globally smooth model-space function `g'`.
   have htarget : interior (extChartAt I x).target ∈ nhds (F x) := by
     rw [hFx]
     exact isOpen_interior.mem_nhds
@@ -354,19 +349,43 @@ theorem tangentToPointDerivation_surjective
     have hsymm := hsymmWithin.contMDiffAt
       (Filter.mem_of_superset (isOpen_interior.mem_nhds hytarget) interior_subset)
     exact β.contMDiffAt.mul (f.contMDiff.contMDiffAt.comp y hsymm)
-  let g' : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ := ⟨g, hg.contMDiff⟩
+  refine ⟨⟨g, hg.contMDiff⟩, ?_⟩
   have hβF : Filter.EventuallyEq (nhds x) (β ∘ F) (fun _ ↦ 1) :=
     β.eventuallyEq_one.comp_tendsto F.contMDiff.continuous.continuousAt
   have hsource : ∀ᶠ y in nhds x, y ∈ (extChartAt I x).source :=
     (isOpen_extChartAt_source x).mem_nhds (mem_extChartAt_source x)
-  have hlocal : Filter.EventuallyEq (nhds x) (f : M → ℝ) (g' ∘ F) := by
-    filter_upwards [hF, hβF, hsource] with y hFy hβy hy
-    -- Unfold composition and the bundled chart-local function `g'`; no theorem rewrites through
-    -- both bundled-map coercions at once.
-    change f y = β (F y) * f ((extChartAt I x).symm (F y))
-    -- Likewise expose the constant function in the eventual equality supplied by the bump.
-    change β (F y) = 1 at hβy
-    rw [hβy, one_mul, hFy, (extChartAt I x).left_inv hy]
+  filter_upwards [hF, hβF, hsource] with y hFy hβy hy
+  -- Unfold composition and the bundled chart-local function; no theorem rewrites through both
+  -- bundled-map coercions at once.
+  change f y = β (F y) * f ((extChartAt I x).symm (F y))
+  -- Likewise expose the constant function in the eventual equality supplied by the bump.
+  change β (F y) = 1 at hβy
+  rw [hβy, one_mul, hFy, (extChartAt I x).left_inv hy]
+
+/-- Every point derivation at an interior point of a finite-dimensional Hausdorff real manifold is
+directional differentiation along a tangent vector. -/
+theorem tangentToPointDerivation_surjective
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+    [T2Space M] (x : M) (hx : I.IsInteriorPoint x) :
+    Function.Surjective (tangentToPointDerivation (I := I) x) := by
+  intro D
+  -- A bump-localized extended chart is globally smooth and agrees with the chart germ at `x`.
+  -- Push `D` through it and apply the model-space theorem to obtain the candidate vector `v`.
+  obtain ⟨F, hF⟩ := exists_contMDiffMap_eventuallyEq_extChartAt (I := I) x
+  obtain ⟨w, hw⟩ := tangentToPointDerivation_surjective_model (F x) (fdifferential F x D)
+  let v : TangentSpace I x := w
+  have hv : mfderiv I (modelWithCornersSelf ℝ E) F x v = w := by
+    rw [hF.mfderiv_eq, mfderiv_extChartAt_self]
+    -- `TangentSpace I x` is the model space as a type synonym, so the identity derivative applies
+    -- to `v` definitionally as the model-space vector `w`.
+    rfl
+  refine ⟨v, ?_⟩
+  ext f
+  -- To compare the two derivations on an arbitrary global `f`, replace it near `x` by a smooth
+  -- function of the chart.
+  obtain ⟨g', hlocal⟩ := exists_contMDiffMap_comp_eventuallyEq hx F hF f
   -- Germ invariance replaces `f` by `g' ∘ F` on both sides. Naturality of the tangent comparison
   -- then reduces the result exactly to the model-space equality `hw`.
   rw [(tangentToPointDerivation x v).congr_of_eventuallyEq f (g'.comp F) hlocal,
