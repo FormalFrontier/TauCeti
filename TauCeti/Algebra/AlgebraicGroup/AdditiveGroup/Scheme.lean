@@ -325,20 +325,6 @@ lemma schemePointsMulEquiv_symm_apply (a : Multiplicative A) :
         ((gaPointsMulEquiv (R := R) (A := A)).symm a) := by
   rfl
 
-/-- The algebra map underlying the scheme point associated to `a` sends the additive coordinate
-`ι(1)` to `a`.
-
-This is intentionally not a simp lemma: its left-hand side already reduces to the right-hand side
-through the simp lemmas for the inverse scheme-points equivalence and the additive coordinate, so
-tagging this result would be rejected by the `simpNF` lint as redundant. -/
-lemma schemePointsMulEquiv_symm_apply_ι (a : Multiplicative A) :
-    ((groupSchemePointMulEquiv A).symm
-      ((schemePointsMulEquiv A).symm a)).ofConv
-          (SymmetricAlgebra.ι R R 1) = Multiplicative.toAdd a := by
-  rw [schemePointsMulEquiv_symm_apply,
-    (groupSchemePointMulEquiv A).symm_apply_apply,
-    gaPointsMulEquiv_symm_apply_ι]
-
 variable {B : Type u} [CommRing B] [Algebra R B]
 
 /-- The scheme-valued point identification is covariantly natural in the value algebra. An
