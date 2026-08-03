@@ -34,6 +34,8 @@ ring in `Type u`.
 ## Main declarations
 
 * `TauCeti.DiagonalizableGroup.groupScheme`: the affine group scheme `D(G) = Spec R[G]`.
+* `TauCeti.DiagonalizableGroup.groupSchemeIsoHopfSpec`: its canonical presentation as the
+  relative spectrum of the coordinate Hopf algebra.
 * `TauCeti.DiagonalizableGroup.groupScheme_one_left`,
   `TauCeti.DiagonalizableGroup.groupScheme_mul_left`, and
   `TauCeti.DiagonalizableGroup.groupScheme_inv_left`: the underlying scheme maps of its
@@ -84,6 +86,15 @@ noncomputable def groupScheme (G : FGCommGrpCat.{u}) :
     Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateRing R G).obj)
+
+/-- The canonical presentation of `D(G)` as the relative spectrum of its coordinate Hopf
+algebra. This identity isomorphism is the public transport boundary between the packaged
+`groupScheme` wrapper and generic `hopfSpec` constructions. -/
+noncomputable def groupSchemeIsoHopfSpec (G : FGCommGrpCat.{u}) :
+    groupScheme R G ≅
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateRing R G).obj) :=
+  Iso.refl _
 
 /-- The scheme underlying `D(G)` is the spectrum of the group algebra `R[G]`. -/
 @[simp]
@@ -152,6 +163,18 @@ lemma groupScheme_inv_left (G : FGCommGrpCat.{u}) :
 noncomputable def groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
     groupScheme R H ⟶ groupScheme R G :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R f).hom.op
+
+/-- The canonical Hopf-spectrum presentation intertwines `groupSchemeMap f` with the
+`hopfSpec` image of the coordinate morphism. -/
+@[simp]
+theorem groupSchemeMap_comp_groupSchemeIsoHopfSpec_hom
+    {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
+    groupSchemeMap R f ≫ (groupSchemeIsoHopfSpec R G).hom =
+      (groupSchemeIsoHopfSpec R H).hom ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (coordinateMap R f).hom.op := by
+  unfold groupSchemeMap groupSchemeIsoHopfSpec groupScheme
+  simp
 
 /-- Under the identifications of its source and target with spectra, the scheme morphism
 underlying `groupSchemeMap f` is induced by the coordinate Hopf-algebra morphism
