@@ -24,7 +24,7 @@ The content is the "no more integers" step: an algebraic integer `z` with `(z : 
 ## Main results
 
 * `TauCeti.NumberField.adjoin_gen_eq_top_of_emod_four_ne_one`: the ring of integers is `ℤ[θ]`.
-* `TauCeti.NumberField.discr_eq_four_mul_of_squarefree_of_emod_four_ne_one`: `discr K = 4d`.
+* `TauCeti.NumberField.discr_eq_four_mul_of_emod_four_ne_one`: `discr K = 4d`.
 -/
 
 public section
@@ -73,19 +73,6 @@ private theorem den_eq_one_of_squarefree_mul_sq_isInt {d : ℤ} (hd : Squarefree
 
 variable {θ : 𝓞 K} {d : ℤ}
 
-/-- The trace of the generator vanishes: `Tr(θ) = 0` (the `X`-coefficient of `X² - d` is `0`). -/
-private theorem trace_coe_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Algebra.trace ℚ K (θ : K) = 0 := by
-  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  have hpbmin : minpoly ℚ (PowerBasis.ofAdjoinEqTop' hint hgen).gen = X ^ 2 - C ((d : ℤ) : ℚ) := by
-    rw [PowerBasis.ofAdjoinEqTop'_gen]; exact minpoly_rat_quadratic hmin
-  have hnc : ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).nextCoeff = 0 := by
-    rw [nextCoeff_of_natDegree_pos (by rw [natDegree_X_pow_sub_C]; norm_num),
-      natDegree_X_pow_sub_C, show (2 : ℕ) - 1 = 1 from rfl, coeff_sub, coeff_X_pow, coeff_C]
-    norm_num
-  rw [← PowerBasis.ofAdjoinEqTop'_gen hint hgen, PowerBasis.trace_gen_eq_nextCoeff_minpoly,
-    hpbmin, hnc, neg_zero]
-
 /-- **Trace and norm of a quadratic algebraic integer are integers.** For `z : 𝓞 K` with
 `(z : K) = a + c·θ`, both `2a` (the trace) and `a² - d·c²` (the norm) are integers. -/
 private theorem exists_intCast_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
@@ -98,9 +85,10 @@ private theorem exists_intCast_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
     rw [hz, map_add, Algebra.trace_algebraMap, hfr, ← Algebra.smul_def, map_smul,
       trace_coe_eq_zero hmin hgen]
     simp
-  refine ⟨⟨Algebra.trace ℤ (𝓞 K) z, by rw [Algebra.coe_trace_int, htr]⟩, ?_⟩
-  obtain ⟨A, hA⟩ : ∃ A : ℤ, (A : ℚ) = 2 * a :=
+  have hAex : ∃ A : ℤ, (A : ℚ) = 2 * a :=
     ⟨Algebra.trace ℤ (𝓞 K) z, by rw [Algebra.coe_trace_int, htr]⟩
+  refine ⟨hAex, ?_⟩
+  obtain ⟨A, hA⟩ := hAex
   -- Norm: `z` satisfies `z² - (2a)·z + (a²-dc²) = 0`, so `a²-dc² = (2a)·z - z² ∈ 𝓞 K ∩ ℚ = ℤ`.
   have hroot : (z : K) ^ 2 - algebraMap ℚ K (2 * a) * (z : K)
       + algebraMap ℚ K (a ^ 2 - (d : ℚ) * c ^ 2) = 0 := by
@@ -224,23 +212,14 @@ include hmin hgen hsf hd4 in
 /-- **The discriminant of `ℚ(√d)` when `d ≢ 1 (mod 4)`.** For squarefree `d` with `d % 4 ≠ 1`
 (equivalently `d ≡ 2, 3 (mod 4)`), the field discriminant is `disc K = 4d`. The ring of integers is
 `ℤ[θ]` — see `adjoin_gen_eq_top_of_emod_four_ne_one`. -/
-theorem discr_eq_four_mul_of_squarefree_of_emod_four_ne_one : NumberField.discr K = 4 * d := by
+theorem discr_eq_four_mul_of_emod_four_ne_one : NumberField.discr K = 4 * d := by
   have hfr := finrank_rat_eq_two hmin hgen
   have hd4' := emod_four_eq_two_or_three hsf hd4
-  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr (coe_notMem_range hmin) θ.isIntegral_coe
-  -- Discriminant of `{1, θ}` is `4d`, via the `2×2` trace form.
+  -- Discriminant of `{1, θ}` is `4d` (`discr_coe_one_gen`).
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((4 * d : ℤ) : ℚ) := by
-    have htr1 : Algebra.trace ℚ K (1 : K) = 2 := by
-      rw [show (1 : K) = algebraMap ℚ K 1 from (map_one _).symm, Algebra.trace_algebraMap, hfr]
-      simp
-    rw [hbs, Algebra.discr_def, Matrix.det_fin_two]
-    simp only [Algebra.traceMatrix_apply, Algebra.traceForm_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one, mul_one, one_mul]
-    rw [← pow_two, hd', htr1, trace_coe_eq_zero hmin hgen, Algebra.trace_algebraMap, hfr]
-    simp only [nsmul_eq_mul]; push_cast; ring
+    rw [hbs]; exact discr_coe_one_gen hmin hgen
   -- Spanning: `{1, θ}` spans `𝓞 K` over `ℤ` (`exists_int_repr`).
   have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
     rw [eq_top_iff]
@@ -248,6 +227,8 @@ theorem discr_eq_four_mul_of_squarefree_of_emod_four_ne_one : NumberField.discr 
     obtain ⟨k, l, hkl⟩ := exists_int_repr hmin hgen hsf hd4' z
     have hval0 : bs 0 = (1 : K) := by rw [hbs]; rfl
     have hval1 : bs 1 = (θ : K) := by rw [hbs]; rfl
+    -- The basis vectors `⟨bs 0, _⟩`, `⟨bs 1, _⟩` of `𝓞 K` are `1` and `θ`; check on the coercion
+    -- to `K` (injective), where `⟨bs i, _⟩` reduces definitionally to `bs i`.
     have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
       apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
     have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = θ := by
