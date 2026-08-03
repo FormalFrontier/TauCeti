@@ -137,6 +137,42 @@ theorem filtrationGradedMul_apply_mk (Q : QuadraticForm R M) (i j : ℕ) (x : fi
   rw [filtrationGradedMul, LinearMap.liftQ₂_mk]
   rfl
 
+private theorem filtrationGradedPiece_cast_mk' (Q : QuadraticForm R M) {i j : ℕ}
+    (h : i = j) (x : filtration Q i) :
+    cast (congrArg (filtrationGradedPiece Q) h) (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (cast (congrArg (fun k => ↥(filtration Q k)) h) x) := by
+  subst j
+  rfl
+
+private theorem filtration_subtype_cast (Q : QuadraticForm R M) {i j : ℕ}
+    (h : i = j) (x : filtration Q i) :
+    (filtration Q j).subtype (cast (congrArg (fun k => ↥(filtration Q k)) h) x) = x := by
+  subst j
+  rfl
+
+/-- Homogeneous Clifford filtration multiplication is associative after reindexing degrees. -/
+theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
+    (x : filtrationGradedPiece Q i) (y : filtrationGradedPiece Q j)
+    (z : filtrationGradedPiece Q k) :
+    cast (congrArg (filtrationGradedPiece Q) (Nat.add_assoc i j k))
+      (filtrationGradedMul Q (i + j) k (filtrationGradedMul Q i j x y) z) =
+      filtrationGradedMul Q i (j + k) x (filtrationGradedMul Q j k y z) := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      induction y using Submodule.Quotient.induction_on with
+      | _ y =>
+          induction z using Submodule.Quotient.induction_on with
+          | _ z =>
+              simp only [filtrationGradedMul_apply_mk]
+              rw [filtrationGradedPiece_cast_mk' Q (Nat.add_assoc i j k)]
+              apply (Submodule.Quotient.eq _).mpr
+              rw [Submodule.mem_comap, map_sub,
+                filtration_subtype_cast Q (Nat.add_assoc i j k)]
+              change ((x : CliffordAlgebra Q) * y) * z - x * (y * z) ∈
+                filtrationPrevious Q (i + (j + k))
+              rw [mul_assoc, sub_self]
+              exact Submodule.zero_mem (filtrationPrevious Q (i + (j + k)))
+
 end CliffordAlgebra
 
 end TauCeti
