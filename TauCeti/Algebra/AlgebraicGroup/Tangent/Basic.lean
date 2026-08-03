@@ -480,24 +480,28 @@ lemma mulTensor_zero_right (s : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R 
   simp
 
 /-- The exterior product is additive in the left factor. -/
+@[simp]
 lemma mulTensor_add_left (s₁ s₂ t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     mulTensor (s₁ + s₂) t = mulTensor s₁ t + mulTensor s₂ t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp [add_mul]
 
 /-- The exterior product is additive in the right factor. -/
+@[simp]
 lemma mulTensor_add_right (s t₁ t₂ : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     mulTensor s (t₁ + t₂) = mulTensor s t₁ + mulTensor s t₂ := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp [mul_add]
 
 /-- Scalars pull out of the left factor of the exterior product. -/
+@[simp]
 lemma mulTensor_smul_left (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     mulTensor (r • s) t = r • mulTensor s t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp
 
 /-- Scalars pull out of the right factor of the exterior product. -/
+@[simp]
 lemma mulTensor_smul_right (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
     mulTensor s (r • t) = r • mulTensor s t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
