@@ -42,6 +42,8 @@ ring in `Type u`.
   induced by a homomorphism of finitely generated commutative groups.
 * `TauCeti.DiagonalizableGroup.schemeFunctor`: the functor `FGCommGrpCatᵒᵖ ⟶
   Grp (Over (Spec R))`.
+* `TauCeti.DiagonalizableGroup.schemeFunctorIsoHopfSpec`: its factorization through the
+  coordinate-ring functor and relative spectrum.
 * `TauCeti.DiagonalizableGroup.isAffine_groupScheme`: `D(G)` is affine.
 * `TauCeti.DiagonalizableGroup.locallyOfFiniteType_groupScheme`: `D(G) ⟶ Spec R` is
   locally of finite type.
@@ -210,6 +212,18 @@ noncomputable def schemeFunctor :
     (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
       (_root_.CommHopfAlgCat.{u} R)).op ⋙
     AlgebraicGeometry.hopfSpec (CommRingCat.of R)
+
+/-- The diagonalizable group-scheme functor is the composite of the opposite coordinate-ring
+functor, the inclusion from finite-type to unrestricted commutative Hopf algebras, and relative
+spectrum. This is the categorical interface for factoring `schemeFunctor` without unfolding its
+implementation. -/
+noncomputable def schemeFunctorIsoHopfSpec :
+    schemeFunctor R ≅
+      (coordinateRingFunctor R).op ⋙
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+          (_root_.CommHopfAlgCat.{u} R)).op ⋙
+        AlgebraicGeometry.hopfSpec (CommRingCat.of R) :=
+  Iso.refl _
 
 /-- On objects, the diagonalizable group-scheme functor is `G ↦ Spec R[G]`. -/
 @[simp]

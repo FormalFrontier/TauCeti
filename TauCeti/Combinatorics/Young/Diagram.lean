@@ -15,7 +15,9 @@ public import Mathlib.Data.List.GetD
 Mathlib's `YoungDiagram.rowLens` records the lengths of the rows of a Young diagram.  This file
 counts the cells of a diagram row by row: the row lengths sum to the number of cells, and the
 first `k` row lengths sum to the number of cells lying in the first `k` rows, whether those
-lengths are summed as `∑ i ∈ Finset.range k, μ.rowLen i` or as `(μ.rowLens.take k).sum`.
+lengths are summed as `∑ i ∈ Finset.range k, μ.rowLen i` or as `(μ.rowLens.take k).sum`.  Since
+the rows exhaust the cells, the row lengths also determine the diagram
+(`TauCeti.YoungDiagram.rowLen_injective`).
 
 The partial sums are the shape of every dominance statement about partitions, since dominance
 compares partial sums of decreasingly sorted parts, and the sorted parts of a partition are the
@@ -50,6 +52,14 @@ theorem rowLen_eq_zero_of_colLen_le {μ : YoungDiagram} {i : ℕ} (hi : μ.colLe
   exact absurd (_root_.YoungDiagram.mem_iff_lt_colLen.mp
     (_root_.YoungDiagram.mem_iff_lt_rowLen.mpr (Nat.pos_of_ne_zero h))) (Nat.not_lt.mpr hi)
 
+/-- A Young diagram is determined by its row lengths. -/
+theorem rowLen_injective : Function.Injective _root_.YoungDiagram.rowLen := by
+  intro μ ν h
+  ext c
+  obtain ⟨i, j⟩ := c
+  rw [_root_.YoungDiagram.mem_cells, _root_.YoungDiagram.mem_cells,
+    _root_.YoungDiagram.mem_iff_lt_rowLen, _root_.YoungDiagram.mem_iff_lt_rowLen, congrFun h i]
+
 /-- Reading the length of a row off `YoungDiagram.rowLens`, with `0` for the rows past the last
 one. -/
 theorem getD_rowLens (μ : YoungDiagram) (i : ℕ) : μ.rowLens.getD i 0 = μ.rowLen i := by
@@ -81,6 +91,16 @@ theorem sum_range_rowLen_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
         _root_.YoungDiagram.mem_row_iff]
       aesop
 
+/-- The cells of a Young diagram, counted over any range of rows that contains all of them.  This
+is `TauCeti.YoungDiagram.sum_rowLens` with the range of summation chosen by hand instead of being
+the exact number of rows `μ.colLen 0`. -/
+theorem card_eq_sum_range_rowLen (μ : _root_.YoungDiagram) {N : ℕ} (hN : μ.colLen 0 ≤ N) :
+    μ.card = ∑ i ∈ Finset.range N, μ.rowLen i := by
+  rw [sum_range_rowLen_eq_card_filter_fst]
+  refine (congrArg Finset.card (Finset.filter_true_of_mem fun c hc => ?_)).symm
+  exact lt_of_lt_of_le ((_root_.YoungDiagram.mem_iff_lt_colLen.mp hc).trans_le
+    (μ.colLen_anti 0 c.snd c.snd.zero_le)) hN
+
 /-- The first `k` entries of `YoungDiagram.rowLens` count the cells in the first `k` rows.  This
 is `TauCeti.YoungDiagram.sum_range_rowLen_eq_card_filter_fst` with the truncation taken on the
 list of row lengths, the form in which partial sums enter the dominance order on partitions. -/
@@ -97,13 +117,7 @@ theorem sum_take_rowLens_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
 /-- The sum of the row lengths of a Young diagram is its number of cells. -/
 @[simp]
 theorem sum_rowLens (μ : YoungDiagram) : μ.rowLens.sum = μ.card := by
-  have hrange : μ.rowLens.sum = ∑ i ∈ Finset.range (μ.colLen 0), μ.rowLen i := by
-    rw [_root_.YoungDiagram.rowLens, sum_list_range]
-  rw [hrange, sum_range_rowLen_eq_card_filter_fst]
-  refine congrArg Finset.card (Finset.filter_true_of_mem fun c hc => ?_)
-  simpa using
-    (_root_.YoungDiagram.mem_iff_lt_colLen.mp hc).trans_le
-      (μ.colLen_anti 0 c.snd c.snd.zero_le)
+  rw [_root_.YoungDiagram.rowLens, sum_list_range, ← card_eq_sum_range_rowLen μ le_rfl]
 
 end YoungDiagram
 

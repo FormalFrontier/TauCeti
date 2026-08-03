@@ -123,10 +123,11 @@ lemma pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq {z w z' w' : ℂ}
     pseudoHyperbolicExpr z w = pseudoHyperbolicExpr z' w' ↔
       hyperbolicDist z w = hyperbolicDist z' w' := by
   have hmem : pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z w], pseudoHyperbolicExpr_lt_one_of_mem_ball hz hw⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz)
+      (by simpa [mem_ball_zero_iff] using hw)
   have hmem' : pseudoHyperbolicExpr z' w' ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z' w'],
-      pseudoHyperbolicExpr_lt_one_of_mem_ball hz' hw'⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz')
+      (by simpa [mem_ball_zero_iff] using hw')
   rw [hyperbolicDist_def, hyperbolicDist_def]
   exact ⟨fun h => by rw [h], fun h => Real.artanh_injOn hmem hmem' h⟩
 

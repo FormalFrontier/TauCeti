@@ -90,11 +90,6 @@ private lemma norm_one_sub_conj_mul_pos (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
   norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
 
-private lemma pseudoHyperbolicExpr_mem_Ioo (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
-    pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
-  ⟨by linarith [pseudoHyperbolicExpr_nonneg z w],
-    pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw⟩
-
 /-- **The defect identity, squared form.** For two points of the open unit disc the deficiency
 `1 - p ^ 2` of the pseudo-hyperbolic expression `p` is the product of the two hyperbolic defects
 divided by the squared Moebius denominator. -/
@@ -124,7 +119,7 @@ theorem sinh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
       ‖z - w‖ / Real.sqrt ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)) := by
   have hD : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos hz hw
   have hS : 0 < Real.sqrt ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)) := sqrt_defect_pos hz hw
-  rw [hyperbolicDist_def, Real.sinh_artanh (pseudoHyperbolicExpr_mem_Ioo hz hw),
+  rw [hyperbolicDist_def, Real.sinh_artanh (pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw),
     sqrt_one_sub_pseudoHyperbolicExpr_sq hz hw, pseudoHyperbolicExpr_def, norm_div]
   set D := ‖1 - (starRingEnd ℂ) w * z‖
   have hD0 : D ≠ 0 := hD.ne'
@@ -136,7 +131,7 @@ theorem sinh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
 theorem cosh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     Real.cosh (hyperbolicDist z w) =
       ‖1 - (starRingEnd ℂ) w * z‖ / Real.sqrt ((1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)) := by
-  rw [hyperbolicDist_def, Real.cosh_artanh (pseudoHyperbolicExpr_mem_Ioo hz hw),
+  rw [hyperbolicDist_def, Real.cosh_artanh (pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw),
     sqrt_one_sub_pseudoHyperbolicExpr_sq hz hw, one_div_div]
 
 /-- **The hyperbolic tangent of the hyperbolic distance** is the pseudo-hyperbolic expression:
@@ -145,7 +140,7 @@ unbounded and additive along geodesics, the second confined to `[0, 1)`. The dis
 Mathlib's `UpperHalfPlane.tanh_half_dist`. -/
 theorem tanh_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     Real.tanh (hyperbolicDist z w) = pseudoHyperbolicExpr z w := by
-  rw [hyperbolicDist_def, Real.tanh_artanh (pseudoHyperbolicExpr_mem_Ioo hz hw)]
+  rw [hyperbolicDist_def, Real.tanh_artanh (pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw)]
 
 /-- **The exponential of the hyperbolic distance.** The disc analogue of Mathlib's
 `UpperHalfPlane.exp_half_dist`. -/
@@ -184,7 +179,7 @@ theorem hyperbolicDist_eq_half_log (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
   have hD : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos hz hw
   have hDN : 0 < ‖1 - (starRingEnd ℂ) w * z‖ - ‖z - w‖ :=
     sub_pos.mpr (norm_sub_lt_norm_one_sub_conj_mul_of_norm_lt_one hz hw)
-  have hmem := pseudoHyperbolicExpr_mem_Ioo hz hw
+  have hmem := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw
   have hp : pseudoHyperbolicExpr z w = ‖z - w‖ / ‖1 - (starRingEnd ℂ) w * z‖ := by
     rw [pseudoHyperbolicExpr_def, norm_div]
   rw [hyperbolicDist_def, Real.artanh_eq_half_log ⟨hmem.1.le, hmem.2.le⟩, hp]
