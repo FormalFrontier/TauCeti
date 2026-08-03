@@ -350,13 +350,6 @@ private theorem counit_rTensor_universalGeneratorDown
   rw [hone] at h
   simpa only [universalGeneratorDown_apply] using h
 
-private theorem comm_lTensor_comm_apply {P : Type*} [AddCommMonoid P] [Module R P]
-    (g : H →ₗ[R] P) (z : H ⊗[R] V) :
-    TensorProduct.comm R V P
-        (g.lTensor V (TensorProduct.comm R H V z)) =
-      g.rTensor V z := by
-  exact LinearMap.congr_fun (LinearMap.comm_comp_lTensor_comp_comm_eq (Q := V) g) z
-
 private theorem recoveredCoaction_counit
     (Theta : PointRepresentation (R := R) (H := H) (V := V)) :
     Coalgebra.counit.lTensor V ∘ₗ recoveredCoaction Theta =
@@ -366,7 +359,15 @@ private theorem recoveredCoaction_counit
   apply (TensorProduct.comm R V R).injective
   simp only [LinearMap.comp_apply]
   rw [recoveredCoaction_apply]
-  rw [comm_lTensor_comm_apply]
+  have hcomm :
+      TensorProduct.comm R V R
+          (Coalgebra.counit.lTensor V
+            (TensorProduct.comm R H V (universalGeneratorDown Theta v))) =
+        Coalgebra.counit.rTensor V (universalGeneratorDown Theta v) := by
+    exact LinearMap.congr_fun
+      (LinearMap.comm_comp_lTensor_comp_comm_eq (Q := V) Coalgebra.counit)
+      (universalGeneratorDown Theta v)
+  rw [hcomm]
   simp only [LinearMap.flip_apply, TensorProduct.mk_apply, TensorProduct.comm_tmul]
   exact counit_rTensor_universalGeneratorDown Theta v
 
@@ -668,7 +669,16 @@ private theorem recoveredCoaction_coassoc
         scalarExtensionMap_comul_eq_liftTensorSquare (R := R) (H := H) (V := V)
           (universalGenerator Theta v)
     _ = _ := by
-      rw [recoveredCoaction_apply, comm_lTensor_comm_apply]
+      rw [recoveredCoaction_apply]
+      have hcomm :
+          TensorProduct.comm R V (H ⊗[R] H)
+              (Coalgebra.comul.lTensor V
+                (TensorProduct.comm R H V (universalGeneratorDown Theta v))) =
+            Coalgebra.comul.rTensor V (universalGeneratorDown Theta v) := by
+        exact LinearMap.congr_fun
+          (LinearMap.comm_comp_lTensor_comp_comm_eq (Q := V) Coalgebra.comul)
+          (universalGeneratorDown Theta v)
+      rw [hcomm]
 
 /-- Recover a right `H`-comodule structure from a natural point representation by evaluating at
 the universal point and flipping the tensor factors. The definition is intentionally opaque; use
