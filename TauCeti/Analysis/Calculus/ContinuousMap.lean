@@ -181,7 +181,7 @@ noncomputable def unitIntervalIntegral :
 
 omit [CompleteSpace E] in
 /-- The Volterra integral operator on the unit interval has operator norm at most one. -/
-theorem norm_unitIntervalIntegral_le :
+theorem norm_unitIntervalIntegral_le_one :
     ‖unitIntervalIntegral (E := E)‖ ≤ 1 := by
   simpa only [unitIntervalIntegral, sub_zero] using
     norm_intervalIntegralOperator_le (E := E) 0 1 zero_le_one
