@@ -107,6 +107,7 @@ noncomputable def mulInvariantCoordinateVectorField [IsManifold I 1 G] (p : E ×
 
 /-- The parameterized coordinate field is the invariant vector field transported through the
 identity chart. -/
+@[simp]
 theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) =
       tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
