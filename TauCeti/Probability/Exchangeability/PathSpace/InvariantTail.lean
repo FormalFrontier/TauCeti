@@ -8,7 +8,6 @@ public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Sigma
 public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
-import Mathlib.Dynamics.FixedPoints.Basic
 
 /-!
 # The shift-invariant σ-algebra: its place below the path tail, and its stability under reindexing
@@ -208,50 +207,6 @@ exchangeable σ-algebra. -/
 theorem invariants_shift_lt_exchangeableSigma :
     MeasurableSpace.invariants (shift Bool) < exchangeableSigma Bool :=
   invariants_shift_lt_pathTail.trans_le pathTail_le_exchangeableSigma
-
-omit [MeasurableSpace α] in
-/-- **Invariant events are fixed by an eventually-translating reindexing.** If `φ` is eventually
-`n ↦ n + C`, then reindexing by `φ` leaves every set measurable in
-`MeasurableSpace.invariants (shift α)` unchanged.
-
-Beyond the first `m` coordinates the reindexing agrees with `(shift α)^[C]`, so the identity
-`(shift α)^[m] (reindex φ x) = (shift α)^[m + C] x` holds, and exact shift invariance of `A` under
-both iterates transfers membership.
-
-Strict monotonicity of `φ` is **not** needed for this set identity; it enters separately, when
-`ContractableLaw.measurePreserving_reindex` turns the reindexing into a measure-preserving map. The
-two facts are the pair of inputs the Koopman block factorization needs.
-
-The eventual-translation hypothesis is exactly the conclusion recorded by
-`exists_strictMono_nat_extending_fin_eventually_add`, whose docstring describes this argument as its
-intended use; this theorem is the consumer of that clause. -/
-theorem preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
-    {A : Set (ℕ → α)} (hshift : shift α ⁻¹' A = A)
-    (hφ : ∀ n, m ≤ n → φ n = n + C) :
-    (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A := by
-  have hkey : ∀ x : ℕ → α,
-      (shift α)^[m] (fun k => x (φ k)) = (shift α)^[m + C] x := by
-    intro x
-    funext n
-    rw [shift_iterate_apply, shift_iterate_apply, hφ (n + m) (Nat.le_add_left m n)]
-    congr 1
-    omega
-  ext x
-  constructor
-  · intro hx
-    have h1 : (shift α)^[m] (fun k => x (φ k)) ∈ A := by
-      rw [← Set.mem_preimage, Function.IsFixedPt.preimage_iterate hshift m]
-      exact hx
-    rw [hkey x, ← Set.mem_preimage,
-      Function.IsFixedPt.preimage_iterate hshift (m + C)] at h1
-    exact h1
-  · intro hx
-    have h1 : (shift α)^[m + C] x ∈ A := by
-      rw [← Set.mem_preimage, Function.IsFixedPt.preimage_iterate hshift (m + C)]
-      exact hx
-    rw [← hkey x, ← Set.mem_preimage,
-      Function.IsFixedPt.preimage_iterate hshift m] at h1
-    exact h1
 
 /-- **Invariant events are fixed by an eventually-translating reindexing**, in the
 `MeasurableSpace.invariants`-measurable form.
