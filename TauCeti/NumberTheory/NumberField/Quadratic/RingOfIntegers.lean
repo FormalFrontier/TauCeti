@@ -6,7 +6,7 @@ module
 
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 public import TauCeti.NumberTheory.NumberField.Internal.QuadraticIntegralBasis
-public import TauCeti.NumberTheory.EffectiveBounds.Discriminant.Equality
+public import TauCeti.NumberTheory.NumberField.Discriminant.OfIntegralBasis
 public import Mathlib.NumberTheory.NumberField.Norm
 
 /-!
@@ -127,7 +127,7 @@ private theorem two_dvd_of_sq_sub_mul_sq {A B N : ℤ} (hd4 : d % 4 = 2 ∨ d % 
   have heq0 : (A : ZMod 4) ^ 2 - (d : ZMod 4) * (B : ZMod 4) ^ 2 = 0 := by
     have hc : ((A ^ 2 - d * B ^ 2 : ℤ) : ZMod 4) = ((4 * N : ℤ) : ZMod 4) := by rw [h]
     push_cast at hc
-    rw [hc, show (4 : ZMod 4) = 0 from by decide]; ring
+    rw [hc, (by decide : (4 : ZMod 4) = 0)]; ring
   obtain ⟨hA, hB⟩ := key _ _ _ hw heq0
   refine ⟨?_, ?_⟩
   · rcases hA with h0 | h2
@@ -192,7 +192,7 @@ include hsf hd4 in
 /-- From squarefreeness and `d % 4 ≠ 1`, the residue is `2` or `3` (it is never `0`, as `4 ∤ d`). -/
 private theorem emod_four_eq_two_or_three : d % 4 = 2 ∨ d % 4 = 3 := by
   have hnd4 : ¬ (4 : ℤ) ∣ d := fun h => by
-    have h2 : IsUnit (2 : ℤ) := hsf 2 (by rw [show (2 : ℤ) * 2 = 4 from by norm_num]; exact h)
+    have h2 : IsUnit (2 : ℤ) := hsf 2 (by rw [(by norm_num : (2 : ℤ) * 2 = 4)]; exact h)
     rw [Int.isUnit_iff] at h2; omega
   omega
 
@@ -217,9 +217,9 @@ theorem discr_eq_four_mul_of_emod_four_ne_one : NumberField.discr K = 4 * d := b
   have hd4' := emod_four_eq_two_or_three hsf hd4
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr (coe_notMem_range hmin) θ.isIntegral_coe
-  -- Discriminant of `{1, θ}` is `4d` (`discr_coe_one_gen`).
+  -- Discriminant of `{1, θ}` is `4d` (`discr_one_gen`).
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((4 * d : ℤ) : ℚ) := by
-    rw [hbs]; exact discr_coe_one_gen hmin hgen
+    rw [hbs]; exact discr_one_gen hmin hgen
   -- Spanning: `{1, θ}` spans `𝓞 K` over `ℤ` (`exists_int_repr`).
   have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
     rw [eq_top_iff]
