@@ -287,31 +287,6 @@ theorem multiplicativeGroupSchemePointsMulEquiv_inclusionGroupSchemeMap (n : ℕ
     _ = (schemePointsMulEquiv (R := R) (A := A) n p : Aˣ) := by
       rfl
 
-/-- The comparison between the scheme inclusion and the inclusion of roots into units is
-natural in the value algebra. -/
-theorem multiplicativeGroupSchemePointsMulEquiv_inclusionGroupSchemeMap_mapValue
-    (n : ℕ) (phi : A →ₐ[R] B)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (groupScheme R n).X) :
-    DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
-        (R := R) (A := B)
-        (((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) ≫ p) ≫
-            (inclusionGroupSchemeMap R n).hom.hom) =
-      Units.map phi.toMonoidHom
-        (schemePointsMulEquiv (R := R) (A := A) n p : Aˣ) := by
-  rw [Category.assoc,
-    DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_mapValue,
-    multiplicativeGroupSchemePointsMulEquiv_inclusionGroupSchemeMap]
-
-/-- The coordinate map induced by the lifted character quotient is surjective. -/
-theorem coordinateMap_characterQuotient_surjective (n : ℕ) :
-    Function.Surjective
-      (FiniteTypeCommHopfAlgCat.toBialgHom
-        (DiagonalizableGroup.coordinateMap R (characterQuotient.{u} n))) :=
-  DiagonalizableGroup.coordinateMap_surjective_of_surjective R
-    (characterQuotient n) (characterQuotient_surjective n)
-
 /-- The group-scheme morphism `mu_n -> G_m` is a closed immersion. -/
 instance isClosedImmersion_inclusionGroupSchemeMap (n : ℕ) :
     IsClosedImmersion (inclusionGroupSchemeMap R n).hom.hom.left := by
