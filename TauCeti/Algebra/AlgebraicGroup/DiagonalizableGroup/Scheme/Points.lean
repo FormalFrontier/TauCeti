@@ -99,10 +99,18 @@ private noncomputable def groupSchemeIsoSpec (G : FGCommGrpCat.{u}) :
 
 private instance groupSchemeIsoSpec_isMonHom (G : FGCommGrpCat.{u}) :
     IsMonHom (groupSchemeIsoSpec (R := R) G).hom := by
-  change IsMonHom
-    ((eqToHom (groupScheme_def R G) ≫
-      eqToHom (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj)).hom.hom)
-  infer_instance
+  have h₁ : IsMonHom (groupSchemeIsoHopfSpec (R := R) G).hom := by
+    unfold groupSchemeIsoHopfSpec
+    rw [Functor.mapIso_hom, Grp.forget_map]
+    infer_instance
+  have h₂ : IsMonHom (hopfSpecIsoSpec (R := R) G).hom := by
+    unfold hopfSpecIsoSpec
+    rw [Functor.mapIso_hom, Grp.forget_map]
+    infer_instance
+  unfold groupSchemeIsoSpec
+  exact @instIsMonHomComp _ _ _ _ _ _ _ _ _
+    (groupSchemeIsoHopfSpec (R := R) G).hom
+    (hopfSpecIsoSpec (R := R) G).hom h₁ h₂
 
 /-- Scheme-valued points of `D(G)` are the convolution group of algebra maps out of its
 coordinate ring. This typed wrapper keeps the defining identification of `groupScheme`

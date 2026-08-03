@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!

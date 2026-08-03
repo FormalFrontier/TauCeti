@@ -126,14 +126,11 @@ theorem schemePointsMulEquiv_mapValue [Finite sigma] (phi : A →ₐ[R] B)
       fun i => Units.map phi.toMonoidHom
         (schemePointsMulEquiv (R := R) (A := A) p i) := by
   funext i
-  apply Units.ext
-  change (schemePointsMulEquiv (R := R) (A := B)
-      ((Spec.map (CommRingCat.ofHom phi.toRingHom)).asOver
-        (Spec (CommRingCat.of R)) ≫ p) i : B) =
-    phi (schemePointsMulEquiv (R := R) (A := A) p i : A)
-  rw [schemePointsMulEquiv_apply_coe, schemePointsMulEquiv_apply_coe,
+  rw [← Units.val_inj, Units.coe_map, schemePointsMulEquiv_apply_coe,
+    schemePointsMulEquiv_apply_coe,
     DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue,
     AlgHom.mapValue_apply, WithConv.ofConv_toConv, AlgHom.comp_apply]
+  exact (congrFun (AlgHom.coe_toRingHom phi) _).symm
 
 /-! ### Characters and cocharacters as group-scheme morphisms -/
 
