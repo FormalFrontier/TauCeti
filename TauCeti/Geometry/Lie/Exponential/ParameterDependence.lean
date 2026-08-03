@@ -131,6 +131,8 @@ theorem contDiffAt_mulInvariantCoordinateVectorField {n : ℕ∞ω}
   have hV₀ := hV.contMDiffAt (x := ((0 : E), (1 : G)))
   rw [contMDiffAt_iff] at hV₀
   have h01 : (𝓘(ℝ, E).prod I).IsInteriorPoint ((0 : E), (1 : G)) := by
+    -- `ModelWithCorners.interior_prod` is stated for membership in `interior`; unfold
+    -- `IsInteriorPoint` to expose precisely that representation.
     change ((0 : E), (1 : G)) ∈ (𝓘(ℝ, E).prod I).interior (E × G)
     rw [ModelWithCorners.interior_prod]
     exact ⟨BoundarylessManifold.isInteriorPoint, h1⟩
