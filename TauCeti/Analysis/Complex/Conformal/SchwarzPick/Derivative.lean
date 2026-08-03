@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
-import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 
 /-!
 # The infinitesimal Schwarz--Pick inequality
@@ -20,6 +20,11 @@ it into itself, then at every point `z` of the disc
 `‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2)`, i.e. `f` contracts the Poincaré
 (hyperbolic) metric `|dz| / (1 - |z| ^ 2)`.  The bundled `Complex.UnitDisc` form is
 `norm_deriv_div_one_sub_norm_sq_le_unitDisc`.
+
+The chain rule that carries Schwarz's lemma from the Schwarz--Pick conjugate to `f` is exported
+alongside it, in a value form `hasDerivAt_schwarzPickConjugate_zero` and the norm form
+`norm_deriv_schwarzPickConjugate_zero` the estimate itself consumes, because the equality case
+in `SchwarzPick/DerivativeRigidity.lean` needs the value and not only the norm.
 
 This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 (`TauCetiRoadmap/ConformalMapping/README.md`, the L2 hyperbolic/Poincaré-metric contraction),
@@ -39,15 +44,24 @@ namespace TauCeti
 open Complex Metric Set
 open scoped ComplexConjugate
 
-/-- **Chain rule for the infinitesimal Schwarz--Pick conjugate.** The Schwarz--Pick conjugate
+/-- **Chain rule for the Schwarz--Pick conjugate at the origin.** The Schwarz--Pick conjugate
 `schwarzPickConjugate f z` sandwiches `f` between the unit-disc Moebius factors centred at `-z`
 and at `f z`, whose derivatives are `1 - conj z * z` (the source factor at `0`, where it takes
-the value `z`) and `1 / (1 - conj (f z) * f z)` (the target factor at `f z`).  So the norm of
-the derivative of the conjugate at the origin is the Poincaré distortion
-`‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2)` of `f` at `z`. -/
-private lemma norm_deriv_schwarzPickConjugate_at_zero {f : ℂ → ℂ} {df z : ℂ}
-    (hz : ‖z‖ < 1) (hfz : ‖f z‖ < 1) (hf : HasDerivAt f df z) :
-    ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
+the value `z`) and `1 / (1 - conj (f z) * f z)` (the target factor at `f z`).  So the derivative
+of the conjugate at the origin is the derivative of `f` at `z`, rescaled by the two Poincaré
+defects.
+
+Both the estimate below and its equality case in `SchwarzPick/DerivativeRigidity.lean` run on
+this computation: the estimate needs only the norm
+(`norm_deriv_schwarzPickConjugate_zero`), while the equality case needs the value, which at a
+fixed point of `f` is `df` itself.
+
+Only the target factor needs its centre `f z` in the disc; the source factor is differentiated
+at the origin, where its denominator is `1`, so no bound on `z` is required. -/
+lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+    (hfz : ‖f z‖ < 1) (hf : HasDerivAt f df z) :
+    HasDerivAt (schwarzPickConjugate f z)
+      (df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z)) 0 := by
   have hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0 :=
     one_sub_conj_mul_ne_zero_of_norm_lt_one hfz hfz
   -- Local names for the two Moebius factors of the conjugate, for the derivative calculation.
@@ -72,10 +86,22 @@ private lemma norm_deriv_schwarzPickConjugate_at_zero {f : ℂ → ℂ} {df z : 
     rw [Function.comp_apply, hsz]; exact ht
   -- The conjugate *is* the composite `target ∘ f ∘ source`.
   have hconj : schwarzPickConjugate f z = target ∘ f ∘ source := schwarzPickConjugate_def f z
-  rw [hconj, (ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)).deriv, norm_mul, norm_mul, norm_div,
-    norm_one, norm_one_sub_conj_mul_self_of_norm_le_one hz.le,
+  have hval : 1 / (1 - (starRingEnd ℂ) (f z) * f z) * (df * (1 - (starRingEnd ℂ) z * z))
+      = df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z) := by ring
+  rw [hconj, ← hval]
+  exact ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)
+
+/-- **The Poincaré distortion of `f` is the norm of the derivative of its Schwarz--Pick
+conjugate at the origin.** Taking norms in `hasDerivAt_schwarzPickConjugate_zero` and using
+`‖1 - conj w * w‖ = 1 - ‖w‖ ^ 2` turns the two Moebius defects into the real factors of the
+Poincaré metric. Schwarz's lemma at `0` for the conjugate is therefore exactly the
+infinitesimal Schwarz--Pick estimate for `f` at `z`. -/
+lemma norm_deriv_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+    (hz : ‖z‖ < 1) (hfz : ‖f z‖ < 1) (hf : HasDerivAt f df z) :
+    ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
+  rw [(hasDerivAt_schwarzPickConjugate_zero hfz hf).deriv, norm_div, norm_mul,
+    norm_one_sub_conj_mul_self_of_norm_le_one hz.le,
     norm_one_sub_conj_mul_self_of_norm_le_one hfz.le]
-  ring
 
 /-- **The infinitesimal Schwarz--Pick inequality.** A holomorphic self-map `f` of the open
 unit disc contracts the Poincaré metric: at every point `z` of the disc,
@@ -103,7 +129,7 @@ theorem norm_deriv_div_one_sub_norm_sq_le {f : ℂ → ℂ}
     (hf.differentiableAt (isOpen_ball.mem_nhds hz)).hasDerivAt
   have hnorm_dg : ‖deriv (schwarzPickConjugate f z) 0‖
       = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) :=
-    norm_deriv_schwarzPickConjugate_at_zero hz1 hfz1 hf_at
+    norm_deriv_schwarzPickConjugate_zero hz1 hfz1 hf_at
   have hkey : ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) ≤ 1 := hnorm_dg ▸ hschwarz
   rw [div_le_one hden_fz] at hkey
   rw [div_le_div_iff₀ hden_fz hden_z, one_mul]
