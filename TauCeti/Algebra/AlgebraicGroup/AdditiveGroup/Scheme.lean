@@ -126,6 +126,13 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R))
 
+private lemma groupScheme_eq_hopfSpec :
+    groupScheme R =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateHopfAlgebra R)) := by
+  unfold groupScheme
+  rfl
+
 -- The generic `hopfSpec_obj_*` lemmas are stated for the literal functor object, whereas
 -- `groupScheme` is a `def` whose body is not exposed outside this module. Downstream the generic
 -- lemmas therefore cannot be applied to `(groupScheme R).X` at all, and `simp` cannot see through
@@ -278,7 +285,8 @@ noncomputable def groupSchemePointMulEquiv :
     WithConv (SymmetricAlgebra R R →ₐ[R] A) ≃*
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R).X) :=
-  AlgebraicGeometry.Spec.mapMulEquiv
+  CommHopfAlgCat.mapMulEquivOfPresentation
+    (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
 
 /-- The underlying map of the spectrum point associated to an algebra point. -/
 @[simp]
@@ -287,10 +295,10 @@ lemma groupSchemePointMulEquiv_apply_left
     (groupSchemePointMulEquiv A f).left =
       Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
         eqToHom (groupScheme_X_left R).symm := by
-  -- Postcomposition crosses the named presentation equality; on the raw spectrum boundary the
-  -- specialized wrapper and Mathlib's spectrum-points equivalence agree definitionally.
-  apply (cancel_mono (eqToHom (groupScheme_X_left R))).1
-  rfl
+  simpa only [groupSchemePointMulEquiv] using
+    CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
+      (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
+        (groupScheme_X_left R) f
 
 /-- The group of scheme-valued points of the additive group scheme is the additive group of the
 value algebra.
@@ -340,27 +348,15 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
         (φ (Multiplicative.toAdd (schemePointsMulEquiv A p))) := by
   let q : WithConv (SymmetricAlgebra R R →ₐ[R] A) :=
     (groupSchemePointMulEquiv A).symm p
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapValue
-    (coordinateHopfAlgebra R) (CommAlgCat.ofHom φ) q
-  have hp : groupSchemePointMulEquiv A q = p :=
-    (groupSchemePointMulEquiv A).apply_symm_apply p
   have hpre :
       (groupSchemePointMulEquiv B).symm
           ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
             (Spec (CommRingCat.of R)) ≫ p) =
         HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R)
           (CommAlgCat.ofHom φ) q := by
-    apply (groupSchemePointMulEquiv B).injective
-    rw [(groupSchemePointMulEquiv B).apply_symm_apply, ← hp]
-    apply Over.OverMorphism.ext
-    apply (cancel_mono (eqToHom (groupScheme_X_left R))).1
-    erw [Over.comp_left]
-    simp only [OverClass.asOverHom_left, groupSchemePointMulEquiv_apply_left]
-    have hmapLeft := congrArg Over.Hom.left hmap.symm
-    simp only [Over.comp_left, OverClass.asOverHom_left] at hmapLeft
-    -- On the raw spectrum boundary, `Spec.mapMulEquiv` exposes this left component
-    -- definitionally, so the generic naturality theorem has exactly the required map equality.
-    exact hmapLeft
+    simpa only [q, groupSchemePointMulEquiv] using
+      CommHopfAlgCat.mapMulEquivOfPresentation_mapValue
+        (coordinateHopfAlgebra R) φ (groupScheme_eq_hopfSpec R) p
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact gaPointsMulEquiv_mapValue φ q
