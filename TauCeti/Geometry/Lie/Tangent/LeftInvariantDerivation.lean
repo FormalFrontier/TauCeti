@@ -142,76 +142,88 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rw [show (fun x : G ↦ 1 * x) = id by funext x; simp, mfderiv_id]
   rfl
 
+/-- The derivation of smooth functions that differentiates along the left-invariant vector
+field of a tangent vector `v` at the identity. -/
+private noncomputable def mulInvariantDerivation [ContMDiffMul I ∞ G]
+    (v : GroupLieAlgebra I G) : Derivation 𝕜 C^∞⟮I, G; 𝕜⟯ C^∞⟮I, G; 𝕜⟯ :=
+  Derivation.mk'
+      { toFun := fun f ↦
+          ⟨fun g ↦ mvfderiv I f g (mulInvariantVectorField v g),
+            contMDiff_mvfderiv_mulInvariantVectorField v f⟩
+        map_add' := fun f g ↦ by
+          ext x
+          -- Unfold the smooth-function wrappers to use linearity of `mvfderiv`.
+          change mvfderiv I (⇑f + ⇑g) x (mulInvariantVectorField v x) =
+            mvfderiv I f x (mulInvariantVectorField v x) +
+              mvfderiv I g x (mulInvariantVectorField v x)
+          exact congr($(mvfderiv_add
+            (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
+            (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
+            (mulInvariantVectorField v x))
+        map_smul' := fun c f ↦ by
+          ext x
+          have hc : MDiffAt (fun _ : G ↦ c) x := mdifferentiableAt_const
+          -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
+          change mvfderiv I ((fun _ : G ↦ c) • ⇑f) x (mulInvariantVectorField v x) =
+            c • mvfderiv I f x (mulInvariantVectorField v x)
+          have h := congr($(mvfderiv_smul hc
+            (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
+            (mulInvariantVectorField v x))
+          calc
+            _ = (c • mvfderiv I f x +
+                (mvfderiv I (fun _ : G ↦ c) x).smulRight (f x))
+                (mulInvariantVectorField v x) := h
+            _ = _ := by simp [mvfderiv_const] }
+      fun f g ↦ by
+        ext x
+        -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
+        change mvfderiv I (⇑f * ⇑g) x (mulInvariantVectorField v x) =
+          f x * mvfderiv I g x (mulInvariantVectorField v x) +
+            g x * mvfderiv I f x (mulInvariantVectorField v x)
+        exact congr($(mvfderiv_mul
+          (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
+          (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
+          (mulInvariantVectorField v x))
+
+/-- `mulInvariantDerivation v` is left invariant: differentiating along a left-invariant
+vector field commutes with left translation. -/
+private theorem mulInvariantDerivation_left_invariant [ContMDiffMul I ∞ G]
+    (v : GroupLieAlgebra I G) (g : G) :
+    (𝒅ₕ (smoothLeftMul_one I g)) (Derivation.evalAt 1 (mulInvariantDerivation v)) =
+      Derivation.evalAt g (mulInvariantDerivation v) := by
+  ext f
+  -- The calculation endpoints unfold `hfdifferential`, `evalAt` and `mulInvariantDerivation`.
+  calc
+    ((𝒅ₕ (smoothLeftMul_one I g))
+        (Derivation.evalAt 1 (mulInvariantDerivation v))) f =
+        mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1
+          (mulInvariantVectorField v 1) := rfl
+    _ = mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1 v := by
+      rw [mulInvariantVectorField_one]
+    _ = mvfderiv I (show C^∞⟮I, G; 𝕜⟯ from f) g
+        (mulInvariantVectorField v g) := by
+      rw [mulInvariantVectorField]
+      -- Expose the function composition hidden by `ContMDiffMap.comp`.
+      change (mfderiv I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f (g * x)) 1) v =
+        (mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g)
+          ((mfderiv I I (fun x ↦ g * x) 1) v)
+      have h := mfderiv_comp_apply 1
+        (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
+        ((contMDiff_mul_left (n := ∞) (a := g)).mdifferentiable (by simp)).mdifferentiableAt v
+      rw [mul_one] at h
+      change ((mfderiv I (modelWithCornersSelf 𝕜 𝕜)
+        ((show G → 𝕜 from f) ∘ fun x ↦ g * x) 1) v) = _
+      exact h
+    _ = (Derivation.evalAt g (mulInvariantDerivation v)) f := rfl
+
 /-- The left-invariant derivation associated to a tangent vector at the identity. At every point it
 acts by differentiating along Mathlib's corresponding left-invariant vector field. -/
 noncomputable def tangentToLeftInvariantDerivation
     [ContMDiffMul I ∞ G] :
     GroupLieAlgebra I G →ₗ[𝕜] LeftInvariantDerivation I G where
-  toFun v := by
-    let D : Derivation 𝕜 C^∞⟮I, G; 𝕜⟯ C^∞⟮I, G; 𝕜⟯ :=
-      Derivation.mk'
-          { toFun := fun f ↦
-              ⟨fun g ↦ mvfderiv I f g (mulInvariantVectorField v g),
-                contMDiff_mvfderiv_mulInvariantVectorField v f⟩
-            map_add' := fun f g ↦ by
-              ext x
-              -- Unfold the smooth-function wrappers to use linearity of `mvfderiv`.
-              change mvfderiv I (⇑f + ⇑g) x (mulInvariantVectorField v x) =
-                mvfderiv I f x (mulInvariantVectorField v x) +
-                  mvfderiv I g x (mulInvariantVectorField v x)
-              exact congr($(mvfderiv_add
-                (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
-                (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
-                (mulInvariantVectorField v x))
-            map_smul' := fun c f ↦ by
-              ext x
-              have hc : MDiffAt (fun _ : G ↦ c) x := mdifferentiableAt_const
-              -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
-              change mvfderiv I ((fun _ : G ↦ c) • ⇑f) x (mulInvariantVectorField v x) =
-                c • mvfderiv I f x (mulInvariantVectorField v x)
-              have h := congr($(mvfderiv_smul hc
-                (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
-                (mulInvariantVectorField v x))
-              calc
-                _ = (c • mvfderiv I f x +
-                    (mvfderiv I (fun _ : G ↦ c) x).smulRight (f x))
-                    (mulInvariantVectorField v x) := h
-                _ = _ := by simp [mvfderiv_const] }
-          fun f g ↦ by
-            ext x
-            -- Unfold the smooth-function wrappers to use the product rule for `mvfderiv`.
-            change mvfderiv I (⇑f * ⇑g) x (mulInvariantVectorField v x) =
-              f x * mvfderiv I g x (mulInvariantVectorField v x) +
-                g x * mvfderiv I f x (mulInvariantVectorField v x)
-            exact congr($(mvfderiv_mul
-              (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
-              (g.contMDiff.mdifferentiable (by simp)).mdifferentiableAt)
-              (mulInvariantVectorField v x))
-    refine { toDerivation := D, left_invariant'' := fun g ↦ ?_ }
-    · ext f
-      -- The calculation endpoints unfold `hfdifferential`, `evalAt`, and the local derivation `D`.
-      calc
-        ((𝒅ₕ (smoothLeftMul_one I g))
-            (Derivation.evalAt 1 D)) f =
-            mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1
-              (mulInvariantVectorField v 1) := rfl
-        _ = mvfderiv I ((show C^∞⟮I, G; 𝕜⟯ from f).comp (smoothLeftMul I g)) 1 v := by
-          rw [mulInvariantVectorField_one]
-        _ = mvfderiv I (show C^∞⟮I, G; 𝕜⟯ from f) g
-            (mulInvariantVectorField v g) := by
-          rw [mulInvariantVectorField]
-          -- Expose the function composition hidden by `ContMDiffMap.comp`.
-          change (mfderiv I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f (g * x)) 1) v =
-            (mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g)
-              ((mfderiv I I (fun x ↦ g * x) 1) v)
-          have h := mfderiv_comp_apply 1
-            (f.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
-            ((contMDiff_mul_left (n := ∞) (a := g)).mdifferentiable (by simp)).mdifferentiableAt v
-          rw [mul_one] at h
-          change ((mfderiv I (modelWithCornersSelf 𝕜 𝕜)
-            ((show G → 𝕜 from f) ∘ fun x ↦ g * x) 1) v) = _
-          exact h
-        _ = (Derivation.evalAt g D) f := rfl
+  toFun v :=
+    { toDerivation := mulInvariantDerivation v
+      left_invariant'' := mulInvariantDerivation_left_invariant v }
   map_add' v w := by
     apply LeftInvariantDerivation.evalAt_one_injective
     ext f
