@@ -106,14 +106,14 @@ theorem card_path_eq_ite_add_sum [DecidableEq V] [Fintype V] (i : V)
     Nat.card (Quiver.Path i b)
       = (if i = b then 1 else 0)
         + ∑ a : V, Nat.card (Quiver.Path i a) * Nat.card (a ⟶ b) := by
-  haveI hsub : Subsingleton (PLift (i = b)) := ⟨fun x y ↦ by cases x; cases y; rfl⟩
-  haveI : Finite (PLift (i = b)) := Finite.of_subsingleton
+  have hsub : Subsingleton (PLift (i = b)) := ⟨fun x y ↦ by cases x; cases y; rfl⟩
+  have : Finite (PLift (i = b)) := Finite.of_subsingleton
   have hcard : Nat.card (PLift (i = b)) = if i = b then 1 else 0 := by
     by_cases h : i = b
     · rw [if_pos h]
       exact Nat.card_eq_one_iff_unique.mpr ⟨hsub, ⟨⟨h⟩⟩⟩
     · rw [if_neg h]
-      haveI : IsEmpty (PLift (i = b)) := ⟨fun x ↦ h x.down⟩
+      have : IsEmpty (PLift (i = b)) := ⟨fun x ↦ h x.down⟩
       exact Nat.card_of_isEmpty
   rw [Nat.card_congr (pathLastArrowEquiv i b), Nat.card_sum, hcard, Nat.card_sigma]
   exact congrArg _ (Finset.sum_congr rfl fun a _ ↦ Nat.card_prod _ _)

@@ -173,7 +173,7 @@ theorem nonempty_iff_isInvertible :
   · rintro ⟨t⟩
     exact t.isInvertible
   · intro hM
-    letI := hM
+    let := hM
     exact ⟨ofIsInvertible M⟩
 
 end LocalTrivializations

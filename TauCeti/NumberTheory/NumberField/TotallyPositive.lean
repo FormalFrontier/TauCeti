@@ -4,7 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Order.Ring.Units
+public import TauCeti.GroupTheory.Index
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.Basic
+public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
 
 /-!
 # Totally positive elements of a number field
@@ -23,6 +26,10 @@ are closed under multiplication and inversion and contain every nonzero square, 
 positive units form a subgroup of `Kˣ`. That subgroup is the kernel of the sign (signature) map on
 units; the signs *not* realized by units measure the difference between `Cl⁺(K)` and `Cl(K)`.
 
+The file also records that `totallyPositiveUnits` has **finite index** — a finite intersection, over
+the real places, of the finite-index preimages of the positive units of `ℝ` — which is what makes
+the narrow class group finite (see `NarrowClassGroup.Finite`).
+
 ## Main definitions and results
 
 * `TauCeti.NumberField.IsTotallyPositive`: strict positivity at every real place, with
@@ -31,7 +38,14 @@ units; the signs *not* realized by units measure the difference between `Cl⁺(K
   `isTotallyPositive_sq`: the multiplicative structure, including that nonzero squares are totally
   positive.
 * `TauCeti.NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
-  kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`.
+  kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`. For a totally complex field
+  it is everything (`totallyPositiveUnits_eq_top`), since total positivity is then vacuous
+  (`not_isReal_of_isTotallyComplex` makes `IsTotallyPositive` `simp` to `True`).
+* `TauCeti.NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
+  units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
+  `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
+* `TauCeti.NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
+  (via `Units.instFiniteIndexPosSubgroup` and the general `Subgroup.instFiniteIndexComap`).
 -/
 
 public section
@@ -96,5 +110,56 @@ theorem mem_totallyPositiveUnits {u : Kˣ} :
 theorem sq_mem_totallyPositiveUnits (u : Kˣ) : u ^ 2 ∈ totallyPositiveUnits := by
   rw [mem_totallyPositiveUnits, Units.val_pow_eq_pow_val]
   exact isTotallyPositive_sq (Units.ne_zero u)
+
+/-- A **totally complex** field has no real infinite places. As a `simp` lemma this discharges the
+vacuous real-place hypotheses in totally-positive statements: `IsTotallyPositive x` then reduces to
+`True` (via `isTotallyPositive_iff`), so total positivity is automatic for every element. -/
+@[simp] theorem not_isReal_of_isTotallyComplex [IsTotallyComplex K] (w : InfinitePlace K) :
+    ¬ w.IsReal :=
+  not_isReal_iff_isComplex.mpr (IsTotallyComplex.isComplex w)
+
+/-- For a totally complex field every unit is (vacuously) totally positive:
+`totallyPositiveUnits = ⊤`. -/
+@[simp] theorem totallyPositiveUnits_eq_top [IsTotallyComplex K] :
+    totallyPositiveUnits (K := K) = ⊤ := by
+  ext u; simp
+
+variable [NumberField K]
+
+/-- The subgroup of **totally positive integer units** of `(𝓞 K)ˣ`: the preimage of
+`totallyPositiveUnits` under the inclusion `(𝓞 K)ˣ → Kˣ`, i.e. the integer units whose image in `K`
+is totally positive. It is the kernel of the integer-unit signature map; the signatures realized by
+units — the quotient of `(𝓞 K)ˣ` by this subgroup — are the archimedean input to the comparison
+between the narrow and ordinary class groups. -/
+noncomputable def totallyPositiveIntegerUnits : Subgroup (𝓞 K)ˣ :=
+  totallyPositiveUnits.comap (Units.map (algebraMap (𝓞 K) K).toMonoidHom)
+
+omit [NumberField K] in
+/-- Membership in `totallyPositiveIntegerUnits` is total positivity of the image in `K`. -/
+@[simp] theorem mem_totallyPositiveIntegerUnits {u : (𝓞 K)ˣ} :
+    u ∈ totallyPositiveIntegerUnits ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by
+  simp only [totallyPositiveIntegerUnits, Subgroup.mem_comap, mem_totallyPositiveUnits,
+    Units.coe_map, RingHom.toMonoidHom_eq_coe, MonoidHom.coe_coe]
+
+omit [NumberField K] in
+/-- Every square of an integer unit is a totally positive integer unit. -/
+theorem sq_mem_totallyPositiveIntegerUnits (u : (𝓞 K)ˣ) :
+    u ^ 2 ∈ totallyPositiveIntegerUnits := by
+  rw [totallyPositiveIntegerUnits, Subgroup.mem_comap, map_pow]
+  exact sq_mem_totallyPositiveUnits _
+
+omit [NumberField K] in
+/-- For a totally complex field every integer unit is (vacuously) totally positive:
+`totallyPositiveIntegerUnits = ⊤`. -/
+@[simp] theorem totallyPositiveIntegerUnits_eq_top [IsTotallyComplex K] :
+    totallyPositiveIntegerUnits (K := K) = ⊤ := by
+  ext u; simp
+
+/-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
+infinite places, of the finite-index preimages of the positive units of `ℝ` (via the general
+`Units.instFiniteIndexPosSubgroup` and `Subgroup.instFiniteIndexComap`). -/
+instance finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).FiniteIndex := by
+  rw [totallyPositiveUnits, iInf_subtype']
+  exact Subgroup.finiteIndex_iInf fun _ => inferInstance
 
 end TauCeti.NumberField

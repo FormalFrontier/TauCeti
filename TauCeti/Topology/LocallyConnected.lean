@@ -100,7 +100,7 @@ closure of a subset of a normed space is met in practice. -/
 theorem locallyConnectedSpace_image_of_isCompact [T2Space Y] {s : Set X} {f : X → Y}
     [LocallyConnectedSpace s] (hs : IsCompact s) (hf : ContinuousOn f s) :
     LocallyConnectedSpace (f '' s) := by
-  haveI : CompactSpace s := isCompact_iff_compactSpace.mp hs
+  have : CompactSpace s := isCompact_iff_compactSpace.mp hs
   have hsurj : Function.Surjective ((mapsTo_image f s).restrict f s (f '' s)) := by
     rintro ⟨-, x, hx, rfl⟩
     exact ⟨⟨x, hx⟩, rfl⟩

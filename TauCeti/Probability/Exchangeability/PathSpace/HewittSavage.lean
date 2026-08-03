@@ -186,7 +186,7 @@ private theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω}
     {T : Set (∀ _j : G, α)} (hT : MeasurableSet T) :
     pathLaw μ X (cylinder F S ∩ cylinder G T)
       = pathLaw μ X (cylinder F S) * pathLaw μ X (cylinder G T) := by
-  letI := h_indep.isProbabilityMeasure
+  let := h_indep.isProbabilityMeasure
   have hΦ : AEMeasurable (fun ω => (fun n => X n ω : ℕ → α)) μ := aemeasurable_pi_lambda _ hX
   have hSmeas : MeasurableSet (cylinder F S) :=
     MeasurableSet.cylinder (α := fun _ : ℕ => α) F hS
@@ -376,9 +376,9 @@ theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
     (hident : ∀ i, ProbabilityTheory.IdentDistrib (X i) (X 0) μ μ)
     {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
     pathLaw μ X s = 0 ∨ pathLaw μ X s = 1 := by
-  letI := h_indep.isProbabilityMeasure
+  let := h_indep.isProbabilityMeasure
   have hX : ∀ i, AEMeasurable (X i) μ := fun i => (hident i).aemeasurable_fst
-  haveI : IsProbabilityMeasure (pathLaw μ X) := by
+  have : IsProbabilityMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
     exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
   have hexch : ExchangeableLaw (pathLaw μ X) :=

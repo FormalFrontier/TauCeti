@@ -73,9 +73,9 @@ theorem orthogonalKerEquivRange_apply (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
     (x : (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ) : (orthogonalKerEquivRange T hT x :
       F) = T x := by
-  letI : CompleteSpace (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ :=
+  let : CompleteSpace (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ :=
     (LinearMap.ker (T : E →ₗ[𝕜] F)).isClosed_orthogonal.completeSpace_coe
-  letI : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
+  let : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
     hT.completeSpace_coe
   let e := LinearMap.kerComplementEquivRange (T : E →ₗ[𝕜] F)
     (LinearMap.ker (T : E →ₗ[𝕜] F)).isCompl_orthogonal.symm
@@ -232,7 +232,7 @@ theorem cokerEquivKerAdjoint_symm_apply (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (y : LinearMap.ker (T† : F →ₗ[𝕜] E)) :
     (cokerEquivKerAdjoint T hT).symm y = Submodule.Quotient.mk (y : F) := by
   let range := LinearMap.range (T : E →ₗ[𝕜] F)
-  letI : CompleteSpace range := hT.completeSpace_coe
+  let : CompleteSpace range := hT.completeSpace_coe
   simp [cokerEquivKerAdjoint]
 
 /-- The cokernel of the adjoint of a closed-range operator is continuously linearly equivalent to

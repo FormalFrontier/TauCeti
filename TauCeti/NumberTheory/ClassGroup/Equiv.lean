@@ -74,9 +74,9 @@ private theorem canonicalEquiv_eq_ringEquivOfRingEquiv (K K' : Type*) [Field K] 
     [Algebra R K] [Algebra R K'] [IsFractionRing R K] [IsFractionRing R K'] :
     FractionalIdeal.canonicalEquiv R⁰ K K' =
       FractionalIdeal.ringEquivOfRingEquiv K K' (RingEquiv.refl R) := by
-  letI : RingHomInvPair (RingEquiv.refl R : R →+* R) (RingEquiv.refl R).symm :=
+  let : RingHomInvPair (RingEquiv.refl R : R →+* R) (RingEquiv.refl R).symm :=
     RingHomInvPair.of_ringEquiv (RingEquiv.refl R)
-  letI : RingHomInvPair ((RingEquiv.refl R).symm : R →+* R) (RingEquiv.refl R) :=
+  let : RingHomInvPair ((RingEquiv.refl R).symm : R →+* R) (RingEquiv.refl R) :=
     RingHomInvPair.of_ringEquiv (RingEquiv.refl R).symm
   ext I x
   rw [FractionalIdeal.mem_canonicalEquiv_apply]
@@ -229,8 +229,8 @@ private theorem ringEquivOfRingEquiv_coeIdeal [IsDomain R] [IsDomain R'] (K L : 
       (Ideal.map (f : R →+* R') I : FractionalIdeal R'⁰ L) := by
   -- Pin the `RingHomInvPair` instances to resolve an `f`/`f.symm.symm` defeq diamond, so the `erw`
   -- rewrites below fire without a transparency option.
-  letI : RingHomInvPair (f : R →+* R') (f.symm : R' →+* R) := RingHomInvPair.of_ringEquiv f
-  letI : RingHomInvPair (f.symm : R' →+* R) (f : R →+* R') := RingHomInvPair.of_ringEquiv f.symm
+  let : RingHomInvPair (f : R →+* R') (f.symm : R' →+* R) := RingHomInvPair.of_ringEquiv f
+  let : RingHomInvPair (f.symm : R' →+* R) (f : R →+* R') := RingHomInvPair.of_ringEquiv f.symm
   apply FractionalIdeal.coeToSubmodule_injective
   dsimp only
   rw [← FractionalIdeal.val_eq_coe, FractionalIdeal.ringEquivOfRingEquiv_apply_val,

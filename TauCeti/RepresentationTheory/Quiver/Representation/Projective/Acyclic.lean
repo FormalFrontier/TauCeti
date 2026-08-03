@@ -51,8 +51,8 @@ hypothesis is needed. -/
 theorem titsForm_dimVector_indecProjRep_of_isAcyclic [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
     (h : Quiver.IsAcyclic Q) (i : Q) :
     titsForm Q (fun v ↦ (dimVector (indecProjRep k Q i) v : ℤ)) = 1 := by
-  haveI := finite_paths_of_isAcyclic h
-  haveI : ∀ a : Q, Finite (Quiver.Path i a) := fun a ↦
+  have := finite_paths_of_isAcyclic h
+  have : ∀ a : Q, Finite (Quiver.Path i a) := fun a ↦
     Finite.of_injective (fun p : Quiver.Path i a ↦ (⟨i, a, p⟩ : Σ x y : Q, Quiver.Path x y))
       fun p q hpq ↦ by simpa using hpq
   rw [titsForm_dimVector_indecProjRep, h.card_path_self, Nat.cast_one]

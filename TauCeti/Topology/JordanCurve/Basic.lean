@@ -5,9 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Convex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Topology.Homeomorph.Lemmas
 public import TauCeti.Topology.LocallyConnected
+import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 
 /-!
@@ -18,9 +20,11 @@ the circle. This file introduces the predicate `TauCeti.IsJordanCurve` and its b
 
 The circle is Mathlib's `Circle`, the unit circle of `ℂ` as a topological group; the notion itself
 is purely topological, so `TauCeti.IsJordanCurve` is stated for a subset of an arbitrary
-topological space. Only the model curve — a circle `Metric.sphere c r` of positive radius in `ℂ`,
-at the end of the file — mentions `ℂ`, and it is built from the complex affine change of
-coordinates `w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric.
+topological space. `ℂ` is mentioned only by the two concrete curves towards the end of the file:
+the model curve, a circle `Metric.sphere c r` of positive radius, and the frontier of a bounded
+convex set with nonempty interior. The model is built from the complex affine change of coordinates
+`w ↦ (w - c) / r`, so it uses the field structure of `ℂ` and not only its metric, and the convex
+frontier is obtained from the model by transport.
 
 Phrasing the predicate as *the set is homeomorphic to the circle*, rather than *the set is the
 range of a continuous map on `[0, 1]` that is injective except for matching endpoints*, is what
@@ -34,6 +38,8 @@ transporting the property back to a compact set from an image already known to b
 ## Main definitions
 
 * `TauCeti.IsJordanCurve` — a set homeomorphic to the circle.
+* `TauCeti.jordanParam` — the parametrization of a Jordan curve by the circle underlying a
+  homeomorphism of the curve with `Circle`.
 
 ## Main results
 
@@ -47,8 +53,17 @@ transporting the property back to a compact set from an image already known to b
 * `TauCeti.IsJordanCurve.image_homeomorph` and `TauCeti.isJordanCurve_image_homeomorph_iff` — being
   a Jordan curve is invariant under a homeomorphism of the ambient spaces; no separation axiom is
   needed.
+* `TauCeti.continuous_jordanParam`, `TauCeti.jordanParam_injective`,
+  `TauCeti.isInducing_jordanParam`, `TauCeti.range_jordanParam`, `TauCeti.jordanParam_apply` and
+  `TauCeti.jordanParam_apply_apply` — the parametrization of a Jordan curve by the circle is a
+  continuous injection, is inducing, traces out exactly the curve, and undoes `e`; this is what
+  carries a statement about the circle to one about an arbitrary Jordan curve.
 * `TauCeti.sphereCircleHomeomorph` and `TauCeti.isJordanCurve_sphere` — a circle of positive radius
   in `ℂ` is a Jordan curve, by the affine change of coordinates `w ↦ (w - c) / r`.
+* `TauCeti.isJordanCurve_frontier_of_convex` — the frontier of a bounded convex subset of `ℂ` with
+  nonempty interior is a Jordan curve. This is `TauCeti.isJordanCurve_sphere` with the disc
+  weakened to an arbitrary convex body, the affine change of coordinates being replaced by Mathlib's
+  gauge rescaling.
 * `TauCeti.locallyConnectedSpace_sphere` and `TauCeti.IsJordanCurve.locallyConnectedSpace` — a
   circle in `ℂ`, and hence every Jordan curve, is locally connected.
 
@@ -82,7 +97,7 @@ namespace TauCeti
 
 open Metric Set Topology
 
-variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X} {r : ℝ}
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {C : Set X} {p : X} {r : ℝ}
 
 /-- A **Jordan curve**, or simple closed curve, in a topological space: a subset homeomorphic to
 the circle.
@@ -172,6 +187,58 @@ theorem isJordanCurve_image_homeomorph_iff (e : X ≃ₜ Y) :
     IsJordanCurve (e '' C) ↔ IsJordanCurve C :=
   ⟨fun h => e.symm_image_image C ▸ h.image_homeomorph e.symm, fun h => h.image_homeomorph e⟩
 
+/-! ## The parametrization by the circle
+
+Every transport of a statement about `Circle` to a Jordan curve goes through the parametrization
+`jordanParam e` attached to a homeomorphism `e`, so its properties — continuity, injectivity,
+range, and that it is inducing — are collected here rather than rebuilt at each use, both by the
+cutting of a curve at one or two of its points
+(`TauCeti/Topology/JordanCurve/Separation.lean`) and by the quantitative form of that cutting
+(`TauCeti/Topology/JordanCurve/SmallArc.lean`). -/
+
+/-- The parametrization of a Jordan curve by the circle underlying a homeomorphism `e`: the
+composite of `e.symm` with the inclusion of the curve into the ambient space. -/
+noncomputable def jordanParam (e : C ≃ₜ Circle) : Circle → X :=
+  fun u => ((e.symm u : C) : X)
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is continuous. -/
+lemma continuous_jordanParam (e : C ≃ₜ Circle) : Continuous (jordanParam e) :=
+  continuous_subtype_val.comp e.symm.continuous
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is injective: this is
+the simplicity of the curve. -/
+lemma jordanParam_injective (e : C ≃ₜ Circle) : Function.Injective (jordanParam e) :=
+  Subtype.val_injective.comp e.symm.injective
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle is inducing, so
+preconnectedness of a subset of the curve may be tested on its preimage of parameters. -/
+lemma isInducing_jordanParam (e : C ≃ₜ Circle) : Topology.IsInducing (jordanParam e) :=
+  Topology.IsInducing.subtypeVal.comp e.symm.isInducing
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle traces out exactly the
+curve. -/
+@[simp]
+lemma range_jordanParam (e : C ≃ₜ Circle) : range (jordanParam e) = C := by
+  refine subset_antisymm ?_ fun x hx => ⟨e ⟨x, hx⟩, by simp [jordanParam]⟩
+  rintro _ ⟨u, rfl⟩
+  exact (e.symm u).2
+
+/-- The defining equation of `TauCeti.jordanParam`: the parameter `u` names the point `e.symm u` of
+the curve, read in the ambient space. This is the general application lemma, so a consumer never has
+to unfold the definition. -/
+@[simp]
+lemma jordanParam_apply (e : C ≃ₜ Circle) (u : Circle) :
+    jordanParam e u = ((e.symm u : C) : X) := by
+  simp [jordanParam]
+
+/-- The parametrization `TauCeti.jordanParam` of a Jordan curve by the circle undoes `e`: it sends
+the parameter `e ⟨p, hp⟩` of a point `p` of the curve back to `p`. Simp proves this from
+`TauCeti.jordanParam_apply`; it is stated for the `rw` steps that produce the point `p` itself
+rather than a coerced parameter. -/
+lemma jordanParam_apply_apply (e : C ≃ₜ Circle) (hp : p ∈ C) :
+    jordanParam e (e ⟨p, hp⟩) = p := by
+  simp
+
 /-! ## The model curve: a circle in `ℂ` -/
 
 /-- The affine change of coordinates `w ↦ (w - c) * r⁻¹` of `ℂ`, as a homeomorphism of `ℂ`. It
@@ -232,6 +299,24 @@ lemma coe_sphereCircleHomeomorph_symm_apply (c : ℂ) (hr : 0 < r) (z : Circle) 
 theorem isJordanCurve_sphere (c : ℂ) (hr : 0 < r) : IsJordanCurve (sphere c r) :=
   isJordanCurve_iff.mpr ⟨sphereCircleHomeomorph c hr⟩
 
+/-- **The frontier of a bounded convex subset of `ℂ` with nonempty interior is a Jordan curve.**
+
+This is `TauCeti.isJordanCurve_sphere` with the disc weakened to an arbitrary convex body, which it
+recovers at `s = Metric.ball c r`. The model curve transports because Mathlib's gauge rescaling
+supplies an *ambient* homeomorphism `e : ℂ ≃ₜ ℂ` carrying `frontier s` onto the unit circle
+(`exists_homeomorph_image_interior_closure_frontier_eq_unitBall`), so the affine change of
+coordinates above is simply replaced by a nonlinear one and no further topology is needed.
+
+The set is asked neither to be open nor to be nonempty: what a convex set needs in order to have a
+one-dimensional frontier is that it be *solid*, and that is `(interior s).Nonempty`. Without it the
+statement fails — a segment is convex and bounded, and is its own frontier. -/
+theorem isJordanCurve_frontier_of_convex {s : Set ℂ} (hs : Convex ℝ s)
+    (hne : (interior s).Nonempty) (hb : Bornology.IsBounded s) : IsJordanCurve (frontier s) := by
+  obtain ⟨e, -, -, hfr⟩ := exists_homeomorph_image_interior_closure_frontier_eq_unitBall hs hne hb
+  refine (isJordanCurve_image_homeomorph_iff e).mp ?_
+  rw [hfr]
+  exact isJordanCurve_sphere 0 one_pos
+
 /-! ## Local connectedness -/
 
 open Complex in
@@ -260,7 +345,7 @@ instance locallyConnectedSpace_sphere (c : ℂ) (r : ℝ) : LocallyConnectedSpac
         ring
       · rintro ⟨θ, -, rfl⟩
         simp [abs_of_nonneg hr]
-    haveI := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
+    have := (convex_Icc (-Real.pi) Real.pi).locallyPathConnectedSpace
     rw [hparam]
     exact locallyConnectedSpace_image_of_isCompact isCompact_Icc
       (Continuous.continuousOn (by fun_prop))

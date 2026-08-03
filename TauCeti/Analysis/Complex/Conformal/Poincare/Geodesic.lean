@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Poincare.IsometryEquiv
+public import TauCeti.Analysis.Complex.Conformal.Poincare.Isometry.Equiv
 
 /-!
 # The Poincaré disc is a geodesic metric space
@@ -28,8 +28,16 @@ turns that into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Re
 it a unit-speed line: `TauCeti.PoincareDisc.radialGeodesic u` is an isometric embedding of `ℝ`.
 
 Every point of the disc lies on such a line through the origin, and the disc automorphisms act
-transitively by isometries, so transporting a radial line gives a geodesic through any two
-prescribed points.
+transitively by isometries, so transporting a radial line names the geodesic line through an
+*arbitrary* point: carrying the radial geodesic in direction `u` back by
+`(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the inverse of the Moebius isometry that
+sends `a` to the origin — gives `TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and
+repeats the radial API (`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`,
+`geodesicLine_injective`) at that base point. No hyperbolic computation is redone: each of those
+statements is its radial counterpart read through an isometry.
+
+Those lines are what makes the disc a geodesic space: through any two prescribed points there
+passes one of them.
 
 ## Main declarations
 
@@ -40,6 +48,9 @@ prescribed points.
   `TauCeti.PoincareDisc.isometry_radialGeodesic` saying it is an isometric embedding of `ℝ`.
 * `TauCeti.PoincareDisc.exists_radialGeodesic_eq` — every point of the disc is reached by the
   radial geodesic in its own direction, at time its distance to the origin.
+* `TauCeti.PoincareDisc.geodesicLine` — the same line based at an arbitrary point `a` instead of
+  the origin, with `TauCeti.PoincareDisc.isometry_geodesicLine`,
+  `TauCeti.PoincareDisc.geodesicLine_zero` and `TauCeti.PoincareDisc.geodesicLine_injective`.
 * `TauCeti.PoincareDisc.exists_isometry_apply_zero_apply_dist` — **the Poincaré disc is a
   geodesic space**: through any two points there is a unit-speed geodesic line `γ : ℝ → 𝔻`, with
   `γ 0` the first point and `γ (dist z w)` the second.
@@ -237,26 +248,97 @@ theorem exists_radialGeodesic_eq (z : PoincareDisc) :
     rw [coe_radialGeodesic, htanh, hu]
     field_simp
 
+/-! ### Geodesic lines through an arbitrary point -/
+
+/-- The unit-speed geodesic line of the Poincaré disc through `a` in the direction `u : Circle`:
+the radial geodesic `TauCeti.PoincareDisc.radialGeodesic u` carried back to `a` by
+`(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm`, the *inverse* of the Moebius isometry that
+sends `a` to the origin. Based at the origin it is `radialGeodesic u` itself
+(`TauCeti.PoincareDisc.geodesicLine_toPoincare_zero`). -/
+noncomputable def geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) : PoincareDisc :=
+  (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm (radialGeodesic u t)
+
+/-- The defining formula for `TauCeti.PoincareDisc.geodesicLine`; its body is not `@[expose]`d, so
+this is how the definition is unfolded downstream. -/
+lemma geodesicLine_def (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    geodesicLine a u t =
+      (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm (radialGeodesic u t) := by
+  rw [geodesicLine]
+
+/-- The Moebius isometry that sends `a` to the origin straightens the geodesic line through `a`
+into the radial geodesic in the same direction. This is `TauCeti.PoincareDisc.geodesicLine_def`
+read forwards, and it is how a statement about `geodesicLine` is transported to the origin.
+
+Not a `simp` lemma: `unitDiscMoebiusIsometryEquiv_apply` is itself `simp`, so the left-hand side
+here is not in simp-normal form — it rewrites to
+`Complex.UnitDisc.toPoincare (unitDiscMoebius (toUnitDisc a) (toUnitDisc (geodesicLine a u t)))`,
+which the `simpNF` linter rejects. -/
+lemma unitDiscMoebiusIsometryEquiv_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    unitDiscMoebiusIsometryEquiv (toUnitDisc a) (geodesicLine a u t) = radialGeodesic u t := by
+  rw [geodesicLine_def, IsometryEquiv.apply_symm_apply]
+
+/-- Every geodesic line through `a` starts at `a`: the generalisation of
+`TauCeti.PoincareDisc.radialGeodesic_zero` off the origin. -/
+@[simp]
+lemma geodesicLine_zero (a : PoincareDisc) (u : Circle) : geodesicLine a u 0 = a := by
+  have ha : unitDiscMoebiusIsometryEquiv (toUnitDisc a) a = Complex.UnitDisc.toPoincare 0 := by
+    rw [unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
+  rw [geodesicLine_def, radialGeodesic_zero, ← ha, IsometryEquiv.symm_apply_apply]
+
+/-- Based at the origin, the geodesic lines are exactly the radial ones: the Moebius isometry
+centred at the origin is the identity. -/
+@[simp]
+lemma geodesicLine_toPoincare_zero (u : Circle) :
+    geodesicLine (Complex.UnitDisc.toPoincare 0) u = radialGeodesic u := by
+  funext t
+  rw [geodesicLine_def, toUnitDisc_toPoincare, IsometryEquiv.symm_apply_eq]
+  simp
+
+/-- **The geodesic lines are unit-speed geodesic lines**: `geodesicLine a u` is an isometric
+embedding of the real line into the Poincaré disc, being `TauCeti.PoincareDisc.radialGeodesic u`
+composed with an isometry. -/
+theorem isometry_geodesicLine (a : PoincareDisc) (u : Circle) : Isometry (geodesicLine a u) := by
+  have h : geodesicLine a u =
+      (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm ∘ radialGeodesic u :=
+    funext (geodesicLine_def a u)
+  rw [h]
+  exact (unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm.isometry.comp
+    (isometry_radialGeodesic u)
+
+/-- The geodesic line through `a` is at hyperbolic distance `|t|` from `a` at time `t`: the
+generalisation of `TauCeti.PoincareDisc.dist_radialGeodesic_zero` off the origin. -/
+lemma dist_geodesicLine_self (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    dist (geodesicLine a u t) a = |t| := by
+  have h := (isometry_geodesicLine a u).dist_eq t 0
+  rwa [geodesicLine_zero, Real.dist_eq, sub_zero] at h
+
+/-- Distinct directions give distinct geodesic lines through a common point: the generalisation of
+`TauCeti.PoincareDisc.radialGeodesic_injective` off the origin. -/
+theorem geodesicLine_injective (a : PoincareDisc) : Function.Injective (geodesicLine a) := by
+  intro u v huv
+  refine radialGeodesic_injective (funext fun t => ?_)
+  have h := congrArg (unitDiscMoebiusIsometryEquiv (toUnitDisc a)) (congrFun huv t)
+  rwa [unitDiscMoebiusIsometryEquiv_geodesicLine,
+    unitDiscMoebiusIsometryEquiv_geodesicLine] at h
+
 /-! ### The Poincaré disc is a geodesic space -/
 
 /-- **The Poincaré disc is a geodesic metric space.** Through any two of its points there is a
 unit-speed geodesic line `γ : ℝ → PoincareDisc` — an isometric embedding of the whole real line
 — that starts at `z` at time `0` and passes through `w` at time `dist z w`.
 
-The line is obtained by transporting a geodesic through the origin (`exists_radialGeodesic_eq`)
-by the disc automorphism that moves `z` to the origin, which is a hyperbolic isometry. -/
+The line is `TauCeti.PoincareDisc.geodesicLine z u`, for `u` the direction in which the Moebius
+isometry sending `z` to the origin sees `w` (`TauCeti.PoincareDisc.exists_radialGeodesic_eq`). -/
 theorem exists_isometry_apply_zero_apply_dist (z w : PoincareDisc) :
     ∃ γ : ℝ → PoincareDisc, Isometry γ ∧ γ 0 = z ∧ γ (dist z w) = w := by
-  set g := unitDiscMoebiusIsometryEquiv (toUnitDisc z) with hg
-  have hgz : g z = Complex.UnitDisc.toPoincare 0 := by
-    rw [hg, unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
-  obtain ⟨u, hu⟩ := exists_radialGeodesic_eq (g w)
-  have hdist : dist (g w) (Complex.UnitDisc.toPoincare 0) = dist z w := by
-    rw [← hgz, g.dist_eq, dist_comm]
-  refine ⟨g.symm ∘ radialGeodesic u,
-    g.symm.isometry.comp (isometry_radialGeodesic u), ?_, ?_⟩
-  · rw [Function.comp_apply, radialGeodesic_zero, ← hgz, g.symm_apply_apply]
-  · rw [Function.comp_apply, ← hdist, hu, g.symm_apply_apply]
+  obtain ⟨u, hu⟩ := exists_radialGeodesic_eq (unitDiscMoebiusIsometryEquiv (toUnitDisc z) w)
+  refine ⟨geodesicLine z u, isometry_geodesicLine z u, geodesicLine_zero z u, ?_⟩
+  have hgz : unitDiscMoebiusIsometryEquiv (toUnitDisc z) z = Complex.UnitDisc.toPoincare 0 := by
+    rw [unitDiscMoebiusIsometryEquiv_apply, unitDiscMoebius_self]
+  have hdist : dist (unitDiscMoebiusIsometryEquiv (toUnitDisc z) w)
+      (Complex.UnitDisc.toPoincare 0) = dist z w := by
+    rw [← hgz, (unitDiscMoebiusIsometryEquiv (toUnitDisc z)).dist_eq, dist_comm]
+  rw [geodesicLine_def, ← hdist, hu, IsometryEquiv.symm_apply_apply]
 
 /-- Every intermediate distance along a geodesic is realised: for `0 ≤ r ≤ dist z w` there is a
 point at hyperbolic distance `r` from `z` and `dist z w - r` from `w`. -/

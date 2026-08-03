@@ -71,7 +71,7 @@ noncomputable def permutationModuleIsoIndTrivial {n : ℕ} (μ : n.Partition) :
 /-- The dimension of `M^μ` is the index of its Young subgroup. -/
 theorem finrank_permutationModule_eq_index {n : ℕ} (μ : n.Partition) :
     Module.finrank ℚ (permutationModule μ).V = (youngSubgroup μ).index := by
-  letI : Fintype (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) := Fintype.ofFinite _
+  let : Fintype (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) := Fintype.ofFinite _
   rw [Module.finrank_eq_card_basis (permutationModuleBasis μ)]
   rw [← Nat.card_eq_fintype_card, Subgroup.index_eq_card]
 
@@ -89,7 +89,7 @@ theorem char_permutationModule {n : ℕ} (μ : n.Partition)
     (permutationModule μ).ρ.character σ =
       (Nat.card
         {q : Equiv.Perm (Fin n) ⧸ youngSubgroup μ // σ • q = q} : ℚ) := by
-  letI : Finite (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) := inferInstance
+  let : Finite (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) := inferInstance
   exact char_ofMulAction ℚ _ σ
 
 /-- The Young permutation module bundled as a finite-dimensional representation. -/

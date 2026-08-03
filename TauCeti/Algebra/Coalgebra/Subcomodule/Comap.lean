@@ -63,13 +63,12 @@ private theorem ker_rangeRestrict_mkQ_comp {M₁ : Type w} {N₁ : Type x}
   simp [LinearMap.mem_ker, Submodule.mem_comap]
 
 omit [Coalgebra R C] [Comodule R C M] [Comodule R C N] in
-private theorem rTensor_rangeRestrict_eq_zero_of_rTensor_eq_zero
-    {M₁ : Type w} {N₁ : Type x}
+private theorem rTensor_rangeRestrict_eq_zero_of_rTensor_eq_zero {M₁ : Type w} {N₁ : Type x}
     [AddCommGroup M₁] [Module R M₁] [AddCommGroup N₁] [Module R N₁]
     {B : Submodule R N₁} {f : M₁ →ₗ[R] N₁} {t : M₁ ⊗[R] C}
     (h : LinearMap.rTensor C (B.mkQ.comp f) t = 0) :
     LinearMap.rTensor C (B.mkQ.comp f).rangeRestrict t = 0 := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   apply Module.Flat.rTensor_preserves_injective_linearMap
     (LinearMap.range (B.mkQ.comp f)).subtype Subtype.val_injective
   calc
@@ -91,7 +90,7 @@ private theorem tensor_mem_range_comap {M₁ : Type w} {N₁ : Type x}
     {t : M₁ ⊗[R] C} (h : LinearMap.rTensor C (B.mkQ.comp f) t = 0) :
     t ∈ LinearMap.range
       (TensorProduct.map (B.comap f).subtype (LinearMap.id : C →ₗ[R] C)) := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   let g : M₁ →ₗ[R] LinearMap.range (B.mkQ.comp f) := (B.mkQ.comp f).rangeRestrict
   have hker : LinearMap.ker g = B.comap f :=
     ker_rangeRestrict_mkQ_comp (M₁ := M₁) (N₁ := N₁) B f
@@ -111,16 +110,15 @@ private theorem tensor_mem_range_comap {M₁ : Type w} {N₁ : Type x}
   rw [LinearMap.rTensor_def] at ht'
   simpa using ht'
 
-private theorem coact_mem_range_comap_toLinearMap
-    (f : Comodule.Hom R C M N) (B : Subcomodule R C N)
+private theorem coact_mem_range_comap_toLinearMap (f : Comodule.Hom R C M N) (B : Subcomodule R C N)
     {m : M} (hm : m ∈ B.toSubmodule.comap f.toLinearMap) :
     Comodule.coact (R := R) (C := C) (M := M) m ∈
       LinearMap.range
         (TensorProduct.map (B.toSubmodule.comap f.toLinearMap).subtype
           (LinearMap.id : C →ₗ[R] C)) := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
-  letI : AddCommGroup M := Module.addCommMonoidToAddCommGroup R (M := M)
-  letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R (M := N)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup M := Module.addCommMonoidToAddCommGroup R (M := M)
+  let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R (M := N)
   refine tensor_mem_range_comap (R := R) (C := C) (M₁ := M) (N₁ := N)
     B.toSubmodule f.toLinearMap ?_
   rw [LinearMap.rTensor_comp_apply]
@@ -213,8 +211,7 @@ theorem le_comap_map (A : Subcomodule R C M) (f : Comodule.Hom R C M N) :
   (gc_map_comap f).le_u_l A
 
 /-- A subcomodule is contained in the inverse image of the image of a larger subcomodule. -/
-theorem le_comap_map_of_le {A D : Subcomodule R C M} (hAD : A ≤ D)
-    (f : Comodule.Hom R C M N) :
+theorem le_comap_map_of_le {A D : Subcomodule R C M} (hAD : A ≤ D) (f : Comodule.Hom R C M N) :
     A ≤ (D.map f).comap f := by
   rw [← map_le_iff_le_comap]
   exact map_mono f hAD

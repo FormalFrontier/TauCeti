@@ -45,7 +45,7 @@ simply connected space has a subsingleton fundamental group. -/
 theorem not_simplyConnectedSpace_of_nontrivial_fundamentalGroup {X : Type*} [TopologicalSpace X]
     (x : X) [Nontrivial (FundamentalGroup X x)] : ¬ SimplyConnectedSpace X := by
   intro h
-  haveI := h
+  have := h
   exact false_of_nontrivial_of_subsingleton (FundamentalGroup X x)
 
 /-- A **not simply connected** space is **not contractible**: a contractible space is simply
@@ -53,7 +53,7 @@ connected. -/
 theorem not_contractibleSpace_of_not_simplyConnectedSpace {X : Type*} [TopologicalSpace X]
     (h : ¬ SimplyConnectedSpace X) : ¬ ContractibleSpace X := by
   intro hc
-  haveI := hc
+  have := hc
   exact h inferInstance
 
 /-- A **not simply connected** space is not homeomorphic to any simply connected space: a

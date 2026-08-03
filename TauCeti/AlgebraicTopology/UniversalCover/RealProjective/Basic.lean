@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.PiL2
+public import Mathlib.Analysis.Normed.Module.Connected
 public import Mathlib.Topology.Covering.Quotient
 public import TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction
 
@@ -27,6 +28,9 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 ## Main declarations
 
 * `TauCeti.RealProjectiveSpace`: real projective `n`-space as an antipodal quotient of `Sⁿ`.
+* `TauCeti.RealProjectiveSpace.instNonemptySphere` and
+  `TauCeti.RealProjectiveSpace.connectedSpace_sphere`: the covering sphere `Sⁿ` is nonempty, and
+  connected once `1 ≤ n`.
 * `TauCeti.RealProjectiveSpace.inductionOn`, `TauCeti.RealProjectiveSpace.lift`, and
   `TauCeti.RealProjectiveSpace.lift_unique`: elimination principles for the antipodal quotient.
 * `TauCeti.RealProjectiveSpace.mk_eq_mk_iff`: two unit vectors define the same projective point
@@ -55,6 +59,20 @@ def RealProjectiveSpace (n : ℕ) :=
 namespace RealProjectiveSpace
 
 variable (n : ℕ)
+
+/-- The unit sphere of `EuclideanSpace ℝ (Fin (n + 1))` is nonempty. -/
+instance instNonemptySphere :
+    Nonempty (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :=
+  (NormedSpace.sphere_nonempty.mpr zero_le_one).to_subtype
+
+/-- The unit sphere of `EuclideanSpace ℝ (Fin (n + 1))` is connected once `1 ≤ n`, that is,
+from the circle `S¹` on. This is the standing hypothesis behind the identification of the
+deck group of the antipodal cover. -/
+theorem connectedSpace_sphere (hn : 1 ≤ n) :
+    ConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
+  refine Subtype.connectedSpace (isConnected_sphere ?_ 0 zero_le_one)
+  rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
+  omega
 
 /-- The quotient topology on real projective space. -/
 instance instTopologicalSpace : TopologicalSpace (RealProjectiveSpace n) :=

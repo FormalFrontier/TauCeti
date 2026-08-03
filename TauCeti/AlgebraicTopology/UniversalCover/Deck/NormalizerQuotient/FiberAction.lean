@@ -212,7 +212,7 @@ theorem normalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal_of_isRegular
     (hreg : IsRegular p) (H : Subgroup (Deck p)) [H.Normal] :
     MulAction.IsPretransitive
       (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) := by
-  letI := hreg.fiber_isPretransitive b
+  let := hreg.fiber_isPretransitive b
   exact normalizerQuotientSubgroupFiberOrbitIsPretransitiveOfNormal H
 
 /-- Equality after the `N(H) / H` action on an `H`-fibre quotient is equality of
@@ -235,7 +235,7 @@ quotient is free. -/
 theorem normalizerQuotientSubgroupFiberOrbitIsCancelSMulOfIsCoveringMap
     [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p) (H : Subgroup (Deck p)) :
     IsCancelSMul (Subgroup.normalizerQuotient H) (SubgroupFiberOrbitQuotient H b) := by
-  letI := fiber_isCancelSMul (b := b) hp
+  let := fiber_isCancelSMul (b := b) hp
   exact instNormalizerQuotientSubgroupFiberOrbitIsCancelSMul H
 
 end Deck

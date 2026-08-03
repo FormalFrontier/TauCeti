@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
-public import TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra
+public import TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra.Basic
 
 /-!
 # The additive group
@@ -33,7 +33,7 @@ group"), in the same spirit as the multiplicative group `𝔾ₘ`.
 ## References
 
 The symmetric-algebra Hopf structure is supplied by
-`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra`, on top of Mathlib's symmetric-algebra
+`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra.Basic`, on top of Mathlib's symmetric-algebra
 bialgebra and convolution monoid APIs.
 -/
 

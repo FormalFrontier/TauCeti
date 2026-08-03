@@ -204,7 +204,7 @@ theorem comap_sSup_of_surjective (S : Set (HopfIdeal R K)) (hS : S.Nonempty)
     (f : H →ₐc[R] K) (hf : Function.Surjective f) :
     (sSup S).comap f hf = sSup ((fun I => I.comap f hf) '' S) := by
   classical
-  haveI : Nonempty S := hS.to_subtype
+  have : Nonempty S := hS.to_subtype
   rw [sSup_eq_iSup', comap_iSup_of_surjective, sSup_image']
 
 /-- Pulling a Hopf ideal back along the identity morphism leaves it unchanged. -/

@@ -131,12 +131,10 @@ theorem abs_le_of_laplacian_add_fderiv_eq_mul_abs_le_frontier {K : Set E} (hK : 
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
     ∀ ⦃x⦄, x ∈ K → |f x| ≤ M := by
   intro x hx
-  rw [abs_le]
-  constructor
-  · exact ge_of_laplacian_add_fderiv_le_mul_ge_frontier hK (neg_nonpos.mpr hM) hcont hcd hc hb
-      (fun y hy => (hsol hy).le) (fun y hy => (abs_le.mp (hbdry hy)).1) hx
-  · exact le_of_mul_le_laplacian_add_fderiv_le_frontier hK hM hcont hcd hc hb
-      (fun y hy => (hsol hy).ge) (fun y hy => (abs_le.mp (hbdry hy)).2) hx
+  refine abs_le.mpr ⟨ge_of_laplacian_add_fderiv_le_mul_ge_frontier hK (neg_nonpos.mpr hM) hcont
+      hcd hc hb (fun y hy => (hsol hy).le) (fun y hy => (abs_le.mp (hbdry hy)).1) hx,
+    le_of_mul_le_laplacian_add_fderiv_le_frontier hK hM hcont hcd hc hb
+      (fun y hy => (hsol hy).ge) (fun y hy => (abs_le.mp (hbdry hy)).2) hx⟩
 
 /-- **Comparison principle for `-Δ - b·∇ + c`.** Functions acted on by the same lower-order
 coefficients are ordered on a compact set when their operator values and frontier values are
@@ -172,13 +170,11 @@ theorem eqOn_of_laplacian_add_fderiv_sub_mul_eq_of_eqOn_frontier {K : Set E} (hK
         Δ g x + fderiv ℝ g x (b x) - c x * g x)
     (hbdry : Set.EqOn f g (frontier K)) : Set.EqOn f g K := by
   intro x hx
-  apply le_antisymm
-  · exact le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
-      hK hfcont hgcont hfcd hgcd hc hb
-      (fun y hy => (hL hy).ge) (fun y hy => (hbdry hy).le) hx
-  · exact le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
-      hK hgcont hfcont hgcd hfcd hc hb
-      (fun y hy => (hL hy).le) (fun y hy => (hbdry hy).ge) hx
+  exact le_antisymm
+    (le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
+      hK hfcont hgcont hfcd hgcd hc hb (fun y hy => (hL hy).ge) (fun y hy => (hbdry hy).le) hx)
+    (le_of_laplacian_add_fderiv_sub_mul_le_laplacian_add_fderiv_sub_mul_of_le_frontier
+      hK hgcont hfcont hgcd hfcd hc hb (fun y hy => (hL hy).le) (fun y hy => (hbdry hy).ge) hx)
 
 end TauCeti
 

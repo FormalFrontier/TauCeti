@@ -49,7 +49,7 @@ prime ideals unless it equals one of the factors. -/
 private theorem isPrime_not_dvd_prod (p : IsDedekindDomain.HeightOneSpectrum R)
     {T : Finset (IsDedekindDomain.HeightOneSpectrum R)} (hpT : p ∉ T) :
     ¬ p.asIdeal ∣ ∏ q ∈ T, q.asIdeal := by
-  haveI := p.isPrime
+  have := p.isPrime
   have hpprime : Prime p.asIdeal := p.prime
   rw [Prime.dvd_finsetProd_iff hpprime]
   rintro ⟨q, hqT, hpq⟩

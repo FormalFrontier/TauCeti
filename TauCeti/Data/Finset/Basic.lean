@@ -23,7 +23,7 @@ namespace TauCeti
 theorem card_nonempty_finset {ι : Type*} [Finite ι] :
     Nat.card {S : Finset ι // S.Nonempty} = 2 ^ Nat.card ι - 1 := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   have h : Fintype.card {S : Finset ι // S.Nonempty} = 2 ^ Fintype.card ι - 1 := by
     rw [Fintype.card_subtype]
     simp_rw [Finset.nonempty_iff_ne_empty]

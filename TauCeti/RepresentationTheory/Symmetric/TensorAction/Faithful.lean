@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Finsupp.Basic
-public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 
 /-!
@@ -28,10 +26,6 @@ independent coordinate directions with which to tell tensor slots apart, that is
 
 Both answers are read off the monomial basis `tensorPowerBasis` of `(Rⁿ)^{⊗d}`, indexed by the
 functions `Fin d → Fin n`, on which a permutation acts by precomposition with its inverse.
-
-## Main definitions
-
-* `TauCeti.tensorPowerBasis` is the monomial basis of `(Rⁿ)^{⊗d}`.
 
 ## Main results
 
@@ -61,47 +55,6 @@ namespace TauCeti
 section CommSemiring
 
 variable (R : Type u) (n d : ℕ) [CommSemiring R]
-
-/-- The monomial basis of `(Rⁿ)^{⊗d}`: the basis vector at `f : Fin d → Fin n` is the pure tensor
-whose `i`-th factor is the `f i`-th standard basis vector of `Rⁿ`. -/
-noncomputable def tensorPowerBasis :
-    Module.Basis (Fin d → Fin n) R (⨂[R] _ : Fin d, Fin n → R) :=
-  Basis.piTensorProduct fun _ => Pi.basisFun R (Fin n)
-
-@[simp]
-theorem tensorPowerBasis_apply (f : Fin d → Fin n) :
-    tensorPowerBasis R n d f = PiTensorProduct.tprod R fun i => Pi.single (f i) (1 : R) := by
-  classical
-  rw [tensorPowerBasis, Basis.piTensorProduct_apply]
-  simp
-
--- These two derived normal forms remain explicit rewrite lemmas: `simpNF` detects each as already
--- provable from the underlying tensor-action rules, so adding them to the simp set is redundant.
-/-- A permutation acts on the monomial basis of `(Rⁿ)^{⊗d}` by precomposing the index function
-with its inverse. -/
-theorem permTensorAction_tensorPowerBasis (σ : Equiv.Perm (Fin d)) (f : Fin d → Fin n) :
-    permTensorAction R n d σ (tensorPowerBasis R n d f) =
-      tensorPowerBasis R n d fun i => f (σ.symm i) := by
-  simp
-
-/-- A group-algebra basis element acts on a monomial basis vector by precomposition and
-scaling. -/
-theorem permTensorActionAlgHom_single_tensorPowerBasis (ρ : Equiv.Perm (Fin d)) (r : R)
-    (f : Fin d → Fin n) :
-    permTensorActionAlgHom R n d (MonoidAlgebra.single ρ r) (tensorPowerBasis R n d f) =
-      r • tensorPowerBasis R n d fun i => f (ρ.symm i) := by
-  rw [permTensorActionAlgHom_def, Representation.asAlgebraHom_single, LinearMap.smul_apply,
-    permTensorAction_tensorPowerBasis]
-
-/-- The group-algebra action on a monomial basis vector is the coefficient-weighted sum of the
-precomposed monomial basis vectors. -/
-theorem permTensorActionAlgHom_apply_tensorPowerBasis
-    (a : MonoidAlgebra R (Equiv.Perm (Fin d))) (f : Fin d → Fin n) :
-    permTensorActionAlgHom R n d a (tensorPowerBasis R n d f) =
-      ∑ σ ∈ a.coeff.support,
-        a.coeff σ • tensorPowerBasis R n d fun i => f (σ.symm i) := by
-  rw [tensorPowerBasis_apply, permTensorActionAlgHom_apply_tprod, Finsupp.sum]
-  exact Finset.sum_congr rfl fun σ _ => by rw [tensorPowerBasis_apply]
 
 variable {R n d}
 
@@ -227,7 +180,7 @@ variable {R n d}
 permutation action on `(Rⁿ)^{⊗d}` is trivial. -/
 theorem permTensorAction_eq_one_of_le_one (h : n ≤ 1) (σ : Equiv.Perm (Fin d)) :
     permTensorAction R n d σ = 1 := by
-  haveI : Subsingleton (Fin n) := Fin.subsingleton_iff_le_one.mpr h
+  have : Subsingleton (Fin n) := Fin.subsingleton_iff_le_one.mpr h
   refine (tensorPowerBasis R n d).ext fun f => ?_
   rw [permTensorAction_tensorPowerBasis, Module.End.one_apply]
   exact congrArg _ (funext fun i => Subsingleton.elim _ _)
@@ -237,7 +190,7 @@ the monomial basis vector marking a single tensor slot already detects the permu
 theorem permTensorAction_injective_of_two_le [Nontrivial R] (h : 2 ≤ n) :
     Function.Injective (permTensorAction R n d) := by
   classical
-  haveI : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.mpr h
+  have : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.mpr h
   obtain ⟨a, b, hab⟩ := exists_pair_ne (Fin n)
   intro σ τ hστ
   have hsymm : σ.symm = τ.symm := by
@@ -265,7 +218,7 @@ theorem permTensorAction_injective_iff [Nontrivial R] :
     · exact Or.inl h2
     refine Or.inr ?_
     by_contra hd
-    haveI : Nontrivial (Fin d) := Fin.nontrivial_iff_two_le.mpr (by omega)
+    have : Nontrivial (Fin d) := Fin.nontrivial_iff_two_le.mpr (by omega)
     obtain ⟨a, b, hab⟩ := exists_pair_ne (Fin d)
     have hswap : Equiv.swap a b = 1 :=
       hinj (by rw [permTensorAction_eq_one_of_le_one (by omega), map_one])
@@ -273,7 +226,7 @@ theorem permTensorAction_injective_iff [Nontrivial R] :
     exact hab hswap
   · rintro (h | h)
     · exact permTensorAction_injective_of_two_le h
-    · haveI : Subsingleton (Fin d) := Fin.subsingleton_iff_le_one.mpr h
+    · have : Subsingleton (Fin d) := Fin.subsingleton_iff_le_one.mpr h
       exact fun σ τ _ => Equiv.ext fun x => Subsingleton.elim _ _
 
 end CommSemiring

@@ -54,6 +54,13 @@ across eventual equality of the initial function (`TauCeti.continuesAlong_congr`
 `TauCeti.continuesInside_congr`). `TauCeti.ContinuesInside` is the hypothesis of the monodromy
 theorem for a simply connected domain (`Conformal/GlobalBranch.lean`).
 
+Both predicates are closed under the ring operations and under differentiation, because a
+continuation of a combination of germs is the corresponding combination of continuations of the
+parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to them verbatim, with
+no choice of continuation to reconcile. A function analytic at every point of a continuous path
+continues along it via the constant family (`TauCeti.ContinuesAlong.of_analyticAt`), so
+continuability is a condition one may check on the pieces of a germ built from simpler ones.
+
 ## Relation to the monodromy theorem
 
 This is the L4 prerequisite that the monodromy theorem of the conformal-mapping roadmap needs:
@@ -71,8 +78,8 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
 * `TauCeti.IsAnalyticContinuationAlong.const`, `.of_differentiableOn` — a holomorphic function
   continues itself along any path in its domain.
 * `TauCeti.IsAnalyticContinuationAlong.congr` — only the carried germs matter.
-* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul` — continuations are closed under the
-  germ-wise operations.
+* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow` —
+  continuations are closed under the germ-wise operations.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq` — **uniqueness**: a continuation over a
   preconnected parameter set is determined by its germ at a single time.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
@@ -81,6 +88,9 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   and along every path inside a domain. Neither body is exposed; downstream files use them through
   `TauCeti.continuesAlong_iff_exists`, `TauCeti.ContinuesInside.continuesAlong` and
   `TauCeti.ContinuesInside.of_forall`.
+* `TauCeti.ContinuesAlong.add`, `.mul`, `.neg`, `.sub`, `.pow`, `.deriv` and their
+  `TauCeti.ContinuesInside` counterparts — continuability of a germ is inherited by sums, products,
+  differences, powers and derivatives.
 
 ## References
 
@@ -140,7 +150,7 @@ private theorem eq_of_isPreconnected_of_eventually_iff (hs : IsPreconnected s) {
     rintro ⟨t, ht⟩
     rw [nhds_subtype_eq_comap_nhdsWithin]
     exact Filter.Eventually.comap ((hP t ht).mono fun _ hu => propext hu) _
-  haveI : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
+  have : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
   rw [hlc.apply_eq_of_preconnectedSpace ⟨b, hb⟩ ⟨a, ha⟩]
   exact hPa
 
@@ -223,6 +233,27 @@ protected theorem mul (hf : IsAnalyticContinuationAlong f γ s)
   analyticAt t ht := (hf.analyticAt t ht).mul (hg.analyticAt t ht)
   locallyEq t ht := by
     filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.mul hu'
+
+/-- Continuations negate: the pointwise negation family `-f` continues along `γ` as well. -/
+protected theorem neg (hf : IsAnalyticContinuationAlong f γ s) :
+    IsAnalyticContinuationAlong (-f) γ s where
+  continuousOn := hf.continuousOn
+  analyticAt t ht := (hf.analyticAt t ht).neg
+  locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.neg
+
+/-- Continuations subtract: the pointwise difference family `f - g` continues along `γ` as
+well. -/
+protected theorem sub (hf : IsAnalyticContinuationAlong f γ s)
+    (hg : IsAnalyticContinuationAlong g γ s) :
+    IsAnalyticContinuationAlong (f - g) γ s := by
+  simpa only [sub_eq_add_neg] using hf.add hg.neg
+
+/-- Continuations take powers: the pointwise power family `f ^ n` continues along `γ` as well. -/
+protected theorem pow (hf : IsAnalyticContinuationAlong f γ s) (n : ℕ) :
+    IsAnalyticContinuationAlong (f ^ n) γ s where
+  continuousOn := hf.continuousOn
+  analyticAt t ht := (hf.analyticAt t ht).pow n
+  locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.pow_const n
 
 /-! ### Uniqueness -/
 
@@ -319,6 +350,47 @@ theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ 
     (hcU : ∀ x, c x ∈ U) : ContinuesAlong f₀ c :=
   of_analyticAt hc fun x => hf₀.analyticOnNhd hUo _ (hcU x)
 
+/-! #### Closure under the germ-wise operations
+
+Continuing two germs along one path and combining the results is the same as combining first and
+continuing after: the operations act on the carried germs time by time
+(`TauCeti.IsAnalyticContinuationAlong.add` and its companions), so a continuation of the combination
+is obtained from continuations of the parts, with no new choices to make. -/
+
+/-- The sum of two germs that continue along a path continues along it. -/
+protected theorem add (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
+    ContinuesAlong (f₀ + g₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  let ⟨g, hg, hg0⟩ := h'
+  ⟨f + g, hf.add hg, hf0.add hg0⟩
+
+/-- The product of two germs that continue along a path continues along it. -/
+protected theorem mul (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
+    ContinuesAlong (f₀ * g₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  let ⟨g, hg, hg0⟩ := h'
+  ⟨f * g, hf.mul hg, hf0.mul hg0⟩
+
+/-- The negation of a germ that continues along a path continues along it. -/
+protected theorem neg (h : ContinuesAlong f₀ c) : ContinuesAlong (-f₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  ⟨-f, hf.neg, hf0.neg⟩
+
+/-- The difference of two germs that continue along a path continues along it. -/
+protected theorem sub (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
+    ContinuesAlong (f₀ - g₀) c := by
+  simpa only [sub_eq_add_neg] using h.add h'.neg
+
+/-- A power of a germ that continues along a path continues along it. -/
+protected theorem pow (h : ContinuesAlong f₀ c) (n : ℕ) : ContinuesAlong (f₀ ^ n) c :=
+  let ⟨f, hf, hf0⟩ := h
+  ⟨f ^ n, hf.pow n, hf0.pow_const n⟩
+
+/-- The derivative of a germ that continues along a path continues along it. -/
+protected theorem deriv (h : ContinuesAlong f₀ c) : ContinuesAlong (_root_.deriv f₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  ⟨fun t => _root_.deriv (f t), hf.deriv, hf0.deriv⟩
+
 end ContinuesAlong
 
 /-- Continuability along a path is a property of the germ of `f₀` at the initial point. -/
@@ -366,6 +438,42 @@ protected theorem congr (H : ContinuesInside f₀ U z₀) (hfg : f₀ =ᶠ[𝓝 
 theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
     ContinuesInside f₀ U z₀ :=
   of_forall fun _ hc hcU _ => .of_differentiableOn hUo hf₀ hc hcU
+
+/-! #### Closure under the germ-wise operations
+
+Continuability inside `U` is continuability along each path of `U` at once, so it inherits the
+closure properties of `TauCeti.ContinuesAlong` path by path. Read through the monodromy theorem for
+a simply connected domain (`Conformal/GlobalBranch.lean`), these are the statements that a germ
+assembled from germs extending to `U` extends to `U` itself. -/
+
+/-- The sum of two germs that continue inside a domain continues inside it. -/
+protected theorem add (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
+    ContinuesInside (f₀ + g₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).add (H'.continuesAlong hc hcU hc0)
+
+/-- The product of two germs that continue inside a domain continues inside it. -/
+protected theorem mul (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
+    ContinuesInside (f₀ * g₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).mul (H'.continuesAlong hc hcU hc0)
+
+/-- The negation of a germ that continues inside a domain continues inside it. -/
+protected theorem neg (H : ContinuesInside f₀ U z₀) : ContinuesInside (-f₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).neg
+
+/-- The difference of two germs that continue inside a domain continues inside it. -/
+protected theorem sub (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
+    ContinuesInside (f₀ - g₀) U z₀ := by
+  simpa only [sub_eq_add_neg] using H.add H'.neg
+
+/-- A power of a germ that continues inside a domain continues inside it. -/
+protected theorem pow (H : ContinuesInside f₀ U z₀) (n : ℕ) : ContinuesInside (f₀ ^ n) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).pow n
+
+/-- **The derivative of a germ that continues inside a domain continues inside it.** If `U` is open
+and simply connected and contains `z₀`, the derivative therefore has a branch of its own on `U`
+(`TauCeti.ContinuesInside.exists_analyticOnNhd`). -/
+protected theorem deriv (H : ContinuesInside f₀ U z₀) : ContinuesInside (_root_.deriv f₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).deriv
 
 end ContinuesInside
 

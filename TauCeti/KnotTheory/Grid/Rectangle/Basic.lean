@@ -466,8 +466,7 @@ theorem symmEquiv_apply (R : GridRectangleBetween x y) :
 
 /-- Applying the inverse opposite-rectangle equivalence is `GridRectangleBetween.symm`. -/
 @[simp]
-theorem symmEquiv_symm_apply (R : GridRectangleBetween y x) :
-    (symmEquiv x y).symm R = R.symm :=
+theorem symmEquiv_symm_apply (R : GridRectangleBetween y x) : (symmEquiv x y).symm R = R.symm :=
   rfl
 
 /-- The opposite rectangle has the same bottom row. -/

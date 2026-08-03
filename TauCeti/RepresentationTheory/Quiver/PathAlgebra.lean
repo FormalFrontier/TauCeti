@@ -567,7 +567,7 @@ theorem one_def [Fintype Q] : (1 : pathAlgebra k Q) = ∑ v : Q, vertexIdempoten
 /-- The sum of the vertex idempotents is a left unit on basis paths. -/
 private theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
     ((1 : pathAlgebra k Q) * single x r : pathAlgebra k Q) = single x r := by
-  letI := Fintype.ofFinite Q
+  let := Fintype.ofFinite Q
   rw [one_def, Finset.sum_mul, Finset.sum_eq_single x.2.1]
   · exact vertexIdempotent_mul_single x r
   · intro v _ hv
@@ -579,7 +579,7 @@ private theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
 /-- The sum of the vertex idempotents is a right unit on basis paths. -/
 private theorem single_mul_one (x : Quiver.TotalPath Q) (r : k) :
     (single x r * (1 : pathAlgebra k Q) : pathAlgebra k Q) = single x r := by
-  letI := Fintype.ofFinite Q
+  let := Fintype.ofFinite Q
   rw [one_def, Finset.mul_sum, Finset.sum_eq_single x.1]
   · exact single_mul_vertexIdempotent x r
   · intro v _ hv
@@ -807,10 +807,10 @@ end PathAlgebra
 /-- Over a division ring, the path algebra of the one-loop quiver is infinite-dimensional. -/
 theorem not_finiteDimensional_pathAlgebra_oneLoop (k : Type w) [DivisionRing k] :
     ¬ FiniteDimensional k (pathAlgebra k Quiver.OneLoop) := by
-  letI : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
+  let : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
     Quiver.OneLoop.totalPathEquivNat.infinite_iff.mpr inferInstance
   intro h
-  letI : Module.Finite k (pathAlgebra k Quiver.OneLoop) := h
+  let : Module.Finite k (pathAlgebra k Quiver.OneLoop) := h
   exact Module.Finite.not_linearIndependent_of_infinite
     (⇑(pathAlgebraBasis k Quiver.OneLoop))
     (pathAlgebraBasis k Quiver.OneLoop).linearIndependent

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Poincare.MetricSpace
+public import TauCeti.Analysis.SpecialFunctions.Artanh
 public import Mathlib.Topology.MetricSpace.ProperSpace
 
 /-!
@@ -23,7 +24,10 @@ is the reparametrisation `Real.artanh p`:
 * the Moebius denominator has norm at most `2` on the disc, so `‖z - w‖ ≤ 2 * p`, which makes
   the identity map from the Poincaré disc to the Euclidean disc Lipschitz-like near the
   diagonal;
-* `p` depends continuously on `(z, w)` and `Real.artanh` is continuous on `(-1, 1)`, so the
+* `p` depends continuously on `(z, w)` — that is `TauCeti.continuousOn_pseudoHyperbolicExpr`,
+  from `TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean` — and `Real.artanh` is
+  continuous on `(-1, 1)` — that is
+  `Real.continuousOn_artanh`, from `TauCeti/Analysis/SpecialFunctions/Artanh.lean` — so the
   hyperbolic distance is jointly continuous for the Euclidean topology.
 
 Properness comes from a compact exhaustion: a closed hyperbolic ball around `x` of radius `r`
@@ -67,25 +71,6 @@ namespace TauCeti
 open _root_.Complex Metric Set
 open scoped ComplexConjugate Topology
 
-/-! ### Continuity of the inverse hyperbolic tangent -/
-
-/-- `Real.artanh` is continuous on the interval `(-1, 1)` on which it inverts `Real.tanh`.
-
-Mathlib's `Analysis/SpecialFunctions/Artanh.lean` proves the monotonicity and inversion
-properties of `Real.artanh` but records no continuity statement. This is a local proof helper
-for `continuousOn_hyperbolicDist`, kept private so that a general real-analysis fact is not
-exported from a file about the Poincaré metric. -/
-private lemma continuousOn_artanh : ContinuousOn Real.artanh (Ioo (-1 : ℝ) 1) := by
-  have hpos : ∀ x ∈ Ioo (-1 : ℝ) 1, (0 : ℝ) < (1 + x) / (1 - x) := fun x hx =>
-    div_pos (by linarith [hx.1]) (by linarith [hx.2])
-  have hcont : ContinuousOn (fun x : ℝ => 1 / 2 * Real.log ((1 + x) / (1 - x)))
-      (Ioo (-1 : ℝ) 1) := by
-    refine continuousOn_const.mul (ContinuousOn.log ?_ fun x hx => (hpos x hx).ne')
-    exact (continuousOn_const.add continuousOn_id).div (continuousOn_const.sub continuousOn_id)
-      fun x hx => by have : (0 : ℝ) < 1 - x := by linarith [hx.2]
-                     exact this.ne'
-  exact hcont.congr fun x hx => Real.artanh_eq_half_log (Ioo_subset_Icc_self hx)
-
 /-! ### Comparison of the Euclidean and pseudo-hyperbolic distances -/
 
 /-- The Euclidean distance between two points of the open unit disc is at most twice their
@@ -105,26 +90,12 @@ lemma norm_sub_le_two_mul_pseudoHyperbolicExpr {z w : ℂ} (hz : ‖z‖ < 1) (h
 
 /-! ### Joint continuity of the hyperbolic distance -/
 
-/-- The pseudo-hyperbolic expression is continuous on the product of two copies of the open
-unit disc, where its Moebius denominator does not vanish. -/
-lemma continuousOn_pseudoHyperbolicExpr :
-    ContinuousOn (fun p : ℂ × ℂ => pseudoHyperbolicExpr p.1 p.2)
-      (ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1) := by
-  have hnum : Continuous fun p : ℂ × ℂ => p.1 - p.2 := continuous_fst.sub continuous_snd
-  have hden : Continuous fun p : ℂ × ℂ => (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 :=
-    continuous_const.sub ((Complex.continuous_conj.comp continuous_snd).mul continuous_fst)
-  have hne : ∀ p ∈ ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1,
-      (1 : ℂ) - (starRingEnd ℂ) p.2 * p.1 ≠ 0 := fun _ hp =>
-    one_sub_conj_mul_ne_zero_of_mem_ball hp.1 hp.2
-  exact ((hnum.continuousOn.div hden.continuousOn hne).norm).congr fun p _ =>
-    pseudoHyperbolicExpr_def p.1 p.2
-
 /-- The hyperbolic distance is jointly continuous on the product of two copies of the open unit
 disc, for the Euclidean topology of `ℂ`. -/
 lemma continuousOn_hyperbolicDist :
     ContinuousOn (fun p : ℂ × ℂ => hyperbolicDist p.1 p.2)
       (ball (0 : ℂ) 1 ×ˢ ball (0 : ℂ) 1) := by
-  refine ContinuousOn.congr (continuousOn_artanh.comp continuousOn_pseudoHyperbolicExpr
+  refine ContinuousOn.congr (Real.continuousOn_artanh.comp continuousOn_pseudoHyperbolicExpr
     fun p hp => ⟨by linarith [pseudoHyperbolicExpr_nonneg p.1 p.2],
       pseudoHyperbolicExpr_lt_one_of_mem_ball hp.1 hp.2⟩) fun p _ => hyperbolicDist_def p.1 p.2
 

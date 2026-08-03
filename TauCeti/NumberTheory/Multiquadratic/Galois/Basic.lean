@@ -158,7 +158,7 @@ theorem isSplittingField (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
     (definingPolynomial d).IsSplittingField K (adjoin K (Set.range root)) where
   splits' := splits_definingPolynomial hroot
   adjoin_rootSet' := by
-    letI := Fintype.ofFinite ι
+    let := Fintype.ofFinite ι
     have hsub : Set.range (gen (K := K) root) ⊆
         (definingPolynomial d).rootSet (adjoin K (Set.range root)) := by
       rintro _ ⟨i, rfl⟩
@@ -177,9 +177,9 @@ theorem isSplittingField (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
 `∏ᵢ (X² - dᵢ)` (hence normal), and each generator satisfies a separable quadratic. -/
 theorem isGalois [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
     IsGalois K (adjoin K (Set.range root)) := by
-  haveI := isSplittingField hroot
-  haveI : Normal K (adjoin K (Set.range root)) := Normal.of_isSplittingField (definingPolynomial d)
-  haveI : Algebra.IsSeparable K (adjoin K (Set.range root)) := by
+  have := isSplittingField hroot
+  have : Normal K (adjoin K (Set.range root)) := Normal.of_isSplittingField (definingPolynomial d)
+  have : Algebra.IsSeparable K (adjoin K (Set.range root)) := by
     rw [IntermediateField.isSeparable_adjoin_iff_isSeparable]
     rintro _ ⟨i, rfl⟩
     -- `root i` is a root of `X² - dᵢ`; this is separable when `dᵢ ≠ 0` (as `2 ≠ 0`), and when
