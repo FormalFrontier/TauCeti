@@ -92,14 +92,6 @@ private theorem monoidHomCongrLeft_ulift_symm_apply_up {G : Type v} [CommGroup G
     (((MulEquiv.ulift : ULift.{u} G ≃* G).monoidHomCongrLeft).symm χ) (ULift.up g) = χ g :=
   rfl
 
-/-- A group-algebra basis element with coefficient `r` is the scalar multiple by `r` of
-the corresponding basis element with coefficient one. -/
-private theorem monoidAlgebra_single_eq_smul_single_one {G : Type v} [Monoid G]
-    (g : G) (r : R) :
-    MonoidAlgebra.single g r = r • MonoidAlgebra.single g (1 : R) := by
-  apply MonoidAlgebra.coeff_injective
-  simp
-
 /-- Scheme-valued points of `mu_n` over `Spec R` are the `n`th roots of unity in the value
 algebra.
 
@@ -193,7 +185,7 @@ theorem schemePointsMulEquiv_symm_apply_single_generator_smul (n : ℕ)
       simp only [chi, DiagonalizableGroup.pointsMulEquiv_apply]
       rw [
         DiagonalizableGroup.charOfPoint_apply_coe,
-        monoidAlgebra_single_eq_smul_single_one (r := r), map_smul]
+        ← mul_one r, ← MonoidAlgebra.smul_single', map_smul, mul_one]
     _ = _ := RootsOfUnityGroup.pointsMulEquiv_symm_apply_single_generator_smul
       (R := R) (A := A) n ζ r
 
