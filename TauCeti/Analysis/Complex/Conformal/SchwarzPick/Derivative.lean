@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
-import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 
 /-!
 # The infinitesimal Schwarz--Pick inequality
@@ -50,7 +50,7 @@ All the target factor needs is that its denominator `1 - conj (f z) * f z` at `f
 Poincaré defect `1 - ‖f z‖ ^ 2` — does not vanish, which for `‖f z‖ < 1` is
 `one_sub_conj_mul_ne_zero_of_norm_lt_one`; the source factor is differentiated at the origin,
 where its denominator is `1`, so no bound on `z` is required. -/
-private lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
     (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hf : HasDerivAt f df z) :
     HasDerivAt (schwarzPickConjugate f z)
       (df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z)) 0 := by
