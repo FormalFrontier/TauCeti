@@ -12,8 +12,10 @@ public import Mathlib.Analysis.Complex.UnitDisc.Basic
 This file records the scalar pseudo-hyperbolic expression
 `‖(z - w) / (1 - conj w * z)‖` used in the Schwarz--Pick layer of the conformal-mapping
 roadmap.  The main API proves that the denominator is nonzero on the open unit disc, the
-expression is symmetric, it is strictly less than one for two points of the unit disc, and it
-is jointly continuous there (`TauCeti.continuousOn_pseudoHyperbolicExpr`).
+expression is symmetric, it is strictly less than one for two points of the unit disc — hence
+lies in `Ioo (-1) 1` (`TauCeti.pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one`), the interval on
+which `Real.artanh` is a bijection onto `ℝ` — and it is jointly continuous there
+(`TauCeti.continuousOn_pseudoHyperbolicExpr`).
 The Poincaré defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub` compares the
 numerator and the denominator, and yields
 `TauCeti.norm_sub_eq_of_pseudoHyperbolicExpr_eq`: between points of prescribed norms, the
@@ -286,6 +288,14 @@ than one. -/
 lemma pseudoHyperbolicExpr_lt_one_unitDisc (z w : Complex.UnitDisc) :
     pseudoHyperbolicExpr (z : ℂ) (w : ℂ) < 1 :=
   pseudoHyperbolicExpr_lt_one_of_norm_lt_one z.norm_lt_one w.norm_lt_one
+
+/-- The pseudo-hyperbolic expression of two points of norm less than one lies in the interval
+`Ioo (-1) 1` on which `Real.artanh` is a strictly monotone bijection onto `ℝ`. This is the side
+condition of the `Real.artanh` lemmas applied to it in the hyperbolic-distance layer. -/
+lemma pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
+  ⟨by linarith [pseudoHyperbolicExpr_nonneg z w],
+    pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw⟩
 
 /-- The pseudo-hyperbolic expression is continuous on the product of two copies of the open
 unit disc, where its Moebius denominator does not vanish. -/
