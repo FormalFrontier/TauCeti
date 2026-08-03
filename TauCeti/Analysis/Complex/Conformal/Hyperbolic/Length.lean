@@ -87,8 +87,9 @@ file should be refactored onto that API at that point.
 ## Main declarations
 
 * `TauCeti.hyperbolicLength` — the density-weighted length of a path in the disc, with
-  `TauCeti.hyperbolicLength_eq_integral` rewriting it against an explicit derivative and
-  `TauCeti.hyperbolicLength_symm`, `TauCeti.hyperbolicLength_nonneg`,
+  `TauCeti.hyperbolicLength_eq_integral` rewriting it against an explicit derivative,
+  `TauCeti.hyperbolicLength_comp_mul_add` its invariance under affine reparametrisation of the
+  path, and `TauCeti.hyperbolicLength_symm`, `TauCeti.hyperbolicLength_nonneg`,
   `TauCeti.hyperbolicLength_const`, `TauCeti.hyperbolicLength_add` the basic evaluations and
   operations.
 * `TauCeti.hyperbolicLength_unitDiscMoebiusFormula_comp` — hyperbolic length is a Moebius
@@ -136,7 +137,8 @@ the Poincaré density `(1 - ‖γ t‖ ^ 2)⁻¹` of `Conformal/Hyperbolic/Densi
 Taking the integral over the unordered interval, as Mathlib's `Manifold.pathELength` does, makes
 the length independent of the orientation of the parameter interval
 (`TauCeti.hyperbolicLength_symm`) and nonnegative for a path in the disc whichever way round its
-endpoints are (`TauCeti.hyperbolicLength_nonneg`).
+endpoints are (`TauCeti.hyperbolicLength_nonneg`); it is a reparametrisation invariant of the path,
+`TauCeti.hyperbolicLength_comp_mul_add` for the affine reparametrisations.
 
 The definition is stated for an arbitrary `γ : ℝ → ℂ`, and only the derivative at the interior
 parameters enters (`TauCeti.hyperbolicLength_eq_integral`). It is the intended notion of length
@@ -151,6 +153,7 @@ theorem hyperbolicLength_def (γ : ℝ → ℂ) (a b : ℝ) :
     hyperbolicLength γ a b = ∫ t in uIcc a b, ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2) := by
   rw [hyperbolicLength]
 
+/-- A degenerate parameter interval carries no hyperbolic length. -/
 @[simp]
 theorem hyperbolicLength_self (γ : ℝ → ℂ) (a : ℝ) : hyperbolicLength γ a a = 0 := by
   rw [hyperbolicLength_def, uIcc_self]
@@ -161,6 +164,7 @@ theorem hyperbolicLength_symm (γ : ℝ → ℂ) (a b : ℝ) :
     hyperbolicLength γ b a = hyperbolicLength γ a b := by
   rw [hyperbolicLength_def, hyperbolicLength_def, uIcc_comm]
 
+/-- A constant path has zero hyperbolic length. -/
 @[simp]
 theorem hyperbolicLength_const (c : ℂ) (a b : ℝ) :
     hyperbolicLength (fun _ => c) a b = 0 := by
@@ -223,6 +227,49 @@ theorem hyperbolicLength_add {a b c : ℝ} (hab : a ≤ b) (hbc : b ≤ c)
     exact Icc_subset_Icc le_rfl hbc
   · rw [uIcc_of_le hbc, uIcc_of_le hac]
     exact Icc_subset_Icc hab le_rfl
+
+/-- The affine reparametrisation invariance over an ordered parameter interval; the general case
+follows by symmetry. -/
+private theorem hyperbolicLength_comp_mul_add_of_le (γ : ℝ → ℂ) {s : ℝ} (hs : s ≠ 0) (d : ℝ)
+    (hab : a ≤ b) :
+    hyperbolicLength (fun t => γ (s * t + d)) a b
+      = hyperbolicLength γ (s * a + d) (s * b + d) := by
+  have hderiv : ∀ t : ℝ, deriv (fun u : ℝ => γ (s * u + d)) t = s • deriv γ (s * t + d) := by
+    intro t
+    have h := deriv_comp_mul_left s (fun u : ℝ => γ (u + d)) t
+    rw [deriv_comp_add_const] at h
+    simpa using h
+  have hLHS : hyperbolicLength (fun t => γ (s * t + d)) a b
+      = |s| * ∫ t in a..b, ‖deriv γ (s * t + d)‖ / (1 - ‖γ (s * t + d)‖ ^ 2) := by
+    rw [hyperbolicLength_eq_intervalIntegral _ hab, ← intervalIntegral.integral_const_mul]
+    refine intervalIntegral.integral_congr fun t _ => ?_
+    rw [hderiv t, norm_smul, Real.norm_eq_abs, mul_div_assoc]
+  rw [hLHS, intervalIntegral.integral_comp_mul_add
+    (fun u => ‖deriv γ u‖ / (1 - ‖γ u‖ ^ 2)) hs d, smul_eq_mul]
+  rcases hs.lt_or_gt with hneg | hpos
+  · have hle : s * b + d ≤ s * a + d := by nlinarith
+    rw [hyperbolicLength_symm, hyperbolicLength_eq_intervalIntegral _ hle,
+      intervalIntegral.integral_symm (s * a + d) (s * b + d), abs_of_neg hneg]
+    field_simp
+  · have hle : s * a + d ≤ s * b + d := by nlinarith
+    rw [hyperbolicLength_eq_intervalIntegral _ hle, abs_of_pos hpos]
+    field_simp
+
+/-- **Hyperbolic length is invariant under affine reparametrisation.** Replacing the parameter `t`
+by `s * t + d` for `s ≠ 0`, an orientation-preserving reparametrisation for `0 < s` and an
+orientation-reversing one for `s < 0`, transports the parameter interval and leaves the length
+unchanged: two affinely reparametrised copies of one path have the same hyperbolic length. For
+instance `s = r`, `d = 0` reads the path of
+`TauCeti.exists_hyperbolicLength_eq_hyperbolicDist`, defined on `[0, r]`, on the parameter
+interval `[0, 1]` without changing its length. -/
+theorem hyperbolicLength_comp_mul_add (γ : ℝ → ℂ) {s : ℝ} (hs : s ≠ 0) (d a b : ℝ) :
+    hyperbolicLength (fun t => γ (s * t + d)) a b
+      = hyperbolicLength γ (s * a + d) (s * b + d) := by
+  rcases le_total a b with hab | hab
+  · exact hyperbolicLength_comp_mul_add_of_le γ hs d hab
+  · rw [hyperbolicLength_symm (fun t => γ (s * t + d)) b a,
+      hyperbolicLength_symm γ (s * b + d) (s * a + d)]
+    exact hyperbolicLength_comp_mul_add_of_le γ hs d hab
 
 /-- **The hyperbolic length of a Euclidean radius.** For a unit vector `u` and `0 ≤ r < 1`, the
 path `t ↦ u * t` has hyperbolic length `Real.artanh r` over `[0, r]`, which by
