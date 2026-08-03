@@ -67,7 +67,7 @@ theorem contMDiffAt_mulInvariantExp_zero
       mulInvariantCoordinateVectorField (I := I) (G := G) p
     have hF : ContDiffAt ℝ (n + 1) F ((0 : E), center) := by
       exact contDiffAt_const.smul
-        ((contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (n := ∞)
+        ((contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := ∞)
           BoundarylessManifold.isInteriorPoint).of_le
           (by exact_mod_cast le_top))
     have hFzero : ∀ᶠ y in 𝓝 center, F (0, y) = 0 := by
