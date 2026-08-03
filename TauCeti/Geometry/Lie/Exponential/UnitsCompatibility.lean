@@ -33,13 +33,11 @@ open scoped ContDiff Manifold
 
 noncomputable section
 
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
+
 section Complete
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
-
-/-- The rational normed-algebra structure inherited from the real one. -/
-noncomputable local instance normedAlgebraRatOfRealComplete : NormedAlgebra ℚ R :=
-  .restrictScalars ℚ ℝ R
 
 /-- The preferred chart of the units manifold at one is inclusion into the ambient algebra. -/
 theorem extChartAt_units_one_apply (u : Rˣ) :
@@ -105,12 +103,7 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [FiniteDimensional ℝ
 noncomputable local instance finiteDimensionalCompleteSpace : CompleteSpace R :=
   FiniteDimensional.complete ℝ R
 
-/-- The rational normed-algebra structure inherited from the real one. -/
-noncomputable local instance normedAlgebraRatOfRealFiniteDimensional : NormedAlgebra ℚ R :=
-  .restrictScalars ℚ ℝ R
-
 /-- The canonical identification of the Lie algebra of `Rˣ` with the ambient real algebra. -/
-@[expose]
 noncomputable def unitsLieAlgebraEquiv :
     LeftInvariantDerivation 𝓘(ℝ, R) Rˣ ≃ₗ[ℝ] R :=
   leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓘(ℝ, R)) (G := Rˣ)
@@ -122,7 +115,9 @@ theorem unitsLieAlgebraEquiv_apply (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ
     unitsLieAlgebraEquiv X =
       leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓘(ℝ, R)) (G := Rˣ)
         BoundarylessManifold.isInteriorPoint X :=
-  rfl
+  by
+    rw [unitsLieAlgebraEquiv]
+    rfl
 
 /-- The abstract one-parameter subgroup on `Rˣ` is the Banach-algebra exponential subgroup. -/
 @[simp]
