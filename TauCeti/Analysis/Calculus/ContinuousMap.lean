@@ -10,13 +10,14 @@ public import Mathlib.Analysis.Normed.Operator.Bilinear
 public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.Topology.ContinuousMap.Compact
+public import Mathlib.Topology.ContinuousMap.Interval
 public import Mathlib.Topology.UniformSpace.HeineCantor
 
 /-!
 # Calculus on spaces of continuous maps
 
-This file develops the bounded pointwise operations needed to differentiate superposition maps on
-spaces of continuous functions over a compact domain.
+This file develops bounded pointwise operations for differentiating superposition maps, together
+with bounded integration operators on continuous paths for constructing Picard residuals.
 
 ## Main results
 
@@ -85,48 +86,54 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E
 
 /-- The primitive of a continuous path on a compact real interval, using constant extension before
 integration. -/
-private noncomputable def intervalPrimitive (a b : ℝ) (hab : a ≤ b)
+private noncomputable def intervalPrimitive (a b : ℝ) [Fact (a ≤ b)]
     (f : C(Set.Icc a b, E)) : C(Set.Icc a b, E) :=
-  ⟨fun t ↦ ∫ s in a..t, f (Set.projIcc a b hab s),
+  ⟨fun t ↦ ∫ s in a..t, IccExtendCM f s,
     (intervalIntegral.continuous_primitive
-      (fun x y ↦ (f.continuous.comp continuous_projIcc).intervalIntegrable x y) a).comp
+      (fun x y ↦ (IccExtendCM f).continuous.intervalIntegrable x y) a).comp
         continuous_subtype_val⟩
 
 omit [CompleteSpace E] in
-private theorem intervalPrimitive_apply (a b : ℝ) (hab : a ≤ b)
+private theorem intervalPrimitive_apply (a b : ℝ) [Fact (a ≤ b)]
     (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
-    intervalPrimitive a b hab f t = ∫ s in a..t, f (Set.projIcc a b hab s) := rfl
+    intervalPrimitive a b f t = ∫ s in a..t, IccExtendCM f s := rfl
 
 /-- Volterra integration as a continuous linear operator on continuous paths over an arbitrary
 compact real interval. The input is extended constantly outside the interval before integration. -/
 noncomputable def intervalIntegralOperator (a b : ℝ) (hab : a ≤ b) :
     C(Set.Icc a b, E) →L[ℝ] C(Set.Icc a b, E) := by
+  let _ : Fact (a ≤ b) := ⟨hab⟩
   let L : C(Set.Icc a b, E) →ₗ[ℝ] C(Set.Icc a b, E) :=
-    { toFun := intervalPrimitive a b hab
+    { toFun := intervalPrimitive a b
       map_add' := fun f g ↦ by
         ext t
         rw [intervalPrimitive_apply, ContinuousMap.add_apply, intervalPrimitive_apply,
           intervalPrimitive_apply]
+        rw [show IccExtendCM (f + g) = IccExtendCM f + IccExtendCM g by
+          ext s
+          rfl]
         exact intervalIntegral.integral_add
-          ((f.continuous.comp continuous_projIcc).intervalIntegrable _ _)
-          ((g.continuous.comp continuous_projIcc).intervalIntegrable _ _)
+          ((IccExtendCM f).continuous.intervalIntegrable _ _)
+          ((IccExtendCM g).continuous.intervalIntegrable _ _)
       map_smul' := fun c f ↦ by
         ext t
         rw [intervalPrimitive_apply, ContinuousMap.smul_apply, intervalPrimitive_apply]
+        rw [show IccExtendCM (c • f) = c • IccExtendCM f by
+          ext s
+          rfl]
         simpa only [ContinuousMap.smul_apply, RingHom.id_apply] using
-          intervalIntegral.integral_smul c
-            (fun s ↦ f (Set.projIcc a b hab s)) }
+          intervalIntegral.integral_smul c (IccExtendCM f) }
   have L_apply (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
-      L f t = intervalPrimitive a b hab f t := rfl
+      L f t = intervalPrimitive a b f t := rfl
   exact LinearMap.mkContinuous L (b - a) fun f ↦ by
     apply (ContinuousMap.norm_le _
       (mul_nonneg (sub_nonneg.mpr hab) (norm_nonneg f))).2
     intro t
     rw [L_apply, intervalPrimitive_apply]
     calc
-      ‖∫ s in a..(t : ℝ), f (Set.projIcc a b hab s)‖ ≤ ‖f‖ * |(t : ℝ) - a| :=
+      ‖∫ s in a..(t : ℝ), IccExtendCM f s‖ ≤ ‖f‖ * |(t : ℝ) - a| :=
         intervalIntegral.norm_integral_le_of_norm_le_const fun s _ ↦
-          ContinuousMap.norm_coe_le_norm f (Set.projIcc a b hab s)
+          ContinuousMap.norm_coe_le_norm f (projIccCM s)
       _ ≤ (b - a) * ‖f‖ := by
         rw [abs_of_nonneg (sub_nonneg.mpr t.2.1), mul_comm (b - a)]
         exact mul_le_mul_of_nonneg_left (sub_le_sub_right t.2.2 a) (norm_nonneg f)
@@ -146,8 +153,9 @@ theorem intervalIntegralOperator_apply (a b : ℝ) (hab : a ≤ b)
     (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
     intervalIntegralOperator a b hab f t =
       ∫ s in a..t, f (Set.projIcc a b hab s) := by
+  let _ : Fact (a ≤ b) := ⟨hab⟩
   rw [intervalIntegralOperator]
-  exact intervalPrimitive_apply a b hab f t
+  exact intervalPrimitive_apply a b f t
 
 /-- Volterra integration on the unit interval, obtained from the general compact-interval
 operator. -/
