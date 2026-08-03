@@ -85,6 +85,14 @@ noncomputable def groupScheme (G : FGCommGrpCat.{u}) :
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateRing R G).obj)
 
+/-- The diagonalizable group scheme is obtained by applying relative spectrum to its
+coordinate Hopf algebra. -/
+theorem groupScheme_def (G : FGCommGrpCat.{u}) :
+    groupScheme R G =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateRing R G).obj) := by
+  rfl
+
 /-- The scheme underlying `D(G)` is the spectrum of the group algebra `R[G]`. -/
 @[simp]
 lemma groupScheme_X_left (G : FGCommGrpCat.{u}) :
@@ -152,6 +160,18 @@ lemma groupScheme_inv_left (G : FGCommGrpCat.{u}) :
 noncomputable def groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
     groupScheme R H ⟶ groupScheme R G :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R f).hom.op
+
+/-- The morphism of diagonalizable group schemes is obtained by applying relative spectrum to
+the coordinate Hopf-algebra morphism. -/
+theorem groupSchemeMap_def {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
+    groupSchemeMap R f =
+      eqToHom (groupScheme_def R H) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R f).hom.op ≫
+        eqToHom (groupScheme_def R G).symm := by
+  apply (conj_eqToHom_iff_heq _ _
+    (groupScheme_def R H) (groupScheme_def R G)).2
+  unfold groupSchemeMap
+  rfl
 
 /-- Under the identifications of its source and target with spectra, the scheme morphism
 underlying `groupSchemeMap f` is induced by the coordinate Hopf-algebra morphism
