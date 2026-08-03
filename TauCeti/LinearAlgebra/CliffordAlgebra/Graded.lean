@@ -112,6 +112,26 @@ theorem filtrationGradedEquiv_apply_mk (Q : QuadraticForm R M) [Invertible (2 : 
     (Submodule.Quotient.mk y))
   exact Subtype.ext (coe_equivExteriorFiltration_apply Q (k + 1) x)
 
+/-- The inverse graded equivalence sends an exterior element to the quotient class of its
+preimage under `equivExterior`. -/
+@[simp]
+theorem filtrationGradedEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ)
+    (x : ⋀[R]^(k + 1) M) :
+    (filtrationGradedEquiv Q k).symm x =
+      Submodule.Quotient.mk
+        (⟨(equivExterior Q).symm x, by
+          simpa only [coe_equivExteriorFiltration_symm_apply] using
+            ((equivExteriorFiltration Q (k + 1)).symm
+              (⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩ :
+                filtration (0 : QuadraticForm R M) (k + 1))).property⟩ :
+          filtration Q (k + 1)) := by
+  rw [filtrationGradedEquiv, LinearEquiv.trans_symm, LinearEquiv.trans_apply,
+    zeroFormFiltrationQuotientEquivExteriorPower_symm_apply,
+    equivExteriorFiltrationQuotient, Submodule.Quotient.equiv_symm,
+    Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+  apply congrArg Submodule.Quotient.mk
+  exact Subtype.ext (coe_equivExteriorFiltration_symm_apply Q (k + 1) _)
+
 end CliffordAlgebra
 
 end TauCeti
