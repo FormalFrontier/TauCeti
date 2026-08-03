@@ -171,11 +171,7 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ¬ (p : ℤ) ∣ d) :
     (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔ legendreSym p d = 1 := by
   have hp := not_dvd_exponent_of_minpoly_quadratic hmin hgen hodd hcop
-  have hintθℚ : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  have hfr : finrank ℚ K = 2 := by
-    rw [(PowerBasis.ofAdjoinEqTop' hintθℚ hgen).finrank,
-      ← (PowerBasis.ofAdjoinEqTop' hintθℚ hgen).natDegree_minpoly,
-      PowerBasis.ofAdjoinEqTop'_gen, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
+  have hfr : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have hcard : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = (monicFactorsMod θ p).card := by
     rw [← Nat.card_coe_set_eq, Nat.card_congr (primesOverSpanEquivMonicFactorsMod hp)]
     exact Nat.card_eq_finsetCard _
