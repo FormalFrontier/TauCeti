@@ -43,22 +43,11 @@ namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
-/-- `equivExterior` maps every Clifford filtration step to the corresponding zero-form step. -/
-theorem equivExterior_map_filtration (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
-    (filtration Q k).map (equivExterior Q).toLinearMap = filtration (0 : QuadraticForm R M) k :=
-  changeFormEquiv_map_filtration Q changeForm.associated_neg_proof k
-
 /-- `equivExterior` restricted to a Clifford filtration step. -/
 noncomputable def equivExteriorFiltration (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
     filtration Q k ≃ₗ[R] filtration (0 : QuadraticForm R M) k :=
-  (equivExterior Q).ofSubmodules _ _ (equivExterior_map_filtration Q k)
-
-/-- The restricted equivalence agrees with `equivExterior` after coercion from a filtration step. -/
-@[simp]
-theorem coe_equivExteriorFiltration_apply (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ)
-    (x : filtration Q k) :
-    (equivExteriorFiltration Q k x : CliffordAlgebra (0 : QuadraticForm R M)) = equivExterior Q x :=
-  LinearEquiv.ofSubmodules_apply (equivExterior Q) (equivExterior_map_filtration Q k) x
+  (equivExterior Q).ofSubmodules _ _
+    (changeFormEquiv_map_filtration Q changeForm.associated_neg_proof k)
 
 private theorem equivExteriorFiltration_map_previous (Q : QuadraticForm R M) [Invertible (2 : R)]
     (k : ℕ) :
@@ -69,9 +58,11 @@ private theorem equivExteriorFiltration_map_previous (Q : QuadraticForm R M) [In
   ext x
   rw [Submodule.mem_map_equiv]
   -- The two submodules are over filtration subtypes, so expose their ambient carrier predicates.
-  change (equivExterior Q).symm (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration Q k ↔
+  change (changeFormEquiv changeForm.associated_neg_proof).symm
+      (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration Q k ↔
     (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration (0 : QuadraticForm R M) k
-  rw [← equivExterior_map_filtration Q k, Submodule.mem_map_equiv]
+  rw [← changeFormEquiv_map_filtration Q changeForm.associated_neg_proof k,
+    Submodule.mem_map_equiv]
 
 private noncomputable def equivExteriorFiltrationQuotient (Q : QuadraticForm R M)
     [Invertible (2 : R)] (k : ℕ) :
