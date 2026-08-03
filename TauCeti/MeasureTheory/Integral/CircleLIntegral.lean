@@ -112,20 +112,26 @@ theorem circleLIntegral_def (g : ℂ → ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
   rw [circleLIntegral]
 
 /-- Increasing the weight on the circle increases its circle integral: only the values on
-`Metric.sphere ζ |ρ|`, the circle the integral is taken over, matter. -/
+`Metric.sphere ζ ρ`, the circle the integral is taken over, matter.
+
+The comparison is asked for only at a positive radius, since at a nonpositive one both sides are
+`0` and nothing about `g` and `h` is needed. -/
 theorem circleLIntegral_mono_on {h : ℂ → ℝ≥0∞} (ζ : ℂ) (ρ : ℝ)
-    (hgh : ∀ z ∈ Metric.sphere ζ |ρ|, g z ≤ h z) :
+    (hgh : 0 < ρ → ∀ z ∈ Metric.sphere ζ ρ, g z ≤ h z) :
     circleLIntegral g ζ ρ ≤ circleLIntegral h ζ ρ := by
+  rcases le_or_gt ρ 0 with hρ | hρ
+  · rw [circleLIntegral_def, circleLIntegral_def, ENNReal.ofReal_of_nonpos hρ, zero_mul, zero_mul]
   rw [circleLIntegral_def, circleLIntegral_def]
   gcongr with θ
-  exact hgh _ (circleMap_mem_sphere' ζ ρ θ)
+  exact hgh hρ _ (circleMap_mem_sphere ζ hρ.le θ)
 
-/-- Weights agreeing on the circle have the same circle integral. -/
+/-- Weights agreeing on the circle have the same circle integral; as in
+`TauCeti.circleLIntegral_mono_on`, agreement is asked for only at a positive radius. -/
 theorem circleLIntegral_congr {h : ℂ → ℝ≥0∞} (ζ : ℂ) (ρ : ℝ)
-    (hgh : EqOn g h (Metric.sphere ζ |ρ|)) :
+    (hgh : 0 < ρ → EqOn g h (Metric.sphere ζ ρ)) :
     circleLIntegral g ζ ρ = circleLIntegral h ζ ρ :=
-  le_antisymm (circleLIntegral_mono_on ζ ρ fun _ hz => (hgh hz).le)
-    (circleLIntegral_mono_on ζ ρ fun _ hz => (hgh hz).ge)
+  le_antisymm (circleLIntegral_mono_on ζ ρ fun hρ _ hz => (hgh hρ hz).le)
+    (circleLIntegral_mono_on ζ ρ fun hρ _ hz => (hgh hρ hz).ge)
 
 /-- The circle integral of a constant weight is `2 π ρ` — for `ρ > 0` the circumference of the
 circle — times that constant; for `ρ ≤ 0` both sides are `0`. -/
@@ -139,7 +145,9 @@ theorem circleLIntegral_const (a : ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
       ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 2 * π)]
     ring
 
-/-- A circle of nonpositive radius carries no arc length. -/
+/-- The circle integral vanishes at a nonpositive radius, by the factor `ENNReal.ofReal ρ` in the
+definition of `TauCeti.circleLIntegral`. This is that convention, not a geometric statement: for
+`ρ < 0` the parametrisation `circleMap ζ ρ` still runs once around the circle of radius `|ρ|`. -/
 @[simp]
 theorem circleLIntegral_of_nonpos (g : ℂ → ℝ≥0∞) (ζ : ℂ) (hρ : ρ ≤ 0) :
     circleLIntegral g ζ ρ = 0 := by

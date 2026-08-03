@@ -26,8 +26,10 @@ the **length density of `f`**, namely `‖deriv f‖ₑ` cut off outside `s`, an
 sides of the general estimates then mean:
 
 * the circle integral `TauCeti.circleLIntegral` of that weight is
-  `TauCeti.circleImageLength f s ζ ρ`, for measurable `s` and holomorphic `f` the arc length of the
-  parametrised curve `f ∘ circleMap ζ ρ` over the angles landing in `s`;
+  `TauCeti.circleImageLength f s ζ ρ`, which for `ρ > 0`, measurable `s` and holomorphic `f` is the
+  arc length of the parametrised curve `f ∘ circleMap ζ ρ` over the angles landing in `s` (for
+  `ρ ≤ 0` it is `0` by the `ENNReal.ofReal ρ` convention of `TauCeti.circleLIntegral`, and carries
+  no geometric reading);
 * its plane integral of squares is the Dirichlet integral of `f` over `s`, hence by
   `Conformal/Area.lean` the area of `f '' s`.
 
@@ -49,9 +51,9 @@ from these estimates in order to force the cluster set at `ζ` to degenerate to 
 ## Main results
 
 * `TauCeti.circleImageLength` — the circle integral of the length density of `f` cut off outside
-  `s`; for measurable `s` and holomorphic `f` this is the arc length of `f ∘ circleMap ζ ρ` over the
-  angles landing in `s`, a length along the parametrisation, counted with multiplicity, rather than
-  a measure of the image set.
+  `s`; for `ρ > 0`, measurable `s` and holomorphic `f` this is the arc length of `f ∘ circleMap ζ ρ`
+  over the angles landing in `s`, a length along the parametrisation, counted with multiplicity,
+  rather than a measure of the image set.
 * `TauCeti.ofReal_dist_le_circleImageLength` — the chord bound justifying the name, and the only
   claim made here about lengths that is actually proved: a sub-arc of angular width at most `2 * π`
   that stays in `s` and in a set on which `f` is holomorphic has the distance between the images of
@@ -108,9 +110,11 @@ carries no geometric meaning. What is proved of it here is
 `TauCeti.ofReal_dist_le_circleImageLength`, which for `f` holomorphic bounds the chord across an
 arc of angles lying in `s` by this quantity, and that is what justifies the name.
 
-For measurable `s` and holomorphic `f` the informal reading is the arc length of the parametrised
-curve `f ∘ circleMap ζ ρ` restricted to the angles whose points lie in `s`, whose speed at angle
-`θ` is `ρ * ‖deriv f (circleMap ζ ρ θ)‖`. Even then it is length along the *parametrisation*, so
+For `0 < ρ`, measurable `s` and holomorphic `f` the informal reading is the arc length of the
+parametrised curve `f ∘ circleMap ζ ρ` restricted to the angles whose points lie in `s`, whose
+speed at angle `θ` is `ρ * ‖deriv f (circleMap ζ ρ θ)‖`. For `ρ ≤ 0` the quantity is `0` by the
+`ENNReal.ofReal ρ` convention of `TauCeti.circleLIntegral`, so no arc-length reading applies there.
+Even for `0 < ρ` it is length along the *parametrisation*, so
 points covered several times are counted with multiplicity, and it is a length of the image *set*
 only when `f` is in addition injective on that part of the circle; neither reading is formalised
 here. For a map with no complex derivative the reading fails outright, since `deriv` is then the
@@ -131,12 +135,13 @@ theorem circleImageLength_def (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : �
 theorem circleImageLength_mono (f : ℂ → ℂ) (ζ : ℂ) (ρ : ℝ) (hst : s ⊆ t) :
     circleImageLength f s ζ ρ ≤ circleImageLength f t ζ ρ := by
   rw [circleImageLength_def, circleImageLength_def]
-  refine circleLIntegral_mono_on ζ ρ (fun z _ => ?_)
+  refine circleLIntegral_mono_on ζ ρ (fun _ z _ => ?_)
   by_cases hz : z ∈ s
   · simp [Set.indicator_of_mem hz, Set.indicator_of_mem (hst hz)]
   · simp [Set.indicator_of_notMem hz]
 
-/-- A circle of nonpositive radius contributes no length. -/
+/-- The quantity vanishes at a nonpositive radius, inheriting the `ENNReal.ofReal ρ` convention of
+`TauCeti.circleLIntegral`: it is that convention rather than a statement about lengths. -/
 @[simp]
 theorem circleImageLength_of_nonpos (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) {ρ : ℝ} (hρ : ρ ≤ 0) :
     circleImageLength f s ζ ρ = 0 := by
