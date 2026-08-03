@@ -90,14 +90,14 @@ variable {G : Type*} [Group G]
 section Stabilizer
 
 /-- The stabilizer of the coset `sH`, for the translation action of `G` on `G ⧸ H`, is the
-conjugate subgroup `sHs⁻¹`.  This is Mathlib's `MulAction.stabilizer_quotient` at a general
-coset instead of the trivial one. -/
+conjugate subgroup `sHs⁻¹`.  This is Mathlib's `MulAction.stabilizer_quotient` transported off the
+trivial coset along `MulAction.stabilizer_smul_eq_stabilizer_map_conj`. -/
 theorem stabilizer_quotientGroup_mk (H : Subgroup G) (s : G) :
     stabilizer G ((s : G ⧸ H)) = MulAut.conj s • H := by
-  ext g
-  rw [mem_stabilizer_iff, mem_conj_smul]
-  change ((g * s : G) : G ⧸ H) = (s : G ⧸ H) ↔ _
-  rw [QuotientGroup.eq, show (g * s)⁻¹ * s = (s⁻¹ * g * s)⁻¹ by group, Subgroup.inv_mem_iff]
+  rw [show ((s : G) : G ⧸ H) = s • ((1 : G) : G ⧸ H) by
+      rw [Quotient.smul_coe, smul_eq_mul, mul_one],
+    stabilizer_smul_eq_stabilizer_map_conj, stabilizer_quotient, Subgroup.pointwise_smul_def]
+  rfl
 
 end Stabilizer
 
@@ -289,14 +289,14 @@ theorem card_doubleCoset_mul_card_mackeySubgroup (s : G) (H K : Subgroup G) :
     mul_comm]
 
 /-- The index of the Mackey subgroup in `K` depends only on the double coset `KsH`, not on the
-representative `s` chosen inside it: the two subgroups are conjugate
-(`TauCeti.mackeySubgroup_conj`), and their common index is the size of the `K`-orbit of `sH`. -/
+representative `s` chosen inside it: the two subgroups are conjugate by an element of `K`
+(`TauCeti.mackeySubgroup_conj`), and conjugation fixes `K`, so it preserves the relative index. -/
 theorem relIndex_mackeySubgroup_conj {s k h : G} {H K : Subgroup G} (hk : k ∈ K) (hh : h ∈ H) :
-    (mackeySubgroup (k * s * h) H K).relIndex K = (mackeySubgroup s H K).relIndex K := by
-  have horb : orbit K (((k * s * h : G) : G ⧸ H)) = orbit K ((s : G ⧸ H)) :=
-    orbit_eq_iff.2 ((mem_doubleCoset_iff_mk_mem_orbit s H K).1
-      (DoubleCoset.mem_doubleCoset.2 ⟨k, hk, h, hh, rfl⟩))
-  rw [← card_orbit_eq_relIndex, ← card_orbit_eq_relIndex, horb]
+    (mackeySubgroup (k * s * h) H K).relIndex K = (mackeySubgroup s H K).relIndex K :=
+  calc (mackeySubgroup (k * s * h) H K).relIndex K
+      = (MulAut.conj k • mackeySubgroup s H K).relIndex (MulAut.conj k • K) := by
+        rw [mackeySubgroup_conj hk hh, Subgroup.conj_smul_eq_self_of_mem hk]
+    _ = (mackeySubgroup s H K).relIndex K := Subgroup.relIndex_pointwise_smul _ _ _
 
 end Orbit
 
