@@ -99,8 +99,7 @@ generating tangent vector in the model space. -/
 noncomputable def mulInvariantCoordinateVectorField (p : E × E) : E :=
   let g := (extChartAt I (1 : G)).symm p.2
   tangentCoordChange I g (1 : G) g
-    (mulInvariantVectorField
-      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1) g)
+    (mulInvariantVectorField (I := I) (G := G) p.1 g)
 
 /-- The coordinate expression of the parameterized left-invariant vector field is smooth at the
 zero tangent vector and identity coordinate. -/
@@ -111,8 +110,7 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
   let _ : ContMDiffMul I (∞ + 1) G := by
     simpa using (inferInstance : ContMDiffMul I ∞ G)
   let V : E × G → TangentBundle I G := fun p =>
-    ⟨p.2, mulInvariantVectorField
-      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1) p.2⟩
+    ⟨p.2, mulInvariantVectorField (I := I) (G := G) p.1 p.2⟩
   have hV : ContMDiff (𝓘(ℝ, E).prod I) I.tangent ∞ V :=
     contMDiff_mulInvariantVectorField_modelSpace (n := ∞)
   have hV₀ := hV.contMDiffAt (x := ((0 : E), (1 : G)))
@@ -127,7 +125,7 @@ theorem contDiffAt_mulInvariantCoordinateVectorField
     change tangentCoordChange I ((extChartAt I (1 : G)).symm p.2) (1 : G)
       ((extChartAt I (1 : G)).symm p.2)
         (mulInvariantVectorField
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1)
+          p.1
           ((extChartAt I (1 : G)).symm p.2)) =
       mulInvariantCoordinateVectorField (I := I) (G := G) p
     rfl
@@ -296,8 +294,8 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
         Set.EqOn
           (fun t => (extChartAt I (1 : G)).symm
             (α (((v, extChartAt I (1 : G) (1 : G)), t))).2)
-          (mulInvariantIntegralCurve
-            ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1)
+          (mulInvariantIntegralCurve (I := I) (G := G)
+            (v : GroupLieAlgebra I G) 1)
           (Set.Ioo (-δ) δ) := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   obtain ⟨α, hαcont, _, hαcontNear, hα⟩ :=
@@ -340,8 +338,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
     simpa only [embed, Set.mem_ofPred_eq, Prod.fst, Prod.snd] using (hsub hmem).2
   have hγAt : ∀ t ∈ Set.Ioo (-δ) δ,
       IsMIntegralCurveAt γ
-        (mulInvariantVectorField
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)) t := by
+        (mulInvariantVectorField (I := I) (G := G) (v : GroupLieAlgebra I G)) t := by
     intro t ht
     apply isMIntegralCurveAt_extChartAt_symm_of_eventually
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
@@ -362,8 +359,7 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       rw [hpair] at hsnd
       simpa only [mulInvariantCoordinateVectorField, f] using hsnd
   have hγOn : IsMIntegralCurveOn γ
-      (mulInvariantVectorField
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v))
+      (mulInvariantVectorField (I := I) (G := G) (v : GroupLieAlgebra I G))
       (Set.Ioo (-δ) δ) := IsMIntegralCurveAt.isMIntegralCurveOn hγAt
   have hzero : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨by linarith, by linarith⟩
   have hγzero : γ 0 = 1 := by
@@ -373,12 +369,18 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
     rw [congrArg Prod.snd hinit]
     exact (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
   exact isMIntegralCurveOn_Ioo_eqOn_of_contMDiff_boundaryless hzero
-    ((contMDiff_mulInvariantVectorField
-      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)).of_le (by simp))
+    ((contMDiff_mulInvariantVectorField (I := I) (G := G)
+      (v : GroupLieAlgebra I G)).of_le (by simp))
     hγOn
-    ((isMIntegralCurve_mulInvariantIntegralCurve
-      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) 1).isMIntegralCurveOn _)
-    (by simpa only [γ, f, Function.comp_apply, mulInvariantIntegralCurve_zero] using hγzero)
+    ((isMIntegralCurve_mulInvariantIntegralCurve (I := I) (G := G)
+      (v : GroupLieAlgebra I G) 1).isMIntegralCurveOn _)
+    (by
+      calc
+        γ 0 = 1 := hγzero
+        _ = mulInvariantIntegralCurve (I := I) (G := G)
+            (v : GroupLieAlgebra I G) 1 0 :=
+          (mulInvariantIntegralCurve_zero (I := I) (G := G)
+            (v : GroupLieAlgebra I G) 1).symm)
 
 omit [IsManifold I 2 G] in
 /-- In model-space coordinates, the tangent-space exponential is continuous at the zero vector.
@@ -387,8 +389,7 @@ integral curves transports that interval to time one. -/
 theorem continuousAt_mulInvariantExp_modelSpace_zero
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ContinuousAt
-      (fun v : E => mulInvariantExp
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)) 0 := by
+      (fun v : E => mulInvariantExp (I := I) (G := G) v) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   obtain ⟨α, U, δ, hU, hδ, _, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
@@ -426,14 +427,13 @@ theorem continuousAt_mulInvariantExp_modelSpace_zero
   symm
   calc
     (extChartAt I (1 : G)).symm (α (q v)).2 =
-        mulInvariantIntegralCurve
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm (c⁻¹ • v)) 1 c := by
+        mulInvariantIntegralCurve (I := I) (G := G) (c⁻¹ • v) 1 c := by
       exact hαeq (c⁻¹ • v) hv hc
     _ = mulInvariantExp
-        (c • (groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm (c⁻¹ • v)) := by
+        (c • (c⁻¹ • v)) := by
       exact (mulInvariantExp_smul _ c).symm
     _ = mulInvariantExp
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) := by
+        v := by
       congr 1
-      rw [← map_smul]
       simp only [smul_smul, mul_inv_cancel₀ hc0, one_smul]
+      rfl
