@@ -117,9 +117,12 @@ theorem matrixCoefficientSubalgebra_dual :
       (matrixCoefficientSubalgebra (R := R) (C := H) (M := M)).map
         (HopfAlgebra.antipodeAlgHom R H) := by
   rw [matrixCoefficientSubalgebra_def, matrixCoefficientSubalgebra_def,
-    matrixCoefficientSet_dual, ← HopfAlgebra.toLinearMap_antipodeAlgHom,
-    AlgHom.map_adjoin]
-  congr 1
+    matrixCoefficientSet_dual, AlgHom.map_adjoin]
+  apply congrArg (Algebra.adjoin R)
+  apply Set.image_congr
+  intro h _
+  exact congrArg (fun f : H →ₗ[R] H => f h)
+    (HopfAlgebra.toLinearMap_antipodeAlgHom (R := R) (A := H)).symm
 
 /-- The coefficient subalgebra of the product of a finite projective comodule and its dual is
 the supremum of the original coefficient subalgebra and its antipode image. -/
