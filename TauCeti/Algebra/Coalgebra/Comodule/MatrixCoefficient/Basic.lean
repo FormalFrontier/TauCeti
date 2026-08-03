@@ -214,7 +214,7 @@ element. -/
 theorem matrixCoefficient_groupLike (g : GroupLike R C) (φ : M →ₗ[R] R) (m : M) :
     letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
     matrixCoefficient (R := R) (C := C) φ m = φ m • (g : C) := by
-  letI : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
+  let : Comodule R C M := groupLike (R := R) (C := C) (M := M) g
   simp [matrixCoefficient_def]
 
 end GroupLike

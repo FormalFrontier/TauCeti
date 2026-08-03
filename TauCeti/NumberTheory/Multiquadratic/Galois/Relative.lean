@@ -200,8 +200,8 @@ theorem card_aut_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isAbelianGalois hroot
-  haveI := finiteDimensional_top_over_intermediateField hroot F
+  have := isAbelianGalois hroot
+  have := finiteDimensional_top_over_intermediateField hroot F
   rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
     finrank_top_over_intermediateField hroot hindep F]
 

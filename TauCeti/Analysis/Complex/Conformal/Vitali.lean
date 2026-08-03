@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Montel
+public import TauCeti.Analysis.Complex.Conformal.Montel.Basic
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.UniformSpace.CompactConvergence
@@ -85,7 +85,7 @@ theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
   obtain ⟨φ, g, hφ, hg, hφconv⟩ := montel hΩ hF hb
   refine ⟨g, hg, (tendstoLocallyUniformlyOn_iff_forall_isCompact hΩ).2 ?_⟩
   intro K hKΩ hK
-  letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  let : CompactSpace K := isCompact_iff_compactSpace.mp hK
   have hrestr :
       Tendsto
         (fun n => ⟨K.domRestrict (F n), ((hF n).continuousOn.mono hKΩ).domRestrict⟩ :

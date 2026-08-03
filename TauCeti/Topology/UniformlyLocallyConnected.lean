@@ -61,6 +61,8 @@ it, and no Lebesgue-number consequence of this shape.
   locally connected.
 * `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace` — a uniformly locally connected set
   is locally connected; no compactness is used.
+* `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset` — a small enough subset is
+  enclosed in a small connected subset, at a rate independent of the subset.
 * `TauCeti.IsCompact.isUniformlyLocallyConnected_iff` — on a compact set the two notions agree.
 * `TauCeti.Convex.isUniformlyLocallyConnected` — a convex set in a real normed space is uniformly
   locally connected, with the joining segment as the connected set.
@@ -137,6 +139,49 @@ theorem isUniformlyLocallyConnected_iff_exists_isConnected_diam_le :
   exact ⟨C, hCs, hCconn, hCa, hCb,
     fun x hx y hy => (dist_le_diam_of_mem hCbdd hx hy).trans hCdiam⟩
 
+/-- **A uniformly locally connected set encloses each of its small subsets in a small connected
+set.** For every `ε > 0` there is a single `δ > 0` — depending on `s` and `ε` alone — such that
+every nonempty bounded subset of `s` of diameter less than `δ` is contained in a connected subset
+of `s` of diameter at most `ε`.
+
+This upgrades the two-point statement `TauCeti.IsUniformlyLocallyConnected.exists_isConnected` from
+a pair of points to a whole small set, one connected set swallowing the subset entirely. The `δ`
+produced is the two-point modulus of `ε / 2`, not of `ε`: the enclosing set is reached from the
+fixed point `a` below, so each of its points is allowed only half of the budget.
+
+The enclosing set is built by taking every candidate at once, as in
+`TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace`: fix a point `a` of the subset and
+unite every preconnected subset of `s` that contains `a` and stays within `ε / 2` of it. -/
+theorem IsUniformlyLocallyConnected.exists_isConnected_superset
+    (h : IsUniformlyLocallyConnected s) {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ > 0, ∀ t ⊆ s, Bornology.IsBounded t → t.Nonempty → diam t < δ →
+      ∃ S ⊆ s, IsConnected S ∧ t ⊆ S ∧ diam S ≤ ε := by
+  obtain ⟨δ, hδ, hjoin⟩ := h.exists_isConnected (by linarith : (0 : ℝ) < ε / 2)
+  refine ⟨δ, hδ, fun t hts htb htne hdiam => ?_⟩
+  obtain ⟨a, ha⟩ := htne
+  -- every preconnected subset of `s` through `a` that stays within `ε / 2` of it
+  set 𝒞 : Set (Set X) := {T : Set X | T ⊆ s ∧ IsPreconnected T ∧ a ∈ T ∧
+    ∀ x ∈ T, dist x a ≤ ε / 2}
+  have haS : a ∈ ⋃₀ 𝒞 :=
+    ⟨{a}, ⟨singleton_subset_iff.mpr (hts ha), isPreconnected_singleton, rfl,
+      fun x hx => by rw [mem_singleton_iff.mp hx, dist_self]; linarith⟩, rfl⟩
+  refine ⟨⋃₀ 𝒞, ?_, ⟨⟨a, haS⟩, isPreconnected_sUnion a 𝒞 (fun T hT => hT.2.2.1)
+    fun T hT => hT.2.1⟩, ?_, ?_⟩
+  · rintro x ⟨T, hT, hxT⟩
+    exact hT.1 hxT
+  · -- uniform local connectedness joins each point of `t` to `a` by a set being united
+    intro b hbt
+    obtain ⟨C, hCs, hCconn, hCa, hCb, hCsmall⟩ := hjoin a (hts ha) b (hts hbt)
+      (lt_of_le_of_lt (dist_le_diam_of_mem htb ha hbt) hdiam)
+    exact ⟨C, ⟨hCs, hCconn.isPreconnected, hCa, fun x hx => hCsmall x hx a hCa⟩, hCb⟩
+  · refine diam_le_of_forall_dist_le hε.le ?_
+    rintro x ⟨T, hT, hxT⟩ y ⟨T', hT', hyT'⟩
+    have hx : dist x a ≤ ε / 2 := hT.2.2.2 x hxT
+    have hy : dist y a ≤ ε / 2 := hT'.2.2.2 y hyT'
+    calc dist x y ≤ dist x a + dist a y := dist_triangle x a y
+      _ ≤ ε / 2 + ε / 2 := by rw [dist_comm a y]; linarith
+      _ = ε := by ring
+
 /-- The empty set is uniformly locally connected, vacuously. -/
 @[simp]
 theorem isUniformlyLocallyConnected_empty : IsUniformlyLocallyConnected (∅ : Set X) :=
@@ -169,7 +214,7 @@ cover does the rest: two points at distance less than `δ` lie in a common ball 
 in a common member of the cover, whose points are pairwise within `ε` of one another. -/
 protected theorem IsCompact.isUniformlyLocallyConnected [LocallyConnectedSpace s]
     (hs : IsCompact s) : IsUniformlyLocallyConnected s := by
-  haveI : CompactSpace s := isCompact_iff_compactSpace.mp hs
+  have : CompactSpace s := isCompact_iff_compactSpace.mp hs
   rw [isUniformlyLocallyConnected_def]
   intro ε hε
   have hε2 : (0 : ℝ) < ε / 2 := by linarith

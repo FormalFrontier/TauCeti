@@ -149,8 +149,8 @@ theorem frobenius_reciprocity [Fintype G] (hG : IsUnit (Nat.card G : k))
     (A : FDRep k S) (B : FDRep k G) :
     (Nat.card G : k)⁻¹ * ∑ g : G, (indFDRep A).character g * B.character g⁻¹ =
       (Nat.card S : k)⁻¹ * ∑ s : S, A.character s * B.character ((s : G)⁻¹) := by
-  letI : Invertible (Nat.card G : k) := hG.invertible
-  letI : Invertible (Nat.card S : k) := (isUnit_natCard_subgroup S hG).invertible
+  let : Invertible (Nat.card G : k) := hG.invertible
+  let : Invertible (Nat.card S : k) := (isUnit_natCard_subgroup S hG).invertible
   calc (Nat.card G : k)⁻¹ * ∑ g : G, (indFDRep A).character g * B.character g⁻¹
       = ClassFunction.characterPairing (ClassFunction.ofFDRep (indFDRep A))
           (ClassFunction.ofFDRep B) := (ClassFunction.characterPairing_ofFDRep _ _).symm

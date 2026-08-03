@@ -41,7 +41,7 @@ variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
 private lemma finiteDimensional_domain_of_isFredholm_zero
     (hT : ContinuousLinearMap.IsFredholm (0 : E →L[𝕜] F)) : FiniteDimensional 𝕜 E := by
-  letI := hT.finite_ker
+  let := hT.finite_ker
   exact
     ((LinearEquiv.ofEq (LinearMap.ker (0 : E →ₗ[𝕜] F)) (⊤ : Submodule 𝕜 E)
         LinearMap.ker_zero) ≪≫ₗ
@@ -49,7 +49,7 @@ private lemma finiteDimensional_domain_of_isFredholm_zero
 
 private lemma finiteDimensional_codomain_of_isFredholm_zero
     (hT : ContinuousLinearMap.IsFredholm (0 : E →L[𝕜] F)) : FiniteDimensional 𝕜 F := by
-  letI := hT.finite_coker
+  let := hT.finite_coker
   exact
     (LinearMap.range (0 : E →ₗ[𝕜] F)).quotEquivOfEqBot LinearMap.range_zero
       |>.finiteDimensional
@@ -65,8 +65,8 @@ lemma isFredholm_zero_iff :
     exact ⟨⟨finiteDimensional_domain_of_isFredholm_zero h⟩,
       ⟨finiteDimensional_codomain_of_isFredholm_zero h⟩⟩
   · rintro ⟨⟨hE⟩, ⟨hF⟩⟩
-    letI := hE
-    letI := hF
+    let := hE
+    let := hF
     exact
       { isStrictMap := by
           have hclosed : IsClosedMap (0 : E →L[𝕜] F) := fun s hs ↦ by

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
+public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RingTheory.Finiteness.Subalgebra
 
@@ -60,6 +61,13 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.reverse_mem_filtration` and
   `TauCeti.CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
   involution, by reversal, and by an isometry of quadratic forms.
+* `TauCeti.CliffordAlgebra.contractLeft_mem_filtration_succ` and
+  `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
+  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
+  quadratic form respect the filtration, contraction lowers every positive step by one, and the
+  change-form equivalence transports every step exactly.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
@@ -380,69 +388,62 @@ theorem filtrationLeadingTerm_apply_ιMulti (k : ℕ) (v : Fin (k + 1) → M) :
     filtrationLeadingTermAlternating]
   rfl
 
+/-- The pullback along the filtration quotient of the range of the degree-`k + 1` leading-term map.
+An element of `filtration Q (k + 1)` lies in its image under the inclusion exactly when its class
+modulo `filtration Q k` is a leading term. -/
+private noncomputable def leadingTermPreimage (k : ℕ) : Submodule R (filtration Q (k + 1)) :=
+  (LinearMap.range (filtrationLeadingTerm Q k)).comap
+    ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ
+
+/-- **The lower filtration consists of leading terms, trivially.** An element of `filtration Q k`
+has zero class modulo `filtration Q k`, and zero is a leading term. -/
+private theorem filtration_le_map_leadingTermPreimage (k : ℕ) :
+    filtration Q k ≤ (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype := by
+  intro z hz
+  have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
+  refine Submodule.mem_map.2 ⟨⟨z, hz'⟩, ?_, rfl⟩
+  have hzero : ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ ⟨z, hz'⟩ = 0 :=
+    (Submodule.Quotient.mk_eq_zero _).mpr hz
+  simp [leadingTermPreimage, hzero]
+
+/-- **A product of `k + 1` generators is a leading term**, namely of the corresponding exterior
+product, so the top piece of the successor filtration also consists of leading terms. -/
+private theorem ι_range_pow_le_map_leadingTermPreimage (k : ℕ) :
+    LinearMap.range (ι Q) ^ (k + 1) ≤
+      (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype := by
+  rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
+  rintro x hx
+  obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
+  choose v hv using fun i => LinearMap.mem_range.1 (f i).property
+  have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
+      (List.ofFn ((ι Q) ∘ v)).prod := by
+    apply congrArg List.prod
+    apply congrArg List.ofFn
+    funext i
+    exact (hv i).symm
+  rw [hprod]
+  refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
+  · rw [← List.map_ofFn]
+    exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
+  · simpa [leadingTermPreimage] using LinearMap.mem_range.2
+      ⟨exteriorPower.ιMulti R (k + 1) v, filtrationLeadingTerm_apply_ιMulti Q k v⟩
+
 /-- Every element of the degree-`k + 1` Clifford filtration quotient is the leading term of an
 element of the degree-`k + 1` exterior power. -/
 theorem filtrationLeadingTerm_surjective (k : ℕ) :
     Function.Surjective (filtrationLeadingTerm Q k) := by
-  -- Pull the leading-term range back along the quotient, then use the successor filtration split.
-  let P : Submodule R (filtration Q (k + 1)) :=
-    (filtration Q k).comap (filtration Q (k + 1)).subtype
-  let q : filtration Q (k + 1) →ₗ[R] (filtration Q (k + 1) ⧸ P) := P.mkQ
-  let T : Submodule R (filtration Q (k + 1)) :=
-    (LinearMap.range (filtrationLeadingTerm Q k)).comap q
-  have hle : filtration Q (k + 1) ≤ T.map (filtration Q (k + 1)).subtype := by
-    calc
-      filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
-        filtration_succ_eq_sup Q k
-      _ ≤ T.map (filtration Q (k + 1)).subtype := sup_le (by
-        intro z hz
-        have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
-        let z' : filtration Q (k + 1) := ⟨z, hz'⟩
-        refine Submodule.mem_map.2 ⟨z', ?_, rfl⟩
-        -- Unfold the range comap and quotient map before proving a lower-filtration class is zero.
-        change q z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
-        change P.mkQ z' ∈ LinearMap.range (filtrationLeadingTerm Q k)
-        have hzP : z' ∈ P := by
-          -- Membership in the comap is exactly the original lower-filtration membership.
-          change z ∈ filtration Q k
-          exact hz
-        have hzero : P.mkQ z' = 0 := by
-          rw [Submodule.mkQ_apply]
-          exact (Submodule.Quotient.mk_eq_zero P).mpr hzP
-        rw [hzero]
-        exact LinearMap.mem_range.2 ⟨0, map_zero _⟩) (by
-        rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
-        rintro x hx
-        obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
-        choose v hv using fun i => LinearMap.mem_range.1 (f i).property
-        have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
-            (List.ofFn ((ι Q) ∘ v)).prod := by
-          apply congrArg List.prod
-          apply congrArg List.ofFn
-          funext i
-          exact (hv i).symm
-        rw [hprod]
-        refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
-        · rw [← List.map_ofFn]
-          exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
-        · change q ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
-            LinearMap.range (filtrationLeadingTerm Q k)
-          -- Expose the quotient map after the subtype witness is constructed.
-          change P.mkQ ⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩ ∈
-            LinearMap.range (filtrationLeadingTerm Q k)
-          rw [Submodule.mkQ_apply]
-          exact LinearMap.mem_range.2 ⟨exteriorPower.ιMulti R (k + 1) v,
-            filtrationLeadingTerm_apply_ιMulti Q k v⟩)
+  -- Both pieces of the successor filtration split consist of leading terms.
+  have hle : filtration Q (k + 1) ≤
+      (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype :=
+    (filtration_succ_eq_sup Q k).le.trans
+      (sup_le (filtration_le_map_leadingTermPreimage Q k)
+        (ι_range_pow_le_map_leadingTermPreimage Q k))
   intro z
-  obtain ⟨x, rfl⟩ := Submodule.Quotient.mk_surjective P z
-  have hx : (x : CliffordAlgebra Q) ∈ T.map (filtration Q (k + 1)).subtype := hle x.property
-  rcases Submodule.mem_map.1 hx with ⟨y, hy, hxy⟩
-  have hxy' : y = x := Subtype.ext hxy
-  subst x
-  -- Unfold the range comap one final time to extract an exterior-power preimage.
-  change q y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
-  change P.mkQ y ∈ LinearMap.range (filtrationLeadingTerm Q k) at hy
-  exact LinearMap.mem_range.1 hy
+  obtain ⟨x, rfl⟩ :=
+    Submodule.Quotient.mk_surjective ((filtration Q k).comap (filtration Q (k + 1)).subtype) z
+  obtain ⟨y, hy, hxy⟩ := Submodule.mem_map.1 (hle x.property)
+  obtain rfl : y = x := Subtype.ext hxy
+  simpa [leadingTermPreimage] using hy
 
 section Conjugation
 
@@ -483,6 +484,91 @@ theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
   exact h hx
 
 end Map
+
+section ChangeForm
+
+variable {Q' : QuadraticForm R M} {B : LinearMap.BilinForm R M}
+
+private theorem contractLeft_prod_map_ι_mem_filtration_pred (d : Module.Dual R M) :
+    ∀ l : List M, contractLeft d (l.map (ι Q)).prod ∈ filtration Q (l.length - 1)
+  | [] => by simp
+  | [m] => by simp
+  | m :: n :: l => by
+    rw [List.map_cons, List.prod_cons, contractLeft_ι_mul]
+    refine Submodule.sub_mem _ ?_ ?_
+    · exact Submodule.smul_mem _ _ (by
+        simpa using prod_map_ι_mem_filtration Q (l := n :: l) le_rfl)
+    · have hmul :=
+        Submodule.mul_mem_mul (ι_mem_filtration_one Q m)
+          (contractLeft_prod_map_ι_mem_filtration_pred d (n :: l))
+      rw [filtration_mul Q 1 ((n :: l).length - 1)] at hmul
+      simpa [Nat.add_comm] using hmul
+
+/-- Left contraction lowers every positive filtration step by one. -/
+theorem contractLeft_mem_filtration_succ (d : Module.Dual R M) {k : ℕ}
+    {x : CliffordAlgebra Q} (hx : x ∈ filtration Q (k + 1)) :
+    contractLeft d x ∈ filtration Q k := by
+  have h : filtration Q (k + 1) ≤ (filtration Q k).comap (contractLeft d) :=
+    (filtration_le_iff Q).2 fun l hl => by
+      rw [Submodule.mem_comap]
+      exact filtration_mono Q (by omega)
+        (contractLeft_prod_map_ι_mem_filtration_pred Q d l)
+  exact h hx
+
+/-- Left contraction preserves each filtration step. -/
+theorem contractLeft_mem_filtration (d : Module.Dual R M) {k : ℕ} {x : CliffordAlgebra Q}
+    (hx : x ∈ filtration Q k) : contractLeft d x ∈ filtration Q k :=
+  contractLeft_mem_filtration_succ Q d (filtration_mono Q (Nat.le_succ k) hx)
+
+private theorem changeForm_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q) :
+    ∀ l : List M, changeForm h (l.map (ι Q)).prod ∈ filtration Q' l.length
+  | [] => by simpa using one_mem_filtration Q' 0
+  | m :: l => by
+    rw [List.map_cons, List.prod_cons, changeForm_ι_mul]
+    refine Submodule.sub_mem _ ?_ ?_
+    · have hmul :=
+        Submodule.mul_mem_mul (ι_mem_filtration_one Q' m)
+          (changeForm_prod_map_ι_mem_filtration h l)
+      rw [filtration_mul Q' 1 l.length] at hmul
+      simpa [Nat.add_comm] using hmul
+    · exact filtration_mono Q' (Nat.le_succ _)
+        (contractLeft_mem_filtration Q' (B m) (changeForm_prod_map_ι_mem_filtration h l))
+
+/-- Changing quadratic form by a bilinear form preserves each filtration step. -/
+theorem changeForm_mem_filtration (h : B.toQuadraticMap = Q' - Q) {k : ℕ}
+    {x : CliffordAlgebra Q} (hx : x ∈ filtration Q k) : changeForm h x ∈ filtration Q' k := by
+  have hmap : filtration Q k ≤ (filtration Q' k).comap (changeForm h) :=
+    (filtration_le_iff Q).2 fun l hl => by
+      rw [Submodule.mem_comap]
+      exact filtration_mono Q' hl (changeForm_prod_map_ι_mem_filtration Q h l)
+  exact hmap hx
+
+/-- The change-form equivalence transports every Clifford filtration step exactly. -/
+@[simp]
+theorem changeFormEquiv_map_filtration (h : B.toQuadraticMap = Q' - Q) (k : ℕ) :
+    (filtration Q k).map (changeFormEquiv h).toLinearMap = filtration Q' k := by
+  refine le_antisymm ?_ ?_
+  · rintro x ⟨y, hy, rfl⟩
+    exact changeForm_mem_filtration Q h hy
+  · intro x hx
+    refine ⟨(changeFormEquiv h).symm x, ?_, (changeFormEquiv h).apply_symm_apply x⟩
+    rw [changeFormEquiv_symm]
+    exact changeForm_mem_filtration Q' (changeForm.neg_proof h) hx
+
+private theorem changeFormEquiv_mem_filtration_iff_aux
+    (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+    (x : CliffordAlgebra Q) : (changeFormEquiv h) x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
+  rw [← changeFormEquiv_map_filtration Q h k, Submodule.mem_map_equiv]
+  rw [(changeFormEquiv h).symm_apply_apply]
+
+/-- Membership in the filtration is invariant under the change-form equivalence. The statement
+uses `changeForm`, the simplifier's normal form for applying `changeFormEquiv`. -/
+@[simp]
+theorem changeForm_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+    (x : CliffordAlgebra Q) : changeForm h x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
+  simpa only [changeFormEquiv_apply] using changeFormEquiv_mem_filtration_iff_aux Q h k x
+
+end ChangeForm
 
 /-- Every step of the filtration is a finitely generated module as soon as `M` is: the `k`-th step
 is generated by the products of at most `k` elements of a generating family of `M`. -/

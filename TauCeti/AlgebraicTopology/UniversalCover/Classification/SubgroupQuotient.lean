@@ -15,8 +15,9 @@ cover and proves that this map is a quotient covering map. The class of the cons
 supplies its distinguished point.
 
 This is the first construction step in the subgroup-to-cover direction of the classification
-of covering spaces. This file descends `UniversalCover.proj` to the quotient; a later file will
-prove that the descended map is a covering map and identify the subgroup it recovers.
+of covering spaces. This file descends `UniversalCover.proj` to the quotient;
+`Classification.RecoveredSubgroup` identifies the subgroup recovered by that map, while a later
+file will prove that the descended map is a covering map.
 
 ## Main declarations
 

@@ -85,8 +85,8 @@ theorem sup_mem_finiteSubcoalgebras {D E : Subcoalgebra R C}
     (hD : D ∈ finiteSubcoalgebras R C) (hE : E ∈ finiteSubcoalgebras R C) :
     D ⊔ E ∈ finiteSubcoalgebras R C := by
   rw [mem_finiteSubcoalgebras] at hD hE ⊢
-  letI : Module.Finite R D.toSubmodule := hD
-  letI : Module.Finite R E.toSubmodule := hE
+  let : Module.Finite R D.toSubmodule := hD
+  let : Module.Finite R E.toSubmodule := hE
   exact sup_finite D E
 
 /-- The family of module-finite subcoalgebras is directed under inclusion. -/
@@ -169,14 +169,14 @@ then every element of `C` belongs to a subcoalgebra that is finite as a module. 
 theorem exists_finite_subcoalgebra_mem [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
     [AddCommGroup C] [Module R C] [Coalgebra R C] [Module.Free R C] (c : C) :
     ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D := by
-  letI : Module.Flat R C := Module.Flat.of_free
+  let : Module.Flat R C := Module.Flat.of_free
   obtain ⟨N, hNfinite, hcN⟩ :=
     Subcomodule.exists_finite_subcomodule_mem (R := R) (C := C) (M := C) c
-  letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
-  letI : Module.Finite R N := hNfinite
-  letI : Module.IsTorsionFree R N :=
+  let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R
+  let : Module.Finite R N := hNfinite
+  let : Module.IsTorsionFree R N :=
     N.toSubmodule.instIsTorsionFree
-  letI : Module.Free R N :=
+  let : Module.Free R N :=
     Module.free_of_finite_type_torsion_free' (R := R) (M := N)
   let D := Comodule.matrixCoefficientSubcoalgebra (R := R) (C := C) (M := N)
   refine ⟨D, inferInstance, ?_⟩

@@ -183,12 +183,12 @@ theorem character_orthonormal_self [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     ⟪characterLp π hπ, characterLp π hπ⟫_𝕜 = 1 := by
   classical
-  letI : Representation.IsIrreducible π.toRepresentation := hirr
-  haveI : Nontrivial π.toRepresentation.asModule :=
+  let : Representation.IsIrreducible π.toRepresentation := hirr
+  have : Nontrivial π.toRepresentation.asModule :=
     IsSimpleModule.nontrivial (MonoidAlgebra 𝕜 G) π.toRepresentation.asModule
   -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
   -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  haveI : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
   have hd : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
     exact_mod_cast (Module.finrank_pos (R := 𝕜) (M := V)).ne'
   set e := stdOrthonormalBasis 𝕜 V

@@ -59,7 +59,7 @@ variable {K : Type*} [Field K] [NumberField K] {p : ℕ} [Fact p.Prime]
 nonzero prime of `𝓞 K` is maximal, with finite residue field). -/
 theorem exists_isArithFrobAt [IsGalois ℚ K] (Q : Ideal (𝓞 K)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q := by
-  haveI : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
+  have : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
   exact IsArithFrobAt.exists_of_isInvariant ℤ (K ≃ₐ[ℚ] K) Q
 
 /-- A Frobenius exists at every prime of `𝓞 K` lying over a rational prime — the form used when

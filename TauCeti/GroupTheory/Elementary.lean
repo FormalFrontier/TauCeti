@@ -174,7 +174,7 @@ witness packaged so that it supplies the group structure on `G ⧸ C`. -/
 theorem isPHyperelementary_iff_isPGroup_quotient : IsPHyperelementary p G ↔
     ∃ (C : Subgroup G) (hC : C.Normal),
       IsCyclic C ∧ ¬ p ∣ Nat.card C ∧ (letI := hC; IsPGroup p (G ⧸ C)) := by
-  refine ⟨fun ⟨C, hC, h₁, h₂, h₃⟩ => ?_, fun ⟨C, hC, h₁, h₂, h₃⟩ => ?_⟩ <;> letI := hC
+  refine ⟨fun ⟨C, hC, h₁, h₂, h₃⟩ => ?_, fun ⟨C, hC, h₁, h₂, h₃⟩ => ?_⟩ <;> let := hC
   · exact ⟨C, hC, h₁, h₂, isPGroup_quotient_of_forall_exists_pow_mem h₃⟩
   · exact isPHyperelementary_of_isPGroup_quotient C h₁ h₂ h₃
 
@@ -262,7 +262,7 @@ group. -/
 theorem IsPHyperelementary.of_injective (h : IsPHyperelementary p G) (f : H →* G)
     (hf : Function.Injective f) : IsPHyperelementary p H := by
   obtain ⟨C, hCnormal, hCcyclic, hCp, hquot⟩ := h
-  haveI := hCcyclic
+  have := hCcyclic
   refine ⟨C.comap f, hCnormal.comap f,
     isCyclic_of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf C),
     fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)), fun y => ?_⟩
@@ -309,7 +309,7 @@ factors, coprime because one is prime to `p` and the other is a power of `p`. -/
 theorem IsPElementary.of_injective [Fact p.Prime] (h : IsPElementary p G) (f : H →* G)
     (hf : Function.Injective f) : IsPElementary p H := by
   obtain ⟨C, P, hC, hCp, hP, hcomm, hcompl⟩ := h
-  haveI := hC
+  have := hC
   refine ⟨C.comap f, P.comap f,
     isCyclic_of_injective _ (MonoidHom.subgroupComap_injective_of_injective hf C),
     fun hdvd => hCp (hdvd.trans (Subgroup.card_comap_dvd_of_injective C f hf)),
@@ -349,7 +349,7 @@ theorem IsHyperelementary.subgroup (h : IsHyperelementary G) (K : Subgroup G) :
 theorem IsElementary.subgroup (h : IsElementary G) (K : Subgroup G) :
     IsElementary K := by
   obtain ⟨q, hq, hqG⟩ := h
-  haveI : Fact q.Prime := ⟨hq⟩
+  have : Fact q.Prime := ⟨hq⟩
   exact ⟨q, hq, hqG.subgroup K⟩
 
 /-! ### Solvability -/
@@ -360,10 +360,10 @@ so solvable too. -/
 theorem IsPHyperelementary.isSolvable [Finite G] [Fact p.Prime] (h : IsPHyperelementary p G) :
     Group.IsSolvable G := by
   obtain ⟨C, hCnormal, hCcyclic, -, hquot⟩ := h
-  haveI := hCnormal
-  haveI := hCcyclic
-  haveI : Group.IsSolvable C := Group.isSolvable_of_comm mul_comm'
-  haveI : Group.IsNilpotent (G ⧸ C) :=
+  have := hCnormal
+  have := hCcyclic
+  have : Group.IsSolvable C := Group.isSolvable_of_comm mul_comm'
+  have : Group.IsNilpotent (G ⧸ C) :=
     IsPGroup.isNilpotent (isPGroup_quotient_of_forall_exists_pow_mem hquot)
   exact (Group.isSolvable_iff_subgroup_quotient C).mpr ⟨inferInstance, inferInstance⟩
 
@@ -371,7 +371,7 @@ theorem IsPHyperelementary.isSolvable [Finite G] [Fact p.Prime] (h : IsPHyperele
 theorem IsHyperelementary.isSolvable [Finite G] (h : IsHyperelementary G) :
     Group.IsSolvable G := by
   obtain ⟨q, hq, hqG⟩ := h
-  haveI : Fact q.Prime := ⟨hq⟩
+  have : Fact q.Prime := ⟨hq⟩
   exact hqG.isSolvable
 
 /-- A finite elementary group is solvable. -/

@@ -95,8 +95,8 @@ theorem finrank_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Module.finrank F (adjoin K (Set.range root))
       = 2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
   have hpos : 0 < Module.finrank K F := Module.finrank_pos
   refine Nat.eq_of_mul_eq_mul_left hpos ?_

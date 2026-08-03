@@ -76,7 +76,7 @@ private theorem measure_eq_of_forall_univ_pi {ι : Type*} [Finite ι] {α : ι �
     (h : ∀ B : ∀ i, Set (α i), (∀ i, MeasurableSet (B i)) →
       μ (Set.univ.pi B) = ν (Set.univ.pi B)) :
     μ = ν := by
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   refine Measure.ext_of_generateFrom_of_iUnion
     (C := Set.pi Set.univ '' Set.pi Set.univ fun i => {s : Set (α i) | MeasurableSet s})
     (B := fun _ : ℕ => Set.univ) generateFrom_pi.symm isPiSystem_pi ?_ ?_ ?_ ?_
@@ -165,7 +165,7 @@ theorem mixedIIDWith_of_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
     MixedIIDWith μ X ν := by
   refine MixedIIDWith.intro hν ?_
   intro m k hk
-  haveI : IsFiniteMeasure (blockLaw μ X k) := by
+  have : IsFiniteMeasure (blockLaw μ X k) := by
     rw [blockLaw_def]
     infer_instance
   refine measure_eq_of_forall_univ_pi ?_

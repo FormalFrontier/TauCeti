@@ -311,7 +311,7 @@ theorem finrank_hom_indecProjRep_indecProjRep (i j : Q) :
 element of `(Pᵢ)_i`. -/
 theorem not_isZero_indecProjRep (i : Q) : ¬ IsZero (indecProjRep k Q i) := by
   intro h
-  letI := ModuleCat.subsingleton_of_isZero (h.obj i)
+  let := ModuleCat.subsingleton_of_isZero (h.obj i)
   exact (indecProjRepBasis k i i).ne_zero Quiver.Path.nil (Subsingleton.elim _ _)
 
 end TauCeti

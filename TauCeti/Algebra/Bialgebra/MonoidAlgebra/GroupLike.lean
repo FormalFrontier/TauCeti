@@ -8,14 +8,16 @@ public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
 public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.Spectrum.Prime.Topology
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
+public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 
 /-!
 # Group-like elements of monoid algebras
 
-Over a commutative ring with connected prime spectrum, the group-like elements of a
-monoid algebra are exactly its standard basis elements. The proof compares coefficients
-in the group-like comultiplication identity. Connectedness makes every idempotent
-coefficient zero or one, and the counit condition excludes the zero element.
+The standard basis elements of a monoid algebra over a commutative semiring are group-like and
+span the whole algebra. Over a commutative ring with connected prime spectrum, these are exactly
+the group-like elements. The proof of the classification compares coefficients in the group-like
+comultiplication identity. Connectedness makes every idempotent coefficient zero or one, and the
+counit condition excludes the zero element.
 
 Consequently, a bialgebra morphism between monoid algebras over such a base uniquely
 recovers the monoid homomorphism on their standard basis indices. This gives a two-sided
@@ -23,6 +25,8 @@ inverse to `MonoidAlgebra.mapDomainBialgHom` on the corresponding hom-sets.
 
 ## Main declarations
 
+* `TauCeti.MonoidAlgebra.groupLikeSetSpan_eq_top`: the group-like elements span every monoid
+  algebra.
 * `TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single`: classification of group-like
   elements in a monoid algebra over a connected base.
 * `TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage`: recover the monoid homomorphism
@@ -57,6 +61,18 @@ private theorem eq_zero_or_eq_one_of_isIdempotentElem
     apply SetLike.ext'
     simpa only [PrimeSpectrum.basicOpen_one, TopologicalSpace.Opens.coe_top] using huniv
 
+/-- The group-like elements of a monoid algebra span the whole algebra: every standard basis
+element is group-like, and the standard basis spans. -/
+theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) [Monoid G] :
+    Subcoalgebra.groupLikeSetSpan (R := R) (C := _root_.MonoidAlgebra R G) Set.univ = ⊤ := by
+  rw [Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top]
+  have hrange : Set.range (_root_.GroupLike.val (R := R) (A := _root_.MonoidAlgebra R G)) =
+      {x : _root_.MonoidAlgebra R G | IsGroupLikeElem R x} :=
+    Set.ext fun x ↦
+      ⟨fun ⟨g, hg⟩ ↦ hg ▸ g.isGroupLikeElem_val, fun hx ↦ ⟨⟨x, hx⟩, rfl⟩⟩
+  rw [hrange]
+  exact _root_.MonoidAlgebra.span_isGroupLikeElem
+
 private theorem tensorEquiv_comul_apply [CommSemiring R]
     {H : Type v} [Monoid H] [DecidableEq H]
     (x : _root_.MonoidAlgebra R H) (g h : H) :
@@ -80,7 +96,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
     IsGroupLikeElem R x ↔
       ∃! h : H, x = _root_.MonoidAlgebra.single h 1 := by
   classical
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  let : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   constructor
   · intro hx
     have hcoeff (g h : H) :
@@ -136,7 +152,7 @@ private theorem groupLikeIndex_eq_iff [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
     (x : _root_.MonoidAlgebra R H) (hx : IsGroupLikeElem R x) (h : H) :
     groupLikeIndex R x hx = h ↔ x = _root_.MonoidAlgebra.single h 1 := by
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  let : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
   constructor
   · rintro rfl
     exact eq_single_groupLikeIndex R x hx

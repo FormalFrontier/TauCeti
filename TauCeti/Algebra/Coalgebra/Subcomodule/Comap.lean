@@ -68,7 +68,7 @@ private theorem rTensor_rangeRestrict_eq_zero_of_rTensor_eq_zero {M₁ : Type w}
     {B : Submodule R N₁} {f : M₁ →ₗ[R] N₁} {t : M₁ ⊗[R] C}
     (h : LinearMap.rTensor C (B.mkQ.comp f) t = 0) :
     LinearMap.rTensor C (B.mkQ.comp f).rangeRestrict t = 0 := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   apply Module.Flat.rTensor_preserves_injective_linearMap
     (LinearMap.range (B.mkQ.comp f)).subtype Subtype.val_injective
   calc
@@ -90,7 +90,7 @@ private theorem tensor_mem_range_comap {M₁ : Type w} {N₁ : Type x}
     {t : M₁ ⊗[R] C} (h : LinearMap.rTensor C (B.mkQ.comp f) t = 0) :
     t ∈ LinearMap.range
       (TensorProduct.map (B.comap f).subtype (LinearMap.id : C →ₗ[R] C)) := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   let g : M₁ →ₗ[R] LinearMap.range (B.mkQ.comp f) := (B.mkQ.comp f).rangeRestrict
   have hker : LinearMap.ker g = B.comap f :=
     ker_rangeRestrict_mkQ_comp (M₁ := M₁) (N₁ := N₁) B f
@@ -116,9 +116,9 @@ private theorem coact_mem_range_comap_toLinearMap (f : Comodule.Hom R C M N) (B 
       LinearMap.range
         (TensorProduct.map (B.toSubmodule.comap f.toLinearMap).subtype
           (LinearMap.id : C →ₗ[R] C)) := by
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
-  letI : AddCommGroup M := Module.addCommMonoidToAddCommGroup R (M := M)
-  letI : AddCommGroup N := Module.addCommMonoidToAddCommGroup R (M := N)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup M := Module.addCommMonoidToAddCommGroup R (M := M)
+  let : AddCommGroup N := Module.addCommMonoidToAddCommGroup R (M := N)
   refine tensor_mem_range_comap (R := R) (C := C) (M₁ := M) (N₁ := N)
     B.toSubmodule f.toLinearMap ?_
   rw [LinearMap.rTensor_comp_apply]

@@ -257,7 +257,7 @@ private lemma existsUnique_irreducibleComponent_of_unique_minimalPrime {X : Sche
   have e_nonempty :=
     nonempty_stalkMinimalPrimesEquivIrreducibleComponentsContaining x
   exact e_nonempty.elim fun e => by
-    haveI hU : Unique { c : irreducibleComponents X.carrier //
+    have hU : Unique { c : irreducibleComponents X.carrier //
         x ∈ (c : Set X.carrier) } :=
       Equiv.unique e.symm
     exact ⟨hU.default.1, hU.default.2,
@@ -317,7 +317,7 @@ private theorem isOpen_irreducibleComponents_of_affine_unique_minimalPrime {X : 
     [IsAffine X]
     [IsLocallyNoetherian X] (hStalks : ∀ x : X.carrier, Unique (minimalPrimes (X.presheaf.stalk x)))
     (c : irreducibleComponents X.carrier) : IsOpen (c : Set X.carrier) := by
-  haveI : NoetherianSpace X.carrier :=
+  have : NoetherianSpace X.carrier :=
     @noetherianSpace_of_isAffine X _
       (IsLocallyNoetherian.component_noetherian ⟨⊤, isAffineOpen_top X⟩)
   apply isOpen_irreducibleComponents_of_pairwise_disjoint
@@ -376,7 +376,7 @@ private lemma irreducibleSpace_of_connected_of_open_components {α : Type*} [Top
   have hIrredUniv : IsIrreducible (univ : Set α) := by
     rw [← hcEqUniv]
     exact c.2.1
-  haveI : PreirreducibleSpace α := ⟨hIrredUniv.2⟩
+  have : PreirreducibleSpace α := ⟨hIrredUniv.2⟩
   exact ⟨inferInstance⟩
 
 /-- A locally noetherian connected scheme whose stalks have unique minimal
@@ -394,7 +394,7 @@ is irreducible. -/
 theorem irreducibleSpace_of_connected_of_isDomain_stalk (Z : Scheme.{u}) [IsLocallyNoetherian Z]
     [ConnectedSpace Z] (hStalks : ∀ x : Z.carrier, IsDomain (Z.presheaf.stalk x)) :
     IrreducibleSpace Z := by
-  haveI hU : ∀ x, Unique (minimalPrimes (Z.presheaf.stalk x)) := fun x => by
+  have hU : ∀ x, Unique (minimalPrimes (Z.presheaf.stalk x)) := fun x => by
     haveI := hStalks x
     rw [IsDomain.minimalPrimes_eq_singleton_bot]
     exact Set.uniqueSingleton ⊥

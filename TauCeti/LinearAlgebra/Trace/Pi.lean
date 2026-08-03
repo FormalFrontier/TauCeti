@@ -35,7 +35,7 @@ theorem LinearMap.trace_pi_of_apply_eq (T : (ι → M) →ₗ[k] (ι → M)) (σ
     LinearMap.trace k (ι → M) T =
       ∑ i : ι, if σ i = i then LinearMap.trace k M (f i) else 0 := by
   let b := Module.Free.chooseBasis k M
-  letI := Fintype.ofFinite (Module.Free.ChooseBasisIndex k M)
+  let := Fintype.ofFinite (Module.Free.ChooseBasisIndex k M)
   let B := Pi.basis fun _ : ι => b
   rw [LinearMap.trace_eq_matrix_trace k B, Matrix.trace]
   rw [Fintype.sum_sigma]

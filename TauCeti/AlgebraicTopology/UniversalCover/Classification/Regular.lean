@@ -55,7 +55,7 @@ theorem IsCoveringMap.isRegular_iff_normal_range
     TauCeti.IsCoveringMap.normal_range_iff hp e]
   constructor
   · intro htrans e'
-    letI := htrans
+    let := htrans
     obtain ⟨φ, hφ⟩ := MulAction.exists_smul_eq (Deck p) e e'
     have hhome : ∃ h : E ≃ₜ E, h e = e' ∧ p ∘ h = p := by
       refine ⟨φ.1, ?_, ?_⟩

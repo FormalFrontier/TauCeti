@@ -79,7 +79,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
       _ = μ.bind fun ω =>
             (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
             refine congrArg (μ.bind ·) (funext fun ω => ?_)
-            haveI : IsProbabilityMeasure ((ν ω : Measure α).map f) :=
+            have : IsProbabilityMeasure ((ν ω : Measure α).map f) :=
               (ν ω : Measure α).isProbabilityMeasure_map hf.aemeasurable
             simp only [ProbabilityMeasure.toMeasure_pi, ProbabilityMeasure.toMeasure_map]
             exact Measure.pi_map_pi fun _ : Fin m => hf.aemeasurable

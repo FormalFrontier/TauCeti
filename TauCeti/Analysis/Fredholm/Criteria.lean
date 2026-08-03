@@ -54,7 +54,7 @@ finite-dimensional kernel is Fredholm. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.of_surjective (hT : Function.Surjective T)
     [FiniteDimensional K (LinearMap.ker (T : E →ₗ[K] F))] :
     ContinuousLinearMap.IsFredholm T := by
-  letI := IsRCLikeNormedField.rclike K
+  let := IsRCLikeNormedField.rclike K
   apply ContinuousLinearMap.IsFredholm.of_finite_ker_coker T inferInstance
   rw [LinearMap.range_eq_top.mpr hT]
   infer_instance
@@ -66,7 +66,7 @@ lemma isFredholm_iff_finite_ker_of_surjective (hT : Function.Surjective T) :
   constructor
   · exact ContinuousLinearMap.IsFredholm.finite_ker
   · intro hker
-    letI := hker
+    let := hker
     exact ContinuousLinearMap.IsFredholm.of_surjective hT
 
 omit [IsRCLikeNormedField K] in
@@ -77,7 +77,7 @@ lemma _root_.ContinuousLinearMap.IsFredholm.of_injective (hT : Function.Injectiv
     [FiniteDimensional K (F ⧸ LinearMap.range (T : E →ₗ[K] F))] :
     ContinuousLinearMap.IsFredholm T where
   isStrictMap := by
-    letI : CompleteSpace T.range := hclosed.completeSpace_coe
+    let : CompleteSpace T.range := hclosed.completeSpace_coe
     rw [Topology.isStrictMap_iff_isQuotientMap_rangeFactorization]
     exact T.rangeRestrict.isQuotientMap Set.rangeFactorization_surjective
   isClosed_range := hclosed
@@ -99,7 +99,7 @@ lemma isFredholm_iff_finite_coker_of_injective (hT : Function.Injective T)
   constructor
   · exact ContinuousLinearMap.IsFredholm.finite_coker
   · intro hcoker
-    letI := hcoker
+    let := hcoker
     exact ContinuousLinearMap.IsFredholm.of_injective hT hclosed
 
 omit [IsRCLikeNormedField K] [CompleteSpace E] [CompleteSpace F] in
@@ -107,8 +107,8 @@ omit [IsRCLikeNormedField K] [CompleteSpace E] [CompleteSpace F] in
 and, by the first isomorphism theorem, of finite codimension. -/
 lemma isFredholm_ker_subtypeL (hT : FiniteDimensional K (LinearMap.range (T : E →ₗ[K] F))) :
     ContinuousLinearMap.IsFredholm (LinearMap.ker (T : E →ₗ[K] F)).subtypeL := by
-  letI := hT
-  letI : FiniteDimensional K (E ⧸ LinearMap.range
+  let := hT
+  let : FiniteDimensional K (E ⧸ LinearMap.range
       ((LinearMap.ker (T : E →ₗ[K] F)).subtypeL : LinearMap.ker (T : E →ₗ[K] F) →ₗ[K] E)) := by
     rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
     exact (T : E →ₗ[K] F).quotKerEquivRange.symm.finiteDimensional

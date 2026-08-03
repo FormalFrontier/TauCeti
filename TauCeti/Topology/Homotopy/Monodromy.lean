@@ -123,7 +123,7 @@ theorem stabilizer_eq_range (hp : IsCoveringMap p) (e : p ⁻¹' {x}) :
     letI := hp.fundamentalGroupMulAction x
     MulAction.stabilizer (FundamentalGroup X x) e =
       (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range := by
-  letI := hp.fundamentalGroupMulAction x
+  let := hp.fundamentalGroupMulAction x
   ext γ
   exact monodromy_eq_self_iff_mem_range hp e γ
 
@@ -150,7 +150,7 @@ theorem exists_monodromy_eq [PathConnectedSpace E] (hp : IsCoveringMap p) (e e' 
 theorem monodromy_isPretransitive [PathConnectedSpace E] (hp : IsCoveringMap p) (x : X) :
     letI := hp.fundamentalGroupMulAction x
     MulAction.IsPretransitive (FundamentalGroup X x) (p ⁻¹' {x}) := by
-  letI := hp.fundamentalGroupMulAction x
+  let := hp.fundamentalGroupMulAction x
   exact ⟨fun e e' => exists_monodromy_eq hp e e'⟩
 
 /-! ### The fibre as a coset space -/
@@ -177,8 +177,8 @@ monodromy translate of the chosen lift. -/
 theorem fiberEquivQuotientRange_symm_apply_mk [PathConnectedSpace E] (hp : IsCoveringMap p)
     (e : p ⁻¹' {x}) (γ : FundamentalGroup X x) :
     (fiberEquivQuotientRange hp e).symm (QuotientGroup.mk γ) = hp.monodromy γ e := by
-  letI := hp.fundamentalGroupMulAction x
-  haveI := monodromy_isPretransitive hp x
+  let := hp.fundamentalGroupMulAction x
+  have := monodromy_isPretransitive hp x
   -- transporting along the equality of subgroups leaves the coset representative alone,
   have hq : (Subgroup.quotientEquivOfEq (stabilizer_eq_range hp e)).symm (QuotientGroup.mk γ) =
       QuotientGroup.mk γ :=
@@ -196,8 +196,8 @@ theorem fiberEquivQuotientRange_symm_apply_mk [PathConnectedSpace E] (hp : IsCov
 theorem card_fiber_eq_index [PathConnectedSpace E] (hp : IsCoveringMap p) (e : p ⁻¹' {x}) :
     Nat.card (p ⁻¹' {x}) =
       (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range.index := by
-  letI := hp.fundamentalGroupMulAction x
-  haveI := monodromy_isPretransitive hp x
+  let := hp.fundamentalGroupMulAction x
+  have := monodromy_isPretransitive hp x
   rw [← stabilizer_eq_range hp e, MulAction.index_stabilizer_of_transitive]
 
 /-! ### Dependence on the chosen lift -/
@@ -207,7 +207,7 @@ theorem range_mapOfEq_monodromy (hp : IsCoveringMap p) (e : p ⁻¹' {x}) (γ : 
     (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ (hp.monodromy γ e).2).range =
       ((FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e.2).range).map
         (MulAut.conj γ).toMonoidHom := by
-  letI := hp.fundamentalGroupMulAction x
+  let := hp.fundamentalGroupMulAction x
   rw [← stabilizer_eq_range hp e, ← stabilizer_eq_range hp (hp.monodromy γ e)]
   exact MulAction.stabilizer_smul_eq_stabilizer_map_conj γ e
 

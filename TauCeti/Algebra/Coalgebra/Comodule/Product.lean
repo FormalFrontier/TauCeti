@@ -568,7 +568,7 @@ theorem prod_hom_ext {P M N : ComoduleCat.{u, v, w} R C} {f g : P ⟶ prod R C M
 theorem prod_hom_ext' {M N P : ComoduleCat.{u, v, w} R C} {f g : prod R C M N ⟶ P}
     (hinl : prodInl M N ≫ f = prodInl M N ≫ g)
     (hinr : prodInr M N ≫ f = prodInr M N ≫ g) : f = g := by
-  letI : Comodule R C (M × N) := Comodule.Prod (R := R) (C := C) (M := M) (N := N)
+  let : Comodule R C (M × N) := Comodule.Prod (R := R) (C := C) (M := M) (N := N)
   apply hom_ext
   intro x
   have hinlp : f (prodInl M N x.1) = g (prodInl M N x.1) := by
