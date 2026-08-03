@@ -294,9 +294,10 @@ private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
 For a closed piecewise-`C¹` immersion `γ` on `[a, b]` all of whose value-`s` parameters are
 interior and `C^{1,1}` there (`deriv γ` Lipschitz on a neighborhood) — in particular satisfied
-vacuously if `γ` never meets `s` — the generalized winding number `n_s(γ)` is a real number,
-equal to the ordinary (non-principal-value) integral of the real winding integrand `h t :=
-realWindingIntegrand (γ t - s) (deriv γ t)`:
+vacuously if `γ` never meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t -
+s) (deriv γ t)` is genuinely interval-integrable (not merely assigned Mathlib's junk `0` value for
+a non-integrable integrand), and the generalized winding number `n_s(γ)` is a real number equal to
+its ordinary (non-principal-value) integral:
 
 `n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
 
@@ -310,12 +311,13 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
       (∀ u ∈ Icc (t - ε) (t + ε), HasDerivAt γ (deriv γ u) u) ∧
         LipschitzOnWith K (deriv γ) (Icc (t - ε) (t + ε))) :
+    IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
     windingNumber γ a b s
       = ((1 / (2 * Real.pi)
           * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) := by
   classical
   rcases hab.eq_or_lt with rfl | hab
-  · simp
+  · exact ⟨.refl, by simp⟩
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
   have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
     rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
@@ -430,6 +432,7 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
   -- its dominated-convergence argument here.
   have hIm : L.im = ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) :=
     hHCPV.im_eq_integral_realWindingIntegrand h_int
+  refine ⟨h_int, ?_⟩
   rw [hwind, ← Complex.re_add_im L, hRe, hIm]
   have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := Complex.two_pi_I_ne_zero
   push_cast
