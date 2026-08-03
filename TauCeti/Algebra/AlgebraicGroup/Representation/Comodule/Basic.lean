@@ -36,6 +36,8 @@ any finiteness, freeness, projectivity, flatness, or nontriviality hypothesis.
 
 * `HopfAlgebra.PointRepresentation`: a natural action on the scalar extensions of `V`.
 * `HopfAlgebra.PointRepresentation.ofComodule`: the point representation induced by a coaction.
+* `HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint`: identification of the
+  induced representation action with the underlying comodule point action.
 * `HopfAlgebra.PointRepresentation.toComodule`: recovery of a coaction from the universal point.
 * `HopfAlgebra.pointRepresentationEquivComodule`: the fixed-object representation--comodule
   correspondence.
@@ -239,6 +241,14 @@ theorem ofComodule_action_tmul (rho : Comodule R H V)
   let : Comodule R H V := rho
   simpa only [LinearMap.lTensor_def] using
     (Comodule.endOfPoint_tmul (R := R) (H := H) V x.ofConv a v)
+
+/-- The underlying linear map of the action induced by a coaction is the corresponding
+comodule point-action endomorphism. -/
+theorem ofComodule_action_val_eq_endOfPoint (rho : Comodule R H V)
+    (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
+    ((ofComodule rho).action A x).val = Comodule.endOfPoint V x.ofConv := by
+  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
+  rw [ofComodule_action_tmul, Comodule.endOfPoint_tmul, LinearMap.lTensor_def]
 
 /-- At the universal point, the action induced by a coaction is the flipped coaction. -/
 @[simp]
