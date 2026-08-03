@@ -21,8 +21,9 @@ comodule. No finiteness, freeness, projectivity, flatness, or nontriviality hypo
 
 * `HopfAlgebra.PointRepresentation.trivial`: the identity action on scalar extensions of an
   arbitrary module.
-* `HopfAlgebra.PointRepresentation.ofComodule_trivial`: compatibility with the trivial
-  comodule.
+* `HopfAlgebra.PointRepresentation.ofComodule_trivial` and
+  `HopfAlgebra.PointRepresentation.toComodule_trivial`: compatibility with the trivial
+  comodule in both directions.
 
 ## References
 
@@ -124,6 +125,13 @@ theorem ofComodule_trivial :
   simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
     map_one, TensorProduct.comm_tmul]
   exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
+
+/-- Recovering the comodule of the trivial point representation gives the trivial comodule. -/
+@[simp]
+theorem toComodule_trivial :
+    toComodule (trivial (H := H) (V := V)) =
+      Comodule.trivial (R := R) (C := H) (M := V) := by
+  rw [← ofComodule_trivial, toComodule_ofComodule]
 
 end PointRepresentation
 

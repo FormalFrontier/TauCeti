@@ -26,8 +26,9 @@ comodule. No finiteness, freeness, projectivity, flatness, or nontriviality hypo
 
 * `HopfAlgebra.PointRepresentation.tensor`: the diagonal action on the tensor product of two
   modules.
-* `HopfAlgebra.PointRepresentation.ofComodule_tensor`: compatibility with the tensor-product
-  comodule.
+* `HopfAlgebra.PointRepresentation.ofComodule_tensor` and
+  `HopfAlgebra.PointRepresentation.toComodule_tensor`: compatibility with the tensor-product
+  comodule in both directions.
 
 ## References
 
@@ -320,6 +321,20 @@ theorem ofComodule_tensor (rhoV : Comodule R H V) (rhoW : Comodule R H W) :
       simp only [one_smul]
       rw [← (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm.map_smul,
         TensorProduct.smul_tmul']
+
+/-- Recovering the comodule of a tensor-product point representation gives the tensor product
+of the recovered comodules. -/
+@[simp]
+theorem toComodule_tensor
+    (Theta : PointRepresentation (R := R) (H := H) (V := V))
+    (Psi : PointRepresentation (R := R) (H := H) (V := W)) :
+    letI : Comodule R H V := toComodule Theta
+    letI : Comodule R H W := toComodule Psi
+    toComodule (tensor Theta Psi) = Comodule.tensor R H V W := by
+  apply (pointRepresentationEquivComodule (R := R) (H := H)
+    (V := V ⊗[R] W)).symm.injective
+  simp only [pointRepresentationEquivComodule_symm_apply, ofComodule_toComodule,
+    ofComodule_tensor]
 
 end PointRepresentation
 
