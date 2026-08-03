@@ -18,11 +18,15 @@ measure that is invariant under both is invariant under conjugation.  Normalized
 compact group is such a measure, which is what makes "class function" a meaningful condition on an
 almost-everywhere equivalence class.
 
-This file records that invariance and feeds it into the two typeclasses Mathlib's machinery
-consumes: the conjugation action of `ConjAct G` on `G` is measurable and measure-preserving, so
+This file records that invariance as the two typeclasses Mathlib's machinery consumes: the
+conjugation action of `ConjAct G` on `G` is measurable and measure-preserving, so
 Mathlib's `DomMulAct` action supplies an isometric action of `(ConjAct G)ᵈᵐᵃ` on `Lp E p μ` by
 precomposition, `(c • f) g = f (h * g * h⁻¹)`.  The **class functions** `classFunctionLp` are the
 vectors that action fixes: a closed submodule, since each conjugation acts by an isometry.
+
+Only conjugation-invariance, `SMulInvariantMeasure (ConjAct G) G μ`, is asked of `μ` for that
+theory; two-sided translation invariance appears just once, as the hypothesis under which
+`TauCeti.instSMulInvariantMeasureConjAct` supplies it.
 
 The condition is on the *class*, not on a representative, and that is the point of packaging it
 this way rather than as a pointwise slogan: pointwise conjugation-invariance of a function is not
@@ -35,9 +39,11 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 
 ## Main statements
 
-* `TauCeti.measurePreserving_conj`: conjugation preserves a two-sided invariant measure.
 * `TauCeti.instMeasurableConstSMulConjAct` and `TauCeti.instSMulInvariantMeasureConjAct`: the two
-  instances that unlock `DomMulAct`'s action on `Lp`.
+  instances that unlock `DomMulAct`'s action on `Lp`, the second deriving conjugation-invariance
+  from two-sided translation invariance.
+* `TauCeti.measurePreserving_conj`: conjugation preserves a conjugation-invariant measure, stated
+  through the group operation.
 * `TauCeti.conjAct_smul_Lp_ae_eq`: the induced action on `Lp` is precomposition with conjugation.
 * `TauCeti.mem_classFunctionLp_iff_ae`: membership read on representatives, as invariance almost
   everywhere.
@@ -59,12 +65,6 @@ namespace TauCeti
 
 variable {G : Type*} [Group G] [MeasurableSpace G] [MeasurableMul G]
 
-/-- **Conjugation preserves a two-sided invariant measure.**  Conjugation by `h` is left
-translation by `h` followed by right translation by `h⁻¹`. -/
-theorem measurePreserving_conj (μ : Measure G) [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant]
-    (h : G) : MeasurePreserving (fun g ↦ h * g * h⁻¹) μ μ :=
-  (measurePreserving_mul_right μ h⁻¹).comp (measurePreserving_mul_left μ h)
-
 /-- Conjugation by a fixed element is measurable, so the conjugation action of `ConjAct G` on `G`
 has measurable orbit maps. -/
 instance instMeasurableConstSMulConjAct : MeasurableConstSMul (ConjAct G) G where
@@ -72,15 +72,24 @@ instance instMeasurableConstSMulConjAct : MeasurableConstSMul (ConjAct G) G wher
     simp only [ConjAct.smul_def]
     exact (measurable_id.const_mul _).mul_const _
 
-/-- A two-sided invariant measure is invariant under the conjugation action of `ConjAct G`. -/
+/-- **A two-sided invariant measure is invariant under conjugation.**  Conjugation by `h` is left
+translation by `h` followed by right translation by `h⁻¹`. -/
 instance instSMulInvariantMeasureConjAct {μ : Measure G} [μ.IsMulLeftInvariant]
     [μ.IsMulRightInvariant] : SMulInvariantMeasure (ConjAct G) G μ where
   measure_preimage_smul c s hs := by
     simp only [ConjAct.smul_def]
-    exact (measurePreserving_conj μ (ConjAct.ofConjAct c)).measure_preimage hs.nullMeasurableSet
+    exact ((measurePreserving_mul_right μ (ConjAct.ofConjAct c)⁻¹).comp
+      (measurePreserving_mul_left μ (ConjAct.ofConjAct c))).measure_preimage hs.nullMeasurableSet
+
+/-- **Conjugation preserves a conjugation-invariant measure**, stated in terms of the group
+operation rather than the action of `ConjAct G`.  Bi-invariant measures are the intended source of
+the hypothesis (`TauCeti.instSMulInvariantMeasureConjAct`). -/
+theorem measurePreserving_conj (μ : Measure G) [SMulInvariantMeasure (ConjAct G) G μ] (h : G) :
+    MeasurePreserving (fun g ↦ h * g * h⁻¹) μ μ :=
+  measurePreserving_smul (ConjAct.toConjAct h) μ
 
 variable {E : Type*} [NormedAddCommGroup E] {p : ℝ≥0∞} {μ : Measure G}
-  [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant]
+  [SMulInvariantMeasure (ConjAct G) G μ]
 
 /-- The action of `(ConjAct G)ᵈᵐᵃ` on `Lp E p μ` is precomposition with conjugation: the class of
 `f` is sent to the class of `g ↦ f (h * g * h⁻¹)`. -/
@@ -90,15 +99,15 @@ theorem conjAct_smul_Lp_ae_eq (h : G) (f : Lp E p μ) :
     DomMulAct.smul_Lp_ae_eq (DomMulAct.mk (ConjAct.toConjAct h)) f
 
 /-- **The class functions in `Lp`.**  The submodule of `Lp E p μ` fixed by every conjugation,
-for a two-sided invariant measure `μ` on a group `G`.
+for a conjugation-invariant measure `μ` on a group `G`.
 
 Invariance is a condition on the *class*, not on a representative: an element of `Lp` is a class
 function exactly when each of its conjugates agrees with it almost everywhere
 (`TauCeti.mem_classFunctionLp_iff_ae`).  Asking instead for a pointwise identity would not define a
 submodule of `Lp` at all, since it is not stable under changing a representative on a null set. -/
 def classFunctionLp (𝕜 E : Type*) [NormedRing 𝕜] [NormedAddCommGroup E] [Module 𝕜 E]
-    [IsBoundedSMul 𝕜 E] (p : ℝ≥0∞) (μ : Measure G) [μ.IsMulLeftInvariant]
-    [μ.IsMulRightInvariant] : Submodule 𝕜 (Lp E p μ) where
+    [IsBoundedSMul 𝕜 E] (p : ℝ≥0∞) (μ : Measure G) [SMulInvariantMeasure (ConjAct G) G μ] :
+    Submodule 𝕜 (Lp E p μ) where
   carrier := {f | ∀ c : (ConjAct G)ᵈᵐᵃ, c • f = f}
   add_mem' hf hg c := by rw [DomMulAct.smul_Lp_add, hf c, hg c]
   zero_mem' c := DomMulAct.smul_Lp_zero c
@@ -171,7 +180,7 @@ theorem const_mem_classFunctionLp [IsFiniteMeasure μ] (a : E) :
 
 /-- On a commutative group every element of `Lp` is a class function: conjugation is trivial. -/
 theorem classFunctionLp_eq_top_of_commGroup {G : Type*} [CommGroup G] [MeasurableSpace G]
-    [MeasurableMul G] {μ : Measure G} [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant] :
+    [MeasurableMul G] {μ : Measure G} [SMulInvariantMeasure (ConjAct G) G μ] :
     classFunctionLp 𝕜 E p μ = ⊤ := by
   refine eq_top_iff.2 fun f _ ↦ ?_
   rw [mem_classFunctionLp_iff_ae]
