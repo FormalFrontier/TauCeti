@@ -131,7 +131,7 @@ theorem circleImageLength_def (f : ℂ → ℂ) (s : Set ℂ) (ζ : ℂ) (ρ : �
 theorem circleImageLength_mono (f : ℂ → ℂ) (ζ : ℂ) (ρ : ℝ) (hst : s ⊆ t) :
     circleImageLength f s ζ ρ ≤ circleImageLength f t ζ ρ := by
   rw [circleImageLength_def, circleImageLength_def]
-  refine circleLIntegral_mono (fun z => ?_) ζ ρ
+  refine circleLIntegral_mono_on ζ ρ (fun z _ => ?_)
   by_cases hz : z ∈ s
   · simp [Set.indicator_of_mem hz, Set.indicator_of_mem (hst hz)]
   · simp [Set.indicator_of_notMem hz]

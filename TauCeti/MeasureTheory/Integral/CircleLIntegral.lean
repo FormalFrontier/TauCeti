@@ -19,9 +19,13 @@ import Mathlib.MeasureTheory.Integral.Prod
 
 For a weight `g : ℂ → ℝ≥0∞` this file introduces `TauCeti.circleLIntegral g ζ ρ`, the lower
 integral of `g` over the circle of centre `ζ` and radius `ρ` with respect to arc length, computed
-through Mathlib's parametrisation `circleMap ζ ρ` whose speed is the constant `ρ`:
+through Mathlib's parametrisation `circleMap ζ ρ`, which for `ρ > 0` runs once around that circle
+at the constant speed `ρ`:
 
 `circleLIntegral g ζ ρ = ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ)`.
+
+For `ρ ≤ 0` the factor `ENNReal.ofReal ρ` makes the value `0`, a convention rather than a reading
+of the parametrisation; the arc-length statements below are therefore statements about `ρ > 0`.
 
 Two facts about it are proved, and they are the two halves of the classical **length–area method**.
 
@@ -36,7 +40,7 @@ iterated integral, the factor `ENNReal.ofReal ρ` in the definition being exactl
 `ρ dρ dθ` of polar coordinates.
 
 The second is **Cauchy–Schwarz on the circle**: the square of the circle integral of `g` is at most
-`2 π ρ` — the length of the circle — times the circle integral of `g ^ 2`
+`2 π ρ` — for `ρ > 0` the length of the circle — times the circle integral of `g ^ 2`
 (`TauCeti.circleLIntegral_sq_le`). Dividing by `ρ` and integrating in `ρ`, polar Fubini reassembles
 the right-hand side into the plane integral of `g ^ 2` and gives the **length–area inequality**
 
@@ -89,13 +93,15 @@ variable {g : ℂ → ℝ≥0∞} {ζ : ℂ} {ρ : ℝ}
 /-! ### The circle integral of a weight -/
 
 /-- The **lower integral of the weight `g` over the circle** of centre `ζ` and radius `ρ`, taken
-with respect to arc length: the angular integral of `g ∘ circleMap ζ ρ` scaled by the speed `ρ` of
-that parametrisation.
+with respect to arc length: for `ρ > 0`, the angular integral of `g ∘ circleMap ζ ρ` scaled by the
+speed `ρ` of that parametrisation.
 
 Nothing is assumed of `g`, so this is a lower integral of a possibly non-measurable integrand. The
 angle runs over `Ioo (-π) π`, one full period of `circleMap ζ ρ`; by
-`TauCeti.circleLIntegral_eq_lintegral_Ioc` any other period gives the same value. A negative radius,
-for which `circleMap` traverses the same circle backwards, gives the value `0`. -/
+`TauCeti.circleLIntegral_eq_lintegral_Ioc` any other period gives the same value. A nonpositive
+radius gives the value `0`, by the factor `ENNReal.ofReal ρ`: that is a deliberate convention, not
+a property of the parametrisation, since for `ρ < 0` the map `circleMap ζ ρ` still runs once around
+the circle of radius `|ρ|`, at speed `|ρ|` and in the same direction, only rotated by `π`. -/
 noncomputable def circleLIntegral (g : ℂ → ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ)
 
@@ -105,12 +111,33 @@ theorem circleLIntegral_def (g : ℂ → ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
     circleLIntegral g ζ ρ = ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ) := by
   rw [circleLIntegral]
 
-/-- Increasing the weight increases its circle integral. -/
-theorem circleLIntegral_mono {h : ℂ → ℝ≥0∞} (hgh : ∀ z, g z ≤ h z) (ζ : ℂ) (ρ : ℝ) :
+/-- Increasing the weight on the circle increases its circle integral: only the values on
+`Metric.sphere ζ |ρ|`, the circle the integral is taken over, matter. -/
+theorem circleLIntegral_mono_on {h : ℂ → ℝ≥0∞} (ζ : ℂ) (ρ : ℝ)
+    (hgh : ∀ z ∈ Metric.sphere ζ |ρ|, g z ≤ h z) :
     circleLIntegral g ζ ρ ≤ circleLIntegral h ζ ρ := by
   rw [circleLIntegral_def, circleLIntegral_def]
   gcongr with θ
-  exact hgh _
+  exact hgh _ (circleMap_mem_sphere' ζ ρ θ)
+
+/-- Weights agreeing on the circle have the same circle integral. -/
+theorem circleLIntegral_congr {h : ℂ → ℝ≥0∞} (ζ : ℂ) (ρ : ℝ)
+    (hgh : EqOn g h (Metric.sphere ζ |ρ|)) :
+    circleLIntegral g ζ ρ = circleLIntegral h ζ ρ :=
+  le_antisymm (circleLIntegral_mono_on ζ ρ fun _ hz => (hgh hz).le)
+    (circleLIntegral_mono_on ζ ρ fun _ hz => (hgh hz).ge)
+
+/-- The circle integral of a constant weight is `2 π ρ` — for `ρ > 0` the circumference of the
+circle — times that constant; for `ρ ≤ 0` both sides are `0`. -/
+@[simp]
+theorem circleLIntegral_const (a : ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
+    circleLIntegral (fun _ => a) ζ ρ = ENNReal.ofReal (2 * π * ρ) * a := by
+  rcases le_or_gt ρ 0 with hρ | _
+  · rw [circleLIntegral_def, ENNReal.ofReal_of_nonpos hρ, zero_mul,
+      ENNReal.ofReal_of_nonpos (mul_nonpos_of_nonneg_of_nonpos (by positivity) hρ), zero_mul]
+  · rw [circleLIntegral_def, setLIntegral_const, Real.volume_Ioo, show π - -π = 2 * π by ring,
+      ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 2 * π)]
+    ring
 
 /-- A circle of nonpositive radius carries no arc length. -/
 @[simp]
@@ -208,21 +235,22 @@ private theorem sq_lintegral_le_measure_univ_mul {α : Type*} [MeasurableSpace �
 
 /-- Cauchy–Schwarz in the angular variable: the square of the angular integral is at most `2 π`,
 the length of the angular interval, times the angular integral of the square. -/
-private theorem sq_lintegral_angle_le (hg : Measurable g) (ζ : ℂ) (ρ : ℝ) :
+private theorem sq_lintegral_angle_le
+    (hg : AEMeasurable (fun θ => g (circleMap ζ ρ θ)) (volume.restrict (Ioo (-π) π))) :
     (∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ)) ^ 2 ≤
       ENNReal.ofReal (2 * π) * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ) ^ 2 := by
   have hvol : (volume.restrict (Ioo (-π) π)) Set.univ = ENNReal.ofReal (2 * π) := by
     rw [Measure.restrict_apply_univ, Real.volume_Ioo]
     ring_nf
-  have hum : AEMeasurable (fun θ => g (circleMap ζ ρ θ)) (volume.restrict (Ioo (-π) π)) :=
-    (hg.comp (measurable_circleMap ζ ρ)).aemeasurable
-  simpa [hvol] using sq_lintegral_le_measure_univ_mul (volume.restrict (Ioo (-π) π)) hum
+  simpa [hvol] using sq_lintegral_le_measure_univ_mul (volume.restrict (Ioo (-π) π)) hg
 
-/-- **Cauchy–Schwarz on a circle.** The square of the circle integral of `g` is at most the
-circumference `2 π ρ` times the circle integral of `g ^ 2`.
+/-- **Cauchy–Schwarz on a circle.** The square of the circle integral of `g` is at most
+`2 π ρ` — for `ρ > 0` the circumference of the circle — times the circle integral of `g ^ 2`.
 
-Both sides vanish for a nonpositive radius, so no positivity is assumed. -/
-theorem circleLIntegral_sq_le (hg : Measurable g) (ζ : ℂ) (ρ : ℝ) :
+Only the angular trace of `g` along the circle at hand need be measurable; nothing is assumed of
+`g` off that circle. Both sides vanish for a nonpositive radius, so no positivity is assumed. -/
+theorem circleLIntegral_sq_le (ζ : ℂ) (ρ : ℝ)
+    (hg : AEMeasurable (fun θ => g (circleMap ζ ρ θ)) (volume.restrict (Ioo (-π) π))) :
     circleLIntegral g ζ ρ ^ 2 ≤
       ENNReal.ofReal (2 * π * ρ) * circleLIntegral (fun z => g z ^ 2) ζ ρ := by
   rcases le_or_gt ρ 0 with hρ | hρ
@@ -233,7 +261,7 @@ theorem circleLIntegral_sq_le (hg : Measurable g) (ζ : ℂ) (ρ : ℝ) :
       ≤ ENNReal.ofReal ρ ^ 2 *
           (ENNReal.ofReal (2 * π) * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ) ^ 2) := by
         gcongr
-        exact sq_lintegral_angle_le hg ζ ρ
+        exact sq_lintegral_angle_le hg
     _ = ENNReal.ofReal (2 * π) * ENNReal.ofReal ρ *
           (ENNReal.ofReal ρ * ∫⁻ θ in Ioo (-π) π, g (circleMap ζ ρ θ) ^ 2) := by ring
 
@@ -253,7 +281,8 @@ theorem lintegral_circleLIntegral_sq_div_le_lintegral_sq (hg : Measurable g) (ζ
     have hρpos : (0 : ℝ) < ρ := hρ
     have hρ0 : ENNReal.ofReal ρ ≠ 0 := (ENNReal.ofReal_pos.mpr hρpos).ne'
     rw [ENNReal.div_le_iff hρ0 ENNReal.ofReal_ne_top]
-    refine (circleLIntegral_sq_le hg ζ ρ).trans (le_of_eq ?_)
+    refine (circleLIntegral_sq_le ζ ρ
+      (hg.comp (measurable_circleMap ζ ρ)).aemeasurable).trans (le_of_eq ?_)
     rw [ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 2 * π)]
     ring
   calc ∫⁻ ρ in Ioi (0 : ℝ), circleLIntegral g ζ ρ ^ 2 / ENNReal.ofReal ρ
