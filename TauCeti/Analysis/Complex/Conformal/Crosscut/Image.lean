@@ -26,8 +26,8 @@ connected boundary set enclosing the part of that frontier which clings to the i
 Write `Ω = f '' ball c r`, `A = f '' (ball c r ∩ ball ζ ρ)`, `B = f '' (ball c r \ closedBall ζ ρ)`
 for the images of the two sides, and `γ = f '' (ball c r ∩ sphere ζ ρ)` for the image crosscut, `f`
 being holomorphic and injective on the disc. Then `Ω = A ∪ γ ∪ B`
-(`TauCeti.image_ball_eq_union_image_crosscut`), and the two sides are open, so a frontier point of
-`Ω` — which lies in `closure Ω` but not in `Ω` — is a frontier point of `A`, a frontier point of
+(`TauCeti.image_ball_eq_union_image_crosscut`), and the frontier of a union is covered by the
+frontiers of its parts, so a frontier point of `Ω` is a frontier point of `A`, a frontier point of
 `B`, or an adherent point of `γ`:
 
 > `frontier Ω = frontier Ω ∩ frontier A ∪ frontier Ω ∩ closure γ ∪ frontier Ω ∩ frontier B`
@@ -91,9 +91,7 @@ Layer L5 is absent from
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
 human-curated Riemann-mapping-theorem effort, which stops at the mapping theorem itself, and the
 pinned Mathlib has no boundary correspondence for conformal maps. So this file is new Lean
-formalization rather than a temporary shim. It consumes the L0–L3 shim
-`TauCeti.isOpen_image_of_differentiableOn_of_injOn`, to be refactored onto Mathlib's open mapping
-API once the upstream work lands.
+formalization rather than a temporary shim.
 
 ## References
 
@@ -129,37 +127,19 @@ theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ 
 /-- **The boundary of the image of a disc is covered by the boundaries of the two sides of a
 crosscut together with the closure of the image crosscut.**
 
-A frontier point of the open set `f '' ball c r` lies in its closure but not in it, so by
-`TauCeti.image_ball_eq_union_image_crosscut` it is adherent to one of the three pieces while
-belonging to none of them; for the two sides, which are open, being adherent and not belonging is
-exactly being on the frontier. -/
-theorem frontier_image_ball_subset_union (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) :
+Like the decomposition itself this needs nothing of `f`: the image of the disc is the union of the
+three pieces by `TauCeti.image_ball_eq_union_image_crosscut`, the frontier of a union is covered by
+the frontiers of the two parts by `frontier_union_subset`, and the frontier of the image crosscut
+lies in its closure. -/
+theorem frontier_image_ball_subset_union (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
     frontier (f '' ball c r) ⊆
       frontier (f '' (ball c r ∩ ball ζ ρ)) ∪ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪
         frontier (f '' (ball c r \ closedBall ζ ρ)) := by
-  have hΩopen : IsOpen (f '' ball c r) :=
-    isOpen_image_of_differentiableOn_of_injOn isOpen_ball hd hinj
-  have hAopen : IsOpen (f '' (ball c r ∩ ball ζ ρ)) :=
-    isOpen_image_of_differentiableOn_of_injOn (isOpen_ball.inter isOpen_ball)
-      (hd.mono inter_subset_left) (hinj.mono inter_subset_left)
-  have hBopen : IsOpen (f '' (ball c r \ closedBall ζ ρ)) :=
-    isOpen_image_of_differentiableOn_of_injOn (isOpen_ball.sdiff isClosed_closedBall)
-      (hd.mono sdiff_subset) (hinj.mono sdiff_subset)
-  intro p hp
-  have hpn : p ∉ f '' ball c r := by
-    rw [hΩopen.frontier_eq] at hp
-    exact hp.2
-  have hpc : p ∈ closure (f '' ball c r) := hp.1
-  rw [image_ball_eq_union_image_crosscut f c ζ r ρ, closure_union, closure_union] at hpc
-  rcases hpc with (h | h) | h
-  · refine Or.inl (Or.inl ?_)
-    rw [hAopen.frontier_eq]
-    exact ⟨h, fun hc => hpn (image_mono inter_subset_left hc)⟩
-  · exact Or.inl (Or.inr h)
-  · refine Or.inr ?_
-    rw [hBopen.frontier_eq]
-    exact ⟨h, fun hc => hpn (image_mono sdiff_subset hc)⟩
+  have hunion : ∀ s t : Set ℂ, frontier (s ∪ t) ⊆ frontier s ∪ frontier t := fun s t =>
+    (frontier_union_subset s t).trans (union_subset_union inter_subset_left inter_subset_right)
+  rw [image_ball_eq_union_image_crosscut f c ζ r ρ]
+  exact (hunion _ _).trans (union_subset_union
+    ((hunion _ _).trans (union_subset_union subset_rfl frontier_subset_closure)) subset_rfl)
 
 /-- **A circular crosscut cuts the boundary of the image into two pieces and a middle piece.** The
 equality form of `TauCeti.frontier_image_ball_subset_union`: `frontier (f '' ball c r)` is the union
@@ -167,14 +147,13 @@ of the two *boundary pieces* the crosscut determines — its intersections with 
 images of the two sides — and of the part of it adherent to the image crosscut, which
 `TauCeti.diam_frontier_inter_closure_image_ball_inter_sphere_le` shows to be no wider than the
 image crosscut itself. -/
-theorem frontier_image_ball_eq_union (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) :
+theorem frontier_image_ball_eq_union (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
     frontier (f '' ball c r) =
       frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ∪
         frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪
         frontier (f '' ball c r) ∩ frontier (f '' (ball c r \ closedBall ζ ρ)) := by
   rw [← inter_union_distrib_left, ← inter_union_distrib_left]
-  exact (inter_eq_left.mpr (frontier_image_ball_subset_union hd hinj)).symm
+  exact (inter_eq_left.mpr (frontier_image_ball_subset_union f c ζ r ρ)).symm
 
 /-! ## The middle piece -/
 

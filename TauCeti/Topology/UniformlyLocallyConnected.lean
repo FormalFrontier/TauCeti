@@ -144,8 +144,10 @@ set.** For every `ε > 0` there is a single `δ > 0` — depending on `s` and `�
 every nonempty bounded subset of `s` of diameter less than `δ` is contained in a connected subset
 of `s` of diameter at most `ε`.
 
-This upgrades the two-point statement `TauCeti.IsUniformlyLocallyConnected.exists_isConnected` to
-a whole small set, at no cost in the rate: one connected set swallows the subset entirely.
+This upgrades the two-point statement `TauCeti.IsUniformlyLocallyConnected.exists_isConnected` from
+a pair of points to a whole small set, one connected set swallowing the subset entirely. The `δ`
+produced is the two-point modulus of `ε / 2`, not of `ε`: the enclosing set is reached from the
+fixed point `a` below, so each of its points is allowed only half of the budget.
 
 The enclosing set is built by taking every candidate at once, as in
 `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace`: fix a point `a` of the subset and
