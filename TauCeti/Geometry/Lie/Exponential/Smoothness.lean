@@ -287,17 +287,11 @@ private theorem mulInvariantExp_nsmul
     (v : GroupLieAlgebra I G) (m : ℕ) :
     mulInvariantExp (I := I) (G := G) (m • v) =
       mulInvariantExp (I := I) (G := G) v ^ m := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-      rw [succ_nsmul]
-      calc
-        mulInvariantExp (I := I) (G := G) (m • v + v) =
-            mulInvariantExp (I := I) (G := G) (((m : ℝ) + 1) • v) := by
-          congr 1
-          rw [add_smul, one_smul, Nat.cast_smul_eq_nsmul]
-        _ = mulInvariantExp (I := I) (G := G) v ^ (m + 1) := by
-          rw [mulInvariantExp_add_smul, Nat.cast_smul_eq_nsmul, one_smul, ih, pow_succ]
+  have h := map_pow (mulInvariantOneParameterSubgroup (I := I) (G := G) v)
+    (Multiplicative.ofAdd (1 : ℝ)) m
+  rw [← ofAdd_nsmul] at h
+  simpa only [nsmul_eq_mul, mul_one, Nat.cast_smul_eq_nsmul,
+    mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul, one_smul] using h
 
 omit [IsManifold I 2 G] in
 /-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth. Smoothness
