@@ -16,6 +16,7 @@ to prove that the Lie-group exponential is smooth at the zero vector.
 ## Main results
 
 * `contMDiffAt_mulInvariantExp_zero`: the tangent-space exponential is smooth at zero.
+* `contMDiff_mulInvariantExp`: the tangent-space exponential is smooth everywhere.
 
 ## References
 
@@ -279,3 +280,80 @@ theorem contMDiffAt_mulInvariantExp_zero
   refine ⟨continuousAt_mulInvariantExp_modelSpace_zero (I := I) (G := G), ?_⟩
   have hcoordM := hcoord.contMDiffAt
   simpa only [Function.comp_def] using hcoordM
+
+omit [IsManifold I 2 G] in
+private theorem mulInvariantExp_nsmul
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
+    (v : GroupLieAlgebra I G) (m : ℕ) :
+    mulInvariantExp (I := I) (G := G) (m • v) =
+      mulInvariantExp (I := I) (G := G) v ^ m := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [succ_nsmul]
+      calc
+        mulInvariantExp (I := I) (G := G) (m • v + v) =
+            mulInvariantExp (I := I) (G := G) (((m : ℝ) + 1) • v) := by
+          congr 1
+          rw [add_smul, one_smul, Nat.cast_smul_eq_nsmul]
+        _ = mulInvariantExp (I := I) (G := G) v ^ (m + 1) := by
+          rw [mulInvariantExp_add_smul, Nat.cast_smul_eq_nsmul, one_smul, ih, pow_succ]
+
+omit [IsManifold I 2 G] in
+/-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth. Smoothness
+at zero globalizes because every vector can be divided by a sufficiently large positive integer,
+and `exp v = (exp (v / m)) ^ m`. -/
+theorem contMDiff_mulInvariantExp
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    ContMDiff 𝓘(ℝ, E) I ∞
+      (fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) := by
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
+  rw [contMDiff_infty]
+  intro n x
+  have hzero : ContMDiffAt 𝓘(ℝ, E) I n
+      (fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) 0 :=
+    contMDiffAt_mulInvariantExp_zero (I := I) (G := G) |>.of_le
+      (by exact_mod_cast le_top)
+  have hnear : ∀ᶠ y in 𝓝 (0 : E),
+      ContMDiffAt 𝓘(ℝ, E) I n
+        (fun v : E => mulInvariantExp (I := I) (G := G)
+          (v : GroupLieAlgebra I G)) y :=
+    ((contMDiffAt_iff_contMDiffAt_nhds (by simp)).mp hzero)
+  obtain ⟨ε, hε, hεnear⟩ := Metric.mem_nhds_iff.mp hnear
+  obtain ⟨m, hm⟩ := exists_nat_gt (‖x‖ / ε)
+  have hmpos : 0 < (m : ℝ) :=
+    (div_nonneg (norm_nonneg x) hε.le).trans_lt hm
+  have hm0 : m ≠ 0 := by exact_mod_cast hmpos.ne'
+  have hxsmall : (m : ℝ)⁻¹ • x ∈ Metric.ball (0 : E) ε := by
+    rw [Metric.mem_ball, dist_zero_right, norm_smul, Real.norm_eq_abs,
+      abs_inv, abs_of_pos hmpos]
+    apply (inv_mul_lt_iff₀ hmpos).2
+    exact (div_lt_iff₀ hε).mp hm
+  have hsmall := hεnear hxsmall
+  have hscale : ContMDiffAt 𝓘(ℝ, E) 𝓘(ℝ, E) n
+      (fun y : E => (m : ℝ)⁻¹ • y) x :=
+    (contDiff_const_smul (𝕜 := ℝ) (F := E) (m : ℝ)⁻¹).contDiffAt.contMDiffAt
+  have hscaled : ContMDiffAt 𝓘(ℝ, E) I n
+      (fun y : E => mulInvariantExp (I := I) (G := G)
+        (((m : ℝ)⁻¹ • y : E) : GroupLieAlgebra I G)) x := by
+    simpa only [Function.comp_def] using hsmall.comp x hscale
+  have hpow : ContMDiffAt 𝓘(ℝ, E) I n
+      (fun y : E => mulInvariantExp (I := I) (G := G)
+        (((m : ℝ)⁻¹ • y : E) : GroupLieAlgebra I G) ^ m) x := by
+    simpa only [Function.comp_def] using
+      (contMDiff_pow m).contMDiffAt.comp x hscaled
+  apply hpow.congr_of_eventuallyEq
+  filter_upwards [] with y
+  symm
+  calc
+    mulInvariantExp (I := I) (G := G)
+          (((m : ℝ)⁻¹ • y : E) : GroupLieAlgebra I G) ^ m =
+        mulInvariantExp (I := I) (G := G)
+          (m • (((m : ℝ)⁻¹ • y : E) : GroupLieAlgebra I G)) :=
+      (mulInvariantExp_nsmul (I := I) (G := G)
+        (((m : ℝ)⁻¹ • y : E) : GroupLieAlgebra I G) m).symm
+    _ = mulInvariantExp (I := I) (G := G) (y : GroupLieAlgebra I G) := by
+      congr 1
+      rw [← Nat.cast_smul_eq_nsmul ℝ, smul_smul, mul_inv_cancel₀ (by exact_mod_cast hm0), one_smul]
