@@ -75,8 +75,9 @@ private theorem coact_apply_eq_universal_endOfPoint
   | add a b ha hb => simpa only [map_add] using congrArg₂ (fun c d ↦ c + d) ha hb
   | tmul a b =>
       simp only [LinearMap.lTensor_tmul, AlgEquiv.toLinearMap_apply,
-        TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.comm_tmul]
-      rfl
+        TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.comm_tmul,
+        AlgHom.toLinearMap_apply, AlgEquiv.toAlgHom_apply,
+        AlgEquiv.apply_symm_apply]
 
 section IndependentCarrierUniverses
 
