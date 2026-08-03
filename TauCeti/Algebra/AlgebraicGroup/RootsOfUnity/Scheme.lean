@@ -244,6 +244,13 @@ noncomputable def inclusionGroupSchemeMap (R : Type u) [CommRing R] (n : ℕ) :
     groupScheme R n ⟶ DiagonalizableGroup.multiplicativeGroupScheme R :=
   DiagonalizableGroup.groupSchemeMap R (characterQuotient n)
 
+/-- The roots-of-unity group-scheme inclusion is the contravariant diagonalizable image of
+`characterQuotient`. -/
+theorem inclusionGroupSchemeMap_def (n : ℕ) :
+    inclusionGroupSchemeMap R n =
+      DiagonalizableGroup.groupSchemeMap R (characterQuotient n) := by
+  rfl
+
 /-- On scheme-valued points, `mu_n -> G_m` is the established inclusion of roots of unity
 into units. -/
 @[simp high]
