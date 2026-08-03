@@ -17,15 +17,15 @@ extension.
 
 ## Main declarations
 
-* `TauCeti.Comodule.baseChangeEvaluation`: the canonical scalar-extended evaluation map.
-* `TauCeti.Comodule.baseChangeEvaluation_tmul`: its value on two pure tensors.
+* `TauCeti.Module.Dual.baseChangeEvaluation`: the canonical scalar-extended evaluation map.
+* `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
 -/
 
 public section
 
 open scoped TensorProduct
 
-namespace TauCeti.Comodule
+namespace TauCeti.Module.Dual
 
 universe u w x
 
@@ -52,4 +52,4 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
   rw [Algebra.algebraMap_self_apply]
   ac_rfl
 
-end TauCeti.Comodule
+end TauCeti.Module.Dual

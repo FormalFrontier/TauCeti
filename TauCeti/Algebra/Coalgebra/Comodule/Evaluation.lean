@@ -67,7 +67,7 @@ point at the corresponding matrix coefficient. -/
 @[simp↓]
 theorem baseChangeEvaluation_endOfPoint_tmul (g : H →ₐ[R] A)
     (a b : A) (φ : Module.Dual R M) (m : M) :
-    baseChangeEvaluation (R := R) (M := M) (A := A) (a ⊗ₜ[R] φ)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A) (a ⊗ₜ[R] φ)
         (endOfPoint M g (b ⊗ₜ[R] m)) =
       a * b * g (matrixCoefficient (R := R) (C := H) φ m) := by
   rw [endOfPoint_tmul, matrixCoefficient_def]
@@ -77,7 +77,8 @@ theorem baseChangeEvaluation_endOfPoint_tmul (g : H →ₐ[R] A)
   | add s t hs ht => simp [hs, ht, mul_add]
   | tmul n h =>
       simp only [LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply, TensorProduct.comm_tmul,
-        map_smul, baseChangeEvaluation_tmul, smul_eq_mul, TensorProduct.map_tmul,
+        map_smul, TauCeti.Module.Dual.baseChangeEvaluation_tmul, smul_eq_mul,
+        TensorProduct.map_tmul,
         LinearMap.id_coe, id_eq, TensorProduct.lid_tmul, Algebra.smul_def, map_mul,
         AlgHom.commutes]
       rw [mul_comm (algebraMap R A (φ n)) (g h)]
@@ -100,7 +101,7 @@ attribute [local instance] dual
 omit [Comodule R H M] [Module.Finite R M] [Module.Projective R M] in
 private theorem baseChangeEvaluation_comm_lTensor (g : H →ₐ[R] A)
     (t : Module.Dual R M ⊗[R] H) (b : A) (m : M) :
-    baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (TensorProduct.comm R (Module.Dual R M) A
           (LinearMap.lTensor (Module.Dual R M) g.toLinearMap t)) (b ⊗ₜ[R] m) =
       b * g (dualTensorHom R M H t m) := by
@@ -109,7 +110,8 @@ private theorem baseChangeEvaluation_comm_lTensor (g : H →ₐ[R] A)
   | add s t hs ht => simp [hs, ht, mul_add]
   | tmul φ h =>
       simp only [LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply, TensorProduct.comm_tmul,
-        baseChangeEvaluation_tmul, dualTensorHom_apply, Algebra.smul_def, map_mul,
+        TauCeti.Module.Dual.baseChangeEvaluation_tmul, dualTensorHom_apply, Algebra.smul_def,
+        map_mul,
         AlgHom.commutes]
       rw [mul_comm (algebraMap R A (φ m)) (g h)]
       ac_rfl
@@ -120,7 +122,7 @@ to the original matrix coefficient, together with the two scalar factors. -/
 @[simp↓]
 theorem baseChangeEvaluation_dual_endOfPoint_tmul (g : WithConv (H →ₐ[R] A))
     (a b : A) (φ : Module.Dual R M) (m : M) :
-    baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (endOfPoint (Module.Dual R M) g.ofConv (a ⊗ₜ[R] φ)) (b ⊗ₜ[R] m) =
       a * b * (g⁻¹).ofConv (matrixCoefficient (R := R) (C := H) φ m) := by
   rw [endOfPoint_tmul]
@@ -135,9 +137,9 @@ scalar-extended evaluation, to the original point action at the inverse point. -
 @[simp]
 theorem baseChangeEvaluation_dual_endOfPoint (g : WithConv (H →ₐ[R] A))
     (ξ : A ⊗[R] Module.Dual R M) (z : A ⊗[R] M) :
-    baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (endOfPoint (Module.Dual R M) g.ofConv ξ) z =
-      baseChangeEvaluation (R := R) (M := M) (A := A) ξ
+      TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A) ξ
         (endOfPoint M (g⁻¹).ofConv z) := by
   induction ξ using TensorProduct.induction_on with
   | zero => simp
@@ -156,9 +158,9 @@ preserves the canonical scalar-extended evaluation pairing. -/
 @[simp↓]
 theorem baseChangeEvaluation_dual_endOfPoint_invariant (g : WithConv (H →ₐ[R] A))
     (ξ : A ⊗[R] Module.Dual R M) (z : A ⊗[R] M) :
-    baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (endOfPoint (Module.Dual R M) g.ofConv ξ) (endOfPoint M g.ofConv z) =
-      baseChangeEvaluation (R := R) (M := M) (A := A) ξ z := by
+      TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A) ξ z := by
   rw [baseChangeEvaluation_dual_endOfPoint]
   congr 1
   have h := LinearMap.congr_fun (endOfPoint_convMul M g⁻¹ g) z

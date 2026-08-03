@@ -61,7 +61,7 @@ left-hand side first, so the simp-normal-form linter rejects the specialized ori
 theorem ofComodule_dual_action_evaluation_tmul
     (A : CommAlgCat.{max u v w} R) (g : points (H := H) A)
     (a b : A) (φ : Module.Dual R M) (m : M) :
-    Comodule.baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (((ofComodule (Comodule.dual R H M)).action A g).val (a ⊗ₜ[R] φ))
         (b ⊗ₜ[R] m) =
       a * b * (g⁻¹).ofConv (Comodule.matrixCoefficient (R := R) (C := H) φ m) := by
@@ -74,9 +74,9 @@ dual comodule is adjoint under evaluation to the original action at the inverse 
 theorem ofComodule_dual_action_evaluation
     (A : CommAlgCat.{max u v w} R) (g : points (H := H) A)
     (ξ : A ⊗[R] Module.Dual R M) (z : A ⊗[R] M) :
-    Comodule.baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (((ofComodule (Comodule.dual R H M)).action A g).val ξ) z =
-      Comodule.baseChangeEvaluation (R := R) (M := M) (A := A) ξ
+      TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A) ξ
         (((ofComodule rho).action A g⁻¹).val z) := by
   rw [ofComodule_action_val_eq_endOfPoint, ofComodule_action_val_eq_endOfPoint]
   exact Comodule.baseChangeEvaluation_dual_endOfPoint g ξ z
@@ -89,10 +89,10 @@ left-hand side first, so the simp-normal-form linter rejects the specialized ori
 theorem ofComodule_dual_action_evaluation_invariant
     (A : CommAlgCat.{max u v w} R) (g : points (H := H) A)
     (ξ : A ⊗[R] Module.Dual R M) (z : A ⊗[R] M) :
-    Comodule.baseChangeEvaluation (R := R) (M := M) (A := A)
+    TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A)
         (((ofComodule (Comodule.dual R H M)).action A g).val ξ)
         (((ofComodule rho).action A g).val z) =
-      Comodule.baseChangeEvaluation (R := R) (M := M) (A := A) ξ z := by
+      TauCeti.Module.Dual.baseChangeEvaluation (R := R) (M := M) (A := A) ξ z := by
   rw [ofComodule_action_val_eq_endOfPoint, ofComodule_action_val_eq_endOfPoint]
   exact Comodule.baseChangeEvaluation_dual_endOfPoint_invariant g ξ z
 
