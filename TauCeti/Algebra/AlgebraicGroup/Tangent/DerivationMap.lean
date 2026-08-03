@@ -41,6 +41,30 @@ variable {R A A' B : Type*} [CommSemiring R]
   [CommSemiring A] [Bialgebra R A] [CommSemiring A'] [Bialgebra R A']
   [Semiring B] [Algebra R B]
 
+/-- **The two counit coefficient algebras agree, `A'`-linearly.** `Bialgebra.CounitAlgebra R A B`
+and `Bialgebra.CounitAlgebra R A' B` are both copies of `B`, and the identification between them is
+`A'`-linear exactly because a bialgebra morphism intertwines the counits
+(`BialgHom.counitAlgHom_comp`). The `A'`-algebra structure on the `A`-side copy is not the global
+one, so it is taken as an instance argument together with `hmap`, which says its structure map
+factors through `φ` — the only property of it this construction uses. -/
+private noncomputable def counitAlgebraCongr (φ : A' →ₐc[R] A)
+    [Algebra A' (Bialgebra.CounitAlgebra R A B)]
+    (hmap : ∀ a : A', algebraMap A' (Bialgebra.CounitAlgebra R A B) a =
+      algebraMap A (Bialgebra.CounitAlgebra R A B) ((φ : A' →ₐ[R] A) a)) :
+    Bialgebra.CounitAlgebra R A B ≃ₐ[A'] Bialgebra.CounitAlgebra R A' B :=
+  AlgEquiv.ofRingEquiv
+    (f := (Bialgebra.CounitAlgebra.algEquivSelf R A B).toRingEquiv.trans
+      (Bialgebra.CounitAlgebra.algEquivSelf R A' B).symm.toRingEquiv) (by
+    intro a
+    simp only [RingEquiv.trans_apply, AlgEquiv.coe_ringEquiv,
+      Bialgebra.CounitAlgebra.algEquivSelf_apply]
+    rw [hmap a, Bialgebra.CounitAlgebra.algebraMap_apply R A B,
+      Bialgebra.CounitAlgebra.algebraMap_apply R A' B,
+      Bialgebra.CounitAlgebra.algEquivSelf_symm_apply R A' B]
+    exact congrArg (algebraMap R B)
+      (DFunLike.congr_fun (BialgHom.counitAlgHom_comp φ) a))
+
+
 /-- Implementation of the bundled `derivationComp`, which is the API. -/
 private noncomputable def derivationCompAux (φ : A' →ₐc[R] A)
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
@@ -78,37 +102,23 @@ private noncomputable def derivationCompAux (φ : A' →ₐc[R] A)
         IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply]
   letI : IsScalarTower A' A (Bialgebra.CounitAlgebra R A B) :=
     IsScalarTower.of_algebraMap_eq' rfl
-  let eRing : Bialgebra.CounitAlgebra R A B ≃+* Bialgebra.CounitAlgebra R A' B :=
-    (Bialgebra.CounitAlgebra.algEquivSelf R A B).toRingEquiv.trans
-      (Bialgebra.CounitAlgebra.algEquivSelf R A' B).symm.toRingEquiv
-  let e : Bialgebra.CounitAlgebra R A B ≃ₐ[A'] Bialgebra.CounitAlgebra R A' B :=
-    AlgEquiv.ofRingEquiv (f := eRing) (by
-      intro a
-      -- The single mathematical obligation: the two `A'`-algebra maps agree because
-      -- `φ` intertwines the counits. The transports erase pointwise, the left algebra
-      -- map is `algebraMap A (CounitAlgebra R A B)` at `φ a` by the local instance, and
-      -- both sides then reduce through the counit.
-      simp only [eRing, RingEquiv.trans_apply, AlgEquiv.coe_ringEquiv,
-        Bialgebra.CounitAlgebra.algEquivSelf_apply]
-      -- The `A'`-algebra map on the left is the local `letI` instance, whose value
-      -- is definitionally `ρ a = algebraMap A _ (φ a)`; this holds by `rfl` only, as
-      -- no lemma describes an instance local to this construction.
-      rw [show (algebraMap A' (Bialgebra.CounitAlgebra R A B)) a =
-          algebraMap A (Bialgebra.CounitAlgebra R A B) ((φ : A' →ₐ[R] A) a) from rfl,
-        Bialgebra.CounitAlgebra.algebraMap_apply R A B,
-        Bialgebra.CounitAlgebra.algebraMap_apply R A' B,
-        Bialgebra.CounitAlgebra.algEquivSelf_symm_apply R A' B]
-      exact congrArg (algebraMap R B)
-        (DFunLike.congr_fun (BialgHom.counitAlgHom_comp φ) a))
-  exact e.toLinearEquiv.compDer (d.compAlgebraMap A')
+  -- The `A'`-algebra structure just installed sends `a` to `ρ a = algebraMap A _ (φ a)`,
+  -- which is definitional, so `hmap` is discharged by `rfl`.
+  exact (counitAlgebraCongr φ (B := B) (fun _ => rfl)).toLinearEquiv.compDer
+    (d.compAlgebraMap A')
 
 private lemma derivationCompAux_apply (φ : A' →ₐc[R] A)
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A') :
     derivationCompAux (B := B) φ d a = d ((φ : A' →ₐ[R] A) a) := by
-  simp only [derivationCompAux, Derivation.linearEquiv_coe_comp, LinearMap.coe_comp,
-    Function.comp_apply, LinearMap.restrictScalars_apply, AlgEquiv.toLinearMap_apply,
-    AlgEquiv.ofRingEquiv_apply, RingEquiv.trans_apply, AlgEquiv.coe_ringEquiv,
-    Bialgebra.CounitAlgebra.algEquivSelf_apply]
+  -- `counitAlgebraCongr` is unfolded rather than applied through an `_apply` lemma. Its `hmap`
+  -- argument is supplied here as `fun _ => rfl`, elaborated under the `letI` algebra instance of
+  -- `derivationCompAux`, in which the two sides of `hmap` are the *same* term; the stored proof
+  -- therefore carries a reflexivity type. An `_apply` lemma, whose `hmap` has the general
+  -- non-reflexive type, does not match this occurrence, and `rw`/`simp only` find no pattern.
+  simp only [derivationCompAux, counitAlgebraCongr, Derivation.linearEquiv_coe_comp,
+    LinearMap.coe_comp, Function.comp_apply, LinearMap.restrictScalars_apply,
+    AlgEquiv.toLinearMap_apply, AlgEquiv.ofRingEquiv_apply, RingEquiv.trans_apply,
+    AlgEquiv.coe_ringEquiv, Bialgebra.CounitAlgebra.algEquivSelf_apply]
   -- The remaining transport erases at this value, and the precomposition is
   -- definitional in Mathlib's `compAlgebraMap`.
   exact (Bialgebra.CounitAlgebra.algEquivSelf_symm_apply R A' B _).trans rfl

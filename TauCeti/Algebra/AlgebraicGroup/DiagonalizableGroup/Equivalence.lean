@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.EssentialImage
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 
 /-!
 # The anti-equivalence for diagonalizable group schemes

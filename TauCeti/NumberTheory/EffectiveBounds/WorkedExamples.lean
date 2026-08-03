@@ -9,7 +9,7 @@ public import Mathlib.RingTheory.AdjoinRoot
 public import Mathlib.NumberTheory.Cyclotomic.Basic
 import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
 import TauCeti.NumberTheory.EffectiveBounds.ClassNumber.Basic
-import TauCeti.NumberTheory.EffectiveBounds.Discriminant.Equality
+import TauCeti.NumberTheory.NumberField.Discriminant.OfIntegralBasis
 import TauCeti.FieldTheory.Trace
 import TauCeti.NumberTheory.NumberField.Internal.QuadraticIntegralBasis
 import Mathlib.FieldTheory.KummerPolynomial
