@@ -626,9 +626,22 @@ theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
       · exact ⟨_, Set.mem_union_left _ ⟨ij, rfl⟩, rfl⟩
       · exact ⟨_, Set.mem_union_right _ ⟨ij, rfl⟩,
           coordinateHopfAlgebra_antipode_apply R n _⟩
-  change Algebra.adjoin R bundledGenerators = ⊤
+  have hbundledAdjoin :
+      Algebra.adjoin R
+          (Set.range (fun ij : Fin n × Fin n =>
+            coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X ij))) ∪
+          Set.range (fun ij : Fin n × Fin n =>
+            HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
+              (coordinateHopfAlgebraAlgEquiv R n
+                (coordinateRingMap R n (MvPolynomial.X ij))))) =
+        Algebra.adjoin R bundledGenerators := by
+    simp only [bundledGenerators]
+  have hrawAdjoin : Algebra.adjoin R rawGenerators = ⊤ := by
+    simpa only [rawGenerators] using adjoin_X_union_antipode_X R n
   calc
-    Algebra.adjoin R bundledGenerators =
+    _ = Algebra.adjoin R bundledGenerators := hbundledAdjoin
+    _ =
         Algebra.adjoin R ((coordinateHopfAlgebraAlgEquiv R n) '' rawGenerators) := by
       rw [himage]
     _ = (Algebra.adjoin R rawGenerators).map
@@ -636,8 +649,7 @@ theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
       simpa using Algebra.adjoin_image R
         (coordinateHopfAlgebraAlgEquiv R n).toAlgHom rawGenerators
     _ = ⊤ := by
-      rw [show Algebra.adjoin R rawGenerators = ⊤ from adjoin_X_union_antipode_X R n,
-        Algebra.map_top]
+      rw [hrawAdjoin, Algebra.map_top]
       exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
 
 /-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
