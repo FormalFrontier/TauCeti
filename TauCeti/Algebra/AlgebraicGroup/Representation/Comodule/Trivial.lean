@@ -33,7 +33,7 @@ comodule. No finiteness, freeness, projectivity, flatness, or nontriviality hypo
 
 public section
 
-open CategoryTheory TensorProduct
+open TensorProduct
 open scoped TensorProduct
 
 namespace TauCeti
@@ -48,59 +48,21 @@ variable [AddCommMonoid V] [Module R V]
 
 namespace PointRepresentation
 
-private noncomputable def rawTrivialAction
-    (A : CommAlgCat.{max u v w} R) :
-    points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A :=
-  GrpCat.ofHom (1 : points (H := H) A →* GeneralLinear.scalarExtensionAutomorphisms (V := V) A)
-
-private theorem rawTrivialAction_naturality
-    {A B : CommAlgCat.{max u v w} R} (phi : A ⟶ B) :
-    mapPoints (H := H) phi ≫ rawTrivialAction (H := H) (V := V) B =
-      rawTrivialAction (H := H) (V := V) A ≫
-        GeneralLinear.mapScalarExtensionAutomorphisms (V := V) phi := by
-  apply GrpCat.ext
-  intro x
-  simp [rawTrivialAction]
-
 /-- The trivial point representation on an arbitrary module. Every point acts by the identity
 linear automorphism after scalar extension. -/
-noncomputable def trivial : PointRepresentation (R := R) (H := H) (V := V) where
-  app A := rawTrivialAction (H := H) (V := V) A ≫
-    eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm
-  naturality A B phi := by
-    -- `pointsFunctor_obj` and the scalar-extension object theorem are categorical equalities,
-    -- with no computation lemma that rewrites this structure-field goal before it is exposed.
-    change
-      mapPoints (H := H) phi ≫ rawTrivialAction (H := H) (V := V) B ≫
-          eqToHom
-            (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) B).symm =
-        rawTrivialAction (H := H) (V := V) A ≫
-          eqToHom
-            (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm ≫
-          (GeneralLinear.scalarExtensionAutomorphismsFunctor (V := V)).map phi
-    rw [GeneralLinear.scalarExtensionAutomorphismsFunctor_map]
-    rw [← Category.assoc, rawTrivialAction_naturality (H := H) (V := V) phi]
-    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-
-@[simp]
-private theorem action_trivial (A : CommAlgCat.{max u v w} R) :
-    (trivial (H := H) (V := V)).action A = rawTrivialAction (H := H) (V := V) A := by
-  rw [action_def, trivial]
-  -- The natural-transformation component is stored with the inverse of the opaque object
-  -- equality; expose that categorical composite before cancelling the two transports.
-  change
-    (rawTrivialAction (H := H) (V := V) A ≫
-        eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A).symm) ≫
-      eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := V) A) =
-        rawTrivialAction (H := H) (V := V) A
-  rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+noncomputable def trivial : PointRepresentation (R := R) (H := H) (V := V) :=
+  ofComodule (Comodule.trivial (R := R) (C := H) (M := V))
 
 /-- Every point acts as the identity in the trivial point representation. -/
 @[simp]
 theorem trivial_action (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
     (trivial (H := H) (V := V)).action A x = 1 := by
-  rw [action_trivial]
-  simp [rawTrivialAction]
+  apply Units.ext
+  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
+  rw [trivial, ofComodule_action_tmul, Comodule.trivial_coact_apply]
+  simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
+    map_one, TensorProduct.comm_tmul]
+  exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
 
 /-- The trivial point representation fixes every vector after scalar extension. -/
 @[simp]
@@ -116,22 +78,14 @@ representation. -/
 theorem ofComodule_trivial :
     ofComodule (Comodule.trivial (R := R) (C := H) (M := V)) =
       trivial (H := H) (V := V) := by
-  apply ext
-  intro A x
-  apply Units.ext
-  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
-  rw [ofComodule_action_tmul, trivial_action_apply]
-  rw [Comodule.trivial_coact_apply]
-  simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
-    map_one, TensorProduct.comm_tmul]
-  exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
+  rfl
 
 /-- Recovering the comodule of the trivial point representation gives the trivial comodule. -/
 @[simp]
 theorem toComodule_trivial :
     toComodule (trivial (H := H) (V := V)) =
       Comodule.trivial (R := R) (C := H) (M := V) := by
-  rw [← ofComodule_trivial, toComodule_ofComodule]
+  rw [trivial, toComodule_ofComodule]
 
 end PointRepresentation
 
