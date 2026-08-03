@@ -289,35 +289,140 @@ private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A 
         · exact h_avoid t' h_rest)
     exact (h_left.trans (h_win t List.mem_cons_self)).trans h_rest
 
+/-! ### Boundedness of the derivative of a piecewise-`C¹` curve -/
+
+/-- The derivative of a curve that is `C¹` on `[c, d]` has bounded image on `[c, d]`: the
+within-interval derivative is continuous on the compact piece, hence bounded there by
+compactness, and agrees with `deriv` on the interior; the two endpoints contribute at most two
+further (arbitrary, automatically bounded) values. -/
+private theorem isBounded_image_deriv_of_contDiffOn {γ : ℝ → ℂ} {c d : ℝ} (hcd : c ≤ d)
+    (hC1 : ContDiffOn ℝ 1 γ (Icc c d)) :
+    Bornology.IsBounded (deriv γ '' Icc c d) := by
+  rcases hcd.eq_or_lt with heq | hlt
+  · obtain rfl := heq
+    rw [Set.Icc_self, Set.image_singleton]
+    exact (Set.finite_singleton _).isBounded
+  have hdw : ContinuousOn (derivWithin γ (Icc c d)) (Icc c d) :=
+    hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl
+  have hdw_bdd : Bornology.IsBounded (derivWithin γ (Icc c d) '' Icc c d) :=
+    (isCompact_Icc.image_of_continuousOn hdw).isBounded
+  refine (hdw_bdd.union
+    ((Set.finite_singleton (deriv γ d)).insert (deriv γ c)).isBounded).subset ?_
+  rintro y ⟨t, ht, rfl⟩
+  rcases eq_or_ne t c with rfl | htc
+  · exact Or.inr (by simp)
+  rcases eq_or_ne t d with rfl | htd
+  · exact Or.inr (by simp)
+  exact Or.inl ⟨t, ht, derivWithin_of_mem_nhds (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htc))
+    (lt_of_le_of_ne ht.2 htd))⟩
+
+/-- Gluing step for `isBounded_image_deriv_Icc`: boundedness of the derivative's image on any
+subinterval `[c, d] ⊆ [[a, b]]`, by induction on the number of breakpoints strictly inside
+`(c, d)`, splitting off the largest one. Mirrors `intervalIntegrable_deriv_aux`. -/
+private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Finset ℝ}
+    (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
+      ContDiffOn ℝ 1 γ (Icc c d)) :
+    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+      Bornology.IsBounded (deriv γ '' Icc c d) := by
+  have hdisj : ∀ {c d : ℝ}, p.filter (· ∈ Ioo c d) = ∅ → Disjoint (↑p : Set ℝ) (Ioo c d) :=
+    fun he => Set.disjoint_left.mpr fun x hxp hx =>
+      Finset.notMem_empty x (he ▸ Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hx⟩)
+  intro n
+  induction n with
+  | zero =>
+    intro c d hcard hcd hsub
+    have he : p.filter (· ∈ Ioo c d) = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
+    exact isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
+  | succ n ih =>
+    intro c d hcard hcd hsub
+    rcases (p.filter (· ∈ Ioo c d)).eq_empty_or_nonempty with he | hne
+    · exact isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub (hdisj he))
+    set m := (p.filter (· ∈ Ioo c d)).max' hne with hm_def
+    obtain ⟨hmp, hm⟩ := Finset.mem_filter.mp ((p.filter (· ∈ Ioo c d)).max'_mem hne)
+    have hssub : p.filter (· ∈ Ioo c m) ⊂ p.filter (· ∈ Ioo c d) :=
+      (Finset.ssubset_iff_of_subset (Finset.monotone_filter_right _ fun x _ hx =>
+          ⟨hx.1, hx.2.trans hm.2⟩)).mpr
+        ⟨m, Finset.mem_filter.mpr ⟨hmp, hm⟩, fun hmem =>
+          (Finset.mem_filter.mp hmem).2.2.false⟩
+    have h₁ : Bornology.IsBounded (deriv γ '' Icc c m) :=
+      ih c m (Nat.le_of_lt_succ ((Finset.card_lt_card hssub).trans_le hcard)) hm.1.le
+        ((Icc_subset_Icc le_rfl hm.2.le).trans hsub)
+    have h₂ : Bornology.IsBounded (deriv γ '' Icc m d) := by
+      refine isBounded_image_deriv_of_contDiffOn hm.2.le
+        (hC1 m d ((Icc_subset_Icc hm.1.le le_rfl).trans hsub) (Set.disjoint_left.mpr ?_))
+      intro x hxp hx
+      exact absurd ((p.filter (· ∈ Ioo c d)).le_max' x
+          (Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hm.1.trans hx.1, hx.2⟩))
+        (not_le.mpr hx.1)
+    have hunion : Icc c d = Icc c m ∪ Icc m d := (Set.Icc_union_Icc_eq_Icc hm.1.le hm.2.le).symm
+    rw [hunion, Set.image_union]
+    exact h₁.union h₂
+
+/-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
+Mirrors `IsPiecewiseC1On.intervalIntegrable_deriv`'s gluing-across-breakpoints argument, but for
+boundedness of the image rather than interval-integrability. -/
+private theorem isBounded_image_deriv_Icc {γ : ℝ → ℂ} {a b : ℝ} (h : IsPiecewiseC1On γ a b)
+    (hab : a ≤ b) : Bornology.IsBounded (deriv γ '' Icc a b) := by
+  obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
+  have key := isBounded_image_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
+    (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
+  simpa [min_eq_left hab, max_eq_right hab] using key
+
+/-- **A crude bound on the real winding integrand away from its singularity.** No quadratic
+remainder estimate is needed once `‖z‖` is bounded below: the numerator is `|Im(v · conj z)| ≤
+‖v‖ · ‖z‖` and the denominator is `‖z‖ ^ 2`, so the quotient is at most `‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
+private theorem abs_realWindingIntegrand_le_div_of_norm_le {z v : ℂ} {m : ℝ} (hm : 0 < m)
+    (hz : m ≤ ‖z‖) : |realWindingIntegrand z v| ≤ ‖v‖ / m := by
+  have hz_pos : 0 < ‖z‖ := lt_of_lt_of_le hm hz
+  have hnum : |z.re * v.im - z.im * v.re| ≤ ‖v‖ * ‖z‖ := by
+    have heq : z.re * v.im - z.im * v.re = (v * (starRingEnd ℂ) z).im := by
+      rw [Complex.mul_im, Complex.conj_re, Complex.conj_im]; ring
+    rw [heq]
+    calc |(v * (starRingEnd ℂ) z).im| ≤ ‖v * (starRingEnd ℂ) z‖ := by
+          rw [← RCLike.im_eq_complex_im]; exact RCLike.abs_im_le_norm _
+      _ = ‖v‖ * ‖z‖ := by rw [norm_mul, RCLike.norm_conj]
+  rw [realWindingIntegrand_eq_div, abs_div, Complex.normSq_eq_norm_sq,
+    abs_of_nonneg (by positivity : (0 : ℝ) ≤ ‖z‖ ^ 2), div_le_div_iff₀ (by positivity) hm]
+  calc |z.re * v.im - z.im * v.re| * m ≤ (‖v‖ * ‖z‖) * m :=
+        mul_le_mul_of_nonneg_right hnum hm.le
+    _ ≤ ‖v‖ * ‖z‖ * ‖z‖ := mul_le_mul_of_nonneg_left hz (mul_nonneg (norm_nonneg v) (norm_nonneg z))
+    _ = ‖v‖ * ‖z‖ ^ 2 := by ring
+
 /-! ### Assembly -/
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
 For a closed piecewise-`C¹` immersion `γ` on `[a, b]` all of whose value-`s` parameters are
 interior and `C^{1,1}` there (`deriv γ` Lipschitz on a neighborhood) — in particular satisfied
 vacuously if `γ` never meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t -
-s) (deriv γ t)` is genuinely interval-integrable (not merely assigned Mathlib's junk `0` value for
-a non-integrable integrand), and the generalized winding number `n_s(γ)` is a real number equal to
+s) (deriv γ t)` has bounded image on `[a, b]` (not just off the crossings, where it is continuous
+on the compact avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is a fortiori
+genuinely interval-integrable there (not merely assigned Mathlib's junk `0` value for a
+non-integrable integrand), and the generalized winding number `n_s(γ)` is a real number equal to
 its ordinary (non-principal-value) integral:
 
 `n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
 
-Unlike the off-curve case, `h`'s interval-integrability is not assumed here: it is derived from
-the crossing regularity, via `isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`'s
-boundedness at each `C^{1,1}` crossing and the ordinary avoidance argument between crossings —
-the actual content of HW Prop 2.3. -/
+Unlike the off-curve case, `h`'s boundedness and interval-integrability are not assumed here: both
+are derived from the crossing regularity, via
+`isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`'s boundedness at each `C^{1,1}`
+crossing and the ordinary avoidance argument between crossings — the actual content of HW
+Prop 2.3. -/
 theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
       (∀ u ∈ Icc (t - ε) (t + ε), HasDerivAt γ (deriv γ u) u) ∧
         LipschitzOnWith K (deriv γ) (Icc (t - ε) (t + ε))) :
+    Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) ∧
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
     windingNumber γ a b s
       = ((1 / (2 * Real.pi)
           * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) := by
   classical
   rcases hab.eq_or_lt with rfl | hab
-  · exact ⟨.refl, by simp⟩
+  · refine ⟨?_, .refl, by simp⟩
+    rw [show Icc a a = {a} from Set.Icc_self a, Set.image_singleton]
+    exact (Set.finite_singleton _).isBounded
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
   have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
     rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
@@ -432,7 +537,36 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
   -- its dominated-convergence argument here.
   have hIm : L.im = ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) :=
     hHCPV.im_eq_integral_realWindingIntegrand h_int
-  refine ⟨h_int, ?_⟩
+  -- The real winding integrand is bounded on all of `[a, b]`: bounded on each of the finitely
+  -- many crossing windows (from the `C^{1,1}` regularity), and bounded away from every window by
+  -- the crude `‖v‖ / m` estimate, `m` the lower bound on `‖γ - s‖` there and `Cd` a bound on
+  -- `‖deriv γ‖` over all of `[a, b]` (piecewise-`C¹`, hence bounded on finitely many pieces).
+  have hm_pos : 0 < h_far.choose := h_far.choose_spec.1
+  obtain ⟨Cd, hCd⟩ := (isBounded_image_deriv_Icc h_imm.isPiecewiseC1On hab.le).exists_norm_le
+  have hwin_union_bdd : Bornology.IsBounded
+      (⋃ t₀ ∈ T, (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) ''
+        Icc (t₀ - ρ) (t₀ + ρ)) :=
+    (Bornology.isBounded_biUnion_finset T).mpr fun t₀ ht₀ => by
+      have hsub : Icc (t₀ - ρ) (t₀ + ρ) ⊆ Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀) :=
+        Icc_subset_Icc (by linarith [hρ_le_ρlip t₀ ht₀]) (by linarith [hρ_le_ρlip t₀ ht₀])
+      exact (hρ_lip_bdd t₀ ht₀).subset (Set.image_mono hsub)
+  have h_bdd : Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) := by
+    refine (hwin_union_bdd.union (Metric.isBounded_closedBall
+      (x := (0 : ℝ)) (r := Cd / h_far.choose))).subset ?_
+    rintro y ⟨t, ht, rfl⟩
+    by_cases hcase : ∀ t₀ ∈ T, t ∉ Ioo (t₀ - ρ) (t₀ + ρ)
+    · refine Or.inr ?_
+      rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
+      have hm_le : h_far.choose ≤ ‖γ t - s‖ := h_far.choose_spec.2 t ht hcase
+      have hv_le : ‖deriv γ t‖ ≤ Cd := hCd _ ⟨t, ht, rfl⟩
+      calc |realWindingIntegrand (γ t - s) (deriv γ t)| ≤ ‖deriv γ t‖ / h_far.choose :=
+            abs_realWindingIntegrand_le_div_of_norm_le hm_pos hm_le
+        _ ≤ Cd / h_far.choose := by gcongr
+    · push Not at hcase
+      obtain ⟨t₀, ht₀, htwin⟩ := hcase
+      exact Or.inl (Set.mem_biUnion ht₀ ⟨t, Ioo_subset_Icc_self htwin, rfl⟩)
+  refine ⟨h_bdd, h_int, ?_⟩
   rw [hwind, ← Complex.re_add_im L, hRe, hIm]
   have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := Complex.two_pi_I_ne_zero
   push_cast
