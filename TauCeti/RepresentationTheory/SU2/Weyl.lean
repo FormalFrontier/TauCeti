@@ -332,12 +332,6 @@ theorem weylAut_injective : Function.Injective weylAut :=
   (Subgroup.normalizerQuotientLift_injective_iff torus normalizerAut
     (fun _ hn => (normalizerAut_eq_one_iff _).mpr hn)).mpr normalizerAut_eq_one_iff
 
-/-- Every element of the maximal torus is conjugate to its inverse in `SU(2)`, by the quarter
-turn. -/
-theorem isConj_inv_of_mem_torus {g : SU2} (hg : g ∈ torus) : IsConj g g⁻¹ := by
-  obtain ⟨z, rfl⟩ := mem_torus_iff_exists_torusHom.mp hg
-  exact isConj_iff.mpr ⟨weylElement, by rw [weylElement_conj_torusHom, map_inv]⟩
-
 end SU2
 
 end TauCeti

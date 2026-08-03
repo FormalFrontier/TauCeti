@@ -56,6 +56,25 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
+omit [MeasurableSpace Ω] in
+/-- **A block average over tail indices is tail-measurable.** If every index of the family `k` is at
+least `r`, each coordinate `f ∘ X (k j)` is `tailFamily X r`-measurable, hence so is their average.
+Only measurability of `f` is needed: no measure, and no contractability of `X`.
+
+The indices need not be consecutive — `blockAverage` averages over an arbitrary `k : Fin n → ℕ`,
+and only `r ≤ k j` is used. -/
+private theorem measurable_tailFamily_blockAverage {X : ℕ → Ω → α} {f : α → ℝ}
+    (hf : Measurable f) {r n : ℕ} {k : Fin n → ℕ} (hk : ∀ j, r ≤ k j) :
+    Measurable[tailFamily X r] (blockAverage (fun i ω => f (X i ω)) k) := by
+  have hterm : ∀ j : Fin n,
+      Measurable[tailFamily X r] fun ω => f (X (k j) ω) := fun j =>
+    hf.comp (measurable_tailFamily_of_le (hk j))
+  have happly : (blockAverage (fun i ω => f (X i ω)) k)
+      = fun ω => (n : ℝ)⁻¹ * ∑ j : Fin n, f (X (k j) ω) :=
+    funext fun ω => blockAverage_apply _ _
+  rw [happly]
+  exact (Finset.measurable_fun_sum Finset.univ fun j _ => hterm j).const_mul _
+
 /-- **The Cesàro limit lives on the tail.** For a measurable observable `f` whose composite with a
 single coordinate is square-integrable, the common `L¹` limit of the fixed-start Cesàro windows
 supplied by `weighted_sums_converge_L1_of_memLp` has a **`tailProcess X`-measurable**
@@ -79,20 +98,6 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
   have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := fun i =>
     (hY.identDistrib_coord (hf.comp_aemeasurable (hX_ae 0))
       (hf.comp_aemeasurable (hX_ae i))).memLp_snd hf_L2
-  have hg_meas : ∀ r m : ℕ, Measurable[tailFamily X r]
-      (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j)) := by
-    intro r m
-    rw [blockAverage_eq_sum]
-    have hterm : ∀ j : Fin (m + 1),
-        Measurable[tailFamily X r] fun ω => f (X (r + (j : ℕ)) ω) := fun j =>
-      hf.comp (measurable_tailFamily_of_le (Nat.le_add_right r (j : ℕ)))
-    refine Measurable.const_smul ?_ (((m + 1 : ℕ) : ℝ)⁻¹)
-    have hsum : (∑ j : Fin (m + 1), fun ω => f (X (r + (j : ℕ)) ω))
-        = fun ω => ∑ j : Fin (m + 1), f (X (r + (j : ℕ)) ω) := by
-      funext ω
-      simp [Finset.sum_apply]
-    rw [hsum]
-    exact Finset.measurable_sum Finset.univ fun j _ => hterm j
   have hg_int : ∀ r m : ℕ, Integrable
       (blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j)) μ := fun r m =>
     MemLp.integrable one_le_two
@@ -119,7 +124,8 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
         (fun m => (hg_int r m).aestronglyMeasurable) ha₀_int.aestronglyMeasurable hL1
     obtain ⟨ns, -, hae⟩ := hmeasure.exists_seq_tendsto_ae
     exact TauCeti.MeasureTheory.aestronglyMeasurable_of_tendsto_ae' (m := tailFamily X r)
-      (fun k => ((hg_meas r (ns k)).stronglyMeasurable).aestronglyMeasurable) hae
+      (fun k => (measurable_tailFamily_blockAverage hf
+        fun j => Nat.le_add_right r (j : ℕ)).stronglyMeasurable.aestronglyMeasurable) hae
   have hiInf := TauCeti.MeasureTheory.aestronglyMeasurable_iInf_of_antitone
     (tailFamily_antitone X) a₀ haes
   rw [← tailProcess_eq_iInf_tailFamily] at hiInf
