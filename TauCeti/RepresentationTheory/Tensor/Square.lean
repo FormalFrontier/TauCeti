@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
@@ -25,8 +25,10 @@ The two identities read the same exact sequence `⋀²M → M ⊗ M → Sym²M` 
 same diagonal action *composed with the swap of the two tensor factors* gives the difference:
 the swap is `-1` on the exterior square and `+1` on the symmetric square, while its composite
 with the diagonal action has trace `χ(g²)`. So `χ_{Sym²}(g) - χ_{Λ²}(g) = χ(g²)`, and adding and
-subtracting the two identities isolates each character, `2·χ_{Sym²}(g) = χ(g)² + χ(g²)` and
-`2·χ_{Λ²}(g) = χ(g)² - χ(g²)`.
+subtracting the two identities gives the doubled formulas `2·χ_{Sym²}(g) = χ(g)² + χ(g²)` and
+`2·χ_{Λ²}(g) = χ(g)² - χ(g²)`. These hold over every field, but they pin down the two characters
+individually only away from characteristic two: in characteristic two their left sides vanish and
+the sum and difference identities coincide, so neither character is determined by them.
 
 ## Main definitions
 
@@ -39,9 +41,9 @@ subtracting the two identities isolates each character, `2·χ_{Sym²}(g) = χ(g
 * `Representation.char_symmetricSquare_sub_char_exteriorSquare` is the companion difference
   `χ_{Sym²}(g) - χ_{Λ²}(g) = χ(g²)`.
 * `Representation.two_mul_char_symmetricSquare` and
-  `Representation.two_mul_char_exteriorSquare` isolate each character without dividing, and
+  `Representation.two_mul_char_exteriorSquare` are the doubled formulas, over every field, and
   `Representation.char_symmetricSquare` and `Representation.char_exteriorSquare` are the
-  familiar halved forms, away from characteristic two.
+  familiar halved forms that determine each character, away from characteristic two.
 
 ## Implementation notes
 
@@ -416,7 +418,8 @@ theorem char_tensorSquare (ρ : Representation R G M) (g : G) : (ρ.character g)
 
 /-- **The difference of the two square characters is the character at the square.** Over any
 field, including in characteristic two, `χ_{Sym²}(g) - χ_{Λ²}(g) = χ(g²)`; this is the identity
-that, together with `Representation.char_tensorSquare`, pins each of the two characters. -/
+that, together with `Representation.char_tensorSquare`, gives the doubled formulas for the two
+characters, which determine them individually away from characteristic two. -/
 theorem char_symmetricSquare_sub_char_exteriorSquare (ρ : Representation R G M) (g : G) :
     (ρ.symmetricPower 2).character g - (ρ.exteriorPower 2).character g
       = ρ.character (g * g) := by
