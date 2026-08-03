@@ -26,8 +26,8 @@ powers. For characters of level one it specializes to Mathlib's ordinary divisor
 * `TauCeti.DirichletCharacter.twistedDivisorSum`: the arithmetic function of twisted divisor sums;
 * `TauCeti.DirichletCharacter.isMultiplicative_twistedDivisorSum`: its multiplicativity;
 * `TauCeti.DirichletCharacter.twistedDivisorSum_apply_prime_pow`: its prime-power formula;
-* `TauCeti.DirichletCharacter.twistedDivisorSum_apply_prime_of_dvd_left_level`: its bad-level
-  specialization;
+* `TauCeti.DirichletCharacter.twistedDivisorSum_apply_prime_pow_of_dvd_left_level`: its
+  bad-level specialization;
 * `TauCeti.DirichletCharacter.twistedDivisorSum_modOne_eq_sigma`: its reduction to the ordinary
   divisor sum.
 
@@ -110,28 +110,56 @@ theorem twistedDivisorSum_apply_prime (e : ℕ) (psi : DirichletCharacter R u)
     twistedDivisorSum_apply_prime_pow e psi phi 1 hp
 
 /-- If `p` divides the level of the left character, only the right-character term remains in
+the value at `p ^ r`. -/
+theorem twistedDivisorSum_apply_prime_pow_of_dvd_left_level (e : ℕ)
+    (psi : DirichletCharacter R u) (phi : DirichletCharacter R v) (r : ℕ) {p : ℕ}
+    (hp : p.Prime) (hpu : p ∣ u) :
+    twistedDivisorSum e psi phi (p ^ r) = phi p ^ r * (p : R) ^ (r * e) := by
+  have hpsi : psi p = 0 := psi.map_nonunit <| by
+    rw [ZMod.isUnit_iff_coprime]
+    exact hp.dvd_iff_not_coprime.mp hpu
+  rw [twistedDivisorSum_apply_prime_pow e psi phi r hp, Finset.sum_eq_single r]
+  · simp [hpsi]
+  · intro j hj hne
+    have hjr : j < r :=
+      Nat.lt_of_le_of_ne (Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)) hne
+    simp [hpsi, Nat.sub_ne_zero_of_lt hjr]
+  · simp
+
+/-- If `p` divides the level of the left character, only the right-character term remains in
 the value at `p`. -/
 theorem twistedDivisorSum_apply_prime_of_dvd_left_level (e : ℕ)
     (psi : DirichletCharacter R u) (phi : DirichletCharacter R v) {p : ℕ} (hp : p.Prime)
     (hpu : p ∣ u) :
     twistedDivisorSum e psi phi p = phi p * (p : R) ^ e := by
-  have hpsi : psi p = 0 := psi.map_nonunit <| by
+  simpa using
+    twistedDivisorSum_apply_prime_pow_of_dvd_left_level e psi phi 1 hp hpu
+
+/-- If `p` divides the level of the right character, only the left-character term remains in
+the value at `p ^ r`. -/
+theorem twistedDivisorSum_apply_prime_pow_of_dvd_right_level (e : ℕ)
+    (psi : DirichletCharacter R u) (phi : DirichletCharacter R v) (r : ℕ) {p : ℕ}
+    (hp : p.Prime) (hpv : p ∣ v) : twistedDivisorSum e psi phi (p ^ r) = psi p ^ r := by
+  have hphi : phi p = 0 := phi.map_nonunit <| by
     rw [ZMod.isUnit_iff_coprime]
-    exact hp.dvd_iff_not_coprime.mp hpu
-  rw [twistedDivisorSum_apply_prime e psi phi hp, hpsi, zero_add]
+    exact hp.dvd_iff_not_coprime.mp hpv
+  rw [twistedDivisorSum_apply_prime_pow e psi phi r hp, Finset.sum_eq_single 0]
+  · simp [hphi]
+  · intro j _ hne
+    simp [hphi, hne]
+  · simp
 
 /-- If `p` divides the level of the right character, only the left-character term remains in
 the value at `p`. -/
 theorem twistedDivisorSum_apply_prime_of_dvd_right_level (e : ℕ)
     (psi : DirichletCharacter R u) (phi : DirichletCharacter R v) {p : ℕ} (hp : p.Prime)
     (hpv : p ∣ v) : twistedDivisorSum e psi phi p = psi p := by
-  have hphi : phi p = 0 := phi.map_nonunit <| by
-    rw [ZMod.isUnit_iff_coprime]
-    exact hp.dvd_iff_not_coprime.mp hpv
-  rw [twistedDivisorSum_apply_prime e psi phi hp, hphi, zero_mul, add_zero]
+  simpa using
+    twistedDivisorSum_apply_prime_pow_of_dvd_right_level e psi phi 1 hp hpv
 
 /-- With both characters of level one, the twisted divisor sum is Mathlib's ordinary divisor
 sum `ArithmeticFunction.sigma`. -/
+@[simp]
 theorem twistedDivisorSum_modOne_eq_sigma (e : ℕ) (psi phi : DirichletCharacter R 1) :
     twistedDivisorSum e psi phi =
       (ArithmeticFunction.sigma e : ArithmeticFunction R) := by
