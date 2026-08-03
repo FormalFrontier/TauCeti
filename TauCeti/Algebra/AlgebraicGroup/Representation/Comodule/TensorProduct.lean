@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 
 /-!
@@ -318,8 +318,8 @@ theorem ofComodule_tensor (rhoV : Comodule R H V) (rhoW : Comodule R H W) :
         (Comodule.coact (R := R) (C := H) (M := V) v)
         (Comodule.coact (R := R) (C := H) (M := W) w)]
       simp only [one_smul]
-      rw [← (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm.map_smul]
-      rfl
+      rw [← (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm.map_smul,
+        TensorProduct.smul_tmul']
 
 end PointRepresentation
 
