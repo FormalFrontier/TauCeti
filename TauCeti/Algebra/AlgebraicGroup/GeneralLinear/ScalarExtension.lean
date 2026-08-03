@@ -217,7 +217,9 @@ lemma mapScalarExtensionAutomorphisms_comp
   simp
 
 /-- The group-valued functor of linear automorphisms of scalar extensions of `V`. -/
-def scalarExtensionAutomorphismsFunctor :
+-- `@[expose]` matches `HopfAlgebra.pointsFunctor`: natural transformations out of
+-- either functor need the object part to unfold cross-module.
+@[expose] def scalarExtensionAutomorphismsFunctor :
     CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
   obj A := scalarExtensionAutomorphisms (V := V) A
   map φ := mapScalarExtensionAutomorphisms (V := V) φ
