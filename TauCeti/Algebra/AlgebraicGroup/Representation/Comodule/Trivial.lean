@@ -64,14 +64,6 @@ theorem trivial_action (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
     map_one, TensorProduct.comm_tmul]
   exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
 
-/-- The trivial point representation fixes every vector after scalar extension. -/
-@[simp]
-theorem trivial_action_apply (A : CommAlgCat.{max u v w} R) (x : points (H := H) A)
-    (z : A ⊗[R] V) :
-    ((trivial (H := H) (V := V)).action A x).val z = z := by
-  rw [trivial_action]
-  rfl
-
 /-- The point representation induced by the trivial comodule is the trivial point
 representation. -/
 @[simp]
