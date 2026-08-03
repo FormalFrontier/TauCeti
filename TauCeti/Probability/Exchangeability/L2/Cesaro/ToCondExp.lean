@@ -67,23 +67,15 @@ theorem Contractable.condExp_blockAverage_tailProcess_ae_eq {μ : Measure Ω} [I
       =ᵐ[μ] μ[fun ω => f (X 0 ω) | tailProcess X] := by
   have hint : ∀ i, Integrable (fun ω => f (X i ω)) μ :=
     hX.integrable_comp (fun i => (hX_meas i).aemeasurable) hf hf_int
-  rw [blockAverage_eq_sum]
-  have hsmul := condExp_smul (μ := μ) (m := tailProcess X) (((n + 1 : ℕ) : ℝ)⁻¹)
-    (∑ j : Fin (n + 1), fun ω => f (X (k j) ω))
-  have hsum := condExp_finsetSum (μ := μ) (m := tailProcess X) (s := Finset.univ)
-    (f := fun j : Fin (n + 1) => fun ω => f (X (k j) ω)) fun j _ => hint (k j)
   have hterm : ∀ᵐ ω ∂μ, ∀ j : Fin (n + 1),
       (μ[fun ω => f (X (k j) ω) | tailProcess X]) ω
         = (μ[fun ω => f (X 0 ω) | tailProcess X]) ω :=
     ae_all_iff.2 fun j => hX.condExp_comp_tailProcess_ae_eq hX_meas hf
-  -- The block has `n + 1` terms, all with the same conditional expectation, so the average is that
-  -- common value; the normalisation cancels because `n + 1 ≠ 0`.
-  have hne : ((n + 1 : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.2 n.succ_ne_zero
-  filter_upwards [hsmul, hsum, hterm] with ω h1 h2 h3
-  rw [h1, Pi.smul_apply, h2, Finset.sum_apply,
-    Finset.sum_congr rfl fun j (_ : j ∈ Finset.univ) => h3 j]
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, smul_eq_mul,
-    inv_mul_cancel_left₀ hne]
+  -- Conditional expectation passes inside the block average, and the block has `n + 1` terms all
+  -- with the same conditional expectation, so the average is that common value.
+  refine (condExp_blockAverage k fun j => hint (k j)).trans ?_
+  filter_upwards [hterm] with ω hω
+  exact blockAverage_apply_of_forall_eq n.succ_pos hω
 
 /-- **The Cesàro windows converge to a conditional expectation.** For a measurable observable `f`
 whose composite with a single coordinate is square-integrable, the fixed-start Cesàro windows of
