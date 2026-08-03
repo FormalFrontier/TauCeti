@@ -93,6 +93,22 @@ end Bialgebra.CounitAlgebra
 
 end BialgebraPoint
 
+section RingTarget
+
+namespace Bialgebra.CounitAlgebra
+
+variable {R A B : Type*}
+
+/-- The counit-point coefficient synonym is a ring whenever `B` is. -/
+instance [Ring B] : Ring (CounitAlgebra R A B) := inferInstanceAs (Ring B)
+
+/-- The counit-point coefficient synonym is a commutative ring whenever `B` is. -/
+instance [CommRing B] : CommRing (CounitAlgebra R A B) := inferInstanceAs (CommRing B)
+
+end Bialgebra.CounitAlgebra
+
+end RingTarget
+
 section BialgebraPointScalar
 
 variable (R A B : Type*) [CommSemiring R] [CommSemiring A] [Bialgebra R A]
