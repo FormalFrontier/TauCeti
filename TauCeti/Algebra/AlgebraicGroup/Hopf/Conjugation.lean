@@ -279,15 +279,10 @@ theorem conjugationAlgHom_coassoc :
     rw [evaluate mulFirst, evaluate actSecond, hmulFirstLeft, hmulFirstRight,
       hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    rw [mul_inv_rev g₁ g₂]
-    calc
-      (g₁ * g₂) * x * (g₂⁻¹ * g₁⁻¹) =
-          (((g₁ * g₂) * x) * g₂⁻¹) * g₁⁻¹ :=
-        (mul_assoc ((g₁ * g₂) * x) g₂⁻¹ g₁⁻¹).symm
-      _ = ((g₁ * (g₂ * x)) * g₂⁻¹) * g₁⁻¹ := by
-        rw [mul_assoc g₁ g₂ x]
-      _ = (g₁ * ((g₂ * x) * g₂⁻¹)) * g₁⁻¹ := by
-        rw [mul_assoc g₁ (g₂ * x) g₂⁻¹]
+    exact
+      mul_inv_eq_iff_eq_mul.2
+        ((SemiconjBy.conj_mk g₁ (g₂ * x * g₂⁻¹)).mul_left
+          (SemiconjBy.conj_mk g₂ x)).eq
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra
