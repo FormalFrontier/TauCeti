@@ -6,7 +6,7 @@ module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.ClosedImmersion
 public import Mathlib.CategoryTheory.Subobject.Basic
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
+public import Mathlib.CategoryTheory.Monoidal.Cartesian.CommGrp_
 
 /-!
 # Closed subgroup schemes
@@ -16,9 +16,8 @@ closed subgroup scheme is a categorical subobject whose representative arrow is 
 immersion on underlying schemes. Pulling the closed-immersion property back through the two
 forgetful functors makes the condition independent of the chosen representative.
 
-Although this module belongs to the affine-group-scheme directory, neither the base nor the group
-scheme is required to be affine. Affineness enters only in specialized constructions that import
-this generic API.
+Neither the base nor the group scheme is required to be affine. Affineness enters only in
+specialized constructions that import this generic API.
 
 ## Main declarations
 
@@ -83,21 +82,21 @@ namespace ClosedSubgroupScheme
 
 variable {X : Scheme.{u}} {G : Grp (Over X)}
 
-/-- Construct a closed subgroup scheme from a monomorphism whose underlying scheme morphism is a
+/-- Construct a closed subgroup scheme from a morphism whose underlying scheme morphism is a
 closed immersion. -/
-noncomputable def mk {K : Grp (Over X)} (i : K ⟶ G) [Mono i]
-    (hi : IsClosedImmersion i.hom.hom.left) : ClosedSubgroupScheme G :=
+noncomputable def mk {K : Grp (Over X)} (i : K ⟶ G)
+    [IsClosedImmersion i.hom.hom.left] : ClosedSubgroupScheme G :=
   ⟨Subobject.mk i, by
     rw [← Subobject.underlyingIso_hom_comp_eq_mk i,
       (closedSubgroupMorphismProperty X).cancel_left_of_respectsIso]
-    exact (closedSubgroupMorphismProperty_iff X i).2 hi⟩
+    exact (closedSubgroupMorphismProperty_iff X i).2 inferInstance⟩
 
 /-- The subobject underlying a closed subgroup scheme constructed from an explicit arrow is the
 subobject represented by that arrow. -/
 @[simp]
-lemma coe_mk {K : Grp (Over X)} (i : K ⟶ G) [Mono i]
-    (hi : IsClosedImmersion i.hom.hom.left) :
-    (mk i hi).1 = Subobject.mk i :=
+lemma coe_mk {K : Grp (Over X)} (i : K ⟶ G)
+    [IsClosedImmersion i.hom.hom.left] :
+    (mk i).1 = Subobject.mk i :=
   by
     unfold mk
     rfl

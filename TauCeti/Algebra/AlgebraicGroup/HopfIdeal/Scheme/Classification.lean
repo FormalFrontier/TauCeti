@@ -7,7 +7,7 @@ module
 public import Mathlib.Order.Hom.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.HopfAlgebra.Kernel
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedSubgroup
+public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 
 /-!
 # Closed subgroup schemes and Hopf ideals
@@ -31,6 +31,8 @@ ideals of `H`.
   criterion.
 * `TauCeti.CommHopfAlgCat.hopfIdealOrderIsoClosedSubgroup`: the classification of closed
   subgroup schemes of `Spec H` by Hopf ideals of `H`.
+* `TauCeti.CommHopfAlgCat.hopfIdealOrderIsoClosedSubgroup_symm_apply_eq_ker`: the inverse
+  classification computed from a surjective coordinate presentation.
 
 ## References
 
@@ -60,7 +62,7 @@ noncomputable def quotientClosedSubgroup (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) :
     ClosedSubgroupScheme
       ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)) :=
-  ClosedSubgroupScheme.mk (quotientSpecι H I) inferInstance
+  ClosedSubgroupScheme.mk (quotientSpecι H I)
 
 /-- The subobject underlying `quotientClosedSubgroup` is represented by the quotient closed
 immersion `Spec (H ⧸ I) ⟶ Spec H`. -/
@@ -69,7 +71,7 @@ lemma quotientClosedSubgroup_coe (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdea
     (quotientClosedSubgroup H I).1 = Subobject.mk (quotientSpecι H I) :=
   by
     unfold quotientClosedSubgroup
-    exact ClosedSubgroupScheme.coe_mk (quotientSpecι H I) inferInstance
+    exact ClosedSubgroupScheme.coe_mk (quotientSpecι H I)
 
 /-- Inclusion of quotient closed subgroup schemes is exactly reverse inclusion of their defining
 Hopf ideals. -/
@@ -289,6 +291,28 @@ lemma hopfIdealOrderIsoClosedSubgroup_symm_apply_quotientClosedSubgroup
     hopfIdealOrderIsoClosedSubgroup_apply H (OrderDual.toDual I)
   exact (congrArg (hopfIdealOrderIsoClosedSubgroup H).symm hApply).symm.trans
     ((hopfIdealOrderIsoClosedSubgroup H).symm_apply_apply (OrderDual.toDual I))
+
+/-- Given an explicit affine presentation of a closed subgroup scheme, the inverse classification
+recovers the Hopf ideal that is the kernel of its surjective coordinate morphism. -/
+theorem hopfIdealOrderIsoClosedSubgroup_symm_apply_eq_ker
+    (H K : _root_.CommHopfAlgCat.{u} R)
+    (P : ClosedSubgroupScheme
+      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)))
+    (e : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K) ≅
+      (P.1 : Grp (Over (Spec (CommRingCat.of R)))))
+    (f : H ⟶ K) (hf : Function.Surjective f.hom)
+    (hmap_f : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op =
+      e.hom ≫ P.1.arrow) :
+    (hopfIdealOrderIsoClosedSubgroup H).symm P =
+      OrderDual.toDual (HopfIdeal.ker f.hom hf) := by
+  let I : HopfIdeal R H := HopfIdeal.ker f.hom hf
+  have hP : quotientClosedSubgroup H I = P := by
+    apply Subtype.ext
+    rw [quotientClosedSubgroup_coe]
+    exact (quotientSubobject_ker_eq_mk H K f hf e P.1.arrow hmap_f).trans
+      (Subobject.mk_arrow P.1)
+  rw [← hP]
+  exact hopfIdealOrderIsoClosedSubgroup_symm_apply_quotientClosedSubgroup H I
 
 end CommHopfAlgCat
 
