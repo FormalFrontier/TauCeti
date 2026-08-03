@@ -16,6 +16,7 @@ public import TauCeti.Geometry.Lie.InvariantVectorField
 A left-invariant derivation on a Lie group is determined by its value at any point. For a
 finite-dimensional smooth real Lie group whose identity is an interior point, evaluation there
 gives a canonical linear equivalence between left-invariant derivations and the tangent Lie algebra.
+The latter is the manifold model vector space, so this also determines the Lie algebra's dimension.
 
 ## Main results
 
@@ -25,6 +26,11 @@ gives a canonical linear equivalence between left-invariant derivations and the 
   at the identity.
 * `leftInvariantDerivationEquivGroupLieAlgebra`: the canonical linear equivalence between
   left-invariant derivations and the tangent Lie algebra.
+* `leftInvariantDerivationEquivModelVectorSpace`: the resulting equivalence with the manifold model
+  vector space.
+* `finiteDimensional_leftInvariantDerivation`: the Lie algebra is finite-dimensional.
+* `finrank_leftInvariantDerivation_eq_modelVectorSpace`: its dimension equals that of the manifold
+  model vector space.
 
 ## References
 
@@ -283,17 +289,6 @@ theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
 
-/-- The tangent Lie algebra at the identity, explicitly identified with the manifold's model vector
-space. This packages the implementation-level fact that `TangentSpace I 1` is a type synonym for
-`E` behind a stable linear equivalence. -/
-def groupLieAlgebraEquivModelVectorSpace : GroupLieAlgebra I G ≃ₗ[ℝ] E where
-  toFun v := v
-  invFun v := v
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
 /-- The canonical linear equivalence from left-invariant derivations to the manifold's model vector
 space. -/
 noncomputable def leftInvariantDerivationEquivModelVectorSpace
@@ -302,14 +297,32 @@ noncomputable def leftInvariantDerivationEquivModelVectorSpace
   (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
     (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G))
 
+/-- The derivation–model-vector-space equivalence is evaluation at the identity followed by the
+point-derivation–tangent equivalence. -/
+@[simp]
+theorem leftInvariantDerivationEquivModelVectorSpace_apply
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) (D : LeftInvariantDerivation I G) :
+    leftInvariantDerivationEquivModelVectorSpace h₁ D =
+      pointDerivationEquivTangentSpace 1 h₁ (LeftInvariantDerivation.evalAt 1 D) := by
+  rfl
+
+/-- The inverse derivation–model-vector-space equivalence is the explicit invariant-derivation
+construction. -/
+@[simp]
+theorem leftInvariantDerivationEquivModelVectorSpace_symm_apply
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) (v : E) :
+    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).symm v =
+      tangentToLeftInvariantDerivation v := by
+  exact leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁ v
+
 /-- Left-invariant derivations on a finite-dimensional smooth real Lie group form a
 finite-dimensional vector space. -/
 theorem finiteDimensional_leftInvariantDerivation
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
     (h₁ : I.IsInteriorPoint (1 : G)) : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
-  FiniteDimensional.of_injective
-    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).toLinearMap
-    (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).injective
+  (leftInvariantDerivationEquivModelVectorSpace (I := I) (G := G) h₁).symm.finiteDimensional
 
 /-- The Lie algebra of a finite-dimensional smooth real Lie group has the dimension of the
 manifold model vector space. -/
