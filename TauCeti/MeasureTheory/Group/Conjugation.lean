@@ -21,17 +21,17 @@ almost-everywhere equivalence class.
 This file records that invariance and feeds it into the two typeclasses Mathlib's machinery
 consumes: the conjugation action of `ConjAct G` on `G` is measurable and measure-preserving, so
 Mathlib's `DomMulAct` action supplies an isometric action of `(ConjAct G)ᵈᵐᵃ` on `Lp E p μ` by
-precomposition, `(c • f) g = f (h * g * h⁻¹)`.  The **class functions** `centralLp` are the vectors
-that action fixes: a closed submodule, since each conjugation acts by an isometry.
+precomposition, `(c • f) g = f (h * g * h⁻¹)`.  The **class functions** `classFunctionLp` are the
+vectors that action fixes: a closed submodule, since each conjugation acts by an isometry.
 
 The condition is on the *class*, not on a representative, and that is the point of packaging it
 this way rather than as a pointwise slogan: pointwise conjugation-invariance of a function is not
 stable under changing it on a null set, so it does not descend to `Lp` at all.  What descends is
-`TauCeti.mem_centralLp_iff_ae`, invariance up to a null set.
+`TauCeti.mem_classFunctionLp_iff_ae`, invariance up to a null set.
 
 ## Main definitions
 
-* `TauCeti.centralLp`: the class functions in `Lp E p μ`, a submodule.
+* `TauCeti.classFunctionLp`: the class functions in `Lp E p μ`, a submodule.
 
 ## Main statements
 
@@ -39,15 +39,15 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 * `TauCeti.instMeasurableConstSMulConjAct` and `TauCeti.instSMulInvariantMeasureConjAct`: the two
   instances that unlock `DomMulAct`'s action on `Lp`.
 * `TauCeti.conjAct_smul_Lp_ae_eq`: the induced action on `Lp` is precomposition with conjugation.
-* `TauCeti.mem_centralLp_iff_ae`: membership read on representatives, as invariance almost
+* `TauCeti.mem_classFunctionLp_iff_ae`: membership read on representatives, as invariance almost
   everywhere.
-* `TauCeti.isClosed_centralLp`: the class functions are a closed subspace, hence
-  (`TauCeti.instCompleteSpaceCentralLp`) complete.
-* `TauCeti.mem_centralLp_of_ae_eq_of_conj_invariant`: a pointwise invariant representative makes a
-  class function.
+* `TauCeti.isClosed_classFunctionLp`: the class functions are a closed subspace, hence
+  (`TauCeti.instCompleteSpaceClassFunctionLp`) complete.
+* `TauCeti.mem_classFunctionLp_of_ae_eq_of_conj_invariant`: a pointwise invariant representative
+  makes a class function.
 
 The compact-group specialization -- that the character of a continuous representation is a class
-function in `L²(G)` -- is in `TauCeti/RepresentationTheory/Compact/CentralLp.lean`.
+function in `L²(G)` -- is in `TauCeti/RepresentationTheory/Compact/ClassFunctionLp.lean`.
 -/
 
 public section
@@ -94,9 +94,9 @@ for a two-sided invariant measure `μ` on a group `G`.
 
 Invariance is a condition on the *class*, not on a representative: an element of `Lp` is a class
 function exactly when each of its conjugates agrees with it almost everywhere
-(`TauCeti.mem_centralLp_iff_ae`).  Asking instead for a pointwise identity would not define a
+(`TauCeti.mem_classFunctionLp_iff_ae`).  Asking instead for a pointwise identity would not define a
 submodule of `Lp` at all, since it is not stable under changing a representative on a null set. -/
-def centralLp (𝕜 E : Type*) [NormedRing 𝕜] [NormedAddCommGroup E] [Module 𝕜 E]
+def classFunctionLp (𝕜 E : Type*) [NormedRing 𝕜] [NormedAddCommGroup E] [Module 𝕜 E]
     [IsBoundedSMul 𝕜 E] (p : ℝ≥0∞) (μ : Measure G) [μ.IsMulLeftInvariant]
     [μ.IsMulRightInvariant] : Submodule 𝕜 (Lp E p μ) where
   carrier := {f | ∀ c : (ConjAct G)ᵈᵐᵃ, c • f = f}
@@ -107,14 +107,14 @@ def centralLp (𝕜 E : Type*) [NormedRing 𝕜] [NormedAddCommGroup E] [Module 
 variable (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E]
 
 @[simp]
-theorem mem_centralLp_iff {f : Lp E p μ} :
-    f ∈ centralLp 𝕜 E p μ ↔ ∀ c : (ConjAct G)ᵈᵐᵃ, c • f = f :=
+theorem mem_classFunctionLp_iff {f : Lp E p μ} :
+    f ∈ classFunctionLp 𝕜 E p μ ↔ ∀ c : (ConjAct G)ᵈᵐᵃ, c • f = f :=
   Iff.rfl
 
-/-- **Membership of `centralLp`, read on representatives.**  A class lies in `centralLp` exactly
-when each of its conjugates agrees with it almost everywhere. -/
-theorem mem_centralLp_iff_ae {f : Lp E p μ} :
-    f ∈ centralLp 𝕜 E p μ ↔ ∀ h : G, (fun g ↦ f (h * g * h⁻¹)) =ᵐ[μ] f := by
+/-- **Membership of `classFunctionLp`, read on representatives.**  A class lies in
+`classFunctionLp` exactly when each of its conjugates agrees with it almost everywhere. -/
+theorem mem_classFunctionLp_iff_ae {f : Lp E p μ} :
+    f ∈ classFunctionLp 𝕜 E p μ ↔ ∀ h : G, (fun g ↦ f (h * g * h⁻¹)) =ᵐ[μ] f := by
   constructor
   · intro hf h
     refine ((conjAct_smul_Lp_ae_eq h f).symm.trans ?_)
@@ -127,52 +127,54 @@ theorem mem_centralLp_iff_ae {f : Lp E p μ} :
 section Topology
 
 -- Only the statements in this section need `1 ≤ p`, for the norm topology on `Lp E p μ`;
--- membership of `centralLp` is an algebraic condition, meaningful for every exponent.
+-- membership of `classFunctionLp` is an algebraic condition, meaningful for every exponent.
 variable [Fact (1 ≤ p)]
 
 /-- **The class functions form a closed subspace.**  Each conjugation acts on `Lp` by an isometry,
-so the set where it agrees with the identity is closed, and `centralLp` is their intersection. -/
-theorem isClosed_centralLp : IsClosed (centralLp 𝕜 E p μ : Set (Lp E p μ)) := by
-  have : (centralLp 𝕜 E p μ : Set (Lp E p μ)) =
+so the set where it agrees with the identity is closed, and `classFunctionLp` is their
+intersection. -/
+theorem isClosed_classFunctionLp : IsClosed (classFunctionLp 𝕜 E p μ : Set (Lp E p μ)) := by
+  have : (classFunctionLp 𝕜 E p μ : Set (Lp E p μ)) =
       ⋂ c : (ConjAct G)ᵈᵐᵃ, {f : Lp E p μ | c • f = f} := by
     ext f
-    simp [centralLp]
+    simp [classFunctionLp]
   rw [this]
   exact isClosed_iInter fun c ↦ isClosed_eq (continuous_const_smul c) continuous_id
 
 /-- **The class functions are complete.**  A closed subspace of the complete space `Lp E p μ`.
-Completeness is what makes the intended specialization `centralLp ℂ ℂ 2 μ` a Hilbert space, which
-is the setting in which the characters of a compact group are expected to form an orthonormal
-basis. -/
-instance instCompleteSpaceCentralLp [CompleteSpace E] :
-    CompleteSpace (centralLp 𝕜 E p μ) :=
-  (isClosed_centralLp 𝕜).completeSpace_coe
+Completeness is what makes the intended specialization `classFunctionLp ℂ ℂ 2 μ` a Hilbert space,
+which is the setting in which the characters of a compact group are expected to form an
+orthonormal basis. -/
+instance instCompleteSpaceClassFunctionLp [CompleteSpace E] :
+    CompleteSpace (classFunctionLp 𝕜 E p μ) :=
+  (isClosed_classFunctionLp 𝕜).completeSpace_coe
 
 end Topology
 
 /-- **A genuinely invariant representative makes a class function.**  If some representative `F` of
-`f` is constant on conjugacy classes on the nose, then `f` is central.  Only the representative is
+`f` is constant on conjugacy classes on the nose, then `f` is a class function.  Only the
+representative is
 asked to be invariant pointwise: the null set on which `f` and `F` disagree pulls back along
 conjugation to a null set, because conjugation preserves `μ`. -/
-theorem mem_centralLp_of_ae_eq_of_conj_invariant {f : Lp E p μ} {F : G → E} (hF : ⇑f =ᵐ[μ] F)
-    (hFconj : ∀ g h : G, F (h * g * h⁻¹) = F g) : f ∈ centralLp 𝕜 E p μ := by
-  rw [mem_centralLp_iff_ae]
+theorem mem_classFunctionLp_of_ae_eq_of_conj_invariant {f : Lp E p μ} {F : G → E} (hF : ⇑f =ᵐ[μ] F)
+    (hFconj : ∀ g h : G, F (h * g * h⁻¹) = F g) : f ∈ classFunctionLp 𝕜 E p μ := by
+  rw [mem_classFunctionLp_iff_ae]
   intro h
   have hconj := (measurePreserving_conj μ h).quasiMeasurePreserving.ae_eq hF
   refine hconj.trans (Filter.EventuallyEq.trans ?_ hF.symm)
   exact Filter.Eventually.of_forall fun g ↦ hFconj g h
 
 /-- A constant is a class function. -/
-theorem const_mem_centralLp [IsFiniteMeasure μ] (a : E) :
-    Lp.const p μ a ∈ centralLp 𝕜 E p μ :=
+theorem const_mem_classFunctionLp [IsFiniteMeasure μ] (a : E) :
+    Lp.const p μ a ∈ classFunctionLp 𝕜 E p μ :=
   fun c ↦ DomMulAct.smul_Lp_const c a
 
 /-- On a commutative group every element of `Lp` is a class function: conjugation is trivial. -/
-theorem centralLp_eq_top_of_commGroup {G : Type*} [CommGroup G] [MeasurableSpace G]
+theorem classFunctionLp_eq_top_of_commGroup {G : Type*} [CommGroup G] [MeasurableSpace G]
     [MeasurableMul G] {μ : Measure G} [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant] :
-    centralLp 𝕜 E p μ = ⊤ := by
+    classFunctionLp 𝕜 E p μ = ⊤ := by
   refine eq_top_iff.2 fun f _ ↦ ?_
-  rw [mem_centralLp_iff_ae]
+  rw [mem_classFunctionLp_iff_ae]
   intro h
   refine Filter.Eventually.of_forall fun g ↦ ?_
   simp [mul_comm h g, mul_assoc]
