@@ -11,7 +11,7 @@ public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
 import Mathlib.Dynamics.FixedPoints.Basic
 
 /-!
-# The shift-invariant σ-algebra sits strictly inside the path tail σ-algebra
+# The shift-invariant σ-algebra: its place below the path tail, and its stability under reindexing
 
 For the one-sided shift on path space `ℕ → α`, an ambient-measurable event fixed by the shift is
 fixed by every iterate of the shift, and therefore depends only on the coordinates from an
@@ -22,6 +22,14 @@ arbitrarily late time onward.  This file proves that comparison,
 and shows that the inclusion is **strict**: for `Bool`-valued paths, the tail event "the value
 `true` occurs at infinitely many even times" is not shift-invariant, because the shift exchanges
 even and odd times.
+
+It also records how shift-invariant events behave under **time reindexing**: a reindexing that is
+eventually a translation leaves every exactly shift-invariant event unchanged
+(`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add`, with
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` the invariant-measurable form).
+That is one of the two independent inputs a Koopman-style block argument needs — the other,
+measure preservation, comes from contractability and needs strict monotonicity, which this one does
+not.
 
 The Layer 2 exchangeability roadmap warns against silently identifying the tail σ-algebra with the
 shift-invariant σ-algebra for one-sided sequences; these two results are the exact form of that
@@ -201,6 +209,7 @@ theorem invariants_shift_lt_exchangeableSigma :
     MeasurableSpace.invariants (shift Bool) < exchangeableSigma Bool :=
   invariants_shift_lt_pathTail.trans_le pathTail_le_exchangeableSigma
 
+omit [MeasurableSpace α] in
 /-- **Invariant events are fixed by an eventually-translating reindexing.** If `φ` is eventually
 `n ↦ n + C`, then reindexing by `φ` leaves every set measurable in
 `MeasurableSpace.invariants (shift α)` unchanged.
@@ -211,12 +220,15 @@ both iterates transfers membership.
 
 Strict monotonicity of `φ` is **not** needed for this set identity; it enters separately, when
 `ContractableLaw.measurePreserving_reindex` turns the reindexing into a measure-preserving map. The
-two facts are the pair of inputs the Koopman block factorization needs. -/
-theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+two facts are the pair of inputs the Koopman block factorization needs.
+
+The eventual-translation hypothesis is exactly the conclusion recorded by
+`exists_strictMono_nat_extending_fin_eventually_add`, whose docstring describes this argument as its
+intended use; this theorem is the consumer of that clause. -/
+theorem preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
+    {A : Set (ℕ → α)} (hshift : shift α ⁻¹' A = A)
     (hφ : ∀ n, m ≤ n → φ n = n + C) :
     (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A := by
-  have hshift : shift α ⁻¹' A = A := (MeasurableSpace.measurableSet_invariants.1 hA).2
   have hkey : ∀ x : ℕ → α,
       (shift α)^[m] (fun k => x (φ k)) = (shift α)^[m + C] x := by
     intro x
@@ -240,6 +252,19 @@ theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C :
     rw [← hkey x, ← Set.mem_preimage,
       Function.IsFixedPt.preimage_iterate hshift m] at h1
     exact h1
+
+/-- **Invariant events are fixed by an eventually-translating reindexing**, in the
+`MeasurableSpace.invariants`-measurable form.
+
+Deliberately **not** `@[simp]`: `m` and `C` occur only in the hypothesis `hφ`, never in the
+left-hand side, so `simp` cannot infer them and the rule would never fire. -/
+theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    (hφ : ∀ n, m ≤ n → φ n = n + C) :
+    (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A :=
+  preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add
+    (MeasurableSpace.measurableSet_invariants.1 hA).2 hφ
+
 
 end Probability
 
