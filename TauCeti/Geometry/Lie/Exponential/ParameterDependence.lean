@@ -71,16 +71,19 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
 theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G)
       (v, I (chartAt H (1 : G) (1 : G))) = v := by
-  change mulInvariantCoordinateVectorField (I := I) (G := G)
-    (v, extChartAt I (1 : G) (1 : G)) = v
+  have hidentityCoordinate : I (chartAt H (1 : G) (1 : G)) =
+      extChartAt I (1 : G) (1 : G) := by
+    rfl
+  rw [hidentityCoordinate]
   rw [mulInvariantCoordinateVectorField_apply]
   have hsymm : (extChartAt I (1 : G)).symm (extChartAt I (1 : G) (1 : G)) = 1 :=
     (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
   rw [hsymm]
-  rw [show (show E from mulInvariantVectorField (I := I) (G := G)
-      (v : GroupLieAlgebra I G) 1) = v by
+  have hfieldOne : (show E from mulInvariantVectorField (I := I) (G := G)
+      (v : GroupLieAlgebra I G) 1) = v := by
     exact congrArg (fun w : GroupLieAlgebra I G => (show E from w))
-      (mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G))]
+      (mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G))
+  rw [hfieldOne]
   exact tangentCoordChange_self (mem_extChartAt_source (I := I) (1 : G))
 
 /-- The invariant coordinate field vanishes when its generating vector vanishes. -/
@@ -212,10 +215,10 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
     have hβ : ∀ t ∈ Set.Icc (-δ) δ,
         HasDerivWithinAt β 0 (Set.Icc (-δ) δ) t := by
       intro t ht
-      -- `β` is definitionally the first continuous-linear projection of the solution family.
-      change HasDerivWithinAt
-        ((ContinuousLinearMap.fst ℝ E E) ∘ fun s => α' (x, s)) 0
-          (Set.Icc (-δ) δ) t
+      have hβ_def : β =
+          (ContinuousLinearMap.fst ℝ E E) ∘ fun s => α' (x, s) := by
+        rfl
+      rw [hβ_def]
       simpa using (ContinuousLinearMap.fst ℝ E E).hasFDerivAt.comp_hasDerivWithinAt t
         ((hα' x hx').2 t ht)
     have hconst := constant_of_derivWithin_zero
@@ -225,10 +228,9 @@ theorem exists_lipschitzOn_local_mulInvariantCoordinateFlow
           (Set.Ico_subset_Icc_self ht)))
     intro t ht
     have hzero : (0 : ℝ) ∈ Set.Icc (-δ) δ := by constructor <;> linarith
-    -- Unfold the named first-coordinate path before applying its constancy theorem.
-    change β t = x.1
-    exact (hconst t ht).trans ((hconst 0 hzero).symm.trans
+    have hβeq : β t = x.1 := (hconst t ht).trans ((hconst 0 hzero).symm.trans
       (congrArg Prod.fst (hα' x hx').1))
+    simpa only [β] using hβeq
 
 /-- There is a coordinate solution family near the zero tangent vector and time zero which is
 continuous at the center, solves the parameterized invariant ODE with an ordinary derivative,
@@ -365,10 +367,10 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
       have hsnd : HasDerivAt f
           (mulInvariantCoordinateVectorField (I := I) (G := G)
             (α (((v, extChartAt I (1 : G) (1 : G)), s)))) s := by
-        -- `f` is definitionally the second continuous-linear projection of the solution family.
-        change HasDerivAt
-          ((ContinuousLinearMap.snd ℝ E E) ∘ fun u =>
-            α (((v, extChartAt I (1 : G) (1 : G)), u))) _ s
+        have hf_def : f = (ContinuousLinearMap.snd ℝ E E) ∘ fun u =>
+            α (((v, extChartAt I (1 : G) (1 : G)), u)) := by
+          rfl
+        rw [hf_def]
         simpa using (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt s
           (hlocal s hs).1
       have hpair : α (((v, extChartAt I (1 : G) (1 : G)), s)) = (v, f s) := by
@@ -383,9 +385,10 @@ theorem exists_local_coordinate_representation_mulInvariantIntegralCurve
   have hzero : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨by linarith, by linarith⟩
   have hγzero : γ 0 = 1 := by
     have hinit := (hlocal 0 hzero).2.1
-    -- Expand the named chart-valued path so the initial-value equality rewrites its coordinate.
-    change (extChartAt I (1 : G)).symm
-      (α (((v, extChartAt I (1 : G) (1 : G)), 0))).2 = 1
+    have hγ_def : γ 0 = (extChartAt I (1 : G)).symm
+        (α (((v, extChartAt I (1 : G) (1 : G)), 0))).2 := by
+      rfl
+    rw [hγ_def]
     rw [congrArg Prod.snd hinit]
     exact (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
   exact isMIntegralCurveOn_Ioo_eqOn_of_contMDiff_boundaryless hzero
