@@ -4,9 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ContDiff.Basic
+public import Mathlib.Analysis.Calculus.ContDiff.Comp
+public import Mathlib.Analysis.Calculus.MeanValue
 public import Mathlib.Analysis.Normed.Operator.Bilinear
 public import Mathlib.Topology.ContinuousMap.Compact
+public import Mathlib.Topology.UniformSpace.HeineCantor
 
 /-!
 # Calculus on spaces of continuous maps
@@ -20,6 +22,9 @@ spaces of continuous functions over a compact domain.
   continuous linear maps, as a bounded bilinear operator.
 * `ContinuousMap.hasStrictFDerivAt_comp_const`: strict differentiability of pointwise
   postcomposition at a constant map.
+* `ContinuousMap.hasFDerivAt_comp`: the derivative of pointwise postcomposition by a `C¹` map.
+* `ContinuousMap.contDiff_comp_nat`: finite-order smoothness of pointwise postcomposition.
+* `ContinuousMap.contDiff_comp_infty`: smoothness of pointwise postcomposition.
 
 ## References
 
@@ -29,9 +34,11 @@ spaces of continuous functions over a compact domain.
 
 public section
 
-open scoped ContinuousMap
+open scoped ContinuousMap ContDiff
 
 noncomputable section
+
+universe u
 
 namespace ContinuousMap
 
@@ -107,5 +114,101 @@ theorem hasStrictFDerivAt_comp_const (f : C(E, F)) (f' : E →L[𝕜] F) (x : E)
         applyContinuousLinearMap_apply, ContinuousMap.sub_apply] using hbound _ hpt
     _ ≤ c * ‖p.1 - p.2‖ :=
       mul_le_mul_of_nonneg_left (ContinuousMap.norm_coe_le_norm (p.1 - p.2) t) hc.le
+
+end ContinuousMap
+
+namespace ContinuousMap
+
+variable {K : Type*} [TopologicalSpace K] [CompactSpace K]
+  {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {F : Type u} [NormedAddCommGroup F] [NormedSpace ℝ F]
+
+/-- The continuous family of derivatives of a `C¹` map along a continuous map. -/
+@[expose]
+noncomputable def fderivComp (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
+    C(K, E →L[ℝ] F) :=
+  ⟨fun t ↦ fderiv ℝ f (g t), (hf.continuous_fderiv one_ne_zero).comp g.continuous⟩
+
+omit [CompactSpace K] in
+@[simp]
+theorem fderivComp_apply (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) (t : K) :
+    fderivComp f hf g t = fderiv ℝ f (g t) :=
+  by
+    rw [fderivComp]
+    rfl
+
+/-- Pointwise postcomposition by a `C¹` map is Fréchet differentiable. Its derivative applies
+the derivative of the original map pointwise along the input function. -/
+theorem hasFDerivAt_comp (f : C(E, F)) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
+    HasFDerivAt (fun h : C(K, E) ↦ f.comp h)
+      (applyContinuousLinearMap (fderivComp f hf g)) g := by
+  rw [hasFDerivAt_iff_isLittleO, Asymptotics.isLittleO_iff]
+  intro c hc
+  have hcompact : IsCompact (Set.range g) := isCompact_range g.continuous
+  have hdf_cont : Continuous (fderiv ℝ f) := hf.continuous_fderiv one_ne_zero
+  have huniform := hcompact.uniformContinuousAt_of_continuousAt
+    (fderiv ℝ f) (fun _ _ ↦ hdf_cont.continuousAt) (Metric.dist_mem_uniformity hc)
+  obtain ⟨δ, hδ, hderiv⟩ := Metric.mem_uniformity_dist.mp huniform
+  rw [Metric.eventually_nhds_iff_ball]
+  refine ⟨δ, hδ, fun h hh ↦ ?_⟩
+  apply (ContinuousMap.norm_le _ (mul_nonneg hc.le (norm_nonneg _))).2
+  intro t
+  have htg : g t ∈ Set.range g := ⟨t, rfl⟩
+  have hpoint : dist (h t) (g t) < δ :=
+    (ContinuousMap.dist_apply_le_dist t).trans_lt hh
+  have hbound : ∀ z ∈ segment ℝ (g t) (h t),
+      ‖fderiv ℝ f z - fderiv ℝ f (g t)‖ ≤ c := by
+    intro z hz
+    have hzg : dist (g t) z < δ := by
+      rw [dist_comm]
+      simpa only [dist_eq_norm] using
+        (norm_sub_le_of_mem_segment hz).trans_lt (by simpa only [dist_eq_norm] using hpoint)
+    have hd := hderiv hzg htg
+    change dist (fderiv ℝ f (g t)) (fderiv ℝ f z) < c at hd
+    simpa only [dist_eq_norm, norm_sub_rev] using hd.le
+  calc
+    ‖(f.comp h - f.comp g - applyContinuousLinearMap (fderivComp f hf g) (h - g)) t‖ ≤
+        c * ‖h t - g t‖ := by
+      simpa only [ContinuousMap.comp_apply, ContinuousMap.sub_apply,
+        applyContinuousLinearMap_apply, fderivComp_apply] using
+        (convex_segment (g t) (h t)).norm_image_sub_le_of_norm_fderiv_le'
+          (fun _ _ ↦ hf.differentiable one_ne_zero _) hbound
+          (left_mem_segment ℝ (g t) (h t)) (right_mem_segment ℝ (g t) (h t))
+    _ ≤ c * ‖h - g‖ :=
+      mul_le_mul_of_nonneg_left (ContinuousMap.norm_coe_le_norm (h - g) t) hc.le
+
+/-- Pointwise postcomposition by a `C^n` map is `C^n` on a compact-domain continuous-map space,
+for every finite differentiability order `n`. -/
+theorem contDiff_comp_nat (n : ℕ) (f : C(E, F)) (hf : ContDiff ℝ n f) :
+    ContDiff ℝ n (fun g : C(K, E) ↦ f.comp g) := by
+  induction n generalizing F with
+  | zero =>
+      change ContDiff ℝ (0 : ℕ∞ω) (fun g : C(K, E) ↦ f.comp g)
+      rw [contDiff_zero]
+      exact f.continuous_postcomp
+  | succ n ih =>
+      have hf' : ContDiff ℝ ((n : ℕ∞ω) + 1) f := by simpa using hf
+      let hf₁ : ContDiff ℝ 1 f := hf'.one_of_succ
+      let df : C(E, E →L[ℝ] F) := ⟨fderiv ℝ f, hf₁.continuous_fderiv one_ne_zero⟩
+      have hdf : ContDiff ℝ n df := (contDiff_succ_iff_fderiv.mp hf').2.2
+      have hcomp : ContDiff ℝ n (fun g : C(K, E) ↦ df.comp g) := ih df hdf
+      change ContDiff ℝ ((n : ℕ∞ω) + 1) (fun g : C(K, E) ↦ f.comp g)
+      rw [contDiff_succ_iff_hasFDerivAt]
+      refine ⟨fun g ↦ applyContinuousLinearMap (df.comp g),
+        applyContinuousLinearMap.contDiff.fun_comp hcomp, fun g ↦ ?_⟩
+      have hderiv := hasFDerivAt_comp f hf₁ g
+      have hfamily : df.comp g = fderivComp f hf₁ g := by
+        ext t
+        rfl
+      change HasFDerivAt (fun h : C(K, E) ↦ f.comp h)
+        (applyContinuousLinearMap (df.comp g)) g
+      rw [hfamily]
+      exact hderiv
+
+/-- Pointwise postcomposition by a smooth map is smooth on a compact-domain continuous-map
+space. -/
+theorem contDiff_comp_infty (f : C(E, F)) (hf : ContDiff ℝ ∞ f) :
+    ContDiff ℝ ∞ (fun g : C(K, E) ↦ f.comp g) :=
+  contDiff_infty.2 fun n ↦ contDiff_comp_nat n f ((contDiff_infty.mp hf) n)
 
 end ContinuousMap
