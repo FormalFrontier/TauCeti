@@ -141,7 +141,8 @@ theorem circleLIntegral_const (a : ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
   rcases le_or_gt ρ 0 with hρ | _
   · rw [circleLIntegral_def, ENNReal.ofReal_of_nonpos hρ, zero_mul,
       ENNReal.ofReal_of_nonpos (mul_nonpos_of_nonneg_of_nonpos (by positivity) hρ), zero_mul]
-  · rw [circleLIntegral_def, setLIntegral_const, Real.volume_Ioo, show π - -π = 2 * π by ring,
+  · have hπ : π - -π = 2 * π := by ring
+    rw [circleLIntegral_def, setLIntegral_const, Real.volume_Ioo, hπ,
       ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ 2 * π)]
     ring
 
@@ -157,6 +158,26 @@ theorem circleLIntegral_of_nonpos (g : ℂ → ℝ≥0∞) (ζ : ℂ) (hρ : ρ 
 @[simp]
 theorem circleLIntegral_zero (ζ : ℂ) (ρ : ℝ) : circleLIntegral 0 ζ ρ = 0 := by
   simp [circleLIntegral_def]
+
+/-- **The circle integral is additive in the weight**, as soon as one summand has an a.e.
+measurable angular trace along the circle at hand; as in `TauCeti.circleLIntegral_sq_le`, nothing
+is assumed of either weight off that circle. Some such hypothesis is needed, a lower integral being
+only superadditive in general. It is the hypothesis of `MeasureTheory.lintegral_add_left'`, which
+is why — like that lemma, and unlike its `Measurable` counterpart — this is not a `simp` lemma. -/
+theorem circleLIntegral_add {h : ℂ → ℝ≥0∞} (ζ : ℂ) (ρ : ℝ)
+    (hg : AEMeasurable (fun θ => g (circleMap ζ ρ θ)) (volume.restrict (Ioo (-π) π))) :
+    circleLIntegral (fun z => g z + h z) ζ ρ =
+      circleLIntegral g ζ ρ + circleLIntegral h ζ ρ := by
+  rw [circleLIntegral_def, circleLIntegral_def, circleLIntegral_def, lintegral_add_left' hg,
+    mul_add]
+
+/-- **A finite constant comes out of the circle integral.** This is
+`MeasureTheory.lintegral_const_mul'`, whose finiteness hypothesis on the constant is what lets the
+weight stay arbitrary; as there, no measurability is needed. -/
+theorem circleLIntegral_const_mul (a : ℝ≥0∞) (g : ℂ → ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) (ha : a ≠ ∞) :
+    circleLIntegral (fun z => a * g z) ζ ρ = a * circleLIntegral g ζ ρ := by
+  rw [circleLIntegral_def, circleLIntegral_def, lintegral_const_mul' _ _ ha]
+  ring
 
 /-- The angular integrand has period `2 * π`, because `circleMap ζ ρ` does. -/
 private theorem periodic_comp_circleMap (g : ℂ → ℝ≥0∞) (ζ : ℂ) (ρ : ℝ) :
