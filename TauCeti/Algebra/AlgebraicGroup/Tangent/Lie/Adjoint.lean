@@ -12,9 +12,9 @@ public import Mathlib.RepresentationTheory.Basic
 
 The points of a Hopf algebra act on the counit-valued derivations — the tangent
 vectors at the identity — by convolution conjugation: `Ad g d = g ⋆ d ⋆ g⁻¹` in the
-convolution ring of linear maps, the differential of the conjugation
-`c_g x = g ⋆ x ⋆ g⁻¹` of the group of points. Conjugation is a ring automorphism of
-the whole convolution ring; this file shows it restricts to the derivations, and
+convolution semiring of linear maps, the differential of the conjugation
+`c_g x = g ⋆ x ⋆ g⁻¹` of the group of points. Conjugation is a semiring automorphism of
+the whole convolution semiring; this file shows it restricts to the derivations, and
 packages the restriction as a representation of the group of points on the tangent
 space (`adRepresentation`). This is the adjoint action of the corresponding affine
 group scheme on its Lie functor, for commutative `A`.
@@ -50,32 +50,8 @@ namespace Derivation
 
 open Coalgebra WithConv TensorProduct
 
-section Square
-
-variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
-  [CommSemiring B] [Algebra R B]
-
-/-- An algebra-map point composed with multiplication is its own exterior square:
-the multiplicativity of the point, in convolution form. -/
-lemma toConv_algHom_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
-    toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
-      mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp [map_mul]
-
-end Square
-
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
   [CommSemiring B] [Algebra R B]
-
-/-- The linear images of a point and of its convolution inverse multiply to the
-convolution unit. -/
-lemma toConv_toLinearMap_mul_inv (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) :
-    toConv (g.ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) =
-      (1 : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) := by
-  have h := congrArg (fun ψ : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B) =>
-    toConv ψ.ofConv.toLinearMap) (mul_inv_cancel g)
-  rwa [AlgHom.toLinearMap_convMul, AlgHom.toLinearMap_convOne] at h
 
 private lemma conj_comp_mul'
     (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
@@ -163,7 +139,7 @@ theorem coe_adDerivation (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A 
       toConv ((g⁻¹).ofConv.toLinearMap)).ofConv = _
   rfl
 
-/-- The adjoint action, valuewise: the conjugate evaluated at a point of the
+/-- The adjoint action, valuewise: the conjugate evaluated at an element of the
 bialgebra. -/
 theorem adDerivation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
@@ -185,7 +161,7 @@ private lemma toConv_coe_adDerivation
 
 variable (B) in
 /-- The adjoint action of the group of points on the tangent space, as a
-representation: conjugation is a ring automorphism of the convolution ring, and it
+representation: conjugation is a semiring automorphism of the convolution semiring, and it
 restricts to the derivations. -/
 noncomputable def adRepresentation :
     Representation R (WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))

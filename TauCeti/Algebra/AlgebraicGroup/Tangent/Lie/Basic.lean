@@ -119,7 +119,31 @@ lemma toConv_coe_comp_mul'
     ← Algebra.smul_def, ← Algebra.smul_def]
   exact d.leibniz x y
 
+/-- An algebra-map point composed with multiplication is its own exterior square:
+the multiplicativity of the point, in convolution form. -/
+lemma toConv_algHom_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
+    toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
+      mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp [map_mul]
+
 end ExteriorProduct
+
+section HopfPoints
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
+  [CommSemiring B] [Algebra R B]
+
+/-- The linear images of a point and of its convolution inverse multiply to the
+convolution unit. -/
+lemma toConv_toLinearMap_mul_inv (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) :
+    toConv (g.ofConv.toLinearMap) * toConv ((g⁻¹).ofConv.toLinearMap) =
+      (1 : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) := by
+  have h := congrArg (fun ψ : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B) =>
+    toConv ψ.ofConv.toLinearMap) (mul_inv_cancel g)
+  rwa [AlgHom.toLinearMap_convMul, AlgHom.toLinearMap_convOne] at h
+
+end HopfPoints
 
 section Bracket
 
