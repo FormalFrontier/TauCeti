@@ -98,7 +98,7 @@ private lemma groupScheme_eq_hopfSpec :
 
 /-- The scheme underlying the general linear group scheme is the spectrum of its bundled
 coordinate Hopf algebra. -/
-lemma groupScheme_X_left_bundled :
+lemma groupScheme_X_left :
     (groupScheme R n).X.left =
       Spec (CommRingCat.of (coordinateHopfAlgebra R n)) := by
   simpa only [groupScheme] using
@@ -108,13 +108,13 @@ lemma groupScheme_X_left_bundled :
 spectrum of the determinant localization. -/
 noncomputable def groupSchemeSpecIso :
     (groupScheme R n).X.left ≅ Spec (CommRingCat.of (CoordinateRing R n)) :=
-  eqToIso (groupScheme_X_left_bundled R n) ≪≫
+  eqToIso (groupScheme_X_left R n) ≪≫
     Scheme.Spec.mapIso
       (coordinateHopfAlgebraAlgEquiv R n).toRingEquiv.toCommRingCatIso.op
 
 private lemma groupScheme_X_hom_bundled :
     (groupScheme R n).X.hom =
-      eqToHom (groupScheme_X_left_bundled R n) ≫
+      eqToHom (groupScheme_X_left R n) ≫
         Spec.map (CommRingCat.ofHom
           (algebraMap R (coordinateHopfAlgebra R n))) := by
   unfold groupScheme
@@ -129,7 +129,7 @@ lemma groupScheme_X_hom :
         Spec.map (CommRingCat.ofHom (algebraMap R (CoordinateRing R n))) := by
   calc
     (groupScheme R n).X.hom =
-        eqToHom (groupScheme_X_left_bundled R n) ≫
+        eqToHom (groupScheme_X_left R n) ≫
           Spec.map (CommRingCat.ofHom
             (algebraMap R (coordinateHopfAlgebra R n))) :=
       groupScheme_X_hom_bundled R n
@@ -205,7 +205,7 @@ private lemma groupScheme_one_left_bundled :
     η[(groupScheme R n).X].left =
       Spec.map (CommRingCat.ofHom
         (Bialgebra.counitAlgHom R (coordinateHopfAlgebra R n))) ≫
-      eqToHom (groupScheme_X_left_bundled R n).symm := by
+      eqToHom (groupScheme_X_left R n).symm := by
   unfold groupScheme
   convert hopfSpec_obj_one_left R (coordinateHopfAlgebra R n) using 1
 
@@ -216,16 +216,16 @@ private lemma groupScheme_mul_left_bundled :
           (coordinateHopfAlgebra R n)).hom ≫
         Spec.map (CommRingCat.ofHom
           (Bialgebra.comulAlgHom R (coordinateHopfAlgebra R n))) ≫
-        eqToHom (groupScheme_X_left_bundled R n).symm := by
+        eqToHom (groupScheme_X_left R n).symm := by
   unfold groupScheme
   convert hopfSpec_obj_mul_left R (coordinateHopfAlgebra R n) using 1
 
 private lemma groupScheme_inv_left_bundled :
     ι[(groupScheme R n).X].left =
-      eqToHom (groupScheme_X_left_bundled R n) ≫
+      eqToHom (groupScheme_X_left R n) ≫
         Spec.map (CommRingCat.ofHom
           (HopfAlgebra.antipodeAlgHom R (coordinateHopfAlgebra R n)).toRingHom) ≫
-        eqToHom (groupScheme_X_left_bundled R n).symm := by
+        eqToHom (groupScheme_X_left R n).symm := by
   unfold groupScheme
   convert hopfSpec_obj_inv_left R (coordinateHopfAlgebra R n) using 1
 
@@ -240,7 +240,7 @@ lemma groupScheme_one_left :
     Functor.mapIso_inv, Iso.op_inv, Scheme.Spec_map, Quiver.Hom.unop_op,
     RingEquiv.toCommRingCatIso_inv]
   rw [← Category.assoc]
-  apply (cancel_mono (eqToHom (groupScheme_X_left_bundled R n).symm)).2
+  apply (cancel_mono (eqToHom (groupScheme_X_left R n).symm)).2
   rw [← Spec.map_comp]
   rw [Spec.map_inj]
   rw [← CommRingCat.ofHom_comp]
@@ -266,7 +266,7 @@ lemma groupScheme_mul_left :
     (pullbackSpecIso R (coordinateHopfAlgebra R n)
       (coordinateHopfAlgebra R n)).hom).2
   simp only [← Category.assoc]
-  apply (cancel_mono (eqToHom (groupScheme_X_left_bundled R n).symm)).2
+  apply (cancel_mono (eqToHom (groupScheme_X_left R n).symm)).2
   rw [← Spec.map_comp, ← Spec.map_comp]
   rw [Spec.map_inj]
   rw [← CommRingCat.ofHom_comp, ← CommRingCat.ofHom_comp]
@@ -287,9 +287,9 @@ lemma groupScheme_inv_left :
     Scheme.Spec_map, Quiver.Hom.unop_op, RingEquiv.toCommRingCatIso_hom,
     Iso.trans_inv, eqToIso.inv, Functor.mapIso_inv, Iso.op_inv,
     RingEquiv.toCommRingCatIso_inv, Category.assoc]
-  apply (cancel_epi (eqToHom (groupScheme_X_left_bundled R n))).2
+  apply (cancel_epi (eqToHom (groupScheme_X_left R n))).2
   simp only [← Category.assoc]
-  apply (cancel_mono (eqToHom (groupScheme_X_left_bundled R n).symm)).2
+  apply (cancel_mono (eqToHom (groupScheme_X_left R n).symm)).2
   rw [← Spec.map_comp, ← Spec.map_comp]
   rw [Spec.map_inj]
   rw [← CommRingCat.ofHom_comp, ← CommRingCat.ofHom_comp]
@@ -335,11 +335,11 @@ lemma groupSchemePointMulEquiv_apply_left
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
     (groupSchemePointMulEquiv n A f).left =
       Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
-        eqToHom (groupScheme_X_left_bundled R n).symm := by
+        eqToHom (groupScheme_X_left R n).symm := by
   simpa only [groupSchemePointMulEquiv] using
     CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
       (coordinateHopfAlgebra R n) A (groupScheme_eq_hopfSpec R n)
-        (groupScheme_X_left_bundled R n) f
+        (groupScheme_X_left R n) f
 
 /-- The group of scheme-valued points of the general linear group scheme is the ordinary general
 linear group over the value algebra.

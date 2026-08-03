@@ -145,23 +145,25 @@ theorem mapMulEquivOfPresentation_mapValue
     congrArg (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left) hG
   let q : WithConv (H →ₐ[R] A) :=
     (mapMulEquivOfPresentation H A hG).symm p
-  change (mapMulEquivOfPresentation H B hG).symm
-      ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
-        (Spec (CommRingCat.of R)) ≫ p) =
-    HopfAlgebra.mapPoints (H := H) (CommAlgCat.ofHom φ) q
-  have hmap := mapMulEquiv_mapValue H (CommAlgCat.ofHom φ) q
-  have hp : mapMulEquivOfPresentation H A hG q = p :=
-    (mapMulEquivOfPresentation H A hG).apply_symm_apply p
-  apply (mapMulEquivOfPresentation H B hG).injective
-  rw [(mapMulEquivOfPresentation H B hG).apply_symm_apply, ← hp]
-  apply Over.OverMorphism.ext
-  apply (cancel_mono (eqToHom hX)).1
-  erw [Over.comp_left]
-  rw [Category.assoc, mapMulEquivOfPresentation_apply_left_comp H A hG hX,
-    mapMulEquivOfPresentation_apply_left_comp H B hG hX]
-  have hmapLeft := congrArg Over.Hom.left hmap.symm
-  simp only [Over.comp_left, OverClass.asOverHom_left, mapMulEquiv_left] at hmapLeft
-  exact hmapLeft
+  have hq :
+      (mapMulEquivOfPresentation H B hG).symm
+          ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+            (Spec (CommRingCat.of R)) ≫ p) =
+        HopfAlgebra.mapPoints (H := H) (CommAlgCat.ofHom φ) q := by
+    have hmap := mapMulEquiv_mapValue H (CommAlgCat.ofHom φ) q
+    have hp : mapMulEquivOfPresentation H A hG q = p :=
+      (mapMulEquivOfPresentation H A hG).apply_symm_apply p
+    apply (mapMulEquivOfPresentation H B hG).injective
+    rw [(mapMulEquivOfPresentation H B hG).apply_symm_apply, ← hp]
+    apply Over.OverMorphism.ext
+    apply (cancel_mono (eqToHom hX)).1
+    erw [Over.comp_left]
+    rw [Category.assoc, mapMulEquivOfPresentation_apply_left_comp H A hG hX,
+      mapMulEquivOfPresentation_apply_left_comp H B hG hX]
+    have hmapLeft := congrArg Over.Hom.left hmap.symm
+    simp only [Over.comp_left, OverClass.asOverHom_left, mapMulEquiv_left] at hmapLeft
+    exact hmapLeft
+  simpa only [q] using hq
 
 /-- Mathlib's spectrum-points equivalence is contravariantly natural in the coordinate
 Hopf algebra. Precomposing a `K`-point by `φ : H ⟶ K` corresponds on spectra to
