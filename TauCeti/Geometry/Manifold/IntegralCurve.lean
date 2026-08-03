@@ -22,6 +22,8 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 
 ## References
 
+* Mathlib's proof of `exists_isMIntegralCurveAt_of_contMDiffAt_boundaryless`, whose extended-chart
+  calculation is adapted by `IsMIntegralCurveAt.of_extChartAt_symm` in the reverse direction.
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 0, "The exponential map".
 -/
