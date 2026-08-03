@@ -20,11 +20,10 @@ spaces of continuous functions over a compact domain.
 
 * `ContinuousMap.applyContinuousLinearMap`: pointwise application of a continuous family of
   continuous linear maps, as a bounded bilinear operator.
-* `ContinuousMap.hasStrictFDerivAt_comp_const`: strict differentiability of pointwise
+* `ContinuousMap.hasStrictFDerivAt_postcomp_const`: strict differentiability of pointwise
   postcomposition at a constant map.
-* `ContinuousMap.hasFDerivAt_comp`: the derivative of pointwise postcomposition by a `C¹` map.
-* `ContinuousMap.contDiff_comp_nat`: finite-order smoothness of pointwise postcomposition.
-* `ContinuousMap.contDiff_comp_infty`: smoothness of pointwise postcomposition.
+* `ContinuousMap.hasFDerivAt_postcomp`: the derivative of pointwise postcomposition by a `C¹` map.
+* `ContinuousMap.contDiff_postcomp`: finite-order or smooth pointwise postcomposition.
 
 ## References
 
@@ -38,7 +37,7 @@ open scoped ContinuousMap ContDiff
 
 noncomputable section
 
-universe u
+universe u v
 
 namespace ContinuousMap
 
@@ -51,36 +50,24 @@ variable {K : Type*} [TopologicalSpace K] [CompactSpace K]
 as a bounded bilinear operator. -/
 noncomputable def applyContinuousLinearMap :
     C(K, E →L[𝕜] F) →L[𝕜] C(K, E) →L[𝕜] C(K, F) := by
-  let app (A : C(K, E →L[𝕜] F)) : C(K, E) →L[𝕜] C(K, F) :=
-    LinearMap.mkContinuous
-      { toFun := fun f => ⟨fun x => A x (f x), by fun_prop⟩
-        map_add' := fun _ _ => by ext x; simp
-        map_smul' := fun _ _ => by ext x; simp }
-      ‖A‖ fun f => by
+  let L : C(K, E →L[𝕜] F) →ₗ[𝕜] C(K, E) →ₗ[𝕜] C(K, F) :=
+    { toFun := fun A =>
+        { toFun := fun f => ⟨fun x => A x (f x), by fun_prop⟩
+          map_add' := fun _ _ => by ext x; simp
+          map_smul' := fun _ _ => by ext x; simp }
+      map_add' := fun _ _ => by ext f x; simp
+      map_smul' := fun _ _ => by ext f x; simp }
+  exact LinearMap.mkContinuous₂ (𝕜 := 𝕜) (𝕜₂ := 𝕜) (𝕜₃ := 𝕜)
+    (σ₁₃ := RingHom.id 𝕜) (σ₂₃ := RingHom.id 𝕜) L 1 fun
+      (A : C(K, E →L[𝕜] F)) (f : C(K, E)) => by
+      rw [one_mul]
+      change ‖(⟨fun x => A x (f x), by fun_prop⟩ : C(K, F))‖ ≤ ‖A‖ * ‖f‖
       apply (ContinuousMap.norm_le _
         (mul_nonneg (norm_nonneg A) (norm_nonneg f))).2
       intro x
       exact (ContinuousLinearMap.le_opNorm (A x) (f x)).trans <|
         mul_le_mul (norm_coe_le_norm A x) (norm_coe_le_norm f x)
           (norm_nonneg _) (norm_nonneg _)
-  let L : C(K, E →L[𝕜] F) →ₗ[𝕜] C(K, E) →L[𝕜] C(K, F) :=
-    { toFun := app
-      map_add' := fun _ _ => by ext f x; simp [app]
-      map_smul' := fun _ _ => by ext f x; simp [app] }
-  exact LinearMap.mkContinuous (𝕜₂ := 𝕜) L 1 fun
-      (A : C(K, E →L[𝕜] F)) => by
-    have hL_apply : L A = app A := by
-      rfl
-    rw [hL_apply]
-    rw [one_mul]
-    apply ContinuousLinearMap.opNorm_le_bound (app A) (norm_nonneg A)
-    intro f
-    apply (ContinuousMap.norm_le _
-      (mul_nonneg (norm_nonneg A) (norm_nonneg f))).2
-    intro x
-    exact (ContinuousLinearMap.le_opNorm (A x) (f x)).trans <|
-      mul_le_mul (norm_coe_le_norm A x) (norm_coe_le_norm f x)
-        (norm_nonneg _) (norm_nonneg _)
 
 @[simp]
 theorem applyContinuousLinearMap_apply (A : C(K, E →L[𝕜] F)) (f : C(K, E)) (x : K) :
@@ -92,7 +79,7 @@ theorem applyContinuousLinearMap_apply (A : C(K, E →L[𝕜] F)) (f : C(K, E)) 
 /-- Strict differentiability of a map lifts to strict differentiability of pointwise
 postcomposition at a constant continuous map. The derivative acts pointwise by the original
 derivative. -/
-theorem hasStrictFDerivAt_comp_const (f : C(E, F)) (f' : E →L[𝕜] F) (x : E)
+theorem hasStrictFDerivAt_postcomp_const (f : C(E, F)) (f' : E →L[𝕜] F) (x : E)
     (hf : HasStrictFDerivAt f f' x) :
     HasStrictFDerivAt (fun g : C(K, E) ↦ f.comp g)
       (applyContinuousLinearMap (ContinuousMap.const K f')) (ContinuousMap.const K x) := by
@@ -123,7 +110,7 @@ namespace ContinuousMap
 
 variable {K : Type*} [TopologicalSpace K] [CompactSpace K]
   {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type u} [NormedAddCommGroup F] [NormedSpace ℝ F]
+  {F : Type (max u v)} [NormedAddCommGroup F] [NormedSpace ℝ F]
 
 /-- The continuous family of derivatives of a `C¹` map along a continuous map. -/
 noncomputable def fderivComp (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
@@ -140,8 +127,8 @@ theorem fderivComp_apply (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) (t 
 
 /-- Pointwise postcomposition by a `C¹` map is Fréchet differentiable. Its derivative applies
 the derivative of the original map pointwise along the input function. -/
-theorem hasFDerivAt_comp (f : C(E, F)) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
-    HasFDerivAt (fun h : C(K, E) ↦ f.comp h)
+theorem hasFDerivAt_postcomp (f : E → F) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
+    HasFDerivAt (fun h : C(K, E) ↦ (⟨f, hf.continuous⟩ : C(E, F)).comp h)
       (applyContinuousLinearMap (fderivComp f hf g)) g := by
   rw [hasFDerivAt_iff_isLittleO, Asymptotics.isLittleO_iff]
   intro c hc
@@ -168,19 +155,20 @@ theorem hasFDerivAt_comp (f : C(E, F)) (hf : ContDiff ℝ 1 f) (g : C(K, E)) :
     have hd' : dist (fderiv ℝ f (g t)) (fderiv ℝ f z) < c := hd
     simpa only [dist_eq_norm, norm_sub_rev] using hd'.le
   calc
-    ‖(f.comp h - f.comp g - applyContinuousLinearMap (fderivComp f hf g) (h - g)) t‖ ≤
+    ‖((⟨f, hf.continuous⟩ : C(E, F)).comp h -
+        (⟨f, hf.continuous⟩ : C(E, F)).comp g -
+        applyContinuousLinearMap (fderivComp f hf g) (h - g)) t‖ ≤
         c * ‖h t - g t‖ := by
-      simpa only [ContinuousMap.comp_apply, ContinuousMap.sub_apply,
-        applyContinuousLinearMap_apply, fderivComp_apply] using
-        (convex_segment (g t) (h t)).norm_image_sub_le_of_norm_fderiv_le'
-          (fun _ _ ↦ hf.differentiable one_ne_zero _) hbound
-          (left_mem_segment ℝ (g t) (h t)) (right_mem_segment ℝ (g t) (h t))
+      rw [ContinuousMap.sub_apply, ContinuousMap.sub_apply,
+        ContinuousMap.comp_apply, ContinuousMap.comp_apply,
+        applyContinuousLinearMap_apply, fderivComp_apply]
+      exact (convex_segment (g t) (h t)).norm_image_sub_le_of_norm_fderiv_le'
+        (fun _ _ ↦ hf.differentiable one_ne_zero _) hbound
+        (left_mem_segment ℝ (g t) (h t)) (right_mem_segment ℝ (g t) (h t))
     _ ≤ c * ‖h - g‖ :=
       mul_le_mul_of_nonneg_left (ContinuousMap.norm_coe_le_norm (h - g) t) hc.le
 
-/-- Pointwise postcomposition by a `C^n` map is `C^n` on a compact-domain continuous-map space,
-for every finite differentiability order `n`. -/
-theorem contDiff_comp_nat (n : ℕ) (f : C(E, F)) (hf : ContDiff ℝ n f) :
+private theorem contDiff_postcomp_nat (n : ℕ) (f : C(E, F)) (hf : ContDiff ℝ n f) :
     ContDiff ℝ n (fun g : C(K, E) ↦ f.comp g) := by
   induction n generalizing F with
   | zero =>
@@ -198,20 +186,35 @@ theorem contDiff_comp_nat (n : ℕ) (f : C(E, F)) (hf : ContDiff ℝ n f) :
         rw [contDiff_succ_iff_hasFDerivAt]
         refine ⟨fun g ↦ applyContinuousLinearMap (df.comp g),
           applyContinuousLinearMap.contDiff.fun_comp hcomp, fun g ↦ ?_⟩
-        have hderiv := hasFDerivAt_comp f hf₁ g
+        have hderiv := hasFDerivAt_postcomp (f : E → F) hf₁ g
         have hfamily : df.comp g = fderivComp f hf₁ g := by
           apply ContinuousMap.ext
           intro t
           have hdf_apply : df (g t) = fderiv ℝ f (g t) := by
             rfl
           rw [ContinuousMap.comp_apply, hdf_apply, fderivComp_apply]
+        have hfc : (⟨(f : E → F), hf₁.continuous⟩ : C(E, F)) = f := by
+          ext x
+          rfl
+        rw [hfc] at hderiv
         simpa only [hfamily] using hderiv
       simpa using hsucc
 
-/-- Pointwise postcomposition by a smooth map is smooth on a compact-domain continuous-map
-space. -/
-theorem contDiff_comp_infty (f : C(E, F)) (hf : ContDiff ℝ ∞ f) :
-    ContDiff ℝ ∞ (fun g : C(K, E) ↦ f.comp g) :=
-  contDiff_infty.2 fun n ↦ contDiff_comp_nat n f ((contDiff_infty.mp hf) n)
+/-- Pointwise postcomposition by a `C^n` map is `C^n` on a compact-domain continuous-map space,
+for every finite or infinite differentiability order `n`. -/
+theorem contDiff_postcomp (n : ℕ∞) (f : E → F) (hf : ContDiff ℝ (n : ℕ∞ω) f) :
+    ContDiff ℝ (n : ℕ∞ω)
+      (fun g : C(K, E) ↦ (⟨f, hf.continuous⟩ : C(E, F)).comp g) := by
+  induction n using ENat.recTopCoe with
+  | top =>
+      have hfInf : ContDiff ℝ ∞ f := by simpa using hf
+      let fc : C(E, F) := ⟨f, hfInf.continuous⟩
+      change ContDiff ℝ ∞ (fun g : C(K, E) => fc.comp g)
+      exact contDiff_infty.2 fun m =>
+        contDiff_postcomp_nat m fc ((contDiff_infty.mp hfInf) m)
+  | coe n =>
+      let fc : C(E, F) := ⟨f, hf.continuous⟩
+      change ContDiff ℝ n (fun g : C(K, E) => fc.comp g)
+      exact contDiff_postcomp_nat n fc hf
 
 end ContinuousMap
