@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import Mathlib.Analysis.Calculus.ImplicitContDiff
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+public import TauCeti.Analysis.Calculus.BumpFunction.FiniteDimension
 public import TauCeti.Analysis.Calculus.ContinuousMap
 
 /-!
@@ -42,42 +42,6 @@ namespace ODE
 variable {E F : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F]
 
-/-- A finite-order smooth germ on a finite-dimensional real normed space has a globally smooth
-representative of the same order. A smooth bump cuts the function off inside a neighborhood on
-which the original germ is smooth. -/
-theorem exists_contDiff_eventuallyEq_of_finiteDimensional
-    [FiniteDimensional ℝ E] (n : ℕ) {f : E → F} {x : E}
-    (hf : ContDiffAt ℝ n f x) :
-    ∃ g : E → F, ContDiff ℝ n g ∧ g =ᶠ[nhds x] f := by
-  obtain ⟨s, hs, hfs⟩ := hf.contDiffOn le_rfl (by simp)
-  obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
-  let b : ContDiffBump x :=
-    ⟨ε / 4, ε / 2, by positivity, by linarith⟩
-  let g : E → F := fun y ↦ b y • f y
-  have hball : ContDiffOn ℝ n f (Metric.ball x ε) :=
-    hfs.mono hεs
-  have hg : ContDiff ℝ n g := by
-    rw [contDiff_iff_contDiffAt]
-    intro y
-    by_cases hy : y ∈ tsupport b
-    · have hyClosed : y ∈ Metric.closedBall x (ε / 2) := by
-        simpa only [b, ContDiffBump.tsupport_eq] using hy
-      have hyBall : y ∈ Metric.ball x ε := by
-        rw [Metric.mem_ball]
-        exact hyClosed.trans_lt (by linarith)
-      exact b.contDiffAt.smul
-        ((hball y hyBall).contDiffAt (Metric.isOpen_ball.mem_nhds hyBall))
-    · have hbzero : (b : E → ℝ) =ᶠ[nhds y] fun _ ↦ 0 :=
-        notMem_tsupport_iff_eventuallyEq.mp hy
-      have hgeq : g =ᶠ[nhds y] fun _ ↦ (0 : F) := by
-        filter_upwards [hbzero] with z hz
-        simp only [g, hz, zero_smul]
-      exact contDiffAt_const.congr_of_eventuallyEq hgeq
-  refine ⟨g, hg, ?_⟩
-  filter_upwards [b.eventuallyEq_one] with y hy
-  change b y = 1 at hy
-  simp only [g, hy, one_smul]
-
 variable {K : Type*} [TopologicalSpace K] [CompactSpace K]
 
 /-- Pair a parameter with every value of a continuous path, as a continuous linear map. -/
@@ -107,6 +71,14 @@ noncomputable def picardResidual (f : C(E × F, F)) (x₀ : F) :
   p.2 - ContinuousMap.const _ x₀ -
     ContinuousMap.unitIntervalIntegral (f.comp (parameterizedPath p))
 
+/-- The Picard residual is the path minus its initial value and integrated vector field. -/
+@[simp]
+theorem picardResidual_apply (f : C(E × F, F)) (x₀ : F)
+    (p : E × C(Set.Icc (0 : ℝ) 1, F)) :
+    picardResidual f x₀ p = p.2 - ContinuousMap.const _ x₀ -
+      ContinuousMap.unitIntervalIntegral (f.comp (parameterizedPath p)) := by
+  rfl
+
 /-- A smooth vector field gives a smooth Picard residual. -/
 theorem contDiff_picardResidual (n : ℕ) (f : C(E × F, F))
     (hf : ContDiff ℝ n f) (x₀ : F) :
@@ -120,7 +92,7 @@ theorem contDiff_picardResidual (n : ℕ) (f : C(E × F, F))
 
 /-- At a parameter for which the vector field vanishes locally in the state variable, the partial
 derivative of the Picard residual in the path variable is the identity. -/
-theorem hasStrictFDerivAt_picardResidual_parameter
+theorem hasStrictFDerivAt_picardResidual_path
     [CompleteSpace F] (f : C(E × F, F)) (p₀ : E) (x₀ : F)
     (hf : ∀ᶠ y in nhds x₀, f (p₀, y) = 0) :
     HasStrictFDerivAt
@@ -141,7 +113,7 @@ theorem hasStrictFDerivAt_picardResidual_parameter
       simpa only [parameterizedPath_apply, ContinuousMap.const_apply, Prod.snd] using
         (ContinuousMap.dist_apply_le_dist (f := γ)
           (g := ContinuousMap.const _ x₀) t).trans_lt hγ
-    simp only [picardResidual, hcomp, map_zero, sub_zero]
+    simp only [picardResidual_apply, hcomp, map_zero, sub_zero]
   exact (hasStrictFDerivAt_sub_const (ContinuousMap.const _ x₀)).congr_of_eventuallyEq heq
 
 /-- A path satisfying the Picard integral equation solves the corresponding ODE at every interior
@@ -184,7 +156,8 @@ theorem hasDerivWithinAt_Ici_of_forall_eq_picard
     · simp
   apply hprimitive.hasDerivWithinAt.congr_of_eventuallyEq
   · have hIio : Set.Iio (1 : ℝ) ∈ nhdsWithin t (Set.Ici t) :=
-      (show nhdsWithin t (Set.Ici t) ≤ nhds t from inf_le_left) (Iio_mem_nhds ht.2)
+      have hle : nhdsWithin t (Set.Ici t) ≤ nhds t := inf_le_left
+      hle (Iio_mem_nhds ht.2)
     filter_upwards [hIio, self_mem_nhdsWithin] with s hs hts
     rw [Set.projIcc_of_mem zero_le_one ⟨ht.1.trans hts, hs.le⟩]
     exact hq ⟨s, ht.1.trans hts, hs.le⟩
@@ -200,7 +173,7 @@ theorem exists_contDiffAt_picard_solution
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ F]
     (n : ℕ) (f : E × F → F) (p₀ : E) (x₀ : F)
     (hf : ContDiffAt ℝ (n + 1) f (p₀, x₀))
-    (hzero : ∀ y, f (p₀, y) = 0) :
+    (hzero : ∀ᶠ y in nhds x₀, f (p₀, y) = 0) :
     ∃ γ : E → C(Set.Icc (0 : ℝ) 1, F),
       ContDiffAt ℝ (n + 1) γ p₀ ∧
       γ p₀ = ContinuousMap.const _ x₀ ∧
@@ -216,8 +189,10 @@ theorem exists_contDiffAt_picard_solution
             (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) (Set.Ici t) t := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let _ : CompleteSpace F := FiniteDimensional.complete ℝ F
+  -- Replace the local vector-field germ by a global smooth representative so the Banach-space
+  -- implicit function theorem applies without changing the ODE near the base point.
   obtain ⟨g, hg, hgf⟩ :=
-    exists_contDiff_eventuallyEq_of_finiteDimensional (n + 1) hf
+    hf.exists_contDiff_eventuallyEq_of_finiteDimensional (n + 1)
   let gc : C(E × F, F) := ⟨g, hg.continuous⟩
   let R := picardResidual gc x₀
   let basePath : C(Set.Icc (0 : ℝ) 1, F) := ContinuousMap.const _ x₀
@@ -226,12 +201,15 @@ theorem exists_contDiffAt_picard_solution
     (contDiff_picardResidual (n + 1) gc hg x₀).contDiffAt
   have hgfBase : g (p₀, x₀) = f (p₀, x₀) :=
     hgf.self_of_nhds
+  have hzeroBase : f (p₀, x₀) = 0 := hzero.self_of_nhds
   have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := by
     have hpull : ∀ᶠ y in nhds x₀, g (p₀, y) = f (p₀, y) :=
       (continuousAt_const.prodMk continuousAt_id).eventually hgf
-    filter_upwards [hpull] with y hy
-    exact hy.trans (hzero y)
-  have hpartial := hasStrictFDerivAt_picardResidual_parameter gc p₀ x₀ hgzero
+    filter_upwards [hpull, hzero] with y hy hyzero
+    exact hy.trans hyzero
+  -- At the constant base solution the path derivative of the residual is the identity, so the
+  -- implicit function theorem produces a smooth parameter-to-path germ.
+  have hpartial := hasStrictFDerivAt_picardResidual_path gc p₀ x₀ hgzero
   have hdiff := hR.differentiableAt (by norm_num)
   have hinnerRaw := hasFDerivAt_const (𝕜 := ℝ) p₀ basePath |>.prodMk
     (hasFDerivAt_id (𝕜 := ℝ) basePath)
@@ -257,8 +235,8 @@ theorem exists_contDiffAt_picard_solution
     have hcomp : gc.comp (parameterizedPath u) = 0 := by
       ext t
       simp only [gc, u, basePath]
-      exact hgfBase.trans (hzero x₀)
-    simp only [R, picardResidual, u, basePath, hcomp, map_zero, sub_self]
+      exact hgfBase.trans hzeroBase
+    simp only [R, picardResidual_apply, u, basePath, hcomp, map_zero, sub_self]
   have hγeq : ∀ᶠ p in nhds p₀, R (p, γ p) = 0 := by
     filter_upwards [hR.eventually_apply_implicitFunction (by norm_num) hinvertible] with p hp
     rw [hp, hRbase]
@@ -275,10 +253,14 @@ theorem exists_contDiffAt_picard_solution
     have hnear := hpath (Metric.ball_mem_nhds
       (parameterizedPath (p₀, γ p₀)) hε)
     filter_upwards [hnear] with p hp
-    change parameterizedPath (p, γ p) ∈
-      Metric.ball (parameterizedPath (p₀, γ p₀)) ε at hp
-    rw [Metric.mem_ball] at hp
-    simpa only [hpathBase] using hp
+    have hpBall : parameterizedPath (p, γ p) ∈
+        Metric.ball (parameterizedPath (p₀, γ p₀)) ε := Set.mem_preimage.mp hp
+    have hp' : dist (parameterizedPath (p, γ p))
+        (parameterizedPath (p₀, γ p₀)) < ε := by
+      simpa only [Metric.mem_ball] using hpBall
+    simpa only [hpathBase] using hp'
+  -- Restrict to parameters whose whole Picard path remains where the cutoff field agrees with
+  -- the original field; then transfer the integral equation and its derivative consequences.
   refine ⟨γ, hγsmooth, by simpa only [basePath] using hγbase, ?_⟩
   filter_upwards [hγeq, hpathsNear] with p hp hpnear
   have hpoint (t : Set.Icc (0 : ℝ) 1) :
@@ -296,7 +278,7 @@ theorem exists_contDiffAt_picard_solution
       γ p - (ContinuousMap.const _ x₀ +
           ContinuousMap.unitIntervalIntegral (gc.comp (parameterizedPath (p, γ p)))) =
           R (p, γ p) := by
-        simp only [R, picardResidual]
+        simp only [R, picardResidual_apply]
         abel
       _ = 0 := hp
   have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
