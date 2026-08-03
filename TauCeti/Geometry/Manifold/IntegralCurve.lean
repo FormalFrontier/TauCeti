@@ -40,7 +40,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 coordinate expression of a vector field gives a manifold integral curve after applying the inverse
 chart. -/
 theorem IsMIntegralCurveAt.of_extChartAt_symm
-    [ContinuousSMul ℝ E]
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
     {x₀ : M} {f : ℝ → E} {t₀ : ℝ} {v : (x : M) → TangentSpace I x}
     (htarget : ∀ᶠ t in nhds t₀, f t ∈ interior (extChartAt I x₀).target)
