@@ -60,7 +60,7 @@ and Layer 3 develops "Hopf ideals ↔ closed subgroup schemes".
 ## References
 
 The Hopf structure on the additive group is Tau Ceti's
-`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra` and
+`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra.Basic` and
 `TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic`; the Hopf-ideal quotient machinery and its
 bridge to Mathlib's quotient Hopf algebra are `TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic`. The
 primitivity of `xᵖ` reuses `TauCeti.AdditiveGroup.comul_ι_pow` of
