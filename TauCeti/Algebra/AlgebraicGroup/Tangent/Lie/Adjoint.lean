@@ -50,7 +50,9 @@ namespace Derivation
 
 open Coalgebra WithConv TensorProduct
 
-variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
+section Square
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
   [CommSemiring B] [Algebra R B]
 
 /-- An algebra-map point composed with multiplication is its own exterior square:
@@ -60,6 +62,11 @@ lemma toConv_algHom_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
       mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp [map_mul]
+
+end Square
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
+  [CommSemiring B] [Algebra R B]
 
 /-- The linear images of a point and of its convolution inverse multiply to the
 convolution unit. -/
