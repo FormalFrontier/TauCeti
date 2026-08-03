@@ -8,8 +8,6 @@ public import TauCeti.RingTheory.Semisimple.CentralCharacter
 public import TauCeti.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Integral
-public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.Irreducible
 
 /-!
 # The central character of an irreducible representation
@@ -37,7 +35,7 @@ class-multiplication matrices.
 
 ## Main statements
 
-* `TauCeti.Representation.asAlgebraHom_apply_of_mem_center`: a central element of the group algebra
+* `TauCeti.Representation.asAlgebraHom_center_apply`: a central element of the group algebra
   acts on the representation as the scalar its central character records.
 * `TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one`: the class-sum
   identity `ωᵪ(K_C) · χ(1) = |C| · χ(g)`, in its division-free form, with
@@ -119,25 +117,25 @@ noncomputable def centralCharacter : Subalgebra.center k k[G] →ₐ[k] k :=
 
 /-- A central element of the group algebra acts on the representation as multiplication by the
 value of the central character. -/
-theorem asAlgebraHom_apply_of_mem_center (z : Subalgebra.center k k[G]) (v : V) :
+theorem asAlgebraHom_center_apply (z : Subalgebra.center k k[G]) (v : V) :
     ρ.asAlgebraHom (z : k[G]) v = centralCharacter ρ z • v := by
   have h : (z : k[G]) • ρ.asModuleEquiv.symm v =
       centralCharacter ρ z • ρ.asModuleEquiv.symm v :=
-    (TauCeti.centralCharacter_smul k k[G] ρ.asModule z _).symm
+    TauCeti.smul_eq_centralCharacter_smul k k[G] ρ.asModule z _
   have h' := congrArg ρ.asModuleEquiv h
   rwa [_root_.Representation.asModuleEquiv_map_smul, map_smul,
     LinearEquiv.apply_symm_apply] at h'
 
 /-- A central element of the group algebra acts on an irreducible representation by a scalar
 endomorphism. -/
-theorem asAlgebraHom_of_mem_center (z : Subalgebra.center k k[G]) :
+theorem asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     ρ.asAlgebraHom (z : k[G]) = centralCharacter ρ z • LinearMap.id :=
-  LinearMap.ext fun v => asAlgebraHom_apply_of_mem_center ρ z v
+  LinearMap.ext fun v => asAlgebraHom_center_apply ρ z v
 
 /-- The trace of the action of a central element is its central character times the degree. -/
-theorem trace_asAlgebraHom_of_mem_center (z : Subalgebra.center k k[G]) :
+theorem trace_asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     LinearMap.trace k V (ρ.asAlgebraHom (z : k[G])) = centralCharacter ρ z * finrank k V := by
-  rw [asAlgebraHom_of_mem_center, map_smul, LinearMap.trace_id, smul_eq_mul]
+  rw [asAlgebraHom_center, map_smul, LinearMap.trace_id, smul_eq_mul]
 
 section Finite
 
@@ -154,7 +152,7 @@ theorem centralCharacter_classSumCenter_mul_character_one {C : ConjClasses G} {g
     (hg : ConjClasses.mk g = C) :
     centralCharacter ρ (classSumCenter C) * ρ.character 1 =
       Nat.card C.carrier * ρ.character g := by
-  rw [ρ.char_one, ← trace_asAlgebraHom_of_mem_center ρ (classSumCenter C), classSumCenter_coe,
+  rw [ρ.char_one, ← trace_asAlgebraHom_center ρ (classSumCenter C), classSumCenter_coe,
     trace_asAlgebraHom_classSum ρ hg]
 
 /-- The central character on a class sum, in quotient form, when the degree of the representation
@@ -192,17 +190,19 @@ variable (k G) [Fintype G] [DecidableEq G]
 `C` to the size of `C`: every group element acts by the identity there, so a class sum acts by the
 number of its terms.
 
-This pins the normalization of `TauCeti.Representation.centralCharacter`, and is the case `χ = 1`
-of `TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one`. -/
+This pins the normalization of `TauCeti.Representation.centralCharacter`. It is derived from
+`TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one` as the case `χ = 1`,
+where both the degree and the character value on the class are `1`. -/
 theorem centralCharacter_trivial_classSumCenter (C : ConjClasses G) :
     centralCharacter (_root_.Representation.trivial k G k) (classSumCenter C) =
       Nat.card C.carrier := by
-  have h := asAlgebraHom_apply_of_mem_center (_root_.Representation.trivial k G k)
-    (classSumCenter C) (1 : k)
-  rw [classSumCenter_coe, asAlgebraHom_classSum, LinearMap.sum_apply] at h
-  simp only [_root_.Representation.trivial_apply, Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
-    mul_one, smul_eq_mul] at h
-  rw [Nat.card_eq_fintype_card, ← h]
+  have hchar : ∀ x : G, (_root_.Representation.trivial k G k).character x = 1 := fun x => by
+    have : (_root_.Representation.trivial k G k) x = LinearMap.id :=
+      LinearMap.ext fun v => by simp
+    simp [_root_.Representation.character, this]
+  obtain ⟨g, hg⟩ := C.exists_rep
+  simpa [hchar] using
+    centralCharacter_classSumCenter_mul_character_one (_root_.Representation.trivial k G k) hg
 
 end Trivial
 

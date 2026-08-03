@@ -18,6 +18,18 @@ The point is to establish integrality inside `Z(ℤ[G])`. Integrality of a class
 an element of `ℤ[G]` would not retain the central algebra through which central characters
 factor.
 
+The same statement over an arbitrary coefficient ring `k` follows by base change along
+`ℤ[G] → k[G]`, which carries class sums to class sums; it cannot be proved by the argument over
+`ℤ`, because `Z(k[G])` need not be a finite `ℤ`-module. This coefficient-general form is the one a
+central character `Z(k[G]) →ₐ[k] k` can be applied to, so it is what makes the values of a central
+character on the class sums algebraic integers.
+
+## Main results
+
+* `TauCeti.isIntegral_classSum`: a class sum is integral over `ℤ` in `Z(ℤ[G])`.
+* `TauCeti.isIntegral_classSumCenter`: its base change, integrality over `ℤ` in `Z(k[G])` for an
+  arbitrary commutative coefficient ring `k`.
+
 ## References
 
 * [Character Theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),

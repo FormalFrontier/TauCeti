@@ -28,7 +28,7 @@ sums are the entries of a row of the character table, up to the normalization by
 
 ## Main statements
 
-* `TauCeti.centralCharacter_smul`: the defining property, that a central element acts as
+* `TauCeti.smul_eq_centralCharacter_smul`: the defining property, that a central element acts as
   multiplication by its central character.
 * `TauCeti.centralCharacter_eq_of_smul_eq`: the central character is the *only* scalar with that
   property, so it can be computed from any single vector.
@@ -96,11 +96,14 @@ noncomputable def centralCharacter : Subalgebra.center k A →ₐ[k] k :=
   (endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := M)).toAlgHom.comp (centerToEnd k A M)
 
 /-- The defining property of the central character: a central element acts on the module as
-multiplication by the scalar the central character assigns to it. -/
+multiplication by the scalar the central character assigns to it.
+
+This is the simp normal form: the opaque action of the centre is replaced by the action of a
+scalar, which is the whole point of the construction. -/
 @[simp]
-theorem centralCharacter_smul (z : Subalgebra.center k A) (m : M) :
-    centralCharacter k A M z • m = (z : A) • m :=
-  endAlgEquivSelfOfIsSimpleModule_smul (k := k) (centerToEnd k A M z) m
+theorem smul_eq_centralCharacter_smul (z : Subalgebra.center k A) (m : M) :
+    (z : A) • m = centralCharacter k A M z • m :=
+  (endAlgEquivSelfOfIsSimpleModule_smul (k := k) (centerToEnd k A M z) m).symm
 
 variable {k A M}
 
@@ -109,7 +112,7 @@ vector: no other scalar can reproduce it there. -/
 theorem centralCharacter_eq_of_smul_eq_of_ne_zero {z : Subalgebra.center k A} {c : k} {m : M}
     (hm : m ≠ 0) (h : (z : A) • m = c • m) : centralCharacter k A M z = c := by
   have hsub : (centralCharacter k A M z - c) • m = 0 := by
-    rw [sub_smul, centralCharacter_smul, h, sub_self]
+    rw [sub_smul, ← smul_eq_centralCharacter_smul, h, sub_self]
   exact sub_eq_zero.mp ((smul_eq_zero.mp hsub).resolve_right hm)
 
 /-- The central character is the unique scalar by which a central element acts.
