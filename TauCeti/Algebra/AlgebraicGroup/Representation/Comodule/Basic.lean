@@ -86,7 +86,7 @@ private noncomputable def liftedComulAlgHom (_V : Type w) :
     ((Bialgebra.comulAlgHom R H).comp ULift.algEquiv.toAlgHom)
 
 /-- The group homomorphism at a value algebra, with the opaque functor object equalities removed. -/
-noncomputable def action (Theta : PointRepresentation (R := R) (H := H) (V := V))
+@[expose] noncomputable def action (Theta : PointRepresentation (R := R) (H := H) (V := V))
     (A : CommAlgCat.{max u v w} R) :
     points (H := H) A ⟶ GeneralLinear.scalarExtensionAutomorphisms (V := V) A :=
   Theta.app A ≫
