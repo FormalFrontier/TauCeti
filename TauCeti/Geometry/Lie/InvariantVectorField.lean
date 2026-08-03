@@ -69,15 +69,14 @@ theorem contMDiff_mulInvariantVectorField_infty
     rfl
 
 /-- In model coordinates, the invariant vector field is jointly `C^n` in its generating tangent
-vector and the group point when multiplication is `C^(n + 1)`.
-
-The separate `IsManifold I 1 G` hypothesis supplies the differentiable tangent-bundle structure;
-it is independent of the regularity lost by differentiating multiplication. -/
+vector and the group point when multiplication is `C^(n + 1)`. -/
 theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
-    [IsManifold I 1 G] [ContMDiffMul I (n + 1) G] :
+    [ContMDiffMul I (n + 1) G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
     ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
       (fun p : E × G =>
         (mulInvariantVectorField (I := I) (G := G) p.1 p.2 : TangentBundle I G)) := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fg :=
     (contMDiff_zeroSection 𝕜 (TangentSpace I : G → Type _)).comp contMDiff_snd
