@@ -1,0 +1,140 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.Algebra.Coalgebra.Comodule.Dual
+public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Product
+
+/-!
+# Matrix coefficients of dual comodules
+
+For a finite projective right comodule `M` over a Hopf algebra, this file identifies the matrix
+coefficients of Tau Ceti's explicit right dual with the antipode images of the coefficients of
+`M`. The pointwise formula uses evaluation to turn `m : M` into a functional on the dual:
+
+```text
+c_(Mᵛ)(ev_m, φ) = S(c_M(φ, m)).
+```
+
+Finite projectivity identifies every functional on `Mᵛ` with evaluation at some `m`, so the
+coefficient sets satisfy `CoeffSet(Mᵛ) = S '' CoeffSet(M)`. No inverse for the antipode is
+needed. When the Hopf algebra is commutative, this becomes an equality of coefficient
+subalgebras, and combining it with the product-comodule formula gives the coefficient algebra of
+`M × Mᵛ`.
+
+## Main results
+
+* `TauCeti.Comodule.matrixCoefficient_dual_eval`: the pointwise dual-coefficient formula.
+* `TauCeti.Comodule.matrixCoefficientSet_dual`: dual coefficients are exactly antipode images.
+* `TauCeti.Comodule.matrixCoefficientSubalgebra_dual`: the coefficient algebra of the dual is
+  the antipode image of the original coefficient algebra.
+* `TauCeti.Comodule.matrixCoefficientSubalgebra_prod_dual`: adjoining a comodule and its dual
+  adjoins the original coefficient algebra and its antipode image.
+
+## References
+
+The dual-comodule formula is standard; see Sweedler, *Hopf Algebras*, Chapter 2. For the role of
+ordinary and dual matrix coefficients in faithful representations, see Milne, *Algebraic Groups*
+(2017), Remark 4.1, Example 4.2, and Theorems 4.9 and 4.14, and Milne, *Reductive Groups*,
+Sections 5.1 and 5.8--5.9.
+-/
+
+public section
+
+open scoped TensorProduct
+
+namespace TauCeti.Comodule
+
+universe u v w
+
+noncomputable section
+
+section Set
+
+variable {R : Type u} {H : Type v} {M : Type w}
+variable [CommSemiring R] [Semiring H] [HopfAlgebra R H]
+variable [AddCommMonoid M] [Module R M] [Comodule R H M]
+variable [Module.Finite R M] [Module.Projective R M]
+
+attribute [local instance] dual
+
+/-- Evaluating against `m` gives a coefficient of the dual comodule equal to the antipode of
+the original coefficient indexed by the same functional and vector. -/
+@[simp]
+theorem matrixCoefficient_dual_eval (φ : Module.Dual R M) (m : M) :
+    matrixCoefficient (R := R) (C := H) (Module.Dual.eval R M m) φ =
+      HopfAlgebra.antipode R (matrixCoefficient (R := R) (C := H) φ m) := by
+  rw [matrixCoefficient_def, dual_coact,
+    ← dualTensorHom_dualCoact_apply (R := R) (H := H) (M := M)]
+  generalize dualCoact (R := R) (H := H) (M := M) φ = x
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+      simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hx hy
+  | tmul ψ h => simp
+
+/-- The coefficients of the explicit dual comodule are exactly the antipode images of the
+coefficients of the original finite projective comodule. -/
+@[simp]
+theorem matrixCoefficientSet_dual :
+    matrixCoefficientSet (R := R) (C := H) (M := Module.Dual R M) =
+      HopfAlgebra.antipode R '' matrixCoefficientSet (R := R) (C := H) (M := M) := by
+  apply Set.Subset.antisymm
+  · intro c hc
+    rcases (mem_matrixCoefficientSet_iff
+      (R := R) (C := H) (M := Module.Dual R M) c).mp hc with ⟨Φ, φ, rfl⟩
+    let m := (Module.evalEquiv R M).symm Φ
+    refine ⟨matrixCoefficient (R := R) (C := H) φ m,
+      matrixCoefficient_mem_set (R := R) (C := H) φ m, ?_⟩
+    have heval : Module.Dual.eval R M m = Φ := by
+      ext ψ
+      exact Module.apply_evalEquiv_symm_apply R M ψ Φ
+    rw [← heval, matrixCoefficient_dual_eval]
+  · rintro _ ⟨c, hc, rfl⟩
+    rcases (mem_matrixCoefficientSet_iff (R := R) (C := H) (M := M) c).mp hc with
+      ⟨φ, m, rfl⟩
+    rw [← matrixCoefficient_dual_eval]
+    exact matrixCoefficient_mem_set (R := R) (C := H) (Module.Dual.eval R M m) φ
+
+end Set
+
+section Algebra
+
+variable {R : Type u} {H : Type v} {M : Type w}
+variable [CommSemiring R] [CommSemiring H] [HopfAlgebra R H]
+variable [AddCommMonoid M] [Module R M] [Comodule R H M]
+variable [Module.Finite R M] [Module.Projective R M]
+
+attribute [local instance] dual Prod
+
+/-- For a commutative Hopf algebra, the coefficient subalgebra of the dual comodule is the
+image of the original coefficient subalgebra under the antipode algebra endomorphism. -/
+@[simp]
+theorem matrixCoefficientSubalgebra_dual :
+    matrixCoefficientSubalgebra (R := R) (C := H) (M := Module.Dual R M) =
+      (matrixCoefficientSubalgebra (R := R) (C := H) (M := M)).map
+        (HopfAlgebra.antipodeAlgHom R H) := by
+  rw [matrixCoefficientSubalgebra_def, matrixCoefficientSubalgebra_def,
+    matrixCoefficientSet_dual, AlgHom.map_adjoin]
+  apply congrArg (Algebra.adjoin R)
+  apply Set.image_congr
+  intro h _
+  exact congrArg (fun f : H →ₗ[R] H => f h)
+    (HopfAlgebra.toLinearMap_antipodeAlgHom (R := R) (A := H)).symm
+
+/-- The coefficient subalgebra of the product of a finite projective comodule and its dual is
+the supremum of the original coefficient subalgebra and its antipode image. -/
+theorem matrixCoefficientSubalgebra_prod_dual :
+    matrixCoefficientSubalgebra (R := R) (C := H) (M := M × Module.Dual R M) =
+      matrixCoefficientSubalgebra (R := R) (C := H) (M := M) ⊔
+        (matrixCoefficientSubalgebra (R := R) (C := H) (M := M)).map
+          (HopfAlgebra.antipodeAlgHom R H) := by
+  rw [matrixCoefficientSubalgebra_prod, matrixCoefficientSubalgebra_dual]
+
+end Algebra
+
+end
+
+end TauCeti.Comodule

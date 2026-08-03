@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.GroupAction.FixedPoints
-public import TauCeti.GroupTheory.DoubleCoset
+public import TauCeti.GroupTheory.DoubleCoset.Orbits
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
 public import TauCeti.RepresentationTheory.Induction.Permutation
 
