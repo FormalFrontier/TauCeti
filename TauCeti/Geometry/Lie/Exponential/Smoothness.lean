@@ -69,8 +69,8 @@ theorem contMDiffAt_mulInvariantExp_zero
         ((contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (n := ∞)
           BoundarylessManifold.isInteriorPoint).of_le
           (by exact_mod_cast le_top))
-    have hFzero : ∀ y, F (0, y) = 0 := by
-      intro y
+    have hFzero : ∀ᶠ y in 𝓝 center, F (0, y) = 0 := by
+      filter_upwards [] with y
       simp only [F, mulInvariantCoordinateVectorField_zero, smul_zero]
     obtain ⟨γ, hγsmooth, hγzero, hγode⟩ :=
       ODE.exists_contDiffAt_picard_solution n F (0 : E) center hF hFzero
