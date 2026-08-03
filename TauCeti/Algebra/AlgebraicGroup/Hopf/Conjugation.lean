@@ -60,7 +60,7 @@ variable [_root_.HopfAlgebra R H]
 The first tensor factor is the conjugating variable and the second is the acted-on variable.
 As a universal point, this is `i₁ * i₂ * i₁⁻¹`, so on algebra-valued points it represents
 `(g, x) ↦ g * x * g⁻¹`. -/
-@[expose] noncomputable def conjugationAlgHom : H →ₐ[R] H ⊗[R] H :=
+noncomputable def conjugationAlgHom : H →ₐ[R] H ⊗[R] H :=
   (toConv (Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H) (H₂ := H)).toAlgHom *
       toConv (Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H) (H₂ := H)).toAlgHom *
       (toConv
@@ -84,6 +84,7 @@ their group-theoretic conjugate.
 
 Here `g` is the conjugating point and `x` is the acted-on point. The product map sends a pure
 tensor `h ⊗ₜ k` to `g(h) * x(k)`. -/
+@[simp]
 theorem productMap_comp_conjugationAlgHom
     {A : Type w} [CommSemiring A] [Algebra R A]
     (g x : WithConv (H →ₐ[R] A)) :
@@ -103,6 +104,7 @@ theorem productMap_comp_conjugationAlgHom
 
 /-- The identity point acts trivially by conjugation. This is the pointwise product-map form of
 the left-unit law for the coordinate action. -/
+@[simp]
 theorem productMap_one_id_comp_conjugationAlgHom :
     (Algebra.TensorProduct.productMap
         (1 : WithConv (H →ₐ[R] H)).ofConv (AlgHom.id R H)).comp
@@ -113,6 +115,7 @@ theorem productMap_one_id_comp_conjugationAlgHom :
       (1 : WithConv (H →ₐ[R] H)) (toConv (AlgHom.id R H)))
 
 /-- Conjugation fixes the identity point. -/
+@[simp]
 theorem productMap_id_one_comp_conjugationAlgHom :
     (Algebra.TensorProduct.productMap
         (AlgHom.id R H) (1 : WithConv (H →ₐ[R] H)).ofConv).comp
@@ -125,6 +128,7 @@ theorem productMap_id_one_comp_conjugationAlgHom :
 /-- Under the canonical left-unit identification, applying the counit to the conjugating
 coordinate makes conjugation the identity. This is the coordinate identity-action law
 `(ε ⊗ id) ∘ c♯ = id`. -/
+@[simp]
 theorem conjugationAlgHom_counit_left :
     (Algebra.TensorProduct.lid R H).toAlgHom.comp
         ((Algebra.TensorProduct.map (Bialgebra.counitAlgHom R H) (AlgHom.id R H)).comp
@@ -144,6 +148,7 @@ theorem conjugationAlgHom_counit_left :
 /-- Under the canonical right-unit identification, applying the counit to the acted-on
 coordinate gives the identity point. This is the coordinate formula saying that conjugation
 fixes the group identity. -/
+@[simp]
 theorem conjugationAlgHom_counit_right :
     (Algebra.TensorProduct.rid R R H).toAlgHom.comp
         ((Algebra.TensorProduct.map (AlgHom.id R H) (Bialgebra.counitAlgHom R H)).comp
@@ -188,21 +193,6 @@ theorem conjugationAlgHom_coassoc :
   let g₁ : WithConv (H →ₐ[R] H ⊗[R] (H ⊗[R] H)) := toConv j₁
   let g₂ : WithConv (H →ₐ[R] H ⊗[R] (H ⊗[R] H)) := toConv j₂
   let x : WithConv (H →ₐ[R] H ⊗[R] (H ⊗[R] H)) := toConv j₃
-  -- Comultiplication evaluates as multiplication of the two universal tensor-factor points.
-  have hcomul :
-      toConv (Bialgebra.comulAlgHom R H) =
-        toConv (Bialgebra.TensorProduct.includeLeft
-          (R := R) (H₁ := H) (H₂ := H)).toAlgHom *
-        toConv (Bialgebra.TensorProduct.includeRight
-          (R := R) (H₁ := H) (H₂ := H)).toAlgHom := by
-    apply WithConv.ofConv_injective
-    apply AlgHom.toLinearMap_injective
-    apply WithConv.toConv_injective
-    rw [AlgHom.toLinearMap_convMul]
-    simpa only [Bialgebra.toLinearMap_comulAlgHom,
-      Bialgebra.TensorProduct.includeLeft_toAlgHom,
-      Bialgebra.TensorProduct.includeRight_toAlgHom] using
-        (Coalgebra.comul_eq_convMul_includeLeft_includeRight (R := R) (C := H))
   -- Any tensor-square point is its product map on the two restrictions, so the characteristic
   -- evaluation theorem applies to arbitrary post-composition maps into the triple tensor algebra.
   have evaluate (phi : H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H)) :
@@ -233,17 +223,21 @@ theorem conjugationAlgHom_coassoc :
       simp only [mulFirst, up, AlgHom.comp_assoc,
         Algebra.TensorProduct.map_comp_includeLeft]
     rw [hfactor]
-    change AlgHom.mapValue (H := H) up (toConv (Bialgebra.comulAlgHom R H)) = _
-    rw [hcomul, map_mul]
-    apply congrArg₂ (fun a b ↦ a * b)
-    · apply WithConv.ofConv_injective
-      simp only [AlgHom.mapValue_apply]
-      ext h
-      simp [up, assoc, g₁, j₁, Algebra.TensorProduct.one_def]
-    · apply WithConv.ofConv_injective
-      simp only [AlgHom.mapValue_apply]
-      ext h
-      simp [up, assoc, g₂, j₂]
+    calc
+      toConv (up.comp (Bialgebra.comulAlgHom R H)) =
+          AlgHom.mapValue (H := H) up (toConv (Bialgebra.comulAlgHom R H)) := by
+        rw [AlgHom.mapValue_apply, ofConv_toConv]
+      _ = g₁ * g₂ := by
+        rw [Bialgebra.comulPoint_eq_include_mul, map_mul]
+        apply congrArg₂ (fun a b ↦ a * b)
+        · apply WithConv.ofConv_injective
+          simp only [AlgHom.mapValue_apply]
+          ext h
+          simp [up, assoc, g₁, j₁, Algebra.TensorProduct.one_def]
+        · apply WithConv.ofConv_injective
+          simp only [AlgHom.mapValue_apply]
+          ext h
+          simp [up, assoc, g₂, j₂]
   have hmulFirstRight :
       toConv (mulFirst.comp Algebra.TensorProduct.includeRight) = x := by
     apply WithConv.ofConv_injective
@@ -263,38 +257,38 @@ theorem conjugationAlgHom_coassoc :
           Algebra.TensorProduct.productMap g₂.ofConv x.ofConv =
             (Algebra.TensorProduct.includeRight :
               H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H)) := by
-        change Algebra.TensorProduct.productMap
-            ((Algebra.TensorProduct.includeRight :
-              H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H)).comp
-                Algebra.TensorProduct.includeLeft)
-            ((Algebra.TensorProduct.includeRight :
-              H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H)).comp
-                Algebra.TensorProduct.includeRight) =
-              Algebra.TensorProduct.includeRight
-        exact AffineGroup.Product.productMap_restrict
+        simpa only [g₂, x, j₂, j₃, ofConv_toConv] using
+          (AffineGroup.Product.productMap_restrict
             (Algebra.TensorProduct.includeRight :
-              H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H))
+              H ⊗[R] H →ₐ[R] H ⊗[R] (H ⊗[R] H)))
       rw [← hproduct]
       exact productMap_comp_conjugationAlgHom (R := R) (H := H) g₂ x
-    change toConv
-      ((Algebra.TensorProduct.map (AlgHom.id R H) c).comp
-        Algebra.TensorProduct.includeRight) = _
-    rw [Algebra.TensorProduct.map_comp_includeRight, hinner]
+    calc
+      toConv (actSecond.comp Algebra.TensorProduct.includeRight) =
+          toConv
+            ((Algebra.TensorProduct.map (AlgHom.id R H) c).comp
+              Algebra.TensorProduct.includeRight) := by
+        rfl
+      _ = toConv (Algebra.TensorProduct.includeRight.comp c) := by
+        rw [Algebra.TensorProduct.map_comp_includeRight]
+      _ = g₂ * x * g₂⁻¹ := by
+        rw [hinner, toConv_ofConv]
   -- The two coordinate maps now evaluate to the corresponding conjugates; associativity and
   -- `(g₁ * g₂)⁻¹ = g₂⁻¹ * g₁⁻¹` finish the comparison.
-  change mulFirst.comp c = actSecond.comp c
-  rw [evaluate mulFirst, evaluate actSecond, hmulFirstLeft, hmulFirstRight,
-    hactSecondLeft, hactSecondRight]
-  apply congrArg WithConv.ofConv
-  rw [mul_inv_rev g₁ g₂]
-  calc
-    (g₁ * g₂) * x * (g₂⁻¹ * g₁⁻¹) =
-        (((g₁ * g₂) * x) * g₂⁻¹) * g₁⁻¹ :=
-      (mul_assoc ((g₁ * g₂) * x) g₂⁻¹ g₁⁻¹).symm
-    _ = ((g₁ * (g₂ * x)) * g₂⁻¹) * g₁⁻¹ := by
-      rw [mul_assoc g₁ g₂ x]
-    _ = (g₁ * ((g₂ * x) * g₂⁻¹)) * g₁⁻¹ := by
-      rw [mul_assoc g₁ (g₂ * x) g₂⁻¹]
+  have hcoassoc : mulFirst.comp c = actSecond.comp c := by
+    rw [evaluate mulFirst, evaluate actSecond, hmulFirstLeft, hmulFirstRight,
+      hactSecondLeft, hactSecondRight]
+    apply congrArg WithConv.ofConv
+    rw [mul_inv_rev g₁ g₂]
+    calc
+      (g₁ * g₂) * x * (g₂⁻¹ * g₁⁻¹) =
+          (((g₁ * g₂) * x) * g₂⁻¹) * g₁⁻¹ :=
+        (mul_assoc ((g₁ * g₂) * x) g₂⁻¹ g₁⁻¹).symm
+      _ = ((g₁ * (g₂ * x)) * g₂⁻¹) * g₁⁻¹ := by
+        rw [mul_assoc g₁ g₂ x]
+      _ = (g₁ * ((g₂ * x) * g₂⁻¹)) * g₁⁻¹ := by
+        rw [mul_assoc g₁ (g₂ * x) g₂⁻¹]
+  simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra
 
