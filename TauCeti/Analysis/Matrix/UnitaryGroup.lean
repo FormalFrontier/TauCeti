@@ -35,14 +35,13 @@ multiplication by a suitable scalar of modulus one. The scalar is a `card n`-th 
 of the determinant, which has modulus one; the root is taken through `Circle.exp`. -/
 theorem exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup n ℂ) :
     ∃ c : Circle, ((c : ℂ) • (U : Matrix n n ℂ)) ∈ Matrix.specialUnitaryGroup n ℂ := by
-  have hUU : star (U : Matrix n n ℂ) * (U : Matrix n n ℂ) = 1 :=
-    Matrix.UnitaryGroup.star_mul_self U
-  have hcc : ∀ z : Circle, star (z : ℂ) * (z : ℂ) = 1 := fun z => by
-    rw [Complex.star_def, ← Complex.normSq_eq_conj_mul_self, Circle.normSq_coe, Complex.ofReal_one]
+  have hcc : ∀ z : Circle, (z : ℂ) ∈ unitary ℂ := fun z =>
+    Unitary.mem_iff_star_mul_self.mpr <| by
+      rw [Complex.star_def, ← Complex.normSq_eq_conj_mul_self, Circle.normSq_coe,
+        Complex.ofReal_one]
   -- Rescaling by a scalar of modulus one keeps the matrix unitary, whatever the scalar.
-  have hunit : ∀ c : Circle, ((c : ℂ) • (U : Matrix n n ℂ)) ∈ Matrix.unitaryGroup n ℂ := fun c => by
-    rw [Matrix.mem_unitaryGroup_iff', star_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hUU,
-      hcc, one_smul]
+  have hunit : ∀ c : Circle, ((c : ℂ) • (U : Matrix n n ℂ)) ∈ Matrix.unitaryGroup n ℂ := fun c =>
+    Unitary.smul_mem_of_mem (hcc c) U.2
   rcases isEmpty_or_nonempty n with hn | hn
   · -- With no indices at all every determinant is one and there is nothing to rescale.
     exact ⟨1, Matrix.mem_specialUnitaryGroup_iff.mpr ⟨hunit 1, Matrix.det_isEmpty⟩⟩
