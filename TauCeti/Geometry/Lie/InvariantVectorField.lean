@@ -17,7 +17,6 @@ left-invariant-derivation model of a Lie algebra.
 
 ## Main results
 
-* `groupLieAlgebraEquivModelSpace`: the tangent Lie algebra is canonically the manifold model space.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
 * `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly smooth in
@@ -40,25 +39,6 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-
-/-- The tangent Lie algebra of a Lie group is canonically linearly equivalent to the manifold
-model space. This makes explicit the identification implemented by Mathlib's `TangentSpace` type
-synonym. -/
-@[expose]
-noncomputable def groupLieAlgebraEquivModelSpace : GroupLieAlgebra I G ≃ₗ[𝕜] E :=
-  LinearEquiv.refl 𝕜 E
-
-/-- The tangent-to-model equivalence is the identity on underlying vectors. -/
-@[simp]
-theorem groupLieAlgebraEquivModelSpace_apply (v : GroupLieAlgebra I G) :
-    groupLieAlgebraEquivModelSpace v = v :=
-  rfl
-
-/-- The model-to-tangent equivalence is the identity on underlying vectors. -/
-@[simp]
-theorem groupLieAlgebraEquivModelSpace_symm_apply (v : E) :
-    (groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v = v :=
-  rfl
 
 /-- A left-invariant vector field on a smooth Lie group is smooth. -/
 theorem contMDiff_mulInvariantVectorField_infty
@@ -95,9 +75,7 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
     [IsManifold I 2 G] [ContMDiffMul I (n + 1) G] :
     ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
       (fun p : E × G =>
-        (mulInvariantVectorField
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm p.1) p.2 :
-            TangentBundle I G)) := by
+        (mulInvariantVectorField (I := I) (G := G) p.1 p.2 : TangentBundle I G)) := by
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fg :=
     (contMDiff_zeroSection 𝕜 (TangentSpace I : G → Type _)).comp contMDiff_snd
