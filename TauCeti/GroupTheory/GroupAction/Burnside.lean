@@ -47,6 +47,7 @@ section Monoid
 variable [Monoid G] [MulAction G X] [MulAction G Y]
 
 /-- A point of a product `G`-set is fixed exactly when both of its components are. -/
+@[simp]
 theorem fixedBy_prod (g : G) : fixedBy (X × Y) g = fixedBy X g ×ˢ fixedBy Y g := by
   ext p
   simp [mem_fixedBy, Prod.ext_iff, Set.mem_prod]

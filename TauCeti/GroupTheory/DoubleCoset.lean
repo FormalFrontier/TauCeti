@@ -71,6 +71,7 @@ variable {H K}
 
 /-- Two points of the slice `{(H, gK) | g : G}` lie in the same orbit exactly when their labels
 lie in the same double coset. -/
+@[simp]
 theorem doubleCosetOrbit_eq_iff {a b : G} :
     doubleCosetOrbit H K a = doubleCosetOrbit H K b ↔
       DoubleCoset.mk H K a = DoubleCoset.mk H K b := by
@@ -109,7 +110,7 @@ noncomputable def doubleCosetEquivOrbitQuotient :
       exact ⟨by simp, by simp⟩⟩
 
 @[simp]
-theorem doubleCosetEquivOrbitQuotient_mk (g : G) :
+theorem doubleCosetEquivOrbitQuotient_apply_mk (g : G) :
     doubleCosetEquivOrbitQuotient H K (DoubleCoset.mk H K g) = doubleCosetOrbit H K g :=
   -- The parentheses keep this out of `@[defeq]` inference: the proof is `rfl`, but the two sides
   -- are only definitionally equal after unfolding the (unexposed) definitions above.
