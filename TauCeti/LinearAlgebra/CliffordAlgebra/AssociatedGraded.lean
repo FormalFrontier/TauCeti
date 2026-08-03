@@ -11,8 +11,8 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 /-!
 # Homogeneous multiplication for a Clifford filtration
 
-This file defines the successive quotient pieces of the Clifford degree filtration and lifts
-Clifford multiplication to a bilinear product between any two homogeneous pieces.
+This file lifts Clifford multiplication to a bilinear product between any two successive quotient
+pieces of the Clifford degree filtration.
 
 This is the multiplication prerequisite for the Layer 0 associated-graded comparison in the spin
 representations roadmap. It is generic in the quadratic form and does not yet package the direct
@@ -30,27 +30,6 @@ namespace TauCeti
 namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
-
-/-- The filtration step preceding degree `k`. At degree zero it is bottom, so the degree-zero
-piece remains the scalar filtration step rather than a zero quotient. -/
-def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q)
-  | 0 => ⊥
-  | k + 1 => filtration Q k
-
--- Parenthesized `rfl` exports the intended reduction API without exposing the definition.
-@[simp]
-theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
-  (rfl)
-
-@[simp]
-theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
-    filtrationPrevious Q (k + 1) = filtration Q k :=
-  (rfl)
-
-/-- The degree-`k` piece of the associated graded Clifford filtration. -/
-abbrev filtrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
-  filtration Q k ⧸
-    Submodule.comap (filtration Q k).subtype (filtrationPrevious Q k)
 
 private theorem mul_mem_filtrationPrevious_left (Q : QuadraticForm R M) (i j : ℕ)
     {x y : CliffordAlgebra Q} (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
@@ -87,8 +66,17 @@ private noncomputable def filtrationMul (Q : QuadraticForm R M) (i j : ℕ) :
       Submodule.mulMap' (filtration Q i) (filtration Q j))
 
 private noncomputable def filtrationGradedPreMul (Q : QuadraticForm R M) (i j : ℕ) :
-    filtration Q i →ₗ[R] filtration Q j →ₗ[R] filtrationGradedPiece Q (i + j) :=
+    filtration Q i →ₗ[R] filtration Q j →ₗ[R] FiltrationGradedPiece Q (i + j) :=
   (filtrationMul Q i j).compr₂ (Submodule.mkQ _)
+
+private theorem filtrationGradedPreMul_apply (Q : QuadraticForm R M) (i j : ℕ)
+    (x : filtration Q i) (y : filtration Q j) :
+    filtrationGradedPreMul Q i j x y =
+      Submodule.Quotient.mk
+        (⟨(x : CliffordAlgebra Q) * y, by
+          rw [← filtration_mul Q i j]
+          exact Submodule.mul_mem_mul x.property y.property⟩ : filtration Q (i + j)) :=
+  rfl
 
 private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j : ℕ) :
     Submodule.comap (filtration Q i).subtype (filtrationPrevious Q i) ≤
@@ -96,8 +84,7 @@ private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j
   rintro ⟨x, hx⟩ hprevious
   rw [LinearMap.mem_ker]
   ext y
-  -- Expose the quotient representative before using its zero-class membership criterion.
-  change Submodule.Quotient.mk _ = 0
+  simp only [filtrationGradedPreMul_apply, LinearMap.zero_apply]
   rw [Submodule.Quotient.mk_eq_zero]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
@@ -109,17 +96,16 @@ private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i 
   rintro ⟨y, hy⟩ hprevious
   rw [LinearMap.mem_ker]
   ext x
-  -- Expose the quotient representative before using its zero-class membership criterion.
-  change Submodule.Quotient.mk _ = 0
-  rw [Submodule.Quotient.mk_eq_zero]
+  simp only [LinearMap.flip_apply, LinearMap.zero_apply]
+  rw [filtrationGradedPreMul_apply, Submodule.Quotient.mk_eq_zero]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
   exact mul_mem_filtrationPrevious_right Q i j x.property hprevious
 
 /-- Multiplication of two homogeneous pieces of the Clifford associated graded algebra. -/
 noncomputable def filtrationGradedMul (Q : QuadraticForm R M) (i j : ℕ) :
-    filtrationGradedPiece Q i →ₗ[R] filtrationGradedPiece Q j →ₗ[R]
-      filtrationGradedPiece Q (i + j) :=
+    FiltrationGradedPiece Q i →ₗ[R] FiltrationGradedPiece Q j →ₗ[R]
+      FiltrationGradedPiece Q (i + j) :=
   (filtrationGradedPreMul Q i j).liftQ₂ _ _
     (filtrationGradedPreMul_mem_ker_left Q i j)
     (filtrationGradedPreMul_mem_ker_right Q i j)
@@ -139,7 +125,7 @@ theorem filtrationGradedMul_apply_mk (Q : QuadraticForm R M) (i j : ℕ) (x : fi
 
 private theorem filtrationGradedPiece_cast_mk' (Q : QuadraticForm R M) {i j : ℕ}
     (h : i = j) (x : filtration Q i) :
-    cast (congrArg (filtrationGradedPiece Q) h) (Submodule.Quotient.mk x) =
+    cast (congrArg (FiltrationGradedPiece Q) h) (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk (cast (congrArg (fun k => ↥(filtration Q k)) h) x) := by
   subst j
   rfl
@@ -152,9 +138,9 @@ private theorem filtration_subtype_cast (Q : QuadraticForm R M) {i j : ℕ}
 
 /-- Homogeneous Clifford filtration multiplication is associative after reindexing degrees. -/
 theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
-    (x : filtrationGradedPiece Q i) (y : filtrationGradedPiece Q j)
-    (z : filtrationGradedPiece Q k) :
-    cast (congrArg (filtrationGradedPiece Q) (Nat.add_assoc i j k))
+    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j)
+    (z : FiltrationGradedPiece Q k) :
+    cast (congrArg (FiltrationGradedPiece Q) (Nat.add_assoc i j k))
       (filtrationGradedMul Q (i + j) k (filtrationGradedMul Q i j x y) z) =
       filtrationGradedMul Q i (j + k) x (filtrationGradedMul Q j k y z) := by
   induction x using Submodule.Quotient.induction_on with
@@ -168,6 +154,7 @@ theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
               apply (Submodule.Quotient.eq _).mpr
               rw [Submodule.mem_comap, map_sub,
                 filtration_subtype_cast Q (Nat.add_assoc i j k)]
+              -- Compare the two representatives in the ambient Clifford algebra.
               change ((x : CliffordAlgebra Q) * y) * z - x * (y * z) ∈
                 filtrationPrevious Q (i + (j + k))
               rw [mul_assoc, sub_self]
