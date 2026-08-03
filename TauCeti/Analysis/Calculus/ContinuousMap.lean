@@ -84,19 +84,30 @@ open MeasureTheory
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 
+/-- Constant extension from a compact interval, bundled as a continuous linear map. -/
+private noncomputable def intervalExtension (a b : ℝ) [Fact (a ≤ b)] :
+    C(Set.Icc a b, E) →L[ℝ] C(ℝ, E) :=
+  (projIccCM (α := ℝ) (a := a) (b := b)).compCLM ℝ E
+
+omit [CompleteSpace E] in
+@[simp]
+private theorem intervalExtension_apply (a b : ℝ) [Fact (a ≤ b)]
+    (f : C(Set.Icc a b, E)) (t : ℝ) :
+    intervalExtension a b f t = IccExtendCM f t := rfl
+
 /-- The primitive of a continuous path on a compact real interval, using constant extension before
 integration. -/
 private noncomputable def intervalPrimitive (a b : ℝ) [Fact (a ≤ b)]
     (f : C(Set.Icc a b, E)) : C(Set.Icc a b, E) :=
-  ⟨fun t ↦ ∫ s in a..t, IccExtendCM f s,
+  ⟨fun t ↦ ∫ s in a..t, intervalExtension a b f s,
     (intervalIntegral.continuous_primitive
-      (fun x y ↦ (IccExtendCM f).continuous.intervalIntegrable x y) a).comp
+      (fun x y ↦ (intervalExtension a b f).continuous.intervalIntegrable x y) a).comp
         continuous_subtype_val⟩
 
 omit [CompleteSpace E] in
 private theorem intervalPrimitive_apply (a b : ℝ) [Fact (a ≤ b)]
     (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
-    intervalPrimitive a b f t = ∫ s in a..t, IccExtendCM f s := rfl
+    intervalPrimitive a b f t = ∫ s in a..t, intervalExtension a b f s := rfl
 
 /-- Volterra integration as a continuous linear operator on continuous paths over an arbitrary
 compact real interval. The input is extended constantly outside the interval before integration. -/
@@ -109,20 +120,16 @@ noncomputable def intervalIntegralOperator (a b : ℝ) (hab : a ≤ b) :
         ext t
         rw [intervalPrimitive_apply, ContinuousMap.add_apply, intervalPrimitive_apply,
           intervalPrimitive_apply]
-        rw [show IccExtendCM (f + g) = IccExtendCM f + IccExtendCM g by
-          ext s
-          rfl]
+        rw [map_add]
         exact intervalIntegral.integral_add
-          ((IccExtendCM f).continuous.intervalIntegrable _ _)
-          ((IccExtendCM g).continuous.intervalIntegrable _ _)
+          ((intervalExtension a b f).continuous.intervalIntegrable _ _)
+          ((intervalExtension a b g).continuous.intervalIntegrable _ _)
       map_smul' := fun c f ↦ by
         ext t
         rw [intervalPrimitive_apply, ContinuousMap.smul_apply, intervalPrimitive_apply]
-        rw [show IccExtendCM (c • f) = c • IccExtendCM f by
-          ext s
-          rfl]
+        rw [map_smul]
         simpa only [ContinuousMap.smul_apply, RingHom.id_apply] using
-          intervalIntegral.integral_smul c (IccExtendCM f) }
+          intervalIntegral.integral_smul c (intervalExtension a b f) }
   have L_apply (f : C(Set.Icc a b, E)) (t : Set.Icc a b) :
       L f t = intervalPrimitive a b f t := rfl
   exact LinearMap.mkContinuous L (b - a) fun f ↦ by
@@ -131,7 +138,7 @@ noncomputable def intervalIntegralOperator (a b : ℝ) (hab : a ≤ b) :
     intro t
     rw [L_apply, intervalPrimitive_apply]
     calc
-      ‖∫ s in a..(t : ℝ), IccExtendCM f s‖ ≤ ‖f‖ * |(t : ℝ) - a| :=
+      ‖∫ s in a..(t : ℝ), intervalExtension a b f s‖ ≤ ‖f‖ * |(t : ℝ) - a| :=
         intervalIntegral.norm_integral_le_of_norm_le_const fun s _ ↦
           ContinuousMap.norm_coe_le_norm f (projIccCM s)
       _ ≤ (b - a) * ‖f‖ := by
@@ -155,7 +162,9 @@ theorem intervalIntegralOperator_apply (a b : ℝ) (hab : a ≤ b)
       ∫ s in a..t, f (Set.projIcc a b hab s) := by
   let _ : Fact (a ≤ b) := ⟨hab⟩
   rw [intervalIntegralOperator]
-  exact intervalPrimitive_apply a b f t
+  change intervalPrimitive a b f t = _
+  rw [intervalPrimitive_apply]
+  simp [intervalExtension_apply, IccExtendCM, projIccCM]
 
 /-- Volterra integration on the unit interval, obtained from the general compact-interval
 operator. -/
