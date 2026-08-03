@@ -282,3 +282,12 @@ theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
   rw [LinearEquiv.apply_symm_apply, leftInvariantDerivationEquivGroupLieAlgebra_apply]
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
+
+/-- The Lie algebra of a finite-dimensional smooth real Lie group has the dimension of the
+manifold model space. -/
+theorem finrank_leftInvariantDerivation_eq_modelSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) :
+    Module.finrank ℝ (LeftInvariantDerivation I G) = Module.finrank ℝ E := by
+  exact LinearEquiv.finrank_eq
+    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁)
