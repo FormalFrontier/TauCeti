@@ -169,69 +169,114 @@ private theorem re_integral_inv_sub_mul_deriv_eq_log_norm {γ : ℝ → ℂ} {s 
 
 /-! ### Interval-integrability of the real winding integrand, allowing crossings -/
 
-/-- **The velocity at a `C^{1,1}` crossing of a piecewise-`C¹` immersion is non-zero.** The
-immersion's one-sided tangent there is non-zero (`IsPwC1ImmersionOn.exists_deriv_right_limit`),
-and `deriv γ`'s continuity on a neighborhood (from Lipschitz continuity there) forces the
-ordinary derivative to agree with that one-sided limit. -/
-private theorem deriv_ne_zero_of_lipschitzOnWith_deriv {γ : ℝ → ℂ} {a b t₀ ε : ℝ} {K : ℝ≥0}
-    (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (ht₀ : t₀ ∈ Ioo a b) (hε_pos : 0 < ε)
-    (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε))) :
-    deriv γ t₀ ≠ 0 := by
-  have htendsto : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 (deriv γ t₀)) :=
-    ((hlip.continuousOn.continuousAt
-      (Icc_mem_nhds (by linarith) (by linarith))).tendsto).mono_left nhdsWithin_le_nhds
-  obtain ⟨L, hL_ne, hL_tendsto⟩ := h_imm.exists_deriv_right_limit
-    (show t₀ ∈ Ico (min a b) (max a b) by
-      rw [min_eq_left hab, max_eq_right hab]; exact ⟨ht₀.1.le, ht₀.2⟩)
-  rwa [tendsto_nhds_unique htendsto hL_tendsto]
-
-/-- **The real winding integrand is interval-integrable on a small enough symmetric window around
-a `C^{1,1}` crossing.** Bounded on a window of radius `ρ_lip ≤ ε_D`
-(`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`, from Lipschitz
-regularity of `deriv γ` and its non-zero velocity at the crossing itself, the window's only
-value-`s` parameter), shrunk further to any `ρ ≤ ρ_lip`, and measurable (γ and `deriv γ` are
-genuinely continuous throughout the window, so `(γ · - s)⁻¹ * deriv γ` is a.e. strongly
-measurable exactly as in `intervalIntegrable_inv_sub_truncated`, without needing an avoidance
-hypothesis), hence integrable on the finite-measure window. -/
-private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ} {s : ℂ}
-    {t₀ ρ ρ_lip εD : ℝ} {K : ℝ≥0}
-    (hρ_pos : 0 < ρ) (hρ_le_ρlip : ρ ≤ ρ_lip) (hρlip_le_εD : ρ_lip ≤ εD)
-    (hderiv : ∀ u ∈ Icc (t₀ - εD) (t₀ + εD), HasDerivAt γ (deriv γ u) u)
-    (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - εD) (t₀ + εD)))
+/-- **The real winding integrand is interval-integrable on a small enough right-window at a
+`C^{1,1}` crossing, from the right.** Bounded on a window of radius `ρ_lip ≤ ε_D`
+(`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right`), shrunk
+further to any `ρ ≤ ρ_lip`, and measurable: `γ` and `derivWithin γ (Icc t₀ (t₀ + εD))` are
+continuous throughout `[t₀, t₀ + ρ]`, agreeing with `deriv γ` off the single point `t₀` (measure
+zero, so invisible to a.e. strong measurability), so `(γ · - s)⁻¹ * deriv γ` is a.e. strongly
+measurable there, exactly as in `intervalIntegrable_inv_sub_truncated`, without needing an
+avoidance hypothesis or the two sides of the crossing to agree. -/
+private theorem intervalIntegrable_realWindingIntegrand_window_right {γ : ℝ → ℂ} {s : ℂ}
+    {t₀ ρ ρ_lip εD : ℝ} (hρ_pos : 0 < ρ) (hρ_le_ρlip : ρ ≤ ρ_lip) (hρlip_le_εD : ρ_lip ≤ εD)
+    (hC1 : ContDiffOn ℝ 1 γ (Icc t₀ (t₀ + εD)))
     (hbdd : Bornology.IsBounded
-      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc (t₀ - ρ_lip) (t₀ + ρ_lip))) :
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc t₀ (t₀ + ρ_lip))) :
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume
-      (t₀ - ρ) (t₀ + ρ) := by
-  have hsub_lip : Icc (t₀ - ρ) (t₀ + ρ) ⊆ Icc (t₀ - ρ_lip) (t₀ + ρ_lip) :=
-    Icc_subset_Icc (by linarith) (by linarith)
-  have hsub_εD : Icc (t₀ - ρ) (t₀ + ρ) ⊆ Icc (t₀ - εD) (t₀ + εD) :=
-    Icc_subset_Icc (by linarith) (by linarith)
+      t₀ (t₀ + ρ) := by
+  have hsub_lip : Icc t₀ (t₀ + ρ) ⊆ Icc t₀ (t₀ + ρ_lip) := Icc_subset_Icc le_rfl (by linarith)
+  have hsub_εD : Icc t₀ (t₀ + ρ) ⊆ Icc t₀ (t₀ + εD) := Icc_subset_Icc le_rfl (by linarith)
   obtain ⟨C, hC⟩ := (hbdd.subset (Set.image_mono hsub_lip)).exists_norm_le
-  have hγc : ContinuousOn γ (Icc (t₀ - ρ) (t₀ + ρ)) := fun t ht =>
-    (hderiv t (hsub_εD ht)).continuousAt.continuousWithinAt
-  have hdc : ContinuousOn (deriv γ) (Icc (t₀ - ρ) (t₀ + ρ)) := hlip.continuousOn.mono hsub_εD
-  have huIoc_sub : uIoc (t₀ - ρ) (t₀ + ρ) ⊆ Icc (t₀ - ρ) (t₀ + ρ) :=
-    (uIoc_subset_uIcc).trans (by rw [uIcc_of_le (by linarith : t₀ - ρ ≤ t₀ + ρ)])
-  have haesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * deriv γ t)
-      (volume.restrict (uIoc (t₀ - ρ) (t₀ + ρ))) := by
-    have hγ_aem : AEMeasurable γ (volume.restrict (uIoc (t₀ - ρ) (t₀ + ρ))) :=
+  have hγc : ContinuousOn γ (Icc t₀ (t₀ + ρ)) := hC1.continuousOn.mono hsub_εD
+  have hdw : ContinuousOn (derivWithin γ (Icc t₀ (t₀ + εD))) (Icc t₀ (t₀ + ρ)) :=
+    (hC1.continuousOn_derivWithin (uniqueDiffOn_Icc (by linarith)) le_rfl).mono hsub_εD
+  have huIoc_eq : uIoc t₀ (t₀ + ρ) = Ioc t₀ (t₀ + ρ) := uIoc_of_le (by linarith)
+  have huIoc_sub : uIoc t₀ (t₀ + ρ) ⊆ Icc t₀ (t₀ + ρ) :=
+    (uIoc_subset_uIcc).trans (by rw [uIcc_of_le (by linarith : t₀ ≤ t₀ + ρ)])
+  have haesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * derivWithin γ (Icc t₀ (t₀ + εD)) t)
+      (volume.restrict (uIoc t₀ (t₀ + ρ))) := by
+    have hγ_aem : AEMeasurable γ (volume.restrict (uIoc t₀ (t₀ + ρ))) :=
       ((hγc.aestronglyMeasurable measurableSet_Icc).mono_measure
         (Measure.restrict_mono huIoc_sub le_rfl)).aemeasurable
-    have hd_aem : AEMeasurable (deriv γ) (volume.restrict (uIoc (t₀ - ρ) (t₀ + ρ))) :=
-      ((hdc.aestronglyMeasurable measurableSet_Icc).mono_measure
+    have hd_aem : AEMeasurable (derivWithin γ (Icc t₀ (t₀ + εD)))
+        (volume.restrict (uIoc t₀ (t₀ + ρ))) :=
+      ((hdw.aestronglyMeasurable measurableSet_Icc).mono_measure
         (Measure.restrict_mono huIoc_sub le_rfl)).aemeasurable
     exact ((hγ_aem.sub_const s).inv.mul hd_aem).aestronglyMeasurable
-  have haesm_h : AEStronglyMeasurable (fun t => realWindingIntegrand (γ t - s) (deriv γ t))
-      (volume.restrict (uIoc (t₀ - ρ) (t₀ + ρ))) := by
+  have haesm_h : AEStronglyMeasurable
+      (fun t => realWindingIntegrand (γ t - s) (derivWithin γ (Icc t₀ (t₀ + εD)) t))
+      (volume.restrict (uIoc t₀ (t₀ + ρ))) := by
     refine (Complex.imCLM.continuous.comp_aestronglyMeasurable haesm).congr
       (MeasureTheory.ae_of_all _ fun t => ?_)
     simp only [Complex.imCLM_apply, realWindingIntegrand_def]
+  have hcongr : (fun t => realWindingIntegrand (γ t - s) (deriv γ t))
+      =ᶠ[ae (volume.restrict (uIoc t₀ (t₀ + ρ)))]
+      (fun t => realWindingIntegrand (γ t - s) (derivWithin γ (Icc t₀ (t₀ + εD)) t)) := by
+    rw [huIoc_eq, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioo] with t ht
+    congr 1
+    exact (derivWithin_of_mem_nhds (Icc_mem_nhds (by linarith [ht.1]) (by linarith [ht.2]))).symm
+  have haesm_h' : AEStronglyMeasurable (fun t => realWindingIntegrand (γ t - s) (deriv γ t))
+      (volume.restrict (uIoc t₀ (t₀ + ρ))) := haesm_h.congr hcongr.symm
   rw [intervalIntegrable_iff]
-  have : IsFiniteMeasure (volume.restrict (uIoc (t₀ - ρ) (t₀ + ρ))) :=
+  have : IsFiniteMeasure (volume.restrict (uIoc t₀ (t₀ + ρ))) :=
     isFiniteMeasure_restrict.mpr ((measure_mono uIoc_subset_uIcc).trans_lt
-      (by rw [uIcc_of_le (by linarith : t₀ - ρ ≤ t₀ + ρ)]
+      (by rw [uIcc_of_le (by linarith : t₀ ≤ t₀ + ρ)]
           exact isCompact_Icc.measure_lt_top)).ne
-  refine Integrable.of_bound haesm_h C ?_
+  refine Integrable.of_bound haesm_h' C ?_
+  filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
+  exact hC _ ⟨t, huIoc_sub ht, rfl⟩
+
+/-- **The real winding integrand is interval-integrable on a small enough left-window at a
+`C^{1,1}` crossing, from the left.** The left-hand mirror of
+`intervalIntegrable_realWindingIntegrand_window_right`. -/
+private theorem intervalIntegrable_realWindingIntegrand_window_left {γ : ℝ → ℂ} {s : ℂ}
+    {t₀ ρ ρ_lip εD : ℝ} (hρ_pos : 0 < ρ) (hρ_le_ρlip : ρ ≤ ρ_lip) (hρlip_le_εD : ρ_lip ≤ εD)
+    (hC1 : ContDiffOn ℝ 1 γ (Icc (t₀ - εD) t₀))
+    (hbdd : Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc (t₀ - ρ_lip) t₀)) :
+    IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume
+      (t₀ - ρ) t₀ := by
+  have hsub_lip : Icc (t₀ - ρ) t₀ ⊆ Icc (t₀ - ρ_lip) t₀ := Icc_subset_Icc (by linarith) le_rfl
+  have hsub_εD : Icc (t₀ - ρ) t₀ ⊆ Icc (t₀ - εD) t₀ := Icc_subset_Icc (by linarith) le_rfl
+  obtain ⟨C, hC⟩ := (hbdd.subset (Set.image_mono hsub_lip)).exists_norm_le
+  have hγc : ContinuousOn γ (Icc (t₀ - ρ) t₀) := hC1.continuousOn.mono hsub_εD
+  have hdw : ContinuousOn (derivWithin γ (Icc (t₀ - εD) t₀)) (Icc (t₀ - ρ) t₀) :=
+    (hC1.continuousOn_derivWithin (uniqueDiffOn_Icc (by linarith)) le_rfl).mono hsub_εD
+  have huIoc_eq : uIoc (t₀ - ρ) t₀ = Ioc (t₀ - ρ) t₀ := uIoc_of_le (by linarith)
+  have huIoc_sub : uIoc (t₀ - ρ) t₀ ⊆ Icc (t₀ - ρ) t₀ :=
+    (uIoc_subset_uIcc).trans (by rw [uIcc_of_le (by linarith : t₀ - ρ ≤ t₀)])
+  have haesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * derivWithin γ (Icc (t₀ - εD) t₀) t)
+      (volume.restrict (uIoc (t₀ - ρ) t₀)) := by
+    have hγ_aem : AEMeasurable γ (volume.restrict (uIoc (t₀ - ρ) t₀)) :=
+      ((hγc.aestronglyMeasurable measurableSet_Icc).mono_measure
+        (Measure.restrict_mono huIoc_sub le_rfl)).aemeasurable
+    have hd_aem : AEMeasurable (derivWithin γ (Icc (t₀ - εD) t₀))
+        (volume.restrict (uIoc (t₀ - ρ) t₀)) :=
+      ((hdw.aestronglyMeasurable measurableSet_Icc).mono_measure
+        (Measure.restrict_mono huIoc_sub le_rfl)).aemeasurable
+    exact ((hγ_aem.sub_const s).inv.mul hd_aem).aestronglyMeasurable
+  have haesm_h : AEStronglyMeasurable
+      (fun t => realWindingIntegrand (γ t - s) (derivWithin γ (Icc (t₀ - εD) t₀) t))
+      (volume.restrict (uIoc (t₀ - ρ) t₀)) := by
+    refine (Complex.imCLM.continuous.comp_aestronglyMeasurable haesm).congr
+      (MeasureTheory.ae_of_all _ fun t => ?_)
+    simp only [Complex.imCLM_apply, realWindingIntegrand_def]
+  have hcongr : (fun t => realWindingIntegrand (γ t - s) (deriv γ t))
+      =ᶠ[ae (volume.restrict (uIoc (t₀ - ρ) t₀))]
+      (fun t => realWindingIntegrand (γ t - s) (derivWithin γ (Icc (t₀ - εD) t₀) t)) := by
+    rw [huIoc_eq, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioo] with t ht
+    congr 1
+    exact (derivWithin_of_mem_nhds (Icc_mem_nhds (by linarith [ht.1]) (by linarith [ht.2]))).symm
+  have haesm_h' : AEStronglyMeasurable (fun t => realWindingIntegrand (γ t - s) (deriv γ t))
+      (volume.restrict (uIoc (t₀ - ρ) t₀)) := haesm_h.congr hcongr.symm
+  rw [intervalIntegrable_iff]
+  have : IsFiniteMeasure (volume.restrict (uIoc (t₀ - ρ) t₀)) :=
+    isFiniteMeasure_restrict.mpr ((measure_mono uIoc_subset_uIcc).trans_lt
+      (by rw [uIcc_of_le (by linarith : t₀ - ρ ≤ t₀)]
+          exact isCompact_Icc.measure_lt_top)).ne
+  refine Integrable.of_bound haesm_h' C ?_
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
@@ -338,15 +383,20 @@ its ordinary (non-principal-value) integral:
 
 Unlike the off-curve case, `h`'s boundedness and interval-integrability are not assumed here: both
 are derived from the crossing regularity, via
-`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`'s boundedness at each
-`C^{1,1}` crossing and the ordinary avoidance argument between crossings — the actual content of
-HW Prop 2.3. -/
+`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right`/`_left`'s
+boundedness at each `C^{1,1}` crossing and the ordinary avoidance argument between crossings — the
+actual content of HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
+crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
+Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
+splitting (arXiv:1808.00997, p. 9). -/
 theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
-      (∀ u ∈ Icc (t - ε) (t + ε), HasDerivAt γ (deriv γ u) u) ∧
-        LipschitzOnWith K (deriv γ) (Icc (t - ε) (t + ε))) :
+      ContDiffOn ℝ 1 γ (Icc t (t + ε)) ∧ LipschitzOnWith K (derivWithin γ (Icc t (t + ε)))
+        (Icc t (t + ε)) ∧ derivWithin γ (Icc t (t + ε)) t ≠ 0 ∧
+      ContDiffOn ℝ 1 γ (Icc (t - ε) t) ∧ LipschitzOnWith K (derivWithin γ (Icc (t - ε) t))
+        (Icc (t - ε) t) ∧ derivWithin γ (Icc (t - ε) t) t ≠ 0) :
     Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) ∧
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
     windingNumber γ a b s
@@ -376,17 +426,37 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
   choose! R hR_pos L_R L_L hL_R hL_L h_spec using
     fun t₀ (ht₀ : t₀ ∈ T) => exists_radius_perWindow_tendsto_value h_imm hab (h_Ioo t₀ ht₀)
       (hT_mem.mp ht₀).2
-  -- The crossing regularity: a `C^{1,1}` neighborhood around each crossing, its forced non-zero
-  -- velocity, and the boundedness of the real winding integrand this already buys on a
-  -- (possibly smaller) window.
-  choose! εD hεD_pos K hderivD hlipD using fun t₀ (ht₀ : t₀ ∈ T) =>
+  -- The crossing regularity: a `C^{1,1}` neighborhood on each side of each crossing (possibly a
+  -- corner, so the two sides may disagree), each side's forced non-zero velocity given directly,
+  -- and the boundedness of the real winding integrand each side already buys on a (possibly
+  -- smaller) one-sided window.
+  choose! εD hεD_pos K hC1R hlipR hvelR hC1L hlipL hvelL using fun t₀ (ht₀ : t₀ ∈ T) =>
     hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2
-  have hvel : ∀ t₀ ∈ T, deriv γ t₀ ≠ 0 := fun t₀ ht₀ =>
-    deriv_ne_zero_of_lipschitzOnWith_deriv h_imm hab.le (h_Ioo t₀ ht₀) (hεD_pos t₀ ht₀)
-      (hlipD t₀ ht₀)
-  choose! ρ_lip hρ_lip_pos hρ_lip_le_εD hρ_lip_bdd using fun t₀ (ht₀ : t₀ ∈ T) =>
-    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv (hεD_pos t₀ ht₀)
-      (hderivD t₀ ht₀) (hlipD t₀ ht₀) (hT_mem.mp ht₀).2 (hvel t₀ ht₀)
+  choose! ρ_lipR hρ_lipR_pos hρ_lipR_lt hbddR using fun t₀ (ht₀ : t₀ ∈ T) =>
+    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
+      (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀]) (hC1R t₀ ht₀) (hlipR t₀ ht₀)
+      (hT_mem.mp ht₀).2 (hvelR t₀ ht₀)
+  choose! ρ_lipL hρ_lipL_pos hρ_lipL_lt hbddL using fun t₀ (ht₀ : t₀ ∈ T) =>
+    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
+      (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀]) (hC1L t₀ ht₀) (hlipL t₀ ht₀)
+      (hT_mem.mp ht₀).2 (hvelL t₀ ht₀)
+  -- Combine the two one-sided windows into one symmetric bounded window per crossing.
+  set ρ_lip : ℝ → ℝ := fun t => min (ρ_lipR t) (ρ_lipL t) with hρ_lip_def
+  have hρ_lip_pos : ∀ t ∈ T, 0 < ρ_lip t := fun t ht => lt_min (hρ_lipR_pos t ht) (hρ_lipL_pos t ht)
+  have hρ_lip_bdd : ∀ t₀ ∈ T, Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) ''
+        Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)) := fun t₀ ht₀ => by
+    have hRsub : Icc t₀ (t₀ + ρ_lip t₀) ⊆ Icc t₀ (t₀ + ρ_lipR t₀) :=
+      Icc_subset_Icc le_rfl (by linarith [min_le_left (ρ_lipR t₀) (ρ_lipL t₀)])
+    have hLsub : Icc (t₀ - ρ_lip t₀) t₀ ⊆ Icc (t₀ - ρ_lipL t₀) t₀ :=
+      Icc_subset_Icc (by linarith [min_le_right (ρ_lipR t₀) (ρ_lipL t₀)]) le_rfl
+    rw [show Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)
+          = Icc (t₀ - ρ_lip t₀) t₀ ∪ Icc t₀ (t₀ + ρ_lip t₀) from
+        (Set.Icc_union_Icc_eq_Icc (by linarith [hρ_lip_pos t₀ ht₀])
+          (by linarith [hρ_lip_pos t₀ ht₀])).symm,
+      Set.image_union]
+    exact ((hbddL t₀ ht₀).subset (Set.image_mono hLsub)).union
+      ((hbddR t₀ ht₀).subset (Set.image_mono hRsub))
   -- Shrink the common window radius to also stay inside every crossing's bounded window.
   set R' : ℝ → ℝ := fun t => min (R t) (ρ_lip t) with hR'_def
   have hR'_pos : ∀ t ∈ T, 0 < R' t := fun t ht => lt_min (hR_pos t ht) (hρ_lip_pos t ht)
@@ -410,10 +480,16 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
       (fun t ht => by linarith [(h_endpts t ((Finset.mem_sort _).mp ht)).2])
       (fun t ht t' ht' hne => (h_pair t ((Finset.mem_sort _).mp ht) t'
         ((Finset.mem_sort _).mp ht') hne).le)
-      (fun t ht => intervalIntegrable_realWindingIntegrand_window hρ_pos
-        (hρ_le_ρlip t ((Finset.mem_sort _).mp ht)) (hρ_lip_le_εD t ((Finset.mem_sort _).mp ht))
-        (hderivD t ((Finset.mem_sort _).mp ht)) (hlipD t ((Finset.mem_sort _).mp ht))
-        (hρ_lip_bdd t ((Finset.mem_sort _).mp ht)))
+      (fun t ht => by
+        have ht' := (Finset.mem_sort _).mp ht
+        have hL : ρ_lipL t ≤ εD t := by linarith [hρ_lipL_lt t ht']
+        have hR : ρ_lipR t ≤ εD t := by linarith [hρ_lipR_lt t ht']
+        exact (intervalIntegrable_realWindingIntegrand_window_left hρ_pos
+            ((hρ_le_ρlip t ht').trans (min_le_right _ _)) hL
+            (hC1L t ht') (hbddL t ht')).trans
+          (intervalIntegrable_realWindingIntegrand_window_right hρ_pos
+            ((hρ_le_ρlip t ht').trans (min_le_left _ _)) hR
+            (hC1R t ht') (hbddR t ht')))
       (fun u hu h_avoid => h_far.choose_spec.2 u hu
         fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
     have h_ne : ∀ t ∈ Icc l u, γ t ≠ s := fun t ht h_eq => by
