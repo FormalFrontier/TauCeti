@@ -36,15 +36,16 @@ column group meets the row group trivially, so the tabloids appearing in `e_t` a
 distinct and the coefficient of `{t}` itself is `1`.
 
 The identification of `S^μ` with the left ideal `ℚ[Sₙ] c_t` of
-`TauCeti/RepresentationTheory/Symmetric/SpechtIdeal/Basic.lean` is a separate milestone and is not
+`TauCeti/RepresentationTheory/Symmetric/Specht/Ideal/Basic.lean` is a separate milestone and is not
 proved here; so are James's submodule theorem and irreducibility.
 
 ## Main definitions
 
 * `TauCeti.YoungTableau.tabloid`: the `μ`-tabloid of a tableau.
 * `TauCeti.YoungTableau.polytabloid`: the polytabloid `e_t = b_t · {t}`.
-* `TauCeti.spechtModule`: the Specht module `S^μ`, as a subrepresentation of `M^μ`.
-* `TauCeti.spechtModuleFDRep`: the Specht module as a finite-dimensional representation.
+* `TauCeti.spechtSubrepresentation`: the span of the polytabloids, as a subrepresentation of `M^μ`.
+* `TauCeti.spechtModule`: the Specht module `S^μ`, that subrepresentation bundled as a
+  finite-dimensional representation.
 
 ## Main results
 
@@ -54,8 +55,8 @@ proved here; so are James's submodule theorem and irreducibility.
 * `TauCeti.YoungTableau.polytabloid_ne_zero` and
   `TauCeti.YoungTableau.tabloidForm_polytabloid_self`: polytabloids are nonzero, and the tabloid
   form pairs one with itself to the order of the column group.
-* `TauCeti.spechtModule_eq_span_orbit` and `TauCeti.spechtModule_ne_bot`: the Specht module is the
-  span of the orbit of a single polytabloid, and it is nonzero.
+* `TauCeti.spechtSubrepresentation_eq_span_orbit` and `TauCeti.spechtSubrepresentation_ne_bot`: the
+  Specht module is the span of the orbit of a single polytabloid, and it is nonzero.
 
 ## References
 
@@ -235,41 +236,43 @@ end YoungTableau
 
 open YoungTableau
 
-/-- The **Specht module** `S^μ`: the subrepresentation of the Young permutation module `M^μ`
-spanned by the polytabloids of the `μ`-tableaux.
+/-- The **Specht module** `S^μ`, in its concrete presentation: the subrepresentation of the Young
+permutation module `M^μ` spanned by the polytabloids of the `μ`-tableaux.
 
 It is stable under the symmetric group because relabeling a tableau translates its polytabloid,
 and the polytabloids of the relabelings of a fixed tableau are all of them. -/
-noncomputable def spechtModule (μ : YoungDiagram) :
+noncomputable def spechtSubrepresentation (μ : YoungDiagram) :
     Subrepresentation (permutationModule (shapePartition μ)).ρ where
   toSubmodule := Submodule.span ℚ (Set.range (polytabloid (μ := μ)))
-  apply_mem_toSubmodule σ v hv := by
-    refine Submodule.span_induction ?_ ?_ ?_ ?_ hv
-    · rintro _ ⟨t, rfl⟩
+  apply_mem_toSubmodule σ _ hv := by
+    -- stability of a span is checked on its generators
+    have h : Submodule.span ℚ (Set.range (polytabloid (μ := μ))) ≤
+        (Submodule.span ℚ (Set.range (polytabloid (μ := μ)))).comap
+          ((permutationModule (shapePartition μ)).ρ σ) := by
+      rw [Submodule.span_le]
+      rintro _ ⟨t, rfl⟩
       exact Submodule.subset_span ⟨relabel σ t, polytabloid_relabel σ t⟩
-    · simp
-    · intro x y _ _ hx hy
-      simpa using Submodule.add_mem _ hx hy
-    · intro a x _ hx
-      simpa using Submodule.smul_mem _ a hx
+    exact h hv
 
-theorem spechtModule_toSubmodule (μ : YoungDiagram) :
-    (spechtModule μ).toSubmodule = Submodule.span ℚ (Set.range (polytabloid (μ := μ))) :=
+/-- The underlying submodule of the Specht module is the span of the polytabloids. -/
+theorem spechtSubrepresentation_toSubmodule (μ : YoungDiagram) :
+    (spechtSubrepresentation μ).toSubmodule =
+      Submodule.span ℚ (Set.range (polytabloid (μ := μ))) :=
   (rfl)
 
 /-- Every polytabloid lies in the Specht module. -/
-theorem polytabloid_mem_spechtModule (t : YoungTableau μ) :
-    polytabloid t ∈ spechtModule μ :=
+theorem polytabloid_mem_spechtSubrepresentation (t : YoungTableau μ) :
+    polytabloid t ∈ spechtSubrepresentation μ :=
   Submodule.subset_span ⟨t, rfl⟩
 
 /-- **The Specht module is cyclic.** It is the span of the orbit of a single polytabloid, because
 the symmetric group permutes the `μ`-tableaux transitively. -/
-theorem spechtModule_eq_span_orbit (t : YoungTableau μ) :
-    (spechtModule μ).toSubmodule =
+theorem spechtSubrepresentation_eq_span_orbit (t : YoungTableau μ) :
+    (spechtSubrepresentation μ).toSubmodule =
       Submodule.span ℚ
         (Set.range fun σ : Equiv.Perm (Fin μ.card) =>
           (permutationModule (shapePartition μ)).ρ σ (polytabloid t)) := by
-  rw [spechtModule_toSubmodule]
+  rw [spechtSubrepresentation_toSubmodule]
   congr 1
   apply Set.eq_of_subset_of_subset
   · rintro _ ⟨t', rfl⟩
@@ -279,29 +282,32 @@ theorem spechtModule_eq_span_orbit (t : YoungTableau μ) :
     exact ⟨relabel σ t, polytabloid_relabel σ t⟩
 
 /-- The Specht module is nonzero. -/
-theorem spechtModule_ne_bot (μ : YoungDiagram) : spechtModule μ ≠ ⊥ := by
+theorem spechtSubrepresentation_ne_bot (μ : YoungDiagram) : spechtSubrepresentation μ ≠ ⊥ := by
   obtain ⟨t⟩ := YoungTableau.nonempty μ
   intro h
   have hmem : polytabloid t ∈ (⊥ : Subrepresentation (permutationModule (shapePartition μ)).ρ) :=
-    h ▸ polytabloid_mem_spechtModule t
+    h ▸ polytabloid_mem_spechtSubrepresentation t
   exact polytabloid_ne_zero t (Submodule.mem_bot ℚ |>.mp hmem)
 
+/-- The Specht module is finite-dimensional, being a submodule of the finite-dimensional Young
+permutation module.  This is what lets it be bundled as an `FDRep`. -/
 instance (μ : YoungDiagram) :
-    FiniteDimensional ℚ (spechtModule μ).toSubmodule :=
+    FiniteDimensional ℚ (spechtSubrepresentation μ).toSubmodule :=
   FiniteDimensional.finiteDimensional_submodule _
 
-/-- The Specht module bundled as a finite-dimensional representation of the symmetric group. -/
-noncomputable abbrev spechtModuleFDRep (μ : YoungDiagram) :
+/-- The **Specht module** `S^μ` bundled as a finite-dimensional representation of the symmetric
+group; `spechtSubrepresentation_toSubmodule` identifies the underlying module with the span of the
+polytabloids. -/
+noncomputable abbrev spechtModule (μ : YoungDiagram) :
     FDRep ℚ (Equiv.Perm (Fin μ.card)) :=
-  FDRep.of (spechtModule μ).toRepresentation
+  FDRep.of (spechtSubrepresentation μ).toRepresentation
 
-/-- The Specht module is nontrivial, so its bundled form has positive dimension. -/
+/-- The Specht module is nontrivial, so it has positive dimension. -/
 theorem finrank_spechtModule_pos (μ : YoungDiagram) :
-    0 < Module.finrank ℚ (spechtModule μ).toSubmodule := by
-  obtain ⟨t⟩ := YoungTableau.nonempty μ
-  have : Nontrivial (spechtModule μ).toSubmodule :=
-    nontrivial_of_ne ⟨polytabloid t, polytabloid_mem_spechtModule t⟩ 0
-      (fun h => polytabloid_ne_zero t (congrArg Subtype.val h))
-  exact Module.finrank_pos
+    0 < Module.finrank ℚ (spechtModule μ) :=
+  have : Nontrivial (spechtSubrepresentation μ).toSubmodule :=
+    Submodule.nontrivial_iff_ne_bot.mpr fun h =>
+      spechtSubrepresentation_ne_bot μ (Subrepresentation.toSubmodule_injective h)
+  Module.finrank_pos
 
 end TauCeti

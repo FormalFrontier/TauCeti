@@ -52,7 +52,7 @@ private noncomputable def rowCellsEquiv (μ : YoungDiagram) :
 
 private noncomputable def sortedBlocksEquivRows (μ : YoungDiagram) :
     rowBlocks ((shapePartition μ).parts.sort (· ≥ ·)) ≃ rowBlocks μ.rowLens :=
-  Equiv.cast (congrArg rowBlocks (sort_shapePartition_parts μ))
+  Equiv.cast (congrArg rowBlocks (shapePartition_parts_sort μ))
 
 private theorem cast_rowBlocks_fst {l₁ l₂ : List ℕ} (h : l₁ = l₂)
     (x : rowBlocks l₁) :
@@ -69,12 +69,12 @@ private theorem cast_rowBlocks_snd {l₁ l₂ : List ℕ} (h : l₁ = l₂)
 private theorem sortedBlocksEquivRows_fst (μ : YoungDiagram)
     (x : rowBlocks ((shapePartition μ).parts.sort (· ≥ ·))) :
     ((sortedBlocksEquivRows μ x).1 : ℕ) = x.1 :=
-  cast_rowBlocks_fst (sort_shapePartition_parts μ) x
+  cast_rowBlocks_fst (shapePartition_parts_sort μ) x
 
 private theorem sortedBlocksEquivRows_snd (μ : YoungDiagram)
     (x : rowBlocks ((shapePartition μ).parts.sort (· ≥ ·))) :
     ((sortedBlocksEquivRows μ x).2 : ℕ) = x.2 :=
-  cast_rowBlocks_snd (sort_shapePartition_parts μ) x
+  cast_rowBlocks_snd (shapePartition_parts_sort μ) x
 
 /-- The permutation carrying the consecutive-block labeling of a Young diagram to the labeling
 of `t`. It sends each block of the shape partition to the correspondingly numbered row of `t`. -/

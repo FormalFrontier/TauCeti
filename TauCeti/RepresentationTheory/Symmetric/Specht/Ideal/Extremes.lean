@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Irreducible
-public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Basic
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
 # The Specht ideals of the one-row and the one-column shape

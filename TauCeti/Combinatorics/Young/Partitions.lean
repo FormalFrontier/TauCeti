@@ -97,7 +97,7 @@ theorem shapePartition_parts (μ : YoungDiagram) :
 /-- Sorting the parts of the shape partition into decreasing order returns the row lengths, which
 are already decreasing.  This is not a `simp` lemma: `simp` rewrites the parts to `μ.rowLens` with
 `shapePartition_parts` and then sorts the coerced list itself. -/
-theorem sort_shapePartition_parts (μ : YoungDiagram) :
+theorem shapePartition_parts_sort (μ : YoungDiagram) :
     (shapePartition μ).parts.sort (· ≥ ·) = μ.rowLens := by
   have h := partitionEquivYoungDiagram_apply_rowLens μ.card (shapePartition μ)
   rw [shapePartition, Equiv.apply_symm_apply] at h
