@@ -112,7 +112,7 @@ variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 /-! ## The three pieces of the image -/
 
 /-- **A circular crosscut splits the image of a disc into three pieces**: the images of the two
-sides and the image crosscut. This is `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` —
+sides and the image crosscut. This is `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` —
 the corresponding identity in the disc — pushed forward, and needs nothing of `f`. -/
 theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
     f '' ball c r =
@@ -120,7 +120,7 @@ theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ 
         f '' (ball c r \ closedBall ζ ρ) := by
   rw [← image_union, ← image_union]
   congr 1
-  rw [union_right_comm, ← diff_sphere_eq_inter_ball_union_diff_closedBall, sdiff_union_inter]
+  rw [union_right_comm, ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
 
 /-! ## The crosscut cuts the boundary of the image in two -/
 

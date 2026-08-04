@@ -30,9 +30,9 @@ use, and Mathlib has no form of the decomposition.
 
 ## Main results
 
-* `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` — the two sides cover the cut set.
-* `TauCeti.disjoint_inter_ball_diff_closedBall` — the two sides are disjoint.
-* `TauCeti.subset_inter_ball_or_subset_diff_closedBall` — a preconnected subset of an open cut set
+* `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` — the two sides cover the cut set.
+* `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint.
+* `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
 -/
 
@@ -47,7 +47,7 @@ variable {X : Type*} [PseudoMetricSpace X] {x : X} {ρ : ℝ}
 /-- **A circular cut splits a set into a near side and a far side.** Removing the sphere
 `sphere x ρ` from a set `s` leaves the points of `s` at distance less than `ρ` from `x` together
 with those at distance more than `ρ`. -/
-theorem diff_sphere_eq_inter_ball_union_diff_closedBall {s : Set X} :
+theorem sdiff_sphere_eq_inter_ball_union_sdiff_closedBall {s : Set X} :
     s \ sphere x ρ = s ∩ ball x ρ ∪ s \ closedBall x ρ := by
   ext y
   constructor
@@ -62,18 +62,18 @@ theorem diff_sphere_eq_inter_ball_union_diff_closedBall {s : Set X} :
 
 /-- The two sides of a circular cut are disjoint, the near side lying inside `closedBall x ρ` and
 the far side outside it. -/
-theorem disjoint_inter_ball_diff_closedBall {s : Set X} :
+theorem disjoint_inter_ball_sdiff_closedBall {s : Set X} :
     Disjoint (s ∩ ball x ρ) (s \ closedBall x ρ) :=
   Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
 
 /-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
 the separation statement the decomposition exists for: the two sides are open and disjoint, so a
 preconnected subset of their union cannot meet both. Only openness of the cut set is used. -/
-theorem subset_inter_ball_or_subset_diff_closedBall {s S : Set X} (hs : IsOpen s)
+theorem subset_inter_ball_or_subset_sdiff_closedBall {s S : Set X} (hs : IsOpen s)
     (hS : IsPreconnected S) (hSsub : S ⊆ s \ sphere x ρ) :
     S ⊆ s ∩ ball x ρ ∨ S ⊆ s \ closedBall x ρ :=
   hS.subset_or_subset (hs.inter isOpen_ball) (hs.sdiff isClosed_closedBall)
-    disjoint_inter_ball_diff_closedBall
-    (diff_sphere_eq_inter_ball_union_diff_closedBall (x := x) (s := s) ▸ hSsub)
+    disjoint_inter_ball_sdiff_closedBall
+    (sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := x) (s := s) ▸ hSsub)
 
 end TauCeti

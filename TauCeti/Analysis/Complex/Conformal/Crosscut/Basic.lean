@@ -121,8 +121,8 @@ functions.
   connected.
 * `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion — a circular
   crosscut separates the disc into exactly two connected components, the two sides being those cut
-  out by `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` and
-  `TauCeti.subset_inter_ball_or_subset_diff_closedBall` of
+  out by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` and
+  `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` of
   `TauCeti/Topology/MetricSpace/Cut.lean`. The disc signatures those two replace are kept here as
   deprecated compatibility wrappers.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
@@ -434,27 +434,27 @@ The three cut lemmas of `TauCeti/Topology/MetricSpace/Cut.lean` were stated here
 each naming its generalized replacement. -/
 
 /-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall`. -/
-@[deprecated diff_sphere_eq_inter_ball_union_diff_closedBall (since := "2026-08-04")]
+`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
+@[deprecated sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (since := "2026-08-04")]
 theorem ball_diff_sphere_eq_union :
     ball c r \ sphere ζ ρ = ball c r ∩ ball ζ ρ ∪ ball c r \ closedBall ζ ρ :=
-  diff_sphere_eq_inter_ball_union_diff_closedBall
+  sdiff_sphere_eq_inter_ball_union_sdiff_closedBall
 
 /-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.disjoint_inter_ball_diff_closedBall`. -/
-@[deprecated disjoint_inter_ball_diff_closedBall (since := "2026-08-04")]
+`TauCeti.disjoint_inter_ball_sdiff_closedBall`. -/
+@[deprecated disjoint_inter_ball_sdiff_closedBall (since := "2026-08-04")]
 theorem disjoint_ball_inter_ball_ball_diff_closedBall :
     Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
-  disjoint_inter_ball_diff_closedBall
+  disjoint_inter_ball_sdiff_closedBall
 
 /-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.subset_inter_ball_or_subset_diff_closedBall`, whose openness hypothesis the disc
+`TauCeti.subset_inter_ball_or_subset_sdiff_closedBall`, whose openness hypothesis the disc
 discharges with `Metric.isOpen_ball`. -/
-@[deprecated subset_inter_ball_or_subset_diff_closedBall (since := "2026-08-04")]
+@[deprecated subset_inter_ball_or_subset_sdiff_closedBall (since := "2026-08-04")]
 theorem subset_ball_inter_ball_or_subset_ball_diff_closedBall {S : Set ℂ} (hS : IsPreconnected S)
     (hSsub : S ⊆ ball c r \ sphere ζ ρ) :
     S ⊆ ball c r ∩ ball ζ ρ ∨ S ⊆ ball c r \ closedBall ζ ρ :=
-  subset_inter_ball_or_subset_diff_closedBall isOpen_ball hS hSsub
+  subset_inter_ball_or_subset_sdiff_closedBall isOpen_ball hS hSsub
 
 /-- **The crosscut neighbourhood is a connected component of the cut disc.** Together with
 `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` this says a circular
@@ -463,14 +463,14 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball
     (hz : z ∈ ball c r ∩ ball ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r ∩ ball ζ ρ := by
   have hsub : ball c r ∩ ball ζ ρ ⊆ ball c r \ sphere ζ ρ :=
-    diff_sphere_eq_inter_ball_union_diff_closedBall (x := ζ) (s := ball c r) ▸ subset_union_left
+    sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := ζ) (s := ball c r) ▸ subset_union_left
   refine Subset.antisymm ?_ (((convex_ball c r).inter (convex_ball ζ ρ)).isPreconnected
     |>.subset_connectedComponentIn hz hsub)
-  rcases subset_inter_ball_or_subset_diff_closedBall (x := ζ) (s := ball c r) isOpen_ball
+  rcases subset_inter_ball_or_subset_sdiff_closedBall (x := ζ) (s := ball c r) isOpen_ball
     isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _) with h | h
   · exact h
   · exact absurd (h (mem_connectedComponentIn (hsub hz)))
-      (Set.disjoint_left.mp disjoint_inter_ball_diff_closedBall hz)
+      (Set.disjoint_left.mp disjoint_inter_ball_sdiff_closedBall hz)
 
 /-- **The far side of a circular crosscut is a connected component of the cut disc.** The companion
 of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball`; here the connectedness of the
@@ -479,12 +479,12 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρ' : ρ < 2 * r) (hz : z ∈ ball c r \ closedBall ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r \ closedBall ζ ρ := by
   have hsub : ball c r \ closedBall ζ ρ ⊆ ball c r \ sphere ζ ρ :=
-    diff_sphere_eq_inter_ball_union_diff_closedBall (x := ζ) (s := ball c r) ▸ subset_union_right
+    sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := ζ) (s := ball c r) ▸ subset_union_right
   refine Subset.antisymm ?_ ((isConnected_ball_diff_closedBall hζ hρ hρ').isPreconnected
     |>.subset_connectedComponentIn hz hsub)
-  rcases subset_inter_ball_or_subset_diff_closedBall (x := ζ) (s := ball c r) isOpen_ball
+  rcases subset_inter_ball_or_subset_sdiff_closedBall (x := ζ) (s := ball c r) isOpen_ball
     isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _) with h | h
-  · exact absurd hz (Set.disjoint_left.mp disjoint_inter_ball_diff_closedBall
+  · exact absurd hz (Set.disjoint_left.mp disjoint_inter_ball_sdiff_closedBall
       (h (mem_connectedComponentIn (hsub hz))))
   · exact h
 
