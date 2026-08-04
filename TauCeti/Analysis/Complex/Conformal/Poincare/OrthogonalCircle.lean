@@ -81,8 +81,9 @@ diameters, which the radial geodesics already trace, this closes the description
   arbitrary isometric embedding of the real line, which is the parametrisation-free form of that
   description.
 * `TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul` and
-  `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` — the centre and radius of the hyperbolic line
-  through `k * w` perpendicular to the radius through the unit vector `w`, and
+  `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` — the two parameters at the perpendicular pair
+  `u = I * w`, `a = k * w` for a unit vector `w`, which for `k` in `Ioo 0 1` are the centre and
+  radius of the hyperbolic line through `k * w` perpendicular to the radius through `w`, and
   `TauCeti.exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq` — every circle orthogonal to
   the unit circle is the circle of a hyperbolic line.
 * `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_radialGeodesic_eq` and
@@ -359,7 +360,10 @@ is perpendicular to the radius through it, so the pair to compute with is `a = k
 treat. -/
 
 /-- The discriminator `Im (conj u * a)` of `TauCeti.setOf_im_eq_ball_inter_sphere` at the
-perpendicular pair `u = I * w`, `a = k * w` with `‖w‖ = 1` and `k` real: it is `-k`, so the
+perpendicular pair `u = I * w`, `a = k * w` with `‖w‖ = 1` and `k` real: it is `-k`.
+
+Nothing is asked of `k` beyond being real, so on its own this is an algebraic identity. For
+`|k| < 1`, which is exactly when `k * w` lies in the open unit disc, it reads geometrically: the
 hyperbolic line through `k * w` perpendicular to the radius through `w` misses the origin exactly
 when `k ≠ 0`. -/
 private lemma im_conj_mul_I_mul_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ) :
@@ -374,13 +378,17 @@ private lemma im_conj_mul_I_mul_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ
     Complex.ofReal_im]
   ring
 
-/-- **The centre of the perpendicular hyperbolic line.** For a unit `w` and a nonzero real `k`,
-the hyperbolic line through `k * w` in the direction `I * w` perpendicular to the radius through
-`w` traces a Euclidean circle centred at `((1 + k ^ 2) / (2 * k)) * w`, again on that radius.
+/-- **The centre parameter at the perpendicular pair.** For a unit `w` and a nonzero real `k`, the
+centre parameter of `u = I * w`, `a = k * w` is `((1 + k ^ 2) / (2 * k)) * w`, again on the radius
+through `w`.
 
-Together with `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` this is the computation that makes
-every circle orthogonal to the unit circle a hyperbolic line: as `k` ranges over `Ioo 0 1` the
-centre sweeps out the whole ray beyond the unit circle. -/
+As at `TauCeti.orthogonalCircleCenter` itself, `k ≠ 0` alone makes this an algebraic computation.
+For `0 < k < 1`, which is exactly when `k * w` lies in the open unit disc, it is the centre of the
+Euclidean circle traced by the hyperbolic line through `k * w` in the direction `I * w`
+perpendicular to the radius through `w`. That reading, together with
+`TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul`, is the computation that makes every circle
+orthogonal to the unit circle a hyperbolic line: as `k` ranges over `Ioo 0 1` the centre sweeps
+out the whole ray beyond the unit circle. -/
 @[simp]
 lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : k ≠ 0) :
     orthogonalCircleCenter (I * w) ((k : ℂ) * w) = (((1 + k ^ 2) / (2 * k) : ℝ) : ℂ) * w := by
@@ -404,13 +412,17 @@ lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : 
   push_cast
   field_simp
 
-/-- **The radius of the perpendicular hyperbolic line.** The companion of
-`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`: the Euclidean circle traced by the hyperbolic
-line through `k * w` in the direction `I * w` has radius `(1 - k ^ 2) / (2 * k)`. Unlike the
-centre, which is a signed expression in `Im (conj u * a)` and so needs only `k ≠ 0`, the radius
-divides by `2 * |Im (conj u * a)| = 2 * |k|`: the displayed formula therefore asks for `0 < k`,
-and for a negative `k` it would instead read `(1 - k ^ 2) / (2 * |k|)`. Positivity of the value
-is the further information `k < 1`, that is, that `k * w` lies in the open disc. -/
+/-- **The radius parameter at the perpendicular pair.** The companion of
+`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`: for a unit `w` and a positive real `k`, the
+radius parameter of `u = I * w`, `a = k * w` is `(1 - k ^ 2) / (2 * k)`. Unlike the centre, which
+is a signed expression in `Im (conj u * a)` and so needs only `k ≠ 0`, the radius divides by
+`2 * |Im (conj u * a)| = 2 * |k|`: the displayed formula therefore asks for `0 < k`, and for a
+negative `k` it would instead read `(1 - k ^ 2) / (2 * |k|)`.
+
+Positivity of the value is the further information `k < 1`, that is, that `k * w` lies in the open
+disc; for `k > 1` the value is negative and describes no circle. It is under `0 < k < 1` that this
+is the radius of the Euclidean circle traced by the hyperbolic line through `k * w` in the
+direction `I * w`. -/
 @[simp]
 lemma orthogonalCircleRadius_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : 0 < k) :
     orthogonalCircleRadius (I * w) ((k : ℂ) * w) = (1 - k ^ 2) / (2 * k) := by
