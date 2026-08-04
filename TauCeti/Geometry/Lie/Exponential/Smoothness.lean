@@ -10,8 +10,9 @@ public import TauCeti.Geometry.Lie.Exponential.ParameterDependence
 /-!
 # Smoothness of the Lie-group exponential
 
-This file upgrades the continuous local invariant flow to smooth parameter dependence and uses it
-to prove that the Lie-group exponential is smooth at the zero vector.
+This file upgrades the continuous local invariant flow to smooth parameter dependence, proves that
+the Lie-group exponential is smooth at the zero vector, and globalizes that result using its
+one-parameter-subgroup law.
 
 ## Main results
 
