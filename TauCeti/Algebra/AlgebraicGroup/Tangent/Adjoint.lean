@@ -182,8 +182,8 @@ noncomputable def adRepresentation :
     ext d a
     simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.one_apply]
     rw [adDerivation_apply, AlgHom.toLinearMap_convOne, inv_one,
-      AlgHom.toLinearMap_convOne, one_mul, mul_one]
-    rfl
+      AlgHom.toLinearMap_convOne, one_mul, mul_one, ofConv_toConv,
+      Derivation.coeFn_coe]
   map_mul' g h := by
     ext d a
     simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply]

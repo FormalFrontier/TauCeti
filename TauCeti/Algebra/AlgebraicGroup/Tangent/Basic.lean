@@ -437,69 +437,68 @@ section ExteriorProduct
 
 open WithConv TensorProduct
 
-variable {R A B : Type*} [CommSemiring R] [Semiring A] [Algebra R A]
-  [CommSemiring B] [Algebra R B]
+variable {R M S : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
+  [CommSemiring S] [Algebra R S]
 
 namespace LinearMap
 
 
 
-/-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
+/-- The exterior convolution product on `M ⊗[R] M`: apply one factor on each tensor
 leg and multiply the results in the coefficients. It underlies the Leibniz-rule
 manipulations for counit-valued derivations: composing with the multiplication of the
 bialgebra lands in this product's image. -/
-def mulTensor (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
-    WithConv (A ⊗[R] A →ₗ[R] Bialgebra.CounitAlgebra R A B) :=
-  toConv ((Algebra.TensorProduct.lmul' R
-    (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
+def mulTensor (s t : WithConv (M →ₗ[R] S)) :
+    WithConv (M ⊗[R] M →ₗ[R] S) :=
+  toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
 
 /-- The exterior product evaluates a pure tensor legwise and multiplies the results
 in the coefficients. -/
 @[simp]
 lemma mulTensor_apply_tmul
-    (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) (x y : A) :
+    (s t : WithConv (M →ₗ[R] S)) (x y : M) :
     (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
   simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
 
 
 /-- The exterior product vanishes when the left factor is zero. -/
 @[simp]
-lemma mulTensor_zero_left (t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_zero_left (t : WithConv (M →ₗ[R] S)) :
     mulTensor 0 t = 0 := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp
 
 /-- The exterior product vanishes when the right factor is zero. -/
 @[simp]
-lemma mulTensor_zero_right (s : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_zero_right (s : WithConv (M →ₗ[R] S)) :
     mulTensor s 0 = 0 := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp
 
 /-- The exterior product is additive in the left factor. -/
 @[simp]
-lemma mulTensor_add_left (s₁ s₂ t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_add_left (s₁ s₂ t : WithConv (M →ₗ[R] S)) :
     mulTensor (s₁ + s₂) t = mulTensor s₁ t + mulTensor s₂ t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp [add_mul]
 
 /-- The exterior product is additive in the right factor. -/
 @[simp]
-lemma mulTensor_add_right (s t₁ t₂ : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_add_right (s t₁ t₂ : WithConv (M →ₗ[R] S)) :
     mulTensor s (t₁ + t₂) = mulTensor s t₁ + mulTensor s t₂ := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp [mul_add]
 
 /-- Scalars pull out of the left factor of the exterior product. -/
 @[simp]
-lemma mulTensor_smul_left (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_smul_left (r : R) (s t : WithConv (M →ₗ[R] S)) :
     mulTensor (r • s) t = r • mulTensor s t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp
 
 /-- Scalars pull out of the right factor of the exterior product. -/
 @[simp]
-lemma mulTensor_smul_right (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+lemma mulTensor_smul_right (r : R) (s t : WithConv (M →ₗ[R] S)) :
     mulTensor s (r • t) = r • mulTensor s t := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
   simp
@@ -507,6 +506,8 @@ lemma mulTensor_smul_right (r : R) (s t : WithConv (A →ₗ[R] Bialgebra.Counit
 end LinearMap
 
 namespace AlgHom
+
+variable {A B : Type*} [Semiring A] [Algebra R A] [CommSemiring B] [Algebra R B]
 
 open TauCeti.LinearMap in
 /-- An algebra-map point composed with multiplication is its own exterior square:
