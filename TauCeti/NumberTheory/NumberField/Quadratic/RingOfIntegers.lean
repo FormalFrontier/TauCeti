@@ -87,7 +87,7 @@ private theorem exists_intCast_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
   -- Trace: `Tr z = 2a` since `Tr θ = 0`.
   have htr : Algebra.trace ℚ K (z : K) = 2 * a := by
     rw [hz, map_add, Algebra.trace_algebraMap, hfr, ← Algebra.smul_def, map_smul,
-      trace_coe_eq_zero hmin hgen]
+      trace_gen_eq_zero hmin]
     simp
   have hAex : ∃ A : ℤ, (A : ℚ) = 2 * a :=
     ⟨Algebra.trace ℤ (𝓞 K) z, by rw [Algebra.coe_trace_int, htr]⟩
@@ -174,23 +174,18 @@ private theorem isIntegral_half_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 :
   · simp only [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C]
     field_simp
     linear_combination ht + hde
-private theorem coe_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
-    (θ : K) ∉ (algebraMap ℚ K).range := by
-  rintro ⟨q, hq⟩
-  have hdvd : minpoly ℚ (algebraMap ℚ K q) ∣ (X - C q) := minpoly.dvd ℚ _ (by simp)
-  have h1 : (minpoly ℚ (algebraMap ℚ K q)).natDegree ≤ 1 := by
-    simpa [natDegree_X_sub_C] using Polynomial.natDegree_le_of_dvd hdvd (X_sub_C_ne_zero q)
-  rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
-  norm_num at h1
-
-/-- **`𝓞 K = ℤ[θ]` for `d ≢ 1 (mod 4)`: coordinates.** Every algebraic integer of `ℚ(√d)` is a
-`ℤ`-combination `k + l·θ` — the "no more integers" step (see the module docstring). -/
-private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d)
-    (hd4 : d % 4 = 2 ∨ d % 4 = 3) (z : 𝓞 K) : ∃ k l : ℤ, z = k • (1 : 𝓞 K) + l • θ := by
+/-- **Shared half-integer coordinate/norm data.** For squarefree `d` and any `z : 𝓞 K`, the
+`{1, θ}`-coordinates of `z` are half-integers: `z = (A/2)·1 + (B/2)·θ` with `A` its trace and `B`
+twice its second coordinate, and the norm relation `A² - d·B² = 4N` holds for some `N : ℤ`. Both
+congruence branches read off their integral basis from this by the appropriate parity argument
+(`two_dvd_of_sq_sub_mul_sq` for `d ≢ 1`, `two_dvd_sub_of_sq_sub_mul_sq` for `d ≡ 1 (mod 4)`). -/
+private theorem exists_half_int_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (z : 𝓞 K) :
+    ∃ A B N : ℤ, (z : K) = algebraMap ℚ K ((A : ℚ) / 2) + algebraMap ℚ K ((B : ℚ) / 2) * (θ : K)
+      ∧ A ^ 2 - d * B ^ 2 = 4 * N := by
   have hfr := finrank_rat_eq_two hmin hgen
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
-    hfr (coe_notMem_range hmin) θ.isIntegral_coe
+    hfr (gen_notMem_range hmin) θ.isIntegral_coe
   set a := bs.repr (z : K) 0 with ha
   set c := bs.repr (z : K) 1 with hc
   have hz : (z : K) = algebraMap ℚ K a + algebraMap ℚ K c * (θ : K) := by
@@ -204,18 +199,27 @@ private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
   have hcden : (2 * c).den = 1 := den_eq_one_of_squarefree_mul_sq_isInt hsf h2c
   obtain ⟨B, hB⟩ : ∃ B : ℤ, (B : ℚ) = 2 * c :=
     ⟨(2 * c).num, by rw [← Rat.num_div_den (2 * c), hcden]; simp⟩
-  -- Parity: `A, B` both even, so `a = A/2`, `c = B/2` are integers.
   have hABN : A ^ 2 - d * B ^ 2 = 4 * N := by
     have : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hB, hN]; ring
     exact_mod_cast this
+  refine ⟨A, B, N, ?_, hABN⟩
+  rw [hz, show a = (A : ℚ) / 2 by rw [hA]; ring, show c = (B : ℚ) / 2 by rw [hB]; ring]
+
+/-- **`𝓞 K = ℤ[θ]` for `d ≢ 1 (mod 4)`: coordinates.** Every algebraic integer of `ℚ(√d)` is a
+`ℤ`-combination `k + l·θ` — the "no more integers" step (see the module docstring). -/
+private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d)
+    (hd4 : d % 4 = 2 ∨ d % 4 = 3) (z : 𝓞 K) : ∃ k l : ℤ, z = k • (1 : 𝓞 K) + l • θ := by
+  obtain ⟨A, B, N, hz, hABN⟩ := exists_half_int_coords hmin hgen hsf z
+  -- Parity: `A, B` both even, so the half-integer coordinates `A/2, B/2` are the integers `k, l`.
   obtain ⟨⟨k, hk⟩, ⟨l, hl⟩⟩ := two_dvd_of_sq_sub_mul_sq hd4 hABN
-  have hak : a = (k : ℚ) := by rw [hk] at hA; push_cast at hA; linarith
-  have hcl : c = (l : ℚ) := by rw [hl] at hB; push_cast at hB; linarith
-  -- The coercion `𝓞 K → K` is injective; the identity holds on coordinates, where `algebraMap ℚ K`
-  -- of an integer cast and the `ℤ`-scalar action both reduce to the integer cast `↑· : ℤ → K`.
+  have hAk : (A : ℚ) / 2 = (k : ℚ) := by rw [hk]; push_cast; ring
+  have hBl : (B : ℚ) / 2 = (l : ℚ) := by rw [hl]; push_cast; ring
+  -- The coercion `𝓞 K → K` is injective, so compare in `K`, where `algebraMap ℚ K` of an integer
+  -- cast and the `ℤ`-scalar action both reduce to the integer cast `↑· : ℤ → K`.
   refine ⟨k, l, RingOfIntegers.coe_injective ?_⟩
   change (z : K) = ((k • (1 : 𝓞 K) + l • θ) : K)
-  rw [hz, hak, hcl]
+  rw [hz, hAk, hBl]
   push_cast [zsmul_eq_mul, map_intCast]
   ring
 
@@ -223,39 +227,25 @@ private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
 noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) : 𝓞 K :=
   ⟨(1 + (θ : K)) / 2, isIntegral_half_gen hmin hd4⟩
 
+/-- The half-integer generator coerces to `(1 + θ)/2` in `K`. -/
+@[simp] theorem coe_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+    (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := rfl
+
 /-- **`𝓞 K = ℤ[ω]` for `d ≡ 1 (mod 4)`: coordinates.** Every algebraic integer is a `ℤ`-combination
-`k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the `{1, θ}`-coordinates `a = A/2, c = B/2` give
+`k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the half-integer coordinates `A/2, B/2` give
 `z = (A-B)/2 · 1 + B · ω`, and `A ≡ B (mod 2)` (`d ≡ 1`) makes `(A-B)/2` an integer. -/
 private theorem exists_int_repr_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) (z : 𝓞 K) :
     ∃ k l : ℤ, z = k • (1 : 𝓞 K) + l • halfGen hmin hd4 := by
-  have hfr := finrank_rat_eq_two hmin hgen
-  obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
-    hfr (coe_notMem_range hmin) θ.isIntegral_coe
-  set a := bs.repr (z : K) 0 with ha
-  set c := bs.repr (z : K) 1 with hc
-  have hz : (z : K) = algebraMap ℚ K a + algebraMap ℚ K c * (θ : K) := by
-    have hsum := bs.sum_repr (z : K)
-    rw [Fin.sum_univ_two, hbs] at hsum
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_one] at hsum
-    rw [← hsum, Algebra.smul_def, Algebra.smul_def, mul_one]
-  obtain ⟨⟨A, hA⟩, ⟨N, hN⟩⟩ := exists_intCast_coords hmin hgen hz
-  have h2c : (d : ℚ) * (2 * c) ^ 2 = ((A ^ 2 - 4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hN]; ring
-  have hcden : (2 * c).den = 1 := den_eq_one_of_squarefree_mul_sq_isInt hsf h2c
-  obtain ⟨B, hB⟩ : ∃ B : ℤ, (B : ℚ) = 2 * c :=
-    ⟨(2 * c).num, by rw [← Rat.num_div_den (2 * c), hcden]; simp⟩
-  have hABN : A ^ 2 - d * B ^ 2 = 4 * N := by
-    have : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hB, hN]; ring
-    exact_mod_cast this
+  obtain ⟨A, B, N, hz, hABN⟩ := exists_half_int_coords hmin hgen hsf z
   obtain ⟨m, hm⟩ := two_dvd_sub_of_sq_sub_mul_sq hd4 hABN
-  refine ⟨m, B, RingOfIntegers.coe_injective ?_⟩
-  have hω : (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := rfl
-  have haA : a = (A : ℚ) / 2 := by rw [hA]; ring
-  have hcB : c = (B : ℚ) / 2 := by rw [hB]; ring
   have hmABK : (A : K) - (B : K) = 2 * (m : K) := by exact_mod_cast hm
+  -- Compare in `K` (the coercion `𝓞 K → K` is injective); `ω = (1+θ)/2`, so `θ = 2ω - 1` and the
+  -- half-integer coordinates combine to `(A-B)/2 · 1 + B · ω = m · 1 + B · ω`.
+  refine ⟨m, B, RingOfIntegers.coe_injective ?_⟩
   change (z : K) = ((m • (1 : 𝓞 K) + B • halfGen hmin hd4) : K)
-  rw [hz, haA, hcB]
-  push_cast [zsmul_eq_mul, map_intCast, map_div₀, map_ofNat, hω]
+  rw [hz]
+  push_cast [zsmul_eq_mul, map_intCast, map_div₀, map_ofNat, coe_halfGen]
   field_simp
   linear_combination hmABK
 
@@ -280,7 +270,7 @@ theorem discr_eq_of_squarefree_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 
   have hfr := finrank_rat_eq_two hmin hgen
   have hωnotmem : ((1 + (θ : K)) / 2) ∉ (algebraMap ℚ K).range := by
     rintro ⟨q, hq⟩
-    exact coe_notMem_range hmin ⟨2 * q - 1, by rw [map_sub, map_mul, map_one, map_ofNat, hq]; ring⟩
+    exact gen_notMem_range hmin ⟨2 * q - 1, by rw [map_sub, map_mul, map_one, map_ofNat, hq]; ring⟩
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr hωnotmem (isIntegral_half_gen hmin hd4)
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((d : ℤ) : ℚ) := by
@@ -291,10 +281,13 @@ theorem discr_eq_of_squarefree_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 
     obtain ⟨k, l, hkl⟩ := exists_int_repr_one hmin hgen hsf hd4 z
     have hval0 : bs 0 = (1 : K) := by rw [hbs]; rfl
     have hval1 : bs 1 = (1 + (θ : K)) / 2 := by rw [hbs]; rfl
+    -- The basis vectors `⟨bs 0, _⟩, ⟨bs 1, _⟩` of `𝓞 K` are `1` and `ω = (1+θ)/2`; check on the
+    -- coercion to `K` (injective), where `⟨bs i, _⟩` reduces definitionally to `bs i`.
     have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
       apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
     have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = halfGen hmin hd4 := by
-      apply RingOfIntegers.coe_injective; change bs 1 = (1 + (θ : K)) / 2; exact hval1
+      apply RingOfIntegers.coe_injective; rw [coe_halfGen]; change bs 1 = (1 + (θ : K)) / 2
+      exact hval1
     have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
       e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
     have hω : halfGen hmin hd4 ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
@@ -334,7 +327,7 @@ theorem discr_eq_four_mul_of_emod_four_ne_one : NumberField.discr K = 4 * d := b
   have hfr := finrank_rat_eq_two hmin hgen
   have hd4' := emod_four_eq_two_or_three hsf hd4
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
-    hfr (coe_notMem_range hmin) θ.isIntegral_coe
+    hfr (gen_notMem_range hmin) θ.isIntegral_coe
   -- Discriminant of `{1, θ}` is `4d` (`discr_one_gen`).
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((4 * d : ℤ) : ℚ) := by
     rw [hbs]; exact discr_one_gen hmin hgen

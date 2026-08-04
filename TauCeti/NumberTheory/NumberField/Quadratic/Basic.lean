@@ -8,6 +8,7 @@ public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.LinearAlgebra.Matrix.Notation
+public import TauCeti.FieldTheory.Trace
 
 /-!
 # Basics for quadratic number fields
@@ -21,8 +22,13 @@ minimal polynomial over `ℤ` is `X² - d`. These feed both the prime-splitting 
 * `TauCeti.NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
 * `TauCeti.NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
 * `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
-* `TauCeti.NumberField.trace_coe_eq_zero`: the trace of the generator is `0`.
+* `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
+
+The trace and discriminant computations reuse the generic quadratic-extension API
+`TauCeti.NumberField.trace_eq_zero_of_sq_ratCast` and
+`TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap` from `TauCeti.FieldTheory.Trace`.
 -/
 
 public section
@@ -63,34 +69,35 @@ theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
   have := congrArg (algebraMap (𝓞 K) K) h
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
-/-- The trace of the generator vanishes: `Tr(θ) = 0` (the `X`-coefficient of `X² - d` is `0`). -/
-theorem trace_coe_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Algebra.trace ℚ K (θ : K) = 0 := by
-  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  have hpbmin : minpoly ℚ (PowerBasis.ofAdjoinEqTop' hint hgen).gen = X ^ 2 - C ((d : ℤ) : ℚ) := by
-    rw [PowerBasis.ofAdjoinEqTop'_gen]; exact minpoly_rat_quadratic hmin
-  have hnc : ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).nextCoeff = 0 := by
-    rw [nextCoeff_of_natDegree_pos (by rw [natDegree_X_pow_sub_C]; norm_num),
-      natDegree_X_pow_sub_C, coeff_sub, coeff_X_pow, coeff_C]
-    norm_num
-  rw [← PowerBasis.ofAdjoinEqTop'_gen hint hgen, PowerBasis.trace_gen_eq_nextCoeff_minpoly,
-    hpbmin, hnc, neg_zero]
+/-- The generator is irrational: `θ ∉ ℚ`. Were `θ = q` for some `q : ℚ`, its `ℚ`-minimal
+polynomial would divide `X - q` and so have degree `≤ 1`, contradicting `minpoly ℚ θ = X² - d`. -/
+theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    (θ : K) ∉ (algebraMap ℚ K).range := by
+  rintro ⟨q, hq⟩
+  have hdvd : minpoly ℚ (algebraMap ℚ K q) ∣ (X - C q) := minpoly.dvd ℚ _ (by simp)
+  have h1 : (minpoly ℚ (algebraMap ℚ K q)).natDegree ≤ 1 := by
+    simpa [natDegree_X_sub_C] using Polynomial.natDegree_le_of_dvd hdvd (X_sub_C_ne_zero q)
+  rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
+  norm_num at h1
 
-/-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`, from the `2×2` trace form
-(`Tr 1 = 2`, `Tr θ = 0`, `Tr θ² = 2d`). -/
+/-- The trace of the generator vanishes: `Tr(θ) = 0`. This specialises the generic quadratic
+trace-vanishing fact `trace_eq_zero_of_sq_ratCast` to `θ² = d` and the irrationality of `θ`. -/
+theorem trace_gen_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    Algebra.trace ℚ K (θ : K) = 0 := by
+  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
+    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  exact trace_eq_zero_of_sq_ratCast hd' (gen_notMem_range hmin)
+
+/-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`. This specialises the generic
+square-root-basis discriminant `discr_one_elem_eq_of_sq_algebraMap` to `θ² = d`. -/
 theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (θ : K)] = ((4 * d : ℤ) : ℚ) := by
-  have hfr := finrank_rat_eq_two hmin hgen
   have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
     rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
-  have htr1 : Algebra.trace ℚ K (1 : K) = 2 := by
-    rw [← map_one (algebraMap ℚ K), Algebra.trace_algebraMap, hfr]; simp
-  rw [Algebra.discr_def, Matrix.det_fin_two]
-  simp only [Algebra.traceMatrix_apply, Algebra.traceForm_apply, Matrix.cons_val_zero,
-    Matrix.cons_val_one, mul_one, one_mul]
-  rw [← pow_two, hd', htr1, trace_coe_eq_zero hmin hgen, Algebra.trace_algebraMap, hfr]
-  simp only [nsmul_eq_mul]; push_cast; ring
+  rw [TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap (finrank_rat_eq_two hmin hgen) hd'
+    (gen_notMem_range hmin)]
+  push_cast; ring
 
 /-- The discriminant of the `ℚ`-family `{1, (1+θ)/2}` is `d`: a change of basis from `{1, θ}` by
 the matrix `!![1, 0; 1/2, 1/2]` (determinant `1/2`), so `disc = (1/2)² · 4d = d`. -/
