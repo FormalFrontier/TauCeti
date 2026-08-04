@@ -27,8 +27,6 @@ rational algebraic integer is an integer, so `χ(1)` divides `|G|`.
 
 ## Main statements
 
-* `TauCeti.Representation.sum_character_mul_character_inv`: first orthogonality for a single
-  irreducible character, in the form `∑_g χ(g) χ(g⁻¹) = |G|`.
 * `TauCeti.Representation.finrank_mul_sum_centralCharacter_eq_card`: the division-free identity
   `χ(1) · ∑_C ωᵪ(K_C) χ(g_C⁻¹) = |G|`.
 * `TauCeti.Representation.finrank_dvd_card` and `TauCeti.FDRep.finrank_dvd_card`: the degree of an
@@ -70,7 +68,7 @@ private theorem dvd_of_isIntegral_of_natCast_mul_eq {k : Type*} [Field k] [CharZ
     (isIntegral_algebraMap_iff (algebraMap ℚ k).injective).mp (hz' ▸ hz)
   obtain ⟨y, hy⟩ := IsIntegrallyClosed.algebraMap_eq_of_integral hq
   have hyq : (y : ℚ) * (n : ℚ) = (m : ℚ) := by
-    rw [show ((y : ℤ) : ℚ) = algebraMap ℤ ℚ y from rfl, hy, div_mul_cancel₀]
+    rw [← eq_intCast (algebraMap ℤ ℚ) y, hy, div_mul_cancel₀]
     exact Nat.cast_ne_zero.mpr hn
   refine Int.natCast_dvd_natCast.mp ⟨y, ?_⟩
   exact_mod_cast (by linarith : (m : ℚ) = (n : ℚ) * (y : ℚ))
@@ -78,28 +76,6 @@ private theorem dvd_of_isIntegral_of_natCast_mul_eq {k : Type*} [Field k] [CharZ
 namespace Representation
 
 variable {k G V : Type*} [Field k] [Group G] [AddCommGroup V] [Module k V]
-
-section Orthogonality
-
-variable [Fintype G] [IsAlgClosed k] [FiniteDimensional k V] (ρ : Representation k G V)
-  [ρ.IsIrreducible]
-
-/-- **First orthogonality for a single irreducible character**, in division-free form:
-`∑_g χ(g) χ(g⁻¹) = |G|`.
-
-This is Mathlib's `Representation.char_orthonormal` for `ρ` against itself, with the normalising
-factor `|G|⁻¹` cleared. -/
-theorem sum_character_mul_character_inv [Invertible (Nat.card G : k)] :
-    ∑ g : G, ρ.character g * ρ.character g⁻¹ = Nat.card G := by
-  classical
-  have hself : Nonempty (_root_.Representation.Equiv ρ ρ) :=
-    ⟨_root_.Representation.Equiv.mk (LinearEquiv.refl k V) fun g => by ext v; simp⟩
-  have h := _root_.Representation.char_orthonormal ρ ρ
-  rw [if_pos hself,
-    inv_mul_eq_iff_eq_mul₀ (Invertible.ne_zero (a := (Nat.card G : k)))] at h
-  simpa using h
-
-end Orthogonality
 
 section Divisibility
 
@@ -125,7 +101,15 @@ theorem finrank_mul_sum_centralCharacter_eq_card [Invertible (Nat.card G : k)] :
     (finrank k V : k) * ∑ C : ConjClasses G, centralCharacter ρ (classSumCenter C) *
         ClassFunction.toConjClasses (ClassFunction.ofCharacter ρ.dual) C = Nat.card G := by
   classical
-  rw [Finset.mul_sum, ← sum_character_mul_character_inv ρ,
+  -- First orthogonality for `ρ` against itself, with the normalising factor `|G|⁻¹` cleared.
+  have hself : Nonempty (_root_.Representation.Equiv ρ ρ) :=
+    ⟨_root_.Representation.Equiv.mk (LinearEquiv.refl k V) fun g => by ext v; simp⟩
+  have horth : ∑ g : G, ρ.character g * ρ.character g⁻¹ = Nat.card G := by
+    have h := _root_.Representation.char_orthonormal ρ ρ
+    rw [if_pos hself,
+      inv_mul_eq_iff_eq_mul₀ (Invertible.ne_zero (a := (Nat.card G : k)))] at h
+    simpa using h
+  rw [Finset.mul_sum, ← horth,
     ClassFunction.sum_eq_sum_conjClasses
       (⟨_, character_mul_character_inv_mem_classFunction ρ⟩ : ClassFunction k G)]
   refine Finset.sum_congr rfl fun C _ => ?_

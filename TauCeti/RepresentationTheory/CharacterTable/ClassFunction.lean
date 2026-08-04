@@ -121,7 +121,7 @@ times the single value the class function takes there.
 
 This is the substitution that turns a sum over the group, such as the one pairing two characters,
 into a sum over the columns of a character table. -/
-theorem sum_eq_sum_conjClasses [Fintype G] [DecidableEq G] (f : ClassFunction k G) :
+theorem sum_eq_sum_conjClasses [Fintype G] [Fintype (ConjClasses G)] (f : ClassFunction k G) :
     ∑ g : G, f.1 g = ∑ C : ConjClasses G, (Nat.card C.carrier : k) * toConjClasses f C := by
   classical
   rw [← Fintype.sum_fiberwise (ConjClasses.mk (α := G)) fun g => f.1 g]
