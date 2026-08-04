@@ -102,21 +102,13 @@ private theorem continuousMap_terminal_eq_of_ode_unique
     (γ.continuous.comp continuous_projIcc).continuousOn
   have hgS : ∀ t ∈ Set.Ico (0 : ℝ) 1, g t ∈ S := fun t _ =>
     hγS (Set.projIcc 0 1 zero_le_one t)
-  have hprojZero : Set.projIcc 0 1 zero_le_one 0 =
-      (⟨0, le_rfl, zero_le_one⟩ : Set.Icc (0 : ℝ) 1) := by
-    ext
-    simp
   have hgaZero : g 0 = a 0 := by
-    simpa only [g, hprojZero] using hγzero.trans haZero.symm
+    simpa only [g, Set.projIcc_left] using hγzero.trans haZero.symm
   have hunique := ODE_solution_unique_of_mem_Icc_right
     (v := fun _ y => F (p, y)) (s := fun _ => S)
     (fun _ _ => hfixed) hgCont hγderiv hgS haCont haDeriv haS hgaZero
   have hone := hunique (⟨zero_le_one, le_rfl⟩ : (1 : ℝ) ∈ Set.Icc 0 1)
-  have hprojOne : Set.projIcc 0 1 zero_le_one 1 =
-      (⟨1, zero_le_one, le_rfl⟩ : Set.Icc (0 : ℝ) 1) := by
-    ext
-    simp
-  simpa only [g, hprojOne] using hone
+  simpa only [g, Set.projIcc_right] using hone
 
 /-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth at zero. -/
 theorem contMDiffAt_mulInvariantExp_modelSpace_zero
