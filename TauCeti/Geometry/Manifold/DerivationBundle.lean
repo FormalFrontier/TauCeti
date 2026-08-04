@@ -155,6 +155,105 @@ theorem tangentToPointDerivation_injective
   rw [← hderiv v, ← hderiv w]
   exact hfv
 
+/-- **Hadamard's lemma in coordinates.** Subtracting its value at `x` writes a smooth real
+function as a combination of the coordinate functions of any finitely-indexed basis, each taken
+relative to its own value at `x`, with smooth coefficients. At the base point those coefficients
+are the directional derivatives along the basis. -/
+private theorem exists_contMDiffMap_hadamard_coords {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {ι : Type*} [Fintype ι]
+    (f : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) (x : E) (b : Module.Basis ι ℝ E) :
+    ∃ a : ι → C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯,
+      (∀ i, a i x = fderiv ℝ f x (b i)) ∧
+        ∀ y, f y - f x = ∑ i, a i y * (b.coord i y - b.coord i x) := by
+  refine ⟨fun i ↦ ⟨fun y ↦ hadamardFactor f x y (b i), ?_⟩, fun i ↦ ?_, ?_⟩
+  · have hfac : ContDiff ℝ ∞ (hadamardFactor f x) :=
+      f.contMDiff.contDiff.contDiff_hadamardFactor f x
+    -- Applying a smooth continuous-linear-map-valued function to the constant vector `b i`
+    -- is the available API for smoothness of each scalar Hadamard factor.
+    exact (hfac.clm_apply (show ContDiff ℝ ∞ (fun _ : E ↦ b i) from contDiff_const)).contMDiff
+  · simp
+  · intro y
+    calc
+      f y - f x = hadamardFactor f x y (y - x) :=
+        (f.contMDiff.contDiff.of_le (by norm_num)).sub_eq_hadamardFactor_apply f x y
+      _ = ∑ i, hadamardFactor f x y (b i) * (b.coord i y - b.coord i x) := by
+        rw [← b.sum_repr (y - x), map_sum]
+        apply Finset.sum_congr rfl
+        intro i _
+        rw [map_smul]
+        simp [mul_comm]
+
+/-- **Hadamard's identity in the algebra of smooth functions.** A pointwise factorization of
+`g - g x` through the functions `c i`, with coefficients `a i`, is an identity between the bundled
+smooth maps themselves, the constants appearing as the images of `algebraMap`.
+
+This is the pointwise-to-bundled transport: the hypothesis speaks of values, the conclusion of
+elements of `C^∞⟮…⟯`, and the two are related by evaluation being a ring homomorphism. -/
+private theorem sub_algebraMap_eq_sum_mul_sub_algebraMap {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {ι : Type*} [Fintype ι] (x : E)
+    (g : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯)
+    (a c : ι → C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯)
+    (h : ∀ y, g y - g x = ∑ i, a i y * (c i y - c i x)) :
+    g - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (g x) =
+      ∑ i, a i * (c i - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (c i x)) := by
+  ext y
+  calc
+    (g - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (g x)) y = g y - g x := rfl
+    _ = ∑ i, a i y * (c i y - c i x) := h y
+    _ = _ := by
+      -- Evaluation of bundled smooth maps is a ring homomorphism, but the pointwise coercion on
+      -- the left does not expose that homomorphism to `rw` automatically.
+      change _ = ContMDiffMap.evalRingHom y _
+      rw [map_sum]
+      exact Finset.sum_congr rfl fun i _ ↦ rfl
+
+/-- The constant smooth map `algebraMap ℝ C^∞⟮…⟯ s` takes the value `s` at every point.
+
+The algebra structure on smooth maps is pointwise, so this holds by unfolding; stating it gives
+that normalization a name, so the proofs below need not rely on it silently. -/
+private theorem algebraMap_contMDiffMap_apply {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (s : ℝ) (y : E) :
+    (algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ s) y = s :=
+  rfl
+
+/-- **Subtracting its value at the base point does not change a derivation**, since the constant
+subtracted off is annihilated by `D`. -/
+private theorem derivation_sub_algebraMap {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {x : E}
+    (D : PointDerivation (modelWithCornersSelf ℝ E) x)
+    (q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+    D (q - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (q x)) = D q := by
+  -- `D`'s domain is a type synonym for `C^∞⟮…⟯`, so a difference formed in the unpointed type
+  -- does not match `map_sub`/`map_algebraMap` as stated. These restatements supply the form `rw`
+  -- needs, each holding by definitional unfolding alone; isolating them here keeps that
+  -- bookkeeping out of every consumer.
+  have hsub (u w : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) : D (u - w) = D u - D w :=
+    D.map_sub _ _
+  have hconst (s : ℝ) :
+      D (algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ s) = 0 :=
+    D.map_algebraMap s
+  rw [hsub, hconst, sub_zero]
+
+/-- **The Leibniz rule collapses once the second factor vanishes at the base point.** Subtracting
+`q x` from `q` makes that factor vanish at `x`, and the Leibniz scalar action is evaluation at `x`,
+so the `D p` term drops out. What survives is `D q`, weighted by `p x` — the subtracted constant
+itself contributing nothing, being annihilated by `D`. -/
+private theorem derivation_mul_sub_algebraMap {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {x : E}
+    (D : PointDerivation (modelWithCornersSelf ℝ E) x)
+    (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
+    D (p * (q - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (q x))) = p x * D q := by
+  set r : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
+    q - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (q x) with hr
+  have hleibniz := D.leibniz p r
+  -- Unfold pointed-map evaluation in the Leibniz identity. The scalar action there is
+  -- evaluation at `x`, which is definitionally the displayed multiplication.
+  change D (p * r) = p x * D r + r x * D p at hleibniz
+  have hrx : r x = 0 := by
+    rw [hr]
+    simp [algebraMap_contMDiffMap_apply]
+  rw [hleibniz, hrx, hr, derivation_sub_algebraMap, zero_mul, add_zero]
+
 private theorem tangentToPointDerivation_surjective_model
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (x : E) :
     Function.Surjective
@@ -175,63 +274,16 @@ private theorem tangentToPointDerivation_surjective_model
   -- their evaluation here so the rest of the argument can stay in the ordinary smooth-map API.
   change mvfderiv (modelWithCornersSelf ℝ E) f' x v = D f'
   rw [mvfderiv, mfderiv_eq_fderiv]
-  -- Hadamard's lemma factors `f - f(x)` through the coordinate functions. The factors are smooth,
+  -- Hadamard's lemma factors `f - f(x)` through the coordinate functions, with smooth factors,
   -- so this identity lives in the algebra on which the derivation acts.
-  let a (i : Fin (Module.finrank ℝ E)) : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
-    ⟨fun y ↦ hadamardFactor f' x y (b i), by
-      have hfac : ContDiff ℝ ∞ (hadamardFactor f' x) :=
-        f'.contMDiff.contDiff.contDiff_hadamardFactor f' x
-      -- Applying a smooth continuous-linear-map-valued function to the constant vector `b i`
-      -- is the available API for smoothness of each scalar Hadamard factor.
-      exact (hfac.clm_apply (show ContDiff ℝ ∞ (fun _ : E ↦ b i) from
-        contDiff_const)).contMDiff⟩
-  let k : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
-    ⟨fun _ ↦ f' x, contDiff_const.contMDiff⟩
-  let kcoord (i : Fin (Module.finrank ℝ E)) :
-      C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ :=
-    ⟨fun _ ↦ c i x, contDiff_const.contMDiff⟩
-  have hfactor : f' - k = ∑ i, a i * (c i - kcoord i) := by
-    ext y
-    calc
-      (f' - k) y = f' y - f' x := rfl
-      _ = hadamardFactor f' x y (y - x) :=
-        (f'.contMDiff.contDiff.of_le (by norm_num)).sub_eq_hadamardFactor_apply f' x y
-      _ = ∑ i, hadamardFactor f' x y (b i) * (b.coord i y - b.coord i x) := by
-        rw [← b.sum_repr (y - x), map_sum]
-        apply Finset.sum_congr rfl
-        intro i _
-        rw [map_smul]
-        simp [b, mul_comm]
-      _ = (∑ i, a i * (c i - kcoord i)) y := by
-        -- Evaluation of bundled smooth maps is a ring homomorphism, but the pointwise coercion on
-        -- the left does not expose that homomorphism to `rw` automatically.
-        change _ = ContMDiffMap.evalRingHom y (∑ i, a i * (c i - kcoord i))
-        rw [map_sum]
-        apply Finset.sum_congr rfl
-        intro i _
-        rfl
-  -- `D`'s domain is a type synonym for `C^∞⟮…⟯`, so `D` applies to ordinary smooth maps directly.
-  -- The differences and sums below nevertheless live *syntactically* in the unpointed type, so
-  -- `rw` cannot use the derivation laws as stated; these restatements supply the matching form,
-  -- each holding by definitional unfolding alone.
-  have hconst (r : ℝ) :
-      D (⟨fun _ : E ↦ r, contDiff_const.contMDiff⟩ :
-        C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) = 0 :=
-    D.map_algebraMap r
-  have hsub (p q : C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) : D (p - q) = D p - D q :=
-    D.map_sub _ _
+  obtain ⟨a, hax, ha⟩ := exists_contMDiffMap_hadamard_coords f' x b
+  have hfactor := sub_algebraMap_eq_sum_mul_sub_algebraMap x f' a c ha
+  -- `D`'s domain is a type synonym for `C^∞⟮…⟯`, so the sum below lives *syntactically* in the
+  -- unpointed type and `rw` cannot use `map_sum` as stated; this restatement supplies the
+  -- matching form, and holds by definitional unfolding alone.
   have hsum (q : Fin (Module.finrank ℝ E) → C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯) :
       D (∑ i, q i) = ∑ i, D (q i) :=
     map_sum D _ _
-  have hterm (i : Fin (Module.finrank ℝ E)) :
-      D (a i * (c i - kcoord i)) = fderiv ℝ f' x (b i) * D (c i) := by
-    have hleibniz := D.leibniz (a i) (c i - kcoord i)
-    -- Unfold pointed-map evaluation in the Leibniz identity. The scalar action there is
-    -- evaluation at `x`, which is definitionally the displayed multiplication.
-    change D (a i * (c i - kcoord i)) =
-      a i x * D (c i - kcoord i) + (c i x - kcoord i x) * D (a i) at hleibniz
-    rw [hleibniz, hsub, hconst]
-    simp [a, kcoord]
   calc
     fderiv ℝ f' x v = ∑ i, fderiv ℝ f' x (b i) * D (c i) := by
       -- Unfold the chosen vector `v` across the tangent-space synonym before using linearity.
@@ -241,11 +293,13 @@ private theorem tangentToPointDerivation_surjective_model
       intro i _
       rw [map_smul]
       simp [smul_eq_mul, mul_comm]
-    _ = D (∑ i, a i * (c i - kcoord i)) := by
+    _ = D (∑ i, a i * (c i - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (c i x))) := by
       rw [hsum]
-      exact Finset.sum_congr rfl fun i _ ↦ (hterm i).symm
-    _ = D (f' - k) := congrArg D hfactor.symm
-    _ = D f' := by rw [hsub, hconst, sub_zero]
+      exact Finset.sum_congr rfl fun i _ ↦ by
+        rw [derivation_mul_sub_algebraMap, hax]
+    _ = D (f' - algebraMap ℝ C^∞⟮modelWithCornersSelf ℝ E, E; ℝ⟯ (f' x)) :=
+      congrArg D hfactor.symm
+    _ = D f' := derivation_sub_algebraMap D f'
 
 namespace PointDerivation
 

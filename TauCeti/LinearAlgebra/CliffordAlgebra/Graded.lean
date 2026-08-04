@@ -81,18 +81,15 @@ private theorem equivExteriorFiltration_map_previous (Q : QuadraticForm R M) [In
 
 private noncomputable def equivExteriorFiltrationQuotient (Q : QuadraticForm R M)
     [Invertible (2 : R)] (k : ℕ) :
-    (filtration Q (k + 1) ⧸
-      Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k)) ≃ₗ[R]
-      (filtration (0 : QuadraticForm R M) (k + 1) ⧸
-        Submodule.comap (filtration (0 : QuadraticForm R M) (k + 1)).subtype
-          (filtration (0 : QuadraticForm R M) k)) :=
+    FiltrationGradedPiece Q (k + 1) ≃ₗ[R]
+      FiltrationGradedPiece (0 : QuadraticForm R M) (k + 1) :=
   Submodule.Quotient.equiv _ _ (equivExteriorFiltration Q (k + 1))
-    (equivExteriorFiltration_map_previous Q k)
+    (by
+      simpa only [filtrationPrevious_succ] using equivExteriorFiltration_map_previous Q k)
 
 /-- The successive degree quotient of a Clifford algebra is the corresponding exterior power. -/
 noncomputable def filtrationGradedEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
-    (filtration Q (k + 1) ⧸
-      Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k)) ≃ₗ[R] ⋀[R]^(k + 1) M :=
+    FiltrationGradedPiece Q (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
   (equivExteriorFiltrationQuotient Q k).trans (zeroFormFiltrationQuotientEquivExteriorPower k)
 
 /-- On quotient representatives, `filtrationGradedEquiv` first applies `equivExterior`. -/

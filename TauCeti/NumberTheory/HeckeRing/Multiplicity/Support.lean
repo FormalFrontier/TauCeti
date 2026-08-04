@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.GroupTheory.DoubleCoset
+public import TauCeti.GroupTheory.DoubleCoset.Basic
 public import TauCeti.NumberTheory.HeckeRing.Multiplicity.Basic
 
 /-!

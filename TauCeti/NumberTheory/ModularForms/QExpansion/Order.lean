@@ -84,6 +84,13 @@ lemma qExpansion_nat_mul_order {g : ℍ → ℂ} {m : ℕ} (hh : 0 < h) (hm : 0 
     analyticOrderAt_congr (cuspFunction_nat_mul_eventuallyEq hh hm hg_per hg_bdd hg_mdiff),
     TauCeti.analyticOrderAt_comp_pow_zero han hm]
 
+/-- The order of the `q`-expansion at period `h` is at most its order at period `m * h`. -/
+lemma qExpansion_order_le_qExpansion_nat_mul_order {g : ℍ → ℂ} {m : ℕ} (hh : 0 < h) (hm : 0 < m)
+    (hg_per : Periodic (g ∘ ofComplex) h) (hg_bdd : IsBoundedAtImInfty g) (hg_mdiff : MDiff g) :
+    (qExpansion h g).order ≤ (qExpansion (m * h : ℝ) g).order :=
+  (ENat.self_le_mul_right _ (mod_cast hm.ne')).trans
+    (qExpansion_nat_mul_order hh hm hg_per hg_bdd hg_mdiff).ge
+
 end TauCeti
 
 end

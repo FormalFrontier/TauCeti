@@ -77,7 +77,7 @@ lemma energyIntegrand_zero_drift_comm_of_isSymm {A : Matrix n n ℝ} (hA : A.IsS
 Downstream energy forms that need the same integrand to be both symmetric and bounded below
 pair this with `min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self`.  For a
 nonsymmetric principal coefficient, first pass to `coefficientSymmetricPart` using the uniform
-ellipticity API in `TauCeti.Analysis.PDE.Uniform.Ellipticity`, then apply this lemma to the
+ellipticity API in `TauCeti.Analysis.PDE.Ellipticity.Basic`, then apply this lemma to the
 symmetric coefficient field. -/
 @[simp]
 lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm) (c : ℝ) :
