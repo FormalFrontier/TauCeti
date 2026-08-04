@@ -36,6 +36,20 @@ open scoped ContDiff Manifold Topology
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
 
+/-- Convert an ordinary derivative into the model-space derivative expected inside a manifold
+derivative. This is the single boundary where the tangent spaces of the self model on `ℝ` and of
+`I` are identified with their model vector spaces `ℝ` and `E`. -/
+private theorem hasFDerivWithinAt_model_tangent_spaces
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+    {x : M} {φ : ℝ → E} {t : ℝ} {v : TangentSpace I x}
+    (hφ : HasDerivAt φ v t) :
+    HasFDerivWithinAt φ
+      (ContinuousLinearMap.toSpanSingleton ℝ v :
+        TangentSpace 𝓘(ℝ, ℝ) t →L[ℝ] TangentSpace I x)
+      Set.univ t := by
+  change HasFDerivWithinAt φ (ContinuousLinearMap.toSpanSingleton ℝ v) Set.univ t
+  exact hφ.hasFDerivAt.hasFDerivWithinAt
+
 /-- A coordinate curve whose values stay in an extended-chart target and whose derivative is the
 coordinate expression of a vector field gives a manifold integral curve after applying the inverse
 chart. -/
@@ -81,8 +95,7 @@ theorem IsMIntegralCurveAt.of_extChartAt_symm
   -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
   rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
   rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
-  convert (hd'.hasFDerivAt.hasFDerivWithinAt (s := Set.univ)) using 1
-  all_goals rfl
+  exact hasFDerivWithinAt_model_tangent_spaces hd'
 
 private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] {n : ℕ} {f : ℝ → F} {v : F → F} {s : Set ℝ} {u : Set F}
