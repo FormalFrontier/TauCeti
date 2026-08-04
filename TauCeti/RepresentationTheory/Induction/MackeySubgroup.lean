@@ -142,22 +142,24 @@ theorem mackeyToConjH_injective : Function.Injective (mackeyToConjH s H K) :=
 
 section Special
 
-@[simp]
+-- Not `@[simp]`: `simp` reaches `K ⊓ H` here through `mackeySubgroup_of_mem` and `one_mem`.
 theorem mackeySubgroup_one (H K : Subgroup G) : mackeySubgroup 1 H K = K ⊓ H := by
   rw [mackeySubgroup_def, conj_one_smul]
 
 /-- A representative lying in `H` gives back the plain intersection `K ⊓ H`. -/
+@[simp]
 theorem mackeySubgroup_of_mem (hs : s ∈ H) : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.conj_smul_eq_self_of_mem hs]
 
 /-- For a normal `H` the Mackey subgroup does not depend on the representative at all: it is
 `K ⊓ H` for every `s`.  This is why Clifford theory over a normal subgroup only ever sees the one
 intersection. -/
+@[simp]
 theorem mackeySubgroup_of_normal [H.Normal] : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.Normal.conj_smul_eq_self]
 
 /-- Inducing from the whole group leaves nothing to intersect: the Mackey subgroup is `K`. -/
-@[simp]
+-- Not `@[simp]`: `simp` reaches `K` here through `mackeySubgroup_of_mem` and `Subgroup.mem_top`.
 theorem mackeySubgroup_top_left (s : G) (K : Subgroup G) : mackeySubgroup s ⊤ K = K := by
   ext x; simp
 
