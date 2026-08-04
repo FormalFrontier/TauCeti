@@ -129,11 +129,12 @@ def mackeyToConjH : mackeySubgroup s H K →* (MulAut.conj s • H : Subgroup G)
   Subgroup.inclusion mackeySubgroup_le_conj
 
 @[simp]
-theorem coe_mackeyToK (x : mackeySubgroup s H K) : (mackeyToK s H K x : G) = (x : G) :=
+theorem coe_mackeyToK_apply (x : mackeySubgroup s H K) : (mackeyToK s H K x : G) = (x : G) :=
   (rfl)
 
 @[simp]
-theorem coe_mackeyToConjH (x : mackeySubgroup s H K) : (mackeyToConjH s H K x : G) = (x : G) :=
+theorem coe_mackeyToConjH_apply (x : mackeySubgroup s H K) :
+    (mackeyToConjH s H K x : G) = (x : G) :=
   (rfl)
 
 theorem mackeyToK_injective : Function.Injective (mackeyToK s H K) :=
@@ -247,10 +248,15 @@ finiteness hypothesis. -/
 theorem card_doubleCoset_mul_card_mackeySubgroup (s : G) (H K : Subgroup G) :
     Nat.card (DoubleCoset.doubleCoset s (K : Set G) (H : Set G)) * Nat.card (mackeySubgroup s H K)
       = Nat.card K * Nat.card H := by
+  -- The double coset is `(Ks)H`, so `Subgroup.card_mul_eq_card_subgroup_mul_card_quotient` counts
+  -- it as `|H|` times the size of the image of `Ks` in `G ⧸ H`, and that image is the orbit.
+  have himg : (QuotientGroup.mk : G → G ⧸ H) '' ((K : Set G) * {s}) = orbit K ((s : G ⧸ H)) :=
+    QuotientGroup.mk_surjective.preimage_injective <| by
+      rw [QuotientGroup.preimage_image_mk_eq_mul, preimage_orbit_eq_doubleCoset,
+        DoubleCoset.doubleCoset]
   have hdc : Nat.card (DoubleCoset.doubleCoset s (K : Set G) (H : Set G))
       = Nat.card H * Nat.card (orbit K ((s : G ⧸ H))) := by
-    rw [← preimage_orbit_eq_doubleCoset,
-      Nat.card_congr (QuotientGroup.preimageMkEquivSubgroupProdSet H _), Nat.card_prod]
+    rw [DoubleCoset.doubleCoset, Subgroup.card_mul_eq_card_subgroup_mul_card_quotient, himg]
   have hK : Nat.card (mackeySubgroup s H K) * (mackeySubgroup s H K).relIndex K = Nat.card K := by
     rw [Subgroup.relIndex,
       ← Nat.card_congr (Subgroup.subgroupOfEquivOfLe mackeySubgroup_le_right).toEquiv]

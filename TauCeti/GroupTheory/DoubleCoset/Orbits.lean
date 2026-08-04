@@ -71,6 +71,7 @@ section SingleCoset
 
 /-- The double coset `KsH` consists exactly of those `x` whose class in `G ⧸ H` lies in the
 `K`-orbit of the class of `s`. -/
+@[simp]
 theorem mem_doubleCoset_iff_mk_mem_orbit (s : G) (H K : Subgroup G) {x : G} :
     x ∈ DoubleCoset.doubleCoset s (K : Set G) (H : Set G) ↔
       ((x : G ⧸ H)) ∈ orbit K ((s : G ⧸ H)) := by
