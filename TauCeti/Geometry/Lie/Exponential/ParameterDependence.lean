@@ -51,9 +51,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-/-- A tangent vector is represented by the model vector type `E`. This private helper isolates the
+/-- A tangent vector is represented by the model vector type `E`. This helper isolates the
 definitional identification used when a tangent-bundle value enters coordinate calculus. -/
-private abbrev tangentVectorModelSpace {g : G} (v : TangentSpace I g) : E := v
+abbrev tangentVectorModelSpace {g : G} (v : TangentSpace I g) : E := v
 
 /-- The left-invariant vector field, expressed in the identity chart and parameterized by its
 generating tangent vector in the model space. -/
@@ -64,16 +64,17 @@ noncomputable def mulInvariantCoordinateVectorField [IsManifold I 1 G] (p : E ×
 
 /-- The parameterized coordinate field is the invariant vector field transported through the
 identity chart. -/
-@[simp]
 theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) =
       tangentCoordChange I ((extChartAt I (1 : G)).symm y) (1 : G)
         ((extChartAt I (1 : G)).symm y)
-        (show E from mulInvariantVectorField (I := I) (G := G)
-          (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
+        (tangentVectorModelSpace (I := I) <|
+          mulInvariantVectorField (I := I) (G := G)
+            (v : GroupLieAlgebra I G) ((extChartAt I (1 : G)).symm y)) := by
   rfl
 
 /-- The invariant coordinate field is additive in its generating vector. -/
+@[simp]
 theorem mulInvariantCoordinateVectorField_add [IsManifold I 1 G] (v w y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v + w, y) =
       mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) +
@@ -102,6 +103,7 @@ theorem mulInvariantCoordinateVectorField_add [IsManifold I 1 G] (v w y : E) :
         (v : GroupLieAlgebra I G) (w : GroupLieAlgebra I G)) g
 
 /-- The invariant coordinate field respects scalar multiplication in its generating vector. -/
+@[simp]
 theorem mulInvariantCoordinateVectorField_smul [IsManifold I 1 G] (c : ℝ) (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (c • v, y) =
       c • mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) := by
@@ -126,6 +128,7 @@ theorem mulInvariantCoordinateVectorField_smul [IsManifold I 1 G] (c : ℝ) (v y
         c (v : GroupLieAlgebra I G)) g
 
 /-- At the identity coordinate, the parameterized invariant field equals its generator. -/
+@[simp]
 theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G)
       (v, I (chartAt H (1 : G) (1 : G))) = v := by
@@ -137,13 +140,15 @@ theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
   have hsymm : (extChartAt I (1 : G)).symm (extChartAt I (1 : G) (1 : G)) = 1 :=
     (extChartAt I (1 : G)).left_inv (mem_extChartAt_source (I := I) (1 : G))
   rw [hsymm]
-  have hfieldOne : (show E from mulInvariantVectorField (I := I) (G := G)
-      (v : GroupLieAlgebra I G) 1) = v := by
+  have hfieldOne : tangentVectorModelSpace (I := I)
+      (mulInvariantVectorField (I := I) (G := G)
+        (v : GroupLieAlgebra I G) 1) = v := by
     exact mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G)
   rw [hfieldOne]
   exact tangentCoordChange_self (mem_extChartAt_source (I := I) (1 : G))
 
 /-- The invariant coordinate field vanishes when its generating vector vanishes. -/
+@[simp]
 theorem mulInvariantCoordinateVectorField_zero [IsManifold I 1 G] (y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (0, y) = 0 := by
   simpa using mulInvariantCoordinateVectorField_smul
