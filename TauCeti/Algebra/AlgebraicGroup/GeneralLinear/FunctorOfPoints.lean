@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.CoordinateHopfAlgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
 public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 
 /-!

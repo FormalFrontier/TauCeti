@@ -7,7 +7,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.RingTheory.Localization.Away.AdjoinRoot
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.CoordinateBialgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.Bialgebra
 
 /-!
 # The general linear coordinate Hopf algebra
@@ -35,6 +35,8 @@ hypothesis.
 * `TauCeti.GeneralLinear.antipode`: the inverse-matrix antipode.
 * `TauCeti.GeneralLinear.hopfAlgebra`: the selected Hopf-algebra dictionary.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebra`: the bundled commutative Hopf algebra.
+* `TauCeti.GeneralLinear.adjoin_coordinateHopfAlgebra_X_union_antipode_X`: its generic entries
+  and their antipode images generate its carrier as an algebra.
 * `TauCeti.GeneralLinear.finiteTypeCoordinateHopfAlgebra`: its finite-type package.
 
 ## References
@@ -299,6 +301,60 @@ theorem antipode_det_localizedGenericMatrix :
   rw [AlgHom.map_det, AlgHom.mapMatrix_apply, map_antipode_localizedGenericMatrix,
     Matrix.det_nonsing_inv]
 
+private theorem adjoin_X_union_antipode_X :
+    Algebra.adjoin R
+        (Set.range (fun ij : Fin n × Fin n =>
+          coordinateRingMap R n (MvPolynomial.X ij)) ∪
+        Set.range (fun ij : Fin n × Fin n =>
+          antipode R n (coordinateRingMap R n (MvPolynomial.X ij)))) =
+      ⊤ := by
+  let B : Subalgebra R (CoordinateRing R n) :=
+    Algebra.adjoin R
+      (Set.range (fun ij : Fin n × Fin n =>
+        coordinateRingMap R n (MvPolynomial.X ij)) ∪
+      Set.range (fun ij : Fin n × Fin n =>
+        antipode R n (coordinateRingMap R n (MvPolynomial.X ij))))
+  have hpoly : ∀ p : MatrixMonoid.CoordinateRing R n, coordinateRingMap R n p ∈ B := by
+    intro p
+    have hrange :
+        (MvPolynomial.aeval (fun ij : Fin n × Fin n =>
+          coordinateRingMap R n (MvPolynomial.X ij))).range ≤ B := by
+      rw [← Algebra.adjoin_range_eq_range_aeval]
+      exact Algebra.adjoin_mono Set.subset_union_left
+    have heval :
+        MvPolynomial.aeval (fun ij : Fin n × Fin n =>
+          coordinateRingMap R n (MvPolynomial.X ij)) = coordinateRingMap R n := by
+      apply MvPolynomial.algHom_ext
+      intro ij
+      simp
+    rw [← heval]
+    exact hrange ⟨p, rfl⟩
+  have hantipodePoly : ∀ p : MatrixMonoid.CoordinateRing R n,
+      antipode R n (coordinateRingMap R n p) ∈ B := by
+    intro p
+    rw [antipode_coordinateRingMap]
+    have hrange :
+        (MvPolynomial.aeval (fun ij : Fin n × Fin n =>
+          antipode R n (coordinateRingMap R n (MvPolynomial.X ij)))).range ≤ B := by
+      rw [← Algebra.adjoin_range_eq_range_aeval]
+      exact Algebra.adjoin_mono Set.subset_union_right
+    exact hrange ⟨p, by simp⟩
+  have hinv : Ring.inverse (Matrix.det (localizedGenericMatrix R n)) ∈ B := by
+    rw [← antipode_det_localizedGenericMatrix, det_localizedGenericMatrix]
+    exact hantipodePoly _
+  apply Algebra.eq_top_iff.mpr
+  intro z
+  obtain ⟨m, p, hz⟩ := IsLocalization.Away.surj
+    (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) z
+  have hz' : z = coordinateRingMap R n p *
+      Ring.inverse (Matrix.det (localizedGenericMatrix R n)) ^ m := by
+    rw [Ring.inverse_pow]
+    apply (Ring.eq_mul_inverse_iff_mul_eq _ _ _
+      ((isUnit_det_localizedGenericMatrix R n).pow m)).mpr
+    simpa [det_localizedGenericMatrix] using hz
+  rw [hz']
+  exact B.mul_mem (hpoly p) (B.pow_mem hinv m)
+
 private theorem comul_coassoc :
     (Algebra.TensorProduct.assoc R R R
         (CoordinateRing R n) (CoordinateRing R n) (CoordinateRing R n)).toAlgHom.comp
@@ -530,6 +586,38 @@ theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
           (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
       coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
+
+/-- The localized generic entries and their images under the stored antipode generate the carrier
+of the bundled general linear coordinate Hopf algebra. -/
+theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
+    Algebra.adjoin R
+        (Set.range (fun ij : Fin n × Fin n =>
+          coordinateHopfAlgebraAlgEquiv R n
+            (coordinateRingMap R n (MvPolynomial.X ij))) ∪
+        Set.range (fun ij : Fin n × Fin n =>
+          HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
+            (coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X ij))))) =
+      ⊤ := by
+  -- The bundled generators are the image of the raw ones: the stored antipode acts through the
+  -- transport equivalence, so each range is the equivalence's image of the corresponding raw range.
+  have himage :
+      Set.range (fun ij : Fin n × Fin n =>
+          coordinateHopfAlgebraAlgEquiv R n
+            (coordinateRingMap R n (MvPolynomial.X ij))) ∪
+        Set.range (fun ij : Fin n × Fin n =>
+          HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
+            (coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X ij)))) =
+        (coordinateHopfAlgebraAlgEquiv R n).toAlgHom ''
+          (Set.range (fun ij : Fin n × Fin n =>
+            coordinateRingMap R n (MvPolynomial.X ij)) ∪
+          Set.range (fun ij : Fin n × Fin n =>
+            antipode R n (coordinateRingMap R n (MvPolynomial.X ij)))) := by
+    simp only [Set.image_union, ← Set.range_comp, Function.comp_def, AlgEquiv.coe_toAlgHom,
+      coordinateHopfAlgebra_antipode_apply]
+  rw [himage, Algebra.adjoin_image, adjoin_X_union_antipode_X, Algebra.map_top]
+  exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
 
 /-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
 noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=

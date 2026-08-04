@@ -39,6 +39,8 @@ scheme-side functor, or depend on the general Hopf-algebra/affine-group-scheme a
   algebra.
 * `TauCeti.DiagonalizableGroup.coordinateMap`: the coordinate morphism induced by a group
   homomorphism.
+* `TauCeti.DiagonalizableGroup.coordinateMap_surjective_of_surjective`: a surjective
+  character-group homomorphism induces a surjective coordinate morphism.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor`: the group-algebra functor from
   finitely generated commutative groups to finite-type commutative Hopf algebras.
 * `TauCeti.DiagonalizableGroup.coordinateMap_injective`: coordinate maps remember their
@@ -106,6 +108,20 @@ theorem coordinateMap_single {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) (g : G) (r 
       MonoidAlgebra.single (FGCommGrpCat.toMonoidHom φ g) r := by
   rw [toBialgHom_coordinateMap]
   exact MonoidAlgebra.mapDomain_single
+
+/-- A surjective homomorphism of character groups induces a surjective morphism of their
+coordinate Hopf algebras. -/
+theorem coordinateMap_surjective_of_surjective {G H : FGCommGrpCat.{v}} (φ : G ⟶ H)
+    (hφ : Function.Surjective (FGCommGrpCat.toMonoidHom φ)) :
+    Function.Surjective
+      (FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ)) := by
+  rw [toBialgHom_coordinateMap]
+  intro y
+  obtain ⟨x, hx⟩ := Finsupp.mapDomain_surjective (M := R) hφ y.coeff
+  refine ⟨MonoidAlgebra.ofCoeff x, ?_⟩
+  unfold MonoidAlgebra.mapDomainBialgHom
+  apply MonoidAlgebra.coeff_injective
+  exact hx
 
 /-- Recover the character-group homomorphism that induces a morphism between coordinate
 Hopf algebras of finite-type diagonalizable groups over a base with connected prime

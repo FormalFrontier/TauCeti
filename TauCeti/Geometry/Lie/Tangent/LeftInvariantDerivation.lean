@@ -16,6 +16,7 @@ public import TauCeti.Geometry.Lie.InvariantVectorField
 A left-invariant derivation on a Lie group is determined by its value at any point. For a
 finite-dimensional smooth real Lie group whose identity is an interior point, evaluation there
 gives a canonical linear equivalence between left-invariant derivations and the tangent Lie algebra.
+The latter is the manifold model vector space, so this also determines the Lie algebra's dimension.
 
 ## Main results
 
@@ -25,6 +26,9 @@ gives a canonical linear equivalence between left-invariant derivations and the 
   at the identity.
 * `leftInvariantDerivationEquivGroupLieAlgebra`: the canonical linear equivalence between
   left-invariant derivations and the tangent Lie algebra.
+* `finiteDimensional_leftInvariantDerivation`: the Lie algebra is finite-dimensional.
+* `finrank_leftInvariantDerivation_eq_modelVectorSpace`: its dimension equals that of the manifold
+  model vector space.
 
 ## References
 
@@ -282,3 +286,29 @@ theorem leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
   rw [LinearEquiv.apply_symm_apply, leftInvariantDerivationEquivGroupLieAlgebra_apply]
   rw [LeftInvariantDerivation.evalAt_one_tangentToLeftInvariantDerivation,
     pointDerivationEquivTangentSpace_tangentToPointDerivation]
+
+/-- The private proof boundary identifying the identity tangent space with the model vector
+space. -/
+private noncomputable def groupLieAlgebraEquivModelVectorSpace :
+    GroupLieAlgebra I G ≃ₗ[ℝ] E :=
+  LinearEquiv.refl ℝ E
+
+/-- Left-invariant derivations on a finite-dimensional smooth real Lie group form a
+finite-dimensional vector space. -/
+theorem finiteDimensional_leftInvariantDerivation
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) : FiniteDimensional ℝ (LeftInvariantDerivation I G) := by
+  let _ : FiniteDimensional ℝ (GroupLieAlgebra I G) :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.finiteDimensional
+  exact (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+    h₁).symm.finiteDimensional
+
+/-- The Lie algebra of a finite-dimensional smooth real Lie group has the dimension of the
+manifold model vector space. -/
+theorem finrank_leftInvariantDerivation_eq_modelVectorSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) :
+    Module.finrank ℝ (LeftInvariantDerivation I G) = Module.finrank ℝ E := by
+  exact LinearEquiv.finrank_eq
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+      (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)))

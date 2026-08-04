@@ -207,23 +207,17 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
     rw [mul_one] at h1
     rw [← h1]
     simp
-  -- Surjectivity of `φ` gives a right inverse of `u`; injectivity makes it two-sided.
+  -- Surjectivity of `φ` gives a right inverse of `u`.
   obtain ⟨y, hy⟩ := φ.surjective (Bimodule.of g 1)
   set v : A := (Bimodule.of f).symm y with hv
   have huv : u * v = 1 := by
     have h := key v
     rw [hv, LinearEquiv.apply_symm_apply, hy] at h
     simpa using h.symm
-  have hinj : ∀ z : A, u * z = 0 → z = 0 := by
-    intro z hz
-    have h := key z
-    rw [hz] at h
-    have h' : φ (Bimodule.of f z) = 0 := (Bimodule.of g).symm.map_eq_zero_iff.mp h
-    have := φ.injective (h'.trans (map_zero φ).symm)
-    simpa using congrArg (Bimodule.of f).symm this
-  have hvu : v * u = 1 := by
-    refine sub_eq_zero.mp (hinj _ ?_)
-    rw [mul_sub, ← mul_assoc, huv, one_mul, mul_one, sub_self]
+  -- `A` is finite-dimensional over a field, hence Artinian, hence Dedekind-finite
+  -- (`IsArtinianRing.of_finite` is a theorem, not an instance, so it is supplied by hand).
+  -- A right inverse therefore already presents `u` as a unit.
+  have : IsArtinianRing A := IsArtinianRing.of_finite K A
   -- Linearity of `φ` for the left action of `B` is the conjugation relation.
   have hb : ∀ b : B, u * f b = g b * u := by
     intro b
@@ -236,8 +230,13 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
             rw [map_smul]
       _ = (Bimodule.of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of g u) := by rw [hu']
       _ = g b * u := by rw [Bimodule.smul_of]; simp
-  refine ⟨⟨u, v, huv, hvu⟩, fun x ↦ ?_⟩
-  rw [Units.inv_mk, Units.val_mk, Units.val_mk, hb x, mul_assoc, huv, mul_one]
+  -- Name the two coercions of the constructed unit through the stable `Units` API rather than
+  -- relying on `Units.mkOfMulEqOne` reducing definitionally.
+  have hUval : ((Units.mkOfMulEqOne u v huv : Aˣ) : A) = u := Units.val_mkOfMulEqOne huv
+  have hUinv : (↑(Units.mkOfMulEqOne u v huv)⁻¹ : A) = v :=
+    Units.inv_eq_of_mul_eq_one_right (by rw [hUval]; exact huv)
+  refine ⟨Units.mkOfMulEqOne u v huv, fun x ↦ ?_⟩
+  rw [hUval, hUinv, hb x, mul_assoc, huv, mul_one]
 
 /-- **Every automorphism of a central simple algebra is inner.** A `K`-algebra automorphism of a
 finite-dimensional central simple `K`-algebra `A` is conjugation by a unit of `A`. -/
