@@ -368,6 +368,8 @@ theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (
       filtrationGradedMul Q k 0 x (filtrationGradedAlgebraMap₀ Q r) := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
+      -- Quotient induction provides a representative. Expose the quotient classes so the
+      -- representative-product API applies on both sides of the commutation equation.
       change cast (congrArg (FiltrationGradedPiece Q)
         ((Nat.zero_add k).trans (Nat.add_zero k).symm))
         (filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
@@ -378,6 +380,8 @@ theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (
       apply (Submodule.Quotient.eq _).mpr
       rw [Submodule.mem_comap, map_sub,
         filtration_subtype_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
+      -- Quotient equality is ambient filtration membership; this exposes the coercions needed
+      -- for the Clifford algebra's scalar-commutation theorem.
       change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) -
           x * algebraMap R (CliffordAlgebra Q) r ∈ filtrationPrevious Q (k + 0)
       rw [Algebra.commutes, sub_self]
