@@ -248,10 +248,19 @@ noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
     GradedMonoid.GOne (FiltrationGradedPiece Q) where
   one := filtrationGradedOne Q
 
+/-- The `GOne` field is the named degree-zero filtration class. -/
+@[simp] theorem filtrationGradedGOne_one (Q : QuadraticForm R M) :
+    (GradedMonoid.GOne.one : FiltrationGradedPiece Q 0) = filtrationGradedOne Q := rfl
+
 /-- Homogeneous filtration multiplication supplies the `GMul` structure on filtration pieces. -/
 noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
     GradedMonoid.GMul (FiltrationGradedPiece Q) where
   mul {i j} := fun x y => filtrationGradedMul Q i j x y
+
+/-- The `GMul` field is the named homogeneous filtration product. -/
+@[simp] theorem filtrationGradedGMul_mul (Q : QuadraticForm R M) {i j : ℕ}
+    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
+    GradedMonoid.GMul.mul (A := FiltrationGradedPiece Q) x y = filtrationGradedMul Q i j x y := rfl
 
 /-- The homogeneous unit and multiplication form a graded monoid of filtration pieces. -/
 noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
@@ -436,12 +445,30 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
       congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
         (filtrationGradedAlgebraMap₀_mul Q r k x)
 
+/-- The `GAlgebra` field is the named degree-zero scalar map. -/
+@[simp] theorem filtrationGradedGAlgebra_toFun (Q : QuadraticForm R M) (r : R) :
+    DirectSum.GAlgebra.toFun (A := FiltrationGradedPiece Q)
+      (self := filtrationGradedGAlgebra (Q := Q)) r = filtrationGradedAlgebraMap₀ Q r := rfl
+
 /-- The direct sum of homogeneous filtration pieces inherits its associated-graded
 ring structure. -/
 noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
     Ring (filtrationAssociatedGraded Q) := by
   letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
   infer_instance
+
+/-- Multiplication of homogeneous direct-sum terms is the named filtration product. -/
+@[simp] theorem filtrationAssociatedGraded_of_mul (Q : QuadraticForm R M) {i j : ℕ}
+    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
+    (DirectSum.of (FiltrationGradedPiece Q) i x : filtrationAssociatedGraded Q) *
+      DirectSum.of (FiltrationGradedPiece Q) j y =
+      DirectSum.of (FiltrationGradedPiece Q) (i + j) (filtrationGradedMul Q i j x y) := by
+  simp only [DirectSum.of_mul_of, filtrationGradedGMul_mul]
+
+/-- The associated-graded scalar map is the degree-zero named filtration map. -/
+@[simp] theorem filtrationAssociatedGraded_algebraMap (Q : QuadraticForm R M) (r : R) :
+    algebraMap R (filtrationAssociatedGraded Q) r =
+      DirectSum.of (FiltrationGradedPiece Q) 0 (filtrationGradedAlgebraMap₀ Q r) := rfl
 
 end CliffordAlgebra
 
