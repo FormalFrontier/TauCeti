@@ -521,9 +521,12 @@ theorem exists_closure_image_ball_inter_sphere_eq_insert (hζ : dist ζ c = r) (
   obtain ⟨v, hv⟩ :=
     exists_clusterSetOn_ball_inter_sphere_eq_singleton hζ hρ hρr hf hfin (hsub _ hq)
   have hr : 0 < r := by linarith
+  have hends : ⋃ e ∈ frontier (ball c r) ∩ sphere ζ ρ,
+      clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {u, v} := by
+    rw [frontier_ball c hr.ne', hpair, biUnion_pair, hu, hv, singleton_union]
   refine ⟨u, v, ?_⟩
   rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
-    (hf.continuousOn.mono inter_subset_left) hρ, frontier_ball c hr.ne', hpair, biUnion_pair,
-    hu, hv, union_comm, singleton_union, insert_union, singleton_union]
+    (hf.continuousOn.mono inter_subset_left), hends]
+  simp
 
 end TauCeti
