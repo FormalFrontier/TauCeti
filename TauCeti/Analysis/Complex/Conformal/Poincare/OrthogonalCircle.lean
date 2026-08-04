@@ -86,10 +86,10 @@ diameters, which the radial geodesics already trace, this closes the description
   radius of the hyperbolic line through `k * w` perpendicular to the radius through `w`, and
   `TauCeti.exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq` — every circle orthogonal to
   the unit circle is the circle of a hyperbolic line.
-* `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_radialGeodesic_eq` and
-  `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — the
-  converse directions: every Euclidean diameter and every arc `ball 0 1 ∩ sphere c R` with
-  `‖c‖ ^ 2 = R ^ 2 + 1` is traced by a geodesic.
+* `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — the
+  converse direction in the circular case: every arc `ball 0 1 ∩ sphere c R` with
+  `‖c‖ ^ 2 = R ^ 2 + 1` is traced by a geodesic. The converse for the diameters needs nothing new,
+  `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq` being already an equality of sets.
 * `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_iff` and
   `TauCeti.PoincareDisc.exists_isometry_range_coe_toUnitDisc_eq_iff` — **the classification**: the
   traces of the geodesics of the Poincaré disc are exactly the Euclidean diameters and the arcs of
@@ -378,19 +378,20 @@ private lemma im_conj_mul_I_mul_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ
     Complex.ofReal_im]
   ring
 
-/-- **The centre parameter at the perpendicular pair.** For a unit `w` and a nonzero real `k`, the
+/-- **The centre parameter at the perpendicular pair.** For a unit `w` and any real `k`, the
 centre parameter of `u = I * w`, `a = k * w` is `((1 + k ^ 2) / (2 * k)) * w`, again on the radius
 through `w`.
 
-As at `TauCeti.orthogonalCircleCenter` itself, `k ≠ 0` alone makes this an algebraic computation.
-For `0 < k < 1`, which is exactly when `k * w` lies in the open unit disc, it is the centre of the
-Euclidean circle traced by the hyperbolic line through `k * w` in the direction `I * w`
-perpendicular to the radius through `w`. That reading, together with
+As at `TauCeti.orthogonalCircleCenter` itself, nothing is asked of `k`, so on its own this is an
+algebraic computation: at `k = 0` the two sides are the two divisions by zero, both `0`. For
+`0 < k < 1`, which is exactly when `k * w` lies in the open unit disc away from the origin, it is
+the centre of the Euclidean circle traced by the hyperbolic line through `k * w` in the direction
+`I * w` perpendicular to the radius through `w`. That reading, together with
 `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul`, is the computation that makes every circle
 orthogonal to the unit circle a hyperbolic line: as `k` ranges over `Ioo 0 1` the centre sweeps
 out the whole ray beyond the unit circle. -/
 @[simp]
-lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : k ≠ 0) :
+lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ) :
     orthogonalCircleCenter (I * w) ((k : ℂ) * w) = (((1 + k ^ 2) / (2 * k) : ℝ) : ℂ) * w := by
   have hcw : w * conj w = 1 := by
     rw [Complex.mul_conj, Complex.normSq_eq_norm_sq, hw]
@@ -405,31 +406,29 @@ lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : 
     simp only [map_mul, map_neg, map_add, map_one, map_pow, Complex.conj_I, Complex.conj_conj,
       Complex.conj_ofReal]
     ring
-  have hk' : (k : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hk
   have hII : I * (I * w * (1 + (k : ℂ) ^ 2)) = -(w * (1 + (k : ℂ) ^ 2)) := by
     linear_combination (w * (1 + (k : ℂ) ^ 2)) * Complex.I_mul_I
   rw [orthogonalCircleCenter_def, im_conj_mul_I_mul_mul_ofReal hw, hconjB, hII]
   push_cast
-  field_simp
+  ring
 
 /-- **The radius parameter at the perpendicular pair.** The companion of
-`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`: for a unit `w` and a positive real `k`, the
-radius parameter of `u = I * w`, `a = k * w` is `(1 - k ^ 2) / (2 * k)`. Unlike the centre, which
-is a signed expression in `Im (conj u * a)` and so needs only `k ≠ 0`, the radius divides by
-`2 * |Im (conj u * a)| = 2 * |k|`: the displayed formula therefore asks for `0 < k`, and for a
-negative `k` it would instead read `(1 - k ^ 2) / (2 * |k|)`.
+`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`: for a unit `w` and any real `k`, the radius
+parameter of `u = I * w`, `a = k * w` is `(1 - k ^ 2) / (2 * |k|)`. Unlike the centre, which is a
+signed expression in `Im (conj u * a)`, the radius divides by `2 * |Im (conj u * a)| = 2 * |k|`,
+whence the absolute value; for `0 < k` it reads `(1 - k ^ 2) / (2 * k)`, and at `k = 0` both sides
+are the division by zero, `0`.
 
-Positivity of the value is the further information `k < 1`, that is, that `k * w` lies in the open
-disc; for `k > 1` the value is negative and describes no circle. It is under `0 < k < 1` that this
-is the radius of the Euclidean circle traced by the hyperbolic line through `k * w` in the
-direction `I * w`. -/
+Positivity of the value is the further information `|k| < 1`, that is, that `k * w` lies in the
+open disc; for `|k| > 1` the value is negative and describes no circle. It is under `0 < k < 1`
+that this is the radius of the Euclidean circle traced by the hyperbolic line through `k * w` in
+the direction `I * w`. -/
 @[simp]
-lemma orthogonalCircleRadius_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : 0 < k) :
-    orthogonalCircleRadius (I * w) ((k : ℂ) * w) = (1 - k ^ 2) / (2 * k) := by
-  have hnorm : ‖(k : ℂ) * w‖ = k := by
-    rw [norm_mul, Complex.norm_real, hw, mul_one, Real.norm_eq_abs, abs_of_pos hk]
-  rw [orthogonalCircleRadius_def, im_conj_mul_I_mul_mul_ofReal hw, hnorm, abs_neg,
-    abs_of_pos hk]
+lemma orthogonalCircleRadius_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ) :
+    orthogonalCircleRadius (I * w) ((k : ℂ) * w) = (1 - k ^ 2) / (2 * |k|) := by
+  have hnorm : ‖(k : ℂ) * w‖ = |k| := by
+    rw [norm_mul, Complex.norm_real, hw, mul_one, Real.norm_eq_abs]
+  rw [orthogonalCircleRadius_def, im_conj_mul_I_mul_mul_ofReal hw, hnorm, abs_neg, sq_abs]
 
 /-- **Every circle orthogonal to the unit circle is the circle of a hyperbolic line.** Given a
 Euclidean circle of centre `c` and positive radius `R` meeting the unit circle at right angles —
@@ -462,14 +461,14 @@ theorem exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq {c : ℂ} {R 
     exact hk1
   · rw [im_conj_mul_I_mul_mul_ofReal hw]
     exact neg_ne_zero.mpr hk0.ne'
-  · rw [orthogonalCircleCenter_I_mul_ofReal_mul hw hk0.ne', hwdef]
+  · rw [orthogonalCircleCenter_I_mul_ofReal_mul hw, hwdef]
     have hcen : (1 + k ^ 2) / (2 * k) = ‖c‖ := by
       have h : 1 + k ^ 2 = 2 * ‖c‖ * k := by rw [hkdef]; linear_combination -horth
       rw [h]
       field_simp
     rw [hcen]
     field_simp
-  · rw [orthogonalCircleRadius_I_mul_ofReal_mul hw hk0]
+  · rw [orthogonalCircleRadius_I_mul_ofReal_mul hw, abs_of_pos hk0]
     have h : 1 - k ^ 2 = 2 * R * k := by rw [hkdef]; linear_combination -horth
     rw [h]
     field_simp
@@ -680,22 +679,6 @@ theorem range_coe_toUnitDisc_eq_ball_inter_or_of_isometry {γ : ℝ → Poincare
 
 /-! ### The converse: every such Euclidean set is a geodesic -/
 
-/-- **Every Euclidean diameter of the disc is traced by a geodesic.** For a unit `v`, the
-intersection of the open unit disc with the Euclidean line `Im (v * z) = 0` through the origin is
-swept out by the radial geodesic in the direction `conj v`.
-
-This is `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq`, whose statement is already
-an equality of sets; all that is done here is to name the direction that produces a prescribed
-line, `conj v` rather than `v`, the conjugation coming from the `conj u * z` in which the equation
-of the radial geodesic is written. -/
-theorem exists_range_coe_toUnitDisc_radialGeodesic_eq {v : ℂ} (hv : ‖v‖ = 1) :
-    ∃ u : Circle,
-      Set.range (fun t : ℝ => ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ))
-        = ball 0 1 ∩ {z : ℂ | (v * z).im = 0} := by
-  obtain ⟨u, hu⟩ : ∃ u : Circle, (u : ℂ) = conj v :=
-    ⟨⟨_, mem_sphere_zero_iff_norm.2 (by rw [norm_conj, hv])⟩, rfl⟩
-  exact ⟨u, by rw [range_coe_toUnitDisc_radialGeodesic_eq, hu, Complex.conj_conj]⟩
-
 /-- **Every arc of a Euclidean circle orthogonal to the unit circle is traced by a geodesic.**
 This is the converse of
 `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere`: a Euclidean circle
@@ -729,9 +712,13 @@ with a Euclidean line through the origin or with a Euclidean circle of positive 
 
 The forward implication is
 `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_or`, which also says which of
-the two cases occurs and, in the circular case, computes the centre and radius; the backward one
-is the pair `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_radialGeodesic_eq` and
-`TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere`. -/
+the two cases occurs and, in the circular case, computes the centre and radius. Backwards, the
+circular case is
+`TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere`, while the
+diameter case is `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq`, which is already an
+equality of sets: all that the proof adds there is the direction realising a prescribed line,
+`conj v` rather than `v`, the conjugation coming from the `conj u * z` in which the equation of the
+radial geodesic is written. -/
 theorem exists_range_coe_toUnitDisc_geodesicLine_eq_iff {S : Set ℂ} :
     (∃ (a : PoincareDisc) (u : Circle),
         Set.range (fun t : ℝ => ((toUnitDisc (geodesicLine a u t) : Complex.UnitDisc) : ℂ)) = S) ↔
@@ -744,8 +731,11 @@ theorem exists_range_coe_toUnitDisc_geodesicLine_eq_iff {S : Set ℂ} :
     · exact Or.inl ⟨v, hv, hS⟩
     · exact Or.inr ⟨c, R, hR, horth, hS⟩
   · rintro (⟨v, hv, rfl⟩ | ⟨c, R, hR, horth, rfl⟩)
-    · obtain ⟨u, hu⟩ := exists_range_coe_toUnitDisc_radialGeodesic_eq hv
-      exact ⟨Complex.UnitDisc.toPoincare 0, u, by rwa [geodesicLine_toPoincare_zero]⟩
+    · obtain ⟨u, hu⟩ : ∃ u : Circle, (u : ℂ) = conj v :=
+        ⟨⟨_, mem_sphere_zero_iff_norm.2 (by rw [norm_conj, hv])⟩, rfl⟩
+      exact ⟨Complex.UnitDisc.toPoincare 0, u, by
+        rw [geodesicLine_toPoincare_zero, range_coe_toUnitDisc_radialGeodesic_eq, hu,
+          Complex.conj_conj]⟩
     · exact exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere hR horth
 
 /-- **The geodesics of the Poincaré disc, parametrisation-free.** A subset of the plane is traced
