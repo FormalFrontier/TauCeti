@@ -15,7 +15,7 @@ to prove that the Lie-group exponential is smooth at the zero vector.
 
 ## Main results
 
-* `contMDiffAt_mulInvariantExp_zero`: the tangent-space exponential is smooth at zero.
+* `contMDiffAt_mulInvariantExp_modelSpace_zero`: the tangent-space exponential is smooth at zero.
 
 ## References
 
@@ -33,15 +33,93 @@ noncomputable section
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [IsManifold I 1 G] [IsManifold I 2 G]
 
-local instance lieGroupMinSmoothnessSmoothness [LieGroup I ∞ G] :
-    LieGroup I (minSmoothness ℝ 3) G := by
+local instance [LieGroup I ∞ G] : LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
 
-omit [IsManifold I 2 G] in
+/-- Continuity, the rescaled ODE, and the initial value for the second coordinate of a product
+flow. This packages the chain-rule calculation used to compare a canonical coordinate path with a
+Picard path. -/
+private theorem rescaledSecondCoordinate_data
+    {α : (E × E) × ℝ → E × E} {V : E × E → E} (p center : E) (c : ℝ)
+    (hα : ∀ t ∈ Set.Icc (0 : ℝ) 1,
+      ContinuousAt α ((p, center), c * t) ∧
+        HasDerivAt (fun s : ℝ => α ((p, center), s))
+          ((0 : E), V (α ((p, center), c * t))) (c * t) ∧
+        α ((p, center), 0) = (p, center) ∧
+        (α ((p, center), c * t)).1 = p) :
+    ContinuousOn (fun t : ℝ => (α ((p, center), c * t)).2) (Set.Icc 0 1) ∧
+      (∀ t ∈ Set.Ico (0 : ℝ) 1,
+        HasDerivWithinAt (fun s : ℝ => (α ((p, center), c * s)).2)
+          (c • V (p, (α ((p, center), c * t)).2)) (Set.Ici t) t) ∧
+      (α ((p, center), c * 0)).2 = center := by
+  have hcont : ContinuousOn (fun t : ℝ => (α ((p, center), c * t)).2)
+      (Set.Icc 0 1) := by
+    intro t ht
+    have hinner : ContinuousAt (fun s : ℝ => ((p, center), c * s)) t := by fun_prop
+    exact (continuousAt_snd.comp'
+      ((hα t ht).1.comp_of_eq hinner rfl)).continuousWithinAt
+  have hderiv : ∀ t ∈ Set.Ico (0 : ℝ) 1,
+      HasDerivWithinAt (fun s : ℝ => (α ((p, center), c * s)).2)
+        (c • V (p, (α ((p, center), c * t)).2)) (Set.Ici t) t := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0 : ℝ) 1 := ⟨ht.1, ht.2.le⟩
+    have hcomp : HasDerivAt (fun s : ℝ => α ((p, center), c * s))
+        (c • ((0 : E), V (α ((p, center), c * t)))) t :=
+      HasDerivAt.scomp t (hα t ht').2.1 (hasDerivAt_const_mul c)
+    have hsnd := (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt t hcomp
+    apply hsnd.hasDerivWithinAt.congr_deriv
+    have hpair : α ((p, center), c * t) =
+        (p, (α ((p, center), c * t)).2) := by
+      apply Prod.ext
+      · exact (hα t ht').2.2.2
+      · rfl
+    simp only [map_smul]
+    rw [hpair]
+    rfl
+  refine ⟨hcont, hderiv, ?_⟩
+  simpa only [mul_zero] using congrArg Prod.snd
+    ((hα 0 ⟨le_rfl, zero_le_one⟩).2.2.1)
+
+/-- Two paths in one Lipschitz set with the same right-hand ODE and initial value agree at the
+terminal time. The first path is bundled on `Icc`; the second is an ordinary real path. -/
+private theorem continuousMap_terminal_eq_of_ode_unique
+    {F : E × E → E} {p center : E} {S : Set E} {K : NNReal}
+    (γ : C(Set.Icc (0 : ℝ) 1, E)) (a : ℝ → E)
+    (hfixed : LipschitzOnWith K (fun y => F (p, y)) S)
+    (hγzero : γ ⟨0, le_rfl, zero_le_one⟩ = center)
+    (hγderiv : ∀ t ∈ Set.Ico (0 : ℝ) 1,
+      HasDerivWithinAt (fun s => γ (Set.projIcc 0 1 zero_le_one s))
+        (F (p, γ (Set.projIcc 0 1 zero_le_one t))) (Set.Ici t) t)
+    (hγS : ∀ t : Set.Icc (0 : ℝ) 1, γ t ∈ S)
+    (haCont : ContinuousOn a (Set.Icc (0 : ℝ) 1))
+    (haDeriv : ∀ t ∈ Set.Ico (0 : ℝ) 1,
+      HasDerivWithinAt a (F (p, a t)) (Set.Ici t) t)
+    (haS : ∀ t ∈ Set.Ico (0 : ℝ) 1, a t ∈ S) (haZero : a 0 = center) :
+    γ ⟨1, zero_le_one, le_rfl⟩ = a 1 := by
+  let g : ℝ → E := fun t => γ (Set.projIcc 0 1 zero_le_one t)
+  have hgCont : ContinuousOn g (Set.Icc (0 : ℝ) 1) :=
+    (γ.continuous.comp continuous_projIcc).continuousOn
+  have hgS : ∀ t ∈ Set.Ico (0 : ℝ) 1, g t ∈ S := fun t _ =>
+    hγS (Set.projIcc 0 1 zero_le_one t)
+  have hprojZero : Set.projIcc 0 1 zero_le_one 0 =
+      (⟨0, le_rfl, zero_le_one⟩ : Set.Icc (0 : ℝ) 1) := by
+    ext
+    simp
+  have hgaZero : g 0 = a 0 := by
+    simpa only [g, hprojZero] using hγzero.trans haZero.symm
+  have hunique := ODE_solution_unique_of_mem_Icc_right
+    (v := fun _ y => F (p, y)) (s := fun _ => S)
+    (fun _ _ => hfixed) hgCont hγderiv hgS haCont haDeriv haS hgaZero
+  have hone := hunique (⟨zero_le_one, le_rfl⟩ : (1 : ℝ) ∈ Set.Icc 0 1)
+  have hprojOne : Set.projIcc 0 1 zero_le_one 1 =
+      (⟨1, zero_le_one, le_rfl⟩ : Set.Icc (0 : ℝ) 1) := by
+    ext
+    simp
+  simpa only [g, hprojOne] using hone
+
 /-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth at zero. -/
-theorem contMDiffAt_mulInvariantExp_zero
+theorem contMDiffAt_mulInvariantExp_modelSpace_zero
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ContMDiffAt 𝓘(ℝ, E) I ∞
       (fun v : E => mulInvariantExp (I := I) (G := G)
@@ -153,7 +231,6 @@ theorem contMDiffAt_mulInvariantExp_zero
             (mulInvariantExp (I := I) (G := G)
               (c • (p : GroupLieAlgebra I G))) := by
       filter_upwards [hγode, hγS, hcanonicalS, hP, hU] with p hpODE hpγS hpCanonicalS hpP hpU
-      let g : ℝ → E := fun t => γ p (Set.projIcc 0 1 zero_le_one t)
       let a : ℝ → E := fun t =>
         (α (((p, center), c * t))).2
       have htime (t : ℝ) (ht : t ∈ Set.Icc (0 : ℝ) 1) :
@@ -183,77 +260,33 @@ theorem contMDiffAt_mulInvariantExp_zero
             exact congrArg (extChartAt I (1 : G))
               (mulInvariantExp_smul (I := I) (G := G)
                 (p : GroupLieAlgebra I G) (c * t)).symm
+      have hpath := rescaledSecondCoordinate_data
+        (α := α) (V := mulInvariantCoordinateVectorField (I := I) (G := G)) p center c (by
+          intro t ht
+          have hlocal := hαlocal p hpU (c * t) (htime t ht)
+          refine ⟨?_, ?_, ?_, ?_⟩
+          · simpa only [center] using hlocal.1
+          · simpa only [center] using hlocal.2.1
+          · simpa only [center] using hlocal.2.2.1
+          · simpa only [center] using hlocal.2.2.2.1)
       have haCont : ContinuousOn a (Set.Icc (0 : ℝ) 1) := by
-        intro t ht
-        have hlocal := hαlocal p hpU (c * t) (htime t ht)
-        have hinner : ContinuousAt
-            (fun s : ℝ => ((p, extChartAt I (1 : G) (1 : G)), c * s)) t := by fun_prop
-        have hαcomp : ContinuousAt
-            (fun s : ℝ => α ((p, extChartAt I (1 : G) (1 : G)), c * s)) t :=
-          hlocal.1.comp_of_eq hinner rfl
-        simpa only [a, center] using (continuousAt_snd.comp' hαcomp).continuousWithinAt
+        simpa only [a] using hpath.1
       have haDeriv : ∀ t ∈ Set.Ico (0 : ℝ) 1,
           HasDerivWithinAt a (F (p, a t)) (Set.Ici t) t := by
         intro t ht
-        have ht' : t ∈ Set.Icc (0 : ℝ) 1 := ⟨ht.1, ht.2.le⟩
-        have hlocal := hαlocal p hpU (c * t) (htime t ht')
-        have hcomp : HasDerivAt
-            (fun s : ℝ => α ((p, extChartAt I (1 : G) (1 : G)), c * s))
-            (c • ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G)
-              (α ((p, extChartAt I (1 : G) (1 : G)), c * t)))) t :=
-          HasDerivAt.scomp t hlocal.2.1 (hasDerivAt_const_mul c)
-        have hsnd := (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt t hcomp
-        apply hsnd.hasDerivWithinAt.congr_deriv
-        have hpair : α (((p, center), c * t)) = (p, a t) := by
-          apply Prod.ext
-          · exact hlocal.2.2.2.1
-          · rfl
-        have hpair' : α (((p, extChartAt I (1 : G) (1 : G)), c * t)) = (p, a t) := by
-          simpa only [center] using hpair
-        simp only [F, map_smul]
-        rw [hpair']
-        rfl
-      have hgCont : ContinuousOn g (Set.Icc (0 : ℝ) 1) :=
-        ((γ p).continuous.comp continuous_projIcc).continuousOn
-      have hgDeriv : ∀ t ∈ Set.Ico (0 : ℝ) 1,
-          HasDerivWithinAt g (F (p, g t)) (Set.Ici t) t := hpODE.2.2
+        simpa only [a, F] using hpath.2.1 t ht
       have haS : ∀ t ∈ Set.Ico (0 : ℝ) 1, a t ∈ S := by
         intro t ht
         rw [haCoord t ⟨ht.1, ht.2.le⟩]
         exact hpCanonicalS t ⟨ht.1, ht.2.le⟩
-      have hgS : ∀ t ∈ Set.Ico (0 : ℝ) 1, g t ∈ S := by
-        intro t ht
-        exact hpγS (Set.projIcc 0 1 zero_le_one t)
-      have hga0 : g 0 = a 0 := by
-        have hg0 := hpODE.1 ⟨0, le_rfl, zero_le_one⟩
-        have ha0 := (hαlocal p hpU 0 (by simpa using htime 0 ⟨le_rfl, zero_le_one⟩)).2.2.1
-        have hprojZero : Set.projIcc 0 1 zero_le_one 0 =
-            (⟨0, le_rfl, zero_le_one⟩ : Set.Icc (0 : ℝ) 1) := by
-          ext
-          simp
-        have hg0' : g 0 = center := by
-          -- Expose the definition of `g` only at the initial time.
-          change γ p (Set.projIcc 0 1 zero_le_one 0) = center
-          rw [hprojZero]
-          simpa using hg0
-        have ha0' : a 0 = center := by
-          -- Expose the definition of `a` only at the initial time.
-          change (α (((p, center), c * 0))).2 = center
-          rw [mul_zero]
-          simpa only [center] using congrArg Prod.snd ha0
-        exact hg0'.trans ha0'.symm
-      have hunique := ODE_solution_unique_of_mem_Icc_right
-        (v := fun _ y => F (p, y)) (s := fun _ => S)
-        (fun _ _ => hfixed p hpP) hgCont hgDeriv hgS haCont haDeriv haS hga0
-      have hone := hunique (show (1 : ℝ) ∈ Set.Icc 0 1 by exact ⟨zero_le_one, le_rfl⟩)
-      have hone' := hone.trans (haCoord 1 ⟨zero_le_one, le_rfl⟩)
-      have hprojOne : Set.projIcc 0 1 zero_le_one 1 =
-          (⟨1, zero_le_one, le_rfl⟩ : Set.Icc (0 : ℝ) 1) := by
-        ext
-        simp
-      change γ p ⟨1, zero_le_one, le_rfl⟩ = _
-      rw [← hprojOne]
-      simpa only [g, mul_one] using hone'
+      have haZero : a 0 = center := by simpa only [a] using hpath.2.2
+      have hγzero : γ p ⟨0, le_rfl, zero_le_one⟩ = center := by
+        simpa using hpODE.1 ⟨0, le_rfl, zero_le_one⟩
+      have hterminal := continuousMap_terminal_eq_of_ode_unique
+        (F := F) (p := p) (center := center) (S := S) (K := K) (γ p) a
+        (hfixed p hpP) hγzero hpODE.2.2 hpγS haCont haDeriv haS haZero
+      exact hterminal.trans (by
+        simpa only [mul_one] using haCoord 1 ⟨zero_le_one, le_rfl⟩)
     -- Phase 4: evaluate the smooth Picard germ at the terminal time, transfer smoothness through
     -- the comparison, and undo the time rescaling.
     have heval : ContDiffAt ℝ (n + 1)
