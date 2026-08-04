@@ -14,8 +14,9 @@ public import TauCeti.FieldTheory.Trace
 # Basics for quadratic number fields
 
 Shared facts about a quadratic number field `K` presented by an algebraic integer `θ : 𝓞 K` whose
-minimal polynomial over `ℤ` is `X² - d`. These feed both the prime-splitting law
-(`Quadratic/Splitting.lean`) and the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`).
+minimal polynomial over `ℤ` is `X² - d`. These feed the prime-splitting law
+(`Quadratic/Splitting.lean`), the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`), and
+the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 
 ## Main results
 
@@ -25,6 +26,7 @@ minimal polynomial over `ℤ` is `X² - d`. These feed both the prime-splitting 
 * `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
 * `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
+* `TauCeti.NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
 
 The trace and discriminant computations reuse the generic quadratic-extension API
 `TauCeti.NumberField.trace_eq_zero_of_sq_ratCast` and
