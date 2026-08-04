@@ -51,7 +51,10 @@ sum, and is not proved here.
 ## Main statements
 
 * `TauCeti.Representation.characterSum_eq_sum`: the character sum is the sum `∑_g χ(g⁻¹) g` over
-  the group, with `TauCeti.Representation.characterSum_coeff` its coefficients.
+  the group, with `TauCeti.Representation.characterSum_coeff` its coefficients and
+  `TauCeti.Representation.characterSumCenter_eq_sum_classSumCenter` its expansion in the class
+  sums, of which `TauCeti.Representation.primitiveCentralIdempotentCenter_eq_sum_classSumCenter`
+  is the rescaled form for `e_ρ`.
 * `TauCeti.Representation.characterSum_mul_characterSum`: multiplying by `∑_g χ(g⁻¹) g` rescales the
   character sum of an irreducible representation by the scalar its central character records.
 * `TauCeti.Representation.centralCharacter_characterSumCenter_mul_character_one`: that scalar,
@@ -138,6 +141,29 @@ theorem characterSum_eq_sum :
   classical
   ext g
   simp [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, Finsupp.single_apply]
+
+/-- **The class-sum expansion of the character sum.** For any choice `r` of representatives of the
+conjugacy classes, `∑_g χ(g⁻¹) g` is the combination `∑_C χ(r C ⁻¹) K_C` of the class sums `K_C`.
+
+This is the form in which the character sum is built, made available to consumers: the coefficients
+`g ↦ χ(g⁻¹)` are constant on conjugacy classes, so only the value at one representative of each
+class occurs. -/
+theorem characterSumCenter_eq_sum_classSumCenter [DecidableEq G] (r : ConjClasses G → G)
+    (hr : ∀ C, ConjClasses.mk (r C) = C) :
+    characterSumCenter ρ =
+      ∑ C : ConjClasses G, ρ.character (r C)⁻¹ • classSumCenter (k := k) C := by
+  apply Subtype.ext
+  ext g
+  rw [characterSumCenter_coe]
+  simp only [characterSum_coeff, AddSubmonoidClass.coe_finsetSum, SetLike.val_smul,
+    classSumCenter_coe, MonoidAlgebra.coeff_sum, MonoidAlgebra.coeff_smul, Finsupp.coe_finsetSum,
+    Finsupp.coe_smul, Finset.sum_apply, Pi.smul_apply, classSum_coeff, smul_eq_mul, mul_ite,
+    mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+  have key : ∀ {a b : G}, IsConj a b → ρ.character a⁻¹ = ρ.character b⁻¹ := by
+    rintro a b h
+    obtain ⟨c, rfl⟩ := isConj_iff.mp h
+    simpa [mul_assoc] using (ρ.char_conj a⁻¹ c).symm
+  exact (key (ConjClasses.mk_eq_mk_iff_isConj.mp (hr (ConjClasses.mk g)))).symm
 
 /-- The action of the character sum of `ρ` on a representation `σ`, as a linear combination of the
 operators of `σ`. -/
@@ -310,6 +336,21 @@ theorem primitiveCentralIdempotentCenter_eq_smul :
       ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSumCenter ρ := by
   apply Subtype.ext
   simp [primitiveCentralIdempotent]
+
+/-- **The class-sum expansion of the primitive central idempotent.** For any choice `r` of
+representatives of the conjugacy classes,
+`e_ρ = ∑_C (χ(1) / |G|) χ(r C ⁻¹) K_C` in the class sums `K_C`.
+
+This is `TauCeti.Representation.characterSumCenter_eq_sum_classSumCenter` rescaled. -/
+theorem primitiveCentralIdempotentCenter_eq_sum_classSumCenter [DecidableEq G]
+    (r : ConjClasses G → G) (hr : ∀ C, ConjClasses.mk (r C) = C) :
+    primitiveCentralIdempotentCenter ρ =
+      ∑ C : ConjClasses G,
+        ((Nat.card G : k)⁻¹ * ρ.character 1 * ρ.character (r C)⁻¹) • classSumCenter (k := k) C := by
+  rw [primitiveCentralIdempotentCenter_eq_smul, characterSumCenter_eq_sum_classSumCenter ρ r hr,
+    Finset.smul_sum]
+  refine Finset.sum_congr rfl fun C _ => ?_
+  rw [smul_smul]
 
 open scoped Classical in
 /-- **An irreducible representation sees `e_ρ` as `1` or as `0`**, according to whether it is
