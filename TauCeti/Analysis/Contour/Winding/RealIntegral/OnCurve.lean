@@ -30,9 +30,11 @@ avoids `s` throughout, where the winding number is already a genuine integer. Th
 that avoidance hypothesis: `s` may be a value of `γ`, so long as every parameter where `γ` meets
 `s` is interior to `[a, b]`. The generalized winding number is then a genuine Cauchy principal
 value rather than an ordinary index integral, and this theorem shows it is still real and equal
-to the same bounded real integral, whenever that integral is interval-integrable. (The hypothesis
-is satisfied vacuously when `γ` never meets `s`, so this also reproves the avoiding case, but the
-two are kept as separate theorems since their proofs are unrelated.)
+to the same bounded real integral. Unlike the avoiding case, interval-integrability of that
+integral is not assumed here: it is derived from the crossing regularity, the same `C^{1,1}`
+hypothesis this file's boundedness result needs. (That hypothesis is satisfied vacuously when `γ`
+never meets `s`, so this also reproves the avoiding case, but the two are kept as separate
+theorems since their proofs are unrelated.)
 
 This bundles two independent facts about the single-point Cauchy principal value
 `L := 2πi · n_s(γ)` of the Cauchy kernel `(z - s)⁻¹` along `γ`:
@@ -315,6 +317,8 @@ private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Fi
   piecewise_gluing_aux
     (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
     (fun c m d hcm hmd h₁ h₂ => by
+      -- Split at the shared breakpoint `m` so the two pieces' boundedness facts `h₁`, `h₂`
+      -- combine via `Set.image_union` into one on the whole `Icc c d`.
       rw [show Icc c d = Icc c m ∪ Icc m d from (Set.Icc_union_Icc_eq_Icc hcm hmd).symm,
         Set.image_union]
       exact h₁.union h₂)
@@ -435,6 +439,7 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
   classical
   rcases hab.eq_or_lt with rfl | hab
   · refine ⟨?_, .refl, by simp⟩
+    -- A degenerate `[a, a]` interval is a single point, trivially bounded.
     rw [show Icc a a = {a} from Set.Icc_self a, Set.image_singleton]
     exact (Set.finite_singleton _).isBounded
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
@@ -488,6 +493,8 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
       Icc_subset_Icc le_rfl (by linarith [min_le_left (ρ_lipR t₀) (ρ_lipL t₀)])
     have hLsub : Icc (t₀ - ρ_lip t₀) t₀ ⊆ Icc (t₀ - ρ_lipL t₀) t₀ :=
       Icc_subset_Icc (by linarith [min_le_right (ρ_lipR t₀) (ρ_lipL t₀)]) le_rfl
+    -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
+    -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
     rw [show Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)
           = Icc (t₀ - ρ_lip t₀) t₀ ∪ Icc t₀ (t₀ + ρ_lip t₀) from
         (Set.Icc_union_Icc_eq_Icc (by linarith [hρ_lip_pos t₀ ht₀])
