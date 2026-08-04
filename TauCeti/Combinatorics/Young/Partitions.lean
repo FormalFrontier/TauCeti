@@ -85,7 +85,7 @@ theorem partitionEquivYoungDiagram_symm_apply_parts (n : ℕ) (μ : {μ : YoungD
 lengths of `μ`.  It is the partition `partitionEquivYoungDiagram` sends back to `μ`, so it is the
 partition index to use whenever a construction indexed by partitions (a Young subgroup, a Young
 permutation module) is applied to a diagram. -/
-noncomputable abbrev shapePartition (μ : YoungDiagram) : μ.card.Partition :=
+noncomputable def shapePartition (μ : YoungDiagram) : μ.card.Partition :=
   (partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩
 
 /-- The parts of the shape partition are the row lengths of the diagram. -/
@@ -95,8 +95,8 @@ theorem shapePartition_parts (μ : YoungDiagram) :
   partitionEquivYoungDiagram_symm_apply_parts μ.card ⟨μ, rfl⟩
 
 /-- Sorting the parts of the shape partition into decreasing order returns the row lengths, which
-are already decreasing. -/
-@[simp]
+are already decreasing.  This is not a `simp` lemma: `simp` rewrites the parts to `μ.rowLens` with
+`shapePartition_parts` and then sorts the coerced list itself. -/
 theorem sort_shapePartition_parts (μ : YoungDiagram) :
     (shapePartition μ).parts.sort (· ≥ ·) = μ.rowLens := by
   have h := partitionEquivYoungDiagram_apply_rowLens μ.card (shapePartition μ)
