@@ -31,10 +31,11 @@ that avoidance hypothesis: `s` may be a value of `γ`, so long as every paramete
 `s` is interior to `[a, b]`. The generalized winding number is then a genuine Cauchy principal
 value rather than an ordinary index integral, and this theorem shows it is still real and equal
 to the same bounded real integral. Unlike the avoiding case, interval-integrability of that
-integral is not assumed here: it is derived from the crossing regularity, the same `C^{1,1}`
-hypothesis this file's boundedness result needs. (That hypothesis is satisfied vacuously when `γ`
-never meets `s`, so this also reproves the avoiding case, but the two are kept as separate
-theorems since their proofs are unrelated.)
+integral is not assumed here: it follows from a.e. strong measurability (continuity off the
+crossings, no different from the avoiding case) together with the boundedness above, both drawn
+from the same `C^{1,1}` crossing regularity this file's boundedness result needs. (That
+regularity hypothesis is satisfied vacuously when `γ` never meets `s`, so this also reproves the
+avoiding case, but the two are kept as separate theorems since their proofs are unrelated.)
 
 This bundles two independent facts about the single-point Cauchy principal value
 `L := 2πi · n_s(γ)` of the Cauchy kernel `(z - s)⁻¹` along `γ`:
@@ -51,7 +52,7 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.isBounded_windingNumber_eq_real_integral_of_closed_of_interior_crossings`
+* `TauCeti.Contour.isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_crossings`
   — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
   interior.
 
@@ -411,22 +412,23 @@ ending or starting at the crossing, `hγ_lip` — the two sides need not agree, 
 coincide with a breakpoint of the immersion) — in particular satisfied vacuously if `γ` never
 meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t - s) (deriv γ t)` has
 bounded image on `[a, b]` (not just off the crossings, where it is continuous on the compact
-avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is a fortiori genuinely
-interval-integrable there (not merely assigned Mathlib's junk `0` value for a non-integrable
-integrand), and the generalized winding number `n_s(γ)` is a real number equal to its ordinary
-(non-principal-value) integral:
+avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is genuinely interval-integrable
+there given that boundedness together with a.e. strong measurability (not merely assigned
+Mathlib's junk `0` value for a non-integrable integrand), and the generalized winding number
+`n_s(γ)` is a real number equal to its ordinary (non-principal-value) integral:
 
 `n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
 
 Unlike the off-curve case, `h`'s boundedness and interval-integrability are not assumed here: both
 are derived from the crossing regularity, via
 `exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right`/`_left`'s
-boundedness at each `C^{1,1}` crossing and the ordinary avoidance argument between crossings — the
-actual content of HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
+boundedness at each `C^{1,1}` crossing, its continuity off the crossing itself giving the
+measurability half, and the ordinary avoidance argument between crossings — the actual content of
+HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem isBounded_windingNumber_eq_real_integral_of_closed_of_interior_crossings
+theorem isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
@@ -477,12 +479,15 @@ theorem isBounded_windingNumber_eq_real_integral_of_closed_of_interior_crossings
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1, (h_Ioo t ht).2.le⟩
   choose! ρ_lipR hρ_lipR_pos hρ_lipR_lt hbddR using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
+      -- `show` pins the target type so `linarith` knows which strict inequality to prove,
+      -- rather than needing it inferred from `_right`'s expected first argument.
       (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀])
       ((hC1R t₀ ht₀).differentiableOn one_ne_zero) (hlipR t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hC1R t₀ ht₀)
         (by linarith [hεD_pos t₀ ht₀]))
   choose! ρ_lipL hρ_lipL_pos hρ_lipL_lt hbddL using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
+      -- Same reason as the `_right` call above, mirrored to the left side.
       (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀])
       ((hC1L t₀ ht₀).differentiableOn one_ne_zero) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_left h_imm (h_Ioc t₀ ht₀) (hC1L t₀ ht₀)
