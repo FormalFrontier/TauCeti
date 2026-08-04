@@ -246,20 +246,13 @@ centralizes it or inverts it, according to which of the two classes of `N(T) / T
 theorem conj_torusHom_of_mem_normalizer {n : SU2} (hn : n ∈ Subgroup.normalizer (torus : Set SU2))
     (z : Circle) :
     n * torusHom z * n⁻¹ = torusHom z ∨ n * torusHom z * n⁻¹ = torusHom z⁻¹ := by
-  -- The torus is commutative, so conjugating one of its elements by another does nothing.
-  have hcomm : ∀ u : Circle, torusHom u * torusHom z * (torusHom u)⁻¹ = torusHom z := fun u => by
-    simp only [← map_inv, ← map_mul, mul_inv_cancel_comm]
-  rcases mem_normalizer_torus_iff.mp hn with h | h
-  · obtain ⟨u, rfl⟩ := mem_torus_iff_exists_torusHom.mp h
-    exact Or.inl (hcomm u)
-  · obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp h
-    have hn' : n = weylElement * torusHom u := by rw [hu]; group
-    subst hn'
-    refine Or.inr ?_
-    calc weylElement * torusHom u * torusHom z * (weylElement * torusHom u)⁻¹
-        = weylElement * (torusHom u * torusHom z * (torusHom u)⁻¹) * weylElement⁻¹ := by group
-      _ = weylElement * torusHom z * weylElement⁻¹ := by rw [hcomm u]
-      _ = torusHom z⁻¹ := weylElement_conj_torusHom z
+  -- Normalizing `T` keeps the conjugate `n diag (z, z⁻¹) n⁻¹` inside `T`, and a torus element
+  -- conjugate to `diag (z, z⁻¹)` is already classified: it is that element or its inverse.
+  obtain ⟨u, hu⟩ := mem_torus_iff_exists_torusHom.mp
+    ((Subgroup.mem_normalizer_iff.mp hn (torusHom z)).mp (torusHom_mem_torus z))
+  rcases eq_or_eq_inv_of_conj_torusHom hu.symm with rfl | rfl
+  · exact Or.inl hu.symm
+  · exact Or.inr hu.symm
 
 /-! ### The action of the Weyl group on the maximal torus -/
 
