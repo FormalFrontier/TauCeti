@@ -15,7 +15,7 @@ Killing the arrows of a quiver leaves its vertices. This file makes that precise
 algebras: reading off the coordinates of an element of `pathAlgebra k Q` on the trivial paths is an
 algebra homomorphism `TauCeti.PathAlgebra.trivialCoeff` onto the product algebra `Q → k`, and its
 kernel is exactly the arrow ideal. So the arrow ideal is the kernel of a map onto a product of
-copies of the base field, and
+copies of the base semiring, and
 
 `pathAlgebra k Q ⧸ arrowIdeal k Q ≃ₐ[k] (Q → k)`.
 
@@ -171,7 +171,9 @@ private theorem repr_nil_one (v : Q) :
 
 /-- **The trivial-coefficient homomorphism** of a path algebra: an element is sent to the family of
 its coordinates on the trivial paths, one for each vertex. Concatenation adds lengths, so this is
-multiplicative, and it is the projection onto the semisimple quotient. -/
+multiplicative, and it is the projection onto the quotient by the arrow ideal. Over a field and for
+a finite acyclic quiver that quotient is the semisimple quotient, but no such hypothesis is needed
+here. -/
 noncomputable def trivialCoeff : pathAlgebra k Q →ₐ[k] (Q → k) where
   toFun f v := (pathAlgebraBasis k Q).repr f ⟨v, v, Quiver.Path.nil⟩
   map_one' := funext fun v => repr_nil_one v
@@ -185,11 +187,13 @@ noncomputable def trivialCoeff : pathAlgebra k Q →ₐ[k] (Q → k) where
 variable {k Q}
 
 /-- The trivial-coefficient homomorphism reads off a coordinate for the path basis. -/
+@[simp]
 theorem trivialCoeff_apply (f : pathAlgebra k Q) (v : Q) :
     trivialCoeff k Q f v = (pathAlgebraBasis k Q).repr f ⟨v, v, Quiver.Path.nil⟩ :=
   (rfl)
 
 /-- A basis path of positive length has all its trivial coordinates zero. -/
+@[simp]
 theorem trivialCoeff_ofPath_of_length_pos {x : Quiver.TotalPath Q} (hx : 0 < x.2.2.length) :
     trivialCoeff k Q (ofPath x) = 0 := by
   funext v
@@ -204,6 +208,7 @@ theorem trivialCoeff_ofArrow {a b : Q} (e : a ⟶ b) : trivialCoeff k Q (ofArrow
   exact trivialCoeff_ofPath_of_length_pos (by simp)
 
 /-- The vertex idempotent at `v` is sent to the indicator of `v`. -/
+@[simp]
 theorem trivialCoeff_vertexIdempotent [DecidableEq Q] (v : Q) :
     trivialCoeff k Q (vertexIdempotent k v) = Pi.single v 1 := by
   funext w
@@ -257,8 +262,9 @@ homomorphism. -/
 @[simp]
 theorem quotientArrowIdealAlgEquiv_mk (f : pathAlgebra k Q) :
     quotientArrowIdealAlgEquiv k Q (Ideal.Quotient.mk (arrowIdeal k Q) f) =
-      trivialCoeff k Q f :=
-  (rfl)
+      trivialCoeff k Q f := by
+  rw [quotientArrowIdealAlgEquiv, AlgEquiv.trans_apply, Ideal.quotientEquivAlgOfEq_mk,
+    Ideal.quotientKerAlgEquivOfSurjective_mk]
 
 end Quotient
 
@@ -280,8 +286,9 @@ noncomputable def quotientJacobsonAlgEquiv (h : Quiver.IsAcyclic Q) :
 @[simp]
 theorem quotientJacobsonAlgEquiv_mk (h : Quiver.IsAcyclic Q) (f : pathAlgebra k Q) :
     quotientJacobsonAlgEquiv k Q h (Ideal.Quotient.mk (Ring.jacobson (pathAlgebra k Q)) f) =
-      trivialCoeff k Q f :=
-  (rfl)
+      trivialCoeff k Q f := by
+  rw [quotientJacobsonAlgEquiv, AlgEquiv.trans_apply, Ideal.quotientEquivAlgOfEq_mk,
+    quotientArrowIdealAlgEquiv_mk]
 
 /-- The semisimple quotient of the path algebra of a finite acyclic quiver is indeed semisimple:
 a finite product of fields is a semisimple ring. -/

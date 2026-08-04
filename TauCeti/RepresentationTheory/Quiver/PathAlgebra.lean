@@ -178,6 +178,7 @@ variable {Q : Type u} [Quiver.{v} Q]
 /-- An indexed path is the trivial path at `v` exactly when it starts at `v` and has length zero.
 Stated this way the equality is checked against two non-dependent conditions, so recognizing a
 trivial path inside a concatenation needs no transport along the endpoints. -/
+@[simp]
 theorem eq_nil_iff {v : Q} {x : TotalPath Q} :
     x = ⟨v, v, _root_.Quiver.Path.nil⟩ ↔ x.1 = v ∧ x.2.2.length = 0 := by
   constructor
