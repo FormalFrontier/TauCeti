@@ -353,6 +353,40 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv
       (Icc_subset_Icc (by linarith [min_le_right ρR ρL]) le_rfl))).union
     (hbddR.subset (Set.image_mono (Icc_subset_Icc le_rfl (by linarith [min_le_left ρR ρL]))))
 
+/-- **Boundedness of the real winding integrand on the full neighborhood of a `C^{1,1}` corner
+crossing.** Combines `_right` and `_left` above into the full two-sided window `[t₀ - ρ, t₀ + ρ]`,
+allowing the two sides to have genuinely different pieces and Lipschitz constants (as at a
+corner, where the one-sided tangents themselves may differ) rather than requiring one shared
+ambient derivative as `exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`
+does. -/
+theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner
+    {γ : ℝ → ℂ} {w : ℂ} {c t₀ d : ℝ} {KR KL : ℝ≥0} (hct : c < t₀) (htd : t₀ < d)
+    (hdiffR : DifferentiableOn ℝ γ (Icc t₀ d))
+    (hlipR : LipschitzOnWith KR (derivWithin γ (Icc t₀ d)) (Icc t₀ d))
+    (hdiffL : DifferentiableOn ℝ γ (Icc c t₀))
+    (hlipL : LipschitzOnWith KL (derivWithin γ (Icc c t₀)) (Icc c t₀)) (h_eq : γ t₀ = w)
+    (hvelR : derivWithin γ (Icc t₀ d) t₀ ≠ 0) (hvelL : derivWithin γ (Icc c t₀) t₀ ≠ 0) :
+    ∃ ρ > 0, ρ < min (d - t₀) (t₀ - c) ∧ Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) (t₀ + ρ)) := by
+  obtain ⟨ρR, hρR_pos, hρR_lt, hbddR⟩ :=
+    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
+      htd hdiffR hlipR h_eq hvelR
+  obtain ⟨ρL, hρL_pos, hρL_lt, hbddL⟩ :=
+    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
+      hct hdiffL hlipL h_eq hvelL
+  refine ⟨min ρR ρL, lt_min hρR_pos hρL_pos,
+    lt_min ((min_le_left ρR ρL).trans_lt hρR_lt) ((min_le_right ρR ρL).trans_lt hρL_lt), ?_⟩
+  -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
+  -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
+  have hsplit : Icc (t₀ - min ρR ρL) (t₀ + min ρR ρL)
+      = Icc (t₀ - min ρR ρL) t₀ ∪ Icc t₀ (t₀ + min ρR ρL) :=
+    (Set.Icc_union_Icc_eq_Icc (by linarith [lt_min hρR_pos hρL_pos])
+      (by linarith [lt_min hρR_pos hρL_pos])).symm
+  rw [hsplit, Set.image_union]
+  exact (hbddL.subset (Set.image_mono
+      (Icc_subset_Icc (by linarith [min_le_right ρR ρL]) le_rfl))).union
+    (hbddR.subset (Set.image_mono (Icc_subset_Icc le_rfl (by linarith [min_le_left ρR ρL]))))
+
 end TauCeti.Contour
 
 end
