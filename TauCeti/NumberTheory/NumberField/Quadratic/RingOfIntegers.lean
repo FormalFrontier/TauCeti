@@ -26,9 +26,9 @@ even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `
 
 ## Main results
 
-* `TauCeti.NumberField.adjoin_gen_eq_top_of_emod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
-* `TauCeti.NumberField.discr_eq_four_mul_of_emod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
-* `TauCeti.NumberField.adjoin_half_gen_eq_top_of_emod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
+* `TauCeti.NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
+* `TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
+* `TauCeti.NumberField.adjoin_half_gen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
 -/
 
 public section
@@ -203,7 +203,9 @@ private theorem exists_half_int_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
     have : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((4 * N : ℤ) : ℚ) := by push_cast; rw [hA, hB, hN]; ring
     exact_mod_cast this
   refine ⟨A, B, N, ?_, hABN⟩
-  rw [hz, show a = (A : ℚ) / 2 by rw [hA]; ring, show c = (B : ℚ) / 2 by rw [hB]; ring]
+  have hAa : (A : ℚ) / 2 = a := by rw [hA]; ring
+  have hBc : (B : ℚ) / 2 = c := by rw [hB]; ring
+  rw [hz, hAa, hBc]
 
 /-- **`𝓞 K = ℤ[θ]` for `d ≢ 1 (mod 4)`: coordinates.** Every algebraic integer of `ℚ(√d)` is a
 `ℤ`-combination `k + l·θ` — the "no more integers" step (see the module docstring). -/
@@ -252,7 +254,7 @@ private theorem exists_int_repr_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- **The ring of integers is `ℤ[(1+θ)/2]` when `d ≡ 1 (mod 4)`.** For squarefree `d` with
 `d % 4 = 1`, the ring of integers of `ℚ(√d)` is generated over `ℤ` by `ω = (1+θ)/2`. -/
-theorem adjoin_half_gen_eq_top_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem adjoin_half_gen_eq_top_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) :
     Algebra.adjoin ℤ {halfGen hmin hd4} = (⊤ : Subalgebra ℤ (𝓞 K)) := by
   rw [eq_top_iff]
@@ -265,7 +267,7 @@ theorem adjoin_half_gen_eq_top_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 
 /-- **The discriminant of `ℚ(√d)` when `d ≡ 1 (mod 4)`.** For squarefree `d` with `d % 4 = 1`, the
 field discriminant is `disc K = d` (the ring of integers is `ℤ[(1+θ)/2]`, whose `{1, ω}` basis has
 discriminant `d`). -/
-theorem discr_eq_of_squarefree_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem discr_eq_of_squarefree_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) :
     NumberField.discr K = d := by
   have hfr := finrank_rat_eq_two hmin hgen
@@ -301,7 +303,7 @@ variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ :
 
 include hsf hd4 in
 /-- From squarefreeness and `d % 4 ≠ 1`, the residue is `2` or `3` (it is never `0`, as `4 ∤ d`). -/
-private theorem emod_four_eq_two_or_three : d % 4 = 2 ∨ d % 4 = 3 := by
+private theorem mod_four_eq_two_or_three : d % 4 = 2 ∨ d % 4 = 3 := by
   have hnd4 : ¬ (4 : ℤ) ∣ d := fun h => by
     have h2 : IsUnit (2 : ℤ) := hsf 2 (by rw [(by norm_num : (2 : ℤ) * 2 = 4)]; exact h)
     rw [Int.isUnit_iff] at h2; omega
@@ -310,11 +312,11 @@ private theorem emod_four_eq_two_or_three : d % 4 = 2 ∨ d % 4 = 3 := by
 include hmin hgen hsf hd4 in
 /-- **The ring of integers is `ℤ[θ]` when `d ≢ 1 (mod 4)`.** For squarefree `d` with `d % 4 ≠ 1`,
 the ring of integers of `ℚ(√d)` is generated over `ℤ` by `θ`. -/
-theorem adjoin_gen_eq_top_of_emod_four_ne_one :
+theorem adjoin_gen_eq_top_of_mod_four_ne_one :
     Algebra.adjoin ℤ {θ} = (⊤ : Subalgebra ℤ (𝓞 K)) := by
   rw [eq_top_iff]
   rintro z -
-  obtain ⟨k, l, hkl⟩ := exists_int_repr hmin hgen hsf (emod_four_eq_two_or_three hsf hd4) z
+  obtain ⟨k, l, hkl⟩ := exists_int_repr hmin hgen hsf (mod_four_eq_two_or_three hsf hd4) z
   rw [hkl]
   exact add_mem (zsmul_mem (one_mem _) k)
     (zsmul_mem (Algebra.subset_adjoin (Set.mem_singleton θ)) l)
@@ -322,10 +324,10 @@ theorem adjoin_gen_eq_top_of_emod_four_ne_one :
 include hmin hgen hsf hd4 in
 /-- **The discriminant of `ℚ(√d)` when `d ≢ 1 (mod 4)`.** For squarefree `d` with `d % 4 ≠ 1`
 (equivalently `d ≡ 2, 3 (mod 4)`), the field discriminant is `disc K = 4d`. The ring of integers is
-`ℤ[θ]` — see `adjoin_gen_eq_top_of_emod_four_ne_one`. -/
-theorem discr_eq_four_mul_of_emod_four_ne_one : NumberField.discr K = 4 * d := by
+`ℤ[θ]` — see `adjoin_gen_eq_top_of_mod_four_ne_one`. -/
+theorem discr_eq_four_mul_of_mod_four_ne_one : NumberField.discr K = 4 * d := by
   have hfr := finrank_rat_eq_two hmin hgen
-  have hd4' := emod_four_eq_two_or_three hsf hd4
+  have hd4' := mod_four_eq_two_or_three hsf hd4
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr (gen_notMem_range hmin) θ.isIntegral_coe
   -- Discriminant of `{1, θ}` is `4d` (`discr_one_gen`).
