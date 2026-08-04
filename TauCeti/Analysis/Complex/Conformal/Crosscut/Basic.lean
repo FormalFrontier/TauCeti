@@ -121,7 +121,8 @@ lines, and the analytic half is the maximum modulus principle for holomorphic fu
   `TauCeti.subset_inter_ball_or_subset_diff_closedBall` and
   `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` — a circular crosscut
   separates the disc into exactly two connected components. The first two need nothing of the
-  disc, nor of the plane, and are stated for an arbitrary cut set in a pseudo-metric space.
+  disc, nor of the plane, and are stated for an arbitrary cut set in a pseudo-metric space; the
+  disc signatures they replace are kept as deprecated compatibility wrappers beside them.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
   `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
   on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
@@ -469,6 +470,34 @@ theorem subset_inter_ball_or_subset_diff_closedBall {s S : Set X} (hs : IsOpen s
     (diff_sphere_eq_inter_ball_union_diff_closedBall (x := x) (s := s) ▸ hSsub)
 
 end Cut
+
+/-! ### Deprecated disc-specific forms
+
+The three lemmas above were stated for `s = ball c r` in `ℂ`. Their old signatures are retained
+here as deprecated compatibility wrappers, each naming its generalized replacement. -/
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall`. -/
+@[deprecated diff_sphere_eq_inter_ball_union_diff_closedBall (since := "2026-08-04")]
+theorem ball_diff_sphere_eq_union :
+    ball c r \ sphere ζ ρ = ball c r ∩ ball ζ ρ ∪ ball c r \ closedBall ζ ρ :=
+  diff_sphere_eq_inter_ball_union_diff_closedBall
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.disjoint_inter_ball_diff_closedBall`. -/
+@[deprecated disjoint_inter_ball_diff_closedBall (since := "2026-08-04")]
+theorem disjoint_ball_inter_ball_ball_diff_closedBall :
+    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
+  disjoint_inter_ball_diff_closedBall
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.subset_inter_ball_or_subset_diff_closedBall`, whose openness hypothesis the disc
+discharges with `Metric.isOpen_ball`. -/
+@[deprecated subset_inter_ball_or_subset_diff_closedBall (since := "2026-08-04")]
+theorem subset_ball_inter_ball_or_subset_ball_diff_closedBall {S : Set ℂ} (hS : IsPreconnected S)
+    (hSsub : S ⊆ ball c r \ sphere ζ ρ) :
+    S ⊆ ball c r ∩ ball ζ ρ ∨ S ⊆ ball c r \ closedBall ζ ρ :=
+  subset_inter_ball_or_subset_diff_closedBall isOpen_ball hS hSsub
 
 /-- **The crosscut neighbourhood is a connected component of the cut disc.** Together with
 `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` this says a circular

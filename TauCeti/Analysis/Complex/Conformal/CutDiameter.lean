@@ -113,6 +113,9 @@ space, and `TauCeti.IsPreconnected.inter_frontier_nonempty` for an arbitrary top
   `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` — the resulting
   boundary limit and continuous extension to the closure.
 
+The disc signatures these replace are kept as deprecated compatibility wrappers in a final section,
+each naming its generalized replacement.
+
 ## Coordination with upstream Mathlib
 
 Layer L5 is absent from
@@ -336,5 +339,111 @@ theorem exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le (hUo : I
     ∃ F : ℂ → ℂ, ContinuousOn F (closure U) ∧ EqOn F f U :=
   exists_continuousOn_closure_eqOn_of_isBounded hUo hd.continuousOn hb fun w hw =>
     subsingleton_clusterSetOn_of_forall_exists_diam_union_le hUo hd hinj hb (h w hw)
+
+/-! ## Deprecated disc-specific forms
+
+Everything above was stated for `U = ball c r`. The old signatures are retained here as deprecated
+compatibility wrappers, each naming its generalized replacement; the openness hypothesis is
+discharged by `Metric.isOpen_ball`, and `Metric.frontier_ball` and `Metric.closure_ball` turn
+`frontier U` and `closure U` back into `sphere c r` and `closedBall c r`. -/
+
+variable {c : ℂ} {r : ℝ}
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.frontier_image_subset_image_union_frontier_image`, which asks holomorphy and injectivity
+on `s ∪ t` only, and does not need `t ⊆ U`. -/
+@[deprecated frontier_image_subset_image_union_frontier_image (since := "2026-08-04")]
+theorem frontier_image_subset_image_union_frontier_image_ball
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) {s t u : Set ℂ}
+    (hs : IsOpen s) (ht : IsOpen t) (hsr : s ⊆ ball c r) (htr : t ⊆ ball c r)
+    (hst : Disjoint s t) (hcov : ball c r ⊆ s ∪ t ∪ u) :
+    frontier (f '' s) ⊆ f '' u ∪ frontier (f '' ball c r) :=
+  frontier_image_subset_image_union_frontier_image (hd.mono (union_subset hsr htr))
+    (hinj.mono (union_subset hsr htr)) hs ht hsr hst hcov
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.frontier_image_inter_ball_subset`. -/
+@[deprecated frontier_image_inter_ball_subset (since := "2026-08-04")]
+theorem frontier_image_ball_inter_ball_subset (hd : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) :
+    frontier (f '' (ball c r ∩ ball ζ ρ))
+      ⊆ f '' (ball c r ∩ sphere ζ ρ) ∪ frontier (f '' ball c r) :=
+  frontier_image_inter_ball_subset isOpen_ball hd hinj
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.frontier_image_diff_closedBall_subset`. -/
+@[deprecated frontier_image_diff_closedBall_subset (since := "2026-08-04")]
+theorem frontier_image_ball_diff_closedBall_subset (hd : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) :
+    frontier (f '' (ball c r \ closedBall ζ ρ))
+      ⊆ f '' (ball c r ∩ sphere ζ ρ) ∪ frontier (f '' ball c r) :=
+  frontier_image_diff_closedBall_subset isOpen_ball hd hinj
+
+/-- Deprecated compatibility wrapper for the disc case of `TauCeti.diam_image_inter_ball_le`. -/
+@[deprecated diam_image_inter_ball_le (since := "2026-08-04")]
+theorem diam_image_ball_inter_ball_le (hd : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {E : Set ℂ} (hE : IsBounded E)
+    (hEsub : frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E) :
+    diam (f '' (ball c r ∩ ball ζ ρ)) ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) :=
+  diam_image_inter_ball_le isOpen_ball hd hinj hb hE hEsub
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.diam_image_diff_closedBall_le`. -/
+@[deprecated diam_image_diff_closedBall_le (since := "2026-08-04")]
+theorem diam_image_ball_diff_closedBall_le (hd : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {E : Set ℂ} (hE : IsBounded E)
+    (hEsub : frontier (f '' ball c r) ∩ frontier (f '' (ball c r \ closedBall ζ ρ)) ⊆ E) :
+    diam (f '' (ball c r \ closedBall ζ ρ)) ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) :=
+  diam_image_diff_closedBall_le isOpen_ball hd hinj hb hE hEsub
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le`. -/
+@[deprecated subsingleton_clusterSetOn_of_forall_exists_diam_le (since := "2026-08-04")]
+theorem subsingleton_clusterSetOn_ball_of_forall_exists_diam_le (hb : IsBounded (f '' ball c r))
+    (h : ∀ ε > 0, ∃ ρ > 0, diam (f '' (ball c r ∩ ball ζ ρ)) ≤ ε) :
+    (clusterSetOn f (ball c r) ζ).Subsingleton :=
+  subsingleton_clusterSetOn_of_forall_exists_diam_le hb h
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_union_le`. -/
+@[deprecated subsingleton_clusterSetOn_of_forall_exists_diam_union_le (since := "2026-08-04")]
+theorem subsingleton_clusterSetOn_ball_of_forall_exists_diam_union_le
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
+    (hb : IsBounded (f '' ball c r))
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E ∧
+      diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) ≤ ε) :
+    (clusterSetOn f (ball c r) ζ).Subsingleton :=
+  subsingleton_clusterSetOn_of_forall_exists_diam_union_le isOpen_ball hd hinj hb h
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le`, whose hypothesis
+`ζ ∈ closure U` the disc discharges from `dist ζ c = r` through `Metric.closure_ball`. -/
+@[deprecated exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le (since := "2026-08-04")]
+theorem exists_tendsto_nhdsWithin_ball_of_forall_exists_diam_union_le (hr : 0 < r)
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
+    (hb : IsBounded (f '' ball c r)) (hζ : dist ζ c = r)
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E ∧
+      diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) ≤ ε) :
+    ∃ v, Tendsto f (𝓝[ball c r] ζ) (𝓝 v) :=
+  exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le isOpen_ball hd hinj hb
+    (closure_ball c hr.ne' ▸ mem_closedBall.mpr hζ.le) h
+
+/-- Deprecated compatibility wrapper for the disc case of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`, whose `frontier U` and
+`closure U` the disc turns into `sphere c r` and `closedBall c r`. -/
+@[deprecated exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le
+  (since := "2026-08-04")]
+theorem exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le (hr : 0 < r)
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
+    (hb : IsBounded (f '' ball c r))
+    (h : ∀ w ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball w ρ)) ⊆ E ∧
+      diam (f '' (ball c r ∩ sphere w ρ) ∪ E) ≤ ε) :
+    ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
+  obtain ⟨F, hFc, hFe⟩ := exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le
+    isOpen_ball hd hinj hb (frontier_ball c hr.ne' ▸ h)
+  exact ⟨F, closure_ball c hr.ne' ▸ hFc, hFe⟩
 
 end TauCeti
