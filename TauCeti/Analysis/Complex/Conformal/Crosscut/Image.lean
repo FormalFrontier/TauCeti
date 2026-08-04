@@ -47,10 +47,11 @@ The middle piece is not merely small, it is *exactly the two ends of the image c
 > `frontier Ω ∩ closure γ = ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f S e`
 
 for `S = ball c r ∩ sphere ζ ρ` the crosscut itself, the index set being its two endpoints
-(`TauCeti.sphere_inter_sphere_eq_pair_circleMap`). Each of those two cluster sets is nonempty
+(`TauCeti.sphere_inter_sphere_eq_pair_circleMap`). The equality itself allows the two cluster sets
+to be empty; as soon as the image crosscut `γ` is bounded each of them is nonempty
 (`TauCeti.nonempty_clusterSetOn_ball_inter_sphere`) and in fact a continuum
-(`TauCeti.isConnected_clusterSetOn_ball_inter_sphere`), so the crosscut clings to the boundary of
-the image at *each* of its ends and the middle piece is where those two ends sit.
+(`TauCeti.isConnected_clusterSetOn_ball_inter_sphere`), and then the crosscut clings to the boundary
+of the image at *each* of its ends and the middle piece is where those two ends sit.
 
 Both inclusions come from the same source. The closure of an image crosscut is the image crosscut
 together with its two end cluster sets
@@ -102,7 +103,8 @@ pseudometric space.
   crosscut is the image crosscut together with the cluster sets at its two endpoints.
 * `TauCeti.nonempty_clusterSetOn_ball_inter_sphere` and
   `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — each of those two end cluster sets is
-  nonempty, and connected as soon as `f` is continuous along the crosscut.
+  nonempty once the image of the crosscut is bounded, and connected once `f` is in addition
+  continuous along the crosscut.
 * `TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn` — the middle
   piece is *exactly* the union of the two end cluster sets, its one-sided inclusion being
   `TauCeti.clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image`.
@@ -283,9 +285,11 @@ holomorphic and injective on `ball c r` and a genuine circular crosscut at a bou
 
 the index set being the two endpoints of the crosscut by
 `TauCeti.sphere_inter_sphere_eq_pair_circleMap`. So the part of the image boundary that the
-crosscut clings to is not merely small and nonempty: it is the union of the cluster sets at the two
-ends, each of them nonempty by `TauCeti.nonempty_clusterSetOn_ball_inter_sphere`. This is what a
-small connected boundary set enclosing the middle piece —
+crosscut clings to is not merely small: it is the union of the cluster sets at the two ends. The
+image of the crosscut is not assumed bounded here, so the equality by itself leaves those two
+cluster sets possibly empty; add that boundedness and each of them is nonempty by
+`TauCeti.nonempty_clusterSetOn_ball_inter_sphere`, which is what a small connected boundary set
+enclosing the middle piece —
 `TauCeti.exists_isConnected_subset_frontier_image_ball_of_diam_lt` — has to *join*.
 
 One inclusion is `TauCeti.clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image`. For
