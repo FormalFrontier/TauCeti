@@ -55,7 +55,11 @@ so they ask for `Finite G` and produce the `Fintype` inside the proof.
 ## References
 
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-  Layer 3, the orthonormality-to-independence half of the completeness item.
+  Layer 3, the orthonormality-to-independence half of the completeness item. Nothing here uses
+  Layers 1-2; on the contrary, these results feed them: the character bound is the `≤` half of
+  Layer 2's count `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, and that a character
+  determines its irreducible is what makes `character` injective on the isomorphism classes that
+  Layer 2.5 indexes by.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.8 and Corollary 2.9.
 -/
 
@@ -78,6 +82,7 @@ variable [Fintype G] {V W : Type w} [AddCommGroup V] [Module k V] [FiniteDimensi
   [AddCommGroup W] [Module k W] [FiniteDimensional k W]
 
 /-- An irreducible character pairs to `1` with itself. -/
+@[simp]
 theorem characterPairing_ofCharacter_self (ρ : Representation k G V) [ρ.IsIrreducible] :
     characterPairing (ofCharacter ρ) (ofCharacter ρ) = 1 := by
   classical
@@ -85,6 +90,7 @@ theorem characterPairing_ofCharacter_self (ρ : Representation k G V) [ρ.IsIrre
   rw [characterPairing_ofCharacter_orthonormal ρ ρ, if_pos hrefl]
 
 /-- The characters of inequivalent irreducible representations pair to `0`. -/
+@[simp]
 theorem characterPairing_ofCharacter_eq_zero (ρ : Representation k G V)
     (σ : Representation k G W) [ρ.IsIrreducible] [σ.IsIrreducible] (h : IsEmpty (σ.Equiv ρ)) :
     characterPairing (ofCharacter ρ) (ofCharacter σ) = 0 := by
@@ -92,6 +98,7 @@ theorem characterPairing_ofCharacter_eq_zero (ρ : Representation k G V)
   rw [characterPairing_ofCharacter_orthonormal ρ σ, if_neg (not_nonempty_iff.mpr h)]
 
 /-- The character of a simple object of `FDRep k G` pairs to `1` with itself. -/
+@[simp]
 theorem characterPairing_ofFDRep_self (X : FDRep k G) [CategoryTheory.Simple X] :
     characterPairing (ofFDRep X) (ofFDRep X) = 1 := by
   classical
@@ -99,6 +106,7 @@ theorem characterPairing_ofFDRep_self (X : FDRep k G) [CategoryTheory.Simple X] 
   rw [characterPairing_ofFDRep_orthonormal X X, if_pos hrefl]
 
 /-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`. -/
+@[simp]
 theorem characterPairing_ofFDRep_eq_zero (X Y : FDRep k G) [CategoryTheory.Simple X]
     [CategoryTheory.Simple Y] (h : IsEmpty (X ≅ Y)) :
     characterPairing (ofFDRep X) (ofFDRep Y) = 0 := by
@@ -134,7 +142,11 @@ theorem linearIndependent_character (ρ : ∀ i, Representation k G (V i))
     LinearIndependent k fun i => (ρ i).character := by
   have hmap := (linearIndependent_ofCharacter ρ h).map' (ClassFunction k G).subtype
     (Submodule.ker_subtype _)
-  simpa only [Function.comp_def, Submodule.subtype_apply, coe_ofCharacter] using hmap
+  have hcoe : ⇑(ClassFunction k G).subtype ∘ (fun i => ofCharacter (ρ i)) =
+      fun i => (ρ i).character := by
+    funext i g
+    simp only [Function.comp_apply, Submodule.subtype_apply, ofCharacter_apply]
+  rwa [hcoe] at hmap
 
 /-- **The characters of pairwise non-isomorphic simple objects of `FDRep k G` are linearly
 independent** as class functions. -/
@@ -155,7 +167,11 @@ theorem linearIndependent_character_fdRep (X : ι → FDRep k G)
     LinearIndependent k fun i => (X i).character := by
   have hmap := (linearIndependent_ofFDRep X h).map' (ClassFunction k G).subtype
     (Submodule.ker_subtype _)
-  simpa only [Function.comp_def, Submodule.subtype_apply, coe_ofFDRep] using hmap
+  have hcoe : ⇑(ClassFunction k G).subtype ∘ (fun i => ofFDRep (X i)) =
+      fun i => (X i).character := by
+    funext i g
+    simp only [Function.comp_apply, Submodule.subtype_apply, ofFDRep_apply]
+  rwa [hcoe] at hmap
 
 end Independence
 
@@ -178,7 +194,7 @@ theorem nonempty_equiv_of_character_eq (ρ : Representation k G V) (σ : Represe
   rw [← not_isEmpty_iff]
   intro hempty
   have hσρ : ClassFunction.ofCharacter σ = ClassFunction.ofCharacter ρ :=
-    Subtype.ext <| by rw [ClassFunction.coe_ofCharacter, ClassFunction.coe_ofCharacter, h]
+    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofCharacter_apply, h]
   have h0 := ClassFunction.characterPairing_ofCharacter_eq_zero ρ σ hempty
   rw [hσρ, ClassFunction.characterPairing_ofCharacter_self ρ] at h0
   exact one_ne_zero h0
@@ -198,7 +214,7 @@ theorem nonempty_iso_of_character_eq (X Y : FDRep k G) [CategoryTheory.Simple X]
   rw [← not_isEmpty_iff]
   intro hempty
   have hXY : ClassFunction.ofFDRep Y = ClassFunction.ofFDRep X :=
-    Subtype.ext <| by rw [ClassFunction.coe_ofFDRep, ClassFunction.coe_ofFDRep, h]
+    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofFDRep_apply, h]
   have h0 := ClassFunction.characterPairing_ofFDRep_eq_zero X Y hempty
   rw [hXY, ClassFunction.characterPairing_ofFDRep_self X] at h0
   exact one_ne_zero h0
