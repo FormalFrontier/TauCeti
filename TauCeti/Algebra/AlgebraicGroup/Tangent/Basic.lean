@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.RingTheory.Derivation.DualNumber
-public import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
