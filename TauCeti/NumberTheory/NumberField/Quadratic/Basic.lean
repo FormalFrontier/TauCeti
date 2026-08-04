@@ -101,7 +101,7 @@ theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- The discriminant of the `ℚ`-family `{1, (1+θ)/2}` is `d`: a change of basis from `{1, θ}` by
 the matrix `!![1, 0; 1/2, 1/2]` (determinant `1/2`), so `disc = (1/2)² · 4d = d`. -/
-theorem discr_one_half_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem discr_one_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (1 + (θ : K)) / 2] = ((d : ℤ) : ℚ) := by
   have hP : ![(1 : K), (1 + (θ : K)) / 2]

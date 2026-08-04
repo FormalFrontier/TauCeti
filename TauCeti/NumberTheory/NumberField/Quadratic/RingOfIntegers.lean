@@ -28,7 +28,7 @@ even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `
 
 * `TauCeti.NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
 * `TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
-* `TauCeti.NumberField.adjoin_half_gen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
+* `TauCeti.NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
 -/
 
 public section
@@ -163,7 +163,7 @@ private theorem two_dvd_sub_of_sq_sub_mul_sq {A B N : ℤ} (hd4 : d % 4 = 1)
 
 /-- For `d ≡ 1 (mod 4)`, `ω = (1 + θ)/2` is an algebraic integer: it is a root of the monic
 integer polynomial `X² - X - (d-1)/4`. -/
-private theorem isIntegral_half_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+private theorem isIntegral_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
     IsIntegral ℤ ((1 + (θ : K)) / 2) := by
   obtain ⟨e, he⟩ : ∃ e : ℤ, d = 4 * e + 1 := ⟨d / 4, by omega⟩
   have ht : (θ : K) ^ 2 = algebraMap ℤ K d := coe_gen_sq hmin
@@ -227,7 +227,7 @@ private theorem exists_int_repr (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- For `d ≡ 1 (mod 4)`, the half-integer generator `ω = (1 + θ)/2 ∈ 𝓞 K`. -/
 noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) : 𝓞 K :=
-  ⟨(1 + (θ : K)) / 2, isIntegral_half_gen hmin hd4⟩
+  ⟨(1 + (θ : K)) / 2, isIntegral_halfGen hmin hd4⟩
 
 /-- The half-integer generator coerces to `(1 + θ)/2` in `K`. -/
 @[simp] theorem coe_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
@@ -254,7 +254,7 @@ private theorem exists_int_repr_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- **The ring of integers is `ℤ[(1+θ)/2]` when `d ≡ 1 (mod 4)`.** For squarefree `d` with
 `d % 4 = 1`, the ring of integers of `ℚ(√d)` is generated over `ℤ` by `ω = (1+θ)/2`. -/
-theorem adjoin_half_gen_eq_top_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem adjoin_halfGen_eq_top_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) :
     Algebra.adjoin ℤ {halfGen hmin hd4} = (⊤ : Subalgebra ℤ (𝓞 K)) := by
   rw [eq_top_iff]
@@ -275,9 +275,9 @@ theorem discr_eq_of_squarefree_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2
     rintro ⟨q, hq⟩
     exact gen_notMem_range hmin ⟨2 * q - 1, by rw [map_sub, map_mul, map_one, map_ofNat, hq]; ring⟩
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
-    hfr hωnotmem (isIntegral_half_gen hmin hd4)
+    hfr hωnotmem (isIntegral_halfGen hmin hd4)
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((d : ℤ) : ℚ) := by
-    rw [hbs]; exact discr_one_half_gen hmin hgen
+    rw [hbs]; exact discr_one_halfGen hmin hgen
   have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
     rw [eq_top_iff]
     rintro z -
