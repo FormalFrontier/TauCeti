@@ -35,6 +35,20 @@ of the kernel says nothing about the Lie bracket, which appears at second order.
 The synonym `CounitAlgebra` is a fresh scope for the point-induced algebra structure,
 as the dictionary requires; it does not install instances on `B` itself, and
 `Bialgebra.CounitAlgebra.algEquivSelf` transports back to `B` as an `R`-algebra.
+
+## The exterior convolution product
+
+The file also provides the exterior convolution product `LinearMap.mulTensor`: two
+convolution linear maps applied legwise on `A ⊗[R] A` and multiplied in the
+coefficients, with its normalization rules (zero, addition, scalars) and its
+multiplicativity for convolution. Composing with the multiplication of `A` lands in
+this product's image: an algebra-map point satisfies `g ∘ mul = g ⊠ g`
+(`AlgHom.toConv_toLinearMap_comp_mul'`), and a counit-valued derivation satisfies the
+Leibniz rule `d ∘ mul = 1 ⊠ d + d ⊠ 1` (`Derivation.toConv_coe_comp_mul'`). This
+calculus lives here, at the tangent level, because every later structure on the tangent
+space — the Lie bracket and the adjoint action alike — is a composition-level
+consequence of these three identities.
+
 -/
 
 public section
