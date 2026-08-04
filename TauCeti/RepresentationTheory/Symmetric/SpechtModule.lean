@@ -78,14 +78,13 @@ variable {μ : YoungDiagram}
 
 /-- The **tabloid** `{t}` of a `μ`-tableau `t`: the row-equivalence class of `t`, presented as the
 coset of the Young subgroup of the shape of `μ` given by `rowYoungConjugator t`. -/
-@[expose]
 noncomputable def tabloid (t : YoungTableau μ) :
     Equiv.Perm (Fin μ.card) ⧸ youngSubgroup (shapePartition μ) :=
   QuotientGroup.mk (rowYoungConjugator t)
 
 theorem tabloid_def (t : YoungTableau μ) :
     tabloid t = QuotientGroup.mk (rowYoungConjugator t) :=
-  rfl
+  (rfl)
 
 /-- Relabeling a tableau translates its tabloid. -/
 @[simp]
@@ -130,9 +129,9 @@ theorem smul_tabloid_eq_self_iff {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.
 
 /-- Distinct elements of the column group of `t` move the tabloid of `t` to distinct tabloids: the
 column group meets the row group, which is the stabilizer, only in the identity. -/
-theorem smul_tabloid_injective_on_colSubgroup {t : YoungTableau μ} {q r : colSubgroup t}
-    (h : (q : Equiv.Perm (Fin μ.card)) • tabloid t = (r : Equiv.Perm (Fin μ.card)) • tabloid t) :
-    q = r := by
+theorem smul_tabloid_injective (t : YoungTableau μ) :
+    Function.Injective fun q : colSubgroup t => (q : Equiv.Perm (Fin μ.card)) • tabloid t := by
+  intro q r h
   have hrow : (q : Equiv.Perm (Fin μ.card))⁻¹ * r ∈ rowSubgroup t := smul_tabloid_eq_iff.mp h
   have hcol : (q : Equiv.Perm (Fin μ.card))⁻¹ * r ∈ colSubgroup t :=
     mul_mem (inv_mem q.2) r.2
@@ -165,6 +164,7 @@ theorem polytabloid_eq_sum (t : YoungTableau μ) :
   simp [MonoidAlgebra.of_apply, Representation.asAlgebraHom_single]
 
 /-- Relabeling a tableau translates its polytabloid: `e_{σt} = σ · e_t`. -/
+@[simp]
 theorem polytabloid_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ) :
     polytabloid (relabel σ t) =
       (permutationModule (shapePartition μ)).ρ σ (polytabloid t) := by
@@ -174,9 +174,9 @@ theorem polytabloid_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ
   simp only [Module.End.mul_apply, Representation.ofMulAction_single, smul_smul,
     inv_mul_cancel, one_smul]
 
-/-- The tabloids occurring in the polytabloid `e_t` are exactly the images of `{t}` under the
-column group of `t`, and the coefficient of each is the sign of the column permutation producing
-it. -/
+/-- The coefficient, in the polytabloid `e_t`, of the tabloid obtained from `{t}` by a column
+permutation `q` of `t` is the sign of `q`. -/
+@[simp]
 theorem polytabloid_coeff_smul_tabloid (t : YoungTableau μ) (q : colSubgroup t) :
     (polytabloid t).coeff ((q : Equiv.Perm (Fin μ.card)) • tabloid t) =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) := by
@@ -187,13 +187,14 @@ theorem polytabloid_coeff_smul_tabloid (t : YoungTableau μ) (q : colSubgroup t)
   · intro r _ hr
     have hne : (r : Equiv.Perm (Fin μ.card)) • tabloid t ≠
         (q : Equiv.Perm (Fin μ.card)) • tabloid t := fun h =>
-      hr (smul_tabloid_injective_on_colSubgroup h)
+      hr (smul_tabloid_injective t h)
     simp [MonoidAlgebra.coeff_single, hne]
   · intro h
     exact absurd (Finset.mem_univ _) h
 
 /-- The coefficient of the tabloid `{t}` in the polytabloid `e_t` is `1`; in particular `e_t` is a
 nonzero element of `M^μ`. -/
+@[simp]
 theorem polytabloid_coeff_tabloid (t : YoungTableau μ) :
     (polytabloid t).coeff (tabloid t) = 1 := by
   have h := polytabloid_coeff_smul_tabloid t 1
@@ -207,9 +208,8 @@ theorem polytabloid_ne_zero (t : YoungTableau μ) : polytabloid t ≠ 0 := by
   simp at this
 
 /-- **The tabloid form evaluates a polytabloid against itself to the order of the column group.**
-The tabloids occurring in `e_t` are pairwise distinct and their coefficients are signs, so the sum
-of the squared coefficients counts the column group.  This nonvanishing is the input that James's
-submodule theorem converts into irreducibility of the Specht module. -/
+This nonvanishing is the input that James's submodule theorem converts into irreducibility of the
+Specht module. -/
 theorem tabloidForm_polytabloid_self (t : YoungTableau μ) :
     tabloidForm (shapePartition μ) (polytabloid t) (polytabloid t) =
       (Nat.card (colSubgroup t) : ℚ) := by
@@ -240,7 +240,6 @@ spanned by the polytabloids of the `μ`-tableaux.
 
 It is stable under the symmetric group because relabeling a tableau translates its polytabloid,
 and the polytabloids of the relabelings of a fixed tableau are all of them. -/
-@[expose]
 noncomputable def spechtModule (μ : YoungDiagram) :
     Subrepresentation (permutationModule (shapePartition μ)).ρ where
   toSubmodule := Submodule.span ℚ (Set.range (polytabloid (μ := μ)))
@@ -256,7 +255,7 @@ noncomputable def spechtModule (μ : YoungDiagram) :
 
 theorem spechtModule_toSubmodule (μ : YoungDiagram) :
     (spechtModule μ).toSubmodule = Submodule.span ℚ (Set.range (polytabloid (μ := μ))) :=
-  rfl
+  (rfl)
 
 /-- Every polytabloid lies in the Specht module. -/
 theorem polytabloid_mem_spechtModule (t : YoungTableau μ) :
