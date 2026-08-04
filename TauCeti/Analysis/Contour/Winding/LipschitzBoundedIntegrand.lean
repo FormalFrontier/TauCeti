@@ -154,7 +154,7 @@ private theorem abs_div_sq_le_of_abs_le_mul_sq {x a b d N : ℝ} (hN : 0 ≤ N) 
 ‖derivWithin γ (Icc c d) t₀‖`, the real winding integrand at `γ t - w` (using the within-piece
 derivative at `t`) is bounded independent of `t`. -/
 private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin {γ : ℝ → ℂ} {w : ℂ}
-    {c d : ℝ} {K : ℝ≥0} (hcd : c ≤ d) (hdiff : DifferentiableOn ℝ γ (Icc c d))
+    {c d : ℝ} {K : ℝ≥0} (hdiff : DifferentiableOn ℝ γ (Icc c d))
     (hlip : LipschitzOnWith K (derivWithin γ (Icc c d)) (Icc c d))
     {t₀ : ℝ} (ht₀ : t₀ ∈ Icc c d) (h_eq : γ t₀ = w)
     (hvel : derivWithin γ (Icc c d) t₀ ≠ 0) {t : ℝ} (ht : t ∈ Icc c d)
@@ -163,6 +163,7 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin {γ :
       4 * (2 * ‖derivWithin γ (Icc c d) t₀‖ * K + K ^ 2 * (d - c)) /
         ‖derivWithin γ (Icc c d) t₀‖ ^ 2 := by
   set D : ℝ → ℂ := derivWithin γ (Icc c d) with hD_def
+  have hcd : c ≤ d := ht₀.1.trans ht₀.2
   have habs_le : |t - t₀| ≤ d - c := by
     rw [abs_le]; exact ⟨by linarith [ht.1, ht₀.2], by linarith [ht.2, ht₀.1]⟩
   have hR : ‖γ t - w - (t - t₀) • D t₀‖ ≤ K * (t - t₀) ^ 2 := by
@@ -238,7 +239,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       (derivWithin_of_mem_nhds
         (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htne)) (by linarith [ht.2]))).symm
     rw [hDeq]
-    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin htd.le hdiff hlip
+    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin hdiff hlip
       (left_mem_Icc.mpr htd.le) h_eq hvel htcd ?_
     have habs : |t - t₀| = t - t₀ := abs_of_nonneg (by linarith [ht.1])
     rw [habs]
@@ -287,7 +288,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       (derivWithin_of_mem_nhds
         (Icc_mem_nhds (by linarith [ht.1]) (lt_of_le_of_ne ht.2 htne))).symm
     rw [hDeq]
-    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin hct.le hdiff hlip
+    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin hdiff hlip
       (right_mem_Icc.mpr hct.le) h_eq hvel htcd ?_
     have habs : |t - t₀| = t₀ - t := by rw [abs_of_nonpos (by linarith [ht.2])]; ring
     rw [habs]
