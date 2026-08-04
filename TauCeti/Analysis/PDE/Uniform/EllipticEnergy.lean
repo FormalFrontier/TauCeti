@@ -19,7 +19,7 @@ The statements are still pointwise finite-dimensional estimates on jets
 hypothesis of Lax--Milgram: that needs coercivity of the *integrated* form on a complete
 inner-product (H¹-type) space, later Lane A/D work.  They are the pointwise boundedness and
 diagonal lower bounds that the integrated inequality of
-`TauCeti.Analysis.PDE.Integrated.EnergyForm` consumes after integrating over the domain.
+`TauCeti.Analysis.PDE.EnergyForm.Integrated.Basic` consumes after integrating over the domain.
 
 This file deliberately leaves symmetry to `TauCeti.Analysis.PDE.SymmetricEnergy`.  For a
 zero-drift uniformly elliptic operator with symmetric principal coefficient, use

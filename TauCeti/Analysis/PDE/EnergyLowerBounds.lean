@@ -21,7 +21,7 @@ the hypothesis of Lax--Milgram: `TauCeti.Analysis.InnerProductSpace.LaxMilgram` 
 coercivity of the *integrated* form on a complete inner-product (H¹-type) space, which is
 later Lane A/D work.  The genuine consumer of these pointwise bounds is the integrated
 inequality `∫ (min (λ/2) (μ − β²/2λ)) · ‖U‖² ≤ energyFormIntegral` in
-`TauCeti.Analysis.PDE.Integrated.EnergyForm`, obtained by integrating them; no
+`TauCeti.Analysis.PDE.EnergyForm.Integrated.Basic`, obtained by integrating them; no
 finite-dimensional jet fibre is fed into Lax--Milgram.
 
 The lower-bound theorems below take a single principal coefficient `A`, drift coefficient
