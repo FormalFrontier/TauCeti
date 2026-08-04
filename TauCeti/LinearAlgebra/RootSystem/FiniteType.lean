@@ -46,13 +46,22 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
-* `TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero`: the degree bound. No index has
-  four pairwise non-adjacent neighbours, so no vertex of the diagram has degree greater than three;
-  the affine type `D̃₄` is ruled out in `TauCeti.not_isFiniteType_affineD₄`.
+* `TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero`: the degree bound for a
+  non-adjacent star. No index has four pairwise non-adjacent neighbours; the affine type `D̃₄` is
+  ruled out in `TauCeti.not_isFiniteType_affineD₄`.
 * `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le` and
-  `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`: at most one edge at an index is
-  multiple, and an index carrying a triple edge carries no other edge.
-* `TauCeti.IsFiniteType.apply_mul_apply_eq_one_of_three_le_card`: a branch vertex is simply laced.
+  `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`: of two edges at an index whose
+  far ends are non-adjacent at most one is multiple, and an index carrying a triple edge is joined
+  to no further index non-adjacent to the far end of that edge.
+* `TauCeti.IsFiniteType.apply_mul_apply_eq_one_of_three_le_card`: three pairwise non-adjacent
+  neighbours of an index are each joined to it by a single edge.
+
+Each of these consequences selects its neighbours through a pairwise non-adjacency hypothesis,
+which is what the star bound asks for. Turning them into the unconditional graph statements the
+classification runs on - degree at most three, at most one multiple edge at a vertex, an isolated
+triple edge, a simply laced branch vertex - needs in addition that distinct neighbours of an index
+are never adjacent, that is, that a finite-type diagram carries no triangle. That exclusion is not
+proved here.
 * `TauCeti.IsFiniteType.det_ne_zero`: a finite-type matrix is nonsingular. Since the extended
   Dynkin diagrams have singular Cartan matrices, this is the second elimination tool; the affine
   type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`.
@@ -152,9 +161,9 @@ theorem one_le_apply_mul_apply (h : IsFiniteType A) {i j : B} (hij : i ≠ j) (h
 pairwise non-adjacent, then the Cartan products of `i` with the indices of `s` sum to less than
 `4`.
 
-This is the single positive-definiteness estimate from which the local shape of a finite-type
-diagram follows: `i` has at most three pairwise non-adjacent neighbours, at most one of the edges
-at `i` reaching such a neighbour is multiple, and a triple edge at `i` reaches no other. It is
+This is the single positive-definiteness estimate behind the local shape of a finite-type diagram:
+inside a pairwise non-adjacent star at `i` there are at most three neighbours, at most one of the
+edges to them is multiple, and a triple edge among them stands alone. It is
 proved by evaluating the symmetrized quadratic form at the vector that is `1` at `i` and, at each
 `j ∈ s`, the value `-dᵢAᵢⱼ / 2dⱼ` minimizing the `j`-th coordinate of the form. Pairwise
 non-adjacency is what makes the coordinates of `s` independent of one another, so that each can be
@@ -266,7 +275,7 @@ theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k 
   have hlt := h.sum_apply_mul_apply_lt_four hi hp
   rwa [Finset.sum_insert (by simpa using hjk), Finset.sum_singleton] at hlt
 
-/-- **An index of a finite-type matrix carries at most one multiple edge.** If the edge from `i` to
+/-- **At most one edge of a non-adjacent pair at an index is multiple.** If the edge from `i` to
 `j` is multiple, then every edge from `i` to a neighbour non-adjacent to `j` is single. -/
 theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
     (hik : i ≠ k) (h0 : A j k = 0) (hj : 2 ≤ A i j * A j i) :
@@ -274,9 +283,9 @@ theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (hij :
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
-/-- **A triple edge is isolated.** An index joined to `j` by a triple edge is joined to no further
-index non-adjacent to `j`. This is the local step behind `G₂` being the only finite-type diagram
-carrying a triple edge. -/
+/-- **A triple edge is isolated among the neighbours non-adjacent to its far end.** An index joined
+to `j` by a triple edge is joined to no further index non-adjacent to `j`. This is the local step
+behind `G₂` being the only finite-type diagram carrying a triple edge. -/
 theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
     (hik : i ≠ k) (h0 : A j k = 0) (hj : A i j * A j i = 3) :
     A i k = 0 := by
@@ -285,9 +294,10 @@ theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : 
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
-/-- **An index of a finite-type matrix has at most three pairwise non-adjacent neighbours**: there
-is no vertex of degree greater than three, so the diagram of a finite-type matrix branches at most
-into three arms. -/
+/-- **An index of a finite-type matrix has at most three pairwise non-adjacent neighbours**, so a
+finite-type diagram branches into at most three pairwise unjoined arms. The unconditional degree
+bound asks in addition that distinct neighbours of an index are non-adjacent, which is not proved
+here. -/
 theorem card_le_three_of_pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s : Finset B}
     (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
     (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
@@ -300,9 +310,9 @@ theorem card_le_three_of_pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s 
   have := h.sum_apply_mul_apply_lt_four his hs
   omega
 
-/-- **A branch vertex of a finite-type diagram is simply laced.** An index with three pairwise
-non-adjacent neighbours meets each of them along a single edge, since three Cartan products of
-value at least `1` already exhaust the star bound. -/
+/-- **A three-armed non-adjacent star of a finite-type matrix is simply laced.** An index with
+three pairwise non-adjacent neighbours meets each of them along a single edge, since three Cartan
+products of value at least `1` already exhaust the star bound. -/
 theorem apply_mul_apply_eq_one_of_three_le_card (h : IsFiniteType A) {i : B} {s : Finset B}
     (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
     (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) (hcard : 3 ≤ s.card) {j : B} (hj : j ∈ s) :
