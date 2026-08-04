@@ -64,4 +64,3 @@ theorem contMDiff_mulInvariantVectorField_infty
     rw [mfderiv_prod_eq_add_apply ((contMDiff_mul I ∞).mdifferentiableAt (by simp))]
     simp +instances [mulInvariantVectorField, equivTangentBundleProd]
     rfl
-
