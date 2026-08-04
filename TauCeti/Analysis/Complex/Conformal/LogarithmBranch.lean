@@ -11,7 +11,7 @@ import Mathlib.Analysis.Complex.CoveringMap
 import Mathlib.Topology.Homotopy.Lifting
 
 /-!
-# The logarithm: a germ that continues everywhere and is single-valued nowhere
+# The logarithm: a germ that continues in the punctured plane but has no branch there
 
 `Conformal/GlobalBranch.lean` proves that on a **simply connected** domain a germ continuing
 along every path is the germ of one holomorphic function. `Conformal/Continuation.lean` asserts,
@@ -50,9 +50,9 @@ lift continue the principal branch (`TauCeti.continuesAlong_log`), so the germ c
 the whole punctured plane (`TauCeti.continuesInside_log`). Inside the slit plane there is nothing
 to do: the principal branch is holomorphic there (`TauCeti.continuesInside_log_slitPlane`).
 
-*Single-valued nowhere.* Around the unit circle the lift is `t ↦ 2 π i t`, so the terminal
-branch is based at `2 π i` and the terminal germ is `log + 2 π i`, not `log`. By uniqueness of
-continuation along a fixed path this is forced for *every* continuation of the germ around that
+*No branch on the punctured plane.* Around the unit circle the lift is `t ↦ 2 π i t`, so the
+terminal branch is based at `2 π i` and the terminal germ is `log + 2 π i`, not `log`. By uniqueness
+of continuation along a fixed path this is forced for *every* continuation of the germ around that
 loop (`TauCeti.eventuallyEq_add_two_pi_mul_I_of_isAnalyticContinuationAlong`), and a holomorphic
 function on `ℂ \ {0}` would be its own continuation, so no such function has the germ of `log` at
 `1` (`TauCeti.not_exists_analyticOnNhd_eventuallyEq_log`).
@@ -258,10 +258,16 @@ theorem continuesInside_log : ContinuesInside Complex.log ({0}ᶜ : Set ℂ) 1 :
   ContinuesInside.of_forall fun _ hc hcU hc0 =>
     continuesAlong_log hc hc0 fun x => Set.mem_compl_singleton_iff.mp (hcU x)
 
-/-- **The germ of `Complex.log` continues inside the slit plane**, where the principal branch is
-already single-valued. -/
-theorem continuesInside_log_slitPlane {z₀ : ℂ} :
-    ContinuesInside Complex.log Complex.slitPlane z₀ :=
+/-- **The germ of `Complex.log` at `1` continues inside the slit plane**, where the principal
+branch is already single-valued.
+
+The base point is that of `TauCeti.continuesInside_log`, so that the two halves of the claim in
+the docstring of `TauCeti.ContinuesInside` compare directly. A base point outside the slit plane
+would make the statement vacuous, since no path can start there and stay in the domain; the
+general statement, for any base point of any open set on which a function is holomorphic, is
+`TauCeti.ContinuesInside.of_differentiableOn`. -/
+theorem continuesInside_log_slitPlane :
+    ContinuesInside Complex.log Complex.slitPlane 1 :=
   ContinuesInside.of_differentiableOn Complex.isOpen_slitPlane fun _ hz =>
     (Complex.differentiableAt_log hz).differentiableWithinAt
 
