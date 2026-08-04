@@ -35,6 +35,12 @@ and identifies it with Mathlib's `Circle` as a topological group. Three facts pi
 * `TauCeti.SU2.mem_torus_iff_exists_torusExp`: every element of `T` is `diag (e^{iθ}, e^{-iθ})`,
   the parametrisation the Weyl integration and character formulas for `SU(2)` are stated in.
 
+The centralizer computation is run at a *single* well-chosen torus element: already
+`TauCeti.SU2.centralizer_torusHom` says that `diag (z, z⁻¹)` with `z² ≠ 1` has centralizer exactly
+`T`. Together with `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom`, which says that conjugating a torus
+element back into `T` can only return it or its inverse, this is the rigidity that the Weyl group
+of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
+
 It also records the structural identity `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its
 conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an element of `SU(2)` is a
 scalar matrix.
@@ -155,6 +161,12 @@ noncomputable def torus : Subgroup SU2 := torusHom.range
 
 theorem torusHom_mem_torus (z : Circle) : torusHom z ∈ torus := ⟨z, rfl⟩
 
+/-- An element of `SU(2)` lies in the maximal torus exactly when it is `diag (z, z⁻¹)` for a point
+`z` of the unit circle. This is the definition of `TauCeti.SU2.torus` as a range, restated as the
+membership lemma that puts a hand on the circle parameter of a torus element. -/
+theorem mem_torus_iff_exists_torusHom {g : SU2} : g ∈ torus ↔ ∃ z : Circle, torusHom z = g :=
+  torusHom.mem_range
+
 /-- An element of `SU(2)` lies in the maximal torus exactly when it is a diagonal matrix: unitarity
 makes the `(0, 0)` entry a point of the unit circle, and the determinant condition then forces the
 `(1, 1)` entry to be its inverse. -/
@@ -225,32 +237,82 @@ instance : IsMulCommutative torus :=
 
 /-! ### Maximality -/
 
+/-- The imaginary unit as a point of the unit circle. The torus element it names,
+`diag (i, -i)`, is the one the centralizer of the maximal torus is computed at: it is the
+simplest `z` with `z² ≠ 1`, which is exactly what `TauCeti.SU2.centralizer_torusHom` asks for. It
+is a proof witness, not `SU(2)` API, so it stays local to this file. -/
+private def circleI : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr (by simp)⟩
+
+private theorem coe_circleI : (circleI : ℂ) = Complex.I := (rfl)
+
+private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
+  rw [coe_circleI, Complex.I_sq]
+  norm_num
+
+/-- **An element of `SU(2)` commuting with a single torus element `diag (z, z⁻¹)` with `z² ≠ 1`
+already lies in the maximal torus.** Reading off the off-diagonal entries of
+`diag (z, z⁻¹) g = g diag (z, z⁻¹)` gives `g₀₁ (z - z⁻¹) = 0` and `g₁₀ (z⁻¹ - z) = 0`, and
+`z ≠ z⁻¹` is exactly `z² ≠ 1`. -/
+theorem mem_torus_of_commute_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) {g : SU2}
+    (h : torusHom z * g = g * torusHom z) : g ∈ torus := by
+  have hz0 : (z : ℂ) ≠ 0 := z.coe_ne_zero
+  have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := by
+    intro hc
+    refine hz ?_
+    have h2 : (z : ℂ) * ((z : ℂ) - ((z : ℂ))⁻¹) = (z : ℂ) ^ 2 - 1 := by
+      rw [mul_sub, mul_inv_cancel₀ hz0, sq]
+    rw [hc, mul_zero] at h2
+    exact sub_eq_zero.mp h2.symm
+  have hmat : torusMatrix z * (g : Matrix (Fin 2) (Fin 2) ℂ)
+      = (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z := by
+    have hval := congrArg Subtype.val h
+    simpa only [Submonoid.coe_mul, coe_torusHom] using hval
+  have h01 : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := by
+    have hentry := congrFun (congrFun hmat 0) 1
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
+      torusMatrix_apply_zero_one, torusMatrix_apply_one_one, zero_mul, mul_zero, add_zero,
+      zero_add] at hentry
+    have hmul : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 * ((z : ℂ) - ((z : ℂ))⁻¹) = 0 := by
+      linear_combination hentry
+    exact (mul_eq_zero.mp hmul).resolve_right hsub
+  have h10 : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 = 0 := by
+    have hentry := congrFun (congrFun hmat 1) 0
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
+      torusMatrix_apply_one_one, torusMatrix_apply_one_zero, zero_mul, mul_zero, add_zero,
+      zero_add] at hentry
+    have hmul : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 * ((z : ℂ) - ((z : ℂ))⁻¹) = 0 := by
+      linear_combination -hentry
+    exact (mul_eq_zero.mp hmul).resolve_right hsub
+  refine mem_torus_iff.mpr fun i j hij => ?_
+  fin_cases i <;> fin_cases j <;> simp_all
+
+/-- **A single torus element `diag (z, z⁻¹)` with `z² ≠ 1` already has centralizer the maximal
+torus.** This sharpens `TauCeti.SU2.centralizer_torus`, which centralizes the whole of `T` rather
+than one well-chosen element of it. -/
+theorem centralizer_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
+    Subgroup.centralizer ({torusHom z} : Set SU2) = torus := by
+  refine le_antisymm (fun g hg => ?_) (fun g hg => ?_)
+  · exact mem_torus_of_commute_torusHom hz (Subgroup.mem_centralizer_iff.mp hg _ rfl)
+  · obtain ⟨u, rfl⟩ := hg
+    rw [Subgroup.mem_centralizer_iff]
+    rintro h rfl
+    rw [← map_mul, ← map_mul, mul_comm]
+
+/-- **The maximal torus contains a regular element**: some single element `diag (z, z⁻¹)` of `T`
+has centralizer exactly `T`. This is `TauCeti.SU2.centralizer_torusHom` at a point of the circle
+satisfying its rigidity hypothesis `z² ≠ 1`; the particular witness, `z = i`, is a proof detail of
+this file, and a downstream computation that must detect `T` by a single element needs only the
+existence. -/
+theorem exists_centralizer_torusHom_eq_torus :
+    ∃ z : Circle, Subgroup.centralizer ({torusHom z} : Set SU2) = torus :=
+  ⟨circleI, centralizer_torusHom circleI_sq_ne_one⟩
+
 /-- The maximal torus is its own centralizer in `SU(2)`. -/
 theorem centralizer_torus : Subgroup.centralizer (torus : Set SU2) = torus := by
   refine le_antisymm (fun g hg => ?_) (fun g hg => ?_)
-  · -- `g` commutes with `diag (i, -i)`, which forces the off-diagonal entries of `g` to vanish.
-    have hI : ‖Complex.I‖ = 1 := by simp
-    set zi : Circle := ⟨Complex.I, mem_sphere_zero_iff_norm.mpr hI⟩
-    have hzi : (zi : ℂ) = Complex.I := rfl
-    have hne : (2 : ℂ) * Complex.I ≠ 0 := by simp
-    have hmat : torusMatrix zi * (g : Matrix (Fin 2) (Fin 2) ℂ)
-        = (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix zi :=
-      congrArg Subtype.val (Subgroup.mem_centralizer_iff.mp hg (torusHom zi)
-        (torusHom_mem_torus zi))
-    have h01 : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := by
-      have h := congrFun (congrFun hmat 0) 1
-      simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
-        torusMatrix_apply_zero_one, torusMatrix_apply_one_one, hzi, Complex.inv_I] at h
-      have h2 : 2 * Complex.I * (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := by linear_combination h
-      exact (mul_eq_zero.mp h2).resolve_left hne
-    have h10 : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 = 0 := by
-      have h := congrFun (congrFun hmat 1) 0
-      simp only [Matrix.mul_apply, Fin.sum_univ_two, torusMatrix_apply_zero_zero,
-        torusMatrix_apply_one_one, torusMatrix_apply_one_zero, hzi, Complex.inv_I] at h
-      have h2 : 2 * Complex.I * (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 = 0 := by linear_combination -h
-      exact (mul_eq_zero.mp h2).resolve_left hne
-    refine mem_torus_iff.mpr fun i j hij => ?_
-    fin_cases i <;> fin_cases j <;> simp_all
+  · -- `g` commutes with `diag (i, -i)`, whose centralizer is already the torus.
+    exact mem_torus_of_commute_torusHom circleI_sq_ne_one
+      (Subgroup.mem_centralizer_iff.mp hg (torusHom circleI) (torusHom_mem_torus circleI))
   · rw [Subgroup.mem_centralizer_iff]
     rintro h ⟨w, rfl⟩
     obtain ⟨z, rfl⟩ := hg
@@ -264,6 +326,32 @@ theorem eq_torus_of_isMulCommutative {H : Subgroup SU2} [IsMulCommutative H] (hH
   rw [← centralizer_torus, Subgroup.mem_centralizer_iff]
   intro h hh
   exact setLike_mul_comm (hH hh) hg
+
+/-! ### Conjugating a torus element back into the torus -/
+
+/-- **Conjugating a torus element back into the maximal torus returns it or its inverse.**
+Conjugation preserves the trace, and `z` and `z⁻¹` are the only two solutions of
+`X + X⁻¹ = z + z⁻¹`, being the two roots of `X² - (z + z⁻¹) X + 1`. -/
+theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
+    (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ := by
+  have hBA : ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
+    have hval := congrArg Subtype.val (inv_mul_cancel g)
+    simpa only [Submonoid.coe_mul, OneMemClass.coe_one] using hval
+  have hmat : (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z
+      * ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix w := by
+    have hval := congrArg Subtype.val h
+    simpa only [Submonoid.coe_mul, coe_torusHom] using hval
+  have htrace : (torusMatrix w).trace = (torusMatrix z).trace := by
+    rw [← hmat, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hBA, Matrix.one_mul]
+  rw [Matrix.trace_fin_two, Matrix.trace_fin_two] at htrace
+  simp only [torusMatrix_apply_zero_zero, torusMatrix_apply_one_one] at htrace
+  have hfac : ((w : ℂ) - (z : ℂ)) * ((w : ℂ) - ((z : ℂ))⁻¹) = 0 := by
+    have hw : (w : ℂ) * ((w : ℂ))⁻¹ = 1 := mul_inv_cancel₀ w.coe_ne_zero
+    have hzz : (z : ℂ) * ((z : ℂ))⁻¹ = 1 := mul_inv_cancel₀ z.coe_ne_zero
+    linear_combination (w : ℂ) * htrace - hw + hzz
+  rcases mul_eq_zero.mp hfac with hc | hc
+  · exact Or.inl (Circle.ext (sub_eq_zero.mp hc))
+  · exact Or.inr (Circle.ext (by rw [Circle.coe_inv]; exact sub_eq_zero.mp hc))
 
 /-! ### The angle parametrisation -/
 
