@@ -19,10 +19,8 @@ smooth parameterized autonomous ODE depend smoothly on its parameter.
 ## Main results
 
 * `ODE.exists_contDiffAt_picard_solution`: a finite-order smooth family of local solutions of the
-  Picard integral equation.
-* `ODE.hasDerivAt_of_forall_eq_picard`: a Picard solution satisfies the ODE at interior times.
-* `ODE.hasDerivWithinAt_Ici_of_forall_eq_picard`: a Picard solution has the required right
-  derivative at its initial endpoint.
+  Picard integral equation, satisfying the ODE at interior times and from the right at the initial
+  endpoint.
 
 ## References
 
@@ -136,37 +134,6 @@ private theorem hasDerivWithinAt_Icc_of_forall_eq_picard
     simp only [ODE.picard_apply, α, Set.projIcc_of_mem zero_le_one hs]
     exact hq ⟨s, hs⟩
   · exact ht
-
-/-- A path satisfying the Picard integral equation solves the corresponding ODE at every interior
-time. Projection to the unit interval makes the path a total function on `ℝ`. -/
-theorem hasDerivAt_of_forall_eq_picard
-    [CompleteSpace F] (v : ℝ → F) (hv : Continuous v)
-    (x₀ : F) (q : C(Set.Icc (0 : ℝ) 1, F))
-    (hq : ∀ t : Set.Icc (0 : ℝ) 1,
-      q t = x₀ + ∫ s in (0 : ℝ)..t, v s)
-    {t : ℝ} (ht : t ∈ Set.Ioo (0 : ℝ) 1) :
-    HasDerivAt (fun s ↦ q (Set.projIcc 0 1 zero_le_one s)) (v t) t :=
-  (hasDerivWithinAt_Icc_of_forall_eq_picard v hv x₀ q hq ⟨ht.1.le, ht.2.le⟩).hasDerivAt
-    (Icc_mem_nhds ht.1 ht.2)
-
-/-- A path satisfying the Picard integral equation has the corresponding right derivative at the
-initial endpoint as well as at every time before the terminal endpoint. -/
-theorem hasDerivWithinAt_Ici_of_forall_eq_picard
-    [CompleteSpace F] (v : ℝ → F) (hv : Continuous v)
-    (x₀ : F) (q : C(Set.Icc (0 : ℝ) 1, F))
-    (hq : ∀ t : Set.Icc (0 : ℝ) 1,
-      q t = x₀ + ∫ s in (0 : ℝ)..t, v s)
-    {t : ℝ} (ht : t ∈ Set.Ico (0 : ℝ) 1) :
-    HasDerivWithinAt (fun s ↦ q (Set.projIcc 0 1 zero_le_one s)) (v t)
-      (Set.Ici t) t := by
-  have hIcc := hasDerivWithinAt_Icc_of_forall_eq_picard v hv x₀ q hq
-    ⟨ht.1, ht.2.le⟩
-  have hsmall := hIcc.mono (Set.Icc_subset_Icc ht.1 le_rfl)
-  apply hsmall.congr_set
-  filter_upwards [Iic_mem_nhds ht.2] with s hs
-  apply propext
-  change (t ≤ s ∧ s ≤ 1) ↔ t ≤ s
-  exact and_iff_left hs
 
 /-- A smooth parameterized autonomous vector field which vanishes at the base parameter admits a
 locally smooth family of solutions through a fixed initial state. The result is stated at every
@@ -297,27 +264,31 @@ theorem exists_contDiffAt_picard_solution
     simpa only [ContinuousMap.add_apply, ContinuousMap.const_apply,
       ContinuousMap.unitIntervalIntegral_apply, ContinuousMap.comp_apply,
       parameterizedPath_apply] using ht
+  let vproj : ℝ → F := fun s ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s))
+  have hvproj : Continuous vproj :=
+    gc.continuous.comp
+      (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
   refine ⟨fun t ↦ (hpicard t).trans (congrArg (x₀ + ·) ?_), ?_, ?_⟩
   · apply intervalIntegral.integral_congr
     intro s _
     exact hpoint (Set.projIcc 0 1 zero_le_one s)
   · intro t ht
-    have hcontinuous : Continuous (fun s : ℝ ↦
-        gc (p, γ p (Set.projIcc 0 1 zero_le_one s))) :=
-      gc.continuous.comp
-        (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
-    have hderiv := hasDerivAt_of_forall_eq_picard
-      (fun s : ℝ ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s)))
-      hcontinuous x₀ (γ p) hpicard ht
+    have hderiv :=
+      (hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
+        ⟨ht.1.le, ht.2.le⟩).hasDerivAt (Icc_mem_nhds ht.1 ht.2)
     exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
   · intro t ht
-    have hcontinuous : Continuous (fun s : ℝ ↦
-        gc (p, γ p (Set.projIcc 0 1 zero_le_one s))) :=
-      gc.continuous.comp
-        (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
-    have hderiv := hasDerivWithinAt_Ici_of_forall_eq_picard
-      (fun s : ℝ ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s)))
-      hcontinuous x₀ (γ p) hpicard ht
+    have hIcc := hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
+      ⟨ht.1, ht.2.le⟩
+    have hsmall := hIcc.mono (Set.Icc_subset_Icc ht.1 le_rfl)
+    have hderiv : HasDerivWithinAt
+        (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s)) (vproj t) (Set.Ici t) t := by
+      apply hsmall.congr_set
+      filter_upwards [Iic_mem_nhds ht.2] with s hs
+      apply propext
+      constructor
+      · exact fun h ↦ h.1
+      · exact fun h ↦ ⟨h, hs⟩
     exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
 
 end ODE
