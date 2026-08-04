@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Complex.AbsMax
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import TauCeti.Topology.ClusterSet
+public import TauCeti.Topology.MetricSpace.Cut
 import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Normed.Module.RCLike.Real
 
@@ -102,12 +103,13 @@ on the collar is where local connectedness of the image boundary enters.
 ## Generality
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
-every theorem added in layers L0–L6, everything below is stated for `ℂ`, except the three set
-lemmas that split a set by a sphere: their statements and proofs use nothing but the containments
-between balls and spheres, so they are stated for an arbitrary pseudo-metric space and used here
-at `ℂ`. For the rest the bar is not merely a convenience: the map that performs the decomposition
-is the complex inversion `z ↦ (z - ζ)⁻¹`, the Möbius map the roadmap names for reducing circles to
-lines, and the analytic half is the maximum modulus principle for holomorphic functions.
+every theorem added in layers L0–L6, everything below is stated for `ℂ`. The three set lemmas that
+split a set by a sphere use nothing but the containments between balls and spheres, so they live in
+`TauCeti/Topology/MetricSpace/Cut.lean`, stated for an arbitrary pseudo-metric space, and are used
+here at `ℂ`. For the rest the bar is not merely a convenience: the map that performs the
+decomposition is the complex inversion `z ↦ (z - ζ)⁻¹`, the Möbius map the roadmap names for
+reducing circles to lines, and the analytic half is the maximum modulus principle for holomorphic
+functions.
 
 ## Main results
 
@@ -117,12 +119,12 @@ lines, and the analytic half is the maximum modulus principle for holomorphic fu
   description of a circular crosscut, and the fact that it is an arc of angles.
 * `TauCeti.isConnected_ball_diff_closedBall` — the part of a disc outside a circular crosscut is
   connected.
-* `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall`,
-  `TauCeti.subset_inter_ball_or_subset_diff_closedBall` and
-  `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` — a circular crosscut
-  separates the disc into exactly two connected components. The first two need nothing of the
-  disc, nor of the plane, and are stated for an arbitrary cut set in a pseudo-metric space; the
-  disc signatures they replace are kept as deprecated compatibility wrappers beside them.
+* `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion — a circular
+  crosscut separates the disc into exactly two connected components, the two sides being those cut
+  out by `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` and
+  `TauCeti.subset_inter_ball_or_subset_diff_closedBall` of
+  `TauCeti/Topology/MetricSpace/Cut.lean`. The disc signatures those two replace are kept here as
+  deprecated compatibility wrappers.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
   `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
   on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
@@ -425,56 +427,11 @@ theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
   exact (continuousAt_const.add
     (continuousAt_inv₀ (ne_zero_of_one_lt_two_mul_re_mul hw.1))).continuousWithinAt
 
-section Cut
-
-variable {X : Type*} [PseudoMetricSpace X] {x : X}
-
-/-- **A circular cut splits a set into a near side and a far side.** The set identity underlying
-the crosscut decomposition: removing the sphere `sphere x ρ` from a set `s` leaves the points of
-`s` at distance less than `ρ` from `x` together with those at distance more than `ρ`.
-
-Neither the disc nor the plane plays any role — `s` is an arbitrary set in an arbitrary
-pseudo-metric space — and the crosscut instance is `X = ℂ`, `s = ball c r`. The general form is
-what `Conformal/CutDiameter.lean` cuts an arbitrary domain with. -/
-theorem diff_sphere_eq_inter_ball_union_diff_closedBall {s : Set X} :
-    s \ sphere x ρ = s ∩ ball x ρ ∪ s \ closedBall x ρ := by
-  ext y
-  constructor
-  · rintro ⟨hy, hne⟩
-    rw [Metric.mem_sphere] at hne
-    rcases lt_or_gt_of_ne hne with h | h
-    · exact Or.inl ⟨hy, Metric.mem_ball.mpr h⟩
-    · exact Or.inr ⟨hy, fun hc => absurd (Metric.mem_closedBall.mp hc) (not_le.mpr h)⟩
-  · rintro (⟨hy, h⟩ | ⟨hy, h⟩)
-    · exact ⟨hy, fun hc => (Metric.mem_ball.mp h).ne (Metric.mem_sphere.mp hc)⟩
-    · exact ⟨hy, fun hc => h (Metric.sphere_subset_closedBall hc)⟩
-
-/-- The two sides of a circular cut are disjoint, the near side lying inside `closedBall x ρ` and
-the far side outside it. As in `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` the cut
-set, and the ambient pseudo-metric space, are arbitrary. -/
-theorem disjoint_inter_ball_diff_closedBall {s : Set X} :
-    Disjoint (s ∩ ball x ρ) (s \ closedBall x ρ) :=
-  Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
-
-/-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
-the separation statement the decomposition exists for: the two sides are open and disjoint, so a
-preconnected subset of their union cannot meet both.
-
-Only openness of the cut set is used, so the disc is again not needed; the crosscut instance is
-`X = ℂ`, `s = ball c r`, supplied with `isOpen_ball`. -/
-theorem subset_inter_ball_or_subset_diff_closedBall {s S : Set X} (hs : IsOpen s)
-    (hS : IsPreconnected S) (hSsub : S ⊆ s \ sphere x ρ) :
-    S ⊆ s ∩ ball x ρ ∨ S ⊆ s \ closedBall x ρ :=
-  hS.subset_or_subset (hs.inter isOpen_ball) (hs.sdiff isClosed_closedBall)
-    disjoint_inter_ball_diff_closedBall
-    (diff_sphere_eq_inter_ball_union_diff_closedBall (x := x) (s := s) ▸ hSsub)
-
-end Cut
-
 /-! ### Deprecated disc-specific forms
 
-The three lemmas above were stated for `s = ball c r` in `ℂ`. Their old signatures are retained
-here as deprecated compatibility wrappers, each naming its generalized replacement. -/
+The three cut lemmas of `TauCeti/Topology/MetricSpace/Cut.lean` were stated here for
+`s = ball c r` in `ℂ`. Their old signatures are retained as deprecated compatibility wrappers,
+each naming its generalized replacement. -/
 
 /-- Deprecated compatibility wrapper for the disc case of
 `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall`. -/

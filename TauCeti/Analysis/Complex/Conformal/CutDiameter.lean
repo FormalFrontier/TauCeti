@@ -8,19 +8,19 @@ module
 public import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 public import TauCeti.Analysis.Normed.Module.DiamFrontier
 public import TauCeti.Topology.ClusterSet
-import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
+import TauCeti.Topology.MetricSpace.Cut
 
 /-!
 # The piece a crosscut cuts off, measured by its boundary
 
-`Conformal/Crosscut/Basic.lean` supplies the set-splitting lemmas that cut a set at a point `ζ` by
-the circle `sphere ζ ρ`, leaving the *crosscut neighbourhood* `U ∩ ball ζ ρ` of `ζ`, and turns an
-oscillation bound on that neighbourhood into a boundary limit for a *disc* `U`, by the maximum
-modulus principle. This file carries that criterion to an arbitrary open `U`, and supplies the
-oscillation bound for a *conformal* map, in the geometric form that layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md` — the Carathéodory boundary correspondence — produces
-it: the image of the crosscut neighbourhood is no wider than the image of the crosscut arc together
-with the piece of `∂Ω` that arc cuts off.
+`Topology/MetricSpace/Cut.lean` supplies the set-splitting lemmas that cut a set at a point `ζ` by
+the circle `sphere ζ ρ`, leaving the *crosscut neighbourhood* `U ∩ ball ζ ρ` of `ζ`, and
+`Conformal/Crosscut/Basic.lean` turns an oscillation bound on that neighbourhood into a boundary
+limit for a *disc* `U`, by the maximum modulus principle. This file carries that criterion to an
+arbitrary open `U`, and supplies the oscillation bound for a *conformal* map, in the geometric form
+that layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md` — the Carathéodory boundary
+correspondence — produces it: the image of the crosscut neighbourhood is no wider than the image of
+the crosscut arc together with the piece of `∂Ω` that arc cuts off.
 
 ## The boundary of the image of a crosscut neighbourhood
 
