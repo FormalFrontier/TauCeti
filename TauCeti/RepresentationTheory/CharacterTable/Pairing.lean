@@ -231,15 +231,18 @@ theorem characterPairing_ofCharacter_self {V : Type*} [AddCommGroup V] [Module k
   have hrefl : Nonempty (Representation.Equiv ρ ρ) := ⟨Representation.Equiv.refl ρ⟩
   rw [characterPairing_ofCharacter_orthonormal ρ ρ, if_pos hrefl]
 
-/-- The characters of inequivalent irreducible representations pair to `0`. -/
+/-- The characters of inequivalent irreducible representations pair to `0`.
+
+Algebraic closure is not needed here: by Schur's lemma the intertwiners between inequivalent
+irreducibles already form a subsingleton over any field. -/
 @[simp]
 theorem characterPairing_ofCharacter_eq_zero {V W : Type*} [AddCommGroup V] [Module k V]
     [FiniteDimensional k V] [AddCommGroup W] [Module k W] [FiniteDimensional k W]
-    [Invertible (Nat.card G : k)] [IsAlgClosed k] (ρ : Representation k G V)
+    [Invertible (Nat.card G : k)] (ρ : Representation k G V)
     (σ : Representation k G W) [ρ.IsIrreducible] [σ.IsIrreducible]
     (h : IsEmpty (σ.Equiv ρ)) : characterPairing (ofCharacter ρ) (ofCharacter σ) = 0 := by
-  classical
-  rw [characterPairing_ofCharacter_orthonormal ρ σ, if_neg (not_nonempty_iff.mpr h)]
+  rw [characterPairing_ofCharacter_eq_finrank ρ σ, Module.finrank_zero_of_subsingleton,
+    Nat.cast_zero]
 
 /-- The character pairing computes the dimension of a morphism space in `FDRep`. -/
 theorem characterPairing_ofFDRep_eq_finrank [Invertible (Nat.card G : k)] (V W : FDRep k G) :
@@ -265,13 +268,17 @@ theorem characterPairing_ofFDRep_self [Invertible (Nat.card G : k)] [IsAlgClosed
   have hrefl : Nonempty (V ≅ V) := ⟨CategoryTheory.Iso.refl V⟩
   rw [characterPairing_ofFDRep_orthonormal V V, if_pos hrefl]
 
-/-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`. -/
+/-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`.
+
+Algebraic closure is not needed here: by Schur's lemma the morphism space between
+non-isomorphic simple objects is already zero-dimensional over any field. -/
 @[simp]
-theorem characterPairing_ofFDRep_eq_zero [Invertible (Nat.card G : k)] [IsAlgClosed k]
+theorem characterPairing_ofFDRep_eq_zero [Invertible (Nat.card G : k)]
     (V W : FDRep k G) [CategoryTheory.Simple V] [CategoryTheory.Simple W] (h : IsEmpty (V ≅ W)) :
     characterPairing (ofFDRep V) (ofFDRep W) = 0 := by
-  classical
-  rw [characterPairing_ofFDRep_orthonormal V W, if_neg (not_nonempty_iff.mpr h)]
+  rw [characterPairing_ofFDRep_eq_finrank V W,
+    CategoryTheory.finrank_hom_simple_simple_eq_zero_of_not_iso k fun i => h.elim i.symm,
+    Nat.cast_zero]
 
 end ClassFunction
 
