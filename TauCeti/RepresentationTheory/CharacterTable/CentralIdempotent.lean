@@ -11,8 +11,9 @@ public import TauCeti.RepresentationTheory.CharacterTable.CentralCharacter
 
 Attached to a representation `ρ` of a finite group `G` over a field `k`, with character `χ`, is the
 group-algebra element `∑_g χ(g⁻¹) g`, called `TauCeti.Representation.characterSum` here. Because the
-character is a class function this element is central, so an irreducible representation `σ` sees it
-as the single scalar recorded by the central character of
+character is a class function, this element is a combination of class sums, and it is built as one
+by `TauCeti.ofConjClassesCenter`, so its centrality comes for free. An irreducible representation
+`σ` therefore sees it as the single scalar recorded by the central character of
 `TauCeti/RepresentationTheory/CharacterTable/CentralCharacter.lean`.
 
 Two computations of one trace pin that scalar down. The trace of the action of `∑_g χ(g⁻¹) g` on
@@ -49,10 +50,12 @@ sum, and is not proved here.
 
 ## Main statements
 
+* `TauCeti.Representation.characterSum_eq_sum`: the character sum is the sum `∑_g χ(g⁻¹) g` over
+  the group, with `TauCeti.Representation.characterSum_coeff` its coefficients.
 * `TauCeti.Representation.characterSum_mul_characterSum`: multiplying by `∑_g χ(g⁻¹) g` rescales the
   character sum of an irreducible representation by the scalar its central character records.
-* `TauCeti.Representation.centralCharacter_characterSumCenter_mul_char_one`: that scalar, times the
-  degree, is `|G|` for isomorphic representations and `0` otherwise.
+* `TauCeti.Representation.centralCharacter_characterSumCenter_mul_character_one`: that scalar,
+  times the degree, is `|G|` for isomorphic representations and `0` otherwise.
 * `TauCeti.Representation.isUnit_char_one`: the degree of an irreducible representation is a unit
   in `k`.
 * `TauCeti.Representation.asAlgebraHom_primitiveCentralIdempotent`: `e_ρ` acts as the identity on
@@ -91,57 +94,56 @@ section Defs
 
 variable [Fintype G]
 
+open scoped Classical in
+/-- The character sum `∑_g χ(g⁻¹) g`, read as an element of the centre of the group algebra.
+
+Its coefficients `g ↦ χ(g⁻¹)` form a class function, so the element is assembled from the class
+sums by `TauCeti.ofConjClassesCenter`, which is where its centrality comes from;
+`TauCeti.Representation.characterSum_eq_sum` recovers the formula `∑_g χ(g⁻¹) g`.
+
+Decidability of equality on `G` is only what indexes the class sums, so it is taken classically
+rather than being a hypothesis of the definition. -/
+noncomputable def characterSumCenter : Subalgebra.center k k[G] :=
+  ofConjClassesCenter (ClassFunction.toConjClasses
+    ⟨fun g => ρ.character g⁻¹, ClassFunction.mem_iff.mpr fun g h => by
+      simpa [mul_assoc] using ρ.char_conj g⁻¹ h⟩)
+
 /-- The group-algebra element `∑_g χ(g⁻¹) g` attached to a representation with character `χ`.
 
 It is central because the character is a class function, and it is the unnormalized form of
 `TauCeti.Representation.primitiveCentralIdempotent`. -/
 noncomputable def characterSum : k[G] :=
-  ∑ g : G, MonoidAlgebra.single g (ρ.character g⁻¹)
-
-/-- The coefficients of `∑_g χ(g⁻¹) g` are the character values at the inverses.
-
-This is the simp normal form: the sum of `MonoidAlgebra.single`s is evaluated. -/
-@[simp]
-theorem characterSum_coeff (g : G) : (characterSum ρ).coeff g = ρ.character g⁻¹ := by
-  classical
-  simp [characterSum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, Finsupp.single_apply]
-
-/-- The character sum commutes with every group element: conjugation permutes the terms, and the
-character is constant on conjugacy classes. -/
-theorem characterSum_commutes (h : G) :
-    characterSum ρ * MonoidAlgebra.of k G h = MonoidAlgebra.of k G h * characterSum ρ := by
-  simp only [characterSum, Finset.sum_mul, Finset.mul_sum, MonoidAlgebra.of_apply,
-    MonoidAlgebra.single_mul_single, one_mul, mul_one]
-  refine Fintype.sum_equiv ((Equiv.mulLeft h⁻¹).trans (Equiv.mulRight h)) _ _ fun x => ?_
-  simp only [Equiv.trans_apply, Equiv.coe_mulLeft, Equiv.coe_mulRight]
-  rw [show h * (h⁻¹ * x * h) = x * h from by group,
-    show (h⁻¹ * x * h)⁻¹ = h⁻¹ * x⁻¹ * (h⁻¹)⁻¹ from by group,
-    _root_.Representation.char_conj]
-
-/-- The character sum lies in the centre of the group algebra. -/
-theorem characterSum_mem_center : characterSum ρ ∈ Subalgebra.center k k[G] := by
-  rw [Subalgebra.mem_center_iff]
-  intro a
-  induction a using MonoidAlgebra.induction_on with
-  | of g => exact (characterSum_commutes ρ g).symm
-  | add x y hx hy => rw [mul_add, add_mul, hx, hy]
-  | smul r x hx => rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, hx]
-
-/-- The character sum `∑_g χ(g⁻¹) g`, read as an element of the centre of the group algebra. -/
-@[expose]
-noncomputable def characterSumCenter : Subalgebra.center k k[G] :=
-  ⟨characterSum ρ, characterSum_mem_center ρ⟩
+  characterSumCenter ρ
 
 /-- The underlying group-algebra element of the central character sum is the character sum. -/
 @[simp]
 theorem characterSumCenter_coe : (characterSumCenter ρ : k[G]) = characterSum ρ :=
-  rfl
+  (rfl)
+
+/-- The character sum lies in the centre of the group algebra. -/
+theorem characterSum_mem_center : characterSum ρ ∈ Subalgebra.center k k[G] :=
+  (characterSumCenter ρ).2
+
+/-- The coefficients of `∑_g χ(g⁻¹) g` are the character values at the inverses.
+
+This is the simp normal form: the class-sum combination is evaluated. -/
+@[simp]
+theorem characterSum_coeff (g : G) : (characterSum ρ).coeff g = ρ.character g⁻¹ := by
+  classical
+  simp [characterSum, characterSumCenter]
+
+/-- The character sum is the sum `∑_g χ(g⁻¹) g` over the group. -/
+theorem characterSum_eq_sum :
+    characterSum ρ = ∑ g : G, MonoidAlgebra.single g (ρ.character g⁻¹) := by
+  classical
+  ext g
+  simp [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, Finsupp.single_apply]
 
 /-- The action of the character sum of `ρ` on a representation `σ`, as a linear combination of the
 operators of `σ`. -/
 theorem asAlgebraHom_characterSum :
     σ.asAlgebraHom (characterSum ρ) = ∑ g : G, ρ.character g⁻¹ • σ g := by
-  simp [characterSum, map_sum, _root_.Representation.asAlgebraHom_single]
+  simp [characterSum_eq_sum, map_sum, _root_.Representation.asAlgebraHom_single]
 
 /-- The trace of the action of the character sum of `ρ` on `σ`, after `σ(x⁻¹)`, expanded as a sum of
 products of character values.
@@ -187,7 +189,7 @@ theorem characterSum_mul_characterSum :
     rw [← characterSumCenter_coe ρ]
     exact asAlgebraHom_center σ (characterSumCenter ρ)
   rw [hcoeff, ← trace_mul_asAlgebraHom_characterSum ρ σ x, hscalar,
-    show (LinearMap.id : W →ₗ[k] W) = 1 from rfl, mul_smul_comm, mul_one, map_smul, smul_eq_mul]
+    ← Module.End.one_eq_id, mul_smul_comm, mul_one, map_smul, smul_eq_mul]
   simp [_root_.Representation.character]
 
 end Product
@@ -206,7 +208,7 @@ is `|G|` when `ρ` and `σ` are isomorphic and `0` otherwise.
 
 This is the orthogonality relation of the irreducible characters, read through the central
 character. -/
-theorem centralCharacter_characterSumCenter_mul_char_one :
+theorem centralCharacter_characterSumCenter_mul_character_one :
     centralCharacter σ (characterSumCenter ρ) * σ.character 1 =
       Nat.card G * (if Nonempty (ρ.Equiv σ) then 1 else 0) := by
   have htrace : LinearMap.trace k W (σ.asAlgebraHom (characterSum ρ)) =
@@ -234,12 +236,12 @@ algebraically closed field whose characteristic does not divide `|G|`, that char
 no irreducible degree.
 
 This is the diagonal case of
-`TauCeti.Representation.centralCharacter_characterSumCenter_mul_char_one`: the degree times the
-scalar by which the character sum acts is `|G|`, which is a unit by hypothesis. -/
+`TauCeti.Representation.centralCharacter_characterSumCenter_mul_character_one`: the degree times
+the scalar by which the character sum acts is `|G|`, which is a unit by hypothesis. -/
 theorem isUnit_char_one : IsUnit (ρ.character 1) := by
   classical
   have : Fintype G := Fintype.ofFinite G
-  have h := centralCharacter_characterSumCenter_mul_char_one ρ ρ
+  have h := centralCharacter_characterSumCenter_mul_character_one ρ ρ
   rw [if_pos ⟨_root_.Representation.Equiv.refl ρ⟩, mul_one] at h
   exact isUnit_of_mul_isUnit_right (h ▸ isUnit_of_invertible (Nat.card G : k))
 
@@ -264,10 +266,10 @@ It is the Wedderburn projector onto the block of `ρ`: it acts as the identity o
 every irreducible representation not isomorphic to `ρ`, by
 `TauCeti.Representation.asAlgebraHom_primitiveCentralIdempotent`. That property forces the
 normalization, and it is what makes the element idempotent
-(`TauCeti.Representation.isIdempotentElem_primitiveCentralIdempotent`); the hypotheses are exactly
-the ones the idempotence needs, so the definition is stated with them rather than for a bare
-formula. Use `TauCeti.Representation.characterSum` for the unnormalized element `∑_g χ(g⁻¹) g`,
-which is defined for every representation. -/
+(`TauCeti.Representation.isIdempotentElem_primitiveCentralIdempotent`); the definition carries the
+hypotheses that the idempotence theorem uses, rather than being stated for a bare formula that need
+not be idempotent. Use `TauCeti.Representation.characterSum` for the unnormalized element
+`∑_g χ(g⁻¹) g`, which is defined for every representation. -/
 noncomputable def primitiveCentralIdempotent [FiniteDimensional k V] [IsAlgClosed k]
     [Invertible (Nat.card G : k)] [ρ.IsIrreducible] : k[G] :=
   ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSum ρ
@@ -291,7 +293,6 @@ theorem primitiveCentralIdempotent_mem_center :
   Subalgebra.smul_mem _ (characterSum_mem_center ρ) _
 
 /-- The primitive central idempotent, read as an element of the centre of the group algebra. -/
-@[expose]
 noncomputable def primitiveCentralIdempotentCenter : Subalgebra.center k k[G] :=
   ⟨primitiveCentralIdempotent ρ, primitiveCentralIdempotent_mem_center ρ⟩
 
@@ -300,7 +301,7 @@ central idempotent. -/
 @[simp]
 theorem primitiveCentralIdempotentCenter_coe :
     (primitiveCentralIdempotentCenter ρ : k[G]) = primitiveCentralIdempotent ρ :=
-  rfl
+  (rfl)
 
 /-- The primitive central idempotent is the character sum rescaled by `χ(1) / |G|`, in the
 centre. -/
@@ -319,7 +320,7 @@ theorem centralCharacter_primitiveCentralIdempotentCenter :
   have hne : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
   refine mul_right_cancel₀ (isUnit_char_one σ).ne_zero ?_
   rw [primitiveCentralIdempotentCenter_eq_smul, map_smul, smul_eq_mul, mul_assoc,
-    centralCharacter_characterSumCenter_mul_char_one ρ σ]
+    centralCharacter_characterSumCenter_mul_character_one ρ σ]
   rcases isEmpty_or_nonempty (ρ.Equiv σ) with hE | hN
   · rw [if_neg (not_nonempty_iff.2 hE)]
     ring
