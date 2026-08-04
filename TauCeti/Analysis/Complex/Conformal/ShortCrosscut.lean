@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
-import Mathlib.MeasureTheory.Integral.CircleIntegral
 
 /-!
 # A circular crosscut with a short image
@@ -143,11 +142,11 @@ point.** For `f` holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv 
 the circle `sphere c r`, every tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at
 which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`.
 
-This is Wolff's lemma `TauCeti.exists_circleImageLength_sq_lt` fed to
-`TauCeti.diam_image_ball_inter_sphere_le`. The inner radius of the annulus in which the good `ρ` is
-sought is `R * exp (-(A + 1) / ε ^ 2)`, where `A` is `2 * π` times the Dirichlet integral: the
-annulus is made logarithmically long enough that the average of
-`circleImageLength f (ball c r) ζ ρ ^ 2` over it falls below `ε ^ 2`.
+This is the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top` of Wolff's
+lemma fed to `TauCeti.diam_image_ball_inter_sphere_le`. The annulus in which the good `ρ` is sought
+is chosen there rather than here: it is made logarithmically long enough that the length–area
+average of `circleImageLength f (ball c r) ζ ρ ^ 2` over it falls below the threshold, and is
+shrunk against `R` so that the radius produced lies in `Ioo 0 R`.
 
 The bound is on the intersection `ball c r ∩ sphere ζ ρ`, which is a genuine circular crosscut only
 when `ρ < 2 * r`, being empty otherwise; since `R` is arbitrary, a caller wanting a crosscut applies
@@ -161,41 +160,10 @@ theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top (hζ : dist �
     (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
     ∃ ρ ∈ Ioo 0 R, diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
-  -- `A` is `2 * π` times the Dirichlet integral, a finite real number
-  have hfin' : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤ :=
-    ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
-  set A : ℝ := (ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2).toReal with hA
-  have hA0 : 0 ≤ A := ENNReal.toReal_nonneg
-  -- the annulus `Ioo r' R`, of logarithmic length `L`
-  have hε2 : ε ^ 2 ≠ 0 := by positivity
-  set L : ℝ := (A + 1) / ε ^ 2 with hL
-  have hLpos : 0 < L := div_pos (by linarith) (by positivity)
-  have hεL : ε ^ 2 * L = A + 1 := by rw [hL]; field_simp
-  set r' : ℝ := R * Real.exp (-L) with hr'
-  have hr'pos : 0 < r' := mul_pos hR (Real.exp_pos _)
-  have hr'R : r' < R := by
-    have : Real.exp (-L) < 1 := Real.exp_lt_one_iff.mpr (by linarith)
-    nlinarith
-  have hlog : Real.log (R / r') = L := by
-    rw [hr', Real.log_div hR.ne' hr'pos.ne', Real.log_mul hR.ne' (Real.exp_ne_zero _),
-      Real.log_exp]
-    ring
-  -- Wolff's lemma on that annulus, with threshold `ε ^ 2`
-  have hc : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2
-      < ENNReal.ofReal (ε ^ 2) * ENNReal.ofReal (Real.log (R / r')) := by
-    have hAeq : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 = ENNReal.ofReal A :=
-      (ENNReal.ofReal_toReal hfin').symm
-    rw [hAeq, hlog, ← ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ ε ^ 2), hεL]
-    exact (ENNReal.ofReal_lt_ofReal_iff (by linarith)).mpr (by linarith)
-  obtain ⟨ρ, hρmem, hρlt⟩ :=
-    exists_circleImageLength_sq_lt (s := ball c r) f measurableSet_ball ζ hr'pos hr'R hc
-  -- undo the square
-  have hlen : circleImageLength f (ball c r) ζ ρ ≤ ENNReal.ofReal ε := by
-    rw [ENNReal.ofReal_pow hε.le] at hρlt
-    by_contra hcon
-    exact absurd (pow_le_pow_left' (not_le.mp hcon).le 2) (not_le.mpr hρlt)
-  exact ⟨ρ, ⟨hr'pos.trans hρmem.1, hρmem.2⟩,
-    diam_image_ball_inter_sphere_le hζ (hr'pos.trans hρmem.1) hf hε.le hlen⟩
+  obtain ⟨ρ, hρmem, hlen⟩ :=
+    exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
+      (ENNReal.ofReal_pos.mpr hε).ne' hR
+  exact ⟨ρ, hρmem, diam_image_ball_inter_sphere_le hζ hρmem.1 hf hε.le hlen.le⟩
 
 /-- **A conformal map of a disc has arbitrarily small images of the circle intersections
 `ball c r ∩ sphere ζ ρ` at every boundary point.** This is the case of

@@ -7,12 +7,14 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
+public import Mathlib.Order.LiminfLimsup
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Periodic
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.Topology.Order.LeftRightNhds
 
 /-!
 # The lower integral of a weight over a circle, and the length–area inequality
@@ -52,6 +54,18 @@ cannot keep `circleLIntegral g ζ ρ ^ 2` above a positive constant throughout a
 **Wolff's lemma** `TauCeti.exists_circleLIntegral_sq_lt` produces a radius `ρ` between `r` and `R`
 with `circleLIntegral g ζ ρ ^ 2 < c` as soon as `2 π ∫⁻ z, g z ^ 2 < c * log (R / r)`.
 
+The threshold `2 π ∫⁻ z, g z ^ 2 / log (R / r)` that lemma asks to be beaten falls to `0` as the
+annulus is made longer, so for a weight of *finite* square integral it is beaten by every positive
+`c` once the annulus is long enough. Shrinking the annulus onto the centre — take the outer radius
+`R` as given and the inner one `R * exp (-L)` with `L` large — that is
+`TauCeti.exists_circleLIntegral_lt_of_lintegral_sq_ne_top`: below every bound `R` there is a radius
+`ρ` with `circleLIntegral g ζ ρ` smaller than any prescribed `c ≠ 0`. Equivalently, and sharply,
+the circle integral has **lower limit zero at the centre**,
+`TauCeti.liminf_circleLIntegral_nhdsGT_eq_zero`. Only a *lower* limit is available, and that is not
+a defect of the proof: the weight `‖z - ζ‖⁻¹ / (2 π)` cut down to a sequence of thin annuli
+`Ioo aₙ (aₙ * (1 + εₙ))` with `∑ εₙ` finite has finite square integral yet circle integral `1` at
+every radius in those annuli, so `circleLIntegral g ζ ρ` need not tend to `0` as `ρ → 0`.
+
 Nothing here is analytic: `g` is an arbitrary measurable weight, and the two inputs are the
 polar-coordinate change of variables and Hölder's inequality. The analytic use is
 `TauCeti/Analysis/Complex/Conformal/LengthArea.lean`, which takes `g` to be `‖deriv f‖ₑ` cut off
@@ -74,6 +88,11 @@ integral on the right need not be an area and the circle integral on the left ne
 * `TauCeti.lintegral_circleLIntegral_sq_div_le_lintegral_sq` — the **length–area inequality**.
 * `TauCeti.exists_circleLIntegral_sq_lt` — **Wolff's lemma**: a radius with small circle integral
   exists in every annulus whose logarithmic measure is large enough.
+* `TauCeti.exists_circleLIntegral_lt_of_lintegral_sq_ne_top` — its limiting form for a weight of
+  finite square integral: below every positive bound there is a radius at which the circle integral
+  is smaller than any prescribed `c ≠ 0`.
+* `TauCeti.liminf_circleLIntegral_nhdsGT_eq_zero` — the same statement as a lower limit: the circle
+  integrals of a weight of finite square integral have lower limit `0` at the centre.
 
 ## References
 
@@ -85,7 +104,7 @@ public section
 
 namespace TauCeti
 
-open MeasureTheory Set
+open MeasureTheory Set Topology
 open scoped ENNReal Real
 
 variable {g : ℂ → ℝ≥0∞} {ζ : ℂ} {ρ : ℝ}
@@ -374,5 +393,89 @@ theorem exists_circleLIntegral_sq_lt (hg : Measurable g) (ζ : ℂ) {r R : ℝ} 
       = ∫⁻ ρ in Ioo r R, c * (ENNReal.ofReal ρ)⁻¹ := hconst.symm
     _ ≤ ENNReal.ofReal (2 * π) * ∫⁻ z, g z ^ 2 :=
         (hmono.trans hsub).trans (lintegral_circleLIntegral_sq_div_le_lintegral_sq hg ζ)
+
+/-! ### Small circle integrals at arbitrarily small radii -/
+
+/-- **An annulus of prescribed logarithmic length inside a prescribed disc.** Shrinking the inner
+radius of the annulus `Ioo r R` towards `0` sends `Real.log (R / r)` to `+∞`, so every target
+length `L` is met by the inner radius `R * Real.exp (-L)`, which for `0 < L` is smaller than `R`.
+This is how the outer radius is kept below a prescribed bound while Wolff's lemma is given as long
+an annulus as it needs. -/
+private theorem log_div_mul_exp_neg {R : ℝ} (hR : 0 < R) (L : ℝ) :
+    Real.log (R / (R * Real.exp (-L))) = L := by
+  have h : R / (R * Real.exp (-L)) = Real.exp L := by
+    rw [Real.exp_neg]
+    field_simp
+  rw [h, Real.log_exp]
+
+/-- **Wolff's lemma in the limit: a weight of finite square integral has small circle integrals at
+arbitrarily small radii.** If `∫⁻ z, g z ^ 2` is finite then for every threshold `c ≠ 0` and every
+bound `R > 0` there is a radius `ρ` below `R` with `circleLIntegral g ζ ρ < c`.
+
+The threshold that `TauCeti.exists_circleLIntegral_sq_lt` asks to be beaten is
+`2 π ∫⁻ z, g z ^ 2 / log (R / r)`, which for a finite square integral falls to `0` as the annulus
+`Ioo r R` is made logarithmically longer; here the outer radius is the prescribed bound `R` and the
+inner one `R * exp (-L)` is pushed towards `0`, which is what confines the radius produced to
+`Ioo 0 R`. The reduction to a finite threshold is the passage to `min c 1`, and the square is undone
+by monotonicity of squaring on `ℝ≥0∞`.
+
+There is no companion statement for a *fixed* small radius: see
+`TauCeti.liminf_circleLIntegral_nhdsGT_eq_zero` for the sharp form, a lower limit rather than a
+limit. -/
+theorem exists_circleLIntegral_lt_of_lintegral_sq_ne_top (hg : Measurable g)
+    (hfin : (∫⁻ z, g z ^ 2) ≠ ∞) (ζ : ℂ) {c : ℝ≥0∞} (hc : c ≠ 0) {R : ℝ} (hR : 0 < R) :
+    ∃ ρ ∈ Ioo 0 R, circleLIntegral g ζ ρ < c := by
+  -- it is enough to treat a finite threshold, since `min c 1` is one and is at most `c`
+  suffices h : ∀ b : ℝ≥0∞, b ≠ 0 → b ≠ ∞ → ∃ ρ ∈ Ioo 0 R, circleLIntegral g ζ ρ < b by
+    obtain ⟨ρ, hρ, hlt⟩ := h (min c 1) (by simp [hc]) (by simp)
+    exact ⟨ρ, hρ, hlt.trans_le (min_le_left c 1)⟩
+  intro b hb0 hbtop
+  -- `A` is `2 π` times the square integral, a finite real number, and `br` is the threshold
+  have hAtop : ENNReal.ofReal (2 * π) * ∫⁻ z, g z ^ 2 ≠ ∞ :=
+    ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
+  set A : ℝ := (ENNReal.ofReal (2 * π) * ∫⁻ z, g z ^ 2).toReal
+  have hA0 : 0 ≤ A := ENNReal.toReal_nonneg
+  set br : ℝ := b.toReal
+  have hbr0 : 0 < br := ENNReal.toReal_pos hb0 hbtop
+  -- the annulus `Ioo r R`, chosen of logarithmic length `L` so that `br ^ 2 * L` beats `A`
+  set L : ℝ := (A + 1) / br ^ 2 with hL
+  have hLpos : 0 < L := div_pos (by linarith) (by positivity)
+  have hbrL : br ^ 2 * L = A + 1 := by rw [hL]; field_simp
+  set r : ℝ := R * Real.exp (-L) with hr
+  have hrpos : 0 < r := mul_pos hR (Real.exp_pos _)
+  have hrR : r < R := by
+    have hexp : Real.exp (-L) < 1 := Real.exp_lt_one_iff.mpr (by linarith)
+    nlinarith
+  have hlog : Real.log (R / r) = L := by rw [hr, log_div_mul_exp_neg hR]
+  -- Wolff's lemma on that annulus, at the squared threshold
+  have hlt : ENNReal.ofReal (2 * π) * ∫⁻ z, g z ^ 2 <
+      b ^ 2 * ENNReal.ofReal (Real.log (R / r)) := by
+    have hAeq : ENNReal.ofReal (2 * π) * ∫⁻ z, g z ^ 2 = ENNReal.ofReal A :=
+      (ENNReal.ofReal_toReal hAtop).symm
+    have hbeq : b = ENNReal.ofReal br := (ENNReal.ofReal_toReal hbtop).symm
+    rw [hAeq, hbeq, hlog, ← ENNReal.ofReal_pow hbr0.le,
+      ← ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ br ^ 2), hbrL]
+    exact (ENNReal.ofReal_lt_ofReal_iff (by linarith)).mpr (by linarith)
+  obtain ⟨ρ, hρmem, hρlt⟩ := exists_circleLIntegral_sq_lt hg ζ hrpos hrR hlt
+  refine ⟨ρ, ⟨hrpos.trans hρmem.1, hρmem.2⟩, ?_⟩
+  by_contra hcon
+  exact absurd (pow_le_pow_left' (not_lt.mp hcon) 2) (not_le.mpr hρlt)
+
+/-- **The circle integrals of a weight of finite square integral have lower limit `0` at the
+centre.** This is the sharp form of `TauCeti.exists_circleLIntegral_lt_of_lintegral_sq_ne_top`,
+which says exactly that every positive threshold is undercut on every interval `Ioo 0 R` of radii,
+and those intervals are a basis of `𝓝[>] 0`.
+
+The limit itself does not exist in general: the circle integral is only *frequently* small, as the
+thin-annulus weight described in the module docstring shows. -/
+theorem liminf_circleLIntegral_nhdsGT_eq_zero (hg : Measurable g) (hfin : (∫⁻ z, g z ^ 2) ≠ ∞)
+    (ζ : ℂ) : Filter.liminf (fun ρ => circleLIntegral g ζ ρ) (𝓝[>] (0 : ℝ)) = 0 := by
+  refine le_antisymm ?_ zero_le
+  by_contra hcon
+  obtain ⟨b, hb0, hbl⟩ := exists_between (not_le.mp hcon)
+  refine absurd (Filter.liminf_le_of_frequently_le' ?_) (not_le.mpr hbl)
+  refine (nhdsGT_basis (0 : ℝ)).frequently_iff.mpr fun R hR => ?_
+  obtain ⟨ρ, hρ, hlt⟩ := exists_circleLIntegral_lt_of_lintegral_sq_ne_top hg hfin ζ hb0.ne' hR
+  exact ⟨ρ, hρ, hlt.le⟩
 
 end TauCeti

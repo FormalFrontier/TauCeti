@@ -36,7 +36,12 @@ sides of the general estimates then mean:
 So the length–area inequality reads
 `∫⁻ ρ in Ioi 0, ℓ ρ ^ 2 / ρ ≤ 2 π * volume (f '' s)`, and Wolff's lemma reads: on every annulus,
 and for every `c` strictly above the average `2 π A / log (R / r)`, there is a radius with
-`ℓ ρ ^ 2 < c` — a threshold that falls without limit as the annulus is made longer.
+`ℓ ρ ^ 2 < c` — a threshold that falls without limit as the annulus is made longer. Letting it fall
+below an arbitrary `c ≠ 0`, which a finite Dirichlet integral allows, gives the form the crosscut
+estimates consume: `ℓ ρ < c` at some radius below every prescribed bound
+(`TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top`), equivalently `ℓ` has lower limit `0` at
+the centre (`TauCeti.liminf_circleImageLength_nhdsGT_eq_zero`). A *limit* is not available and is
+false in general; only some arbitrarily small radii carry a short circle.
 
 The genuinely holomorphic content added here is the **chord bound**
 `TauCeti.ofReal_dist_le_circleImageLength`, which is what makes `ℓ` a length: the fundamental
@@ -66,6 +71,11 @@ from these estimates in order to force the cluster set at `ζ` to degenerate to 
 * `TauCeti.exists_circleImageLength_sq_lt` and
   `TauCeti.exists_circleImageLength_sq_lt_of_volume_image` — **Wolff's lemma**: a radius with
   `ℓ ρ ^ 2 < c` exists in every annulus `r < ρ < R` on which `2 π A < c * log (R / r)`.
+* `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top` — its limiting form, the one a crosscut
+  estimate consumes: for a finite Dirichlet integral, below every bound `R` there is a radius at
+  which `ℓ ρ` is smaller than any prescribed `c ≠ 0`.
+* `TauCeti.liminf_circleImageLength_nhdsGT_eq_zero` — the same statement as a lower limit at the
+  centre, which is the exact sense in which the method makes arcs short.
 
 Holomorphy is used in exactly two places: through `Conformal/Area.lean`, to replace the Dirichlet
 integral by the area of the image, and in the chord bound, where the fundamental theorem of calculus
@@ -92,7 +102,7 @@ public section
 
 namespace TauCeti
 
-open Complex MeasureTheory Metric Set
+open Complex MeasureTheory Metric Set Topology
 open scoped ENNReal Real
 
 variable {U s t : Set ℂ} {f : ℂ → ℂ} {ζ : ℂ}
@@ -236,6 +246,37 @@ theorem exists_circleImageLength_sq_lt_of_volume_image (hUo : IsOpen U)
     ∃ ρ ∈ Ioo r R, circleImageLength f s ζ ρ ^ 2 < c := by
   refine exists_circleImageLength_sq_lt f hs ζ hr hrR ?_
   rwa [volume_image_eq_lintegral_enorm_deriv_sq hUo hf hs.nullMeasurableSet hsU hinj] at hc
+
+/-! ### Short circles at arbitrarily small radii -/
+
+/-- **A finite Dirichlet integral makes the circles about any point short at arbitrarily small
+radii.** If `∫⁻ z in s, ‖deriv f z‖ₑ ^ 2` is finite, then below every bound `R > 0` there is a
+radius `ρ` at which `TauCeti.circleImageLength f s ζ ρ` is smaller than any prescribed `c ≠ 0`.
+
+This is the limiting form `TauCeti.exists_circleLIntegral_lt_of_lintegral_sq_ne_top` of Wolff's
+lemma at the length density of `f`: the annulus in which
+`TauCeti.exists_circleImageLength_sq_lt` is applied is chosen there, logarithmically long enough
+that its average is beaten, and shrunk against `R`. It is the statement the crosscut estimate of
+`Conformal/ShortCrosscut.lean` runs on, the bound `R` being what confines the radius to a genuine
+crosscut. -/
+theorem exists_circleImageLength_lt_of_lintegral_ne_top (f : ℂ → ℂ) (hs : MeasurableSet s) (ζ : ℂ)
+    (hfin : (∫⁻ z in s, ‖deriv f z‖ₑ ^ 2) ≠ ⊤) {c : ℝ≥0∞} (hc : c ≠ 0) {R : ℝ} (hR : 0 < R) :
+    ∃ ρ ∈ Ioo 0 R, circleImageLength f s ζ ρ < c := by
+  simp only [circleImageLength_def]
+  refine exists_circleLIntegral_lt_of_lintegral_sq_ne_top
+    (measurable_indicator_enorm_deriv f hs) ?_ ζ hc hR
+  rwa [lintegral_indicator_enorm_deriv_sq f hs]
+
+/-- **The circles about any point have lower limit `0` in length.** The sharp form of
+`TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top`, and the exact sense in which the
+length–area method makes arcs short: only *some* arbitrarily small radii carry a short circle, not
+all of them. -/
+theorem liminf_circleImageLength_nhdsGT_eq_zero (f : ℂ → ℂ) (hs : MeasurableSet s) (ζ : ℂ)
+    (hfin : (∫⁻ z in s, ‖deriv f z‖ₑ ^ 2) ≠ ⊤) :
+    Filter.liminf (fun ρ => circleImageLength f s ζ ρ) (𝓝[>] (0 : ℝ)) = 0 := by
+  simp only [circleImageLength_def]
+  refine liminf_circleLIntegral_nhdsGT_eq_zero (measurable_indicator_enorm_deriv f hs) ?_ ζ
+  rwa [lintegral_indicator_enorm_deriv_sq f hs]
 
 /-! ### The chord bound -/
 
