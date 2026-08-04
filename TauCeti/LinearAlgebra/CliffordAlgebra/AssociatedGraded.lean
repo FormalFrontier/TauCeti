@@ -18,6 +18,9 @@ algebra with the exterior algebra.
 
 It advances the Layer 0 associated-graded-algebra target in the
 [Spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md#layer-0-the-clifford-algebra-its-universal-property-and-the-two-gradings).
+
+Its graded-algebra packaging adapts the pattern in Mathlib's
+[`TensorPower` construction](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/LinearAlgebra/TensorPower/Basic.lean).
 -/
 
 public section
@@ -185,11 +188,14 @@ noncomputable def filtrationGradedAlgebraMap (Q : QuadraticForm R M) :
 /-- The degree-zero scalar map sends `1` to the homogeneous unit. -/
 @[simp] theorem filtrationGradedAlgebraMap_one (Q : QuadraticForm R M) :
     filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q := by
+  -- Expand the two degree-zero representatives to compare their quotient classes;
+  -- `map_one` is stated only in the ambient Clifford algebra.
   change Submodule.Quotient.mk
       (⟨algebraMap R (CliffordAlgebra Q) 1, algebraMap_mem_filtration Q 1 0⟩ : filtration Q 0) =
     Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0)
   apply (Submodule.Quotient.eq _).mpr
   rw [Submodule.mem_comap]
+  -- Quotient equality is ambient membership, the form in which `map_one` applies.
   change algebraMap R (CliffordAlgebra Q) 1 - 1 ∈ filtrationPrevious Q 0
   rw [map_one, sub_self]
   exact Submodule.zero_mem _
@@ -258,6 +264,7 @@ noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
     one_mul := fun x => by
       rcases x with ⟨k, x⟩
       apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k)
+      -- The sigma equality is now a homogeneous equality after exposing the GOne and GMul fields.
       change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
         (filtrationGradedMul Q 0 k (filtrationGradedOne Q) x) = x
       rw [filtrationGradedOne_mul]
@@ -265,6 +272,7 @@ noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
     mul_one := fun x => by
       rcases x with ⟨k, x⟩
       apply filtrationGradedMonoid_eq_of_cast Q (Nat.add_zero k)
+      -- The sigma equality is now a homogeneous equality after exposing the GOne and GMul fields.
       change cast (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k))
         (filtrationGradedMul Q k 0 x (filtrationGradedOne Q)) = x
       rw [filtrationGradedMul_one]
@@ -337,11 +345,14 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
 private theorem filtrationGradedAlgebraMap_mul_self (Q : QuadraticForm R M) (r s : R) :
     filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap Q r)
       (filtrationGradedAlgebraMap Q s) = filtrationGradedAlgebraMap Q (r * s) := by
+  -- Both scalar classes are quotient representatives, so expose them for the
+  -- representative product.
   change filtrationGradedMul Q 0 0 (Submodule.Quotient.mk _)
     (Submodule.Quotient.mk _) = Submodule.Quotient.mk _
   rw [filtrationGradedMul_apply_mk]
   apply (Submodule.Quotient.eq _).mpr
   rw [Submodule.mem_comap]
+  -- Quotient equality is ambient membership, the form in which `map_mul` applies.
   change algebraMap R (CliffordAlgebra Q) r * algebraMap R (CliffordAlgebra Q) s -
       algebraMap R (CliffordAlgebra Q) (r * s) ∈ filtrationPrevious Q 0
   rw [← map_mul, sub_self]
