@@ -65,7 +65,7 @@ section ExteriorProduct
 open WithConv TensorProduct
 
 variable {R M S : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
-  [CommSemiring S] [Algebra R S]
+  [Semiring S] [Algebra R S]
 
 namespace LinearMap
 
@@ -77,7 +77,7 @@ manipulations for counit-valued derivations: composing with the multiplication o
 bialgebra lands in this product's image. -/
 def mulTensor (s t : WithConv (M →ₗ[R] S)) :
     WithConv (M ⊗[R] M →ₗ[R] S) :=
-  toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
+  toConv (LinearMap.mul' R S ∘ₗ map s.ofConv t.ofConv)
 
 /-- The exterior product evaluates a pure tensor legwise and multiplies the results
 in the coefficients. -/
@@ -85,7 +85,7 @@ in the coefficients. -/
 lemma mulTensor_apply_tmul
     (s t : WithConv (M →ₗ[R] S)) (x y : M) :
     (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
-  simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
+  simp [mulTensor]
 
 
 /-- The exterior product vanishes when the left factor is zero. -/
@@ -167,9 +167,11 @@ lemma mulTensor_convMul
     (Algebra.TensorProduct.lmul' R (S := S))
     (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
   rw [map_convMul_map] at h
+  -- The commutative multiplication algebra map and the plain multiplication linear map
+  -- agree; restate `h` in the linear form used by `mulTensor`.
+  rw [Algebra.TensorProduct.lmul'_toLinearMap] at h
   calc mulTensor s t * mulTensor u v
-      = toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ
-          map (s * u).ofConv (t * v).ofConv) := by
+      = toConv (LinearMap.mul' R S ∘ₗ map (s * u).ofConv (t * v).ofConv) := by
         rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
     _ = mulTensor (s * u) (t * v) := rfl
 

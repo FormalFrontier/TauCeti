@@ -12,5 +12,5 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 
 Directory aggregator: the Lie algebra structure on counit-valued derivations
 (`Lie.Basic`), the differential as a Lie algebra morphism (`Lie.Map`), and the
-`TauCeti.Algebra.AlgebraicGroup.Tangent.Lie` provides all three.
+`TauCeti.Algebra.AlgebraicGroup.Tangent.Lie` provides both.
 -/
