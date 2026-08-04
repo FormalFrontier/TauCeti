@@ -60,8 +60,8 @@ from these estimates in order to force the cluster set at `ζ` to degenerate to 
   over the angles landing in `s`, a length along the parametrisation, counted with multiplicity,
   rather than a measure of the image set.
 * `TauCeti.ofReal_dist_le_mul_lintegral_Ioc` — the chord bound in its primitive, set-free form:
-  the images of the endpoints of an arc of angles are at distance at most `ρ` times the angular
-  integral of `‖deriv f‖` over that arc.
+  the images of the endpoints of an arc of angles are at distance at most `|ρ|` times the angular
+  integral of `‖deriv f‖` over that arc, for a radius `ρ` of either sign.
 * `TauCeti.ofReal_dist_le_circleImageLength` — the chord bound justifying the name, and the only
   claim made here about lengths that is actually proved: a sub-arc of angular width at most `2 * π`
   that stays in `s` and in a set on which `f` is holomorphic has the distance between the images of
@@ -286,29 +286,32 @@ theorem liminf_circleImageLength_nhdsGT_eq_zero (f : ℂ → ℂ) (hs : Measurab
 
 /-- **The chord bound over a sub-arc.** For `f` holomorphic on an open `U` containing the piece of
 the circle of radius `ρ` about `ζ` cut out by the angles `Icc a b`, the distance between the images
-of the two endpoints of that arc is at most `ρ` times the angular integral of `‖deriv f‖` over it.
+of the two endpoints of that arc is at most `|ρ|` times the angular integral of `‖deriv f‖` over it.
 
 This is the fundamental theorem of calculus along the arc, and it is the primitive form of the
 chord bound: the right-hand side is the length of the image of *this* arc, with no reference to
-any set `s` and no restriction on the angular width. Enlarging it to a whole period and inserting
-the indicator of `s` gives `TauCeti.ofReal_dist_le_circleImageLength`, which is the form the
-length–area estimates chain with; the form here is what a *local* estimate near one end of the arc
-needs, since there the arc is shrunk rather than the radius.
+any set `s`, no restriction on the angular width and none on the sign of the radius — a negative
+`ρ` traces the same circle in the other sense, and `ρ = 0` makes both sides `0`. Enlarging the arc
+to a whole period and inserting the indicator of `s` gives
+`TauCeti.ofReal_dist_le_circleImageLength`, which is the form the length–area estimates chain with
+and which does need `0 < ρ`, since `TauCeti.circleImageLength` vanishes at a nonpositive radius;
+the form here is what a *local* estimate near one end of the arc needs, since there the arc is
+shrunk rather than the radius.
 
 The analytic step is Mathlib's `MeasureTheory.enorm_sub_le_lintegral_deriv_of_contDiffOn_Icc`,
 applied to `f ∘ circleMap ζ ρ`, which is `C¹` on the arc because `f` is analytic on `U` and
 `circleMap` is smooth. All that remains is the chain rule, which replaces the derivative of the
-composite by `deriv f (circleMap ζ ρ θ)` times the velocity `circleMap 0 ρ θ * I`, of norm `ρ`. -/
+composite by `deriv f (circleMap ζ ρ θ)` times the velocity `circleMap 0 ρ θ * I`, of norm `|ρ|`. -/
 theorem ofReal_dist_le_mul_lintegral_Ioc (hUo : IsOpen U) (hf : DifferentiableOn ℂ f U) (ζ : ℂ)
-    {ρ : ℝ} (hρ : 0 < ρ) {a b : ℝ} (hab : a ≤ b)
+    {ρ : ℝ} {a b : ℝ} (hab : a ≤ b)
     (hmemU : ∀ θ ∈ Icc a b, circleMap ζ ρ θ ∈ U) :
     ENNReal.ofReal (dist (f (circleMap ζ ρ a)) (f (circleMap ζ ρ b))) ≤
-      ENNReal.ofReal ρ * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
+      ENNReal.ofReal |ρ| * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
   have hcd : ContDiffOn ℝ 1 (fun θ => f (circleMap ζ ρ θ)) (Icc a b) := fun θ hθ =>
     (((hf.analyticAt (hUo.mem_nhds (hmemU θ hθ))).contDiffAt.restrict_scalars ℝ).comp θ
       (contDiff_circleMap ζ ρ).contDiffAt).contDiffWithinAt
   have hderiv : ∀ θ ∈ Ioc a b, ‖deriv (fun θ => f (circleMap ζ ρ θ)) θ‖ₑ =
-      ENNReal.ofReal ρ * ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
+      ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
     intro θ hθ
     have hmem := hmemU θ (Set.Ioc_subset_Icc_self hθ)
     have h : HasDerivAt (fun θ => f (circleMap ζ ρ θ))
@@ -317,7 +320,7 @@ theorem ofReal_dist_le_mul_lintegral_Ioc (hUo : IsOpen U) (hf : DifferentiableOn
         (hasDerivAt_circleMap ζ ρ θ)
     rw [h.deriv, smul_eq_mul, enorm_mul]
     congr 1
-    rw [← ofReal_norm, norm_mul, norm_circleMap_zero, Complex.norm_I, mul_one, abs_of_pos hρ]
+    rw [← ofReal_norm, norm_mul, norm_circleMap_zero, Complex.norm_I, mul_one]
   calc ENNReal.ofReal (dist (f (circleMap ζ ρ a)) (f (circleMap ζ ρ b)))
       = ‖f (circleMap ζ ρ b) - f (circleMap ζ ρ a)‖ₑ := by
         rw [dist_comm, dist_eq_norm, ofReal_norm]
@@ -325,9 +328,9 @@ theorem ofReal_dist_le_mul_lintegral_Ioc (hUo : IsOpen U) (hf : DifferentiableOn
         enorm_sub_le_lintegral_deriv_of_contDiffOn_Icc hcd hab
     _ = ∫⁻ θ in Ioc a b, ‖deriv (fun θ => f (circleMap ζ ρ θ)) θ‖ₑ := by
         rw [← restrict_Ioc_eq_restrict_Icc]
-    _ = ∫⁻ θ in Ioc a b, ENNReal.ofReal ρ * ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
+    _ = ∫⁻ θ in Ioc a b, ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
         setLIntegral_congr_fun measurableSet_Ioc hderiv
-    _ = ENNReal.ofReal ρ * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
+    _ = ENNReal.ofReal |ρ| * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
         lintegral_const_mul' _ _ ENNReal.ofReal_ne_top
 
 /-- **The chord bound.** If the closed arc of angles `Icc a b` has angular width at most `2 * π`
@@ -357,8 +360,10 @@ theorem ofReal_dist_le_circleImageLength (hUo : IsOpen U) (hf : DifferentiableOn
     ENNReal.ofReal (dist (f (circleMap ζ ρ a)) (f (circleMap ζ ρ b))) ≤
       circleImageLength f s ζ ρ := by
   calc ENNReal.ofReal (dist (f (circleMap ζ ρ a)) (f (circleMap ζ ρ b)))
-      ≤ ENNReal.ofReal ρ * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
-        ofReal_dist_le_mul_lintegral_Ioc hUo hf ζ hρ hab hmemU
+      ≤ ENNReal.ofReal |ρ| * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ :=
+        ofReal_dist_le_mul_lintegral_Ioc hUo hf ζ hab hmemU
+    _ = ENNReal.ofReal ρ * ∫⁻ θ in Ioc a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
+        rw [abs_of_pos hρ]
     _ = ENNReal.ofReal ρ *
           ∫⁻ θ in Ioc a b, s.indicator (fun z => ‖deriv f z‖ₑ) (circleMap ζ ρ θ) := by
         congr 1
