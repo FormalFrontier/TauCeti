@@ -5,10 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
-public import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 
 /-!
 # Comparing two products of elements of the unit ball
