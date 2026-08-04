@@ -15,6 +15,9 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 This file packages the homogeneous pieces of the Clifford degree filtration into a direct-sum
 associated-graded algebra. It is generic in the quadratic form and does not yet identify that
 algebra with the exterior algebra.
+
+It advances the Layer 0 associated-graded-algebra target in the
+[Spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md#layer-0-the-clifford-algebra-its-universal-property-and-the-two-gradings).
 -/
 
 public section
@@ -179,9 +182,10 @@ noncomputable def filtrationGradedAlgebraMap (Q : QuadraticForm R M) :
     apply congrArg Submodule.Quotient.mk
     exact Subtype.ext (map_add (algebraMap R (CliffordAlgebra Q)) r s)
 
-@[simp] private theorem filtrationGradedAlgebraMap_one (Q : QuadraticForm R M) :
+/-- The degree-zero scalar map sends `1` to the homogeneous unit. -/
+@[simp] theorem filtrationGradedAlgebraMap_one (Q : QuadraticForm R M) :
     filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q :=
-  rfl
+  (rfl)
 
 private theorem filtrationGradedPiece_cast_mk (Q : QuadraticForm R M) {i j : ℕ}
     (h : i = j) (x : filtration Q i) (hx : (x : CliffordAlgebra Q) ∈ filtration Q j) :
@@ -197,12 +201,15 @@ private theorem filtrationGradedMonoid_eq_of_cast (Q : QuadraticForm R M)
   cases h
   exact congrArg _ h2
 
-private theorem filtrationGradedOne_mul (Q : QuadraticForm R M) (k : ℕ)
+/-- The degree-zero homogeneous unit acts on the left. -/
+@[simp] theorem filtrationGradedOne_mul (Q : QuadraticForm R M) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
     filtrationGradedMul Q 0 k (filtrationGradedOne Q) x =
       cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) x := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
+      -- Quotient induction supplies representatives, the only stable form to which the
+      -- public representative multiplication lemma applies.
       change filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
         (Submodule.Quotient.mk x) = _
       rw [filtrationGradedMul_apply_mk]
@@ -210,17 +217,21 @@ private theorem filtrationGradedOne_mul (Q : QuadraticForm R M) (k : ℕ)
         rw [Nat.zero_add]
         exact x.property)]
       apply (Submodule.Quotient.eq _).mpr
+      -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (1 : CliffordAlgebra Q) * (x : CliffordAlgebra Q) - x ∈
         filtrationPrevious Q (0 + k)
       rw [one_mul, sub_self]
       exact Submodule.zero_mem (filtrationPrevious Q (0 + k))
 
-private theorem filtrationGradedMul_one (Q : QuadraticForm R M) (k : ℕ)
+/-- The degree-zero homogeneous unit acts on the right. -/
+@[simp] theorem filtrationGradedMul_one (Q : QuadraticForm R M) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
     filtrationGradedMul Q k 0 x (filtrationGradedOne Q) =
       cast (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k).symm) x := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
+      -- Quotient induction supplies representatives, the only stable form to which the
+      -- public representative multiplication lemma applies.
       change filtrationGradedMul Q k 0 (Submodule.Quotient.mk x)
         (Submodule.Quotient.mk _) = _
       rw [filtrationGradedMul_apply_mk]
@@ -228,6 +239,7 @@ private theorem filtrationGradedMul_one (Q : QuadraticForm R M) (k : ℕ)
         rw [Nat.add_zero]
         exact x.property)]
       apply (Submodule.Quotient.eq _).mpr
+      -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (x : CliffordAlgebra Q) * 1 - x ∈ filtrationPrevious Q (k + 0)
       rw [mul_one, sub_self]
       exact Submodule.zero_mem (filtrationPrevious Q (k + 0))
@@ -295,16 +307,20 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
       -filtrationGradedAlgebraMap Q ((n + 1 : ℕ) : R)
     rw [Int.cast_negSucc, map_neg]
 
-private theorem filtrationGradedAlgebraMap_mul (Q : QuadraticForm R M) (r : R) (k : ℕ)
+/-- Left multiplication by a degree-zero scalar class is scalar multiplication. -/
+@[simp] theorem filtrationGradedAlgebraMap_mul (Q : QuadraticForm R M) (r : R) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
     cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
       (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x) = r • x := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
+      -- Quotient induction supplies representatives, the only stable form to which the
+      -- public representative multiplication lemma applies.
       change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
         (filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
           (Submodule.Quotient.mk x)) = r • Submodule.Quotient.mk x
       rw [filtrationGradedMul_apply_mk, ← Submodule.Quotient.mk_smul]
+      -- The cast needs an ambient membership witness; `filtration_mul` supplies that witness.
       rw [filtrationGradedPiece_cast_mk Q (Nat.zero_add k) _ (by
         simpa using (show (algebraMap R (CliffordAlgebra Q) r) * x ∈ filtration Q (0 + k) by
           rw [← filtration_mul Q 0 k]
@@ -382,8 +398,9 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) (r • x) =
       filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x
     symm
-    simpa using congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
-      (filtrationGradedAlgebraMap_mul Q r k x)
+    simpa only [cast_cast, cast_eq] using
+      congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
+        (filtrationGradedAlgebraMap_mul Q r k x)
 
 noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
     Ring (filtrationAssociatedGraded Q) := by
