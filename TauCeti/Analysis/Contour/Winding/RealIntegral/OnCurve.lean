@@ -13,6 +13,7 @@ import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.Winding.LipschitzBoundedIntegrand
 import TauCeti.Analysis.Contour.Winding.PrincipalValueRealIntegral
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
@@ -81,32 +82,13 @@ namespace TauCeti.Contour
 
 /-! ### The real part of a complex derivative along the real embeddings -/
 
-private theorem hasDerivAt_re {f : ℝ → ℂ} {t : ℝ} {D : ℂ} (hf : HasDerivAt f D t) :
-    HasDerivAt (fun u => (f u).re) D.re t :=
-  Complex.reCLM.hasFDerivAt.comp_hasDerivAt t hf
-
-private theorem hasDerivAt_im {f : ℝ → ℂ} {t : ℝ} {D : ℂ} (hf : HasDerivAt f D t) :
-    HasDerivAt (fun u => (f u).im) D.im t :=
-  Complex.imCLM.hasFDerivAt.comp_hasDerivAt t hf
-
 /-- The derivative of the squared complex modulus, in the real-parameter chain-rule form used to
-differentiate the log-norm below. -/
+differentiate the log-norm below. An instance of Mathlib's generic inner-product-space
+squared-norm derivative rule (`HasDerivAt.norm_sq`), rewritten from `⟪·,·⟫_ℝ` to `Complex.normSq`
+via `Complex.inner` and `Complex.normSq_eq_norm_sq`. -/
 private theorem hasDerivAt_normSq {f : ℝ → ℂ} {t : ℝ} {D : ℂ} (hf : HasDerivAt f D t) :
     HasDerivAt (fun u => Complex.normSq (f u)) (2 * ((starRingEnd ℂ (f t) * D).re)) t := by
-  have hre := hasDerivAt_re hf
-  have him := hasDerivAt_im hf
-  have h1 : HasDerivAt (fun u => (f u).re * (f u).re) (D.re * (f t).re + (f t).re * D.re) t :=
-    hre.mul hre
-  have h2 : HasDerivAt (fun u => (f u).im * (f u).im) (D.im * (f t).im + (f t).im * D.im) t :=
-    him.mul him
-  have key : HasDerivAt (fun u => Complex.normSq (f u))
-      (D.re * (f t).re + (f t).re * D.re + (D.im * (f t).im + (f t).im * D.im)) t :=
-    (h1.add h2).congr_of_eventuallyEq (Filter.Eventually.of_forall fun u => by
-      simp [Complex.normSq_apply])
-  have hval : D.re * (f t).re + (f t).re * D.re + (D.im * (f t).im + (f t).im * D.im)
-      = 2 * ((starRingEnd ℂ (f t) * D).re) := by
-    simp [Complex.mul_re]; ring
-  rwa [hval] at key
+  simpa [Complex.normSq_eq_norm_sq, Complex.inner, mul_comm] using HasDerivAt.norm_sq hf
 
 /-- **The log-norm derivative.** Wherever a real-parametrized curve is differentiable and avoids
 `0`, the real-valued function `t ↦ Real.log ‖f t‖` is differentiable, with derivative the real
