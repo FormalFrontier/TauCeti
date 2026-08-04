@@ -128,7 +128,7 @@ theorem mulInvariantCoordinateVectorField_smul [IsManifold I 1 G] (c : ℝ) (v y
 
 /-- At the identity coordinate, the parameterized invariant field equals its generator. -/
 @[simp]
-theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
+theorem mulInvariantCoordinateVectorField_one [IsManifold I 1 G] (v : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G)
       (v, I (chartAt H (1 : G) (1 : G))) = v := by
   have hidentityCoordinate : I (chartAt H (1 : G) (1 : G)) =
