@@ -423,7 +423,7 @@ section ExteriorProduct
 
 open WithConv TensorProduct
 
-variable {R A B : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
+variable {R A B : Type*} [CommSemiring R] [Semiring A] [Algebra R A]
   [CommSemiring B] [Algebra R B]
 
 namespace LinearMap
@@ -447,21 +447,6 @@ lemma mulTensor_apply_tmul
     (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
   simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
 
-/-- The exterior product is multiplicative for convolution: products interleave
-legwise. -/
-lemma mulTensor_convMul
-    (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
-    mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
-  have h := LinearMap.algHom_comp_convMul_distrib
-    (Algebra.TensorProduct.lmul' R (S := Bialgebra.CounitAlgebra R A B))
-    (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
-  rw [map_convMul_map] at h
-  calc mulTensor s t * mulTensor u v
-      = toConv ((Algebra.TensorProduct.lmul' R
-            (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ
-          map (s * u).ofConv (t * v).ofConv) := by
-        rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
-    _ = mulTensor (s * u) (t * v) := rfl
 
 /-- The exterior product vanishes when the left factor is zero. -/
 @[simp]
@@ -521,6 +506,35 @@ lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A 
 end AlgHom
 
 end ExteriorProduct
+
+section ExteriorConvolution
+
+open WithConv TensorProduct
+
+variable {R A B : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B]
+
+namespace LinearMap
+
+/-- The exterior product is multiplicative for convolution: products interleave
+legwise. -/
+lemma mulTensor_convMul
+    (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
+  have h := LinearMap.algHom_comp_convMul_distrib
+    (Algebra.TensorProduct.lmul' R (S := Bialgebra.CounitAlgebra R A B))
+    (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
+  rw [map_convMul_map] at h
+  calc mulTensor s t * mulTensor u v
+      = toConv ((Algebra.TensorProduct.lmul' R
+            (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ
+          map (s * u).ofConv (t * v).ofConv) := by
+        rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
+    _ = mulTensor (s * u) (t * v) := rfl
+
+end LinearMap
+
+end ExteriorConvolution
 
 section DerivationLeibniz
 
