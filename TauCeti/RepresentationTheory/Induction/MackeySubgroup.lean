@@ -109,16 +109,18 @@ theorem mem_mackeySubgroup_iff {x : G} :
     x ∈ mackeySubgroup s H K ↔ x ∈ K ∧ s⁻¹ * x * s ∈ H := by
   simp [mackeySubgroup_def]
 
-theorem mackeySubgroup_le_left : mackeySubgroup s H K ≤ K :=
+/-- The Mackey subgroup is contained in `K`, the second subgroup argument. -/
+theorem mackeySubgroup_le_right : mackeySubgroup s H K ≤ K :=
   inf_le_left
 
+/-- The Mackey subgroup is contained in the conjugate `sHs⁻¹` of the first subgroup argument. -/
 theorem mackeySubgroup_le_conj : mackeySubgroup s H K ≤ MulAut.conj s • H :=
   inf_le_right
 
 variable (s H K) in
 /-- The inclusion of the Mackey subgroup into `K`, along which the Mackey summand is induced. -/
 def mackeyToK : mackeySubgroup s H K →* K :=
-  Subgroup.inclusion mackeySubgroup_le_left
+  Subgroup.inclusion mackeySubgroup_le_right
 
 variable (s H K) in
 /-- The inclusion of the Mackey subgroup into `sHs⁻¹`, along which the conjugate representation
@@ -211,6 +213,7 @@ section Orbit
 
 /-- **The Mackey subgroup is a stabilizer**: it is the stabilizer of the coset `sH` for the
 translation action of `K` on `G ⧸ H`, read as a subgroup of `K`. -/
+@[simp]
 theorem stabilizer_eq_mackeySubgroup_subgroupOf (s : G) (H K : Subgroup G) :
     stabilizer (↥K) ((s : G ⧸ H)) = (mackeySubgroup s H K).subgroupOf K := by
   ext g
@@ -250,7 +253,7 @@ theorem card_doubleCoset_mul_card_mackeySubgroup (s : G) (H K : Subgroup G) :
       Nat.card_congr (QuotientGroup.preimageMkEquivSubgroupProdSet H _), Nat.card_prod]
   have hK : Nat.card (mackeySubgroup s H K) * (mackeySubgroup s H K).relIndex K = Nat.card K := by
     rw [Subgroup.relIndex,
-      ← Nat.card_congr (Subgroup.subgroupOfEquivOfLe mackeySubgroup_le_left).toEquiv]
+      ← Nat.card_congr (Subgroup.subgroupOfEquivOfLe mackeySubgroup_le_right).toEquiv]
     exact Subgroup.card_mul_index _
   rw [hdc, card_orbit_eq_relIndex, mul_assoc, mul_comm ((mackeySubgroup s H K).relIndex K), hK,
     mul_comm]

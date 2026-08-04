@@ -44,13 +44,17 @@ variable {G : Type*} [Group G]
 /-- The stabilizer of the coset `sH`, for the translation action of `G` on `G ⧸ H`, is the
 conjugate subgroup `sHs⁻¹`.  This is Mathlib's `MulAction.stabilizer_quotient` transported off the
 trivial coset along `MulAction.stabilizer_smul_eq_stabilizer_map_conj`. -/
+@[simp]
 theorem stabilizer_quotientGroup_mk (H : Subgroup G) (s : G) :
     stabilizer G ((s : G ⧸ H)) = MulAut.conj s • H := by
   have hs : ((s : G) : G ⧸ H) = s • ((1 : G) : G ⧸ H) := by
     rw [Quotient.smul_coe, smul_eq_mul, mul_one]
-  rw [hs, stabilizer_smul_eq_stabilizer_map_conj, stabilizer_quotient,
-    Subgroup.pointwise_smul_def]
-  rfl
+  rw [hs, stabilizer_smul_eq_stabilizer_map_conj, stabilizer_quotient]
+  -- `stabilizer_smul_eq_stabilizer_map_conj` leaves the conjugate as `H.map (MulAut.conj s)`,
+  -- so the two descriptions are compared on elements rather than as subgroup maps.
+  ext x
+  rw [Subgroup.mem_map_equiv, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv,
+    MulAut.smul_def, MulAut.conj_symm_apply, MulAut.conj_apply, inv_inv]
 
 /-- Left translation on the cosets of the trivial subgroup is left translation in the group.
 
