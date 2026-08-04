@@ -86,6 +86,7 @@ def yosidaApprox (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda) :
   lambda ^ 2 • hA.resolvent lambda hlambda - lambda • (1 : X →L[ℝ] X)
 
 /-- The Yosida approximation, applied to a vector. -/
+@[simp]
 theorem yosidaApprox_apply (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda) (x : X) :
     hA.yosidaApprox lambda hlambda x
       = lambda ^ 2 • hA.resolvent lambda hlambda x - lambda • x := by
@@ -176,7 +177,7 @@ theorem norm_exp_yosidaApprox_le_one (hA : IsMDissipative A) (lambda : ℝ) (hla
           mul_le_mul_of_nonneg_left ContinuousLinearMap.norm_id_le (Real.exp_nonneg _)
       _ = Real.exp (-(t * lambda)) := mul_one _
   have hres : ‖exp ((t * lambda ^ 2) • R)‖ ≤ Real.exp (t * lambda) := by
-    refine (StronglyContinuousSemigroup.norm_exp_le_exp_norm _).trans (Real.exp_le_exp.mpr ?_)
+    refine (norm_exp_le_exp_norm _).trans (Real.exp_le_exp.mpr ?_)
     rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg ht (sq_nonneg lambda))]
     calc t * lambda ^ 2 * ‖R‖
         ≤ t * lambda ^ 2 * (1 / lambda) :=
@@ -185,7 +186,7 @@ theorem norm_exp_yosidaApprox_le_one (hA : IsMDissipative A) (lambda : ℝ) (hla
       _ = t * lambda := by field_simp [hlambda.ne', sq]
   calc ‖exp (t • hA.yosidaApprox lambda hlambda)‖
       = ‖exp ((t * lambda ^ 2) • R) * exp ((-(t * lambda)) • (1 : X →L[ℝ] X))‖ := by
-        rw [hsplit, StronglyContinuousSemigroup.exp_add_of_commute hcomm]
+        rw [hsplit, exp_add_of_commute hcomm]
     _ ≤ ‖exp ((t * lambda ^ 2) • R)‖ * ‖exp ((-(t * lambda)) • (1 : X →L[ℝ] X))‖ :=
         norm_mul_le _ _
     _ ≤ Real.exp (t * lambda) * Real.exp (-(t * lambda)) :=
