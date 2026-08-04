@@ -286,19 +286,13 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
   rw [hbot', Submodule.mem_bot k] at hmem
   exact repr_symmetrizer_tensorPowerBasis_ne_zero t hn (by rw [hmem, map_zero]; rfl)
 
-/-- The Weyl module of a `μ`-tableau vanishes as soon as `μ` has more than `n` rows.
-
-The `|μ|`-fold tensor power is spanned by the pure tensors `e_{p(1)} ⊗ ⋯ ⊗ e_{p(d)}` of standard
-basis vectors.  The first column of `μ` is longer than `n`, so two of its labels `x ≠ y` have
-`p x = p y`; the transposition of `x` and `y` then lies in the column group of `t`, so it fixes
-that pure tensor while multiplying `c_t` on the right by it negates `c_t`.  The value of `c_t` on
-the pure tensor is therefore its own negative, hence zero because `2` is invertible in a
-`ℚ`-algebra. -/
-theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
-    weylModule k n t = ⊥ := by
+/-- **The symmetrizer annihilates the whole tensor power when `μ` has more than `n` rows.** On each
+monomial basis vector two labels of the first column share a basis index, so their transposition
+fixes it while negating `c_t`; the value is its own negative, hence zero since `2` is invertible. -/
+private theorem permTensorActionAlgHom_youngSymmetrizerOver_eq_zero (t : YoungTableau μ)
+    (hn : n < μ.colLen 0) :
+    permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) = 0 := by
   classical
-  -- subrepresentations are equal when their underlying submodules are
-  refine Subrepresentation.toSubmodule_injective ?_
   have : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
   have : Invertible (2 : k) := by
     have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
@@ -307,64 +301,57 @@ theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
   have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
     rw [μ.colLen_eq_card, ← Fintype.card_coe]
     exact Fintype.card_congr (colFiberEquiv t 0)
-  have hzero : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) = 0 := by
-    refine (Basis.piTensorProduct fun _ : Fin μ.card => Pi.basisFun k (Fin n)).ext fun p => ?_
-    rw [Basis.piTensorProduct_apply, LinearMap.zero_apply]
-    simp only [Pi.basisFun_apply]
-    -- two labels of the first column carry the same basis index
-    obtain ⟨a, b, hab, hpab⟩ :=
-      Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
-        (by rw [hcard, Fintype.card_fin]; exact hn)
-    have hxy : (a : Fin μ.card) ≠ (b : Fin μ.card) := fun h => hab (Subtype.ext h)
-    have hτ : Equiv.swap (a : Fin μ.card) (b : Fin μ.card) ∈ colSubgroup t :=
-      swap_mem_colSubgroup (by rw [a.2, b.2])
-    -- their transposition fixes the pure tensor
-    have hfix : (fun i => (Pi.single
-          (p ((Equiv.swap (a : Fin μ.card) (b : Fin μ.card)).symm i)) (1 : k) : Fin n → k)) =
-        fun i => (Pi.single (p i) (1 : k) : Fin n → k) := by
-      funext i
-      rw [Equiv.symm_swap]
-      rcases eq_or_ne i (a : Fin μ.card) with rfl | h1
-      · rw [Equiv.swap_apply_left, hpab]
-      · rcases eq_or_ne i (b : Fin μ.card) with rfl | h2
-        · rw [Equiv.swap_apply_right, hpab]
-        · rw [Equiv.swap_apply_of_ne_of_ne h1 h2]
-    -- and multiplying the symmetrizer on the right by it negates the symmetrizer
-    have hc : youngSymmetrizerOver k t *
+  refine (tensorPowerBasis k n μ.card).ext fun p => ?_
+  rw [LinearMap.zero_apply]
+  -- two labels of the first column carry the same basis index
+  obtain ⟨a, b, hab, hpab⟩ :=
+    Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
+      (by rw [hcard, Fintype.card_fin]; exact hn)
+  have hxy : (a : Fin μ.card) ≠ (b : Fin μ.card) := fun h => hab (Subtype.ext h)
+  have hτ : Equiv.swap (a : Fin μ.card) (b : Fin μ.card) ∈ colSubgroup t :=
+    swap_mem_colSubgroup (by rw [a.2, b.2])
+  -- the transposition permutes the index function back to itself
+  have hswap : (fun i => p ((Equiv.swap (a : Fin μ.card) (b : Fin μ.card)).symm i)) = p :=
+    funext fun i => by rw [Equiv.symm_swap]; exact Equiv.apply_swap_eq_self hpab i
+  have h : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t *
+        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1)
+        (tensorPowerBasis k n μ.card p) =
+      permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+    rw [map_mul, Module.End.mul_apply, permTensorActionAlgHom_single_tensorPowerBasis, one_smul,
+      hswap]
+  have hneg : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) =
+      -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+    -- a transposition of the column group has sign `-1`, and `c_t` is alternating under it
+    have hneg' : youngSymmetrizerOver k t *
         MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
         -youngSymmetrizerOver k t := by
-      have h := mul_youngSymmetrizer_right t ⟨_, hτ⟩
-      rw [Equiv.Perm.sign_swap hxy] at h
-      have h' := congrArg (MonoidAlgebra.mapAlgHom (Equiv.Perm (Fin μ.card)) (Algebra.ofId ℚ k))
-        (by simpa using h :
-          youngSymmetrizer t *
-              MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
-            -youngSymmetrizer t)
-      rw [map_mul, map_neg, MonoidAlgebra.mapAlgHom_single, map_one] at h'
-      rwa [youngSymmetrizerOver_def]
-    -- so the value of the symmetrizer on the pure tensor is its own negative
-    have h : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t *
-          MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1)
-          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) =
-        permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) := by
-      rw [map_mul, Module.End.mul_apply, ← MonoidAlgebra.of_apply, permTensorActionAlgHom_of,
-        permTensorAction_apply, LinearEquiv.coe_toLinearMap, PiTensorProduct.reindex_tprod, hfix]
-    have hneg : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) =
-        -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-          (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) := by
-      conv_lhs => rw [← h]
-      rw [hc, map_neg, LinearMap.neg_apply]
-    have htwo : (2 : k) • permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (PiTensorProduct.tprod k fun i => (Pi.single (p i) (1 : k) : Fin n → k)) = 0 := by
-      rw [two_smul]
-      nth_rewrite 2 [hneg]
-      rw [add_neg_cancel]
-    have := congrArg (fun w => (⅟(2 : k)) • w) htwo
-    simpa [smul_smul] using this
-  rw [weylModule_toSubmodule, hzero, LinearMap.range_zero]
-  -- the submodule underlying the zero subrepresentation is `⊥`
+      simpa [Equiv.Perm.sign_swap hxy] using mul_youngSymmetrizerOver_right k t ⟨_, hτ⟩
+    conv_lhs => rw [← h]
+    rw [hneg', map_neg, LinearMap.neg_apply]
+  have htwo : (2 : k) • permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+      (tensorPowerBasis k n μ.card p) = 0 := by
+    rw [two_smul]
+    nth_rewrite 2 [hneg]
+    rw [add_neg_cancel]
+  have := congrArg (fun w => (⅟(2 : k)) • w) htwo
+  simpa [smul_smul] using this
+
+/-- The Weyl module of a `μ`-tableau vanishes as soon as `μ` has more than `n` rows.
+
+The `|μ|`-fold tensor power is spanned by the monomial basis vectors `e_{p(1)} ⊗ ⋯ ⊗ e_{p(d)}`.
+The first column of `μ` is longer than `n`, so on each of them two labels of that column share a
+basis index; their transposition lies in the column group, fixing the vector while negating `c_t`.
+The value of `c_t` is therefore its own negative, hence zero because `2` is invertible in a
+`ℚ`-algebra. -/
+theorem weylModule_eq_bot (t : YoungTableau μ) (hn : n < μ.colLen 0) :
+    weylModule k n t = ⊥ := by
+  -- subrepresentations are equal when their underlying submodules are
+  refine Subrepresentation.toSubmodule_injective ?_
+  rw [weylModule_toSubmodule, permTensorActionAlgHom_youngSymmetrizerOver_eq_zero t hn,
+    LinearMap.range_zero]
   rfl
 
 /-- **The vanishing criterion for the Weyl module**: it vanishes exactly when the shape has more
