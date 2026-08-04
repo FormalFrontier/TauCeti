@@ -32,8 +32,11 @@ namespace TauCeti
 variable {R : Type*} [Ring R]
 
 /-- If `1 + a * b` is a unit then so is `1 + b * a`: an explicit inverse is `1 - b * v * a`,
-where `v` inverts `1 + a * b`. -/
-theorem isUnit_one_add_mul_swap {a b : R} (h : IsUnit (1 + a * b)) : IsUnit (1 + b * a) := by
+where `v` inverts `1 + a * b`.
+
+This is one direction of `TauCeti.isUnit_one_add_mul_comm`, which is the form to use. -/
+private theorem isUnit_one_add_mul_swap {a b : R} (h : IsUnit (1 + a * b)) :
+    IsUnit (1 + b * a) := by
   obtain ⟨u, hu⟩ := h
   obtain ⟨v, hv, hv'⟩ : ∃ v : R, (1 + a * b) * v = 1 ∧ v * (1 + a * b) = 1 :=
     ⟨((u⁻¹ : Rˣ) : R), by rw [← hu, u.mul_inv], by rw [← hu, u.inv_mul]⟩

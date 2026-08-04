@@ -65,8 +65,8 @@ variable {R}
 
 This is `Ideal.mem_jacobson_iff` at the zero ideal, rearranged. Only a left inverse is available
 at this stage; `TauCeti.Ring.mem_jacobson_iff_isUnit_one_add_mul_left` upgrades it to a two-sided
-one. -/
-theorem mem_jacobson_iff_exists_mul_eq_one {x : R} :
+one and is the form to use. -/
+private theorem mem_jacobson_iff_forall_exists_mul_one_add_mul_eq_one {x : R} :
     x ∈ Ring.jacobson R ↔ ∀ y : R, ∃ z : R, z * (1 + y * x) = 1 := by
   rw [← Ideal.jacobson_bot, Ideal.mem_jacobson_iff]
   refine forall_congr' fun y => exists_congr fun z => ?_
@@ -78,7 +78,7 @@ theorem mem_jacobson_iff_exists_mul_eq_one {x : R} :
 Mathlib's `Ideal.mem_jacobson_bot` is this statement over a commutative ring. -/
 theorem mem_jacobson_iff_isUnit_one_add_mul_left {x : R} :
     x ∈ Ring.jacobson R ↔ ∀ y : R, IsUnit (1 + y * x) := by
-  rw [mem_jacobson_iff_exists_mul_eq_one]
+  rw [mem_jacobson_iff_forall_exists_mul_one_add_mul_eq_one]
   refine ⟨fun h y => ?_, fun h y => ?_⟩
   · -- A left inverse `z` of `1 + y * x` is again of the form `1 + y' * x`, so it has a left
     -- inverse `w` in turn; then `w = w * (z * (1 + y * x)) = 1 + y * x`, which makes `z` a
@@ -120,8 +120,9 @@ theorem op_mem_jacobson_mulOpposite_iff {x : R} :
 /-- `TauCeti.Ring.op_mem_jacobson_mulOpposite_iff` phrased for an element of `Rᵐᵒᵖ`. -/
 @[simp]
 theorem mem_jacobson_mulOpposite_iff {X : Rᵐᵒᵖ} :
-    X ∈ Ring.jacobson Rᵐᵒᵖ ↔ X.unop ∈ Ring.jacobson R :=
-  op_mem_jacobson_mulOpposite_iff (x := X.unop)
+    X ∈ Ring.jacobson Rᵐᵒᵖ ↔ X.unop ∈ Ring.jacobson R := by
+  conv_lhs => rw [← op_unop X]
+  exact op_mem_jacobson_mulOpposite_iff
 
 /-- The Jacobson radical of `Rᵐᵒᵖ` is, as a set, the `op`-image of the Jacobson radical of `R`. -/
 theorem coe_jacobson_mulOpposite (R : Type*) [Ring R] :
@@ -164,14 +165,17 @@ private theorem unop_mem_jacobson_pow (n : ℕ) (X : Rᵐᵒᵖ) (hX : X ∈ Rin
 `n`-th power of `Ring.jacobson Rᵐᵒᵖ` exactly when `x` lies in the `n`-th power of
 `Ring.jacobson R`. -/
 theorem op_mem_jacobson_mulOpposite_pow_iff {x : R} {n : ℕ} :
-    op x ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ x ∈ Ring.jacobson R ^ n :=
-  ⟨unop_mem_jacobson_pow n (op x), op_mem_jacobson_pow n x⟩
+    op x ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ x ∈ Ring.jacobson R ^ n := by
+  refine ⟨fun h => ?_, op_mem_jacobson_pow n x⟩
+  have h' := unop_mem_jacobson_pow n (op x) h
+  rwa [unop_op] at h'
 
 /-- `TauCeti.Ring.op_mem_jacobson_mulOpposite_pow_iff` phrased for an element of `Rᵐᵒᵖ`. -/
 @[simp]
 theorem mem_jacobson_mulOpposite_pow_iff {X : Rᵐᵒᵖ} {n : ℕ} :
-    X ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ X.unop ∈ Ring.jacobson R ^ n :=
-  op_mem_jacobson_mulOpposite_pow_iff (x := X.unop)
+    X ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ X.unop ∈ Ring.jacobson R ^ n := by
+  conv_lhs => rw [← op_unop X]
+  exact op_mem_jacobson_mulOpposite_pow_iff
 
 variable (R)
 
@@ -191,25 +195,45 @@ theorem isNilpotent_jacobson_mulOpposite_iff :
     rw [hn] at hX'
     simpa [Ideal.mem_bot] using hX'
 
+/-- Reduction modulo the Jacobson radical, read in the opposite ring: this sends `op x` to
+`op (Ideal.Quotient.mk (Ring.jacobson R) x)`. -/
+private def opQuotientMk : Rᵐᵒᵖ →+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ :=
+  RingHom.op (Ideal.Quotient.mk (Ring.jacobson R))
+
+/-- `TauCeti.Ring.opQuotientMk` on `op`-generators. This is how `RingHom.op` is defined, so the
+computation is definitional; every later use of `TauCeti.Ring.opQuotientMk` goes through this
+lemma rather than through the definition. -/
+private theorem opQuotientMk_op (x : R) :
+    opQuotientMk R (op x) = op (Ideal.Quotient.mk (Ring.jacobson R) x) := rfl
+
+/-- `TauCeti.Ring.opQuotientMk` is surjective, since `Ideal.Quotient.mk` is. -/
+private theorem opQuotientMk_surjective : Function.Surjective (opQuotientMk R) := fun Y => by
+  obtain ⟨x, hx⟩ := Ideal.Quotient.mk_surjective Y.unop
+  exact ⟨op x, by rw [opQuotientMk_op, hx, op_unop]⟩
+
+/-- The kernel of `TauCeti.Ring.opQuotientMk` is the Jacobson radical of `Rᵐᵒᵖ`: this is the
+left-right symmetry again. -/
+private theorem ker_opQuotientMk : RingHom.ker (opQuotientMk R) = Ring.jacobson Rᵐᵒᵖ := by
+  ext X
+  induction X using MulOpposite.rec' with
+  | _ x =>
+    rw [RingHom.mem_ker, opQuotientMk_op, op_eq_zero_iff, Ideal.Quotient.eq_zero_iff_mem,
+      op_mem_jacobson_mulOpposite_iff]
+
 /-- Reduction modulo the Jacobson radical commutes with passing to the opposite ring. -/
-@[expose] noncomputable def quotientJacobsonMulOppositeRingEquiv :
-    Rᵐᵒᵖ ⧸ Ring.jacobson Rᵐᵒᵖ ≃+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ := by
-  let f : Rᵐᵒᵖ →+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ := RingHom.op (Ideal.Quotient.mk (Ring.jacobson R))
-  have hf : Function.Surjective f := fun Y => by
-    obtain ⟨x, hx⟩ := Ideal.Quotient.mk_surjective Y.unop
-    exact ⟨op x, by simp [f, hx]⟩
-  have hker : RingHom.ker f = Ring.jacobson Rᵐᵒᵖ := by
-    ext X
-    simp [f, RingHom.mem_ker, Ideal.Quotient.eq_zero_iff_mem]
-  exact (Ideal.quotEquivOfEq hker.symm).trans (RingHom.quotientKerEquivOfSurjective hf)
+noncomputable def quotientJacobsonMulOppositeRingEquiv :
+    Rᵐᵒᵖ ⧸ Ring.jacobson Rᵐᵒᵖ ≃+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ :=
+  (Ideal.quotEquivOfEq (ker_opQuotientMk R).symm).trans
+    (RingHom.quotientKerEquivOfSurjective (opQuotientMk_surjective R))
 
 /-- `TauCeti.Ring.quotientJacobsonMulOppositeRingEquiv` is reduction modulo the radical read in
 `Rᵐᵒᵖ`: it sends the class of `op x` to the opposite of the class of `x`. -/
 @[simp]
 theorem quotientJacobsonMulOppositeRingEquiv_mk (x : R) :
     quotientJacobsonMulOppositeRingEquiv R (Ideal.Quotient.mk (Ring.jacobson Rᵐᵒᵖ) (op x)) =
-      op (Ideal.Quotient.mk (Ring.jacobson R) x) :=
-  rfl
+      op (Ideal.Quotient.mk (Ring.jacobson R) x) := by
+  rw [quotientJacobsonMulOppositeRingEquiv, RingEquiv.trans_apply, Ideal.quotEquivOfEq_mk,
+    RingHom.quotientKerEquivOfSurjective_apply_mk, opQuotientMk_op]
 
 /-- The inverse of `TauCeti.Ring.quotientJacobsonMulOppositeRingEquiv`, on generators. -/
 @[simp]
