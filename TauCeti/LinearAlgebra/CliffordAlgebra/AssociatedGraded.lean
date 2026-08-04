@@ -121,7 +121,7 @@ theorem filtrationGradedMul_apply_mk (Q : QuadraticForm R M) (i j : ℕ) (x : fi
           exact Submodule.mul_mem_mul x.property y.property⟩ : filtration Q (i + j)) :=
   by
   rw [filtrationGradedMul, LinearMap.liftQ₂_mk]
-  rfl
+  exact filtrationGradedPreMul_apply Q i j x y
 
 private theorem filtrationGradedPiece_cast_mk' (Q : QuadraticForm R M) {i j : ℕ}
     (h : i = j) (x : filtration Q i) :

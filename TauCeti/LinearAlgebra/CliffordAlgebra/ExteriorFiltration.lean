@@ -91,10 +91,17 @@ private theorem zero_form_filtration_succ_eq_exteriorPower_sup (k : ℕ) :
       ⋀[R]^(k + 1) M ⊔ filtration (0 : QuadraticForm R M) k := by
   rw [filtration_succ_eq_sup, sup_comm]
 
+private theorem zero_form_filtrationPrevious_succ_comap (k : ℕ) :
+    Submodule.comap (filtration (0 : QuadraticForm R M) (k + 1)).subtype
+        (filtrationPrevious (0 : QuadraticForm R M) (k + 1)) =
+      Submodule.comap (filtration (0 : QuadraticForm R M) (k + 1)).subtype
+        (filtration (0 : QuadraticForm R M) k) := by
+  rw [filtrationPrevious_succ]
+
 /-- The successive zero-form Clifford filtration quotient is the degree `k + 1` exterior power. -/
 noncomputable def zeroFormFiltrationQuotientEquivExteriorPower (k : ℕ) :
     FiltrationGradedPiece (0 : QuadraticForm R M) (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
-  (Submodule.quotEquivOfEq _ _ (by rw [filtrationPrevious_succ])).trans
+  (Submodule.quotEquivOfEq _ _ (zero_form_filtrationPrevious_succ_comap k)).trans
     (quotientEquivOfEqSup _ _ _ (zero_form_filtration_succ_eq_exteriorPower_sup k)
       (exteriorPower_succ_disjoint_zero_form_filtration k))
 
@@ -109,7 +116,8 @@ theorem zeroFormFiltrationQuotientEquivExteriorPower_symm_apply (k : ℕ)
         exact Submodule.mem_sup_left x.property⟩ := by
   rw [zeroFormFiltrationQuotientEquivExteriorPower, LinearEquiv.trans_symm,
     LinearEquiv.trans_apply, quotientEquivOfEqSup_symm_apply]
-  rfl
+  apply (Submodule.quotEquivOfEq _ _ (zero_form_filtrationPrevious_succ_comap k)).injective
+  rw [LinearEquiv.apply_symm_apply, Submodule.quotEquivOfEq_mk]
 
 /-- The quotient equivalence sends the canonical class of a degree `k + 1` exterior element to
 that element. -/
