@@ -406,6 +406,9 @@ theorem contMDiff_lieExp
   apply ((contMDiff_mulInvariantExp (I := I) (G := G)).comp he).congr
   intro X
   rw [lieExp_eq_mulInvariantExp]
+  -- The composed map exposes the model vector `e X`, while `lieExp` exposes the definitionally
+  -- identical identity tangent vector. Reorient the goal so the characteristic isometry theorem
+  -- can cross that coercion without unfolding the opaque equivalence.
   change mulInvariantExp (I := I) (G := G)
       (leftInvariantDerivationEquivGroupLieAlgebra
         BoundarylessManifold.isInteriorPoint X) =
