@@ -175,7 +175,7 @@ noncomputable def filtrationGradedOne (Q : QuadraticForm R M) :
   Submodule.Quotient.mk ⟨1, one_mem_filtration Q 0⟩
 
 /-- The degree-zero class of a scalar in the associated graded Clifford filtration. -/
-noncomputable def filtrationGradedAlgebraMap (Q : QuadraticForm R M) :
+noncomputable def filtrationGradedAlgebraMap₀ (Q : QuadraticForm R M) :
     R →+ FiltrationGradedPiece Q 0 where
   toFun r := Submodule.Quotient.mk
     ⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩
@@ -186,8 +186,8 @@ noncomputable def filtrationGradedAlgebraMap (Q : QuadraticForm R M) :
     exact Subtype.ext (map_add (algebraMap R (CliffordAlgebra Q)) r s)
 
 /-- The degree-zero scalar map sends `1` to the homogeneous unit. -/
-@[simp] theorem filtrationGradedAlgebraMap_one (Q : QuadraticForm R M) :
-    filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q := by
+@[simp] theorem filtrationGradedAlgebraMap₀_one (Q : QuadraticForm R M) :
+    filtrationGradedAlgebraMap₀ Q 1 = filtrationGradedOne Q := by
   -- Expand the two degree-zero representatives to compare their quotient classes;
   -- `map_one` is stated only in the ambient Clifford algebra.
   change Submodule.Quotient.mk
@@ -299,32 +299,32 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
       filtrationGradedMul Q _ _ x z + filtrationGradedMul Q _ _ y z
     rw [LinearMap.map_add]
     rfl
-  natCast := fun n => filtrationGradedAlgebraMap Q n
+  natCast := fun n => filtrationGradedAlgebraMap₀ Q n
   natCast_zero := by
     rw [Nat.cast_zero]
-    exact map_zero (filtrationGradedAlgebraMap Q)
+    exact map_zero (filtrationGradedAlgebraMap₀ Q)
   natCast_succ := fun n => by
     -- The cast field is represented by the degree-zero scalar class chosen above.
-    change filtrationGradedAlgebraMap Q ((n + 1 : ℕ) : R) =
-      filtrationGradedAlgebraMap Q (n : R) + filtrationGradedOne Q
+    change filtrationGradedAlgebraMap₀ Q ((n + 1 : ℕ) : R) =
+      filtrationGradedAlgebraMap₀ Q (n : R) + filtrationGradedOne Q
     rw [Nat.cast_succ, map_add]
     rfl
-  intCast := fun z => filtrationGradedAlgebraMap Q z
+  intCast := fun z => filtrationGradedAlgebraMap₀ Q z
   intCast_ofNat := fun n => by
     -- Integer casts use the same chosen degree-zero scalar representative.
-    change filtrationGradedAlgebraMap Q ((n : ℤ) : R) = filtrationGradedAlgebraMap Q (n : R)
+    change filtrationGradedAlgebraMap₀ Q ((n : ℤ) : R) = filtrationGradedAlgebraMap₀ Q (n : R)
     norm_cast
   intCast_negSucc_ofNat := fun n => by
     -- Integer casts use the same chosen degree-zero scalar representative.
-    change filtrationGradedAlgebraMap Q ((Int.negSucc n : ℤ) : R) =
-      -filtrationGradedAlgebraMap Q ((n + 1 : ℕ) : R)
+    change filtrationGradedAlgebraMap₀ Q ((Int.negSucc n : ℤ) : R) =
+      -filtrationGradedAlgebraMap₀ Q ((n + 1 : ℕ) : R)
     rw [Int.cast_negSucc, map_neg]
 
 /-- Left multiplication by a degree-zero scalar class is scalar multiplication. -/
-@[simp] theorem filtrationGradedAlgebraMap_mul (Q : QuadraticForm R M) (r : R) (k : ℕ)
+@[simp] theorem filtrationGradedAlgebraMap₀_mul (Q : QuadraticForm R M) (r : R) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
     cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
-      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x) = r • x := by
+      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap₀ Q r) x) = r • x := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
       -- Quotient induction supplies representatives, the only stable form to which the
@@ -342,9 +342,10 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
       rw [Algebra.smul_def, sub_self]
       exact Submodule.zero_mem (filtrationPrevious Q k)
 
-private theorem filtrationGradedAlgebraMap_mul_self (Q : QuadraticForm R M) (r s : R) :
-    filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap Q r)
-      (filtrationGradedAlgebraMap Q s) = filtrationGradedAlgebraMap Q (r * s) := by
+/-- Degree-zero scalar classes multiply by multiplying their scalars. -/
+@[simp 1100] theorem filtrationGradedAlgebraMap₀_mul_algebraMap₀ (Q : QuadraticForm R M) (r s : R) :
+    filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap₀ Q r)
+      (filtrationGradedAlgebraMap₀ Q s) = filtrationGradedAlgebraMap₀ Q (r * s) := by
   -- Both scalar classes are quotient representatives, so expose them for the
   -- representative product.
   change filtrationGradedMul Q 0 0 (Submodule.Quotient.mk _)
@@ -358,12 +359,13 @@ private theorem filtrationGradedAlgebraMap_mul_self (Q : QuadraticForm R M) (r s
   rw [← map_mul, sub_self]
   exact Submodule.zero_mem (filtrationPrevious Q 0)
 
-private theorem filtrationGradedAlgebraMap_commutes (Q : QuadraticForm R M) (r : R) (k : ℕ)
+/-- Degree-zero scalar classes commute with homogeneous products after reindexing degrees. -/
+theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
     cast (congrArg (FiltrationGradedPiece Q)
       ((Nat.zero_add k).trans (Nat.add_zero k).symm))
-      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x) =
-      filtrationGradedMul Q k 0 x (filtrationGradedAlgebraMap Q r) := by
+      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap₀ Q r) x) =
+      filtrationGradedMul Q k 0 x (filtrationGradedAlgebraMap₀ Q r) := by
   induction x using Submodule.Quotient.induction_on with
   | _ x =>
       change cast (congrArg (FiltrationGradedPiece Q)
@@ -381,6 +383,13 @@ private theorem filtrationGradedAlgebraMap_commutes (Q : QuadraticForm R M) (r :
       rw [Algebra.commutes, sub_self]
       exact Submodule.zero_mem (filtrationPrevious Q (k + 0))
 
+/-- Right multiplication by a degree-zero scalar class is scalar multiplication. -/
+@[simp] theorem filtrationGradedMul_algebraMap₀ (Q : QuadraticForm R M) (r : R) (k : ℕ)
+    (x : FiltrationGradedPiece Q k) :
+    filtrationGradedMul Q k 0 x (filtrationGradedAlgebraMap₀ Q r) = r • x := by
+  rw [← filtrationGradedAlgebraMap₀_commutes Q r k x]
+  simpa only [cast_cast, cast_eq] using filtrationGradedAlgebraMap₀_mul Q r k x
+
 noncomputable instance filtrationGradedGSemiring {Q : QuadraticForm R M} :
     DirectSum.GSemiring (FiltrationGradedPiece Q) := by
   exact @DirectSum.GRing.toGSemiring ℕ (FiltrationGradedPiece Q) _ _
@@ -388,34 +397,34 @@ noncomputable instance filtrationGradedGSemiring {Q : QuadraticForm R M} :
 
 noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     DirectSum.GAlgebra R (FiltrationGradedPiece Q) where
-  toFun := filtrationGradedAlgebraMap Q
+  toFun := filtrationGradedAlgebraMap₀ Q
   map_one := by
     -- `DirectSum.GAlgebra.map_one` is phrased through the degree-zero `GOne` field.
-    change filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q
-    exact filtrationGradedAlgebraMap_one Q
+    change filtrationGradedAlgebraMap₀ Q 1 = filtrationGradedOne Q
+    exact filtrationGradedAlgebraMap₀_one Q
   map_mul r s := by
     apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add 0).symm
     -- The scalar product is a degree-zero homogeneous product after this reindexing.
     change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add 0).symm)
-      (filtrationGradedAlgebraMap Q (r * s)) =
-      filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap Q r)
-        (filtrationGradedAlgebraMap Q s)
-    rw [filtrationGradedAlgebraMap_mul_self]
+      (filtrationGradedAlgebraMap₀ Q (r * s)) =
+      filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap₀ Q r)
+        (filtrationGradedAlgebraMap₀ Q s)
+    rw [filtrationGradedAlgebraMap₀_mul_algebraMap₀]
     simp
   commutes r x := by
     rcases x with ⟨k, x⟩
     apply filtrationGradedMonoid_eq_of_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)
-    exact filtrationGradedAlgebraMap_commutes Q r k x
+    exact filtrationGradedAlgebraMap₀_commutes Q r k x
   smul_def r x := by
     rcases x with ⟨k, x⟩
     apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k).symm
     -- The sigma-level scalar law reduces to the degree-`k` homogeneous scalar equation.
     change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) (r • x) =
-      filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x
+      filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap₀ Q r) x
     symm
     simpa only [cast_cast, cast_eq] using
       congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
-        (filtrationGradedAlgebraMap_mul Q r k x)
+        (filtrationGradedAlgebraMap₀_mul Q r k x)
 
 noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
     Ring (filtrationAssociatedGraded Q) := by
