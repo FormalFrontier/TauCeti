@@ -28,8 +28,8 @@ the additive monoid of derivations at the identity
 (the `CommGroup (tangentKer R A B)` instance).
 
 This identifies counit-valued derivations with the first-order infinitesimal kernel.
-The additive wrapper of the kernel inherits its natural `R`-module structure through this
-identification, and `derivationLinearEquivTangent` records the resulting linear equivalence.
+The additive wrapper of the kernel inherits its natural `B`-module structure through this
+identification, and `derivationLinearEquivTangentKer` records the resulting linear equivalence.
 No Lie bracket or functoriality in `B` is constructed here — first-order commutativity of the
 kernel says nothing about the Lie bracket, which appears at second order.
 
@@ -379,37 +379,48 @@ noncomputable instance : CommGroup (tangentKer R A B) :=
       refine (derivationMulEquivTangentKer R A B).symm.injective ?_
       rw [map_mul, map_mul, mul_comm] }
 
-variable (R A B) in
-/-- Counit-valued derivations are additively equivalent to the tangent kernel, with the
-multiplication of infinitesimal points read as addition through the `Additive` wrapper. -/
-noncomputable def derivationAddEquivTangent :
-    Derivation R A (Bialgebra.CounitAlgebra R A B) ≃+
-      Additive (tangentKer R A B) :=
-  AddEquiv.toAdditive_toMultiplicative.symm.trans
-    (derivationMulEquivTangentKer R A B).toAdditive
+/-- Counit-valued derivations carry their pointwise `B`-module structure through the
+coefficient type synonym. -/
+noncomputable instance : Module B
+    (Derivation R A (Bialgebra.CounitAlgebra R A B)) := by
+  letI : Algebra A B :=
+    inferInstanceAs (Algebra A (Bialgebra.CounitAlgebra R A B))
+  exact inferInstanceAs (Module B (Derivation R A B))
 
-@[simp]
-lemma derivationAddEquivTangent_symm_apply
-    (ψ : tangentKer R A B) (a : A) :
-    (derivationAddEquivTangent R A B).symm (.ofMul ψ) a =
-      TrivSqZeroExt.snd (ψ.val.ofConv a) := by
-  exact derivationMulEquivTangentKer_symm_apply ψ a
-
-/-- The natural `R`-module structure on the tangent kernel, written additively. It is
-transported from counit-valued derivations through `derivationAddEquivTangent`. -/
-noncomputable instance : Module R (Additive (tangentKer R A B)) :=
-  (derivationAddEquivTangent R A B).symm.module R
+/-- The natural `B`-module structure on the tangent kernel, written additively and
+transported from counit-valued derivations. -/
+noncomputable instance : Module B (Additive (tangentKer R A B)) :=
+  (AddEquiv.toAdditive_toMultiplicative.symm.trans
+    (derivationMulEquivTangentKer R A B).toAdditive).symm.module B
 
 variable (R A B) in
 /-- The tangent kernel at the identity is linearly equivalent to the module of derivations
 at the counit point. -/
-noncomputable def derivationLinearEquivTangent :
-    Derivation R A (Bialgebra.CounitAlgebra R A B) ≃ₗ[R]
+noncomputable def derivationLinearEquivTangentKer :
+    Derivation R A (Bialgebra.CounitAlgebra R A B) ≃ₗ[B]
       Additive (tangentKer R A B) :=
-  { derivationAddEquivTangent R A B with
-    map_smul' := fun r d => by
-      apply (derivationAddEquivTangent R A B).symm.injective
-      simp [Equiv.smul_def] }
+  ((AddEquiv.toAdditive_toMultiplicative.symm.trans
+    (derivationMulEquivTangentKer R A B).toAdditive).symm.linearEquiv B).symm
+
+@[simp]
+lemma derivationLinearEquivTangentKer_apply_snd
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
+    snd (R := CounitAlgebra R A B)
+        ((derivationLinearEquivTangentKer R A B d).toMul.val.ofConv a) = d a := by
+  -- Unwrap the transferred linear equivalence and the additive/multiplicative type tags.
+  change snd (R := CounitAlgebra R A B)
+    ((derivationMulEquivTangentKer R A B (.ofAdd d)).val.ofConv a) = d a
+  exact derivationMulEquivTangentKer_apply_snd (.ofAdd d) a
+
+@[simp]
+lemma derivationLinearEquivTangentKer_symm_apply
+    (ψ : tangentKer R A B) (a : A) :
+    (derivationLinearEquivTangentKer R A B).symm (.ofMul ψ) a =
+      TrivSqZeroExt.snd (ψ.val.ofConv a) := by
+  -- Unwrap the transferred linear equivalence and the additive/multiplicative type tags.
+  change ((derivationMulEquivTangentKer R A B).symm ψ).toAdd a =
+    TrivSqZeroExt.snd (ψ.val.ofConv a)
+  exact derivationMulEquivTangentKer_symm_apply ψ a
 
 end Hopf
 
