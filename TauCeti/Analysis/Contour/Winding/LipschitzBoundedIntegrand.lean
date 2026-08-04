@@ -344,11 +344,11 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv
   refine ⟨min ρR ρL, lt_min hρR_pos hρL_pos, by linarith [min_le_left ρR ρL], ?_⟩
   -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
   -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
-  rw [show Icc (t₀ - min ρR ρL) (t₀ + min ρR ρL)
-        = Icc (t₀ - min ρR ρL) t₀ ∪ Icc t₀ (t₀ + min ρR ρL) from
-      (Set.Icc_union_Icc_eq_Icc (by linarith [lt_min hρR_pos hρL_pos])
-        (by linarith [lt_min hρR_pos hρL_pos])).symm,
-    Set.image_union]
+  have hsplit : Icc (t₀ - min ρR ρL) (t₀ + min ρR ρL)
+      = Icc (t₀ - min ρR ρL) t₀ ∪ Icc t₀ (t₀ + min ρR ρL) :=
+    (Set.Icc_union_Icc_eq_Icc (by linarith [lt_min hρR_pos hρL_pos])
+      (by linarith [lt_min hρR_pos hρL_pos])).symm
+  rw [hsplit, Set.image_union]
   exact (hbddL.subset (Set.image_mono
       (Icc_subset_Icc (by linarith [min_le_right ρR ρL]) le_rfl))).union
     (hbddR.subset (Set.image_mono (Icc_subset_Icc le_rfl (by linarith [min_le_left ρR ρL]))))
