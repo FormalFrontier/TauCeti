@@ -55,8 +55,10 @@ theorem chartedSchwarzReflection_def (z : ℂ) :
       d.symm (schwarzReflection (fun w => d (f (e.symm w))) (e z)) :=
   (rfl)
 
-/-- The inverse chart preserves a cut expressed in chart coordinates. -/
-private theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
+/-- The inverse chart preserves a cut expressed in chart coordinates: the part of `e.target` cut
+out by a condition on the imaginary part is carried by `e.symm` into the part of `e.source` cut
+out by the same condition read through `e`. -/
+theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
     MapsTo e.symm (e.target ∩ {w : ℂ | P w.im})
       (e.source ∩ {z : ℂ | P (e z).im}) := by
   rintro w ⟨hw, hP⟩

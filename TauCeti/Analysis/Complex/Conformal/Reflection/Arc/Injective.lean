@@ -95,19 +95,6 @@ open scoped ComplexConjugate
 
 variable (e d : OpenPartialHomeomorph ℂ ℂ) (f : ℂ → ℂ)
 
-/-- The inverse chart carries the closed upper half of `e.target` *onto* the closed positive side
-of the source arc. -/
-private theorem symm_image_closed_side :
-    e.symm '' (e.target ∩ {w : ℂ | 0 ≤ w.im}) = e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
-  rw [e.symm_image_target_inter_eq, e.source_inter_preimage_target_inter, Set.preimage_ofPred_eq]
-
-/-- The inverse chart carries the closed upper half of `e.target` into the closed positive side
-of the source arc. -/
-private theorem symm_mem_closed_side {w : ℂ} (hw : w ∈ e.target ∩ {w : ℂ | 0 ≤ w.im}) :
-    e.symm w ∈ e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
-  rw [← symm_image_closed_side e]
-  exact Set.mem_image_of_mem _ hw
-
 /-- In the straightening coordinates, injectivity of the original branch on the closed positive
 side of the source arc becomes injectivity on the closed upper half-plane: `e.symm`, `f` and `d`
 are injective in turn on the sets involved. -/
@@ -116,8 +103,8 @@ private theorem injOn_in_coordinates
     (hf_inj : InjOn f (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) :
     InjOn (fun w => d (f (e.symm w))) (e.target ∩ {w : ℂ | 0 ≤ w.im}) := by
   intro w₁ h₁ w₂ h₂ hw
-  have hs₁ := symm_mem_closed_side e h₁
-  have hs₂ := symm_mem_closed_side e h₂
+  have hs₁ := mapsTo_symm_inter_im e h₁
+  have hs₂ := mapsTo_symm_inter_im e h₂
   have hsymm : e.symm w₁ = e.symm w₂ :=
     hf_inj hs₁ hs₂ (d.injOn (hf_maps hs₁) (hf_maps hs₂) hw)
   simpa only [e.right_inv h₁.1, e.right_inv h₂.1] using congrArg e hsymm
@@ -179,9 +166,12 @@ theorem image_chartedSchwarzReflection_of_symmetric
           (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) := by
   -- The inverse chart identifies the closed upper half of `e.target` with the closed positive
   -- side of the source arc, so the coordinate map has image `d '' (f '' _)` there.
+  have hsymm : e.symm '' (e.target ∩ {w : ℂ | 0 ≤ w.im}) = e.source ∩ {z : ℂ | 0 ≤ (e z).im} := by
+    have h := e.toPartialEquiv.symm_image_target_inter_eq' {w : ℂ | 0 ≤ w.im}
+    rwa [Set.preimage_ofPred_eq] at h
   have hcoord : (fun w => d (f (e.symm w))) '' (e.target ∩ {w : ℂ | 0 ≤ w.im}) =
       d '' (f '' (e.source ∩ {z : ℂ | 0 ≤ (e z).im})) := by
-    rw [← symm_image_closed_side e, Set.image_image, Set.image_image]
+    rw [← hsymm, Set.image_image, Set.image_image]
   have hleft : LeftInvOn (d.symm : ℂ → ℂ) d d.source := fun _ hv => d.left_inv hv
   -- The real-axis image description for the coordinate map on `e.target`.
   have himage := image_schwarzReflection_of_symmetric (f := fun w => d (f (e.symm w)))
