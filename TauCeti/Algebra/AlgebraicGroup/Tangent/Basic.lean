@@ -430,7 +430,6 @@ lemma derivationLinearEquivTangentKer_symm_apply_toAdd
 
 /-- The second component of the tangent point associated to a derivation is the value
 of that derivation. -/
-@[simp]
 lemma derivationLinearEquivTangentKer_apply_snd
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
     snd (R := CounitAlgebra R A B)
@@ -440,7 +439,6 @@ lemma derivationLinearEquivTangentKer_apply_snd
 
 /-- The inverse linear equivalence evaluates a tangent point at `a` by taking its
 second component at `a`. -/
-@[simp]
 lemma derivationLinearEquivTangentKer_symm_apply
     (ψ : Additive (tangentKer R A B)) (a : A) :
     (derivationLinearEquivTangentKer R A B).symm ψ a =
