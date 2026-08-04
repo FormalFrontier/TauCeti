@@ -135,6 +135,7 @@ theorem weylElement_mul_torusHom (z : Circle) :
 
 /-- **Conjugation by the quarter turn inverts the maximal torus.** This single identity carries the
 whole Weyl-group action of `SU(2)`: `w diag (z, z⁻¹) w⁻¹ = diag (z⁻¹, z)`. -/
+@[simp]
 theorem weylElement_conj_torusHom (z : Circle) :
     weylElement * torusHom z * weylElement⁻¹ = torusHom z⁻¹ :=
   mul_inv_eq_iff_eq_mul.mpr (weylElement_mul_torusHom z)
@@ -297,8 +298,18 @@ noncomputable def normalizerAut :
 /-- `TauCeti.SU2.normalizerAut` is conjugation in `SU(2)`, read on the circle parameter. -/
 theorem torusHom_normalizerAut (n : ↥(Subgroup.normalizer (torus : Set SU2))) (z : Circle) :
     torusHom (normalizerAut n z) = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
+  -- The multiplicative equivalence underlying a `ContinuousMulEquiv` has the same underlying
+  -- function as the equivalence itself, in both directions. Mathlib records this only
+  -- definitionally (`ContinuousMulEquiv.toMulEquiv_eq_coe`), so the two application lemmas are
+  -- named here and rewritten with below.
+  have happly (g : torus) :
+      torusContinuousMulEquiv.symm.toMulEquiv g = torusContinuousMulEquiv.symm g := rfl
+  have hsymm_apply (w : Circle) :
+      torusContinuousMulEquiv.symm.toMulEquiv.symm w = torusContinuousMulEquiv w := rfl
   have hval : normalizerAut n z = torusContinuousMulEquiv.symm
-      (Subgroup.normalizerMonoidHom torus n (torusContinuousMulEquiv z)) := rfl
+      (Subgroup.normalizerMonoidHom torus n (torusContinuousMulEquiv z)) := by
+    rw [normalizerAut, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulAut.congr_apply,
+      MulEquiv.trans_apply, MulEquiv.trans_apply, happly, hsymm_apply]
   rw [hval, torusHom_torusContinuousMulEquiv_symm,
     Subgroup.normalizerMonoidHom_apply_apply_coe, torusContinuousMulEquiv_apply]
 
