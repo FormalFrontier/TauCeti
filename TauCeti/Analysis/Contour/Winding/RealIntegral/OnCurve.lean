@@ -28,8 +28,11 @@ non-principal-value integral
 for a closed piecewise-`C¹` immersion `γ`. `Winding.RealIntegral.Basic` proves this when `γ`
 avoids `s` throughout, where the winding number is already a genuine integer. This file drops
 that avoidance hypothesis: `s` may be a value of `γ`, so long as every parameter where `γ` meets
-`s` is interior to `[a, b]`. The generalized winding number is then a genuine Cauchy principal
-value rather than an ordinary index integral, and this theorem shows it is still real and equal
+`s` is interior to `[a, b]` **and** `derivWithin γ` is Lipschitz on a one-sided closed piece
+ending or starting there (`C^{1,1}`, possibly a different piece on each side, so a crossing may
+coincide with a breakpoint of the immersion). The generalized winding number is then a genuine
+Cauchy principal value rather than an ordinary index integral, and this theorem shows it is still
+real and equal
 to the same bounded real integral. Unlike the avoiding case, interval-integrability of that
 integral is not assumed here: it follows from a.e. strong measurability (continuity off the
 crossings, no different from the avoiding case) together with the boundedness above, both drawn
@@ -52,7 +55,7 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_crossings`
+* `TauCeti.Contour.isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_crossings`
   — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
   interior.
 
@@ -428,7 +431,7 @@ HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_crossings
+theorem isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
