@@ -97,18 +97,24 @@ private theorem continuousMap_terminal_eq_of_ode_unique
       HasDerivWithinAt a (F (p, a t)) (Set.Ici t) t)
     (haS : ∀ t ∈ Set.Ico (0 : ℝ) 1, a t ∈ S) (haZero : a 0 = center) :
     γ ⟨1, zero_le_one, le_rfl⟩ = a 1 := by
-  let g : ℝ → E := fun t => γ (Set.projIcc 0 1 zero_le_one t)
+  let g : C(ℝ, E) := ContinuousMap.IccExtendCM γ
   have hgCont : ContinuousOn g (Set.Icc (0 : ℝ) 1) :=
-    (γ.continuous.comp continuous_projIcc).continuousOn
-  have hgS : ∀ t ∈ Set.Ico (0 : ℝ) 1, g t ∈ S := fun t _ =>
-    hγS (Set.projIcc 0 1 zero_le_one t)
+    g.continuous.continuousOn
+  have hgS : ∀ t ∈ Set.Ico (0 : ℝ) 1, g t ∈ S := by
+    intro t ht
+    rw [ContinuousMap.IccExtendCM_of_mem ⟨ht.1, ht.2.le⟩]
+    exact hγS ⟨t, ht.1, ht.2.le⟩
   have hgaZero : g 0 = a 0 := by
-    simpa only [g, Set.projIcc_left] using hγzero.trans haZero.symm
+    rw [ContinuousMap.IccExtendCM_of_mem
+      (show (0 : ℝ) ∈ Set.Icc 0 1 from ⟨le_rfl, zero_le_one⟩)]
+    exact hγzero.trans haZero.symm
   have hunique := ODE_solution_unique_of_mem_Icc_right
     (v := fun _ y => F (p, y)) (s := fun _ => S)
     (fun _ _ => hfixed) hgCont hγderiv hgS haCont haDeriv haS hgaZero
   have hone := hunique (⟨zero_le_one, le_rfl⟩ : (1 : ℝ) ∈ Set.Icc 0 1)
-  simpa only [g, Set.projIcc_right] using hone
+  rw [ContinuousMap.IccExtendCM_of_mem
+    (show (1 : ℝ) ∈ Set.Icc 0 1 from ⟨zero_le_one, le_rfl⟩)] at hone
+  exact hone
 
 /-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth at zero. -/
 theorem contMDiffAt_mulInvariantExp_modelSpace_zero
