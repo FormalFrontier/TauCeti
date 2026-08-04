@@ -178,8 +178,6 @@ noncomputable def filtrationGradedOne (Q : QuadraticForm R M) :
 theorem filtrationGradedOne_def (Q : QuadraticForm R M) :
     filtrationGradedOne Q =
       Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0) := by
-  change Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0) =
-    Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0)
   rfl
 
 /-- The quotient class of the Clifford unit is the degree-zero homogeneous unit. -/
@@ -205,12 +203,6 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       Submodule.Quotient.mk
         (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
           filtration Q 0) := by
-  change Submodule.Quotient.mk
-      (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
-        filtration Q 0) =
-    Submodule.Quotient.mk
-      (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
-        filtration Q 0)
   rfl
 
 /-- The quotient class of an ambient scalar is its degree-zero homogeneous class. -/
@@ -499,11 +491,6 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
       DirectSum.of (FiltrationGradedPiece Q) j y =
       DirectSum.of (FiltrationGradedPiece Q) (i + j) (filtrationGradedMul Q i j x y) := by
   simp only [DirectSum.of_mul_of, filtrationGradedGMul_def]
-
-/-- The associated-graded scalar map is the degree-zero named filtration map. -/
-@[simp] theorem filtrationAssociatedGraded_algebraMap (Q : QuadraticForm R M) (r : R) :
-    algebraMap R (filtrationAssociatedGraded Q) r =
-      DirectSum.of (FiltrationGradedPiece Q) 0 (filtrationGradedAlgebraMap₀ Q r) := rfl
 
 end CliffordAlgebra
 
