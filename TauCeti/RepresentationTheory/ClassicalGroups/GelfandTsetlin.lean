@@ -169,21 +169,22 @@ theorem entry_add_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
 
 /-- The **top row** `(λ₀,ₙ, …, λₙ₋₁,ₙ)` of a Gelfand-Tsetlin pattern: the highest weight it
 refines. -/
-@[expose]
 def topRow (P : GTPattern n) : Fin n → ℤ := fun i => P i n
 
 @[simp]
-theorem topRow_apply (P : GTPattern n) (i : Fin n) : P.topRow i = P i n := rfl
+theorem topRow_apply (P : GTPattern n) (i : Fin n) : P.topRow i = P i n := (rfl)
 
+/-- **The top row is weakly decreasing.**  Rows of a pattern decrease weakly (`entry_anti`), and
+the top row is one of them, so it is a dominant weight of `GL n`; `TauCeti.GTPattern.topWeight`
+packages it as one. -/
 theorem topRow_antitone (P : GTPattern n) : Antitone P.topRow :=
   fun _ i' h => P.entry_anti le_rfl h i'.2
 
 /-- The top row of a Gelfand-Tsetlin pattern, as a dominant weight of `GL n`. -/
-@[expose]
 def topWeight (P : GTPattern n) : DominantWeight n := ⟨P.topRow, P.topRow_antitone⟩
 
 @[simp]
-theorem topWeight_coe (P : GTPattern n) : (P.topWeight : Fin n → ℤ) = P.topRow := rfl
+theorem topWeight_coe (P : GTPattern n) : (P.topWeight : Fin n → ℤ) = P.topRow := (rfl)
 
 /-- Every entry is at most the top-row entry directly above it. -/
 theorem entry_le_topRow (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) :
@@ -219,8 +220,13 @@ end GTPattern
 
 /-- `TauCeti.Interlaces l m` says that the integer sequence `m : Fin n → ℤ` **interlaces** the
 longer sequence `l : Fin (n + 1) → ℤ`: `lᵢ ≥ mᵢ ≥ lᵢ₊₁` for every `i`.  This is the betweenness
-condition relating consecutive rows of a Gelfand-Tsetlin pattern, and equally the condition
-picking out the constituents of `V_l` restricted along `GL n ↪ GL (n + 1)`. -/
+condition relating consecutive rows of a Gelfand-Tsetlin pattern.
+
+No dominance is assumed: `l` and `m` are arbitrary integer sequences and the relation is purely
+combinatorial.  When `l` *is* dominant it acquires its representation-theoretic reading: every `m`
+interlacing `l` is then dominant too (the two inequalities give `mᵢ₊₁ ≤ lᵢ₊₁ ≤ mᵢ`), and such `m`
+are exactly the highest weights of the constituents of `V_l` restricted along
+`GL n ↪ GL (n + 1)`. -/
 def Interlaces {n : ℕ} (l : Fin (n + 1) → ℤ) (m : Fin n → ℤ) : Prop :=
   ∀ i : Fin n, m i ≤ l i.castSucc ∧ l i.succ ≤ m i
 
@@ -245,7 +251,6 @@ variable {n : ℕ}
 /-! ### Deleting and prepending a top row -/
 
 /-- Delete the top row of a pattern with `n + 1` rows. -/
-@[expose]
 def truncate (P : GTPattern (n + 1)) : GTPattern n where
   entry i j := if j ≤ n then P i j else 0
   zeros' := by
@@ -262,7 +267,7 @@ def truncate (P : GTPattern (n + 1)) : GTPattern n where
 
 @[simp]
 theorem truncate_apply (P : GTPattern (n + 1)) (i j : ℕ) :
-    truncate P i j = if j ≤ n then P i j else 0 := rfl
+    truncate P i j = if j ≤ n then P i j else 0 := (rfl)
 
 /-- The top row of a truncated pattern is the row below the top of the original. -/
 theorem topRow_truncate (P : GTPattern (n + 1)) (i : Fin n) : (truncate P).topRow i = P i n := by
@@ -277,7 +282,6 @@ theorem interlaces_topRow_truncate (P : GTPattern (n + 1)) :
       by simpa using P.entry_succ_succ_le_entry i.2 (by omega)⟩
 
 /-- Prepend the row `l` on top of a pattern with `n` rows whose own top row it interlaces. -/
-@[expose]
 def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow) :
     GTPattern (n + 1) where
   entry i j := if j = n + 1 then (if hi : i < n + 1 then l ⟨i, hi⟩ else 0) else Q i j
@@ -306,7 +310,7 @@ def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRo
 theorem extend_apply (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     (i j : ℕ) :
     extend Q l h i j = if j = n + 1 then (if hi : i < n + 1 then l ⟨i, hi⟩ else 0) else Q i j :=
-  rfl
+  (rfl)
 
 theorem extend_apply_of_ne (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i j : ℕ} (hj : j ≠ n + 1) : extend Q l h i j = Q i j := by
@@ -355,11 +359,12 @@ theorem extend_truncate (P : GTPattern (n + 1)) :
 /-- **Deleting the top row is a bijection.**  The Gelfand-Tsetlin patterns with `n + 1` rows and
 top row `l` are exactly the patterns with `n` rows whose own top row interlaces `l`.
 
-This is the combinatorial form of the multiplicity-free branching `GL (n+1) ↓ GL n`: the
-constituents of the restriction of `V_l` are indexed by the interlacing weights, and a basis
-vector of `V_l` is a choice of interlacing weight together with a basis vector of the
-corresponding constituent. -/
-@[expose]
+The statement holds for an arbitrary integer sequence `l`, where it is a bijection between two
+combinatorial sets and nothing more (for a non-dominant `l` both sides are empty as soon as
+`n ≥ 1`).  For a *dominant* `l` it is the combinatorial form of the multiplicity-free branching
+`GL (n+1) ↓ GL n`: the constituents of the restriction of `V_l` are indexed by the interlacing
+weights, which are again dominant, and a basis vector of `V_l` is a choice of interlacing weight
+together with a basis vector of the corresponding constituent. -/
 def truncateEquiv (l : Fin (n + 1) → ℤ) :
     {P : GTPattern (n + 1) // P.topRow = l} ≃ {Q : GTPattern n // Interlaces l Q.topRow} where
   toFun := fun ⟨P, hP⟩ => ⟨truncate P, hP ▸ interlaces_topRow_truncate P⟩
@@ -371,13 +376,13 @@ def truncateEquiv (l : Fin (n + 1) → ℤ) :
 theorem truncateEquiv_apply_coe (l : Fin (n + 1) → ℤ)
     (P : {P : GTPattern (n + 1) // P.topRow = l}) :
     (truncateEquiv l P).1 = truncate P.1 :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem truncateEquiv_symm_apply_coe (l : Fin (n + 1) → ℤ)
     (Q : {Q : GTPattern n // Interlaces l Q.topRow}) :
     ((truncateEquiv l).symm Q).1 = extend Q.1 l Q.2 :=
-  rfl
+  (rfl)
 
 /-! ### Finitely many patterns share a top row -/
 
@@ -425,7 +430,6 @@ theorem card_topRow_eq_one (l : Fin 1 → ℤ) : Nat.card {P : GTPattern 1 // P.
 
 /-- Reading the top row is a bijection from the patterns with one row onto the integer sequences of
 length one. -/
-@[expose]
 def equivOne : GTPattern 1 ≃ (Fin 1 → ℤ) where
   toFun := topRow
   invFun l := (default : {P : GTPattern 1 // P.topRow = l}).1
@@ -434,7 +438,7 @@ def equivOne : GTPattern 1 ≃ (Fin 1 → ℤ) where
   right_inv l := (default : {P : GTPattern 1 // P.topRow = l}).2
 
 @[simp]
-theorem equivOne_apply (P : GTPattern 1) : equivOne P = P.topRow := rfl
+theorem equivOne_apply (P : GTPattern 1) : equivOne P = P.topRow := (rfl)
 
 /-- **The count for `GL 2`.**  A Gelfand-Tsetlin pattern with two rows is its top row together with
 a single integer `λ₀,₁` between `λ₁` and `λ₀`, so the patterns with top row `(λ₀, λ₁)` are counted
