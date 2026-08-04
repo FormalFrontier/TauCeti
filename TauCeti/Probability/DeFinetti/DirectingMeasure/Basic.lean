@@ -23,8 +23,14 @@ directingMeasure μ X ω = condDistrib (X 0) (id) μ ω    (conditioning on tail
 Because it lives over the **value** space `α`, it needs only `[StandardBorelSpace α]` (and
 `[Nonempty α]`); the sample space `Ω` is an arbitrary measurable space.
 
-This is the random directing measure of the martingale (and kernel-based Koopman) route to de
-Finetti's theorem. This file records its basic theory: it is a probability measure
+This is the tail-conditioned directing measure: the object the martingale route proves to be a
+`ConditionallyIIDWith` witness, and the one any route conditioning on `tailProcess X` will use. A
+route conditioning on a different σ-algebra builds its own conditional law — see
+`DeFinetti.ViaKoopman.InvariantConditionalLaw` for the shift-invariant candidate, which is not yet
+proved to direct anything — and whether two such objects agree a.e. is a theorem about them, not a
+property of this file.
+
+This file records the basic theory: it is a probability measure
 (`isProbabilityMeasure_directingMeasure`), its set evaluations are `tailProcess X`-measurable
 (`measurable_tailProcess_directingMeasure_coe`, with the ambient corollary
 `measurable_directingMeasure_coe`), and it is the conditional law of `X 0` given the tail
@@ -32,8 +38,8 @@ Finetti's theorem. This file records its basic theory: it is a probability measu
 `directingProbabilityMeasure`, measurable at the `tailProcess X` level
 (`measurable_tailProcess_directingProbabilityMeasure`, with the ambient corollary
 `measurable_directingProbabilityMeasure`) — the form `MixedIIDWith` consumes as its witness `ν`.
-The full block-product factorisation (conditional independence across a whole block) is left to a
-later step.
+The block-product factorisation (conditional independence across a whole block) is a separate
+concern and lives with the routes that establish it.
 
 Adapted from `cameronfreer/exchangeability` (`DeFinetti/ViaMartingale/DirectingMeasure.lean`, pin
 `e0532e59ceff23edab44dda9ab0655debbc9cc22`); that version conditions over `Ω` (needing

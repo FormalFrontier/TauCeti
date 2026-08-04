@@ -7,23 +7,20 @@ module
 public import Mathlib.NumberTheory.NumberField.Discriminant.Defs
 
 /-!
-# When the discriminant bound is an equality: integral bases
+# The discriminant of a number field from an integral basis
 
-The effective discriminant bound `|d_K| ≤ |disc b|`
-(`TauCeti.NumberField.abs_discr_le_of_basis_isIntegral`) holds for *every* `ℚ`-basis `b` of a
-number field `K` consisting of algebraic integers, and is strict exactly when `b` fails to
-generate the whole ring of integers: writing `m` for the index of the `ℤ`-span of `b` in
-`𝒪_K`, one has `disc b = m² · d_K`. The roadmap's Layer-1 discriminant target records the
-inequality; this file supplies the complementary **equality** half, the case `m = 1`.
+If `b` is (the image in `K` of) a `ℤ`-basis of the ring of integers `𝒪_K` — an *integral
+basis* — then its rational trace-form discriminant is exactly the field discriminant,
 
-Concretely, if `b` is (the image in `K` of) a `ℤ`-basis of `𝒪_K` — an *integral basis* — then
+`disc b = d_K` (over `ℚ`).
 
-`disc b = d_K` (exactly, over `ℚ`),
-
-so the upper bound is attained. This is what makes the bound usable as an evaluator: once a
-`ℤ`-basis of `𝒪_K` is exhibited, computing its trace-form discriminant computes `d_K` on the
-nose. It is exactly the step behind the roadmap's `ℚ(i)` worked example, where `{1, i}` is a
-`ℤ`-basis of the Gaussian integers and `disc {1, i} = -4` gives `d_{ℚ(i)} = -4`.
+More usefully, this holds for any `ℚ`-basis `b` of `K` consisting of algebraic integers whose
+`ℤ`-span inside `𝒪_K` is everything: exhibiting such a spanning integral basis and evaluating
+its discriminant computes `d_K` on the nose. This is the exact-attainment half of the effective
+discriminant bound `|d_K| ≤ |disc b|`
+(`TauCeti.NumberField.abs_discr_le_of_basis_isIntegral`), which is strict exactly when the span
+has index `m > 1` (then `disc b = m² · d_K`). It also drives concrete discriminant computations,
+e.g. `{1, i}` is a `ℤ`-basis of the Gaussian integers and `disc {1, i} = -4` gives `d_{ℚ(i)} = -4`.
 
 ## Main results
 

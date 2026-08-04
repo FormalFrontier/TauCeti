@@ -20,11 +20,12 @@ fixed-start Cesàro window of a square-integrable observable of a contractable p
 *where it lives* comes for free.
 
 `Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp` shows the limit has a
-`tailProcess X`-measurable representative, with `…_cesaro_limit` the bounded-observable
-corollary. It does **not** identify that limit with a conditional
-expectation; that identification, and with it the Layer 3 milestones
-`realObservables_determine_directing_measure` and `directing_measure_satisfies_requirements`, is
-left to a complementary result. This file supplies the prerequisite those milestones need.
+`tailProcess X`-measurable representative, with `…_cesaro_limit` the bounded-observable corollary.
+
+This file's responsibility is **measurability of the limit**, deliberately separate from
+identifying *what* the limit is: `Exchangeability.L2.Cesaro.ToCondExp` identifies it with
+`μ[f ∘ X 0 | tailProcess X]`. Keeping the two apart is what lets the measurability argument avoid
+the reverse-martingale theorem entirely.
 
 The argument does not use the reverse-martingale convergence theorem `tendsto_ae_condExp_iInf` of
 Layer 4, which is what distinguishes this route from the martingale one. The window starting at `r`
