@@ -58,7 +58,7 @@ private theorem norm_sub_sub_smul_derivWithin_le_of_lipschitzOnWith {γ : ℝ �
     (hlip : LipschitzOnWith K (derivWithin γ (Icc c d)) (Icc c d))
     {t₀ t : ℝ} (ht₀ : t₀ ∈ Icc c d) (ht : t ∈ Icc c d) :
     ‖γ t - γ t₀ - (t - t₀) • derivWithin γ (Icc c d) t₀‖ ≤ K * (t - t₀) ^ 2 := by
-  set D : ℝ → ℂ := derivWithin γ (Icc c d) with hD_def
+  set D : ℝ → ℂ := derivWithin γ (Icc c d)
   set g : ℝ → ℂ := fun u => γ u - γ t₀ - (u - t₀) • D t₀ with hg_def
   have hg_deriv : ∀ u ∈ Icc c d, HasDerivWithinAt g (D u - D t₀) (Icc c d) u := fun u hu => by
     have h1 : HasDerivWithinAt (fun u => γ u - γ t₀) (D u) (Icc c d) u :=
@@ -162,7 +162,7 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin {γ :
     |realWindingIntegrand (γ t - w) (derivWithin γ (Icc c d) t)| ≤
       4 * (2 * ‖derivWithin γ (Icc c d) t₀‖ * K + K ^ 2 * (d - c)) /
         ‖derivWithin γ (Icc c d) t₀‖ ^ 2 := by
-  set D : ℝ → ℂ := derivWithin γ (Icc c d) with hD_def
+  set D : ℝ → ℂ := derivWithin γ (Icc c d)
   have hcd : c ≤ d := ht₀.1.trans ht₀.2
   have habs_le : |t - t₀| ≤ d - c := by
     rw [abs_le]; exact ⟨by linarith [ht.1, ht₀.2], by linarith [ht.2, ht₀.1]⟩
