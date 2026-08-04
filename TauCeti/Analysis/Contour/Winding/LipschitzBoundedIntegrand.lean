@@ -54,7 +54,7 @@ open scoped NNReal
 `[c, d]` and `derivWithin γ (Icc c d)` is `K`-Lipschitz there, the affine approximation at any
 `t₀ ∈ [c, d]` is off by at most `K * (t - t₀) ^ 2`, for any `t ∈ [c, d]`. -/
 private theorem norm_sub_sub_smul_derivWithin_le_of_lipschitzOnWith {γ : ℝ → ℂ} {c d : ℝ}
-    {K : ℝ≥0} (_hcd : c ≤ d) (hdiff : DifferentiableOn ℝ γ (Icc c d))
+    {K : ℝ≥0} (hdiff : DifferentiableOn ℝ γ (Icc c d))
     (hlip : LipschitzOnWith K (derivWithin γ (Icc c d)) (Icc c d))
     {t₀ t : ℝ} (ht₀ : t₀ ∈ Icc c d) (ht : t ∈ Icc c d) :
     ‖γ t - γ t₀ - (t - t₀) • derivWithin γ (Icc c d) t₀‖ ≤ K * (t - t₀) ^ 2 := by
@@ -166,7 +166,7 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin {γ :
   have habs_le : |t - t₀| ≤ d - c := by
     rw [abs_le]; exact ⟨by linarith [ht.1, ht₀.2], by linarith [ht.2, ht₀.1]⟩
   have hR : ‖γ t - w - (t - t₀) • D t₀‖ ≤ K * (t - t₀) ^ 2 := by
-    have h := norm_sub_sub_smul_derivWithin_le_of_lipschitzOnWith hcd hdiff hlip ht₀ ht
+    have h := norm_sub_sub_smul_derivWithin_le_of_lipschitzOnWith hdiff hlip ht₀ ht
     rwa [h_eq] at h
   have he : ‖D t - D t₀‖ ≤ K * |t - t₀| := by
     have h : dist (D t) (D t₀) ≤ K * dist t t₀ :=
