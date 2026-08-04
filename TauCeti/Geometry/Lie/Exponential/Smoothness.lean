@@ -62,6 +62,7 @@ theorem contMDiffAt_mulInvariantExp_zero
   have hcoord : ContDiffAt ℝ n
       (fun v : E => extChartAt I (1 : G)
         (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) 0 := by
+    -- Phase 1: construct a smooth Picard germ for the time-rescaled coordinate field.
     let F : E × E → E := fun p => c •
       mulInvariantCoordinateVectorField (I := I) (G := G) p
     have hF : ContDiffAt ℝ (n + 1) F ((0 : E), center) := by
@@ -74,6 +75,8 @@ theorem contMDiffAt_mulInvariantExp_zero
       simp only [F, mulInvariantCoordinateVectorField_zero, smul_zero]
     obtain ⟨γ, hγsmooth, hγzero, hγode⟩ :=
       ODE.exists_contDiffAt_picard_solution n F (0 : E) center hF hFzero
+    -- Phase 2: choose one Lipschitz neighborhood containing both the Picard paths and the
+    -- canonical exponential paths for all sufficiently small parameters.
     have hFone : ContDiffAt ℝ 1 F ((0 : E), center) :=
       hF.of_le (by exact_mod_cast Nat.succ_le_succ (Nat.zero_le n))
     obtain ⟨K, W, hW, hFlip⟩ := hFone.exists_lipschitzOnWith
@@ -87,6 +90,7 @@ theorem contMDiffAt_mulInvariantExp_zero
     obtain ⟨ε, hε, hεS⟩ := Metric.mem_nhds_iff.mp hS
     have hγS : ∀ᶠ p in 𝓝 (0 : E), ∀ t : Set.Icc (0 : ℝ) 1, γ p t ∈ S := by
       have hnear := hγsmooth.continuousAt
+        -- The path-space neighborhood is the sup-norm ball around the constant center path.
         (show Metric.ball (ContinuousMap.const _ center) ε ∈ 𝓝 (γ 0) by
           rw [hγzero]
           exact Metric.ball_mem_nhds _ hε)
@@ -113,6 +117,7 @@ theorem contMDiffAt_mulInvariantExp_zero
         have hzero : mulInvariantExp (I := I) (G := G)
             (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
         apply hexpCoord.preimage_mem_nhds
+        -- Expose the value of the preimage map at zero so that `hS` has the required center.
         change S ∈ 𝓝 (extChartAt I (1 : G)
           (mulInvariantExp (I := I) (G := G) (0 : GroupLieAlgebra I G)))
         rw [hzero]
@@ -140,6 +145,8 @@ theorem contMDiffAt_mulInvariantExp_zero
             c * (η / (c + 1)) = (c / (c + 1)) * η := by ring
             _ < 1 * η := mul_lt_mul_of_pos_right hcfrac hη
             _ = η := one_mul η
+    -- Phase 3: compare the smooth Picard path with the canonical invariant path by ODE
+    -- uniqueness inside their common Lipschitz neighborhood.
     have hEq : ∀ᶠ p in 𝓝 (0 : E),
         γ p ⟨1, zero_le_one, le_rfl⟩ =
           extChartAt I (1 : G)
@@ -220,12 +227,17 @@ theorem contMDiffAt_mulInvariantExp_zero
       have hga0 : g 0 = a 0 := by
         have hg0 := hpODE.1 ⟨0, le_rfl, zero_le_one⟩
         have ha0 := (hαlocal p hpU 0 (by simpa using htime 0 ⟨le_rfl, zero_le_one⟩)).2.2.1
+        have hprojZero : Set.projIcc 0 1 zero_le_one 0 =
+            (⟨0, le_rfl, zero_le_one⟩ : Set.Icc (0 : ℝ) 1) := by
+          ext
+          simp
         have hg0' : g 0 = center := by
+          -- Expose the definition of `g` only at the initial time.
           change γ p (Set.projIcc 0 1 zero_le_one 0) = center
-          rw [show Set.projIcc 0 1 zero_le_one 0 =
-            (⟨0, le_rfl, zero_le_one⟩ : Set.Icc (0 : ℝ) 1) by ext; simp]
+          rw [hprojZero]
           simpa using hg0
         have ha0' : a 0 = center := by
+          -- Expose the definition of `a` only at the initial time.
           change (α (((p, center), c * 0))).2 = center
           rw [mul_zero]
           simpa only [center] using congrArg Prod.snd ha0
@@ -235,10 +247,15 @@ theorem contMDiffAt_mulInvariantExp_zero
         (fun _ _ => hfixed p hpP) hgCont hgDeriv hgS haCont haDeriv haS hga0
       have hone := hunique (show (1 : ℝ) ∈ Set.Icc 0 1 by exact ⟨zero_le_one, le_rfl⟩)
       have hone' := hone.trans (haCoord 1 ⟨zero_le_one, le_rfl⟩)
+      have hprojOne : Set.projIcc 0 1 zero_le_one 1 =
+          (⟨1, zero_le_one, le_rfl⟩ : Set.Icc (0 : ℝ) 1) := by
+        ext
+        simp
       change γ p ⟨1, zero_le_one, le_rfl⟩ = _
-      rw [← show Set.projIcc 0 1 zero_le_one 1 =
-        (⟨1, zero_le_one, le_rfl⟩ : Set.Icc (0 : ℝ) 1) by ext; simp]
+      rw [← hprojOne]
       simpa only [g, mul_one] using hone'
+    -- Phase 4: evaluate the smooth Picard germ at the terminal time, transfer smoothness through
+    -- the comparison, and undo the time rescaling.
     have heval : ContDiffAt ℝ (n + 1)
         (fun p => γ p ⟨1, zero_le_one, le_rfl⟩) 0 :=
       by
@@ -265,12 +282,14 @@ theorem contMDiffAt_mulInvariantExp_zero
     have harg : c • ((c⁻¹ • p : E) : GroupLieAlgebra I G) =
         (p : GroupLieAlgebra I G) := by
       rw [smul_smul, mul_inv_cancel₀ hc0, one_smul]
+    -- State the rescaled composite in the model-space presentation used by `harg`.
     change extChartAt I (1 : G)
       (mulInvariantExp (I := I) (G := G) (p : GroupLieAlgebra I G)) =
         extChartAt I (1 : G)
           (mulInvariantExp (I := I) (G := G)
             (c • ((c⁻¹ • p : E) : GroupLieAlgebra I G)))
     rw [harg]
+  -- Phase 5: convert smoothness of the identity-chart expression back to manifold smoothness.
   have hzero : mulInvariantExp (I := I) (G := G)
       (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
   rw [contMDiffAt_iff_target_of_mem_source (y := (1 : G)) (by
