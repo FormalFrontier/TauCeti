@@ -36,7 +36,6 @@ noncomputable section
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [IsManifold I 1 G] [IsManifold I 2 G]
 
 local instance lieGroupMinSmoothnessDerivative [LieGroup I ∞ G] :
     LieGroup I (minSmoothness ℝ 3) G := by
@@ -48,31 +47,49 @@ theorem hasFDerivAt_mulInvariantExp_modelSpace_zero
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     HasFDerivAt
       (fun v : E => extChartAt I (1 : G)
-        (mulInvariantExp
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)))
+        (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)))
       (ContinuousLinearMap.id ℝ E) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
+  let _ : ContMDiffMul I (∞ + 1) G := by
+    simpa using (inferInstance : ContMDiffMul I ∞ G)
   let center : E := extChartAt I (1 : G) (1 : G)
   let F : E → E := fun v => extChartAt I (1 : G)
-    (mulInvariantExp
-      ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v))
+    (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))
   let A : E → E →L[ℝ] E := mulInvariantCoordinateLinearMap (I := I) (G := G)
-  obtain ⟨α, U, δ, hU, hδ, hαcont, hαinit, hαlocal, hαderiv, hαeq⟩ :=
+  obtain ⟨α, U, δ, hU, hδ, hαlocal, hαeq⟩ :=
     exists_local_coordinate_representation_mulInvariantIntegralCurve (I := I) (G := G)
   have hzeroU : (0 : E) ∈ U := mem_of_mem_nhds hU
+  have hzeroTime : (0 : ℝ) ∈ Set.Ioo (-δ) δ := ⟨by linarith, by linarith⟩
+  have hαcont : ContinuousAt α (((0 : E), center), 0) := by
+    simpa only [center] using (hαlocal 0 hzeroU 0 hzeroTime).1
+  have hαinit (v : E) (hv : v ∈ U) : α ((v, center), 0) = (v, center) := by
+    simpa only [center] using (hαlocal v hv 0 hzeroTime).2.2.1
+  have hαderiv (v : E) (hv : v ∈ U) (t : ℝ) (ht : t ∈ Set.Ioo (-δ) δ) :
+      HasDerivAt (fun s => α ((v, center), s))
+        ((0 : E), mulInvariantCoordinateVectorField (I := I) (G := G)
+          (α ((v, center), t))) t := by
+    simpa only [center] using (hαlocal v hv t ht).2.1
   have hFzero : F 0 = center := by
-    simp only [F, center, map_zero, mulInvariantExp_zero]
+    change extChartAt I (1 : G)
+      (mulInvariantExp (I := I) (G := G) (0 : GroupLieAlgebra I G)) =
+        extChartAt I (1 : G) (1 : G)
+    rw [mulInvariantExp_zero]
   rw [show (fun v : E => extChartAt I (1 : G)
-      (mulInvariantExp
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v))) = F from rfl]
+      (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) = F from rfl]
   rw [hasFDerivAt_iff_isLittleO_nhds_zero, isLittleO_iff]
   intro ε hε
   have hAcont : ContinuousAt A center := by
     simpa only [A, center] using
-      (continuousAt_mulInvariantCoordinateLinearMap_identity (I := I) (G := G))
+      (contDiffAt_mulInvariantCoordinateLinearMap_one (I := I) (G := G) (n := ∞)
+        BoundarylessManifold.isInteriorPoint).continuousAt
   have hAcenter : A center = ContinuousLinearMap.id ℝ E := by
-    simpa only [A, center] using
-      (mulInvariantCoordinateLinearMap_identity (I := I) (G := G))
+    have hidentityCoordinate : extChartAt I (1 : G) (1 : G) =
+        I (chartAt H (1 : G) (1 : G)) := by
+      rw [extChartAt_coe]
+      rfl
+    dsimp only [A, center]
+    rw [hidentityCoordinate]
+    exact mulInvariantCoordinateLinearMap_one (I := I) (G := G)
   let S : Set E := {y | ‖A y - ContinuousLinearMap.id ℝ E‖ ≤ ε}
   have hS : S ∈ 𝓝 center := by
     have hnorm : ContinuousAt (fun y => ‖A y - ContinuousLinearMap.id ℝ E‖) center :=
@@ -129,7 +146,19 @@ theorem hasFDerivAt_mulInvariantExp_modelSpace_zero
     exact lt_of_le_of_lt ht.2 hcη
   have hzderiv (t : ℝ) (ht : t ∈ Set.Icc (0 : ℝ) c) :
       HasDerivAt z (A (z t) w) t := by
-    simpa only [z, w, center, A] using hαderiv (c⁻¹ • v) hvU t (htflow t ht)
+    have hpair : α ((w, center), t) = (w, z t) := by
+      apply Prod.ext
+      · simpa only [w, center] using
+          (hαlocal (c⁻¹ • v) hvU t (htflow t ht)).2.2.2.1
+      · rfl
+    have hsnd := (ContinuousLinearMap.snd ℝ E E).hasFDerivAt.comp_hasDerivAt t
+      (hαderiv (c⁻¹ • v) hvU t (htflow t ht))
+    convert hsnd using 1
+    · rfl
+    · rw [hpair]
+      change mulInvariantCoordinateLinearMap (I := I) (G := G) (z t) w =
+        mulInvariantCoordinateVectorField (I := I) (G := G) (w, z t)
+      rw [mulInvariantCoordinateLinearMap_apply]
   have hAbound (t : ℝ) (ht : t ∈ Set.Icc (0 : ℝ) c) :
       ‖A (z t) - ContinuousLinearMap.id ℝ E‖ ≤ ε := by
     have hmem : (q v, t) ∈ β ⁻¹' S :=
@@ -154,26 +183,22 @@ theorem hasFDerivAt_mulInvariantExp_modelSpace_zero
   have hcw : c • w = v := by
     simp only [w, smul_smul, mul_inv_cancel₀ hc0, one_smul]
   have hexp : (extChartAt I (1 : G)).symm (z c) =
-      mulInvariantExp
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) := by
+      mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G) := by
     calc
       (extChartAt I (1 : G)).symm (z c) =
           mulInvariantIntegralCurve
-            ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm w) 1 c := by
+            (I := I) (G := G) (w : GroupLieAlgebra I G) 1 c := by
         exact hαeq w hvU hcflow
-      _ = mulInvariantExp
-          (c • (groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm w) := by
-        exact (mulInvariantExp_smul _ c).symm
-      _ = mulInvariantExp
-          ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v) := by
-        rw [← map_smul, hcw]
+      _ = mulInvariantExp (I := I) (G := G) (c • (w : GroupLieAlgebra I G)) := by
+        exact (mulInvariantExp_smul (I := I) (G := G) (w : GroupLieAlgebra I G) c).symm
+      _ = mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G) := by
+        rw [show c • (w : GroupLieAlgebra I G) = (v : GroupLieAlgebra I G) from hcw]
   have hF : F v = z c := by
     change extChartAt I (1 : G)
-      (mulInvariantExp
-        ((groupLieAlgebraEquivModelSpace (I := I) (G := G)).symm v)) = z c
+      (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)) = z c
     rw [← hexp]
     exact (extChartAt I (1 : G)).right_inv
-      (Set.mem_of_mem_of_subset (hαlocal w hvU c hcflow).2 interior_subset)
+      (Set.mem_of_mem_of_subset (hαlocal w hvU c hcflow).2.2.2.2 interior_subset)
   calc
     ‖F (0 + v) - F 0 - (ContinuousLinearMap.id ℝ E) v‖ = ‖e c - e 0‖ := by
       rw [zero_add, hF, hFzero, ContinuousLinearMap.id_apply]
