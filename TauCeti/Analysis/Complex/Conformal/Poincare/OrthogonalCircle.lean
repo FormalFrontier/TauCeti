@@ -48,8 +48,6 @@ diameter `Im (conj u * z) = 0`.
   `a` in direction `u`, and
   `TauCeti.PoincareDisc.toPoincare_zero_mem_range_geodesicLine_iff` — that equation at the origin,
   which is what makes `Im (conj u * a)` the geometric discriminator of the case split below.
-* `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq` — a geodesic through the origin
-  traces the Euclidean diameter in its direction.
 * `TauCeti.orthogonalCircleCenter` and `TauCeti.orthogonalCircleRadius` — the centre and radius
   parameters read off by completing the square, which for `‖u‖ = 1`, `‖a‖ < 1` and
   `Im (conj u * a) ≠ 0` are the centre and radius of the Euclidean circle traced by a hyperbolic
@@ -57,7 +55,11 @@ diameter `Im (conj u * z) = 0`.
   orthogonality relation `TauCeti.norm_orthogonalCircleCenter_sq`.
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — a geodesic line
   missing the origin traces `ball 0 1 ∩ sphere c R` for that Euclidean circle, which is
-  **orthogonal to the unit circle**, `‖c‖ ^ 2 = R ^ 2 + 1`.
+  **orthogonal to the unit circle**, `‖c‖ ^ 2 = R ^ 2 + 1`, and the complementary case
+  `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_setOf_im` — a geodesic
+  line through the origin traces the Euclidean diameter in its direction, of which
+  `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq` is the reading at the base
+  point `0`.
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_or` — the two cases
   together: every geodesic line of the Poincaré disc traces the intersection of the disc with a
   Euclidean line through the origin or with a Euclidean circle orthogonal to the unit circle.
@@ -410,23 +412,6 @@ theorem toPoincare_zero_mem_range_geodesicLine_iff (a : PoincareDisc) (u : Circl
   rw [mem_range_geodesicLine_iff, toUnitDisc_toPoincare, Complex.UnitDisc.coe_zero, zero_sub,
     map_zero, mul_zero, sub_zero, mul_one, mul_neg, Complex.neg_im, neg_eq_zero]
 
-/-- **A geodesic through the origin traces a Euclidean diameter.** The radial geodesic in
-direction `u` sweeps out exactly the intersection of the open unit disc with the Euclidean line
-through the origin in direction `u`. -/
-theorem range_coe_toUnitDisc_radialGeodesic_eq (u : Circle) :
-    Set.range (fun t : ℝ => ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ))
-      = ball 0 1 ∩ {z : ℂ | (conj (u : ℂ) * z).im = 0} := by
-  ext z
-  simp only [Set.mem_range, Set.mem_ofPred_eq, mem_inter_iff, mem_ball_zero_iff]
-  constructor
-  · rintro ⟨t, rfl⟩
-    exact ⟨(toUnitDisc (radialGeodesic u t)).norm_lt_one,
-      (mem_range_radialGeodesic_iff u (radialGeodesic u t)).mp ⟨t, rfl⟩⟩
-  · rintro ⟨hz, him⟩
-    obtain ⟨t, ht⟩ := (mem_range_radialGeodesic_iff u
-      (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz))).mpr (by simpa using him)
-    exact ⟨t, by simp [ht]⟩
-
 /-- The plane description of the geodesic line through `a` in direction `u`: it traces the set of
 points of the open unit disc satisfying the geodesic equation. -/
 theorem range_coe_toUnitDisc_geodesicLine_eq (a : PoincareDisc) (u : Circle) :
@@ -477,6 +462,19 @@ theorem range_coe_toUnitDisc_geodesicLine_eq_ball_inter_setOf_im (a : PoincareDi
       = ball 0 1 ∩ {z : ℂ | (conj (u : ℂ) * z).im = 0} := by
   rw [range_coe_toUnitDisc_geodesicLine_eq,
     setOf_im_eq_ball_inter_setOf_im (toUnitDisc a).norm_lt_one.ne hA]
+
+/-- **A geodesic through the origin traces a Euclidean diameter.** The radial geodesic in
+direction `u` sweeps out exactly the intersection of the open unit disc with the Euclidean line
+through the origin in direction `u`.
+
+This is `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_setOf_im` at the
+base point `0`, where the geodesic line is the radial one
+(`TauCeti.PoincareDisc.geodesicLine_toPoincare_zero`). -/
+theorem range_coe_toUnitDisc_radialGeodesic_eq (u : Circle) :
+    Set.range (fun t : ℝ => ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ))
+      = ball 0 1 ∩ {z : ℂ | (conj (u : ℂ) * z).im = 0} := by
+  rw [← geodesicLine_toPoincare_zero u]
+  exact range_coe_toUnitDisc_geodesicLine_eq_ball_inter_setOf_im _ u (by simp)
 
 /-- **The geodesics of the Poincaré disc, in Euclidean terms.** Every geodesic line of the
 Poincaré disc traces either the intersection of the open unit disc with a Euclidean line through
