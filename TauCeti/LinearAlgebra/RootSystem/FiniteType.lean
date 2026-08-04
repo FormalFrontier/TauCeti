@@ -159,6 +159,66 @@ theorem one_le_apply_mul_apply (h : IsFiniteType A) {i j : B} (hne : A i j ≠ 0
     omega
   nlinarith
 
+omit [Fintype B] in
+/-- **A pairwise non-adjacent block of the symmetrization is diagonal.** Along a set of indices
+that are pairwise non-adjacent, the `l`-th column of the symmetrization `fun p q ↦ d p * A p q`
+meets only the index `l` itself, so the sum collapses to that one term. This is what makes the
+coordinates of a pairwise non-adjacent star independent of one another, so that each can be chosen
+to minimize the quadratic form separately. -/
+private theorem sum_mul_symmetrization_mul_eq_of_pairwise_apply_eq_zero {d x : B → ℚ}
+    {s : Finset B} (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) {l : B} (hl : l ∈ s) :
+    ∑ k ∈ s, x k * (d k * (A k l : ℚ)) * x l = x l * (d l * (A l l : ℚ)) * x l :=
+  Finset.sum_eq_single_of_mem l hl fun k hk hkl ↦ by
+    simp [hs (by exact_mod_cast hk) (by exact_mod_cast hl) hkl]
+
+/-- **The value of the symmetrized quadratic form at the test vector of a non-adjacent star.** For
+`i` outside a pairwise non-adjacent `s`, any vector taking the value `1` at `i`, the value
+`-dᵢAᵢₖ / 2dₖ` at each `k ∈ s` and `0` at every other index evaluates the form at
+`2dᵢ - (dᵢ/2) ∑ⱼ AᵢⱼAⱼᵢ`. When the symmetrizer is positive, as it is at the one call site below,
+that value at `k ∈ s` is the one minimizing the `k`-th coordinate of the form — a legitimate choice
+one coordinate at a time because `s` is pairwise non-adjacent. The evaluation itself needs no sign
+condition, only `dₖ ≠ 0`.
+
+Of the matrix data only the nonvanishing of the symmetrizer on `s`, the diagonal entries at `i` and
+on `s`, and the symmetrization identity `dⱼAⱼᵢ = dᵢAᵢⱼ` for `j ∈ s` are used; positive definiteness
+enters in `TauCeti.IsFiniteType.sum_apply_mul_apply_lt_four`, which is what turns this value into a
+bound. -/
+private theorem dotProduct_mulVec_symmetrization_eq_of_pairwise_apply_eq_zero
+    {d : B → ℚ} {i : B} {s : Finset B} (hd : ∀ p ∈ s, d p ≠ 0) (h2i : A i i = 2)
+    (h2s : ∀ p ∈ s, A p p = 2)
+    (hsymm : ∀ p ∈ s, d p * (A p i : ℚ) = d i * (A i p : ℚ)) (his : i ∉ s)
+    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) {x : B → ℚ} (hxi : x i = 1)
+    (hxs : ∀ k ∈ s, x k = -(d i * (A i k : ℚ)) / (2 * d k))
+    (hxz : ∀ k, k ≠ i → k ∉ s → x k = 0) :
+    x ⬝ᵥ ((Matrix.of fun p q ↦ d p * (A p q : ℚ)) *ᵥ x)
+      = 2 * d i - d i / 2 * ∑ j ∈ s, (A i j : ℚ) * (A j i : ℚ) := by
+  classical
+  -- Only the indices of `insert i s` contribute to the quadratic form.
+  have hxz' : ∀ k ∉ insert i s, x k = 0 := fun k hk ↦
+    hxz k (fun hc ↦ hk (hc ▸ Finset.mem_insert_self i s)) fun hc ↦ hk (Finset.mem_insert_of_mem hc)
+  have hrow : ∀ l : B, ∑ k, x k * (d k * (A k l : ℚ)) * x l
+      = ∑ k ∈ insert i s, x k * (d k * (A k l : ℚ)) * x l := fun l ↦
+    (Finset.sum_subset (Finset.subset_univ _) fun k _ hk ↦ by simp [hxz' k hk]).symm
+  have hsum : x ⬝ᵥ ((Matrix.of fun p q ↦ d p * (A p q : ℚ)) *ᵥ x)
+      = ∑ l ∈ insert i s, ∑ k ∈ insert i s, x k * (d k * (A k l : ℚ)) * x l := by
+    rw [Matrix.dot_mulVec_eq_sum_sum]
+    simp only [Matrix.of_apply, hrow]
+    exact (Finset.sum_subset (Finset.subset_univ _) fun l _ hl ↦ by simp [hxz' l hl]).symm
+  rw [hsum, sub_eq_add_neg, Finset.mul_sum, ← Finset.sum_neg_distrib]
+  simp only [Finset.sum_insert his]
+  rw [add_assoc, ← Finset.sum_add_distrib]
+  congr 1
+  · rw [hxi, h2i]
+    push_cast
+    ring
+  · refine Finset.sum_congr rfl fun j hj ↦ ?_
+    have hji : (A j i : ℚ) = d i * (A i j : ℚ) / d j := by
+      field_simp [hd j hj]
+      linarith [hsymm j hj]
+    rw [sum_mul_symmetrization_mul_eq_of_pairwise_apply_eq_zero hs hj, h2s j hj, hxi, hxs j hj, hji]
+    field_simp [hd j hj]
+    ring
+
 /-- **The star bound.** If `i` is distinct from every index of `s` and the indices of `s` are
 pairwise non-adjacent, then the Cartan products of `i` with the indices of `s` sum to less than
 `4`.
@@ -171,73 +231,22 @@ theorem sum_apply_mul_apply_lt_four (h : IsFiniteType A) {i : B} {s : Finset B} 
     ∑ j ∈ s, A i j * A j i < 4 := by
   classical
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
-  set M : Matrix B B ℚ := Matrix.of fun p q ↦ d p * (A p q : ℚ) with hM
   -- The symmetrizer intertwines the two entries of a transposed pair.
-  have hsymm : ∀ p q : B, d q * (A q p : ℚ) = d p * (A p q : ℚ) := by
-    intro p q
-    have h' := hpd.isHermitian.apply p q
-    simpa [hM] using h'
-  -- The test vector: `1` at `i`, the value `-dᵢAᵢₖ / 2dₖ` minimizing the `k`-th coordinate of the
-  -- form at each `k ∈ s`, and `0` elsewhere. Pairwise non-adjacency makes the coordinates of `s`
-  -- independent of one another, which is what lets each be minimized separately.
-  set c : B → ℚ := fun k ↦ -(d i * (A i k : ℚ)) / (2 * d k) with hc
-  set x : B → ℚ := fun k ↦ if k = i then 1 else if k ∈ s then c k else 0 with hx
+  have hsymm : ∀ p q : B, d q * (A q p : ℚ) = d p * (A p q : ℚ) := fun p q ↦ by
+    simpa using hpd.isHermitian.apply p q
+  -- The test vector: `1` at `i`, the value minimizing the `k`-th coordinate of the form at each
+  -- `k ∈ s`, and `0` elsewhere.
+  set x : B → ℚ := fun k ↦ if k = i then 1 else
+    if k ∈ s then -(d i * (A i k : ℚ)) / (2 * d k) else 0 with hx
   have hxi : x i = 1 := by simp [hx]
-  have hxs : ∀ k ∈ s, x k = c k := fun k hk ↦ by
-    have hki : k ≠ i := fun hc' ↦ his (hc' ▸ hk)
+  have hxs : ∀ k ∈ s, x k = -(d i * (A i k : ℚ)) / (2 * d k) := fun k hk ↦ by
+    have hki : k ≠ i := fun hc ↦ his (hc ▸ hk)
     simp [hx, hki, hk]
-  have hxz : ∀ k ∉ insert i s, x k = 0 := by
-    intro k hk
-    rw [Finset.mem_insert, not_or] at hk
-    simp [hx, hk.1, hk.2]
-  have hxne : x ≠ 0 := fun hcon ↦ by simpa [hxi] using congrFun hcon i
-  have hq := hpd.dotProduct_mulVec_pos hxne
-  rw [star_trivial] at hq
-  -- Only the indices of `insert i s` contribute to the quadratic form.
-  have hrow : ∀ l : B, ∑ k, x k * M k l * x l = ∑ k ∈ insert i s, x k * M k l * x l := fun l ↦
-    (Finset.sum_subset (Finset.subset_univ _) fun k _ hk ↦ by simp [hxz k hk]).symm
-  have hsum : x ⬝ᵥ (M *ᵥ x) = ∑ l ∈ insert i s, ∑ k ∈ insert i s, x k * M k l * x l := by
-    rw [Matrix.dot_mulVec_eq_sum_sum]
-    simp only [hrow]
-    exact (Finset.sum_subset (Finset.subset_univ _) fun l _ hl ↦ by simp [hxz l hl]).symm
-  -- Pairwise non-adjacency collapses the `s`-block of the form to its diagonal.
-  have hinner : ∀ l ∈ s, ∑ k ∈ s, x k * M k l * x l = c l * (2 * d l) * c l := by
-    intro l hl
-    rw [Finset.sum_eq_single_of_mem l hl]
-    · rw [hxs l hl]
-      simp only [hM, Matrix.of_apply, h.apply_self l]
-      push_cast
-      ring
-    · intro k hk hkl
-      have hzero : A k l = 0 := hs (by exact_mod_cast hk) (by exact_mod_cast hl) hkl
-      simp [hM, hzero]
-  -- The value of the form at the test vector, namely `dᵢ(4 - ∑ⱼ AᵢⱼAⱼᵢ) / 2`.
-  have key : x ⬝ᵥ (M *ᵥ x) = 2 * d i + ∑ j ∈ s, -(d i * (A i j : ℚ) * (A j i : ℚ)) / 2 := by
-    rw [hsum]
-    simp only [Finset.sum_insert his]
-    rw [add_assoc, ← Finset.sum_add_distrib]
-    congr 1
-    · rw [hxi]
-      simp only [hM, Matrix.of_apply, h.apply_self i]
-      push_cast
-      ring
-    · refine Finset.sum_congr rfl fun j hj ↦ ?_
-      have hdj := (hd j).ne'
-      have hji : (A j i : ℚ) = d i * (A i j : ℚ) / d j := by
-        field_simp
-        linarith [hsymm i j]
-      rw [hinner j hj, hxi, hxs j hj]
-      simp only [hM, hc, Matrix.of_apply]
-      rw [hji]
-      field_simp
-      ring
-  rw [key] at hq
+  have hq := hpd.dotProduct_mulVec_pos (x := x) fun hc ↦ by simpa [hxi] using congrFun hc i
+  rw [star_trivial, dotProduct_mulVec_symmetrization_eq_of_pairwise_apply_eq_zero
+    (fun p _ ↦ (hd p).ne') (h.apply_self i) (fun p _ ↦ h.apply_self p) (fun p _ ↦ hsymm i p) his
+    hs hxi hxs fun k hki hks ↦ by simp [hx, hki, hks]] at hq
   -- Positive definiteness now reads off the bound, the factor `dᵢ` being positive.
-  have hfold : ∑ j ∈ s, -(d i * (A i j : ℚ) * (A j i : ℚ)) / 2
-      = -(d i / 2) * ∑ j ∈ s, (A i j : ℚ) * (A j i : ℚ) := by
-    rw [Finset.mul_sum]
-    exact Finset.sum_congr rfl fun j _ ↦ by ring
-  rw [hfold] at hq
   have hcast : ((∑ j ∈ s, A i j * A j i : ℤ) : ℚ) < 4 := by
     push_cast
     nlinarith [hd i]
