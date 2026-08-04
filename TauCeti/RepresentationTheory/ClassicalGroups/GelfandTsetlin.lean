@@ -111,9 +111,11 @@ theorem ext {P P' : GTPattern n} (h : ∀ i j, P i j = P' i j) : P = P' :=
 theorem zeros (P : GTPattern n) {i j : ℕ} (h : n < j ∨ j ≤ i) : P i j = 0 := P.zeros' h
 
 /-- The `i`-th entry of row `j` vanishes once `j` outruns the number of rows. -/
+@[simp]
 theorem zeros_of_lt (P : GTPattern n) {i j : ℕ} (h : n < j) : P i j = 0 := P.zeros (Or.inl h)
 
 /-- The `i`-th entry of row `j` vanishes once `i` outruns the length of the row. -/
+@[simp]
 theorem zeros_of_le (P : GTPattern n) {i j : ℕ} (h : j ≤ i) : P i j = 0 := P.zeros (Or.inr h)
 
 /-- The first interlacing inequality `λᵢ,ⱼ ≤ λᵢ,ⱼ₊₁`. -/
@@ -232,6 +234,7 @@ def Interlaces {n : ℕ} (l : Fin (n + 1) → ℤ) (m : Fin n → ℤ) : Prop :=
 
 /-- Interlacing unfolded: the pair of inequalities at each index.  This is the introduction and
 elimination rule for `TauCeti.Interlaces`, whose body is not exposed. -/
+@[simp]
 theorem interlaces_iff {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ} :
     Interlaces l m ↔ ∀ i : Fin n, m i ≤ l i.castSucc ∧ l i.succ ≤ m i :=
   Iff.rfl
@@ -322,7 +325,8 @@ theorem extend_apply_top (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interl
     {i : ℕ} (hi : i < n + 1) : extend Q l h i (n + 1) = l ⟨i, hi⟩ := by
   rw [extend_apply, if_pos rfl, dif_pos hi]
 
-@[simp]
+/-- Prepending a row leaves the cells past the end of the new row empty.  This is not `@[simp]`:
+`zeros_of_le` already rewrites it, being the general normal form for an out-of-row cell. -/
 theorem extend_apply_top_of_le (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i : ℕ} (hi : n + 1 ≤ i) : extend Q l h i (n + 1) = 0 := by
   rw [extend_apply, if_pos rfl, dif_neg (by omega)]
