@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.GroupTheory.DoubleCoset
 public import Mathlib.GroupTheory.Index
-public import TauCeti.RepresentationTheory.Induction.Conjugate
+public import TauCeti.Algebra.Group.Subgroup.Pointwise
+public import TauCeti.Algebra.GroupAction.Quotient
 
 /-!
 # The Mackey subgroup
@@ -21,16 +21,17 @@ along `mackeySubgroup s H K ≤ sHs⁻¹` and then induced along `mackeySubgroup
 inclusions are pinned here as `TauCeti.mackeyToConjH` and `TauCeti.mackeyToK`; there is no second
 intersection with `K`.
 
-The reason the Mackey subgroup is the right object is geometric, and that is what this file proves.
-The group `K` acts on `G ⧸ H` by translation, and the stabilizer of the coset `sH` is exactly
-`mackeySubgroup s H K` (`TauCeti.stabilizer_subgroup_eq_subgroupOf`, resting on the description
+The reason the Mackey subgroup is the right object is geometric.  The group `K` acts on `G ⧸ H` by
+translation, and the stabilizer of the coset `sH` is exactly `mackeySubgroup s H K`
+(`TauCeti.stabilizer_eq_mackeySubgroup_subgroupOf`, resting on the description
 `TauCeti.stabilizer_quotientGroup_mk` of the stabilizer in `G` as the conjugate `sHs⁻¹`).  The
 `K`-orbit of `sH` is the image of the double coset `KsH`
 (`TauCeti.preimage_orbit_eq_doubleCoset`), so the partition of `G ⧸ H` into `K`-orbits is the
 partition of `G` into double cosets, and orbit-stabilizer turns each orbit into an index:
 `|K·sH| = [K : K ⊓ sHs⁻¹]`.  This is the combinatorial content of the Mackey decomposition, and it
 yields the classical double-coset size formula `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`
-(`TauCeti.card_doubleCoset_mul_card_mackeySubgroup`).
+(`TauCeti.card_doubleCoset_mul_card_mackeySubgroup`).  The two facts about the translation action
+that this rests on are generic group theory and live in `TauCeti.Algebra.GroupAction.Quotient`.
 
 Because the Mackey decomposition is indexed by double cosets while its summands are built from a
 *chosen* representative, the dependence on the representative has to be pinned too: replacing `s`
@@ -41,8 +42,8 @@ a canonical representative-independent summand; that would need coherent conjuga
 of the representations themselves.
 
 Everything in this file is a statement about subgroups of `G`, with no coefficients and no
-representations; it is placed with the induction files because the Mackey subgroup is the
-subgroup the induction and restriction of that layer run along.
+representations; it is placed with the induction files because `mackeySubgroup` is the
+roadmap-specific subgroup the induction and restriction of that layer run along.
 
 ## Main definitions
 
@@ -54,13 +55,10 @@ subgroup the induction and restriction of that layer run along.
 
 ## Main statements
 
-* `TauCeti.stabilizer_quotientGroup_mk`: the stabilizer of `sH` in `G` is `sHs⁻¹`.
-* `TauCeti.stabilizer_subgroup_eq_subgroupOf`: the stabilizer of `sH` in `K` is the Mackey
+* `TauCeti.stabilizer_eq_mackeySubgroup_subgroupOf`: the stabilizer of `sH` in `K` is the Mackey
   subgroup.
 * `TauCeti.mackeySubgroup_conj`: changing the double-coset representative conjugates the Mackey
   subgroup.
-* `TauCeti.preimage_orbit_eq_doubleCoset`: the double coset `KsH` is the preimage of the `K`-orbit
-  of `sH`.
 * `TauCeti.card_orbit_eq_relIndex`: the `K`-orbit of `sH` has as many elements as the Mackey
   subgroup has index in `K`.
 * `TauCeti.relIndex_mackeySubgroup_conj`: that index depends only on the double coset.
@@ -87,35 +85,26 @@ namespace TauCeti
 
 variable {G : Type*} [Group G]
 
-section Stabilizer
-
-/-- The stabilizer of the coset `sH`, for the translation action of `G` on `G ⧸ H`, is the
-conjugate subgroup `sHs⁻¹`.  This is Mathlib's `MulAction.stabilizer_quotient` transported off the
-trivial coset along `MulAction.stabilizer_smul_eq_stabilizer_map_conj`. -/
-theorem stabilizer_quotientGroup_mk (H : Subgroup G) (s : G) :
-    stabilizer G ((s : G ⧸ H)) = MulAut.conj s • H := by
-  rw [show ((s : G) : G ⧸ H) = s • ((1 : G) : G ⧸ H) by
-      rw [Quotient.smul_coe, smul_eq_mul, mul_one],
-    stabilizer_smul_eq_stabilizer_map_conj, stabilizer_quotient, Subgroup.pointwise_smul_def]
-  rfl
-
-end Stabilizer
-
 /-- The **Mackey subgroup** `K ⊓ sHs⁻¹`: the subgroup carrying the summand of the Mackey
 decomposition attached to the double coset `KsH`.
 
 It comes with the two inclusions `TauCeti.mackeyToConjH` into `sHs⁻¹`, along which the conjugate
 representation `{}^s A` is restricted, and `TauCeti.mackeyToK` into `K`, along which the result is
 induced. -/
-@[expose] def mackeySubgroup (s : G) (H K : Subgroup G) : Subgroup G :=
+def mackeySubgroup (s : G) (H K : Subgroup G) : Subgroup G :=
   K ⊓ MulAut.conj s • H
 
 variable {s : G} {H K : Subgroup G}
 
+/-- The Mackey subgroup unfolded: it is the intersection of `K` with the conjugate `sHs⁻¹`. -/
+theorem mackeySubgroup_def (s : G) (H K : Subgroup G) :
+    mackeySubgroup s H K = K ⊓ MulAut.conj s • H :=
+  (rfl)
+
 @[simp]
 theorem mem_mackeySubgroup_iff {x : G} :
     x ∈ mackeySubgroup s H K ↔ x ∈ K ∧ s⁻¹ * x * s ∈ H := by
-  simp [mackeySubgroup]
+  simp [mackeySubgroup_def]
 
 theorem mackeySubgroup_le_left : mackeySubgroup s H K ≤ K :=
   inf_le_left
@@ -125,22 +114,22 @@ theorem mackeySubgroup_le_conj : mackeySubgroup s H K ≤ MulAut.conj s • H :=
 
 variable (s H K) in
 /-- The inclusion of the Mackey subgroup into `K`, along which the Mackey summand is induced. -/
-@[expose] def mackeyToK : mackeySubgroup s H K →* K :=
+def mackeyToK : mackeySubgroup s H K →* K :=
   Subgroup.inclusion mackeySubgroup_le_left
 
 variable (s H K) in
 /-- The inclusion of the Mackey subgroup into `sHs⁻¹`, along which the conjugate representation
 `{}^s A` is restricted. -/
-@[expose] def mackeyToConjH : mackeySubgroup s H K →* (MulAut.conj s • H : Subgroup G) :=
+def mackeyToConjH : mackeySubgroup s H K →* (MulAut.conj s • H : Subgroup G) :=
   Subgroup.inclusion mackeySubgroup_le_conj
 
 @[simp]
 theorem coe_mackeyToK (x : mackeySubgroup s H K) : (mackeyToK s H K x : G) = (x : G) :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem coe_mackeyToConjH (x : mackeySubgroup s H K) : (mackeyToConjH s H K x : G) = (x : G) :=
-  rfl
+  (rfl)
 
 theorem mackeyToK_injective : Function.Injective (mackeyToK s H K) :=
   Subgroup.inclusion_injective _
@@ -152,26 +141,26 @@ section Special
 
 @[simp]
 theorem mackeySubgroup_one (H K : Subgroup G) : mackeySubgroup 1 H K = K ⊓ H := by
-  rw [mackeySubgroup, conj_one_smul]
+  rw [mackeySubgroup_def, conj_one_smul]
 
 /-- A representative lying in `H` gives back the plain intersection `K ⊓ H`. -/
 theorem mackeySubgroup_of_mem (hs : s ∈ H) : mackeySubgroup s H K = K ⊓ H := by
-  rw [mackeySubgroup, Subgroup.conj_smul_eq_self_of_mem hs]
+  rw [mackeySubgroup_def, Subgroup.conj_smul_eq_self_of_mem hs]
 
 /-- For a normal `H` the Mackey subgroup does not depend on the representative at all: it is
 `K ⊓ H` for every `s`.  This is why Clifford theory over a normal subgroup only ever sees the one
 intersection. -/
 theorem mackeySubgroup_of_normal [H.Normal] : mackeySubgroup s H K = K ⊓ H := by
-  rw [mackeySubgroup, Subgroup.Normal.conj_smul_eq_self]
+  rw [mackeySubgroup_def, Subgroup.Normal.conj_smul_eq_self]
 
 /-- Inducing from the whole group leaves nothing to intersect: the Mackey subgroup is `K`. -/
 @[simp]
-theorem mackeySubgroup_top_left (s : G) (K : Subgroup G) : mackeySubgroup s ⊤ K = K := by
+theorem mackeySubgroup_top_right (s : G) (K : Subgroup G) : mackeySubgroup s ⊤ K = K := by
   ext x; simp
 
 /-- Restricting to the whole group leaves the bare conjugate `sHs⁻¹`. -/
 @[simp]
-theorem mackeySubgroup_top_right (s : G) (H : Subgroup G) :
+theorem mackeySubgroup_top_left (s : G) (H : Subgroup G) :
     mackeySubgroup s H ⊤ = MulAut.conj s • H := by
   ext x; simp
 
@@ -184,8 +173,9 @@ section Representative
 replaces `K ⊓ sHs⁻¹` by its conjugate `k (K ⊓ sHs⁻¹) k⁻¹`. -/
 theorem mackeySubgroup_conj {k h : G} (hk : k ∈ K) (hh : h ∈ H) :
     mackeySubgroup (k * s * h) H K = MulAut.conj k • mackeySubgroup s H K := by
-  rw [mackeySubgroup, mackeySubgroup, Subgroup.smul_inf, Subgroup.conj_smul_eq_self_of_mem hk,
-    conj_mul_smul, conj_mul_smul, Subgroup.conj_smul_eq_self_of_mem hh]
+  rw [mackeySubgroup_def, mackeySubgroup_def, Subgroup.smul_inf,
+    Subgroup.conj_smul_eq_self_of_mem hk, conj_mul_smul, conj_mul_smul,
+    Subgroup.conj_smul_eq_self_of_mem hh]
 
 /-- The Mackey subgroups of two representatives of one double coset are isomorphic, by
 conjugation.  This is the invariance that makes the *index* of the Mackey subgroup, and hence the
@@ -205,61 +195,33 @@ theorem coe_mackeySubgroupCongr_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s
 theorem coe_mackeySubgroupCongr_symm_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s : G)
     (y : mackeySubgroup (k * s * h) H K) :
     ((mackeySubgroupCongr hk hh s).symm y : G) = k⁻¹ * (y : G) * k := by
-  conv_rhs =>
-    rw [show (y : G) = k * ((mackeySubgroupCongr hk hh s).symm y : G) * k⁻¹ from by
-      rw [← coe_mackeySubgroupCongr_apply hk hh s, MulEquiv.apply_symm_apply]]
-  group
+  have hy : k * ((mackeySubgroupCongr hk hh s).symm y : G) * k⁻¹ = (y : G) := by
+    rw [← coe_mackeySubgroupCongr_apply hk hh s, MulEquiv.apply_symm_apply]
+  rw [← hy]
+  simp [mul_assoc]
 
 end Representative
 
 section Orbit
 
-/-- The double coset `KsH` consists exactly of those `x` whose class in `G ⧸ H` lies in the
-`K`-orbit of the class of `s`. -/
-theorem mem_doubleCoset_iff_mk_mem_orbit (s : G) (H K : Subgroup G) {x : G} :
-    x ∈ DoubleCoset.doubleCoset s (K : Set G) (H : Set G) ↔
-      ((x : G ⧸ H)) ∈ orbit K ((s : G ⧸ H)) := by
-  rw [DoubleCoset.mem_doubleCoset, mem_orbit_iff]
-  constructor
-  · rintro ⟨k, hk, h, hh, rfl⟩
-    refine ⟨⟨k, hk⟩, ?_⟩
-    change ((k * s : G) : G ⧸ H) = ((k * s * h : G) : G ⧸ H)
-    rw [QuotientGroup.eq, show (k * s)⁻¹ * (k * s * h) = h by group]
-    exact hh
-  · rintro ⟨⟨k, hk⟩, hkx⟩
-    refine ⟨k, hk, (k * s)⁻¹ * x, ?_, by group⟩
-    have : ((k * s : G) : G ⧸ H) = ((x : G) : G ⧸ H) := hkx
-    rwa [QuotientGroup.eq] at this
-
-/-- The double coset `KsH` is the preimage, under `G → G ⧸ H`, of the `K`-orbit of the coset `sH`.
-So the partition of `G` into `K`-`H` double cosets is the partition of `G ⧸ H` into `K`-orbits. -/
-theorem preimage_orbit_eq_doubleCoset (s : G) (H K : Subgroup G) :
-    QuotientGroup.mk ⁻¹' (orbit K ((s : G ⧸ H)))
-      = DoubleCoset.doubleCoset s (K : Set G) (H : Set G) :=
-  Set.ext fun _ => (mem_doubleCoset_iff_mk_mem_orbit s H K).symm
-
 /-- **The Mackey subgroup is a stabilizer**: it is the stabilizer of the coset `sH` for the
 translation action of `K` on `G ⧸ H`, read as a subgroup of `K`. -/
-theorem stabilizer_subgroup_eq_subgroupOf (s : G) (H K : Subgroup G) :
+theorem stabilizer_eq_mackeySubgroup_subgroupOf (s : G) (H K : Subgroup G) :
     stabilizer (↥K) ((s : G ⧸ H)) = (mackeySubgroup s H K).subgroupOf K := by
   ext g
-  rw [Subgroup.mem_subgroupOf, mem_mackeySubgroup_iff, mem_stabilizer_iff]
-  constructor
-  · intro hg
-    have : (g : G) ∈ stabilizer G ((s : G ⧸ H)) := hg
-    rw [stabilizer_quotientGroup_mk, mem_conj_smul] at this
-    exact ⟨g.2, this⟩
-  · rintro ⟨-, hg⟩
-    have : (g : G) ∈ stabilizer G ((s : G ⧸ H)) := by
-      rw [stabilizer_quotientGroup_mk, mem_conj_smul]; exact hg
-    exact this
+  -- `K` acts on `G ⧸ H` through `Subgroup.subtype K`, so stabilizing in `K` is stabilizing in
+  -- `G` while lying in `K`, and `stabilizer_quotientGroup_mk` identifies the latter with `sHs⁻¹`.
+  rw [Subgroup.mem_subgroupOf, mem_mackeySubgroup_iff, mem_stabilizer_iff,
+    compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, ← mem_stabilizer_iff,
+    stabilizer_quotientGroup_mk, mem_conj_smul]
+  exact ⟨fun hg => ⟨g.2, hg⟩, fun hg => hg.2⟩
 
 /-- **Orbit-stabilizer for the Mackey subgroup**: the `K`-orbit of the coset `sH` has as many
 elements as the Mackey subgroup has index in `K`. -/
 theorem card_orbit_eq_relIndex (s : G) (H K : Subgroup G) :
     Nat.card (orbit K ((s : G ⧸ H))) = (mackeySubgroup s H K).relIndex K := by
-  rw [Subgroup.relIndex, ← stabilizer_subgroup_eq_subgroupOf]
-  exact Nat.card_congr (orbitEquivQuotientStabilizer K _)
+  rw [Subgroup.relIndex, ← stabilizer_eq_mackeySubgroup_subgroupOf, Nat.card_coe_set_eq]
+  exact (index_stabilizer K _).symm
 
 /-- If `H` has finite index in `G` then the Mackey subgroup has finite index in `K`, so the Mackey
 summand attached to `s` is induced along a finite-index inclusion. -/
