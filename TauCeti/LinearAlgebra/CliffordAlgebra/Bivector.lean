@@ -242,7 +242,7 @@ theorem cliffordBivector_lie_cliffordBivector (a b c d : M) :
 
 /-- The range of the exterior-square Clifford bivector map is closed under the ambient Clifford
 commutator. -/
-theorem lie_mem_cliffordBivectorExterior_range {x y : CliffordAlgebra Q}
+private theorem lie_mem_cliffordBivectorExterior_range {x y : CliffordAlgebra Q}
     (hx : x ∈ LinearMap.range (cliffordBivectorExterior Q))
     (hy : y ∈ LinearMap.range (cliffordBivectorExterior Q)) :
     ⁅x, y⁆ ∈ LinearMap.range (cliffordBivectorExterior Q) := by
