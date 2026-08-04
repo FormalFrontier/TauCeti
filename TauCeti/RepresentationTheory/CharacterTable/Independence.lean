@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
 public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
-public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+public import Mathlib.LinearAlgebra.Dimension.Finite
 
 /-!
 # Irreducible characters are linearly independent
@@ -25,13 +25,12 @@ would also have to be the cross pairing `0`. And a family of pairwise inequivale
 has at most as many members as `G` has conjugacy classes, because the class functions have
 exactly that dimension.
 
-That last bound is in fact an equality, but the matching lower bound is the count of Layer 2 of
-the roadmap: `TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix` supplies it for the
-Wedderburn blocks of `k[G]`, which are not yet matched up with the irreducible representations
-themselves. The final section records what that equality buys once it is available: a family of
-pairwise inequivalent irreducibles indexed by as many indices as `G` has conjugacy classes is a
-*basis* of the class functions, so its characters span them. This is the completeness statement
-of Layer 3, conditional on the count.
+That last bound is in fact an equality, and the equality would upgrade the linear independence
+proved here to a basis of the class functions. The matching lower bound is the count of Layer 2
+of the roadmap, and it is not available: `TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix`
+supplies it for the Wedderburn blocks of `k[G]`, which are not yet matched up with the
+irreducible representations themselves. So the completeness half of Layer 3 waits on that count
+and is not stated here; what this file proves is the inequality.
 
 ## Main results
 
@@ -46,10 +45,6 @@ of Layer 3, conditional on the count.
 * `TauCeti.ClassFunction.card_le_card_conjClasses` and
   `TauCeti.ClassFunction.card_le_card_conjClasses_fdRep`: **there are at most as many pairwise
   inequivalent irreducibles as there are conjugacy classes**.
-* `TauCeti.ClassFunction.characterBasis` and
-  `TauCeti.ClassFunction.span_range_ofCharacter_eq_top`: as many pairwise inequivalent
-  irreducible characters as there are conjugacy classes form a basis of the class functions, and
-  therefore span them.
 
 ## Implementation notes
 
@@ -60,7 +55,7 @@ so they ask for `Finite G` and produce the `Fintype` inside the proof.
 ## References
 
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-  Layer 3, the completeness item.
+  Layer 3, the orthonormality-to-independence half of the completeness item.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.8 and Corollary 2.9.
 -/
 
@@ -240,37 +235,6 @@ theorem card_le_card_conjClasses_fdRep (X : ι → FDRep k G) [∀ i, CategoryTh
   rwa [finrank_eq_card_conjClasses] at hle
 
 end Counting
-
-/-! ### Completeness, given the count -/
-
-section Complete
-
-variable (ρ : ∀ i, Representation k G (V i)) [∀ i, (ρ i).IsIrreducible]
-  (h : Pairwise fun i j => IsEmpty ((ρ i).Equiv (ρ j)))
-  (hcard : Fintype.card ι = Nat.card (ConjClasses G))
-
-include h hcard
-
-/-- As many pairwise inequivalent irreducible characters as `G` has conjugacy classes form a
-basis of the class functions. The cardinality hypothesis is the count of Layer 2 of the roadmap,
-so it is taken as an input here rather than derived. -/
-noncomputable def characterBasis : Module.Basis ι k (ClassFunction k G) :=
-  letI := Fintype.ofFinite G
-  basisOfLinearIndependentOfCardEqFinrank' (fun i => ofCharacter (ρ i))
-    (linearIndependent_ofCharacter ρ h) (by rw [hcard, finrank_eq_card_conjClasses])
-
-@[simp]
-theorem coe_characterBasis : ⇑(characterBasis ρ h hcard) = fun i => ofCharacter (ρ i) := by
-  let _ := Fintype.ofFinite G
-  exact coe_basisOfLinearIndependentOfCardEqFinrank' ..
-
-/-- **Completeness, given the count**: as many pairwise inequivalent irreducible characters as
-`G` has conjugacy classes span the class functions. -/
-theorem span_range_ofCharacter_eq_top :
-    Submodule.span k (Set.range fun i => ofCharacter (ρ i)) = ⊤ := by
-  simpa using (characterBasis ρ h hcard).span_eq
-
-end Complete
 
 end ClassFunction
 
