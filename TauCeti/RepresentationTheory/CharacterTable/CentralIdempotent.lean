@@ -44,7 +44,7 @@ sum, and is not proved here.
 * `TauCeti.Representation.characterSum`: the group-algebra element `∑_g χ(g⁻¹) g`, with
   `TauCeti.Representation.characterSumCenter` the same element read in the centre.
 * `TauCeti.Representation.primitiveCentralIdempotent`: the element
-  `e_ρ = (χ(1) / |G|) ∑_g χ(g⁻¹) g`, with
+  `e_ρ = (χ(1) / |G|) ∑_g χ(g⁻¹) g` of an irreducible representation, with
   `TauCeti.Representation.primitiveCentralIdempotentCenter` the same element read in the centre.
 
 ## Main statements
@@ -85,7 +85,7 @@ variable {k : Type u} {G : Type v} {V : Type w} {W : Type*}
 variable [Field k] [Group G] [AddCommGroup V] [Module k V] [AddCommGroup W] [Module k W]
 variable (ρ : Representation k G V) (σ : Representation k G W)
 
-/-! ### The character sum and its normalization -/
+/-! ### The character sum -/
 
 section Defs
 
@@ -136,55 +136,6 @@ noncomputable def characterSumCenter : Subalgebra.center k k[G] :=
 @[simp]
 theorem characterSumCenter_coe : (characterSumCenter ρ : k[G]) = characterSum ρ :=
   rfl
-
-/-- **The primitive central idempotent** `e_ρ = (χ(1) / |G|) ∑_g χ(g⁻¹) g` of a representation.
-
-For an irreducible `ρ` over an algebraically closed field whose characteristic does not divide `|G|`
-this is the Wedderburn projector onto the block of `ρ`: it acts as the identity on `ρ` and as zero
-on every irreducible representation not isomorphic to `ρ`, by
-`TauCeti.Representation.asAlgebraHom_primitiveCentralIdempotent`. That property forces the
-normalization, and needs `|G|` to be invertible in `k`.
-
-The formula makes sense for any representation, and the definition is stated at that generality; the
-name records the case the idempotence and orthogonality statements below are about, where `ρ` is
-irreducible. -/
-noncomputable def primitiveCentralIdempotent : k[G] :=
-  ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSum ρ
-
-/-- The coefficients of the primitive central idempotent.
-
-This is the simp normal form: the definition is evaluated to the coefficient
-`(χ(1) / |G|) · χ(g⁻¹)`. -/
-@[simp]
-theorem primitiveCentralIdempotent_coeff (g : G) :
-    (primitiveCentralIdempotent ρ).coeff g =
-      (Nat.card G : k)⁻¹ * ρ.character 1 * ρ.character g⁻¹ := by
-  simp [primitiveCentralIdempotent]
-
-/-- The primitive central idempotent lies in the centre of the group algebra. -/
-theorem primitiveCentralIdempotent_mem_center :
-    primitiveCentralIdempotent ρ ∈ Subalgebra.center k k[G] :=
-  Subalgebra.smul_mem _ (characterSum_mem_center ρ) _
-
-/-- The primitive central idempotent, read as an element of the centre of the group algebra. -/
-@[expose]
-noncomputable def primitiveCentralIdempotentCenter : Subalgebra.center k k[G] :=
-  ⟨primitiveCentralIdempotent ρ, primitiveCentralIdempotent_mem_center ρ⟩
-
-/-- The underlying group-algebra element of the central primitive idempotent is the primitive
-central idempotent. -/
-@[simp]
-theorem primitiveCentralIdempotentCenter_coe :
-    (primitiveCentralIdempotentCenter ρ : k[G]) = primitiveCentralIdempotent ρ :=
-  rfl
-
-/-- The primitive central idempotent is the character sum rescaled by `χ(1) / |G|`, in the
-centre. -/
-theorem primitiveCentralIdempotentCenter_eq_smul :
-    primitiveCentralIdempotentCenter ρ =
-      ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSumCenter ρ := by
-  apply Subtype.ext
-  simp [primitiveCentralIdempotent]
 
 /-- The action of the character sum of `ρ` on a representation `σ`, as a linear combination of the
 operators of `σ`. -/
@@ -304,8 +255,60 @@ end Degree
 
 section Idempotent
 
-variable [Fintype G] [FiniteDimensional k V] [FiniteDimensional k W] [IsAlgClosed k]
+variable [Fintype G]
+
+/-- **The primitive central idempotent** `e_ρ = (χ(1) / |G|) ∑_g χ(g⁻¹) g` of an irreducible
+representation over an algebraically closed field whose characteristic does not divide `|G|`.
+
+It is the Wedderburn projector onto the block of `ρ`: it acts as the identity on `ρ` and as zero on
+every irreducible representation not isomorphic to `ρ`, by
+`TauCeti.Representation.asAlgebraHom_primitiveCentralIdempotent`. That property forces the
+normalization, and it is what makes the element idempotent
+(`TauCeti.Representation.isIdempotentElem_primitiveCentralIdempotent`); the hypotheses are exactly
+the ones the idempotence needs, so the definition is stated with them rather than for a bare
+formula. Use `TauCeti.Representation.characterSum` for the unnormalized element `∑_g χ(g⁻¹) g`,
+which is defined for every representation. -/
+noncomputable def primitiveCentralIdempotent [FiniteDimensional k V] [IsAlgClosed k]
+    [Invertible (Nat.card G : k)] [ρ.IsIrreducible] : k[G] :=
+  ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSum ρ
+
+variable [FiniteDimensional k V] [FiniteDimensional k W] [IsAlgClosed k]
 variable [Invertible (Nat.card G : k)] [ρ.IsIrreducible] [σ.IsIrreducible]
+
+/-- The coefficients of the primitive central idempotent.
+
+This is the simp normal form: the definition is evaluated to the coefficient
+`(χ(1) / |G|) · χ(g⁻¹)`. -/
+@[simp]
+theorem primitiveCentralIdempotent_coeff (g : G) :
+    (primitiveCentralIdempotent ρ).coeff g =
+      (Nat.card G : k)⁻¹ * ρ.character 1 * ρ.character g⁻¹ := by
+  simp [primitiveCentralIdempotent]
+
+/-- The primitive central idempotent lies in the centre of the group algebra. -/
+theorem primitiveCentralIdempotent_mem_center :
+    primitiveCentralIdempotent ρ ∈ Subalgebra.center k k[G] :=
+  Subalgebra.smul_mem _ (characterSum_mem_center ρ) _
+
+/-- The primitive central idempotent, read as an element of the centre of the group algebra. -/
+@[expose]
+noncomputable def primitiveCentralIdempotentCenter : Subalgebra.center k k[G] :=
+  ⟨primitiveCentralIdempotent ρ, primitiveCentralIdempotent_mem_center ρ⟩
+
+/-- The underlying group-algebra element of the central primitive idempotent is the primitive
+central idempotent. -/
+@[simp]
+theorem primitiveCentralIdempotentCenter_coe :
+    (primitiveCentralIdempotentCenter ρ : k[G]) = primitiveCentralIdempotent ρ :=
+  rfl
+
+/-- The primitive central idempotent is the character sum rescaled by `χ(1) / |G|`, in the
+centre. -/
+theorem primitiveCentralIdempotentCenter_eq_smul :
+    primitiveCentralIdempotentCenter ρ =
+      ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSumCenter ρ := by
+  apply Subtype.ext
+  simp [primitiveCentralIdempotent]
 
 open scoped Classical in
 /-- **An irreducible representation sees `e_ρ` as `1` or as `0`**, according to whether it is
