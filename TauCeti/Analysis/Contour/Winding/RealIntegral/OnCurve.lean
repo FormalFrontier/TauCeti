@@ -51,7 +51,7 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.isBddIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossings`
+* `TauCeti.Contour.isBounded_windingNumber_eq_real_integral_of_closed_of_interior_crossings`
   — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
   interior.
 
@@ -266,7 +266,7 @@ private theorem intervalIntegrable_realWindingIntegrand_window_left {γ : ℝ �
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
 /-- **Gluing interval-integrability of the real winding integrand along the sorted crossing
-list.** An instance of `sorted_crossing_gluing_aux`: only needs `IntervalIntegrable.trans` to
+list.** An instance of `sorted_crossing_gluing_induction`: only needs `IntervalIntegrable.trans` to
 concatenate plain pieces with windows — no limiting value to track. -/
 private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A b r m : ℝ}
     (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) →
@@ -278,7 +278,7 @@ private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A 
         (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume (t - r) (t + r)) →
       (∀ u ∈ Icc a b, (∀ t ∈ sorted, u ∉ Ioo (t - r) (t + r)) → m ≤ ‖γ u - s‖) →
       IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b :=
-  sorted_crossing_gluing_aux h_piece (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
+  sorted_crossing_gluing_induction h_piece (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
 
 /-! ### Boundedness of the derivative of a piecewise-`C¹` curve -/
 
@@ -308,14 +308,14 @@ private theorem isBounded_image_deriv_of_contDiffOn {γ : ℝ → ℂ} {c d : �
     (lt_of_le_of_ne ht.2 htd))⟩
 
 /-- Gluing step for `isBounded_image_deriv_Icc`: boundedness of the derivative's image on any
-subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_aux`, shared with
+subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_induction`, shared with
 `IsPiecewiseC1On.intervalIntegrable_deriv`'s identical breakpoint-splitting induction. -/
 private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Finset ℝ}
     (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
       ContDiffOn ℝ 1 γ (Icc c d)) :
     ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
       Bornology.IsBounded (deriv γ '' Icc c d) :=
-  piecewise_gluing_aux
+  piecewise_gluing_induction
     (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
     (fun c m d hcm hmd h₁ h₂ => by
       -- Split at the shared breakpoint `m` so the two pieces' boundedness facts `h₁`, `h₂`
@@ -426,7 +426,7 @@ actual content of HW Prop 2.3. The two sides of a crossing need not agree: `hγ_
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem isBddIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossings
+theorem isBounded_windingNumber_eq_real_integral_of_closed_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)

@@ -47,9 +47,9 @@ simple-pole and higher-order per-window theorems both discharge them.
   difference of a real boundary function `Ψ`, given only the real part of each piece and window
   value. Weaker than the telescoping form's shared complex antiderivative `Φ`, so it applies even
   when different windows need different branch choices for their imaginary part.
-* `Contour.sorted_crossing_gluing_aux` — the sorted-crossing-list geometry underlying the above,
-  generalized to glue an arbitrary invariant `Q : ℝ → ℝ → Prop` (not just `HasCauchyPVAt` with an
-  explicit `windowPieceSum` value) across the windows; reused by callers that only need a
+* `Contour.sorted_crossing_gluing_induction` — the sorted-crossing-list geometry underlying the
+  above, generalized to glue an arbitrary invariant `Q : ℝ → ℝ → Prop` (not just `HasCauchyPVAt`
+  with an explicit `windowPieceSum` value) across the windows; reused by callers that only need a
   `Prop`-valued conclusion, e.g. interval-integrability.
 
 ## Provenance
@@ -118,7 +118,7 @@ arbitrary invariant `Q : ℝ → ℝ → Prop` closed under concatenation at a s
 with no explicit aggregated value tracked. Reach for `hasCauchyPVAt_along_sorted` instead when the
 conclusion needs the explicit `windowPieceSum` value (e.g. to pin its real part); this form is for
 callers whose invariant is a bare `Prop`, e.g. interval-integrability. -/
-theorem sorted_crossing_gluing_aux {γ : ℝ → ℂ} {s : ℂ} {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
+theorem sorted_crossing_gluing_induction {γ : ℝ → ℂ} {s : ℂ} {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
     (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) → Q l u)
     (hglue : ∀ l u₀ u : ℝ, l ≤ u₀ → u₀ ≤ u → Q l u₀ → Q u₀ u → Q l u) :
     ∀ (sorted : List ℝ), sorted.SortedLT → (sorted ≠ [] → 0 ≤ r) →
