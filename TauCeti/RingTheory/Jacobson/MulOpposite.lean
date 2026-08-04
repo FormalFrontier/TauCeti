@@ -8,7 +8,6 @@ public import Mathlib.RingTheory.HopkinsLevitzki
 public import Mathlib.RingTheory.Jacobson.Ideal
 public import Mathlib.RingTheory.SimpleModule.WedderburnArtin
 public import TauCeti.Algebra.Ring.Units
-import Mathlib.RingTheory.Ideal.Quotient.Operations
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -131,8 +130,11 @@ theorem coe_jacobson_mulOpposite (R : Type*) [Ring R] :
 
 /-- The symmetry passes to the powers of the radical: `op` reverses products, so a product of `n`
 elements of `Ring.jacobson R` is the opposite of a product of `n` elements of
-`Ring.jacobson Rᵐᵒᵖ`, taken in the other order. -/
-theorem op_mem_jacobson_pow (n : ℕ) (x : R) (hx : x ∈ Ring.jacobson R ^ n) :
+`Ring.jacobson Rᵐᵒᵖ`, taken in the other order.
+
+This is the forward half of `TauCeti.Ring.op_mem_jacobson_mulOpposite_pow_iff`, which is the form
+to use. -/
+private theorem op_mem_jacobson_pow (n : ℕ) (x : R) (hx : x ∈ Ring.jacobson R ^ n) :
     op x ∈ Ring.jacobson Rᵐᵒᵖ ^ n := by
   induction n generalizing x with
   | zero => rw [Submodule.pow_zero, Ideal.one_eq_top]; exact Submodule.mem_top
@@ -144,8 +146,9 @@ theorem op_mem_jacobson_pow (n : ℕ) (x : R) (hx : x ∈ Ring.jacobson R ^ n) :
     · rw [op_add]
       exact Ideal.add_mem _ ha hb
 
-/-- The converse direction of `TauCeti.Ring.op_mem_jacobson_pow`. -/
-theorem unop_mem_jacobson_pow (n : ℕ) (X : Rᵐᵒᵖ) (hX : X ∈ Ring.jacobson Rᵐᵒᵖ ^ n) :
+/-- The reverse half of `TauCeti.Ring.op_mem_jacobson_mulOpposite_pow_iff`, the same induction run
+in the opposite ring. -/
+private theorem unop_mem_jacobson_pow (n : ℕ) (X : Rᵐᵒᵖ) (hX : X ∈ Ring.jacobson Rᵐᵒᵖ ^ n) :
     X.unop ∈ Ring.jacobson R ^ n := by
   induction n generalizing X with
   | zero => rw [Submodule.pow_zero, Ideal.one_eq_top]; exact Submodule.mem_top
@@ -157,6 +160,19 @@ theorem unop_mem_jacobson_pow (n : ℕ) (X : Rᵐᵒᵖ) (hX : X ∈ Ring.jacobs
     · rw [unop_add]
       exact Ideal.add_mem _ hA hB
 
+/-- The left-right symmetry of the Jacobson radical, at the level of powers: `op x` lies in the
+`n`-th power of `Ring.jacobson Rᵐᵒᵖ` exactly when `x` lies in the `n`-th power of
+`Ring.jacobson R`. -/
+theorem op_mem_jacobson_mulOpposite_pow_iff {x : R} {n : ℕ} :
+    op x ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ x ∈ Ring.jacobson R ^ n :=
+  ⟨unop_mem_jacobson_pow n (op x), op_mem_jacobson_pow n x⟩
+
+/-- `TauCeti.Ring.op_mem_jacobson_mulOpposite_pow_iff` phrased for an element of `Rᵐᵒᵖ`. -/
+@[simp]
+theorem mem_jacobson_mulOpposite_pow_iff {X : Rᵐᵒᵖ} {n : ℕ} :
+    X ∈ Ring.jacobson Rᵐᵒᵖ ^ n ↔ X.unop ∈ Ring.jacobson R ^ n :=
+  op_mem_jacobson_mulOpposite_pow_iff (x := X.unop)
+
 variable (R)
 
 /-- Nilpotence of the Jacobson radical is left-right symmetric: the two radicals have the same
@@ -166,17 +182,17 @@ theorem isNilpotent_jacobson_mulOpposite_iff :
   constructor
   · rintro ⟨n, hn⟩
     refine ⟨n, eq_bot_iff.mpr fun x hx => ?_⟩
-    have hx' := op_mem_jacobson_pow n x hx
+    have hx' := op_mem_jacobson_mulOpposite_pow_iff.mpr hx
     rw [hn] at hx'
     simpa [Ideal.mem_bot] using hx'
   · rintro ⟨n, hn⟩
     refine ⟨n, eq_bot_iff.mpr fun X hX => ?_⟩
-    have hX' := unop_mem_jacobson_pow n X hX
+    have hX' := mem_jacobson_mulOpposite_pow_iff.mp hX
     rw [hn] at hX'
     simpa [Ideal.mem_bot] using hX'
 
 /-- Reduction modulo the Jacobson radical commutes with passing to the opposite ring. -/
-noncomputable def quotientJacobsonMulOppositeRingEquiv :
+@[expose] noncomputable def quotientJacobsonMulOppositeRingEquiv :
     Rᵐᵒᵖ ⧸ Ring.jacobson Rᵐᵒᵖ ≃+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ := by
   let f : Rᵐᵒᵖ →+* (R ⧸ Ring.jacobson R)ᵐᵒᵖ := RingHom.op (Ideal.Quotient.mk (Ring.jacobson R))
   have hf : Function.Surjective f := fun Y => by
@@ -186,6 +202,21 @@ noncomputable def quotientJacobsonMulOppositeRingEquiv :
     ext X
     simp [f, RingHom.mem_ker, Ideal.Quotient.eq_zero_iff_mem]
   exact (Ideal.quotEquivOfEq hker.symm).trans (RingHom.quotientKerEquivOfSurjective hf)
+
+/-- `TauCeti.Ring.quotientJacobsonMulOppositeRingEquiv` is reduction modulo the radical read in
+`Rᵐᵒᵖ`: it sends the class of `op x` to the opposite of the class of `x`. -/
+@[simp]
+theorem quotientJacobsonMulOppositeRingEquiv_mk (x : R) :
+    quotientJacobsonMulOppositeRingEquiv R (Ideal.Quotient.mk (Ring.jacobson Rᵐᵒᵖ) (op x)) =
+      op (Ideal.Quotient.mk (Ring.jacobson R) x) :=
+  rfl
+
+/-- The inverse of `TauCeti.Ring.quotientJacobsonMulOppositeRingEquiv`, on generators. -/
+@[simp]
+theorem quotientJacobsonMulOppositeRingEquiv_symm_op_mk (x : R) :
+    (quotientJacobsonMulOppositeRingEquiv R).symm (op (Ideal.Quotient.mk (Ring.jacobson R) x)) =
+      Ideal.Quotient.mk (Ring.jacobson Rᵐᵒᵖ) (op x) :=
+  (RingEquiv.symm_apply_eq _).mpr (quotientJacobsonMulOppositeRingEquiv_mk R x).symm
 
 /-- Semisimplicity of the quotient by the Jacobson radical is left-right symmetric. -/
 theorem isSemisimpleRing_quotient_jacobson_mulOpposite_iff :
