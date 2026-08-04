@@ -435,7 +435,7 @@ lemma derivationLinearEquivTangentKer_apply_snd
     snd (R := CounitAlgebra R A B)
         ((derivationLinearEquivTangentKer R A B d).toMul.val.ofConv a) = d a := by
   rw [derivationLinearEquivTangentKer_apply_toMul]
-  exact derivationMulEquivTangentKer_apply_snd (.ofAdd d) a
+  simpa only [toAdd_ofAdd] using derivationMulEquivTangentKer_apply_snd (.ofAdd d) a
 
 /-- The inverse linear equivalence evaluates a tangent point at `a` by taking its
 second component at `a`. -/
