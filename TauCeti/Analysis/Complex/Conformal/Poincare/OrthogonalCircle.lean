@@ -50,10 +50,11 @@ diameter `Im (conj u * z) = 0`.
   which is what makes `Im (conj u * a)` the geometric discriminator of the case split below.
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq` — a geodesic through the origin
   traces the Euclidean diameter in its direction.
-* `TauCeti.orthogonalCircleCenter` and `TauCeti.orthogonalCircleRadius` — the centre and the
-  radius of the Euclidean circle traced by a hyperbolic line missing the origin, together with
-  `TauCeti.orthogonalCircleRadius_pos` and the orthogonality relation
-  `TauCeti.sq_norm_orthogonalCircleCenter`.
+* `TauCeti.orthogonalCircleCenter` and `TauCeti.orthogonalCircleRadius` — the centre and radius
+  parameters read off by completing the square, which for `‖u‖ = 1`, `‖a‖ < 1` and
+  `Im (conj u * a) ≠ 0` are the centre and radius of the Euclidean circle traced by a hyperbolic
+  line missing the origin, together with `TauCeti.orthogonalCircleRadius_pos` and the
+  orthogonality relation `TauCeti.sq_norm_orthogonalCircleCenter`.
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — a geodesic line
   missing the origin traces `ball 0 1 ∩ sphere c R` for that Euclidean circle, which is
   **orthogonal to the unit circle**, `‖c‖ ^ 2 = R ^ 2 + 1`.
@@ -159,21 +160,29 @@ private lemma mul_normSq_sub_sub_sq {A R : ℝ} {B c : ℂ} (hA : A ≠ 0)
 
 /-! ### The centre and radius of the orthogonal circle -/
 
-/-- The centre of the Euclidean circle traced by the hyperbolic line through `a` in direction `u`.
-Completing the square in the geodesic equation `Im (B * z) = A * (‖z‖ ^ 2 + 1)` of
-`TauCeti.im_conj_mul_sub_mul_one_sub_mul_conj` gives `c = I * conj B / (2 * A)`, with
-`A = Im (conj u * a)` and `B = conj u - u * conj a ^ 2`; it is the centre of a genuine circle
-exactly when `A ≠ 0`, that is when the line misses the origin. -/
+/-- The centre parameter `c = I * conj B / (2 * A)`, with `A = Im (conj u * a)` and
+`B = conj u - u * conj a ^ 2`, read off by completing the square in the geodesic equation
+`Im (B * z) = A * (‖z‖ ^ 2 + 1)` of `TauCeti.im_conj_mul_sub_mul_one_sub_mul_conj`.
+
+Nothing is asked of `u` or `a` here, so on its own this is an algebraic parameter: at `A = 0` the
+division is by zero and the value is `0`, and `A ≠ 0` alone does not make it the centre of a
+genuine circle, since the companion radius `TauCeti.orthogonalCircleRadius u a` vanishes at
+`‖a‖ = 1` and is negative beyond. It is the centre of the Euclidean circle traced by the
+hyperbolic line through `a` in direction `u` under the hypotheses `‖u‖ = 1`, `‖a‖ < 1` and
+`A ≠ 0` of `TauCeti.setOf_im_eq_ball_inter_sphere`, the last of which says that that line misses
+the origin. -/
 noncomputable def orthogonalCircleCenter (u a : ℂ) : ℂ :=
   I * conj (conj u - u * conj a ^ 2) / ((2 * (conj u * a).im : ℝ) : ℂ)
 
 /-- The quantity `R = (1 - ‖a‖ ^ 2) / (2 * |A|)`, with `A = Im (conj u * a)`, read off by
 completing the square as in `TauCeti.orthogonalCircleCenter`.
 
-Nothing is asked of `a` here, so this is a signed algebraic parameter, negative for `‖a‖ > 1` (at
-`u = 1` and `a = 2 * I` it is `-3/4`). It is the radius of a genuine Euclidean circle — the one
-traced by the hyperbolic line through `a` in direction `u` — under the hypotheses `‖a‖ < 1` and
-`A ≠ 0` of `TauCeti.orthogonalCircleRadius_pos`. -/
+Nothing is asked of `u` or `a` here, so this is a signed algebraic parameter, negative for
+`‖a‖ > 1` (at `u = 1` and `a = 2 * I` it is `-3/4`). Under `‖a‖ < 1` and `A ≠ 0` it is positive
+(`TauCeti.orthogonalCircleRadius_pos`), but it is the radius of the Euclidean circle traced by the
+hyperbolic line through `a` in direction `u` only once `‖u‖ = 1` as well
+(`TauCeti.setOf_im_eq_ball_inter_sphere`): unlike the centre, `R` is not invariant under
+rescaling `u`, because `A` scales with `u` while the numerator does not. -/
 noncomputable def orthogonalCircleRadius (u a : ℂ) : ℝ :=
   (1 - ‖a‖ ^ 2) / (2 * |(conj u * a).im|)
 
@@ -190,9 +199,12 @@ lemma orthogonalCircleRadius_def (u a : ℂ) :
     orthogonalCircleRadius u a = (1 - ‖a‖ ^ 2) / (2 * |(conj u * a).im|) := by
   rw [orthogonalCircleRadius]
 
-/-- **The circle of a hyperbolic line off the origin is a genuine circle.** Its radius is
-positive: `‖a‖ < 1` makes the numerator positive and `Im (conj u * a) ≠ 0`, which says that the
-line misses the origin, makes the denominator positive. -/
+/-- **The radius parameter is positive on the disc, away from the origin.** `‖a‖ < 1` makes the
+numerator positive and `Im (conj u * a) ≠ 0` makes the denominator positive; no unit direction is
+needed for that. At `‖u‖ = 1` the second hypothesis says that the hyperbolic line through `a` in
+direction `u` misses the origin, and positivity is then what makes the Euclidean set that line
+traces a genuine circle rather than a point or the empty set
+(`TauCeti.setOf_im_eq_ball_inter_sphere`). -/
 lemma orthogonalCircleRadius_pos {u a : ℂ} (ha : ‖a‖ < 1) (hA : (conj u * a).im ≠ 0) :
     0 < orthogonalCircleRadius u a := by
   rw [orthogonalCircleRadius_def]
