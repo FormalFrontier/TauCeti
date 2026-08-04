@@ -18,6 +18,7 @@ one-parameter-subgroup law.
 
 * `contMDiffAt_mulInvariantExp_modelSpace_zero`: the tangent-space exponential is smooth at zero.
 * `contMDiff_mulInvariantExp`: the tangent-space exponential is smooth everywhere.
+* `contMDiff_lieExp`: the derivation-based Lie-group exponential is smooth everywhere.
 
 ## References
 
@@ -389,3 +390,32 @@ theorem contMDiff_mulInvariantExp
     _ = mulInvariantExp (I := I) (G := G) (y : GroupLieAlgebra I G) := by
       congr 1
       rw [← Nat.cast_smul_eq_nsmul ℝ, smul_smul, mul_inv_cancel₀ (by exact_mod_cast hm0), one_smul]
+
+/-- The derivation-based exponential of a finite-dimensional smooth Lie group is smooth. -/
+theorem contMDiff_lieExp
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    let _ : NormedAddCommGroup (LeftInvariantDerivation I G) :=
+      leftInvariantDerivationNormedAddCommGroup (E := E) (H := H) (I := I) (G := G)
+        BoundarylessManifold.isInteriorPoint
+    let _ : NormedSpace ℝ (LeftInvariantDerivation I G) :=
+      leftInvariantDerivationNormedSpace (E := E) (H := H) (I := I) (G := G)
+        BoundarylessManifold.isInteriorPoint
+    ContMDiff (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I ∞
+      (lieExp (I := I) (G := G)) := by
+  let _ := leftInvariantDerivationNormedAddCommGroup (E := E) (H := H) (I := I) (G := G)
+    BoundarylessManifold.isInteriorPoint
+  let _ := leftInvariantDerivationNormedSpace (E := E) (H := H) (I := I) (G := G)
+    BoundarylessManifold.isInteriorPoint
+  let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
+    finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
+  let e : LeftInvariantDerivation I G ≃ₗ[ℝ] E :=
+    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint).trans (LinearEquiv.refl ℝ E)
+  have he : ContMDiff (modelWithCornersSelf ℝ (LeftInvariantDerivation I G))
+      (modelWithCornersSelf ℝ E) ∞ e :=
+    (⟨e, e.toLinearMap.continuous_of_finiteDimensional⟩ :
+      LeftInvariantDerivation I G →L[ℝ] E).contDiff.contMDiff
+  apply ((contMDiff_mulInvariantExp (I := I) (G := G)).comp he).congr
+  intro X
+  rw [lieExp_eq_mulInvariantExp]
+  rfl

@@ -26,6 +26,8 @@ The latter is the manifold model vector space, so this also determines the Lie a
   at the identity.
 * `leftInvariantDerivationEquivGroupLieAlgebra`: the canonical linear equivalence between
   left-invariant derivations and the tangent Lie algebra.
+* `leftInvariantDerivationNormedAddCommGroup`, `leftInvariantDerivationNormedSpace`: the canonical
+  normed-space structure transported from the tangent space at the identity.
 * `finiteDimensional_leftInvariantDerivation`: the Lie algebra is finite-dimensional.
 * `finrank_leftInvariantDerivation_eq_modelVectorSpace`: its dimension equals that of the manifold
   model vector space.
@@ -264,6 +266,30 @@ noncomputable def leftInvariantDerivationEquivGroupLieAlgebra
     ⟨LeftInvariantDerivation.evalAt_one_injective,
       LeftInvariantDerivation.evalAt_one_surjective h₁⟩).trans
     (pointDerivationEquivTangentSpace 1 h₁)
+
+/-- The normed additive group structure on left-invariant derivations transported from the
+tangent space at the identity. -/
+noncomputable abbrev leftInvariantDerivationNormedAddCommGroup
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) :
+    NormedAddCommGroup (LeftInvariantDerivation I G) :=
+  NormedAddCommGroup.induced (LeftInvariantDerivation I G) E
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+      (LinearEquiv.refl ℝ E))
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+      (LinearEquiv.refl ℝ E)).injective
+
+/-- The normed vector-space structure on left-invariant derivations transported from the tangent
+space at the identity. -/
+noncomputable abbrev leftInvariantDerivationNormedSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    (h₁ : I.IsInteriorPoint (1 : G)) :
+    @NormedSpace ℝ (LeftInvariantDerivation I G) _
+      (leftInvariantDerivationNormedAddCommGroup (I := I) (G := G)
+        h₁).toSeminormedAddCommGroup :=
+  NormedSpace.induced ℝ (LeftInvariantDerivation I G) E
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+      (LinearEquiv.refl ℝ E))
 
 /-- The derivation–tangent equivalence is evaluation at the identity followed by the
 point-derivation–tangent equivalence. -/
