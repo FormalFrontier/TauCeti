@@ -93,7 +93,7 @@ omit [CompleteSpace E] in
 @[simp]
 private theorem intervalExtension_apply (a b : ℝ) [Fact (a ≤ b)]
     (f : C(Set.Icc a b, E)) (t : ℝ) :
-    intervalExtension a b f t = IccExtendCM f t := rfl
+    intervalExtension a b f t = f (Set.projIcc a b Fact.out t) := rfl
 
 /-- The primitive of a continuous path on a compact real interval, using constant extension before
 integration. -/
@@ -171,7 +171,7 @@ theorem intervalIntegralOperator_apply (a b : ℝ) (hab : a ≤ b)
       ∫ s in a..t, f (Set.projIcc a b hab s) := by
   let _ : Fact (a ≤ b) := ⟨hab⟩
   rw [intervalIntegralOperator_apply_intervalPrimitive, intervalPrimitive_apply]
-  simp [intervalExtension_apply, IccExtendCM, projIccCM]
+  simp only [intervalExtension_apply]
 
 /-- Volterra integration on the unit interval, obtained from the general compact-interval
 operator. -/
@@ -194,7 +194,7 @@ theorem unitIntervalIntegral_apply (f : C(Set.Icc (0 : ℝ) 1, E))
     (t : Set.Icc (0 : ℝ) 1) :
     unitIntervalIntegral f t =
       ∫ s in (0 : ℝ)..t, f (Set.projIcc 0 1 zero_le_one s) := by
-  exact intervalIntegralOperator_apply 0 1 zero_le_one f t
+  simpa only [unitIntervalIntegral] using intervalIntegralOperator_apply 0 1 zero_le_one f t
 
 end ContinuousMap
 
