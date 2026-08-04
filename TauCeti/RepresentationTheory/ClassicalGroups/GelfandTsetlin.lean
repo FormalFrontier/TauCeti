@@ -28,17 +28,20 @@ dimension of the representation.  Nothing of the kind is in Mathlib (whose `Gelf
 about C\*-algebras), so this file builds the combinatorial object and its recursion.
 
 Entries are **integers** and no positivity is imposed, so the determinant-twisted (rational)
-patterns are included alongside the polynomial ones; only the sign of the top row distinguishes
-them.  The interlacing inequalities are imposed only on the interior cells `i < j < n`, where all
-three entries involved are informative; weak decrease along each row is then a consequence
-(`TauCeti.GTPattern.entry_anti`), not an extra hypothesis.
+patterns are included alongside the polynomial ones.  The polynomial patterns are those all of
+whose entries are nonnegative; since every entry is at least the last entry of the top row, that
+is decided by the last entry of the top row alone, and not by the signs of the other entries,
+which a dominant top row is free to mix.  The interlacing inequalities are imposed only on the
+interior cells `i < j < n`, where all three entries involved are informative; weak decrease along
+each row is then a consequence (`TauCeti.GTPattern.entry_anti`), not an extra hypothesis.
 
 The engine of the file is `TauCeti.GTPattern.truncateEquiv`: deleting the top row identifies the
 patterns with `n + 1` rows and top row `l` with the patterns with `n` rows whose own top row
 interlaces `l`.  This is the combinatorial shadow of the `GL (n+1) ↓ GL n` branching rule, and it
 is what makes the patterns with a prescribed top row finite and countable.  Read off at `n = 1` it
-gives a unique pattern for each top row, and at `n = 2` the count `λ₀ - λ₁ + 1`, the dimension of
-the irreducible representation of `GL 2` of highest weight `(λ₀, λ₁)`.
+gives a unique pattern for each top row, and at `n = 2` the count `(λ₀ - λ₁ + 1).toNat`, which for
+a dominant top row `λ₁ ≤ λ₀` is `λ₀ - λ₁ + 1`, the dimension of the irreducible representation of
+`GL 2` of highest weight `(λ₀, λ₁)`.
 
 ## Main definitions
 
@@ -50,13 +53,13 @@ the irreducible representation of `GL 2` of highest weight `(λ₀, λ₁)`.
 
 ## Main results
 
-* `TauCeti.GTPattern.entry_anti` and `TauCeti.GTPattern.antitone_topRow`: rows are weakly
+* `TauCeti.GTPattern.entry_anti` and `TauCeti.GTPattern.topRow_antitone`: rows are weakly
   decreasing, so the top row is a dominant weight.
 * `TauCeti.GTPattern.truncateEquiv`: patterns with `n + 1` rows and top row `l` correspond to
   patterns with `n` rows whose top row interlaces `l`.
 * `TauCeti.GTPattern.finite_topRow_eq`: only finitely many patterns share a top row.
 * `TauCeti.GTPattern.card_topRow_eq_one` and `TauCeti.GTPattern.card_topRow_two`: the counts for
-  `n = 1` and `n = 2`, the latter being `λ₀ - λ₁ + 1`.
+  `n = 1` and `n = 2`, the latter being `(λ₀ - λ₁ + 1).toNat`.
 
 ## References
 
@@ -172,12 +175,12 @@ def topRow (P : GTPattern n) : Fin n → ℤ := fun i => P i n
 @[simp]
 theorem topRow_apply (P : GTPattern n) (i : Fin n) : P.topRow i = P i n := rfl
 
-theorem antitone_topRow (P : GTPattern n) : Antitone P.topRow :=
+theorem topRow_antitone (P : GTPattern n) : Antitone P.topRow :=
   fun _ i' h => P.entry_anti le_rfl h i'.2
 
 /-- The top row of a Gelfand-Tsetlin pattern, as a dominant weight of `GL n`. -/
 @[expose]
-def topWeight (P : GTPattern n) : DominantWeight n := ⟨P.topRow, P.antitone_topRow⟩
+def topWeight (P : GTPattern n) : DominantWeight n := ⟨P.topRow, P.topRow_antitone⟩
 
 @[simp]
 theorem topWeight_coe (P : GTPattern n) : (P.topWeight : Fin n → ℤ) = P.topRow := rfl
@@ -190,17 +193,20 @@ theorem entry_le_topRow (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ 
 /-- Every entry dominates the top-row entry reached from it by increasing both indices equally. -/
 theorem topRow_le_entry (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) :
     P.topRow ⟨i + (n - j), by omega⟩ ≤ P i j := by
+  have hjn : j + (n - j) = n := by omega
   have h := P.entry_add_le hij (d := n - j) (by omega)
-  rwa [show j + (n - j) = n by omega] at h
+  rw [hjn] at h
+  simpa using h
 
 /-- Every entry of a pattern lies between the last and the first entry of its top row. -/
 theorem entry_mem_Icc (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) (hn : 0 < n) :
-    P i j ∈ Set.Icc (P.topRow ⟨n - 1, by omega⟩) (P.topRow ⟨0, hn⟩) :=
-  ⟨(P.antitone_topRow (show (⟨i + (n - j), by omega⟩ : Fin n) ≤ ⟨n - 1, by omega⟩ by
-      simp only [Fin.le_def]; omega)).trans (P.topRow_le_entry hij hj),
-    (P.entry_le_topRow hij hj).trans
-      (P.antitone_topRow (show (⟨0, hn⟩ : Fin n) ≤ ⟨i, hij.trans_le hj⟩ by
-        simp only [Fin.le_def]; omega))⟩
+    P i j ∈ Set.Icc (P.topRow ⟨n - 1, by omega⟩) (P.topRow ⟨0, hn⟩) := by
+  have hlast : (⟨i + (n - j), by omega⟩ : Fin n) ≤ ⟨n - 1, by omega⟩ := by
+    simp only [Fin.le_def]; omega
+  have hfirst : (⟨0, hn⟩ : Fin n) ≤ ⟨i, hij.trans_le hj⟩ := by
+    simp only [Fin.le_def]; omega
+  exact ⟨(P.topRow_antitone hlast).trans (P.topRow_le_entry hij hj),
+    (P.entry_le_topRow hij hj).trans (P.topRow_antitone hfirst)⟩
 
 /-- There is exactly one empty pattern. -/
 instance : Unique (GTPattern 0) where
@@ -215,9 +221,22 @@ end GTPattern
 longer sequence `l : Fin (n + 1) → ℤ`: `lᵢ ≥ mᵢ ≥ lᵢ₊₁` for every `i`.  This is the betweenness
 condition relating consecutive rows of a Gelfand-Tsetlin pattern, and equally the condition
 picking out the constituents of `V_l` restricted along `GL n ↪ GL (n + 1)`. -/
-@[expose]
 def Interlaces {n : ℕ} (l : Fin (n + 1) → ℤ) (m : Fin n → ℤ) : Prop :=
   ∀ i : Fin n, m i ≤ l i.castSucc ∧ l i.succ ≤ m i
+
+/-- Interlacing unfolded: the pair of inequalities at each index.  This is the introduction and
+elimination rule for `TauCeti.Interlaces`, whose body is not exposed. -/
+theorem interlaces_iff {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ} :
+    Interlaces l m ↔ ∀ i : Fin n, m i ≤ l i.castSucc ∧ l i.succ ≤ m i :=
+  Iff.rfl
+
+/-- Half of the interlacing condition: `mᵢ ≤ lᵢ`. -/
+theorem Interlaces.le_castSucc {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ}
+    (h : Interlaces l m) (i : Fin n) : m i ≤ l i.castSucc := (h i).1
+
+/-- The other half of the interlacing condition: `lᵢ₊₁ ≤ mᵢ`. -/
+theorem Interlaces.succ_le {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ}
+    (h : Interlaces l m) (i : Fin n) : l i.succ ≤ m i := (h i).2
 
 namespace GTPattern
 
@@ -252,9 +271,10 @@ theorem topRow_truncate (P : GTPattern (n + 1)) (i : Fin n) : (truncate P).topRo
 /-- The row below the top of a pattern interlaces its top row: the pattern's own witness that
 `TauCeti.GTPattern.truncate` lands where `TauCeti.GTPattern.extend` expects it. -/
 theorem interlaces_topRow_truncate (P : GTPattern (n + 1)) :
-    Interlaces P.topRow (truncate P).topRow := fun i =>
-  ⟨by simpa using P.entry_le_entry_succ_row i.2 (by omega),
-    by simpa using P.entry_succ_succ_le_entry i.2 (by omega)⟩
+    Interlaces P.topRow (truncate P).topRow :=
+  interlaces_iff.mpr fun i =>
+    ⟨by simpa using P.entry_le_entry_succ_row i.2 (by omega),
+      by simpa using P.entry_succ_succ_le_entry i.2 (by omega)⟩
 
 /-- Prepend the row `l` on top of a pattern with `n` rows whose own top row it interlaces. -/
 @[expose]
@@ -264,21 +284,23 @@ def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRo
   zeros' := by
     intro i j hz
     by_cases hj : j = n + 1
-    · rw [if_pos hj, dif_neg (show ¬ i < n + 1 by omega)]
+    · have hi : ¬ i < n + 1 := by omega
+      rw [if_pos hj, dif_neg hi]
     · rw [if_neg hj]
       exact Q.zeros (by omega)
   interlacing' := by
     intro i j hij hj
     by_cases hjn : j = n
     · have hi : i < n := hjn ▸ hij
+      have hne : ¬ (n = n + 1) := by omega
+      have hi' : i < n + 1 := by omega
+      have hi'' : i + 1 < n + 1 := by omega
       rw [hjn]
-      refine ⟨?_, ?_⟩
-      · simp only [if_neg (show ¬ (n = n + 1) by omega), dif_pos (show i < n + 1 by omega)]
-        exact (h ⟨i, hi⟩).1
-      · simp only [if_neg (show ¬ (n = n + 1) by omega), dif_pos (show i + 1 < n + 1 by omega)]
-        exact (h ⟨i, hi⟩).2
-    · simp only [if_neg (show ¬ (j = n + 1) by omega),
-        if_neg (show ¬ (j + 1 = n + 1) by omega)]
+      exact ⟨by simp only [if_neg hne, dif_pos hi']; exact h.le_castSucc ⟨i, hi⟩,
+        by simp only [if_neg hne, dif_pos hi'']; exact h.succ_le ⟨i, hi⟩⟩
+    · have hne : ¬ (j = n + 1) := by omega
+      have hne' : ¬ (j + 1 = n + 1) := by omega
+      simp only [if_neg hne, if_neg hne']
       exact Q.interlacing' hij (by omega)
 
 theorem extend_apply (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
@@ -310,7 +332,8 @@ theorem truncate_extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interla
   ext i j
   rw [truncate_apply]
   by_cases hj : j ≤ n
-  · rw [if_pos hj, extend_apply_of_ne Q l h (show j ≠ n + 1 by omega)]
+  · have hj' : j ≠ n + 1 := by omega
+    rw [if_pos hj, extend_apply_of_ne Q l h hj']
   · rw [if_neg hj]
     exact (Q.zeros_of_lt (by omega)).symm
 
@@ -344,8 +367,23 @@ def truncateEquiv (l : Fin (n + 1) → ℤ) :
   left_inv := by rintro ⟨P, rfl⟩; exact Subtype.ext (extend_truncate P)
   right_inv Q := Subtype.ext (truncate_extend _ _ _)
 
+@[simp]
+theorem truncateEquiv_apply_coe (l : Fin (n + 1) → ℤ)
+    (P : {P : GTPattern (n + 1) // P.topRow = l}) :
+    (truncateEquiv l P).1 = truncate P.1 :=
+  rfl
+
+@[simp]
+theorem truncateEquiv_symm_apply_coe (l : Fin (n + 1) → ℤ)
+    (Q : {Q : GTPattern n // Interlaces l Q.topRow}) :
+    ((truncateEquiv l).symm Q).1 = extend Q.1 l Q.2 :=
+  rfl
+
 /-! ### Finitely many patterns share a top row -/
 
+/-- **Only finitely many patterns share a top row.**  Every entry of a pattern is squeezed between
+the last and the first entry of its top row (`TauCeti.GTPattern.entry_mem_Icc`), so the patterns
+with a prescribed top row form a finite type. -/
 instance finite_topRow_eq (l : Fin n → ℤ) : Finite {P : GTPattern n // P.topRow = l} := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · infer_instance
@@ -371,9 +409,12 @@ instance finite_topRow_eq (l : Fin n → ℤ) : Finite {P : GTPattern n // P.top
 
 /-! ### The counts in low rank -/
 
+/-- A one-row pattern is nothing but its top row: for each `l` there is exactly one pattern with
+top row `l`. -/
 instance uniqueTopRowOne (l : Fin 1 → ℤ) : Unique {P : GTPattern 1 // P.topRow = l} := by
   haveI : Unique {Q : GTPattern 0 // Interlaces l Q.topRow} :=
-    ⟨⟨⟨default, fun i => i.elim0⟩⟩, fun _ => Subtype.ext (Subsingleton.elim _ _)⟩
+    ⟨⟨⟨default, interlaces_iff.mpr fun i => i.elim0⟩⟩,
+      fun _ => Subtype.ext (Subsingleton.elim _ _)⟩
   exact (truncateEquiv l).unique
 
 /-- A Gelfand-Tsetlin pattern with a single row is its top row: there is exactly one pattern with
@@ -395,17 +436,19 @@ def equivOne : GTPattern 1 ≃ (Fin 1 → ℤ) where
 @[simp]
 theorem equivOne_apply (P : GTPattern 1) : equivOne P = P.topRow := rfl
 
-/-- **The dimension count for `GL 2`.**  The Gelfand-Tsetlin patterns with top row `(λ₀, λ₁)` are
-counted by `λ₀ - λ₁ + 1`: such a pattern is its top row together with a single integer `λ₀,₁`
-between `λ₁` and `λ₀`.  This is the dimension of the irreducible representation of `GL 2` of
-highest weight `(λ₀, λ₁)`. -/
+/-- **The count for `GL 2`.**  A Gelfand-Tsetlin pattern with two rows is its top row together with
+a single integer `λ₀,₁` between `λ₁` and `λ₀`, so the patterns with top row `(λ₀, λ₁)` are counted
+by `(λ₀ - λ₁ + 1).toNat`.  The truncation is not decoration: `l` is an arbitrary integer sequence,
+and for `λ₀ < λ₁` there is no such pattern at all.  On a dominant top row, `λ₁ ≤ λ₀`, the count is
+`λ₀ - λ₁ + 1`, the dimension of the irreducible representation of `GL 2` of highest weight
+`(λ₀, λ₁)`. -/
 theorem card_topRow_two (l : Fin 2 → ℤ) :
     Nat.card {P : GTPattern 2 // P.topRow = l} = (l 0 - l 1 + 1).toNat := by
   have e₂ : {Q : GTPattern 1 // Interlaces l Q.topRow} ≃ {m : Fin 1 → ℤ // Interlaces l m} :=
     Equiv.subtypeEquiv equivOne fun _ => Iff.rfl
   have e₃ : {m : Fin 1 → ℤ // Interlaces l m} ≃ Set.Icc (l 1) (l 0) :=
-    { toFun := fun m => ⟨m.1 0, ⟨(m.2 0).2, (m.2 0).1⟩⟩
-      invFun := fun x => ⟨fun _ => x.1, fun i => by
+    { toFun := fun m => ⟨m.1 0, ⟨m.2.succ_le 0, m.2.le_castSucc 0⟩⟩
+      invFun := fun x => ⟨fun _ => x.1, interlaces_iff.mpr fun i => by
         obtain rfl : i = 0 := Subsingleton.elim _ _
         exact ⟨x.2.2, x.2.1⟩⟩
       left_inv := fun m => by
