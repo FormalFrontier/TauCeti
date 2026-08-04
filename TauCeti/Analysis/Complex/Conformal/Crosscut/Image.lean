@@ -51,7 +51,7 @@ crosscut arc (`TauCeti.sphere_inter_sphere_eq_pair_circleMap`); for a general do
 whole trace of `frontier U` on the cutting circle, which is where the crosscut can run out of the
 domain, and the cluster sets at points of it not adherent to the crosscut are empty. The equality
 itself allows all of those cluster sets to be empty; as soon as the image crosscut `γ` is bounded
-each end carries one (`TauCeti.nonempty_clusterSetOn_inter_sphere`), and for a disc each is in
+each end carries one (`TauCeti.clusterSetOn_nonempty`), and for a disc each is in
 fact a continuum (`TauCeti.isConnected_clusterSetOn_ball_inter_sphere`), so the crosscut clings to
 the boundary of the image at *each* of its ends and the middle piece is where those ends sit.
 
@@ -113,10 +113,9 @@ pseudometric space.
   the image into two pieces and a middle piece adherent to the image crosscut.
 * `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of an image
   crosscut is the image crosscut together with the cluster sets at its ends.
-* `TauCeti.nonempty_clusterSetOn_inter_sphere` and
-  `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — an end cluster set is nonempty once the
-  image of the crosscut is bounded, and, for a disc, connected once `f` is in addition continuous
-  along the crosscut.
+* `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — for a disc an end cluster set is a
+  continuum once `f` is continuous along the crosscut with bounded image; its nonemptiness for a
+  general domain is the generic `TauCeti.clusterSetOn_nonempty`, applied to the crosscut.
 * `TauCeti.frontier_inter_closure_image_inter_sphere_eq_biUnion_clusterSetOn` — the middle
   piece is *exactly* the union of the end cluster sets, its one-sided inclusion being
   `TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image`.
@@ -270,16 +269,6 @@ theorem clusterSetOn_inter_sphere_subset_frontier_inter_closure_image (hUo : IsO
       (clusterSetOn_mono inter_subset_left hv))
     fun _ hv => clusterSetOn_subset_closure_image hv
 
-/-- **Each end of a circular crosscut carries a cluster value.** At a point adherent to the
-crosscut, `f` is confined along it to the compact `closure (f '' (U ∩ sphere ζ ρ))`, so the cluster
-set there is nonempty; only the image of the crosscut need be bounded, and no holomorphy is
-needed. -/
-theorem nonempty_clusterSetOn_inter_sphere (hb : IsBounded (f '' (U ∩ sphere ζ ρ)))
-    (he : e ∈ closure (U ∩ sphere ζ ρ)) :
-    (clusterSetOn f (U ∩ sphere ζ ρ) e).Nonempty :=
-  clusterSetOn_nonempty hb.isCompact_closure
-    (fun _ hz => subset_closure (mem_image_of_mem f hz)) he
-
 /-- **Each end of an image crosscut of a disc is a continuum.** For `f` continuous along a genuine
 circular crosscut of a disc and with bounded image *of the crosscut*, the cluster set at either
 endpoint is nonempty and connected; it is compact by
@@ -314,7 +303,7 @@ the index set being, for a disc, the two endpoints of the crosscut
 crosscut clings to is not merely small: it is the union of the cluster sets at its ends. The
 image of the crosscut is not assumed bounded here, so the equality by itself leaves those cluster
 sets possibly empty; add that boundedness and each end adherent to the crosscut carries one by
-`TauCeti.nonempty_clusterSetOn_inter_sphere`, which is what a small connected boundary set
+`TauCeti.clusterSetOn_nonempty`, which is what a small connected boundary set
 enclosing the middle piece — `TauCeti.exists_isConnected_subset_frontier_image_of_diam_lt` — has to
 *join*.
 
@@ -359,8 +348,9 @@ theorem nonempty_frontier_inter_closure_image_inter_sphere (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U))
     (he : e ∈ frontier U ∩ closure (U ∩ sphere ζ ρ)) :
     (frontier (f '' U) ∩ closure (f '' (U ∩ sphere ζ ρ))).Nonempty := by
-  obtain ⟨v, hv⟩ :=
-    nonempty_clusterSetOn_inter_sphere (hb.subset (image_mono inter_subset_left)) he.2
+  have harc : IsBounded (f '' (U ∩ sphere ζ ρ)) := hb.subset (image_mono inter_subset_left)
+  obtain ⟨v, hv⟩ := clusterSetOn_nonempty harc.isCompact_closure
+    (fun _ hz => subset_closure (mem_image_of_mem f hz)) he.2
   exact ⟨v, clusterSetOn_inter_sphere_subset_frontier_inter_closure_image hUo hd hinj he.1 hv⟩
 
 /-- **A circular crosscut of a disc has an end.** The disc discharges the hypothesis that the
@@ -480,14 +470,14 @@ theorem clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image
   clusterSetOn_inter_sphere_subset_frontier_inter_closure_image isOpen_ball hd hinj
     (by rw [frontier_ball c hr.ne']; exact he.1)
 
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.nonempty_clusterSetOn_inter_sphere`, which asks only that the end be adherent to the
-crosscut. -/
-@[deprecated nonempty_clusterSetOn_inter_sphere (since := "2026-08-04")]
+/-- Deprecated compatibility wrapper for the disc case of `TauCeti.clusterSetOn_nonempty`, which
+asks only that the end be adherent to the crosscut. -/
+@[deprecated clusterSetOn_nonempty (since := "2026-08-04")]
 theorem nonempty_clusterSetOn_ball_inter_sphere (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Nonempty := by
-  refine nonempty_clusterSetOn_inter_sphere hb ?_
+  refine clusterSetOn_nonempty hb.isCompact_closure
+    (fun _ hz => subset_closure (mem_image_of_mem f hz)) ?_
   rw [closure_ball_inter_sphere hζ hρ hρr]
   exact ⟨sphere_subset_closedBall he.1, he.2⟩
 
