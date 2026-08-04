@@ -185,8 +185,8 @@ private theorem groupSchemeIsoSpec_naturality {G H : FGCommGrpCat.{u}} (f : G ‚ü
         hopfSpecMapAsOver (R := R) f := by
   unfold groupSchemeIsoSpec hopfSpecMapAsOver
   rw [Iso.trans_hom, Iso.trans_hom, ‚Üê Category.assoc,
-    groupSchemeIsoHopfSpec_naturality]
-  simp [Category.assoc]
+    groupSchemeIsoHopfSpec_naturality, Category.assoc, Category.assoc,
+    Iso.hom_inv_id_assoc]
 
 /-- The typed scheme-point comparison sends postcomposition by `groupSchemeMap f` to the
 existing contravariant algebra-point map induced by the underlying homomorphism `f`. -/

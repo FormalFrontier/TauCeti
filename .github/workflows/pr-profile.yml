@@ -148,6 +148,11 @@ jobs:
           ref: ${{ steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
+          # actions/checkout refuses to fetch fork PR code under
+          # pull_request_target unless this opt-in is set. Safe here for the
+          # same reasons as pr-build.yml: no credentials in the checkout, and
+          # the fork's code runs only under landrun below (offline, no token).
+          allow-unsafe-pr-checkout: true
 
       - name: Overlay PR TauCeti/ and root TauCeti.lean onto the trusted base (reject symlinks)
         if: ${{ steps.files.outputs.none != '1' }}
