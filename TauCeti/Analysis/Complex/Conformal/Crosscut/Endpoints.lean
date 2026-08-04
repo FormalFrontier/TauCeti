@@ -116,23 +116,6 @@ private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
   rw [dist_eq_norm, ← Complex.normSq_eq_norm_sq, hsub, Complex.normSq_sub, hu, ha, hcross]
   ring
 
-/-- The chord length `TauCeti.dist_circleMap_eq_two_mul_abs_sin` with the sign of the angular
-difference cleared: for angles at most `π` apart the chord grows with the angular gap. -/
-private lemma dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ}
-    (h : |θ - θ'| ≤ π) :
-    dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
-  rw [dist_circleMap_eq_two_mul_abs_sin]
-  congr 1
-  have hnn : 0 ≤ Real.sin (|θ - θ'| / 2) :=
-    Real.sin_nonneg_of_nonneg_of_le_pi (by positivity) (by linarith [Real.pi_pos])
-  rcases abs_cases (θ - θ') with ⟨hc, -⟩ | ⟨hc, -⟩
-  · rw [hc] at hnn ⊢
-    exact abs_of_nonneg hnn
-  · rw [hc] at hnn ⊢
-    rw [neg_div, Real.sin_neg]
-    rw [neg_div, Real.sin_neg] at hnn
-    exact abs_of_nonpos (by linarith)
-
 /-- **A ball centred at a point of an arc of angular width at most `π` meets it in an arc.** The
 chord distance to a fixed angle `θ₀` of the arc falls and then rises as the angle sweeps across the
 arc, so the angles it keeps below a threshold form an interval. -/

@@ -24,7 +24,9 @@ translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ 
   unit circle has length `2 * |sin (θ / 2)|`.
 * `TauCeti.dist_circleMap_eq_two_mul_abs_sin` — its form for the circle `circleMap ζ ρ` of arbitrary
   centre and radius, where the chord between the angles `θ` and `θ'` has length
-  `2 * |ρ| * |sin ((θ - θ') / 2)|`.
+  `2 * |ρ| * |sin ((θ - θ') / 2)|`, and
+  `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, the same formula with the sign of the angular
+  difference cleared, valid for angles at most `π` apart.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
   most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
@@ -94,6 +96,27 @@ theorem dist_circleMap_eq_two_mul_abs_sin (ζ : ℂ) (ρ θ θ' : ℝ) :
     exact (Subtype.dist_eq _ _).symm
   rw [dist_eq_norm, hsub, norm_mul, Complex.norm_real, Real.norm_eq_abs, hchord]
   ring
+
+/-- **The chord with the sign of the angular difference cleared.** For angles at most `π` apart the
+chord `TauCeti.dist_circleMap_eq_two_mul_abs_sin` is `2 * |ρ| * sin (|θ - θ'| / 2)`, an increasing
+function of the angular gap: the absolute value moves from outside the sine to inside it.
+
+The width restriction is what makes the two forms differ. Beyond `π` the half-angle leaves
+`[-π / 2, π / 2]`, where `|sin|` and `sin ∘ |·|` part company, and the chord stops growing with the
+gap. -/
+theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (h : |θ - θ'| ≤ π) :
+    dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
+  rw [dist_circleMap_eq_two_mul_abs_sin]
+  congr 1
+  have hnn : 0 ≤ Real.sin (|θ - θ'| / 2) :=
+    Real.sin_nonneg_of_nonneg_of_le_pi (by positivity) (by linarith [Real.pi_pos])
+  rcases abs_cases (θ - θ') with ⟨hc, -⟩ | ⟨hc, -⟩
+  · rw [hc] at hnn ⊢
+    exact abs_of_nonneg hnn
+  · rw [hc] at hnn ⊢
+    rw [neg_div, Real.sin_neg]
+    rw [neg_div, Real.sin_neg] at hnn
+    exact abs_of_nonpos (by linarith)
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
