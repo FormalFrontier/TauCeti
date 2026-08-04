@@ -23,11 +23,11 @@ by composition and satisfies `(exp (L / n)) ^ n = exp L = g` outright, so routin
 continuous root branch would add a second continuity-to-holomorphy argument for no gain.
 
 The upgrade is local and purely formal. Near a point `z₀`, the continuous branch `L` agrees with
-`v ↦ w₀ + log (v / exp w₀) ∘ g` where `w₀ = L z₀`: that composite is holomorphic (the argument
-sits near `1`, inside the slit plane, where `Complex.log` is), and it agrees with `L` because
-continuity of `L` confines `L z - w₀` to the strip `|im| < π` on which `log ∘ exp` is the identity.
-So no new analysis is involved — only the observation that a continuous logarithm of a holomorphic
-nonvanishing function is automatically holomorphic.
+`logBranch w₀ ∘ g` where `w₀ = L z₀`, the branch of the logarithm based at `w₀`: that composite is
+holomorphic (the argument sits near `1`, inside the slit plane, where `Complex.log` is), and it
+agrees with `L` because continuity of `L` confines `L z - w₀` to the strip `|im| < π` on which that
+branch inverts `Complex.exp`. So no new analysis is involved — only the observation that a
+continuous logarithm of a holomorphic nonvanishing function is automatically holomorphic.
 
 ## Attribution and upstream coordination
 
@@ -67,6 +67,23 @@ namespace TauCeti
 
 open Complex Set
 
+/-- The branch of the logarithm **based at `a`**: the translate of Mathlib's principal branch that
+takes the value `a` at the point `Complex.exp a`, its branch cut rotated away from there. -/
+private noncomputable def logBranch (a v : ℂ) : ℂ := a + Complex.log (v / Complex.exp a)
+
+/-- The branch based at `a` is complex differentiable wherever the translated point misses the
+branch cut. -/
+private theorem differentiableAt_logBranch {a v : ℂ} (h : v / Complex.exp a ∈ Complex.slitPlane) :
+    DifferentiableAt ℂ (logBranch a) v :=
+  ((differentiableAt_id.div_const _).clog h).const_add _
+
+/-- **The branch based at `a` inverts `Complex.exp`** on the strip of height `2 π` centred at `a`,
+because `Complex.log_exp` inverts it on `-π < im ≤ π`. -/
+private theorem logBranch_exp {a w : ℂ} (h₁ : -Real.pi < (w - a).im) (h₂ : (w - a).im ≤ Real.pi) :
+    logBranch a (Complex.exp w) = w := by
+  rw [logBranch, ← Complex.exp_sub, Complex.log_exp h₁ h₂]
+  ring
+
 /-- **The local upgrade.** A continuous branch `L` of `log ∘ g` on an open set is complex
 differentiable wherever `g` is, because near any point it coincides with an honest local branch of
 `log` composed with `g`. -/
@@ -75,12 +92,10 @@ private theorem differentiableAt_of_continuousOn_exp_comp {U : Set ℂ} (hU : Is
     (hg : DifferentiableOn ℂ g U) {z₀ : ℂ} (hz₀ : z₀ ∈ U) :
     DifferentiableAt ℂ L z₀ := by
   set w₀ : ℂ := L z₀ with hw₀
-  -- The local branch of `log` centred at `w₀`, and the composite it defines.
-  set ℓ : ℂ → ℂ := fun v => w₀ + Complex.log (v / Complex.exp w₀) with hℓ
   have hgz₀ : g z₀ = Complex.exp w₀ := (hEq hz₀).symm
   -- `L` is continuous at `z₀` in the ambient sense, `U` being open.
   have hLat : ContinuousAt L z₀ := (hL.continuousAt (hU.mem_nhds hz₀))
-  -- Continuity confines `L z - w₀` to the strip where `log ∘ exp` is the identity.
+  -- Continuity confines `L z - w₀` to the strip where the branch based at `w₀` inverts `exp`.
   have hstrip : ∀ᶠ z in nhds z₀, |(L z - w₀).im| < Real.pi := by
     have hcont : ContinuousAt (fun z => |(L z - w₀).im|) z₀ := by
       exact (continuous_abs.comp Complex.continuous_im).continuousAt.comp
@@ -88,27 +103,20 @@ private theorem differentiableAt_of_continuousOn_exp_comp {U : Set ℂ} (hU : Is
     have hz : |(L z₀ - w₀).im| < Real.pi := by
       simp [hw₀, Real.pi_pos]
     exact hcont (Iio_mem_nhds hz)
-  -- On that neighbourhood (intersected with `U`), `L` and `ℓ ∘ g` agree.
-  have hloc : L =ᶠ[nhds z₀] ℓ ∘ g := by
+  -- On that neighbourhood (intersected with `U`), `L` and `logBranch w₀ ∘ g` agree.
+  have hloc : L =ᶠ[nhds z₀] logBranch w₀ ∘ g := by
     filter_upwards [hstrip, hU.mem_nhds hz₀] with z hz hzU
     have hgz : g z = Complex.exp (L z) := (hEq hzU).symm
-    have hdiv : g z / Complex.exp w₀ = Complex.exp (L z - w₀) := by
-      rw [hgz, ← Complex.exp_sub]
-    have hlog : Complex.log (Complex.exp (L z - w₀)) = L z - w₀ :=
-      Complex.log_exp (by linarith [abs_lt.mp hz |>.1]) (le_of_lt (abs_lt.mp hz).2)
-    simp only [hℓ, Function.comp_apply, hdiv, hlog]
-    ring
-  -- `ℓ ∘ g` is differentiable at `z₀`: the argument of `log` is `1` there.
-  have hone : g z₀ / Complex.exp w₀ = 1 := by
-    rw [hgz₀, div_self (Complex.exp_ne_zero _)]
-  have hdiffℓ : DifferentiableAt ℂ (ℓ ∘ g) z₀ := by
+    simp only [Function.comp_apply, hgz]
+    exact (logBranch_exp (by linarith [abs_lt.mp hz |>.1]) (le_of_lt (abs_lt.mp hz).2)).symm
+  -- `logBranch w₀ ∘ g` is differentiable at `z₀`: the translated argument is `1` there.
+  have hdiffBranch : DifferentiableAt ℂ (logBranch w₀ ∘ g) z₀ := by
     have hgd : DifferentiableAt ℂ g z₀ := (hg z₀ hz₀).differentiableAt (hU.mem_nhds hz₀)
-    have hquot : DifferentiableAt ℂ (fun z => g z / Complex.exp w₀) z₀ :=
-      hgd.div_const _
-    have hslit : (fun z => g z / Complex.exp w₀) z₀ ∈ Complex.slitPlane := by
-      simpa only [hone] using Complex.one_mem_slitPlane
-    exact (hquot.clog hslit).const_add _
-  exact hdiffℓ.congr_of_eventuallyEq hloc
+    have hslit : g z₀ / Complex.exp w₀ ∈ Complex.slitPlane := by
+      rw [hgz₀, div_self (Complex.exp_ne_zero _)]
+      exact Complex.one_mem_slitPlane
+    exact (differentiableAt_logBranch hslit).comp z₀ hgd
+  exact hdiffBranch.congr_of_eventuallyEq hloc
 
 /-- **A holomorphic branch of `log ∘ g` on a simply connected domain.** If `g` is holomorphic and
 nowhere zero on a simply connected open `U ⊆ ℂ`, there is a holomorphic `f` on `U` with

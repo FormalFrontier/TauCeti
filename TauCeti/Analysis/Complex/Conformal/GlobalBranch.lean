@@ -38,11 +38,6 @@ two-way form below it is supplied by nothing else once `U` is simply connected.
 The branch produced is unique as soon as `U` is preconnected, by the identity principle
 (`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`); no uniqueness statement is added here.
 
-Simple connectivity is not removable: `Conformal/LogarithmBranch.lean` exhibits the germ of
-`Complex.log` at `1`, which continues inside the punctured plane
-(`TauCeti.continuesInside_log`) yet is the germ of no function analytic there
-(`TauCeti.not_exists_analyticOnNhd_eventuallyEq_log`).
-
 ## The construction
 
 Path independence is monodromy plus simple connectivity: two paths in `U` with the same endpoints
