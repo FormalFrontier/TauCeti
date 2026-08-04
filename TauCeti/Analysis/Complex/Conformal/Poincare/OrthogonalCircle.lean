@@ -53,7 +53,14 @@ origin, and then the equation collapses to the Euclidean diameter `Im (conj u * 
   geodesic line of the Poincaré disc traces the intersection of the disc with a Euclidean line
   through the origin or with a Euclidean circle orthogonal to the unit circle.
 * `TauCeti.PoincareDisc.range_coe_eq_ball_inter_or_of_isometry` — the same for an arbitrary
-  isometric embedding of the real line, which is the parametrisation-free classification.
+  isometric embedding of the real line, which is the parametrisation-free form of that
+  description.
+
+Everything here runs in one direction, from a geodesic to the Euclidean set it traces. The
+converse — that every diameter of the disc and every arc `ball 0 1 ∩ sphere c R` with
+`‖c‖ ^ 2 = R ^ 2 + 1` is traced by a geodesic — is not proved below, and only the diameters are
+covered, by `TauCeti.PoincareDisc.range_coe_radialGeodesic_eq`, which is an equality of sets and
+so runs both ways.
 
 ## Generality
 
@@ -401,7 +408,8 @@ This is the two cases
 `TauCeti.PoincareDisc.range_coe_geodesicLine_eq_ball_inter_setOf` and
 `TauCeti.PoincareDisc.exists_range_coe_geodesicLine_eq_ball_inter_sphere` put together; the
 individual statements say which case occurs and, in the circular case, what the centre and radius
-are. -/
+are. As there, the implication runs from the geodesic to the Euclidean set it traces, and not
+back. -/
 theorem range_coe_geodesicLine_eq_ball_inter_or (a : PoincareDisc) (u : Circle) :
     (∃ v : ℂ, ‖v‖ = 1 ∧
         Set.range (fun t : ℝ => ((toUnitDisc (geodesicLine a u t) : Complex.UnitDisc) : ℂ))
@@ -414,16 +422,18 @@ theorem range_coe_geodesicLine_eq_ball_inter_or (a : PoincareDisc) (u : Circle) 
       range_coe_geodesicLine_eq_ball_inter_setOf a u hA⟩
   · exact Or.inr (exists_range_coe_geodesicLine_eq_ball_inter_sphere a u hA)
 
-/-- **The geodesics of the Poincaré disc are exactly its Euclidean diameters and the arcs of
-Euclidean circles orthogonal to the unit circle.** Any isometric embedding `γ : ℝ → PoincareDisc`
-— which by `TauCeti.PoincareDisc.existsUnique_eq_geodesicLine` is a
-`TauCeti.PoincareDisc.geodesicLine`, with no hypothesis on where it starts — traces either the
-intersection of the open unit disc with a Euclidean line through the origin, or its intersection
-with a Euclidean circle satisfying the orthogonality relation `‖c‖ ^ 2 = R ^ 2 + 1`.
+/-- **Every geodesic of the Poincaré disc is a Euclidean diameter or an arc of a Euclidean circle
+orthogonal to the unit circle.** Any isometric embedding `γ : ℝ → PoincareDisc` — which by
+`TauCeti.PoincareDisc.existsUnique_eq_geodesicLine` is a `TauCeti.PoincareDisc.geodesicLine`, with
+no hypothesis on where it starts — traces either the intersection of the open unit disc with a
+Euclidean line through the origin, or its intersection with a Euclidean circle satisfying the
+orthogonality relation `‖c‖ ^ 2 = R ^ 2 + 1`.
 
 This is the classical picture of the Poincaré disc, and it is
 `TauCeti.PoincareDisc.range_coe_geodesicLine_eq_ball_inter_or` freed of the parametrisation:
-nothing here refers to `geodesicLine`, only to being a geodesic line. -/
+nothing here refers to `geodesicLine`, only to being a geodesic line. It runs in one direction
+only, from a geodesic to the Euclidean set it traces; that every such diameter or orthogonal
+circular arc is in turn traced by a geodesic is not claimed here. -/
 theorem range_coe_eq_ball_inter_or_of_isometry {γ : ℝ → PoincareDisc} (hγ : Isometry γ) :
     (∃ v : ℂ, ‖v‖ = 1 ∧
         Set.range (fun t : ℝ => ((toUnitDisc (γ t) : Complex.UnitDisc) : ℂ))
