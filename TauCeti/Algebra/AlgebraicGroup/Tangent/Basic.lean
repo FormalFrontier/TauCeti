@@ -402,25 +402,79 @@ noncomputable def derivationLinearEquivTangentKer :
   ((AddEquiv.toAdditive_toMultiplicative.symm.trans
     (derivationMulEquivTangentKer R A B).toAdditive).symm.linearEquiv B).symm
 
+/-- Applying `derivationLinearEquivTangentKer` and removing the additive type tag
+recovers `derivationMulEquivTangentKer`. -/
+@[simp]
+lemma derivationLinearEquivTangentKer_apply_toMul
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    (derivationLinearEquivTangentKer R A B d).toMul =
+      derivationMulEquivTangentKer R A B (.ofAdd d) := by
+  rw [derivationLinearEquivTangentKer, AddEquiv.linearEquiv_symm_apply]
+  -- The remaining reduction only removes the generated additive/multiplicative type tags.
+  rfl
+
+/-- Applying the inverse of `derivationLinearEquivTangentKer` recovers the derivation
+underlying the inverse of `derivationMulEquivTangentKer`. -/
+@[simp]
+lemma derivationLinearEquivTangentKer_symm_apply_toAdd
+    (ψ : Additive (tangentKer R A B)) :
+    (derivationLinearEquivTangentKer R A B).symm ψ =
+      ((derivationMulEquivTangentKer R A B).symm ψ.toMul).toAdd := by
+  rw [derivationLinearEquivTangentKer, LinearEquiv.symm_symm,
+    AddEquiv.linearEquiv_apply]
+  -- `MulEquiv.toAdditive` has no application lemma, so the final step only removes its
+  -- generated additive/multiplicative type tags.
+  exact (AddEquiv.symm_trans_apply
+    AddEquiv.toAdditive_toMultiplicative.symm
+    (derivationMulEquivTangentKer R A B).toAdditive ψ).trans rfl
+
+/-- The second component of the tangent point associated to a derivation is the value
+of that derivation. -/
 @[simp]
 lemma derivationLinearEquivTangentKer_apply_snd
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
     snd (R := CounitAlgebra R A B)
         ((derivationLinearEquivTangentKer R A B d).toMul.val.ofConv a) = d a := by
-  -- Unwrap the transferred linear equivalence and the additive/multiplicative type tags.
-  change snd (R := CounitAlgebra R A B)
-    ((derivationMulEquivTangentKer R A B (.ofAdd d)).val.ofConv a) = d a
+  rw [derivationLinearEquivTangentKer_apply_toMul]
   exact derivationMulEquivTangentKer_apply_snd (.ofAdd d) a
 
+/-- The inverse linear equivalence evaluates a tangent point at `a` by taking its
+second component at `a`. -/
 @[simp]
 lemma derivationLinearEquivTangentKer_symm_apply
-    (ψ : tangentKer R A B) (a : A) :
-    (derivationLinearEquivTangentKer R A B).symm (.ofMul ψ) a =
-      TrivSqZeroExt.snd (ψ.val.ofConv a) := by
-  -- Unwrap the transferred linear equivalence and the additive/multiplicative type tags.
-  change ((derivationMulEquivTangentKer R A B).symm ψ).toAdd a =
-    TrivSqZeroExt.snd (ψ.val.ofConv a)
-  exact derivationMulEquivTangentKer_symm_apply ψ a
+    (ψ : Additive (tangentKer R A B)) (a : A) :
+    (derivationLinearEquivTangentKer R A B).symm ψ a =
+      TrivSqZeroExt.snd (ψ.toMul.val.ofConv a) := by
+  rw [derivationLinearEquivTangentKer_symm_apply_toAdd]
+  exact derivationMulEquivTangentKer_symm_apply ψ.toMul a
+
+private lemma algEquivSelf_derivation_smul_apply
+    (b : B) (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
+    Bialgebra.CounitAlgebra.algEquivSelf R A B ((b • d) a) =
+      b * Bialgebra.CounitAlgebra.algEquivSelf R A B (d a) := by
+  -- `CounitAlgebra` deliberately has no `SMul B` instance. The derivation module was
+  -- transferred from `B`, so this `rfl` isolates the necessary coefficient-synonym reduction.
+  rfl
+
+/-- Scalar multiplication on the additive tangent kernel multiplies its second component,
+viewed in `B` through `Bialgebra.CounitAlgebra.algEquivSelf`. -/
+@[simp]
+lemma tangentKer_smul_apply_snd
+    (b : B) (ψ : Additive (tangentKer R A B)) (a : A) :
+    snd (R := CounitAlgebra R A B) ((b • ψ).toMul.val.ofConv a) =
+      (Bialgebra.CounitAlgebra.algEquivSelf R A B).symm
+        (b * Bialgebra.CounitAlgebra.algEquivSelf R A B
+          (snd (R := CounitAlgebra R A B) (ψ.toMul.val.ofConv a))) := by
+  have h := congrArg (fun d : Derivation R A (Bialgebra.CounitAlgebra R A B) =>
+      Bialgebra.CounitAlgebra.algEquivSelf R A B (d a))
+    ((derivationLinearEquivTangentKer R A B).symm.map_smul b ψ)
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
+  calc
+    _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A B
+          (snd (R := CounitAlgebra R A B) (ψ.toMul.val.ofConv a)) := by
+      simpa only [derivationLinearEquivTangentKer_symm_apply,
+        algEquivSelf_derivation_smul_apply] using h
+    _ = _ := (Bialgebra.CounitAlgebra.algEquivSelf R A B).apply_symm_apply _ |>.symm
 
 end Hopf
 
