@@ -55,11 +55,11 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings`
+* `TauCeti.Contour.intervalIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossing`
   — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
   interior, bundled with the boundedness and interval-integrability facts it is built from.
-* `TauCeti.Contour.windingNumber_eq_integral_of_closed_of_interior_crossings` — the same formula
-  on its own, for callers who only need the equality.
+* `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_of_interior_crossings` — the same
+  formula on its own, for callers who only need the equality.
 
 ## Provenance
 
@@ -69,12 +69,13 @@ contour-integration infrastructure: the per-crossing window value
 (`hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary`), and the integral-identity
 bridge (`HasCauchyPVAt.im_eq_integral_realWindingIntegrand`). This file's own content is the
 log-norm derivative machinery (feeding the real-part telescoping hypothesis of the aggregation
-theorem), deriving the real winding integrand's boundedness and interval-integrability from the
-crossing regularity rather than assuming them (via
-`Winding.LipschitzBoundedIntegrand`'s one-sided bounds and the gluing across the sorted crossing
-list), and the assembly of all of the above into the final formula; the per-crossing-window
-construction and its real/imaginary-part facts are proved once, generically, in
-`Crossing.PVAggregation` rather than re-derived here.
+theorem) and deriving the real winding integrand's boundedness and interval-integrability from
+the crossing regularity rather than assuming them, via `Winding.LipschitzBoundedIntegrand`'s
+one-sided bounds fed into the *same* generic breakpoint/window gluing induction
+(`sorted_crossing_gluing_induction`) that `Crossing.PVAggregation` already uses for its own
+per-crossing-window construction, not a re-derivation of it; the assembly of all of the above
+into the final formula is this file's content too. That per-crossing-window construction and its
+real/imaginary-part facts are proved once, generically, in `Crossing.PVAggregation`.
 
 ## References
 
@@ -436,7 +437,7 @@ HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings
+theorem intervalIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossing
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
@@ -648,10 +649,10 @@ theorem intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_cross
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3),
 stated as a bare equality. A thin projection of
-`intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings`'s third conjunct,
+`intervalIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossing`'s third conjunct,
 for callers who only need the formula itself and not the boundedness/interval-integrability facts
 along the way to it. -/
-theorem windingNumber_eq_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ}
+theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
@@ -662,7 +663,7 @@ theorem windingNumber_eq_integral_of_closed_of_interior_crossings {γ : ℝ → 
     windingNumber γ a b s
       = ((1 / (2 * Real.pi)
           * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) :=
-  (intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings
+  (intervalIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossing
     h_imm hab hclosed h_interior hγ_lip).2.2
 
 end TauCeti.Contour
