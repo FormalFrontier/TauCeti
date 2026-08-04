@@ -385,11 +385,6 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     simpa using congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
       (filtrationGradedAlgebraMap_mul Q r k x)
 
-noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
-    Ring (filtrationAssociatedGraded Q) := by
-  letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
-  infer_instance
-
 /-- Multiplication of homogeneous elements in the associated graded Clifford algebra. -/
 @[simp]
 theorem filtrationAssociatedGraded_of_mul (Q : QuadraticForm R M) (i j : ℕ)
