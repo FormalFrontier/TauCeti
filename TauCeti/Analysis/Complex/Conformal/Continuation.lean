@@ -61,28 +61,6 @@ no choice of continuation to reconcile. A function analytic at every point of a 
 continues along it via the constant family (`TauCeti.ContinuesAlong.of_analyticAt`), so
 continuability is a condition one may check on the pieces of a germ built from simpler ones.
 
-## Substitution, reciprocals and reparametrisation
-
-Beyond the ring operations a germ is built by two further moves, and continuation is closed under
-both. **Substitution** is `TauCeti.IsAnalyticContinuationAlong.comp`: continuing `f` along `γ` and
-continuing `g` along the path `t ↦ f t (γ t)` that the *values* of `f` sweep out continues the
-composite germ `g t ∘ f t` along `γ`. The inner path is not a further datum — it is forced, and it
-is continuous, which is `TauCeti.IsAnalyticContinuationAlong.continuousOn_apply`. **Reciprocals**
-are `TauCeti.IsAnalyticContinuationAlong.inv`, whose hypothesis is that the value carried at each
-time is nonzero; nonvanishing at the initial time alone will not do, since a germ may continue to a
-vanishing germ.
-
-Both statements need the continuation itself, not just its initial germ, since the values along the
-way are what the hypotheses speak about. At the germ level they therefore appear only in the case
-that dispenses with those hypotheses, post-composition with an *entire* function
-(`TauCeti.ContinuesAlong.postcomp`, `TauCeti.ContinuesInside.postcomp`).
-
-Finally, continuation is a property of the path only up to **reparametrisation**
-(`TauCeti.IsAnalyticContinuationAlong.reparam`, `TauCeti.ContinuesAlong.reparam`): precomposing
-with a continuous map of parameters, injective or not, transports a continuation to the
-reparametrised path, restriction to a smaller parameter set
-(`TauCeti.IsAnalyticContinuationAlong.mono`) being the case of the identity.
-
 ## Relation to the monodromy theorem
 
 This is the L4 prerequisite that the monodromy theorem of the conformal-mapping roadmap needs:
@@ -100,16 +78,11 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
 * `TauCeti.IsAnalyticContinuationAlong.const`, `.of_differentiableOn` — a holomorphic function
   continues itself along any path in its domain.
 * `TauCeti.IsAnalyticContinuationAlong.congr` — only the carried germs matter.
-* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow`, `.inv`,
-  `.div` — continuations are closed under the germ-wise operations, the last two under the
-  hypothesis that no zero value is carried.
-* `TauCeti.IsAnalyticContinuationAlong.continuousOn_apply` — the values a continuation carries
-  trace out a continuous path.
-* `TauCeti.IsAnalyticContinuationAlong.comp` — **substitution**: a continuation along the value
-  path of another composes with it; `TauCeti.IsAnalyticContinuationAlong.postcomp` is the case of
-  a single analytic outer function.
-* `TauCeti.IsAnalyticContinuationAlong.reparam` — **reparametrisation invariance**, of which
-  `TauCeti.IsAnalyticContinuationAlong.mono` is the identity case.
+* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow` —
+  continuations are closed under the germ-wise operations.
+* `TauCeti.IsAnalyticContinuationAlong.reparam` — a continuation transports along any continuous
+  reparametrisation of the path, of which restriction to a smaller parameter set
+  (`TauCeti.IsAnalyticContinuationAlong.mono`) is the identity case.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq` — **uniqueness**: a continuation over a
   preconnected parameter set is determined by its germ at a single time.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
@@ -121,10 +94,6 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
 * `TauCeti.ContinuesAlong.add`, `.mul`, `.neg`, `.sub`, `.pow`, `.deriv` and their
   `TauCeti.ContinuesInside` counterparts — continuability of a germ is inherited by sums, products,
   differences, powers and derivatives.
-* `TauCeti.ContinuesAlong.postcomp` and `TauCeti.ContinuesInside.postcomp` — and by composition
-  with an entire function.
-* `TauCeti.ContinuesAlong.reparam` — continuability along a path depends on the path only up to
-  reparametrisation.
 
 ## References
 
@@ -208,16 +177,18 @@ structure IsAnalyticContinuationAlong (f : X → ℂ → ℂ) (γ : X → ℂ) (
 
 namespace IsAnalyticContinuationAlong
 
-/-- **Continuation is invariant under reparametrisation of the path.** Precomposing both the
+/-- **A continuation transports along a reparametrisation of the path.** Precomposing both the
 family and the path with a continuous map `φ` of parameters again gives a continuation, along the
 reparametrised path `γ ∘ φ`.
 
 Nothing is asked of `φ` beyond continuity — it need not be injective, surjective or monotone — so
 this covers restriction (`TauCeti.IsAnalyticContinuationAlong.mono`, the case `φ = id`),
 reversal of a path, and the passage between the parameter conventions `X = ℝ` with `s = Icc 0 1`
-and `X = unitInterval` with `s = univ` that this file's two layers use. The germ carried at a
-reparametrised time is by construction the germ carried at the original time, so no uniqueness
-argument is needed: the conclusion is about the *same* family, read along `φ`. -/
+and `X = unitInterval` with `s = univ` that this file's two layers use. Only this direction is
+claimed: a `φ` that is not surjective drops part of the original path, so continuing along `γ ∘ φ`
+does not in general continue along `γ`. The germ carried at a reparametrised time is by
+construction the germ carried at the original time, so no uniqueness argument is needed: the
+conclusion is about the *same* family, read along `φ`. -/
 theorem reparam {Y : Type*} [TopologicalSpace Y] {φ : Y → X} {s' : Set Y}
     (hf : IsAnalyticContinuationAlong f γ s) (hφ : ContinuousOn φ s')
     (hmaps : Set.MapsTo φ s' s) :
@@ -306,83 +277,6 @@ protected theorem pow (hf : IsAnalyticContinuationAlong f γ s) (n : ℕ) :
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).pow n
   locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.pow_const n
-
-/-- **The reciprocal of a nowhere-vanishing continuation continues.** The hypothesis is that the
-*value carried at each time*, `f t (γ t)`, is nonzero; nothing is asked of `f t` away from `γ t`,
-which the germ `(f t)⁻¹` does not see either.
-
-The condition cannot be weakened to nonvanishing at the initial time alone: a germ may continue to
-a germ that vanishes — `z ↦ z` continued along a path through `0` is the standard example — and
-there the reciprocal germ has a pole rather than a continuation. -/
-protected theorem inv (hf : IsAnalyticContinuationAlong f γ s) (hne : ∀ t ∈ s, f t (γ t) ≠ 0) :
-    IsAnalyticContinuationAlong f⁻¹ γ s where
-  continuousOn := hf.continuousOn
-  analyticAt t ht := (hf.analyticAt t ht).inv (hne t ht)
-  locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.inv
-
-/-- Continuations divide, provided the denominator carries no zero value. -/
-protected theorem div (hf : IsAnalyticContinuationAlong f γ s)
-    (hg : IsAnalyticContinuationAlong g γ s) (hne : ∀ t ∈ s, g t (γ t) ≠ 0) :
-    IsAnalyticContinuationAlong (f / g) γ s where
-  continuousOn := hf.continuousOn
-  analyticAt t ht := (hf.analyticAt t ht).div (hg.analyticAt t ht) (hne t ht)
-  locallyEq t ht := by
-    filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.div hu'
-
-/-! ### Composition -/
-
-/-- **The value carried by a continuation is continuous in the parameter.** The germs themselves
-vary only "locally constantly", but their values at the moving point `γ t` trace out an honest
-continuous path `t ↦ f t (γ t)` — the path along which an outer germ is to be continued when two
-continuations are composed.
-
-The proof is the one-line consequence of the two clauses of the definition: near `t` the family is
-constant as a germ, so `f u (γ u) = f t (γ u)`, and the right-hand side is continuous because the
-single function `f t` is analytic, hence continuous, at `γ t`. -/
-theorem continuousOn_apply (hf : IsAnalyticContinuationAlong f γ s) :
-    ContinuousOn (fun t => f t (γ t)) s := by
-  intro t₀ ht₀
-  have hval : (fun u => f t₀ (γ u)) =ᶠ[𝓝[s] t₀] fun u => f u (γ u) := by
-    filter_upwards [hf.locallyEq t₀ ht₀] with u hu using hu.eq_of_nhds.symm
-  exact Filter.Tendsto.congr' hval
-    ((hf.analyticAt t₀ ht₀).continuousAt.comp_continuousWithinAt (hf.continuousOn t₀ ht₀))
-
-/-- **Continuations compose.** If `f` continues a germ along `γ` and `g` continues a germ along the
-path `t ↦ f t (γ t)` traced out by the values of `f`, then the composites `g t ∘ f t` continue the
-composite germ along `γ`.
-
-This is the closure rule that the ring operations do not reach, and it is what lets a germ built
-by substitution be continued by continuing its two constituents separately. The inner path is
-forced: it is the value path of `f`, which is continuous by
-`TauCeti.IsAnalyticContinuationAlong.continuousOn_apply`.
-
-Germ agreement propagates through the composite because `f u` is continuous at `γ u`: the points
-`f u z` for `z` near `γ u` are near `f u (γ u)`, which is where `g u` and `g t` are known to have
-the same germ. -/
-protected theorem comp {g : X → ℂ → ℂ}
-    (hg : IsAnalyticContinuationAlong g (fun t => f t (γ t)) s)
-    (hf : IsAnalyticContinuationAlong f γ s) :
-    IsAnalyticContinuationAlong (fun t => g t ∘ f t) γ s where
-  continuousOn := hf.continuousOn
-  analyticAt t ht := (hg.analyticAt t ht).comp (hf.analyticAt t ht)
-  locallyEq t ht := by
-    filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht, self_mem_nhdsWithin] with u hfu hgu hu
-    have houter : ∀ᶠ z in 𝓝 (γ u), g u (f u z) = g t (f u z) :=
-      Filter.Tendsto.eventually (hf.analyticAt u hu).continuousAt hgu
-    filter_upwards [hfu, houter] with z hz hz'
-    rw [Function.comp_apply, Function.comp_apply, hz', hz]
-
-/-- **Post-composing a continuation with a single analytic function.** If `F` is analytic at every
-value `f t (γ t)` carried by a continuation — for an entire `F` that is automatic — then the
-family `F ∘ f t` is a continuation along the same path.
-
-This is `TauCeti.IsAnalyticContinuationAlong.comp` against the constant outer family, which is a
-continuation along the value path by
-`TauCeti.IsAnalyticContinuationAlong.continuousOn_apply`. -/
-theorem postcomp {F : ℂ → ℂ} (hf : IsAnalyticContinuationAlong f γ s)
-    (hF : ∀ t ∈ s, AnalyticAt ℂ F (f t (γ t))) :
-    IsAnalyticContinuationAlong (fun t => F ∘ f t) γ s :=
-  (IsAnalyticContinuationAlong.const hf.continuousOn_apply hF).comp hf
 
 /-! ### Uniqueness -/
 
@@ -520,31 +414,6 @@ protected theorem deriv (h : ContinuesAlong f₀ c) : ContinuesAlong (_root_.der
   let ⟨f, hf, hf0⟩ := h
   ⟨fun t => _root_.deriv (f t), hf.deriv, hf0.deriv⟩
 
-/-- **Post-composing with an entire function preserves continuability.** If the germ of `f₀`
-continues along `c` and `F` is analytic everywhere, then the germ of `F ∘ f₀` continues along `c`.
-
-Analyticity of `F` on all of `ℂ` is what makes this a statement about the germ of `f₀` alone: for
-an `F` analytic only on a proper open subset the hypothesis one would need — that the continuation
-of `f₀` keeps its values inside that subset — is not readable off `f₀`, and the statement belongs
-at the level of `TauCeti.IsAnalyticContinuationAlong.postcomp`, where the continuation is named.
-Taking `F` to be `Complex.exp`, a polynomial, or `Complex.sin` are the typical uses. -/
-theorem postcomp (h : ContinuesAlong f₀ c) {F : ℂ → ℂ} (hF : ∀ z, AnalyticAt ℂ F z) :
-    ContinuesAlong (F ∘ f₀) c :=
-  let ⟨f, hf, hf0⟩ := h
-  ⟨fun t => F ∘ f t, hf.postcomp fun _ _ => hF _, hf0.fun_comp F⟩
-
-/-- **Continuability along a path is invariant under reparametrisation.** A germ that continues
-along `c` continues along `c ∘ φ` for every continuous `φ : I → I` fixing the initial time.
-
-Fixing `φ 0 = 0` is what keeps the *initial* germ the one being continued; without it the
-reparametrised path starts somewhere else, and the statement is
-`TauCeti.IsAnalyticContinuationAlong.reparam` instead. -/
-theorem reparam (h : ContinuesAlong f₀ c) {φ : I → I} (hφ : Continuous φ) (hφ0 : φ 0 = 0) :
-    ContinuesAlong f₀ (c ∘ φ) :=
-  let ⟨f, hf, hf0⟩ := h
-  ⟨f ∘ φ, hf.reparam hφ.continuousOn (Set.mapsTo_univ _ _), by
-    simpa only [Function.comp_apply, hφ0] using hf0⟩
-
 end ContinuesAlong
 
 /-- Continuability along a path is a property of the germ of `f₀` at the initial point. -/
@@ -628,14 +497,6 @@ and simply connected and contains `z₀`, the derivative therefore has a branch 
 (`TauCeti.ContinuesInside.exists_analyticOnNhd`). -/
 protected theorem deriv (H : ContinuesInside f₀ U z₀) : ContinuesInside (_root_.deriv f₀) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).deriv
-
-/-- **An entire function applied to a germ that continues inside a domain continues inside it.**
-Composed with the monodromy theorem for a simply connected domain
-(`TauCeti.ContinuesInside.exists_analyticOnNhd`), this says that `F ∘ f₀` has a branch on `U`
-whenever `f₀` has one — the substitution instance of the closure properties above. -/
-theorem postcomp (H : ContinuesInside f₀ U z₀) {F : ℂ → ℂ} (hF : ∀ z, AnalyticAt ℂ F z) :
-    ContinuesInside (F ∘ f₀) U z₀ :=
-  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).postcomp hF
 
 end ContinuesInside
 
