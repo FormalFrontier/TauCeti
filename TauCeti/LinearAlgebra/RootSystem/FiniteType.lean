@@ -145,11 +145,13 @@ theorem submatrix {C : Type*} [Fintype C] (h : IsFiniteType A) {e : C → B}
     fun i j hij ↦ h.apply_eq_zero_symm hij, d ∘ e, fun i ↦ hd _, ?_⟩
   exact hpd.submatrix he
 
-/-- **Adjacent indices have Cartan product at least `1`.** Both entries of an adjacent transposed
-pair are at most `-1`: they are nonpositive, and neither vanishes, because the vanishing pattern is
-symmetric. -/
-theorem one_le_apply_mul_apply (h : IsFiniteType A) {i j : B} (hij : i ≠ j) (hne : A i j ≠ 0) :
+/-- **A nonzero entry has Cartan product at least `1`.** Off the diagonal both entries of such a
+transposed pair are at most `-1`: they are nonpositive, and neither vanishes, because the vanishing
+pattern is symmetric. On the diagonal the product is `2 * 2`. -/
+theorem one_le_apply_mul_apply (h : IsFiniteType A) {i j : B} (hne : A i j ≠ 0) :
     1 ≤ A i j * A j i := by
+  rcases eq_or_ne i j with rfl | hij
+  · rw [h.apply_self]; norm_num
   have hi : A i j ≤ -1 := by have := h.apply_le_zero_of_ne hij; omega
   have hj : A j i ≤ -1 := by
     have hle := h.apply_le_zero_of_ne hij.symm
@@ -256,9 +258,10 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
-/-- **The two-neighbour case of the star bound.** Two non-adjacent indices `j` and `k`, both
-distinct from `i`, carry Cartan products with `i` summing to less than `4`. Here `j ≠ k` need not
-be assumed: it follows from `A j k = 0`, since the diagonal entries are `2`. -/
+/-- **The two-index case of the star bound.** Two non-adjacent indices `j` and `k`, both distinct
+from `i`, carry Cartan products with `i` summing to less than `4`; neither is required to be a
+neighbour of `i`, an absent edge contributing `0`. Here `j ≠ k` need not be assumed: it follows
+from `A j k = 0`, since the diagonal entries are `2`. -/
 theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
     (hik : i ≠ k) (h0 : A j k = 0) :
     A i j * A j i + A i k * A k i < 4 := by
@@ -305,7 +308,7 @@ theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : 
     rw [h.apply_eq_zero_symm h0] at hj
     simp at hj
   by_contra hne
-  have h1 := h.one_le_apply_mul_apply hik hne
+  have h1 := h.one_le_apply_mul_apply hne
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
@@ -318,7 +321,7 @@ theorem card_le_three_of_pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s 
     (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
     s.card ≤ 3 := by
   have hone : ∀ j ∈ s, (1 : ℤ) ≤ A i j * A j i := fun j hj ↦
-    h.one_le_apply_mul_apply (fun hc ↦ his (hc ▸ hj)) (hadj j hj)
+    h.one_le_apply_mul_apply (hadj j hj)
   have hcard : (s.card : ℤ) ≤ ∑ j ∈ s, A i j * A j i := by
     calc (s.card : ℤ) = ∑ _j ∈ s, (1 : ℤ) := by simp
       _ ≤ _ := Finset.sum_le_sum hone
@@ -334,7 +337,7 @@ theorem apply_mul_apply_eq_one_of_three_le_card (h : IsFiniteType A) {i : B} {s 
     A i j * A j i = 1 := by
   classical
   have hone : ∀ k ∈ s, (1 : ℤ) ≤ A i k * A k i := fun k hk ↦
-    h.one_le_apply_mul_apply (fun hc ↦ his (hc ▸ hk)) (hadj k hk)
+    h.one_le_apply_mul_apply (hadj k hk)
   have hsplit : ∑ k ∈ s, A i k * A k i
       = A i j * A j i + ∑ k ∈ s.erase j, A i k * A k i := (Finset.add_sum_erase _ _ hj).symm
   have herase : ((s.erase j).card : ℤ) ≤ ∑ k ∈ s.erase j, A i k * A k i := by
