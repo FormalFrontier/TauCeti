@@ -108,6 +108,16 @@ noncomputable def unitsLieAlgebraEquiv :
   leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓘(ℝ, R)) (G := Rˣ)
     BoundarylessManifold.isInteriorPoint
 
+/-- The units Lie-algebra equivalence is the general derivation--tangent equivalence specialized
+to the boundaryless manifold `Rˣ`. -/
+@[simp]
+theorem unitsLieAlgebraEquiv_apply (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
+    unitsLieAlgebraEquiv X =
+      leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓘(ℝ, R)) (G := Rˣ)
+        BoundarylessManifold.isInteriorPoint X := by
+  rw [unitsLieAlgebraEquiv]
+  rfl
+
 /-- The abstract one-parameter subgroup on `Rˣ` is the Banach-algebra exponential subgroup. -/
 @[simp]
 theorem oneParameterSubgroup_eq_expUnitHom (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
