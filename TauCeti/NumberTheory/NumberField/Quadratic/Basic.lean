@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.Discriminant
+public import Mathlib.LinearAlgebra.Matrix.Notation
 
 /-!
 # Basics for quadratic number fields
@@ -27,6 +28,7 @@ minimal polynomial over `ℤ` is `X² - d`. These feed both the prime-splitting 
 public section
 
 open Polynomial NumberField Module
+open scoped Matrix
 
 namespace TauCeti.NumberField
 
@@ -89,5 +91,20 @@ theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     Matrix.cons_val_one, mul_one, one_mul]
   rw [← pow_two, hd', htr1, trace_coe_eq_zero hmin hgen, Algebra.trace_algebraMap, hfr]
   simp only [nsmul_eq_mul]; push_cast; ring
+
+/-- The discriminant of the `ℚ`-family `{1, (1+θ)/2}` is `d`: a change of basis from `{1, θ}` by
+the matrix `!![1, 0; 1/2, 1/2]` (determinant `1/2`), so `disc = (1/2)² · 4d = d`. -/
+theorem discr_one_half_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    Algebra.discr ℚ ![(1 : K), (1 + (θ : K)) / 2] = ((d : ℤ) : ℚ) := by
+  have hP : ![(1 : K), (1 + (θ : K)) / 2]
+      = (!![1, 0; 1 / 2, 1 / 2] : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ K) *ᵥ
+          ![(1 : K), (θ : K)] := by
+    funext i
+    fin_cases i
+    · simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two]
+    · simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two]; ring
+  rw [hP, Algebra.discr_of_matrix_mulVec, discr_one_gen hmin hgen, Matrix.det_fin_two_of]
+  push_cast; ring
 
 end TauCeti.NumberField

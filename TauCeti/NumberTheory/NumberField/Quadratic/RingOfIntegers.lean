@@ -271,6 +271,38 @@ theorem adjoin_half_gen_eq_top_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 
   exact add_mem (zsmul_mem (one_mem _) k)
     (zsmul_mem (Algebra.subset_adjoin (Set.mem_singleton _)) l)
 
+/-- **The discriminant of `ℚ(√d)` when `d ≡ 1 (mod 4)`.** For squarefree `d` with `d % 4 = 1`, the
+field discriminant is `disc K = d` (the ring of integers is `ℤ[(1+θ)/2]`, whose `{1, ω}` basis has
+discriminant `d`). -/
+theorem discr_eq_of_squarefree_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 = 1) :
+    NumberField.discr K = d := by
+  have hfr := finrank_rat_eq_two hmin hgen
+  have hωnotmem : ((1 + (θ : K)) / 2) ∉ (algebraMap ℚ K).range := by
+    rintro ⟨q, hq⟩
+    exact coe_notMem_range hmin ⟨2 * q - 1, by rw [map_sub, map_mul, map_one, map_ofNat, hq]; ring⟩
+  obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
+    hfr hωnotmem (isIntegral_half_gen hmin hd4)
+  have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((d : ℤ) : ℚ) := by
+    rw [hbs]; exact discr_one_half_gen hmin hgen
+  have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
+    rw [eq_top_iff]
+    rintro z -
+    obtain ⟨k, l, hkl⟩ := exists_int_repr_one hmin hgen hsf hd4 z
+    have hval0 : bs 0 = (1 : K) := by rw [hbs]; rfl
+    have hval1 : bs 1 = (1 + (θ : K)) / 2 := by rw [hbs]; rfl
+    have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
+      apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
+    have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = halfGen hmin hd4 := by
+      apply RingOfIntegers.coe_injective; change bs 1 = (1 + (θ : K)) / 2; exact hval1
+    have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
+      e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
+    have hω : halfGen hmin hd4 ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
+      e1 ▸ Submodule.subset_span (Set.mem_range_self 1)
+    rw [hkl]
+    exact add_mem (Submodule.smul_mem _ _ h1) (Submodule.smul_mem _ _ hω)
+  exact_mod_cast discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int bs hb hspan hdd
+
 variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
   (hsf : Squarefree d) (hd4 : d % 4 ≠ 1)
 
