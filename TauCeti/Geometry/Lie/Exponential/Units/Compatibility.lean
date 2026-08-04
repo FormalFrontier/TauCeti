@@ -8,7 +8,7 @@ public import TauCeti.Geometry.Lie.Exponential.Basic
 public import TauCeti.Geometry.Lie.Exponential.OneParameter
 
 /-!
-# Compatibility of the abstract and Banach-algebra exponentials
+# Compatibility between abstract and Banach-algebra exponentials
 
 The abstract Lie-group exponential recovers the Banach-algebra exponential on `Rˣ`. Under the
 canonical identification of its Lie algebra with `R`, the abstract one-parameter subgroup is
