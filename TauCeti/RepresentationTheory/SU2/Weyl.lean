@@ -65,6 +65,16 @@ torus", which needs the `W`-invariant (even) functions on `T` to be the class fu
 it is the `SU(2)` instance of `weylGroup T = N_G(T) / T` from
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`, Layer 6.
 
+Inside Tau Ceti, the inversion action of the Weyl reflection on the torus was already formalized by
+`TauCeti.SU2.isConj_inv_of_mem_torus` in `TauCeti/RepresentationTheory/SU2/TorusConjugacy.lean`,
+which conjugates a torus element to its inverse by the sign-opposite quarter turn
+`!![0, 1; -1, 0] = w⁻¹`. That is the same construction as
+`TauCeti.SU2.weylElement_conj_torusHom` here, in existential form: it asserts `IsConj g g⁻¹` and so
+neither names a conjugating element nor records that the conjugator normalizes `T`, which is what
+the computation of `N(T)` and of the quotient needs. The quarter turn is therefore named afresh
+here rather than extracted from `TorusConjugacy`, which also keeps this file independent of the
+spectral theorem that file rests on.
+
 * D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 18.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter IV.
