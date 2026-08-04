@@ -108,17 +108,9 @@ angular gap, the half-angle then staying in `[0, π / 2]`; beyond `π` the formu
 chord shrinks again as the gap widens. -/
 theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (h : |θ - θ'| ≤ 2 * π) :
     dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
-  rw [dist_circleMap_eq_two_mul_abs_sin]
-  congr 1
-  have hnn : 0 ≤ Real.sin (|θ - θ'| / 2) :=
-    Real.sin_nonneg_of_nonneg_of_le_pi (by positivity) (by linarith [Real.pi_pos])
-  rcases abs_cases (θ - θ') with ⟨hc, -⟩ | ⟨hc, -⟩
-  · rw [hc] at hnn ⊢
-    exact abs_of_nonneg hnn
-  · rw [hc] at hnn ⊢
-    rw [neg_div, Real.sin_neg]
-    rw [neg_div, Real.sin_neg] at hnn
-    exact abs_of_nonpos (by linarith)
+  have habs : |(θ - θ') / 2| = |θ - θ'| / 2 := by rw [abs_div, abs_two]
+  rw [dist_circleMap_eq_two_mul_abs_sin,
+    Real.abs_sin_eq_sin_abs_of_abs_le_pi (by rw [habs]; linarith), habs]
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
