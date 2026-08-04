@@ -6,8 +6,8 @@ module
 
 public import TauCeti.RingTheory.Semisimple.CentralCharacter
 public import TauCeti.RepresentationTheory.Irreducible
-public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Integral
+public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Representation
 
 /-!
 # The central character of an irreducible representation
@@ -26,7 +26,8 @@ is in characteristic zero.
 Because the class sums are integral over `ℤ` and an algebra homomorphism preserves integrality,
 every value `ωᵪ(K_C)` is an algebraic integer. This is the input to the divisibility `χ(1) ∣ |G|`
 and to the Dixon-Schneider algorithm, where the row `C ↦ ωᵪ(K_C)` is a common left eigenrow of the
-class-multiplication matrices.
+class-multiplication matrices; that eigenrow property holds of any algebra homomorphism out of the
+centre, and is `TauCeti.isClassEigenrow_classSumRow` applied to a central character.
 
 ## Main definitions
 
@@ -43,9 +44,6 @@ class-multiplication matrices.
   degree.
 * `TauCeti.Representation.isIntegral_centralCharacter_classSumCenter`: the values of the central
   character on the class sums are algebraic integers.
-* `TauCeti.Representation.isClassEigenrow_classSumRow_centralCharacter`: those values form a common
-  left eigenrow of the class-multiplication matrices, which is what the Dixon-Schneider
-  characterization consumes.
 * `TauCeti.Representation.centralCharacter_trivial_classSumCenter`: the worked case of the trivial
   representation, where the value on a class sum is the size of the class.
 
@@ -75,33 +73,6 @@ universe u v w
 
 variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Group G]
 variable [AddCommGroup V] [Module k V] (ρ : Representation k G V)
-
-/-! ### The action of a class sum -/
-
-section ClassSum
-
-variable [Fintype G] [DecidableEq G]
-
-/-- A class sum acts on a representation by the sum of the actions of the elements of the class. -/
-theorem asAlgebraHom_classSum (C : ConjClasses G) :
-    ρ.asAlgebraHom (classSum k C) = ∑ x : C.carrier, ρ (x : G) := by
-  rw [classSum_eq_sum, map_sum]
-  exact Finset.sum_congr rfl fun x _ => ρ.asAlgebraHom_of x
-
-/-- The character is constant on a conjugacy class, so the trace of the action of a class sum is
-the size of the class times the character value there. -/
-theorem trace_asAlgebraHom_classSum {C : ConjClasses G} {g : G} (hg : ConjClasses.mk g = C) :
-    LinearMap.trace k V (ρ.asAlgebraHom (classSum k C)) = Nat.card C.carrier * ρ.character g := by
-  rw [asAlgebraHom_classSum, map_sum]
-  have hconst : ∀ x : C.carrier, LinearMap.trace k V (ρ (x : G)) = ρ.character g := by
-    rintro ⟨x, hx⟩
-    obtain ⟨c, rfl⟩ := isConj_iff.mp
-      (ConjClasses.mk_eq_mk_iff_isConj.mp (hg.trans (ConjClasses.mem_carrier_iff_mk_eq.mp hx).symm))
-    exact ρ.char_conj g c
-  rw [Finset.sum_congr rfl fun x _ => hconst x, Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
-    Nat.card_eq_fintype_card]
-
-end ClassSum
 
 /-! ### The central character -/
 
@@ -177,14 +148,6 @@ theorem isIntegral_centralCharacter_classSumCenter (C : ConjClasses G) :
     IsIntegral ℤ (centralCharacter ρ (classSumCenter C)) :=
   (isIntegral_classSumCenter k C).map ((centralCharacter ρ).restrictScalars ℤ)
 
-/-- The values of a central character on the class sums form a common left eigenrow of the
-class-multiplication matrices: this is the row that the Dixon-Schneider characterization of the
-character table computes with. It is the specialization of
-`TauCeti.isClassEigenrow_classSumRow` to the central character. -/
-theorem isClassEigenrow_classSumRow_centralCharacter :
-    IsClassEigenrow (classSumRow (centralCharacter ρ)) :=
-  isClassEigenrow_classSumRow _
-
 end Finite
 
 /-! ### The trivial representation -/
@@ -199,7 +162,11 @@ number of its terms.
 
 This pins the normalization of `TauCeti.Representation.centralCharacter`. It is derived from
 `TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one` as the case `χ = 1`,
-where both the degree and the character value on the class are `1`. -/
+where both the degree and the character value on the class are `1`.
+
+This is the simp normal form of the value: the central character of the trivial representation on a
+class sum is evaluated to the size of the class. -/
+@[simp]
 theorem centralCharacter_trivial_classSumCenter (C : ConjClasses G) :
     centralCharacter (_root_.Representation.trivial k G k) (classSumCenter C) =
       Nat.card C.carrier := by
