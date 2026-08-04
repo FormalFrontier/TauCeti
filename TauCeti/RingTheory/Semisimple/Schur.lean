@@ -38,8 +38,10 @@ equivalence.
   `TauCeti.nonempty_algEquiv_self_of_finiteDimensional_divisionRing` the finite-dimensional
   division algebra special case, also available under the name the roadmap pins,
   `TauCeti.algEquiv_self_of_finiteDimensional_divisionRing`.
-* `TauCeti.nonempty_end_algEquiv_self_of_isSimpleModule`: the endomorphism ring of a
-  finite-dimensional simple module over an algebraically closed field collapses to that field.
+* `TauCeti.endAlgEquivSelfOfIsSimpleModule`: the endomorphism ring of a finite-dimensional simple
+  module over an algebraically closed field collapses to that field, canonically, as the inverse
+  of the structure map; `TauCeti.nonempty_end_algEquiv_self_of_isSimpleModule` is its existence
+  form.
 
 ## References
 
@@ -150,10 +152,35 @@ finite-dimensional simple module over a `k`-algebra is the field `k` itself.
 Mathlib's `IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed` proves that every such
 endomorphism is a scalar; this packages that bijection as an algebra equivalence. Finite
 dimensionality is needed: an infinite-dimensional simple module can have a larger division
-endomorphism ring. -/
+endomorphism ring.
+
+The equivalence involves no choices: it is the inverse of the structure map `k → End A S`, which
+Schur's lemma proves bijective. Its inverse is therefore `algebraMap` on the nose, and the scalar
+attached to an endomorphism is characterized by
+`TauCeti.endAlgEquivSelfOfIsSimpleModule_smul`. -/
+noncomputable def endAlgEquivSelfOfIsSimpleModule : Module.End A S ≃ₐ[k] k :=
+  (AlgEquiv.ofBijective (Algebra.ofId k (Module.End A S))
+    (IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed k)).symm
+
+/-- The inverse of the Schur equivalence is the structure map of the endomorphism algebra. -/
+@[simp]
+theorem endAlgEquivSelfOfIsSimpleModule_symm_apply (c : k) :
+    (endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := S)).symm c =
+      algebraMap k (Module.End A S) c :=
+  (rfl)
+
+/-- The scalar attached to an endomorphism of a simple module is the scalar it acts by. -/
+@[simp]
+theorem endAlgEquivSelfOfIsSimpleModule_smul (f : Module.End A S) (s : S) :
+    endAlgEquivSelfOfIsSimpleModule (k := k) f • s = f s := by
+  conv_rhs =>
+    rw [← (endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := S)).symm_apply_apply f]
+  rw [endAlgEquivSelfOfIsSimpleModule_symm_apply, Module.algebraMap_end_apply]
+
+/-- The existence statement of Schur's lemma over an algebraically closed field, for consumers
+that only need to know that some algebra equivalence exists. -/
 theorem nonempty_end_algEquiv_self_of_isSimpleModule : Nonempty (Module.End A S ≃ₐ[k] k) :=
-  ⟨(AlgEquiv.ofBijective (Algebra.ofId k (Module.End A S))
-    (IsSimpleModule.algebraMap_end_bijective_of_isAlgClosed k)).symm⟩
+  ⟨endAlgEquivSelfOfIsSimpleModule⟩
 
 end SimpleEnd
 

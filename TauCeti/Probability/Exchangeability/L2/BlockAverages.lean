@@ -36,9 +36,8 @@ Var[blockAverage X k - blockAverage X k'] = (v - c) / n + (v - c) / m,
 and, since contractability makes the two averages share the common mean `μ[X 0]`, this is the
 squared `L²` distance `∫ (blockAverage X k - blockAverage X k')² dμ` itself. The squared
 distance vanishes like `1 / n + 1 / m` (equivalently, the `L²` norm like `n^(-1/2)` for equal
-windows), which is the analytic engine that later drives the `L²` convergence of the observables
-`blockAverage X k` toward their common conditional mean, the intermediate real-valued step
-before the roadmap's determining-class argument identifies the directing random measure.
+windows), which is the quantitative averaging input the `L²` route runs on: it is what drives the
+convergence of `blockAverage X k` toward the common conditional mean.
 
 The elementary L² route to de Finetti's theorem formalised here is the one presented in
 Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), Chapter 1

@@ -92,133 +92,104 @@ private theorem norm_sub_sub_smul_deriv_le_of_lipschitzOnWith {γ : ℝ → ℂ}
     calc ‖g t‖ ≤ K * (t₀ - t) * (t₀ - t) := this
       _ = K * (t - t₀) ^ 2 := by ring
 
+/-- **The cross product of two nearly parallel vectors is small.** The imaginary part of
+`u * conj z` is the two-dimensional cross product of `z` and `u`, so it vanishes when both are
+real multiples of one vector `v`. This bounds it by the two deviations from that configuration:
+`u` from `v`, and `z` from the real multiple `a • v`. -/
+private theorem abs_im_mul_conj_le_norm_sub_mul_add_mul_norm_sub_smul (u z v : ℂ) (a : ℝ) :
+    |(u * (starRingEnd ℂ) z).im| ≤ ‖u - v‖ * ‖z‖ + ‖v‖ * ‖z - a • v‖ := by
+  have habs : ∀ x y : ℂ, |(x * (starRingEnd ℂ) y).im| ≤ ‖x‖ * ‖y‖ := fun x y => by
+    simpa [norm_mul, Complex.norm_conj] using Complex.abs_im_le_norm (x * (starRingEnd ℂ) y)
+  -- The cross product of `v` with the real multiple `a • v` is zero.
+  have hreal : (v * (starRingEnd ℂ) (a • v)).im = 0 := by
+    rw [Complex.real_smul, map_mul, Complex.conj_ofReal, ← mul_assoc, mul_comm v, mul_assoc,
+      Complex.mul_conj]
+    simp
+  have hsplit : u * (starRingEnd ℂ) z = (u - v) * (starRingEnd ℂ) z
+      + (v * (starRingEnd ℂ) (a • v) + v * (starRingEnd ℂ) (z - a • v)) := by
+    rw [map_sub]; ring
+  rw [hsplit, Complex.add_im, Complex.add_im, hreal, zero_add]
+  exact (abs_add_le _ _).trans (add_le_add (habs _ _) (habs _ _))
+
+/-- **A quadratic error cannot swallow the linear term.** If `z` lies within `K * a ^ 2` of the
+real multiple `a • v`, and `a` is small enough that `|a| * (2 * K) ≤ ‖v‖`, then `z` still inherits
+half of the length `|a| * ‖v‖` of that multiple. -/
+private theorem mul_norm_le_two_mul_norm_of_norm_sub_smul_le {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {z v : E} {a K : ℝ} (hR : ‖z - a • v‖ ≤ K * a ^ 2)
+    (ha : |a| * (2 * K) ≤ ‖v‖) :
+    |a| * ‖v‖ ≤ 2 * ‖z‖ := by
+  have h1 : ‖a • v‖ - ‖z - a • v‖ ≤ ‖z‖ := by
+    simpa [norm_sub_rev z (a • v)] using norm_sub_norm_le (a • v) (a • v - z)
+  rw [norm_smul, Real.norm_eq_abs] at h1
+  rw [← sq_abs a] at hR
+  nlinarith [mul_le_mul_of_nonneg_left ha (abs_nonneg a),
+    mul_nonneg (abs_nonneg a) (norm_nonneg v)]
+
+/-- **A quadratically small numerator over a linearly large denominator.** If `|x|` is at most
+`N * a ^ 2` while the denominator `d` is at least half of `|a| * b`, the quotient `|x| / d ^ 2`
+loses all dependence on `a` and is bounded by `4 * N / b ^ 2`. -/
+private theorem abs_div_sq_le_of_abs_le_mul_sq {x a b d N : ℝ} (hN : 0 ≤ N) (hb : 0 < b)
+    (hd : |a| * b ≤ 2 * d) (hx : |x| ≤ N * a ^ 2) :
+    |x| / d ^ 2 ≤ 4 * N / b ^ 2 := by
+  rcases eq_or_ne a 0 with rfl | ha
+  · have hx0 : |x| = 0 := le_antisymm (by simpa using hx) (abs_nonneg x)
+    rw [hx0, zero_div]
+    positivity
+  · have hapos : 0 < |a| := abs_pos.mpr ha
+    have hdpos : 0 < d := by nlinarith [mul_pos hapos hb]
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have hsq : a ^ 2 * b ^ 2 ≤ 4 * d ^ 2 := by nlinarith [mul_pos hapos hb, sq_abs a]
+    nlinarith [mul_le_mul_of_nonneg_right hx (sq_nonneg b), mul_le_mul_of_nonneg_left hsq hN]
+
 /-- **Pointwise bound on the real winding integrand near a `C^{1,1}` crossing.** For `t` close
-enough to `t₀` that `|t - t₀| * (4 * (K + 1)) ≤ ‖deriv γ t₀‖`, the real winding integrand at
+enough to `t₀` that `|t - t₀| * (2 * K) ≤ ‖deriv γ t₀‖`, the real winding integrand at
 `γ t - w` is bounded independent of `t`. -/
 private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith {γ : ℝ → ℂ} {w : ℂ} {t₀ ε : ℝ}
     {K : ℝ≥0} (hε_pos : 0 < ε) (hderiv : ∀ t ∈ Icc (t₀ - ε) (t₀ + ε), HasDerivAt γ (deriv γ t) t)
     (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε)))
     (h_eq : γ t₀ = w) (hvel : deriv γ t₀ ≠ 0) {t : ℝ} (ht : t ∈ Icc (t₀ - ε) (t₀ + ε))
-    (hρ : |t - t₀| * (4 * ((K : ℝ) + 1)) ≤ ‖deriv γ t₀‖) :
+    (hρ : |t - t₀| * (2 * (K : ℝ)) ≤ ‖deriv γ t₀‖) :
     |realWindingIntegrand (γ t - w) (deriv γ t)| ≤
       4 * (2 * ‖deriv γ t₀‖ * K + K ^ 2 * ε) / ‖deriv γ t₀‖ ^ 2 := by
-  set v₀ := deriv γ t₀ with hv₀_def
-  have hv₀_pos : 0 < ‖v₀‖ := norm_pos_iff.mpr hvel
-  have hK_nonneg : (0 : ℝ) ≤ (K : ℝ) := K.coe_nonneg
-  rcases eq_or_ne t t₀ with rfl | htne
-  · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
-    rw [hz0, realWindingIntegrand_def]
-    simp only [inv_zero, zero_mul, Complex.zero_im, abs_zero]
-    positivity
   have habs_le : |t - t₀| ≤ ε := by rw [abs_le]; constructor <;> linarith [ht.1, ht.2]
-  have habs_sq : |t - t₀| ^ 2 = (t - t₀) ^ 2 := sq_abs _
-  set z : ℂ := γ t - w with hz_def
-  set R : ℂ := z - ((t - t₀ : ℝ) : ℂ) * v₀ with hR_def
-  have hR_bound : ‖R‖ ≤ K * (t - t₀) ^ 2 := by
-    have hthis := norm_sub_sub_smul_deriv_le_of_lipschitzOnWith hε_pos hderiv hlip ht
-    rw [Complex.real_smul, h_eq] at hthis
-    rw [hR_def, hz_def]
-    exact hthis
-  set e : ℂ := deriv γ t - v₀ with he_def
-  have he_bound : ‖e‖ ≤ K * |t - t₀| := by
-    have h1 : dist (deriv γ t) v₀ ≤ K * dist t t₀ :=
+  -- A Lipschitz derivative forces a quadratic remainder on `γ` and a linear one on `deriv γ`.
+  have hR : ‖γ t - w - (t - t₀) • deriv γ t₀‖ ≤ K * (t - t₀) ^ 2 := by
+    have h := norm_sub_sub_smul_deriv_le_of_lipschitzOnWith hε_pos hderiv hlip ht
+    rwa [h_eq] at h
+  have he : ‖deriv γ t - deriv γ t₀‖ ≤ K * |t - t₀| := by
+    have h : dist (deriv γ t) (deriv γ t₀) ≤ K * dist t t₀ :=
       lipschitzOnWith_iff_dist_le_mul.mp hlip t ht t₀ ⟨by linarith, by linarith⟩
-    rwa [dist_eq_norm, Real.dist_eq] at h1
-  have hz_eq : z = ((t - t₀ : ℝ) : ℂ) * v₀ + R := by rw [hR_def]; ring
-  have hv_eq : deriv γ t = v₀ + e := by rw [he_def]; ring
-  -- The linear part dominates: `‖z‖ ≥ |t - t₀| * ‖v₀‖ / 2`.
-  have hz_lower : |t - t₀| * ‖v₀‖ / 2 ≤ ‖z‖ := by
-    have h1 : ‖((t - t₀ : ℝ) : ℂ) * v₀‖ - ‖R‖ ≤ ‖z‖ := by
-      have := norm_sub_norm_le (((t - t₀ : ℝ) : ℂ) * v₀) (-R)
-      rw [sub_neg_eq_add, ← hz_eq, norm_neg] at this
-      linarith
-    have h2 : ‖((t - t₀ : ℝ) : ℂ) * v₀‖ = |t - t₀| * ‖v₀‖ := by
-      rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
-    have h3 : K * (t - t₀) ^ 2 ≤ |t - t₀| * ‖v₀‖ / 4 := by
-      rw [← habs_sq]
-      have h5 : 0 ≤ |t - t₀| := abs_nonneg _
-      nlinarith [mul_le_mul_of_nonneg_left hρ h5]
-    nlinarith [h1, h2, hR_bound, h3]
-  have hz_pos : 0 < ‖z‖ := lt_of_lt_of_le (by
-    have : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr htne)
-    positivity) hz_lower
-  -- The numerator is `O((t - t₀) ^ 2)`.
-  have hnum_bound : |z.re * (deriv γ t).im - z.im * (deriv γ t).re| ≤
-      (2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2 := by
-    have hnum_eq : z.re * (deriv γ t).im - z.im * (deriv γ t).re
-        = (deriv γ t * (starRingEnd ℂ) z).im := by
-      rw [Complex.mul_im, Complex.conj_re, Complex.conj_im]; ring
-    rw [hnum_eq]
-    have hexpand : deriv γ t * (starRingEnd ℂ) z
-        = v₀ * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)
-          + v₀ * (starRingEnd ℂ) R + e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)
-          + e * (starRingEnd ℂ) R := by
-      rw [hz_eq, hv_eq, map_add]; ring
-    rw [hexpand]
-    have h1 : (v₀ * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im = 0 := by
-      have heq : v₀ * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)
-          = ((t - t₀ : ℝ) : ℂ) * (Complex.normSq v₀ : ℝ) := by
-        rw [map_mul, Complex.conj_ofReal, ← mul_assoc, mul_comm v₀, mul_assoc,
-          Complex.mul_conj]
-      rw [heq]
-      simp
-    rw [Complex.add_im, Complex.add_im, Complex.add_im, h1, zero_add]
-    have hb1 : |(v₀ * (starRingEnd ℂ) R).im| ≤ ‖v₀‖ * (K * (t - t₀) ^ 2) := by
-      calc |(v₀ * (starRingEnd ℂ) R).im| ≤ ‖v₀ * (starRingEnd ℂ) R‖ := by
-            rw [← RCLike.im_eq_complex_im]; exact RCLike.abs_im_le_norm _
-        _ = ‖v₀‖ * ‖R‖ := by rw [norm_mul, RCLike.norm_conj]
-        _ ≤ ‖v₀‖ * (K * (t - t₀) ^ 2) := mul_le_mul_of_nonneg_left hR_bound (norm_nonneg _)
-    have hb2 : |(e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im|
-        ≤ (K * |t - t₀|) * (|t - t₀| * ‖v₀‖) := by
-      calc |(e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im|
-            ≤ ‖e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)‖ := by
-              rw [← RCLike.im_eq_complex_im]; exact RCLike.abs_im_le_norm _
-        _ = ‖e‖ * ‖((t - t₀ : ℝ) : ℂ) * v₀‖ := by rw [norm_mul, RCLike.norm_conj]
-        _ = ‖e‖ * (|t - t₀| * ‖v₀‖) := by rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
-        _ ≤ (K * |t - t₀|) * (|t - t₀| * ‖v₀‖) :=
-            mul_le_mul_of_nonneg_right he_bound (by positivity)
-    have hb3 : |(e * (starRingEnd ℂ) R).im| ≤ (K * |t - t₀|) * (K * (t - t₀) ^ 2) := by
-      calc |(e * (starRingEnd ℂ) R).im| ≤ ‖e * (starRingEnd ℂ) R‖ := by
-            rw [← RCLike.im_eq_complex_im]; exact RCLike.abs_im_le_norm _
-        _ = ‖e‖ * ‖R‖ := by rw [norm_mul, RCLike.norm_conj]
-        _ ≤ (K * |t - t₀|) * (K * (t - t₀) ^ 2) := mul_le_mul he_bound hR_bound
-          (norm_nonneg _) (by positivity)
-    calc |(v₀ * (starRingEnd ℂ) R).im + (e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im
-          + (e * (starRingEnd ℂ) R).im|
-        ≤ |(v₀ * (starRingEnd ℂ) R).im| + |(e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im|
-          + |(e * (starRingEnd ℂ) R).im| := by
-          have e1 := abs_add_le ((v₀ * (starRingEnd ℂ) R).im
-            + (e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im) (e * (starRingEnd ℂ) R).im
-          have e2 := abs_add_le (v₀ * (starRingEnd ℂ) R).im
-            (e * (starRingEnd ℂ) (((t - t₀ : ℝ) : ℂ) * v₀)).im
-          linarith
-      _ ≤ ‖v₀‖ * (K * (t - t₀) ^ 2) + (K * |t - t₀|) * (|t - t₀| * ‖v₀‖)
-          + (K * |t - t₀|) * (K * (t - t₀) ^ 2) := add_le_add (add_le_add hb1 hb2) hb3
-      _ = (2 * ‖v₀‖ * K) * (t - t₀) ^ 2 + K ^ 2 * |t - t₀| * (t - t₀) ^ 2 := by
-          rw [← habs_sq]; ring
-      _ ≤ (2 * ‖v₀‖ * K) * (t - t₀) ^ 2 + K ^ 2 * ε * (t - t₀) ^ 2 := by
-          have hsq_nonneg : (0 : ℝ) ≤ (t - t₀) ^ 2 := sq_nonneg _
-          nlinarith [mul_le_mul_of_nonneg_right habs_le hsq_nonneg,
-            mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right habs_le hsq_nonneg)
-              (sq_nonneg (K : ℝ))]
-      _ = (2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2 := by ring
+    rwa [dist_eq_norm, Real.dist_eq] at h
+  -- The linear part `(t - t₀) • deriv γ t₀` controls `γ t - w` from both sides.
+  have hlower : |t - t₀| * ‖deriv γ t₀‖ ≤ 2 * ‖γ t - w‖ :=
+    mul_norm_le_two_mul_norm_of_norm_sub_smul_le hR hρ
+  have hupper : ‖γ t - w‖ ≤ |t - t₀| * ‖deriv γ t₀‖ + K * (t - t₀) ^ 2 := by
+    have h := norm_add_le ((t - t₀) • deriv γ t₀) (γ t - w - (t - t₀) • deriv γ t₀)
+    rw [norm_smul, Real.norm_eq_abs] at h
+    simp only [add_sub_cancel] at h
+    linarith
+  -- Both deviations from parallelism are `O(t - t₀)`, so the cross product is `O((t - t₀) ^ 2)`.
+  have hnum : |(deriv γ t * (starRingEnd ℂ) (γ t - w)).im|
+      ≤ (2 * ‖deriv γ t₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2 := by
+    have hcross := abs_im_mul_conj_le_norm_sub_mul_add_mul_norm_sub_smul
+      (deriv γ t) (γ t - w) (deriv γ t₀) (t - t₀)
+    have h1 : ‖deriv γ t - deriv γ t₀‖ * ‖γ t - w‖
+        ≤ K * ((t - t₀) ^ 2 * ‖deriv γ t₀‖) + K ^ 2 * (|t - t₀| * (t - t₀) ^ 2) :=
+      calc ‖deriv γ t - deriv γ t₀‖ * ‖γ t - w‖
+          ≤ K * |t - t₀| * (|t - t₀| * ‖deriv γ t₀‖ + K * (t - t₀) ^ 2) :=
+            mul_le_mul he hupper (norm_nonneg _) (by positivity)
+        _ = K * ((t - t₀) ^ 2 * ‖deriv γ t₀‖) + K ^ 2 * (|t - t₀| * (t - t₀) ^ 2) := by
+            rw [← sq_abs (t - t₀)]; ring
+    have h2 : ‖deriv γ t₀‖ * ‖γ t - w - (t - t₀) • deriv γ t₀‖
+        ≤ ‖deriv γ t₀‖ * (K * (t - t₀) ^ 2) := mul_le_mul_of_nonneg_left hR (norm_nonneg _)
+    nlinarith [mul_nonneg (mul_nonneg (sq_nonneg (K : ℝ))
+      (sub_nonneg.mpr habs_le)) (sq_nonneg (t - t₀))]
+  have hnum_eq : (γ t - w).re * (deriv γ t).im - (γ t - w).im * (deriv γ t).re
+      = (deriv γ t * (starRingEnd ℂ) (γ t - w)).im := by
+    rw [Complex.mul_im, Complex.conj_re, Complex.conj_im]; ring
   rw [realWindingIntegrand_eq_div, abs_div, Complex.normSq_eq_norm_sq,
-    abs_of_pos (by positivity : (0 : ℝ) < ‖z‖ ^ 2)]
-  have hD_pos : 0 < (|t - t₀| * ‖v₀‖ / 2) ^ 2 := by positivity
-  have step1 : |z.re * (deriv γ t).im - z.im * (deriv γ t).re| / ‖z‖ ^ 2
-      ≤ ((2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2) / (|t - t₀| * ‖v₀‖ / 2) ^ 2 := by
-    rw [div_le_div_iff₀ (by positivity) hD_pos]
-    have hD_le : (|t - t₀| * ‖v₀‖ / 2) ^ 2 ≤ ‖z‖ ^ 2 := pow_le_pow_left₀ (by positivity) hz_lower 2
-    have hnum_nonneg : (0 : ℝ) ≤ (2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2 := by positivity
-    calc |z.re * (deriv γ t).im - z.im * (deriv γ t).re| * (|t - t₀| * ‖v₀‖ / 2) ^ 2
-        ≤ ((2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2) * (|t - t₀| * ‖v₀‖ / 2) ^ 2 :=
-          mul_le_mul_of_nonneg_right hnum_bound (by positivity)
-      _ ≤ ((2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2) * ‖z‖ ^ 2 :=
-          mul_le_mul_of_nonneg_left hD_le hnum_nonneg
-  calc |z.re * (deriv γ t).im - z.im * (deriv γ t).re| / ‖z‖ ^ 2
-      ≤ ((2 * ‖v₀‖ * K + K ^ 2 * ε) * (t - t₀) ^ 2) / (|t - t₀| * ‖v₀‖ / 2) ^ 2 := step1
-    _ = 4 * (2 * ‖v₀‖ * K + K ^ 2 * ε) / ‖v₀‖ ^ 2 := by
-        rw [← habs_sq]; field_simp; ring
+    abs_of_nonneg (by positivity : (0 : ℝ) ≤ ‖γ t - w‖ ^ 2), hnum_eq]
+  exact abs_div_sq_le_of_abs_le_mul_sq (by positivity) (norm_pos_iff.mpr hvel) hlower hnum
 
 /-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing.** If `deriv γ` is
 `K`-Lipschitz on a neighborhood of a crossing `t₀` where `γ t₀ = w`, and `deriv γ t₀ ≠ 0`, the real
@@ -247,11 +218,15 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv
   have hρ_le : |t - t₀| ≤ ρ := by rw [abs_le]; constructor <;> linarith [ht.1, ht.2]
   have hρ_le' : ρ ≤ ‖deriv γ t₀‖ / (8 * ((K : ℝ) + 1)) := min_le_right _ _
   have hK1_pos : (0 : ℝ) < 4 * ((K : ℝ) + 1) := by positivity
-  calc |t - t₀| * (4 * ((K : ℝ) + 1))
-      ≤ (‖deriv γ t₀‖ / (8 * ((K : ℝ) + 1))) * (4 * ((K : ℝ) + 1)) :=
-        mul_le_mul_of_nonneg_right (hρ_le.trans hρ_le') hK1_pos.le
-    _ = ‖deriv γ t₀‖ / 2 := by field_simp; ring
-    _ ≤ ‖deriv γ t₀‖ := by linarith
+  -- The radius keeps the `K + 1` denominator, which is positive even when `K = 0`; the pointwise
+  -- bound only needs the weaker smallness with `K`.
+  have hwide : |t - t₀| * (4 * ((K : ℝ) + 1)) ≤ ‖deriv γ t₀‖ :=
+    calc |t - t₀| * (4 * ((K : ℝ) + 1))
+        ≤ (‖deriv γ t₀‖ / (8 * ((K : ℝ) + 1))) * (4 * ((K : ℝ) + 1)) :=
+          mul_le_mul_of_nonneg_right (hρ_le.trans hρ_le') hK1_pos.le
+      _ = ‖deriv γ t₀‖ / 2 := by field_simp; ring
+      _ ≤ ‖deriv γ t₀‖ := by linarith
+  nlinarith [abs_nonneg (t - t₀), K.coe_nonneg]
 
 end TauCeti.Contour
 

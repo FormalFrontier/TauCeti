@@ -118,6 +118,12 @@ end DoubleCoset
 
 namespace IsHeckeTriple
 
+/-- Every member of the double coset `H₁gH₂` of an element of `Δ` lies in `Δ`. -/
+theorem mem_of_mem_doubleCoset {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
+    {g x : G} (hg : g ∈ Δ) (hx : x ∈ doubleCoset g (H₁ : Set G) H₂) : x ∈ Δ := by
+  obtain ⟨h₁, hh₁, h₂, hh₂, rfl⟩ := mem_doubleCoset.mp hx
+  exact mul_mem (mul_mem (mem_of_mem_left H₂ hh₁) hg) (mem_of_mem_right H₁ hh₂)
+
 /-- For a Hecke triple, the decomposition quotient of any `g : Δ` is finite: `Δ`
 commensurates `H₂`, which is commensurable with `H₁`. -/
 noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
