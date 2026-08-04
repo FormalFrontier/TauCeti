@@ -22,7 +22,7 @@ angles, and concludes that its image under a conformal map has small diameter at
 `ρ`.
 
 That is the first of the two geometric inputs
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
 `Conformal/CutDiameter.lean` runs on, and hence of layer **L5** of
 `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's boundary correspondence. The second —
 a small set `E` enclosing the boundary points of the image domain that cling to the piece the
@@ -153,7 +153,7 @@ when `ρ < 2 * r`, being empty otherwise; since `R` is arbitrary, a caller wanti
 the theorem with `R ≤ 2 * r`.
 
 This is the first of the two geometric inputs of
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le`; nothing here bounds
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`; nothing here bounds
 the boundary piece the crosscut cuts off, which is a matter of the image domain rather than of the
 map. -/
 theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top (hζ : dist ζ c = r)

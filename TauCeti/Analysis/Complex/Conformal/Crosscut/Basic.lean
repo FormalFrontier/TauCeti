@@ -115,10 +115,11 @@ half is the maximum modulus principle for holomorphic functions.
   description of a circular crosscut, and the fact that it is an arc of angles.
 * `TauCeti.isConnected_ball_diff_closedBall` — the part of a disc outside a circular crosscut is
   connected.
-* `TauCeti.ball_diff_sphere_eq_union`,
-  `TauCeti.subset_ball_inter_ball_or_subset_ball_diff_closedBall` and
+* `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall`,
+  `TauCeti.subset_inter_ball_or_subset_diff_closedBall` and
   `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` — a circular crosscut
-  separates the disc into exactly two connected components.
+  separates the disc into exactly two connected components. The first two need nothing of the
+  disc and are stated for an arbitrary cut set.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
   `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
   on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
@@ -421,11 +422,14 @@ theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
   exact (continuousAt_const.add
     (continuousAt_inv₀ (ne_zero_of_one_lt_two_mul_re_mul hw.1))).continuousWithinAt
 
-/-- **A circular crosscut splits the disc into the crosscut neighbourhood and the rest.** The
-underlying set identity: removing the crosscut `sphere ζ ρ` from `ball c r` leaves the points at
-distance less than `ρ` from `ζ` together with those at distance more than `ρ`. -/
-theorem ball_diff_sphere_eq_union :
-    ball c r \ sphere ζ ρ = ball c r ∩ ball ζ ρ ∪ ball c r \ closedBall ζ ρ := by
+/-- **A circular cut splits a set into a near side and a far side.** The set identity underlying
+the crosscut decomposition: removing the circle `sphere ζ ρ` from a set `s` leaves the points of
+`s` at distance less than `ρ` from `ζ` together with those at distance more than `ρ`.
+
+The disc plays no role — `s` is arbitrary — and the crosscut instance is `s = ball c r`. The
+general form is what `Conformal/CutDiameter.lean` cuts an arbitrary domain with. -/
+theorem diff_sphere_eq_inter_ball_union_diff_closedBall {s : Set ℂ} :
+    s \ sphere ζ ρ = s ∩ ball ζ ρ ∪ s \ closedBall ζ ρ := by
   ext y
   constructor
   · rintro ⟨hy, hne⟩
@@ -437,20 +441,24 @@ theorem ball_diff_sphere_eq_union :
     · exact ⟨hy, fun hc => (Metric.mem_ball.mp h).ne (Metric.mem_sphere.mp hc)⟩
     · exact ⟨hy, fun hc => h (Metric.sphere_subset_closedBall hc)⟩
 
-/-- The two sides of a circular crosscut are disjoint, the near side lying inside `closedBall ζ ρ`
-and the far side outside it. -/
-theorem disjoint_ball_inter_ball_ball_diff_closedBall :
-    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
+/-- The two sides of a circular cut are disjoint, the near side lying inside `closedBall ζ ρ` and
+the far side outside it. As in `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` the cut
+set is arbitrary. -/
+theorem disjoint_inter_ball_diff_closedBall {s : Set ℂ} :
+    Disjoint (s ∩ ball ζ ρ) (s \ closedBall ζ ρ) :=
   Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
 
-/-- **A connected set in the disc missing a circular crosscut lies on one side of it.** This is the
-separation statement the decomposition exists for: the two sides are open and disjoint, so a
-preconnected subset of their union cannot meet both. -/
-theorem subset_ball_inter_ball_or_subset_ball_diff_closedBall {S : Set ℂ} (hS : IsPreconnected S)
-    (hSsub : S ⊆ ball c r \ sphere ζ ρ) :
-    S ⊆ ball c r ∩ ball ζ ρ ∨ S ⊆ ball c r \ closedBall ζ ρ :=
-  hS.subset_or_subset (isOpen_ball.inter isOpen_ball) (isOpen_ball.sdiff isClosed_closedBall)
-    disjoint_ball_inter_ball_ball_diff_closedBall (ball_diff_sphere_eq_union ▸ hSsub)
+/-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
+the separation statement the decomposition exists for: the two sides are open and disjoint, so a
+preconnected subset of their union cannot meet both.
+
+Only openness of the cut set is used, so the disc is again not needed; the crosscut instance is
+`s = ball c r`, supplied with `isOpen_ball`. -/
+theorem subset_inter_ball_or_subset_diff_closedBall {s S : Set ℂ} (hs : IsOpen s)
+    (hS : IsPreconnected S) (hSsub : S ⊆ s \ sphere ζ ρ) :
+    S ⊆ s ∩ ball ζ ρ ∨ S ⊆ s \ closedBall ζ ρ :=
+  hS.subset_or_subset (hs.inter isOpen_ball) (hs.sdiff isClosed_closedBall)
+    disjoint_inter_ball_diff_closedBall (diff_sphere_eq_inter_ball_union_diff_closedBall ▸ hSsub)
 
 /-- **The crosscut neighbourhood is a connected component of the cut disc.** Together with
 `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` this says a circular
@@ -459,14 +467,14 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball
     (hz : z ∈ ball c r ∩ ball ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r ∩ ball ζ ρ := by
   have hsub : ball c r ∩ ball ζ ρ ⊆ ball c r \ sphere ζ ρ :=
-    ball_diff_sphere_eq_union ▸ subset_union_left
+    diff_sphere_eq_inter_ball_union_diff_closedBall ▸ subset_union_left
   refine Subset.antisymm ?_ (((convex_ball c r).inter (convex_ball ζ ρ)).isPreconnected
     |>.subset_connectedComponentIn hz hsub)
-  rcases subset_ball_inter_ball_or_subset_ball_diff_closedBall isPreconnected_connectedComponentIn
-    (connectedComponentIn_subset _ _) with h | h
+  rcases subset_inter_ball_or_subset_diff_closedBall isOpen_ball
+    isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _) with h | h
   · exact h
   · exact absurd (h (mem_connectedComponentIn (hsub hz)))
-      (Set.disjoint_left.mp disjoint_ball_inter_ball_ball_diff_closedBall hz)
+      (Set.disjoint_left.mp disjoint_inter_ball_diff_closedBall hz)
 
 /-- **The far side of a circular crosscut is a connected component of the cut disc.** The companion
 of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball`; here the connectedness of the
@@ -475,12 +483,12 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρ' : ρ < 2 * r) (hz : z ∈ ball c r \ closedBall ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r \ closedBall ζ ρ := by
   have hsub : ball c r \ closedBall ζ ρ ⊆ ball c r \ sphere ζ ρ :=
-    ball_diff_sphere_eq_union ▸ subset_union_right
+    diff_sphere_eq_inter_ball_union_diff_closedBall ▸ subset_union_right
   refine Subset.antisymm ?_ ((isConnected_ball_diff_closedBall hζ hρ hρ').isPreconnected
     |>.subset_connectedComponentIn hz hsub)
-  rcases subset_ball_inter_ball_or_subset_ball_diff_closedBall isPreconnected_connectedComponentIn
-    (connectedComponentIn_subset _ _) with h | h
-  · exact absurd hz (Set.disjoint_left.mp disjoint_ball_inter_ball_ball_diff_closedBall
+  rcases subset_inter_ball_or_subset_diff_closedBall isOpen_ball
+    isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _) with h | h
+  · exact absurd hz (Set.disjoint_left.mp disjoint_inter_ball_diff_closedBall
       (h (mem_connectedComponentIn (hsub hz))))
   · exact h
 

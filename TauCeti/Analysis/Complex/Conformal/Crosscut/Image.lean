@@ -112,15 +112,15 @@ variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 /-! ## The three pieces of the image -/
 
 /-- **A circular crosscut splits the image of a disc into three pieces**: the images of the two
-sides and the image crosscut. This is `TauCeti.ball_diff_sphere_eq_union` — the corresponding
-identity in the disc — pushed forward, and needs nothing of `f`. -/
+sides and the image crosscut. This is `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` —
+the corresponding identity in the disc — pushed forward, and needs nothing of `f`. -/
 theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
     f '' ball c r =
       f '' (ball c r ∩ ball ζ ρ) ∪ f '' (ball c r ∩ sphere ζ ρ) ∪
         f '' (ball c r \ closedBall ζ ρ) := by
   rw [← image_union, ← image_union]
   congr 1
-  rw [union_right_comm, ← ball_diff_sphere_eq_union, sdiff_union_inter]
+  rw [union_right_comm, ← diff_sphere_eq_inter_ball_union_diff_closedBall, sdiff_union_inter]
 
 /-! ## The crosscut cuts the boundary of the image in two -/
 
@@ -212,7 +212,7 @@ an image crosscut of diameter less than `δ` has its middle piece contained in a
 `frontier (f '' ball c r)` of diameter at most `ε`.
 
 This is where the local connectedness of `∂Ω` that
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` needs enters, the other
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` needs enters, the other
 of its two geometric inputs being the length–area estimate
 `TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
 whose enclosing set has to contain the whole boundary piece
