@@ -59,16 +59,19 @@ is simple, and `finrank K (End_R A) * finrank K R = (finrank K A)²`. Since
 
 * `TauCeti.centralizerAlgEquivEnd`: the identification `C_A(B) ≃ₐ[K] End_{B ⊗[K] Aᵐᵒᵖ} A`, by left
   multiplication. It needs no hypothesis beyond `B` being a subalgebra.
-* `TauCeti.isSimpleRing_centralizer`: **the centralizer of a central simple subalgebra is simple.**
+* `TauCeti.centralizer_isSimpleRing`: **the centralizer of a central simple subalgebra is simple.**
 * `TauCeti.finrank_mul_finrank_centralizer`: **the centralizer theorem**,
   `finrank K B * finrank K C_A(B) = finrank K A`.
 
 ## Implementation notes
 
 `TauCeti.centralizerAlgEquivEnd` is stated for an arbitrary subalgebra `B` of an arbitrary
-`K`-algebra `A`: neither simplicity nor finite-dimensionality plays any part in identifying the
-endomorphism algebra, they enter only when that algebra is analysed. Keeping the two apart is what
-makes the identification reusable, for instance for the double centralizer.
+`K`-algebra `A` over a commutative semiring `K`: neither simplicity nor finite-dimensionality nor
+the field structure plays any part in identifying the endomorphism algebra, they enter only when
+that algebra is analysed. Keeping the two apart is what makes the identification reusable, for
+instance for the double centralizer. The equivalence is characterised on both sides, by
+`TauCeti.centralizerAlgEquivEnd_apply` and `TauCeti.centralizerAlgEquivEnd_symm_apply`, and the
+algebra homomorphism and bijectivity proof it is assembled from are private to this file.
 
 Centrality is asked of `B` and not of `A`, exactly as in
 `TauCeti/Algebra/CentralSimple/SkolemNoether.lean`, and for the same reason: what the proof needs is
@@ -96,7 +99,7 @@ open scoped TensorProduct
 
 section Identification
 
-variable {K A : Type*} [Field K] [Ring A] [Algebra K A] (B : Subalgebra K A)
+variable {K A : Type*} [CommSemiring K] [Ring A] [Algebra K A] (B : Subalgebra K A)
 
 /-- Left multiplication by an element `c` of the centralizer of `B` in `A`, as an endomorphism of
 the `B ⊗[K] Aᵐᵒᵖ`-module `A`.
@@ -104,8 +107,7 @@ the `B ⊗[K] Aᵐᵒᵖ`-module `A`.
 It is `B ⊗[K] Aᵐᵒᵖ`-linear precisely because `c` commutes with `B`: multiplying by `c` on the left
 is unaffected by the right action of `A` for free, and by the left action of `B` exactly when `c`
 centralizes `B`. -/
-@[expose]
-def centralizerMulLeftEnd (c : Subalgebra.centralizer K (B : Set A)) :
+private def centralizerMulLeftEnd (c : Subalgebra.centralizer K (B : Set A)) :
     Module.End (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val) where
   toFun y := Bimodule.of B.val ((c : A) * (Bimodule.of B.val).symm y)
   map_add' y z := by simp [mul_add]
@@ -122,19 +124,17 @@ def centralizerMulLeftEnd (c : Subalgebra.centralizer K (B : Set A)) :
             ((Subalgebra.mem_centralizer_iff K).1 c.2 (b : A) b.2).symm
           simp only [Bimodule.toEnd_tmul_apply, Subalgebra.coe_val, ← mul_assoc, hc]
       | add r s hr hs => simp only [map_add, LinearMap.add_apply, mul_add, hr, hs]
-    change Bimodule.of B.val ((c : A) * (Bimodule.of B.val).symm (r • Bimodule.of B.val x))
-        = r • Bimodule.of B.val ((c : A) * (Bimodule.of B.val).symm (Bimodule.of B.val x))
-    simp only [Bimodule.smul_def, LinearEquiv.symm_apply_apply]
+    -- The defining equation of the action turns both sides into `key r`, read through `of`.
+    simp only [RingHom.id_apply, Bimodule.smul_def, LinearEquiv.symm_apply_apply]
     exact congrArg (Bimodule.of B.val) (key r)
 
 @[simp]
-theorem centralizerMulLeftEnd_apply (c : Subalgebra.centralizer K (B : Set A)) (x : A) :
+private theorem centralizerMulLeftEnd_apply (c : Subalgebra.centralizer K (B : Set A)) (x : A) :
     centralizerMulLeftEnd B c (Bimodule.of B.val x) = Bimodule.of B.val ((c : A) * x) := rfl
 
 /-- Left multiplication, as a `K`-algebra homomorphism from the centralizer of `B` to the
 endomorphism algebra of the `B ⊗[K] Aᵐᵒᵖ`-module `A`. -/
-@[expose]
-def centralizerAlgHom :
+private def centralizerAlgHom :
     Subalgebra.centralizer K (B : Set A) →ₐ[K]
       Module.End (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val) where
   toFun := centralizerMulLeftEnd B
@@ -161,14 +161,14 @@ def centralizerAlgHom :
     simpa using congrArg (Bimodule.of B.val) (Algebra.smul_def k x).symm
 
 @[simp]
-theorem centralizerAlgHom_apply (c : Subalgebra.centralizer K (B : Set A)) :
+private theorem centralizerAlgHom_apply (c : Subalgebra.centralizer K (B : Set A)) :
     centralizerAlgHom B c = centralizerMulLeftEnd B c := rfl
 
 /-- **Left multiplication by the centralizer exhausts the `B ⊗[K] Aᵐᵒᵖ`-linear endomorphisms of
 `A`, and nothing is lost.** Injectivity is the value at `1`; surjectivity says an endomorphism `φ`
 is left multiplication by `c = φ 1`, which centralizes `B` because `φ` is linear for the left
 action of `B`. -/
-theorem centralizerAlgHom_bijective : Function.Bijective (centralizerAlgHom B) := by
+private theorem centralizerAlgHom_bijective : Function.Bijective (centralizerAlgHom B) := by
   refine ⟨fun c d hcd ↦ ?_, fun φ ↦ ?_⟩
   · -- Injectivity: an endomorphism determines its multiplier through its value at `1`.
     refine Subtype.ext ?_
@@ -205,15 +205,27 @@ theorem centralizerAlgHom_bijective : Function.Bijective (centralizerAlgHom B) :
 
 No hypothesis on `A` or `B` is needed here; the centralizer theorem below is what happens when the
 right-hand side is analysed under the hypotheses that make `B ⊗[K] Aᵐᵒᵖ` simple Artinian. -/
-@[expose]
 noncomputable def centralizerAlgEquivEnd :
     Subalgebra.centralizer K (B : Set A) ≃ₐ[K]
       Module.End (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val) :=
   AlgEquiv.ofBijective (centralizerAlgHom B) (centralizerAlgHom_bijective B)
 
+/-- The forward direction of `TauCeti.centralizerAlgEquivEnd`: `c` goes to left multiplication
+by `c`. -/
 @[simp]
 theorem centralizerAlgEquivEnd_apply (c : Subalgebra.centralizer K (B : Set A)) (x : A) :
-    centralizerAlgEquivEnd B c (Bimodule.of B.val x) = Bimodule.of B.val ((c : A) * x) := rfl
+    centralizerAlgEquivEnd B c (Bimodule.of B.val x) = Bimodule.of B.val ((c : A) * x) := by
+  simp only [centralizerAlgEquivEnd, AlgEquiv.ofBijective_apply, centralizerAlgHom_apply,
+    centralizerMulLeftEnd_apply]
+
+/-- The inverse direction of `TauCeti.centralizerAlgEquivEnd`: an endomorphism is recovered by
+evaluating it at `1`. -/
+@[simp]
+theorem centralizerAlgEquivEnd_symm_apply (φ : Module.End (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val)) :
+    ((centralizerAlgEquivEnd B).symm φ : A)
+      = (Bimodule.of B.val).symm (φ (Bimodule.of B.val 1)) := by
+  conv_rhs => rw [← (centralizerAlgEquivEnd B).apply_symm_apply φ]
+  rw [centralizerAlgEquivEnd_apply, LinearEquiv.symm_apply_apply, mul_one]
 
 end Identification
 
@@ -224,7 +236,7 @@ variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [IsSimpleRing A] [Finite
 
 /-- **The centralizer of a central simple subalgebra of a simple algebra is a simple ring.** It is
 the endomorphism algebra of `A` as a module over the simple Artinian algebra `B ⊗[K] Aᵐᵒᵖ`. -/
-theorem isSimpleRing_centralizer :
+theorem centralizer_isSimpleRing :
     IsSimpleRing (Subalgebra.centralizer K (B : Set A)) := by
   have : FiniteDimensional K ↥B :=
     FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective

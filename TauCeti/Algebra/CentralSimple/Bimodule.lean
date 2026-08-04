@@ -46,9 +46,10 @@ instance.
 `TauCeti.Bimodule.smul_of` and `TauCeti.Bimodule.symm_smul` are the working interface: they compute
 the action of a pure tensor on either side of `of`, and every consumer is expected to reach the
 module structure through them and through `TauCeti.Bimodule.smul_def` rather than by unfolding the
-synonym. The file is `@[expose]`d because a type synonym cannot carry transported instances, nor
-`smul_def` hold by `rfl`, unless the bodies of the synonym, of `of` and of the module instance are
-visible to importers.
+synonym. Only `Bimodule` and `Bimodule.of` are `@[expose]`d, and both have to be: a type synonym
+cannot carry transported instances unless its body is visible, and the exported `smul_def`, which is
+the defining equation of the action, cannot hold by `rfl` unless the bodies of the synonym and of
+`of` are. Everything else, `toEnd` included, stays opaque.
 
 ## References
 
@@ -58,7 +59,7 @@ This is the shared construction beneath the Layer 5 targets `skolemNoether` and
 See R. S. Pierce, *Associative Algebras*, GTM 88, Chapter 12.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -73,7 +74,7 @@ Equivalently this is the `B`-`A`-bimodule `A` obtained by restricting the left a
 packaged as a left module over `B ⊗[K] Aᵐᵒᵖ` in the usual way. It is a type synonym for `A`
 precisely so that the structures coming from two different homomorphisms can be compared, and so
 that `A` itself is left without a `B ⊗[K] Aᵐᵒᵖ`-action. -/
-def Bimodule (_f : B →ₐ[K] A) : Type _ := A
+@[expose] def Bimodule (_f : B →ₐ[K] A) : Type _ := A
 
 namespace Bimodule
 
@@ -86,7 +87,7 @@ instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
 instance [Nontrivial A] : Nontrivial (Bimodule f) := inferInstanceAs (Nontrivial A)
 
 /-- `Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
-def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
+@[expose] def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
 
 /-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `Bimodule f`, as an algebra homomorphism into
 `Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left factor, so
