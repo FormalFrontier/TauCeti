@@ -208,13 +208,22 @@ def yosidaSemigroup (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda
   toStronglyContinuousSemigroup :=
     StronglyContinuousSemigroup.ofBounded (hA.yosidaApprox lambda hlambda)
   contracting t := by
-    have h : (StronglyContinuousSemigroup.ofBounded (hA.yosidaApprox lambda hlambda)) t
-        = exp ((t : ℝ) • hA.yosidaApprox lambda hlambda) :=
-      StronglyContinuousSemigroup.ofBounded_apply _ t
-    rw [show ((StronglyContinuousSemigroup.ofBounded
-        (hA.yosidaApprox lambda hlambda)).toFun t)
-        = (StronglyContinuousSemigroup.ofBounded (hA.yosidaApprox lambda hlambda)) t from rfl, h]
-    exact hA.norm_exp_yosidaApprox_le_one lambda hlambda t.coe_nonneg
+    -- The contraction field exposes the raw `toFun`, which no rewrite lemma reaches
+    -- through; `change` restates the goal as the `FunLike` application that
+    -- `ofBounded_apply` is stated about (the same idiom as `ContractionSemigroup.id`).
+    change ‖(StronglyContinuousSemigroup.ofBounded (hA.yosidaApprox lambda hlambda)) t‖ ≤ 1
+    simpa only [StronglyContinuousSemigroup.ofBounded_apply] using
+      hA.norm_exp_yosidaApprox_le_one lambda hlambda t.coe_nonneg
+
+/-- The Yosida contraction semigroup is `t ↦ exp (t • A_lambda)`.
+
+This is the characteristic property of `yosidaSemigroup`: it lets consumers reason about the
+semigroup without unfolding its construction through `StronglyContinuousSemigroup.ofBounded`. -/
+@[simp]
+theorem yosidaSemigroup_apply (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda)
+    (t : ℝ≥0) :
+    hA.yosidaSemigroup lambda hlambda t = exp ((t : ℝ) • hA.yosidaApprox lambda hlambda) :=
+  StronglyContinuousSemigroup.ofBounded_apply _ t
 
 end IsMDissipative
 
