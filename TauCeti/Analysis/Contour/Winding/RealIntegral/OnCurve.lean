@@ -367,6 +367,52 @@ private theorem abs_realWindingIntegrand_le_div_of_norm_le {z v : ℂ} {m : ℝ}
     _ ≤ ‖v‖ * ‖z‖ * ‖z‖ := mul_le_mul_of_nonneg_left hz (mul_nonneg (norm_nonneg v) (norm_nonneg z))
     _ = ‖v‖ * ‖z‖ ^ 2 := by ring
 
+/-! ### Non-vanishing one-sided velocity from the immersion, not assumed separately -/
+
+/-- **A crossing's one-sided velocity is non-zero, from the immersion alone.** No need to assume
+this alongside a `C^{1,1}` window at a crossing: `IsPwC1ImmersionOn` already forces a non-zero
+`derivWithin`-derivative at every point of the breakpoint-free piece to the right of `t`
+(`IsPwC1ImmersionOn.exists_Icc_piece_right`), including at `t` itself, and `derivWithin` at `t`
+does not depend on which (`C¹` on `[t, d]`) right-piece it is computed against, since both agree
+with the same `HasDerivWithinAt` witness on their common initial segment. -/
+private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_right {γ : ℝ → ℂ} {a b t d : ℝ}
+    (h_imm : IsPwC1ImmersionOn γ a b) (ht₀ : t ∈ Ico (min a b) (max a b))
+    (hC1 : ContDiffOn ℝ 1 γ (Icc t d)) (htd : t < d) :
+    derivWithin γ (Icc t d) t ≠ 0 := by
+  obtain ⟨d', hlt', -, hC1', hne'⟩ := h_imm.exists_Icc_piece_right ht₀
+  have hte : t < min d d' := lt_min htd hlt'
+  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc t d) t) (Icc t (min d d')) t :=
+    ((hC1.differentiableOn one_ne_zero) t (left_mem_Icc.mpr htd.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc le_rfl (min_le_left d d'))
+  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
+    ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc le_rfl (min_le_right d d'))
+  have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
+    (h1.derivWithin ((uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le))).symm.trans
+      (h2.derivWithin ((uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)))
+  rw [heq]
+  exact hne' t (left_mem_Icc.mpr hlt'.le)
+
+/-- **A crossing's one-sided velocity is non-zero, from the immersion alone, from the left.** The
+mirror of `derivWithin_ne_zero_of_isPwC1ImmersionOn_right` above. -/
+private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ} {a b c t : ℝ}
+    (h_imm : IsPwC1ImmersionOn γ a b) (ht₀ : t ∈ Ioc (min a b) (max a b))
+    (hC1 : ContDiffOn ℝ 1 γ (Icc c t)) (hct : c < t) :
+    derivWithin γ (Icc c t) t ≠ 0 := by
+  obtain ⟨c', hlt', -, hC1', hne'⟩ := h_imm.exists_Icc_piece_left ht₀
+  have het : max c c' < t := max_lt hct hlt'
+  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc c t) t) (Icc (max c c') t) t :=
+    ((hC1.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hct.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc (le_max_left c c') le_rfl)
+  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
+    ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc (le_max_right c c') le_rfl)
+  have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
+    (h1.derivWithin ((uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le))).symm.trans
+      (h2.derivWithin ((uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)))
+  rw [heq]
+  exact hne' t (right_mem_Icc.mpr hlt'.le)
+
 /-! ### Assembly -/
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
@@ -394,9 +440,9 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
       ContDiffOn ℝ 1 γ (Icc t (t + ε)) ∧ LipschitzOnWith K (derivWithin γ (Icc t (t + ε)))
-        (Icc t (t + ε)) ∧ derivWithin γ (Icc t (t + ε)) t ≠ 0 ∧
+        (Icc t (t + ε)) ∧
       ContDiffOn ℝ 1 γ (Icc (t - ε) t) ∧ LipschitzOnWith K (derivWithin γ (Icc (t - ε) t))
-        (Icc (t - ε) t) ∧ derivWithin γ (Icc (t - ε) t) t ≠ 0) :
+        (Icc (t - ε) t)) :
     Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) ∧
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
     windingNumber γ a b s
@@ -427,19 +473,27 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
     fun t₀ (ht₀ : t₀ ∈ T) => exists_radius_perWindow_tendsto_value h_imm hab (h_Ioo t₀ ht₀)
       (hT_mem.mp ht₀).2
   -- The crossing regularity: a `C^{1,1}` neighborhood on each side of each crossing (possibly a
-  -- corner, so the two sides may disagree), each side's forced non-zero velocity given directly,
-  -- and the boundedness of the real winding integrand each side already buys on a (possibly
-  -- smaller) one-sided window.
-  choose! εD hεD_pos K hC1R hlipR hvelR hC1L hlipL hvelL using fun t₀ (ht₀ : t₀ ∈ T) =>
+  -- corner, so the two sides may disagree), and the boundedness of the real winding integrand
+  -- each side already buys on a (possibly smaller) one-sided window. Each side's forced non-zero
+  -- velocity is not assumed here -- `IsPwC1ImmersionOn` already forces it.
+  choose! εD hεD_pos K hC1R hlipR hC1L hlipL using fun t₀ (ht₀ : t₀ ∈ T) =>
     hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2
+  have h_Ico : ∀ t ∈ T, t ∈ Ico (min a b) (max a b) := fun t ht => by
+    rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1.le, (h_Ioo t ht).2⟩
+  have h_Ioc : ∀ t ∈ T, t ∈ Ioc (min a b) (max a b) := fun t ht => by
+    rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1, (h_Ioo t ht).2.le⟩
   choose! ρ_lipR hρ_lipR_pos hρ_lipR_lt hbddR using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
-      (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀]) (hC1R t₀ ht₀) (hlipR t₀ ht₀)
-      (hT_mem.mp ht₀).2 (hvelR t₀ ht₀)
+      (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀]) (hC1R t₀ ht₀).differentiableOn
+      (hlipR t₀ ht₀) (hT_mem.mp ht₀).2
+      (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hC1R t₀ ht₀)
+        (by linarith [hεD_pos t₀ ht₀]))
   choose! ρ_lipL hρ_lipL_pos hρ_lipL_lt hbddL using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
-      (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀]) (hC1L t₀ ht₀) (hlipL t₀ ht₀)
-      (hT_mem.mp ht₀).2 (hvelL t₀ ht₀)
+      (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀]) (hC1L t₀ ht₀).differentiableOn
+      (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
+      (derivWithin_ne_zero_of_isPwC1ImmersionOn_left h_imm (h_Ioc t₀ ht₀) (hC1L t₀ ht₀)
+        (by linarith [hεD_pos t₀ ht₀]))
   -- Combine the two one-sided windows into one symmetric bounded window per crossing.
   set ρ_lip : ℝ → ℝ := fun t => min (ρ_lipR t) (ρ_lipL t) with hρ_lip_def
   have hρ_lip_pos : ∀ t ∈ T, 0 < ρ_lip t := fun t ht => lt_min (hρ_lipR_pos t ht) (hρ_lipL_pos t ht)
