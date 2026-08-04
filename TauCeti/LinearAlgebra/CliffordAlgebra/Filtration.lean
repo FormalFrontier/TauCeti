@@ -36,6 +36,7 @@ supremum over the `i` of a fixed parity.
 ## Main definitions
 
 * `TauCeti.CliffordAlgebra.filtration Q k`: the span of the products of at most `k` generators.
+* `TauCeti.CliffordAlgebra.FiltrationGradedPiece Q k`: the degree-`k` successive quotient.
 
 ## Main results
 
@@ -97,6 +98,26 @@ This is deliberately not the submodule power `LinearMap.range (ι Q) ^ k`, which
 of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison. -/
 def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
   Submodule.span R {x | ∃ l : List M, l.length ≤ k ∧ (l.map (ι Q)).prod = x}
+
+/-- The filtration step preceding degree `k`. At degree zero it is bottom, so the degree-zero
+piece remains the scalar filtration step rather than a zero quotient. -/
+def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q)
+  | 0 => ⊥
+  | k + 1 => filtration Q k
+
+@[simp]
+theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
+  (rfl)
+
+@[simp]
+theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
+    filtrationPrevious Q (k + 1) = filtration Q k :=
+  (rfl)
+
+/-- The degree-`k` piece of the associated graded Clifford filtration. -/
+abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
+  filtration Q k ⧸
+    Submodule.comap (filtration Q k).subtype (filtrationPrevious Q k)
 
 variable (Q : QuadraticForm R M)
 
@@ -350,10 +371,10 @@ private theorem filtrationLeadingTermRaw_mem_previous (k : ℕ) (v : Fin (k + 1)
   simpa only [List.length_ofFn, Nat.add_sub_cancel] using
     prod_map_ι_mem_filtration_pred_of_not_nodup Q (List.ofFn v) hnot
 
-private noncomputable def filtrationLeadingTermAlternating (k : ℕ) : M [⋀^Fin (k + 1)]→ₗ[R]
-    (filtration Q (k + 1) ⧸ (filtration Q k).comap (filtration Q (k + 1)).subtype) :=
+private noncomputable def filtrationLeadingTermAlternating (k : ℕ) :
+    M [⋀^Fin (k + 1)]→ₗ[R] FiltrationGradedPiece Q (k + 1) :=
   let P : Submodule R (filtration Q (k + 1)) :=
-    (filtration Q k).comap (filtration Q (k + 1)).subtype
+    (filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype
   { toMultilinearMap :=
       P.mkQ.compMultilinearMap
         ((filtrationLeadingTermRaw Q k).codRestrict (filtration Q (k + 1))
@@ -363,7 +384,9 @@ private noncomputable def filtrationLeadingTermAlternating (k : ℕ) : M [⋀^Fi
       -- Expose the quotient/subtype wrapper so zero is membership in the lower filtration.
       change P.mkQ ⟨filtrationLeadingTermRaw Q k v, filtrationLeadingTermRaw_mem Q k v⟩ = 0
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
-      exact filtrationLeadingTermRaw_mem_previous Q k v hij hijne }
+      change filtrationLeadingTermRaw Q k v ∈ filtrationPrevious Q (k + 1)
+      simpa only [filtrationPrevious_succ] using
+        filtrationLeadingTermRaw_mem_previous Q k v hij hijne }
 
 /-- The degree-`k + 1` leading-term map from the exterior power to the corresponding Clifford
 filtration quotient. A repeated generator becomes a lower-filtration term under the Clifford
@@ -372,7 +395,7 @@ relation, so the product descends to an alternating map.
 This is the surjectivity half of the Layer 0 `filtrationGradedEquiv` target in the
 [spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L62-L68). -/
 noncomputable def filtrationLeadingTerm (k : ℕ) : ExteriorAlgebra.exteriorPower R (k + 1) M →ₗ[R]
-    (filtration Q (k + 1) ⧸ (filtration Q k).comap (filtration Q (k + 1)).subtype) :=
+    FiltrationGradedPiece Q (k + 1) :=
   exteriorPower.alternatingMapLinearEquiv (filtrationLeadingTermAlternating Q k)
 
 /-- The leading-term map sends an exterior product to the class of the corresponding product of
@@ -393,7 +416,7 @@ An element of `filtration Q (k + 1)` lies in its image under the inclusion exact
 modulo `filtration Q k` is a leading term. -/
 private noncomputable def leadingTermPreimage (k : ℕ) : Submodule R (filtration Q (k + 1)) :=
   (LinearMap.range (filtrationLeadingTerm Q k)).comap
-    ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ
+    ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype).mkQ
 
 /-- **The lower filtration consists of leading terms, trivially.** An element of `filtration Q k`
 has zero class modulo `filtration Q k`, and zero is a leading term. -/
@@ -402,8 +425,12 @@ private theorem filtration_le_map_leadingTermPreimage (k : ℕ) :
   intro z hz
   have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
   refine Submodule.mem_map.2 ⟨⟨z, hz'⟩, ?_, rfl⟩
-  have hzero : ((filtration Q k).comap (filtration Q (k + 1)).subtype).mkQ ⟨z, hz'⟩ = 0 :=
-    (Submodule.Quotient.mk_eq_zero _).mpr hz
+  have hzero :
+      ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype).mkQ
+        ⟨z, hz'⟩ = 0 :=
+    (Submodule.Quotient.mk_eq_zero _).mpr (by
+      rw [Submodule.mem_comap, filtrationPrevious_succ]
+      exact hz)
   simp [leadingTermPreimage, hzero]
 
 /-- **A product of `k + 1` generators is a leading term**, namely of the corresponding exterior
@@ -440,7 +467,8 @@ theorem filtrationLeadingTerm_surjective (k : ℕ) :
         (ι_range_pow_le_map_leadingTermPreimage Q k))
   intro z
   obtain ⟨x, rfl⟩ :=
-    Submodule.Quotient.mk_surjective ((filtration Q k).comap (filtration Q (k + 1)).subtype) z
+    Submodule.Quotient.mk_surjective
+      ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype) z
   obtain ⟨y, hy, hxy⟩ := Submodule.mem_map.1 (hle x.property)
   obtain rfl : y = x := Subtype.ext hxy
   simpa [leadingTermPreimage] using hy

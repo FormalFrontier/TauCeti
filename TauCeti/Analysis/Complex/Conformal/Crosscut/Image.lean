@@ -18,8 +18,9 @@ import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 are the two connected components of what is left. `Conformal/CutDiameter.lean` transports the
 two sides to a conformal image and bounds their width by the width of the image crosscut together
 with the boundary piece cut off. This file completes that picture on the image side: it splits
-`frontier (f '' ball c r)`, and it supplies — from local connectedness of that frontier — a small
-connected boundary set enclosing the part of that frontier which clings to the image crosscut.
+`frontier (f '' ball c r)`, identifies the middle piece of that splitting as the two ends of the
+image crosscut, and supplies — from local connectedness of that frontier — a small connected
+boundary set enclosing that middle piece.
 
 ## The decomposition
 
@@ -40,16 +41,36 @@ estimate of `Conformal/ShortCrosscut.lean` can be made as small as desired.
 
 ## The middle piece, and the connected boundary set enclosing it
 
-The middle piece is not merely small, it is *nonempty*
-(`TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere`): the crosscut has an endpoint on
-`sphere c r`, and along that endpoint `f` has a cluster value, which is adherent to `γ` and — a
-conformal map being proper — is not attained, hence lies on `frontier Ω`. That is a statement about
-the *one* endpoint the proof selects, and all that is claimed: nothing below says where the other
-end goes, nor that the two ends are joined.
+The middle piece is not merely small, it is *exactly the two ends of the image crosscut*
+(`TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn`):
 
-That nonemptiness is what the last theorem consumes. If `frontier Ω` is uniformly locally connected
-— which by `TauCeti.IsCompact.isUniformlyLocallyConnected` is exactly local connectedness,
-`frontier Ω` being compact — then for every `ε > 0` there is a single `δ > 0`, independent of the
+> `frontier Ω ∩ closure γ = ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f S e`
+
+for `S = ball c r ∩ sphere ζ ρ` the crosscut itself, the index set being its two endpoints
+(`TauCeti.sphere_inter_sphere_eq_pair_circleMap`). The equality itself allows the two cluster sets
+to be empty; as soon as the image crosscut `γ` is bounded each of them is nonempty
+(`TauCeti.nonempty_clusterSetOn_ball_inter_sphere`) and in fact a continuum
+(`TauCeti.isConnected_clusterSetOn_ball_inter_sphere`), and then the crosscut clings to the boundary
+of the image at *each* of its ends and the middle piece is where those two ends sit.
+
+Both inclusions come from the same source. The closure of an image crosscut is the image crosscut
+together with its two end cluster sets
+(`TauCeti.closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn`), because closing the open
+arc `ball c r ∩ sphere ζ ρ` adds exactly the two points of `sphere c r ∩ sphere ζ ρ` and a
+continuous `f` contributes only its own values over the arc itself. A value taken *on* the crosscut
+lies in the open set `Ω`, which is disjoint from `frontier Ω`, so the middle piece can only consist
+of end cluster values; conversely each end cluster value lies on `frontier Ω`, since a conformal
+map is proper (`TauCeti.clusterSetOn_subset_frontier_image`), and is adherent to `γ` by
+construction.
+
+What this does *not* say is that the two ends are joined: the identification is of the middle piece
+with the union of two cluster sets, not with a connected subset of `frontier Ω` running between
+them.
+
+That nonemptiness is what the enclosure theorem consumes. If `frontier Ω` is uniformly locally
+connected — which by `TauCeti.IsCompact.isUniformlyLocallyConnected` is exactly local
+connectedness, `frontier Ω` being compact — then for every `ε > 0` there is a single `δ > 0`,
+independent of the
 boundary point `ζ` and of the crosscut radius `ρ`, such that an image crosscut of diameter less than
 `δ` has its whole middle piece enclosed in a *connected* subset of `frontier Ω` of diameter at most
 `ε` (`TauCeti.exists_isConnected_subset_frontier_image_ball_of_diam_lt`), the general enclosure
@@ -78,6 +99,15 @@ pseudometric space.
 * `TauCeti.frontier_image_ball_subset_union` and `TauCeti.frontier_image_ball_eq_union` — a
   crosscut cuts the boundary of the image into two pieces and a middle piece adherent to the image
   crosscut.
+* `TauCeti.closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of an image
+  crosscut is the image crosscut together with the cluster sets at its two endpoints.
+* `TauCeti.nonempty_clusterSetOn_ball_inter_sphere` and
+  `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — each of those two end cluster sets is
+  nonempty once the image of the crosscut is bounded, and connected once `f` is in addition
+  continuous along the crosscut.
+* `TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn` — the middle
+  piece is *exactly* the union of the two end cluster sets, its one-sided inclusion being
+  `TauCeti.clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image`.
 * `TauCeti.diam_frontier_inter_closure_image_ball_inter_sphere_le` and
   `TauCeti.nonempty_frontier_inter_closure_image_ball_inter_sphere` — the middle piece is nonempty
   and no wider than the image crosscut.
@@ -107,20 +137,20 @@ namespace TauCeti
 
 open Bornology Complex Filter Metric Set Topology
 
-variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
+variable {f : ℂ → ℂ} {c ζ e : ℂ} {r ρ : ℝ}
 
 /-! ## The three pieces of the image -/
 
 /-- **A circular crosscut splits the image of a disc into three pieces**: the images of the two
-sides and the image crosscut. This is `TauCeti.ball_diff_sphere_eq_union` — the corresponding
-identity in the disc — pushed forward, and needs nothing of `f`. -/
+sides and the image crosscut. This is `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` —
+the corresponding identity in the disc — pushed forward, and needs nothing of `f`. -/
 theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
     f '' ball c r =
       f '' (ball c r ∩ ball ζ ρ) ∪ f '' (ball c r ∩ sphere ζ ρ) ∪
         f '' (ball c r \ closedBall ζ ρ) := by
   rw [← image_union, ← image_union]
   congr 1
-  rw [union_right_comm, ← ball_diff_sphere_eq_union, sdiff_union_inter]
+  rw [union_right_comm, ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
 
 /-! ## The crosscut cuts the boundary of the image in two -/
 
@@ -155,7 +185,133 @@ theorem frontier_image_ball_eq_union (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ)
   rw [← inter_union_distrib_left, ← inter_union_distrib_left]
   exact (inter_eq_left.mpr (frontier_image_ball_subset_union f c ζ r ρ)).symm
 
+/-! ## The two ends of the image crosscut -/
+
+/-- **The closure of an image crosscut is the image crosscut together with its two end cluster
+sets.** The crosscut `ball c r ∩ sphere ζ ρ` is an open arc whose closure adds exactly the two
+points of `sphere c r ∩ sphere ζ ρ`
+(`TauCeti.closure_ball_inter_sphere`, `TauCeti.sphere_inter_sphere_eq_pair_circleMap`), and a
+continuous `f` contributes nothing new over the arc itself, so all of `closure (f '' arc)` beyond
+`f '' arc` is cluster values at the two ends. The cluster-set content is
+`TauCeti.closure_image_eq_image_union_biUnion_clusterSetOn`, applied to the arc, whose frontier is
+its whole closure because an arc has empty interior in the plane.
+
+Only continuity along the arc is used; `f` need be neither holomorphic nor injective, and the
+image need not be bounded. -/
+theorem closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn
+    (hfc : ContinuousOn f (ball c r ∩ sphere ζ ρ)) (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) :
+    closure (f '' (ball c r ∩ sphere ζ ρ)) =
+      f '' (ball c r ∩ sphere ζ ρ) ∪
+        ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e := by
+  have hcl : closure (ball c r ∩ sphere ζ ρ) = closedBall c r ∩ sphere ζ ρ :=
+    closure_ball_inter_sphere hζ hρ hρr
+  have hcomp : IsCompact (closure (ball c r ∩ sphere ζ ρ)) := by
+    rw [hcl]
+    exact (isCompact_closedBall c r).inter_right isClosed_sphere
+  -- the crosscut is an arc, so it has empty interior and its frontier is its whole closure
+  have hint : interior (ball c r ∩ sphere ζ ρ) = ∅ := by
+    rw [← subset_empty_iff, ← interior_sphere ζ hρ.ne']
+    exact interior_mono inter_subset_right
+  have hfr : frontier (ball c r ∩ sphere ζ ρ) =
+      (ball c r ∩ sphere ζ ρ) ∪ (sphere c r ∩ sphere ζ ρ) := by
+    rw [← closure_sdiff_interior, hint, sdiff_empty, hcl, ← ball_union_sphere,
+      union_inter_distrib_right]
+  have harc : ⋃ w ∈ ball c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) w
+      ⊆ f '' (ball c r ∩ sphere ζ ρ) := by
+    refine iUnion₂_subset fun w hw => ?_
+    rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw)]
+    exact singleton_subset_iff.mpr (mem_image_of_mem f hw)
+  rw [closure_image_eq_image_union_biUnion_clusterSetOn hcomp hfc, hfr, biUnion_union,
+    ← union_assoc, union_eq_self_of_subset_right harc]
+
+/-- **An end cluster set of an image crosscut lies in the middle piece.** For `f` holomorphic and
+injective on `ball c r` and an endpoint `e` of a circular crosscut, every value `f` clusters at
+along the crosscut as `e` is approached is a boundary value of the image adherent to the image
+crosscut.
+
+Both halves are already available: the cluster set along the crosscut is contained in the cluster
+set along the whole disc, which `TauCeti.clusterSetOn_subset_frontier_image` — properness of a
+conformal map — puts on `frontier (f '' ball c r)`; and cluster values are adherent to the image
+of the approach set by `TauCeti.clusterSetOn_subset_closure_image`. -/
+theorem clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) (hr : 0 < r)
+    (he : e ∈ sphere c r ∩ sphere ζ ρ) :
+    clusterSetOn f (ball c r ∩ sphere ζ ρ) e ⊆
+      frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
+  refine subset_inter (fun v hv => ?_) fun v hv => clusterSetOn_subset_closure_image hv
+  refine clusterSetOn_subset_frontier_image isOpen_ball hd hinj ?_
+    (clusterSetOn_mono inter_subset_left hv)
+  rw [frontier_ball c hr.ne']
+  exact he.1
+
+/-- **Each end of a circular crosscut carries a cluster value.** The crosscut is adherent to each
+of its two endpoints and `f` is confined along it to the compact
+`closure (f '' (ball c r ∩ sphere ζ ρ))`, so the cluster set there is nonempty; only the image of
+the crosscut need be bounded, and no holomorphy is needed. -/
+theorem nonempty_clusterSetOn_ball_inter_sphere (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
+    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
+    (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Nonempty := by
+  refine clusterSetOn_nonempty hb.isCompact_closure
+    (fun z hz => subset_closure (mem_image_of_mem f hz)) ?_
+  rw [closure_ball_inter_sphere hζ hρ hρr]
+  exact ⟨sphere_subset_closedBall he.1, he.2⟩
+
+/-- **Each end of an image crosscut is a continuum.** For `f` continuous along a genuine circular
+crosscut and with bounded image *of the crosscut*, the cluster set at either endpoint is nonempty
+and connected; it is compact by `TauCeti.isCompact_clusterSetOn_of_isBounded`. This is the
+Collingwood–Lohwater continuum theorem `TauCeti.isConnected_clusterSetOn`, whose local hypothesis —
+that arbitrarily small neighbourhoods of the endpoint meet the crosscut in a preconnected set — is
+exactly `TauCeti.isPreconnected_ball_inter_sphere_inter_ball`, a crosscut spanning less than a half
+turn and so meeting each ball centred on it in a subarc. -/
+theorem isConnected_clusterSetOn_ball_inter_sphere
+    (hfc : ContinuousOn f (ball c r ∩ sphere ζ ρ)) (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
+    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
+    IsConnected (clusterSetOn f (ball c r ∩ sphere ζ ρ) e) := by
+  have hecl : e ∈ closedBall c r ∩ sphere ζ ρ := ⟨sphere_subset_closedBall he.1, he.2⟩
+  refine isConnected_clusterSetOn_of_isBounded hfc hb
+    (by rw [closure_ball_inter_sphere hζ hρ hρr]; exact hecl) fun s hs => ?_
+  obtain ⟨δ, hδ, hball⟩ := Metric.mem_nhds_iff.mp hs
+  exact ⟨ball e δ, ball_mem_nhds e hδ, hball,
+    isPreconnected_ball_inter_sphere_inter_ball hζ hρ hρr hecl δ⟩
+
 /-! ## The middle piece -/
+
+/-- **The middle piece is exactly the two end cluster sets of the image crosscut.** For `f`
+holomorphic and injective on `ball c r` and a genuine circular crosscut at a boundary point `ζ`,
+
+> `frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))`
+> `= ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e`,
+
+the index set being the two endpoints of the crosscut by
+`TauCeti.sphere_inter_sphere_eq_pair_circleMap`. So the part of the image boundary that the
+crosscut clings to is not merely small: it is the union of the cluster sets at the two ends. The
+image of the crosscut is not assumed bounded here, so the equality by itself leaves those two
+cluster sets possibly empty; add that boundedness and each of them is nonempty by
+`TauCeti.nonempty_clusterSetOn_ball_inter_sphere`, which is what a small connected boundary set
+enclosing the middle piece —
+`TauCeti.exists_isConnected_subset_frontier_image_ball_of_diam_lt` — has to *join*.
+
+One inclusion is `TauCeti.clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image`. For
+the other, `TauCeti.closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn` splits a point
+of the closure of the image crosscut into a value on the crosscut and a cluster value at an end,
+and a value on the crosscut lies in the *open* image `f '' ball c r`, which is disjoint from its
+own frontier. -/
+theorem frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn
+    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) (hζ : dist ζ c = r)
+    (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
+    frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) =
+      ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e := by
+  have hr : 0 < r := by linarith
+  refine subset_antisymm ?_ (iUnion₂_subset fun e he =>
+    clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image hd hinj hr he)
+  rintro v ⟨hvfr, hvcl⟩
+  rw [closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn
+    (hd.continuousOn.mono inter_subset_left) hζ hρ hρr] at hvcl
+  refine hvcl.resolve_left fun hv => ?_
+  have hopen : IsOpen (f '' ball c r) :=
+    isOpen_image_of_differentiableOn_of_injOn isOpen_ball hd hinj
+  exact (hopen.frontier_eq ▸ hvfr).2 (image_mono inter_subset_left hv)
 
 /-- **The middle piece is no wider than the image crosscut.** It is contained in the closure of the
 image crosscut, and closing a set does not change its diameter. -/
@@ -171,14 +327,12 @@ theorem diam_frontier_inter_closure_image_ball_inter_sphere_le (hb : IsBounded (
 /-- **The middle piece is nonempty**: for `f` holomorphic and injective on `ball c r` with bounded
 image, and a genuine circular crosscut at a boundary point `ζ`, the set
 `frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))` has a point. So the image
-crosscut does cling to the boundary of the image — at the one endpoint the proof selects; where the
-other end of the crosscut goes is not asserted.
+crosscut does cling to the boundary of the image, and — by
+`TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn` and
+`TauCeti.nonempty_clusterSetOn_ball_inter_sphere` — at *each* of its two ends.
 
-The crosscut has an endpoint `e` on `sphere c r`, adherent to it by
-`TauCeti.closure_ball_inter_sphere`. Along `e` the map has a cluster value, the image being confined
-to the compact `closure (f '' ball c r)`; that value is adherent to the image crosscut by
-construction, and by `TauCeti.clusterSetOn_subset_frontier_image` — properness of a conformal map —
-it is a boundary value of the image rather than one of its points. -/
+The crosscut has an endpoint on `sphere c r`, and the cluster set of `f` along the crosscut there
+is nonempty and contained in the middle piece. -/
 theorem nonempty_frontier_inter_closure_image_ball_inter_sphere
     (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
@@ -189,18 +343,10 @@ theorem nonempty_frontier_inter_closure_image_ball_inter_sphere
       ∈ sphere c r ∩ sphere ζ ρ := by
     rw [sphere_inter_sphere_eq_pair_circleMap hζ hρ hρr]
     exact Or.inl rfl
-  have hecl : circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ∈ closure (ball c r ∩ sphere ζ ρ) := by
-    rw [closure_ball_inter_sphere hζ hρ hρr]
-    exact ⟨sphere_subset_closedBall hemem.1, hemem.2⟩
-  have hefr : circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))) ∈ frontier (ball c r) := by
-    rw [frontier_ball c hr.ne']
-    exact hemem.1
-  -- a cluster value of `f` along the crosscut at that endpoint
-  obtain ⟨v, hv⟩ := clusterSetOn_nonempty hb.isCompact_closure
-    (fun z hz => subset_closure (mem_image_of_mem f (inter_subset_left hz))) hecl
-  exact ⟨v, clusterSetOn_subset_frontier_image isOpen_ball hd hinj hefr
-    (clusterSetOn_mono inter_subset_left hv), clusterSetOn_subset_closure_image hv⟩
+  obtain ⟨v, hv⟩ :=
+    nonempty_clusterSetOn_ball_inter_sphere (hb.subset (image_mono inter_subset_left))
+      hζ hρ hρr hemem
+  exact ⟨v, clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image hd hinj hr hemem hv⟩
 
 /-! ## The small connected set enclosing the middle piece -/
 
@@ -212,7 +358,7 @@ an image crosscut of diameter less than `δ` has its middle piece contained in a
 `frontier (f '' ball c r)` of diameter at most `ε`.
 
 This is where the local connectedness of `∂Ω` that
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` needs enters, the other
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` needs enters, the other
 of its two geometric inputs being the length–area estimate
 `TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
 whose enclosing set has to contain the whole boundary piece

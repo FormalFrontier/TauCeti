@@ -6,20 +6,27 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 
 /-!
-# The chord and the arc on the unit circle
+# The chord and the arc on a circle
 
 Mathlib's `Circle` carries both a metric, from the inclusion into `ℂ`, and an arc-length API:
 `Circle.exp` parametrizes it by angles and `Circle.angleDiff x y` is the length of the arc running
 counterclockwise from `x` to `y`. This file relates the two, comparing the *chord* `dist x y` with
-the *arc* separating `x` from `y` in both directions.
+the *arc* separating `x` from `y` in both directions, and transports the chord formula along the
+translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ ρ`.
 
 ## Main results
 
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
+* `TauCeti.dist_circleMap_eq_two_mul_abs_sin` — its form for the circle `circleMap ζ ρ` of arbitrary
+  centre and radius, where the chord between the angles `θ` and `θ'` has length
+  `2 * |ρ| * |sin ((θ - θ') / 2)|`, and
+  `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, the same formula with the sign of the angular
+  difference cleared, valid for angles at most a full turn apart.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
   most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
@@ -71,6 +78,39 @@ theorem dist_circleExp_eq_two_mul_abs_sin (a b : ℝ) :
   rw [dist_circleExp_eq_norm_exp_sub_one, Complex.norm_exp_I_mul_ofReal_sub_one,
     Real.norm_eq_abs, abs_mul]
   norm_num
+
+/-- **The chord of a circle of arbitrary centre and radius.** The two points of `circleMap ζ ρ` at
+angles `θ` and `θ'` are at distance `2 * |ρ| * |sin ((θ - θ') / 2)|`; nothing is assumed of the
+radius, a negative `ρ` tracing the same circle in the other sense.
+
+This is the unit-circle formula `TauCeti.dist_circleExp_eq_two_mul_abs_sin` transported along the
+translation and real scaling that carry `Circle.exp` to `circleMap ζ ρ`. -/
+theorem dist_circleMap_eq_two_mul_abs_sin (ζ : ℂ) (ρ θ θ' : ℝ) :
+    dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * |Real.sin ((θ - θ') / 2)| := by
+  have hsub : circleMap ζ ρ θ - circleMap ζ ρ θ' =
+      (ρ : ℂ) * ((Circle.exp θ : ℂ) - (Circle.exp θ' : ℂ)) := by
+    simp only [circleMap, Circle.coe_exp]
+    ring
+  have hchord : ‖(Circle.exp θ : ℂ) - (Circle.exp θ' : ℂ)‖ = 2 * |Real.sin ((θ - θ') / 2)| := by
+    rw [← dist_circleExp_eq_two_mul_abs_sin, ← Complex.dist_eq]
+    exact (Subtype.dist_eq _ _).symm
+  rw [dist_eq_norm, hsub, norm_mul, Complex.norm_real, Real.norm_eq_abs, hchord]
+  ring
+
+/-- **The chord with the sign of the angular difference cleared.** For angles at most a full turn
+apart the chord `TauCeti.dist_circleMap_eq_two_mul_abs_sin` is `2 * |ρ| * sin (|θ - θ'| / 2)`: the
+absolute value moves from outside the sine to inside it.
+
+The width restriction is what makes the two forms differ: it puts the half-angle in `[0, π]`, where
+the sine is nonnegative, and past a full turn the half-angle leaves that interval and `|sin|` and
+`sin ∘ |·|` part company. Up to `π` the right-hand side is moreover an increasing function of the
+angular gap, the half-angle then staying in `[0, π / 2]`; beyond `π` the formula still holds but the
+chord shrinks again as the gap widens. -/
+theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (h : |θ - θ'| ≤ 2 * π) :
+    dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
+  have habs : |(θ - θ') / 2| = |θ - θ'| / 2 := by rw [abs_div, abs_two]
+  rw [dist_circleMap_eq_two_mul_abs_sin,
+    Real.abs_sin_eq_sin_abs_of_abs_le_pi (by rw [habs]; linarith), habs]
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
