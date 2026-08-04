@@ -22,6 +22,8 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 
 * `TauCeti.hopfSpec_obj_X_left`: the underlying scheme of a Hopf spectrum.
 * `TauCeti.hopfSpec_obj_X_hom`: its structural morphism.
+* `TauCeti.hopfSpec_obj_eq_asOver`: its bundled identification with the group object on the
+  ordinary spectrum.
 * `TauCeti.hopfSpec_obj_tensor_X_left`: the source of its multiplication.
 * `TauCeti.algSpec_map_left_ofAlgHom`: the underlying spectrum map of an algebra morphism.
 * `TauCeti.hopfSpec_obj_one_left`, `TauCeti.hopfSpec_obj_mul_left`, and
@@ -98,12 +100,12 @@ lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
   rw [AlgebraicGeometry.algSpec_map_left]
   rfl
 
-/-- Mathlib's `hopfSpec` object is definitionally the group object on the ordinary spectrum.
+/-- Mathlib's `hopfSpec` object is the group object on the ordinary spectrum.
 
-This private lemma localizes the identification between the two instance paths.  Mathlib's
-operation computation lemmas are stated for `(Spec H).asOver (Spec R)`, while `hopfSpec` reaches
-that group object through the Hopf-algebra/cogroup equivalence. -/
-private lemma hopfSpec_obj_eq_asOver (H : CommHopfAlgCat.{u} R) :
+This bundled identification carries the group structure across the two instance paths.
+Mathlib's operation computation lemmas are stated for `(Spec H).asOver (Spec R)`, while
+`hopfSpec` reaches that group object through the Hopf-algebra/cogroup equivalence. -/
+lemma hopfSpec_obj_eq_asOver (H : CommHopfAlgCat.{u} R) :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H) =
       Grp.mk ((Spec (CommRingCat.of H)).asOver (Spec (CommRingCat.of R))) :=
   rfl

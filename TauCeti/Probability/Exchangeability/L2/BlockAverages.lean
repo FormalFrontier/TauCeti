@@ -36,9 +36,8 @@ Var[blockAverage X k - blockAverage X k'] = (v - c) / n + (v - c) / m,
 and, since contractability makes the two averages share the common mean `μ[X 0]`, this is the
 squared `L²` distance `∫ (blockAverage X k - blockAverage X k')² dμ` itself. The squared
 distance vanishes like `1 / n + 1 / m` (equivalently, the `L²` norm like `n^(-1/2)` for equal
-windows), which is the analytic engine that later drives the `L²` convergence of the observables
-`blockAverage X k` toward their common conditional mean, the intermediate real-valued step
-before the roadmap's determining-class argument identifies the directing random measure.
+windows), which is the quantitative averaging input the `L²` route runs on: it is what drives the
+convergence of `blockAverage X k` toward the common conditional mean.
 
 The elementary L² route to de Finetti's theorem formalised here is the one presented in
 Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), Chapter 1
@@ -86,11 +85,31 @@ theorem blockAverage_eq_sum {n : ℕ} (k : Fin n → ℕ) :
   ext ω
   simp
 
+omit [MeasurableSpace Ω] in
+/-- **A block average of a constant block.** If every coordinate of a nonempty block takes the
+value `c` at `ω`, then so does the block average: the normalisation `n⁻¹` cancels the `n` terms. -/
+theorem blockAverage_apply_of_forall_eq {n : ℕ} (hn : 0 < n) {k : Fin n → ℕ} {ω : Ω} {c : ℝ}
+    (h : ∀ i, X (k i) ω = c) : blockAverage X k ω = c := by
+  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
+  rw [blockAverage, Finset.expect_apply, Finset.expect_congr rfl fun i _ => h i,
+    Fintype.expect_const]
+
 /-- A block average of `L²` coordinates is itself `L²`. -/
 theorem memLp_blockAverage {n : ℕ} (k : Fin n → ℕ) (hX_L2 : ∀ i, MemLp (X (k i)) 2 μ) :
     MemLp (blockAverage X k) 2 μ := by
   rw [blockAverage_eq_sum]
   exact (memLp_finsetSum' _ fun i _ => hX_L2 i).const_smul _
+
+/-- **Conditional expectation commutes with block averages.** The conditional expectation of a
+block average of integrable coordinates is the block average of their conditional expectations. -/
+theorem condExp_blockAverage {m : MeasurableSpace Ω} {n : ℕ} (k : Fin n → ℕ)
+    (hX : ∀ i, Integrable (X (k i)) μ) :
+    μ[blockAverage X k | m] =ᵐ[μ] blockAverage (fun i => μ[X i | m]) k := by
+  rw [blockAverage_eq_sum]
+  refine (condExp_smul _ _ _).trans ?_
+  filter_upwards [condExp_finsetSum (μ := μ) (m := m) (s := Finset.univ)
+    (f := fun i : Fin n => X (k i)) fun i _ => hX i] with ω hω
+  rw [Pi.smul_apply, hω, Finset.sum_apply, blockAverage_apply, smul_eq_mul]
 
 /-- The double sum of block covariances splits along the diagonal into the common variance and
 the common off-diagonal covariance of a contractable `L²` sequence. -/
