@@ -13,12 +13,14 @@ import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 /-!
 # The piece a crosscut cuts off, measured by its boundary
 
-`Conformal/Crosscut/Basic.lean` cuts a domain at a boundary point `ζ` by the circle `sphere ζ ρ`,
-leaving the *crosscut neighbourhood* `U ∩ ball ζ ρ` of `ζ`, and turns an oscillation bound on that
-neighbourhood into a boundary limit. This file supplies such a bound for a *conformal* map, in the
-geometric form that layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md` — the Carathéodory
-boundary correspondence — produces it: the image of the crosscut neighbourhood is no wider than the
-image of the crosscut arc together with the piece of `∂Ω` that arc cuts off.
+`Conformal/Crosscut/Basic.lean` supplies the set-splitting lemmas that cut a set at a point `ζ` by
+the circle `sphere ζ ρ`, leaving the *crosscut neighbourhood* `U ∩ ball ζ ρ` of `ζ`, and turns an
+oscillation bound on that neighbourhood into a boundary limit for a *disc* `U`, by the maximum
+modulus principle. This file carries that criterion to an arbitrary open `U`, and supplies the
+oscillation bound for a *conformal* map, in the geometric form that layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md` — the Carathéodory boundary correspondence — produces
+it: the image of the crosscut neighbourhood is no wider than the image of the crosscut arc together
+with the piece of `∂Ω` that arc cuts off.
 
 ## The boundary of the image of a crosscut neighbourhood
 
@@ -39,7 +41,9 @@ twice: a point `p` of `frontier (f '' s)` lies in `closure Ω = Ω ∪ frontier 
 `f '' s`, which is disjoint from its own frontier, while `w ∈ t` would put `p` in the *open* set
 `f '' t`, which injectivity makes disjoint from `f '' s`, contradicting `p ∈ closure (f '' s)`.
 So `w ∈ u`. Simple connectivity plays no role, and neither does the geometry of `Ω` — nor even
-openness of `U`, which enters only when the splitting is produced.
+openness of `U`, which enters only when the splitting is produced; holomorphy and injectivity of
+`f` are asked for on `s ∪ t` alone, the rest of `U` entering only through the set `f '' U` whose
+frontier the conclusion names.
 
 Instantiating it at the near side and at the far side `U \ closedBall ζ ρ`, which by
 `TauCeti.diff_sphere_eq_inter_ball_union_diff_closedBall` are disjoint and open and leave exactly
@@ -139,8 +143,8 @@ variable {f : ℂ → ℂ} {U : Set ℂ} {ζ : ℂ} {ρ : ℝ}
 
 /-- **The boundary of the image of one open side of a splitting of a domain lies on the image of
 the splitting set and on the boundary of the image of the domain.** If `U` is covered by two
-disjoint open subsets `s` and `t` of it together with a third set `u`, and `f` is holomorphic and
-injective on `U`, then `frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)`.
+disjoint open sets `s`, `t` together with a third set `u`, the side `s` lies in `U`, and `f` is
+holomorphic and injective on `s ∪ t`, then `frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)`.
 
 The two sides enter symmetrically, so the lemma bounds either of them; the crosscut instances are
 `TauCeti.frontier_image_inter_ball_subset` and
@@ -150,17 +154,20 @@ The sets `f '' s` and `f '' t` are open by the open mapping theorem, and injecti
 disjoint. A frontier point of `f '' s` lies in `closure (f '' U)`, so if it is not a frontier point
 of `f '' U` it is a value `f w` with `w` in one of the three covering sets: `w ∈ s` would place it
 inside an open set disjoint from its own frontier, and `w ∈ t` inside an open set disjoint from a
-set it is in the closure of, so `w ∈ u`. Openness of `U` is not used: only the two named sides need
-to be open. -/
-theorem frontier_image_subset_image_union_frontier_image
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) {s t u : Set ℂ}
-    (hs : IsOpen s) (ht : IsOpen t) (hsU : s ⊆ U) (htU : t ⊆ U)
+set it is in the closure of, so `w ∈ u`. Openness of `U` is not used, and neither is any analytic
+hypothesis away from the two named sides: only they need to be open, and only on their union is
+`f` asked to be holomorphic and injective. -/
+theorem frontier_image_subset_image_union_frontier_image {s t u : Set ℂ}
+    (hd : DifferentiableOn ℂ f (s ∪ t)) (hinj : InjOn f (s ∪ t))
+    (hs : IsOpen s) (ht : IsOpen t) (hsU : s ⊆ U)
     (hst : Disjoint s t) (hcov : U ⊆ s ∪ t ∪ u) :
     frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U) := by
   have hsopen : IsOpen (f '' s) :=
-    isOpen_image_of_differentiableOn_of_injOn hs (hd.mono hsU) (hinj.mono hsU)
+    isOpen_image_of_differentiableOn_of_injOn hs (hd.mono subset_union_left)
+      (hinj.mono subset_union_left)
   have htopen : IsOpen (f '' t) :=
-    isOpen_image_of_differentiableOn_of_injOn ht (hd.mono htU) (hinj.mono htU)
+    isOpen_image_of_differentiableOn_of_injOn ht (hd.mono subset_union_right)
+      (hinj.mono subset_union_right)
   intro p hp
   have hpΩ : p ∈ closure (f '' U) := closure_mono (image_mono hsU) hp.1
   rw [closure_eq_self_union_frontier] at hpΩ
@@ -171,8 +178,8 @@ theorem frontier_image_subset_image_union_frontier_image
         (eq_empty_iff_forall_notMem.mp hsopen.inter_frontier_eq (f w))
     · obtain ⟨q, ⟨v, hv, hfv⟩, ⟨x, hx, hfx⟩⟩ :=
         mem_closure_iff.mp hp.1 _ htopen (mem_image_of_mem f hwt)
-      exact absurd (hinj (htU hv) (hsU hx) (hfv.trans hfx.symm) ▸ hv)
-        (Set.disjoint_left.mp hst hx)
+      exact absurd (hinj (subset_union_right hv) (subset_union_left hx)
+        (hfv.trans hfx.symm) ▸ hv) (Set.disjoint_left.mp hst hx)
     · exact Or.inl (mem_image_of_mem f hwu)
   · exact Or.inr hpfr
 
@@ -189,9 +196,10 @@ theorem frontier_image_inter_ball_subset (hUo : IsOpen U) (hd : DifferentiableOn
     frontier (f '' (U ∩ ball ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
   have hcov : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
     rw [← diff_sphere_eq_inter_ball_union_diff_closedBall, sdiff_union_inter]
-  exact frontier_image_subset_image_union_frontier_image hd hinj
+  have hsub : U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ⊆ U := union_subset inter_subset_left sdiff_subset
+  exact frontier_image_subset_image_union_frontier_image (hd.mono hsub) (hinj.mono hsub)
     (hUo.inter isOpen_ball) (hUo.sdiff isClosed_closedBall) inter_subset_left
-    sdiff_subset disjoint_inter_ball_diff_closedBall hcov.subset
+    disjoint_inter_ball_diff_closedBall hcov.subset
 
 /-- **The boundary of the image of the far side of a crosscut lies on the image crosscut and on the
 boundary of the image domain.** The mirror of `TauCeti.frontier_image_inter_ball_subset`: it is
@@ -203,9 +211,10 @@ theorem frontier_image_diff_closedBall_subset (hUo : IsOpen U) (hd : Differentia
   have hcov : U = U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ∪ U ∩ sphere ζ ρ := by
     rw [union_comm (U \ closedBall ζ ρ), ← diff_sphere_eq_inter_ball_union_diff_closedBall,
       sdiff_union_inter]
-  exact frontier_image_subset_image_union_frontier_image hd hinj
+  have hsub : U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ⊆ U := union_subset sdiff_subset inter_subset_left
+  exact frontier_image_subset_image_union_frontier_image (hd.mono hsub) (hinj.mono hsub)
     (hUo.sdiff isClosed_closedBall) (hUo.inter isOpen_ball) sdiff_subset
-    inter_subset_left disjoint_inter_ball_diff_closedBall.symm hcov.subset
+    disjoint_inter_ball_diff_closedBall.symm hcov.subset
 
 /-! ## The diameter of the cut-off piece -/
 
