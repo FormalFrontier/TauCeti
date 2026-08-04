@@ -390,23 +390,6 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
   letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
   infer_instance
 
-/-- Multiplication of homogeneous elements in the associated graded Clifford algebra. -/
-@[simp]
-theorem filtrationAssociatedGraded_of_mul (Q : QuadraticForm R M) (i j : ℕ)
-    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
-    (DirectSum.of (fun k => FiltrationGradedPiece Q k) i x : filtrationAssociatedGraded Q) *
-      DirectSum.of (fun k => FiltrationGradedPiece Q k) j y =
-        DirectSum.of (fun k => FiltrationGradedPiece Q k) (i + j)
-          (filtrationGradedMul Q i j x y) :=
-  DirectSum.of_mul_of x y
-
-/-- The scalar map of the associated graded Clifford algebra lands in degree zero. -/
-@[simp]
-theorem filtrationAssociatedGraded_algebraMap_apply (Q : QuadraticForm R M) (r : R) :
-    algebraMap R (filtrationAssociatedGraded Q) r =
-      DirectSum.of (fun k => FiltrationGradedPiece Q k) 0 (filtrationGradedAlgebraMap Q r) :=
-  DirectSum.algebraMap_apply R (FiltrationGradedPiece Q) r
-
 end CliffordAlgebra
 
 end TauCeti
