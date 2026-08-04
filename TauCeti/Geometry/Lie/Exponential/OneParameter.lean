@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.ODE.ExistUnique
 public import Mathlib.Geometry.Manifold.Instances.UnitsOfNormedAlgebra
-public import TauCeti.Geometry.Lie.Exponential.Units
+public import TauCeti.Geometry.Lie.Exponential.Units.Basic
 
 /-!
 # One-parameter subgroups from the Banach algebra exponential

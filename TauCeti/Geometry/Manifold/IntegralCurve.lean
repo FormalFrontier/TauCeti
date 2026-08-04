@@ -18,20 +18,84 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 
 * `IsMIntegralCurve.contMDiff_succ`: an integral curve of a `C^n` vector field is `C^(n + 1)`.
 * `IsMIntegralCurve.contMDiff`: an integral curve of a smooth vector field is smooth.
+* `IsMIntegralCurveAt.of_extChartAt_symm`: a coordinate solution gives a manifold integral curve.
 
 ## References
 
+* Mathlib's proof of `exists_isMIntegralCurveAt_of_contMDiffAt_boundaryless`, whose extended-chart
+  calculation is adapted by `IsMIntegralCurveAt.of_extChartAt_symm` in the reverse direction.
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 0, "The exponential map".
 -/
 
 public section
 
-open Function Manifold Set
+open Bundle Function Manifold Set
 open scoped ContDiff Manifold Topology
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+
+/-- Convert an ordinary derivative into the model-space derivative expected inside a manifold
+derivative. This is the single boundary where the tangent spaces of the self model on `ℝ` and of
+`I` are identified with their model vector spaces `ℝ` and `E`. -/
+private theorem hasFDerivWithinAt_model_tangent_spaces
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+    {x : M} {φ : ℝ → E} {t : ℝ} {v : TangentSpace I x}
+    (hφ : HasDerivAt φ v t) :
+    HasFDerivWithinAt φ
+      (ContinuousLinearMap.toSpanSingleton ℝ v :
+        TangentSpace 𝓘(ℝ, ℝ) t →L[ℝ] TangentSpace I x)
+      Set.univ t := by
+  change HasFDerivWithinAt φ (ContinuousLinearMap.toSpanSingleton ℝ v) Set.univ t
+  exact hφ.hasFDerivAt.hasFDerivWithinAt
+
+/-- A coordinate curve whose values stay in an extended-chart target and whose derivative is the
+coordinate expression of a vector field gives a manifold integral curve after applying the inverse
+chart. -/
+theorem IsMIntegralCurveAt.of_extChartAt_symm
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
+    {x₀ : M} {f : ℝ → E} {t₀ : ℝ} {v : (x : M) → TangentSpace I x}
+    (htarget : ∀ᶠ t in nhds t₀, f t ∈ interior (extChartAt I x₀).target)
+    (hderiv : ∀ᶠ t in nhds t₀,
+      HasDerivAt f
+        (tangentCoordChange I ((extChartAt I x₀).symm (f t)) x₀
+          ((extChartAt I x₀).symm (f t)) (v ((extChartAt I x₀).symm (f t)))) t) :
+    IsMIntegralCurveAt ((extChartAt I x₀).symm ∘ f) v t₀ := by
+  obtain ⟨s, hs, haux⟩ := (hderiv.and htarget).exists_mem
+  rw [isMIntegralCurveAt_iff]
+  refine ⟨s, hs, ?_⟩
+  intro t ht
+  let xₜ : M := (extChartAt I x₀).symm (f t)
+  have h : HasDerivAt f
+      (tangentCoordChange I xₜ x₀ xₜ (v xₜ)) t := (haux t ht).1
+  have hf3 := mem_of_mem_of_subset (haux t ht).2 interior_subset
+  have hft1 := mem_preimage.mp <|
+    mem_of_mem_of_subset hf3 (extChartAt I x₀).target_subset_preimage_source
+  have hft2 := mem_extChartAt_source (I := I) xₜ
+  have hft1' : xₜ ∈ (extChartAt I x₀).source := by simpa only [xₜ] using hft1
+  have hcharts :
+      xₜ ∈ (extChartAt I xₜ).source ∩ (extChartAt I x₀).source ∩
+        (extChartAt I xₜ).source := ⟨⟨hft2, hft1'⟩, hft2⟩
+  apply HasMFDerivAt.hasMFDerivWithinAt
+  refine ⟨(continuousAt_extChartAt_symm'' hf3).comp h.continuousAt, ?_⟩
+  have hcomp : HasDerivAt ((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f)
+      (tangentCoordChange I x₀ xₜ xₜ (tangentCoordChange I xₜ x₀ xₜ (v xₜ))) t := by
+    apply HasFDerivAt.comp_hasDerivAt _ _ h
+    apply HasFDerivWithinAt.hasFDerivAt (s := range I) _ <|
+      mem_nhds_iff.mpr ⟨interior (extChartAt I x₀).target,
+        subset_trans interior_subset (extChartAt_target_subset_range ..),
+        isOpen_interior, (haux t ht).2⟩
+    rw [← (extChartAt I x₀).right_inv hf3]
+    exact hasFDerivWithinAt_tangentCoordChange ⟨hft1, hft2⟩
+  have hd := hcomp.congr_deriv (tangentCoordChange_comp hcharts)
+  have hd' := hd.congr_deriv (tangentCoordChange_self hft2)
+  simp only [writtenInExtChartAt, extChartAt_model_space_eq_id, PartialEquiv.refl_coe,
+    PartialEquiv.refl_symm, modelWithCornersSelf_coe, Function.comp_def, id_eq, range_id]
+  -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
+  rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
+  rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
+  exact hasFDerivWithinAt_model_tangent_spaces hd'
 
 private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] {n : ℕ} {f : ℝ → F} {v : F → F} {s : Set ℝ} {u : Set F}
