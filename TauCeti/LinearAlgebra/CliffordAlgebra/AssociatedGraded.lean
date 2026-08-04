@@ -6,22 +6,21 @@ module
 
 public import Mathlib.LinearAlgebra.Quotient.Bilinear
 public import Mathlib.LinearAlgebra.TensorProduct.Submodule
+public import Mathlib.Algebra.DirectSum.Algebra
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
 # Homogeneous multiplication for a Clifford filtration
 
-This file lifts Clifford multiplication to a bilinear product between any two successive quotient
-pieces of the Clifford degree filtration.
-
-This is the multiplication prerequisite for the Layer 0 associated-graded comparison in the spin
-representations roadmap. It is generic in the quadratic form and does not yet package the direct
-sum as a graded algebra or identify it with the exterior algebra.
+This file packages the homogeneous pieces of the Clifford degree filtration into a direct-sum
+associated-graded algebra. It is generic in the quadratic form and does not yet identify that
+algebra with the exterior algebra.
 -/
 
 public section
 
 open CliffordAlgebra
+open scoped DirectSum
 
 universe u v
 
@@ -30,6 +29,10 @@ namespace TauCeti
 namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+
+/-- The direct sum of the homogeneous pieces of the Clifford degree filtration. -/
+abbrev filtrationAssociatedGraded (Q : QuadraticForm R M) : Type max u v :=
+  ⨁ k : ℕ, FiltrationGradedPiece Q k
 
 private theorem mul_mem_filtrationPrevious_left (Q : QuadraticForm R M) (i j : ℕ)
     {x y : CliffordAlgebra Q} (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
@@ -159,6 +162,250 @@ theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
                 filtrationPrevious Q (i + (j + k))
               rw [mul_assoc, sub_self]
               exact Submodule.zero_mem (filtrationPrevious Q (i + (j + k)))
+
+/-- The degree-zero unit of the homogeneous Clifford filtration pieces. -/
+noncomputable def filtrationGradedOne (Q : QuadraticForm R M) :
+    FiltrationGradedPiece Q 0 :=
+  Submodule.Quotient.mk ⟨1, one_mem_filtration Q 0⟩
+
+/-- The degree-zero class of a scalar in the associated graded Clifford filtration. -/
+noncomputable def filtrationGradedAlgebraMap (Q : QuadraticForm R M) :
+    R →+ FiltrationGradedPiece Q 0 where
+  toFun r := Submodule.Quotient.mk
+    ⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩
+  map_zero' := by simp
+  map_add' r s := by
+    rw [← Submodule.Quotient.mk_add]
+    apply congrArg Submodule.Quotient.mk
+    exact Subtype.ext (map_add (algebraMap R (CliffordAlgebra Q)) r s)
+
+@[simp] private theorem filtrationGradedAlgebraMap_one (Q : QuadraticForm R M) :
+    filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q :=
+  rfl
+
+private theorem filtrationGradedPiece_cast_mk (Q : QuadraticForm R M) {i j : ℕ}
+    (h : i = j) (x : filtration Q i) (hx : (x : CliffordAlgebra Q) ∈ filtration Q j) :
+    cast (congrArg (FiltrationGradedPiece Q) h) (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨x, hx⟩ := by
+  subst j
+  rfl
+
+private theorem filtrationGradedMonoid_eq_of_cast (Q : QuadraticForm R M)
+    {a b : GradedMonoid (FiltrationGradedPiece Q)} (h : a.fst = b.fst)
+    (h2 : cast (congrArg (FiltrationGradedPiece Q) h) a.snd = b.snd) : a = b := by
+  obtain ⟨i, a⟩ := a
+  cases h
+  exact congrArg _ h2
+
+private theorem filtrationGradedOne_mul (Q : QuadraticForm R M) (k : ℕ)
+    (x : FiltrationGradedPiece Q k) :
+    filtrationGradedMul Q 0 k (filtrationGradedOne Q) x =
+      cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) x := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      change filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
+        (Submodule.Quotient.mk x) = _
+      rw [filtrationGradedMul_apply_mk]
+      rw [filtrationGradedPiece_cast_mk Q (Nat.zero_add k).symm x (by
+        rw [Nat.zero_add]
+        exact x.property)]
+      apply (Submodule.Quotient.eq _).mpr
+      change (1 : CliffordAlgebra Q) * (x : CliffordAlgebra Q) - x ∈
+        filtrationPrevious Q (0 + k)
+      rw [one_mul, sub_self]
+      exact Submodule.zero_mem (filtrationPrevious Q (0 + k))
+
+private theorem filtrationGradedMul_one (Q : QuadraticForm R M) (k : ℕ)
+    (x : FiltrationGradedPiece Q k) :
+    filtrationGradedMul Q k 0 x (filtrationGradedOne Q) =
+      cast (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k).symm) x := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      change filtrationGradedMul Q k 0 (Submodule.Quotient.mk x)
+        (Submodule.Quotient.mk _) = _
+      rw [filtrationGradedMul_apply_mk]
+      rw [filtrationGradedPiece_cast_mk Q (Nat.add_zero k).symm x (by
+        rw [Nat.add_zero]
+        exact x.property)]
+      apply (Submodule.Quotient.eq _).mpr
+      change (x : CliffordAlgebra Q) * 1 - x ∈ filtrationPrevious Q (k + 0)
+      rw [mul_one, sub_self]
+      exact Submodule.zero_mem (filtrationPrevious Q (k + 0))
+
+noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
+    GradedMonoid.GOne (FiltrationGradedPiece Q) where
+  one := filtrationGradedOne Q
+
+noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
+    GradedMonoid.GMul (FiltrationGradedPiece Q) where
+  mul {i j} := fun x y => filtrationGradedMul Q i j x y
+
+noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
+    GradedMonoid.GMonoid (FiltrationGradedPiece Q) :=
+  { filtrationGradedGMul (Q := Q), filtrationGradedGOne (Q := Q) with
+    one_mul := fun x => by
+      rcases x with ⟨k, x⟩
+      apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k)
+      change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
+        (filtrationGradedMul Q 0 k (filtrationGradedOne Q) x) = x
+      rw [filtrationGradedOne_mul]
+      simp
+    mul_one := fun x => by
+      rcases x with ⟨k, x⟩
+      apply filtrationGradedMonoid_eq_of_cast Q (Nat.add_zero k)
+      change cast (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k))
+        (filtrationGradedMul Q k 0 x (filtrationGradedOne Q)) = x
+      rw [filtrationGradedMul_one]
+      simp
+    mul_assoc := fun x y z => by
+      rcases x with ⟨i, x⟩
+      rcases y with ⟨j, y⟩
+      rcases z with ⟨k, z⟩
+      apply filtrationGradedMonoid_eq_of_cast Q (Nat.add_assoc i j k)
+      exact filtrationGradedMul_assoc Q i j k x y z }
+
+noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
+    DirectSum.GRing (FiltrationGradedPiece Q) where
+  mul_zero := fun x => (filtrationGradedMul Q _ _ x).map_zero
+  zero_mul := fun x => by
+    change filtrationGradedMul Q _ _ 0 x = 0
+    rw [LinearMap.map_zero]
+    rfl
+  mul_add := fun x y z => (filtrationGradedMul Q _ _ x).map_add y z
+  add_mul := fun x y z => by
+    change filtrationGradedMul Q _ _ (x + y) z =
+      filtrationGradedMul Q _ _ x z + filtrationGradedMul Q _ _ y z
+    rw [LinearMap.map_add]
+    rfl
+  natCast := fun n => filtrationGradedAlgebraMap Q n
+  natCast_zero := by
+    rw [Nat.cast_zero]
+    exact map_zero (filtrationGradedAlgebraMap Q)
+  natCast_succ := fun n => by
+    change filtrationGradedAlgebraMap Q ((n + 1 : ℕ) : R) =
+      filtrationGradedAlgebraMap Q (n : R) + filtrationGradedOne Q
+    rw [Nat.cast_succ, map_add]
+    rfl
+  intCast := fun z => filtrationGradedAlgebraMap Q z
+  intCast_ofNat := fun n => by
+    change filtrationGradedAlgebraMap Q ((n : ℤ) : R) = filtrationGradedAlgebraMap Q (n : R)
+    norm_cast
+  intCast_negSucc_ofNat := fun n => by
+    change filtrationGradedAlgebraMap Q ((Int.negSucc n : ℤ) : R) =
+      -filtrationGradedAlgebraMap Q ((n + 1 : ℕ) : R)
+    rw [Int.cast_negSucc, map_neg]
+
+private theorem filtrationGradedAlgebraMap_mul (Q : QuadraticForm R M) (r : R) (k : ℕ)
+    (x : FiltrationGradedPiece Q k) :
+    cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
+      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x) = r • x := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
+        (filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
+          (Submodule.Quotient.mk x)) = r • Submodule.Quotient.mk x
+      rw [filtrationGradedMul_apply_mk, ← Submodule.Quotient.mk_smul]
+      rw [filtrationGradedPiece_cast_mk Q (Nat.zero_add k) _ (by
+        simpa using (show (algebraMap R (CliffordAlgebra Q) r) * x ∈ filtration Q (0 + k) by
+          rw [← filtration_mul Q 0 k]
+          exact Submodule.mul_mem_mul
+            (algebraMap_mem_filtration Q r 0) x.property))]
+      apply (Submodule.Quotient.eq _).mpr
+      rw [Submodule.mem_comap]
+      change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) - r • x ∈
+        filtrationPrevious Q k
+      rw [Algebra.smul_def, sub_self]
+      exact Submodule.zero_mem (filtrationPrevious Q k)
+
+private theorem filtrationGradedAlgebraMap_mul_self (Q : QuadraticForm R M) (r s : R) :
+    filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap Q r)
+      (filtrationGradedAlgebraMap Q s) = filtrationGradedAlgebraMap Q (r * s) := by
+  change filtrationGradedMul Q 0 0 (Submodule.Quotient.mk _)
+    (Submodule.Quotient.mk _) = Submodule.Quotient.mk _
+  rw [filtrationGradedMul_apply_mk]
+  apply (Submodule.Quotient.eq _).mpr
+  rw [Submodule.mem_comap]
+  change algebraMap R (CliffordAlgebra Q) r * algebraMap R (CliffordAlgebra Q) s -
+      algebraMap R (CliffordAlgebra Q) (r * s) ∈ filtrationPrevious Q 0
+  rw [← map_mul, sub_self]
+  exact Submodule.zero_mem (filtrationPrevious Q 0)
+
+private theorem filtrationGradedAlgebraMap_commutes (Q : QuadraticForm R M) (r : R) (k : ℕ)
+    (x : FiltrationGradedPiece Q k) :
+    cast (congrArg (FiltrationGradedPiece Q)
+      ((Nat.zero_add k).trans (Nat.add_zero k).symm))
+      (filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x) =
+      filtrationGradedMul Q k 0 x (filtrationGradedAlgebraMap Q r) := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      change cast (congrArg (FiltrationGradedPiece Q)
+        ((Nat.zero_add k).trans (Nat.add_zero k).symm))
+        (filtrationGradedMul Q 0 k (Submodule.Quotient.mk _)
+          (Submodule.Quotient.mk x)) =
+        filtrationGradedMul Q k 0 (Submodule.Quotient.mk x) (Submodule.Quotient.mk _)
+      rw [filtrationGradedMul_apply_mk, filtrationGradedMul_apply_mk]
+      rw [filtrationGradedPiece_cast_mk' Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
+      apply (Submodule.Quotient.eq _).mpr
+      rw [Submodule.mem_comap, map_sub,
+        filtration_subtype_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
+      change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) -
+          x * algebraMap R (CliffordAlgebra Q) r ∈ filtrationPrevious Q (k + 0)
+      rw [Algebra.commutes, sub_self]
+      exact Submodule.zero_mem (filtrationPrevious Q (k + 0))
+
+noncomputable instance filtrationGradedGSemiring {Q : QuadraticForm R M} :
+    DirectSum.GSemiring (FiltrationGradedPiece Q) := by
+  exact @DirectSum.GRing.toGSemiring ℕ (FiltrationGradedPiece Q) _ _
+    (filtrationGradedGRing (Q := Q))
+
+noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
+    DirectSum.GAlgebra R (FiltrationGradedPiece Q) where
+  toFun := filtrationGradedAlgebraMap Q
+  map_one := by
+    change filtrationGradedAlgebraMap Q 1 = filtrationGradedOne Q
+    exact filtrationGradedAlgebraMap_one Q
+  map_mul r s := by
+    apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add 0).symm
+    change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add 0).symm)
+      (filtrationGradedAlgebraMap Q (r * s)) =
+      filtrationGradedMul Q 0 0 (filtrationGradedAlgebraMap Q r)
+        (filtrationGradedAlgebraMap Q s)
+    rw [filtrationGradedAlgebraMap_mul_self]
+    simp
+  commutes r x := by
+    rcases x with ⟨k, x⟩
+    apply filtrationGradedMonoid_eq_of_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)
+    exact filtrationGradedAlgebraMap_commutes Q r k x
+  smul_def r x := by
+    rcases x with ⟨k, x⟩
+    apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k).symm
+    change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) (r • x) =
+      filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap Q r) x
+    symm
+    simpa using congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
+      (filtrationGradedAlgebraMap_mul Q r k x)
+
+noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
+    Ring (filtrationAssociatedGraded Q) := by
+  letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
+  infer_instance
+
+/-- Multiplication of homogeneous elements in the associated graded Clifford algebra. -/
+@[simp]
+theorem filtrationAssociatedGraded_of_mul (Q : QuadraticForm R M) (i j : ℕ)
+    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
+    (DirectSum.of (fun k => FiltrationGradedPiece Q k) i x : filtrationAssociatedGraded Q) *
+      DirectSum.of (fun k => FiltrationGradedPiece Q k) j y =
+        DirectSum.of (fun k => FiltrationGradedPiece Q k) (i + j)
+          (filtrationGradedMul Q i j x y) :=
+  DirectSum.of_mul_of x y
+
+/-- The scalar map of the associated graded Clifford algebra lands in degree zero. -/
+@[simp]
+theorem filtrationAssociatedGraded_algebraMap_apply (Q : QuadraticForm R M) (r : R) :
+    algebraMap R (filtrationAssociatedGraded Q) r =
+      DirectSum.of (fun k => FiltrationGradedPiece Q k) 0 (filtrationGradedAlgebraMap Q r) :=
+  DirectSum.algebraMap_apply R (FiltrationGradedPiece Q) r
 
 end CliffordAlgebra
 
