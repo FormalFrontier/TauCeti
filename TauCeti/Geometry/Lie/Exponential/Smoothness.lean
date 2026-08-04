@@ -343,9 +343,7 @@ private theorem mulInvariantExp_nsmul
   simpa only [nsmul_eq_mul, mul_one, Nat.cast_smul_eq_nsmul,
     mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul, one_smul] using h
 
-/-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth. Smoothness
-at zero globalizes because every vector can be divided by a sufficiently large positive integer,
-and `exp v = (exp (v / m)) ^ m`. -/
+/-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth. -/
 theorem contMDiff_mulInvariantExp
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     ContMDiff 𝓘(ℝ, E) I ∞
@@ -354,6 +352,8 @@ theorem contMDiff_mulInvariantExp
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   rw [contMDiff_infty]
   intro n x
+  -- Divide `x` by a large natural number, use smoothness near zero, then recover `exp x` through
+  -- the one-parameter-subgroup power identity.
   have hzero : ContMDiffAt 𝓘(ℝ, E) I n
       (fun v : E => mulInvariantExp (I := I) (G := G)
         (v : GroupLieAlgebra I G)) 0 :=
