@@ -16,8 +16,10 @@ public import TauCeti.Algebra.CentralSimple.Bimodule
 -- Non-public: used only inside proofs. Simplicity of the tensor product, the endomorphism algebra
 -- of a module over a simple Artinian algebra, and finiteness of a tensor product supply the three
 -- inputs of the two theorems, and no exported statement mentions any of them; the dimension of a
--- tensor product is the bookkeeping, and the complex numbers appear only in the worked example.
+-- tensor product and the finite-dimensionality of an opposite space are the bookkeeping, and the
+-- complex numbers appear only in the worked example.
 import Mathlib.Algebra.Algebra.Subalgebra.Lattice
+import Mathlib.LinearAlgebra.Basis.MulOpposite
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
@@ -217,11 +219,6 @@ end Identification
 
 section Centralizer
 
-/-- `Aᵐᵒᵖ` is finite-dimensional whenever `A` is; the opposite algebra is the same `K`-module. -/
-private theorem finiteDimensional_op (K A : Type*) [Field K] [Ring A] [Algebra K A]
-    [FiniteDimensional K A] : FiniteDimensional K Aᵐᵒᵖ :=
-  Module.Finite.equiv (MulOpposite.opLinearEquiv K)
-
 variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [IsSimpleRing A] [FiniteDimensional K A]
   (B : Subalgebra K A) [Algebra.IsCentral K B] [IsSimpleRing B]
 
@@ -229,7 +226,6 @@ variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [IsSimpleRing A] [Finite
 the endomorphism algebra of `A` as a module over the simple Artinian algebra `B ⊗[K] Aᵐᵒᵖ`. -/
 theorem isSimpleRing_centralizer :
     IsSimpleRing (Subalgebra.centralizer K (B : Set A)) := by
-  have := finiteDimensional_op K A
   have : FiniteDimensional K ↥B :=
     FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
   exact _root_.IsSimpleRing.of_ringEquiv (centralizerAlgEquivEnd B).symm.toRingEquiv
@@ -245,7 +241,6 @@ The endomorphism algebra of `A` over `R = B ⊗[K] Aᵐᵒᵖ` is the centralize
 cancelling one factor of `finrank K A`, which is nonzero, gives the formula. -/
 theorem finrank_mul_finrank_centralizer :
     finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A := by
-  have := finiteDimensional_op K A
   have : FiniteDimensional K ↥B :=
     FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
   have key := IsSimpleRing.finrank_end_mul_finrank_eq_sq K (R := ↥B ⊗[K] Aᵐᵒᵖ)
