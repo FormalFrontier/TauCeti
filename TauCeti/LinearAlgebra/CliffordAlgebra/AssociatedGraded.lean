@@ -484,14 +484,6 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
   letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
   infer_instance
 
-/-- Multiplication of homogeneous direct-sum terms is the named filtration product. -/
-@[simp] theorem filtrationAssociatedGraded_of_mul_of (Q : QuadraticForm R M) {i j : ℕ}
-    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
-    (DirectSum.of (FiltrationGradedPiece Q) i x : filtrationAssociatedGraded Q) *
-      DirectSum.of (FiltrationGradedPiece Q) j y =
-      DirectSum.of (FiltrationGradedPiece Q) (i + j) (filtrationGradedMul Q i j x y) := by
-  simp only [DirectSum.of_mul_of, filtrationGradedGMul_def]
-
 end CliffordAlgebra
 
 end TauCeti
