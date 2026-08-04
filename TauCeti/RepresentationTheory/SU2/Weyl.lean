@@ -50,7 +50,8 @@ evenness of characters that this yields is proved in
 * `TauCeti.SU2.weylElement_conj_torusHom`: conjugation by `w` inverts the maximal torus.
 * `TauCeti.SU2.mem_normalizer_torus_iff`: an element of `SU(2)` normalizes `T` exactly when it lies
   in `T` or in `w T`; equivalently `TauCeti.SU2.normalizer_torus`, `N(T) = T ⊔ ⟨w⟩`.
-* `TauCeti.SU2.card_weylGroup`: the Weyl group of `SU(2)` has order `2`.
+* `TauCeti.SU2.card_weylGroup`: the Weyl group of `SU(2)` has order `2`; its nontrivial element
+  `TauCeti.SU2.weylClass` squares to `1` (`TauCeti.SU2.weylClass_sq`) and is its own inverse.
 * `TauCeti.SU2.conj_torusHom_of_mem_normalizer`: the Weyl group acts on `T` by `z ↦ z^{±1}`,
   refined by `TauCeti.SU2.weylAut_weylClass` and `TauCeti.SU2.weylAut_injective`: the action of the
   Weyl group is faithful and its nontrivial element is inversion.
@@ -65,15 +66,16 @@ torus", which needs the `W`-invariant (even) functions on `T` to be the class fu
 it is the `SU(2)` instance of `weylGroup T = N_G(T) / T` from
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`, Layer 6.
 
-Inside Tau Ceti, the inversion action of the Weyl reflection on the torus was already formalized by
+Inside Tau Ceti, the inversion action of the Weyl reflection on the torus was first formalized by
 `TauCeti.SU2.isConj_inv_of_mem_torus` in `TauCeti/RepresentationTheory/SU2/TorusConjugacy.lean`,
-which conjugates a torus element to its inverse by the sign-opposite quarter turn
+which conjugated a torus element to its inverse by the sign-opposite quarter turn
 `!![0, 1; -1, 0] = w⁻¹`. That is the same construction as
 `TauCeti.SU2.weylElement_conj_torusHom` here, in existential form: it asserts `IsConj g g⁻¹` and so
 neither names a conjugating element nor records that the conjugator normalizes `T`, which is what
-the computation of `N(T)` and of the quotient needs. The quarter turn is therefore named afresh
-here rather than extracted from `TorusConjugacy`, which also keeps this file independent of the
-spectral theorem that file rests on.
+the computation of `N(T)` and of the quotient needs. The quarter turn is therefore named here, and
+`isConj_inv_of_mem_torus` is now derived from `TauCeti.SU2.weylElement_conj_torusHom` rather than
+repeating the matrix computation; the dependency runs that way round because this file needs only
+`SU2/Basic.lean`, whereas `TorusConjugacy` rests on the spectral theorem.
 
 * D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 18.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
@@ -219,14 +221,29 @@ theorem coe_weylNormalizerElement : (weylNormalizerElement : SU2) = weylElement 
 noncomputable def weylClass : weylGroup :=
   Subgroup.normalizerQuotientMk torus weylNormalizerElement
 
-/-- `TauCeti.SU2.weylClass` is the class of the quarter turn, written in the quotient-map normal
-form that `TauCeti.Subgroup.normalizerQuotientMk_apply` rewrites to. -/
-theorem weylClass_eq_mk : weylClass = QuotientGroup.mk weylNormalizerElement := (rfl)
-
 /-- The class of the quarter turn is nontrivial, because the quarter turn is not diagonal. -/
 theorem weylClass_ne_one : weylClass ≠ 1 := fun h =>
   weylElement_notMem_torus
     ((Subgroup.normalizerQuotientMk_eq_one_iff torus weylNormalizerElement).mp h)
+
+/-- **The nontrivial element of the Weyl group of `SU(2)` has order two**, because the square of
+the quarter turn is `-1`, which is diagonal and so lies in the maximal torus. -/
+@[simp]
+theorem weylClass_sq : weylClass ^ 2 = 1 := by
+  rw [weylClass, ← map_pow]
+  refine (Subgroup.normalizerQuotientMk_eq_one_iff torus _).mpr ?_
+  have hcoe : ((weylNormalizerElement ^ 2 : ↥(Subgroup.normalizer (torus : Set SU2))) : SU2)
+      = weylElement * weylElement := by
+    rw [SubmonoidClass.coe_pow, coe_weylNormalizerElement, sq]
+  rw [hcoe]
+  refine mem_torus_iff.mpr fun i j hij => ?_
+  fin_cases i <;> fin_cases j <;>
+    simp_all [weylMatrix, Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- The nontrivial element of the Weyl group of `SU(2)` is its own inverse. -/
+@[simp]
+theorem weylClass_inv : weylClass⁻¹ = weylClass :=
+  inv_eq_of_mul_eq_one_right (by rw [← sq, weylClass_sq])
 
 /-- Every element of the Weyl group of `SU(2)` is trivial or the class of the quarter turn. -/
 theorem eq_one_or_eq_weylClass (q : weylGroup) : q = 1 ∨ q = weylClass := by
@@ -308,24 +325,20 @@ noncomputable def weylAut : weylGroup →* MulAut Circle :=
   Subgroup.normalizerQuotientLift torus normalizerAut fun _ hn =>
     (normalizerAut_eq_one_iff _).mpr hn
 
-/-- The Weyl-group action is the conjugation action of any representative: it is independent of
-the choice of representative by construction. The representative is written as a bare quotient
-class, the normal form `TauCeti.Subgroup.normalizerQuotientMk_apply` produces. -/
-@[simp]
-theorem weylAut_mk (n : ↥(Subgroup.normalizer (torus : Set SU2))) :
-    weylAut (QuotientGroup.mk n) = normalizerAut n := (rfl)
-
-/-- The Weyl-group action of the class of `n ∈ N(T)`, unfolded to conjugation by `n` in `SU(2)`. -/
+/-- The Weyl-group action of the class of `n ∈ N(T)`, unfolded to conjugation by `n` in `SU(2)`.
+The action is that of any representative, being independent of the choice of representative by
+construction. -/
 theorem torusHom_weylAut_mk (n : ↥(Subgroup.normalizer (torus : Set SU2))) (z : Circle) :
-    torusHom (weylAut (QuotientGroup.mk n) z) = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
-  rw [weylAut_mk, torusHom_normalizerAut]
+    torusHom (weylAut (Subgroup.normalizerQuotientMk torus n) z)
+      = (n : SU2) * torusHom z * ((n : SU2))⁻¹ := by
+  rw [weylAut, Subgroup.normalizerQuotientLift_mk, torusHom_normalizerAut]
 
 /-- **The nontrivial element of the Weyl group of `SU(2)` acts on the maximal torus by
 inversion.** -/
 @[simp]
 theorem weylAut_weylClass : weylAut weylClass = MulEquiv.inv Circle := by
   refine MulEquiv.ext fun z => torusHom_injective ?_
-  rw [weylClass_eq_mk, torusHom_weylAut_mk, coe_weylNormalizerElement,
+  rw [weylClass, torusHom_weylAut_mk, coe_weylNormalizerElement,
     weylElement_conj_torusHom]
   rfl
 
