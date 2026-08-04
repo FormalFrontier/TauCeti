@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
-public import TauCeti.Analysis.Complex.Conformal.ShortCrosscut
+public import TauCeti.Analysis.Complex.Conformal.LengthArea
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 import TauCeti.Topology.Circle.Metric
 
@@ -276,6 +276,17 @@ theorem subsingleton_clusterSetOn_circleMap_image_Ioo (hUo : IsOpen U)
 
 /-! ## The two ends of a circular crosscut -/
 
+/-- The open arc of angles of a genuine circular crosscut lies in the disc: by
+`TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` it parametrises the crosscut itself. -/
+private lemma circleMap_mem_ball_of_mem_Ioo (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
+    {θ : ℝ} (hθ : θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ((c - ζ).arg + Real.arccos (ρ / (2 * r)))) :
+    circleMap ζ ρ θ ∈ ball c r := by
+  have hmem : circleMap ζ ρ θ ∈ ball c r ∩ sphere ζ ρ := by
+    rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
+    exact ⟨θ, hθ, rfl⟩
+  exact hmem.1
+
 /-- The angular integral of the length density over the arc of a genuine circular crosscut is
 finite as soon as `TauCeti.circleImageLength f (ball c r) ζ ρ` is: the crosscut lies in `ball c r`,
 so the indicator in the definition of the latter is inert along it, and the crosscut spans less
@@ -288,12 +299,8 @@ private lemma lintegral_enorm_deriv_circleMap_ne_top (hζ : dist ζ c = r) (hρ 
   have hφπ2 : Real.arccos (ρ / (2 * r)) < π / 2 :=
     Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by positivity))
   have hmem : ∀ θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ ∈ ball c r := by
-    intro θ hθ
-    have : circleMap ζ ρ θ ∈ ball c r ∩ sphere ζ ρ := by
-      rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
-      exact ⟨θ, hθ, rfl⟩
-    exact this.1
+      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ ∈ ball c r :=
+    fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ
   have hle : ∫⁻ θ in Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
         ((c - ζ).arg + Real.arccos (ρ / (2 * r))), ‖deriv f (circleMap ζ ρ θ)‖ₑ ≤
       ∫⁻ θ in Ioc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
@@ -342,18 +349,15 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
     exact he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
-  refine subsingleton_clusterSetOn_circleMap_image_Ioo isOpen_ball hf ζ hρ (by linarith)
-    (by linarith) hθ₀ (fun θ hθ => ?_)
+  exact subsingleton_clusterSetOn_circleMap_image_Ioo isOpen_ball hf ζ hρ (by linarith)
+    (by linarith) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
-  have : circleMap ζ ρ θ ∈ ball c r ∩ sphere ζ ρ := by
-    rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
-    exact ⟨θ, hθ, rfl⟩
-  exact this.1
 
 /-- **A circular crosscut of finite image length has a limit at each point of its closure.** The
 cluster set is a subsingleton by `TauCeti.subsingleton_clusterSetOn_ball_inter_sphere`, and it is
-nonempty because the image of the crosscut is bounded — the chord bound again — so the map is
-confined along the crosscut to a compact set.
+nonempty because the image of the crosscut is bounded — the arc form
+`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top` at the crosscut's arc of angles —
+so the map is confined along the crosscut to a compact set.
 
 At the two endpoints, where `e ∈ sphere c r ∩ sphere ζ ρ`, this is the statement that the image
 crosscut is a curve with two honest ends. -/
@@ -363,10 +367,10 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     ∃ v, Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] e) (𝓝 v) := by
   have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
-    rw [Metric.isBounded_image_iff]
-    refine ⟨(circleImageLength f (ball c r) ζ ρ).toReal, fun z hz w hw => ?_⟩
-    exact (ENNReal.ofReal_le_iff_le_toReal hfin).mp
-      (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hζ hρ hf hz hw)
+    rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
+    exact isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top isOpen_ball hf ζ hρ
+      (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+      (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
   refine exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
     (fun w hw => subset_closure (mem_image_of_mem f hw)) ?_
     (subsingleton_clusterSetOn_ball_inter_sphere hζ hρ hρr hf hfin he)
