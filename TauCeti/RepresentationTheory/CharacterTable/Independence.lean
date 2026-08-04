@@ -26,11 +26,12 @@ has at most as many members as `G` has conjugacy classes, because the class func
 exactly that dimension.
 
 That last bound is in fact an equality, and the equality would upgrade the linear independence
-proved here to a basis of the class functions. The matching lower bound is the count of Layer 2
-of the roadmap, and it is not available: `TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix`
-supplies it for the Wedderburn blocks of `k[G]`, which are not yet matched up with the
-irreducible representations themselves. So the completeness half of Layer 3 waits on that count
-and is not stated here; what this file proves is the inequality.
+proved here to a basis of the class functions. Its other half is the roadmap's Layer 2 count,
+which runs through Wedderburn and the dimension of the centre of `k[G]`, and it is not available:
+`TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix` supplies that count only for the
+Wedderburn blocks of `k[G]`, which are not yet matched up with the irreducible representations
+themselves. Nothing below uses it, and the two statements that would need it, that the irreducible
+characters span the class functions and that they form a basis of them, are not stated here.
 
 ## Main results
 
@@ -57,13 +58,14 @@ the pairing enters only through the split orthonormality lemmas of
 
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md).
   Everything here is proved from Layer 0's `characterPairing` and its orthonormality, which are on
-  `main`, together with Mathlib's `char_orthonormal`; no Layer 1 or Layer 2 material is used. The
-  results are prerequisites for those layers rather than consequences of them: that a character
-  determines its irreducible is the injectivity of the map `character : Irreps k G →
-  ClassFunction k G` that Layer 2.5 asks for, and the bound is the `≤` half of Layer 2's count
-  `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, obtained without Wedderburn. Of Layer 3's
-  completeness item only this independence half is available; the basis and the spanning statement
-  need the count and are deliberately not stated here.
+  `main`, together with Mathlib's `char_orthonormal`; no Layer 1, Layer 2 or Layer 3 material is
+  used, and none is presupposed. What the file supplies is prerequisite material for the later
+  layers: that a character determines its irreducible is the injectivity of the map
+  `character : Irreps k G → ClassFunction k G` that Layer 2.5 asks for, and the cardinality bound
+  is the `≤` half of Layer 2's count `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, obtained
+  without Wedderburn. Layer 3's completeness item, the spanning statement and the orthonormal
+  basis indexed by `Irreps k G`, is not advanced here: it needs both that indexing and that count,
+  and neither is in the repository yet.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.8 and Corollary 2.9.
 -/
 
