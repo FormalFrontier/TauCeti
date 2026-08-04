@@ -217,7 +217,6 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     (h_eq : γ t₀ = w) (hvel : derivWithin γ (Icc t₀ d) t₀ ≠ 0) :
     ∃ ρ > 0, ρ < d - t₀ ∧ Bornology.IsBounded
       ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc t₀ (t₀ + ρ)) := by
-  have hv₀_pos : 0 < ‖derivWithin γ (Icc t₀ d) t₀‖ := norm_pos_iff.mpr hvel
   set ρ : ℝ := min ((d - t₀) / 2) (‖derivWithin γ (Icc t₀ d) t₀‖ / (4 * ((K : ℝ) + 1))) with hρ_def
   have hρ_pos : 0 < ρ := lt_min (by linarith) (by positivity)
   have hρ_lt : ρ < d - t₀ := lt_of_le_of_lt (min_le_left _ _) (by linarith)
@@ -266,7 +265,6 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     (h_eq : γ t₀ = w) (hvel : derivWithin γ (Icc c t₀) t₀ ≠ 0) :
     ∃ ρ > 0, ρ < t₀ - c ∧ Bornology.IsBounded
       ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) t₀) := by
-  have hv₀_pos : 0 < ‖derivWithin γ (Icc c t₀) t₀‖ := norm_pos_iff.mpr hvel
   set ρ : ℝ := min ((t₀ - c) / 2) (‖derivWithin γ (Icc c t₀) t₀‖ / (4 * ((K : ℝ) + 1))) with hρ_def
   have hρ_pos : 0 < ρ := lt_min (by linarith) (by positivity)
   have hρ_lt : ρ < t₀ - c := lt_of_le_of_lt (min_le_left _ _) (by linarith)
@@ -344,6 +342,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
       (by linarith) hdiffL hlipL h_eq hvelL
   refine ⟨min ρR ρL, lt_min hρR_pos hρL_pos, by linarith [min_le_left ρR ρL], ?_⟩
+  -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
+  -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
   rw [show Icc (t₀ - min ρR ρL) (t₀ + min ρR ρL)
         = Icc (t₀ - min ρR ρL) t₀ ∪ Icc t₀ (t₀ + min ρR ρL) from
       (Set.Icc_union_Icc_eq_Icc (by linarith [lt_min hρR_pos hρL_pos])
