@@ -423,14 +423,12 @@ section ExteriorProduct
 
 open WithConv TensorProduct
 
-variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+variable {R A B : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
   [CommSemiring B] [Algebra R B]
 
 namespace LinearMap
 
 
-variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
-  [CommSemiring B] [Algebra R B]
 
 /-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
 leg and multiply the results in the coefficients. It underlies the Leibniz-rule
@@ -522,6 +520,15 @@ lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A 
 
 end AlgHom
 
+end ExteriorProduct
+
+section DerivationLeibniz
+
+open WithConv TensorProduct
+
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B]
+
 namespace Derivation
 
 open TauCeti.LinearMap
@@ -545,6 +552,6 @@ lemma toConv_coe_comp_mul'
 
 end Derivation
 
-end ExteriorProduct
+end DerivationLeibniz
 
 end TauCeti
