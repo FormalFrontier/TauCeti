@@ -46,10 +46,11 @@ instance.
 `TauCeti.Bimodule.smul_of` and `TauCeti.Bimodule.symm_smul` are the working interface: they compute
 the action of a pure tensor on either side of `of`, and every consumer is expected to reach the
 module structure through them and through `TauCeti.Bimodule.smul_def` rather than by unfolding the
-synonym. Only `Bimodule` and `Bimodule.of` are `@[expose]`d, and both have to be: a type synonym
-cannot carry transported instances unless its body is visible, and the exported `smul_def`, which is
-the defining equation of the action, cannot hold by `rfl` unless the bodies of the synonym and of
-`of` are. Everything else, `toEnd` included, stays opaque.
+synonym. Only `Bimodule` is `@[expose]`d, and it has to be: a type synonym cannot carry transported
+instances unless its body is visible. Everything else, `of` and `toEnd` included, stays opaque, so
+that no consumer can depend on their bodies; `smul_def` is proved by `(rfl)` rather than by `rfl`,
+which is what keeps it from being tagged `@[defeq]` — an exported `@[defeq]` theorem would demand
+that the body of `of` be exposed too.
 
 Nothing in the construction uses negation, so `A` and `B` are asked only to be semirings; the
 additive group structure is inherited conditionally, when `A` happens to be a ring.
@@ -95,7 +96,7 @@ instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
 instance [Nontrivial A] : Nontrivial (Bimodule f) := inferInstanceAs (Nontrivial A)
 
 /-- `Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
-@[expose] def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
+def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
 
 /-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `Bimodule f`, as an algebra homomorphism into
 `Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left factor, so
@@ -115,7 +116,7 @@ noncomputable instance : Module (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) :=
 /-- A scalar `r : B ⊗[K] Aᵐᵒᵖ` acts on `Bimodule f` through `toEnd f`. This is the defining equation
 of the module structure, and the single place it is unfolded: everything else below rewrites with it
 instead of reasoning up to definitional equality. -/
-theorem smul_def (r : B ⊗[K] Aᵐᵒᵖ) (x : A) : r • of f x = of f (toEnd f r x) := rfl
+theorem smul_def (r : B ⊗[K] Aᵐᵒᵖ) (x : A) : r • of f x = of f (toEnd f r x) := (rfl)
 
 instance : IsScalarTower K (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) where
   smul_assoc c r x := by

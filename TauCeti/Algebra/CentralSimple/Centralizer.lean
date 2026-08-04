@@ -14,15 +14,17 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.SimpleRing.Defs
 public import TauCeti.Algebra.CentralSimple.Bimodule
 -- Non-public: used only inside proofs. Simplicity of the tensor product, the endomorphism algebra
--- of a module over a simple Artinian algebra, and finiteness of a tensor product supply the three
--- inputs of the two theorems, and no exported statement mentions any of them; the dimension of a
--- tensor product and the finite-dimensionality of an opposite space are the bookkeeping, and the
--- complex numbers appear only in the worked example.
+-- of a module over a simple Artinian ring, and finiteness of a tensor product supply the three
+-- inputs of the two theorems, and no exported statement mentions any of them; the Artinian
+-- hypothesis of the first is supplied by finite-dimensionality (`IsArtinianRing.of_finite`); the
+-- dimension of a tensor product and the finite-dimensionality of an opposite space are the
+-- bookkeeping, and the complex numbers appear only in the worked example.
 import Mathlib.Algebra.Algebra.Subalgebra.Lattice
 import Mathlib.LinearAlgebra.Basis.MulOpposite
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
+import Mathlib.RingTheory.Artinian.Module
 import Mathlib.RingTheory.SimpleRing.Congr
 import Mathlib.RingTheory.TensorProduct.Finite
 import TauCeti.Algebra.CentralSimple.TensorProduct
@@ -130,7 +132,8 @@ private def centralizerMulLeftEnd (c : Subalgebra.centralizer K (B : Set A)) :
 
 @[simp]
 private theorem centralizerMulLeftEnd_apply (c : Subalgebra.centralizer K (B : Set A)) (x : A) :
-    centralizerMulLeftEnd B c (Bimodule.of B.val x) = Bimodule.of B.val ((c : A) * x) := rfl
+    centralizerMulLeftEnd B c (Bimodule.of B.val x) = Bimodule.of B.val ((c : A) * x) := by
+  simp [centralizerMulLeftEnd]
 
 /-- Left multiplication, as a `K`-algebra homomorphism from the centralizer of `B` to the
 endomorphism algebra of the `B ⊗[K] Aᵐᵒᵖ`-module `A`. -/
@@ -240,8 +243,12 @@ theorem centralizer_isSimpleRing :
     IsSimpleRing (Subalgebra.centralizer K (B : Set A)) := by
   have : FiniteDimensional K ↥B :=
     FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
+  -- `B ⊗[K] Aᵐᵒᵖ` is simple Artinian, and `A` is finite over it because it is finite over `K`.
+  have : IsArtinianRing (↥B ⊗[K] Aᵐᵒᵖ) := IsArtinianRing.of_finite K _
+  have : Module.Finite (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val) :=
+    Module.Finite.of_restrictScalars_finite K _ _
   exact _root_.IsSimpleRing.of_ringEquiv (centralizerAlgEquivEnd B).symm.toRingEquiv
-    (IsSimpleRing.moduleEnd K (R := ↥B ⊗[K] Aᵐᵒᵖ) (M := Bimodule B.val))
+    (IsSimpleRing.moduleEnd (R := ↥B ⊗[K] Aᵐᵒᵖ) (M := Bimodule B.val))
 
 /-- **The centralizer theorem.** For a central simple `K`-subalgebra `B` of a finite-dimensional
 simple `K`-algebra `A`, the dimensions of `B` and of its centralizer are complementary:

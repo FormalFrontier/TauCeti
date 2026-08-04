@@ -5,9 +5,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- Public: the classes and types occurring in the exported statements. `IsSimpleRing` is both a
--- hypothesis and a conclusion, `Module.End` is the object under study, and `Module.finrank` and
+-- hypothesis and a conclusion, `Module.End` is the object under study, `IsArtinianRing` and
+-- `Module.Finite` are the hypotheses of the simplicity theorem, and `Module.finrank` and
 -- `FiniteDimensional` carry the dimension count.
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+public import Mathlib.RingTheory.Artinian.Defs
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import Mathlib.RingTheory.SimpleRing.Defs
 -- Non-public: used only inside proofs. The matrix presentation of the endomorphism algebra of a
@@ -34,6 +36,9 @@ are recorded here: `End_R M` is again a simple ring when `M ≠ 0`, and its dime
 
   `finrank K (End_R M) * finrank K R = (finrank K M)²`.
 
+Only the dimension identity needs the field: simplicity of `End_R M` is stated with no `K` in sight,
+for a nonzero module `M` finite over a simple Artinian ring `R`.
+
 The dimension identity is what makes `End_R M` computable without naming `S`, `k` or the division
 algebra: writing `finrank K S = s`, `finrank K M = k * s` and `finrank K R = m * s`, the matrix
 presentation gives `finrank K (End_R M) = k² * d` and `finrank K (End_R R) = m² * d` for
@@ -49,7 +54,8 @@ theorem in `TauCeti/Algebra/CentralSimple/Centralizer.lean`.
 
 * `TauCeti.IsSimpleRing.finrank_end_mul_finrank_eq_sq`: the dimension identity
   `finrank K (End_R M) * finrank K R = (finrank K M)²`.
-* `TauCeti.IsSimpleRing.moduleEnd`: `End_R M` is a simple ring, for `M` nonzero.
+* `TauCeti.IsSimpleRing.moduleEnd`: `End_R M` is a simple ring, for `M` a nonzero module finite
+  over a simple Artinian ring `R`.
 
 ## Implementation notes
 
@@ -78,6 +84,33 @@ namespace TauCeti
 open Module
 
 namespace IsSimpleRing
+
+section Simplicity
+
+variable {R : Type*} [Ring R] [IsSimpleRing R] [IsArtinianRing R]
+  {M : Type*} [AddCommGroup M] [Module R M] [Module.Finite R M]
+
+/-- **The endomorphism ring of a nonzero finite module over a simple Artinian ring is simple.** It
+is the matrix ring `Mat_k(End_R S)` over the division ring of Schur's lemma, with `k ≠ 0` because
+`M ≠ 0`.
+
+No base field is involved: `M` is a power `Sᵏ` of a minimal left ideal `S` of `R` because `R` is
+simple Artinian and `M` is finite over `R`. -/
+theorem moduleEnd [Nontrivial M] : IsSimpleRing (Module.End R M) := by
+  classical
+  obtain ⟨S, hS⟩ := IsAtomic.exists_atom (Submodule R R)
+  rw [← isSimpleModule_iff_isAtom] at hS
+  obtain ⟨k, ⟨e⟩⟩ := (IsIsotypicOfType.of_isSimpleRing R (↥S) M).linearEquiv_fun
+  have hk : k ≠ 0 := by
+    rintro rfl
+    exact not_subsingleton M e.subsingleton
+  have : Nonempty (Fin k) := ⟨⟨0, Nat.pos_of_ne_zero hk⟩⟩
+  -- Schur's lemma makes `End_R S` a division ring, hence a simple ring, hence so is `Mat_k` of it.
+  have : IsSimpleRing (Matrix (Fin k) (Fin k) (Module.End R ↥S)) := inferInstance
+  exact _root_.IsSimpleRing.of_ringEquiv
+    (e.conjRingEquiv.trans (endVecRingEquivMatrixEnd (Fin k) R ↥S)).symm this
+
+end Simplicity
 
 variable (K : Type*) [Field K] {R : Type*} [Ring R] [IsSimpleRing R] [Algebra K R]
   [FiniteDimensional K R]
@@ -144,25 +177,6 @@ theorem finrank_end_mul_finrank_eq_sq :
     exact Nat.eq_of_mul_eq_mul_left hmpos h
   rw [hEM, hm, hk, hsmd]
   ring
-
-include K in
-/-- **The endomorphism algebra of a nonzero module over a simple Artinian algebra is simple.** It is
-the matrix algebra `Mat_k(End_R S)` over the division algebra of Schur's lemma, with `k ≠ 0` because
-`M ≠ 0`. -/
-theorem moduleEnd [Nontrivial M] : IsSimpleRing (Module.End R M) := by
-  classical
-  have : IsArtinianRing R := IsArtinianRing.of_finite K R
-  obtain ⟨S, hS⟩ := IsAtomic.exists_atom (Submodule R R)
-  rw [← isSimpleModule_iff_isAtom] at hS
-  obtain ⟨k, hk, ⟨e⟩⟩ := exists_algEquiv_matrix_end K S M
-  have hkpos : 0 < k := by
-    by_contra h
-    rw [Nat.eq_zero_of_not_pos h, zero_mul] at hk
-    exact (Module.finrank_pos (R := K) (M := M)).ne' hk
-  have : Nonempty (Fin k) := ⟨⟨0, hkpos⟩⟩
-  -- Schur's lemma makes `End_R S` a division ring, hence a simple ring, hence so is `Mat_k` of it.
-  have : IsSimpleRing (Matrix (Fin k) (Fin k) (Module.End R ↥S)) := inferInstance
-  exact _root_.IsSimpleRing.of_ringEquiv e.symm.toRingEquiv this
 
 end IsSimpleRing
 
