@@ -312,14 +312,17 @@ theorem extend_apply (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces
     extend Q l h i j = if j = n + 1 then (if hi : i < n + 1 then l ⟨i, hi⟩ else 0) else Q i j :=
   (rfl)
 
+@[simp]
 theorem extend_apply_of_ne (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i j : ℕ} (hj : j ≠ n + 1) : extend Q l h i j = Q i j := by
   rw [extend_apply, if_neg hj]
 
+@[simp]
 theorem extend_apply_top (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i : ℕ} (hi : i < n + 1) : extend Q l h i (n + 1) = l ⟨i, hi⟩ := by
   rw [extend_apply, if_pos rfl, dif_pos hi]
 
+@[simp]
 theorem extend_apply_top_of_le (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i : ℕ} (hi : n + 1 ≤ i) : extend Q l h i (n + 1) = 0 := by
   rw [extend_apply, if_pos rfl, dif_neg (by omega)]
@@ -341,6 +344,7 @@ theorem truncate_extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interla
   · rw [if_neg hj]
     exact (Q.zeros_of_lt (by omega)).symm
 
+@[simp]
 theorem extend_truncate (P : GTPattern (n + 1)) :
     extend (truncate P) P.topRow (interlaces_topRow_truncate P) = P := by
   ext i j
