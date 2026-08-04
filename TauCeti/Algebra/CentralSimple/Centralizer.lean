@@ -99,7 +99,7 @@ open scoped TensorProduct
 
 section Identification
 
-variable {K A : Type*} [CommSemiring K] [Ring A] [Algebra K A] (B : Subalgebra K A)
+variable {K A : Type*} [CommSemiring K] [Semiring A] [Algebra K A] (B : Subalgebra K A)
 
 /-- Left multiplication by an element `c` of the centralizer of `B` in `A`, as an endomorphism of
 the `B ⊗[K] Aᵐᵒᵖ`-module `A`.

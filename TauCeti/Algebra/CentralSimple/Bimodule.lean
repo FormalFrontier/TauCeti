@@ -51,6 +51,9 @@ cannot carry transported instances unless its body is visible, and the exported 
 the defining equation of the action, cannot hold by `rfl` unless the bodies of the synonym and of
 `of` are. Everything else, `toEnd` included, stays opaque.
 
+Nothing in the construction uses negation, so `A` and `B` are asked only to be semirings; the
+additive group structure is inherited conditionally, when `A` happens to be a ring.
+
 ## References
 
 This is the shared construction beneath the Layer 5 targets `skolemNoether` and
@@ -65,7 +68,7 @@ namespace TauCeti
 
 open scoped TensorProduct
 
-variable {K A B : Type*} [CommSemiring K] [Ring A] [Algebra K A] [Semiring B] [Algebra K B]
+variable {K A B : Type*} [CommSemiring K] [Semiring A] [Algebra K A] [Semiring B] [Algebra K B]
 
 /-- `A` regarded as a left module over `B ⊗[K] Aᵐᵒᵖ` through an algebra homomorphism
 `f : B →ₐ[K] A`: the element `b ⊗ₜ op a` acts by `x ↦ f b * x * a`.
@@ -80,7 +83,12 @@ namespace Bimodule
 
 variable (f : B →ₐ[K] A)
 
-instance : AddCommGroup (Bimodule f) := inferInstanceAs (AddCommGroup A)
+instance : AddCommMonoid (Bimodule f) := inferInstanceAs (AddCommMonoid A)
+
+-- Conditional, so that the endomorphism ring of `Bimodule f` is a ring and not merely a semiring
+-- when `A` is one; nothing in the construction itself needs the negation.
+instance {A : Type*} [Ring A] [Algebra K A] (f : B →ₐ[K] A) : AddCommGroup (Bimodule f) :=
+  inferInstanceAs (AddCommGroup A)
 
 instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
 
