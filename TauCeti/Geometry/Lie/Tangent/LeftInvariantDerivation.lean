@@ -288,7 +288,7 @@ noncomputable instance LeftInvariantDerivation.instNormedSpace
 
 /-- Evaluation at the identity identifies left-invariant derivations isometrically with the
 manifold model vector space. -/
-noncomputable abbrev leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+noncomputable def leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
     [BoundarylessManifold I G] : LeftInvariantDerivation I G ≃ₗᵢ[ℝ] E where
   toLinearEquiv :=
@@ -305,7 +305,7 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply
     [BoundarylessManifold I G] (X : LeftInvariantDerivation I G) :
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) X =
       (leftInvariantDerivationEquivGroupLieAlgebra BoundarylessManifold.isInteriorPoint X : E) :=
-  rfl
+  (rfl)
 
 /-- The norm of a left-invariant derivation is the norm of its tangent vector at the identity. -/
 @[simp]
