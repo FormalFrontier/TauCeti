@@ -48,9 +48,9 @@ prerequisite for the homology Cauchy theorem and the generalized residue theorem
   corollaries) — eventual differentiability near an interior parameter.
 * `Contour.IsPiecewiseC1On.intervalIntegrable_deriv` — the derivative is interval-integrable on
   `a..b`, glued across the breakpoints from the `C¹` pieces.
-* `Contour.piecewise_gluing_aux` — the shared breakpoint-gluing induction underlying it, generic in
-  the invariant being glued (interval-integrability, boundedness of the image, ...), reused by
-  other piecewise-`C¹` gluing arguments.
+* `Contour.piecewise_gluing_induction` — the shared breakpoint-gluing induction underlying it,
+  generic in the invariant being glued (interval-integrability, boundedness of the image, ...),
+  reused by other piecewise-`C¹` gluing arguments.
 
 ## Provenance
 
@@ -236,7 +236,7 @@ strictly inside it, splitting off the largest one. Shared scaffolding for gluing
 invariant across breakpoints — e.g. `IntervalIntegrable (deriv γ) volume` via `.trans`, or
 `Bornology.IsBounded (deriv γ '' ·)` via `.union` on `Icc c m ∪ Icc m d = Icc c d`
 (`Winding.RealIntegral.OnCurve`'s `isBounded_image_deriv_aux`). -/
-theorem piecewise_gluing_aux {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
+theorem piecewise_gluing_induction {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
     (hbase : ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) → Q c d)
     (hglue : ∀ c m d : ℝ, c ≤ m → m ≤ d → Q c m → Q m d → Q c d) :
     ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b → Q c d := by
@@ -272,13 +272,13 @@ theorem piecewise_gluing_aux {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
     exact hglue c m d hm.1.le hm.2.le h₁ h₂
 
 /-- Gluing step for `IsPiecewiseC1On.intervalIntegrable_deriv`: interval-integrability of the
-derivative on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_aux`. -/
+derivative on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_induction`. -/
 private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
     (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
       ContDiffOn ℝ 1 γ (Icc c d)) :
     ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
       IntervalIntegrable (fun t ↦ deriv γ t) volume c d :=
-  piecewise_gluing_aux
+  piecewise_gluing_induction
     (fun c d hcd hsub hdisj => intervalIntegrable_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
     (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
 
