@@ -332,17 +332,6 @@ theorem contMDiffAt_mulInvariantExp_modelSpace_zero
   have hcoordM := hcoord.contMDiffAt
   simpa only [Function.comp_def] using hcoordM
 
-private theorem mulInvariantExp_nsmul
-    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
-    (v : GroupLieAlgebra I G) (m : ℕ) :
-    mulInvariantExp (I := I) (G := G) (m • v) =
-      mulInvariantExp (I := I) (G := G) v ^ m := by
-  have h := map_pow (mulInvariantOneParameterSubgroup (I := I) (G := G) v)
-    (Multiplicative.ofAdd (1 : ℝ)) m
-  rw [← ofAdd_nsmul] at h
-  simpa only [nsmul_eq_mul, mul_one, Nat.cast_smul_eq_nsmul,
-    mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul, one_smul] using h
-
 /-- The tangent-space exponential of a finite-dimensional smooth Lie group is smooth. -/
 theorem contMDiff_mulInvariantExp
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
