@@ -49,12 +49,16 @@ modulus as the Cauchy criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exi
 included.
 
 The same chord bound, applied with the whole arc rather than a sub-arc, bounds the image
-(`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`), which is what turns a
-subsingleton cluster set into an honest limit.
+(`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`), which is what turns that
+subsingleton cluster set into an honest limit:
+`TauCeti.exists_tendsto_nhdsWithin_circleMap_image_Ioo`, with cluster-set form
+`TauCeti.exists_clusterSetOn_circleMap_image_Ioo_eq_singleton`. All of this is about an arc of
+angles and asks nothing of a crosscut.
 
 ## The crosscut
 
-The crosscut instances are the arc description of `Conformal/Crosscut/Endpoints.lean`:
+The crosscut statements are those arc statements at the arc description of
+`Conformal/Crosscut/Endpoints.lean`:
 `ball c r ∩ sphere ζ ρ` is the open arc of angles within `arccos (ρ / (2 * r))` of `arg (c - ζ)`,
 and `closedBall c r ∩ sphere ζ ρ` is the closed one, of angular width `2 * arccos (ρ / (2 * r))`,
 which is below `π` exactly because `ρ` is positive. Finiteness of the angular integral over the arc
@@ -77,11 +81,14 @@ joining them can be named.
 * `TauCeti.subsingleton_clusterSetOn_circleMap_image_Ioo` — at every point of an arc of angular
   width at most `π` and of finite image length, the cluster set of the map along the arc has at
   most one element.
-* `TauCeti.subsingleton_clusterSetOn_ball_inter_sphere` and
-  `TauCeti.exists_tendsto_nhdsWithin_ball_inter_sphere` — the crosscut forms: a circular crosscut of
-  finite image length carries a limit at each point of its closure, its two endpoints included.
-* `TauCeti.exists_clusterSetOn_ball_inter_sphere_eq_singleton` — that limit as a one-point cluster
-  set, the form `Conformal/Crosscut/Image.lean` indexes over.
+* `TauCeti.exists_tendsto_nhdsWithin_circleMap_image_Ioo` and
+  `TauCeti.exists_clusterSetOn_circleMap_image_Ioo_eq_singleton` — hence such an arc carries a limit
+  at each point of its closure, its two endpoints included, and its cluster set there is a single
+  point.
+* `TauCeti.subsingleton_clusterSetOn_ball_inter_sphere`,
+  `TauCeti.exists_tendsto_nhdsWithin_ball_inter_sphere` and
+  `TauCeti.exists_clusterSetOn_ball_inter_sphere_eq_singleton` — the three arc statements at the arc
+  of a circular crosscut, the last of them the form `Conformal/Crosscut/Image.lean` indexes over.
 * `TauCeti.exists_closure_image_ball_inter_sphere_eq_insert` — hence the closure of an image
   crosscut of finite length is the image crosscut together with two points.
 
@@ -274,7 +281,59 @@ theorem subsingleton_clusterSetOn_circleMap_image_Ioo (hUo : IsOpen U)
   have hmη : m ≤ η / 2 := min_le_left _ _
   linarith
 
+/-- Every angle of the *closed* arc names a point of the closure of the open one: the closure of
+`Ioo a b` is `Icc a b`, and `circleMap ζ ρ` is continuous. -/
+private lemma circleMap_mem_closure_image_Ioo (ζ : ℂ) (ρ : ℝ) {a b θ₀ : ℝ} (hab : a < b)
+    (hθ₀ : θ₀ ∈ Icc a b) : circleMap ζ ρ θ₀ ∈ closure (circleMap ζ ρ '' Ioo a b) :=
+  mem_closure_image (continuous_circleMap ζ ρ).continuousAt (by rwa [closure_Ioo hab.ne])
+
+/-- **An arc of finite image length has a limit at each point of its closure.** The cluster set
+along the arc is a subsingleton by `TauCeti.subsingleton_clusterSetOn_circleMap_image_Ioo`, and it
+is nonempty because the image of the arc is bounded,
+`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top` — so the map is confined along the
+arc to a compact set, which is the hypothesis of
+`TauCeti.exists_tendsto_of_clusterSetOn_subsingleton`.
+
+The two endpoints `θ₀ = a` and `θ₀ = b` are the case with content: there the arc is a curve with an
+honest end. -/
+theorem exists_tendsto_nhdsWithin_circleMap_image_Ioo (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (ζ : ℂ) {ρ : ℝ} (hρ : 0 < ρ) {a b θ₀ : ℝ} (hab : a < b)
+    (habπ : b - a ≤ π) (hθ₀ : θ₀ ∈ Icc a b)
+    (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U)
+    (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
+    ∃ v, Tendsto f (𝓝[circleMap ζ ρ '' Ioo a b] (circleMap ζ ρ θ₀)) (𝓝 v) :=
+  exists_tendsto_of_clusterSetOn_subsingleton
+    (isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top hUo hf ζ hρ hmemU
+      hfin).isCompact_closure
+    (fun _ hw => subset_closure (mem_image_of_mem f hw))
+    (circleMap_mem_closure_image_Ioo ζ ρ hab hθ₀)
+    (subsingleton_clusterSetOn_circleMap_image_Ioo hUo hf ζ hρ hab habπ hθ₀ hmemU hfin)
+
+/-- **The cluster set of an arc of finite image length is a single point.** The limit of
+`TauCeti.exists_tendsto_nhdsWithin_circleMap_image_Ioo` written as a cluster set, which is the form
+a boundary piece described as a union of cluster sets is indexed over. -/
+theorem exists_clusterSetOn_circleMap_image_Ioo_eq_singleton (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (ζ : ℂ) {ρ : ℝ} (hρ : 0 < ρ) {a b θ₀ : ℝ} (hab : a < b)
+    (habπ : b - a ≤ π) (hθ₀ : θ₀ ∈ Icc a b)
+    (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U)
+    (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
+    ∃ v, clusterSetOn f (circleMap ζ ρ '' Ioo a b) (circleMap ζ ρ θ₀) = {v} := by
+  obtain ⟨v, hv⟩ :=
+    exists_tendsto_nhdsWithin_circleMap_image_Ioo hUo hf ζ hρ hab habπ hθ₀ hmemU hfin
+  exact ⟨v, clusterSetOn_eq_singleton_of_tendsto (circleMap_mem_closure_image_Ioo ζ ρ hab hθ₀) hv⟩
+
 /-! ## The two ends of a circular crosscut -/
+
+/-- Half the angular width of a genuine circular crosscut is positive. -/
+private lemma arccos_div_two_mul_pos (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
+    0 < Real.arccos (ρ / (2 * r)) :=
+  Real.arccos_pos.mpr ((div_lt_one (by linarith)).mpr hρr)
+
+/-- Half the angular width of a genuine circular crosscut is below `π / 2`: a crosscut spans less
+than half of its circle. -/
+private lemma arccos_div_two_mul_lt_pi_div_two (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
+    Real.arccos (ρ / (2 * r)) < π / 2 :=
+  Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by linarith))
 
 /-- The open arc of angles of a genuine circular crosscut lies in the disc: by
 `TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` it parametrises the crosscut itself. -/
@@ -295,9 +354,7 @@ private lemma lintegral_enorm_deriv_circleMap_ne_top (hζ : dist ζ c = r) (hρ 
     (hρr : ρ < 2 * r) (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
     ∫⁻ θ in Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤ := by
-  have hr : 0 < r := by linarith
-  have hφπ2 : Real.arccos (ρ / (2 * r)) < π / 2 :=
-    Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by positivity))
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
   have hmem : ∀ θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ ∈ ball c r :=
     fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ
@@ -339,11 +396,8 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Subsingleton := by
-  have hr : 0 < r := by linarith
-  have hφ0 : 0 < Real.arccos (ρ / (2 * r)) :=
-    Real.arccos_pos.mpr ((div_lt_one (by positivity)).mpr hρr)
-  have hφπ2 : Real.arccos (ρ / (2 * r)) < π / 2 :=
-    Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by positivity))
+  have hφ0 := arccos_div_two_mul_pos hρ hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
   obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
     rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
@@ -353,11 +407,9 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (by linarith) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
-/-- **A circular crosscut of finite image length has a limit at each point of its closure.** The
-cluster set is a subsingleton by `TauCeti.subsingleton_clusterSetOn_ball_inter_sphere`, and it is
-nonempty because the image of the crosscut is bounded — the arc form
-`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top` at the crosscut's arc of angles —
-so the map is confined along the crosscut to a compact set.
+/-- **A circular crosscut of finite image length has a limit at each point of its closure.** This is
+`TauCeti.exists_tendsto_nhdsWithin_circleMap_image_Ioo` at the arc description of
+`Conformal/Crosscut/Endpoints.lean`.
 
 At the two endpoints, where `e ∈ sphere c r ∩ sphere ζ ρ`, this is the statement that the image
 crosscut is a curve with two honest ends. -/
@@ -366,19 +418,20 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     ∃ v, Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] e) (𝓝 v) := by
-  have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
-    rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
-    exact isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top isOpen_ball hf ζ hρ
-      (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
-      (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
-  refine exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
-    (fun w hw => subset_closure (mem_image_of_mem f hw)) ?_
-    (subsingleton_clusterSetOn_ball_inter_sphere hζ hρ hρr hf hfin he)
-  rw [closure_ball_inter_sphere hζ hρ hρr]
-  exact he
+  have hφ0 := arccos_div_two_mul_pos hρ hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
+    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
+    exact he
+  rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
+  exact exists_tendsto_nhdsWithin_circleMap_image_Ioo isOpen_ball hf ζ hρ (by linarith)
+    (by linarith) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+    (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
-/-- **The end of a circular crosscut of finite image length is a single point.** The cluster set of
-`TauCeti.exists_tendsto_nhdsWithin_ball_inter_sphere` written as a singleton, which is the form
+/-- **The end of a circular crosscut of finite image length is a single point.** This is
+`TauCeti.exists_clusterSetOn_circleMap_image_Ioo_eq_singleton` at the arc description of
+`Conformal/Crosscut/Endpoints.lean`, and it is the form
 `TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn` of
 `Conformal/Crosscut/Image.lean` indexes the boundary piece over. -/
 theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r) (hρ : 0 < ρ)
@@ -386,10 +439,16 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     ∃ v, clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {v} := by
-  obtain ⟨v, hv⟩ := exists_tendsto_nhdsWithin_ball_inter_sphere hζ hρ hρr hf hfin he
-  refine ⟨v, clusterSetOn_eq_singleton_of_tendsto ?_ hv⟩
-  rw [closure_ball_inter_sphere hζ hρ hρr]
-  exact he
+  have hφ0 := arccos_div_two_mul_pos hρ hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
+    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
+    exact he
+  rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
+  exact exists_clusterSetOn_circleMap_image_Ioo_eq_singleton isOpen_ball hf ζ hρ (by linarith)
+    (by linarith) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+    (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
 /-- **The closure of an image crosscut of finite length is the image crosscut together with two
 points.** `Conformal/Crosscut/Image.lean` writes that closure as the image crosscut together with
