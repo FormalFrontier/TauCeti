@@ -387,9 +387,10 @@ private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_right {γ : ℝ → ℂ
   have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
     ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
       (Icc_subset_Icc le_rfl (min_le_right d d'))
+  have hud : UniqueDiffWithinAt ℝ (Icc t (min d d')) t :=
+    (uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)
   have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
-    (h1.derivWithin ((uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le))).symm.trans
-      (h2.derivWithin ((uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)))
+    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
   rw [heq]
   exact hne' t (left_mem_Icc.mpr hlt'.le)
 
@@ -407,9 +408,10 @@ private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ}
   have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
     ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
       (Icc_subset_Icc (le_max_right c c') le_rfl)
+  have hud : UniqueDiffWithinAt ℝ (Icc (max c c') t) t :=
+    (uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)
   have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
-    (h1.derivWithin ((uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le))).symm.trans
-      (h2.derivWithin ((uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)))
+    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
   rw [heq]
   exact hne' t (right_mem_Icc.mpr hlt'.le)
 
@@ -484,14 +486,14 @@ theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1, (h_Ioo t ht).2.le⟩
   choose! ρ_lipR hρ_lipR_pos hρ_lipR_lt hbddR using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
-      (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀]) (hC1R t₀ ht₀).differentiableOn
-      (hlipR t₀ ht₀) (hT_mem.mp ht₀).2
+      (show t₀ < t₀ + εD t₀ by linarith [hεD_pos t₀ ht₀])
+      ((hC1R t₀ ht₀).differentiableOn one_ne_zero) (hlipR t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hC1R t₀ ht₀)
         (by linarith [hεD_pos t₀ ht₀]))
   choose! ρ_lipL hρ_lipL_pos hρ_lipL_lt hbddL using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
-      (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀]) (hC1L t₀ ht₀).differentiableOn
-      (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
+      (show t₀ - εD t₀ < t₀ by linarith [hεD_pos t₀ ht₀])
+      ((hC1L t₀ ht₀).differentiableOn one_ne_zero) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_left h_imm (h_Ioc t₀ ht₀) (hC1L t₀ ht₀)
         (by linarith [hεD_pos t₀ ht₀]))
   -- Combine the two one-sided windows into one symmetric bounded window per crossing.
