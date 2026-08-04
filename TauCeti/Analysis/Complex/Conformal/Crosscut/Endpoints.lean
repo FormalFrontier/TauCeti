@@ -39,7 +39,9 @@ with its closure; they do not assert the continuous boundary extension itself.
   arcs.
 * `TauCeti.sphere_inter_sphere_eq_pair_circleMap` identifies their two distinct endpoints.
 * `TauCeti.isPathConnected_ball_inter_sphere` and
-  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging.
+  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging, and
+  `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere` records that a crosscut reaches
+  the frontier of the disc.
 * `TauCeti.isPreconnected_ball_inter_sphere_inter_ball` — a ball centred at a point of the closed
   crosscut meets the crosscut in a subarc: a crosscut spans less than a half turn, so along it the
   chord distance to a fixed one of its points falls and then rises, and the angles it keeps below a
@@ -116,23 +118,6 @@ private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
   rw [dist_eq_norm, ← Complex.normSq_eq_norm_sq, hsub, Complex.normSq_sub, hu, ha, hcross]
   ring
 
-/-- The chord length `TauCeti.dist_circleMap_eq_two_mul_abs_sin` with the sign of the angular
-difference cleared: for angles at most `π` apart the chord grows with the angular gap. -/
-private lemma dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ}
-    (h : |θ - θ'| ≤ π) :
-    dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
-  rw [dist_circleMap_eq_two_mul_abs_sin]
-  congr 1
-  have hnn : 0 ≤ Real.sin (|θ - θ'| / 2) :=
-    Real.sin_nonneg_of_nonneg_of_le_pi (by positivity) (by linarith [Real.pi_pos])
-  rcases abs_cases (θ - θ') with ⟨hc, -⟩ | ⟨hc, -⟩
-  · rw [hc] at hnn ⊢
-    exact abs_of_nonneg hnn
-  · rw [hc] at hnn ⊢
-    rw [neg_div, Real.sin_neg]
-    rw [neg_div, Real.sin_neg] at hnn
-    exact abs_of_nonpos (by linarith)
-
 /-- **A ball centred at a point of an arc of angular width at most `π` meets it in an arc.** The
 chord distance to a fixed angle `θ₀` of the arc falls and then rises as the angle sweeps across the
 arc, so the angles it keeps below a threshold form an interval. -/
@@ -144,7 +129,7 @@ private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : �
     intro u hu
     refine dist_circleMap_eq_two_mul_sin_abs ζ ρ ?_
     rw [abs_le]
-    constructor <;> [linarith [hu.1, h₀.2]; linarith [hu.2, h₀.1]]
+    constructor <;> [linarith [hu.1, h₀.2, Real.pi_pos]; linarith [hu.2, h₀.1, Real.pi_pos]]
   have hmono : ∀ u ∈ Icc a b, ∀ v ∈ Icc a b, |u - θ₀| ≤ |v - θ₀| →
       dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀) ≤ dist (circleMap ζ ρ v) (circleMap ζ ρ θ₀) := by
     intro u hu v hv huv
@@ -409,6 +394,27 @@ theorem closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : �
   · rintro z ⟨θ, hθ, rfl⟩
     exact mem_closure_image (continuous_circleMap ζ ρ).continuousAt
       (by rwa [closure_Ioo hab.ne])
+
+/-- **A circular crosscut of a disc reaches the boundary of the disc.** A crosscut spanning less
+than a half turn has two endpoints (`TauCeti.sphere_inter_sphere_eq_pair_circleMap`), and either of
+them lies on `sphere c r`, the frontier of the disc, and in the closure of the crosscut
+(`TauCeti.closure_ball_inter_sphere`).
+
+This is the form in which `Conformal/Crosscut/Image.lean`, whose statements are about an arbitrary
+domain, asks a cut to leave the domain at all. -/
+theorem nonempty_frontier_ball_inter_closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) :
+    (frontier (ball c r) ∩ closure (ball c r ∩ sphere ζ ρ)).Nonempty := by
+  have hr : 0 < r := by linarith
+  have hmem : circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ∈ sphere c r ∩ sphere ζ ρ := by
+    rw [sphere_inter_sphere_eq_pair_circleMap hζ hρ hρr]
+    exact Or.inl rfl
+  refine ⟨circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))), ?_, ?_⟩
+  · rw [frontier_ball c hr.ne']
+    exact hmem.1
+  · rw [closure_ball_inter_sphere hζ hρ hρr]
+    exact ⟨sphere_subset_closedBall hmem.1, hmem.2⟩
 
 /-- **A ball centred at a point of the closed crosscut meets the crosscut in a subarc.** A genuine
 circular crosscut spans an angle `2 * arccos (ρ / (2 * r)) < π`, so along it the chord distance to
