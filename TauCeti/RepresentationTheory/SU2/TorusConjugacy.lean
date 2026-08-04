@@ -43,8 +43,11 @@ change the conjugation it induces.
   the quarter turn `TauCeti.SU2.weylElement` of `TauCeti/RepresentationTheory/SU2/Weyl.lean`
   (`TauCeti.SU2.weylElement_conj_torusHom`), read as an existential. With torus conjugacy it says
   every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
-  converse, that conjugate elements of `T` are equal or inverse, is not proved here, so the
-  classes are not yet identified with the Weyl orbits.
+  converse, that conjugate elements of `T` are equal or inverse, is
+  `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`, so
+  each conjugacy class of `SU(2)` meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group
+  computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean`; that identification is not assembled
+  into a theorem here.
 * `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)`
   that agree on the maximal torus are equal; a class function on `SU(2)` is determined by its
   restriction to `T`.
