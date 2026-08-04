@@ -15,11 +15,20 @@ This file records the elementary path-space API for iterating the one-sided shif
 building shift-invariant sigma algebras and before comparing finite-dimensional path laws after
 discarding an initial block.
 
+It also records how *shift-fixed sets* behave under time reindexing:
+`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` shows that a reindexing which is
+eventually a translation `n ↦ n + C` leaves every set with `shift α ⁻¹' A = A` unchanged, because
+beyond the altered prefix the reindexing agrees with a fixed shift iterate. That is a purely
+set-theoretic statement — it assumes no measurability — and it is what lets a block argument move
+an invariant event through a reindexing; the complementary fact, that a contractable law is
+preserved by such a reindexing, needs strict monotonicity and lives with `ContractableLaw`.
+
 The shift-specialized statements reuse the general time-reindexing path-law lemmas
 (`measurable_reindex`, `map_reindex_pathLaw`, `map_reindex_prefixProj_pathLaw`) from
-`TauCeti.Probability.Exchangeability.Basic`. The implementation is only a Tau Ceti adapter around
-the existing path-space definitions and Mathlib's generic `Measurable.iterate`; no Mathlib
-infrastructure is vendored.
+`TauCeti.Probability.Exchangeability.Basic`. Apart from the reindexing identity above, which is
+proved from Mathlib's `Function.IsFixedPt.preimage_iterate`, the implementation is a Tau Ceti
+adapter around the existing path-space definitions and Mathlib's generic `Measurable.iterate`; no
+Mathlib infrastructure is vendored.
 -/
 
 public section
