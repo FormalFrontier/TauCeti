@@ -22,7 +22,7 @@ tangent vectors.
 * `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is `C^n` at every
   generating vector over the identity coordinate when multiplication is `C^(n + 1)`.
 * `mulInvariantCoordinateLinearMap`: the coordinate field as an operator on its generating vector.
-* `contDiffAt_mulInvariantCoordinateLinearMap_one`: this operator is smooth at the identity
+* `contDiffAt_mulInvariantCoordinateLinearMap_one`: this operator is `C^n` at the identity
   coordinate.
 * `hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_one`: the linearization of the
   parameterized coordinate field at zero and the identity is projection onto the parameter.
@@ -234,7 +234,7 @@ theorem mulInvariantCoordinateLinearMap_one [IsManifold I 1 G] :
   rw [mulInvariantCoordinateLinearMap_apply, ContinuousLinearMap.id_apply]
   exact mulInvariantCoordinateVectorField_one (I := I) (G := G) v
 
-/-- In finite dimensions, the coordinate-field linear map is smooth at the identity coordinate. -/
+/-- In finite dimensions, the coordinate-field linear map is `C^n` at the identity coordinate. -/
 theorem contDiffAt_mulInvariantCoordinateLinearMap_one {n : ℕ∞ω}
     [FiniteDimensional ℝ E] [ContMDiffMul I (n + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
     let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
