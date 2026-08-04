@@ -22,9 +22,9 @@ tangent vectors.
 * `contDiffAt_mulInvariantCoordinateVectorField`: this coordinate vector field is `C^n` at every
   generating vector over the identity coordinate when multiplication is `C^(n + 1)`.
 * `mulInvariantCoordinateLinearMap`: the coordinate field as an operator on its generating vector.
-* `contDiffAt_mulInvariantCoordinateLinearMap_identity`: this operator is smooth at the identity
+* `contDiffAt_mulInvariantCoordinateLinearMap_one`: this operator is smooth at the identity
   coordinate.
-* `hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity`: the linearization of the
+* `hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_one`: the linearization of the
   parameterized coordinate field at zero and the identity is projection onto the parameter.
 * `exists_lipschitzOn_local_mulInvariantCoordinateFlow`: a local solution family on a uniform
   closed neighborhood of the zero vector and the identity coordinate, jointly continuous and
@@ -212,41 +212,36 @@ theorem contDiffAt_mulInvariantCoordinateVectorField (v : E) {n : ℕ∞ω}
 
 /-- At a fixed identity-chart coordinate, the invariant coordinate field as a continuous linear
 map of its generating model vector. -/
-noncomputable def mulInvariantCoordinateLinearMap [IsManifold I 1 G] [FiniteDimensional ℝ E]
-    (y : E) : E →L[ℝ] E :=
-  LinearMap.toContinuousLinearMap
-    { toFun := fun v => mulInvariantCoordinateVectorField (I := I) (G := G) (v, y)
-      map_add' := fun v w => mulInvariantCoordinateVectorField_add (I := I) (G := G) v w y
-      map_smul' := fun c v => mulInvariantCoordinateVectorField_smul (I := I) (G := G) c v y }
+noncomputable def mulInvariantCoordinateLinearMap [IsManifold I 1 G] (y : E) : E →L[ℝ] E :=
+  let g := (extChartAt I (1 : G)).symm y
+  (tangentCoordChange I g (1 : G) g).comp
+    (mfderiv I I (fun x : G => g * x) (1 : G))
 
 /-- Applying the coordinate-field linear map recovers the parameterized coordinate vector field. -/
 @[simp]
-theorem mulInvariantCoordinateLinearMap_apply [IsManifold I 1 G] [FiniteDimensional ℝ E]
-    (y v : E) :
+theorem mulInvariantCoordinateLinearMap_apply [IsManifold I 1 G] (y v : E) :
     mulInvariantCoordinateLinearMap (I := I) (G := G) y v =
       mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) := by
   rfl
 
 /-- At the identity coordinate, the coordinate-field linear map is the identity operator. -/
 @[simp]
-theorem mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G] [FiniteDimensional ℝ E] :
+theorem mulInvariantCoordinateLinearMap_one [IsManifold I 1 G] :
     mulInvariantCoordinateLinearMap (I := I) (G := G)
       (I (chartAt H (1 : G) (1 : G))) = ContinuousLinearMap.id ℝ E := by
   apply ContinuousLinearMap.ext
   intro v
   rw [mulInvariantCoordinateLinearMap_apply, ContinuousLinearMap.id_apply]
-  exact mulInvariantCoordinateVectorField_one v
+  exact mulInvariantCoordinateVectorField_one (I := I) (G := G) v
 
 /-- In finite dimensions, the coordinate-field linear map is smooth at the identity coordinate. -/
-theorem contDiffAt_mulInvariantCoordinateLinearMap_identity
-    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] (h1 : I.IsInteriorPoint (1 : G)) :
-    let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
-    ContDiffAt ℝ ∞ (mulInvariantCoordinateLinearMap (I := I) (G := G))
+theorem contDiffAt_mulInvariantCoordinateLinearMap_one {n : ℕ∞ω}
+    [FiniteDimensional ℝ E] [ContMDiffMul I (n + 1) G] (h1 : I.IsInteriorPoint (1 : G)) :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+    ContDiffAt ℝ n (mulInvariantCoordinateLinearMap (I := I) (G := G))
       (extChartAt I (1 : G) (1 : G)) := by
-  let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
   dsimp only
-  let _ : ContMDiffMul I (∞ + 1) G := by
-    simpa using (inferInstance : ContMDiffMul I ∞ G)
   let d := Module.finrank ℝ E
   let e₁ : E ≃L[ℝ] Fin d → ℝ :=
     ContinuousLinearEquiv.ofFinrankEq (Module.finrank_fin_fun ℝ).symm
@@ -258,7 +253,7 @@ theorem contDiffAt_mulInvariantCoordinateLinearMap_identity
   intro i
   let b : E := e₁.symm (Pi.single i 1)
   have h := (contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := b)
-    (n := ∞) h1).comp
+    (n := n) h1).comp
     (extChartAt I (1 : G) (1 : G)) (contDiffAt_const.prodMk contDiffAt_id)
   convert h using 1
   funext y
@@ -267,42 +262,45 @@ theorem contDiffAt_mulInvariantCoordinateLinearMap_identity
 
 /-- At the zero generating vector over the identity coordinate, the parameterized coordinate
 vector field has strict derivative equal to projection onto the generating-vector coordinate. -/
-theorem hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity
-    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [BoundarylessManifold I G] :
-    let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
+theorem hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_one
+    [FiniteDimensional ℝ E] [ContMDiffMul I (1 + 1) G]
+    (h1 : I.IsInteriorPoint (1 : G)) :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
     HasStrictFDerivAt (mulInvariantCoordinateVectorField (I := I) (G := G))
       (ContinuousLinearMap.fst ℝ E E)
       ((0 : E), extChartAt I (1 : G) (1 : G)) := by
-  let _ : IsManifold I 1 G := IsManifold.of_le (n := ∞) (by simp)
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := 1 + 1) (by norm_num)
   dsimp only
-  let _ : ContMDiffMul I (∞ + 1) G := by
-    simpa using (inferInstance : ContMDiffMul I ∞ G)
   let A : E → E →L[ℝ] E := mulInvariantCoordinateLinearMap (I := I) (G := G)
   let p : E × E := ((0 : E), extChartAt I (1 : G) (1 : G))
-  have hAcd : ContDiffAt ℝ ∞ (fun q : E × E => A q.2) p :=
+  have hAcd : ContDiffAt ℝ 1 (fun q : E × E => A q.2) p :=
     ContDiffAt.fun_comp p
-      (contDiffAt_mulInvariantCoordinateLinearMap_identity (I := I) (G := G)
-        BoundarylessManifold.isInteriorPoint) contDiffAt_snd
+      (contDiffAt_mulInvariantCoordinateLinearMap_one (I := I) (G := G) (n := 1)
+        h1) contDiffAt_snd
   have hA : DifferentiableAt ℝ (fun q : E × E => A q.2) p :=
-    hAcd.differentiableAt (by simp)
+    hAcd.differentiableAt one_ne_zero
   have h := hA.hasFDerivAt.clm_apply (hasFDerivAt_fst (p := p))
+  have hfield : mulInvariantCoordinateVectorField (I := I) (G := G) =
+      fun q : E × E => (A q.2) q.1 := by
+    funext q
+    exact (mulInvariantCoordinateLinearMap_apply (I := I) (G := G) q.2 q.1).symm
   have hderiv : HasFDerivAt (mulInvariantCoordinateVectorField (I := I) (G := G))
       (ContinuousLinearMap.fst ℝ E E) p := by
-    rw [show mulInvariantCoordinateVectorField (I := I) (G := G) =
-        fun q : E × E => (A q.2) q.1 by
-      funext q
-      exact (mulInvariantCoordinateLinearMap_apply (I := I) (G := G) q.2 q.1).symm]
+    rw [hfield]
     apply h.congr_fderiv
     apply ContinuousLinearMap.ext
     rintro ⟨q₁, q₂⟩
     simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.coe_fst',
       p, map_zero, A, add_zero]
-    change mulInvariantCoordinateLinearMap (I := I) (G := G)
-      (I (chartAt H (1 : G) (1 : G))) q₁ = q₁
-    rw [mulInvariantCoordinateLinearMap_identity]
+    have hidentityCoordinate : extChartAt I (1 : G) (1 : G) =
+        I (chartAt H (1 : G) (1 : G)) := by
+      rw [extChartAt_coe]
+      rfl
+    rw [hidentityCoordinate]
+    rw [mulInvariantCoordinateLinearMap_one]
     rfl
-  exact (contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := ∞)
-    BoundarylessManifold.isInteriorPoint).hasStrictFDerivAt' hderiv (by simp)
+  exact (contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := 1)
+    h1).hasStrictFDerivAt' hderiv one_ne_zero
 
 /-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
 a single solution family that is continuous jointly in its initial condition and time and
