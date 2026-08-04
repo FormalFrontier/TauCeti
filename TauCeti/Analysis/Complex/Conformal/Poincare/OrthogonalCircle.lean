@@ -87,7 +87,7 @@ diameters, which the radial geodesics already trace, this closes the description
   `TauCeti.exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq` — every circle orthogonal to
   the unit circle is the circle of a hyperbolic line.
 * `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — the
-  converse direction in the circular case: every arc `ball 0 1 ∩ sphere c R` with
+  converse direction in the circular case: every arc `ball 0 1 ∩ sphere c R` with `0 < R` and
   `‖c‖ ^ 2 = R ^ 2 + 1` is traced by a geodesic. The converse for the diameters needs nothing new,
   `TauCeti.PoincareDisc.range_coe_toUnitDisc_radialGeodesic_eq` being already an equality of sets.
 * `TauCeti.PoincareDisc.exists_range_coe_toUnitDisc_geodesicLine_eq_iff` and
@@ -383,11 +383,11 @@ centre parameter of `u = I * w`, `a = k * w` is `((1 + k ^ 2) / (2 * k)) * w`, a
 through `w`.
 
 As at `TauCeti.orthogonalCircleCenter` itself, nothing is asked of `k`, so on its own this is an
-algebraic computation: at `k = 0` the two sides are the two divisions by zero, both `0`. For
-`0 < k < 1`, which is exactly when `k * w` lies in the open unit disc away from the origin, it is
-the centre of the Euclidean circle traced by the hyperbolic line through `k * w` in the direction
-`I * w` perpendicular to the radius through `w`. That reading, together with
-`TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul`, is the computation that makes every circle
+algebraic computation: at `k = 0` the two sides are the two divisions by zero, both `0`. It is
+exactly for `0 < |k| < 1` that `k * w` lies in the open unit disc away from the origin, and for
+`0 < k < 1` the value is the centre of the Euclidean circle traced by the hyperbolic line through
+`k * w` in the direction `I * w` perpendicular to the radius through `w`. That reading, together
+with `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul`, is the computation that makes every circle
 orthogonal to the unit circle a hyperbolic line: as `k` ranges over `Ioo 0 1` the centre sweeps
 out the whole ray beyond the unit circle. -/
 @[simp]
@@ -419,10 +419,10 @@ signed expression in `Im (conj u * a)`, the radius divides by `2 * |Im (conj u *
 whence the absolute value; for `0 < k` it reads `(1 - k ^ 2) / (2 * k)`, and at `k = 0` both sides
 are the division by zero, `0`.
 
-Positivity of the value is the further information `|k| < 1`, that is, that `k * w` lies in the
-open disc; for `|k| > 1` the value is negative and describes no circle. It is under `0 < k < 1`
-that this is the radius of the Euclidean circle traced by the hyperbolic line through `k * w` in
-the direction `I * w`. -/
+Positivity of the value is the further information `0 < |k| < 1`, that is, that `k * w` lies in
+the open disc away from the origin; at `k = 0` the value is `0` and for `|k| > 1` it is negative,
+so neither describes a circle. It is under `0 < k < 1` that this is the radius of the Euclidean
+circle traced by the hyperbolic line through `k * w` in the direction `I * w`. -/
 @[simp]
 lemma orthogonalCircleRadius_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ) :
     orthogonalCircleRadius (I * w) ((k : ℂ) * w) = (1 - k ^ 2) / (2 * |k|) := by
