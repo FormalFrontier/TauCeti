@@ -92,9 +92,9 @@ joining them can be named.
   `TauCeti.exists_clusterSetOn_ball_inter_sphere_eq_singleton` — the three arc statements at the arc
   of a circular crosscut, the last of them the form `Conformal/Crosscut/Image.lean` indexes over.
 * `TauCeti.exists_biUnion_clusterSetOn_ball_inter_sphere_eq_pair` — hence the union of the cluster
-  sets at the two endpoints, which `Conformal/Crosscut/Image.lean` identifies with the part of the
-  closed image crosscut outside the image crosscut, is a pair of points. (That file also identifies
-  the union with the boundary piece the image crosscut clings to, but only for injective `f`.)
+  sets at the two endpoints, the term `Conformal/Crosscut/Image.lean` adjoins to the image crosscut
+  to close it, is a pair of points. (That file also identifies the union with the boundary piece the
+  image crosscut clings to, but only for injective `f`.)
 * `TauCeti.exists_closure_image_ball_inter_sphere_eq_insert` — hence the closure of an image
   crosscut of finite length is the image crosscut together with two points.
 
@@ -499,13 +499,15 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
 /-- **The two ends of a circular crosscut of finite image length are two points.** The union of the
-cluster sets of `f` at the two endpoints of the crosscut is a pair. So, therefore, is the part of
-`closure (f '' (ball c r ∩ sphere ζ ρ))` outside the image crosscut, which
-`Conformal/Crosscut/Image.lean` identifies with that union under exactly the hypotheses assumed
-here. The other description of the union in that file, as the piece of `frontier (f '' ball c r)`
-the image crosscut clings to, is *not* available here: it asks `f` to be injective on `ball c r`,
-which makes `f '' ball c r` open and hence disjoint from its own frontier. Adding that hypothesis
-is `TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` of
+cluster sets of `f` at the two endpoints of the crosscut is a pair. That union is the term
+`Conformal/Crosscut/Image.lean` adjoins to the image crosscut to write
+`closure (f '' (ball c r ∩ sphere ζ ρ))`, under exactly the hypotheses assumed here; that
+decomposition is a union, not a disjoint one, so nothing here says the pair misses the image
+crosscut. The other description of the union in that file, as the piece of
+`frontier (f '' ball c r)` the image crosscut clings to, is *not* available here: it asks `f` to be
+injective on `ball c r`, which makes `f '' ball c r` open and hence disjoint from its own
+frontier. Adding that hypothesis is
+`TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` of
 `Conformal/Crosscut/BoundaryEnds.lean`.
 
 Nothing is claimed about the two points: they may coincide, an image crosscut being free to close
