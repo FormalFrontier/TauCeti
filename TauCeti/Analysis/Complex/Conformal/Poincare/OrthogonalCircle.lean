@@ -54,7 +54,7 @@ diameter `Im (conj u * z) = 0`.
   parameters read off by completing the square, which for `‖u‖ = 1`, `‖a‖ < 1` and
   `Im (conj u * a) ≠ 0` are the centre and radius of the Euclidean circle traced by a hyperbolic
   line missing the origin, together with `TauCeti.orthogonalCircleRadius_pos` and the
-  orthogonality relation `TauCeti.sq_norm_orthogonalCircleCenter`.
+  orthogonality relation `TauCeti.norm_orthogonalCircleCenter_sq`.
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere` — a geodesic line
   missing the origin traces `ball 0 1 ∩ sphere c R` for that Euclidean circle, which is
   **orthogonal to the unit circle**, `‖c‖ ^ 2 = R ^ 2 + 1`.
@@ -222,7 +222,7 @@ Once `‖a‖ < 1` makes `R` positive (`TauCeti.orthogonalCircleRadius_pos`), so
 centre `c` and radius `R` is a genuine circle, the relation is Pythagoras for the right triangle
 whose legs are the radius `1` of the unit circle and the radius `R`, and it then says precisely
 that the two circles meet at right angles. -/
-lemma sq_norm_orthogonalCircleCenter {u a : ℂ} (hu : ‖u‖ = 1) (hA : (conj u * a).im ≠ 0) :
+lemma norm_orthogonalCircleCenter_sq {u a : ℂ} (hu : ‖u‖ = 1) (hA : (conj u * a).im ≠ 0) :
     ‖orthogonalCircleCenter u a‖ ^ 2 = orthogonalCircleRadius u a ^ 2 + 1 := by
   have hnu : normSq u = 1 := by rw [Complex.normSq_eq_norm_sq, hu]; norm_num
   have hkey := normSq_sub_mul_conj_sq_sub_four_mul_sq_im u a
@@ -243,7 +243,7 @@ circle.** If `‖u‖ = 1`, `‖a‖ < 1` and the geodesic through `a` in direct
 `R = TauCeti.orthogonalCircleRadius u a`.
 
 That this is a genuine circle, and that it meets the unit circle at right angles, are
-`TauCeti.orthogonalCircleRadius_pos` and `TauCeti.sq_norm_orthogonalCircleCenter`. -/
+`TauCeti.orthogonalCircleRadius_pos` and `TauCeti.norm_orthogonalCircleCenter_sq`. -/
 theorem setOf_im_eq_ball_inter_sphere {u a : ℂ} (hu : ‖u‖ = 1) (ha : ‖a‖ < 1)
     (hA : (conj u * a).im ≠ 0) :
     {z : ℂ | ‖z‖ < 1 ∧ (conj u * (z - a) * (1 - a * conj z)).im = 0}
@@ -251,7 +251,7 @@ theorem setOf_im_eq_ball_inter_sphere {u a : ℂ} (hu : ‖u‖ = 1) (ha : ‖a�
   have hRpos : 0 < orthogonalCircleRadius u a := orthogonalCircleRadius_pos ha hA
   have hnc : normSq (orthogonalCircleCenter u a) = orthogonalCircleRadius u a ^ 2 + 1 := by
     rw [Complex.normSq_eq_norm_sq]
-    exact sq_norm_orthogonalCircleCenter hu hA
+    exact norm_orthogonalCircleCenter_sq hu hA
   have hconjc : conj (orthogonalCircleCenter u a)
       = -I * (conj u - u * conj a ^ 2) / ((2 * (conj u * a).im : ℝ) : ℂ) := by
     rw [orthogonalCircleCenter_def, map_div₀, map_mul, Complex.conj_I, Complex.conj_conj,
@@ -457,7 +457,7 @@ origin — the geodesic line of the Poincaré disc through `a` in direction `u` 
 `ball 0 1 ∩ sphere c R` for the Euclidean circle of centre
 `TauCeti.orthogonalCircleCenter` and radius `TauCeti.orthogonalCircleRadius`, whose radius is
 positive (`TauCeti.orthogonalCircleRadius_pos`) and which satisfies `‖c‖ ^ 2 = R ^ 2 + 1`
-(`TauCeti.sq_norm_orthogonalCircleCenter`), the Pythagorean relation expressing that it meets the
+(`TauCeti.norm_orthogonalCircleCenter_sq`), the Pythagorean relation expressing that it meets the
 unit circle at right angles.
 
 This is the classical picture of the Poincaré disc, and it is
@@ -509,7 +509,7 @@ theorem range_coe_toUnitDisc_geodesicLine_eq_ball_inter_or (a : PoincareDisc) (u
   · exact Or.inl ⟨conj (u : ℂ), by rw [norm_conj, Circle.norm_coe],
       range_coe_toUnitDisc_geodesicLine_eq_ball_inter_setOf_im a u hA⟩
   · exact Or.inr ⟨_, _, orthogonalCircleRadius_pos (toUnitDisc a).norm_lt_one hA,
-      sq_norm_orthogonalCircleCenter (Circle.norm_coe u) hA,
+      norm_orthogonalCircleCenter_sq (Circle.norm_coe u) hA,
       range_coe_toUnitDisc_geodesicLine_eq_ball_inter_sphere a u hA⟩
 
 /-- **Every geodesic of the Poincaré disc is a Euclidean diameter or an arc of a Euclidean circle
