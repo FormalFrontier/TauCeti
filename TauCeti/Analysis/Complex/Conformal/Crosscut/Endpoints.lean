@@ -127,7 +127,7 @@ private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : �
     intro u hu
     refine dist_circleMap_eq_two_mul_sin_abs ζ ρ ?_
     rw [abs_le]
-    constructor <;> [linarith [hu.1, h₀.2]; linarith [hu.2, h₀.1]]
+    constructor <;> [linarith [hu.1, h₀.2, Real.pi_pos]; linarith [hu.2, h₀.1, Real.pi_pos]]
   have hmono : ∀ u ∈ Icc a b, ∀ v ∈ Icc a b, |u - θ₀| ≤ |v - θ₀| →
       dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀) ≤ dist (circleMap ζ ρ v) (circleMap ζ ρ θ₀) := by
     intro u hu v hv huv

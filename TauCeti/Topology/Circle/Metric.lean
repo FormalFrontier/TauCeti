@@ -26,7 +26,7 @@ translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ 
   centre and radius, where the chord between the angles `θ` and `θ'` has length
   `2 * |ρ| * |sin ((θ - θ') / 2)|`, and
   `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, the same formula with the sign of the angular
-  difference cleared, valid for angles at most `π` apart.
+  difference cleared, valid for angles at most a full turn apart.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
   most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
@@ -97,14 +97,16 @@ theorem dist_circleMap_eq_two_mul_abs_sin (ζ : ℂ) (ρ θ θ' : ℝ) :
   rw [dist_eq_norm, hsub, norm_mul, Complex.norm_real, Real.norm_eq_abs, hchord]
   ring
 
-/-- **The chord with the sign of the angular difference cleared.** For angles at most `π` apart the
-chord `TauCeti.dist_circleMap_eq_two_mul_abs_sin` is `2 * |ρ| * sin (|θ - θ'| / 2)`, an increasing
-function of the angular gap: the absolute value moves from outside the sine to inside it.
+/-- **The chord with the sign of the angular difference cleared.** For angles at most a full turn
+apart the chord `TauCeti.dist_circleMap_eq_two_mul_abs_sin` is `2 * |ρ| * sin (|θ - θ'| / 2)`: the
+absolute value moves from outside the sine to inside it.
 
-The width restriction is what makes the two forms differ. Beyond `π` the half-angle leaves
-`[-π / 2, π / 2]`, where `|sin|` and `sin ∘ |·|` part company, and the chord stops growing with the
-gap. -/
-theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (h : |θ - θ'| ≤ π) :
+The width restriction is what makes the two forms differ: it puts the half-angle in `[0, π]`, where
+the sine is nonnegative, and past a full turn the half-angle leaves that interval and `|sin|` and
+`sin ∘ |·|` part company. Up to `π` the right-hand side is moreover an increasing function of the
+angular gap, the half-angle then staying in `[0, π / 2]`; beyond `π` the formula still holds but the
+chord shrinks again as the gap widens. -/
+theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (h : |θ - θ'| ≤ 2 * π) :
     dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
   rw [dist_circleMap_eq_two_mul_abs_sin]
   congr 1
