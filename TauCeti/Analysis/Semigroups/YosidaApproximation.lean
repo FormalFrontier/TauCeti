@@ -226,6 +226,21 @@ theorem yosidaSemigroup_apply (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 
     hA.yosidaSemigroup lambda hlambda t = exp ((t : ℝ) • hA.yosidaApprox lambda hlambda) :=
   StronglyContinuousSemigroup.ofBounded_apply _ t
 
+/-- The generator domain of `yosidaSemigroup` is the whole space: `A_lambda` is bounded, so
+`ofBounded_domain_eq_top` applies directly. -/
+@[simp]
+theorem yosidaSemigroup_domain_eq_top (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda) :
+    (hA.yosidaSemigroup lambda hlambda).domain = ⊤ :=
+  StronglyContinuousSemigroup.ofBounded_domain_eq_top _
+
+/-- The generator of `yosidaSemigroup` is `A_lambda` itself, viewed as a total unbounded
+operator. -/
+@[simp]
+theorem yosidaSemigroup_generator (hA : IsMDissipative A) (lambda : ℝ) (hlambda : 0 < lambda) :
+    (hA.yosidaSemigroup lambda hlambda).generator
+      = ((hA.yosidaApprox lambda hlambda : X →L[ℝ] X) : X →ₗ[ℝ] X).toPMap ⊤ :=
+  StronglyContinuousSemigroup.ofBounded_generator _
+
 end IsMDissipative
 
 end TauCeti.Semigroups
