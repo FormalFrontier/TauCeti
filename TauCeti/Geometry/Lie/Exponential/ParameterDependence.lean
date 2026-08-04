@@ -74,7 +74,6 @@ theorem mulInvariantCoordinateVectorField_apply [IsManifold I 1 G] (v y : E) :
   rfl
 
 /-- The invariant coordinate field is additive in its generating vector. -/
-@[simp]
 theorem mulInvariantCoordinateVectorField_add [IsManifold I 1 G] (v w y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (v + w, y) =
       mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) +
@@ -103,7 +102,6 @@ theorem mulInvariantCoordinateVectorField_add [IsManifold I 1 G] (v w y : E) :
         (v : GroupLieAlgebra I G) (w : GroupLieAlgebra I G)) g
 
 /-- The invariant coordinate field respects scalar multiplication in its generating vector. -/
-@[simp]
 theorem mulInvariantCoordinateVectorField_smul [IsManifold I 1 G] (c : ℝ) (v y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (c • v, y) =
       c • mulInvariantCoordinateVectorField (I := I) (G := G) (v, y) := by
@@ -128,7 +126,6 @@ theorem mulInvariantCoordinateVectorField_smul [IsManifold I 1 G] (c : ℝ) (v y
         c (v : GroupLieAlgebra I G)) g
 
 /-- At the identity coordinate, the parameterized invariant field equals its generator. -/
-@[simp]
 theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G)
       (v, I (chartAt H (1 : G) (1 : G))) = v := by
@@ -147,7 +144,6 @@ theorem mulInvariantCoordinateVectorField_identity [IsManifold I 1 G] (v : E) :
   exact tangentCoordChange_self (mem_extChartAt_source (I := I) (1 : G))
 
 /-- The invariant coordinate field vanishes when its generating vector vanishes. -/
-@[simp]
 theorem mulInvariantCoordinateVectorField_zero [IsManifold I 1 G] (y : E) :
     mulInvariantCoordinateVectorField (I := I) (G := G) (0, y) = 0 := by
   rw [mulInvariantCoordinateVectorField_apply]
