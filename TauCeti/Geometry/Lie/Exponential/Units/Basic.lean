@@ -9,7 +9,7 @@ public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.ContinuousMap.Units
 
 /-!
-# The exponential of a Banach algebra as a unit
+# Banach-algebra exponentials as units
 
 The exponential of an element of a complete normed rational algebra is invertible, with inverse
 the exponential of its negation. This file packages that fact as a units-valued map

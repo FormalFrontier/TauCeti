@@ -16,7 +16,7 @@ import TauCeti.Topology.Circle.Metric
 `Conformal/Crosscut/Image.lean` identifies the boundary piece a circular crosscut clings to as the
 union of the *cluster sets* of the map at the crosscut's two endpoints, and shows each of them to be
 a continuum. Nothing there says those continua are single points; in its own words, the
-identification is "with a union of two cluster sets, not with a connected subset of `∂Ω` running
+identification is "with a union of cluster sets, not with a connected subset of `∂Ω` running
 between them". This file supplies the missing degeneration, from the one hypothesis that the
 length–area method already produces: **an image crosscut of finite length has an honest limit at
 each of its two ends**, so its closure is the crosscut together with two points.
@@ -520,9 +520,13 @@ theorem exists_closure_image_ball_inter_sphere_eq_insert (hζ : dist ζ c = r) (
     exists_clusterSetOn_ball_inter_sphere_eq_singleton hζ hρ hρr hf hfin (hsub _ hp)
   obtain ⟨v, hv⟩ :=
     exists_clusterSetOn_ball_inter_sphere_eq_singleton hζ hρ hρr hf hfin (hsub _ hq)
+  have hr : 0 < r := by linarith
+  have hends : ⋃ e ∈ frontier (ball c r) ∩ sphere ζ ρ,
+      clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {u, v} := by
+    rw [frontier_ball c hr.ne', hpair, biUnion_pair, hu, hv, singleton_union]
   refine ⟨u, v, ?_⟩
-  rw [closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn
-    (hf.continuousOn.mono inter_subset_left) hζ hρ hρr, hpair, biUnion_pair, hu, hv,
-    union_comm, singleton_union, insert_union, singleton_union]
+  rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
+    (hf.continuousOn.mono inter_subset_left), hends]
+  simp
 
 end TauCeti

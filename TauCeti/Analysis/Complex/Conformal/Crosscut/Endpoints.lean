@@ -39,7 +39,9 @@ with its closure; they do not assert the continuous boundary extension itself.
   arcs.
 * `TauCeti.sphere_inter_sphere_eq_pair_circleMap` identifies their two distinct endpoints.
 * `TauCeti.isPathConnected_ball_inter_sphere` and
-  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging.
+  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging, and
+  `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere` records that a crosscut reaches
+  the frontier of the disc.
 * `TauCeti.isPreconnected_ball_inter_sphere_inter_ball` — a ball centred at a point of the closed
   crosscut meets the crosscut in a subarc: a crosscut spans less than a half turn, so along it the
   chord distance to a fixed one of its points falls and then rises, and the angles it keeps below a
@@ -392,6 +394,27 @@ theorem closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : �
   · rintro z ⟨θ, hθ, rfl⟩
     exact mem_closure_image (continuous_circleMap ζ ρ).continuousAt
       (by rwa [closure_Ioo hab.ne])
+
+/-- **A circular crosscut of a disc reaches the boundary of the disc.** A crosscut spanning less
+than a half turn has two endpoints (`TauCeti.sphere_inter_sphere_eq_pair_circleMap`), and either of
+them lies on `sphere c r`, the frontier of the disc, and in the closure of the crosscut
+(`TauCeti.closure_ball_inter_sphere`).
+
+This is the form in which `Conformal/Crosscut/Image.lean`, whose statements are about an arbitrary
+domain, asks a cut to leave the domain at all. -/
+theorem nonempty_frontier_ball_inter_closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) :
+    (frontier (ball c r) ∩ closure (ball c r ∩ sphere ζ ρ)).Nonempty := by
+  have hr : 0 < r := by linarith
+  have hmem : circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ∈ sphere c r ∩ sphere ζ ρ := by
+    rw [sphere_inter_sphere_eq_pair_circleMap hζ hρ hρr]
+    exact Or.inl rfl
+  refine ⟨circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))), ?_, ?_⟩
+  · rw [frontier_ball c hr.ne']
+    exact hmem.1
+  · rw [closure_ball_inter_sphere hζ hρ hρr]
+    exact ⟨sphere_subset_closedBall hmem.1, hmem.2⟩
 
 /-- **A ball centred at a point of the closed crosscut meets the crosscut in a subarc.** A genuine
 circular crosscut spans an angle `2 * arccos (ρ / (2 * r)) < π`, so along it the chord distance to
