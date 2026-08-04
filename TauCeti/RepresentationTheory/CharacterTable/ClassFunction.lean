@@ -13,7 +13,8 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, and shows that characters of representations are class functions.
+groups, pulls class functions back along a group homomorphism, and shows that characters of
+representations are class functions.
 
 These are the indexing foundations for character tables.
 
@@ -80,6 +81,22 @@ def ofConjClasses (f : ConjClasses G → k) : ClassFunction k G :=
 @[simp]
 theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
+  (rfl)
+
+/-- Pull a class function back along a group homomorphism.  Restriction of a class function to a
+subgroup is the case `φ = S.subtype`. -/
+def comap {H : Type w} [Group H] (φ : H →* G) :
+    ClassFunction k G →ₗ[k] ClassFunction k H where
+  toFun f := ⟨fun x => f.1 (φ x), fun g h => by
+    simp only [map_mul, map_inv]
+    exact f.2 (φ g) (φ h)⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- A pulled-back class function is the composite with the homomorphism. -/
+@[simp]
+theorem comap_apply {H : Type w} [Group H] (φ : H →* G) (f : ClassFunction k G) (x : H) :
+    (comap φ f).1 x = f.1 (φ x) :=
   (rfl)
 
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
