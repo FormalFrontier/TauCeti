@@ -235,7 +235,7 @@ theorem mulInvariantCoordinateLinearMap_identity [IsManifold I 1 G] [FiniteDimen
   apply ContinuousLinearMap.ext
   intro v
   rw [mulInvariantCoordinateLinearMap_apply, ContinuousLinearMap.id_apply]
-  exact mulInvariantCoordinateVectorField_identity v
+  exact mulInvariantCoordinateVectorField_one v
 
 /-- In finite dimensions, the coordinate-field linear map is smooth at the identity coordinate. -/
 theorem contDiffAt_mulInvariantCoordinateLinearMap_identity
@@ -303,6 +303,7 @@ theorem hasStrictFDerivAt_mulInvariantCoordinateVectorField_zero_identity
     rfl
   exact (contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := ∞)
     BoundarylessManifold.isInteriorPoint).hasStrictFDerivAt' hderiv (by simp)
+
 /-- Near the zero tangent vector and the identity coordinate, the parameterized invariant ODE has
 a single solution family that is continuous jointly in its initial condition and time and
 uniformly Lipschitz in its initial state. The tangent-vector coordinate is frozen by the ODE; the
