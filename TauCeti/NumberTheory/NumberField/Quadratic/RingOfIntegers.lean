@@ -17,7 +17,8 @@ For a quadratic number field `K = ℚ(√d)` — presented by an algebraic integ
 depends on `d mod 4`:
 
 * `d ≢ 1 (mod 4)`: `𝓞 K = ℤ[θ]` and `NumberField.discr K = 4 * d`;
-* `d ≡ 1 (mod 4)`: `𝓞 K = ℤ[ω]` with `ω = (1+θ)/2 = TauCeti.NumberField.halfGen`.
+* `d ≡ 1 (mod 4)`: `𝓞 K = ℤ[ω]` with `ω = (1+θ)/2 = TauCeti.NumberField.halfGen`, and
+  `NumberField.discr K = d`.
 
 The content is the "no more integers" step: an algebraic integer `z` with `(z : K) = a + b·θ`
 (`a, b : ℚ`) has `2a ∈ ℤ` and `a² - d·b² ∈ ℤ` (its trace and norm), whence `2a, 2b ∈ ℤ` (using that
@@ -29,6 +30,7 @@ even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `
 * `TauCeti.NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
 * `TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
 * `TauCeti.NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
+* `TauCeti.NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`: `discr K = d` for `d ≡ 1`.
 -/
 
 public section
@@ -252,6 +254,29 @@ private theorem exists_int_repr_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
   field_simp
   linear_combination hmABK
 
+/-- **Spanning from a coordinate representation.** If `bs = ![1, g]` is a `ℚ`-basis of `K` whose
+entries are algebraic integers and every `z : 𝓞 K` is an integer combination `k·1 + l·g`, then the
+integral lifts `⟨bs i, _⟩` span `𝓞 K` over `ℤ`. -/
+private theorem span_eq_top_of_int_repr {g : 𝓞 K} {bs : Basis (Fin 2) ℚ K}
+    (hbs : (bs : Fin 2 → K) = ![1, (g : K)]) (hb : ∀ i, IsIntegral ℤ (bs i))
+    (hrepr : ∀ z : 𝓞 K, ∃ k l : ℤ, z = k • (1 : 𝓞 K) + l • g) :
+    Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
+  rw [eq_top_iff]
+  rintro z -
+  obtain ⟨k, l, hkl⟩ := hrepr z
+  -- The integral lifts `⟨bs 0, _⟩, ⟨bs 1, _⟩` are `1` and `g`; check on the injective coercion to
+  -- `K`, where `⟨bs i, _⟩` reduces definitionally to `bs i`.
+  have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
+    apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); rw [hbs]; rfl
+  have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = g := by
+    apply RingOfIntegers.coe_injective; change bs 1 = (g : K); rw [hbs]; rfl
+  have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
+    e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
+  have hg : g ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
+    e1 ▸ Submodule.subset_span (Set.mem_range_self 1)
+  rw [hkl]
+  exact add_mem (Submodule.smul_mem _ _ h1) (Submodule.smul_mem _ _ hg)
+
 /-- **The ring of integers is `ℤ[(1+θ)/2]` when `d ≡ 1 (mod 4)`.** For squarefree `d` with
 `d % 4 = 1`, the ring of integers of `ℚ(√d)` is generated over `ℤ` by `ω = (1+θ)/2`. -/
 theorem adjoin_halfGen_eq_top_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
@@ -278,24 +303,8 @@ theorem discr_eq_of_squarefree_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2
     hfr hωnotmem (isIntegral_halfGen hmin hd4)
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((d : ℤ) : ℚ) := by
     rw [hbs]; exact discr_one_halfGen hmin hgen
-  have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
-    rw [eq_top_iff]
-    rintro z -
-    obtain ⟨k, l, hkl⟩ := exists_int_repr_one hmin hgen hsf hd4 z
-    have hval0 : bs 0 = (1 : K) := by rw [hbs]; rfl
-    have hval1 : bs 1 = (1 + (θ : K)) / 2 := by rw [hbs]; rfl
-    -- The basis vectors `⟨bs 0, _⟩, ⟨bs 1, _⟩` of `𝓞 K` are `1` and `ω = (1+θ)/2`; check on the
-    -- coercion to `K` (injective), where `⟨bs i, _⟩` reduces definitionally to `bs i`.
-    have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
-      apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
-    have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = halfGen hmin hd4 := by
-      apply RingOfIntegers.coe_injective; change bs 1 = (1 + (θ : K)) / 2; exact hval1
-    have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
-      e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
-    have hω : halfGen hmin hd4 ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
-      e1 ▸ Submodule.subset_span (Set.mem_range_self 1)
-    rw [hkl]
-    exact add_mem (Submodule.smul_mem _ _ h1) (Submodule.smul_mem _ _ hω)
+  have hbs' : (bs : Fin 2 → K) = ![1, (halfGen hmin hd4 : K)] := by rw [coe_halfGen]; exact hbs
+  have hspan := span_eq_top_of_int_repr hbs' hb (exists_int_repr_one hmin hgen hsf hd4)
   exact_mod_cast discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int bs hb hspan hdd
 
 variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
@@ -330,28 +339,10 @@ theorem discr_eq_four_mul_of_mod_four_ne_one : NumberField.discr K = 4 * d := by
   have hd4' := mod_four_eq_two_or_three hsf hd4
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr (gen_notMem_range hmin) θ.isIntegral_coe
-  -- Discriminant of `{1, θ}` is `4d` (`discr_one_gen`).
+  -- Discriminant of `{1, θ}` is `4d` (`discr_one_gen`); `{1, θ}` spans `𝓞 K` over `ℤ`.
   have hdd : Algebra.discr ℚ (bs : Fin 2 → K) = ((4 * d : ℤ) : ℚ) := by
     rw [hbs]; exact discr_one_gen hmin hgen
-  -- Spanning: `{1, θ}` spans `𝓞 K` over `ℤ` (`exists_int_repr`).
-  have hspan : Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) = ⊤ := by
-    rw [eq_top_iff]
-    rintro z -
-    obtain ⟨k, l, hkl⟩ := exists_int_repr hmin hgen hsf hd4' z
-    have hval0 : bs 0 = (1 : K) := by rw [hbs]; rfl
-    have hval1 : bs 1 = (θ : K) := by rw [hbs]; rfl
-    -- The basis vectors `⟨bs 0, _⟩`, `⟨bs 1, _⟩` of `𝓞 K` are `1` and `θ`; check on the coercion
-    -- to `K` (injective), where `⟨bs i, _⟩` reduces definitionally to `bs i`.
-    have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
-      apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
-    have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = θ := by
-      apply RingOfIntegers.coe_injective; change bs 1 = (θ : K); exact hval1
-    have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
-      e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
-    have hθ : θ ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
-      e1 ▸ Submodule.subset_span (Set.mem_range_self 1)
-    rw [hkl]
-    exact add_mem (Submodule.smul_mem _ _ h1) (Submodule.smul_mem _ _ hθ)
+  have hspan := span_eq_top_of_int_repr hbs hb (exists_int_repr hmin hgen hsf hd4')
   exact discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int bs hb hspan hdd
 
 end TauCeti.NumberField

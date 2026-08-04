@@ -66,7 +66,7 @@ private theorem algebraMap_four_mul_mem_conductor {θ : 𝓞 K} {d : ℤ}
   have hnormθ : Algebra.norm ℚ pb.gen = -((d : ℤ) : ℚ) := by
     rw [Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly, hmin', hdim]
     simp [coeff_sub, coeff_X_pow]
-  have hfinrank : Module.finrank ℚ K = 2 := pb.finrank.trans hdim
+  have hfinrank : Module.finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have haeval : (aeval pb.gen) ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).derivative
       = algebraMap ℚ K 2 * pb.gen := by
     -- `derivative_X_pow` leaves the exponent as `2 - 1`; reduce it to `1` so `pow_one` applies.

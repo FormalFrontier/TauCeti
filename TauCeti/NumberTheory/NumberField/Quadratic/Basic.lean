@@ -58,7 +58,7 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
-theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+@[simp] theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
   have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
     have hae := minpoly.aeval ℤ θ
@@ -69,10 +69,11 @@ theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
   have := congrArg (algebraMap (𝓞 K) K) h
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
-/-- The generator is irrational: `θ ∉ ℚ`. Were `θ = q` for some `q : ℚ`, its `ℚ`-minimal
-polynomial would divide `X - q` and so have degree `≤ 1`, contradicting `minpoly ℚ θ = X² - d`. -/
+/-- The generator is irrational: `θ ∉ ℚ`. -/
 theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ∉ (algebraMap ℚ K).range := by
+  -- Were `θ = q ∈ ℚ`, its `ℚ`-minimal polynomial would divide `X - q`, so have degree `≤ 1`,
+  -- contradicting `minpoly ℚ θ = X² - d`.
   rintro ⟨q, hq⟩
   have hdvd : minpoly ℚ (algebraMap ℚ K q) ∣ (X - C q) := minpoly.dvd ℚ _ (by simp)
   have h1 : (minpoly ℚ (algebraMap ℚ K q)).natDegree ≤ 1 := by
@@ -80,30 +81,30 @@ theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
   rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
   norm_num at h1
 
-/-- The trace of the generator vanishes: `Tr(θ) = 0`. This specialises the generic quadratic
-trace-vanishing fact `trace_eq_zero_of_sq_ratCast` to `θ² = d` and the irrationality of `θ`. -/
+/-- The trace of the generator vanishes: `Tr(θ) = 0`. -/
 theorem trace_gen_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     Algebra.trace ℚ K (θ : K) = 0 := by
+  -- Specialise the generic `trace_eq_zero_of_sq_ratCast` to `θ² = d` and the irrationality of `θ`.
   have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
     rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
   exact trace_eq_zero_of_sq_ratCast hd' (gen_notMem_range hmin)
 
-/-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`. This specialises the generic
-square-root-basis discriminant `discr_one_elem_eq_of_sq_algebraMap` to `θ² = d`. -/
+/-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`. -/
 theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (θ : K)] = ((4 * d : ℤ) : ℚ) := by
+  -- Specialise the generic square-root-basis discriminant `discr_one_elem_eq_of_sq_algebraMap`.
   have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
     rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
   rw [TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap (finrank_rat_eq_two hmin hgen) hd'
     (gen_notMem_range hmin)]
   push_cast; ring
 
-/-- The discriminant of the `ℚ`-family `{1, (1+θ)/2}` is `d`: a change of basis from `{1, θ}` by
-the matrix `!![1, 0; 1/2, 1/2]` (determinant `1/2`), so `disc = (1/2)² · 4d = d`. -/
+/-- The discriminant of the `ℚ`-family `{1, (1+θ)/2}` is `d`. -/
 theorem discr_one_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (1 + (θ : K)) / 2] = ((d : ℤ) : ℚ) := by
+  -- Change of basis from `{1, θ}` by `!![1, 0; 1/2, 1/2]` (determinant `1/2`): `(1/2)² · 4d = d`.
   have hP : ![(1 : K), (1 + (θ : K)) / 2]
       = (!![1, 0; 1 / 2, 1 / 2] : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ K) *ᵥ
           ![(1 : K), (θ : K)] := by
