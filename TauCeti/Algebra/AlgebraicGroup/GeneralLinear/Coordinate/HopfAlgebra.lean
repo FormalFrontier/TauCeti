@@ -7,7 +7,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.RingTheory.Localization.Away.AdjoinRoot
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.CoordinateBialgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.Bialgebra
 
 /-!
 # The general linear coordinate Hopf algebra
@@ -599,58 +599,25 @@ theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
             (coordinateHopfAlgebraAlgEquiv R n
               (coordinateRingMap R n (MvPolynomial.X ij))))) =
       ⊤ := by
-  let rawGenerators : Set (CoordinateRing R n) :=
-    Set.range (fun ij : Fin n × Fin n =>
-      coordinateRingMap R n (MvPolynomial.X ij)) ∪
-    Set.range (fun ij : Fin n × Fin n =>
-      antipode R n (coordinateRingMap R n (MvPolynomial.X ij)))
-  let bundledGenerators : Set (coordinateHopfAlgebra R n) :=
-    Set.range (fun ij : Fin n × Fin n =>
-      coordinateHopfAlgebraAlgEquiv R n
-        (coordinateRingMap R n (MvPolynomial.X ij))) ∪
-    Set.range (fun ij : Fin n × Fin n =>
-      HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
-        (coordinateHopfAlgebraAlgEquiv R n
-          (coordinateRingMap R n (MvPolynomial.X ij))))
+  -- The bundled generators are the image of the raw ones: the stored antipode acts through the
+  -- transport equivalence, so each range is the equivalence's image of the corresponding raw range.
   have himage :
-      (coordinateHopfAlgebraAlgEquiv R n) '' rawGenerators = bundledGenerators := by
-    ext x
-    constructor
-    · rintro ⟨y, hy, rfl⟩
-      rcases hy with ⟨ij, rfl⟩ | ⟨ij, rfl⟩
-      · exact Set.mem_union_left _ ⟨ij, rfl⟩
-      · exact Set.mem_union_right _ ⟨ij,
-          (coordinateHopfAlgebra_antipode_apply R n _).symm⟩
-    · intro hx
-      rcases hx with ⟨ij, rfl⟩ | ⟨ij, rfl⟩
-      · exact ⟨_, Set.mem_union_left _ ⟨ij, rfl⟩, rfl⟩
-      · exact ⟨_, Set.mem_union_right _ ⟨ij, rfl⟩,
-          coordinateHopfAlgebra_antipode_apply R n _⟩
-  have hbundledAdjoin :
-      Algebra.adjoin R
+      Set.range (fun ij : Fin n × Fin n =>
+          coordinateHopfAlgebraAlgEquiv R n
+            (coordinateRingMap R n (MvPolynomial.X ij))) ∪
+        Set.range (fun ij : Fin n × Fin n =>
+          HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
+            (coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X ij)))) =
+        (coordinateHopfAlgebraAlgEquiv R n).toAlgHom ''
           (Set.range (fun ij : Fin n × Fin n =>
-            coordinateHopfAlgebraAlgEquiv R n
-              (coordinateRingMap R n (MvPolynomial.X ij))) ∪
+            coordinateRingMap R n (MvPolynomial.X ij)) ∪
           Set.range (fun ij : Fin n × Fin n =>
-            HopfAlgebra.antipode R (A := coordinateHopfAlgebra R n)
-              (coordinateHopfAlgebraAlgEquiv R n
-                (coordinateRingMap R n (MvPolynomial.X ij))))) =
-        Algebra.adjoin R bundledGenerators := by
-    simp only [bundledGenerators]
-  have hrawAdjoin : Algebra.adjoin R rawGenerators = ⊤ := by
-    simpa only [rawGenerators] using adjoin_X_union_antipode_X R n
-  calc
-    _ = Algebra.adjoin R bundledGenerators := hbundledAdjoin
-    _ =
-        Algebra.adjoin R ((coordinateHopfAlgebraAlgEquiv R n) '' rawGenerators) := by
-      rw [himage]
-    _ = (Algebra.adjoin R rawGenerators).map
-        (coordinateHopfAlgebraAlgEquiv R n).toAlgHom := by
-      simpa using Algebra.adjoin_image R
-        (coordinateHopfAlgebraAlgEquiv R n).toAlgHom rawGenerators
-    _ = ⊤ := by
-      rw [hrawAdjoin, Algebra.map_top]
-      exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
+            antipode R n (coordinateRingMap R n (MvPolynomial.X ij)))) := by
+    simp only [Set.image_union, ← Set.range_comp, Function.comp_def, AlgEquiv.coe_toAlgHom,
+      coordinateHopfAlgebra_antipode_apply]
+  rw [himage, Algebra.adjoin_image, adjoin_X_union_antipode_X, Algebra.map_top]
+  exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
 
 /-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
 noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=

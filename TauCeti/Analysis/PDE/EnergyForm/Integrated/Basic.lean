@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PDE.EnergyForm.Linearity
-public import TauCeti.Analysis.PDE.Uniform.EllipticEnergy
+public import TauCeti.Analysis.PDE.Ellipticity.Energy
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 /-!

@@ -6,6 +6,7 @@ Authors: Codex, Claude
 module
 
 public import Mathlib.CategoryTheory.Skeletal
+public import TauCeti.Algebra.Group.Subgroup.Pointwise
 public import TauCeti.RepresentationTheory.Induction.Restriction
 
 /-!
@@ -18,6 +19,12 @@ isomorphism
 `sHs⁻¹ → H, x ↦ s⁻¹xs`.
 
 This is the representation occurring in the summands of the Mackey decomposition.
+
+The conjugation convention itself, that `MulAut.conj s • H` is `sHs⁻¹` and so that the membership
+proof `conjRep` needs is `s⁻¹xs ∈ H`, is pinned in `TauCeti.Algebra.Group.Subgroup.Pointwise` as
+`TauCeti.mem_conj_smul`, together with the laws `TauCeti.conj_one_smul` and
+`TauCeti.conj_mul_smul` making conjugation an action of `G` on the subgroups of `G`; the coherence
+below transports the representations along them.
 
 The file also records the coherence making `s ↦ {}^s(-)` an action: conjugating by `1` does
 nothing and `{}^{st} A = {}^s({}^t A)`.  Neither statement is literally an equation between
@@ -90,13 +97,6 @@ universe u v w
 namespace TauCeti
 
 variable {k : Type u} {G : Type v} [Group G]
-
-/-- Membership in `sHs⁻¹`, expressed using the conjugation convention used by `conjRep`. -/
-@[simp]
-theorem mem_conj_smul (s : G) (H : Subgroup G) (x : G) :
-    x ∈ (MulAut.conj s • H : Subgroup G) ↔ s⁻¹ * x * s ∈ H := by
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
-  simp
 
 /-- The canonical multiplicative equivalence `sHs⁻¹ ≃* H`, given by `x ↦ s⁻¹xs`. -/
 def conjSubgroupEquiv (s : G) (H : Subgroup G) : (MulAut.conj s • H : Subgroup G) ≃* H :=
@@ -204,20 +204,6 @@ theorem isIrreducible_conjRep_iff [Field k] (s : G) {H : Subgroup G} (A : Rep.{w
   isIrreducible_comp_equiv_iff (conjSubgroupEquiv s H) A.ρ
 
 section Coherence
-
-/-- Conjugating a subgroup by `1` leaves it unchanged. -/
-theorem conj_one_smul (H : Subgroup G) : MulAut.conj (1 : G) • H = H := by
-  simp
-
-/-- Conjugating a subgroup by `s * t` is conjugating by `t` and then by `s`. -/
-theorem conj_mul_smul (s t : G) (H : Subgroup G) :
-    MulAut.conj (s * t) • H = MulAut.conj s • (MulAut.conj t • H) := by
-  rw [map_mul, mul_smul]
-
-/-- Conjugating a subgroup by `s⁻¹` undoes conjugating it by `s`. -/
-theorem conj_inv_smul_smul (s : G) (H : Subgroup G) :
-    MulAut.conj s⁻¹ • (MulAut.conj s • H) = H := by
-  rw [← mul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
 
 /-- The transported form of `conjSubgroupEquiv 1`: conjugating by `1` is the identification of
 `1 · H · 1⁻¹` with `H`. -/
