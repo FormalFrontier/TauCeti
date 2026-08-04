@@ -51,8 +51,9 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_of_interior_crossings` — the real
-  bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are interior.
+* `TauCeti.Contour.isBddIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossings`
+  — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
+  interior.
 
 ## Provenance
 
@@ -405,13 +406,15 @@ private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ}
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
 For a closed piecewise-`C¹` immersion `γ` on `[a, b]` all of whose value-`s` parameters are
-interior and `C^{1,1}` there (`deriv γ` Lipschitz on a neighborhood) — in particular satisfied
-vacuously if `γ` never meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t -
-s) (deriv γ t)` has bounded image on `[a, b]` (not just off the crossings, where it is continuous
-on the compact avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is a fortiori
-genuinely interval-integrable there (not merely assigned Mathlib's junk `0` value for a
-non-integrable integrand), and the generalized winding number `n_s(γ)` is a real number equal to
-its ordinary (non-principal-value) integral:
+interior and `C^{1,1}` on each side there (`derivWithin γ` Lipschitz on a one-sided closed piece
+ending or starting at the crossing, `hγ_lip` — the two sides need not agree, so a crossing may
+coincide with a breakpoint of the immersion) — in particular satisfied vacuously if `γ` never
+meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t - s) (deriv γ t)` has
+bounded image on `[a, b]` (not just off the crossings, where it is continuous on the compact
+avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is a fortiori genuinely
+interval-integrable there (not merely assigned Mathlib's junk `0` value for a non-integrable
+integrand), and the generalized winding number `n_s(γ)` is a real number equal to its ordinary
+(non-principal-value) integral:
 
 `n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
 
@@ -423,7 +426,8 @@ actual content of HW Prop 2.3. The two sides of a crossing need not agree: `hγ_
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem windingNumber_eq_real_integral_of_closed_of_interior_crossings {γ : ℝ → ℂ} {a b : ℝ}
+theorem isBddIntegrable_windingNumber_eq_real_integral_of_closed_of_interior_crossings
+    {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ ε > 0, ∃ K : ℝ≥0,
