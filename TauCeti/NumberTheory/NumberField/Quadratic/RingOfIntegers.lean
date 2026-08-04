@@ -229,7 +229,8 @@ noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1
 
 /-- The half-integer generator coerces to `(1 + θ)/2` in `K`. -/
 @[simp] theorem coe_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
-    (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := rfl
+    (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := by
+  simp [halfGen]
 
 /-- **`𝓞 K = ℤ[ω]` for `d ≡ 1 (mod 4)`: coordinates.** Every algebraic integer is a `ℤ`-combination
 `k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the half-integer coordinates `A/2, B/2` give
@@ -286,8 +287,7 @@ theorem discr_eq_of_squarefree_of_emod_four_eq_one (hmin : minpoly ℤ θ = X ^ 
     have e0 : (⟨bs 0, hb 0⟩ : 𝓞 K) = 1 := by
       apply RingOfIntegers.coe_injective; change bs 0 = (1 : K); exact hval0
     have e1 : (⟨bs 1, hb 1⟩ : 𝓞 K) = halfGen hmin hd4 := by
-      apply RingOfIntegers.coe_injective; rw [coe_halfGen]; change bs 1 = (1 + (θ : K)) / 2
-      exact hval1
+      apply RingOfIntegers.coe_injective; change bs 1 = (1 + (θ : K)) / 2; exact hval1
     have h1 : (1 : 𝓞 K) ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
       e0 ▸ Submodule.subset_span (Set.mem_range_self 0)
     have hω : halfGen hmin hd4 ∈ Submodule.span ℤ (Set.range fun i => (⟨bs i, hb i⟩ : 𝓞 K)) :=
