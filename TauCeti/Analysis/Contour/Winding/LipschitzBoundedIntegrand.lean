@@ -201,48 +201,6 @@ private theorem abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin {γ :
     abs_of_nonneg (by positivity : (0 : ℝ) ≤ ‖γ t - w‖ ^ 2), hnum_eq]
   exact abs_div_sq_le_of_abs_le_mul_sq (by positivity) (norm_pos_iff.mpr hvel) hlower hnum
 
-/-- **Shared window-boundedness argument for a one-sided `C^{1,1}` crossing.** Both the `_right`
-and `_left` corollaries below need the same three things once a radius `ρ` bounding `|t - t₀| *
-(2 * K)` by `‖derivWithin γ (Icc c d) t₀‖ / 2` has been picked for their own side: that the window
-set `s` sits inside `[c, d]`, that it sits within `ρ` of `t₀`, and that `deriv γ` agrees with
-`derivWithin γ (Icc c d)` away from `t₀` on `s`. Given those three (side-specific, but short)
-facts, this proves boundedness on `s` directly, dispatching `t = t₀` itself for free. -/
-private theorem isBounded_image_realWindingIntegrand_window_of_lipschitzOnWith_derivWithin
-    {γ : ℝ → ℂ} {w : ℂ} {c d t₀ : ℝ} {K : ℝ≥0} (hcd : c ≤ d) (ht₀ : t₀ ∈ Icc c d)
-    (hdiff : DifferentiableOn ℝ γ (Icc c d))
-    (hlip : LipschitzOnWith K (derivWithin γ (Icc c d)) (Icc c d))
-    (h_eq : γ t₀ = w) (hvel : derivWithin γ (Icc c d) t₀ ≠ 0)
-    {ρ : ℝ} (hρ_bound : ρ ≤ ‖derivWithin γ (Icc c d) t₀‖ / (4 * ((K : ℝ) + 1)))
-    {s : Set ℝ} (hs_sub : s ⊆ Icc c d) (hs_win : ∀ t ∈ s, |t - t₀| ≤ ρ)
-    (hderiv_eq : ∀ t ∈ s, t ≠ t₀ → deriv γ t = derivWithin γ (Icc c d) t) :
-    Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' s) := by
-  have hv₀_pos : 0 < ‖derivWithin γ (Icc c d) t₀‖ := norm_pos_iff.mpr hvel
-  set r : ℝ := 4 * (2 * ‖derivWithin γ (Icc c d) t₀‖ * K + K ^ 2 * (d - c)) /
-    ‖derivWithin γ (Icc c d) t₀‖ ^ 2 with hr_def
-  have hr_nonneg : 0 ≤ r := by rw [hr_def]; positivity
-  refine Bornology.IsBounded.subset (Metric.isBounded_closedBall (x := (0 : ℝ)) (r := r)) ?_
-  rintro x ⟨t, ht, rfl⟩
-  simp only []
-  rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
-  rcases eq_or_ne t t₀ with rfl | htne
-  · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
-    rw [hz0, realWindingIntegrand_def]
-    simp only [inv_zero, zero_mul, Complex.zero_im, abs_zero]
-    exact hr_nonneg
-  · have htcd : t ∈ Icc c d := hs_sub ht
-    rw [hderiv_eq t ht htne]
-    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin hcd hdiff hlip ht₀ h_eq
-      hvel htcd ?_
-    have habs : |t - t₀| ≤ ρ := hs_win t ht
-    have hK1 : (0 : ℝ) < 2 * ((K : ℝ) + 1) := by positivity
-    calc |t - t₀| * (2 * (K : ℝ)) ≤ |t - t₀| * (2 * ((K : ℝ) + 1)) := by
-            nlinarith [abs_nonneg (t - t₀)]
-      _ ≤ ρ * (2 * ((K : ℝ) + 1)) := mul_le_mul_of_nonneg_right habs hK1.le
-      _ ≤ (‖derivWithin γ (Icc c d) t₀‖ / (4 * ((K : ℝ) + 1))) * (2 * ((K : ℝ) + 1)) :=
-          mul_le_mul_of_nonneg_right hρ_bound hK1.le
-      _ = ‖derivWithin γ (Icc c d) t₀‖ / 2 := by field_simp; ring
-      _ ≤ ‖derivWithin γ (Icc c d) t₀‖ := by linarith
-
 /-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing, from the right.** If `γ`
 is differentiable on `[t₀, d]` and `derivWithin γ (Icc t₀ d)` is `K`-Lipschitz there and non-zero
 at `t₀`, where `γ t₀ = w`, then the real winding integrand (the ordinary derivative, which agrees
@@ -262,13 +220,38 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   set ρ : ℝ := min ((d - t₀) / 2) (‖derivWithin γ (Icc t₀ d) t₀‖ / (4 * ((K : ℝ) + 1))) with hρ_def
   have hρ_pos : 0 < ρ := lt_min (by linarith) (by positivity)
   have hρ_lt : ρ < d - t₀ := lt_of_le_of_lt (min_le_left _ _) (by linarith)
-  refine ⟨ρ, hρ_pos, hρ_lt,
-    isBounded_image_realWindingIntegrand_window_of_lipschitzOnWith_derivWithin htd.le
-      (left_mem_Icc.mpr htd.le) hdiff hlip h_eq hvel (min_le_right _ _)
-      (fun t ht => ⟨ht.1, by linarith [ht.2]⟩)
-      (fun t ht => abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)
-      (fun t ht htne => (derivWithin_of_mem_nhds
-        (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htne)) (by linarith [ht.2]))).symm)⟩
+  set r : ℝ := 4 * (2 * ‖derivWithin γ (Icc t₀ d) t₀‖ * K + K ^ 2 * (d - t₀)) /
+    ‖derivWithin γ (Icc t₀ d) t₀‖ ^ 2 with hr_def
+  have hr_nonneg : 0 ≤ r := by rw [hr_def]; positivity
+  refine ⟨ρ, hρ_pos, hρ_lt, Bornology.IsBounded.subset
+    (Metric.isBounded_closedBall (x := (0 : ℝ)) (r := r)) ?_⟩
+  rintro x ⟨t, ht, rfl⟩
+  simp only []
+  rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
+  rcases eq_or_ne t t₀ with rfl | htne
+  · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
+    rw [hz0, realWindingIntegrand_def]
+    simp only [inv_zero, zero_mul, Complex.zero_im, abs_zero]
+    exact hr_nonneg
+  · have htcd : t ∈ Icc t₀ d := ⟨ht.1, by linarith [ht.2]⟩
+    have hDeq : deriv γ t = derivWithin γ (Icc t₀ d) t :=
+      (derivWithin_of_mem_nhds
+        (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htne)) (by linarith [ht.2]))).symm
+    rw [hDeq]
+    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin htd.le hdiff hlip
+      (left_mem_Icc.mpr htd.le) h_eq hvel htcd ?_
+    have habs : |t - t₀| = t - t₀ := abs_of_nonneg (by linarith [ht.1])
+    rw [habs]
+    have h1 : t - t₀ ≤ ρ := by linarith [ht.2]
+    have h2 : ρ ≤ ‖derivWithin γ (Icc t₀ d) t₀‖ / (4 * ((K : ℝ) + 1)) := min_le_right _ _
+    have hK1 : (0 : ℝ) < 2 * ((K : ℝ) + 1) := by positivity
+    calc (t - t₀) * (2 * (K : ℝ)) ≤ (t - t₀) * (2 * ((K : ℝ) + 1)) :=
+            mul_le_mul_of_nonneg_left (by linarith) (by linarith [ht.1])
+      _ ≤ ρ * (2 * ((K : ℝ) + 1)) := mul_le_mul_of_nonneg_right h1 hK1.le
+      _ ≤ (‖derivWithin γ (Icc t₀ d) t₀‖ / (4 * ((K : ℝ) + 1))) * (2 * ((K : ℝ) + 1)) :=
+          mul_le_mul_of_nonneg_right h2 hK1.le
+      _ = ‖derivWithin γ (Icc t₀ d) t₀‖ / 2 := by field_simp; ring
+      _ ≤ ‖derivWithin γ (Icc t₀ d) t₀‖ := half_le_self (norm_nonneg _)
 
 /-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing, from the left.** The
 left-hand mirror of the `_right` version above: if `γ` is differentiable on `[c, t₀]` and
@@ -286,13 +269,38 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   set ρ : ℝ := min ((t₀ - c) / 2) (‖derivWithin γ (Icc c t₀) t₀‖ / (4 * ((K : ℝ) + 1))) with hρ_def
   have hρ_pos : 0 < ρ := lt_min (by linarith) (by positivity)
   have hρ_lt : ρ < t₀ - c := lt_of_le_of_lt (min_le_left _ _) (by linarith)
-  refine ⟨ρ, hρ_pos, hρ_lt,
-    isBounded_image_realWindingIntegrand_window_of_lipschitzOnWith_derivWithin hct.le
-      (right_mem_Icc.mpr hct.le) hdiff hlip h_eq hvel (min_le_right _ _)
-      (fun t ht => ⟨by linarith [ht.1], ht.2⟩)
-      (fun t ht => abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)
-      (fun t ht htne => (derivWithin_of_mem_nhds
-        (Icc_mem_nhds (by linarith [ht.1]) (lt_of_le_of_ne ht.2 htne))).symm)⟩
+  set r : ℝ := 4 * (2 * ‖derivWithin γ (Icc c t₀) t₀‖ * K + K ^ 2 * (t₀ - c)) /
+    ‖derivWithin γ (Icc c t₀) t₀‖ ^ 2 with hr_def
+  have hr_nonneg : 0 ≤ r := by rw [hr_def]; positivity
+  refine ⟨ρ, hρ_pos, hρ_lt, Bornology.IsBounded.subset
+    (Metric.isBounded_closedBall (x := (0 : ℝ)) (r := r)) ?_⟩
+  rintro x ⟨t, ht, rfl⟩
+  simp only []
+  rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
+  rcases eq_or_ne t t₀ with rfl | htne
+  · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
+    rw [hz0, realWindingIntegrand_def]
+    simp only [inv_zero, zero_mul, Complex.zero_im, abs_zero]
+    exact hr_nonneg
+  · have htcd : t ∈ Icc c t₀ := ⟨by linarith [ht.1], ht.2⟩
+    have hDeq : deriv γ t = derivWithin γ (Icc c t₀) t :=
+      (derivWithin_of_mem_nhds
+        (Icc_mem_nhds (by linarith [ht.1]) (lt_of_le_of_ne ht.2 htne))).symm
+    rw [hDeq]
+    refine abs_realWindingIntegrand_le_of_lipschitzOnWith_derivWithin hct.le hdiff hlip
+      (right_mem_Icc.mpr hct.le) h_eq hvel htcd ?_
+    have habs : |t - t₀| = t₀ - t := by rw [abs_of_nonpos (by linarith [ht.2])]; ring
+    rw [habs]
+    have h1 : t₀ - t ≤ ρ := by linarith [ht.1]
+    have h2 : ρ ≤ ‖derivWithin γ (Icc c t₀) t₀‖ / (4 * ((K : ℝ) + 1)) := min_le_right _ _
+    have hK1 : (0 : ℝ) < 2 * ((K : ℝ) + 1) := by positivity
+    calc (t₀ - t) * (2 * (K : ℝ)) ≤ (t₀ - t) * (2 * ((K : ℝ) + 1)) :=
+            mul_le_mul_of_nonneg_left (by linarith) (by linarith [ht.2])
+      _ ≤ ρ * (2 * ((K : ℝ) + 1)) := mul_le_mul_of_nonneg_right h1 hK1.le
+      _ ≤ (‖derivWithin γ (Icc c t₀) t₀‖ / (4 * ((K : ℝ) + 1))) * (2 * ((K : ℝ) + 1)) :=
+          mul_le_mul_of_nonneg_right h2 hK1.le
+      _ = ‖derivWithin γ (Icc c t₀) t₀‖ / 2 := by field_simp; ring
+      _ ≤ ‖derivWithin γ (Icc c t₀) t₀‖ := half_le_self (norm_nonneg _)
 
 end TauCeti.Contour
 
