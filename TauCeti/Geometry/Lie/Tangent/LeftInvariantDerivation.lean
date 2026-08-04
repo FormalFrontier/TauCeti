@@ -26,8 +26,8 @@ The latter is the manifold model vector space, so this also determines the Lie a
   at the identity.
 * `leftInvariantDerivationEquivGroupLieAlgebra`: the canonical linear equivalence between
   left-invariant derivations and the tangent Lie algebra.
-* `leftInvariantDerivationNormedAddCommGroup`, `leftInvariantDerivationNormedSpace`: the canonical
-  normed-space structure transported from the tangent space at the identity.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace`: the canonical isometric linear
+  equivalence with the manifold model vector space.
 * `finiteDimensional_leftInvariantDerivation`: the Lie algebra is finite-dimensional.
 * `finrank_leftInvariantDerivation_eq_modelVectorSpace`: its dimension equals that of the manifold
   model vector space.
@@ -267,29 +267,55 @@ noncomputable def leftInvariantDerivationEquivGroupLieAlgebra
       LeftInvariantDerivation.evalAt_one_surjective h₁⟩).trans
     (pointDerivationEquivTangentSpace 1 h₁)
 
-/-- The normed additive group structure on left-invariant derivations transported from the
-tangent space at the identity. -/
-noncomputable abbrev leftInvariantDerivationNormedAddCommGroup
+noncomputable instance LeftInvariantDerivation.instNormedAddCommGroup
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
-    (h₁ : I.IsInteriorPoint (1 : G)) :
-    NormedAddCommGroup (LeftInvariantDerivation I G) :=
+    [BoundarylessManifold I G] : NormedAddCommGroup (LeftInvariantDerivation I G) :=
   NormedAddCommGroup.induced (LeftInvariantDerivation I G) E
-    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint).trans
       (LinearEquiv.refl ℝ E))
-    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint).trans
       (LinearEquiv.refl ℝ E)).injective
 
-/-- The normed vector-space structure on left-invariant derivations transported from the tangent
-space at the identity. -/
-noncomputable abbrev leftInvariantDerivationNormedSpace
+noncomputable instance LeftInvariantDerivation.instNormedSpace
     [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
-    (h₁ : I.IsInteriorPoint (1 : G)) :
-    @NormedSpace ℝ (LeftInvariantDerivation I G) _
-      (leftInvariantDerivationNormedAddCommGroup (I := I) (G := G)
-        h₁).toSeminormedAddCommGroup :=
+    [BoundarylessManifold I G] : NormedSpace ℝ (LeftInvariantDerivation I G) :=
   NormedSpace.induced ℝ (LeftInvariantDerivation I G) E
-    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁).trans
+    ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint).trans
       (LinearEquiv.refl ℝ E))
+
+/-- Evaluation at the identity identifies left-invariant derivations isometrically with the
+manifold model vector space. -/
+noncomputable abbrev leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    [BoundarylessManifold I G] : LeftInvariantDerivation I G ≃ₗᵢ[ℝ] E where
+  toLinearEquiv :=
+    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+      BoundarylessManifold.isInteriorPoint).trans
+      (LinearEquiv.refl ℝ E)
+  norm_map' _ := rfl
+
+/-- The isometric derivation–model-space equivalence is evaluation at the identity followed by
+the canonical identification of the identity tangent space with the model vector space. -/
+@[simp]
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    [BoundarylessManifold I G] (X : LeftInvariantDerivation I G) :
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) X =
+      (leftInvariantDerivationEquivGroupLieAlgebra BoundarylessManifold.isInteriorPoint X : E) :=
+  rfl
+
+/-- The norm of a left-invariant derivation is the norm of its tangent vector at the identity. -/
+@[simp]
+theorem norm_leftInvariantDerivation_eq_norm_modelVectorSpace
+    [FiniteDimensional ℝ E] [ContMDiffMul I ∞ G] [T2Space G]
+    [BoundarylessManifold I G] (X : LeftInvariantDerivation I G) :
+    ‖X‖ = ‖leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+      (I := I) (G := G) X‖ :=
+  (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)).norm_map X |>.symm
 
 /-- The derivation–tangent equivalence is evaluation at the identity followed by the
 point-derivation–tangent equivalence. -/

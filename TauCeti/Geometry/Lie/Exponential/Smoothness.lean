@@ -394,28 +394,20 @@ theorem contMDiff_mulInvariantExp
 /-- The derivation-based exponential of a finite-dimensional smooth Lie group is smooth. -/
 theorem contMDiff_lieExp
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
-    let _ : NormedAddCommGroup (LeftInvariantDerivation I G) :=
-      leftInvariantDerivationNormedAddCommGroup (E := E) (H := H) (I := I) (G := G)
-        BoundarylessManifold.isInteriorPoint
-    let _ : NormedSpace ℝ (LeftInvariantDerivation I G) :=
-      leftInvariantDerivationNormedSpace (E := E) (H := H) (I := I) (G := G)
-        BoundarylessManifold.isInteriorPoint
     ContMDiff (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I ∞
       (lieExp (I := I) (G := G)) := by
-  let _ := leftInvariantDerivationNormedAddCommGroup (E := E) (H := H) (I := I) (G := G)
-    BoundarylessManifold.isInteriorPoint
-  let _ := leftInvariantDerivationNormedSpace (E := E) (H := H) (I := I) (G := G)
-    BoundarylessManifold.isInteriorPoint
   let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
     finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
-  let e : LeftInvariantDerivation I G ≃ₗ[ℝ] E :=
-    (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
-      BoundarylessManifold.isInteriorPoint).trans (LinearEquiv.refl ℝ E)
+  let e := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)
   have he : ContMDiff (modelWithCornersSelf ℝ (LeftInvariantDerivation I G))
       (modelWithCornersSelf ℝ E) ∞ e :=
-    (⟨e, e.toLinearMap.continuous_of_finiteDimensional⟩ :
-      LeftInvariantDerivation I G →L[ℝ] E).contDiff.contMDiff
+    e.toContinuousLinearEquiv.contDiff.contMDiff
   apply ((contMDiff_mulInvariantExp (I := I) (G := G)).comp he).congr
   intro X
   rw [lieExp_eq_mulInvariantExp]
-  rfl
+  change mulInvariantExp (I := I) (G := G)
+      (leftInvariantDerivationEquivGroupLieAlgebra
+        BoundarylessManifold.isInteriorPoint X) =
+    mulInvariantExp (I := I) (G := G) (e X : GroupLieAlgebra I G)
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply]
