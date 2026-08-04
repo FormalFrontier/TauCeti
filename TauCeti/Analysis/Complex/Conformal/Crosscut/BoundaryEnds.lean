@@ -132,10 +132,9 @@ theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair (hζ : dis
 /-- **A holomorphic injection of finite Dirichlet integral has, at every boundary point, crosscuts
 of arbitrarily small radius whose image is narrow and whose two ends are close together on the
 image boundary.** For `f` holomorphic and injective on `ball c r` with
-`∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤`, every tolerance `ε > 0` and every bound `R` with
-`0 < R ≤ 2 * r` admit a radius `ρ < R` at which the image of `ball c r ∩ sphere ζ ρ` has diameter
-at most `ε` and the closed image crosscut meets `frontier (f '' ball c r)` in two points at
-distance at most `ε`.
+`∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤`, every tolerance `ε > 0` and every bound `R > 0` admit a
+radius `ρ < R` at which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε` and the
+closed image crosscut meets `frontier (f '' ball c r)` in two points at distance at most `ε`.
 
 The radius comes from the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top`
 of Wolff's lemma, which makes `TauCeti.circleImageLength f (ball c r) ζ ρ` smaller than
@@ -145,31 +144,32 @@ points; `TauCeti.diam_image_ball_inter_sphere_le` turns the same bound into the 
 `TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` passes it on to the two ends, which lie
 in the boundary piece and so are no further apart than the image crosscut is wide.
 
-The bound `R ≤ 2 * r` is what makes `ball c r ∩ sphere ζ ρ` a genuine circular crosscut rather than
-the empty set; it forces `0 < r`, so no separate hypothesis on the radius of the disc is needed. -/
+Only `0 < r` is asked of the disc, and only `0 < R` of the prescribed bound: the radius is searched
+for below `min R (2 * r)` instead of below `R`, which is what makes `ball c r ∩ sphere ζ ρ` a
+genuine circular crosscut rather than the empty set. -/
 theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le
-    (hζ : dist ζ c = r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R)
-    (hRr : R ≤ 2 * r) :
+    (hζ : dist ζ c = r) (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ}
+    (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
     ∃ ρ ∈ Ioo 0 R, ∃ u v,
       frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) = {u, v} ∧
         dist u v ≤ ε ∧ diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
   obtain ⟨ρ, hρmem, hlen⟩ :=
     exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
-      (ENNReal.ofReal_pos.mpr hε).ne' hR
+      (ENNReal.ofReal_pos.mpr hε).ne' (R := min R (2 * r)) (lt_min hR (by linarith))
   have hfin' : circleImageLength f (ball c r) ζ ρ ≠ ⊤ :=
     (hlen.trans ENNReal.ofReal_lt_top).ne
   have hdiam : diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε :=
     diam_image_ball_inter_sphere_le hζ hρmem.1 hf hε.le hlen.le
   obtain ⟨u, v, hpair⟩ := exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair hζ hρmem.1
-    (hρmem.2.trans_le hRr) hf hinj hfin'
+    (hρmem.2.trans_le (min_le_right _ _)) hf hinj hfin'
   have hu : u ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert _ _
   have hv : v ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert_of_mem _ rfl
   have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) :=
     isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hζ hρmem.1 hf hfin'
-  exact ⟨ρ, hρmem, u, v, hpair,
+  exact ⟨ρ, ⟨hρmem.1, hρmem.2.trans_le (min_le_left _ _)⟩, u, v, hpair,
     (dist_le_diam_of_mem (hb.closure.subset inter_subset_right) hu hv).trans
       ((diam_frontier_inter_closure_image_inter_sphere_le hb).trans hdiam), hdiam⟩
 
@@ -185,13 +185,14 @@ on `frontier (f '' ball c r)`, which for a Jordan domain is a Jordan curve, and 
 of each other, so `TauCeti.IsJordanCurve.exists_pos_forall_exists_diam_le` cuts a small closed arc
 off that curve between them — once `u ≠ v` is known, which nothing here supplies. -/
 theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le_of_isBounded
-    (hζ : dist ζ c = r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r)) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) (hRr : R ≤ 2 * r) :
+    (hζ : dist ζ c = r) (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {ε : ℝ} (hε : 0 < ε) {R : ℝ}
+    (hR : 0 < R) :
     ∃ ρ ∈ Ioo 0 R, ∃ u v,
       frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) = {u, v} ∧
         dist u v ≤ ε ∧ diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε :=
-  exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le hζ hf
+  exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le hζ hr hf
     hinj (lintegral_enorm_deriv_sq_ne_top_of_isBounded isOpen_ball hf
-      measurableSet_ball.nullMeasurableSet subset_rfl hinj hb) hε hR hRr
+      measurableSet_ball.nullMeasurableSet subset_rfl hinj hb) hε hR
 
 end TauCeti
