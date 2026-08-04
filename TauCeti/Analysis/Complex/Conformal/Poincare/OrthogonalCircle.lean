@@ -390,14 +390,8 @@ theorem mem_range_geodesicLine_iff (a : PoincareDisc) (u : Circle) (z : Poincare
       exact ⟨t, by rw [unitDiscMoebiusIsometryEquiv_geodesicLine]⟩
     · rintro ⟨t, ht⟩
       exact ⟨t, by rw [geodesicLine_def, ht, IsometryEquiv.symm_apply_apply]⟩
-  have hne : 1 - conj (toUnitDisc a : ℂ) * (toUnitDisc z : ℂ) ≠ 0 := by
-    intro hzero
-    have h1 : ‖conj (toUnitDisc a : ℂ) * (toUnitDisc z : ℂ)‖ = 1 := by
-      rw [← sub_eq_zero.mp hzero]
-      exact norm_one
-    rw [norm_mul, norm_conj] at h1
-    nlinarith [(toUnitDisc a).norm_lt_one, (toUnitDisc z).norm_lt_one,
-      norm_nonneg (toUnitDisc a : ℂ), norm_nonneg (toUnitDisc z : ℂ)]
+  have hne : 1 - conj (toUnitDisc a : ℂ) * (toUnitDisc z : ℂ) ≠ 0 :=
+    one_sub_conj_mul_ne_zero_unitDisc (toUnitDisc z) (toUnitDisc a)
   have hconj : conj (1 - conj (toUnitDisc a : ℂ) * (toUnitDisc z : ℂ))
       = 1 - (toUnitDisc a : ℂ) * conj (toUnitDisc z : ℂ) := by
     rw [map_sub, map_one, map_mul, Complex.conj_conj]
