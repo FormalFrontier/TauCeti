@@ -48,8 +48,8 @@ the unit circle meets the ray through its centre at a point `k * w` of the open 
 point, at distance `k = ‖c‖ - R` from the origin, which the orthogonality relation identifies with
 `1 / (‖c‖ + R) < 1` — and the hyperbolic line through that point perpendicular to the ray has
 centre `((1 + k ^ 2) / (2 * k)) * w` and radius `(1 - k ^ 2) / (2 * k)`
-(`TauCeti.orthogonalCircleCenter_mul_I_mul_ofReal`,
-`TauCeti.orthogonalCircleRadius_mul_I_mul_ofReal`). The orthogonality relation is exactly what
+(`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`,
+`TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul`). The orthogonality relation is exactly what
 makes those two numbers `‖c‖` and `R` again, so the prescribed circle is the circle of that line
 (`TauCeti.exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq`). Together with the
 diameters, which the radial geodesics already trace, this closes the description into an iff.
@@ -80,8 +80,8 @@ diameters, which the radial geodesics already trace, this closes the description
 * `TauCeti.PoincareDisc.range_coe_toUnitDisc_eq_ball_inter_or_of_isometry` — the same for an
   arbitrary isometric embedding of the real line, which is the parametrisation-free form of that
   description.
-* `TauCeti.orthogonalCircleCenter_mul_I_mul_ofReal` and
-  `TauCeti.orthogonalCircleRadius_mul_I_mul_ofReal` — the centre and radius of the hyperbolic line
+* `TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul` and
+  `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` — the centre and radius of the hyperbolic line
   through `k * w` perpendicular to the radius through the unit vector `w`, and
   `TauCeti.exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq` — every circle orthogonal to
   the unit circle is the circle of a hyperbolic line.
@@ -378,10 +378,11 @@ private lemma im_conj_mul_I_mul_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) (k : ℝ
 the hyperbolic line through `k * w` in the direction `I * w` perpendicular to the radius through
 `w` traces a Euclidean circle centred at `((1 + k ^ 2) / (2 * k)) * w`, again on that radius.
 
-Together with `TauCeti.orthogonalCircleRadius_mul_I_mul_ofReal` this is the computation that makes
+Together with `TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` this is the computation that makes
 every circle orthogonal to the unit circle a hyperbolic line: as `k` ranges over `Ioo 0 1` the
 centre sweeps out the whole ray beyond the unit circle. -/
-lemma orthogonalCircleCenter_mul_I_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : k ≠ 0) :
+@[simp]
+lemma orthogonalCircleCenter_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : k ≠ 0) :
     orthogonalCircleCenter (I * w) ((k : ℂ) * w) = (((1 + k ^ 2) / (2 * k) : ℝ) : ℂ) * w := by
   have hcw : w * conj w = 1 := by
     rw [Complex.mul_conj, Complex.normSq_eq_norm_sq, hw]
@@ -404,11 +405,14 @@ lemma orthogonalCircleCenter_mul_I_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) {k : 
   field_simp
 
 /-- **The radius of the perpendicular hyperbolic line.** The companion of
-`TauCeti.orthogonalCircleCenter_mul_I_mul_ofReal`: the Euclidean circle traced by the hyperbolic
-line through `k * w` in the direction `I * w` has radius `(1 - k ^ 2) / (2 * k)`. Only `k ≠ 0` is
-needed for the identity; positivity of the value is the extra information `0 < k < 1`, that is,
-that `k * w` lies in the open disc away from the origin. -/
-lemma orthogonalCircleRadius_mul_I_mul_ofReal {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : 0 < k) :
+`TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul`: the Euclidean circle traced by the hyperbolic
+line through `k * w` in the direction `I * w` has radius `(1 - k ^ 2) / (2 * k)`. Unlike the
+centre, which is a signed expression in `Im (conj u * a)` and so needs only `k ≠ 0`, the radius
+divides by `2 * |Im (conj u * a)| = 2 * |k|`: the displayed formula therefore asks for `0 < k`,
+and for a negative `k` it would instead read `(1 - k ^ 2) / (2 * |k|)`. Positivity of the value
+is the further information `k < 1`, that is, that `k * w` lies in the open disc. -/
+@[simp]
+lemma orthogonalCircleRadius_I_mul_ofReal_mul {w : ℂ} (hw : ‖w‖ = 1) {k : ℝ} (hk : 0 < k) :
     orthogonalCircleRadius (I * w) ((k : ℂ) * w) = (1 - k ^ 2) / (2 * k) := by
   have hnorm : ‖(k : ℂ) * w‖ = k := by
     rw [norm_mul, Complex.norm_real, hw, mul_one, Real.norm_eq_abs, abs_of_pos hk]
@@ -424,8 +428,8 @@ has exactly that centre and radius.
 The witnesses are `a = k * w` and `u = I * w`, where `w = c / ‖c‖` is the direction of the centre
 and `k = ‖c‖ - R` is the distance from the origin to the near point of the circle: the
 orthogonality relation makes `k` the reciprocal of `‖c‖ + R`, hence a point of `Ioo 0 1`, and the
-two computations `TauCeti.orthogonalCircleCenter_mul_I_mul_ofReal` and
-`TauCeti.orthogonalCircleRadius_mul_I_mul_ofReal` then return `c` and `R` on the nose. -/
+two computations `TauCeti.orthogonalCircleCenter_I_mul_ofReal_mul` and
+`TauCeti.orthogonalCircleRadius_I_mul_ofReal_mul` then return `c` and `R` on the nose. -/
 theorem exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq {c : ℂ} {R : ℝ} (hR : 0 < R)
     (horth : ‖c‖ ^ 2 = R ^ 2 + 1) :
     ∃ u a : ℂ, ‖u‖ = 1 ∧ ‖a‖ < 1 ∧ (conj u * a).im ≠ 0 ∧
@@ -446,14 +450,14 @@ theorem exists_orthogonalCircleCenter_eq_orthogonalCircleRadius_eq {c : ℂ} {R 
     exact hk1
   · rw [im_conj_mul_I_mul_mul_ofReal hw]
     exact neg_ne_zero.mpr hk0.ne'
-  · rw [orthogonalCircleCenter_mul_I_mul_ofReal hw hk0.ne', hwdef]
+  · rw [orthogonalCircleCenter_I_mul_ofReal_mul hw hk0.ne', hwdef]
     have hcen : (1 + k ^ 2) / (2 * k) = ‖c‖ := by
       have h : 1 + k ^ 2 = 2 * ‖c‖ * k := by rw [hkdef]; linear_combination -horth
       rw [h]
       field_simp
     rw [hcen]
     field_simp
-  · rw [orthogonalCircleRadius_mul_I_mul_ofReal hw hk0]
+  · rw [orthogonalCircleRadius_I_mul_ofReal_mul hw hk0]
     have h : 1 - k ^ 2 = 2 * R * k := by rw [hkdef]; linear_combination -horth
     rw [h]
     field_simp
