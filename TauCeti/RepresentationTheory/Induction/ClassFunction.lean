@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
-public import TauCeti.RepresentationTheory.Induction.Character
 
 /-!
 # The induced class function
@@ -17,20 +16,24 @@ character of `G`, by the coset-representative formula
 `TauCeti.indClassFun`.  It is the linearization of induction on characters, and the map that turns
 the restriction/induction pair into an adjoint pair on class functions.
 
+Nothing here mentions a representation, so the file sits below
+`TauCeti.RepresentationTheory.Induction.Character`, which imports it to identify the induced
+character with the induced class function of a character (`TauCeti.indClassFun_ofFDRep_character`)
+and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
+
 ## Main definitions
 
 * `TauCeti.indClassFun S f`: the function `G → k` obtained from `f : S → k` by summing `f` over
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
-  so it is available over an arbitrary field.
+  so it needs no invertibility hypothesis and no more than an additive commutative monoid of
+  coefficients.
 * `TauCeti.ClassFunction.ind S`: the same construction packaged as a `k`-linear map
   `ClassFunction k S →ₗ[k] ClassFunction k G`.
 
 ## Main statements
 
-* `TauCeti.indClassFun_ofFDRep_character`: on a genuine character, `indClassFun` is the character
-  of the induced representation.
 * `TauCeti.indClassFun_mem_classFunction`: the induced function of a class function is a class
-  function; in particular the coset representatives chosen in the definition do not matter.
+  function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
 * `TauCeti.frobenius_reciprocity_classFun` and `TauCeti.characterPairing_ind`: **Frobenius
@@ -40,17 +43,16 @@ the restriction/induction pair into an adjoint pair on class functions.
 ## Implementation notes
 
 The definition sums over `Quotient.out` representatives of `G ⧸ S`, so it literally matches
-`TauCeti.character_indFDRep_sum_quotient` and the character identity is definitional.  For a
-general `f` the individual summands depend on that choice of representatives; they stop depending
-on it exactly when `f` is a class function (`TauCeti.indClassFun_mem_classFunction`), which is the
-only regime the results below use.
+`TauCeti.character_indFDRep_sum_quotient`.  For a general `f` the individual summands depend on
+that choice of representatives; being a class function is a sufficient condition for them not to,
+and that is what `TauCeti.indClassFun_mem_classFunction` extracts, in the form of conjugation
+invariance of the total sum.  It is the only regime the results below use.
 
-`TauCeti.character_ind` is the special case of `TauCeti.indClassFun_eq_natCard_inv_mul_sum` for the
-character of an `FDRep`, and `TauCeti.frobenius_reciprocity` is the special case of
-`TauCeti.frobenius_reciprocity_classFun` for two characters.  Neither is re-derived here: both live
-in files that this one imports, and the character-level statements are what the earlier layers of
-the roadmap are stated against.  What is new is that the same identities hold for class functions
-that are not characters, which is what the virtual-character lattice of Layer 6 needs.
+`TauCeti.frobenius_reciprocity` is the special case of
+`TauCeti.frobenius_reciprocity_classFun` for two characters.  It is not re-derived here: it is
+what the earlier layers of the roadmap are stated against, and what is new is that the same
+identity holds for class functions that are not characters, which is what the virtual-character
+lattice of Layer 6 needs.
 
 ## References
 
@@ -66,7 +68,11 @@ namespace TauCeti
 
 universe u
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k G : Type u} [Group G] {S : Subgroup G}
+
+section AddCommMonoid
+
+variable [AddCommMonoid k]
 
 open scoped Classical in
 /-- The summand of the induced class function attached to a representative `x`: the value of `f`
@@ -74,13 +80,27 @@ at `x⁻¹ * g * x` when that element lies in the subgroup, and `0` otherwise. -
 private noncomputable def indTerm (f : S → k) (g x : G) : k :=
   if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0
 
+/-- Conjugating the argument of the summand translates the representative. -/
+private theorem indTerm_conj (f : S → k) (g x c : G) :
+    indTerm f (c * g * c⁻¹) x = indTerm f g (c⁻¹ * x) := by
+  classical
+  have h : x⁻¹ * (c * g * c⁻¹) * x = (c⁻¹ * x)⁻¹ * g * (c⁻¹ * x) := by group
+  simp only [indTerm, h]
+
+open scoped Classical in
+/-- The value of the summand at the identity representative. -/
+private theorem indTerm_one (f : S → k) (g : G) :
+    indTerm f g 1 = if h : g ∈ S then f ⟨g, h⟩ else 0 := by
+  simp [indTerm]
+
 open scoped Classical in
 /-- **The induced class function.**  For `f : S → k` and `g : G`, sum `f (t⁻¹ g t)` over those
 left coset representatives `t` of `S` in `G` with `t⁻¹ g t ∈ S`.
 
-The sum has no division by `|S|`, so the definition is available over an arbitrary field; the
-averaged group-sum form is `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.  On a character it is the
-character of the induced representation, by `TauCeti.indClassFun_ofFDRep_character`. -/
+The sum has no division by `|S|`, so the definition needs nothing of the coefficients beyond
+addition; the averaged group-sum form is `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.  On a
+character it is the character of the induced representation, by
+`TauCeti.indClassFun_ofFDRep_character`. -/
 noncomputable def indClassFun (S : Subgroup G) [S.FiniteIndex] (f : S → k) : G → k := fun g =>
   letI := Fintype.ofFinite (G ⧸ S)
   ∑ t : G ⧸ S, indTerm f g (Quotient.out t)
@@ -96,15 +116,7 @@ theorem indClassFun_apply [S.FiniteIndex] (f : S → k) (g : G) :
         else 0 :=
   (rfl)
 
-/-- The character of an induced representation is the induced class function of its character. -/
-theorem indClassFun_ofFDRep_character [S.FiniteIndex] (A : FDRep k S) :
-    indClassFun S A.character = (indFDRep (k := k) (G := G) A).character := by
-  funext g
-  exact (character_indFDRep_sum_quotient A g).symm
-
-/-! ### Linearity -/
-
-section Linear
+/-! ### Additivity -/
 
 private theorem indTerm_zero (g x : G) : indTerm (S := S) (0 : S → k) g x = 0 := by
   classical
@@ -115,31 +127,38 @@ private theorem indTerm_add (f₁ f₂ : S → k) (g x : G) :
   classical
   by_cases h : x⁻¹ * g * x ∈ S <;> simp [indTerm, h]
 
-private theorem indTerm_smul (c : k) (f : S → k) (g x : G) :
-    indTerm (c • f) g x = c * indTerm f g x := by
-  classical
-  by_cases h : x⁻¹ * g * x ∈ S <;> simp [indTerm, h]
-
 /-- Induction of class functions kills the zero function. -/
+@[simp]
 theorem indClassFun_zero [S.FiniteIndex] : indClassFun S (0 : S → k) = 0 := by
   funext g
   simp [indClassFun, indTerm_zero]
 
 /-- Induction of class functions is additive. -/
+@[simp]
 theorem indClassFun_add [S.FiniteIndex] (f₁ f₂ : S → k) :
     indClassFun S (f₁ + f₂) = indClassFun S f₁ + indClassFun S f₂ := by
   funext g
   simp [indClassFun, indTerm_add, Finset.sum_add_distrib]
 
+end AddCommMonoid
+
+section Semiring
+
+variable [Semiring k]
+
+private theorem indTerm_smul (c : k) (f : S → k) (g x : G) :
+    indTerm (c • f) g x = c * indTerm f g x := by
+  classical
+  by_cases h : x⁻¹ * g * x ∈ S <;> simp [indTerm, h]
+
 /-- Induction of class functions is homogeneous. -/
+@[simp]
 theorem indClassFun_smul [S.FiniteIndex] (c : k) (f : S → k) :
     indClassFun S (c • f) = c • indClassFun S f := by
   funext g
   simp [indClassFun, indTerm_smul, Finset.mul_sum]
 
-end Linear
-
-/-! ### Independence of the chosen coset representatives -/
+/-! ### Conjugation invariance -/
 
 section ClassFun
 
@@ -174,21 +193,7 @@ private theorem indTerm_eq_of_mk_eq (hf : f ∈ ClassFunction k S) (g x y : G)
   have hy : x * ((⟨x⁻¹ * y, hs⟩ : S) : G) = y := by simp
   rw [← hy, indTerm_mul hf]
 
-/-- Conjugating the argument of the induced class function translates the representative. -/
-private theorem indTerm_conj (f : S → k) (g x c : G) :
-    indTerm f (c * g * c⁻¹) x = indTerm f g (c⁻¹ * x) := by
-  classical
-  have h : x⁻¹ * (c * g * c⁻¹) * x = (c⁻¹ * x)⁻¹ * g * (c⁻¹ * x) := by group
-  simp only [indTerm, h]
-
-open scoped Classical in
-/-- The value of the summand at the identity representative. -/
-private theorem indTerm_one (f : S → k) (g : G) :
-    indTerm f g 1 = if h : g ∈ S then f ⟨g, h⟩ else 0 := by
-  simp [indTerm]
-
-/-- **The induced function of a class function is a class function.**  In particular the value of
-`TauCeti.indClassFun` does not depend on the coset representatives chosen in its definition. -/
+/-- **The induced function of a class function is a class function.** -/
 theorem indClassFun_mem_classFunction [S.FiniteIndex] (hf : f ∈ ClassFunction k S) :
     indClassFun S f ∈ ClassFunction k G := by
   refine ClassFunction.mem_iff.mpr fun g c => ?_
@@ -198,8 +203,7 @@ theorem indClassFun_mem_classFunction [S.FiniteIndex] (hf : f ∈ ClassFunction 
         simp only [indClassFun, indTerm_conj]
     _ = ∑ t : G ⧸ S, indTerm f g (Quotient.out ((c⁻¹ : G) • t)) := by
         refine Finset.sum_congr rfl fun t _ => indTerm_eq_of_mk_eq hf _ _ _ ?_
-        rw [show c⁻¹ * Quotient.out t = (c⁻¹ : G) • Quotient.out t from rfl,
-          MulAction.Quotient.mk_smul_out, QuotientGroup.out_eq']
+        rw [← smul_eq_mul, MulAction.Quotient.mk_smul_out, QuotientGroup.out_eq']
     _ = ∑ t : G ⧸ S, indTerm f g (Quotient.out t) :=
         Fintype.sum_equiv (MulAction.toPerm (c⁻¹ : G)) _ _ fun _ => rfl
     _ = indClassFun S f g := rfl
@@ -208,15 +212,11 @@ end ClassFun
 
 /-! ### The group-sum form -/
 
-section GroupSum
-
-variable {f : S → k}
-
 open scoped Classical in
 /-- **The group-sum form of the induced class function**, with no division: summing the
 conjugation summand over all of `G` rather than over coset representatives multiplies the induced
 class function by the order of the subgroup. -/
-theorem natCard_mul_indClassFun [Fintype G] (hf : f ∈ ClassFunction k S) (g : G) :
+theorem natCard_mul_indClassFun [Fintype G] {f : S → k} (hf : f ∈ ClassFunction k S) (g : G) :
     (Nat.card S : k) * indClassFun S f g =
       ∑ x : G, if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 := by
   let := Fintype.ofFinite (G ⧸ S)
@@ -233,18 +233,6 @@ theorem natCard_mul_indClassFun [Fintype G] (hf : f ∈ ClassFunction k S) (g : 
         rw [← e.symm.sum_comp (fun x => indTerm f g x), Fintype.sum_prod_type]
     -- the remaining step only unfolds the private summand
     _ = _ := rfl
-
-open scoped Classical in
-/-- **The averaged group-sum form of the induced class function.**  The order of the subgroup must
-be invertible in the coefficient field; without that hypothesis
-`TauCeti.natCard_mul_indClassFun` is the division-free identity to use. -/
-theorem indClassFun_eq_natCard_inv_mul_sum [Fintype G] (hS : IsUnit (Nat.card S : k))
-    (hf : f ∈ ClassFunction k S) (g : G) :
-    indClassFun S f g =
-      (Nat.card S : k)⁻¹ * ∑ x : G, if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 := by
-  rw [← natCard_mul_indClassFun hf g, ← mul_assoc, inv_mul_cancel₀ hS.ne_zero, one_mul]
-
-end GroupSum
 
 /-! ### The induced class function as a linear map -/
 
@@ -263,20 +251,25 @@ theorem ind_apply [S.FiniteIndex] (f : ClassFunction k S) (g : G) :
     (ind S f).1 g = indClassFun S f.1 g :=
   (rfl)
 
-/-- Inducing the class function of a finite-dimensional representation gives the class function of
-the induced representation. -/
-theorem ind_ofFDRep [S.FiniteIndex] (A : FDRep k S) :
-    ind S (ofFDRep A) = ofFDRep (indFDRep (k := k) (G := G) A) := by
-  have hcoe : ((ofFDRep A : ClassFunction k S) : S → k) = A.character :=
-    funext fun s => ofFDRep_apply A s
-  refine Subtype.ext (funext fun g => ?_)
-  rw [ind_apply, hcoe, indClassFun_ofFDRep_character, ofFDRep_apply]
-
 end ClassFunction
 
-/-! ### Frobenius reciprocity -/
+end Semiring
 
-section Frobenius
+/-! ### Averaging and Frobenius reciprocity -/
+
+section Field
+
+variable [Field k]
+
+open scoped Classical in
+/-- **The averaged group-sum form of the induced class function.**  The order of the subgroup must
+be invertible in the coefficient field; without that hypothesis
+`TauCeti.natCard_mul_indClassFun` is the division-free identity to use. -/
+theorem indClassFun_eq_natCard_inv_mul_sum [Fintype G] {f : S → k}
+    (hS : IsUnit (Nat.card S : k)) (hf : f ∈ ClassFunction k S) (g : G) :
+    indClassFun S f g =
+      (Nat.card S : k)⁻¹ * ∑ x : G, if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 := by
+  rw [← natCard_mul_indClassFun hf g, ← mul_assoc, inv_mul_cancel₀ hS.ne_zero, one_mul]
 
 open scoped Classical in
 /-- **Frobenius reciprocity for class functions.**  The normalized pairing over `G` of an induced
@@ -299,6 +292,7 @@ theorem frobenius_reciprocity_classFun [Fintype G] (hG : IsUnit (Nat.card G : k)
   -- For a fixed `x : G`, summing the conjugation summand against `h` over all of `G` gives `X`.
   have hinner (x : G) :
       (∑ g : G, indTerm f.1 g x * h.1 g⁻¹) = X := by
+    have hinv (y : G) : (x * y * x⁻¹)⁻¹ = x * y⁻¹ * x⁻¹ := by group
     calc (∑ g : G, indTerm f.1 g x * h.1 g⁻¹)
         = ∑ y : G, indTerm f.1 (x * y * x⁻¹) x * h.1 (x * y * x⁻¹)⁻¹ := by
           refine (Fintype.sum_equiv ((Equiv.mulRight x⁻¹).trans (Equiv.mulLeft x)) _ _ ?_).symm
@@ -308,7 +302,7 @@ theorem frobenius_reciprocity_classFun [Fintype G] (hG : IsUnit (Nat.card G : k)
           refine Finset.sum_congr rfl fun y _ => ?_
           rw [indTerm_conj, inv_mul_cancel, indTerm_one]
           congr 1
-          rw [show (x * y * x⁻¹)⁻¹ = x * y⁻¹ * x⁻¹ by group]
+          rw [hinv y]
           exact ClassFunction.mem_iff.mp h.2 y⁻¹ x
       _ = ∑ y ∈ Finset.univ.filter (fun y : G => y ∈ S),
             (if hy : y ∈ S then f.1 ⟨y, hy⟩ else 0) * h.1 y⁻¹ := by
@@ -356,6 +350,6 @@ theorem characterPairing_ind [Fintype G] (hG : IsUnit (Nat.card G : k))
   rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply]
   simpa using frobenius_reciprocity_classFun hG f h
 
-end Frobenius
+end Field
 
 end TauCeti
