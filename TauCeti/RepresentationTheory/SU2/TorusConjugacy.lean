@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.Matrix.Spectrum
 public import TauCeti.Analysis.Matrix.UnitaryGroup
-public import TauCeti.RepresentationTheory.SU2.Basic
+public import TauCeti.RepresentationTheory.SU2.Weyl
 
 /-!
 # Every element of `SU(2)` is conjugate into the maximal torus
@@ -39,10 +39,15 @@ change the conjugation it induces.
 * `TauCeti.SU2.exists_isConj_torusExp`: the angle form, every element of `SU(2)` is conjugate to
   `diag (e^{iθ}, e^{-iθ})`.
 * `TauCeti.SU2.isConj_inv_of_mem_torus` and `TauCeti.SU2.isConj_torusExp_neg`: the Weyl reflection,
-  every element of the torus is conjugate in `SU(2)` to its inverse. With torus conjugacy this
-  says every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
-  converse, that conjugate elements of `T` are equal or inverse, is not proved here, so the
-  classes are not yet identified with the Weyl orbits.
+  every element of the torus is conjugate in `SU(2)` to its inverse. This is the conjugation by
+  the quarter turn `TauCeti.SU2.weylElement` of `TauCeti/RepresentationTheory/SU2/Weyl.lean`
+  (`TauCeti.SU2.weylElement_conj_torusHom`), read as an existential. With torus conjugacy it says
+  every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
+  converse, that conjugate elements of `T` are equal or inverse, is
+  `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`, so
+  each conjugacy class of `SU(2)` meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group
+  computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean`; that identification is not assembled
+  into a theorem here.
 * `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)`
   that agree on the maximal torus are equal; a class function on `SU(2)` is determined by its
   restriction to `T`.
@@ -133,30 +138,12 @@ theorem exists_isConj_torusExp (g : SU2) : ∃ θ : ℝ, IsConj g (torusExp θ) 
 /-! ### The Weyl reflection -/
 
 /-- The Weyl group of `SU(2)` acts on the maximal torus by inversion: every element of the torus
-is conjugate in `SU(2)` to its inverse, by the matrix `!![0, 1; -1, 0]` that swaps the two
-coordinate axes. Together with `TauCeti.SU2.exists_conj_mem_torus` this says that every conjugacy
-class of `SU(2)` meets the torus in a nonempty set closed under inversion. -/
+is conjugate in `SU(2)` to its inverse, by the quarter turn `TauCeti.SU2.weylElement` that swaps
+the two coordinate axes. Together with `TauCeti.SU2.exists_conj_mem_torus` this says that every
+conjugacy class of `SU(2)` meets the torus in a nonempty set closed under inversion. -/
 theorem isConj_inv_of_mem_torus {g : SU2} (hg : g ∈ torus) : IsConj g g⁻¹ := by
-  have hdiag := mem_torus_iff.mp hg
-  have h01 : (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1 = 0 := hdiag (by decide)
-  have h10 : (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0 = 0 := hdiag (by decide)
-  have hmem : (!![0, 1; -1, 0] : Matrix (Fin 2) (Fin 2) ℂ) ∈
-      Matrix.specialUnitaryGroup (Fin 2) ℂ := by
-    refine Matrix.mem_specialUnitaryGroup_iff.mpr ⟨Matrix.mem_unitaryGroup_iff.mpr ?_, ?_⟩
-    · ext i j
-      fin_cases i <;> fin_cases j <;>
-        simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.star_eq_conjTranspose]
-    · simp [Matrix.det_fin_two]
-  refine isConj_iff.mpr ⟨⟨_, hmem⟩, ?_⟩
-  -- Inversion in `SU(2)` is `star`, which commutes with the coercion to matrices.
-  rw [← Matrix.star_eq_inv, ← Matrix.star_eq_inv]
-  refine Subtype.ext ?_
-  push_cast
-  rw [Matrix.specialUnitaryGroup.star_eq_adjugate, Matrix.adjugate_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Matrix.vecMul, Matrix.vecHead, Matrix.vecTail, Fin.sum_univ_two,
-      Matrix.star_eq_conjTranspose, h01, h10]
+  obtain ⟨z, rfl⟩ := mem_torus_iff_exists_torusHom.mp hg
+  exact isConj_iff.mpr ⟨weylElement, by rw [weylElement_conj_torusHom, map_inv]⟩
 
 /-- Every element of the maximal torus is conjugate to its inverse in the angle parametrisation:
 `diag (e^{iθ}, e^{-iθ})` and `diag (e^{-iθ}, e^{iθ})` are conjugate in `SU(2)`. -/

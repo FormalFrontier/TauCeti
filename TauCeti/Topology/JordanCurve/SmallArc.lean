@@ -60,7 +60,10 @@ below consumes.
 The transport then runs both uniform continuities of the parametrization `TauCeti.jordanParam` of
 `TauCeti/Topology/JordanCurve/Basic.lean` at once: one converts "the two points are close in
 `X`" into "their parameters are close on the circle", the other converts "the parameter arc is
-short" into "its image has small diameter".
+short" into "its image has small diameter". That transport is carried out in one step, which
+*builds* a small arc. The main statement below then only has to *locate* that arc inside an
+arbitrary separating decomposition; that part is set-theoretic except for its closing step, which
+compares diameters and so still needs the curve to be bounded.
 
 ## Identifying the arcs
 
@@ -152,6 +155,25 @@ theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} 
     rw [pair_comm z w]
     exact (hdiam w z).trans ((le_min_iff.mpr ⟨hle, le_rfl⟩).trans hmin)
 
+/-- **Two nearby points cut a short arc off the circle**: the `δ`-`η` form of
+`TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le`, in which the bound on the
+diameter of the short arc no longer mentions the distance of the two cut points. This is the form
+the transport to a Jordan curve consumes, since what arrives there is a hypothesis of the shape
+`dist z w < δ`. -/
+private theorem exists_pos_forall_isPreconnected_union_eq_compl_pair_circle_diam_lt {η : ℝ}
+    (hη : 0 < η) :
+    ∃ δ > 0, ∀ ⦃z w : Circle⦄, z ≠ w → dist z w < δ →
+      ∃ P Q : Set Circle, IsPreconnected P ∧ IsPreconnected Q ∧
+        P ∪ Q = ({z, w} : Set Circle)ᶜ ∧ Metric.diam (P ∪ {z, w}) < η := by
+  have hπ : 0 < π := Real.pi_pos
+  refine ⟨2 / π * η, by positivity, fun z w hzw hd => ?_⟩
+  obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ :=
+    exists_isPreconnected_union_eq_compl_pair_circle_diam_le hzw
+  refine ⟨P, Q, hPc, hQc, hunion, hPd.trans_lt ?_⟩
+  calc π / 2 * dist z w < π / 2 * (2 / π * η) := by
+        exact mul_lt_mul_of_pos_left hd (by positivity)
+    _ = η := by field_simp
+
 /-! ## Cutting a Jordan curve -/
 
 variable {X : Type*} [PseudoMetricSpace X] {C : Set X} {ε : ℝ}
@@ -170,6 +192,58 @@ private lemma subset_or_eq_empty_of_union_eq_union {α : Type*} {A B U V : Set �
   · refine Or.inl fun x hx => ?_
     have hmem : x ∈ U ∪ V := by rw [hcover]; exact mem_union_left B hx
     exact hmem.elim id fun h => absurd (hdisj.le_bot ⟨hx, hVB h⟩) id
+
+/-- **Two nearby points cut a small arc off a Jordan curve**, in the form that *builds* the small
+arc: for every `ε > 0` there is a `δ > 0` such that if `p` and `q` are two distinct points of the
+curve at distance less than `δ`, then `C \ {p, q}` is covered by two preconnected sets, the first of
+which has diameter at most `ε` once the two cut points are put back.
+
+This is the analytic half of `TauCeti.IsJordanCurve.exists_pos_forall_diam_le`: it transports the
+cut of the circle along the parametrization, running both uniform continuities at once. The other
+half — passing from this one cover to an arbitrary separating decomposition — is set-theoretic
+apart from its closing diameter comparison, which still uses boundedness of the curve. Only the
+cover is recorded, not the disjointness of the two pieces, since that is all the identification
+below consumes. -/
+private theorem IsJordanCurve.exists_pos_forall_exists_isPreconnected_diam_union_pair_le
+    (h : IsJordanCurve C) (hε : 0 < ε) :
+    ∃ δ > 0, ∀ ⦃p : X⦄, p ∈ C → ∀ ⦃q : X⦄, q ∈ C → p ≠ q → dist p q < δ →
+      ∃ P Q : Set X, IsPreconnected P ∧ IsPreconnected Q ∧ P ∪ Q = C \ {p, q} ∧
+        Metric.diam (P ∪ {p, q}) ≤ ε := by
+  obtain ⟨e⟩ := isJordanCurve_iff.mp h
+  have : CompactSpace C := isCompact_iff_compactSpace.mp h.isCompact
+  set g := jordanParam e
+  have hgc : Continuous g := continuous_jordanParam e
+  have hginj : Function.Injective g := jordanParam_injective e
+  have hgrange : range g = C := range_jordanParam e
+  -- Uniform continuity of the parametrization turns short arcs into sets of small diameter.
+  obtain ⟨η, hη₀, hη⟩ := Metric.uniformContinuous_iff.mp
+    (CompactSpace.uniformContinuous_of_continuous hgc) ε hε
+  obtain ⟨δ₀, hδ₀, hcut⟩ :=
+    exists_pos_forall_isPreconnected_union_eq_compl_pair_circle_diam_lt hη₀
+  -- Uniform continuity of its inverse turns nearby points into nearby parameters.
+  obtain ⟨δ, hδpos, hδ⟩ := Metric.uniformContinuous_iff.mp
+    (CompactSpace.uniformContinuous_of_continuous e.continuous) δ₀ hδ₀
+  refine ⟨δ, hδpos, fun p hp q hq hpq hpqδ => ?_⟩
+  set z := e ⟨p, hp⟩
+  set w := e ⟨q, hq⟩
+  have hgz : g z = p := jordanParam_apply_apply e hp
+  have hgw : g w = q := jordanParam_apply_apply e hq
+  have hzw : z ≠ w := fun hh => hpq (congrArg Subtype.val (e.injective hh))
+  have hzwδ : dist z w < δ₀ := hδ (by simpa [Subtype.dist_eq] using hpqδ)
+  obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ := hcut hzw hzwδ
+  -- The closed short arc downstairs is the image of the closed short arc of parameters.
+  have hclosed : g '' (P ∪ {z, w}) = g '' P ∪ {p, q} := by
+    rw [image_union, image_insert_eq, image_singleton, hgz, hgw]
+  have himg : g '' P ∪ g '' Q = C \ {p, q} := by
+    rw [← image_union, hunion, Set.image_compl_eq_range_sdiff_image hginj, hgrange,
+      image_insert_eq, image_singleton, hgz, hgw]
+  refine ⟨g '' P, g '' Q, hPc.image _ hgc.continuousOn, hQc.image _ hgc.continuousOn,
+    himg, ?_⟩
+  rw [← hclosed]
+  refine Metric.diam_le_of_forall_dist_le hε.le ?_
+  rintro _ ⟨u, hu, rfl⟩ _ ⟨v, hv, rfl⟩
+  exact (hη ((Metric.dist_le_diam_of_mem
+    ((isCompact_univ (X := Circle)).isBounded.subset (subset_univ _)) hu hv).trans_lt hPd)).le
 
 /-- **Two nearby points cut a small arc off a Jordan curve.** For every `ε > 0` there is a `δ > 0`
 with the following property: if `p` and `q` are two distinct points of a Jordan curve `C` at
@@ -193,69 +267,29 @@ theorem IsJordanCurve.exists_pos_forall_diam_le (h : IsJordanCurve C) (hε : 0 <
       ∀ A B : Set X, A ∪ B = C \ {p, q} → Disjoint A B →
         (∀ ⦃S : Set X⦄, S ⊆ C \ {p, q} → IsPreconnected S → S ⊆ A ∨ S ⊆ B) →
         Metric.diam (A ∪ {p, q}) ≤ ε ∨ Metric.diam (B ∪ {p, q}) ≤ ε := by
-  obtain ⟨e⟩ := isJordanCurve_iff.mp h
-  have : CompactSpace C := isCompact_iff_compactSpace.mp h.isCompact
-  set g := jordanParam e with hg
-  have hgc : Continuous g := continuous_jordanParam e
-  have hginj : Function.Injective g := jordanParam_injective e
-  have hgrange : range g = C := range_jordanParam e
-  -- Uniform continuity of the parametrization turns short arcs into sets of small diameter.
-  obtain ⟨η, hη₀, hη⟩ := Metric.uniformContinuous_iff.mp
-    (CompactSpace.uniformContinuous_of_continuous hgc) ε hε
-  -- Uniform continuity of its inverse turns nearby points into nearby parameters.
-  obtain ⟨δ, hδ₀, hδ⟩ := Metric.uniformContinuous_iff.mp
-    (CompactSpace.uniformContinuous_of_continuous e.continuous) (2 / π * η) (by positivity)
+  obtain ⟨δ, hδ₀, hδ⟩ := h.exists_pos_forall_exists_isPreconnected_diam_union_pair_le hε
   -- `δ ≤ ε` so that the two cut points alone are already of diameter at most `ε`.
   refine ⟨min δ ε, lt_min hδ₀ hε, fun p hp q hq hpq hpqδ A B hAB hdisj hsep => ?_⟩
   have hpqε : dist p q ≤ ε := (hpqδ.trans_le (min_le_right _ _)).le
-  set z := e ⟨p, hp⟩ with hzdef
-  set w := e ⟨q, hq⟩ with hwdef
-  have hgz : g z = p := jordanParam_apply_apply e hp
-  have hgw : g w = q := jordanParam_apply_apply e hq
-  have hzw : z ≠ w := fun hh => hpq (congrArg Subtype.val (e.injective hh))
-  have hchord : π / 2 * dist z w < η := by
-    have hd : dist z w < 2 / π * η :=
-      hδ (by simpa [Subtype.dist_eq] using hpqδ.trans_le (min_le_left _ _))
-    have hπ : 0 < π := Real.pi_pos
-    calc π / 2 * dist z w < π / 2 * (2 / π * η) := by
-          exact mul_lt_mul_of_pos_left hd (by positivity)
-      _ = η := by field_simp
-  obtain ⟨P₀, Q₀, hP₀c, hQ₀c, hunion₀, hP₀d⟩ :=
-    exists_isPreconnected_union_eq_compl_pair_circle_diam_le hzw
-  -- Transport the two arcs of parameters to the curve.
-  have himg : g '' P₀ ∪ g '' Q₀ = C \ {p, q} := by
-    rw [← image_union, hunion₀, compl_eq_univ_sdiff, image_sdiff hginj, image_univ, hgrange]
-    congr 1
-    rw [image_insert_eq, image_singleton, hgz, hgw]
-  have hPsub : g '' P₀ ⊆ C \ {p, q} := himg ▸ subset_union_left
-  have hQsub : g '' Q₀ ⊆ C \ {p, q} := himg ▸ subset_union_right
-  -- The closed short arc downstairs is the image of the closed short arc of parameters.
-  have hclosed : g '' (P₀ ∪ {z, w}) = g '' P₀ ∪ {p, q} := by
-    rw [image_union, image_insert_eq, image_singleton, hgz, hgw]
-  have hPdiam : Metric.diam (g '' P₀ ∪ {p, q}) ≤ ε := by
-    rw [← hclosed]
-    refine Metric.diam_le_of_forall_dist_le hε.le ?_
-    rintro _ ⟨u, hu, rfl⟩ _ ⟨v, hv, rfl⟩
-    have hbdd : Bornology.IsBounded (P₀ ∪ {z, w}) :=
-      (isCompact_univ (X := Circle)).isBounded.subset (subset_univ _)
-    exact (hη (lt_of_le_of_lt (Metric.dist_le_diam_of_mem hbdd hu hv)
-      (lt_of_le_of_lt hP₀d hchord))).le
-  have hPbdd : Bornology.IsBounded (g '' P₀ ∪ {p, q}) :=
+  obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ := hδ hp hq hpq (hpqδ.trans_le (min_le_left _ _))
+  have hPsub : P ⊆ C \ {p, q} := hunion ▸ subset_union_left
+  have hQsub : Q ⊆ C \ {p, q} := hunion ▸ subset_union_right
+  have hPbdd : Bornology.IsBounded (P ∪ {p, q}) :=
     h.isCompact.isBounded.subset (union_subset (hPsub.trans sdiff_subset)
       (insert_subset hp (singleton_subset_iff.2 hq)))
   -- The side containing the short arc either is contained in it, and so is small, or leaves the
   -- other side empty, and then only the two cut points are left.
-  have hside : ∀ A' B' : Set X, A' ∪ B' = C \ {p, q} → Disjoint A' B' → g '' P₀ ⊆ A' →
-      (g '' Q₀ ⊆ A' ∨ g '' Q₀ ⊆ B') →
+  have hside : ∀ A' B' : Set X, A' ∪ B' = C \ {p, q} → Disjoint A' B' → P ⊆ A' →
+      (Q ⊆ A' ∨ Q ⊆ B') →
       Metric.diam (A' ∪ {p, q}) ≤ ε ∨ Metric.diam (B' ∪ {p, q}) ≤ ε := by
     intro A' B' hcover hd hP hQ
-    rcases subset_or_eq_empty_of_union_eq_union (himg.trans hcover.symm) hd hP hQ with hsub | hemp
-    · exact Or.inl ((Metric.diam_mono (union_subset_union_left _ hsub) hPbdd).trans hPdiam)
+    rcases subset_or_eq_empty_of_union_eq_union (hunion.trans hcover.symm) hd hP hQ with hsub | hemp
+    · exact Or.inl ((Metric.diam_mono (union_subset_union_left _ hsub) hPbdd).trans hPd)
     · rw [hemp, empty_union, Metric.diam_pair]
       exact Or.inr hpqε
-  -- Locate each transported arc inside `A` or inside `B`, and apply that symmetrically.
-  have hQ := hsep hQsub (hQ₀c.image _ hgc.continuousOn)
-  rcases hsep hPsub (hP₀c.image _ hgc.continuousOn) with hPA | hPB
+  -- Locate each arc inside `A` or inside `B`, and apply that symmetrically.
+  have hQ := hsep hQsub hQc
+  rcases hsep hPsub hPc with hPA | hPB
   · exact hside A B hAB hdisj hPA hQ
   · exact (hside B A (by rw [union_comm]; exact hAB) hdisj.symm hPB hQ.symm).symm
 

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PDE.Uniform.Ellipticity
+public import TauCeti.Analysis.PDE.Ellipticity.Basic
 public import TauCeti.Analysis.PDE.LowerOrder
 
 /-!
@@ -20,7 +20,7 @@ whose integrand at a point `x` depends only on the *jets* `(u(x), ∇u(x))` and
 three pointwise coefficient forms already available
 
 * the principal matrix form `matrixBilinearForm (a x)` (in
-  `TauCeti.Analysis.PDE.Uniform.Ellipticity`),
+  `TauCeti.Analysis.PDE.Ellipticity.Basic`),
 * the drift form `driftForm (b x)` and the mass form `massForm (c x)` (in
   `TauCeti.Analysis.PDE.LowerOrder`),
 

@@ -175,6 +175,21 @@ namespace Quiver.TotalPath
 
 variable {Q : Type u} [Quiver.{v} Q]
 
+/-- An indexed path is the trivial path at `v` exactly when it starts at `v` and has length zero.
+Stated this way the equality is checked against two non-dependent conditions, so recognizing a
+trivial path inside a concatenation needs no transport along the endpoints. -/
+@[simp]
+theorem eq_nil_iff {v : Q} {x : TotalPath Q} :
+    x = ⟨v, v, _root_.Quiver.Path.nil⟩ ↔ x.1 = v ∧ x.2.2.length = 0 := by
+  constructor
+  · rintro rfl
+    exact ⟨rfl, rfl⟩
+  · obtain ⟨a, b, p⟩ := x
+    rintro ⟨rfl, hlen⟩
+    obtain rfl : a = b := p.eq_of_length_zero hlen
+    obtain rfl : p = _root_.Quiver.Path.nil := p.eq_nil_of_length_zero hlen
+    rfl
+
 open scoped Classical in
 /-- Concatenation of indexed paths in the *later factor first* order used by the path algebra:
 `x.mul? y` traces `y` and then `x`, and is `none` unless `y` ends where `x` starts. -/

@@ -34,13 +34,11 @@ The two uniqueness statements are genuinely different, and the difference is the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
 directing measure is pinned down almost everywhere.
 
-## What is deliberately not here
+## Scope
 
-Route-specific endpoints. The `L²` and Koopman developments are not complete, so no `viaL2` or
-`viaKoopman` names exist to export; this facade grows when they land. Likewise the empirical work
-beyond what has already merged.
-
-The worked examples are excluded, and are reachable from their own modules.
+This facade exports the stable representation and uniqueness API. Proof routes keep their own
+endpoints and internals in their own modules, and the worked examples live with the examples;
+both are reachable directly.
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies

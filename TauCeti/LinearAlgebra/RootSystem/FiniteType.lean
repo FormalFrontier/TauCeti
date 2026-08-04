@@ -39,9 +39,29 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
   which the symmetrizer already forces.
 * `TauCeti.IsFiniteType.submatrix`: principal submatrices of a finite-type matrix are of finite
   type. This is what lets a forbidden subdiagram rule out a diagram containing it.
+* `TauCeti.IsFiniteType.sum_apply_mul_apply_lt_four`: the star bound. The Cartan products joining
+  an index to pairwise non-adjacent neighbours sum to less than `4`. This is the one
+  positive-definiteness estimate behind the local shape of a finite-type diagram, and the results
+  below are its corollaries.
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
+* `TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero`: the degree bound for a
+  non-adjacent star. No index has four pairwise non-adjacent neighbours; the affine type `D̃₄` is
+  ruled out in `TauCeti.not_isFiniteType_affineD₄`.
+* `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le` and
+  `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`: of two edges at an index whose
+  far ends are non-adjacent at most one is multiple, and an index carrying a triple edge is joined
+  to no further index non-adjacent to the far end of that edge.
+* `TauCeti.IsFiniteType.apply_mul_apply_eq_one_of_three_le_card`: three pairwise non-adjacent
+  neighbours of an index are each joined to it by a single edge.
+
+Each of these consequences selects its neighbours through a pairwise non-adjacency hypothesis,
+which is what the star bound asks for. Turning them into the unconditional graph statements the
+classification runs on - degree at most three, at most one multiple edge at a vertex, an isolated
+triple edge, a simply laced branch vertex - needs in addition that distinct neighbours of an index
+are never adjacent, that is, that a finite-type diagram carries no triangle. That exclusion is not
+proved here.
 * `TauCeti.IsFiniteType.det_ne_zero`: a finite-type matrix is nonsingular. Since the extended
   Dynkin diagrams have singular Cartan matrices, this is the second elimination tool; the affine
   type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`.
@@ -58,6 +78,8 @@ Dimensional Lie Algebras*, 3rd ed., Chapter 4, for the finite/affine/indefinite 
 generalized Cartan matrices, and Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, Chapter 11, for the classification of the finite-type case.
 -/
+
+open scoped Matrix
 
 namespace TauCeti
 
@@ -123,41 +145,207 @@ theorem submatrix {C : Type*} [Fintype C] (h : IsFiniteType A) {e : C → B}
     fun i j hij ↦ h.apply_eq_zero_symm hij, d ∘ e, fun i ↦ hd _, ?_⟩
   exact hpd.submatrix he
 
-/-- The rank-two case of the Cartan-product bound, where the quadratic form can be evaluated on an
-explicit vector. Testing at `(-A 0 1, 2)` kills the first coordinate of the symmetrization and
-leaves `2 * d 1 * (4 - A 0 1 * A 1 0)`. -/
-private lemma apply_mul_apply_lt_four_fin_two {A : Matrix (Fin 2) (Fin 2) ℤ} (h : IsFiniteType A) :
-    A 0 1 * A 1 0 < 4 := by
+/-- **A nonzero entry has Cartan product at least `1`.** Off the diagonal both entries of such a
+transposed pair are at most `-1`: they are nonpositive, and neither vanishes, because the vanishing
+pattern is symmetric. On the diagonal the product is `2 * 2`. -/
+theorem one_le_apply_mul_apply (h : IsFiniteType A) {i j : B} (hne : A i j ≠ 0) :
+    1 ≤ A i j * A j i := by
+  rcases eq_or_ne i j with rfl | hij
+  · rw [h.apply_self]; norm_num
+  have hi : A i j ≤ -1 := by have := h.apply_le_zero_of_ne hij; omega
+  have hj : A j i ≤ -1 := by
+    have hle := h.apply_le_zero_of_ne hij.symm
+    have hne' : A j i ≠ 0 := fun hc ↦ hne (h.apply_eq_zero_symm hc)
+    omega
+  nlinarith
+
+/-- **The star bound.** If `i` is distinct from every index of `s` and the indices of `s` are
+pairwise non-adjacent, then the Cartan products of `i` with the indices of `s` sum to less than
+`4`.
+
+This is the single positive-definiteness estimate behind the local shape of a finite-type diagram:
+inside a pairwise non-adjacent star at `i` there are at most three neighbours, at most one of the
+edges to them is multiple, and a triple edge among them stands alone. -/
+theorem sum_apply_mul_apply_lt_four (h : IsFiniteType A) {i : B} {s : Finset B} (his : i ∉ s)
+    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
+    ∑ j ∈ s, A i j * A j i < 4 := by
+  classical
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
-  have h₀ : A 0 0 = 2 := h.apply_self 0
-  have h₁ : A 1 1 = 2 := h.apply_self 1
-  have hx : (![-(A 0 1 : ℚ), 2] : Fin 2 → ℚ) ≠ 0 := fun hc ↦ by
-    simpa using congrFun hc 1
-  have hq := hpd.dotProduct_mulVec_pos hx
+  set M : Matrix B B ℚ := Matrix.of fun p q ↦ d p * (A p q : ℚ) with hM
+  -- The symmetrizer intertwines the two entries of a transposed pair.
+  have hsymm : ∀ p q : B, d q * (A q p : ℚ) = d p * (A p q : ℚ) := by
+    intro p q
+    have h' := hpd.isHermitian.apply p q
+    simpa [hM] using h'
+  -- The test vector: `1` at `i`, the value `-dᵢAᵢₖ / 2dₖ` minimizing the `k`-th coordinate of the
+  -- form at each `k ∈ s`, and `0` elsewhere. Pairwise non-adjacency makes the coordinates of `s`
+  -- independent of one another, which is what lets each be minimized separately.
+  set c : B → ℚ := fun k ↦ -(d i * (A i k : ℚ)) / (2 * d k) with hc
+  set x : B → ℚ := fun k ↦ if k = i then 1 else if k ∈ s then c k else 0 with hx
+  have hxi : x i = 1 := by simp [hx]
+  have hxs : ∀ k ∈ s, x k = c k := fun k hk ↦ by
+    have hki : k ≠ i := fun hc' ↦ his (hc' ▸ hk)
+    simp [hx, hki, hk]
+  have hxz : ∀ k ∉ insert i s, x k = 0 := by
+    intro k hk
+    rw [Finset.mem_insert, not_or] at hk
+    simp [hx, hk.1, hk.2]
+  have hxne : x ≠ 0 := fun hcon ↦ by simpa [hxi] using congrFun hcon i
+  have hq := hpd.dotProduct_mulVec_pos hxne
   rw [star_trivial] at hq
-  simp only [_root_.dotProduct, _root_.Matrix.mulVec_apply_eq_sum, Fin.sum_univ_two,
-    Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one, h₀, h₁] at hq
-  -- The value of the quadratic form is `2 * d 1 * (4 - A 0 1 * A 1 0)`.
-  have hq' : 0 < 2 * d 1 * (4 - (A 0 1 : ℚ) * (A 1 0 : ℚ)) := by push_cast at hq ⊢; linarith
-  have hlt : (A 0 1 : ℚ) * (A 1 0 : ℚ) < 4 := by
-    nlinarith [hd 1, hq']
-  exact_mod_cast hlt
+  -- Only the indices of `insert i s` contribute to the quadratic form.
+  have hrow : ∀ l : B, ∑ k, x k * M k l * x l = ∑ k ∈ insert i s, x k * M k l * x l := fun l ↦
+    (Finset.sum_subset (Finset.subset_univ _) fun k _ hk ↦ by simp [hxz k hk]).symm
+  have hsum : x ⬝ᵥ (M *ᵥ x) = ∑ l ∈ insert i s, ∑ k ∈ insert i s, x k * M k l * x l := by
+    rw [Matrix.dot_mulVec_eq_sum_sum]
+    simp only [hrow]
+    exact (Finset.sum_subset (Finset.subset_univ _) fun l _ hl ↦ by simp [hxz l hl]).symm
+  -- Pairwise non-adjacency collapses the `s`-block of the form to its diagonal.
+  have hinner : ∀ l ∈ s, ∑ k ∈ s, x k * M k l * x l = c l * (2 * d l) * c l := by
+    intro l hl
+    rw [Finset.sum_eq_single_of_mem l hl]
+    · rw [hxs l hl]
+      simp only [hM, Matrix.of_apply, h.apply_self l]
+      push_cast
+      ring
+    · intro k hk hkl
+      have hzero : A k l = 0 := hs (by exact_mod_cast hk) (by exact_mod_cast hl) hkl
+      simp [hM, hzero]
+  -- The value of the form at the test vector, namely `dᵢ(4 - ∑ⱼ AᵢⱼAⱼᵢ) / 2`.
+  have key : x ⬝ᵥ (M *ᵥ x) = 2 * d i + ∑ j ∈ s, -(d i * (A i j : ℚ) * (A j i : ℚ)) / 2 := by
+    rw [hsum]
+    simp only [Finset.sum_insert his]
+    rw [add_assoc, ← Finset.sum_add_distrib]
+    congr 1
+    · rw [hxi]
+      simp only [hM, Matrix.of_apply, h.apply_self i]
+      push_cast
+      ring
+    · refine Finset.sum_congr rfl fun j hj ↦ ?_
+      have hdj := (hd j).ne'
+      have hji : (A j i : ℚ) = d i * (A i j : ℚ) / d j := by
+        field_simp
+        linarith [hsymm i j]
+      rw [hinner j hj, hxi, hxs j hj]
+      simp only [hM, hc, Matrix.of_apply]
+      rw [hji]
+      field_simp
+      ring
+  rw [key] at hq
+  -- Positive definiteness now reads off the bound, the factor `dᵢ` being positive.
+  have hfold : ∑ j ∈ s, -(d i * (A i j : ℚ) * (A j i : ℚ)) / 2
+      = -(d i / 2) * ∑ j ∈ s, (A i j : ℚ) * (A j i : ℚ) := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun j _ ↦ by ring
+  rw [hfold] at hq
+  have hcast : ((∑ j ∈ s, A i j * A j i : ℤ) : ℚ) < 4 := by
+    push_cast
+    nlinarith [hd i]
+  exact_mod_cast hcast
 
 /-- **The Cartan product of two distinct indices of a finite-type matrix is `0`, `1`, `2` or `3`.**
 These are exactly the values that name the orders `2, 3, 4, 6` of a product of two simple
 reflections. -/
 theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j) :
     A i j * A j i ∈ ({0, 1, 2, 3} : Set ℤ) := by
-  -- Nonnegativity is the product of two nonpositive entries; the upper bound is the rank-two
-  -- computation, applied to the principal submatrix on `{i, j}`.
-  have hinj : Function.Injective (![i, j] : Fin 2 → B) := by
-    intro a c hac
-    fin_cases a <;> fin_cases c <;> simp_all
-  have hsub := (h.submatrix hinj).apply_mul_apply_lt_four_fin_two
-  simp only [Matrix.submatrix_apply, Matrix.cons_val_zero, Matrix.cons_val_one] at hsub
+  -- Nonnegativity is the product of two nonpositive entries; the upper bound is the star bound for
+  -- the single-element star `{j}`.
+  have hlt := h.sum_apply_mul_apply_lt_four (i := i) (s := {j}) (by simpa using hij)
+    (by simp [Set.pairwise_singleton])
+  rw [Finset.sum_singleton] at hlt
   have hnonneg : 0 ≤ A i j * A j i :=
     mul_nonneg_of_nonpos_of_nonpos (h.apply_le_zero_of_ne hij) (h.apply_le_zero_of_ne hij.symm)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
+  omega
+
+/-- **The two-index case of the star bound.** Two non-adjacent indices `j` and `k`, both distinct
+from `i`, carry Cartan products with `i` summing to less than `4`; neither is required to be a
+neighbour of `i`, an absent edge contributing `0`. Here `j ≠ k` need not be assumed: it follows
+from `A j k = 0`, since the diagonal entries are `2`. -/
+theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
+    (hik : i ≠ k) (h0 : A j k = 0) :
+    A i j * A j i + A i k * A k i < 4 := by
+  classical
+  have hjk : j ≠ k := fun hc ↦ by rw [hc, h.apply_self k] at h0; omega
+  have hkj : A k j = 0 := h.apply_eq_zero_symm h0
+  have hi : i ∉ ({j, k} : Finset B) := by simp [hij, hik]
+  have hp : ((({j, k} : Finset B) : Set B)).Pairwise fun p q ↦ A p q = 0 := by
+    intro p hp' q hq' hpq
+    simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
+      Set.mem_singleton_iff] at hp' hq'
+    rcases hp' with rfl | rfl <;> rcases hq' with rfl | rfl <;> simp_all
+  have hlt := h.sum_apply_mul_apply_lt_four hi hp
+  rwa [Finset.sum_insert (by simpa using hjk), Finset.sum_singleton] at hlt
+
+/-- **At most one edge of a non-adjacent pair at an index is multiple.** If the edge from `i` to
+`j` is multiple, then `i` is joined to every index non-adjacent to `j` by at most a single edge. -/
+theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (h0 : A j k = 0)
+    (hj : 2 ≤ A i j * A j i) :
+    A i k * A k i ≤ 1 := by
+  -- A multiple edge at `i` makes `i ≠ j`, and were `i` equal to `k` that edge would be absent.
+  rcases eq_or_ne i j with rfl | hij
+  · simp [h0]
+  have hik : i ≠ k := by
+    rintro rfl
+    rw [h.apply_eq_zero_symm h0] at hj
+    simp at hj
+  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
+  omega
+
+/-- **A triple edge is isolated among the neighbours non-adjacent to its far end.** An index joined
+to `j` by a triple edge is joined to no further index non-adjacent to `j`. This is the local step
+behind `G₂` being the only finite-type diagram carrying a triple edge. -/
+theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : B} (h0 : A j k = 0)
+    (hj : A i j * A j i = 3) :
+    A i k = 0 := by
+  -- A Cartan product of `3` is neither the diagonal value `4` nor the absent edge from `k` to `j`.
+  have hij : i ≠ j := by
+    rintro rfl
+    rw [h.apply_self] at hj
+    omega
+  have hik : i ≠ k := by
+    rintro rfl
+    rw [h.apply_eq_zero_symm h0] at hj
+    simp at hj
+  by_contra hne
+  have h1 := h.one_le_apply_mul_apply hne
+  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
+  omega
+
+/-- **An index of a finite-type matrix has at most three pairwise non-adjacent neighbours**, so a
+finite-type diagram branches into at most three pairwise unjoined arms. The unconditional degree
+bound asks in addition that distinct neighbours of an index are non-adjacent, which is not proved
+here. -/
+theorem card_le_three_of_pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s : Finset B}
+    (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
+    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
+    s.card ≤ 3 := by
+  have hone : ∀ j ∈ s, (1 : ℤ) ≤ A i j * A j i := fun j hj ↦
+    h.one_le_apply_mul_apply (hadj j hj)
+  have hcard : (s.card : ℤ) ≤ ∑ j ∈ s, A i j * A j i := by
+    calc (s.card : ℤ) = ∑ _j ∈ s, (1 : ℤ) := by simp
+      _ ≤ _ := Finset.sum_le_sum hone
+  have := h.sum_apply_mul_apply_lt_four his hs
+  omega
+
+/-- **A three-armed non-adjacent star of a finite-type matrix is simply laced.** An index with
+three pairwise non-adjacent neighbours meets each of them along a single edge, since three Cartan
+products of value at least `1` already exhaust the star bound. -/
+theorem apply_mul_apply_eq_one_of_three_le_card (h : IsFiniteType A) {i : B} {s : Finset B}
+    (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
+    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) (hcard : 3 ≤ s.card) {j : B} (hj : j ∈ s) :
+    A i j * A j i = 1 := by
+  classical
+  have hone : ∀ k ∈ s, (1 : ℤ) ≤ A i k * A k i := fun k hk ↦
+    h.one_le_apply_mul_apply (hadj k hk)
+  have hsplit : ∑ k ∈ s, A i k * A k i
+      = A i j * A j i + ∑ k ∈ s.erase j, A i k * A k i := (Finset.add_sum_erase _ _ hj).symm
+  have herase : ((s.erase j).card : ℤ) ≤ ∑ k ∈ s.erase j, A i k * A k i := by
+    calc ((s.erase j).card : ℤ) = ∑ _k ∈ s.erase j, (1 : ℤ) := by simp
+      _ ≤ _ := Finset.sum_le_sum fun k hk ↦ hone k (Finset.mem_of_mem_erase hk)
+  have hcard' : (s.erase j).card = s.card - 1 := Finset.card_erase_of_mem hj
+  have hlt := h.sum_apply_mul_apply_lt_four his hs
+  have hj1 := hone j hj
   omega
 
 /-- **A finite-type matrix is nonsingular.** This is the elimination tool for the extended Dynkin
@@ -190,6 +378,27 @@ theorem not_isFiniteType_affineA₂ :
   refine h.det_ne_zero ?_
   norm_num [Matrix.det_fin_three, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
     Matrix.head_cons, Matrix.tail_cons]
+
+/-- **The Cartan matrix of the affine diagram `D̃₄` is not of finite type.** The four-armed star is
+the smallest diagram excluded by the degree bound; unlike `Ã₂` it needs no determinant, since
+`TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero` applies to the central index
+directly. -/
+theorem not_isFiniteType_affineD₄ :
+    ¬ IsFiniteType (!![2, -1, -1, -1, -1;
+                      -1, 2, 0, 0, 0;
+                      -1, 0, 2, 0, 0;
+                      -1, 0, 0, 2, 0;
+                      -1, 0, 0, 0, 2] : Matrix (Fin 5) (Fin 5) ℤ) := by
+  intro h
+  have hcard := h.card_le_three_of_pairwise_apply_eq_zero (i := 0) (s := {1, 2, 3, 4})
+    (by decide) (by decide) (by
+      intro p hp q hq hpq
+      simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
+        Set.mem_singleton_iff] at hp hq
+      rcases hp with rfl | rfl | rfl | rfl <;> rcases hq with rfl | rfl | rfl | rfl <;>
+        revert hpq <;> decide)
+  revert hcard
+  decide
 
 section RootPairing
 

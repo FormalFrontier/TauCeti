@@ -473,17 +473,7 @@ private theorem liftedComulPoint_eq_include_mul :
     ext h
     rfl
   rw [hcomul, hleft, hright]
-  calc
-    toConv (up.comp (Bialgebra.comulAlgHom R H)) =
-        (AlgHom.mapValue (H := H) up) (toConv (Bialgebra.comulAlgHom R H)) := rfl
-    _ = (AlgHom.mapValue (H := H) up)
-        (toConv (includeLeftAlgHom (R := R) (H := H)) *
-          toConv (includeRightAlgHom (R := R) (H := H))) := by
-      rw [Bialgebra.comulPoint_eq_include_mul]
-    _ = toConv (up.comp (includeLeftAlgHom (R := R) (H := H))) *
-        toConv (up.comp (includeRightAlgHom (R := R) (H := H))) := by
-      rw [map_mul]
-      rfl
+  exact Bialgebra.toConv_comp_comulAlgHom up
 
 private theorem action_comul_eq_include_actions
     (Theta : PointRepresentation (R := R) (H := H) (V := V)) :

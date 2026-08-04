@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 import Mathlib.Geometry.Euclidean.Basic
+import TauCeti.Topology.Circle.Metric
 
 /-!
 # The endpoints of a circular crosscut
@@ -19,7 +20,10 @@ companion, and its two endpoints exactly. If
 * `φ = arccos (ρ / (2 * r))` is the half-angle of the crosscut,
 
 then the open and closed arcs are the images under `circleMap ζ ρ` of `(α - φ, α + φ)` and
-`[α - φ, α + φ]`, while the two bounding circles meet at the images of the endpoints.
+`[α - φ, α + φ]`, while the two bounding circles meet at the images of the endpoints. Since
+`φ < π / 2`, a crosscut spans less than a half turn, and the chord length along it is therefore
+unimodal about any one of its points; that is what makes a crosscut *locally connected at its own
+endpoints*, the last statement below.
 
 This is the source-side endpoint interface needed by layer **L5** of
 `TauCetiRoadmap/ConformalMapping/README.md`, the Jordan-domain case of Carathéodory boundary
@@ -35,7 +39,17 @@ with its closure; they do not assert the continuous boundary extension itself.
   arcs.
 * `TauCeti.sphere_inter_sphere_eq_pair_circleMap` identifies their two distinct endpoints.
 * `TauCeti.isPathConnected_ball_inter_sphere` and
-  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging.
+  `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging, and
+  `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere` records that a crosscut reaches
+  the frontier of the disc.
+* `TauCeti.isPreconnected_ball_inter_sphere_inter_ball` — a ball centred at a point of the closed
+  crosscut meets the crosscut in a subarc: a crosscut spans less than a half turn, so along it the
+  chord distance to a fixed one of its points falls and then rises, and the angles it keeps below a
+  threshold form an interval. The chord length itself is measured by
+  `TauCeti.dist_circleMap_eq_two_mul_abs_sin`, in `TauCeti/Topology/Circle/Metric.lean`. This is the
+  local connectedness of a crosscut at its own endpoints,
+  which `Conformal/Crosscut/Image.lean` spends to make the cluster set of a conformal map at an end
+  of an image crosscut a continuum.
 
 ## Coordination with upstream Mathlib
 
@@ -103,6 +117,40 @@ private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
         ring
   rw [dist_eq_norm, ← Complex.normSq_eq_norm_sq, hsub, Complex.normSq_sub, hu, ha, hcross]
   ring
+
+/-- **A ball centred at a point of an arc of angular width at most `π` meets it in an arc.** The
+chord distance to a fixed angle `θ₀` of the arc falls and then rises as the angle sweeps across the
+arc, so the angles it keeps below a threshold form an interval. -/
+private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : ℝ) {a b θ₀ δ : ℝ}
+    (hab : b - a ≤ π) (h₀ : θ₀ ∈ Icc a b) :
+    (Ioo a b ∩ {θ | dist (circleMap ζ ρ θ) (circleMap ζ ρ θ₀) < δ}).OrdConnected := by
+  have hdist : ∀ u ∈ Icc a b, dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀)
+      = 2 * |ρ| * Real.sin (|u - θ₀| / 2) := by
+    intro u hu
+    refine dist_circleMap_eq_two_mul_sin_abs ζ ρ ?_
+    rw [abs_le]
+    constructor <;> [linarith [hu.1, h₀.2, Real.pi_pos]; linarith [hu.2, h₀.1, Real.pi_pos]]
+  have hmono : ∀ u ∈ Icc a b, ∀ v ∈ Icc a b, |u - θ₀| ≤ |v - θ₀| →
+      dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀) ≤ dist (circleMap ζ ρ v) (circleMap ζ ρ θ₀) := by
+    intro u hu v hv huv
+    rw [hdist u hu, hdist v hv]
+    have hvπ : |v - θ₀| ≤ π := by
+      rw [abs_le]
+      constructor <;> [linarith [hv.1, h₀.2]; linarith [hv.2, h₀.1]]
+    have hsin : Real.sin (|u - θ₀| / 2) ≤ Real.sin (|v - θ₀| / 2) :=
+      Real.sin_le_sin_of_le_of_le_pi_div_two
+        (by linarith [abs_nonneg (u - θ₀), Real.pi_pos]) (by linarith) (by linarith)
+    exact mul_le_mul_of_nonneg_left hsin (by positivity)
+  refine ⟨fun x hx y hy z hz => ⟨(ordConnected_Ioo (a := a) (b := b)).out hx.1 hy.1 hz, ?_⟩⟩
+  have hzIcc : z ∈ Icc a b :=
+    Ioo_subset_Icc_self ((ordConnected_Ioo (a := a) (b := b)).out hx.1 hy.1 hz)
+  rcases le_total z θ₀ with hzθ | hzθ
+  · refine lt_of_le_of_lt (hmono z hzIcc x (Ioo_subset_Icc_self hx.1) ?_) hx.2
+    rw [abs_of_nonpos (by linarith), abs_of_nonpos (by linarith [hz.1])]
+    linarith [hz.1]
+  · refine lt_of_le_of_lt (hmono z hzIcc y (Ioo_subset_Icc_self hy.1) ?_) hy.2
+    rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith [hz.2])]
+    linarith [hz.2]
 
 /-- A point of `sphere ζ ρ`, in angular coordinates, lies in `closedBall c r` exactly when its
 angle satisfies the weak cosine inequality complementary to
@@ -346,5 +394,54 @@ theorem closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : �
   · rintro z ⟨θ, hθ, rfl⟩
     exact mem_closure_image (continuous_circleMap ζ ρ).continuousAt
       (by rwa [closure_Ioo hab.ne])
+
+/-- **A circular crosscut of a disc reaches the boundary of the disc.** A crosscut spanning less
+than a half turn has two endpoints (`TauCeti.sphere_inter_sphere_eq_pair_circleMap`), and either of
+them lies on `sphere c r`, the frontier of the disc, and in the closure of the crosscut
+(`TauCeti.closure_ball_inter_sphere`).
+
+This is the form in which `Conformal/Crosscut/Image.lean`, whose statements are about an arbitrary
+domain, asks a cut to leave the domain at all. -/
+theorem nonempty_frontier_ball_inter_closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) :
+    (frontier (ball c r) ∩ closure (ball c r ∩ sphere ζ ρ)).Nonempty := by
+  have hr : 0 < r := by linarith
+  have hmem : circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ∈ sphere c r ∩ sphere ζ ρ := by
+    rw [sphere_inter_sphere_eq_pair_circleMap hζ hρ hρr]
+    exact Or.inl rfl
+  refine ⟨circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))), ?_, ?_⟩
+  · rw [frontier_ball c hr.ne']
+    exact hmem.1
+  · rw [closure_ball_inter_sphere hζ hρ hρr]
+    exact ⟨sphere_subset_closedBall hmem.1, hmem.2⟩
+
+/-- **A ball centred at a point of the closed crosscut meets the crosscut in a subarc.** A genuine
+circular crosscut spans an angle `2 * arccos (ρ / (2 * r)) < π`, so along it the chord distance to
+a fixed one of its points is unimodal; the part of the crosscut inside any ball centred at such a
+point is therefore the image of an interval of angles, and in particular preconnected.
+
+This is the local connectedness of a crosscut *at its own endpoints*, which is what the cluster set
+of a map along a crosscut needs in order to be a continuum
+(`TauCeti.isConnected_clusterSetOn`). The radius `δ` is arbitrary: for large `δ` the trace is the
+whole crosscut. -/
+theorem isPreconnected_ball_inter_sphere_inter_ball (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) {e : ℂ} (he : e ∈ closedBall c r ∩ sphere ζ ρ) (δ : ℝ) :
+    IsPreconnected (ball c r ∩ sphere ζ ρ ∩ ball e δ) := by
+  have hr : 0 < r := by linarith
+  have hx0 : 0 < ρ / (2 * r) := div_pos hρ (by positivity)
+  have hφπ2 : Real.arccos (ρ / (2 * r)) < π / 2 := Real.arccos_lt_pi_div_two.mpr hx0
+  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
+      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
+    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
+    exact he
+  rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr, ← image_inter_preimage]
+  refine IsPreconnected.image ?_ _ (continuous_circleMap ζ ρ).continuousOn
+  have hpre : circleMap ζ ρ ⁻¹' ball (circleMap ζ ρ θ₀) δ
+      = {θ | dist (circleMap ζ ρ θ) (circleMap ζ ρ θ₀) < δ} := by
+    ext θ
+    simp [Metric.mem_ball]
+  rw [hpre]
+  exact (ordConnected_Ioo_inter_setOf_dist_circleMap_lt ζ ρ (by linarith) hθ₀).isPreconnected
 
 end TauCeti

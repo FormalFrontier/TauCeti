@@ -7,7 +7,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.RingTheory.Localization.Away.AdjoinRoot
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.CoordinateBialgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.Bialgebra
 
 /-!
 # The general linear coordinate Hopf algebra
