@@ -200,13 +200,6 @@ noncomputable def filtrationGradedAlgebraMap₀ (Q : QuadraticForm R M) :
   rw [map_one, sub_self]
   exact Submodule.zero_mem _
 
-private theorem filtrationGradedMonoid_eq_of_cast (Q : QuadraticForm R M)
-    {a b : GradedMonoid (FiltrationGradedPiece Q)} (h : a.fst = b.fst)
-    (h2 : cast (congrArg (FiltrationGradedPiece Q) h) a.snd = b.snd) : a = b := by
-  obtain ⟨i, a⟩ := a
-  cases h
-  exact congrArg _ h2
-
 /-- The degree-zero homogeneous unit acts on the left. -/
 @[simp] theorem filtrationGradedOne_mul (Q : QuadraticForm R M) (k : ℕ)
     (x : FiltrationGradedPiece Q k) :
@@ -250,20 +243,24 @@ private theorem filtrationGradedMonoid_eq_of_cast (Q : QuadraticForm R M)
       rw [mul_one, sub_self]
       exact Submodule.zero_mem (filtrationPrevious Q (k + 0))
 
+/-- The homogeneous degree-zero class supplies the `GOne` structure on filtration pieces. -/
 noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
     GradedMonoid.GOne (FiltrationGradedPiece Q) where
   one := filtrationGradedOne Q
 
+/-- Homogeneous filtration multiplication supplies the `GMul` structure on filtration pieces. -/
 noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
     GradedMonoid.GMul (FiltrationGradedPiece Q) where
   mul {i j} := fun x y => filtrationGradedMul Q i j x y
 
+/-- The homogeneous unit and multiplication form a graded monoid of filtration pieces. -/
 noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
     GradedMonoid.GMonoid (FiltrationGradedPiece Q) :=
   { filtrationGradedGMul (Q := Q), filtrationGradedGOne (Q := Q) with
     one_mul := fun x => by
       rcases x with ⟨k, x⟩
-      apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k)
+      apply Sigma.ext (Nat.zero_add k)
+      apply heq_of_cast_eq (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
       -- The sigma equality is now a homogeneous equality after exposing the GOne and GMul fields.
       change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k))
         (filtrationGradedMul Q 0 k (filtrationGradedOne Q) x) = x
@@ -271,7 +268,8 @@ noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
       simp
     mul_one := fun x => by
       rcases x with ⟨k, x⟩
-      apply filtrationGradedMonoid_eq_of_cast Q (Nat.add_zero k)
+      apply Sigma.ext (Nat.add_zero k)
+      apply heq_of_cast_eq (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k))
       -- The sigma equality is now a homogeneous equality after exposing the GOne and GMul fields.
       change cast (congrArg (FiltrationGradedPiece Q) (Nat.add_zero k))
         (filtrationGradedMul Q k 0 x (filtrationGradedOne Q)) = x
@@ -281,9 +279,11 @@ noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
       rcases x with ⟨i, x⟩
       rcases y with ⟨j, y⟩
       rcases z with ⟨k, z⟩
-      apply filtrationGradedMonoid_eq_of_cast Q (Nat.add_assoc i j k)
+      apply Sigma.ext (Nat.add_assoc i j k)
+      apply heq_of_cast_eq (congrArg (FiltrationGradedPiece Q) (Nat.add_assoc i j k))
       exact filtrationGradedMul_assoc Q i j k x y z }
 
+/-- Bilinearity and scalar casts make the homogeneous pieces a direct-sum graded ring. -/
 noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
     DirectSum.GRing (FiltrationGradedPiece Q) where
   mul_zero := fun x => (filtrationGradedMul Q _ _ x).map_zero
@@ -390,11 +390,13 @@ theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (
   rw [← filtrationGradedAlgebraMap₀_commutes Q r k x]
   simpa only [cast_cast, cast_eq] using filtrationGradedAlgebraMap₀_mul Q r k x
 
+/-- The graded-ring structure supplies the semiring structure needed by the direct sum. -/
 noncomputable instance filtrationGradedGSemiring {Q : QuadraticForm R M} :
     DirectSum.GSemiring (FiltrationGradedPiece Q) := by
   exact @DirectSum.GRing.toGSemiring ℕ (FiltrationGradedPiece Q) _ _
     (filtrationGradedGRing (Q := Q))
 
+/-- Degree-zero scalar classes make the homogeneous pieces into a graded `R`-algebra. -/
 noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     DirectSum.GAlgebra R (FiltrationGradedPiece Q) where
   toFun := filtrationGradedAlgebraMap₀ Q
@@ -403,7 +405,8 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     change filtrationGradedAlgebraMap₀ Q 1 = filtrationGradedOne Q
     exact filtrationGradedAlgebraMap₀_one Q
   map_mul r s := by
-    apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add 0).symm
+    apply Sigma.ext (Nat.zero_add 0).symm
+    apply heq_of_cast_eq (congrArg (FiltrationGradedPiece Q) (Nat.zero_add 0).symm)
     -- The scalar product is a degree-zero homogeneous product after this reindexing.
     change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add 0).symm)
       (filtrationGradedAlgebraMap₀ Q (r * s)) =
@@ -413,11 +416,14 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     simp
   commutes r x := by
     rcases x with ⟨k, x⟩
-    apply filtrationGradedMonoid_eq_of_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)
+    apply Sigma.ext ((Nat.zero_add k).trans (Nat.add_zero k).symm)
+    apply heq_of_cast_eq
+      (congrArg (FiltrationGradedPiece Q) ((Nat.zero_add k).trans (Nat.add_zero k).symm))
     exact filtrationGradedAlgebraMap₀_commutes Q r k x
   smul_def r x := by
     rcases x with ⟨k, x⟩
-    apply filtrationGradedMonoid_eq_of_cast Q (Nat.zero_add k).symm
+    apply Sigma.ext (Nat.zero_add k).symm
+    apply heq_of_cast_eq (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm)
     -- The sigma-level scalar law reduces to the degree-`k` homogeneous scalar equation.
     change cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm) (r • x) =
       filtrationGradedMul Q 0 k (filtrationGradedAlgebraMap₀ Q r) x
@@ -426,6 +432,8 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
       congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
         (filtrationGradedAlgebraMap₀_mul Q r k x)
 
+/-- The direct sum of homogeneous filtration pieces inherits its associated-graded
+ring structure. -/
 noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
     Ring (filtrationAssociatedGraded Q) := by
   letI : ∀ k, AddCommGroup (FiltrationGradedPiece Q k) := fun _ => inferInstance
