@@ -53,10 +53,6 @@ domain rather than of the crosscut, and is untouched here.
 
 ## Main results
 
-* `TauCeti.isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top` — an image crosscut of
-  finite length is bounded, so its diameter is a genuine bound on the distances inside it.
-* `TauCeti.dist_le_diam_image_inter_sphere` — two points of the boundary piece are no further apart
-  than the image crosscut is wide; this holds over an arbitrary domain, no disc being involved.
 * `TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` — the closed image
   crosscut of finite length meets the boundary of the image domain in a pair of points.
 * `TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le`
@@ -71,8 +67,7 @@ domain rather than of the crosscut, and is untouched here.
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, everything below is stated for maps of `ℂ`. The disc is a
 general `ball c r` rather than the unit disc, the boundary point entering only through
-`dist ζ c = r`; `TauCeti.dist_le_diam_image_inter_sphere` asks for no disc at all, the boundary
-piece being defined over any domain.
+`dist ζ c = r`.
 
 ## Coordination with upstream Mathlib
 
@@ -100,42 +95,9 @@ namespace TauCeti
 
 open Bornology Complex MeasureTheory Metric Set
 
-variable {f : ℂ → ℂ} {U : Set ℂ} {c ζ u v : ℂ} {r ρ : ℝ}
+variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 
 /-! ## The boundary piece of an image crosscut is a pair -/
-
-/-- **An image crosscut of finite length is bounded.** The chord bound
-`TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere` keeps every pair of points of
-`f '' (ball c r ∩ sphere ζ ρ)` within the finite number
-`(TauCeti.circleImageLength f (ball c r) ζ ρ).toReal` of each other.
-
-This is what makes `Metric.diam (f '' (ball c r ∩ sphere ζ ρ))` a bound on the distances inside the
-image crosscut rather than the junk value `0` that an unbounded set carries; it is the disc
-counterpart of `TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`, stated against
-the crosscut rather than against an arc of angles. -/
-theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top (hζ : dist ζ c = r)
-    (hρ : 0 < ρ) (hf : DifferentiableOn ℂ f (ball c r))
-    (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
-    IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
-  rw [isBounded_iff]
-  refine ⟨(circleImageLength f (ball c r) ζ ρ).toReal, ?_⟩
-  rintro _ ⟨z, hz, rfl⟩ _ ⟨w, hw, rfl⟩
-  exact (ENNReal.ofReal_le_iff_le_toReal hfin).mp
-    (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hζ hρ hf hz hw)
-
-/-- **The boundary piece is no wider than the image crosscut.** Two points of
-`frontier (f '' U) ∩ closure (f '' (U ∩ sphere ζ ρ))` are at distance at most
-`Metric.diam (f '' (U ∩ sphere ζ ρ))`.
-
-This is `TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` read pointwise, and asks
-nothing of `U` beyond boundedness of the image of the cut: the boundary piece sits inside the
-closure of the image cut, whose diameter is that of the image cut. -/
-theorem dist_le_diam_image_inter_sphere (hb : IsBounded (f '' (U ∩ sphere ζ ρ)))
-    (hu : u ∈ frontier (f '' U) ∩ closure (f '' (U ∩ sphere ζ ρ)))
-    (hv : v ∈ frontier (f '' U) ∩ closure (f '' (U ∩ sphere ζ ρ))) :
-    dist u v ≤ diam (f '' (U ∩ sphere ζ ρ)) :=
-  (dist_le_diam_of_mem (hb.closure.subset inter_subset_right) hu hv).trans
-    (diam_frontier_inter_closure_image_inter_sphere_le hb)
 
 /-- **A closed image crosscut of finite length meets the boundary of the image domain in a pair
 of points.** For `f` holomorphic and injective on `ball c r`, and a genuine circular crosscut
@@ -180,7 +142,8 @@ of Wolff's lemma, which makes `TauCeti.circleImageLength f (ball c r) ζ ρ` sma
 `ENNReal.ofReal ε` — in particular finite, which is what
 `TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` needs, so the ends are two
 points; `TauCeti.diam_image_ball_inter_sphere_le` turns the same bound into the diameter bound, and
-`TauCeti.dist_le_diam_image_inter_sphere` passes it on to the two ends.
+`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` passes it on to the two ends, which lie
+in the boundary piece and so are no further apart than the image crosscut is wide.
 
 The bound `R ≤ 2 * r` is what makes `ball c r ∩ sphere ζ ρ` a genuine circular crosscut rather than
 the empty set; it forces `0 < r`, so no separate hypothesis on the radius of the disc is needed. -/
@@ -204,9 +167,11 @@ theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le
     rw [hpair]; exact mem_insert _ _
   have hv : v ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert_of_mem _ rfl
-  exact ⟨ρ, hρmem, u, v, hpair, (dist_le_diam_image_inter_sphere
-    (isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hζ hρmem.1 hf hfin') hu hv).trans
-    hdiam, hdiam⟩
+  have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) :=
+    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hζ hρmem.1 hf hfin'
+  exact ⟨ρ, hρmem, u, v, hpair,
+    (dist_le_diam_of_mem (hb.closure.subset inter_subset_right) hu hv).trans
+      ((diam_frontier_inter_closure_image_inter_sphere_le hb).trans hdiam), hdiam⟩
 
 /-- **A conformal map of a disc has, at every boundary point, crosscuts of arbitrarily small radius
 whose image is narrow and whose two ends are close together on the image boundary.** This is the
