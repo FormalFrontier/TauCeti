@@ -31,8 +31,8 @@ For a **finite acyclic** quiver over a field the arrow ideal is the Jacobson rad
 
 which is the Wedderburn decomposition of the semisimple quotient: one block for each vertex, and
 every block is the base field itself. In particular the semisimple quotient is commutative and
-reduced -- the path algebra of a finite acyclic quiver is a **basic** algebra, with no repeated
-matrix block -- and its dimension is the number of vertices.
+reduced -- the path algebra of a finite acyclic quiver is a **basic** algebra, with every matrix
+block of size one -- and its dimension is the number of vertices.
 
 ## Main definitions
 
