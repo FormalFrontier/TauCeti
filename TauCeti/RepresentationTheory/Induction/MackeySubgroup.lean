@@ -6,7 +6,8 @@ module
 
 public import Mathlib.GroupTheory.Index
 public import TauCeti.Algebra.Group.Subgroup.Pointwise
-public import TauCeti.Algebra.GroupAction.Quotient
+public import TauCeti.GroupTheory.DoubleCoset.Orbits
+public import TauCeti.GroupTheory.QuotientGroup.Basic
 
 /-!
 # The Mackey subgroup
@@ -31,7 +32,9 @@ partition of `G` into double cosets, and orbit-stabilizer turns each orbit into 
 `|K·sH| = [K : K ⊓ sHs⁻¹]`.  This is the combinatorial content of the Mackey decomposition, and it
 yields the classical double-coset size formula `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`
 (`TauCeti.card_doubleCoset_mul_card_mackeySubgroup`).  The two facts about the translation action
-that this rests on are generic group theory and live in `TauCeti.Algebra.GroupAction.Quotient`.
+that this rests on are generic group theory and live with the topics they belong to: the
+stabilizer description in `TauCeti.GroupTheory.QuotientGroup.Basic` and the identification of a
+double coset with an orbit in `TauCeti.GroupTheory.DoubleCoset.Orbits`.
 
 Because the Mackey decomposition is indexed by double cosets while its summands are built from a
 *chosen* representative, the dependence on the representative has to be pinned too: replacing `s`
@@ -155,12 +158,12 @@ theorem mackeySubgroup_of_normal [H.Normal] : mackeySubgroup s H K = K ⊓ H := 
 
 /-- Inducing from the whole group leaves nothing to intersect: the Mackey subgroup is `K`. -/
 @[simp]
-theorem mackeySubgroup_top_right (s : G) (K : Subgroup G) : mackeySubgroup s ⊤ K = K := by
+theorem mackeySubgroup_top_left (s : G) (K : Subgroup G) : mackeySubgroup s ⊤ K = K := by
   ext x; simp
 
 /-- Restricting to the whole group leaves the bare conjugate `sHs⁻¹`. -/
 @[simp]
-theorem mackeySubgroup_top_left (s : G) (H : Subgroup G) :
+theorem mackeySubgroup_top_right (s : G) (H : Subgroup G) :
     mackeySubgroup s H ⊤ = MulAut.conj s • H := by
   ext x; simp
 

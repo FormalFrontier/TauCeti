@@ -10,9 +10,15 @@ public import Mathlib.GroupTheory.Coset.Card
 public import Mathlib.GroupTheory.DoubleCoset
 
 /-!
-# Double cosets as the orbits of a group on a product of coset spaces
+# Double cosets as orbits
 
-For subgroups `H` and `K` of a group `G`, the diagonal action of `G` on `(G ⧸ H) × (G ⧸ K)` has
+For subgroups `H` and `K` of a group `G`, a double coset is an orbit in two ways.
+
+The double coset `KsH` is the preimage in `G` of the `K`-orbit of the coset `sH`
+(`TauCeti.preimage_orbit_eq_doubleCoset`), so the partition of `G ⧸ H` into `K`-orbits is the
+partition of `G` into `K`-`H` double cosets.
+
+Globally, the diagonal action of `G` on `(G ⧸ H) × (G ⧸ K)` has
 orbits in bijection with the double cosets `H \ G / K`: the orbit of `(aH, bK)` is recorded by the
 double coset `H a⁻¹ b K`, and every orbit meets the slice `{(H, gK) | g : G}`.
 
@@ -27,6 +33,10 @@ numbers, which is the group-theoretic half of the statement that the permutation
 
 ## Main statements
 
+* `TauCeti.mem_doubleCoset_iff_mk_mem_orbit`: an element lies in `KsH` exactly when its coset
+  lies in the `K`-orbit of `sH`.
+* `TauCeti.preimage_orbit_eq_doubleCoset`: the double coset `KsH` is the preimage of the
+  `K`-orbit of `sH`.
 * `TauCeti.card_doubleCosetQuotient_eq_card_orbitQuotient`: the two sides of that bijection have
   the same cardinality.
 * `TauCeti.sum_card_fixedBy_mul_card_fixedBy_eq_card_doubleCosetQuotient_mul_card_group`:
@@ -56,6 +66,36 @@ open MulAction
 namespace TauCeti
 
 variable {G : Type*} [Group G]
+
+section SingleCoset
+
+/-- The double coset `KsH` consists exactly of those `x` whose class in `G ⧸ H` lies in the
+`K`-orbit of the class of `s`. -/
+theorem mem_doubleCoset_iff_mk_mem_orbit (s : G) (H K : Subgroup G) {x : G} :
+    x ∈ DoubleCoset.doubleCoset s (K : Set G) (H : Set G) ↔
+      ((x : G ⧸ H)) ∈ orbit K ((s : G ⧸ H)) := by
+  rw [DoubleCoset.mem_doubleCoset, mem_orbit_iff]
+  -- `K` acts on `G ⧸ H` through `Subgroup.subtype K` (`MulAction.mulLeftCosetsCompSubtypeVal`),
+  -- so `MulAction.compHom_smul_def` is what turns a `K`-translate back into a `G`-translate.
+  constructor
+  · rintro ⟨k, hk, h, hh, rfl⟩
+    refine ⟨⟨k, hk⟩, ?_⟩
+    rw [compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, Quotient.smul_coe,
+      smul_eq_mul, QuotientGroup.eq]
+    simpa [mul_assoc] using hh
+  · rintro ⟨k, hkx⟩
+    rw [compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, Quotient.smul_coe,
+      smul_eq_mul, QuotientGroup.eq] at hkx
+    exact ⟨k, k.2, ((k : G) * s)⁻¹ * x, hkx, (mul_inv_cancel_left _ _).symm⟩
+
+/-- The double coset `KsH` is the preimage, under `G → G ⧸ H`, of the `K`-orbit of the coset `sH`.
+So the partition of `G` into `K`-`H` double cosets is the partition of `G ⧸ H` into `K`-orbits. -/
+theorem preimage_orbit_eq_doubleCoset (s : G) (H K : Subgroup G) :
+    QuotientGroup.mk ⁻¹' (orbit K ((s : G ⧸ H)))
+      = DoubleCoset.doubleCoset s (K : Set G) (H : Set G) :=
+  Set.ext fun _ => (mem_doubleCoset_iff_mk_mem_orbit s H K).symm
+
+end SingleCoset
 
 section Orbits
 
