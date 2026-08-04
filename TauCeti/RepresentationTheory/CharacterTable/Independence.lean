@@ -6,8 +6,8 @@ Authors: Claude
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
-public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
-public import Mathlib.LinearAlgebra.Dimension.Finite
+import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
+import Mathlib.LinearAlgebra.Dimension.Finite
 
 /-!
 # Irreducible characters are linearly independent
@@ -48,18 +48,22 @@ and is not stated here; what this file proves is the inequality.
 
 ## Implementation notes
 
-Only the orthonormality lemmas mention `TauCeti.ClassFunction.characterPairing`, which is
-defined for a `Fintype`; the statements downstream of them are about linear independence alone,
-so they ask for `Finite G` and produce the `Fintype` inside the proof.
+Nothing here mentions `TauCeti.ClassFunction.characterPairing`, which is defined for a `Fintype`:
+the pairing enters only through the split orthonormality lemmas of
+`TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`, so these statements ask for
+`Finite G` and produce the `Fintype` inside their proofs.
 
 ## References
 
-* [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-  Layer 3, the orthonormality-to-independence half of the completeness item. Nothing here uses
-  Layers 1-2; on the contrary, these results feed them: the character bound is the `≤` half of
-  Layer 2's count `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, and that a character
-  determines its irreducible is what makes `character` injective on the isomorphism classes that
-  Layer 2.5 indexes by.
+* [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md).
+  Everything here is proved from Layer 0's `characterPairing` and its orthonormality, which are on
+  `main`, together with Mathlib's `char_orthonormal`; no Layer 1 or Layer 2 material is used. The
+  results are prerequisites for those layers rather than consequences of them: that a character
+  determines its irreducible is the injectivity of the map `character : Irreps k G →
+  ClassFunction k G` that Layer 2.5 asks for, and the bound is the `≤` half of Layer 2's count
+  `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, obtained without Wedderburn. Of Layer 3's
+  completeness item only this independence half is available; the basis and the spanning statement
+  need the count and are deliberately not stated here.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.8 and Corollary 2.9.
 -/
 
@@ -73,47 +77,6 @@ namespace ClassFunction
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
-
-/-! ### Orthonormality, split into its two halves -/
-
-section Orthonormal
-
-variable [Fintype G] {V W : Type w} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
-  [AddCommGroup W] [Module k W] [FiniteDimensional k W]
-
-/-- An irreducible character pairs to `1` with itself. -/
-@[simp]
-theorem characterPairing_ofCharacter_self (ρ : Representation k G V) [ρ.IsIrreducible] :
-    characterPairing (ofCharacter ρ) (ofCharacter ρ) = 1 := by
-  classical
-  have hrefl : Nonempty (Representation.Equiv ρ ρ) := ⟨Representation.Equiv.refl ρ⟩
-  rw [characterPairing_ofCharacter_orthonormal ρ ρ, if_pos hrefl]
-
-/-- The characters of inequivalent irreducible representations pair to `0`. -/
-@[simp]
-theorem characterPairing_ofCharacter_eq_zero (ρ : Representation k G V)
-    (σ : Representation k G W) [ρ.IsIrreducible] [σ.IsIrreducible] (h : IsEmpty (σ.Equiv ρ)) :
-    characterPairing (ofCharacter ρ) (ofCharacter σ) = 0 := by
-  classical
-  rw [characterPairing_ofCharacter_orthonormal ρ σ, if_neg (not_nonempty_iff.mpr h)]
-
-/-- The character of a simple object of `FDRep k G` pairs to `1` with itself. -/
-@[simp]
-theorem characterPairing_ofFDRep_self (X : FDRep k G) [CategoryTheory.Simple X] :
-    characterPairing (ofFDRep X) (ofFDRep X) = 1 := by
-  classical
-  have hrefl : Nonempty (X ≅ X) := ⟨CategoryTheory.Iso.refl X⟩
-  rw [characterPairing_ofFDRep_orthonormal X X, if_pos hrefl]
-
-/-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`. -/
-@[simp]
-theorem characterPairing_ofFDRep_eq_zero (X Y : FDRep k G) [CategoryTheory.Simple X]
-    [CategoryTheory.Simple Y] (h : IsEmpty (X ≅ Y)) :
-    characterPairing (ofFDRep X) (ofFDRep Y) = 0 := by
-  classical
-  rw [characterPairing_ofFDRep_orthonormal X Y, if_neg (not_nonempty_iff.mpr h)]
-
-end Orthonormal
 
 /-! ### Linear independence -/
 
