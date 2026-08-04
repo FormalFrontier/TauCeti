@@ -405,7 +405,8 @@ at `z₀` and stays in `U`.
 This is the hypothesis of the monodromy theorem. It is a condition on the germ
 (`TauCeti.continuesInside_congr`) and on the domain jointly: the germ of `Complex.log` at `1`
 continues inside `ℂ \ {0}`, and continues inside the slit plane, but is single-valued only on the
-latter. -/
+latter (`TauCeti.continuesInside_log`, `TauCeti.continuesInside_log_slitPlane` and
+`TauCeti.not_exists_analyticOnNhd_eventuallyEq_log`, in `Conformal/LogarithmBranch.lean`). -/
 def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
   ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c
 
