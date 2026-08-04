@@ -66,8 +66,8 @@ private theorem algebraMap_four_mul_mem_conductor {θ : 𝓞 K} {d : ℤ}
   have hdiscr : Algebra.discr ℚ pb.basis = ((4 * d : ℤ) : ℚ) := by
     -- `pb.basis` is `{1, θ}` reindexed along `pb.dim = 2`, so its discriminant is `discr_one_gen`.
     have hb2 : ⇑pb.basis ∘ ⇑(finCongr hdim).symm = ![(1 : K), (θ : K)] := by
-      funext j; fin_cases j <;> simp [pb.basis_eq_pow, hgenθ]
-    rw [← Algebra.discr_reindex pb.basis (finCongr hdim), hb2, discr_one_gen hmin hgen]
+      funext j; fin_cases j <;> simp [hgenθ]
+    rw [← Algebra.discr_reindex ℚ pb.basis (finCongr hdim), hb2, discr_one_gen hmin hgen]
   have hgenint : IsIntegral ℤ pb.gen := hgenθ ▸ hintθℤ
   have key := Algebra.discr_mul_isIntegral_mem_adjoin (R := ℤ) (K := ℚ) (L := K) (B := pb)
     hgenint (z := (b : K)) (b.isIntegral_coe)
