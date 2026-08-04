@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 import Mathlib.Geometry.Euclidean.Basic
+import TauCeti.Topology.Circle.Metric
 
 /-!
 # The endpoints of a circular crosscut
@@ -39,8 +40,8 @@ with its closure; they do not assert the continuous boundary extension itself.
 * `TauCeti.sphere_inter_sphere_eq_pair_circleMap` identifies their two distinct endpoints.
 * `TauCeti.isPathConnected_ball_inter_sphere` and
   `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging.
-* `TauCeti.dist_circleMap_circleMap` is the chord length `2 * |ρ| * |sin ((θ - θ') / 2)|` between
-  two angles of a circle.
+* `TauCeti.dist_circleMap_eq_two_mul_abs_sin` is the chord length `2 * |ρ| * |sin ((θ - θ') / 2)|`
+  between two angles of a circle.
 * `TauCeti.isPreconnected_ball_inter_sphere_inter_ball` — a ball centred at a point of the closed
   crosscut meets the crosscut in a subarc: a crosscut spans less than a half turn, so along it the
   chord distance to a fixed one of its points falls and then rises, and the angles it keeps below a
@@ -119,34 +120,28 @@ private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
 distance `2 * |ρ| * |sin ((θ - θ') / 2)|`; nothing is assumed of the radius, a negative `ρ`
 tracing the same circle in the other sense.
 
-Mathlib has the unit-circle case in the form
-`Complex.norm_exp_I_mul_ofReal_sub_one : ‖exp (I * x) - 1‖ = ‖2 * sin (x / 2)‖`; this is that
-statement transported to `circleMap`, which is how the angular descriptions in this file measure
-distances along a crosscut. -/
-theorem dist_circleMap_circleMap (ζ : ℂ) (ρ θ θ' : ℝ) :
+This is the unit-circle chord formula `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — itself Mathlib's
+`Complex.norm_exp_I_mul_ofReal_sub_one : ‖exp (I * x) - 1‖ = ‖2 * sin (x / 2)‖` — transported along
+the translation and real scaling that carry `Circle.exp` to `circleMap ζ ρ`, which is how the
+angular descriptions in this file measure distances along a crosscut. -/
+theorem dist_circleMap_eq_two_mul_abs_sin (ζ : ℂ) (ρ θ θ' : ℝ) :
     dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * |Real.sin ((θ - θ') / 2)| := by
   have hsub : circleMap ζ ρ θ - circleMap ζ ρ θ' =
-      (ρ : ℂ) * exp ((θ' : ℂ) * I) * (exp (I * ((θ - θ' : ℝ) : ℂ)) - 1) := by
-    have hmul : exp ((θ' : ℂ) * I) * exp (I * ((θ - θ' : ℝ) : ℂ)) = exp ((θ : ℂ) * I) := by
-      rw [← Complex.exp_add]
-      congr 1
-      push_cast
-      ring
-    simp only [circleMap]
-    rw [mul_sub, mul_one, mul_assoc, hmul]
+      (ρ : ℂ) * ((Circle.exp θ : ℂ) - (Circle.exp θ' : ℂ)) := by
+    simp only [circleMap, Circle.coe_exp]
     ring
-  rw [dist_eq_norm, hsub, norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs,
-    Complex.norm_exp_ofReal_mul_I, mul_one, Complex.norm_exp_I_mul_ofReal_sub_one,
-    Real.norm_eq_abs, abs_mul]
-  norm_num
+  have hchord : ‖(Circle.exp θ : ℂ) - (Circle.exp θ' : ℂ)‖ = 2 * |Real.sin ((θ - θ') / 2)| := by
+    rw [← dist_circleExp_eq_two_mul_abs_sin, ← Complex.dist_eq]
+    exact (Subtype.dist_eq _ _).symm
+  rw [dist_eq_norm, hsub, norm_mul, Complex.norm_real, Real.norm_eq_abs, hchord]
   ring
 
-/-- The chord length of `TauCeti.dist_circleMap_circleMap` with the sign of the angular difference
-cleared: for angles at most `π` apart the chord grows with the angular gap. -/
-private lemma dist_circleMap_circleMap_eq_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ}
+/-- The chord length of `TauCeti.dist_circleMap_eq_two_mul_abs_sin` with the sign of the angular
+difference cleared: for angles at most `π` apart the chord grows with the angular gap. -/
+private lemma dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ}
     (h : |θ - θ'| ≤ π) :
     dist (circleMap ζ ρ θ) (circleMap ζ ρ θ') = 2 * |ρ| * Real.sin (|θ - θ'| / 2) := by
-  rw [dist_circleMap_circleMap]
+  rw [dist_circleMap_eq_two_mul_abs_sin]
   congr 1
   have hnn : 0 ≤ Real.sin (|θ - θ'| / 2) :=
     Real.sin_nonneg_of_nonneg_of_le_pi (by positivity) (by linarith [Real.pi_pos])
@@ -167,7 +162,7 @@ private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : �
   have hdist : ∀ u ∈ Icc a b, dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀)
       = 2 * |ρ| * Real.sin (|u - θ₀| / 2) := by
     intro u hu
-    refine dist_circleMap_circleMap_eq_sin_abs ζ ρ ?_
+    refine dist_circleMap_eq_two_mul_sin_abs ζ ρ ?_
     rw [abs_le]
     constructor <;> [linarith [hu.1, h₀.2]; linarith [hu.2, h₀.1]]
   have hmono : ∀ u ∈ Icc a b, ∀ v ∈ Icc a b, |u - θ₀| ≤ |v - θ₀| →

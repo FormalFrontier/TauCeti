@@ -190,7 +190,9 @@ sets.** The crosscut `ball c r ∩ sphere ζ ρ` is an open arc whose closure ad
 points of `sphere c r ∩ sphere ζ ρ`
 (`TauCeti.closure_ball_inter_sphere`, `TauCeti.sphere_inter_sphere_eq_pair_circleMap`), and a
 continuous `f` contributes nothing new over the arc itself, so all of `closure (f '' arc)` beyond
-`f '' arc` is cluster values at the two ends.
+`f '' arc` is cluster values at the two ends. The cluster-set content is
+`TauCeti.closure_image_eq_image_union_biUnion_clusterSetOn`, applied to the arc, whose frontier is
+its whole closure because an arc has empty interior in the plane.
 
 Only continuity along the arc is used; `f` need be neither holomorphic nor injective, and the
 image need not be bounded. -/
@@ -205,21 +207,21 @@ theorem closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn
   have hcomp : IsCompact (closure (ball c r ∩ sphere ζ ρ)) := by
     rw [hcl]
     exact (isCompact_closedBall c r).inter_right isClosed_sphere
-  have hsplit : closure (ball c r ∩ sphere ζ ρ) =
+  -- the crosscut is an arc, so it has empty interior and its frontier is its whole closure
+  have hint : interior (ball c r ∩ sphere ζ ρ) = ∅ := by
+    rw [← subset_empty_iff, ← interior_sphere ζ hρ.ne']
+    exact interior_mono inter_subset_right
+  have hfr : frontier (ball c r ∩ sphere ζ ρ) =
       (ball c r ∩ sphere ζ ρ) ∪ (sphere c r ∩ sphere ζ ρ) := by
-    rw [hcl, ← ball_union_sphere, union_inter_distrib_right]
+    rw [← closure_sdiff_interior, hint, sdiff_empty, hcl, ← ball_union_sphere,
+      union_inter_distrib_right]
   have harc : ⋃ w ∈ ball c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) w
-      = f '' (ball c r ∩ sphere ζ ρ) := by
-    ext v
-    simp only [mem_iUnion₂, mem_image]
-    constructor
-    · rintro ⟨w, hw, hv⟩
-      rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw), mem_singleton_iff] at hv
-      exact ⟨w, hw, hv.symm⟩
-    · rintro ⟨w, hw, rfl⟩
-      exact ⟨w, hw, by
-        rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw)]; rfl⟩
-  rw [closure_image_eq_biUnion_clusterSetOn hcomp, hsplit, biUnion_union, harc]
+      ⊆ f '' (ball c r ∩ sphere ζ ρ) := by
+    refine iUnion₂_subset fun w hw => ?_
+    rw [clusterSetOn_eq_singleton_of_continuousWithinAt hw (hfc w hw)]
+    exact singleton_subset_iff.mpr (mem_image_of_mem f hw)
+  rw [closure_image_eq_image_union_biUnion_clusterSetOn hcomp hfc, hfr, biUnion_union,
+    ← union_assoc, union_eq_self_of_subset_right harc]
 
 /-- **An end cluster set of an image crosscut lies in the middle piece.** For `f` holomorphic and
 injective on `ball c r` and an endpoint `e` of a circular crosscut, every value `f` clusters at
@@ -242,29 +244,30 @@ theorem clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image
   exact he.1
 
 /-- **Each end of a circular crosscut carries a cluster value.** The crosscut is adherent to each
-of its two endpoints and `f` is confined to the compact `closure (f '' ball c r)`, so the cluster
-set there is nonempty; no holomorphy is needed. -/
-theorem nonempty_clusterSetOn_ball_inter_sphere (hb : IsBounded (f '' ball c r))
+of its two endpoints and `f` is confined along it to the compact
+`closure (f '' (ball c r ∩ sphere ζ ρ))`, so the cluster set there is nonempty; only the image of
+the crosscut need be bounded, and no holomorphy is needed. -/
+theorem nonempty_clusterSetOn_ball_inter_sphere (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Nonempty := by
   refine clusterSetOn_nonempty hb.isCompact_closure
-    (fun z hz => subset_closure (mem_image_of_mem f (inter_subset_left hz))) ?_
+    (fun z hz => subset_closure (mem_image_of_mem f hz)) ?_
   rw [closure_ball_inter_sphere hζ hρ hρr]
   exact ⟨sphere_subset_closedBall he.1, he.2⟩
 
 /-- **Each end of an image crosscut is a continuum.** For `f` continuous along a genuine circular
-crosscut and with bounded image, the cluster set at either endpoint is nonempty and connected; it
-is compact by `TauCeti.isCompact_clusterSetOn_of_isBounded`. This is the Collingwood–Lohwater
-continuum theorem `TauCeti.isConnected_clusterSetOn`, whose local hypothesis — that arbitrarily
-small neighbourhoods of the endpoint meet the crosscut in a preconnected set — is exactly
-`TauCeti.isPreconnected_ball_inter_sphere_inter_ball`, a crosscut spanning less than a half turn
-and so meeting each ball centred on it in a subarc. -/
+crosscut and with bounded image *of the crosscut*, the cluster set at either endpoint is nonempty
+and connected; it is compact by `TauCeti.isCompact_clusterSetOn_of_isBounded`. This is the
+Collingwood–Lohwater continuum theorem `TauCeti.isConnected_clusterSetOn`, whose local hypothesis —
+that arbitrarily small neighbourhoods of the endpoint meet the crosscut in a preconnected set — is
+exactly `TauCeti.isPreconnected_ball_inter_sphere_inter_ball`, a crosscut spanning less than a half
+turn and so meeting each ball centred on it in a subarc. -/
 theorem isConnected_clusterSetOn_ball_inter_sphere
-    (hfc : ContinuousOn f (ball c r ∩ sphere ζ ρ)) (hb : IsBounded (f '' ball c r))
+    (hfc : ContinuousOn f (ball c r ∩ sphere ζ ρ)) (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
     IsConnected (clusterSetOn f (ball c r ∩ sphere ζ ρ) e) := by
   have hecl : e ∈ closedBall c r ∩ sphere ζ ρ := ⟨sphere_subset_closedBall he.1, he.2⟩
-  refine isConnected_clusterSetOn_of_isBounded hfc (hb.subset (image_mono inter_subset_left))
+  refine isConnected_clusterSetOn_of_isBounded hfc hb
     (by rw [closure_ball_inter_sphere hζ hρ hρr]; exact hecl) fun s hs => ?_
   obtain ⟨δ, hδ, hball⟩ := Metric.mem_nhds_iff.mp hs
   exact ⟨ball e δ, ball_mem_nhds e hδ, hball,
@@ -336,7 +339,9 @@ theorem nonempty_frontier_inter_closure_image_ball_inter_sphere
       ∈ sphere c r ∩ sphere ζ ρ := by
     rw [sphere_inter_sphere_eq_pair_circleMap hζ hρ hρr]
     exact Or.inl rfl
-  obtain ⟨v, hv⟩ := nonempty_clusterSetOn_ball_inter_sphere hb hζ hρ hρr hemem
+  obtain ⟨v, hv⟩ :=
+    nonempty_clusterSetOn_ball_inter_sphere (hb.subset (image_mono inter_subset_left))
+      hζ hρ hρr hemem
   exact ⟨v, clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image hd hinj hr hemem hv⟩
 
 /-! ## The small connected set enclosing the middle piece -/
