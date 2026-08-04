@@ -10,7 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 /-!
 # The Lie algebra of the tangent space
 
-Directory aggregator: the Lie algebra structure on counit-valued derivations
-(`Lie.Basic`), the differential as a Lie algebra morphism (`Lie.Map`), and the
-`TauCeti.Algebra.AlgebraicGroup.Tangent.Lie` provides both.
+Directory aggregator: importing this module provides both the Lie algebra structure
+on counit-valued derivations (`Lie.Basic`) and the differential as a Lie algebra
+morphism (`Lie.Map`).
 -/

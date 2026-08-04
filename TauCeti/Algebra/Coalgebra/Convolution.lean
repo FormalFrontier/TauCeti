@@ -14,10 +14,21 @@ Let `C` be an `R`-algebra carrying a comultiplication. This file records that, i
 monoid of linear maps `C →ₗ[R] C ⊗[R] C`, comultiplication is the convolution product of the two
 canonical inclusions `c ↦ c ⊗ₜ 1` and `c ↦ 1 ⊗ₜ c` of `C` into its tensor square.
 
+The file also provides the exterior convolution product `LinearMap.mulTensor`: two
+linear maps out of a module `M`, valued in an algebra, applied legwise on `M ⊗[R] M`
+and multiplied in the codomain. Its normalization rules (zero, addition, scalars) and
+its multiplicativity for the convolution product make it the engine for
+composition-level convolution calculations: composing a map with a multiplication
+lands in the image of `mulTensor`, and convolution products interleave legwise.
+
 ## Main declarations
 
 * `TauCeti.Coalgebra.comul_eq_convMul_includeLeft_includeRight`: comultiplication as the
   convolution product of the two tensor inclusions.
+* `TauCeti.LinearMap.mulTensor`: the exterior convolution product, with its
+  normalization rules and `TauCeti.LinearMap.mulTensor_convMul`.
+* `TauCeti.AlgHom.toConv_toLinearMap_comp_mul'`: an algebra map composed with
+  multiplication is its own exterior square.
 -/
 
 public section
