@@ -53,7 +53,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra WithConv TensorProduct
+open _root_.Coalgebra WithConv TensorProduct
 
 namespace Derivation
 

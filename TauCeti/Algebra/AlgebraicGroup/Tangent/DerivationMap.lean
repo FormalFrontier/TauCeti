@@ -33,7 +33,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra
+open _root_.Coalgebra
 
 section DerivationMap
 

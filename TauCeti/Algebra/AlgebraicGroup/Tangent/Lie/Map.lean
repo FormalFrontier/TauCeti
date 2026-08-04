@@ -28,7 +28,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra TensorProduct WithConv
+open _root_.Coalgebra TensorProduct WithConv
 
 section Bracket
 

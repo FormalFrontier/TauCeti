@@ -50,7 +50,7 @@ namespace TauCeti
 
 namespace Derivation
 
-open Coalgebra WithConv TensorProduct
+open _root_.Coalgebra WithConv TensorProduct
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
   [CommSemiring B] [Algebra R B]

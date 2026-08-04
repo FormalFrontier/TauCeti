@@ -7,6 +7,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.RingTheory.Derivation.DualNumber
 public import Mathlib.RingTheory.Bialgebra.TensorProduct
+public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
 # The tangent space at the identity point
@@ -55,7 +56,7 @@ public section
 
 namespace TauCeti
 
-open Bialgebra Coalgebra WithConv
+open Bialgebra _root_.Coalgebra WithConv
 
 section BialgebraPoint
 
@@ -102,7 +103,6 @@ lemma algEquivSelf_symm_apply (b : B) : (algEquivSelf R A B).symm b = b := by
   change (AlgEquiv.refl (R := R) (A₁ := B)).symm b = b
   simp only [AlgEquiv.refl_symm, AlgEquiv.coe_refl]
   rfl
-
 
 end Bialgebra.CounitAlgebra
 
@@ -431,124 +431,6 @@ noncomputable instance : CommGroup (tangentKer R A B) :=
       rw [map_mul, map_mul, mul_comm] }
 
 end Hopf
-
-
-section ExteriorProduct
-
-open WithConv TensorProduct
-
-variable {R M S : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
-  [CommSemiring S] [Algebra R S]
-
-namespace LinearMap
-
-
-
-/-- The exterior convolution product on `M ⊗[R] M`: apply one factor on each tensor
-leg and multiply the results in the coefficients. It underlies the Leibniz-rule
-manipulations for counit-valued derivations: composing with the multiplication of the
-bialgebra lands in this product's image. -/
-def mulTensor (s t : WithConv (M →ₗ[R] S)) :
-    WithConv (M ⊗[R] M →ₗ[R] S) :=
-  toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
-
-/-- The exterior product evaluates a pure tensor legwise and multiplies the results
-in the coefficients. -/
-@[simp]
-lemma mulTensor_apply_tmul
-    (s t : WithConv (M →ₗ[R] S)) (x y : M) :
-    (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
-  simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
-
-
-/-- The exterior product vanishes when the left factor is zero. -/
-@[simp]
-lemma mulTensor_zero_left (t : WithConv (M →ₗ[R] S)) :
-    mulTensor 0 t = 0 := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp
-
-/-- The exterior product vanishes when the right factor is zero. -/
-@[simp]
-lemma mulTensor_zero_right (s : WithConv (M →ₗ[R] S)) :
-    mulTensor s 0 = 0 := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp
-
-/-- The exterior product is additive in the left factor. -/
-@[simp]
-lemma mulTensor_add_left (s₁ s₂ t : WithConv (M →ₗ[R] S)) :
-    mulTensor (s₁ + s₂) t = mulTensor s₁ t + mulTensor s₂ t := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp [add_mul]
-
-/-- The exterior product is additive in the right factor. -/
-@[simp]
-lemma mulTensor_add_right (s t₁ t₂ : WithConv (M →ₗ[R] S)) :
-    mulTensor s (t₁ + t₂) = mulTensor s t₁ + mulTensor s t₂ := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp [mul_add]
-
-/-- Scalars pull out of the left factor of the exterior product. -/
-@[simp]
-lemma mulTensor_smul_left (r : R) (s t : WithConv (M →ₗ[R] S)) :
-    mulTensor (r • s) t = r • mulTensor s t := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp
-
-/-- Scalars pull out of the right factor of the exterior product. -/
-@[simp]
-lemma mulTensor_smul_right (r : R) (s t : WithConv (M →ₗ[R] S)) :
-    mulTensor s (r • t) = r • mulTensor s t := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp
-
-end LinearMap
-
-namespace AlgHom
-
-variable {A : Type*} [Semiring A] [Algebra R A]
-
-open TauCeti.LinearMap in
-/-- An algebra-map point composed with multiplication is its own exterior square:
-the multiplicativity of the point, in convolution form. -/
-lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] S) :
-    toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
-      mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp [map_mul]
-
-end AlgHom
-
-end ExteriorProduct
-
-section ExteriorConvolution
-
-open WithConv TensorProduct
-
-variable {R A S : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
-  [CommSemiring S] [Algebra R S]
-
-namespace LinearMap
-
-/-- The exterior product is multiplicative for convolution: products interleave
-legwise. -/
-lemma mulTensor_convMul
-    (s t u v : WithConv (A →ₗ[R] S)) :
-    mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
-  have h := LinearMap.algHom_comp_convMul_distrib
-    (Algebra.TensorProduct.lmul' R (S := S))
-    (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
-  rw [map_convMul_map] at h
-  calc mulTensor s t * mulTensor u v
-      = toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ
-          map (s * u).ofConv (t * v).ofConv) := by
-        rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
-    _ = mulTensor (s * u) (t * v) := rfl
-
-end LinearMap
-
-end ExteriorConvolution
 
 section DerivationLeibniz
 
