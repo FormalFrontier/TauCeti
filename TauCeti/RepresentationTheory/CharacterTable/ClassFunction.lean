@@ -144,6 +144,12 @@ theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) (g : G) : (ofCharacter ρ).1 g = ρ.character g :=
   (rfl)
 
+/-- The class function of a representation *is* its character, as a function on `G`. Not a `simp`
+lemma, because `TauCeti.ClassFunction.ofCharacter_apply` is the pointwise normal form. -/
+theorem coe_ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
+    (ρ : Representation k G V) : ((ofCharacter ρ : ClassFunction k G) : G → k) = ρ.character :=
+  funext fun g => ofCharacter_apply ρ g
+
 /-- The character of a finite-dimensional bundled representation is a class function. -/
 noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
   ⟨V.character, fun g h => V.char_conj g h⟩
@@ -152,6 +158,12 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 @[simp]
 theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
   (rfl)
+
+/-- The class function of a bundled finite-dimensional representation *is* its character, as a
+function on `G`. Not a `simp` lemma, because `TauCeti.ClassFunction.ofFDRep_apply` is the
+pointwise normal form. -/
+theorem coe_ofFDRep (V : FDRep k G) : ((ofFDRep V : ClassFunction k G) : G → k) = V.character :=
+  funext fun g => ofFDRep_apply V g
 
 end ClassFunction
 
