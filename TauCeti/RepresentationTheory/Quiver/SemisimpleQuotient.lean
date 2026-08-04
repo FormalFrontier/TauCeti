@@ -240,7 +240,7 @@ its trivial coordinates zero exactly when it is supported on the paths of positi
 theorem ker_trivialCoeff : RingHom.ker (trivialCoeff k Q) = arrowIdeal k Q := by
   ext f
   rw [RingHom.mem_ker, mem_arrowIdeal_iff_repr_nil, funext_iff]
-  rfl
+  simp only [trivialCoeff_apply, Pi.zero_apply]
 
 end TrivialCoeff
 
