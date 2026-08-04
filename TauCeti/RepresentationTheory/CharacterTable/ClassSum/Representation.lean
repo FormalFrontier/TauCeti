@@ -40,15 +40,21 @@ namespace Representation
 
 universe u v w
 
-variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Group G]
-variable [AddCommGroup V] [Module k V] (ρ : Representation k G V)
-variable [Fintype G] [DecidableEq G]
+variable {k : Type u} {G : Type v} {V : Type w} [Group G] [Fintype G] [DecidableEq G]
+
+section
+
+variable [CommSemiring k] [AddCommMonoid V] [Module k V] (ρ : Representation k G V)
 
 /-- A class sum acts on a representation by the sum of the actions of the elements of the class. -/
 theorem asAlgebraHom_classSum (C : ConjClasses G) :
     ρ.asAlgebraHom (classSum k C) = ∑ x : C.carrier, ρ (x : G) := by
   rw [classSum_eq_sum, map_sum]
   exact Finset.sum_congr rfl fun x _ => ρ.asAlgebraHom_of x
+
+end
+
+variable [Field k] [AddCommGroup V] [Module k V] (ρ : Representation k G V)
 
 /-- The character is constant on a conjugacy class, so the trace of the action of a class sum is
 the size of the class times the character value there. -/
