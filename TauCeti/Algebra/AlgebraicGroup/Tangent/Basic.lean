@@ -507,12 +507,12 @@ end LinearMap
 
 namespace AlgHom
 
-variable {A B : Type*} [Semiring A] [Algebra R A] [CommSemiring B] [Algebra R B]
+variable {A : Type*} [Semiring A] [Algebra R A]
 
 open TauCeti.LinearMap in
 /-- An algebra-map point composed with multiplication is its own exterior square:
 the multiplicativity of the point, in convolution form. -/
-lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] Bialgebra.CounitAlgebra R A B) :
+lemma toConv_toLinearMap_comp_mul' (g : A →ₐ[R] S) :
     toConv (g.toLinearMap ∘ₗ LinearMap.mul' R A) =
       mulTensor (toConv g.toLinearMap) (toConv g.toLinearMap) := by
   refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
@@ -526,23 +526,22 @@ section ExteriorConvolution
 
 open WithConv TensorProduct
 
-variable {R A B : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
-  [CommSemiring B] [Algebra R B]
+variable {R A S : Type*} [CommSemiring R] [Semiring A] [Bialgebra R A]
+  [CommSemiring S] [Algebra R S]
 
 namespace LinearMap
 
 /-- The exterior product is multiplicative for convolution: products interleave
 legwise. -/
 lemma mulTensor_convMul
-    (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
+    (s t u v : WithConv (A →ₗ[R] S)) :
     mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
   have h := LinearMap.algHom_comp_convMul_distrib
-    (Algebra.TensorProduct.lmul' R (S := Bialgebra.CounitAlgebra R A B))
+    (Algebra.TensorProduct.lmul' R (S := S))
     (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
   rw [map_convMul_map] at h
   calc mulTensor s t * mulTensor u v
-      = toConv ((Algebra.TensorProduct.lmul' R
-            (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ
+      = toConv ((Algebra.TensorProduct.lmul' R (S := S)).toLinearMap ∘ₗ
           map (s * u).ofConv (t * v).ofConv) := by
         rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
     _ = mulTensor (s * u) (t * v) := rfl
