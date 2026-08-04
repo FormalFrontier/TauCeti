@@ -230,7 +230,7 @@ noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1
 /-- The half-integer generator coerces to `(1 + θ)/2` in `K`. -/
 @[simp] theorem coe_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
     (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := by
-  simp only [halfGen, RingOfIntegers.coe_mk]
+  unfold halfGen; rfl
 
 /-- **`𝓞 K = ℤ[ω]` for `d ≡ 1 (mod 4)`: coordinates.** Every algebraic integer is a `ℤ`-combination
 `k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the half-integer coordinates `A/2, B/2` give
