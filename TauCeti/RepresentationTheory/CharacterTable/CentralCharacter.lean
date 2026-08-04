@@ -116,7 +116,10 @@ noncomputable def centralCharacter : Subalgebra.center k k[G] →ₐ[k] k :=
   TauCeti.centralCharacter k k[G] ρ.asModule
 
 /-- A central element of the group algebra acts on the representation as multiplication by the
-value of the central character. -/
+value of the central character.
+
+Not itself `@[simp]`: simp reaches this normal form from the map-level
+`TauCeti.Representation.asAlgebraHom_center` below. -/
 theorem asAlgebraHom_center_apply (z : Subalgebra.center k k[G]) (v : V) :
     ρ.asAlgebraHom (z : k[G]) v = centralCharacter ρ z • v := by
   have h : (z : k[G]) • ρ.asModuleEquiv.symm v =
@@ -127,7 +130,11 @@ theorem asAlgebraHom_center_apply (z : Subalgebra.center k k[G]) (v : V) :
     LinearEquiv.apply_symm_apply] at h'
 
 /-- A central element of the group algebra acts on an irreducible representation by a scalar
-endomorphism. -/
+endomorphism.
+
+This is the simp normal form for the action of the centre: the opaque action is replaced by a
+scalar, applied or not. -/
+@[simp]
 theorem asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     ρ.asAlgebraHom (z : k[G]) = centralCharacter ρ z • LinearMap.id :=
   LinearMap.ext fun v => asAlgebraHom_center_apply ρ z v
