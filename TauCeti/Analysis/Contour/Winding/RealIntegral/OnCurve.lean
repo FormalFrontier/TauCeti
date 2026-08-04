@@ -55,7 +55,7 @@ per-crossing windows along the sorted crossing list.
 
 ## Main results
 
-* `TauCeti.Contour.isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_crossings`
+* `TauCeti.Contour.intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings`
   — the real bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are
   interior.
 
@@ -324,8 +324,8 @@ private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Fi
     (fun c m d hcm hmd h₁ h₂ => by
       -- Split at the shared breakpoint `m` so the two pieces' boundedness facts `h₁`, `h₂`
       -- combine via `Set.image_union` into one on the whole `Icc c d`.
-      rw [show Icc c d = Icc c m ∪ Icc m d from (Set.Icc_union_Icc_eq_Icc hcm hmd).symm,
-        Set.image_union]
+      have hsplit : Icc c d = Icc c m ∪ Icc m d := (Set.Icc_union_Icc_eq_Icc hcm hmd).symm
+      rw [hsplit, Set.image_union]
       exact h₁.union h₂)
 
 /-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
@@ -431,7 +431,7 @@ HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
 crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
 Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
 splitting (arXiv:1808.00997, p. 9). -/
-theorem isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_crossings
+theorem intervalIntegrable_windingNumber_eq_integral_of_closed_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
@@ -449,7 +449,8 @@ theorem isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_cros
   rcases hab.eq_or_lt with rfl | hab
   · refine ⟨?_, .refl, by simp⟩
     -- A degenerate `[a, a]` interval is a single point, trivially bounded.
-    rw [show Icc a a = {a} from Set.Icc_self a, Set.image_singleton]
+    have hsingle : Icc a a = {a} := Set.Icc_self a
+    rw [hsingle, Set.image_singleton]
     exact (Set.finite_singleton _).isBounded
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
   have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
@@ -507,11 +508,11 @@ theorem isBounded_intervalIntegrable_windingNumber_eq_integral_of_closed_of_cros
       Icc_subset_Icc (by linarith [min_le_right (ρ_lipR t₀) (ρ_lipL t₀)]) le_rfl
     -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
     -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
-    rw [show Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)
-          = Icc (t₀ - ρ_lip t₀) t₀ ∪ Icc t₀ (t₀ + ρ_lip t₀) from
-        (Set.Icc_union_Icc_eq_Icc (by linarith [hρ_lip_pos t₀ ht₀])
-          (by linarith [hρ_lip_pos t₀ ht₀])).symm,
-      Set.image_union]
+    have hsplit : Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)
+        = Icc (t₀ - ρ_lip t₀) t₀ ∪ Icc t₀ (t₀ + ρ_lip t₀) :=
+      (Set.Icc_union_Icc_eq_Icc (by linarith [hρ_lip_pos t₀ ht₀])
+        (by linarith [hρ_lip_pos t₀ ht₀])).symm
+    rw [hsplit, Set.image_union]
     exact ((hbddL t₀ ht₀).subset (Set.image_mono hLsub)).union
       ((hbddR t₀ ht₀).subset (Set.image_mono hRsub))
   -- Shrink the common window radius to also stay inside every crossing's bounded window.
