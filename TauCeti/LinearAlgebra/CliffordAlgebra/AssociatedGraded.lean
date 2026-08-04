@@ -10,7 +10,7 @@ public import Mathlib.Algebra.DirectSum.Algebra
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
-# Homogeneous multiplication for a Clifford filtration
+# Associated-graded algebra of a Clifford filtration
 
 This file packages the homogeneous pieces of the Clifford degree filtration into a direct-sum
 associated-graded algebra. It is generic in the quadratic form and does not yet identify that
@@ -174,6 +174,20 @@ noncomputable def filtrationGradedOne (Q : QuadraticForm R M) :
     FiltrationGradedPiece Q 0 :=
   Submodule.Quotient.mk ⟨1, one_mem_filtration Q 0⟩
 
+/-- The degree-zero unit is the quotient class of the Clifford unit. -/
+theorem filtrationGradedOne_def (Q : QuadraticForm R M) :
+    filtrationGradedOne Q =
+      Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0) := by
+  change Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0) =
+    Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0)
+  rfl
+
+/-- The quotient class of the Clifford unit is the degree-zero homogeneous unit. -/
+@[simp] theorem filtrationGradedOne_mk (Q : QuadraticForm R M) :
+    Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0) =
+      filtrationGradedOne Q :=
+  (filtrationGradedOne_def Q).symm
+
 /-- The degree-zero class of a scalar in the associated graded Clifford filtration. -/
 noncomputable def filtrationGradedAlgebraMap₀ (Q : QuadraticForm R M) :
     R →+ FiltrationGradedPiece Q 0 where
@@ -184,6 +198,27 @@ noncomputable def filtrationGradedAlgebraMap₀ (Q : QuadraticForm R M) :
     rw [← Submodule.Quotient.mk_add]
     apply congrArg Submodule.Quotient.mk
     exact Subtype.ext (map_add (algebraMap R (CliffordAlgebra Q)) r s)
+
+/-- The degree-zero scalar map is the quotient class of its ambient scalar. -/
+theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
+    filtrationGradedAlgebraMap₀ Q r =
+      Submodule.Quotient.mk
+        (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
+          filtration Q 0) := by
+  change Submodule.Quotient.mk
+      (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
+        filtration Q 0) =
+    Submodule.Quotient.mk
+      (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
+        filtration Q 0)
+  rfl
+
+/-- The quotient class of an ambient scalar is its degree-zero homogeneous class. -/
+@[simp] theorem filtrationGradedAlgebraMap₀_mk (Q : QuadraticForm R M) (r : R) :
+    Submodule.Quotient.mk
+      (⟨algebraMap R (CliffordAlgebra Q) r, algebraMap_mem_filtration Q r 0⟩ :
+        filtration Q 0) = filtrationGradedAlgebraMap₀ Q r :=
+  (filtrationGradedAlgebraMap₀_apply Q r).symm
 
 /-- The degree-zero scalar map sends `1` to the homogeneous unit. -/
 @[simp] theorem filtrationGradedAlgebraMap₀_one (Q : QuadraticForm R M) :
@@ -249,7 +284,7 @@ noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
   one := filtrationGradedOne Q
 
 /-- The `GOne` field is the named degree-zero filtration class. -/
-@[simp] theorem filtrationGradedGOne_one (Q : QuadraticForm R M) :
+@[simp] theorem filtrationGradedGOne_def (Q : QuadraticForm R M) :
     (GradedMonoid.GOne.one : FiltrationGradedPiece Q 0) = filtrationGradedOne Q := rfl
 
 /-- Homogeneous filtration multiplication supplies the `GMul` structure on filtration pieces. -/
@@ -258,7 +293,7 @@ noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
   mul {i j} := fun x y => filtrationGradedMul Q i j x y
 
 /-- The `GMul` field is the named homogeneous filtration product. -/
-@[simp] theorem filtrationGradedGMul_mul (Q : QuadraticForm R M) {i j : ℕ}
+@[simp] theorem filtrationGradedGMul_def (Q : QuadraticForm R M) {i j : ℕ}
     (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
     GradedMonoid.GMul.mul (A := FiltrationGradedPiece Q) x y = filtrationGradedMul Q i j x y := rfl
 
@@ -446,7 +481,7 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
         (filtrationGradedAlgebraMap₀_mul Q r k x)
 
 /-- The `GAlgebra` field is the named degree-zero scalar map. -/
-@[simp] theorem filtrationGradedGAlgebra_toFun (Q : QuadraticForm R M) (r : R) :
+@[simp] theorem filtrationGradedGAlgebra_toFun_def (Q : QuadraticForm R M) (r : R) :
     DirectSum.GAlgebra.toFun (A := FiltrationGradedPiece Q)
       (self := filtrationGradedGAlgebra (Q := Q)) r = filtrationGradedAlgebraMap₀ Q r := rfl
 
@@ -458,12 +493,12 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
   infer_instance
 
 /-- Multiplication of homogeneous direct-sum terms is the named filtration product. -/
-@[simp] theorem filtrationAssociatedGraded_of_mul (Q : QuadraticForm R M) {i j : ℕ}
+@[simp] theorem filtrationAssociatedGraded_of_mul_of (Q : QuadraticForm R M) {i j : ℕ}
     (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
     (DirectSum.of (FiltrationGradedPiece Q) i x : filtrationAssociatedGraded Q) *
       DirectSum.of (FiltrationGradedPiece Q) j y =
       DirectSum.of (FiltrationGradedPiece Q) (i + j) (filtrationGradedMul Q i j x y) := by
-  simp only [DirectSum.of_mul_of, filtrationGradedGMul_mul]
+  simp only [DirectSum.of_mul_of, filtrationGradedGMul_def]
 
 /-- The associated-graded scalar map is the degree-zero named filtration map. -/
 @[simp] theorem filtrationAssociatedGraded_algebraMap (Q : QuadraticForm R M) (r : R) :
