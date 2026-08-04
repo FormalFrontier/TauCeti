@@ -163,11 +163,7 @@ pairwise non-adjacent, then the Cartan products of `i` with the indices of `s` s
 
 This is the single positive-definiteness estimate behind the local shape of a finite-type diagram:
 inside a pairwise non-adjacent star at `i` there are at most three neighbours, at most one of the
-edges to them is multiple, and a triple edge among them stands alone. It is
-proved by evaluating the symmetrized quadratic form at the vector that is `1` at `i` and, at each
-`j ∈ s`, the value `-dᵢAᵢⱼ / 2dⱼ` minimizing the `j`-th coordinate of the form. Pairwise
-non-adjacency is what makes the coordinates of `s` independent of one another, so that each can be
-minimized separately; the resulting value of the form is `dᵢ(4 - ∑ⱼ AᵢⱼAⱼᵢ) / 2`. -/
+edges to them is multiple, and a triple edge among them stands alone. -/
 theorem sum_apply_mul_apply_lt_four (h : IsFiniteType A) {i : B} {s : Finset B} (his : i ∉ s)
     (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
     ∑ j ∈ s, A i j * A j i < 4 := by
@@ -179,7 +175,9 @@ theorem sum_apply_mul_apply_lt_four (h : IsFiniteType A) {i : B} {s : Finset B} 
     intro p q
     have h' := hpd.isHermitian.apply p q
     simpa [hM] using h'
-  -- The test vector: `1` at `i`, the minimizing value at each index of `s`, and `0` elsewhere.
+  -- The test vector: `1` at `i`, the value `-dᵢAᵢₖ / 2dₖ` minimizing the `k`-th coordinate of the
+  -- form at each `k ∈ s`, and `0` elsewhere. Pairwise non-adjacency makes the coordinates of `s`
+  -- independent of one another, which is what lets each be minimized separately.
   set c : B → ℚ := fun k ↦ -(d i * (A i k : ℚ)) / (2 * d k) with hc
   set x : B → ℚ := fun k ↦ if k = i then 1 else if k ∈ s then c k else 0 with hx
   have hxi : x i = 1 := by simp [hx]
@@ -211,6 +209,7 @@ theorem sum_apply_mul_apply_lt_four (h : IsFiniteType A) {i : B} {s : Finset B} 
     · intro k hk hkl
       have hzero : A k l = 0 := hs (by exact_mod_cast hk) (by exact_mod_cast hl) hkl
       simp [hM, hzero]
+  -- The value of the form at the test vector, namely `dᵢ(4 - ∑ⱼ AᵢⱼAⱼᵢ) / 2`.
   have key : x ⬝ᵥ (M *ᵥ x) = 2 * d i + ∑ j ∈ s, -(d i * (A i j : ℚ) * (A j i : ℚ)) / 2 := by
     rw [hsum]
     simp only [Finset.sum_insert his]
@@ -257,9 +256,9 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
-/-- **The two-neighbour case of the star bound.** Two non-adjacent neighbours of an index carry
-Cartan products summing to less than `4`. Here `j ≠ k` need not be assumed: it follows from
-`A j k = 0`, since the diagonal entries are `2`. -/
+/-- **The two-neighbour case of the star bound.** Two non-adjacent indices `j` and `k`, both
+distinct from `i`, carry Cartan products with `i` summing to less than `4`. Here `j ≠ k` need not
+be assumed: it follows from `A j k = 0`, since the diagonal entries are `2`. -/
 theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
     (hik : i ≠ k) (h0 : A j k = 0) :
     A i j * A j i + A i k * A k i < 4 := by
@@ -276,19 +275,35 @@ theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k 
   rwa [Finset.sum_insert (by simpa using hjk), Finset.sum_singleton] at hlt
 
 /-- **At most one edge of a non-adjacent pair at an index is multiple.** If the edge from `i` to
-`j` is multiple, then every edge from `i` to a neighbour non-adjacent to `j` is single. -/
-theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
-    (hik : i ≠ k) (h0 : A j k = 0) (hj : 2 ≤ A i j * A j i) :
+`j` is multiple, then `i` is joined to every index non-adjacent to `j` by at most a single edge. -/
+theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (h0 : A j k = 0)
+    (hj : 2 ≤ A i j * A j i) :
     A i k * A k i ≤ 1 := by
+  -- A multiple edge at `i` makes `i ≠ j`, and were `i` equal to `k` that edge would be absent.
+  rcases eq_or_ne i j with rfl | hij
+  · simp [h0]
+  have hik : i ≠ k := by
+    rintro rfl
+    rw [h.apply_eq_zero_symm h0] at hj
+    simp at hj
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
 /-- **A triple edge is isolated among the neighbours non-adjacent to its far end.** An index joined
 to `j` by a triple edge is joined to no further index non-adjacent to `j`. This is the local step
 behind `G₂` being the only finite-type diagram carrying a triple edge. -/
-theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
-    (hik : i ≠ k) (h0 : A j k = 0) (hj : A i j * A j i = 3) :
+theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : B} (h0 : A j k = 0)
+    (hj : A i j * A j i = 3) :
     A i k = 0 := by
+  -- A Cartan product of `3` is neither the diagonal value `4` nor the absent edge from `k` to `j`.
+  have hij : i ≠ j := by
+    rintro rfl
+    rw [h.apply_self] at hj
+    omega
+  have hik : i ≠ k := by
+    rintro rfl
+    rw [h.apply_eq_zero_symm h0] at hj
+    simp at hj
   by_contra hne
   have h1 := h.one_le_apply_mul_apply hik hne
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
