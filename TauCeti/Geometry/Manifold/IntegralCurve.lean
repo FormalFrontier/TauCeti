@@ -40,7 +40,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 coordinate expression of a vector field gives a manifold integral curve after applying the inverse
 chart. -/
 theorem IsMIntegralCurveAt.of_extChartAt_symm
-    [ContinuousSMul ℝ E]
     {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
     {x₀ : M} {f : ℝ → E} {t₀ : ℝ} {v : (x : M) → TangentSpace I x}
     (htarget : ∀ᶠ t in nhds t₀, f t ∈ interior (extChartAt I x₀).target)
@@ -82,11 +81,8 @@ theorem IsMIntegralCurveAt.of_extChartAt_symm
   -- Restore the named chart preimage before comparing the ordinary and manifold derivatives.
   rw [show (extChartAt I x₀).symm (f t) = xₜ from rfl]
   rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
-  -- In these charts, the source and target tangent spaces are definitionally their model spaces.
-  change HasFDerivWithinAt
-    (((extChartAt I xₜ ∘ (extChartAt I x₀).symm) ∘ f))
-      (ContinuousLinearMap.toSpanSingleton ℝ (v xₜ)) Set.univ t
-  exact hd'.hasFDerivAt.hasFDerivWithinAt
+  convert (hd'.hasFDerivAt.hasFDerivWithinAt (s := Set.univ)) using 1
+  all_goals rfl
 
 private theorem contDiffOn_succ_of_hasDerivAt_comp {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] {n : ℕ} {f : ℝ → F} {v : F → F} {s : Set ℝ} {u : Set F}
