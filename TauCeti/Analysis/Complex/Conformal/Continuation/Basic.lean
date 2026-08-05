@@ -60,6 +60,7 @@ parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to 
 no choice of continuation to reconcile. A function analytic at every point of a continuous path
 continues along it via the constant family (`TauCeti.ContinuesAlong.of_analyticAt`), so
 continuability is a condition one may check on the pieces of a germ built from simpler ones.
+They are also closed under concatenating paths, which `Continuation/Trans.lean` proves.
 
 ## Relation to the monodromy theorem
 
