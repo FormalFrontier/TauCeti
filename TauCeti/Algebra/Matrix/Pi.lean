@@ -10,8 +10,9 @@ public import Mathlib.LinearAlgebra.Dimension.Constructions
 -- `FiniteDimensional` is a hypothesis of, and a conclusion of, the presentation results below.
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 -- Non-public: `Matrix.entryLinearMap` is used only inside a proof, to exhibit a coefficient algebra
--- as a linear quotient of its matrix block, and `Module.finrank_pos` only to bound the dimension of
--- a nontrivial coefficient algebra from below.
+-- as a linear quotient of its matrix block, and `Module.finrank_pos` together with
+-- `LinearMap.finrank_le_finrank_of_surjective` only to bound a block from below by the dimension of
+-- its coefficients and from above by that of the algebra presented.
 import Mathlib.Data.Matrix.Basic
 import Mathlib.LinearAlgebra.Dimension.Finite
 
@@ -35,13 +36,12 @@ coefficients to be division algebras.
   size `0` is the zero ring whatever its coefficients are, so it constrains them not at all: the
   positivity hypothesis is essential rather than an artefact of the proof;
 * `TauCeti.finrank_eq_sum_sq_finrank`: **the dimension count** `finrank k A = ∑ᵢ nᵢ² · finrank k Dᵢ`
-  for an algebra presented as `∏ᵢ Matₙᵢ(Dᵢ)`, of which
-  `TauCeti.finrank_eq_sum_sq_of_algEquiv_pi_matrix` is the already split form
-  `finrank k A = ∑ᵢ nᵢ²`. The count itself needs no positivity: a block of size `0` contributes `0`
-  to both sides;
+  for an algebra presented as `∏ᵢ Matₙᵢ(Dᵢ)`. The count itself needs no positivity: a block of size
+  `0` contributes `0` to both sides;
 * `TauCeti.sq_le_finrank_of_algEquiv_pi_matrix` and `TauCeti.card_le_finrank_of_algEquiv_pi_matrix`:
-  the bounds `nᵢ² ≤ finrank k A` on a single block degree and, when every block is nonzero,
-  `Nat.card ι ≤ finrank k A` on the number of blocks.
+  the bounds `nᵢ² ≤ finrank k A` on the degree of a single block with nontrivial coefficients — no
+  other block plays any part, so the index need not even be finite — and, when every block is
+  nonzero over nontrivial coefficients, `Nat.card ι ≤ finrank k A` on the number of blocks.
 
 ## References
 
@@ -166,49 +166,43 @@ theorem finrank_eq_sum_sq_finrank (e : A ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [Module.finrank_matrix, Fintype.card_fin, sq]
 
-omit [FiniteDimensional k A] in
-/-- **The dimension count for an already split presentation**: if `A` is presented as a product of
-matrix algebras over the base field itself, then `finrank k A = ∑ᵢ nᵢ²`.
-
-No hypothesis on `k` is needed here; algebraic closedness enters
-`TauCeti.finrank_eq_sum_sq_of_isAlgClosed` only to identify the coefficients of the nonzero blocks
-of a presentation with the base field, and here every coefficient already is the base field. -/
-theorem finrank_eq_sum_sq_of_algEquiv_pi_matrix
-    (e : A ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) :
-    Module.finrank k A = ∑ i, d i ^ 2 :=
-  e.toLinearEquiv.finrank_eq.trans (finrank_pi_matrix k d)
-
 end Count
 
 section Bounds
 
-variable [Finite ι] [FiniteDimensional k A] [∀ i, Nontrivial (D i)]
-  (e : A ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) (D i))
+variable [FiniteDimensional k A] (e : A ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) (D i))
 
 include e
 
-/-- **The degree of a block is bounded by the dimension**: `nᵢ² ≤ finrank k A` for every block of a
-presentation of a finite-dimensional algebra by matrix algebras over nontrivial coefficients. -/
-theorem sq_le_finrank_of_algEquiv_pi_matrix (i : ι) : d i ^ 2 ≤ Module.finrank k A := by
-  have : Fintype ι := Fintype.ofFinite ι
+/-- **The degree of a block is bounded by the dimension**: `nᵢ² ≤ finrank k A` for a block with
+nontrivial coefficients in a presentation of a finite-dimensional algebra by matrix algebras.
+
+Only the block `i` takes part: the bound reads off the surjection of `A` onto that block alone, so
+neither the other coefficient algebras nor the finiteness of the index are assumed. -/
+theorem sq_le_finrank_of_algEquiv_pi_matrix (i : ι) [Nontrivial (D i)] :
+    d i ^ 2 ≤ Module.finrank k A := by
+  classical
   rcases eq_or_ne (d i) 0 with h | h
   · simp [h]
   · have : NeZero (d i) := ⟨h⟩
     have := finiteDimensional_of_algEquiv_pi_matrix k e i
     calc d i ^ 2 ≤ d i ^ 2 * Module.finrank k (D i) :=
           Nat.le_mul_of_pos_right _ (Module.finrank_pos (R := k) (M := D i))
-      _ ≤ ∑ j, d j ^ 2 * Module.finrank k (D j) :=
-          Finset.single_le_sum (f := fun j => d j ^ 2 * Module.finrank k (D j))
-            (fun _ _ => Nat.zero_le _) (Finset.mem_univ i)
-      _ = Module.finrank k A := (finrank_eq_sum_sq_finrank k e).symm
+      _ = Module.finrank k (Matrix (Fin (d i)) (Fin (d i)) (D i)) := by
+          rw [Module.finrank_matrix, Fintype.card_fin, sq]
+      _ ≤ Module.finrank k A :=
+          LinearMap.finrank_le_finrank_of_surjective
+            (f := (LinearMap.proj (R := k) (φ := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i)
+              ∘ₗ (e.toLinearEquiv : A →ₗ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) (D i)))
+            fun x => ⟨e.symm (Pi.single i x), by simp⟩
 
 /-- **The number of blocks is bounded by the dimension**: a finite-dimensional algebra presented by
 nonzero matrix blocks over nontrivial coefficients has at most `finrank k A` of them.
 
 For the group algebra of a finite group over a splitting field this bounds the number of irreducible
 representations by the order of the group. -/
-theorem card_le_finrank_of_algEquiv_pi_matrix [∀ i, NeZero (d i)] :
-    Nat.card ι ≤ Module.finrank k A := by
+theorem card_le_finrank_of_algEquiv_pi_matrix [Finite ι] [∀ i, NeZero (d i)]
+    [∀ i, Nontrivial (D i)] : Nat.card ι ≤ Module.finrank k A := by
   have : Fintype ι := Fintype.ofFinite ι
   rw [finrank_eq_sum_sq_finrank k e, Nat.card_eq_fintype_card, ← Finset.card_univ,
     Finset.card_eq_sum_ones]

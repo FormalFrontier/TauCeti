@@ -42,8 +42,7 @@ Nothing here needs the presentation to come from Artin--Wedderburn: an algebra e
 ## Main results
 
 * `TauCeti.finrank_eq_sum_sq_of_isAlgClosed`: over an algebraically closed field the count reads
-  `finrank k A = ∑ᵢ nᵢ²`. `TauCeti.finrank_eq_sum_sq_of_algEquiv_pi_matrix` is the already split
-  form, which needs no hypothesis on the field.
+  `finrank k A = ∑ᵢ nᵢ²`.
 
 ## References
 
