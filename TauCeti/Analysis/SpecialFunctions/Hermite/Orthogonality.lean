@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import Mathlib.Analysis.Calculus.Deriv.Pow
 public import Mathlib.Analysis.Calculus.Deriv.Polynomial
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
@@ -12,6 +12,7 @@ public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.RingTheory.Polynomial.Hermite.Basic
+public import TauCeti.Probability.Distributions.Gaussian.Basic
 public import TauCeti.Probability.Distributions.Gaussian.PolynomialMemLp
 public import TauCeti.RingTheory.Polynomial.Hermite.Derivative
 
@@ -36,6 +37,10 @@ orthogonal, and self-paired to `n! · √(2π)`, in `L²` of the Gaussian weight
 * **Milestone (Gaussian-measure form)** `integral_hermite_mul_hermite_gaussianReal`:
   `∫ x, Hₘ(x) · Hₙ(x) ∂(gaussianReal 0 1) = if m = n then n! else 0`, the Lebesgue form divided by
   the `√(2π)` density. This is the form the Gaussian Hermite basis (A3′) consumes directly.
+
+The closed form of the density itself, `gaussianPDFReal 0 1 x = (√(2π))⁻¹ · e^{-x²/2}`, is a fact
+about the Gaussian distribution rather than about the Hermite family, and lives in
+`TauCeti.Probability.Distributions.Gaussian.Basic` as `TauCeti.gaussianPDFReal_zero_one`.
 
 The Hermite lowering identities `Polynomial.derivative_hermite`,
 `Polynomial.iterate_derivative_hermite` are reused from
@@ -151,13 +156,6 @@ theorem integral_hermite_mul_hermite_mul_gaussian (m n : ℕ) :
   · rw [if_neg h.ne', integral_hermite_swap, integral_aeval_mul_hermite, iterate_derivative_hermite,
       Nat.descFactorial_eq_zero_iff_lt.mpr h]
     simp
-
-/-- The probability-density form of the weight: `gaussianPDFReal 0 1 x = (√(2π))⁻¹ · e^{-x²/2}`. -/
-private theorem gaussianPDFReal_zero_one (x : ℝ) :
-    gaussianPDFReal 0 1 x = (Real.sqrt (2 * π))⁻¹ * Real.exp (-(x ^ 2 / 2)) := by
-  rw [gaussianPDFReal]
-  simp only [NNReal.coe_one, mul_one, sub_zero]
-  rw [show -x ^ 2 / 2 = -(x ^ 2 / 2) from by ring]
 
 /-- **The Hermite orthogonality relation, Gaussian-measure form** (milestone A1):
 `∫ x, Hₘ(x) · Hₙ(x) ∂(gaussianReal 0 1) = if m = n then n! else 0`. This is the Lebesgue form

@@ -96,9 +96,9 @@ lemma isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg {f : ℝ → ℝ} :
     · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Ici 0) = Iic 0 := by
         ext x
         simp
-      simpa [Function.comp_def, hpre] using
-        (hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ) :
-          ContDiffOn ℝ ∞ (fun u : ℝ => f (-u)) ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Ici 0))
+      rw [← hpre]
+      simpa [Function.comp_def] using
+        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
     · rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) u]
       have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by
         ext x
@@ -111,10 +111,9 @@ lemma isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg {f : ℝ → ℝ} :
     · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Iic 0) = Ici 0 := by
         ext x
         simp
-      simpa [Function.comp_def, hpre] using
-        (hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ) :
-          ContDiffOn ℝ ∞ ((fun u : ℝ => f (-u)) ∘ (-ContinuousLinearMap.id ℝ ℝ))
-            ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Iic 0))
+      rw [← hpre]
+      simpa [Function.comp_def] using
+        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
     · have hsign' := hsign n (-t) (mem_Iic.mpr (neg_nonpos.mpr ht))
       rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) (-t)] at hsign'
       have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by

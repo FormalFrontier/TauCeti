@@ -52,13 +52,12 @@ noncomputable def fiberTorsor [PreconnectedSpace E]
 /-- In the regular-cover fibre torsor, `e₁ /ₛ e₂` is the inverse equivalence from `e₂`
 applied to `e₁`. -/
 lemma fiber_sdiv_eq_deckEquivFiber_symm [PreconnectedSpace E] (hp : IsCoveringMap p)
-    (hreg : IsRegular p)
-    (e₁ e₂ : p ⁻¹' {b}) :
+    (hreg : IsRegular p) (e₁ e₂ : p ⁻¹' {b}) :
     letI := fiberTorsor hp hreg b
     e₁ /ₛ e₂ = (deckEquivFiber hp hreg e₂).symm e₁ :=
 by
-  letI := hreg.nonempty_fiber b
-  letI := hreg.fiber_isPretransitive b
+  let := hreg.nonempty_fiber b
+  let := hreg.fiber_isPretransitive b
   exact fiber_sdiv_eq_deckEquivFiberOfSurjective_symm hp e₁ e₂
 
 /-- In the regular-cover fibre torsor, the inverse of `deckEquivFiber` computes the quotient

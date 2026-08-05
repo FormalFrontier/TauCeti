@@ -99,8 +99,7 @@ theorem signPattern_injective (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
   exact hgen
 
 /-- The sign is `0` exactly where the automorphism fixes the generator. -/
-theorem signPattern_eq_zero
-    (σ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι)
+theorem signPattern_eq_zero (σ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι)
     (h : σ (gen root i) = gen root i) : signPattern root σ i = 0 := by
   simp [signPattern, h]
 
@@ -112,8 +111,7 @@ theorem signPattern_eq_zero
   by_cases h : σ (gen root i) = gen root i <;> simp [h]
 
 /-- The sign is `1` where the automorphism negates a generator that differs from its negation. -/
-theorem signPattern_eq_one
-    (σ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι)
+theorem signPattern_eq_one (σ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι)
     (hne : gen (K := K) root i ≠ -gen root i)
     (h : σ (gen root i) = -gen root i) : signPattern root σ i = 1 := by
   have hni : σ (gen root i) ≠ gen root i := fun hh => hne (h ▸ hh.symm)
@@ -149,10 +147,8 @@ private theorem signed_pow_add_mul (x : adjoin K (Set.range root)) (a b : ZMod 2
 
 private theorem zmod_two_eq_zero_or_one (t : ZMod 2) : t = 0 ∨ t = 1 := by revert t; decide
 
-private theorem aut_mul_gen_eq_signPattern_add
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (σ τ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι) :
-    (σ * τ) (gen root i)
+private theorem aut_mul_gen_eq_signPattern_add (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (σ τ : adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) (i : ι) : (σ * τ) (gen root i)
       = (-1) ^ (signPattern root σ i + signPattern root τ i).val * gen root i := by
   rw [AlgEquiv.mul_apply, aut_gen_eq_signPattern hroot τ i, map_mul, map_pow, map_neg,
     map_one, aut_gen_eq_signPattern hroot σ i]
@@ -214,11 +210,11 @@ private theorem signHom_bijective [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Function.Bijective (signHom (K := K) root hroot) := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     IsSplittingField.finiteDimensional _ (definingPolynomial d)
-  haveI := isGalois hroot
-  letI := Fintype.ofFinite ι
+  have := isGalois hroot
+  let := Fintype.ofFinite ι
   rw [Fintype.bijective_iff_injective_and_card]
   refine ⟨signHom_injective hroot, ?_⟩
   rw [← Nat.card_eq_fintype_card (α := adjoin K (Set.range root) ≃ₐ[K] _),
@@ -255,8 +251,7 @@ theorem aut_nontrivial [Finite ι] [NeZero (2 : K)] [Nonempty ι]
 generator `rootᵢ` to `(-1)^(εᵢ) · rootᵢ`. -/
 @[simp] theorem galoisGroupEquiv_symm_apply_gen [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
-    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (ε : ι → ZMod 2) (i : ι) :
+    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) (ε : ι → ZMod 2) (i : ι) :
     ((galoisGroupEquiv hroot hindep).symm (Multiplicative.ofAdd ε)) (gen root i)
       = (-1) ^ (ε i).val * gen root i := by
   have hσ : signPattern root
@@ -275,7 +270,7 @@ theorem card_aut_adjoin_range [Finite ι] [NeZero (2 : K)]
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[K] adjoin K (Set.range root)) = 2 ^ Nat.card ι := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   rw [Nat.card_congr (galoisGroupEquiv hroot hindep).toEquiv,
     Nat.card_congr (Multiplicative.ofAdd (α := ι → ZMod 2)).symm,
     Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, Fintype.card_pi]

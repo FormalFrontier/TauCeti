@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.Convolution
-public import Mathlib.RingTheory.HopfAlgebra.Convolution
 public import TauCeti.Algebra.HopfAlgebra.Basic
 
 /-!
@@ -119,7 +117,7 @@ noncomputable instance instGroup : Group (WithConv (H →ₐ[R] A)) where
     have key := LinearMap.algHom_comp_convMul_distrib f.ofConv
       (toConv (antipode R)) (toConv LinearMap.id)
     -- `key : f ∘ (S * id) = ((f ∘ S) * (f ∘ id)).ofConv`. Use `S * id = 1` and `f ∘ id = f`.
-    rw [HopfAlgebra.antipode_convMul_id, ofConv_toConv, ofConv_toConv, LinearMap.comp_id] at key
+    rw [LinearMap.antipode_mul_id, ofConv_toConv, ofConv_toConv, LinearMap.comp_id] at key
     -- So `((f ∘ S) * f).ofConv = f ∘ 1`, the linear unit `1` being `algebraMap ∘ counit`.
     rw [← key, LinearMap.convOne_def, ofConv_toConv]
     -- Finally `f ∘ (algebraMap ∘ counit) = algebraMap ∘ counit`, since `f` is an algebra hom.

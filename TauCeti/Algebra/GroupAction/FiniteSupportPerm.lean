@@ -51,8 +51,7 @@ theorem finite_compl_fixedBy_iff_eventually_eq_self {π : Equiv.Perm ℕ} :
 /-- Conjugating a group element preserves Mathlib's finite-support predicate
 `(MulAction.fixedBy α ·)ᶜ.Finite`; in particular this applies to conjugation of permutations. -/
 theorem finite_compl_fixedBy_conj {G α : Type*} [Group G] [MulAction G α] {g h : G}
-    (hh : (MulAction.fixedBy α h)ᶜ.Finite) :
-    (MulAction.fixedBy α (g⁻¹ * h * g))ᶜ.Finite := by
+    (hh : (MulAction.fixedBy α h)ᶜ.Finite) : (MulAction.fixedBy α (g⁻¹ * h * g))ᶜ.Finite := by
   simpa [Set.smul_set_compl, MulAction.smul_fixedBy] using hh.smul_set (a := g⁻¹)
 
 end TauCeti
@@ -70,7 +69,7 @@ theorem exists_compl_fixedBy_subset_apply_eq {ι β : Type*} [Finite ι] (f g : 
       (MulAction.fixedBy β σ)ᶜ ⊆ Set.range f ∪ Set.range g ∧ ∀ i, σ (f i) = g i := by
   classical
   set T : Set β := Set.range f ∪ Set.range g with hT
-  haveI : Fintype ↥T := ((Set.finite_range f).union (Set.finite_range g)).fintype
+  have : Fintype ↥T := ((Set.finite_range f).union (Set.finite_range g)).fintype
   have hfT : ∀ i, f i ∈ T := fun i => Or.inl ⟨i, rfl⟩
   have hgT : ∀ i, g i ∈ T := fun i => Or.inr ⟨i, rfl⟩
   obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair (f.codRestrict T hfT) (g.codRestrict T hgT)

@@ -108,10 +108,10 @@ theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :
   rw [Subalgebra.mem_center_iff]
   intro a
   induction a using MonoidAlgebra.induction_on with
-  | hM g => exact (classSum_commutes C g).symm
-  | hadd x y hx hy =>
+  | of g => exact (classSum_commutes C g).symm
+  | add x y hx hy =>
     rw [mul_add, add_mul, hx, hy]
-  | hsmul r x hx =>
+  | smul r x hx =>
     rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, hx]
 
 end TauCeti

@@ -4,13 +4,11 @@ name: Update Dependencies
 # composite actions (TauCeti is registered as a downstream there). Daily behavior:
 #   - mathlib compatible: open/update a single "bump to last-known-good" PR.
 #   - mathlib incompatible: open a tracking issue naming the first-known-bad mathlib
-#     commit, plus a fix PR pinned at that commit (a ready-made branch to fix in
+#     commit, plus a fix PR whose manifest is pinned at that commit (a ready-made branch to fix in
 #     place — not for merging as-is), and close the LKG bump PR until resolved.
 # PRs and pushes use the tauceti-review-bot App token so pr-build/review trigger
-# normally. The LKG bump is de-pinned below to a manifest- and toolchain-only forward move,
-# so bump-guard validates it and it auto-merges. A first-known-bad fix PR keeps its exact
-# lakefile pin; the author-aware bump guard validates that one bot-only config change so the
-# repair PR can merge without human intervention once its build and reviews are green.
+# normally. Both update paths preserve Mathlib's `master` nomination and change only the
+# manifest/toolchain pins, so bump-guard can validate and auto-merge them once green.
 
 on:
   schedule:
@@ -39,60 +37,23 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       # Suppress the LKG bump while a regression is active: the only open PR
-      # should be the fix one pinned at the first-known-bad commit.
+      # should be the fix one carrying the first-known-bad manifest pin.
       - name: Check whether an incompatibility is reported
         id: fkb
-        uses: leanprover-community/downstream-reports/.github/actions/query-latest@43df0aa23fd0d157988f154b9e636c2d0efe2822
+        uses: leanprover-community/downstream-reports/.github/actions/query-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           query-type: first-known-bad
 
       - name: Bump to latest mathlib
         id: bump
         if: steps.fkb.outputs.commit == ''
-        uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@43df0aa23fd0d157988f154b9e636c2d0efe2822
-
-      # TauCeti tracks mathlib `master` and lets bump-guard (scripts/check-bump.sh) validate
-      # each bump as a forward move and auto-merge it. bump-to-latest pins the lakefile `rev`
-      # and manifest `inputRev` to the bumped commit. Restore both nominations to `master` while
-      # retaining the manifest's actual SHA pin. This is normally a manifest/toolchain-only bump;
-      # after an incompatibility PR temporarily pinned the base lakefile, it also performs the
-      # trusted bot's validated one-line de-pin back to `master`.
-      - name: De-pin to keep tracking master (so bump-guard can auto-merge)
-        if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
-        run: |
-          set -euo pipefail
-          # Restore only Mathlib's nominated rev to master. `git checkout -- lakefile.toml` is not
-          # enough when main is temporarily pinned at a first-known-bad SHA: it would restore that
-          # SHA and leave the next LKG PR unable to resume tracking master.
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path("lakefile.toml")
-          parts = path.read_text().split("[[require]]")
-          changed = 0
-          for index in range(1, len(parts)):
-              if re.search(
-                      r'^[ \t]*name[ \t]*=[ \t]*"mathlib"[ \t]*$',
-                      parts[index], re.MULTILINE):
-                  parts[index], count = re.subn(
-                      r'^[ \t]*rev[ \t]*=[ \t]*"[^"]+"[ \t]*$', 'rev = "master"', parts[index],
-                      count=1, flags=re.MULTILINE)
-                  changed += count
-          if changed != 1:
-              raise SystemExit(f"expected one Mathlib rev in lakefile.toml; changed {changed}")
-          path.write_text("[[require]]".join(parts))
-          PY
-          git checkout -- lakefile.lean 2>/dev/null || true
-          # Reset mathlib's inputRev back to "master". It is the only 40-hex inputRev in the
-          # manifest (every other dep nominates a branch/tag), so this targets mathlib alone
-          # and preserves Lake's formatting and all derived transitive pins.
-          sed -i -E 's/"inputRev": "[0-9a-f]{40}"/"inputRev": "master"/' lake-manifest.json
-          echo "de-pinned: lakefile restored to master; manifest inputRev reset to master"
+        uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
+        with:
+          preserve-lakefile: true
 
       - name: Open or update PR
         if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
-        uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@43df0aa23fd0d157988f154b9e636c2d0efe2822
+        uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           branch: ${{ env.LKG_BRANCH }}
           title: "chore: ${{ steps.bump.outputs.pr-title }}"
@@ -121,9 +82,10 @@ jobs:
 
       - name: Open or update incompatibility issue and fix PR
         id: track
-        uses: leanprover-community/downstream-reports/.github/actions/track-incompatibility@43df0aa23fd0d157988f154b9e636c2d0efe2822
+        uses: leanprover-community/downstream-reports/.github/actions/track-incompatibility@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           open-pr: true
+          preserve-lakefile: true
           token: ${{ steps.app-token.outputs.token }}
           git-user-name: tauceti-review-bot[bot]
           git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
@@ -140,4 +102,4 @@ jobs:
             echo "No open LKG bump PR; nothing to close."
             exit 0
           fi
-          gh pr close "$lkg_pr" --comment "Closing in favor of #${FKB_PR}: TauCeti is currently incompatible with the latest mathlib, so attention should go to the PR pinned at the first-known-bad commit. A new last-known-good bump PR will be opened automatically once the incompatibility is resolved."
+          gh pr close "$lkg_pr" --comment "Closing in favor of #${FKB_PR}: TauCeti is currently incompatible with the latest mathlib, so attention should go to the PR whose manifest is pinned at the first-known-bad commit. A new last-known-good bump PR will be opened automatically once the incompatibility is resolved."

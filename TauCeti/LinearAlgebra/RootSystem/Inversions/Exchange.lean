@@ -22,6 +22,9 @@ identification of Coxeter length with the number of inversions.
 
 * `TauCeti.mem_inversions_mul_ofIdx_iff_not_mem` shows that the defining simple root toggles
   membership in the inversion set.
+* `TauCeti.ncard_inversions_mul_ofIdx_of_notMem` and `TauCeti.ncard_inversions_mul_ofIdx_of_mem`
+  say in which direction the count moves: it goes up exactly when the defining simple root is not
+  already an inversion.
 * `TauCeti.ncard_inversions_mul_ofIdx` proves that the inversion count changes by one.
 
 ## References
@@ -41,20 +44,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 variable [CharZero R] (b : P.Base)
 
-private lemma reflectionPerm_ne_of_isPos {i j : ι} (hi : i ∈ b.support)
-    (hj : b.IsPos j) :
-    P.reflectionPerm i j ≠ i := by
-  intro h
-  have hji : j = P.reflectionPerm i i := by
-    calc
-      j = P.reflectionPerm i (P.reflectionPerm i j) :=
-        (P.reflectionPerm_self i j).symm
-      _ = P.reflectionPerm i i := congrArg (P.reflectionPerm i) h
-  have hneg : ¬ b.IsPos (P.reflectionPerm i i) := by
-    rw [isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots]
-    exact not_not_intro (b.isPos_of_mem_support hi)
-  exact hneg (hji ▸ hj)
-
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
 /-- Membership criterion for the punctured inversion sets: a positive root other than the
@@ -64,7 +53,7 @@ private lemma reflectionPerm_mem_inversions_sdiff (v : P.weylGroup) {i j : ι}
     (hneg : ¬ b.IsPos (P.weylGroupToPerm v (P.reflectionPerm i j))) :
     P.reflectionPerm i j ∈ inversions P b v \ {i} :=
   ⟨(mem_inversions P b _ _).mpr ⟨hj.reflectionPerm hi hji, hneg⟩, by
-    simpa using reflectionPerm_ne_of_isPos P b hi hj⟩
+    simpa using reflectionPerm_ne_of_mem_posRoots P b hi ((mem_posRoots P b j).mpr hj)⟩
 
 /-- Away from the distinguished simple root, reflection bijects the inversion sets before and
 after right multiplication by that simple reflection. -/
@@ -98,10 +87,49 @@ lemma mem_inversions_mul_ofIdx_iff_not_mem {i : ι} (hi : i ∈ b.support) :
     i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) ↔
       i ∉ inversions P b w := by
   classical
-  letI := P.indexNeg
+  let := P.indexNeg
   simp only [mem_inversions, b.isPos_of_mem_support hi, true_and,
     RootPairing.weylGroupToPerm_mul_ofIdx_apply, ← RootPairing.indexNeg_neg,
     RootPairing.weylGroupToPerm_neg, RootPairing.Base.IsPos.neg_iff_not]
+
+/-- The punctured inversion sets have the same size before and after right multiplication by a
+simple reflection. -/
+private lemma ncard_inversions_mul_ofIdx_sdiff {i : ι} (hi : i ∈ b.support) :
+    (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard =
+      (inversions P b w \ {i}).ncard :=
+  Set.ncard_congr' (puncturedInversionsEquiv P w b hi)
+
+/-- Right multiplication by a simple reflection whose simple root is **not** yet an inversion
+raises the number of inversions by one. -/
+theorem ncard_inversions_mul_ofIdx_of_notMem {i : ι} (hi : i ∈ b.support)
+    (hiw : i ∉ inversions P b w) :
+    (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
+      (inversions P b w).ncard + 1 := by
+  have hiws : i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) :=
+    (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mpr hiw
+  calc
+    (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
+        (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 :=
+      (Set.ncard_sdiff_singleton_add_one hiws).symm
+    _ = (inversions P b w \ {i}).ncard + 1 :=
+      congrArg (· + 1) (ncard_inversions_mul_ofIdx_sdiff P w b hi)
+    _ = (inversions P b w).ncard + 1 := by rw [Set.sdiff_singleton_eq_self hiw]
+
+/-- Right multiplication by a simple reflection whose simple root is already an inversion lowers
+the number of inversions by one. -/
+theorem ncard_inversions_mul_ofIdx_of_mem {i : ι} (hi : i ∈ b.support)
+    (hiw : i ∈ inversions P b w) :
+    (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
+      (inversions P b w).ncard := by
+  have hiws : i ∉ inversions P b (w * RootPairing.weylGroup.ofIdx P i) := fun h ↦
+    (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mp h hiw
+  calc
+    (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
+        (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 := by
+          rw [Set.sdiff_singleton_eq_self hiws]
+    _ = (inversions P b w \ {i}).ncard + 1 :=
+      congrArg (· + 1) (ncard_inversions_mul_ofIdx_sdiff P w b hi)
+    _ = (inversions P b w).ncard := Set.ncard_sdiff_singleton_add_one hiw
 
 /-- Right multiplication by a simple reflection changes the number of inversions by exactly
 one. -/
@@ -111,31 +139,8 @@ theorem ncard_inversions_mul_ofIdx {i : ι} (hi : i ∈ b.support) :
       (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
         (inversions P b w).ncard := by
   classical
-  have hpunctured :
-      (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard =
-        (inversions P b w \ {i}).ncard :=
-    Set.ncard_congr' (puncturedInversionsEquiv P w b hi)
   by_cases hiw : i ∈ inversions P b w
-  · right
-    have hiws : i ∉ inversions P b (w * RootPairing.weylGroup.ofIdx P i) := by
-      intro h
-      exact (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mp h hiw
-    calc
-      (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
-          (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 := by
-            rw [Set.sdiff_singleton_eq_self hiws]
-      _ = (inversions P b w \ {i}).ncard + 1 := congrArg (· + 1) hpunctured
-      _ = (inversions P b w).ncard :=
-        Set.ncard_sdiff_singleton_add_one hiw
-  · left
-    have hiws : i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) :=
-      (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mpr hiw
-    calc
-      (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
-          (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 :=
-        (Set.ncard_sdiff_singleton_add_one hiws).symm
-      _ = (inversions P b w \ {i}).ncard + 1 := congrArg (· + 1) hpunctured
-      _ = (inversions P b w).ncard + 1 := by
-        rw [Set.sdiff_singleton_eq_self hiw]
+  · exact Or.inr (ncard_inversions_mul_ofIdx_of_mem P w b hi hiw)
+  · exact Or.inl (ncard_inversions_mul_ofIdx_of_notMem P w b hi hiw)
 
 end TauCeti

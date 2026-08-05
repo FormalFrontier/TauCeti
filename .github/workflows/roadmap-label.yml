@@ -1,14 +1,13 @@
 name: Roadmap label
 
-# Label every PR with the roadmap it advances, derived from the roadmap citation the
-# scope rubric already asks authors to write. No new field is required of submitters:
-# the classifier (scripts/roadmap_label.py) reads the citation back out of the body.
+# Label every PR with its declared primary roadmap association. New PRs carry a
+# standalone `Roadmap: <Area-or-none>` line; target markers and canonical roadmap
+# citations remain compatibility fallbacks for older descriptions.
 #
-#   roadmap/<Area>   the body cites exactly one canonical roadmap
+#   roadmap/<Area>   exactly one canonical association
 #   roadmap/none     the diff reaches outside the AI-ownable path set (infra, merged by
-#                    human override), or the title is a refactor/fix/chore/bump
-#   roadmap/Unknown  new mathematics with no parseable citation -> a one-time nudge asks
-#                    the author to cite the roadmap file
+#                    human override), is a pin-only bump, or explicitly declares none
+#   roadmap/Unknown  missing, invalid, or conflicting association
 #
 # The area label is created on first use, so a roadmap added in TauCetiRoadmap becomes
 # labelable with no change here.
@@ -16,8 +15,8 @@ name: Roadmap label
 # Runs on pull_request_target so it can label PRs from forks, but it NEVER checks out or
 # executes PR head code: it reads only PR metadata (title/body/files) through the API and
 # runs the trusted base-branch script. The body is untrusted, so it is only ever
-# regex-matched against the fixed set of canonical roadmap names and never interpolated
-# into a shell; the label applied always comes from a closed set.
+# parsed against the fixed set of canonical roadmap names and never interpolated into
+# a shell; the label applied always comes from a closed set.
 
 on:
   pull_request_target:
@@ -66,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/roadmap_label.py \
-            --repo "$REPO" --roadmap-dir roadmap --pr "$PR" --apply --nudge
+            --repo "$REPO" --roadmap-dir roadmap --pr "$PR" --apply
 
       # Advisory-only structure nudge (scripts/structure_nudge.py): one updatable
       # marker comment when a PR adds .lean files that sit beside an existing topic

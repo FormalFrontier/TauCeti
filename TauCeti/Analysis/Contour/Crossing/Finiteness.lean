@@ -29,6 +29,8 @@ compact `[[a, b]]` would have an accumulation point.
 * `Contour.IsPwC1ImmersionOn.eventually_ne_nhdsNE` — crossings of an immersion are isolated.
 * `Contour.IsPwC1ImmersionOn.finite_crossings` — **HW Proposition 2.2**: the crossing set
   `[[a, b]] ∩ γ ⁻¹' {z₀}` of an immersion is finite.
+* `Contour.IsPwC1ImmersionOn.mem_toFinset_finite_crossings` — membership in the resulting
+  crossing finset.
 
 ## Provenance
 
@@ -206,6 +208,15 @@ theorem IsPwC1ImmersionOn.finite_crossings (h : IsPwC1ImmersionOn γ a b) :
       exact (hfreq.and_eventually hev).exists.elim fun t ht => ht.2 ht.1
     · have hev := crossing_isolated_right h ⟨ht₀_Icc.1, hlt⟩ ht₀_mem.2
       exact (hfreq.and_eventually hev).exists.elim fun t ht => ht.2 ht.1.2
+
+/-- **Membership in the crossing finset.** The finset supplied by
+`IsPwC1ImmersionOn.finite_crossings` consists of exactly the parameters of `[[a, b]]` at which
+`γ` takes the value `z₀`. Multi-crossing principal-value arguments index their windows by this
+finset, so they need the characterisation and not just the finiteness; for ordered endpoints
+follow with `uIcc_of_le`. -/
+theorem IsPwC1ImmersionOn.mem_toFinset_finite_crossings (h : IsPwC1ImmersionOn γ a b) {t : ℝ} :
+    t ∈ (h.finite_crossings (z₀ := z₀)).toFinset ↔ t ∈ uIcc a b ∧ γ t = z₀ := by
+  rw [Set.Finite.mem_toFinset, Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff]
 
 end TauCeti.Contour
 

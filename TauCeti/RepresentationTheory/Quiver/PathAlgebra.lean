@@ -137,8 +137,7 @@ private theorem length_toList {a b : OneLoop}
   | nil => rfl
   | cons p e ih => simp [ih]
 
-private theorem path_eq_pathOfLength
-    (p : _root_.Quiver.Path (vertex : OneLoop) vertex) :
+private theorem path_eq_pathOfLength (p : _root_.Quiver.Path (vertex : OneLoop) vertex) :
     p = pathOfLength p.length := by
   apply (_root_.Quiver.Path.toList_injective vertex vertex)
   apply List.length_injective
@@ -175,6 +174,21 @@ end Quiver.OneLoop
 namespace Quiver.TotalPath
 
 variable {Q : Type u} [Quiver.{v} Q]
+
+/-- An indexed path is the trivial path at `v` exactly when it starts at `v` and has length zero.
+Stated this way the equality is checked against two non-dependent conditions, so recognizing a
+trivial path inside a concatenation needs no transport along the endpoints. -/
+@[simp]
+theorem eq_nil_iff {v : Q} {x : TotalPath Q} :
+    x = ⟨v, v, _root_.Quiver.Path.nil⟩ ↔ x.1 = v ∧ x.2.2.length = 0 := by
+  constructor
+  · rintro rfl
+    exact ⟨rfl, rfl⟩
+  · obtain ⟨a, b, p⟩ := x
+    rintro ⟨rfl, hlen⟩
+    obtain rfl : a = b := p.eq_of_length_zero hlen
+    obtain rfl : p = _root_.Quiver.Path.nil := p.eq_nil_of_length_zero hlen
+    rfl
 
 open scoped Classical in
 /-- Concatenation of indexed paths in the *later factor first* order used by the path algebra:
@@ -568,7 +582,7 @@ theorem one_def [Fintype Q] : (1 : pathAlgebra k Q) = ∑ v : Q, vertexIdempoten
 /-- The sum of the vertex idempotents is a left unit on basis paths. -/
 private theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
     ((1 : pathAlgebra k Q) * single x r : pathAlgebra k Q) = single x r := by
-  letI := Fintype.ofFinite Q
+  let := Fintype.ofFinite Q
   rw [one_def, Finset.sum_mul, Finset.sum_eq_single x.2.1]
   · exact vertexIdempotent_mul_single x r
   · intro v _ hv
@@ -580,7 +594,7 @@ private theorem one_mul_single (x : Quiver.TotalPath Q) (r : k) :
 /-- The sum of the vertex idempotents is a right unit on basis paths. -/
 private theorem single_mul_one (x : Quiver.TotalPath Q) (r : k) :
     (single x r * (1 : pathAlgebra k Q) : pathAlgebra k Q) = single x r := by
-  letI := Fintype.ofFinite Q
+  let := Fintype.ofFinite Q
   rw [one_def, Finset.mul_sum, Finset.sum_eq_single x.1]
   · exact single_mul_vertexIdempotent x r
   · intro v _ hv
@@ -774,8 +788,7 @@ private theorem oneLoopLinearEquiv_map_one :
   simp [vertexIdempotent_eq_single, oneLoopLinearEquiv_single,
     Quiver.OneLoop.totalPathEquivNat, ← AddMonoidAlgebra.one_def]
 
-private theorem oneLoopLinearEquiv_map_mul
-    (f g : pathAlgebra k Quiver.OneLoop) :
+private theorem oneLoopLinearEquiv_map_mul (f g : pathAlgebra k Quiver.OneLoop) :
     oneLoopLinearEquiv k (f * g) = oneLoopLinearEquiv k f * oneLoopLinearEquiv k g := by
   induction f using induction_linear with
   | zero => simp
@@ -807,13 +820,12 @@ end OneLoop
 end PathAlgebra
 
 /-- Over a division ring, the path algebra of the one-loop quiver is infinite-dimensional. -/
-theorem not_finiteDimensional_pathAlgebra_oneLoop
-    (k : Type w) [DivisionRing k] :
+theorem not_finiteDimensional_pathAlgebra_oneLoop (k : Type w) [DivisionRing k] :
     ¬ FiniteDimensional k (pathAlgebra k Quiver.OneLoop) := by
-  letI : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
+  let : Infinite (Quiver.TotalPath Quiver.OneLoop) :=
     Quiver.OneLoop.totalPathEquivNat.infinite_iff.mpr inferInstance
   intro h
-  letI : Module.Finite k (pathAlgebra k Quiver.OneLoop) := h
+  let : Module.Finite k (pathAlgebra k Quiver.OneLoop) := h
   exact Module.Finite.not_linearIndependent_of_infinite
     (⇑(pathAlgebraBasis k Quiver.OneLoop))
     (pathAlgebraBasis k Quiver.OneLoop).linearIndependent

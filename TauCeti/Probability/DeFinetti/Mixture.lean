@@ -38,14 +38,14 @@ No theorem here assumes `[StandardBorelSpace Ω]`. That hypothesis is what *supp
 witness costs — `mixedIIDWith_of_contractable` carries it — so the specialization below takes the
 witness as an explicit hypothesis instead of deriving it.
 
-## What is not here
+## Final representation
 
 The Layer 6 bullet in `TauCetiRoadmap/Exchangeability/README.md` asks for the mixture form with `π`
 the **unique** law of `ν`. That uniqueness is `mixedIID_mixingLaw_unique`, proved alongside the
 generic representation in `Exchangeability/MixedIID/Mixture.lean`; it is stated for `MixedIIDWith`
-witnesses and so does not mention `deFinettiMeasure`. The roadmap name `deFinetti_mixture` stays
-reserved for the theorem that *derives* a canonical witness rather than assuming one, which is
-still open.
+witnesses and so does not mention `deFinettiMeasure`. The theorem `deFinetti_mixture` in
+`TauCeti.Probability.DeFinetti.Representation` derives the unique mixing-law representation from
+exchangeability without assuming a witness.
 -/
 
 public section
@@ -89,7 +89,11 @@ theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {
     (hTail : tailProcess X ≤ (inferInstance : MeasurableSpace Ω)) :
     (deFinettiMeasure μ X hTail : Measure (ProbabilityMeasure α))
       = μ.map (directingProbabilityMeasure μ X) := by
-  simp only [deFinettiMeasure, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]
+  unfold deFinettiMeasure
+  -- `ProbabilityMeasure.map` is `Measure.map` on the underlying measures by construction; the
+  -- pre-bump `simp only [ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]` no
+  -- longer rewrites through the bundled subtype, so strip it definitionally.
+  rfl
 
 /-- **The mixture representation against the de Finetti measure.** When the canonical directing
 measure is a mixing representative for `X`, the path law of `X` is the `deFinettiMeasure`-mixture of

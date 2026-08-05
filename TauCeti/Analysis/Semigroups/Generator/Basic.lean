@@ -35,8 +35,7 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 /-- The integral averages `(1/t) • ∫_{(0,t]} g u du` of a function that is locally strongly
 measurable and continuous at `0` from the right tend to `g 0` as `t → 0⁺`. -/
 private theorem tendsto_average_Ioc_zero_of_stronglyMeasurableAtFilter_continuousWithinAt_Ioi
-    {g : ℝ → X}
-    (hmeas : StronglyMeasurableAtFilter g (nhdsWithin (0 : ℝ) (Set.Ioi 0)) volume)
+    {g : ℝ → X} (hmeas : StronglyMeasurableAtFilter g (nhdsWithin (0 : ℝ) (Set.Ioi 0)) volume)
     (hg0 : ContinuousWithinAt g (Set.Ioi 0) 0) :
     Filter.Tendsto
       (fun t => (1 / t) • ∫ u in Set.Ioc 0 t, g u)
@@ -183,8 +182,10 @@ theorem StronglyContinuousSemigroup.generator_eq_toPMap_top_of_forall_tendsto
   refine ⟨hdomain, ?_⟩
   refine LinearPMap.ext ?_ ?_
   · rw [S.generator_domain, hdomain, LinearMap.toPMap_domain]
-  · intro x _ _
-    rw [LinearMap.toPMap_apply]
+  · intro x hx _
+    -- `LinearPMap.ext` leaves the goal on the coercion of `S.generator`, whose argument still
+    -- carries the membership proof from the old domain; `change` names the bundled element.
+    change S.generator ⟨x, hx⟩ = L x
     exact S.generator_eq_of_tendsto (hmem x) (h x)
 
 

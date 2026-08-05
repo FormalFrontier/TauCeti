@@ -75,7 +75,7 @@ end Algebra.TensorProduct
 
 namespace AffineGroup.Product
 
-open Bialgebra.TensorProduct
+open _root_.TauCeti.Bialgebra.TensorProduct
 
 variable {R H₁ H₂ A : Type*} [CommSemiring R]
 variable [CommSemiring H₁] [CommSemiring H₂] [_root_.Bialgebra R H₁] [_root_.Bialgebra R H₂]

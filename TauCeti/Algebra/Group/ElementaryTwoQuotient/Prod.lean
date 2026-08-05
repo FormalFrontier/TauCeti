@@ -118,8 +118,7 @@ noncomputable def elementaryTwoQuotientProdLinearEquiv (G H : Type*) [CommGroup 
 
 /-- The inverse product equivalence sends a pair of classes to the class of the pair. -/
 @[simp] theorem elementaryTwoQuotientProdLinearEquiv_symm_mk (G H : Type*)
-    [CommGroup G] [CommGroup H] (a : G) (b : H) :
-    (elementaryTwoQuotientProdLinearEquiv G H).symm
+    [CommGroup G] [CommGroup H] (a : G) (b : H) : (elementaryTwoQuotientProdLinearEquiv G H).symm
         (elementaryTwoQuotientMk a, elementaryTwoQuotientMk b) =
       elementaryTwoQuotientMk (a, b) := by
   rw [LinearEquiv.symm_apply_eq, elementaryTwoQuotientProdLinearEquiv_mk]

@@ -175,7 +175,7 @@ theorem bijOn_vertexPreReflection {i : Q} (h : IsEmpty (i ⟶ i)) (n : ℤ) :
   have hmaps : Set.MapsTo (vertexReflection Q h) {d : Q → ℤ | titsForm Q d = n}
       {d : Q → ℤ | titsForm Q d = n} := by
     intro d hd
-    simpa only [Set.mem_setOf_eq, coe_vertexReflection, titsForm_vertexPreReflection Q h]
+    simpa only [Set.mem_ofPred_eq, coe_vertexReflection, titsForm_vertexPreReflection Q h]
       using hd
   rw [← coe_vertexReflection Q h]
   exact Module.bijOn_reflection_of_mapsTo (titsPolarForm_single_self_of_isEmpty Q h) hmaps

@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import pathlib
 import subprocess
 import sys
+import tempfile
 
 import roadmap_label as rl
 
@@ -26,9 +28,10 @@ import roadmap_label as rl
 # checkout, but the unit tests pin it so they need no network.
 AREAS = {
     "CombinatorialHeegaardFloer", "ConformalMapping", "ContourIntegration",
-    "Exchangeability", "GeometricTopology", "HeegaardFloer", "JacobianChallenge",
+    "EffectiveBounds", "Exchangeability", "GeometricTopology", "HeegaardFloer",
+    "JacobianChallenge",
     "Multiquadratic", "OneParameterSemigroups", "OrthogonalL2Bases", "PDE",
-    "ReductiveGroups", "UniversalCovers",
+    "ReductiveGroups", "RepresentationTheory", "UniversalCovers",
 }
 
 TC = ["TauCeti/Analysis/Foo.lean"]        # an allowed (AI-ownable) math diff
@@ -36,7 +39,31 @@ INFRA = ["TauCeti/Foo.lean", ".github/workflows/x.yml"]  # trips the scope guard
 
 # (name, title, body, files, expected_label)
 CASES = [
-    # 1. citation resolves the area (real bodies, abbreviated) -----------------
+    # 1. explicit declaration is the preferred source --------------------------
+    ("explicit area", "refactor: share a proof",
+     "Roadmap: ContourIntegration", TC, "roadmap/ContourIntegration"),
+    ("explicit none", "refactor: share a general proof",
+     "Roadmap: none", TC, "roadmap/none"),
+    ("duplicate identical declaration", "refactor: share a proof",
+     "Roadmap: PDE\n\nRoadmap: PDE", TC, "roadmap/PDE"),
+    ("invalid explicit area", "refactor: share a proof",
+     "Roadmap: NotARoadmap", TC, "roadmap/Unknown"),
+    ("conflicting declarations", "refactor: share a proof",
+     "Roadmap: PDE\nRoadmap: ContourIntegration", TC, "roadmap/Unknown"),
+    ("fenced example ignored", "refactor: share a proof",
+     "```\nRoadmap: PDE\n```\nRoadmap: ContourIntegration", TC,
+     "roadmap/ContourIntegration"),
+    ("quoted example ignored", "refactor: share a proof",
+     "> Roadmap: PDE\nRoadmap: ContourIntegration", TC,
+     "roadmap/ContourIntegration"),
+
+    # 2. target markers and citations are compatibility sources ---------------
+    ("target marker", "refactor: share a proof",
+     '<!--tauceti-target:v1 {"focus":"PDE","id":"helper"}-->', TC,
+     "roadmap/PDE"),
+    ("invalid target marker ignored", "refactor: share a proof",
+     '<!--tauceti-target:v1 {"focus":"pde-helper","id":"helper"}-->', TC,
+     "roadmap/Unknown"),
     ("full path", "feat: add semigroup exponential shifts",
      "It advances TauCetiRoadmap/OneParameterSemigroups/README.md, Part A.", TC,
      "roadmap/OneParameterSemigroups"),
@@ -46,22 +73,36 @@ CASES = [
     ("suggested.lean path", "feat: add quotient comodules",
      "See TauCetiRoadmap/ReductiveGroups/Suggested.lean for the target.", TC,
      "roadmap/ReductiveGroups"),
+    ("matching declaration marker and citation", "feat: add theorem",
+     'Roadmap: PDE\nTauCetiRoadmap/PDE/README.md\n'
+     '<!--tauceti-target:v1 {"focus":"PDE","id":"target"}-->',
+     TC, "roadmap/PDE"),
+    ("declaration conflicts with citation", "feat: add theorem",
+     "Roadmap: PDE\nTauCetiRoadmap/ContourIntegration/README.md",
+     TC, "roadmap/Unknown"),
+    ("none conflicts with marker", "refactor: general cleanup",
+     'Roadmap: none\n<!--tauceti-target:v1 {"focus":"PDE","id":"target"}-->',
+     TC, "roadmap/Unknown"),
 
-    # 2. infra override wins even over a citation ------------------------------
+    # 3. infra and pin-only overrides ------------------------------------------
     ("infra beats citation", "feat: add roadmap CI",
      "advances TauCetiRoadmap/ContourIntegration/README.md", INFRA, "roadmap/none"),
     ("infra feat (website)", "feat: add site favicon", "", [".github/x", "web/y"],
      "roadmap/none"),
     ("empty diff", "feat: something", "advances TauCetiRoadmap/PDE/README.md", [],
      "roadmap/none"),
+    ("pin-only bump", "chore: forward bump", "",
+     ["lake-manifest.json", "lean-toolchain"], "roadmap/none"),
 
-    # 3. non-roadmap titles, no citation --------------------------------------
-    ("refactor", "refactor: move split into Cylinder.lean", "", TC, "roadmap/none"),
-    ("fix", "fix: drop the vacuous coe lemma", "", TC, "roadmap/none"),
+    # 4. a title never supplies roadmap evidence -------------------------------
+    ("refactor missing attribution", "refactor: move split into Cylinder.lean", "",
+     TC, "roadmap/Unknown"),
+    ("fix missing attribution", "fix: drop the vacuous coe lemma", "",
+     TC, "roadmap/Unknown"),
     ("mathlib bump", "chore: bump mathlib to 40b45a0, fix breaking changes", "",
-     ["TauCeti/A.lean", "lake-manifest.json", "lean-toolchain"], "roadmap/none"),
+     ["TauCeti/A.lean", "lake-manifest.json", "lean-toolchain"], "roadmap/Unknown"),
 
-    # 4. new mathematics, no parseable citation -> Unknown --------------------
+    # 5. missing or ambiguous evidence -> Unknown ------------------------------
     ("feat cites decl not file", "feat(Analysis/Contour): continuous argument lift",
      "Prerequisite for homologyCauchyTheorem (Dixon) and the residue theorem.", TC,
      "roadmap/Unknown"),
@@ -75,9 +116,6 @@ CASES = [
     ("multi-area citation", "feat: add thing",
      "spans TauCetiRoadmap/PDE/README.md and TauCetiRoadmap/Multiquadratic/README.md",
      TC, "roadmap/Unknown"),
-    # a refactor bump touching only the pins is allowed-set + non-roadmap title
-    ("pin-only bump", "chore: forward bump", "",
-     ["lake-manifest.json", "lean-toolchain"], "roadmap/none"),
 ]
 
 
@@ -92,8 +130,29 @@ def run_unit() -> int:
     # parse helper spot checks
     assert rl.parse_cited_areas("TauCetiRoadmap/PDE/README.md", AREAS) == {"PDE"}
     assert rl.parse_cited_areas("nothing here", AREAS) == set()
+    assert rl.parse_target_areas(
+        '<!--tauceti-target:v1 {"focus":"PDE","id":"x"}-->', AREAS
+    ) == {"PDE"}
+    assert rl.parse_declared_area("Roadmap: EffectiveBounds", AREAS) == (
+        True, "EffectiveBounds")
+    assert rl.parse_declared_area("nothing here", AREAS) == (False, None)
     assert rl.is_infra(["TauCeti/A.lean"]) is False
     assert rl.is_infra(["scripts/x.sh"]) is True
+    assert rl.is_pin_only(["lake-manifest.json", "lean-toolchain"]) is True
+    assert rl.is_pin_only(["TauCeti/A.lean", "lake-manifest.json"]) is False
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        for directory in (
+            root / "TauCetiRoadmap" / "ContourIntegration",
+            root / "Completed" / "EffectiveBounds",
+        ):
+            directory.mkdir(parents=True)
+            (directory / "README.md").touch()
+        # The archive container has a README of its own, but is not an area.
+        (root / "Completed" / "README.md").touch()
+        assert rl.canonical_areas(root) == {"ContourIntegration", "EffectiveBounds"}
+
     print(f"\n{len(CASES) - fails}/{len(CASES)} classifier cases passed")
     return 1 if fails else 0
 

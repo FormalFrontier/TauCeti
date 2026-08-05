@@ -35,7 +35,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate
 
 /-- **Value-level equality case of the infinitesimal Schwarz--Pick lemma.** The quotient built

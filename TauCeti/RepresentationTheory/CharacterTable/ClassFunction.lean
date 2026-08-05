@@ -13,7 +13,8 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, and shows that characters of representations are class functions.
+groups, shows that characters of representations are class functions, and evaluates a sum over a
+finite group one conjugacy class at a time.
 
 These are the indexing foundations for character tables.
 
@@ -114,6 +115,27 @@ theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
     equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
 
+/-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
+the group and a class function is constant on each of them, so each class contributes its size
+times the single value the class function takes there.
+
+This is the substitution that turns a sum over the group, such as the one pairing two characters,
+into a sum over the columns of a character table. -/
+theorem sum_eq_sum_conjClasses [Fintype G] [Fintype (ConjClasses G)] (f : ClassFunction k G) :
+    ∑ g : G, f.1 g = ∑ C : ConjClasses G, (Nat.card C.carrier : k) * toConjClasses f C := by
+  classical
+  rw [← Fintype.sum_fiberwise (ConjClasses.mk (α := G)) fun g => f.1 g]
+  refine Finset.sum_congr rfl fun C _ => ?_
+  have hconst : ∀ x : {g : G // ConjClasses.mk g = C}, f.1 x.1 = toConjClasses f C := by
+    rintro ⟨x, rfl⟩
+    exact (toConjClasses_mk f x).symm
+  have hcard : Nat.card C.carrier = Fintype.card {g : G // ConjClasses.mk g = C} :=
+    (Nat.card_congr
+      (Equiv.subtypeEquivRight fun _ => ConjClasses.mem_carrier_iff_mk_eq)).trans
+      (Nat.card_eq_fintype_card)
+  rw [Finset.sum_congr rfl fun x _ => hconst x, Finset.sum_const, Finset.card_univ, hcard,
+    nsmul_eq_mul]
+
 end ClassFunction
 
 namespace ClassFunction
@@ -123,7 +145,7 @@ variable {k : Type u} {G : Type v} [DivisionRing k] [Group G]
 /-- The dimension of the space of class functions is the number of conjugacy classes. -/
 theorem finrank_eq_card_conjClasses [Finite (ConjClasses G)] :
     Module.finrank k (ClassFunction k G) = Nat.card (ConjClasses G) := by
-  letI := Fintype.ofFinite (ConjClasses G)
+  let := Fintype.ofFinite (ConjClasses G)
   rw [LinearEquiv.finrank_eq equivConjClasses, Module.finrank_pi_fintype]
   simp
 
@@ -141,8 +163,7 @@ noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
 /-- The class function of a representation evaluates to its character. -/
 @[simp]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
-    (ρ : Representation k G V) (g : G) :
-    (ofCharacter ρ).1 g = ρ.character g :=
+    (ρ : Representation k G V) (g : G) : (ofCharacter ρ).1 g = ρ.character g :=
   (rfl)
 
 /-- The character of a finite-dimensional bundled representation is a class function. -/
@@ -151,8 +172,7 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 
 /-- The class function of a bundled finite-dimensional representation evaluates to its character. -/
 @[simp]
-theorem ofFDRep_apply (V : FDRep k G) (g : G) :
-    (ofFDRep V).1 g = V.character g :=
+theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
   (rfl)
 
 end ClassFunction

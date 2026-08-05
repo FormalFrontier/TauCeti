@@ -41,8 +41,7 @@ variable {E F B : Type*} [TopologicalSpace E] [TopologicalSpace F]
 
 /-- Conjugating an over-base homeomorphism identifies the normalizer quotient of a deck
 subgroup with the normalizer quotient of the conjugated subgroup. -/
-noncomputable abbrev normalizerQuotientConjEquiv (h : E ≃ₜ F)
-    (hpq : ∀ e, q (h e) = p e)
+noncomputable abbrev normalizerQuotientConjEquiv (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
     (H : Subgroup (Deck p)) :
     Subgroup.normalizerQuotient H ≃*
       Subgroup.normalizerQuotient
@@ -51,8 +50,7 @@ noncomputable abbrev normalizerQuotientConjEquiv (h : E ≃ₜ F)
 
 /-- On normalizer representatives, the deck normalizer-quotient conjugation equivalence is
 induced by conjugating deck transformations. -/
-lemma normalizerQuotientConjEquiv_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
+lemma normalizerQuotientConjEquiv_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (H : Subgroup (Deck p))
     (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
     normalizerQuotientConjEquiv h hpq H (Subgroup.normalizerQuotientMk H φ) =
       Subgroup.normalizerQuotientMk
@@ -82,8 +80,7 @@ lemma normalizerQuotientConjEquiv_refl_mk_congr (H : Subgroup (Deck p))
 /-- The inverse deck normalizer-quotient conjugation equivalence is induced by inverse
 conjugation of deck transformations. -/
 lemma normalizerQuotientConjEquiv_symm_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
-    (ψ : _root_.Subgroup.normalizer
+    (H : Subgroup (Deck p)) (ψ : _root_.Subgroup.normalizer
       ((H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q)) :
         Set (Deck q))) :
     (normalizerQuotientConjEquiv h hpq H).symm
@@ -95,12 +92,9 @@ lemma normalizerQuotientConjEquiv_symm_mk (h : E ≃ₜ F) (hpq : ∀ e, q (h e)
 
 /-- Composing two deck normalizer-quotient conjugation equivalences sends representatives through
 the two successive conjugation transports. -/
-lemma normalizerQuotientConjEquiv_trans_mk
-    {G : Type*} [TopologicalSpace G] {r : G → B}
-    (h : E ≃ₜ F) (k : F ≃ₜ G)
-    (hpq : ∀ e, q (h e) = p e) (hqr : ∀ f, r (k f) = q f)
-    (H : Subgroup (Deck p))
-    (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
+lemma normalizerQuotientConjEquiv_trans_mk {G : Type*} [TopologicalSpace G] {r : G → B}
+    (h : E ≃ₜ F) (k : F ≃ₜ G) (hpq : ∀ e, q (h e) = p e) (hqr : ∀ f, r (k f) = q f)
+    (H : Subgroup (Deck p)) (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
     normalizerQuotientConjEquiv k hqr
         (H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q))
         (normalizerQuotientConjEquiv h hpq H (Subgroup.normalizerQuotientMk H φ)) =
@@ -117,12 +111,9 @@ lemma normalizerQuotientConjEquiv_trans_mk
 /-- After identifying the twice-conjugated subgroup with the subgroup conjugated by the
 composite over-base homeomorphism, composing deck normalizer-quotient conjugation equivalences
 agrees with conjugation by the composite on representatives. -/
-lemma normalizerQuotientConjEquiv_trans_mk_congr
-    {G : Type*} [TopologicalSpace G] {r : G → B}
-    (h : E ≃ₜ F) (k : F ≃ₜ G)
-    (hpq : ∀ e, q (h e) = p e) (hqr : ∀ f, r (k f) = q f)
-    (H : Subgroup (Deck p))
-    (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
+lemma normalizerQuotientConjEquiv_trans_mk_congr {G : Type*} [TopologicalSpace G] {r : G → B}
+    (h : E ≃ₜ F) (k : F ≃ₜ G) (hpq : ∀ e, q (h e) = p e) (hqr : ∀ f, r (k f) = q f)
+    (H : Subgroup (Deck p)) (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
     Subgroup.normalizerQuotientCongr (subgroup_map_conj_trans h k hpq hqr H)
       (normalizerQuotientConjEquiv k hqr
         (H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q))
@@ -144,8 +135,7 @@ lemma normalizerQuotientConjEquiv_trans_mk_congr
 /-- Inverse-conjugating a representative of the `h`-conjugated subgroup quotient gives the
 stated representative in the twice-mapped subgroup. -/
 lemma normalizerQuotientConjEquiv_symm_mk' (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
-    (ψ : _root_.Subgroup.normalizer
+    (H : Subgroup (Deck p)) (ψ : _root_.Subgroup.normalizer
       ((H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q)) :
         Set (Deck q))) :
     normalizerQuotientConjEquiv h.symm (map_symm_eq_of_map_eq h hpq)
@@ -166,8 +156,7 @@ lemma normalizerQuotientConjEquiv_symm_mk' (h : E ≃ₜ F) (hpq : ∀ e, q (h e
 /-- On underlying deck transformations, the normalizer representative in the target quotient
 is obtained by conjugation. -/
 lemma normalizerQuotientConjEquiv_mk_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
-    (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
+    (H : Subgroup (Deck p)) (φ : _root_.Subgroup.normalizer (H : Set (Deck p))) :
     normalizerQuotientConjEquiv h hpq H (Subgroup.normalizerQuotientMk H φ) =
       Subgroup.normalizerQuotientMk
         (H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q))
@@ -179,8 +168,7 @@ lemma normalizerQuotientConjEquiv_mk_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) 
 /-- On representatives, inverse transport of the deck normalizer quotient applies inverse
 conjugation. -/
 lemma normalizerQuotientConjEquiv_symm_mk_coe (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
-    (ψ : _root_.Subgroup.normalizer
+    (H : Subgroup (Deck p)) (ψ : _root_.Subgroup.normalizer
       ((H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q)) :
         Set (Deck q))) :
     (normalizerQuotientConjEquiv h hpq H).symm

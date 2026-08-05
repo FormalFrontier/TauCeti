@@ -7,6 +7,7 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.UnitDisc.Basic
 public import Mathlib.Data.Set.Function
+public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Basic
 import Mathlib.Analysis.Complex.Schwarz
 import TauCeti.Analysis.Complex.Conformal.Moebius
 
@@ -25,8 +26,10 @@ This advances the conformal-mapping roadmap's **L2 Schwarz--Pick** target
 complementing Tau Ceti's finite Schwarz--Pick estimate `pseudoHyperbolicExpr_map_le`.  It
 reuses Mathlib's Schwarz lemma (`Complex.norm_deriv_le_one_of_mapsTo_ball`) and Tau Ceti's
 unit-disc Moebius API.  As with the rest of the L0--L3 conformal-mapping material, it is
-coordinated with the upstream Mathlib RMT effort leanprover-community/mathlib4#33505 and
-should be refactored to upstream API if that work lands a human-curated Schwarz--Pick theorem.
+coordinated with the upstream Mathlib RMT effort leanprover-community/mathlib4#33505.  Mathlib
+already contains the preceding human-curated work in `Analysis/Complex/RiemannMapping.lean` and
+`Analysis/Complex/BranchLogRoot.lean`; none of it is duplicated here, and should that work land
+a human-curated Schwarz--Pick theorem this file should be refactored onto it.
 -/
 
 public section
@@ -36,24 +39,65 @@ namespace TauCeti
 open Complex Metric Set
 open scoped ComplexConjugate
 
-/-- **Chain rule for the infinitesimal Schwarz--Pick conjugate.** For the composite
-`target ∘ f ∘ source` of two unit-disc Moebius factors around `f`, given the factor derivatives
-`1 - conj z * z` (of `source` at `0`, where `source 0 = z`) and `1 / (1 - conj (f z) * f z)` (of
-`target` at `f z`), the norm of the derivative of the composite at the origin equals the Poincaré
-distortion `‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2)`. -/
-private lemma norm_deriv_schwarzPickConjugate_at_zero {source target f : ℂ → ℂ} {df z : ℂ}
-    (hz : ‖z‖ ≤ 1) (hfz : ‖f z‖ ≤ 1)
-    (hs : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0) (hsz : source 0 = z)
-    (hf : HasDerivAt f df z)
-    (ht : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z)) :
-    ‖deriv (target ∘ f ∘ source) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
+/-- **Chain rule for the Schwarz--Pick conjugate at the origin.** The Schwarz--Pick conjugate
+`schwarzPickConjugate f z` sandwiches `f` between the unit-disc Moebius factors centred at `-z`
+and at `f z`, whose derivatives are `1 - conj z * z` (the source factor at `0`, where it takes
+the value `z`) and `1 / (1 - conj (f z) * f z)` (the target factor at `f z`).  So the derivative
+of the conjugate at the origin is the derivative of `f` at `z`, rescaled by the two Poincaré
+defects.
+
+All the target factor needs is that its denominator `1 - conj (f z) * f z` at `f z` — the
+Poincaré defect `1 - ‖f z‖ ^ 2` — does not vanish, which for `‖f z‖ < 1` is
+`one_sub_conj_mul_ne_zero_of_norm_lt_one`; the source factor is differentiated at the origin,
+where its denominator is `1`, so no bound on `z` is required. -/
+lemma hasDerivAt_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+    (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hf : HasDerivAt f df z) :
+    HasDerivAt (schwarzPickConjugate f z)
+      (df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z)) 0 := by
+  -- Local names for the two Moebius factors of the conjugate, for the derivative calculation.
+  let source : ℂ → ℂ := fun ξ => (ξ - (-z)) / (1 - (starRingEnd ℂ) (-z) * ξ)
+  let target : ℂ → ℂ := fun η => (η - f z) / (1 - (starRingEnd ℂ) (f z) * η)
+  have hsz : source 0 = z := by simp [source]
+  -- The two factor derivatives, specialised from `hasDerivAt_unitDiscMoebiusFormula`.
+  have hs : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0 := by
+    have h := hasDerivAt_unitDiscMoebiusFormula (-z) 0 (by simp)
+    have hval : (1 - (starRingEnd ℂ) (-z) * (-z)) / (1 - (starRingEnd ℂ) (-z) * 0) ^ 2
+        = 1 - (starRingEnd ℂ) z * z := by simp [map_neg]
+    rw [hval] at h
+    exact h
+  have ht : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z) := by
+    have h := hasDerivAt_unitDiscMoebiusFormula (f z) (f z) hp_outer
+    have hval : (1 - (starRingEnd ℂ) (f z) * f z) / (1 - (starRingEnd ℂ) (f z) * f z) ^ 2
+        = 1 / (1 - (starRingEnd ℂ) (f z) * f z) := by rw [sq, ← div_div, div_self hp_outer]
+    rw [hval] at h
+    exact h
   have hf' : HasDerivAt f df (source 0) := by rw [hsz]; exact hf
   have ht' : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) ((f ∘ source) 0) := by
     rw [Function.comp_apply, hsz]; exact ht
-  rw [(ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)).deriv, norm_mul, norm_mul, norm_div, norm_one,
+  -- The conjugate *is* the composite `target ∘ f ∘ source`.
+  have hconj : schwarzPickConjugate f z = target ∘ f ∘ source := schwarzPickConjugate_def f z
+  have hval : 1 / (1 - (starRingEnd ℂ) (f z) * f z) * (df * (1 - (starRingEnd ℂ) z * z))
+      = df * (1 - (starRingEnd ℂ) z * z) / (1 - (starRingEnd ℂ) (f z) * f z) := by ring
+  rw [hconj, ← hval]
+  exact ht'.comp (0 : ℂ) (hf'.comp (0 : ℂ) hs)
+
+/-- **The Poincaré distortion of `f` is the norm of the derivative of its Schwarz--Pick
+conjugate at the origin.** Taking norms in `hasDerivAt_schwarzPickConjugate_zero` and using
+`‖1 - conj w * w‖ = 1 - ‖w‖ ^ 2` turns the two Moebius defects into the real factors of the
+Poincaré metric. Schwarz's lemma at `0` for the conjugate is therefore exactly the
+infinitesimal Schwarz--Pick estimate for `f` at `z`.
+
+Only the closed-disc bounds `‖z‖ ≤ 1` and `‖f z‖ ≤ 1` are needed to identify the two Moebius
+defects with `1 - ‖z‖ ^ 2` and `1 - ‖f z‖ ^ 2`, on top of the nonvanishing
+`1 - conj (f z) * f z ≠ 0` that `hasDerivAt_schwarzPickConjugate_zero` itself asks for; for a
+disc point that nonvanishing is `one_sub_conj_mul_ne_zero_of_norm_lt_one`. -/
+private lemma norm_deriv_schwarzPickConjugate_zero {f : ℂ → ℂ} {df z : ℂ}
+    (hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0) (hz : ‖z‖ ≤ 1) (hfz : ‖f z‖ ≤ 1)
+    (hf : HasDerivAt f df z) :
+    ‖deriv (schwarzPickConjugate f z) 0‖ = ‖df‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) := by
+  rw [(hasDerivAt_schwarzPickConjugate_zero hp_outer hf).deriv, norm_div, norm_mul,
     norm_one_sub_conj_mul_self_of_norm_le_one hz,
     norm_one_sub_conj_mul_self_of_norm_le_one hfz]
-  ring
 
 /-- **The infinitesimal Schwarz--Pick inequality.** A holomorphic self-map `f` of the open
 unit disc contracts the Poincaré metric: at every point `z` of the disc,
@@ -67,37 +111,22 @@ theorem norm_deriv_div_one_sub_norm_sq_le {f : ℂ → ℂ}
   have hfz1 : ‖f z‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps hz
   have hden_z : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
   have hden_fz : (0 : ℝ) < 1 - ‖f z‖ ^ 2 := by nlinarith [norm_nonneg (f z)]
-  -- Conjugate `f` by the disc automorphisms centred at `-z` and `f z` so the conjugate fixes `0`.
-  let source : ℂ → ℂ := fun ξ => (ξ - (-z)) / (1 - (starRingEnd ℂ) (-z) * ξ)
-  let target : ℂ → ℂ := fun η => (η - f z) / (1 - (starRingEnd ℂ) (f z) * η)
-  let g : ℂ → ℂ := target ∘ f ∘ source
-  obtain ⟨hg_diff, hg_maps, hg_zero'⟩ :=
+  -- Pass to the Schwarz--Pick conjugate of `f` at `z`, a holomorphic self-map fixing the origin.
+  obtain ⟨hg_diff, hg_maps, hg_zero⟩ :=
     differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hmaps hz1
-  have hg_zero : g 0 = 0 := hg_zero'
-  have hsource_zero : source 0 = z := by simp [source]
-  -- Schwarz's lemma at `0` for the conjugate `g`.
-  have hschwarz : ‖deriv g 0‖ ≤ 1 := by
-    have hmaps' : MapsTo g (ball (0 : ℂ) 1) (closedBall (g 0) 1) := by
+  -- Schwarz's lemma at `0` for the conjugate.
+  have hschwarz : ‖deriv (schwarzPickConjugate f z) 0‖ ≤ 1 := by
+    have hmaps' : MapsTo (schwarzPickConjugate f z) (ball (0 : ℂ) 1)
+        (closedBall (schwarzPickConjugate f z 0) 1) := by
       rw [hg_zero]; exact fun ξ hξ => ball_subset_closedBall (hg_maps hξ)
     exact Complex.norm_deriv_le_one_of_mapsTo_ball hg_diff hmaps' (by norm_num)
-  -- The chain rule turns Schwarz's bound `‖deriv g 0‖ ≤ 1` into the estimate for `f`.
+  -- The chain rule turns Schwarz's bound for the conjugate into the estimate for `f`.
   have hf_at : HasDerivAt f (deriv f z) z :=
     (hf.differentiableAt (isOpen_ball.mem_nhds hz)).hasDerivAt
-  have hp_outer : (1 : ℂ) - (starRingEnd ℂ) (f z) * f z ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one hfz1 hfz1
-  -- The two Möbius factor derivatives, specialised from `hasDerivAt_unitDiscMoebiusFormula`.
-  have hs : HasDerivAt source (1 - (starRingEnd ℂ) z * z) 0 := by
-    have h := hasDerivAt_unitDiscMoebiusFormula (-z) 0 (by simp)
-    have hval : (1 - (starRingEnd ℂ) (-z) * (-z)) / (1 - (starRingEnd ℂ) (-z) * 0) ^ 2
-        = 1 - (starRingEnd ℂ) z * z := by simp [map_neg]
-    rwa [hval] at h
-  have ht : HasDerivAt target (1 / (1 - (starRingEnd ℂ) (f z) * f z)) (f z) := by
-    have h := hasDerivAt_unitDiscMoebiusFormula (f z) (f z) hp_outer
-    have hval : (1 - (starRingEnd ℂ) (f z) * f z) / (1 - (starRingEnd ℂ) (f z) * f z) ^ 2
-        = 1 / (1 - (starRingEnd ℂ) (f z) * f z) := by rw [sq, ← div_div, div_self hp_outer]
-    rwa [hval] at h
-  have hnorm_dg : ‖deriv g 0‖ = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) :=
-    norm_deriv_schwarzPickConjugate_at_zero hz1.le hfz1.le hs hsource_zero hf_at ht
+  have hnorm_dg : ‖deriv (schwarzPickConjugate f z) 0‖
+      = ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) :=
+    norm_deriv_schwarzPickConjugate_zero (one_sub_conj_mul_ne_zero_of_norm_lt_one hfz1 hfz1)
+      hz1.le hfz1.le hf_at
   have hkey : ‖deriv f z‖ * (1 - ‖z‖ ^ 2) / (1 - ‖f z‖ ^ 2) ≤ 1 := hnorm_dg ▸ hschwarz
   rw [div_le_one hden_fz] at hkey
   rw [div_le_div_iff₀ hden_fz hden_z, one_mul]

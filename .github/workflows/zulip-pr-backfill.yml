@@ -1,0 +1,72 @@
+name: Zulip PR backfill
+
+# Manually rewrite every existing bot-authored post in "Tau Ceti" > "PRs"
+# from current GitHub metadata. This is deliberately separate from the
+# event-driven workflows: normal updates stay fast, while a format migration
+# can edit the full history in place without reposting or duplicating messages.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Read every post and report changes without writing them"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  statuses: read
+
+concurrency:
+  group: zulip-pr-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: read
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/pr_status
+      - name: Reconcile all existing PR posts
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(--strict)
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+
+          # Pass the paginated listing's complete PR metadata to one long-lived
+          # process. This stays well below GITHUB_TOKEN's 1,000 requests/hour
+          # repository limit and authenticates the Zulip bot only once.
+          gh api --paginate \
+            'repos/TauCetiProject/TauCeti/pulls?state=all&sort=created&direction=asc&per_page=100' \
+            --jq '.[] | {
+              number,
+              state,
+              merged: (.merged_at != null),
+              head: .head.sha,
+              title,
+              author: .user.login,
+              roadmaps: [.labels[].name | select(startswith("roadmap/"))]
+            }' |
+            python3 scripts/pr_status/zulip.py backfill "${args[@]}"

@@ -111,7 +111,7 @@ theorem trivialToRegular_apply (r : R) :
     letI : Comodule R C R := trivial (R := R) (C := C) (M := R)
     trivialToRegular (R := R) (C := C) r = algebraMap R C r :=
   by
-    letI : Comodule R C R := trivial (R := R) (C := C) (M := R)
+    let : Comodule R C R := trivial (R := R) (C := C) (M := R)
     rw [← Algebra.linearMap_apply R C r]
     exact LinearMap.congr_fun (trivialToRegular_toLinearMap (R := R) (C := C)) r
 
@@ -134,8 +134,7 @@ abbrev regular : ComoduleCat.{u, v, v} R C :=
 
 /-- The underlying type of the bundled regular comodule is the coalgebra itself. -/
 @[simp]
-theorem regular_toSemimoduleCat :
-    (regular R C).toSemimoduleCat = SemimoduleCat.of R C :=
+theorem regular_toSemimoduleCat : (regular R C).toSemimoduleCat = SemimoduleCat.of R C :=
   rfl
 
 /-- The coaction on the bundled regular comodule is the coalgebra comultiplication. -/
@@ -195,8 +194,7 @@ abbrev regular : FGComoduleCat.{u, v, v} R C :=
 /-- The ambient comodule underlying the finitely generated regular comodule is the regular
 comodule. -/
 @[simp]
-theorem regular_obj :
-    (regular R C : FGComoduleCat.{u, v, v} R C).obj = ComoduleCat.regular R C :=
+theorem regular_obj : (regular R C : FGComoduleCat.{u, v, v} R C).obj = ComoduleCat.regular R C :=
   rfl
 
 /-- The coaction on the finitely generated regular comodule is the coalgebra comultiplication. -/

@@ -60,12 +60,11 @@ private theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
     MapsTo e.symm (e.target ∩ {w : ℂ | P w.im})
       (e.source ∩ {z : ℂ | P (e z).im}) := by
   rintro w ⟨hw, hP⟩
-  exact ⟨e.map_target hw, by simpa only [Set.mem_setOf_eq, e.right_inv hw] using hP⟩
+  exact ⟨e.map_target hw, by simpa only [Set.mem_ofPred_eq, e.right_inv hw] using hP⟩
 
 /-- If both coordinate domains are conjugation-invariant, the reflected coordinate values stay
 in the target coordinate domain. -/
-private theorem mapsTo_schwarzReflection
-    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+private theorem mapsTo_schwarzReflection (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
     MapsTo (schwarzReflection (fun w => d (f (e.symm w)))) e.target d.target := by
@@ -79,12 +78,11 @@ private theorem mapsTo_schwarzReflection
     apply d.map_source
     apply hf
     refine mapsTo_symm_inter_im e ⟨he_symm hw, ?_⟩
-    rw [Set.mem_setOf_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
+    rw [Set.mem_ofPred_eq, starRingEnd_apply, Complex.star_def, Complex.conj_im]
     exact neg_nonneg.mpr him_neg.le
 
 /-- Charted Schwarz reflection maps the source chart domain into the target chart domain. -/
-theorem mapsTo_chartedSchwarzReflection
-    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+theorem mapsTo_chartedSchwarzReflection (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
     MapsTo (chartedSchwarzReflection e d f) e.source d.source := by
@@ -136,7 +134,7 @@ private theorem differentiableOn_in_coordinates
     hf.comp (he_inv.mono inter_subset_left) (mapsTo_symm_inter_im e)
   refine hd.comp hfe fun w hw => hf_maps ?_
   rcases hw with ⟨hw_target, hw_im⟩
-  simp only [Set.mem_setOf_eq] at hw_im
+  simp only [Set.mem_ofPred_eq] at hw_im
   apply mapsTo_symm_inter_im e
   exact ⟨hw_target, hw_im.le⟩
 
@@ -186,8 +184,7 @@ theorem chartedSchwarzReflection_sourceReflection
     (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf_maps : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source)
-    (hf_real : ∀ z ∈ e.source, (e z).im = 0 → (d (f z)).im = 0)
-    {z : ℂ} (hz : z ∈ e.source) :
+    (hf_real : ∀ z ∈ e.source, (e z).im = 0 → (d (f z)).im = 0) {z : ℂ} (hz : z ∈ e.source) :
     chartedSchwarzReflection e d f
         (e.symm ((starRingEnd ℂ) (e z))) =
       d.symm ((starRingEnd ℂ) (d (chartedSchwarzReflection e d f z))) := by

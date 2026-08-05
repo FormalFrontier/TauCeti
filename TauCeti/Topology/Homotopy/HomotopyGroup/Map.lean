@@ -70,8 +70,7 @@ theorem map_id (p : Ω^ N X x) :
   rfl
 
 @[simp]
-theorem map_comp (g : C(Y, Z)) (hg : g y = z) (f : C(X, Y)) (hf : f x = y)
-    (p : Ω^ N X x) :
+theorem map_comp (g : C(Y, Z)) (hg : g y = z) (f : C(X, Y)) (hf : f x = y) (p : Ω^ N X x) :
     map g hg (map f hf p) = map (g.comp f) (by simp [hf, hg]) p := by
   apply _root_.GenLoop.ext
   intro t
@@ -142,8 +141,7 @@ theorem map_continuousMap_const_apply (y : Y) (hy : (ContinuousMap.const X y) x 
 
 /-- A based map into a subsingleton space induces the same map as the constant map at the
 target basepoint. -/
-theorem map_eq_continuousMap_const_of_subsingleton [Subsingleton Y]
-    (f : C(X, Y)) (hf : f x = y) :
+theorem map_eq_continuousMap_const_of_subsingleton [Subsingleton Y] (f : C(X, Y)) (hf : f x = y) :
     map (N := N) f hf = map (x := x) (ContinuousMap.const X y) rfl := by
   have h : f = ContinuousMap.const X y := Subsingleton.elim _ _
   subst f
@@ -200,6 +198,9 @@ theorem map_comp_apply (g : C(Y, Z)) (hg : g y = z) (f : C(X, Y)) (hf : f x = y)
   refine Quotient.inductionOn a ?_
   intro p
   simp
+  -- both sides are now `⟦GenLoop.map (g.comp f) _ p⟧` and differ only in the basepoint proof
+  -- carried by `GenLoop.map`, which is proof-irrelevant.
+  rfl
 
 /-- The induced map `HomotopyGroup.map` depends only on the underlying continuous map, not on the
 chosen proof of the basepoint equation. -/
@@ -229,6 +230,9 @@ homomorphism for the standard group structure on homotopy groups. -/
     refine Quotient.inductionOn₂ a b ?_
     intro p q
     simp [_root_.HomotopyGroup.mul_spec (i := Classical.arbitrary N)]
+    -- as in `map_comp_apply`, the two sides differ only in the proof-irrelevant basepoint
+    -- argument of `GenLoop.map`.
+    rfl
 
 @[simp]
 theorem mapHom_apply [DecidableEq N] [Nonempty N] (f : C(X, Y)) (hf : f x = y)

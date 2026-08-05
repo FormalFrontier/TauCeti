@@ -95,8 +95,7 @@ private theorem lintegral_prod_pow_eq_of_bind_eq
 /-- The `ℝ≥0∞`-valued mixed monomial is `ENNReal.ofReal` of its real-valued counterpart; a
 probability measure's values are finite, so `toReal` passes through the product. -/
 private theorem toReal_prod_pow (P : ProbabilityMeasure α) {k : ℕ} (B : Fin k → Set α)
-    (m : Fin k → ℕ) :
-    (∏ j, ((P : Measure α) (B j)) ^ m j).toReal = ∏ j, (P (B j) : ℝ) ^ m j := by
+    (m : Fin k → ℕ) : (∏ j, ((P : Measure α) (B j)) ^ m j).toReal = ∏ j, (P (B j) : ℝ) ^ m j := by
   rw [ENNReal.toReal_prod]
   refine Finset.prod_congr rfl fun j _ => ?_
   rw [← ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, ← ENNReal.coe_pow,
@@ -120,7 +119,7 @@ theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁]
     (h : (π₁.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α))
       = π₂.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
     π₁ = π₂ := by
-  haveI : IsFiniteMeasure π₂ := by
+  have : IsFiniteMeasure π₂ := by
     constructor
     rw [← bind_infinitePi_univ π₂, ← h, bind_infinitePi_univ π₁]
     exact measure_lt_top π₁ _
@@ -128,9 +127,9 @@ theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁]
     fun k B hB => ?_
   have hfm : Measurable fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) :=
     measurable_probabilityMeasure_eval_family B hB
-  haveI : IsFiniteMeasure (π₁.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
+  have : IsFiniteMeasure (π₁.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
     Measure.isFiniteMeasure_map _ _
-  haveI : IsFiniteMeasure (π₂.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
+  have : IsFiniteMeasure (π₂.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
     Measure.isFiniteMeasure_map _ _
   have hKc : IsCompact (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1) :=
     isCompact_univ_pi fun _ => isCompact_Icc

@@ -210,16 +210,14 @@ private theorem card_filter_graph (f : Fin (n + 2) → Fin (n + 2)) :
 
 /-- The number of increasing column pairs is unchanged by additionally demanding that the two
 diagonal `O` markings be in increasing order, which they always are. -/
-private theorem card_filter_lt_O_lt_O :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+private theorem card_filter_lt_O_lt_O : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
         p.1 < p.2 ∧ (unknot n).O p.1 < (unknot n).O p.2).card
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card :=
   congrArg Finset.card (Finset.filter_congr fun p _ => by simp)
 
 /-- Among the increasing column pairs, exactly the `n + 1` pairs ending in the last column fail to
 put the first diagonal `O` marking below the second shifted `X` marking. -/
-private theorem card_filter_lt_O_lt_X :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+private theorem card_filter_lt_O_lt_X : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
         p.1 < p.2 ∧ (unknot n).O p.1 < (unknot n).X p.2).card + (n + 1)
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card := by
   have hset : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
@@ -245,8 +243,7 @@ private theorem card_filter_lt_O_lt_X :
 
 /-- Among the increasing column pairs, exactly the `n + 1` pairs of consecutive columns fail to
 put the first shifted `X` marking below the second diagonal `O` marking. -/
-private theorem card_filter_lt_X_lt_O :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+private theorem card_filter_lt_X_lt_O : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
         p.1 < p.2 ∧ (unknot n).X p.1 < (unknot n).O p.2).card + (n + 1)
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card := by
   have hset : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
@@ -275,8 +272,7 @@ private theorem card_filter_lt_X_lt_O :
 
 /-- Among the increasing column pairs, exactly the `n + 1` pairs ending in the last column fail to
 keep the two shifted `X` markings in increasing order. -/
-private theorem card_filter_lt_X_lt_X :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+private theorem card_filter_lt_X_lt_X : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
         p.1 < p.2 ∧ (unknot n).X p.1 < (unknot n).X p.2).card + (n + 1)
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card := by
   have hset : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>

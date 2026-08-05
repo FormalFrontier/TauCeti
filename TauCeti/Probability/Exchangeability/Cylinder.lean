@@ -69,7 +69,7 @@ measurable. -/
 theorem measurableSet_blockCylinder {X : ℕ → Ω → α} {m : ℕ} {k : Fin m → ℕ} {C : Fin m → Set α}
     (hX : ∀ i, Measurable (X (k i))) (hC : ∀ i, MeasurableSet (C i)) :
     MeasurableSet (blockCylinder X k C) := by
-  simp only [blockCylinder, Set.setOf_forall]
+  simp only [blockCylinder, Set.ofPred_forall]
   exact MeasurableSet.iInter fun i => (hX i) (hC i)
 
 /-- The block law evaluated on a measurable rectangle is the measure of the block cylinder:
@@ -141,7 +141,7 @@ theorem blockIndicatorProd_succ_eq_indicator_inter (X : ℕ → Ω → α) {r : 
 theorem nullMeasurableSet_blockCylinder {μ : Measure Ω} {X : ℕ → Ω → α} {m : ℕ} {k : Fin m → ℕ}
     {C : Fin m → Set α} (hX : ∀ i, AEMeasurable (X (k i)) μ) (hC : ∀ i, MeasurableSet (C i)) :
     NullMeasurableSet (blockCylinder X k C) μ := by
-  rw [blockCylinder, Set.setOf_forall]
+  rw [blockCylinder, Set.ofPred_forall]
   exact NullMeasurableSet.iInter fun i => (hX i).nullMeasurableSet_preimage (hC i)
 
 /-- The indicator product is integrable under a finite measure (a.e.-measurable coordinates). -/

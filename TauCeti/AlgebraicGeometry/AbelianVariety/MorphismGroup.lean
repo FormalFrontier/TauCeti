@@ -129,57 +129,55 @@ quotient. -/
 right: post-composition by a homomorphism is multiplicative. -/
 @[simp, reassoc] lemma mul_comp {A B C : AbelianVariety K} (f g : A ⟶ B) (h : B ⟶ C) :
     (f * g) ≫ h = f ≫ h * g ≫ h := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_mul, MonObj.mul_comp]
 
 /-- Composition of homomorphisms of abelian varieties distributes over the pointwise product on the
 left: pre-composition by a homomorphism is multiplicative. -/
 @[simp, reassoc] lemma comp_mul {A B C : AbelianVariety K} (f : A ⟶ B) (g h : B ⟶ C) :
     f ≫ (g * h) = f ≫ g * f ≫ h := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_mul, MonObj.comp_mul]
 
 /-- Post-composition sends the identity element of a homomorphism group to the identity element. -/
-@[simp] lemma one_comp {A B C : AbelianVariety K} (h : B ⟶ C) :
-    (1 : A ⟶ B) ≫ h = 1 := by
-  apply Hom.toOverFunctor.map_injective
+@[simp] lemma one_comp {A B C : AbelianVariety K} (h : B ⟶ C) : (1 : A ⟶ B) ≫ h = 1 := by
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_one, MonObj.one_comp]
 
 /-- Pre-composition sends the identity element of a homomorphism group to the identity element. -/
 @[simp] lemma comp_one {A B C : AbelianVariety K} (f : A ⟶ B) :
     f ≫ (1 : B ⟶ C) = 1 := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_one, MonObj.comp_one]
 
 /-- Post-composition preserves pointwise inverses of homomorphisms. -/
 @[simp] lemma inv_comp {A B C : AbelianVariety K} (f : A ⟶ B) (h : B ⟶ C) :
     f⁻¹ ≫ h = (f ≫ h)⁻¹ := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_inv, GrpObj.inv_comp]
 
 /-- Post-composition preserves pointwise quotients of homomorphisms. -/
 @[simp] lemma div_comp {A B C : AbelianVariety K} (f g : A ⟶ B) (h : B ⟶ C) :
     (f / g) ≫ h = (f ≫ h) / (g ≫ h) := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_div, GrpObj.div_comp]
 
 /-- Pre-composition preserves pointwise inverses of homomorphisms. -/
 @[simp] lemma comp_inv {A B C : AbelianVariety K} (f : A ⟶ B) (g : B ⟶ C) :
     f ≫ g⁻¹ = (f ≫ g)⁻¹ := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_inv, GrpObj.comp_inv]
 
 /-- Pre-composition preserves pointwise quotients of homomorphisms. -/
 @[simp] lemma comp_div {A B C : AbelianVariety K} (f : A ⟶ B) (g h : B ⟶ C) :
     f ≫ (g / h) = (f ≫ g) / (f ≫ h) := by
-  apply Hom.toOverFunctor.map_injective
+  apply toOverHom_injective
   simp only [Hom.toOverHom_comp, Hom.toOverHom_div, GrpObj.comp_div]
 
 /-- Pre-composition by a fixed homomorphism, bundled as a homomorphism of the pointwise
 homomorphism groups. This is `Hom.comp_mul` in bundled form; the name follows Mathlib's
 `CategoryTheory.Preadditive.leftComp`. -/
-def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) :
-    (B ⟶ C) →* (A ⟶ C) where
+def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) : (B ⟶ C) →* (A ⟶ C) where
   toFun g := f ≫ g
   map_one' := comp_one f
   map_mul' g h := comp_mul f g h
@@ -187,8 +185,7 @@ def leftComp {A B : AbelianVariety K} (C : AbelianVariety K) (f : A ⟶ B) :
 /-- Post-composition by a fixed homomorphism, bundled as a homomorphism of the pointwise
 homomorphism groups. This is `Hom.mul_comp` in bundled form; the name follows Mathlib's
 `CategoryTheory.Preadditive.rightComp`. -/
-def rightComp (A : AbelianVariety K) {B C : AbelianVariety K} (g : B ⟶ C) :
-    (A ⟶ B) →* (A ⟶ C) where
+def rightComp (A : AbelianVariety K) {B C : AbelianVariety K} (g : B ⟶ C) : (A ⟶ B) →* (A ⟶ C) where
   toFun f := f ≫ g
   map_one' := one_comp g
   map_mul' f f' := mul_comp f f' g

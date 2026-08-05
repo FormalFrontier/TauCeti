@@ -62,8 +62,7 @@ antiderivative, at every window radius whose window lies inside `[a, b]` and con
 crossing. -/
 private theorem perWindow_boundary_tendsto_of_interior {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     {k n : ℕ} {P : Set ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b)
-    (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n)
-    (h_flat : FlatOfOrder γ t₀ n)
+    (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n) (h_flat : FlatOfOrder γ t₀ n)
     (h_B : ∀ L_R L_L : ℂ, Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R) →
       Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L) →
       (L_R / (‖L_R‖ : ℂ)) ^ (k - 1) = ((-L_L) / (‖L_L‖ : ℂ)) ^ (k - 1))
@@ -104,8 +103,7 @@ piecewise-`C¹` curve is the boundary difference of its antiderivative — the p
 to the telescoping aggregation. -/
 private theorem plain_piece_integral_eq {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k : ℕ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (hk : 2 ≤ k) (c : ℂ)
-    {l u : ℝ} (hal : a ≤ l) (hlu : l ≤ u) (hub : u ≤ b)
-    (h_ne : ∀ t ∈ Icc l u, γ t ≠ s) :
+    {l u : ℝ} (hal : a ≤ l) (hlu : l ≤ u) (hub : u ≤ b) (h_ne : ∀ t ∈ Icc l u, γ t ≠ s) :
     ∫ t in l..u, c / (γ t - s) ^ k * deriv γ t =
       c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹) -
         c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ l - s) ^ (k - 1))⁻¹) := by
@@ -129,8 +127,7 @@ curve. Endpoint crossings are excluded by `h_interior`; for a closed curve this 
 of a basepoint off `s`. -/
 theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k n : ℕ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
-    (hk : 2 ≤ k) (hkn : k ≤ n)
+    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b) (hk : 2 ≤ k) (hkn : k ≤ n)
     (h_flat : ∀ t ∈ Icc a b, γ t = s → FlatOfOrder γ t n)
     (h_B : ∀ t ∈ Icc a b, γ t = s → ∀ L_R L_L : ℂ,
       Tendsto (deriv γ) (𝓝[>] t) (𝓝 L_R) → Tendsto (deriv γ) (𝓝[<] t) (𝓝 L_L) →
@@ -143,9 +140,8 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
   rcases hab.eq_or_lt with rfl | hab
   · simpa using HasCauchyPVAt.of_eq γ rfl (fun z => c / (z - s) ^ k) s
   set T : Finset ℝ := (h_imm.finite_crossings (z₀ := s)).toFinset with hT_def
-  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {t} => by
-    rw [hT_def, Set.Finite.mem_toFinset, Set.mem_inter_iff, Set.mem_preimage,
-      Set.mem_singleton_iff, uIcc_of_le hab.le]
+  have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
+    rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
   have h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ T := fun t ht h_eq => hT_mem.mpr ⟨ht, h_eq⟩
   have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht =>
     h_interior t (hT_mem.mp ht).1 (hT_mem.mp ht).2
@@ -180,10 +176,8 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
         (hT_mem.mp ht₀).2 hk hkn (h_flat t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
         (h_B t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2) c p.countable_toSet hp hρ_pos
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq
-          (fun u hu => ⟨(h_endpts u hu).1.le, (h_endpts u hu).2.le⟩)
-          (fun u hu u' hu' hne => by linarith [h_pair u hu u' hu' hne])
-          h_complete ht₀ ht h_eq)
+        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+          (h_pair t₀ ht₀) h_complete ht h_eq)
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
         fun t _ => hρ_pos)
 

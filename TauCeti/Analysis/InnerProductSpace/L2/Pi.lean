@@ -1,10 +1,10 @@
-module
-
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude
 -/
+module
+
 public import Mathlib.Analysis.InnerProductSpace.l2Space
 public import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import Mathlib.MeasureTheory.Function.L2Space
@@ -360,8 +360,7 @@ theorem orthogonal_span_range_L2piMul_eq_bot {κ : ι → Type*}
 
 /-- **The `Fintype`-indexed product Hilbert basis.** Pointwise products of coordinatewise Hilbert
 bases form a Hilbert basis of `L²(Measure.pi μ)`, indexed by the dependent function type. -/
-noncomputable def piHilbertBasis {κ : ι → Type*}
-    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
+noncomputable def piHilbertBasis {κ : ι → Type*} (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
     HilbertBasis (∀ i, κ i) 𝕜 (Lp 𝕜 2 (Measure.pi μ)) :=
   HilbertBasis.mkOfOrthogonalEqBot (orthonormal_L2piMul fun i => (b i).orthonormal)
     (orthogonal_span_range_L2piMul_eq_bot b)

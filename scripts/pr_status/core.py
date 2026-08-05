@@ -56,24 +56,40 @@ def gh_api(path, jq=None, paginate=False):
     return out.stdout
 
 
+def _roadmap_labels(labels):
+    """Sorted `roadmap/...` names from REST label objects or plain label names."""
+    names = [label.get("name", "") if isinstance(label, dict) else str(label)
+             for label in labels]
+    return sorted(name for name in names if name.startswith("roadmap/"))
+
+
 def pr_state(pr):
-    """{'state','merged','head','title'} for the PR.
+    """{'state','merged','head','title','author','roadmaps'} for the PR.
 
     Prefer the triggering event's payload, passed in via PR_STATE/PR_HEAD/
-    PR_MERGED/PR_TITLE (a workflow that has the pull_request object can set these
-    from github.event.pull_request, so a close/merge needs no GitHub API call at
-    all). Fall back to the REST API when they aren't set (the workflow_run and
-    issue_comment triggers, and the backfill), where the payload is absent or
-    isn't the PR we're reconciling.
+    PR_MERGED/PR_TITLE/PR_AUTHOR/PR_LABELS_JSON (a workflow that has the
+    pull_request object can set these from github.event.pull_request, so a
+    close/merge needs no GitHub API call at all). Fall back to the REST API when
+    PR state/head aren't set (the workflow_run and issue_comment triggers, and
+    the backfill), where the payload is absent or isn't the PR we're
+    reconciling.
     """
     env_state = os.environ.get("PR_STATE")
     env_head = os.environ.get("PR_HEAD")
     if env_state and env_head:
+        try:
+            labels = json.loads(os.environ.get("PR_LABELS_JSON") or "[]")
+        except json.JSONDecodeError:
+            labels = []
+        if not isinstance(labels, list):
+            labels = []
         return {
             "state": env_state,
             "merged": os.environ.get("PR_MERGED") == "true",
             "head": env_head,
             "title": os.environ.get("PR_TITLE") or f"PR #{pr}",
+            "author": os.environ.get("PR_AUTHOR") or "",
+            "roadmaps": _roadmap_labels(labels),
         }
     d = json.loads(gh_api(f"/repos/{REPO}/pulls/{pr}"))
     return {
@@ -81,6 +97,8 @@ def pr_state(pr):
         "merged": bool(d.get("merged")),
         "head": d["head"]["sha"],
         "title": d.get("title") or f"PR #{pr}",
+        "author": (d.get("user") or {}).get("login") or "",
+        "roadmaps": _roadmap_labels(d.get("labels") or []),
     }
 
 
@@ -189,8 +207,8 @@ def review_state(meta, head):
     scoreboard with no `states` map. State not at the current head (a fix landed since the last
     review) reads as "running, green so far".
 
-        "none"     nothing posted yet          (Zulip 👀 / label awaiting-review)
-        "running"  behind HEAD, or undecided    (Zulip ▶️ / label awaiting-review)
+        "none"     nothing posted yet          (no Zulip review emoji / label awaiting-review)
+        "running"  behind HEAD, or undecided    (no Zulip review emoji / label awaiting-review)
         "changes"  at HEAD, a blocking rubric   (Zulip ✍️ / label awaiting-author)
         "approved" at HEAD, every rubric green  (Zulip ✔️ / label ready-to-merge)
     """

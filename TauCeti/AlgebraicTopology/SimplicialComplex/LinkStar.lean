@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicTopology.SimplicialComplex.Basic
+public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
 # The closed star, link, and deletion of a simplex
@@ -46,6 +47,9 @@ simplex need not contain every vertex even when `K` does.
   `mem_deletion_singleton`: the vertex forms used by downstream local-link arguments.
 * `TauCeti.PreAbstractSimplicialComplex.closedStar_empty` / `link_empty` / `deletion_empty`: the
   values at the empty simplex (`K`, `K`, and `⊥`), pinning the conventions.
+* `TauCeti.PreAbstractSimplicialComplex.isCone_closedStar` / `isCone_deletion`: the closed star of
+  a face is a cone with apex any vertex of that face, and deleting a face missing the apex of a
+  cone leaves a cone with the same apex.
 * monotonicity of all three constructions in `K`.
 -/
 
@@ -202,6 +206,38 @@ omit [DecidableEq ι] in
 /-- The deletion is monotone in the complex. -/
 theorem deletion_mono (h : K ≤ L) : deletion K σ ≤ deletion L σ :=
   fun _ ⟨hρ, hσ⟩ => ⟨h hρ, hσ⟩
+
+section IsCone
+
+variable {v : ι}
+
+/-- The closed star of a face is a cone with apex any vertex of that face: adjoining `v ∈ σ` to
+a face `ρ` of the closed star leaves the defining union `ρ ∪ σ` unchanged. -/
+theorem isCone_closedStar (hσ : σ ∈ K) (hv : v ∈ σ) : IsCone (closedStar K σ) v where
+  apex_mem :=
+    mem_closedStar.mpr ⟨Finset.singleton_nonempty v, by
+      rwa [Finset.singleton_union, Finset.insert_eq_self.mpr hv]⟩
+  insert_mem ρ hρ :=
+    mem_closedStar.mpr ⟨Finset.insert_nonempty v ρ, by
+      rw [Finset.insert_union, Finset.insert_eq_self.mpr (Finset.mem_union_right _ hv)]
+      exact (mem_closedStar.mp hρ).2⟩
+
+/-- Deleting a nonempty face that misses the apex of a cone leaves a cone with the same apex.
+Note that the deletion of a face *containing* the apex need not be a cone: deleting `{v}` itself
+destroys the apex. -/
+theorem isCone_deletion (h : IsCone K v) (hσ : σ.Nonempty) (hv : v ∉ σ) :
+    IsCone (deletion K σ) v where
+  apex_mem := by
+    refine mem_deletion.mpr ⟨h.apex_mem, fun hsub => ?_⟩
+    rcases Finset.subset_singleton_iff.mp hsub with rfl | rfl
+    · exact hσ.ne_empty rfl
+    · exact hv (Finset.mem_singleton_self v)
+  insert_mem ω hω := by
+    rw [mem_deletion] at hω ⊢
+    exact ⟨h.insert_mem hω.1, fun hsub =>
+      hω.2 ((Finset.subset_insert_iff_of_notMem hv).mp hsub)⟩
+
+end IsCone
 
 end PreAbstractSimplicialComplex
 

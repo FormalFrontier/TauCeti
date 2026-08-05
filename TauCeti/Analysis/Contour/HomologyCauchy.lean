@@ -81,8 +81,7 @@ theorem homologyCauchyTheorem_of_point_off_curve {f : ℂ → ℂ} {U : Set ℂ}
     (hγ_cont : ContinuousOn γ (uIcc a b)) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U)
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b) (hclosed : γ a = γ b)
     (hP : P.Countable) (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
-    (h_null : IsNullHomologous γ a b U) (hw₀U : w₀ ∈ U)
-    (hw₀off : ∀ t ∈ uIcc a b, γ t ≠ w₀) :
+    (h_null : IsNullHomologous γ a b U) (hw₀U : w₀ ∈ U) (hw₀off : ∀ t ∈ uIcc a b, γ t ≠ w₀) :
     ∫ t in a..b, deriv γ t • f (γ t) = 0 := by
   have hg : DifferentiableOn ℂ (fun z ↦ (z - w₀) * f z) U := by
     fun_prop
@@ -106,10 +105,8 @@ the compact curve image cannot exhaust the open `Ω`, giving a base point `w₀ 
 (`exists_mem_off_curve`); and `homologyCauchyTheorem_of_point_off_curve` — vanishing of the glued
 Dixon function by Liouville, then the Cauchy integral formula at `w₀` — concludes. -/
 theorem homologyCauchyTheorem {f : ℂ → ℂ} {Ω : Set ℂ} (hΩ : IsOpen Ω) (γ : ℝ → ℂ) (a b : ℝ)
-    (hγ_pc1 : IsPiecewiseC1On γ a b)
-    (hγ : ∀ t ∈ uIcc a b, γ t ∈ Ω) (hclosed : γ a = γ b)
-    (hf : DifferentiableOn ℂ f Ω)
-    (hnull : IsNullHomologous γ a b Ω) :
+    (hγ_pc1 : IsPiecewiseC1On γ a b) (hγ : ∀ t ∈ uIcc a b, γ t ∈ Ω) (hclosed : γ a = γ b)
+    (hf : DifferentiableOn ℂ f Ω) (hnull : IsNullHomologous γ a b Ω) :
     ∫ t in a..b, deriv γ t • f (γ t) = 0 := by
   obtain ⟨P, hP, hγ_diff⟩ := hγ_pc1.exists_countable_differentiableAt
   obtain ⟨w₀, hw₀Ω, hw₀off⟩ := exists_mem_off_curve hΩ hγ_pc1.continuousOn hγ

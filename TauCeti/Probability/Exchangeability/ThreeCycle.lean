@@ -116,7 +116,7 @@ private theorem threeCycle_straight_event :
     {ω : ZMod 3 | ∀ i : Fin 2, threeCycle (i.val) ω ∈ (![{0}, {1}] : Fin 2 → Set (ZMod 3)) i}
       = {0} := by
   ext ω
-  simp only [Set.mem_setOf_eq, Fin.forall_fin_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+  simp only [Set.mem_ofPred_eq, Fin.forall_fin_two, Matrix.cons_val_zero, Matrix.cons_val_one,
     Set.mem_singleton_iff]
   revert ω
   decide
@@ -128,7 +128,7 @@ private theorem threeCycle_spread_event :
         threeCycle ((![0, 2] : Fin 2 → ℕ) i) ω ∈
           (![{0}, {1}] : Fin 2 → Set (ZMod 3)) i} = ∅ := by
   ext ω
-  simp only [Set.mem_setOf_eq, Fin.forall_fin_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+  simp only [Set.mem_ofPred_eq, Fin.forall_fin_two, Matrix.cons_val_zero, Matrix.cons_val_one,
     Set.mem_singleton_iff, Set.mem_empty_iff_false]
   revert ω
   decide

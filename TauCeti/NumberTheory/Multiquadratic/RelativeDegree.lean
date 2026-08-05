@@ -32,6 +32,8 @@ relative degree the genus-field constructions consume.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.finiteDimensional_top_over_intermediateField`: `M` is finite-dimensional
+  over any intermediate field `F`, the instance the relative degrees are read against.
 * `TauCeti.Multiquadratic.finrank_intermediateField_mul_finrank_top`: the tower identity
   `[F : K] · [M : F] = 2ⁿ`.
 * `TauCeti.Multiquadratic.finrank_top_over_intermediateField`: `[M : F] = 2 ^ dim U`, the relative
@@ -60,6 +62,16 @@ namespace TauCeti.Multiquadratic
 variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
   {d : ι → K} {root : ι → L}
 
+/-- A multiquadratic field is finite-dimensional over any intermediate field. -/
+theorem finiteDimensional_top_over_intermediateField [Finite ι]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (F : IntermediateField K (adjoin K (Set.range root))) :
+    FiniteDimensional F (adjoin K (Set.range root)) :=
+  haveI := isSplittingField hroot
+  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  Module.Finite.of_restrictScalars_finite K F (adjoin K (Set.range root))
+
 /-- **The tower identity `[F : K] · [M : F] = 2ⁿ`.** Under square-class independence, an
 intermediate field `F` of `M = K(rootᵢ : i)` and the whole multiquadratic field multiply their
 degrees to the full degree `2 ^ |ι|`: the absolute degree `[F : K]` times the relative degree
@@ -83,8 +95,8 @@ theorem finrank_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Module.finrank F (adjoin K (Set.range root))
       = 2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
   have hpos : 0 < Module.finrank K F := Module.finrank_pos
   refine Nat.eq_of_mul_eq_mul_left hpos ?_
@@ -118,8 +130,7 @@ degree that the genus-field constructions read off over the quadratic base. -/
 theorem finrank_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (F : IntermediateField K (adjoin K (Set.range root)))
-    (hF : Module.finrank K F = 2) :
+    (F : IntermediateField K (adjoin K (Set.range root))) (hF : Module.finrank K F = 2) :
     Module.finrank F (adjoin K (Set.range root)) = 2 ^ (Nat.card ι - 1) := by
   rw [finrank_top_over_intermediateField hroot hindep F]
   congr 1

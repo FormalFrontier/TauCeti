@@ -8,6 +8,7 @@ these run with no network and no `gh`. Run with:  python3 -m unittest test_pr_la
 import os
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import core  # noqa: E402
@@ -74,6 +75,54 @@ class ScoreboardMeta(unittest.TestCase):
 
     def test_no_marker_is_empty(self):
         self.assertEqual(core.scoreboard_meta_from([{"body": "hi", "updated": "x"}]), {})
+
+
+class RoadmapLabels(unittest.TestCase):
+    def test_extracts_and_sorts_roadmaps_from_rest_objects(self):
+        self.assertEqual(
+            core._roadmap_labels([
+                {"name": "awaiting-review"},
+                {"name": "roadmap/Zeta"},
+                {"name": "roadmap/Alpha"},
+            ]),
+            ["roadmap/Alpha", "roadmap/Zeta"],
+        )
+
+    def test_accepts_plain_names(self):
+        self.assertEqual(
+            core._roadmap_labels(["roadmap/PDE", "documentation"]),
+            ["roadmap/PDE"],
+        )
+
+    def test_event_metadata_fast_path(self):
+        env = {
+            "PR_STATE": "open",
+            "PR_HEAD": "abc",
+            "PR_MERGED": "false",
+            "PR_TITLE": "Title",
+            "PR_AUTHOR": "alice",
+            "PR_LABELS_JSON": '[{"name":"awaiting-CI"},{"name":"roadmap/PDE"}]',
+        }
+        with (
+            mock.patch.dict(os.environ, env, clear=True),
+            mock.patch.object(core, "gh_api", side_effect=AssertionError("must not fetch")),
+        ):
+            self.assertEqual(
+                core.pr_state("9"),
+                {
+                    "state": "open",
+                    "merged": False,
+                    "head": "abc",
+                    "title": "Title",
+                    "author": "alice",
+                    "roadmaps": ["roadmap/PDE"],
+                },
+            )
+
+    def test_non_list_event_labels_degrade_to_empty(self):
+        env = {"PR_STATE": "open", "PR_HEAD": "abc", "PR_LABELS_JSON": "null"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertEqual(core.pr_state("9")["roadmaps"], [])
 
 
 class InProgress(unittest.TestCase):

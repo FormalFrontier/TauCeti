@@ -54,8 +54,7 @@ variable {V : Type*} [AddCommGroup V]
 /-- If the time factor gives a positive-definite kernel `(t, u) ↦ f (t + u)`, and the spatial
 factor gives a positive-definite subtraction kernel `(v, w) ↦ g (v - w)`, then their separated
 product is semigroup-group positive definite. -/
-theorem isSemigroupGroupPD_mul_time_spatial_of_kernels
-    {f : ℝ≥0 → ℂ} {g : V → ℂ}
+theorem isSemigroupGroupPD_mul_time_spatial_of_kernels {f : ℝ≥0 → ℂ} {g : V → ℂ}
     (hf : IsPositiveDefiniteKernel fun t u : ℝ≥0 => f (t + u))
     (hg : IsPositiveDefiniteKernel fun v w : V => g (v - w)) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
@@ -69,10 +68,8 @@ theorem isSemigroupGroupPD_mul_time_spatial_of_kernels
 /-- A separated product of a time positive-definite function and a spatial positive-definite
 function is semigroup-group positive definite. The time factor uses Mathlib's trivial involution
 on `ℝ≥0`; the spatial factor uses the supplied negation-involution hypothesis. -/
-theorem isSemigroupGroupPD_mul_time_spatial [StarAddMonoid V]
-    {f : ℝ≥0 → ℂ} {g : V → ℂ}
-    (hf : IsPositiveDefinite f) (hg : IsPositiveDefinite g)
-    (hstar : ∀ v : V, star v = -v) :
+theorem isSemigroupGroupPD_mul_time_spatial [StarAddMonoid V] {f : ℝ≥0 → ℂ} {g : V → ℂ}
+    (hf : IsPositiveDefinite f) (hg : IsPositiveDefinite g) (hstar : ∀ v : V, star v = -v) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
   refine isSemigroupGroupPD_mul_time_spatial_of_kernels ?_ (hg.isPositiveDefiniteKernel_sub hstar)
   have hK := hf.isPositiveDefiniteKernel

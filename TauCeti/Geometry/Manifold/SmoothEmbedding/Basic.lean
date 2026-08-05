@@ -162,8 +162,7 @@ def id [IsManifold I n M] : SmoothEmbedding I I n M M where
   isSmoothEmbedding_toFun := Manifold.IsSmoothEmbedding.id
 
 @[simp]
-theorem id_apply [IsManifold I n M] (x : M) :
-    (id (I := I) (n := n) (M := M)) x = x := by
+theorem id_apply [IsManifold I n M] (x : M) : (id (I := I) (n := n) (M := M)) x = x := by
   rfl
 
 @[simp]
@@ -191,8 +190,7 @@ theorem of_opens_coe [IsManifold I n M] (s : TopologicalSpace.Opens M) :
   exact of_opens_apply (I := I) (n := n) s x
 
 /-- The product of two bundled smooth embeddings. -/
-def prodMap [IsManifold I n M] [IsManifold J n N]
-    [IsManifold I' n M'] [IsManifold J' n N']
+def prodMap [IsManifold I n M] [IsManifold J n N] [IsManifold I' n M'] [IsManifold J' n N']
     (f : SmoothEmbedding I J n M N) (g : SmoothEmbedding I' J' n M' N') :
     SmoothEmbedding (I.prod I') (J.prod J') n (M × M') (N × N') where
   toContMDiffMap :=
@@ -207,8 +205,7 @@ theorem prodMap_apply [IsManifold I n M] [IsManifold J n N]
   rfl
 
 @[simp]
-theorem prodMap_coe [IsManifold I n M] [IsManifold J n N]
-    [IsManifold I' n M'] [IsManifold J' n N']
+theorem prodMap_coe [IsManifold I n M] [IsManifold J n N] [IsManifold I' n M'] [IsManifold J' n N']
     (f : SmoothEmbedding I J n M N) (g : SmoothEmbedding I' J' n M' N') :
     ⇑(f.prodMap g) = fun x => (f x.1, g x.2) := by
   funext x

@@ -63,7 +63,7 @@ theorem encard_faces_add_two (h : ElementaryCollapsesTo K L) :
 theorem ncard_faces_add_two (h : ElementaryCollapsesTo K L) (hK : K.faces.Finite) :
     Set.ncard L.faces + 2 = Set.ncard K.faces := by
   have hL : L.faces.Finite := hK.subset h.le
-  rw [← ENat.coe_inj]
+  rw [← ENat.natCast_inj]
   simpa only [← hK.cast_ncard_eq, ← hL.cast_ncard_eq, Nat.cast_add, Nat.cast_ofNat] using
     h.encard_faces_add_two
 

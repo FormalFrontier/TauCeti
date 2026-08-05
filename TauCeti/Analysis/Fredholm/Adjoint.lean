@@ -29,7 +29,7 @@ surjective, which removes the closure from Mathlib's general identity
   closed-range theorem for adjoints.
 * `TauCeti.ContinuousLinearMap.isClosed_range_adjoint_iff`: an operator has closed range if and
   only if its adjoint does.
-* `TauCeti.IsFredholm.adjoint`: the adjoint of a Fredholm operator is Fredholm.
+* `ContinuousLinearMap.IsFredholm.adjoint`: the adjoint of a Fredholm operator is Fredholm.
 * `TauCeti.ContinuousLinearMap.index_adjoint`: taking the adjoint negates the Fredholm index.
 
 The argument and index convention follow McDuff--Salamon,
@@ -71,14 +71,20 @@ noncomputable def orthogonalKerEquivRange (T : E →L[𝕜] F)
 @[simp]
 theorem orthogonalKerEquivRange_apply (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
-    (x : (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ) :
-    (orthogonalKerEquivRange T hT x :
+    (x : (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ) : (orthogonalKerEquivRange T hT x :
       F) = T x := by
-  letI : CompleteSpace (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ :=
+  let : CompleteSpace (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ :=
     (LinearMap.ker (T : E →ₗ[𝕜] F)).isClosed_orthogonal.completeSpace_coe
-  letI : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
+  let : CompleteSpace (LinearMap.range (T : E →ₗ[𝕜] F)) :=
     hT.completeSpace_coe
-  rw [orthogonalKerEquivRange, LinearEquiv.coeFn_toContinuousLinearEquivOfContinuous]
+  let e := LinearMap.kerComplementEquivRange (T : E →ₗ[𝕜] F)
+    (LinearMap.ker (T : E →ₗ[𝕜] F)).isCompl_orthogonal.symm
+  let he : Continuous e :=
+    (T.continuous.comp continuous_subtype_val).subtype_mk _
+  -- Expose the `LinearEquiv` underlying the continuous wrapper so its application lemma applies.
+  change ((e.toContinuousLinearEquivOfContinuous he x :
+    LinearMap.range (T : E →ₗ[𝕜] F)) : F) = T x
+  rw [LinearEquiv.coeFn_toContinuousLinearEquivOfContinuous]
   exact LinearMap.kerComplementEquivRange_apply_coe _ _ x
 
 /-- Applying a closed-range operator to the inverse of its orthogonal-kernel restriction
@@ -108,12 +114,14 @@ private theorem adjoint_bijective (e : E ≃L[𝕜] F) :
   let B : E →L[𝕜] F := ((e.symm : F →L[𝕜] E)†)
   have hBA : B.comp A = ContinuousLinearMap.id 𝕜 F := by
     rw [← ContinuousLinearMap.adjoint_comp]
-    ext x
-    simp
+    have he : (e : E →L[𝕜] F).comp (e.symm : F →L[𝕜] E) =
+        ContinuousLinearMap.id 𝕜 F := by
+      ext x
+      simp
+    rw [he, ContinuousLinearMap.adjoint_id]
   have hAB : A.comp B = ContinuousLinearMap.id 𝕜 E := by
     rw [← ContinuousLinearMap.adjoint_comp]
-    ext x
-    simp
+    rw [e.coe_symm_comp_coe, ContinuousLinearMap.adjoint_id]
   -- Fold the displayed adjoint back to the local name used for the inverse identities.
   change Function.Bijective A
   constructor
@@ -150,8 +158,12 @@ theorem range_adjoint_eq_orthogonal_ker_of_isClosed_range (T : E →L[𝕜] F)
     calc
       inner 𝕜 x (B y) = inner 𝕜 (x : E) ((T†) (y : F)) := by
         rw [Submodule.coe_inner]
-        simp only [B, ContinuousLinearMap.coe_codRestrict_apply,
-          ContinuousLinearMap.domRestrict_apply]
+        -- `B` hides both restriction wrappers, so expose them in order before applying their
+        -- explicit coercion lemmas.
+        rw [show (B y : E) = ((T†).domRestrict R) y by
+          exact ContinuousLinearMap.coe_codRestrict_apply _ _ _ y]
+        rw [show ((T†).domRestrict R) y = (T†) (y : F) by
+          exact congrFun (ContinuousLinearMap.coe_domRestrict (T†) R) y]
       _ = inner 𝕜 (T (x : E)) (y : F) := T.adjoint_inner_right x y
       _ = inner 𝕜 ((e x : R) : F) (y : F) := by
         rw [he_apply]
@@ -217,11 +229,10 @@ theorem coe_cokerEquivKerAdjoint_apply_mk (T : E →L[𝕜] F)
 class. -/
 @[simp]
 theorem cokerEquivKerAdjoint_symm_apply (T : E →L[𝕜] F)
-    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
-    (y : LinearMap.ker (T† : F →ₗ[𝕜] E)) :
+    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (y : LinearMap.ker (T† : F →ₗ[𝕜] E)) :
     (cokerEquivKerAdjoint T hT).symm y = Submodule.Quotient.mk (y : F) := by
   let range := LinearMap.range (T : E →ₗ[𝕜] F)
-  letI : CompleteSpace range := hT.completeSpace_coe
+  let : CompleteSpace range := hT.completeSpace_coe
   simp [cokerEquivKerAdjoint]
 
 /-- The cokernel of the adjoint of a closed-range operator is continuously linearly equivalent to
@@ -246,22 +257,21 @@ theorem coe_cokerAdjointEquivKer_apply_mk (T : E →L[𝕜] F)
 class. -/
 @[simp]
 theorem cokerAdjointEquivKer_symm_apply (T : E →L[𝕜] F)
-    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F))
-    (x : LinearMap.ker (T : E →ₗ[𝕜] F)) :
+    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) (x : LinearMap.ker (T : E →ₗ[𝕜] F)) :
     (cokerAdjointEquivKer T hT).symm x = Submodule.Quotient.mk (x : E) := by
   simp [cokerAdjointEquivKer]
 
 end ContinuousLinearMap
 
 /-- The adjoint of a Fredholm operator between Hilbert spaces is Fredholm. -/
-theorem IsFredholm.adjoint {T : E →L[𝕜] F} (hT : IsFredholm T) :
-    IsFredholm (T†) := by
-  letI := hT.finiteDimensional_ker
-  letI := hT.finiteDimensional_coker
-  refine ⟨?_, ?_, ?_⟩
+theorem _root_.ContinuousLinearMap.IsFredholm.adjoint {T : E →L[𝕜] F}
+    (hT : ContinuousLinearMap.IsFredholm T) :
+    ContinuousLinearMap.IsFredholm (T†) := by
+  have := hT.finite_coker
+  have := hT.finite_ker
+  apply ContinuousLinearMap.IsFredholm.of_finite_ker_coker
   · exact (ContinuousLinearMap.cokerEquivKerAdjoint T
       hT.isClosed_range).toLinearEquiv.finiteDimensional
-  · exact ContinuousLinearMap.isClosed_range_adjoint_of_isClosed_range T hT.isClosed_range
   · exact (ContinuousLinearMap.cokerAdjointEquivKer T
       hT.isClosed_range).symm.toLinearEquiv.finiteDimensional
 
@@ -269,17 +279,17 @@ theorem IsFredholm.adjoint {T : E →L[𝕜] F} (hT : IsFredholm T) :
 Fredholm. -/
 @[simp]
 theorem isFredholm_adjoint_iff (T : E →L[𝕜] F) :
-    IsFredholm (T†) ↔ IsFredholm T := by
+    ContinuousLinearMap.IsFredholm (T†) ↔ ContinuousLinearMap.IsFredholm T := by
   constructor
   · intro hT
     simpa using hT.adjoint
-  · exact IsFredholm.adjoint
+  · exact ContinuousLinearMap.IsFredholm.adjoint
 
 namespace ContinuousLinearMap
 
 /-- Taking the adjoint of a Fredholm operator negates its index. -/
 @[simp]
-theorem index_adjoint (T : E →L[𝕜] F) (hT : IsFredholm T) :
+theorem index_adjoint (T : E →L[𝕜] F) (hT : ContinuousLinearMap.IsFredholm T) :
     index (T†) = -index T := by
   rw [index_eq_finrank_sub, index_eq_finrank_sub,
     ← LinearEquiv.finrank_eq (cokerEquivKerAdjoint T hT.isClosed_range).toLinearEquiv,

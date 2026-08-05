@@ -129,8 +129,10 @@ theorem permConjClassPartition_partitionEquivConjClasses (n : ℕ) (p : n.Partit
 theorem partitionEquivPermConjClasses_symm_mk (α : Type*) [Fintype α] [DecidableEq α]
     (σ : Equiv.Perm α) :
     (partitionEquivPermConjClasses α).symm (ConjClasses.mk σ) = σ.partition := by
-  rw [partitionEquivPermConjClasses, Equiv.symm_symm, Equiv.ofBijective_apply,
-    permConjClassPartition_mk]
+  -- the inverse of `partitionEquivPermConjClasses` is `permConjClassPartition` by construction;
+  -- `change` names it, the equivalence having no `symm_apply` lemma of its own.
+  change permConjClassPartition (ConjClasses.mk σ) = σ.partition
+  exact permConjClassPartition_mk σ
 
 /-- The inverse class-to-partition map for `Fin n` sends a representative to its permutation
 partition. -/

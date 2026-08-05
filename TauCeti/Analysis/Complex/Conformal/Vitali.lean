@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Montel
+public import TauCeti.Analysis.Complex.Conformal.Montel.Basic
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.UniformSpace.CompactConvergence
@@ -85,12 +85,13 @@ theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
   obtain ⟨φ, g, hφ, hg, hφconv⟩ := montel hΩ hF hb
   refine ⟨g, hg, (tendstoLocallyUniformlyOn_iff_forall_isCompact hΩ).2 ?_⟩
   intro K hKΩ hK
-  letI : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  let : CompactSpace K := isCompact_iff_compactSpace.mp hK
   have hrestr :
       Tendsto
-        (fun n => ⟨K.restrict (F n), ((hF n).continuousOn.mono hKΩ).restrict⟩ : ℕ → C(K, ℂ))
+        (fun n => ⟨K.domRestrict (F n), ((hF n).continuousOn.mono hKΩ).domRestrict⟩ :
+          ℕ → C(K, ℂ))
         atTop
-        (𝓝 ⟨K.restrict g, (hg.continuousOn.mono hKΩ).restrict⟩) := by
+        (𝓝 ⟨K.domRestrict g, (hg.continuousOn.mono hKΩ).domRestrict⟩) := by
     apply tendsto_of_subseq_tendsto
     intro ψ hψ
     have hbψ : IsLocallyBoundedOn (fun n => F (ψ n)) Ω := by
@@ -111,9 +112,9 @@ theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
         TendstoUniformlyOn (fun n => F (ψ (θ n))) g atTop K :=
       (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hK).mp
         ((hθconv.congr_right hqg).mono hKΩ)
-    exact ((hg.continuousOn.mono hKΩ).tendsto_restrict_iff_tendstoUniformlyOn
+    exact ((hg.continuousOn.mono hKΩ).tendsto_domRestrict_iff_tendstoUniformlyOn
       (fun n => (hF (ψ (θ n))).continuousOn.mono hKΩ)).2 hcompact
-  exact ((hg.continuousOn.mono hKΩ).tendsto_restrict_iff_tendstoUniformlyOn
+  exact ((hg.continuousOn.mono hKΩ).tendsto_domRestrict_iff_tendstoUniformlyOn
     (fun n => (hF n).continuousOn.mono hKΩ)).1 hrestr
 
 /-- **Vitali's theorem with prescribed pointwise values.** Under the hypotheses of `vitali`, if
