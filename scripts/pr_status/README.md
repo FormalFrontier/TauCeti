@@ -179,8 +179,11 @@ comment, because it is parked on purpose. The label goes on the moment the confl
 is *seen*, so if such a PR is later unparked while still conflicting, the episode is
 dated from that `labeled` event rather than from the sweep that finally comments —
 otherwise a conflict of days would be reported as one of minutes. A conflict that
-both starts and clears while the PR is parked leaves no episode at all: no notice
-was issued and nobody was asked to act, so there is no author latency to record.
+both starts and clears while the PR is parked never gets a comment at all, and is
+recorded by the label's `labeled`/`unlabeled` pair alone: a durable record that
+costs no extra write and notifies nobody. `report` reads those back as
+*unannounced* episodes, so withholding the notice does not quietly shorten the
+measurement — see below.
 
 The label and the ⚠️ are re-asserted on **every** sweep for a PR that is currently
 conflicting. During an episode nothing else fires for that PR — that is this
@@ -215,11 +218,18 @@ not be dropped, or the median would improve every time the queue got healthier. 
 PR closed while still conflicting is reported as *censored* — an outcome, not a
 resolution time — and kept out of the median rather than counted either way.
 
+It also reads each PR's `merge-conflict` **label timeline**, for the same reason:
+an episode that came and went while the PR was parked has no comment to be found
+by, and dropping those would drop precisely the conflicts nobody was chasing. They
+count towards the headline median, which is queue-wide because that is what the 24h
+target names, and are then broken out as *parked* with their own median — the one
+population that contains no author latency at all, since nobody was told.
+
 The first sweep dates every *already*-conflicting PR from the moment it ran, so
 its first day of output understates those ages. History from before the markers
-existed has to be reconstructed from git instead; see
-[`conflict_stats.py`](conflict_stats.py) and the "Measuring merge conflicts"
-section below.
+existed has to be reconstructed from git — replaying each PR head against every
+`main` commit with `git merge-tree` — which is its own tool and not part of this
+package.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 

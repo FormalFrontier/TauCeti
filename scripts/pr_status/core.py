@@ -21,9 +21,12 @@ scoreboard meta and the in-progress marker -- are taken only from comments by a
 repo-associated author (OWNER/MEMBER/COLLABORATOR), so a fork PR author cannot
 forge review state. Both are extracted from ONE comment fetch.
 
-The module is a pure library -- importing it has no side effects, writes nothing,
-and needs only python3's standard library plus an authenticated `gh` CLI (via
-GH_TOKEN / GITHUB_TOKEN). It reads GitHub; it never touches Zulip or labels.
+The module is a pure library -- importing it has no side effects, decides nothing
+on its own, and needs only python3's standard library plus an authenticated `gh`
+CLI (via GH_TOKEN / GITHUB_TOKEN). It derives status from GitHub and never touches
+Zulip. `run_gh` is also the one place anything here shells out to `gh`, so the
+sinks' own writes (a label, a conflict comment) share its rate-limit back-off
+rather than each growing a subprocess wrapper of its own.
 """
 
 import json
@@ -45,23 +48,36 @@ _INPROGRESS_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
 TRUSTED_ASSOC = ("OWNER", "MEMBER", "COLLABORATOR")
 
 # `gh` exits nonzero on a rate limit without retrying. These substrings identify
-# that case in its stderr, so gh_api can back off instead of failing the caller.
+# that case in its stderr, so run_gh can back off instead of failing the caller.
 _RATE_LIMITED = ("rate limit", "secondary rate", "API rate limit exceeded",
                  "was submitted too quickly", "HTTP 429")
 RATE_LIMIT_RETRIES = 4
 RATE_LIMIT_BACKOFF_SECONDS = 15
+# The short ladder for `retry_transient`: 1s, 2s, 4s. A 502 clears in a moment or
+# not at all, so waiting a rate limit's 15s for one only lengthens the run.
+TRANSIENT_BACKOFF_SECONDS = 1
 
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
-def _gh(args, describe, sleep=time.sleep):
+def run_gh(args, describe, sleep=time.sleep, retry_transient=False):
     """One `gh` call, with a bounded back-off for a rate limit.
+
+    The single place this repository shells out to `gh`: every read, write, and
+    GraphQL query below goes through it, so the back-off cannot be bypassed by
+    adding a caller.
 
     `gh` does not retry a 403/429 rate limit of its own accord, and every sink in
     this package shares one App installation budget with the review and merge
     workflows. Failing the whole run because a burst of merges used the budget for
     a minute is the wrong answer, so a rate-limited call waits and retries a few
     times; anything else fails immediately, as before.
+
+    `retry_transient` widens that to ANY failure, which is the policy a long bulk
+    read wants: `pr_stats_graphs.py` makes thousands of GraphQL calls in one run,
+    where a single 502 would otherwise throw the whole run away. The status sinks
+    here leave it False deliberately -- a sweep that cannot read one PR should fail
+    that PR now and let the next run act on a settled state, not paper over it.
     """
     for attempt in range(RATE_LIMIT_RETRIES):
         out = subprocess.run(["gh", *args], capture_output=True, text=True)
@@ -69,39 +85,54 @@ def _gh(args, describe, sleep=time.sleep):
             return out.stdout
         stderr = out.stderr.strip()
         limited = any(marker.lower() in stderr.lower() for marker in _RATE_LIMITED)
-        if not limited or attempt + 1 == RATE_LIMIT_RETRIES:
+        if not (limited or retry_transient) or attempt + 1 == RATE_LIMIT_RETRIES:
             raise RuntimeError(f"{describe} failed: {stderr}")
-        delay = RATE_LIMIT_BACKOFF_SECONDS * (2 ** attempt)
-        print(f"gh api rate-limited; retrying in {delay}s", flush=True)
+        delay = (RATE_LIMIT_BACKOFF_SECONDS if limited
+                 else TRANSIENT_BACKOFF_SECONDS) * (2 ** attempt)
+        print(f"{describe}: {'rate-limited' if limited else 'transient failure'};"
+              f" retrying in {delay}s", flush=True)
         sleep(delay)
 
 
-def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
-    """One REST `gh api` read, backing off a rate limit as `_gh` describes."""
+def gh_api(path, jq=None, paginate=False, method=None, fields=None, sleep=time.sleep):
+    """One REST `gh api` call, backing off a rate limit as `run_gh` describes.
+
+    A read by default; `method` ("POST"/"PATCH"/"DELETE") and `fields` (sent as
+    `-f name=value`) make it a write. A write wants the same back-off a read does,
+    and can take it safely: a rate-limited call was REFUSED, so retrying it cannot
+    double-post the comment it was carrying.
+    """
     args = ["api", path]
+    if method is not None:
+        args += ["--method", method]
     if paginate:
         args.append("--paginate")
     if jq is not None:
         args += ["--jq", jq]
-    return _gh(args, f"gh api {path}", sleep=sleep)
+    for key, value in (fields or {}).items():
+        args += ["-f", f"{key}={value}"]
+    return run_gh(args, f"gh api {path}", sleep=sleep)
 
 
-def graphql(query, sleep=time.sleep, **variables):
+def graphql(query, sleep=time.sleep, retry_transient=False, **variables):
     """One GraphQL query, returning its `data` object.
 
-    The GraphQL twin of `gh_api`, and the one GraphQL entry point for this package,
-    so a query shares the same rate-limit back-off as every REST read. A variable
-    passed as None is dropped, so an optional cursor needs no juggling at the call
-    site; an `int` is sent as a number (`-F`) rather than a string; and an `errors`
-    block raises, since GraphQL reports a failed field with HTTP 200 and a `data`
-    that is null or half-filled.
+    The GraphQL twin of `gh_api`, and the repository's single GraphQL client (the
+    PR status sinks here and `pr_stats_graphs.py` both call it), so a query shares
+    the same rate-limit back-off as every REST read. A variable passed as None is
+    dropped, so an optional cursor needs no juggling at the call site; an `int` is
+    sent as a number (`-F`) rather than a string; and an `errors` block raises,
+    since GraphQL reports a failed field with HTTP 200 and a `data` that is null or
+    half-filled. `retry_transient` is `run_gh`'s, for a caller whose run is long
+    enough that riding out a 502 beats losing it.
     """
     args = ["api", "graphql", "-f", f"query={query}"]
     for key, value in variables.items():
         if value is None:
             continue
         args += ["-F" if isinstance(value, int) else "-f", f"{key}={value}"]
-    payload = json.loads(_gh(args, "gh api graphql", sleep=sleep))
+    payload = json.loads(run_gh(args, "gh api graphql", sleep=sleep,
+                                retry_transient=retry_transient))
     if payload.get("errors"):
         raise RuntimeError(f"GitHub GraphQL errors: {payload['errors']}")
     return payload["data"]

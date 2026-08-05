@@ -322,8 +322,8 @@ class StillTrue(unittest.TestCase):
         self.assertFalse(conflicts.still_true("1", "H", "B", True))
 
 
-class LabelOnset(unittest.TestCase):
-    """The onset store for an episode that was seen but never commented on."""
+class LabelHistory(unittest.TestCase):
+    """The label timeline: the record of an episode that was seen but never commented on."""
 
     def setUp(self):
         self._api = core.gh_api
@@ -334,10 +334,26 @@ class LabelOnset(unittest.TestCase):
     def answer(self, payload):
         core.gh_api = lambda path, jq=None, paginate=False: payload
 
+    def test_reads_both_ends_of_an_episode_oldest_first(self):
+        self.answer("2026-03-01T12:00:00Z labeled\n2026-01-01T00:00:00Z unlabeled\n")
+        self.assertEqual(
+            conflicts.label_events("7"),
+            [(conflicts.iso_to_epoch("2026-01-01T00:00:00Z"), False),
+             (conflicts.iso_to_epoch("2026-03-01T12:00:00Z"), True)])
+
+    def test_a_failed_read_is_not_an_empty_history(self):
+        # "We could not look" must not read as "it never happened": the caller falls
+        # back to now for an onset, and reports no unannounced episode at all.
+        def boom(path, jq=None, paginate=False):
+            raise RuntimeError("GitHub is down")
+        core.gh_api = boom
+        self.assertIsNone(conflicts.label_events("7"))
+        self.assertEqual(conflicts.unannounced_episodes("7", [], now=1_700_000_000), [])
+
     def test_takes_the_most_recent_application(self):
         # An earlier episode's label event is still in the history; only the current
         # application dates this one.
-        self.answer("2026-01-01T00:00:00Z\n2026-03-01T12:00:00Z\n")
+        self.answer("2026-01-01T00:00:00Z labeled\n2026-03-01T12:00:00Z labeled\n")
         self.assertEqual(conflicts.label_onset("7"),
                          conflicts.iso_to_epoch("2026-03-01T12:00:00Z"))
 
@@ -450,17 +466,21 @@ class Report(unittest.TestCase):
 
     def setUp(self):
         self._comments = conflicts.conflict_comments
+        self._events = conflicts.label_events
         self.prs = []
+        conflicts.label_events = lambda pr: []
 
     def tearDown(self):
         conflicts.conflict_comments = self._comments
+        conflicts.label_events = self._events
 
     def run_episodes(self, **kwargs):
         return conflicts.episodes(now=self.NOW, prs=self.prs, **kwargs)
 
-    def stub(self, prs, comments):
+    def stub(self, prs, comments, events=None):
         self.prs = prs
         conflicts.conflict_comments = lambda pr: comments.get(pr, [])
+        conflicts.label_events = lambda pr: (events or {}).get(pr, [])
 
     def episode(self, onset, resolved=None):
         marker = {"onset": onset}
@@ -505,6 +525,77 @@ class Report(unittest.TestCase):
         self.assertIn("2 conflict episode(s): 1 resolved, 1 live", lines)
         self.assertIn("LIVE #6", lines)
         self.assertIn("alice", lines)
+
+    def test_a_conflict_that_came_and_went_while_parked_is_still_measured(self):
+        # The episode nobody was told about: a parked PR gets the label and no
+        # comment, so the marker history is empty and only the label brackets it.
+        # Dropping it would drop precisely the conflicts nobody was chasing.
+        self.stub([{"number": 5, "author": "alice"}], {},
+                  {5: [(self.NOW - 4 * 86400, True), (self.NOW - 86400, False)]})
+        [row] = self.run_episodes(days=90)
+        self.assertEqual((row["state"], row["announced"]), ("resolved", False))
+        self.assertEqual(row["seconds"], 3 * 86400)
+        self.assertEqual(row["resolved"], self.NOW - 86400)
+
+    def test_a_still_parked_conflict_is_live_not_resolved(self):
+        self.stub([{"number": 5, "author": "alice"}], {},
+                  {5: [(self.NOW - 7200, True)]})
+        [row] = self.run_episodes(days=90)
+        self.assertEqual((row["state"], row["seconds"], row["announced"]),
+                         ("live", 7200, False))
+
+    def test_a_pr_closed_while_still_labelled_is_censored(self):
+        self.stub([{"number": 5, "author": "alice",
+                    "closed_at": "2026-01-01T00:00:00Z"}], {},
+                  {5: [(conflicts.iso_to_epoch("2025-12-31T00:00:00Z"), True)]})
+        [row] = self.run_episodes(days=90000)
+        self.assertEqual((row["state"], row["seconds"]), ("censored", 86400))
+
+    def test_an_announced_episode_is_not_counted_twice_by_its_own_label(self):
+        # Every episode moves the label too, so the label span that brackets a
+        # commented episode is that same episode -- counted once, from the marker.
+        onset = self.NOW - 5000
+        self.stub([{"number": 5, "author": "alice"}],
+                  {5: [self.episode(onset, self.NOW - 1000)]},
+                  {5: [(onset - 30, True), (self.NOW - 1000, False)]})
+        [row] = self.run_episodes(days=90)
+        self.assertEqual((row["onset"], row["announced"]), (onset, True))
+
+    def test_the_parked_population_is_reported_separately(self):
+        self.stub([{"number": 5, "author": "alice"}, {"number": 6, "author": "bob"}],
+                  {5: [self.episode(self.NOW - 90000, self.NOW - 86400)]},        # 1h
+                  {6: [(self.NOW - 90000, True), (self.NOW - 79200, False)]})     # 3h
+        lines = "\n".join(conflicts.summarise(self.run_episodes(days=90)))
+        # Queue-wide first (the number the 24h target names), then the split.
+        self.assertIn("resolved: median 2h 0m", lines)
+        self.assertIn("parked:   1 episode(s) were never announced", lines)
+        self.assertIn("no comment was posted), median 3h 0m", lines)
+        self.assertIn("announced episodes alone resolve in a median of 1h 0m", lines)
+
+
+class Writes(unittest.TestCase):
+    """Both comment writes go through core's runner, and so inherit its back-off."""
+
+    def setUp(self):
+        self._api = core.gh_api
+        self.calls = []
+        core.gh_api = lambda path, jq=None, paginate=False, method=None, fields=None: (
+            self.calls.append((path, method, fields)))
+
+    def tearDown(self):
+        core.gh_api = self._api
+
+    def test_a_notice_is_posted_through_the_shared_runner(self):
+        conflicts.post_comment("7", "hello")
+        self.assertEqual(
+            self.calls,
+            [(f"/repos/{conflicts.REPO}/issues/7/comments", "POST", {"body": "hello"})])
+
+    def test_a_resolution_is_edited_through_the_shared_runner(self):
+        conflicts.edit_comment(11, "done")
+        self.assertEqual(
+            self.calls,
+            [(f"/repos/{conflicts.REPO}/issues/comments/11", "PATCH", {"body": "done"})])
 
 
 class Formatting(unittest.TestCase):

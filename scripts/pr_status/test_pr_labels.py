@@ -218,6 +218,29 @@ class RateLimitBackoff(unittest.TestCase):
                 core.gh_api("/x", sleep=lambda s: None)
             self.assertEqual(run.call_count, core.RATE_LIMIT_RETRIES)
 
+    def test_a_write_goes_through_the_same_back_off(self):
+        # conflicts.py posts its notice through gh_api, so the sweep's writes share
+        # the budget protection its reads have. Retrying is safe: a rate-limited call
+        # was refused, so it cannot double-post the comment it was carrying.
+        results = [mock.Mock(returncode=1, stderr="API rate limit exceeded", stdout=""),
+                   mock.Mock(returncode=0, stderr="", stdout="ok")]
+        with mock.patch.object(core.subprocess, "run", side_effect=results) as run:
+            core.gh_api("/x", method="POST", fields={"body": "b"}, sleep=lambda s: None)
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args.args[0],
+                         ["gh", "api", "/x", "--method", "POST", "-f", "body=b"])
+
+    def test_retry_transient_is_opt_in(self):
+        # The bulk chart reads ride out a 502; a status sink must not, or a sweep
+        # papers over a read it should have failed and left for the next run.
+        for retry_transient, expected in ((False, 1), (True, core.RATE_LIMIT_RETRIES)):
+            with mock.patch.object(core.subprocess, "run") as run:
+                run.return_value = mock.Mock(returncode=1, stderr="HTTP 502", stdout="")
+                with self.assertRaises(RuntimeError):
+                    core.run_gh(["api", "/x"], "gh api /x", sleep=lambda s: None,
+                                retry_transient=retry_transient)
+                self.assertEqual(run.call_count, expected, retry_transient)
+
 
 class DerivedLabel(unittest.TestCase):
     def label(self, lifecycle="open", ci=None, review="none", inprogress=False,

@@ -31,11 +31,11 @@ three places an author already looks.
 
 The marker also makes the problem MEASURABLE. Its JSON records `onset` and, once
 cleared, `resolved` (epoch seconds), so conflict-to-resolution is a plain read of
-the PR's own comments -- `conflicts.py report`. Before this, the only way to get
-that number was to replay every PR head against every `main` commit with
-`git merge-tree` (which is what `conflict_stats.py` does for the historical
-baseline). The target that motivated this, a median under 24h, is not something
-you can chase without being able to re-measure it cheaply.
+the PR's own comments -- plus, for an episode nobody was told about, of the
+`merge-conflict` label's timeline -- via `conflicts.py report`. Before this, the
+only way to get that number was to replay every PR head against every `main`
+commit with `git merge-tree`. The target that motivated this, a median under 24h,
+is not something you can chase without being able to re-measure it cheaply.
 
 Mergeability is read for EVERY open PR in one GraphQL query. The per-PR cost after
 that is one paginated comment read each, deliberately: the marker comments ARE the
@@ -74,7 +74,11 @@ conflict-to-resolution distribution -- overall and per author -- plus the
 still-open conflicts and how long they have been live. `--days N` (default 30)
 sets the window. It reads CLOSED and merged PRs as well as open ones: a conflict
 that was resolved and then merged is precisely the case that must not be dropped,
-or the median would improve every time the queue got healthier.
+or the median would improve every time the queue got healthier. For the same
+reason it also reads the `merge-conflict` label's own timeline, which is what
+records an episode that came and went while the PR was parked and so never got a
+comment; those count towards the queue-wide median and are broken out separately,
+since nobody was asked to act on them.
 
 Environment:
     GH_REPO                                  default "TauCetiProject/TauCeti"
@@ -96,7 +100,6 @@ import json
 import os
 import re
 import statistics
-import subprocess
 import sys
 import time
 
@@ -124,13 +127,14 @@ UNKNOWN_WAIT_SECONDS = 10.0
 #
 # Withholding the comment must not falsify the measurement, and that takes care:
 # the comment is where the onset is recorded, so a parked conflict has no marker to
-# date it by. The LABEL goes on at the moment the sweep first sees the conflict,
-# parked or not, so if the PR is later unparked while still conflicting, the
-# `labeled` event dates the episode truthfully (see `label_onset`) rather than
-# reporting a days-old conflict as minutes old. A conflict that both starts AND
-# clears while the PR is parked leaves no episode at all, deliberately: no notice
-# was ever issued and nobody was ever asked to act, so there is no author latency
-# to attribute -- the label carried its live state throughout.
+# date it by. The LABEL is the second record, and it is written whether the PR is
+# parked or not -- on the moment the sweep first sees the conflict, off when it
+# clears -- so GitHub's `labeled`/`unlabeled` events bracket a parked episode
+# without notifying anyone. An unparked PR's notice is dated from the `labeled`
+# event (`label_onset`), so a days-old conflict is not reported as minutes old, and
+# an episode that both starts AND clears while parked is recovered whole by
+# `unannounced_episodes`, which `report` counts towards the queue-wide median and
+# breaks out separately: it is a real conflict, but not one anybody was asked to fix.
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
 
 # The status label this module drives, via labels.py. Also the onset store for an
@@ -323,21 +327,17 @@ def conflict_comments(pr):
 
 # ----- GitHub writes ----------------------------------------------------------
 
-def _gh(args):
-    result = subprocess.run(["gh", "api", *args], capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"gh api {' '.join(args)} failed: {result.stderr.strip()}")
-    return result.stdout
-
-
+# Both writes go through `core.gh_api`, the same runner as every read here, so they
+# inherit its rate-limit back-off: the sweep fires on every push to main, when the
+# shared App budget is at its busiest, and losing the comment is losing the notice.
 def post_comment(pr, body):
-    _gh(["--method", "POST", f"/repos/{REPO}/issues/{pr}/comments", "-f", f"body={body}"])
+    core.gh_api(f"/repos/{REPO}/issues/{pr}/comments", method="POST", fields={"body": body})
     log(f"PR #{pr}: posted conflict notice")
 
 
 def edit_comment(comment_id, body):
-    _gh(["--method", "PATCH", f"/repos/{REPO}/issues/comments/{comment_id}",
-         "-f", f"body={body}"])
+    core.gh_api(f"/repos/{REPO}/issues/comments/{comment_id}", method="PATCH",
+                fields={"body": body})
     log(f"edited comment {comment_id} to the resolved form")
 
 
@@ -378,6 +378,37 @@ def still_true(pr, head, base, is_conflicting):
     return True
 
 
+def label_events(pr):
+    """Every `merge-conflict` label change on this PR as `(epoch, on)`, oldest first.
+
+    The second record of an episode, and the only one for an episode that was never
+    commented on. `sweep` labels a conflict the moment it SEES it -- parked or not --
+    and takes the label off when it clears, so GitHub's own event log brackets every
+    episode, at no extra write and notifying nobody. `label_onset` dates an
+    unannounced episode from it and `unannounced_episodes` recovers whole ones.
+
+    Returns None (not []) when the read fails, so a caller can tell "no such event"
+    from "we could not look": the first is evidence, the second is not.
+    """
+    try:
+        raw = core.gh_api(
+            f"/repos/{REPO}/issues/{pr}/events?per_page=100",
+            jq=f'.[] | select(.label.name == "{CONFLICT_LABEL}")'
+               ' | select(.event == "labeled" or .event == "unlabeled")'
+               ' | "\\(.created_at) \\(.event)"',
+            paginate=True)
+    except (RuntimeError, ValueError) as exc:
+        log(f"PR #{pr}: could not read its {CONFLICT_LABEL} history ({exc})")
+        return None
+    out = []
+    for line in (raw or "").splitlines():
+        stamp, _, event = line.strip().partition(" ")
+        if event in ("labeled", "unlabeled"):
+            out.append((iso_to_epoch(stamp), event == "labeled"))
+    out.sort()
+    return out
+
+
 def label_onset(pr):
     """When `merge-conflict` was most recently put on this PR (epoch), or None.
 
@@ -394,17 +425,8 @@ def label_onset(pr):
     timestamp is approximate. Episode *existence* is never decided by the label --
     a lost label must not swallow a notice -- only its start time.
     """
-    try:
-        raw = core.gh_api(
-            f"/repos/{REPO}/issues/{pr}/events?per_page=100",
-            jq=f'.[] | select(.event == "labeled" and .label.name == "{CONFLICT_LABEL}")'
-               ' | .created_at',
-            paginate=True)
-    except (RuntimeError, ValueError) as exc:
-        log(f"PR #{pr}: could not read its label history ({exc}); dating the episode now")
-        return None
-    stamps = [iso_to_epoch(line.strip()) for line in (raw or "").splitlines() if line.strip()]
-    return max(stamps) if stamps else None
+    applied = [at for at, on in (label_events(pr) or []) if on]
+    return max(applied) if applied else None
 
 
 def conflict_body(onset):
@@ -612,10 +634,52 @@ def report_prs(days):
 REPORT_DEFAULT_DAYS = 30
 
 
+def unannounced_episodes(pr, announced, now, closed_at=None):
+    """This PR's conflict episodes that no comment ever recorded.
+
+    A parked PR is labelled but deliberately not commented on, so a conflict that
+    both began AND cleared while it was parked leaves no marker. Reading only
+    markers would then drop precisely the episodes nobody was chasing -- the ones
+    most likely to have run long -- and quietly flatter the queue-wide median. The
+    `merge-conflict` label's own `labeled`/`unlabeled` events bracket them (see
+    `label_events`), which costs the report one read per PR and the sweep nothing:
+    the sink that writes the label runs whether the PR is parked or not.
+
+    `announced` is this PR's marker episodes. A label interval containing one of
+    their onsets is the same episode seen twice, so it is dropped here and counted
+    from the marker, which is the more precise record -- and the one whose author
+    was actually asked to act.
+    """
+    spans, start = [], None
+    for at, on in (label_events(pr) or []):
+        if on:
+            start = at if start is None else start
+        elif start is not None:
+            spans.append((start, at))
+            start = None
+    if start is not None:
+        spans.append((start, None))
+    out = []
+    for onset, cleared in spans:
+        if any(onset <= e["onset"] <= (cleared if cleared is not None else now)
+               for e in announced):
+            continue
+        if cleared is not None:
+            state, end = "resolved", cleared
+        elif closed_at:
+            state, end = "censored", iso_to_epoch(closed_at)
+        else:
+            state, end = "live", now
+        out.append({"onset": onset, "resolved": cleared if state == "resolved" else None,
+                    "seconds": max(0, end - onset), "state": state})
+    return out
+
+
 def episodes(days=REPORT_DEFAULT_DAYS, now=None, prs=None):
     """Every conflict episode recorded in the window, newest onset first.
 
-    Each is `{pr, author, onset, resolved, seconds, state}` where `state` is:
+    Each is `{pr, author, onset, resolved, seconds, state, announced}` where `state`
+    is:
 
         "resolved"  the PR merged cleanly again; `seconds` is the real duration
         "live"      still conflicting on an open PR; `seconds` is its age so far
@@ -624,16 +688,21 @@ def episodes(days=REPORT_DEFAULT_DAYS, now=None, prs=None):
                     the resolved median: closing a conflicted PR is an outcome,
                     not a resolution time, and averaging it in would flatter or
                     ruin the number depending on which way you squinted.
+
+    `announced` says whether the author was told: True for an episode with a marker
+    comment, False for one recovered from the label alone, which is what a parked
+    PR's conflict leaves behind (`unannounced_episodes`). Both are real conflicts
+    and both count towards the queue-wide latency; only the announced ones carry an
+    author who was asked to act, so `summarise` reports the split rather than
+    silently mixing two different questions -- or, as before, silently dropping one.
     """
     now = now_epoch() if now is None else now
     cutoff = now - days * 86400
     out = []
     for pr in (report_prs(days) if prs is None else prs):
+        seen = []
         for comment in conflict_comments(pr["number"]):
             marker = comment["marker"]
-            onset = marker["onset"]
-            if onset < cutoff:
-                continue
             resolved = marker.get("resolved") if comment["resolved"] else None
             if resolved is not None:
                 state, end = "resolved", resolved
@@ -643,14 +712,15 @@ def episodes(days=REPORT_DEFAULT_DAYS, now=None, prs=None):
                 state, end = "censored", iso_to_epoch(pr["closed_at"])
             else:
                 state, end = "live", now
-            out.append({
-                "pr": pr["number"],
-                "author": pr["author"],
-                "onset": onset,
-                "resolved": resolved,
-                "seconds": max(0, end - onset),
-                "state": state,
-            })
+            seen.append({"onset": marker["onset"], "resolved": resolved,
+                         "seconds": max(0, end - marker["onset"]), "state": state})
+        rows = [dict(row, announced=True) for row in seen]
+        rows += [dict(row, announced=False) for row in
+                 unannounced_episodes(pr["number"], seen, now, pr.get("closed_at"))]
+        for row in rows:
+            if row["onset"] < cutoff:
+                continue
+            out.append({"pr": pr["number"], "author": pr["author"], **row})
     out.sort(key=lambda e: e["onset"], reverse=True)
     return out
 
@@ -661,11 +731,19 @@ def iso_to_epoch(text):
 
 
 def summarise(eps):
-    """Lines of a human-readable report over `episodes()` output."""
+    """Lines of a human-readable report over `episodes()` output.
+
+    The headline median is queue-wide -- every episode, announced or not -- because
+    that is the quantity the 24h target names. The unannounced ones (a conflict that
+    came and went while the PR was parked) are then broken out with their own
+    median, since they are the only population with no author latency in them:
+    nobody was told, so nobody was slow.
+    """
     lines = []
     resolved = [e for e in eps if e["state"] == "resolved"]
     live = [e for e in eps if e["state"] == "live"]
     censored = [e for e in eps if e["state"] == "censored"]
+    parked = [e for e in eps if not e["announced"]]
     lines.append(f"{len(eps)} conflict episode(s): {len(resolved)} resolved, "
                  f"{len(live)} live, {len(censored)} closed while conflicting")
     if resolved:
@@ -673,6 +751,15 @@ def summarise(eps):
         over = sum(1 for d in durations if d > 86400)
         lines.append(f"  resolved: median {human_duration(statistics.median(durations))}, "
                      f"max {human_duration(max(durations))}, {over} over 24h")
+    if parked:
+        quiet = [e["seconds"] for e in parked if e["state"] == "resolved"]
+        told = [e["seconds"] for e in resolved if e["announced"]]
+        detail = (f", median {human_duration(statistics.median(quiet))}" if quiet else "")
+        lines.append(f"  parked:   {len(parked)} episode(s) were never announced "
+                     f"(the PR was on hold, so no comment was posted){detail}")
+        if quiet and told:
+            lines.append(f"            announced episodes alone resolve in a median of "
+                         f"{human_duration(statistics.median(told))}")
     if live:
         ages = [e["seconds"] for e in live]
         lines.append(f"  live:     median age {human_duration(statistics.median(ages))}, "
@@ -695,7 +782,8 @@ def summarise(eps):
                       f"(oldest {human_duration(max(e['seconds'] for e in open_now))})"
         lines.append(f"  {author}: {detail}")
     for e in live:
-        lines.append(f"  LIVE #{e['pr']} ({e['author']}) conflicting for "
+        who = e["author"] + ("" if e["announced"] else ", never announced")
+        lines.append(f"  LIVE #{e['pr']} ({who}) conflicting for "
                      f"{human_duration(e['seconds'])}, since {iso(e['onset'])}")
     return lines
 

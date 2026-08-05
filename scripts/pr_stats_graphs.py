@@ -42,6 +42,12 @@ from pathlib import Path
 from typing import Iterable
 
 from chart_style import BAR_BG, MUTED, PALETTE, base_css, card_rect, css_px
+# The repository's one GraphQL client, shared with the PR status sinks that already
+# import it: same query/variable/error handling, plus the rate-limit back-off this
+# job wants as much as they do (it and they spend one App budget). The call sites
+# below pass `retry_transient=True` to keep this script's own policy of riding out
+# a transient failure, which a run of thousands of timeline queries depends on.
+from pr_status.core import graphql
 
 SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # A canonical scoreboard is the review engine's own comment: besides the public marker it
@@ -154,19 +160,6 @@ query($owner:String!, $name:String!, $number:Int!, $cursor:String) {
 """
 
 
-def graphql(query: str, **variables) -> dict:
-    args = ["api", "graphql", "-f", f"query={query}"]
-    for key, value in variables.items():
-        if value is None:
-            continue
-        flag = "-F" if isinstance(value, int) else "-f"
-        args.extend([flag, f"{key}={value}"])
-    payload = json.loads(run_gh(args))
-    if payload.get("errors"):
-        raise RuntimeError(f"GitHub GraphQL errors: {payload['errors']}")
-    return payload["data"]
-
-
 def normalized_events(events: list[dict]) -> list[dict]:
     return sorted((
         {"created_at": event["createdAt"], "label": event["label"]["name"]}
@@ -180,7 +173,7 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
     events = []
     while True:
         pull = graphql(
-            TIMELINE_PAGE_QUERY, owner=owner, name=name,
+            TIMELINE_PAGE_QUERY, retry_transient=True, owner=owner, name=name,
             number=number, cursor=cursor,
         )["repository"]["pullRequest"]
         if pull is None:
@@ -215,7 +208,8 @@ def fetch_prs(repo: str) -> list[dict]:
     cursor = None
     prs = []
     while True:
-        data = graphql(PR_PAGE_QUERY, owner=owner, name=name, cursor=cursor)
+        data = graphql(PR_PAGE_QUERY, retry_transient=True,
+                       owner=owner, name=name, cursor=cursor)
         connection = data["repository"]["pullRequests"]
         for raw in connection["nodes"]:
             labels = [item["name"] for item in raw["labels"]["nodes"]]
