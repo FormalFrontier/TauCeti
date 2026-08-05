@@ -97,6 +97,14 @@ continuation along the constant loop is constant.
 * `TauCeti.monodromy_theorem_of_homotopy_refl` — a germ continued around a null-homotopic loop
   comes back to itself.
 
+## Generality
+
+The germs carried are germs of maps `ℂ → E` into a complex Banach space, as in
+`Continuation/Basic.lean`, where the choice is discussed; the conformal-mapping consumers of the
+monodromy theorem instantiate `E = ℂ`. Nothing in the stability engine sees the target: the disc
+representatives come from `AnalyticAt.exists_ball_analyticOnNhd` and are compared by the identity
+principle, both of which Mathlib states for maps into an arbitrary Banach space.
+
 ## Relation to Mathlib
 
 Mathlib's `IsLocalHomeomorph.monodromy_theorem` (`Mathlib/Topology/Homotopy/Lifting.lean`) is an
@@ -132,12 +140,14 @@ namespace TauCeti
 
 open Filter Metric Set Topology unitInterval
 
-variable {X : Type*} [TopologicalSpace X] {f : X → ℂ → ℂ} {γ : X → ℂ} {s : Set X}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+  {X : Type*} [TopologicalSpace X] {f : X → ℂ → E} {γ : X → ℂ} {s : Set X}
 
 namespace IsAnalyticContinuationAlong
 
 /-! ### Uniform disc representatives -/
 
+omit [CompleteSpace E] in
 /-- Around any parameter time of a continuation there is an open neighbourhood on which the
 carried germ is constant and the path has moved by less than a prescribed `ε`.
 
@@ -208,7 +218,7 @@ The uniform radius is what makes the family usable along a *perturbed* path: the
 condition of a continuation controls `f t` only near `γ t`, so `f t` itself carries no
 information at a nearby point `γ' t`. -/
 theorem exists_representatives (hf : IsAnalyticContinuationAlong f γ s) (hs : IsCompact s) :
-    ∃ ρ > 0, ∃ F : X → ℂ → ℂ,
+    ∃ ρ > 0, ∃ F : X → ℂ → E,
       (∀ t ∈ s, AnalyticOnNhd ℂ (F t) (ball (γ t) ρ)) ∧
       (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
       (∀ t ∈ s, ∀ᶠ u in 𝓝[s] t, EqOn (F u) (F t) (ball (γ t) ρ)) := by
@@ -255,7 +265,7 @@ Note the order of the quantifiers: the family `F` is produced once and for all, 
 perturbed path is given. -/
 theorem exists_isAnalyticContinuationAlong_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsCompact s) :
-    ∃ ρ > 0, ∃ F : X → ℂ → ℂ, (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
+    ∃ ρ > 0, ∃ F : X → ℂ → E, (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
       ∀ γ' : X → ℂ, ContinuousOn γ' s → (∀ t ∈ s, dist (γ' t) (γ t) < ρ) →
         IsAnalyticContinuationAlong F γ' s := by
   obtain ⟨ρ, hρ, F, hF₁, hF₂, hF₃⟩ := hf.exists_representatives hs
@@ -280,8 +290,8 @@ endpoints do not move, `TauCeti.IsAnalyticContinuationAlong.exists_eventuallyEq_
 eliminates `F` again. -/
 theorem exists_forall_eventuallyEq_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsCompact s) (hsc : IsPreconnected s) :
-    ∃ ρ > 0, ∃ F : X → ℂ → ℂ, (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
-      ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ), (∀ t ∈ s, dist (γ' t) (γ t) < ρ) →
+    ∃ ρ > 0, ∃ F : X → ℂ → E, (∀ t ∈ s, F t =ᶠ[𝓝 (γ t)] f t) ∧
+      ∀ (γ' : X → ℂ) (g : X → ℂ → E), (∀ t ∈ s, dist (γ' t) (γ t) < ρ) →
         IsAnalyticContinuationAlong g γ' s →
         ∀ ⦃a : X⦄, a ∈ s → ∀ ⦃b : X⦄, b ∈ s →
           g a =ᶠ[𝓝 (γ' a)] F a → g b =ᶠ[𝓝 (γ' b)] F b := by
@@ -301,7 +311,7 @@ common endpoints continue a germ to the same place. It is the fixed-endpoint spe
 equalities being exactly what lets the comparison family be traded back for `f`. -/
 theorem exists_eventuallyEq_of_dist_lt (hf : IsAnalyticContinuationAlong f γ s)
     (hs : IsCompact s) (hsc : IsPreconnected s) {a b : X} (ha : a ∈ s) (hb : b ∈ s) :
-    ∃ ρ > 0, ∀ (γ' : X → ℂ) (g : X → ℂ → ℂ),
+    ∃ ρ > 0, ∀ (γ' : X → ℂ) (g : X → ℂ → E),
       (∀ t ∈ s, dist (γ' t) (γ t) < ρ) → γ' a = γ a → γ' b = γ b →
       IsAnalyticContinuationAlong g γ' s → g a =ᶠ[𝓝 (γ a)] f a → g b =ᶠ[𝓝 (γ b)] f b := by
   obtain ⟨ρ, hρ, F, hF, hkey⟩ := hf.exists_forall_eventuallyEq_of_dist_lt hs hsc
@@ -324,7 +334,7 @@ This is the transport that lets a germ comparison made at the base point `c t₀
 moving endpoint `c t` of a free homotopy, and it is why the two edges of such a homotopy may be
 compared against one fixed representative family. -/
 private lemma eventually_eventuallyEq_of_continuousAt {Z : Type*} [TopologicalSpace Z] {c : Z → ℂ}
-    {t₀ : Z} {F G : ℂ → ℂ} (hc : ContinuousAt c t₀) (hF : AnalyticAt ℂ F (c t₀))
+    {t₀ : Z} {F G : ℂ → E} (hc : ContinuousAt c t₀) (hF : AnalyticAt ℂ F (c t₀))
     (hG : AnalyticAt ℂ G (c t₀)) (h : F =ᶠ[𝓝 (c t₀)] G) :
     ∀ᶠ t in 𝓝 t₀, F =ᶠ[𝓝 (c t)] G :=
   hc.eventually ((eventually_eventuallyEq_iff_of_analyticAt hF hG).mono fun _ hiff => hiff.mpr h)
@@ -341,7 +351,7 @@ sweeps out. Nothing is assumed rel endpoints; `TauCeti.monodromy_theorem` is the
 which both edges are constant, where "continues along a constant path" degenerates to "carries one
 germ throughout". -/
 theorem monodromy_theorem_of_free_homotopy {h : I × I → ℂ} (hh : Continuous h)
-    {f : I → I → ℂ → ℂ}
+    {f : I → I → ℂ → E}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : IsAnalyticContinuationAlong (fun t => f t 0) (fun t => h (t, 0)) univ) :
     IsAnalyticContinuationAlong (fun t => f t 1) (fun t => h (t, 1)) univ := by
@@ -379,7 +389,7 @@ This is the rel-endpoints case of `TauCeti.monodromy_theorem_of_free_homotopy`, 
 allowed to move the endpoints and whose conclusion is correspondingly a continuation along the
 path the terminal point sweeps out rather than a single germ at `z₁`. -/
 theorem monodromy_theorem {z₀ z₁ : ℂ} {p₀ p₁ : Path z₀ z₁} (h : p₀.Homotopy p₁)
-    {f : I → I → ℂ → ℂ}
+    {f : I → I → ℂ → E}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : ∀ t, f t 0 =ᶠ[𝓝 z₀] f 0 0) (t : I) :
     f t 1 =ᶠ[𝓝 z₁] f 0 1 := by
@@ -405,7 +415,7 @@ continuation around every loop of the homotopy as soon as it is preserved around
 This is the statement that makes monodromy an invariant of the free homotopy class of a loop, and
 it is out of reach of `TauCeti.monodromy_theorem`, whose homotopies must fix the base point. -/
 theorem monodromy_theorem_of_free_homotopy_loop {h : I × I → ℂ} (hh : Continuous h)
-    (hloop : ∀ t : I, h (t, 1) = h (t, 0)) {f : I → I → ℂ → ℂ}
+    (hloop : ∀ t : I, h (t, 1) = h (t, 0)) {f : I → I → ℂ → E}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : IsAnalyticContinuationAlong (fun t => f t 0) (fun t => h (t, 0)) univ)
     (hbase : f 0 1 =ᶠ[𝓝 (h (0, 0))] f 0 0) (t : I) :
@@ -422,7 +432,7 @@ Together with the uniqueness of continuation along a fixed path, this is the rea
 can be analytically continued along every path of a simply connected domain is single-valued
 there: no loop in such a domain can create a new branch. -/
 theorem monodromy_theorem_of_homotopy_refl {z₀ : ℂ} {p : Path z₀ z₀}
-    (h : p.Homotopy (Path.refl z₀)) {f : I → I → ℂ → ℂ}
+    (h : p.Homotopy (Path.refl z₀)) {f : I → I → ℂ → E}
     (hf : ∀ t, IsAnalyticContinuationAlong (f t) (fun x => h (t, x)) univ)
     (hstart : ∀ t, f t 0 =ᶠ[𝓝 z₀] f 0 0) :
     f 0 1 =ᶠ[𝓝 z₀] f 0 0 := by
