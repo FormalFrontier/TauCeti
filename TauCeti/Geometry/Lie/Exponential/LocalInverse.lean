@@ -176,10 +176,7 @@ theorem mulInvariantLogChart_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 theorem mulInvariantLogChart_one [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     mulInvariantLogChart (I := I) (G := G)
-      (I (chartAt H (1 : G) (1 : G))) = 0 := by
-  have hcoord := congrFun (extChartAt_coe (I := I) (1 : G)) (1 : G)
-  simp only [Function.comp_apply] at hcoord
-  rw [← hcoord]
+      (extChartAt I (1 : G) (1 : G)) = 0 := by
   rw [← mulInvariantExpChart_zero (I := I) (G := G)]
   exact (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).left_inv
     zero_mem_mulInvariantExpOpenPartialHomeomorph_source
@@ -363,8 +360,7 @@ theorem eventually_mulInvariantExp_log [FiniteDimensional ℝ E] [LieGroup I ∞
     (contDiffAt_mulInvariantLogChart_one (I := I) (G := G)).continuousAt.comp
       (continuousAt_extChartAt (I := I) (1 : G))
   have hlogOne : L (extChartAt I (1 : G) (1 : G)) = 0 := by
-    simpa only [L, extChartAt_coe, Function.comp_apply] using
-      mulInvariantLogChart_one (I := I) (G := G)
+    exact mulInvariantLogChart_one (I := I) (G := G)
   have hexpCont : ContinuousAt
       (fun g : G => mulInvariantExp (I := I) (G := G)
         (L (extChartAt I (1 : G) g) : GroupLieAlgebra I G)) 1 :=
@@ -544,6 +540,8 @@ theorem isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero [FiniteDimensional 
   have hsourceOpen : IsOpen (chart.source ∩ chart ⁻¹' V) :=
     (continuousOn_extChartAt (I := I) (1 : G)).isOpen_inter_preimage
       (isOpen_extChartAt_source (I := I) (1 : G)) hVopen
+  -- Boundarylessness puts the identity coordinate in the interior of the chart target. Restricting
+  -- the chart to that interior gives an honest smooth partial diffeomorphism in both directions.
   let ce : PartialEquiv G E := {
     toFun := chart
     invFun := chart.symm
@@ -571,6 +569,8 @@ theorem isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero [FiniteDimensional 
     contMDiffOn_invFun :=
       (contMDiffOn_extChartAt_symm (I := I) (1 : G)).mono interior_subset
   }
+  -- Transport the charted local diffeomorphism `d : E ↔ E` back through the restricted identity
+  -- chart. The resulting `q : E ↔ G` has the desired source, target, and smooth inverse.
   let q := d.trans c.symm
   have hzeroq : (0 : E) ∈ q.source := by
     change 0 ∈ d.source ∩ d ⁻¹' c.symm.source
@@ -585,6 +585,9 @@ theorem isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero [FiniteDimensional 
     change f x = (extChartAt I (1 : G)).symm
       (extChartAt I (1 : G) (f x))
     exact ((extChartAt I (1 : G)).left_inv (hdsource hx.1)).symm
+  -- Although `q` agrees with `f` on its source, its total forward function retains the composed
+  -- chart implementation. Re-wrap its partial equivalence using literally `f` so the final local
+  -- diffeomorphism theorem has the canonical exponential as its function.
   let e : PartialEquiv E G := {
     toFun := f
     invFun := q.symm
