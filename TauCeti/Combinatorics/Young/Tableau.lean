@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Group.End
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Combinatorics.Young.YoungDiagram
 
 /-!
@@ -13,7 +14,10 @@ public import Mathlib.Combinatorics.Young.YoungDiagram
 A `μ`-tableau is a bijective filling `t : ↥μ.cells ≃ Fin μ.card` of the cells of a Young diagram
 `μ` by the labels `Fin μ.card`.  This file defines `YoungTableau`, the row and the column of a
 label, and identifies the labels lying in a given row, respectively column, with the cells of that
-row, respectively column, of `μ`.  It also defines `YoungTableau.relabel`, the transitive action of
+row, respectively column, of `μ`.  On top of that it proves the counting lemma
+`YoungTableau.colIndex_lt_rowLen_of_injective`: if the row of a label together with the column of
+its image under a permutation `u` of the labels determine the label, then that pair of indices is
+again a cell of `μ`.  It also defines `YoungTableau.relabel`, the transitive action of
 the permutations of the labels on the tableaux of a fixed shape, which is how two tableaux of the
 same shape are compared.
 
@@ -141,6 +145,136 @@ theorem colFiberEquiv_symm_apply_coe (t : YoungTableau μ) (j : ℕ) (c : ↥(μ
   rw [Equiv.symm_apply_apply]
   refine Subtype.ext ?_
   rw [← colFiberEquiv_apply_coe, Equiv.apply_symm_apply]
+
+/-! ## Cells and labels -/
+
+/-- The row and the column of a label are the coordinates of a cell of `μ`. -/
+theorem rowIndex_colIndex_mem (t : YoungTableau μ) (x : Fin μ.card) :
+    (rowIndex t x, colIndex t x) ∈ μ := by
+  rw [rowIndex_def, colIndex_def]
+  simp
+
+/-- A label lies in a column strictly to the left of the end of its row. -/
+theorem colIndex_lt_rowLen (t : YoungTableau μ) (x : Fin μ.card) :
+    colIndex t x < μ.rowLen (rowIndex t x) :=
+  YoungDiagram.mem_iff_lt_rowLen.mp (rowIndex_colIndex_mem t x)
+
+/-- Every cell of `μ` carries a label. -/
+theorem exists_rowIndex_colIndex (t : YoungTableau μ) {i j : ℕ} (h : (i, j) ∈ μ) :
+    ∃ x, rowIndex t x = i ∧ colIndex t x = j :=
+  ⟨t ⟨(i, j), (YoungDiagram.mem_cells _).mpr h⟩, by simp, by simp⟩
+
+/-- Row `i` of a `μ`-tableau carries `μ.rowLen i` labels. -/
+theorem card_filter_rowIndex_eq (t : YoungTableau μ) (i : ℕ) :
+    (Finset.univ.filter fun y => rowIndex t y = i).card = μ.rowLen i := by
+  rw [← Fintype.card_subtype, Fintype.card_congr (rowFiberEquiv t i), Fintype.card_coe]
+  exact (YoungDiagram.rowLen_eq_card μ).symm
+
+/-! ## The counting lemma -/
+
+/-- **The counting lemma for rows and columns along a permutation.**  If the row of a label
+together with the column of its `u`-image determine the label, then that pair is again a cell of
+`μ`.
+
+Both halves of the count are over the rows of `μ`: the labels whose `u`-image lies in one of the
+first `k` columns number `∑ᵢ min (μ.rowLen i) k`, while row `i` can contribute at most
+`min (μ.rowLen i) k` of them.  Upper bounds that add up to the total are equalities, and the case
+`k = μ.rowLen i` of the resulting equality is the statement. -/
+theorem colIndex_lt_rowLen_of_injective (t : YoungTableau μ) (u : Equiv.Perm (Fin μ.card))
+    (hu : Function.Injective fun x => (rowIndex t x, colIndex t (u x))) (x : Fin μ.card) :
+    colIndex t (u x) < μ.rowLen (rowIndex t x) := by
+  -- the rows of `μ` that actually carry labels
+  set S : Finset ℕ := Finset.image (rowIndex t) Finset.univ with hS
+  have hmemS : ∀ y : Fin μ.card, rowIndex t y ∈ S := fun y =>
+    Finset.mem_image_of_mem _ (Finset.mem_univ y)
+  -- row `i` contributes exactly `min (μ.rowLen i) k` labels to the first `k` columns
+  have hexact : ∀ i k : ℕ,
+      (Finset.univ.filter fun y => colIndex t y < k ∧ rowIndex t y = i).card
+        = min (μ.rowLen i) k := by
+    intro i k
+    have hinj : Set.InjOn (colIndex t)
+        ↑(Finset.univ.filter fun y => colIndex t y < k ∧ rowIndex t y = i) := by
+      intro a ha b hb hab
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and] at ha hb
+      exact rowIndex_colIndex_injective t (Prod.ext (ha.2.trans hb.2.symm) hab)
+    have himg : (Finset.univ.filter fun y => colIndex t y < k ∧ rowIndex t y = i).image
+        (colIndex t) = (Finset.range (μ.rowLen i)).filter fun j => j < k := by
+      ext j
+      simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_range]
+      constructor
+      · rintro ⟨y, ⟨hy1, hy2⟩, rfl⟩
+        exact ⟨hy2 ▸ colIndex_lt_rowLen t y, hy1⟩
+      · rintro ⟨hj1, hj2⟩
+        obtain ⟨y, hy1, hy2⟩ :=
+          exists_rowIndex_colIndex t (YoungDiagram.mem_iff_lt_rowLen.mpr hj1)
+        exact ⟨y, ⟨hy2 ▸ hj2, hy1⟩, hy2⟩
+    have hrange : ((Finset.range (μ.rowLen i)).filter fun j => j < k)
+        = Finset.range (min (μ.rowLen i) k) := by
+      ext j
+      simp
+    rw [← Finset.card_image_of_injOn hinj, himg, hrange, Finset.card_range]
+  -- row `i` contributes at most `min (μ.rowLen i) k` labels along `u`
+  have hle : ∀ i k : ℕ,
+      (Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i).card
+        ≤ min (μ.rowLen i) k := by
+    intro i k
+    refine le_min ?_ ?_
+    · rw [← card_filter_rowIndex_eq t i]
+      refine Finset.card_le_card fun y hy => ?_
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hy ⊢
+      exact hy.2
+    · have hinj : Set.InjOn (fun y => colIndex t (u y))
+          ↑(Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i) := by
+        intro a ha b hb hab
+        simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and] at ha hb
+        exact hu (Prod.ext (ha.2.trans hb.2.symm) hab)
+      calc (Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i).card
+          = ((Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i).image
+              fun y => colIndex t (u y)).card := (Finset.card_image_of_injOn hinj).symm
+        _ ≤ (Finset.range k).card := by
+              refine Finset.card_le_card fun j hj => ?_
+              simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and] at hj
+              obtain ⟨y, ⟨hy1, _⟩, rfl⟩ := hj
+              exact Finset.mem_range.mpr hy1
+        _ = k := Finset.card_range k
+  -- the two counts agree, so the upper bounds are equalities
+  have hsum : ∀ k : ℕ,
+      ∑ i ∈ S, (Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i).card
+        = ∑ i ∈ S, min (μ.rowLen i) k := by
+    intro k
+    have h1 : (Finset.univ.filter fun y => colIndex t (u y) < k).card
+        = ∑ i ∈ S,
+            (Finset.univ.filter fun y => colIndex t (u y) < k ∧ rowIndex t y = i).card := by
+      rw [Finset.card_eq_sum_card_fiberwise (f := rowIndex t) (t := S) fun y _ => hmemS y]
+      exact Finset.sum_congr rfl fun i _ => by rw [Finset.filter_filter]
+    have h2 : (Finset.univ.filter fun y => colIndex t y < k).card
+        = ∑ i ∈ S, (Finset.univ.filter fun y => colIndex t y < k ∧ rowIndex t y = i).card := by
+      rw [Finset.card_eq_sum_card_fiberwise (f := rowIndex t) (t := S) fun y _ => hmemS y]
+      exact Finset.sum_congr rfl fun i _ => by rw [Finset.filter_filter]
+    have h3 : (Finset.univ.filter fun y => colIndex t (u y) < k).card
+        = (Finset.univ.filter fun y => colIndex t y < k).card :=
+      Finset.card_equiv u fun i => by simp
+    rw [← h1, h3, h2]
+    exact Finset.sum_congr rfl fun i _ => hexact i k
+  have hfull := fun k =>
+    (Finset.sum_eq_sum_iff_of_le fun i _ => hle i k).mp (hsum k) (rowIndex t x) (hmemS x)
+  have hi := hfull (μ.rowLen (rowIndex t x))
+  rw [min_self] at hi
+  -- a subset of the row with the same cardinality is the whole row
+  have hsub : (Finset.univ.filter fun y =>
+        colIndex t (u y) < μ.rowLen (rowIndex t x) ∧ rowIndex t y = rowIndex t x)
+      ⊆ Finset.univ.filter fun y => rowIndex t y = rowIndex t x := by
+    intro y hy
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hy ⊢
+    exact hy.2
+  have hEq := Finset.eq_of_subset_of_card_le hsub
+    (le_of_eq (by rw [card_filter_rowIndex_eq t (rowIndex t x), hi]))
+  have hx : x ∈ Finset.univ.filter fun y =>
+      colIndex t (u y) < μ.rowLen (rowIndex t x) ∧ rowIndex t y = rowIndex t x := by
+    rw [hEq]
+    simp
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hx
+  exact hx.1
 
 /-! ## Relabeling -/
 

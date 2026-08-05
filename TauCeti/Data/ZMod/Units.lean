@@ -18,7 +18,7 @@ Coprime residues modulo `d` lift to coprime integers (`IsCoprime.exists_int_lift
 Ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck); the consumer is the
 strong approximation theorem `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective` in
-`TauCeti/LinearAlgebra/Matrix/SpecialLinearGroup.lean`.
+`TauCeti/LinearAlgebra/Matrix/SpecialLinearGroup/Basic.lean`.
 -/
 
 public section

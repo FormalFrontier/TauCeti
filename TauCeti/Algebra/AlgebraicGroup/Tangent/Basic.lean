@@ -4,10 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
-public import TauCeti.RingTheory.Derivation.DualNumber
 public import Mathlib.Algebra.Group.Equiv.TypeTags
 public import Mathlib.Algebra.Module.TransferInstance
+public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
+public import TauCeti.Algebra.Coalgebra.Convolution
+public import TauCeti.RingTheory.Derivation.DualNumber
 
 /-!
 # The tangent space at the identity point
@@ -36,13 +37,28 @@ kernel says nothing about the Lie bracket, which appears at second order.
 The synonym `CounitAlgebra` is a fresh scope for the point-induced algebra structure,
 as the dictionary requires; it does not install instances on `B` itself, and
 `Bialgebra.CounitAlgebra.algEquivSelf` transports back to `B` as an `R`-algebra.
+
+## The exterior convolution product
+
+This file *applies* the exterior convolution product `LinearMap.mulTensor` — two
+convolution linear maps applied legwise on `A ⊗[R] A` and multiplied in the coefficients
+— to counit-valued derivations. The product itself, together with its normalization rules
+(zero, addition, scalars) and its multiplicativity for convolution, is defined generically
+in `TauCeti/Algebra/Coalgebra/Convolution.lean`. Composing with the multiplication of `A` lands in
+this product's image: an algebra-map point satisfies `g ∘ mul = g ⊠ g`
+(`AlgHom.toConv_toLinearMap_comp_mul'`), and a counit-valued derivation satisfies the
+Leibniz rule `d ∘ mul = 1 ⊠ d + d ⊠ 1` (`Derivation.toConv_coe_comp_mul'`). This
+calculus lives here, at the tangent level, because every later structure on the tangent
+space — the Lie bracket and the adjoint action alike — is a composition-level
+consequence of these three identities.
+
 -/
 
 public section
 
 namespace TauCeti
 
-open Bialgebra Coalgebra WithConv
+open TauCeti.Bialgebra _root_.Bialgebra _root_.Coalgebra WithConv
 
 section BialgebraPoint
 
@@ -90,8 +106,31 @@ lemma algEquivSelf_symm_apply (b : B) : (algEquivSelf R A B).symm b = b := by
   simp only [AlgEquiv.refl_symm, AlgEquiv.coe_refl]
   rfl
 
+end Bialgebra.CounitAlgebra
+
+section SynonymScalars
+
+variable {R A B : Type*}
+
+namespace Bialgebra.CounitAlgebra
+
+/-- The coefficient synonym is a module over the coefficients, inherited from `B`. -/
+instance [Semiring B] : Module B (CounitAlgebra R A B) := inferInstanceAs (Module B B)
+
+/-- Base and coefficient scalars commute on the synonym, inherited from `B`. -/
+instance [CommSemiring R] [Semiring B] [Algebra R B] :
+    SMulCommClass R B (CounitAlgebra R A B) :=
+  inferInstanceAs (SMulCommClass R B B)
+
+/-- Coefficient scalars associate with the synonym's multiplication, inherited from
+`B`. -/
+instance [Semiring B] : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
+  inferInstanceAs (IsScalarTower B B B)
 
 end Bialgebra.CounitAlgebra
+
+end SynonymScalars
+
 
 end BialgebraPoint
 
@@ -132,6 +171,22 @@ noncomputable instance : IsScalarTower R A (CounitAlgebra R A B) :=
       ((Algebra.ofId R B).comp (counitAlgHom R A)) (algebraMap R A r)
     simp
 
+/-- Scalars of the coefficient algebra commute with the bialgebra scalar action, because
+the latter multiplies by a central element — the image of the counit in `B`. -/
+instance : SMulCommClass B A (CounitAlgebra R A B) where
+  smul_comm b a x := by
+    -- The bialgebra scalar action multiplies by a central element, so it commutes
+    -- with the `B`-action: move the central factor across the product.
+    rw [Algebra.smul_def, Algebra.smul_def, Algebra.commutes a (b • x), smul_mul_assoc,
+      Algebra.commutes a x]
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- The base `R`-algebra map of the coefficient synonym agrees with that of `B` itself:
+the synonym changes only the `A`-algebra structure. -/
+@[simp]
+lemma algebraMap_base (r : R) :
+    algebraMap R (CounitAlgebra R A B) r = algebraMap R B r := rfl
+
 @[simp]
 lemma algebraMap_apply (a : A) :
     algebraMap A (CounitAlgebra R A B) a = algebraMap R B (counit a) := by
@@ -143,6 +198,18 @@ lemma algebraMap_apply (a : A) :
 end Bialgebra.CounitAlgebra
 
 end BialgebraPointScalar
+
+section CommPointScalar
+
+-- The synonym's carrier is `B`, so this instance is inherited from the coefficient semiring
+-- alone; `R` and `A` are phantom parameters here and need no structure.
+variable (R A B : Type*) [CommSemiring B]
+
+/-- Coefficient scalars commute with multiplication in the coefficient synonym. -/
+instance : SMulCommClass B (Bialgebra.CounitAlgebra R A B) (Bialgebra.CounitAlgebra R A B) :=
+  inferInstanceAs (SMulCommClass B B B)
+
+end CommPointScalar
 
 section BialgebraCommTarget
 
@@ -213,7 +280,7 @@ private lemma sum_smul_counit {R C : Type*} [CommSemiring R] [AddCommMonoid C]
 
 section Hopf
 
-open TrivSqZeroExt WithConv Bialgebra Bialgebra.CounitAlgebra
+open TrivSqZeroExt WithConv _root_.Bialgebra Bialgebra.CounitAlgebra
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
   [CommSemiring B] [Algebra R B]
@@ -475,5 +542,41 @@ lemma tangentKer_smul_apply_snd
     _ = _ := (Bialgebra.CounitAlgebra.algEquivSelf R A B).apply_symm_apply _ |>.symm
 
 end Hopf
+
+section DerivationLeibniz
+
+open WithConv TensorProduct
+
+-- Only `Semiring B` is needed: the statement preserves multiplication order, and the
+-- centrality it relies on comes from the `Algebra A (CounitAlgebra R A B)` structure.
+-- Commutativity is required later, by `mulTensor_convMul` and the adjoint representation.
+variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [Semiring B] [Algebra R B]
+
+namespace Derivation
+
+open TauCeti.LinearMap
+
+/-- The Leibniz rule in convolution form: composing a counit-valued derivation with
+the multiplication of `A` is the exterior product against the convolution unit, on
+either side. -/
+@[simp]
+lemma toConv_coe_comp_mul'
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    toConv ((d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ LinearMap.mul' R A) =
+      mulTensor 1 (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
+        mulTensor (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) 1 := by
+  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
+  simp only [ofConv_add, LinearMap.add_apply, LinearMap.coe_comp,
+    Function.comp_apply, LinearMap.mul'_apply, mulTensor_apply_tmul,
+    Derivation.coeFn_coe, LinearMap.convOne_apply, Bialgebra.CounitAlgebra.algebraMap_base]
+  rw [← Bialgebra.CounitAlgebra.algebraMap_apply R A B x,
+    ← Bialgebra.CounitAlgebra.algebraMap_apply R A B y, ← Algebra.commutes,
+    ← Algebra.smul_def, ← Algebra.smul_def]
+  exact d.leibniz x y
+
+end Derivation
+
+end DerivationLeibniz
 
 end TauCeti
