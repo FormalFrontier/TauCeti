@@ -122,12 +122,8 @@ theorem entry_top_eq (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) (i : ℕ) : P i n = (μ.rowLen i : ℤ) := by
   rcases Nat.lt_or_ge i n with hi | hi
   · simpa using hP ⟨i, hi⟩
-  · have hnot : (i, 0) ∉ μ := fun h =>
-      absurd (YoungDiagram.row_lt_of_colLen_le_of_mem hμ h) (by omega)
-    have hz : μ.rowLen i = 0 := by
-      by_contra h
-      exact hnot (YoungDiagram.mem_iff_lt_rowLen.mpr (Nat.pos_of_ne_zero h))
-    rw [P.entry_eq_zero_of_le hi, hz, Nat.cast_zero]
+  · rw [P.entry_eq_zero_of_le hi, YoungDiagram.rowLen_eq_zero_of_colLen_le (hμ.trans hi),
+      Nat.cast_zero]
 
 /-! ### From a pattern to a tableau -/
 
