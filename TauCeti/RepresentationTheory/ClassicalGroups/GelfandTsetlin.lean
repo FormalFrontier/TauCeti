@@ -55,7 +55,8 @@ a dominant top row `λ₁ ≤ λ₀` is `λ₀ - λ₁ + 1`, the dimension of th
 
 * `TauCeti.GTPattern.entry_anti` and `TauCeti.GTPattern.topRow_antitone`: rows are weakly
   decreasing, so the top row is a dominant weight.
-* `TauCeti.Interlaces.antitone`: a sequence interlacing a dominant weight is dominant.
+* `TauCeti.Interlaces.antitone`: an interlacing sequence is weakly decreasing, so a sequence
+  interlacing a dominant weight is dominant.
 * `TauCeti.GTPattern.truncateEquiv`: patterns with `n + 1` rows and top row `l` correspond to
   patterns with `n` rows whose top row interlaces `l`.
 * `TauCeti.GTPattern.finite_topRow_eq`: only finitely many patterns share a top row.
@@ -104,7 +105,7 @@ instance instFunLike : FunLike (GTPattern n) ℕ (ℕ → ℤ) where
   coe_injective P P' h := by cases P; cases P'; congr
 
 @[simp]
-theorem toFun_eq_coe {P : GTPattern n} : P.entry = (P : ℕ → ℕ → ℤ) := rfl
+theorem entry_eq_coe {P : GTPattern n} : P.entry = (P : ℕ → ℕ → ℤ) := rfl
 
 @[ext]
 theorem ext {P P' : GTPattern n} (h : ∀ i j, P i j = P' i j) : P = P' :=
@@ -251,19 +252,17 @@ theorem Interlaces.le_castSucc {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n �
 theorem Interlaces.succ_le {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ}
     (h : Interlaces l m) (i : Fin n) : l i.succ ≤ m i := (h i).2
 
-/-- **A sequence interlacing a dominant weight is itself dominant.**  For `i < i'` the two
-interlacing inequalities give `mᵢ' ≤ lᵢ' ≤ lᵢ₊₁ ≤ mᵢ`, so `m` is again weakly decreasing; this is
-what packages the output of `TauCeti.GTPattern.truncateEquiv` as a `TauCeti.DominantWeight`. -/
-theorem Interlaces.antitone {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ} (hl : Antitone l)
-    (h : Interlaces l m) : Antitone m := by
-  intro i i' hii'
-  rcases eq_or_lt_of_le hii' with rfl | hlt
-  · exact le_rfl
-  · have hle : i.succ ≤ i'.castSucc := by
-      have : (i : ℕ) < (i' : ℕ) := hlt
-      simp only [Fin.le_def, Fin.val_succ, Fin.val_castSucc]
-      omega
-    exact (h.le_castSucc i').trans ((hl hle).trans (h.succ_le i))
+/-- **An interlacing sequence is weakly decreasing.**  The two interlacing inequalities at
+adjacent indices meet at the same entry of `l`, giving `mᵢ₊₁ ≤ lᵢ₊₁ ≤ mᵢ`; no assumption on `l` is
+needed.  In particular a sequence interlacing a dominant weight is itself dominant, which is what
+packages the output of `TauCeti.GTPattern.truncateEquiv` as a `TauCeti.DominantWeight`. -/
+theorem Interlaces.antitone {n : ℕ} {l : Fin (n + 1) → ℤ} {m : Fin n → ℤ} (h : Interlaces l m) :
+    Antitone m := by
+  cases n with
+  | zero => exact fun i => i.elim0
+  | succ _ =>
+    exact Fin.antitone_iff_succ_le.mpr fun i =>
+      (h.le_castSucc i.succ).trans (by simpa using h.succ_le i.castSucc)
 
 namespace GTPattern
 
