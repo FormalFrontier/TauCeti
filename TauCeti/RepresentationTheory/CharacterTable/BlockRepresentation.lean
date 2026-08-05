@@ -120,6 +120,14 @@ theorem isIrreducible_blockRepresentation (i : ι) [NeZero (d i)] :
   exact Representation.isIrreducible_of_asAlgebraHom_surjective _
     (by simpa using blockAlgHom_surjective e i)
 
+end Irreducible
+
+section Inequivalent
+
+variable {k : Type u} {G : Type v} [CommSemiring k] [Nontrivial k] [Monoid G] {ι : Type w}
+  {d : ι → ℕ}
+  (e : k[G] ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
+
 /-- **Distinct Wedderburn blocks carry inequivalent representations.** The idempotent that `e`
 matches with `Pi.single i 1` acts as the identity on the `i`-th block and as zero on the `j`-th. -/
 theorem isEmpty_equiv_blockRepresentation {i j : ι} [NeZero (d i)] (hij : i ≠ j) :
@@ -153,7 +161,7 @@ theorem isEmpty_equiv_blockRepresentation {i j : ι} [NeZero (d i)] (hij : i ≠
   rw [hi, hj] at hv0
   simpa using hv0
 
-end Irreducible
+end Inequivalent
 
 section Existence
 
