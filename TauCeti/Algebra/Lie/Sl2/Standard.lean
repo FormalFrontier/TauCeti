@@ -63,13 +63,15 @@ carries `v₀` along the whole string because the coefficients `n - i` are inver
 `Sl2Std K n` is a type synonym for `Fin (n + 1) → K` rather than that type itself: the
 `sl (Fin 2) K`-action is not canonical on a plain function space, and registering it there as an
 instance would give every `Fin m → K` a surprise Lie module structure. The synonym is `@[expose]`d
-so that its coordinates are still directly available, and `TauCeti.Sl2Std.smul_apply`,
-`TauCeti.Sl2Std.sub_apply`, `TauCeti.Sl2Std.neg_apply` and `TauCeti.Sl2Std.zero_apply` restate the
-pointwise operations that `Pi` lemmas can no longer reach through it.
+so that its coordinates are still directly available, and `TauCeti.Sl2Std.add_apply`,
+`TauCeti.Sl2Std.smul_apply`, `TauCeti.Sl2Std.sub_apply`, `TauCeti.Sl2Std.neg_apply` and
+`TauCeti.Sl2Std.zero_apply` restate the pointwise operations that `Pi` lemmas can no longer reach
+through it.
 
 The three ladder operators are `@[expose]`d for the same reason. They are defined by a
 `Module.End` literal, and unfolding that literal is exactly what proves their coordinate equations
-`TauCeti.Sl2Std.raise_apply`, `TauCeti.Sl2Std.lower_apply` and `TauCeti.Sl2Std.diag_apply`; without
+`TauCeti.Sl2Std.raise_apply`, `TauCeti.Sl2Std.lower_apply` and `TauCeti.Sl2Std.diag_apply`. A public
+theorem may unfold only exposed definitions, in its own module as much as anywhere else, so without
 exposure those equations could not be stated as public theorems at all, and there would be no way
 to use the operators. Exposure is what makes those three equations provable, not an invitation to
 unfold the literal again: the operators are marked `irreducible` immediately after the equations,
@@ -163,6 +165,9 @@ variable {K n}
 
 The type synonym hides `Fin (n + 1) → K` from the `Pi` lemmas, so the pointwise operations are
 restated here. -/
+
+/-- Addition on `V(n)` is coordinatewise. -/
+@[simp] theorem add_apply (v w : Sl2Std K n) (i : Fin (n + 1)) : (v + w) i = v i + w i := rfl
 
 /-- Scalar multiplication on `V(n)` is coordinatewise. -/
 @[simp] theorem smul_apply (c : K) (v : Sl2Std K n) (i : Fin (n + 1)) : (c • v) i = c * v i := rfl
