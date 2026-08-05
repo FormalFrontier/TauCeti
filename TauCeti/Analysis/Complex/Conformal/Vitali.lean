@@ -14,8 +14,9 @@ import Mathlib.Topology.UniformSpace.CompactConvergence
 # Vitali's convergence theorem
 
 Vitali's theorem upgrades pointwise convergence on a set with an accumulation point to locally
-uniform convergence for a locally bounded sequence of holomorphic functions. This completes the
-Vitali component of layer **L1 (normal families / Montel)** of the conformal-mapping roadmap.
+uniform convergence for a locally bounded sequence of holomorphic maps into a proper complex
+normed space. This completes the Vitali component of layer **L1 (normal families / Montel)** of
+the conformal-mapping roadmap.
 
 The proof applies `TauCeti.montel` twice. First choose one locally uniform subsequential limit `g`.
 For an arbitrary subsequence, Montel supplies a further locally uniform limit `q`. Both limits
@@ -27,9 +28,9 @@ each compact subset, gives locally uniform convergence of the original sequence.
 
 ## Main result
 
-* `TauCeti.vitali` — a locally bounded sequence of holomorphic functions which converges pointwise
+* `TauCeti.vitali` — a locally bounded sequence of holomorphic maps which converges pointwise
   on a set with an accumulation point in the domain converges locally uniformly to a holomorphic
-  function.
+  map.
 * `TauCeti.vitali_of_tendsto` — the same theorem with a prescribed pointwise limit on the
   convergence set.
 
@@ -52,15 +53,16 @@ open Complex Filter Set Topology
 
 namespace TauCeti
 
-variable {Ω A : Set ℂ} {F : ℕ → ℂ → ℂ}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {Ω A : Set ℂ} {F : ℕ → ℂ → E}
 
+omit [NormedSpace ℂ E] in
 /-- Two locally uniform subsequential limits agree on a set where the original sequence converges
 pointwise. -/
 private theorem eqOn_of_subseq_limits
     (hAΩ : A ⊆ Ω)
     (hpoint : ∀ z ∈ A, ∃ w, Tendsto (fun n => F n z) atTop (𝓝 w))
     {φ ψ : ℕ → ℕ} (hφ : Tendsto φ atTop atTop) (hψ : Tendsto ψ atTop atTop)
-    {g q : ℂ → ℂ}
+    {g q : ℂ → E}
     (hg : TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω)
     (hq : TendstoLocallyUniformlyOn (fun n => F (ψ n)) q atTop Ω) :
     A.EqOn g q := by
@@ -71,17 +73,19 @@ private theorem eqOn_of_subseq_limits
   exact (tendsto_nhds_unique (hg.tendsto_at (hAΩ hz)) hgw).trans
     (tendsto_nhds_unique (hq.tendsto_at (hAΩ hz)) hqw).symm
 
-/-- **Vitali's convergence theorem.** Let `Ω` be an open preconnected subset of `ℂ`. A locally
-bounded sequence of holomorphic functions on `Ω` which converges pointwise on a subset `A ⊆ Ω`
-having an accumulation point in `Ω` converges locally uniformly on `Ω` to a holomorphic function.
+/-- **Vitali's convergence theorem.** Let `Ω` be an open preconnected subset of `ℂ` and `E` a
+proper complex normed space. A locally bounded sequence of holomorphic maps `Ω → E` which
+converges pointwise on a subset `A ⊆ Ω` having an accumulation point in `Ω` converges locally
+uniformly on `Ω` to a holomorphic map.
 
 The pointwise limit on `A` need not be supplied: its existence is enough to determine the
-holomorphic limit uniquely. -/
-theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
+holomorphic limit uniquely. Properness of `E` is inherited from `TauCeti.montel`, which the proof
+runs twice; for a normed space over `ℂ` it says exactly that `E` is finite-dimensional. -/
+theorem vitali [ProperSpace E] (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
     (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hAΩ : A ⊆ Ω) {z₀ : ℂ} (hz₀ : z₀ ∈ Ω) (hacc : AccPt z₀ (𝓟 A))
     (hpoint : ∀ z ∈ A, ∃ w, Tendsto (fun n => F n z) atTop (𝓝 w)) :
-    ∃ g : ℂ → ℂ, DifferentiableOn ℂ g Ω ∧ TendstoLocallyUniformlyOn F g atTop Ω := by
+    ∃ g : ℂ → E, DifferentiableOn ℂ g Ω ∧ TendstoLocallyUniformlyOn F g atTop Ω := by
   obtain ⟨φ, g, hφ, hg, hφconv⟩ := montel hΩ hF hb
   refine ⟨g, hg, (tendstoLocallyUniformlyOn_iff_forall_isCompact hΩ).2 ?_⟩
   intro K hKΩ hK
@@ -89,18 +93,13 @@ theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
   have hrestr :
       Tendsto
         (fun n => ⟨K.domRestrict (F n), ((hF n).continuousOn.mono hKΩ).domRestrict⟩ :
-          ℕ → C(K, ℂ))
+          ℕ → C(K, E))
         atTop
         (𝓝 ⟨K.domRestrict g, (hg.continuousOn.mono hKΩ).domRestrict⟩) := by
     apply tendsto_of_subseq_tendsto
     intro ψ hψ
-    have hbψ : IsLocallyBoundedOn (fun n => F (ψ n)) Ω := by
-      rw [isLocallyBoundedOn_def]
-      intro L hLΩ hL
-      obtain ⟨C, hC⟩ := isLocallyBoundedOn_def.mp hb L hLΩ hL
-      exact ⟨C, fun n => hC (ψ n)⟩
     obtain ⟨θ, q, hθ, hq, hθconv⟩ :=
-      montel hΩ (fun n => hF (ψ n)) hbψ
+      montel hΩ (fun n => hF (ψ n)) (hb.comp ψ)
     have hqgA : A.EqOn q g := eqOn_of_subseq_limits hAΩ hpoint
       (hψ.comp hθ.tendsto_atTop) hφ.tendsto_atTop hθconv hφconv
     have hqg : Ω.EqOn q g :=
@@ -122,11 +121,11 @@ the sequence converges pointwise on `A` to a specified function `g`, its locally
 holomorphic limit agrees with `g` throughout `A`.
 
 No regularity of `g` away from `A` is assumed or concluded. -/
-theorem vitali_of_tendsto (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
+theorem vitali_of_tendsto [ProperSpace E] (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
     (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hAΩ : A ⊆ Ω) {z₀ : ℂ} (hz₀ : z₀ ∈ Ω) (hacc : AccPt z₀ (𝓟 A))
-    {g : ℂ → ℂ} (hpoint : ∀ z ∈ A, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
-    ∃ q : ℂ → ℂ, DifferentiableOn ℂ q Ω ∧ A.EqOn q g ∧
+    {g : ℂ → E} (hpoint : ∀ z ∈ A, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
+    ∃ q : ℂ → E, DifferentiableOn ℂ q Ω ∧ A.EqOn q g ∧
       TendstoLocallyUniformlyOn F q atTop Ω := by
   obtain ⟨q, hq, hconv⟩ :=
     vitali hΩ hconn hF hb hAΩ hz₀ hacc fun z hz => ⟨g z, hpoint z hz⟩

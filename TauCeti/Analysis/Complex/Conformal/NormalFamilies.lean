@@ -18,9 +18,14 @@ import Mathlib.Topology.MetricSpace.Thickening
 
 A family of holomorphic functions on an open set `U ⊆ ℂ` that is *locally bounded* — uniformly
 bounded on every compact subset of `U` — is automatically equicontinuous on `U`.  This is the
-analytic heart of Montel's normal-families theorem: for complex-valued functions, combined with
-Arzelà--Ascoli and an exhaustion/diagonal argument, it yields precompactness for local uniform
-convergence.
+analytic heart of Montel's normal-families theorem: combined with Arzelà--Ascoli and an
+exhaustion/diagonal argument, it yields precompactness for local uniform convergence.
+
+Everything here is stated for maps `ℂ → E` into a complex normed space, because nothing in a
+Cauchy estimate uses the multiplicative structure of the target: Mathlib's
+`Complex.norm_deriv_le_of_forall_mem_sphere_norm_le`, which is the sole analytic input, is itself
+`E`-valued.  Only `TauCeti.IsLocallyBoundedOn.equicontinuousOn_deriv` needs `E` complete, and
+that is because it differentiates twice.  Taking `E = ℂ` recovers the scalar statements.
 
 The mechanism is Cauchy's estimate for the first derivative.  Mathlib's
 `Complex.norm_deriv_le_of_forall_mem_sphere_norm_le` bounds `‖deriv f c‖` at the *centre* of a
@@ -34,6 +39,8 @@ the family, which is exactly equicontinuity.
 
 * `TauCeti.IsLocallyBoundedOn F s`: the family `F` is uniformly bounded on every compact subset
   of `s`.
+* `TauCeti.IsLocallyBoundedOn.comp`: local boundedness passes to any reindexing of the family,
+  in particular to a subsequence.
 
 ## Main results
 
@@ -50,12 +57,15 @@ the family, which is exactly equicontinuity.
   derivatives of a locally bounded family of holomorphic functions are again locally bounded, hence
   also equicontinuous.
 
-This advances the L1 (normal families / Montel) layer of the conformal-mapping roadmap, whose
-generality bar requires scalar-valued functions `ℂ → ℂ` and fixes local boundedness as "bounded on
-each compact `K ⊆ Ω`".  As with the rest of the L0--L3 conformal-mapping material it is coordinated
-with the upstream Mathlib Riemann-mapping effort leanprover-community/mathlib4#33505, which proves a
-Montel equicontinuity statement internally as a private lemma; these declarations are a temporary
-shim, to be deleted and refactored to Mathlib's API once that human-curated work lands.
+This advances the L1 (normal families / Montel) layer of the conformal-mapping roadmap, which
+fixes local boundedness as "bounded on each compact `K ⊆ Ω`".  The roadmap's scalar generality bar
+governs the *conformal* statements it adds — Rouché, Hurwitz, the Riemann mapping theorem — whose
+hypotheses genuinely use `ℂ` as the target; the Cauchy estimates below are the inputs those
+statements consume, and are stated at the generality Mathlib already provides for them.  As with
+the rest of the L0--L3 conformal-mapping material it is coordinated with the upstream Mathlib
+Riemann-mapping effort leanprover-community/mathlib4#33505, which proves a Montel equicontinuity
+statement internally as a private lemma; these declarations are a temporary shim, to be deleted
+and refactored to Mathlib's API once that human-curated work lands.
 
 ## References
 
@@ -68,13 +78,13 @@ namespace TauCeti
 
 open Filter Metric Set Topology
 
-variable {ι : Type*} {U : Set ℂ} {f : ℂ → ℂ} {F : ι → ℂ → ℂ}
+variable {ι E : Type*} [NormedAddCommGroup E] {U : Set ℂ} {f : ℂ → E} {F : ι → ℂ → E}
 
-/-- A family `F : ι → ℂ → ℂ` is **locally bounded** on `s` if it is uniformly bounded — with a
+/-- A family `F : ι → ℂ → E` is **locally bounded** on `s` if it is uniformly bounded — with a
 single constant, independent of the index — on every compact subset of `s`.
 
 This is the hypothesis of Montel's theorem, in the form fixed by the conformal-mapping roadmap. -/
-def IsLocallyBoundedOn (F : ι → ℂ → ℂ) (s : Set ℂ) : Prop :=
+def IsLocallyBoundedOn (F : ι → ℂ → E) (s : Set ℂ) : Prop :=
   ∀ K ⊆ s, IsCompact K → ∃ C, ∀ i, ∀ z ∈ K, ‖F i z‖ ≤ C
 
 /-- The defining compact-set characterization of local boundedness. -/
@@ -88,6 +98,17 @@ theorem isLocallyBoundedOn_def :
 theorem IsLocallyBoundedOn.mono {s t : Set ℂ} (hb : IsLocallyBoundedOn F s) (hts : t ⊆ s) :
     IsLocallyBoundedOn F t :=
   fun _K hKt hK => hb _ (hKt.trans hts) hK
+
+/-- Local boundedness is inherited by any reindexing of the family: the bound on a compact set is
+uniform in the index, so it survives being restricted to a subfamily.
+
+The case `σ : ℕ → ℕ` is the one Montel-based arguments use, where passing to a subsequence must
+not lose the hypothesis. -/
+theorem IsLocallyBoundedOn.comp {κ : Type*} {s : Set ℂ} (hb : IsLocallyBoundedOn F s)
+    (σ : κ → ι) : IsLocallyBoundedOn (fun k => F (σ k)) s := by
+  intro K hKs hK
+  obtain ⟨C, hC⟩ := hb K hKs hK
+  exact ⟨C, fun k => hC (σ k)⟩
 
 /-- A locally bounded family is bounded at each point of the set, uniformly in the index.
 
@@ -117,6 +138,8 @@ private theorem exists_pos_closedBall_two_mul_subset (hU : IsOpen U) {z : ℂ} (
   exact (closedBall_subset_cthickening (mem_singleton z) δ).trans hδU
 
 section Estimates
+
+variable [NormedSpace ℂ E]
 
 /-- **Cauchy's estimate on a closed ball.** If `f` is holomorphic on an open set `U` containing
 `closedBall c r` and `‖f‖ ≤ M` on that closed ball, then `‖deriv f c‖ ≤ M / r`.
@@ -213,9 +236,12 @@ theorem IsLocallyBoundedOn.deriv (hb : IsLocallyBoundedOn F U) (hU : IsOpen U)
 /-- The derivatives of a locally bounded family of holomorphic functions are equicontinuous.
 
 The result follows by applying the preceding equicontinuity theorem to the locally bounded
-derivative family. -/
-theorem IsLocallyBoundedOn.equicontinuousOn_deriv (hb : IsLocallyBoundedOn F U) (hU : IsOpen U)
-    (hF : ∀ i, DifferentiableOn ℂ (F i) U) : EquicontinuousOn (fun i => _root_.deriv (F i)) U :=
+derivative family.  This is the one statement in this file that needs `E` complete, because
+that theorem asks the derivatives themselves to be holomorphic, and holomorphy of `deriv f`
+(`DifferentiableOn.deriv`) rests on the Cauchy integral formula. -/
+theorem IsLocallyBoundedOn.equicontinuousOn_deriv [CompleteSpace E]
+    (hb : IsLocallyBoundedOn F U) (hU : IsOpen U) (hF : ∀ i, DifferentiableOn ℂ (F i) U) :
+    EquicontinuousOn (fun i => _root_.deriv (F i)) U :=
   (hb.deriv hU hF).equicontinuousOn hU fun i => (hF i).deriv hU
 
 end Estimates
