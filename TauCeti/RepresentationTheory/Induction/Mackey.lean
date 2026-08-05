@@ -9,7 +9,6 @@ public import TauCeti.GroupTheory.DoubleCoset.Finite
 public import TauCeti.RepresentationTheory.Induction.Character
 public import TauCeti.RepresentationTheory.Induction.Conjugate
 public import TauCeti.RepresentationTheory.Induction.MackeySubgroup
-public import TauCeti.RepresentationTheory.Induction.Restriction
 
 /-!
 # The Mackey decomposition formula
@@ -44,7 +43,9 @@ conjugate Mackey subgroup (`TauCeti.mackeySubgroup_conj`).
   `(Σ KsH ∈ K \ G / H, K ⧸ (K ⊓ sHs⁻¹)) ≃ G ⧸ H`.
 * `TauCeti.mackeyToH`: the homomorphism `K ⊓ sHs⁻¹ → H`, `y ↦ s⁻¹ y s`, along which the Mackey
   summand pulls a representation of `H` back to the Mackey subgroup.
-* `TauCeti.mackeyClassFun`: the class function `y ↦ f (s⁻¹ y s)` on the Mackey subgroup.
+* `TauCeti.mackeyClassFun`: the conjugated function `y ↦ f (s⁻¹ y s)` on the Mackey subgroup; it is
+  a class function as soon as `f` is one, and inducing it up to `K` gives the character of the
+  Mackey summand when `f` is a character.
 * `TauCeti.mackeySummand`: the Mackey summand `Ind_{K ⊓ sHs⁻¹}^K Res ({}^s A)` as an `FDRep k K`.
 
 ## Main statements
@@ -52,8 +53,9 @@ conjugate Mackey subgroup (`TauCeti.mackeySubgroup_conj`).
 * `TauCeti.index_eq_sum_relIndex_mackeySubgroup`: `[G : H] = ∑_{KsH} [K : K ⊓ sHs⁻¹]`.
 * `TauCeti.mackeyClassFun_mem_classFunction`: the conjugate of a class function is one.
 * `TauCeti.indClassFun_mackey`: the Mackey decomposition for induced class functions.
-* `TauCeti.character_indFDRep_mackey`: the Mackey decomposition for induced characters.
-* `TauCeti.character_resFDRep_indFDRep_mackey`: the same, read on `Res_K (Ind_H^G A)`.
+* `TauCeti.character_indFDRep_mackey`: the Mackey decomposition for induced characters, which is
+  the decomposition of the character of `Res_K (Ind_H^G A)` because `TauCeti.character_resFDRep`
+  rewrites the two into each other.
 * `TauCeti.finrank_mackeySummand`: the dimension of a Mackey summand.
 
 ## Implementation notes
@@ -224,9 +226,12 @@ section ClassFun
 
 variable {k : Type*} [Semiring k] {G : Type*} [Group G] {H K : Subgroup G}
 
-/-- The function on the Mackey subgroup obtained from a function `f` on `H` by conjugating:
-`y ↦ f (s⁻¹ y s)`.  On a class function it is again a class function, and it is the class function
-whose induction to `K` is the Mackey summand attached to `s`. -/
+/-- The function on the Mackey subgroup obtained from an arbitrary function `f` on `H` by
+conjugating: `y ↦ f (s⁻¹ y s)`, that is, the pullback of `f` along `TauCeti.mackeyToH`.
+
+It is a class function whenever `f` is one (`TauCeti.mackeyClassFun_mem_classFunction`), and when
+`f` is the character of a representation `A` its induction to `K` is the character of the Mackey
+summand attached to `s` (`TauCeti.character_mackeySummand`); nothing is assumed of `f` here. -/
 def mackeyClassFun (s : G) (H K : Subgroup G) (f : H → k) :
     ((mackeySubgroup s H K).subgroupOf K) → k :=
   f ∘ mackeyToH s H K
@@ -251,8 +256,10 @@ theorem mackeyClassFun_mem_classFunction (s : G) (H K : Subgroup G) {f : H → k
 from `H` to `G`, taken at the representative `u s` and at an element of `K`, is the summand of the
 class function induced from the Mackey subgroup to `K`, taken at the representative `u`.
 
-This single identity is where the conjugation `s⁻¹ (·) s` enters the Mackey decomposition. -/
-theorem indTerm_mackeyClassFun (s : G) (H K : Subgroup G) (f : H → k) (x u : K) :
+This single identity is where the conjugation `s⁻¹ (·) s` enters the Mackey decomposition.  It is
+private: it speaks about the individual representatives that `TauCeti.indClassFun_mackey` sums
+over, and that sum is the interface. -/
+private theorem indTerm_mackeyClassFun (s : G) (H K : Subgroup G) (f : H → k) (x u : K) :
     indTerm f (x : G) ((u : G) * s) = indTerm (mackeyClassFun s H K f) x u := by
   classical
   have hconj : ((u : G) * s)⁻¹ * (x : G) * ((u : G) * s)
@@ -340,8 +347,10 @@ theorem mackeySummand_eq_indFDRep_res_conjFDRep [H.FiniteIndex] (s : G) (A : FDR
           (Subgroup.subgroupOfEquivOfLe
             (mackeySubgroup_le_right (s := s) (H := H) (K := K))).toMonoidHom).obj
         ((Action.res (FGModuleCat k) (mackeyToConjH s H K)).obj (conjFDRep s A))) := by
-  rw [← res_obj_eq_conjFDRep]
-  rfl
+  -- `mackeyToH` is a composite of three homomorphisms; `actionRes_comp` splits its restriction
+  -- into the corresponding three restrictions, the outer two of which are the ones stated.
+  simp only [mackeySummand, mackeyToH, actionRes_comp, CategoryTheory.Functor.comp_obj,
+    MulEquiv.toMonoidHom_eq_coe, res_obj_eq_conjFDRep]
 
 /-- The character of a Mackey summand is the induced class function of the conjugated character. -/
 @[simp]
@@ -366,7 +375,9 @@ theorem finrank_mackeySummand [H.FiniteIndex] (s : G) (A : FDRep k H) :
 `A` at `x` is the sum, over the double cosets `K \ G / H`, of the characters of the Mackey
 summands.
 
-`TauCeti.character_resFDRep_indFDRep_mackey` reads this on `Res_K (Ind_H^G A)`. -/
+This is the formula the roadmap states on `Res_K (Ind_H^G A)`: the character of the restriction is
+the character of `Ind_H^G A` on `K` by `TauCeti.character_resFDRep`, a `simp` lemma, so the
+left-hand side is that character read on `K`. -/
 theorem character_indFDRep_mackey [H.FiniteIndex] (A : FDRep k H) (x : K) :
     (indFDRep A).character (x : G) =
       letI := Fintype.ofFinite (DoubleCoset.Quotient (K : Set G) (H : Set G))
@@ -376,17 +387,6 @@ theorem character_indFDRep_mackey [H.FiniteIndex] (A : FDRep k H) (x : K) :
   simp only [character_mackeySummand]
   rw [← indClassFun_ofFDRep_character]
   exact indClassFun_mackey (ClassFunction.mem_iff.mpr A.char_conj) x
-
-/-- **The Mackey decomposition formula on `Res_K (Ind_H^G A)`.**  This is
-`TauCeti.character_indFDRep_mackey` with the left-hand side written as the character of the
-restriction to `K` of the induced representation, the form the roadmap states. -/
-theorem character_resFDRep_indFDRep_mackey [H.FiniteIndex] (A : FDRep k H) (x : K) :
-    (resFDRep K (indFDRep A)).character x =
-      letI := Fintype.ofFinite (DoubleCoset.Quotient (K : Set G) (H : Set G))
-      ∑ D : DoubleCoset.Quotient (K : Set G) (H : Set G),
-        (mackeySummand (K := K) D.out A).character x := by
-  rw [character_resFDRep]
-  exact character_indFDRep_mackey A x
 
 end Character
 

@@ -44,10 +44,8 @@ theorem doubleCosetMk_out_mk (H K : Subgroup G) (g : G) :
 /-- **The double cosets `H \ G / K` are finite when `K` has finite index**: they are the image of
 the finite set `G ⧸ K` under `gK ↦ HgK`. -/
 instance finite_doubleCosetQuotient (H K : Subgroup G) [K.FiniteIndex] :
-    Finite (DoubleCoset.Quotient (H : Set G) (K : Set G)) := by
-  refine Finite.of_surjective (fun t : G ⧸ K => DoubleCoset.mk H K t.out) fun d => ?_
-  refine ⟨QuotientGroup.mk d.out, ?_⟩
-  change DoubleCoset.mk H K (Quotient.out (QuotientGroup.mk d.out : G ⧸ K)) = d
-  rw [doubleCosetMk_out_mk, DoubleCoset.out_eq']
+    Finite (DoubleCoset.Quotient (H : Set G) (K : Set G)) :=
+  Finite.of_surjective (fun t : G ⧸ K => DoubleCoset.mk H K t.out) fun d =>
+    ⟨QuotientGroup.mk d.out, (doubleCosetMk_out_mk H K d.out).trans (DoubleCoset.out_eq' H K d)⟩
 
 end TauCeti
