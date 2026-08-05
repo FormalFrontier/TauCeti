@@ -155,12 +155,12 @@ class Replay(unittest.TestCase):
         self.assertEqual(conflict_stats.first_conflicting(
             mirror, self.HISTORY, 0, 20, "h1", exhaustive=True), 5)
 
-    def test_a_reopened_pr_is_still_open_not_closed(self):
-        # `closedAt` survives a reopen, and trusting it censored the PR out of the
-        # live tail this tool exists to report.
+    def test_current_state_decides_the_outcome_not_closedat(self):
+        # Reading `closedAt` first censored an open PR out of the live tail this
+        # tool exists to report. State decides; a stale or unexpected `closedAt` on
+        # an open PR must not override it.
         mirror = self.FakeMirror([("h1", 1000)], {"h1": 5})
         pr = self.pr(closedAt="1970-01-01T00:30:00Z", state="OPEN")
-        pr["_reopened"] = True
         episodes, _ = self.analyse(mirror, pr)
         self.assertEqual(episodes[0]["outcome"], "still-open")
 
@@ -353,7 +353,7 @@ class ClosedIntervals(unittest.TestCase):
 
     def episode(self, onset, resolved):
         return {"pr": 1, "onset": onset, "resolved": resolved,
-                "seconds": resolved - onset, "outcome": "push"}
+                "seconds": resolved - onset, "closed_seconds": 0, "outcome": "push"}
 
     def test_no_intervals_changes_nothing(self):
         rows = [self.episode(0, 100)]
@@ -363,12 +363,33 @@ class ClosedIntervals(unittest.TestCase):
         rows = conflict_stats.clip_episodes([self.episode(0, 100)], [(20, 50)])
         self.assertEqual(rows[0]["seconds"], 70)
 
+    def test_the_discount_is_recorded_rather_than_silently_applied(self):
+        # `seconds` no longer equals `resolved - onset` once time is taken out, so
+        # the row has to say how much, or the JSON contradicts itself.
+        rows = conflict_stats.clip_episodes([self.episode(0, 100)], [(20, 50)])
+        row = rows[0]
+        self.assertEqual(row["closed_seconds"], 30)
+        self.assertEqual(row["seconds"], row["resolved"] - row["onset"]
+                         - row["closed_seconds"])
+
     def test_an_episode_entirely_inside_a_closed_interval_is_dropped(self):
         self.assertEqual(conflict_stats.clip_episodes([self.episode(30, 40)], [(20, 50)]), [])
 
     def test_an_interval_outside_the_episode_is_ignored(self):
         rows = conflict_stats.clip_episodes([self.episode(0, 100)], [(200, 300)])
         self.assertEqual(rows[0]["seconds"], 100)
+
+    def test_a_pulse_of_brief_closures_stays_one_episode(self):
+        # What close/reopen actually looks like here: the review bot shutting a PR
+        # and opening it again a second later, fifteen times (#1908). Splitting the
+        # episode at each boundary would report fifteen abandonments that never
+        # happened; the conflict was continuous and the closures cost 15 seconds.
+        pulses = [(10 * i, 10 * i + 1) for i in range(1, 16)]
+        rows = conflict_stats.clip_episodes([self.episode(0, 1000)], pulses)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["outcome"], "push")
+        self.assertEqual(rows[0]["closed_seconds"], 15)
+        self.assertEqual(rows[0]["seconds"], 985)
 
 
 class ReplaySummary(unittest.TestCase):

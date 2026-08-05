@@ -141,6 +141,14 @@ merge cleanly. An episode ends only at a head that is *clean* when it appeared, 
 successive conflicting heads stay one conflict; a PR closed or merged while still
 conflicting is censored rather than counted as a fast resolution.
 
+Closing a PR and reopening it does not end an episode — nothing there resolves the
+conflict — but the time it spent closed is discounted from the duration, since
+nobody could have merged it then, and `closed_seconds` on each row records how
+much. That has to come from the timeline: GitHub *clears* `closedAt` on reopen, so
+the list read cannot tell a reopened PR from one that never closed. Of the 33 PRs
+reopened here, all but one are now closed or merged, and most of the closures are
+the review bot pulsing a PR shut and open again a second later.
+
 ```bash
 python3 scripts/pr_status/conflict_stats.py --ledger-cache /tmp/ledger.json --json episodes.json
 python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity assumption

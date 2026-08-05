@@ -37,6 +37,14 @@ still conflicting ends its episode without resolving it, and is reported as
 CENSORED rather than folded into the resolution median -- otherwise abandoning a
 conflicted PR would score as fixing it quickly.
 
+A PR that is closed and REOPENED is a different matter: nothing there resolved the
+conflict, so the episode continues across the closure, with the time spent closed
+discounted from its duration (`closed_seconds` records how much) because nobody
+could have merged it then. It is not split into a censored segment plus a resolved
+one; that would file the pre-close segment under "abandoned while conflicting",
+and the closures here are mostly the review bot pulsing a PR shut and open again
+for a second at a time -- #1908 fifteen times in one afternoon.
+
 A PR's own squash-merge commit is excluded from the bases it is measured against.
 It conflicts with that PR's head by construction (same edits, different sha), and
 leaving it in made a PR's own landing look like the event that broke it.
@@ -262,9 +270,14 @@ class Mirror:
 
 
 def fetch_prs(since=None):
-    """Every PR, as GitHub reports it, optionally limited to `--since`."""
-    # `state == OPEN` with a non-null closedAt is GitHub's own tell that a PR was
-    # closed and reopened; it costs nothing extra on the list read.
+    """Every PR, as GitHub reports it, optionally limited to `--since`.
+
+    A reopen is NOT visible here. GitHub clears `closedAt` when a PR is reopened,
+    so "open, but carries a closedAt" -- which an earlier version of this file used
+    as the tell -- describes no PR at all: 0 of the 1990 in this repository. Reopens
+    come from the timeline instead, in `closed_intervals`, and `closedAt` is read
+    only as the date a currently-closed PR closed.
+    """
     fields = ("number,author,createdAt,closedAt,mergedAt,state,isDraft,title,"
               "headRefName,headRepositoryOwner")
     out = subprocess.run(
@@ -273,8 +286,6 @@ def fetch_prs(since=None):
     if out.returncode != 0:
         raise RuntimeError(f"gh pr list failed: {out.stderr.strip()}")
     prs = json.loads(out.stdout)
-    for pr in prs:
-        pr["_reopened"] = bool(pr.get("closedAt")) and pr.get("state") == "OPEN"
     cutoff = parse_iso(since)
     if cutoff is not None:
         prs = [p for p in prs if parse_iso(p["createdAt"]) >= cutoff]
@@ -362,8 +373,11 @@ def closed_intervals(number):
 
     A PR that was closed and reopened was not in the queue in between, and a
     conflict cannot be "unresolved" during a period when nobody could merge it
-    anyway. Only reopened PRs need this -- for everything else GitHub's `closedAt`
-    already bounds the window -- so it is fetched only where a reopen exists.
+    anyway. The timeline is the ONLY record of that: `closedAt` is cleared on
+    reopen, so a PR that was closed and reopened is indistinguishable from one that
+    never closed until you read this. 33 PRs here have been reopened, all but one
+    of them now closed or merged, so a pre-filter on the list fields would have
+    missed essentially all of them.
     """
     out = subprocess.run(
         ["gh", "api", f"/repos/{REPO}/issues/{number}/timeline?per_page=100",
@@ -388,8 +402,22 @@ def closed_intervals(number):
 
 
 def clip_episodes(episodes, intervals):
-    """Remove time the PR spent closed from each episode, dropping any that lie
-    entirely inside a closed interval."""
+    """Discount the time an episode's PR spent closed, dropping any episode that
+    lies entirely inside a closed interval. The discount is recorded in
+    `closed_seconds`, so `seconds` is always `resolved - onset - closed_seconds`
+    and the JSON never disagrees with itself about a duration.
+
+    A closure does NOT end an episode and a reopen does not start a new one. A
+    conflict is over only when a head appears that merges cleanly (see
+    `analyse_pr`), and closing a PR does not make one appear: reopen it and the
+    same conflict is still there. Splitting at each boundary instead -- ending the
+    pre-close segment as `closed` -- would file every one of those segments under
+    the outcome that means "abandoned while still conflicting", which is the very
+    misclassification this function exists to avoid. It is not hypothetical: #1908
+    here was closed and reopened 15 times by the review bot, in pulses lasting 1 to
+    22 seconds, and #1913 and #1917 similarly. Splitting would report one conflict
+    on #1908 as 16 episodes, 15 of them abandonments that never happened.
+    """
     if not intervals:
         return episodes
     kept = []
@@ -398,6 +426,7 @@ def clip_episodes(episodes, intervals):
                       for low, high in intervals)
         if overlap >= row["seconds"]:
             continue
+        row["closed_seconds"] = overlap
         row["seconds"] = max(0, row["seconds"] - overlap)
         kept.append(row)
     return kept
@@ -498,9 +527,7 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     # a commit authored a week earlier would date a "conflict" to before the PR
     # was opened and inflate its duration.
     created = parse_iso(pr.get("createdAt")) or epochs[0][1]
-    ended = (parse_iso(pr["mergedAt"])
-             or (None if pr.get("_reopened") else parse_iso(pr["closedAt"]))
-             or now)
+    ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
     author = (pr.get("author") or {}).get("login") or ""
     # A PR's OWN squash commit is not a base it was ever measured against, and it
     # conflicts with the PR's head by construction (same edits, different sha). Left
@@ -543,14 +570,13 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
             open_onset = onset
 
     if open_onset is not None:
-        # `closedAt` is NOT a reliable "is closed": a reopened PR keeps the old
-        # timestamp while being open again. Trusting it labelled such a PR
-        # `closed`, which censors it -- so a live conflict on a reopened PR would
-        # vanish from the very tail this tool exists to report. Current state
-        # decides; `closedAt` only dates a PR that is actually closed now.
+        # CURRENT STATE decides the outcome, never `closedAt`. Reading `closedAt`
+        # first labelled a reopened PR `closed`, which censors it -- so a live
+        # conflict on a reopened PR would vanish from the very tail this tool
+        # exists to report. `closedAt` only dates a PR that is closed now.
         if pr["mergedAt"]:
             outcome = "merged"
-        elif pr.get("state") == "OPEN" or pr.get("_reopened"):
+        elif pr.get("state") == "OPEN":
             outcome = "still-open"
         elif pr["closedAt"]:
             outcome = "closed"
@@ -589,6 +615,11 @@ def episode(number, author, onset, resolved, outcome, resolver_epoch):
         "onset": onset,
         "resolved": resolved,
         "seconds": max(0, resolved - onset),
+        # Time inside [onset, resolved] the PR spent closed, which `clip_episodes`
+        # takes back out of `seconds`. Recorded rather than silently subtracted, so
+        # a reader of the JSON can see why the two timestamps and the duration do
+        # not agree, and can put it back if they want wall-clock instead.
+        "closed_seconds": 0,
         "outcome": "push" if resolver_epoch is not None else outcome,
         "resolver_epoch": resolver_epoch,
         "resolver": None,
@@ -750,9 +781,7 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
     wanted = []
     for pr in prs:
         created = parse_iso(pr.get("createdAt")) or 0
-        ended = (parse_iso(pr["mergedAt"])
-                 or (None if pr.get("_reopened") else parse_iso(pr["closedAt"]))
-                 or now)
+        ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
         pushes = pr_pushes(pr, index, created, ended)
         pr["_pushes"] = pushes
         wanted.extend(row[0] for row in pushes)
@@ -772,19 +801,24 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = list(pool.map(one, prs))
 
-    # Only PRs that produced an episode AND were reopened need their closed
-    # intervals removed; that is a handful, so the timeline reads are cheap.
+    # Ask every PR that produced an episode for the time it spent closed. There is
+    # no cheaper pre-filter: a reopen clears `closedAt`, so nothing in the list read
+    # distinguishes a PR that was closed and reopened from one that never closed,
+    # and the tell an earlier version used matched 0 of 1990 PRs while 33 had in
+    # fact been reopened. Conflicted PRs are a small fraction of the whole, so this
+    # is a hundred-odd timeline reads rather than a couple of thousand.
     by_pr = {}
     for rows, _, _, _ in results:
         for row in rows:
             by_pr.setdefault(row["pr"], []).append(row)
-    reopened = [pr["number"] for pr in prs
-                if pr["number"] in by_pr and pr.get("_reopened")]
-    if reopened:
-        log(f"removing closed intervals from {len(reopened)} reopened PR(s)")
+    conflicted = sorted(by_pr)
+    if conflicted:
+        log(f"checking {len(conflicted)} conflicted PR(s) for time spent closed")
         with ThreadPoolExecutor(max_workers=min(jobs, 8)) as pool:
-            for number, intervals in zip(reopened, pool.map(closed_intervals, reopened)):
-                by_pr[number] = clip_episodes(by_pr[number], intervals)
+            for number, intervals in zip(conflicted,
+                                         pool.map(closed_intervals, conflicted)):
+                if intervals:
+                    by_pr[number] = clip_episodes(by_pr[number], intervals)
 
     episodes = [row for rows, _, _, _ in results for row in rows
                 if row in by_pr.get(row["pr"], [])]
