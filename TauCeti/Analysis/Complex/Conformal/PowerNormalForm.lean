@@ -49,10 +49,10 @@ Read backwards, the normal form answers the question of when a holomorphic germ 
 `n`-th root: exactly when `n` divides its order of vanishing
 (`TauCeti.exists_eventually_pow_eq_iff_dvd`). One direction takes `φ ^ (m / n)` for the chart `φ` of
 an order-`m` zero, the other reads off `analyticOrderNatAt (ψ ^ n) = n * analyticOrderNatAt ψ`.
-Mathlib's `Complex.exists_continuousOn_pow_eq` and the holomorphic upgrade of it in
-`TauCeti/Analysis/Complex/BranchLogRoot.lean` require the function to be **zero-free**, so between
-them they settle only the case of order `0`; a germ that does vanish is what the criterion here
-covers.
+The holomorphic root branch `TauCeti.exists_differentiableOn_pow_eq`, which builds the root as
+`exp (L / n)` from a holomorphic branch `L` of the logarithm, requires the function to be
+**zero-free**, so it settles only the case of order `0`; a germ that does vanish is what the
+criterion here covers.
 
 ## Main results
 
@@ -71,10 +71,10 @@ in-progress human-curated Riemann-mapping-theorem effort, which proves several L
 internally as private lemmas. **This file is therefore a temporary shim**: once corresponding
 Mathlib lemmas land, these statements should be backed by them — or deleted and their consumers
 refactored — rather than maintained as independent re-proofs. What Tau Ceti adds at L0 is named,
-discoverable API, not first proof. The branch statements underneath, Mathlib's
-`Complex.exists_continuousOn_eqOn_exp_comp` and `Complex.exists_continuousOn_pow_eq`
-(`Mathlib/Analysis/Complex/BranchLogRoot.lean`), are consumed through the holomorphic upgrade in
-`TauCeti/Analysis/Complex/BranchLogRoot.lean`, not rebuilt.
+discoverable API, not first proof. The branch statement underneath, Mathlib's continuous logarithm
+branch `Complex.exists_continuousOn_eqOn_exp_comp` (`Mathlib/Analysis/Complex/BranchLogRoot.lean`),
+is consumed through the holomorphic upgrade in `TauCeti/Analysis/Complex/BranchLogRoot.lean` — from
+which the `n`-th root is taken as `exp (L / n)` — not rebuilt.
 
 ## References
 
@@ -162,20 +162,15 @@ This is the qualitative form of the open-mapping degree of `Conformal/LocalDegre
 counts the preimages of the values near `f z₀`; here `n` is the same exponent
 `analyticOrderNatAt (f · - f z₀) z₀` that the counting statements return. -/
 theorem localNormalForm {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀)
-    (hisol : ∀ᶠ z in 𝓝[≠] z₀, f z ≠ f z₀) :
+    (hnc : ¬ EventuallyConst f (𝓝 z₀)) :
     ∃ r > 0, ∃ φ : ℂ → ℂ, DifferentiableOn ℂ φ (ball z₀ r) ∧ Set.InjOn φ (ball z₀ r) ∧
       φ z₀ = 0 ∧ deriv φ z₀ ≠ 0 ∧
       ∀ z ∈ ball z₀ r, f z = f z₀ + φ z ^ analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
   set A : ℂ → ℂ := fun ζ => f ζ - f z₀ with hAdef
   have hAan : AnalyticAt ℂ A z₀ := hf.sub analyticAt_const
   -- `f` is not locally constant, so the order of `A` at `z₀` is finite.
-  have htop : analyticOrderAt A z₀ ≠ ⊤ := by
-    intro htop
-    have hfalse : ∀ᶠ z in 𝓝[≠] z₀, False := by
-      filter_upwards [hisol, nhdsWithin_le_nhds (analyticOrderAt_eq_top.mp htop)] with z h1 h2
-      exact h1 (sub_eq_zero.mp h2)
-    obtain ⟨_, hz⟩ := hfalse.exists
-    exact hz
+  have htop : analyticOrderAt A z₀ ≠ ⊤ := fun htop =>
+    hnc (eventuallyConst_iff_analyticOrderAt_sub_eq_top.mpr htop)
   set n := analyticOrderNatAt A z₀
   have hord : analyticOrderAt A z₀ = (n : ℕ∞) := (Nat.cast_analyticOrderNatAt htop).symm
   -- `A` vanishes at `z₀`, so that order is not `0` either.
@@ -187,9 +182,9 @@ theorem localNormalForm {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z�
 /-- **When a holomorphic germ has a holomorphic `n`-th root.** A germ vanishing to finite order `m`
 at `z₀` is an `n`-th power near `z₀` exactly when `n` divides `m`.
 
-The case `m = 0` — a germ that does not vanish — is Mathlib's `Complex.exists_continuousOn_pow_eq`
-in its holomorphic form; the content here is the vanishing case, where a root exists only under the
-divisibility condition that the normal form makes visible. -/
+The case `m = 0` — a germ that does not vanish — is the zero-free root branch
+`TauCeti.exists_differentiableOn_pow_eq`; the content here is the vanishing case, where a root
+exists only under the divisibility condition that the normal form makes visible. -/
 theorem exists_eventually_pow_eq_iff_dvd {A : ℂ → ℂ} {z₀ : ℂ} {m n : ℕ} (hA : AnalyticAt ℂ A z₀)
     (hord : analyticOrderAt A z₀ = m) (hn : n ≠ 0) :
     (∃ ψ : ℂ → ℂ, AnalyticAt ℂ ψ z₀ ∧ ∀ᶠ z in 𝓝 z₀, A z = ψ z ^ n) ↔ n ∣ m := by
@@ -199,9 +194,10 @@ theorem exists_eventually_pow_eq_iff_dvd {A : ℂ → ℂ} {z₀ : ℂ} {m n : �
       filter_upwards [hψeq] with z hz
       simpa using hz
     have hm : analyticOrderNatAt A z₀ = m := by simp [analyticOrderNatAt, hord]
-    have hmul : analyticOrderNatAt A z₀ = n * analyticOrderNatAt ψ z₀ := by
+    have hcongr : analyticOrderNatAt A z₀ = analyticOrderNatAt (ψ ^ n) z₀ := by
       simp only [analyticOrderNatAt, analyticOrderAt_congr hpi]
-      simpa [smul_eq_mul] using congrArg ENat.toNat (analyticOrderAt_pow hψ n)
+    have hmul : analyticOrderNatAt A z₀ = n * analyticOrderNatAt ψ z₀ := by
+      rw [hcongr, analyticOrderNatAt_pow hψ n, smul_eq_mul]
     exact ⟨analyticOrderNatAt ψ z₀, by rw [← hm, hmul]⟩
   · rintro ⟨k, rfl⟩
     rcases Nat.eq_zero_or_pos k with rfl | hk
