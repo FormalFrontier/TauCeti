@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.CharacterTable.Pairing
+public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 
 /-!
 # The induced class function
@@ -26,7 +26,8 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
 * `TauCeti.indTerm f g x`: the summand attached to a representative `x`, namely `f (x⁻¹ g x)`
   when `x⁻¹ g x` lies in the subgroup and `0` otherwise.  It is the summand of the
   induced-character formula too, which the character file uses at `f = ρ.character`, together
-  with the coset-invariance lemmas `TauCeti.indTerm_mul` and `TauCeti.indTerm_eq_of_mk_eq`.
+  with the coset-invariance lemmas `TauCeti.indTerm_mul` and `TauCeti.indTerm_eq_of_mk_eq` and the
+  evaluations `TauCeti.indTerm_conj` and `TauCeti.indTerm_one`.
 * `TauCeti.indClassFun S f`: the function `G → k` obtained from `f : S → k` by summing `f` over
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
@@ -40,9 +41,10 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
-* `TauCeti.frobenius_reciprocity_classFunction` and `TauCeti.characterPairing_ind`: **Frobenius
-  reciprocity for class functions**, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, for arbitrary class functions
-  `f` on `S` and `h` on `G`.
+
+Frobenius reciprocity for class functions, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, is
+`TauCeti.frobenius_reciprocity_classFunction`; it needs the pairing, so it lives with the other
+reciprocities in `TauCeti.RepresentationTheory.Induction.FrobeniusReciprocity`.
 
 ## Implementation notes
 
@@ -51,12 +53,6 @@ The definition sums over `Quotient.out` representatives of `G ⧸ S`, so it lite
 that choice of representatives; being a class function is a sufficient condition for them not to,
 and that is what `TauCeti.indClassFun_mem_classFunction` extracts, in the form of conjugation
 invariance of the total sum.  It is the only regime the results below use.
-
-`TauCeti.frobenius_reciprocity` is the special case of
-`TauCeti.frobenius_reciprocity_classFunction` for two characters.  It is not re-derived here: it is
-what the earlier layers of the roadmap are stated against, and what is new is that the same
-identity holds for class functions that are not characters, which is what the virtual-character
-lattice of Layer 6 needs.
 
 ## References
 
@@ -94,7 +90,7 @@ theorem indTerm_apply (f : S → k) (g x : G) :
   (rfl)
 
 /-- Conjugating the argument of the summand translates the representative. -/
-private theorem indTerm_conj (f : S → k) (g x c : G) :
+theorem indTerm_conj (f : S → k) (g x c : G) :
     indTerm f (c * g * c⁻¹) x = indTerm f g (c⁻¹ * x) := by
   classical
   have h : x⁻¹ * (c * g * c⁻¹) * x = (c⁻¹ * x)⁻¹ * g * (c⁻¹ * x) := by group
@@ -102,7 +98,7 @@ private theorem indTerm_conj (f : S → k) (g x c : G) :
 
 open scoped Classical in
 /-- The value of the summand at the identity representative. -/
-private theorem indTerm_one (f : S → k) (g : G) :
+theorem indTerm_one (f : S → k) (g : G) :
     indTerm f g 1 = if h : g ∈ S then f ⟨g, h⟩ else 0 := by
   simp [indTerm]
 
@@ -273,7 +269,7 @@ end ClassFunction
 
 end Semiring
 
-/-! ### Averaging and Frobenius reciprocity -/
+/-! ### Averaging -/
 
 section Field
 
@@ -288,85 +284,6 @@ theorem indClassFun_eq_natCard_inv_mul_sum [Fintype G] {f : S → k}
     indClassFun S f g =
       (Nat.card S : k)⁻¹ * ∑ x : G, if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 := by
   rw [← natCard_mul_indClassFun hf g, ← mul_assoc, inv_mul_cancel₀ hS.ne_zero, one_mul]
-
-open scoped Classical in
-/-- **Frobenius reciprocity for class functions.**  The normalized pairing over `G` of an induced
-class function with a class function of `G` is the normalized pairing over `S` of the original
-class function with the restricted one.
-
-Both sides are written as explicit normalized sums, so the statement does not depend on the name of
-any particular pairing; `TauCeti.characterPairing_ind` is the same identity phrased against
-`TauCeti.ClassFunction.characterPairing`.  Specialized to two characters this is
-`TauCeti.frobenius_reciprocity`, but no representation is involved here: the identity is a
-double count over `G × G` and holds for arbitrary class functions. -/
-theorem frobenius_reciprocity_classFunction [Fintype G] (hG : IsUnit (Nat.card G : k))
-    (f : ClassFunction k S) (h : ClassFunction k G) :
-    (Nat.card G : k)⁻¹ * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹ =
-      (Nat.card S : k)⁻¹ * ∑ s : S, f.1 s * h.1 ((s : G)⁻¹) := by
-  have hS : IsUnit (Nat.card S : k) :=
-    isUnit_of_mul_isUnit_left (y := (S.index : k))
-      (by rwa [← Nat.cast_mul, S.card_mul_index])
-  set X : k := ∑ s : S, f.1 s * h.1 ((s : G)⁻¹) with hX
-  -- For a fixed `x : G`, summing the conjugation summand against `h` over all of `G` gives `X`.
-  have hinner (x : G) :
-      (∑ g : G, indTerm f.1 g x * h.1 g⁻¹) = X := by
-    have hinv (y : G) : (x * y * x⁻¹)⁻¹ = x * y⁻¹ * x⁻¹ := by group
-    calc (∑ g : G, indTerm f.1 g x * h.1 g⁻¹)
-        = ∑ y : G, indTerm f.1 (x * y * x⁻¹) x * h.1 (x * y * x⁻¹)⁻¹ := by
-          refine (Fintype.sum_equiv ((Equiv.mulRight x⁻¹).trans (Equiv.mulLeft x)) _ _ ?_).symm
-          intro y
-          simp [mul_assoc]
-      _ = ∑ y : G, (if hy : y ∈ S then f.1 ⟨y, hy⟩ else 0) * h.1 y⁻¹ := by
-          refine Finset.sum_congr rfl fun y _ => ?_
-          rw [indTerm_conj, inv_mul_cancel, indTerm_one]
-          congr 1
-          rw [hinv y]
-          exact ClassFunction.mem_iff.mp h.2 y⁻¹ x
-      _ = ∑ y ∈ Finset.univ.filter (fun y : G => y ∈ S),
-            (if hy : y ∈ S then f.1 ⟨y, hy⟩ else 0) * h.1 y⁻¹ := by
-          refine (Finset.sum_subset (Finset.filter_subset _ _) fun y _ hy => ?_).symm
-          rw [Finset.mem_filter] at hy
-          rw [dif_neg fun hy' => hy ⟨Finset.mem_univ y, hy'⟩, zero_mul]
-      _ = ∑ s : S, (if hy : (s : G) ∈ S then f.1 ⟨(s : G), hy⟩ else 0) * h.1 (s : G)⁻¹ :=
-          Finset.sum_subtype (p := fun y : G => y ∈ S) _ (by simp) _
-      _ = X := by
-          rw [hX]
-          exact Finset.sum_congr rfl fun s _ => by rw [dif_pos s.2]
-  -- Summing over cosets and then over the subgroup turns the outer sum into `Nat.card G • X`.
-  have hmain : (Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹
-      = (Nat.card G : k) * X := by
-    calc (Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹
-        = ∑ g : G, ((Nat.card S : k) * indClassFun S f.1 g) * h.1 g⁻¹ := by
-          rw [Finset.mul_sum]
-          exact Finset.sum_congr rfl fun g _ => (mul_assoc _ _ _).symm
-      _ = ∑ g : G, (∑ x : G, indTerm f.1 g x) * h.1 g⁻¹ := by
-          refine Finset.sum_congr rfl fun g _ => ?_
-          rw [natCard_mul_indClassFun f.2 g]
-          simp only [indTerm]
-      _ = ∑ x : G, ∑ g : G, indTerm f.1 g x * h.1 g⁻¹ := by
-          rw [Finset.sum_comm]
-          exact Finset.sum_congr rfl fun g _ => by rw [Finset.sum_mul]
-      _ = ∑ _x : G, X := Finset.sum_congr rfl fun x _ => hinner x
-      _ = (Nat.card G : k) * X := by
-          simp [Nat.card_eq_fintype_card]
-  refine mul_left_cancel₀ hS.ne_zero ?_
-  calc (Nat.card S : k) * ((Nat.card G : k)⁻¹ * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹)
-      = (Nat.card G : k)⁻¹ * ((Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹) := by
-        ring
-    _ = (Nat.card G : k)⁻¹ * ((Nat.card G : k) * X) := by rw [hmain]
-    _ = X := by rw [← mul_assoc, inv_mul_cancel₀ hG.ne_zero, one_mul]
-    _ = (Nat.card S : k) * ((Nat.card S : k)⁻¹ * X) := by
-        rw [← mul_assoc, mul_inv_cancel₀ hS.ne_zero, one_mul]
-
-open scoped Classical in
-/-- Frobenius reciprocity for class functions, phrased against the normalized pairing
-`TauCeti.ClassFunction.characterPairing`. -/
-theorem characterPairing_ind [Fintype G] (hG : IsUnit (Nat.card G : k))
-    (f : ClassFunction k S) (h : ClassFunction k G) :
-    ClassFunction.characterPairing (ClassFunction.ind S f) h =
-      ClassFunction.characterPairing f (ClassFunction.comap S.subtype h) := by
-  rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply]
-  simpa using frobenius_reciprocity_classFunction hG f h
 
 end Field
 
