@@ -19,6 +19,8 @@ the identity at zero; equivalently, `F(v) = F(0) + v + o(‖v‖)`.
 
 * `hasFDerivAt_extChartAt_mulInvariantExp_zero`: in model-space identity coordinates, the
   tangent-space exponential has derivative the identity at zero.
+* `hasFDerivAt_extChartAt_lieExp_zero`: the identity-chart derivative of the derivation-based
+  exponential is the canonical linear isometry to the model space.
 
 ## References
 
@@ -98,3 +100,31 @@ theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
       exact hcurveDeriv
     exact hline.unique hlineCurve
   exact hresult
+
+/-- In identity-chart coordinates, the derivative of the derivation-based Lie exponential at zero
+is the canonical linear isometry from left-invariant derivations to the model space. -/
+theorem hasFDerivAt_extChartAt_lieExp_zero
+    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    HasFDerivAt
+      (fun X : LeftInvariantDerivation I G => extChartAt I (1 : G) (lieExp X))
+      (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+        (I := I) (G := G)).toContinuousLinearEquiv.toContinuousLinearMap 0 := by
+  let L := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)
+  have hmodel := hasFDerivAt_extChartAt_mulInvariantExp_zero (I := I) (G := G)
+  have hmodelAt : HasFDerivAt
+      (fun v : E => extChartAt I (1 : G)
+        (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)))
+      (ContinuousLinearMap.id ℝ E) (L 0) := by
+    simpa using hmodel
+  have hcomp := hmodelAt.comp 0 L.toContinuousLinearEquiv.hasFDerivAt
+  have hfun :
+      (fun X : LeftInvariantDerivation I G => extChartAt I (1 : G) (lieExp X)) =
+        (fun v : E => extChartAt I (1 : G)
+          (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) ∘ L := by
+    funext X
+    apply congrArg (extChartAt I (1 : G))
+    rw [lieExp_eq_mulInvariantExp]
+    simp only [L, leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply]
+  rw [hfun]
+  simpa only [ContinuousLinearMap.id_comp] using hcomp
