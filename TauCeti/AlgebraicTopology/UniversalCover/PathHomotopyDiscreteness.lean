@@ -123,8 +123,7 @@ def TubeData.toSet {X : Type*} [TopologicalSpace X] {x y : X} {n : ℕ}
 
 /-- File-local adapter from Mathlib's unit-interval open-cover partition lemma to the segment
 data needed by the tube construction. -/
-private theorem Path.exists_partition_with_property {x y : X} (γ : Path x y)
-    (P : Set X → Prop)
+private theorem Path.exists_partition_with_property {x y : X} (γ : Path x y) (P : Set X → Prop)
     (h : ∀ z ∈ Set.range γ, ∃ U : Set X, IsOpen U ∧ z ∈ U ∧ P U) :
     ∃ (n : ℕ) (part : IntervalPartition n),
       ∀ i : Fin n, ∃ U : Set X, IsOpen U ∧ P U ∧
@@ -150,8 +149,7 @@ private theorem Path.exists_partition_with_property {x y : X} (γ : Path x y)
 /-- Given segment neighborhoods covering each subpath of `γ`, construct the vertex neighborhoods
 as path components of the finite intersections of adjacent segment neighborhoods. -/
 private theorem Path.exists_vertexNeighborhood_family [LocallyPathConnectedSpace X]
-    {x y : X} {γ : Path x y} {n : ℕ}
-    {t : Fin (n + 1) → unitInterval} {U : Fin n → Set X}
+    {x y : X} {γ : Path x y} {n : ℕ} {t : Fin (n + 1) → unitInterval} {U : Fin n → Set X}
     (h_mono : Monotone t) (hU_open : ∀ i, IsOpen (U i))
     (hU_contains : ∀ i : Fin n, ∀ s : unitInterval,
       (t i.castSucc : ℝ) ≤ s ∧ s ≤ (t i.succ : ℝ) → γ s ∈ U i) :
@@ -204,8 +202,7 @@ path-homotopy-trivial tube.
 
 `public` because `TauCeti.AlgebraicTopology.UniversalCover.BasedPath` consumes the tube (partition
 and tube data) around a based path to build an open endpoint-preimage neighborhood. -/
-public theorem Path.exists_pathHomotopyTrivial_tube
-    [LocallyPathConnectedSpace X] {x y : X}
+public theorem Path.exists_pathHomotopyTrivial_tube [LocallyPathConnectedSpace X] {x y : X}
     (γ : Path x y) (hslsc : SemilocallySimplyConnectedOn (Set.range γ)) :
     ∃ (n : ℕ) (part : IntervalPartition n) (T : TubeData X n), PathInTube γ part T := by
   obtain ⟨n, part, h_partition⟩ := γ.exists_partition_with_property
@@ -296,8 +293,7 @@ theorem isOpen_pathTube {x y : X} {n : ℕ}
     (isOpen_setOf_forall_vertex_mem part V hV_open)
 
 /-- Given a partition and tube data, the set of paths in the tube is open in the path space. -/
-theorem TubeData.isOpen {x y : X} {n : ℕ}
-    (part : IntervalPartition n) (T : TubeData X n) :
+theorem TubeData.isOpen {x y : X} {n : ℕ} (part : IntervalPartition n) (T : TubeData X n) :
     IsOpen (T.toSet (x := x) (y := y) part) := by
   have : T.toSet (x := x) (y := y) part =
       {γ' : Path x y |
@@ -346,8 +342,7 @@ theorem Path.exists_rung_paths {x y y' : X} {n : ℕ} (γ : Path x y) (γ' : Pat
 
 /-- For a single segment in a path-homotopy-trivial set `U`, the path `γ.trans α_end` is
 homotopic to `α_start.trans γ'` when all four paths have range in `U`. -/
-theorem Path.segment_rung_homotopy {a b c d : X} (U : Set X)
-    (hU : IsPathHomotopyTrivial U)
+theorem Path.segment_rung_homotopy {a b c d : X} (U : Set X) (hU : IsPathHomotopyTrivial U)
     (γ : Path a b) (γ' : Path c d) (α_start : Path a c) (α_end : Path b d)
     (hγ : Set.range γ ⊆ U) (hγ' : Set.range γ' ⊆ U)
     (hα_start : Set.range α_start ⊆ U) (hα_end : Set.range α_end ⊆ U) :
@@ -432,10 +427,8 @@ open Path.Homotopic.Quotient in
 a single rung across one rectangle, and the rectangle homotopy `h_rectangles i` cancels it. -/
 private lemma Path.pasteSegmentAuxPath_succ_homotopic {x y y' : X} {n : ℕ}
     (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
-    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
-    (i : Fin n)
-    (h_rectangle : Path.Homotopic
-        ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) (i : Fin n)
+    (h_rectangle : Path.Homotopic ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
         ((α i.castSucc).trans (γ'.subpath (part.t i.castSucc) (part.t i.succ)))) :
     Path.Homotopic (Path.pasteSegmentAuxPath γ γ' part α i.succ)
       (Path.pasteSegmentAuxPath γ γ' part α i.castSucc) := by
@@ -481,8 +474,7 @@ When the initial loop is null-homotopic, this identifies `γ'` with `γ` followe
 rung. If the final rung is also null-homotopic, we recover γ ≃ γ'. -/
 theorem Path.paste_segment_homotopies {x y y' : X} {n : ℕ}
     (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
-    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
-    (h_rectangles : ∀ (i : Fin n),
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) (h_rectangles : ∀ (i : Fin n),
         Path.Homotopic
           ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
           ((α i.castSucc).trans (γ'.subpath (part.t i.castSucc) (part.t i.succ)))) :
@@ -507,20 +499,16 @@ theorem Path.paste_segment_homotopies {x y y' : X} {n : ℕ}
 
 /-- A loop whose range lies in a path-homotopy-trivial set is null-homotopic. -/
 theorem Path.nullhomotopic_of_range_subset_pathHomotopyTrivial {x : X} (γ : Path x x)
-    (U : Set X) (hU : IsPathHomotopyTrivial U)
-    (hγU : Set.range γ ⊆ U) :
+    (U : Set X) (hU : IsPathHomotopyTrivial U) (hγU : Set.range γ ⊆ U) :
     Path.Homotopic γ (Path.refl x) :=
   hU.apply γ (Path.refl x) hγU <| by
     rintro _ ⟨_, rfl⟩
     simpa [γ.source] using hγU ⟨0, rfl⟩
 
 private theorem Path.first_rung_nullhomotopic_of_range_subset_pathHomotopyTrivial
-    {x y y' : X} {n : ℕ}
-    (γ : Path x y) (γ' : Path x y')
-    (part : IntervalPartition n)
+    {x y y' : X} {n : ℕ} (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
     (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
-    (U₀ : Set X) (hU₀ : IsPathHomotopyTrivial U₀)
-    (h_α₀_in_U₀ : Set.range (α 0) ⊆ U₀) :
+    (U₀ : Set X) (hU₀ : IsPathHomotopyTrivial U₀) (h_α₀_in_U₀ : Set.range (α 0) ⊆ U₀) :
     let α₀ := (α 0).cast (Path.source_eq_eval_partition_zero γ part)
       (Path.source_eq_eval_partition_zero γ' part)
     Path.Homotopic α₀ (Path.refl x) := by
@@ -528,12 +516,10 @@ private theorem Path.first_rung_nullhomotopic_of_range_subset_pathHomotopyTrivia
   apply Path.nullhomotopic_of_range_subset_pathHomotopyTrivial α₀ U₀ hU₀
   simpa only [α₀, Path.cast_coe] using h_α₀_in_U₀
 
-private theorem Path.last_rung_nullhomotopic_of_range_subset_pathHomotopyTrivial
-    {x y : X} {n : ℕ}
+private theorem Path.last_rung_nullhomotopic_of_range_subset_pathHomotopyTrivial {x y : X} {n : ℕ}
     (γ γ' : Path x y) (part : IntervalPartition n)
     (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
-    (Uₙ : Set X) (hUₙ : IsPathHomotopyTrivial Uₙ)
-    (h_αₙ_in_Uₙ : Set.range (α (Fin.last n)) ⊆ Uₙ) :
+    (Uₙ : Set X) (hUₙ : IsPathHomotopyTrivial Uₙ) (h_αₙ_in_Uₙ : Set.range (α (Fin.last n)) ⊆ Uₙ) :
     let αₙ := (α (Fin.last n)).cast
       (Path.target_eq_eval_partition_last γ part)
       (Path.target_eq_eval_partition_last γ' part)
@@ -546,10 +532,8 @@ private theorem Path.last_rung_nullhomotopic_of_range_subset_pathHomotopyTrivial
 first rung has range in a path-homotopy-trivial set. Then `γ'` is homotopic to `γ` followed by
 the final rung. -/
 theorem Path.paste_segment_homotopies_pathHomotopyTrivial_source {x y y' : X} {n : ℕ}
-    (γ : Path x y) (γ' : Path x y')
-    (part : IntervalPartition n)
-    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
-    (h_rectangles : ∀ (i : Fin n),
+    (γ : Path x y) (γ' : Path x y') (part : IntervalPartition n)
+    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i))) (h_rectangles : ∀ (i : Fin n),
         Path.Homotopic
           ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
           ((α i.castSucc).trans (γ'.subpath (part.t i.castSucc) (part.t i.succ))))
@@ -576,8 +560,7 @@ followed by the final endpoint rung.
 variable-endpoint statement to move between based paths with distinct endpoints inside a common
 path component of `endpoint ⁻¹' U`; the fixed-endpoint public API does not suffice there. -/
 public theorem Path.tube_subset_homotopy_class_source {x y y' : X} {n : ℕ}
-    (γ : Path x y) (part : IntervalPartition n) (T : TubeData X n)
-    (hγ : PathInTube γ part T)
+    (γ : Path x y) (part : IntervalPartition n) (T : TubeData X n) (hγ : PathInTube γ part T)
     (γ' : Path x y') (hγ' : PathInTube γ' part T) :
     ∃ ρ : Path y y', Set.range ρ ⊆ T.V (Fin.last n) ∧ Path.Homotopic (γ.trans ρ) γ' := by
   cases n with
@@ -606,8 +589,7 @@ public theorem Path.tube_subset_homotopy_class_source {x y y' : X} {n : ℕ}
 
 /-- Two-sided specialization of `paste_segment_homotopies` killing both endpoint loops. -/
 theorem Path.paste_segment_homotopies_pathHomotopyTrivial {x y : X} {n : ℕ} (γ γ' : Path x y)
-    (part : IntervalPartition n)
-    (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
+    (part : IntervalPartition n) (α : (i : Fin (n + 1)) → Path (γ (part.t i)) (γ' (part.t i)))
     (h_rectangles : ∀ (i : Fin n),
         Path.Homotopic
           ((γ.subpath (part.t i.castSucc) (part.t i.succ)).trans (α i.succ))
@@ -630,8 +612,7 @@ theorem Path.paste_segment_homotopies_pathHomotopyTrivial {x y : X} {n : ℕ} (�
 
 /-- Any fixed-endpoint path in the same tube as `γ` is homotopic to `γ`. -/
 theorem Path.tube_subset_homotopy_class {x y : X} {n : ℕ}
-    (γ : Path x y) (part : IntervalPartition n) (T : TubeData X n)
-    (hγ : PathInTube γ part T)
+    (γ : Path x y) (part : IntervalPartition n) (T : TubeData X n) (hγ : PathInTube γ part T)
     (γ' : Path x y) (hγ' : PathInTube γ' part T) :
     Path.Homotopic γ' γ := by
   cases n with

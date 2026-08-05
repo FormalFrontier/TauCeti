@@ -68,8 +68,7 @@ lemma pullback_section_fst (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f
 
 /-- The two projection formulas uniquely determine the pulled-back section. -/
 lemma eq_pullback_section (h : SplitEpi f) {T : C} (g : T ⟶ S) [HasPullback f g]
-    (t : T ⟶ Limits.pullback f g)
-    (hfst : t ≫ Limits.pullback.fst f g = g ≫ h.section_)
+    (t : T ⟶ Limits.pullback f g) (hfst : t ≫ Limits.pullback.fst f g = g ≫ h.section_)
     (hsnd : t ≫ Limits.pullback.snd f g = 𝟙 T) :
     t = (h.pullback g).section_ := by
   apply Limits.pullback.hom_ext
@@ -84,8 +83,7 @@ pulled-back sections. -/
 lemma pullback_section_naturality {Y : C} {f' : Y ⟶ S} (h : SplitEpi f)
     (h' : SplitEpi f') (i : X ⟶ Y) (hi : f = i ≫ f')
     (hsection : h.section_ ≫ i = h'.section_) {T : C} (g : T ⟶ S)
-    [HasPullback f g] [HasPullback f' g] :
-    (h.pullback g).section_ ≫
+    [HasPullback f g] [HasPullback f' g] : (h.pullback g).section_ ≫
         Limits.pullback.map f g f' g i (𝟙 T) (𝟙 S) (by simp [hi]) (by simp) =
       (h'.pullback g).section_ := by
   apply Limits.pullback.hom_ext
@@ -98,8 +96,7 @@ For `k : T' ⟶ T`, the canonical map from the pullback along `k ≫ g` to the
 pullback along `g` carries the section over `T'` to the section over `T`
 precomposed with `k`. -/
 lemma pullback_section_map (h : SplitEpi f) {T T' : C} (g : T ⟶ S) (k : T' ⟶ T)
-    [HasPullback f g] [HasPullback f (k ≫ g)] :
-    (h.pullback (k ≫ g)).section_ ≫
+    [HasPullback f g] [HasPullback f (k ≫ g)] : (h.pullback (k ≫ g)).section_ ≫
         Limits.pullback.map f (k ≫ g) f g (𝟙 X) k (𝟙 S) (by simp) (by simp) =
       k ≫ (h.pullback g).section_ := by
   apply Limits.pullback.hom_ext

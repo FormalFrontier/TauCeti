@@ -68,8 +68,7 @@ the base. -/
 `orbitQuotientEquivBase`. -/
 @[simp]
 lemma orbitQuotientHomeomorphBase_apply (hreg : IsRegular p) (hcont : Continuous p)
-    (hopen : IsOpenMap p)
-    (x : MulAction.orbitRel.Quotient (Deck p) E) :
+    (hopen : IsOpenMap p) (x : MulAction.orbitRel.Quotient (Deck p) E) :
     hreg.orbitQuotientHomeomorphBase hcont hopen x = hreg.orbitQuotientEquivBase x :=
   rfl
 
@@ -85,8 +84,7 @@ lemma orbitQuotientHomeomorphBase_mk (hreg : IsRegular p) (hcont : Continuous p)
 lift. -/
 @[simp]
 lemma orbitQuotientHomeomorphBase_symm_apply_proj (hreg : IsRegular p) (hcont : Continuous p)
-    (hopen : IsOpenMap p) (e : E) :
-    (hreg.orbitQuotientHomeomorphBase hcont hopen).symm (p e) =
+    (hopen : IsOpenMap p) (e : E) : (hreg.orbitQuotientHomeomorphBase hcont hopen).symm (p e) =
       (Quotient.mk'' e : MulAction.orbitRel.Quotient (Deck p) E) :=
   hreg.orbitQuotientEquivBase_symm_apply_proj e
 

@@ -129,8 +129,7 @@ theorem toMonic_append (s : Sym R n) (t : Sym R m) :
 
 /-- The monic polynomial of a constant tuple is a pure power of a linear factor. -/
 @[simp]
-theorem toMonic_replicate (a : R) :
-    (toMonic (Sym.replicate n a) : R[X]) = (X - C a) ^ n := by
+theorem toMonic_replicate (a : R) : (toMonic (Sym.replicate n a) : R[X]) = (X - C a) ^ n := by
   rw [coe_toMonic, Sym.coe_replicate]
   simp
 
@@ -281,8 +280,7 @@ theorem coeffEquiv_apply (s : Sym K n) (i : Fin n) :
 /-- The inverse chart sends a coefficient tuple to the root multiset of the monic polynomial it
 determines. -/
 @[simp]
-theorem coeffEquiv_symm_apply (f : Fin n → K) :
-    (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
+theorem coeffEquiv_symm_apply (f : Fin n → K) : (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
       (X ^ n + ∑ i : Fin n, monomial (i : ℕ) (f i)).roots := by
   rw [coeffEquiv, Equiv.symm_trans_apply, Equiv.symm_trans_apply, coe_monicEquiv_symm_apply,
     coe_monicEquivDegreeLT_symm_apply, coe_degreeLTEquiv_toEquiv_symm_apply]

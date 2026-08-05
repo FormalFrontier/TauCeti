@@ -80,8 +80,7 @@ theorem twoRank_units : TauCeti.twoRank (𝓞 F)ˣ = rank F + 1 :=
 `[𝓞 F^× : (𝓞 F^×)²] = 2 ^ (rank F + 1)`. This is the subgroup-index reading of
 `TauCeti.NumberField.card_elementaryTwoQuotient_units`; it sharpens the degree bound
 `TauCeti.NumberField.units_sq_index_le` to an equality. -/
-theorem units_sq_index_eq :
-    (Subgroup.square (𝓞 F)ˣ).index = 2 ^ (rank F + 1) := by
+theorem units_sq_index_eq : (Subgroup.square (𝓞 F)ˣ).index = 2 ^ (rank F + 1) := by
   rw [← TauCeti.card_elementaryTwoQuotient_eq_index_square, card_elementaryTwoQuotient_units]
 
 end TauCeti.NumberField

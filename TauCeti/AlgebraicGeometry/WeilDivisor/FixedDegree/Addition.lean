@@ -85,8 +85,7 @@ lemma add_assoc {n : ℕ} (D : EffectiveDivisorOfDegree X d)
 /-- Adding divisors built from finitely supported multiplicities corresponds to adding their
 multiplicity functions. -/
 @[simp]
-lemma add_ofFinsupp (m n : X →₀ ℕ) (hm : m.sum (fun _ k => k) = d)
-    (hn : n.sum (fun _ k => k) = e) :
+lemma add_ofFinsupp (m n : X →₀ ℕ) (hm : m.sum (fun _ k => k) = d) (hn : n.sum (fun _ k => k) = e) :
     add (ofFinsupp m hm) (ofFinsupp n hn) =
       ofFinsupp (m + n) (by
         rw [Finsupp.sum_add_index']

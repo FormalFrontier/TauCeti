@@ -145,7 +145,7 @@ theorem exists_mem_rootSet_eq_adjoin_of_abs_discr_le [DecidableEq A] {N : ℕ}
       (K : IntermediateField ℚ A) = ℚ⟮x⟯ := by
   classical
   have : CharZero K := SubsemiringClass.instCharZero K
-  haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance hK₀
+  have : _root_.NumberField K := @NumberField.mk _ _ inferInstance hK₀
   obtain ⟨a, ha₁, haM⟩ := exists_primitive_element_infinitePlace_le hK
   refine ⟨a, ?_, ?_⟩
   · refine Set.mem_iUnion.mpr ⟨minpoly ℤ (a : K), Set.mem_iUnion.mpr
@@ -258,14 +258,13 @@ private theorem setOf_finiteDimensional_abs_discr_le_subset_of_le {N M : ℕ} (h
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         |discr K| ≤ (M : ℤ)} := by
   intro K hK
-  haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
+  have : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
   exact @le_trans ℤ _ |discr K| (N : ℤ) (M : ℤ) hK (by exact_mod_cast hNM)
 
 /-- **Threshold-monotone effective Hermite--Minkowski.** If `N ≤ M`, then the number of
 finite-dimensional subfields of an ambient extension `A / ℚ` with absolute discriminant at most `N`
 is bounded by the explicit Hermite-count expression attached to the larger threshold `M`. -/
-theorem ncard_setOf_finiteDimensional_abs_discr_le_le_of_threshold_le {N M : ℕ}
-    (hNM : N ≤ M) :
+theorem ncard_setOf_finiteDimensional_abs_discr_le_le_of_threshold_le {N M : ℕ} (hNM : N ≤ M) :
     {K : {F : IntermediateField ℚ A // FiniteDimensional ℚ F} |
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         |discr K| ≤ (N : ℤ)}.ncard ≤
@@ -296,7 +295,7 @@ private theorem setOf_finiteDimensional_natAbs_discr_le_subset_abs_discr_le (N :
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         |discr K| ≤ (N : ℤ)} := by
   intro K hK
-  haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
+  have : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
   -- The set predicate elaborates its own `haveI`; normalize the target to the local instance
   -- before rewriting `Int.natAbs`.
   change |discr K| ≤ (N : ℤ)
@@ -307,8 +306,7 @@ private theorem setOf_finiteDimensional_natAbs_discr_le_subset_abs_discr_le (N :
 then the number of finite-dimensional subfields of an ambient extension `A / ℚ` whose
 discriminant has natural absolute value at most `N` is bounded by the explicit Hermite-count
 expression attached to the larger threshold `M`. -/
-theorem ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_threshold_le {N M : ℕ}
-    (hNM : N ≤ M) :
+theorem ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_threshold_le {N M : ℕ} (hNM : N ≤ M) :
     {K : {F : IntermediateField ℚ A // FiniteDimensional ℚ F} |
         haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
         (discr K).natAbs ≤ N}.ncard ≤

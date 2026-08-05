@@ -46,7 +46,7 @@ paths could be extended indefinitely, past the bound of
 `TauCeti.Quiver.IsAcyclic.length_lt_card`. -/
 theorem IsAcyclic.exists_isSink [Finite V] [Nonempty V] (h : IsAcyclic V) :
     ∃ i : V, IsSink i := by
-  letI : Fintype V := Fintype.ofFinite V
+  let : Fintype V := Fintype.ofFinite V
   by_contra hcon
   have hout : ∀ i : V, ∃ b : V, Nonempty (i ⟶ b) := fun i ↦ by
     by_contra hi
@@ -66,7 +66,7 @@ theorem IsAcyclic.exists_isSink [Finite V] [Nonempty V] (h : IsAcyclic V) :
 /-- A nonempty finite acyclic quiver has a source. -/
 theorem IsAcyclic.exists_isSource [Finite V] [Nonempty V] (h : IsAcyclic V) :
     ∃ i : V, IsSource i := by
-  letI : Fintype V := Fintype.ofFinite V
+  let : Fintype V := Fintype.ofFinite V
   by_contra hcon
   have hin : ∀ i : V, ∃ a : V, Nonempty (a ⟶ i) := fun i ↦ by
     by_contra hi

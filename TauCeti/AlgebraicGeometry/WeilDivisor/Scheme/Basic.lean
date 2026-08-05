@@ -93,8 +93,7 @@ lemma toAlgebraicCycle_apply_of_coheight_ne_one (D : SchemeWeilDivisor X) (x : X
 
 /-- The support of a scheme-theoretic Weil divisor viewed as an algebraic cycle is the image of
 its finite support under the inclusion of codimension-one points. -/
-lemma support_toAlgebraicCycle (D : SchemeWeilDivisor X) :
-    (toAlgebraicCycle D).support =
+lemma support_toAlgebraicCycle (D : SchemeWeilDivisor X) : (toAlgebraicCycle D).support =
       Subtype.val '' (D.support : Set (CodimensionOnePoint X)) := by
   ext x
   constructor

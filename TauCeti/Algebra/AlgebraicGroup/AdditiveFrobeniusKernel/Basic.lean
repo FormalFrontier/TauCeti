@@ -7,7 +7,8 @@ module
 public import Mathlib.Algebra.DualNumber
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Frobenius
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map
+public import TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra.Augmentation
 
 /-!
 # The Frobenius kernel group scheme `αₚ`
@@ -48,6 +49,8 @@ and Layer 3 develops "Hopf ideals ↔ closed subgroup schemes".
 ## Main declarations
 
 * `TauCeti.AlphaP.hopfIdeal`: the Hopf ideal `(xᵖ)` of the additive-group Hopf algebra.
+* `TauCeti.AlphaP.map_augmentation_frobeniusBialgHom_eq_hopfIdeal`: mapping the augmentation
+  Hopf ideal along Frobenius gives `TauCeti.AlphaP.hopfIdeal`.
 * `TauCeti.AlphaP.CoordinateRing`: the coordinate Hopf algebra `R[x] / (xᵖ)` of `αₚ`.
 * `TauCeti.AlphaP.pointsHom`: the injective homomorphism from the convolution group of points of
   `αₚ` to the additive group `Multiplicative A`, landing in the `p`-nilpotent elements.
@@ -60,7 +63,7 @@ and Layer 3 develops "Hopf ideals ↔ closed subgroup schemes".
 ## References
 
 The Hopf structure on the additive group is Tau Ceti's
-`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra` and
+`TauCeti.Algebra.HopfAlgebra.SymmetricAlgebra.Basic` and
 `TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic`; the Hopf-ideal quotient machinery and its
 bridge to Mathlib's quotient Hopf algebra are `TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic`. The
 primitivity of `xᵖ` reuses `TauCeti.AdditiveGroup.comul_ι_pow` of
@@ -141,6 +144,25 @@ theorem hopfIdeal_toIdeal :
     (hopfIdeal (R := R) p).toIdeal = Ideal.span {(ι R R 1 : SymmetricAlgebra R R) ^ p} :=
   rfl
 
+/-- Mapping the augmentation Hopf ideal of the additive group along the Frobenius coordinate
+endomorphism `x ↦ xᵖ` gives the Hopf ideal `(xᵖ)` defining `αₚ`. This is the concrete ideal
+identification relating `αₚ` to the generic kernel construction for affine group schemes. -/
+@[simp]
+theorem map_augmentation_frobeniusBialgHom_eq_hopfIdeal :
+    (HopfIdeal.augmentation R (SymmetricAlgebra R R)).map
+        (AdditiveGroup.frobeniusBialgHom R p) =
+      hopfIdeal (R := R) p := by
+  apply HopfIdeal.ext
+  intro z
+  rw [← HopfIdeal.mem_toIdeal, ← HopfIdeal.mem_toIdeal, HopfIdeal.map_toIdeal,
+    TauCeti.SymmetricAlgebra.augmentation_toIdeal_eq_span_singleton_ι_one, Ideal.map_span,
+    Set.image_singleton]
+  -- `Ideal.map_span` exposes the ring-hom coercion; the bialgebra-hom form lets its generator
+  -- computation lemma apply directly.
+  change z ∈ Ideal.span {(AdditiveGroup.frobeniusBialgHom R p)
+      (ι R R 1 : SymmetricAlgebra R R)} ↔ z ∈ (hopfIdeal (R := R) p).toIdeal
+  rw [AdditiveGroup.frobeniusBialgHom_ι_one, hopfIdeal_toIdeal]
+
 /-- **The coordinate Hopf algebra of `αₚ`**, the quotient `R[x] / (xᵖ)`. It carries a Hopf
 algebra structure through the bridge instances of `TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic`. -/
 noncomputable abbrev CoordinateRing : Type u :=
@@ -186,7 +208,7 @@ additive companion of the non-reduced `μ_p` example. -/
 theorem coordinateRing_not_isReduced [Nontrivial R] :
     ¬ IsReduced (CoordinateRing (R := R) p) := by
   intro hred
-  haveI := hred
+  have := hred
   exact mk_ι_ne_zero p
     (IsNilpotent.eq_zero (x := Ideal.Quotient.mk _ (ι R R 1)) ⟨p, mk_ι_pow_eq_zero p⟩)
 

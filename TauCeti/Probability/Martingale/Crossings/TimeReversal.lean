@@ -114,8 +114,7 @@ For `m ≤ k` with `X`'s `k`-th crossing completing before `N`:
 This captures that `Y`'s `m`-th crossing corresponds to `X`'s `(k - m + 1)`-th crossing (reversed
 order), with `Y`'s crossing ending at time `N - τ` where `τ` is the start of `X`'s crossing. -/
 private lemma upperCrossingTime_neg_revProcess_le_strong
-    {Ω : Type*} (X : ℕ → Ω → ℝ) (a b : ℝ) (hab : a < b) (N k m : ℕ) (ω : Ω)
-    (hm : m ≤ k)
+    {Ω : Type*} (X : ℕ → Ω → ℝ) (a b : ℝ) (hab : a < b) (N k m : ℕ) (ω : Ω) (hm : m ≤ k)
     (h_k : upperCrossingTime a b X N k ω < N) :
     upperCrossingTime (-b) (-a) (-(revProcess X N)) (N + 1) m ω
       ≤ N - lowerCrossingTime a b X N (k - m) ω := by

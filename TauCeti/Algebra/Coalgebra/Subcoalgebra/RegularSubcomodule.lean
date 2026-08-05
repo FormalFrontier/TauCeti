@@ -151,8 +151,7 @@ theorem toRegularSubcomodule_iSup {ι : Sort*} (D : ι → Subcoalgebra R C) :
 
 /-- Viewing subcoalgebras as regular subcomodules preserves set-indexed suprema. -/
 @[simp]
-theorem toRegularSubcomodule_sSup (S : Set (Subcoalgebra R C)) :
-    (sSup S).toRegularSubcomodule =
+theorem toRegularSubcomodule_sSup (S : Set (Subcoalgebra R C)) : (sSup S).toRegularSubcomodule =
       ⨆ D : S, (D : Subcoalgebra R C).toRegularSubcomodule := by
   ext c
   rw [← Subcomodule.mem_toSubmodule
@@ -164,8 +163,7 @@ theorem toRegularSubcomodule_sSup (S : Set (Subcoalgebra R C)) :
 
 /-- Viewing subcoalgebras as regular subcomodules preserves finite joins. -/
 @[simp]
-theorem toRegularSubcomodule_finset_sup {ι : Type*} (s : Finset ι)
-    (D : ι → Subcoalgebra R C) :
+theorem toRegularSubcomodule_finset_sup {ι : Type*} (s : Finset ι) (D : ι → Subcoalgebra R C) :
     (s.sup D).toRegularSubcomodule = s.sup fun i => (D i).toRegularSubcomodule := by
   classical
   induction s using Finset.induction_on with
@@ -173,15 +171,13 @@ theorem toRegularSubcomodule_finset_sup {ι : Type*} (s : Finset ι)
   | insert i s hi ih => simp [ih]
 
 /-- A finite subcoalgebra is finite as a regular subcomodule. -/
-theorem toRegularSubcomodule_finite (D : Subcoalgebra R C)
-    [Module.Finite R D.toSubmodule] :
+theorem toRegularSubcomodule_finite (D : Subcoalgebra R C) [Module.Finite R D.toSubmodule] :
     Module.Finite R D.toRegularSubcomodule.toSubmodule := by
   rw [toRegularSubcomodule_toSubmodule]
   infer_instance
 
 /-- A finite subcoalgebra is finite as a regular subcomodule. -/
-instance instFiniteToRegularSubcomodule (D : Subcoalgebra R C)
-    [Module.Finite R D.toSubmodule] :
+instance instFiniteToRegularSubcomodule (D : Subcoalgebra R C) [Module.Finite R D.toSubmodule] :
     Module.Finite R D.toRegularSubcomodule.toSubmodule :=
   D.toRegularSubcomodule_finite
 

@@ -237,15 +237,13 @@ theorem IsComplexAntilinear.comp_linear {F : V →ₗ[ℝ] W} {G : W →ₗ[ℝ]
 
 /-- The defining formula for `complexLinearPartLinearMap J J'` on an input map. -/
 @[simp]
-theorem complexLinearPartLinearMap_apply (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W)
-    (F : V →ₗ[ℝ] W) :
+theorem complexLinearPartLinearMap_apply (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (F : V →ₗ[ℝ] W) :
     complexLinearPartLinearMap J J' F = (2⁻¹ : ℝ) • (F - J' ∘ₗ F ∘ₗ J) :=
   rfl
 
 /-- The defining formula for `complexAntilinearPartLinearMap J J'` on an input map. -/
 @[simp]
-theorem complexAntilinearPartLinearMap_apply (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W)
-    (F : V →ₗ[ℝ] W) :
+theorem complexAntilinearPartLinearMap_apply (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (F : V →ₗ[ℝ] W) :
     complexAntilinearPartLinearMap J J' F = (2⁻¹ : ℝ) • (F + J' ∘ₗ F ∘ₗ J) :=
   rfl
 
@@ -316,15 +314,13 @@ theorem complexAntilinearPart_add (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (
 
 /-- The complex-linear part commutes with real scalar multiplication in `F`. -/
 @[simp]
-theorem complexLinearPart_smul (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (c : ℝ)
-    (F : V →ₗ[ℝ] W) :
+theorem complexLinearPart_smul (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (c : ℝ) (F : V →ₗ[ℝ] W) :
     complexLinearPart J J' (c • F) = c • complexLinearPart J J' F :=
   map_smul (complexLinearPartLinearMap J J') c F
 
 /-- The complex-antilinear part commutes with real scalar multiplication in `F`. -/
 @[simp]
-theorem complexAntilinearPart_smul (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (c : ℝ)
-    (F : V →ₗ[ℝ] W) :
+theorem complexAntilinearPart_smul (J : V →ₗ[ℝ] V) (J' : W →ₗ[ℝ] W) (c : ℝ) (F : V →ₗ[ℝ] W) :
     complexAntilinearPart J J' (c • F) = c • complexAntilinearPart J J' F :=
   map_smul (complexAntilinearPartLinearMap J J') c F
 
@@ -498,8 +494,7 @@ theorem mem_complexAntilinearMaps {F : V →ₗ[ℝ] W} :
 
 /-- For genuine almost complex structures, every real-linear map splits uniquely as a
 complex-linear plus a complex-antilinear map: the two subspaces are complementary. -/
-theorem isCompl_complexLinearMaps (hJ : J ∘ₗ J = -LinearMap.id)
-    (hJ' : J' ∘ₗ J' = -LinearMap.id) :
+theorem isCompl_complexLinearMaps (hJ : J ∘ₗ J = -LinearMap.id) (hJ' : J' ∘ₗ J' = -LinearMap.id) :
     IsCompl (complexLinearMaps J J') (complexAntilinearMaps J J') := by
   constructor
   · rw [Submodule.disjoint_def]

@@ -113,16 +113,14 @@ noncomputable def extPowerFDRepDetIso : extPowerFDRep k n n ≅ detFDRep k n :=
 /-- The forward map of the bundled identification is the underlying representation
 equivalence. -/
 @[simp]
-theorem extPowerFDRepDetIso_hom_hom :
-    (extPowerFDRepDetIso k n).hom.hom =
+theorem extPowerFDRepDetIso_hom_hom : (extPowerFDRepDetIso k n).hom.hom =
       ConcreteCategory.ofHom (topExtPowerEquivDet k n).toLinearMap := by
   rw [extPowerFDRepDetIso]
   rfl
 
 /-- The inverse map of the bundled identification is the inverse representation equivalence. -/
 @[simp]
-theorem extPowerFDRepDetIso_inv_hom :
-    (extPowerFDRepDetIso k n).inv.hom =
+theorem extPowerFDRepDetIso_inv_hom : (extPowerFDRepDetIso k n).inv.hom =
       ConcreteCategory.ofHom (topExtPowerEquivDet k n).symm.toLinearMap := by
   rw [extPowerFDRepDetIso]
   rfl
@@ -136,8 +134,7 @@ variable [Field k]
 /-- The character of the `d`th exterior power on a diagonal matrix is the `d`th elementary
 symmetric polynomial in its diagonal entries. -/
 @[simp]
-theorem char_extPowerRep_diagonal (t : Fin n → kˣ) :
-    (extPowerRep k n d).character (diagGL t) =
+theorem char_extPowerRep_diagonal (t : Fin n → kˣ) : (extPowerRep k n d).character (diagGL t) =
       MvPolynomial.eval (fun i => (t i : k)) (MvPolynomial.esymm (Fin n) k d) := by
   rw [Representation.character, Representation.exteriorPower_apply]
   rw [exteriorPower.trace_map_of_apply_basis (Pi.basisFun k (Fin n))

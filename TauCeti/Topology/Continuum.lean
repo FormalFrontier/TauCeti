@@ -31,11 +31,11 @@ recedes to infinity — intersect in the two lines, which are disconnected.
 
 Suppose the intersection `C` splits: `C ⊆ u ∪ v` with `u`, `v` open, both meeting `C`, and
 `C ∩ u ∩ v = ∅`. Then `C \ v` and `C \ u` are disjoint nonempty compact sets, so in a Hausdorff
-space they have disjoint open neighbourhoods `U` and `V`, and `C ⊆ U ∪ V`. Now the compact sets
-`t i \ (U ∪ V)` are again directed and their intersection is `C \ (U ∪ V) = ∅`, so by Cantor's
-intersection theorem one of them is *already* empty: some member `t i` is covered by `U ∪ V`. That
-member meets both `U` and `V` — it contains `C` — so its connectedness forces `U ∩ V` to be
-nonempty, a contradiction.
+space they have disjoint open neighbourhoods `U` and `V`, and `C ⊆ U ∪ V`. So `U ∪ V` is a
+neighbourhood of every point of `C`, and `exists_subset_nhds_of_isCompact` — any neighbourhood of
+the intersection of a directed family of compacts already contains one member — supplies a single
+`t i` covered by `U ∪ V`. That member meets both `U` and `V` — it contains `C` — so its
+connectedness forces `U ∩ V` to be nonempty, a contradiction.
 
 ## Main results
 
@@ -87,25 +87,10 @@ theorem isPreconnected_iInter_of_directed [T2Space X] [Nonempty ι] (htd : Direc
     by_cases hxv : x ∈ v
     · exact Or.inr (hBV ⟨hx, fun hxu => hmem x hx hxu hxv⟩)
     · exact Or.inl (hAU ⟨hx, hxv⟩)
-  -- Cantor's intersection theorem: one member of the family is already covered by `U ∪ V`.
-  have hcover : ∃ i, t i ⊆ U ∪ V := by
-    by_contra hno
-    push Not at hno
-    have hne : ∀ i, (t i \ (U ∪ V)).Nonempty := fun i => by
-      obtain ⟨x, hx, hxUV⟩ := not_subset.mp (hno i)
-      exact ⟨x, hx, hxUV⟩
-    have hdir : Directed (· ⊇ ·) fun i => t i \ (U ∪ V) := by
-      intro i j
-      obtain ⟨k, hki, hkj⟩ := htd i j
-      exact ⟨k, sdiff_subset_sdiff_left hki, sdiff_subset_sdiff_left hkj⟩
-    obtain ⟨x, hx⟩ :=
-      IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed
-        (fun i => t i \ (U ∪ V)) hdir hne (fun i => (htc i).diff (hU.union hV))
-        fun i => ((htc i).diff (hU.union hV)).isClosed
-    have hxC : x ∈ ⋂ i, t i := mem_iInter.mpr fun i => (mem_iInter.mp hx i).1
-    exact (mem_iInter.mp hx (Classical.arbitrary ι)).2 (hCUV hxC)
-  -- That member is preconnected and meets both `U` and `V`, so they cannot be disjoint.
-  obtain ⟨i, hi⟩ := hcover
+  -- Cantor's intersection theorem: one member of the family is already covered by `U ∪ V`, and
+  -- that member is preconnected and meets both `U` and `V`, so they cannot be disjoint.
+  obtain ⟨i, hi⟩ :=
+    exists_subset_nhds_of_isCompact htd htc fun x hx => (hU.union hV).mem_nhds (hCUV hx)
   obtain ⟨x, -, hxU, hxV⟩ :=
     htp i U V hU hV hi ⟨a, mem_iInter.mp haC i, hAU haA⟩ ⟨b, mem_iInter.mp hbC i, hBV hbB⟩
   exact disjoint_left.mp hUV hxU hxV

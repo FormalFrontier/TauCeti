@@ -141,8 +141,7 @@ theorem IsNullHomologous.union_right (h : IsNullHomologous γ a b Ω') :
 
 /-- If a curve is null-homologous in each of two domains, it is null-homologous in their
 intersection. -/
-theorem IsNullHomologous.inter (hΩ : IsNullHomologous γ a b Ω)
-    (hΩ' : IsNullHomologous γ a b Ω') :
+theorem IsNullHomologous.inter (hΩ : IsNullHomologous γ a b Ω) (hΩ' : IsNullHomologous γ a b Ω') :
     IsNullHomologous γ a b (Ω ∩ Ω') := by
   rw [isNullHomologous_iff] at hΩ hΩ' ⊢
   intro w hw

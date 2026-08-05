@@ -76,7 +76,7 @@ class IsInvertible : Prop where
 instance IsInvertible.isLocallyFree (M : SheafOfModules.{u} R) [h : IsInvertible M] :
     M.IsLocallyFree := by
   obtain ⟨q, hq⟩ := h.exists_isInvertible
-  letI := hq.isLocallyFreeData
+  let := hq.isLocallyFreeData
   exact q.isLocallyFree
 
 /-- Transport local generator data along an isomorphism of sheaves of modules: the same cover, with

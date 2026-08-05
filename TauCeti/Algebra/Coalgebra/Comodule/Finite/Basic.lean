@@ -144,15 +144,13 @@ abbrev of (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 /-- The object of `ComoduleCat` underlying `FGComoduleCat.of` is `ComoduleCat.of`. -/
 @[simp]
-theorem of_obj (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R C M]
-    [Module.Finite R M] :
+theorem of_obj (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R C M] [Module.Finite R M] :
     (of (R := R) (C := C) M).obj = ComoduleCat.of R C M :=
   rfl
 
 /-- The coaction on `FGComoduleCat.of` is the original unbundled coaction. -/
 @[simp]
-theorem of_coact {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R C M]
-    [Module.Finite R M] :
+theorem of_coact {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R C M] [Module.Finite R M] :
     Comodule.coact (R := R) (C := C) (M := of (R := R) (C := C) M) =
       Comodule.coact (R := R) (C := C) (M := M) :=
   rfl
@@ -177,8 +175,7 @@ theorem ofHom_hom {M N : Type w} [AddCommMonoid M] [Module R M] [Comodule R C M]
 /-- The categorical identity on a finitely generated bundled comodule is the bundled form of
 the identity comodule morphism. -/
 @[simp]
-theorem ofHom_id {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R C M]
-    [Module.Finite R M] :
+theorem ofHom_id {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R C M] [Module.Finite R M] :
     ofHom (R := R) (C := C) (Comodule.Hom.id R C M) = 𝟙 (of (R := R) (C := C) M) :=
   rfl
 
@@ -261,8 +258,7 @@ def zero : FGComoduleCat.{u, v, w} R C :=
 
 /-- The ambient comodule underlying the finitely generated zero comodule is the zero comodule. -/
 @[simp]
-theorem zero_obj :
-    (zero R C : FGComoduleCat.{u, v, w} R C).obj = ComoduleCat.zero R C :=
+theorem zero_obj : (zero R C : FGComoduleCat.{u, v, w} R C).obj = ComoduleCat.zero R C :=
   rfl
 
 /-- The named finitely generated zero comodule is a zero object. -/

@@ -63,8 +63,7 @@ theorem symmetricPower_apply (ρ : Representation R G M) (d : ℕ) (g : G) :
 
 This is intentionally not a simp lemma: `symmetricPower_apply` followed by
 `SymmetricPower.map_tprod` already performs this simplification. -/
-theorem symmetricPower_apply_tprod (ρ : Representation R G M) (d : ℕ) (g : G)
-    (m : Fin d → M) :
+theorem symmetricPower_apply_tprod (ρ : Representation R G M) (d : ℕ) (g : G) (m : Fin d → M) :
     ρ.symmetricPower d g (⨂ₛ[R] i, m i) = ⨂ₛ[R] i, ρ g (m i) := by
   rw [symmetricPower_apply, SymmetricPower.map_tprod]
 
@@ -103,8 +102,7 @@ theorem symmetricPower_apply_tprod (f : IntertwiningMap ρ σ) (d : ℕ) (m : Fi
 
 /-- Symmetric powers preserve identity intertwining maps. -/
 @[simp]
-theorem symmetricPower_id (d : ℕ) :
-    (IntertwiningMap.id ρ).symmetricPower d =
+theorem symmetricPower_id (d : ℕ) : (IntertwiningMap.id ρ).symmetricPower d =
       IntertwiningMap.id (ρ.symmetricPower d) := by
   apply IntertwiningMap.ext
   simp
@@ -113,8 +111,7 @@ theorem symmetricPower_id (d : ℕ) :
 @[simp]
 theorem symmetricPower_comp {P : Type*} [AddCommMonoid P] [Module R P]
     {τ : Representation R G P} (f : IntertwiningMap ρ σ) (g : IntertwiningMap σ τ) (d : ℕ) :
-    (g.comp f).symmetricPower d =
-      (g.symmetricPower d).comp (f.symmetricPower d) := by
+    (g.comp f).symmetricPower d = (g.symmetricPower d).comp (f.symmetricPower d) := by
   apply IntertwiningMap.ext
   exact SymmetricPower.map_comp f.toLinearMap g.toLinearMap
 
@@ -167,8 +164,7 @@ private theorem symmetricPower_toLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
 
 /-- The underlying linear map is the usual map induced on symmetric powers. -/
 @[simp]
-theorem symmetricPower_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
-    (e.symmetricPower d).toLinearMap =
+theorem symmetricPower_toLinearMap (e : ρ.Equiv σ) (d : ℕ) : (e.symmetricPower d).toLinearMap =
       SymmetricPower.map (ι := Fin d) e.toLinearMap :=
   (rfl)
 
@@ -201,8 +197,7 @@ theorem symmetricPower_symm (e : ρ.Equiv σ) (d : ℕ) :
 @[simp]
 theorem symmetricPower_trans {P : Type*} [AddCommMonoid P] [Module R P]
     {τ : Representation R G P} (e : ρ.Equiv σ) (f : σ.Equiv τ) (d : ℕ) :
-    (e.trans f).symmetricPower d =
-      (e.symmetricPower d).trans (f.symmetricPower d) := by
+    (e.trans f).symmetricPower d = (e.symmetricPower d).trans (f.symmetricPower d) := by
   have h : ((e.trans f).symmetricPower d).toLinearMap =
       ((e.symmetricPower d).trans (f.symmetricPower d)).toLinearMap := by
     simp

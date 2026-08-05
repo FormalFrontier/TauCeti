@@ -161,8 +161,7 @@ theorem weightL2Isometry_apply (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasur
 
 /-- The inverse isometry is multiplication by `(√w)⁻¹`. -/
 theorem weightL2Isometry_symm_apply (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ)
-    (g : Lp 𝕜 2 μ) :
-    (weightL2Isometry μ w hwpos hwm).symm g
+    (g : Lp 𝕜 2 μ) : (weightL2Isometry μ w hwpos hwm).symm g
       =ᵐ[μ] fun x => (Real.sqrt (w x))⁻¹ • (g : α → 𝕜) x :=
   (MemLp.coeFn_toLp (memLp_inv_sqrt_smul μ w hwpos hwm g)).filter_mono
     (ac_withDensity μ w hwpos hwm).ae_le

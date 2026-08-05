@@ -59,7 +59,7 @@ private theorem le_ker_tensorProduct_mkQ_comp_coact :
   rw [LinearMap.mem_ker, LinearMap.comp_apply]
   rcases N.coact_mem hm with ⟨t, ht⟩
   rw [← ht]
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   -- The goal is written with `TensorProduct.map`, while Mathlib's quotient-tensor exactness
   -- lemma is stated for `rTensor`; this is only the wrapper conversion between those forms.
   change LinearMap.rTensor C N.carrier.mkQ
@@ -262,11 +262,10 @@ theorem liftQ_apply (f : Comodule.Hom R C M P)
 /-- The underlying linear map of the descended quotient morphism is the quotient-module lift. -/
 @[simp]
 theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
-    (N.liftQ f hf).toLinearMap =
+    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) : (N.liftQ f hf).toLinearMap =
       letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
       N.toSubmodule.liftQ f.toLinearMap hf := by
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
   apply Submodule.linearMap_qext
   ext m
   rw [LinearMap.comp_apply, LinearMap.comp_apply, Submodule.mkQ_apply]
@@ -281,8 +280,7 @@ theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
 /-- Precomposing the descended quotient morphism with the quotient map recovers the original
 morphism. -/
 @[simp]
-theorem liftQ_mkQ (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
+theorem liftQ_mkQ (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
     (N.liftQ f hf).comp N.mkQ = f := by
   ext m
   simp
@@ -296,8 +294,7 @@ theorem hom_ext {f g : Comodule.Hom R C (M ⧸ N.toSubmodule) P}
   exact congr_fun (congrArg DFunLike.coe h) m
 
 /-- Uniqueness of the morphism descended to a quotient. -/
-theorem liftQ_unique (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
+theorem liftQ_unique (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
     (g : Comodule.Hom R C (M ⧸ N.toSubmodule) P) (hg : g.comp N.mkQ = f) :
     g = N.liftQ f hf := by
   apply N.hom_ext

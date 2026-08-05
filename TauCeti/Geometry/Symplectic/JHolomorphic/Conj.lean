@@ -210,8 +210,7 @@ changes the source structure from the standard one to its negation, provided ref
 reflected source set into the original one. -/
 lemma comp_stdComplexLineConj
     (hf : IsConstStructureJHolomorphicWithinAt (AlmostComplexStructure.product ℝ) J f t
-      (stdComplexLineConjCLM x))
-    (hst : Set.MapsTo stdComplexLineConjCLM s t) :
+      (stdComplexLineConjCLM x)) (hst : Set.MapsTo stdComplexLineConjCLM s t) :
     IsConstStructureJHolomorphicWithinAt (-(AlmostComplexStructure.product ℝ)) J
       (fun z => f (stdComplexLineConjCLM z)) s x :=
   hf.comp
@@ -223,8 +222,7 @@ standard structure by standard-line conjugation restores the standard source str
 reflection maps the reflected source set into the original one. -/
 lemma comp_neg_stdComplexLineConj
     (hf : IsConstStructureJHolomorphicWithinAt (-(AlmostComplexStructure.product ℝ)) J f t
-      (stdComplexLineConjCLM x))
-    (hst : Set.MapsTo stdComplexLineConjCLM s t) :
+      (stdComplexLineConjCLM x)) (hst : Set.MapsTo stdComplexLineConjCLM s t) :
     IsConstStructureJHolomorphicWithinAt (AlmostComplexStructure.product ℝ) J
       (fun z => f (stdComplexLineConjCLM z)) s x :=
   hf.comp

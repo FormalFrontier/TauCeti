@@ -171,8 +171,7 @@ noncomputable def galoisGroupEquivIntermediateFieldSubmodule [Finite ι] [NeZero
 attached to `F` as the `F`-automorphism sending each generator `rootᵢ` to `(-1)^(vᵢ) · rootᵢ`. This
 is the relative reading of `TauCeti.Multiquadratic.galoisGroupEquiv_symm_apply_gen`. -/
 @[simp] theorem galoisGroupEquivIntermediateFieldSubmodule_symm_apply_gen [Finite ι]
-    [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
     (F : IntermediateField K (adjoin K (Set.range root)))
     (v : (intermediateFieldEquivSubmodule hroot hindep F).ofDual) (i : ι) :
@@ -201,8 +200,8 @@ theorem card_aut_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isAbelianGalois hroot
-  haveI := finiteDimensional_top_over_intermediateField hroot F
+  have := isAbelianGalois hroot
+  have := finiteDimensional_top_over_intermediateField hroot F
   rw [IsGalois.card_aut_eq_finrank F (adjoin K (Set.range root)),
     finrank_top_over_intermediateField hroot hindep F]
 
@@ -214,8 +213,7 @@ everything. This is the group the genus-field constructions read off over the qu
 theorem card_aut_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (F : IntermediateField K (adjoin K (Set.range root)))
-    (hF : Module.finrank K F = 2) :
+    (F : IntermediateField K (adjoin K (Set.range root))) (hF : Module.finrank K F = 2) :
     Nat.card (adjoin K (Set.range root) ≃ₐ[F] adjoin K (Set.range root)) =
       2 ^ (Nat.card ι - 1) := by
   rw [card_aut_top_over_intermediateField hroot hindep F]

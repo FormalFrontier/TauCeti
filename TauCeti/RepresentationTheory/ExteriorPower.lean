@@ -86,8 +86,7 @@ theorem exteriorPowerZeroEquiv_toLinearEquiv (ρ : Representation R G M) :
   (rfl)
 
 /-- The first exterior power is equivalent to the original representation. -/
-noncomputable def exteriorPowerOneEquiv (ρ : Representation R G M) :
-    (ρ.exteriorPower 1).Equiv ρ :=
+noncomputable def exteriorPowerOneEquiv (ρ : Representation R G M) : (ρ.exteriorPower 1).Equiv ρ :=
   .mk (_root_.exteriorPower.oneEquiv R M) fun g =>
     _root_.exteriorPower.oneEquiv_naturality (ρ g)
 

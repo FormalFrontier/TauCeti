@@ -155,7 +155,7 @@ compact set. Some such hypothesis is needed: the cluster set of `z ↦ 1 / z` on
 `ball 0 1 \ {0}` at `0` is empty, the values escaping to infinity. -/
 lemma clusterSetOn_nonempty (hK : IsCompact K) (hfK : MapsTo f U K) (hw : w ∈ closure U) :
     (clusterSetOn f U w).Nonempty := by
-  haveI : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
+  have : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
   have hle : map f (𝓝[U] w) ≤ 𝓟 K :=
     le_principal_iff.mpr (mem_map.mpr (mem_of_superset self_mem_nhdsWithin hfK))
   obtain ⟨v, -, hv⟩ := hK.exists_mapClusterPt hle
@@ -166,11 +166,11 @@ lemma clusterSetOn_nonempty (hK : IsCompact K) (hfK : MapsTo f U K) (hw : w ∈ 
 /-- If `f` has a limit `v` along `𝓝[U] w`, the cluster set is exactly `{v}`. -/
 lemma clusterSetOn_eq_singleton_of_tendsto [T2Space Y] (hw : w ∈ closure U)
     (hv : Tendsto f (𝓝[U] w) (𝓝 v)) : clusterSetOn f U w = {v} := by
-  haveI : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
+  have : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
   have hv' : map f (𝓝[U] w) ≤ 𝓝 v := hv
   refine subset_antisymm (fun u hu => ?_) (singleton_subset_iff.mpr hv.mapClusterPt)
   -- Both `u` and `v` are limits of the identity along the nontrivial filter `𝓝 u ⊓ map f (𝓝[U] w)`.
-  haveI : (𝓝 u ⊓ map f (𝓝[U] w)).NeBot := hu.clusterPt
+  have : (𝓝 u ⊓ map f (𝓝[U] w)).NeBot := hu.clusterPt
   exact mem_singleton_iff.mpr
     (tendsto_nhds_unique (f := id) (tendsto_id.mono_left inf_le_left)
       (tendsto_id.mono_left (inf_le_right.trans hv')))
@@ -196,7 +196,7 @@ unique cluster point converges to it. -/
 theorem exists_tendsto_of_clusterSetOn_subsingleton (hK : IsCompact K) (hfK : MapsTo f U K)
     (hw : w ∈ closure U) (hsub : (clusterSetOn f U w).Subsingleton) :
     ∃ v, Tendsto f (𝓝[U] w) (𝓝 v) := by
-  haveI : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
+  have : (𝓝[U] w).NeBot := mem_closure_iff_nhdsWithin_neBot.mp hw
   obtain ⟨v, hv⟩ := clusterSetOn_nonempty hK hfK hw
   exact ⟨v, hK.tendsto_nhds_of_unique_mapClusterPt
     (mem_of_superset self_mem_nhdsWithin hfK) fun _ _ hu => hsub hu hv⟩
@@ -219,7 +219,7 @@ and the witnessing filter `𝓝 w ⊓ (comap f (𝓝 v) ⊓ 𝓟 U)` is a nontri
 whose image under `f` refines `𝓝 v`, which is exactly what `v ∈ clusterSetOn f U w` asserts. -/
 theorem exists_mem_closure_mem_clusterSetOn (hU : IsCompact (closure U))
     (hv : v ∈ closure (f '' U)) : ∃ w ∈ closure U, v ∈ clusterSetOn f U w := by
-  haveI : (comap f (𝓝 v) ⊓ 𝓟 U).NeBot := by
+  have : (comap f (𝓝 v) ⊓ 𝓟 U).NeBot := by
     refine Filter.inf_principal_neBot_iff.mpr fun t ht => ?_
     obtain ⟨s, hs, hst⟩ := ht
     obtain ⟨y, hys, z, hzU, rfl⟩ := mem_closure_iff_nhds.mp hv s hs

@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Crosscut
+public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
-import Mathlib.MeasureTheory.Integral.CircleIntegral
 
 /-!
 # A circular crosscut with a short image
@@ -18,12 +17,12 @@ import Mathlib.MeasureTheory.Integral.CircleIntegral
 two endpoints of an *arc of angles*. It leaves open, in its own words, the step of "turning that
 into a crosscut of small diameter at a boundary point". This file takes that step: it reads the
 intersection `ball c r ∩ sphere ζ ρ` of the circle `sphere ζ ρ` with the disc — the **circular
-crosscut** of `Conformal/Crosscut.lean` when `ρ < 2 * r`, and empty otherwise — as an arc of
+crosscut** of `Conformal/Crosscut/Basic.lean` when `ρ < 2 * r`, and empty otherwise — as an arc of
 angles, and concludes that its image under a conformal map has small diameter at suitable radii
 `ρ`.
 
 That is the first of the two geometric inputs
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
 `Conformal/CutDiameter.lean` runs on, and hence of layer **L5** of
 `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's boundary correspondence. The second —
 a small set `E` enclosing the boundary points of the image domain that cling to the piece the
@@ -32,8 +31,8 @@ crosscut cuts off — is a matter of local connectedness of that boundary and is
 ## The intersection is an arc
 
 Everything rests on the angular description of the intersection proved in
-`Conformal/Crosscut.lean`. Writing `α = arg (c - ζ)` for the direction from the boundary point `ζ`
-to the centre, `TauCeti.circleMap_mem_ball_iff` says that
+`Conformal/Crosscut/Basic.lean`. Writing `α = arg (c - ζ)` for the direction from the boundary
+point `ζ` to the centre, `TauCeti.circleMap_mem_ball_iff` says that
 
 > `circleMap ζ ρ θ ∈ ball c r ↔ ρ < 2 * r * cos (θ - α)`,
 
@@ -89,17 +88,6 @@ open scoped ENNReal Real
 
 variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 
-/-- Every point of the circle `sphere ζ ρ` is reached at an angle within `π` of any prescribed
-direction `α`, since `circleMap ζ ρ` is `2 * π`-periodic with range `sphere ζ ρ`. -/
-private theorem exists_mem_Icc_circleMap_eq (α : ℝ) (hρ : 0 < ρ) {z : ℂ} (hz : z ∈ sphere ζ ρ) :
-    ∃ t ∈ Icc (-π) π, circleMap ζ ρ (α + t) = z := by
-  have hmem : z ∈ circleMap ζ ρ '' Icc (α - π) (α - π + 2 * π) := by
-    rw [(periodic_circleMap ζ ρ).image_Icc Real.two_pi_pos, range_circleMap, abs_of_pos hρ]
-    exact hz
-  obtain ⟨θ, hθ, hθz⟩ := hmem
-  refine ⟨θ - α, ⟨by linarith [hθ.1], by linarith [hθ.2]⟩, ?_⟩
-  rwa [add_sub_cancel]
-
 /-! ## The chord bound on a circular crosscut -/
 
 /-- **The chord bound for a circular crosscut.** For `f` holomorphic on `ball c r` and `ζ` on the
@@ -120,8 +108,8 @@ theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere (hζ : dist ζ
       ∀ t₁ ∈ Icc (-π) π, ∀ t₂ ∈ Icc (-π) π, t₁ ≤ t₂ →
       circleMap ζ ρ ((c - ζ).arg + t₁) = z' → circleMap ζ ρ ((c - ζ).arg + t₂) = w' →
       ENNReal.ofReal (dist (f z') (f w')) ≤ circleImageLength f (ball c r) ζ ρ by
-    obtain ⟨t₁, ht₁, hz'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hz.2
-    obtain ⟨t₂, ht₂, hw'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hρ hw.2
+    obtain ⟨t₁, ht₁, hz'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hz.2
+    obtain ⟨t₂, ht₂, hw'⟩ := exists_mem_Icc_circleMap_eq (c - ζ).arg hw.2
     rcases le_total t₁ t₂ with hle | hle
     · exact h z w hz hw t₁ ht₁ t₂ ht₂ hle hz' hw'
     · rw [dist_comm]
@@ -154,59 +142,28 @@ point.** For `f` holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv 
 the circle `sphere c r`, every tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at
 which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`.
 
-This is Wolff's lemma `TauCeti.exists_circleImageLength_sq_lt` fed to
-`TauCeti.diam_image_ball_inter_sphere_le`. The inner radius of the annulus in which the good `ρ` is
-sought is `R * exp (-(A + 1) / ε ^ 2)`, where `A` is `2 * π` times the Dirichlet integral: the
-annulus is made logarithmically long enough that the average of
-`circleImageLength f (ball c r) ζ ρ ^ 2` over it falls below `ε ^ 2`.
+This is the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top` of Wolff's
+lemma fed to `TauCeti.diam_image_ball_inter_sphere_le`. The annulus in which the good `ρ` is sought
+is chosen there rather than here: it is made logarithmically long enough that the length–area
+average of `circleImageLength f (ball c r) ζ ρ ^ 2` over it falls below the threshold, and is
+shrunk against `R` so that the radius produced lies in `Ioo 0 R`.
 
 The bound is on the intersection `ball c r ∩ sphere ζ ρ`, which is a genuine circular crosscut only
 when `ρ < 2 * r`, being empty otherwise; since `R` is arbitrary, a caller wanting a crosscut applies
 the theorem with `R ≤ 2 * r`.
 
 This is the first of the two geometric inputs of
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le`; nothing here bounds
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`; nothing here bounds
 the boundary piece the crosscut cuts off, which is a matter of the image domain rather than of the
 map. -/
 theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top (hζ : dist ζ c = r)
     (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
     ∃ ρ ∈ Ioo 0 R, diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
-  -- `A` is `2 * π` times the Dirichlet integral, a finite real number
-  have hfin' : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤ :=
-    ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
-  set A : ℝ := (ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2).toReal with hA
-  have hA0 : 0 ≤ A := ENNReal.toReal_nonneg
-  -- the annulus `Ioo r' R`, of logarithmic length `L`
-  have hε2 : ε ^ 2 ≠ 0 := by positivity
-  set L : ℝ := (A + 1) / ε ^ 2 with hL
-  have hLpos : 0 < L := div_pos (by linarith) (by positivity)
-  have hεL : ε ^ 2 * L = A + 1 := by rw [hL]; field_simp
-  set r' : ℝ := R * Real.exp (-L) with hr'
-  have hr'pos : 0 < r' := mul_pos hR (Real.exp_pos _)
-  have hr'R : r' < R := by
-    have : Real.exp (-L) < 1 := Real.exp_lt_one_iff.mpr (by linarith)
-    nlinarith
-  have hlog : Real.log (R / r') = L := by
-    rw [hr', Real.log_div hR.ne' hr'pos.ne', Real.log_mul hR.ne' (Real.exp_ne_zero _),
-      Real.log_exp]
-    ring
-  -- Wolff's lemma on that annulus, with threshold `ε ^ 2`
-  have hc : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2
-      < ENNReal.ofReal (ε ^ 2) * ENNReal.ofReal (Real.log (R / r')) := by
-    have hAeq : ENNReal.ofReal (2 * π) * ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 = ENNReal.ofReal A :=
-      (ENNReal.ofReal_toReal hfin').symm
-    rw [hAeq, hlog, ← ENNReal.ofReal_mul (by positivity : (0 : ℝ) ≤ ε ^ 2), hεL]
-    exact (ENNReal.ofReal_lt_ofReal_iff (by linarith)).mpr (by linarith)
-  obtain ⟨ρ, hρmem, hρlt⟩ :=
-    exists_circleImageLength_sq_lt (s := ball c r) f measurableSet_ball ζ hr'pos hr'R hc
-  -- undo the square
-  have hlen : circleImageLength f (ball c r) ζ ρ ≤ ENNReal.ofReal ε := by
-    rw [ENNReal.ofReal_pow hε.le] at hρlt
-    by_contra hcon
-    exact absurd (pow_le_pow_left' (not_le.mp hcon).le 2) (not_le.mpr hρlt)
-  exact ⟨ρ, ⟨hr'pos.trans hρmem.1, hρmem.2⟩,
-    diam_image_ball_inter_sphere_le hζ (hr'pos.trans hρmem.1) hf hε.le hlen⟩
+  obtain ⟨ρ, hρmem, hlen⟩ :=
+    exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
+      (ENNReal.ofReal_pos.mpr hε).ne' hR
+  exact ⟨ρ, hρmem, diam_image_ball_inter_sphere_le hζ hρmem.1 hf hε.le hlen.le⟩
 
 /-- **A conformal map of a disc has arbitrarily small images of the circle intersections
 `ball c r ∩ sphere ζ ρ` at every boundary point.** This is the case of

@@ -52,10 +52,8 @@ The hypotheses are precisely the normalized second-order position expansion and 
 velocity expansion. -/
 private theorem tendsto_realWindingIntegrand_mul_add {α : Type*} {l : Filter α}
     {τ : α → ℝ} {q r d : α → ℂ} {L A : ℂ} (hL : L ≠ 0)
-    (hq : Tendsto q l (𝓝 L)) (hr : Tendsto r l (𝓝 (A / 2)))
-    (hd : Tendsto d l (𝓝 A))
-    (hqr : ∀ᶠ i in l, q i - L = ((τ i : ℝ) : ℂ) * r i)
-    (hτ : ∀ᶠ i in l, τ i ≠ 0) :
+    (hq : Tendsto q l (𝓝 L)) (hr : Tendsto r l (𝓝 (A / 2))) (hd : Tendsto d l (𝓝 A))
+    (hqr : ∀ᶠ i in l, q i - L = ((τ i : ℝ) : ℂ) * r i) (hτ : ∀ᶠ i in l, τ i ≠ 0) :
     Tendsto (fun i ↦ realWindingIntegrand (((τ i : ℝ) : ℂ) * q i)
       (L + ((τ i : ℝ) : ℂ) * d i)) l
       (𝓝 ((L.re * A.im - L.im * A.re) / (2 * Complex.normSq L))) := by
@@ -108,12 +106,9 @@ matching first-order velocity expansion, implies
 The conclusion refers only to the coefficients in the assumed filter expansions. -/
 theorem tendsto_realWindingIntegrand_at_crossing {α : Type*} {l : Filter α}
     {t : α → ℝ} {t₀ : ℝ} {γ : ℝ → ℂ} {s L A : ℂ} (hL : L ≠ 0)
-    (htend : Tendsto t l (𝓝 t₀)) (hcross : γ t₀ = s)
-    (hpos₂ : Tendsto (fun i ↦
-      (((γ (t i) - s) / (((t i - t₀ : ℝ) : ℂ))) - L) /
-        (((t i - t₀ : ℝ) : ℂ))) l (𝓝 (A / 2)))
-    (hvel : Tendsto (fun i ↦ (deriv γ (t i) - L) /
-      (((t i - t₀ : ℝ) : ℂ))) l (𝓝 A))
+    (htend : Tendsto t l (𝓝 t₀)) (hcross : γ t₀ = s) (hpos₂ : Tendsto (fun i ↦
+      (((γ (t i) - s) / (((t i - t₀ : ℝ) : ℂ))) - L) / (((t i - t₀ : ℝ) : ℂ))) l (𝓝 (A / 2)))
+    (hvel : Tendsto (fun i ↦ (deriv γ (t i) - L) / (((t i - t₀ : ℝ) : ℂ))) l (𝓝 A))
     (ht : ∀ᶠ i in l, t i ≠ t₀) :
     Tendsto (fun i ↦ realWindingIntegrand (γ (t i) - s) (deriv γ (t i))) l
       (𝓝 ((L.re * A.im - L.im * A.re) / (2 * Complex.normSq L))) := by

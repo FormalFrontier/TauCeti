@@ -43,8 +43,7 @@ variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E]
 /-- The cokernel of a Fredholm operator is linearly equivalent to its kernel if the operator and
 its adjoint have the same kernel. -/
 noncomputable def _root_.ContinuousLinearMap.IsFredholm.cokerEquivKerOfKerAdjointEq {T : E →L[𝕜] E}
-    (hT : ContinuousLinearMap.IsFredholm T)
-    (hker : (ContinuousLinearMap.adjoint T).ker = T.ker) :
+    (hT : ContinuousLinearMap.IsFredholm T) (hker : (ContinuousLinearMap.adjoint T).ker = T.ker) :
     (E ⧸ LinearMap.range (T : E →ₗ[𝕜] E)) ≃ₗ[𝕜]
       LinearMap.ker (T : E →ₗ[𝕜] E) :=
   (TauCeti.ContinuousLinearMap.cokerEquivKerAdjoint T hT.isClosed_range).toLinearEquiv.trans
@@ -52,8 +51,7 @@ noncomputable def _root_.ContinuousLinearMap.IsFredholm.cokerEquivKerOfKerAdjoin
 
 /-- The cokernel of a self-adjoint Fredholm operator is linearly equivalent to its kernel. -/
 noncomputable def _root_.ContinuousLinearMap.IsFredholm.cokerEquivKer {T : E →L[𝕜] E}
-    (hT : ContinuousLinearMap.IsFredholm T)
-    (hself : IsSelfAdjoint T) :
+    (hT : ContinuousLinearMap.IsFredholm T) (hself : IsSelfAdjoint T) :
     (E ⧸ LinearMap.range (T : E →ₗ[𝕜] E)) ≃ₗ[𝕜]
       LinearMap.ker (T : E →ₗ[𝕜] E) :=
   hT.cokerEquivKerOfKerAdjointEq <| by rw [hself.adjoint_eq]

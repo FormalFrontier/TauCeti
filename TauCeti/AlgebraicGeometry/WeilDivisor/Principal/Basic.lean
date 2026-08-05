@@ -297,8 +297,7 @@ lemma mem_picZero (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {c : S.ClassGro
 /-- The class of a Weil divisor lies in `picZero` exactly when that representative has weighted
 degree zero; the value is well defined because the weighted degree descends to the class. -/
 @[simp]
-lemma divisorClass_mem_picZero (w : X → ℤ) (h : S.IsWeightedDegreeZero w)
-    {D : WeilDivisor X} :
+lemma divisorClass_mem_picZero (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {D : WeilDivisor X} :
     S.divisorClass D ∈ picZero w h ↔ weightedDegree w D = 0 := by
   rw [mem_picZero, weightedDegreeClass_divisorClass]
 

@@ -109,8 +109,7 @@ instance finiteDimensional_simpleRep_obj (i a : Q) :
 variable (k)
 
 /-- The vector space that the vertex simple `Sᵢ` puts at `i` is the base field. -/
-noncomputable def simpleRepSelfEquiv (i : Q) :
-    (simpleRep k Q i).obj ((Paths.of Q).obj i) ≃ₗ[k] k :=
+noncomputable def simpleRepSelfEquiv (i : Q) : (simpleRep k Q i).obj ((Paths.of Q).obj i) ≃ₗ[k] k :=
   (eqToIso (simpleRep_obj_self i)).toLinearEquiv
 
 /-- The canonical generator of the line `(Sᵢ)ᵢ`: the element corresponding to `1 : k`. -/
@@ -125,8 +124,7 @@ theorem simpleRepSelfEquiv_apply_generator (i : Q) :
 
 /-- **The vertex simple is a line at its vertex**: every element of `(Sᵢ)ᵢ` is a multiple of the
 generator. -/
-theorem exists_eq_smul_simpleRepGenerator {i : Q}
-    (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
+theorem exists_eq_smul_simpleRepGenerator {i : Q} (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
     ∃ c : k, x = c • simpleRepGenerator k i := by
   refine ⟨simpleRepSelfEquiv k i x, ?_⟩
   rw [simpleRepGenerator, ← LinearEquiv.map_smul, smul_eq_mul, mul_one,
@@ -143,8 +141,7 @@ variable {k}
 
 /-- Every arrow of the quiver acts by zero on the vertex simple `Sᵢ`. -/
 @[simp]
-theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
-    (simpleRep k Q i).map e.toPath = 0 :=
+theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) : (simpleRep k Q i).map e.toPath = 0 :=
   Paths.lift_toPath _ e
 
 /-- More generally, every path of positive length acts by zero on the vertex simple `Sᵢ`. -/
@@ -205,7 +202,7 @@ instance simpleRep_simple (i : Q) : Simple (simpleRep k Q i) where
       change Q at a
       change IsIso (f.app ((Paths.of Q).obj a))
       rcases eq_or_ne a i with rfl | ha
-      · letI : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
+      · let : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
           change Simple ((simpleRep k Q a).obj a)
           exact simple_simpleRep_obj_self a
         exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)

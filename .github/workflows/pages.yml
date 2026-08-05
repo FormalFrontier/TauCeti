@@ -24,8 +24,9 @@ name: Pages
 # way, but from the PR labels rather than git, since roadmap attribution lives in the
 # `roadmap/<Area>` labels; it reads them via gh (hence pull-requests: read below). The
 # participation snapshot likewise reads GitHub through gh, but deduplicates the current
-# human actors instead of reconstructing a historical series. The three-hour `schedule` below
-# redeploys the site so the charts track the project as it grows.
+# human actors instead of reconstructing a historical series. Pull-request queue, review-cycle,
+# throughput, and contributor charts come from scripts/pr_stats_graphs.py. The three-hour
+# `schedule` below redeploys the site so the charts track the project as it grows.
 # (This replaces the old loc-graph workflow, which committed the SVGs to main on a
 # schedule; main now sits behind a merge queue that refuses direct pushes, so generating
 # the charts in this build is the only way they refresh.)
@@ -39,6 +40,7 @@ on:
       - 'scripts/loc_graph.py'
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
+      - 'scripts/pr_stats_graphs.py'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
@@ -131,6 +133,19 @@ jobs:
           python3 scripts/participant_graph.py \
             --out web/static_files/participation.svg \
           || echo "::warning::participation graph generation failed; keeping the committed fallback SVG"
+
+      # PR history and current queue state come from GitHub rather than git. The generator
+      # paginates both the PR connection and each label timeline, and bounds contributor
+      # rendering so growth in participation cannot make the deployed SVG unmanageably large.
+      - name: Regenerate the pull-request statistics into static_files
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/pr_stats_graphs.py \
+            --repo "${{ github.repository }}" \
+            --out-dir web/static_files \
+          || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
 
       - name: Install elan
         run: |

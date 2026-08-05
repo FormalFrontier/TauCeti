@@ -279,8 +279,7 @@ drops the hypothesis `g z₀ ≠ 0`, so the presentation exponent `n` need not b
 of `f`: `g` may vanish at `z₀`, raising the true pole order above `n`; only when `g`'s vanishing
 order is at least `-n` is `f` analytic (residue `0`). -/
 theorem residue_eq_of_eventuallyEq_zpow_smul {f g : ℂ → ℂ} {z₀ : ℂ} {n : ℤ}
-    (hn : n ≤ -1) (hg : AnalyticAt ℂ g z₀)
-    (hfg : f =ᶠ[𝓝[≠] z₀] fun z => (z - z₀) ^ n • g z) :
+    (hn : n ≤ -1) (hg : AnalyticAt ℂ g z₀) (hfg : f =ᶠ[𝓝[≠] z₀] fun z => (z - z₀) ^ n • g z) :
     residue f z₀ = iteratedDeriv (-1 - n).toNat g z₀ / ((-1 - n).toNat.factorial : ℂ) := by
   have hf : MeromorphicAt f z₀ :=
     MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt.mpr ⟨n, g, hg, hfg⟩

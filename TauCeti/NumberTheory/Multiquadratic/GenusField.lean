@@ -58,8 +58,7 @@ private lemma primeDiscriminant_eq_sq_mul_radicand {P : ℤ} (hP : IsPrimeDiscri
 /-- The product of the radicands of prime discriminants whose product is
 `fundamentalDiscriminant d` is a nonzero rational square times `d`. -/
 theorem exists_prod_radicand_eq_sq_mul_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
-    (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
-    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) :
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) :
     ∃ a : ℚ, a ≠ 0 ∧
       (∏ P ∈ s.attach, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) =
         a ^ 2 * ((d : ℤ) : ℚ) := by
@@ -100,8 +99,7 @@ finite set of prime discriminants whose product is the fundamental discriminant
 squaring to `d`. This is the square-class containment underlying the genus-field construction. -/
 theorem exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
-    {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L)
-    (hroot : ∀ P : {P // P ∈ s},
+    {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L) (hroot : ∀ P : {P // P ∈ s},
       root P ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) :
     ∃ x ∈ IntermediateField.adjoin ℚ (Set.range root), x ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
   classical

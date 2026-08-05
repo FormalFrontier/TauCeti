@@ -198,8 +198,7 @@ theorem tensorRightUnitor_eq : tensorRightUnitor R C M = ρ_ M :=
 /-- The monoidal tensor product of two finite-comodule morphisms is their ordinary tensor
 product on underlying linear maps. -/
 @[simp]
-theorem tensorHom_toLinearMap (f : M ⟶ M') (g : N ⟶ N') :
-    (f ⊗ₘ g).hom.toLinearMap =
+theorem tensorHom_toLinearMap (f : M ⟶ M') (g : N ⟶ N') : (f ⊗ₘ g).hom.toLinearMap =
       TensorProduct.map f.hom.toLinearMap g.hom.toLinearMap :=
   rfl
 
@@ -212,26 +211,22 @@ theorem tensorHom_tmul (f : M ⟶ M') (g : N ⟶ N') (m : M) (n : N) :
 
 /-- The left unitor acts by scalar multiplication. -/
 @[simp]
-theorem leftUnitor_hom_apply (r : R) (m : M) :
-    (λ_ M).hom (r ⊗ₜ[R] m) = r • m :=
+theorem leftUnitor_hom_apply (r : R) (m : M) : (λ_ M).hom (r ⊗ₜ[R] m) = r • m :=
   TensorProduct.lid_tmul m r
 
 /-- The inverse left unitor sends `m` to `1 ⊗ m`. -/
 @[simp]
-theorem leftUnitor_inv_apply (m : M) :
-    (λ_ M).inv m = 1 ⊗ₜ[R] m :=
+theorem leftUnitor_inv_apply (m : M) : (λ_ M).inv m = 1 ⊗ₜ[R] m :=
   TensorProduct.lid_symm_apply m
 
 /-- The right unitor acts by scalar multiplication. -/
 @[simp]
-theorem rightUnitor_hom_apply (m : M) (r : R) :
-    (ρ_ M).hom (m ⊗ₜ[R] r) = r • m :=
+theorem rightUnitor_hom_apply (m : M) (r : R) : (ρ_ M).hom (m ⊗ₜ[R] r) = r • m :=
   TensorProduct.rid_tmul m r
 
 /-- The inverse right unitor sends `m` to `m ⊗ 1`. -/
 @[simp]
-theorem rightUnitor_inv_apply (m : M) :
-    (ρ_ M).inv m = m ⊗ₜ[R] 1 :=
+theorem rightUnitor_inv_apply (m : M) : (ρ_ M).inv m = m ⊗ₜ[R] 1 :=
   TensorProduct.rid_symm_apply m
 
 /-- The associator sends `(m ⊗ n) ⊗ p` to `m ⊗ (n ⊗ p)`. -/

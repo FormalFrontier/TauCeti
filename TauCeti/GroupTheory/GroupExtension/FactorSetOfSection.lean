@@ -295,8 +295,7 @@ theorem ofFactorSetHom_apply (x : (factorSet σ hσ hact).Extension) :
   (rfl)
 
 /-- **An extension with abelian kernel is the twisted product built from its factor set.** -/
-noncomputable def factorSetToGroupExtensionEquiv :
-    (factorSet σ hσ hact).groupExtension.Equiv S :=
+noncomputable def factorSetToGroupExtensionEquiv : (factorSet σ hσ hact).groupExtension.Equiv S :=
   GroupExtension.Equiv.ofMonoidHom (ofFactorSetHom σ hσ hact)
     (by ext a; simp [hσ])
     (by ext x; simp)

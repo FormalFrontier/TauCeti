@@ -93,7 +93,7 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω} {X :
     haveI := hindep.isProbabilityMeasure
     ConditionallyIIDWith μ X
       (fun _ => ⟨μ.map (X i₀), Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩) := by
-  haveI := hindep.isProbabilityMeasure
+  have := hindep.isProbabilityMeasure
   exact conditionallyIIDWith_const_of_mixedIIDWith
     (MixedIIDWith.of_iIndepFun_identDistrib_at i₀ hindep hident)
 

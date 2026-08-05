@@ -112,8 +112,7 @@ private noncomputable def classIndicator (x : G) : ClassFunction k G := by
   exact equivConjClasses.symm (Pi.single (ConjClasses.mk x) 1)
 
 open scoped Classical in
-private theorem classIndicator_apply (x y : G) :
-    (classIndicator (k := k) x).1 y =
+private theorem classIndicator_apply (x y : G) : (classIndicator (k := k) x).1 y =
       if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 :=
   by
     classical
@@ -123,10 +122,10 @@ omit [Fintype G] in
 private theorem card_conjClass_dvd_card [Finite G] (x : G) :
     Nat.card (ConjClasses.mk x).carrier ∣ Nat.card G := by
   classical
-  letI : Fintype G := Fintype.ofFinite G
-  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
-  letI : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
-  letI : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
+  let : Fintype G := Fintype.ofFinite G
+  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  let : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
+  let : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
   rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
   rw [ConjClasses.card_carrier]
   apply Nat.div_dvd_of_dvd
@@ -150,7 +149,7 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
   apply Subtype.ext
   funext x
   by_contra hfx
-  letI : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
   have hcarrier : (ConjClasses.mk x).carrier = {g | IsConj g x} := by
     ext g
     simp only [ConjClasses.mem_carrier_iff_mk_eq, Set.mem_ofPred_eq]
@@ -187,10 +186,8 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
     (mul_ne_zero (card_conjClass_cast_ne_zero (k := k) x) hfx)) hpair
 
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
-theorem characterPairing_ofCharacter
-    {V W : Type*} [AddCommGroup V] [Module k V]
-    [AddCommGroup W] [Module k W]
-    (ρ : Representation k G V) (σ : Representation k G W) :
+theorem characterPairing_ofCharacter {V W : Type*} [AddCommGroup V] [Module k V]
+    [AddCommGroup W] [Module k W] (ρ : Representation k G V) (σ : Representation k G W) :
     characterPairing (ofCharacter ρ) (ofCharacter σ) =
       (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character g * σ.character g⁻¹ := by
   rw [characterPairing_apply]
@@ -224,6 +221,29 @@ theorem characterPairing_ofCharacter_orthonormal {V W : Type*} [AddCommGroup V] 
   rw [characterPairing_ofCharacter]
   exact Representation.char_orthonormal ρ σ
 
+/-- An irreducible character pairs to `1` with itself. -/
+@[simp]
+theorem characterPairing_ofCharacter_self {V : Type*} [AddCommGroup V] [Module k V]
+    [FiniteDimensional k V] [Invertible (Nat.card G : k)] [IsAlgClosed k]
+    (ρ : Representation k G V) [ρ.IsIrreducible] :
+    characterPairing (ofCharacter ρ) (ofCharacter ρ) = 1 := by
+  classical
+  have hrefl : Nonempty (Representation.Equiv ρ ρ) := ⟨Representation.Equiv.refl ρ⟩
+  rw [characterPairing_ofCharacter_orthonormal ρ ρ, if_pos hrefl]
+
+/-- The characters of inequivalent irreducible representations pair to `0`.
+
+Algebraic closure is not needed here: by Schur's lemma the intertwiners between inequivalent
+irreducibles already form a subsingleton over any field. -/
+@[simp]
+theorem characterPairing_ofCharacter_eq_zero {V W : Type*} [AddCommGroup V] [Module k V]
+    [FiniteDimensional k V] [AddCommGroup W] [Module k W] [FiniteDimensional k W]
+    [Invertible (Nat.card G : k)] (ρ : Representation k G V)
+    (σ : Representation k G W) [ρ.IsIrreducible] [σ.IsIrreducible]
+    (h : IsEmpty (σ.Equiv ρ)) : characterPairing (ofCharacter ρ) (ofCharacter σ) = 0 := by
+  rw [characterPairing_ofCharacter_eq_finrank ρ σ, Module.finrank_zero_of_subsingleton,
+    Nat.cast_zero]
+
 /-- The character pairing computes the dimension of a morphism space in `FDRep`. -/
 theorem characterPairing_ofFDRep_eq_finrank [Invertible (Nat.card G : k)] (V W : FDRep k G) :
     characterPairing (ofFDRep V) (ofFDRep W) = Module.finrank k (W ⟶ V) := by
@@ -238,6 +258,27 @@ theorem characterPairing_ofFDRep_orthonormal [Invertible (Nat.card G : k)] [IsAl
       if Nonempty (V ≅ W) then (1 : k) else 0 := by
   rw [characterPairing_ofFDRep]
   exact FDRep.char_orthonormal V W
+
+/-- The character of a simple object of `FDRep k G` pairs to `1` with itself. -/
+@[simp]
+theorem characterPairing_ofFDRep_self [Invertible (Nat.card G : k)] [IsAlgClosed k]
+    (V : FDRep k G) [CategoryTheory.Simple V] :
+    characterPairing (ofFDRep V) (ofFDRep V) = 1 := by
+  classical
+  have hrefl : Nonempty (V ≅ V) := ⟨CategoryTheory.Iso.refl V⟩
+  rw [characterPairing_ofFDRep_orthonormal V V, if_pos hrefl]
+
+/-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`.
+
+Algebraic closure is not needed here: by Schur's lemma the morphism space between
+non-isomorphic simple objects is already zero-dimensional over any field. -/
+@[simp]
+theorem characterPairing_ofFDRep_eq_zero [Invertible (Nat.card G : k)]
+    (V W : FDRep k G) [CategoryTheory.Simple V] [CategoryTheory.Simple W] (h : IsEmpty (V ≅ W)) :
+    characterPairing (ofFDRep V) (ofFDRep W) = 0 := by
+  rw [characterPairing_ofFDRep_eq_finrank V W,
+    CategoryTheory.finrank_hom_simple_simple_eq_zero_of_not_iso k fun i => h.elim i.symm,
+    Nat.cast_zero]
 
 end ClassFunction
 

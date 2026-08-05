@@ -72,8 +72,7 @@ noncomputable def galoisGroupEquivISqrtPrimes :
 
 /-- The inverse CM Galois equivalence realizes a sign pattern by sending each generator to
 `(-1)^(ε x)` times itself: `i ↦ ±i` and `√(p i) ↦ ±√(p i)`. -/
-@[simp] theorem galoisGroupEquivISqrtPrimes_symm_apply_gen (ε : Option ι → ZMod 2)
-    (x : Option ι) :
+@[simp] theorem galoisGroupEquivISqrtPrimes_symm_apply_gen (ε : Option ι → ZMod 2) (x : Option ι) :
     ((galoisGroupEquivISqrtPrimes p hp hinj).symm (Multiplicative.ofAdd ε)) (gen (cmRoot p) x)
       = (-1) ^ (ε x).val * gen (cmRoot p) x :=
   galoisGroupEquiv_symm_apply_gen (cmRoot_sq p) (not_isSquare_prod_cmRadicand p hp hinj) ε x
@@ -89,7 +88,7 @@ theorem card_aut_adjoin_I_sqrt_primes :
             IntermediateField ℚ ℂ))
       = 2 ^ (Nat.card ι + 1) := by
   have hcard : Nat.card (Option ι) = Nat.card ι + 1 := by
-    letI := Fintype.ofFinite ι
+    let := Fintype.ofFinite ι
     simp [Nat.card_eq_fintype_card, Fintype.card_option]
   have hkey := card_aut_adjoin_range (cmRoot_sq p) (not_isSquare_prod_cmRadicand p hp hinj)
   rw [range_cmRoot p, hcard] at hkey

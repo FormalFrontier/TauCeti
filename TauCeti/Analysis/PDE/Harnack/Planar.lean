@@ -41,8 +41,7 @@ namespace TauCeti
 
 open Complex Filter InnerProductSpace Metric Real Topology
 
-private lemma continuousOn_re_herglotzRieszKernel {c w : ℂ} {R : ℝ}
-    (hw : w ∈ ball c R) :
+private lemma continuousOn_re_herglotzRieszKernel {c w : ℂ} {R : ℝ} (hw : w ∈ ball c R) :
     ContinuousOn (re ∘ herglotzRieszKernel c w) (sphere c R) := by
   rw [herglotzRieszKernel_fun_def]
   have hne : ∀ z ∈ sphere c R, z - c - (w - c) ≠ 0 := by
@@ -93,8 +92,7 @@ nonnegative on its boundary circle, then every `w` in the open disk satisfies
 
 The boundary-only sign assumption is sufficient: both inequalities follow from the Poisson
 integral formula and the pointwise bounds on the Poisson kernel. -/
-theorem harnack_inequality_center_of_nonneg_on_sphere
-    (hf : HarmonicOnNhd f (closedBall c R))
+theorem harnack_inequality_center_of_nonneg_on_sphere (hf : HarmonicOnNhd f (closedBall c R))
     (hnonneg : ∀ z ∈ sphere c R, 0 ≤ f z) (hw : w ∈ ball c R) :
     (R - ‖w - c‖) / (R + ‖w - c‖) * f c ≤ f w ∧
       f w ≤ (R + ‖w - c‖) / (R - ‖w - c‖) * f c := by
@@ -170,8 +168,7 @@ its boundary, then for any `x, y ∈ closedBall c r`,
 `f x ≤ ((R + r) / (R - r)) ^ 2 * f y`.
 
 This pairwise form follows by comparing both values with `f c`. -/
-theorem harnack_inequality_of_nonneg_on_sphere
-    (hf : HarmonicOnNhd f (closedBall c R))
+theorem harnack_inequality_of_nonneg_on_sphere (hf : HarmonicOnNhd f (closedBall c R))
     (hnonneg : ∀ z ∈ sphere c R, 0 ≤ f z) {r : ℝ} (hr : 0 ≤ r) (hrR : r < R)
     {x y : ℂ} (hx : x ∈ closedBall c r) (hy : y ∈ closedBall c r) :
     f x ≤ ((R + r) / (R - r)) ^ 2 * f y := by
@@ -324,8 +321,7 @@ theorem harnack_inequality (hf : HarmonicOnNhd f (ball c R))
 
 /-- A nonnegative harmonic function on an open planar disk that vanishes at one point vanishes
 throughout the disk.  This is the zero case of Harnack's inequality. -/
-theorem eq_zero_on_ball_of_harmonicOnNhd_of_nonneg_of_eq_zero
-    (hf : HarmonicOnNhd f (ball c R))
+theorem eq_zero_on_ball_of_harmonicOnNhd_of_nonneg_of_eq_zero (hf : HarmonicOnNhd f (ball c R))
     (hnonneg : ∀ z ∈ ball c R, 0 ≤ f z) (hw : w ∈ ball c R) (hfw : f w = 0) :
     Set.EqOn f 0 (ball c R) := by
   intro z hz

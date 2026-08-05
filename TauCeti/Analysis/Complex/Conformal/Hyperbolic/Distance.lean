@@ -76,6 +76,13 @@ lemma hyperbolicDist_def (z w : ℂ) :
 lemma hyperbolicDist_comm (z w : ℂ) : hyperbolicDist z w = hyperbolicDist w z := by
   rw [hyperbolicDist_def, hyperbolicDist_def, pseudoHyperbolicExpr_comm]
 
+/-- **Conjugation invariance.** Conjugating both points leaves the hyperbolic distance
+unchanged, so conjugation is a hyperbolic isometry of the disc. -/
+@[simp]
+lemma hyperbolicDist_conj (z w : ℂ) :
+    hyperbolicDist ((starRingEnd ℂ) z) ((starRingEnd ℂ) w) = hyperbolicDist z w := by
+  rw [hyperbolicDist_def, hyperbolicDist_def, pseudoHyperbolicExpr_conj]
+
 /-- The hyperbolic distance from a point to itself is zero. -/
 @[simp]
 lemma hyperbolicDist_self (z : ℂ) : hyperbolicDist z z = 0 := by
@@ -116,10 +123,11 @@ lemma pseudoHyperbolicExpr_eq_iff_hyperbolicDist_eq {z w z' w' : ℂ}
     pseudoHyperbolicExpr z w = pseudoHyperbolicExpr z' w' ↔
       hyperbolicDist z w = hyperbolicDist z' w' := by
   have hmem : pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z w], pseudoHyperbolicExpr_lt_one_of_mem_ball hz hw⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz)
+      (by simpa [mem_ball_zero_iff] using hw)
   have hmem' : pseudoHyperbolicExpr z' w' ∈ Ioo (-1 : ℝ) 1 :=
-    ⟨by linarith [pseudoHyperbolicExpr_nonneg z' w'],
-      pseudoHyperbolicExpr_lt_one_of_mem_ball hz' hw'⟩
+    pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one (by simpa [mem_ball_zero_iff] using hz')
+      (by simpa [mem_ball_zero_iff] using hw')
   rw [hyperbolicDist_def, hyperbolicDist_def]
   exact ⟨fun h => by rw [h], fun h => Real.artanh_injOn hmem hmem' h⟩
 
