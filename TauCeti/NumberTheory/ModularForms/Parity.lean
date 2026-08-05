@@ -71,6 +71,7 @@ theorem coe_diamondOp_neg_one (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL 
     Gamma0.coe_negOne, mapGL_neg_one, ModularForm.slash_neg_one]
 
 /-- The diamond operator `⟨-1⟩` on `M_k(Γ₁(N))` is the scalar `(-1)^k`. -/
+@[simp]
 theorem diamondOp_neg_one (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     diamondOp k (-1 : (ZMod N)ˣ) f = ((-1 : ℂ) ^ k) • f :=
   ModularForm.ext fun z ↦ congr_fun (coe_diamondOp_neg_one k f) z
@@ -82,6 +83,7 @@ theorem coe_diamondOpCusp_neg_one (k : ℤ) (f : CuspForm ((Gamma1 N).map (mapGL
     Gamma0.coe_negOne, mapGL_neg_one, ModularForm.slash_neg_one]
 
 /-- The diamond operator `⟨-1⟩` on `S_k(Γ₁(N))` is the scalar `(-1)^k`. -/
+@[simp]
 theorem diamondOpCusp_neg_one (k : ℤ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     diamondOpCusp k (-1 : (ZMod N)ˣ) f = ((-1 : ℂ) ^ k) • f :=
   CuspForm.ext fun z ↦ congr_fun (coe_diamondOpCusp_neg_one k f) z

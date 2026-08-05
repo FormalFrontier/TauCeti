@@ -14,7 +14,8 @@ Small generic lemmas extending `Mathlib/NumberTheory/ModularForms/Basic.lean` an
 actions: the conjugation `σ` is trivial on `SL(2, ℤ)`-matrices, the `CuspForm`
 translation equations Mathlib does not yet provide (`CuspForm.mcast_apply` and the
 `GL(2, ℝ)`-level `CuspForm.coe_translate_gl`), and the weight-`k` slash action of `-I`
-(`ModularForm.slash_neg_one`).
+(`ModularForm.slash_neg_one`), the source of every parity constraint on weights and
+nebentypus characters.
 
 Split out of the diamond-operator development ported from the AINTLIB `LeanModularForms`
 project (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
@@ -45,19 +46,12 @@ lemma _root_.CuspForm.coe_translate_gl {F : Type*} [FunLike F UpperHalfPlane ℂ
     {Γ : Subgroup (GL (Fin 2) ℝ)} [CuspFormClass F Γ k] (f : F) (g : GL (Fin 2) ℝ) :
     ⇑(CuspForm.translate f g) = ⇑f ∣[k] g := (rfl)
 
-/-- `-I` maps to `-I` under `SL(n, R) → GL(n, S)`. -/
-@[simp]
-lemma _root_.Matrix.SpecialLinearGroup.mapGL_neg_one {n R S : Type*} [Fintype n] [DecidableEq n]
-    [CommRing R] [CommRing S] [Algebra R S] [Fact (Even (Fintype.card n))] :
-    mapGL S (-1 : SpecialLinearGroup n R) = -1 := by
-  ext i j
-  rcases eq_or_ne i j with h | h <;> simp [mapGL, h]
-
 /-- The weight-`k` slash action of `-I` is multiplication by `(-1) ^ k`: `-I` acts trivially
 on `ℍ` and has determinant `1`, so the only surviving factor is its automorphy factor
 `denom (-I) z ^ (-k) = (-1) ^ (-k) = (-1) ^ k`.
 
 This is the source of every parity constraint on weights and nebentypus characters. -/
+@[simp]
 theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
     f ∣[k] (-1 : GL (Fin 2) ℝ) = (-1 : ℂ) ^ k • f := by
   have hzpow : (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k := by

@@ -113,15 +113,15 @@ theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
 
 /-- `-I ∈ Γ₀(N)`, packaged as an element of the subgroup. It is the representative through
 which the diamond operator at `-1` is computed. -/
-@[expose] def Gamma0.negOne (N : ℕ) : ↥(Gamma0 N) := ⟨-1, neg_one_mem_Gamma0⟩
+def Gamma0.negOne (N : ℕ) : ↥(Gamma0 N) := ⟨-1, neg_one_mem_Gamma0⟩
 
 @[simp]
-lemma Gamma0.coe_negOne (N : ℕ) : (Gamma0.negOne N : SL(2, ℤ)) = -1 := rfl
+lemma Gamma0.coe_negOne (N : ℕ) : (Gamma0.negOne N : SL(2, ℤ)) = -1 := (rfl)
 
 /-- The lower-right entry of `-I ∈ Γ₀(N)` is `-1`. -/
 @[simp]
 theorem Gamma0Map_negOne : Gamma0Map N (Gamma0.negOne N) = -1 := by
-  simp [Gamma0Map, Gamma0.negOne]
+  simp [Gamma0Map, Gamma0.coe_negOne]
 
 /-- The unit-valued lower-right entry of `-I ∈ Γ₀(N)` is the unit `-1`. -/
 @[simp]
@@ -133,8 +133,8 @@ theorem Gamma0Map_toHomUnits_negOne :
 range in which `Γ₁(N)` contains `-I`, so that all odd-weight forms for it vanish. -/
 theorem neg_one_mem_Gamma1_iff : (-1 : SL(2, ℤ)) ∈ Gamma1 N ↔ N ∣ 2 := by
   have h : (-1 : ZMod N) = 1 ↔ N ∣ 2 := by
-    rw [neg_eq_iff_add_eq_zero, show (1 : ZMod N) + 1 = ((2 : ℕ) : ZMod N) by push_cast; ring,
-      ZMod.natCast_eq_zero_iff]
+    rw [neg_eq_iff_add_eq_zero, ← ZMod.natCast_eq_zero_iff 2 N]
+    norm_num
   simp [Gamma1_mem, h]
 
 end CongruenceSubgroup
