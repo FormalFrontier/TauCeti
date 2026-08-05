@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RingTheory.Semisimple.CentralCharacter
+public import TauCeti.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Integral
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Representation
@@ -42,6 +43,8 @@ centre, and is `TauCeti.isClassEigenrow_classSumRow` applied to a central charac
   identity `ωᵪ(K_C) · χ(1) = |C| · χ(g)`, in its division-free form, with
   `TauCeti.Representation.centralCharacter_classSumCenter` the quotient form for an invertible
   degree.
+* `TauCeti.Representation.centralCharacter_eq_of_equiv`: equivalent irreducible representations
+  have the same central character.
 * `TauCeti.Representation.isIntegral_centralCharacter_classSumCenter`: the values of the central
   character on the class sums are algebraic integers.
 * `TauCeti.Representation.centralCharacter_trivial_classSumCenter`: the worked case of the trivial
@@ -114,6 +117,24 @@ theorem asAlgebraHom_center (z : Subalgebra.center k k[G]) :
 theorem trace_asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     LinearMap.trace k V (ρ.asAlgebraHom (z : k[G])) = centralCharacter ρ z * finrank k V := by
   rw [asAlgebraHom_center, map_smul, LinearMap.trace_id, smul_eq_mul]
+
+/-- **Equivalent irreducible representations have the same central character.** An equivalence
+commutes with the action of the group algebra, so it carries the scalar action of the centre on one
+to the scalar action on the other; a nonzero vector then forces the two scalars to agree. -/
+theorem centralCharacter_eq_of_equiv {W : Type*} [AddCommGroup W] [Module k W]
+    [FiniteDimensional k W] (σ : _root_.Representation k G W) [σ.IsIrreducible] (φ : ρ.Equiv σ) :
+    centralCharacter σ = centralCharacter ρ := by
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  obtain ⟨v, hv⟩ := exists_ne (0 : V)
+  have hφv : φ.toIntertwiningMap v ≠ 0 := fun h0 =>
+    hv (φ.toLinearEquiv.injective (by simpa using h0))
+  refine AlgHom.ext fun z => ?_
+  have h := IntertwiningMap.map_asAlgebraHom φ.toIntertwiningMap (z : k[G]) v
+  rw [asAlgebraHom_center_apply, map_smul, asAlgebraHom_center_apply] at h
+  have hsub : (centralCharacter σ z - centralCharacter ρ z) • φ.toIntertwiningMap v = 0 := by
+    rw [sub_smul, ← h, sub_self]
+  exact sub_eq_zero.mp ((smul_eq_zero.mp hsub).resolve_right hφv)
 
 section Finite
 

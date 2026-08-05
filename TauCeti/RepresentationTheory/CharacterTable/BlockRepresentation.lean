@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Wedderburn
+public import TauCeti.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.Irreducible
 public import Mathlib.LinearAlgebra.Matrix.ToLin
 
@@ -139,18 +140,9 @@ theorem isEmpty_equiv_blockRepresentation {i j : ι} [NeZero (d i)] (hij : i ≠
   set u : k[G] := e.symm (Pi.single i 1) with hu
   have hcomm : ∀ x : k[G], ∀ v : Fin (d i) → k,
       φ ((blockRepresentation e i).asAlgebraHom x v) =
-        (blockRepresentation e j).asAlgebraHom x (φ v) := by
-    intro x
-    induction x using MonoidAlgebra.induction_on with
-    | of g =>
-        intro v
-        simpa using Representation.IntertwiningMap.isIntertwining _ _ φ.toIntertwiningMap g v
-    | add x y hx hy =>
-        intro v
-        simp only [map_add, LinearMap.add_apply, map_add, hx v, hy v]
-    | smul r x hx =>
-        intro v
-        simp only [map_smul, LinearMap.smul_apply, map_smul, hx v]
+        (blockRepresentation e j).asAlgebraHom x (φ v) := fun x v => by
+    simpa using
+      TauCeti.Representation.IntertwiningMap.map_asAlgebraHom φ.toIntertwiningMap x v
   have hi : (blockRepresentation e i).asAlgebraHom u = 1 := by
     simp [hu]
   have hj : (blockRepresentation e j).asAlgebraHom u = 0 := by
