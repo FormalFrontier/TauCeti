@@ -20,10 +20,13 @@ characters of a finite group.
 Nothing here is a new theorem about compact groups; it is the calibration that keeps the
 normalizations honest, the acceptance criterion "finite groups recover character theory" of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
-`TauCeti.ContRepresentation.card_inv_mul_sum_character_mul_character_inv_self` and
-`TauCeti.ContRepresentation.card_inv_mul_sum_character_mul_character_inv` are literally the two
-halves of Mathlib's `Representation.char_orthonormal`, obtained from the compact-group proof rather
-than from the averaging idempotent of the finite-group proof.
+`TauCeti.ContRepresentation.inner_characterLp_eq_inv_card_mul_sum` identifies the `L²` pairing of
+two characters with the sum `|G|⁻¹ * ∑ g, χ_ρ g * χ_π g⁻¹` that Mathlib's
+`Representation.char_orthonormal` evaluates, so the compact-group relations
+`TauCeti.ContRepresentation.character_orthonormal_self` and
+`TauCeti.ContRepresentation.character_orthonormal_distinct` land on Mathlib's statement on the
+nose, with the compact-group proof in place of the averaging idempotent of the finite-group one.
+Mathlib already proves those two relations for a finite group, so they are not restated here.
 
 ## Main results
 
@@ -35,9 +38,8 @@ than from the averaging idempotent of the finite-group proof.
   on a finite group are its arithmetic mean.
 * `TauCeti.ContRepresentation.card_inv_mul_sum_matrixCoeff_mul_conj_matrixCoeff`: the first Schur
   orthogonality relation as a finite sum.
-* `TauCeti.ContRepresentation.card_inv_mul_sum_character_mul_character_inv_self` and
-  `TauCeti.ContRepresentation.card_inv_mul_sum_character_mul_character_inv`: the two character
-  orthogonality relations as finite sums.
+* `TauCeti.ContRepresentation.inner_characterLp_eq_inv_card_mul_sum`: the `L²` pairing of two
+  characters as the finite sum of Mathlib's `Representation.char_orthonormal`.
 
 ## Implementation notes
 
@@ -187,17 +189,17 @@ section Character
 
 variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [DiscreteTopology G]
   [Fintype G] [MeasurableSpace G] [BorelSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
-  [FiniteDimensional 𝕜 V]
-  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
-  [FiniteDimensional 𝕜 W]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [FiniteDimensional 𝕜 W]
 
 variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
-omit [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] in
 /-- **The `L²` inner product of two characters of a finite group is the classical character
 pairing.** Unitarity of `π` turns the conjugation supplied by the inner product into the inversion
-`g ↦ g⁻¹` of Mathlib's `Representation.char_orthonormal`. -/
+`g ↦ g⁻¹` of Mathlib's `Representation.char_orthonormal`; combining this with
+`TauCeti.ContRepresentation.character_orthonormal_self` and
+`TauCeti.ContRepresentation.character_orthonormal_distinct` is what specializes the compact-group
+orthogonality relations to the classical ones. -/
 theorem inner_characterLp_eq_inv_card_mul_sum (hunitary : IsUnitary π)
     (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ) :
     ⟪characterLp π hπ, characterLp ρ hρ⟫_𝕜
@@ -205,32 +207,6 @@ theorem inner_characterLp_eq_inv_card_mul_sum (hunitary : IsUnitary π)
   rw [characterLp_def, characterLp_def, inner_toLp_eq_inv_card_mul_sum]
   exact congrArg _ (Finset.sum_congr rfl fun g _ ↦ by
     rw [character_apply_inv π hπ hunitary g])
-
-/-- **First orthogonality relation for the character of a finite group**, obtained by specializing
-the compact-group relation `TauCeti.ContRepresentation.character_orthonormal_self`. This is the
-diagonal half of Mathlib's `Representation.char_orthonormal`. -/
-theorem card_inv_mul_sum_character_mul_character_inv_self [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
-    (hirr : Representation.IsIrreducible π.toRepresentation) :
-    (Nat.card G : 𝕜)⁻¹ * ∑ g, character π hπ g * character π hπ g⁻¹ = 1 := by
-  rw [← inner_characterLp_eq_inv_card_mul_sum π hπ hunitary π hπ]
-  exact character_orthonormal_self π hπ hunitary hirr
-
-omit [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] in
-/-- **Second orthogonality relation for the characters of a finite group**, obtained by
-specializing `TauCeti.ContRepresentation.character_orthonormal_distinct`. This is the off-diagonal
-half of Mathlib's `Representation.char_orthonormal`: the characters of two inequivalent irreducible
-representations are orthogonal. The vanishing of the intertwiners `ρ → π` that
-`character_orthonormal_distinct` asks for is supplied by Schur's lemma, in the form of
-`TauCeti.ContRepresentation.eq_zero_of_isEmpty_equiv`. -/
-theorem card_inv_mul_sum_character_mul_character_inv (hunitary : IsUnitary π)
-    (hirr : Representation.IsIrreducible π.toRepresentation)
-    (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ)
-    (hirr' : Representation.IsIrreducible ρ.toRepresentation)
-    (hne : IsEmpty (_root_.ContRepresentation.Equiv ρ π)) :
-    (Nat.card G : 𝕜)⁻¹ * ∑ g, character ρ hρ g * character π hπ g⁻¹ = 0 := by
-  rw [← inner_characterLp_eq_inv_card_mul_sum π hπ hunitary ρ hρ]
-  exact character_orthonormal_distinct π hπ ρ hρ hunitary
-    fun f ↦ by simp [eq_zero_of_isEmpty_equiv hirr' hirr hne f]
 
 end Character
 
