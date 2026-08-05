@@ -65,6 +65,21 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
 @[simp] theorem prodRootMem_coe (S : Finset ι) :
     (prodRootMem (K := K) root S : L) = ∏ i ∈ S, root i := rfl
 
+/-- **The square of a subset-product root, computed inside `M`.** The `M`-level companion of
+`prod_root_sq`: `prodRootMem root S` squares to the product over `S` of the images `K → M` of the
+radicands `d i`. Only the roots indexed by `S` are constrained. Stated in the `map_prod`-normal form
+`∏ i ∈ S, algebraMap K M (d i)` (rather than `algebraMap K M (∏ i ∈ S, d i)`) so it is a legal
+`@[simp]` normal form. -/
+@[simp] theorem prodRootMem_sq {S : Finset ι} (hroot : ∀ i ∈ S, root i ^ 2 = algebraMap K L (d i)) :
+    prodRootMem (K := K) root S ^ 2 = ∏ i ∈ S, algebraMap K (adjoin K (Set.range root)) (d i) := by
+  -- Transport through the `M ↪ L` subtype: the coercion turns `prodRootMem root S` into
+  -- `∏ i ∈ S, root i` and commutes with the product and the algebra map, reducing to `root i`'s
+  -- square being `algebraMap (d i)` on `S`.
+  apply Subtype.ext
+  push_cast [prodRootMem_coe]
+  rw [← Finset.prod_pow]
+  exact Finset.prod_congr rfl hroot
+
 /-- **A nonempty subset-product subfield of `M` is quadratic.** Computed inside `M`, the simple
 extension `K(∏_{i ∈ S} root i)` has the same degree as its `L`-level counterpart, which is `2`
 when the radicand product `∏_{i ∈ S} d i` is not a square. -/
