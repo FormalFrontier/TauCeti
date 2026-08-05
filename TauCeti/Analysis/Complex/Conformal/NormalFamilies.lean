@@ -25,7 +25,10 @@ Everything here is stated for maps `ℂ → E` into a complex normed space, beca
 Cauchy estimate uses the multiplicative structure of the target: Mathlib's
 `Complex.norm_deriv_le_of_forall_mem_sphere_norm_le`, which is the sole analytic input, is itself
 `E`-valued.  Only `TauCeti.IsLocallyBoundedOn.equicontinuousOn_deriv` needs `E` complete, and
-that is because it differentiates twice.  Taking `E = ℂ` recovers the scalar statements.
+that is because it differentiates twice.  Local boundedness itself is a statement about `‖·‖`
+alone, so `TauCeti.IsLocallyBoundedOn` and its elementary API ask only for `[Norm E]`; the normed
+complex vector space structure enters with the Cauchy estimates.  Taking `E = ℂ` recovers the
+scalar statements.
 
 The mechanism is Cauchy's estimate for the first derivative.  Mathlib's
 `Complex.norm_deriv_le_of_forall_mem_sphere_norm_le` bounds `‖deriv f c‖` at the *centre* of a
@@ -78,7 +81,11 @@ namespace TauCeti
 
 open Filter Metric Set Topology
 
-variable {ι E : Type*} [NormedAddCommGroup E] {U : Set ℂ} {f : ℂ → E} {F : ι → ℂ → E}
+variable {ι E : Type*} {U : Set ℂ} {f : ℂ → E} {F : ι → ℂ → E}
+
+section LocallyBounded
+
+variable [Norm E]
 
 /-- A family `F : ι → ℂ → E` is **locally bounded** on `s` if it is uniformly bounded — with a
 single constant, independent of the index — on every compact subset of `s`.
@@ -124,6 +131,8 @@ theorem isLocallyBoundedOn_of_forall_norm_le {s : Set ℂ} {C : ℝ}
     (h : ∀ i, ∀ z ∈ s, ‖F i z‖ ≤ C) : IsLocallyBoundedOn F s :=
   fun _K hKs _hK => ⟨C, fun i z hz => h i z (hKs hz)⟩
 
+end LocallyBounded
+
 /-- Every point of an open set admits a radius `r > 0` with `closedBall z (2 * r) ⊆ U`.
 
 The doubled radius is what lets the Cauchy estimate below be applied at every point of
@@ -139,7 +148,7 @@ private theorem exists_pos_closedBall_two_mul_subset (hU : IsOpen U) {z : ℂ} (
 
 section Estimates
 
-variable [NormedSpace ℂ E]
+variable [NormedAddCommGroup E] [NormedSpace ℂ E]
 
 /-- **Cauchy's estimate on a closed ball.** If `f` is holomorphic on an open set `U` containing
 `closedBall c r` and `‖f‖ ≤ M` on that closed ball, then `‖deriv f c‖ ≤ M / r`.
