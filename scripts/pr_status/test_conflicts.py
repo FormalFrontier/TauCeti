@@ -489,6 +489,14 @@ class Report(unittest.TestCase):
         self.assertEqual(len(self.run_episodes(days=2)), 1)
         self.assertEqual(len(self.run_episodes(days=90)), 2)
 
+    def test_the_reported_median_averages_an_even_count(self):
+        self.stub([{"number": 5, "author": "alice"}], {5: [
+            self.episode(self.NOW - 90000, self.NOW - 86400),   # 1h
+            self.episode(self.NOW - 80000, self.NOW - 69200),   # 3h
+        ]})
+        lines = "\n".join(conflicts.summarise(self.run_episodes(days=90)))
+        self.assertIn("resolved: median 2h 0m", lines)
+
     def test_summary_reports_both_populations(self):
         self.stub([{"number": 5, "author": "alice"}, {"number": 6, "author": "bob"}],
                   {5: [self.episode(self.NOW - 90000, self.NOW - 82800)],
@@ -504,11 +512,6 @@ class Formatting(unittest.TestCase):
         self.assertEqual(conflicts.human_duration(59), "0m")
         self.assertEqual(conflicts.human_duration(3 * 3600 + 720), "3h 12m")
         self.assertEqual(conflicts.human_duration(2 * 86400 + 4 * 3600), "2d 4h")
-
-    def test_median_of_an_even_count_averages_the_middle(self):
-        self.assertEqual(conflicts.median([1, 2, 3, 4]), 2.5)
-        self.assertEqual(conflicts.median([3, 1, 2]), 2)
-        self.assertIsNone(conflicts.median([]))
 
 
 if __name__ == "__main__":

@@ -95,6 +95,7 @@ import datetime
 import json
 import os
 import re
+import statistics
 import subprocess
 import sys
 import time
@@ -212,16 +213,6 @@ query($owner:String!, $name:String!, $cursor:String) {
 """
 
 
-def _graphql(query, **variables):
-    cmd = ["gh", "api", "graphql", "-f", f"query={query}"]
-    for key, value in variables.items():
-        cmd += ["-f", f"{key}={value}"]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        raise RuntimeError(f"gh api graphql failed: {out.stderr.strip()}")
-    return json.loads(out.stdout)
-
-
 def open_prs():
     """Every open PR as {number, title, draft, mergeable, author, labels}.
 
@@ -233,9 +224,8 @@ def open_prs():
     owner, _, name = REPO.partition("/")
     rows, cursor = [], None
     while True:
-        page = _graphql(OPEN_PRS_QUERY, owner=owner, name=name,
-                        **({"cursor": cursor} if cursor else {}))
-        block = page["data"]["repository"]["pullRequests"]
+        page = core.graphql(OPEN_PRS_QUERY, owner=owner, name=name, cursor=cursor)
+        block = page["repository"]["pullRequests"]
         for node in block["nodes"]:
             rows.append({
                 "number": node["number"],
@@ -605,8 +595,7 @@ def report_prs(days):
     query = f"repo:{REPO} is:pr updated:>={since}"
     rows, cursor = [], None
     while True:
-        page = _graphql(REPORT_PRS_QUERY, q=query, **({"cursor": cursor} if cursor else {}))
-        block = page["data"]["search"]
+        block = core.graphql(REPORT_PRS_QUERY, q=query, cursor=cursor)["search"]
         for node in block["nodes"]:
             if not node:
                 continue
@@ -671,16 +660,6 @@ def iso_to_epoch(text):
         text.replace("Z", "+00:00")).timestamp())
 
 
-def median(values):
-    if not values:
-        return None
-    ordered = sorted(values)
-    mid = len(ordered) // 2
-    if len(ordered) % 2:
-        return ordered[mid]
-    return (ordered[mid - 1] + ordered[mid]) / 2
-
-
 def summarise(eps):
     """Lines of a human-readable report over `episodes()` output."""
     lines = []
@@ -692,11 +671,11 @@ def summarise(eps):
     if resolved:
         durations = [e["seconds"] for e in resolved]
         over = sum(1 for d in durations if d > 86400)
-        lines.append(f"  resolved: median {human_duration(median(durations))}, "
+        lines.append(f"  resolved: median {human_duration(statistics.median(durations))}, "
                      f"max {human_duration(max(durations))}, {over} over 24h")
     if live:
         ages = [e["seconds"] for e in live]
-        lines.append(f"  live:     median age {human_duration(median(ages))}, "
+        lines.append(f"  live:     median age {human_duration(statistics.median(ages))}, "
                      f"oldest {human_duration(max(ages))}")
     if censored:
         lines.append(f"  censored: {len(censored)} PR(s) were closed still conflicting; "
@@ -710,7 +689,7 @@ def summarise(eps):
         open_now = [e for e in rows if e["state"] == "live"]
         detail = f"{len(rows)} episode(s)"
         if done:
-            detail += f", median {human_duration(median(done))}"
+            detail += f", median {human_duration(statistics.median(done))}"
         if open_now:
             detail += f", {len(open_now)} still live " \
                       f"(oldest {human_duration(max(e['seconds'] for e in open_now))})"

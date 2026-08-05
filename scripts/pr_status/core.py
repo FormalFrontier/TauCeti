@@ -54,8 +54,8 @@ RATE_LIMIT_BACKOFF_SECONDS = 15
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
-def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
-    """One `gh api` read, with a bounded back-off for a rate limit.
+def _gh(args, describe, sleep=time.sleep):
+    """One `gh` call, with a bounded back-off for a rate limit.
 
     `gh` does not retry a 403/429 rate limit of its own accord, and every sink in
     this package shares one App installation budget with the review and merge
@@ -63,22 +63,48 @@ def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
     a minute is the wrong answer, so a rate-limited call waits and retries a few
     times; anything else fails immediately, as before.
     """
-    cmd = ["gh", "api", path]
-    if paginate:
-        cmd.append("--paginate")
-    if jq is not None:
-        cmd += ["--jq", jq]
     for attempt in range(RATE_LIMIT_RETRIES):
-        out = subprocess.run(cmd, capture_output=True, text=True)
+        out = subprocess.run(["gh", *args], capture_output=True, text=True)
         if out.returncode == 0:
             return out.stdout
         stderr = out.stderr.strip()
         limited = any(marker.lower() in stderr.lower() for marker in _RATE_LIMITED)
         if not limited or attempt + 1 == RATE_LIMIT_RETRIES:
-            raise RuntimeError(f"gh api {path} failed: {stderr}")
+            raise RuntimeError(f"{describe} failed: {stderr}")
         delay = RATE_LIMIT_BACKOFF_SECONDS * (2 ** attempt)
         print(f"gh api rate-limited; retrying in {delay}s", flush=True)
         sleep(delay)
+
+
+def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
+    """One REST `gh api` read, backing off a rate limit as `_gh` describes."""
+    args = ["api", path]
+    if paginate:
+        args.append("--paginate")
+    if jq is not None:
+        args += ["--jq", jq]
+    return _gh(args, f"gh api {path}", sleep=sleep)
+
+
+def graphql(query, sleep=time.sleep, **variables):
+    """One GraphQL query, returning its `data` object.
+
+    The GraphQL twin of `gh_api`, and the one GraphQL entry point for this package,
+    so a query shares the same rate-limit back-off as every REST read. A variable
+    passed as None is dropped, so an optional cursor needs no juggling at the call
+    site; an `int` is sent as a number (`-F`) rather than a string; and an `errors`
+    block raises, since GraphQL reports a failed field with HTTP 200 and a `data`
+    that is null or half-filled.
+    """
+    args = ["api", "graphql", "-f", f"query={query}"]
+    for key, value in variables.items():
+        if value is None:
+            continue
+        args += ["-F" if isinstance(value, int) else "-f", f"{key}={value}"]
+    payload = json.loads(_gh(args, "gh api graphql", sleep=sleep))
+    if payload.get("errors"):
+        raise RuntimeError(f"GitHub GraphQL errors: {payload['errors']}")
+    return payload["data"]
 
 
 def _roadmap_labels(labels):
