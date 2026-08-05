@@ -31,12 +31,16 @@ local-endomorphism-ring theorem. Both are supplied here.
 
 * `TauCeti.isIndecomposableModule_iff_nontrivial_and_forall_isIdempotentElem`: indecomposability
   says exactly that `M` is nontrivial and `0` and `1` are the only idempotents of `Module.End A M`.
+* `TauCeti.IsIndecomposableModule.bijective_of_bijective_comp`: a split injection into an
+  indecomposable module is an isomorphism, that is, if `g ∘ₗ f` is bijective and the module `f`
+  lands in is indecomposable, then `f` is bijective.
 * `TauCeti.IsIndecomposableModule.isNilpotent_or_bijective`: **Fitting's lemma**, for a module that
   is Noetherian and Artinian, together with
   `TauCeti.IsIndecomposableModule.isNilpotent_iff_not_isUnit`, which reads it as an identification
   of the non-units of the endomorphism ring with its nilpotents.
 * `TauCeti.isLocalRing_end_of_isIndecomposable`: the endomorphism ring of an indecomposable module
-  of finite length is local.
+  of finite length is local, and `TauCeti.nontrivial_of_isLocalRing_end` for the converse direction
+  that a local endomorphism ring forces the module to be nonzero.
 * `TauCeti.isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`: for a module of finite
   length the converse holds too, so indecomposability is *equivalent* to being nontrivial and
   having a local endomorphism ring.
@@ -159,6 +163,37 @@ theorem IsSimpleModule.isIndecomposableModule [IsSimpleModule A M] :
     have hdisj : Disjoint (⊤ : Submodule A M) P := hN ▸ hNP.disjoint
     simpa using hdisj
 
+/-! ### Splitting off an indecomposable module -/
+
+/-- **A split injection into an indecomposable module is an isomorphism.** If `g ∘ₗ f` is bijective
+then `f ∘ₗ (g ∘ₗ f)⁻¹ ∘ₗ g` is an idempotent endomorphism of the indecomposable module `f` lands
+in, hence is `0` or `1`; it cannot be `0`, because that would force `f` to vanish on a nontrivial
+module, so it is the identity and `f` is surjective. -/
+theorem IsIndecomposableModule.bijective_of_bijective_comp {N P : Type*}
+    [AddCommGroup N] [Module A N] [AddCommGroup P] [Module A P] [Nontrivial N]
+    (hP : IsIndecomposableModule A P) {f : N →ₗ[A] P} {g : P →ₗ[A] N}
+    (h : Function.Bijective (g ∘ₗ f)) : Function.Bijective f := by
+  set u : N ≃ₗ[A] N := LinearEquiv.ofBijective (g ∘ₗ f) h with hu
+  have hgf : ∀ x : N, u.symm (g (f x)) = x := fun x ↦ u.symm_apply_apply x
+  set e : Module.End A P := f ∘ₗ (u.symm : N →ₗ[A] N) ∘ₗ g with he
+  have hidem : IsIdempotentElem e := by
+    ext x
+    simp only [he, Module.End.mul_apply, LinearMap.coe_comp, Function.comp_apply,
+      LinearEquiv.coe_coe]
+    rw [hgf]
+  have hinjf : Function.Injective f := fun x y hxy ↦ h.1 (by
+    simp only [LinearMap.coe_comp, Function.comp_apply, hxy])
+  rcases hP.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
+  · exfalso
+    have hzero : ∀ x : N, f x = 0 := fun x ↦ by
+      have hx := congrArg (fun t : Module.End A P ↦ t (f x)) h0
+      simpa [he, hgf] using hx
+    obtain ⟨x, y, hxy⟩ := exists_pair_ne N
+    exact hxy (hinjf (by rw [hzero x, hzero y]))
+  · refine ⟨hinjf, fun y ↦ ⟨u.symm (g y), ?_⟩⟩
+    have hy := congrArg (fun t : Module.End A P ↦ t y) h1
+    simpa [he] using hy
+
 /-! ### Fitting's lemma -/
 
 section Fitting
@@ -223,6 +258,14 @@ theorem isLocalRing_end_of_isIndecomposable (hM : IsFiniteLength A M)
   have := h.nontrivial
   refine IsLocalRing.of_isUnit_or_isUnit_one_sub_self fun f ↦ ?_
   exact (h.isNilpotent_or_isUnit f).symm.imp id IsNilpotent.isUnit_one_sub
+
+/-- A module with local endomorphism ring is nonzero: over the zero module the endomorphism ring is
+the zero ring, which is not local. -/
+theorem nontrivial_of_isLocalRing_end [IsLocalRing (Module.End A M)] : Nontrivial M := by
+  rcases subsingleton_or_nontrivial M with _ | h
+  · exact absurd (LinearMap.ext fun _ ↦ Subsingleton.elim _ _ : (0 : Module.End A M) = 1)
+      zero_ne_one
+  · exact h
 
 /-- A nonzero module with local endomorphism ring is indecomposable. This is the converse of
 `TauCeti.isLocalRing_end_of_isIndecomposable`, and needs no finiteness hypothesis. -/
