@@ -44,10 +44,12 @@ sets. It cannot come from `s`, since `f '' s` is open and therefore disjoint fro
 and it cannot come from `t`, since `f '' t` is then an open neighbourhood of `p`, which must meet
 `f '' s`, contradicting disjointness of the two images. So `w ∈ u`.
 
-Only the two named sides matter, and only through their images: they are asked to be open and
-disjoint, which is all the argument uses, and `t` need not even lie in `U`. A consumer whose map is
-open and injective on two disjoint open sides supplies both, as the conformal one below does
-through the open mapping theorem and `Disjoint.image`.
+The source carries no topology; the sides enter topologically only through their images, which are
+asked to be open and disjoint, and that is all the argument uses of them. What is asked of the
+sides themselves is purely set-theoretic: `s ⊆ U` and the covering `U ⊆ s ∪ t ∪ u`. In particular
+`t` need not lie in `U`, and neither side need be open or disjoint from the other. A consumer whose
+map is open and injective on two disjoint open sides supplies both image hypotheses, as the
+conformal one below does through the open mapping theorem and `Disjoint.image`.
 
 ## Consumers
 
@@ -122,8 +124,9 @@ of the two images. So `w ∈ u`.
 Nothing is assumed of `U` beyond `s ⊆ U`; in particular `t` need not lie in `U`, and the two sides
 need be neither open nor disjoint nor separated by injectivity — only their images need be open and
 disjoint, which is what the argument uses and what an injective open map on two disjoint open sides
-supplies. The source carries no topology at all: every hypothesis and the conclusion live in the
-target. -/
+supplies. The source carries no topology at all: `s`, `t`, `u` and `U` are constrained only by the
+set-theoretic hypotheses `hsU` and `hcov`, while every topological hypothesis, and the conclusion,
+lives in the target. -/
 theorem frontier_image_subset_image_union_frontier_image (hfs : IsOpen (f '' s))
     (hft : IsOpen (f '' t)) (hst : Disjoint (f '' s) (f '' t)) (hsU : s ⊆ U)
     (hcov : U ⊆ s ∪ t ∪ u) :
