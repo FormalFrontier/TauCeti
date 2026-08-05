@@ -125,11 +125,9 @@ theorem windingNumber_comp_eq_integral_logDeriv (hγ : Contour.IsPiecewiseC1On �
     have htu : t ∈ [[a, b]] := by
       rw [← Set.Icc_min_max]
       exact Set.Ioo_subset_Icc_self htIoo.1
-    have hd : HasDerivAt (f ∘ γ) (deriv γ t • deriv f (γ t)) t :=
-      (hfa t htu).differentiableAt.hasDerivAt.scomp t (hp t htIoo).hasDerivAt
-    rw [hd.deriv]
-    simp only [Function.comp_apply, sub_zero, logDeriv_apply, smul_eq_mul]
-    ring
+    have hcomp : logDeriv (f ∘ γ) t = logDeriv f (γ t) * deriv γ t :=
+      logDeriv_comp (hfa t htu).differentiableAt (hp t htIoo)
+    rw [sub_zero, ← div_eq_inv_mul, ← logDeriv_apply, hcomp, smul_eq_mul, mul_comm]
   have hint : IntervalIntegrable (fun t => deriv γ t • logDeriv f (γ t)) volume a b :=
     Contour.intervalIntegrable_deriv_smul_logDeriv hγ hfa hfne
   rw [Contour.windingNumber_eq_integral_of_avoidance hcont
