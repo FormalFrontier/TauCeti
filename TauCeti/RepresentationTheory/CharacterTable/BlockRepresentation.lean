@@ -1,0 +1,207 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.RepresentationTheory.CharacterTable.Wedderburn
+public import Mathlib.LinearAlgebra.Basis.VectorSpace
+public import Mathlib.LinearAlgebra.Matrix.ToLin
+public import Mathlib.RepresentationTheory.Irreducible
+
+/-!
+# The irreducible representations carried by the Wedderburn blocks
+
+A Wedderburn presentation `e : k[G] ≃ₐ[k] Π i, Matₙᵢ(k)` of a finite group algebra is a numerical
+statement until each block is turned into a representation. This file does that: composing `e` with
+the projection onto the `i`-th factor and with `Matrix.toLinAlgEquiv'` presents the column space
+`Fin (d i) → k` as a `k[G]`-module, hence as a representation of `G`.
+
+Two facts make the resulting family the family of irreducibles. Each `blockRepresentation e i` is
+irreducible, because its algebra map onto `End k (Fin (d i) → k)` is surjective and a nonzero vector
+of a vector space can be moved anywhere by an endomorphism. And the blocks are pairwise
+inequivalent, because the idempotent `e.symm (Pi.single i 1)` acts as the identity on the `i`-th
+block and as zero on every other one.
+
+Together with `TauCeti.exists_algEquiv_pi_matrix_conjClasses` this produces, over an algebraically
+closed field whose characteristic does not divide `|G|`, a family of pairwise inequivalent
+irreducible representations of `G` indexed by the conjugacy classes of `G`.
+
+## Main definitions
+
+* `TauCeti.blockAlgHom`: the algebra map from `k[G]` onto the endomorphisms of the `i`-th column
+  space cut out by a Wedderburn presentation.
+* `TauCeti.blockRepresentation`: the representation of `G` on that column space.
+
+## Main statements
+
+* `TauCeti.isIrreducible_blockRepresentation`: **every block of a Wedderburn presentation carries an
+  irreducible representation**.
+* `TauCeti.isEmpty_equiv_blockRepresentation`: **distinct blocks carry inequivalent
+  representations**.
+* `TauCeti.exists_irreducible_family_conjClasses`: **there are as many pairwise inequivalent
+  irreducible representations of `G` as `G` has conjugacy classes**, in the form of a family indexed
+  by `ConjClasses G`.
+
+## References
+
+This supplies the block ⇆ irreducible-representation matching that Layer 2.5 of the
+[character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
+asks for, in the concrete form needed by Layer 3's completeness statement. See J.-P. Serre, *Linear
+Representations of Finite Groups*, Section 6.4, or I. M. Isaacs, *Character Theory of Finite
+Groups*, Chapter 1.
+-/
+
+public section
+
+open scoped MonoidAlgebra
+
+namespace TauCeti
+
+universe u v w
+
+section Surjective
+
+variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
+
+/-- A nonzero vector of a vector space can be carried to any other vector by an endomorphism: the
+functional dual to it on the line it spans extends to the whole space. -/
+theorem exists_end_apply_eq {x : V} (hx : x ≠ 0) (y : V) : ∃ T : Module.End k V, T x = y := by
+  obtain ⟨T, hT⟩ := LinearMap.exists_extend
+    ((LinearMap.toSpanSingleton k V y).comp
+      (LinearEquiv.toSpanNonzeroSingleton k V x hx).symm.toLinearMap)
+  refine ⟨T, ?_⟩
+  have h := congrFun (congrArg DFunLike.coe hT)
+    (LinearEquiv.toSpanNonzeroSingleton k V x hx 1)
+  simp only [LinearMap.coe_comp, Function.comp_apply, Submodule.subtype_apply,
+    LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply, LinearMap.toSpanSingleton_apply,
+    one_smul] at h
+  rwa [LinearEquiv.toSpanNonzeroSingleton_one] at h
+
+/-- **A representation whose algebra map exhausts the endomorphisms is irreducible.** Every nonzero
+vector then generates, because a nonzero vector of a vector space can be carried anywhere by an
+endomorphism. -/
+theorem Representation.isIrreducible_of_asAlgebraHom_surjective [Nontrivial V]
+    (ρ : Representation k G V) (h : Function.Surjective ρ.asAlgebraHom) : ρ.IsIrreducible := by
+  rw [_root_.Representation.irreducible_iff_isSimpleModule_asModule,
+    isSimpleModule_iff_toSpanSingleton_surjective]
+  refine ⟨ρ.asModuleEquiv.toEquiv.nontrivial, fun x hx y => ?_⟩
+  obtain ⟨T, hT⟩ := exists_end_apply_eq (k := k)
+    (x := ρ.asModuleEquiv x) (by simpa using hx) (ρ.asModuleEquiv y)
+  obtain ⟨r, rfl⟩ := h T
+  refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
+  rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
+
+end Surjective
+
+section Block
+
+variable {k : Type u} {G : Type v} [Field k] [Group G] {ι : Type w} {d : ι → ℕ}
+  (e : k[G] ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
+
+/-- The algebra map from the group algebra onto the endomorphisms of the `i`-th column space of a
+Wedderburn presentation: project `e` onto the `i`-th matrix block and let a matrix act on column
+vectors. -/
+noncomputable def blockAlgHom (i : ι) : k[G] →ₐ[k] Module.End k (Fin (d i) → k) :=
+  (Matrix.toLinAlgEquiv' (n := Fin (d i)) (R := k)).toAlgHom.comp
+    ((Pi.evalAlgHom k (fun j => Matrix (Fin (d j)) (Fin (d j)) k) i).comp e.toAlgHom)
+
+@[simp]
+theorem blockAlgHom_apply (i : ι) (x : k[G]) :
+    blockAlgHom e i x = Matrix.toLinAlgEquiv' (e x i) := by
+  simp [blockAlgHom]
+
+/-- Each block of a Wedderburn presentation exhausts the endomorphisms of its column space: `e` is
+bijective, the projection onto a factor is surjective, and matrices are all the endomorphisms of a
+coordinate space. -/
+theorem blockAlgHom_surjective (i : ι) : Function.Surjective (blockAlgHom e i) := by
+  classical
+  intro T
+  refine ⟨e.symm (Pi.single i (Matrix.toLinAlgEquiv'.symm T)), ?_⟩
+  simp
+
+/-- **The representation of `G` on the `i`-th block of a Wedderburn presentation of `k[G]`**: the
+group acts on the column space `Fin (d i) → k` through the `i`-th matrix factor. -/
+noncomputable def blockRepresentation (i : ι) : Representation k G (Fin (d i) → k) :=
+  (blockAlgHom e i).toMonoidHom.comp (MonoidAlgebra.of k G)
+
+@[simp]
+theorem blockRepresentation_apply (i : ι) (g : G) :
+    blockRepresentation e i g = Matrix.toLinAlgEquiv' (e (MonoidAlgebra.of k G g) i) := by
+  simp [blockRepresentation]
+
+/-- The algebra map of `TauCeti.blockRepresentation` is the block projection it was built from. -/
+@[simp]
+theorem asAlgebraHom_blockRepresentation (i : ι) :
+    (blockRepresentation e i).asAlgebraHom = blockAlgHom e i := by
+  refine AlgHom.ext fun x => ?_
+  induction x using MonoidAlgebra.induction_on with
+  | of g => rw [Representation.asAlgebraHom_of]; simp [blockRepresentation]
+  | add x y hx hy => rw [map_add, map_add, hx, hy]
+  | smul r x hx => rw [map_smul, map_smul, hx]
+
+/-- **Every Wedderburn block carries an irreducible representation.** -/
+theorem isIrreducible_blockRepresentation [∀ i, NeZero (d i)] (i : ι) :
+    (blockRepresentation e i).IsIrreducible := by
+  have : Nonempty (Fin (d i)) := ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
+  have : Nontrivial (Fin (d i) → k) := inferInstance
+  exact Representation.isIrreducible_of_asAlgebraHom_surjective _
+    (by simpa using blockAlgHom_surjective e i)
+
+/-- **Distinct Wedderburn blocks carry inequivalent representations.** The idempotent that `e`
+matches with `Pi.single i 1` acts as the identity on the `i`-th block and as zero on the `j`-th. -/
+theorem isEmpty_equiv_blockRepresentation [∀ i, NeZero (d i)] {i j : ι} (hij : i ≠ j) :
+    IsEmpty ((blockRepresentation e i).Equiv (blockRepresentation e j)) := by
+  classical
+  have : Nonempty (Fin (d i)) := ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
+  have : Nontrivial (Fin (d i) → k) := inferInstance
+  refine ⟨fun φ => ?_⟩
+  set u : k[G] := e.symm (Pi.single i 1) with hu
+  have hcomm : ∀ x : k[G], ∀ v : Fin (d i) → k,
+      φ ((blockRepresentation e i).asAlgebraHom x v) =
+        (blockRepresentation e j).asAlgebraHom x (φ v) := by
+    intro x
+    induction x using MonoidAlgebra.induction_on with
+    | of g =>
+        intro v
+        simpa using Representation.IntertwiningMap.isIntertwining _ _ φ.toIntertwiningMap g v
+    | add x y hx hy =>
+        intro v
+        simp only [map_add, LinearMap.add_apply, map_add, hx v, hy v]
+    | smul r x hx =>
+        intro v
+        simp only [map_smul, LinearMap.smul_apply, map_smul, hx v]
+  have hi : (blockRepresentation e i).asAlgebraHom u = 1 := by
+    simp [hu]
+  have hj : (blockRepresentation e j).asAlgebraHom u = 0 := by
+    simp [hu, Pi.single_eq_of_ne (Ne.symm hij)]
+  obtain ⟨v, hv⟩ := exists_ne (0 : Fin (d i) → k)
+  refine hv (φ.toLinearEquiv.injective ?_)
+  have hv0 := hcomm u v
+  rw [hi, hj] at hv0
+  simpa using hv0
+
+end Block
+
+section Existence
+
+variable (k : Type u) (G : Type v) [Field k] [Group G] [Finite G] [NeZero (Nat.card G : k)]
+  [IsAlgClosed k]
+
+/-- **There are as many pairwise inequivalent irreducible representations of `G` as `G` has
+conjugacy classes.** Maschke and Artin--Wedderburn present `k[G]` with its blocks indexed by
+`ConjClasses G`, and the blocks carry pairwise inequivalent irreducible representations.
+
+The bound in the other direction, that no family of pairwise inequivalent irreducibles is larger,
+is `TauCeti.ClassFunction.card_le_card_conjClasses`. -/
+theorem exists_irreducible_family_conjClasses :
+    ∃ (d : ConjClasses G → ℕ) (ρ : ∀ C, Representation k G (Fin (d C) → k)),
+      (∀ C, (ρ C).IsIrreducible) ∧ Pairwise fun C D => IsEmpty ((ρ C).Equiv (ρ D)) := by
+  obtain ⟨d, hd, -, ⟨e⟩⟩ := exists_algEquiv_pi_matrix_conjClasses k G
+  have := hd
+  exact ⟨d, blockRepresentation e, isIrreducible_blockRepresentation e,
+    fun _ _ h => isEmpty_equiv_blockRepresentation e h⟩
+
+end Existence
+
+end TauCeti
