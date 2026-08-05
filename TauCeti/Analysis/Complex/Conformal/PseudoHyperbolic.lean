@@ -19,10 +19,7 @@ which `Real.artanh` is a bijection onto `ℝ` — and it is jointly continuous t
 The Poincaré defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub` compares the
 numerator and the denominator, and yields
 `TauCeti.norm_sub_eq_of_pseudoHyperbolicExpr_eq`: between points of prescribed norms, the
-pseudo-hyperbolic expression determines the Euclidean distance.  The same identity read on the
-boundary gives `TauCeti.pseudoHyperbolicExpr_eq_one_of_norm_eq_one`: the expression is exactly
-one as soon as one of the two points has norm one, which is the statement that the Moebius factor
-of an interior point maps the unit circle to itself.
+pseudo-hyperbolic expression determines the Euclidean distance.
 
 This L2 material is coordinated with the upstream Mathlib RMT effort in
 leanprover-community/mathlib4#33505.  Mathlib already contains the preceding human-curated
@@ -291,27 +288,6 @@ than one. -/
 lemma pseudoHyperbolicExpr_lt_one_unitDisc (z w : Complex.UnitDisc) :
     pseudoHyperbolicExpr (z : ℂ) (w : ℂ) < 1 :=
   pseudoHyperbolicExpr_lt_one_of_norm_lt_one z.norm_lt_one w.norm_lt_one
-
-/-- **The Moebius factor preserves the unit circle.** If `z` has norm one and `w` norm less than
-one, the pseudo-hyperbolic expression is exactly one: `‖(z - w) / (1 - conj w * z)‖ = 1`.
-
-This is the boundary companion of `TauCeti.pseudoHyperbolicExpr_lt_one_of_norm_lt_one`, and it
-comes from the same defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub`: the
-product of defects `(1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)` vanishes when `‖z‖ = 1`, so numerator and
-denominator have equal norms. Only `z` is asked to lie on the circle; `w` stays inside, which is
-what keeps the denominator away from zero. -/
-lemma pseudoHyperbolicExpr_eq_one_of_norm_eq_one {z w : ℂ} (hz : ‖z‖ = 1) (hw : ‖w‖ < 1) :
-    pseudoHyperbolicExpr z w = 1 := by
-  have hden : (1 : ℂ) - (starRingEnd ℂ) w * z ≠ 0 := by
-    refine (isUnit_one_sub_of_norm_lt_one (x := (starRingEnd ℂ) w * z) ?_).ne_zero
-    rw [norm_mul, norm_conj, hz, mul_one]
-    exact hw
-  have hdefect := norm_sq_one_sub_conj_mul_sub_norm_sq_sub z w
-  rw [hz] at hdefect
-  have hsq : ‖(1 : ℂ) - (starRingEnd ℂ) w * z‖ ^ 2 = ‖z - w‖ ^ 2 := by nlinarith [hdefect]
-  have heq : ‖(1 : ℂ) - (starRingEnd ℂ) w * z‖ = ‖z - w‖ :=
-    (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp hsq
-  rw [pseudoHyperbolicExpr_eq_norm_div_norm, ← heq, div_self (norm_ne_zero_iff.2 hden)]
 
 /-- The pseudo-hyperbolic expression of two points of norm less than one lies in the interval
 `Ioo (-1) 1` on which `Real.artanh` is a strictly monotone bijection onto `ℝ`. This is the side
