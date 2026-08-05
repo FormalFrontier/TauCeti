@@ -47,7 +47,8 @@ a proper `E` — for a normed space over `ℂ` that is exactly finite-dimensiona
 converse, which merely reads a bound off a compact set, for an arbitrary one.
 
 *Relatively compact ⇒ locally bounded* is a soft argument and needs no holomorphy at all, nor even
-openness of `Ω`: local compactness of the subtype `↥Ω` is all it uses. On a compact `K ⊆ Ω` the
+openness of `Ω` or a complex domain: it is stated for a set `Ω` in an arbitrary topological space,
+because local compactness of the subtype `↥Ω` is all it uses. On a compact `K ⊆ Ω` the
 product `closure (range f) ×ˢ (Subtype.val ⁻¹' K)` is compact, local compactness of `↥Ω` makes
 evaluation `C(↥Ω, E) × ↥Ω → E` continuous in both variables at once, and a continuous real function
 on a compact set is bounded. The bound obtained is uniform in the index, which is exactly
@@ -62,7 +63,7 @@ boundedness are the same condition.
 * `TauCeti.isCompact_closure_range_of_isLocallyBoundedOn` — a locally bounded family of
   holomorphic maps of an open set into a proper `E` is relatively compact in `C(↥Ω, E)`.
 * `TauCeti.isLocallyBoundedOn_of_isCompact_closure_range` — the converse, for any family of
-  maps on a set whose subtype is locally compact.
+  maps on a set in a topological space whose subtype is locally compact.
 * `TauCeti.isCompact_closure_range_iff_isLocallyBoundedOn` — the two are equivalent.
 
 ## Coordination with upstream Mathlib
@@ -155,15 +156,22 @@ theorem isCompact_closure_range_of_isLocallyBoundedOn [ProperSpace E] (hΩ : IsO
   obtain ⟨i, rfl⟩ := hg
   simpa [hf i, mem_closedBall, dist_zero_right] using hC i
 
+section GeneralDomain
+
+-- The converse direction is pure topology: it never differentiates, so the domain need not be
+-- `ℂ`, only a topological space whose subtype `↥Ω` is locally compact.
+variable {X : Type*} [TopologicalSpace X] {Ω : Set X} {F : ι → X → E} {f : ι → C(Ω, E)}
+
 omit [NormedSpace ℂ E] in
-/-- **The converse of Montel's theorem.** A family of maps on a set `Ω ⊆ ℂ` with locally compact
+/-- **The converse of Montel's theorem.** A family of maps on a set `Ω` with locally compact
 subtype whose restrictions are relatively compact in `C(↥Ω, E)` is locally bounded on `Ω`.
 
-No holomorphy is needed, nor even continuity beyond what the restrictions already carry, and no
-properness of the target: evaluation is continuous in the map and the point together as soon as
-`↥Ω` is locally compact (for an open `Ω` the instance is `IsOpen.locallyCompactSpace`), so a
-continuous real function on the compact product `closure (Set.range f) ×ˢ (Subtype.val ⁻¹' K)` is
-bounded — and its bound is uniform in the index, which is what local boundedness asserts. -/
+No holomorphy is needed — not even a complex domain, nor continuity beyond what the restrictions
+already carry — and no properness of the target: evaluation is continuous in the map and the point
+together as soon as `↥Ω` is locally compact (for an open `Ω ⊆ ℂ` the instance is
+`IsOpen.locallyCompactSpace`), so a continuous real function on the compact product
+`closure (Set.range f) ×ˢ (Subtype.val ⁻¹' K)` is bounded — and its bound is uniform in the index,
+which is what local boundedness asserts. -/
 theorem isLocallyBoundedOn_of_isCompact_closure_range [LocallyCompactSpace Ω]
     (hf : ∀ i, ⇑(f i) = Ω.domRestrict (F i)) (hcpt : IsCompact (closure (Set.range f))) :
     IsLocallyBoundedOn F Ω := by
@@ -179,6 +187,8 @@ theorem isLocallyBoundedOn_of_isCompact_closure_range [LocallyCompactSpace Ω]
     ⟨subset_closure ⟨i, rfl⟩, hz⟩
   have hle : ‖(f i) (⟨z, hKΩ hz⟩ : Ω)‖ ≤ C := hC (mem_image_of_mem _ hmem)
   rwa [hf i] at hle
+
+end GeneralDomain
 
 /-- **Montel's theorem as an equivalence.** For a family of holomorphic maps of an open set
 `Ω ⊆ ℂ` into a proper complex normed space `E`, being locally bounded on `Ω` and being relatively
