@@ -121,12 +121,12 @@ inside the open set `f '' s`, which is disjoint from its own frontier, and `w �
 set `f '' t`, which meets `f '' s` because the point is in its closure, contradicting disjointness
 of the two images. So `w ∈ u`.
 
-Nothing is assumed of `U` beyond `s ⊆ U`; in particular `t` need not lie in `U`, and the two sides
-need be neither open nor disjoint nor separated by injectivity — only their images need be open and
-disjoint, which is what the argument uses and what an injective open map on two disjoint open sides
-supplies. The source carries no topology at all: `s`, `t`, `u` and `U` are constrained only by the
-set-theoretic hypotheses `hsU` and `hcov`, while every topological hypothesis, and the conclusion,
-lives in the target. -/
+The source carries no topology at all: `U` and the three sets covering it are constrained only by
+the two set-theoretic hypotheses `hsU : s ⊆ U` and `hcov : U ⊆ s ∪ t ∪ u`, while every topological
+hypothesis, and the conclusion, lives in the target. In particular `t` need not lie in `U`, and
+the two sides need be neither open nor disjoint nor separated by injectivity — only their images
+need be open and disjoint, which is what the argument uses and what an injective open map on two
+disjoint open sides supplies. -/
 theorem frontier_image_subset_image_union_frontier_image (hfs : IsOpen (f '' s))
     (hft : IsOpen (f '' t)) (hst : Disjoint (f '' s) (f '' t)) (hsU : s ⊆ U)
     (hcov : U ⊆ s ∪ t ∪ u) :
