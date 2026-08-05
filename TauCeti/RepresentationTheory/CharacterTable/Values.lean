@@ -6,7 +6,6 @@ Authors: Claude
 module
 
 public import TauCeti.LinearAlgebra.End.FiniteOrder
-public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 

@@ -121,6 +121,7 @@ variable [Finite G] [IsAlgClosed k] [Invertible (Nat.card G : k)]
 /-- **Every irreducible character is an irreducible character**: the character of an irreducible
 representation on an arbitrary finite-dimensional space lies in `TauCeti.irreducibleCharacters`,
 because it is equivalent to one of the representations on a coordinate space. -/
+@[simp]
 theorem character_mem_irreducibleCharacters {V : Type w} [AddCommGroup V] [Module k V]
     [FiniteDimensional k V] (σ : Representation k G V) [σ.IsIrreducible] :
     σ.character ∈ irreducibleCharacters k G := by
