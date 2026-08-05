@@ -51,7 +51,8 @@ class Replay(unittest.TestCase):
         base.update(kwargs)
         return base
 
-    def analyse(self, mirror, pr, now=9999, gap=7200, actors=None, window=0):
+    def analyse(self, mirror, pr, now=9999, gap=7200, actors=None, window=0,
+                exhaustive=False):
         """Replay through the push ledger. `actors` maps head sha -> github login;
         by default every head was pushed by the PR's own author."""
         author = (pr.get("author") or {}).get("login") or ""
@@ -65,8 +66,8 @@ class Replay(unittest.TestCase):
         index = conflict_stats.ledger_index(ledger)
         pr["_pushes"] = [row for row in index.get(("o", "b"), [])]
         rows, handling, _, _ = conflict_stats.analyse_pr(
-            mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window,
-            index=index, available={r["sha"] for r in ledger})
+            mirror, self.HISTORY, self.TIMES, pr, now, gap, exhaustive=exhaustive,
+            push_window=window, index=index, available={r["sha"] for r in ledger})
         return rows, handling
 
     def analyse_pushes(self, mirror, pr, pushes, gap=7200, now=9999):
@@ -98,10 +99,14 @@ class Replay(unittest.TestCase):
         self.assertEqual(episodes[0]["resolved"], 1650)
         self.assertEqual(episodes[0]["outcome"], "push")
 
-    def test_binary_search_costs_a_handful_of_merges_not_one_per_commit(self):
-        mirror = self.FakeMirror([("h1", 1000), ("h2", 3000)], {"h1": 5})
-        self.analyse(mirror, self.pr())
-        self.assertLess(mirror.merges, len(self.HISTORY))
+    def test_the_onset_search_costs_a_handful_of_merges_not_one_per_commit(self):
+        # The ONSET is binary-searched. Ending an episode is not: `first_clean`
+        # walks the bases one at a time, which is what makes it a check on the
+        # monotonicity assumption rather than another use of it.
+        mirror = self.FakeMirror([("h1", 1000)], {"h1": 5})
+        self.assertEqual(conflict_stats.first_conflicting(
+            mirror, self.HISTORY, 0, len(self.HISTORY), "h1"), 5)
+        self.assertLess(mirror.merges, 10)
 
     def test_an_epoch_that_ends_clean_is_reported_clean(self):
         # Monotonicity is an assumption, not a theorem: check the last base first.
@@ -164,6 +169,55 @@ class Replay(unittest.TestCase):
             mirror, self.HISTORY, 0, 20, "h1"))
         self.assertEqual(conflict_stats.first_conflicting(
             mirror, self.HISTORY, 0, 20, "h1", exhaustive=True), 5)
+
+    def test_main_moving_can_end_an_episode_with_nobody_pushing(self):
+        # The one place the monotonicity assumption reached past the onset search:
+        # main moves to a commit the UNCHANGED head merges with again, so the
+        # conflict is over without anyone pushing. Assumed away, this episode ran
+        # on to the next clean head (or was dropped); it now ends at that base.
+        class Cleared(self.FakeMirror):
+            def conflicts(self, base_sha, head_sha):
+                self.merges += 1
+                return 5 <= int(base_sha) <= 9      # clean again from 10 onwards
+        mirror = Cleared([("h1", 1000)], {})
+        episodes, _ = self.analyse(mirror, self.pr(), exhaustive=True)
+        [row] = episodes
+        self.assertEqual(row["onset"], 1500)        # main commit 5
+        self.assertEqual(row["resolved"], 2000)     # main commit 10, clean again
+        self.assertEqual(row["outcome"], conflict_stats.MAIN_CLEARED)
+        # A resolution with nobody to credit: no push ended it.
+        self.assertIsNone(row["resolver_epoch"])
+        self.assertIsNone(row["resolver"])
+        self.assertIsNone(row["session"])
+
+    def test_a_head_main_cleared_can_break_again_as_a_new_episode(self):
+        # Clearing is not the end of the head's story: main keeps moving, and a
+        # later base can break the same head again. That is a second episode, not
+        # a continuation of the first.
+        class Twice(self.FakeMirror):
+            def conflicts(self, base_sha, head_sha):
+                self.merges += 1
+                base = int(base_sha)
+                return 5 <= base <= 6 or base >= 9
+        mirror = Twice([("h1", 1000)], {})
+        episodes, _ = self.analyse(mirror, self.pr(), now=9999)
+        self.assertEqual(
+            [(e["onset"], e["resolved"], e["outcome"]) for e in episodes],
+            [(1500, 1700, conflict_stats.MAIN_CLEARED), (1900, 9999, "still-open")])
+
+    def test_a_conflict_carried_across_a_push_still_ends_at_a_clean_base(self):
+        # The head changed and the conflict survived it, so the episode carries on
+        # -- and main clearing it must still end it, in whichever epoch that falls.
+        class Cleared(self.FakeMirror):
+            def conflicts(self, base_sha, head_sha):
+                self.merges += 1
+                return 5 <= int(base_sha) <= 7
+        mirror = Cleared([("h1", 1000), ("h2", 1650)], {})
+        episodes, _ = self.analyse(mirror, self.pr())
+        [row] = episodes
+        self.assertEqual(row["onset"], 1500)
+        self.assertEqual(row["resolved"], 1800)     # main commit 8, clean again
+        self.assertEqual(row["outcome"], conflict_stats.MAIN_CLEARED)
 
     def test_current_state_decides_the_outcome_not_closedat(self):
         # Reading `closedAt` first censored an open PR out of the live tail this
@@ -656,6 +710,22 @@ class ReplaySummary(unittest.TestCase):
         lines = "\n".join(conflict_stats.summarise(
             self.episodes(), handled={"recorded": 40, "partial": 3}, total_prs=99))
         self.assertIn("3 partially (heads unfetchable, or a hole in the ledger", lines)
+
+    def test_a_main_cleared_episode_is_a_resolution_with_no_pusher(self):
+        # The merge came clean again, so it belongs in the resolution figures --
+        # censoring it would file a conflict that genuinely ended as an
+        # abandonment. It carries no resolver, so it stays out of the split.
+        episodes = self.episodes()
+        episodes.append({"pr": 5, "author": "bob", "onset": 0, "resolved": 60,
+                         "seconds": 60, "closed_seconds": 0,
+                         "outcome": conflict_stats.MAIN_CLEARED,
+                         "session": None, "resolver": None})
+        lines = "\n".join(conflict_stats.summarise(
+            episodes, handled={"recorded": 40}, total_prs=99))
+        self.assertIn("1/4 took over 24h", lines)
+        self.assertIn("1 of those ended with no push at all", lines)
+        self.assertIn("resolved by a push: 3", lines)
+        self.assertNotIn("censored", lines)
 
     def test_an_unchecked_closed_time_is_flagged_rather_than_passed_off_as_zero(self):
         episodes = self.episodes()

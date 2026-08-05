@@ -40,14 +40,17 @@ the epoch began, so a PR that is born conflicting is not missed -- for the first
 one that `git merge-tree` cannot merge cleanly with that head. That commit's time,
 or the epoch's start if the conflict was inherited, is the ONSET.
 
-An **episode** spans as many epochs as it takes. A conflict is over only when a
-head appears that is CLEAN against the base current at the moment it appeared;
-until then, successive conflicting heads are one continuous episode, not a string
-of short falsely-resolved ones.
+An **episode** spans as many epochs as it takes. A conflict ends when a head
+appears that is CLEAN against the base current at the moment it appeared; until
+then, successive conflicting heads are one continuous episode, not a string of
+short falsely-resolved ones. It also ends, without anybody pushing, if `main`
+moves to a base the UNCHANGED head merges cleanly with: that is the outcome
+`main-cleared`, and it is searched for on every run rather than assumed away --
+see Monotonicity below.
 
-Only such a clean successor counts as a resolution. A PR closed or merged while
-still conflicting ends its episode without resolving it, and is reported as
-CENSORED rather than folded into the resolution median -- otherwise abandoning a
+Only those two count as resolutions. A PR closed or merged while still
+conflicting ends its episode without resolving it, and is reported as CENSORED
+rather than folded into the resolution median -- otherwise abandoning a
 conflicted PR would score as fixing it quickly.
 
 A PR that is closed and REOPENED is a different matter: nothing there resolved the
@@ -100,18 +103,22 @@ Two further limits apply to both paths:
     conflict that arose and cleared inside one epoch. `--exhaustive` tests every
     base instead; run back to back over the whole history the two agree.
 
-    The assumption reaches past the search, because an episode ends at a clean
-    HEAD and never at a base: if `main` moved so that a conflicting head merged
-    again with nobody pushing, the conflict would be over and this file would not
-    say so -- `--exhaustive` would carry the episode on to the next clean head, and
-    the default would drop it. Whether that ever happens is measurable, and
-    measured: scanning every base in every epoch's window, rather than stopping at
-    the first that conflicts, is 41,790 merges over 9,647 epochs, 184 of which
-    conflict with some base -- and NO epoch has a clean base after a conflicting
-    one. So nothing here has ever been un-conflicted by `main` moving. That is a
-    fact about this history rather than a theorem, and the scan is the way to
-    re-check it; the two modes agreeing is the weaker instrument, since a live
-    queue moves between two runs.
+    The assumption is confined to finding the ONSET. Where an episode ENDS is not
+    assumed: once a conflict is open, every later base in the epoch is tried in
+    turn, and the first that merges cleanly with the unchanged head ends the
+    episode as `main-cleared` -- `main` moved and the conflict was over with
+    nobody pushing. Leaving that out was the one place the assumption reached
+    past the search: `--exhaustive` carried such an episode on to the next clean
+    head, and the default dropped it.
+
+    Over this repository's history it has never happened. The same scan run over
+    every epoch rather than only the conflicting ones is 41,790 merges over 9,647
+    epochs, 184 of which conflict with some base -- and NO epoch has a clean base
+    after a conflicting one, so every conflict here ended at a push, at a closure,
+    or is still open. That is a fact about this history rather than a theorem,
+    which is why the check now runs on every replay instead of being quoted from
+    one scan; comparing the two modes is the weaker instrument, since a live queue
+    moves between two runs.
 
 An earlier version of this file claimed every error ran one way, making the output
 a LOWER bound. That was wrong and is worth killing explicitly so nobody revives
@@ -361,10 +368,8 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     reported clean, so the default UNDERCOUNTS episodes and never invents one.
     Use `--exhaustive` when the count matters more than the wall clock.
 
-    Either way this returns the ONSET and stops: nothing here looks for a base
-    that clears a conflict again, because an episode ends at a clean head. Over
-    this repository no epoch has one -- see the module docstring on monotonicity,
-    which measures it.
+    Either way this returns the ONSET and stops. Where the conflict ENDS is
+    `first_clean`'s business, and it assumes nothing.
     """
     if lo >= hi:
         return None
@@ -385,6 +390,24 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
         else:
             lo = mid + 1
     return lo
+
+
+def first_clean(mirror, history, lo, hi, head):
+    """Index of the first base in `history[lo:hi]` that merges cleanly with `head`.
+
+    None if every base in the window conflicts. This is how an episode can end
+    without a push: `main` moves, and the head nobody has touched merges again.
+
+    Linear on purpose, and never binary-searched. The binary search in
+    `first_conflicting` is licensed by assuming that a conflict persists as main
+    accumulates commits, and this function exists precisely to test that
+    assumption rather than to lean on it. It runs only while a conflict is open,
+    so its cost is the conflicting epochs' windows and not the whole queue's.
+    """
+    for index in range(lo, hi):
+        if not mirror.conflicts(history[index][0], head):
+            return index
+    return None
 
 
 def ledger_actor(actor):
@@ -599,6 +622,12 @@ def pr_epochs(mirror, pr, index, push_window, available):
     return epochs, [""] * len(epochs), "partial" if lost else "inferred"
 
 
+# The outcome for an episode that ended without anybody pushing: `main` moved to a
+# commit the unchanged head merges cleanly with, so the conflict was simply over.
+# A real resolution, but not a push, so it carries no resolver and no session.
+MAIN_CLEARED = "main-cleared"
+
+
 def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False,
                push_window=PUSH_WINDOW_SECONDS, index=None, available=None):
     """Conflict episodes for one PR, its epochs, its actors, and how it was handled.
@@ -648,19 +677,38 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
         hi = min(hi, landed) if landed is not None else hi
         if hi <= lo:
             continue
-        found = first_conflicting(mirror, history, lo, hi, head, exhaustive)
-        # A conflict inherited from before this epoch began dates to the epoch's
-        # start (the push, or the PR opening), never to the older main commit.
-        onset = None if found is None else max(history_times[found], start)
-
+        cursor = lo
         if open_onset is not None:
-            if onset is not None and onset <= start:
-                continue        # this head arrived already conflicting: same episode
-            # It arrived clean, so the push that created it is the resolution.
-            out.append(episode(number, author, open_onset, start, "push", index))
-            open_onset = None
-        if open_onset is None and onset is not None:
-            open_onset = onset
+            # A head arriving mid-conflict either inherits it or ends it, and the
+            # base in effect when the head appeared is what decides which.
+            if mirror.conflicts(history[lo][0], head):
+                cursor = lo + 1     # same episode: look for a base that clears it
+            else:
+                # It arrived clean, so the push that created it is the resolution.
+                out.append(episode(number, author, open_onset, start, "push", index))
+                open_onset = None
+        # Walk the epoch's bases, alternating between the two things that can
+        # happen to this one head as main moves under it: a base that breaks the
+        # merge opens an episode, and a later base that merges cleanly again ends
+        # one -- with nobody having pushed, which is what `main-cleared` records.
+        while cursor < hi:
+            if open_onset is None:
+                found = first_conflicting(mirror, history, cursor, hi, head, exhaustive)
+                if found is None:
+                    break
+                # A conflict inherited from before this epoch began dates to the
+                # epoch's start (the push, or the PR opening), never to the older
+                # main commit that happened to be current then.
+                open_onset = max(history_times[found], start)
+                cursor = found + 1
+            else:
+                cleared = first_clean(mirror, history, cursor, hi, head)
+                if cleared is None:
+                    break
+                out.append(episode(number, author, open_onset,
+                                   history_times[cleared], MAIN_CLEARED, None))
+                open_onset = None
+                cursor = cleared + 1
 
     if open_onset is not None:
         # CURRENT STATE decides the outcome, never `closedAt`. Reading `closedAt`
@@ -700,8 +748,11 @@ def own_merge_index(history, number):
 
 
 def episode(number, author, onset, resolved, outcome, resolver_epoch):
-    """One conflict episode. `resolver_epoch` indexes the push that ended it (None
-    when nothing did); `resolver`/`session` are filled in by `attribute`."""
+    """One conflict episode. `resolver_epoch` indexes the push that ended it, and
+    is None when no push did -- the PR was closed or merged, it is still
+    conflicting, or `main` moved and cleared it (`MAIN_CLEARED`), which is a
+    resolution with nobody to credit. `resolver`/`session` are filled in by
+    `attribute`, which skips exactly those rows."""
     return {
         "pr": number,
         "author": author,
@@ -1075,10 +1126,12 @@ def summarise(episodes, handled, total_prs):
 
     Provenance leads, because it decides what the rest is worth, and rows whose
     timeline could not be read are called out as upper bounds. The resolution
-    figures then cover ONLY episodes a push ended: a PR closed or merged while
+    figures then cover the episodes that were actually resolved -- a push, or
+    `main` moving so the head merged again -- while a PR closed or merged while
     still conflicting is censored and counted on its own line, since folding it in
     would score abandoning a conflicted PR as fixing it quickly. The session split
-    follows, which is the question this tool was written to answer.
+    follows, which is the question this tool was written to answer; it covers the
+    push rows alone, because a `main-cleared` episode has no resolver to bucket.
     """
     lines = []
     conflicted_prs = {e["pr"] for e in episodes}
@@ -1099,12 +1152,13 @@ def summarise(episodes, handled, total_prs):
         lines.append(f"{len(unchecked)} episode(s) whose timeline could not be read: time the "
                      f"PR spent closed is still in their duration, so those are upper bounds")
 
-    # ONLY a push that made the branch merge again is a resolution. Closing a PR
-    # that is still conflicting ends the episode without resolving anything, and
-    # counting it as a fast resolution would reward abandonment; it is reported
-    # separately as censored. `merged` is likewise not a push-resolution.
-    resolved = [e for e in episodes if e["outcome"] == "push"]
+    # A conflict is resolved when the merge comes clean again: a pushed head, or
+    # main moving under an untouched one. Closing a PR that is still conflicting
+    # resolves nothing, and counting it as a fast resolution would reward
+    # abandonment; it is reported separately as censored, and so is `merged`.
+    resolved = [e for e in episodes if e["outcome"] in ("push", MAIN_CLEARED)]
     censored = [e for e in episodes if e["outcome"] in ("closed", "merged")]
+    cleared = [e for e in episodes if e["outcome"] == MAIN_CLEARED]
     if resolved:
         durations = [e["seconds"] for e in resolved]
         lines.append(f"time to resolution: median {human_duration(median(durations))}, "
@@ -1112,9 +1166,13 @@ def summarise(episodes, handled, total_prs):
                      f"max {human_duration(max(durations))}")
         over_24h = sum(1 for d in durations if d > 86400)
         lines.append(f"  {over_24h}/{len(durations)} took over 24h")
+    if cleared:
+        lines.append(f"{len(cleared)} of those ended with no push at all: main moved to a "
+                     f"commit the unchanged head merged cleanly with")
     if censored:
-        lines.append(f"{len(censored)} episode(s) ended without a resolving push (the PR was "
-                     f"closed or merged while still conflicting); censored, not in the median")
+        lines.append(f"{len(censored)} episode(s) ended without the merge ever coming clean "
+                     f"(the PR was closed or merged while still conflicting); censored, "
+                     f"not in the median")
 
     by_outcome = {}
     for e in episodes:

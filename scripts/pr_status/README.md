@@ -141,16 +141,18 @@ replay needs from it. `main`'s first-parent history supplies the bases, from
 git. For each head the tool
 binary-searches those bases with `git merge-tree` — starting from the base already
 in effect, so a PR born conflicting is not missed — for the first that will not
-merge cleanly. An episode ends only at a head that is *clean* when it appeared, so
+merge cleanly. An episode ends at a head that is *clean* when it appeared, so
 successive conflicting heads stay one conflict; a PR closed or merged while still
 conflicting is censored rather than counted as a fast resolution.
 
-It ends at a clean *head*, never at a base — so if main moved such that a
-conflicting head merged again with nobody pushing, the conflict would be over and
-this would not say so. Testing every base in every epoch's window instead of
-stopping at the first that conflicts (41,790 merges over 9,647 epochs, 184 of them
-conflicting) finds no epoch where a clean base follows a conflicting one, so that
-has never happened here.
+An episode also ends with nobody pushing, if main moves to a commit the *unchanged*
+head merges cleanly with. That is the outcome `main-cleared`, and it is searched
+for on every run: while a conflict is open, each later base in the epoch is tried
+in turn, so where an episode ends never rests on the monotonicity the onset search
+assumes. It has never happened here — the same scan run over every epoch rather
+than only the conflicting ones is 41,790 merges over 9,647 epochs, 184 of them
+conflicting, and no epoch has a clean base after a conflicting one — but that is a
+fact about this history, not a theorem about the next one.
 
 Closing a PR and reopening it does not end an episode — nothing there resolves the
 conflict — but the time it spent closed is discounted from the duration, since
