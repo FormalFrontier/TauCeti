@@ -1,0 +1,239 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.RepresentationTheory.Continuous.Character
+public import TauCeti.RepresentationTheory.Continuous.Conjugate
+public import TauCeti.RepresentationTheory.Continuous.TensorProduct
+public import TauCeti.RepresentationTheory.Continuous.Transport
+
+/-!
+# The representative ring of a topological group
+
+A **representative function** on a topological group `G` is a matrix coefficient of a
+finite-dimensional continuous unitary representation of `G`. Their span
+`TauCeti.representativeSubmodule` is the **representative ring** `𝓡(G) ⊆ C(G, 𝕜)`, and the point of
+this file is that the span is far more than a subspace: it is a `*`-subalgebra,
+`TauCeti.representativeStarSubalgebra`.
+
+Three constructions supply the three closure properties, and each is a statement about
+representations rather than about functions:
+
+* the **trivial** representation on `𝕜` gives the constants
+  (`TauCeti.isRepresentative_one`);
+* the **tensor product** of two representations multiplies their matrix coefficients
+  (`TauCeti.ContRepresentation.matrixCoeff_tprod`), giving closure under multiplication;
+* the **conjugate** representation conjugates them
+  (`TauCeti.ContRepresentation.star_matrixCoeff_eq_matrixCoeff_conjugate`), giving closure under the
+  involution of `C(G, 𝕜)`.
+
+Characters are sums of diagonal matrix coefficients, so they lie in `𝓡(G)` as well
+(`TauCeti.ContRepresentation.character_mem_representativeSubmodule`).
+
+## Implementation notes
+
+The carrier of a representation cannot be quantified over all types at once, so the *definition*
+of a representative function pins the standard models `EuclideanSpace 𝕜 (Fin n)`. Nothing is lost:
+`TauCeti.matrixCoeff_mem_representativeSubmodule` says that a matrix coefficient of a continuous
+unitary representation on *any* finite-dimensional inner product space is a representative
+function, by transporting the representation along the isometry supplied by `stdOrthonormalBasis`
+(`TauCeti.ContRepresentation.congr`). That transport lemma is what makes the pinned model harmless,
+and it is how the closure proofs feed the tensor product `V ⊗ W` and the conjugate back into the
+definition.
+
+Unitarity is part of the definition rather than a consequence: on a general topological group a
+finite-dimensional continuous representation need not be unitarizable. On a *compact* group it
+always is, by Haar averaging (Layer 1), so there the restriction is vacuous; that implication is
+not proved here because it is not needed for the closure properties.
+
+**Point separation is deliberately absent.** That `𝓡(G)` separates the points of a compact `G` is
+equivalent to the Peter-Weyl theorem, so it cannot be recorded at this stage without circularity;
+it is a Layer 5 corollary of the analytic density theorem, not an input to it.
+
+## Main definitions
+
+* `TauCeti.IsRepresentative`: being a matrix coefficient of a finite-dimensional continuous unitary
+  representation.
+* `TauCeti.representativeSubmodule`: the span of the representative functions.
+* `TauCeti.representativeStarSubalgebra`: that span, as a `*`-subalgebra of `C(G, 𝕜)`.
+
+## Main statements
+
+* `TauCeti.matrixCoeff_mem_representativeSubmodule`: every matrix coefficient of a
+  finite-dimensional continuous unitary representation lies in `𝓡(G)`.
+* `TauCeti.IsRepresentative.mul`, `TauCeti.IsRepresentative.star`,
+  `TauCeti.isRepresentative_one`: the representative functions themselves are closed under
+  multiplication and conjugation and contain the constants.
+* `TauCeti.mul_mem_representativeSubmodule`, `TauCeti.star_mem_representativeSubmodule`: the same
+  closure properties for their span.
+* `TauCeti.ContRepresentation.character_mem_representativeSubmodule`: characters are representative.
+
+This is the representative-`*`-subalgebra item of Layer 3 of the
+[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+the algebra whose uniform density in `C(G)` is the analytic core of Layer 5. The mathematical
+development follows Daniel Bump, *Lie Groups*, second edition, Chapter 2, and
+T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Chapter III.
+-/
+
+public section
+
+open scoped InnerProductSpace
+
+namespace TauCeti
+
+open _root_.TauCeti.ContRepresentation
+
+section Defs
+
+variable {𝕜 G : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+
+/-- **A representative function** on `G`: a matrix coefficient of a finite-dimensional continuous
+unitary representation. The carrier is pinned to a standard model `EuclideanSpace 𝕜 (Fin n)`, which
+by `TauCeti.matrixCoeff_mem_representativeSubmodule` is no restriction on the span. -/
+def IsRepresentative (f : C(G, 𝕜)) : Prop :=
+  ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))) (hπ : Continuous π),
+    IsUnitary π ∧ ∃ v w : EuclideanSpace 𝕜 (Fin n), f = matrixCoeff π hπ v w
+
+variable (𝕜 G) in
+/-- **The representative ring `𝓡(G)`**, as a submodule of `C(G, 𝕜)`: the span of the matrix
+coefficients of the finite-dimensional continuous unitary representations of `G`. -/
+def representativeSubmodule : Submodule 𝕜 C(G, 𝕜) :=
+  Submodule.span 𝕜 {f : C(G, 𝕜) | IsRepresentative f}
+
+/-- A representative function lies in the representative ring. -/
+theorem mem_representativeSubmodule_of_isRepresentative {f : C(G, 𝕜)} (hf : IsRepresentative f) :
+    f ∈ representativeSubmodule 𝕜 G :=
+  Submodule.subset_span hf
+
+end Defs
+
+section Membership
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+
+/-- **Every matrix coefficient is representative.** A matrix coefficient of a continuous unitary
+representation on an arbitrary finite-dimensional inner product space is a representative function:
+transporting the representation along `(stdOrthonormalBasis 𝕜 V).repr` puts it on a standard model
+without changing its matrix coefficients. -/
+theorem isRepresentative_matrixCoeff (π : ContRepresentation 𝕜 G V)
+    (hπ : Continuous π) (hu : IsUnitary π) (v w : V) :
+    IsRepresentative (matrixCoeff π hπ v w) :=
+  ⟨Module.finrank 𝕜 V, ContRepresentation.congr (stdOrthonormalBasis 𝕜 V).repr π,
+    continuous_congr _ hπ, hu.congr _, _, _,
+    (matrixCoeff_congr (stdOrthonormalBasis 𝕜 V).repr hπ v w).symm⟩
+
+/-- Every matrix coefficient of a finite-dimensional continuous unitary representation lies in
+`𝓡(G)`. -/
+theorem matrixCoeff_mem_representativeSubmodule (π : ContRepresentation 𝕜 G V)
+    (hπ : Continuous π) (hu : IsUnitary π) (v w : V) :
+    matrixCoeff π hπ v w ∈ representativeSubmodule 𝕜 G :=
+  mem_representativeSubmodule_of_isRepresentative (isRepresentative_matrixCoeff π hπ hu v w)
+
+end Membership
+
+section Algebra
+
+variable {𝕜 G : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+
+variable (𝕜 G) in
+/-- **The constants are representative.** The constant function `1` is the matrix coefficient of the
+trivial one-dimensional representation at the unit vector `1 : 𝕜`. -/
+theorem isRepresentative_one : IsRepresentative (1 : C(G, 𝕜)) := by
+  have h : (1 : C(G, 𝕜)) =
+      matrixCoeff (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const (1 : 𝕜) (1 : 𝕜) := by
+    rw [matrixCoeff_trivial]
+    ext g
+    simp
+  rw [h]
+  exact isRepresentative_matrixCoeff _ _ isUnitary_trivial _ _
+
+variable (𝕜 G) in
+/-- The constant function `1` lies in `𝓡(G)`. -/
+theorem one_mem_representativeSubmodule : (1 : C(G, 𝕜)) ∈ representativeSubmodule 𝕜 G :=
+  mem_representativeSubmodule_of_isRepresentative (isRepresentative_one 𝕜 G)
+
+/-- **A product of representative functions is representative**: the product of a matrix coefficient
+of `π` and one of `ρ` is a matrix coefficient of `π ⊗ ρ`. -/
+theorem IsRepresentative.mul {a b : C(G, 𝕜)} (ha : IsRepresentative a)
+    (hb : IsRepresentative b) : IsRepresentative (a * b) := by
+  obtain ⟨n, π, hπ, hu, v, w, rfl⟩ := ha
+  obtain ⟨m, ρ, hρ, hu', v', w', rfl⟩ := hb
+  rw [← matrixCoeff_tprod π ρ hπ hρ v w v' w']
+  exact isRepresentative_matrixCoeff _ _ (hu.tprod hu') _ _
+
+/-- **The conjugate of a representative function is representative**: the conjugate of a matrix
+coefficient of `π` is a matrix coefficient of the conjugate of `π`. -/
+theorem IsRepresentative.star {a : C(G, 𝕜)} (ha : IsRepresentative a) :
+    IsRepresentative (star a) := by
+  obtain ⟨n, π, hπ, hu, v, w, rfl⟩ := ha
+  rw [star_matrixCoeff_eq_matrixCoeff_conjugate (EuclideanSpace.basisFun (Fin n) 𝕜) π hπ v w]
+  exact isRepresentative_matrixCoeff _ _ (hu.conjugate _) _ _
+
+/-- **`𝓡(G)` is closed under multiplication.** -/
+theorem mul_mem_representativeSubmodule {a b : C(G, 𝕜)} (ha : a ∈ representativeSubmodule 𝕜 G)
+    (hb : b ∈ representativeSubmodule 𝕜 G) : a * b ∈ representativeSubmodule 𝕜 G := by
+  induction ha using Submodule.span_induction with
+  | mem x hx =>
+    induction hb using Submodule.span_induction with
+    | mem y hy => exact mem_representativeSubmodule_of_isRepresentative (hx.mul hy)
+    | zero => simp
+    | add y z _ _ ihy ihz => rw [mul_add]; exact add_mem ihy ihz
+    | smul c y _ ih => rw [mul_smul_comm]; exact Submodule.smul_mem _ c ih
+  | zero => simp
+  | add x y _ _ ihx ihy => rw [add_mul]; exact add_mem ihx ihy
+  | smul c x _ ih => rw [smul_mul_assoc]; exact Submodule.smul_mem _ c ih
+
+/-- **`𝓡(G)` is closed under the involution of `C(G, 𝕜)`.** -/
+theorem star_mem_representativeSubmodule {a : C(G, 𝕜)} (ha : a ∈ representativeSubmodule 𝕜 G) :
+    star a ∈ representativeSubmodule 𝕜 G := by
+  induction ha using Submodule.span_induction with
+  | mem x hx => exact mem_representativeSubmodule_of_isRepresentative hx.star
+  | zero => simp
+  | add x y _ _ ihx ihy => rw [star_add]; exact add_mem ihx ihy
+  | smul c x _ ih => rw [star_smul]; exact Submodule.smul_mem _ _ ih
+
+variable (𝕜 G) in
+/-- **The representative ring as a `*`-subalgebra of `C(G, 𝕜)`.** The span of the matrix
+coefficients of the finite-dimensional continuous unitary representations of `G` contains the
+constants, and is closed under multiplication and under conjugation. -/
+def representativeStarSubalgebra : StarSubalgebra 𝕜 C(G, 𝕜) where
+  carrier := representativeSubmodule 𝕜 G
+  mul_mem' := mul_mem_representativeSubmodule
+  add_mem' := add_mem
+  zero_mem' := zero_mem _
+  algebraMap_mem' r := by
+    rw [Algebra.algebraMap_eq_smul_one]
+    exact Submodule.smul_mem _ r (one_mem_representativeSubmodule 𝕜 G)
+  star_mem' := star_mem_representativeSubmodule
+
+/-- Membership in the representative `*`-subalgebra is membership in its underlying span. -/
+@[simp]
+theorem mem_representativeStarSubalgebra_iff {f : C(G, 𝕜)} :
+    f ∈ representativeStarSubalgebra 𝕜 G ↔ f ∈ representativeSubmodule 𝕜 G :=
+  Iff.rfl
+
+end Algebra
+
+namespace ContRepresentation
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+
+/-- **The character of a finite-dimensional continuous unitary representation is representative.**
+Its conjugate is the sum of the diagonal matrix coefficients, and `𝓡(G)` is closed under
+conjugation. -/
+theorem character_mem_representativeSubmodule (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
+    (hu : IsUnitary π) : character π hπ ∈ representativeSubmodule 𝕜 G := by
+  have h : character π hπ =
+      star (∑ i, matrixCoeff π hπ (stdOrthonormalBasis 𝕜 V i) (stdOrthonormalBasis 𝕜 V i)) := by
+    rw [← star_character π hπ (stdOrthonormalBasis 𝕜 V), star_star]
+  rw [h]
+  exact star_mem_representativeSubmodule
+    (Submodule.sum_mem _ fun i _ ↦ matrixCoeff_mem_representativeSubmodule π hπ hu _ _)
+
+end ContRepresentation
+
+end TauCeti
