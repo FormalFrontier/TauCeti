@@ -63,6 +63,8 @@ restriction plus uniqueness of continuation along a fixed path identify the germ
 * `TauCeti.IsAnalyticContinuationAlong.left_of_trans`, `.right_of_trans` — **continuations
   restrict**: a continuation along `γ.trans δ` reads as a continuation along `γ` and one
   along `δ`.
+* `TauCeti.ContinuesAlong.left_of_trans` — the germ-level form of the first of those: a germ
+  that continues along `γ.trans δ` continues along `γ`.
 * `TauCeti.continuesInside_of_isAnalyticContinuationAlong` — **continuability inside a domain
   travels with the germ**: continuing inside `U` along a path of `U` again continues inside `U`.
 
@@ -281,6 +283,27 @@ theorem IsAnalyticContinuationAlong.right_of_trans {H : I → ℂ → ℂ} {p : 
           rw [projIcc_of_mem _ hmem]
     _ = (p.trans q) (projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2)) :=
           (p.trans q).extend_extends' _
+
+/-- **Continuability restricts to the first factor of a concatenation.** A germ that continues
+along `p.trans q` continues along `p`: the germ-level converse of
+`TauCeti.continuesAlong_trans`, obtained by restricting a witness with
+`TauCeti.IsAnalyticContinuationAlong.left_of_trans`.
+
+There is no companion for the second factor at this level: `q` issues from the endpoint of `p`,
+so the germ it continues is the one reached at the junction, which
+`TauCeti.ContinuesAlong` does not name. Use
+`TauCeti.IsAnalyticContinuationAlong.right_of_trans` on a witness instead. -/
+theorem ContinuesAlong.left_of_trans {p : Path a b} {q : Path b c}
+    (h : ContinuesAlong f₀ (⇑(p.trans q))) : ContinuesAlong f₀ (⇑p) := by
+  obtain ⟨H, hH, hH0⟩ := continuesAlong_iff_exists.mp h
+  rw [(p.trans q).source] at hH0
+  refine continuesAlong_iff_exists.mpr
+    ⟨fun t : I => H (projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2)), hH.left_of_trans, ?_⟩
+  have hzero : projIcc (0 : ℝ) 1 zero_le_one (((0 : I) : ℝ) / 2) = 0 := by
+    ext; norm_num [coe_projIcc]
+  simp only [hzero]
+  rw [p.source]
+  exact hH0
 
 /-! ### Continuability inside a domain travels with the germ -/
 
