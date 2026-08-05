@@ -11,21 +11,22 @@ import Mathlib.Analysis.Complex.LocallyUniformLimit
 /-!
 # Montel's selection theorem
 
-A locally bounded family of holomorphic functions on an open set `Ω ⊆ ℂ` is a normal family: every
-sequence drawn from it has a subsequence converging locally uniformly on `Ω`, and the limit is
-again holomorphic. This is the **Montel selection** component of layer **L1 (normal families /
-Montel)** of the conformal-mapping roadmap, and the compactness engine the Riemann mapping theorem
-runs on. The other component L1 lists, Vitali's theorem, is proved in `Conformal/Vitali.lean`,
-which applies the selection theorem below.
+A locally bounded family of holomorphic maps of an open set `Ω ⊆ ℂ` into a proper complex normed
+space is a normal family: every sequence drawn from it has a subsequence converging locally
+uniformly on `Ω`, and the limit is again holomorphic. This is the **Montel selection** component of
+layer **L1 (normal families / Montel)** of the conformal-mapping roadmap, and the compactness
+engine the Riemann mapping theorem runs on (there with the scalar target `E = ℂ`). The other
+component L1 lists, Vitali's theorem, is proved in `Conformal/Vitali.lean`, which applies the
+selection theorem below.
 
 The compactness this runs on is `Conformal/Montel/Precompact.lean`: the restricted family is
-relatively compact in `C(↥Ω, ℂ)` with its compact-open topology, and there it is *equivalent* to
+relatively compact in `C(↥Ω, E)` with its compact-open topology, and there it is *equivalent* to
 local boundedness. What is added here is the passage from that compactness to a convergent
 subsequence, and the identification of the limit.
 
 An open subset of `ℂ` is locally compact and second countable, hence σ-compact and so hemicompact —
 a countable cofinal family of compacts — which is what makes the compact-open topology on
-`C(↥Ω, ℂ)` first countable (local compactness alone would not suffice), and
+`C(↥Ω, E)` first countable (local compactness alone would not suffice), and
 `IsCompact.tendsto_subseq` extracts a convergent subsequence. Finally
 `ContinuousMap.tendsto_iff_tendstoLocallyUniformly` turns compact-open convergence into locally
 uniform convergence, and `TendstoLocallyUniformlyOn.differentiableOn` gives holomorphy of the limit.
@@ -35,8 +36,8 @@ in `Conformal/Montel/Precompact.lean`, subsumes both.
 
 ## Main results
 
-* `TauCeti.montel` — a locally bounded family of holomorphic functions on an open set has a
-  locally uniformly convergent subsequence, with holomorphic limit.
+* `TauCeti.montel` — a locally bounded family of holomorphic maps of an open set into a proper
+  complex normed space has a locally uniformly convergent subsequence, with holomorphic limit.
 
 ## Coordination with upstream Mathlib
 
@@ -62,22 +63,28 @@ open Complex Metric Filter Topology Set BoundedContinuousFunction
 
 namespace TauCeti
 
-variable {Ω : Set ℂ} {F : ℕ → ℂ → ℂ}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {Ω : Set ℂ} {F : ℕ → ℂ → E}
 
-/-- **Montel's selection theorem.** A locally bounded family of holomorphic functions on an open
-set `Ω ⊆ ℂ` is normal: every sequence from it has a subsequence converging locally uniformly on
-`Ω`, and the limit is holomorphic.
+/-- **Montel's selection theorem.** A locally bounded family of holomorphic maps of an open set
+`Ω ⊆ ℂ` into a proper complex normed space `E` is normal: every sequence from it has a subsequence
+converging locally uniformly on `Ω`, and the limit is holomorphic.
 
-The local boundedness hypothesis cannot be dropped: on any *nonempty* open `Ω`, the holomorphic
-family `F n z = n` has no locally uniformly convergent subsequence. (On `Ω = ∅` the conclusion is
-vacuous, so nonemptiness is needed for the counterexample.) -/
-theorem montel (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
+The local boundedness hypothesis cannot be dropped once `E` is nontrivial: on any *nonempty* open
+`Ω`, and for a unit vector `v : E`, the holomorphic family `F n z = n • v` has no locally uniformly
+convergent subsequence. Both qualifications are needed for that counterexample: on `Ω = ∅` the
+conclusion is vacuous, and on the trivial `E = 0` there is no unit vector and every family
+converges, so local boundedness is genuinely dispensable in those two degenerate cases.
+Properness of `E` cannot be dropped either — see
+`TauCeti.isCompact_closure_range_of_isLocallyBoundedOn`, where it enters; for a normed space over
+`ℂ` it is exactly finite-dimensionality, and the scalar case `E = ℂ` is the one the Riemann
+mapping theorem uses. -/
+theorem montel [ProperSpace E] (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω)
     (hb : IsLocallyBoundedOn F Ω) :
-    ∃ (φ : ℕ → ℕ) (g : ℂ → ℂ), StrictMono φ ∧ DifferentiableOn ℂ g Ω ∧
+    ∃ (φ : ℕ → ℕ) (g : ℂ → E), StrictMono φ ∧ DifferentiableOn ℂ g Ω ∧
       TendstoLocallyUniformlyOn (fun n => F (φ n)) g atTop Ω := by
   classical
   have : LocallyCompactSpace Ω := hΩ.locallyCompactSpace
-  set f : ℕ → C(Ω, ℂ) := fun n => ⟨Ω.domRestrict (F n), ((hF n).continuousOn).domRestrict⟩
+  set f : ℕ → C(Ω, E) := fun n => ⟨Ω.domRestrict (F n), ((hF n).continuousOn).domRestrict⟩
   -- The relative compactness of the restricted family, from `Conformal/Montel/Precompact.lean`.
   have hcpt : IsCompact (closure (Set.range f)) :=
     isCompact_closure_range_of_isLocallyBoundedOn hΩ hF hb fun _ => rfl

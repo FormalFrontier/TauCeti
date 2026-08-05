@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.Lie.Sl2.Basic
 public import TauCeti.Algebra.Lie.Sl2.WeightString
+public import TauCeti.Algebra.Lie.Subalgebra.Top
 
 /-!
 # The standard irreducible representations of `sl₂`
@@ -690,29 +691,13 @@ instance isIrreducible :
 the form of irreducibility that the classification of
 `TauCeti/Algebra/Lie/Sl2/WeightString.lean` asks for; here the two forms agree, since the standard
 triple generates all of `sl (Fin 2) K`
-(`TauCeti.toLieSubalgebra_isSl2Triple_single_eq_top`). -/
+(`TauCeti.toLieSubalgebra_isSl2Triple_single_eq_top`), so
+`TauCeti.isIrreducible_of_eq_top` carries the one to the other. -/
 instance isIrreducible_toLieSubalgebra :
     LieModule.IsIrreducible K
       ((isSl2Triple_single (R := K) (zero_ne_one : (0 : Fin 2) ≠ 1)).toLieSubalgebra K)
-      (Sl2Std K n) := by
-  set t := isSl2Triple_single (R := K) (zero_ne_one : (0 : Fin 2) ≠ 1)
-  have he : slFinTwoBasis K 0 ∈ t.toLieSubalgebra K := by
-    rw [slFinTwoBasis_zero]
-    exact IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨1, 0, 0, by simp⟩
-  have hf : slFinTwoBasis K 1 ∈ t.toLieSubalgebra K := by
-    rw [slFinTwoBasis_one]
-    exact IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨0, 1, 0, by simp⟩
-  -- The subalgebra acts through the ambient action of the underlying element of `sl (Fin 2) K`.
-  have hmem : ∀ (N : LieSubmodule K (t.toLieSubalgebra K) (Sl2Std K n))
-      (x : SpecialLinear.sl (Fin 2) K) (hx : x ∈ t.toLieSubalgebra K) (w : Sl2Std K n),
-      w ∈ N → ⁅x, w⁆ ∈ N := fun N x hx w hw => by
-    simpa only [LieSubalgebra.coe_bracket_of_module, LieSubmodule.mem_carrier,
-      LieSubmodule.mem_toSubmodule, SetLike.mem_coe] using N.lie_mem (x := ⟨x, hx⟩) hw
-  refine LieModule.IsIrreducible.mk fun N hN => ?_
-  refine (LieSubmodule.toSubmodule_eq_top N).1 (eq_top_of_raise_mem_of_lower_mem _
-    (fun h => hN ((LieSubmodule.toSubmodule_eq_bot N).1 h)) (fun w hw => ?_) (fun w hw => ?_))
-  · rw [← lie_slFinTwoBasis_zero]; exact hmem N _ he w hw
-  · rw [← lie_slFinTwoBasis_one]; exact hmem N _ hf w hw
+      (Sl2Std K n) :=
+  isIrreducible_of_eq_top (toLieSubalgebra_isSl2Triple_single_eq_top _)
 
 /-- **The classification of the finite-dimensional irreducible `sl₂`-modules.** A Noetherian
 module over `sl (Fin 2) K` which is irreducible over the subalgebra of the standard triple and
@@ -820,8 +805,10 @@ Together with `TauCeti.finrank_eq_of_hasPrimitiveVectorWith` and
 `TauCeti.lieModuleEquivOfHasPrimitiveVectorWith` this pins down the modules that carry a primitive
 vector of weight `n` and are irreducible over the subalgebra of the triple: for each `n : ℕ` there
 is one, it has rank `n + 1`, and any two are equivalent. That every finite-dimensional irreducible
-carries a primitive vector is a further statement, not proved here, so this is the existence half
-of the classification rather than the whole of it. -/
+carries a primitive vector is a further statement, proved in
+`TauCeti/Algebra/Lie/Sl2/Classification.lean`
+(`TauCeti.exists_hasPrimitiveVectorWith`), so this is the existence half of the classification
+rather than the whole of it. -/
 theorem exists_isIrreducible_hasPrimitiveVectorWith (n : ℕ) :
     ∃ (V : Type u) (_ : AddCommGroup V) (_ : Module K V) (_ : LieRingModule L V)
       (_ : LieModule K L V) (v : V), FiniteDimensional K V ∧
