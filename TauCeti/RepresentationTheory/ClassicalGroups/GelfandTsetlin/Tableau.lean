@@ -111,11 +111,6 @@ private theorem lt_card_filter_range_iff {N : ℕ} {p : ℕ → Prop} [Decidable
 
 namespace GTPattern
 
-/-- A pattern whose top row is the shape `μ` has nonnegative entries. -/
-theorem entry_nonneg_of_topRow (P : GTPattern n)
-    (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) (i j : ℕ) : 0 ≤ P i j :=
-  P.entry_nonneg (fun k => by rw [hP k]; exact Int.natCast_nonneg _) i j
-
 /-- The top row of a pattern whose top row is the shape `μ` is the row-length sequence of `μ` at
 *every* index: past `n` both sides vanish, because `μ` has at most `n` rows. -/
 theorem entry_top_eq (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
@@ -282,6 +277,7 @@ theorem patternEntry_def (T : SemistandardYoungTableau μ) (n i j : ℕ) :
 /-- **The pattern entry, read off the tableau**: `c` is counted in row `j` of the `i`-th row
 exactly when `(i, c)` is a cell of `μ` carrying an entry below `j`.  The rows of a tableau
 increase weakly, so the condition is downward closed in `c`. -/
+@[simp]
 theorem lt_card_filter_rowLen_iff (T : SemistandardYoungTableau μ) {i j c : ℕ} :
     c < #{c' ∈ range (μ.rowLen i) | T i c' < j} ↔ c < μ.rowLen i ∧ T i c < j :=
   lt_card_filter_range_iff fun _ _ hxy hx hpx =>
@@ -376,7 +372,7 @@ def gtPatternEquivSSYT (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n) :
     SemistandardYoungTableau.topRow_toGTPattern T.1 n T.2⟩
   left_inv := by
     rintro ⟨P, hP⟩
-    have hnn := P.entry_nonneg_of_topRow hP
+    have hnn := P.entry_nonneg fun k => by rw [hP k]; exact Int.natCast_nonneg _
     refine Subtype.ext (GTPattern.ext fun i j => ?_)
     rw [SemistandardYoungTableau.toGTPattern_apply]
     simp only [SemistandardYoungTableau.patternEntry_def]
