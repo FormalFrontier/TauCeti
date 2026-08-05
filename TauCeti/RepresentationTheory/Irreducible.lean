@@ -18,8 +18,7 @@ A representation on a one-dimensional vector space is irreducible, whatever the 
 it acts: a subrepresentation is in particular a subspace, and a line has only the two trivial
 subspaces.  Nontriviality, the other half of irreducibility, is the same dimension count.  This is
 how the smallest representations of a group are recognised as irreducible without knowing anything
-about the group -- the trivial representation, a character, a sign -- and it is the criterion the
-one-row and one-column Specht modules are proved irreducible by.
+about the group -- the trivial representation, a character, a sign.
 
 The second criterion turns a lattice-theoretic statement about a fixed ambient representation into
 a statement about a subrepresentation on its own: a subrepresentation that is an **atom** of the

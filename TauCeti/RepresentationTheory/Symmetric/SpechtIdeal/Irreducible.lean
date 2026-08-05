@@ -35,20 +35,21 @@ module it carries; the transfer to the language of representations is
 
 Running the first case on `W = ℚ[Sₙ] c_t` itself, which is nonzero, shows that the sandwich is
 not identically zero: some `c_t a c_t` is a **nonzero** multiple of `c_t`
-(`TauCeti.YoungTableau.exists_youngSymmetrizer_mul_mul_ne_zero`).  Whether the scalar attached to
-`a = 1` is itself nonzero -- that is, whether `c_t * c_t = (n! / f^μ) • c_t` with the stated
-nonzero scalar -- does not follow from the sandwich calculation alone (over `M₂(ℚ)` the element
-`e₁₂` sandwiches to a line and squares to zero), and is not proved here.
+(`TauCeti.YoungTableau.exists_ne_zero_eq_smul_youngSymmetrizer_mul_mul`).  Whether the scalar
+attached to `a = 1` is itself nonzero -- that is, whether `c_t * c_t = (n! / f^μ) • c_t` with the
+stated nonzero scalar -- does not follow from the sandwich calculation alone (over `M₂(ℚ)` the
+element `e₁₂` sandwiches to a line and squares to zero), and is not proved here.
 
 The statement is made at the `Representation` level, as elsewhere in this repository: neither
 Mathlib nor this repository relates `CategoryTheory.Simple` in `FDRep ℚ Sₙ` to
 `Representation.IsIrreducible`, so the `FDRep` mirror of the theorem is not available.
 
-The one-row and one-column shapes are proved irreducible by a dimension count, without any of
-this, in `TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Extremes`.  The identification of
-this representation with the span of the polytabloids inside the Young permutation module, and
-the classification saying that these exhaust the irreducibles of `Sₙ` and are pairwise
-non-isomorphic across shapes, are separate targets and are not claimed here.
+On the one-row and the one-column shape the Specht ideal is a line, by the dimension count of
+`TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Extremes`, so on those shapes this theorem is
+visible without any of the above; there is nothing extra to say about them here.  The
+identification of this representation with the span of the polytabloids inside the Young
+permutation module, and the classification saying that these exhaust the irreducibles of `Sₙ` and
+are pairwise non-isomorphic across shapes, are separate targets and are not claimed here.
 
 ## Main results
 
@@ -87,8 +88,10 @@ private theorem eq_bot_of_forall_youngSymmetrizer_mul_eq_zero (t : YoungTableau 
     rw [mul_assoc, h y hy, mul_zero]
 
 /-- **The Young symmetrizer does not sandwich to zero**: some `c_t a c_t` is nonzero.  If they all
-vanished, the Specht ideal would be square-zero, hence zero, and it is not. -/
-theorem exists_youngSymmetrizer_mul_mul_ne_zero (t : YoungTableau μ) :
+vanished, the Specht ideal would be square-zero, hence zero, and it is not.  This is the raw form
+of `TauCeti.YoungTableau.exists_ne_zero_eq_smul_youngSymmetrizer_mul_mul`, which is the statement
+to use. -/
+private theorem exists_youngSymmetrizer_mul_mul_ne_zero (t : YoungTableau μ) :
     ∃ a : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)),
       youngSymmetrizer t * a * youngSymmetrizer t ≠ 0 := by
   by_contra hall

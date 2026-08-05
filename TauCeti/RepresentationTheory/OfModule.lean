@@ -54,6 +54,7 @@ variable (M : Type*) [AddCommMonoid M] [Module k M] [Module k[G] M] [IsScalarTow
 
 /-- A group element acts on `Representation.ofModule' M` through the corresponding group-algebra
 basis element. -/
+@[simp]
 theorem ofModule'_apply (g : G) (x : M) :
     _root_.Representation.ofModule' (k := k) (G := G) M g x = MonoidAlgebra.single g (1 : k) • x :=
   rfl
@@ -74,13 +75,24 @@ theorem asAlgebraHom_ofModule'_apply (r : k[G]) (x : M) :
 
 /-- **The `k[G]`-module underlying `Representation.ofModule' M` is `M` itself.**  The map is the
 identity; the content is that the two `k[G]`-actions agree. -/
-noncomputable def ofModule'AsModuleEquiv :
+@[expose] noncomputable def ofModule'AsModuleEquiv :
     (_root_.Representation.ofModule' (k := k) (G := G) M).asModule ≃ₗ[k[G]] M where
-  __ := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv
+  toFun := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv
+  invFun := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv.symm
+  map_add' := map_add _
   map_smul' r x := by
-    change (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv (r • x) =
-      r • (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv x
-    rw [_root_.Representation.asModuleEquiv_map_smul, asAlgebraHom_ofModule'_apply]
+    rw [RingHom.id_apply, _root_.Representation.asModuleEquiv_map_smul,
+      asAlgebraHom_ofModule'_apply]
+  left_inv := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv.left_inv
+  right_inv := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv.right_inv
+
+/-- `TauCeti.Representation.ofModule'AsModuleEquiv` is the identity map: its two sides are the
+same type, and all it records is that their `k[G]`-actions agree. -/
+@[simp]
+theorem ofModule'AsModuleEquiv_apply
+    (x : (_root_.Representation.ofModule' (k := k) (G := G) M).asModule) :
+    ofModule'AsModuleEquiv M x = x :=
+  rfl
 
 end Semiring
 
