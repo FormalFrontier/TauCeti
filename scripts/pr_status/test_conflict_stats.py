@@ -41,8 +41,16 @@ class Replay(unittest.TestCase):
         base.update(kwargs)
         return base
 
-    def analyse(self, mirror, pr, now=9999, gap=7200):
-        return conflict_stats.analyse_pr(mirror, self.HISTORY, self.TIMES, pr, now, gap)
+    def analyse(self, mirror, pr, now=9999, gap=7200, actors=None, window=0):
+        """Replay, then attribute. `actors` maps head sha -> github login; by
+        default every head is the PR's own author."""
+        rows, handling, epochs = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window)
+        author = (pr.get("author") or {}).get("login") or ""
+        if actors is None:
+            actors = {sha: author for sha, _ in epochs}
+        conflict_stats.attribute(rows, epochs, actors, author, gap)
+        return rows, handling
 
     def test_a_never_conflicting_pr_yields_nothing(self):
         mirror = self.FakeMirror([("h1", 1000)], {})
@@ -76,7 +84,7 @@ class Replay(unittest.TestCase):
         episodes, _ = self.analyse(mirror, self.pr(), now=9999)
         self.assertEqual(episodes[0]["outcome"], "still-open")
         self.assertEqual(episodes[0]["resolved"], 9999)
-        self.assertIsNone(episodes[0]["continuation"])
+        self.assertIsNone(episodes[0]["session"])
 
     def test_a_conflict_that_ends_at_the_merge_is_labelled_merged(self):
         mirror = self.FakeMirror([("h1", 1000)], {"h1": 5})
@@ -87,13 +95,13 @@ class Replay(unittest.TestCase):
         mirror = self.FakeMirror([("h0", 900), ("h1", 1000), ("h2", 1600)], {"h1": 5})
         episodes, _ = self.analyse(mirror, self.pr(), gap=7200)
         [episode] = [e for e in episodes if e["outcome"] == "push"]
-        self.assertTrue(episode["continuation"])
+        self.assertEqual(episode["session"], conflict_stats.CONTINUATION)
 
     def test_a_push_long_after_the_last_one_counts_as_a_return(self):
         mirror = self.FakeMirror([("h0", 900), ("h1", 1000), ("h2", 1600)], {"h1": 5})
         episodes, _ = self.analyse(mirror, self.pr(), gap=60)
         [episode] = [e for e in episodes if e["outcome"] == "push"]
-        self.assertFalse(episode["continuation"])
+        self.assertEqual(episode["session"], conflict_stats.RETURN)
 
     def test_a_rebased_pr_is_flagged_as_unmeasurable(self):
         # Every commit rewritten to one timestamp: the pre-rebase window is gone.
@@ -163,9 +171,48 @@ class Replay(unittest.TestCase):
         history = self.HISTORY[:10] + [("10", 2000, "feat: do a thing (#1)")] + self.HISTORY[11:]
         times = [when for _, when, _ in history]
         mirror = self.FakeMirror([("h1", 1000)], {"h1": 10})
-        episodes, _ = conflict_stats.analyse_pr(
-            mirror, history, times, self.pr(mergedAt="1970-01-01T00:33:20Z"), 9999, 7200)
+        episodes, _, _ = conflict_stats.analyse_pr(
+            mirror, history, times, self.pr(mergedAt="1970-01-01T00:33:20Z"), 9999, 7200,
+            push_window=0)
         self.assertEqual(episodes, [])
+
+    def test_a_resolution_by_someone_else_is_not_credited_to_the_author(self):
+        # git records a committer string, not a GitHub account. Without the API a
+        # maintainer or bot pushing the fix was silently scored as the author
+        # returning to their own PR.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        episodes, _ = self.analyse(mirror, self.pr(), actors={"h1": "alice", "h2": "carol"})
+        self.assertEqual(episodes[0]["session"], conflict_stats.OTHER_ACTOR)
+        self.assertEqual(episodes[0]["resolver"], "carol")
+
+    def test_an_unnameable_actor_is_left_unattributed(self):
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        episodes, _ = self.analyse(mirror, self.pr(), actors={})
+        self.assertEqual(episodes[0]["session"], conflict_stats.UNATTRIBUTED)
+        self.assertIsNone(episodes[0]["resolver"])
+
+    def test_the_gap_is_measured_against_the_same_actors_previous_push(self):
+        # bob pushing in between must not disguise alice's return as a continuation.
+        # alice pushed at 1100, bob at 2400, alice again at 2500. Against bob's
+        # push the gap is 100s (a continuation); against alice's own it is 1400s.
+        mirror = self.FakeMirror(
+            [("h0", 1100), ("h1", 2400), ("h2", 2500)], {"h1": 5})
+        episodes, _ = self.analyse(
+            mirror, self.pr(), gap=600,
+            actors={"h0": "alice", "h1": "bob", "h2": "alice"})
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["session"], conflict_stats.RETURN)
+
+    def test_commits_within_the_push_window_are_one_head(self):
+        # Only the last commit of a push was ever the branch head; an intermediate
+        # one that conflicts must not invent an episode.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
+        episodes, _ = self.analyse(mirror, self.pr(), window=120)
+        self.assertEqual(episodes, [])
+        # With grouping off, the intermediate commit is treated as a real head.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
+        episodes, _ = self.analyse(mirror, self.pr(), window=0)
+        self.assertEqual(len(episodes), 1)
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})
@@ -175,22 +222,26 @@ class Replay(unittest.TestCase):
 class ReplaySummary(unittest.TestCase):
     def episodes(self):
         return [
-            {"pr": 1, "author": "alice", "onset": 0, "resolved": 3600,
-             "seconds": 3600, "outcome": "push", "continuation": True},
-            {"pr": 2, "author": "alice", "onset": 0, "resolved": 200000,
-             "seconds": 200000, "outcome": "push", "continuation": False},
-            {"pr": 3, "author": "bob", "onset": 0, "resolved": 500000,
-             "seconds": 500000, "outcome": "still-open", "continuation": None},
+            {"pr": 1, "author": "alice", "onset": 0, "resolved": 3600, "seconds": 3600,
+             "outcome": "push", "session": conflict_stats.CONTINUATION, "resolver": "alice"},
+            {"pr": 2, "author": "alice", "onset": 0, "resolved": 200000, "seconds": 200000,
+             "outcome": "push", "session": conflict_stats.RETURN, "resolver": "alice"},
+            {"pr": 3, "author": "bob", "onset": 0, "resolved": 500000, "seconds": 500000,
+             "outcome": "still-open", "session": None, "resolver": None},
+            {"pr": 4, "author": "bob", "onset": 0, "resolved": 900, "seconds": 900,
+             "outcome": "push", "session": conflict_stats.OTHER_ACTOR, "resolver": "carol"},
         ]
 
     def test_reports_the_over_24h_tail_and_the_session_split(self):
         lines = "\n".join(conflict_stats.summarise(
             self.episodes(), unmeasured={"rewritten": 4, "skipped": 2}, total_prs=99))
-        self.assertIn("3 conflict episode(s) across 3 of 99 PR(s)", lines)
+        self.assertIn("4 conflict episode(s) across 4 of 99 PR(s)", lines)
         self.assertIn("4 PR(s) had their history rewritten", lines)
         self.assertIn("2 had no replayable commits", lines)
-        self.assertIn("1/2 took over 24h", lines)
-        self.assertIn("1 while the author was already working the PR, 1 on a later return", lines)
+        self.assertIn("1/3 took over 24h", lines)
+        self.assertIn("1 by the PR's author, already pushing to it", lines)
+        self.assertIn("1 by the PR's author, returning after a gap", lines)
+        self.assertIn("1 by someone other than the PR's author", lines)
         self.assertIn("still conflicting", lines)
 
 

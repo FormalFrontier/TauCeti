@@ -49,13 +49,15 @@ conflicting, so there is nothing to read; commits are the only durable trace of 
 branch's history, and they are an imperfect proxy for it. Read the numbers with
 these limits in mind, all of which are reported rather than hidden:
 
-  * **Commit time is not push time, and a commit is not a head.** Several commits
-    pushed together each look like a separate epoch here, and a commit's committer
-    date is when it was written, not when it reached GitHub. Coalescing episodes
-    across consecutive conflicting heads removes the worst of this -- a spurious
-    epoch boundary no longer ends an episode -- but a *resolution* is still dated
-    to a commit's committer time, so resolution times carry that error, and the
-    continuation/return split reads gaps between commits rather than pushes.
+  * **Commit time is not push time, and a commit is not a head.** This is the
+    deepest limitation and it cuts BOTH ways, so be careful with it. Commits
+    pushed together were never heads individually: an intermediate commit that
+    conflicts, while the tip actually pushed is clean, INVENTS an episode; an
+    intermediate commit that is clean can SPLIT a real one. Grouping commits
+    written within `--push-window` (default 120s) into one push removes the common
+    case, and coalescing across consecutive conflicting heads removes the rest of
+    the splitting, but neither makes the boundaries true. Resolutions are still
+    dated to a committer timestamp rather than a push.
   * **Rewritten history.** Force-pushed heads are gone from the server. A PR whose
     surviving commits all share one timestamp is flagged `rewritten` and its
     pre-rebase window is unmeasurable; a PR force-pushed down to a single commit
@@ -64,45 +66,65 @@ these limits in mind, all of which are reported rather than hidden:
     with `main` still conflicts against later `main`. Each epoch is therefore
     checked at its LAST base and reported clean if it ends clean, which drops a
     conflict that arose and cleared inside one epoch. `--exhaustive` tests every
-    base instead; over this repository's whole history the two agree exactly (98
+    base instead; over this repository's whole history the two agree exactly (96
     episodes, identical medians and session split), so the assumption is currently
     costing nothing -- but it is an assumption, so re-check it rather than trust
     that it keeps holding.
 
-Every one of those errs the same way: they lose episodes and shorten the ones they
-keep. So the reported medians and counts are a LOWER bound on how much conflict
-there was -- useful for "is the tail real" (it is: an unresolved episode needs no
-reconstruction, and the ones found here match GitHub's live `CONFLICTING` list
-exactly), and directionally safe for the session question below, where the bias
-runs *against* the conclusion the numbers support.
+An earlier version of this file claimed all of that errs one way, making the output
+a LOWER bound. That was wrong, and the claim is worth killing explicitly so nobody
+revives it: an intermediate conflicting commit invents an episode, which is an
+error in the opposite direction. There is no global bias to lean on.
+
+What survives is narrower, and each claim has to earn its own keep:
+
+  * **The unresolved tail needs no reconstruction at all.** A PR that is
+    conflicting right now is a fact about the present, read straight from
+    GitHub -- the episodes reported here as `still-open` match its live
+    `CONFLICTING` list exactly, and that count does not move when the knobs do.
+    Trust that one.
+  * **Resolution durations are approximate**, with error bounded by how far apart
+    a push's commits are written. Across `--push-window` from 0 to 900s the median
+    ran 11m to 22m here: read it as an order of magnitude ("minutes, not days"),
+    never as a number.
+  * **Episode counts can move in either direction**, and do: 98 at
+    `--push-window 0` down to 72 at 900s. Compare runs at several values before
+    believing a count.
+  * **The existence of returns is robust** even though their exact number is not:
+    12-15 across every push window, 8-23 across session gaps from 30m to 8h, never
+    zero. That is enough to answer the question this was built for, and no more.
 
 Attribution
 -----------
 The issue this was written for asks a specific question: are conflicts resolved
 only while the author's session happens to still be alive, and never once it has
 ended? A session is not visible from outside, so the proxy is the gap between the
-resolving push and the PR's previous push. A resolution that arrives within
-`--session-gap` hours of the author's last push to that PR is a CONTINUATION (the
-author was already there); anything later is a RETURN (the author came back to a
-PR they had left). If essentially every resolution is a continuation and returns
-are vanishingly rare, the problem is session lifetime, not motivation, and the
-remedy is a different one.
+resolving push and that same actor's previous push to that PR.
 
-This classification inherits the limits above, and it is worth being precise about
-which way they push. Treating each commit as its own push SPLITS what was really
-one push into several closely-spaced epochs, which shortens apparent gaps and
-therefore over-reports CONTINUATIONS. So the count of returns is a floor: the
-error can only hide evidence that authors come back, never manufacture it. A
-result showing plentiful returns survives the criticism; a result showing none
-would not, and should be treated as inconclusive rather than as proof of the
-session-lifetime story. Vary `--session-gap` and check the split is not an
-artefact of one threshold -- on this repository it is not: returns run from 32 of
-76 at a half-hour gap down to 13 of 76 at eight hours, never near zero.
+WHO pushed is not a question git can answer. It records a committer name and email,
+which is not a GitHub account and can say anything; a maintainer or a bot pushing
+the fix would be credited to the PR's author, which is exactly the claim under
+test. So the actor comes from GitHub (`/pulls/N/commits`, preferring `committer`
+over `author`: a rebase keeps the original author, but the committer is who put the
+commit on the branch). Every resolving push lands in one of four buckets:
+
+    continuation   the PR's author, who had pushed to it within --session-gap
+    return         the PR's author, coming back after longer than that
+    other-actor    somebody else entirely -- not evidence about the author at all
+    unattributed   GitHub could not name the actor; counted, never guessed
+
+If essentially every resolution is a continuation and returns are vanishingly
+rare, the problem is session lifetime, not motivation, and the remedy is a
+different one. A result with plentiful returns rules that out; a result with none
+is inconclusive rather than proof of the session-lifetime story, because the
+push-boundary error above shortens apparent gaps and so favours continuations.
+Vary `--session-gap` and `--push-window` and check the split is not an artefact of
+one threshold.
 
 Usage
 -----
-    conflict_stats.py [--repo-dir DIR] [--since ISO] [--jobs N]
-                      [--session-gap HOURS] [--json OUT]
+    conflict_stats.py [--repo-dir DIR] [--since ISO] [--jobs N] [--exhaustive]
+                      [--session-gap HOURS] [--push-window SECONDS] [--json OUT]
 
 `--repo-dir` is a scratch clone this script maintains (default a temporary
 directory); it fetches `main` and `refs/pull/*/head`, which for this repository is
@@ -125,6 +147,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 REPO = os.environ.get("GH_REPO", "TauCetiProject/TauCeti")
 DEFAULT_SESSION_GAP_HOURS = 2.0
+# Commits written within this many seconds of each other are treated as one push.
+PUSH_WINDOW_SECONDS = 120
 
 
 def log(msg):
@@ -293,7 +317,8 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     return lo
 
 
-def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False):
+def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False,
+               push_window=PUSH_WINDOW_SECONDS):
     """Conflict episodes for one PR, plus how it was handled.
 
     The second element is "" for a fully measured PR, "rewritten" when several
@@ -311,16 +336,24 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     number = pr["number"]
     heads = mirror.pr_heads(number)
     if not heads:
-        return [], "skipped"
-    # Collapse commits sharing a timestamp: the head during that instant is the
-    # last of them. What survives is one entry per push (or per rebase).
+        return [], "skipped", []
+    # Group commits into PUSHES. Commits written within `push_window` of each other
+    # almost always travelled in one push, and only the LAST of them was ever the
+    # branch's head -- the earlier ones were never on GitHub on their own. Treating
+    # each as its own head is what lets the replay invent a short episode from an
+    # intermediate commit that conflicts, or split a real one at an intermediate
+    # commit that does not. Grouping does not make the boundaries true, but it
+    # removes the failure mode for the common case; `--push-window 0` disables it.
     epochs = []
     for sha, when in heads:
-        if epochs and epochs[-1][1] == when:
+        if epochs and when - epochs[-1][1] <= push_window:
             epochs[-1] = (sha, when)
         else:
             epochs.append((sha, when))
-    handling = "rewritten" if len(epochs) == 1 and len(heads) > 1 else ""
+    # "Rewritten" is about IDENTICAL timestamps (a rebase stamps them all at once),
+    # not about grouping: several commits genuinely pushed together are not a
+    # rewritten history.
+    handling = "rewritten" if len({when for _, when in heads}) == 1 and len(heads) > 1 else ""
 
     # A branch's commits routinely predate the PR that proposes them, and a PR
     # cannot conflict before it exists. Clamp every epoch to the PR's creation, or
@@ -365,10 +398,10 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
         if open_onset is not None:
             if onset is not None and onset <= start:
                 continue        # this head arrived already conflicting: same episode
-            # It arrived clean, so the push that created it is the resolution.
-            previous = max(epochs[index - 1][1], created) if index else start
-            out.append(episode(number, author, open_onset, start, "push",
-                               (start - previous) <= session_gap))
+            # It arrived clean, so the push that created it is the resolution. WHO
+            # pushed it, and whether they had been working the PR, is not knowable
+            # from git alone; `attribute` fills that in from GitHub afterwards.
+            out.append(episode(number, author, open_onset, start, "push", index))
             open_onset = None
         if open_onset is None and onset is not None:
             open_onset = onset
@@ -380,9 +413,9 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
             outcome = "closed"
         else:
             outcome = "still-open"
-        out.append(episode(number, author, open_onset, ended if outcome != "still-open" else now,
-                           outcome, None))
-    return out, handling
+        out.append(episode(number, author, open_onset,
+                           ended if outcome != "still-open" else now, outcome, None))
+    return out, handling, epochs
 
 
 def base_index_at(history_times, when):
@@ -403,19 +436,89 @@ def own_merge_index(history, number):
     return None
 
 
-def episode(number, author, onset, resolved, outcome, continuation):
+def episode(number, author, onset, resolved, outcome, resolver_epoch):
+    """One conflict episode. `resolver_epoch` indexes the push that ended it (None
+    when nothing did); `resolver`/`session` are filled in by `attribute`."""
     return {
         "pr": number,
         "author": author,
         "onset": onset,
         "resolved": resolved,
         "seconds": max(0, resolved - onset),
-        "outcome": outcome,
-        "continuation": continuation,
+        "outcome": "push" if resolver_epoch is not None else outcome,
+        "resolver_epoch": resolver_epoch,
+        "resolver": None,
+        "session": None,
     }
 
 
-def replay(mirror, prs, jobs, session_gap, now, exhaustive=False):
+# How a resolving push relates to whoever made it.
+CONTINUATION = "continuation"   # the same actor had pushed to this PR moments before
+RETURN = "return"               # the same actor came back after a gap
+OTHER_ACTOR = "other-actor"     # someone other than the PR's author pushed the fix
+UNATTRIBUTED = "unattributed"   # GitHub could not name the actor
+
+
+def commit_actors(number):
+    """{sha: github login} for a PR's commits, or {} if the read fails.
+
+    Git records a committer name and email, which is NOT a GitHub identity and can
+    be anything; the API resolves each commit to the account GitHub attributes it
+    to. Preferring `committer` over `author` is deliberate: a rebase or a
+    web-UI edit keeps the original author but the committer is who actually put
+    the commit on the branch, which is the actor whose session we are asking about.
+    """
+    try:
+        out = subprocess.run(
+            ["gh", "api", "--paginate", f"/repos/{REPO}/pulls/{number}/commits?per_page=100",
+             "--jq", '.[] | "\\(.sha) \\(.committer.login // .author.login // "")"'],
+            capture_output=True, text=True)
+        if out.returncode != 0:
+            return {}
+    except OSError:
+        return {}
+    actors = {}
+    for line in out.stdout.splitlines():
+        parts = line.split(" ", 1)
+        if len(parts) == 2 and parts[1].strip():
+            actors[parts[0]] = parts[1].strip()
+    return actors
+
+
+def attribute(episodes, epochs, actors, pr_author, session_gap):
+    """Name the actor behind each resolving push and classify the session.
+
+    The question this tool exists to answer is about an AUTHOR's behaviour, so a
+    resolution can only count as "they came back" once we know who pushed it and
+    that they are the PR's author. Git cannot say: it records a committer string,
+    not a GitHub account, and a maintainer or bot pushing a fix would otherwise be
+    silently credited to the author.
+
+    The gap is measured against that same actor's previous push to the PR, not
+    against whoever pushed last, so one person's return is not disguised as a
+    continuation by somebody else's activity in between.
+    """
+    for row in episodes:
+        index = row.get("resolver_epoch")
+        if index is None:
+            continue
+        sha, when = epochs[index][0], epochs[index][1]
+        actor = actors.get(sha) or ""
+        row["resolver"] = actor or None
+        if not actor:
+            row["session"] = UNATTRIBUTED
+        elif actor != pr_author:
+            row["session"] = OTHER_ACTOR
+        else:
+            previous = next((epochs[j][1] for j in range(index - 1, -1, -1)
+                             if actors.get(epochs[j][0]) == actor), None)
+            row["session"] = (CONTINUATION if previous is not None
+                              and (when - previous) <= session_gap else RETURN)
+    return episodes
+
+
+def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
+           push_window=PUSH_WINDOW_SECONDS):
     history = mirror.main_history()
     history_times = [when for _, when, _ in history]
     log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads"
@@ -424,16 +527,32 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False):
     def one(pr):
         try:
             return analyse_pr(mirror, history, history_times, pr, now, session_gap,
-                              exhaustive)
+                              exhaustive, push_window)
         except Exception as exc:
             log(f"PR #{pr['number']}: replay failed ({exc}); skipping")
-            return [], "skipped"
+            return [], "skipped", []
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = list(pool.map(one, prs))
-    episodes = [episode for rows, _ in results for episode in rows]
+
+    # Phase 2: name the actor behind each resolving push. This costs one GitHub
+    # read per PR, so it runs ONLY over the handful that produced an episode --
+    # ~90 of ~2000 here -- rather than over the whole queue.
+    needs_actors = [(pr, rows, epochs) for pr, (rows, _, epochs) in zip(prs, results)
+                    if any(row.get("resolver_epoch") is not None for row in rows)]
+    log(f"attributing {len(needs_actors)} PR(s) with a resolving push")
+
+    def name_actors(item):
+        pr, rows, epochs = item
+        attribute(rows, epochs, commit_actors(pr["number"]),
+                  (pr.get("author") or {}).get("login") or "", session_gap)
+
+    with ThreadPoolExecutor(max_workers=min(jobs, 8)) as pool:
+        list(pool.map(name_actors, needs_actors))
+
+    episodes = [row for rows, _, _ in results for row in rows]
     unmeasured = {"rewritten": 0, "skipped": 0}
-    for _, handling in results:
+    for _, handling, _ in results:
         if handling:
             unmeasured[handling] += 1
     return episodes, unmeasured
@@ -478,16 +597,22 @@ def summarise(episodes, unmeasured, total_prs):
 
     pushes = [e for e in episodes if e["outcome"] == "push"]
     if pushes:
-        continued = [e for e in pushes if e["continuation"]]
-        returned = [e for e in pushes if not e["continuation"]]
-        lines.append(f"resolved by a push: {len(continued)} while the author was "
-                     f"already working the PR, {len(returned)} on a later return")
-        if continued:
-            lines.append(f"  continuation: median "
-                         f"{human_duration(median([e['seconds'] for e in continued]))}")
-        if returned:
-            lines.append(f"  return:       median "
-                         f"{human_duration(median([e['seconds'] for e in returned]))}")
+        buckets = {}
+        for row in pushes:
+            buckets.setdefault(row["session"], []).append(row)
+        lines.append(f"resolved by a push: {len(pushes)}")
+        labels = [
+            (CONTINUATION, "the PR's author, already pushing to it"),
+            (RETURN, "the PR's author, returning after a gap"),
+            (OTHER_ACTOR, "someone other than the PR's author"),
+            (UNATTRIBUTED, "an actor GitHub could not name"),
+        ]
+        for key, description in labels:
+            rows = buckets.get(key) or []
+            if not rows:
+                continue
+            lines.append(f"  {len(rows):3} by {description}, median "
+                         f"{human_duration(median([e['seconds'] for e in rows]))}")
 
     by_author = {}
     for e in episodes:
@@ -518,6 +643,9 @@ def main(argv=None):
     parser.add_argument("--session-gap", type=float, default=DEFAULT_SESSION_GAP_HOURS,
                         help="hours after which a resolving push counts as a return, "
                              "not a continuation of the author's current session")
+    parser.add_argument("--push-window", type=int, default=PUSH_WINDOW_SECONDS,
+                        help="seconds within which consecutive commits are treated as one "
+                             "push (0 to treat every commit as its own head)")
     parser.add_argument("--exhaustive", action="store_true",
                         help="test every base instead of binary-searching; slower, but "
                              "does not assume a conflict persists as main accumulates")
@@ -531,7 +659,8 @@ def main(argv=None):
         prs = fetch_prs(args.since)
         now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         episodes, unmeasured = replay(
-            mirror, prs, args.jobs, int(args.session_gap * 3600), now, args.exhaustive)
+            mirror, prs, args.jobs, int(args.session_gap * 3600), now,
+            args.exhaustive, args.push_window)
 
     if args.json_out:
         with open(args.json_out, "w") as handle:
