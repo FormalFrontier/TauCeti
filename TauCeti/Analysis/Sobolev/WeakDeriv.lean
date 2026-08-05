@@ -25,12 +25,13 @@ the underlying differentiation notion: for an open set `Ω` in a real normed spa
 
 `TauCeti.HasWeakLineDerivOn μ Ω u u' v`
 
-says that `∫ (∂_v φ) • u = - ∫ φ • u'` for every test function `φ ∈ 𝓓(Ω, ℝ)`, i.e. that `u'`
-represents the distributional derivative `∂_v u` on `Ω`. The bundled test-function type
+says that `∫ (∂_v φ) • u ∂μ = - ∫ φ • u' ∂μ` for every test function `φ ∈ 𝓓(Ω, ℝ)`; for the
+intended `μ`, an additive Haar measure, this says that `u'` represents the distributional
+derivative `∂_v u` on `Ω` (see *The measure* below). The bundled test-function type
 `TestFunction` of `Mathlib/Analysis/Distribution/TestFunction.lean` is the class of admissible
-`φ`, so the definition is exactly the distributional one; `TauCeti.hasWeakLineDerivOn_iff`
-restates it in terms of unbundled smooth compactly supported functions when that is more
-convenient.
+`φ`, so the test objects are exactly the distributional ones; `TauCeti.hasWeakLineDerivOn_iff`
+restates the identity in terms of unbundled smooth compactly supported functions when that is
+more convenient.
 
 Assembling the directions gives `TauCeti.HasWeakFDerivOn μ Ω u U` for a candidate weak derivative
 `U : E → E →L[ℝ] F`, the object whose `Lᵖ` integrability cuts out `W^{1,p}(Ω)`.
@@ -43,7 +44,7 @@ Two facts make the notion usable, and both are proved here.
   `IsOpen.ae_eq_zero_of_integral_contDiff_smul_eq_zero`. Local integrability is a genuine
   hypothesis and is carried separately, exactly as the roadmap asks: without it the identity
   defining a weak derivative is a statement about junk-valued integrals.
-* **Consistency.** A classical derivative is a weak derivative
+* **Consistency.** For a Haar measure `μ`, a classical derivative is a weak derivative
   (`TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt`, `TauCeti.hasWeakFDerivOn_of_differentiableOn`),
   by integration by parts. Together with uniqueness this pins the notion down: on a `C¹`
   function the weak derivative is the classical one almost everywhere.
@@ -51,9 +52,31 @@ Two facts make the notion usable, and both are proved here.
 Nothing here assumes that `Ω` is bounded or that its boundary is regular: the weak derivative is a
 purely interior notion, and boundary hypotheses enter only with traces and extensions.
 
+## The measure
+
+The defining identity is *not* the distributional derivative for an arbitrary `μ`, and is not
+advertised as one. Integrating against `μ` produces the adjoint of `∂_v` relative to `μ`: for a
+weighted `μ = volume.withDensity w`, the identity reads `∂_v (w • u) = w • u'` in the sense of
+distributions, so differentiating the weight contributes the extra term `u • ∂_v w`, and a
+constant `u` then has weak derivative `u • ∂_v w / w` rather than `0`. Exactly when `μ` is
+translation invariant — an additive Haar measure, hence a positive multiple of Lebesgue measure
+on a finite-dimensional `E` — does the identity say that `u'` represents `∂_v u` as a
+distribution on `Ω`, and that is the `μ` out of which `W^{k,p}(Ω)` will be built.
+
+Accordingly `[μ.IsAddHaarMeasure]` is a hypothesis of every result below that ties the notion to
+the classical derivative: `TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt`,
+`TauCeti.hasWeakLineDerivOn_const`, `TauCeti.hasWeakFDerivOn_of_differentiableOn`,
+`TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`. It is
+carried by those results rather than built into the definition, following Mathlib's own treatment
+of `MeasureTheory.convolution`, whose definition takes a bare `μ` and whose group-invariance
+hypotheses sit on the lemmas that need them: locality, linearity and almost-everywhere uniqueness
+are true of the adjoint relation for every `μ`, and stating them for a Haar measure only would
+weaken them for no gain.
+
 ## Main declarations
 
-* `TauCeti.HasWeakLineDerivOn`: `u'` is a weak derivative of `u` in the direction `v` on `Ω`.
+* `TauCeti.HasWeakLineDerivOn`: `u'` is a weak derivative of `u` in the direction `v` on `Ω`,
+  relative to `μ`.
 * `TauCeti.HasWeakFDerivOn`: `U` is a weak (Fréchet) derivative of `u` on `Ω`.
 * `TauCeti.hasWeakLineDerivOn_iff`: the unbundled restatement of the defining identity.
 * `TauCeti.integrable_smul_of_locallyIntegrableOn` and
@@ -68,7 +91,7 @@ purely interior notion, and boundary hypotheses enter only with traces and exten
   which is what makes the `TauCeti.HasWeakFDerivOn` packaging the right one.
 * `TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt` and
   `TauCeti.hasWeakFDerivOn_of_differentiableOn`: classical derivatives are weak derivatives.
-* `TauCeti.hasWeakLineDerivOn_const`: a constant has weak derivative `0`.
+* `TauCeti.hasWeakLineDerivOn_const`: against a Haar measure, a constant has weak derivative `0`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq` and `TauCeti.HasWeakFDerivOn.ae_eq`: uniqueness almost
   everywhere on `Ω`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`: where
@@ -102,13 +125,19 @@ section Defs
 variable [MeasurableSpace E] {μ : Measure E} {u u' : E → F}
 
 /-- `HasWeakLineDerivOn μ Ω u u' v` says that `u'` is a **weak derivative** of `u` in the
-direction `v` on the open set `Ω`: the integration-by-parts identity
+direction `v` on the open set `Ω`, relative to the measure `μ`: the integration-by-parts identity
 
 `∫ (∂_v φ) • u ∂μ = - ∫ φ • u' ∂μ`
 
 holds for every test function `φ : 𝓓(Ω, ℝ)`, that is, for every smooth `φ : E → ℝ` whose support
-is compact and contained in `Ω`. Equivalently, `u'` represents the distributional derivative
-`∂_v u` on `Ω`.
+is compact and contained in `Ω`.
+
+For the intended `μ`, an additive Haar measure, this says exactly that `u'` represents the
+distributional derivative `∂_v u` on `Ω`, and `[μ.IsAddHaarMeasure]` is the hypothesis of every
+result identifying the two (`TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt` and
+`TauCeti.hasWeakLineDerivOn_const` among them). For a `μ` that is not translation invariant the
+identity is instead the adjoint of `∂_v` relative to `μ` — with a weight `w` it describes
+`∂_v (w • u)`, so a constant need not have weak derivative `0`; see the module docstring.
 
 This carries no integrability hypothesis: `LocallyIntegrableOn u Ω μ` and
 `LocallyIntegrableOn u' Ω μ` are the separate hypotheses under which the identity determines `u'`
@@ -297,7 +326,11 @@ theorem HasWeakLineDerivOn.smul_direction (h : HasWeakLineDerivOn μ Ω u u' v) 
 
 end SmulDirection
 
-/-! ### Classical derivatives are weak derivatives -/
+/-! ### Classical derivatives are weak derivatives
+
+This is where the measure has to be an additive Haar measure: integration by parts is available
+only for a translation-invariant `μ`, and it is what makes the weak derivative of this section
+the classical one. -/
 
 section Classical
 
@@ -327,8 +360,10 @@ theorem hasWeakLineDerivOn_of_hasLineDerivAt (hu : LocallyIntegrableOn u Ω μ)
       (hφd x).hasFDerivAt.hasLineDerivAt v)
   simpa using key
 
-/-- A constant function has weak derivative `0` in every direction: the first sanity check that
-`TauCeti.HasWeakLineDerivOn` is not vacuous. -/
+/-- A constant function has weak derivative `0` in every direction, for `μ` an additive Haar
+measure: the first sanity check that `TauCeti.HasWeakLineDerivOn` is not vacuous. Translation
+invariance of `μ` is needed — against a weighted measure a constant pairs with `∂_v` of the
+weight. -/
 theorem hasWeakLineDerivOn_const (c : F) :
     HasWeakLineDerivOn μ Ω (fun _ => c) (fun _ => 0) v :=
   hasWeakLineDerivOn_of_hasLineDerivAt (locallyIntegrableOn_const c) locallyIntegrableOn_zero
