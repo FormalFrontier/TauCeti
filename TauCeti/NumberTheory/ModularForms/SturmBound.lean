@@ -97,7 +97,7 @@ has order strictly greater than `k · [𝒮ℒ : 𝒢 ⊓ 𝒮ℒ] / 12` is iden
 theorem sturm_bound_finiteIndex [DiscreteTopology 𝒢.strictPeriods]
     (h : (↑((k * Nat.card (𝒮ℒ ⧸ 𝒢.subgroupOf 𝒮ℒ)).toNat / 12) : ℕ∞) <
       (qExpansion 𝒢.strictWidthInfty f).order) : f = 0 := by
-  rw [← _root_.ModularForm.coe_eq_zero_iff, ← _root_.ModularForm.norm_eq_zero_iff (ℋ := 𝒮ℒ)]
+  rw [← FunLike.coe_zero_iff, ← _root_.ModularForm.norm_eq_zero_iff (ℋ := 𝒮ℒ)]
   exact _root_.ModularForm.sturm_bound_levelOne <|
     h.trans_le (qExpansion_order_le_qExpansion_norm_order f)
 
@@ -125,7 +125,7 @@ theorem eq_of_sturm_bound [DiscreteTopology 𝒢.strictPeriods]
   rw [← sub_eq_zero]
   refine sturm_bound_finiteIndex (f - g) (lt_of_lt_of_le
     (by exact_mod_cast Nat.lt_succ_self _) (PowerSeries.nat_le_order _ _ fun i hi ↦ ?_))
-  rw [_root_.ModularForm.coe_sub, _root_.ModularForm.qExpansion_sub
+  rw [FunLike.coe_sub, _root_.ModularForm.qExpansion_sub
     strictWidthInfty_pos_of_finiteRelIndex 𝒢.strictWidthInfty_mem_strictPeriods,
     map_sub, sub_eq_zero]
   exact h i (Nat.lt_succ_iff.mp hi)
