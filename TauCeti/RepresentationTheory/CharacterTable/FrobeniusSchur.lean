@@ -107,7 +107,7 @@ noncomputable def frobeniusSchurIndicator (ρ : Representation k G V) : k :=
   (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g * g)
 
 /-- The indicator, written with a square rather than a product. -/
-theorem frobeniusSchurIndicator_eq_sum_char_sq (ρ : Representation k G V) :
+theorem frobeniusSchurIndicator_eq_card_inv_mul_sum_char_sq (ρ : Representation k G V) :
     frobeniusSchurIndicator ρ = (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g ^ 2) := by
   simp only [frobeniusSchurIndicator, sq]
 
@@ -223,7 +223,9 @@ noncomputable def frobeniusSchurIndicator (V : FDRep k G) : k :=
   Representation.frobeniusSchurIndicator V.ρ
 
 /-- The two forms of the indicator agree: the `FDRep`-level indicator of `V` is the indicator of
-the underlying representation `V.ρ`. -/
+the underlying representation `V.ρ`. It is a `simp` lemma, so results proved on the module spine
+apply to the `FDRep`-level indicator automatically. -/
+@[simp]
 theorem frobeniusSchurIndicator_eq_representation (V : FDRep k G) :
     frobeniusSchurIndicator V = Representation.frobeniusSchurIndicator V.ρ :=
   (rfl)
