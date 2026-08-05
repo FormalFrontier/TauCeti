@@ -201,17 +201,11 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere (hζ : dist ζ c = 
     intro t ht
     exact hFg (lineMap_mem_Ioo hab ht)
   have hγrange : range γ = F '' Icc a b := by
-    apply Set.Subset.antisymm
-    · rintro y ⟨t, rfl⟩
-      refine ⟨AffineMap.lineMap a b (t : ℝ), ?_, rfl⟩
-      rw [← segment_eq_Icc hab.le]
-      exact lineMap_mem_segment ℝ a b t.2
-    · rintro y ⟨θ, hθ, rfl⟩
-      have hlineImage : AffineMap.lineMap a b '' Icc (0 : ℝ) 1 = Icc a b := by
-        rw [← segment_eq_image_lineMap ℝ a b, segment_eq_Icc hab.le]
-      rw [← hlineImage] at hθ
-      obtain ⟨t, ht, rfl⟩ := hθ
-      exact ⟨⟨t, ht⟩, rfl⟩
+    calc
+      range γ = range (F ∘ AffineMap.lineMap a b ∘ ((↑) : unitInterval → ℝ)) := rfl
+      _ = F '' Icc a b := by
+        rw [range_comp, range_comp, Subtype.range_coe, ← segment_eq_image_lineMap ℝ a b,
+          segment_eq_Icc hab.le]
   have hFimage : F '' Icc a b = closure (g '' Ioo a b) := by
     calc
       F '' Icc a b = F '' closure (Ioo a b) := by rw [hcl]
@@ -234,8 +228,9 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere (hζ : dist ζ c = 
 endpoints.** Under the hypotheses of
 `TauCeti.exists_path_range_eq_closure_image_ball_inter_sphere`, assume additionally that `f` is
 injective on `ball c r`. Then the endpoints of the resulting path lie on
-`frontier (f '' ball c r)`, its interior is injective, and no endpoint value occurs in the
-interior. Thus the only possible repeated value is a common value of the two endpoints.
+`frontier (f '' ball c r)` and remain identified by their endpoint limits, its interior is
+injective, and no endpoint value occurs in the interior. Thus the only possible repeated value is
+a common value of the two endpoints.
 
 The endpoints need not be distinct: before the Carathéodory boundary theorem, the hypotheses do
 not exclude an image crosscut closing up at the boundary.
@@ -246,6 +241,12 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere_of_injOn
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
     ∃ u v, ∃ γ : Path u v,
       range γ = closure (f '' (ball c r ∩ sphere ζ ρ)) ∧
+        Tendsto f
+          (𝓝[ball c r ∩ sphere ζ ρ]
+            (circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))))) (𝓝 u) ∧
+        Tendsto f
+          (𝓝[ball c r ∩ sphere ζ ρ]
+            (circleMap ζ ρ ((c - ζ).arg + Real.arccos (ρ / (2 * r))))) (𝓝 v) ∧
         u ∈ frontier (f '' ball c r) ∧ v ∈ frontier (f '' ball c r) ∧
         (∀ ⦃x y⦄, γ x = γ y →
           x = y ∨ (x = 0 ∧ y = 1) ∨ (x = 1 ∧ y = 0)) ∧
@@ -372,6 +373,6 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere_of_injOn
       · exfalso
         exact (himageOpen.frontier_eq ▸ hγone).2 (by rw [← hxy]; exact hγmem x hx)
       · exact Or.inl (hγinj hx hy hxy)
-  exact ⟨u, v, γ, hγrange, hufrontier, hvfrontier, hγsimple, hγformula⟩
+  exact ⟨u, v, γ, hγrange, hu, hv, hufrontier, hvfrontier, hγsimple, hγformula⟩
 
 end TauCeti
