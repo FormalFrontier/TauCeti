@@ -59,8 +59,9 @@ is already a diameter bound: for any `E` containing the boundary points of `Ω` 
 (`TauCeti.diam_image_inter_ball_le`), and likewise for the far side
 (`TauCeti.diam_image_sdiff_closedBall_le`), both through the same
 `TauCeti.diam_image_le_diam_image_union`. Feeding those bounds, one for each tolerance, to the
-Cauchy criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` of
-`Topology/ClusterSet.lean` gives the boundary limit
+Cauchy criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists` of
+`Topology/ClusterSet.lean` — a diameter bound on the image of an approach region bounding the
+distance between two of its values by `Metric.dist_le_diam_of_mem` — gives the boundary limit
 `TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le` and, if the bounds are available
 at every point of `frontier U`, the continuous extension to `closure U`,
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`.
@@ -95,7 +96,7 @@ that never mention a holomorphic map are stated at their own generality elsewher
 here: `TauCeti.frontier_image_subset_image_union_frontier_image` for maps between arbitrary
 topological spaces, `TauCeti.diam_frontier` — through
 `TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
-`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` for a map between metric spaces. What
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists` for a map between metric spaces. What
 remains here is exactly the conformal content: the open mapping theorem, and the reading of a
 circular cut as a crosscut.
 
@@ -236,18 +237,21 @@ is a crosscut radius `ρ > 0` and a bounded set `E` enclosing the boundary point
 that cling to the cut-off piece, such that the image crosscut together with `E` has diameter at most
 `ε`, then `f` has at most one cluster value at `ζ` along `U`.
 
-This is `TauCeti.diam_image_inter_ball_le` fed to
-`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le`. -/
+This is `TauCeti.diam_image_inter_ball_le` fed to the Cauchy criterion
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists`: the crosscut neighbourhood is an approach
+region, and `Metric.dist_le_diam_of_mem` reads the diameter bound on its image as a bound on the
+distance between two values of `f` there, the image being bounded because `f '' U` is. -/
 theorem subsingleton_clusterSetOn_of_forall_exists_diam_union_le (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U))
     (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
       frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E ∧
       diam (f '' (U ∩ sphere ζ ρ) ∪ E) ≤ ε) :
     (clusterSetOn f U ζ).Subsingleton := by
-  refine subsingleton_clusterSetOn_of_forall_exists_diam_le fun ε hε => ?_
+  refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
   obtain ⟨ρ, hρ, E, hEb, hEsub, hEdiam⟩ := h ε hε
-  exact ⟨ρ, hρ, hb.subset (image_mono inter_subset_left),
-    (diam_image_inter_ball_le hUo hd hinj hb hEb hEsub).trans hEdiam⟩
+  exact ⟨ρ, hρ, fun _ hx _ hy => (dist_le_diam_of_mem (hb.subset (image_mono inter_subset_left))
+    (mem_image_of_mem f hx) (mem_image_of_mem f hy)).trans
+    ((diam_image_inter_ball_le hUo hd hinj hb hEb hEsub).trans hEdiam)⟩
 
 /-- **The crosscut criterion in geometric form, boundary-limit version.** A conformal map of a
 domain with bounded image has a limit at a point `ζ` of its closure, along the domain, as soon as
