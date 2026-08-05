@@ -87,7 +87,6 @@ variable {G}
 
 /-- A chain belongs to a homogeneous piece exactly when every state outside that bidegree has
 zero coefficient. -/
-@[simp]
 theorem mem_bigradedPiece_iff {R : Type*} [Semiring R] {d : ℤ × ℤ}
     (c : GridChain R n) :
     c ∈ G.bigradedPiece R d ↔ ∀ x, G.bidegree x ≠ d → c x = 0 := by
