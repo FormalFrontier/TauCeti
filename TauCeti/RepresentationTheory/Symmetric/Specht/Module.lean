@@ -250,6 +250,7 @@ noncomputable def spechtSubrepresentation (μ : YoungDiagram) :
     exact h hv
 
 /-- The underlying submodule of the Specht module is the span of the polytabloids. -/
+@[simp]
 theorem spechtSubrepresentation_toSubmodule (μ : YoungDiagram) :
     (spechtSubrepresentation μ).toSubmodule =
       Submodule.span ℚ (Set.range (polytabloid (μ := μ))) :=
