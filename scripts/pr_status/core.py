@@ -2,13 +2,16 @@
 """Shared derivation of a TauCeti PR's status from GitHub truth.
 
 This is the single place that reads what a PR's status *is* -- its lifecycle
-(open / merged / closed), its `build` CI state, and its review state (from the
-canonical `<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review
-is in flight right now (from the engine's `<!--tauceti-review-in-progress-->`
-marker). Every status *sink* imports it and renders that one truth its own way:
+(open / merged / closed), its `build` CI state, whether it currently conflicts
+with the base branch, and its review state (from the canonical
+`<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review is in
+flight right now (from the engine's `<!--tauceti-review-in-progress-->` marker).
+Every status *sink* imports it and renders that one truth its own way:
 
-  * zulip.py   -> two independent groups of emoji reactions on the PR's message
-  * labels.py  -> exactly one of the five status labels on the PR itself
+  * zulip.py     -> two independent groups of emoji reactions on the PR's message
+  * labels.py    -> exactly one of the six status labels on the PR itself
+  * conflicts.py -> one marker comment per conflict episode, which is what
+                    actually notifies the author (and records the onset time)
 
 Keeping the derivation here means the two sinks can never disagree about what a
 PR's state is: they read the same `derive()` and only differ in how they show it.
@@ -64,7 +67,7 @@ def _roadmap_labels(labels):
 
 
 def pr_state(pr):
-    """{'state','merged','head','title','author','roadmaps'} for the PR.
+    """{'state','merged','head','title','author','roadmaps','mergeable'} for the PR.
 
     Prefer the triggering event's payload, passed in via PR_STATE/PR_HEAD/
     PR_MERGED/PR_TITLE/PR_AUTHOR/PR_LABELS_JSON (a workflow that has the
@@ -73,6 +76,11 @@ def pr_state(pr):
     PR state/head aren't set (the workflow_run and issue_comment triggers, and
     the backfill), where the payload is absent or isn't the PR we're
     reconciling.
+
+    `mergeable` is GitHub's tri-state (True / False / None-for-not-yet-computed).
+    The REST path gets it for free from the same read; the payload path has no
+    trustworthy value for it and reports None, which `conflicting()` then resolves
+    with one targeted read.
     """
     env_state = os.environ.get("PR_STATE")
     env_head = os.environ.get("PR_HEAD")
@@ -90,8 +98,10 @@ def pr_state(pr):
             "title": os.environ.get("PR_TITLE") or f"PR #{pr}",
             "author": os.environ.get("PR_AUTHOR") or "",
             "roadmaps": _roadmap_labels(labels),
+            "mergeable": None,
         }
     d = json.loads(gh_api(f"/repos/{REPO}/pulls/{pr}"))
+    mergeable = d.get("mergeable")
     return {
         "state": d["state"],                 # "open" | "closed"
         "merged": bool(d.get("merged")),
@@ -99,18 +109,21 @@ def pr_state(pr):
         "title": d.get("title") or f"PR #{pr}",
         "author": (d.get("user") or {}).get("login") or "",
         "roadmaps": _roadmap_labels(d.get("labels") or []),
+        "mergeable": mergeable if isinstance(mergeable, bool) else None,
     }
 
 
 def trusted_comments(pr):
     """Issue comments authored by a repo-associated account (OWNER/MEMBER/COLLABORATOR), as
-    `[{'body','updated'}]`. One paginated fetch, reused for both review signals below, so an
-    untrusted fork-PR comment can never forge review state. The jq emits one compact object per
-    line (valid JSONL across any number of pages)."""
+    `[{'id','body','updated'}]`. One paginated fetch, reused for the review signals below and for
+    conflicts.py's markers, so an untrusted fork-PR comment can never forge review or conflict
+    state. `id` is what lets a caller EDIT the comment it found (conflicts.py edits its marker to a
+    resolved form). The jq emits one compact object per line (valid JSONL across any number of
+    pages)."""
     out = gh_api(
         f"/repos/{REPO}/issues/{pr}/comments?per_page=100",
         jq='.[] | select(.author_association|IN("OWNER","MEMBER","COLLABORATOR"))'
-           ' | {body: .body, updated: .updated_at}',
+           ' | {id: .id, body: .body, updated: .updated_at}',
         paginate=True,
     )
     rows = []
@@ -197,6 +210,36 @@ def ci_status(head):
     return None
 
 
+# GitHub computes `mergeable` LAZILY: the first read of a PR whose base has moved
+# schedules a background merge and answers `null`. A second read a moment later
+# almost always has the answer, so re-read a null a few times before giving up.
+MERGEABLE_POLLS = 3
+MERGEABLE_POLL_SECONDS = 2.0
+
+
+def conflicting(pr, state=None, sleep=time.sleep):
+    """True / False / None -- does the PR conflict with its base branch?
+
+    None means "GitHub has not computed it yet", NOT "no conflict". Every caller
+    must treat None as *unknown* and change nothing: announcing a conflict we are
+    not sure of is as wrong as clearing one that is still live.
+
+    `state` may be a pre-fetched `pr_state()`; its `mergeable` is used when GitHub
+    already answered (the REST path), so the common case costs no extra request.
+    """
+    if state is not None and isinstance(state.get("mergeable"), bool):
+        return not state["mergeable"]
+    for attempt in range(MERGEABLE_POLLS):
+        raw = gh_api(f"/repos/{REPO}/pulls/{pr}", jq=".mergeable").strip()
+        if raw == "true":
+            return False
+        if raw == "false":
+            return True
+        if attempt + 1 < MERGEABLE_POLLS:
+            sleep(MERGEABLE_POLL_SECONDS)
+    return None
+
+
 def review_state(meta, head):
     """Map the scoreboard meta at the current head to a sink-agnostic review state.
 
@@ -235,20 +278,24 @@ def review_state(meta, head):
     return "running"
 
 
-def derive(pr, ci_override=None, state=None, now=None):
+def derive(pr, ci_override=None, state=None, now=None, conflict_override=None):
     """The canonical status of a PR, as a dict:
 
         {"lifecycle": "open"|"merged"|"closed",
          "ci":        "running"|"success"|"failure"|None,   # None => not reported
+         "conflicting": True|False|None,                     # None => not computed yet
          "review":    "none"|"running"|"changes"|"approved"|None,
          "review_inprogress": bool,                          # a live in-progress marker at HEAD
          "head":      "<sha>", "title": "<title>"}
 
-    `ci`, `review`, and `review_inprogress` are only meaningful while the PR is open; on a
-    merged/closed PR they are None/False (a sink shows a terminal state and clears the rest).
+    `ci`, `conflicting`, `review`, and `review_inprogress` are only meaningful while the PR is
+    open; on a merged/closed PR they are None/False (a sink shows a terminal state and clears the
+    rest).
 
     `ci_override` (running|success|failure|none|None) forces the CI state instead of reading the
-    `build` commit status. `state` lets a caller pass a pre-fetched pr_state() so the PR is read
+    `build` commit status. `conflict_override` (True/False/None) likewise forces the conflict state,
+    so the sweep -- which already read every open PR's mergeability in one GraphQL query -- does not
+    re-read it per PR. `state` lets a caller pass a pre-fetched pr_state() so the PR is read
     once (a Zulip sink creates its message from the title BEFORE these fallible reads). `now`
     (epoch seconds) is the clock for the in-progress TTL; defaults to the wall clock.
     """
@@ -262,6 +309,7 @@ def derive(pr, ci_override=None, state=None, now=None):
 
     if lifecycle != "open":
         ci = None
+        conflict = None
         review = None
         inprogress = False
     else:
@@ -269,6 +317,7 @@ def derive(pr, ci_override=None, state=None, now=None):
             ci = None if ci_override == "none" else ci_override
         else:
             ci = ci_status(st["head"])
+        conflict = conflict_override if conflict_override is not None else conflicting(pr, st)
         comments = trusted_comments(pr)
         review = review_state(scoreboard_meta_from(comments), st["head"])
         inprogress = inprogress_from(comments, st["head"], int(time.time()) if now is None else now)
@@ -276,6 +325,7 @@ def derive(pr, ci_override=None, state=None, now=None):
     return {
         "lifecycle": lifecycle,
         "ci": ci,
+        "conflicting": conflict,
         "review": review,
         "review_inprogress": inprogress,
         "head": st["head"],

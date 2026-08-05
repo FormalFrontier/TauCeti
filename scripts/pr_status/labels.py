@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Keep exactly one status label on every open TauCeti PR.
 
-The five labels are mutually exclusive; together they say, at a glance in the PR
+The six labels are mutually exclusive; together they say, at a glance in the PR
 list, where a PR is in the pipeline:
 
+    merge-conflict      the PR no longer merges cleanly into main
     awaiting-CI         CI has not yet reported on the latest commit
     awaiting-review     CI is green; waiting for review verdicts
     review-in-progress  a review is running on this exact commit right now
     awaiting-author     the build failed or a review requested changes
     ready-to-merge      CI green and every rubric approved
 
-All five are derived here from the PR's status (core.derive) and this sink is the
+`merge-conflict` outranks the rest because it is the one state where nothing
+downstream can make progress: no CI result and no review verdict on the current
+head can lead to a merge until the author rebases. It is also the only state a PR
+can enter with NO event of its own -- main moving is what causes it -- so it is
+driven by conflicts.py's sweep as well as by the usual per-PR triggers.
+
+All six are derived here from the PR's status (core.derive) and this sink is the
 SOLE writer of them, so the "exactly one" invariant is CI's alone to keep -- it
 never depends on any worker or review harness behaving a particular way. reconcile
 is idempotent and convergent: it reads GitHub truth afresh and drives the label
@@ -30,6 +37,10 @@ Usage:
 `--ci STATE` (running|success|failure|none) forces the CI state instead of reading
 the `build` commit status; used only by the backfill/tests.
 
+Callers that already know the conflict state (conflicts.py's sweep reads every open
+PR's mergeability in one query) pass it to `reconcile` as `conflict_override`, so
+the sweep costs no extra per-PR mergeability read.
+
 Environment:
     GH_REPO                   default "TauCetiProject/TauCeti"
     GH_TOKEN / GITHUB_TOKEN   used by `gh` for the GitHub API (needs issues:write)
@@ -47,10 +58,12 @@ REPO = core.REPO
 # label -> (hex color, description). Created on first use, like the roadmap labels, so setting this
 # up needs no manual label creation.
 LABELS = {
+    "merge-conflict":     ("b60205", "No longer merges cleanly into main; the author must rebase"),
     "awaiting-CI":        ("fbca04", "CI has not yet reported on the latest commit"),
     "awaiting-review":    ("1d76db", "CI is green; waiting for review verdicts"),
     "review-in-progress": ("a371f7", "A review is running on this exact commit right now"),
-    "awaiting-author":    ("d93f0b", "The build failed or a review requested changes; author action needed"),
+    "awaiting-author":    ("d93f0b",
+                           "The build failed or a review requested changes; author action needed"),
     "ready-to-merge":     ("0e8a16", "CI green and every rubric approved; ready to merge"),
 }
 STATUS_LABELS = list(LABELS)
@@ -65,15 +78,22 @@ def derived_label(status):
 
     Precedence:
         PR merged/closed                       -> None (no status label)
+        conflicts with main                    -> merge-conflict
         CI not reported yet / running          -> awaiting-CI
         CI failed                              -> awaiting-author
         CI green, review requested changes     -> awaiting-author
         CI green, every rubric approved        -> ready-to-merge
         CI green, review pending + live marker -> review-in-progress
         CI green, review pending, no marker    -> awaiting-review
+
+    `conflicting` is True/False/None, and only True paints the label: None means
+    GitHub has not computed mergeability yet, and a state we have not established
+    must never displace the one we can see.
     """
     if status["lifecycle"] != "open":
         return None
+    if status.get("conflicting") is True:
+        return "merge-conflict"
     ci = status["ci"]
     if ci in (None, "running"):
         return "awaiting-CI"
@@ -142,8 +162,8 @@ def remove_label(pr, name):
     log(f"removed {name}")
 
 
-def reconcile(pr, ci_override=None):
-    status = core.derive(pr, ci_override)
+def reconcile(pr, ci_override=None, conflict_override=None):
+    status = core.derive(pr, ci_override, conflict_override=conflict_override)
     desired = derived_label(status)          # one of STATUS_LABELS, or None (terminal)
     current = set(current_status_labels(pr))
 
@@ -153,7 +173,8 @@ def reconcile(pr, ci_override=None):
     if desired is not None and desired not in current:
         add_label(pr, desired)
 
-    log(f"PR #{pr}: lifecycle={status['lifecycle']} ci={status['ci']} review={status['review']} "
+    log(f"PR #{pr}: lifecycle={status['lifecycle']} ci={status['ci']} "
+        f"conflicting={status['conflicting']} review={status['review']} "
         f"inprogress={status['review_inprogress']} -> label={desired or '(none)'}")
 
 

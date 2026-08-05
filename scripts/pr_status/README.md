@@ -7,6 +7,8 @@ source of truth:
   list and searchable.
 - **Zulip reactions**: one bot-owned message per PR in the **Tau Ceti** channel,
   carrying emoji that track the same states at a glance.
+- **A comment on the PR**, for the one state that needs to reach an author who
+  has stopped looking: a merge conflict.
 
 [`core.py`](core.py) is that source of truth. It derives a PR's status from
 GitHub (PR state, the `build` commit status, the canonical
@@ -19,6 +21,7 @@ reactions can never disagree:
 | `core.derive` | `labels.py` (one label) | `zulip.py` (two reaction groups) |
 | --- | --- | --- |
 | lifecycle `merged` / `closed` | *(no label)* | `:merge:` / `:closed-pr:` |
+| conflicting | `merge-conflict` | ⚠️ `warning` |
 | ci `running` | `awaiting-CI` | 🟡 `yellow` |
 | ci not reported | `awaiting-CI` | 🟡 `yellow` |
 | ci `failure` | `awaiting-author` | 🔴 `red_circle` |
@@ -37,12 +40,20 @@ and an authenticated `gh` CLI, nothing from PyPI.
 
 ## Labels
 
-The five labels are mutually exclusive; [`labels.py`](labels.py) sets one and
+The six labels are mutually exclusive; [`labels.py`](labels.py) sets one and
 removes any other, so exactly one is present on an open PR (none on a terminal
-PR). All five are provisioned on first use, and **`labels.py` is the sole writer
+PR). All six are provisioned on first use, and **`labels.py` is the sole writer
 of them**: the "exactly one" invariant is CI's alone to keep, and it assumes
 nothing about any worker or review harness. That is deliberate: anyone can point
 their own review harness at TauCeti, and CI must not depend on a particular one.
+The conflict sweep is a *caller* of `labels.reconcile`, not a second writer.
+
+`merge-conflict` outranks the other five, because it is the one state in which
+nothing downstream can make progress: a green build and an approving review on
+the current head still cannot merge. It is also the only state derived from a
+tri-state — GitHub computes mergeability lazily, and `conflicting is None` means
+"not computed", never "no conflict", so an uncomputed PR keeps whatever label it
+had rather than being painted either way.
 
 `review-in-progress` is derived, like the other four, from a signal CI reads
 rather than from anyone writing the label. The signal is the review engine's
@@ -88,7 +99,8 @@ reconciles two independent, mutually-exclusive reaction groups from `core.derive
 | **CI (build)** | waiting / running | 🟡 `yellow` |
 | | passed | 🟢 `green_circle` |
 | | failed | 🔴 `red_circle` |
-| **Review / lifecycle** | review in progress | 👀 `eyes` |
+| **Review / lifecycle** | conflicts with main | ⚠️ `warning` |
+| | review in progress | 👀 `eyes` |
 | | waiting for review | *(none)* |
 | | changes requested / blocked | ✍️ `writing` |
 | | all review done, all green | ✔️ `check` |
@@ -117,6 +129,76 @@ Three event-driven workflows drive it:
 - [`zulip-healthcheck.yml`](../../.github/workflows/zulip-healthcheck.yml): a
   schedule (every 6h) that runs `check` to probe the credentials, so a broken
   key is caught even during quiet periods with no PR activity.
+
+## Merge conflicts
+
+A PR becomes conflicted because **main moved**, not because its author did
+anything. That makes it the one transition no other workflow here can see: every
+other trigger is scoped to the PR (`pull_request_target`, a `pr-build` / `Review`
+`workflow_run`, an `issue_comment`), and main moving fires none of them. Before
+[`conflicts.py`](conflicts.py) existed, a PR could pick up a conflict and
+*nothing anywhere said so* — no label, no reaction, no comment, no alert.
+`stuck_alerts.py` deliberately skips a conflicting PR (it is not being wrongly
+withheld by the merge path) and `housekeeping.py` only retires PRs that are
+blocking under review, so a conflicted-but-approved PR was reaped by nothing
+either. It rotted silently.
+
+[`conflict-sweep.yml`](../../.github/workflows/conflict-sweep.yml) runs the sweep
+on every push to main — the exact moment conflicts are created — and hourly as a
+backstop. One GraphQL query reads mergeability for every open PR at once, so a
+sweep costs one request plus a handful for the PRs that actually changed.
+
+The **comment** is the part that matters, because it is the only one of the three
+sinks that generates a GitHub notification, and therefore the only one that
+reaches an author whose session has ended. There is exactly one per conflict
+*episode*, carrying a hidden `<!--tauceti-conflict:v1 {"onset": …}-->` marker:
+
+- while the conflict persists the comment is left **byte-identical** — this is a
+  notice, not a nag;
+- when the PR merges cleanly again the comment is **edited** to a ✅ form
+  recording `resolved`;
+- a *second* conflict posts a **new** comment, since editing the buried ✅ one
+  would notify nobody.
+
+A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
+still gets the label and the reaction — the queue view should be honest — but no
+comment, because it is parked on purpose.
+
+GitHub computes `mergeable` lazily, so the first read after main moves answers
+UNKNOWN and schedules the merge in the background. The sweep re-reads the unknowns
+a few times; anything still unknown is **left exactly as it is**, neither
+announced nor cleared, and picked up an hour later. "We could not compute it" is
+not evidence either way.
+
+### Measuring it
+
+The marker's `onset`/`resolved` pair is what makes conflict-to-resolution
+*measurable*, which it previously was not: GitHub reports only the current value
+of `mergeable` and its timeline records nothing when a PR starts conflicting.
+
+```bash
+python3 scripts/pr_status/conflicts.py report            # median, tail, per author
+python3 scripts/pr_status/conflicts.py report --days 14 --json
+```
+
+The first sweep dates every *already*-conflicting PR from the moment it ran, so
+its first day of output understates those ages. For history from before the
+markers existed, [`conflict_stats.py`](conflict_stats.py) reconstructs it from git
+alone: it replays each PR head against every commit of main with
+`git merge-tree`, binary-searching for the main commit that first broke the merge.
+
+```bash
+python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
+```
+
+It reports the resolution distribution, the over-24h tail, and — because "the
+author's session had ended" is a real competing explanation for an unfixed
+conflict — how many resolutions came from an author who was already pushing to
+that PR versus one who came back to it after a gap (`--session-gap`, default 2h).
+It is honest about its two limits: force-pushed heads are gone from the server, so
+PRs whose history was rewritten are counted and excluded rather than guessed at;
+and the binary search assumes conflicts persist as main accumulates, so every
+epoch is checked at its last base first and reported clean if it ends clean.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 

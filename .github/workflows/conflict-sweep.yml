@@ -1,0 +1,81 @@
+name: Conflict sweep
+
+# Tell an author when their PR stops merging into main.
+#
+# This is the one PR transition that no other workflow can see. Every other
+# trigger in this repository is scoped to the PR — pull_request_target, a
+# pr-build / Review workflow_run, an issue_comment — but a PR becomes conflicted
+# because *main moved*, which fires no event on the PR at all. Until this
+# workflow existed, a PR could pick up a conflict and nothing anywhere said so:
+# no label, no Zulip reaction, no comment, no alert (stuck-alerts deliberately
+# skips a conflicting PR, and housekeeping only retires PRs that are blocking
+# under review, so a conflicted-but-approved PR was reaped by nothing either).
+#
+# So the trigger is a push to main: the exact moment conflicts are created. The
+# hourly schedule is a backstop — right after a push GitHub has to recompute
+# mergeability for every open PR at once, and any PR still UNKNOWN when the sweep
+# gives up is left untouched and picked up on the next run.
+#
+# scripts/pr_status/conflicts.py posts one comment per conflict episode (the only
+# signal that actually notifies an author whose session has ended), and drives the
+# `merge-conflict` label and the ⚠️ Zulip reaction through the existing sinks so
+# labels.py stays the sole writer of the status labels. The marker in each comment
+# records onset and resolution, which is what makes the median measurable at all:
+# `python3 scripts/pr_status/conflicts.py report`.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Hourly, offset from housekeeping (:20), merge-sweep (:40), stuck-alerts (:50).
+    - cron: "35 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Report what would change without commenting or labelling"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read           # checkout the script
+
+concurrency:
+  group: conflict-sweep
+  # Never cancel: a cancelled run can leave a PR labelled but un-commented. GitHub
+  # keeps at most one pending run per group, so a burst of merges collapses to one
+  # follow-up sweep on its own, which is the behaviour we want anyway.
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: write        # the conflict comment and the status label
+          permission-pull-requests: read  # open PRs and their mergeability
+          permission-statuses: read       # labels.py re-derives the `build` state
+      # The trusted base checkout: never PR head code, like every other sink here.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/pr_status
+          persist-credentials: false
+      - name: Announce and clear merge conflicts
+        # No continue-on-error. A failed write means a conflict went unannounced,
+        # which is the exact failure this workflow exists to prevent, so it must be
+        # visible. Nothing here is a required check, so a red run never blocks a PR.
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          DRY_RUN: ${{ inputs.dry-run && '--dry-run' || '' }}
+        run: python3 scripts/pr_status/conflicts.py sweep $DRY_RUN
