@@ -19,8 +19,8 @@ function on the whole domain**. Equivalently, on such a domain continuation crea
 branches, so "multi-valued analytic function" is a phenomenon of the topology of the domain and
 not of the germ.
 
-The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation.lean`: the germ
-of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
+The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation/Basic.lean`:
+the germ of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
 holomorphic function on `U` supplies (`TauCeti.ContinuesInside.of_differentiableOn`), and by the
 two-way form below it is supplied by nothing else once `U` is simply connected.
 

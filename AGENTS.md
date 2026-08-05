@@ -44,10 +44,13 @@ scope do not coincide.
   Mathlib linter set (style, file length, no `maxHeartbeats` overrides). Do not try to disable
   these.
 - One topic per PR. Ship a prerequisite refactor as its own PR.
-- When Mathlib adds mathematics that duplicates Tau Ceti code, migrate all uses to Mathlib and
-  delete the duplicate Tau Ceti declarations. Do not preserve the old API with compatibility
-  aliases, wrapper declarations, deprecated shims, or duplicate theorem names: Tau Ceti defers to
-  Mathlib's names, definitions, and design decisions directly.
+- Tau Ceti does not preserve backwards compatibility. When declarations or modules are moved,
+  renamed, replaced, or deleted — including when Mathlib supersedes them — update every
+  in-repository use and remove the obsolete names and module paths in the same PR. Do not add or
+  retain anything whose only purpose is compatibility: aliases, wrapper declarations, forwarding
+  import modules, deprecated shims (including `deprecated_module`), or duplicate theorem names.
+  External users of an older revision must update to the canonical API on current `main`;
+  breaking their source compatibility is not a reason to keep an obsolete surface.
 - `TauCeti/` is the only place code goes. `scripts/`, `.github/`, and the lakefile
   (`lakefile.toml`/`lakefile.lean`) are human-owned. The two Lake *pins* —
   `lake-manifest.json` and `lean-toolchain` — are an exception: a **forward-only** bump of

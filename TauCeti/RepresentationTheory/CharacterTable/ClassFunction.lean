@@ -13,7 +13,9 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, and shows that characters of representations are class functions.
+groups, pulls class functions back along a group homomorphism, shows that characters of
+representations are class functions, and evaluates a sum over a finite group one conjugacy class
+at a time.
 
 These are the indexing foundations for character tables.
 
@@ -34,7 +36,7 @@ definitional equalities, which would in turn require exposing the definitions.
 
 namespace TauCeti
 
-universe u v w
+universe u v w w'
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -82,6 +84,34 @@ theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
   (rfl)
 
+/-- Pull a class function back along a group homomorphism.  Restriction of a class function to a
+subgroup is the case `φ = S.subtype`. -/
+def comap {H : Type w} [Group H] (φ : H →* G) :
+    ClassFunction k G →ₗ[k] ClassFunction k H where
+  toFun f := ⟨fun x => f.1 (φ x), fun g h => by
+    simp only [map_mul, map_inv]
+    exact f.2 (φ g) (φ h)⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- A pulled-back class function is the composite with the homomorphism. -/
+@[simp]
+theorem comap_apply {H : Type w} [Group H] (φ : H →* G) (f : ClassFunction k G) (x : H) :
+    (comap φ f).1 x = f.1 (φ x) :=
+  (rfl)
+
+/-- Pulling back along the identity homomorphism changes nothing. -/
+@[simp]
+theorem comap_id : comap (MonoidHom.id G) = LinearMap.id (R := k) (M := ClassFunction k G) :=
+  (rfl)
+
+/-- Pullback is contravariantly functorial: pulling back along a composite is pulling back along
+each factor in turn. -/
+@[simp]
+theorem comap_comp {H : Type w} {J : Type w'} [Group H] [Group J] (φ : H →* G) (ψ : J →* H) :
+    comap (k := k) (φ.comp ψ) = (comap ψ).comp (comap φ) :=
+  (rfl)
+
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
   toFun := toConjClasses
@@ -113,6 +143,27 @@ theorem equivConjClasses_apply (f : ClassFunction k G) :
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
     equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
+
+/-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
+the group and a class function is constant on each of them, so each class contributes its size
+times the single value the class function takes there.
+
+This is the substitution that turns a sum over the group, such as the one pairing two characters,
+into a sum over the columns of a character table. -/
+theorem sum_eq_sum_conjClasses [Fintype G] [Fintype (ConjClasses G)] (f : ClassFunction k G) :
+    ∑ g : G, f.1 g = ∑ C : ConjClasses G, (Nat.card C.carrier : k) * toConjClasses f C := by
+  classical
+  rw [← Fintype.sum_fiberwise (ConjClasses.mk (α := G)) fun g => f.1 g]
+  refine Finset.sum_congr rfl fun C _ => ?_
+  have hconst : ∀ x : {g : G // ConjClasses.mk g = C}, f.1 x.1 = toConjClasses f C := by
+    rintro ⟨x, rfl⟩
+    exact (toConjClasses_mk f x).symm
+  have hcard : Nat.card C.carrier = Fintype.card {g : G // ConjClasses.mk g = C} :=
+    (Nat.card_congr
+      (Equiv.subtypeEquivRight fun _ => ConjClasses.mem_carrier_iff_mk_eq)).trans
+      (Nat.card_eq_fintype_card)
+  rw [Finset.sum_congr rfl fun x _ => hconst x, Finset.sum_const, Finset.card_univ, hcard,
+    nsmul_eq_mul]
 
 end ClassFunction
 
