@@ -17,8 +17,30 @@ translation equations Mathlib does not yet provide (`CuspForm.mcast_apply` and t
 (`ModularForm.slash_neg_one`), the source of every parity constraint on weights and
 nebentypus characters.
 
-Split out of the diamond-operator development ported from the AINTLIB `LeanModularForms`
-project (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
+It also records how modular and cusp forms move between two nested groups `Γ' ≤ Γ`. Shrinking
+the group is unconditional (`ModularForm.ofLe`): slash invariance restricts, and every cusp of
+`Γ'` is a cusp of `Γ` (`IsCusp.mono`), so the boundedness conditions restrict as well.
+Enlarging it is not: a `Γ'`-form which happens to be `Γ`-slash invariant is bounded only at the
+cusps of `Γ'`, so one needs to know that `Γ` has no further cusps. Arithmeticity supplies that
+(every arithmetic group has the cusps of `SL(2, ℤ)`), and under it the two constructions are
+mutually inverse: the image of `M_k(Γ) → M_k(Γ')` is exactly the `Γ`-invariant part of
+`M_k(Γ')` (`ModularForm.mem_range_ofLeₗ_iff`).
+
+The first group of lemmas was split out of the diamond-operator development ported from the
+AINTLIB `LeanModularForms` project
+(<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
+
+## Main definitions
+
+* `ModularForm.ofLe`, `CuspForm.ofLe` (and their `ℂ`-linear packagings `ofLeₗ`): a form for `Γ`
+  read as a form for a subgroup `Γ' ≤ Γ`.
+* `ModularForm.ofSlashInvariant`, `CuspForm.ofSlashInvariant`: a form for an arithmetic group
+  `Γ'` which is slash invariant under an arithmetic group `Γ`, read as a form for `Γ`.
+
+## Main results
+
+* `ModularForm.mem_range_ofLeₗ_iff`, `CuspForm.mem_range_ofLeₗ_iff`: for arithmetic `Γ' ≤ Γ`, a
+  form for `Γ'` extends to `Γ` exactly when it is `Γ`-slash invariant.
 -/
 
 public section
@@ -64,3 +86,133 @@ theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
   rw [ModularForm.slash_apply]
   simp [UpperHalfPlane.σ, hzpow, hdet, mul_comm]
 
+/-! ### Changing the invariance group
+
+Throughout, `Γ' ≤ Γ` are subgroups of `GL(2, ℝ)`.
+-/
+
+section OfLe
+
+variable {Γ Γ' : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
+
+namespace ModularForm
+
+/-- A modular form for `Γ` is a modular form for any subgroup `Γ' ≤ Γ`: slash invariance
+restricts, and a cusp of `Γ'` is a cusp of `Γ`, so the boundedness conditions restrict too. -/
+@[expose]
+def ofLe (h : Γ' ≤ Γ) (f : ModularForm Γ k) : ModularForm Γ' k where
+  toFun := f
+  slash_action_eq' _ hγ := f.slash_action_eq' _ (h hγ)
+  holo' := f.holo'
+  bdd_at_cusps' hc := f.bdd_at_cusps' (hc.mono h)
+
+@[simp]
+lemma coe_ofLe (h : Γ' ≤ Γ) (f : ModularForm Γ k) : ⇑(ofLe h f) = ⇑f := rfl
+
+lemma ofLe_injective (h : Γ' ≤ Γ) : Function.Injective (ofLe h : ModularForm Γ k → _) :=
+  fun _ _ hfg ↦ ext fun z ↦ DFunLike.congr_fun hfg z
+
+/-- Restriction of the invariance group, as a `ℂ`-linear map. -/
+@[expose]
+def ofLeₗ [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) :
+    ModularForm Γ k →ₗ[ℂ] ModularForm Γ' k where
+  toFun := ofLe h
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+@[simp]
+lemma ofLeₗ_apply [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) (f : ModularForm Γ k) :
+    ofLeₗ h f = ofLe h f := rfl
+
+lemma ofLeₗ_injective [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) :
+    Function.Injective (ofLeₗ h : ModularForm Γ k → _) :=
+  ofLe_injective h
+
+/-- A modular form for an arithmetic group `Γ'` which is slash invariant under an arithmetic
+group `Γ` is a modular form for `Γ`. Arithmeticity is what makes this legitimate: it forces `Γ`
+and `Γ'` to have the same cusps (those of `SL(2, ℤ)`), so no new boundedness condition is
+imposed. Some such hypothesis is needed — enlarging the invariance group can otherwise create
+cusps at which nothing is known. -/
+@[expose]
+def ofSlashInvariant [Γ.IsArithmetic] [Γ'.IsArithmetic] (f : ModularForm Γ' k)
+    (hf : ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f) : ModularForm Γ k where
+  toFun := f
+  slash_action_eq' := hf
+  holo' := f.holo'
+  bdd_at_cusps' hc := f.bdd_at_cusps'
+    ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z Γ').mpr
+      ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z Γ).mp hc))
+
+@[simp]
+lemma coe_ofSlashInvariant [Γ.IsArithmetic] [Γ'.IsArithmetic] (f : ModularForm Γ' k)
+    (hf : ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f) : ⇑(ofSlashInvariant f hf) = ⇑f := rfl
+
+/-- For arithmetic groups `Γ' ≤ Γ`, a modular form for `Γ'` comes from a modular form for `Γ`
+exactly when it is `Γ`-slash invariant. -/
+lemma mem_range_ofLeₗ_iff [Γ.HasDetOne] [Γ'.HasDetOne] [Γ.IsArithmetic] [Γ'.IsArithmetic]
+    (h : Γ' ≤ Γ) (f : ModularForm Γ' k) :
+    f ∈ LinearMap.range (ofLeₗ h) ↔ ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f :=
+  ⟨by rintro ⟨g, rfl⟩ γ hγ; exact g.slash_action_eq' γ hγ,
+    fun hf ↦ ⟨ofSlashInvariant f hf, rfl⟩⟩
+
+end ModularForm
+
+namespace CuspForm
+
+/-- A cusp form for `Γ` is a cusp form for any subgroup `Γ' ≤ Γ`. -/
+@[expose]
+def ofLe (h : Γ' ≤ Γ) (f : CuspForm Γ k) : CuspForm Γ' k where
+  toFun := f
+  slash_action_eq' _ hγ := f.slash_action_eq' _ (h hγ)
+  holo' := f.holo'
+  zero_at_cusps' hc := f.zero_at_cusps' (hc.mono h)
+
+@[simp]
+lemma coe_ofLe (h : Γ' ≤ Γ) (f : CuspForm Γ k) : ⇑(ofLe h f) = ⇑f := rfl
+
+lemma ofLe_injective (h : Γ' ≤ Γ) : Function.Injective (ofLe h : CuspForm Γ k → _) :=
+  fun _ _ hfg ↦ ext fun z ↦ DFunLike.congr_fun hfg z
+
+/-- Restriction of the invariance group, as a `ℂ`-linear map. -/
+@[expose]
+def ofLeₗ [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) : CuspForm Γ k →ₗ[ℂ] CuspForm Γ' k where
+  toFun := ofLe h
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+@[simp]
+lemma ofLeₗ_apply [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) (f : CuspForm Γ k) :
+    ofLeₗ h f = ofLe h f := rfl
+
+lemma ofLeₗ_injective [Γ.HasDetOne] [Γ'.HasDetOne] (h : Γ' ≤ Γ) :
+    Function.Injective (ofLeₗ h : CuspForm Γ k → _) :=
+  ofLe_injective h
+
+/-- A cusp form for an arithmetic group `Γ'` which is slash invariant under an arithmetic group
+`Γ` is a cusp form for `Γ`; see `ModularForm.ofSlashInvariant` for why arithmeticity is
+needed. -/
+@[expose]
+def ofSlashInvariant [Γ.IsArithmetic] [Γ'.IsArithmetic] (f : CuspForm Γ' k)
+    (hf : ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f) : CuspForm Γ k where
+  toFun := f
+  slash_action_eq' := hf
+  holo' := f.holo'
+  zero_at_cusps' hc := f.zero_at_cusps'
+    ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z Γ').mpr
+      ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z Γ).mp hc))
+
+@[simp]
+lemma coe_ofSlashInvariant [Γ.IsArithmetic] [Γ'.IsArithmetic] (f : CuspForm Γ' k)
+    (hf : ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f) : ⇑(ofSlashInvariant f hf) = ⇑f := rfl
+
+/-- For arithmetic groups `Γ' ≤ Γ`, a cusp form for `Γ'` comes from a cusp form for `Γ`
+exactly when it is `Γ`-slash invariant. -/
+lemma mem_range_ofLeₗ_iff [Γ.HasDetOne] [Γ'.HasDetOne] [Γ.IsArithmetic] [Γ'.IsArithmetic]
+    (h : Γ' ≤ Γ) (f : CuspForm Γ' k) :
+    f ∈ LinearMap.range (ofLeₗ h) ↔ ∀ γ ∈ Γ, ⇑f ∣[k] γ = ⇑f :=
+  ⟨by rintro ⟨g, rfl⟩ γ hγ; exact g.slash_action_eq' γ hγ,
+    fun hf ↦ ⟨ofSlashInvariant f hf, rfl⟩⟩
+
+end CuspForm
+
+end OfLe
