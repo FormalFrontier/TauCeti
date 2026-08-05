@@ -244,21 +244,29 @@ variable [CommSemiring k] [AddCommMonoid V] [Module k V]
 
 section Monoid
 
-variable [Monoid G] {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ} [IsFactorSet α]
+variable [Monoid G] {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
 open TwistedMonoidAlgebra in
 /-- **A projective representation with factor set `α` is a `k_α[G]`-module.** The algebra map is
 the one the universal property of `TauCeti.twistedMonoidAlgebra` produces from the lift; a module
-structure on `V` over an algebra is exactly such an algebra map to `Module.End k V`. -/
+structure on `V` over an algebra is exactly such an algebra map to `Module.End k V`.
+
+Writing the domain down needs the factor-set axioms, since `TauCeti.twistedMonoidAlgebra` takes
+them as an instance argument; they are supplied by `h` itself, so no separate `IsFactorSet α`
+instance need be in scope. -/
 noncomputable def IsProjectiveRep.toAlgHom (h : IsProjectiveRep ρ α) :
+    letI := h.isFactorSet
     twistedMonoidAlgebra k G α →ₐ[k] Module.End k V :=
+  letI := h.isFactorSet
   lift (fun g ↦ (ρ g : V →ₗ[k] V)) (by rw [h.map_one]; rfl) h.toLinearMap_mul
 
 /-- The `k_α[G]`-module structure attached to a projective representation acts on the basis
 element at `g` by the lift at `g`. -/
 @[simp]
 theorem IsProjectiveRep.toAlgHom_of (h : IsProjectiveRep ρ α) (g : G) :
+    letI := h.isFactorSet
     h.toAlgHom (TwistedMonoidAlgebra.of g) = (ρ g : V →ₗ[k] V) :=
+  letI := h.isFactorSet
   TwistedMonoidAlgebra.lift_of ..
 
 end Monoid
@@ -305,10 +313,12 @@ theorem toAlgHom_projectiveRepOfAlgHom :
     rw [IsProjectiveRep.toAlgHom_of]
     exact LinearMap.ext (projectiveRepOfAlgHom_apply φ g)
 
+omit [IsFactorSet α] in
 /-- Reading a projective representation as a `k_α[G]`-module and back returns the lift. -/
 @[simp]
 theorem projectiveRepOfAlgHom_toAlgHom {ρ : G → V ≃ₗ[k] V} (h : IsProjectiveRep ρ α) :
     projectiveRepOfAlgHom h.toAlgHom = ρ :=
+  haveI := h.isFactorSet
   funext fun g ↦ LinearEquiv.ext fun x ↦ by
     rw [projectiveRepOfAlgHom_apply, IsProjectiveRep.toAlgHom_of]
     rfl
