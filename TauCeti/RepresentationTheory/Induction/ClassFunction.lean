@@ -26,8 +26,8 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
 * `TauCeti.indTerm f g x`: the summand attached to a representative `x`, namely `f (x⁻¹ g x)`
   when `x⁻¹ g x` lies in the subgroup and `0` otherwise.  It is the summand of the
   induced-character formula too, which the character file uses at `f = ρ.character`, together
-  with the coset-invariance lemmas `TauCeti.indTerm_mul` and `TauCeti.indTerm_eq_of_mk_eq` and the
-  evaluations `TauCeti.indTerm_conj` and `TauCeti.indTerm_one`.
+  with the coset-invariance lemma `TauCeti.indTerm_eq_of_mk_eq` and the evaluations
+  `TauCeti.indTerm_conj` and `TauCeti.indTerm_one`.
 * `TauCeti.indClassFun S f`: the function `G → k` obtained from `f : S → k` by summing `f` over
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
@@ -53,6 +53,11 @@ The definition sums over `Quotient.out` representatives of `G ⧸ S`, so it lite
 that choice of representatives; being a class function is a sufficient condition for them not to,
 and that is what `TauCeti.indClassFun_mem_classFunction` extracts, in the form of conjugation
 invariance of the total sum.  It is the only regime the results below use.
+
+`TauCeti.indTerm` and the lemmas that evaluate it are shared, not internal to this file:
+`TauCeti.RepresentationTheory.Induction.Character` sums it over right cosets and
+`TauCeti.RepresentationTheory.Induction.FrobeniusReciprocity` sums it over all of `G`.  Only
+`indTerm_mul`, which serves the proof of `TauCeti.indTerm_eq_of_mk_eq` alone, is private.
 
 ## References
 
@@ -179,8 +184,10 @@ section ClassFun
 variable {f : S → k}
 
 /-- Replacing a representative `x` by `x * s` for `s` in the subgroup does not change the
-summand, because `f` is constant on conjugacy classes of the subgroup. -/
-theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
+summand, because `f` is constant on conjugacy classes of the subgroup.
+
+It is private: `TauCeti.indTerm_eq_of_mk_eq` is the form every consumer uses. -/
+private theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
     indTerm f g (x * s) = indTerm f g x := by
   classical
   by_cases hx : x⁻¹ * g * x ∈ S
@@ -245,7 +252,7 @@ theorem natCard_mul_indClassFun [Fintype G] {f : S → k} (hf : f ∈ ClassFunct
         Finset.sum_congr rfl fun q _ => Finset.sum_congr rfl fun s _ => (hterm q s).symm
     _ = ∑ x : G, indTerm f g x := by
         rw [← e.symm.sum_comp (fun x => indTerm f g x), Fintype.sum_prod_type]
-    -- the remaining step only unfolds the private summand
+    -- the remaining step only unfolds the summand
     _ = _ := rfl
 
 /-! ### The induced class function as a linear map -/
