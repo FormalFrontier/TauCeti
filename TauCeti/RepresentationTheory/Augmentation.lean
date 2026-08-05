@@ -29,14 +29,16 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 
 ## Main results
 
-* `TauCeti.sumCoords_basis_ofMulAction`: the augmentation is invariant, which is what makes both
-  subrepresentations subrepresentations.
+* `TauCeti.sumCoords_basis_ofMulAction`: the augmentation is invariant, which is what makes the
+  augmentation subrepresentation a subrepresentation.
+* `TauCeti.ofMulAction_permutationSum`: the sum of the standard basis is fixed, which is what makes
+  the invariant line one.
 * `TauCeti.toRepresentation_invariantLine`: the invariant line carries the trivial representation,
   and `TauCeti.finrank_invariantLine` says it is a line.
 * `TauCeti.ker_sumCoords_basis_eq_span`: the augmentation subrepresentation is spanned by the
   differences of the standard basis vectors from a fixed one.
-* `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`: when `|X|` is invertible in `k`
-  the two subrepresentations are complementary.
+* `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`: when `|X|` is invertible in `k`,
+  or `X` is empty, the two subrepresentations are complementary.
 * `TauCeti.finrank_augmentationSubrepresentation`: the augmentation subrepresentation has
   dimension `|X| - 1`.
 
@@ -54,7 +56,8 @@ Invertibility of `|X|` in `k`, rather than an ordered field or an averaging oper
 splitting needs, and for a nonempty `X` over a nontrivial `k` it is the sharp hypothesis: if
 `|X| = 0` in `k` then `permutationSum` is a nonzero element of the augmentation subrepresentation,
 so the invariant line meets it and the two are not complementary.  For an empty `X`, or a trivial
-`k`, every module in sight is zero and the two are complementary whatever `|X|` is in `k`.
+`k`, every module in sight is zero and the two are complementary whatever `|X|` is in `k`; the
+empty case is the first disjunct of `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`.
 
 ## References
 
@@ -230,6 +233,15 @@ theorem toRepresentation_invariantLine :
     LinearMap.coe_restrict_apply, Representation.trivial_apply]
   rw [← hc, map_smul, ofMulAction_permutationSum]
 
+variable {k G X}
+
+/-- The elements of the invariant line are exactly the multiples of the sum of the standard
+basis. -/
+@[simp]
+theorem mem_invariantLine_iff {v : MonoidAlgebra k X} :
+    v ∈ invariantLine k G X ↔ ∃ c : k, c • permutationSum k X = v :=
+  Submodule.mem_span_singleton
+
 end InvariantLine
 
 /-! ### The splitting -/
@@ -277,9 +289,19 @@ variable {k G X}
 
 /-- **The permutation representation splits.**  When the cardinality of `X` is invertible in `k`,
 the invariant line and the augmentation subrepresentation are complementary, so `k[X]` is the
-direct sum of a trivial representation and a representation of dimension `|X| - 1`. -/
-theorem isCompl_invariantLine_augmentationSubrepresentation (h : (Fintype.card X : k) ≠ 0) :
+direct sum of a trivial representation and a representation of dimension `|X| - 1`.  For an empty
+`X` the two are complementary as well, for the degenerate reason that `k[X]` is then the zero
+module. -/
+theorem isCompl_invariantLine_augmentationSubrepresentation
+    (h : IsEmpty X ∨ (Fintype.card X : k) ≠ 0) :
     IsCompl (invariantLine k G X) (augmentationSubrepresentation k G X) := by
+  rcases h with hX | h
+  · -- `k[X]` is the zero module, so it has only one subrepresentation
+    have : Subsingleton (MonoidAlgebra k X) :=
+      ⟨fun v w => MonoidAlgebra.coeff_inj.mp (Finsupp.ext fun x => hX.elim x)⟩
+    have : Subsingleton (Subrepresentation (Representation.ofMulAction k G X)) :=
+      Subrepresentation.toSubmodule_injective.subsingleton
+    exact ⟨disjoint_iff.mpr (Subsingleton.elim _ _), codisjoint_iff.mpr (Subsingleton.elim _ _)⟩
   have hsub : IsCompl (Submodule.span k {permutationSum k X})
       (LinearMap.ker (MonoidAlgebra.basis X k).sumCoords) := by
     constructor

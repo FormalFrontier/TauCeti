@@ -15,18 +15,18 @@ that permutation representation sit the invariant line spanned by the sum of the
 trivial representation, and the **standard representation**, the subrepresentation of dimension
 `|α| - 1` on which the coefficients sum to zero; when `|α|` is invertible in `k` the two are
 complementary and the permutation representation splits as their direct sum.  This file proves that
-the standard representation is irreducible whenever `|α| ≥ 2` and `|α|` is invertible in `k`.
+the standard representation is irreducible whenever `|α| ≥ 2` and either `|α| = 2` or `|α|` is
+invertible in `k`.
 
 The hypothesis `2 ≤ |α|` is needed: for `|α| ≤ 1` the standard representation is zero, and the zero
-representation is not irreducible.  The hypothesis `|α| ≠ 0` in `k` is a sufficient hypothesis
-uniform in `|α|` rather than a necessary one.  It cannot simply be dropped: as soon as `3 ≤ |α|`
-and `|α| = 0` in `k`, the sum of the standard basis itself has vanishing coefficient sum, so the
-invariant line lies *inside* the standard subrepresentation, and it is a proper subrepresentation
-because the standard one has dimension `|α| - 1 ≥ 2`, so the latter is reducible -- this is the
-first place the modular theory departs from the ordinary one, and it is excluded here rather than
-developed.  The remaining case is an exception: for `|α| = 2` in characteristic `2` the standard
-subrepresentation *is* the invariant line, a line and hence irreducible, so there the conclusion
-holds without `|α| ≠ 0` in `k`.
+representation is not irreducible.  Given `2 ≤ |α|`, the disjunction is sharp.  Invertibility of
+`|α|` cannot simply be dropped: as soon as `3 ≤ |α|` and `|α| = 0` in `k`, the sum of the standard
+basis itself has vanishing coefficient sum, so the invariant line lies *inside* the standard
+subrepresentation, and it is a proper subrepresentation because the standard one has dimension
+`|α| - 1 ≥ 2`, so the latter is reducible -- this is the first place the modular theory departs
+from the ordinary one, and it is excluded here rather than developed.  The remaining case is the
+first disjunct: for `|α| = 2` the standard subrepresentation is a line -- in characteristic `2` it
+*is* the invariant line -- and hence irreducible whatever the characteristic.
 
 The argument is elementary and uses only transpositions.  If `v` has vanishing coefficient sum and
 is nonzero, two of its coefficients differ, say at `x` and `y`; subtracting the transposition
@@ -49,7 +49,7 @@ produces all the others, and those differences span.
 
 The two remaining halves of the picture hold for an arbitrary permutation representation and are
 proved there, in `TauCeti.RepresentationTheory.Augmentation`: that `k[α]` is the direct sum of the
-invariant line and the standard subrepresentation, again under `|α| ≠ 0` in `k`, is
+invariant line and the standard subrepresentation, again under `|α| ≠ 0` in `k` (or `α` empty), is
 `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, and that the standard
 subrepresentation has dimension `|α| - 1` is `TauCeti.finrank_augmentationSubrepresentation`.
 
@@ -211,11 +211,19 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
       exact Submodule.span_le.mpr (by rintro _ ⟨z, rfl⟩; exact hall z) hw'
     exact absurd (le_antisymm hτ.le hle) hτ.ne
 
-/-- **The standard representation is irreducible.** -/
+/-- **The standard representation is irreducible.**  Given `2 ≤ |α|`, the hypothesis is sharp: for
+`|α| = 2` the standard representation is a line, hence irreducible whatever the characteristic,
+and for `3 ≤ |α|` with `|α| = 0` in `k` the invariant line is a proper nonzero subrepresentation
+of it. -/
 theorem isIrreducible_standardRepresentation (h2 : 2 ≤ Fintype.card α)
-    (hchar : (Fintype.card α : k) ≠ 0) : (standardRepresentation k α).IsIrreducible :=
-  Representation.isIrreducible_toRepresentation_of_isAtom
-    (isAtom_augmentationSubrepresentation h2 hchar)
+    (hchar : Fintype.card α = 2 ∨ (Fintype.card α : k) ≠ 0) :
+    (standardRepresentation k α).IsIrreducible := by
+  rcases hchar with hcard | hchar
+  · -- a two-element `α` leaves a line, which is irreducible in every characteristic
+    exact Representation.isIrreducible_of_finrank_eq_one _
+      (by rw [finrank_augmentationSubrepresentation, hcard])
+  · exact Representation.isIrreducible_toRepresentation_of_isAtom
+      (isAtom_augmentationSubrepresentation h2 hchar)
 
 end Standard
 
