@@ -365,17 +365,19 @@ then `f` has at most one cluster value at `w` along `U`.
 
 This is `TauCeti.subsingleton_clusterSetOn_of_forall_exists` read through `Metric.diam`, which is
 the shape a *geometric* estimate arrives in: what such an estimate bounds is the width of the
-image of the approach region, not the distance between two named values in it. Boundedness of the
-whole image is needed only because `Metric.diam` vanishes on an unbounded set, so a diameter bound
-would otherwise be no bound at all. -/
-theorem subsingleton_clusterSetOn_of_forall_exists_diam_le (hb : Bornology.IsBounded (f '' U))
-    (h : ∀ ε > 0, ∃ δ > 0, Metric.diam (f '' (U ∩ Metric.ball w δ)) ≤ ε) :
+image of the approach region, not the distance between two named values in it. Each region is asked
+to have bounded image only because `Metric.diam` vanishes on an unbounded set, so a diameter bound
+would otherwise be no bound at all; nothing is asked of the image of `U` away from the regions the
+estimate selects, and a consumer with a globally bounded image supplies the boundedness by
+restriction. -/
+theorem subsingleton_clusterSetOn_of_forall_exists_diam_le
+    (h : ∀ ε > 0, ∃ δ > 0, Bornology.IsBounded (f '' (U ∩ Metric.ball w δ)) ∧
+      Metric.diam (f '' (U ∩ Metric.ball w δ)) ≤ ε) :
     (clusterSetOn f U w).Subsingleton := by
   refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
-  obtain ⟨δ, hδ, hdiam⟩ := h ε hε
-  refine ⟨δ, hδ, fun x hx y hy => le_trans ?_ hdiam⟩
-  exact Metric.dist_le_diam_of_mem (hb.subset (Set.image_mono Set.inter_subset_left))
-    (Set.mem_image_of_mem f hx) (Set.mem_image_of_mem f hy)
+  obtain ⟨δ, hδ, hb, hdiam⟩ := h ε hε
+  exact ⟨δ, hδ, fun x hx y hy => (Metric.dist_le_diam_of_mem hb
+    (Set.mem_image_of_mem f hx) (Set.mem_image_of_mem f hy)).trans hdiam⟩
 
 end MetricSpace
 

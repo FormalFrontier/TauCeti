@@ -37,10 +37,10 @@ Nothing in that statement distinguishes the two sides of the crosscut, nor uses 
 analysis, so it is proved once and elsewhere:
 `TauCeti.frontier_image_subset_image_union_frontier_image` in `TauCeti/Topology/Frontier.lean`
 splits an arbitrary set into two pieces `s`, `t` with disjoint open images and a remainder `u`,
-over arbitrary topological spaces. All that is spent here is the
-open mapping theorem, which turns the two open sides of the crosscut into open images. Simple
-connectivity plays no role, and neither does the geometry of `Ω` — nor even openness of `U`, which
-enters only when the splitting is produced.
+over arbitrary topological spaces. All that is spent here is the open mapping theorem, which turns
+the two open sides of the crosscut into open images, and `Disjoint.image`, which makes those images
+disjoint from injectivity. Simple connectivity plays no role, and neither does the geometry of
+`Ω` — nor even openness of `U`, which enters only when the splitting is produced.
 
 Instantiating it at the near side and at the far side `U \ closedBall ζ ρ`, which by
 `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` are disjoint and open and leave exactly
@@ -114,9 +114,6 @@ circular cut as a crosscut.
   `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` — the resulting
   boundary limit and continuous extension to the closure.
 
-The disc signatures these replace are kept as deprecated compatibility wrappers in a final section,
-each naming its generalized replacement.
-
 ## Coordination with upstream Mathlib
 
 Layer L5 is absent from
@@ -148,7 +145,8 @@ variable {f : ℂ → ℂ} {U : Set ℂ} {ζ : ℂ} {ρ : ℝ}
 /-- The open mapping theorem on an open piece of a domain of injective holomorphy. This is the only
 place the analytic hypotheses enter the splitting step
 `TauCeti.frontier_image_subset_image_union_frontier_image`, which asks nothing of `f` beyond
-openness of the images of the two sides and injectivity across them. -/
+openness and disjointness of the images of the two sides — and disjointness `Disjoint.image` reads
+off injectivity alone. -/
 private theorem isOpen_image_of_subset (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
     {s : Set ℂ} (hsU : s ⊆ U) (hs : IsOpen s) : IsOpen (f '' s) :=
   isOpen_image_of_differentiableOn_of_injOn hs (hd.mono hsU) (hinj.mono hsU)
@@ -166,11 +164,11 @@ theorem frontier_image_inter_ball_subset (hUo : IsOpen U) (hd : DifferentiableOn
     frontier (f '' (U ∩ ball ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
   have hcov : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
     rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
-  have hsub : U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ⊆ U := union_subset inter_subset_left sdiff_subset
   exact frontier_image_subset_image_union_frontier_image
     (isOpen_image_of_subset hd hinj inter_subset_left (hUo.inter isOpen_ball))
     (isOpen_image_of_subset hd hinj sdiff_subset (hUo.sdiff isClosed_closedBall))
-    (hinj.mono hsub) inter_subset_left disjoint_inter_ball_sdiff_closedBall hcov.subset
+    (disjoint_inter_ball_sdiff_closedBall.image hinj inter_subset_left sdiff_subset)
+    inter_subset_left hcov.subset
 
 /-- **The boundary of the image of the far side of a crosscut lies on the image crosscut and on the
 boundary of the image domain.** The mirror of `TauCeti.frontier_image_inter_ball_subset`: it is
@@ -182,11 +180,11 @@ theorem frontier_image_sdiff_closedBall_subset (hUo : IsOpen U) (hd : Differenti
   have hcov : U = U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ∪ U ∩ sphere ζ ρ := by
     rw [union_comm (U \ closedBall ζ ρ), ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall,
       sdiff_union_inter]
-  have hsub : U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ⊆ U := union_subset sdiff_subset inter_subset_left
   exact frontier_image_subset_image_union_frontier_image
     (isOpen_image_of_subset hd hinj sdiff_subset (hUo.sdiff isClosed_closedBall))
     (isOpen_image_of_subset hd hinj inter_subset_left (hUo.inter isOpen_ball))
-    (hinj.mono hsub) sdiff_subset disjoint_inter_ball_sdiff_closedBall.symm hcov.subset
+    (disjoint_inter_ball_sdiff_closedBall.symm.image hinj sdiff_subset inter_subset_left)
+    sdiff_subset hcov.subset
 
 /-! ## The diameter of the cut-off piece -/
 
@@ -248,9 +246,10 @@ theorem subsingleton_clusterSetOn_of_forall_exists_diam_union_le (hUo : IsOpen U
       frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E ∧
       diam (f '' (U ∩ sphere ζ ρ) ∪ E) ≤ ε) :
     (clusterSetOn f U ζ).Subsingleton := by
-  refine subsingleton_clusterSetOn_of_forall_exists_diam_le hb fun ε hε => ?_
+  refine subsingleton_clusterSetOn_of_forall_exists_diam_le fun ε hε => ?_
   obtain ⟨ρ, hρ, E, hEb, hEsub, hEdiam⟩ := h ε hε
-  exact ⟨ρ, hρ, (diam_image_inter_ball_le hUo hd hinj hb hEb hEsub).trans hEdiam⟩
+  exact ⟨ρ, hρ, hb.subset (image_mono inter_subset_left),
+    (diam_image_inter_ball_le hUo hd hinj hb hEb hEsub).trans hEdiam⟩
 
 /-- **The crosscut criterion in geometric form, boundary-limit version.** A conformal map of a
 domain with bounded image has a limit at a point `ζ` of its closure, along the domain, as soon as
@@ -289,112 +288,5 @@ theorem exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le (hUo : I
     ∃ F : ℂ → ℂ, ContinuousOn F (closure U) ∧ EqOn F f U :=
   exists_continuousOn_closure_eqOn_of_isBounded hUo hd.continuousOn hb fun w hw =>
     subsingleton_clusterSetOn_of_forall_exists_diam_union_le hUo hd hinj hb (h w hw)
-
-/-! ## Deprecated disc-specific forms
-
-Everything above was stated for `U = ball c r`. The old signatures are retained here as deprecated
-compatibility wrappers, each naming its generalized replacement; the openness hypothesis is
-discharged by `Metric.isOpen_ball`, and `Metric.frontier_ball` and `Metric.closure_ball` turn
-`frontier U` and `closure U` back into `sphere c r` and `closedBall c r`. -/
-
-variable {c : ℂ} {r : ℝ}
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_image_subset_image_union_frontier_image`, which asks openness of the two images
-rather than of the two sides, injectivity on `s ∪ t` only, no holomorphy, and does not need
-`t ⊆ U`. -/
-@[deprecated frontier_image_subset_image_union_frontier_image (since := "2026-08-04")]
-theorem frontier_image_subset_image_union_frontier_image_ball
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) {s t u : Set ℂ}
-    (hs : IsOpen s) (ht : IsOpen t) (hsr : s ⊆ ball c r) (htr : t ⊆ ball c r)
-    (hst : Disjoint s t) (hcov : ball c r ⊆ s ∪ t ∪ u) :
-    frontier (f '' s) ⊆ f '' u ∪ frontier (f '' ball c r) :=
-  frontier_image_subset_image_union_frontier_image (isOpen_image_of_subset hd hinj hsr hs)
-    (isOpen_image_of_subset hd hinj htr ht) (hinj.mono (union_subset hsr htr)) hsr hst hcov
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_image_inter_ball_subset`. -/
-@[deprecated frontier_image_inter_ball_subset (since := "2026-08-04")]
-theorem frontier_image_ball_inter_ball_subset (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) :
-    frontier (f '' (ball c r ∩ ball ζ ρ))
-      ⊆ f '' (ball c r ∩ sphere ζ ρ) ∪ frontier (f '' ball c r) :=
-  frontier_image_inter_ball_subset isOpen_ball hd hinj
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_image_sdiff_closedBall_subset`. -/
-@[deprecated frontier_image_sdiff_closedBall_subset (since := "2026-08-04")]
-theorem frontier_image_ball_diff_closedBall_subset (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) :
-    frontier (f '' (ball c r \ closedBall ζ ρ))
-      ⊆ f '' (ball c r ∩ sphere ζ ρ) ∪ frontier (f '' ball c r) :=
-  frontier_image_sdiff_closedBall_subset isOpen_ball hd hinj
-
-/-- Deprecated compatibility wrapper for the disc case of `TauCeti.diam_image_inter_ball_le`. -/
-@[deprecated diam_image_inter_ball_le (since := "2026-08-04")]
-theorem diam_image_ball_inter_ball_le (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {E : Set ℂ} (hE : IsBounded E)
-    (hEsub : frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E) :
-    diam (f '' (ball c r ∩ ball ζ ρ)) ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) :=
-  diam_image_inter_ball_le isOpen_ball hd hinj hb hE hEsub
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.diam_image_sdiff_closedBall_le`. -/
-@[deprecated diam_image_sdiff_closedBall_le (since := "2026-08-04")]
-theorem diam_image_ball_diff_closedBall_le (hd : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r)) {E : Set ℂ} (hE : IsBounded E)
-    (hEsub : frontier (f '' ball c r) ∩ frontier (f '' (ball c r \ closedBall ζ ρ)) ⊆ E) :
-    diam (f '' (ball c r \ closedBall ζ ρ)) ≤ diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) :=
-  diam_image_sdiff_closedBall_le isOpen_ball hd hinj hb hE hEsub
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le`. -/
-@[deprecated subsingleton_clusterSetOn_of_forall_exists_diam_le (since := "2026-08-04")]
-theorem subsingleton_clusterSetOn_ball_of_forall_exists_diam_le (hb : IsBounded (f '' ball c r))
-    (h : ∀ ε > 0, ∃ ρ > 0, diam (f '' (ball c r ∩ ball ζ ρ)) ≤ ε) :
-    (clusterSetOn f (ball c r) ζ).Subsingleton :=
-  subsingleton_clusterSetOn_of_forall_exists_diam_le hb h
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_union_le`. -/
-@[deprecated subsingleton_clusterSetOn_of_forall_exists_diam_union_le (since := "2026-08-04")]
-theorem subsingleton_clusterSetOn_ball_of_forall_exists_diam_union_le
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r))
-    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
-      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E ∧
-      diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) ≤ ε) :
-    (clusterSetOn f (ball c r) ζ).Subsingleton :=
-  subsingleton_clusterSetOn_of_forall_exists_diam_union_le isOpen_ball hd hinj hb h
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le`, whose hypothesis
-`ζ ∈ closure U` the disc discharges from `dist ζ c = r` through `Metric.closure_ball`. -/
-@[deprecated exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le (since := "2026-08-04")]
-theorem exists_tendsto_nhdsWithin_ball_of_forall_exists_diam_union_le (hr : 0 < r)
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r)) (hζ : dist ζ c = r)
-    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
-      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ⊆ E ∧
-      diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) ≤ ε) :
-    ∃ v, Tendsto f (𝓝[ball c r] ζ) (𝓝 v) :=
-  exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le isOpen_ball hd hinj hb
-    (closure_ball c hr.ne' ▸ mem_closedBall.mpr hζ.le) h
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`, whose `frontier U` and
-`closure U` the disc turns into `sphere c r` and `closedBall c r`. -/
-@[deprecated exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le
-  (since := "2026-08-04")]
-theorem exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le (hr : 0 < r)
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r))
-    (h : ∀ w ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
-      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball w ρ)) ⊆ E ∧
-      diam (f '' (ball c r ∩ sphere w ρ) ∪ E) ≤ ε) :
-    ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
-  obtain ⟨F, hFc, hFe⟩ := exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le
-    isOpen_ball hd hinj hb (frontier_ball c hr.ne' ▸ h)
-  exact ⟨F, closure_ball c hr.ne' ▸ hFc, hFe⟩
 
 end TauCeti

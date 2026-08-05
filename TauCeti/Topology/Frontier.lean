@@ -42,12 +42,12 @@ The proof is a three-way case split. A point `p` of `frontier (f '' s)` lies in 
 so if it is not on `frontier (f '' U)` it is a value `f w` with `w` in one of the three covering
 sets. It cannot come from `s`, since `f '' s` is open and therefore disjoint from its own frontier;
 and it cannot come from `t`, since `f '' t` is then an open neighbourhood of `p`, which must meet
-`f '' s`, forcing a point of `s` and a point of `t` to share a value. So `w ∈ u`.
+`f '' s`, contradicting disjointness of the two images. So `w ∈ u`.
 
-Only the two named sides matter: `f` is asked to be injective on `s ∪ t` alone, and `t` need not
-even lie in `U`. Openness is asked of the *images* `f '' s` and `f '' t`, which is what the argument
-uses; a consumer with an open map on open sides supplies it, as the conformal one below does
-through the open mapping theorem.
+Only the two named sides matter, and only through their images: they are asked to be open and
+disjoint, which is all the argument uses, and `t` need not even lie in `U`. A consumer whose map is
+open and injective on two disjoint open sides supplies both, as the conformal one below does
+through the open mapping theorem and `Disjoint.image`.
 
 ## Consumers
 
@@ -114,15 +114,16 @@ The two sides enter symmetrically, so the lemma bounds either of them by swappin
 A frontier point of `f '' s` lies in `closure (f '' U)`, so if it is not a frontier point of
 `f '' U` it is a value `f w` with `w` in one of the three covering sets: `w ∈ s` would place it
 inside the open set `f '' s`, which is disjoint from its own frontier, and `w ∈ t` inside the open
-set `f '' t`, which meets `f '' s` because the point is in its closure, contradicting injectivity
-across the two disjoint sides. So `w ∈ u`.
+set `f '' t`, which meets `f '' s` because the point is in its closure, contradicting disjointness
+of the two images. So `w ∈ u`.
 
-Nothing is assumed of `U` beyond `s ⊆ U`; in particular `t` need not lie in `U`, and neither side
-need be open — only their images, which is what the argument uses and what an open map on open
-sides supplies. The source carries no topology at all: every hypothesis and the conclusion live in
-the target. -/
+Nothing is assumed of `U` beyond `s ⊆ U`; in particular `t` need not lie in `U`, and the two sides
+need be neither open nor disjoint nor separated by injectivity — only their images need be open and
+disjoint, which is what the argument uses and what an injective open map on two disjoint open sides
+supplies. The source carries no topology at all: every hypothesis and the conclusion live in the
+target. -/
 theorem frontier_image_subset_image_union_frontier_image (hfs : IsOpen (f '' s))
-    (hft : IsOpen (f '' t)) (hinj : InjOn f (s ∪ t)) (hsU : s ⊆ U) (hst : Disjoint s t)
+    (hft : IsOpen (f '' t)) (hst : Disjoint (f '' s) (f '' t)) (hsU : s ⊆ U)
     (hcov : U ⊆ s ∪ t ∪ u) :
     frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U) := by
   intro p hp
@@ -133,10 +134,8 @@ theorem frontier_image_subset_image_union_frontier_image (hfs : IsOpen (f '' s))
     rcases hcov hw with (hws | hwt) | hwu
     · exact absurd ⟨mem_image_of_mem f hws, hp⟩
         (eq_empty_iff_forall_notMem.mp hfs.inter_frontier_eq (f w))
-    · obtain ⟨q, ⟨v, hv, hfv⟩, ⟨x, hx, hfx⟩⟩ :=
-        mem_closure_iff.mp hp.1 _ hft (mem_image_of_mem f hwt)
-      exact absurd (hinj (subset_union_right hv) (subset_union_left hx)
-        (hfv.trans hfx.symm) ▸ hv) (Set.disjoint_left.mp hst hx)
+    · obtain ⟨q, hqt, hqs⟩ := mem_closure_iff.mp hp.1 _ hft (mem_image_of_mem f hwt)
+      exact absurd hqs (disjoint_right.mp hst hqt)
     · exact Or.inl (mem_image_of_mem f hwu)
   · exact Or.inr hpfr
 

@@ -28,8 +28,7 @@ frontier — a small connected boundary set enclosing that middle piece.
 Nothing below assumes that `U ∩ sphere ζ ρ` *is* a crosscut. For an arbitrary `U` it may be empty,
 disconnected, or the whole circle, and it need not separate `U`; the statements are about that
 intersection as it stands, and the words *crosscut*, *arc* and *endpoint* are used only where a
-hypothesis puts them there — for a disc, in `TauCeti.isConnected_clusterSetOn_ball_inter_sphere`
-and in the deprecated disc forms of the final section.
+hypothesis puts them there — for a disc, in `TauCeti.isConnected_clusterSetOn_ball_inter_sphere`.
 
 ## The decomposition
 
@@ -140,9 +139,6 @@ pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 * `TauCeti.exists_isConnected_subset_frontier_image_of_diam_lt` — a uniformly locally connected
   image boundary encloses the middle piece of every small cut in a small connected boundary set, at
   a rate independent of the centre and radius of the cutting circle.
-
-The disc signatures these replace are kept as deprecated compatibility wrappers in a final section,
-each naming its generalized replacement.
 
 ## Coordination with upstream Mathlib
 
@@ -352,135 +348,5 @@ theorem exists_isConnected_subset_frontier_image_of_diam_lt (hUo : IsOpen U)
   exact hencl _ inter_subset_left (hcut.closure.subset inter_subset_right)
     (nonempty_frontier_inter_closure_image_inter_sphere hUo hd hinj hcut hw)
     (lt_of_le_of_lt (diam_frontier_inter_closure_image_inter_sphere_le hcut) hdiam)
-
-/-! ## Deprecated disc-specific forms
-
-The statements above used to be made only for `U = ball c r`. Their old signatures are retained here
-as deprecated compatibility wrappers, each naming its generalized replacement; the openness
-hypothesis is discharged by `Metric.isOpen_ball`, `Metric.frontier_ball` turns `frontier U` back
-into `sphere c r`, and `TauCeti.closure_ball_inter_sphere` turns the closure of the crosscut back
-into `closedBall c r ∩ sphere ζ ρ`.
-
-Hypotheses that the generalization no longer needs are kept, in their old positions, so that every
-former application still elaborates; they are named `_hζ` because the unused-variable linter rejects
-a referenced-nowhere binder name, and a positional or `_`-prefixed named argument reaches them
-either way. -/
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.image_eq_union_image_inter_sphere`. -/
-@[deprecated image_eq_union_image_inter_sphere (since := "2026-08-04")]
-theorem image_ball_eq_union_image_crosscut (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
-    f '' ball c r =
-      f '' (ball c r ∩ ball ζ ρ) ∪ f '' (ball c r ∩ sphere ζ ρ) ∪
-        f '' (ball c r \ closedBall ζ ρ) :=
-  image_eq_union_image_inter_sphere f (ball c r) ζ ρ
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_image_subset_union_closure_image_inter_sphere`. -/
-@[deprecated frontier_image_subset_union_closure_image_inter_sphere (since := "2026-08-04")]
-theorem frontier_image_ball_subset_union (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
-    frontier (f '' ball c r) ⊆
-      frontier (f '' (ball c r ∩ ball ζ ρ)) ∪ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪
-        frontier (f '' (ball c r \ closedBall ζ ρ)) :=
-  frontier_image_subset_union_closure_image_inter_sphere f (ball c r) ζ ρ
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_image_eq_union_closure_image_inter_sphere`. -/
-@[deprecated frontier_image_eq_union_closure_image_inter_sphere (since := "2026-08-04")]
-theorem frontier_image_ball_eq_union (f : ℂ → ℂ) (c ζ : ℂ) (r ρ : ℝ) :
-    frontier (f '' ball c r) =
-      frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) ∪
-        frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪
-        frontier (f '' ball c r) ∩ frontier (f '' (ball c r \ closedBall ζ ρ)) :=
-  frontier_image_eq_union_closure_image_inter_sphere f (ball c r) ζ ρ
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn`, which needs neither
-`dist ζ c = r` nor `ρ < 2 * r`. -/
-@[deprecated closure_image_inter_sphere_eq_union_biUnion_clusterSetOn (since := "2026-08-04")]
-theorem closure_image_ball_inter_sphere_eq_union_biUnion_clusterSetOn
-    (hfc : ContinuousOn f (ball c r ∩ sphere ζ ρ)) (_hζ : dist ζ c = r) (hρ : 0 < ρ)
-    (hρr : ρ < 2 * r) :
-    closure (f '' (ball c r ∩ sphere ζ ρ)) =
-      f '' (ball c r ∩ sphere ζ ρ) ∪
-        ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e := by
-  have hr : 0 < r := by linarith
-  rw [← frontier_ball c hr.ne']
-  exact closure_image_inter_sphere_eq_union_biUnion_clusterSetOn hfc
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image`, which asks only that the
-end lie on `frontier U`. -/
-@[deprecated clusterSetOn_inter_sphere_subset_frontier_inter_closure_image (since := "2026-08-04")]
-theorem clusterSetOn_ball_inter_sphere_subset_frontier_inter_closure_image
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) (hr : 0 < r)
-    (he : e ∈ sphere c r ∩ sphere ζ ρ) :
-    clusterSetOn f (ball c r ∩ sphere ζ ρ) e ⊆
-      frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) :=
-  clusterSetOn_inter_sphere_subset_frontier_inter_closure_image isOpen_ball hd hinj
-    (by rw [frontier_ball c hr.ne']; exact he.1)
-
-/-- Deprecated compatibility wrapper for the disc case of `TauCeti.clusterSetOn_nonempty`, which
-asks only that the end be adherent to the crosscut. -/
-@[deprecated clusterSetOn_nonempty (since := "2026-08-04")]
-theorem nonempty_clusterSetOn_ball_inter_sphere (hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)))
-    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) (he : e ∈ sphere c r ∩ sphere ζ ρ) :
-    (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Nonempty := by
-  refine clusterSetOn_nonempty hb.isCompact_closure
-    (fun _ hz => subset_closure (mem_image_of_mem f hz)) ?_
-  rw [closure_ball_inter_sphere hζ hρ hρr]
-  exact ⟨sphere_subset_closedBall he.1, he.2⟩
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.frontier_inter_closure_image_inter_sphere_eq_biUnion_clusterSetOn`, which needs neither
-`dist ζ c = r` nor `ρ < 2 * r`. -/
-@[deprecated frontier_inter_closure_image_inter_sphere_eq_biUnion_clusterSetOn
-  (since := "2026-08-04")]
-theorem frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) (_hζ : dist ζ c = r)
-    (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) =
-      ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e := by
-  have hr : 0 < r := by linarith
-  rw [← frontier_ball c hr.ne']
-  exact frontier_inter_closure_image_inter_sphere_eq_biUnion_clusterSetOn isOpen_ball hd hinj
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`. -/
-@[deprecated diam_frontier_inter_closure_image_inter_sphere_le (since := "2026-08-04")]
-theorem diam_frontier_inter_closure_image_ball_inter_sphere_le (hb : IsBounded (f '' ball c r))
-    (ζ : ℂ) (ρ : ℝ) :
-    diam (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)))
-      ≤ diam (f '' (ball c r ∩ sphere ζ ρ)) :=
-  diam_frontier_inter_closure_image_inter_sphere_le (hb.subset (image_mono inter_subset_left))
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.nonempty_frontier_inter_closure_image_inter_sphere`, whose end the disc supplies through
-`TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere`. -/
-@[deprecated nonempty_frontier_inter_closure_image_inter_sphere (since := "2026-08-04")]
-theorem nonempty_frontier_inter_closure_image_ball_inter_sphere
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r)) (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))).Nonempty :=
-  let ⟨_, he⟩ := nonempty_frontier_ball_inter_closure_ball_inter_sphere hζ hρ hρr
-  nonempty_frontier_inter_closure_image_inter_sphere isOpen_ball hd hinj
-    (hb.subset (image_mono inter_subset_left)) he
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.exists_isConnected_subset_frontier_image_of_diam_lt`, whose end the disc supplies through
-`TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere`. -/
-@[deprecated exists_isConnected_subset_frontier_image_of_diam_lt (since := "2026-08-04")]
-theorem exists_isConnected_subset_frontier_image_ball_of_diam_lt
-    (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r))
-    (hulc : IsUniformlyLocallyConnected (frontier (f '' ball c r))) {ε : ℝ} (hε : 0 < ε) :
-    ∃ δ > 0, ∀ ζ : ℂ, dist ζ c = r → ∀ ρ : ℝ, 0 < ρ → ρ < 2 * r →
-      diam (f '' (ball c r ∩ sphere ζ ρ)) < δ →
-        ∃ S ⊆ frontier (f '' ball c r), IsConnected S ∧
-          frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ S ∧ diam S ≤ ε := by
-  obtain ⟨δ, hδ, hencl⟩ :=
-    exists_isConnected_subset_frontier_image_of_diam_lt isOpen_ball hd hinj hb hulc hε
-  exact ⟨δ, hδ, fun ζ hζ ρ hρ hρr hdiam =>
-    hencl ζ ρ (nonempty_frontier_ball_inter_closure_ball_inter_sphere hζ hρ hρr) hdiam⟩
 
 end TauCeti
