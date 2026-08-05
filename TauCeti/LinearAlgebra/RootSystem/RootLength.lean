@@ -1,0 +1,423 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.LinearAlgebra.RootSystem.RootPositive
+public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+
+public section
+
+/-!
+# Long and short simple roots of a Dynkin type
+
+A Cartan matrix records more than an unoriented diagram: the ratio of a transposed pair of its
+off-diagonal entries is the ratio of the squared lengths of the two simple roots. This file reads
+that information off the standard Cartan matrices of `TauCeti.DynkinType`, pinning for each type
+which of its nodes carry long simple roots and which carry short ones, and then proves that the
+reading is correct against Mathlib's `RootPairing.RootPositiveForm.rootLength`.
+
+Two pieces of data are attached to a type. `TauCeti.DynkinType.rootLength` gives the relative
+squared length of each simple root, normalised so that a shortest one has length `1`; it is the
+integral symmetriser of the standard Cartan matrix, the reciprocal of the rational symmetriser `d`
+asked for by `TauCeti.IsFiniteType`. `TauCeti.DynkinType.IsLongSimpleRoot` then singles out the
+nodes of maximal length.
+
+## The Bourbaki numbering
+
+Everything here is stated against the node numbering of `TauCeti.DynkinType.cartanMatrix`, which is
+Bourbaki's with node `i` at `Fin` index `i - 1`. Zero-based `Fin` indices against one-based
+Bourbaki labels are the standing trap, so the numbering is pinned explicitly: the `Aₙ` chain runs
+`0, 1, …, n - 1` in order; `Bₙ` and `Cₙ` continue that chain with the double edge between `n - 2`
+and `n - 1`, the short simple root being the last node of `Bₙ` and the long one the last node of
+`Cₙ`; `Dₙ` forks at `n - 3`; `Eₙ` follows Bourbaki with index `1` the branch node; and `F₄` has
+`0, 1` long and `2, 3` short.
+
+`G₂` is the one place where Mathlib's convention differs from Bourbaki's. Mathlib takes
+`CartanMatrix.G₂ = !![2, -3; -1, 2]`, the transpose of Bourbaki's matrix, "for consistency with
+F₄"; that is, its long simple root comes first, at index `0`, exactly as the long simple roots of
+`F₄` do. Since `TauCeti.DynkinType.cartanMatrix` is defined from Mathlib's family, the numbering
+inherited here is Mathlib's, so `G₂` is long-then-short and `TauCeti.DynkinType.IsLongSimpleRoot`
+selects index `0`. This is the orientation that
+`TauCeti.DynkinType.cartanMatrix_mul_rootLength` forces; the opposite convention would make that
+identity false.
+
+## Main definitions
+
+* `TauCeti.DynkinType.rootLength`: the relative squared length of each simple root of a type.
+* `TauCeti.DynkinType.IsLongSimpleRoot`: the nodes carrying a simple root of maximal length.
+
+## Main results
+
+* `TauCeti.DynkinType.cartanMatrix_mul_rootLength`: the standard Cartan matrix of a type is
+  symmetrised by `rootLength`, that is `A i j * ℓ j = A j i * ℓ i`. This is the identity that
+  pins the relative lengths, and it holds for every type, valid or not.
+* `TauCeti.DynkinType.isLongSimpleRoot_iff`: for a valid type, a node is long exactly when its
+  simple root has maximal length. Validity is needed: the degenerate `B 1` has a single node,
+  which is of maximal length while `IsLongSimpleRoot` calls it short, because it is the short node
+  of the `Bₙ` family.
+* `TauCeti.DynkinType.forall_isLongSimpleRoot_iff_isSimplyLaced`: a valid type has all its simple
+  roots long exactly when it is simply laced.
+* `TauCeti.DynkinType.isLongSimpleRoot_C_iff_not_isLongSimpleRoot_B`: `Bₙ` and `Cₙ` carry the same
+  diagram with the lengths exchanged.
+* `TauCeti.rootLength_le_iff_pairingIn_le`: in any root pairing carrying a root-positive form, two
+  roots meeting at a strictly negative pairing compare in length exactly as the transposed pair of
+  pairings compares. This is the statement that makes the Cartan-matrix reading above meaningful.
+* `TauCeti.rootLength_le_iff_dynkinRootLength_le`: for a base matched to a Dynkin type, adjacent
+  simple roots compare in length exactly as `TauCeti.DynkinType.rootLength` says they do.
+
+## References
+
+This file implements the "pin the node numbering" item of Layer 6 of
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, following the target signature
+`DynkinType.IsLongSimpleRoot` in that roadmap's `Suggested.lean`. See Bourbaki, *Lie Groups and Lie
+Algebras, Chapters 4-6*, plates I-IX, for the numbering and the root lengths, and Kac, *Infinite
+Dimensional Lie Algebras*, Chapter 2, for symmetrisable Cartan matrices.
+-/
+
+namespace TauCeti
+
+namespace DynkinType
+
+/-- The relative squared length of the simple roots of a Dynkin type, in the Bourbaki numbering of
+`TauCeti.DynkinType.cartanMatrix`, normalised so that a shortest simple root has length `1`.
+
+"Length" is squared length, as in Mathlib's `RootPairing.RootPositiveForm.rootLength`: it is the
+value of an invariant form on a root with itself. The vector is exactly the symmetriser of the
+standard Cartan matrix (`TauCeti.DynkinType.cartanMatrix_mul_rootLength`), so it is determined up
+to a positive factor by the matrix alone once the diagram is connected; the normalisation fixes
+that factor. -/
+def rootLength : (t : DynkinType) → Fin t.rank → ℤ
+  | .A _, _ | .D _, _ | .E6, _ | .E7, _ | .E8, _ => 1
+  | .B n, i => if (i : ℕ) + 1 = n then 1 else 2
+  | .C n, i => if (i : ℕ) + 1 = n then 2 else 1
+  | .F4, i => if (i : ℕ) < 2 then 2 else 1
+  | .G2, i => if (i : ℕ) = 0 then 3 else 1
+
+-- The parenthesized `(rfl)` proofs keep these out of the implicit `@[defeq]` set, which would
+-- otherwise demand that `rootLength` be `@[expose]`d. They are stated at the level of the whole
+-- length vector rather than of one entry, as `TauCeti.DynkinType.cartanMatrix_A` and its siblings
+-- are: an entrywise statement carries an index of type `Fin (A n).rank`, which does not match the
+-- reduced `Fin n` that a case split on the type leaves behind.
+@[simp] lemma rootLength_A (n : ℕ) : (A n).rootLength = fun _ ↦ 1 := (rfl)
+@[simp] lemma rootLength_D (n : ℕ) : (D n).rootLength = fun _ ↦ 1 := (rfl)
+@[simp] lemma rootLength_E6 : E6.rootLength = fun _ ↦ 1 := (rfl)
+@[simp] lemma rootLength_E7 : E7.rootLength = fun _ ↦ 1 := (rfl)
+@[simp] lemma rootLength_E8 : E8.rootLength = fun _ ↦ 1 := (rfl)
+
+@[simp] lemma rootLength_B (n : ℕ) :
+    (B n).rootLength = fun i : Fin (B n).rank ↦ if (i : ℕ) + 1 = n then (1 : ℤ) else 2 := (rfl)
+
+@[simp] lemma rootLength_C (n : ℕ) :
+    (C n).rootLength = fun i : Fin (C n).rank ↦ if (i : ℕ) + 1 = n then (2 : ℤ) else 1 := (rfl)
+
+@[simp] lemma rootLength_F4 :
+    F4.rootLength = fun i : Fin F4.rank ↦ if (i : ℕ) < 2 then (2 : ℤ) else 1 := (rfl)
+
+@[simp] lemma rootLength_G2 :
+    G2.rootLength = fun i : Fin G2.rank ↦ if (i : ℕ) = 0 then (3 : ℤ) else 1 := (rfl)
+
+/-- Every simple root has positive length. -/
+lemma rootLength_pos (t : DynkinType) (i : Fin t.rank) : 0 < t.rootLength i := by
+  cases t <;> simp only [rootLength_A, rootLength_B, rootLength_C, rootLength_D, rootLength_E6,
+    rootLength_E7, rootLength_E8, rootLength_F4, rootLength_G2] <;> (try split_ifs) <;> norm_num
+
+/-- A simply-laced type has all its simple roots of length `1`. -/
+lemma rootLength_eq_one_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced)
+    (i : Fin t.rank) : t.rootLength i = 1 := by
+  cases t
+  case B n => exact absurd ht (not_isSimplyLaced_B n)
+  case C n => exact absurd ht (not_isSimplyLaced_C n)
+  case F4 => exact absurd ht not_isSimplyLaced_F4
+  case G2 => exact absurd ht not_isSimplyLaced_G2
+  all_goals simp
+
+/-- Type `Bₙ` and type `Cₙ` carry reciprocal length vectors: at each node the two lengths multiply
+to `2`, the ratio between a long and a short root of either type. -/
+lemma rootLength_B_mul_rootLength_C (n : ℕ) (i : Fin n) :
+    (B n).rootLength i * (C n).rootLength i = 2 := by
+  simp only [rootLength_B, rootLength_C]
+  split_ifs <;> norm_num
+
+/-- **The standard Cartan matrix of a Dynkin type is symmetrised by `rootLength`.** Writing
+`A = t.cartanMatrix` and `ℓ = t.rootLength`, the products `A i j * ℓ j` are symmetric in `i` and
+`j`, so `ℓ i / ℓ j = A i j / A j i` whenever the two nodes are joined. This is what fixes the
+relative lengths, and with `TauCeti.DynkinType.rootLength_pos` it exhibits the rational symmetriser
+`d i = (ℓ i)⁻¹` that `TauCeti.IsFiniteType` asks for.
+
+No validity hypothesis is needed: the identity holds for the degenerate low-rank types too. -/
+theorem cartanMatrix_mul_rootLength (t : DynkinType) (i j : Fin t.rank) :
+    t.cartanMatrix i j * t.rootLength j = t.cartanMatrix j i * t.rootLength i := by
+  -- For the simply-laced types both lengths are `1` and the matrix is symmetric. For `Bₙ` the
+  -- only asymmetric pair of entries is the double edge, and the lengths `2` and `1` there
+  -- compensate for it exactly; `Cₙ` is the transpose of `Bₙ`, whose length vector is reciprocal.
+  cases t with
+  | A n => simpa using (CartanMatrix.A_isSymm n).apply j i
+  | D n => simpa using (CartanMatrix.D_isSymm n).apply j i
+  | E6 => simpa using CartanMatrix.E₆_isSymm.apply j i
+  | E7 => simpa using CartanMatrix.E₇_isSymm.apply j i
+  | E8 => simpa using CartanMatrix.E₈_isSymm.apply j i
+  | F4 =>
+      simp only [cartanMatrix_F4, rootLength_F4]
+      fin_cases i <;> fin_cases j <;> decide
+  | G2 =>
+      simp only [cartanMatrix_G2, rootLength_G2]
+      fin_cases i <;> fin_cases j <;> decide
+  | B n =>
+      -- Splitting on `t` leaves dependent indices that elaborate as `Fin t.rank`; expose their
+      -- definitional reduction to `Fin n` before unfolding the non-symmetric matrix.
+      change Fin n at i j
+      have hi : (i : ℕ) < n := i.isLt
+      have hj : (j : ℕ) < n := j.isLt
+      simp only [cartanMatrix_B, rootLength_B]
+      unfold CartanMatrix.B
+      simp only [Matrix.of_apply, Fin.ext_iff]
+      split_ifs <;> omega
+  | C n =>
+      -- As in the `B` branch, make the reduced dependent index explicit.
+      change Fin n at i j
+      have hi : (i : ℕ) < n := i.isLt
+      have hj : (j : ℕ) < n := j.isLt
+      simp only [cartanMatrix_C, rootLength_C]
+      unfold CartanMatrix.C
+      simp only [Matrix.of_apply, Fin.ext_iff]
+      split_ifs <;> omega
+
+/-- A simple root of a Dynkin type is **long** when it is one of maximal length among the simple
+roots, in the Bourbaki numbering of `TauCeti.DynkinType.cartanMatrix`
+(`TauCeti.DynkinType.isLongSimpleRoot_iff`). Simply-laced types have all their simple roots of the
+same length, hence all long; `Bₙ` is short at its last node, `Cₙ` long only at its last node, `F₄`
+long at its first two nodes and `G₂` long at its first, following Mathlib's `CartanMatrix.G₂`,
+which is Bourbaki's transposed. -/
+def IsLongSimpleRoot : (t : DynkinType) → Fin t.rank → Prop
+  | .A _, _ | .D _, _ | .E6, _ | .E7, _ | .E8, _ => True
+  | .B n, i => (i : ℕ) + 1 < n
+  | .C n, i => (i : ℕ) + 1 = n
+  | .F4, i => (i : ℕ) < 2
+  | .G2, i => (i : ℕ) = 0
+
+instance : ∀ t : DynkinType, DecidablePred t.IsLongSimpleRoot
+  | .A _ | .D _ | .E6 | .E7 | .E8 => fun _ ↦ inferInstanceAs (Decidable True)
+  | .B n => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) + 1 < n))
+  | .C n => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) + 1 = n))
+  | .F4 => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) < 2))
+  | .G2 => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) = 0))
+
+@[simp] lemma isLongSimpleRoot_A (n : ℕ) : (A n).IsLongSimpleRoot = fun _ ↦ True := (rfl)
+@[simp] lemma isLongSimpleRoot_D (n : ℕ) : (D n).IsLongSimpleRoot = fun _ ↦ True := (rfl)
+@[simp] lemma isLongSimpleRoot_E6 : E6.IsLongSimpleRoot = fun _ ↦ True := (rfl)
+@[simp] lemma isLongSimpleRoot_E7 : E7.IsLongSimpleRoot = fun _ ↦ True := (rfl)
+@[simp] lemma isLongSimpleRoot_E8 : E8.IsLongSimpleRoot = fun _ ↦ True := (rfl)
+
+@[simp] lemma isLongSimpleRoot_B (n : ℕ) :
+    (B n).IsLongSimpleRoot = fun i : Fin (B n).rank ↦ (i : ℕ) + 1 < n := (rfl)
+
+@[simp] lemma isLongSimpleRoot_C (n : ℕ) :
+    (C n).IsLongSimpleRoot = fun i : Fin (C n).rank ↦ (i : ℕ) + 1 = n := (rfl)
+
+@[simp] lemma isLongSimpleRoot_F4 :
+    F4.IsLongSimpleRoot = fun i : Fin F4.rank ↦ (i : ℕ) < 2 := (rfl)
+
+@[simp] lemma isLongSimpleRoot_G2 :
+    G2.IsLongSimpleRoot = fun i : Fin G2.rank ↦ (i : ℕ) = 0 := (rfl)
+
+/-- **A node of a valid Dynkin type is long exactly when its simple root has maximal length.**
+
+Validity is not decoration. The degenerate type `B 1` has a single node, necessarily of maximal
+length, but `TauCeti.DynkinType.IsLongSimpleRoot` calls it short because it is the short node of
+the `Bₙ` family; that node is the only counterexample among all the types. -/
+theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
+    t.IsLongSimpleRoot i ↔ ∀ j, t.rootLength j ≤ t.rootLength i := by
+  cases t with
+  | A n | D n | E6 | E7 | E8 => simp
+  | F4 => simp only [isLongSimpleRoot_F4, rootLength_F4]; revert i; decide
+  | G2 => simp only [isLongSimpleRoot_G2, rootLength_G2]; revert i; decide
+  | B n =>
+      have hn : 2 ≤ n := valid_B.mp ht
+      change Fin n at i
+      have hi : (i : ℕ) < n := i.isLt
+      simp only [isLongSimpleRoot_B, rootLength_B]
+      refine ⟨fun h j ↦ ?_, fun h ↦ ?_⟩
+      · rw [if_neg (show ¬ (i : ℕ) + 1 = n by omega)]
+        split_ifs <;> norm_num
+      · -- The first node is long, so a node of maximal length cannot be the short last one.
+        by_contra hcon
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+        have h₀ := h j₀
+        rw [if_neg (show ¬ (j₀ : ℕ) + 1 = n by omega),
+          if_pos (show (i : ℕ) + 1 = n by omega)] at h₀
+        norm_num at h₀
+  | C n =>
+      have hn : 3 ≤ n := valid_C.mp ht
+      change Fin n at i
+      have hi : (i : ℕ) < n := i.isLt
+      simp only [isLongSimpleRoot_C, rootLength_C]
+      refine ⟨fun h j ↦ ?_, fun h ↦ ?_⟩
+      · rw [if_pos h]
+        split_ifs <;> norm_num
+      · -- The last node is the only long one, so a node of maximal length is that node.
+        by_contra hcon
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+        have h₀ := h j₀
+        rw [if_pos (show (j₀ : ℕ) + 1 = n by omega), if_neg hcon] at h₀
+        norm_num at h₀
+
+/-- Every simple root of a simply-laced type is long: all its simple roots have the same length. -/
+lemma isLongSimpleRoot_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) (i : Fin t.rank) :
+    t.IsLongSimpleRoot i := by
+  cases t
+  case B n => exact absurd ht (not_isSimplyLaced_B n)
+  case C n => exact absurd ht (not_isSimplyLaced_C n)
+  case F4 => exact absurd ht not_isSimplyLaced_F4
+  case G2 => exact absurd ht not_isSimplyLaced_G2
+  all_goals simp
+
+/-- **A valid Dynkin type has all its simple roots long exactly when it is simply laced.** The
+multiply-laced types `Bₙ`, `Cₙ`, `F₄` and `G₂` each have a short simple root, and validity is what
+rules out the degenerate `B 1`, whose single node is short by name while nothing is longer. -/
+theorem forall_isLongSimpleRoot_iff_isSimplyLaced {t : DynkinType} (ht : t.Valid) :
+    (∀ i, t.IsLongSimpleRoot i) ↔ t.IsSimplyLaced := by
+  refine ⟨fun h ↦ ?_, fun h i ↦ isLongSimpleRoot_of_isSimplyLaced h i⟩
+  cases t with
+  | A n | D n | E6 | E7 | E8 => simp
+  | B n =>
+      have hn : 2 ≤ n := valid_B.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+      have h₀ := h j₀
+      simp only [isLongSimpleRoot_B] at h₀
+      exact absurd h₀ (by omega)
+  | C n =>
+      have hn : 3 ≤ n := valid_C.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      have h₀ := h j₀
+      simp only [isLongSimpleRoot_C] at h₀
+      exact absurd h₀ (by omega)
+  | F4 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
+      have h₀ := h j₀
+      simp only [isLongSimpleRoot_F4] at h₀
+      exact absurd h₀ (by omega)
+  | G2 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 1 := ⟨⟨1, by omega⟩, rfl⟩
+      have h₀ := h j₀
+      simp only [isLongSimpleRoot_G2] at h₀
+      exact absurd h₀ (by omega)
+
+/-- Every valid Dynkin type has a long simple root. -/
+theorem exists_isLongSimpleRoot {t : DynkinType} (ht : t.Valid) :
+    ∃ i, t.IsLongSimpleRoot i := by
+  cases t with
+  | A n =>
+      have hn : 1 ≤ n := valid_A.mp ht
+      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp⟩
+  | D n =>
+      have hn : 4 ≤ n := valid_D.mp ht
+      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp⟩
+  | E6 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | E7 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | E8 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | B n =>
+      have hn : 2 ≤ n := valid_B.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [isLongSimpleRoot_B]; omega⟩
+  | C n =>
+      have hn : 3 ≤ n := valid_C.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [isLongSimpleRoot_C]; omega⟩
+  | F4 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [isLongSimpleRoot_F4]; omega⟩
+  | G2 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [isLongSimpleRoot_G2]; omega⟩
+
+/-- **Types `Bₙ` and `Cₙ` have the same diagram with long and short exchanged.** Their standard
+Cartan matrices are transposes of one another (`CartanMatrix.B_transpose`), and this is that duality
+read at the level of root lengths: a node long in one type is short in the other. -/
+theorem isLongSimpleRoot_C_iff_not_isLongSimpleRoot_B (n : ℕ) (i : Fin n) :
+    (C n).IsLongSimpleRoot i ↔ ¬ (B n).IsLongSimpleRoot i := by
+  have hi : (i : ℕ) < n := i.isLt
+  simp only [isLongSimpleRoot_B, isLongSimpleRoot_C]
+  omega
+
+end DynkinType
+
+/-- Comparing two positive quantities tied together by a strictly negative multiplier. If
+`a * y = c * x` with `x` positive and `a` strictly negative, then `x ≤ y` exactly when `c ≤ a`.
+
+This is the shared arithmetic behind the two length comparisons below: a transposed pair of Cartan
+entries and a pair of root lengths always satisfy such a symmetrised relation, whether the lengths
+are those of `TauCeti.DynkinType.rootLength` or those measured by a root-positive form. -/
+private lemma le_iff_le_of_mul_eq_mul {S : Type*} [CommRing S] [LinearOrder S]
+    [IsStrictOrderedRing S] {a c x y : S} (hx : 0 < x) (ha : a < 0) (h : a * y = c * x) :
+    x ≤ y ↔ c ≤ a := by
+  refine ⟨fun hxy ↦ ?_, fun hca ↦ ?_⟩
+  · have h1 : c * x ≤ a * x := h ▸ mul_le_mul_of_nonpos_left hxy ha.le
+    exact le_of_mul_le_mul_right h1 hx
+  · have h1 : a * y ≤ a * x := h ▸ mul_le_mul_of_nonneg_right hca hx.le
+    exact (mul_le_mul_left_of_neg ha).mp h1
+
+section RootPairing
+
+variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+
+section IsValuedIn
+
+variable {S : Type*} [CommRing S] [LinearOrder S] [IsStrictOrderedRing S] [Algebra S R]
+  [FaithfulSMul S R] [Module S M] [IsScalarTower S R M]
+  {P : RootPairing ι R M N} [P.IsValuedIn S]
+
+/-- **Two roots meeting at a strictly negative pairing compare in length exactly as their
+transposed pair of pairings compares.** This is the content behind reading root lengths off a
+Cartan matrix: `⟨αᵢ, αⱼ^∨⟩ / ⟨αⱼ, αᵢ^∨⟩` is the ratio `‖αᵢ‖² / ‖αⱼ‖²`, so the more negative entry
+belongs to the longer root.
+
+The negativity hypothesis is what pins the direction. It is automatic for two distinct simple roots
+of a base, whose pairings are nonpositive, once they are not orthogonal; for a pair with positive
+pairings the comparison is reversed. -/
+theorem rootLength_le_iff_pairingIn_le (B : P.RootPositiveForm S) {i j : ι}
+    (h : P.pairingIn S i j < 0) :
+    B.rootLength i ≤ B.rootLength j ↔ P.pairingIn S j i ≤ P.pairingIn S i j :=
+  le_iff_le_of_mul_eq_mul (B.rootLength_pos i) h
+    (B.pairingIn_mul_eq_pairingIn_mul_swap i j).symm
+
+end IsValuedIn
+
+section IsCrystallographic
+
+variable [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallographic]
+
+/-- Two simple roots of a base joined by a strictly negative Cartan entry compare in length exactly
+as the transposed pair of Cartan entries compares. This is
+`TauCeti.rootLength_le_iff_pairingIn_le` read on the Cartan matrix. -/
+theorem rootLength_le_iff_cartanMatrix_le (b : P.Base) (B : P.RootPositiveForm ℤ)
+    {i j : b.support} (h : b.cartanMatrix i j < 0) :
+    B.rootLength i ≤ B.rootLength j ↔ b.cartanMatrix j i ≤ b.cartanMatrix i j :=
+  rootLength_le_iff_pairingIn_le B h
+
+/-- **A base matched to a Dynkin type has its adjacent simple roots comparing in length exactly as
+`TauCeti.DynkinType.rootLength` says.** The matching `e` is taken as data rather than through
+`TauCeti.HasCartanType` so that the statement names the node the comparison is made at; any witness
+of `TauCeti.HasCartanType` supplies one, and since the left-hand side does not mention `e`, the
+comparison read off the type is the same for every witness.
+
+The hypothesis that the two nodes are joined is necessary: two simple roots that are orthogonal are
+constrained by nothing, and in `Cₙ` for instance the first node is short although no neighbour of
+it is longer. -/
+theorem rootLength_le_iff_dynkinRootLength_le {b : P.Base} {t : DynkinType}
+    {e : b.support ≃ Fin t.rank} (he : ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j))
+    (B : P.RootPositiveForm ℤ) {i j : b.support} (h : b.cartanMatrix i j < 0) :
+    B.rootLength i ≤ B.rootLength j ↔ t.rootLength (e i) ≤ t.rootLength (e j) := by
+  rw [rootLength_le_iff_cartanMatrix_le b B h, he i j, he j i]
+  refine (le_iff_le_of_mul_eq_mul (t.rootLength_pos (e i)) ?_
+    (t.cartanMatrix_mul_rootLength (e i) (e j))).symm
+  rwa [he i j] at h
+
+end IsCrystallographic
+
+end RootPairing
+
+end TauCeti
