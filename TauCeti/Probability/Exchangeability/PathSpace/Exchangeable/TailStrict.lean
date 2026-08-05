@@ -168,8 +168,8 @@ theorem pathTail_lt_exchangeableSigma
     pathTail α < exchangeableSigma α := by
   refine lt_of_le_not_ge pathTail_le_exchangeableSigma ?_
   intro hle
-  have hnot := not_le_of_gt hα
-  change ¬ (∀ s, MeasurableSet s → MeasurableSet[⊥] s) at hnot
+  have hnot : ¬ (∀ s, MeasurableSet s → MeasurableSet[⊥] s) :=
+    fun h ↦ (not_le_of_gt hα) (MeasurableSpace.le_def.mpr h)
   push Not at hnot
   obtain ⟨s, hs, hs_not_bot⟩ := hnot
   rw [MeasurableSpace.measurableSet_bot_iff] at hs_not_bot
