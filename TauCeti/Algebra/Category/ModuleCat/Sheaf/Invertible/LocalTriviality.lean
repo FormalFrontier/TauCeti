@@ -84,13 +84,17 @@ def trivializationIso {q : SheafOfModules.LocalGeneratorsData M}
 followed by the original local free presentation. -/
 @[simp]
 lemma trivializationIso_hom {q : SheafOfModules.LocalGeneratorsData M}
-    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) :
-    (hq.trivializationIso i).hom =
+    (hq : LocalGeneratorsData.IsInvertible q) (i : q.I) : (hq.trivializationIso i).hom =
       (_root_.SheafOfModules.freeFunctor (R := R.over (q.X i))).map
         (@Equiv.punitOfNonemptyOfSubsingleton (q.generators i).I
           (hq.basisNonempty i) (hq.basisSubsingleton i)).symm.toIso.hom ≫
         (q.generators i).π :=
-  by simp only [trivializationIso, Iso.trans_hom, Functor.mapIso_hom, asIso_hom]
+  by
+    simp only [trivializationIso, Iso.trans_hom, Functor.mapIso_hom]
+    -- the residual goal is `(asIso (q.generators i).π).hom = (q.generators i).π`; `asIso_hom`
+    -- no longer rewrites under the composition after the bump, and `asIso` stores its `hom`
+    -- field as the given morphism, so this is definitional.
+    rfl
 
 end LocalGeneratorsData.IsInvertible
 
@@ -105,8 +109,7 @@ def ofIso (t : LocalTrivializations M) (e : M ≅ N) : LocalTrivializations N wh
 
 /-- Transporting local trivializations preserves the indexing type. -/
 @[simp]
-lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) :
-    (t.ofIso e).I = t.I := (rfl)
+lemma ofIso_I (t : LocalTrivializations M) (e : M ≅ N) : (t.ofIso e).I = t.I := (rfl)
 
 /-- Transporting local trivializations preserves the covering objects. -/
 @[simp]
@@ -115,8 +118,7 @@ lemma ofIso_X (t : LocalTrivializations M) (e : M ≅ N) :
 
 /-- The transported trivializations are obtained by composing with the restricted isomorphism. -/
 @[simp]
-lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : (t.ofIso e).I) :
-    (t.ofIso e).iso i =
+lemma ofIso_iso (t : LocalTrivializations M) (e : M ≅ N) (i : (t.ofIso e).I) : (t.ofIso e).iso i =
       cast (by rw [ofIso_X])
         (t.iso ((ofIso_I t e).mp i) ≪≫
           (SheafOfModules.overFunctor R (t.X ((ofIso_I t e).mp i))).mapIso e) := (rfl)
@@ -171,7 +173,7 @@ theorem nonempty_iff_isInvertible :
   · rintro ⟨t⟩
     exact t.isInvertible
   · intro hM
-    letI := hM
+    let := hM
     exact ⟨ofIsInvertible M⟩
 
 end LocalTrivializations

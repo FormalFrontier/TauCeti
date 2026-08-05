@@ -40,12 +40,12 @@ private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (
   induction n generalizing a b with
   | zero => exact Finite.of_subsingleton
   | succ n ih =>
-    letI : Fintype V := Fintype.ofFinite V
-    letI arrowFintype (x y : V) : Fintype (x ⟶ y) := Fintype.ofFinite _
-    letI pathFinite (x y : V) : Finite (_root_.Quiver.Path.BoundedPaths x y n) := ih _ _
-    letI pathFintype (x y : V) : Fintype (_root_.Quiver.Path.BoundedPaths x y n) :=
+    let : Fintype V := Fintype.ofFinite V
+    let arrowFintype (x y : V) : Fintype (x ⟶ y) := Fintype.ofFinite _
+    let pathFinite (x y : V) : Finite (_root_.Quiver.Path.BoundedPaths x y n) := ih _ _
+    let pathFintype (x y : V) : Fintype (_root_.Quiver.Path.BoundedPaths x y n) :=
       Fintype.ofFinite _
-    letI zeroFintype : Fintype (_root_.Quiver.Path.BoundedPaths a b 0) := Fintype.ofFinite _
+    let zeroFintype : Fintype (_root_.Quiver.Path.BoundedPaths a b 0) := Fintype.ofFinite _
     let f : (_root_.Quiver.Path.BoundedPaths a b 0 ⊕
         (Σ c : V, (a ⟶ c) × _root_.Quiver.Path.BoundedPaths c b n)) →
         _root_.Quiver.Path.BoundedPaths a b (n + 1) := fun x ↦
@@ -53,7 +53,7 @@ private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (
       | .inl p => ⟨p.1, p.2.trans (Nat.zero_le _)⟩
       | .inr ⟨c, e, q⟩ =>
         ⟨e.toPath.comp q.1, by simpa [Nat.add_comm] using Nat.add_le_add_right q.2 1⟩
-    letI : Finite (_root_.Quiver.Path.BoundedPaths a b 0 ⊕
+    let : Finite (_root_.Quiver.Path.BoundedPaths a b 0 ⊕
         (Σ c : V, (a ⟶ c) × _root_.Quiver.Path.BoundedPaths c b n)) :=
       Finite.of_fintype _
     apply Finite.of_surjective f
@@ -71,22 +71,25 @@ private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (
 namespace Quiver.IsAcyclic
 
 /-- Every path in an acyclic finite quiver has length strictly below the number of vertices. -/
-theorem length_lt_card (h : Quiver.IsAcyclic V) [Fintype V] {a b : V}
-    (p : _root_.Quiver.Path a b) :
+theorem length_lt_card (h : Quiver.IsAcyclic V) [Fintype V] {a b : V} (p : _root_.Quiver.Path a b) :
     p.length < Fintype.card V := by
-  simpa [Nat.lt_iff_add_one_le] using List.Nodup.length_le_card (h.vertices_nodup p)
+  -- The bound is unfolded by hand rather than by `simpa`: `Quiver.IsAcyclic.card_path_self` puts
+  -- `Nat.card` in scope for this file, and simp then exceeds `maxRecDepth` on this goal.
+  have hle := List.Nodup.length_le_card (h.vertices_nodup p)
+  rw [_root_.Quiver.Path.vertices_length] at hle
+  omega
 
 private theorem finite_paths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (h : Quiver.IsAcyclic V) :
     Finite (Σ a b : V, _root_.Quiver.Path a b) := by
-  letI : Fintype V := Fintype.ofFinite V
-  letI pathFinite (a b : V) : Finite (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
+  let : Fintype V := Fintype.ofFinite V
+  let pathFinite (a b : V) : Finite (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
     finite_boundedPaths _ _ _
-  letI pathFintype (a b : V) : Fintype (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
+  let pathFintype (a b : V) : Fintype (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
     Fintype.ofFinite _
   let f : (Σ a b : V, _root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) →
       Σ a b : V, _root_.Quiver.Path a b :=
     fun p ↦ ⟨p.1, p.2.1, p.2.2.1⟩
-  letI : Finite (Σ a b : V, _root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
+  let : Finite (Σ a b : V, _root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
     Finite.of_fintype _
   apply Finite.of_surjective f
   rintro ⟨a, b, p⟩

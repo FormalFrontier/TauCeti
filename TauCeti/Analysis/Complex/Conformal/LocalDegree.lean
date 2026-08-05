@@ -154,7 +154,7 @@ private lemma zeros_finite {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : AnalyticO
     cases h : analyticOrderAt A z with
     | top => simp [analyticOrderNatAt, h] at h1
     | coe n =>
-        simp only [analyticOrderNatAt, h, ENat.toNat_coe] at h1
+        simp only [analyticOrderNatAt, h, ENat.toNat_natCast] at h1
         simp [h1]
   simp [Function.mem_support, MeromorphicOn.AnalyticOnNhd.divisor_apply hAb hzb, hord]
 

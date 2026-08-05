@@ -44,9 +44,8 @@ theorem degree_hermiteDilated (n : ℕ) : (hermiteDilated n).degree = (n : WithB
   have h2 : Real.sqrt 2 ≠ 0 := by positivity
   have hq : (Polynomial.C (Real.sqrt 2) * Polynomial.X).degree = 1 :=
     Polynomial.degree_C_mul_X h2
-  have hmap : ((hermite n).map (Int.castRingHom ℝ)).degree = (n : WithBot ℕ) := by
-    rw [Polynomial.degree_map_eq_of_injective Int.cast_injective, Polynomial.degree_hermite]
-  rw [hermiteDilated_def, Polynomial.degree_comp (by rw [hq]; norm_num), hq, hmap, mul_one]
+  rw [hermiteDilated_def, Polynomial.degree_comp (by rw [hq]; norm_num), hq, degree_hermiteℝ,
+    mul_one]
 
 /-- **Finite exponential moments of the Gaussian weight.** For every rate `a`, `e^{a|x|}` is
 integrable against `e^{-x²}·dx`, because `a|x| ≤ (a² + x²)/2` gives the domination

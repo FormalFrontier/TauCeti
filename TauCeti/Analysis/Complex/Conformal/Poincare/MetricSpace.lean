@@ -49,7 +49,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 
 /-- The complex open unit disc equipped with the hyperbolic (Poincaré) metric.
 

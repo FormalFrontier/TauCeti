@@ -150,7 +150,7 @@ theorem Measure.ext_of_forall_integral_monomial_eq [Fintype ι] [CompactSpace K]
     (hmom : ∀ n : ι → ℕ, ∫ x, ∏ i, (x : ι → ℝ) i ^ n i ∂μ
       = ∫ x, ∏ i, (x : ι → ℝ) i ^ n i ∂ν) :
     μ = ν := by
-  haveI : PolishSpace K :=
+  have : PolishSpace K :=
     (isCompact_iff_compactSpace.mpr ‹CompactSpace K›).isClosed.polishSpace
   exact ext_of_forall_mem_subalgebra_integral_eq_of_polish (coordAlgebra_separatesPoints K)
     fun _ hg => integral_eq_of_mem_coordAlgebra hmom hg
@@ -176,11 +176,10 @@ support implies: with genuine moments, a Markov bound on `x i ^ (2 * m)` confine
 box. That is left to a follow-up; the Layer 6 consumer already has both mixing laws on a common
 compact box. -/
 theorem Measure.ext_of_forall_integral_monomial_eq_of_support [Fintype ι] (hK : IsCompact K)
-    {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
+    {μ ν : Measure (ι → ℝ)} [IsFiniteMeasure μ] [IsFiniteMeasure ν] (hμ : μ Kᶜ = 0) (hν : ν Kᶜ = 0)
     (hmom : ∀ n : ι → ℕ, ∫ x, ∏ i, x i ^ n i ∂μ = ∫ x, ∏ i, x i ^ n i ∂ν) :
     μ = ν := by
-  haveI : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  have : CompactSpace K := isCompact_iff_compactSpace.mp hK
   have hKm : MeasurableSet K := hK.measurableSet
   have hμr : μ.restrict K = μ := Measure.restrict_eq_self_of_ae_mem (ae_iff.mpr hμ)
   have hνr : ν.restrict K = ν := Measure.restrict_eq_self_of_ae_mem (ae_iff.mpr hν)
@@ -190,8 +189,8 @@ theorem Measure.ext_of_forall_integral_monomial_eq_of_support [Fintype ι] (hK :
     constructor
     rw [comap_subtype_coe_apply hKm]
     exact measure_lt_top ρ _
-  haveI := hfin μ
-  haveI := hfin ν
+  have := hfin μ
+  have := hfin ν
   have hmom' : ∀ n : ι → ℕ,
       ∫ x : K, ∏ i, (x : ι → ℝ) i ^ n i ∂(Measure.comap Subtype.val μ)
         = ∫ x : K, ∏ i, (x : ι → ℝ) i ^ n i ∂(Measure.comap Subtype.val ν) := by

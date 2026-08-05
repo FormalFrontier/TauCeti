@@ -70,8 +70,7 @@ theorem partitionEquivYoungDiagram_apply_rowLens (n : ℕ) (p : n.Partition) :
 
 /-- Reading the row lengths of a sized Young diagram recovers the partition's parts. -/
 @[simp]
-theorem partitionEquivYoungDiagram_symm_apply_parts (n : ℕ)
-    (μ : {μ : YoungDiagram // μ.card = n}) :
+theorem partitionEquivYoungDiagram_symm_apply_parts (n : ℕ) (μ : {μ : YoungDiagram // μ.card = n}) :
     ((partitionEquivYoungDiagram n).symm μ).parts = μ.1.rowLens := by
   have h := partitionEquivYoungDiagram_apply_rowLens n
     ((partitionEquivYoungDiagram n).symm μ)

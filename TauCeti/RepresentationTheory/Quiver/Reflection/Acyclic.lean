@@ -46,7 +46,7 @@ paths could be extended indefinitely, past the bound of
 `TauCeti.Quiver.IsAcyclic.length_lt_card`. -/
 theorem IsAcyclic.exists_isSink [Finite V] [Nonempty V] (h : IsAcyclic V) :
     ∃ i : V, IsSink i := by
-  letI : Fintype V := Fintype.ofFinite V
+  let : Fintype V := Fintype.ofFinite V
   by_contra hcon
   have hout : ∀ i : V, ∃ b : V, Nonempty (i ⟶ b) := fun i ↦ by
     by_contra hi
@@ -66,7 +66,7 @@ theorem IsAcyclic.exists_isSink [Finite V] [Nonempty V] (h : IsAcyclic V) :
 /-- A nonempty finite acyclic quiver has a source. -/
 theorem IsAcyclic.exists_isSource [Finite V] [Nonempty V] (h : IsAcyclic V) :
     ∃ i : V, IsSource i := by
-  letI : Fintype V := Fintype.ofFinite V
+  let : Fintype V := Fintype.ofFinite V
   by_contra hcon
   have hin : ∀ i : V, ∃ a : V, Nonempty (a ⟶ i) := fun i ↦ by
     by_contra hi
@@ -96,7 +96,7 @@ private theorem exists_path_of_isSink {i : V} (h : IsSink i) {a b : Reflect V i}
     by_cases hd : d = i
     · exact (h.isSource_reflect.isEmpty_hom c).elim (hd ▸ e)
     · refine ⟨hd, q.cons (cast (reflectHom_of_ne_of_ne hc hd) (cast (hom_reflect i c d) e)), ?_⟩
-      rw [Path.length_cons, Path.length_cons, hq]
+      rw [Path.length_cons (V := V) a c d, Path.length_cons (V := Reflect V i) a c d, hq]
 
 /-- Reflecting an acyclic quiver at a sink leaves it acyclic. -/
 theorem IsAcyclic.reflect_of_isSink {i : V} (hV : IsAcyclic V) (h : IsSink i) :
@@ -121,7 +121,7 @@ private theorem exists_path_of_isSource {i : V} (h : IsSource i) {a b : Reflect 
     have hc : c ≠ i := fun hc ↦ (h.isSink_reflect.isEmpty_hom d).elim (hc ▸ e)
     obtain ⟨ha, q, hq⟩ := ih hc
     refine ⟨ha, q.cons (cast (reflectHom_of_ne_of_ne hc hb) (cast (hom_reflect i c d) e)), ?_⟩
-    rw [Path.length_cons, Path.length_cons, hq]
+    rw [Path.length_cons (V := V) a c d, Path.length_cons (V := Reflect V i) a c d, hq]
 
 /-- Reflecting an acyclic quiver at a source leaves it acyclic. -/
 theorem IsAcyclic.reflect_of_isSource {i : V} (hV : IsAcyclic V) (h : IsSource i) :

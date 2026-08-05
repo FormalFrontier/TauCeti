@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
   statuses: read
 
@@ -32,15 +33,34 @@ jobs:
       !(github.event.workflow_run.name == 'Review' && github.event.action == 'requested')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: read
       - name: Resolve PR number
         id: pr
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           PR=$(echo '${{ toJSON(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')
           if [ -z "$PR" ]; then
-            PR=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" --jq '.[0].number // empty' 2>/dev/null || true)
+            # Fork PRs leave pull_requests[] empty, and commits/<sha>/pulls
+            # need not associate their head commit with the base repository.
+            # Accept exactly one open PR whose current head is this SHA.
+            MATCHES=$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls?state=open&per_page=100" \
+              --jq ".[] | select(.head.sha == \"$HEAD_SHA\") | .number" 2>/dev/null || true)
+            mapfile -t PRS <<< "$MATCHES"
+            if [ -n "$MATCHES" ] && [ "${#PRS[@]}" -eq 1 ]; then
+              PR="${PRS[0]}"
+            fi
           fi
           if [ -z "$PR" ]; then
             echo "No PR for $HEAD_SHA; skipping"; echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -59,7 +79,7 @@ jobs:
         # required checks, and auto-merge gates on the build status + review
         # ledger, not on this workflow.
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com

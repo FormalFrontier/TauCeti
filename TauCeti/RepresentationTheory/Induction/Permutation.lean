@@ -142,8 +142,7 @@ private theorem quotientToIndTrivial_single (q : G ⧸ H) (r : k) :
 
 /-- **The permutation representation.** Inducing the trivial representation of a subgroup `H ≤ G`
 along `H.subtype` gives the permutation representation of `G` on the left cosets `G ⧸ H`. -/
-noncomputable def indTrivialEquiv :
-    ((Representation.trivial k H k).ind H.subtype).Equiv
+noncomputable def indTrivialEquiv : ((Representation.trivial k H k).ind H.subtype).Equiv
       (Representation.ofMulAction k G (G ⧸ H)) := by
   refine Representation.Equiv.mk
     (LinearEquiv.ofLinear (indTrivialToQuotient k H) (quotientToIndTrivial k H) ?_ ?_) ?_

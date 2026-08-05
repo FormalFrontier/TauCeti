@@ -198,7 +198,7 @@ the de Finetti mixture representation, here with the mixing law prescribed in ad
 theorem pathLaw_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
     pathLaw (iidMixtureLaw π P) (fun n ω => ω.2 n)
       = (π.map P).bind fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α) := by
-  haveI := isProbabilityMeasure_iidMixtureLaw (π := π) hP
+  have := isProbabilityMeasure_iidMixtureLaw (π := π) hP
   rw [← iidMixtureLaw_map_directing hP]
   exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith
     (fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable)
@@ -211,7 +211,7 @@ construction supplies is genuinely random rather than an a.e. constant. -/
 theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
     (hP : Measurable P) (h : iIndepFun (fun n (ω : T × (ℕ → α)) => ω.2 n) (iidMixtureLaw π P)) :
     ∃ Q : ProbabilityMeasure α, π.map P = Measure.dirac Q := by
-  haveI := isProbabilityMeasure_iidMixtureLaw (π := π) hP
+  have := isProbabilityMeasure_iidMixtureLaw (π := π) hP
   have hX : ∀ n, AEMeasurable (fun ω : T × (ℕ → α) => ω.2 n) (iidMixtureLaw π P) :=
     fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable
   -- the coordinates are automatically identically distributed, the process being contractable, so
@@ -219,13 +219,16 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
   have hident : ∀ i, IdentDistrib (fun ω : T × (ℕ → α) => ω.2 i)
       (fun ω : T × (ℕ → α) => ω.2 0) (iidMixtureLaw π P) (iidMixtureLaw π P) :=
     fun i => (contractable_iidMixtureLaw hP).identDistrib_coord (hX i) (hX 0)
-  refine ⟨⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
-    Measure.isProbabilityMeasure_map (hX 0)⟩, ?_⟩
+  let Q : ProbabilityMeasure α :=
+    ⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
+      Measure.isProbabilityMeasure_map (hX 0)⟩
+  refine ⟨Q, ?_⟩
   -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,
     mixedIID_mixingLaw_unique hX (mixedIIDWith_iidMixtureLaw hP)
-      (MixedIIDWith.of_iIndepFun_identDistrib h hident),
-    Measure.map_const, measure_univ, one_smul]
+      (MixedIIDWith.of_iIndepFun_identDistrib h hident)]
+  change Measure.map (fun _ : T × (ℕ → α) => Q) (iidMixtureLaw π P) = Measure.dirac Q
+  rw [Measure.map_const, measure_univ, one_smul]
 
 end Probability
 

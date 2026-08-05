@@ -81,8 +81,7 @@ theorem isPositiveDefiniteKernel_sum_smul {ι : Type w} {s : Finset ι}
     isPositiveDefiniteKernel_smul_of_nonneg (hr i hi) (hK i hi)
 
 /-- Schur powers of a positive-definite kernel are positive definite. -/
-theorem isPositiveDefiniteKernel_pow {K : α → α → 𝕜}
-    (hK : IsPositiveDefiniteKernel K) (n : ℕ) :
+theorem isPositiveDefiniteKernel_pow {K : α → α → 𝕜} (hK : IsPositiveDefiniteKernel K) (n : ℕ) :
     IsPositiveDefiniteKernel (fun a b => K a b ^ n) := by
   induction n with
   | zero =>
@@ -93,16 +92,14 @@ theorem isPositiveDefiniteKernel_pow {K : α → α → 𝕜}
 /-- Finite sums of rank-one kernels `(a, b) ↦ conj (gᵢ a) * gᵢ b` are positive definite.
 These are the finite-rank positive-definite kernels used as the elementary building blocks for
 the later GNS/Kolmogorov decomposition. -/
-theorem isPositiveDefiniteKernel_sum_conj_mul {ι : Type w} (s : Finset ι)
-    (g : ι → α → 𝕜) :
+theorem isPositiveDefiniteKernel_sum_conj_mul {ι : Type w} (s : Finset ι) (g : ι → α → 𝕜) :
     IsPositiveDefiniteKernel
       (fun a b => ∑ i ∈ s, conj (g i a) * g i b) :=
   isPositiveDefiniteKernel_sum fun i _ => isPositiveDefiniteKernel_conj_mul (g i)
 
 /-- Finite products of rank-one kernels are positive definite. This is the Schur-product
 companion to `TauCeti.isPositiveDefiniteKernel_sum_conj_mul`. -/
-theorem isPositiveDefiniteKernel_prod_conj_mul {ι : Type w} (s : Finset ι)
-    (g : ι → α → 𝕜) :
+theorem isPositiveDefiniteKernel_prod_conj_mul {ι : Type w} (s : Finset ι) (g : ι → α → 𝕜) :
     IsPositiveDefiniteKernel
       (fun a b => ∏ i ∈ s, conj (g i a) * g i b) :=
   isPositiveDefiniteKernel_prod fun i _ => isPositiveDefiniteKernel_conj_mul (g i)

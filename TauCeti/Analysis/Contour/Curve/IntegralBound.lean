@@ -48,8 +48,7 @@ namespace TauCeti.Contour
 `L¹` norm. Only the bound on the half-open interval `Ι a b` matters; the endpoints do not affect the
 integral. -/
 theorem norm_integral_inv_sub_mul_le {γ g : ℝ → ℂ} {a b R : ℝ} {w : ℂ}
-    (hg : IntervalIntegrable g volume a b)
-    (hR : ∀ t ∈ Ι a b, ‖γ t‖ ≤ R) (hw : R < ‖w‖) :
+    (hg : IntervalIntegrable g volume a b) (hR : ∀ t ∈ Ι a b, ‖γ t‖ ≤ R) (hw : R < ‖w‖) :
     ‖∫ t in a..b, (γ t - w)⁻¹ * g t‖ ≤ (∫ t in Ι a b, ‖g t‖) / (‖w‖ - R) := by
   have hpos : 0 < ‖w‖ - R := by linarith
   have h_dist_lb : ∀ t ∈ Ι a b, ‖w‖ - R ≤ ‖γ t - w‖ := fun t ht => by

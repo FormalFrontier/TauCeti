@@ -128,8 +128,7 @@ theorem unitSphereDiffeomorph_neg_apply (x : sphere (0 : E) 1) :
 /-- The inclusion of the linear isometry group of `E` into the group of self-diffeomorphisms of
 its unit sphere. For `E = EuclideanSpace ℝ (Fin (n + 1))` this is the reference inclusion
 `O(n + 1) → Diff(Sⁿ)`; see `TauCeti.orthogonalToDiffSphere`. -/
-def unitSphereDiffHom (m : ℕ∞ω) :
-    (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
+def unitSphereDiffHom (m : ℕ∞ω) : (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
   toFun e := unitSphereDiffeomorph e m
   map_one' := _root_.Diffeomorph.ext fun x => by
     apply Subtype.ext

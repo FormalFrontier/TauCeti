@@ -132,16 +132,15 @@ homeomorphism group. -/
 def toRelativeHomeomorphHom (s : Set M) :
     fixingSubgroup (I := I) (n := n) s →*
       _root_.fixingSubgroup (M ≃ₜ M) s :=
-  (toHomeomorphHom (I := I) (n := n)).restrict (fixingSubgroup (I := I) (n := n) s)
+  (toHomeomorphHom (I := I) (n := n)).domRestrict (fixingSubgroup (I := I) (n := n) s)
     |>.codRestrict (_root_.fixingSubgroup (M ≃ₜ M) s) fun f => by
-      rw [MonoidHom.restrict_apply, toHomeomorphHom_apply]
+      rw [MonoidHom.domRestrict_apply, toHomeomorphHom_apply]
       exact toHomeomorph_mem_fixingSubgroup f.property
 
 /-- Applying the forgetful homomorphism to a relative diffeomorphism is its underlying
 homeomorphism. -/
 @[simp]
-theorem toRelativeHomeomorphHom_apply (s : Set M)
-    (f : fixingSubgroup (I := I) (n := n) s) :
+theorem toRelativeHomeomorphHom_apply (s : Set M) (f : fixingSubgroup (I := I) (n := n) s) :
     (toRelativeHomeomorphHom (M := M) s f : M ≃ₜ M) =
       (f : M ≃ₘ^n⟮I, I⟯ M).toHomeomorph := by
   ext x

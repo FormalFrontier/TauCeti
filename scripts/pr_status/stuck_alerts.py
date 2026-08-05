@@ -259,13 +259,11 @@ def detect_stale_pin():
     }]
 
 
-def is_automerge_scope(files, author):
-    """Mirror the author-aware path exception enforced by pr-build and TauCetiReview."""
+def is_automerge_scope(files):
+    """Mirror the path allowlist enforced by pr-build and TauCetiReview."""
     if not files:
         return False
     allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
-    if author == "tauceti-review-bot[bot]":
-        allowed_roots.add("lakefile.toml")
     return all(path.startswith("TauCeti/") or path in allowed_roots for path in files)
 
 
@@ -305,7 +303,7 @@ def detect_stranded_prs():
             continue
         touches_pin = any(
             f in ("lake-manifest.json", "lean-toolchain", "lakefile.toml") for f in files)
-        if not is_automerge_scope(files, pr.get("author")):
+        if not is_automerge_scope(files):
             continue  # a human-owned path legitimately does not auto-merge
         if touches_pin and newest_status(head, "bump-guard")[0] != "success":
             continue
@@ -468,7 +466,7 @@ def detect_stale_fkb():
                 f"A first-known-bad tracking issue (`{FKB_LABEL}`) has been open for "
                 f"over {FKB_STALE_DAYS} days: https://github.com/{REPO}/issues/{i['number']}. "
                 f"The pin is frozen at the last-known-good commit until it is fixed.\n\n"
-                f"**Fix:** land the fix PR pinned at the first-known-bad commit so the "
+                f"**Fix:** land the fix PR whose manifest is pinned at the first-known-bad commit so the "
                 f"freeze lifts and the daily bump resumes toward master."),
         })
     return out

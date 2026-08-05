@@ -141,8 +141,23 @@ Finally, we understand that participating in AI-assisted mathematics research re
 Generated API documentation for every declaration in Tau Ceti, hyperlinked into its Mathlib
 dependencies, is published at
 [taucetiproject.github.io/TauCeti/docs](https://taucetiproject.github.io/TauCeti/docs/). It is
-rebuilt daily from `main` with [`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside
-the [project website](https://taucetiproject.github.io/TauCeti/).
+scheduled for regeneration every three hours from `main` with
+[`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside the
+[project website](https://taucetiproject.github.io/TauCeti/).
+
+The moving `docgen` branch points at the mainline commit whose generated API documentation is
+currently published — not necessarily the newest, since a deployment that serves older
+documentation moves the branch back to match it. Every successful deployment from `main` attempts
+that correction, in either direction, so the branch heals rather than drifting indefinitely.
+
+It is best-effort rather than exact. Publishing to Pages and updating a git ref cannot be done
+atomically, so between the two the branch names documentation that has already been replaced; and
+if the update fails, or the deployment came from a manually dispatched run on another branch, the
+branch stays wrong — in either direction — until the next deployment from `main`. Anything that
+needs certainty should instead read
+[`/docs/SOURCE_SHA`](https://taucetiproject.github.io/TauCeti/docs/SOURCE_SHA), which is published
+inside the documentation itself and therefore states, at the moment it is read, exactly which commit
+the live documentation describes.
 
 ## Building
 

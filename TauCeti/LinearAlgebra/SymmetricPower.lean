@@ -68,13 +68,9 @@ noncomputable def map {N : Type*} [AddCommMonoid N] [Module R N] (f : M →ₗ[R
 
 /-- The map on symmetric powers commutes with the quotient map from the tensor power. -/
 @[simp]
-theorem map_mk {N : Type*} [AddCommMonoid N] [Module R N] (f : M →ₗ[R] N)
-    (x : ⨂[R] (_ : ι), M) :
+theorem map_mk {N : Type*} [AddCommMonoid N] [Module R N] (f : M →ₗ[R] N) (x : ⨂[R] (_ : ι), M) :
     map f (mk R ι M x) = mk R ι N (PiTensorProduct.map (fun _ : ι => f) x) :=
-  by
-    simpa only [map, mk, LinearMap.coe_mk, AddHom.coe_mk, AddMonoidHom.toFun_eq_coe,
-      AddMonoidHom.comp_apply, LinearMap.toAddMonoidHom_coe] using
-        AddCon.lift_mk' (map_rel f) x
+  AddCon.lift_mk' (map_rel f) x
 
 /-- The map induced on symmetric powers sends a pure tensor to the tensor of the images. -/
 @[simp]
@@ -94,8 +90,7 @@ theorem map_id :
 /-- Symmetric powers preserve composition of linear maps. -/
 @[simp]
 theorem map_comp {N : Type*} {P : Type*}
-    [AddCommMonoid N] [Module R N] [AddCommMonoid P] [Module R P]
-    (f : M →ₗ[R] N) (g : N →ₗ[R] P) :
+    [AddCommMonoid N] [Module R N] [AddCommMonoid P] [Module R P] (f : M →ₗ[R] N) (g : N →ₗ[R] P) :
     map (ι := ι) (g.comp f) = (map (ι := ι) g).comp (map (ι := ι) f) := by
   apply LinearMap.ext_on (span_tprod_eq_top (R := R) (ι := ι) (M := M))
   rintro _ ⟨m, rfl⟩

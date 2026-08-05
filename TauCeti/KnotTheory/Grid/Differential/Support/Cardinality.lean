@@ -70,8 +70,7 @@ theorem fullyBlockedDifferentialOnGenerator_support_eq_empty_of_le_one
 /-- The support of the fully blocked differential of one generator is empty in grid
 size `0`. -/
 theorem fullyBlockedDifferentialOnGenerator_support_eq_empty_of_zero (G : GridDiagram 0)
-    (x : GridState 0) :
-    (G.fullyBlockedDifferentialOnGenerator x).support = ∅ :=
+    (x : GridState 0) : (G.fullyBlockedDifferentialOnGenerator x).support = ∅ :=
   G.fullyBlockedDifferentialOnGenerator_support_eq_empty_of_le_one (Nat.zero_le 1) x
 
 /-- The fully blocked differential of a generator is zero in grid size at most `1`. -/
@@ -83,8 +82,7 @@ theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_le_one
 
 /-- The fully blocked differential of a generator is zero in grid size `0`. -/
 @[simp]
-theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_zero (G : GridDiagram 0)
-    (x : GridState 0) :
+theorem fullyBlockedDifferentialOnGenerator_eq_zero_of_zero (G : GridDiagram 0) (x : GridState 0) :
     G.fullyBlockedDifferentialOnGenerator x = 0 :=
   G.fullyBlockedDifferentialOnGenerator_eq_zero_of_le_one (Nat.zero_le 1) x
 

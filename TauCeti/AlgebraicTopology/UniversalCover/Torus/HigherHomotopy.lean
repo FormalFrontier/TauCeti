@@ -49,8 +49,7 @@ theorem homotopyGroup_pi_eq_one [DecidableEq N]
   Subsingleton.elim _ _
 
 /-- Every element of `π_(n + 2)` of an indexed product of real circles is the identity. -/
-theorem homotopyGroupPi_pi_eq_one (n : ℕ)
-    (a : π_ (n + 2) (∀ i, AddCircle (p i)) x) : a = 1 :=
+theorem homotopyGroupPi_pi_eq_one (n : ℕ) (a : π_ (n + 2) (∀ i, AddCircle (p i)) x) : a = 1 :=
   homotopyGroup_pi_eq_one p x a
 
 end AddCircle

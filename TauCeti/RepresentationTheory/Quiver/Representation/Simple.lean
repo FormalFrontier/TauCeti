@@ -24,10 +24,13 @@ is a simple `k`-module.
 ## Main definitions
 
 * `TauCeti.simpleRep k Q i`: the vertex simple representation `Sᵢ`.
+* `TauCeti.simpleRepSelfEquiv`: the identification `(Sᵢ)ᵢ ≃ₗ[k] k`, and
+  `TauCeti.simpleRepGenerator`: the element of `(Sᵢ)ᵢ` it sends to `1`.
 
 ## Main results
 
 * `TauCeti.simpleRep_simple`: `Sᵢ` is a simple object of `TauCeti.QuiverRep k Q`.
+* `TauCeti.exists_eq_smul_simpleRepGenerator`: `(Sᵢ)ᵢ` is the line spanned by the generator.
 * `TauCeti.hom_simpleRep_eq_zero_iff` and `TauCeti.simpleRep_hom_eq_zero_iff`: a morphism into or
   out of `Sᵢ` is detected by its component at `i`.
 * `TauCeti.dimVector_simpleRep`: the dimension vector of `Sᵢ` is `Pi.single i 1`.
@@ -101,10 +104,44 @@ instance finiteDimensional_simpleRep_obj (i a : Q) :
       ModuleCat.subsingleton_of_isZero (isZero_zero _)
     infer_instance
 
+/-! ### The vertex simple is a line at its vertex -/
+
+variable (k)
+
+/-- The vector space that the vertex simple `Sᵢ` puts at `i` is the base field. -/
+noncomputable def simpleRepSelfEquiv (i : Q) : (simpleRep k Q i).obj ((Paths.of Q).obj i) ≃ₗ[k] k :=
+  (eqToIso (simpleRep_obj_self i)).toLinearEquiv
+
+/-- The canonical generator of the line `(Sᵢ)ᵢ`: the element corresponding to `1 : k`. -/
+noncomputable def simpleRepGenerator (i : Q) : (simpleRep k Q i).obj ((Paths.of Q).obj i) :=
+  (simpleRepSelfEquiv k i).symm 1
+
+/-- The generator of `(Sᵢ)ᵢ` corresponds to `1 : k`. -/
+@[simp]
+theorem simpleRepSelfEquiv_apply_generator (i : Q) :
+    simpleRepSelfEquiv k i (simpleRepGenerator k i) = 1 :=
+  (simpleRepSelfEquiv k i).apply_symm_apply 1
+
+/-- **The vertex simple is a line at its vertex**: every element of `(Sᵢ)ᵢ` is a multiple of the
+generator. -/
+theorem exists_eq_smul_simpleRepGenerator {i : Q} (x : (simpleRep k Q i).obj ((Paths.of Q).obj i)) :
+    ∃ c : k, x = c • simpleRepGenerator k i := by
+  refine ⟨simpleRepSelfEquiv k i x, ?_⟩
+  rw [simpleRepGenerator, ← LinearEquiv.map_smul, smul_eq_mul, mul_one,
+    LinearEquiv.symm_apply_apply]
+
+/-- The generator of `(Sᵢ)ᵢ` is nonzero. -/
+theorem simpleRepGenerator_ne_zero (i : Q) : simpleRepGenerator k i ≠ 0 := by
+  intro h
+  have h1 := congrArg (simpleRepSelfEquiv k i) h
+  rw [simpleRepSelfEquiv_apply_generator, map_zero] at h1
+  exact one_ne_zero h1
+
+variable {k}
+
 /-- Every arrow of the quiver acts by zero on the vertex simple `Sᵢ`. -/
 @[simp]
-theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) :
-    (simpleRep k Q i).map e.toPath = 0 :=
+theorem simpleRep_map_toPath (i : Q) {a b : Q} (e : a ⟶ b) : (simpleRep k Q i).map e.toPath = 0 :=
   Paths.lift_toPath _ e
 
 /-- More generally, every path of positive length acts by zero on the vertex simple `Sᵢ`. -/
@@ -127,7 +164,10 @@ other components land in a zero module. -/
 @[simp]
 theorem hom_simpleRep_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : M ⟶ simpleRep k Q i) :
     f = 0 ↔ f.app i = 0 := by
-  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine ⟨fun h ↦ by
+    rw [h]
+    exact CategoryTheory.Limits.zero_app (ModuleCat k) M (simpleRep k Q i)
+      ((Paths.of Q).obj i), fun h ↦ ?_⟩
   refine NatTrans.ext (funext fun a ↦ ?_)
   rcases eq_or_ne a i with rfl | ha
   · exact h
@@ -138,7 +178,10 @@ all its other components start from a zero module. -/
 @[simp]
 theorem simpleRep_hom_eq_zero_iff {i : Q} {M : QuiverRep k Q} (f : simpleRep k Q i ⟶ M) :
     f = 0 ↔ f.app i = 0 := by
-  refine ⟨fun h ↦ by simp [h], fun h ↦ ?_⟩
+  refine ⟨fun h ↦ by
+    rw [h]
+    exact CategoryTheory.Limits.zero_app (ModuleCat k) (simpleRep k Q i) M
+      ((Paths.of Q).obj i), fun h ↦ ?_⟩
   refine NatTrans.ext (funext fun a ↦ ?_)
   rcases eq_or_ne a i with rfl | ha
   · exact h
@@ -156,11 +199,19 @@ instance simpleRep_simple (i : Q) : Simple (simpleRep k Q i) where
     · intro h
       rw [NatTrans.isIso_iff_isIso_app]
       intro a
+      change Q at a
+      change IsIso (f.app ((Paths.of Q).obj a))
       rcases eq_or_ne a i with rfl | ha
-      · exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)
-      · have ht : IsZero ((simpleRep k Q i).obj a) := isZero_simpleRep_obj (Q := Q) ha
-        have hs : IsZero (M.obj a) := IsZero.of_mono (f.app a) ht
-        rw [hs.eq_of_src (f.app a) (hs.iso ht).hom]
+      · let : Simple ((simpleRep k Q a).obj ((Paths.of Q).obj a)) := by
+          change Simple ((simpleRep k Q a).obj a)
+          exact simple_simpleRep_obj_self a
+        exact isIso_of_mono_of_nonzero ((hom_simpleRep_eq_zero_iff f).ne.mp h)
+      · have ht : IsZero ((simpleRep k Q i).obj ((Paths.of Q).obj a)) := by
+          change IsZero ((simpleRep k Q i).obj a)
+          exact isZero_simpleRep_obj (Q := Q) ha
+        have hs : IsZero (M.obj ((Paths.of Q).obj a)) :=
+          IsZero.of_mono (f.app ((Paths.of Q).obj a)) ht
+        rw [hs.eq_of_src (f.app ((Paths.of Q).obj a)) (hs.iso ht).hom]
         infer_instance
 
 /-- The dimension vector of the vertex simple `Sᵢ` is the standard basis vector at `i`. -/

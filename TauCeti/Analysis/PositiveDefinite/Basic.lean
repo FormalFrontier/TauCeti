@@ -93,8 +93,7 @@ namespace IsPositiveDefinite
 /-- Positive-definiteness holds for an arbitrary finite index type, not just `Fin n`: for every
 finite family of scalars `c : ι → ℂ` and points `v : ι → M`, the Hermitian form
 `∑_{i,j} c i · conj (c j) · F (v i + star (v j))` is a nonnegative real number. -/
-theorem sum_nonneg (hF : IsPositiveDefinite F) {ι : Type*} [Fintype ι]
-    (c : ι → ℂ) (v : ι → M) :
+theorem sum_nonneg (hF : IsPositiveDefinite F) {ι : Type*} [Fintype ι] (c : ι → ℂ) (v : ι → M) :
     0 ≤ ∑ i, ∑ j, c i * conj (c j) * F (v i + star (v j)) := by
   classical
   let e : Fin (Fintype.card ι) ≃ ι := (Fintype.equivFin ι).symm
@@ -282,15 +281,13 @@ theorem isPositiveDefinite_zero : IsPositiveDefinite (fun _ : M => (0 : ℂ)) :=
 namespace IsPositiveDefinite
 
 /-- Positive-definite functions are closed under finite sums. -/
-theorem sum {ι : Type*} {s : Finset ι} {F : ι → M → ℂ}
-    (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
+theorem sum {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∑ i ∈ s, F i x) :=
   of_isPositiveDefiniteKernel <|
     isPositiveDefiniteKernel_sum fun i hi => (hF i hi).isPositiveDefiniteKernel
 
 /-- Positive-definite functions are closed under finite products (Schur product). -/
-theorem prod {ι : Type*} {s : Finset ι} {F : ι → M → ℂ}
-    (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
+theorem prod {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∏ i ∈ s, F i x) :=
   of_isPositiveDefiniteKernel <|
     isPositiveDefiniteKernel_prod fun i hi => (hF i hi).isPositiveDefiniteKernel

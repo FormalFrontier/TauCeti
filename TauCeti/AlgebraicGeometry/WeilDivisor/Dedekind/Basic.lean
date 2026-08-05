@@ -132,7 +132,7 @@ private lemma adicOrd_ne_zero_mem_support_union (v : HeightOneSpectrum R) (u : A
   have hne_one : v.valuation K k ≠ 1 := fun h => hlog ((log_eq_zero_iff_eq_one hval).2 h)
   rcases lt_or_gt_of_ne hne_one with hlt | hgt
   · refine Or.inr ?_
-    rw [HeightOneSpectrum.Support, Set.mem_setOf_eq, map_inv₀]
+    rw [HeightOneSpectrum.Support, Set.mem_ofPred_eq, map_inv₀]
     exact (one_lt_inv₀ (WithZero.pos_iff_ne_zero.mpr hval)).mpr hlt
   · exact Or.inl hgt
 
@@ -263,8 +263,7 @@ lemma coeff_principalDivisor_eq_neg_log_valuation (u : Additive Kˣ) (v : Height
 
 /-- The coefficient of a Dedekind-domain principal divisor agrees with Mathlib's exponent of the
 corresponding principal fractional ideal. -/
-lemma coeff_principalDivisor_eq_fractionalIdeal_count (u : Additive Kˣ)
-    (v : HeightOneSpectrum R) :
+lemma coeff_principalDivisor_eq_fractionalIdeal_count (u : Additive Kˣ) (v : HeightOneSpectrum R) :
     coeff ((OrderSystem.ofDedekindDomain R K).principalDivisor u) v =
       FractionalIdeal.count K v
         (toPrincipalIdeal R K (Additive.toMul u) : FractionalIdeal R⁰ K) := by
@@ -287,8 +286,7 @@ variable {R K}
 
 /-- A coefficient of a principal divisor is positive exactly when the corresponding valuation is
 strictly less than one. -/
-lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ)
-    (v : HeightOneSpectrum R) :
+lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ) (v : HeightOneSpectrum R) :
     0 < coeff ((OrderSystem.ofDedekindDomain R K).principalDivisor u) v ↔
       v.valuation K ((Additive.toMul u : Kˣ) : K) < 1 := by
   have hu : v.valuation K ((Additive.toMul u : Kˣ) : K) ≠ 0 :=
@@ -300,8 +298,7 @@ lemma coeff_principalDivisor_pos_iff_valuation_lt_one (u : Additive Kˣ)
 no poles, only zeros. The element is presented as any unit `u : Kˣ` whose value is
 `algebraMap R K r`. This is the divisor-of-functions sanity check that rules out a vacuous
 order system. -/
-lemma isEffective_principalDivisor_of_integral {r : R} {u : Kˣ}
-    (hu : (u : K) = algebraMap R K r) :
+lemma isEffective_principalDivisor_of_integral {r : R} {u : Kˣ} (hu : (u : K) = algebraMap R K r) :
     IsEffective ((OrderSystem.ofDedekindDomain R K).principalDivisor (Additive.ofMul u)) := by
   rw [isEffective_iff]
   intro v

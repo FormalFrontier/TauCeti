@@ -77,11 +77,10 @@ lemma energyIntegrand_zero_drift_comm_of_isSymm {A : Matrix n n ℝ} (hA : A.IsS
 Downstream energy forms that need the same integrand to be both symmetric and bounded below
 pair this with `min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self`.  For a
 nonsymmetric principal coefficient, first pass to `coefficientSymmetricPart` using the uniform
-ellipticity API in `TauCeti.Analysis.PDE.Uniform.Ellipticity`, then apply this lemma to the
+ellipticity API in `TauCeti.Analysis.PDE.Ellipticity.Basic`, then apply this lemma to the
 symmetric coefficient field. -/
 @[simp]
-lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm)
-    (c : ℝ) :
+lemma energyIntegrand_zero_drift_flip_eq_of_isSymm {A : Matrix n n ℝ} (hA : A.IsSymm) (c : ℝ) :
     (energyIntegrand A 0 c).flip = energyIntegrand A 0 c := by
   apply ContinuousLinearMap.ext
   intro U
@@ -111,8 +110,7 @@ lemma energyIntegrand_coefficientSymmetricPart_self (A : Matrix n n ℝ)
 
 /-- Bundled-map form of symmetry for the symmetric-part zero-drift jet integrand. -/
 @[simp]
-lemma energyIntegrand_coefficientSymmetricPart_zero_drift_flip_eq (A : Matrix n n ℝ)
-    (c : ℝ) :
+lemma energyIntegrand_coefficientSymmetricPart_zero_drift_flip_eq (A : Matrix n n ℝ) (c : ℝ) :
     (energyIntegrand (coefficientSymmetricPart A) 0 c).flip =
       energyIntegrand (coefficientSymmetricPart A) 0 c :=
   energyIntegrand_zero_drift_flip_eq_of_isSymm (coefficientSymmetricPart_isSymm A) c

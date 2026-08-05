@@ -20,18 +20,13 @@ import subprocess
 import sys
 import time
 
-
-BG = "#101936"
-PANEL = "#1b2547"
-BAR_BG = "#27335a"
-TEXT = "#eef2fb"
-MUTED = "#9aa6c9"
+from chart_style import BAR_BG, MUTED, PALETTE, TEXT, base_css, card_rect, css_px
 
 REPOSITORIES = [
-    ("TauCetiProject/TauCeti", "TauCeti", "#ff9d4d"),
-    ("TauCetiProject/TauCetiRoadmap", "TauCetiRoadmap", "#5eead4"),
-    ("kim-em/TauCetiWorker", "TauCetiWorker", "#60a5fa"),
-    ("TauCetiProject/TauCetiReview", "TauCetiReview", "#c084fc"),
+    ("TauCetiProject/TauCeti", "TauCeti", PALETTE[1]),
+    ("TauCetiProject/TauCetiRoadmap", "TauCetiRoadmap", PALETTE[0]),
+    ("kim-em/TauCetiWorker", "TauCetiWorker", PALETTE[2]),
+    ("TauCetiProject/TauCetiReview", "TauCetiReview", PALETTE[4]),
 ]
 
 # Some GitHub Apps surface through GraphQL as User nodes or without their REST
@@ -247,17 +242,16 @@ def render(people: dict[str, set[str]], title: str, out: str, as_of: str) -> int
   <title id="participation-title">{html.escape(title)}: {html.escape(subtitle)}</title>
   <desc id="participation-description">{html.escape(breakdown)}. People active in several repositories are counted in each bar.</desc>
   <style>
-    .title{{fill:{TEXT};font-size:19px;font-weight:600}}
-    .total{{fill:{TEXT};font-size:42px;font-weight:700}}
-    .sub{{fill:{MUTED};font-size:13px}}
-    .label{{fill:{TEXT};font-size:15px;text-anchor:end}}
-    .count{{fill:{TEXT};font-size:16px;font-weight:650}}
-    .note{{fill:{MUTED};font-size:12.5px}}
+    {base_css(W)}
+    .total{{fill:{TEXT};font-size:{css_px(W, 42)};font-weight:700}}
+    .label{{fill:{TEXT};font-size:{css_px(W, 15)};text-anchor:end}}
+    .count{{fill:{TEXT};font-size:{css_px(W, 16)};font-weight:650}}
+    .note{{fill:{MUTED};font-size:{css_px(W, 12.5)}}}
   </style>
-  <rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" rx="12" fill="{BG}" stroke="{PANEL}"/>
+  {card_rect(W, H)}
   <text class="title" x="50" y="36">{html.escape(title)}</text>
   <text class="total" x="50" y="91">{total}</text>
-  <text class="sub" x="112" y="86">unique people · {safe_as_of}</text>
+  <text class="subtitle" x="112" y="86">unique people · {safe_as_of}</text>
   {''.join(bars)}
   <text class="note" x="50" y="{H-30}">
     Opened a PR/issue, commented or reviewed, or authored a default-branch commit. Multi-repo participants appear in each bar.

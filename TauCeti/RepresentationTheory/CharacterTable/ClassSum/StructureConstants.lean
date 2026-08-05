@@ -117,8 +117,7 @@ theorem classSumCenter_mul (k : Type*) [CommSemiring k] (Cᵢ Cⱼ : ConjClasses
 /-- The coefficient of `g` in a product of two class sums is the structure constant at the
 conjugacy class of `g`. This is the pointwise form of `TauCeti.classSum_mul`. -/
 theorem coeff_classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) (g : G) :
-    (classSum k Cᵢ * classSum k Cⱼ).coeff g =
-      (structureConstant Cᵢ Cⱼ (ConjClasses.mk g) : k) := by
+    (classSum k Cᵢ * classSum k Cⱼ).coeff g = (structureConstant Cᵢ Cⱼ (ConjClasses.mk g) : k) := by
   rw [classSum_mul]
   simp only [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, MonoidAlgebra.coeff_smul_apply,
     smul_eq_mul, classSum_coeff]

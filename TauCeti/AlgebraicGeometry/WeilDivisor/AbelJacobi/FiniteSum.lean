@@ -62,8 +62,7 @@ lemma weightedAbelJacobiDivisorClass_ofFinsupp (w : X → ℤ) (h : S.IsWeighted
 of the point Abel-Jacobi classes with those multiplicities. -/
 @[simp]
 lemma weightedAbelJacobiDivisorClass_ofFinsetWithMultiplicity (w : X → ℤ)
-    (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) (s : Finset X)
-    (m : X → ℕ) :
+    (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) (s : Finset X) (m : X → ℕ) :
     S.weightedAbelJacobiDivisorClass w h hx₀ (ofFinsetWithMultiplicity s m) =
       ∑ x ∈ s, (m x : ℤ) • S.weightedAbelJacobiClass w h hx₀ x := by
   rw [ofFinsetWithMultiplicity_eq_sum, map_sum]

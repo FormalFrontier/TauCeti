@@ -54,8 +54,7 @@ private theorem windingNumber_eq_zero_of_far {γ : ℝ → ℂ} {a b R : ℝ} {P
     (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
     (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
-    (hR : ∀ t ∈ uIcc a b, ‖γ t‖ ≤ R)
-    (hw : R + (∫ t in Ι a b, ‖deriv γ t‖) / (2 * Real.pi) < ‖w‖) :
+    (hR : ∀ t ∈ uIcc a b, ‖γ t‖ ≤ R) (hw : R + (∫ t in Ι a b, ‖deriv γ t‖) / (2 * Real.pi) < ‖w‖) :
     windingNumber γ a b w = 0 := by
   have h2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
   have hD_nonneg : 0 ≤ ∫ t in Ι a b, ‖deriv γ t‖ := integral_nonneg fun _ => norm_nonneg _

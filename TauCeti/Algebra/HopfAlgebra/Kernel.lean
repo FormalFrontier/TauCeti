@@ -193,7 +193,10 @@ theorem kerLiftBialgEquiv_toBialgHom (f : H →ₐc[R] K) (hf : Function.Surject
 theorem ker_mkBialgHom (I : HopfIdeal R H) :
     ker (Bialgebra.Quotient.mkBialgHom I.toIdeal) Ideal.Quotient.mk_surjective = I := by
   ext x
-  rw [mem_ker, Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
+  -- membership in `ker` is by definition vanishing under the morphism; `change` spells that out,
+  -- `ker` being a bundled structure with no membership equation lemma.
+  change Bialgebra.Quotient.mkBialgHom (R := R) I.toIdeal x = 0 ↔ x ∈ I
+  rw [Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
 
 end HopfIdeal
 

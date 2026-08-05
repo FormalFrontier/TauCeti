@@ -92,11 +92,9 @@ theorem windingNumber_eq_two_pi_I_inv_mul_curveIntegral {x y w : ℂ} {p : Path 
 
 /-- If the extension of a path homotopy is `C²` on the unit square, then every intermediate
 path, extended constantly from the unit interval to `ℝ`, is piecewise `C¹` on `[0, 1]`. -/
-theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x y : ℂ} {p q : Path x y}
-    (φ : p.Homotopy q)
+theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x y : ℂ} {p q : Path x y} (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
     (s : I) :
     IsPiecewiseC1On (φ.eval s).extend 0 1 := by
   apply IsPiecewiseC1On.of_contDiffOn
@@ -113,11 +111,9 @@ theorem isPiecewiseC1On_eval_of_smoothPathHomotopy {x y : ℂ} {p q : Path x y}
 /-- **Homotopy invariance of the winding number off the curve.** Two closed paths joined through
 `ℂ \ {w}` by a path homotopy whose extension to the unit square is `C²` have the same winding number
 about `w`. -/
-theorem windingNumber_eq_of_pathHomotopy {x w : ℂ} {p q : Path x x}
-    (φ : p.Homotopy q)
+theorem windingNumber_eq_of_pathHomotopy {x w : ℂ} {p q : Path x x} (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
     (havoid : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ≠ w) :
     windingNumber p.extend 0 1 w = windingNumber q.extend 0 1 w := by
   have hrange : IsClosed (Set.range φ) :=
@@ -164,11 +160,9 @@ theorem windingNumber_eq_of_pathHomotopy {x w : ℂ} {p q : Path x x}
     hcurve']
 
 /-- Null-homology in `Ω` is invariant under a `C²` path homotopy whose image lies in `Ω`. -/
-theorem isNullHomologous_iff_of_pathHomotopy {x : ℂ} {p q : Path x x} {Ω : Set ℂ}
-    (φ : p.Homotopy q)
+theorem isNullHomologous_iff_of_pathHomotopy {x : ℂ} {p q : Path x x} {Ω : Set ℂ} (φ : p.Homotopy q)
     (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2)
-      (Set.Icc 0 1))
+      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
     (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω) :
     IsNullHomologous p.extend 0 1 Ω ↔ IsNullHomologous q.extend 0 1 Ω := by
   constructor

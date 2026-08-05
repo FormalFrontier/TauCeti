@@ -24,11 +24,11 @@ Openness is the open mapping theorem. It is local, so it needs no connectivity h
 around each point of `Ω` sits a ball on which `g` is analytic and — being injective — nonconstant,
 and `Mathlib.Analysis.Complex.OpenMapping` opens that ball.
 
-Simple connectivity is then purely topological, and Mathlib supplies it: injectivity and continuity
-make `Ω.restrict g` an injective continuous map, openness makes it an open map, hence a topological
-embedding, and `Topology.IsEmbedding.isSimplyConnected_image` transports simple connectivity across
-an embedding. Holomorphy enters *only* through the open mapping theorem; there is no separate
-homotopy argument here.
+Simple connectivity is then purely topological, and Mathlib supplies it: injectivity and
+continuity make `Ω.domRestrict g` an injective continuous map, openness makes it an open map,
+hence a topological embedding, and `Topology.IsEmbedding.isSimplyConnected_image` transports
+simple connectivity across an embedding. Holomorphy enters *only* through the open mapping
+theorem; there is no separate homotopy argument here.
 
 ## Main statements
 
@@ -86,10 +86,10 @@ theorem isOpen_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
 subset of the subtype `↥Ω` is `Ω` met with an open set, and the image of that is open by
 `TauCeti.isOpen_image_of_differentiableOn_of_injOn`. -/
 theorem isOpenMap_restrict_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
-    (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) : IsOpenMap (Ω.restrict g) := by
+    (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) : IsOpenMap (Ω.domRestrict g) := by
   intro V hV
   obtain ⟨W, hW, rfl⟩ := isOpen_induced_iff.mp hV
-  rw [Set.image_restrict]
+  rw [Set.image_domRestrict]
   exact isOpen_image_of_differentiableOn_of_injOn (hW.inter hΩo) (hgd.mono inter_subset_right)
     (hgi.mono inter_subset_right)
 
@@ -102,13 +102,13 @@ embedding, because it is continuous, injective, and open. -/
 theorem isSimplyConnected_image_of_differentiableOn_of_injOn (hΩo : IsOpen Ω)
     (hΩc : IsSimplyConnected Ω) (hgd : DifferentiableOn ℂ g Ω) (hgi : InjOn g Ω) :
     IsSimplyConnected (g '' Ω) := by
-  have hemb : IsEmbedding (Ω.restrict g) :=
+  have hemb : IsEmbedding (Ω.domRestrict g) :=
     (IsOpenEmbedding.of_continuous_injective_isOpenMap
-      (continuousOn_iff_continuous_restrict.mp hgd.continuousOn)
+      (continuousOn_iff_continuous_domRestrict.mp hgd.continuousOn)
       (Set.injOn_iff_injective.mp hgi)
       (isOpenMap_restrict_of_differentiableOn_of_injOn hΩo hgd hgi)).isEmbedding
   have himg := hemb.isSimplyConnected_image (s := (univ : Set ↥Ω))
-  rw [image_univ, Set.range_restrict] at himg
+  rw [image_univ, Set.range_domRestrict] at himg
   refine himg.mpr ?_
   -- `IsSimplyConnected (univ : Set ↥Ω)` is simple connectivity of `↥Ω` itself.
   have : SimplyConnectedSpace ↥Ω := hΩc

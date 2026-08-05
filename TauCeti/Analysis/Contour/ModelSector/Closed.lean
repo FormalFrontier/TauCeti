@@ -145,8 +145,7 @@ Hungerbühler–Wasem model sector of *interior angle* `α` only for `0 < α < 2
 radii coincide, and at `α ≥ 2π` the arc wraps — `α = 4π` traverses the circle twice, giving winding
 `2`. At both ends the formula stands; it is the corner reading that lapses. -/
 @[simp]
-theorem windingNumber_closedModelSector
-    {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ : ℝ) {α : ℝ} (hα : 0 ≤ α) :
+theorem windingNumber_closedModelSector {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ : ℝ) {α : ℝ} (hα : 0 ≤ α) :
     windingNumber (modelSector z₀ r φ α) (-r) (r + α) z₀ = (α : ℂ) / (2 * (Real.pi : ℂ)) := by
   have hrne : r ≠ 0 := ne_of_gt hr
   have hcorner := modelSector_eqOn_corner z₀ hr.le φ α

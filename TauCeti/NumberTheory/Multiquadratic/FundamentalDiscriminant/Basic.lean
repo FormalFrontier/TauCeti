@@ -163,8 +163,7 @@ theorem odd_prod_oddPrimeDiscriminant (hodd : ∀ i ∈ s, Odd (p i)) :
   omega
 
 /-- A product of odd prime discriminants at pairwise distinct primes is squarefree. -/
-theorem squarefree_prod_oddPrimeDiscriminant (hp : ∀ i ∈ s, (p i).Prime)
-    (hinj : Set.InjOn p s) :
+theorem squarefree_prod_oddPrimeDiscriminant (hp : ∀ i ∈ s, (p i).Prime) (hinj : Set.InjOn p s) :
     Squarefree (∏ i ∈ s, oddPrimeDiscriminant (p i)) := by
   refine Finset.squarefree_prod_of_pairwise_isCoprime (fun i hi j hj hij => ?_)
     fun i hi => squarefree_oddPrimeDiscriminant (hp i hi).squarefree
@@ -231,8 +230,7 @@ private theorem prod_oddPrimeDiscriminant_natAbs_of_not_isEvenPrimeDiscriminant 
 /-- **A product of distinct prime discriminants with at most one even value is a fundamental
 discriminant.** -/
 theorem isFundamentalDiscriminant_prod {D : ι → ℤ} (hD : ∀ i ∈ s, IsPrimeDiscriminant (D i))
-    (hDinj : Set.InjOn D s)
-    (heven : ∀ i ∈ s, ∀ j ∈ s, IsEvenPrimeDiscriminant (D i) →
+    (hDinj : Set.InjOn D s) (heven : ∀ i ∈ s, ∀ j ∈ s, IsEvenPrimeDiscriminant (D i) →
       IsEvenPrimeDiscriminant (D j) → D i = D j) :
     IsFundamentalDiscriminant (∏ i ∈ s, D i) := by
   classical

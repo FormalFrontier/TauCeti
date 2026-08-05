@@ -66,8 +66,7 @@ lemma add_mem_completeLinearSystem_right {D D' E E' : WeilDivisor X}
 /-- If two complete linear systems are nonempty, then the complete linear system of the sum of
 their divisor classes is nonempty. -/
 lemma nonempty_completeLinearSystem_add {D D' : WeilDivisor X}
-    (hD : (S.completeLinearSystem D).Nonempty)
-    (hD' : (S.completeLinearSystem D').Nonempty) :
+    (hD : (S.completeLinearSystem D).Nonempty) (hD' : (S.completeLinearSystem D').Nonempty) :
     (S.completeLinearSystem (D + D')).Nonempty := by
   rcases hD with ⟨E, hE⟩
   rcases hD' with ⟨E', hE'⟩
@@ -87,8 +86,7 @@ lemma mapsTo_add_effective_completeLinearSystem {D A : WeilDivisor X} (hA : IsEf
 /-- Adding an effective divisor to the indexing divisor preserves nonemptiness of complete
 linear systems. -/
 lemma nonempty_completeLinearSystem_add_effective {D A : WeilDivisor X} (hA : IsEffective A)
-    (hD : (S.completeLinearSystem D).Nonempty) :
-    (S.completeLinearSystem (D + A)).Nonempty := by
+    (hD : (S.completeLinearSystem D).Nonempty) : (S.completeLinearSystem (D + A)).Nonempty := by
   rcases hD with ⟨E, hE⟩
   exact ⟨E + A, S.add_effective_mem_completeLinearSystem hA hE⟩
 

@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal
+public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Basic
 
 /-!
 # Relabeling a Young tableau conjugates its Young symmetrizer
@@ -28,7 +28,8 @@ character, depend only on the shape of `t`.
 ## Main results
 
 * `YoungTableau.youngSymmetrizer_relabel`: the Young symmetrizer of a relabeled tableau is the
-  conjugate of the Young symmetrizer.
+  conjugate of the Young symmetrizer, and `YoungTableau.youngSymmetrizerOver_relabel` says the
+  same for its transport to a `ℚ`-algebra.
 * `YoungTableau.spechtIdealRelabelRepEquiv`: right multiplication by `σ` as an isomorphism of
   representations `ℚ[Sₙ] c_{σt} ≅ ℚ[Sₙ] c_t`.
 * `YoungTableau.spechtIdealRepIso`, `YoungTableau.finrank_spechtIdeal_eq` and
@@ -152,6 +153,14 @@ theorem youngSymmetrizer_relabel :
     columnAntisymmetrizer_relabel]
   simp only [mul_assoc]
   rw [← mul_assoc (MonoidAlgebra.single σ⁻¹ (1 : ℚ)), hσ, one_mul]
+
+/-- Relabeling by `σ` conjugates the transported Young symmetrizer, as it does the rational
+one. -/
+theorem youngSymmetrizerOver_relabel (k : Type*) [CommSemiring k] [Algebra ℚ k] :
+    youngSymmetrizerOver k (relabel σ t) =
+      MonoidAlgebra.single σ 1 * youngSymmetrizerOver k t * MonoidAlgebra.single σ⁻¹ 1 := by
+  rw [youngSymmetrizerOver_def, youngSymmetrizerOver_def, youngSymmetrizer_relabel, map_mul,
+    map_mul, MonoidAlgebra.mapAlgHom_single, MonoidAlgebra.mapAlgHom_single, map_one]
 
 /-! ## The Young-symmetrizer left ideal of a relabeled tableau -/
 

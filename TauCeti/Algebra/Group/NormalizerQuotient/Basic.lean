@@ -60,8 +60,7 @@ abbrev normalizerQuotientMk (H : Subgroup G) :
 
 /-- The canonical quotient map evaluates as the quotient-group constructor. -/
 @[simp]
-lemma normalizerQuotientMk_apply (H : Subgroup G)
-    (g : _root_.Subgroup.normalizer (H : Set G)) :
+lemma normalizerQuotientMk_apply (H : Subgroup G) (g : _root_.Subgroup.normalizer (H : Set G)) :
     normalizerQuotientMk H g = (g : normalizerQuotient H) :=
   rfl
 
@@ -75,8 +74,7 @@ lemma normalizerQuotientMk_eq_one_iff (H : Subgroup G)
 
 /-- The kernel of the quotient map `N(H) →* N(H) / H` is the copy of `H` inside its
 normalizer. -/
-lemma normalizerQuotientMk_ker (H : Subgroup G) :
-    (normalizerQuotientMk H).ker =
+lemma normalizerQuotientMk_ker (H : Subgroup G) : (normalizerQuotientMk H).ker =
       H.subgroupOf (_root_.Subgroup.normalizer (H : Set G)) := by
   exact QuotientGroup.ker_mk'
     (N := H.subgroupOf (_root_.Subgroup.normalizer (H : Set G)))
@@ -88,8 +86,7 @@ lemma normalizerQuotientMk_surjective (H : Subgroup G) :
     (H.subgroupOf (_root_.Subgroup.normalizer (H : Set G)))
 
 /-- The canonical map `N(H) →* N(H) / H` has full range. -/
-lemma normalizerQuotientMk_range (H : Subgroup G) :
-    (normalizerQuotientMk H).range = ⊤ :=
+lemma normalizerQuotientMk_range (H : Subgroup G) : (normalizerQuotientMk H).range = ⊤ :=
   QuotientGroup.range_mk'
     (N := H.subgroupOf (_root_.Subgroup.normalizer (H : Set G)))
 
@@ -97,8 +94,7 @@ variable {M : Type*} [Group M]
 
 /-- The universal property of `N(H) / H`: a homomorphism from the normalizer that sends every
 ambient element of `H` to `1` descends to a homomorphism from the normalizer quotient. -/
-abbrev normalizerQuotientLift (H : Subgroup G)
-    (φ : _root_.Subgroup.normalizer (H : Set G) →* M)
+abbrev normalizerQuotientLift (H : Subgroup G) (φ : _root_.Subgroup.normalizer (H : Set G) →* M)
     (hφ : ∀ g : _root_.Subgroup.normalizer (H : Set G), (g : G) ∈ H → φ g = 1) :
     normalizerQuotient H →* M :=
   QuotientGroup.lift (H.subgroupOf (_root_.Subgroup.normalizer (H : Set G))) φ (by
@@ -107,8 +103,7 @@ abbrev normalizerQuotientLift (H : Subgroup G)
 
 /-- The lift from `N(H) / H` evaluates on representatives as the original homomorphism. -/
 @[simp]
-lemma normalizerQuotientLift_mk (H : Subgroup G)
-    (φ : _root_.Subgroup.normalizer (H : Set G) →* M)
+lemma normalizerQuotientLift_mk (H : Subgroup G) (φ : _root_.Subgroup.normalizer (H : Set G) →* M)
     (hφ : ∀ g : _root_.Subgroup.normalizer (H : Set G), (g : G) ∈ H → φ g = 1)
     (g : _root_.Subgroup.normalizer (H : Set G)) :
     normalizerQuotientLift H φ hφ (normalizerQuotientMk H g) = φ g :=
@@ -229,8 +224,7 @@ abbrev normalizerQuotientToQuotientOfNormal :
 /-- The comparison map from `N(H) / H` to `G / H` sends a normalizer representative to its
 ordinary quotient class. -/
 @[simp]
-lemma normalizerQuotientToQuotientOfNormal_mk
-    (g : _root_.Subgroup.normalizer (H : Set G)) :
+lemma normalizerQuotientToQuotientOfNormal_mk (g : _root_.Subgroup.normalizer (H : Set G)) :
     normalizerQuotientToQuotientOfNormal H (normalizerQuotientMk H g) =
       QuotientGroup.mk' H (g : G) :=
   rfl
@@ -261,8 +255,7 @@ noncomputable abbrev normalizerQuotientEquivQuotientOfNormal :
 
 /-- The normal-case equivalence sends a normalizer representative to its ordinary quotient
 class in `G / H`. -/
-lemma normalizerQuotientEquivQuotientOfNormal_mk
-    (g : _root_.Subgroup.normalizer (H : Set G)) :
+lemma normalizerQuotientEquivQuotientOfNormal_mk (g : _root_.Subgroup.normalizer (H : Set G)) :
     normalizerQuotientEquivQuotientOfNormal H (normalizerQuotientMk H g) =
       QuotientGroup.mk' H (g : G) :=
   rfl

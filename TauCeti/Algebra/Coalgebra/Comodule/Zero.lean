@@ -95,7 +95,7 @@ theorem isZero_of_subsingleton (M : ComoduleCat.{u, v, w} R C) [Subsingleton M] 
 
 /-- The named zero comodule is a zero object. -/
 theorem isZero_zero : IsZero (zero R C : ComoduleCat.{u, v, w} R C) := by
-  haveI := subsingleton_zero (R := R) (C := C)
+  have := subsingleton_zero (R := R) (C := C)
   exact isZero_of_subsingleton (R := R) (C := C) (zero R C)
 
 /-- Any morphism from the named zero comodule is zero. -/

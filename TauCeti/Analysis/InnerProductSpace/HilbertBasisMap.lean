@@ -38,15 +38,13 @@ protected noncomputable def _root_.HilbertBasis.mapₗᵢ
 
 /-- The coordinate representation of `b.mapₗᵢ e` is `b.repr` after applying `e.symm`. -/
 @[simp]
-theorem _root_.HilbertBasis.repr_mapₗᵢ
-    (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
+theorem _root_.HilbertBasis.repr_mapₗᵢ (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
     (b.mapₗᵢ e).repr = e.symm.trans b.repr :=
   congrArg _root_.HilbertBasis.repr (_root_.HilbertBasis.mapₗᵢ.eq_1 b e)
 
 /-- The `i`th vector of the transported basis is the image of the `i`th vector. -/
 @[simp]
-theorem _root_.HilbertBasis.mapₗᵢ_apply
-    (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) (i : ι) :
+theorem _root_.HilbertBasis.mapₗᵢ_apply (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) (i : ι) :
     b.mapₗᵢ e i = e (b i) :=
   by
     classical
@@ -57,8 +55,7 @@ theorem _root_.HilbertBasis.mapₗᵢ_apply
 
 /-- Function-level form of `HilbertBasis.mapₗᵢ_apply`. -/
 @[simp]
-theorem _root_.HilbertBasis.coe_mapₗᵢ
-    (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
+theorem _root_.HilbertBasis.coe_mapₗᵢ (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
     ⇑(b.mapₗᵢ e) = e ∘ b :=
   funext (b.mapₗᵢ_apply e)
 
@@ -80,16 +77,14 @@ theorem _root_.HilbertBasis.mapₗᵢ_trans {G : Type*} [NormedAddCommGroup G] [
 
 /-- Transporting a Hilbert basis across an isometry and then back across the inverse isometry
 recovers the original basis. -/
-theorem _root_.HilbertBasis.mapₗᵢ_symm
-    (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
+theorem _root_.HilbertBasis.mapₗᵢ_symm (b : _root_.HilbertBasis ι 𝕜 E) (e : E ≃ₗᵢ[𝕜] F) :
     (b.mapₗᵢ e).mapₗᵢ e.symm = b := by
   rw [_root_.HilbertBasis.mapₗᵢ_trans]
   simp
 
 /-- Transporting a Hilbert basis back across an inverse isometry and then forward again recovers
 the original basis. -/
-theorem _root_.HilbertBasis.mapₗᵢ_symm_self
-    (b : _root_.HilbertBasis ι 𝕜 F) (e : E ≃ₗᵢ[𝕜] F) :
+theorem _root_.HilbertBasis.mapₗᵢ_symm_self (b : _root_.HilbertBasis ι 𝕜 F) (e : E ≃ₗᵢ[𝕜] F) :
     (b.mapₗᵢ e.symm).mapₗᵢ e = b := by
   rw [_root_.HilbertBasis.mapₗᵢ_trans]
   simp

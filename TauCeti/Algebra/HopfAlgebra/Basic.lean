@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.Hom
-public import Mathlib.RingTheory.HopfAlgebra.Basic
-public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
+public import Mathlib.RingTheory.HopfAlgebra.Convolution
 
 /-!
 # Hopf algebra morphisms
@@ -18,13 +16,11 @@ antipode. We prove that here by the usual convolution-inverse uniqueness argumen
 
 ## Main results
 
-* `TauCeti.HopfAlgebra.antipode_convMul_id` and
-  `TauCeti.HopfAlgebra.id_convMul_antipode`: the antipode is respectively a left and right
-  convolution inverse of the identity linear map.
-* `TauCeti.TensorProduct.antipode_tmul`: the antipode on a tensor product of Hopf algebras
-  acts componentwise on pure tensors.
 * `BialgHom.toLinearMap_comp_antipode` and `BialgHom.map_antipode`: a bialgebra morphism
-  between Hopf algebras commutes with the antipodes.
+  between Hopf algebras commutes with the antipodes (the convolution-inverse identities
+  themselves are Mathlib's `LinearMap.antipode_mul_id` and `LinearMap.id_mul_antipode`,
+  and the pure-tensor antipode formula is Mathlib's simp lemma
+  `TensorProduct.antipode_def`).
 
 ## References
 
@@ -32,8 +28,8 @@ This supplies a formal prerequisite for the Tau Ceti reductive-groups roadmap, L
 "the functor of points and the three-way dictionary": morphisms in the Hopf-algebra model
 must respect the inverse map in the affine group-scheme model. The proof uses Mathlib's
 convolution product on linear maps, due to Yaël Dillies, Michał Mrugała and Yunzhou Xie.
-The tensor-product antipode formula uses Mathlib's
-`Mathlib.RingTheory.HopfAlgebra.TensorProduct`, specifically `TensorProduct.antipode_def`.
+The pure-tensor antipode formula is Mathlib's `TensorProduct.antipode_def` in
+`Mathlib.RingTheory.HopfAlgebra.TensorProduct`, imported where consumed.
 -/
 
 public section
@@ -42,68 +38,10 @@ open Coalgebra HopfAlgebra TensorProduct WithConv
 
 namespace TauCeti
 
-namespace TensorProduct
-
-variable {R S A B : Type*} [CommSemiring R] [CommSemiring S] [Semiring A] [Semiring B]
-  [Algebra R S] [_root_.HopfAlgebra R A] [_root_.HopfAlgebra S B] [Algebra R B]
-  [IsScalarTower R S B]
-
-/-- The antipode on a tensor product of Hopf algebras acts componentwise on pure tensors. -/
-@[simp]
-lemma antipode_tmul (b : B) (a : A) :
-    antipode S (A := B ⊗[R] A) (b ⊗ₜ[R] a) =
-      antipode S b ⊗ₜ[R] antipode R a := by
-  simp [_root_.TensorProduct.antipode_def]
-
-end TensorProduct
-
-namespace HopfAlgebra
-
-variable {R H : Type*} [CommSemiring R] [Semiring H] [_root_.HopfAlgebra R H]
-
-/-- The antipode on the base-changed Hopf algebra `K ⊗[k] A` sends a pure tensor
-`s ⊗ a` to `s ⊗ S a`. -/
-@[simp]
-lemma baseChange_antipode_tmul {k K A : Type*} [CommSemiring k] [CommSemiring K]
-    [Semiring A] [Algebra k K] [_root_.HopfAlgebra k A] (s : K) (a : A) :
-    antipode K (A := K ⊗[k] A) (s ⊗ₜ[k] a) =
-      s ⊗ₜ[k] antipode k a := by
-  simp
-
-/-- The antipode is a left convolution inverse of the identity in the convolution ring of
-linear maps: `S * id = 1`. This is a restatement of the antipode axiom
-`HopfAlgebra.mul_antipode_rTensor_comul`. -/
-lemma antipode_convMul_id :
-    (toConv (antipode R) : WithConv (H →ₗ[R] H)) * toConv LinearMap.id = 1 := by
-  refine WithConv.ext ?_
-  ext h
-  simp only [LinearMap.convMul_apply, LinearMap.convOne_apply,
-    ← LinearMap.rTensor_def]
-  exact mul_antipode_rTensor_comul_apply h
-
-/-- The antipode is a right convolution inverse of the identity in the convolution ring of
-linear maps: `id * S = 1`. This is a restatement of the antipode axiom
-`HopfAlgebra.mul_antipode_lTensor_comul`. -/
-lemma id_convMul_antipode :
-    (toConv LinearMap.id : WithConv (H →ₗ[R] H)) * toConv (antipode R) = 1 := by
-  refine WithConv.ext ?_
-  ext h
-  simp only [LinearMap.convMul_apply, LinearMap.convOne_apply,
-    ← LinearMap.lTensor_def]
-  exact mul_antipode_lTensor_comul_apply h
-
-end HopfAlgebra
-
 namespace BialgHom
 
 variable {R A B : Type*} [CommSemiring R]
 variable [Semiring A] [Semiring B] [_root_.HopfAlgebra R A] [_root_.HopfAlgebra R B]
-
-/-- The algebra-hom projection of a bialgebra hom has the same underlying linear map as the
-bialgebra hom itself. -/
-private lemma toAlgHom_toLinearMap (φ : A →ₐc[R] B) :
-    (φ : A →ₐ[R] B).toLinearMap = φ.toLinearMap :=
-  _root_.BialgHom.toAlgHom_toLinearMap φ
 
 /-- The coalgebra-hom projection of a bialgebra hom has the same underlying linear map as the
 bialgebra hom itself. -/
@@ -124,7 +62,7 @@ private lemma algHom_comp_convMul_ofConv (φ : A →ₐc[R] B) (f g : A →ₗ[R
           toConv (φ.toLinearMap.comp g)).ofConv =
       φ.toLinearMap.comp (toConv f * toConv g).ofConv := by
   have hφ : φ.toLinearMap = (φ : A →ₐ[R] B).toLinearMap :=
-    (toAlgHom_toLinearMap φ).symm
+    (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
   rw [hφ]
   simpa using
     (LinearMap.algHom_comp_convMul_distrib (φ : A →ₐ[R] B) (toConv f) (toConv g)).symm
@@ -178,7 +116,7 @@ theorem toLinearMap_comp_antipode (φ : A →ₐc[R] B) :
     dsimp [g, f]
     rw [toCoalgHom_toLinearMap φ]
     rw [algHom_comp_antipode_id_ofConv φ]
-    rw [HopfAlgebra.antipode_convMul_id]
+    rw [LinearMap.antipode_mul_id]
     ext a
     exact (φ : A →ₐ[R] B).commutes (Coalgebra.counit a)
   have hh_right : f * h = 1 := by
@@ -186,7 +124,7 @@ theorem toLinearMap_comp_antipode (φ : A →ₐc[R] B) :
     dsimp [f, h]
     rw [toCoalgHom_toLinearMap φ]
     rw [id_antipode_comp_coalgHom_ofConv φ]
-    rw [HopfAlgebra.id_convMul_antipode]
+    rw [LinearMap.id_mul_antipode]
     ext a
     exact congr_arg (algebraMap R B) (CoalgHomClass.counit_comp_apply φ a)
   have h_eq : g = h := by

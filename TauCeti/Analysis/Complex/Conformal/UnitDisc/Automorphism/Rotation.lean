@@ -40,7 +40,7 @@ public section
 
 namespace TauCeti
 
-open Complex Metric Set
+open _root_.Complex Metric Set
 open scoped ComplexConjugate Topology
 
 variable {f g : ℂ → ℂ}

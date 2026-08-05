@@ -96,7 +96,7 @@ is the identity of `Spec K` (`Over.tensorUnit_hom`), and an isomorphism is geome
 by `geometricallyIntegral_of_isIso`. -/
 private lemma geometricallyIntegralTensorUnit :
     GeometricallyIntegral (𝟙_ (Over (Spec (.of K)))).hom := by
-  haveI hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
+  have hid : GeometricallyIntegral (𝟙 (Spec (.of K))) := geometricallyIntegral_of_isIso _
   rw [Over.tensorUnit_hom]
   exact hid
 
@@ -116,8 +116,8 @@ def trivial : AbelianVariety K :=
 `Over (Spec K)`. -/
 @[simp]
 lemma trivial_toOver : (trivial K).toOver = 𝟙_ (Over (Spec (.of K))) := by
-  letI := isProperTensorUnit K
-  letI := geometricallyIntegralTensorUnit K
+  let := isProperTensorUnit K
+  let := geometricallyIntegralTensorUnit K
   unfold trivial
   exact ofGeometricallyIntegral_toOver _
 
@@ -137,8 +137,8 @@ terminal object. -/
 lemma trivial_one :
     η[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
       η[𝟙_ (Over (Spec (.of K)))] := by
-  letI := isProperTensorUnit K
-  letI := geometricallyIntegralTensorUnit K
+  let := isProperTensorUnit K
+  let := geometricallyIntegralTensorUnit K
   unfold trivial
   exact ofGeometricallyIntegral_one _
 
@@ -148,8 +148,8 @@ lemma trivial_mul :
     μ[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
       (eqToHom (trivial_toOver K) ⊗ₘ eqToHom (trivial_toOver K)) ≫
         μ[𝟙_ (Over (Spec (.of K)))] := by
-  letI := isProperTensorUnit K
-  letI := geometricallyIntegralTensorUnit K
+  let := isProperTensorUnit K
+  let := geometricallyIntegralTensorUnit K
   unfold trivial
   exact ofGeometricallyIntegral_mul _
 
@@ -158,8 +158,8 @@ lemma trivial_mul :
 lemma trivial_inv :
     ι[(trivial K).toOver] ≫ eqToHom (trivial_toOver K) =
       eqToHom (trivial_toOver K) ≫ ι[𝟙_ (Over (Spec (.of K)))] := by
-  letI := isProperTensorUnit K
-  letI := geometricallyIntegralTensorUnit K
+  let := isProperTensorUnit K
+  let := geometricallyIntegralTensorUnit K
   unfold trivial
   exact ofGeometricallyIntegral_inv _
 

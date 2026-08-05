@@ -83,7 +83,7 @@ though the analogous statement for an arbitrary closed cover of the domain fails
 private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
     [TopologicalSpace W] {f : Z → W} (hf : Continuous f) {D₁ D₂ : Set W}
     (h₁ : IsClosed D₁) (h₂ : IsClosed D₂) (hcov : D₁ ∪ D₂ = Set.univ)
-    (hi₁ : IsInducing ((f ⁻¹' D₁).restrict f)) (hi₂ : IsInducing ((f ⁻¹' D₂).restrict f)) :
+    (hi₁ : IsInducing ((f ⁻¹' D₁).domRestrict f)) (hi₂ : IsInducing ((f ⁻¹' D₂).domRestrict f)) :
     IsInducing f := by
   rw [isInducing_iff_nhds]
   intro z
@@ -91,7 +91,7 @@ private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
   rw [Filter.le_def]
   intro U hU
   rw [Filter.mem_comap]
-  have extract : ∀ D : Set W, IsInducing ((f ⁻¹' D).restrict f) → f z ∈ D →
+  have extract : ∀ D : Set W, IsInducing ((f ⁻¹' D).domRestrict f) → f z ∈ D →
       ∃ V ∈ 𝓝 (f z), f ⁻¹' V ∩ f ⁻¹' D ⊆ U := by
     intro D hi hzD
     rw [isInducing_iff_nhds] at hi
@@ -103,8 +103,8 @@ private theorem isInducing_of_isClosed_cover {Z W : Type*} [TopologicalSpace Z]
     rintro y ⟨hyV, hyD⟩
     -- The restricted map applies definitionally to `f y`, so this `show` only changes
     -- `hyV : f y ∈ V` into the preimage-membership type expected by `hVsub`.
-    exact hVsub (show ((f ⁻¹' D).restrict f) ⟨y, hyD⟩ ∈ V from hyV)
-  have wstep : ∀ D : Set W, IsClosed D → IsInducing ((f ⁻¹' D).restrict f) →
+    exact hVsub (show ((f ⁻¹' D).domRestrict f) ⟨y, hyD⟩ ∈ V from hyV)
+  have wstep : ∀ D : Set W, IsClosed D → IsInducing ((f ⁻¹' D).domRestrict f) →
       ∃ V ∈ 𝓝 (f z), f ⁻¹' V ∩ f ⁻¹' D ⊆ U := by
     intro D hD hi
     by_cases hzD : f z ∈ D
@@ -126,15 +126,15 @@ restriction of `f` to `f ⁻¹' D` is inducing. -/
 private theorem isInducing_restrict_of_embedding {Z W A : Type*} [TopologicalSpace Z]
     [TopologicalSpace W] [TopologicalSpace A] {f : Z → W} {D : Set W} {e : A → Z}
     (he : IsEmbedding e) (hrange : Set.range e = f ⁻¹' D) (hfe : IsInducing (f ∘ e)) :
-    IsInducing ((f ⁻¹' D).restrict f) := by
+    IsInducing ((f ⁻¹' D).domRestrict f) := by
   let φ : A ≃ₜ (f ⁻¹' D) := he.toHomeomorph.trans (Homeomorph.setCongr hrange)
   have hφ_apply (a : A) : (φ a : Z) = e a := by
     simp only [φ, Homeomorph.trans_apply]
     simp [Homeomorph.setCongr]
-  have hcomp : (f ⁻¹' D).restrict f ∘ φ = f ∘ e := by
+  have hcomp : (f ⁻¹' D).domRestrict f ∘ φ = f ∘ e := by
     funext a
     exact congrArg f (hφ_apply a)
-  have h0 : IsInducing ((f ⁻¹' D).restrict f ∘ φ) := hcomp ▸ hfe
+  have h0 : IsInducing ((f ⁻¹' D).domRestrict f ∘ φ) := hcomp ▸ hfe
   have h2 := h0.comp φ.symm.isInducing
   rwa [Function.comp_assoc, Homeomorph.self_comp_symm, Function.comp_id] at h2
 
@@ -208,17 +208,14 @@ theorem isEmbedding_right (F : Isotopy f₀ f₁) : IsEmbedding f₁ := by
 /-- Value of the concatenated homotopy on the first half `[0, 1 / 2]`, with the time parameter
 rescaled to `2 * t`. -/
 private theorem trans_toHomotopy_apply_of_le (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) {t : I} (x : X)
-    (h : (t : ℝ) ≤ 1 / 2) :
-    (F.toHomotopy.trans G.toHomotopy) (t, x)
+    (h : (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = F.toHomotopy (⟨2 * t, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨t.2.1, h⟩⟩, x) := by
   rw [Homotopy.trans_apply, dif_pos h]
 
 /-- Value of the concatenated homotopy on the second half `[1 / 2, 1]`, with the time parameter
 rescaled to `2 * t - 1`. -/
 private theorem trans_toHomotopy_apply_of_not_le (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) {t : I}
-    (x : X)
-    (h : ¬ (t : ℝ) ≤ 1 / 2) :
-    (F.toHomotopy.trans G.toHomotopy) (t, x)
+    (x : X) (h : ¬ (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = G.toHomotopy
           (⟨2 * t - 1, unitInterval.two_mul_sub_one_mem_iff.2 ⟨(not_le.1 h).le, t.2.2⟩⟩, x) := by
   rw [Homotopy.trans_apply, dif_neg h]
@@ -260,14 +257,14 @@ private theorem isEmbedding_halfRight : IsEmbedding halfRight :=
 
 private theorem range_half : Set.range half = {t : I | (t : ℝ) ≤ 1 / 2} := by
   ext t
-  simp only [Set.mem_range, Set.mem_setOf_eq]
+  simp only [Set.mem_range, Set.mem_ofPred_eq]
   refine ⟨?_, fun ht => ⟨⟨2 * t, ⟨by linarith [t.2.1], by linarith⟩⟩, ?_⟩⟩
   · rintro ⟨s, rfl⟩; rw [coe_half]; linarith [s.2.2]
   · exact half_left_inv t ht
 
 private theorem range_halfRight : Set.range halfRight = {t : I | 1 / 2 ≤ (t : ℝ)} := by
   ext t
-  simp only [Set.mem_range, Set.mem_setOf_eq]
+  simp only [Set.mem_range, Set.mem_ofPred_eq]
   refine ⟨?_, fun ht => ⟨⟨2 * t - 1, ⟨by linarith, by linarith [t.2.2]⟩⟩, ?_⟩⟩
   · rintro ⟨s, rfl⟩; rw [coe_halfRight]; linarith [s.2.1]
   · exact halfRight_right_inv t ht
@@ -312,7 +309,7 @@ noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f�
       set D₂ : Set (I × Y) := {q | 1 / 2 ≤ (q.1 : ℝ)} with hD₂def
       have hcov : D₁ ∪ D₂ = Set.univ := by
         ext q
-        simp only [hD₁def, hD₂def, Set.mem_union, Set.mem_setOf_eq, Set.mem_univ, iff_true]
+        simp only [hD₁def, hD₂def, Set.mem_union, Set.mem_ofPred_eq, Set.mem_univ, iff_true]
         exact le_total _ _
       have hrange₁ : Set.range (Prod.map half (id : X → X)) = T ⁻¹' D₁ := by
         rw [Set.range_prodMap, Set.range_id, range_half]; ext ⟨t, x⟩; simp [hT, hD₁def]
@@ -350,8 +347,7 @@ noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f�
 
 /-- The value of a concatenated isotopy is given by the first isotopy on `[0, 1 / 2]`
 and by the second isotopy on `[1 / 2, 1]`, with the time parameter rescaled linearly. -/
-theorem trans_apply {f₂ : C(X, Y)}
-    (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) (x : I × X) :
+theorem trans_apply {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) (x : I × X) :
     (F.trans G) x =
       if h : (x.1 : ℝ) ≤ 1 / 2 then
         F (⟨2 * x.1, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨x.1.2.1, h⟩⟩, x.2)
@@ -402,8 +398,7 @@ theorem symm (h : Isotopic f₀ f₁) : Isotopic f₁ f₀ :=
 
 /-- Isotopy is transitive. -/
 @[trans]
-theorem trans {f₂ : C(X, Y)}
-    (h₀₁ : Isotopic f₀ f₁) (h₁₂ : Isotopic f₁ f₂) : Isotopic f₀ f₂ :=
+theorem trans {f₂ : C(X, Y)} (h₀₁ : Isotopic f₀ f₁) (h₁₂ : Isotopic f₁ f₂) : Isotopic f₀ f₂ :=
   ⟨h₀₁.some.trans h₁₂.some⟩
 
 /-- The left endpoint of an isotopy relation is an embedding. -/

@@ -67,8 +67,7 @@ theorem tailProcess_eq_iInf_tailFamily (X : (k : ℕ) → Ω → β k) :
     (f := fun k : {k : ℕ // n ≤ k} => MeasurableSpace.comap (X k.1) inferInstance)).symm
 
 /-- A future coordinate is measurable with respect to the corresponding future σ-algebra. -/
-theorem measurable_tailFamily_of_le {X : (k : ℕ) → Ω → β k} {n k : ℕ}
-    (hnk : n ≤ k) :
+theorem measurable_tailFamily_of_le {X : (k : ℕ) → Ω → β k} {n k : ℕ} (hnk : n ≤ k) :
     Measurable[tailFamily X n] (X k) := by
   rw [measurable_iff_comap_le]
   exact le_iSup (fun k : {k : ℕ // n ≤ k} =>
@@ -112,7 +111,7 @@ theorem tailFamily_eq_comap_shift (X : (k : ℕ) → Ω → β k) (r : ℕ) :
         (fun ω n => X (r + n) ω) := measurable_iff_comap_le.mpr le_rfl
     exact (measurable_pi_apply d).comp hshift
   · have hmeas : Measurable[tailFamily X r] (fun ω n => X (r + n) ω) := by
-      letI : MeasurableSpace Ω := tailFamily X r
+      let : MeasurableSpace Ω := tailFamily X r
       exact measurable_pi_lambda (fun ω n => X (r + n) ω)
         fun n => measurable_tailFamily_of_le (Nat.le_add_right r n)
     exact hmeas.comap_le
@@ -121,8 +120,7 @@ variable [MeasurableSpace Ω]
 
 /-- If all coordinates are ambient-measurable, then each future σ-algebra is a sub-σ-algebra of
 the ambient one. -/
-theorem tailFamily_le_ambient {X : (k : ℕ) → Ω → β k} (n : ℕ)
-    (hX : ∀ k, n ≤ k → Measurable (X k)) :
+theorem tailFamily_le_ambient {X : (k : ℕ) → Ω → β k} (n : ℕ) (hX : ∀ k, n ≤ k → Measurable (X k)) :
     tailFamily X n ≤ (inferInstance : MeasurableSpace Ω) :=
   tailFamily_le_iff.2 hX
 

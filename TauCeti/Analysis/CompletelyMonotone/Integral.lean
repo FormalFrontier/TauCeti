@@ -141,8 +141,7 @@ lemma IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub
 
 /-- `-f'` is integrable on `(0, ∞)` for a completely monotone function, where the derivative is
 taken within the closed half-line `[0, ∞)`. -/
-lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn
-    (hcm : IsCompletelyMonotone f) :
+lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn (hcm : IsCompletelyMonotone f) :
     IntegrableOn (fun t => -iteratedDerivWithin 1 f (Ici 0) t) (Ioi 0) := by
   obtain ⟨L, hL, -⟩ := hcm.exists_nonneg_tendsto_atTop
   have hcont : ContinuousWithinAt f (Ici 0) 0 :=
@@ -158,8 +157,7 @@ lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn
 /-- The improper integral `∫ₓ^∞ (-f') dt = f x - L` from an arbitrary nonnegative endpoint `x`,
 for a completely monotone function with limit `L` at infinity. -/
 lemma IsCompletelyMonotone.integral_Ioi_neg_iteratedDerivWithin_one_of_nonneg
-    (hcm : IsCompletelyMonotone f) {x : ℝ} (hx : 0 ≤ x) {L : ℝ}
-    (hL : Tendsto f atTop (nhds L)) :
+    (hcm : IsCompletelyMonotone f) {x : ℝ} (hx : 0 ≤ x) {L : ℝ} (hL : Tendsto f atTop (nhds L)) :
     ∫ t in Ioi x, -iteratedDerivWithin 1 f (Ici 0) t = f x - L := by
   have hcont : ContinuousWithinAt f (Ici x) x :=
     (hcm.contDiffOn.continuousOn.continuousWithinAt hx).mono (Ici_subset_Ici.mpr hx)

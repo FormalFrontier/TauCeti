@@ -49,10 +49,10 @@ noncomputable def circleReflectionHomeomorph (c : ℂ) (r : ℝ) (hr : r ≠ 0) 
   right_inv z := Subtype.ext (inversion_inversion c hr z)
   continuous_toFun :=
     ((continuousOn_const.inversion continuousOn_const continuousOn_id fun z hz ↦
-      Set.mem_compl_singleton_iff.mp hz).restrict.subtype_mk _)
+      Set.mem_compl_singleton_iff.mp hz).domRestrict.subtype_mk _)
   continuous_invFun :=
     ((continuousOn_const.inversion continuousOn_const continuousOn_id fun z hz ↦
-      Set.mem_compl_singleton_iff.mp hz).restrict.subtype_mk _)
+      Set.mem_compl_singleton_iff.mp hz).domRestrict.subtype_mk _)
 
 /-- The punctured-plane circle-reflection homeomorphism acts by Euclidean inversion. -/
 @[simp]

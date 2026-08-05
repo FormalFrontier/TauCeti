@@ -53,7 +53,7 @@ theorem intermediateFieldEquivSubmoduleSqrtPrimes_apply_ofDual_eq
       (intermediateFieldEquivSubmodule (fun i => sq_sqrt_natCast (p i))
         (not_isSquare_prod_primes_of_injective p hp hinj) F).ofDual := by
   ext v
-  rw [mem_intermediateFieldEquivSubmoduleSqrtPrimes_apply_ofDual_iff,
+  erw [mem_intermediateFieldEquivSubmoduleSqrtPrimes_apply_ofDual_iff,
     mem_intermediateFieldEquivSubmodule_apply_ofDual_iff]
   rfl
 

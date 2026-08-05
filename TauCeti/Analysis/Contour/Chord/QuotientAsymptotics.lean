@@ -80,8 +80,7 @@ theorem chord_quotient_tendsto {u : Set ℝ} (hu : t₀ ∉ u)
 /-- **The normalized chord is eventually close to `1`**: for any `ρ > 0`, eventually along
 `𝓝[u] t₀`, `‖(γ t - s) / (L (t - t₀)) - 1‖ ≤ ρ`. -/
 private theorem eventually_normalized_chord_close {u : Set ℝ} (hu : t₀ ∉ u)
-    (h_deriv : HasDerivWithinAt γ L u t₀) (h_at : γ t₀ = s) (hL : L ≠ 0)
-    {ρ : ℝ} (hρ_pos : 0 < ρ) :
+    (h_deriv : HasDerivWithinAt γ L u t₀) (h_at : γ t₀ = s) (hL : L ≠ 0) {ρ : ℝ} (hρ_pos : 0 < ρ) :
     ∀ᶠ t in 𝓝[u] t₀, ‖(γ t - s) / (L * ((t - t₀ : ℝ) : ℂ)) - 1‖ ≤ ρ := by
   have h_div := (chord_quotient_tendsto hu h_deriv h_at).div_const L
   rw [div_self hL] at h_div
@@ -115,8 +114,7 @@ theorem exists_normalized_chord_bound_left
 
 /-- **Slit-plane condition for quotients near `1`.** If `‖z - 1‖ ≤ 1/4` and `‖w - 1‖ ≤ 1/4`,
 then `z / w ∈ Complex.slitPlane`: the quotient stays in the unit ball around `1`. -/
-theorem div_mem_slitPlane_of_close_to_one {z w : ℂ}
-    (hz : ‖z - 1‖ ≤ 1 / 4) (hw : ‖w - 1‖ ≤ 1 / 4) :
+theorem div_mem_slitPlane_of_close_to_one {z w : ℂ} (hz : ‖z - 1‖ ≤ 1 / 4) (hw : ‖w - 1‖ ≤ 1 / 4) :
     z / w ∈ Complex.slitPlane := by
   have hw_ne : w ≠ 0 := fun hw_eq => by
     rw [hw_eq, zero_sub, norm_neg, norm_one] at hw
@@ -150,8 +148,7 @@ private theorem ofReal_pos_mul_mem_slitPlane {c : ℝ} (hc : 0 < c) {z : ℂ}
 `(b - t₀) / (a - t₀) > 0` — then `(γ b - s) / (γ a - s) ∈ Complex.slitPlane`. -/
 theorem chord_quotient_mem_slitPlane (hL : L ≠ 0) {a b : ℝ}
     (ha : ‖(γ a - s) / (L * ((a - t₀ : ℝ) : ℂ)) - 1‖ ≤ 1 / 4)
-    (hb : ‖(γ b - s) / (L * ((b - t₀ : ℝ) : ℂ)) - 1‖ ≤ 1 / 4)
-    (hab : 0 < (b - t₀) / (a - t₀)) :
+    (hb : ‖(γ b - s) / (L * ((b - t₀ : ℝ) : ℂ)) - 1‖ ≤ 1 / 4) (hab : 0 < (b - t₀) / (a - t₀)) :
     (γ b - s) / (γ a - s) ∈ Complex.slitPlane := by
   have ha_ne : (a - t₀ : ℝ) ≠ 0 := fun h => by simp [h] at hab
   have hb_ne : (b - t₀ : ℝ) ≠ 0 := fun h => by simp [h] at hab
@@ -216,10 +213,8 @@ theorem arg_tendsto_of_pos_mul_tendsto {α : Type*} {l : Filter α} {c : α → 
 argument of the annular quotient `(γ (t₀ + r) - s) / (γ (t₀ + δ ε) - s)` converges to the
 argument of `(γ (t₀ + r) - s) / L`. -/
 theorem arg_annular_quotient_tendsto_right
-    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_at : γ t₀ = s)
-    {δ : ℝ → ℝ} {r : ℝ}
-    (h_slit : (γ (t₀ + r) - s) / L ∈ Complex.slitPlane)
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ ε)
+    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_at : γ t₀ = s) {δ : ℝ → ℝ} {r : ℝ}
+    (h_slit : (γ (t₀ + r) - s) / L ∈ Complex.slitPlane) (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ ε)
     (hδ_to_zero : Tendsto δ (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ))) :
     Tendsto (fun ε : ℝ => Complex.arg ((γ (t₀ + r) - s) / (γ (t₀ + δ ε) - s)))
       (𝓝[>] (0 : ℝ)) (𝓝 ((γ (t₀ + r) - s) / L).arg) := by
@@ -244,10 +239,8 @@ theorem arg_annular_quotient_tendsto_right
 argument of the annular quotient `(γ (t₀ - δ ε) - s) / (γ (t₀ - r) - s)` converges to the
 argument of `(-L) / (γ (t₀ - r) - s)`. -/
 theorem arg_annular_quotient_tendsto_left
-    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s)
-    {δ : ℝ → ℝ} {r : ℝ}
-    (h_slit : (-L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ ε)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s) {δ : ℝ → ℝ} {r : ℝ}
+    (h_slit : (-L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane) (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ ε)
     (hδ_to_zero : Tendsto δ (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ))) :
     Tendsto (fun ε : ℝ => Complex.arg ((γ (t₀ - δ ε) - s) / (γ (t₀ - r) - s)))
       (𝓝[>] (0 : ℝ)) (𝓝 ((-L) / (γ (t₀ - r) - s)).arg) := by

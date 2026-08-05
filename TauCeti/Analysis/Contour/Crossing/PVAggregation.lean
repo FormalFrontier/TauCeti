@@ -68,8 +68,7 @@ open scoped Fin.NatCast
 `[a, b]`, by restriction. -/
 private theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : ℂ}
     {g : ℂ → ℂ} {a b r t : ℝ} (hab : a ≤ b) (h_lo : a ≤ t - r) (h_hi : t + r ≤ b)
-    (hr_nonneg : 0 ≤ r)
-    (h_int_tr : ∀ ε : ℝ, 0 < ε →
+    (hr_nonneg : 0 ≤ r) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun u => if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0)
         MeasureTheory.volume a b) :
     ∀ᶠ ε in 𝓝[>] (0 : ℝ),
@@ -84,8 +83,7 @@ private theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ
 `s`: the plain integral, with the truncated integrability restricted from `[a, b]`. Both public
 aggregations discharge their piece hypothesis through this. -/
 private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ} {a b m : ℝ}
-    (hab : a ≤ b) (hm_pos : 0 < m)
-    (h_int_tr : ∀ ε : ℝ, 0 < ε →
+    (hab : a ≤ b) (hm_pos : 0 < m) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
         MeasureTheory.volume a b)
     {l u : ℝ} (hA : a ≤ l) (hlu : l ≤ u) (hu : u ≤ b)
@@ -164,8 +162,7 @@ positive distance from `s` off the windows, then the principal value at `s` exis
 `[a, b]`. The per-window limits are hypotheses, so both the simple-pole and higher-order
 per-window theorems discharge them. -/
 theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ}
-    {a b r : ℝ} (hab : a ≤ b) (crossings : Finset ℝ)
-    (hr_nonneg : crossings.Nonempty → 0 ≤ r)
+    {a b r : ℝ} (hab : a ≤ b) (crossings : Finset ℝ) (hr_nonneg : crossings.Nonempty → 0 ≤ r)
     (h_lo : ∀ t ∈ crossings, a ≤ t - r) (h_hi : ∀ t ∈ crossings, t + r ≤ b)
     (h_pair : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r ≤ |t - t'|)
     (h_int_tr : ∀ ε : ℝ, 0 < ε →
@@ -214,7 +211,7 @@ Sorting commutes with the strictly monotone window map — that is Mathlib's
 `StrictMonoOn.map_finsetSort` — so the `i`-th sorted pair is the `i`-th sorted crossing
 shifted by `±r`. -/
 private theorem orderEmbOfFin_window_fst_snd {crossings : Finset ℝ} {r : ℝ} {k : ℕ}
-    (hc : crossings.card = k) {F : Finset (ℝ × ℝ)}
+    (hc : crossings.card = k) {F : Finset (ℝ ×ₗ ℝ)}
     (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r)) (hF : F.card = k) (i : Fin k) :
     ((Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF) i).1 = crossings.orderEmbOfFin hc i - r
       ∧ ((Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF) i).2 = crossings.orderEmbOfFin hc i + r := by
@@ -226,7 +223,8 @@ private theorem orderEmbOfFin_window_fst_snd {crossings : Finset ℝ} {r : ℝ} 
     exact ((windowLexEmb r).strictMono.strictMonoOn _).map_finsetSort
   have key : Finset.orderEmbOfFin (α := ℝ ×ₗ ℝ) F hF i
       = windowLexEmb r (crossings.orderEmbOfFin hc i) := by
-    simp [Finset.orderEmbOfFin_apply, ← hmap]
+    rw [Finset.orderEmbOfFin_apply, Finset.orderEmbOfFin_apply]
+    simp [← hmap]
   exact ⟨congrArg Prod.fst key, congrArg Prod.snd key⟩
 
 /-- **The piece/window sum is Mathlib's interval-gap sum.** Along the suffix of the sorted
@@ -235,7 +233,7 @@ window values of that suffix. The `j = 0` case identifies `windowPieceSum` with
 `Finset.intervalGapsWithin`. -/
 private theorem windowPieceSum_eq_sum_intervalGapsWithin_add_sum {p : ℝ → ℝ → ℂ} {w : ℝ → ℂ}
     {a b r : ℝ} {k : ℕ} {crossings : Finset ℝ} (hc : crossings.card = k)
-    {F : Finset (ℝ × ℝ)} (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r))
+    {F : Finset (ℝ ×ₗ ℝ)} (hFdef : F = crossings.image fun t : ℝ => (t - r, t + r))
     (hF : F.card = k) :
     ∀ j : ℕ, j ≤ k →
       windowPieceSum r p w b ((crossings.sort (· ≤ ·)).drop j)
@@ -287,8 +285,7 @@ private theorem windowPieceSum_eq_sum_intervalGapsWithin_add_sum {p : ℝ → �
 /-- **The window aggregation telescopes to the endpoint difference.** Reading the pieces as the
 gaps of the window finset `F = {(t - r, t + r) : t ∈ crossings}` inside `[a, b]`, this is exactly
 `Finset.sum_intervalGapsWithin_add_sum_eq_sub` for `g = Φ ∘ γ`. -/
-private theorem windowPieceSum_boundary {γ : ℝ → ℂ} {Φ : ℂ → ℂ} {a b r : ℝ}
-    {crossings : Finset ℝ} :
+private theorem windowPieceSum_boundary {γ : ℝ → ℂ} {Φ : ℂ → ℂ} {a b r : ℝ} {crossings : Finset ℝ} :
     windowPieceSum r (fun l u => Φ (γ u) - Φ (γ l))
         (fun t => Φ (γ (t + r)) - Φ (γ (t - r))) b (crossings.sort (· ≤ ·)) a
       = Φ (γ b) - Φ (γ a) := by
@@ -322,8 +319,7 @@ private theorem windowPieceSum_boundary {γ : ℝ → ℂ} {Φ : ℂ → ℂ} {a
 principal value on `[a, b]` is `Φ (γ b) - Φ (γ a)` — in particular zero around a closed curve.
 The higher-order per-window limits have exactly this boundary-difference shape. -/
 theorem hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint {γ : ℝ → ℂ} {s : ℂ}
-    {g : ℂ → ℂ}
-    {Φ : ℂ → ℂ} {a b r : ℝ} (hab : a ≤ b) (crossings : Finset ℝ)
+    {g : ℂ → ℂ} {Φ : ℂ → ℂ} {a b r : ℝ} (hab : a ≤ b) (crossings : Finset ℝ)
     (hr_nonneg : crossings.Nonempty → 0 ≤ r)
     (h_lo : ∀ t ∈ crossings, a ≤ t - r) (h_hi : ∀ t ∈ crossings, t + r ≤ b)
     (h_pair : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r ≤ |t - t'|)

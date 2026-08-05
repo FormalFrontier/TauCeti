@@ -71,8 +71,7 @@ normal-case comparison, is the existing equivalence to `Deck p ⧸ H`. -/
 @[simp]
 lemma normalizerQuotientEquivQuotientOfNormal_subgroupFiberOrbitQuotientEquiv
     [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] [IsCancelSMul (Deck p) (p ⁻¹' {b})]
-    (H : Subgroup (Deck p)) [H.Normal] (e : p ⁻¹' {b})
-    (x : SubgroupFiberOrbitQuotient H b) :
+    (H : Subgroup (Deck p)) [H.Normal] (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     Subgroup.normalizerQuotientEquivQuotientOfNormal H
         (subgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal H e x) =
       subgroupFiberOrbitQuotientEquivQuotientGroup H e x := by
@@ -99,13 +98,12 @@ normalizer quotient's normal-case comparison, is the existing equivalence to `De
 @[simp]
 lemma normalizerQuotientEquivQuotientOfNormal_regularSubgroupFiberOrbitQuotientEquiv
     [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p) (hreg : IsRegular p)
-    (H : Subgroup (Deck p)) [H.Normal] (e : p ⁻¹' {b})
-    (x : SubgroupFiberOrbitQuotient H b) :
+    (H : Subgroup (Deck p)) [H.Normal] (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     Subgroup.normalizerQuotientEquivQuotientOfNormal H
         (regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal hp hreg H e x) =
       regularSubgroupFiberOrbitQuotientEquivQuotientGroup hp hreg H e x := by
-  letI := hreg.fiber_isPretransitive b
-  letI := fiber_isCancelSMul (b := b) hp
+  let := hreg.fiber_isPretransitive b
+  let := fiber_isCancelSMul (b := b) hp
   refine Quotient.inductionOn' x ?_
   intro e'
   obtain ⟨φ, hφ⟩ := MulAction.exists_smul_eq (Deck p) e e'
@@ -209,8 +207,7 @@ lemma regularSubgroupFiberOrbitQuotientEquivNormalizerQuotientOfNormal_apply_inv
 
 /-- Equality of subgroup fibre-orbit classes of two deck translates is equality of the
 corresponding inverse representatives in the normalizer quotient. -/
-lemma subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq
-    [IsCancelSMul (Deck p) (p ⁻¹' {b})]
+lemma subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq [IsCancelSMul (Deck p) (p ⁻¹' {b})]
     (H : Subgroup (Deck p)) [H.Normal] (e : p ⁻¹' {b}) (φ ψ : Deck p) :
     subgroupFiberOrbitClass H (φ • e) = subgroupFiberOrbitClass H (ψ • e) ↔
       Subgroup.normalizerQuotientMk H
@@ -230,7 +227,7 @@ lemma subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq_of_isCoveringMa
           ⟨φ⁻¹, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩ =
         Subgroup.normalizerQuotientMk H
           ⟨ψ⁻¹, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩ := by
-  letI := fiber_isCancelSMul (b := b) hp
+  let := fiber_isCancelSMul (b := b) hp
   exact subgroupFiberOrbitClass_eq_iff_normalizerQuotientMk_inv_eq H e φ ψ
 
 /-- The inverse equivalence sends a normalizer representative to the fibre-orbit class of its

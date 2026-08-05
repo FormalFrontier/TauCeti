@@ -56,7 +56,7 @@ theorem card (R : Type*) [Zero R] [Fintype R] (n : ℕ) :
 theorem natCard (R : Type*) [Zero R] [Finite R] (n : ℕ) :
     Nat.card (GridChain R n) = Nat.card R ^ n.factorial := by
   classical
-  letI : Fintype R := Fintype.ofFinite R
+  let : Fintype R := Fintype.ofFinite R
   rw [Nat.card_eq_fintype_card, card, Nat.card_eq_fintype_card]
 
 /-- The support of any grid chain has at most `n!` generators.
@@ -94,7 +94,7 @@ theorem card_zmod_two_two : Fintype.card (GridChain (ZMod 2) 2) = 4 := by
 /-- A finite coefficient grid chain module is finite. -/
 instance finite (R : Type*) [Zero R] [Finite R] (n : ℕ) : Finite (GridChain R n) := by
   classical
-  letI : Fintype R := Fintype.ofFinite R
+  let : Fintype R := Fintype.ofFinite R
   infer_instance
 
 end GridChain

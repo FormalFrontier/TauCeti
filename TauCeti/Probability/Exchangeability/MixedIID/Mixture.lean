@@ -77,7 +77,7 @@ theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMe
   have hpow : AEMeasurable (fun P : ProbabilityMeasure α =>
       Measure.infinitePi fun _ : ℕ => (P : Measure α)) (μ.map ν) :=
     TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   refine measure_eq_of_prefixProj_map_eq fun n => ?_
   have hfin : AEMeasurable (fun P : ProbabilityMeasure α =>
       (ProbabilityMeasure.pi fun _ : Fin n => P).toMeasure) (μ.map ν) :=
@@ -120,7 +120,7 @@ theorem mixedIID_mixingLaw_unique {μ : Measure Ω} [IsFiniteMeasure μ] {X : �
     (hX : ∀ n, AEMeasurable (X n) μ) {ν ν' : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) (h' : MixedIIDWith μ X ν') :
     μ.map ν = μ.map ν' := by
-  haveI : IsFiniteMeasure (μ.map ν) := Measure.isFiniteMeasure_map _ _
+  have : IsFiniteMeasure (μ.map ν) := Measure.isFiniteMeasure_map _ _
   refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
   rw [← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h,
     ← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h']
@@ -141,13 +141,16 @@ theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure 
     ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
       hν.measurable_mixingRepresentative.aemeasurable
   refine ⟨π, ?_, ?_⟩
-  · simpa only [π, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk] using
-      pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν
+  · change pathLaw μ X = (Measure.map ν μ).bind
+      fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
+    exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν
   · intro π' hπ'
     apply ProbabilityMeasure.toMeasure_injective
     refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
-    simpa only [π, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk] using
-      hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν)
+    change (π' : Measure (ProbabilityMeasure α)).bind
+        (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) =
+      (Measure.map ν μ).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
+    exact hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν)
 
 end Probability
 
