@@ -11,7 +11,7 @@ import Mathlib.RingTheory.Finiteness.Finsupp
 /-!
 # Finite-dimensional eigenspaces of compact operators
 
-This file starts the Riesz--Schauder input to compact perturbations in the Fredholm package. A
+This file develops Riesz--Schauder input used for compact perturbations of Fredholm operators. A
 compact operator on a normed space has a finite-dimensional eigenspace at every nonzero scalar.
 More generally, every finite stage of the corresponding generalized eigenspace is finite
 dimensional.
@@ -66,45 +66,14 @@ theorem finiteDimensional_eigenspace (hT : IsCompactOperator T) (hμ : μ ≠ 0)
 omit [CompleteSpace 𝕜] in
 /-- The difference operator sends generalized eigenspace stage `n + 1` to stage `n`. -/
 private def genEigenspaceSuccMap (f : Module.End 𝕜 E) (μ : 𝕜) (n : ℕ) :
-    genEigenspace f μ ((n + 1 : ℕ) : ℕ∞) →ₗ[𝕜] genEigenspace f μ n where
-  toFun x :=
-    ⟨(f - μ • 1) x, by
-      have hx' : ((f - μ • 1) ^ (n + 1)) (x : E) = 0 := by
-        rw [← LinearMap.mem_ker, ← mem_genEigenspace_nat]
-        exact x.2
-      apply (mem_genEigenspace_nat (f := f) (μ := μ) (k := n)).mpr
-      rw [LinearMap.mem_ker]
-      simpa only [pow_succ, Module.End.mul_apply] using hx'⟩
-  map_add' x y := by ext; exact (f - μ • 1).map_add x y
-  map_smul' c x := by ext; exact (f - μ • 1).map_smul c x
-
-omit [CompleteSpace 𝕜] in
-@[simp]
-private lemma genEigenspaceSuccMap_apply (f : Module.End 𝕜 E) (μ : 𝕜) (n : ℕ)
-    (x : genEigenspace f μ ((n + 1 : ℕ) : ℕ∞)) :
-    (genEigenspaceSuccMap f μ n x : E) = (f - μ • 1) x := rfl
-
-omit [CompleteSpace 𝕜] in
-/-- The kernel of the map between successive generalized eigenspaces embeds in the ordinary
-eigenspace. -/
-private def genEigenspaceSuccKerToKer (f : Module.End 𝕜 E) (μ : 𝕜) (n : ℕ) :
-    LinearMap.ker (genEigenspaceSuccMap f μ n) →ₗ[𝕜] LinearMap.ker (f - μ • 1) where
-  toFun x :=
-    ⟨x.1.1, by
-      rw [LinearMap.mem_ker]
-      have hx := congrArg Subtype.val (LinearMap.mem_ker.mp x.2)
-      simpa only [genEigenspaceSuccMap_apply, Submodule.coe_zero] using hx⟩
-  map_add' x y := rfl
-  map_smul' c x := rfl
-
-omit [CompleteSpace 𝕜] in
-private lemma genEigenspaceSuccKerToKer_injective
-    (f : Module.End 𝕜 E) (μ : 𝕜) (n : ℕ) :
-    Function.Injective (genEigenspaceSuccKerToKer f μ n) := by
-  intro x y hxy
-  have hval : (x.1.1 : E) = y.1.1 :=
-    congrArg (fun z : LinearMap.ker (f - μ • 1) => (z : E)) hxy
-  exact Subtype.ext (Subtype.ext hval)
+    genEigenspace f μ ((n + 1 : ℕ) : ℕ∞) →ₗ[𝕜] genEigenspace f μ n :=
+  (f - μ • 1).restrict fun x hx => by
+    have hx' : ((f - μ • 1) ^ (n + 1)) x = 0 := by
+      rw [← LinearMap.mem_ker, ← mem_genEigenspace_nat]
+      exact hx
+    apply (mem_genEigenspace_nat (f := f) (μ := μ) (k := n)).mpr
+    rw [LinearMap.mem_ker]
+    simpa only [pow_succ, Module.End.mul_apply] using hx'
 
 omit [CompleteSpace 𝕜] in
 /-- One step of the generalized-eigenspace filtration preserves finite dimensionality once the
@@ -118,8 +87,23 @@ private theorem finiteDimensional_genEigenspace_succ
     rwa [← eigenspace_def]
   have hker : FiniteDimensional 𝕜 (LinearMap.ker A) := by
     let := heigker
-    exact FiniteDimensional.of_injective (genEigenspaceSuccKerToKer T.toLinearMap μ n)
-      (genEigenspaceSuccKerToKer_injective T.toLinearMap μ n)
+    have hkerA : LinearMap.ker A =
+        (LinearMap.ker (T.toLinearMap - μ • 1)).comap
+          (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype := by
+      dsimp only [A, genEigenspaceSuccMap]
+      exact LinearMap.ker_restrict _
+    let i : LinearMap.ker A →ₗ[𝕜] LinearMap.ker (T.toLinearMap - μ • 1) :=
+      ((genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype.domRestrict
+        (LinearMap.ker A)).codRestrict _ fun x => by
+          change x.1 ∈ (LinearMap.ker (T.toLinearMap - μ • 1)).comap
+            (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype
+          rw [← hkerA]
+          exact x.2
+    apply FiniteDimensional.of_injective i
+    rw [← LinearMap.ker_eq_bot]
+    dsimp only [i]
+    rw [LinearMap.ker_codRestrict, LinearMap.ker_domRestrict, Submodule.ker_subtype,
+      Submodule.comap_bot, Submodule.ker_subtype]
   have hrange : FiniteDimensional 𝕜 (LinearMap.range A) := by
     let := hn
     exact FiniteDimensional.of_injective (LinearMap.range A).subtype Subtype.val_injective
