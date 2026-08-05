@@ -11,9 +11,11 @@ public import Mathlib.NumberTheory.ModularForms.Basic
 # Modular-forms basics: extensions of Mathlib's API
 
 Small generic lemmas extending `Mathlib/NumberTheory/ModularForms/Basic.lean` and its slash
-actions: the conjugation `σ` is trivial on `SL(2, ℤ)`-matrices, and the `CuspForm`
+actions: the conjugation `σ` is trivial on `SL(2, ℤ)`-matrices, the `CuspForm`
 translation equations Mathlib does not yet provide (`CuspForm.mcast_apply` and the
-`GL(2, ℝ)`-level `CuspForm.coe_translate_gl`).
+`GL(2, ℝ)`-level `CuspForm.coe_translate_gl`), and the weight-`k` slash action of `-I`
+(`ModularForm.slash_neg_one`), the source of every parity constraint on weights and
+nebentypus characters.
 
 Split out of the diamond-operator development ported from the AINTLIB `LeanModularForms`
 project (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
@@ -43,4 +45,22 @@ lemma _root_.CuspForm.mcast_apply {a b : ℤ} {Γ Γ' : Subgroup (GL (Fin 2) ℝ
 lemma _root_.CuspForm.coe_translate_gl {F : Type*} [FunLike F UpperHalfPlane ℂ] {k : ℤ}
     {Γ : Subgroup (GL (Fin 2) ℝ)} [CuspFormClass F Γ k] (f : F) (g : GL (Fin 2) ℝ) :
     ⇑(CuspForm.translate f g) = ⇑f ∣[k] g := (rfl)
+
+/-- The weight-`k` slash action of `-I` is multiplication by `(-1) ^ k`: `-I` acts trivially
+on `ℍ` and has determinant `1`, so the only surviving factor is its automorphy factor
+`denom (-I) z ^ (-k) = (-1) ^ (-k) = (-1) ^ k`.
+
+This is the source of every parity constraint on weights and nebentypus characters. -/
+@[simp]
+theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
+    f ∣[k] (-1 : GL (Fin 2) ℝ) = (-1 : ℂ) ^ k • f := by
+  have hzpow : (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k := by
+    rw [zpow_neg, ← inv_zpow]
+    norm_num
+  have hdet : (-1 : GL (Fin 2) ℝ).det = 1 := by
+    ext
+    simp [Matrix.det_neg]
+  funext z
+  rw [ModularForm.slash_apply]
+  simp [UpperHalfPlane.σ, hzpow, hdet, mul_comm]
 

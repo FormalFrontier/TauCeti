@@ -14,7 +14,9 @@ public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup
 Foundational results about the pair `Γ₁(N) ≤ Γ₀(N)` beyond Mathlib's
 `Mathlib.NumberTheory.ModularForms.CongruenceSubgroups`: `Γ₀(N)` normalizes `Γ₁(N)` (also
 after mapping to `GL₂(ℝ)`), the ratio of two `Γ₀(N)`-elements with equal lower-right entry
-lies in `Γ₁(N)`, and the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ` is surjective.
+lies in `Γ₁(N)`, the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ` is surjective, and the
+location of `-I`: it always lies in `Γ₀(N)`, with lower-right entry the unit `-1`, and it
+lies in `Γ₁(N)` exactly when `N ∣ 2`.
 
 Ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean`, Chris Birkbeck,
@@ -29,6 +31,9 @@ infrastructure independent of the diamond operators.
   under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
   lower-right entry of a matrix in `Γ₀(N)` (via strong approximation for `SL₂`).
+* `CongruenceSubgroup.neg_one_mem_Gamma0` and
+  `CongruenceSubgroup.Gamma0Map_toHomUnits_negOne`: `-I ∈ Γ₀(N)`, with lower-right entry the
+  unit `-1`; `CongruenceSubgroup.neg_one_mem_Gamma1_iff`: `-I ∈ Γ₁(N) ↔ N ∣ 2`.
 -/
 
 public section
@@ -101,5 +106,35 @@ theorem Gamma0Map_toHomUnits_surjective [NeZero N] :
   have h10 : ((g 1 0 : ℤ) : ZMod N) = 0 := by rw [hentry]; simp
   have h11 : ((g 1 1 : ℤ) : ZMod N) = u := by rw [hentry]; simp
   exact ⟨⟨g, Gamma0_mem.mpr h10⟩, Units.ext (by simpa [Gamma0Map] using h11)⟩
+
+/-- `-I` lies in `Γ₀(N)`: its lower-left entry is `0`. -/
+theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
+  simp
+
+/-- `-I ∈ Γ₀(N)`, packaged as an element of the subgroup. It is the representative through
+which the diamond operator at `-1` is computed. -/
+def Gamma0.negOne (N : ℕ) : ↥(Gamma0 N) := ⟨-1, neg_one_mem_Gamma0⟩
+
+@[simp]
+lemma Gamma0.coe_negOne (N : ℕ) : (Gamma0.negOne N : SL(2, ℤ)) = -1 := (rfl)
+
+/-- The lower-right entry of `-I ∈ Γ₀(N)` is `-1`. -/
+@[simp]
+theorem Gamma0Map_negOne : Gamma0Map N (Gamma0.negOne N) = -1 := by
+  simp [Gamma0Map, Gamma0.coe_negOne]
+
+/-- The unit-valued lower-right entry of `-I ∈ Γ₀(N)` is the unit `-1`. -/
+@[simp]
+theorem Gamma0Map_toHomUnits_negOne :
+    (Gamma0Map N).toHomUnits (Gamma0.negOne N) = -1 :=
+  Units.ext (by simp)
+
+/-- `-I` lies in `Γ₁(N)` exactly when `N ∣ 2`, i.e. for `N ∈ {1, 2}`. This is the degenerate
+range in which `Γ₁(N)` contains `-I`, so that all odd-weight forms for it vanish. -/
+theorem neg_one_mem_Gamma1_iff : (-1 : SL(2, ℤ)) ∈ Gamma1 N ↔ N ∣ 2 := by
+  have h : (-1 : ZMod N) = 1 ↔ N ∣ 2 := by
+    rw [neg_eq_iff_add_eq_zero, ← ZMod.natCast_eq_zero_iff 2 N]
+    norm_num
+  simp [Gamma1_mem, h]
 
 end CongruenceSubgroup

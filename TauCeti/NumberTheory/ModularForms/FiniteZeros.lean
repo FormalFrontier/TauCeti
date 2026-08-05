@@ -6,7 +6,7 @@ module
 
 public import Mathlib.NumberTheory.Modular
 public import Mathlib.NumberTheory.ModularForms.QExpansion
-public import TauCeti.NumberTheory.ModularForms.OrderOfVanishing
+public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
 /-!
 # Finite zeros of a level-one modular form in the fundamental domain

@@ -7,6 +7,10 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
 public import Mathlib.LinearAlgebra.AffineSpace.AffineMap
+public import TauCeti.Analysis.Contour.PiecewiseC1On
+
+import Mathlib.Analysis.Calculus.AddTorsor.AffineMap
+import Mathlib.MeasureTheory.Integral.CircleIntegral
 
 /-!
 # The boundary contour of the standard fundamental domain
@@ -26,6 +30,9 @@ anchors of the valence-formula contour.
   built from `AffineMap.lineMap` and `circleMap`).
 * `TauCeti.ModularForm.fdBoundary_apply_three`: the parameter `3` lands on `ρ`.
 * `TauCeti.ModularForm.fdBoundary_closed`: the contour is closed.
+* `TauCeti.ModularForm.continuous_fdBoundary`: the contour is (globally) continuous.
+* `TauCeti.ModularForm.isPiecewiseC1On_fdBoundary`: the contour is piecewise `C¹`
+  (`contDiffOn_fdBoundary` certifies `fdBoundaryCorners` as a breakpoint witness).
 
 ## References
 
@@ -204,10 +211,11 @@ def fdBoundary (H : ℝ) : ℝ → ℂ := fun t ↦
   else if t ≤ 4 then fdBoundary_segment4 H t
   else fdBoundary_segment5 H t
 
-/-- The interior breakpoints of the five-segment parameterization. -/
+/-- The four interior subdivision parameters of the five-segment parameterization; the
+junction at `2` is smooth, so only `fdBoundaryCorners` are genuine corners. -/
 def fdBoundaryBreakpoints : Finset ℝ := {1, 2, 3, 4}
 
-/-- Membership in the breakpoints is being one of the four interior corners. -/
+/-- Membership in the four subdivision parameters. -/
 @[simp]
 lemma mem_fdBoundaryBreakpoints {t : ℝ} :
     t ∈ fdBoundaryBreakpoints ↔ t = 1 ∨ t = 2 ∨ t = 3 ∨ t = 4 := by
@@ -284,6 +292,162 @@ lemma fdBoundary_apply_five (H : ℝ) : fdBoundary H 5 = 1 / 2 + H * Complex.I :
 /-- The boundary contour is closed. -/
 lemma fdBoundary_closed (H : ℝ) : fdBoundary H 5 = fdBoundary H 0 := by
   rw [fdBoundary_apply_five, fdBoundary_apply_zero]
+
+section Regularity
+
+open Set
+
+open scoped ContDiff
+
+variable {n : WithTop ℕ∞}
+
+/-- Segment 1 is smooth. -/
+lemma contDiff_fdBoundary_segment1 (H : ℝ) : ContDiff ℝ n (fdBoundary_segment1 H) :=
+  AffineMap.contDiff_lineMap _ _
+
+/-- Segment 2 is smooth. -/
+lemma contDiff_fdBoundary_segment2 : ContDiff ℝ n fdBoundary_segment2 :=
+  (contDiff_circleMap _ _).comp (by fun_prop)
+
+/-- Segment 3 is smooth. -/
+lemma contDiff_fdBoundary_segment3 : ContDiff ℝ n fdBoundary_segment3 :=
+  (contDiff_circleMap _ _).comp (by fun_prop)
+
+/-- Segment 4 is smooth. -/
+lemma contDiff_fdBoundary_segment4 (H : ℝ) : ContDiff ℝ n (fdBoundary_segment4 H) :=
+  (AffineMap.contDiff_lineMap _ _).comp (contDiff_id.sub contDiff_const)
+
+/-- Segment 5 is smooth. -/
+lemma contDiff_fdBoundary_segment5 (H : ℝ) : ContDiff ℝ n (fdBoundary_segment5 H) :=
+  (AffineMap.contDiff_lineMap _ _).comp (contDiff_id.sub contDiff_const)
+
+/-- On `[0, 1]` the path agrees with segment 1. -/
+lemma eqOn_fdBoundary_segment1 (H : ℝ) : EqOn (fdBoundary H) (fdBoundary_segment1 H) (Icc 0 1) :=
+  fun _ ht ↦ fdBoundary_of_le_one ht.2
+
+/-- On `[1, 2]` the path agrees with segment 2. -/
+lemma eqOn_fdBoundary_segment2 (H : ℝ) : EqOn (fdBoundary H) fdBoundary_segment2 (Icc 1 2) := by
+  intro t ht
+  rcases eq_or_lt_of_le ht.1 with h1 | h1
+  · rw [← h1, fdBoundary_apply_one, fdBoundary_segment2_apply_one]
+  · exact fdBoundary_of_le_two h1 ht.2
+
+/-- On `[2, 3]` the path agrees with segment 3. -/
+lemma eqOn_fdBoundary_segment3 (H : ℝ) : EqOn (fdBoundary H) fdBoundary_segment3 (Icc 2 3) := by
+  intro t ht
+  rcases eq_or_lt_of_le ht.1 with h2 | h2
+  · rw [← h2, fdBoundary_apply_two, fdBoundary_segment3_apply_two]
+  · exact fdBoundary_of_le_three h2 ht.2
+
+/-- On `[3, 4]` the path agrees with segment 4. -/
+lemma eqOn_fdBoundary_segment4 (H : ℝ) : EqOn (fdBoundary H) (fdBoundary_segment4 H) (Icc 3 4) := by
+  intro t ht
+  rcases eq_or_lt_of_le ht.1 with h3 | h3
+  · rw [← h3, fdBoundary_apply_three, fdBoundary_segment4_apply_three]
+  · exact fdBoundary_of_le_four h3 ht.2
+
+/-- On `[4, 5]` the path agrees with segment 5. -/
+lemma eqOn_fdBoundary_segment5 (H : ℝ) : EqOn (fdBoundary H) (fdBoundary_segment5 H) (Icc 4 5) := by
+  intro t ht
+  rcases eq_or_lt_of_le ht.1 with h4 | h4
+  · rw [← h4, fdBoundary_apply_four, fdBoundary_segment5_apply_four]
+  · exact fdBoundary_of_gt_four h4
+
+private lemma fdBoundary_piece1 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 0 1) :=
+  (contDiff_fdBoundary_segment1 H).contDiffOn.congr (eqOn_fdBoundary_segment1 H)
+
+/-- On `[1, 3]` the path agrees with the unified unit-circle arc of angle `(t + 1)·π/6`:
+the two arc segments continue one smooth circle parameterization. -/
+lemma eqOn_fdBoundary_arc (H : ℝ) :
+    EqOn (fdBoundary H) (fun s : ℝ ↦ circleMap 0 1 ((s + 1) * (Real.pi / 6))) (Icc 1 3) := by
+  intro t ht
+  rcases le_or_gt t 2 with h2 | h2
+  · rcases eq_or_lt_of_le ht.1 with h1 | h1
+    · rw [← h1, fdBoundary_apply_one, ← fdBoundary_segment2_apply_one,
+        fdBoundary_segment2_apply]
+      congr 1
+      ring
+    · rw [fdBoundary_of_le_two h1 h2, fdBoundary_segment2_apply]
+      congr 1
+      ring
+  · rw [fdBoundary_of_le_three h2 ht.2, fdBoundary_segment3_apply]
+    congr 1
+    ring
+
+private lemma fdBoundary_piece13 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 1 3) :=
+  (((contDiff_circleMap 0 1).comp (by fun_prop)).contDiffOn).congr (eqOn_fdBoundary_arc H)
+
+private lemma fdBoundary_piece4 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 3 4) :=
+  (contDiff_fdBoundary_segment4 H).contDiffOn.congr (eqOn_fdBoundary_segment4 H)
+
+private lemma fdBoundary_piece5 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 4 5) :=
+  (contDiff_fdBoundary_segment5 H).contDiffOn.congr (eqOn_fdBoundary_segment5 H)
+
+
+/-- The genuinely nonsmooth junctions of the boundary contour: the two arcs continue one
+smooth circle parameterization through `t = 2`, so only `1`, `3`, and `4` are corners. -/
+def fdBoundaryCorners : Finset ℝ := {1, 3, 4}
+
+/-- Membership in the corner parameters. -/
+@[simp]
+lemma mem_fdBoundaryCorners {t : ℝ} : t ∈ fdBoundaryCorners ↔ t = 1 ∨ t = 3 ∨ t = 4 := by
+  unfold fdBoundaryCorners
+  simp
+
+/-- The boundary path is continuous: consecutive segments agree at the junctions. -/
+lemma continuous_fdBoundary (H : ℝ) : Continuous (fdBoundary H) := by
+  unfold fdBoundary
+  refine Continuous.if_le (contDiff_fdBoundary_segment1 (n := 1) H).continuous
+    (Continuous.if_le (contDiff_fdBoundary_segment2 (n := 1)).continuous
+      (Continuous.if_le (contDiff_fdBoundary_segment3 (n := 1)).continuous
+        (Continuous.if_le (contDiff_fdBoundary_segment4 (n := 1) H).continuous
+          (contDiff_fdBoundary_segment5 (n := 1) H).continuous continuous_id continuous_const
+          fun t ht ↦ ?_)
+        continuous_id continuous_const fun t ht ↦ ?_)
+      continuous_id continuous_const fun t ht ↦ ?_)
+    continuous_id continuous_const fun t ht ↦ ?_
+  all_goals subst ht
+  all_goals norm_num
+
+/-- The boundary path is continuous on the parameter interval `[0, 5]`. -/
+lemma continuousOn_fdBoundary (H : ℝ) : ContinuousOn (fdBoundary H) (Icc 0 5) :=
+  (continuous_fdBoundary H).continuousOn
+
+/-- On every closed subinterval of `[0, 5]` whose interior avoids the three genuine
+corners, the contour is smooth at every order — the certificate that `fdBoundaryCorners`
+is a valid breakpoint witness for `isPiecewiseC1On_fdBoundary`. The two arcs continue one
+smooth circle map through `t = 2`, so no hypothesis excludes it. -/
+lemma contDiffOn_fdBoundary (H : ℝ) {c d : ℝ}
+    (hcd : Icc c d ⊆ Icc 0 5) (hdis : Disjoint (fdBoundaryCorners : Set ℝ) (Ioo c d)) :
+    ContDiffOn ℝ n (fdBoundary H) (Icc c d) := by
+  have hbp : ∀ m : ℝ, m ∈ fdBoundaryCorners → m ∉ Ioo c d := fun m hm ↦
+    Set.disjoint_left.mp hdis (Finset.mem_coe.mpr hm)
+  rcases le_or_gt d 1 with hd1 | hd1
+  · exact (fdBoundary_piece1 H).mono fun x hx ↦ ⟨(hcd hx).1, hx.2.trans hd1⟩
+  · have hc1 : 1 ≤ c := le_of_not_gt fun hlt ↦ hbp 1 (by simp) ⟨hlt, hd1⟩
+    rcases le_or_gt d 3 with hd3 | hd3
+    · exact (fdBoundary_piece13 H).mono fun x hx ↦ ⟨hc1.trans hx.1, hx.2.trans hd3⟩
+    · have hc3 : 3 ≤ c := le_of_not_gt fun hlt ↦ hbp 3 (by simp) ⟨hlt, hd3⟩
+      rcases le_or_gt d 4 with hd4 | hd4
+      · exact (fdBoundary_piece4 H).mono fun x hx ↦ ⟨hc3.trans hx.1, hx.2.trans hd4⟩
+      · have hc4 : 4 ≤ c := le_of_not_gt fun hlt ↦ hbp 4 (by simp) ⟨hlt, hd4⟩
+        exact (fdBoundary_piece5 H).mono fun x hx ↦ ⟨hc4.trans hx.1, (hcd hx).2⟩
+
+/-- The fundamental-domain boundary contour is piecewise `C¹` on `[0, 5]`;
+`contDiffOn_fdBoundary` certifies the three genuine corners as a breakpoint witness. -/
+theorem isPiecewiseC1On_fdBoundary (H : ℝ) : Contour.IsPiecewiseC1On (fdBoundary H) 0 5 := by
+  refine Contour.IsPiecewiseC1On.of_breakpoints ?_ fdBoundaryCorners ?_ ?_
+  · rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 5)]
+    exact continuousOn_fdBoundary H
+  · intro x hx
+    rw [Finset.mem_coe, mem_fdBoundaryCorners] at hx
+    rw [min_eq_left (by norm_num : (0 : ℝ) ≤ 5), max_eq_right (by norm_num : (0 : ℝ) ≤ 5)]
+    rcases hx with rfl | rfl | rfl <;> exact ⟨by norm_num, by norm_num⟩
+  · intro c d hcd hdis
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 5)] at hcd
+    exact contDiffOn_fdBoundary H hcd hdis
+
+end Regularity
 
 end ModularForm
 

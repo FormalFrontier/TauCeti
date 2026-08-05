@@ -32,9 +32,11 @@ transitively by isometries, so transporting a radial line names the geodesic lin
 *arbitrary* point: carrying the radial geodesic in direction `u` back by
 `(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the inverse of the Moebius isometry that
 sends `a` to the origin — gives `TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and
-repeats the radial API (`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`,
-`geodesicLine_injective`) at that base point. No hyperbolic computation is redone: each of those
-statements is its radial counterpart read through an isometry.
+repeats the radial API (`coe_geodesicLine`, `geodesicLine_zero`, `isometry_geodesicLine`,
+`dist_geodesicLine_self`, `geodesicLine_injective`) at that base point. No hyperbolic computation
+is redone: each of those statements is its radial counterpart read through an isometry. Negating
+the direction of either line reverses its time parameter (`radialGeodesic_neg`,
+`geodesicLine_neg`), `Real.tanh` being odd, so the two halves of a line are one construction.
 
 Those lines are what makes the disc a geodesic space: through any two prescribed points there
 passes one of them.
@@ -50,7 +52,10 @@ passes one of them.
   radial geodesic in its own direction, at time its distance to the origin.
 * `TauCeti.PoincareDisc.geodesicLine` — the same line based at an arbitrary point `a` instead of
   the origin, with `TauCeti.PoincareDisc.isometry_geodesicLine`,
-  `TauCeti.PoincareDisc.geodesicLine_zero` and `TauCeti.PoincareDisc.geodesicLine_injective`.
+  `TauCeti.PoincareDisc.geodesicLine_zero`, `TauCeti.PoincareDisc.coe_geodesicLine` (its value in
+  the ambient plane) and `TauCeti.PoincareDisc.geodesicLine_injective`.
+* `TauCeti.PoincareDisc.radialGeodesic_neg`, `TauCeti.PoincareDisc.geodesicLine_neg` — reversing
+  the direction of a geodesic line reverses its time parameter.
 * `TauCeti.PoincareDisc.exists_isometry_apply_zero_apply_dist` — **the Poincaré disc is a
   geodesic space**: through any two points there is a unit-speed geodesic line `γ : ℝ → 𝔻`, with
   `γ 0` the first point and `γ (dist z w)` the second.
@@ -184,6 +189,17 @@ lemma coe_radialGeodesic (u : Circle) (t : ℝ) :
   simp only [radialGeodesic, toUnitDisc_toPoincare, Complex.UnitDisc.coe_circle_smul,
     Complex.UnitDisc.coe_mk]
 
+/-- **Reversing a radial geodesic.** Negating the direction of a radial geodesic reverses its time
+parameter, `Real.tanh` being odd. So the backward half of `radialGeodesic u` is the forward half
+of `radialGeodesic (-u)`. -/
+@[simp]
+lemma radialGeodesic_neg (u : Circle) (t : ℝ) :
+    radialGeodesic (-u) t = radialGeodesic u (-t) :=
+  toUnitDisc.injective <| Complex.UnitDisc.coe_injective <| by
+    rw [coe_radialGeodesic, coe_radialGeodesic, Circle.coe_neg, Real.tanh_neg]
+    push_cast
+    ring
+
 /-- Every radial geodesic starts at the origin. -/
 @[simp]
 lemma radialGeodesic_zero (u : Circle) :
@@ -276,6 +292,28 @@ which the `simpNF` linter rejects. -/
 lemma unitDiscMoebiusIsometryEquiv_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
     unitDiscMoebiusIsometryEquiv (toUnitDisc a) (geodesicLine a u t) = radialGeodesic u t := by
   rw [geodesicLine_def, IsometryEquiv.apply_symm_apply]
+
+/-- The geodesic line through `a` in direction `u`, read in the ambient plane: it is the Moebius
+formula centred at `-a` evaluated at the radial point `u * Real.tanh t`. This is the base-point
+version of `TauCeti.PoincareDisc.coe_radialGeodesic`, and it is how `geodesicLine` is computed
+with on the underlying complex numbers. -/
+@[simp]
+lemma coe_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    ((toUnitDisc (geodesicLine a u t) : Complex.UnitDisc) : ℂ) =
+      ((u : ℂ) * Real.tanh t + (toUnitDisc a : ℂ)) /
+        (1 + (starRingEnd ℂ) (toUnitDisc a : ℂ) * ((u : ℂ) * Real.tanh t)) := by
+  rw [geodesicLine_def]
+  simp only [unitDiscMoebiusIsometryEquiv_symm, unitDiscMoebiusIsometryEquiv_apply,
+    toUnitDisc_toPoincare, coe_unitDiscMoebius, coe_radialGeodesic, Complex.UnitDisc.coe_neg,
+    map_neg, sub_neg_eq_add, neg_mul]
+
+/-- **Reversing a geodesic line.** The base-point version of
+`TauCeti.PoincareDisc.radialGeodesic_neg`: the line through `a` in direction `-u` is the line
+through `a` in direction `u` run backwards. -/
+@[simp]
+lemma geodesicLine_neg (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    geodesicLine a (-u) t = geodesicLine a u (-t) := by
+  rw [geodesicLine_def, geodesicLine_def, radialGeodesic_neg]
 
 /-- Every geodesic line through `a` starts at `a`: the generalisation of
 `TauCeti.PoincareDisc.radialGeodesic_zero` off the origin. -/
