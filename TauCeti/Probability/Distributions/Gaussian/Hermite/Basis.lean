@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Basic
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Orthogonality
+public import TauCeti.MeasureTheory.Function.Lp.CastMeasure
 public import TauCeti.Probability.Distributions.Gaussian.Basic
 public import TauCeti.RingTheory.Polynomial.Hermite.Real
 
@@ -127,14 +128,6 @@ private theorem coe_cast_hilbertBasis {μ ν : Measure ℝ} (h : μ = ν)
   subst h
   rw [cast_eq]
   exact hb
-
-/-- Transporting an `L²` element along an equality of measures does not move its representative:
-the `cast` is along `↥(Lp 𝕜 2 μ) = ↥(Lp 𝕜 2 ν)`, so it is the identity on functions. -/
-private theorem coeFn_cast_lp {μ ν : Measure ℝ} (h : μ = ν) (f : Lp 𝕜 2 μ) (x : ℝ) :
-    ((cast (congrArg (fun m : Measure ℝ => (Lp 𝕜 2 m : Type _)) h) f : Lp 𝕜 2 ν) : ℝ → 𝕜) x
-      = (f : ℝ → 𝕜) x := by
-  subst h
-  rfl
 
 /-- **Roadmap A3′: the Hermite polynomials are a Hilbert basis of `L²(γ)`.** Orthonormality comes
 from the orthogonality relation against the Gaussian density and completeness from moment
@@ -270,7 +263,7 @@ theorem weightL2Isometry_gaussianHermiteHilbertBasis (n : ℕ) :
     rw [gaussianReal_of_var_ne_zero 0 one_ne_zero, gaussianPDF_def]
   refine Filter.EventuallyEq.trans ?_ (sqrt_gaussianPDFReal_smul_gaussianHermiteHilbertBasis 𝕜 n)
   exact Filter.Eventually.of_forall fun x => by
-    simp only [coeFn_cast_lp 𝕜 hγ (gaussianHermiteHilbertBasis 𝕜 n) x]
+    simp only [coeFn_cast_lp hγ (gaussianHermiteHilbertBasis 𝕜 n) x]
 
 end Basis
 

@@ -208,14 +208,12 @@ private theorem isAtom_augmentationSubrepresentation_of_card_eq_two (hcard : Fin
     IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α) := by
   -- For two elements the subrepresentation is a line, and a line is an atom of the lattice of
   -- subspaces; the lattice of subrepresentations embeds in it by `toSubmodule`.
-  have hbot :
-      (⊥ : Subrepresentation (Representation.ofMulAction k (Equiv.Perm α) α)).toSubmodule = ⊥ :=
-    rfl
   have hatom : IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
     Submodule.isAtom_iff_finrank_eq_one.mpr
       (by rw [finrank_augmentationSubrepresentation, hcard])
-  refine ⟨fun h => hatom.1 (by rw [h, hbot]), fun τ hτ =>
-    Subrepresentation.toSubmodule_injective ((hatom.2 _ ?_).trans hbot.symm)⟩
+  refine ⟨fun h => hatom.1 (by rw [h, Subrepresentation.toSubmodule_bot]), fun τ hτ =>
+    Subrepresentation.toSubmodule_injective
+      ((hatom.2 _ ?_).trans Subrepresentation.toSubmodule_bot.symm)⟩
   exact lt_of_le_of_ne hτ.le fun hc => hτ.ne (Subrepresentation.toSubmodule_injective hc)
 
 omit [Fintype α] in

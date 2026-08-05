@@ -292,7 +292,7 @@ theorem peterssonInnerFd_zero_left (g : CuspForm Γ k) : peterssonInnerFd 0 g = 
 @[simp]
 theorem peterssonInnerFd_neg_right (f g : CuspForm Γ k) :
     peterssonInnerFd f (-g) = -peterssonInnerFd f g := by
-  simp only [peterssonInnerFd_def, coe_neg]
+  simp only [peterssonInnerFd_def, FunLike.coe_neg]
   exact UpperHalfPlane.peterssonInner_neg_right k ModularGroup.fd f g
 
 /-- Negating the left argument negates the pairing: the first slot is conjugate-linear,
@@ -300,7 +300,7 @@ and conjugation fixes `-1`. -/
 @[simp]
 theorem peterssonInnerFd_neg_left (f g : CuspForm Γ k) :
     peterssonInnerFd (-f) g = -peterssonInnerFd f g := by
-  simp only [peterssonInnerFd_def, coe_neg]
+  simp only [peterssonInnerFd_def, FunLike.coe_neg]
   exact UpperHalfPlane.peterssonInner_neg_left k ModularGroup.fd f g
 
 section HasDetOne
@@ -311,14 +311,14 @@ variable [Γ.HasDetOne]
 @[simp]
 theorem peterssonInnerFd_smul_right (c : ℂ) (f g : CuspForm Γ k) :
     peterssonInnerFd f (c • g) = c * peterssonInnerFd f g := by
-  simp only [peterssonInnerFd_def, IsGLPos.coe_smul]
+  simp only [peterssonInnerFd_def, FunLike.coe_smul]
   exact UpperHalfPlane.peterssonInner_smul_right k ModularGroup.fd c f g
 
 /-- The level-one-domain pairing is conjugate-linear in the first argument. -/
 @[simp]
 theorem peterssonInnerFd_smul_left (c : ℂ) (f g : CuspForm Γ k) :
     peterssonInnerFd (c • f) g = conj c * peterssonInnerFd f g := by
-  simp only [peterssonInnerFd_def, IsGLPos.coe_smul]
+  simp only [peterssonInnerFd_def, FunLike.coe_smul]
   exact UpperHalfPlane.peterssonInner_smul_left k ModularGroup.fd c f g
 
 end HasDetOne
@@ -358,7 +358,7 @@ variable [Γ.IsArithmetic]
 @[simp]
 theorem peterssonInnerFd_add_right (f g₁ g₂ : CuspForm Γ k) :
     peterssonInnerFd f (g₁ + g₂) = peterssonInnerFd f g₁ + peterssonInnerFd f g₂ := by
-  simp only [peterssonInnerFd_def, coe_add]
+  simp only [peterssonInnerFd_def, FunLike.coe_add]
   exact UpperHalfPlane.peterssonInner_add_right k ModularGroup.fd f g₁ g₂
     (integrableOn_petersson_fd_left k Γ f g₁) (integrableOn_petersson_fd_left k Γ f g₂)
 
