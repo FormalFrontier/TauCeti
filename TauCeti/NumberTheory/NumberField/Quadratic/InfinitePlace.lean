@@ -27,7 +27,7 @@ open Polynomial NumberField NumberField.InfinitePlace
 
 namespace TauCeti.NumberField
 
-variable {K : Type*} [Field K]
+variable {K : Type*} [Field K] [NumberField K]
 
 /-- **A field with a negative square is totally complex.** If some `x : K` has `x² = r` for a
 negative rational `r`, then every infinite place of `K` is complex. -/
