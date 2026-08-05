@@ -148,7 +148,8 @@ private theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDim
         (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) := by
       have hsmul : (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) =
           (2 : ℝ) • (v (n + 1) : GroupLieAlgebra I G) :=
-        (LinearEquiv.refl ℝ E).map_smul (2 : ℝ) (v (n + 1))
+        (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul
+          (2 : ℝ) (v (n + 1))
       rw [hsmul]
       norm_num
 
@@ -224,7 +225,8 @@ theorem exists_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ E] [Li
       simpa only [log] using hlogn
     have hsmul : ((dyadicStep n • X : E) : GroupLieAlgebra I G) =
         dyadicStep n • (X : GroupLieAlgebra I G) :=
-      (LinearEquiv.refl ℝ E).map_smul (dyadicStep n) X
+      (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul
+        (dyadicStep n) X
     calc
       φ (Multiplicative.ofAdd (dyadicStep n)) =
           mulInvariantExp (I := I) (G := G) (log n : GroupLieAlgebra I G) := hexpn.symm
@@ -275,9 +277,13 @@ theorem mulInvariantOneParameterSubgroup_injective [FiniteDimensional ℝ E] [Li
   rw [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul,
     mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] at hexp
   have hvsmul : ((dyadicStep n • vE : E) : GroupLieAlgebra I G) =
-      dyadicStep n • v := (LinearEquiv.refl ℝ E).map_smul (dyadicStep n) vE
+      dyadicStep n • v :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul
+      (dyadicStep n) vE
   have hwsmul : ((dyadicStep n • wE : E) : GroupLieAlgebra I G) =
-      dyadicStep n • w := (LinearEquiv.refl ℝ E).map_smul (dyadicStep n) wE
+      dyadicStep n • w :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul
+      (dyadicStep n) wE
   have hmodel : dyadicStep n • vE = dyadicStep n • wE := by
     apply hinj hvn hwn
     rw [hvsmul, hwsmul]

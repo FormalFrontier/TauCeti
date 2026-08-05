@@ -89,7 +89,8 @@ theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
       simp only [F, Function.comp_apply]
       apply congrArg (extChartAt I (1 : G))
       have hsmul : ((t • v : E) : GroupLieAlgebra I G) =
-          t • (v : GroupLieAlgebra I G) := (LinearEquiv.refl ℝ E).map_smul t v
+          t • (v : GroupLieAlgebra I G) :=
+        (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul t v
       rw [hsmul]
       exact mulInvariantExp_smul (I := I) (G := G)
         (v : GroupLieAlgebra I G) t
