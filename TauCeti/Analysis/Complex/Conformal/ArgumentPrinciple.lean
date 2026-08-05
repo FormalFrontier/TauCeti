@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Contour.Argument.Cycle
-public import TauCeti.Analysis.Contour.LogDerivFTC
-import Mathlib.Analysis.Calculus.LogDeriv
+public import Mathlib.Analysis.Calculus.LogDeriv
+import TauCeti.Analysis.Contour.LogDerivFTC
 
 /-!
 # The argument principle in winding-number form
@@ -36,9 +36,8 @@ null-homologous in `U`,
 `n_0(f ∘ γ) = ∑_{z ∈ S} n_z(γ) · ord_z f`,
 
 the winding number of the image about the origin being the winding-weighted number of zeros minus
-poles. Three specialisations are recorded: a single zero or pole, the holomorphic case with the
-orders read off by `analyticOrderNatAt`, and the degenerate case of a zero-free function, where the
-image curve does not wind around the origin at all.
+poles. The holomorphic case is recorded separately, with the orders read off by
+`analyticOrderNatAt` instead of supplied by the caller.
 
 Nothing here re-proves the argument principle. Layer **L0** of the conformal-mapping roadmap is
 directed to *consume* the residue and argument-principle material of the sibling
@@ -59,12 +58,8 @@ complex numbers, exactly as the underlying argument principle is.
 * `TauCeti.argumentPrinciple_windingNumber` — **the argument principle, geometric form**: for `f`
   meromorphic with orders `ord` on a finite `S` and `γ` null-homologous, the image curve winds
   `∑_{z ∈ S} n_z(γ) · ord z` times about the origin.
-* `TauCeti.argumentPrinciple_windingNumber_local` — the one-point case: `n_0(f ∘ γ) = n_{z₀}(γ) · n`
-  for a single zero or pole of order `n`.
 * `TauCeti.argumentPrinciple_windingNumber_of_analyticOnNhd` — the holomorphic case, with the orders
   read off by `analyticOrderNatAt`.
-* `TauCeti.windingNumber_comp_eq_zero_of_forall_ne_zero` — a zero-free holomorphic function sends a
-  null-homologous cycle to a curve that does not wind around the origin.
 
 ## Coordination with upstream Mathlib
 
@@ -170,29 +165,6 @@ theorem argumentPrinciple_windingNumber {ord : ℂ → ℤ} (hU : IsOpen U)
     Contour.argumentPrinciple_nullHomologous hU hoff hmero hord hγ hγU hclosed hγoff hnull,
     inv_mul_cancel_left₀ two_pi_I_ne_zero]
 
-/-- **The argument principle for a cycle around a single zero or pole, geometric form.** If `z₀` is
-the only point of an open `U` at which `f` fails to be analytic and non-vanishing, of order `n`
-there, and `γ` is a closed piecewise-`C¹` curve in `U`, null-homologous in `U`, missing `z₀`, then
-the image curve winds `n_{z₀}(γ) · n` times about the origin.
-
-This is the `S = {z₀}` case of `TauCeti.argumentPrinciple_windingNumber`, and the geometric reading
-of `TauCeti.Contour.argumentPrinciple_nullHomologous_local`: a loop winding `k` times around a zero
-of order `n` has an image winding `k · n` times around the origin. Membership `z₀ ∈ U` is not
-required — outside `U` the winding number of `γ` about `z₀` vanishes, and with it both sides. -/
-theorem argumentPrinciple_windingNumber_local {z₀ : ℂ} {n : ℤ} (hU : IsOpen U)
-    (hmero : z₀ ∈ U → MeromorphicAt f z₀)
-    (hn : z₀ ∈ U → meromorphicOrderAt f z₀ = (n : WithTop ℤ))
-    (hoff : ∀ z ∈ U, z ≠ z₀ → AnalyticAt ℂ f z ∧ f z ≠ 0)
-    (hγ : Contour.IsPiecewiseC1On γ a b) (hγU : ∀ t ∈ [[a, b]], γ t ∈ U) (hclosed : γ a = γ b)
-    (hγoff : ∀ t ∈ [[a, b]], γ t ≠ z₀) (hnull : Contour.IsNullHomologous γ a b U) :
-    Contour.windingNumber (f ∘ γ) a b 0 = Contour.windingNumber γ a b z₀ * (n : ℂ) := by
-  have key := argumentPrinciple_windingNumber (S := {z₀}) (ord := fun _ => n) hU
-    (fun z hzU hzS => hoff z hzU (by simpa using hzS))
-    (fun s hs hsU => by rw [Finset.mem_singleton.mp hs] at hsU ⊢; exact hmero hsU)
-    (fun s hs hsU => by rw [Finset.mem_singleton.mp hs] at hsU ⊢; exact hn hsU) hγ hγU hclosed
-    (fun t ht => by simpa using hγoff t ht) hnull
-  simpa using key
-
 /-- **The argument principle, geometric form, for a holomorphic function.** Let `f` be analytic on
 an open `U` with all its zeros in a finite set `S`, and let `γ` be a closed piecewise-`C¹` curve in
 `U`, null-homologous in `U`, along which `f` does not vanish. Then
@@ -216,22 +188,6 @@ theorem argumentPrinciple_windingNumber_of_analyticOnNhd (hU : IsOpen U) (hf : A
     Contour.argumentPrinciple_nullHomologous_of_analyticOnNhd hU hf hzeros hγ hγU hclosed hγoff
       hnull,
     inv_mul_cancel_left₀ two_pi_I_ne_zero]
-
-/-- **A zero-free holomorphic function unwinds every null-homologous cycle.** If `f` is analytic
-and nowhere zero on an open set `U` and `γ` is a closed piecewise-`C¹` curve in `U`,
-null-homologous in `U`, then the image curve `f ∘ γ` does not wind around the origin.
-
-This is the `S = ∅` case of `TauCeti.argumentPrinciple_windingNumber_of_analyticOnNhd`, and the
-geometric form of the vanishing statement Rouché-type arguments run on: an image curve that *does*
-wind around the origin certifies a zero inside. -/
-theorem windingNumber_comp_eq_zero_of_forall_ne_zero (hU : IsOpen U) (hf : AnalyticOnNhd ℂ f U)
-    (hne : ∀ z ∈ U, f z ≠ 0)
-    (hγ : Contour.IsPiecewiseC1On γ a b) (hγU : ∀ t ∈ [[a, b]], γ t ∈ U) (hclosed : γ a = γ b)
-    (hnull : Contour.IsNullHomologous γ a b U) :
-    Contour.windingNumber (f ∘ γ) a b 0 = 0 := by
-  simpa using argumentPrinciple_windingNumber_of_analyticOnNhd (S := ∅) hU hf
-    (fun z hz h0 => absurd h0 (hne z hz)) hγ hγU hclosed
-    (fun t ht => hne _ (hγU t ht)) hnull
 
 end TauCeti
 
