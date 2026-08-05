@@ -59,9 +59,9 @@ regime is there a tableau to speak of.
   `TauCeti.SemistandardYoungTableau.lt_card_filter_rowLen_iff`: the two counting maps are decided
   by the pattern entries, respectively by the tableau entries.  Everything else is read off these
   two comparisons.
-* `TauCeti.finite_ssyt_lt` and `TauCeti.card_gtPattern_topRow_eq_card_ssyt`: there are finitely
-  many semistandard tableaux of a fixed shape with bounded entries, and they are as many as the
-  patterns with the corresponding top row.
+* `TauCeti.card_gtPattern_topRow_eq_card_ssyt`: the patterns with a given top row are as many as
+  the semistandard tableaux of the corresponding shape with bounded entries, both counts being
+  finite by `TauCeti.GTPattern.finite_topRow_eq` and `TauCeti.finite_ssyt_lt`.
 
 ## Implementation notes
 
@@ -183,23 +183,25 @@ theorem tableauEntry_lt_tableauEntry_succ (P : GTPattern n) {i c : ℕ}
     P.tableauEntry i c < P.tableauEntry (i + 1) c := by
   refine P.lt_tableauEntry_iff.mpr ⟨hlt, ?_⟩
   rcases Nat.eq_zero_or_pos (P.tableauEntry i c) with h0 | hpos
-  · rw [h0, P.entry_eq_zero_of_le (show 0 + 1 ≤ i + 1 by omega)]
+  · rw [h0, zero_add, P.entry_eq_zero_of_le (Nat.le_add_left 1 i)]
     exact Int.natCast_nonneg c
   · obtain ⟨k, hk⟩ : ∃ k, P.tableauEntry i c = k + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hpos).symm⟩
     obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff (i := i) (c := c) (j := k)).mp (by omega)
+    have hkn : k + 1 < n := by omega
     rw [hk]
-    exact (P.entry_succ_succ_le_entry (show k + 1 < n by omega)).trans hle
+    exact (P.entry_succ_succ_le_entry hkn).trans hle
 
-/-- Tableau entries increase strictly down a column. -/
+/-- Tableau entries increase strictly down a column.  Only the rows `i₁ ≤ i < i₂` that the chain of
+one-step comparisons passes through need to be bounded. -/
 theorem tableauEntry_lt_tableauEntry (P : GTPattern n) {c : ℕ} :
-    ∀ {i₁ i₂ : ℕ}, i₁ < i₂ → (∀ i ≤ i₂, P.tableauEntry i c < n) →
+    ∀ {i₁ i₂ : ℕ}, i₁ < i₂ → (∀ i, i₁ ≤ i → i < i₂ → P.tableauEntry i c < n) →
       P.tableauEntry i₁ c < P.tableauEntry i₂ c := by
   intro i₁ i₂ h
   induction i₂, h using Nat.le_induction with
-  | base => exact fun hlt => P.tableauEntry_lt_tableauEntry_succ (hlt i₁ (by omega))
+  | base => exact fun hlt => P.tableauEntry_lt_tableauEntry_succ (hlt i₁ le_rfl (by omega))
   | succ k _ ih =>
-    exact fun hlt => (ih fun i hi => hlt i (by omega)).trans
-      (P.tableauEntry_lt_tableauEntry_succ (hlt k (by omega)))
+    exact fun hlt => (ih fun i hi hi' => hlt i hi (by omega)).trans
+      (P.tableauEntry_lt_tableauEntry_succ (hlt k (by omega) (by omega)))
 
 /-- **The semistandard Young tableau of a Gelfand-Tsetlin pattern** whose top row is the shape
 `μ`: the cell `(i, c)` carries the entry `j` for which `νʲ⁺¹` is the first shape in the chain that
@@ -212,8 +214,8 @@ def toTableau (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     exact P.tableauEntry_mono i hc.le
   col_strict' {i₁ i₂ c} hi hcell := by
     rw [if_pos (μ.up_left_mem hi.le le_rfl hcell), if_pos hcell]
-    refine P.tableauEntry_lt_tableauEntry hi fun i hi' => ?_
-    have hcell' : (i, c) ∈ μ := μ.up_left_mem hi' le_rfl hcell
+    refine P.tableauEntry_lt_tableauEntry hi fun i _ hi' => ?_
+    have hcell' : (i, c) ∈ μ := μ.up_left_mem hi'.le le_rfl hcell
     refine P.tableauEntry_lt ?_
     rw [P.entry_top_eq hμ hP]
     exact_mod_cast YoungDiagram.mem_iff_lt_rowLen.mp hcell'
@@ -251,8 +253,9 @@ theorem toTableau_lt_iff (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
   cases j with
   | zero => simp [P.entry_eq_zero_of_le (Nat.zero_le i)]
   | succ k =>
+    have hkn : k < n := by omega
     rw [Nat.lt_succ_iff, ← Nat.not_lt, P.lt_tableauEntry_iff]
-    simp only [show k < n by omega, true_and, not_le]
+    simp only [hkn, true_and, not_le]
 
 end GTPattern
 
@@ -305,18 +308,21 @@ def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : GTPattern n where
           omega
         rw [hempty, card_empty, Nat.cast_zero]
   interlacing' {i j} _ hj := by
+    have hnj : ¬ n < j := by omega
+    have hnj' : ¬ n < j + 1 := by omega
     simp only [patternEntry_def]
     refine ⟨?_, ?_⟩
-    · rw [if_neg (show ¬ n < j by omega), if_neg (show ¬ n < j + 1 by omega), Nat.cast_le]
+    · rw [if_neg hnj, if_neg hnj', Nat.cast_le]
       refine card_le_card fun c hc => ?_
       simp only [mem_filter, mem_range] at hc ⊢
       omega
-    · rw [if_neg (show ¬ n < j by omega), if_neg (show ¬ n < j + 1 by omega), Nat.cast_le]
+    · rw [if_neg hnj, if_neg hnj', Nat.cast_le]
       refine card_le_card fun c hc => ?_
       simp only [mem_filter, mem_range] at hc ⊢
       have hcell : (i + 1, c) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hc.1
       have hup : (i, c) ∈ μ := μ.up_left_mem (Nat.le_succ i) le_rfl hcell
-      have := T.col_strict (show i < i + 1 by omega) hcell
+      have hii : i < i + 1 := Nat.lt_succ_self i
+      have := T.col_strict hii hcell
       exact ⟨YoungDiagram.mem_iff_lt_rowLen.mp hup, by omega⟩
 
 /-- The pattern of a tableau, unfolded. -/
@@ -343,10 +349,10 @@ theorem toGTPattern_succ_le_iff (T : SemistandardYoungTableau μ) (n : ℕ) {i c
     (hj : j < n) (hc : (i, c) ∈ μ) :
     toGTPattern T n i (j + 1) ≤ (c : ℤ) ↔ j < T i c := by
   have hcr : c < μ.rowLen i := YoungDiagram.mem_iff_lt_rowLen.mp hc
+  have hnj : ¬ n < j + 1 := by omega
   rw [toGTPattern_apply]
   simp only [patternEntry_def]
-  rw [if_neg (show ¬ n < j + 1 by omega), Nat.cast_le, ← Nat.not_lt,
-    lt_card_filter_rowLen_iff T]
+  rw [if_neg hnj, Nat.cast_le, ← Nat.not_lt, lt_card_filter_rowLen_iff T]
   omega
 
 end SemistandardYoungTableau
@@ -427,21 +433,6 @@ theorem gtPatternEquivSSYT_symm_apply_coe (n : ℕ) (μ : YoungDiagram) (hμ : �
     (T : {T : SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n}) :
     ((gtPatternEquivSSYT n μ hμ).symm T).1 = SemistandardYoungTableau.toGTPattern T.1 n :=
   (rfl)
-
-/-- **Bounded semistandard tableaux of a fixed shape are finitely many**: such a tableau is
-determined by its restriction to the finitely many cells of `μ`, where it takes one of `n` values.
-Mathlib's `SemistandardYoungTableau μ` allows unbounded entries and is infinite for a nonempty
-`μ`, so the bound is what makes the count finite.  No relation between `n` and the number of rows
-of `μ` is needed: for a shape taller than `n` the type is empty, columns being strict. -/
-theorem finite_ssyt_lt (n : ℕ) (μ : YoungDiagram) :
-    Finite {T : SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n} := by
-  refine Finite.of_injective (β := μ.cells → Fin n)
-    (fun T x => ⟨T.1 x.1.1 x.1.2, T.2 _ _ ((YoungDiagram.mem_cells _).mp x.2)⟩) ?_
-  rintro ⟨T, hT⟩ ⟨T', hT'⟩ h
-  refine Subtype.ext (SemistandardYoungTableau.ext fun i c => ?_)
-  by_cases hc : (i, c) ∈ μ
-  · exact congrArg Fin.val (congrFun h ⟨(i, c), (YoungDiagram.mem_cells _).mpr hc⟩)
-  · rw [T.zeros hc, T'.zeros hc]
 
 /-- **The pattern count is the tableau count**: the patterns with top row the shape `μ` are as
 many as the semistandard Young tableaux of shape `μ` with entries below `n`.  This is the form in
