@@ -13,6 +13,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import chart_style
 import pr_stats_graphs as stats
 
 
@@ -231,14 +232,18 @@ class MetricsTest(unittest.TestCase):
             })
 
         raw = "\n".join([
-            comment(7, "reviewer-a"),
+            # GitHub Actions may project a real collaborator as CONTRIBUTOR here.
+            comment(7, "reviewer-a", association="CONTRIBUTOR"),
             comment(8, "issue-commenter"),       # an ordinary issue, not a PR
             comment(9, "marker-quoter", False),  # the public marker without engine meta
             comment(7, "forger", association="NONE"),
             comment(7, "reviewer-b"),
         ])
         with patch.object(stats, "run_gh", return_value=raw):
-            scoreboards, rejected = stats.fetch_scoreboards("example/project", {7, 9})
+            scoreboards, rejected = stats.fetch_scoreboards(
+                "example/project", {7, 9},
+                {"reviewer-a", "reviewer-b", "marker-quoter"},
+            )
         self.assertEqual(
             [(item["pr"], item["user"]) for item in scoreboards],
             [(7, "reviewer-a"), (7, "reviewer-b")],
@@ -272,7 +277,7 @@ class MetricsTest(unittest.TestCase):
             }
 
         comments = [
-            fixture(7, "trusted", "MEMBER",
+            fixture(7, "trusted", "CONTRIBUTOR",
                     {"kind": "scoreboard", "pr": 7, "states": {"api": "green"}}),
             fixture(7, "wrong-pr", "MEMBER", {"kind": "scoreboard", "pr": 8}),
             fixture(7, "string-pr", "MEMBER", {"kind": "scoreboard", "pr": "7"}),
@@ -285,7 +290,7 @@ class MetricsTest(unittest.TestCase):
             },
         ]
         with patch.object(stats, "run_gh", return_value="") as run:
-            stats.fetch_scoreboards("example/project", {7})
+            stats.fetch_scoreboards("example/project", {7}, {"trusted"})
         query = run.call_args.args[0][-1]
         result = subprocess.run(
             ["jq", "-c", query], input=json.dumps(comments), text=True,
@@ -295,7 +300,22 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(
             [row["canonical"] for row in rows], [True, False, False, False, False],
         )
-        self.assertTrue(all(row["author_association"] == "MEMBER" for row in rows))
+        self.assertEqual(rows[0]["user"], "trusted")
+
+    def test_snapshot_trusts_only_merged_pr_authors(self):
+        prs = [
+            pr(1, 1, merged_day=2, author="merged-author"),
+            pr(2, 2, state="OPEN", author="open-author"),
+            pr(3, 3, merged_day=4, author="unknown"),
+        ]
+        with (
+            patch.object(stats, "fetch_prs", return_value=prs),
+            patch.object(stats, "fetch_scoreboards", return_value=([], {})) as fetch,
+        ):
+            stats.fetch_snapshot("example/project")
+        fetch.assert_called_once_with(
+            "example/project", {1, 2, 3}, {"merged-author"},
+        )
 
     def test_thousands_of_contributors_are_bounded(self):
         start = datetime(2026, 1, 1, tzinfo=UTC)
@@ -359,7 +379,15 @@ class RenderingTest(unittest.TestCase):
             out = Path(temporary)
             metrics = stats.generate(data, out, contributor_limit=2, history_days=30)
             for name in expected:
-                ET.parse(out / name)
+                root = ET.parse(out / name).getroot()
+                svg = (out / name).read_text(encoding="utf-8")
+                card = root.find("{http://www.w3.org/2000/svg}rect")
+                self.assertIsNotNone(card)
+                self.assertEqual(card.attrib["fill"], chart_style.BG)
+                self.assertEqual(card.attrib["stroke"], chart_style.PANEL)
+                self.assertGreater(float(card.attrib["rx"]), 0)
+                width = int(root.attrib["viewBox"].split()[2])
+                self.assertIn(chart_style.base_css(width), svg)
             self.assertTrue((out / "pr-stats.json").is_file())
             queue_svg = (out / "pr-queue-age.svg").read_text(encoding="utf-8")
             self.assertLess(queue_svg.index("Total time open"),
@@ -368,6 +396,11 @@ class RenderingTest(unittest.TestCase):
                             queue_svg.index("In review"))
             cycle_svg = (out / "review-cycles-reached.svg").read_text(encoding="utf-8")
             self.assertIn("Review cycle 7", cycle_svg)
+            review_svg = (
+                out / "cumulative-reviews-by-contributor.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn("Reviews by contributor", review_svg)
+            self.assertNotIn("Trusted v1 review scoreboards", review_svg)
             self.assertEqual(metrics["review_cycles"]["max_cycle"], 7)
             self.assertEqual(metrics["merge_totals_by_contributor"]["frank"], 1)
             self.assertEqual(metrics["review_totals_by_contributor"]["reviewer-c"], 1)
@@ -391,6 +424,23 @@ class RenderingTest(unittest.TestCase):
                     stats.generate(data, out)
             self.assertEqual(existing.read_text(encoding="utf-8"), "previous")
             self.assertFalse((out / "review-cycles-reached.svg").exists())
+
+
+class SiteStatsPageTest(unittest.TestCase):
+    """The page keeps the user-requested narrative and chart order."""
+
+    def test_participation_precedes_contributor_histories(self):
+        source = (
+            Path(__file__).parents[1] / "web" / "Site" / "Stats.lean"
+        ).read_text(encoding="utf-8")
+        self.assertLess(
+            source.index('src="static/rolling-seven-day-history.svg"'),
+            source.index('src="static/review-cycles-reached.svg"'),
+        )
+        self.assertLess(
+            source.rindex(":::blob participationGraph"),
+            source.rindex(":::blob contributorGraphs"),
+        )
 
 
 if __name__ == "__main__":

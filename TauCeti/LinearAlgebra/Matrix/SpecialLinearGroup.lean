@@ -6,17 +6,19 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Data.ZMod.Basic
+public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
 import Mathlib.Tactic.LinearCombination
 import TauCeti.Data.ZMod.Units
 
 /-!
-# Surjectivity of the reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)`
+# Special linear groups: surjectivity of reduction, and the image of `-I`
 
 The natural reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)` is surjective (strong approximation for
-`SL₂`; Shimura §1.6, Serre Ch. VII).
+`SL₂`; Shimura §1.6, Serre Ch. VII), and the base-change map `SL(n, R) → GL(n, S)` sends
+`-I` to `-I`.
 
-Ported from the AINTLIB `LeanModularForms` project
+The surjectivity is ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck). Prerequisite for the
 diamond operators of the ModularForms roadmap (Layer 0), where it realizes every unit of
 `ZMod N` as the lower-right entry of a matrix in `Γ₀(N)`.
@@ -24,6 +26,7 @@ diamond operators of the ModularForms roadmap (Layer 0), where it realizes every
 ## Main results
 
 * `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective`: strong approximation for `SL₂`.
+* `Matrix.SpecialLinearGroup.mapGL_neg_one`: `mapGL S (-1) = -1`.
 
 ## References
 
@@ -38,6 +41,14 @@ open Matrix
 variable {d : ℕ}
 
 namespace Matrix.SpecialLinearGroup
+
+/-- `-I` maps to `-I` under `SL(n, R) → GL(n, S)`. -/
+@[simp]
+lemma mapGL_neg_one {n R S : Type*} [Fintype n] [DecidableEq n] [CommRing R] [CommRing S]
+    [Algebra R S] [Fact (Even (Fintype.card n))] :
+    mapGL S (-1 : SpecialLinearGroup n R) = -1 := by
+  ext i j
+  rcases eq_or_ne i j with h | h <;> simp [mapGL, h]
 
 variable {R : Type*} [CommRing R]
 

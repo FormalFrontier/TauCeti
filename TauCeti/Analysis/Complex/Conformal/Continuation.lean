@@ -80,6 +80,9 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
 * `TauCeti.IsAnalyticContinuationAlong.congr` — only the carried germs matter.
 * `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow` —
   continuations are closed under the germ-wise operations.
+* `TauCeti.IsAnalyticContinuationAlong.reparam` — a continuation transports along any
+  reparametrisation of the path by a continuous map into its parameter set, of which restriction
+  to a smaller parameter set (`TauCeti.IsAnalyticContinuationAlong.mono`) is the identity case.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq` — **uniqueness**: a continuation over a
   preconnected parameter set is determined by its germ at a single time.
 * `TauCeti.IsAnalyticContinuationAlong.eventuallyEq_of_mapsTo` — continuing a holomorphic function
@@ -174,12 +177,32 @@ structure IsAnalyticContinuationAlong (f : X → ℂ → ℂ) (γ : X → ℂ) (
 
 namespace IsAnalyticContinuationAlong
 
-/-- A continuation restricts to any smaller parameter set. -/
+/-- **A continuation transports along a reparametrisation of the path.** Precomposing both the
+family and the path with a map `φ` of parameters that is continuous on `s'` and sends `s'` into `s`
+again gives a continuation, over `s'` and along the reparametrised path `γ ∘ φ`.
+
+Nothing further is asked of `φ` — it need not be injective, monotone, or cover `s` — so this
+covers restriction (`TauCeti.IsAnalyticContinuationAlong.mono`, the case `φ = id`), reversal of a
+path, and the passage between the parameter conventions `X = ℝ` with `s = Icc 0 1` and
+`X = unitInterval` with `s = univ` that this file's two layers use. Only this direction is claimed:
+if `φ '' s'` fails to cover `s` then part of the original path is dropped, so continuing along
+`γ ∘ φ` does not in general continue along `γ`. The germ carried at a reparametrised time is by
+construction the germ carried at the original time, so no uniqueness argument is needed: the
+conclusion is about the *same* family, read along `φ`. -/
+theorem reparam {Y : Type*} [TopologicalSpace Y] {φ : Y → X} {s' : Set Y}
+    (hf : IsAnalyticContinuationAlong f γ s) (hφ : ContinuousOn φ s')
+    (hmaps : Set.MapsTo φ s' s) :
+    IsAnalyticContinuationAlong (f ∘ φ) (γ ∘ φ) s' where
+  continuousOn := hf.continuousOn.comp hφ hmaps
+  analyticAt t ht := hf.analyticAt (φ t) (hmaps ht)
+  locallyEq t ht :=
+    ((hφ t ht).tendsto_nhdsWithin hmaps).eventually (hf.locallyEq (φ t) (hmaps ht))
+
+/-- A continuation restricts to any smaller parameter set: the case `φ = id` of
+`TauCeti.IsAnalyticContinuationAlong.reparam`. -/
 theorem mono (hf : IsAnalyticContinuationAlong f γ s) {s' : Set X} (hs' : s' ⊆ s) :
-    IsAnalyticContinuationAlong f γ s' where
-  continuousOn := hf.continuousOn.mono hs'
-  analyticAt t ht := hf.analyticAt t (hs' ht)
-  locallyEq t ht := (hf.locallyEq t (hs' ht)).filter_mono (nhdsWithin_mono t hs')
+    IsAnalyticContinuationAlong f γ s' :=
+  hf.reparam (φ := id) continuousOn_id hs'
 
 /-- The constant family is a continuation: a function analytic at every point of the path
 continues itself along it. -/

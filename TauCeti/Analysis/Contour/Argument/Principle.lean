@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Complex.CauchyIntegral
 public import Mathlib.Analysis.Meromorphic.Order
+public import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Meromorphic.NormalForm
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import TauCeti.Analysis.Contour.Cauchy.Goursat
@@ -63,14 +64,6 @@ open Filter Topology Metric Complex
 open scoped Real
 
 namespace TauCeti.Contour
-
-/-- At a point where a function is analytic and non-vanishing, its logarithmic derivative
-`logDeriv f = deriv f / f` is analytic. Exposed for the residue-form of the argument principle
-(`TauCeti.Contour.residue_logDeriv_eq_meromorphicOrderAt`). -/
-lemma analyticAt_logDeriv_of_analyticAt {f : ℂ → ℂ} {z : ℂ} (hf : AnalyticAt ℂ f z)
-    (hz : f z ≠ 0) : AnalyticAt ℂ (logDeriv f) z := by
-  rw [logDeriv]
-  exact hf.deriv.div hf hz
 
 /-- The logarithmic derivative depends only on the germ. -/
 private lemma logDeriv_eq_of_eventuallyEq {f g : ℂ → ℂ} {z : ℂ} (h : f =ᶠ[𝓝 z] g) :
