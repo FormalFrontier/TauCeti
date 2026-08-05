@@ -57,7 +57,8 @@ theorem LocalGeneratorsData.IsLocallyFreeData.isFinitePresentation
     change (q.generators i).IsFiniteType
     exact hfinite.isFiniteType i
   · refine ⟨?_⟩
-    -- The locally free presentation uses `ULift Empty` as its relation-index type.
+    -- Typeclass synthesis does not unfold the relation-index projection through
+    -- `quasiCoherentData`, and there is no rewriting lemma exposing it as `ULift Empty`.
     change Finite (ULift Empty)
     infer_instance
 
