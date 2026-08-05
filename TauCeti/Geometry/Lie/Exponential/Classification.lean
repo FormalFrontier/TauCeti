@@ -65,7 +65,7 @@ local instance lieGroupMinSmoothnessClassification [LieGroup I ∞ G] :
 noncomputable def continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G]
     (φ : ContinuousMonoidHom (Multiplicative ℝ) G) (n : ℕ) : E :=
-  mulInvariantLogModelSpace (I := I) (G := G)
+  mulInvariantLogChart (I := I) (G := G)
     (extChartAt I (1 : G) (φ (Multiplicative.ofAdd (dyadicStep n))))
 
 omit [IsManifold I 1 G] in
@@ -87,16 +87,16 @@ theorem tendsto_continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I 
   have hφ := tendsto_continuousMonoidHom_dyadicStep (I := I) (G := G) φ
   have hchart := (continuousAt_extChartAt (I := I) (1 : G)).tendsto.comp hφ
   have hlog :=
-    (contDiffAt_mulInvariantLogModelSpace_identity (I := I) (G := G)).continuousAt.tendsto
+    (contDiffAt_mulInvariantLogChart_identity (I := I) (G := G)).continuousAt.tendsto
       |>.comp hchart
   change Tendsto (continuousOneParameterLog (I := I) (G := G) φ) atTop
-    (𝓝 (mulInvariantLogModelSpace (I := I) (G := G)
+    (𝓝 (mulInvariantLogChart (I := I) (G := G)
       (extChartAt I (1 : G) (1 : G)))) at hlog
-  rw [show mulInvariantLogModelSpace (I := I) (G := G)
+  rw [show mulInvariantLogChart (I := I) (G := G)
       (extChartAt I (1 : G) (1 : G)) = 0 by
-    change mulInvariantLogModelSpace (I := I) (G := G)
+    change mulInvariantLogChart (I := I) (G := G)
       (I (chartAt H (1 : G) (1 : G))) = 0
-    exact mulInvariantLogModelSpace_identity (I := I) (G := G)] at hlog
+    exact mulInvariantLogChart_identity (I := I) (G := G)] at hlog
   exact hlog
 
 /-- At sufficiently small dyadic times, the local logarithm scales exactly under time halving. -/
@@ -121,7 +121,7 @@ theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDimensional
         φ (Multiplicative.ofAdd (dyadicStep n)) := by
     have h := hφ.eventually
       (eventually_mulInvariantExp_log (I := I) (G := G))
-    simpa only [v, continuousOneParameterLog, mulInvariantLog_eq_modelSpace] using h
+    simpa only [v, continuousOneParameterLog, mulInvariantLog_eq_chart] using h
   have hexpSucc : ∀ᶠ n in atTop,
       mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) =
         φ (Multiplicative.ofAdd (dyadicStep (n + 1))) :=
@@ -223,7 +223,7 @@ theorem exists_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ E] [Li
         φ (Multiplicative.ofAdd (dyadicStep n)) := by
     have h := hφ.eventually
       (eventually_mulInvariantExp_log (I := I) (G := G))
-    simpa only [log, continuousOneParameterLog, mulInvariantLog_eq_modelSpace] using h
+    simpa only [log, continuousOneParameterLog, mulInvariantLog_eq_chart] using h
   let ψ : ContinuousMonoidHom (Multiplicative ℝ) G :=
     mulInvariantOneParameterSubgroup (I := I) (G := G) (X : GroupLieAlgebra I G)
   have hdyadic : ∀ᶠ n in atTop,
@@ -302,24 +302,6 @@ theorem existsUnique_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ 
   apply mulInvariantOneParameterSubgroup_injective (I := I) (G := G)
   exact hw.symm.trans hv
 
-/-- The derivation-based and tangent-vector-based constructions of a one-parameter subgroup
-agree. -/
-theorem oneParameterSubgroup_eq_mulInvariantOneParameterSubgroup [FiniteDimensional ℝ E]
-    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
-    (X : LeftInvariantDerivation I G) :
-    oneParameterSubgroup X = mulInvariantOneParameterSubgroup
-      (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
-        BoundarylessManifold.isInteriorPoint X) := by
-  apply ContinuousMonoidHom.ext
-  intro t
-  change oneParameterSubgroup X (Multiplicative.ofAdd (Multiplicative.toAdd t)) =
-    mulInvariantOneParameterSubgroup
-      (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
-        BoundarylessManifold.isInteriorPoint X)
-      (Multiplicative.ofAdd (Multiplicative.toAdd t))
-  rw [oneParameterSubgroup_apply, lieExp_eq_mulInvariantExp,
-    map_smul, mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul]
-
 /-- Distinct left-invariant derivations generate distinct one-parameter subgroups. -/
 theorem oneParameterSubgroup_injective [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
@@ -350,7 +332,6 @@ theorem oneParameterSubgroup_surjective [FiniteDimensional ℝ E] [LieGroup I �
 
 /-- Continuous one-parameter subgroups of a finite-dimensional Lie group are equivalent to its
 left-invariant derivations. -/
-@[expose]
 noncomputable def oneParameterSubgroupEquiv [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     LeftInvariantDerivation I G ≃ ContinuousMonoidHom (Multiplicative ℝ) G :=
@@ -361,7 +342,12 @@ noncomputable def oneParameterSubgroupEquiv [FiniteDimensional ℝ E] [LieGroup 
 @[simp]
 theorem oneParameterSubgroupEquiv_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] (X : LeftInvariantDerivation I G) :
-    oneParameterSubgroupEquiv (I := I) (G := G) X = oneParameterSubgroup X := rfl
+    oneParameterSubgroupEquiv (I := I) (G := G) X = oneParameterSubgroup X := by
+  -- Expose the sealed definition once, then use Mathlib's public application theorem.
+  change Equiv.ofBijective (oneParameterSubgroup (I := I) (G := G))
+    ⟨oneParameterSubgroup_injective (I := I) (G := G),
+      oneParameterSubgroup_surjective (I := I) (G := G)⟩ X = oneParameterSubgroup X
+  exact Equiv.ofBijective_apply _ _ X
 
 /-- Every continuous one-parameter subgroup is generated by a unique left-invariant derivation. -/
 theorem existsUnique_eq_oneParameterSubgroup [FiniteDimensional ℝ E] [LieGroup I ∞ G]
