@@ -21,10 +21,26 @@ resolves it. Both are in git:
     against, timestamped the same way.
 
 An **epoch** is one head and the window it was current for. Within an epoch we
-binary-search `main`'s commits for the first one that `git merge-tree` cannot
-merge cleanly with that head; its commit time is the conflict's ONSET. The epoch
-ends when the author pushes again (a resolution, since the next epoch's head is
-measured afresh) or when the PR merges or closes.
+binary-search `main`'s commits -- starting from the base already in effect when
+the epoch began, so a PR that is born conflicting is not missed -- for the first
+one that `git merge-tree` cannot merge cleanly with that head. That commit's time,
+or the epoch's start if the conflict was inherited, is the ONSET.
+
+An **episode** spans as many epochs as it takes. A conflict is over only when a
+head appears that is CLEAN against the base current at the moment it appeared;
+until then, successive conflicting heads are one continuous episode. This matters
+because several commits pushed together look like several heads here, none of
+which was ever the PR's head: treating every following commit as a resolution
+would shred one long conflict into a string of short, falsely-resolved ones.
+
+Only such a clean successor counts as a resolution. A PR closed or merged while
+still conflicting ends its episode without resolving it, and is reported as
+CENSORED rather than folded into the resolution median -- otherwise abandoning a
+conflicted PR would score as fixing it quickly.
+
+A PR's own squash-merge commit is excluded from the bases it is measured against.
+It conflicts with that PR's head by construction (same edits, different sha), and
+leaving it in made a PR's own landing look like the event that broke it.
 
 What this is and is not
 -----------------------
@@ -34,9 +50,12 @@ branch's history, and they are an imperfect proxy for it. Read the numbers with
 these limits in mind, all of which are reported rather than hidden:
 
   * **Commit time is not push time, and a commit is not a head.** Several commits
-    pushed together each look like a separate head here, and a commit's committer
-    date is when it was written, not when it reached GitHub. Both effects
-    *fragment* the timeline into more, shorter epochs than really existed.
+    pushed together each look like a separate epoch here, and a commit's committer
+    date is when it was written, not when it reached GitHub. Coalescing episodes
+    across consecutive conflicting heads removes the worst of this -- a spurious
+    epoch boundary no longer ends an episode -- but a *resolution* is still dated
+    to a commit's committer time, so resolution times carry that error, and the
+    continuation/return split reads gaps between commits rather than pushes.
   * **Rewritten history.** Force-pushed heads are gone from the server. A PR whose
     surviving commits all share one timestamp is flagged `rewritten` and its
     pre-rebase window is unmeasurable; a PR force-pushed down to a single commit
@@ -45,7 +64,7 @@ these limits in mind, all of which are reported rather than hidden:
     with `main` still conflicts against later `main`. Each epoch is therefore
     checked at its LAST base and reported clean if it ends clean, which drops a
     conflict that arose and cleared inside one epoch. `--exhaustive` tests every
-    base instead; over this repository's whole history the two agree exactly (105
+    base instead; over this repository's whole history the two agree exactly (98
     episodes, identical medians and session split), so the assumption is currently
     costing nothing -- but it is an assumption, so re-check it rather than trust
     that it keeps holding.
@@ -77,7 +96,8 @@ error can only hide evidence that authors come back, never manufacture it. A
 result showing plentiful returns survives the criticism; a result showing none
 would not, and should be treated as inconclusive rather than as proof of the
 session-lifetime story. Vary `--session-gap` and check the split is not an
-artefact of one threshold.
+artefact of one threshold -- on this repository it is not: returns run from 32 of
+76 at a half-hour gap down to 13 of 76 at eight hours, never near zero.
 
 Usage
 -----
@@ -177,10 +197,14 @@ class Mirror:
                  "+refs/pull/*/head:refs/remotes/pr/*")
 
     def main_history(self):
-        """`main`'s first-parent commits, OLDEST first, as (sha, epoch)."""
-        out = self.git("log", "--format=%H %ct", "--first-parent",
+        """`main`'s first-parent commits, OLDEST first, as (sha, epoch, subject)."""
+        out = self.git("log", "--format=%H %ct %s", "--first-parent",
                        "refs/remotes/origin/main").stdout
-        rows = [(line.split()[0], int(line.split()[1])) for line in out.splitlines()]
+        rows = []
+        for line in out.splitlines():
+            parts = line.split(" ", 2)
+            subject = parts[2] if len(parts) > 2 else ""
+            rows.append((parts[0], int(parts[1]), subject))
         return rows[::-1]
 
     def pr_heads(self, number):
@@ -304,45 +328,96 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     # was opened and inflate its duration.
     created = parse_iso(pr.get("createdAt")) or epochs[0][1]
     ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
+    author = (pr.get("author") or {}).get("login") or ""
+    # A PR's OWN squash commit is not a base it was ever measured against, and it
+    # conflicts with the PR's head by construction (same edits, different sha). Left
+    # in, it made the merge itself look like the thing that caused the conflict:
+    # five of six sampled `merged` episodes dated their onset to the PR's own
+    # landing commit. Everything from that commit onwards is out of range.
+    landed = own_merge_index(history, number)
     out = []
-    for index, (head, start) in enumerate(epochs):
-        start = max(start, created)
+    # An EPISODE spans as many epochs as it takes: a conflict is over only when a
+    # head appears that is clean against the base current at the moment it
+    # appeared. Walking epoch by epoch and calling every following commit a
+    # resolution would fragment one continuous conflict into a string of falsely
+    # resolved episodes -- doubly so because several commits pushed together look
+    # like several heads here, none of which was ever the PR's head.
+    open_onset = None
+    for index, (head, raw_start) in enumerate(epochs):
+        start = max(raw_start, created)
         following = epochs[index + 1][1] if index + 1 < len(epochs) else ended
         if following <= start:
             continue
-        lo = bisect.bisect_left(history_times, start)
-        hi = bisect.bisect_left(history_times, following)
-        found = first_conflicting(mirror, history, lo, hi, head, exhaustive)
-        if found is None:
+        # Start from the base IN EFFECT at `start`, not the first one after it: a
+        # PR can be born conflicting, and a head that never sees a new main commit
+        # at all still has a base to conflict with. `hi` is widened to keep that
+        # one base in range even when the window contains no later commit.
+        lo = base_index_at(history_times, start)
+        hi = max(bisect.bisect_left(history_times, following), lo + 1)
+        hi = min(hi, landed) if landed is not None else hi
+        if hi <= lo:
             continue
-        onset = history_times[found]
-        if index + 1 < len(epochs):
-            resolved, outcome = following, "push"
+        found = first_conflicting(mirror, history, lo, hi, head, exhaustive)
+        # A conflict inherited from before this epoch began dates to the epoch's
+        # start (the push, or the PR opening), never to the older main commit.
+        onset = None if found is None else max(history_times[found], start)
+
+        if open_onset is not None:
+            if onset is not None and onset <= start:
+                continue        # this head arrived already conflicting: same episode
+            # It arrived clean, so the push that created it is the resolution.
             previous = max(epochs[index - 1][1], created) if index else start
-            continuation = (following - previous) <= session_gap
-        elif pr["mergedAt"]:
-            # A merge with no intervening push means the conflict cleared some
-            # other way (the base absorbed it, or the merge was of an older head).
-            resolved, outcome, continuation = ended, "merged", None
+            out.append(episode(number, author, open_onset, start, "push",
+                               (start - previous) <= session_gap))
+            open_onset = None
+        if open_onset is None and onset is not None:
+            open_onset = onset
+
+    if open_onset is not None:
+        if pr["mergedAt"]:
+            outcome = "merged"
         elif pr["closedAt"]:
-            resolved, outcome, continuation = ended, "closed", None
+            outcome = "closed"
         else:
-            resolved, outcome, continuation = now, "still-open", None
-        out.append({
-            "pr": number,
-            "author": (pr.get("author") or {}).get("login") or "",
-            "onset": onset,
-            "resolved": resolved,
-            "seconds": resolved - onset,
-            "outcome": outcome,
-            "continuation": continuation,
-        })
+            outcome = "still-open"
+        out.append(episode(number, author, open_onset, ended if outcome != "still-open" else now,
+                           outcome, None))
     return out, handling
+
+
+def base_index_at(history_times, when):
+    """Index of the last main commit at or before `when` (0 if `when` predates main)."""
+    return max(0, bisect.bisect_right(history_times, when) - 1)
+
+
+def own_merge_index(history, number):
+    """Index of the commit where PR `number` itself landed on main, or None.
+
+    Squash-merges here carry `(#N)` at the end of the subject, which is the only
+    durable link from a main commit back to the PR it came from.
+    """
+    suffix = f"(#{number})"
+    for index, (_, _, subject) in enumerate(history):
+        if subject.rstrip().endswith(suffix):
+            return index
+    return None
+
+
+def episode(number, author, onset, resolved, outcome, continuation):
+    return {
+        "pr": number,
+        "author": author,
+        "onset": onset,
+        "resolved": resolved,
+        "seconds": max(0, resolved - onset),
+        "outcome": outcome,
+        "continuation": continuation,
+    }
 
 
 def replay(mirror, prs, jobs, session_gap, now, exhaustive=False):
     history = mirror.main_history()
-    history_times = [when for _, when in history]
+    history_times = [when for _, when, _ in history]
     log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads"
         + (" (exhaustive)" if exhaustive else ""))
 
@@ -375,14 +450,22 @@ def summarise(episodes, unmeasured, total_prs):
                  f"no surviving earlier head, and {unmeasured.get('skipped', 0)} had no "
                  f"replayable commits; neither group's conflicts are measurable")
 
-    closed = [e for e in episodes if e["outcome"] != "still-open"]
-    if closed:
-        durations = [e["seconds"] for e in closed]
+    # ONLY a push that made the branch merge again is a resolution. Closing a PR
+    # that is still conflicting ends the episode without resolving anything, and
+    # counting it as a fast resolution would reward abandonment; it is reported
+    # separately as censored. `merged` is likewise not a push-resolution.
+    resolved = [e for e in episodes if e["outcome"] == "push"]
+    censored = [e for e in episodes if e["outcome"] in ("closed", "merged")]
+    if resolved:
+        durations = [e["seconds"] for e in resolved]
         lines.append(f"time to resolution: median {human_duration(median(durations))}, "
                      f"p90 {human_duration(percentile(durations, 0.9))}, "
                      f"max {human_duration(max(durations))}")
         over_24h = sum(1 for d in durations if d > 86400)
         lines.append(f"  {over_24h}/{len(durations)} took over 24h")
+    if censored:
+        lines.append(f"{len(censored)} episode(s) ended without a resolving push (the PR was "
+                     f"closed or merged while still conflicting); censored, not in the median")
 
     by_outcome = {}
     for e in episodes:
@@ -412,7 +495,7 @@ def summarise(episodes, unmeasured, total_prs):
     lines.append("per author:")
     for author in sorted(by_author, key=lambda a: -len(by_author[a])):
         rows = by_author[author]
-        done = [e["seconds"] for e in rows if e["outcome"] != "still-open"]
+        done = [e["seconds"] for e in rows if e["outcome"] == "push"]
         live = [e for e in rows if e["outcome"] == "still-open"]
         detail = f"{len(rows)} episode(s)"
         if done:

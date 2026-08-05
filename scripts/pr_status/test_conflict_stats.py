@@ -32,8 +32,8 @@ class Replay(unittest.TestCase):
             at = self.breaks_at.get(head_sha)
             return at is not None and int(base_sha) >= at
 
-    HISTORY = [(str(i), 1000 + 100 * i) for i in range(20)]
-    TIMES = [when for _, when in HISTORY]
+    HISTORY = [(str(i), 1000 + 100 * i, f"feat: commit {i}") for i in range(20)]
+    TIMES = [when for _, when, _ in HISTORY]
 
     def pr(self, **kwargs):
         base = {"number": 1, "author": {"login": "alice"}, "createdAt": None,
@@ -119,6 +119,53 @@ class Replay(unittest.TestCase):
             mirror, self.HISTORY, 0, 20, "h1"))
         self.assertEqual(conflict_stats.first_conflicting(
             mirror, self.HISTORY, 0, 20, "h1", exhaustive=True), 5)
+
+    def test_a_pr_born_conflicting_is_detected_and_dated_to_its_opening(self):
+        # The base in effect when the PR opened already conflicts. Replaying only
+        # main commits strictly after the opening never tested it, so the whole
+        # episode was invisible; and it must date to the opening, not to the older
+        # main commit that happened to be current then.
+        mirror = self.FakeMirror([("h1", 1550)], {"h1": 0})
+        episodes, _ = self.analyse(mirror, self.pr(createdAt="1970-01-01T00:25:50Z"))
+        self.assertEqual(len(episodes), 1)
+        self.assertEqual(episodes[0]["onset"], 1550)
+
+    def test_a_conflict_with_no_later_main_commit_is_still_found(self):
+        # Window contains no main commit at all: there is still a base to conflict
+        # with, and the old code searched an empty range and found nothing.
+        mirror = self.FakeMirror([("h1", 2905)], {"h1": 0})
+        episodes, _ = self.analyse(mirror, self.pr(), now=2950)
+        self.assertEqual(len(episodes), 1)
+        self.assertEqual(episodes[0]["outcome"], "still-open")
+
+    def test_consecutive_conflicting_heads_are_one_episode(self):
+        # Commits pushed together look like separate heads here. Calling each
+        # following one a resolution fragmented a single continuous conflict into a
+        # string of falsely resolved episodes.
+        mirror = self.FakeMirror(
+            [("h1", 1000), ("h2", 1650), ("h3", 1660)], {"h1": 5, "h2": 0, "h3": 0})
+        episodes, _ = self.analyse(mirror, self.pr())
+        self.assertEqual(len(episodes), 1)
+        self.assertEqual(episodes[0]["onset"], 1500)
+        self.assertEqual(episodes[0]["outcome"], "still-open")
+
+    def test_a_clean_successor_head_is_what_ends_an_episode(self):
+        mirror = self.FakeMirror(
+            [("h1", 1000), ("h2", 1650), ("h3", 1900)], {"h1": 5, "h2": 0})
+        episodes, _ = self.analyse(mirror, self.pr())
+        self.assertEqual(len(episodes), 1)
+        self.assertEqual(episodes[0]["resolved"], 1900)
+        self.assertEqual(episodes[0]["outcome"], "push")
+
+    def test_the_prs_own_landing_commit_is_not_a_base(self):
+        # A squash-merge of this PR conflicts with its own head by construction,
+        # which made the merge look like the cause of the conflict.
+        history = self.HISTORY[:10] + [("10", 2000, "feat: do a thing (#1)")] + self.HISTORY[11:]
+        times = [when for _, when, _ in history]
+        mirror = self.FakeMirror([("h1", 1000)], {"h1": 10})
+        episodes, _ = conflict_stats.analyse_pr(
+            mirror, history, times, self.pr(mergedAt="1970-01-01T00:33:20Z"), 9999, 7200)
+        self.assertEqual(episodes, [])
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})

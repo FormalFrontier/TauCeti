@@ -128,9 +128,13 @@ is not a question you can look up — there is no log to read.
 conflicts because main moved and stops because the author pushed, and both are in
 the history: the PR's own commits give the sequence of heads it has had, and
 main's first-parent history gives every base each was measured against. For each
-head it binary-searches main's commits with `git merge-tree` for the first one
-that cannot merge cleanly — that commit's time is the conflict's onset — and the
-episode ends at the next push, or at the merge or close.
+head it binary-searches main's commits with `git merge-tree` — starting from the
+base already in effect, so a PR born conflicting is not missed — for the first one
+that cannot merge cleanly. An episode ends only when a head appears that is *clean*
+against the base current when it appeared, so successive conflicting heads stay one
+continuous conflict rather than a string of falsely-resolved short ones. A PR
+closed or merged while still conflicting is reported as censored, not as a fast
+resolution.
 
 ```bash
 python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
