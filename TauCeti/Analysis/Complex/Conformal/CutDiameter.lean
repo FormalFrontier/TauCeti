@@ -142,15 +142,6 @@ variable {f : ℂ → ℂ} {U : Set ℂ} {ζ : ℂ} {ρ : ℝ}
 
 /-! ## The boundary of the image of one side -/
 
-/-- The open mapping theorem on an open piece of a domain of injective holomorphy. This is the only
-place the analytic hypotheses enter the splitting step
-`TauCeti.frontier_image_subset_image_union_frontier_image`, which asks nothing of `f` beyond
-openness and disjointness of the images of the two sides — and disjointness `Disjoint.image` reads
-off injectivity alone. -/
-private theorem isOpen_image_of_subset (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
-    {s : Set ℂ} (hsU : s ⊆ U) (hs : IsOpen s) : IsOpen (f '' s) :=
-  isOpen_image_of_differentiableOn_of_injOn hs (hd.mono hsU) (hinj.mono hsU)
-
 /-- **The boundary of the image of a crosscut neighbourhood lies on the image crosscut and on the
 boundary of the image domain.** For `f` holomorphic and injective on an open `U`, the frontier of
 the image `f '' (U ∩ ball ζ ρ)` of the crosscut neighbourhood is covered by the image
@@ -158,22 +149,27 @@ the image `f '' (U ∩ ball ζ ρ)` of the crosscut neighbourhood is covered by 
 
 This is `TauCeti.frontier_image_subset_image_union_frontier_image` for the near side of the
 crosscut, the two sides of which are disjoint and open and cover the domain apart from the crosscut
-arc by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
+arc by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. That lemma asks nothing of `f`
+beyond openness and disjointness of the images of the two sides, so
+`TauCeti.isOpen_image_of_differentiableOn_of_injOn` is the only place the analytic hypotheses enter,
+and `Disjoint.image` reads the disjointness off injectivity alone. -/
 theorem frontier_image_inter_ball_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) :
     frontier (f '' (U ∩ ball ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
   have hcov : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
     rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
   exact frontier_image_subset_image_union_frontier_image
-    (isOpen_image_of_subset hd hinj inter_subset_left (hUo.inter isOpen_ball))
-    (isOpen_image_of_subset hd hinj sdiff_subset (hUo.sdiff isClosed_closedBall))
+    (isOpen_image_of_differentiableOn_of_injOn (hUo.inter isOpen_ball)
+      (hd.mono inter_subset_left) (hinj.mono inter_subset_left))
+    (isOpen_image_of_differentiableOn_of_injOn (hUo.sdiff isClosed_closedBall)
+      (hd.mono sdiff_subset) (hinj.mono sdiff_subset))
     (disjoint_inter_ball_sdiff_closedBall.image hinj inter_subset_left sdiff_subset)
     inter_subset_left hcov.subset
 
 /-- **The boundary of the image of the far side of a crosscut lies on the image crosscut and on the
 boundary of the image domain.** The mirror of `TauCeti.frontier_image_inter_ball_subset`: it is
-`TauCeti.frontier_image_subset_image_union_frontier_image` read across the crosscut, the two sides
-entering that lemma symmetrically. -/
+`TauCeti.frontier_image_subset_image_union_frontier_image` read across the crosscut: both sides lie
+in `U`, so either may play the role of the side that lemma bounds. -/
 theorem frontier_image_sdiff_closedBall_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) :
     frontier (f '' (U \ closedBall ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
@@ -181,8 +177,10 @@ theorem frontier_image_sdiff_closedBall_subset (hUo : IsOpen U) (hd : Differenti
     rw [union_comm (U \ closedBall ζ ρ), ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall,
       sdiff_union_inter]
   exact frontier_image_subset_image_union_frontier_image
-    (isOpen_image_of_subset hd hinj sdiff_subset (hUo.sdiff isClosed_closedBall))
-    (isOpen_image_of_subset hd hinj inter_subset_left (hUo.inter isOpen_ball))
+    (isOpen_image_of_differentiableOn_of_injOn (hUo.sdiff isClosed_closedBall)
+      (hd.mono sdiff_subset) (hinj.mono sdiff_subset))
+    (isOpen_image_of_differentiableOn_of_injOn (hUo.inter isOpen_ball)
+      (hd.mono inter_subset_left) (hinj.mono inter_subset_left))
     (disjoint_inter_ball_sdiff_closedBall.symm.image hinj sdiff_subset inter_subset_left)
     sdiff_subset hcov.subset
 

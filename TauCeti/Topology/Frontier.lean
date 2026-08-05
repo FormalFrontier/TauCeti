@@ -63,9 +63,9 @@ specific to those uses; neither lemma mentions a metric, let alone a holomorphic
 
 * `TauCeti.IsPreconnected.inter_frontier_nonempty` — a preconnected set meeting both a set and its
   complement meets the frontier of that set.
-* `TauCeti.frontier_image_subset_image_union_frontier_image` — the frontier of the image of one of
-  two sides with disjoint open images lies on the image of the remainder and on the frontier of the
-  image of the whole.
+* `TauCeti.frontier_image_subset_image_union_frontier_image` — for a set split into two sides with
+  disjoint open images plus a remainder, the frontier of the image of the side lying in that set
+  lies on the image of the remainder and on the frontier of the image of the whole.
 -/
 
 public section
@@ -109,7 +109,9 @@ and on the boundary of the image of the domain.** If `U` is covered by two sets 
 disjoint open images together with a third set `u`, and `s ⊆ U`, then
 `frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)`.
 
-The two sides enter symmetrically, so the lemma bounds either of them by swapping their roles.
+The conclusion is about `s`, the side that is asked to lie in `U`. The argument treats the two
+sides alike apart from that, so a consumer with `t ⊆ U` in hand bounds `t` as well by swapping
+their roles.
 
 A frontier point of `f '' s` lies in `closure (f '' U)`, so if it is not a frontier point of
 `f '' U` it is a value `f w` with `w` in one of the three covering sets: `w ∈ s` would place it
