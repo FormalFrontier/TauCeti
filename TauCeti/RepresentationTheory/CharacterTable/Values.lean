@@ -179,6 +179,7 @@ theorem conj_char_eq_char_inv (ρ : Representation ℂ G V) {g : G} {n : ℕ} (h
   exact End.conj_trace_eq_trace_pow_sub_one hn hf
 
 /-- **Over `ℂ`, inversion conjugates the character values of a finite group.** -/
+@[simp]
 theorem conj_char [Finite G] (ρ : Representation ℂ G V) (g : G) :
     (starRingEnd ℂ) (ρ.character g) = ρ.character g⁻¹ :=
   conj_char_eq_char_inv ρ (isOfFinOrder_of_finite g).orderOf_pos.ne' (pow_orderOf_eq_one g)
@@ -213,6 +214,7 @@ theorem norm_char_le_finrank (V : FDRep ℂ G) (g : G) : ‖V.character g‖ ≤
 
 /-- **Over `ℂ`, inversion conjugates the character values of a finite group**, so that a complex
 character is a "unitary" class function: `conj (χ g) = χ g⁻¹`. -/
+@[simp]
 theorem conj_char (V : FDRep ℂ G) (g : G) :
     (starRingEnd ℂ) (V.character g) = V.character g⁻¹ :=
   Representation.conj_char V.ρ g

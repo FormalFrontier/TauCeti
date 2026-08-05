@@ -84,11 +84,7 @@ omit [FiniteDimensional k V] in
 /-- A power of `f` acts on the `μ`-eigenspace of `f` as the scalar `μ ^ m`. -/
 theorem pow_apply_of_mem_eigenspace {μ : k} {x : V} (hx : x ∈ f.eigenspace μ) (m : ℕ) :
     (f ^ m) x = μ ^ m • x := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-    rw [pow_succ, End.mul_apply, (End.mem_eigenspace_iff).1 hx, map_smul, ih, smul_smul,
-      ← pow_succ']
+  simpa using End.aeval_apply_of_mem_apply_eq_smul (p := X ^ m) (End.mem_eigenspace_iff.1 hx)
 
 omit [FiniteDimensional k V] in
 /-- Every power of `f` maps each eigenspace of `f` to itself. -/
@@ -115,9 +111,10 @@ theorem pow_eq_one_of_hasEigenvalue (hf : f ^ n = 1) {μ : k} (hμ : f.HasEigenv
 
 variable [IsAlgClosed k]
 
+open scoped Classical in
 /-- **The eigenspaces of an endomorphism of finite order decompose the space**, `n` being invertible
 in the algebraically closed field `k`: such an `f` is semisimple, hence diagonalizable. -/
-theorem isInternal_eigenspace_of_pow_eq_one [DecidableEq k] (hn : (n : k) ≠ 0) (hf : f ^ n = 1) :
+theorem isInternal_eigenspace_of_pow_eq_one (hn : (n : k) ≠ 0) (hf : f ^ n = 1) :
     DirectSum.IsInternal f.eigenspace :=
   DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top f.eigenspaces_iSupIndep
     (isSemisimple_of_pow_eq_one hn hf).iSup_eigenspace_eq_top
